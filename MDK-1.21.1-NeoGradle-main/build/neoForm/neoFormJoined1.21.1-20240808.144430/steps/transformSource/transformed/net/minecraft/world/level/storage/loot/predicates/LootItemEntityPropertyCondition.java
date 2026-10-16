@@ -13,6 +13,9 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
 
+/**
+ * A LootItemCondition that checks a given {@link EntityPredicate} against a given {@link LootContext.EntityTarget}.
+ */
 public record LootItemEntityPropertyCondition(Optional<EntityPredicate> predicate, LootContext.EntityTarget entityTarget) implements LootItemCondition {
     public static final MapCodec<LootItemEntityPropertyCondition> CODEC = RecordCodecBuilder.mapCodec(
         p_338171_ -> p_338171_.group(
@@ -32,21 +35,21 @@ public record LootItemEntityPropertyCondition(Optional<EntityPredicate> predicat
         return ImmutableSet.of(LootContextParams.ORIGIN, this.entityTarget.getParam());
     }
 
-    public boolean test(LootContext p_81871_) {
-        Entity entity = p_81871_.getParamOrNull(this.entityTarget.getParam());
-        Vec3 vec3 = p_81871_.getParamOrNull(LootContextParams.ORIGIN);
-        return this.predicate.isEmpty() || this.predicate.get().matches(p_81871_.getLevel(), vec3, entity);
+    public boolean test(LootContext context) {
+        Entity entity = context.getParamOrNull(this.entityTarget.getParam());
+        Vec3 vec3 = context.getParamOrNull(LootContextParams.ORIGIN);
+        return this.predicate.isEmpty() || this.predicate.get().matches(context.getLevel(), vec3, entity);
     }
 
-    public static LootItemCondition.Builder entityPresent(LootContext.EntityTarget p_81863_) {
-        return hasProperties(p_81863_, EntityPredicate.Builder.entity());
+    public static LootItemCondition.Builder entityPresent(LootContext.EntityTarget target) {
+        return hasProperties(target, EntityPredicate.Builder.entity());
     }
 
-    public static LootItemCondition.Builder hasProperties(LootContext.EntityTarget p_81865_, EntityPredicate.Builder p_81866_) {
-        return () -> new LootItemEntityPropertyCondition(Optional.of(p_81866_.build()), p_81865_);
+    public static LootItemCondition.Builder hasProperties(LootContext.EntityTarget target, EntityPredicate.Builder predicateBuilder) {
+        return () -> new LootItemEntityPropertyCondition(Optional.of(predicateBuilder.build()), target);
     }
 
-    public static LootItemCondition.Builder hasProperties(LootContext.EntityTarget p_81868_, EntityPredicate p_81869_) {
-        return () -> new LootItemEntityPropertyCondition(Optional.of(p_81869_), p_81868_);
+    public static LootItemCondition.Builder hasProperties(LootContext.EntityTarget target, EntityPredicate entityPredicate) {
+        return () -> new LootItemEntityPropertyCondition(Optional.of(entityPredicate), target);
     }
 }

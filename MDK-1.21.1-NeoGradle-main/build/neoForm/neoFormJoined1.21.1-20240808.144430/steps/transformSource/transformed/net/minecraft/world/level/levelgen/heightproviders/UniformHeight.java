@@ -25,19 +25,19 @@ public class UniformHeight extends HeightProvider {
     private final VerticalAnchor maxInclusive;
     private final LongSet warnedFor = new LongOpenHashSet();
 
-    private UniformHeight(VerticalAnchor p_162029_, VerticalAnchor p_162030_) {
-        this.minInclusive = p_162029_;
-        this.maxInclusive = p_162030_;
+    private UniformHeight(VerticalAnchor minInclusive, VerticalAnchor maxInclusive) {
+        this.minInclusive = minInclusive;
+        this.maxInclusive = maxInclusive;
     }
 
-    public static UniformHeight of(VerticalAnchor p_162035_, VerticalAnchor p_162036_) {
-        return new UniformHeight(p_162035_, p_162036_);
+    public static UniformHeight of(VerticalAnchor minInclusive, VerticalAnchor maxInclusive) {
+        return new UniformHeight(minInclusive, maxInclusive);
     }
 
     @Override
-    public int sample(RandomSource p_226308_, WorldGenerationContext p_226309_) {
-        int i = this.minInclusive.resolveY(p_226309_);
-        int j = this.maxInclusive.resolveY(p_226309_);
+    public int sample(RandomSource random, WorldGenerationContext context) {
+        int i = this.minInclusive.resolveY(context);
+        int j = this.maxInclusive.resolveY(context);
         if (i > j) {
             if (this.warnedFor.add((long)i << 32 | (long)j)) {
                 LOGGER.warn("Empty height range: {}", this);
@@ -45,7 +45,7 @@ public class UniformHeight extends HeightProvider {
 
             return i;
         } else {
-            return Mth.randomBetweenInclusive(p_226308_, i, j);
+            return Mth.randomBetweenInclusive(random, i, j);
         }
     }
 

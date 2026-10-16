@@ -19,32 +19,32 @@ import net.minecraft.resources.ResourceLocation;
 public interface CommandFunction<T> {
     ResourceLocation id();
 
-    InstantiatedFunction<T> instantiate(@Nullable CompoundTag p_306231_, CommandDispatcher<T> p_305923_) throws FunctionInstantiationException;
+    InstantiatedFunction<T> instantiate(@Nullable CompoundTag arguments, CommandDispatcher<T> dispatcher) throws FunctionInstantiationException;
 
-    private static boolean shouldConcatenateNextLine(CharSequence p_306338_) {
-        int i = p_306338_.length();
-        return i > 0 && p_306338_.charAt(i - 1) == '\\';
+    private static boolean shouldConcatenateNextLine(CharSequence line) {
+        int i = line.length();
+        return i > 0 && line.charAt(i - 1) == '\\';
     }
 
     static <T extends ExecutionCommandSource<T>> CommandFunction<T> fromLines(
-        ResourceLocation p_306082_, CommandDispatcher<T> p_306046_, T p_305973_, List<String> p_306307_
+        ResourceLocation id, CommandDispatcher<T> dispatcher, T source, List<String> lines
     ) {
         FunctionBuilder<T> functionbuilder = new FunctionBuilder<>();
 
-        for (int i = 0; i < p_306307_.size(); i++) {
+        for (int i = 0; i < lines.size(); i++) {
             int j = i + 1;
-            String s = p_306307_.get(i).trim();
+            String s = lines.get(i).trim();
             String s1;
             if (shouldConcatenateNextLine(s)) {
                 StringBuilder stringbuilder = new StringBuilder(s);
 
                 do {
-                    if (++i == p_306307_.size()) {
+                    if (++i == lines.size()) {
                         throw new IllegalArgumentException("Line continuation at end of file");
                     }
 
                     stringbuilder.deleteCharAt(stringbuilder.length() - 1);
-                    String s2 = p_306307_.get(i).trim();
+                    String s2 = lines.get(i).trim();
                     stringbuilder.append(s2);
                     checkCommandLineLength(stringbuilder);
                 } while (shouldConcatenateNextLine(stringbuilder));
@@ -72,10 +72,10 @@ public interface CommandFunction<T> {
                 }
 
                 if (stringreader.peek() == '$') {
-                    functionbuilder.addMacro(s1.substring(1), j, p_305973_);
+                    functionbuilder.addMacro(s1.substring(1), j, source);
                 } else {
                     try {
-                        functionbuilder.addCommand(parseCommand(p_306046_, p_305973_, stringreader));
+                        functionbuilder.addCommand(parseCommand(dispatcher, source, stringreader));
                     } catch (CommandSyntaxException commandsyntaxexception) {
                         throw new IllegalArgumentException("Whilst parsing command on line " + j + ": " + commandsyntaxexception.getMessage());
                     }
@@ -83,24 +83,24 @@ public interface CommandFunction<T> {
             }
         }
 
-        return functionbuilder.build(p_306082_);
+        return functionbuilder.build(id);
     }
 
-    static void checkCommandLineLength(CharSequence p_326091_) {
-        if (p_326091_.length() > 2000000) {
-            CharSequence charsequence = p_326091_.subSequence(0, Math.min(512, 2000000));
-            throw new IllegalStateException("Command too long: " + p_326091_.length() + " characters, contents: " + charsequence + "...");
+    static void checkCommandLineLength(CharSequence command) {
+        if (command.length() > 2000000) {
+            CharSequence charsequence = command.subSequence(0, Math.min(512, 2000000));
+            throw new IllegalStateException("Command too long: " + command.length() + " characters, contents: " + charsequence + "...");
         }
     }
 
-    static <T extends ExecutionCommandSource<T>> UnboundEntryAction<T> parseCommand(CommandDispatcher<T> p_306213_, T p_305785_, StringReader p_306140_) throws CommandSyntaxException {
-        ParseResults<T> parseresults = p_306213_.parse(p_306140_, p_305785_);
+    static <T extends ExecutionCommandSource<T>> UnboundEntryAction<T> parseCommand(CommandDispatcher<T> dispatcher, T source, StringReader command) throws CommandSyntaxException {
+        ParseResults<T> parseresults = dispatcher.parse(command, source);
         Commands.validateParseResults(parseresults);
-        Optional<ContextChain<T>> optional = ContextChain.tryFlatten(parseresults.getContext().build(p_306140_.getString()));
+        Optional<ContextChain<T>> optional = ContextChain.tryFlatten(parseresults.getContext().build(command.getString()));
         if (optional.isEmpty()) {
             throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownCommand().createWithContext(parseresults.getReader());
         } else {
-            return new BuildContexts.Unbound<>(p_306140_.getString(), optional.get());
+            return new BuildContexts.Unbound<>(command.getString(), optional.get());
         }
     }
 }

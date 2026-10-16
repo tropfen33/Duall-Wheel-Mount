@@ -9,9 +9,9 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class RealmsLongRunningMcoTickTaskScreen extends RealmsLongRunningMcoTaskScreen {
     private final LongRunningTask task;
 
-    public RealmsLongRunningMcoTickTaskScreen(Screen p_301165_, LongRunningTask p_300864_) {
-        super(p_301165_, p_300864_);
-        this.task = p_300864_;
+    public RealmsLongRunningMcoTickTaskScreen(Screen lastScreen, LongRunningTask task) {
+        super(lastScreen, task);
+        this.task = task;
     }
 
     @Override

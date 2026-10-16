@@ -19,16 +19,19 @@ public class BuddingAmethystBlock extends AmethystBlock {
         return CODEC;
     }
 
-    public BuddingAmethystBlock(BlockBehaviour.Properties p_152726_) {
-        super(p_152726_);
+    public BuddingAmethystBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_220898_, ServerLevel p_220899_, BlockPos p_220900_, RandomSource p_220901_) {
-        if (p_220901_.nextInt(5) == 0) {
-            Direction direction = DIRECTIONS[p_220901_.nextInt(DIRECTIONS.length)];
-            BlockPos blockpos = p_220900_.relative(direction);
-            BlockState blockstate = p_220899_.getBlockState(blockpos);
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (random.nextInt(5) == 0) {
+            Direction direction = DIRECTIONS[random.nextInt(DIRECTIONS.length)];
+            BlockPos blockpos = pos.relative(direction);
+            BlockState blockstate = level.getBlockState(blockpos);
             Block block = null;
             if (canClusterGrowAtState(blockstate)) {
                 block = Blocks.SMALL_AMETHYST_BUD;
@@ -44,12 +47,12 @@ public class BuddingAmethystBlock extends AmethystBlock {
                 BlockState blockstate1 = block.defaultBlockState()
                     .setValue(AmethystClusterBlock.FACING, direction)
                     .setValue(AmethystClusterBlock.WATERLOGGED, Boolean.valueOf(blockstate.getFluidState().getType() == Fluids.WATER));
-                p_220899_.setBlockAndUpdate(blockpos, blockstate1);
+                level.setBlockAndUpdate(blockpos, blockstate1);
             }
         }
     }
 
-    public static boolean canClusterGrowAtState(BlockState p_152735_) {
-        return p_152735_.isAir() || p_152735_.is(Blocks.WATER) && p_152735_.getFluidState().getAmount() == 8;
+    public static boolean canClusterGrowAtState(BlockState state) {
+        return state.isAir() || state.is(Blocks.WATER) && state.getFluidState().getAmount() == 8;
     }
 }

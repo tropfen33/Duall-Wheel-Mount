@@ -49,43 +49,43 @@ public class ConnectScreen extends Screen {
     private long lastNarration = -1L;
     final Component connectFailedTitle;
 
-    private ConnectScreen(Screen p_279215_, Component p_279228_) {
+    private ConnectScreen(Screen parent, Component connectFailedTitle) {
         super(GameNarrator.NO_TITLE);
-        this.parent = p_279215_;
-        this.connectFailedTitle = p_279228_;
+        this.parent = parent;
+        this.connectFailedTitle = connectFailedTitle;
     }
 
     public static void startConnecting(
-        Screen p_279473_, Minecraft p_279200_, ServerAddress p_279150_, ServerData p_279481_, boolean p_279117_, @Nullable TransferState p_320013_
+        Screen parent, Minecraft minecraft, ServerAddress serverAddress, ServerData serverData, boolean isQuickPlay, @Nullable TransferState transferState
     ) {
-        if (p_279200_.screen instanceof ConnectScreen) {
+        if (minecraft.screen instanceof ConnectScreen) {
             LOGGER.error("Attempt to connect while already connecting");
         } else {
             Component component;
-            if (p_320013_ != null) {
+            if (transferState != null) {
                 component = CommonComponents.TRANSFER_CONNECT_FAILED;
-            } else if (p_279117_) {
+            } else if (isQuickPlay) {
                 component = QuickPlay.ERROR_TITLE;
             } else {
                 component = CommonComponents.CONNECT_FAILED;
             }
 
-            ConnectScreen connectscreen = new ConnectScreen(p_279473_, component);
-            if (p_320013_ != null) {
+            ConnectScreen connectscreen = new ConnectScreen(parent, component);
+            if (transferState != null) {
                 connectscreen.updateStatus(Component.translatable("connect.transferring"));
             }
 
-            p_279200_.disconnect();
-            p_279200_.prepareForMultiplayer();
-            p_279200_.updateReportEnvironment(ReportEnvironment.thirdParty(p_279481_.ip));
-            p_279200_.quickPlayLog().setWorldData(QuickPlayLog.Type.MULTIPLAYER, p_279481_.ip, p_279481_.name);
-            p_279200_.setScreen(connectscreen);
-            connectscreen.connect(p_279200_, p_279150_, p_279481_, p_320013_);
+            minecraft.disconnect();
+            minecraft.prepareForMultiplayer();
+            minecraft.updateReportEnvironment(ReportEnvironment.thirdParty(serverData.ip));
+            minecraft.quickPlayLog().setWorldData(QuickPlayLog.Type.MULTIPLAYER, serverData.ip, serverData.name);
+            minecraft.setScreen(connectscreen);
+            connectscreen.connect(minecraft, serverAddress, serverData, transferState);
         }
     }
 
-    private void connect(final Minecraft p_251955_, final ServerAddress p_249536_, final ServerData p_252078_, @Nullable final TransferState p_320415_) {
-        LOGGER.info("Connecting to {}, {}", p_249536_.getHost(), p_249536_.getPort());
+    private void connect(final Minecraft minecraft, final ServerAddress serverAddress, final ServerData serverData, @Nullable final TransferState transferState) {
+        LOGGER.info("Connecting to {}, {}", serverAddress.getHost(), serverAddress.getPort());
         Thread thread = new Thread("Server Connector #" + UNIQUE_THREAD_ID.incrementAndGet()) {
             @Override
             public void run() {
@@ -96,16 +96,16 @@ public class ConnectScreen extends Screen {
                         return;
                     }
 
-                    Optional<InetSocketAddress> optional = ServerNameResolver.DEFAULT.resolveAddress(p_249536_).map(ResolvedServerAddress::asInetSocketAddress);
+                    Optional<InetSocketAddress> optional = ServerNameResolver.DEFAULT.resolveAddress(serverAddress).map(ResolvedServerAddress::asInetSocketAddress);
                     if (ConnectScreen.this.aborted) {
                         return;
                     }
 
                     if (optional.isEmpty()) {
-                        ConnectScreen.LOGGER.error("Couldn't connect to server: Unknown host \"{}\"", p_249536_.getHost());
+                        ConnectScreen.LOGGER.error("Couldn't connect to server: Unknown host \"{}\"", serverAddress.getHost());
                         net.neoforged.neoforge.network.DualStackUtils.logInitialPreferences();
-                        p_251955_.execute(
-                            () -> p_251955_.setScreen(
+                        minecraft.execute(
+                            () -> minecraft.setScreen(
                                     new DisconnectedScreen(ConnectScreen.this.parent, ConnectScreen.this.connectFailedTitle, ConnectScreen.UNKNOWN_HOST_MESSAGE)
                                 )
                         );
@@ -120,8 +120,8 @@ public class ConnectScreen extends Screen {
                         }
 
                         connection = new Connection(PacketFlow.CLIENTBOUND);
-                        connection.setBandwidthLogger(p_251955_.getDebugOverlay().getBandwidthLogger());
-                        ConnectScreen.this.channelFuture = Connection.connect(inetsocketaddress, p_251955_.options.useNativeTransport(), connection);
+                        connection.setBandwidthLogger(minecraft.getDebugOverlay().getBandwidthLogger());
+                        ConnectScreen.this.channelFuture = Connection.connect(inetsocketaddress, minecraft.options.useNativeTransport(), connection);
                     }
 
                     ConnectScreen.this.channelFuture.syncUninterruptibly();
@@ -132,7 +132,7 @@ public class ConnectScreen extends Screen {
                         }
 
                         ConnectScreen.this.connection = connection;
-                        p_251955_.getDownloadedPackSource().configureForServerControl(connection, convertPackStatus(p_252078_.getResourcePackStatus()));
+                        minecraft.getDownloadedPackSource().configureForServerControl(connection, convertPackStatus(serverData.getResourcePackStatus()));
                     }
 
                     ConnectScreen.this.connection
@@ -143,17 +143,17 @@ public class ConnectScreen extends Screen {
                             LoginProtocols.CLIENTBOUND,
                             new ClientHandshakePacketListenerImpl(
                                 ConnectScreen.this.connection,
-                                p_251955_,
-                                p_252078_,
+                                minecraft,
+                                serverData,
                                 ConnectScreen.this.parent,
                                 false,
                                 null,
                                 ConnectScreen.this::updateStatus,
-                                p_320415_
+                                transferState
                             ),
-                            p_320415_ != null
+                            transferState != null
                         );
-                    ConnectScreen.this.connection.send(new ServerboundHelloPacket(p_251955_.getUser().getName(), p_251955_.getUser().getProfileId()));
+                    ConnectScreen.this.connection.send(new ServerboundHelloPacket(minecraft.getUser().getName(), minecraft.getUser().getProfileId()));
                 } catch (Exception exception2) {
                     if (ConnectScreen.this.aborted) {
                         return;
@@ -172,8 +172,8 @@ public class ConnectScreen extends Screen {
                         : exception.getMessage()
                             .replaceAll(inetsocketaddress.getHostName() + ":" + inetsocketaddress.getPort(), "")
                             .replaceAll(inetsocketaddress.toString(), "");
-                    p_251955_.execute(
-                        () -> p_251955_.setScreen(
+                    minecraft.execute(
+                        () -> minecraft.setScreen(
                                 new DisconnectedScreen(
                                     ConnectScreen.this.parent, ConnectScreen.this.connectFailedTitle, Component.translatable("disconnect.genericReason", s)
                                 )
@@ -182,8 +182,8 @@ public class ConnectScreen extends Screen {
                 }
             }
 
-            private static ServerPackManager.PackPromptStatus convertPackStatus(ServerData.ServerPackStatus p_314423_) {
-                return switch (p_314423_) {
+            private static ServerPackManager.PackPromptStatus convertPackStatus(ServerData.ServerPackStatus packStatus) {
+                return switch (packStatus) {
                     case ENABLED -> ServerPackManager.PackPromptStatus.ALLOWED;
                     case DISABLED -> ServerPackManager.PackPromptStatus.DECLINED;
                     case PROMPT -> ServerPackManager.PackPromptStatus.PENDING;
@@ -194,8 +194,8 @@ public class ConnectScreen extends Screen {
         thread.start();
     }
 
-    private void updateStatus(Component p_95718_) {
-        this.status = p_95718_;
+    private void updateStatus(Component status) {
+        this.status = status;
     }
 
     @Override
@@ -233,15 +233,23 @@ public class ConnectScreen extends Screen {
         }).bounds(this.width / 2 - 100, this.height / 4 + 120 + 12, 200, 20).build());
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283201_, int p_95701_, int p_95702_, float p_95703_) {
-        super.render(p_283201_, p_95701_, p_95702_, p_95703_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         long i = Util.getMillis();
         if (i - this.lastNarration > 2000L) {
             this.lastNarration = i;
             this.minecraft.getNarrator().sayNow(Component.translatable("narrator.joining"));
         }
 
-        p_283201_.drawCenteredString(this.font, this.status, this.width / 2, this.height / 2 - 50, 16777215);
+        guiGraphics.drawCenteredString(this.font, this.status, this.width / 2, this.height / 2 - 50, 16777215);
     }
 }

@@ -15,8 +15,8 @@ public class EnchantedItemTrigger extends SimpleCriterionTrigger<EnchantedItemTr
         return EnchantedItemTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_27669_, ItemStack p_27670_, int p_27671_) {
-        this.trigger(p_27669_, p_27675_ -> p_27675_.matches(p_27670_, p_27671_));
+    public void trigger(ServerPlayer player, ItemStack item, int levelsSpent) {
+        this.trigger(player, p_27675_ -> p_27675_.matches(item, levelsSpent));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, Optional<ItemPredicate> item, MinMaxBounds.Ints levels)
@@ -35,8 +35,8 @@ public class EnchantedItemTrigger extends SimpleCriterionTrigger<EnchantedItemTr
                 .createCriterion(new EnchantedItemTrigger.TriggerInstance(Optional.empty(), Optional.empty(), MinMaxBounds.Ints.ANY));
         }
 
-        public boolean matches(ItemStack p_27692_, int p_27693_) {
-            return this.item.isPresent() && !this.item.get().test(p_27692_) ? false : this.levels.matches(p_27693_);
+        public boolean matches(ItemStack item, int levels) {
+            return this.item.isPresent() && !this.item.get().test(item) ? false : this.levels.matches(levels);
         }
     }
 }

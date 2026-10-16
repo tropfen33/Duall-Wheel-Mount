@@ -12,12 +12,12 @@ import java.util.Optional;
 import net.minecraft.util.datafix.ComponentDataFixUtils;
 
 public class ItemCustomNameToComponentFix extends DataFix {
-    public ItemCustomNameToComponentFix(Schema p_15927_, boolean p_15928_) {
-        super(p_15927_, p_15928_);
+    public ItemCustomNameToComponentFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
-    private Dynamic<?> fixTag(Dynamic<?> p_15935_) {
-        Optional<? extends Dynamic<?>> optional = p_15935_.get("display").result();
+    private Dynamic<?> fixTag(Dynamic<?> tag) {
+        Optional<? extends Dynamic<?>> optional = tag.get("display").result();
         if (optional.isPresent()) {
             Dynamic<?> dynamic = (Dynamic<?>)optional.get();
             Optional<String> optional1 = dynamic.get("Name").asString().result();
@@ -25,9 +25,9 @@ public class ItemCustomNameToComponentFix extends DataFix {
                 dynamic = dynamic.set("Name", ComponentDataFixUtils.createPlainTextComponent(dynamic.getOps(), optional1.get()));
             }
 
-            return p_15935_.set("display", dynamic);
+            return tag.set("display", dynamic);
         } else {
-            return p_15935_;
+            return tag;
         }
     }
 

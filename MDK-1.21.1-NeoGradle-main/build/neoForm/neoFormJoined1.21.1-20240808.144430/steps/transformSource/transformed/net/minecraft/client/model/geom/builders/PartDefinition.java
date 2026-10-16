@@ -18,14 +18,14 @@ public class PartDefinition {
     private final PartPose partPose;
     private final Map<String, PartDefinition> children = Maps.newHashMap();
 
-    PartDefinition(List<CubeDefinition> p_171581_, PartPose p_171582_) {
-        this.cubes = p_171581_;
-        this.partPose = p_171582_;
+    PartDefinition(List<CubeDefinition> cubes, PartPose partPose) {
+        this.cubes = cubes;
+        this.partPose = partPose;
     }
 
-    public PartDefinition addOrReplaceChild(String p_171600_, CubeListBuilder p_171601_, PartPose p_171602_) {
-        PartDefinition partdefinition = new PartDefinition(p_171601_.getCubes(), p_171602_);
-        PartDefinition partdefinition1 = this.children.put(p_171600_, partdefinition);
+    public PartDefinition addOrReplaceChild(String name, CubeListBuilder cubes, PartPose partPose) {
+        PartDefinition partdefinition = new PartDefinition(cubes.getCubes(), partPose);
+        PartDefinition partdefinition1 = this.children.put(name, partdefinition);
         if (partdefinition1 != null) {
             partdefinition.children.putAll(partdefinition1.children);
         }
@@ -33,26 +33,26 @@ public class PartDefinition {
         return partdefinition;
     }
 
-    public ModelPart bake(int p_171584_, int p_171585_) {
+    public ModelPart bake(int texWidth, int texHeight) {
         Object2ObjectArrayMap<String, ModelPart> object2objectarraymap = this.children
             .entrySet()
             .stream()
             .collect(
                 Collectors.toMap(
                     Entry::getKey,
-                    p_171593_ -> p_171593_.getValue().bake(p_171584_, p_171585_),
+                    p_171593_ -> p_171593_.getValue().bake(texWidth, texHeight),
                     (p_171595_, p_171596_) -> p_171595_,
                     Object2ObjectArrayMap::new
                 )
             );
-        List<ModelPart.Cube> list = this.cubes.stream().map(p_171589_ -> p_171589_.bake(p_171584_, p_171585_)).collect(ImmutableList.toImmutableList());
+        List<ModelPart.Cube> list = this.cubes.stream().map(p_171589_ -> p_171589_.bake(texWidth, texHeight)).collect(ImmutableList.toImmutableList());
         ModelPart modelpart = new ModelPart(list, object2objectarraymap);
         modelpart.setInitialPose(this.partPose);
         modelpart.loadPose(this.partPose);
         return modelpart;
     }
 
-    public PartDefinition getChild(String p_171598_) {
-        return this.children.get(p_171598_);
+    public PartDefinition getChild(String name) {
+        return this.children.get(name);
     }
 }

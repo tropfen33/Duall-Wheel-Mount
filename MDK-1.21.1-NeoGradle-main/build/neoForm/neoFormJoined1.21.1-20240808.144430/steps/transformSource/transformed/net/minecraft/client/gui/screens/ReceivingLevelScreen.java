@@ -21,10 +21,10 @@ public class ReceivingLevelScreen extends Screen {
     @Nullable
     private TextureAtlasSprite cachedNetherPortalSprite;
 
-    public ReceivingLevelScreen(BooleanSupplier p_304926_, ReceivingLevelScreen.Reason p_341661_) {
+    public ReceivingLevelScreen(BooleanSupplier levelReceived, ReceivingLevelScreen.Reason reason) {
         super(GameNarrator.NO_TITLE);
-        this.levelReceived = p_304926_;
-        this.reason = p_341661_;
+        this.levelReceived = levelReceived;
+        this.reason = reason;
         this.createdAt = System.currentTimeMillis();
     }
 
@@ -38,25 +38,33 @@ public class ReceivingLevelScreen extends Screen {
         return false;
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281489_, int p_282902_, int p_283018_, float p_281251_) {
-        super.render(p_281489_, p_282902_, p_283018_, p_281251_);
-        p_281489_.drawCenteredString(this.font, DOWNLOADING_TERRAIN_TEXT, this.width / 2, this.height / 2 - 50, 16777215);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, DOWNLOADING_TERRAIN_TEXT, this.width / 2, this.height / 2 - 50, 16777215);
     }
 
     @Override
-    public void renderBackground(GuiGraphics p_341670_, int p_341687_, int p_341693_, float p_341684_) {
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         switch (this.reason) {
             case NETHER_PORTAL:
-                p_341670_.blit(0, 0, -90, p_341670_.guiWidth(), p_341670_.guiHeight(), this.getNetherPortalSprite());
+                guiGraphics.blit(0, 0, -90, guiGraphics.guiWidth(), guiGraphics.guiHeight(), this.getNetherPortalSprite());
                 break;
             case END_PORTAL:
-                p_341670_.fillRenderType(RenderType.endPortal(), 0, 0, this.width, this.height, 0);
+                guiGraphics.fillRenderType(RenderType.endPortal(), 0, 0, this.width, this.height, 0);
                 break;
             case OTHER:
-                this.renderPanorama(p_341670_, p_341684_);
-                this.renderBlurredBackground(p_341684_);
-                this.renderMenuBackground(p_341670_);
+                this.renderPanorama(guiGraphics, partialTick);
+                this.renderBlurredBackground(partialTick);
+                this.renderMenuBackground(guiGraphics);
         }
     }
 

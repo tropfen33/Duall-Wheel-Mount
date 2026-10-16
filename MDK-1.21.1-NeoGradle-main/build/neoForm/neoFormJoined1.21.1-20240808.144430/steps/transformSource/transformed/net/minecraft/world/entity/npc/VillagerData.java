@@ -38,10 +38,10 @@ public class VillagerData {
     private final VillagerProfession profession;
     private final int level;
 
-    public VillagerData(VillagerType p_35557_, VillagerProfession p_35558_, int p_35559_) {
-        this.type = p_35557_;
-        this.profession = p_35558_;
-        this.level = Math.max(1, p_35559_);
+    public VillagerData(VillagerType type, VillagerProfession profession, int level) {
+        this.type = type;
+        this.profession = profession;
+        this.level = Math.max(1, level);
     }
 
     public VillagerType getType() {
@@ -56,27 +56,27 @@ public class VillagerData {
         return this.level;
     }
 
-    public VillagerData setType(VillagerType p_35568_) {
-        return new VillagerData(p_35568_, this.profession, this.level);
+    public VillagerData setType(VillagerType type) {
+        return new VillagerData(type, this.profession, this.level);
     }
 
-    public VillagerData setProfession(VillagerProfession p_35566_) {
-        return new VillagerData(this.type, p_35566_, this.level);
+    public VillagerData setProfession(VillagerProfession profession) {
+        return new VillagerData(this.type, profession, this.level);
     }
 
-    public VillagerData setLevel(int p_35562_) {
-        return new VillagerData(this.type, this.profession, p_35562_);
+    public VillagerData setLevel(int level) {
+        return new VillagerData(this.type, this.profession, level);
     }
 
-    public static int getMinXpPerLevel(int p_35573_) {
-        return canLevelUp(p_35573_) ? NEXT_LEVEL_XP_THRESHOLDS[p_35573_ - 1] : 0;
+    public static int getMinXpPerLevel(int level) {
+        return canLevelUp(level) ? NEXT_LEVEL_XP_THRESHOLDS[level - 1] : 0;
     }
 
-    public static int getMaxXpPerLevel(int p_35578_) {
-        return canLevelUp(p_35578_) ? NEXT_LEVEL_XP_THRESHOLDS[p_35578_] : 0;
+    public static int getMaxXpPerLevel(int level) {
+        return canLevelUp(level) ? NEXT_LEVEL_XP_THRESHOLDS[level] : 0;
     }
 
-    public static boolean canLevelUp(int p_35583_) {
-        return p_35583_ >= 1 && p_35583_ < 5;
+    public static boolean canLevelUp(int level) {
+        return level >= 1 && level < 5;
     }
 }

@@ -7,11 +7,11 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface SpectatorMenuItem {
-    void selectItem(SpectatorMenu p_101842_);
+    void selectItem(SpectatorMenu menu);
 
     Component getName();
 
-    void renderIcon(GuiGraphics p_282591_, float p_101840_, int p_101841_);
+    void renderIcon(GuiGraphics guiGraphics, float shadeColor, int alpha);
 
     boolean isEnabled();
 }

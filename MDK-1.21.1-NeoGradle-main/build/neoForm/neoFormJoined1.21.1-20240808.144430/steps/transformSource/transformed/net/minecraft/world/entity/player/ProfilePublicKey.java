@@ -23,11 +23,11 @@ public record ProfilePublicKey(ProfilePublicKey.Data data) {
     public static final Duration EXPIRY_GRACE_PERIOD = Duration.ofHours(8L);
     public static final Codec<ProfilePublicKey> TRUSTED_CODEC = ProfilePublicKey.Data.CODEC.xmap(ProfilePublicKey::new, ProfilePublicKey::data);
 
-    public static ProfilePublicKey createValidated(SignatureValidator p_243373_, UUID p_243390_, ProfilePublicKey.Data p_243374_) throws ProfilePublicKey.ValidationException {
-        if (!p_243374_.validateSignature(p_243373_, p_243390_)) {
+    public static ProfilePublicKey createValidated(SignatureValidator signatureValidator, UUID profileId, ProfilePublicKey.Data data) throws ProfilePublicKey.ValidationException {
+        if (!data.validateSignature(signatureValidator, profileId)) {
             throw new ProfilePublicKey.ValidationException(INVALID_SIGNATURE);
         } else {
-            return new ProfilePublicKey(p_243374_);
+            return new ProfilePublicKey(data);
         }
     }
 
@@ -50,22 +50,22 @@ public record ProfilePublicKey(ProfilePublicKey.Data data) {
             this(p_219809_.readInstant(), p_219809_.readPublicKey(), p_219809_.readByteArray(4096));
         }
 
-        public void write(FriendlyByteBuf p_219816_) {
-            p_219816_.writeInstant(this.expiresAt);
-            p_219816_.writePublicKey(this.key);
-            p_219816_.writeByteArray(this.keySignature);
+        public void write(FriendlyByteBuf buffer) {
+            buffer.writeInstant(this.expiresAt);
+            buffer.writePublicKey(this.key);
+            buffer.writeByteArray(this.keySignature);
         }
 
-        boolean validateSignature(SignatureValidator p_240296_, UUID p_240297_) {
-            return p_240296_.validate(this.signedPayload(p_240297_), this.keySignature);
+        boolean validateSignature(SignatureValidator signatureValidator, UUID profileId) {
+            return signatureValidator.validate(this.signedPayload(profileId), this.keySignature);
         }
 
-        private byte[] signedPayload(UUID p_240267_) {
+        private byte[] signedPayload(UUID profileId) {
             byte[] abyte = this.key.getEncoded();
             byte[] abyte1 = new byte[24 + abyte.length];
             ByteBuffer bytebuffer = ByteBuffer.wrap(abyte1).order(ByteOrder.BIG_ENDIAN);
-            bytebuffer.putLong(p_240267_.getMostSignificantBits())
-                .putLong(p_240267_.getLeastSignificantBits())
+            bytebuffer.putLong(profileId.getMostSignificantBits())
+                .putLong(profileId.getLeastSignificantBits())
                 .putLong(this.expiresAt.toEpochMilli())
                 .put(abyte);
             return abyte1;
@@ -75,13 +75,13 @@ public record ProfilePublicKey(ProfilePublicKey.Data data) {
             return this.expiresAt.isBefore(Instant.now());
         }
 
-        public boolean hasExpired(Duration p_243376_) {
-            return this.expiresAt.plus(p_243376_).isBefore(Instant.now());
+        public boolean hasExpired(Duration gracePeriod) {
+            return this.expiresAt.plus(gracePeriod).isBefore(Instant.now());
         }
 
         @Override
-        public boolean equals(Object p_219822_) {
-            return !(p_219822_ instanceof ProfilePublicKey.Data profilepublickey$data)
+        public boolean equals(Object other) {
+            return !(other instanceof ProfilePublicKey.Data profilepublickey$data)
                 ? false
                 : this.expiresAt.equals(profilepublickey$data.expiresAt)
                     && this.key.equals(profilepublickey$data.key)

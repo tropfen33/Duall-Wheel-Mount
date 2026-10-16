@@ -22,26 +22,29 @@ public class BreezeRenderer extends MobRenderer<Breeze, BreezeModel<Breeze>> {
         this.addLayer(new BreezeEyesLayer(this));
     }
 
-    public void render(Breeze p_316547_, float p_316622_, float p_316268_, PoseStack p_316604_, MultiBufferSource p_316232_, int p_316777_) {
+    public void render(Breeze entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         BreezeModel<Breeze> breezemodel = this.getModel();
         enable(breezemodel, breezemodel.head(), breezemodel.rods());
-        super.render(p_316547_, p_316622_, p_316268_, p_316604_, p_316232_, p_316777_);
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 
-    public ResourceLocation getTextureLocation(Breeze p_311864_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Breeze entity) {
         return TEXTURE_LOCATION;
     }
 
-    public static BreezeModel<Breeze> enable(BreezeModel<Breeze> p_316245_, ModelPart... p_316382_) {
-        p_316245_.head().visible = false;
-        p_316245_.eyes().visible = false;
-        p_316245_.rods().visible = false;
-        p_316245_.wind().visible = false;
+    public static BreezeModel<Breeze> enable(BreezeModel<Breeze> model, ModelPart... parts) {
+        model.head().visible = false;
+        model.eyes().visible = false;
+        model.rods().visible = false;
+        model.wind().visible = false;
 
-        for (ModelPart modelpart : p_316382_) {
+        for (ModelPart modelpart : parts) {
             modelpart.visible = true;
         }
 
-        return p_316245_;
+        return model;
     }
 }

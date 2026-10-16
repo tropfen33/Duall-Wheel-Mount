@@ -29,34 +29,34 @@ public class FreeTypeUtil {
         }
     }
 
-    public static void assertError(int p_319997_, String p_320575_) {
-        if (p_319997_ != 0) {
-            throw new IllegalStateException("FreeType error: " + describeError(p_319997_) + " (" + p_320575_ + ")");
+    public static void assertError(int errorId, String action) {
+        if (errorId != 0) {
+            throw new IllegalStateException("FreeType error: " + describeError(errorId) + " (" + action + ")");
         }
     }
 
-    public static boolean checkError(int p_341678_, String p_341603_) {
-        if (p_341678_ != 0) {
-            LOGGER.error("FreeType error: {} ({})", describeError(p_341678_), p_341603_);
+    public static boolean checkError(int errorId, String action) {
+        if (errorId != 0) {
+            LOGGER.error("FreeType error: {} ({})", describeError(errorId), action);
             return true;
         } else {
             return false;
         }
     }
 
-    private static String describeError(int p_320372_) {
-        String s = FreeType.FT_Error_String(p_320372_);
-        return s != null ? s : "Unrecognized error: 0x" + Integer.toHexString(p_320372_);
+    private static String describeError(int errorId) {
+        String s = FreeType.FT_Error_String(errorId);
+        return s != null ? s : "Unrecognized error: 0x" + Integer.toHexString(errorId);
     }
 
-    public static FT_Vector setVector(FT_Vector p_320591_, float p_319765_, float p_320303_) {
-        long i = (long)Math.round(p_319765_ * 64.0F);
-        long j = (long)Math.round(p_320303_ * 64.0F);
-        return p_320591_.set(i, j);
+    public static FT_Vector setVector(FT_Vector vector, float x, float y) {
+        long i = (long)Math.round(x * 64.0F);
+        long j = (long)Math.round(y * 64.0F);
+        return vector.set(i, j);
     }
 
-    public static float x(FT_Vector p_320117_) {
-        return (float)p_320117_.x() / 64.0F;
+    public static float x(FT_Vector vector) {
+        return (float)vector.x() / 64.0F;
     }
 
     public static void destroy() {

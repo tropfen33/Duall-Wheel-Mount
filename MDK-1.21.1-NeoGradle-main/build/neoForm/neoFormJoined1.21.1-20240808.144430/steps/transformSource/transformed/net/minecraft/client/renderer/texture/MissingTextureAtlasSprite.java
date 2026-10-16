@@ -24,14 +24,14 @@ public final class MissingTextureAtlasSprite {
     @Nullable
     private static DynamicTexture missingTexture;
 
-    private static NativeImage generateMissingImage(int p_249811_, int p_249362_) {
-        NativeImage nativeimage = new NativeImage(p_249811_, p_249362_, false);
+    private static NativeImage generateMissingImage(int width, int height) {
+        NativeImage nativeimage = new NativeImage(width, height, false);
         int i = -16777216;
         int j = -524040;
 
-        for (int k = 0; k < p_249362_; k++) {
-            for (int l = 0; l < p_249811_; l++) {
-                if (k < p_249362_ / 2 ^ l < p_249811_ / 2) {
+        for (int k = 0; k < height; k++) {
+            for (int l = 0; l < width; l++) {
+                if (k < height / 2 ^ l < width / 2) {
                     nativeimage.setPixelRGBA(l, k, -524040);
                 } else {
                     nativeimage.setPixelRGBA(l, k, -16777216);

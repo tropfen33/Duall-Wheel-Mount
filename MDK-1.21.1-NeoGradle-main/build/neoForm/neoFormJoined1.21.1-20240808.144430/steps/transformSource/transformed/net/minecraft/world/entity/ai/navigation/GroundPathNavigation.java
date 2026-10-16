@@ -19,15 +19,15 @@ import net.minecraft.world.phys.Vec3;
 public class GroundPathNavigation extends PathNavigation {
     private boolean avoidSun;
 
-    public GroundPathNavigation(Mob p_26448_, Level p_26449_) {
-        super(p_26448_, p_26449_);
+    public GroundPathNavigation(Mob mob, Level level) {
+        super(mob, level);
     }
 
     @Override
-    protected PathFinder createPathFinder(int p_26453_) {
+    protected PathFinder createPathFinder(int maxVisitedNodes) {
         this.nodeEvaluator = new WalkNodeEvaluator();
         this.nodeEvaluator.setCanPassDoors(true);
-        return new PathFinder(this.nodeEvaluator, p_26453_);
+        return new PathFinder(this.nodeEvaluator, maxVisitedNodes);
     }
 
     @Override
@@ -40,49 +40,55 @@ public class GroundPathNavigation extends PathNavigation {
         return new Vec3(this.mob.getX(), (double)this.getSurfaceY(), this.mob.getZ());
     }
 
+    /**
+     * Returns path to given BlockPos
+     */
     @Override
-    public Path createPath(BlockPos p_26475_, int p_26476_) {
+    public Path createPath(BlockPos pos, int accuracy) {
         LevelChunk levelchunk = this.level
             .getChunkSource()
-            .getChunkNow(SectionPos.blockToSectionCoord(p_26475_.getX()), SectionPos.blockToSectionCoord(p_26475_.getZ()));
+            .getChunkNow(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()));
         if (levelchunk == null) {
             return null;
         } else {
-            if (levelchunk.getBlockState(p_26475_).isAir()) {
-                BlockPos blockpos = p_26475_.below();
+            if (levelchunk.getBlockState(pos).isAir()) {
+                BlockPos blockpos = pos.below();
 
                 while (blockpos.getY() > this.level.getMinBuildHeight() && levelchunk.getBlockState(blockpos).isAir()) {
                     blockpos = blockpos.below();
                 }
 
                 if (blockpos.getY() > this.level.getMinBuildHeight()) {
-                    return super.createPath(blockpos.above(), p_26476_);
+                    return super.createPath(blockpos.above(), accuracy);
                 }
 
                 while (blockpos.getY() < this.level.getMaxBuildHeight() && levelchunk.getBlockState(blockpos).isAir()) {
                     blockpos = blockpos.above();
                 }
 
-                p_26475_ = blockpos;
+                pos = blockpos;
             }
 
-            if (!levelchunk.getBlockState(p_26475_).isSolid()) {
-                return super.createPath(p_26475_, p_26476_);
+            if (!levelchunk.getBlockState(pos).isSolid()) {
+                return super.createPath(pos, accuracy);
             } else {
-                BlockPos blockpos1 = p_26475_.above();
+                BlockPos blockpos1 = pos.above();
 
                 while (blockpos1.getY() < this.level.getMaxBuildHeight() && levelchunk.getBlockState(blockpos1).isSolid()) {
                     blockpos1 = blockpos1.above();
                 }
 
-                return super.createPath(blockpos1, p_26476_);
+                return super.createPath(blockpos1, accuracy);
             }
         }
     }
 
+    /**
+     * Returns a path to the given entity or null
+     */
     @Override
-    public Path createPath(Entity p_26465_, int p_26466_) {
-        return this.createPath(p_26465_.blockPosition(), p_26466_);
+    public Path createPath(Entity entity, int accuracy) {
+        return this.createPath(entity.blockPosition(), accuracy);
     }
 
     private int getSurfaceY() {
@@ -122,35 +128,35 @@ public class GroundPathNavigation extends PathNavigation {
         }
     }
 
-    protected boolean hasValidPathType(PathType p_326937_) {
-        if (p_326937_ == PathType.WATER) {
+    protected boolean hasValidPathType(PathType pathType) {
+        if (pathType == PathType.WATER) {
             return false;
         } else {
-            return p_326937_ == PathType.LAVA ? false : p_326937_ != PathType.OPEN;
+            return pathType == PathType.LAVA ? false : pathType != PathType.OPEN;
         }
     }
 
-    public void setCanOpenDoors(boolean p_26478_) {
-        this.nodeEvaluator.setCanOpenDoors(p_26478_);
+    public void setCanOpenDoors(boolean canOpenDoors) {
+        this.nodeEvaluator.setCanOpenDoors(canOpenDoors);
     }
 
     public boolean canPassDoors() {
         return this.nodeEvaluator.canPassDoors();
     }
 
-    public void setCanPassDoors(boolean p_148215_) {
-        this.nodeEvaluator.setCanPassDoors(p_148215_);
+    public void setCanPassDoors(boolean canPassDoors) {
+        this.nodeEvaluator.setCanPassDoors(canPassDoors);
     }
 
     public boolean canOpenDoors() {
         return this.nodeEvaluator.canPassDoors();
     }
 
-    public void setAvoidSun(boolean p_26491_) {
-        this.avoidSun = p_26491_;
+    public void setAvoidSun(boolean avoidSun) {
+        this.avoidSun = avoidSun;
     }
 
-    public void setCanWalkOverFences(boolean p_255877_) {
-        this.nodeEvaluator.setCanWalkOverFences(p_255877_);
+    public void setCanWalkOverFences(boolean canWalkOverFences) {
+        this.nodeEvaluator.setCanWalkOverFences(canWalkOverFences);
     }
 }

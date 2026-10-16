@@ -40,55 +40,55 @@ public class ResourceKeyArgument<T> implements ArgumentType<ResourceKey<T>> {
     );
     final ResourceKey<? extends Registry<T>> registryKey;
 
-    public ResourceKeyArgument(ResourceKey<? extends Registry<T>> p_212367_) {
-        this.registryKey = p_212367_;
+    public ResourceKeyArgument(ResourceKey<? extends Registry<T>> registryKey) {
+        this.registryKey = registryKey;
     }
 
-    public static <T> ResourceKeyArgument<T> key(ResourceKey<? extends Registry<T>> p_212387_) {
-        return new ResourceKeyArgument<>(p_212387_);
+    public static <T> ResourceKeyArgument<T> key(ResourceKey<? extends Registry<T>> registryKey) {
+        return new ResourceKeyArgument<>(registryKey);
     }
 
     private static <T> ResourceKey<T> getRegistryKey(
-        CommandContext<CommandSourceStack> p_212374_, String p_212375_, ResourceKey<Registry<T>> p_212376_, DynamicCommandExceptionType p_212377_
+        CommandContext<CommandSourceStack> context, String argument, ResourceKey<Registry<T>> registryKey, DynamicCommandExceptionType exception
     ) throws CommandSyntaxException {
-        ResourceKey<?> resourcekey = p_212374_.getArgument(p_212375_, ResourceKey.class);
-        Optional<ResourceKey<T>> optional = resourcekey.cast(p_212376_);
-        return optional.orElseThrow(() -> p_212377_.create(resourcekey));
+        ResourceKey<?> resourcekey = context.getArgument(argument, ResourceKey.class);
+        Optional<ResourceKey<T>> optional = resourcekey.cast(registryKey);
+        return optional.orElseThrow(() -> exception.create(resourcekey));
     }
 
-    private static <T> Registry<T> getRegistry(CommandContext<CommandSourceStack> p_212379_, ResourceKey<? extends Registry<T>> p_212380_) {
-        return p_212379_.getSource().getServer().registryAccess().registryOrThrow(p_212380_);
+    private static <T> Registry<T> getRegistry(CommandContext<CommandSourceStack> context, ResourceKey<? extends Registry<T>> registryKey) {
+        return context.getSource().getServer().registryAccess().registryOrThrow(registryKey);
     }
 
     private static <T> Holder.Reference<T> resolveKey(
-        CommandContext<CommandSourceStack> p_248662_, String p_252172_, ResourceKey<Registry<T>> p_249701_, DynamicCommandExceptionType p_249790_
+        CommandContext<CommandSourceStack> context, String argument, ResourceKey<Registry<T>> registryKey, DynamicCommandExceptionType exception
     ) throws CommandSyntaxException {
-        ResourceKey<T> resourcekey = getRegistryKey(p_248662_, p_252172_, p_249701_, p_249790_);
-        return getRegistry(p_248662_, p_249701_).getHolder(resourcekey).orElseThrow(() -> p_249790_.create(resourcekey.location()));
+        ResourceKey<T> resourcekey = getRegistryKey(context, argument, registryKey, exception);
+        return getRegistry(context, registryKey).getHolder(resourcekey).orElseThrow(() -> exception.create(resourcekey.location()));
     }
 
-    public static Holder.Reference<ConfiguredFeature<?, ?>> getConfiguredFeature(CommandContext<CommandSourceStack> p_249310_, String p_250729_) throws CommandSyntaxException {
-        return resolveKey(p_249310_, p_250729_, Registries.CONFIGURED_FEATURE, ERROR_INVALID_FEATURE);
+    public static Holder.Reference<ConfiguredFeature<?, ?>> getConfiguredFeature(CommandContext<CommandSourceStack> context, String argument) throws CommandSyntaxException {
+        return resolveKey(context, argument, Registries.CONFIGURED_FEATURE, ERROR_INVALID_FEATURE);
     }
 
-    public static Holder.Reference<Structure> getStructure(CommandContext<CommandSourceStack> p_248804_, String p_251331_) throws CommandSyntaxException {
-        return resolveKey(p_248804_, p_251331_, Registries.STRUCTURE, ERROR_INVALID_STRUCTURE);
+    public static Holder.Reference<Structure> getStructure(CommandContext<CommandSourceStack> context, String argument) throws CommandSyntaxException {
+        return resolveKey(context, argument, Registries.STRUCTURE, ERROR_INVALID_STRUCTURE);
     }
 
-    public static Holder.Reference<StructureTemplatePool> getStructureTemplatePool(CommandContext<CommandSourceStack> p_252203_, String p_250407_) throws CommandSyntaxException {
-        return resolveKey(p_252203_, p_250407_, Registries.TEMPLATE_POOL, ERROR_INVALID_TEMPLATE_POOL);
+    public static Holder.Reference<StructureTemplatePool> getStructureTemplatePool(CommandContext<CommandSourceStack> context, String argument) throws CommandSyntaxException {
+        return resolveKey(context, argument, Registries.TEMPLATE_POOL, ERROR_INVALID_TEMPLATE_POOL);
     }
 
-    public ResourceKey<T> parse(StringReader p_212369_) throws CommandSyntaxException {
-        ResourceLocation resourcelocation = ResourceLocation.read(p_212369_);
+    public ResourceKey<T> parse(StringReader reader) throws CommandSyntaxException {
+        ResourceLocation resourcelocation = ResourceLocation.read(reader);
         return ResourceKey.create(this.registryKey, resourcelocation);
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_212399_, SuggestionsBuilder p_212400_) {
-        return p_212399_.getSource() instanceof SharedSuggestionProvider sharedsuggestionprovider
-            ? sharedsuggestionprovider.suggestRegistryElements(this.registryKey, SharedSuggestionProvider.ElementSuggestionType.ELEMENTS, p_212400_, p_212399_)
-            : p_212400_.buildFuture();
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
+        return context.getSource() instanceof SharedSuggestionProvider sharedsuggestionprovider
+            ? sharedsuggestionprovider.suggestRegistryElements(this.registryKey, SharedSuggestionProvider.ElementSuggestionType.ELEMENTS, builder, context)
+            : builder.buildFuture();
     }
 
     @Override
@@ -97,30 +97,30 @@ public class ResourceKeyArgument<T> implements ArgumentType<ResourceKey<T>> {
     }
 
     public static class Info<T> implements ArgumentTypeInfo<ResourceKeyArgument<T>, ResourceKeyArgument.Info<T>.Template> {
-        public void serializeToNetwork(ResourceKeyArgument.Info<T>.Template p_233278_, FriendlyByteBuf p_233279_) {
-            p_233279_.writeResourceKey(p_233278_.registryKey);
+        public void serializeToNetwork(ResourceKeyArgument.Info<T>.Template template, FriendlyByteBuf buffer) {
+            buffer.writeResourceKey(template.registryKey);
         }
 
-        public ResourceKeyArgument.Info<T>.Template deserializeFromNetwork(FriendlyByteBuf p_233289_) {
-            return new ResourceKeyArgument.Info.Template(p_233289_.readRegistryKey());
+        public ResourceKeyArgument.Info<T>.Template deserializeFromNetwork(FriendlyByteBuf buffer) {
+            return new ResourceKeyArgument.Info.Template(buffer.readRegistryKey());
         }
 
-        public void serializeToJson(ResourceKeyArgument.Info<T>.Template p_233275_, JsonObject p_233276_) {
-            p_233276_.addProperty("registry", p_233275_.registryKey.location().toString());
+        public void serializeToJson(ResourceKeyArgument.Info<T>.Template template, JsonObject json) {
+            json.addProperty("registry", template.registryKey.location().toString());
         }
 
-        public ResourceKeyArgument.Info<T>.Template unpack(ResourceKeyArgument<T> p_233281_) {
-            return new ResourceKeyArgument.Info.Template(p_233281_.registryKey);
+        public ResourceKeyArgument.Info<T>.Template unpack(ResourceKeyArgument<T> argument) {
+            return new ResourceKeyArgument.Info.Template(argument.registryKey);
         }
 
         public final class Template implements ArgumentTypeInfo.Template<ResourceKeyArgument<T>> {
             final ResourceKey<? extends Registry<T>> registryKey;
 
-            Template(ResourceKey<? extends Registry<T>> p_233296_) {
-                this.registryKey = p_233296_;
+            Template(ResourceKey<? extends Registry<T>> registryKey) {
+                this.registryKey = registryKey;
             }
 
-            public ResourceKeyArgument<T> instantiate(CommandBuildContext p_233299_) {
+            public ResourceKeyArgument<T> instantiate(CommandBuildContext context) {
                 return new ResourceKeyArgument<>(this.registryKey);
             }
 

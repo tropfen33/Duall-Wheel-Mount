@@ -18,6 +18,9 @@ import net.neoforged.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public class DeathScreen extends Screen {
     private static final ResourceLocation DRAFT_REPORT_SPRITE = ResourceLocation.withDefaultNamespace("icon/draft_report");
+    /**
+     * The integer value containing the number of ticks that have passed since the player's death
+     */
     private int delayTicker;
     private final Component causeOfDeath;
     private final boolean hardcore;
@@ -26,10 +29,10 @@ public class DeathScreen extends Screen {
     @Nullable
     private Button exitToTitleButton;
 
-    public DeathScreen(@Nullable Component p_95911_, boolean p_95912_) {
-        super(Component.translatable(p_95912_ ? "deathScreen.title.hardcore" : "deathScreen.title"));
-        this.causeOfDeath = p_95911_;
-        this.hardcore = p_95912_;
+    public DeathScreen(@Nullable Component causeOfDeath, boolean hardcore) {
+        super(Component.translatable(hardcore ? "deathScreen.title.hardcore" : "deathScreen.title"));
+        this.causeOfDeath = causeOfDeath;
+        this.hardcore = hardcore;
     }
 
     @Override
@@ -93,62 +96,79 @@ public class DeathScreen extends Screen {
         this.minecraft.setScreen(new TitleScreen());
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283488_, int p_283551_, int p_283002_, float p_281981_) {
-        super.render(p_283488_, p_283551_, p_283002_, p_281981_);
-        p_283488_.pose().pushPose();
-        p_283488_.pose().scale(2.0F, 2.0F, 2.0F);
-        p_283488_.drawCenteredString(this.font, this.title, this.width / 2 / 2, 30, 16777215);
-        p_283488_.pose().popPose();
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().scale(2.0F, 2.0F, 2.0F);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2 / 2, 30, 16777215);
+        guiGraphics.pose().popPose();
         if (this.causeOfDeath != null) {
-            p_283488_.drawCenteredString(this.font, this.causeOfDeath, this.width / 2, 85, 16777215);
+            guiGraphics.drawCenteredString(this.font, this.causeOfDeath, this.width / 2, 85, 16777215);
         }
 
-        p_283488_.drawCenteredString(this.font, this.deathScore, this.width / 2, 100, 16777215);
-        if (this.causeOfDeath != null && p_283002_ > 85 && p_283002_ < 85 + 9) {
-            Style style = this.getClickedComponentStyleAt(p_283551_);
-            p_283488_.renderComponentHoverEffect(this.font, style, p_283551_, p_283002_);
+        guiGraphics.drawCenteredString(this.font, this.deathScore, this.width / 2, 100, 16777215);
+        if (this.causeOfDeath != null && mouseY > 85 && mouseY < 85 + 9) {
+            Style style = this.getClickedComponentStyleAt(mouseX);
+            guiGraphics.renderComponentHoverEffect(this.font, style, mouseX, mouseY);
         }
 
         if (this.exitToTitleButton != null && this.minecraft.getReportingContext().hasDraftReport()) {
-            p_283488_.blitSprite(
+            guiGraphics.blitSprite(
                 DRAFT_REPORT_SPRITE, this.exitToTitleButton.getX() + this.exitToTitleButton.getWidth() - 17, this.exitToTitleButton.getY() + 3, 15, 15
             );
         }
     }
 
     @Override
-    public void renderBackground(GuiGraphics p_296411_, int p_295765_, int p_295221_, float p_295625_) {
-        renderDeathBackground(p_296411_, this.width, this.height);
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        renderDeathBackground(guiGraphics, this.width, this.height);
     }
 
-    static void renderDeathBackground(GuiGraphics p_339647_, int p_339641_, int p_339673_) {
-        p_339647_.fillGradient(0, 0, p_339641_, p_339673_, 1615855616, -1602211792);
+    static void renderDeathBackground(GuiGraphics guiGraphics, int width, int height) {
+        guiGraphics.fillGradient(0, 0, width, height, 1615855616, -1602211792);
     }
 
     @Nullable
-    private Style getClickedComponentStyleAt(int p_95918_) {
+    private Style getClickedComponentStyleAt(int x) {
         if (this.causeOfDeath == null) {
             return null;
         } else {
             int i = this.minecraft.font.width(this.causeOfDeath);
             int j = this.width / 2 - i / 2;
             int k = this.width / 2 + i / 2;
-            return p_95918_ >= j && p_95918_ <= k ? this.minecraft.font.getSplitter().componentStyleAtWidth(this.causeOfDeath, p_95918_ - j) : null;
+            return x >= j && x <= k ? this.minecraft.font.getSplitter().componentStyleAtWidth(this.causeOfDeath, x - j) : null;
         }
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    public boolean mouseClicked(double p_95914_, double p_95915_, int p_95916_) {
-        if (this.causeOfDeath != null && p_95915_ > 85.0 && p_95915_ < (double)(85 + 9)) {
-            Style style = this.getClickedComponentStyleAt((int)p_95914_);
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (this.causeOfDeath != null && mouseY > 85.0 && mouseY < (double)(85 + 9)) {
+            Style style = this.getClickedComponentStyleAt((int)mouseX);
             if (style != null && style.getClickEvent() != null && style.getClickEvent().getAction() == ClickEvent.Action.OPEN_URL) {
                 this.handleComponentClicked(style);
                 return false;
             }
         }
 
-        return super.mouseClicked(p_95914_, p_95915_, p_95916_);
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
@@ -165,9 +185,9 @@ public class DeathScreen extends Screen {
         }
     }
 
-    private void setButtonsActive(boolean p_273413_) {
+    private void setButtonsActive(boolean active) {
         for (Button button : this.exitButtons) {
-            button.active = p_273413_;
+            button.active = active;
         }
     }
 

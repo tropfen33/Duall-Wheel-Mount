@@ -9,30 +9,34 @@ public class NbtAccounter {
     private final int maxDepth;
     private int depth;
 
-    public NbtAccounter(long p_128922_, int p_302350_) {
-        this.quota = p_128922_;
-        this.maxDepth = p_302350_;
+    public NbtAccounter(long quota, int maxDepth) {
+        this.quota = quota;
+        this.maxDepth = maxDepth;
     }
 
-    public static NbtAccounter create(long p_302395_) {
-        return new NbtAccounter(p_302395_, 512);
+    public static NbtAccounter create(long quota) {
+        return new NbtAccounter(quota, 512);
     }
 
     public static NbtAccounter unlimitedHeap() {
         return new NbtAccounter(Long.MAX_VALUE, 512);
     }
 
-    public void accountBytes(long p_302490_, long p_302493_) {
-        this.accountBytes(p_302490_ * p_302493_);
+    public void accountBytes(long bytesPerItem, long items) {
+        this.accountBytes(bytesPerItem * items);
     }
 
-    public void accountBytes(long p_263515_) {
-        if (this.usage + p_263515_ > this.quota) {
+    /**
+     * Adds the bytes to the current number of read bytes. If the number of bytes is greater than the stored quota, an exception will occur.
+     * @throws RuntimeException if the number of {@code usage} bytes exceed the number of {@code quota} bytes
+     */
+    public void accountBytes(long bytes) {
+        if (this.usage + bytes > this.quota) {
             throw new NbtAccounterException(
-                "Tried to read NBT tag that was too big; tried to allocate: " + this.usage + " + " + p_263515_ + " bytes where max allowed: " + this.quota
+                "Tried to read NBT tag that was too big; tried to allocate: " + this.usage + " + " + bytes + " bytes where max allowed: " + this.quota
             );
         } else {
-            this.usage += p_263515_;
+            this.usage += bytes;
         }
     }
 

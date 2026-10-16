@@ -25,11 +25,11 @@ public record EnchantmentsByCost(HolderSet<Enchantment> enchantments, IntProvide
     );
 
     @Override
-    public void enchant(ItemStack p_345483_, ItemEnchantments.Mutable p_346331_, RandomSource p_344794_, DifficultyInstance p_348577_) {
+    public void enchant(ItemStack stack, ItemEnchantments.Mutable enchantments, RandomSource random, DifficultyInstance difficulty) {
         for (EnchantmentInstance enchantmentinstance : EnchantmentHelper.selectEnchantment(
-            p_344794_, p_345483_, this.cost.sample(p_344794_), this.enchantments.stream()
+            random, stack, this.cost.sample(random), this.enchantments.stream()
         )) {
-            p_346331_.upgrade(enchantmentinstance.enchantment, enchantmentinstance.level);
+            enchantments.upgrade(enchantmentinstance.enchantment, enchantmentinstance.level);
         }
     }
 

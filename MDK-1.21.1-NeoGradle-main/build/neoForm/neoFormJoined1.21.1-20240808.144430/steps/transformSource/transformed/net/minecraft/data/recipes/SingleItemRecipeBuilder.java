@@ -27,29 +27,29 @@ public class SingleItemRecipeBuilder implements RecipeBuilder {
     private String group;
     private final SingleItemRecipe.Factory<?> factory;
 
-    public SingleItemRecipeBuilder(RecipeCategory p_251425_, SingleItemRecipe.Factory<?> p_312361_, Ingredient p_251221_, ItemLike p_251302_, int p_250964_) {
-        this.category = p_251425_;
-        this.factory = p_312361_;
-        this.result = p_251302_.asItem();
-        this.ingredient = p_251221_;
-        this.count = p_250964_;
+    public SingleItemRecipeBuilder(RecipeCategory category, SingleItemRecipe.Factory<?> factory, Ingredient ingredient, ItemLike result, int count) {
+        this.category = category;
+        this.factory = factory;
+        this.result = result.asItem();
+        this.ingredient = ingredient;
+        this.count = count;
     }
 
-    public static SingleItemRecipeBuilder stonecutting(Ingredient p_248596_, RecipeCategory p_250503_, ItemLike p_250269_) {
-        return new SingleItemRecipeBuilder(p_250503_, StonecutterRecipe::new, p_248596_, p_250269_, 1);
+    public static SingleItemRecipeBuilder stonecutting(Ingredient ingredient, RecipeCategory category, ItemLike result) {
+        return new SingleItemRecipeBuilder(category, StonecutterRecipe::new, ingredient, result, 1);
     }
 
-    public static SingleItemRecipeBuilder stonecutting(Ingredient p_251375_, RecipeCategory p_248984_, ItemLike p_250105_, int p_249506_) {
-        return new SingleItemRecipeBuilder(p_248984_, StonecutterRecipe::new, p_251375_, p_250105_, p_249506_);
+    public static SingleItemRecipeBuilder stonecutting(Ingredient ingredient, RecipeCategory category, ItemLike result, int count) {
+        return new SingleItemRecipeBuilder(category, StonecutterRecipe::new, ingredient, result, count);
     }
 
-    public SingleItemRecipeBuilder unlockedBy(String p_176810_, Criterion<?> p_301267_) {
-        this.criteria.put(p_176810_, p_301267_);
+    public SingleItemRecipeBuilder unlockedBy(String name, Criterion<?> criterion) {
+        this.criteria.put(name, criterion);
         return this;
     }
 
-    public SingleItemRecipeBuilder group(@Nullable String p_176808_) {
-        this.group = p_176808_;
+    public SingleItemRecipeBuilder group(@Nullable String groupName) {
+        this.group = groupName;
         return this;
     }
 
@@ -59,21 +59,21 @@ public class SingleItemRecipeBuilder implements RecipeBuilder {
     }
 
     @Override
-    public void save(RecipeOutput p_301137_, ResourceLocation p_126328_) {
-        this.ensureValid(p_126328_);
-        Advancement.Builder advancement$builder = p_301137_.advancement()
-            .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(p_126328_))
-            .rewards(AdvancementRewards.Builder.recipe(p_126328_))
+    public void save(RecipeOutput recipeOutput, ResourceLocation id) {
+        this.ensureValid(id);
+        Advancement.Builder advancement$builder = recipeOutput.advancement()
+            .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(id))
+            .rewards(AdvancementRewards.Builder.recipe(id))
             .requirements(AdvancementRequirements.Strategy.OR);
         this.criteria.forEach(advancement$builder::addCriterion);
         SingleItemRecipe singleitemrecipe = this.factory
             .create(Objects.requireNonNullElse(this.group, ""), this.ingredient, new ItemStack(this.result, this.count));
-        p_301137_.accept(p_126328_, singleitemrecipe, advancement$builder.build(p_126328_.withPrefix("recipes/" + this.category.getFolderName() + "/")));
+        recipeOutput.accept(id, singleitemrecipe, advancement$builder.build(id.withPrefix("recipes/" + this.category.getFolderName() + "/")));
     }
 
-    private void ensureValid(ResourceLocation p_126330_) {
+    private void ensureValid(ResourceLocation id) {
         if (this.criteria.isEmpty()) {
-            throw new IllegalStateException("No way of obtaining recipe " + p_126330_);
+            throw new IllegalStateException("No way of obtaining recipe " + id);
         }
     }
 }

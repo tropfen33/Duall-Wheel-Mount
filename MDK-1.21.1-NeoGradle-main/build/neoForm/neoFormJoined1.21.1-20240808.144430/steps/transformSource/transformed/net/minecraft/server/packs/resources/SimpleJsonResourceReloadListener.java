@@ -20,27 +20,30 @@ public abstract class SimpleJsonResourceReloadListener extends SimplePreparableR
     private final Gson gson;
     private final String directory;
 
-    public SimpleJsonResourceReloadListener(Gson p_10768_, String p_10769_) {
-        this.gson = p_10768_;
-        this.directory = p_10769_;
+    public SimpleJsonResourceReloadListener(Gson gson, String directory) {
+        this.gson = gson;
+        this.directory = directory;
     }
 
-    protected Map<ResourceLocation, JsonElement> prepare(ResourceManager p_10771_, ProfilerFiller p_10772_) {
+    /**
+     * Performs any reloading that can be done off-thread, such as file IO
+     */
+    protected Map<ResourceLocation, JsonElement> prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
         Map<ResourceLocation, JsonElement> map = new HashMap<>();
-        scanDirectory(p_10771_, this.directory, this.gson, map);
+        scanDirectory(resourceManager, this.directory, this.gson, map);
         return map;
     }
 
-    public static void scanDirectory(ResourceManager p_279308_, String p_279131_, Gson p_279261_, Map<ResourceLocation, JsonElement> p_279404_) {
-        FileToIdConverter filetoidconverter = FileToIdConverter.json(p_279131_);
+    public static void scanDirectory(ResourceManager resourceManager, String name, Gson gson, Map<ResourceLocation, JsonElement> output) {
+        FileToIdConverter filetoidconverter = FileToIdConverter.json(name);
 
-        for (Entry<ResourceLocation, Resource> entry : filetoidconverter.listMatchingResources(p_279308_).entrySet()) {
+        for (Entry<ResourceLocation, Resource> entry : filetoidconverter.listMatchingResources(resourceManager).entrySet()) {
             ResourceLocation resourcelocation = entry.getKey();
             ResourceLocation resourcelocation1 = filetoidconverter.fileToId(resourcelocation);
 
             try (Reader reader = entry.getValue().openAsReader()) {
-                JsonElement jsonelement = GsonHelper.fromJson(p_279261_, reader, JsonElement.class);
-                JsonElement jsonelement1 = p_279404_.put(resourcelocation1, jsonelement);
+                JsonElement jsonelement = GsonHelper.fromJson(gson, reader, JsonElement.class);
+                JsonElement jsonelement1 = output.put(resourcelocation1, jsonelement);
                 if (jsonelement1 != null) {
                     throw new IllegalStateException("Duplicate data file ignored with ID " + resourcelocation1);
                 }

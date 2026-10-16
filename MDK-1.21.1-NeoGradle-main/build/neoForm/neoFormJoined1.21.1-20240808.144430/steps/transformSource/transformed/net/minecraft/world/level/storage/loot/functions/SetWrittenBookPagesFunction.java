@@ -32,22 +32,25 @@ public class SetWrittenBookPagesFunction extends LootItemConditionalFunction {
     private final List<Filterable<Component>> pages;
     private final ListOperation pageOperation;
 
-    public SetWrittenBookPagesFunction(List<LootItemCondition> p_333863_, List<Filterable<Component>> p_333788_, ListOperation p_334047_) {
-        super(p_333863_);
-        this.pages = p_333788_;
-        this.pageOperation = p_334047_;
+    public SetWrittenBookPagesFunction(List<LootItemCondition> conditions, List<Filterable<Component>> pages, ListOperation pageOperation) {
+        super(conditions);
+        this.pages = pages;
+        this.pageOperation = pageOperation;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    protected ItemStack run(ItemStack p_333960_, LootContext p_333892_) {
-        p_333960_.update(DataComponents.WRITTEN_BOOK_CONTENT, WrittenBookContent.EMPTY, this::apply);
-        return p_333960_;
+    protected ItemStack run(ItemStack stack, LootContext context) {
+        stack.update(DataComponents.WRITTEN_BOOK_CONTENT, WrittenBookContent.EMPTY, this::apply);
+        return stack;
     }
 
     @VisibleForTesting
-    public WrittenBookContent apply(WrittenBookContent p_333830_) {
-        List<Filterable<Component>> list = this.pageOperation.apply(p_333830_.pages(), this.pages);
-        return p_333830_.withReplacedPages(list);
+    public WrittenBookContent apply(WrittenBookContent writtenBookContent) {
+        List<Filterable<Component>> list = this.pageOperation.apply(writtenBookContent.pages(), this.pages);
+        return writtenBookContent.withReplacedPages(list);
     }
 
     @Override

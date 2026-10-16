@@ -13,16 +13,16 @@ public class WeightedStateProvider extends BlockStateProvider {
         .fieldOf("entries");
     private final SimpleWeightedRandomList<BlockState> weightedList;
 
-    private static DataResult<WeightedStateProvider> create(SimpleWeightedRandomList<BlockState> p_161598_) {
-        return p_161598_.isEmpty() ? DataResult.error(() -> "WeightedStateProvider with no states") : DataResult.success(new WeightedStateProvider(p_161598_));
+    private static DataResult<WeightedStateProvider> create(SimpleWeightedRandomList<BlockState> weightedList) {
+        return weightedList.isEmpty() ? DataResult.error(() -> "WeightedStateProvider with no states") : DataResult.success(new WeightedStateProvider(weightedList));
     }
 
-    public WeightedStateProvider(SimpleWeightedRandomList<BlockState> p_161596_) {
-        this.weightedList = p_161596_;
+    public WeightedStateProvider(SimpleWeightedRandomList<BlockState> weightedList) {
+        this.weightedList = weightedList;
     }
 
-    public WeightedStateProvider(SimpleWeightedRandomList.Builder<BlockState> p_161594_) {
-        this(p_161594_.build());
+    public WeightedStateProvider(SimpleWeightedRandomList.Builder<BlockState> builder) {
+        this(builder.build());
     }
 
     @Override
@@ -31,7 +31,7 @@ public class WeightedStateProvider extends BlockStateProvider {
     }
 
     @Override
-    public BlockState getState(RandomSource p_225966_, BlockPos p_225967_) {
-        return this.weightedList.getRandomValue(p_225966_).orElseThrow(IllegalStateException::new);
+    public BlockState getState(RandomSource random, BlockPos pos) {
+        return this.weightedList.getRandomValue(random).orElseThrow(IllegalStateException::new);
     }
 }

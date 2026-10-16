@@ -13,9 +13,9 @@ public class ClimbOnTopOfPowderSnowGoal extends Goal {
     private final Mob mob;
     private final Level level;
 
-    public ClimbOnTopOfPowderSnowGoal(Mob p_204055_, Level p_204056_) {
-        this.mob = p_204055_;
-        this.level = p_204056_;
+    public ClimbOnTopOfPowderSnowGoal(Mob mob, Level level) {
+        this.mob = mob;
+        this.level = level;
         this.setFlags(EnumSet.of(Goal.Flag.JUMP));
     }
 

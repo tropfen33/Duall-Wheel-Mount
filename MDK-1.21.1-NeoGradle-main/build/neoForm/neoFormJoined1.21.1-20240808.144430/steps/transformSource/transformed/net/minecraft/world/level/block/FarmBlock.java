@@ -39,102 +39,110 @@ public class FarmBlock extends Block {
         return CODEC;
     }
 
-    public FarmBlock(BlockBehaviour.Properties p_53247_) {
-        super(p_53247_);
+    public FarmBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(MOISTURE, Integer.valueOf(0)));
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_53276_, Direction p_53277_, BlockState p_53278_, LevelAccessor p_53279_, BlockPos p_53280_, BlockPos p_53281_) {
-        if (p_53277_ == Direction.UP && !p_53276_.canSurvive(p_53279_, p_53280_)) {
-            p_53279_.scheduleTick(p_53280_, this, 1);
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (facing == Direction.UP && !state.canSurvive(level, currentPos)) {
+            level.scheduleTick(currentPos, this, 1);
         }
 
-        return super.updateShape(p_53276_, p_53277_, p_53278_, p_53279_, p_53280_, p_53281_);
+        return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_53272_, LevelReader p_53273_, BlockPos p_53274_) {
-        BlockState blockstate = p_53273_.getBlockState(p_53274_.above());
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos.above());
         return !blockstate.isSolid() || blockstate.getBlock() instanceof FenceGateBlock || blockstate.getBlock() instanceof MovingPistonBlock;
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_53249_) {
-        return !this.defaultBlockState().canSurvive(p_53249_.getLevel(), p_53249_.getClickedPos())
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return !this.defaultBlockState().canSurvive(context.getLevel(), context.getClickedPos())
             ? Blocks.DIRT.defaultBlockState()
-            : super.getStateForPlacement(p_53249_);
+            : super.getStateForPlacement(context);
     }
 
     @Override
-    protected boolean useShapeForLightOcclusion(BlockState p_53295_) {
+    protected boolean useShapeForLightOcclusion(BlockState state) {
         return true;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_53290_, BlockGetter p_53291_, BlockPos p_53292_, CollisionContext p_53293_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    protected void tick(BlockState p_221134_, ServerLevel p_221135_, BlockPos p_221136_, RandomSource p_221137_) {
-        if (!p_221134_.canSurvive(p_221135_, p_221136_)) {
-            turnToDirt(null, p_221134_, p_221135_, p_221136_);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!state.canSurvive(level, pos)) {
+            turnToDirt(null, state, level, pos);
         }
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_221139_, ServerLevel p_221140_, BlockPos p_221141_, RandomSource p_221142_) {
-        int i = p_221139_.getValue(MOISTURE);
-        if (!isNearWater(p_221140_, p_221141_) && !p_221140_.isRainingAt(p_221141_.above())) {
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        int i = state.getValue(MOISTURE);
+        if (!isNearWater(level, pos) && !level.isRainingAt(pos.above())) {
             if (i > 0) {
-                p_221140_.setBlock(p_221141_, p_221139_.setValue(MOISTURE, Integer.valueOf(i - 1)), 2);
-            } else if (!shouldMaintainFarmland(p_221140_, p_221141_)) {
-                turnToDirt(null, p_221139_, p_221140_, p_221141_);
+                level.setBlock(pos, state.setValue(MOISTURE, Integer.valueOf(i - 1)), 2);
+            } else if (!shouldMaintainFarmland(level, pos)) {
+                turnToDirt(null, state, level, pos);
             }
         } else if (i < 7) {
-            p_221140_.setBlock(p_221141_, p_221139_.setValue(MOISTURE, Integer.valueOf(7)), 2);
+            level.setBlock(pos, state.setValue(MOISTURE, Integer.valueOf(7)), 2);
         }
     }
 
     @Override
-    public void fallOn(Level p_153227_, BlockState p_153228_, BlockPos p_153229_, Entity p_153230_, float p_153231_) {
-        if (!p_153227_.isClientSide
-            && net.neoforged.neoforge.common.CommonHooks.onFarmlandTrample(p_153227_, p_153229_, Blocks.DIRT.defaultBlockState(), p_153231_, p_153230_)) { // Forge: Move logic to Entity#canTrample
-            turnToDirt(p_153230_, p_153228_, p_153227_, p_153229_);
+    public void fallOn(Level level, BlockState state, BlockPos pos, Entity entity, float fallDistance) {
+        if (!level.isClientSide
+            && net.neoforged.neoforge.common.CommonHooks.onFarmlandTrample(level, pos, Blocks.DIRT.defaultBlockState(), fallDistance, entity)) { // Forge: Move logic to Entity#canTrample
+            turnToDirt(entity, state, level, pos);
         }
 
-        super.fallOn(p_153227_, p_153228_, p_153229_, p_153230_, p_153231_);
+        super.fallOn(level, state, pos, entity, fallDistance);
     }
 
-    public static void turnToDirt(@Nullable Entity p_270981_, BlockState p_270402_, Level p_270568_, BlockPos p_270551_) {
-        BlockState blockstate = pushEntitiesUp(p_270402_, Blocks.DIRT.defaultBlockState(), p_270568_, p_270551_);
-        p_270568_.setBlockAndUpdate(p_270551_, blockstate);
-        p_270568_.gameEvent(GameEvent.BLOCK_CHANGE, p_270551_, GameEvent.Context.of(p_270981_, blockstate));
+    public static void turnToDirt(@Nullable Entity entity, BlockState state, Level level, BlockPos pos) {
+        BlockState blockstate = pushEntitiesUp(state, Blocks.DIRT.defaultBlockState(), level, pos);
+        level.setBlockAndUpdate(pos, blockstate);
+        level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(entity, blockstate));
     }
 
-    private static boolean shouldMaintainFarmland(BlockGetter p_279219_, BlockPos p_279209_) {
-        return p_279219_.getBlockState(p_279209_.above()).is(BlockTags.MAINTAINS_FARMLAND);
+    private static boolean shouldMaintainFarmland(BlockGetter level, BlockPos pos) {
+        return level.getBlockState(pos.above()).is(BlockTags.MAINTAINS_FARMLAND);
     }
 
-    private static boolean isNearWater(LevelReader p_53259_, BlockPos p_53260_) {
-        BlockState state = p_53259_.getBlockState(p_53260_);
-        for (BlockPos blockpos : BlockPos.betweenClosed(p_53260_.offset(-4, 0, -4), p_53260_.offset(4, 1, 4))) {
-            if (state.canBeHydrated(p_53259_, p_53260_, p_53259_.getFluidState(blockpos), blockpos)) {
+    private static boolean isNearWater(LevelReader level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        for (BlockPos blockpos : BlockPos.betweenClosed(pos.offset(-4, 0, -4), pos.offset(4, 1, 4))) {
+            if (state.canBeHydrated(level, pos, level.getFluidState(blockpos), blockpos)) {
                 return true;
             }
         }
 
-        return net.neoforged.neoforge.common.FarmlandWaterManager.hasBlockWaterTicket(p_53259_, p_53260_);
+        return net.neoforged.neoforge.common.FarmlandWaterManager.hasBlockWaterTicket(level, pos);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_53283_) {
-        p_53283_.add(MOISTURE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(MOISTURE);
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_53267_, PathComputationType p_53270_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

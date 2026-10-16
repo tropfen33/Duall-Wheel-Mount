@@ -7627,31 +7627,31 @@ public class Blocks {
         )
     );
 
-    private static ToIntFunction<BlockState> litBlockEmission(int p_50760_) {
-        return p_50763_ -> p_50763_.getValue(BlockStateProperties.LIT) ? p_50760_ : 0;
+    private static ToIntFunction<BlockState> litBlockEmission(int lightValue) {
+        return p_50763_ -> p_50763_.getValue(BlockStateProperties.LIT) ? lightValue : 0;
     }
 
-    private static Function<BlockState, MapColor> waterloggedMapColor(MapColor p_341621_) {
-        return p_341578_ -> p_341578_.getValue(BlockStateProperties.WATERLOGGED) ? MapColor.WATER : p_341621_;
+    private static Function<BlockState, MapColor> waterloggedMapColor(MapColor unwaterloggedMapColor) {
+        return p_341578_ -> p_341578_.getValue(BlockStateProperties.WATERLOGGED) ? MapColor.WATER : unwaterloggedMapColor;
     }
 
-    public static Boolean never(BlockState p_50779_, BlockGetter p_50780_, BlockPos p_50781_, EntityType<?> p_50782_) {
+    public static Boolean never(BlockState state, BlockGetter blockGetter, BlockPos pos, EntityType<?> entity) {
         return false;
     }
 
-    public static Boolean always(BlockState p_50810_, BlockGetter p_50811_, BlockPos p_50812_, EntityType<?> p_50813_) {
+    public static Boolean always(BlockState state, BlockGetter blockGetter, BlockPos pos, EntityType<?> entity) {
         return true;
     }
 
-    public static Boolean ocelotOrParrot(BlockState p_50822_, BlockGetter p_50823_, BlockPos p_50824_, EntityType<?> p_50825_) {
-        return p_50825_ == EntityType.OCELOT || p_50825_ == EntityType.PARROT;
+    public static Boolean ocelotOrParrot(BlockState state, BlockGetter blockGetter, BlockPos pos, EntityType<?> entity) {
+        return entity == EntityType.OCELOT || entity == EntityType.PARROT;
     }
 
-    private static Block bed(DyeColor p_50765_) {
+    private static Block bed(DyeColor color) {
         return new BedBlock(
-            p_50765_,
+            color,
             BlockBehaviour.Properties.of()
-                .mapColor(p_284863_ -> p_284863_.getValue(BedBlock.PART) == BedPart.FOOT ? p_50765_.getMapColor() : MapColor.WOOL)
+                .mapColor(p_284863_ -> p_284863_.getValue(BedBlock.PART) == BedPart.FOOT ? color.getMapColor() : MapColor.WOOL)
                 .sound(SoundType.WOOD)
                 .strength(0.2F)
                 .noOcclusion()
@@ -7660,10 +7660,10 @@ public class Blocks {
         );
     }
 
-    private static Block log(MapColor p_285370_, MapColor p_285126_) {
+    private static Block log(MapColor topMapColor, MapColor sideMapColor) {
         return new RotatedPillarBlock(
             BlockBehaviour.Properties.of()
-                .mapColor(p_152624_ -> p_152624_.getValue(RotatedPillarBlock.AXIS) == Direction.Axis.Y ? p_285370_ : p_285126_)
+                .mapColor(p_152624_ -> p_152624_.getValue(RotatedPillarBlock.AXIS) == Direction.Axis.Y ? topMapColor : sideMapColor)
                 .instrument(NoteBlockInstrument.BASS)
                 .strength(2.0F)
                 .sound(SoundType.WOOD)
@@ -7671,36 +7671,36 @@ public class Blocks {
         );
     }
 
-    private static Block log(MapColor p_285425_, MapColor p_285292_, SoundType p_285418_) {
+    private static Block log(MapColor topMapColor, MapColor sideMapColor, SoundType soundType) {
         return new RotatedPillarBlock(
             BlockBehaviour.Properties.of()
-                .mapColor(p_258972_ -> p_258972_.getValue(RotatedPillarBlock.AXIS) == Direction.Axis.Y ? p_285425_ : p_285292_)
+                .mapColor(p_258972_ -> p_258972_.getValue(RotatedPillarBlock.AXIS) == Direction.Axis.Y ? topMapColor : sideMapColor)
                 .instrument(NoteBlockInstrument.BASS)
                 .strength(2.0F)
-                .sound(p_285418_)
+                .sound(soundType)
                 .ignitedByLava()
         );
     }
 
-    private static Block netherStem(MapColor p_285125_) {
+    private static Block netherStem(MapColor mapColor) {
         return new RotatedPillarBlock(
-            BlockBehaviour.Properties.of().mapColor(p_152620_ -> p_285125_).instrument(NoteBlockInstrument.BASS).strength(2.0F).sound(SoundType.STEM)
+            BlockBehaviour.Properties.of().mapColor(p_152620_ -> mapColor).instrument(NoteBlockInstrument.BASS).strength(2.0F).sound(SoundType.STEM)
         );
     }
 
-    private static boolean always(BlockState p_50775_, BlockGetter p_50776_, BlockPos p_50777_) {
+    private static boolean always(BlockState state, BlockGetter blockGetter, BlockPos pos) {
         return true;
     }
 
-    private static boolean never(BlockState p_50806_, BlockGetter p_50807_, BlockPos p_50808_) {
+    private static boolean never(BlockState state, BlockGetter blockGetter, BlockPos pos) {
         return false;
     }
 
-    private static Block stainedGlass(DyeColor p_50802_) {
+    private static Block stainedGlass(DyeColor color) {
         return new StainedGlassBlock(
-            p_50802_,
+            color,
             BlockBehaviour.Properties.of()
-                .mapColor(p_50802_)
+                .mapColor(color)
                 .instrument(NoteBlockInstrument.HAT)
                 .strength(0.3F)
                 .sound(SoundType.GLASS)
@@ -7712,13 +7712,13 @@ public class Blocks {
         );
     }
 
-    private static Block leaves(SoundType p_152615_) {
+    private static Block leaves(SoundType soundType) {
         return new LeavesBlock(
             BlockBehaviour.Properties.of()
                 .mapColor(MapColor.PLANT)
                 .strength(0.2F)
                 .randomTicks()
-                .sound(p_152615_)
+                .sound(soundType)
                 .noOcclusion()
                 .isValidSpawn(Blocks::ocelotOrParrot)
                 .isSuffocating(Blocks::never)
@@ -7729,11 +7729,11 @@ public class Blocks {
         );
     }
 
-    private static Block shulkerBox(@Nullable DyeColor p_50767_, MapColor p_304422_) {
+    private static Block shulkerBox(@Nullable DyeColor color, MapColor mapColor) {
         return new ShulkerBoxBlock(
-            p_50767_,
+            color,
             BlockBehaviour.Properties.of()
-                .mapColor(p_304422_)
+                .mapColor(mapColor)
                 .forceSolidOn()
                 .strength(2.0F)
                 .dynamicShape()
@@ -7744,10 +7744,10 @@ public class Blocks {
         );
     }
 
-    private static Block pistonBase(boolean p_50799_) {
+    private static Block pistonBase(boolean isSticky) {
         BlockBehaviour.StatePredicate blockbehaviour$statepredicate = (p_152641_, p_152642_, p_152643_) -> !p_152641_.getValue(PistonBaseBlock.EXTENDED);
         return new PistonBaseBlock(
-            p_50799_,
+            isSticky,
             BlockBehaviour.Properties.of()
                 .mapColor(MapColor.STONE)
                 .strength(1.5F)
@@ -7758,22 +7758,22 @@ public class Blocks {
         );
     }
 
-    private static Block woodenButton(BlockSetType p_278239_) {
-        return new ButtonBlock(p_278239_, 30, BlockBehaviour.Properties.of().noCollission().strength(0.5F).pushReaction(PushReaction.DESTROY));
+    private static Block woodenButton(BlockSetType type) {
+        return new ButtonBlock(type, 30, BlockBehaviour.Properties.of().noCollission().strength(0.5F).pushReaction(PushReaction.DESTROY));
     }
 
     private static Block stoneButton() {
         return new ButtonBlock(BlockSetType.STONE, 20, BlockBehaviour.Properties.of().noCollission().strength(0.5F).pushReaction(PushReaction.DESTROY));
     }
 
-    private static Block flowerPot(Block p_278261_) {
-        return new FlowerPotBlock(p_278261_, BlockBehaviour.Properties.of().instabreak().noOcclusion().pushReaction(PushReaction.DESTROY));
+    private static Block flowerPot(Block potted) {
+        return new FlowerPotBlock(potted, BlockBehaviour.Properties.of().instabreak().noOcclusion().pushReaction(PushReaction.DESTROY));
     }
 
-    private static Block candle(MapColor p_285034_) {
+    private static Block candle(MapColor mapColor) {
         return new CandleBlock(
             BlockBehaviour.Properties.of()
-                .mapColor(p_285034_)
+                .mapColor(mapColor)
                 .noOcclusion()
                 .strength(0.1F)
                 .sound(SoundType.CANDLE)
@@ -7783,20 +7783,20 @@ public class Blocks {
     }
 
     @Deprecated
-    private static Block legacyStair(Block p_312243_) {
-        return new StairBlock(p_312243_.defaultBlockState(), BlockBehaviour.Properties.ofLegacyCopy(p_312243_));
+    private static Block legacyStair(Block baseBlock) {
+        return new StairBlock(baseBlock.defaultBlockState(), BlockBehaviour.Properties.ofLegacyCopy(baseBlock));
     }
 
-    private static Block stair(Block p_304516_) {
-        return new StairBlock(p_304516_.defaultBlockState(), BlockBehaviour.Properties.ofFullCopy(p_304516_));
+    private static Block stair(Block baseBlock) {
+        return new StairBlock(baseBlock.defaultBlockState(), BlockBehaviour.Properties.ofFullCopy(baseBlock));
     }
 
-    public static Block register(String p_50796_, Block p_50797_) {
-        return Registry.register(BuiltInRegistries.BLOCK, p_50796_, p_50797_);
+    public static Block register(String key, Block block) {
+        return Registry.register(BuiltInRegistries.BLOCK, key, block);
     }
 
-    public static Block register(ResourceKey<Block> p_304740_, Block p_294615_) {
-        return Registry.register(BuiltInRegistries.BLOCK, p_304740_, p_294615_);
+    public static Block register(ResourceKey<Block> resourceKey, Block block) {
+        return Registry.register(BuiltInRegistries.BLOCK, resourceKey, block);
     }
 
     public static void rebuildCache() {

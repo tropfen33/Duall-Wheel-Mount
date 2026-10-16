@@ -28,63 +28,63 @@ public abstract class TrunkPlacer {
     protected final int heightRandA;
     protected final int heightRandB;
 
-    protected static <P extends TrunkPlacer> P3<Mu<P>, Integer, Integer, Integer> trunkPlacerParts(Instance<P> p_70306_) {
-        return p_70306_.group(
+    protected static <P extends TrunkPlacer> P3<Mu<P>, Integer, Integer, Integer> trunkPlacerParts(Instance<P> instance) {
+        return instance.group(
             Codec.intRange(0, 32).fieldOf("base_height").forGetter(p_70314_ -> p_70314_.baseHeight),
             Codec.intRange(0, 24).fieldOf("height_rand_a").forGetter(p_70312_ -> p_70312_.heightRandA),
             Codec.intRange(0, 24).fieldOf("height_rand_b").forGetter(p_70308_ -> p_70308_.heightRandB)
         );
     }
 
-    public TrunkPlacer(int p_70268_, int p_70269_, int p_70270_) {
-        this.baseHeight = p_70268_;
-        this.heightRandA = p_70269_;
-        this.heightRandB = p_70270_;
+    public TrunkPlacer(int baseHeight, int heightRandA, int heightRandB) {
+        this.baseHeight = baseHeight;
+        this.heightRandA = heightRandA;
+        this.heightRandB = heightRandB;
     }
 
     protected abstract TrunkPlacerType<?> type();
 
     public abstract List<FoliagePlacer.FoliageAttachment> placeTrunk(
-        LevelSimulatedReader p_226157_,
-        BiConsumer<BlockPos, BlockState> p_226158_,
-        RandomSource p_226159_,
-        int p_226160_,
-        BlockPos p_226161_,
-        TreeConfiguration p_226162_
+        LevelSimulatedReader level,
+        BiConsumer<BlockPos, BlockState> blockSetter,
+        RandomSource random,
+        int freeTreeHeight,
+        BlockPos pos,
+        TreeConfiguration config
     );
 
-    public int getTreeHeight(RandomSource p_226154_) {
-        return this.baseHeight + p_226154_.nextInt(this.heightRandA + 1) + p_226154_.nextInt(this.heightRandB + 1);
+    public int getTreeHeight(RandomSource random) {
+        return this.baseHeight + random.nextInt(this.heightRandA + 1) + random.nextInt(this.heightRandB + 1);
     }
 
-    private static boolean isDirt(LevelSimulatedReader p_70296_, BlockPos p_70297_) {
-        return p_70296_.isStateAtPosition(p_70297_, p_70304_ -> Feature.isDirt(p_70304_) && !p_70304_.is(Blocks.GRASS_BLOCK) && !p_70304_.is(Blocks.MYCELIUM));
+    private static boolean isDirt(LevelSimulatedReader level, BlockPos pos) {
+        return level.isStateAtPosition(pos, p_70304_ -> Feature.isDirt(p_70304_) && !p_70304_.is(Blocks.GRASS_BLOCK) && !p_70304_.is(Blocks.MYCELIUM));
     }
 
     protected static void setDirtAt(
-        LevelSimulatedReader p_226170_, BiConsumer<BlockPos, BlockState> p_226171_, RandomSource p_226172_, BlockPos p_226173_, TreeConfiguration p_226174_
+        LevelSimulatedReader level, BiConsumer<BlockPos, BlockState> blockSetter, RandomSource random, BlockPos pos, TreeConfiguration config
     ) {
-        if (!(((net.minecraft.world.level.LevelReader) p_226170_).getBlockState(p_226173_).onTreeGrow((net.minecraft.world.level.LevelReader) p_226170_, p_226171_, p_226172_, p_226173_, p_226174_)) && (p_226174_.forceDirt || !isDirt(p_226170_, p_226173_))) {
-            p_226171_.accept(p_226173_, p_226174_.dirtProvider.getState(p_226172_, p_226173_));
+        if (!(((net.minecraft.world.level.LevelReader) level).getBlockState(pos).onTreeGrow((net.minecraft.world.level.LevelReader) level, blockSetter, random, pos, config)) && (config.forceDirt || !isDirt(level, pos))) {
+            blockSetter.accept(pos, config.dirtProvider.getState(random, pos));
         }
     }
 
     protected boolean placeLog(
-        LevelSimulatedReader p_226188_, BiConsumer<BlockPos, BlockState> p_226189_, RandomSource p_226190_, BlockPos p_226191_, TreeConfiguration p_226192_
+        LevelSimulatedReader level, BiConsumer<BlockPos, BlockState> blockSetter, RandomSource random, BlockPos pos, TreeConfiguration config
     ) {
-        return this.placeLog(p_226188_, p_226189_, p_226190_, p_226191_, p_226192_, Function.identity());
+        return this.placeLog(level, blockSetter, random, pos, config, Function.identity());
     }
 
     protected boolean placeLog(
-        LevelSimulatedReader p_226176_,
-        BiConsumer<BlockPos, BlockState> p_226177_,
-        RandomSource p_226178_,
-        BlockPos p_226179_,
-        TreeConfiguration p_226180_,
-        Function<BlockState, BlockState> p_226181_
+        LevelSimulatedReader level,
+        BiConsumer<BlockPos, BlockState> blockSetter,
+        RandomSource random,
+        BlockPos pos,
+        TreeConfiguration config,
+        Function<BlockState, BlockState> propertySetter
     ) {
-        if (this.validTreePos(p_226176_, p_226179_)) {
-            p_226177_.accept(p_226179_, p_226181_.apply(p_226180_.trunkProvider.getState(p_226178_, p_226179_)));
+        if (this.validTreePos(level, pos)) {
+            blockSetter.accept(pos, propertySetter.apply(config.trunkProvider.getState(random, pos)));
             return true;
         } else {
             return false;
@@ -92,22 +92,22 @@ public abstract class TrunkPlacer {
     }
 
     protected void placeLogIfFree(
-        LevelSimulatedReader p_226164_,
-        BiConsumer<BlockPos, BlockState> p_226165_,
-        RandomSource p_226166_,
-        BlockPos.MutableBlockPos p_226167_,
-        TreeConfiguration p_226168_
+        LevelSimulatedReader level,
+        BiConsumer<BlockPos, BlockState> blockSetter,
+        RandomSource random,
+        BlockPos.MutableBlockPos pos,
+        TreeConfiguration config
     ) {
-        if (this.isFree(p_226164_, p_226167_)) {
-            this.placeLog(p_226164_, p_226165_, p_226166_, p_226167_, p_226168_);
+        if (this.isFree(level, pos)) {
+            this.placeLog(level, blockSetter, random, pos, config);
         }
     }
 
-    protected boolean validTreePos(LevelSimulatedReader p_226155_, BlockPos p_226156_) {
-        return TreeFeature.validTreePos(p_226155_, p_226156_);
+    protected boolean validTreePos(LevelSimulatedReader level, BlockPos pos) {
+        return TreeFeature.validTreePos(level, pos);
     }
 
-    public boolean isFree(LevelSimulatedReader p_226185_, BlockPos p_226186_) {
-        return this.validTreePos(p_226185_, p_226186_) || p_226185_.isStateAtPosition(p_226186_, p_226183_ -> p_226183_.is(BlockTags.LOGS));
+    public boolean isFree(LevelSimulatedReader level, BlockPos pos) {
+        return this.validTreePos(level, pos) || level.isStateAtPosition(pos, p_226183_ -> p_226183_.is(BlockTags.LOGS));
     }
 }

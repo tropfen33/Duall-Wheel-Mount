@@ -11,21 +11,21 @@ public class WorldCoordinates implements Coordinates {
     private final WorldCoordinate y;
     private final WorldCoordinate z;
 
-    public WorldCoordinates(WorldCoordinate p_120883_, WorldCoordinate p_120884_, WorldCoordinate p_120885_) {
-        this.x = p_120883_;
-        this.y = p_120884_;
-        this.z = p_120885_;
+    public WorldCoordinates(WorldCoordinate x, WorldCoordinate y, WorldCoordinate z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
 
     @Override
-    public Vec3 getPosition(CommandSourceStack p_120893_) {
-        Vec3 vec3 = p_120893_.getPosition();
+    public Vec3 getPosition(CommandSourceStack source) {
+        Vec3 vec3 = source.getPosition();
         return new Vec3(this.x.get(vec3.x), this.y.get(vec3.y), this.z.get(vec3.z));
     }
 
     @Override
-    public Vec2 getRotation(CommandSourceStack p_120896_) {
-        Vec2 vec2 = p_120896_.getRotation();
+    public Vec2 getRotation(CommandSourceStack source) {
+        Vec2 vec2 = source.getRotation();
         return new Vec2((float)this.x.get((double)vec2.x), (float)this.y.get((double)vec2.y));
     }
 
@@ -45,10 +45,10 @@ public class WorldCoordinates implements Coordinates {
     }
 
     @Override
-    public boolean equals(Object p_120900_) {
-        if (this == p_120900_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        } else if (!(p_120900_ instanceof WorldCoordinates worldcoordinates)) {
+        } else if (!(other instanceof WorldCoordinates worldcoordinates)) {
             return false;
         } else if (!this.x.equals(worldcoordinates.x)) {
             return false;
@@ -57,53 +57,53 @@ public class WorldCoordinates implements Coordinates {
         }
     }
 
-    public static WorldCoordinates parseInt(StringReader p_120888_) throws CommandSyntaxException {
-        int i = p_120888_.getCursor();
-        WorldCoordinate worldcoordinate = WorldCoordinate.parseInt(p_120888_);
-        if (p_120888_.canRead() && p_120888_.peek() == ' ') {
-            p_120888_.skip();
-            WorldCoordinate worldcoordinate1 = WorldCoordinate.parseInt(p_120888_);
-            if (p_120888_.canRead() && p_120888_.peek() == ' ') {
-                p_120888_.skip();
-                WorldCoordinate worldcoordinate2 = WorldCoordinate.parseInt(p_120888_);
+    public static WorldCoordinates parseInt(StringReader reader) throws CommandSyntaxException {
+        int i = reader.getCursor();
+        WorldCoordinate worldcoordinate = WorldCoordinate.parseInt(reader);
+        if (reader.canRead() && reader.peek() == ' ') {
+            reader.skip();
+            WorldCoordinate worldcoordinate1 = WorldCoordinate.parseInt(reader);
+            if (reader.canRead() && reader.peek() == ' ') {
+                reader.skip();
+                WorldCoordinate worldcoordinate2 = WorldCoordinate.parseInt(reader);
                 return new WorldCoordinates(worldcoordinate, worldcoordinate1, worldcoordinate2);
             } else {
-                p_120888_.setCursor(i);
-                throw Vec3Argument.ERROR_NOT_COMPLETE.createWithContext(p_120888_);
+                reader.setCursor(i);
+                throw Vec3Argument.ERROR_NOT_COMPLETE.createWithContext(reader);
             }
         } else {
-            p_120888_.setCursor(i);
-            throw Vec3Argument.ERROR_NOT_COMPLETE.createWithContext(p_120888_);
+            reader.setCursor(i);
+            throw Vec3Argument.ERROR_NOT_COMPLETE.createWithContext(reader);
         }
     }
 
-    public static WorldCoordinates parseDouble(StringReader p_120890_, boolean p_120891_) throws CommandSyntaxException {
-        int i = p_120890_.getCursor();
-        WorldCoordinate worldcoordinate = WorldCoordinate.parseDouble(p_120890_, p_120891_);
-        if (p_120890_.canRead() && p_120890_.peek() == ' ') {
-            p_120890_.skip();
-            WorldCoordinate worldcoordinate1 = WorldCoordinate.parseDouble(p_120890_, false);
-            if (p_120890_.canRead() && p_120890_.peek() == ' ') {
-                p_120890_.skip();
-                WorldCoordinate worldcoordinate2 = WorldCoordinate.parseDouble(p_120890_, p_120891_);
+    public static WorldCoordinates parseDouble(StringReader reader, boolean centerCorrect) throws CommandSyntaxException {
+        int i = reader.getCursor();
+        WorldCoordinate worldcoordinate = WorldCoordinate.parseDouble(reader, centerCorrect);
+        if (reader.canRead() && reader.peek() == ' ') {
+            reader.skip();
+            WorldCoordinate worldcoordinate1 = WorldCoordinate.parseDouble(reader, false);
+            if (reader.canRead() && reader.peek() == ' ') {
+                reader.skip();
+                WorldCoordinate worldcoordinate2 = WorldCoordinate.parseDouble(reader, centerCorrect);
                 return new WorldCoordinates(worldcoordinate, worldcoordinate1, worldcoordinate2);
             } else {
-                p_120890_.setCursor(i);
-                throw Vec3Argument.ERROR_NOT_COMPLETE.createWithContext(p_120890_);
+                reader.setCursor(i);
+                throw Vec3Argument.ERROR_NOT_COMPLETE.createWithContext(reader);
             }
         } else {
-            p_120890_.setCursor(i);
-            throw Vec3Argument.ERROR_NOT_COMPLETE.createWithContext(p_120890_);
+            reader.setCursor(i);
+            throw Vec3Argument.ERROR_NOT_COMPLETE.createWithContext(reader);
         }
     }
 
-    public static WorldCoordinates absolute(double p_175086_, double p_175087_, double p_175088_) {
-        return new WorldCoordinates(new WorldCoordinate(false, p_175086_), new WorldCoordinate(false, p_175087_), new WorldCoordinate(false, p_175088_));
+    public static WorldCoordinates absolute(double x, double y, double z) {
+        return new WorldCoordinates(new WorldCoordinate(false, x), new WorldCoordinate(false, y), new WorldCoordinate(false, z));
     }
 
-    public static WorldCoordinates absolute(Vec2 p_175090_) {
+    public static WorldCoordinates absolute(Vec2 vector) {
         return new WorldCoordinates(
-            new WorldCoordinate(false, (double)p_175090_.x), new WorldCoordinate(false, (double)p_175090_.y), new WorldCoordinate(true, 0.0)
+            new WorldCoordinate(false, (double)vector.x), new WorldCoordinate(false, (double)vector.y), new WorldCoordinate(true, 0.0)
         );
     }
 

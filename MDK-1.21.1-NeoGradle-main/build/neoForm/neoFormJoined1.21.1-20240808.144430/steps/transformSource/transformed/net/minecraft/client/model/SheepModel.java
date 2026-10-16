@@ -15,8 +15,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class SheepModel<T extends Sheep> extends QuadrupedModel<T> {
     private float headXRot;
 
-    public SheepModel(ModelPart p_170903_) {
-        super(p_170903_, false, 8.0F, 4.0F, 2.0F, 2.0F, 24);
+    public SheepModel(ModelPart root) {
+        super(root, false, 8.0F, 4.0F, 2.0F, 2.0F, 24);
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -33,14 +33,17 @@ public class SheepModel<T extends Sheep> extends QuadrupedModel<T> {
         return LayerDefinition.create(meshdefinition, 64, 32);
     }
 
-    public void prepareMobModel(T p_103687_, float p_103688_, float p_103689_, float p_103690_) {
-        super.prepareMobModel(p_103687_, p_103688_, p_103689_, p_103690_);
-        this.head.y = 6.0F + p_103687_.getHeadEatPositionScale(p_103690_) * 9.0F;
-        this.headXRot = p_103687_.getHeadEatAngleScale(p_103690_);
+    public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float partialTick) {
+        super.prepareMobModel(entity, limbSwing, limbSwingAmount, partialTick);
+        this.head.y = 6.0F + entity.getHeadEatPositionScale(partialTick) * 9.0F;
+        this.headXRot = entity.getHeadEatAngleScale(partialTick);
     }
 
-    public void setupAnim(T p_103692_, float p_103693_, float p_103694_, float p_103695_, float p_103696_, float p_103697_) {
-        super.setupAnim(p_103692_, p_103693_, p_103694_, p_103695_, p_103696_, p_103697_);
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
         this.head.xRot = this.headXRot;
     }
 }

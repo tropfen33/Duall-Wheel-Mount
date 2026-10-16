@@ -45,11 +45,11 @@ public class StructureTemplatePool {
     private final Holder<StructureTemplatePool> fallback;
     private int maxSize = Integer.MIN_VALUE;
 
-    public StructureTemplatePool(Holder<StructureTemplatePool> p_255747_, List<Pair<StructurePoolElement, Integer>> p_255919_) {
-        this.rawTemplates = p_255919_;
+    public StructureTemplatePool(Holder<StructureTemplatePool> fallback, List<Pair<StructurePoolElement, Integer>> rawTemplates) {
+        this.rawTemplates = rawTemplates;
         this.templates = new ObjectArrayList<>();
 
-        for (Pair<StructurePoolElement, Integer> pair : p_255919_) {
+        for (Pair<StructurePoolElement, Integer> pair : rawTemplates) {
             StructurePoolElement structurepoolelement = pair.getFirst();
 
             for (int i = 0; i < pair.getSecond(); i++) {
@@ -57,19 +57,19 @@ public class StructureTemplatePool {
             }
         }
 
-        this.fallback = p_255747_;
+        this.fallback = fallback;
     }
 
     public StructureTemplatePool(
-        Holder<StructureTemplatePool> p_255795_,
-        List<Pair<Function<StructureTemplatePool.Projection, ? extends StructurePoolElement>, Integer>> p_256083_,
-        StructureTemplatePool.Projection p_255642_
+        Holder<StructureTemplatePool> fallback,
+        List<Pair<Function<StructureTemplatePool.Projection, ? extends StructurePoolElement>, Integer>> rawTemplateFactories,
+        StructureTemplatePool.Projection projection
     ) {
         this.rawTemplates = Lists.newArrayList();
         this.templates = new ObjectArrayList<>();
 
-        for (Pair<Function<StructureTemplatePool.Projection, ? extends StructurePoolElement>, Integer> pair : p_256083_) {
-            StructurePoolElement structurepoolelement = pair.getFirst().apply(p_255642_);
+        for (Pair<Function<StructureTemplatePool.Projection, ? extends StructurePoolElement>, Integer> pair : rawTemplateFactories) {
+            StructurePoolElement structurepoolelement = pair.getFirst().apply(projection);
             this.rawTemplates.add(Pair.of(structurepoolelement, pair.getSecond()));
 
             for (int i = 0; i < pair.getSecond(); i++) {
@@ -77,15 +77,15 @@ public class StructureTemplatePool {
             }
         }
 
-        this.fallback = p_255795_;
+        this.fallback = fallback;
     }
 
-    public int getMaxSize(StructureTemplateManager p_227358_) {
+    public int getMaxSize(StructureTemplateManager structureTemplateManager) {
         if (this.maxSize == Integer.MIN_VALUE) {
             this.maxSize = this.templates
                 .stream()
                 .filter(p_210577_ -> p_210577_ != EmptyPoolElement.INSTANCE)
-                .mapToInt(p_227361_ -> p_227361_.getBoundingBox(p_227358_, BlockPos.ZERO, Rotation.NONE).getYSpan())
+                .mapToInt(p_227361_ -> p_227361_.getBoundingBox(structureTemplateManager, BlockPos.ZERO, Rotation.NONE).getYSpan())
                 .max()
                 .orElse(0);
         }
@@ -97,12 +97,12 @@ public class StructureTemplatePool {
         return this.fallback;
     }
 
-    public StructurePoolElement getRandomTemplate(RandomSource p_227356_) {
-        return (StructurePoolElement)(this.templates.isEmpty() ? EmptyPoolElement.INSTANCE : this.templates.get(p_227356_.nextInt(this.templates.size())));
+    public StructurePoolElement getRandomTemplate(RandomSource random) {
+        return (StructurePoolElement)(this.templates.isEmpty() ? EmptyPoolElement.INSTANCE : this.templates.get(random.nextInt(this.templates.size())));
     }
 
-    public List<StructurePoolElement> getShuffledTemplates(RandomSource p_227363_) {
-        return Util.shuffledCopy(this.templates, p_227363_);
+    public List<StructurePoolElement> getShuffledTemplates(RandomSource random) {
+        return Util.shuffledCopy(this.templates, random);
     }
 
     public int size() {
@@ -119,17 +119,17 @@ public class StructureTemplatePool {
         private final String name;
         private final ImmutableList<StructureProcessor> processors;
 
-        private Projection(String p_210602_, ImmutableList<StructureProcessor> p_210603_) {
-            this.name = p_210602_;
-            this.processors = p_210603_;
+        private Projection(String name, ImmutableList<StructureProcessor> processors) {
+            this.name = name;
+            this.processors = processors;
         }
 
         public String getName() {
             return this.name;
         }
 
-        public static StructureTemplatePool.Projection byName(String p_210608_) {
-            return CODEC.byName(p_210608_);
+        public static StructureTemplatePool.Projection byName(String name) {
+            return CODEC.byName(name);
         }
 
         public ImmutableList<StructureProcessor> getProcessors() {

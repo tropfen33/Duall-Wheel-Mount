@@ -11,16 +11,19 @@ public class ServerboundSetCarriedItemPacket implements Packet<ServerGamePacketL
     );
     private final int slot;
 
-    public ServerboundSetCarriedItemPacket(int p_134491_) {
-        this.slot = p_134491_;
+    public ServerboundSetCarriedItemPacket(int slot) {
+        this.slot = slot;
     }
 
-    private ServerboundSetCarriedItemPacket(FriendlyByteBuf p_179751_) {
-        this.slot = p_179751_.readShort();
+    private ServerboundSetCarriedItemPacket(FriendlyByteBuf buffer) {
+        this.slot = buffer.readShort();
     }
 
-    private void write(FriendlyByteBuf p_134500_) {
-        p_134500_.writeShort(this.slot);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeShort(this.slot);
     }
 
     @Override
@@ -28,8 +31,11 @@ public class ServerboundSetCarriedItemPacket implements Packet<ServerGamePacketL
         return GamePacketTypes.SERVERBOUND_SET_CARRIED_ITEM;
     }
 
-    public void handle(ServerGamePacketListener p_134497_) {
-        p_134497_.handleSetCarriedItem(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleSetCarriedItem(this);
     }
 
     public int getSlot() {

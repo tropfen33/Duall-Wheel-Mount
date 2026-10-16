@@ -16,11 +16,11 @@ public class RealmsConfirmScreen extends RealmsScreen {
     private final Component title1;
     private final Component title2;
 
-    public RealmsConfirmScreen(BooleanConsumer p_88550_, Component p_88551_, Component p_88552_) {
+    public RealmsConfirmScreen(BooleanConsumer callback, Component title1, Component title2) {
         super(GameNarrator.NO_TITLE);
-        this.callback = p_88550_;
-        this.title1 = p_88551_;
-        this.title2 = p_88552_;
+        this.callback = callback;
+        this.title1 = title1;
+        this.title2 = title2;
     }
 
     @Override
@@ -33,10 +33,18 @@ public class RealmsConfirmScreen extends RealmsScreen {
         );
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282610_, int p_282200_, int p_283480_, float p_281259_) {
-        super.render(p_282610_, p_282200_, p_283480_, p_281259_);
-        p_282610_.drawCenteredString(this.font, this.title1, this.width / 2, row(3), -1);
-        p_282610_.drawCenteredString(this.font, this.title2, this.width / 2, row(5), -1);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title1, this.width / 2, row(3), -1);
+        guiGraphics.drawCenteredString(this.font, this.title2, this.width / 2, row(5), -1);
     }
 }

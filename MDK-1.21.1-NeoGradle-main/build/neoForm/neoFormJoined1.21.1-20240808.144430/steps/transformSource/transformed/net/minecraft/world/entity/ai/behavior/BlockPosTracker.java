@@ -8,14 +8,14 @@ public class BlockPosTracker implements PositionTracker {
     private final BlockPos blockPos;
     private final Vec3 centerPosition;
 
-    public BlockPosTracker(BlockPos p_22676_) {
-        this.blockPos = p_22676_.immutable();
-        this.centerPosition = Vec3.atCenterOf(p_22676_);
+    public BlockPosTracker(BlockPos blockPos) {
+        this.blockPos = blockPos.immutable();
+        this.centerPosition = Vec3.atCenterOf(blockPos);
     }
 
-    public BlockPosTracker(Vec3 p_251060_) {
-        this.blockPos = BlockPos.containing(p_251060_);
-        this.centerPosition = p_251060_;
+    public BlockPosTracker(Vec3 centerPosition) {
+        this.blockPos = BlockPos.containing(centerPosition);
+        this.centerPosition = centerPosition;
     }
 
     @Override
@@ -29,7 +29,7 @@ public class BlockPosTracker implements PositionTracker {
     }
 
     @Override
-    public boolean isVisibleBy(LivingEntity p_22679_) {
+    public boolean isVisibleBy(LivingEntity entity) {
         return true;
     }
 

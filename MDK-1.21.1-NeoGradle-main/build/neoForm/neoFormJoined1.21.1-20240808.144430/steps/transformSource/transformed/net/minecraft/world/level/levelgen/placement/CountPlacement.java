@@ -10,21 +10,21 @@ public class CountPlacement extends RepeatingPlacement {
     public static final MapCodec<CountPlacement> CODEC = IntProvider.codec(0, 256).fieldOf("count").xmap(CountPlacement::new, p_191633_ -> p_191633_.count);
     private final IntProvider count;
 
-    private CountPlacement(IntProvider p_191627_) {
-        this.count = p_191627_;
+    private CountPlacement(IntProvider count) {
+        this.count = count;
     }
 
-    public static CountPlacement of(IntProvider p_191631_) {
-        return new CountPlacement(p_191631_);
+    public static CountPlacement of(IntProvider count) {
+        return new CountPlacement(count);
     }
 
-    public static CountPlacement of(int p_191629_) {
-        return of(ConstantInt.of(p_191629_));
+    public static CountPlacement of(int count) {
+        return of(ConstantInt.of(count));
     }
 
     @Override
-    protected int count(RandomSource p_226333_, BlockPos p_226334_) {
-        return this.count.sample(p_226333_);
+    protected int count(RandomSource random, BlockPos pos) {
+        return this.count.sample(random);
     }
 
     @Override

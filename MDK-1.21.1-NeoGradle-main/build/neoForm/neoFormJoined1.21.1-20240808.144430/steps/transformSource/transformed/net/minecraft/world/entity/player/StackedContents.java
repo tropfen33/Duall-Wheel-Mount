@@ -23,64 +23,64 @@ public class StackedContents {
     private static final int EMPTY = 0;
     public final Int2IntMap contents = new Int2IntOpenHashMap();
 
-    public void accountSimpleStack(ItemStack p_36467_) {
-        if (!p_36467_.isDamaged() && !p_36467_.isEnchanted() && !p_36467_.has(DataComponents.CUSTOM_NAME)) {
-            this.accountStack(p_36467_);
+    public void accountSimpleStack(ItemStack stack) {
+        if (!stack.isDamaged() && !stack.isEnchanted() && !stack.has(DataComponents.CUSTOM_NAME)) {
+            this.accountStack(stack);
         }
     }
 
-    public void accountStack(ItemStack p_36492_) {
-        this.accountStack(p_36492_, p_36492_.getMaxStackSize());
+    public void accountStack(ItemStack stack) {
+        this.accountStack(stack, stack.getMaxStackSize());
     }
 
-    public void accountStack(ItemStack p_36469_, int p_36470_) {
-        if (!p_36469_.isEmpty()) {
-            int i = getStackingIndex(p_36469_);
-            int j = Math.min(p_36470_, p_36469_.getCount());
+    public void accountStack(ItemStack stack, int amount) {
+        if (!stack.isEmpty()) {
+            int i = getStackingIndex(stack);
+            int j = Math.min(amount, stack.getCount());
             this.put(i, j);
         }
     }
 
-    public static int getStackingIndex(ItemStack p_36497_) {
-        return BuiltInRegistries.ITEM.getId(p_36497_.getItem());
+    public static int getStackingIndex(ItemStack stack) {
+        return BuiltInRegistries.ITEM.getId(stack.getItem());
     }
 
-    boolean has(int p_36483_) {
-        return this.contents.get(p_36483_) > 0;
+    boolean has(int stackingIndex) {
+        return this.contents.get(stackingIndex) > 0;
     }
 
-    int take(int p_36457_, int p_36458_) {
-        int i = this.contents.get(p_36457_);
-        if (i >= p_36458_) {
-            this.contents.put(p_36457_, i - p_36458_);
-            return p_36457_;
+    int take(int stackingIndex, int amount) {
+        int i = this.contents.get(stackingIndex);
+        if (i >= amount) {
+            this.contents.put(stackingIndex, i - amount);
+            return stackingIndex;
         } else {
             return 0;
         }
     }
 
-    void put(int p_36485_, int p_36486_) {
-        this.contents.put(p_36485_, this.contents.get(p_36485_) + p_36486_);
+    void put(int stackingIndex, int increment) {
+        this.contents.put(stackingIndex, this.contents.get(stackingIndex) + increment);
     }
 
-    public boolean canCraft(Recipe<?> p_36476_, @Nullable IntList p_36477_) {
-        return this.canCraft(p_36476_, p_36477_, 1);
+    public boolean canCraft(Recipe<?> recipe, @Nullable IntList stackingIndexList) {
+        return this.canCraft(recipe, stackingIndexList, 1);
     }
 
-    public boolean canCraft(Recipe<?> p_36479_, @Nullable IntList p_36480_, int p_36481_) {
-        return new StackedContents.RecipePicker(p_36479_).tryPick(p_36481_, p_36480_);
+    public boolean canCraft(Recipe<?> recipe, @Nullable IntList stackingIndexList, int amount) {
+        return new StackedContents.RecipePicker(recipe).tryPick(amount, stackingIndexList);
     }
 
-    public int getBiggestCraftableStack(RecipeHolder<?> p_301005_, @Nullable IntList p_36474_) {
-        return this.getBiggestCraftableStack(p_301005_, Integer.MAX_VALUE, p_36474_);
+    public int getBiggestCraftableStack(RecipeHolder<?> recipe, @Nullable IntList stackingIndexList) {
+        return this.getBiggestCraftableStack(recipe, Integer.MAX_VALUE, stackingIndexList);
     }
 
-    public int getBiggestCraftableStack(RecipeHolder<?> p_300888_, int p_300980_, @Nullable IntList p_36495_) {
-        return new StackedContents.RecipePicker(p_300888_.value()).tryPickAll(p_300980_, p_36495_);
+    public int getBiggestCraftableStack(RecipeHolder<?> recipe, int amount, @Nullable IntList stackingIndexList) {
+        return new StackedContents.RecipePicker(recipe.value()).tryPickAll(amount, stackingIndexList);
     }
 
-    public static ItemStack fromStackingIndex(int p_36455_) {
-        return p_36455_ == 0 ? ItemStack.EMPTY : new ItemStack(Item.byId(p_36455_));
+    public static ItemStack fromStackingIndex(int stackingIndex) {
+        return stackingIndex == 0 ? ItemStack.EMPTY : new ItemStack(Item.byId(stackingIndex));
     }
 
     public void clear() {
@@ -96,9 +96,9 @@ public class StackedContents {
         private final BitSet data;
         private final IntList path = new IntArrayList();
 
-        public RecipePicker(Recipe<?> p_36508_) {
-            this.recipe = p_36508_;
-            this.ingredients.addAll(p_36508_.getIngredients());
+        public RecipePicker(Recipe<?> recipe) {
+            this.recipe = recipe;
+            this.ingredients.addAll(recipe.getIngredients());
             this.ingredients.removeIf(Ingredient::isEmpty);
             this.ingredientCount = this.ingredients.size();
             this.items = this.getUniqueAvailableIngredientItems();
@@ -116,13 +116,13 @@ public class StackedContents {
             }
         }
 
-        public boolean tryPick(int p_36513_, @Nullable IntList p_36514_) {
-            if (p_36513_ <= 0) {
+        public boolean tryPick(int amount, @Nullable IntList stackingIndexList) {
+            if (amount <= 0) {
                 return true;
             } else {
                 int i;
-                for (i = 0; this.dfs(p_36513_); i++) {
-                    StackedContents.this.take(this.items[this.path.getInt(0)], p_36513_);
+                for (i = 0; this.dfs(amount); i++) {
+                    StackedContents.this.take(this.items[this.path.getInt(0)], amount);
                     int j = this.path.size() - 1;
                     this.setSatisfied(this.path.getInt(j));
 
@@ -135,9 +135,9 @@ public class StackedContents {
                 }
 
                 boolean flag = i == this.ingredientCount;
-                boolean flag1 = flag && p_36514_ != null;
+                boolean flag1 = flag && stackingIndexList != null;
                 if (flag1) {
-                    p_36514_.clear();
+                    stackingIndexList.clear();
                 }
 
                 this.data.clear(0, this.ingredientCount + this.itemCount + this.ingredientCount);
@@ -145,14 +145,14 @@ public class StackedContents {
 
                 for (Ingredient ingredient : this.recipe.getIngredients()) {
                     if (flag1 && ingredient.isEmpty()) {
-                        p_36514_.add(0);
+                        stackingIndexList.add(0);
                     } else {
                         for (int i1 = 0; i1 < this.itemCount; i1++) {
                             if (this.hasResidual(false, l, i1)) {
                                 this.toggleResidual(true, i1, l);
-                                StackedContents.this.put(this.items[i1], p_36513_);
+                                StackedContents.this.put(this.items[i1], amount);
                                 if (flag1) {
-                                    p_36514_.add(this.items[i1]);
+                                    stackingIndexList.add(this.items[i1]);
                                 }
                             }
                         }
@@ -183,11 +183,11 @@ public class StackedContents {
             return intcollection.toIntArray();
         }
 
-        private boolean dfs(int p_36511_) {
+        private boolean dfs(int amount) {
             int i = this.itemCount;
 
             for (int j = 0; j < i; j++) {
-                if (StackedContents.this.contents.get(this.items[j]) >= p_36511_) {
+                if (StackedContents.this.contents.get(this.items[j]) >= amount) {
                     this.visit(false, j);
 
                     while (!this.path.isEmpty()) {
@@ -228,58 +228,58 @@ public class StackedContents {
             return false;
         }
 
-        private boolean isSatisfied(int p_36524_) {
-            return this.data.get(this.getSatisfiedIndex(p_36524_));
+        private boolean isSatisfied(int stackingIndex) {
+            return this.data.get(this.getSatisfiedIndex(stackingIndex));
         }
 
-        private void setSatisfied(int p_36536_) {
-            this.data.set(this.getSatisfiedIndex(p_36536_));
+        private void setSatisfied(int stackingIndex) {
+            this.data.set(this.getSatisfiedIndex(stackingIndex));
         }
 
-        private int getSatisfiedIndex(int p_36545_) {
-            return this.ingredientCount + this.itemCount + p_36545_;
+        private int getSatisfiedIndex(int stackingIndex) {
+            return this.ingredientCount + this.itemCount + stackingIndex;
         }
 
-        private boolean hasConnection(boolean p_36519_, int p_36520_, int p_36521_) {
-            return this.data.get(this.getIndex(p_36519_, p_36520_, p_36521_));
+        private boolean hasConnection(boolean isIngredientPath, int stackingIndex, int pathIndex) {
+            return this.data.get(this.getIndex(isIngredientPath, stackingIndex, pathIndex));
         }
 
-        private boolean hasResidual(boolean p_36532_, int p_36533_, int p_36534_) {
-            return p_36532_ != this.data.get(1 + this.getIndex(p_36532_, p_36533_, p_36534_));
+        private boolean hasResidual(boolean isIngredientPath, int stackingIndex, int pathIndex) {
+            return isIngredientPath != this.data.get(1 + this.getIndex(isIngredientPath, stackingIndex, pathIndex));
         }
 
-        private void toggleResidual(boolean p_36541_, int p_36542_, int p_36543_) {
-            this.data.flip(1 + this.getIndex(p_36541_, p_36542_, p_36543_));
+        private void toggleResidual(boolean isIngredientPath, int stackingIndex, int pathIndex) {
+            this.data.flip(1 + this.getIndex(isIngredientPath, stackingIndex, pathIndex));
         }
 
-        private int getIndex(boolean p_36547_, int p_36548_, int p_36549_) {
-            int i = p_36547_ ? p_36548_ * this.ingredientCount + p_36549_ : p_36549_ * this.ingredientCount + p_36548_;
+        private int getIndex(boolean isIngredientPath, int stackingIndex, int pathIndex) {
+            int i = isIngredientPath ? stackingIndex * this.ingredientCount + pathIndex : pathIndex * this.ingredientCount + stackingIndex;
             return this.ingredientCount + this.itemCount + this.ingredientCount + 2 * i;
         }
 
-        private void visit(boolean p_36516_, int p_36517_) {
-            this.data.set(this.getVisitedIndex(p_36516_, p_36517_));
-            this.path.add(p_36517_);
+        private void visit(boolean isIngredientPath, int pathIndex) {
+            this.data.set(this.getVisitedIndex(isIngredientPath, pathIndex));
+            this.path.add(pathIndex);
         }
 
-        private boolean hasVisited(boolean p_36529_, int p_36530_) {
-            return this.data.get(this.getVisitedIndex(p_36529_, p_36530_));
+        private boolean hasVisited(boolean isIngredientPath, int pathIndex) {
+            return this.data.get(this.getVisitedIndex(isIngredientPath, pathIndex));
         }
 
-        private int getVisitedIndex(boolean p_36538_, int p_36539_) {
-            return (p_36538_ ? 0 : this.ingredientCount) + p_36539_;
+        private int getVisitedIndex(boolean isIngredientPath, int pathIndex) {
+            return (isIngredientPath ? 0 : this.ingredientCount) + pathIndex;
         }
 
-        public int tryPickAll(int p_36526_, @Nullable IntList p_36527_) {
+        public int tryPickAll(int amount, @Nullable IntList stackingIndexList) {
             int i = 0;
-            int j = Math.min(p_36526_, this.getMinIngredientCount()) + 1;
+            int j = Math.min(amount, this.getMinIngredientCount()) + 1;
 
             while (true) {
                 int k = (i + j) / 2;
                 if (this.tryPick(k, null)) {
                     if (j - i <= 1) {
                         if (k > 0) {
-                            this.tryPick(k, p_36527_);
+                            this.tryPick(k, stackingIndexList);
                         }
 
                         return k;

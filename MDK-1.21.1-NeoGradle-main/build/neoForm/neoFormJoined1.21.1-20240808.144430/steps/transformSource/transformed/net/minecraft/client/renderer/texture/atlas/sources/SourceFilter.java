@@ -19,13 +19,13 @@ public class SourceFilter implements SpriteSource {
     );
     private final ResourceLocationPattern filter;
 
-    public SourceFilter(ResourceLocationPattern p_261654_) {
-        this.filter = p_261654_;
+    public SourceFilter(ResourceLocationPattern filter) {
+        this.filter = filter;
     }
 
     @Override
-    public void run(ResourceManager p_261888_, SpriteSource.Output p_261864_) {
-        p_261864_.removeAll(this.filter.locationPredicate());
+    public void run(ResourceManager resourceManager, SpriteSource.Output output) {
+        output.removeAll(this.filter.locationPredicate());
     }
 
     @Override

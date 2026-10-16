@@ -6,11 +6,11 @@ public final class ResultField implements Comparable<ResultField> {
     public final long count;
     public final String name;
 
-    public ResultField(String p_18612_, double p_18613_, double p_18614_, long p_18615_) {
-        this.name = p_18612_;
-        this.percentage = p_18613_;
-        this.globalPercentage = p_18614_;
-        this.count = p_18615_;
+    public ResultField(String name, double percentage, double globalPercentage, long count) {
+        this.name = name;
+        this.percentage = percentage;
+        this.globalPercentage = globalPercentage;
+        this.count = count;
     }
 
     public int compareTo(ResultField p_18618_) {

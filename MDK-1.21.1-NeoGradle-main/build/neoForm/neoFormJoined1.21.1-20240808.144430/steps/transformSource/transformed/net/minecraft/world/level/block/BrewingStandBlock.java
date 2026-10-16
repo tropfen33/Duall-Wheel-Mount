@@ -39,8 +39,8 @@ public class BrewingStandBlock extends BaseEntityBlock {
         return CODEC;
     }
 
-    public BrewingStandBlock(BlockBehaviour.Properties p_50909_) {
-        super(p_50909_);
+    public BrewingStandBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(
             this.stateDefinition
                 .any()
@@ -50,73 +50,83 @@ public class BrewingStandBlock extends BaseEntityBlock {
         );
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_50950_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_152698_, BlockState p_152699_) {
-        return new BrewingStandBlockEntity(p_152698_, p_152699_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new BrewingStandBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_152694_, BlockState p_152695_, BlockEntityType<T> p_152696_) {
-        return p_152694_.isClientSide ? null : createTickerHelper(p_152696_, BlockEntityType.BREWING_STAND, BrewingStandBlockEntity::serverTick);
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        return level.isClientSide ? null : createTickerHelper(blockEntityType, BlockEntityType.BREWING_STAND, BrewingStandBlockEntity::serverTick);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_50952_, BlockGetter p_50953_, BlockPos p_50954_, CollisionContext p_50955_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_50930_, Level p_50931_, BlockPos p_50932_, Player p_50933_, BlockHitResult p_50935_) {
-        if (p_50931_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
-            BlockEntity blockentity = p_50931_.getBlockEntity(p_50932_);
+            BlockEntity blockentity = level.getBlockEntity(pos);
             if (blockentity instanceof BrewingStandBlockEntity) {
-                p_50933_.openMenu((BrewingStandBlockEntity)blockentity);
-                p_50933_.awardStat(Stats.INTERACT_WITH_BREWINGSTAND);
+                player.openMenu((BrewingStandBlockEntity)blockentity);
+                player.awardStat(Stats.INTERACT_WITH_BREWINGSTAND);
             }
 
             return InteractionResult.CONSUME;
         }
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_220883_, Level p_220884_, BlockPos p_220885_, RandomSource p_220886_) {
-        double d0 = (double)p_220885_.getX() + 0.4 + (double)p_220886_.nextFloat() * 0.2;
-        double d1 = (double)p_220885_.getY() + 0.7 + (double)p_220886_.nextFloat() * 0.3;
-        double d2 = (double)p_220885_.getZ() + 0.4 + (double)p_220886_.nextFloat() * 0.2;
-        p_220884_.addParticle(ParticleTypes.SMOKE, d0, d1, d2, 0.0, 0.0, 0.0);
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        double d0 = (double)pos.getX() + 0.4 + (double)random.nextFloat() * 0.2;
+        double d1 = (double)pos.getY() + 0.7 + (double)random.nextFloat() * 0.3;
+        double d2 = (double)pos.getZ() + 0.4 + (double)random.nextFloat() * 0.2;
+        level.addParticle(ParticleTypes.SMOKE, d0, d1, d2, 0.0, 0.0, 0.0);
     }
 
     @Override
-    protected void onRemove(BlockState p_50937_, Level p_50938_, BlockPos p_50939_, BlockState p_50940_, boolean p_50941_) {
-        Containers.dropContentsOnDestroy(p_50937_, p_50940_, p_50938_, p_50939_);
-        super.onRemove(p_50937_, p_50938_, p_50939_, p_50940_, p_50941_);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        Containers.dropContentsOnDestroy(state, newState, level, pos);
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 
     @Override
-    protected boolean hasAnalogOutputSignal(BlockState p_50919_) {
+    protected boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
+    /**
+     * Returns the analog signal this block emits. This is the signal a comparator can read from it.
+     *
+     */
     @Override
-    protected int getAnalogOutputSignal(BlockState p_50926_, Level p_50927_, BlockPos p_50928_) {
-        return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(p_50927_.getBlockEntity(p_50928_));
+    protected int getAnalogOutputSignal(BlockState blockState, Level level, BlockPos pos) {
+        return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(level.getBlockEntity(pos));
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_50948_) {
-        p_50948_.add(HAS_BOTTLE[0], HAS_BOTTLE[1], HAS_BOTTLE[2]);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(HAS_BOTTLE[0], HAS_BOTTLE[1], HAS_BOTTLE[2]);
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_50921_, PathComputationType p_50924_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

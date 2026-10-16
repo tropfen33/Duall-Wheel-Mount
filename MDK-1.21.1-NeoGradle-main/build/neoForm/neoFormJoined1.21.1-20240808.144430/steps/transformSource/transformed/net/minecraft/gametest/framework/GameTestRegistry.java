@@ -26,55 +26,67 @@ public class GameTestRegistry {
     private static final Map<String, Consumer<ServerLevel>> AFTER_BATCH_FUNCTIONS = Maps.newHashMap();
     private static final Set<TestFunction> LAST_FAILED_TESTS = Sets.newHashSet();
 
-    /** @deprecated Forge: Use {@link net.neoforged.neoforge.event.RegisterGameTestsEvent RegisterGameTestsEvent} to register game tests */
+    /**
+ * @deprecated Forge: Use {@link
+ *             net.neoforged.neoforge.event.RegisterGameTestsEvent
+ *             RegisterGameTestsEvent} to register game tests
+ */
     @Deprecated
-    public static void register(Class<?> p_177502_) {
-        Arrays.stream(p_177502_.getDeclaredMethods()).sorted(Comparator.comparing(Method::getName)).forEach(GameTestRegistry::register);
+    public static void register(Class<?> testClass) {
+        Arrays.stream(testClass.getDeclaredMethods()).sorted(Comparator.comparing(Method::getName)).forEach(GameTestRegistry::register);
     }
 
-    /** @deprecated Forge: Use {@link net.neoforged.neoforge.event.RegisterGameTestsEvent RegisterGameTestsEvent} to register game tests */
+    /**
+ * @deprecated Forge: Use {@link
+ *             net.neoforged.neoforge.event.RegisterGameTestsEvent
+ *             RegisterGameTestsEvent} to register game tests
+ */
     @Deprecated
-    public static void register(Method p_177504_) {
-         register(p_177504_, java.util.Set.of());
+    public static void register(Method testMethod) {
+         register(testMethod, java.util.Set.of());
     }
-    /** @deprecated Forge: Use {@link net.neoforged.neoforge.event.RegisterGameTestsEvent RegisterGameTestsEvent} to register game tests */
+    /**
+ * @deprecated Forge: Use {@link
+ *             net.neoforged.neoforge.event.RegisterGameTestsEvent
+ *             RegisterGameTestsEvent} to register game tests
+ */
     @Deprecated
-    public static void register(Method p_177504_, java.util.Set<String> allowedNamespaces) {
-        String s = p_177504_.getDeclaringClass().getSimpleName();
-        GameTest gametest = p_177504_.getAnnotation(GameTest.class);
-        if (gametest != null && (allowedNamespaces.isEmpty() || allowedNamespaces.contains(net.neoforged.neoforge.gametest.GameTestHooks.getTemplateNamespace(p_177504_)))) {
-            TEST_FUNCTIONS.add(turnMethodIntoTestFunction(p_177504_));
+    public static void register(Method testMethod, java.util.Set<String> allowedNamespaces) {
+        String s = testMethod.getDeclaringClass().getSimpleName();
+        GameTest gametest = testMethod.getAnnotation(GameTest.class);
+        if (gametest != null && (allowedNamespaces.isEmpty() || allowedNamespaces.contains(net.neoforged.neoforge.gametest.GameTestHooks.getTemplateNamespace(testMethod)))) {
+            TEST_FUNCTIONS.add(turnMethodIntoTestFunction(testMethod));
             TEST_CLASS_NAMES.add(s);
         }
 
-        GameTestGenerator gametestgenerator = p_177504_.getAnnotation(GameTestGenerator.class);
+        GameTestGenerator gametestgenerator = testMethod.getAnnotation(GameTestGenerator.class);
         if (gametestgenerator != null) {
-            Collection<TestFunction> testFunctions = new java.util.ArrayList<>(useTestGeneratorMethod(p_177504_));
+            Collection<TestFunction> testFunctions = new java.util.ArrayList<>(useTestGeneratorMethod(testMethod));
             if (!allowedNamespaces.isEmpty())
                  testFunctions.removeIf(t -> !allowedNamespaces.contains(net.minecraft.resources.ResourceLocation.parse(t.structureName()).getNamespace()));
             TEST_FUNCTIONS.addAll(testFunctions);
             TEST_CLASS_NAMES.add(s);
         }
 
-        registerBatchFunction(p_177504_, BeforeBatch.class, BeforeBatch::batch, BEFORE_BATCH_FUNCTIONS);
-        registerBatchFunction(p_177504_, AfterBatch.class, AfterBatch::batch, AFTER_BATCH_FUNCTIONS);
+        registerBatchFunction(testMethod, BeforeBatch.class, BeforeBatch::batch, BEFORE_BATCH_FUNCTIONS);
+        registerBatchFunction(testMethod, AfterBatch.class, AfterBatch::batch, AFTER_BATCH_FUNCTIONS);
     }
 
     private static <T extends Annotation> void registerBatchFunction(
-        Method p_177506_, Class<T> p_177507_, Function<T, String> p_177508_, Map<String, Consumer<ServerLevel>> p_177509_
+        Method testMethod, Class<T> annotationType, Function<T, String> valueGetter, Map<String, Consumer<ServerLevel>> positioning
     ) {
-        T t = p_177506_.getAnnotation(p_177507_);
+        T t = testMethod.getAnnotation(annotationType);
         if (t != null) {
-            String s = p_177508_.apply(t);
-            Consumer<ServerLevel> consumer = p_177509_.putIfAbsent(s, (Consumer<ServerLevel>)turnMethodIntoConsumer(p_177506_));
+            String s = valueGetter.apply(t);
+            Consumer<ServerLevel> consumer = positioning.putIfAbsent(s, (Consumer<ServerLevel>)turnMethodIntoConsumer(testMethod));
             if (consumer != null) {
-                throw new RuntimeException("Hey, there should only be one " + p_177507_ + " method per batch. Batch '" + s + "' has more than one!");
+                throw new RuntimeException("Hey, there should only be one " + annotationType + " method per batch. Batch '" + s + "' has more than one!");
             }
         }
     }
 
-    public static Stream<TestFunction> getTestFunctionsForClassName(String p_127660_) {
-        return TEST_FUNCTIONS.stream().filter(p_127674_ -> isTestFunctionPartOfClass(p_127674_, p_127660_));
+    public static Stream<TestFunction> getTestFunctionsForClassName(String className) {
+        return TEST_FUNCTIONS.stream().filter(p_127674_ -> isTestFunctionPartOfClass(p_127674_, className));
     }
 
     public static Collection<TestFunction> getAllTestFunctions() {
@@ -85,51 +97,51 @@ public class GameTestRegistry {
         return TEST_CLASS_NAMES;
     }
 
-    public static boolean isTestClass(String p_127671_) {
-        return TEST_CLASS_NAMES.contains(p_127671_);
+    public static boolean isTestClass(String className) {
+        return TEST_CLASS_NAMES.contains(className);
     }
 
-    public static Consumer<ServerLevel> getBeforeBatchFunction(String p_127677_) {
-        return BEFORE_BATCH_FUNCTIONS.getOrDefault(p_127677_, p_319462_ -> {
+    public static Consumer<ServerLevel> getBeforeBatchFunction(String functionName) {
+        return BEFORE_BATCH_FUNCTIONS.getOrDefault(functionName, p_319462_ -> {
         });
     }
 
-    public static Consumer<ServerLevel> getAfterBatchFunction(String p_177518_) {
-        return AFTER_BATCH_FUNCTIONS.getOrDefault(p_177518_, p_319461_ -> {
+    public static Consumer<ServerLevel> getAfterBatchFunction(String functionName) {
+        return AFTER_BATCH_FUNCTIONS.getOrDefault(functionName, p_319461_ -> {
         });
     }
 
-    public static Optional<TestFunction> findTestFunction(String p_127680_) {
-        return getAllTestFunctions().stream().filter(p_319460_ -> p_319460_.testName().equalsIgnoreCase(p_127680_)).findFirst();
+    public static Optional<TestFunction> findTestFunction(String testName) {
+        return getAllTestFunctions().stream().filter(p_319460_ -> p_319460_.testName().equalsIgnoreCase(testName)).findFirst();
     }
 
-    public static TestFunction getTestFunction(String p_127682_) {
-        Optional<TestFunction> optional = findTestFunction(p_127682_);
+    public static TestFunction getTestFunction(String testName) {
+        Optional<TestFunction> optional = findTestFunction(testName);
         if (optional.isEmpty()) {
-            throw new IllegalArgumentException("Can't find the test function for " + p_127682_);
+            throw new IllegalArgumentException("Can't find the test function for " + testName);
         } else {
             return optional.get();
         }
     }
 
-    private static Collection<TestFunction> useTestGeneratorMethod(Method p_177514_) {
+    private static Collection<TestFunction> useTestGeneratorMethod(Method testMethod) {
         try {
             Object object = null;
-            if (!java.lang.reflect.Modifier.isStatic(p_177514_.getModifiers()))
-                 object = p_177514_.getDeclaringClass().newInstance();
-            return (Collection<TestFunction>)p_177514_.invoke(object);
+            if (!java.lang.reflect.Modifier.isStatic(testMethod.getModifiers()))
+                 object = testMethod.getDeclaringClass().newInstance();
+            return (Collection<TestFunction>)testMethod.invoke(object);
         } catch (ReflectiveOperationException reflectiveoperationexception) {
             throw new RuntimeException(reflectiveoperationexception);
         }
     }
 
-    private static TestFunction turnMethodIntoTestFunction(Method p_177516_) {
-        GameTest gametest = p_177516_.getAnnotation(GameTest.class);
-        String s = p_177516_.getDeclaringClass().getSimpleName();
+    private static TestFunction turnMethodIntoTestFunction(Method testMethod) {
+        GameTest gametest = testMethod.getAnnotation(GameTest.class);
+        String s = testMethod.getDeclaringClass().getSimpleName();
         String s1 = s.toLowerCase();
-        boolean prefixGameTestTemplate = net.neoforged.neoforge.gametest.GameTestHooks.prefixGameTestTemplate(p_177516_);
-        String s2 = (prefixGameTestTemplate ? s1 + "." : "") + p_177516_.getName().toLowerCase();
-        String s3 = net.neoforged.neoforge.gametest.GameTestHooks.getTemplateNamespace(p_177516_) + ":" + (gametest.template().isEmpty() ? s2 : (prefixGameTestTemplate ? s1 + "." : "") + gametest.template());
+        boolean prefixGameTestTemplate = net.neoforged.neoforge.gametest.GameTestHooks.prefixGameTestTemplate(testMethod);
+        String s2 = (prefixGameTestTemplate ? s1 + "." : "") + testMethod.getName().toLowerCase();
+        String s3 = net.neoforged.neoforge.gametest.GameTestHooks.getTemplateNamespace(testMethod) + ":" + (gametest.template().isEmpty() ? s2 : (prefixGameTestTemplate ? s1 + "." : "") + gametest.template());
         String s4 = gametest.batch();
         Rotation rotation = StructureUtils.getRotationForRotationSteps(gametest.rotationSteps());
         return new TestFunction(
@@ -144,17 +156,17 @@ public class GameTestRegistry {
             gametest.requiredSuccesses(),
             gametest.attempts(),
             gametest.skyAccess(),
-            (Consumer<GameTestHelper>)turnMethodIntoConsumer(p_177516_)
+            (Consumer<GameTestHelper>)turnMethodIntoConsumer(testMethod)
         );
     }
 
-    private static Consumer<?> turnMethodIntoConsumer(Method p_177520_) {
+    private static Consumer<?> turnMethodIntoConsumer(Method testMethod) {
         return p_177512_ -> {
             try {
                 Object object = null;
-                if (!java.lang.reflect.Modifier.isStatic(p_177520_.getModifiers()))
-                     object = p_177520_.getDeclaringClass().newInstance();
-                p_177520_.invoke(object, p_177512_);
+                if (!java.lang.reflect.Modifier.isStatic(testMethod.getModifiers()))
+                     object = testMethod.getDeclaringClass().newInstance();
+                testMethod.invoke(object, p_177512_);
             } catch (InvocationTargetException invocationtargetexception) {
                 if (invocationtargetexception.getCause() instanceof RuntimeException) {
                     throw (RuntimeException)invocationtargetexception.getCause();
@@ -167,16 +179,16 @@ public class GameTestRegistry {
         };
     }
 
-    private static boolean isTestFunctionPartOfClass(TestFunction p_127667_, String p_127668_) {
-        return p_127667_.testName().toLowerCase().startsWith(p_127668_.toLowerCase() + ".");
+    private static boolean isTestFunctionPartOfClass(TestFunction testFunction, String className) {
+        return testFunction.testName().toLowerCase().startsWith(className.toLowerCase() + ".");
     }
 
     public static Stream<TestFunction> getLastFailedTests() {
         return LAST_FAILED_TESTS.stream();
     }
 
-    public static void rememberFailedTest(TestFunction p_127665_) {
-        LAST_FAILED_TESTS.add(p_127665_);
+    public static void rememberFailedTest(TestFunction testFunction) {
+        LAST_FAILED_TESTS.add(testFunction);
     }
 
     public static void forgetFailedTests() {

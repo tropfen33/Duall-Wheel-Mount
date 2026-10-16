@@ -12,11 +12,11 @@ public class ClientboundSetTimePacket implements Packet<ClientGamePacketListener
     private final long gameTime;
     private final long dayTime;
 
-    public ClientboundSetTimePacket(long p_133349_, long p_133350_, boolean p_133351_) {
-        this.gameTime = p_133349_;
-        long i = p_133350_;
-        if (!p_133351_) {
-            i = -p_133350_;
+    public ClientboundSetTimePacket(long gameTime, long dayTime, boolean daylightCycleEnabled) {
+        this.gameTime = gameTime;
+        long i = dayTime;
+        if (!daylightCycleEnabled) {
+            i = -dayTime;
             if (i == 0L) {
                 i = -1L;
             }
@@ -25,14 +25,17 @@ public class ClientboundSetTimePacket implements Packet<ClientGamePacketListener
         this.dayTime = i;
     }
 
-    private ClientboundSetTimePacket(FriendlyByteBuf p_179387_) {
-        this.gameTime = p_179387_.readLong();
-        this.dayTime = p_179387_.readLong();
+    private ClientboundSetTimePacket(FriendlyByteBuf buffer) {
+        this.gameTime = buffer.readLong();
+        this.dayTime = buffer.readLong();
     }
 
-    private void write(FriendlyByteBuf p_133360_) {
-        p_133360_.writeLong(this.gameTime);
-        p_133360_.writeLong(this.dayTime);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeLong(this.gameTime);
+        buffer.writeLong(this.dayTime);
     }
 
     @Override
@@ -40,8 +43,11 @@ public class ClientboundSetTimePacket implements Packet<ClientGamePacketListener
         return GamePacketTypes.CLIENTBOUND_SET_TIME;
     }
 
-    public void handle(ClientGamePacketListener p_133357_) {
-        p_133357_.handleSetTime(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleSetTime(this);
     }
 
     public long getGameTime() {

@@ -15,13 +15,16 @@ import net.minecraft.world.item.component.WrittenBookContent;
 import net.minecraft.world.level.Level;
 
 public class WrittenBookItem extends Item {
-    public WrittenBookItem(Item.Properties p_43455_) {
-        super(p_43455_);
+    public WrittenBookItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Gets the title name of the book
+     */
     @Override
-    public Component getName(ItemStack p_43480_) {
-        WrittenBookContent writtenbookcontent = p_43480_.get(DataComponents.WRITTEN_BOOK_CONTENT);
+    public Component getName(ItemStack stack) {
+        WrittenBookContent writtenbookcontent = stack.get(DataComponents.WRITTEN_BOOK_CONTENT);
         if (writtenbookcontent != null) {
             String s = writtenbookcontent.title().raw();
             if (!StringUtil.isBlank(s)) {
@@ -29,39 +32,42 @@ public class WrittenBookItem extends Item {
             }
         }
 
-        return super.getName(p_43480_);
+        return super.getName(stack);
     }
 
     @Override
-    public void appendHoverText(ItemStack p_43457_, Item.TooltipContext p_339643_, List<Component> p_43459_, TooltipFlag p_43460_) {
-        WrittenBookContent writtenbookcontent = p_43457_.get(DataComponents.WRITTEN_BOOK_CONTENT);
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        WrittenBookContent writtenbookcontent = stack.get(DataComponents.WRITTEN_BOOK_CONTENT);
         if (writtenbookcontent != null) {
             if (!StringUtil.isBlank(writtenbookcontent.author())) {
-                p_43459_.add(Component.translatable("book.byAuthor", writtenbookcontent.author()).withStyle(ChatFormatting.GRAY));
+                tooltipComponents.add(Component.translatable("book.byAuthor", writtenbookcontent.author()).withStyle(ChatFormatting.GRAY));
             }
 
-            p_43459_.add(Component.translatable("book.generation." + writtenbookcontent.generation()).withStyle(ChatFormatting.GRAY));
+            tooltipComponents.add(Component.translatable("book.generation." + writtenbookcontent.generation()).withStyle(ChatFormatting.GRAY));
         }
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_43468_, Player p_43469_, InteractionHand p_43470_) {
-        ItemStack itemstack = p_43469_.getItemInHand(p_43470_);
-        p_43469_.openItemGui(itemstack, p_43470_);
-        p_43469_.awardStat(Stats.ITEM_USED.get(this));
-        return InteractionResultHolder.sidedSuccess(itemstack, p_43468_.isClientSide());
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
+        player.openItemGui(itemstack, hand);
+        player.awardStat(Stats.ITEM_USED.get(this));
+        return InteractionResultHolder.sidedSuccess(itemstack, level.isClientSide());
     }
 
-    public static boolean resolveBookComponents(ItemStack p_43462_, CommandSourceStack p_43463_, @Nullable Player p_43464_) {
-        WrittenBookContent writtenbookcontent = p_43462_.get(DataComponents.WRITTEN_BOOK_CONTENT);
+    public static boolean resolveBookComponents(ItemStack bookStack, CommandSourceStack resolvingSource, @Nullable Player resolvingPlayer) {
+        WrittenBookContent writtenbookcontent = bookStack.get(DataComponents.WRITTEN_BOOK_CONTENT);
         if (writtenbookcontent != null && !writtenbookcontent.resolved()) {
-            WrittenBookContent writtenbookcontent1 = writtenbookcontent.resolve(p_43463_, p_43464_);
+            WrittenBookContent writtenbookcontent1 = writtenbookcontent.resolve(resolvingSource, resolvingPlayer);
             if (writtenbookcontent1 != null) {
-                p_43462_.set(DataComponents.WRITTEN_BOOK_CONTENT, writtenbookcontent1);
+                bookStack.set(DataComponents.WRITTEN_BOOK_CONTENT, writtenbookcontent1);
                 return true;
             }
 
-            p_43462_.set(DataComponents.WRITTEN_BOOK_CONTENT, writtenbookcontent.markResolved());
+            bookStack.set(DataComponents.WRITTEN_BOOK_CONTENT, writtenbookcontent.markResolved());
         }
 
         return false;

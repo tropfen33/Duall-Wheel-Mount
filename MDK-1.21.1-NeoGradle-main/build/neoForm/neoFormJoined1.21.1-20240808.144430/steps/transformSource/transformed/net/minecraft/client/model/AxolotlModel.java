@@ -30,9 +30,9 @@ public class AxolotlModel<T extends Axolotl & LerpingModel> extends AgeableListM
     private final ModelPart leftGills;
     private final ModelPart rightGills;
 
-    public AxolotlModel(ModelPart p_170370_) {
+    public AxolotlModel(ModelPart root) {
         super(true, 8.0F, 3.35F);
-        this.body = p_170370_.getChild("body");
+        this.body = root.getChild("body");
         this.head = this.body.getChild("head");
         this.rightHindLeg = this.body.getChild("right_hind_leg");
         this.leftHindLeg = this.body.getChild("left_hind_leg");
@@ -84,37 +84,40 @@ public class AxolotlModel<T extends Axolotl & LerpingModel> extends AgeableListM
         return ImmutableList.of(this.body);
     }
 
-    public void setupAnim(T p_170395_, float p_170396_, float p_170397_, float p_170398_, float p_170399_, float p_170400_) {
-        this.setupInitialAnimationValues(p_170395_, p_170399_, p_170400_);
-        if (p_170395_.isPlayingDead()) {
-            this.setupPlayDeadAnimation(p_170399_);
-            this.saveAnimationValues(p_170395_);
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.setupInitialAnimationValues(entity, netHeadYaw, headPitch);
+        if (entity.isPlayingDead()) {
+            this.setupPlayDeadAnimation(netHeadYaw);
+            this.saveAnimationValues(entity);
         } else {
-            boolean flag = p_170397_ > 1.0E-5F || p_170395_.getXRot() != p_170395_.xRotO || p_170395_.getYRot() != p_170395_.yRotO;
-            if (p_170395_.isInWaterOrBubble()) {
+            boolean flag = limbSwingAmount > 1.0E-5F || entity.getXRot() != entity.xRotO || entity.getYRot() != entity.yRotO;
+            if (entity.isInWaterOrBubble()) {
                 if (flag) {
-                    this.setupSwimmingAnimation(p_170398_, p_170400_);
+                    this.setupSwimmingAnimation(ageInTicks, headPitch);
                 } else {
-                    this.setupWaterHoveringAnimation(p_170398_);
+                    this.setupWaterHoveringAnimation(ageInTicks);
                 }
 
-                this.saveAnimationValues(p_170395_);
+                this.saveAnimationValues(entity);
             } else {
-                if (p_170395_.onGround()) {
+                if (entity.onGround()) {
                     if (flag) {
-                        this.setupGroundCrawlingAnimation(p_170398_, p_170399_);
+                        this.setupGroundCrawlingAnimation(ageInTicks, netHeadYaw);
                     } else {
-                        this.setupLayStillOnGroundAnimation(p_170398_, p_170399_);
+                        this.setupLayStillOnGroundAnimation(ageInTicks, netHeadYaw);
                     }
                 }
 
-                this.saveAnimationValues(p_170395_);
+                this.saveAnimationValues(entity);
             }
         }
     }
 
-    private void saveAnimationValues(T p_170389_) {
-        Map<String, Vector3f> map = p_170389_.getModelRotationValues();
+    private void saveAnimationValues(T axolotl) {
+        Map<String, Vector3f> map = axolotl.getModelRotationValues();
         map.put("body", this.getRotationVector(this.body));
         map.put("head", this.getRotationVector(this.head));
         map.put("right_hind_leg", this.getRotationVector(this.rightHindLeg));
@@ -127,21 +130,21 @@ public class AxolotlModel<T extends Axolotl & LerpingModel> extends AgeableListM
         map.put("right_gills", this.getRotationVector(this.rightGills));
     }
 
-    private Vector3f getRotationVector(ModelPart p_254355_) {
-        return new Vector3f(p_254355_.xRot, p_254355_.yRot, p_254355_.zRot);
+    private Vector3f getRotationVector(ModelPart part) {
+        return new Vector3f(part.xRot, part.yRot, part.zRot);
     }
 
-    private void setRotationFromVector(ModelPart p_254301_, Vector3f p_253783_) {
-        p_254301_.setRotation(p_253783_.x(), p_253783_.y(), p_253783_.z());
+    private void setRotationFromVector(ModelPart part, Vector3f rotation) {
+        part.setRotation(rotation.x(), rotation.y(), rotation.z());
     }
 
-    private void setupInitialAnimationValues(T p_170391_, float p_170392_, float p_170393_) {
+    private void setupInitialAnimationValues(T axolotl, float netHeadYaw, float headPitch) {
         this.body.x = 0.0F;
         this.head.y = 0.0F;
         this.body.y = 20.0F;
-        Map<String, Vector3f> map = p_170391_.getModelRotationValues();
+        Map<String, Vector3f> map = axolotl.getModelRotationValues();
         if (map.isEmpty()) {
-            this.body.setRotation(p_170393_ * (float) (Math.PI / 180.0), p_170392_ * (float) (Math.PI / 180.0), 0.0F);
+            this.body.setRotation(headPitch * (float) (Math.PI / 180.0), netHeadYaw * (float) (Math.PI / 180.0), 0.0F);
             this.head.setRotation(0.0F, 0.0F, 0.0F);
             this.leftHindLeg.setRotation(0.0F, 0.0F, 0.0F);
             this.rightHindLeg.setRotation(0.0F, 0.0F, 0.0F);
@@ -165,20 +168,20 @@ public class AxolotlModel<T extends Axolotl & LerpingModel> extends AgeableListM
         }
     }
 
-    private float lerpTo(float p_170375_, float p_170376_) {
-        return this.lerpTo(0.05F, p_170375_, p_170376_);
+    private float lerpTo(float start, float end) {
+        return this.lerpTo(0.05F, start, end);
     }
 
-    private float lerpTo(float p_170378_, float p_170379_, float p_170380_) {
-        return Mth.rotLerp(p_170378_, p_170379_, p_170380_);
+    private float lerpTo(float delta, float start, float end) {
+        return Mth.rotLerp(delta, start, end);
     }
 
-    private void lerpPart(ModelPart p_170404_, float p_170405_, float p_170406_, float p_170407_) {
-        p_170404_.setRotation(this.lerpTo(p_170404_.xRot, p_170405_), this.lerpTo(p_170404_.yRot, p_170406_), this.lerpTo(p_170404_.zRot, p_170407_));
+    private void lerpPart(ModelPart part, float xDelta, float yDelta, float zDelta) {
+        part.setRotation(this.lerpTo(part.xRot, xDelta), this.lerpTo(part.yRot, yDelta), this.lerpTo(part.zRot, zDelta));
     }
 
-    private void setupLayStillOnGroundAnimation(float p_170415_, float p_170416_) {
-        float f = p_170415_ * 0.09F;
+    private void setupLayStillOnGroundAnimation(float ageInTicks, float netHeadYaw) {
+        float f = ageInTicks * 0.09F;
         float f1 = Mth.sin(f);
         float f2 = Mth.cos(f);
         float f3 = f1 * f1 - 2.0F * f1;
@@ -194,12 +197,12 @@ public class AxolotlModel<T extends Axolotl & LerpingModel> extends AgeableListM
         this.lerpPart(this.leftFrontLeg, 0.8F, 2.3F, -0.5F);
         this.applyMirrorLegRotations();
         this.body.xRot = this.lerpTo(0.2F, this.body.xRot, 0.0F);
-        this.body.yRot = this.lerpTo(this.body.yRot, p_170416_ * (float) (Math.PI / 180.0));
+        this.body.yRot = this.lerpTo(this.body.yRot, netHeadYaw * (float) (Math.PI / 180.0));
         this.body.zRot = this.lerpTo(this.body.zRot, 0.0F);
     }
 
-    private void setupGroundCrawlingAnimation(float p_170419_, float p_170420_) {
-        float f = p_170419_ * 0.11F;
+    private void setupGroundCrawlingAnimation(float ageInTicks, float netHeadYaw) {
+        float f = ageInTicks * 0.11F;
         float f1 = Mth.cos(f);
         float f2 = (f1 * f1 - 2.0F * f1) / 5.0F;
         float f3 = 0.7F * f1;
@@ -215,12 +218,12 @@ public class AxolotlModel<T extends Axolotl & LerpingModel> extends AgeableListM
         this.lerpPart(this.rightHindLeg, this.leftHindLeg.xRot, -1.0F - f2, 0.0F);
         this.lerpPart(this.rightFrontLeg, this.leftFrontLeg.xRot, (float) (-Math.PI / 2) - f3, 0.0F);
         this.body.xRot = this.lerpTo(0.2F, this.body.xRot, 0.0F);
-        this.body.yRot = this.lerpTo(this.body.yRot, p_170420_ * (float) (Math.PI / 180.0));
+        this.body.yRot = this.lerpTo(this.body.yRot, netHeadYaw * (float) (Math.PI / 180.0));
         this.body.zRot = this.lerpTo(this.body.zRot, 0.0F);
     }
 
-    private void setupWaterHoveringAnimation(float p_170373_) {
-        float f = p_170373_ * 0.075F;
+    private void setupWaterHoveringAnimation(float ageInTicks) {
+        float f = ageInTicks * 0.075F;
         float f1 = Mth.cos(f);
         float f2 = Mth.sin(f) * 0.15F;
         this.body.xRot = this.lerpTo(this.body.xRot, -0.15F + 0.075F * f1);
@@ -237,12 +240,12 @@ public class AxolotlModel<T extends Axolotl & LerpingModel> extends AgeableListM
         this.head.zRot = this.lerpTo(this.head.zRot, 0.0F);
     }
 
-    private void setupSwimmingAnimation(float p_170423_, float p_170424_) {
-        float f = p_170423_ * 0.33F;
+    private void setupSwimmingAnimation(float ageInTicks, float headPitch) {
+        float f = ageInTicks * 0.33F;
         float f1 = Mth.sin(f);
         float f2 = Mth.cos(f);
         float f3 = 0.13F * f1;
-        this.body.xRot = this.lerpTo(0.1F, this.body.xRot, p_170424_ * (float) (Math.PI / 180.0) + f3);
+        this.body.xRot = this.lerpTo(0.1F, this.body.xRot, headPitch * (float) (Math.PI / 180.0) + f3);
         this.head.xRot = -f3 * 1.8F;
         this.body.y -= 0.45F * f2;
         this.topGills.xRot = this.lerpTo(this.topGills.xRot, -0.5F * f1 - 0.8F);
@@ -256,13 +259,13 @@ public class AxolotlModel<T extends Axolotl & LerpingModel> extends AgeableListM
         this.head.zRot = this.lerpTo(this.head.zRot, 0.0F);
     }
 
-    private void setupPlayDeadAnimation(float p_170413_) {
+    private void setupPlayDeadAnimation(float netHeadYaw) {
         this.lerpPart(this.leftHindLeg, 1.4137167F, 1.0995574F, (float) (Math.PI / 4));
         this.lerpPart(this.leftFrontLeg, (float) (Math.PI / 4), 2.042035F, 0.0F);
         this.body.xRot = this.lerpTo(this.body.xRot, -0.15F);
         this.body.zRot = this.lerpTo(this.body.zRot, 0.35F);
         this.applyMirrorLegRotations();
-        this.body.yRot = this.lerpTo(this.body.yRot, p_170413_ * (float) (Math.PI / 180.0));
+        this.body.yRot = this.lerpTo(this.body.yRot, netHeadYaw * (float) (Math.PI / 180.0));
         this.head.xRot = this.lerpTo(this.head.xRot, 0.0F);
         this.head.yRot = this.lerpTo(this.head.yRot, 0.0F);
         this.head.zRot = this.lerpTo(this.head.zRot, 0.0F);

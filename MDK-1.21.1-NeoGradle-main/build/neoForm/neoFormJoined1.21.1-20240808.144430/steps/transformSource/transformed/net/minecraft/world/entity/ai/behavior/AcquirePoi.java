@@ -30,28 +30,28 @@ public class AcquirePoi {
     public static final int SCAN_RANGE = 48;
 
     public static BehaviorControl<PathfinderMob> create(
-        Predicate<Holder<PoiType>> p_259994_, MemoryModuleType<GlobalPos> p_259167_, boolean p_259077_, Optional<Byte> p_259824_
+        Predicate<Holder<PoiType>> acquirablePois, MemoryModuleType<GlobalPos> acquiringMemory, boolean onlyIfAdult, Optional<Byte> entityEventId
     ) {
-        return create(p_259994_, p_259167_, p_259167_, p_259077_, p_259824_);
+        return create(acquirablePois, acquiringMemory, acquiringMemory, onlyIfAdult, entityEventId);
     }
 
     public static BehaviorControl<PathfinderMob> create(
-        Predicate<Holder<PoiType>> p_260007_,
-        MemoryModuleType<GlobalPos> p_259129_,
-        MemoryModuleType<GlobalPos> p_260194_,
-        boolean p_259108_,
-        Optional<Byte> p_260129_
+        Predicate<Holder<PoiType>> acquirablePois,
+        MemoryModuleType<GlobalPos> existingAbsentMemory,
+        MemoryModuleType<GlobalPos> acquiringMemory,
+        boolean onlyIfAdult,
+        Optional<Byte> entityEventId
     ) {
         int i = 5;
         int j = 20;
         MutableLong mutablelong = new MutableLong(0L);
         Long2ObjectMap<AcquirePoi.JitteredLinearRetry> long2objectmap = new Long2ObjectOpenHashMap<>();
         OneShot<PathfinderMob> oneshot = BehaviorBuilder.create(
-            p_258276_ -> p_258276_.group(p_258276_.absent(p_260194_))
+            p_258276_ -> p_258276_.group(p_258276_.absent(acquiringMemory))
                     .apply(
                         p_258276_,
                         p_258300_ -> (p_258292_, p_258293_, p_258294_) -> {
-                                if (p_259108_ && p_258293_.isBaby()) {
+                                if (onlyIfAdult && p_258293_.isBaby()) {
                                     return false;
                                 } else if (mutablelong.getValue() == 0L) {
                                     mutablelong.setValue(p_258292_.getGameTime() + (long)p_258292_.random.nextInt(20));
@@ -74,7 +74,7 @@ public class AcquirePoi {
                                         }
                                     };
                                     Set<Pair<Holder<PoiType>, BlockPos>> set = poimanager.findAllClosestFirstWithType(
-                                            p_260007_, predicate, p_258293_.blockPosition(), 48, PoiManager.Occupancy.HAS_SPACE
+                                            acquirablePois, predicate, p_258293_.blockPosition(), 48, PoiManager.Occupancy.HAS_SPACE
                                         )
                                         .limit(5L)
                                         .collect(Collectors.toSet());
@@ -82,9 +82,9 @@ public class AcquirePoi {
                                     if (path != null && path.canReach()) {
                                         BlockPos blockpos = path.getTarget();
                                         poimanager.getType(blockpos).ifPresent(p_340720_ -> {
-                                            poimanager.take(p_260007_, (p_217108_, p_217109_) -> p_217109_.equals(blockpos), blockpos, 1);
+                                            poimanager.take(acquirablePois, (p_217108_, p_217109_) -> p_217109_.equals(blockpos), blockpos, 1);
                                             p_258300_.set(GlobalPos.of(p_258292_.dimension(), blockpos));
-                                            p_260129_.ifPresent(p_147369_ -> p_258292_.broadcastEntityEvent(p_258293_, p_147369_));
+                                            entityEventId.ifPresent(p_147369_ -> p_258292_.broadcastEntityEvent(p_258293_, p_147369_));
                                             long2objectmap.clear();
                                             DebugPackets.sendPoiTicketCountPacket(p_258292_, blockpos);
                                         });
@@ -101,25 +101,25 @@ public class AcquirePoi {
                             }
                     )
         );
-        return p_260194_ == p_259129_
+        return acquiringMemory == existingAbsentMemory
             ? oneshot
-            : BehaviorBuilder.create(p_258269_ -> p_258269_.group(p_258269_.absent(p_259129_)).apply(p_258269_, p_258302_ -> oneshot));
+            : BehaviorBuilder.create(p_258269_ -> p_258269_.group(p_258269_.absent(existingAbsentMemory)).apply(p_258269_, p_258302_ -> oneshot));
     }
 
     @Nullable
-    public static Path findPathToPois(Mob p_217098_, Set<Pair<Holder<PoiType>, BlockPos>> p_217099_) {
-        if (p_217099_.isEmpty()) {
+    public static Path findPathToPois(Mob mob, Set<Pair<Holder<PoiType>, BlockPos>> poiPositions) {
+        if (poiPositions.isEmpty()) {
             return null;
         } else {
             Set<BlockPos> set = new HashSet<>();
             int i = 1;
 
-            for (Pair<Holder<PoiType>, BlockPos> pair : p_217099_) {
+            for (Pair<Holder<PoiType>, BlockPos> pair : poiPositions) {
                 i = Math.max(i, pair.getFirst().value().validRange());
                 set.add(pair.getSecond());
             }
 
-            return p_217098_.getNavigation().createPath(set, i);
+            return mob.getNavigation().createPath(set, i);
         }
     }
 
@@ -132,24 +132,24 @@ public class AcquirePoi {
         private long nextScheduledAttemptTimestamp;
         private int currentDelay;
 
-        JitteredLinearRetry(RandomSource p_217111_, long p_217112_) {
-            this.random = p_217111_;
-            this.markAttempt(p_217112_);
+        JitteredLinearRetry(RandomSource random, long timestamp) {
+            this.random = random;
+            this.markAttempt(timestamp);
         }
 
-        public void markAttempt(long p_22381_) {
-            this.previousAttemptTimestamp = p_22381_;
+        public void markAttempt(long timestamp) {
+            this.previousAttemptTimestamp = timestamp;
             int i = this.currentDelay + this.random.nextInt(40) + 40;
             this.currentDelay = Math.min(i, 400);
-            this.nextScheduledAttemptTimestamp = p_22381_ + (long)this.currentDelay;
+            this.nextScheduledAttemptTimestamp = timestamp + (long)this.currentDelay;
         }
 
-        public boolean isStillValid(long p_22383_) {
-            return p_22383_ - this.previousAttemptTimestamp < 400L;
+        public boolean isStillValid(long timestamp) {
+            return timestamp - this.previousAttemptTimestamp < 400L;
         }
 
-        public boolean shouldRetry(long p_22385_) {
-            return p_22385_ >= this.nextScheduledAttemptTimestamp;
+        public boolean shouldRetry(long timestamp) {
+            return timestamp >= this.nextScheduledAttemptTimestamp;
         }
 
         @Override

@@ -16,46 +16,74 @@ public interface Container extends Clearable {
 
     boolean isEmpty();
 
-    ItemStack getItem(int p_18941_);
+    /**
+     * Returns the stack in the given slot.
+     */
+    ItemStack getItem(int slot);
 
-    ItemStack removeItem(int p_18942_, int p_18943_);
+    /**
+     * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
+     */
+    ItemStack removeItem(int slot, int amount);
 
-    ItemStack removeItemNoUpdate(int p_18951_);
+    /**
+     * Removes a stack from the given slot and returns it.
+     */
+    ItemStack removeItemNoUpdate(int slot);
 
-    void setItem(int p_18944_, ItemStack p_18945_);
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
+    void setItem(int slot, ItemStack stack);
 
     default int getMaxStackSize() {
         return 99;
     }
 
-    default int getMaxStackSize(ItemStack p_335963_) {
-        return Math.min(this.getMaxStackSize(), p_335963_.getMaxStackSize());
+    default int getMaxStackSize(ItemStack stack) {
+        return Math.min(this.getMaxStackSize(), stack.getMaxStackSize());
     }
 
     void setChanged();
 
-    boolean stillValid(Player p_18946_);
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
+    boolean stillValid(Player player);
 
-    default void startOpen(Player p_18955_) {
+    default void startOpen(Player player) {
     }
 
-    default void stopOpen(Player p_18954_) {
+    default void stopOpen(Player player) {
     }
 
-    default boolean canPlaceItem(int p_18952_, ItemStack p_18953_) {
+    /**
+     * Returns {@code true} if automation is allowed to insert the given stack (ignoring stack size) into the given slot. For guis use Slot.isItemValid
+     */
+    default boolean canPlaceItem(int slot, ItemStack stack) {
         return true;
     }
 
-    default boolean canTakeItem(Container p_273520_, int p_272681_, ItemStack p_273702_) {
+    /**
+     * {@return {@code true} if the given stack can be extracted into the target inventory}
+     *
+     * @param target the container into which the item should be extracted
+     * @param slot   the slot from which to extract the item
+     * @param stack  the item to extract
+     */
+    default boolean canTakeItem(Container target, int slot, ItemStack stack) {
         return true;
     }
 
-    default int countItem(Item p_18948_) {
+    /**
+     * Returns the total amount of the specified item in this inventory. This method does not check for nbt.
+     */
+    default int countItem(Item item) {
         int i = 0;
 
         for (int j = 0; j < this.getContainerSize(); j++) {
             ItemStack itemstack = this.getItem(j);
-            if (itemstack.getItem().equals(p_18948_)) {
+            if (itemstack.getItem().equals(item)) {
                 i += itemstack.getCount();
             }
         }
@@ -63,14 +91,17 @@ public interface Container extends Clearable {
         return i;
     }
 
-    default boolean hasAnyOf(Set<Item> p_18950_) {
-        return this.hasAnyMatching(p_216873_ -> !p_216873_.isEmpty() && p_18950_.contains(p_216873_.getItem()));
+    /**
+     * Returns {@code true} if any item from the passed set exists in this inventory.
+     */
+    default boolean hasAnyOf(Set<Item> set) {
+        return this.hasAnyMatching(p_216873_ -> !p_216873_.isEmpty() && set.contains(p_216873_.getItem()));
     }
 
-    default boolean hasAnyMatching(Predicate<ItemStack> p_216875_) {
+    default boolean hasAnyMatching(Predicate<ItemStack> predicate) {
         for (int i = 0; i < this.getContainerSize(); i++) {
             ItemStack itemstack = this.getItem(i);
-            if (p_216875_.test(itemstack)) {
+            if (predicate.test(itemstack)) {
                 return true;
             }
         }
@@ -78,17 +109,17 @@ public interface Container extends Clearable {
         return false;
     }
 
-    static boolean stillValidBlockEntity(BlockEntity p_273154_, Player p_273222_) {
-        return stillValidBlockEntity(p_273154_, p_273222_, 4.0F);
+    static boolean stillValidBlockEntity(BlockEntity blockEntity, Player player) {
+        return stillValidBlockEntity(blockEntity, player, 4.0F);
     }
 
-    static boolean stillValidBlockEntity(BlockEntity p_272877_, Player p_272670_, float p_320837_) {
-        Level level = p_272877_.getLevel();
-        BlockPos blockpos = p_272877_.getBlockPos();
+    static boolean stillValidBlockEntity(BlockEntity blockEntity, Player player, float distance) {
+        Level level = blockEntity.getLevel();
+        BlockPos blockpos = blockEntity.getBlockPos();
         if (level == null) {
             return false;
         } else {
-            return level.getBlockEntity(blockpos) != p_272877_ ? false : p_272670_.canInteractWithBlock(blockpos, (double)p_320837_);
+            return level.getBlockEntity(blockpos) != blockEntity ? false : player.canInteractWithBlock(blockpos, (double)distance);
         }
     }
 }

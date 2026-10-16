@@ -18,36 +18,36 @@ public class SmithingTrimRecipeBuilder {
     private final Ingredient addition;
     private final Map<String, Criterion<?>> criteria = new LinkedHashMap<>();
 
-    public SmithingTrimRecipeBuilder(RecipeCategory p_267007_, Ingredient p_266712_, Ingredient p_267018_, Ingredient p_267264_) {
-        this.category = p_267007_;
-        this.template = p_266712_;
-        this.base = p_267018_;
-        this.addition = p_267264_;
+    public SmithingTrimRecipeBuilder(RecipeCategory category, Ingredient template, Ingredient base, Ingredient addition) {
+        this.category = category;
+        this.template = template;
+        this.base = base;
+        this.addition = addition;
     }
 
-    public static SmithingTrimRecipeBuilder smithingTrim(Ingredient p_266812_, Ingredient p_266843_, Ingredient p_267309_, RecipeCategory p_267269_) {
-        return new SmithingTrimRecipeBuilder(p_267269_, p_266812_, p_266843_, p_267309_);
+    public static SmithingTrimRecipeBuilder smithingTrim(Ingredient template, Ingredient base, Ingredient addition, RecipeCategory category) {
+        return new SmithingTrimRecipeBuilder(category, template, base, addition);
     }
 
-    public SmithingTrimRecipeBuilder unlocks(String p_266882_, Criterion<?> p_301261_) {
-        this.criteria.put(p_266882_, p_301261_);
+    public SmithingTrimRecipeBuilder unlocks(String key, Criterion<?> criterion) {
+        this.criteria.put(key, criterion);
         return this;
     }
 
-    public void save(RecipeOutput p_301110_, ResourceLocation p_266718_) {
-        this.ensureValid(p_266718_);
-        Advancement.Builder advancement$builder = p_301110_.advancement()
-            .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(p_266718_))
-            .rewards(AdvancementRewards.Builder.recipe(p_266718_))
+    public void save(RecipeOutput recipeOutput, ResourceLocation recipeId) {
+        this.ensureValid(recipeId);
+        Advancement.Builder advancement$builder = recipeOutput.advancement()
+            .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(recipeId))
+            .rewards(AdvancementRewards.Builder.recipe(recipeId))
             .requirements(AdvancementRequirements.Strategy.OR);
         this.criteria.forEach(advancement$builder::addCriterion);
         SmithingTrimRecipe smithingtrimrecipe = new SmithingTrimRecipe(this.template, this.base, this.addition);
-        p_301110_.accept(p_266718_, smithingtrimrecipe, advancement$builder.build(p_266718_.withPrefix("recipes/" + this.category.getFolderName() + "/")));
+        recipeOutput.accept(recipeId, smithingtrimrecipe, advancement$builder.build(recipeId.withPrefix("recipes/" + this.category.getFolderName() + "/")));
     }
 
-    private void ensureValid(ResourceLocation p_267040_) {
+    private void ensureValid(ResourceLocation location) {
         if (this.criteria.isEmpty()) {
-            throw new IllegalStateException("No way of obtaining recipe " + p_267040_);
+            throw new IllegalStateException("No way of obtaining recipe " + location);
         }
     }
 }

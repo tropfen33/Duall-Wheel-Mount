@@ -6,19 +6,19 @@ import net.minecraft.server.level.ServerPlayer;
 public class ServerItemCooldowns extends ItemCooldowns {
     private final ServerPlayer player;
 
-    public ServerItemCooldowns(ServerPlayer p_43067_) {
-        this.player = p_43067_;
+    public ServerItemCooldowns(ServerPlayer player) {
+        this.player = player;
     }
 
     @Override
-    protected void onCooldownStarted(Item p_43069_, int p_43070_) {
-        super.onCooldownStarted(p_43069_, p_43070_);
-        this.player.connection.send(new ClientboundCooldownPacket(p_43069_, p_43070_));
+    protected void onCooldownStarted(Item item, int ticks) {
+        super.onCooldownStarted(item, ticks);
+        this.player.connection.send(new ClientboundCooldownPacket(item, ticks));
     }
 
     @Override
-    protected void onCooldownEnded(Item p_43072_) {
-        super.onCooldownEnded(p_43072_);
-        this.player.connection.send(new ClientboundCooldownPacket(p_43072_, 0));
+    protected void onCooldownEnded(Item item) {
+        super.onCooldownEnded(item);
+        this.player.connection.send(new ClientboundCooldownPacket(item, 0));
     }
 }

@@ -57,119 +57,136 @@ public class EnderChestBlock extends AbstractChestBlock<EnderChestBlockEntity> i
 
     @Override
     public DoubleBlockCombiner.NeighborCombineResult<? extends ChestBlockEntity> combine(
-        BlockState p_53149_, Level p_53150_, BlockPos p_53151_, boolean p_53152_
+        BlockState state, Level level, BlockPos pos, boolean override
     ) {
         return DoubleBlockCombiner.Combiner::acceptNone;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_53171_, BlockGetter p_53172_, BlockPos p_53173_, CollisionContext p_53174_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_53169_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_53128_) {
-        FluidState fluidstate = p_53128_.getLevel().getFluidState(p_53128_.getClickedPos());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
         return this.defaultBlockState()
-            .setValue(FACING, p_53128_.getHorizontalDirection().getOpposite())
+            .setValue(FACING, context.getHorizontalDirection().getOpposite())
             .setValue(WATERLOGGED, Boolean.valueOf(fluidstate.getType() == Fluids.WATER));
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_53137_, Level p_53138_, BlockPos p_53139_, Player p_53140_, BlockHitResult p_53142_) {
-        PlayerEnderChestContainer playerenderchestcontainer = p_53140_.getEnderChestInventory();
-        BlockEntity blockentity = p_53138_.getBlockEntity(p_53139_);
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        PlayerEnderChestContainer playerenderchestcontainer = player.getEnderChestInventory();
+        BlockEntity blockentity = level.getBlockEntity(pos);
         if (playerenderchestcontainer != null && blockentity instanceof EnderChestBlockEntity) {
-            BlockPos blockpos = p_53139_.above();
-            if (p_53138_.getBlockState(blockpos).isRedstoneConductor(p_53138_, blockpos)) {
-                return InteractionResult.sidedSuccess(p_53138_.isClientSide);
-            } else if (p_53138_.isClientSide) {
+            BlockPos blockpos = pos.above();
+            if (level.getBlockState(blockpos).isRedstoneConductor(level, blockpos)) {
+                return InteractionResult.sidedSuccess(level.isClientSide);
+            } else if (level.isClientSide) {
                 return InteractionResult.SUCCESS;
             } else {
                 EnderChestBlockEntity enderchestblockentity = (EnderChestBlockEntity)blockentity;
                 playerenderchestcontainer.setActiveChest(enderchestblockentity);
-                p_53140_.openMenu(
+                player.openMenu(
                     new SimpleMenuProvider(
                         (p_53124_, p_53125_, p_53126_) -> ChestMenu.threeRows(p_53124_, p_53125_, playerenderchestcontainer), CONTAINER_TITLE
                     )
                 );
-                p_53140_.awardStat(Stats.OPEN_ENDERCHEST);
-                PiglinAi.angerNearbyPiglins(p_53140_, true);
+                player.awardStat(Stats.OPEN_ENDERCHEST);
+                PiglinAi.angerNearbyPiglins(player, true);
                 return InteractionResult.CONSUME;
             }
         } else {
-            return InteractionResult.sidedSuccess(p_53138_.isClientSide);
+            return InteractionResult.sidedSuccess(level.isClientSide);
         }
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_153208_, BlockState p_153209_) {
-        return new EnderChestBlockEntity(p_153208_, p_153209_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new EnderChestBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_153199_, BlockState p_153200_, BlockEntityType<T> p_153201_) {
-        return p_153199_.isClientSide ? createTickerHelper(p_153201_, BlockEntityType.ENDER_CHEST, EnderChestBlockEntity::lidAnimateTick) : null;
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        return level.isClientSide ? createTickerHelper(blockEntityType, BlockEntityType.ENDER_CHEST, EnderChestBlockEntity::lidAnimateTick) : null;
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_221117_, Level p_221118_, BlockPos p_221119_, RandomSource p_221120_) {
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
         for (int i = 0; i < 3; i++) {
-            int j = p_221120_.nextInt(2) * 2 - 1;
-            int k = p_221120_.nextInt(2) * 2 - 1;
-            double d0 = (double)p_221119_.getX() + 0.5 + 0.25 * (double)j;
-            double d1 = (double)((float)p_221119_.getY() + p_221120_.nextFloat());
-            double d2 = (double)p_221119_.getZ() + 0.5 + 0.25 * (double)k;
-            double d3 = (double)(p_221120_.nextFloat() * (float)j);
-            double d4 = ((double)p_221120_.nextFloat() - 0.5) * 0.125;
-            double d5 = (double)(p_221120_.nextFloat() * (float)k);
-            p_221118_.addParticle(ParticleTypes.PORTAL, d0, d1, d2, d3, d4, d5);
+            int j = random.nextInt(2) * 2 - 1;
+            int k = random.nextInt(2) * 2 - 1;
+            double d0 = (double)pos.getX() + 0.5 + 0.25 * (double)j;
+            double d1 = (double)((float)pos.getY() + random.nextFloat());
+            double d2 = (double)pos.getZ() + 0.5 + 0.25 * (double)k;
+            double d3 = (double)(random.nextFloat() * (float)j);
+            double d4 = ((double)random.nextFloat() - 0.5) * 0.125;
+            double d5 = (double)(random.nextFloat() * (float)k);
+            level.addParticle(ParticleTypes.PORTAL, d0, d1, d2, d3, d4, d5);
         }
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_53157_, Rotation p_53158_) {
-        return p_53157_.setValue(FACING, p_53158_.rotate(p_53157_.getValue(FACING)));
+    protected BlockState rotate(BlockState state, Rotation rot) {
+        return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState mirror(BlockState p_53154_, Mirror p_53155_) {
-        return p_53154_.rotate(p_53155_.getRotation(p_53154_.getValue(FACING)));
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, WATERLOGGED);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_53167_) {
-        p_53167_.add(FACING, WATERLOGGED);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected FluidState getFluidState(BlockState p_53177_) {
-        return p_53177_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_53177_);
-    }
-
-    @Override
-    protected BlockState updateShape(BlockState p_53160_, Direction p_53161_, BlockState p_53162_, LevelAccessor p_53163_, BlockPos p_53164_, BlockPos p_53165_) {
-        if (p_53160_.getValue(WATERLOGGED)) {
-            p_53163_.scheduleTick(p_53164_, Fluids.WATER, Fluids.WATER.getTickDelay(p_53163_));
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        return super.updateShape(p_53160_, p_53161_, p_53162_, p_53163_, p_53164_, p_53165_);
+        return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_53132_, PathComputationType p_53135_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
     @Override
-    protected void tick(BlockState p_221112_, ServerLevel p_221113_, BlockPos p_221114_, RandomSource p_221115_) {
-        BlockEntity blockentity = p_221113_.getBlockEntity(p_221114_);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        BlockEntity blockentity = level.getBlockEntity(pos);
         if (blockentity instanceof EnderChestBlockEntity) {
             ((EnderChestBlockEntity)blockentity).recheckOpen();
         }

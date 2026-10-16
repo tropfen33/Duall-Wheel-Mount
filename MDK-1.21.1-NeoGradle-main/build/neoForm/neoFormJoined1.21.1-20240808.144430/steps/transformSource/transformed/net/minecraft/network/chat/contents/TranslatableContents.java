@@ -54,33 +54,36 @@ public class TranslatableContents implements ComponentContents {
     private final Object[] args;
     @Nullable
     private Language decomposedWith;
+    /**
+     * The discrete elements that make up this component. For example, this would be ["Prefix, ", "FirstArg", "SecondArg", " again ", "SecondArg", " and ", "FirstArg", " lastly ", "ThirdArg", " and also ", "FirstArg", " again!"] for "translation.test.complex" (see en_us.json)
+     */
     private List<FormattedText> decomposedParts = ImmutableList.of();
     private static final Pattern FORMAT_PATTERN = Pattern.compile("%(?:(\\d+)\\$)?([A-Za-z%]|$)");
 
-    private static DataResult<Object> filterAllowedArguments(@Nullable Object p_304727_) {
-        return !isAllowedPrimitiveArgument(p_304727_) ? DataResult.error(() -> "This value needs to be parsed as component") : DataResult.success(p_304727_);
+    private static DataResult<Object> filterAllowedArguments(@Nullable Object input) {
+        return !isAllowedPrimitiveArgument(input) ? DataResult.error(() -> "This value needs to be parsed as component") : DataResult.success(input);
     }
 
-    public static boolean isAllowedPrimitiveArgument(@Nullable Object p_304690_) {
-        return p_304690_ instanceof Number || p_304690_ instanceof Boolean || p_304690_ instanceof String;
+    public static boolean isAllowedPrimitiveArgument(@Nullable Object input) {
+        return input instanceof Number || input instanceof Boolean || input instanceof String;
     }
 
-    private static Optional<List<Object>> adjustArgs(Object[] p_304743_) {
-        return p_304743_.length == 0 ? Optional.empty() : Optional.of(Arrays.asList(p_304743_));
+    private static Optional<List<Object>> adjustArgs(Object[] args) {
+        return args.length == 0 ? Optional.empty() : Optional.of(Arrays.asList(args));
     }
 
-    private static Object[] adjustArgs(Optional<List<Object>> p_304744_) {
-        return p_304744_.<Object[]>map(p_304855_ -> p_304855_.isEmpty() ? NO_ARGS : p_304855_.toArray()).orElse(NO_ARGS);
+    private static Object[] adjustArgs(Optional<List<Object>> args) {
+        return args.<Object[]>map(p_304855_ -> p_304855_.isEmpty() ? NO_ARGS : p_304855_.toArray()).orElse(NO_ARGS);
     }
 
-    private static TranslatableContents create(String p_304502_, Optional<String> p_304440_, Optional<List<Object>> p_304710_) {
-        return new TranslatableContents(p_304502_, p_304440_.orElse(null), adjustArgs(p_304710_));
+    private static TranslatableContents create(String key, Optional<String> fallback, Optional<List<Object>> args) {
+        return new TranslatableContents(key, fallback.orElse(null), adjustArgs(args));
     }
 
-    public TranslatableContents(String p_265775_, @Nullable String p_265204_, Object[] p_265752_) {
-        this.key = p_265775_;
-        this.fallback = p_265204_;
-        this.args = p_265752_;
+    public TranslatableContents(String key, @Nullable String fallback, Object[] args) {
+        this.key = key;
+        this.fallback = fallback;
+        this.args = args;
         if (!net.neoforged.fml.loading.FMLEnvironment.production) {
             for (Object arg : this.args) {
                 if (!(arg instanceof Component) && !isAllowedPrimitiveArgument(arg)) {
@@ -118,8 +121,8 @@ public class TranslatableContents implements ComponentContents {
         }
     }
 
-    private void decomposeTemplate(String p_237516_, Consumer<FormattedText> p_237517_) {
-        Matcher matcher = FORMAT_PATTERN.matcher(p_237516_);
+    private void decomposeTemplate(String formatTemplate, Consumer<FormattedText> consumer) {
+        Matcher matcher = FORMAT_PATTERN.matcher(formatTemplate);
 
         try {
             int i = 0;
@@ -129,18 +132,18 @@ public class TranslatableContents implements ComponentContents {
                 int k = matcher.start();
                 int l = matcher.end();
                 if (k > j) {
-                    String s = p_237516_.substring(j, k);
+                    String s = formatTemplate.substring(j, k);
                     if (s.indexOf(37) != -1) {
                         throw new IllegalArgumentException();
                     }
 
-                    p_237517_.accept(FormattedText.of(s));
+                    consumer.accept(FormattedText.of(s));
                 }
 
                 String s4 = matcher.group(2);
-                String s1 = p_237516_.substring(k, l);
+                String s1 = formatTemplate.substring(k, l);
                 if ("%".equals(s4) && "%%".equals(s1)) {
-                    p_237517_.accept(TEXT_PERCENT);
+                    consumer.accept(TEXT_PERCENT);
                 } else {
                     if (!"s".equals(s4)) {
                         throw new TranslatableFormatException(this, "Unsupported format: '" + s1 + "'");
@@ -148,40 +151,40 @@ public class TranslatableContents implements ComponentContents {
 
                     String s2 = matcher.group(1);
                     int i1 = s2 != null ? Integer.parseInt(s2) - 1 : i++;
-                    p_237517_.accept(this.getArgument(i1));
+                    consumer.accept(this.getArgument(i1));
                 }
 
                 j = l;
             }
 
-            if (j < p_237516_.length()) {
-                String s3 = p_237516_.substring(j);
+            if (j < formatTemplate.length()) {
+                String s3 = formatTemplate.substring(j);
                 if (s3.indexOf(37) != -1) {
                     throw new IllegalArgumentException();
                 }
 
-                p_237517_.accept(FormattedText.of(s3));
+                consumer.accept(FormattedText.of(s3));
             }
         } catch (IllegalArgumentException illegalargumentexception) {
             throw new TranslatableFormatException(this, illegalargumentexception);
         }
     }
 
-    private FormattedText getArgument(int p_237510_) {
-        if (p_237510_ >= 0 && p_237510_ < this.args.length) {
-            Object object = this.args[p_237510_];
+    private FormattedText getArgument(int index) {
+        if (index >= 0 && index < this.args.length) {
+            Object object = this.args[index];
             if (object instanceof Component) {
                 return (Component)object;
             } else {
                 return object == null ? TEXT_NULL : FormattedText.of(object.toString());
             }
         } else {
-            throw new TranslatableFormatException(this, p_237510_);
+            throw new TranslatableFormatException(this, index);
         }
     }
 
     @Override
-    public <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> p_237521_, Style p_237522_) {
+    public <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> styledContentConsumer, Style style) {
         this.decompose();
 
         if (!net.neoforged.neoforge.common.util.InsertingContents.pushTranslation(this)) {
@@ -191,7 +194,7 @@ public class TranslatableContents implements ComponentContents {
 
         try {
         for (FormattedText formattedtext : this.decomposedParts) {
-            Optional<T> optional = formattedtext.visit(p_237521_, p_237522_);
+            Optional<T> optional = formattedtext.visit(styledContentConsumer, style);
             if (optional.isPresent()) {
                 return optional;
             }
@@ -204,7 +207,7 @@ public class TranslatableContents implements ComponentContents {
     }
 
     @Override
-    public <T> Optional<T> visit(FormattedText.ContentConsumer<T> p_237519_) {
+    public <T> Optional<T> visit(FormattedText.ContentConsumer<T> contentConsumer) {
         this.decompose();
 
         if (!net.neoforged.neoforge.common.util.InsertingContents.pushTranslation(this)) {
@@ -214,7 +217,7 @@ public class TranslatableContents implements ComponentContents {
 
         try {
         for (FormattedText formattedtext : this.decomposedParts) {
-            Optional<T> optional = formattedtext.visit(p_237519_);
+            Optional<T> optional = formattedtext.visit(contentConsumer);
             if (optional.isPresent()) {
                 return optional;
             }
@@ -227,13 +230,13 @@ public class TranslatableContents implements ComponentContents {
     }
 
     @Override
-    public MutableComponent resolve(@Nullable CommandSourceStack p_237512_, @Nullable Entity p_237513_, int p_237514_) throws CommandSyntaxException {
+    public MutableComponent resolve(@Nullable CommandSourceStack nbtPathPattern, @Nullable Entity entity, int recursionDepth) throws CommandSyntaxException {
         Object[] aobject = new Object[this.args.length];
 
         for (int i = 0; i < aobject.length; i++) {
             Object object = this.args[i];
             if (object instanceof Component component) {
-                aobject[i] = ComponentUtils.updateForEntity(p_237512_, component, p_237513_, p_237514_);
+                aobject[i] = ComponentUtils.updateForEntity(nbtPathPattern, component, entity, recursionDepth);
             } else {
                 aobject[i] = object;
             }
@@ -243,11 +246,11 @@ public class TranslatableContents implements ComponentContents {
     }
 
     @Override
-    public boolean equals(Object p_237526_) {
-        if (this == p_237526_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            if (p_237526_ instanceof TranslatableContents translatablecontents
+            if (other instanceof TranslatableContents translatablecontents
                 && Objects.equals(this.key, translatablecontents.key)
                 && Objects.equals(this.fallback, translatablecontents.fallback)
                 && Arrays.equals(this.args, translatablecontents.args)) {

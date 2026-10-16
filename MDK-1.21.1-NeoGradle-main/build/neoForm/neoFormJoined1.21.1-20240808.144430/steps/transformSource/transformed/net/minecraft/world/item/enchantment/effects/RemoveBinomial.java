@@ -12,17 +12,17 @@ public record RemoveBinomial(LevelBasedValue chance) implements EnchantmentValue
     );
 
     @Override
-    public float process(int p_345642_, RandomSource p_345903_, float p_345714_) {
-        float f = this.chance.calculate(p_345642_);
+    public float process(int enchantmentLevel, RandomSource random, float value) {
+        float f = this.chance.calculate(enchantmentLevel);
         int i = 0;
 
-        for (int j = 0; (float)j < p_345714_; j++) {
-            if (p_345903_.nextFloat() < f) {
+        for (int j = 0; (float)j < value; j++) {
+            if (random.nextFloat() < f) {
                 i++;
             }
         }
 
-        return p_345714_ - (float)i;
+        return value - (float)i;
     }
 
     @Override

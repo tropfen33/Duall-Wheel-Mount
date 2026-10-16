@@ -19,30 +19,30 @@ public abstract class AgeableListModel<E extends Entity> extends EntityModel<E> 
     private final float babyBodyScale;
     private final float bodyYOffset;
 
-    protected AgeableListModel(boolean p_102023_, float p_102024_, float p_102025_) {
-        this(p_102023_, p_102024_, p_102025_, 2.0F, 2.0F, 24.0F);
+    protected AgeableListModel(boolean scaleHead, float babyYHeadOffset, float babyZHeadOffset) {
+        this(scaleHead, babyYHeadOffset, babyZHeadOffset, 2.0F, 2.0F, 24.0F);
     }
 
-    protected AgeableListModel(boolean p_102027_, float p_102028_, float p_102029_, float p_102030_, float p_102031_, float p_102032_) {
-        this(RenderType::entityCutoutNoCull, p_102027_, p_102028_, p_102029_, p_102030_, p_102031_, p_102032_);
+    protected AgeableListModel(boolean scaleHead, float babyYHeadOffset, float babyZHeadOffset, float babyHeadScale, float babyBodyScale, float bodyYOffset) {
+        this(RenderType::entityCutoutNoCull, scaleHead, babyYHeadOffset, babyZHeadOffset, babyHeadScale, babyBodyScale, bodyYOffset);
     }
 
     protected AgeableListModel(
-        Function<ResourceLocation, RenderType> p_102015_,
-        boolean p_102016_,
-        float p_102017_,
-        float p_102018_,
-        float p_102019_,
-        float p_102020_,
-        float p_102021_
+        Function<ResourceLocation, RenderType> renderType,
+        boolean scaleHead,
+        float babyYHeadOffset,
+        float babyZHeadOffset,
+        float babyHeadScale,
+        float babyBodyScale,
+        float bodyYOffset
     ) {
-        super(p_102015_);
-        this.scaleHead = p_102016_;
-        this.babyYHeadOffset = p_102017_;
-        this.babyZHeadOffset = p_102018_;
-        this.babyHeadScale = p_102019_;
-        this.babyBodyScale = p_102020_;
-        this.bodyYOffset = p_102021_;
+        super(renderType);
+        this.scaleHead = scaleHead;
+        this.babyYHeadOffset = babyYHeadOffset;
+        this.babyZHeadOffset = babyZHeadOffset;
+        this.babyHeadScale = babyHeadScale;
+        this.babyBodyScale = babyBodyScale;
+        this.bodyYOffset = bodyYOffset;
     }
 
     protected AgeableListModel() {
@@ -50,26 +50,26 @@ public abstract class AgeableListModel<E extends Entity> extends EntityModel<E> 
     }
 
     @Override
-    public void renderToBuffer(PoseStack p_102034_, VertexConsumer p_102035_, int p_102036_, int p_102037_, int p_350361_) {
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
         if (this.young) {
-            p_102034_.pushPose();
+            poseStack.pushPose();
             if (this.scaleHead) {
                 float f = 1.5F / this.babyHeadScale;
-                p_102034_.scale(f, f, f);
+                poseStack.scale(f, f, f);
             }
 
-            p_102034_.translate(0.0F, this.babyYHeadOffset / 16.0F, this.babyZHeadOffset / 16.0F);
-            this.headParts().forEach(p_349807_ -> p_349807_.render(p_102034_, p_102035_, p_102036_, p_102037_, p_350361_));
-            p_102034_.popPose();
-            p_102034_.pushPose();
+            poseStack.translate(0.0F, this.babyYHeadOffset / 16.0F, this.babyZHeadOffset / 16.0F);
+            this.headParts().forEach(p_349807_ -> p_349807_.render(poseStack, buffer, packedLight, packedOverlay, color));
+            poseStack.popPose();
+            poseStack.pushPose();
             float f1 = 1.0F / this.babyBodyScale;
-            p_102034_.scale(f1, f1, f1);
-            p_102034_.translate(0.0F, this.bodyYOffset / 16.0F, 0.0F);
-            this.bodyParts().forEach(p_349825_ -> p_349825_.render(p_102034_, p_102035_, p_102036_, p_102037_, p_350361_));
-            p_102034_.popPose();
+            poseStack.scale(f1, f1, f1);
+            poseStack.translate(0.0F, this.bodyYOffset / 16.0F, 0.0F);
+            this.bodyParts().forEach(p_349825_ -> p_349825_.render(poseStack, buffer, packedLight, packedOverlay, color));
+            poseStack.popPose();
         } else {
-            this.headParts().forEach(p_349819_ -> p_349819_.render(p_102034_, p_102035_, p_102036_, p_102037_, p_350361_));
-            this.bodyParts().forEach(p_349813_ -> p_349813_.render(p_102034_, p_102035_, p_102036_, p_102037_, p_350361_));
+            this.headParts().forEach(p_349819_ -> p_349819_.render(poseStack, buffer, packedLight, packedOverlay, color));
+            this.bodyParts().forEach(p_349813_ -> p_349813_.render(poseStack, buffer, packedLight, packedOverlay, color));
         }
     }
 

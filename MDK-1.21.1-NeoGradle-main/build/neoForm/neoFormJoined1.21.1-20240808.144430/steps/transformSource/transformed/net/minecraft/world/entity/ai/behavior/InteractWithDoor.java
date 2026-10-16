@@ -90,33 +90,33 @@ public class InteractWithDoor {
     }
 
     public static void closeDoorsThatIHaveOpenedOrPassedThrough(
-        ServerLevel p_260343_,
-        LivingEntity p_259371_,
-        @Nullable Node p_259408_,
-        @Nullable Node p_260013_,
-        Set<GlobalPos> p_259401_,
-        Optional<List<LivingEntity>> p_260015_
+        ServerLevel level,
+        LivingEntity entity,
+        @Nullable Node previous,
+        @Nullable Node next,
+        Set<GlobalPos> doorPositions,
+        Optional<List<LivingEntity>> nearestLivingEntities
     ) {
-        Iterator<GlobalPos> iterator = p_259401_.iterator();
+        Iterator<GlobalPos> iterator = doorPositions.iterator();
 
         while (iterator.hasNext()) {
             GlobalPos globalpos = iterator.next();
             BlockPos blockpos = globalpos.pos();
-            if ((p_259408_ == null || !p_259408_.asBlockPos().equals(blockpos)) && (p_260013_ == null || !p_260013_.asBlockPos().equals(blockpos))) {
-                if (isDoorTooFarAway(p_260343_, p_259371_, globalpos)) {
+            if ((previous == null || !previous.asBlockPos().equals(blockpos)) && (next == null || !next.asBlockPos().equals(blockpos))) {
+                if (isDoorTooFarAway(level, entity, globalpos)) {
                     iterator.remove();
                 } else {
-                    BlockState blockstate = p_260343_.getBlockState(blockpos);
+                    BlockState blockstate = level.getBlockState(blockpos);
                     if (!blockstate.is(BlockTags.MOB_INTERACTABLE_DOORS, p_201952_ -> p_201952_.getBlock() instanceof DoorBlock)) {
                         iterator.remove();
                     } else {
                         DoorBlock doorblock = (DoorBlock)blockstate.getBlock();
                         if (!doorblock.isOpen(blockstate)) {
                             iterator.remove();
-                        } else if (areOtherMobsComingThroughDoor(p_259371_, blockpos, p_260015_)) {
+                        } else if (areOtherMobsComingThroughDoor(entity, blockpos, nearestLivingEntities)) {
                             iterator.remove();
                         } else {
-                            doorblock.setOpen(p_259371_, p_260343_, blockstate, blockpos, false);
+                            doorblock.setOpen(entity, level, blockstate, blockpos, false);
                             iterator.remove();
                         }
                     }
@@ -125,21 +125,21 @@ public class InteractWithDoor {
         }
     }
 
-    private static boolean areOtherMobsComingThroughDoor(LivingEntity p_260091_, BlockPos p_259764_, Optional<List<LivingEntity>> p_259365_) {
-        return p_259365_.isEmpty()
+    private static boolean areOtherMobsComingThroughDoor(LivingEntity entity, BlockPos pos, Optional<List<LivingEntity>> nearestLivingEntities) {
+        return nearestLivingEntities.isEmpty()
             ? false
-            : p_259365_.get()
+            : nearestLivingEntities.get()
                 .stream()
-                .filter(p_348184_ -> p_348184_.getType() == p_260091_.getType())
-                .filter(p_352722_ -> p_259764_.closerToCenterThan(p_352722_.position(), 2.0))
-                .anyMatch(p_258454_ -> isMobComingThroughDoor(p_258454_.getBrain(), p_259764_));
+                .filter(p_348184_ -> p_348184_.getType() == entity.getType())
+                .filter(p_352722_ -> pos.closerToCenterThan(p_352722_.position(), 2.0))
+                .anyMatch(p_258454_ -> isMobComingThroughDoor(p_258454_.getBrain(), pos));
     }
 
-    private static boolean isMobComingThroughDoor(Brain<?> p_259548_, BlockPos p_259146_) {
-        if (!p_259548_.hasMemoryValue(MemoryModuleType.PATH)) {
+    private static boolean isMobComingThroughDoor(Brain<?> brain, BlockPos pos) {
+        if (!brain.hasMemoryValue(MemoryModuleType.PATH)) {
             return false;
         } else {
-            Path path = p_259548_.getMemory(MemoryModuleType.PATH).get();
+            Path path = brain.getMemory(MemoryModuleType.PATH).get();
             if (path.isDone()) {
                 return false;
             } else {
@@ -148,26 +148,26 @@ public class InteractWithDoor {
                     return false;
                 } else {
                     Node node1 = path.getNextNode();
-                    return p_259146_.equals(node.asBlockPos()) || p_259146_.equals(node1.asBlockPos());
+                    return pos.equals(node.asBlockPos()) || pos.equals(node1.asBlockPos());
                 }
             }
         }
     }
 
-    private static boolean isDoorTooFarAway(ServerLevel p_23308_, LivingEntity p_23309_, GlobalPos p_23310_) {
-        return p_23310_.dimension() != p_23308_.dimension() || !p_23310_.pos().closerToCenterThan(p_23309_.position(), 3.0);
+    private static boolean isDoorTooFarAway(ServerLevel level, LivingEntity entity, GlobalPos pos) {
+        return pos.dimension() != level.dimension() || !pos.pos().closerToCenterThan(entity.position(), 3.0);
     }
 
     private static Optional<Set<GlobalPos>> rememberDoorToClose(
-        MemoryAccessor<Mu, Set<GlobalPos>> p_262178_, Optional<Set<GlobalPos>> p_261639_, ServerLevel p_261528_, BlockPos p_261874_
+        MemoryAccessor<Mu, Set<GlobalPos>> doorsToClose, Optional<Set<GlobalPos>> doorPositions, ServerLevel level, BlockPos pos
     ) {
-        GlobalPos globalpos = GlobalPos.of(p_261528_.dimension(), p_261874_);
-        return Optional.of(p_261639_.<Set<GlobalPos>>map(p_261437_ -> {
+        GlobalPos globalpos = GlobalPos.of(level.dimension(), pos);
+        return Optional.of(doorPositions.<Set<GlobalPos>>map(p_261437_ -> {
             p_261437_.add(globalpos);
             return p_261437_;
         }).orElseGet(() -> {
             Set<GlobalPos> set = Sets.newHashSet(globalpos);
-            p_262178_.set(set);
+            doorsToClose.set(set);
             return set;
         }));
     }

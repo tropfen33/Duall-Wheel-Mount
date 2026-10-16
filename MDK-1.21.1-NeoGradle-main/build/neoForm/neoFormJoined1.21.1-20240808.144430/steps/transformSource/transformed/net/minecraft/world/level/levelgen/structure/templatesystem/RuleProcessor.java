@@ -14,32 +14,32 @@ public class RuleProcessor extends StructureProcessor {
     public static final MapCodec<RuleProcessor> CODEC = ProcessorRule.CODEC.listOf().fieldOf("rules").xmap(RuleProcessor::new, p_74306_ -> p_74306_.rules);
     private final ImmutableList<ProcessorRule> rules;
 
-    public RuleProcessor(List<? extends ProcessorRule> p_74296_) {
-        this.rules = ImmutableList.copyOf(p_74296_);
+    public RuleProcessor(List<? extends ProcessorRule> rules) {
+        this.rules = ImmutableList.copyOf(rules);
     }
 
     @Nullable
     @Override
     public StructureTemplate.StructureBlockInfo processBlock(
-        LevelReader p_74299_,
-        BlockPos p_74300_,
-        BlockPos p_74301_,
-        StructureTemplate.StructureBlockInfo p_74302_,
-        StructureTemplate.StructureBlockInfo p_74303_,
-        StructurePlaceSettings p_74304_
+        LevelReader level,
+        BlockPos offset,
+        BlockPos pos,
+        StructureTemplate.StructureBlockInfo blockInfo,
+        StructureTemplate.StructureBlockInfo relativeBlockInfo,
+        StructurePlaceSettings settings
     ) {
-        RandomSource randomsource = RandomSource.create(Mth.getSeed(p_74303_.pos()));
-        BlockState blockstate = p_74299_.getBlockState(p_74303_.pos());
+        RandomSource randomsource = RandomSource.create(Mth.getSeed(relativeBlockInfo.pos()));
+        BlockState blockstate = level.getBlockState(relativeBlockInfo.pos());
 
         for (ProcessorRule processorrule : this.rules) {
-            if (processorrule.test(p_74303_.state(), blockstate, p_74302_.pos(), p_74303_.pos(), p_74301_, randomsource)) {
+            if (processorrule.test(relativeBlockInfo.state(), blockstate, blockInfo.pos(), relativeBlockInfo.pos(), pos, randomsource)) {
                 return new StructureTemplate.StructureBlockInfo(
-                    p_74303_.pos(), processorrule.getOutputState(), processorrule.getOutputTag(randomsource, p_74303_.nbt())
+                    relativeBlockInfo.pos(), processorrule.getOutputState(), processorrule.getOutputTag(randomsource, relativeBlockInfo.nbt())
                 );
             }
         }
 
-        return p_74303_;
+        return relativeBlockInfo;
     }
 
     @Override

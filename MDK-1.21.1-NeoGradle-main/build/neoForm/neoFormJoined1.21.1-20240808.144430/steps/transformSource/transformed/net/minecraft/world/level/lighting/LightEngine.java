@@ -34,67 +34,67 @@ public abstract class LightEngine<M extends DataLayerStorageMap<M>, S extends La
     private final long[] lastChunkPos = new long[2];
     private final LightChunk[] lastChunk = new LightChunk[2];
 
-    protected LightEngine(LightChunkGetter p_285189_, S p_284964_) {
-        this.chunkSource = p_285189_;
-        this.storage = p_284964_;
+    protected LightEngine(LightChunkGetter chunkSource, S storage) {
+        this.chunkSource = chunkSource;
+        this.storage = storage;
         this.clearChunkCache();
     }
 
-    public static boolean hasDifferentLightProperties(BlockGetter p_285159_, BlockPos p_284985_, BlockState p_285110_, BlockState p_285372_) {
-        return p_285372_ == p_285110_
+    public static boolean hasDifferentLightProperties(BlockGetter level, BlockPos pos, BlockState state1, BlockState state2) {
+        return state2 == state1
             ? false
-            : p_285372_.getLightBlock(p_285159_, p_284985_) != p_285110_.getLightBlock(p_285159_, p_284985_)
-                || p_285372_.getLightEmission(p_285159_, p_284985_) != p_285110_.getLightEmission(p_285159_, p_284985_)
-                || p_285372_.useShapeForLightOcclusion()
-                || p_285110_.useShapeForLightOcclusion();
+            : state2.getLightBlock(level, pos) != state1.getLightBlock(level, pos)
+                || state2.getLightEmission(level, pos) != state1.getLightEmission(level, pos)
+                || state2.useShapeForLightOcclusion()
+                || state1.useShapeForLightOcclusion();
     }
 
     public static int getLightBlockInto(
-        BlockGetter p_285330_, BlockState p_285453_, BlockPos p_285187_, BlockState p_285318_, BlockPos p_285240_, Direction p_285196_, int p_285248_
+        BlockGetter level, BlockState state1, BlockPos pos1, BlockState state2, BlockPos pos2, Direction direction, int defaultReturnValue
     ) {
-        boolean flag = isEmptyShape(p_285453_);
-        boolean flag1 = isEmptyShape(p_285318_);
+        boolean flag = isEmptyShape(state1);
+        boolean flag1 = isEmptyShape(state2);
         if (flag && flag1) {
-            return p_285248_;
+            return defaultReturnValue;
         } else {
-            VoxelShape voxelshape = flag ? Shapes.empty() : p_285453_.getOcclusionShape(p_285330_, p_285187_);
-            VoxelShape voxelshape1 = flag1 ? Shapes.empty() : p_285318_.getOcclusionShape(p_285330_, p_285240_);
-            return Shapes.mergedFaceOccludes(voxelshape, voxelshape1, p_285196_) ? 16 : p_285248_;
+            VoxelShape voxelshape = flag ? Shapes.empty() : state1.getOcclusionShape(level, pos1);
+            VoxelShape voxelshape1 = flag1 ? Shapes.empty() : state2.getOcclusionShape(level, pos2);
+            return Shapes.mergedFaceOccludes(voxelshape, voxelshape1, direction) ? 16 : defaultReturnValue;
         }
     }
 
-    public static VoxelShape getOcclusionShape(BlockGetter p_285472_, BlockPos p_285229_, BlockState p_285020_, Direction p_285455_) {
-        return isEmptyShape(p_285020_) ? Shapes.empty() : p_285020_.getFaceOcclusionShape(p_285472_, p_285229_, p_285455_);
+    public static VoxelShape getOcclusionShape(BlockGetter level, BlockPos pos, BlockState state, Direction direction) {
+        return isEmptyShape(state) ? Shapes.empty() : state.getFaceOcclusionShape(level, pos, direction);
     }
 
-    protected static boolean isEmptyShape(BlockState p_285133_) {
-        return !p_285133_.canOcclude() || !p_285133_.useShapeForLightOcclusion();
+    protected static boolean isEmptyShape(BlockState state) {
+        return !state.canOcclude() || !state.useShapeForLightOcclusion();
     }
 
-    protected BlockState getState(BlockPos p_285338_) {
-        int i = SectionPos.blockToSectionCoord(p_285338_.getX());
-        int j = SectionPos.blockToSectionCoord(p_285338_.getZ());
+    protected BlockState getState(BlockPos pos) {
+        int i = SectionPos.blockToSectionCoord(pos.getX());
+        int j = SectionPos.blockToSectionCoord(pos.getZ());
         LightChunk lightchunk = this.getChunk(i, j);
-        return lightchunk == null ? Blocks.BEDROCK.defaultBlockState() : lightchunk.getBlockState(p_285338_);
+        return lightchunk == null ? Blocks.BEDROCK.defaultBlockState() : lightchunk.getBlockState(pos);
     }
 
-    protected int getOpacity(BlockState p_285084_, BlockPos p_285057_) {
-        return Math.max(1, p_285084_.getLightBlock(this.chunkSource.getLevel(), p_285057_));
+    protected int getOpacity(BlockState state, BlockPos pos) {
+        return Math.max(1, state.getLightBlock(this.chunkSource.getLevel(), pos));
     }
 
-    protected boolean shapeOccludes(long p_285115_, BlockState p_285154_, long p_284957_, BlockState p_285155_, Direction p_285327_) {
-        VoxelShape voxelshape = this.getOcclusionShape(p_285154_, p_285115_, p_285327_);
-        VoxelShape voxelshape1 = this.getOcclusionShape(p_285155_, p_284957_, p_285327_.getOpposite());
+    protected boolean shapeOccludes(long packedPos1, BlockState state1, long packedPos2, BlockState state2, Direction direction) {
+        VoxelShape voxelshape = this.getOcclusionShape(state1, packedPos1, direction);
+        VoxelShape voxelshape1 = this.getOcclusionShape(state2, packedPos2, direction.getOpposite());
         return Shapes.faceShapeOccludes(voxelshape, voxelshape1);
     }
 
-    protected VoxelShape getOcclusionShape(BlockState p_285136_, long p_285517_, Direction p_285376_) {
-        return getOcclusionShape(this.chunkSource.getLevel(), this.mutablePos.set(p_285517_), p_285136_, p_285376_);
+    protected VoxelShape getOcclusionShape(BlockState state, long pos, Direction direction) {
+        return getOcclusionShape(this.chunkSource.getLevel(), this.mutablePos.set(pos), state, direction);
     }
 
     @Nullable
-    protected LightChunk getChunk(int p_284967_, int p_285447_) {
-        long i = ChunkPos.asLong(p_284967_, p_285447_);
+    protected LightChunk getChunk(int x, int z) {
+        long i = ChunkPos.asLong(x, z);
 
         for (int j = 0; j < 2; j++) {
             if (i == this.lastChunkPos[j]) {
@@ -102,7 +102,7 @@ public abstract class LightEngine<M extends DataLayerStorageMap<M>, S extends La
             }
         }
 
-        LightChunk lightchunk = this.chunkSource.getChunkForLighting(p_284967_, p_285447_);
+        LightChunk lightchunk = this.chunkSource.getChunkForLighting(x, z);
 
         for (int k = 1; k > 0; k--) {
             this.lastChunkPos[k] = this.lastChunkPos[k - 1];
@@ -120,26 +120,26 @@ public abstract class LightEngine<M extends DataLayerStorageMap<M>, S extends La
     }
 
     @Override
-    public void checkBlock(BlockPos p_285352_) {
-        this.blockNodesToCheck.add(p_285352_.asLong());
+    public void checkBlock(BlockPos pos) {
+        this.blockNodesToCheck.add(pos.asLong());
     }
 
-    public void queueSectionData(long p_285221_, @Nullable DataLayer p_285427_) {
-        this.storage.queueSectionData(p_285221_, p_285427_);
+    public void queueSectionData(long sectionPos, @Nullable DataLayer data) {
+        this.storage.queueSectionData(sectionPos, data);
     }
 
-    public void retainData(ChunkPos p_285314_, boolean p_284937_) {
-        this.storage.retainData(SectionPos.getZeroNode(p_285314_.x, p_285314_.z), p_284937_);
-    }
-
-    @Override
-    public void updateSectionStatus(SectionPos p_285167_, boolean p_284934_) {
-        this.storage.updateSectionStatus(p_285167_.asLong(), p_284934_);
+    public void retainData(ChunkPos chunkPos, boolean retainData) {
+        this.storage.retainData(SectionPos.getZeroNode(chunkPos.x, chunkPos.z), retainData);
     }
 
     @Override
-    public void setLightEnabled(ChunkPos p_285116_, boolean p_285522_) {
-        this.storage.setLightEnabled(SectionPos.getZeroNode(p_285116_.x, p_285116_.z), p_285522_);
+    public void updateSectionStatus(SectionPos pos, boolean isQueueEmpty) {
+        this.storage.updateSectionStatus(pos.asLong(), isQueueEmpty);
+    }
+
+    @Override
+    public void setLightEnabled(ChunkPos chunkPos, boolean lightEnabled) {
+        this.storage.setLightEnabled(SectionPos.getZeroNode(chunkPos.x, chunkPos.z), lightEnabled);
     }
 
     @Override
@@ -192,14 +192,14 @@ public abstract class LightEngine<M extends DataLayerStorageMap<M>, S extends La
         return i;
     }
 
-    protected void enqueueDecrease(long p_285228_, long p_285464_) {
-        this.decreaseQueue.enqueue(p_285228_);
-        this.decreaseQueue.enqueue(p_285464_);
+    protected void enqueueDecrease(long packedPos1, long packedPos2) {
+        this.decreaseQueue.enqueue(packedPos1);
+        this.decreaseQueue.enqueue(packedPos2);
     }
 
-    protected void enqueueIncrease(long p_285223_, long p_285022_) {
-        this.increaseQueue.enqueue(p_285223_);
-        this.increaseQueue.enqueue(p_285022_);
+    protected void enqueueIncrease(long packedPos1, long packedPos2) {
+        this.increaseQueue.enqueue(packedPos1);
+        this.increaseQueue.enqueue(packedPos2);
     }
 
     @Override
@@ -209,28 +209,28 @@ public abstract class LightEngine<M extends DataLayerStorageMap<M>, S extends La
 
     @Nullable
     @Override
-    public DataLayer getDataLayerData(SectionPos p_285093_) {
-        return this.storage.getDataLayerData(p_285093_.asLong());
+    public DataLayer getDataLayerData(SectionPos sectionPos) {
+        return this.storage.getDataLayerData(sectionPos.asLong());
     }
 
     @Override
-    public int getLightValue(BlockPos p_285149_) {
-        return this.storage.getLightValue(p_285149_.asLong());
+    public int getLightValue(BlockPos levelPos) {
+        return this.storage.getLightValue(levelPos.asLong());
     }
 
-    public String getDebugData(long p_285363_) {
-        return this.getDebugSectionType(p_285363_).display();
+    public String getDebugData(long sectionPos) {
+        return this.getDebugSectionType(sectionPos).display();
     }
 
-    public LayerLightSectionStorage.SectionType getDebugSectionType(long p_285320_) {
-        return this.storage.getDebugSectionType(p_285320_);
+    public LayerLightSectionStorage.SectionType getDebugSectionType(long sectionPos) {
+        return this.storage.getDebugSectionType(sectionPos);
     }
 
-    protected abstract void checkNode(long p_285507_);
+    protected abstract void checkNode(long packedPos);
 
-    protected abstract void propagateIncrease(long p_285325_, long p_285026_, int p_285197_);
+    protected abstract void propagateIncrease(long packedPos, long queueEntry, int lightLevel);
 
-    protected abstract void propagateDecrease(long p_284941_, long p_285213_);
+    protected abstract void propagateDecrease(long packedPos, long lightLevel);
 
     public static class QueueEntry {
         private static final int FROM_LEVEL_BITS = 4;
@@ -240,95 +240,95 @@ public abstract class LightEngine<M extends DataLayerStorageMap<M>, S extends La
         private static final long FLAG_FROM_EMPTY_SHAPE = 1024L;
         private static final long FLAG_INCREASE_FROM_EMISSION = 2048L;
 
-        public static long decreaseSkipOneDirection(int p_285429_, Direction p_285207_) {
-            long i = withoutDirection(1008L, p_285207_);
-            return withLevel(i, p_285429_);
+        public static long decreaseSkipOneDirection(int level, Direction direction) {
+            long i = withoutDirection(1008L, direction);
+            return withLevel(i, level);
         }
 
-        public static long decreaseAllDirections(int p_285144_) {
-            return withLevel(1008L, p_285144_);
+        public static long decreaseAllDirections(int level) {
+            return withLevel(1008L, level);
         }
 
-        public static long increaseLightFromEmission(int p_285199_, boolean p_284986_) {
+        public static long increaseLightFromEmission(int level, boolean fromEmptyShape) {
             long i = 1008L;
             i |= 2048L;
-            if (p_284986_) {
+            if (fromEmptyShape) {
                 i |= 1024L;
             }
 
-            return withLevel(i, p_285199_);
+            return withLevel(i, level);
         }
 
-        public static long increaseSkipOneDirection(int p_285091_, boolean p_285186_, Direction p_285382_) {
-            long i = withoutDirection(1008L, p_285382_);
-            if (p_285186_) {
+        public static long increaseSkipOneDirection(int level, boolean fromEmptyShape, Direction direction) {
+            long i = withoutDirection(1008L, direction);
+            if (fromEmptyShape) {
                 i |= 1024L;
             }
 
-            return withLevel(i, p_285091_);
+            return withLevel(i, level);
         }
 
-        public static long increaseOnlyOneDirection(int p_285025_, boolean p_285384_, Direction p_285072_) {
+        public static long increaseOnlyOneDirection(int level, boolean fromEmptyShape, Direction direction) {
             long i = 0L;
-            if (p_285384_) {
+            if (fromEmptyShape) {
                 i |= 1024L;
             }
 
-            i = withDirection(i, p_285072_);
-            return withLevel(i, p_285025_);
+            i = withDirection(i, direction);
+            return withLevel(i, level);
         }
 
-        public static long increaseSkySourceInDirections(boolean p_285487_, boolean p_285390_, boolean p_285476_, boolean p_285505_, boolean p_285127_) {
+        public static long increaseSkySourceInDirections(boolean down, boolean north, boolean south, boolean west, boolean east) {
             long i = withLevel(0L, 15);
-            if (p_285487_) {
+            if (down) {
                 i = withDirection(i, Direction.DOWN);
             }
 
-            if (p_285390_) {
+            if (north) {
                 i = withDirection(i, Direction.NORTH);
             }
 
-            if (p_285476_) {
+            if (south) {
                 i = withDirection(i, Direction.SOUTH);
             }
 
-            if (p_285505_) {
+            if (west) {
                 i = withDirection(i, Direction.WEST);
             }
 
-            if (p_285127_) {
+            if (east) {
                 i = withDirection(i, Direction.EAST);
             }
 
             return i;
         }
 
-        public static int getFromLevel(long p_285483_) {
-            return (int)(p_285483_ & 15L);
+        public static int getFromLevel(long entry) {
+            return (int)(entry & 15L);
         }
 
-        public static boolean isFromEmptyShape(long p_285436_) {
-            return (p_285436_ & 1024L) != 0L;
+        public static boolean isFromEmptyShape(long entry) {
+            return (entry & 1024L) != 0L;
         }
 
-        public static boolean isIncreaseFromEmission(long p_285348_) {
-            return (p_285348_ & 2048L) != 0L;
+        public static boolean isIncreaseFromEmission(long entry) {
+            return (entry & 2048L) != 0L;
         }
 
-        public static boolean shouldPropagateInDirection(long p_285347_, Direction p_285291_) {
-            return (p_285347_ & 1L << p_285291_.ordinal() + 4) != 0L;
+        public static boolean shouldPropagateInDirection(long entry, Direction direction) {
+            return (entry & 1L << direction.ordinal() + 4) != 0L;
         }
 
-        private static long withLevel(long p_285234_, int p_285042_) {
-            return p_285234_ & -16L | (long)p_285042_ & 15L;
+        private static long withLevel(long entry, int level) {
+            return entry & -16L | (long)level & 15L;
         }
 
-        private static long withDirection(long p_285295_, Direction p_285016_) {
-            return p_285295_ | 1L << p_285016_.ordinal() + 4;
+        private static long withDirection(long entry, Direction direction) {
+            return entry | 1L << direction.ordinal() + 4;
         }
 
-        private static long withoutDirection(long p_285366_, Direction p_285489_) {
-            return p_285366_ & ~(1L << p_285489_.ordinal() + 4);
+        private static long withoutDirection(long entry, Direction direction) {
+            return entry & ~(1L << direction.ordinal() + 4);
         }
     }
 }

@@ -87,13 +87,13 @@ public class ModelBakery {
     private final Object2IntMap<BlockState> modelGroups;
 
     public ModelBakery(
-        BlockColors p_249183_,
-        ProfilerFiller p_252014_,
-        Map<ResourceLocation, BlockModel> p_251087_,
-        Map<ResourceLocation, List<BlockStateModelLoader.LoadedJson>> p_250416_
+        BlockColors blockColors,
+        ProfilerFiller profilerFiller,
+        Map<ResourceLocation, BlockModel> modelResources,
+        Map<ResourceLocation, List<BlockStateModelLoader.LoadedJson>> blockStateResources
     ) {
-        this.modelResources = p_251087_;
-        p_252014_.push("missing_model");
+        this.modelResources = modelResources;
+        profilerFiller.push("missing_model");
 
         try {
             this.missingModel = this.loadBlockModel(MISSING_MODEL_LOCATION);
@@ -104,17 +104,17 @@ public class ModelBakery {
         }
 
         BlockStateModelLoader blockstatemodelloader = new BlockStateModelLoader(
-            p_250416_, p_252014_, this.missingModel, p_249183_, this::registerModelAndLoadDependencies
+            blockStateResources, profilerFiller, this.missingModel, blockColors, this::registerModelAndLoadDependencies
         );
         blockstatemodelloader.loadAllBlockStates();
         this.modelGroups = blockstatemodelloader.getModelGroups();
-        p_252014_.popPush("items");
+        profilerFiller.popPush("items");
 
         for (ResourceLocation resourcelocation : BuiltInRegistries.ITEM.keySet()) {
             this.loadItemModelAndDependencies(resourcelocation);
         }
 
-        p_252014_.popPush("special");
+        profilerFiller.popPush("special");
         this.loadSpecialItemModelAndDependencies(ItemRenderer.TRIDENT_IN_HAND_MODEL);
         this.loadSpecialItemModelAndDependencies(ItemRenderer.SPYGLASS_IN_HAND_MODEL);
         Set<ModelResourceLocation> additionalModels = new HashSet<>();
@@ -124,15 +124,15 @@ public class ModelBakery {
             this.registerModelAndLoadDependencies(rl, unbakedmodel);
         }
         this.topLevelModels.values().forEach(p_247954_ -> p_247954_.resolveParents(this::getModel));
-        p_252014_.pop();
+        profilerFiller.pop();
     }
 
-    public void bakeModels(ModelBakery.TextureGetter p_352431_) {
+    public void bakeModels(ModelBakery.TextureGetter textureGetter) {
         this.topLevelModels.forEach((p_351687_, p_351688_) -> {
             BakedModel bakedmodel = null;
 
             try {
-                bakedmodel = new ModelBakery.ModelBakerImpl(p_352431_, p_351687_).bakeUncached(p_351688_, BlockModelRotation.X0_Y0);
+                bakedmodel = new ModelBakery.ModelBakerImpl(textureGetter, p_351687_).bakeUncached(p_351688_, BlockModelRotation.X0_Y0);
             } catch (Exception exception) {
                 LOGGER.warn("Unable to bake model: '{}': {}", p_351687_, exception);
             }
@@ -143,13 +143,13 @@ public class ModelBakery {
         });
     }
 
-    UnbakedModel getModel(ResourceLocation p_119342_) {
-        if (this.unbakedCache.containsKey(p_119342_)) {
-            return this.unbakedCache.get(p_119342_);
-        } else if (this.loadingStack.contains(p_119342_)) {
-            throw new IllegalStateException("Circular reference while loading " + p_119342_);
+    UnbakedModel getModel(ResourceLocation modelLocation) {
+        if (this.unbakedCache.containsKey(modelLocation)) {
+            return this.unbakedCache.get(modelLocation);
+        } else if (this.loadingStack.contains(modelLocation)) {
+            throw new IllegalStateException("Circular reference while loading " + modelLocation);
         } else {
-            this.loadingStack.add(p_119342_);
+            this.loadingStack.add(modelLocation);
 
             while (!this.loadingStack.isEmpty()) {
                 ResourceLocation resourcelocation = this.loadingStack.iterator().next();
@@ -161,44 +161,44 @@ public class ModelBakery {
                         this.loadingStack.addAll(unbakedmodel.getDependencies());
                     }
                 } catch (Exception exception) {
-                    LOGGER.warn("Unable to load model: '{}' referenced from: {}: {}", resourcelocation, p_119342_, exception);
+                    LOGGER.warn("Unable to load model: '{}' referenced from: {}: {}", resourcelocation, modelLocation, exception);
                     this.unbakedCache.put(resourcelocation, this.missingModel);
                 } finally {
                     this.loadingStack.remove(resourcelocation);
                 }
             }
 
-            return this.unbakedCache.getOrDefault(p_119342_, this.missingModel);
+            return this.unbakedCache.getOrDefault(modelLocation, this.missingModel);
         }
     }
 
-    private void loadItemModelAndDependencies(ResourceLocation p_352200_) {
-        ModelResourceLocation modelresourcelocation = ModelResourceLocation.inventory(p_352200_);
-        ResourceLocation resourcelocation = p_352200_.withPrefix("item/");
+    private void loadItemModelAndDependencies(ResourceLocation modelLocation) {
+        ModelResourceLocation modelresourcelocation = ModelResourceLocation.inventory(modelLocation);
+        ResourceLocation resourcelocation = modelLocation.withPrefix("item/");
         UnbakedModel unbakedmodel = this.getModel(resourcelocation);
         this.registerModelAndLoadDependencies(modelresourcelocation, unbakedmodel);
     }
 
-    private void loadSpecialItemModelAndDependencies(ModelResourceLocation p_352247_) {
-        ResourceLocation resourcelocation = p_352247_.id().withPrefix("item/");
+    private void loadSpecialItemModelAndDependencies(ModelResourceLocation modelLocation) {
+        ResourceLocation resourcelocation = modelLocation.id().withPrefix("item/");
         UnbakedModel unbakedmodel = this.getModel(resourcelocation);
-        this.registerModelAndLoadDependencies(p_352247_, unbakedmodel);
+        this.registerModelAndLoadDependencies(modelLocation, unbakedmodel);
     }
 
-    private void registerModelAndLoadDependencies(ModelResourceLocation p_352435_, UnbakedModel p_352250_) {
-        for (ResourceLocation resourcelocation : p_352250_.getDependencies()) {
+    private void registerModelAndLoadDependencies(ModelResourceLocation modelLocation, UnbakedModel model) {
+        for (ResourceLocation resourcelocation : model.getDependencies()) {
             this.getModel(resourcelocation);
         }
 
-        this.registerModel(p_352435_, p_352250_);
+        this.registerModel(modelLocation, model);
     }
 
-    private void registerModel(ModelResourceLocation p_352067_, UnbakedModel p_352146_) {
-        this.topLevelModels.put(p_352067_, p_352146_);
+    private void registerModel(ModelResourceLocation modelLocation, UnbakedModel model) {
+        this.topLevelModels.put(modelLocation, model);
     }
 
-    private BlockModel loadBlockModel(ResourceLocation p_119365_) throws IOException {
-        String s = p_119365_.getPath();
+    private BlockModel loadBlockModel(ResourceLocation location) throws IOException {
+        String s = location.getPath();
         if ("builtin/generated".equals(s)) {
             return GENERATION_MARKER;
         } else if ("builtin/entity".equals(s)) {
@@ -207,20 +207,20 @@ public class ModelBakery {
             String s1 = s.substring("builtin/".length());
             String s2 = BUILTIN_MODELS.get(s1);
             if (s2 == null) {
-                throw new FileNotFoundException(p_119365_.toString());
+                throw new FileNotFoundException(location.toString());
             } else {
                 Reader reader = new StringReader(s2);
                 BlockModel blockmodel1 = BlockModel.fromStream(reader);
-                blockmodel1.name = p_119365_.toString();
+                blockmodel1.name = location.toString();
                 return blockmodel1;
             }
         } else {
-            ResourceLocation resourcelocation = MODEL_LISTER.idToFile(p_119365_);
+            ResourceLocation resourcelocation = MODEL_LISTER.idToFile(location);
             BlockModel blockmodel = this.modelResources.get(resourcelocation);
             if (blockmodel == null) {
                 throw new FileNotFoundException(resourcelocation.toString());
             } else {
-                blockmodel.name = p_119365_.toString();
+                blockmodel.name = location.toString();
                 return blockmodel;
             }
         }
@@ -242,13 +242,13 @@ public class ModelBakery {
     class ModelBakerImpl implements ModelBaker {
         private final Function<Material, TextureAtlasSprite> modelTextureGetter;
 
-        ModelBakerImpl(ModelBakery.TextureGetter p_352124_, ModelResourceLocation p_352126_) {
-            this.modelTextureGetter = p_351691_ -> p_352124_.get(p_352126_, p_351691_);
+        ModelBakerImpl(ModelBakery.TextureGetter textureGetter, ModelResourceLocation modelLocation) {
+            this.modelTextureGetter = p_351691_ -> textureGetter.get(modelLocation, p_351691_);
         }
 
         @Override
-        public UnbakedModel getModel(ResourceLocation p_248568_) {
-            return ModelBakery.this.getModel(p_248568_);
+        public UnbakedModel getModel(ResourceLocation location) {
+            return ModelBakery.this.getModel(location);
         }
 
         @Override
@@ -263,45 +263,45 @@ public class ModelBakery {
         }
 
         @Override
-        public BakedModel bake(ResourceLocation p_252176_, ModelState p_249765_) {
-            return bake(p_252176_, p_249765_, this.modelTextureGetter);
+        public BakedModel bake(ResourceLocation location, ModelState transform) {
+            return bake(location, transform, this.modelTextureGetter);
         }
 
         @Override
-        public BakedModel bake(ResourceLocation p_252176_, ModelState p_249765_, Function<Material, TextureAtlasSprite> sprites) {
-            ModelBakery.BakedCacheKey modelbakery$bakedcachekey = new ModelBakery.BakedCacheKey(p_252176_, p_249765_.getRotation(), p_249765_.isUvLocked());
+        public BakedModel bake(ResourceLocation location, ModelState transform, Function<Material, TextureAtlasSprite> sprites) {
+            ModelBakery.BakedCacheKey modelbakery$bakedcachekey = new ModelBakery.BakedCacheKey(location, transform.getRotation(), transform.isUvLocked());
             BakedModel bakedmodel = ModelBakery.this.bakedCache.get(modelbakery$bakedcachekey);
             if (bakedmodel != null) {
                 return bakedmodel;
             } else {
-                UnbakedModel unbakedmodel = this.getModel(p_252176_);
-                BakedModel bakedmodel1 = this.bakeUncached(unbakedmodel, p_249765_, sprites);
+                UnbakedModel unbakedmodel = this.getModel(location);
+                BakedModel bakedmodel1 = this.bakeUncached(unbakedmodel, transform, sprites);
                 ModelBakery.this.bakedCache.put(modelbakery$bakedcachekey, bakedmodel1);
                 return bakedmodel1;
             }
         }
 
         @Nullable
-        BakedModel bakeUncached(UnbakedModel p_352386_, ModelState p_352194_) {
-            return bakeUncached(p_352386_, p_352194_, this.modelTextureGetter);
+        BakedModel bakeUncached(UnbakedModel model, ModelState state) {
+            return bakeUncached(model, state, this.modelTextureGetter);
         }
 
         @Override
         @Nullable
-        public BakedModel bakeUncached(UnbakedModel p_352386_, ModelState p_352194_, Function<Material, TextureAtlasSprite> sprites) {
-            if (p_352386_ instanceof BlockModel blockmodel && blockmodel.getRootModel() == ModelBakery.GENERATION_MARKER) {
+        public BakedModel bakeUncached(UnbakedModel model, ModelState state, Function<Material, TextureAtlasSprite> sprites) {
+            if (model instanceof BlockModel blockmodel && blockmodel.getRootModel() == ModelBakery.GENERATION_MARKER) {
                 return ModelBakery.ITEM_MODEL_GENERATOR
                     .generateBlockModel(sprites, blockmodel)
-                    .bake(this, blockmodel, sprites, p_352194_, false);
+                    .bake(this, blockmodel, sprites, state, false);
             }
 
-            return p_352386_.bake(this, sprites, p_352194_);
+            return model.bake(this, sprites, state);
         }
     }
 
     @FunctionalInterface
     @OnlyIn(Dist.CLIENT)
     public interface TextureGetter {
-        TextureAtlasSprite get(ModelResourceLocation p_352455_, Material p_352128_);
+        TextureAtlasSprite get(ModelResourceLocation modelLocation, Material material);
     }
 }

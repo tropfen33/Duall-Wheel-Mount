@@ -20,20 +20,20 @@ public class StructureGridSpawner implements GameTestRunner.StructureSpawner {
     private float maxX = -1.0F;
     private final Collection<GameTestInfo> testInLastBatch = new ArrayList<>();
 
-    public StructureGridSpawner(BlockPos p_320479_, int p_320201_, boolean p_352391_) {
-        this.testsPerRow = p_320201_;
-        this.nextTestNorthWestCorner = p_320479_.mutable();
+    public StructureGridSpawner(BlockPos northTestNorthWestCorner, int testsPerRow, boolean clearOnBatch) {
+        this.testsPerRow = testsPerRow;
+        this.nextTestNorthWestCorner = northTestNorthWestCorner.mutable();
         this.rowBounds = new AABB(this.nextTestNorthWestCorner);
-        this.firstTestNorthWestCorner = p_320479_;
-        this.clearOnBatch = p_352391_;
+        this.firstTestNorthWestCorner = northTestNorthWestCorner;
+        this.clearOnBatch = clearOnBatch;
     }
 
     @Override
-    public void onBatchStart(ServerLevel p_352155_) {
+    public void onBatchStart(ServerLevel level) {
         if (this.clearOnBatch) {
             this.testInLastBatch.forEach(p_352408_ -> {
                 BoundingBox boundingbox = StructureUtils.getStructureBoundingBox(p_352408_.getStructureBlockEntity());
-                StructureUtils.clearSpaceForStructure(boundingbox, p_352155_);
+                StructureUtils.clearSpaceForStructure(boundingbox, level);
             });
             this.testInLastBatch.clear();
             this.rowBounds = new AABB(this.firstTestNorthWestCorner);
@@ -42,11 +42,11 @@ public class StructureGridSpawner implements GameTestRunner.StructureSpawner {
     }
 
     @Override
-    public Optional<GameTestInfo> spawnStructure(GameTestInfo p_320875_) {
+    public Optional<GameTestInfo> spawnStructure(GameTestInfo gameTestInfo) {
         BlockPos blockpos = new BlockPos(this.nextTestNorthWestCorner);
-        p_320875_.setNorthWestCorner(blockpos);
-        p_320875_.prepareTestStructure();
-        AABB aabb = StructureUtils.getStructureBounds(p_320875_.getStructureBlockEntity());
+        gameTestInfo.setNorthWestCorner(blockpos);
+        gameTestInfo.prepareTestStructure();
+        AABB aabb = StructureUtils.getStructureBounds(gameTestInfo.getStructureBlockEntity());
         this.rowBounds = this.rowBounds.minmax(aabb);
         this.nextTestNorthWestCorner.move((int)aabb.getXsize() + 5, 0, 0);
         if ((float)this.nextTestNorthWestCorner.getX() > this.maxX) {
@@ -60,7 +60,7 @@ public class StructureGridSpawner implements GameTestRunner.StructureSpawner {
             this.rowBounds = new AABB(this.nextTestNorthWestCorner);
         }
 
-        this.testInLastBatch.add(p_320875_);
-        return Optional.of(p_320875_);
+        this.testInLastBatch.add(gameTestInfo);
+        return Optional.of(gameTestInfo);
     }
 }

@@ -14,11 +14,11 @@ public record GameTestAddMarkerDebugPayload(BlockPos pos, int color, String text
         this(p_294353_.readBlockPos(), p_294353_.readInt(), p_294353_.readUtf(), p_294353_.readInt());
     }
 
-    private void write(FriendlyByteBuf p_294856_) {
-        p_294856_.writeBlockPos(this.pos);
-        p_294856_.writeInt(this.color);
-        p_294856_.writeUtf(this.text);
-        p_294856_.writeInt(this.durationMs);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeBlockPos(this.pos);
+        buffer.writeInt(this.color);
+        buffer.writeUtf(this.text);
+        buffer.writeInt(this.durationMs);
     }
 
     @Override

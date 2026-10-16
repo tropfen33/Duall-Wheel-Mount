@@ -44,10 +44,10 @@ public class RealmsPlayerScreen extends RealmsScreen {
     private RealmsPlayerScreen.InvitedObjectSelectionList invitedList;
     boolean stateChanged;
 
-    public RealmsPlayerScreen(RealmsConfigureWorldScreen p_89089_, RealmsServer p_89090_) {
+    public RealmsPlayerScreen(RealmsConfigureWorldScreen lastScreen, RealmsServer serverData) {
         super(TITLE);
-        this.lastScreen = p_89089_;
-        this.serverData = p_89090_;
+        this.lastScreen = lastScreen;
+        this.serverData = serverData;
     }
 
     @Override
@@ -116,15 +116,15 @@ public class RealmsPlayerScreen extends RealmsScreen {
         private final Button makeOpButton;
         private final Button removeOpButton;
 
-        public Entry(PlayerInfo p_89204_) {
-            this.playerInfo = p_89204_;
+        public Entry(PlayerInfo playerInfo) {
+            this.playerInfo = playerInfo;
             int i = RealmsPlayerScreen.this.serverData.players.indexOf(this.playerInfo);
             this.makeOpButton = SpriteIconButton.builder(NORMAL_USER_TEXT, p_329669_ -> this.op(i), false)
                 .sprite(MAKE_OP_SPRITE, 8, 7)
                 .width(16 + RealmsPlayerScreen.this.font.width(NORMAL_USER_TEXT))
                 .narration(
                     p_329661_ -> CommonComponents.joinForNarration(
-                            Component.translatable("mco.invited.player.narration", p_89204_.getName()),
+                            Component.translatable("mco.invited.player.narration", playerInfo.getName()),
                             p_329661_.get(),
                             Component.translatable("narration.cycle_button.usage.focused", OP_TEXT)
                         )
@@ -135,7 +135,7 @@ public class RealmsPlayerScreen extends RealmsScreen {
                 .width(16 + RealmsPlayerScreen.this.font.width(OP_TEXT))
                 .narration(
                     p_329659_ -> CommonComponents.joinForNarration(
-                            Component.translatable("mco.invited.player.narration", p_89204_.getName()),
+                            Component.translatable("mco.invited.player.narration", playerInfo.getName()),
                             p_329659_.get(),
                             Component.translatable("narration.cycle_button.usage.focused", NORMAL_USER_TEXT)
                         )
@@ -145,15 +145,15 @@ public class RealmsPlayerScreen extends RealmsScreen {
                 .sprite(REMOVE_PLAYER_SPRITE, 8, 7)
                 .width(16 + RealmsPlayerScreen.this.font.width(REMOVE_TEXT))
                 .narration(
-                    p_329667_ -> CommonComponents.joinForNarration(Component.translatable("mco.invited.player.narration", p_89204_.getName()), p_329667_.get())
+                    p_329667_ -> CommonComponents.joinForNarration(Component.translatable("mco.invited.player.narration", playerInfo.getName()), p_329667_.get())
                 )
                 .build();
             this.updateOpButtons();
         }
 
-        private void op(int p_331202_) {
+        private void op(int index) {
             RealmsClient realmsclient = RealmsClient.create();
-            UUID uuid = RealmsPlayerScreen.this.serverData.players.get(p_331202_).getUuid();
+            UUID uuid = RealmsPlayerScreen.this.serverData.players.get(index).getUuid();
 
             try {
                 this.updateOps(realmsclient.op(RealmsPlayerScreen.this.serverData.id, uuid));
@@ -164,9 +164,9 @@ public class RealmsPlayerScreen extends RealmsScreen {
             this.updateOpButtons();
         }
 
-        private void deop(int p_331659_) {
+        private void deop(int index) {
             RealmsClient realmsclient = RealmsClient.create();
-            UUID uuid = RealmsPlayerScreen.this.serverData.players.get(p_331659_).getUuid();
+            UUID uuid = RealmsPlayerScreen.this.serverData.players.get(index).getUuid();
 
             try {
                 this.updateOps(realmsclient.deop(RealmsPlayerScreen.this.serverData.id, uuid));
@@ -177,9 +177,9 @@ public class RealmsPlayerScreen extends RealmsScreen {
             this.updateOpButtons();
         }
 
-        private void uninvite(int p_330606_) {
-            if (p_330606_ >= 0 && p_330606_ < RealmsPlayerScreen.this.serverData.players.size()) {
-                PlayerInfo playerinfo = RealmsPlayerScreen.this.serverData.players.get(p_330606_);
+        private void uninvite(int index) {
+            if (index >= 0 && index < RealmsPlayerScreen.this.serverData.players.size()) {
+                PlayerInfo playerinfo = RealmsPlayerScreen.this.serverData.players.get(index);
                 RealmsConfirmScreen realmsconfirmscreen = new RealmsConfirmScreen(p_335150_ -> {
                     if (p_335150_) {
                         RealmsClient realmsclient = RealmsClient.create();
@@ -190,7 +190,7 @@ public class RealmsPlayerScreen extends RealmsScreen {
                             RealmsPlayerScreen.LOGGER.error("Couldn't uninvite user", (Throwable)realmsserviceexception);
                         }
 
-                        RealmsPlayerScreen.this.serverData.players.remove(p_330606_);
+                        RealmsPlayerScreen.this.serverData.players.remove(index);
                         RealmsPlayerScreen.this.repopulateInvitedList();
                     }
 
@@ -201,9 +201,9 @@ public class RealmsPlayerScreen extends RealmsScreen {
             }
         }
 
-        private void updateOps(Ops p_330984_) {
+        private void updateOps(Ops ops) {
             for (PlayerInfo playerinfo : RealmsPlayerScreen.this.serverData.players) {
-                playerinfo.setOperator(p_330984_.ops.contains(playerinfo.getName()));
+                playerinfo.setOperator(ops.ops.contains(playerinfo.getName()));
             }
         }
 
@@ -228,16 +228,16 @@ public class RealmsPlayerScreen extends RealmsScreen {
 
         @Override
         public void render(
-            GuiGraphics p_282985_,
-            int p_281343_,
-            int p_283042_,
-            int p_282863_,
-            int p_281381_,
-            int p_282692_,
-            int p_283240_,
-            int p_282706_,
-            boolean p_283067_,
-            float p_282230_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
             int i;
             if (!this.playerInfo.getAccepted()) {
@@ -248,19 +248,19 @@ public class RealmsPlayerScreen extends RealmsScreen {
                 i = -1;
             }
 
-            int j = p_283042_ + p_282692_ / 2 - 16;
-            RealmsUtil.renderPlayerFace(p_282985_, p_282863_, j, 32, this.playerInfo.getUuid());
-            int k = p_283042_ + p_282692_ / 2 - 9 / 2;
-            p_282985_.drawString(RealmsPlayerScreen.this.font, this.playerInfo.getName(), p_282863_ + 8 + 32, k, i, false);
-            int l = p_283042_ + p_282692_ / 2 - 10;
-            int i1 = p_282863_ + p_281381_ - this.removeButton.getWidth();
+            int j = top + height / 2 - 16;
+            RealmsUtil.renderPlayerFace(guiGraphics, left, j, 32, this.playerInfo.getUuid());
+            int k = top + height / 2 - 9 / 2;
+            guiGraphics.drawString(RealmsPlayerScreen.this.font, this.playerInfo.getName(), left + 8 + 32, k, i, false);
+            int l = top + height / 2 - 10;
+            int i1 = left + width - this.removeButton.getWidth();
             this.removeButton.setPosition(i1, l);
-            this.removeButton.render(p_282985_, p_283240_, p_282706_, p_282230_);
+            this.removeButton.render(guiGraphics, mouseX, mouseY, partialTick);
             int j1 = i1 - this.activeOpButton().getWidth() - 8;
             this.makeOpButton.setPosition(j1, l);
-            this.makeOpButton.render(p_282985_, p_283240_, p_282706_, p_282230_);
+            this.makeOpButton.render(guiGraphics, mouseX, mouseY, partialTick);
             this.removeOpButton.setPosition(j1, l);
-            this.removeOpButton.render(p_282985_, p_283240_, p_282706_, p_282230_);
+            this.removeOpButton.render(guiGraphics, mouseX, mouseY, partialTick);
         }
     }
 

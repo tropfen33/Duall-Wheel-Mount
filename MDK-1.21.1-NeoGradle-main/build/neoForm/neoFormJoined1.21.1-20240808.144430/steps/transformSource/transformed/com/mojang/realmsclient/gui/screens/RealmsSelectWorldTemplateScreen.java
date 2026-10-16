@@ -64,27 +64,27 @@ public class RealmsSelectWorldTemplateScreen extends RealmsScreen {
     @Nullable
     List<TextRenderingUtils.Line> noTemplatesMessage;
 
-    public RealmsSelectWorldTemplateScreen(Component p_167481_, Consumer<WorldTemplate> p_167482_, RealmsServer.WorldType p_167483_) {
-        this(p_167481_, p_167482_, p_167483_, null);
+    public RealmsSelectWorldTemplateScreen(Component title, Consumer<WorldTemplate> callback, RealmsServer.WorldType worldType) {
+        this(title, callback, worldType, null);
     }
 
     public RealmsSelectWorldTemplateScreen(
-        Component p_167485_, Consumer<WorldTemplate> p_167486_, RealmsServer.WorldType p_167487_, @Nullable WorldTemplatePaginatedList p_167488_
+        Component title, Consumer<WorldTemplate> callback, RealmsServer.WorldType worldType, @Nullable WorldTemplatePaginatedList worldTemplatePaginatedList
     ) {
-        super(p_167485_);
-        this.callback = p_167486_;
-        this.worldType = p_167487_;
-        if (p_167488_ == null) {
+        super(title);
+        this.callback = callback;
+        this.worldType = worldType;
+        if (worldTemplatePaginatedList == null) {
             this.worldTemplateList = new RealmsSelectWorldTemplateScreen.WorldTemplateList();
             this.fetchTemplatesAsync(new WorldTemplatePaginatedList(10));
         } else {
-            this.worldTemplateList = new RealmsSelectWorldTemplateScreen.WorldTemplateList(Lists.newArrayList(p_167488_.templates));
-            this.fetchTemplatesAsync(p_167488_);
+            this.worldTemplateList = new RealmsSelectWorldTemplateScreen.WorldTemplateList(Lists.newArrayList(worldTemplatePaginatedList.templates));
+            this.fetchTemplatesAsync(worldTemplatePaginatedList);
         }
     }
 
-    public void setWarning(Component... p_89683_) {
-        this.warning = p_89683_;
+    public void setWarning(Component... warning) {
+        this.warning = warning;
     }
 
     @Override
@@ -150,11 +150,11 @@ public class RealmsSelectWorldTemplateScreen extends RealmsScreen {
         }
     }
 
-    private void fetchTemplatesAsync(final WorldTemplatePaginatedList p_89654_) {
+    private void fetchTemplatesAsync(final WorldTemplatePaginatedList output) {
         (new Thread("realms-template-fetcher") {
                 @Override
                 public void run() {
-                    WorldTemplatePaginatedList worldtemplatepaginatedlist = p_89654_;
+                    WorldTemplatePaginatedList worldtemplatepaginatedlist = output;
                     RealmsClient realmsclient = RealmsClient.create();
 
                     while (worldtemplatepaginatedlist != null) {
@@ -205,41 +205,49 @@ public class RealmsSelectWorldTemplateScreen extends RealmsScreen {
             .start();
     }
 
-    Either<WorldTemplatePaginatedList, Exception> fetchTemplates(WorldTemplatePaginatedList p_89656_, RealmsClient p_89657_) {
+    Either<WorldTemplatePaginatedList, Exception> fetchTemplates(WorldTemplatePaginatedList templates, RealmsClient realmsClient) {
         try {
-            return Either.left(p_89657_.fetchWorldTemplates(p_89656_.page + 1, p_89656_.size, this.worldType));
+            return Either.left(realmsClient.fetchWorldTemplates(templates.page + 1, templates.size, this.worldType));
         } catch (RealmsServiceException realmsserviceexception) {
             return Either.right(realmsserviceexception);
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282162_, int p_89640_, int p_89641_, float p_89642_) {
-        super.render(p_282162_, p_89640_, p_89641_, p_89642_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.currentLink = null;
         if (this.noTemplatesMessage != null) {
-            this.renderMultilineMessage(p_282162_, p_89640_, p_89641_, this.noTemplatesMessage);
+            this.renderMultilineMessage(guiGraphics, mouseX, mouseY, this.noTemplatesMessage);
         }
 
         if (this.warning != null) {
             for (int i = 0; i < this.warning.length; i++) {
                 Component component = this.warning[i];
-                p_282162_.drawCenteredString(this.font, component, this.width / 2, row(-1 + i), -6250336);
+                guiGraphics.drawCenteredString(this.font, component, this.width / 2, row(-1 + i), -6250336);
             }
         }
     }
 
-    private void renderMultilineMessage(GuiGraphics p_282398_, int p_282163_, int p_282021_, List<TextRenderingUtils.Line> p_282203_) {
-        for (int i = 0; i < p_282203_.size(); i++) {
-            TextRenderingUtils.Line textrenderingutils$line = p_282203_.get(i);
+    private void renderMultilineMessage(GuiGraphics guiGraphics, int x, int y, List<TextRenderingUtils.Line> lines) {
+        for (int i = 0; i < lines.size(); i++) {
+            TextRenderingUtils.Line textrenderingutils$line = lines.get(i);
             int j = row(4 + i);
             int k = textrenderingutils$line.segments.stream().mapToInt(p_280748_ -> this.font.width(p_280748_.renderedText())).sum();
             int l = this.width / 2 - k / 2;
 
             for (TextRenderingUtils.LineSegment textrenderingutils$linesegment : textrenderingutils$line.segments) {
                 int i1 = textrenderingutils$linesegment.isLink() ? 3368635 : -1;
-                int j1 = p_282398_.drawString(this.font, textrenderingutils$linesegment.renderedText(), l, j, i1);
-                if (textrenderingutils$linesegment.isLink() && p_282163_ > l && p_282163_ < j1 && p_282021_ > j - 3 && p_282021_ < j + 8) {
+                int j1 = guiGraphics.drawString(this.font, textrenderingutils$linesegment.renderedText(), l, j, i1);
+                if (textrenderingutils$linesegment.isLink() && x > l && x < j1 && y > j - 3 && y < j + 8) {
                     this.setTooltipForNextRenderPass(Component.literal(textrenderingutils$linesegment.getLinkUrl()));
                     this.currentLink = textrenderingutils$linesegment.getLinkUrl();
                 }
@@ -270,25 +278,34 @@ public class RealmsSelectWorldTemplateScreen extends RealmsScreen {
         @Nullable
         private ImageButton trailerButton;
 
-        public Entry(WorldTemplate p_89753_) {
-            this.template = p_89753_;
-            if (!p_89753_.link.isBlank()) {
+        public Entry(WorldTemplate template) {
+            this.template = template;
+            if (!template.link.isBlank()) {
                 this.websiteButton = new ImageButton(
-                    15, 15, WEBSITE_LINK_SPRITES, ConfirmLinkScreen.confirmLink(RealmsSelectWorldTemplateScreen.this, p_89753_.link), PUBLISHER_LINK_TOOLTIP
+                    15, 15, WEBSITE_LINK_SPRITES, ConfirmLinkScreen.confirmLink(RealmsSelectWorldTemplateScreen.this, template.link), PUBLISHER_LINK_TOOLTIP
                 );
                 this.websiteButton.setTooltip(Tooltip.create(PUBLISHER_LINK_TOOLTIP));
             }
 
-            if (!p_89753_.trailer.isBlank()) {
+            if (!template.trailer.isBlank()) {
                 this.trailerButton = new ImageButton(
-                    15, 15, TRAILER_LINK_SPRITES, ConfirmLinkScreen.confirmLink(RealmsSelectWorldTemplateScreen.this, p_89753_.trailer), TRAILER_LINK_TOOLTIP
+                    15, 15, TRAILER_LINK_SPRITES, ConfirmLinkScreen.confirmLink(RealmsSelectWorldTemplateScreen.this, template.trailer), TRAILER_LINK_TOOLTIP
                 );
                 this.trailerButton.setTooltip(Tooltip.create(TRAILER_LINK_TOOLTIP));
             }
         }
 
+        /**
+         * Called when a mouse button is clicked within the GUI element.
+         * <p>
+         * @return {@code true} if the event is consumed, {@code false} otherwise.
+         *
+         * @param mouseX the X coordinate of the mouse.
+         * @param mouseY the Y coordinate of the mouse.
+         * @param button the button that was clicked.
+         */
         @Override
-        public boolean mouseClicked(double p_299887_, double p_299848_, int p_299963_) {
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
             RealmsSelectWorldTemplateScreen.this.selectedTemplate = this.template;
             RealmsSelectWorldTemplateScreen.this.updateButtonStates();
             if (Util.getMillis() - this.lastClickTime < 250L && this.isFocused()) {
@@ -297,53 +314,53 @@ public class RealmsSelectWorldTemplateScreen extends RealmsScreen {
 
             this.lastClickTime = Util.getMillis();
             if (this.websiteButton != null) {
-                this.websiteButton.mouseClicked(p_299887_, p_299848_, p_299963_);
+                this.websiteButton.mouseClicked(mouseX, mouseY, button);
             }
 
             if (this.trailerButton != null) {
-                this.trailerButton.mouseClicked(p_299887_, p_299848_, p_299963_);
+                this.trailerButton.mouseClicked(mouseX, mouseY, button);
             }
 
-            return super.mouseClicked(p_299887_, p_299848_, p_299963_);
+            return super.mouseClicked(mouseX, mouseY, button);
         }
 
         @Override
         public void render(
-            GuiGraphics p_281796_,
-            int p_282160_,
-            int p_281759_,
-            int p_282961_,
-            int p_281497_,
-            int p_282427_,
-            int p_283550_,
-            int p_282955_,
-            boolean p_282866_,
-            float p_281452_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
-            p_281796_.blit(
-                RealmsTextureManager.worldTemplate(this.template.id, this.template.image), p_282961_ + 1, p_281759_ + 1 + 1, 0.0F, 0.0F, 38, 38, 38, 38
+            guiGraphics.blit(
+                RealmsTextureManager.worldTemplate(this.template.id, this.template.image), left + 1, top + 1 + 1, 0.0F, 0.0F, 38, 38, 38, 38
             );
-            p_281796_.blitSprite(RealmsSelectWorldTemplateScreen.SLOT_FRAME_SPRITE, p_282961_, p_281759_ + 1, 40, 40);
+            guiGraphics.blitSprite(RealmsSelectWorldTemplateScreen.SLOT_FRAME_SPRITE, left, top + 1, 40, 40);
             int i = 5;
             int j = RealmsSelectWorldTemplateScreen.this.font.width(this.template.version);
             if (this.websiteButton != null) {
-                this.websiteButton.setPosition(p_282961_ + p_281497_ - j - this.websiteButton.getWidth() - 10, p_281759_);
-                this.websiteButton.render(p_281796_, p_283550_, p_282955_, p_281452_);
+                this.websiteButton.setPosition(left + width - j - this.websiteButton.getWidth() - 10, top);
+                this.websiteButton.render(guiGraphics, mouseX, mouseY, partialTick);
             }
 
             if (this.trailerButton != null) {
-                this.trailerButton.setPosition(p_282961_ + p_281497_ - j - this.trailerButton.getWidth() * 2 - 15, p_281759_);
-                this.trailerButton.render(p_281796_, p_283550_, p_282955_, p_281452_);
+                this.trailerButton.setPosition(left + width - j - this.trailerButton.getWidth() * 2 - 15, top);
+                this.trailerButton.render(guiGraphics, mouseX, mouseY, partialTick);
             }
 
-            int k = p_282961_ + 45 + 20;
-            int l = p_281759_ + 5;
-            p_281796_.drawString(RealmsSelectWorldTemplateScreen.this.font, this.template.name, k, l, -1, false);
-            p_281796_.drawString(RealmsSelectWorldTemplateScreen.this.font, this.template.version, p_282961_ + p_281497_ - j - 5, l, 7105644, false);
-            p_281796_.drawString(RealmsSelectWorldTemplateScreen.this.font, this.template.author, k, l + 9 + 5, -6250336, false);
+            int k = left + 45 + 20;
+            int l = top + 5;
+            guiGraphics.drawString(RealmsSelectWorldTemplateScreen.this.font, this.template.name, k, l, -1, false);
+            guiGraphics.drawString(RealmsSelectWorldTemplateScreen.this.font, this.template.version, left + width - j - 5, l, 7105644, false);
+            guiGraphics.drawString(RealmsSelectWorldTemplateScreen.this.font, this.template.author, k, l + 9 + 5, -6250336, false);
             if (!this.template.recommendedPlayers.isBlank()) {
-                p_281796_.drawString(
-                    RealmsSelectWorldTemplateScreen.this.font, this.template.recommendedPlayers, k, p_281759_ + p_282427_ - 9 / 2 - 5, 5000268, false
+                guiGraphics.drawString(
+                    RealmsSelectWorldTemplateScreen.this.font, this.template.recommendedPlayers, k, top + height - 9 / 2 - 5, 5000268, false
                 );
             }
         }
@@ -366,28 +383,28 @@ public class RealmsSelectWorldTemplateScreen extends RealmsScreen {
             this(Collections.emptyList());
         }
 
-        public WorldTemplateList(Iterable<WorldTemplate> p_313798_) {
+        public WorldTemplateList(Iterable<WorldTemplate> templates) {
             super(RealmsSelectWorldTemplateScreen.this.width, RealmsSelectWorldTemplateScreen.this.height - 33 - RealmsSelectWorldTemplateScreen.this.getHeaderHeight(), RealmsSelectWorldTemplateScreen.this.getHeaderHeight(), 46);
-            p_313798_.forEach(this::addEntry);
+            templates.forEach(this::addEntry);
         }
 
-        public void addEntry(WorldTemplate p_313857_) {
-            this.addEntry(RealmsSelectWorldTemplateScreen.this.new Entry(p_313857_));
+        public void addEntry(WorldTemplate template) {
+            this.addEntry(RealmsSelectWorldTemplateScreen.this.new Entry(template));
         }
 
         @Override
-        public boolean mouseClicked(double p_313816_, double p_313908_, int p_313922_) {
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
             if (currentLink != null) {
                 ConfirmLinkScreen.confirmLinkNow(RealmsSelectWorldTemplateScreen.this, currentLink);
                 return true;
             } else {
-                return super.mouseClicked(p_313816_, p_313908_, p_313922_);
+                return super.mouseClicked(mouseX, mouseY, button);
             }
         }
 
-        public void setSelected(@Nullable RealmsSelectWorldTemplateScreen.Entry p_313741_) {
-            super.setSelected(p_313741_);
-            selectedTemplate = p_313741_ == null ? null : p_313741_.template;
+        public void setSelected(@Nullable RealmsSelectWorldTemplateScreen.Entry selected) {
+            super.setSelected(selected);
+            selectedTemplate = selected == null ? null : selected.template;
             updateButtonStates();
         }
 

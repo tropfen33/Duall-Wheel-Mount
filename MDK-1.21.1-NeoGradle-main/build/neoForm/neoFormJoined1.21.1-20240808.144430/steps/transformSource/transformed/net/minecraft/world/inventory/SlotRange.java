@@ -10,21 +10,21 @@ public interface SlotRange extends StringRepresentable {
         return this.slots().size();
     }
 
-    static SlotRange of(final String p_332809_, final IntList p_332653_) {
+    static SlotRange of(final String name, final IntList values) {
         return new SlotRange() {
             @Override
             public IntList slots() {
-                return p_332653_;
+                return values;
             }
 
             @Override
             public String getSerializedName() {
-                return p_332809_;
+                return name;
             }
 
             @Override
             public String toString() {
-                return p_332809_;
+                return name;
             }
         };
     }

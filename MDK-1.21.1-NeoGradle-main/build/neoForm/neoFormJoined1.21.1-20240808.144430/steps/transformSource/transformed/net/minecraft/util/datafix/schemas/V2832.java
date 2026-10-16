@@ -9,41 +9,41 @@ import java.util.function.Supplier;
 import net.minecraft.util.datafix.fixes.References;
 
 public class V2832 extends NamespacedSchema {
-    public V2832(int p_185217_, Schema p_185218_) {
-        super(p_185217_, p_185218_);
+    public V2832(int versionKey, Schema parent) {
+        super(versionKey, parent);
     }
 
     @Override
-    public void registerTypes(Schema p_185234_, Map<String, Supplier<TypeTemplate>> p_185235_, Map<String, Supplier<TypeTemplate>> p_185236_) {
-        super.registerTypes(p_185234_, p_185235_, p_185236_);
-        p_185234_.registerType(
+    public void registerTypes(Schema schema, Map<String, Supplier<TypeTemplate>> entityTypes, Map<String, Supplier<TypeTemplate>> blockEntityTypes) {
+        super.registerTypes(schema, entityTypes, blockEntityTypes);
+        schema.registerType(
             false,
             References.CHUNK,
             () -> DSL.fields(
                     "Level",
                     DSL.optionalFields(
                         "Entities",
-                        DSL.list(References.ENTITY_TREE.in(p_185234_)),
+                        DSL.list(References.ENTITY_TREE.in(schema)),
                         "TileEntities",
-                        DSL.list(DSL.or(References.BLOCK_ENTITY.in(p_185234_), DSL.remainder())),
+                        DSL.list(DSL.or(References.BLOCK_ENTITY.in(schema), DSL.remainder())),
                         "TileTicks",
-                        DSL.list(DSL.fields("i", References.BLOCK_NAME.in(p_185234_))),
+                        DSL.list(DSL.fields("i", References.BLOCK_NAME.in(schema))),
                         "Sections",
                         DSL.list(
                             DSL.optionalFields(
                                 "biomes",
-                                DSL.optionalFields("palette", DSL.list(References.BIOME.in(p_185234_))),
+                                DSL.optionalFields("palette", DSL.list(References.BIOME.in(schema))),
                                 "block_states",
-                                DSL.optionalFields("palette", DSL.list(References.BLOCK_STATE.in(p_185234_)))
+                                DSL.optionalFields("palette", DSL.list(References.BLOCK_STATE.in(schema)))
                             )
                         ),
                         "Structures",
-                        DSL.optionalFields("Starts", DSL.compoundList(References.STRUCTURE_FEATURE.in(p_185234_)))
+                        DSL.optionalFields("Starts", DSL.compoundList(References.STRUCTURE_FEATURE.in(schema)))
                     )
                 )
         );
-        p_185234_.registerType(false, References.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST, () -> DSL.constType(namespacedString()));
-        p_185234_.registerType(
+        schema.registerType(false, References.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST, () -> DSL.constType(namespacedString()));
+        schema.registerType(
             false,
             References.WORLD_GEN_SETTINGS,
             () -> DSL.fields(
@@ -64,9 +64,9 @@ public class V2832 extends NamespacedSchema {
                                             "settings",
                                             DSL.optionalFields(
                                                 "biome",
-                                                References.BIOME.in(p_185234_),
+                                                References.BIOME.in(schema),
                                                 "layers",
-                                                DSL.list(DSL.optionalFields("block", References.BLOCK_NAME.in(p_185234_)))
+                                                DSL.list(DSL.optionalFields("block", References.BLOCK_NAME.in(schema)))
                                             )
                                         ),
                                     "minecraft:noise",
@@ -77,14 +77,14 @@ public class V2832 extends NamespacedSchema {
                                                 DSL.string(),
                                                 ImmutableMap.of(
                                                     "minecraft:fixed",
-                                                    () -> DSL.fields("biome", References.BIOME.in(p_185234_)),
+                                                    () -> DSL.fields("biome", References.BIOME.in(schema)),
                                                     "minecraft:multi_noise",
                                                     () -> DSL.or(
-                                                            DSL.fields("preset", References.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST.in(p_185234_)),
-                                                            DSL.list(DSL.fields("biome", References.BIOME.in(p_185234_)))
+                                                            DSL.fields("preset", References.MULTI_NOISE_BIOME_SOURCE_PARAMETER_LIST.in(schema)),
+                                                            DSL.list(DSL.fields("biome", References.BIOME.in(schema)))
                                                         ),
                                                     "minecraft:checkerboard",
-                                                    () -> DSL.fields("biomes", DSL.list(References.BIOME.in(p_185234_))),
+                                                    () -> DSL.fields("biomes", DSL.list(References.BIOME.in(schema))),
                                                     "minecraft:the_end",
                                                     DSL::remainder
                                                 )
@@ -93,7 +93,7 @@ public class V2832 extends NamespacedSchema {
                                             DSL.or(
                                                 DSL.constType(DSL.string()),
                                                 DSL.optionalFields(
-                                                    "default_block", References.BLOCK_NAME.in(p_185234_), "default_fluid", References.BLOCK_NAME.in(p_185234_)
+                                                    "default_block", References.BLOCK_NAME.in(schema), "default_fluid", References.BLOCK_NAME.in(schema)
                                                 )
                                             )
                                         )

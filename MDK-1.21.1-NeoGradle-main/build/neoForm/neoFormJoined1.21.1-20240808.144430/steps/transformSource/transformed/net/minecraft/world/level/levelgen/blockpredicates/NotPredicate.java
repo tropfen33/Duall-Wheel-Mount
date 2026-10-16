@@ -12,12 +12,12 @@ class NotPredicate implements BlockPredicate {
     );
     private final BlockPredicate predicate;
 
-    public NotPredicate(BlockPredicate p_190509_) {
-        this.predicate = p_190509_;
+    public NotPredicate(BlockPredicate predicate) {
+        this.predicate = predicate;
     }
 
-    public boolean test(WorldGenLevel p_190512_, BlockPos p_190513_) {
-        return !this.predicate.test(p_190512_, p_190513_);
+    public boolean test(WorldGenLevel level, BlockPos pos) {
+        return !this.predicate.test(level, pos);
     }
 
     @Override

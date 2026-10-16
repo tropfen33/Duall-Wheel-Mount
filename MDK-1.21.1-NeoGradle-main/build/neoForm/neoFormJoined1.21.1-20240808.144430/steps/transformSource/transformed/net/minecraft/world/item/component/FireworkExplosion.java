@@ -54,22 +54,22 @@ public record FireworkExplosion(FireworkExplosion.Shape shape, IntList colors, I
     private static final Component CUSTOM_COLOR_NAME = Component.translatable("item.minecraft.firework_star.custom_color");
 
     @Override
-    public void addToTooltip(Item.TooltipContext p_341341_, Consumer<Component> p_331404_, TooltipFlag p_330365_) {
-        this.addShapeNameTooltip(p_331404_);
-        this.addAdditionalTooltip(p_331404_);
+    public void addToTooltip(Item.TooltipContext context, Consumer<Component> tooltipAdder, TooltipFlag tooltipFlag) {
+        this.addShapeNameTooltip(tooltipAdder);
+        this.addAdditionalTooltip(tooltipAdder);
     }
 
-    public void addShapeNameTooltip(Consumer<Component> p_331748_) {
-        p_331748_.accept(this.shape.getName().withStyle(ChatFormatting.GRAY));
+    public void addShapeNameTooltip(Consumer<Component> tooltipAdder) {
+        tooltipAdder.accept(this.shape.getName().withStyle(ChatFormatting.GRAY));
     }
 
-    public void addAdditionalTooltip(Consumer<Component> p_331075_) {
+    public void addAdditionalTooltip(Consumer<Component> tooltipAdder) {
         if (!this.colors.isEmpty()) {
-            p_331075_.accept(appendColors(Component.empty().withStyle(ChatFormatting.GRAY), this.colors));
+            tooltipAdder.accept(appendColors(Component.empty().withStyle(ChatFormatting.GRAY), this.colors));
         }
 
         if (!this.fadeColors.isEmpty()) {
-            p_331075_.accept(
+            tooltipAdder.accept(
                 appendColors(
                     Component.translatable("item.minecraft.firework_star.fade_to").append(CommonComponents.SPACE).withStyle(ChatFormatting.GRAY),
                     this.fadeColors
@@ -78,33 +78,33 @@ public record FireworkExplosion(FireworkExplosion.Shape shape, IntList colors, I
         }
 
         if (this.hasTrail) {
-            p_331075_.accept(Component.translatable("item.minecraft.firework_star.trail").withStyle(ChatFormatting.GRAY));
+            tooltipAdder.accept(Component.translatable("item.minecraft.firework_star.trail").withStyle(ChatFormatting.GRAY));
         }
 
         if (this.hasTwinkle) {
-            p_331075_.accept(Component.translatable("item.minecraft.firework_star.flicker").withStyle(ChatFormatting.GRAY));
+            tooltipAdder.accept(Component.translatable("item.minecraft.firework_star.flicker").withStyle(ChatFormatting.GRAY));
         }
     }
 
-    private static Component appendColors(MutableComponent p_331806_, IntList p_330350_) {
-        for (int i = 0; i < p_330350_.size(); i++) {
+    private static Component appendColors(MutableComponent component, IntList colors) {
+        for (int i = 0; i < colors.size(); i++) {
             if (i > 0) {
-                p_331806_.append(", ");
+                component.append(", ");
             }
 
-            p_331806_.append(getColorName(p_330350_.getInt(i)));
+            component.append(getColorName(colors.getInt(i)));
         }
 
-        return p_331806_;
+        return component;
     }
 
-    private static Component getColorName(int p_330226_) {
-        DyeColor dyecolor = DyeColor.byFireworkColor(p_330226_);
+    private static Component getColorName(int id) {
+        DyeColor dyecolor = DyeColor.byFireworkColor(id);
         return (Component)(dyecolor == null ? CUSTOM_COLOR_NAME : Component.translatable("item.minecraft.firework_star." + dyecolor.getName()));
     }
 
-    public FireworkExplosion withFadeColors(IntList p_330678_) {
-        return new FireworkExplosion(this.shape, this.colors, new IntArrayList(p_330678_), this.hasTrail, this.hasTwinkle);
+    public FireworkExplosion withFadeColors(IntList fadeColors) {
+        return new FireworkExplosion(this.shape, this.colors, new IntArrayList(fadeColors), this.hasTrail, this.hasTwinkle);
     }
 
     @net.neoforged.fml.common.asm.enumextension.IndexedEnum
@@ -125,9 +125,9 @@ public record FireworkExplosion(FireworkExplosion.Shape shape, IntList colors, I
         private final int id;
         private final String name;
 
-        private Shape(int p_330605_, String p_331586_) {
-            this.id = p_330605_;
-            this.name = p_331586_;
+        private Shape(int id, String name) {
+            this.id = id;
+            this.name = name;
         }
 
         public MutableComponent getName() {
@@ -138,8 +138,8 @@ public record FireworkExplosion(FireworkExplosion.Shape shape, IntList colors, I
             return this.id;
         }
 
-        public static FireworkExplosion.Shape byId(int p_330838_) {
-            return BY_ID.apply(p_330838_);
+        public static FireworkExplosion.Shape byId(int id) {
+            return BY_ID.apply(id);
         }
 
         @Override

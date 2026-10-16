@@ -26,8 +26,8 @@ public class FancyTrunkPlacer extends TrunkPlacer {
     private static final double BRANCH_SLOPE = 0.381;
     private static final double BRANCH_LENGTH_MAGIC = 0.328;
 
-    public FancyTrunkPlacer(int p_70094_, int p_70095_, int p_70096_) {
-        super(p_70094_, p_70095_, p_70096_);
+    public FancyTrunkPlacer(int baseHeight, int heightRandA, int heightRandB) {
+        super(baseHeight, heightRandA, heightRandB);
     }
 
     @Override
@@ -37,42 +37,42 @@ public class FancyTrunkPlacer extends TrunkPlacer {
 
     @Override
     public List<FoliagePlacer.FoliageAttachment> placeTrunk(
-        LevelSimulatedReader p_226093_,
-        BiConsumer<BlockPos, BlockState> p_226094_,
-        RandomSource p_226095_,
-        int p_226096_,
-        BlockPos p_226097_,
-        TreeConfiguration p_226098_
+        LevelSimulatedReader level,
+        BiConsumer<BlockPos, BlockState> blockSetter,
+        RandomSource random,
+        int freeTreeHeight,
+        BlockPos pos,
+        TreeConfiguration config
     ) {
         int i = 5;
-        int j = p_226096_ + 2;
+        int j = freeTreeHeight + 2;
         int k = Mth.floor((double)j * 0.618);
-        setDirtAt(p_226093_, p_226094_, p_226095_, p_226097_.below(), p_226098_);
+        setDirtAt(level, blockSetter, random, pos.below(), config);
         double d0 = 1.0;
         int l = Math.min(1, Mth.floor(1.382 + Math.pow(1.0 * (double)j / 13.0, 2.0)));
-        int i1 = p_226097_.getY() + k;
+        int i1 = pos.getY() + k;
         int j1 = j - 5;
         List<FancyTrunkPlacer.FoliageCoords> list = Lists.newArrayList();
-        list.add(new FancyTrunkPlacer.FoliageCoords(p_226097_.above(j1), i1));
+        list.add(new FancyTrunkPlacer.FoliageCoords(pos.above(j1), i1));
 
         for (; j1 >= 0; j1--) {
             float f = treeShape(j, j1);
             if (!(f < 0.0F)) {
                 for (int k1 = 0; k1 < l; k1++) {
                     double d1 = 1.0;
-                    double d2 = 1.0 * (double)f * ((double)p_226095_.nextFloat() + 0.328);
-                    double d3 = (double)(p_226095_.nextFloat() * 2.0F) * Math.PI;
+                    double d2 = 1.0 * (double)f * ((double)random.nextFloat() + 0.328);
+                    double d3 = (double)(random.nextFloat() * 2.0F) * Math.PI;
                     double d4 = d2 * Math.sin(d3) + 0.5;
                     double d5 = d2 * Math.cos(d3) + 0.5;
-                    BlockPos blockpos = p_226097_.offset(Mth.floor(d4), j1 - 1, Mth.floor(d5));
+                    BlockPos blockpos = pos.offset(Mth.floor(d4), j1 - 1, Mth.floor(d5));
                     BlockPos blockpos1 = blockpos.above(5);
-                    if (this.makeLimb(p_226093_, p_226094_, p_226095_, blockpos, blockpos1, false, p_226098_)) {
-                        int l1 = p_226097_.getX() - blockpos.getX();
-                        int i2 = p_226097_.getZ() - blockpos.getZ();
+                    if (this.makeLimb(level, blockSetter, random, blockpos, blockpos1, false, config)) {
+                        int l1 = pos.getX() - blockpos.getX();
+                        int i2 = pos.getZ() - blockpos.getZ();
                         double d6 = (double)blockpos.getY() - Math.sqrt((double)(l1 * l1 + i2 * i2)) * 0.381;
                         int j2 = d6 > (double)i1 ? i1 : (int)d6;
-                        BlockPos blockpos2 = new BlockPos(p_226097_.getX(), j2, p_226097_.getZ());
-                        if (this.makeLimb(p_226093_, p_226094_, p_226095_, blockpos2, blockpos, false, p_226098_)) {
+                        BlockPos blockpos2 = new BlockPos(pos.getX(), j2, pos.getZ());
+                        if (this.makeLimb(level, blockSetter, random, blockpos2, blockpos, false, config)) {
                             list.add(new FancyTrunkPlacer.FoliageCoords(blockpos, blockpos2.getY()));
                         }
                     }
@@ -80,12 +80,12 @@ public class FancyTrunkPlacer extends TrunkPlacer {
             }
         }
 
-        this.makeLimb(p_226093_, p_226094_, p_226095_, p_226097_, p_226097_.above(k), true, p_226098_);
-        this.makeBranches(p_226093_, p_226094_, p_226095_, j, p_226097_, list, p_226098_);
+        this.makeLimb(level, blockSetter, random, pos, pos.above(k), true, config);
+        this.makeBranches(level, blockSetter, random, j, pos, list, config);
         List<FoliagePlacer.FoliageAttachment> list1 = Lists.newArrayList();
 
         for (FancyTrunkPlacer.FoliageCoords fancytrunkplacer$foliagecoords : list) {
-            if (this.trimBranches(j, fancytrunkplacer$foliagecoords.getBranchBase() - p_226097_.getY())) {
+            if (this.trimBranches(j, fancytrunkplacer$foliagecoords.getBranchBase() - pos.getY())) {
                 list1.add(fancytrunkplacer$foliagecoords.attachment);
             }
         }
@@ -94,35 +94,35 @@ public class FancyTrunkPlacer extends TrunkPlacer {
     }
 
     private boolean makeLimb(
-        LevelSimulatedReader p_226108_,
-        BiConsumer<BlockPos, BlockState> p_226109_,
-        RandomSource p_226110_,
-        BlockPos p_226111_,
-        BlockPos p_226112_,
-        boolean p_226113_,
-        TreeConfiguration p_226114_
+        LevelSimulatedReader level,
+        BiConsumer<BlockPos, BlockState> blockSetter,
+        RandomSource random,
+        BlockPos basePos,
+        BlockPos offsetPos,
+        boolean modifyWorld,
+        TreeConfiguration config
     ) {
-        if (!p_226113_ && Objects.equals(p_226111_, p_226112_)) {
+        if (!modifyWorld && Objects.equals(basePos, offsetPos)) {
             return true;
         } else {
-            BlockPos blockpos = p_226112_.offset(-p_226111_.getX(), -p_226111_.getY(), -p_226111_.getZ());
+            BlockPos blockpos = offsetPos.offset(-basePos.getX(), -basePos.getY(), -basePos.getZ());
             int i = this.getSteps(blockpos);
             float f = (float)blockpos.getX() / (float)i;
             float f1 = (float)blockpos.getY() / (float)i;
             float f2 = (float)blockpos.getZ() / (float)i;
 
             for (int j = 0; j <= i; j++) {
-                BlockPos blockpos1 = p_226111_.offset(Mth.floor(0.5F + (float)j * f), Mth.floor(0.5F + (float)j * f1), Mth.floor(0.5F + (float)j * f2));
-                if (p_226113_) {
+                BlockPos blockpos1 = basePos.offset(Mth.floor(0.5F + (float)j * f), Mth.floor(0.5F + (float)j * f1), Mth.floor(0.5F + (float)j * f2));
+                if (modifyWorld) {
                     this.placeLog(
-                        p_226108_,
-                        p_226109_,
-                        p_226110_,
+                        level,
+                        blockSetter,
+                        random,
                         blockpos1,
-                        p_226114_,
-                        p_161826_ -> p_161826_.trySetValue(RotatedPillarBlock.AXIS, this.getLogAxis(p_226111_, blockpos1))
+                        config,
+                        p_161826_ -> p_161826_.trySetValue(RotatedPillarBlock.AXIS, this.getLogAxis(basePos, blockpos1))
                     );
-                } else if (!this.isFree(p_226108_, blockpos1)) {
+                } else if (!this.isFree(level, blockpos1)) {
                     return false;
                 }
             }
@@ -131,17 +131,17 @@ public class FancyTrunkPlacer extends TrunkPlacer {
         }
     }
 
-    private int getSteps(BlockPos p_70128_) {
-        int i = Mth.abs(p_70128_.getX());
-        int j = Mth.abs(p_70128_.getY());
-        int k = Mth.abs(p_70128_.getZ());
+    private int getSteps(BlockPos pos) {
+        int i = Mth.abs(pos.getX());
+        int j = Mth.abs(pos.getY());
+        int k = Mth.abs(pos.getZ());
         return Math.max(i, Math.max(j, k));
     }
 
-    private Direction.Axis getLogAxis(BlockPos p_70130_, BlockPos p_70131_) {
+    private Direction.Axis getLogAxis(BlockPos pos, BlockPos otherPos) {
         Direction.Axis direction$axis = Direction.Axis.Y;
-        int i = Math.abs(p_70131_.getX() - p_70130_.getX());
-        int j = Math.abs(p_70131_.getZ() - p_70130_.getZ());
+        int i = Math.abs(otherPos.getX() - pos.getX());
+        int j = Math.abs(otherPos.getZ() - pos.getZ());
         int k = Math.max(i, j);
         if (k > 0) {
             if (i == k) {
@@ -154,34 +154,34 @@ public class FancyTrunkPlacer extends TrunkPlacer {
         return direction$axis;
     }
 
-    private boolean trimBranches(int p_70099_, int p_70100_) {
-        return (double)p_70100_ >= (double)p_70099_ * 0.2;
+    private boolean trimBranches(int maxHeight, int currentHeight) {
+        return (double)currentHeight >= (double)maxHeight * 0.2;
     }
 
     private void makeBranches(
-        LevelSimulatedReader p_226100_,
-        BiConsumer<BlockPos, BlockState> p_226101_,
-        RandomSource p_226102_,
-        int p_226103_,
-        BlockPos p_226104_,
-        List<FancyTrunkPlacer.FoliageCoords> p_226105_,
-        TreeConfiguration p_226106_
+        LevelSimulatedReader level,
+        BiConsumer<BlockPos, BlockState> blockSetter,
+        RandomSource random,
+        int maxHeight,
+        BlockPos pos,
+        List<FancyTrunkPlacer.FoliageCoords> foliageCoords,
+        TreeConfiguration config
     ) {
-        for (FancyTrunkPlacer.FoliageCoords fancytrunkplacer$foliagecoords : p_226105_) {
+        for (FancyTrunkPlacer.FoliageCoords fancytrunkplacer$foliagecoords : foliageCoords) {
             int i = fancytrunkplacer$foliagecoords.getBranchBase();
-            BlockPos blockpos = new BlockPos(p_226104_.getX(), i, p_226104_.getZ());
-            if (!blockpos.equals(fancytrunkplacer$foliagecoords.attachment.pos()) && this.trimBranches(p_226103_, i - p_226104_.getY())) {
-                this.makeLimb(p_226100_, p_226101_, p_226102_, blockpos, fancytrunkplacer$foliagecoords.attachment.pos(), true, p_226106_);
+            BlockPos blockpos = new BlockPos(pos.getX(), i, pos.getZ());
+            if (!blockpos.equals(fancytrunkplacer$foliagecoords.attachment.pos()) && this.trimBranches(maxHeight, i - pos.getY())) {
+                this.makeLimb(level, blockSetter, random, blockpos, fancytrunkplacer$foliagecoords.attachment.pos(), true, config);
             }
         }
     }
 
-    private static float treeShape(int p_70133_, int p_70134_) {
-        if ((float)p_70134_ < (float)p_70133_ * 0.3F) {
+    private static float treeShape(int height, int currentY) {
+        if ((float)currentY < (float)height * 0.3F) {
             return -1.0F;
         } else {
-            float f = (float)p_70133_ / 2.0F;
-            float f1 = f - (float)p_70134_;
+            float f = (float)height / 2.0F;
+            float f1 = f - (float)currentY;
             float f2 = Mth.sqrt(f * f - f1 * f1);
             if (f1 == 0.0F) {
                 f2 = f;
@@ -197,9 +197,9 @@ public class FancyTrunkPlacer extends TrunkPlacer {
         final FoliagePlacer.FoliageAttachment attachment;
         private final int branchBase;
 
-        public FoliageCoords(BlockPos p_70140_, int p_70141_) {
-            this.attachment = new FoliagePlacer.FoliageAttachment(p_70140_, 0, false);
-            this.branchBase = p_70141_;
+        public FoliageCoords(BlockPos attachmentPos, int branchBase) {
+            this.attachment = new FoliagePlacer.FoliageAttachment(attachmentPos, 0, false);
+            this.branchBase = branchBase;
         }
 
         public int getBranchBase() {

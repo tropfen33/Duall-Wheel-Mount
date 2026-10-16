@@ -24,10 +24,10 @@ public class ClientboundOpenScreenPacket implements Packet<ClientGamePacketListe
     private final MenuType<?> type;
     private final Component title;
 
-    public ClientboundOpenScreenPacket(int p_132616_, MenuType<?> p_132617_, Component p_132618_) {
-        this.containerId = p_132616_;
-        this.type = p_132617_;
-        this.title = p_132618_;
+    public ClientboundOpenScreenPacket(int containerId, MenuType<?> menuType, Component title) {
+        this.containerId = containerId;
+        this.type = menuType;
+        this.title = title;
     }
 
     @Override
@@ -35,8 +35,11 @@ public class ClientboundOpenScreenPacket implements Packet<ClientGamePacketListe
         return GamePacketTypes.CLIENTBOUND_OPEN_SCREEN;
     }
 
-    public void handle(ClientGamePacketListener p_132624_) {
-        p_132624_.handleOpenScreen(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleOpenScreen(this);
     }
 
     public int getContainerId() {

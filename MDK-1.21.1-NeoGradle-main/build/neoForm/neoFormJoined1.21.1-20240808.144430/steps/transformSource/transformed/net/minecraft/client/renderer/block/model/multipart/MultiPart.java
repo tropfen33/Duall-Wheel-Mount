@@ -36,9 +36,9 @@ public class MultiPart implements UnbakedModel {
     private final StateDefinition<Block, BlockState> definition;
     private final List<Selector> selectors;
 
-    public MultiPart(StateDefinition<Block, BlockState> p_111965_, List<Selector> p_111966_) {
-        this.definition = p_111965_;
-        this.selectors = p_111966_;
+    public MultiPart(StateDefinition<Block, BlockState> definition, List<Selector> selectors) {
+        this.definition = definition;
+        this.selectors = selectors;
     }
 
     public List<Selector> getSelectors() {
@@ -56,11 +56,11 @@ public class MultiPart implements UnbakedModel {
     }
 
     @Override
-    public boolean equals(Object p_111984_) {
-        if (this == p_111984_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return !(p_111984_ instanceof MultiPart multipart)
+            return !(other instanceof MultiPart multipart)
                 ? false
                 : Objects.equals(this.definition, multipart.definition) && Objects.equals(this.selectors, multipart.selectors);
         }
@@ -77,17 +77,17 @@ public class MultiPart implements UnbakedModel {
     }
 
     @Override
-    public void resolveParents(Function<ResourceLocation, UnbakedModel> p_251539_) {
-        this.getSelectors().forEach(p_247936_ -> p_247936_.getVariant().resolveParents(p_251539_));
+    public void resolveParents(Function<ResourceLocation, UnbakedModel> resolver) {
+        this.getSelectors().forEach(p_247936_ -> p_247936_.getVariant().resolveParents(resolver));
     }
 
     @Nullable
     @Override
-    public BakedModel bake(ModelBaker p_249988_, Function<Material, TextureAtlasSprite> p_111972_, ModelState p_111973_) {
+    public BakedModel bake(ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState state) {
         MultiPartBakedModel.Builder multipartbakedmodel$builder = new MultiPartBakedModel.Builder();
 
         for (Selector selector : this.getSelectors()) {
-            BakedModel bakedmodel = selector.getVariant().bake(p_249988_, p_111972_, p_111973_);
+            BakedModel bakedmodel = selector.getVariant().bake(baker, spriteGetter, state);
             if (bakedmodel != null) {
                 multipartbakedmodel$builder.add(selector.getPredicate(this.definition), bakedmodel);
             }
@@ -100,19 +100,19 @@ public class MultiPart implements UnbakedModel {
     public static class Deserializer implements JsonDeserializer<MultiPart> {
         private final BlockModelDefinition.Context context;
 
-        public Deserializer(BlockModelDefinition.Context p_111989_) {
-            this.context = p_111989_;
+        public Deserializer(BlockModelDefinition.Context context) {
+            this.context = context;
         }
 
-        public MultiPart deserialize(JsonElement p_111994_, Type p_111995_, JsonDeserializationContext p_111996_) throws JsonParseException {
-            return new MultiPart(this.context.getDefinition(), this.getSelectors(p_111996_, p_111994_.getAsJsonArray()));
+        public MultiPart deserialize(JsonElement json, Type type, JsonDeserializationContext jsonContext) throws JsonParseException {
+            return new MultiPart(this.context.getDefinition(), this.getSelectors(jsonContext, json.getAsJsonArray()));
         }
 
-        private List<Selector> getSelectors(JsonDeserializationContext p_111991_, JsonArray p_111992_) {
+        private List<Selector> getSelectors(JsonDeserializationContext jsonContext, JsonArray elements) {
             List<Selector> list = Lists.newArrayList();
 
-            for (JsonElement jsonelement : p_111992_) {
-                list.add(p_111991_.deserialize(jsonelement, Selector.class));
+            for (JsonElement jsonelement : elements) {
+                list.add(jsonContext.deserialize(jsonelement, Selector.class));
             }
 
             return list;

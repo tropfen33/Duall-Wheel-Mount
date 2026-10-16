@@ -12,8 +12,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class GoatModel<T extends Goat> extends QuadrupedModel<T> {
-    public GoatModel(ModelPart p_170578_) {
-        super(p_170578_, true, 19.0F, 1.0F, 2.5F, 2.0F, 24);
+    public GoatModel(ModelPart root) {
+        super(root, true, 19.0F, 1.0F, 2.5F, 2.0F, 24);
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -66,11 +66,14 @@ public class GoatModel<T extends Goat> extends QuadrupedModel<T> {
         return LayerDefinition.create(meshdefinition, 64, 64);
     }
 
-    public void setupAnim(T p_170587_, float p_170588_, float p_170589_, float p_170590_, float p_170591_, float p_170592_) {
-        this.head.getChild("left_horn").visible = p_170587_.hasLeftHorn();
-        this.head.getChild("right_horn").visible = p_170587_.hasRightHorn();
-        super.setupAnim(p_170587_, p_170588_, p_170589_, p_170590_, p_170591_, p_170592_);
-        float f = p_170587_.getRammingXHeadRot();
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.head.getChild("left_horn").visible = entity.hasLeftHorn();
+        this.head.getChild("right_horn").visible = entity.hasRightHorn();
+        super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+        float f = entity.getRammingXHeadRot();
         if (f != 0.0F) {
             this.head.xRot = f;
         }

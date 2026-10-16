@@ -19,19 +19,22 @@ public class PhantomRenderer extends MobRenderer<Phantom, PhantomModel<Phantom>>
         this.addLayer(new PhantomEyesLayer<>(this));
     }
 
-    public ResourceLocation getTextureLocation(Phantom p_115679_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Phantom entity) {
         return PHANTOM_LOCATION;
     }
 
-    protected void scale(Phantom p_115681_, PoseStack p_115682_, float p_115683_) {
-        int i = p_115681_.getPhantomSize();
+    protected void scale(Phantom livingEntity, PoseStack poseStack, float partialTickTime) {
+        int i = livingEntity.getPhantomSize();
         float f = 1.0F + 0.15F * (float)i;
-        p_115682_.scale(f, f, f);
-        p_115682_.translate(0.0F, 1.3125F, 0.1875F);
+        poseStack.scale(f, f, f);
+        poseStack.translate(0.0F, 1.3125F, 0.1875F);
     }
 
-    protected void setupRotations(Phantom p_320470_, PoseStack p_115674_, float p_115675_, float p_115676_, float p_115677_, float p_320856_) {
-        super.setupRotations(p_320470_, p_115674_, p_115675_, p_115676_, p_115677_, p_320856_);
-        p_115674_.mulPose(Axis.XP.rotationDegrees(p_320470_.getXRot()));
+    protected void setupRotations(Phantom entity, PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale) {
+        super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
+        poseStack.mulPose(Axis.XP.rotationDegrees(entity.getXRot()));
     }
 }

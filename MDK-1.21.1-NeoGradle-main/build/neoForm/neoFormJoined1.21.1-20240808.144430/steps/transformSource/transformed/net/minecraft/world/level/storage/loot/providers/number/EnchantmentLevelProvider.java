@@ -14,8 +14,8 @@ public record EnchantmentLevelProvider(LevelBasedValue amount) implements Number
     );
 
     @Override
-    public float getFloat(LootContext p_344791_) {
-        int i = p_344791_.getParam(LootContextParams.ENCHANTMENT_LEVEL);
+    public float getFloat(LootContext lootContext) {
+        int i = lootContext.getParam(LootContextParams.ENCHANTMENT_LEVEL);
         return this.amount.calculate(i);
     }
 
@@ -24,7 +24,7 @@ public record EnchantmentLevelProvider(LevelBasedValue amount) implements Number
         return NumberProviders.ENCHANTMENT_LEVEL;
     }
 
-    public static EnchantmentLevelProvider forEnchantmentLevel(LevelBasedValue p_345320_) {
-        return new EnchantmentLevelProvider(p_345320_);
+    public static EnchantmentLevelProvider forEnchantmentLevel(LevelBasedValue amount) {
+        return new EnchantmentLevelProvider(amount);
     }
 }

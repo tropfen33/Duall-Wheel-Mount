@@ -11,15 +11,15 @@ import net.minecraft.world.phys.Vec3;
 public class WaterBoundPathNavigation extends PathNavigation {
     private boolean allowBreaching;
 
-    public WaterBoundPathNavigation(Mob p_26594_, Level p_26595_) {
-        super(p_26594_, p_26595_);
+    public WaterBoundPathNavigation(Mob mob, Level level) {
+        super(mob, level);
     }
 
     @Override
-    protected PathFinder createPathFinder(int p_26598_) {
+    protected PathFinder createPathFinder(int maxVisitedNodes) {
         this.allowBreaching = this.mob.getType() == EntityType.DOLPHIN;
         this.nodeEvaluator = new SwimNodeEvaluator(this.allowBreaching);
-        return new PathFinder(this.nodeEvaluator, p_26598_);
+        return new PathFinder(this.nodeEvaluator, maxVisitedNodes);
     }
 
     @Override
@@ -33,21 +33,24 @@ public class WaterBoundPathNavigation extends PathNavigation {
     }
 
     @Override
-    protected double getGroundY(Vec3 p_186136_) {
-        return p_186136_.y;
+    protected double getGroundY(Vec3 vec) {
+        return vec.y;
+    }
+
+    /**
+     * Checks if the specified entity can safely walk to the specified location.
+     */
+    @Override
+    protected boolean canMoveDirectly(Vec3 posVec31, Vec3 posVec32) {
+        return isClearForMovementBetween(this.mob, posVec31, posVec32, false);
     }
 
     @Override
-    protected boolean canMoveDirectly(Vec3 p_186138_, Vec3 p_186139_) {
-        return isClearForMovementBetween(this.mob, p_186138_, p_186139_, false);
+    public boolean isStableDestination(BlockPos pos) {
+        return !this.level.getBlockState(pos).isSolidRender(this.level, pos);
     }
 
     @Override
-    public boolean isStableDestination(BlockPos p_26608_) {
-        return !this.level.getBlockState(p_26608_).isSolidRender(this.level, p_26608_);
-    }
-
-    @Override
-    public void setCanFloat(boolean p_26612_) {
+    public void setCanFloat(boolean canSwim) {
     }
 }

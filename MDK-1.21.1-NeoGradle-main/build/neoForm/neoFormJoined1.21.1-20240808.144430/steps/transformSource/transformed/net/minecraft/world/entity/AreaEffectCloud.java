@@ -51,26 +51,26 @@ public class AreaEffectCloud extends Entity implements TraceableEntity {
     @Nullable
     private UUID ownerUUID;
 
-    public AreaEffectCloud(EntityType<? extends AreaEffectCloud> p_19704_, Level p_19705_) {
-        super(p_19704_, p_19705_);
+    public AreaEffectCloud(EntityType<? extends AreaEffectCloud> entityType, Level level) {
+        super(entityType, level);
         this.noPhysics = true;
     }
 
-    public AreaEffectCloud(Level p_19707_, double p_19708_, double p_19709_, double p_19710_) {
-        this(EntityType.AREA_EFFECT_CLOUD, p_19707_);
-        this.setPos(p_19708_, p_19709_, p_19710_);
+    public AreaEffectCloud(Level level, double x, double y, double z) {
+        this(EntityType.AREA_EFFECT_CLOUD, level);
+        this.setPos(x, y, z);
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326332_) {
-        p_326332_.define(DATA_RADIUS, 3.0F);
-        p_326332_.define(DATA_WAITING, false);
-        p_326332_.define(DATA_PARTICLE, ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, -1));
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_RADIUS, 3.0F);
+        builder.define(DATA_WAITING, false);
+        builder.define(DATA_PARTICLE, ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, -1));
     }
 
-    public void setRadius(float p_19713_) {
+    public void setRadius(float radius) {
         if (!this.level().isClientSide) {
-            this.getEntityData().set(DATA_RADIUS, Mth.clamp(p_19713_, 0.0F, 32.0F));
+            this.getEntityData().set(DATA_RADIUS, Mth.clamp(radius, 0.0F, 32.0F));
         }
     }
 
@@ -87,8 +87,8 @@ public class AreaEffectCloud extends Entity implements TraceableEntity {
         return this.getEntityData().get(DATA_RADIUS);
     }
 
-    public void setPotionContents(PotionContents p_330869_) {
-        this.potionContents = p_330869_;
+    public void setPotionContents(PotionContents potionContents) {
+        this.potionContents = potionContents;
         this.updateColor();
     }
 
@@ -100,20 +100,23 @@ public class AreaEffectCloud extends Entity implements TraceableEntity {
         }
     }
 
-    public void addEffect(MobEffectInstance p_19717_) {
-        this.setPotionContents(this.potionContents.withEffectAdded(p_19717_));
+    public void addEffect(MobEffectInstance effectInstance) {
+        this.setPotionContents(this.potionContents.withEffectAdded(effectInstance));
     }
 
     public ParticleOptions getParticle() {
         return this.getEntityData().get(DATA_PARTICLE);
     }
 
-    public void setParticle(ParticleOptions p_19725_) {
-        this.getEntityData().set(DATA_PARTICLE, p_19725_);
+    public void setParticle(ParticleOptions particleOption) {
+        this.getEntityData().set(DATA_PARTICLE, particleOption);
     }
 
-    protected void setWaiting(boolean p_19731_) {
-        this.getEntityData().set(DATA_WAITING, p_19731_);
+    /**
+     * Sets if the cloud is waiting. While waiting, the radius is ignored and the cloud shows fewer particles in its area.
+     */
+    protected void setWaiting(boolean waiting) {
+        this.getEntityData().set(DATA_WAITING, waiting);
     }
 
     public boolean isWaiting() {
@@ -124,8 +127,8 @@ public class AreaEffectCloud extends Entity implements TraceableEntity {
         return this.duration;
     }
 
-    public void setDuration(int p_19735_) {
-        this.duration = p_19735_;
+    public void setDuration(int duration) {
+        this.duration = duration;
     }
 
     @Override
@@ -268,37 +271,37 @@ public class AreaEffectCloud extends Entity implements TraceableEntity {
         return this.radiusOnUse;
     }
 
-    public void setRadiusOnUse(float p_19733_) {
-        this.radiusOnUse = p_19733_;
+    public void setRadiusOnUse(float radiusOnUse) {
+        this.radiusOnUse = radiusOnUse;
     }
 
     public float getRadiusPerTick() {
         return this.radiusPerTick;
     }
 
-    public void setRadiusPerTick(float p_19739_) {
-        this.radiusPerTick = p_19739_;
+    public void setRadiusPerTick(float radiusPerTick) {
+        this.radiusPerTick = radiusPerTick;
     }
 
     public int getDurationOnUse() {
         return this.durationOnUse;
     }
 
-    public void setDurationOnUse(int p_146786_) {
-        this.durationOnUse = p_146786_;
+    public void setDurationOnUse(int durationOnUse) {
+        this.durationOnUse = durationOnUse;
     }
 
     public int getWaitTime() {
         return this.waitTime;
     }
 
-    public void setWaitTime(int p_19741_) {
-        this.waitTime = p_19741_;
+    public void setWaitTime(int waitTime) {
+        this.waitTime = waitTime;
     }
 
-    public void setOwner(@Nullable LivingEntity p_19719_) {
-        this.owner = p_19719_;
-        this.ownerUUID = p_19719_ == null ? null : p_19719_.getUUID();
+    public void setOwner(@Nullable LivingEntity owner) {
+        this.owner = owner;
+        this.ownerUUID = owner == null ? null : owner.getUUID();
     }
 
     @Nullable
@@ -313,65 +316,68 @@ public class AreaEffectCloud extends Entity implements TraceableEntity {
         return this.owner;
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_19727_) {
-        this.tickCount = p_19727_.getInt("Age");
-        this.duration = p_19727_.getInt("Duration");
-        this.waitTime = p_19727_.getInt("WaitTime");
-        this.reapplicationDelay = p_19727_.getInt("ReapplicationDelay");
-        this.durationOnUse = p_19727_.getInt("DurationOnUse");
-        this.radiusOnUse = p_19727_.getFloat("RadiusOnUse");
-        this.radiusPerTick = p_19727_.getFloat("RadiusPerTick");
-        this.setRadius(p_19727_.getFloat("Radius"));
-        if (p_19727_.hasUUID("Owner")) {
-            this.ownerUUID = p_19727_.getUUID("Owner");
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        this.tickCount = compound.getInt("Age");
+        this.duration = compound.getInt("Duration");
+        this.waitTime = compound.getInt("WaitTime");
+        this.reapplicationDelay = compound.getInt("ReapplicationDelay");
+        this.durationOnUse = compound.getInt("DurationOnUse");
+        this.radiusOnUse = compound.getFloat("RadiusOnUse");
+        this.radiusPerTick = compound.getFloat("RadiusPerTick");
+        this.setRadius(compound.getFloat("Radius"));
+        if (compound.hasUUID("Owner")) {
+            this.ownerUUID = compound.getUUID("Owner");
         }
 
         RegistryOps<Tag> registryops = this.registryAccess().createSerializationContext(NbtOps.INSTANCE);
-        if (p_19727_.contains("Particle", 10)) {
+        if (compound.contains("Particle", 10)) {
             ParticleTypes.CODEC
-                .parse(registryops, p_19727_.get("Particle"))
+                .parse(registryops, compound.get("Particle"))
                 .resultOrPartial(p_329991_ -> LOGGER.warn("Failed to parse area effect cloud particle options: '{}'", p_329991_))
                 .ifPresent(this::setParticle);
         }
 
-        if (p_19727_.contains("potion_contents")) {
+        if (compound.contains("potion_contents")) {
             PotionContents.CODEC
-                .parse(registryops, p_19727_.get("potion_contents"))
+                .parse(registryops, compound.get("potion_contents"))
                 .resultOrPartial(p_340707_ -> LOGGER.warn("Failed to parse area effect cloud potions: '{}'", p_340707_))
                 .ifPresent(this::setPotionContents);
         }
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_19737_) {
-        p_19737_.putInt("Age", this.tickCount);
-        p_19737_.putInt("Duration", this.duration);
-        p_19737_.putInt("WaitTime", this.waitTime);
-        p_19737_.putInt("ReapplicationDelay", this.reapplicationDelay);
-        p_19737_.putInt("DurationOnUse", this.durationOnUse);
-        p_19737_.putFloat("RadiusOnUse", this.radiusOnUse);
-        p_19737_.putFloat("RadiusPerTick", this.radiusPerTick);
-        p_19737_.putFloat("Radius", this.getRadius());
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        compound.putInt("Age", this.tickCount);
+        compound.putInt("Duration", this.duration);
+        compound.putInt("WaitTime", this.waitTime);
+        compound.putInt("ReapplicationDelay", this.reapplicationDelay);
+        compound.putInt("DurationOnUse", this.durationOnUse);
+        compound.putFloat("RadiusOnUse", this.radiusOnUse);
+        compound.putFloat("RadiusPerTick", this.radiusPerTick);
+        compound.putFloat("Radius", this.getRadius());
         RegistryOps<Tag> registryops = this.registryAccess().createSerializationContext(NbtOps.INSTANCE);
-        p_19737_.put("Particle", ParticleTypes.CODEC.encodeStart(registryops, this.getParticle()).getOrThrow());
+        compound.put("Particle", ParticleTypes.CODEC.encodeStart(registryops, this.getParticle()).getOrThrow());
         if (this.ownerUUID != null) {
-            p_19737_.putUUID("Owner", this.ownerUUID);
+            compound.putUUID("Owner", this.ownerUUID);
         }
 
         if (!this.potionContents.equals(PotionContents.EMPTY)) {
             Tag tag = PotionContents.CODEC.encodeStart(registryops, this.potionContents).getOrThrow();
-            p_19737_.put("potion_contents", tag);
+            compound.put("potion_contents", tag);
         }
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_19729_) {
-        if (DATA_RADIUS.equals(p_19729_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        if (DATA_RADIUS.equals(key)) {
             this.refreshDimensions();
         }
 
-        super.onSyncedDataUpdated(p_19729_);
+        super.onSyncedDataUpdated(key);
     }
 
     @Override
@@ -380,7 +386,7 @@ public class AreaEffectCloud extends Entity implements TraceableEntity {
     }
 
     @Override
-    public EntityDimensions getDimensions(Pose p_19721_) {
+    public EntityDimensions getDimensions(Pose pose) {
         return EntityDimensions.scalable(this.getRadius() * 2.0F, 0.5F);
     }
 }

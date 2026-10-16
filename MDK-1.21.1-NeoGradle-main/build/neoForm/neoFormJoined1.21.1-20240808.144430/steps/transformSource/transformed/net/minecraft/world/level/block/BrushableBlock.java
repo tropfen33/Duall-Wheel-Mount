@@ -46,73 +46,84 @@ public class BrushableBlock extends BaseEntityBlock implements Fallable {
         return CODEC;
     }
 
-    public BrushableBlock(Block p_277629_, SoundEvent p_278060_, SoundEvent p_277352_, BlockBehaviour.Properties p_277373_) {
-        super(p_277373_);
-        this.turnsInto = p_277629_;
-        this.brushSound = p_278060_;
-        this.brushCompletedSound = p_277352_;
+    public BrushableBlock(Block turnsInto, SoundEvent brushSound, SoundEvent brushCompletedSound, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.turnsInto = turnsInto;
+        this.brushSound = brushSound;
+        this.brushCompletedSound = brushCompletedSound;
         this.registerDefaultState(this.stateDefinition.any().setValue(DUSTED, Integer.valueOf(0)));
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_277623_) {
-        p_277623_.add(DUSTED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(DUSTED);
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    public RenderShape getRenderShape(BlockState p_277553_) {
+    public RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
     @Override
-    public void onPlace(BlockState p_277817_, Level p_277984_, BlockPos p_277869_, BlockState p_277926_, boolean p_277736_) {
-        p_277984_.scheduleTick(p_277869_, this, 2);
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        level.scheduleTick(pos, this, 2);
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
     public BlockState updateShape(
-        BlockState p_277801_, Direction p_277455_, BlockState p_277832_, LevelAccessor p_277473_, BlockPos p_278111_, BlockPos p_277904_
+        BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos
     ) {
-        p_277473_.scheduleTick(p_278111_, this, 2);
-        return super.updateShape(p_277801_, p_277455_, p_277832_, p_277473_, p_278111_, p_277904_);
+        level.scheduleTick(pos, this, 2);
+        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
 
     @Override
-    public void tick(BlockState p_277544_, ServerLevel p_277779_, BlockPos p_278019_, RandomSource p_277471_) {
-        if (p_277779_.getBlockEntity(p_278019_) instanceof BrushableBlockEntity brushableblockentity) {
+    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (level.getBlockEntity(pos) instanceof BrushableBlockEntity brushableblockentity) {
             brushableblockentity.checkReset();
         }
 
-        if (FallingBlock.isFree(p_277779_.getBlockState(p_278019_.below())) && p_278019_.getY() >= p_277779_.getMinBuildHeight()) {
-            FallingBlockEntity fallingblockentity = FallingBlockEntity.fall(p_277779_, p_278019_, p_277544_);
+        if (FallingBlock.isFree(level.getBlockState(pos.below())) && pos.getY() >= level.getMinBuildHeight()) {
+            FallingBlockEntity fallingblockentity = FallingBlockEntity.fall(level, pos, state);
             fallingblockentity.disableDrop();
         }
     }
 
     @Override
-    public void onBrokenAfterFall(Level p_278097_, BlockPos p_277734_, FallingBlockEntity p_277539_) {
-        Vec3 vec3 = p_277539_.getBoundingBox().getCenter();
-        p_278097_.levelEvent(2001, BlockPos.containing(vec3), Block.getId(p_277539_.getBlockState()));
-        p_278097_.gameEvent(p_277539_, GameEvent.BLOCK_DESTROY, vec3);
+    public void onBrokenAfterFall(Level level, BlockPos pos, FallingBlockEntity fallingBlock) {
+        Vec3 vec3 = fallingBlock.getBoundingBox().getCenter();
+        level.levelEvent(2001, BlockPos.containing(vec3), Block.getId(fallingBlock.getBlockState()));
+        level.gameEvent(fallingBlock, GameEvent.BLOCK_DESTROY, vec3);
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_277390_, Level p_277525_, BlockPos p_278107_, RandomSource p_277574_) {
-        if (p_277574_.nextInt(16) == 0) {
-            BlockPos blockpos = p_278107_.below();
-            if (FallingBlock.isFree(p_277525_.getBlockState(blockpos))) {
-                double d0 = (double)p_278107_.getX() + p_277574_.nextDouble();
-                double d1 = (double)p_278107_.getY() - 0.05;
-                double d2 = (double)p_278107_.getZ() + p_277574_.nextDouble();
-                p_277525_.addParticle(new BlockParticleOption(ParticleTypes.FALLING_DUST, p_277390_), d0, d1, d2, 0.0, 0.0, 0.0);
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (random.nextInt(16) == 0) {
+            BlockPos blockpos = pos.below();
+            if (FallingBlock.isFree(level.getBlockState(blockpos))) {
+                double d0 = (double)pos.getX() + random.nextDouble();
+                double d1 = (double)pos.getY() - 0.05;
+                double d2 = (double)pos.getZ() + random.nextDouble();
+                level.addParticle(new BlockParticleOption(ParticleTypes.FALLING_DUST, state), d0, d1, d2, 0.0, 0.0, 0.0);
             }
         }
     }
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_277683_, BlockState p_277381_) {
-        return new BrushableBlockEntity(p_277683_, p_277381_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new BrushableBlockEntity(pos, state);
     }
 
     public Block getTurnsInto() {

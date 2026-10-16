@@ -31,33 +31,33 @@ public class BlockPredicateArgument implements ArgumentType<BlockPredicateArgume
     private static final Collection<String> EXAMPLES = Arrays.asList("stone", "minecraft:stone", "stone[foo=bar]", "#stone", "#stone[foo=bar]{baz=nbt}");
     private final HolderLookup<Block> blocks;
 
-    public BlockPredicateArgument(CommandBuildContext p_234626_) {
-        this.blocks = p_234626_.lookupOrThrow(Registries.BLOCK);
+    public BlockPredicateArgument(CommandBuildContext context) {
+        this.blocks = context.lookupOrThrow(Registries.BLOCK);
     }
 
-    public static BlockPredicateArgument blockPredicate(CommandBuildContext p_234628_) {
-        return new BlockPredicateArgument(p_234628_);
+    public static BlockPredicateArgument blockPredicate(CommandBuildContext context) {
+        return new BlockPredicateArgument(context);
     }
 
-    public BlockPredicateArgument.Result parse(StringReader p_115572_) throws CommandSyntaxException {
-        return parse(this.blocks, p_115572_);
+    public BlockPredicateArgument.Result parse(StringReader reader) throws CommandSyntaxException {
+        return parse(this.blocks, reader);
     }
 
-    public static BlockPredicateArgument.Result parse(HolderLookup<Block> p_234634_, StringReader p_234635_) throws CommandSyntaxException {
-        return BlockStateParser.parseForTesting(p_234634_, p_234635_, true)
+    public static BlockPredicateArgument.Result parse(HolderLookup<Block> lookup, StringReader reader) throws CommandSyntaxException {
+        return BlockStateParser.parseForTesting(lookup, reader, true)
             .map(
                 p_234630_ -> new BlockPredicateArgument.BlockPredicate(p_234630_.blockState(), p_234630_.properties().keySet(), p_234630_.nbt()),
                 p_234632_ -> new BlockPredicateArgument.TagPredicate(p_234632_.tag(), p_234632_.vagueProperties(), p_234632_.nbt())
             );
     }
 
-    public static Predicate<BlockInWorld> getBlockPredicate(CommandContext<CommandSourceStack> p_115574_, String p_115575_) throws CommandSyntaxException {
-        return p_115574_.getArgument(p_115575_, BlockPredicateArgument.Result.class);
+    public static Predicate<BlockInWorld> getBlockPredicate(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
+        return context.getArgument(name, BlockPredicateArgument.Result.class);
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_115587_, SuggestionsBuilder p_115588_) {
-        return BlockStateParser.fillSuggestions(this.blocks, p_115588_, true, true);
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
+        return BlockStateParser.fillSuggestions(this.blocks, builder, true, true);
     }
 
     @Override
@@ -71,14 +71,14 @@ public class BlockPredicateArgument implements ArgumentType<BlockPredicateArgume
         @Nullable
         private final CompoundTag nbt;
 
-        public BlockPredicate(BlockState p_115595_, Set<Property<?>> p_115596_, @Nullable CompoundTag p_115597_) {
-            this.state = p_115595_;
-            this.properties = p_115596_;
-            this.nbt = p_115597_;
+        public BlockPredicate(BlockState state, Set<Property<?>> properties, @Nullable CompoundTag nbt) {
+            this.state = state;
+            this.properties = properties;
+            this.nbt = nbt;
         }
 
-        public boolean test(BlockInWorld p_115599_) {
-            BlockState blockstate = p_115599_.getState();
+        public boolean test(BlockInWorld block) {
+            BlockState blockstate = block.getState();
             if (!blockstate.is(this.state.getBlock())) {
                 return false;
             } else {
@@ -91,8 +91,8 @@ public class BlockPredicateArgument implements ArgumentType<BlockPredicateArgume
                 if (this.nbt == null) {
                     return true;
                 } else {
-                    BlockEntity blockentity = p_115599_.getEntity();
-                    return blockentity != null && NbtUtils.compareNbt(this.nbt, blockentity.saveWithFullMetadata(p_115599_.getLevel().registryAccess()), true);
+                    BlockEntity blockentity = block.getEntity();
+                    return blockentity != null && NbtUtils.compareNbt(this.nbt, blockentity.saveWithFullMetadata(block.getLevel().registryAccess()), true);
                 }
             }
         }
@@ -113,14 +113,14 @@ public class BlockPredicateArgument implements ArgumentType<BlockPredicateArgume
         private final CompoundTag nbt;
         private final Map<String, String> vagueProperties;
 
-        TagPredicate(HolderSet<Block> p_234637_, Map<String, String> p_234638_, @Nullable CompoundTag p_234639_) {
-            this.tag = p_234637_;
-            this.vagueProperties = p_234638_;
-            this.nbt = p_234639_;
+        TagPredicate(HolderSet<Block> tag, Map<String, String> vagueProperties, @Nullable CompoundTag nbt) {
+            this.tag = tag;
+            this.vagueProperties = vagueProperties;
+            this.nbt = nbt;
         }
 
-        public boolean test(BlockInWorld p_115617_) {
-            BlockState blockstate = p_115617_.getState();
+        public boolean test(BlockInWorld block) {
+            BlockState blockstate = block.getState();
             if (!blockstate.is(this.tag)) {
                 return false;
             } else {
@@ -143,8 +143,8 @@ public class BlockPredicateArgument implements ArgumentType<BlockPredicateArgume
                 if (this.nbt == null) {
                     return true;
                 } else {
-                    BlockEntity blockentity = p_115617_.getEntity();
-                    return blockentity != null && NbtUtils.compareNbt(this.nbt, blockentity.saveWithFullMetadata(p_115617_.getLevel().registryAccess()), true);
+                    BlockEntity blockentity = block.getEntity();
+                    return blockentity != null && NbtUtils.compareNbt(this.nbt, blockentity.saveWithFullMetadata(block.getLevel().registryAccess()), true);
                 }
             }
         }

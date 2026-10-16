@@ -12,23 +12,23 @@ public class EnderDragonPhaseManager {
     @Nullable
     private DragonPhaseInstance currentPhase;
 
-    public EnderDragonPhaseManager(EnderDragon p_31414_) {
-        this.dragon = p_31414_;
+    public EnderDragonPhaseManager(EnderDragon dragon) {
+        this.dragon = dragon;
         this.setPhase(EnderDragonPhase.HOVERING);
     }
 
-    public void setPhase(EnderDragonPhase<?> p_31417_) {
-        if (this.currentPhase == null || p_31417_ != this.currentPhase.getPhase()) {
+    public void setPhase(EnderDragonPhase<?> phase) {
+        if (this.currentPhase == null || phase != this.currentPhase.getPhase()) {
             if (this.currentPhase != null) {
                 this.currentPhase.end();
             }
 
-            this.currentPhase = this.getPhase((EnderDragonPhase<DragonPhaseInstance>)p_31417_);
+            this.currentPhase = this.getPhase((EnderDragonPhase<DragonPhaseInstance>)phase);
             if (!this.dragon.level().isClientSide) {
-                this.dragon.getEntityData().set(EnderDragon.DATA_PHASE, p_31417_.getId());
+                this.dragon.getEntityData().set(EnderDragon.DATA_PHASE, phase.getId());
             }
 
-            LOGGER.debug("Dragon is now in phase {} on the {}", p_31417_, this.dragon.level().isClientSide ? "client" : "server");
+            LOGGER.debug("Dragon is now in phase {} on the {}", phase, this.dragon.level().isClientSide ? "client" : "server");
             this.currentPhase.begin();
         }
     }
@@ -37,10 +37,10 @@ public class EnderDragonPhaseManager {
         return this.currentPhase;
     }
 
-    public <T extends DragonPhaseInstance> T getPhase(EnderDragonPhase<T> p_31419_) {
-        int i = p_31419_.getId();
+    public <T extends DragonPhaseInstance> T getPhase(EnderDragonPhase<T> phase) {
+        int i = phase.getId();
         if (this.phases[i] == null) {
-            this.phases[i] = p_31419_.createInstance(this.dragon);
+            this.phases[i] = phase.createInstance(this.dragon);
         }
 
         return (T)this.phases[i];

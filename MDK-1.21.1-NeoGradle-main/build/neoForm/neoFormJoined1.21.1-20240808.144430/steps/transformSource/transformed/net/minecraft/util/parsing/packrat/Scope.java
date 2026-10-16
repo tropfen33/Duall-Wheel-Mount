@@ -8,27 +8,27 @@ import javax.annotation.Nullable;
 public final class Scope {
     private final Object2ObjectMap<Atom<?>, Object> values = new Object2ObjectArrayMap<>();
 
-    public <T> void put(Atom<T> p_335874_, @Nullable T p_335802_) {
-        this.values.put(p_335874_, p_335802_);
+    public <T> void put(Atom<T> atom, @Nullable T value) {
+        this.values.put(atom, value);
     }
 
     @Nullable
-    public <T> T get(Atom<T> p_335532_) {
-        return (T)this.values.get(p_335532_);
+    public <T> T get(Atom<T> atom) {
+        return (T)this.values.get(atom);
     }
 
-    public <T> T getOrThrow(Atom<T> p_335438_) {
-        return Objects.requireNonNull(this.get(p_335438_));
+    public <T> T getOrThrow(Atom<T> atom) {
+        return Objects.requireNonNull(this.get(atom));
     }
 
-    public <T> T getOrDefault(Atom<T> p_336076_, T p_336135_) {
-        return Objects.requireNonNullElse(this.get(p_336076_), p_336135_);
+    public <T> T getOrDefault(Atom<T> atom, T defaultValue) {
+        return Objects.requireNonNullElse(this.get(atom), defaultValue);
     }
 
     @Nullable
     @SafeVarargs
-    public final <T> T getAny(Atom<T>... p_335905_) {
-        for (Atom<T> atom : p_335905_) {
+    public final <T> T getAny(Atom<T>... atoms) {
+        for (Atom<T> atom : atoms) {
             T t = this.get(atom);
             if (t != null) {
                 return t;
@@ -39,8 +39,8 @@ public final class Scope {
     }
 
     @SafeVarargs
-    public final <T> T getAnyOrThrow(Atom<T>... p_336028_) {
-        return Objects.requireNonNull(this.getAny(p_336028_));
+    public final <T> T getAnyOrThrow(Atom<T>... atoms) {
+        return Objects.requireNonNull(this.getAny(atoms));
     }
 
     @Override
@@ -48,16 +48,16 @@ public final class Scope {
         return this.values.toString();
     }
 
-    public void putAll(Scope p_335805_) {
-        this.values.putAll(p_335805_.values);
+    public void putAll(Scope scope) {
+        this.values.putAll(scope.values);
     }
 
     @Override
-    public boolean equals(Object p_335524_) {
-        if (this == p_335524_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return p_335524_ instanceof Scope scope ? this.values.equals(scope.values) : false;
+            return other instanceof Scope scope ? this.values.equals(scope.values) : false;
         }
     }
 

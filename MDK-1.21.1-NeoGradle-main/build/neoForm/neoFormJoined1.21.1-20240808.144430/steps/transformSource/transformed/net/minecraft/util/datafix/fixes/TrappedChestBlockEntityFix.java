@@ -25,8 +25,8 @@ public class TrappedChestBlockEntityFix extends DataFix {
     private static final int SIZE = 4096;
     private static final short SIZE_BITS = 12;
 
-    public TrappedChestBlockEntityFix(Schema p_17018_, boolean p_17019_) {
-        super(p_17018_, p_17019_);
+    public TrappedChestBlockEntityFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -114,8 +114,8 @@ public class TrappedChestBlockEntityFix extends DataFix {
         @Nullable
         private IntSet chestIds;
 
-        public TrappedChestSection(Typed<?> p_17050_, Schema p_17051_) {
-            super(p_17050_, p_17051_);
+        public TrappedChestSection(Typed<?> data, Schema schema) {
+            super(data, schema);
         }
 
         @Override
@@ -133,8 +133,8 @@ public class TrappedChestBlockEntityFix extends DataFix {
             return this.chestIds.isEmpty();
         }
 
-        public boolean isTrappedChest(int p_17054_) {
-            return this.chestIds.contains(p_17054_);
+        public boolean isTrappedChest(int id) {
+            return this.chestIds.contains(id);
         }
     }
 }

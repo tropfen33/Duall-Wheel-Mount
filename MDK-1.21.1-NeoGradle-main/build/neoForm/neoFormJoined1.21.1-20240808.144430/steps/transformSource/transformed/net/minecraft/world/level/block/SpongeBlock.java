@@ -24,34 +24,34 @@ public class SpongeBlock extends Block {
         return CODEC;
     }
 
-    public SpongeBlock(BlockBehaviour.Properties p_56796_) {
-        super(p_56796_);
+    public SpongeBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
-    protected void onPlace(BlockState p_56811_, Level p_56812_, BlockPos p_56813_, BlockState p_56814_, boolean p_56815_) {
-        if (!p_56814_.is(p_56811_.getBlock())) {
-            this.tryAbsorbWater(p_56812_, p_56813_);
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!oldState.is(state.getBlock())) {
+            this.tryAbsorbWater(level, pos);
         }
     }
 
     @Override
-    protected void neighborChanged(BlockState p_56801_, Level p_56802_, BlockPos p_56803_, Block p_56804_, BlockPos p_56805_, boolean p_56806_) {
-        this.tryAbsorbWater(p_56802_, p_56803_);
-        super.neighborChanged(p_56801_, p_56802_, p_56803_, p_56804_, p_56805_, p_56806_);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        this.tryAbsorbWater(level, pos);
+        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
     }
 
-    protected void tryAbsorbWater(Level p_56798_, BlockPos p_56799_) {
-        if (this.removeWaterBreadthFirstSearch(p_56798_, p_56799_)) {
-            p_56798_.setBlock(p_56799_, Blocks.WET_SPONGE.defaultBlockState(), 2);
-            p_56798_.playSound(null, p_56799_, SoundEvents.SPONGE_ABSORB, SoundSource.BLOCKS, 1.0F, 1.0F);
+    protected void tryAbsorbWater(Level level, BlockPos pos) {
+        if (this.removeWaterBreadthFirstSearch(level, pos)) {
+            level.setBlock(pos, Blocks.WET_SPONGE.defaultBlockState(), 2);
+            level.playSound(null, pos, SoundEvents.SPONGE_ABSORB, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
     }
 
-    private boolean removeWaterBreadthFirstSearch(Level p_56808_, BlockPos p_56809_) {
-        BlockState spongeState = p_56808_.getBlockState(p_56809_);
+    private boolean removeWaterBreadthFirstSearch(Level level, BlockPos pos) {
+        BlockState spongeState = level.getBlockState(pos);
         return BlockPos.breadthFirstTraversal(
-                p_56809_,
+                pos,
                 6,
                 65,
                 (p_277519_, p_277492_) -> {
@@ -60,21 +60,21 @@ public class SpongeBlock extends Block {
                     }
                 },
                 p_294069_ -> {
-                    if (p_294069_.equals(p_56809_)) {
+                    if (p_294069_.equals(pos)) {
                         return true;
                     } else {
-                        BlockState blockstate = p_56808_.getBlockState(p_294069_);
-                        FluidState fluidstate = p_56808_.getFluidState(p_294069_);
-                        if (!spongeState.canBeHydrated(p_56808_, p_56809_, fluidstate, p_294069_)) {
+                        BlockState blockstate = level.getBlockState(p_294069_);
+                        FluidState fluidstate = level.getFluidState(p_294069_);
+                        if (!spongeState.canBeHydrated(level, pos, fluidstate, p_294069_)) {
                             return false;
                         } else {
                             if (blockstate.getBlock() instanceof BucketPickup bucketpickup
-                                && !bucketpickup.pickupBlock(null, p_56808_, p_294069_, blockstate).isEmpty()) {
+                                && !bucketpickup.pickupBlock(null, level, p_294069_, blockstate).isEmpty()) {
                                 return true;
                             }
 
                             if (blockstate.getBlock() instanceof LiquidBlock) {
-                                p_56808_.setBlock(p_294069_, Blocks.AIR.defaultBlockState(), 3);
+                                level.setBlock(p_294069_, Blocks.AIR.defaultBlockState(), 3);
                             } else {
                                 if (!blockstate.is(Blocks.KELP)
                                     && !blockstate.is(Blocks.KELP_PLANT)
@@ -83,9 +83,9 @@ public class SpongeBlock extends Block {
                                     return false;
                                 }
 
-                                BlockEntity blockentity = blockstate.hasBlockEntity() ? p_56808_.getBlockEntity(p_294069_) : null;
-                                dropResources(blockstate, p_56808_, p_294069_, blockentity);
-                                p_56808_.setBlock(p_294069_, Blocks.AIR.defaultBlockState(), 3);
+                                BlockEntity blockentity = blockstate.hasBlockEntity() ? level.getBlockEntity(p_294069_) : null;
+                                dropResources(blockstate, level, p_294069_, blockentity);
+                                level.setBlock(p_294069_, Blocks.AIR.defaultBlockState(), 3);
                             }
 
                             return true;

@@ -25,14 +25,17 @@ public class MinecartCommandBlock extends AbstractMinecart {
     static final EntityDataAccessor<Component> DATA_ID_LAST_OUTPUT = SynchedEntityData.defineId(MinecartCommandBlock.class, EntityDataSerializers.COMPONENT);
     private final BaseCommandBlock commandBlock = new MinecartCommandBlock.MinecartCommandBase();
     private static final int ACTIVATION_DELAY = 4;
+    /**
+     * Cooldown before command block logic runs again in ticks
+     */
     private int lastActivated;
 
-    public MinecartCommandBlock(EntityType<? extends MinecartCommandBlock> p_38509_, Level p_38510_) {
-        super(p_38509_, p_38510_);
+    public MinecartCommandBlock(EntityType<? extends MinecartCommandBlock> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public MinecartCommandBlock(Level p_38512_, double p_38513_, double p_38514_, double p_38515_) {
-        super(EntityType.COMMAND_BLOCK_MINECART, p_38512_, p_38513_, p_38514_, p_38515_);
+    public MinecartCommandBlock(Level level, double x, double y, double z) {
+        super(EntityType.COMMAND_BLOCK_MINECART, level, x, y, z);
     }
 
     @Override
@@ -41,24 +44,27 @@ public class MinecartCommandBlock extends AbstractMinecart {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326494_) {
-        super.defineSynchedData(p_326494_);
-        p_326494_.define(DATA_ID_COMMAND_NAME, "");
-        p_326494_.define(DATA_ID_LAST_OUTPUT, CommonComponents.EMPTY);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_ID_COMMAND_NAME, "");
+        builder.define(DATA_ID_LAST_OUTPUT, CommonComponents.EMPTY);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_38525_) {
-        super.readAdditionalSaveData(p_38525_);
-        this.commandBlock.load(p_38525_, this.registryAccess());
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.commandBlock.load(compound, this.registryAccess());
         this.getEntityData().set(DATA_ID_COMMAND_NAME, this.getCommandBlock().getCommand());
         this.getEntityData().set(DATA_ID_LAST_OUTPUT, this.getCommandBlock().getLastOutput());
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_38529_) {
-        super.addAdditionalSaveData(p_38529_);
-        this.commandBlock.save(p_38529_, this.registryAccess());
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        this.commandBlock.save(compound, this.registryAccess());
     }
 
     @Override
@@ -75,30 +81,33 @@ public class MinecartCommandBlock extends AbstractMinecart {
         return this.commandBlock;
     }
 
+    /**
+     * Called every tick the minecart is on an activator rail.
+     */
     @Override
-    public void activateMinecart(int p_38517_, int p_38518_, int p_38519_, boolean p_38520_) {
-        if (p_38520_ && this.tickCount - this.lastActivated >= 4) {
+    public void activateMinecart(int x, int y, int z, boolean receivingPower) {
+        if (receivingPower && this.tickCount - this.lastActivated >= 4) {
             this.getCommandBlock().performCommand(this.level());
             this.lastActivated = this.tickCount;
         }
     }
 
     @Override
-    public InteractionResult interact(Player p_38522_, InteractionHand p_38523_) {
-        InteractionResult ret = super.interact(p_38522_, p_38523_);
+    public InteractionResult interact(Player player, InteractionHand hand) {
+        InteractionResult ret = super.interact(player, hand);
         if (ret.consumesAction()) return ret;
-        return this.commandBlock.usedBy(p_38522_);
+        return this.commandBlock.usedBy(player);
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_38527_) {
-        super.onSyncedDataUpdated(p_38527_);
-        if (DATA_ID_LAST_OUTPUT.equals(p_38527_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (DATA_ID_LAST_OUTPUT.equals(key)) {
             try {
                 this.commandBlock.setLastOutput(this.getEntityData().get(DATA_ID_LAST_OUTPUT));
             } catch (Throwable throwable) {
             }
-        } else if (DATA_ID_COMMAND_NAME.equals(p_38527_)) {
+        } else if (DATA_ID_COMMAND_NAME.equals(key)) {
             this.commandBlock.setCommand(this.getEntityData().get(DATA_ID_COMMAND_NAME));
         }
     }

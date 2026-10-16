@@ -6,13 +6,13 @@ public class LocalSampleLogger extends AbstractSampleLogger implements SampleSto
     private int start;
     private int size;
 
-    public LocalSampleLogger(int p_324172_) {
-        this(p_324172_, new long[p_324172_]);
+    public LocalSampleLogger(int size) {
+        this(size, new long[size]);
     }
 
-    public LocalSampleLogger(int p_323703_, long[] p_324179_) {
-        super(p_323703_, p_324179_);
-        this.samples = new long[240][p_323703_];
+    public LocalSampleLogger(int size, long[] defaults) {
+        super(size, defaults);
+        this.samples = new long[240][size];
     }
 
     @Override
@@ -37,26 +37,26 @@ public class LocalSampleLogger extends AbstractSampleLogger implements SampleSto
     }
 
     @Override
-    public long get(int p_324212_) {
-        return this.get(p_324212_, 0);
+    public long get(int index) {
+        return this.get(index, 0);
     }
 
     @Override
-    public long get(int p_323840_, int p_323620_) {
-        if (p_323840_ >= 0 && p_323840_ < this.size) {
-            long[] along = this.samples[this.wrapIndex(this.start + p_323840_)];
-            if (p_323620_ >= 0 && p_323620_ < along.length) {
-                return along[p_323620_];
+    public long get(int index, int dimension) {
+        if (index >= 0 && index < this.size) {
+            long[] along = this.samples[this.wrapIndex(this.start + index)];
+            if (dimension >= 0 && dimension < along.length) {
+                return along[dimension];
             } else {
-                throw new IndexOutOfBoundsException(p_323620_ + " out of bounds for dimensions " + along.length);
+                throw new IndexOutOfBoundsException(dimension + " out of bounds for dimensions " + along.length);
             }
         } else {
-            throw new IndexOutOfBoundsException(p_323840_ + " out of bounds for length " + this.size);
+            throw new IndexOutOfBoundsException(index + " out of bounds for length " + this.size);
         }
     }
 
-    private int wrapIndex(int p_324200_) {
-        return p_324200_ % 240;
+    private int wrapIndex(int index) {
+        return index % 240;
     }
 
     @Override

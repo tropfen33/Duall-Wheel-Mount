@@ -6,8 +6,8 @@ import com.mojang.datafixers.schemas.Schema;
 import com.mojang.serialization.Dynamic;
 
 public class BlockEntityUUIDFix extends AbstractUUIDFix {
-    public BlockEntityUUIDFix(Schema p_14883_) {
-        super(p_14883_, References.BLOCK_ENTITY);
+    public BlockEntityUUIDFix(Schema outputSchema) {
+        super(outputSchema, References.BLOCK_ENTITY);
     }
 
     @Override
@@ -18,16 +18,16 @@ public class BlockEntityUUIDFix extends AbstractUUIDFix {
         });
     }
 
-    private Dynamic<?> updateSkull(Dynamic<?> p_14890_) {
-        return p_14890_.get("Owner")
+    private Dynamic<?> updateSkull(Dynamic<?> skullTag) {
+        return skullTag.get("Owner")
             .get()
             .map(p_14894_ -> replaceUUIDString((Dynamic<?>)p_14894_, "Id", "Id").orElse((Dynamic<?>)p_14894_))
-            .<Dynamic<?>>map(p_14888_ -> p_14890_.remove("Owner").set("SkullOwner", (Dynamic<?>)p_14888_))
+            .<Dynamic<?>>map(p_14888_ -> skullTag.remove("Owner").set("SkullOwner", (Dynamic<?>)p_14888_))
             .result()
-            .orElse(p_14890_);
+            .orElse(skullTag);
     }
 
-    private Dynamic<?> updateConduit(Dynamic<?> p_14892_) {
-        return replaceUUIDMLTag(p_14892_, "target_uuid", "Target").orElse(p_14892_);
+    private Dynamic<?> updateConduit(Dynamic<?> conduitTag) {
+        return replaceUUIDMLTag(conduitTag, "target_uuid", "Target").orElse(conduitTag);
     }
 }

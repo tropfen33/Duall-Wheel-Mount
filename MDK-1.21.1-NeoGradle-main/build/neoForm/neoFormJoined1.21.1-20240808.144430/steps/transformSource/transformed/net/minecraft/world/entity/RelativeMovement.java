@@ -14,23 +14,23 @@ public enum RelativeMovement {
     public static final Set<RelativeMovement> ROTATION = Set.of(X_ROT, Y_ROT);
     private final int bit;
 
-    private RelativeMovement(int p_265098_) {
-        this.bit = p_265098_;
+    private RelativeMovement(int bit) {
+        this.bit = bit;
     }
 
     private int getMask() {
         return 1 << this.bit;
     }
 
-    private boolean isSet(int p_265420_) {
-        return (p_265420_ & this.getMask()) == this.getMask();
+    private boolean isSet(int packedMovements) {
+        return (packedMovements & this.getMask()) == this.getMask();
     }
 
-    public static Set<RelativeMovement> unpack(int p_265683_) {
+    public static Set<RelativeMovement> unpack(int packedMovements) {
         Set<RelativeMovement> set = EnumSet.noneOf(RelativeMovement.class);
 
         for (RelativeMovement relativemovement : values()) {
-            if (relativemovement.isSet(p_265683_)) {
+            if (relativemovement.isSet(packedMovements)) {
                 set.add(relativemovement);
             }
         }
@@ -38,10 +38,10 @@ public enum RelativeMovement {
         return set;
     }
 
-    public static int pack(Set<RelativeMovement> p_265525_) {
+    public static int pack(Set<RelativeMovement> movements) {
         int i = 0;
 
-        for (RelativeMovement relativemovement : p_265525_) {
+        for (RelativeMovement relativemovement : movements) {
             i |= relativemovement.getMask();
         }
 

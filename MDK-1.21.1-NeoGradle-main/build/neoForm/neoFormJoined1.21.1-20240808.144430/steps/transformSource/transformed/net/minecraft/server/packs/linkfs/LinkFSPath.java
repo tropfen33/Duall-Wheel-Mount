@@ -58,15 +58,15 @@ class LinkFSPath implements Path {
     private String pathString;
     private final PathContents pathContents;
 
-    public LinkFSPath(LinkFileSystem p_251111_, String p_250681_, @Nullable LinkFSPath p_251363_, PathContents p_251268_) {
-        this.fileSystem = p_251111_;
-        this.name = p_250681_;
-        this.parent = p_251363_;
-        this.pathContents = p_251268_;
+    public LinkFSPath(LinkFileSystem fileSystem, String name, @Nullable LinkFSPath parent, PathContents pathContents) {
+        this.fileSystem = fileSystem;
+        this.name = name;
+        this.parent = parent;
+        this.pathContents = pathContents;
     }
 
-    private LinkFSPath createRelativePath(@Nullable LinkFSPath p_249276_, String p_249966_) {
-        return new LinkFSPath(this.fileSystem, p_249966_, p_249276_, PathContents.RELATIVE);
+    private LinkFSPath createRelativePath(@Nullable LinkFSPath parent, String name) {
+        return new LinkFSPath(this.fileSystem, name, parent, PathContents.RELATIVE);
     }
 
     public LinkFileSystem getFileSystem() {
@@ -124,21 +124,21 @@ class LinkFSPath implements Path {
         }
     }
 
-    public LinkFSPath getName(int p_248550_) {
+    public LinkFSPath getName(int index) {
         List<String> list = this.pathToRoot();
-        if (p_248550_ >= 0 && p_248550_ < list.size()) {
-            return this.createRelativePath(null, list.get(p_248550_));
+        if (index >= 0 && index < list.size()) {
+            return this.createRelativePath(null, list.get(index));
         } else {
-            throw new IllegalArgumentException("Invalid index: " + p_248550_);
+            throw new IllegalArgumentException("Invalid index: " + index);
         }
     }
 
-    public LinkFSPath subpath(int p_251923_, int p_248807_) {
+    public LinkFSPath subpath(int start, int end) {
         List<String> list = this.pathToRoot();
-        if (p_251923_ >= 0 && p_248807_ <= list.size() && p_251923_ < p_248807_) {
+        if (start >= 0 && end <= list.size() && start < end) {
             LinkFSPath linkfspath = null;
 
-            for (int i = p_251923_; i < p_248807_; i++) {
+            for (int i = start; i < end; i++) {
                 linkfspath = this.createRelativePath(linkfspath, list.get(i));
             }
 
@@ -149,10 +149,10 @@ class LinkFSPath implements Path {
     }
 
     @Override
-    public boolean startsWith(Path p_248923_) {
-        if (p_248923_.isAbsolute() != this.isAbsolute()) {
+    public boolean startsWith(Path path) {
+        if (path.isAbsolute() != this.isAbsolute()) {
             return false;
-        } else if (p_248923_ instanceof LinkFSPath linkfspath) {
+        } else if (path instanceof LinkFSPath linkfspath) {
             if (linkfspath.fileSystem != this.fileSystem) {
                 return false;
             } else {
@@ -177,10 +177,10 @@ class LinkFSPath implements Path {
     }
 
     @Override
-    public boolean endsWith(Path p_250070_) {
-        if (p_250070_.isAbsolute() && !this.isAbsolute()) {
+    public boolean endsWith(Path path) {
+        if (path.isAbsolute() && !this.isAbsolute()) {
             return false;
-        } else if (p_250070_ instanceof LinkFSPath linkfspath) {
+        } else if (path instanceof LinkFSPath linkfspath) {
             if (linkfspath.fileSystem != this.fileSystem) {
                 return false;
             } else {
@@ -209,40 +209,40 @@ class LinkFSPath implements Path {
         return this;
     }
 
-    public LinkFSPath resolve(Path p_251657_) {
-        LinkFSPath linkfspath = this.toLinkPath(p_251657_);
-        return p_251657_.isAbsolute() ? linkfspath : this.resolve(linkfspath.pathToRoot());
+    public LinkFSPath resolve(Path path) {
+        LinkFSPath linkfspath = this.toLinkPath(path);
+        return path.isAbsolute() ? linkfspath : this.resolve(linkfspath.pathToRoot());
     }
 
-    private LinkFSPath resolve(List<String> p_252101_) {
+    private LinkFSPath resolve(List<String> names) {
         LinkFSPath linkfspath = this;
 
-        for (String s : p_252101_) {
+        for (String s : names) {
             linkfspath = linkfspath.resolveName(s);
         }
 
         return linkfspath;
     }
 
-    LinkFSPath resolveName(String p_249718_) {
+    LinkFSPath resolveName(String name) {
         if (isRelativeOrMissing(this.pathContents)) {
-            return new LinkFSPath(this.fileSystem, p_249718_, this, this.pathContents);
+            return new LinkFSPath(this.fileSystem, name, this, this.pathContents);
         } else if (this.pathContents instanceof PathContents.DirectoryContents pathcontents$directorycontents) {
-            LinkFSPath linkfspath = pathcontents$directorycontents.children().get(p_249718_);
-            return linkfspath != null ? linkfspath : new LinkFSPath(this.fileSystem, p_249718_, this, PathContents.MISSING);
+            LinkFSPath linkfspath = pathcontents$directorycontents.children().get(name);
+            return linkfspath != null ? linkfspath : new LinkFSPath(this.fileSystem, name, this, PathContents.MISSING);
         } else if (this.pathContents instanceof PathContents.FileContents) {
-            return new LinkFSPath(this.fileSystem, p_249718_, this, PathContents.MISSING);
+            return new LinkFSPath(this.fileSystem, name, this, PathContents.MISSING);
         } else {
             throw new AssertionError("All content types should be already handled");
         }
     }
 
-    private static boolean isRelativeOrMissing(PathContents p_248750_) {
-        return p_248750_ == PathContents.MISSING || p_248750_ == PathContents.RELATIVE;
+    private static boolean isRelativeOrMissing(PathContents pathContents) {
+        return pathContents == PathContents.MISSING || pathContents == PathContents.RELATIVE;
     }
 
-    public LinkFSPath relativize(Path p_250294_) {
-        LinkFSPath linkfspath = this.toLinkPath(p_250294_);
+    public LinkFSPath relativize(Path path) {
+        LinkFSPath linkfspath = this.toLinkPath(path);
         if (this.isAbsolute() != linkfspath.isAbsolute()) {
             throw new IllegalArgumentException("absolute mismatch");
         } else {
@@ -275,26 +275,26 @@ class LinkFSPath implements Path {
         return this.isAbsolute() ? this : this.fileSystem.rootPath().resolve(this);
     }
 
-    public LinkFSPath toRealPath(LinkOption... p_251187_) {
+    public LinkFSPath toRealPath(LinkOption... options) {
         return this.toAbsolutePath();
     }
 
     @Override
-    public WatchKey register(WatchService p_249189_, Kind<?>[] p_249917_, Modifier... p_251602_) {
+    public WatchKey register(WatchService watcher, Kind<?>[] events, Modifier... modifiers) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public int compareTo(Path p_250005_) {
-        LinkFSPath linkfspath = this.toLinkPath(p_250005_);
+    public int compareTo(Path other) {
+        LinkFSPath linkfspath = this.toLinkPath(other);
         return PATH_COMPARATOR.compare(this, linkfspath);
     }
 
     @Override
-    public boolean equals(Object p_248707_) {
-        if (p_248707_ == this) {
+    public boolean equals(Object other) {
+        if (other == this) {
             return true;
-        } else if (p_248707_ instanceof LinkFSPath linkfspath) {
+        } else if (other instanceof LinkFSPath linkfspath) {
             if (this.fileSystem != linkfspath.fileSystem) {
                 return false;
             } else {
@@ -340,11 +340,11 @@ class LinkFSPath implements Path {
         return this.pathString;
     }
 
-    private LinkFSPath toLinkPath(@Nullable Path p_250907_) {
-        if (p_250907_ == null) {
+    private LinkFSPath toLinkPath(@Nullable Path path) {
+        if (path == null) {
             throw new NullPointerException();
         } else {
-            if (p_250907_ instanceof LinkFSPath linkfspath && linkfspath.fileSystem == this.fileSystem) {
+            if (path instanceof LinkFSPath linkfspath && linkfspath.fileSystem == this.fileSystem) {
                 return linkfspath;
             }
 
@@ -379,7 +379,7 @@ class LinkFSPath implements Path {
             }
 
             @Override
-            public void setTimes(FileTime p_249505_, FileTime p_250498_, FileTime p_251700_) {
+            public void setTimes(FileTime lastModifiedTime, FileTime lastAccessTime, FileTime createTime) {
                 throw new ReadOnlyFileSystemException();
             }
         };

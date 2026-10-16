@@ -84,8 +84,8 @@ public class ItemSpawnEggFix extends DataFix {
         p_341874_[200] = "EnderCrystal";
     });
 
-    public ItemSpawnEggFix(Schema p_16034_, boolean p_16035_) {
-        super(p_16034_, p_16035_);
+    public ItemSpawnEggFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override

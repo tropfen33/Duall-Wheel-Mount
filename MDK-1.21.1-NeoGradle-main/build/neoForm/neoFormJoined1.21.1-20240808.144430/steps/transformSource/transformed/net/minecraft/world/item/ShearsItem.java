@@ -20,8 +20,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 
 public class ShearsItem extends Item {
-    public ShearsItem(Item.Properties p_43074_) {
-        super(p_43074_);
+    public ShearsItem(Item.Properties properties) {
+        super(properties);
     }
 
     public static Tool createToolProperties() {
@@ -37,21 +37,24 @@ public class ShearsItem extends Item {
         );
     }
 
+    /**
+     * Called when a {@link net.minecraft.world.level.block.Block} is destroyed using this Item. Return {@code true} to trigger the "Use Item" statistic.
+     */
     @Override
-    public boolean mineBlock(ItemStack p_43078_, Level p_43079_, BlockState p_43080_, BlockPos p_43081_, LivingEntity p_43082_) {
-        if (!p_43079_.isClientSide && !p_43080_.is(BlockTags.FIRE)) {
-            p_43078_.hurtAndBreak(1, p_43082_, EquipmentSlot.MAINHAND);
+    public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity entityLiving) {
+        if (!level.isClientSide && !state.is(BlockTags.FIRE)) {
+            stack.hurtAndBreak(1, entityLiving, EquipmentSlot.MAINHAND);
         }
 
-        return p_43080_.is(BlockTags.LEAVES)
-            || p_43080_.is(Blocks.COBWEB)
-            || p_43080_.is(Blocks.SHORT_GRASS)
-            || p_43080_.is(Blocks.FERN)
-            || p_43080_.is(Blocks.DEAD_BUSH)
-            || p_43080_.is(Blocks.HANGING_ROOTS)
-            || p_43080_.is(Blocks.VINE)
-            || p_43080_.is(Blocks.TRIPWIRE)
-            || p_43080_.is(BlockTags.WOOL);
+        return state.is(BlockTags.LEAVES)
+            || state.is(Blocks.COBWEB)
+            || state.is(Blocks.SHORT_GRASS)
+            || state.is(Blocks.FERN)
+            || state.is(Blocks.DEAD_BUSH)
+            || state.is(Blocks.HANGING_ROOTS)
+            || state.is(Blocks.VINE)
+            || state.is(Blocks.TRIPWIRE)
+            || state.is(BlockTags.WOOL);
     }
 
     /**
@@ -92,28 +95,31 @@ public class ShearsItem extends Item {
         return net.neoforged.neoforge.common.ItemAbilities.DEFAULT_SHEARS_ACTIONS.contains(itemAbility);
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_186371_) {
-        Level level = p_186371_.getLevel();
-        BlockPos blockpos = p_186371_.getClickedPos();
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
         BlockState blockstate = level.getBlockState(blockpos);
-        BlockState blockstate1 = blockstate.getToolModifiedState(p_186371_, net.neoforged.neoforge.common.ItemAbilities.SHEARS_TRIM, false);
+        BlockState blockstate1 = blockstate.getToolModifiedState(context, net.neoforged.neoforge.common.ItemAbilities.SHEARS_TRIM, false);
         if (blockstate1 != null) {
-            Player player = p_186371_.getPlayer();
-            ItemStack itemstack = p_186371_.getItemInHand();
+            Player player = context.getPlayer();
+            ItemStack itemstack = context.getItemInHand();
             if (player instanceof ServerPlayer) {
                 CriteriaTriggers.ITEM_USED_ON_BLOCK.trigger((ServerPlayer)player, blockpos, itemstack);
             }
 
             level.setBlockAndUpdate(blockpos, blockstate1);
-            level.gameEvent(GameEvent.BLOCK_CHANGE, blockpos, GameEvent.Context.of(p_186371_.getPlayer(), blockstate1));
+            level.gameEvent(GameEvent.BLOCK_CHANGE, blockpos, GameEvent.Context.of(context.getPlayer(), blockstate1));
             if (player != null) {
-                itemstack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(p_186371_.getHand()));
+                itemstack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(context.getHand()));
             }
 
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
 
-        return super.useOn(p_186371_);
+        return super.useOn(context);
     }
 }

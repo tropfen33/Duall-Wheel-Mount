@@ -23,37 +23,42 @@ public class Tooltip implements NarrationSupplier {
     @Nullable
     private final Component narration;
 
-    private Tooltip(Component p_260262_, @Nullable Component p_260005_) {
-        this.message = p_260262_;
-        this.narration = p_260005_;
+    private Tooltip(Component message, @Nullable Component narration) {
+        this.message = message;
+        this.narration = narration;
     }
 
-    public static Tooltip create(Component p_259571_, @Nullable Component p_259174_) {
-        return new Tooltip(p_259571_, p_259174_);
+    public static Tooltip create(Component message, @Nullable Component narration) {
+        return new Tooltip(message, narration);
     }
 
-    public static Tooltip create(Component p_259142_) {
-        return new Tooltip(p_259142_, p_259142_);
+    public static Tooltip create(Component message) {
+        return new Tooltip(message, message);
     }
 
+    /**
+     * Updates the narration output with the current narration information.
+     *
+     * @param narrationElementOutput the output to update with narration information.
+     */
     @Override
-    public void updateNarration(NarrationElementOutput p_260330_) {
+    public void updateNarration(NarrationElementOutput narrationElementOutput) {
         if (this.narration != null) {
-            p_260330_.add(NarratedElementType.HINT, this.narration);
+            narrationElementOutput.add(NarratedElementType.HINT, this.narration);
         }
     }
 
-    public List<FormattedCharSequence> toCharSequence(Minecraft p_260243_) {
+    public List<FormattedCharSequence> toCharSequence(Minecraft minecraft) {
         Language language = Language.getInstance();
         if (this.cachedTooltip == null || language != this.splitWithLanguage) {
-            this.cachedTooltip = splitTooltip(p_260243_, this.message);
+            this.cachedTooltip = splitTooltip(minecraft, this.message);
             this.splitWithLanguage = language;
         }
 
         return this.cachedTooltip;
     }
 
-    public static List<FormattedCharSequence> splitTooltip(Minecraft p_259133_, Component p_260172_) {
-        return p_259133_.font.split(p_260172_, 170);
+    public static List<FormattedCharSequence> splitTooltip(Minecraft minecraft, Component message) {
+        return minecraft.font.split(message, 170);
     }
 }

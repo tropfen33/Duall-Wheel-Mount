@@ -43,17 +43,17 @@ public class VisGraph {
     });
     private int empty = 4096;
 
-    public void setOpaque(BlockPos p_112972_) {
-        this.bitSet.set(getIndex(p_112972_), true);
+    public void setOpaque(BlockPos pos) {
+        this.bitSet.set(getIndex(pos), true);
         this.empty--;
     }
 
-    private static int getIndex(BlockPos p_112976_) {
-        return getIndex(p_112976_.getX() & 15, p_112976_.getY() & 15, p_112976_.getZ() & 15);
+    private static int getIndex(BlockPos pos) {
+        return getIndex(pos.getX() & 15, pos.getY() & 15, pos.getZ() & 15);
     }
 
-    private static int getIndex(int p_112962_, int p_112963_, int p_112964_) {
-        return p_112962_ << 0 | p_112963_ << 8 | p_112964_ << 4;
+    private static int getIndex(int x, int y, int z) {
+        return x << 0 | y << 8 | z << 4;
     }
 
     public VisibilitySet resolve() {
@@ -73,11 +73,11 @@ public class VisGraph {
         return visibilityset;
     }
 
-    private Set<Direction> floodFill(int p_112960_) {
+    private Set<Direction> floodFill(int index) {
         Set<Direction> set = EnumSet.noneOf(Direction.class);
         IntPriorityQueue intpriorityqueue = new IntArrayFIFOQueue();
-        intpriorityqueue.enqueue(p_112960_);
-        this.bitSet.set(p_112960_, true);
+        intpriorityqueue.enqueue(index);
+        this.bitSet.set(index, true);
 
         while (!intpriorityqueue.isEmpty()) {
             int i = intpriorityqueue.dequeueInt();
@@ -95,67 +95,67 @@ public class VisGraph {
         return set;
     }
 
-    private void addEdges(int p_112969_, Set<Direction> p_112970_) {
-        int i = p_112969_ >> 0 & 15;
+    private void addEdges(int index, Set<Direction> faces) {
+        int i = index >> 0 & 15;
         if (i == 0) {
-            p_112970_.add(Direction.WEST);
+            faces.add(Direction.WEST);
         } else if (i == 15) {
-            p_112970_.add(Direction.EAST);
+            faces.add(Direction.EAST);
         }
 
-        int j = p_112969_ >> 8 & 15;
+        int j = index >> 8 & 15;
         if (j == 0) {
-            p_112970_.add(Direction.DOWN);
+            faces.add(Direction.DOWN);
         } else if (j == 15) {
-            p_112970_.add(Direction.UP);
+            faces.add(Direction.UP);
         }
 
-        int k = p_112969_ >> 4 & 15;
+        int k = index >> 4 & 15;
         if (k == 0) {
-            p_112970_.add(Direction.NORTH);
+            faces.add(Direction.NORTH);
         } else if (k == 15) {
-            p_112970_.add(Direction.SOUTH);
+            faces.add(Direction.SOUTH);
         }
     }
 
-    private int getNeighborIndexAtFace(int p_112966_, Direction p_112967_) {
-        switch (p_112967_) {
+    private int getNeighborIndexAtFace(int index, Direction face) {
+        switch (face) {
             case DOWN:
-                if ((p_112966_ >> 8 & 15) == 0) {
+                if ((index >> 8 & 15) == 0) {
                     return -1;
                 }
 
-                return p_112966_ - DY;
+                return index - DY;
             case UP:
-                if ((p_112966_ >> 8 & 15) == 15) {
+                if ((index >> 8 & 15) == 15) {
                     return -1;
                 }
 
-                return p_112966_ + DY;
+                return index + DY;
             case NORTH:
-                if ((p_112966_ >> 4 & 15) == 0) {
+                if ((index >> 4 & 15) == 0) {
                     return -1;
                 }
 
-                return p_112966_ - DZ;
+                return index - DZ;
             case SOUTH:
-                if ((p_112966_ >> 4 & 15) == 15) {
+                if ((index >> 4 & 15) == 15) {
                     return -1;
                 }
 
-                return p_112966_ + DZ;
+                return index + DZ;
             case WEST:
-                if ((p_112966_ >> 0 & 15) == 0) {
+                if ((index >> 0 & 15) == 0) {
                     return -1;
                 }
 
-                return p_112966_ - DX;
+                return index - DX;
             case EAST:
-                if ((p_112966_ >> 0 & 15) == 15) {
+                if ((index >> 0 & 15) == 15) {
                     return -1;
                 }
 
-                return p_112966_ + DX;
+                return index + DX;
             default:
                 return -1;
         }

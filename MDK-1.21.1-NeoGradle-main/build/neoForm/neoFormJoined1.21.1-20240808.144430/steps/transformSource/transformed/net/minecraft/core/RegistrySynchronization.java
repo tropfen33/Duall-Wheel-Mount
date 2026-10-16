@@ -25,23 +25,23 @@ public class RegistrySynchronization {
         .collect(Collectors.toUnmodifiableSet());
 
     public static void packRegistries(
-        DynamicOps<Tag> p_321796_,
-        RegistryAccess p_321733_,
-        Set<KnownPack> p_326143_,
-        BiConsumer<ResourceKey<? extends Registry<?>>, List<RegistrySynchronization.PackedRegistryEntry>> p_321539_
+        DynamicOps<Tag> ops,
+        RegistryAccess registryAccess,
+        Set<KnownPack> packs,
+        BiConsumer<ResourceKey<? extends Registry<?>>, List<RegistrySynchronization.PackedRegistryEntry>> packetSender
     ) {
         RegistryDataLoader.SYNCHRONIZED_REGISTRIES
-            .forEach(p_325532_ -> packRegistry(p_321796_, (RegistryDataLoader.RegistryData<?>)p_325532_, p_321733_, p_326143_, p_321539_));
+            .forEach(p_325532_ -> packRegistry(ops, (RegistryDataLoader.RegistryData<?>)p_325532_, registryAccess, packs, packetSender));
     }
 
     private static <T> void packRegistry(
-        DynamicOps<Tag> p_321608_,
-        RegistryDataLoader.RegistryData<T> p_321701_,
-        RegistryAccess p_321717_,
-        Set<KnownPack> p_326432_,
-        BiConsumer<ResourceKey<? extends Registry<?>>, List<RegistrySynchronization.PackedRegistryEntry>> p_321724_
+        DynamicOps<Tag> ops,
+        RegistryDataLoader.RegistryData<T> registryData,
+        RegistryAccess registryAccess,
+        Set<KnownPack> packs,
+        BiConsumer<ResourceKey<? extends Registry<?>>, List<RegistrySynchronization.PackedRegistryEntry>> packetSender
     ) {
-        p_321717_.registry(p_321701_.key())
+        registryAccess.registry(registryData.key())
             .ifPresent(
                 p_344187_ -> {
                     List<RegistrySynchronization.PackedRegistryEntry> list = new ArrayList<>(p_344187_.size());
@@ -50,14 +50,14 @@ public class RegistrySynchronization {
                             p_325522_ -> {
                                 boolean flag = p_344187_.registrationInfo(p_325522_.key())
                                     .flatMap(RegistrationInfo::knownPackInfo)
-                                    .filter(p_326432_::contains)
+                                    .filter(packs::contains)
                                     .isPresent();
                                 Optional<Tag> optional;
                                 if (flag) {
                                     optional = Optional.empty();
                                 } else {
-                                    Tag tag = p_321701_.elementCodec()
-                                        .encodeStart(p_321608_, p_325522_.value())
+                                    Tag tag = registryData.elementCodec()
+                                        .encodeStart(ops, p_325522_.value())
                                         .getOrThrow(p_339341_ -> new IllegalArgumentException("Failed to serialize " + p_325522_.key() + ": " + p_339341_));
                                     optional = Optional.of(tag);
                                 }
@@ -65,22 +65,22 @@ public class RegistrySynchronization {
                                 list.add(new RegistrySynchronization.PackedRegistryEntry(p_325522_.key().location(), optional));
                             }
                         );
-                    p_321724_.accept(p_344187_.key(), list);
+                    packetSender.accept(p_344187_.key(), list);
                 }
             );
     }
 
-    private static Stream<RegistryAccess.RegistryEntry<?>> ownedNetworkableRegistries(RegistryAccess p_251842_) {
-        return p_251842_.registries().filter(p_321394_ -> NETWORKABLE_REGISTRIES.contains(p_321394_.key()));
+    private static Stream<RegistryAccess.RegistryEntry<?>> ownedNetworkableRegistries(RegistryAccess registryAccess) {
+        return registryAccess.registries().filter(p_321394_ -> NETWORKABLE_REGISTRIES.contains(p_321394_.key()));
     }
 
-    public static Stream<RegistryAccess.RegistryEntry<?>> networkedRegistries(LayeredRegistryAccess<RegistryLayer> p_259290_) {
-        return ownedNetworkableRegistries(p_259290_.getAccessFrom(RegistryLayer.WORLDGEN));
+    public static Stream<RegistryAccess.RegistryEntry<?>> networkedRegistries(LayeredRegistryAccess<RegistryLayer> registryAccess) {
+        return ownedNetworkableRegistries(registryAccess.getAccessFrom(RegistryLayer.WORLDGEN));
     }
 
-    public static Stream<RegistryAccess.RegistryEntry<?>> networkSafeRegistries(LayeredRegistryAccess<RegistryLayer> p_249066_) {
-        Stream<RegistryAccess.RegistryEntry<?>> stream = p_249066_.getLayer(RegistryLayer.STATIC).registries();
-        Stream<RegistryAccess.RegistryEntry<?>> stream1 = networkedRegistries(p_249066_);
+    public static Stream<RegistryAccess.RegistryEntry<?>> networkSafeRegistries(LayeredRegistryAccess<RegistryLayer> registryAccess) {
+        Stream<RegistryAccess.RegistryEntry<?>> stream = registryAccess.getLayer(RegistryLayer.STATIC).registries();
+        Stream<RegistryAccess.RegistryEntry<?>> stream1 = networkedRegistries(registryAccess);
         return Stream.concat(stream1, stream);
     }
 

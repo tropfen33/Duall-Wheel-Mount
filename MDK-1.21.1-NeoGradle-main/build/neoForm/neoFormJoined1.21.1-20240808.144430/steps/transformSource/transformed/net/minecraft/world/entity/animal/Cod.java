@@ -9,8 +9,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
 public class Cod extends AbstractSchoolingFish {
-    public Cod(EntityType<? extends Cod> p_28276_, Level p_28277_) {
-        super(p_28276_, p_28277_);
+    public Cod(EntityType<? extends Cod> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
@@ -29,7 +29,7 @@ public class Cod extends AbstractSchoolingFish {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_28281_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.COD_HURT;
     }
 

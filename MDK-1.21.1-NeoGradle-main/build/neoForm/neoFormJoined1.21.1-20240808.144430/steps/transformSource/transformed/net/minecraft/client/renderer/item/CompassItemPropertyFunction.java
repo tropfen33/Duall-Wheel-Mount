@@ -20,44 +20,44 @@ public class CompassItemPropertyFunction implements ClampedItemPropertyFunction 
     private final CompassItemPropertyFunction.CompassWobble wobbleRandom = new CompassItemPropertyFunction.CompassWobble();
     public final CompassItemPropertyFunction.CompassTarget compassTarget;
 
-    public CompassItemPropertyFunction(CompassItemPropertyFunction.CompassTarget p_234933_) {
-        this.compassTarget = p_234933_;
+    public CompassItemPropertyFunction(CompassItemPropertyFunction.CompassTarget compassTarget) {
+        this.compassTarget = compassTarget;
     }
 
     @Override
-    public float unclampedCall(ItemStack p_234960_, @Nullable ClientLevel p_234961_, @Nullable LivingEntity p_234962_, int p_234963_) {
-        Entity entity = (Entity)(p_234962_ != null ? p_234962_ : p_234960_.getEntityRepresentation());
+    public float unclampedCall(ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity p_entity, int seed) {
+        Entity entity = (Entity)(p_entity != null ? p_entity : stack.getEntityRepresentation());
         if (entity == null) {
             return 0.0F;
         } else {
-            p_234961_ = this.tryFetchLevelIfMissing(entity, p_234961_);
-            return p_234961_ == null ? 0.0F : this.getCompassRotation(p_234960_, p_234961_, p_234963_, entity);
+            level = this.tryFetchLevelIfMissing(entity, level);
+            return level == null ? 0.0F : this.getCompassRotation(stack, level, seed, entity);
         }
     }
 
-    private float getCompassRotation(ItemStack p_234955_, ClientLevel p_234956_, int p_234957_, Entity p_234958_) {
-        GlobalPos globalpos = this.compassTarget.getPos(p_234956_, p_234955_, p_234958_);
-        long i = p_234956_.getGameTime();
-        return !this.isValidCompassTargetPos(p_234958_, globalpos)
-            ? this.getRandomlySpinningRotation(p_234957_, i)
-            : this.getRotationTowardsCompassTarget(p_234958_, i, globalpos.pos());
+    private float getCompassRotation(ItemStack stack, ClientLevel level, int seed, Entity entity) {
+        GlobalPos globalpos = this.compassTarget.getPos(level, stack, entity);
+        long i = level.getGameTime();
+        return !this.isValidCompassTargetPos(entity, globalpos)
+            ? this.getRandomlySpinningRotation(seed, i)
+            : this.getRotationTowardsCompassTarget(entity, i, globalpos.pos());
     }
 
-    private float getRandomlySpinningRotation(int p_234937_, long p_234938_) {
-        if (this.wobbleRandom.shouldUpdate(p_234938_)) {
-            this.wobbleRandom.update(p_234938_, Math.random());
+    private float getRandomlySpinningRotation(int seed, long ticks) {
+        if (this.wobbleRandom.shouldUpdate(ticks)) {
+            this.wobbleRandom.update(ticks, Math.random());
         }
 
-        double d0 = this.wobbleRandom.rotation + (double)((float)this.hash(p_234937_) / 2.1474836E9F);
+        double d0 = this.wobbleRandom.rotation + (double)((float)this.hash(seed) / 2.1474836E9F);
         return Mth.positiveModulo((float)d0, 1.0F);
     }
 
-    private float getRotationTowardsCompassTarget(Entity p_234942_, long p_234943_, BlockPos p_234944_) {
-        double d0 = this.getAngleFromEntityToPos(p_234942_, p_234944_);
-        double d1 = this.getWrappedVisualRotationY(p_234942_);
-        if (p_234942_ instanceof Player player && player.isLocalPlayer() && player.level().tickRateManager().runsNormally()) {
-            if (this.wobble.shouldUpdate(p_234943_)) {
-                this.wobble.update(p_234943_, 0.5 - (d1 - 0.25));
+    private float getRotationTowardsCompassTarget(Entity entity, long ticks, BlockPos pos) {
+        double d0 = this.getAngleFromEntityToPos(entity, pos);
+        double d1 = this.getWrappedVisualRotationY(entity);
+        if (entity instanceof Player player && player.isLocalPlayer() && player.level().tickRateManager().runsNormally()) {
+            if (this.wobble.shouldUpdate(ticks)) {
+                this.wobble.update(ticks, 0.5 - (d1 - 0.25));
             }
 
             double d3 = d0 + this.wobble.rotation;
@@ -69,33 +69,33 @@ public class CompassItemPropertyFunction implements ClampedItemPropertyFunction 
     }
 
     @Nullable
-    private ClientLevel tryFetchLevelIfMissing(Entity p_234946_, @Nullable ClientLevel p_234947_) {
-        return p_234947_ == null && p_234946_.level() instanceof ClientLevel ? (ClientLevel)p_234946_.level() : p_234947_;
+    private ClientLevel tryFetchLevelIfMissing(Entity entity, @Nullable ClientLevel level) {
+        return level == null && entity.level() instanceof ClientLevel ? (ClientLevel)entity.level() : level;
     }
 
-    private boolean isValidCompassTargetPos(Entity p_234952_, @Nullable GlobalPos p_234953_) {
-        return p_234953_ != null
-            && p_234953_.dimension() == p_234952_.level().dimension()
-            && !(p_234953_.pos().distToCenterSqr(p_234952_.position()) < 1.0E-5F);
+    private boolean isValidCompassTargetPos(Entity entity, @Nullable GlobalPos pos) {
+        return pos != null
+            && pos.dimension() == entity.level().dimension()
+            && !(pos.pos().distToCenterSqr(entity.position()) < 1.0E-5F);
     }
 
-    private double getAngleFromEntityToPos(Entity p_234949_, BlockPos p_234950_) {
-        Vec3 vec3 = Vec3.atCenterOf(p_234950_);
-        return Math.atan2(vec3.z() - p_234949_.getZ(), vec3.x() - p_234949_.getX()) / (float) (Math.PI * 2);
+    private double getAngleFromEntityToPos(Entity entity, BlockPos pos) {
+        Vec3 vec3 = Vec3.atCenterOf(pos);
+        return Math.atan2(vec3.z() - entity.getZ(), vec3.x() - entity.getX()) / (float) (Math.PI * 2);
     }
 
-    private double getWrappedVisualRotationY(Entity p_234940_) {
-        return Mth.positiveModulo((double)(p_234940_.getVisualRotationYInDegrees() / 360.0F), 1.0);
+    private double getWrappedVisualRotationY(Entity entity) {
+        return Mth.positiveModulo((double)(entity.getVisualRotationYInDegrees() / 360.0F), 1.0);
     }
 
-    private int hash(int p_234935_) {
-        return p_234935_ * 1327217883;
+    private int hash(int value) {
+        return value * 1327217883;
     }
 
     @OnlyIn(Dist.CLIENT)
     public interface CompassTarget {
         @Nullable
-        GlobalPos getPos(ClientLevel p_234965_, ItemStack p_234966_, Entity p_234967_);
+        GlobalPos getPos(ClientLevel level, ItemStack stack, Entity entity);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -104,13 +104,13 @@ public class CompassItemPropertyFunction implements ClampedItemPropertyFunction 
         private double deltaRotation;
         private long lastUpdateTick;
 
-        boolean shouldUpdate(long p_234973_) {
-            return this.lastUpdateTick != p_234973_;
+        boolean shouldUpdate(long ticks) {
+            return this.lastUpdateTick != ticks;
         }
 
-        void update(long p_234975_, double p_234976_) {
-            this.lastUpdateTick = p_234975_;
-            double d0 = p_234976_ - this.rotation;
+        void update(long ticks, double rotation) {
+            this.lastUpdateTick = ticks;
+            double d0 = rotation - this.rotation;
             d0 = Mth.positiveModulo(d0 + 0.5, 1.0) - 0.5;
             this.deltaRotation += d0 * 0.1;
             this.deltaRotation *= 0.8;

@@ -14,12 +14,12 @@ import org.apache.commons.lang3.tuple.Pair;
 public class ProfilerSamplerAdapter {
     private final Set<String> previouslyFoundSamplerNames = new ObjectOpenHashSet<>();
 
-    public Set<MetricSampler> newSamplersFoundInProfiler(Supplier<ProfileCollector> p_146164_) {
-        Set<MetricSampler> set = p_146164_.get()
+    public Set<MetricSampler> newSamplersFoundInProfiler(Supplier<ProfileCollector> profiles) {
+        Set<MetricSampler> set = profiles.get()
             .getChartedPaths()
             .stream()
             .filter(p_146176_ -> !this.previouslyFoundSamplerNames.contains(p_146176_.getLeft()))
-            .map(p_146174_ -> samplerForProfilingPath(p_146164_, p_146174_.getLeft(), p_146174_.getRight()))
+            .map(p_146174_ -> samplerForProfilingPath(profiles, p_146174_.getLeft(), p_146174_.getRight()))
             .collect(Collectors.toSet());
 
         for (MetricSampler metricsampler : set) {
@@ -29,9 +29,9 @@ public class ProfilerSamplerAdapter {
         return set;
     }
 
-    private static MetricSampler samplerForProfilingPath(Supplier<ProfileCollector> p_146169_, String p_146170_, MetricCategory p_146171_) {
-        return MetricSampler.create(p_146170_, p_146171_, () -> {
-            ActiveProfiler.PathEntry activeprofiler$pathentry = p_146169_.get().getEntry(p_146170_);
+    private static MetricSampler samplerForProfilingPath(Supplier<ProfileCollector> profiles, String name, MetricCategory category) {
+        return MetricSampler.create(name, category, () -> {
+            ActiveProfiler.PathEntry activeprofiler$pathentry = profiles.get().getEntry(name);
             return activeprofiler$pathentry == null ? 0.0 : (double)activeprofiler$pathentry.getMaxDuration() / (double)TimeUtil.NANOSECONDS_PER_MILLISECOND;
         });
     }

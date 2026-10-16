@@ -27,18 +27,18 @@ public class VillageSiege implements CustomSpawner {
     private int spawnZ;
 
     @Override
-    public int tick(ServerLevel p_27013_, boolean p_27014_, boolean p_27015_) {
-        if (!p_27013_.isDay() && p_27014_) {
-            float f = p_27013_.getTimeOfDay(0.0F);
+    public int tick(ServerLevel level, boolean spawnHostiles, boolean spawnPassives) {
+        if (!level.isDay() && spawnHostiles) {
+            float f = level.getTimeOfDay(0.0F);
             if ((double)f == 0.5) {
-                this.siegeState = p_27013_.random.nextInt(10) == 0 ? VillageSiege.State.SIEGE_TONIGHT : VillageSiege.State.SIEGE_DONE;
+                this.siegeState = level.random.nextInt(10) == 0 ? VillageSiege.State.SIEGE_TONIGHT : VillageSiege.State.SIEGE_DONE;
             }
 
             if (this.siegeState == VillageSiege.State.SIEGE_DONE) {
                 return 0;
             } else {
                 if (!this.hasSetupSiege) {
-                    if (!this.tryToSetupSiege(p_27013_)) {
+                    if (!this.tryToSetupSiege(level)) {
                         return 0;
                     }
 
@@ -51,7 +51,7 @@ public class VillageSiege implements CustomSpawner {
                 } else {
                     this.nextSpawnTime = 2;
                     if (this.zombiesToSpawn > 0) {
-                        this.trySpawn(p_27013_);
+                        this.trySpawn(level);
                         this.zombiesToSpawn--;
                     } else {
                         this.siegeState = VillageSiege.State.SIEGE_DONE;
@@ -67,19 +67,19 @@ public class VillageSiege implements CustomSpawner {
         }
     }
 
-    private boolean tryToSetupSiege(ServerLevel p_27008_) {
-        for (Player player : p_27008_.players()) {
+    private boolean tryToSetupSiege(ServerLevel level) {
+        for (Player player : level.players()) {
             if (!player.isSpectator()) {
                 BlockPos blockpos = player.blockPosition();
-                if (p_27008_.isVillage(blockpos) && !p_27008_.getBiome(blockpos).is(BiomeTags.WITHOUT_ZOMBIE_SIEGES)) {
+                if (level.isVillage(blockpos) && !level.getBiome(blockpos).is(BiomeTags.WITHOUT_ZOMBIE_SIEGES)) {
                     for (int i = 0; i < 10; i++) {
-                        float f = p_27008_.random.nextFloat() * (float) (Math.PI * 2);
+                        float f = level.random.nextFloat() * (float) (Math.PI * 2);
                         this.spawnX = blockpos.getX() + Mth.floor(Mth.cos(f) * 32.0F);
                         this.spawnY = blockpos.getY();
                         this.spawnZ = blockpos.getZ() + Mth.floor(Mth.sin(f) * 32.0F);
-                        Vec3 siegeLocation = this.findRandomSpawnPos(p_27008_, new BlockPos(this.spawnX, this.spawnY, this.spawnZ));
+                        Vec3 siegeLocation = this.findRandomSpawnPos(level, new BlockPos(this.spawnX, this.spawnY, this.spawnZ));
                         if (siegeLocation != null) {
-                            if (net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.village.VillageSiegeEvent(this, p_27008_, player, siegeLocation)).isCanceled()) return false;
+                            if (net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.village.VillageSiegeEvent(this, level, player, siegeLocation)).isCanceled()) return false;
                             this.nextSpawnTime = 0;
                             this.zombiesToSpawn = 20;
                             break;
@@ -94,31 +94,31 @@ public class VillageSiege implements CustomSpawner {
         return false;
     }
 
-    private void trySpawn(ServerLevel p_27017_) {
-        Vec3 vec3 = this.findRandomSpawnPos(p_27017_, new BlockPos(this.spawnX, this.spawnY, this.spawnZ));
+    private void trySpawn(ServerLevel level) {
+        Vec3 vec3 = this.findRandomSpawnPos(level, new BlockPos(this.spawnX, this.spawnY, this.spawnZ));
         if (vec3 != null) {
             Zombie zombie;
             try {
-                zombie = EntityType.ZOMBIE.create(p_27017_); //Forge: Direct Initialization is deprecated, use EntityType.
-                zombie.finalizeSpawn(p_27017_, p_27017_.getCurrentDifficultyAt(zombie.blockPosition()), MobSpawnType.EVENT, null);
+                zombie = EntityType.ZOMBIE.create(level); //Forge: Direct Initialization is deprecated, use EntityType.
+                zombie.finalizeSpawn(level, level.getCurrentDifficultyAt(zombie.blockPosition()), MobSpawnType.EVENT, null);
             } catch (Exception exception) {
                 LOGGER.warn("Failed to create zombie for village siege at {}", vec3, exception);
                 return;
             }
 
-            zombie.moveTo(vec3.x, vec3.y, vec3.z, p_27017_.random.nextFloat() * 360.0F, 0.0F);
-            p_27017_.addFreshEntityWithPassengers(zombie);
+            zombie.moveTo(vec3.x, vec3.y, vec3.z, level.random.nextFloat() * 360.0F, 0.0F);
+            level.addFreshEntityWithPassengers(zombie);
         }
     }
 
     @Nullable
-    private Vec3 findRandomSpawnPos(ServerLevel p_27010_, BlockPos p_27011_) {
+    private Vec3 findRandomSpawnPos(ServerLevel level, BlockPos pos) {
         for (int i = 0; i < 10; i++) {
-            int j = p_27011_.getX() + p_27010_.random.nextInt(16) - 8;
-            int k = p_27011_.getZ() + p_27010_.random.nextInt(16) - 8;
-            int l = p_27010_.getHeight(Heightmap.Types.WORLD_SURFACE, j, k);
+            int j = pos.getX() + level.random.nextInt(16) - 8;
+            int k = pos.getZ() + level.random.nextInt(16) - 8;
+            int l = level.getHeight(Heightmap.Types.WORLD_SURFACE, j, k);
             BlockPos blockpos = new BlockPos(j, l, k);
-            if (p_27010_.isVillage(blockpos) && Monster.checkMonsterSpawnRules(EntityType.ZOMBIE, p_27010_, MobSpawnType.EVENT, blockpos, p_27010_.random)) {
+            if (level.isVillage(blockpos) && Monster.checkMonsterSpawnRules(EntityType.ZOMBIE, level, MobSpawnType.EVENT, blockpos, level.random)) {
                 return Vec3.atBottomCenterOf(blockpos);
             }
         }

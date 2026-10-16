@@ -13,14 +13,14 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProc
 public class TrailRuinsStructurePools {
     public static final ResourceKey<StructureTemplatePool> START = Pools.createKey("trail_ruins/tower");
 
-    public static void bootstrap(BootstrapContext<StructureTemplatePool> p_321543_) {
-        HolderGetter<StructureTemplatePool> holdergetter = p_321543_.lookup(Registries.TEMPLATE_POOL);
+    public static void bootstrap(BootstrapContext<StructureTemplatePool> context) {
+        HolderGetter<StructureTemplatePool> holdergetter = context.lookup(Registries.TEMPLATE_POOL);
         Holder<StructureTemplatePool> holder = holdergetter.getOrThrow(Pools.EMPTY);
-        HolderGetter<StructureProcessorList> holdergetter1 = p_321543_.lookup(Registries.PROCESSOR_LIST);
+        HolderGetter<StructureProcessorList> holdergetter1 = context.lookup(Registries.PROCESSOR_LIST);
         Holder<StructureProcessorList> holder1 = holdergetter1.getOrThrow(ProcessorLists.TRAIL_RUINS_HOUSES_ARCHAEOLOGY);
         Holder<StructureProcessorList> holder2 = holdergetter1.getOrThrow(ProcessorLists.TRAIL_RUINS_ROADS_ARCHAEOLOGY);
         Holder<StructureProcessorList> holder3 = holdergetter1.getOrThrow(ProcessorLists.TRAIL_RUINS_TOWER_TOP_ARCHAEOLOGY);
-        p_321543_.register(
+        context.register(
             START,
             new StructureTemplatePool(
                 holder,
@@ -35,7 +35,7 @@ public class TrailRuinsStructurePools {
             )
         );
         Pools.register(
-            p_321543_,
+            context,
             "trail_ruins/tower/tower_top",
             new StructureTemplatePool(
                 holder,
@@ -50,7 +50,7 @@ public class TrailRuinsStructurePools {
             )
         );
         Pools.register(
-            p_321543_,
+            context,
             "trail_ruins/tower/additions",
             new StructureTemplatePool(
                 holder,
@@ -85,7 +85,7 @@ public class TrailRuinsStructurePools {
             )
         );
         Pools.register(
-            p_321543_,
+            context,
             "trail_ruins/roads",
             new StructureTemplatePool(
                 holder,
@@ -102,7 +102,7 @@ public class TrailRuinsStructurePools {
             )
         );
         Pools.register(
-            p_321543_,
+            context,
             "trail_ruins/buildings",
             new StructureTemplatePool(
                 holder,
@@ -127,7 +127,7 @@ public class TrailRuinsStructurePools {
             )
         );
         Pools.register(
-            p_321543_,
+            context,
             "trail_ruins/buildings/grouped",
             new StructureTemplatePool(
                 holder,
@@ -157,7 +157,7 @@ public class TrailRuinsStructurePools {
             )
         );
         Pools.register(
-            p_321543_,
+            context,
             "trail_ruins/decor",
             new StructureTemplatePool(
                 holder,

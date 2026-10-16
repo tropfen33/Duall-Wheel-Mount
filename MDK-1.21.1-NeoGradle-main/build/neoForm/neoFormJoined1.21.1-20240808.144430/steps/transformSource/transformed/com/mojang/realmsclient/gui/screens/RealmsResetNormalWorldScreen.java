@@ -38,10 +38,10 @@ public class RealmsResetNormalWorldScreen extends RealmsScreen {
     private final Set<String> experiments = new HashSet<>();
     private final Component buttonTitle;
 
-    public RealmsResetNormalWorldScreen(Consumer<WorldGenerationInfo> p_167438_, Component p_167439_) {
+    public RealmsResetNormalWorldScreen(Consumer<WorldGenerationInfo> callback, Component buttonTitle) {
         super(TITLE);
-        this.callback = p_167438_;
-        this.buttonTitle = p_167439_;
+        this.callback = callback;
+        this.buttonTitle = buttonTitle;
     }
 
     @Override
@@ -76,10 +76,10 @@ public class RealmsResetNormalWorldScreen extends RealmsScreen {
         this.setInitialFocus(this.seedEdit);
     }
 
-    private void createExperimentsButton(LinearLayout p_306171_) {
+    private void createExperimentsButton(LinearLayout layout) {
         PackRepository packrepository = ServerPacksSource.createVanillaTrustedRepository();
         packrepository.reload();
-        p_306171_.addChild(
+        layout.addChild(
             Button.builder(
                     Component.translatable("selectWorld.experiments"),
                     p_305631_ -> this.minecraft.setScreen(new ExperimentsScreen(this, packrepository, p_305632_ -> {

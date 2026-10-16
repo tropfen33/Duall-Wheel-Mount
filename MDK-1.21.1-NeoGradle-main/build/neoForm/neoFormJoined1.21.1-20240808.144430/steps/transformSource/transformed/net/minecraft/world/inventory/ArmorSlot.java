@@ -18,18 +18,18 @@ class ArmorSlot extends Slot {
     private final ResourceLocation emptyIcon;
 
     public ArmorSlot(
-        Container p_345898_, LivingEntity p_345231_, EquipmentSlot p_345728_, int p_345121_, int p_346000_, int p_346095_, @Nullable ResourceLocation p_344841_
+        Container container, LivingEntity owner, EquipmentSlot slot, int slotIndex, int x, int y, @Nullable ResourceLocation emptyIcon
     ) {
-        super(p_345898_, p_345121_, p_346000_, p_346095_);
-        this.owner = p_345231_;
-        this.slot = p_345728_;
-        this.emptyIcon = p_344841_;
+        super(container, slotIndex, x, y);
+        this.owner = owner;
+        this.slot = slot;
+        this.emptyIcon = emptyIcon;
     }
 
     @Override
-    public void setByPlayer(ItemStack p_345031_, ItemStack p_344961_) {
-        this.owner.onEquipItem(this.slot, p_344961_, p_345031_);
-        super.setByPlayer(p_345031_, p_344961_);
+    public void setByPlayer(ItemStack newStack, ItemStack oldStack) {
+        this.owner.onEquipItem(this.slot, oldStack, newStack);
+        super.setByPlayer(newStack, oldStack);
     }
 
     @Override
@@ -37,17 +37,23 @@ class ArmorSlot extends Slot {
         return 1;
     }
 
+    /**
+     * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+     */
     @Override
-    public boolean mayPlace(ItemStack p_345029_) {
-        return p_345029_.canEquip(slot, owner);
+    public boolean mayPlace(ItemStack stack) {
+        return stack.canEquip(slot, owner);
     }
 
+    /**
+     * Return whether this slot's stack can be taken from this slot.
+     */
     @Override
-    public boolean mayPickup(Player p_345575_) {
+    public boolean mayPickup(Player player) {
         ItemStack itemstack = this.getItem();
-        return !itemstack.isEmpty() && !p_345575_.isCreative() && EnchantmentHelper.has(itemstack, EnchantmentEffectComponents.PREVENT_ARMOR_CHANGE)
+        return !itemstack.isEmpty() && !player.isCreative() && EnchantmentHelper.has(itemstack, EnchantmentEffectComponents.PREVENT_ARMOR_CHANGE)
             ? false
-            : super.mayPickup(p_345575_);
+            : super.mayPickup(player);
     }
 
     @Override

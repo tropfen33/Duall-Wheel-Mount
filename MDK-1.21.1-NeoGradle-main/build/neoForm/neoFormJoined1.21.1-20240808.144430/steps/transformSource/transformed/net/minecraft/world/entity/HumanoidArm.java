@@ -16,10 +16,10 @@ public enum HumanoidArm implements OptionEnum, StringRepresentable {
     private final String name;
     private final String translationKey;
 
-    private HumanoidArm(int p_217028_, String p_217029_, String p_295547_) {
-        this.id = p_217028_;
-        this.name = p_217029_;
-        this.translationKey = p_295547_;
+    private HumanoidArm(int id, String name, String translationKey) {
+        this.id = id;
+        this.name = name;
+        this.translationKey = translationKey;
     }
 
     public HumanoidArm getOpposite() {

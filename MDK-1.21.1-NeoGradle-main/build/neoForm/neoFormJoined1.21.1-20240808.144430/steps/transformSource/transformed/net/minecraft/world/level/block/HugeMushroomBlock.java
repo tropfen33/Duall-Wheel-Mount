@@ -27,8 +27,8 @@ public class HugeMushroomBlock extends Block {
         return CODEC;
     }
 
-    public HugeMushroomBlock(BlockBehaviour.Properties p_54136_) {
-        super(p_54136_);
+    public HugeMushroomBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(
             this.stateDefinition
                 .any()
@@ -42,9 +42,9 @@ public class HugeMushroomBlock extends Block {
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_54138_) {
-        BlockGetter blockgetter = p_54138_.getLevel();
-        BlockPos blockpos = p_54138_.getClickedPos();
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockGetter blockgetter = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
         return this.defaultBlockState()
             .setValue(DOWN, Boolean.valueOf(!blockgetter.getBlockState(blockpos.below()).is(this)))
             .setValue(UP, Boolean.valueOf(!blockgetter.getBlockState(blockpos.above()).is(this)))
@@ -54,35 +54,46 @@ public class HugeMushroomBlock extends Block {
             .setValue(WEST, Boolean.valueOf(!blockgetter.getBlockState(blockpos.west()).is(this)));
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_54146_, Direction p_54147_, BlockState p_54148_, LevelAccessor p_54149_, BlockPos p_54150_, BlockPos p_54151_) {
-        return p_54148_.is(this)
-            ? p_54146_.setValue(PROPERTY_BY_DIRECTION.get(p_54147_), Boolean.valueOf(false))
-            : super.updateShape(p_54146_, p_54147_, p_54148_, p_54149_, p_54150_, p_54151_);
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return facingState.is(this)
+            ? state.setValue(PROPERTY_BY_DIRECTION.get(facing), Boolean.valueOf(false))
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
+    }
+
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rot) {
+        return state.setValue(PROPERTY_BY_DIRECTION.get(rot.rotate(Direction.NORTH)), state.getValue(NORTH))
+            .setValue(PROPERTY_BY_DIRECTION.get(rot.rotate(Direction.SOUTH)), state.getValue(SOUTH))
+            .setValue(PROPERTY_BY_DIRECTION.get(rot.rotate(Direction.EAST)), state.getValue(EAST))
+            .setValue(PROPERTY_BY_DIRECTION.get(rot.rotate(Direction.WEST)), state.getValue(WEST))
+            .setValue(PROPERTY_BY_DIRECTION.get(rot.rotate(Direction.UP)), state.getValue(UP))
+            .setValue(PROPERTY_BY_DIRECTION.get(rot.rotate(Direction.DOWN)), state.getValue(DOWN));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.NORTH)), state.getValue(NORTH))
+            .setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.SOUTH)), state.getValue(SOUTH))
+            .setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.EAST)), state.getValue(EAST))
+            .setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.WEST)), state.getValue(WEST))
+            .setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.UP)), state.getValue(UP))
+            .setValue(PROPERTY_BY_DIRECTION.get(mirror.mirror(Direction.DOWN)), state.getValue(DOWN));
     }
 
     @Override
-    protected BlockState rotate(BlockState p_54143_, Rotation p_54144_) {
-        return p_54143_.setValue(PROPERTY_BY_DIRECTION.get(p_54144_.rotate(Direction.NORTH)), p_54143_.getValue(NORTH))
-            .setValue(PROPERTY_BY_DIRECTION.get(p_54144_.rotate(Direction.SOUTH)), p_54143_.getValue(SOUTH))
-            .setValue(PROPERTY_BY_DIRECTION.get(p_54144_.rotate(Direction.EAST)), p_54143_.getValue(EAST))
-            .setValue(PROPERTY_BY_DIRECTION.get(p_54144_.rotate(Direction.WEST)), p_54143_.getValue(WEST))
-            .setValue(PROPERTY_BY_DIRECTION.get(p_54144_.rotate(Direction.UP)), p_54143_.getValue(UP))
-            .setValue(PROPERTY_BY_DIRECTION.get(p_54144_.rotate(Direction.DOWN)), p_54143_.getValue(DOWN));
-    }
-
-    @Override
-    protected BlockState mirror(BlockState p_54140_, Mirror p_54141_) {
-        return p_54140_.setValue(PROPERTY_BY_DIRECTION.get(p_54141_.mirror(Direction.NORTH)), p_54140_.getValue(NORTH))
-            .setValue(PROPERTY_BY_DIRECTION.get(p_54141_.mirror(Direction.SOUTH)), p_54140_.getValue(SOUTH))
-            .setValue(PROPERTY_BY_DIRECTION.get(p_54141_.mirror(Direction.EAST)), p_54140_.getValue(EAST))
-            .setValue(PROPERTY_BY_DIRECTION.get(p_54141_.mirror(Direction.WEST)), p_54140_.getValue(WEST))
-            .setValue(PROPERTY_BY_DIRECTION.get(p_54141_.mirror(Direction.UP)), p_54140_.getValue(UP))
-            .setValue(PROPERTY_BY_DIRECTION.get(p_54141_.mirror(Direction.DOWN)), p_54140_.getValue(DOWN));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_54153_) {
-        p_54153_.add(UP, DOWN, NORTH, EAST, SOUTH, WEST);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(UP, DOWN, NORTH, EAST, SOUTH, WEST);
     }
 }

@@ -43,35 +43,35 @@ public class ChunkGeneratorStructureState {
     private final List<Holder<StructureSet>> possibleStructureSets;
 
     public static ChunkGeneratorStructureState createForFlat(
-        RandomState p_256240_, long p_256404_, BiomeSource p_256274_, Stream<Holder<StructureSet>> p_256348_
+        RandomState randomState, long levelSeed, BiomeSource biomeSource, Stream<Holder<StructureSet>> structureSets
     ) {
-        List<Holder<StructureSet>> list = p_256348_.filter(p_255616_ -> hasBiomesForStructureSet(p_255616_.value(), p_256274_)).toList();
-        return new ChunkGeneratorStructureState(p_256240_, p_256274_, p_256404_, 0L, list);
+        List<Holder<StructureSet>> list = structureSets.filter(p_255616_ -> hasBiomesForStructureSet(p_255616_.value(), biomeSource)).toList();
+        return new ChunkGeneratorStructureState(randomState, biomeSource, levelSeed, 0L, list);
     }
 
     public static ChunkGeneratorStructureState createForNormal(
-        RandomState p_256197_, long p_255806_, BiomeSource p_256653_, HolderLookup<StructureSet> p_256659_
+        RandomState randomState, long seed, BiomeSource biomeSource, HolderLookup<StructureSet> structureSetLookup
     ) {
-        List<Holder<StructureSet>> list = p_256659_.listElements()
-            .filter(p_256144_ -> hasBiomesForStructureSet(p_256144_.value(), p_256653_))
+        List<Holder<StructureSet>> list = structureSetLookup.listElements()
+            .filter(p_256144_ -> hasBiomesForStructureSet(p_256144_.value(), biomeSource))
             .collect(Collectors.toUnmodifiableList());
-        return new ChunkGeneratorStructureState(p_256197_, p_256653_, p_255806_, p_255806_, list);
+        return new ChunkGeneratorStructureState(randomState, biomeSource, seed, seed, list);
     }
 
-    private static boolean hasBiomesForStructureSet(StructureSet p_255766_, BiomeSource p_256424_) {
-        Stream<Holder<Biome>> stream = p_255766_.structures().stream().flatMap(p_255738_ -> {
+    private static boolean hasBiomesForStructureSet(StructureSet structureSet, BiomeSource biomeSource) {
+        Stream<Holder<Biome>> stream = structureSet.structures().stream().flatMap(p_255738_ -> {
             Structure structure = p_255738_.structure().value();
             return structure.biomes().stream();
         });
-        return stream.anyMatch(p_256424_.possibleBiomes()::contains);
+        return stream.anyMatch(biomeSource.possibleBiomes()::contains);
     }
 
-    private ChunkGeneratorStructureState(RandomState p_256401_, BiomeSource p_255742_, long p_256615_, long p_255979_, List<Holder<StructureSet>> p_256237_) {
-        this.randomState = p_256401_;
-        this.levelSeed = p_256615_;
-        this.biomeSource = p_255742_;
-        this.concentricRingsSeed = p_255979_;
-        this.possibleStructureSets = p_256237_;
+    private ChunkGeneratorStructureState(RandomState randomState, BiomeSource biomeSource, long levelSeed, long cocentricRingsSeed, List<Holder<StructureSet>> possibleStructureSets) {
+        this.randomState = randomState;
+        this.levelSeed = levelSeed;
+        this.biomeSource = biomeSource;
+        this.concentricRingsSeed = cocentricRingsSeed;
+        this.possibleStructureSets = possibleStructureSets;
     }
 
     public List<Holder<StructureSet>> possibleStructureSets() {
@@ -105,16 +105,16 @@ public class ChunkGeneratorStructureState {
             );
     }
 
-    private CompletableFuture<List<ChunkPos>> generateRingPositions(Holder<StructureSet> p_255966_, ConcentricRingsStructurePlacement p_255744_) {
-        if (p_255744_.count() == 0) {
+    private CompletableFuture<List<ChunkPos>> generateRingPositions(Holder<StructureSet> structureSet, ConcentricRingsStructurePlacement placement) {
+        if (placement.count() == 0) {
             return CompletableFuture.completedFuture(List.of());
         } else {
             Stopwatch stopwatch = Stopwatch.createStarted(Util.TICKER);
-            int i = p_255744_.distance();
-            int j = p_255744_.count();
+            int i = placement.distance();
+            int j = placement.count();
             List<CompletableFuture<ChunkPos>> list = new ArrayList<>(j);
-            int k = p_255744_.spread();
-            HolderSet<Biome> holderset = p_255744_.preferredBiomes();
+            int k = placement.spread();
+            HolderSet<Biome> holderset = placement.preferredBiomes();
             RandomSource randomsource = RandomSource.create();
             randomsource.setSeed(this.concentricRingsSeed);
             double d0 = randomsource.nextDouble() * Math.PI * 2.0;
@@ -161,7 +161,7 @@ public class ChunkGeneratorStructureState {
 
             return Util.sequence(list).thenApply(p_256372_ -> {
                 double d2 = (double)stopwatch.stop().elapsed(TimeUnit.MILLISECONDS) / 1000.0;
-                LOGGER.debug("Calculation for {} took {}s", p_255966_, d2);
+                LOGGER.debug("Calculation for {} took {}s", structureSet, d2);
                 return p_256372_;
             });
         }
@@ -175,26 +175,26 @@ public class ChunkGeneratorStructureState {
     }
 
     @Nullable
-    public List<ChunkPos> getRingPositionsFor(ConcentricRingsStructurePlacement p_256667_) {
+    public List<ChunkPos> getRingPositionsFor(ConcentricRingsStructurePlacement placement) {
         this.ensureStructuresGenerated();
-        CompletableFuture<List<ChunkPos>> completablefuture = this.ringPositions.get(p_256667_);
+        CompletableFuture<List<ChunkPos>> completablefuture = this.ringPositions.get(placement);
         return completablefuture != null ? completablefuture.join() : null;
     }
 
-    public List<StructurePlacement> getPlacementsForStructure(Holder<Structure> p_256494_) {
+    public List<StructurePlacement> getPlacementsForStructure(Holder<Structure> structure) {
         this.ensureStructuresGenerated();
-        return this.placementsForStructure.getOrDefault(p_256494_.value(), List.of());
+        return this.placementsForStructure.getOrDefault(structure.value(), List.of());
     }
 
     public RandomState randomState() {
         return this.randomState;
     }
 
-    public boolean hasStructureChunkInRange(Holder<StructureSet> p_256489_, int p_256593_, int p_256115_, int p_256619_) {
-        StructurePlacement structureplacement = p_256489_.value().placement();
+    public boolean hasStructureChunkInRange(Holder<StructureSet> structureSet, int x, int z, int range) {
+        StructurePlacement structureplacement = structureSet.value().placement();
 
-        for (int i = p_256593_ - p_256619_; i <= p_256593_ + p_256619_; i++) {
-            for (int j = p_256115_ - p_256619_; j <= p_256115_ + p_256619_; j++) {
+        for (int i = x - range; i <= x + range; i++) {
+            for (int j = z - range; j <= z + range; j++) {
                 if (structureplacement.isStructureChunk(this, i, j)) {
                     return true;
                 }

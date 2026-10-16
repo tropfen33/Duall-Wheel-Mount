@@ -13,17 +13,17 @@ public class RecreatingChunkStorage extends ChunkStorage {
     private final Path writeFolder;
 
     public RecreatingChunkStorage(
-        RegionStorageInfo p_325929_, Path p_321613_, RegionStorageInfo p_326497_, Path p_321731_, DataFixer p_321644_, boolean p_321789_
+        RegionStorageInfo info, Path folder, RegionStorageInfo writeInfo, Path writeFolder, DataFixer fixerUpper, boolean sync
     ) {
-        super(p_325929_, p_321613_, p_321644_, p_321789_);
-        this.writeFolder = p_321731_;
-        this.writeWorker = new IOWorker(p_326497_, p_321731_, p_321789_);
+        super(info, folder, fixerUpper, sync);
+        this.writeFolder = writeFolder;
+        this.writeWorker = new IOWorker(writeInfo, writeFolder, sync);
     }
 
     @Override
-    public CompletableFuture<Void> write(ChunkPos p_321778_, CompoundTag p_321767_) {
-        this.handleLegacyStructureIndex(p_321778_);
-        return this.writeWorker.store(p_321778_, p_321767_);
+    public CompletableFuture<Void> write(ChunkPos chunkPos, CompoundTag data) {
+        this.handleLegacyStructureIndex(chunkPos);
+        return this.writeWorker.store(chunkPos, data);
     }
 
     @Override

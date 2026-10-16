@@ -21,14 +21,14 @@ public class MultiPackResourceManager implements CloseableResourceManager {
     private final Map<String, FallbackResourceManager> namespacedManagers;
     private final List<PackResources> packs;
 
-    public MultiPackResourceManager(PackType p_203797_, List<PackResources> p_203798_) {
-        this.packs = List.copyOf(p_203798_);
+    public MultiPackResourceManager(PackType type, List<PackResources> packs) {
+        this.packs = List.copyOf(packs);
         Map<String, FallbackResourceManager> map = new HashMap<>();
-        List<String> list = p_203798_.stream().flatMap(p_215471_ -> p_215471_.getNamespaces(p_203797_).stream()).distinct().toList();
+        List<String> list = packs.stream().flatMap(p_215471_ -> p_215471_.getNamespaces(type).stream()).distinct().toList();
 
-        for (PackResources packresources : p_203798_) {
+        for (PackResources packresources : packs) {
             ResourceFilterSection resourcefiltersection = this.getPackFilterSection(packresources);
-            Set<String> set = packresources.getNamespaces(p_203797_);
+            Set<String> set = packresources.getNamespaces(type);
             Predicate<ResourceLocation> predicate = resourcefiltersection != null
                 ? p_215474_ -> resourcefiltersection.isPathFiltered(p_215474_.getPath())
                 : null;
@@ -39,7 +39,7 @@ public class MultiPackResourceManager implements CloseableResourceManager {
                 if (flag || flag1) {
                     FallbackResourceManager fallbackresourcemanager = map.get(s);
                     if (fallbackresourcemanager == null) {
-                        fallbackresourcemanager = new FallbackResourceManager(p_203797_, s);
+                        fallbackresourcemanager = new FallbackResourceManager(type, s);
                         map.put(s, fallbackresourcemanager);
                     }
 
@@ -58,12 +58,12 @@ public class MultiPackResourceManager implements CloseableResourceManager {
     }
 
     @Nullable
-    private ResourceFilterSection getPackFilterSection(PackResources p_215468_) {
+    private ResourceFilterSection getPackFilterSection(PackResources packResources) {
         try {
-            return p_215468_.getMetadataSection(ResourceFilterSection.TYPE);
+            return packResources.getMetadataSection(ResourceFilterSection.TYPE);
         } catch (IOException ioexception) {
             if (!net.neoforged.neoforge.data.loading.DatagenModLoader.isRunningDataGen())// Neo: Only warn about malformed pack filters outside of datagen in case modders are replacing variables with gradle
-            LOGGER.error("Failed to get filter section from pack {}", p_215468_.packId());
+            LOGGER.error("Failed to get filter section from pack {}", packResources.packId());
             return null;
         }
     }
@@ -74,44 +74,44 @@ public class MultiPackResourceManager implements CloseableResourceManager {
     }
 
     @Override
-    public Optional<Resource> getResource(ResourceLocation p_215482_) {
-        ResourceManager resourcemanager = this.namespacedManagers.get(p_215482_.getNamespace());
-        return resourcemanager != null ? resourcemanager.getResource(p_215482_) : Optional.empty();
+    public Optional<Resource> getResource(ResourceLocation location) {
+        ResourceManager resourcemanager = this.namespacedManagers.get(location.getNamespace());
+        return resourcemanager != null ? resourcemanager.getResource(location) : Optional.empty();
     }
 
     @Override
-    public List<Resource> getResourceStack(ResourceLocation p_215466_) {
-        ResourceManager resourcemanager = this.namespacedManagers.get(p_215466_.getNamespace());
-        return resourcemanager != null ? resourcemanager.getResourceStack(p_215466_) : List.of();
+    public List<Resource> getResourceStack(ResourceLocation location) {
+        ResourceManager resourcemanager = this.namespacedManagers.get(location.getNamespace());
+        return resourcemanager != null ? resourcemanager.getResourceStack(location) : List.of();
     }
 
     @Override
-    public Map<ResourceLocation, Resource> listResources(String p_215476_, Predicate<ResourceLocation> p_215477_) {
-        checkTrailingDirectoryPath(p_215476_);
+    public Map<ResourceLocation, Resource> listResources(String path, Predicate<ResourceLocation> filter) {
+        checkTrailingDirectoryPath(path);
         Map<ResourceLocation, Resource> map = new TreeMap<>();
 
         for (FallbackResourceManager fallbackresourcemanager : this.namespacedManagers.values()) {
-            map.putAll(fallbackresourcemanager.listResources(p_215476_, p_215477_));
+            map.putAll(fallbackresourcemanager.listResources(path, filter));
         }
 
         return map;
     }
 
     @Override
-    public Map<ResourceLocation, List<Resource>> listResourceStacks(String p_215479_, Predicate<ResourceLocation> p_215480_) {
-        checkTrailingDirectoryPath(p_215479_);
+    public Map<ResourceLocation, List<Resource>> listResourceStacks(String path, Predicate<ResourceLocation> filter) {
+        checkTrailingDirectoryPath(path);
         Map<ResourceLocation, List<Resource>> map = new TreeMap<>();
 
         for (FallbackResourceManager fallbackresourcemanager : this.namespacedManagers.values()) {
-            map.putAll(fallbackresourcemanager.listResourceStacks(p_215479_, p_215480_));
+            map.putAll(fallbackresourcemanager.listResourceStacks(path, filter));
         }
 
         return map;
     }
 
-    private static void checkTrailingDirectoryPath(String p_249608_) {
-        if (p_249608_.endsWith("/")) {
-            throw new IllegalArgumentException("Trailing slash in path " + p_249608_);
+    private static void checkTrailingDirectoryPath(String path) {
+        if (path.endsWith("/")) {
+            throw new IllegalArgumentException("Trailing slash in path " + path);
         }
     }
 

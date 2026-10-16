@@ -26,41 +26,49 @@ public class SmokerBlock extends AbstractFurnaceBlock {
         return CODEC;
     }
 
-    public SmokerBlock(BlockBehaviour.Properties p_56439_) {
-        super(p_56439_);
+    public SmokerBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_154644_, BlockState p_154645_) {
-        return new SmokerBlockEntity(p_154644_, p_154645_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new SmokerBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_154640_, BlockState p_154641_, BlockEntityType<T> p_154642_) {
-        return createFurnaceTicker(p_154640_, p_154642_, BlockEntityType.SMOKER);
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        return createFurnaceTicker(level, blockEntityType, BlockEntityType.SMOKER);
     }
 
+    /**
+     * Called to open this furnace's container.
+     *
+     * @see #use
+     */
     @Override
-    protected void openContainer(Level p_56443_, BlockPos p_56444_, Player p_56445_) {
-        BlockEntity blockentity = p_56443_.getBlockEntity(p_56444_);
+    protected void openContainer(Level level, BlockPos pos, Player player) {
+        BlockEntity blockentity = level.getBlockEntity(pos);
         if (blockentity instanceof SmokerBlockEntity) {
-            p_56445_.openMenu((MenuProvider)blockentity);
-            p_56445_.awardStat(Stats.INTERACT_WITH_SMOKER);
+            player.openMenu((MenuProvider)blockentity);
+            player.awardStat(Stats.INTERACT_WITH_SMOKER);
         }
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_222443_, Level p_222444_, BlockPos p_222445_, RandomSource p_222446_) {
-        if (p_222443_.getValue(LIT)) {
-            double d0 = (double)p_222445_.getX() + 0.5;
-            double d1 = (double)p_222445_.getY();
-            double d2 = (double)p_222445_.getZ() + 0.5;
-            if (p_222446_.nextDouble() < 0.1) {
-                p_222444_.playLocalSound(d0, d1, d2, SoundEvents.SMOKER_SMOKE, SoundSource.BLOCKS, 1.0F, 1.0F, false);
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (state.getValue(LIT)) {
+            double d0 = (double)pos.getX() + 0.5;
+            double d1 = (double)pos.getY();
+            double d2 = (double)pos.getZ() + 0.5;
+            if (random.nextDouble() < 0.1) {
+                level.playLocalSound(d0, d1, d2, SoundEvents.SMOKER_SMOKE, SoundSource.BLOCKS, 1.0F, 1.0F, false);
             }
 
-            p_222444_.addParticle(ParticleTypes.SMOKE, d0, d1 + 1.1, d2, 0.0, 0.0, 0.0);
+            level.addParticle(ParticleTypes.SMOKE, d0, d1 + 1.1, d2, 0.0, 0.0, 0.0);
         }
     }
 }

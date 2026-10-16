@@ -33,18 +33,18 @@ public class FlatLevelSource extends ChunkGenerator {
     );
     private final FlatLevelGeneratorSettings settings;
 
-    public FlatLevelSource(FlatLevelGeneratorSettings p_256337_) {
-        super(new FixedBiomeSource(p_256337_.getBiome()), Util.memoize(p_256337_::adjustGenerationSettings));
-        this.settings = p_256337_;
+    public FlatLevelSource(FlatLevelGeneratorSettings settings) {
+        super(new FixedBiomeSource(settings.getBiome()), Util.memoize(settings::adjustGenerationSettings));
+        this.settings = settings;
     }
 
     @Override
-    public ChunkGeneratorStructureState createState(HolderLookup<StructureSet> p_256602_, RandomState p_255830_, long p_256355_) {
+    public ChunkGeneratorStructureState createState(HolderLookup<StructureSet> structureSetLookup, RandomState randomState, long seed) {
         Stream<Holder<StructureSet>> stream = this.settings
             .structureOverrides()
             .map(HolderSet::stream)
-            .orElseGet(() -> p_256602_.listElements().map(p_255579_ -> (Holder<StructureSet>)p_255579_));
-        return ChunkGeneratorStructureState.createForFlat(p_255830_, p_256355_, this.biomeSource, stream);
+            .orElseGet(() -> structureSetLookup.listElements().map(p_255579_ -> (Holder<StructureSet>)p_255579_));
+        return ChunkGeneratorStructureState.createForFlat(randomState, seed, this.biomeSource, stream);
     }
 
     @Override
@@ -57,29 +57,29 @@ public class FlatLevelSource extends ChunkGenerator {
     }
 
     @Override
-    public void buildSurface(WorldGenRegion p_224174_, StructureManager p_224175_, RandomState p_224176_, ChunkAccess p_224177_) {
+    public void buildSurface(WorldGenRegion level, StructureManager structureManager, RandomState random, ChunkAccess chunk) {
     }
 
     @Override
-    public int getSpawnHeight(LevelHeightAccessor p_158279_) {
-        return p_158279_.getMinBuildHeight() + Math.min(p_158279_.getHeight(), this.settings.getLayers().size());
+    public int getSpawnHeight(LevelHeightAccessor level) {
+        return level.getMinBuildHeight() + Math.min(level.getHeight(), this.settings.getLayers().size());
     }
 
     @Override
-    public CompletableFuture<ChunkAccess> fillFromNoise(Blender p_224184_, RandomState p_224185_, StructureManager p_224186_, ChunkAccess p_224187_) {
+    public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState, StructureManager structureManager, ChunkAccess chunk) {
         List<BlockState> list = this.settings.getLayers();
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
-        Heightmap heightmap = p_224187_.getOrCreateHeightmapUnprimed(Heightmap.Types.OCEAN_FLOOR_WG);
-        Heightmap heightmap1 = p_224187_.getOrCreateHeightmapUnprimed(Heightmap.Types.WORLD_SURFACE_WG);
+        Heightmap heightmap = chunk.getOrCreateHeightmapUnprimed(Heightmap.Types.OCEAN_FLOOR_WG);
+        Heightmap heightmap1 = chunk.getOrCreateHeightmapUnprimed(Heightmap.Types.WORLD_SURFACE_WG);
 
-        for (int i = 0; i < Math.min(p_224187_.getHeight(), list.size()); i++) {
+        for (int i = 0; i < Math.min(chunk.getHeight(), list.size()); i++) {
             BlockState blockstate = list.get(i);
             if (blockstate != null) {
-                int j = p_224187_.getMinBuildHeight() + i;
+                int j = chunk.getMinBuildHeight() + i;
 
                 for (int k = 0; k < 16; k++) {
                     for (int l = 0; l < 16; l++) {
-                        p_224187_.setBlockState(blockpos$mutableblockpos.set(k, j, l), blockstate, false);
+                        chunk.setBlockState(blockpos$mutableblockpos.set(k, j, l), blockstate, false);
                         heightmap.update(k, j, l, blockstate);
                         heightmap1.update(k, j, l, blockstate);
                     }
@@ -87,54 +87,54 @@ public class FlatLevelSource extends ChunkGenerator {
             }
         }
 
-        return CompletableFuture.completedFuture(p_224187_);
+        return CompletableFuture.completedFuture(chunk);
     }
 
     @Override
-    public int getBaseHeight(int p_224160_, int p_224161_, Heightmap.Types p_224162_, LevelHeightAccessor p_224163_, RandomState p_224164_) {
+    public int getBaseHeight(int x, int z, Heightmap.Types type, LevelHeightAccessor level, RandomState random) {
         List<BlockState> list = this.settings.getLayers();
 
-        for (int i = Math.min(list.size(), p_224163_.getMaxBuildHeight()) - 1; i >= 0; i--) {
+        for (int i = Math.min(list.size(), level.getMaxBuildHeight()) - 1; i >= 0; i--) {
             BlockState blockstate = list.get(i);
-            if (blockstate != null && p_224162_.isOpaque().test(blockstate)) {
-                return p_224163_.getMinBuildHeight() + i + 1;
+            if (blockstate != null && type.isOpaque().test(blockstate)) {
+                return level.getMinBuildHeight() + i + 1;
             }
         }
 
-        return p_224163_.getMinBuildHeight();
+        return level.getMinBuildHeight();
     }
 
     @Override
-    public NoiseColumn getBaseColumn(int p_224155_, int p_224156_, LevelHeightAccessor p_224157_, RandomState p_224158_) {
+    public NoiseColumn getBaseColumn(int x, int z, LevelHeightAccessor height, RandomState random) {
         return new NoiseColumn(
-            p_224157_.getMinBuildHeight(),
+            height.getMinBuildHeight(),
             this.settings
                 .getLayers()
                 .stream()
-                .limit((long)p_224157_.getHeight())
+                .limit((long)height.getHeight())
                 .map(p_204549_ -> p_204549_ == null ? Blocks.AIR.defaultBlockState() : p_204549_)
                 .toArray(BlockState[]::new)
         );
     }
 
     @Override
-    public void addDebugScreenInfo(List<String> p_224179_, RandomState p_224180_, BlockPos p_224181_) {
+    public void addDebugScreenInfo(List<String> info, RandomState random, BlockPos pos) {
     }
 
     @Override
     public void applyCarvers(
-        WorldGenRegion p_224166_,
-        long p_224167_,
-        RandomState p_224168_,
-        BiomeManager p_224169_,
-        StructureManager p_224170_,
-        ChunkAccess p_224171_,
-        GenerationStep.Carving p_224172_
+        WorldGenRegion level,
+        long seed,
+        RandomState random,
+        BiomeManager biomeManager,
+        StructureManager structureManager,
+        ChunkAccess chunk,
+        GenerationStep.Carving step
     ) {
     }
 
     @Override
-    public void spawnOriginalMobs(WorldGenRegion p_188545_) {
+    public void spawnOriginalMobs(WorldGenRegion level) {
     }
 
     @Override

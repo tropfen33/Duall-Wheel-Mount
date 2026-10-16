@@ -38,21 +38,21 @@ public class PopupScreen extends Screen {
     private final LinearLayout layout = LinearLayout.vertical();
 
     PopupScreen(
-        Screen p_304589_,
-        int p_304486_,
-        @Nullable ResourceLocation p_304853_,
-        Component p_304839_,
-        Component p_304571_,
-        List<PopupScreen.ButtonOption> p_304767_,
-        @Nullable Runnable p_304826_
+        Screen backgroundScreen,
+        int width,
+        @Nullable ResourceLocation image,
+        Component title,
+        Component message,
+        List<PopupScreen.ButtonOption> buttons,
+        @Nullable Runnable onClose
     ) {
-        super(p_304839_);
-        this.backgroundScreen = p_304589_;
-        this.image = p_304853_;
-        this.message = p_304571_;
-        this.buttons = p_304767_;
-        this.onClose = p_304826_;
-        this.contentWidth = p_304486_ - 36;
+        super(title);
+        this.backgroundScreen = backgroundScreen;
+        this.image = image;
+        this.message = message;
+        this.buttons = buttons;
+        this.onClose = onClose;
+        this.contentWidth = width - 36;
     }
 
     @Override
@@ -102,12 +102,12 @@ public class PopupScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(GuiGraphics p_304909_, int p_304478_, int p_304974_, float p_304456_) {
-        this.backgroundScreen.render(p_304909_, -1, -1, p_304456_);
-        p_304909_.flush();
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.backgroundScreen.render(guiGraphics, -1, -1, partialTick);
+        guiGraphics.flush();
         RenderSystem.clear(256, Minecraft.ON_OSX);
-        this.renderTransparentBackground(p_304909_);
-        p_304909_.blitSprite(BACKGROUND_SPRITE, this.layout.getX() - 18, this.layout.getY() - 18, this.layout.getWidth() + 36, this.layout.getHeight() + 36);
+        this.renderTransparentBackground(guiGraphics);
+        guiGraphics.blitSprite(BACKGROUND_SPRITE, this.layout.getX() - 18, this.layout.getY() - 18, this.layout.getWidth() + 36, this.layout.getHeight() + 36);
     }
 
     @Override
@@ -136,33 +136,33 @@ public class PopupScreen extends Screen {
         @Nullable
         private Runnable onClose = null;
 
-        public Builder(Screen p_304648_, Component p_304584_) {
-            this.backgroundScreen = p_304648_;
-            this.title = p_304584_;
+        public Builder(Screen backgroundScreen, Component title) {
+            this.backgroundScreen = backgroundScreen;
+            this.title = title;
         }
 
-        public PopupScreen.Builder setWidth(int p_304576_) {
-            this.width = p_304576_;
+        public PopupScreen.Builder setWidth(int width) {
+            this.width = width;
             return this;
         }
 
-        public PopupScreen.Builder setImage(ResourceLocation p_304597_) {
-            this.image = p_304597_;
+        public PopupScreen.Builder setImage(ResourceLocation image) {
+            this.image = image;
             return this;
         }
 
-        public PopupScreen.Builder setMessage(Component p_304550_) {
-            this.message = p_304550_;
+        public PopupScreen.Builder setMessage(Component message) {
+            this.message = message;
             return this;
         }
 
-        public PopupScreen.Builder addButton(Component p_304733_, Consumer<PopupScreen> p_304537_) {
-            this.buttons.add(new PopupScreen.ButtonOption(p_304733_, p_304537_));
+        public PopupScreen.Builder addButton(Component message, Consumer<PopupScreen> action) {
+            this.buttons.add(new PopupScreen.ButtonOption(message, action));
             return this;
         }
 
-        public PopupScreen.Builder onClose(Runnable p_304557_) {
-            this.onClose = p_304557_;
+        public PopupScreen.Builder onClose(Runnable onClose) {
+            this.onClose = onClose;
             return this;
         }
 

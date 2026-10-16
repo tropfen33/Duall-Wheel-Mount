@@ -15,9 +15,9 @@ public class DerivedLevelData implements ServerLevelData {
     private final WorldData worldData;
     private final ServerLevelData wrapped;
 
-    public DerivedLevelData(WorldData p_78079_, ServerLevelData p_78080_) {
-        this.worldData = p_78079_;
-        this.wrapped = p_78080_;
+    public DerivedLevelData(WorldData worldData, ServerLevelData wrapped) {
+        this.worldData = worldData;
+        this.wrapped = wrapped;
     }
 
     @Override
@@ -51,7 +51,7 @@ public class DerivedLevelData implements ServerLevelData {
     }
 
     @Override
-    public void setClearWeatherTime(int p_78085_) {
+    public void setClearWeatherTime(int time) {
     }
 
     @Override
@@ -80,35 +80,50 @@ public class DerivedLevelData implements ServerLevelData {
     }
 
     @Override
-    public void setGameTime(long p_78087_) {
+    public void setGameTime(long time) {
+    }
+
+    /**
+     * Set current world time
+     */
+    @Override
+    public void setDayTime(long time) {
     }
 
     @Override
-    public void setDayTime(long p_78105_) {
+    public void setSpawn(BlockPos spawnPoint, float angle) {
+    }
+
+    /**
+     * Sets whether it is thundering or not.
+     */
+    @Override
+    public void setThundering(boolean thundering) {
+    }
+
+    /**
+     * Defines the number of ticks until next thunderbolt.
+     */
+    @Override
+    public void setThunderTime(int time) {
+    }
+
+    /**
+     * Sets whether it is raining or not.
+     */
+    @Override
+    public void setRaining(boolean isRaining) {
+    }
+
+    /**
+     * Sets the number of ticks until rain.
+     */
+    @Override
+    public void setRainTime(int time) {
     }
 
     @Override
-    public void setSpawn(BlockPos p_78093_, float p_78094_) {
-    }
-
-    @Override
-    public void setThundering(boolean p_78100_) {
-    }
-
-    @Override
-    public void setThunderTime(int p_78118_) {
-    }
-
-    @Override
-    public void setRaining(boolean p_78107_) {
-    }
-
-    @Override
-    public void setRainTime(int p_78121_) {
-    }
-
-    @Override
-    public void setGameType(GameType p_78089_) {
+    public void setGameType(GameType type) {
     }
 
     @Override
@@ -126,8 +141,11 @@ public class DerivedLevelData implements ServerLevelData {
         return this.wrapped.isInitialized();
     }
 
+    /**
+     * Sets the initialization status of the World.
+     */
     @Override
-    public void setInitialized(boolean p_78112_) {
+    public void setInitialized(boolean initialized) {
     }
 
     @Override
@@ -141,7 +159,7 @@ public class DerivedLevelData implements ServerLevelData {
     }
 
     @Override
-    public void setWorldBorder(WorldBorder.Settings p_78091_) {
+    public void setWorldBorder(WorldBorder.Settings serializer) {
     }
 
     @Override
@@ -165,7 +183,7 @@ public class DerivedLevelData implements ServerLevelData {
     }
 
     @Override
-    public void setWanderingTraderSpawnDelay(int p_78124_) {
+    public void setWanderingTraderSpawnDelay(int delay) {
     }
 
     @Override
@@ -174,7 +192,7 @@ public class DerivedLevelData implements ServerLevelData {
     }
 
     @Override
-    public void setWanderingTraderSpawnChance(int p_78127_) {
+    public void setWanderingTraderSpawnChance(int chance) {
     }
 
     @Override
@@ -183,13 +201,13 @@ public class DerivedLevelData implements ServerLevelData {
     }
 
     @Override
-    public void setWanderingTraderId(UUID p_78096_) {
+    public void setWanderingTraderId(UUID id) {
     }
 
     @Override
-    public void fillCrashReportCategory(CrashReportCategory p_164852_, LevelHeightAccessor p_164853_) {
-        p_164852_.setDetail("Derived", true);
-        this.wrapped.fillCrashReportCategory(p_164852_, p_164853_);
+    public void fillCrashReportCategory(CrashReportCategory crashReportCategory, LevelHeightAccessor level) {
+        crashReportCategory.setDetail("Derived", true);
+        this.wrapped.fillCrashReportCategory(crashReportCategory, level);
     }
 
     // Neo: Variable day time code

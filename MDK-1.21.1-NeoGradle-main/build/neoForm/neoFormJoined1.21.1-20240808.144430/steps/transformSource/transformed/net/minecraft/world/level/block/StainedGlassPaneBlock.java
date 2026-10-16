@@ -18,9 +18,9 @@ public class StainedGlassPaneBlock extends IronBarsBlock implements BeaconBeamBl
         return CODEC;
     }
 
-    public StainedGlassPaneBlock(DyeColor p_56838_, BlockBehaviour.Properties p_56839_) {
-        super(p_56839_);
-        this.color = p_56838_;
+    public StainedGlassPaneBlock(DyeColor color, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.color = color;
         this.registerDefaultState(
             this.stateDefinition
                 .any()

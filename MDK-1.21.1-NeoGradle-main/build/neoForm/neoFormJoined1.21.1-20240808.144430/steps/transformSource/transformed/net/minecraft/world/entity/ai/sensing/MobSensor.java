@@ -15,20 +15,20 @@ public class MobSensor<T extends LivingEntity> extends Sensor<T> {
     private final MemoryModuleType<Boolean> toSet;
     private final int memoryTimeToLive;
 
-    public MobSensor(int p_316590_, BiPredicate<T, LivingEntity> p_316273_, Predicate<T> p_316373_, MemoryModuleType<Boolean> p_316764_, int p_316209_) {
-        super(p_316590_);
-        this.mobTest = p_316273_;
-        this.readyTest = p_316373_;
-        this.toSet = p_316764_;
-        this.memoryTimeToLive = p_316209_;
+    public MobSensor(int scanRate, BiPredicate<T, LivingEntity> mobTest, Predicate<T> readyTest, MemoryModuleType<Boolean> toSet, int memoryTimeToLive) {
+        super(scanRate);
+        this.mobTest = mobTest;
+        this.readyTest = readyTest;
+        this.toSet = toSet;
+        this.memoryTimeToLive = memoryTimeToLive;
     }
 
     @Override
-    protected void doTick(ServerLevel p_316535_, T p_316183_) {
-        if (!this.readyTest.test(p_316183_)) {
-            this.clearMemory(p_316183_);
+    protected void doTick(ServerLevel level, T entity) {
+        if (!this.readyTest.test(entity)) {
+            this.clearMemory(entity);
         } else {
-            this.checkForMobsNearby(p_316183_);
+            this.checkForMobsNearby(entity);
         }
     }
 
@@ -37,21 +37,21 @@ public class MobSensor<T extends LivingEntity> extends Sensor<T> {
         return Set.of(MemoryModuleType.NEAREST_LIVING_ENTITIES);
     }
 
-    public void checkForMobsNearby(T p_316143_) {
-        Optional<List<LivingEntity>> optional = p_316143_.getBrain().getMemory(MemoryModuleType.NEAREST_LIVING_ENTITIES);
+    public void checkForMobsNearby(T sensingEntity) {
+        Optional<List<LivingEntity>> optional = sensingEntity.getBrain().getMemory(MemoryModuleType.NEAREST_LIVING_ENTITIES);
         if (!optional.isEmpty()) {
-            boolean flag = optional.get().stream().anyMatch(p_316324_ -> this.mobTest.test(p_316143_, p_316324_));
+            boolean flag = optional.get().stream().anyMatch(p_316324_ -> this.mobTest.test(sensingEntity, p_316324_));
             if (flag) {
-                this.mobDetected(p_316143_);
+                this.mobDetected(sensingEntity);
             }
         }
     }
 
-    public void mobDetected(T p_316813_) {
-        p_316813_.getBrain().setMemoryWithExpiry(this.toSet, true, (long)this.memoryTimeToLive);
+    public void mobDetected(T sensingEntity) {
+        sensingEntity.getBrain().setMemoryWithExpiry(this.toSet, true, (long)this.memoryTimeToLive);
     }
 
-    public void clearMemory(T p_316737_) {
-        p_316737_.getBrain().eraseMemory(this.toSet);
+    public void clearMemory(T sensingEntity) {
+        sensingEntity.getBrain().eraseMemory(this.toSet);
     }
 }

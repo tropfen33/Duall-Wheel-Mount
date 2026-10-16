@@ -21,11 +21,11 @@ public record FluidPredicate(Optional<HolderSet<Fluid>> fluids, Optional<StatePr
                 .apply(p_337366_, FluidPredicate::new)
     );
 
-    public boolean matches(ServerLevel p_41105_, BlockPos p_41106_) {
-        if (!p_41105_.isLoaded(p_41106_)) {
+    public boolean matches(ServerLevel level, BlockPos pos) {
+        if (!level.isLoaded(pos)) {
             return false;
         } else {
-            FluidState fluidstate = p_41105_.getFluidState(p_41106_);
+            FluidState fluidstate = level.getFluidState(pos);
             return this.fluids.isPresent() && !fluidstate.is(this.fluids.get())
                 ? false
                 : !this.properties.isPresent() || this.properties.get().matches(fluidstate);
@@ -43,8 +43,8 @@ public record FluidPredicate(Optional<HolderSet<Fluid>> fluids, Optional<StatePr
             return new FluidPredicate.Builder();
         }
 
-        public FluidPredicate.Builder of(Fluid p_151172_) {
-            this.fluids = Optional.of(HolderSet.direct(p_151172_.builtInRegistryHolder()));
+        public FluidPredicate.Builder of(Fluid fluid) {
+            this.fluids = Optional.of(HolderSet.direct(fluid.builtInRegistryHolder()));
             return this;
         }
 
@@ -53,8 +53,8 @@ public record FluidPredicate(Optional<HolderSet<Fluid>> fluids, Optional<StatePr
             return this;
         }
 
-        public FluidPredicate.Builder setProperties(StatePropertiesPredicate p_151170_) {
-            this.properties = Optional.of(p_151170_);
+        public FluidPredicate.Builder setProperties(StatePropertiesPredicate properties) {
+            this.properties = Optional.of(properties);
             return this;
         }
 

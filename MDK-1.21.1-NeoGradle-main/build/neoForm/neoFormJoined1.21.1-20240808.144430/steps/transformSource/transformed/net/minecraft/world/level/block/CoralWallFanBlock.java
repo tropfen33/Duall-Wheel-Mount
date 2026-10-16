@@ -25,36 +25,41 @@ public class CoralWallFanBlock extends BaseCoralWallFanBlock {
         return CODEC;
     }
 
-    public CoralWallFanBlock(Block p_52202_, BlockBehaviour.Properties p_52203_) {
-        super(p_52203_);
-        this.deadBlock = p_52202_;
+    public CoralWallFanBlock(Block deadBlock, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.deadBlock = deadBlock;
     }
 
     @Override
-    protected void onPlace(BlockState p_52217_, Level p_52218_, BlockPos p_52219_, BlockState p_52220_, boolean p_52221_) {
-        this.tryScheduleDieTick(p_52217_, p_52218_, p_52219_);
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        this.tryScheduleDieTick(state, level, pos);
     }
 
     @Override
-    protected void tick(BlockState p_221035_, ServerLevel p_221036_, BlockPos p_221037_, RandomSource p_221038_) {
-        if (!scanForWater(p_221035_, p_221036_, p_221037_)) {
-            p_221036_.setBlock(
-                p_221037_, this.deadBlock.defaultBlockState().setValue(WATERLOGGED, Boolean.valueOf(false)).setValue(FACING, p_221035_.getValue(FACING)), 2
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!scanForWater(state, level, pos)) {
+            level.setBlock(
+                pos, this.deadBlock.defaultBlockState().setValue(WATERLOGGED, Boolean.valueOf(false)).setValue(FACING, state.getValue(FACING)), 2
             );
         }
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_52210_, Direction p_52211_, BlockState p_52212_, LevelAccessor p_52213_, BlockPos p_52214_, BlockPos p_52215_) {
-        if (p_52211_.getOpposite() == p_52210_.getValue(FACING) && !p_52210_.canSurvive(p_52213_, p_52214_)) {
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (facing.getOpposite() == state.getValue(FACING) && !state.canSurvive(level, currentPos)) {
             return Blocks.AIR.defaultBlockState();
         } else {
-            if (p_52210_.getValue(WATERLOGGED)) {
-                p_52213_.scheduleTick(p_52214_, Fluids.WATER, Fluids.WATER.getTickDelay(p_52213_));
+            if (state.getValue(WATERLOGGED)) {
+                level.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
             }
 
-            this.tryScheduleDieTick(p_52210_, p_52213_, p_52214_);
-            return super.updateShape(p_52210_, p_52211_, p_52212_, p_52213_, p_52214_, p_52215_);
+            this.tryScheduleDieTick(state, level, currentPos);
+            return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
         }
     }
 }

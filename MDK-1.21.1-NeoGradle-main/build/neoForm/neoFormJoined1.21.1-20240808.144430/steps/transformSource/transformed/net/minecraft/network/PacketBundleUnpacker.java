@@ -9,14 +9,14 @@ import net.minecraft.network.protocol.Packet;
 public class PacketBundleUnpacker extends MessageToMessageEncoder<Packet<?>> {
     private final BundlerInfo bundlerInfo;
 
-    public PacketBundleUnpacker(BundlerInfo p_320840_) {
-        this.bundlerInfo = p_320840_;
+    public PacketBundleUnpacker(BundlerInfo bundlerInfo) {
+        this.bundlerInfo = bundlerInfo;
     }
 
-    protected void encode(ChannelHandlerContext p_265691_, Packet<?> p_265038_, List<Object> p_265735_) throws Exception {
-        this.bundlerInfo.unbundlePacket(p_265038_, p_265735_::add, p_265691_);
-        if (p_265038_.isTerminal()) {
-            p_265691_.pipeline().remove(p_265691_.name());
+    protected void encode(ChannelHandlerContext context, Packet<?> packet, List<Object> p_265735_) throws Exception {
+        this.bundlerInfo.unbundlePacket(packet, p_265735_::add, context);
+        if (packet.isTerminal()) {
+            context.pipeline().remove(context.name());
         }
     }
 }

@@ -15,11 +15,11 @@ public class CriteriaRenameFix extends DataFix {
     private final String advancementId;
     private final UnaryOperator<String> conversions;
 
-    public CriteriaRenameFix(Schema p_216585_, String p_216586_, String p_216587_, UnaryOperator<String> p_216588_) {
-        super(p_216585_, false);
-        this.name = p_216586_;
-        this.advancementId = p_216587_;
-        this.conversions = p_216588_;
+    public CriteriaRenameFix(Schema outputSchema, String name, String advancementId, UnaryOperator<String> conversions) {
+        super(outputSchema, false);
+        this.name = name;
+        this.advancementId = advancementId;
+        this.conversions = conversions;
     }
 
     @Override
@@ -29,8 +29,8 @@ public class CriteriaRenameFix extends DataFix {
         );
     }
 
-    private Dynamic<?> fixAdvancements(Dynamic<?> p_216594_) {
-        return p_216594_.update(
+    private Dynamic<?> fixAdvancements(Dynamic<?> advancementData) {
+        return advancementData.update(
             this.advancementId,
             p_216599_ -> p_216599_.update(
                     "criteria",

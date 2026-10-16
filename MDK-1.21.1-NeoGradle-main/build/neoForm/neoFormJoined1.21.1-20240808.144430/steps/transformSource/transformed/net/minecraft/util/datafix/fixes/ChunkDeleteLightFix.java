@@ -10,8 +10,8 @@ import com.mojang.datafixers.types.Type;
 import com.mojang.serialization.Dynamic;
 
 public class ChunkDeleteLightFix extends DataFix {
-    public ChunkDeleteLightFix(Schema p_284990_) {
-        super(p_284990_, false);
+    public ChunkDeleteLightFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
     @Override

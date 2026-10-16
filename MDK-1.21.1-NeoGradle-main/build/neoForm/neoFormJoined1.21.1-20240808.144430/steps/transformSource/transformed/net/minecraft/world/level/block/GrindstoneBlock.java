@@ -98,19 +98,22 @@ public class GrindstoneBlock extends FaceAttachedHorizontalDirectionalBlock {
         return CODEC;
     }
 
-    public GrindstoneBlock(BlockBehaviour.Properties p_53808_) {
-        super(p_53808_);
+    public GrindstoneBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(FACE, AttachFace.WALL));
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_53840_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
-    private VoxelShape getVoxelShape(BlockState p_53856_) {
-        Direction direction = p_53856_.getValue(FACING);
-        switch ((AttachFace)p_53856_.getValue(FACE)) {
+    private VoxelShape getVoxelShape(BlockState state) {
+        Direction direction = state.getValue(FACING);
+        switch ((AttachFace)state.getValue(FACE)) {
             case FLOOR:
                 if (direction != Direction.NORTH && direction != Direction.SOUTH) {
                     return FLOOR_EAST_WEST_GRINDSTONE;
@@ -141,55 +144,55 @@ public class GrindstoneBlock extends FaceAttachedHorizontalDirectionalBlock {
     }
 
     @Override
-    protected VoxelShape getCollisionShape(BlockState p_53851_, BlockGetter p_53852_, BlockPos p_53853_, CollisionContext p_53854_) {
-        return this.getVoxelShape(p_53851_);
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return this.getVoxelShape(state);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_53842_, BlockGetter p_53843_, BlockPos p_53844_, CollisionContext p_53845_) {
-        return this.getVoxelShape(p_53842_);
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return this.getVoxelShape(state);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_53828_, LevelReader p_53829_, BlockPos p_53830_) {
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
         return true;
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_53821_, Level p_53822_, BlockPos p_53823_, Player p_53824_, BlockHitResult p_53826_) {
-        if (p_53822_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
-            p_53824_.openMenu(p_53821_.getMenuProvider(p_53822_, p_53823_));
-            p_53824_.awardStat(Stats.INTERACT_WITH_GRINDSTONE);
+            player.openMenu(state.getMenuProvider(level, pos));
+            player.awardStat(Stats.INTERACT_WITH_GRINDSTONE);
             return InteractionResult.CONSUME;
         }
     }
 
     @Override
-    protected MenuProvider getMenuProvider(BlockState p_53847_, Level p_53848_, BlockPos p_53849_) {
+    protected MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
         return new SimpleMenuProvider(
-            (p_53812_, p_53813_, p_53814_) -> new GrindstoneMenu(p_53812_, p_53813_, ContainerLevelAccess.create(p_53848_, p_53849_)), CONTAINER_TITLE
+            (p_53812_, p_53813_, p_53814_) -> new GrindstoneMenu(p_53812_, p_53813_, ContainerLevelAccess.create(level, pos)), CONTAINER_TITLE
         );
     }
 
     @Override
-    protected BlockState rotate(BlockState p_53835_, Rotation p_53836_) {
-        return p_53835_.setValue(FACING, p_53836_.rotate(p_53835_.getValue(FACING)));
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState mirror(BlockState p_53832_, Mirror p_53833_) {
-        return p_53832_.rotate(p_53833_.getRotation(p_53832_.getValue(FACING)));
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_53838_) {
-        p_53838_.add(FACING, FACE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, FACE);
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_53816_, PathComputationType p_53819_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

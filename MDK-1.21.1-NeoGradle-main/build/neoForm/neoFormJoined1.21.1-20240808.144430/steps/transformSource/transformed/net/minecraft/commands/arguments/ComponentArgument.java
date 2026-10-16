@@ -21,24 +21,24 @@ public class ComponentArgument implements ArgumentType<Component> {
     );
     private final HolderLookup.Provider registries;
 
-    private ComponentArgument(HolderLookup.Provider p_323707_) {
-        this.registries = p_323707_;
+    private ComponentArgument(HolderLookup.Provider registries) {
+        this.registries = registries;
     }
 
-    public static Component getComponent(CommandContext<CommandSourceStack> p_87118_, String p_87119_) {
-        return p_87118_.getArgument(p_87119_, Component.class);
+    public static Component getComponent(CommandContext<CommandSourceStack> context, String name) {
+        return context.getArgument(name, Component.class);
     }
 
-    public static ComponentArgument textComponent(CommandBuildContext p_324401_) {
-        return new ComponentArgument(p_324401_);
+    public static ComponentArgument textComponent(CommandBuildContext context) {
+        return new ComponentArgument(context);
     }
 
-    public Component parse(StringReader p_87116_) throws CommandSyntaxException {
+    public Component parse(StringReader reader) throws CommandSyntaxException {
         try {
-            return ParserUtils.parseJson(this.registries, p_87116_, ComponentSerialization.CODEC);
+            return ParserUtils.parseJson(this.registries, reader, ComponentSerialization.CODEC);
         } catch (Exception exception) {
             String s = exception.getCause() != null ? exception.getCause().getMessage() : exception.getMessage();
-            throw ERROR_INVALID_JSON.createWithContext(p_87116_, s);
+            throw ERROR_INVALID_JSON.createWithContext(reader, s);
         }
     }
 

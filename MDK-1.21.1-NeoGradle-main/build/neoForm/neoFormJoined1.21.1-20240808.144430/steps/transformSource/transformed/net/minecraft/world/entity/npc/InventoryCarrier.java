@@ -12,34 +12,34 @@ public interface InventoryCarrier {
 
     SimpleContainer getInventory();
 
-    static void pickUpItem(Mob p_219612_, InventoryCarrier p_219613_, ItemEntity p_219614_) {
-        ItemStack itemstack = p_219614_.getItem();
-        if (p_219612_.wantsToPickUp(itemstack)) {
-            SimpleContainer simplecontainer = p_219613_.getInventory();
+    static void pickUpItem(Mob mob, InventoryCarrier carrier, ItemEntity itemEntity) {
+        ItemStack itemstack = itemEntity.getItem();
+        if (mob.wantsToPickUp(itemstack)) {
+            SimpleContainer simplecontainer = carrier.getInventory();
             boolean flag = simplecontainer.canAddItem(itemstack);
             if (!flag) {
                 return;
             }
 
-            p_219612_.onItemPickup(p_219614_);
+            mob.onItemPickup(itemEntity);
             int i = itemstack.getCount();
             ItemStack itemstack1 = simplecontainer.addItem(itemstack);
-            p_219612_.take(p_219614_, i - itemstack1.getCount());
+            mob.take(itemEntity, i - itemstack1.getCount());
             if (itemstack1.isEmpty()) {
-                p_219614_.discard();
+                itemEntity.discard();
             } else {
                 itemstack.setCount(itemstack1.getCount());
             }
         }
     }
 
-    default void readInventoryFromTag(CompoundTag p_253699_, HolderLookup.Provider p_330390_) {
-        if (p_253699_.contains("Inventory", 9)) {
-            this.getInventory().fromTag(p_253699_.getList("Inventory", 10), p_330390_);
+    default void readInventoryFromTag(CompoundTag tag, HolderLookup.Provider levelRegistry) {
+        if (tag.contains("Inventory", 9)) {
+            this.getInventory().fromTag(tag.getList("Inventory", 10), levelRegistry);
         }
     }
 
-    default void writeInventoryToTag(CompoundTag p_254428_, HolderLookup.Provider p_331103_) {
-        p_254428_.put("Inventory", this.getInventory().createTag(p_331103_));
+    default void writeInventoryToTag(CompoundTag tag, HolderLookup.Provider levelRegistry) {
+        tag.put("Inventory", this.getInventory().createTag(levelRegistry));
     }
 }

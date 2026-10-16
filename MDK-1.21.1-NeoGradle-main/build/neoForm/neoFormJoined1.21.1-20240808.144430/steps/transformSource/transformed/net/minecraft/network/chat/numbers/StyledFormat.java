@@ -30,13 +30,13 @@ public class StyledFormat implements NumberFormat {
     public static final StyledFormat PLAYER_LIST_DEFAULT = new StyledFormat(Style.EMPTY.withColor(ChatFormatting.YELLOW));
     final Style style;
 
-    public StyledFormat(Style p_313874_) {
-        this.style = p_313874_;
+    public StyledFormat(Style style) {
+        this.style = style;
     }
 
     @Override
-    public MutableComponent format(int p_313770_) {
-        return Component.literal(Integer.toString(p_313770_)).withStyle(this.style);
+    public MutableComponent format(int number) {
+        return Component.literal(Integer.toString(number)).withStyle(this.style);
     }
 
     @Override

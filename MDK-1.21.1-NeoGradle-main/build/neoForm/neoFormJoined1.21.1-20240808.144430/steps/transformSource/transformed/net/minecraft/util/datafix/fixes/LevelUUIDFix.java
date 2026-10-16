@@ -12,8 +12,8 @@ import org.slf4j.Logger;
 public class LevelUUIDFix extends AbstractUUIDFix {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public LevelUUIDFix(Schema p_16360_) {
-        super(p_16360_, References.LEVEL);
+    public LevelUUIDFix(Schema outputSchema) {
+        super(outputSchema, References.LEVEL);
     }
 
     @Override
@@ -29,12 +29,12 @@ public class LevelUUIDFix extends AbstractUUIDFix {
         );
     }
 
-    private Dynamic<?> updateWanderingTrader(Dynamic<?> p_16373_) {
-        return replaceUUIDString(p_16373_, "WanderingTraderId", "WanderingTraderId").orElse(p_16373_);
+    private Dynamic<?> updateWanderingTrader(Dynamic<?> dynamic) {
+        return replaceUUIDString(dynamic, "WanderingTraderId", "WanderingTraderId").orElse(dynamic);
     }
 
-    private Dynamic<?> updateDragonFight(Dynamic<?> p_16375_) {
-        return p_16375_.update(
+    private Dynamic<?> updateDragonFight(Dynamic<?> dynamic) {
+        return dynamic.update(
             "DimensionData",
             p_16387_ -> p_16387_.updateMapValues(
                     p_145498_ -> p_145498_.mapSecond(
@@ -44,8 +44,8 @@ public class LevelUUIDFix extends AbstractUUIDFix {
         );
     }
 
-    private Dynamic<?> updateCustomBossEvents(Dynamic<?> p_16377_) {
-        return p_16377_.update(
+    private Dynamic<?> updateCustomBossEvents(Dynamic<?> dynamic) {
+        return dynamic.update(
             "CustomBossEvents",
             p_16379_ -> p_16379_.updateMapValues(
                     p_145491_ -> p_145491_.mapSecond(

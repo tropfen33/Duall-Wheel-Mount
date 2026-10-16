@@ -76,25 +76,25 @@ public class DebugEntityNameGenerator {
         "Fist"
     };
 
-    public static String getEntityName(Entity p_179487_) {
-        if (p_179487_ instanceof Player) {
-            return p_179487_.getName().getString();
+    public static String getEntityName(Entity entity) {
+        if (entity instanceof Player) {
+            return entity.getName().getString();
         } else {
-            Component component = p_179487_.getCustomName();
-            return component != null ? component.getString() : getEntityName(p_179487_.getUUID());
+            Component component = entity.getCustomName();
+            return component != null ? component.getString() : getEntityName(entity.getUUID());
         }
     }
 
-    public static String getEntityName(UUID p_133669_) {
-        RandomSource randomsource = getRandom(p_133669_);
+    public static String getEntityName(UUID uuid) {
+        RandomSource randomsource = getRandom(uuid);
         return getRandomString(randomsource, NAMES_FIRST_PART) + getRandomString(randomsource, NAMES_SECOND_PART);
     }
 
-    private static String getRandomString(RandomSource p_237881_, String[] p_237882_) {
-        return Util.getRandom(p_237882_, p_237881_);
+    private static String getRandomString(RandomSource random, String[] strings) {
+        return Util.getRandom(strings, random);
     }
 
-    private static RandomSource getRandom(UUID p_237884_) {
-        return RandomSource.create((long)(p_237884_.hashCode() >> 2));
+    private static RandomSource getRandom(UUID uuid) {
+        return RandomSource.create((long)(uuid.hashCode() >> 2));
     }
 }

@@ -25,21 +25,21 @@ public class SmithingTrimRecipe implements SmithingRecipe {
     final Ingredient base;
     final Ingredient addition;
 
-    public SmithingTrimRecipe(Ingredient p_267298_, Ingredient p_266862_, Ingredient p_267050_) {
-        this.template = p_267298_;
-        this.base = p_266862_;
-        this.addition = p_267050_;
+    public SmithingTrimRecipe(Ingredient template, Ingredient base, Ingredient addition) {
+        this.template = template;
+        this.base = base;
+        this.addition = addition;
     }
 
-    public boolean matches(SmithingRecipeInput p_346082_, Level p_345460_) {
-        return this.template.test(p_346082_.template()) && this.base.test(p_346082_.base()) && this.addition.test(p_346082_.addition());
+    public boolean matches(SmithingRecipeInput input, Level level) {
+        return this.template.test(input.template()) && this.base.test(input.base()) && this.addition.test(input.addition());
     }
 
-    public ItemStack assemble(SmithingRecipeInput p_345750_, HolderLookup.Provider p_335536_) {
-        ItemStack itemstack = p_345750_.base();
+    public ItemStack assemble(SmithingRecipeInput input, HolderLookup.Provider registries) {
+        ItemStack itemstack = input.base();
         if (this.base.test(itemstack)) {
-            Optional<Holder.Reference<TrimMaterial>> optional = TrimMaterials.getFromIngredient(p_335536_, p_345750_.addition());
-            Optional<Holder.Reference<TrimPattern>> optional1 = TrimPatterns.getFromTemplate(p_335536_, p_345750_.template());
+            Optional<Holder.Reference<TrimMaterial>> optional = TrimMaterials.getFromIngredient(registries, input.addition());
+            Optional<Holder.Reference<TrimPattern>> optional1 = TrimPatterns.getFromTemplate(registries, input.template());
             if (optional.isPresent() && optional1.isPresent()) {
                 ArmorTrim armortrim = itemstack.get(DataComponents.TRIM);
                 if (armortrim != null && armortrim.hasPatternAndMaterial(optional1.get(), optional.get())) {
@@ -56,10 +56,10 @@ public class SmithingTrimRecipe implements SmithingRecipe {
     }
 
     @Override
-    public ItemStack getResultItem(HolderLookup.Provider p_335445_) {
+    public ItemStack getResultItem(HolderLookup.Provider registries) {
         ItemStack itemstack = new ItemStack(Items.IRON_CHESTPLATE);
-        Optional<Holder.Reference<TrimPattern>> optional = p_335445_.lookupOrThrow(Registries.TRIM_PATTERN).listElements().findFirst();
-        Optional<Holder.Reference<TrimMaterial>> optional1 = p_335445_.lookupOrThrow(Registries.TRIM_MATERIAL).get(TrimMaterials.REDSTONE);
+        Optional<Holder.Reference<TrimPattern>> optional = registries.lookupOrThrow(Registries.TRIM_PATTERN).listElements().findFirst();
+        Optional<Holder.Reference<TrimMaterial>> optional1 = registries.lookupOrThrow(Registries.TRIM_MATERIAL).get(TrimMaterials.REDSTONE);
         if (optional.isPresent() && optional1.isPresent()) {
             itemstack.set(DataComponents.TRIM, new ArmorTrim(optional1.get(), optional.get()));
         }
@@ -68,18 +68,18 @@ public class SmithingTrimRecipe implements SmithingRecipe {
     }
 
     @Override
-    public boolean isTemplateIngredient(ItemStack p_266762_) {
-        return this.template.test(p_266762_);
+    public boolean isTemplateIngredient(ItemStack stack) {
+        return this.template.test(stack);
     }
 
     @Override
-    public boolean isBaseIngredient(ItemStack p_266795_) {
-        return this.base.test(p_266795_);
+    public boolean isBaseIngredient(ItemStack stack) {
+        return this.base.test(stack);
     }
 
     @Override
-    public boolean isAdditionIngredient(ItemStack p_266922_) {
-        return this.addition.test(p_266922_);
+    public boolean isAdditionIngredient(ItemStack stack) {
+        return this.addition.test(stack);
     }
 
     @Override
@@ -115,17 +115,17 @@ public class SmithingTrimRecipe implements SmithingRecipe {
             return STREAM_CODEC;
         }
 
-        private static SmithingTrimRecipe fromNetwork(RegistryFriendlyByteBuf p_320719_) {
-            Ingredient ingredient = Ingredient.CONTENTS_STREAM_CODEC.decode(p_320719_);
-            Ingredient ingredient1 = Ingredient.CONTENTS_STREAM_CODEC.decode(p_320719_);
-            Ingredient ingredient2 = Ingredient.CONTENTS_STREAM_CODEC.decode(p_320719_);
+        private static SmithingTrimRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
+            Ingredient ingredient = Ingredient.CONTENTS_STREAM_CODEC.decode(buffer);
+            Ingredient ingredient1 = Ingredient.CONTENTS_STREAM_CODEC.decode(buffer);
+            Ingredient ingredient2 = Ingredient.CONTENTS_STREAM_CODEC.decode(buffer);
             return new SmithingTrimRecipe(ingredient, ingredient1, ingredient2);
         }
 
-        private static void toNetwork(RegistryFriendlyByteBuf p_319922_, SmithingTrimRecipe p_320655_) {
-            Ingredient.CONTENTS_STREAM_CODEC.encode(p_319922_, p_320655_.template);
-            Ingredient.CONTENTS_STREAM_CODEC.encode(p_319922_, p_320655_.base);
-            Ingredient.CONTENTS_STREAM_CODEC.encode(p_319922_, p_320655_.addition);
+        private static void toNetwork(RegistryFriendlyByteBuf buffer, SmithingTrimRecipe recipe) {
+            Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, recipe.template);
+            Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, recipe.base);
+            Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, recipe.addition);
         }
     }
 }

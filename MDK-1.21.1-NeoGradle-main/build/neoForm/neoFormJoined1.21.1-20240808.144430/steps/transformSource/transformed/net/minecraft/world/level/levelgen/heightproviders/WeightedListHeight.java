@@ -16,13 +16,13 @@ public class WeightedListHeight extends HeightProvider {
     );
     private final SimpleWeightedRandomList<HeightProvider> distribution;
 
-    public WeightedListHeight(SimpleWeightedRandomList<HeightProvider> p_191536_) {
-        this.distribution = p_191536_;
+    public WeightedListHeight(SimpleWeightedRandomList<HeightProvider> distribution) {
+        this.distribution = distribution;
     }
 
     @Override
-    public int sample(RandomSource p_226314_, WorldGenerationContext p_226315_) {
-        return this.distribution.getRandomValue(p_226314_).orElseThrow(IllegalStateException::new).sample(p_226314_, p_226315_);
+    public int sample(RandomSource random, WorldGenerationContext context) {
+        return this.distribution.getRandomValue(random).orElseThrow(IllegalStateException::new).sample(random, context);
     }
 
     @Override

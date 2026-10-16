@@ -73,8 +73,8 @@ public class AttributeModifierIdFix extends DataFix {
         "minecraft:reinforcement_caller_charge"
     );
 
-    public AttributeModifierIdFix(Schema p_350353_) {
-        super(p_350353_, false);
+    public AttributeModifierIdFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
     @Override
@@ -94,13 +94,13 @@ public class AttributeModifierIdFix extends DataFix {
         );
     }
 
-    private static Stream<Dynamic<?>> fixModifiersTypeWrapper(Stream<?> p_350501_) {
-        return fixModifiers((Stream<Dynamic<?>>)p_350501_);
+    private static Stream<Dynamic<?>> fixModifiersTypeWrapper(Stream<?> modifiers) {
+        return fixModifiers((Stream<Dynamic<?>>)modifiers);
     }
 
-    private static Stream<Dynamic<?>> fixModifiers(Stream<Dynamic<?>> p_350772_) {
+    private static Stream<Dynamic<?>> fixModifiers(Stream<Dynamic<?>> modifiers) {
         Map<String, Dynamic<?>> map = new Object2ObjectArrayMap<>();
-        p_350772_.forEach(p_350336_ -> {
+        modifiers.forEach(p_350336_ -> {
             UUID uuid = uuidFromIntArray(p_350336_.get("uuid").asIntStream().toArray());
             String s = p_350336_.get("name").asString("");
             String s1 = uuid != null ? ID_MAP.get(uuid) : null;
@@ -127,8 +127,8 @@ public class AttributeModifierIdFix extends DataFix {
         return map.values().stream();
     }
 
-    private static Dynamic<?> convertModifierForEntity(Dynamic<?> p_350703_) {
-        return p_350703_.renameField("UUID", "uuid")
+    private static Dynamic<?> convertModifierForEntity(Dynamic<?> modifier) {
+        return modifier.renameField("UUID", "uuid")
             .renameField("Name", "name")
             .renameField("Amount", "amount")
             .renameAndFixField("Operation", "operation", p_350969_ -> {
@@ -141,8 +141,8 @@ public class AttributeModifierIdFix extends DataFix {
             });
     }
 
-    private static Dynamic<?> fixItemStackComponents(Dynamic<?> p_350317_) {
-        return p_350317_.update(
+    private static Dynamic<?> fixItemStackComponents(Dynamic<?> tag) {
+        return tag.update(
             "minecraft:attribute_modifiers",
             p_350851_ -> p_350851_.update(
                     "modifiers",
@@ -153,8 +153,8 @@ public class AttributeModifierIdFix extends DataFix {
         );
     }
 
-    private static Dynamic<?> fixAttribute(Dynamic<?> p_350325_) {
-        return p_350325_.renameField("Name", "id")
+    private static Dynamic<?> fixAttribute(Dynamic<?> tag) {
+        return tag.renameField("Name", "id")
             .renameField("Base", "base")
             .renameAndFixField(
                 "Modifiers",
@@ -164,14 +164,14 @@ public class AttributeModifierIdFix extends DataFix {
                             .result()
                             .map(p_350343_ -> p_350343_.map(AttributeModifierIdFix::convertModifierForEntity))
                             .map(AttributeModifierIdFix::fixModifiersTypeWrapper)
-                            .map(p_350325_::createList),
+                            .map(tag::createList),
                         p_350892_
                     )
             );
     }
 
-    private static Typed<?> fixEntity(Typed<?> p_351052_) {
-        return p_351052_.update(
+    private static Typed<?> fixEntity(Typed<?> entity) {
+        return entity.update(
             DSL.remainderFinder(),
             p_350693_ -> p_350693_.renameAndFixField(
                     "Attributes",
@@ -185,9 +185,9 @@ public class AttributeModifierIdFix extends DataFix {
     }
 
     @Nullable
-    public static UUID uuidFromIntArray(int[] p_350729_) {
-        return p_350729_.length != 4
+    public static UUID uuidFromIntArray(int[] intArray) {
+        return intArray.length != 4
             ? null
-            : new UUID((long)p_350729_[0] << 32 | (long)p_350729_[1] & 4294967295L, (long)p_350729_[2] << 32 | (long)p_350729_[3] & 4294967295L);
+            : new UUID((long)intArray[0] << 32 | (long)intArray[1] & 4294967295L, (long)intArray[2] << 32 | (long)intArray[3] & 4294967295L);
     }
 }

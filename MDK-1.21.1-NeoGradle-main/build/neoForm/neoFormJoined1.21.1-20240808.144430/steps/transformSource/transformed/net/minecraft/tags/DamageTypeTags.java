@@ -39,7 +39,7 @@ public interface DamageTypeTags {
     TagKey<DamageType> PANIC_CAUSES = create("panic_causes");
     TagKey<DamageType> PANIC_ENVIRONMENTAL_CAUSES = create("panic_environmental_causes");
 
-    private static TagKey<DamageType> create(String p_270635_) {
-        return TagKey.create(Registries.DAMAGE_TYPE, ResourceLocation.withDefaultNamespace(p_270635_));
+    private static TagKey<DamageType> create(String name) {
+        return TagKey.create(Registries.DAMAGE_TYPE, ResourceLocation.withDefaultNamespace(name));
     }
 }

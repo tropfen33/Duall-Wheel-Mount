@@ -18,9 +18,9 @@ public class SafetyScreen extends WarningScreen {
     private static final Component NARRATION = TITLE.copy().append("\n").append(CONTENT);
     private final Screen previous;
 
-    public SafetyScreen(Screen p_99743_) {
+    public SafetyScreen(Screen previous) {
         super(TITLE, CONTENT, CHECK, NARRATION);
-        this.previous = p_99743_;
+        this.previous = previous;
     }
 
     @Override

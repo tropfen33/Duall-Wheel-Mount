@@ -7,6 +7,9 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 
+/**
+ * Registry for {@link NbtProvider}
+ */
 public class NbtProviders {
     private static final Codec<NbtProvider> TYPED_CODEC = BuiltInRegistries.LOOT_NBT_PROVIDER_TYPE
         .byNameCodec()
@@ -21,7 +24,7 @@ public class NbtProviders {
     public static final LootNbtProviderType STORAGE = register("storage", StorageNbtProvider.CODEC);
     public static final LootNbtProviderType CONTEXT = register("context", ContextNbtProvider.CODEC);
 
-    private static LootNbtProviderType register(String p_165629_, MapCodec<? extends NbtProvider> p_338777_) {
-        return Registry.register(BuiltInRegistries.LOOT_NBT_PROVIDER_TYPE, ResourceLocation.withDefaultNamespace(p_165629_), new LootNbtProviderType(p_338777_));
+    private static LootNbtProviderType register(String name, MapCodec<? extends NbtProvider> codec) {
+        return Registry.register(BuiltInRegistries.LOOT_NBT_PROVIDER_TYPE, ResourceLocation.withDefaultNamespace(name), new LootNbtProviderType(codec));
     }
 }

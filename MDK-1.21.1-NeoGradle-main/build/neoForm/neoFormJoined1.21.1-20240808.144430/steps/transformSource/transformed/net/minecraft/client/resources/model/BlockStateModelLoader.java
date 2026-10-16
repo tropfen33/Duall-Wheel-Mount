@@ -70,18 +70,18 @@ public class BlockStateModelLoader {
     private final BlockModelDefinition.Context context = new BlockModelDefinition.Context();
 
     public BlockStateModelLoader(
-        Map<ResourceLocation, List<BlockStateModelLoader.LoadedJson>> p_352185_,
-        ProfilerFiller p_352252_,
-        UnbakedModel p_352193_,
-        BlockColors p_352120_,
-        BiConsumer<ModelResourceLocation, UnbakedModel> p_352414_
+        Map<ResourceLocation, List<BlockStateModelLoader.LoadedJson>> blockStateResources,
+        ProfilerFiller profiler,
+        UnbakedModel missingModel,
+        BlockColors blockColors,
+        BiConsumer<ModelResourceLocation, UnbakedModel> discoveredModelOutput
     ) {
-        this.blockStateResources = p_352185_;
-        this.profiler = p_352252_;
-        this.blockColors = p_352120_;
-        this.discoveredModelOutput = p_352414_;
-        BlockStateModelLoader.ModelGroupKey blockstatemodelloader$modelgroupkey = new BlockStateModelLoader.ModelGroupKey(List.of(p_352193_), List.of());
-        this.missingModel = new BlockStateModelLoader.LoadedModel(p_352193_, () -> blockstatemodelloader$modelgroupkey);
+        this.blockStateResources = blockStateResources;
+        this.profiler = profiler;
+        this.blockColors = blockColors;
+        this.discoveredModelOutput = discoveredModelOutput;
+        BlockStateModelLoader.ModelGroupKey blockstatemodelloader$modelgroupkey = new BlockStateModelLoader.ModelGroupKey(List.of(missingModel), List.of());
+        this.missingModel = new BlockStateModelLoader.LoadedModel(missingModel, () -> blockstatemodelloader$modelgroupkey);
     }
 
     public void loadAllBlockStates() {
@@ -96,18 +96,18 @@ public class BlockStateModelLoader {
         this.profiler.pop();
     }
 
-    private void loadBlockStateDefinitions(ResourceLocation p_352059_, StateDefinition<Block, BlockState> p_352064_) {
-        this.context.setDefinition(p_352064_);
-        List<Property<?>> list = List.copyOf(this.blockColors.getColoringProperties(p_352064_.getOwner()));
-        List<BlockState> list1 = p_352064_.getPossibleStates();
+    private void loadBlockStateDefinitions(ResourceLocation blockStateId, StateDefinition<Block, BlockState> stateDefenition) {
+        this.context.setDefinition(stateDefenition);
+        List<Property<?>> list = List.copyOf(this.blockColors.getColoringProperties(stateDefenition.getOwner()));
+        List<BlockState> list1 = stateDefenition.getPossibleStates();
         Map<ModelResourceLocation, BlockState> map = new HashMap<>();
-        list1.forEach(p_352345_ -> map.put(BlockModelShaper.stateToModelLocation(p_352059_, p_352345_), p_352345_));
+        list1.forEach(p_352345_ -> map.put(BlockModelShaper.stateToModelLocation(blockStateId, p_352345_), p_352345_));
         Map<BlockState, BlockStateModelLoader.LoadedModel> map1 = new HashMap<>();
-        ResourceLocation resourcelocation = BLOCKSTATE_LISTER.idToFile(p_352059_);
+        ResourceLocation resourcelocation = BLOCKSTATE_LISTER.idToFile(blockStateId);
 
         try {
             for (BlockStateModelLoader.LoadedJson blockstatemodelloader$loadedjson : this.blockStateResources.getOrDefault(resourcelocation, List.of())) {
-                BlockModelDefinition blockmodeldefinition = blockstatemodelloader$loadedjson.parse(p_352059_, this.context);
+                BlockModelDefinition blockmodeldefinition = blockstatemodelloader$loadedjson.parse(blockStateId, this.context);
                 Map<BlockState, BlockStateModelLoader.LoadedModel> map2 = new IdentityHashMap<>();
                 MultiPart multipart;
                 if (blockmodeldefinition.isMultiPart()) {
@@ -127,7 +127,7 @@ public class BlockStateModelLoader {
                         (p_352346_, p_352105_) -> {
                             try {
                                 list1.stream()
-                                    .filter(predicate(p_352064_, p_352346_))
+                                    .filter(predicate(stateDefenition, p_352346_))
                                     .forEach(
                                         p_352306_ -> {
                                             BlockStateModelLoader.LoadedModel blockstatemodelloader$loadedmodel = map2.put(
@@ -204,14 +204,14 @@ public class BlockStateModelLoader {
         }
     }
 
-    private static Predicate<BlockState> predicate(StateDefinition<Block, BlockState> p_352099_, String p_352078_) {
+    private static Predicate<BlockState> predicate(StateDefinition<Block, BlockState> stateDefentition, String properties) {
         Map<Property<?>, Comparable<?>> map = new HashMap<>();
 
-        for (String s : COMMA_SPLITTER.split(p_352078_)) {
+        for (String s : COMMA_SPLITTER.split(properties)) {
             Iterator<String> iterator = EQUAL_SPLITTER.split(s).iterator();
             if (iterator.hasNext()) {
                 String s1 = iterator.next();
-                Property<?> property = p_352099_.getProperty(s1);
+                Property<?> property = stateDefentition.getProperty(s1);
                 if (property != null && iterator.hasNext()) {
                     String s2 = iterator.next();
                     Comparable<?> comparable = getValueHelper(property, s2);
@@ -226,7 +226,7 @@ public class BlockStateModelLoader {
             }
         }
 
-        Block block = p_352099_.getOwner();
+        Block block = stateDefentition.getOwner();
         return p_352368_ -> {
             if (p_352368_ != null && p_352368_.is(block)) {
                 for (Entry<Property<?>, Comparable<?>> entry : map.entrySet()) {
@@ -243,13 +243,13 @@ public class BlockStateModelLoader {
     }
 
     @Nullable
-    static <T extends Comparable<T>> T getValueHelper(Property<T> p_352301_, String p_352273_) {
-        return p_352301_.getValue(p_352273_).orElse(null);
+    static <T extends Comparable<T>> T getValueHelper(Property<T> property, String propertyName) {
+        return property.getValue(propertyName).orElse(null);
     }
 
-    private void registerModelGroup(Iterable<BlockState> p_352382_) {
+    private void registerModelGroup(Iterable<BlockState> models) {
         int i = this.nextModelGroup++;
-        p_352382_.forEach(p_352170_ -> this.modelGroups.put(p_352170_, i));
+        models.forEach(p_352170_ -> this.modelGroups.put(p_352170_, i));
     }
 
     public Object2IntMap<BlockState> getModelGroups() {
@@ -258,20 +258,20 @@ public class BlockStateModelLoader {
 
     @OnlyIn(Dist.CLIENT)
     static class BlockStateDefinitionException extends RuntimeException {
-        public BlockStateDefinitionException(String p_352118_) {
-            super(p_352118_);
+        public BlockStateDefinitionException(String message) {
+            super(message);
         }
     }
 
     @OnlyIn(Dist.CLIENT)
     public static record LoadedJson(String source, JsonElement data) {
-        BlockModelDefinition parse(ResourceLocation p_352102_, BlockModelDefinition.Context p_352217_) {
+        BlockModelDefinition parse(ResourceLocation blockStateId, BlockModelDefinition.Context context) {
             try {
-                return BlockModelDefinition.fromJsonElement(p_352217_, this.data);
+                return BlockModelDefinition.fromJsonElement(context, this.data);
             } catch (Exception exception) {
                 throw new BlockStateModelLoader.BlockStateDefinitionException(
                     String.format(
-                        Locale.ROOT, "Exception loading blockstate definition: '%s' in resourcepack: '%s': %s", p_352102_, this.source, exception.getMessage()
+                        Locale.ROOT, "Exception loading blockstate definition: '%s' in resourcepack: '%s': %s", blockStateId, this.source, exception.getMessage()
                     )
                 );
             }
@@ -284,24 +284,24 @@ public class BlockStateModelLoader {
 
     @OnlyIn(Dist.CLIENT)
     static record ModelGroupKey(List<UnbakedModel> models, List<Object> coloringValues) {
-        public static BlockStateModelLoader.ModelGroupKey create(BlockState p_352381_, MultiPart p_352248_, Collection<Property<?>> p_352227_) {
-            StateDefinition<Block, BlockState> statedefinition = p_352381_.getBlock().getStateDefinition();
-            List<UnbakedModel> list = p_352248_.getSelectors()
+        public static BlockStateModelLoader.ModelGroupKey create(BlockState state, MultiPart model, Collection<Property<?>> properties) {
+            StateDefinition<Block, BlockState> statedefinition = state.getBlock().getStateDefinition();
+            List<UnbakedModel> list = model.getSelectors()
                 .stream()
-                .filter(p_352283_ -> p_352283_.getPredicate(statedefinition).test(p_352381_))
+                .filter(p_352283_ -> p_352283_.getPredicate(statedefinition).test(state))
                 .map(Selector::getVariant)
                 .collect(Collectors.toUnmodifiableList());
-            List<Object> list1 = getColoringValues(p_352381_, p_352227_);
+            List<Object> list1 = getColoringValues(state, properties);
             return new BlockStateModelLoader.ModelGroupKey(list, list1);
         }
 
-        public static BlockStateModelLoader.ModelGroupKey create(BlockState p_352440_, UnbakedModel p_352383_, Collection<Property<?>> p_352085_) {
-            List<Object> list = getColoringValues(p_352440_, p_352085_);
-            return new BlockStateModelLoader.ModelGroupKey(List.of(p_352383_), list);
+        public static BlockStateModelLoader.ModelGroupKey create(BlockState state, UnbakedModel model, Collection<Property<?>> properties) {
+            List<Object> list = getColoringValues(state, properties);
+            return new BlockStateModelLoader.ModelGroupKey(List.of(model), list);
         }
 
-        private static List<Object> getColoringValues(BlockState p_352214_, Collection<Property<?>> p_352157_) {
-            return p_352157_.stream().map(p_352214_::getValue).collect(Collectors.toUnmodifiableList());
+        private static List<Object> getColoringValues(BlockState state, Collection<Property<?>> properties) {
+            return properties.stream().map(state::getValue).collect(Collectors.toUnmodifiableList());
         }
     }
 }

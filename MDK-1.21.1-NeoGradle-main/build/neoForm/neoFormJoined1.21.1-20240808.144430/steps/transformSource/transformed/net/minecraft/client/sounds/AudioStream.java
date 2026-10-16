@@ -11,5 +11,13 @@ import net.neoforged.api.distmarker.OnlyIn;
 public interface AudioStream extends Closeable {
     AudioFormat getFormat();
 
-    ByteBuffer read(int p_120120_) throws IOException;
+    /**
+     * Reads audio data from the stream and returns a byte buffer containing at most the specified number of bytes.
+     * The method reads audio frames from the stream and adds them to the output buffer until the buffer contains at least the specified number of bytes or the end fo the stream is reached.
+     * @return a byte buffer containing at most the specified number of bytes to read
+     * @throws IOException if an I/O error occurs while reading the audio data
+     *
+     * @param size the maximum number of bytes to read
+     */
+    ByteBuffer read(int size) throws IOException;
 }

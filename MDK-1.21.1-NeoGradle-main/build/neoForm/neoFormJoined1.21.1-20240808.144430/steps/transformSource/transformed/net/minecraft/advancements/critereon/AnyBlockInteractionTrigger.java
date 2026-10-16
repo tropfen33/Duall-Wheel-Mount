@@ -20,17 +20,17 @@ public class AnyBlockInteractionTrigger extends SimpleCriterionTrigger<AnyBlockI
         return AnyBlockInteractionTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_319979_, BlockPos p_320093_, ItemStack p_320553_) {
-        ServerLevel serverlevel = p_319979_.serverLevel();
-        BlockState blockstate = serverlevel.getBlockState(p_320093_);
+    public void trigger(ServerPlayer player, BlockPos pos, ItemStack stack) {
+        ServerLevel serverlevel = player.serverLevel();
+        BlockState blockstate = serverlevel.getBlockState(pos);
         LootParams lootparams = new LootParams.Builder(serverlevel)
-            .withParameter(LootContextParams.ORIGIN, p_320093_.getCenter())
-            .withParameter(LootContextParams.THIS_ENTITY, p_319979_)
+            .withParameter(LootContextParams.ORIGIN, pos.getCenter())
+            .withParameter(LootContextParams.THIS_ENTITY, player)
             .withParameter(LootContextParams.BLOCK_STATE, blockstate)
-            .withParameter(LootContextParams.TOOL, p_320553_)
+            .withParameter(LootContextParams.TOOL, stack)
             .create(LootContextParamSets.ADVANCEMENT_LOCATION);
         LootContext lootcontext = new LootContext.Builder(lootparams).create(Optional.empty());
-        this.trigger(p_319979_, p_320901_ -> p_320901_.matches(lootcontext));
+        this.trigger(player, p_320901_ -> p_320901_.matches(lootcontext));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, Optional<ContextAwarePredicate> location)
@@ -43,14 +43,14 @@ public class AnyBlockInteractionTrigger extends SimpleCriterionTrigger<AnyBlockI
                     .apply(p_337340_, AnyBlockInteractionTrigger.TriggerInstance::new)
         );
 
-        public boolean matches(LootContext p_320453_) {
-            return this.location.isEmpty() || this.location.get().matches(p_320453_);
+        public boolean matches(LootContext context) {
+            return this.location.isEmpty() || this.location.get().matches(context);
         }
 
         @Override
-        public void validate(CriterionValidator p_319820_) {
-            SimpleCriterionTrigger.SimpleInstance.super.validate(p_319820_);
-            this.location.ifPresent(p_320455_ -> p_319820_.validate(p_320455_, LootContextParamSets.ADVANCEMENT_LOCATION, ".location"));
+        public void validate(CriterionValidator validator) {
+            SimpleCriterionTrigger.SimpleInstance.super.validate(validator);
+            this.location.ifPresent(p_320455_ -> validator.validate(p_320455_, LootContextParamSets.ADVANCEMENT_LOCATION, ".location"));
         }
     }
 }

@@ -3,9 +3,9 @@ package net.minecraft.world.item;
 public class TieredItem extends Item {
     private final Tier tier;
 
-    public TieredItem(Tier p_43308_, Item.Properties p_43309_) {
-        super(p_43309_.durability(p_43308_.getUses()));
-        this.tier = p_43308_;
+    public TieredItem(Tier tier, Item.Properties properties) {
+        super(properties.durability(tier.getUses()));
+        this.tier = tier;
     }
 
     public Tier getTier() {
@@ -17,8 +17,11 @@ public class TieredItem extends Item {
         return this.tier.getEnchantmentValue();
     }
 
+    /**
+     * Return whether this item is repairable in an anvil.
+     */
     @Override
-    public boolean isValidRepairItem(ItemStack p_43311_, ItemStack p_43312_) {
-        return this.tier.getRepairIngredient().test(p_43312_) || super.isValidRepairItem(p_43311_, p_43312_);
+    public boolean isValidRepairItem(ItemStack toRepair, ItemStack repair) {
+        return this.tier.getRepairIngredient().test(repair) || super.isValidRepairItem(toRepair, repair);
     }
 }

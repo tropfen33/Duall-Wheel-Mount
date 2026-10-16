@@ -13,23 +13,23 @@ public interface CommandResultCallback {
         }
     };
 
-    void onResult(boolean p_309554_, int p_309707_);
+    void onResult(boolean success, int result);
 
-    default void onSuccess(int p_309552_) {
-        this.onResult(true, p_309552_);
+    default void onSuccess(int result) {
+        this.onResult(true, result);
     }
 
     default void onFailure() {
         this.onResult(false, 0);
     }
 
-    static CommandResultCallback chain(CommandResultCallback p_309638_, CommandResultCallback p_309688_) {
-        if (p_309638_ == EMPTY) {
-            return p_309688_;
+    static CommandResultCallback chain(CommandResultCallback first, CommandResultCallback second) {
+        if (first == EMPTY) {
+            return second;
         } else {
-            return p_309688_ == EMPTY ? p_309638_ : (p_309648_, p_309546_) -> {
-                p_309638_.onResult(p_309648_, p_309546_);
-                p_309688_.onResult(p_309648_, p_309546_);
+            return second == EMPTY ? first : (p_309648_, p_309546_) -> {
+                first.onResult(p_309648_, p_309546_);
+                second.onResult(p_309648_, p_309546_);
             };
         }
     }

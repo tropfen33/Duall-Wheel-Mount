@@ -49,10 +49,10 @@ public class ServerConfigurationPacketListenerImpl extends ServerCommonPacketLis
     @Nullable
     private SynchronizeRegistriesTask synchronizeRegistriesTask;
 
-    public ServerConfigurationPacketListenerImpl(MinecraftServer p_294645_, Connection p_295787_, CommonListenerCookie p_302003_) {
-        super(p_294645_, p_295787_, p_302003_);
-        this.gameProfile = p_302003_.gameProfile();
-        this.clientInformation = p_302003_.clientInformation();
+    public ServerConfigurationPacketListenerImpl(MinecraftServer server, Connection connection, CommonListenerCookie cookie) {
+        super(server, connection, cookie);
+        this.gameProfile = cookie.gameProfile();
+        this.clientInformation = cookie.clientInformation();
     }
 
     @Override
@@ -61,9 +61,9 @@ public class ServerConfigurationPacketListenerImpl extends ServerCommonPacketLis
     }
 
     @Override
-    public void onDisconnect(DisconnectionDetails p_350569_) {
-        LOGGER.info("{} lost connection: {}", this.gameProfile, p_350569_.reason().getString());
-        super.onDisconnect(p_350569_);
+    public void onDisconnect(DisconnectionDetails details) {
+        LOGGER.info("{} lost connection: {}", this.gameProfile, details.reason().getString());
+        super.onDisconnect(details);
     }
 
     @Override
@@ -136,32 +136,32 @@ public class ServerConfigurationPacketListenerImpl extends ServerCommonPacketLis
     }
 
     @Override
-    public void handleClientInformation(ServerboundClientInformationPacket p_302032_) {
-        this.clientInformation = p_302032_.information();
+    public void handleClientInformation(ServerboundClientInformationPacket packet) {
+        this.clientInformation = packet.information();
     }
 
     @Override
-    public void handleResourcePackResponse(ServerboundResourcePackPacket p_294250_) {
-        super.handleResourcePackResponse(p_294250_);
-        if (p_294250_.action().isTerminal()) {
+    public void handleResourcePackResponse(ServerboundResourcePackPacket packet) {
+        super.handleResourcePackResponse(packet);
+        if (packet.action().isTerminal()) {
             this.finishCurrentTask(ServerResourcePackConfigurationTask.TYPE);
         }
     }
 
     @Override
-    public void handleSelectKnownPacks(ServerboundSelectKnownPacks p_326180_) {
-        PacketUtils.ensureRunningOnSameThread(p_326180_, this, this.server);
+    public void handleSelectKnownPacks(ServerboundSelectKnownPacks packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.server);
         if (this.synchronizeRegistriesTask == null) {
             throw new IllegalStateException("Unexpected response from client: received pack selection, but no negotiation ongoing");
         } else {
-            this.synchronizeRegistriesTask.handleResponse(p_326180_.knownPacks(), this::send);
+            this.synchronizeRegistriesTask.handleResponse(packet.knownPacks(), this::send);
             this.finishCurrentTask(SynchronizeRegistriesTask.TYPE);
         }
     }
 
     @Override
-    public void handleConfigurationFinished(ServerboundFinishConfigurationPacket p_294283_) {
-        PacketUtils.ensureRunningOnSameThread(p_294283_, this, this.server);
+    public void handleConfigurationFinished(ServerboundFinishConfigurationPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.server);
         this.finishCurrentTask(JoinWorldTask.TYPE);
         this.connection.setupOutboundProtocol(GameProtocols.CLIENTBOUND_TEMPLATE.bind(RegistryFriendlyByteBuf.decorator(this.server.registryAccess(), this.connectionType)));
         // Packets can only be sent after the outbound protocol is set up again
@@ -210,10 +210,10 @@ public class ServerConfigurationPacketListenerImpl extends ServerCommonPacketLis
         }
     }
 
-    public void finishCurrentTask(ConfigurationTask.Type p_294853_) {
+    public void finishCurrentTask(ConfigurationTask.Type taskType) {
         ConfigurationTask.Type configurationtask$type = this.currentTask != null ? this.currentTask.type() : null;
-        if (!p_294853_.equals(configurationtask$type)) {
-            throw new IllegalStateException("Unexpected request for task finish, current task: " + configurationtask$type + ", requested: " + p_294853_);
+        if (!taskType.equals(configurationtask$type)) {
+            throw new IllegalStateException("Unexpected request for task finish, current task: " + configurationtask$type + ", requested: " + taskType);
         } else {
             this.currentTask = null;
             this.startNextTask();

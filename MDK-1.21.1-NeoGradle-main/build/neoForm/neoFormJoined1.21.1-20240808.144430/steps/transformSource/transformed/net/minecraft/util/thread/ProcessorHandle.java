@@ -8,22 +8,22 @@ import java.util.function.Function;
 public interface ProcessorHandle<Msg> extends AutoCloseable {
     String name();
 
-    void tell(Msg p_18713_);
+    void tell(Msg task);
 
     @Override
     default void close() {
     }
 
-    default <Source> CompletableFuture<Source> ask(Function<? super ProcessorHandle<Source>, ? extends Msg> p_18721_) {
+    default <Source> CompletableFuture<Source> ask(Function<? super ProcessorHandle<Source>, ? extends Msg> task) {
         CompletableFuture<Source> completablefuture = new CompletableFuture<>();
-        Msg msg = (Msg)p_18721_.apply(of("ask future procesor handle", completablefuture::complete));
+        Msg msg = (Msg)task.apply(of("ask future procesor handle", completablefuture::complete));
         this.tell(msg);
         return completablefuture;
     }
 
-    default <Source> CompletableFuture<Source> askEither(Function<? super ProcessorHandle<Either<Source, Exception>>, ? extends Msg> p_18723_) {
+    default <Source> CompletableFuture<Source> askEither(Function<? super ProcessorHandle<Either<Source, Exception>>, ? extends Msg> task) {
         CompletableFuture<Source> completablefuture = new CompletableFuture<>();
-        Msg msg = (Msg)p_18723_.apply(of("ask future procesor handle", p_18719_ -> {
+        Msg msg = (Msg)task.apply(of("ask future procesor handle", p_18719_ -> {
             p_18719_.ifLeft(completablefuture::complete);
             p_18719_.ifRight(completablefuture::completeExceptionally);
         }));
@@ -31,21 +31,21 @@ public interface ProcessorHandle<Msg> extends AutoCloseable {
         return completablefuture;
     }
 
-    static <Msg> ProcessorHandle<Msg> of(final String p_18715_, final Consumer<Msg> p_18716_) {
+    static <Msg> ProcessorHandle<Msg> of(final String name, final Consumer<Msg> task) {
         return new ProcessorHandle<Msg>() {
             @Override
             public String name() {
-                return p_18715_;
+                return name;
             }
 
             @Override
             public void tell(Msg p_18731_) {
-                p_18716_.accept(p_18731_);
+                task.accept(p_18731_);
             }
 
             @Override
             public String toString() {
-                return p_18715_;
+                return name;
             }
         };
     }

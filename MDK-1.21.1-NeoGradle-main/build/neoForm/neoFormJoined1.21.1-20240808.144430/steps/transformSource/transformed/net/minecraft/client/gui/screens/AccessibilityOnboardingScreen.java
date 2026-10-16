@@ -36,10 +36,10 @@ public class AccessibilityOnboardingScreen extends Screen {
     private FocusableTextWidget textWidget;
     private final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this, this.initTitleYPos(), 33);
 
-    public AccessibilityOnboardingScreen(Options p_265483_, Runnable p_300004_) {
+    public AccessibilityOnboardingScreen(Options options, Runnable onClose) {
         super(TITLE);
-        this.options = p_265483_;
-        this.onClose = p_300004_;
+        this.options = options;
+        this.onClose = onClose;
         this.logoRenderer = new LogoRenderer(true);
         this.narratorAvailable = Minecraft.getInstance().getNarrator().isActive();
     }
@@ -95,29 +95,37 @@ public class AccessibilityOnboardingScreen extends Screen {
         this.close(true, this.onClose);
     }
 
-    private void closeAndSetScreen(Screen p_272914_) {
-        this.close(false, () -> this.minecraft.setScreen(p_272914_));
+    private void closeAndSetScreen(Screen screen) {
+        this.close(false, () -> this.minecraft.setScreen(screen));
     }
 
-    private void close(boolean p_352950_, Runnable p_299978_) {
-        if (p_352950_) {
+    private void close(boolean markAsFinished, Runnable onClose) {
+        if (markAsFinished) {
             this.options.onboardingAccessibilityFinished();
         }
 
         Narrator.getNarrator().clear();
-        p_299978_.run();
+        onClose.run();
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282353_, int p_265135_, int p_265032_, float p_265387_) {
-        super.render(p_282353_, p_265135_, p_265032_, p_265387_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.handleInitialNarrationDelay();
-        this.logoRenderer.renderLogo(p_282353_, this.width, 1.0F);
+        this.logoRenderer.renderLogo(guiGraphics, this.width, 1.0F);
     }
 
     @Override
-    protected void renderPanorama(GuiGraphics p_330740_, float p_331952_) {
-        PANORAMA.render(p_330740_, this.width, this.height, 1.0F, 0.0F);
+    protected void renderPanorama(GuiGraphics guiGraphics, float partialTick) {
+        PANORAMA.render(guiGraphics, this.width, this.height, 1.0F, 0.0F);
     }
 
     private void handleInitialNarrationDelay() {

@@ -15,15 +15,15 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface MultiBufferSource {
-    static MultiBufferSource.BufferSource immediate(ByteBufferBuilder p_350664_) {
-        return immediateWithBuffers(Object2ObjectSortedMaps.emptyMap(), p_350664_);
+    static MultiBufferSource.BufferSource immediate(ByteBufferBuilder sharedBuffer) {
+        return immediateWithBuffers(Object2ObjectSortedMaps.emptyMap(), sharedBuffer);
     }
 
-    static MultiBufferSource.BufferSource immediateWithBuffers(SequencedMap<RenderType, ByteBufferBuilder> p_352388_, ByteBufferBuilder p_350332_) {
-        return new MultiBufferSource.BufferSource(p_350332_, p_352388_);
+    static MultiBufferSource.BufferSource immediateWithBuffers(SequencedMap<RenderType, ByteBufferBuilder> fixedBuffers, ByteBufferBuilder sharedBuffer) {
+        return new MultiBufferSource.BufferSource(sharedBuffer, fixedBuffers);
     }
 
-    VertexConsumer getBuffer(RenderType p_109903_);
+    VertexConsumer getBuffer(RenderType renderType);
 
     @OnlyIn(Dist.CLIENT)
     public static class BufferSource implements MultiBufferSource {
@@ -33,35 +33,35 @@ public interface MultiBufferSource {
         @Nullable
         protected RenderType lastSharedType;
 
-        protected BufferSource(ByteBufferBuilder p_350964_, SequencedMap<RenderType, ByteBufferBuilder> p_352181_) {
-            this.sharedBuffer = p_350964_;
-            this.fixedBuffers = p_352181_;
+        protected BufferSource(ByteBufferBuilder sharedBuffer, SequencedMap<RenderType, ByteBufferBuilder> fixedBuffers) {
+            this.sharedBuffer = sharedBuffer;
+            this.fixedBuffers = fixedBuffers;
         }
 
         @Override
-        public VertexConsumer getBuffer(RenderType p_109919_) {
-            BufferBuilder bufferbuilder = this.startedBuilders.get(p_109919_);
-            if (bufferbuilder != null && !p_109919_.canConsolidateConsecutiveGeometry()) {
-                this.endBatch(p_109919_, bufferbuilder);
+        public VertexConsumer getBuffer(RenderType renderType) {
+            BufferBuilder bufferbuilder = this.startedBuilders.get(renderType);
+            if (bufferbuilder != null && !renderType.canConsolidateConsecutiveGeometry()) {
+                this.endBatch(renderType, bufferbuilder);
                 bufferbuilder = null;
             }
 
             if (bufferbuilder != null) {
                 return bufferbuilder;
             } else {
-                ByteBufferBuilder bytebufferbuilder = this.fixedBuffers.get(p_109919_);
+                ByteBufferBuilder bytebufferbuilder = this.fixedBuffers.get(renderType);
                 if (bytebufferbuilder != null) {
-                    bufferbuilder = new BufferBuilder(bytebufferbuilder, p_109919_.mode(), p_109919_.format());
+                    bufferbuilder = new BufferBuilder(bytebufferbuilder, renderType.mode(), renderType.format());
                 } else {
                     if (this.lastSharedType != null) {
                         this.endBatch(this.lastSharedType);
                     }
 
-                    bufferbuilder = new BufferBuilder(this.sharedBuffer, p_109919_.mode(), p_109919_.format());
-                    this.lastSharedType = p_109919_;
+                    bufferbuilder = new BufferBuilder(this.sharedBuffer, renderType.mode(), renderType.format());
+                    this.lastSharedType = renderType;
                 }
 
-                this.startedBuilders.put(p_109919_, bufferbuilder);
+                this.startedBuilders.put(renderType, bufferbuilder);
                 return bufferbuilder;
             }
         }
@@ -81,25 +81,25 @@ public interface MultiBufferSource {
             }
         }
 
-        public void endBatch(RenderType p_109913_) {
-            BufferBuilder bufferbuilder = this.startedBuilders.remove(p_109913_);
+        public void endBatch(RenderType renderType) {
+            BufferBuilder bufferbuilder = this.startedBuilders.remove(renderType);
             if (bufferbuilder != null) {
-                this.endBatch(p_109913_, bufferbuilder);
+                this.endBatch(renderType, bufferbuilder);
             }
         }
 
-        private void endBatch(RenderType p_350903_, BufferBuilder p_350797_) {
-            MeshData meshdata = p_350797_.build();
+        private void endBatch(RenderType renderType, BufferBuilder builder) {
+            MeshData meshdata = builder.build();
             if (meshdata != null) {
-                if (p_350903_.sortOnUpload()) {
-                    ByteBufferBuilder bytebufferbuilder = this.fixedBuffers.getOrDefault(p_350903_, this.sharedBuffer);
+                if (renderType.sortOnUpload()) {
+                    ByteBufferBuilder bytebufferbuilder = this.fixedBuffers.getOrDefault(renderType, this.sharedBuffer);
                     meshdata.sortQuads(bytebufferbuilder, RenderSystem.getVertexSorting());
                 }
 
-                p_350903_.draw(meshdata);
+                renderType.draw(meshdata);
             }
 
-            if (p_350903_.equals(this.lastSharedType)) {
+            if (renderType.equals(this.lastSharedType)) {
                 this.lastSharedType = null;
             }
         }

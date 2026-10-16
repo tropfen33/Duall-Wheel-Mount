@@ -12,8 +12,8 @@ import net.minecraft.server.players.BanListEntry;
 import net.minecraft.server.players.PlayerList;
 
 public class BanListCommands {
-    public static void register(CommandDispatcher<CommandSourceStack> p_136544_) {
-        p_136544_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("banlist")
                 .requires(p_136548_ -> p_136548_.hasPermission(3))
                 .executes(
@@ -35,20 +35,20 @@ public class BanListCommands {
         );
     }
 
-    private static int showList(CommandSourceStack p_136550_, Collection<? extends BanListEntry<?>> p_136551_) {
-        if (p_136551_.isEmpty()) {
-            p_136550_.sendSuccess(() -> Component.translatable("commands.banlist.none"), false);
+    private static int showList(CommandSourceStack source, Collection<? extends BanListEntry<?>> bannedPlayerList) {
+        if (bannedPlayerList.isEmpty()) {
+            source.sendSuccess(() -> Component.translatable("commands.banlist.none"), false);
         } else {
-            p_136550_.sendSuccess(() -> Component.translatable("commands.banlist.list", p_136551_.size()), false);
+            source.sendSuccess(() -> Component.translatable("commands.banlist.list", bannedPlayerList.size()), false);
 
-            for (BanListEntry<?> banlistentry : p_136551_) {
-                p_136550_.sendSuccess(
+            for (BanListEntry<?> banlistentry : bannedPlayerList) {
+                source.sendSuccess(
                     () -> Component.translatable("commands.banlist.entry", banlistentry.getDisplayName(), banlistentry.getSource(), banlistentry.getReason()),
                     false
                 );
             }
         }
 
-        return p_136551_.size();
+        return bannedPlayerList.size();
     }
 }

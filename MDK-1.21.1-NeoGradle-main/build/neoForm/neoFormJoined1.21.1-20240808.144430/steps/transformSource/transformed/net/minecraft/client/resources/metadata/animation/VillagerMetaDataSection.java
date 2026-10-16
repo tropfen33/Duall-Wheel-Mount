@@ -12,8 +12,8 @@ public class VillagerMetaDataSection {
     public static final String SECTION_NAME = "villager";
     private final VillagerMetaDataSection.Hat hat;
 
-    public VillagerMetaDataSection(VillagerMetaDataSection.Hat p_119069_) {
-        this.hat = p_119069_;
+    public VillagerMetaDataSection(VillagerMetaDataSection.Hat hat) {
+        this.hat = hat;
     }
 
     public VillagerMetaDataSection.Hat getHat() {
@@ -30,16 +30,16 @@ public class VillagerMetaDataSection {
             .collect(Collectors.toMap(VillagerMetaDataSection.Hat::getName, p_119084_ -> (VillagerMetaDataSection.Hat)p_119084_));
         private final String name;
 
-        private Hat(String p_119081_) {
-            this.name = p_119081_;
+        private Hat(String name) {
+            this.name = name;
         }
 
         public String getName() {
             return this.name;
         }
 
-        public static VillagerMetaDataSection.Hat getByName(String p_119086_) {
-            return BY_NAME.getOrDefault(p_119086_, NONE);
+        public static VillagerMetaDataSection.Hat getByName(String name) {
+            return BY_NAME.getOrDefault(name, NONE);
         }
     }
 }

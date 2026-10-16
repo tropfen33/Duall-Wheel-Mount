@@ -18,8 +18,8 @@ public final class Monitor {
     private int x;
     private int y;
 
-    public Monitor(long p_84942_) {
-        this.monitor = p_84942_;
+    public Monitor(long monitor) {
+        this.monitor = monitor;
         this.videoModes = Lists.newArrayList();
         this.refreshVideoModes();
     }
@@ -45,9 +45,9 @@ public final class Monitor {
         this.currentMode = new VideoMode(glfwvidmode);
     }
 
-    public VideoMode getPreferredVidMode(Optional<VideoMode> p_84949_) {
-        if (p_84949_.isPresent()) {
-            VideoMode videomode = p_84949_.get();
+    public VideoMode getPreferredVidMode(Optional<VideoMode> videoMode) {
+        if (videoMode.isPresent()) {
+            VideoMode videomode = videoMode.get();
 
             for (VideoMode videomode1 : this.videoModes) {
                 if (videomode1.equals(videomode)) {
@@ -59,8 +59,8 @@ public final class Monitor {
         return this.getCurrentMode();
     }
 
-    public int getVideoModeIndex(VideoMode p_84947_) {
-        return this.videoModes.indexOf(p_84947_);
+    public int getVideoModeIndex(VideoMode videoMode) {
+        return this.videoModes.indexOf(videoMode);
     }
 
     public VideoMode getCurrentMode() {
@@ -75,8 +75,8 @@ public final class Monitor {
         return this.y;
     }
 
-    public VideoMode getMode(int p_84945_) {
-        return this.videoModes.get(p_84945_);
+    public VideoMode getMode(int index) {
+        return this.videoModes.get(index);
     }
 
     public int getModeCount() {

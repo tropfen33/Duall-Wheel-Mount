@@ -68,19 +68,19 @@ public class ServerEntity {
     @Nullable
     private List<SynchedEntityData.DataValue<?>> trackedDataValues;
 
-    public ServerEntity(ServerLevel p_8528_, Entity p_8529_, int p_8530_, boolean p_8531_, Consumer<Packet<?>> p_8532_) {
-        this.level = p_8528_;
-        this.broadcast = p_8532_;
-        this.entity = p_8529_;
-        this.updateInterval = p_8530_;
-        this.trackDelta = p_8531_;
-        this.positionCodec.setBase(p_8529_.trackingPosition());
-        this.lastSentMovement = p_8529_.getDeltaMovement();
-        this.lastSentYRot = Mth.floor(p_8529_.getYRot() * 256.0F / 360.0F);
-        this.lastSentXRot = Mth.floor(p_8529_.getXRot() * 256.0F / 360.0F);
-        this.lastSentYHeadRot = Mth.floor(p_8529_.getYHeadRot() * 256.0F / 360.0F);
-        this.wasOnGround = p_8529_.onGround();
-        this.trackedDataValues = p_8529_.getEntityData().getNonDefaultValues();
+    public ServerEntity(ServerLevel level, Entity entity, int updateInterval, boolean trackDelta, Consumer<Packet<?>> broadcast) {
+        this.level = level;
+        this.broadcast = broadcast;
+        this.entity = entity;
+        this.updateInterval = updateInterval;
+        this.trackDelta = trackDelta;
+        this.positionCodec.setBase(entity.trackingPosition());
+        this.lastSentMovement = entity.getDeltaMovement();
+        this.lastSentYRot = Mth.floor(entity.getYRot() * 256.0F / 360.0F);
+        this.lastSentXRot = Mth.floor(entity.getXRot() * 256.0F / 360.0F);
+        this.lastSentYHeadRot = Mth.floor(entity.getYHeadRot() * 256.0F / 360.0F);
+        this.wasOnGround = entity.onGround();
+        this.trackedDataValues = entity.getEntityData().getNonDefaultValues();
     }
 
     public void sendChanges() {
@@ -226,22 +226,22 @@ public class ServerEntity {
         }
     }
 
-    private static Stream<Entity> removedPassengers(List<Entity> p_277592_, List<Entity> p_277658_) {
-        return p_277658_.stream().filter(p_275361_ -> !p_277592_.contains(p_275361_));
+    private static Stream<Entity> removedPassengers(List<Entity> initialPassengers, List<Entity> currentPassengers) {
+        return currentPassengers.stream().filter(p_275361_ -> !initialPassengers.contains(p_275361_));
     }
 
-    public void removePairing(ServerPlayer p_8535_) {
-        this.entity.stopSeenByPlayer(p_8535_);
-        p_8535_.connection.send(new ClientboundRemoveEntitiesPacket(this.entity.getId()));
-        net.neoforged.neoforge.event.EventHooks.onStopEntityTracking(this.entity, p_8535_);
+    public void removePairing(ServerPlayer player) {
+        this.entity.stopSeenByPlayer(player);
+        player.connection.send(new ClientboundRemoveEntitiesPacket(this.entity.getId()));
+        net.neoforged.neoforge.event.EventHooks.onStopEntityTracking(this.entity, player);
     }
 
-    public void addPairing(ServerPlayer p_8542_) {
+    public void addPairing(ServerPlayer player) {
         List<Packet<? super ClientGamePacketListener>> list = new ArrayList<>();
-        this.sendPairingData(p_8542_, new net.neoforged.neoforge.network.bundle.PacketAndPayloadAcceptor<>(list::add));
-        p_8542_.connection.send(new ClientboundBundlePacket(list));
-        this.entity.startSeenByPlayer(p_8542_);
-        net.neoforged.neoforge.event.EventHooks.onStartEntityTracking(this.entity, p_8542_);
+        this.sendPairingData(player, new net.neoforged.neoforge.network.bundle.PacketAndPayloadAcceptor<>(list::add));
+        player.connection.send(new ClientboundBundlePacket(list));
+        this.entity.startSeenByPlayer(player);
+        net.neoforged.neoforge.event.EventHooks.onStartEntityTracking(this.entity, player);
     }
 
     public void sendPairingData(ServerPlayer p_289562_, net.neoforged.neoforge.network.bundle.PacketAndPayloadAcceptor<net.minecraft.network.protocol.game.ClientGamePacketListener> p_289563_) {
@@ -340,10 +340,10 @@ public class ServerEntity {
         }
     }
 
-    private void broadcastAndSend(Packet<?> p_8539_) {
-        this.broadcast.accept(p_8539_);
+    private void broadcastAndSend(Packet<?> packet) {
+        this.broadcast.accept(packet);
         if (this.entity instanceof ServerPlayer) {
-            ((ServerPlayer)this.entity).connection.send(p_8539_);
+            ((ServerPlayer)this.entity).connection.send(packet);
         }
     }
 }

@@ -39,12 +39,12 @@ public interface DataComponentMap extends Iterable<TypedDataComponent<?>> {
     };
     Codec<DataComponentMap> CODEC = makeCodecFromMap(DataComponentType.VALUE_MAP_CODEC);
 
-    static Codec<DataComponentMap> makeCodec(Codec<DataComponentType<?>> p_345883_) {
-        return makeCodecFromMap(Codec.dispatchedMap(p_345883_, DataComponentType::codecOrThrow));
+    static Codec<DataComponentMap> makeCodec(Codec<DataComponentType<?>> codec) {
+        return makeCodecFromMap(Codec.dispatchedMap(codec, DataComponentType::codecOrThrow));
     }
 
-    static Codec<DataComponentMap> makeCodecFromMap(Codec<Map<DataComponentType<?>, Object>> p_346302_) {
-        return p_346302_.flatComapMap(DataComponentMap.Builder::buildFromMapTrusted, p_337448_ -> {
+    static Codec<DataComponentMap> makeCodecFromMap(Codec<Map<DataComponentType<?>, Object>> codec) {
+        return codec.flatComapMap(DataComponentMap.Builder::buildFromMapTrusted, p_337448_ -> {
             int i = p_337448_.size();
             if (i == 0) {
                 return DataResult.success(Reference2ObjectMaps.emptyMap());
@@ -62,18 +62,18 @@ public interface DataComponentMap extends Iterable<TypedDataComponent<?>> {
         });
     }
 
-    static DataComponentMap composite(final DataComponentMap p_340974_, final DataComponentMap p_341350_) {
+    static DataComponentMap composite(final DataComponentMap map1, final DataComponentMap map2) {
         return new DataComponentMap() {
             @Nullable
             @Override
             public <T> T get(DataComponentType<? extends T> p_330291_) {
-                T t = p_341350_.get(p_330291_);
-                return t != null ? t : p_340974_.get(p_330291_);
+                T t = map2.get(p_330291_);
+                return t != null ? t : map1.get(p_330291_);
             }
 
             @Override
             public Set<DataComponentType<?>> keySet() {
-                return Sets.union(p_340974_.keySet(), p_341350_.keySet());
+                return Sets.union(map1.keySet(), map2.keySet());
             }
         };
     }
@@ -83,23 +83,23 @@ public interface DataComponentMap extends Iterable<TypedDataComponent<?>> {
     }
 
     @Nullable
-    <T> T get(DataComponentType<? extends T> p_331815_);
+    <T> T get(DataComponentType<? extends T> component);
 
     Set<DataComponentType<?>> keySet();
 
-    default boolean has(DataComponentType<?> p_330409_) {
-        return this.get(p_330409_) != null;
+    default boolean has(DataComponentType<?> component) {
+        return this.get(component) != null;
     }
 
-    default <T> T getOrDefault(DataComponentType<? extends T> p_331896_, T p_331597_) {
-        T t = this.get(p_331896_);
-        return t != null ? t : p_331597_;
+    default <T> T getOrDefault(DataComponentType<? extends T> component, T defaultValue) {
+        T t = this.get(component);
+        return t != null ? t : defaultValue;
     }
 
     @Nullable
-    default <T> TypedDataComponent<T> getTyped(DataComponentType<T> p_330594_) {
-        T t = this.get(p_330594_);
-        return t != null ? new TypedDataComponent<>(p_330594_, t) : null;
+    default <T> TypedDataComponent<T> getTyped(DataComponentType<T> component) {
+        T t = this.get(component);
+        return t != null ? new TypedDataComponent<>(component, t) : null;
     }
 
     @Override
@@ -119,17 +119,17 @@ public interface DataComponentMap extends Iterable<TypedDataComponent<?>> {
         return this.size() == 0;
     }
 
-    default DataComponentMap filter(final Predicate<DataComponentType<?>> p_331448_) {
+    default DataComponentMap filter(final Predicate<DataComponentType<?>> predicate) {
         return new DataComponentMap() {
             @Nullable
             @Override
             public <T> T get(DataComponentType<? extends T> p_341052_) {
-                return p_331448_.test(p_341052_) ? DataComponentMap.this.get(p_341052_) : null;
+                return predicate.test(p_341052_) ? DataComponentMap.this.get(p_341052_) : null;
             }
 
             @Override
             public Set<DataComponentType<?>> keySet() {
-                return Sets.filter(DataComponentMap.this.keySet(), p_331448_::test);
+                return Sets.filter(DataComponentMap.this.keySet(), predicate::test);
             }
         };
     }
@@ -140,21 +140,21 @@ public interface DataComponentMap extends Iterable<TypedDataComponent<?>> {
         Builder() {
         }
 
-        public <T> DataComponentMap.Builder set(DataComponentType<T> p_330228_, @Nullable T p_332186_) {
-            this.setUnchecked(p_330228_, p_332186_);
+        public <T> DataComponentMap.Builder set(DataComponentType<T> component, @Nullable T value) {
+            this.setUnchecked(component, value);
             return this;
         }
 
-        <T> void setUnchecked(DataComponentType<T> p_338736_, @Nullable Object p_338594_) {
-            if (p_338594_ != null) {
-                this.map.put(p_338736_, p_338594_);
+        <T> void setUnchecked(DataComponentType<T> component, @Nullable Object value) {
+            if (value != null) {
+                this.map.put(component, value);
             } else {
-                this.map.remove(p_338736_);
+                this.map.remove(component);
             }
         }
 
-        public DataComponentMap.Builder addAll(DataComponentMap p_331194_) {
-            for (TypedDataComponent<?> typeddatacomponent : p_331194_) {
+        public DataComponentMap.Builder addAll(DataComponentMap components) {
+            for (TypedDataComponent<?> typeddatacomponent : components) {
                 this.map.put(typeddatacomponent.type(), typeddatacomponent.value());
             }
 
@@ -165,13 +165,13 @@ public interface DataComponentMap extends Iterable<TypedDataComponent<?>> {
             return buildFromMapTrusted(this.map);
         }
 
-        private static DataComponentMap buildFromMapTrusted(Map<DataComponentType<?>, Object> p_338248_) {
-            if (p_338248_.isEmpty()) {
+        private static DataComponentMap buildFromMapTrusted(Map<DataComponentType<?>, Object> map) {
+            if (map.isEmpty()) {
                 return DataComponentMap.EMPTY;
             } else {
-                return p_338248_.size() < 8
-                    ? new DataComponentMap.Builder.SimpleMap(new Reference2ObjectArrayMap<>(p_338248_))
-                    : new DataComponentMap.Builder.SimpleMap(new Reference2ObjectOpenHashMap<>(p_338248_));
+                return map.size() < 8
+                    ? new DataComponentMap.Builder.SimpleMap(new Reference2ObjectArrayMap<>(map))
+                    : new DataComponentMap.Builder.SimpleMap(new Reference2ObjectOpenHashMap<>(map));
             }
         }
 

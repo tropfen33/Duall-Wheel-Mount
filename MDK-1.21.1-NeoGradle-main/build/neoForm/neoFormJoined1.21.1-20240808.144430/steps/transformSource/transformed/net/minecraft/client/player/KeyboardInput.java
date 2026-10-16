@@ -8,20 +8,20 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class KeyboardInput extends Input {
     private final Options options;
 
-    public KeyboardInput(Options p_108580_) {
-        this.options = p_108580_;
+    public KeyboardInput(Options options) {
+        this.options = options;
     }
 
-    private static float calculateImpulse(boolean p_205578_, boolean p_205579_) {
-        if (p_205578_ == p_205579_) {
+    private static float calculateImpulse(boolean input, boolean otherInput) {
+        if (input == otherInput) {
             return 0.0F;
         } else {
-            return p_205578_ ? 1.0F : -1.0F;
+            return input ? 1.0F : -1.0F;
         }
     }
 
     @Override
-    public void tick(boolean p_234118_, float p_234119_) {
+    public void tick(boolean isSneaking, float sneakingSpeedMultiplier) {
         this.up = this.options.keyUp.isDown();
         this.down = this.options.keyDown.isDown();
         this.left = this.options.keyLeft.isDown();
@@ -30,9 +30,9 @@ public class KeyboardInput extends Input {
         this.leftImpulse = calculateImpulse(this.left, this.right);
         this.jumping = this.options.keyJump.isDown();
         this.shiftKeyDown = this.options.keyShift.isDown();
-        if (p_234118_) {
-            this.leftImpulse *= p_234119_;
-            this.forwardImpulse *= p_234119_;
+        if (isSneaking) {
+            this.leftImpulse *= sneakingSpeedMultiplier;
+            this.forwardImpulse *= sneakingSpeedMultiplier;
         }
     }
 }

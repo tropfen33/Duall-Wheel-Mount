@@ -14,17 +14,17 @@ public class StateSwitchingButton extends AbstractWidget {
     protected WidgetSprites sprites;
     protected boolean isStateTriggered;
 
-    public StateSwitchingButton(int p_94615_, int p_94616_, int p_94617_, int p_94618_, boolean p_94619_) {
-        super(p_94615_, p_94616_, p_94617_, p_94618_, CommonComponents.EMPTY);
-        this.isStateTriggered = p_94619_;
+    public StateSwitchingButton(int x, int y, int width, int height, boolean initialState) {
+        super(x, y, width, height, CommonComponents.EMPTY);
+        this.isStateTriggered = initialState;
     }
 
-    public void initTextureValues(WidgetSprites p_295298_) {
-        this.sprites = p_295298_;
+    public void initTextureValues(WidgetSprites sprites) {
+        this.sprites = sprites;
     }
 
-    public void setStateTriggered(boolean p_94636_) {
-        this.isStateTriggered = p_94636_;
+    public void setStateTriggered(boolean triggered) {
+        this.isStateTriggered = triggered;
     }
 
     public boolean isStateTriggered() {
@@ -32,15 +32,15 @@ public class StateSwitchingButton extends AbstractWidget {
     }
 
     @Override
-    public void updateWidgetNarration(NarrationElementOutput p_259073_) {
-        this.defaultButtonNarrationText(p_259073_);
+    public void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+        this.defaultButtonNarrationText(narrationElementOutput);
     }
 
     @Override
-    public void renderWidget(GuiGraphics p_283051_, int p_283010_, int p_281379_, float p_283453_) {
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.sprites != null) {
             RenderSystem.disableDepthTest();
-            p_283051_.blitSprite(this.sprites.get(this.isStateTriggered, this.isHoveredOrFocused()), this.getX(), this.getY(), this.width, this.height);
+            guiGraphics.blitSprite(this.sprites.get(this.isStateTriggered, this.isHoveredOrFocused()), this.getX(), this.getY(), this.width, this.height);
             RenderSystem.enableDepthTest();
         }
     }

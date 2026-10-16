@@ -38,20 +38,20 @@ public class FontSet implements AutoCloseable {
     private final Int2ObjectMap<IntList> glyphsByWidth = new Int2ObjectOpenHashMap<>();
     private final List<FontTexture> textures = Lists.newArrayList();
 
-    public FontSet(TextureManager p_95062_, ResourceLocation p_95063_) {
-        this.textureManager = p_95062_;
-        this.name = p_95063_;
+    public FontSet(TextureManager textureManager, ResourceLocation name) {
+        this.textureManager = textureManager;
+        this.name = name;
     }
 
-    public void reload(List<GlyphProvider.Conditional> p_326339_, Set<FontOption> p_326154_) {
-        this.allProviders = p_326339_;
-        this.reload(p_326154_);
+    public void reload(List<GlyphProvider.Conditional> allProviders, Set<FontOption> options) {
+        this.allProviders = allProviders;
+        this.reload(options);
     }
 
-    public void reload(Set<FontOption> p_326252_) {
+    public void reload(Set<FontOption> options) {
         this.activeProviders = List.of();
         this.resetTextures();
-        this.activeProviders = this.selectProviders(this.allProviders, p_326252_);
+        this.activeProviders = this.selectProviders(this.allProviders, options);
     }
 
     private void resetTextures() {
@@ -63,12 +63,12 @@ public class FontSet implements AutoCloseable {
         this.whiteGlyph = SpecialGlyphs.WHITE.bake(this::stitch);
     }
 
-    private List<GlyphProvider> selectProviders(List<GlyphProvider.Conditional> p_326151_, Set<FontOption> p_326291_) {
+    private List<GlyphProvider> selectProviders(List<GlyphProvider.Conditional> providers, Set<FontOption> options) {
         IntSet intset = new IntOpenHashSet();
         List<GlyphProvider> list = new ArrayList<>();
 
-        for (GlyphProvider.Conditional glyphprovider$conditional : p_326151_) {
-            if (glyphprovider$conditional.filter().apply(p_326291_)) {
+        for (GlyphProvider.Conditional glyphprovider$conditional : providers) {
+            if (glyphprovider$conditional.filter().apply(options)) {
                 list.add(glyphprovider$conditional.provider());
                 intset.addAll(glyphprovider$conditional.provider().getSupportedGlyphs());
             }
@@ -103,21 +103,21 @@ public class FontSet implements AutoCloseable {
         this.textures.clear();
     }
 
-    private static boolean hasFishyAdvance(GlyphInfo p_243323_) {
-        float f = p_243323_.getAdvance(false);
+    private static boolean hasFishyAdvance(GlyphInfo glyph) {
+        float f = glyph.getAdvance(false);
         if (!(f < 0.0F) && !(f > 32.0F)) {
-            float f1 = p_243323_.getAdvance(true);
+            float f1 = glyph.getAdvance(true);
             return f1 < 0.0F || f1 > 32.0F;
         } else {
             return true;
         }
     }
 
-    private FontSet.GlyphInfoFilter computeGlyphInfo(int p_243321_) {
+    private FontSet.GlyphInfoFilter computeGlyphInfo(int character) {
         GlyphInfo glyphinfo = null;
 
         for (GlyphProvider glyphprovider : this.activeProviders) {
-            GlyphInfo glyphinfo1 = glyphprovider.getGlyph(p_243321_);
+            GlyphInfo glyphinfo1 = glyphprovider.getGlyph(character);
             if (glyphinfo1 != null) {
                 if (glyphinfo == null) {
                     glyphinfo = glyphinfo1;
@@ -132,13 +132,13 @@ public class FontSet implements AutoCloseable {
         return glyphinfo != null ? new FontSet.GlyphInfoFilter(glyphinfo, SpecialGlyphs.MISSING) : FontSet.GlyphInfoFilter.MISSING;
     }
 
-    public GlyphInfo getGlyphInfo(int p_243235_, boolean p_243251_) {
-        return this.glyphInfos.computeIfAbsent(p_243235_, this::computeGlyphInfo).select(p_243251_);
+    public GlyphInfo getGlyphInfo(int character, boolean filterFishyGlyphs) {
+        return this.glyphInfos.computeIfAbsent(character, this::computeGlyphInfo).select(filterFishyGlyphs);
     }
 
-    private BakedGlyph computeBakedGlyph(int p_232565_) {
+    private BakedGlyph computeBakedGlyph(int character) {
         for (GlyphProvider glyphprovider : this.activeProviders) {
-            GlyphInfo glyphinfo = glyphprovider.getGlyph(p_232565_);
+            GlyphInfo glyphinfo = glyphprovider.getGlyph(character);
             if (glyphinfo != null) {
                 return glyphinfo.bake(this::stitch);
             }
@@ -147,32 +147,32 @@ public class FontSet implements AutoCloseable {
         return this.missingGlyph;
     }
 
-    public BakedGlyph getGlyph(int p_95079_) {
-        return this.glyphs.computeIfAbsent(p_95079_, this::computeBakedGlyph);
+    public BakedGlyph getGlyph(int character) {
+        return this.glyphs.computeIfAbsent(character, this::computeBakedGlyph);
     }
 
-    private BakedGlyph stitch(SheetGlyphInfo p_232557_) {
+    private BakedGlyph stitch(SheetGlyphInfo glyphInfo) {
         for (FontTexture fonttexture : this.textures) {
-            BakedGlyph bakedglyph = fonttexture.add(p_232557_);
+            BakedGlyph bakedglyph = fonttexture.add(glyphInfo);
             if (bakedglyph != null) {
                 return bakedglyph;
             }
         }
 
         ResourceLocation resourcelocation = this.name.withSuffix("/" + this.textures.size());
-        boolean flag = p_232557_.isColored();
+        boolean flag = glyphInfo.isColored();
         GlyphRenderTypes glyphrendertypes = flag
             ? GlyphRenderTypes.createForColorTexture(resourcelocation)
             : GlyphRenderTypes.createForIntensityTexture(resourcelocation);
         FontTexture fonttexture1 = new FontTexture(glyphrendertypes, flag);
         this.textures.add(fonttexture1);
         this.textureManager.register(resourcelocation, fonttexture1);
-        BakedGlyph bakedglyph1 = fonttexture1.add(p_232557_);
+        BakedGlyph bakedglyph1 = fonttexture1.add(glyphInfo);
         return bakedglyph1 == null ? this.missingGlyph : bakedglyph1;
     }
 
-    public BakedGlyph getRandomGlyph(GlyphInfo p_95068_) {
-        IntList intlist = this.glyphsByWidth.get(Mth.ceil(p_95068_.getAdvance(false)));
+    public BakedGlyph getRandomGlyph(GlyphInfo glyph) {
+        IntList intlist = this.glyphsByWidth.get(Mth.ceil(glyph.getAdvance(false)));
         return intlist != null && !intlist.isEmpty() ? this.getGlyph(intlist.getInt(RANDOM.nextInt(intlist.size()))) : this.missingGlyph;
     }
 
@@ -188,8 +188,8 @@ public class FontSet implements AutoCloseable {
     static record GlyphInfoFilter(GlyphInfo glyphInfo, GlyphInfo glyphInfoNotFishy) {
         static final FontSet.GlyphInfoFilter MISSING = new FontSet.GlyphInfoFilter(SpecialGlyphs.MISSING, SpecialGlyphs.MISSING);
 
-        GlyphInfo select(boolean p_243218_) {
-            return p_243218_ ? this.glyphInfoNotFishy : this.glyphInfo;
+        GlyphInfo select(boolean filterFishyGlyphs) {
+            return filterFishyGlyphs ? this.glyphInfoNotFishy : this.glyphInfo;
         }
     }
 }

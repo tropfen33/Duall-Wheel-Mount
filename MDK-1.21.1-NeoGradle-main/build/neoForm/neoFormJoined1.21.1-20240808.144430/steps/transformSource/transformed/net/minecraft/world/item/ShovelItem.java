@@ -20,6 +20,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 
 public class ShovelItem extends DiggerItem {
+    /**
+     * Map used to lookup shovel right click interactions
+     */
     protected static final Map<Block, BlockState> FLATTENABLES = Maps.newHashMap(
         new Builder()
             .put(Blocks.GRASS_BLOCK, Blocks.DIRT_PATH.defaultBlockState())
@@ -35,21 +38,24 @@ public class ShovelItem extends DiggerItem {
         super(p_43114_, BlockTags.MINEABLE_WITH_SHOVEL, p_43117_);
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_43119_) {
-        Level level = p_43119_.getLevel();
-        BlockPos blockpos = p_43119_.getClickedPos();
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
         BlockState blockstate = level.getBlockState(blockpos);
-        if (p_43119_.getClickedFace() == Direction.DOWN) {
+        if (context.getClickedFace() == Direction.DOWN) {
             return InteractionResult.PASS;
         } else {
-            Player player = p_43119_.getPlayer();
-            BlockState blockstate1 = blockstate.getToolModifiedState(p_43119_, net.neoforged.neoforge.common.ItemAbilities.SHOVEL_FLATTEN, false);
+            Player player = context.getPlayer();
+            BlockState blockstate1 = blockstate.getToolModifiedState(context, net.neoforged.neoforge.common.ItemAbilities.SHOVEL_FLATTEN, false);
             BlockState blockstate2 = null;
             if (blockstate1 != null && level.getBlockState(blockpos.above()).isAir()) {
                 level.playSound(player, blockpos, SoundEvents.SHOVEL_FLATTEN, SoundSource.BLOCKS, 1.0F, 1.0F);
                 blockstate2 = blockstate1;
-            } else if ((blockstate2 = blockstate.getToolModifiedState(p_43119_, net.neoforged.neoforge.common.ItemAbilities.SHOVEL_DOUSE, false)) != null) {
+            } else if ((blockstate2 = blockstate.getToolModifiedState(context, net.neoforged.neoforge.common.ItemAbilities.SHOVEL_DOUSE, false)) != null) {
                 if (!level.isClientSide()) {
                     level.levelEvent(null, 1009, blockpos, 0);
                 }
@@ -61,7 +67,7 @@ public class ShovelItem extends DiggerItem {
                     level.setBlock(blockpos, blockstate2, 11);
                     level.gameEvent(GameEvent.BLOCK_CHANGE, blockpos, GameEvent.Context.of(player, blockstate2));
                     if (player != null) {
-                        p_43119_.getItemInHand().hurtAndBreak(1, player, LivingEntity.getSlotForHand(p_43119_.getHand()));
+                        context.getItemInHand().hurtAndBreak(1, player, LivingEntity.getSlotForHand(context.getHand()));
                     }
                 }
 

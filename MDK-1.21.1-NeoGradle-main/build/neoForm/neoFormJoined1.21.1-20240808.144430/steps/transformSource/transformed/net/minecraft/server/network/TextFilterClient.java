@@ -54,43 +54,43 @@ public class TextFilterClient implements AutoCloseable {
     final ExecutorService workerPool;
 
     private TextFilterClient(
-        URL p_215275_,
-        TextFilterClient.MessageEncoder p_215276_,
-        URL p_215277_,
-        TextFilterClient.JoinOrLeaveEncoder p_215278_,
-        URL p_215279_,
-        TextFilterClient.JoinOrLeaveEncoder p_215280_,
-        String p_215281_,
-        TextFilterClient.IgnoreStrategy p_215282_,
-        int p_215283_
+        URL chatEndpoint,
+        TextFilterClient.MessageEncoder chatEncoder,
+        URL joinEndpoint,
+        TextFilterClient.JoinOrLeaveEncoder joinEncoder,
+        URL leaveEndpoint,
+        TextFilterClient.JoinOrLeaveEncoder leaveEncoder,
+        String authKey,
+        TextFilterClient.IgnoreStrategy chatIgnoreStrategy,
+        int workerThreadCount
     ) {
-        this.authKey = p_215281_;
-        this.chatIgnoreStrategy = p_215282_;
-        this.chatEndpoint = p_215275_;
-        this.chatEncoder = p_215276_;
-        this.joinEndpoint = p_215277_;
-        this.joinEncoder = p_215278_;
-        this.leaveEndpoint = p_215279_;
-        this.leaveEncoder = p_215280_;
-        this.workerPool = Executors.newFixedThreadPool(p_215283_, THREAD_FACTORY);
+        this.authKey = authKey;
+        this.chatIgnoreStrategy = chatIgnoreStrategy;
+        this.chatEndpoint = chatEndpoint;
+        this.chatEncoder = chatEncoder;
+        this.joinEndpoint = joinEndpoint;
+        this.joinEncoder = joinEncoder;
+        this.leaveEndpoint = leaveEndpoint;
+        this.leaveEncoder = leaveEncoder;
+        this.workerPool = Executors.newFixedThreadPool(workerThreadCount, THREAD_FACTORY);
     }
 
-    private static URL getEndpoint(URI p_212246_, @Nullable JsonObject p_212247_, String p_212248_, String p_212249_) throws MalformedURLException {
-        String s = getEndpointFromConfig(p_212247_, p_212248_, p_212249_);
-        return p_212246_.resolve("/" + s).toURL();
+    private static URL getEndpoint(URI uri, @Nullable JsonObject json, String memberName, String fallback) throws MalformedURLException {
+        String s = getEndpointFromConfig(json, memberName, fallback);
+        return uri.resolve("/" + s).toURL();
     }
 
-    private static String getEndpointFromConfig(@Nullable JsonObject p_215295_, String p_215296_, String p_215297_) {
-        return p_215295_ != null ? GsonHelper.getAsString(p_215295_, p_215296_, p_215297_) : p_215297_;
+    private static String getEndpointFromConfig(@Nullable JsonObject json, String memberName, String fallback) {
+        return json != null ? GsonHelper.getAsString(json, memberName, fallback) : fallback;
     }
 
     @Nullable
-    public static TextFilterClient createFromConfig(String p_143737_) {
-        if (Strings.isNullOrEmpty(p_143737_)) {
+    public static TextFilterClient createFromConfig(String config) {
+        if (Strings.isNullOrEmpty(config)) {
             return null;
         } else {
             try {
-                JsonObject jsonobject = GsonHelper.parse(p_143737_);
+                JsonObject jsonobject = GsonHelper.parse(config);
                 URI uri = new URI(GsonHelper.getAsString(jsonobject, "apiServer"));
                 String s = GsonHelper.getAsString(jsonobject, "apiKey");
                 if (s.isEmpty()) {
@@ -158,60 +158,60 @@ public class TextFilterClient implements AutoCloseable {
                     );
                 }
             } catch (Exception exception) {
-                LOGGER.warn("Failed to parse chat filter config {}", p_143737_, exception);
+                LOGGER.warn("Failed to parse chat filter config {}", config, exception);
                 return null;
             }
         }
     }
 
-    void processJoinOrLeave(GameProfile p_215303_, URL p_215304_, TextFilterClient.JoinOrLeaveEncoder p_215305_, Executor p_215306_) {
-        p_215306_.execute(() -> {
-            JsonObject jsonobject = p_215305_.encode(p_215303_);
+    void processJoinOrLeave(GameProfile profile, URL url, TextFilterClient.JoinOrLeaveEncoder encoder, Executor executor) {
+        executor.execute(() -> {
+            JsonObject jsonobject = encoder.encode(profile);
 
             try {
-                this.processRequest(jsonobject, p_215304_);
+                this.processRequest(jsonobject, url);
             } catch (Exception exception) {
-                LOGGER.warn("Failed to send join/leave packet to {} for player {}", p_215304_, p_215303_, exception);
+                LOGGER.warn("Failed to send join/leave packet to {} for player {}", url, profile, exception);
             }
         });
     }
 
-    CompletableFuture<FilteredText> requestMessageProcessing(GameProfile p_10137_, String p_10138_, TextFilterClient.IgnoreStrategy p_10139_, Executor p_10140_) {
-        return p_10138_.isEmpty() ? CompletableFuture.completedFuture(FilteredText.EMPTY) : CompletableFuture.supplyAsync(() -> {
-            JsonObject jsonobject = this.chatEncoder.encode(p_10137_, p_10138_);
+    CompletableFuture<FilteredText> requestMessageProcessing(GameProfile profile, String text, TextFilterClient.IgnoreStrategy ignoreStrategy, Executor executor) {
+        return text.isEmpty() ? CompletableFuture.completedFuture(FilteredText.EMPTY) : CompletableFuture.supplyAsync(() -> {
+            JsonObject jsonobject = this.chatEncoder.encode(profile, text);
 
             try {
                 JsonObject jsonobject1 = this.processRequestResponse(jsonobject, this.chatEndpoint);
                 boolean flag = GsonHelper.getAsBoolean(jsonobject1, "response", false);
                 if (flag) {
-                    return FilteredText.passThrough(p_10138_);
+                    return FilteredText.passThrough(text);
                 } else {
                     String s = GsonHelper.getAsString(jsonobject1, "hashed", null);
                     if (s == null) {
-                        return FilteredText.fullyFiltered(p_10138_);
+                        return FilteredText.fullyFiltered(text);
                     } else {
                         JsonArray jsonarray = GsonHelper.getAsJsonArray(jsonobject1, "hashes");
-                        FilterMask filtermask = this.parseMask(p_10138_, jsonarray, p_10139_);
-                        return new FilteredText(p_10138_, filtermask);
+                        FilterMask filtermask = this.parseMask(text, jsonarray, ignoreStrategy);
+                        return new FilteredText(text, filtermask);
                     }
                 }
             } catch (Exception exception) {
-                LOGGER.warn("Failed to validate message '{}'", p_10138_, exception);
-                return FilteredText.fullyFiltered(p_10138_);
+                LOGGER.warn("Failed to validate message '{}'", text, exception);
+                return FilteredText.fullyFiltered(text);
             }
-        }, p_10140_);
+        }, executor);
     }
 
-    private FilterMask parseMask(String p_243283_, JsonArray p_243222_, TextFilterClient.IgnoreStrategy p_243237_) {
-        if (p_243222_.isEmpty()) {
+    private FilterMask parseMask(String text, JsonArray hashes, TextFilterClient.IgnoreStrategy ignoreStrategy) {
+        if (hashes.isEmpty()) {
             return FilterMask.PASS_THROUGH;
-        } else if (p_243237_.shouldIgnore(p_243283_, p_243222_.size())) {
+        } else if (ignoreStrategy.shouldIgnore(text, hashes.size())) {
             return FilterMask.FULLY_FILTERED;
         } else {
-            FilterMask filtermask = new FilterMask(p_243283_.length());
+            FilterMask filtermask = new FilterMask(text.length());
 
-            for (int i = 0; i < p_243222_.size(); i++) {
-                filtermask.setFiltered(p_243222_.get(i).getAsInt());
+            for (int i = 0; i < hashes.size(); i++) {
+                filtermask.setFiltered(hashes.get(i).getAsInt());
             }
 
             return filtermask;
@@ -223,15 +223,15 @@ public class TextFilterClient implements AutoCloseable {
         this.workerPool.shutdownNow();
     }
 
-    private void drainStream(InputStream p_10146_) throws IOException {
+    private void drainStream(InputStream stream) throws IOException {
         byte[] abyte = new byte[1024];
 
-        while (p_10146_.read(abyte) != -1) {
+        while (stream.read(abyte) != -1) {
         }
     }
 
-    private JsonObject processRequestResponse(JsonObject p_10128_, URL p_10129_) throws IOException {
-        HttpURLConnection httpurlconnection = this.makeRequest(p_10128_, p_10129_);
+    private JsonObject processRequestResponse(JsonObject json, URL requestUrl) throws IOException {
+        HttpURLConnection httpurlconnection = this.makeRequest(json, requestUrl);
 
         JsonObject jsonobject;
         try (InputStream inputstream = httpurlconnection.getInputStream()) {
@@ -249,16 +249,16 @@ public class TextFilterClient implements AutoCloseable {
         return jsonobject;
     }
 
-    private void processRequest(JsonObject p_10152_, URL p_10153_) throws IOException {
-        HttpURLConnection httpurlconnection = this.makeRequest(p_10152_, p_10153_);
+    private void processRequest(JsonObject json, URL requestUrl) throws IOException {
+        HttpURLConnection httpurlconnection = this.makeRequest(json, requestUrl);
 
         try (InputStream inputstream = httpurlconnection.getInputStream()) {
             this.drainStream(inputstream);
         }
     }
 
-    private HttpURLConnection makeRequest(JsonObject p_10157_, URL p_10158_) throws IOException {
-        HttpURLConnection httpurlconnection = (HttpURLConnection)p_10158_.openConnection();
+    private HttpURLConnection makeRequest(JsonObject json, URL requestUrl) throws IOException {
+        HttpURLConnection httpurlconnection = (HttpURLConnection)requestUrl.openConnection();
         httpurlconnection.setConnectTimeout(15000);
         httpurlconnection.setReadTimeout(2000);
         httpurlconnection.setUseCaches(false);
@@ -272,7 +272,7 @@ public class TextFilterClient implements AutoCloseable {
         OutputStreamWriter outputstreamwriter = new OutputStreamWriter(httpurlconnection.getOutputStream(), StandardCharsets.UTF_8);
 
         try (JsonWriter jsonwriter = new JsonWriter(outputstreamwriter)) {
-            Streams.write(p_10157_, jsonwriter);
+            Streams.write(json, jsonwriter);
         } catch (Throwable throwable1) {
             try {
                 outputstreamwriter.close();
@@ -292,8 +292,8 @@ public class TextFilterClient implements AutoCloseable {
         }
     }
 
-    public TextFilter createContext(GameProfile p_10135_) {
-        return new TextFilterClient.PlayerContext(p_10135_);
+    public TextFilter createContext(GameProfile profile) {
+        return new TextFilterClient.PlayerContext(profile);
     }
 
     @FunctionalInterface
@@ -301,38 +301,38 @@ public class TextFilterClient implements AutoCloseable {
         TextFilterClient.IgnoreStrategy NEVER_IGNORE = (p_10169_, p_10170_) -> false;
         TextFilterClient.IgnoreStrategy IGNORE_FULLY_FILTERED = (p_10166_, p_10167_) -> p_10166_.length() == p_10167_;
 
-        static TextFilterClient.IgnoreStrategy ignoreOverThreshold(int p_143739_) {
-            return (p_143742_, p_143743_) -> p_143743_ >= p_143739_;
+        static TextFilterClient.IgnoreStrategy ignoreOverThreshold(int threshold) {
+            return (p_143742_, p_143743_) -> p_143743_ >= threshold;
         }
 
-        static TextFilterClient.IgnoreStrategy select(int p_143745_) {
-            return switch (p_143745_) {
+        static TextFilterClient.IgnoreStrategy select(int threshold) {
+            return switch (threshold) {
                 case -1 -> NEVER_IGNORE;
                 case 0 -> IGNORE_FULLY_FILTERED;
-                default -> ignoreOverThreshold(p_143745_);
+                default -> ignoreOverThreshold(threshold);
             };
         }
 
-        boolean shouldIgnore(String p_10172_, int p_10173_);
+        boolean shouldIgnore(String text, int threshold);
     }
 
     @FunctionalInterface
     interface JoinOrLeaveEncoder {
-        JsonObject encode(GameProfile p_215318_);
+        JsonObject encode(GameProfile profile);
     }
 
     @FunctionalInterface
     interface MessageEncoder {
-        JsonObject encode(GameProfile p_215320_, String p_215321_);
+        JsonObject encode(GameProfile profile, String text);
     }
 
     class PlayerContext implements TextFilter {
         private final GameProfile profile;
         private final Executor streamExecutor;
 
-        PlayerContext(GameProfile p_10179_) {
-            this.profile = p_10179_;
-            ProcessorMailbox<Runnable> processormailbox = ProcessorMailbox.create(TextFilterClient.this.workerPool, "chat stream for " + p_10179_.getName());
+        PlayerContext(GameProfile profile) {
+            this.profile = profile;
+            ProcessorMailbox<Runnable> processormailbox = ProcessorMailbox.create(TextFilterClient.this.workerPool, "chat stream for " + profile.getName());
             this.streamExecutor = processormailbox::tell;
         }
 
@@ -347,8 +347,8 @@ public class TextFilterClient implements AutoCloseable {
         }
 
         @Override
-        public CompletableFuture<List<FilteredText>> processMessageBundle(List<String> p_10190_) {
-            List<CompletableFuture<FilteredText>> list = p_10190_.stream()
+        public CompletableFuture<List<FilteredText>> processMessageBundle(List<String> texts) {
+            List<CompletableFuture<FilteredText>> list = texts.stream()
                 .map(
                     p_10195_ -> TextFilterClient.this.requestMessageProcessing(
                             this.profile, p_10195_, TextFilterClient.this.chatIgnoreStrategy, this.streamExecutor
@@ -359,14 +359,14 @@ public class TextFilterClient implements AutoCloseable {
         }
 
         @Override
-        public CompletableFuture<FilteredText> processStreamMessage(String p_10186_) {
-            return TextFilterClient.this.requestMessageProcessing(this.profile, p_10186_, TextFilterClient.this.chatIgnoreStrategy, this.streamExecutor);
+        public CompletableFuture<FilteredText> processStreamMessage(String text) {
+            return TextFilterClient.this.requestMessageProcessing(this.profile, text, TextFilterClient.this.chatIgnoreStrategy, this.streamExecutor);
         }
     }
 
     public static class RequestFailedException extends RuntimeException {
-        RequestFailedException(String p_10199_) {
-            super(p_10199_);
+        RequestFailedException(String message) {
+            super(message);
         }
     }
 }

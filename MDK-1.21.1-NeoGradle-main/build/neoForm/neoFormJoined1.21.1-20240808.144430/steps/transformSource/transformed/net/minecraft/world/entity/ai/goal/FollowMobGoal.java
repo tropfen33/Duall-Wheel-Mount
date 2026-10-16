@@ -11,6 +11,9 @@ import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.level.pathfinder.PathType;
 
+/**
+ * A goal allowing a mob to follow others. The mob must have Ground or Flying navigation.
+ */
 public class FollowMobGoal extends Goal {
     private final Mob mob;
     private final Predicate<Mob> followPredicate;
@@ -23,15 +26,18 @@ public class FollowMobGoal extends Goal {
     private float oldWaterCost;
     private final float areaSize;
 
-    public FollowMobGoal(Mob p_25271_, double p_25272_, float p_25273_, float p_25274_) {
-        this.mob = p_25271_;
-        this.followPredicate = p_25278_ -> p_25278_ != null && p_25271_.getClass() != p_25278_.getClass();
-        this.speedModifier = p_25272_;
-        this.navigation = p_25271_.getNavigation();
-        this.stopDistance = p_25273_;
-        this.areaSize = p_25274_;
+    /**
+     * Constructs a goal allowing a mob to follow others. The mob must have Ground or Flying navigation.
+     */
+    public FollowMobGoal(Mob mob, double speedModifier, float stopDistance, float areaSize) {
+        this.mob = mob;
+        this.followPredicate = p_25278_ -> p_25278_ != null && mob.getClass() != p_25278_.getClass();
+        this.speedModifier = speedModifier;
+        this.navigation = mob.getNavigation();
+        this.stopDistance = stopDistance;
+        this.areaSize = areaSize;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
-        if (!(p_25271_.getNavigation() instanceof GroundPathNavigation) && !(p_25271_.getNavigation() instanceof FlyingPathNavigation)) {
+        if (!(mob.getNavigation() instanceof GroundPathNavigation) && !(mob.getNavigation() instanceof FlyingPathNavigation)) {
             throw new IllegalArgumentException("Unsupported mob type for FollowMobGoal");
         }
     }

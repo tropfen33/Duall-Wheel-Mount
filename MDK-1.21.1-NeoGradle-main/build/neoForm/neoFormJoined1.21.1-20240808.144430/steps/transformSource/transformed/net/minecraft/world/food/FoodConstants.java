@@ -27,7 +27,7 @@ public class FoodConstants {
     public static final float EXHAUSTION_SPRINT = 0.1F;
     public static final float EXHAUSTION_SWIM = 0.01F;
 
-    public static float saturationByModifier(int p_341087_, float p_340877_) {
-        return (float)p_341087_ * p_340877_ * 2.0F;
+    public static float saturationByModifier(int foodLevel, float saturationModifier) {
+        return (float)foodLevel * saturationModifier * 2.0F;
     }
 }

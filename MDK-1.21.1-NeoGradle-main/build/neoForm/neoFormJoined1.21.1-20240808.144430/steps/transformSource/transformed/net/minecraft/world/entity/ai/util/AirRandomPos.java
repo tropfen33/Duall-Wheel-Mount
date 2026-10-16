@@ -7,12 +7,12 @@ import net.minecraft.world.phys.Vec3;
 
 public class AirRandomPos {
     @Nullable
-    public static Vec3 getPosTowards(PathfinderMob p_148388_, int p_148389_, int p_148390_, int p_148391_, Vec3 p_148392_, double p_148393_) {
-        Vec3 vec3 = p_148392_.subtract(p_148388_.getX(), p_148388_.getY(), p_148388_.getZ());
-        boolean flag = GoalUtils.mobRestricted(p_148388_, p_148389_);
-        return RandomPos.generateRandomPos(p_148388_, () -> {
-            BlockPos blockpos = AirAndWaterRandomPos.generateRandomPos(p_148388_, p_148389_, p_148390_, p_148391_, vec3.x, vec3.z, p_148393_, flag);
-            return blockpos != null && !GoalUtils.isWater(p_148388_, blockpos) ? blockpos : null;
+    public static Vec3 getPosTowards(PathfinderMob mob, int radius, int yRange, int y, Vec3 vectorPosition, double amplifier) {
+        Vec3 vec3 = vectorPosition.subtract(mob.getX(), mob.getY(), mob.getZ());
+        boolean flag = GoalUtils.mobRestricted(mob, radius);
+        return RandomPos.generateRandomPos(mob, () -> {
+            BlockPos blockpos = AirAndWaterRandomPos.generateRandomPos(mob, radius, yRange, y, vec3.x, vec3.z, amplifier, flag);
+            return blockpos != null && !GoalUtils.isWater(mob, blockpos) ? blockpos : null;
         });
     }
 }

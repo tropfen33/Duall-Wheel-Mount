@@ -33,9 +33,9 @@ public class BitmapProvider implements GlyphProvider {
     private final NativeImage image;
     private final CodepointMap<BitmapProvider.Glyph> glyphs;
 
-    BitmapProvider(NativeImage p_285380_, CodepointMap<BitmapProvider.Glyph> p_285445_) {
-        this.image = p_285380_;
-        this.glyphs = p_285445_;
+    BitmapProvider(NativeImage image, CodepointMap<BitmapProvider.Glyph> glyphs) {
+        this.image = image;
+        this.glyphs = glyphs;
     }
 
     @Override
@@ -45,8 +45,8 @@ public class BitmapProvider implements GlyphProvider {
 
     @Nullable
     @Override
-    public GlyphInfo getGlyph(int p_232638_) {
-        return this.glyphs.get(p_232638_);
+    public GlyphInfo getGlyph(int character) {
+        return this.glyphs.get(character);
     }
 
     @Override
@@ -85,18 +85,18 @@ public class BitmapProvider implements GlyphProvider {
             )
             .validate(BitmapProvider.Definition::validate);
 
-        private static DataResult<int[][]> validateDimensions(int[][] p_286348_) {
-            int i = p_286348_.length;
+        private static DataResult<int[][]> validateDimensions(int[][] dimensions) {
+            int i = dimensions.length;
             if (i == 0) {
                 return DataResult.error(() -> "Expected to find data in codepoint grid");
             } else {
-                int[] aint = p_286348_[0];
+                int[] aint = dimensions[0];
                 int j = aint.length;
                 if (j == 0) {
                     return DataResult.error(() -> "Expected to find data in codepoint grid");
                 } else {
                     for (int k = 1; k < i; k++) {
-                        int[] aint1 = p_286348_[k];
+                        int[] aint1 = dimensions[k];
                         if (aint1.length != j) {
                             return DataResult.error(
                                 () -> "Lines in codepoint grid have to be the same length (found: "
@@ -108,15 +108,15 @@ public class BitmapProvider implements GlyphProvider {
                         }
                     }
 
-                    return DataResult.success(p_286348_);
+                    return DataResult.success(dimensions);
                 }
             }
         }
 
-        private static DataResult<BitmapProvider.Definition> validate(BitmapProvider.Definition p_286662_) {
-            return p_286662_.ascent > p_286662_.height
-                ? DataResult.error(() -> "Ascent " + p_286662_.ascent + " higher than height " + p_286662_.height)
-                : DataResult.success(p_286662_);
+        private static DataResult<BitmapProvider.Definition> validate(BitmapProvider.Definition definition) {
+            return definition.ascent > definition.height
+                ? DataResult.error(() -> "Ascent " + definition.ascent + " higher than height " + definition.height)
+                : DataResult.success(definition);
         }
 
         @Override
@@ -129,11 +129,11 @@ public class BitmapProvider implements GlyphProvider {
             return Either.left(this::load);
         }
 
-        private GlyphProvider load(ResourceManager p_286694_) throws IOException {
+        private GlyphProvider load(ResourceManager resoureManager) throws IOException {
             ResourceLocation resourcelocation = this.file.withPrefix("textures/");
 
             BitmapProvider bitmapprovider;
-            try (InputStream inputstream = p_286694_.open(resourcelocation)) {
+            try (InputStream inputstream = resoureManager.open(resourcelocation)) {
                 NativeImage nativeimage = NativeImage.read(NativeImage.Format.RGBA, inputstream);
                 int i = nativeimage.getWidth();
                 int j = nativeimage.getHeight();
@@ -165,14 +165,14 @@ public class BitmapProvider implements GlyphProvider {
             return bitmapprovider;
         }
 
-        private int getActualGlyphWidth(NativeImage p_286449_, int p_286656_, int p_286554_, int p_286657_, int p_286307_) {
+        private int getActualGlyphWidth(NativeImage image, int width, int height, int x, int y) {
             int i;
-            for (i = p_286656_ - 1; i >= 0; i--) {
-                int j = p_286657_ * p_286656_ + i;
+            for (i = width - 1; i >= 0; i--) {
+                int j = x * width + i;
 
-                for (int k = 0; k < p_286554_; k++) {
-                    int l = p_286307_ * p_286554_ + k;
-                    if (p_286449_.getLuminanceOrAlpha(j, l) != 0) {
+                for (int k = 0; k < height; k++) {
+                    int l = y * height + k;
+                    if (image.getLuminanceOrAlpha(j, l) != 0) {
                         return i + 1;
                     }
                 }
@@ -190,8 +190,8 @@ public class BitmapProvider implements GlyphProvider {
         }
 
         @Override
-        public BakedGlyph bake(Function<SheetGlyphInfo, BakedGlyph> p_232640_) {
-            return p_232640_.apply(new SheetGlyphInfo() {
+        public BakedGlyph bake(Function<SheetGlyphInfo, BakedGlyph> glyphProvider) {
+            return glyphProvider.apply(new SheetGlyphInfo() {
                 @Override
                 public float getOversample() {
                     return 1.0F / Glyph.this.scale;

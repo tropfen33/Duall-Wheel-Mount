@@ -16,19 +16,22 @@ public class ServerboundKeyPacket implements Packet<ServerLoginPacketListener> {
     private final byte[] keybytes;
     private final byte[] encryptedChallenge;
 
-    public ServerboundKeyPacket(SecretKey p_134856_, PublicKey p_134857_, byte[] p_134858_) throws CryptException {
-        this.keybytes = Crypt.encryptUsingKey(p_134857_, p_134856_.getEncoded());
-        this.encryptedChallenge = Crypt.encryptUsingKey(p_134857_, p_134858_);
+    public ServerboundKeyPacket(SecretKey secretKey, PublicKey publicKey, byte[] challenge) throws CryptException {
+        this.keybytes = Crypt.encryptUsingKey(publicKey, secretKey.getEncoded());
+        this.encryptedChallenge = Crypt.encryptUsingKey(publicKey, challenge);
     }
 
-    private ServerboundKeyPacket(FriendlyByteBuf p_179829_) {
-        this.keybytes = p_179829_.readByteArray();
-        this.encryptedChallenge = p_179829_.readByteArray();
+    private ServerboundKeyPacket(FriendlyByteBuf buffer) {
+        this.keybytes = buffer.readByteArray();
+        this.encryptedChallenge = buffer.readByteArray();
     }
 
-    private void write(FriendlyByteBuf p_134870_) {
-        p_134870_.writeByteArray(this.keybytes);
-        p_134870_.writeByteArray(this.encryptedChallenge);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeByteArray(this.keybytes);
+        buffer.writeByteArray(this.encryptedChallenge);
     }
 
     @Override
@@ -36,17 +39,20 @@ public class ServerboundKeyPacket implements Packet<ServerLoginPacketListener> {
         return LoginPacketTypes.SERVERBOUND_KEY;
     }
 
-    public void handle(ServerLoginPacketListener p_134866_) {
-        p_134866_.handleKey(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerLoginPacketListener handler) {
+        handler.handleKey(this);
     }
 
-    public SecretKey getSecretKey(PrivateKey p_134860_) throws CryptException {
-        return Crypt.decryptByteToSecretKey(p_134860_, this.keybytes);
+    public SecretKey getSecretKey(PrivateKey key) throws CryptException {
+        return Crypt.decryptByteToSecretKey(key, this.keybytes);
     }
 
-    public boolean isChallengeValid(byte[] p_254210_, PrivateKey p_253763_) {
+    public boolean isChallengeValid(byte[] expected, PrivateKey key) {
         try {
-            return Arrays.equals(p_254210_, Crypt.decryptUsingKey(p_253763_, this.encryptedChallenge));
+            return Arrays.equals(expected, Crypt.decryptUsingKey(key, this.encryptedChallenge));
         } catch (CryptException cryptexception) {
             return false;
         }

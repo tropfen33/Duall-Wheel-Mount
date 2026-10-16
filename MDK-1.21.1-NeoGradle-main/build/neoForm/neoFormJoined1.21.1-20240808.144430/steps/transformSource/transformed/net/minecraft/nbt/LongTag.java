@@ -7,18 +7,18 @@ import java.io.IOException;
 public class LongTag extends NumericTag {
     private static final int SELF_SIZE_IN_BYTES = 16;
     public static final TagType<LongTag> TYPE = new TagType.StaticSize<LongTag>() {
-        public LongTag load(DataInput p_128906_, NbtAccounter p_128908_) throws IOException {
-            return LongTag.valueOf(readAccounted(p_128906_, p_128908_));
+        public LongTag load(DataInput input, NbtAccounter accounter) throws IOException {
+            return LongTag.valueOf(readAccounted(input, accounter));
         }
 
         @Override
-        public StreamTagVisitor.ValueResult parse(DataInput p_197506_, StreamTagVisitor p_197507_, NbtAccounter p_302345_) throws IOException {
-            return p_197507_.visit(readAccounted(p_197506_, p_302345_));
+        public StreamTagVisitor.ValueResult parse(DataInput input, StreamTagVisitor visitor, NbtAccounter accounter) throws IOException {
+            return visitor.visit(readAccounted(input, accounter));
         }
 
-        private static long readAccounted(DataInput p_302399_, NbtAccounter p_302341_) throws IOException {
-            p_302341_.accountBytes(16L);
-            return p_302399_.readLong();
+        private static long readAccounted(DataInput input, NbtAccounter accounter) throws IOException {
+            accounter.accountBytes(16L);
+            return input.readLong();
         }
 
         @Override
@@ -43,17 +43,17 @@ public class LongTag extends NumericTag {
     };
     private final long data;
 
-    LongTag(long p_128877_) {
-        this.data = p_128877_;
+    LongTag(long data) {
+        this.data = data;
     }
 
-    public static LongTag valueOf(long p_128883_) {
-        return p_128883_ >= -128L && p_128883_ <= 1024L ? LongTag.Cache.cache[(int)p_128883_ - -128] : new LongTag(p_128883_);
+    public static LongTag valueOf(long data) {
+        return data >= -128L && data <= 1024L ? LongTag.Cache.cache[(int)data - -128] : new LongTag(data);
     }
 
     @Override
-    public void write(DataOutput p_128885_) throws IOException {
-        p_128885_.writeLong(this.data);
+    public void write(DataOutput output) throws IOException {
+        output.writeLong(this.data);
     }
 
     @Override
@@ -76,8 +76,8 @@ public class LongTag extends NumericTag {
     }
 
     @Override
-    public boolean equals(Object p_128894_) {
-        return this == p_128894_ ? true : p_128894_ instanceof LongTag && this.data == ((LongTag)p_128894_).data;
+    public boolean equals(Object other) {
+        return this == other ? true : other instanceof LongTag && this.data == ((LongTag)other).data;
     }
 
     @Override
@@ -86,8 +86,8 @@ public class LongTag extends NumericTag {
     }
 
     @Override
-    public void accept(TagVisitor p_177998_) {
-        p_177998_.visitLong(this);
+    public void accept(TagVisitor visitor) {
+        visitor.visitLong(this);
     }
 
     @Override
@@ -126,8 +126,8 @@ public class LongTag extends NumericTag {
     }
 
     @Override
-    public StreamTagVisitor.ValueResult accept(StreamTagVisitor p_197504_) {
-        return p_197504_.visit(this.data);
+    public StreamTagVisitor.ValueResult accept(StreamTagVisitor visitor) {
+        return visitor.visit(this.data);
     }
 
     static class Cache {

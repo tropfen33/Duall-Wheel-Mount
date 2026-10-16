@@ -13,39 +13,42 @@ import net.minecraft.world.entity.projectile.ThrownExperienceBottle;
 import net.minecraft.world.level.Level;
 
 public class ExperienceBottleItem extends Item implements ProjectileItem {
-    public ExperienceBottleItem(Item.Properties p_41194_) {
-        super(p_41194_);
+    public ExperienceBottleItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_41196_, Player p_41197_, InteractionHand p_41198_) {
-        ItemStack itemstack = p_41197_.getItemInHand(p_41198_);
-        p_41196_.playSound(
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
+        level.playSound(
             null,
-            p_41197_.getX(),
-            p_41197_.getY(),
-            p_41197_.getZ(),
+            player.getX(),
+            player.getY(),
+            player.getZ(),
             SoundEvents.EXPERIENCE_BOTTLE_THROW,
             SoundSource.NEUTRAL,
             0.5F,
-            0.4F / (p_41196_.getRandom().nextFloat() * 0.4F + 0.8F)
+            0.4F / (level.getRandom().nextFloat() * 0.4F + 0.8F)
         );
-        if (!p_41196_.isClientSide) {
-            ThrownExperienceBottle thrownexperiencebottle = new ThrownExperienceBottle(p_41196_, p_41197_);
+        if (!level.isClientSide) {
+            ThrownExperienceBottle thrownexperiencebottle = new ThrownExperienceBottle(level, player);
             thrownexperiencebottle.setItem(itemstack);
-            thrownexperiencebottle.shootFromRotation(p_41197_, p_41197_.getXRot(), p_41197_.getYRot(), -20.0F, 0.7F, 1.0F);
-            p_41196_.addFreshEntity(thrownexperiencebottle);
+            thrownexperiencebottle.shootFromRotation(player, player.getXRot(), player.getYRot(), -20.0F, 0.7F, 1.0F);
+            level.addFreshEntity(thrownexperiencebottle);
         }
 
-        p_41197_.awardStat(Stats.ITEM_USED.get(this));
-        itemstack.consume(1, p_41197_);
-        return InteractionResultHolder.sidedSuccess(itemstack, p_41196_.isClientSide());
+        player.awardStat(Stats.ITEM_USED.get(this));
+        itemstack.consume(1, player);
+        return InteractionResultHolder.sidedSuccess(itemstack, level.isClientSide());
     }
 
     @Override
-    public Projectile asProjectile(Level p_338868_, Position p_338766_, ItemStack p_338321_, Direction p_338772_) {
-        ThrownExperienceBottle thrownexperiencebottle = new ThrownExperienceBottle(p_338868_, p_338766_.x(), p_338766_.y(), p_338766_.z());
-        thrownexperiencebottle.setItem(p_338321_);
+    public Projectile asProjectile(Level level, Position pos, ItemStack stack, Direction direction) {
+        ThrownExperienceBottle thrownexperiencebottle = new ThrownExperienceBottle(level, pos.x(), pos.y(), pos.z());
+        thrownexperiencebottle.setItem(stack);
         return thrownexperiencebottle;
     }
 

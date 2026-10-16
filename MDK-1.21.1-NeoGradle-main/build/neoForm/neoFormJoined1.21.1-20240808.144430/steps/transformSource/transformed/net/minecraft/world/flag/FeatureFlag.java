@@ -7,16 +7,17 @@ public class FeatureFlag {
     final boolean modded;
 
     /**
-     * @deprecated Neo: use {@link #FeatureFlag(FeatureFlagUniverse, int, int, boolean)} instead
+     * @deprecated Neo: use {@link #FeatureFlag(FeatureFlagUniverse, int, int, boolean
+     *             )} instead
      */
     @Deprecated
-    FeatureFlag(FeatureFlagUniverse p_249115_, int p_251067_) {
-        this(p_249115_, p_251067_, 0, false);
+    FeatureFlag(FeatureFlagUniverse universe, int maskBit) {
+        this(universe, maskBit, 0, false);
     }
 
-    FeatureFlag(FeatureFlagUniverse p_249115_, int p_251067_, int offset, boolean modded) {
-        this.universe = p_249115_;
-        this.mask = 1L << p_251067_;
+    FeatureFlag(FeatureFlagUniverse universe, int maskBit, int offset, boolean modded) {
+        this.universe = universe;
+        this.mask = 1L << maskBit;
         this.extMaskIndex = offset - 1;
         this.modded = modded;
     }

@@ -8,11 +8,11 @@ public class GameTestAssertPosException extends GameTestAssertException {
     private final BlockPos relativePos;
     private final long tick;
 
-    public GameTestAssertPosException(String p_177051_, BlockPos p_177052_, BlockPos p_177053_, long p_177054_) {
-        super(p_177051_);
-        this.absolutePos = p_177052_;
-        this.relativePos = p_177053_;
-        this.tick = p_177054_;
+    public GameTestAssertPosException(String exceptionMessage, BlockPos absolutePos, BlockPos relativePos, long tick) {
+        super(exceptionMessage);
+        this.absolutePos = absolutePos;
+        this.relativePos = relativePos;
+        this.tick = tick;
     }
 
     @Override

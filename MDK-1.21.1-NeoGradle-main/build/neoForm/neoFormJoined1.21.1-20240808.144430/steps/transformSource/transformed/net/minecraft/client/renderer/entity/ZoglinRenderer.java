@@ -15,7 +15,10 @@ public class ZoglinRenderer extends MobRenderer<Zoglin, HoglinModel<Zoglin>> {
         super(p_174454_, new HoglinModel<>(p_174454_.bakeLayer(ModelLayers.ZOGLIN)), 0.7F);
     }
 
-    public ResourceLocation getTextureLocation(Zoglin p_116544_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Zoglin entity) {
         return ZOGLIN_LOCATION;
     }
 }

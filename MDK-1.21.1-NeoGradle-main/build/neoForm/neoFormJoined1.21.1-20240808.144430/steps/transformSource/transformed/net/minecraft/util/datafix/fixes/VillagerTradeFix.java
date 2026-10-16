@@ -13,8 +13,8 @@ import java.util.function.Function;
 import net.minecraft.util.datafix.schemas.NamespacedSchema;
 
 public class VillagerTradeFix extends DataFix {
-    public VillagerTradeFix(Schema p_17116_) {
-        super(p_17116_, false);
+    public VillagerTradeFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
     @Override
@@ -32,9 +32,9 @@ public class VillagerTradeFix extends DataFix {
         );
     }
 
-    private Typed<?> updateItemStack(OpticFinder<Pair<String, String>> p_17134_, Typed<?> p_17135_) {
-        return p_17135_.update(
-            p_17134_, p_17145_ -> p_17145_.mapSecond(p_145790_ -> Objects.equals(p_145790_, "minecraft:carved_pumpkin") ? "minecraft:pumpkin" : p_145790_)
+    private Typed<?> updateItemStack(OpticFinder<Pair<String, String>> id, Typed<?> typed) {
+        return typed.update(
+            id, p_17145_ -> p_17145_.mapSecond(p_145790_ -> Objects.equals(p_145790_, "minecraft:carved_pumpkin") ? "minecraft:pumpkin" : p_145790_)
         );
     }
 }

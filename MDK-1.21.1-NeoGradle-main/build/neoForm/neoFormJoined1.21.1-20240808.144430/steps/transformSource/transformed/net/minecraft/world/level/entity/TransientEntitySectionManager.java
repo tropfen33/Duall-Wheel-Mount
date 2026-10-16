@@ -18,17 +18,17 @@ public class TransientEntitySectionManager<T extends EntityAccess> {
     private final LongSet tickingChunks = new LongOpenHashSet();
     private final LevelEntityGetter<T> entityGetter;
 
-    public TransientEntitySectionManager(Class<T> p_157643_, LevelCallback<T> p_157644_) {
+    public TransientEntitySectionManager(Class<T> clazz, LevelCallback<T> callbacks) {
         this.entityStorage = new EntityLookup<>();
         this.sectionStorage = new EntitySectionStorage<>(
-            p_157643_, p_157647_ -> this.tickingChunks.contains(p_157647_) ? Visibility.TICKING : Visibility.TRACKED
+            clazz, p_157647_ -> this.tickingChunks.contains(p_157647_) ? Visibility.TICKING : Visibility.TRACKED
         );
-        this.callbacks = p_157644_;
+        this.callbacks = callbacks;
         this.entityGetter = new LevelEntityGetterAdapter<>(this.entityStorage, this.sectionStorage);
     }
 
-    public void startTicking(ChunkPos p_157652_) {
-        long i = p_157652_.toLong();
+    public void startTicking(ChunkPos pos) {
+        long i = pos.toLong();
         this.tickingChunks.add(i);
         this.sectionStorage.getExistingSectionsInChunk(i).forEach(p_157663_ -> {
             Visibility visibility = p_157663_.updateChunkStatus(Visibility.TICKING);
@@ -38,8 +38,8 @@ public class TransientEntitySectionManager<T extends EntityAccess> {
         });
     }
 
-    public void stopTicking(ChunkPos p_157659_) {
-        long i = p_157659_.toLong();
+    public void stopTicking(ChunkPos pos) {
+        long i = pos.toLong();
         this.tickingChunks.remove(i);
         this.sectionStorage.getExistingSectionsInChunk(i).forEach(p_157656_ -> {
             Visibility visibility = p_157656_.updateChunkStatus(Visibility.TRACKED);
@@ -53,16 +53,16 @@ public class TransientEntitySectionManager<T extends EntityAccess> {
         return this.entityGetter;
     }
 
-    public void addEntity(T p_157654_) {
-        this.entityStorage.add(p_157654_);
-        long i = SectionPos.asLong(p_157654_.blockPosition());
+    public void addEntity(T entity) {
+        this.entityStorage.add(entity);
+        long i = SectionPos.asLong(entity.blockPosition());
         EntitySection<T> entitysection = this.sectionStorage.getOrCreateSection(i);
-        entitysection.add(p_157654_);
-        p_157654_.setLevelCallback(new TransientEntitySectionManager.Callback(p_157654_, i, entitysection));
-        this.callbacks.onCreated(p_157654_);
-        this.callbacks.onTrackingStart(p_157654_);
-        if (p_157654_.isAlwaysTicking() || entitysection.getStatus().isTicking()) {
-            this.callbacks.onTickingStart(p_157654_);
+        entitysection.add(entity);
+        entity.setLevelCallback(new TransientEntitySectionManager.Callback(entity, i, entitysection));
+        this.callbacks.onCreated(entity);
+        this.callbacks.onTrackingStart(entity);
+        if (entity.isAlwaysTicking() || entitysection.getStatus().isTicking()) {
+            this.callbacks.onTickingStart(entity);
         }
     }
 
@@ -71,9 +71,9 @@ public class TransientEntitySectionManager<T extends EntityAccess> {
         return this.entityStorage.count();
     }
 
-    void removeSectionIfEmpty(long p_157649_, EntitySection<T> p_157650_) {
-        if (p_157650_.isEmpty()) {
-            this.sectionStorage.remove(p_157649_);
+    void removeSectionIfEmpty(long section, EntitySection<T> entitySection) {
+        if (entitySection.isEmpty()) {
+            this.sectionStorage.remove(section);
         }
     }
 
@@ -88,11 +88,11 @@ public class TransientEntitySectionManager<T extends EntityAccess> {
         private long currentSectionKey;
         private EntitySection<T> currentSection;
 
-        Callback(T p_157673_, long p_157674_, EntitySection<T> p_157675_) {
-            this.entity = p_157673_;
-            this.realEntity = p_157673_ instanceof Entity ? (Entity) p_157673_ : null;
-            this.currentSectionKey = p_157674_;
-            this.currentSection = p_157675_;
+        Callback(T entity, long section, EntitySection<T> currentSection) {
+            this.entity = entity;
+            this.realEntity = entity instanceof Entity ? (Entity) entity : null;
+            this.currentSectionKey = section;
+            this.currentSection = currentSection;
         }
 
         @Override
@@ -127,10 +127,10 @@ public class TransientEntitySectionManager<T extends EntityAccess> {
         }
 
         @Override
-        public void onRemove(Entity.RemovalReason p_157678_) {
+        public void onRemove(Entity.RemovalReason reason) {
             if (!this.currentSection.remove(this.entity)) {
                 TransientEntitySectionManager.LOGGER
-                    .warn("Entity {} wasn't found in section {} (destroying due to {})", this.entity, SectionPos.of(this.currentSectionKey), p_157678_);
+                    .warn("Entity {} wasn't found in section {} (destroying due to {})", this.entity, SectionPos.of(this.currentSectionKey), reason);
             }
 
             Visibility visibility = this.currentSection.getStatus();

@@ -7,7 +7,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.lighting.ChunkSkyLightSources;
 
 public interface LightChunk extends BlockGetter {
-    void findBlockLightSources(BiConsumer<BlockPos, BlockState> p_285040_);
+    void findBlockLightSources(BiConsumer<BlockPos, BlockState> output);
 
     ChunkSkyLightSources getSkyLightSources();
 }

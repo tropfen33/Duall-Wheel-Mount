@@ -35,15 +35,15 @@ public class ExperimentsScreen extends Screen {
     private final Consumer<PackRepository> output;
     protected final Object2BooleanMap<Pack> packs = new Object2BooleanLinkedOpenHashMap<>();
 
-    public ExperimentsScreen(Screen p_270165_, PackRepository p_270308_, Consumer<PackRepository> p_270392_) {
+    public ExperimentsScreen(Screen parent, PackRepository packRepository, Consumer<PackRepository> output) {
         super(TITLE);
-        this.parent = p_270165_;
-        this.packRepository = p_270308_;
-        this.output = p_270392_;
+        this.parent = parent;
+        this.packRepository = packRepository;
+        this.output = output;
 
-        for (Pack pack : p_270308_.getAvailablePacks()) {
+        for (Pack pack : packRepository.getAvailablePacks()) {
             if (pack.getPackSource() == PackSource.FEATURE) {
-                this.packs.put(pack, p_270308_.getSelectedPacks().contains(pack));
+                this.packs.put(pack, packRepository.getSelectedPacks().contains(pack));
             }
         }
     }
@@ -78,9 +78,9 @@ public class ExperimentsScreen extends Screen {
         this.repositionElements();
     }
 
-    protected static Component getHumanReadableTitle(Pack p_270861_) {
-        String s = "dataPack." + p_270861_.getId() + ".name";
-        return (Component)(I18n.exists(s) ? Component.translatable(s) : p_270861_.getTitle());
+    protected static Component getHumanReadableTitle(Pack pack) {
+        String s = "dataPack." + pack.getId() + ".name";
+        return (Component)(I18n.exists(s) ? Component.translatable(s) : pack.getTitle());
     }
 
     @Override

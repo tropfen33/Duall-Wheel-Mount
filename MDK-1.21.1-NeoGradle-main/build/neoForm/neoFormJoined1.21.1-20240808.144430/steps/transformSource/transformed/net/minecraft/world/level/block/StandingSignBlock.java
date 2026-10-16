@@ -30,48 +30,59 @@ public class StandingSignBlock extends SignBlock {
         return CODEC;
     }
 
-    public StandingSignBlock(WoodType p_56991_, BlockBehaviour.Properties p_56990_) {
-        super(p_56991_, p_56990_.sound(p_56991_.soundType()));
+    public StandingSignBlock(WoodType type, BlockBehaviour.Properties properties) {
+        super(type, properties.sound(type.soundType()));
         this.registerDefaultState(this.stateDefinition.any().setValue(ROTATION, Integer.valueOf(0)).setValue(WATERLOGGED, Boolean.valueOf(false)));
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_56995_, LevelReader p_56996_, BlockPos p_56997_) {
-        return p_56996_.getBlockState(p_56997_.below()).isSolid();
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        return level.getBlockState(pos.below()).isSolid();
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_56993_) {
-        FluidState fluidstate = p_56993_.getLevel().getFluidState(p_56993_.getClickedPos());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
         return this.defaultBlockState()
-            .setValue(ROTATION, Integer.valueOf(RotationSegment.convertToSegment(p_56993_.getRotation() + 180.0F)))
+            .setValue(ROTATION, Integer.valueOf(RotationSegment.convertToSegment(context.getRotation() + 180.0F)))
             .setValue(WATERLOGGED, Boolean.valueOf(fluidstate.getType() == Fluids.WATER));
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_57005_, Direction p_57006_, BlockState p_57007_, LevelAccessor p_57008_, BlockPos p_57009_, BlockPos p_57010_) {
-        return p_57006_ == Direction.DOWN && !this.canSurvive(p_57005_, p_57008_, p_57009_)
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return facing == Direction.DOWN && !this.canSurvive(state, level, currentPos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_57005_, p_57006_, p_57007_, p_57008_, p_57009_, p_57010_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    public float getYRotationDegrees(BlockState p_277795_) {
-        return RotationSegment.convertToDegrees(p_277795_.getValue(ROTATION));
+    public float getYRotationDegrees(BlockState state) {
+        return RotationSegment.convertToDegrees(state.getValue(ROTATION));
+    }
+
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rot) {
+        return state.setValue(ROTATION, Integer.valueOf(rot.rotate(state.getValue(ROTATION), 16)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.setValue(ROTATION, Integer.valueOf(mirror.mirror(state.getValue(ROTATION), 16)));
     }
 
     @Override
-    protected BlockState rotate(BlockState p_57002_, Rotation p_57003_) {
-        return p_57002_.setValue(ROTATION, Integer.valueOf(p_57003_.rotate(p_57002_.getValue(ROTATION), 16)));
-    }
-
-    @Override
-    protected BlockState mirror(BlockState p_56999_, Mirror p_57000_) {
-        return p_56999_.setValue(ROTATION, Integer.valueOf(p_57000_.mirror(p_56999_.getValue(ROTATION), 16)));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_57012_) {
-        p_57012_.add(ROTATION, WATERLOGGED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(ROTATION, WATERLOGGED);
     }
 }

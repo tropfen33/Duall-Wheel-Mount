@@ -41,23 +41,23 @@ public class TextureAtlas extends AbstractTexture implements Dumpable, Tickable 
     private int height;
     private int mipLevel;
 
-    public TextureAtlas(ResourceLocation p_118269_) {
-        this.location = p_118269_;
+    public TextureAtlas(ResourceLocation location) {
+        this.location = location;
         this.maxSupportedTextureSize = RenderSystem.maxSupportedTextureSize();
     }
 
     @Override
-    public void load(ResourceManager p_118282_) {
+    public void load(ResourceManager resourceManager) {
     }
 
-    public void upload(SpriteLoader.Preparations p_250662_) {
-        LOGGER.info("Created: {}x{}x{} {}-atlas", p_250662_.width(), p_250662_.height(), p_250662_.mipLevel(), this.location);
-        TextureUtil.prepareImage(this.getId(), p_250662_.mipLevel(), p_250662_.width(), p_250662_.height());
-        this.width = p_250662_.width();
-        this.height = p_250662_.height();
-        this.mipLevel = p_250662_.mipLevel();
+    public void upload(SpriteLoader.Preparations preparations) {
+        LOGGER.info("Created: {}x{}x{} {}-atlas", preparations.width(), preparations.height(), preparations.mipLevel(), this.location);
+        TextureUtil.prepareImage(this.getId(), preparations.mipLevel(), preparations.width(), preparations.height());
+        this.width = preparations.width();
+        this.height = preparations.height();
+        this.mipLevel = preparations.mipLevel();
         this.clearTextureData();
-        this.texturesByName = Map.copyOf(p_250662_.regions());
+        this.texturesByName = Map.copyOf(preparations.regions());
         this.missingSprite = this.texturesByName.get(MissingTextureAtlasSprite.getLocation());
         if (this.missingSprite == null) {
             throw new IllegalStateException("Atlas '" + this.location + "' (" + this.texturesByName.size() + " sprites) has no missing texture sprite");
@@ -65,7 +65,7 @@ public class TextureAtlas extends AbstractTexture implements Dumpable, Tickable 
             List<SpriteContents> list = new ArrayList<>();
             List<TextureAtlasSprite.Ticker> list1 = new ArrayList<>();
 
-            for (TextureAtlasSprite textureatlassprite : p_250662_.regions().values()) {
+            for (TextureAtlasSprite textureatlassprite : preparations.regions().values()) {
                 list.add(textureatlassprite.contents());
 
                 try {
@@ -92,17 +92,17 @@ public class TextureAtlas extends AbstractTexture implements Dumpable, Tickable 
     }
 
     @Override
-    public void dumpContents(ResourceLocation p_276106_, Path p_276127_) throws IOException {
-        String s = p_276106_.toDebugFileName();
-        TextureUtil.writeAsPNG(p_276127_, s, this.getId(), this.mipLevel, this.width, this.height);
-        dumpSpriteNames(p_276127_, s, this.texturesByName);
+    public void dumpContents(ResourceLocation resourceLocation, Path path) throws IOException {
+        String s = resourceLocation.toDebugFileName();
+        TextureUtil.writeAsPNG(path, s, this.getId(), this.mipLevel, this.width, this.height);
+        dumpSpriteNames(path, s, this.texturesByName);
     }
 
-    private static void dumpSpriteNames(Path p_261769_, String p_262102_, Map<ResourceLocation, TextureAtlasSprite> p_261722_) {
-        Path path = p_261769_.resolve(p_262102_ + ".txt");
+    private static void dumpSpriteNames(Path outputDir, String outputFilename, Map<ResourceLocation, TextureAtlasSprite> sprites) {
+        Path path = outputDir.resolve(outputFilename + ".txt");
 
         try (Writer writer = Files.newBufferedWriter(path)) {
-            for (Entry<ResourceLocation, TextureAtlasSprite> entry : p_261722_.entrySet().stream().sorted(Entry.comparingByKey()).toList()) {
+            for (Entry<ResourceLocation, TextureAtlasSprite> entry : sprites.entrySet().stream().sorted(Entry.comparingByKey()).toList()) {
                 TextureAtlasSprite textureatlassprite = entry.getValue();
                 writer.write(
                     String.format(
@@ -138,8 +138,8 @@ public class TextureAtlas extends AbstractTexture implements Dumpable, Tickable 
         }
     }
 
-    public TextureAtlasSprite getSprite(ResourceLocation p_118317_) {
-        TextureAtlasSprite textureatlassprite = this.texturesByName.getOrDefault(p_118317_, this.missingSprite);
+    public TextureAtlasSprite getSprite(ResourceLocation name) {
+        TextureAtlasSprite textureatlassprite = this.texturesByName.getOrDefault(name, this.missingSprite);
         if (textureatlassprite == null) {
             throw new IllegalStateException("Tried to lookup sprite, but atlas is not initialized");
         } else {
@@ -172,8 +172,8 @@ public class TextureAtlas extends AbstractTexture implements Dumpable, Tickable 
         return this.height;
     }
 
-    public void updateFilter(SpriteLoader.Preparations p_251993_) {
-        this.setFilter(false, p_251993_.mipLevel() > 0);
+    public void updateFilter(SpriteLoader.Preparations preparations) {
+        this.setFilter(false, preparations.mipLevel() > 0);
     }
 
     public Map<ResourceLocation, TextureAtlasSprite> getTextures() {

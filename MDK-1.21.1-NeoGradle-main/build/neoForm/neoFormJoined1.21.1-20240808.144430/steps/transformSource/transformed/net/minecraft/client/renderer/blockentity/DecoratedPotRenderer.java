@@ -44,12 +44,12 @@ public class DecoratedPotRenderer implements BlockEntityRenderer<DecoratedPotBlo
     private final ModelPart bottom;
     private static final float WOBBLE_AMPLITUDE = 0.125F;
 
-    public DecoratedPotRenderer(BlockEntityRendererProvider.Context p_272872_) {
-        ModelPart modelpart = p_272872_.bakeLayer(ModelLayers.DECORATED_POT_BASE);
+    public DecoratedPotRenderer(BlockEntityRendererProvider.Context context) {
+        ModelPart modelpart = context.bakeLayer(ModelLayers.DECORATED_POT_BASE);
         this.neck = modelpart.getChild("neck");
         this.top = modelpart.getChild("top");
         this.bottom = modelpart.getChild("bottom");
-        ModelPart modelpart1 = p_272872_.bakeLayer(ModelLayers.DECORATED_POT_SIDES);
+        ModelPart modelpart1 = context.bakeLayer(ModelLayers.DECORATED_POT_SIDES);
         this.frontSide = modelpart1.getChild("front");
         this.backSide = modelpart1.getChild("back");
         this.leftSide = modelpart1.getChild("left");
@@ -89,9 +89,9 @@ public class DecoratedPotRenderer implements BlockEntityRenderer<DecoratedPotBlo
         return LayerDefinition.create(meshdefinition, 16, 16);
     }
 
-    private static Material getSideMaterial(Optional<Item> p_347523_) {
-        if (p_347523_.isPresent()) {
-            Material material = Sheets.getDecoratedPotMaterial(DecoratedPotPatterns.getPatternFromItem(p_347523_.get()));
+    private static Material getSideMaterial(Optional<Item> item) {
+        if (item.isPresent()) {
+            Material material = Sheets.getDecoratedPotMaterial(DecoratedPotPatterns.getPatternFromItem(item.get()));
             if (material != null) {
                 return material;
             }
@@ -100,46 +100,46 @@ public class DecoratedPotRenderer implements BlockEntityRenderer<DecoratedPotBlo
         return Sheets.DECORATED_POT_SIDE;
     }
 
-    public void render(DecoratedPotBlockEntity p_273776_, float p_273103_, PoseStack p_273455_, MultiBufferSource p_273010_, int p_273407_, int p_273059_) {
-        p_273455_.pushPose();
-        Direction direction = p_273776_.getDirection();
-        p_273455_.translate(0.5, 0.0, 0.5);
-        p_273455_.mulPose(Axis.YP.rotationDegrees(180.0F - direction.toYRot()));
-        p_273455_.translate(-0.5, 0.0, -0.5);
-        DecoratedPotBlockEntity.WobbleStyle decoratedpotblockentity$wobblestyle = p_273776_.lastWobbleStyle;
-        if (decoratedpotblockentity$wobblestyle != null && p_273776_.getLevel() != null) {
-            float f = ((float)(p_273776_.getLevel().getGameTime() - p_273776_.wobbleStartedAtTick) + p_273103_)
+    public void render(DecoratedPotBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        Direction direction = blockEntity.getDirection();
+        poseStack.translate(0.5, 0.0, 0.5);
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - direction.toYRot()));
+        poseStack.translate(-0.5, 0.0, -0.5);
+        DecoratedPotBlockEntity.WobbleStyle decoratedpotblockentity$wobblestyle = blockEntity.lastWobbleStyle;
+        if (decoratedpotblockentity$wobblestyle != null && blockEntity.getLevel() != null) {
+            float f = ((float)(blockEntity.getLevel().getGameTime() - blockEntity.wobbleStartedAtTick) + partialTick)
                 / (float)decoratedpotblockentity$wobblestyle.duration;
             if (f >= 0.0F && f <= 1.0F) {
                 if (decoratedpotblockentity$wobblestyle == DecoratedPotBlockEntity.WobbleStyle.POSITIVE) {
                     float f1 = 0.015625F;
                     float f2 = f * (float) (Math.PI * 2);
                     float f3 = -1.5F * (Mth.cos(f2) + 0.5F) * Mth.sin(f2 / 2.0F);
-                    p_273455_.rotateAround(Axis.XP.rotation(f3 * 0.015625F), 0.5F, 0.0F, 0.5F);
+                    poseStack.rotateAround(Axis.XP.rotation(f3 * 0.015625F), 0.5F, 0.0F, 0.5F);
                     float f4 = Mth.sin(f2);
-                    p_273455_.rotateAround(Axis.ZP.rotation(f4 * 0.015625F), 0.5F, 0.0F, 0.5F);
+                    poseStack.rotateAround(Axis.ZP.rotation(f4 * 0.015625F), 0.5F, 0.0F, 0.5F);
                 } else {
                     float f5 = Mth.sin(-f * 3.0F * (float) Math.PI) * 0.125F;
                     float f6 = 1.0F - f;
-                    p_273455_.rotateAround(Axis.YP.rotation(f5 * f6), 0.5F, 0.0F, 0.5F);
+                    poseStack.rotateAround(Axis.YP.rotation(f5 * f6), 0.5F, 0.0F, 0.5F);
                 }
             }
         }
 
-        VertexConsumer vertexconsumer = Sheets.DECORATED_POT_BASE.buffer(p_273010_, RenderType::entitySolid);
-        this.neck.render(p_273455_, vertexconsumer, p_273407_, p_273059_);
-        this.top.render(p_273455_, vertexconsumer, p_273407_, p_273059_);
-        this.bottom.render(p_273455_, vertexconsumer, p_273407_, p_273059_);
-        PotDecorations potdecorations = p_273776_.getDecorations();
-        this.renderSide(this.frontSide, p_273455_, p_273010_, p_273407_, p_273059_, getSideMaterial(potdecorations.front()));
-        this.renderSide(this.backSide, p_273455_, p_273010_, p_273407_, p_273059_, getSideMaterial(potdecorations.back()));
-        this.renderSide(this.leftSide, p_273455_, p_273010_, p_273407_, p_273059_, getSideMaterial(potdecorations.left()));
-        this.renderSide(this.rightSide, p_273455_, p_273010_, p_273407_, p_273059_, getSideMaterial(potdecorations.right()));
-        p_273455_.popPose();
+        VertexConsumer vertexconsumer = Sheets.DECORATED_POT_BASE.buffer(bufferSource, RenderType::entitySolid);
+        this.neck.render(poseStack, vertexconsumer, packedLight, packedOverlay);
+        this.top.render(poseStack, vertexconsumer, packedLight, packedOverlay);
+        this.bottom.render(poseStack, vertexconsumer, packedLight, packedOverlay);
+        PotDecorations potdecorations = blockEntity.getDecorations();
+        this.renderSide(this.frontSide, poseStack, bufferSource, packedLight, packedOverlay, getSideMaterial(potdecorations.front()));
+        this.renderSide(this.backSide, poseStack, bufferSource, packedLight, packedOverlay, getSideMaterial(potdecorations.back()));
+        this.renderSide(this.leftSide, poseStack, bufferSource, packedLight, packedOverlay, getSideMaterial(potdecorations.left()));
+        this.renderSide(this.rightSide, poseStack, bufferSource, packedLight, packedOverlay, getSideMaterial(potdecorations.right()));
+        poseStack.popPose();
     }
 
-    private void renderSide(ModelPart p_273495_, PoseStack p_272899_, MultiBufferSource p_273582_, int p_273242_, int p_273108_, Material p_273173_) {
-        p_273495_.render(p_272899_, p_273173_.buffer(p_273582_, RenderType::entitySolid), p_273242_, p_273108_);
+    private void renderSide(ModelPart modelPart, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay, Material material) {
+        modelPart.render(poseStack, material.buffer(buffer, RenderType::entitySolid), packedLight, packedOverlay);
     }
 
     @Override

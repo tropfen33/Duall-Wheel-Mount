@@ -21,13 +21,13 @@ public abstract class FeatureSize {
             .forGetter(p_68290_ -> p_68290_.minClippedHeight);
     }
 
-    public FeatureSize(OptionalInt p_68285_) {
-        this.minClippedHeight = p_68285_;
+    public FeatureSize(OptionalInt minClippedHeight) {
+        this.minClippedHeight = minClippedHeight;
     }
 
     protected abstract FeatureSizeType<?> type();
 
-    public abstract int getSizeAtHeight(int p_68287_, int p_68288_);
+    public abstract int getSizeAtHeight(int height, int midpoint);
 
     public OptionalInt minClippedHeight() {
         return this.minClippedHeight;

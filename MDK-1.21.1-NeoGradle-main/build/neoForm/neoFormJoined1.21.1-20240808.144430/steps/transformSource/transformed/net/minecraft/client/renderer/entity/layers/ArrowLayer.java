@@ -18,26 +18,26 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class ArrowLayer<T extends LivingEntity, M extends PlayerModel<T>> extends StuckInBodyLayer<T, M> {
     private final EntityRenderDispatcher dispatcher;
 
-    public ArrowLayer(EntityRendererProvider.Context p_174465_, LivingEntityRenderer<T, M> p_174466_) {
-        super(p_174466_);
-        this.dispatcher = p_174465_.getEntityRenderDispatcher();
+    public ArrowLayer(EntityRendererProvider.Context context, LivingEntityRenderer<T, M> renderer) {
+        super(renderer);
+        this.dispatcher = context.getEntityRenderDispatcher();
     }
 
     @Override
-    protected int numStuck(T p_116567_) {
-        return p_116567_.getArrowCount();
+    protected int numStuck(T entity) {
+        return entity.getArrowCount();
     }
 
     @Override
     protected void renderStuckItem(
-        PoseStack p_116569_, MultiBufferSource p_116570_, int p_116571_, Entity p_116572_, float p_116573_, float p_116574_, float p_116575_, float p_116576_
+        PoseStack poseStack, MultiBufferSource buffer, int packedLight, Entity entity, float x, float y, float z, float partialTick
     ) {
-        float f = Mth.sqrt(p_116573_ * p_116573_ + p_116575_ * p_116575_);
-        Arrow arrow = new Arrow(p_116572_.level(), p_116572_.getX(), p_116572_.getY(), p_116572_.getZ(), ItemStack.EMPTY, null);
-        arrow.setYRot((float)(Math.atan2((double)p_116573_, (double)p_116575_) * 180.0F / (float)Math.PI));
-        arrow.setXRot((float)(Math.atan2((double)p_116574_, (double)f) * 180.0F / (float)Math.PI));
+        float f = Mth.sqrt(x * x + z * z);
+        Arrow arrow = new Arrow(entity.level(), entity.getX(), entity.getY(), entity.getZ(), ItemStack.EMPTY, null);
+        arrow.setYRot((float)(Math.atan2((double)x, (double)z) * 180.0F / (float)Math.PI));
+        arrow.setXRot((float)(Math.atan2((double)y, (double)f) * 180.0F / (float)Math.PI));
         arrow.yRotO = arrow.getYRot();
         arrow.xRotO = arrow.getXRot();
-        this.dispatcher.render(arrow, 0.0, 0.0, 0.0, 0.0F, p_116576_, p_116569_, p_116570_, p_116571_);
+        this.dispatcher.render(arrow, 0.0, 0.0, 0.0, 0.0F, partialTick, poseStack, buffer, packedLight);
     }
 }

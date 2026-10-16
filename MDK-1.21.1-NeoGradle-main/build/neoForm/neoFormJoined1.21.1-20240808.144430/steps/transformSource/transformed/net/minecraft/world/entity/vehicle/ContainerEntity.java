@@ -40,11 +40,11 @@ public interface ContainerEntity extends Container, MenuProvider {
     @Nullable
     ResourceKey<LootTable> getLootTable();
 
-    void setLootTable(@Nullable ResourceKey<LootTable> p_336019_);
+    void setLootTable(@Nullable ResourceKey<LootTable> lootTable);
 
     long getLootTableSeed();
 
-    void setLootTableSeed(long p_219925_);
+    void setLootTableSeed(long lootTableSeed);
 
     NonNullList<ItemStack> getItemStacks();
 
@@ -59,32 +59,32 @@ public interface ContainerEntity extends Container, MenuProvider {
         return this.isChestVehicleEmpty();
     }
 
-    default void addChestVehicleSaveData(CompoundTag p_219944_, HolderLookup.Provider p_332101_) {
+    default void addChestVehicleSaveData(CompoundTag tag, HolderLookup.Provider levelRegistry) {
         if (this.getLootTable() != null) {
-            p_219944_.putString("LootTable", this.getLootTable().location().toString());
+            tag.putString("LootTable", this.getLootTable().location().toString());
             if (this.getLootTableSeed() != 0L) {
-                p_219944_.putLong("LootTableSeed", this.getLootTableSeed());
+                tag.putLong("LootTableSeed", this.getLootTableSeed());
             }
         } else {
-            ContainerHelper.saveAllItems(p_219944_, this.getItemStacks(), p_332101_);
+            ContainerHelper.saveAllItems(tag, this.getItemStacks(), levelRegistry);
         }
     }
 
-    default void readChestVehicleSaveData(CompoundTag p_219935_, HolderLookup.Provider p_331073_) {
+    default void readChestVehicleSaveData(CompoundTag tag, HolderLookup.Provider levelRegistry) {
         this.clearItemStacks();
-        if (p_219935_.contains("LootTable", 8)) {
-            this.setLootTable(ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.parse(p_219935_.getString("LootTable"))));
-            this.setLootTableSeed(p_219935_.getLong("LootTableSeed"));
+        if (tag.contains("LootTable", 8)) {
+            this.setLootTable(ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.parse(tag.getString("LootTable"))));
+            this.setLootTableSeed(tag.getLong("LootTableSeed"));
         } else {
-            ContainerHelper.loadAllItems(p_219935_, this.getItemStacks(), p_331073_);
+            ContainerHelper.loadAllItems(tag, this.getItemStacks(), levelRegistry);
         }
     }
 
-    default void chestVehicleDestroyed(DamageSource p_219928_, Level p_219929_, Entity p_219930_) {
-        if (p_219929_.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
-            Containers.dropContents(p_219929_, p_219930_, this);
-            if (!p_219929_.isClientSide) {
-                Entity entity = p_219928_.getDirectEntity();
+    default void chestVehicleDestroyed(DamageSource damageSource, Level level, Entity p_entity) {
+        if (level.getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
+            Containers.dropContents(level, p_entity, this);
+            if (!level.isClientSide) {
+                Entity entity = damageSource.getDirectEntity();
                 if (entity != null && entity.getType() == EntityType.PLAYER) {
                     PiglinAi.angerNearbyPiglins((Player)entity, true);
                 }
@@ -92,17 +92,17 @@ public interface ContainerEntity extends Container, MenuProvider {
         }
     }
 
-    default InteractionResult interactWithContainerVehicle(Player p_270068_) {
-        p_270068_.openMenu(this);
-        return !p_270068_.level().isClientSide ? InteractionResult.CONSUME : InteractionResult.SUCCESS;
+    default InteractionResult interactWithContainerVehicle(Player player) {
+        player.openMenu(this);
+        return !player.level().isClientSide ? InteractionResult.CONSUME : InteractionResult.SUCCESS;
     }
 
-    default void unpackChestVehicleLootTable(@Nullable Player p_219950_) {
+    default void unpackChestVehicleLootTable(@Nullable Player player) {
         MinecraftServer minecraftserver = this.level().getServer();
         if (this.getLootTable() != null && minecraftserver != null) {
             LootTable loottable = minecraftserver.reloadableRegistries().getLootTable(this.getLootTable());
-            if (p_219950_ != null) {
-                CriteriaTriggers.GENERATE_LOOT.trigger((ServerPlayer)p_219950_, this.getLootTable());
+            if (player != null) {
+                CriteriaTriggers.GENERATE_LOOT.trigger((ServerPlayer)player, this.getLootTable());
             }
 
             this.setLootTable(null);
@@ -110,8 +110,8 @@ public interface ContainerEntity extends Container, MenuProvider {
             // Neo: set the chest to attacking_entity for loot context.
             if (this instanceof AbstractMinecartContainer entityContainer)
                 lootparams$builder.withParameter(LootContextParams.ATTACKING_ENTITY, entityContainer);
-            if (p_219950_ != null) {
-                lootparams$builder.withLuck(p_219950_.getLuck()).withParameter(LootContextParams.THIS_ENTITY, p_219950_);
+            if (player != null) {
+                lootparams$builder.withLuck(player.getLuck()).withParameter(LootContextParams.THIS_ENTITY, player);
             }
 
             loottable.fill(this, lootparams$builder.create(LootContextParamSets.CHEST), this.getLootTableSeed());
@@ -133,49 +133,49 @@ public interface ContainerEntity extends Container, MenuProvider {
         return true;
     }
 
-    default ItemStack removeChestVehicleItemNoUpdate(int p_219946_) {
+    default ItemStack removeChestVehicleItemNoUpdate(int slot) {
         this.unpackChestVehicleLootTable(null);
-        ItemStack itemstack = this.getItemStacks().get(p_219946_);
+        ItemStack itemstack = this.getItemStacks().get(slot);
         if (itemstack.isEmpty()) {
             return ItemStack.EMPTY;
         } else {
-            this.getItemStacks().set(p_219946_, ItemStack.EMPTY);
+            this.getItemStacks().set(slot, ItemStack.EMPTY);
             return itemstack;
         }
     }
 
-    default ItemStack getChestVehicleItem(int p_219948_) {
+    default ItemStack getChestVehicleItem(int slot) {
         this.unpackChestVehicleLootTable(null);
-        return this.getItemStacks().get(p_219948_);
+        return this.getItemStacks().get(slot);
     }
 
-    default ItemStack removeChestVehicleItem(int p_219937_, int p_219938_) {
+    default ItemStack removeChestVehicleItem(int slot, int amount) {
         this.unpackChestVehicleLootTable(null);
-        return ContainerHelper.removeItem(this.getItemStacks(), p_219937_, p_219938_);
+        return ContainerHelper.removeItem(this.getItemStacks(), slot, amount);
     }
 
-    default void setChestVehicleItem(int p_219941_, ItemStack p_219942_) {
+    default void setChestVehicleItem(int slot, ItemStack stack) {
         this.unpackChestVehicleLootTable(null);
-        this.getItemStacks().set(p_219941_, p_219942_);
-        p_219942_.limitSize(this.getMaxStackSize(p_219942_));
+        this.getItemStacks().set(slot, stack);
+        stack.limitSize(this.getMaxStackSize(stack));
     }
 
-    default SlotAccess getChestVehicleSlot(final int p_219952_) {
-        return p_219952_ >= 0 && p_219952_ < this.getContainerSize() ? new SlotAccess() {
+    default SlotAccess getChestVehicleSlot(final int index) {
+        return index >= 0 && index < this.getContainerSize() ? new SlotAccess() {
             @Override
             public ItemStack get() {
-                return ContainerEntity.this.getChestVehicleItem(p_219952_);
+                return ContainerEntity.this.getChestVehicleItem(index);
             }
 
             @Override
             public boolean set(ItemStack p_219964_) {
-                ContainerEntity.this.setChestVehicleItem(p_219952_, p_219964_);
+                ContainerEntity.this.setChestVehicleItem(index, p_219964_);
                 return true;
             }
         } : SlotAccess.NULL;
     }
 
-    default boolean isChestVehicleStillValid(Player p_219955_) {
-        return !this.isRemoved() && p_219955_.canInteractWithEntity(this.getBoundingBox(), 4.0);
+    default boolean isChestVehicleStillValid(Player player) {
+        return !this.isRemoved() && player.canInteractWithEntity(this.getBoundingBox(), 4.0);
     }
 }

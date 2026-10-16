@@ -33,11 +33,11 @@ public class BreezeDebugRenderer {
     private final Minecraft minecraft;
     private final Map<Integer, BreezeDebugPayload.BreezeInfo> perEntity = new HashMap<>();
 
-    public BreezeDebugRenderer(Minecraft p_312380_) {
-        this.minecraft = p_312380_;
+    public BreezeDebugRenderer(Minecraft minecraft) {
+        this.minecraft = minecraft;
     }
 
-    public void render(PoseStack p_312334_, MultiBufferSource p_312422_, double p_312916_, double p_312212_, double p_312705_) {
+    public void render(PoseStack poseStack, MultiBufferSource buffer, double xOffset, double yOffset, double zOffset) {
         LocalPlayer localplayer = this.minecraft.player;
         localplayer.level()
             .getEntities(EntityType.BREEZE, localplayer.getBoundingBox().inflate(100.0), p_312383_ -> true)
@@ -49,34 +49,34 @@ public class BreezeDebugRenderer {
                         .map(p_348106_ -> p_348106_.getPosition(this.minecraft.getTimer().getGameTimeDeltaPartialTick(true)))
                         .ifPresent(
                             p_312926_ -> {
-                                drawLine(p_312334_, p_312422_, p_312916_, p_312212_, p_312705_, p_348113_.position(), p_312926_, TARGET_LINE_COLOR);
+                                drawLine(poseStack, buffer, xOffset, yOffset, zOffset, p_348113_.position(), p_312926_, TARGET_LINE_COLOR);
                                 Vec3 vec3 = p_312926_.add(0.0, 0.01F, 0.0);
                                 drawCircle(
-                                    p_312334_.last().pose(),
-                                    p_312916_,
-                                    p_312212_,
-                                    p_312705_,
-                                    p_312422_.getBuffer(RenderType.debugLineStrip(2.0)),
+                                    poseStack.last().pose(),
+                                    xOffset,
+                                    yOffset,
+                                    zOffset,
+                                    buffer.getBuffer(RenderType.debugLineStrip(2.0)),
                                     vec3,
                                     4.0F,
                                     INNER_CIRCLE_COLOR
                                 );
                                 drawCircle(
-                                    p_312334_.last().pose(),
-                                    p_312916_,
-                                    p_312212_,
-                                    p_312705_,
-                                    p_312422_.getBuffer(RenderType.debugLineStrip(2.0)),
+                                    poseStack.last().pose(),
+                                    xOffset,
+                                    yOffset,
+                                    zOffset,
+                                    buffer.getBuffer(RenderType.debugLineStrip(2.0)),
                                     vec3,
                                     8.0F,
                                     MIDDLE_CIRCLE_COLOR
                                 );
                                 drawCircle(
-                                    p_312334_.last().pose(),
-                                    p_312916_,
-                                    p_312212_,
-                                    p_312705_,
-                                    p_312422_.getBuffer(RenderType.debugLineStrip(2.0)),
+                                    poseStack.last().pose(),
+                                    xOffset,
+                                    yOffset,
+                                    zOffset,
+                                    buffer.getBuffer(RenderType.debugLineStrip(2.0)),
                                     vec3,
                                     20.0F,
                                     OUTER_CIRCLE_COLOR
@@ -87,12 +87,12 @@ public class BreezeDebugRenderer {
                         .ifPresent(
                             p_352682_ -> {
                                 drawLine(
-                                    p_312334_, p_312422_, p_312916_, p_312212_, p_312705_, p_348113_.position(), p_352682_.getCenter(), JUMP_TARGET_LINE_COLOR
+                                    poseStack, buffer, xOffset, yOffset, zOffset, p_348113_.position(), p_352682_.getCenter(), JUMP_TARGET_LINE_COLOR
                                 );
                                 DebugRenderer.renderFilledBox(
-                                    p_312334_,
-                                    p_312422_,
-                                    AABB.unitCubeFromLowerCorner(Vec3.atLowerCornerOf(p_352682_)).move(-p_312916_, -p_312212_, -p_312705_),
+                                    poseStack,
+                                    buffer,
+                                    AABB.unitCubeFromLowerCorner(Vec3.atLowerCornerOf(p_352682_)).move(-xOffset, -yOffset, -zOffset),
                                     1.0F,
                                     0.0F,
                                     0.0F,
@@ -105,46 +105,46 @@ public class BreezeDebugRenderer {
     }
 
     private static void drawLine(
-        PoseStack p_311968_, MultiBufferSource p_312154_, double p_312731_, double p_312933_, double p_312347_, Vec3 p_312653_, Vec3 p_312341_, int p_311785_
+        PoseStack poseStack, MultiBufferSource buffer, double xOffset, double yOffset, double zOffset, Vec3 fromPos, Vec3 toPos, int color
     ) {
-        VertexConsumer vertexconsumer = p_312154_.getBuffer(RenderType.debugLineStrip(2.0));
-        vertexconsumer.addVertex(p_311968_.last(), (float)(p_312653_.x - p_312731_), (float)(p_312653_.y - p_312933_), (float)(p_312653_.z - p_312347_))
-            .setColor(p_311785_);
-        vertexconsumer.addVertex(p_311968_.last(), (float)(p_312341_.x - p_312731_), (float)(p_312341_.y - p_312933_), (float)(p_312341_.z - p_312347_))
-            .setColor(p_311785_);
+        VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.debugLineStrip(2.0));
+        vertexconsumer.addVertex(poseStack.last(), (float)(fromPos.x - xOffset), (float)(fromPos.y - yOffset), (float)(fromPos.z - zOffset))
+            .setColor(color);
+        vertexconsumer.addVertex(poseStack.last(), (float)(toPos.x - xOffset), (float)(toPos.y - yOffset), (float)(toPos.z - zOffset))
+            .setColor(color);
     }
 
     private static void drawCircle(
-        Matrix4f p_312289_, double p_312777_, double p_312720_, double p_312378_, VertexConsumer p_312840_, Vec3 p_312033_, float p_312193_, int p_312116_
+        Matrix4f pose, double xOffset, double yOffset, double zOffset, VertexConsumer consumer, Vec3 pos, float radius, int color
     ) {
         for (int i = 0; i < 20; i++) {
-            drawCircleVertex(i, p_312289_, p_312777_, p_312720_, p_312378_, p_312840_, p_312033_, p_312193_, p_312116_);
+            drawCircleVertex(i, pose, xOffset, yOffset, zOffset, consumer, pos, radius, color);
         }
 
-        drawCircleVertex(0, p_312289_, p_312777_, p_312720_, p_312378_, p_312840_, p_312033_, p_312193_, p_312116_);
+        drawCircleVertex(0, pose, xOffset, yOffset, zOffset, consumer, pos, radius, color);
     }
 
     private static void drawCircleVertex(
-        int p_312234_,
-        Matrix4f p_312568_,
-        double p_312049_,
-        double p_312421_,
-        double p_311755_,
-        VertexConsumer p_311778_,
-        Vec3 p_312214_,
-        float p_312646_,
-        int p_312055_
+        int index,
+        Matrix4f pose,
+        double xOffset,
+        double yOffset,
+        double zOffset,
+        VertexConsumer consumer,
+        Vec3 circleCenter,
+        float radius,
+        int color
     ) {
-        float f = (float)p_312234_ * (float) (Math.PI / 10);
-        Vec3 vec3 = p_312214_.add((double)p_312646_ * Math.cos((double)f), 0.0, (double)p_312646_ * Math.sin((double)f));
-        p_311778_.addVertex(p_312568_, (float)(vec3.x - p_312049_), (float)(vec3.y - p_312421_), (float)(vec3.z - p_311755_)).setColor(p_312055_);
+        float f = (float)index * (float) (Math.PI / 10);
+        Vec3 vec3 = circleCenter.add((double)radius * Math.cos((double)f), 0.0, (double)radius * Math.sin((double)f));
+        consumer.addVertex(pose, (float)(vec3.x - xOffset), (float)(vec3.y - yOffset), (float)(vec3.z - zOffset)).setColor(color);
     }
 
     public void clear() {
         this.perEntity.clear();
     }
 
-    public void add(BreezeDebugPayload.BreezeInfo p_312506_) {
-        this.perEntity.put(p_312506_.id(), p_312506_);
+    public void add(BreezeDebugPayload.BreezeInfo breeze) {
+        this.perEntity.put(breeze.id(), breeze);
     }
 }

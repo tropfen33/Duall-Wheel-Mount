@@ -23,32 +23,32 @@ public class SynchronizeRegistriesTask implements ConfigurationTask {
     private final List<KnownPack> requestedPacks;
     private final LayeredRegistryAccess<RegistryLayer> registries;
 
-    public SynchronizeRegistriesTask(List<KnownPack> p_326209_, LayeredRegistryAccess<RegistryLayer> p_326049_) {
-        this.requestedPacks = p_326209_;
-        this.registries = p_326049_;
+    public SynchronizeRegistriesTask(List<KnownPack> requestedPacks, LayeredRegistryAccess<RegistryLayer> registries) {
+        this.requestedPacks = requestedPacks;
+        this.registries = registries;
     }
 
     @Override
-    public void start(Consumer<Packet<?>> p_326485_) {
-        p_326485_.accept(new ClientboundSelectKnownPacks(this.requestedPacks));
+    public void start(Consumer<Packet<?>> task) {
+        task.accept(new ClientboundSelectKnownPacks(this.requestedPacks));
     }
 
-    private void sendRegistries(Consumer<Packet<?>> p_325923_, Set<KnownPack> p_326322_) {
+    private void sendRegistries(Consumer<Packet<?>> packetSender, Set<KnownPack> packs) {
         DynamicOps<Tag> dynamicops = this.registries.compositeAccess().createSerializationContext(NbtOps.INSTANCE);
         RegistrySynchronization.packRegistries(
             dynamicops,
             this.registries.getAccessFrom(RegistryLayer.WORLDGEN),
-            p_326322_,
-            (p_326010_, p_326361_) -> p_325923_.accept(new ClientboundRegistryDataPacket(p_326010_, p_326361_))
+            packs,
+            (p_326010_, p_326361_) -> packetSender.accept(new ClientboundRegistryDataPacket(p_326010_, p_326361_))
         );
-        p_325923_.accept(new ClientboundUpdateTagsPacket(TagNetworkSerialization.serializeTagsToNetwork(this.registries)));
+        packetSender.accept(new ClientboundUpdateTagsPacket(TagNetworkSerialization.serializeTagsToNetwork(this.registries)));
     }
 
-    public void handleResponse(List<KnownPack> p_326076_, Consumer<Packet<?>> p_326167_) {
+    public void handleResponse(List<KnownPack> packs, Consumer<Packet<?>> packetSender) {
         // Neo: instead of using either all available KnownPacks or none, allow partial fallback to normal syncing
         Set<KnownPack> requested = new java.util.HashSet<>(this.requestedPacks);
-        requested.retainAll(p_326076_);
-        this.sendRegistries(p_326167_, requested);
+        requested.retainAll(packs);
+        this.sendRegistries(packetSender, requested);
     }
 
     @Override

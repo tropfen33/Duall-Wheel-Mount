@@ -12,29 +12,29 @@ import net.minecraft.nbt.Tag;
 public class EncoderCache {
     final LoadingCache<EncoderCache.Key<?, ?>, DataResult<?>> cache;
 
-    public EncoderCache(int p_341936_) {
+    public EncoderCache(int maxSize) {
         this.cache = CacheBuilder.newBuilder()
-            .maximumSize((long)p_341936_)
+            .maximumSize((long)maxSize)
             .concurrencyLevel(1)
             .softValues()
             .build(new CacheLoader<EncoderCache.Key<?, ?>, DataResult<?>>() {
-                public DataResult<?> load(EncoderCache.Key<?, ?> p_341934_) {
-                    return p_341934_.resolve();
+                public DataResult<?> load(EncoderCache.Key<?, ?> key) {
+                    return key.resolve();
                 }
             });
     }
 
-    public <A> Codec<A> wrap(final Codec<A> p_341888_) {
+    public <A> Codec<A> wrap(final Codec<A> codec) {
         return new Codec<A>() {
             @Override
-            public <T> DataResult<Pair<A, T>> decode(DynamicOps<T> p_341931_, T p_341946_) {
-                return p_341888_.decode(p_341931_, p_341946_);
+            public <T> DataResult<Pair<A, T>> decode(DynamicOps<T> ops, T input) {
+                return codec.decode(ops, input);
             }
 
             @Override
-            public <T> DataResult<T> encode(A p_341885_, DynamicOps<T> p_341925_, T p_341904_) {
+            public <T> DataResult<T> encode(A input, DynamicOps<T> ops, T value) {
                 return EncoderCache.this.cache
-                    .getUnchecked(new EncoderCache.Key<>(p_341888_, p_341885_, p_341925_))
+                    .getUnchecked(new EncoderCache.Key<>(codec, input, ops))
                     .map(p_342020_ -> (T)(p_342020_ instanceof Tag tag ? tag.copy() : p_342020_));
             }
         };
@@ -46,11 +46,11 @@ public class EncoderCache {
         }
 
         @Override
-        public boolean equals(Object p_341937_) {
-            if (this == p_341937_) {
+        public boolean equals(Object other) {
+            if (this == other) {
                 return true;
             } else {
-                return !(p_341937_ instanceof EncoderCache.Key<?, ?> key)
+                return !(other instanceof EncoderCache.Key<?, ?> key)
                     ? false
                     : this.codec == key.codec && this.value.equals(key.value) && this.ops.equals(key.ops);
             }

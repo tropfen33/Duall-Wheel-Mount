@@ -67,7 +67,7 @@ public interface DispenseItemBehavior {
     Logger LOGGER = LogUtils.getLogger();
     DispenseItemBehavior NOOP = (p_302424_, p_123401_) -> p_123401_;
 
-    ItemStack dispense(BlockSource p_302445_, ItemStack p_123404_);
+    ItemStack dispense(BlockSource blockSource, ItemStack item);
 
     static void bootStrap() {
         DispenserBlock.registerProjectileBehavior(Items.ARROW);
@@ -401,16 +401,16 @@ public interface DispenseItemBehavior {
         DispenserBlock.registerBehavior(
             Items.GLASS_BOTTLE.asItem(),
             new OptionalDispenseItemBehavior() {
-                private ItemStack takeLiquid(BlockSource p_338528_, ItemStack p_338340_, ItemStack p_338879_) {
-                    p_338528_.level().gameEvent(null, GameEvent.FLUID_PICKUP, p_338528_.pos());
-                    return this.consumeWithRemainder(p_338528_, p_338340_, p_338879_);
+                private ItemStack takeLiquid(BlockSource source, ItemStack emptyItem, ItemStack fullItem) {
+                    source.level().gameEvent(null, GameEvent.FLUID_PICKUP, source.pos());
+                    return this.consumeWithRemainder(source, emptyItem, fullItem);
                 }
 
                 @Override
-                public ItemStack execute(BlockSource p_302433_, ItemStack p_123548_) {
+                public ItemStack execute(BlockSource blockSource, ItemStack item) {
                     this.setSuccess(false);
-                    ServerLevel serverlevel = p_302433_.level();
-                    BlockPos blockpos = p_302433_.pos().relative(p_302433_.state().getValue(DispenserBlock.FACING));
+                    ServerLevel serverlevel = blockSource.level();
+                    BlockPos blockpos = blockSource.pos().relative(blockSource.state().getValue(DispenserBlock.FACING));
                     BlockState blockstate = serverlevel.getBlockState(blockpos);
                     if (blockstate.is(
                             BlockTags.BEEHIVES, p_338544_ -> p_338544_.hasProperty(BeehiveBlock.HONEY_LEVEL) && p_338544_.getBlock() instanceof BeehiveBlock
@@ -419,12 +419,12 @@ public interface DispenseItemBehavior {
                         ((BeehiveBlock)blockstate.getBlock())
                             .releaseBeesAndResetHoneyLevel(serverlevel, blockstate, blockpos, null, BeehiveBlockEntity.BeeReleaseStatus.BEE_RELEASED);
                         this.setSuccess(true);
-                        return this.takeLiquid(p_302433_, p_123548_, new ItemStack(Items.HONEY_BOTTLE));
+                        return this.takeLiquid(blockSource, item, new ItemStack(Items.HONEY_BOTTLE));
                     } else if (serverlevel.getFluidState(blockpos).is(FluidTags.WATER)) {
                         this.setSuccess(true);
-                        return this.takeLiquid(p_302433_, p_123548_, PotionContents.createItemStack(Items.POTION, Potions.WATER));
+                        return this.takeLiquid(blockSource, item, PotionContents.createItemStack(Items.POTION, Potions.WATER));
                     } else {
-                        return super.execute(p_302433_, p_123548_);
+                        return super.execute(blockSource, item);
                     }
                 }
             }

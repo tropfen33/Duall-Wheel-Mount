@@ -8,9 +8,9 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface LayoutElement {
-    void setX(int p_265236_);
+    void setX(int x);
 
-    void setY(int p_265404_);
+    void setY(int y);
 
     int getX();
 
@@ -24,10 +24,10 @@ public interface LayoutElement {
         return new ScreenRectangle(this.getX(), this.getY(), this.getWidth(), this.getHeight());
     }
 
-    default void setPosition(int p_265617_, int p_265577_) {
-        this.setX(p_265617_);
-        this.setY(p_265577_);
+    default void setPosition(int x, int y) {
+        this.setX(x);
+        this.setY(y);
     }
 
-    void visitWidgets(Consumer<AbstractWidget> p_265082_);
+    void visitWidgets(Consumer<AbstractWidget> consumer);
 }

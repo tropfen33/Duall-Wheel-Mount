@@ -23,15 +23,15 @@ public class HeightMapRenderer implements DebugRenderer.SimpleDebugRenderer {
     private static final int CHUNK_DIST = 2;
     private static final float BOX_HEIGHT = 0.09375F;
 
-    public HeightMapRenderer(Minecraft p_113572_) {
-        this.minecraft = p_113572_;
+    public HeightMapRenderer(Minecraft minecraft) {
+        this.minecraft = minecraft;
     }
 
     @Override
-    public void render(PoseStack p_113576_, MultiBufferSource p_113577_, double p_113578_, double p_113579_, double p_113580_) {
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, double camX, double camY, double camZ) {
         LevelAccessor levelaccessor = this.minecraft.level;
-        VertexConsumer vertexconsumer = p_113577_.getBuffer(RenderType.debugFilledBox());
-        BlockPos blockpos = BlockPos.containing(p_113578_, 0.0, p_113580_);
+        VertexConsumer vertexconsumer = bufferSource.getBuffer(RenderType.debugFilledBox());
+        BlockPos blockpos = BlockPos.containing(camX, 0.0, camZ);
 
         for (int i = -2; i <= 2; i++) {
             for (int j = -2; j <= 2; j++) {
@@ -47,17 +47,17 @@ public class HeightMapRenderer implements DebugRenderer.SimpleDebugRenderer {
                             int i1 = SectionPos.sectionToBlockCoord(chunkpos.x, k);
                             int j1 = SectionPos.sectionToBlockCoord(chunkpos.z, l);
                             float f = (float)(
-                                (double)((float)levelaccessor.getHeight(heightmap$types, i1, j1) + (float)heightmap$types.ordinal() * 0.09375F) - p_113579_
+                                (double)((float)levelaccessor.getHeight(heightmap$types, i1, j1) + (float)heightmap$types.ordinal() * 0.09375F) - camY
                             );
                             LevelRenderer.addChainedFilledBoxVertices(
-                                p_113576_,
+                                poseStack,
                                 vertexconsumer,
-                                (double)((float)i1 + 0.25F) - p_113578_,
+                                (double)((float)i1 + 0.25F) - camX,
                                 (double)f,
-                                (double)((float)j1 + 0.25F) - p_113580_,
-                                (double)((float)i1 + 0.75F) - p_113578_,
+                                (double)((float)j1 + 0.25F) - camZ,
+                                (double)((float)i1 + 0.75F) - camX,
                                 (double)(f + 0.09375F),
-                                (double)((float)j1 + 0.75F) - p_113580_,
+                                (double)((float)j1 + 0.75F) - camZ,
                                 vector3f.x(),
                                 vector3f.y(),
                                 vector3f.z(),
@@ -70,8 +70,8 @@ public class HeightMapRenderer implements DebugRenderer.SimpleDebugRenderer {
         }
     }
 
-    private Vector3f getColor(Heightmap.Types p_113574_) {
-        return switch (p_113574_) {
+    private Vector3f getColor(Heightmap.Types types) {
+        return switch (types) {
             case WORLD_SURFACE_WG -> new Vector3f(1.0F, 1.0F, 0.0F);
             case OCEAN_FLOOR_WG -> new Vector3f(1.0F, 0.0F, 1.0F);
             case WORLD_SURFACE -> new Vector3f(0.0F, 0.7F, 0.0F);

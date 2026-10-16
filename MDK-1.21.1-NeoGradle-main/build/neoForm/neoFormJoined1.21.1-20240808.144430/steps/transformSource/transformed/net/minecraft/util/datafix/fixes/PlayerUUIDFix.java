@@ -8,8 +8,8 @@ import com.mojang.datafixers.schemas.Schema;
 import com.mojang.serialization.Dynamic;
 
 public class PlayerUUIDFix extends AbstractUUIDFix {
-    public PlayerUUIDFix(Schema p_16684_) {
-        super(p_16684_, References.PLAYER);
+    public PlayerUUIDFix(Schema outputSchema) {
+        super(outputSchema, References.PLAYER);
     }
 
     @Override

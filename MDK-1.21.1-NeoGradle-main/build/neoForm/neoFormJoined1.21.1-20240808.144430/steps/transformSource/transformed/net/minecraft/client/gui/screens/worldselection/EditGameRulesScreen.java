@@ -48,10 +48,10 @@ public class EditGameRulesScreen extends Screen {
     @Nullable
     private Button doneButton;
 
-    public EditGameRulesScreen(GameRules p_101051_, Consumer<Optional<GameRules>> p_101052_) {
+    public EditGameRulesScreen(GameRules gameRules, Consumer<Optional<GameRules>> exitCallback) {
         super(TITLE);
-        this.gameRules = p_101051_;
-        this.exitCallback = p_101052_;
+        this.gameRules = gameRules;
+        this.exitCallback = exitCallback;
     }
 
     @Override
@@ -88,13 +88,13 @@ public class EditGameRulesScreen extends Screen {
         }
     }
 
-    void markInvalid(EditGameRulesScreen.RuleEntry p_101061_) {
-        this.invalidEntries.add(p_101061_);
+    void markInvalid(EditGameRulesScreen.RuleEntry ruleEntry) {
+        this.invalidEntries.add(ruleEntry);
         this.updateDoneButton();
     }
 
-    void clearInvalid(EditGameRulesScreen.RuleEntry p_101075_) {
-        this.invalidEntries.remove(p_101075_);
+    void clearInvalid(EditGameRulesScreen.RuleEntry ruleEntry) {
+        this.invalidEntries.remove(ruleEntry);
         this.updateDoneButton();
     }
 
@@ -102,32 +102,32 @@ public class EditGameRulesScreen extends Screen {
     public class BooleanRuleEntry extends EditGameRulesScreen.GameRuleEntry {
         private final CycleButton<Boolean> checkbox;
 
-        public BooleanRuleEntry(Component p_101101_, List<FormattedCharSequence> p_101102_, String p_101103_, GameRules.BooleanValue p_101104_) {
-            super(p_101102_, p_101101_);
-            this.checkbox = CycleButton.onOffBuilder(p_101104_.get())
+        public BooleanRuleEntry(Component label, List<FormattedCharSequence> tooltip, String p_101103_, GameRules.BooleanValue value) {
+            super(tooltip, label);
+            this.checkbox = CycleButton.onOffBuilder(value.get())
                 .displayOnlyValue()
                 .withCustomNarration(p_170219_ -> p_170219_.createDefaultNarrationMessage().append("\n").append(p_101103_))
-                .create(10, 5, 44, 20, p_101101_, (p_170215_, p_170216_) -> p_101104_.set(p_170216_, null));
+                .create(10, 5, 44, 20, label, (p_170215_, p_170216_) -> value.set(p_170216_, null));
             this.children.add(this.checkbox);
         }
 
         @Override
         public void render(
-            GuiGraphics p_281587_,
-            int p_281471_,
-            int p_281257_,
-            int p_282541_,
-            int p_282993_,
-            int p_283543_,
-            int p_281322_,
-            int p_282930_,
-            boolean p_283227_,
-            float p_283364_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
-            this.renderLabel(p_281587_, p_281257_, p_282541_);
-            this.checkbox.setX(p_282541_ + p_282993_ - 45);
-            this.checkbox.setY(p_281257_);
-            this.checkbox.render(p_281587_, p_281322_, p_282930_, p_283364_);
+            this.renderLabel(guiGraphics, top, left);
+            this.checkbox.setX(left + width - 45);
+            this.checkbox.setY(top);
+            this.checkbox.render(guiGraphics, mouseX, mouseY, partialTick);
         }
     }
 
@@ -135,25 +135,25 @@ public class EditGameRulesScreen extends Screen {
     public class CategoryRuleEntry extends EditGameRulesScreen.RuleEntry {
         final Component label;
 
-        public CategoryRuleEntry(Component p_101141_) {
+        public CategoryRuleEntry(Component label) {
             super(null);
-            this.label = p_101141_;
+            this.label = label;
         }
 
         @Override
         public void render(
-            GuiGraphics p_283335_,
-            int p_283214_,
-            int p_283476_,
-            int p_281365_,
-            int p_281817_,
-            int p_283006_,
-            int p_282893_,
-            int p_282500_,
-            boolean p_283421_,
-            float p_282445_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
-            p_283335_.drawCenteredString(EditGameRulesScreen.this.minecraft.font, this.label, p_281365_ + p_281817_ / 2, p_283476_ + 5, -1);
+            guiGraphics.drawCenteredString(EditGameRulesScreen.this.minecraft.font, this.label, left + width / 2, top + 5, -1);
         }
 
         @Override
@@ -180,7 +180,7 @@ public class EditGameRulesScreen extends Screen {
     @FunctionalInterface
     @OnlyIn(Dist.CLIENT)
     interface EntryFactory<T extends GameRules.Value<T>> {
-        EditGameRulesScreen.RuleEntry create(Component p_101155_, List<FormattedCharSequence> p_101156_, String p_101157_, T p_101158_);
+        EditGameRulesScreen.RuleEntry create(Component label, List<FormattedCharSequence> tooltip, String p_101157_, T p_101158_);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -188,9 +188,9 @@ public class EditGameRulesScreen extends Screen {
         private final List<FormattedCharSequence> label;
         protected final List<AbstractWidget> children = Lists.newArrayList();
 
-        public GameRuleEntry(@Nullable List<FormattedCharSequence> p_101164_, Component p_101165_) {
-            super(p_101164_);
-            this.label = EditGameRulesScreen.this.minecraft.font.split(p_101165_, 175);
+        public GameRuleEntry(@Nullable List<FormattedCharSequence> tooltip, Component label) {
+            super(tooltip);
+            this.label = EditGameRulesScreen.this.minecraft.font.split(label, 175);
         }
 
         @Override
@@ -203,12 +203,12 @@ public class EditGameRulesScreen extends Screen {
             return this.children;
         }
 
-        protected void renderLabel(GuiGraphics p_282711_, int p_281539_, int p_281414_) {
+        protected void renderLabel(GuiGraphics guiGraphics, int x, int y) {
             if (this.label.size() == 1) {
-                p_282711_.drawString(EditGameRulesScreen.this.minecraft.font, this.label.get(0), p_281414_, p_281539_ + 5, -1, false);
+                guiGraphics.drawString(EditGameRulesScreen.this.minecraft.font, this.label.get(0), y, x + 5, -1, false);
             } else if (this.label.size() >= 2) {
-                p_282711_.drawString(EditGameRulesScreen.this.minecraft.font, this.label.get(0), p_281414_, p_281539_, -1, false);
-                p_282711_.drawString(EditGameRulesScreen.this.minecraft.font, this.label.get(1), p_281414_, p_281539_ + 10, -1, false);
+                guiGraphics.drawString(EditGameRulesScreen.this.minecraft.font, this.label.get(0), y, x, -1, false);
+                guiGraphics.drawString(EditGameRulesScreen.this.minecraft.font, this.label.get(1), y, x + 10, -1, false);
             }
         }
     }
@@ -217,12 +217,12 @@ public class EditGameRulesScreen extends Screen {
     public class IntegerRuleEntry extends EditGameRulesScreen.GameRuleEntry {
         private final EditBox input;
 
-        public IntegerRuleEntry(Component p_101175_, List<FormattedCharSequence> p_101176_, String p_101177_, GameRules.IntegerValue p_101178_) {
-            super(p_101176_, p_101175_);
-            this.input = new EditBox(EditGameRulesScreen.this.minecraft.font, 10, 5, 44, 20, p_101175_.copy().append("\n").append(p_101177_).append("\n"));
-            this.input.setValue(Integer.toString(p_101178_.get()));
+        public IntegerRuleEntry(Component label, List<FormattedCharSequence> tooltip, String p_101177_, GameRules.IntegerValue value) {
+            super(tooltip, label);
+            this.input = new EditBox(EditGameRulesScreen.this.minecraft.font, 10, 5, 44, 20, label.copy().append("\n").append(p_101177_).append("\n"));
+            this.input.setValue(Integer.toString(value.get()));
             this.input.setResponder(p_101181_ -> {
-                if (p_101178_.tryDeserialize(p_101181_)) {
+                if (value.tryDeserialize(p_101181_)) {
                     this.input.setTextColor(14737632);
                     EditGameRulesScreen.this.clearInvalid(this);
                 } else {
@@ -235,21 +235,21 @@ public class EditGameRulesScreen extends Screen {
 
         @Override
         public void render(
-            GuiGraphics p_281756_,
-            int p_281882_,
-            int p_281876_,
-            int p_283136_,
-            int p_283044_,
-            int p_282526_,
-            int p_282433_,
-            int p_281816_,
-            boolean p_282227_,
-            float p_281751_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
-            this.renderLabel(p_281756_, p_281876_, p_283136_);
-            this.input.setX(p_283136_ + p_283044_ - 45);
-            this.input.setY(p_281876_);
-            this.input.render(p_281756_, p_282433_, p_281816_, p_281751_);
+            this.renderLabel(guiGraphics, top, left);
+            this.input.setX(left + width - 45);
+            this.input.setY(top);
+            this.input.render(guiGraphics, mouseX, mouseY, partialTick);
         }
     }
 
@@ -258,8 +258,8 @@ public class EditGameRulesScreen extends Screen {
         @Nullable
         final List<FormattedCharSequence> tooltip;
 
-        public RuleEntry(@Nullable List<FormattedCharSequence> p_194062_) {
-            this.tooltip = p_194062_;
+        public RuleEntry(@Nullable List<FormattedCharSequence> tooltip) {
+            this.tooltip = tooltip;
         }
     }
 
@@ -267,7 +267,7 @@ public class EditGameRulesScreen extends Screen {
     public class RuleList extends ContainerObjectSelectionList<EditGameRulesScreen.RuleEntry> {
         private static final int ITEM_HEIGHT = 24;
 
-        public RuleList(GameRules p_101203_) {
+        public RuleList(GameRules gameRules) {
             super(
                 Minecraft.getInstance(),
                 EditGameRulesScreen.this.width,
@@ -279,9 +279,9 @@ public class EditGameRulesScreen extends Screen {
             GameRules.visitGameRuleTypes(
                 new GameRules.GameRuleTypeVisitor() {
                     @Override
-                    public void visitBoolean(GameRules.Key<GameRules.BooleanValue> p_101238_, GameRules.Type<GameRules.BooleanValue> p_101239_) {
+                    public void visitBoolean(GameRules.Key<GameRules.BooleanValue> key, GameRules.Type<GameRules.BooleanValue> type) {
                         this.addEntry(
-                            p_101238_,
+                            key,
                             (p_101228_, p_101229_, p_101230_, p_101231_) -> EditGameRulesScreen.this.new BooleanRuleEntry(
                                     p_101228_, p_101229_, p_101230_, p_101231_
                                 )
@@ -289,22 +289,22 @@ public class EditGameRulesScreen extends Screen {
                     }
 
                     @Override
-                    public void visitInteger(GameRules.Key<GameRules.IntegerValue> p_101241_, GameRules.Type<GameRules.IntegerValue> p_101242_) {
+                    public void visitInteger(GameRules.Key<GameRules.IntegerValue> key, GameRules.Type<GameRules.IntegerValue> type) {
                         this.addEntry(
-                            p_101241_,
+                            key,
                             (p_101233_, p_101234_, p_101235_, p_101236_) -> EditGameRulesScreen.this.new IntegerRuleEntry(
                                     p_101233_, p_101234_, p_101235_, p_101236_
                                 )
                         );
                     }
 
-                    private <T extends GameRules.Value<T>> void addEntry(GameRules.Key<T> p_101225_, EditGameRulesScreen.EntryFactory<T> p_101226_) {
-                        Component component = Component.translatable(p_101225_.getDescriptionId());
-                        Component component1 = Component.literal(p_101225_.getId()).withStyle(ChatFormatting.YELLOW);
-                        T t = p_101203_.getRule(p_101225_);
+                    private <T extends GameRules.Value<T>> void addEntry(GameRules.Key<T> key, EditGameRulesScreen.EntryFactory<T> factory) {
+                        Component component = Component.translatable(key.getDescriptionId());
+                        Component component1 = Component.literal(key.getId()).withStyle(ChatFormatting.YELLOW);
+                        T t = gameRules.getRule(key);
                         String s = t.serialize();
                         Component component2 = Component.translatable("editGamerule.default", Component.literal(s)).withStyle(ChatFormatting.GRAY);
-                        String s1 = p_101225_.getDescriptionId() + ".description";
+                        String s1 = key.getDescriptionId() + ".description";
                         List<FormattedCharSequence> list;
                         String s2;
                         if (I18n.exists(s1)) {
@@ -318,7 +318,7 @@ public class EditGameRulesScreen extends Screen {
                             s2 = component2.getString();
                         }
 
-                        map.computeIfAbsent(p_101225_.getCategory(), p_101223_ -> Maps.newHashMap()).put(p_101225_, p_101226_.create(component, list, s2, t));
+                        map.computeIfAbsent(key.getCategory(), p_101223_ -> Maps.newHashMap()).put(key, factory.create(component, list, s2, t));
                     }
                 }
             );
@@ -342,8 +342,8 @@ public class EditGameRulesScreen extends Screen {
         }
 
         @Override
-        public void renderWidget(GuiGraphics p_313903_, int p_313824_, int p_313867_, float p_313845_) {
-            super.renderWidget(p_313903_, p_313824_, p_313867_, p_313845_);
+        public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+            super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
             EditGameRulesScreen.RuleEntry editgamerulesscreen$ruleentry = this.getHovered();
             if (editgamerulesscreen$ruleentry != null && editgamerulesscreen$ruleentry.tooltip != null) {
                 EditGameRulesScreen.this.setTooltipForNextRenderPass(editgamerulesscreen$ruleentry.tooltip);

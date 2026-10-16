@@ -37,21 +37,21 @@ public class SelectorContents implements ComponentContents {
     private final EntitySelector selector;
     protected final Optional<Component> separator;
 
-    public SelectorContents(String p_237464_, Optional<Component> p_237465_) {
-        this.pattern = p_237464_;
-        this.separator = p_237465_;
-        this.selector = parseSelector(p_237464_);
+    public SelectorContents(String pattern, Optional<Component> separator) {
+        this.pattern = pattern;
+        this.separator = separator;
+        this.selector = parseSelector(pattern);
     }
 
     @Nullable
-    private static EntitySelector parseSelector(String p_237472_) {
+    private static EntitySelector parseSelector(String selector) {
         EntitySelector entityselector = null;
 
         try {
-            EntitySelectorParser entityselectorparser = new EntitySelectorParser(new StringReader(p_237472_), true);
+            EntitySelectorParser entityselectorparser = new EntitySelectorParser(new StringReader(selector), true);
             entityselector = entityselectorparser.parse();
         } catch (CommandSyntaxException commandsyntaxexception) {
-            LOGGER.warn("Invalid selector component: {}: {}", p_237472_, commandsyntaxexception.getMessage());
+            LOGGER.warn("Invalid selector component: {}: {}", selector, commandsyntaxexception.getMessage());
         }
 
         return entityselector;
@@ -76,31 +76,31 @@ public class SelectorContents implements ComponentContents {
     }
 
     @Override
-    public MutableComponent resolve(@Nullable CommandSourceStack p_237468_, @Nullable Entity p_237469_, int p_237470_) throws CommandSyntaxException {
-        if (p_237468_ != null && this.selector != null) {
-            Optional<? extends Component> optional = ComponentUtils.updateForEntity(p_237468_, this.separator, p_237469_, p_237470_);
-            return ComponentUtils.formatList(this.selector.findEntities(p_237468_), optional, Entity::getDisplayName);
+    public MutableComponent resolve(@Nullable CommandSourceStack nbtPathPattern, @Nullable Entity entity, int recursionDepth) throws CommandSyntaxException {
+        if (nbtPathPattern != null && this.selector != null) {
+            Optional<? extends Component> optional = ComponentUtils.updateForEntity(nbtPathPattern, this.separator, entity, recursionDepth);
+            return ComponentUtils.formatList(this.selector.findEntities(nbtPathPattern), optional, Entity::getDisplayName);
         } else {
             return Component.empty();
         }
     }
 
     @Override
-    public <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> p_237476_, Style p_237477_) {
-        return p_237476_.accept(p_237477_, this.pattern);
+    public <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> styledContentConsumer, Style style) {
+        return styledContentConsumer.accept(style, this.pattern);
     }
 
     @Override
-    public <T> Optional<T> visit(FormattedText.ContentConsumer<T> p_237474_) {
-        return p_237474_.accept(this.pattern);
+    public <T> Optional<T> visit(FormattedText.ContentConsumer<T> contentConsumer) {
+        return contentConsumer.accept(this.pattern);
     }
 
     @Override
-    public boolean equals(Object p_237481_) {
-        if (this == p_237481_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            if (p_237481_ instanceof SelectorContents selectorcontents
+            if (other instanceof SelectorContents selectorcontents
                 && this.pattern.equals(selectorcontents.pattern)
                 && this.separator.equals(selectorcontents.separator)) {
                 return true;

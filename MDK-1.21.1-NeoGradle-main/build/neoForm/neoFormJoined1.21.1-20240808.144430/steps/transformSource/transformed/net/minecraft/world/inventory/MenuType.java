@@ -37,29 +37,29 @@ public class MenuType<T extends AbstractContainerMenu> implements FeatureElement
     private final FeatureFlagSet requiredFeatures;
     private final MenuType.MenuSupplier<T> constructor;
 
-    private static <T extends AbstractContainerMenu> MenuType<T> register(String p_39989_, MenuType.MenuSupplier<T> p_39990_) {
-        return Registry.register(BuiltInRegistries.MENU, p_39989_, new MenuType<>(p_39990_, FeatureFlags.VANILLA_SET));
+    private static <T extends AbstractContainerMenu> MenuType<T> register(String key, MenuType.MenuSupplier<T> factory) {
+        return Registry.register(BuiltInRegistries.MENU, key, new MenuType<>(factory, FeatureFlags.VANILLA_SET));
     }
 
-    private static <T extends AbstractContainerMenu> MenuType<T> register(String p_267295_, MenuType.MenuSupplier<T> p_266945_, FeatureFlag... p_267055_) {
-        return Registry.register(BuiltInRegistries.MENU, p_267295_, new MenuType<>(p_266945_, FeatureFlags.REGISTRY.subset(p_267055_)));
+    private static <T extends AbstractContainerMenu> MenuType<T> register(String key, MenuType.MenuSupplier<T> factory, FeatureFlag... requiredFeatures) {
+        return Registry.register(BuiltInRegistries.MENU, key, new MenuType<>(factory, FeatureFlags.REGISTRY.subset(requiredFeatures)));
     }
 
-    public MenuType(MenuType.MenuSupplier<T> p_267054_, FeatureFlagSet p_266909_) {
-        this.constructor = p_267054_;
-        this.requiredFeatures = p_266909_;
+    public MenuType(MenuType.MenuSupplier<T> constructor, FeatureFlagSet requiredFeatures) {
+        this.constructor = constructor;
+        this.requiredFeatures = requiredFeatures;
     }
 
-    public T create(int p_39986_, Inventory p_39987_) {
-        return this.constructor.create(p_39986_, p_39987_);
+    public T create(int containerId, Inventory playerInventory) {
+        return this.constructor.create(containerId, playerInventory);
     }
 
     @Override
-    public T create(int windowId, Inventory playerInv, net.minecraft.network.RegistryFriendlyByteBuf extraData) {
+    public T create(int containerId, Inventory playerInventory, net.minecraft.network.RegistryFriendlyByteBuf extraData) {
         if (this.constructor instanceof net.neoforged.neoforge.network.IContainerFactory) {
-            return ((net.neoforged.neoforge.network.IContainerFactory<T>) this.constructor).create(windowId, playerInv, extraData);
+            return ((net.neoforged.neoforge.network.IContainerFactory<T>) this.constructor).create(containerId, playerInventory, extraData);
         }
-        return create(windowId, playerInv);
+        return create(containerId, playerInventory);
     }
 
     @Override
@@ -68,6 +68,6 @@ public class MenuType<T extends AbstractContainerMenu> implements FeatureElement
     }
 
     public interface MenuSupplier<T extends AbstractContainerMenu> {
-        T create(int p_39995_, Inventory p_39996_);
+        T create(int containerId, Inventory playerInventory);
     }
 }

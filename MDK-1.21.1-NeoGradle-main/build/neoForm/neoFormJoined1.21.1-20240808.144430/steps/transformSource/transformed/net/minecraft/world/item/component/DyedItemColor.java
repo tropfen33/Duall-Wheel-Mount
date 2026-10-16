@@ -33,16 +33,16 @@ public record DyedItemColor(int rgb, boolean showInTooltip) implements TooltipPr
     );
     public static final int LEATHER_COLOR = -6265536;
 
-    public static int getOrDefault(ItemStack p_330661_, int p_331869_) {
-        DyedItemColor dyeditemcolor = p_330661_.get(DataComponents.DYED_COLOR);
-        return dyeditemcolor != null ? FastColor.ARGB32.opaque(dyeditemcolor.rgb()) : p_331869_;
+    public static int getOrDefault(ItemStack stack, int defaultValue) {
+        DyedItemColor dyeditemcolor = stack.get(DataComponents.DYED_COLOR);
+        return dyeditemcolor != null ? FastColor.ARGB32.opaque(dyeditemcolor.rgb()) : defaultValue;
     }
 
-    public static ItemStack applyDyes(ItemStack p_331581_, List<DyeItem> p_330568_) {
-        if (!p_331581_.is(ItemTags.DYEABLE)) {
+    public static ItemStack applyDyes(ItemStack stack, List<DyeItem> dyes) {
+        if (!stack.is(ItemTags.DYEABLE)) {
             return ItemStack.EMPTY;
         } else {
-            ItemStack itemstack = p_331581_.copyWithCount(1);
+            ItemStack itemstack = stack.copyWithCount(1);
             int i = 0;
             int j = 0;
             int k = 0;
@@ -60,7 +60,7 @@ public record DyedItemColor(int rgb, boolean showInTooltip) implements TooltipPr
                 i1++;
             }
 
-            for (DyeItem dyeitem : p_330568_) {
+            for (DyeItem dyeitem : dyes) {
                 int j3 = dyeitem.getDyeColor().getTextureDiffuseColor();
                 int i2 = FastColor.ARGB32.red(j3);
                 int j2 = FastColor.ARGB32.green(j3);
@@ -88,17 +88,17 @@ public record DyedItemColor(int rgb, boolean showInTooltip) implements TooltipPr
     }
 
     @Override
-    public void addToTooltip(Item.TooltipContext p_340955_, Consumer<Component> p_331920_, TooltipFlag p_330757_) {
+    public void addToTooltip(Item.TooltipContext context, Consumer<Component> tooltipAdder, TooltipFlag tooltipFlag) {
         if (this.showInTooltip) {
-            if (p_330757_.isAdvanced()) {
-                p_331920_.accept(Component.translatable("item.color", String.format(Locale.ROOT, "#%06X", this.rgb)).withStyle(ChatFormatting.GRAY));
+            if (tooltipFlag.isAdvanced()) {
+                tooltipAdder.accept(Component.translatable("item.color", String.format(Locale.ROOT, "#%06X", this.rgb)).withStyle(ChatFormatting.GRAY));
             } else {
-                p_331920_.accept(Component.translatable("item.dyed").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+                tooltipAdder.accept(Component.translatable("item.dyed").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
             }
         }
     }
 
-    public DyedItemColor withTooltip(boolean p_335674_) {
-        return new DyedItemColor(this.rgb, p_335674_);
+    public DyedItemColor withTooltip(boolean showInTooltip) {
+        return new DyedItemColor(this.rgb, showInTooltip);
     }
 }

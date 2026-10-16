@@ -14,30 +14,30 @@ public class DustColorTransitionParticle extends DustParticleBase<DustColorTrans
     private final Vector3f toColor;
 
     protected DustColorTransitionParticle(
-        ClientLevel p_172053_,
-        double p_172054_,
-        double p_172055_,
-        double p_172056_,
-        double p_172057_,
-        double p_172058_,
-        double p_172059_,
-        DustColorTransitionOptions p_172060_,
-        SpriteSet p_172061_
+        ClientLevel level,
+        double x,
+        double y,
+        double z,
+        double xSpeed,
+        double ySpeed,
+        double zSpeed,
+        DustColorTransitionOptions options,
+        SpriteSet sprites
     ) {
-        super(p_172053_, p_172054_, p_172055_, p_172056_, p_172057_, p_172058_, p_172059_, p_172060_, p_172061_);
+        super(level, x, y, z, xSpeed, ySpeed, zSpeed, options, sprites);
         float f = this.random.nextFloat() * 0.4F + 0.6F;
-        this.fromColor = this.randomizeColor(p_172060_.getFromColor(), f);
-        this.toColor = this.randomizeColor(p_172060_.getToColor(), f);
+        this.fromColor = this.randomizeColor(options.getFromColor(), f);
+        this.toColor = this.randomizeColor(options.getToColor(), f);
     }
 
-    private Vector3f randomizeColor(Vector3f p_254318_, float p_254472_) {
+    private Vector3f randomizeColor(Vector3f vector, float multiplier) {
         return new Vector3f(
-            this.randomizeColor(p_254318_.x(), p_254472_), this.randomizeColor(p_254318_.y(), p_254472_), this.randomizeColor(p_254318_.z(), p_254472_)
+            this.randomizeColor(vector.x(), multiplier), this.randomizeColor(vector.y(), multiplier), this.randomizeColor(vector.z(), multiplier)
         );
     }
 
-    private void lerpColors(float p_172070_) {
-        float f = ((float)this.age + p_172070_) / ((float)this.lifetime + 1.0F);
+    private void lerpColors(float partialTick) {
+        float f = ((float)this.age + partialTick) / ((float)this.lifetime + 1.0F);
         Vector3f vector3f = new Vector3f(this.fromColor).lerp(this.toColor, f);
         this.rCol = vector3f.x();
         this.gCol = vector3f.y();
@@ -45,30 +45,30 @@ public class DustColorTransitionParticle extends DustParticleBase<DustColorTrans
     }
 
     @Override
-    public void render(VertexConsumer p_172063_, Camera p_172064_, float p_172065_) {
-        this.lerpColors(p_172065_);
-        super.render(p_172063_, p_172064_, p_172065_);
+    public void render(VertexConsumer buffer, Camera renderInfo, float partialTicks) {
+        this.lerpColors(partialTicks);
+        super.render(buffer, renderInfo, partialTicks);
     }
 
     @OnlyIn(Dist.CLIENT)
     public static class Provider implements ParticleProvider<DustColorTransitionOptions> {
         private final SpriteSet sprites;
 
-        public Provider(SpriteSet p_172073_) {
-            this.sprites = p_172073_;
+        public Provider(SpriteSet sprites) {
+            this.sprites = sprites;
         }
 
         public Particle createParticle(
-            DustColorTransitionOptions p_172075_,
-            ClientLevel p_172076_,
-            double p_172077_,
-            double p_172078_,
-            double p_172079_,
-            double p_172080_,
-            double p_172081_,
-            double p_172082_
+            DustColorTransitionOptions type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            return new DustColorTransitionParticle(p_172076_, p_172077_, p_172078_, p_172079_, p_172080_, p_172081_, p_172082_, p_172075_, this.sprites);
+            return new DustColorTransitionParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, type, this.sprites);
         }
     }
 }

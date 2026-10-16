@@ -22,11 +22,14 @@ public class UndeadHorseRenderer extends AbstractHorseRenderer<AbstractHorse, Ho
         )
     );
 
-    public UndeadHorseRenderer(EntityRendererProvider.Context p_174432_, ModelLayerLocation p_174433_) {
-        super(p_174432_, new HorseModel<>(p_174432_.bakeLayer(p_174433_)), 1.0F);
+    public UndeadHorseRenderer(EntityRendererProvider.Context context, ModelLayerLocation layer) {
+        super(context, new HorseModel<>(context.bakeLayer(layer)), 1.0F);
     }
 
-    public ResourceLocation getTextureLocation(AbstractHorse p_116274_) {
-        return MAP.get(p_116274_.getType());
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(AbstractHorse entity) {
+        return MAP.get(entity.getType());
     }
 }

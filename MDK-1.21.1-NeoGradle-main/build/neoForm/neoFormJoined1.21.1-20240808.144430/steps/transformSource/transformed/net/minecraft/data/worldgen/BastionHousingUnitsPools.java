@@ -10,13 +10,13 @@ import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
 
 public class BastionHousingUnitsPools {
-    public static void bootstrap(BootstrapContext<StructureTemplatePool> p_321533_) {
-        HolderGetter<StructureProcessorList> holdergetter = p_321533_.lookup(Registries.PROCESSOR_LIST);
+    public static void bootstrap(BootstrapContext<StructureTemplatePool> context) {
+        HolderGetter<StructureProcessorList> holdergetter = context.lookup(Registries.PROCESSOR_LIST);
         Holder<StructureProcessorList> holder = holdergetter.getOrThrow(ProcessorLists.HOUSING);
-        HolderGetter<StructureTemplatePool> holdergetter1 = p_321533_.lookup(Registries.TEMPLATE_POOL);
+        HolderGetter<StructureTemplatePool> holdergetter1 = context.lookup(Registries.TEMPLATE_POOL);
         Holder<StructureTemplatePool> holder1 = holdergetter1.getOrThrow(Pools.EMPTY);
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/center_pieces",
             new StructureTemplatePool(
                 holder1,
@@ -29,7 +29,7 @@ public class BastionHousingUnitsPools {
             )
         );
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/pathways",
             new StructureTemplatePool(
                 holder1,
@@ -41,7 +41,7 @@ public class BastionHousingUnitsPools {
             )
         );
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/walls/wall_bases",
             new StructureTemplatePool(
                 holder1,
@@ -53,7 +53,7 @@ public class BastionHousingUnitsPools {
             )
         );
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/stages/stage_0",
             new StructureTemplatePool(
                 holder1,
@@ -67,7 +67,7 @@ public class BastionHousingUnitsPools {
             )
         );
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/stages/stage_1",
             new StructureTemplatePool(
                 holder1,
@@ -81,7 +81,7 @@ public class BastionHousingUnitsPools {
             )
         );
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/stages/rot/stage_1",
             new StructureTemplatePool(
                 holder1,
@@ -90,7 +90,7 @@ public class BastionHousingUnitsPools {
             )
         );
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/stages/stage_2",
             new StructureTemplatePool(
                 holder1,
@@ -102,7 +102,7 @@ public class BastionHousingUnitsPools {
             )
         );
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/stages/stage_3",
             new StructureTemplatePool(
                 holder1,
@@ -116,7 +116,7 @@ public class BastionHousingUnitsPools {
             )
         );
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/fillers/stage_0",
             new StructureTemplatePool(
                 holder1,
@@ -125,7 +125,7 @@ public class BastionHousingUnitsPools {
             )
         );
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/edges",
             new StructureTemplatePool(
                 holder1,
@@ -134,7 +134,7 @@ public class BastionHousingUnitsPools {
             )
         );
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/wall_units",
             new StructureTemplatePool(
                 holder1,
@@ -143,7 +143,7 @@ public class BastionHousingUnitsPools {
             )
         );
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/edge_wall_units",
             new StructureTemplatePool(
                 holder1,
@@ -152,7 +152,7 @@ public class BastionHousingUnitsPools {
             )
         );
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/ramparts",
             new StructureTemplatePool(
                 holder1,
@@ -165,7 +165,7 @@ public class BastionHousingUnitsPools {
             )
         );
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/large_ramparts",
             new StructureTemplatePool(
                 holder1,
@@ -174,7 +174,7 @@ public class BastionHousingUnitsPools {
             )
         );
         Pools.register(
-            p_321533_,
+            context,
             "bastion/units/rampart_plates",
             new StructureTemplatePool(
                 holder1,

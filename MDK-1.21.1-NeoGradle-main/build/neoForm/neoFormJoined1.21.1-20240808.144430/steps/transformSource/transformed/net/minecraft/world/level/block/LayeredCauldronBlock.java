@@ -38,78 +38,82 @@ public class LayeredCauldronBlock extends AbstractCauldronBlock {
         return CODEC;
     }
 
-    public LayeredCauldronBlock(Biome.Precipitation p_304591_, CauldronInteraction.InteractionMap p_304761_, BlockBehaviour.Properties p_153522_) {
-        super(p_153522_, p_304761_);
-        this.precipitationType = p_304591_;
+    public LayeredCauldronBlock(Biome.Precipitation precipitationType, CauldronInteraction.InteractionMap interactions, BlockBehaviour.Properties properties) {
+        super(properties, interactions);
+        this.precipitationType = precipitationType;
         this.registerDefaultState(this.stateDefinition.any().setValue(LEVEL, Integer.valueOf(1)));
     }
 
     @Override
-    public boolean isFull(BlockState p_153555_) {
-        return p_153555_.getValue(LEVEL) == 3;
+    public boolean isFull(BlockState state) {
+        return state.getValue(LEVEL) == 3;
     }
 
     @Override
-    protected boolean canReceiveStalactiteDrip(Fluid p_153551_) {
-        return p_153551_ == Fluids.WATER && this.precipitationType == Biome.Precipitation.RAIN;
+    protected boolean canReceiveStalactiteDrip(Fluid fluid) {
+        return fluid == Fluids.WATER && this.precipitationType == Biome.Precipitation.RAIN;
     }
 
     @Override
-    protected double getContentHeight(BlockState p_153528_) {
-        return (6.0 + (double)p_153528_.getValue(LEVEL).intValue() * 3.0) / 16.0;
+    protected double getContentHeight(BlockState state) {
+        return (6.0 + (double)state.getValue(LEVEL).intValue() * 3.0) / 16.0;
     }
 
     @Override
-    protected void entityInside(BlockState p_153534_, Level p_153535_, BlockPos p_153536_, Entity p_153537_) {
-        if (!p_153535_.isClientSide && p_153537_.isOnFire() && this.isEntityInsideContent(p_153534_, p_153536_, p_153537_)) {
-            p_153537_.clearFire();
-            if (p_153537_.mayInteract(p_153535_, p_153536_)) {
-                this.handleEntityOnFireInside(p_153534_, p_153535_, p_153536_);
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        if (!level.isClientSide && entity.isOnFire() && this.isEntityInsideContent(state, pos, entity)) {
+            entity.clearFire();
+            if (entity.mayInteract(level, pos)) {
+                this.handleEntityOnFireInside(state, level, pos);
             }
         }
     }
 
-    private void handleEntityOnFireInside(BlockState p_153556_, Level p_153557_, BlockPos p_153558_) {
+    private void handleEntityOnFireInside(BlockState state, Level level, BlockPos pos) {
         if (this.precipitationType == Biome.Precipitation.SNOW) {
-            lowerFillLevel(Blocks.WATER_CAULDRON.defaultBlockState().setValue(LEVEL, p_153556_.getValue(LEVEL)), p_153557_, p_153558_);
+            lowerFillLevel(Blocks.WATER_CAULDRON.defaultBlockState().setValue(LEVEL, state.getValue(LEVEL)), level, pos);
         } else {
-            lowerFillLevel(p_153556_, p_153557_, p_153558_);
+            lowerFillLevel(state, level, pos);
         }
     }
 
-    public static void lowerFillLevel(BlockState p_153560_, Level p_153561_, BlockPos p_153562_) {
-        int i = p_153560_.getValue(LEVEL) - 1;
-        BlockState blockstate = i == 0 ? Blocks.CAULDRON.defaultBlockState() : p_153560_.setValue(LEVEL, Integer.valueOf(i));
-        p_153561_.setBlockAndUpdate(p_153562_, blockstate);
-        p_153561_.gameEvent(GameEvent.BLOCK_CHANGE, p_153562_, GameEvent.Context.of(blockstate));
+    public static void lowerFillLevel(BlockState state, Level level, BlockPos pos) {
+        int i = state.getValue(LEVEL) - 1;
+        BlockState blockstate = i == 0 ? Blocks.CAULDRON.defaultBlockState() : state.setValue(LEVEL, Integer.valueOf(i));
+        level.setBlockAndUpdate(pos, blockstate);
+        level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(blockstate));
     }
 
     @Override
-    public void handlePrecipitation(BlockState p_153539_, Level p_153540_, BlockPos p_153541_, Biome.Precipitation p_153542_) {
-        if (CauldronBlock.shouldHandlePrecipitation(p_153540_, p_153542_) && p_153539_.getValue(LEVEL) != 3 && p_153542_ == this.precipitationType) {
-            BlockState blockstate = p_153539_.cycle(LEVEL);
-            p_153540_.setBlockAndUpdate(p_153541_, blockstate);
-            p_153540_.gameEvent(GameEvent.BLOCK_CHANGE, p_153541_, GameEvent.Context.of(blockstate));
+    public void handlePrecipitation(BlockState state, Level level, BlockPos pos, Biome.Precipitation precipitation) {
+        if (CauldronBlock.shouldHandlePrecipitation(level, precipitation) && state.getValue(LEVEL) != 3 && precipitation == this.precipitationType) {
+            BlockState blockstate = state.cycle(LEVEL);
+            level.setBlockAndUpdate(pos, blockstate);
+            level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(blockstate));
         }
     }
 
+    /**
+     * Returns the analog signal this block emits. This is the signal a comparator can read from it.
+     *
+     */
     @Override
-    protected int getAnalogOutputSignal(BlockState p_153530_, Level p_153531_, BlockPos p_153532_) {
-        return p_153530_.getValue(LEVEL);
+    protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+        return state.getValue(LEVEL);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_153549_) {
-        p_153549_.add(LEVEL);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(LEVEL);
     }
 
     @Override
-    protected void receiveStalactiteDrip(BlockState p_153544_, Level p_153545_, BlockPos p_153546_, Fluid p_153547_) {
-        if (!this.isFull(p_153544_)) {
-            BlockState blockstate = p_153544_.setValue(LEVEL, Integer.valueOf(p_153544_.getValue(LEVEL) + 1));
-            p_153545_.setBlockAndUpdate(p_153546_, blockstate);
-            p_153545_.gameEvent(GameEvent.BLOCK_CHANGE, p_153546_, GameEvent.Context.of(blockstate));
-            p_153545_.levelEvent(1047, p_153546_, 0);
+    protected void receiveStalactiteDrip(BlockState state, Level level, BlockPos pos, Fluid fluid) {
+        if (!this.isFull(state)) {
+            BlockState blockstate = state.setValue(LEVEL, Integer.valueOf(state.getValue(LEVEL) + 1));
+            level.setBlockAndUpdate(pos, blockstate);
+            level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(blockstate));
+            level.levelEvent(1047, pos, 0);
         }
     }
 }

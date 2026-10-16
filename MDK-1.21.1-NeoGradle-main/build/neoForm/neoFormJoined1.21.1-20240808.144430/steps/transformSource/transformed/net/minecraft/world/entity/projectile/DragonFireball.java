@@ -18,18 +18,21 @@ import net.minecraft.world.phys.Vec3;
 public class DragonFireball extends AbstractHurtingProjectile {
     public static final float SPLASH_RANGE = 4.0F;
 
-    public DragonFireball(EntityType<? extends DragonFireball> p_36892_, Level p_36893_) {
-        super(p_36892_, p_36893_);
+    public DragonFireball(EntityType<? extends DragonFireball> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public DragonFireball(Level p_36903_, LivingEntity p_36904_, Vec3 p_347512_) {
-        super(EntityType.DRAGON_FIREBALL, p_36904_, p_347512_, p_36903_);
+    public DragonFireball(Level level, LivingEntity owner, Vec3 movement) {
+        super(EntityType.DRAGON_FIREBALL, owner, movement, level);
     }
 
+    /**
+     * Called when this EntityFireball hits a block or entity.
+     */
     @Override
-    protected void onHit(HitResult p_36913_) {
-        super.onHit(p_36913_);
-        if (p_36913_.getType() != HitResult.Type.ENTITY || !this.ownedBy(((EntityHitResult)p_36913_).getEntity())) {
+    protected void onHit(HitResult result) {
+        super.onHit(result);
+        if (result.getType() != HitResult.Type.ENTITY || !this.ownedBy(((EntityHitResult)result).getEntity())) {
             if (!this.level().isClientSide) {
                 List<LivingEntity> list = this.level().getEntitiesOfClass(LivingEntity.class, this.getBoundingBox().inflate(4.0, 2.0, 4.0));
                 AreaEffectCloud areaeffectcloud = new AreaEffectCloud(this.level(), this.getX(), this.getY(), this.getZ());
@@ -60,8 +63,11 @@ public class DragonFireball extends AbstractHurtingProjectile {
         }
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_36910_, float p_36911_) {
+    public boolean hurt(DamageSource source, float amount) {
         return false;
     }
 

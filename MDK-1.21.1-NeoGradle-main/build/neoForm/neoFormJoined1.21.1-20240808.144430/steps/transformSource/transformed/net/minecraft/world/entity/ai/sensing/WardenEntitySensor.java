@@ -19,23 +19,23 @@ public class WardenEntitySensor extends NearestLivingEntitySensor<Warden> {
         return ImmutableSet.copyOf(Iterables.concat(super.requires(), List.of(MemoryModuleType.NEAREST_ATTACKABLE)));
     }
 
-    protected void doTick(ServerLevel p_217833_, Warden p_217834_) {
-        super.doTick(p_217833_, p_217834_);
-        getClosest(p_217834_, p_348257_ -> p_348257_.getType() == EntityType.PLAYER)
-            .or(() -> getClosest(p_217834_, p_348258_ -> p_348258_.getType() != EntityType.PLAYER))
+    protected void doTick(ServerLevel level, Warden entity) {
+        super.doTick(level, entity);
+        getClosest(entity, p_348257_ -> p_348257_.getType() == EntityType.PLAYER)
+            .or(() -> getClosest(entity, p_348258_ -> p_348258_.getType() != EntityType.PLAYER))
             .ifPresentOrElse(
-                p_217841_ -> p_217834_.getBrain().setMemory(MemoryModuleType.NEAREST_ATTACKABLE, p_217841_),
-                () -> p_217834_.getBrain().eraseMemory(MemoryModuleType.NEAREST_ATTACKABLE)
+                p_217841_ -> entity.getBrain().setMemory(MemoryModuleType.NEAREST_ATTACKABLE, p_217841_),
+                () -> entity.getBrain().eraseMemory(MemoryModuleType.NEAREST_ATTACKABLE)
             );
     }
 
-    private static Optional<LivingEntity> getClosest(Warden p_217843_, Predicate<LivingEntity> p_217844_) {
-        return p_217843_.getBrain()
+    private static Optional<LivingEntity> getClosest(Warden warden, Predicate<LivingEntity> predicate) {
+        return warden.getBrain()
             .getMemory(MemoryModuleType.NEAREST_LIVING_ENTITIES)
             .stream()
             .flatMap(Collection::stream)
-            .filter(p_217843_::canTargetEntity)
-            .filter(p_217844_)
+            .filter(warden::canTargetEntity)
+            .filter(predicate)
             .findFirst();
     }
 

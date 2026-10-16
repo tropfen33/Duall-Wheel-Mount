@@ -24,35 +24,35 @@ public class WardenEmissiveLayer<T extends Warden, M extends WardenModel<T>> ext
     private final WardenEmissiveLayer.DrawSelector<T, M> drawSelector;
 
     public WardenEmissiveLayer(
-        RenderLayerParent<T, M> p_234885_,
-        ResourceLocation p_234886_,
-        WardenEmissiveLayer.AlphaFunction<T> p_234887_,
-        WardenEmissiveLayer.DrawSelector<T, M> p_234888_
+        RenderLayerParent<T, M> renderer,
+        ResourceLocation texture,
+        WardenEmissiveLayer.AlphaFunction<T> alphaFunction,
+        WardenEmissiveLayer.DrawSelector<T, M> drawSelector
     ) {
-        super(p_234885_);
-        this.texture = p_234886_;
-        this.alphaFunction = p_234887_;
-        this.drawSelector = p_234888_;
+        super(renderer);
+        this.texture = texture;
+        this.alphaFunction = alphaFunction;
+        this.drawSelector = drawSelector;
     }
 
     public void render(
-        PoseStack p_234902_,
-        MultiBufferSource p_234903_,
-        int p_234904_,
-        T p_234905_,
-        float p_234906_,
-        float p_234907_,
-        float p_234908_,
-        float p_234909_,
-        float p_234910_,
-        float p_234911_
+        PoseStack poseStack,
+        MultiBufferSource bufferSource,
+        int packedLight,
+        T livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTick,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
-        if (!p_234905_.isInvisible()) {
+        if (!livingEntity.isInvisible()) {
             this.onlyDrawSelectedParts();
-            VertexConsumer vertexconsumer = p_234903_.getBuffer(RenderType.entityTranslucentEmissive(this.texture));
-            float f = this.alphaFunction.apply(p_234905_, p_234908_, p_234909_);
+            VertexConsumer vertexconsumer = bufferSource.getBuffer(RenderType.entityTranslucentEmissive(this.texture));
+            float f = this.alphaFunction.apply(livingEntity, partialTick, ageInTicks);
             int i = FastColor.ARGB32.color(Mth.floor(f * 255.0F), 255, 255, 255);
-            this.getParentModel().renderToBuffer(p_234902_, vertexconsumer, p_234904_, LivingEntityRenderer.getOverlayCoords(p_234905_, 0.0F), i);
+            this.getParentModel().renderToBuffer(poseStack, vertexconsumer, packedLight, LivingEntityRenderer.getOverlayCoords(livingEntity, 0.0F), i);
             this.resetDrawForAllParts();
         }
     }
@@ -69,11 +69,11 @@ public class WardenEmissiveLayer<T extends Warden, M extends WardenModel<T>> ext
 
     @OnlyIn(Dist.CLIENT)
     public interface AlphaFunction<T extends Warden> {
-        float apply(T p_234920_, float p_234921_, float p_234922_);
+        float apply(T livingEntity, float partialTick, float ageInTicks);
     }
 
     @OnlyIn(Dist.CLIENT)
     public interface DrawSelector<T extends Warden, M extends EntityModel<T>> {
-        List<ModelPart> getPartsToDraw(M p_234924_);
+        List<ModelPart> getPartsToDraw(M parentModel);
     }
 }

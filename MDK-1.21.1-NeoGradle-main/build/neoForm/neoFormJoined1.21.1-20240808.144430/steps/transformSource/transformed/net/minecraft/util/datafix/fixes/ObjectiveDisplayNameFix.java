@@ -10,8 +10,8 @@ import com.mojang.serialization.Dynamic;
 import net.minecraft.util.datafix.ComponentDataFixUtils;
 
 public class ObjectiveDisplayNameFix extends DataFix {
-    public ObjectiveDisplayNameFix(Schema p_16521_, boolean p_16522_) {
-        super(p_16521_, p_16522_);
+    public ObjectiveDisplayNameFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override

@@ -6,11 +6,19 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.LootContextUser;
 
+/**
+ * A LootItemFunction modifies an ItemStack based on the current LootContext.
+ *
+ * @see LootItemFunctions
+ */
 public interface LootItemFunction extends LootContextUser, BiFunction<ItemStack, LootContext, ItemStack> {
     LootItemFunctionType<? extends LootItemFunction> getType();
 
-    static Consumer<ItemStack> decorate(BiFunction<ItemStack, LootContext, ItemStack> p_80725_, Consumer<ItemStack> p_80726_, LootContext p_80727_) {
-        return p_80732_ -> p_80726_.accept(p_80725_.apply(p_80732_, p_80727_));
+    /**
+     * Create a decorated Consumer. The resulting consumer will first apply {@code stackModification} to all stacks before passing them on to {@code originalConsumer}.
+     */
+    static Consumer<ItemStack> decorate(BiFunction<ItemStack, LootContext, ItemStack> stackModification, Consumer<ItemStack> originalConsumer, LootContext lootContext) {
+        return p_80732_ -> originalConsumer.accept(stackModification.apply(p_80732_, lootContext));
     }
 
     public interface Builder {

@@ -4,19 +4,22 @@ import net.minecraft.network.ClientboundPacketListener;
 import net.minecraft.network.ConnectionProtocol;
 import net.minecraft.network.protocol.cookie.ClientCookiePacketListener;
 
+/**
+ * PacketListener for the client side of the LOGIN protocol.
+ */
 public interface ClientLoginPacketListener extends ClientCookiePacketListener, ClientboundPacketListener {
     @Override
     default ConnectionProtocol protocol() {
         return ConnectionProtocol.LOGIN;
     }
 
-    void handleHello(ClientboundHelloPacket p_134742_);
+    void handleHello(ClientboundHelloPacket packet);
 
-    void handleGameProfile(ClientboundGameProfilePacket p_134741_);
+    void handleGameProfile(ClientboundGameProfilePacket packet);
 
-    void handleDisconnect(ClientboundLoginDisconnectPacket p_134744_);
+    void handleDisconnect(ClientboundLoginDisconnectPacket packet);
 
-    void handleCompression(ClientboundLoginCompressionPacket p_134743_);
+    void handleCompression(ClientboundLoginCompressionPacket packet);
 
-    void handleCustomQuery(ClientboundCustomQueryPacket p_134740_);
+    void handleCustomQuery(ClientboundCustomQueryPacket packet);
 }

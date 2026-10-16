@@ -17,9 +17,9 @@ public record GameEventDebugPayload(ResourceKey<GameEvent> gameEventType, Vec3 p
         this(p_294345_.readResourceKey(Registries.GAME_EVENT), p_294345_.readVec3());
     }
 
-    private void write(FriendlyByteBuf p_295680_) {
-        p_295680_.writeResourceKey(this.gameEventType);
-        p_295680_.writeVec3(this.pos);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeResourceKey(this.gameEventType);
+        buffer.writeVec3(this.pos);
     }
 
     @Override

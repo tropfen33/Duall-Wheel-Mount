@@ -68,26 +68,26 @@ public class PoiTypes {
         .collect(ImmutableSet.toImmutableSet());
     private static final Map<BlockState, Holder<PoiType>> TYPE_BY_STATE = net.neoforged.neoforge.registries.GameData.getBlockStatePointOfInterestTypeMap();
 
-    private static Set<BlockState> getBlockStates(Block p_218074_) {
-        return ImmutableSet.copyOf(p_218074_.getStateDefinition().getPossibleStates());
+    private static Set<BlockState> getBlockStates(Block block) {
+        return ImmutableSet.copyOf(block.getStateDefinition().getPossibleStates());
     }
 
-    private static ResourceKey<PoiType> createKey(String p_218091_) {
-        return ResourceKey.create(Registries.POINT_OF_INTEREST_TYPE, ResourceLocation.withDefaultNamespace(p_218091_));
+    private static ResourceKey<PoiType> createKey(String name) {
+        return ResourceKey.create(Registries.POINT_OF_INTEREST_TYPE, ResourceLocation.withDefaultNamespace(name));
     }
 
-    private static PoiType register(Registry<PoiType> p_218085_, ResourceKey<PoiType> p_218086_, Set<BlockState> p_218087_, int p_218088_, int p_218089_) {
-        PoiType poitype = new PoiType(p_218087_, p_218088_, p_218089_);
-        Registry.register(p_218085_, p_218086_, poitype);
-        registerBlockStates(p_218085_.getHolderOrThrow(p_218086_), p_218087_);
+    private static PoiType register(Registry<PoiType> key, ResourceKey<PoiType> value, Set<BlockState> matchingStates, int maxTickets, int validRange) {
+        PoiType poitype = new PoiType(matchingStates, maxTickets, validRange);
+        Registry.register(key, value, poitype);
+        registerBlockStates(key.getHolderOrThrow(value), matchingStates);
         return poitype;
     }
 
-    private static void registerBlockStates(Holder<PoiType> p_250815_, Set<BlockState> p_250679_) {
+    private static void registerBlockStates(Holder<PoiType> poi, Set<BlockState> states) {
         // Neo: we do this automatically for modded PoiTypes in NeoForgeRegistryCallbacks
-        p_250679_.forEach(
+        states.forEach(
             p_218081_ -> {
-                Holder<PoiType> holder = TYPE_BY_STATE.put(p_218081_, p_250815_);
+                Holder<PoiType> holder = TYPE_BY_STATE.put(p_218081_, poi);
                 if (holder != null) {
                     throw (IllegalStateException)Util.pauseInIde(
                         new IllegalStateException(String.format(Locale.ROOT, "%s is defined in more than one PoI type", p_218081_))
@@ -97,34 +97,34 @@ public class PoiTypes {
         );
     }
 
-    public static Optional<Holder<PoiType>> forState(BlockState p_218076_) {
-        return Optional.ofNullable(TYPE_BY_STATE.get(p_218076_));
+    public static Optional<Holder<PoiType>> forState(BlockState state) {
+        return Optional.ofNullable(TYPE_BY_STATE.get(state));
     }
 
-    public static boolean hasPoi(BlockState p_254440_) {
-        return TYPE_BY_STATE.containsKey(p_254440_);
+    public static boolean hasPoi(BlockState state) {
+        return TYPE_BY_STATE.containsKey(state);
     }
 
-    public static PoiType bootstrap(Registry<PoiType> p_218083_) {
-        register(p_218083_, ARMORER, getBlockStates(Blocks.BLAST_FURNACE), 1, 1);
-        register(p_218083_, BUTCHER, getBlockStates(Blocks.SMOKER), 1, 1);
-        register(p_218083_, CARTOGRAPHER, getBlockStates(Blocks.CARTOGRAPHY_TABLE), 1, 1);
-        register(p_218083_, CLERIC, getBlockStates(Blocks.BREWING_STAND), 1, 1);
-        register(p_218083_, FARMER, getBlockStates(Blocks.COMPOSTER), 1, 1);
-        register(p_218083_, FISHERMAN, getBlockStates(Blocks.BARREL), 1, 1);
-        register(p_218083_, FLETCHER, getBlockStates(Blocks.FLETCHING_TABLE), 1, 1);
-        register(p_218083_, LEATHERWORKER, CAULDRONS, 1, 1);
-        register(p_218083_, LIBRARIAN, getBlockStates(Blocks.LECTERN), 1, 1);
-        register(p_218083_, MASON, getBlockStates(Blocks.STONECUTTER), 1, 1);
-        register(p_218083_, SHEPHERD, getBlockStates(Blocks.LOOM), 1, 1);
-        register(p_218083_, TOOLSMITH, getBlockStates(Blocks.SMITHING_TABLE), 1, 1);
-        register(p_218083_, WEAPONSMITH, getBlockStates(Blocks.GRINDSTONE), 1, 1);
-        register(p_218083_, HOME, BEDS, 1, 1);
-        register(p_218083_, MEETING, getBlockStates(Blocks.BELL), 32, 6);
-        register(p_218083_, BEEHIVE, getBlockStates(Blocks.BEEHIVE), 0, 1);
-        register(p_218083_, BEE_NEST, getBlockStates(Blocks.BEE_NEST), 0, 1);
-        register(p_218083_, NETHER_PORTAL, getBlockStates(Blocks.NETHER_PORTAL), 0, 1);
-        register(p_218083_, LODESTONE, getBlockStates(Blocks.LODESTONE), 0, 1);
-        return register(p_218083_, LIGHTNING_ROD, getBlockStates(Blocks.LIGHTNING_ROD), 0, 1);
+    public static PoiType bootstrap(Registry<PoiType> registry) {
+        register(registry, ARMORER, getBlockStates(Blocks.BLAST_FURNACE), 1, 1);
+        register(registry, BUTCHER, getBlockStates(Blocks.SMOKER), 1, 1);
+        register(registry, CARTOGRAPHER, getBlockStates(Blocks.CARTOGRAPHY_TABLE), 1, 1);
+        register(registry, CLERIC, getBlockStates(Blocks.BREWING_STAND), 1, 1);
+        register(registry, FARMER, getBlockStates(Blocks.COMPOSTER), 1, 1);
+        register(registry, FISHERMAN, getBlockStates(Blocks.BARREL), 1, 1);
+        register(registry, FLETCHER, getBlockStates(Blocks.FLETCHING_TABLE), 1, 1);
+        register(registry, LEATHERWORKER, CAULDRONS, 1, 1);
+        register(registry, LIBRARIAN, getBlockStates(Blocks.LECTERN), 1, 1);
+        register(registry, MASON, getBlockStates(Blocks.STONECUTTER), 1, 1);
+        register(registry, SHEPHERD, getBlockStates(Blocks.LOOM), 1, 1);
+        register(registry, TOOLSMITH, getBlockStates(Blocks.SMITHING_TABLE), 1, 1);
+        register(registry, WEAPONSMITH, getBlockStates(Blocks.GRINDSTONE), 1, 1);
+        register(registry, HOME, BEDS, 1, 1);
+        register(registry, MEETING, getBlockStates(Blocks.BELL), 32, 6);
+        register(registry, BEEHIVE, getBlockStates(Blocks.BEEHIVE), 0, 1);
+        register(registry, BEE_NEST, getBlockStates(Blocks.BEE_NEST), 0, 1);
+        register(registry, NETHER_PORTAL, getBlockStates(Blocks.NETHER_PORTAL), 0, 1);
+        register(registry, LODESTONE, getBlockStates(Blocks.LODESTONE), 0, 1);
+        return register(registry, LIGHTNING_ROD, getBlockStates(Blocks.LIGHTNING_ROD), 0, 1);
     }
 }

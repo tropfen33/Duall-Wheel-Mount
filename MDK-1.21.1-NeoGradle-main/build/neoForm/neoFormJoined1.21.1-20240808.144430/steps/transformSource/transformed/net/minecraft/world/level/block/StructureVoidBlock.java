@@ -18,22 +18,25 @@ public class StructureVoidBlock extends Block {
         return CODEC;
     }
 
-    public StructureVoidBlock(BlockBehaviour.Properties p_57150_) {
-        super(p_57150_);
+    public StructureVoidBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_57156_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.INVISIBLE;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_57158_, BlockGetter p_57159_, BlockPos p_57160_, CollisionContext p_57161_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    protected float getShadeBrightness(BlockState p_57152_, BlockGetter p_57153_, BlockPos p_57154_) {
+    protected float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos) {
         return 1.0F;
     }
 }

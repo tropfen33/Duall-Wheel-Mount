@@ -6,19 +6,19 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class V701 extends Schema {
-    public V701(int p_17996_, Schema p_17997_) {
-        super(p_17996_, p_17997_);
+    public V701(int versionKey, Schema parent) {
+        super(versionKey, parent);
     }
 
-    protected static void registerMob(Schema p_18001_, Map<String, Supplier<TypeTemplate>> p_18002_, String p_18003_) {
-        p_18001_.register(p_18002_, p_18003_, () -> V100.equipment(p_18001_));
+    protected static void registerMob(Schema schema, Map<String, Supplier<TypeTemplate>> map, String name) {
+        schema.register(map, name, () -> V100.equipment(schema));
     }
 
     @Override
-    public Map<String, Supplier<TypeTemplate>> registerEntities(Schema p_18005_) {
-        Map<String, Supplier<TypeTemplate>> map = super.registerEntities(p_18005_);
-        registerMob(p_18005_, map, "WitherSkeleton");
-        registerMob(p_18005_, map, "Stray");
+    public Map<String, Supplier<TypeTemplate>> registerEntities(Schema schema) {
+        Map<String, Supplier<TypeTemplate>> map = super.registerEntities(schema);
+        registerMob(schema, map, "WitherSkeleton");
+        registerMob(schema, map, "Stray");
         return map;
     }
 }

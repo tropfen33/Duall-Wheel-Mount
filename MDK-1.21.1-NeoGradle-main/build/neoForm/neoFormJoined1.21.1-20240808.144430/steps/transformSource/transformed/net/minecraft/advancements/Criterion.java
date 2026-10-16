@@ -10,7 +10,7 @@ public record Criterion<T extends CriterionTriggerInstance>(CriterionTrigger<T> 
     );
     public static final Codec<Criterion<?>> CODEC = MAP_CODEC.codec();
 
-    private static <T extends CriterionTriggerInstance> Codec<Criterion<T>> criterionCodec(CriterionTrigger<T> p_312665_) {
-        return p_312665_.codec().xmap(p_312166_ -> new Criterion<>(p_312665_, (T)p_312166_), Criterion::triggerInstance);
+    private static <T extends CriterionTriggerInstance> Codec<Criterion<T>> criterionCodec(CriterionTrigger<T> trigger) {
+        return trigger.codec().xmap(p_312166_ -> new Criterion<>(trigger, (T)p_312166_), Criterion::triggerInstance);
     }
 }

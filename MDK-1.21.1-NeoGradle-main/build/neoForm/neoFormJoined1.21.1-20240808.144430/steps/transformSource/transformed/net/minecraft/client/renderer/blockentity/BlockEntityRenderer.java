@@ -9,9 +9,9 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface BlockEntityRenderer<T extends BlockEntity> extends net.neoforged.neoforge.client.extensions.IBlockEntityRendererExtension<T> {
-    void render(T p_112307_, float p_112308_, PoseStack p_112309_, MultiBufferSource p_112310_, int p_112311_, int p_112312_);
+    void render(T blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay);
 
-    default boolean shouldRenderOffScreen(T p_112306_) {
+    default boolean shouldRenderOffScreen(T blockEntity) {
         return false;
     }
 
@@ -19,7 +19,7 @@ public interface BlockEntityRenderer<T extends BlockEntity> extends net.neoforge
         return 64;
     }
 
-    default boolean shouldRender(T p_173568_, Vec3 p_173569_) {
-        return Vec3.atCenterOf(p_173568_.getBlockPos()).closerThan(p_173569_, (double)this.getViewDistance());
+    default boolean shouldRender(T blockEntity, Vec3 cameraPos) {
+        return Vec3.atCenterOf(blockEntity.getBlockPos()).closerThan(cameraPos, (double)this.getViewDistance());
     }
 }

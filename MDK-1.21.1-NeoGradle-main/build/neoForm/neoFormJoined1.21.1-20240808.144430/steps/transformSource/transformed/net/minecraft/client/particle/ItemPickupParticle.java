@@ -29,24 +29,24 @@ public class ItemPickupParticle extends Particle {
     private double targetYOld;
     private double targetZOld;
 
-    public ItemPickupParticle(EntityRenderDispatcher p_107023_, RenderBuffers p_107024_, ClientLevel p_107025_, Entity p_107026_, Entity p_107027_) {
-        this(p_107023_, p_107024_, p_107025_, p_107026_, p_107027_, p_107026_.getDeltaMovement());
+    public ItemPickupParticle(EntityRenderDispatcher entityRenderDispatcher, RenderBuffers buffers, ClientLevel level, Entity itemEntity, Entity target) {
+        this(entityRenderDispatcher, buffers, level, itemEntity, target, itemEntity.getDeltaMovement());
     }
 
     private ItemPickupParticle(
-        EntityRenderDispatcher p_107029_, RenderBuffers p_107030_, ClientLevel p_107031_, Entity p_107032_, Entity p_107033_, Vec3 p_107034_
+        EntityRenderDispatcher entityRenderDispatcher, RenderBuffers buffers, ClientLevel level, Entity itemEntity, Entity target, Vec3 speedVector
     ) {
-        super(p_107031_, p_107032_.getX(), p_107032_.getY(), p_107032_.getZ(), p_107034_.x, p_107034_.y, p_107034_.z);
-        this.renderBuffers = p_107030_;
-        this.itemEntity = this.getSafeCopy(p_107032_);
-        this.target = p_107033_;
-        this.entityRenderDispatcher = p_107029_;
+        super(level, itemEntity.getX(), itemEntity.getY(), itemEntity.getZ(), speedVector.x, speedVector.y, speedVector.z);
+        this.renderBuffers = buffers;
+        this.itemEntity = this.getSafeCopy(itemEntity);
+        this.target = target;
+        this.entityRenderDispatcher = entityRenderDispatcher;
         this.updatePosition();
         this.saveOldPosition();
     }
 
-    private Entity getSafeCopy(Entity p_107037_) {
-        return (Entity)(!(p_107037_ instanceof ItemEntity) ? p_107037_ : ((ItemEntity)p_107037_).copy());
+    private Entity getSafeCopy(Entity entity) {
+        return (Entity)(!(entity instanceof ItemEntity) ? entity : ((ItemEntity)entity).copy());
     }
 
     @Override
@@ -55,17 +55,17 @@ public class ItemPickupParticle extends Particle {
     }
 
     @Override
-    public void render(VertexConsumer p_107039_, Camera p_107040_, float p_107041_) {
-        float f = ((float)this.life + p_107041_) / 3.0F;
+    public void render(VertexConsumer buffer, Camera renderInfo, float partialTicks) {
+        float f = ((float)this.life + partialTicks) / 3.0F;
         f *= f;
-        double d0 = Mth.lerp((double)p_107041_, this.targetXOld, this.targetX);
-        double d1 = Mth.lerp((double)p_107041_, this.targetYOld, this.targetY);
-        double d2 = Mth.lerp((double)p_107041_, this.targetZOld, this.targetZ);
+        double d0 = Mth.lerp((double)partialTicks, this.targetXOld, this.targetX);
+        double d1 = Mth.lerp((double)partialTicks, this.targetYOld, this.targetY);
+        double d2 = Mth.lerp((double)partialTicks, this.targetZOld, this.targetZ);
         double d3 = Mth.lerp((double)f, this.itemEntity.getX(), d0);
         double d4 = Mth.lerp((double)f, this.itemEntity.getY(), d1);
         double d5 = Mth.lerp((double)f, this.itemEntity.getZ(), d2);
         MultiBufferSource.BufferSource multibuffersource$buffersource = this.renderBuffers.bufferSource();
-        Vec3 vec3 = p_107040_.getPosition();
+        Vec3 vec3 = renderInfo.getPosition();
         this.entityRenderDispatcher
             .render(
                 this.itemEntity,
@@ -73,10 +73,10 @@ public class ItemPickupParticle extends Particle {
                 d4 - vec3.y(),
                 d5 - vec3.z(),
                 this.itemEntity.getYRot(),
-                p_107041_,
+                partialTicks,
                 new PoseStack(),
                 multibuffersource$buffersource,
-                this.entityRenderDispatcher.getPackedLightCoords(this.itemEntity, p_107041_)
+                this.entityRenderDispatcher.getPackedLightCoords(this.itemEntity, partialTicks)
             );
         multibuffersource$buffersource.endBatch();
     }

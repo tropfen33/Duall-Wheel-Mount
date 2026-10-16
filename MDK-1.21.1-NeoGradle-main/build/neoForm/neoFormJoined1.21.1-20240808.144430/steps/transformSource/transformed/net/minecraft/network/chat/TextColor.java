@@ -25,13 +25,13 @@ public final class TextColor {
     @Nullable
     private final String name;
 
-    private TextColor(int p_131263_, String p_131264_) {
-        this.value = p_131263_ & 16777215;
-        this.name = p_131264_;
+    private TextColor(int value, String name) {
+        this.value = value & 16777215;
+        this.name = name;
     }
 
-    private TextColor(int p_131261_) {
-        this.value = p_131261_ & 16777215;
+    private TextColor(int value) {
+        this.value = value & 16777215;
         this.name = null;
     }
 
@@ -48,11 +48,11 @@ public final class TextColor {
     }
 
     @Override
-    public boolean equals(Object p_131279_) {
-        if (this == p_131279_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        } else if (p_131279_ != null && this.getClass() == p_131279_.getClass()) {
-            TextColor textcolor = (TextColor)p_131279_;
+        } else if (other != null && this.getClass() == other.getClass()) {
+            TextColor textcolor = (TextColor)other;
             return this.value == textcolor.value;
         } else {
             return false;
@@ -70,27 +70,27 @@ public final class TextColor {
     }
 
     @Nullable
-    public static TextColor fromLegacyFormat(ChatFormatting p_131271_) {
-        return LEGACY_FORMAT_TO_COLOR.get(p_131271_);
+    public static TextColor fromLegacyFormat(ChatFormatting formatting) {
+        return LEGACY_FORMAT_TO_COLOR.get(formatting);
     }
 
-    public static TextColor fromRgb(int p_131267_) {
-        return new TextColor(p_131267_);
+    public static TextColor fromRgb(int color) {
+        return new TextColor(color);
     }
 
-    public static DataResult<TextColor> parseColor(String p_131269_) {
-        if (p_131269_.startsWith("#")) {
+    public static DataResult<TextColor> parseColor(String color) {
+        if (color.startsWith("#")) {
             try {
-                int i = Integer.parseInt(p_131269_.substring(1), 16);
+                int i = Integer.parseInt(color.substring(1), 16);
                 return i >= 0 && i <= 16777215
                     ? DataResult.success(fromRgb(i), Lifecycle.stable())
-                    : DataResult.error(() -> "Color value out of range: " + p_131269_);
+                    : DataResult.error(() -> "Color value out of range: " + color);
             } catch (NumberFormatException numberformatexception) {
-                return DataResult.error(() -> "Invalid color value: " + p_131269_);
+                return DataResult.error(() -> "Invalid color value: " + color);
             }
         } else {
-            TextColor textcolor = NAMED_COLORS.get(p_131269_);
-            return textcolor == null ? DataResult.error(() -> "Invalid color name: " + p_131269_) : DataResult.success(textcolor, Lifecycle.stable());
+            TextColor textcolor = NAMED_COLORS.get(color);
+            return textcolor == null ? DataResult.error(() -> "Invalid color name: " + color) : DataResult.success(textcolor, Lifecycle.stable());
         }
     }
 }

@@ -49,47 +49,47 @@ public class ArmorTrim implements TooltipProvider {
     private final Function<Holder<ArmorMaterial>, ResourceLocation> outerTexture;
 
     private ArmorTrim(
-        Holder<TrimMaterial> p_336069_,
-        Holder<TrimPattern> p_335896_,
-        boolean p_335621_,
-        Function<Holder<ArmorMaterial>, ResourceLocation> p_335613_,
-        Function<Holder<ArmorMaterial>, ResourceLocation> p_335818_
+        Holder<TrimMaterial> material,
+        Holder<TrimPattern> pattern,
+        boolean showInTooltip,
+        Function<Holder<ArmorMaterial>, ResourceLocation> innerTexture,
+        Function<Holder<ArmorMaterial>, ResourceLocation> outerTexture
     ) {
-        this.material = p_336069_;
-        this.pattern = p_335896_;
-        this.showInTooltip = p_335621_;
-        this.innerTexture = p_335613_;
-        this.outerTexture = p_335818_;
+        this.material = material;
+        this.pattern = pattern;
+        this.showInTooltip = showInTooltip;
+        this.innerTexture = innerTexture;
+        this.outerTexture = outerTexture;
     }
 
-    public ArmorTrim(Holder<TrimMaterial> p_331108_, Holder<TrimPattern> p_331731_, boolean p_331871_) {
-        this.material = p_331108_;
-        this.pattern = p_331731_;
+    public ArmorTrim(Holder<TrimMaterial> material, Holder<TrimPattern> pattern, boolean showInTooltip) {
+        this.material = material;
+        this.pattern = pattern;
         this.innerTexture = Util.memoize(p_335286_ -> {
-            ResourceLocation resourcelocation = p_331731_.value().assetId();
-            String s = getColorPaletteSuffix(p_331108_, p_335286_);
+            ResourceLocation resourcelocation = pattern.value().assetId();
+            String s = getColorPaletteSuffix(material, p_335286_);
             return resourcelocation.withPath(p_266737_ -> "trims/models/armor/" + p_266737_ + "_leggings_" + s);
         });
         this.outerTexture = Util.memoize(p_335283_ -> {
-            ResourceLocation resourcelocation = p_331731_.value().assetId();
-            String s = getColorPaletteSuffix(p_331108_, p_335283_);
+            ResourceLocation resourcelocation = pattern.value().assetId();
+            String s = getColorPaletteSuffix(material, p_335283_);
             return resourcelocation.withPath(p_266864_ -> "trims/models/armor/" + p_266864_ + "_" + s);
         });
-        this.showInTooltip = p_331871_;
+        this.showInTooltip = showInTooltip;
     }
 
-    public ArmorTrim(Holder<TrimMaterial> p_267249_, Holder<TrimPattern> p_267212_) {
-        this(p_267249_, p_267212_, true);
+    public ArmorTrim(Holder<TrimMaterial> material, Holder<TrimPattern> pattern) {
+        this(material, pattern, true);
     }
 
-    private static String getColorPaletteSuffix(Holder<TrimMaterial> p_323989_, Holder<ArmorMaterial> p_335566_) {
-        Map<Holder<ArmorMaterial>, String> map = p_323989_.value().overrideArmorMaterials();
-        String s = map.get(p_335566_);
-        return s != null ? s : p_323989_.value().assetName();
+    private static String getColorPaletteSuffix(Holder<TrimMaterial> trimMaterial, Holder<ArmorMaterial> armorMaterial) {
+        Map<Holder<ArmorMaterial>, String> map = trimMaterial.value().overrideArmorMaterials();
+        String s = map.get(armorMaterial);
+        return s != null ? s : trimMaterial.value().assetName();
     }
 
-    public boolean hasPatternAndMaterial(Holder<TrimPattern> p_266942_, Holder<TrimMaterial> p_267247_) {
-        return p_266942_.equals(this.pattern) && p_267247_.equals(this.material);
+    public boolean hasPatternAndMaterial(Holder<TrimPattern> pattern, Holder<TrimMaterial> material) {
+        return pattern.equals(this.pattern) && material.equals(this.material);
     }
 
     public Holder<TrimPattern> pattern() {
@@ -100,17 +100,17 @@ public class ArmorTrim implements TooltipProvider {
         return this.material;
     }
 
-    public ResourceLocation innerTexture(Holder<ArmorMaterial> p_324361_) {
-        return this.innerTexture.apply(p_324361_);
+    public ResourceLocation innerTexture(Holder<ArmorMaterial> armorMaterial) {
+        return this.innerTexture.apply(armorMaterial);
     }
 
-    public ResourceLocation outerTexture(Holder<ArmorMaterial> p_323530_) {
-        return this.outerTexture.apply(p_323530_);
+    public ResourceLocation outerTexture(Holder<ArmorMaterial> armorMaterial) {
+        return this.outerTexture.apply(armorMaterial);
     }
 
     @Override
-    public boolean equals(Object p_267123_) {
-        return !(p_267123_ instanceof ArmorTrim armortrim)
+    public boolean equals(Object other) {
+        return !(other instanceof ArmorTrim armortrim)
             ? false
             : this.showInTooltip == armortrim.showInTooltip && this.pattern.equals(armortrim.pattern) && this.material.equals(armortrim.material);
     }
@@ -123,15 +123,15 @@ public class ArmorTrim implements TooltipProvider {
     }
 
     @Override
-    public void addToTooltip(Item.TooltipContext p_341366_, Consumer<Component> p_331480_, TooltipFlag p_330344_) {
+    public void addToTooltip(Item.TooltipContext context, Consumer<Component> tooltipAdder, TooltipFlag tooltipFlag) {
         if (this.showInTooltip) {
-            p_331480_.accept(UPGRADE_TITLE);
-            p_331480_.accept(CommonComponents.space().append(this.pattern.value().copyWithStyle(this.material)));
-            p_331480_.accept(CommonComponents.space().append(this.material.value().description()));
+            tooltipAdder.accept(UPGRADE_TITLE);
+            tooltipAdder.accept(CommonComponents.space().append(this.pattern.value().copyWithStyle(this.material)));
+            tooltipAdder.accept(CommonComponents.space().append(this.material.value().description()));
         }
     }
 
-    public ArmorTrim withTooltip(boolean p_335391_) {
-        return new ArmorTrim(this.material, this.pattern, p_335391_, this.innerTexture, this.outerTexture);
+    public ArmorTrim withTooltip(boolean showInTooltip) {
+        return new ArmorTrim(this.material, this.pattern, showInTooltip, this.innerTexture, this.outerTexture);
     }
 }

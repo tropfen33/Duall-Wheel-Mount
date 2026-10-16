@@ -13,15 +13,15 @@ public class TransientCraftingContainer implements CraftingContainer {
     private final int height;
     private final AbstractContainerMenu menu;
 
-    public TransientCraftingContainer(AbstractContainerMenu p_287684_, int p_287629_, int p_287593_) {
-        this(p_287684_, p_287629_, p_287593_, NonNullList.withSize(p_287629_ * p_287593_, ItemStack.EMPTY));
+    public TransientCraftingContainer(AbstractContainerMenu menu, int width, int height) {
+        this(menu, width, height, NonNullList.withSize(width * height, ItemStack.EMPTY));
     }
 
-    public TransientCraftingContainer(AbstractContainerMenu p_287708_, int p_287591_, int p_287609_, NonNullList<ItemStack> p_287695_) {
-        this.items = p_287695_;
-        this.menu = p_287708_;
-        this.width = p_287591_;
-        this.height = p_287609_;
+    public TransientCraftingContainer(AbstractContainerMenu menu, int width, int height, NonNullList<ItemStack> items) {
+        this.items = items;
+        this.menu = menu;
+        this.width = width;
+        this.height = height;
     }
 
     @Override
@@ -40,19 +40,28 @@ public class TransientCraftingContainer implements CraftingContainer {
         return true;
     }
 
+    /**
+     * Returns the stack in the given slot.
+     */
     @Override
-    public ItemStack getItem(int p_287712_) {
-        return p_287712_ >= this.getContainerSize() ? ItemStack.EMPTY : this.items.get(p_287712_);
+    public ItemStack getItem(int slot) {
+        return slot >= this.getContainerSize() ? ItemStack.EMPTY : this.items.get(slot);
     }
 
+    /**
+     * Removes a stack from the given slot and returns it.
+     */
     @Override
-    public ItemStack removeItemNoUpdate(int p_287637_) {
-        return ContainerHelper.takeItem(this.items, p_287637_);
+    public ItemStack removeItemNoUpdate(int slot) {
+        return ContainerHelper.takeItem(this.items, slot);
     }
 
+    /**
+     * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
+     */
     @Override
-    public ItemStack removeItem(int p_287682_, int p_287576_) {
-        ItemStack itemstack = ContainerHelper.removeItem(this.items, p_287682_, p_287576_);
+    public ItemStack removeItem(int slot, int amount) {
+        ItemStack itemstack = ContainerHelper.removeItem(this.items, slot, amount);
         if (!itemstack.isEmpty()) {
             this.menu.slotsChanged(this);
         }
@@ -60,9 +69,12 @@ public class TransientCraftingContainer implements CraftingContainer {
         return itemstack;
     }
 
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
     @Override
-    public void setItem(int p_287681_, ItemStack p_287620_) {
-        this.items.set(p_287681_, p_287620_);
+    public void setItem(int slot, ItemStack stack) {
+        this.items.set(slot, stack);
         this.menu.slotsChanged(this);
     }
 
@@ -70,8 +82,11 @@ public class TransientCraftingContainer implements CraftingContainer {
     public void setChanged() {
     }
 
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
     @Override
-    public boolean stillValid(Player p_287774_) {
+    public boolean stillValid(Player player) {
         return true;
     }
 
@@ -96,9 +111,9 @@ public class TransientCraftingContainer implements CraftingContainer {
     }
 
     @Override
-    public void fillStackedContents(StackedContents p_287653_) {
+    public void fillStackedContents(StackedContents contents) {
         for (ItemStack itemstack : this.items) {
-            p_287653_.accountSimpleStack(itemstack);
+            contents.accountSimpleStack(itemstack);
         }
     }
 }

@@ -9,7 +9,7 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.item.ItemEntity;
 
 public class StartAdmiringItemIfSeen {
-    public static BehaviorControl<LivingEntity> create(int p_259418_) {
+    public static BehaviorControl<LivingEntity> create(int admireDuration) {
         return BehaviorBuilder.create(
             p_259264_ -> p_259264_.group(
                         p_259264_.present(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM),
@@ -22,7 +22,7 @@ public class StartAdmiringItemIfSeen {
                             if (!PiglinAi.isLovedItem(itementity.getItem())) {
                                 return false;
                             } else {
-                                p_260195_.setWithExpiry(true, (long)p_259418_);
+                                p_260195_.setWithExpiry(true, (long)admireDuration);
                                 return true;
                             }
                         })

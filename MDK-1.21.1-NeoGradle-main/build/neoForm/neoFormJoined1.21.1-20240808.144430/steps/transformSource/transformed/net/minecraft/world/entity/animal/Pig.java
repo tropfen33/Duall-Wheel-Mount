@@ -51,8 +51,8 @@ public class Pig extends Animal implements ItemSteerable, Saddleable {
     private static final EntityDataAccessor<Integer> DATA_BOOST_TIME = SynchedEntityData.defineId(Pig.class, EntityDataSerializers.INT);
     private final ItemBasedSteering steering = new ItemBasedSteering(this.entityData, DATA_BOOST_TIME, DATA_SADDLE_ID);
 
-    public Pig(EntityType<? extends Pig> p_29462_, Level p_29463_) {
-        super(p_29462_, p_29463_);
+    public Pig(EntityType<? extends Pig> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
@@ -81,31 +81,34 @@ public class Pig extends Animal implements ItemSteerable, Saddleable {
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_29480_) {
-        if (DATA_BOOST_TIME.equals(p_29480_) && this.level().isClientSide) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        if (DATA_BOOST_TIME.equals(key) && this.level().isClientSide) {
             this.steering.onSynced();
         }
 
-        super.onSyncedDataUpdated(p_29480_);
+        super.onSyncedDataUpdated(key);
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326097_) {
-        super.defineSynchedData(p_326097_);
-        p_326097_.define(DATA_SADDLE_ID, false);
-        p_326097_.define(DATA_BOOST_TIME, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_SADDLE_ID, false);
+        builder.define(DATA_BOOST_TIME, 0);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_29495_) {
-        super.addAdditionalSaveData(p_29495_);
-        this.steering.addAdditionalSaveData(p_29495_);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        this.steering.addAdditionalSaveData(compound);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_29478_) {
-        super.readAdditionalSaveData(p_29478_);
-        this.steering.readAdditionalSaveData(p_29478_);
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.steering.readAdditionalSaveData(compound);
     }
 
     @Override
@@ -114,7 +117,7 @@ public class Pig extends Animal implements ItemSteerable, Saddleable {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_29502_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.PIG_HURT;
     }
 
@@ -124,24 +127,24 @@ public class Pig extends Animal implements ItemSteerable, Saddleable {
     }
 
     @Override
-    protected void playStepSound(BlockPos p_29492_, BlockState p_29493_) {
+    protected void playStepSound(BlockPos pos, BlockState block) {
         this.playSound(SoundEvents.PIG_STEP, 0.15F, 1.0F);
     }
 
     @Override
-    public InteractionResult mobInteract(Player p_29489_, InteractionHand p_29490_) {
-        boolean flag = this.isFood(p_29489_.getItemInHand(p_29490_));
-        if (!flag && this.isSaddled() && !this.isVehicle() && !p_29489_.isSecondaryUseActive()) {
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        boolean flag = this.isFood(player.getItemInHand(hand));
+        if (!flag && this.isSaddled() && !this.isVehicle() && !player.isSecondaryUseActive()) {
             if (!this.level().isClientSide) {
-                p_29489_.startRiding(this);
+                player.startRiding(this);
             }
 
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         } else {
-            InteractionResult interactionresult = super.mobInteract(p_29489_, p_29490_);
+            InteractionResult interactionresult = super.mobInteract(player, hand);
             if (!interactionresult.consumesAction()) {
-                ItemStack itemstack = p_29489_.getItemInHand(p_29490_);
-                return itemstack.is(Items.SADDLE) ? itemstack.interactLivingEntity(p_29489_, this, p_29490_) : InteractionResult.PASS;
+                ItemStack itemstack = player.getItemInHand(hand);
+                return itemstack.is(Items.SADDLE) ? itemstack.interactLivingEntity(player, this, hand) : InteractionResult.PASS;
             } else {
                 return interactionresult;
             }
@@ -167,47 +170,47 @@ public class Pig extends Animal implements ItemSteerable, Saddleable {
     }
 
     @Override
-    public void equipSaddle(ItemStack p_352196_, @Nullable SoundSource p_29476_) {
+    public void equipSaddle(ItemStack stack, @Nullable SoundSource soundSource) {
         this.steering.setSaddle(true);
-        if (p_29476_ != null) {
-            this.level().playSound(null, this, SoundEvents.PIG_SADDLE, p_29476_, 0.5F, 1.0F);
+        if (soundSource != null) {
+            this.level().playSound(null, this, SoundEvents.PIG_SADDLE, soundSource, 0.5F, 1.0F);
         }
     }
 
     @Override
-    public Vec3 getDismountLocationForPassenger(LivingEntity p_29487_) {
+    public Vec3 getDismountLocationForPassenger(LivingEntity livingEntity) {
         Direction direction = this.getMotionDirection();
         if (direction.getAxis() == Direction.Axis.Y) {
-            return super.getDismountLocationForPassenger(p_29487_);
+            return super.getDismountLocationForPassenger(livingEntity);
         } else {
             int[][] aint = DismountHelper.offsetsForDirection(direction);
             BlockPos blockpos = this.blockPosition();
             BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
-            for (Pose pose : p_29487_.getDismountPoses()) {
-                AABB aabb = p_29487_.getLocalBoundsForPose(pose);
+            for (Pose pose : livingEntity.getDismountPoses()) {
+                AABB aabb = livingEntity.getLocalBoundsForPose(pose);
 
                 for (int[] aint1 : aint) {
                     blockpos$mutableblockpos.set(blockpos.getX() + aint1[0], blockpos.getY(), blockpos.getZ() + aint1[1]);
                     double d0 = this.level().getBlockFloorHeight(blockpos$mutableblockpos);
                     if (DismountHelper.isBlockFloorValid(d0)) {
                         Vec3 vec3 = Vec3.upFromBottomCenterOf(blockpos$mutableblockpos, d0);
-                        if (DismountHelper.canDismountTo(this.level(), p_29487_, aabb.move(vec3))) {
-                            p_29487_.setPose(pose);
+                        if (DismountHelper.canDismountTo(this.level(), livingEntity, aabb.move(vec3))) {
+                            livingEntity.setPose(pose);
                             return vec3;
                         }
                     }
                 }
             }
 
-            return super.getDismountLocationForPassenger(p_29487_);
+            return super.getDismountLocationForPassenger(livingEntity);
         }
     }
 
     @Override
-    public void thunderHit(ServerLevel p_29473_, LightningBolt p_29474_) {
-        if (p_29473_.getDifficulty() != Difficulty.PEACEFUL && net.neoforged.neoforge.event.EventHooks.canLivingConvert(this, EntityType.ZOMBIFIED_PIGLIN, (timer) -> {})) {
-            ZombifiedPiglin zombifiedpiglin = EntityType.ZOMBIFIED_PIGLIN.create(p_29473_);
+    public void thunderHit(ServerLevel level, LightningBolt lightning) {
+        if (level.getDifficulty() != Difficulty.PEACEFUL && net.neoforged.neoforge.event.EventHooks.canLivingConvert(this, EntityType.ZOMBIFIED_PIGLIN, (timer) -> {})) {
+            ZombifiedPiglin zombifiedpiglin = EntityType.ZOMBIFIED_PIGLIN.create(level);
             if (zombifiedpiglin != null) {
                 zombifiedpiglin.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.GOLDEN_SWORD));
                 zombifiedpiglin.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
@@ -220,31 +223,31 @@ public class Pig extends Animal implements ItemSteerable, Saddleable {
 
                 zombifiedpiglin.setPersistenceRequired();
                 net.neoforged.neoforge.event.EventHooks.onLivingConvert(this, zombifiedpiglin);
-                p_29473_.addFreshEntity(zombifiedpiglin);
+                level.addFreshEntity(zombifiedpiglin);
                 this.discard();
             } else {
-                super.thunderHit(p_29473_, p_29474_);
+                super.thunderHit(level, lightning);
             }
         } else {
-            super.thunderHit(p_29473_, p_29474_);
+            super.thunderHit(level, lightning);
         }
     }
 
     @Override
-    protected void tickRidden(Player p_278330_, Vec3 p_278267_) {
-        super.tickRidden(p_278330_, p_278267_);
-        this.setRot(p_278330_.getYRot(), p_278330_.getXRot() * 0.5F);
+    protected void tickRidden(Player player, Vec3 travelVector) {
+        super.tickRidden(player, travelVector);
+        this.setRot(player.getYRot(), player.getXRot() * 0.5F);
         this.yRotO = this.yBodyRot = this.yHeadRot = this.getYRot();
         this.steering.tickBoost();
     }
 
     @Override
-    protected Vec3 getRiddenInput(Player p_278309_, Vec3 p_275479_) {
+    protected Vec3 getRiddenInput(Player player, Vec3 travelVector) {
         return new Vec3(0.0, 0.0, 1.0);
     }
 
     @Override
-    protected float getRiddenSpeed(Player p_278258_) {
+    protected float getRiddenSpeed(Player player) {
         return (float)(this.getAttributeValue(Attributes.MOVEMENT_SPEED) * 0.225 * (double)this.steering.boostFactor());
     }
 
@@ -254,13 +257,16 @@ public class Pig extends Animal implements ItemSteerable, Saddleable {
     }
 
     @Nullable
-    public Pig getBreedOffspring(ServerLevel p_149001_, AgeableMob p_149002_) {
-        return EntityType.PIG.create(p_149001_);
+    public Pig getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        return EntityType.PIG.create(level);
     }
 
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on the animal type)
+     */
     @Override
-    public boolean isFood(ItemStack p_29508_) {
-        return p_29508_.is(ItemTags.PIG_FOOD);
+    public boolean isFood(ItemStack stack) {
+        return stack.is(ItemTags.PIG_FOOD);
     }
 
     @Override

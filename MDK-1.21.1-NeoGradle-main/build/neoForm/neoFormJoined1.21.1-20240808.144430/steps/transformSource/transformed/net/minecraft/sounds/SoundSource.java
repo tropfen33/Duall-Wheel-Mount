@@ -14,8 +14,8 @@ public enum SoundSource {
 
     private final String name;
 
-    private SoundSource(String p_12675_) {
-        this.name = p_12675_;
+    private SoundSource(String name) {
+        this.name = name;
     }
 
     public String getName() {

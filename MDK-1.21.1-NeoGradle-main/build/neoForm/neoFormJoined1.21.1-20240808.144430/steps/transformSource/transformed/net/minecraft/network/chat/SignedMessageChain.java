@@ -17,30 +17,30 @@ public class SignedMessageChain {
     SignedMessageLink nextLink;
     Instant lastTimeStamp = Instant.EPOCH;
 
-    public SignedMessageChain(UUID p_250050_, UUID p_249127_) {
-        this.nextLink = SignedMessageLink.root(p_250050_, p_249127_);
+    public SignedMessageChain(UUID sender, UUID sessionId) {
+        this.nextLink = SignedMessageLink.root(sender, sessionId);
     }
 
-    public SignedMessageChain.Encoder encoder(Signer p_248636_) {
+    public SignedMessageChain.Encoder encoder(Signer signer) {
         return p_337505_ -> {
             SignedMessageLink signedmessagelink = this.nextLink;
             if (signedmessagelink == null) {
                 return null;
             } else {
                 this.nextLink = signedmessagelink.advance();
-                return new MessageSignature(p_248636_.sign(p_248065_ -> PlayerChatMessage.updateSignature(p_248065_, signedmessagelink, p_337505_)));
+                return new MessageSignature(signer.sign(p_248065_ -> PlayerChatMessage.updateSignature(p_248065_, signedmessagelink, p_337505_)));
             }
         };
     }
 
-    public SignedMessageChain.Decoder decoder(final ProfilePublicKey p_249122_) {
-        final SignatureValidator signaturevalidator = p_249122_.createSignatureValidator();
+    public SignedMessageChain.Decoder decoder(final ProfilePublicKey publicKey) {
+        final SignatureValidator signaturevalidator = publicKey.createSignatureValidator();
         return new SignedMessageChain.Decoder() {
             @Override
             public PlayerChatMessage unpack(@Nullable MessageSignature p_338553_, SignedMessageBody p_338592_) throws SignedMessageChain.DecodeException {
                 if (p_338553_ == null) {
                     throw new SignedMessageChain.DecodeException(SignedMessageChain.DecodeException.MISSING_PROFILE_KEY);
-                } else if (p_249122_.data().hasExpired()) {
+                } else if (publicKey.data().hasExpired()) {
                     throw new SignedMessageChain.DecodeException(SignedMessageChain.DecodeException.EXPIRED_PROFILE_KEY);
                 } else {
                     SignedMessageLink signedmessagelink = SignedMessageChain.this.nextLink;
@@ -89,17 +89,17 @@ public class SignedMessageChain {
 
     @FunctionalInterface
     public interface Decoder {
-        static SignedMessageChain.Decoder unsigned(UUID p_251747_, BooleanSupplier p_315009_) {
+        static SignedMessageChain.Decoder unsigned(UUID id, BooleanSupplier shouldEnforceSecureProfile) {
             return (p_337508_, p_337509_) -> {
-                if (p_315009_.getAsBoolean()) {
+                if (shouldEnforceSecureProfile.getAsBoolean()) {
                     throw new SignedMessageChain.DecodeException(SignedMessageChain.DecodeException.MISSING_PROFILE_KEY);
                 } else {
-                    return PlayerChatMessage.unsigned(p_251747_, p_337509_.content());
+                    return PlayerChatMessage.unsigned(id, p_337509_.content());
                 }
             };
         }
 
-        PlayerChatMessage unpack(@Nullable MessageSignature p_249082_, SignedMessageBody p_250981_) throws SignedMessageChain.DecodeException;
+        PlayerChatMessage unpack(@Nullable MessageSignature signature, SignedMessageBody body) throws SignedMessageChain.DecodeException;
 
         default void setChainBroken() {
         }
@@ -110,6 +110,6 @@ public class SignedMessageChain {
         SignedMessageChain.Encoder UNSIGNED = p_250548_ -> null;
 
         @Nullable
-        MessageSignature pack(SignedMessageBody p_250628_);
+        MessageSignature pack(SignedMessageBody body);
     }
 }

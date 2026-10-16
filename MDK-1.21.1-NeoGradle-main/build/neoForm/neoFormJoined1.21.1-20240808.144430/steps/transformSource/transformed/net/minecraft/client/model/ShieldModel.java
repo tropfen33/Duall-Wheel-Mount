@@ -22,11 +22,11 @@ public class ShieldModel extends Model {
     private final ModelPart plate;
     private final ModelPart handle;
 
-    public ShieldModel(ModelPart p_170911_) {
+    public ShieldModel(ModelPart root) {
         super(RenderType::entitySolid);
-        this.root = p_170911_;
-        this.plate = p_170911_.getChild("plate");
-        this.handle = p_170911_.getChild("handle");
+        this.root = root;
+        this.plate = root.getChild("plate");
+        this.handle = root.getChild("handle");
     }
 
     public static LayerDefinition createLayer() {
@@ -46,7 +46,7 @@ public class ShieldModel extends Model {
     }
 
     @Override
-    public void renderToBuffer(PoseStack p_103703_, VertexConsumer p_103704_, int p_103705_, int p_103706_, int p_350549_) {
-        this.root.render(p_103703_, p_103704_, p_103705_, p_103706_, p_350549_);
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
+        this.root.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 }

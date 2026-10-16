@@ -30,48 +30,54 @@ public class BrewingStandMenu extends AbstractContainerMenu {
     private final ContainerData brewingStandData;
     private final Slot ingredientSlot;
 
-    public BrewingStandMenu(int p_39090_, Inventory p_39091_) {
-        this(p_39090_, p_39091_, new SimpleContainer(5), new SimpleContainerData(2));
+    public BrewingStandMenu(int containerId, Inventory playerInventory) {
+        this(containerId, playerInventory, new SimpleContainer(5), new SimpleContainerData(2));
     }
 
-    public BrewingStandMenu(int p_39093_, Inventory p_39094_, Container p_39095_, ContainerData p_39096_) {
-        super(MenuType.BREWING_STAND, p_39093_);
-        checkContainerSize(p_39095_, 5);
-        checkContainerDataCount(p_39096_, 2);
-        this.brewingStand = p_39095_;
-        this.brewingStandData = p_39096_;
-        PotionBrewing potionbrewing = p_39094_.player.level().potionBrewing();
-        this.addSlot(new BrewingStandMenu.PotionSlot(potionbrewing, p_39095_, 0, 56, 51));
-        this.addSlot(new BrewingStandMenu.PotionSlot(potionbrewing, p_39095_, 1, 79, 58));
-        this.addSlot(new BrewingStandMenu.PotionSlot(potionbrewing, p_39095_, 2, 102, 51));
-        this.ingredientSlot = this.addSlot(new BrewingStandMenu.IngredientsSlot(potionbrewing, p_39095_, 3, 79, 17));
-        this.addSlot(new BrewingStandMenu.FuelSlot(p_39095_, 4, 17, 17));
-        this.addDataSlots(p_39096_);
+    public BrewingStandMenu(int containerId, Inventory playerInventory, Container brewingStandContainer, ContainerData brewingStandData) {
+        super(MenuType.BREWING_STAND, containerId);
+        checkContainerSize(brewingStandContainer, 5);
+        checkContainerDataCount(brewingStandData, 2);
+        this.brewingStand = brewingStandContainer;
+        this.brewingStandData = brewingStandData;
+        PotionBrewing potionbrewing = playerInventory.player.level().potionBrewing();
+        this.addSlot(new BrewingStandMenu.PotionSlot(potionbrewing, brewingStandContainer, 0, 56, 51));
+        this.addSlot(new BrewingStandMenu.PotionSlot(potionbrewing, brewingStandContainer, 1, 79, 58));
+        this.addSlot(new BrewingStandMenu.PotionSlot(potionbrewing, brewingStandContainer, 2, 102, 51));
+        this.ingredientSlot = this.addSlot(new BrewingStandMenu.IngredientsSlot(potionbrewing, brewingStandContainer, 3, 79, 17));
+        this.addSlot(new BrewingStandMenu.FuelSlot(brewingStandContainer, 4, 17, 17));
+        this.addDataSlots(brewingStandData);
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 9; j++) {
-                this.addSlot(new Slot(p_39094_, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
             }
         }
 
         for (int k = 0; k < 9; k++) {
-            this.addSlot(new Slot(p_39094_, k, 8 + k * 18, 142));
+            this.addSlot(new Slot(playerInventory, k, 8 + k * 18, 142));
         }
     }
 
+    /**
+     * Determines whether supplied player can use this container
+     */
     @Override
-    public boolean stillValid(Player p_39098_) {
-        return this.brewingStand.stillValid(p_39098_);
+    public boolean stillValid(Player player) {
+        return this.brewingStand.stillValid(player);
     }
 
+    /**
+     * Handle when the stack in slot {@code index} is shift-clicked. Normally this moves the stack between the player inventory and the other inventory(s).
+     */
     @Override
-    public ItemStack quickMoveStack(Player p_39100_, int p_39101_) {
+    public ItemStack quickMoveStack(Player player, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(p_39101_);
+        Slot slot = this.slots.get(index);
         if (slot != null && slot.hasItem()) {
             ItemStack itemstack1 = slot.getItem();
             itemstack = itemstack1.copy();
-            if ((p_39101_ < 0 || p_39101_ > 2) && p_39101_ != 3 && p_39101_ != 4) {
+            if ((index < 0 || index > 2) && index != 3 && index != 4) {
                 if (BrewingStandMenu.FuelSlot.mayPlaceItem(itemstack)) {
                     if (this.moveItemStackTo(itemstack1, 4, 5, false)
                         || this.ingredientSlot.mayPlace(itemstack1) && !this.moveItemStackTo(itemstack1, 3, 4, false)) {
@@ -81,15 +87,15 @@ public class BrewingStandMenu extends AbstractContainerMenu {
                     if (!this.moveItemStackTo(itemstack1, 3, 4, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (BrewingStandMenu.PotionSlot.mayPlaceItem(p_39100_.level().potionBrewing(), itemstack)) {
+                } else if (BrewingStandMenu.PotionSlot.mayPlaceItem(player.level().potionBrewing(), itemstack)) {
                     if (!this.moveItemStackTo(itemstack1, 0, 3, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (p_39101_ >= 5 && p_39101_ < 32) {
+                } else if (index >= 5 && index < 32) {
                     if (!this.moveItemStackTo(itemstack1, 32, 41, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (p_39101_ >= 32 && p_39101_ < 41) {
+                } else if (index >= 32 && index < 41) {
                     if (!this.moveItemStackTo(itemstack1, 5, 32, false)) {
                         return ItemStack.EMPTY;
                     }
@@ -114,7 +120,7 @@ public class BrewingStandMenu extends AbstractContainerMenu {
                 return ItemStack.EMPTY;
             }
 
-            slot.onTake(p_39100_, itemstack);
+            slot.onTake(player, itemstack);
         }
 
         return itemstack;
@@ -129,39 +135,48 @@ public class BrewingStandMenu extends AbstractContainerMenu {
     }
 
     static class FuelSlot extends Slot {
-        public FuelSlot(Container p_39105_, int p_39106_, int p_39107_, int p_39108_) {
-            super(p_39105_, p_39106_, p_39107_, p_39108_);
+        public FuelSlot(Container container, int slot, int x, int y) {
+            super(container, slot, x, y);
         }
 
+        /**
+         * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+         */
         @Override
-        public boolean mayPlace(ItemStack p_39111_) {
-            return mayPlaceItem(p_39111_);
+        public boolean mayPlace(ItemStack stack) {
+            return mayPlaceItem(stack);
         }
 
-        public static boolean mayPlaceItem(ItemStack p_39113_) {
-            return p_39113_.is(Items.BLAZE_POWDER);
+        /**
+         * Returns {@code true} if the given {@link net.minecraft.world.item.ItemStack} is usable as fuel in the brewing stand.
+         */
+        public static boolean mayPlaceItem(ItemStack itemStack) {
+            return itemStack.is(Items.BLAZE_POWDER);
         }
     }
 
     static class IngredientsSlot extends Slot {
         private final PotionBrewing potionBrewing;
 
-        public IngredientsSlot(PotionBrewing p_340951_, Container p_39115_, int p_39116_, int p_39117_, int p_39118_) {
-            super(p_39115_, p_39116_, p_39117_, p_39118_);
-            this.potionBrewing = p_340951_;
+        public IngredientsSlot(PotionBrewing potionBrewing, Container container, int slot, int x, int y) {
+            super(container, slot, x, y);
+            this.potionBrewing = potionBrewing;
         }
 
+        /**
+         * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+         */
         @Override
-        public boolean mayPlace(ItemStack p_39121_) {
-            return this.potionBrewing.isIngredient(p_39121_);
+        public boolean mayPlace(ItemStack stack) {
+            return this.potionBrewing.isIngredient(stack);
         }
     }
 
     static class PotionSlot extends Slot {
         private final PotionBrewing potionBrewing;
 
-        public PotionSlot(Container p_39123_, int p_39124_, int p_39125_, int p_39126_) {
-            this(PotionBrewing.EMPTY, p_39123_, p_39124_, p_39125_, p_39126_);
+        public PotionSlot(Container container, int slot, int x, int y) {
+            this(PotionBrewing.EMPTY, container, slot, x, y);
         }
 
         public PotionSlot(PotionBrewing potionBrewing, Container p_39123_, int p_39124_, int p_39125_, int p_39126_) {
@@ -169,9 +184,12 @@ public class BrewingStandMenu extends AbstractContainerMenu {
             this.potionBrewing = potionBrewing;
         }
 
+        /**
+         * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+         */
         @Override
-        public boolean mayPlace(ItemStack p_39132_) {
-            return mayPlaceItem(this.potionBrewing, p_39132_);
+        public boolean mayPlace(ItemStack stack) {
+            return mayPlaceItem(this.potionBrewing, stack);
         }
 
         @Override
@@ -180,19 +198,22 @@ public class BrewingStandMenu extends AbstractContainerMenu {
         }
 
         @Override
-        public void onTake(Player p_150499_, ItemStack p_150500_) {
-            Optional<Holder<Potion>> optional = p_150500_.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY).potion();
-            if (optional.isPresent() && p_150499_ instanceof ServerPlayer serverplayer) {
-                net.neoforged.neoforge.event.EventHooks.onPlayerBrewedPotion(p_150499_, p_150500_);
+        public void onTake(Player player, ItemStack stack) {
+            Optional<Holder<Potion>> optional = stack.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY).potion();
+            if (optional.isPresent() && player instanceof ServerPlayer serverplayer) {
+                net.neoforged.neoforge.event.EventHooks.onPlayerBrewedPotion(player, stack);
                 CriteriaTriggers.BREWED_POTION.trigger(serverplayer, optional.get());
             }
 
-            super.onTake(p_150499_, p_150500_);
+            super.onTake(player, stack);
         }
 
+        /**
+         * Returns {@code true} if this {@link net.minecraft.world.item.ItemStack} can be filled with a potion.
+         */
         @Deprecated // Neo: use the overload that takes PotionBrewing instead
-        public static boolean mayPlaceItem(ItemStack p_39134_) {
-            return p_39134_.is(Items.POTION) || p_39134_.is(Items.SPLASH_POTION) || p_39134_.is(Items.LINGERING_POTION) || p_39134_.is(Items.GLASS_BOTTLE);
+        public static boolean mayPlaceItem(ItemStack stack) {
+            return stack.is(Items.POTION) || stack.is(Items.SPLASH_POTION) || stack.is(Items.LINGERING_POTION) || stack.is(Items.GLASS_BOTTLE);
         }
 
         public static boolean mayPlaceItem(PotionBrewing potionBrewing, ItemStack p_39134_) {

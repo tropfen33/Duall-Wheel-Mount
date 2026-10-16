@@ -19,9 +19,9 @@ public class RandomBooleanFeatureConfiguration implements FeatureConfiguration {
     public final Holder<PlacedFeature> featureTrue;
     public final Holder<PlacedFeature> featureFalse;
 
-    public RandomBooleanFeatureConfiguration(Holder<PlacedFeature> p_204804_, Holder<PlacedFeature> p_204805_) {
-        this.featureTrue = p_204804_;
-        this.featureFalse = p_204805_;
+    public RandomBooleanFeatureConfiguration(Holder<PlacedFeature> featureTrue, Holder<PlacedFeature> featureFalse) {
+        this.featureTrue = featureTrue;
+        this.featureFalse = featureFalse;
     }
 
     @Override

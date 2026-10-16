@@ -33,15 +33,15 @@ public class ServerAdvancementManager extends SimpleJsonResourceReloadListener {
     private AdvancementTree tree = new AdvancementTree();
     private final HolderLookup.Provider registries;
 
-    public ServerAdvancementManager(HolderLookup.Provider p_323943_) {
+    public ServerAdvancementManager(HolderLookup.Provider registries) {
         super(GSON, Registries.elementsDirPath(Registries.ADVANCEMENT));
-        this.registries = p_323943_;
+        this.registries = registries;
     }
 
-    protected void apply(Map<ResourceLocation, JsonElement> p_136034_, ResourceManager p_136035_, ProfilerFiller p_136036_) {
+    protected void apply(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
         RegistryOps<JsonElement> registryops = this.makeConditionalOps(); // Neo: add condition context
         Builder<ResourceLocation, AdvancementHolder> builder = ImmutableMap.builder();
-        p_136034_.forEach((p_337529_, p_337530_) -> {
+        object.forEach((p_337529_, p_337530_) -> {
             try {
                 Advancement advancement = net.neoforged.neoforge.common.conditions.ICondition.getWithWithConditionsCodec(Advancement.CONDITIONAL_CODEC, registryops, p_337530_).orElse(null);
                 if (advancement == null) {
@@ -67,15 +67,15 @@ public class ServerAdvancementManager extends SimpleJsonResourceReloadListener {
         this.tree = advancementtree;
     }
 
-    private void validate(ResourceLocation p_312696_, Advancement p_312110_) {
+    private void validate(ResourceLocation location, Advancement advancement) {
         ProblemReporter.Collector problemreporter$collector = new ProblemReporter.Collector();
-        p_312110_.validate(problemreporter$collector, this.registries.asGetterLookup());
-        problemreporter$collector.getReport().ifPresent(p_344260_ -> LOGGER.warn("Found validation problems in advancement {}: \n{}", p_312696_, p_344260_));
+        advancement.validate(problemreporter$collector, this.registries.asGetterLookup());
+        problemreporter$collector.getReport().ifPresent(p_344260_ -> LOGGER.warn("Found validation problems in advancement {}: \n{}", location, p_344260_));
     }
 
     @Nullable
-    public AdvancementHolder get(ResourceLocation p_301079_) {
-        return this.advancements.get(p_301079_);
+    public AdvancementHolder get(ResourceLocation location) {
+        return this.advancements.get(location);
     }
 
     public AdvancementTree tree() {

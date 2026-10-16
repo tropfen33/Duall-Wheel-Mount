@@ -16,44 +16,44 @@ public class TheEndPortalRenderer<T extends TheEndPortalBlockEntity> implements 
     public static final ResourceLocation END_SKY_LOCATION = ResourceLocation.withDefaultNamespace("textures/environment/end_sky.png");
     public static final ResourceLocation END_PORTAL_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/end_portal.png");
 
-    public TheEndPortalRenderer(BlockEntityRendererProvider.Context p_173689_) {
+    public TheEndPortalRenderer(BlockEntityRendererProvider.Context context) {
     }
 
-    public void render(T p_112650_, float p_112651_, PoseStack p_112652_, MultiBufferSource p_112653_, int p_112654_, int p_112655_) {
-        Matrix4f matrix4f = p_112652_.last().pose();
-        this.renderCube(p_112650_, matrix4f, p_112653_.getBuffer(this.renderType()));
+    public void render(T blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        Matrix4f matrix4f = poseStack.last().pose();
+        this.renderCube(blockEntity, matrix4f, bufferSource.getBuffer(this.renderType()));
     }
 
-    private void renderCube(T p_173691_, Matrix4f p_254024_, VertexConsumer p_173693_) {
+    private void renderCube(T blockEntity, Matrix4f pose, VertexConsumer consumer) {
         float f = this.getOffsetDown();
         float f1 = this.getOffsetUp();
-        this.renderFace(p_173691_, p_254024_, p_173693_, 0.0F, 1.0F, 0.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, Direction.SOUTH);
-        this.renderFace(p_173691_, p_254024_, p_173693_, 0.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, Direction.NORTH);
-        this.renderFace(p_173691_, p_254024_, p_173693_, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.0F, Direction.EAST);
-        this.renderFace(p_173691_, p_254024_, p_173693_, 0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 1.0F, 1.0F, 0.0F, Direction.WEST);
-        this.renderFace(p_173691_, p_254024_, p_173693_, 0.0F, 1.0F, f, f, 0.0F, 0.0F, 1.0F, 1.0F, Direction.DOWN);
-        this.renderFace(p_173691_, p_254024_, p_173693_, 0.0F, 1.0F, f1, f1, 1.0F, 1.0F, 0.0F, 0.0F, Direction.UP);
+        this.renderFace(blockEntity, pose, consumer, 0.0F, 1.0F, 0.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, Direction.SOUTH);
+        this.renderFace(blockEntity, pose, consumer, 0.0F, 1.0F, 1.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, Direction.NORTH);
+        this.renderFace(blockEntity, pose, consumer, 1.0F, 1.0F, 1.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.0F, Direction.EAST);
+        this.renderFace(blockEntity, pose, consumer, 0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 1.0F, 1.0F, 0.0F, Direction.WEST);
+        this.renderFace(blockEntity, pose, consumer, 0.0F, 1.0F, f, f, 0.0F, 0.0F, 1.0F, 1.0F, Direction.DOWN);
+        this.renderFace(blockEntity, pose, consumer, 0.0F, 1.0F, f1, f1, 1.0F, 1.0F, 0.0F, 0.0F, Direction.UP);
     }
 
     private void renderFace(
-        T p_253949_,
-        Matrix4f p_254247_,
-        VertexConsumer p_254390_,
-        float p_254147_,
-        float p_253639_,
-        float p_254107_,
-        float p_254109_,
-        float p_254021_,
-        float p_254458_,
-        float p_254086_,
-        float p_254310_,
-        Direction p_253619_
+        T blockEntity,
+        Matrix4f pose,
+        VertexConsumer consumer,
+        float x0,
+        float x1,
+        float y0,
+        float y1,
+        float z0,
+        float z1,
+        float z2,
+        float z3,
+        Direction direction
     ) {
-        if (p_253949_.shouldRenderFace(p_253619_)) {
-            p_254390_.addVertex(p_254247_, p_254147_, p_254107_, p_254021_);
-            p_254390_.addVertex(p_254247_, p_253639_, p_254107_, p_254458_);
-            p_254390_.addVertex(p_254247_, p_253639_, p_254109_, p_254086_);
-            p_254390_.addVertex(p_254247_, p_254147_, p_254109_, p_254310_);
+        if (blockEntity.shouldRenderFace(direction)) {
+            consumer.addVertex(pose, x0, y0, z0);
+            consumer.addVertex(pose, x1, y0, z1);
+            consumer.addVertex(pose, x1, y1, z2);
+            consumer.addVertex(pose, x0, y1, z3);
         }
     }
 

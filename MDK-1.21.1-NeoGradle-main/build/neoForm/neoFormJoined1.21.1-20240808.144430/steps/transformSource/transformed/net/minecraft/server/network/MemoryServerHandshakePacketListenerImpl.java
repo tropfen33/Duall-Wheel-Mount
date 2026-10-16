@@ -12,15 +12,18 @@ public class MemoryServerHandshakePacketListenerImpl implements ServerHandshakeP
     private final MinecraftServer server;
     private final Connection connection;
 
-    public MemoryServerHandshakePacketListenerImpl(MinecraftServer p_9691_, Connection p_9692_) {
-        this.server = p_9691_;
-        this.connection = p_9692_;
+    public MemoryServerHandshakePacketListenerImpl(MinecraftServer server, Connection connection) {
+        this.server = server;
+        this.connection = connection;
     }
 
+    /**
+     * There are two recognized intentions for initiating a handshake: logging in and acquiring server status. The NetworkManager's protocol will be reconfigured according to the specified intention, although a login-intention must pass a versioncheck or receive a disconnect otherwise
+     */
     @Override
-    public void handleIntention(ClientIntentionPacket p_9697_) {
-        if (p_9697_.intention() != ClientIntent.LOGIN) {
-            throw new UnsupportedOperationException("Invalid intention " + p_9697_.intention());
+    public void handleIntention(ClientIntentionPacket packet) {
+        if (packet.intention() != ClientIntent.LOGIN) {
+            throw new UnsupportedOperationException("Invalid intention " + packet.intention());
         } else {
             this.connection.setupInboundProtocol(LoginProtocols.SERVERBOUND, new ServerLoginPacketListenerImpl(this.server, this.connection, false));
             this.connection.setupOutboundProtocol(LoginProtocols.CLIENTBOUND);
@@ -28,7 +31,7 @@ public class MemoryServerHandshakePacketListenerImpl implements ServerHandshakeP
     }
 
     @Override
-    public void onDisconnect(DisconnectionDetails p_350630_) {
+    public void onDisconnect(DisconnectionDetails details) {
     }
 
     @Override

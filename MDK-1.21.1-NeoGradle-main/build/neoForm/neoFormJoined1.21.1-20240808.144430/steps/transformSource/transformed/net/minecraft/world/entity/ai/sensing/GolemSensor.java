@@ -17,13 +17,13 @@ public class GolemSensor extends Sensor<LivingEntity> {
         this(200);
     }
 
-    public GolemSensor(int p_26642_) {
-        super(p_26642_);
+    public GolemSensor(int scanRate) {
+        super(scanRate);
     }
 
     @Override
-    protected void doTick(ServerLevel p_26645_, LivingEntity p_26646_) {
-        checkForNearbyGolem(p_26646_);
+    protected void doTick(ServerLevel level, LivingEntity entity) {
+        checkForNearbyGolem(entity);
     }
 
     @Override
@@ -31,17 +31,17 @@ public class GolemSensor extends Sensor<LivingEntity> {
         return ImmutableSet.of(MemoryModuleType.NEAREST_LIVING_ENTITIES);
     }
 
-    public static void checkForNearbyGolem(LivingEntity p_26648_) {
-        Optional<List<LivingEntity>> optional = p_26648_.getBrain().getMemory(MemoryModuleType.NEAREST_LIVING_ENTITIES);
+    public static void checkForNearbyGolem(LivingEntity livingEntity) {
+        Optional<List<LivingEntity>> optional = livingEntity.getBrain().getMemory(MemoryModuleType.NEAREST_LIVING_ENTITIES);
         if (!optional.isEmpty()) {
             boolean flag = optional.get().stream().anyMatch(p_348253_ -> p_348253_.getType().equals(EntityType.IRON_GOLEM));
             if (flag) {
-                golemDetected(p_26648_);
+                golemDetected(livingEntity);
             }
         }
     }
 
-    public static void golemDetected(LivingEntity p_26650_) {
-        p_26650_.getBrain().setMemoryWithExpiry(MemoryModuleType.GOLEM_DETECTED_RECENTLY, true, 599L);
+    public static void golemDetected(LivingEntity livingEntity) {
+        livingEntity.getBrain().setMemoryWithExpiry(MemoryModuleType.GOLEM_DETECTED_RECENTLY, true, 599L);
     }
 }

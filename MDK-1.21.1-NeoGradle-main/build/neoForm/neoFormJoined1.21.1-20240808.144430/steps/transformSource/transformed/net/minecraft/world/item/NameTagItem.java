@@ -9,24 +9,27 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.player.Player;
 
 public class NameTagItem extends Item {
-    public NameTagItem(Item.Properties p_42952_) {
-        super(p_42952_);
+    public NameTagItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Try interacting with given entity. Return {@code InteractionResult.PASS} if nothing should happen.
+     */
     @Override
-    public InteractionResult interactLivingEntity(ItemStack p_42954_, Player p_42955_, LivingEntity p_42956_, InteractionHand p_42957_) {
-        Component component = p_42954_.get(DataComponents.CUSTOM_NAME);
-        if (component != null && !(p_42956_ instanceof Player)) {
-            if (!p_42955_.level().isClientSide && p_42956_.isAlive()) {
-                p_42956_.setCustomName(component);
-                if (p_42956_ instanceof Mob mob) {
+    public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
+        Component component = stack.get(DataComponents.CUSTOM_NAME);
+        if (component != null && !(target instanceof Player)) {
+            if (!player.level().isClientSide && target.isAlive()) {
+                target.setCustomName(component);
+                if (target instanceof Mob mob) {
                     mob.setPersistenceRequired();
                 }
 
-                p_42954_.shrink(1);
+                stack.shrink(1);
             }
 
-            return InteractionResult.sidedSuccess(p_42955_.level().isClientSide);
+            return InteractionResult.sidedSuccess(player.level().isClientSide);
         } else {
             return InteractionResult.PASS;
         }

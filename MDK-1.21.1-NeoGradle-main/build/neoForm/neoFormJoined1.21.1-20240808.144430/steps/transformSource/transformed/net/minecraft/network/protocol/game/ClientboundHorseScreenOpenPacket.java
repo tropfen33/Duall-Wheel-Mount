@@ -13,22 +13,25 @@ public class ClientboundHorseScreenOpenPacket implements Packet<ClientGamePacket
     private final int inventoryColumns;
     private final int entityId;
 
-    public ClientboundHorseScreenOpenPacket(int p_132195_, int p_132196_, int p_132197_) {
-        this.containerId = p_132195_;
-        this.inventoryColumns = p_132196_;
-        this.entityId = p_132197_;
+    public ClientboundHorseScreenOpenPacket(int containerId, int size, int entityId) {
+        this.containerId = containerId;
+        this.inventoryColumns = size;
+        this.entityId = entityId;
     }
 
-    private ClientboundHorseScreenOpenPacket(FriendlyByteBuf p_178867_) {
-        this.containerId = p_178867_.readUnsignedByte();
-        this.inventoryColumns = p_178867_.readVarInt();
-        this.entityId = p_178867_.readInt();
+    private ClientboundHorseScreenOpenPacket(FriendlyByteBuf buffer) {
+        this.containerId = buffer.readUnsignedByte();
+        this.inventoryColumns = buffer.readVarInt();
+        this.entityId = buffer.readInt();
     }
 
-    private void write(FriendlyByteBuf p_132206_) {
-        p_132206_.writeByte(this.containerId);
-        p_132206_.writeVarInt(this.inventoryColumns);
-        p_132206_.writeInt(this.entityId);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeByte(this.containerId);
+        buffer.writeVarInt(this.inventoryColumns);
+        buffer.writeInt(this.entityId);
     }
 
     @Override
@@ -36,8 +39,11 @@ public class ClientboundHorseScreenOpenPacket implements Packet<ClientGamePacket
         return GamePacketTypes.CLIENTBOUND_HORSE_SCREEN_OPEN;
     }
 
-    public void handle(ClientGamePacketListener p_132203_) {
-        p_132203_.handleHorseScreenOpen(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleHorseScreenOpen(this);
     }
 
     public int getContainerId() {

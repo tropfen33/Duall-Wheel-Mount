@@ -20,54 +20,54 @@ public class RecipeToast implements Toast {
     private long lastChanged;
     private boolean changed;
 
-    public RecipeToast(RecipeHolder<?> p_301250_) {
-        this.recipes.add(p_301250_);
+    public RecipeToast(RecipeHolder<?> recipe) {
+        this.recipes.add(recipe);
     }
 
     @Override
-    public Toast.Visibility render(GuiGraphics p_281667_, ToastComponent p_281321_, long p_281779_) {
+    public Toast.Visibility render(GuiGraphics guiGraphics, ToastComponent toastComponent, long timeSinceLastVisible) {
         if (this.changed) {
-            this.lastChanged = p_281779_;
+            this.lastChanged = timeSinceLastVisible;
             this.changed = false;
         }
 
         if (this.recipes.isEmpty()) {
             return Toast.Visibility.HIDE;
         } else {
-            p_281667_.blitSprite(BACKGROUND_SPRITE, 0, 0, this.width(), this.height());
-            p_281667_.drawString(p_281321_.getMinecraft().font, TITLE_TEXT, 30, 7, -11534256, false);
-            p_281667_.drawString(p_281321_.getMinecraft().font, DESCRIPTION_TEXT, 30, 18, -16777216, false);
+            guiGraphics.blitSprite(BACKGROUND_SPRITE, 0, 0, this.width(), this.height());
+            guiGraphics.drawString(toastComponent.getMinecraft().font, TITLE_TEXT, 30, 7, -11534256, false);
+            guiGraphics.drawString(toastComponent.getMinecraft().font, DESCRIPTION_TEXT, 30, 18, -16777216, false);
             RecipeHolder<?> recipeholder = this.recipes
                 .get(
                     (int)(
-                        (double)p_281779_
-                            / Math.max(1.0, 5000.0 * p_281321_.getNotificationDisplayTimeMultiplier() / (double)this.recipes.size())
+                        (double)timeSinceLastVisible
+                            / Math.max(1.0, 5000.0 * toastComponent.getNotificationDisplayTimeMultiplier() / (double)this.recipes.size())
                             % (double)this.recipes.size()
                     )
                 );
             ItemStack itemstack = recipeholder.value().getToastSymbol();
-            p_281667_.pose().pushPose();
-            p_281667_.pose().scale(0.6F, 0.6F, 1.0F);
-            p_281667_.renderFakeItem(itemstack, 3, 3);
-            p_281667_.pose().popPose();
-            p_281667_.renderFakeItem(recipeholder.value().getResultItem(p_281321_.getMinecraft().level.registryAccess()), 8, 8);
-            return (double)(p_281779_ - this.lastChanged) >= 5000.0 * p_281321_.getNotificationDisplayTimeMultiplier()
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().scale(0.6F, 0.6F, 1.0F);
+            guiGraphics.renderFakeItem(itemstack, 3, 3);
+            guiGraphics.pose().popPose();
+            guiGraphics.renderFakeItem(recipeholder.value().getResultItem(toastComponent.getMinecraft().level.registryAccess()), 8, 8);
+            return (double)(timeSinceLastVisible - this.lastChanged) >= 5000.0 * toastComponent.getNotificationDisplayTimeMultiplier()
                 ? Toast.Visibility.HIDE
                 : Toast.Visibility.SHOW;
         }
     }
 
-    private void addItem(RecipeHolder<?> p_301083_) {
-        this.recipes.add(p_301083_);
+    private void addItem(RecipeHolder<?> recipe) {
+        this.recipes.add(recipe);
         this.changed = true;
     }
 
-    public static void addOrUpdate(ToastComponent p_94818_, RecipeHolder<?> p_301027_) {
-        RecipeToast recipetoast = p_94818_.getToast(RecipeToast.class, NO_TOKEN);
+    public static void addOrUpdate(ToastComponent toastComponent, RecipeHolder<?> recipe) {
+        RecipeToast recipetoast = toastComponent.getToast(RecipeToast.class, NO_TOKEN);
         if (recipetoast == null) {
-            p_94818_.addToast(new RecipeToast(p_301027_));
+            toastComponent.addToast(new RecipeToast(recipe));
         } else {
-            recipetoast.addItem(p_301027_);
+            recipetoast.addItem(recipe);
         }
     }
 }

@@ -319,8 +319,14 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     private static final Component RECONFIGURE_SCREEN_MESSAGE = Component.translatable("connect.reconfiguring");
     private static final int PENDING_OFFSET_THRESHOLD = 64;
     private final GameProfile localGameProfile;
+    /**
+     * Reference to the current ClientWorld instance, which many handler methods operate on
+     */
     private ClientLevel level;
     private ClientLevel.ClientLevelData levelData;
+    /**
+     * A mapping from player names to their respective GuiPlayerInfo (specifies the clients response time to the server)
+     */
     private final Map<UUID, PlayerInfo> playerInfoMap = Maps.newHashMap();
     private final Set<PlayerInfo> listedPlayers = new ReferenceOpenHashSet<>();
     private final ClientAdvancements advancements;
@@ -328,6 +334,9 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     private final DebugQueryHandler debugQueryHandler = new DebugQueryHandler(this);
     private int serverChunkRadius = 3;
     private int serverSimulationDistance = 3;
+    /**
+     * Just an ordinary random number generator, used to randomize audio pitch of item/orb pickup and randomize both particlespawn offset and velocity
+     */
     private final RandomSource random = RandomSource.createThreadSafe();
     public CommandDispatcher<SharedSuggestionProvider> commands = new CommandDispatcher<>();
     private final RecipeManager recipeManager;
@@ -353,21 +362,21 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     private final Scoreboard scoreboard = new Scoreboard();
     private final SessionSearchTrees searchTrees = new SessionSearchTrees();
 
-    public ClientPacketListener(Minecraft p_253924_, Connection p_253614_, CommonListenerCookie p_295121_) {
-        super(p_253924_, p_253614_, p_295121_);
-        this.localGameProfile = p_295121_.localGameProfile();
-        this.registryAccess = p_295121_.receivedRegistries();
-        this.enabledFeatures = p_295121_.enabledFeatures();
-        this.advancements = new ClientAdvancements(p_253924_, this.telemetryManager);
-        this.suggestionsProvider = new ClientSuggestionProvider(this, p_253924_);
-        this.pingDebugMonitor = new PingDebugMonitor(this, p_253924_.getDebugOverlay().getPingLogger());
+    public ClientPacketListener(Minecraft minecraft, Connection connection, CommonListenerCookie commonListenerCookie) {
+        super(minecraft, connection, commonListenerCookie);
+        this.localGameProfile = commonListenerCookie.localGameProfile();
+        this.registryAccess = commonListenerCookie.receivedRegistries();
+        this.enabledFeatures = commonListenerCookie.enabledFeatures();
+        this.advancements = new ClientAdvancements(minecraft, this.telemetryManager);
+        this.suggestionsProvider = new ClientSuggestionProvider(this, minecraft);
+        this.pingDebugMonitor = new PingDebugMonitor(this, minecraft.getDebugOverlay().getPingLogger());
         this.recipeManager = new RecipeManager(this.registryAccess);
-        this.debugSampleSubscriber = new DebugSampleSubscriber(this, p_253924_.getDebugOverlay());
-        if (p_295121_.chatState() != null) {
-            p_253924_.gui.getChat().restoreState(p_295121_.chatState());
+        this.debugSampleSubscriber = new DebugSampleSubscriber(this, minecraft.getDebugOverlay());
+        if (commonListenerCookie.chatState() != null) {
+            minecraft.gui.getChat().restoreState(commonListenerCookie.chatState());
         }
 
-        this.connectionType = p_295121_.connectionType();
+        this.connectionType = commonListenerCookie.connectionType();
         this.potionBrewing = PotionBrewing.bootstrap(this.enabledFeatures, this.registryAccess);
     }
 
@@ -390,21 +399,24 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         return this.recipeManager;
     }
 
+    /**
+     * Registers some server properties (gametype, hardcore-mode, terraintype, difficulty, player limit), creates a new WorldClient and sets the player initial dimension.
+     */
     @Override
-    public void handleLogin(ClientboundLoginPacket p_105030_) {
-        PacketUtils.ensureRunningOnSameThread(p_105030_, this, this.minecraft);
+    public void handleLogin(ClientboundLoginPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         this.minecraft.gameMode = new MultiPlayerGameMode(this.minecraft, this);
-        CommonPlayerSpawnInfo commonplayerspawninfo = p_105030_.commonPlayerSpawnInfo();
-        List<ResourceKey<Level>> list = Lists.newArrayList(p_105030_.levels());
+        CommonPlayerSpawnInfo commonplayerspawninfo = packet.commonPlayerSpawnInfo();
+        List<ResourceKey<Level>> list = Lists.newArrayList(packet.levels());
         Collections.shuffle(list);
         this.levels = Sets.newLinkedHashSet(list);
         ResourceKey<Level> resourcekey = commonplayerspawninfo.dimension();
         Holder<DimensionType> holder = commonplayerspawninfo.dimensionType();
-        this.serverChunkRadius = p_105030_.chunkRadius();
-        this.serverSimulationDistance = p_105030_.simulationDistance();
+        this.serverChunkRadius = packet.chunkRadius();
+        this.serverSimulationDistance = packet.simulationDistance();
         boolean flag = commonplayerspawninfo.isDebug();
         boolean flag1 = commonplayerspawninfo.isFlat();
-        ClientLevel.ClientLevelData clientlevel$clientleveldata = new ClientLevel.ClientLevelData(Difficulty.NORMAL, p_105030_.hardcore(), flag1);
+        ClientLevel.ClientLevelData clientlevel$clientleveldata = new ClientLevel.ClientLevelData(Difficulty.NORMAL, packet.hardcore(), flag1);
         this.levelData = clientlevel$clientleveldata;
         this.level = new ClientLevel(
             this,
@@ -430,19 +442,19 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         this.minecraft.debugRenderer.clear();
         this.minecraft.player.resetPos();
         net.neoforged.neoforge.client.ClientHooks.firePlayerLogin(this.minecraft.gameMode, this.minecraft.player, this.minecraft.getConnection().connection);
-        this.minecraft.player.setId(p_105030_.playerId());
+        this.minecraft.player.setId(packet.playerId());
         this.level.addEntity(this.minecraft.player);
         this.minecraft.player.input = new KeyboardInput(this.minecraft.options);
         this.minecraft.gameMode.adjustPlayer(this.minecraft.player);
         this.minecraft.cameraEntity = this.minecraft.player;
         this.startWaitingForNewLevel(this.minecraft.player, this.level, ReceivingLevelScreen.Reason.OTHER, null, null);
-        this.minecraft.player.setReducedDebugInfo(p_105030_.reducedDebugInfo());
-        this.minecraft.player.setShowDeathScreen(p_105030_.showDeathScreen());
-        this.minecraft.player.setDoLimitedCrafting(p_105030_.doLimitedCrafting());
+        this.minecraft.player.setReducedDebugInfo(packet.reducedDebugInfo());
+        this.minecraft.player.setShowDeathScreen(packet.showDeathScreen());
+        this.minecraft.player.setDoLimitedCrafting(packet.doLimitedCrafting());
         this.minecraft.player.setLastDeathLocation(commonplayerspawninfo.lastDeathLocation());
         this.minecraft.player.setPortalCooldown(commonplayerspawninfo.portalCooldown());
         this.minecraft.gameMode.setLocalMode(commonplayerspawninfo.gameType(), commonplayerspawninfo.previousGameType());
-        this.minecraft.options.setServerRenderDistance(p_105030_.chunkRadius());
+        this.minecraft.options.setServerRenderDistance(packet.chunkRadius());
         this.chatSession = null;
         this.lastSeenMessages = new LastSeenMessagesTracker(20);
         this.messageSignatureCache = MessageSignatureCache.createDefault();
@@ -450,9 +462,9 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
             this.minecraft.getProfileKeyPairManager().prepareKeyPair().thenAcceptAsync(p_253341_ -> p_253341_.ifPresent(this::setKeyPair), this.minecraft);
         }
 
-        this.telemetryManager.onPlayerInfoReceived(commonplayerspawninfo.gameType(), p_105030_.hardcore());
+        this.telemetryManager.onPlayerInfoReceived(commonplayerspawninfo.gameType(), packet.hardcore());
         this.minecraft.quickPlayLog().log(this.minecraft);
-        this.serverEnforcesSecureChat = p_105030_.enforcesSecureChat();
+        this.serverEnforcesSecureChat = packet.enforcesSecureChat();
         if (this.serverData != null && !this.seenInsecureChatWarning && !this.enforcesSecureChat()) {
             SystemToast systemtoast = SystemToast.multiline(
                 this.minecraft, SystemToast.SystemToastId.UNSECURE_SERVER_WARNING, UNSECURE_SERVER_TOAST_TITLE, UNSERURE_SERVER_TOAST
@@ -462,26 +474,29 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         }
     }
 
+    /**
+     * Spawns an instance of the objecttype indicated by the packet and sets its position and momentum
+     */
     @Override
-    public void handleAddEntity(ClientboundAddEntityPacket p_104958_) {
-        PacketUtils.ensureRunningOnSameThread(p_104958_, this, this.minecraft);
-        Entity entity = this.createEntityFromPacket(p_104958_);
+    public void handleAddEntity(ClientboundAddEntityPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.createEntityFromPacket(packet);
         if (entity != null) {
-            entity.recreateFromPacket(p_104958_);
+            entity.recreateFromPacket(packet);
             this.level.addEntity(entity);
             this.postAddEntitySoundInstance(entity);
         } else {
-            LOGGER.warn("Skipping Entity with id {}", p_104958_.getType());
+            LOGGER.warn("Skipping Entity with id {}", packet.getType());
         }
     }
 
     @Nullable
-    private Entity createEntityFromPacket(ClientboundAddEntityPacket p_302232_) {
-        EntityType<?> entitytype = p_302232_.getType();
+    private Entity createEntityFromPacket(ClientboundAddEntityPacket packet) {
+        EntityType<?> entitytype = packet.getType();
         if (entitytype == EntityType.PLAYER) {
-            PlayerInfo playerinfo = this.getPlayerInfo(p_302232_.getUUID());
+            PlayerInfo playerinfo = this.getPlayerInfo(packet.getUUID());
             if (playerinfo == null) {
-                LOGGER.warn("Server attempted to add player prior to sending player info (Player id {})", p_302232_.getUUID());
+                LOGGER.warn("Server attempted to add player prior to sending player info (Player id {})", packet.getUUID());
                 return null;
             } else {
                 return new RemotePlayer(this.level, playerinfo.getProfile());
@@ -491,10 +506,10 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         }
     }
 
-    private void postAddEntitySoundInstance(Entity p_233664_) {
-        if (p_233664_ instanceof AbstractMinecart abstractminecart) {
+    private void postAddEntitySoundInstance(Entity entity) {
+        if (entity instanceof AbstractMinecart abstractminecart) {
             this.minecraft.getSoundManager().play(new MinecartSoundInstance(abstractminecart));
-        } else if (p_233664_ instanceof Bee bee) {
+        } else if (entity instanceof Bee bee) {
             boolean flag = bee.isAngry();
             BeeSoundInstance beesoundinstance;
             if (flag) {
@@ -507,141 +522,162 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         }
     }
 
+    /**
+     * Spawns an experience orb and sets its value (amount of XP)
+     */
     @Override
-    public void handleAddExperienceOrb(ClientboundAddExperienceOrbPacket p_104960_) {
-        PacketUtils.ensureRunningOnSameThread(p_104960_, this, this.minecraft);
-        double d0 = p_104960_.getX();
-        double d1 = p_104960_.getY();
-        double d2 = p_104960_.getZ();
-        Entity entity = new ExperienceOrb(this.level, d0, d1, d2, p_104960_.getValue());
+    public void handleAddExperienceOrb(ClientboundAddExperienceOrbPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        double d0 = packet.getX();
+        double d1 = packet.getY();
+        double d2 = packet.getZ();
+        Entity entity = new ExperienceOrb(this.level, d0, d1, d2, packet.getValue());
         entity.syncPacketPositionCodec(d0, d1, d2);
         entity.setYRot(0.0F);
         entity.setXRot(0.0F);
-        entity.setId(p_104960_.getId());
+        entity.setId(packet.getId());
         this.level.addEntity(entity);
     }
 
+    /**
+     * Sets the velocity of the specified entity to the specified value
+     */
     @Override
-    public void handleSetEntityMotion(ClientboundSetEntityMotionPacket p_105092_) {
-        PacketUtils.ensureRunningOnSameThread(p_105092_, this, this.minecraft);
-        Entity entity = this.level.getEntity(p_105092_.getId());
+    public void handleSetEntityMotion(ClientboundSetEntityMotionPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.level.getEntity(packet.getId());
         if (entity != null) {
-            entity.lerpMotion(p_105092_.getXa(), p_105092_.getYa(), p_105092_.getZa());
+            entity.lerpMotion(packet.getXa(), packet.getYa(), packet.getZa());
         }
     }
 
+    /**
+     * Invoked when the server registers new proximate objects in your watchlist or when objects in your watchlist have changed -> Registers any changes locally
+     */
     @Override
-    public void handleSetEntityData(ClientboundSetEntityDataPacket p_105088_) {
-        PacketUtils.ensureRunningOnSameThread(p_105088_, this, this.minecraft);
-        Entity entity = this.level.getEntity(p_105088_.id());
+    public void handleSetEntityData(ClientboundSetEntityDataPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.level.getEntity(packet.id());
         if (entity != null) {
-            entity.getEntityData().assignValues(p_105088_.packedItems());
+            entity.getEntityData().assignValues(packet.packedItems());
         }
     }
 
+    /**
+     * Updates an entity's position and rotation as specified by the packet
+     */
     @Override
-    public void handleTeleportEntity(ClientboundTeleportEntityPacket p_105124_) {
-        PacketUtils.ensureRunningOnSameThread(p_105124_, this, this.minecraft);
-        Entity entity = this.level.getEntity(p_105124_.getId());
+    public void handleTeleportEntity(ClientboundTeleportEntityPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.level.getEntity(packet.getId());
         if (entity != null) {
-            double d0 = p_105124_.getX();
-            double d1 = p_105124_.getY();
-            double d2 = p_105124_.getZ();
+            double d0 = packet.getX();
+            double d1 = packet.getY();
+            double d2 = packet.getZ();
             entity.syncPacketPositionCodec(d0, d1, d2);
             if (!entity.isControlledByLocalInstance()) {
-                float f = (float)(p_105124_.getyRot() * 360) / 256.0F;
-                float f1 = (float)(p_105124_.getxRot() * 360) / 256.0F;
+                float f = (float)(packet.getyRot() * 360) / 256.0F;
+                float f1 = (float)(packet.getxRot() * 360) / 256.0F;
                 entity.lerpTo(d0, d1, d2, f, f1, 3);
-                entity.setOnGround(p_105124_.isOnGround());
+                entity.setOnGround(packet.isOnGround());
             }
         }
     }
 
     @Override
-    public void handleTickingState(ClientboundTickingStatePacket p_309203_) {
-        PacketUtils.ensureRunningOnSameThread(p_309203_, this, this.minecraft);
+    public void handleTickingState(ClientboundTickingStatePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         if (this.minecraft.level != null) {
             TickRateManager tickratemanager = this.minecraft.level.tickRateManager();
-            tickratemanager.setTickRate(p_309203_.tickRate());
-            tickratemanager.setFrozen(p_309203_.isFrozen());
+            tickratemanager.setTickRate(packet.tickRate());
+            tickratemanager.setFrozen(packet.isFrozen());
         }
     }
 
     @Override
-    public void handleTickingStep(ClientboundTickingStepPacket p_308901_) {
-        PacketUtils.ensureRunningOnSameThread(p_308901_, this, this.minecraft);
+    public void handleTickingStep(ClientboundTickingStepPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         if (this.minecraft.level != null) {
             TickRateManager tickratemanager = this.minecraft.level.tickRateManager();
-            tickratemanager.setFrozenTicksToRun(p_308901_.tickSteps());
+            tickratemanager.setFrozenTicksToRun(packet.tickSteps());
         }
     }
 
+    /**
+     * Updates which hotbar slot of the player is currently selected
+     */
     @Override
-    public void handleSetCarriedItem(ClientboundSetCarriedItemPacket p_105078_) {
-        PacketUtils.ensureRunningOnSameThread(p_105078_, this, this.minecraft);
-        if (Inventory.isHotbarSlot(p_105078_.getSlot())) {
-            this.minecraft.player.getInventory().selected = p_105078_.getSlot();
+    public void handleSetCarriedItem(ClientboundSetCarriedItemPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        if (Inventory.isHotbarSlot(packet.getSlot())) {
+            this.minecraft.player.getInventory().selected = packet.getSlot();
         }
     }
 
+    /**
+     * Updates the specified entity's position by the specified relative momentum and absolute rotation. Note that subclassing of the packet allows for the specification of a subset of this data (e.g. only rel. position, abs. rotation or both).
+     */
     @Override
-    public void handleMoveEntity(ClientboundMoveEntityPacket p_105036_) {
-        PacketUtils.ensureRunningOnSameThread(p_105036_, this, this.minecraft);
-        Entity entity = p_105036_.getEntity(this.level);
+    public void handleMoveEntity(ClientboundMoveEntityPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = packet.getEntity(this.level);
         if (entity != null) {
             if (!entity.isControlledByLocalInstance()) {
-                if (p_105036_.hasPosition()) {
+                if (packet.hasPosition()) {
                     VecDeltaCodec vecdeltacodec = entity.getPositionCodec();
-                    Vec3 vec3 = vecdeltacodec.decode((long)p_105036_.getXa(), (long)p_105036_.getYa(), (long)p_105036_.getZa());
+                    Vec3 vec3 = vecdeltacodec.decode((long)packet.getXa(), (long)packet.getYa(), (long)packet.getZa());
                     vecdeltacodec.setBase(vec3);
-                    float f = p_105036_.hasRotation() ? (float)(p_105036_.getyRot() * 360) / 256.0F : entity.lerpTargetYRot();
-                    float f1 = p_105036_.hasRotation() ? (float)(p_105036_.getxRot() * 360) / 256.0F : entity.lerpTargetXRot();
+                    float f = packet.hasRotation() ? (float)(packet.getyRot() * 360) / 256.0F : entity.lerpTargetYRot();
+                    float f1 = packet.hasRotation() ? (float)(packet.getxRot() * 360) / 256.0F : entity.lerpTargetXRot();
                     entity.lerpTo(vec3.x(), vec3.y(), vec3.z(), f, f1, 3);
-                } else if (p_105036_.hasRotation()) {
-                    float f2 = (float)(p_105036_.getyRot() * 360) / 256.0F;
-                    float f3 = (float)(p_105036_.getxRot() * 360) / 256.0F;
+                } else if (packet.hasRotation()) {
+                    float f2 = (float)(packet.getyRot() * 360) / 256.0F;
+                    float f3 = (float)(packet.getxRot() * 360) / 256.0F;
                     entity.lerpTo(entity.lerpTargetX(), entity.lerpTargetY(), entity.lerpTargetZ(), f2, f3, 3);
                 }
 
-                entity.setOnGround(p_105036_.isOnGround());
+                entity.setOnGround(packet.isOnGround());
             }
         }
     }
 
+    /**
+     * Updates the direction in which the specified entity is looking, normally this head rotation is independent of the rotation of the entity itself
+     */
     @Override
-    public void handleRotateMob(ClientboundRotateHeadPacket p_105068_) {
-        PacketUtils.ensureRunningOnSameThread(p_105068_, this, this.minecraft);
-        Entity entity = p_105068_.getEntity(this.level);
+    public void handleRotateMob(ClientboundRotateHeadPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = packet.getEntity(this.level);
         if (entity != null) {
-            float f = (float)(p_105068_.getYHeadRot() * 360) / 256.0F;
+            float f = (float)(packet.getYHeadRot() * 360) / 256.0F;
             entity.lerpHeadTo(f, 3);
         }
     }
 
     @Override
-    public void handleRemoveEntities(ClientboundRemoveEntitiesPacket p_182633_) {
-        PacketUtils.ensureRunningOnSameThread(p_182633_, this, this.minecraft);
-        p_182633_.getEntityIds().forEach(p_205521_ -> this.level.removeEntity(p_205521_, Entity.RemovalReason.DISCARDED));
+    public void handleRemoveEntities(ClientboundRemoveEntitiesPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        packet.getEntityIds().forEach(p_205521_ -> this.level.removeEntity(p_205521_, Entity.RemovalReason.DISCARDED));
     }
 
     @Override
-    public void handleMovePlayer(ClientboundPlayerPositionPacket p_105056_) {
-        PacketUtils.ensureRunningOnSameThread(p_105056_, this, this.minecraft);
+    public void handleMovePlayer(ClientboundPlayerPositionPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         Player player = this.minecraft.player;
         Vec3 vec3 = player.getDeltaMovement();
-        boolean flag = p_105056_.getRelativeArguments().contains(RelativeMovement.X);
-        boolean flag1 = p_105056_.getRelativeArguments().contains(RelativeMovement.Y);
-        boolean flag2 = p_105056_.getRelativeArguments().contains(RelativeMovement.Z);
+        boolean flag = packet.getRelativeArguments().contains(RelativeMovement.X);
+        boolean flag1 = packet.getRelativeArguments().contains(RelativeMovement.Y);
+        boolean flag2 = packet.getRelativeArguments().contains(RelativeMovement.Z);
         double d0;
         double d1;
         if (flag) {
             d0 = vec3.x();
-            d1 = player.getX() + p_105056_.getX();
-            player.xOld = player.xOld + p_105056_.getX();
-            player.xo = player.xo + p_105056_.getX();
+            d1 = player.getX() + packet.getX();
+            player.xOld = player.xOld + packet.getX();
+            player.xo = player.xo + packet.getX();
         } else {
             d0 = 0.0;
-            d1 = p_105056_.getX();
+            d1 = packet.getX();
             player.xOld = d1;
             player.xo = d1;
         }
@@ -650,12 +686,12 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         double d3;
         if (flag1) {
             d2 = vec3.y();
-            d3 = player.getY() + p_105056_.getY();
-            player.yOld = player.yOld + p_105056_.getY();
-            player.yo = player.yo + p_105056_.getY();
+            d3 = player.getY() + packet.getY();
+            player.yOld = player.yOld + packet.getY();
+            player.yo = player.yo + packet.getY();
         } else {
             d2 = 0.0;
-            d3 = p_105056_.getY();
+            d3 = packet.getY();
             player.yOld = d3;
             player.yo = d3;
         }
@@ -664,21 +700,21 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         double d5;
         if (flag2) {
             d4 = vec3.z();
-            d5 = player.getZ() + p_105056_.getZ();
-            player.zOld = player.zOld + p_105056_.getZ();
-            player.zo = player.zo + p_105056_.getZ();
+            d5 = player.getZ() + packet.getZ();
+            player.zOld = player.zOld + packet.getZ();
+            player.zo = player.zo + packet.getZ();
         } else {
             d4 = 0.0;
-            d5 = p_105056_.getZ();
+            d5 = packet.getZ();
             player.zOld = d5;
             player.zo = d5;
         }
 
         player.setPos(d1, d3, d5);
         player.setDeltaMovement(d0, d2, d4);
-        float f = p_105056_.getYRot();
-        float f1 = p_105056_.getXRot();
-        if (p_105056_.getRelativeArguments().contains(RelativeMovement.X_ROT)) {
+        float f = packet.getYRot();
+        float f1 = packet.getXRot();
+        if (packet.getRelativeArguments().contains(RelativeMovement.X_ROT)) {
             player.setXRot(player.getXRot() + f1);
             player.xRotO += f1;
         } else {
@@ -686,7 +722,7 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
             player.xRotO = f1;
         }
 
-        if (p_105056_.getRelativeArguments().contains(RelativeMovement.Y_ROT)) {
+        if (packet.getRelativeArguments().contains(RelativeMovement.Y_ROT)) {
             player.setYRot(player.getYRot() + f);
             player.yRotO += f;
         } else {
@@ -694,23 +730,26 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
             player.yRotO = f;
         }
 
-        this.connection.send(new ServerboundAcceptTeleportationPacket(p_105056_.getId()));
+        this.connection.send(new ServerboundAcceptTeleportationPacket(packet.getId()));
         this.connection.send(new ServerboundMovePlayerPacket.PosRot(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot(), false));
     }
 
+    /**
+     * Received from the servers PlayerManager if between 1 and 64 blocks in a chunk are changed. If only one block requires an update, the server sends S23PacketBlockChange and if 64 or more blocks are changed, the server sends S21PacketChunkData
+     */
     @Override
-    public void handleChunkBlocksUpdate(ClientboundSectionBlocksUpdatePacket p_105070_) {
-        PacketUtils.ensureRunningOnSameThread(p_105070_, this, this.minecraft);
-        p_105070_.runUpdates((p_284633_, p_284634_) -> this.level.setServerVerifiedBlockState(p_284633_, p_284634_, 19));
+    public void handleChunkBlocksUpdate(ClientboundSectionBlocksUpdatePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        packet.runUpdates((p_284633_, p_284634_) -> this.level.setServerVerifiedBlockState(p_284633_, p_284634_, 19));
     }
 
     @Override
-    public void handleLevelChunkWithLight(ClientboundLevelChunkWithLightPacket p_194241_) {
-        PacketUtils.ensureRunningOnSameThread(p_194241_, this, this.minecraft);
-        int i = p_194241_.getX();
-        int j = p_194241_.getZ();
-        this.updateLevelChunk(i, j, p_194241_.getChunkData());
-        ClientboundLightUpdatePacketData clientboundlightupdatepacketdata = p_194241_.getLightData();
+    public void handleLevelChunkWithLight(ClientboundLevelChunkWithLightPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        int i = packet.getX();
+        int j = packet.getZ();
+        this.updateLevelChunk(i, j, packet.getChunkData());
+        ClientboundLightUpdatePacketData clientboundlightupdatepacketdata = packet.getLightData();
         this.level.queueLightUpdate(() -> {
             this.applyLightData(i, j, clientboundlightupdatepacketdata);
             LevelChunk levelchunk = this.level.getChunkSource().getChunk(i, j, false);
@@ -721,10 +760,10 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handleChunksBiomes(ClientboundChunksBiomesPacket p_275437_) {
-        PacketUtils.ensureRunningOnSameThread(p_275437_, this, this.minecraft);
+    public void handleChunksBiomes(ClientboundChunksBiomesPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
 
-        for (ClientboundChunksBiomesPacket.ChunkBiomeData clientboundchunksbiomespacket$chunkbiomedata : p_275437_.chunkBiomeData()) {
+        for (ClientboundChunksBiomesPacket.ChunkBiomeData clientboundchunksbiomespacket$chunkbiomedata : packet.chunkBiomeData()) {
             this.level
                 .getChunkSource()
                 .replaceBiomes(
@@ -734,12 +773,12 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
                 );
         }
 
-        for (ClientboundChunksBiomesPacket.ChunkBiomeData clientboundchunksbiomespacket$chunkbiomedata1 : p_275437_.chunkBiomeData()) {
+        for (ClientboundChunksBiomesPacket.ChunkBiomeData clientboundchunksbiomespacket$chunkbiomedata1 : packet.chunkBiomeData()) {
             this.level
                 .onChunkLoaded(new ChunkPos(clientboundchunksbiomespacket$chunkbiomedata1.pos().x, clientboundchunksbiomespacket$chunkbiomedata1.pos().z));
         }
 
-        for (ClientboundChunksBiomesPacket.ChunkBiomeData clientboundchunksbiomespacket$chunkbiomedata2 : p_275437_.chunkBiomeData()) {
+        for (ClientboundChunksBiomesPacket.ChunkBiomeData clientboundchunksbiomespacket$chunkbiomedata2 : packet.chunkBiomeData()) {
             for (int i = -1; i <= 1; i++) {
                 for (int j = -1; j <= 1; j++) {
                     for (int k = this.level.getMinSection(); k < this.level.getMaxSection(); k++) {
@@ -754,36 +793,36 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         }
     }
 
-    private void updateLevelChunk(int p_194199_, int p_194200_, ClientboundLevelChunkPacketData p_194201_) {
+    private void updateLevelChunk(int x, int z, ClientboundLevelChunkPacketData data) {
         this.level
             .getChunkSource()
             .replaceWithPacketData(
-                p_194199_, p_194200_, p_194201_.getReadBuffer(), p_194201_.getHeightmaps(), p_194201_.getBlockEntitiesTagsConsumer(p_194199_, p_194200_)
+                x, z, data.getReadBuffer(), data.getHeightmaps(), data.getBlockEntitiesTagsConsumer(x, z)
             );
     }
 
-    private void enableChunkLight(LevelChunk p_194213_, int p_194214_, int p_194215_) {
+    private void enableChunkLight(LevelChunk chunk, int x, int z) {
         LevelLightEngine levellightengine = this.level.getChunkSource().getLightEngine();
-        LevelChunkSection[] alevelchunksection = p_194213_.getSections();
-        ChunkPos chunkpos = p_194213_.getPos();
+        LevelChunkSection[] alevelchunksection = chunk.getSections();
+        ChunkPos chunkpos = chunk.getPos();
 
         for (int i = 0; i < alevelchunksection.length; i++) {
             LevelChunkSection levelchunksection = alevelchunksection[i];
             int j = this.level.getSectionYFromSectionIndex(i);
             levellightengine.updateSectionStatus(SectionPos.of(chunkpos, j), levelchunksection.hasOnlyAir());
-            this.level.setSectionDirtyWithNeighbors(p_194214_, j, p_194215_);
+            this.level.setSectionDirtyWithNeighbors(x, j, z);
         }
     }
 
     @Override
-    public void handleForgetLevelChunk(ClientboundForgetLevelChunkPacket p_105014_) {
-        PacketUtils.ensureRunningOnSameThread(p_105014_, this, this.minecraft);
-        this.level.getChunkSource().drop(p_105014_.pos());
-        this.queueLightRemoval(p_105014_);
+    public void handleForgetLevelChunk(ClientboundForgetLevelChunkPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.level.getChunkSource().drop(packet.pos());
+        this.queueLightRemoval(packet);
     }
 
-    private void queueLightRemoval(ClientboundForgetLevelChunkPacket p_194253_) {
-        ChunkPos chunkpos = p_194253_.pos();
+    private void queueLightRemoval(ClientboundForgetLevelChunkPacket packet) {
+        ChunkPos chunkpos = packet.pos();
         this.level.queueLightUpdate(() -> {
             LevelLightEngine levellightengine = this.level.getLightEngine();
             levellightengine.setLightEnabled(chunkpos, false);
@@ -800,15 +839,18 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         });
     }
 
+    /**
+     * Updates the block and metadata and generates a blockupdate (and notify the clients)
+     */
     @Override
-    public void handleBlockUpdate(ClientboundBlockUpdatePacket p_104980_) {
-        PacketUtils.ensureRunningOnSameThread(p_104980_, this, this.minecraft);
-        this.level.setServerVerifiedBlockState(p_104980_.getPos(), p_104980_.getBlockState(), 19);
+    public void handleBlockUpdate(ClientboundBlockUpdatePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.level.setServerVerifiedBlockState(packet.getPos(), packet.getBlockState(), 19);
     }
 
     @Override
-    public void handleConfigurationStart(ClientboundStartConfigurationPacket p_296485_) {
-        PacketUtils.ensureRunningOnSameThread(p_296485_, this, this.minecraft);
+    public void handleConfigurationStart(ClientboundStartConfigurationPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         this.minecraft.getChatListener().clearQueue();
         this.sendChatAcknowledgement();
         ChatComponent.State chatcomponent$state = this.minecraft.gui.getChat().storeState();
@@ -841,10 +883,10 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handleTakeItemEntity(ClientboundTakeItemEntityPacket p_105122_) {
-        PacketUtils.ensureRunningOnSameThread(p_105122_, this, this.minecraft);
-        Entity entity = this.level.getEntity(p_105122_.getItemId());
-        LivingEntity livingentity = (LivingEntity)this.level.getEntity(p_105122_.getPlayerId());
+    public void handleTakeItemEntity(ClientboundTakeItemEntityPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.level.getEntity(packet.getItemId());
+        LivingEntity livingentity = (LivingEntity)this.level.getEntity(packet.getPlayerId());
         if (livingentity == null) {
             livingentity = this.minecraft.player;
         }
@@ -882,69 +924,69 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
             if (entity instanceof ItemEntity itementity) {
                 ItemStack itemstack = itementity.getItem();
                 if (!itemstack.isEmpty()) {
-                    itemstack.shrink(p_105122_.getAmount());
+                    itemstack.shrink(packet.getAmount());
                 }
 
                 if (itemstack.isEmpty()) {
-                    this.level.removeEntity(p_105122_.getItemId(), Entity.RemovalReason.DISCARDED);
+                    this.level.removeEntity(packet.getItemId(), Entity.RemovalReason.DISCARDED);
                 }
             } else if (!(entity instanceof ExperienceOrb)) {
-                this.level.removeEntity(p_105122_.getItemId(), Entity.RemovalReason.DISCARDED);
+                this.level.removeEntity(packet.getItemId(), Entity.RemovalReason.DISCARDED);
             }
         }
     }
 
     @Override
-    public void handleSystemChat(ClientboundSystemChatPacket p_233708_) {
-        PacketUtils.ensureRunningOnSameThread(p_233708_, this, this.minecraft);
-        this.minecraft.getChatListener().handleSystemMessage(p_233708_.content(), p_233708_.overlay());
+    public void handleSystemChat(ClientboundSystemChatPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.getChatListener().handleSystemMessage(packet.content(), packet.overlay());
     }
 
     @Override
-    public void handlePlayerChat(ClientboundPlayerChatPacket p_233702_) {
-        PacketUtils.ensureRunningOnSameThread(p_233702_, this, this.minecraft);
-        Optional<SignedMessageBody> optional = p_233702_.body().unpack(this.messageSignatureCache);
+    public void handlePlayerChat(ClientboundPlayerChatPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Optional<SignedMessageBody> optional = packet.body().unpack(this.messageSignatureCache);
         if (optional.isEmpty()) {
             this.connection.disconnect(INVALID_PACKET);
         } else {
-            this.messageSignatureCache.push(optional.get(), p_233702_.signature());
-            UUID uuid = p_233702_.sender();
+            this.messageSignatureCache.push(optional.get(), packet.signature());
+            UUID uuid = packet.sender();
             PlayerInfo playerinfo = this.getPlayerInfo(uuid);
             if (playerinfo == null) {
                 LOGGER.error("Received player chat packet for unknown player with ID: {}", uuid);
-                this.minecraft.getChatListener().handleChatMessageError(uuid, p_233702_.chatType());
+                this.minecraft.getChatListener().handleChatMessageError(uuid, packet.chatType());
             } else {
                 RemoteChatSession remotechatsession = playerinfo.getChatSession();
                 SignedMessageLink signedmessagelink;
                 if (remotechatsession != null) {
-                    signedmessagelink = new SignedMessageLink(p_233702_.index(), uuid, remotechatsession.sessionId());
+                    signedmessagelink = new SignedMessageLink(packet.index(), uuid, remotechatsession.sessionId());
                 } else {
                     signedmessagelink = SignedMessageLink.unsigned(uuid);
                 }
 
                 PlayerChatMessage playerchatmessage = new PlayerChatMessage(
-                    signedmessagelink, p_233702_.signature(), optional.get(), p_233702_.unsignedContent(), p_233702_.filterMask()
+                    signedmessagelink, packet.signature(), optional.get(), packet.unsignedContent(), packet.filterMask()
                 );
                 playerchatmessage = playerinfo.getMessageValidator().updateAndValidate(playerchatmessage);
                 if (playerchatmessage != null) {
-                    this.minecraft.getChatListener().handlePlayerChatMessage(playerchatmessage, playerinfo.getProfile(), p_233702_.chatType());
+                    this.minecraft.getChatListener().handlePlayerChatMessage(playerchatmessage, playerinfo.getProfile(), packet.chatType());
                 } else {
-                    this.minecraft.getChatListener().handleChatMessageError(uuid, p_233702_.chatType());
+                    this.minecraft.getChatListener().handleChatMessageError(uuid, packet.chatType());
                 }
             }
         }
     }
 
     @Override
-    public void handleDisguisedChat(ClientboundDisguisedChatPacket p_251920_) {
-        PacketUtils.ensureRunningOnSameThread(p_251920_, this, this.minecraft);
-        this.minecraft.getChatListener().handleDisguisedChatMessage(p_251920_.message(), p_251920_.chatType());
+    public void handleDisguisedChat(ClientboundDisguisedChatPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.getChatListener().handleDisguisedChatMessage(packet.message(), packet.chatType());
     }
 
     @Override
-    public void handleDeleteChat(ClientboundDeleteChatPacket p_241325_) {
-        PacketUtils.ensureRunningOnSameThread(p_241325_, this, this.minecraft);
-        Optional<MessageSignature> optional = p_241325_.messageSignature().unpack(this.messageSignatureCache);
+    public void handleDeleteChat(ClientboundDeleteChatPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Optional<MessageSignature> optional = packet.messageSignature().unpack(this.messageSignatureCache);
         if (optional.isEmpty()) {
             this.connection.disconnect(INVALID_PACKET);
         } else {
@@ -955,62 +997,65 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         }
     }
 
+    /**
+     * Renders a specified animation: Waking up a player, a living entity swinging its currently held item, being hurt or receiving a critical hit by normal or magical means
+     */
     @Override
-    public void handleAnimate(ClientboundAnimatePacket p_104968_) {
-        PacketUtils.ensureRunningOnSameThread(p_104968_, this, this.minecraft);
-        Entity entity = this.level.getEntity(p_104968_.getId());
+    public void handleAnimate(ClientboundAnimatePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.level.getEntity(packet.getId());
         if (entity != null) {
-            if (p_104968_.getAction() == 0) {
+            if (packet.getAction() == 0) {
                 LivingEntity livingentity = (LivingEntity)entity;
                 livingentity.swing(InteractionHand.MAIN_HAND);
-            } else if (p_104968_.getAction() == 3) {
+            } else if (packet.getAction() == 3) {
                 LivingEntity livingentity1 = (LivingEntity)entity;
                 livingentity1.swing(InteractionHand.OFF_HAND);
-            } else if (p_104968_.getAction() == 2) {
+            } else if (packet.getAction() == 2) {
                 Player player = (Player)entity;
                 player.stopSleepInBed(false, false);
-            } else if (p_104968_.getAction() == 4) {
+            } else if (packet.getAction() == 4) {
                 this.minecraft.particleEngine.createTrackingEmitter(entity, ParticleTypes.CRIT);
-            } else if (p_104968_.getAction() == 5) {
+            } else if (packet.getAction() == 5) {
                 this.minecraft.particleEngine.createTrackingEmitter(entity, ParticleTypes.ENCHANTED_HIT);
             }
         }
     }
 
     @Override
-    public void handleHurtAnimation(ClientboundHurtAnimationPacket p_265581_) {
-        PacketUtils.ensureRunningOnSameThread(p_265581_, this, this.minecraft);
-        Entity entity = this.level.getEntity(p_265581_.id());
+    public void handleHurtAnimation(ClientboundHurtAnimationPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.level.getEntity(packet.id());
         if (entity != null) {
-            entity.animateHurt(p_265581_.yaw());
+            entity.animateHurt(packet.yaw());
         }
     }
 
     @Override
-    public void handleSetTime(ClientboundSetTimePacket p_105108_) {
-        PacketUtils.ensureRunningOnSameThread(p_105108_, this, this.minecraft);
-        this.minecraft.level.setGameTime(p_105108_.getGameTime());
-        this.minecraft.level.setDayTime(p_105108_.getDayTime());
-        this.telemetryManager.setTime(p_105108_.getGameTime());
+    public void handleSetTime(ClientboundSetTimePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.level.setGameTime(packet.getGameTime());
+        this.minecraft.level.setDayTime(packet.getDayTime());
+        this.telemetryManager.setTime(packet.getGameTime());
     }
 
     @Override
-    public void handleSetSpawn(ClientboundSetDefaultSpawnPositionPacket p_105084_) {
-        PacketUtils.ensureRunningOnSameThread(p_105084_, this, this.minecraft);
-        this.minecraft.level.setDefaultSpawnPos(p_105084_.getPos(), p_105084_.getAngle());
+    public void handleSetSpawn(ClientboundSetDefaultSpawnPositionPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.level.setDefaultSpawnPos(packet.getPos(), packet.getAngle());
     }
 
     @Override
-    public void handleSetEntityPassengersPacket(ClientboundSetPassengersPacket p_105102_) {
-        PacketUtils.ensureRunningOnSameThread(p_105102_, this, this.minecraft);
-        Entity entity = this.level.getEntity(p_105102_.getVehicle());
+    public void handleSetEntityPassengersPacket(ClientboundSetPassengersPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.level.getEntity(packet.getVehicle());
         if (entity == null) {
             LOGGER.warn("Received passengers for unknown entity");
         } else {
             boolean flag = entity.hasIndirectPassenger(this.minecraft.player);
             entity.ejectPassengers();
 
-            for (int i : p_105102_.getPassengers()) {
+            for (int i : packet.getPassengers()) {
                 Entity entity1 = this.level.getEntity(i);
                 if (entity1 != null) {
                     entity1.startRiding(entity, true);
@@ -1031,16 +1076,16 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handleEntityLinkPacket(ClientboundSetEntityLinkPacket p_105090_) {
-        PacketUtils.ensureRunningOnSameThread(p_105090_, this, this.minecraft);
-        if (this.level.getEntity(p_105090_.getSourceId()) instanceof Leashable leashable) {
-            leashable.setDelayedLeashHolderId(p_105090_.getDestId());
+    public void handleEntityLinkPacket(ClientboundSetEntityLinkPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        if (this.level.getEntity(packet.getSourceId()) instanceof Leashable leashable) {
+            leashable.setDelayedLeashHolderId(packet.getDestId());
         }
     }
 
-    private static ItemStack findTotem(Player p_104928_) {
+    private static ItemStack findTotem(Player player) {
         for (InteractionHand interactionhand : InteractionHand.values()) {
-            ItemStack itemstack = p_104928_.getItemInHand(interactionhand);
+            ItemStack itemstack = player.getItemInHand(interactionhand);
             if (itemstack.is(Items.TOTEM_OF_UNDYING)) {
                 return itemstack;
             }
@@ -1049,12 +1094,15 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         return new ItemStack(Items.TOTEM_OF_UNDYING);
     }
 
+    /**
+     * Invokes the entities' handleUpdateHealth method which is implemented in LivingBase (hurt/death), MinecartMobSpawner (spawn delay), FireworkRocket & MinecartTNT (explosion), IronGolem (throwing, ...), Witch (spawn particles), Zombie (villager transformation), Animal (breeding mode particles), Horse (breeding/smoke particles), Sheep (...), Tameable (...), Villager (particles for breeding mode, angry and happy), Wolf (...)
+     */
     @Override
-    public void handleEntityEvent(ClientboundEntityEventPacket p_105010_) {
-        PacketUtils.ensureRunningOnSameThread(p_105010_, this, this.minecraft);
-        Entity entity = p_105010_.getEntity(this.level);
+    public void handleEntityEvent(ClientboundEntityEventPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = packet.getEntity(this.level);
         if (entity != null) {
-            switch (p_105010_.getEventId()) {
+            switch (packet.getEventId()) {
                 case 21:
                     this.minecraft.getSoundManager().play(new GuardianAttackSoundInstance((Guardian)entity));
                     break;
@@ -1070,38 +1118,38 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
                     this.minecraft.getSoundManager().play(new SnifferSoundInstance((Sniffer)entity));
                     break;
                 default:
-                    entity.handleEntityEvent(p_105010_.getEventId());
+                    entity.handleEntityEvent(packet.getEventId());
             }
         }
     }
 
     @Override
-    public void handleDamageEvent(ClientboundDamageEventPacket p_270800_) {
-        PacketUtils.ensureRunningOnSameThread(p_270800_, this, this.minecraft);
-        Entity entity = this.level.getEntity(p_270800_.entityId());
+    public void handleDamageEvent(ClientboundDamageEventPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.level.getEntity(packet.entityId());
         if (entity != null) {
-            entity.handleDamageEvent(p_270800_.getSource(this.level));
+            entity.handleDamageEvent(packet.getSource(this.level));
         }
     }
 
     @Override
-    public void handleSetHealth(ClientboundSetHealthPacket p_105098_) {
-        PacketUtils.ensureRunningOnSameThread(p_105098_, this, this.minecraft);
-        this.minecraft.player.hurtTo(p_105098_.getHealth());
-        this.minecraft.player.getFoodData().setFoodLevel(p_105098_.getFood());
-        this.minecraft.player.getFoodData().setSaturation(p_105098_.getSaturation());
+    public void handleSetHealth(ClientboundSetHealthPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.player.hurtTo(packet.getHealth());
+        this.minecraft.player.getFoodData().setFoodLevel(packet.getFood());
+        this.minecraft.player.getFoodData().setSaturation(packet.getSaturation());
     }
 
     @Override
-    public void handleSetExperience(ClientboundSetExperiencePacket p_105096_) {
-        PacketUtils.ensureRunningOnSameThread(p_105096_, this, this.minecraft);
-        this.minecraft.player.setExperienceValues(p_105096_.getExperienceProgress(), p_105096_.getTotalExperience(), p_105096_.getExperienceLevel());
+    public void handleSetExperience(ClientboundSetExperiencePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.player.setExperienceValues(packet.getExperienceProgress(), packet.getTotalExperience(), packet.getExperienceLevel());
     }
 
     @Override
-    public void handleRespawn(ClientboundRespawnPacket p_105066_) {
-        PacketUtils.ensureRunningOnSameThread(p_105066_, this, this.minecraft);
-        CommonPlayerSpawnInfo commonplayerspawninfo = p_105066_.commonPlayerSpawnInfo();
+    public void handleRespawn(ClientboundRespawnPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        CommonPlayerSpawnInfo commonplayerspawninfo = packet.commonPlayerSpawnInfo();
         ResourceKey<Level> resourcekey = commonplayerspawninfo.dimension();
         Holder<DimensionType> holder = commonplayerspawninfo.dimensionType();
         LocalPlayer localplayer = this.minecraft.player;
@@ -1138,7 +1186,7 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         }
 
         LocalPlayer localplayer1;
-        if (p_105066_.shouldKeep((byte)2)) {
+        if (packet.shouldKeep((byte)2)) {
             localplayer1 = this.minecraft
                 .gameMode
                 .createPlayer(this.level, localplayer.getStats(), localplayer.getRecipeBook(), localplayer.isShiftKeyDown(), localplayer.isSprinting());
@@ -1154,14 +1202,14 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         }
 
         this.minecraft.cameraEntity = localplayer1;
-        if (p_105066_.shouldKeep((byte)2)) {
+        if (packet.shouldKeep((byte)2)) {
             List<SynchedEntityData.DataValue<?>> list = localplayer.getEntityData().getNonDefaultValues();
             if (list != null) {
                 localplayer1.getEntityData().assignValues(list);
             }
         }
 
-        if (p_105066_.shouldKeep((byte)1)) {
+        if (packet.shouldKeep((byte)1)) {
             localplayer1.getAttributes().assignAllValues(localplayer.getAttributes());
         } else {
             localplayer1.getAttributes().assignBaseValues(localplayer.getAttributes());
@@ -1186,12 +1234,12 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         this.minecraft.gameMode.setLocalMode(commonplayerspawninfo.gameType(), commonplayerspawninfo.previousGameType());
     }
 
-    private ReceivingLevelScreen.Reason determineLevelLoadingReason(boolean p_341642_, ResourceKey<Level> p_341617_, ResourceKey<Level> p_341637_) {
+    private ReceivingLevelScreen.Reason determineLevelLoadingReason(boolean dying, ResourceKey<Level> spawnDimension, ResourceKey<Level> currentDimension) {
         ReceivingLevelScreen.Reason receivinglevelscreen$reason = ReceivingLevelScreen.Reason.OTHER;
-        if (!p_341642_) {
-            if (p_341617_ == Level.NETHER || p_341637_ == Level.NETHER) {
+        if (!dying) {
+            if (spawnDimension == Level.NETHER || currentDimension == Level.NETHER) {
                 receivinglevelscreen$reason = ReceivingLevelScreen.Reason.NETHER_PORTAL;
-            } else if (p_341617_ == Level.END || p_341637_ == Level.END) {
+            } else if (spawnDimension == Level.END || currentDimension == Level.END) {
                 receivinglevelscreen$reason = ReceivingLevelScreen.Reason.END_PORTAL;
             }
         }
@@ -1199,21 +1247,24 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         return receivinglevelscreen$reason;
     }
 
+    /**
+     * Initiates a new explosion (sound, particles, drop spawn) for the affected blocks indicated by the packet.
+     */
     @Override
-    public void handleExplosion(ClientboundExplodePacket p_105012_) {
-        PacketUtils.ensureRunningOnSameThread(p_105012_, this, this.minecraft);
+    public void handleExplosion(ClientboundExplodePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         Explosion explosion = new Explosion(
             this.minecraft.level,
             null,
-            p_105012_.getX(),
-            p_105012_.getY(),
-            p_105012_.getZ(),
-            p_105012_.getPower(),
-            p_105012_.getToBlow(),
-            p_105012_.getBlockInteraction(),
-            p_105012_.getSmallExplosionParticles(),
-            p_105012_.getLargeExplosionParticles(),
-            p_105012_.getExplosionSound()
+            packet.getX(),
+            packet.getY(),
+            packet.getZ(),
+            packet.getPower(),
+            packet.getToBlow(),
+            packet.getBlockInteraction(),
+            packet.getSmallExplosionParticles(),
+            packet.getLargeExplosionParticles(),
+            packet.getExplosionSound()
         );
         explosion.finalizeExplosion(true);
         this.minecraft
@@ -1222,19 +1273,19 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
                 this.minecraft
                     .player
                     .getDeltaMovement()
-                    .add((double)p_105012_.getKnockbackX(), (double)p_105012_.getKnockbackY(), (double)p_105012_.getKnockbackZ())
+                    .add((double)packet.getKnockbackX(), (double)packet.getKnockbackY(), (double)packet.getKnockbackZ())
             );
     }
 
     @Override
-    public void handleHorseScreenOpen(ClientboundHorseScreenOpenPacket p_105018_) {
-        PacketUtils.ensureRunningOnSameThread(p_105018_, this, this.minecraft);
-        if (this.level.getEntity(p_105018_.getEntityId()) instanceof AbstractHorse abstracthorse) {
+    public void handleHorseScreenOpen(ClientboundHorseScreenOpenPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        if (this.level.getEntity(packet.getEntityId()) instanceof AbstractHorse abstracthorse) {
             LocalPlayer localplayer = this.minecraft.player;
-            int i = p_105018_.getInventoryColumns();
+            int i = packet.getInventoryColumns();
             SimpleContainer simplecontainer = new SimpleContainer(AbstractHorse.getInventorySize(i));
             HorseInventoryMenu horseinventorymenu = new HorseInventoryMenu(
-                p_105018_.getContainerId(), localplayer.getInventory(), simplecontainer, abstracthorse, i
+                packet.getContainerId(), localplayer.getInventory(), simplecontainer, abstracthorse, i
             );
             localplayer.containerMenu = horseinventorymenu;
             this.minecraft.setScreen(new HorseInventoryScreen(horseinventorymenu, localplayer.getInventory(), abstracthorse, i));
@@ -1242,23 +1293,26 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handleOpenScreen(ClientboundOpenScreenPacket p_105042_) {
-        PacketUtils.ensureRunningOnSameThread(p_105042_, this, this.minecraft);
-        MenuScreens.create(p_105042_.getType(), this.minecraft, p_105042_.getContainerId(), p_105042_.getTitle());
+    public void handleOpenScreen(ClientboundOpenScreenPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        MenuScreens.create(packet.getType(), this.minecraft, packet.getContainerId(), packet.getTitle());
     }
 
+    /**
+     * Handles picking up an ItemStack or dropping one in your inventory or an open (non-creative) container
+     */
     @Override
-    public void handleContainerSetSlot(ClientboundContainerSetSlotPacket p_105000_) {
-        PacketUtils.ensureRunningOnSameThread(p_105000_, this, this.minecraft);
+    public void handleContainerSetSlot(ClientboundContainerSetSlotPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         Player player = this.minecraft.player;
-        ItemStack itemstack = p_105000_.getItem();
-        int i = p_105000_.getSlot();
+        ItemStack itemstack = packet.getItem();
+        int i = packet.getSlot();
         this.minecraft.getTutorial().onGetItem(itemstack);
-        if (p_105000_.getContainerId() == -1) {
+        if (packet.getContainerId() == -1) {
             if (!(this.minecraft.screen instanceof CreativeModeInventoryScreen)) {
                 player.containerMenu.setCarried(itemstack);
             }
-        } else if (p_105000_.getContainerId() == -2) {
+        } else if (packet.getContainerId() == -2) {
             player.getInventory().setItem(i, itemstack);
         } else {
             boolean flag = false;
@@ -1266,7 +1320,7 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
                 flag = !creativemodeinventoryscreen.isInventoryOpen();
             }
 
-            if (p_105000_.getContainerId() == 0 && InventoryMenu.isHotbarSlot(i)) {
+            if (packet.getContainerId() == 0 && InventoryMenu.isHotbarSlot(i)) {
                 if (!itemstack.isEmpty()) {
                     ItemStack itemstack1 = player.inventoryMenu.getSlot(i).getItem();
                     if (itemstack1.isEmpty() || itemstack1.getCount() < itemstack.getCount()) {
@@ -1274,44 +1328,53 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
                     }
                 }
 
-                player.inventoryMenu.setItem(i, p_105000_.getStateId(), itemstack);
-            } else if (p_105000_.getContainerId() == player.containerMenu.containerId && (p_105000_.getContainerId() != 0 || !flag)) {
-                player.containerMenu.setItem(i, p_105000_.getStateId(), itemstack);
+                player.inventoryMenu.setItem(i, packet.getStateId(), itemstack);
+            } else if (packet.getContainerId() == player.containerMenu.containerId && (packet.getContainerId() != 0 || !flag)) {
+                player.containerMenu.setItem(i, packet.getStateId(), itemstack);
             }
         }
     }
 
+    /**
+     * Handles the placement of a specified ItemStack in a specified container/inventory slot
+     */
     @Override
-    public void handleContainerContent(ClientboundContainerSetContentPacket p_104996_) {
-        PacketUtils.ensureRunningOnSameThread(p_104996_, this, this.minecraft);
+    public void handleContainerContent(ClientboundContainerSetContentPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         Player player = this.minecraft.player;
-        if (p_104996_.getContainerId() == 0) {
-            player.inventoryMenu.initializeContents(p_104996_.getStateId(), p_104996_.getItems(), p_104996_.getCarriedItem());
-        } else if (p_104996_.getContainerId() == player.containerMenu.containerId) {
-            player.containerMenu.initializeContents(p_104996_.getStateId(), p_104996_.getItems(), p_104996_.getCarriedItem());
+        if (packet.getContainerId() == 0) {
+            player.inventoryMenu.initializeContents(packet.getStateId(), packet.getItems(), packet.getCarriedItem());
+        } else if (packet.getContainerId() == player.containerMenu.containerId) {
+            player.containerMenu.initializeContents(packet.getStateId(), packet.getItems(), packet.getCarriedItem());
         }
     }
 
+    /**
+     * Creates a sign in the specified location if it didn't exist and opens the GUI to edit its text
+     */
     @Override
-    public void handleOpenSignEditor(ClientboundOpenSignEditorPacket p_105044_) {
-        PacketUtils.ensureRunningOnSameThread(p_105044_, this, this.minecraft);
-        BlockPos blockpos = p_105044_.getPos();
+    public void handleOpenSignEditor(ClientboundOpenSignEditorPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        BlockPos blockpos = packet.getPos();
         if (this.level.getBlockEntity(blockpos) instanceof SignBlockEntity signblockentity) {
-            this.minecraft.player.openTextEdit(signblockentity, p_105044_.isFrontText());
+            this.minecraft.player.openTextEdit(signblockentity, packet.isFrontText());
         } else {
             BlockState blockstate = this.level.getBlockState(blockpos);
             SignBlockEntity signblockentity1 = new SignBlockEntity(blockpos, blockstate);
             signblockentity1.setLevel(this.level);
-            this.minecraft.player.openTextEdit(signblockentity1, p_105044_.isFrontText());
+            this.minecraft.player.openTextEdit(signblockentity1, packet.isFrontText());
         }
     }
 
+    /**
+     * Updates the NBTTagCompound metadata of instances of the following entitytypes: Mob spawners, command blocks, beacons, skulls, flowerpot
+     */
     @Override
-    public void handleBlockEntityData(ClientboundBlockEntityDataPacket p_104976_) {
-        PacketUtils.ensureRunningOnSameThread(p_104976_, this, this.minecraft);
-        BlockPos blockpos = p_104976_.getPos();
-        this.minecraft.level.getBlockEntity(blockpos, p_104976_.getType()).ifPresent(p_337415_ -> {
-            p_337415_.onDataPacket(connection, p_104976_, this.registryAccess);
+    public void handleBlockEntityData(ClientboundBlockEntityDataPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        BlockPos blockpos = packet.getPos();
+        this.minecraft.level.getBlockEntity(blockpos, packet.getType()).ifPresent(p_337415_ -> {
+            p_337415_.onDataPacket(connection, packet, this.registryAccess);
 
             if (p_337415_ instanceof CommandBlockEntity && this.minecraft.screen instanceof CommandBlockEditScreen) {
                 ((CommandBlockEditScreen)this.minecraft.screen).updateGui();
@@ -1319,47 +1382,59 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         });
     }
 
+    /**
+     * Sets the progressbar of the opened window to the specified value
+     */
     @Override
-    public void handleContainerSetData(ClientboundContainerSetDataPacket p_104998_) {
-        PacketUtils.ensureRunningOnSameThread(p_104998_, this, this.minecraft);
+    public void handleContainerSetData(ClientboundContainerSetDataPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         Player player = this.minecraft.player;
-        if (player.containerMenu != null && player.containerMenu.containerId == p_104998_.getContainerId()) {
-            player.containerMenu.setData(p_104998_.getId(), p_104998_.getValue());
+        if (player.containerMenu != null && player.containerMenu.containerId == packet.getContainerId()) {
+            player.containerMenu.setData(packet.getId(), packet.getValue());
         }
     }
 
     @Override
-    public void handleSetEquipment(ClientboundSetEquipmentPacket p_105094_) {
-        PacketUtils.ensureRunningOnSameThread(p_105094_, this, this.minecraft);
-        if (this.level.getEntity(p_105094_.getEntity()) instanceof LivingEntity livingentity) {
-            p_105094_.getSlots().forEach(p_323056_ -> livingentity.setItemSlot(p_323056_.getFirst(), p_323056_.getSecond()));
+    public void handleSetEquipment(ClientboundSetEquipmentPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        if (this.level.getEntity(packet.getEntity()) instanceof LivingEntity livingentity) {
+            packet.getSlots().forEach(p_323056_ -> livingentity.setItemSlot(p_323056_.getFirst(), p_323056_.getSecond()));
         }
     }
 
+    /**
+     * Resets the ItemStack held in hand and closes the window that is opened
+     */
     @Override
-    public void handleContainerClose(ClientboundContainerClosePacket p_104994_) {
-        PacketUtils.ensureRunningOnSameThread(p_104994_, this, this.minecraft);
+    public void handleContainerClose(ClientboundContainerClosePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         this.minecraft.player.clientSideCloseContainer();
     }
 
+    /**
+     * Triggers Block.onBlockEventReceived, which is implemented in BlockPistonBase for extension/retraction, BlockNote for setting the instrument (including audiovisual feedback) and in BlockContainer to set the number of players accessing a (Ender)Chest
+     */
     @Override
-    public void handleBlockEvent(ClientboundBlockEventPacket p_104978_) {
-        PacketUtils.ensureRunningOnSameThread(p_104978_, this, this.minecraft);
-        this.minecraft.level.blockEvent(p_104978_.getPos(), p_104978_.getBlock(), p_104978_.getB0(), p_104978_.getB1());
+    public void handleBlockEvent(ClientboundBlockEventPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.level.blockEvent(packet.getPos(), packet.getBlock(), packet.getB0(), packet.getB1());
+    }
+
+    /**
+     * Updates all registered IWorldAccess instances with destroyBlockInWorldPartially
+     */
+    @Override
+    public void handleBlockDestruction(ClientboundBlockDestructionPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.level.destroyBlockProgress(packet.getId(), packet.getPos(), packet.getProgress());
     }
 
     @Override
-    public void handleBlockDestruction(ClientboundBlockDestructionPacket p_104974_) {
-        PacketUtils.ensureRunningOnSameThread(p_104974_, this, this.minecraft);
-        this.minecraft.level.destroyBlockProgress(p_104974_.getId(), p_104974_.getPos(), p_104974_.getProgress());
-    }
-
-    @Override
-    public void handleGameEvent(ClientboundGameEventPacket p_105016_) {
-        PacketUtils.ensureRunningOnSameThread(p_105016_, this, this.minecraft);
+    public void handleGameEvent(ClientboundGameEventPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         Player player = this.minecraft.player;
-        ClientboundGameEventPacket.Type clientboundgameeventpacket$type = p_105016_.getEvent();
-        float f = p_105016_.getParam();
+        ClientboundGameEventPacket.Type clientboundgameeventpacket$type = packet.getEvent();
+        float f = packet.getParam();
         int i = Mth.floor(f + 0.5F);
         if (clientboundgameeventpacket$type == ClientboundGameEventPacket.NO_RESPAWN_BLOCK_AVAILABLE) {
             player.displayClientMessage(Component.translatable("block.minecraft.spawn.not_valid"), false);
@@ -1422,52 +1497,58 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         }
     }
 
-    /** @deprecated Neo: use {@link #startWaitingForNewLevel(LocalPlayer, ClientLevel, ReceivingLevelScreen.Reason, ResourceKey, ResourceKey)} instead. */
+    /**
+ * @deprecated Neo: use {@link #startWaitingForNewLevel(LocalPlayer, ClientLevel,
+ *             ReceivingLevelScreen.Reason, ResourceKey, ResourceKey)} instead.
+ */
     @Deprecated
-    private void startWaitingForNewLevel(LocalPlayer p_304688_, ClientLevel p_304528_, ReceivingLevelScreen.Reason p_341690_) {
-        this.startWaitingForNewLevel(p_304688_, p_304528_, p_341690_, null, null);
+    private void startWaitingForNewLevel(LocalPlayer player, ClientLevel level, ReceivingLevelScreen.Reason reason) {
+        this.startWaitingForNewLevel(player, level, reason, null, null);
     }
 
-    private void startWaitingForNewLevel(LocalPlayer p_304688_, ClientLevel p_304528_, ReceivingLevelScreen.Reason p_341690_, @Nullable ResourceKey<Level> toDimension, @Nullable ResourceKey<Level> fromDimension) {
-        this.levelLoadStatusManager = new LevelLoadStatusManager(p_304688_, p_304528_, this.minecraft.levelRenderer);
-        this.minecraft.setScreen(net.neoforged.neoforge.client.DimensionTransitionScreenManager.getScreen(toDimension, fromDimension).create(this.levelLoadStatusManager::levelReady, p_341690_));
+    private void startWaitingForNewLevel(LocalPlayer player, ClientLevel level, ReceivingLevelScreen.Reason reason, @Nullable ResourceKey<Level> toDimension, @Nullable ResourceKey<Level> fromDimension) {
+        this.levelLoadStatusManager = new LevelLoadStatusManager(player, level, this.minecraft.levelRenderer);
+        this.minecraft.setScreen(net.neoforged.neoforge.client.DimensionTransitionScreenManager.getScreen(toDimension, fromDimension).create(this.levelLoadStatusManager::levelReady, reason));
     }
 
+    /**
+     * Updates the worlds MapStorage with the specified MapData for the specified map-identifier and invokes a MapItemRenderer for it
+     */
     @Override
-    public void handleMapItemData(ClientboundMapItemDataPacket p_105032_) {
-        PacketUtils.ensureRunningOnSameThread(p_105032_, this, this.minecraft);
+    public void handleMapItemData(ClientboundMapItemDataPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         MapRenderer maprenderer = this.minecraft.gameRenderer.getMapRenderer();
-        MapId mapid = p_105032_.mapId();
+        MapId mapid = packet.mapId();
         MapItemSavedData mapitemsaveddata = this.minecraft.level.getMapData(mapid);
         if (mapitemsaveddata == null) {
-            mapitemsaveddata = MapItemSavedData.createForClient(p_105032_.scale(), p_105032_.locked(), this.minecraft.level.dimension());
+            mapitemsaveddata = MapItemSavedData.createForClient(packet.scale(), packet.locked(), this.minecraft.level.dimension());
             this.minecraft.level.overrideMapData(mapid, mapitemsaveddata);
         }
 
-        p_105032_.applyToMap(mapitemsaveddata);
+        packet.applyToMap(mapitemsaveddata);
         maprenderer.update(mapid, mapitemsaveddata);
     }
 
     @Override
-    public void handleLevelEvent(ClientboundLevelEventPacket p_105024_) {
-        PacketUtils.ensureRunningOnSameThread(p_105024_, this, this.minecraft);
-        if (p_105024_.isGlobalEvent()) {
-            this.minecraft.level.globalLevelEvent(p_105024_.getType(), p_105024_.getPos(), p_105024_.getData());
+    public void handleLevelEvent(ClientboundLevelEventPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        if (packet.isGlobalEvent()) {
+            this.minecraft.level.globalLevelEvent(packet.getType(), packet.getPos(), packet.getData());
         } else {
-            this.minecraft.level.levelEvent(p_105024_.getType(), p_105024_.getPos(), p_105024_.getData());
+            this.minecraft.level.levelEvent(packet.getType(), packet.getPos(), packet.getData());
         }
     }
 
     @Override
-    public void handleUpdateAdvancementsPacket(ClientboundUpdateAdvancementsPacket p_105126_) {
-        PacketUtils.ensureRunningOnSameThread(p_105126_, this, this.minecraft);
-        this.advancements.update(p_105126_);
+    public void handleUpdateAdvancementsPacket(ClientboundUpdateAdvancementsPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.advancements.update(packet);
     }
 
     @Override
-    public void handleSelectAdvancementsTab(ClientboundSelectAdvancementsTabPacket p_105072_) {
-        PacketUtils.ensureRunningOnSameThread(p_105072_, this, this.minecraft);
-        ResourceLocation resourcelocation = p_105072_.getTab();
+    public void handleSelectAdvancementsTab(ClientboundSelectAdvancementsTabPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        ResourceLocation resourcelocation = packet.getTab();
         if (resourcelocation == null) {
             this.advancements.setSelectedTab(null, false);
         } else {
@@ -1477,29 +1558,32 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handleCommands(ClientboundCommandsPacket p_104990_) {
-        PacketUtils.ensureRunningOnSameThread(p_104990_, this, this.minecraft);
+    public void handleCommands(ClientboundCommandsPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         var context = CommandBuildContext.simple(this.registryAccess, this.enabledFeatures);
-        this.commands = new CommandDispatcher<>(p_104990_.getRoot(context));
+        this.commands = new CommandDispatcher<>(packet.getRoot(context));
         this.commands = net.neoforged.neoforge.client.ClientCommandHandler.mergeServerCommands(this.commands, context);
     }
 
     @Override
-    public void handleStopSoundEvent(ClientboundStopSoundPacket p_105116_) {
-        PacketUtils.ensureRunningOnSameThread(p_105116_, this, this.minecraft);
-        this.minecraft.getSoundManager().stop(p_105116_.getName(), p_105116_.getSource());
+    public void handleStopSoundEvent(ClientboundStopSoundPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.getSoundManager().stop(packet.getName(), packet.getSource());
+    }
+
+    /**
+     * This method is only called for manual tab-completion (the {@link net.minecraft.commands.synchronization.SuggestionProviders#ASK_SERVER minecraft:ask_server} suggestion provider).
+     */
+    @Override
+    public void handleCommandSuggestions(ClientboundCommandSuggestionsPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.suggestionsProvider.completeCustomSuggestions(packet.id(), packet.toSuggestions());
     }
 
     @Override
-    public void handleCommandSuggestions(ClientboundCommandSuggestionsPacket p_104988_) {
-        PacketUtils.ensureRunningOnSameThread(p_104988_, this, this.minecraft);
-        this.suggestionsProvider.completeCustomSuggestions(p_104988_.id(), p_104988_.toSuggestions());
-    }
-
-    @Override
-    public void handleUpdateRecipes(ClientboundUpdateRecipesPacket p_105132_) {
-        PacketUtils.ensureRunningOnSameThread(p_105132_, this, this.minecraft);
-        this.recipeManager.replaceRecipes(p_105132_.getRecipes());
+    public void handleUpdateRecipes(ClientboundUpdateRecipesPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.recipeManager.replaceRecipes(packet.getRecipes());
         ClientRecipeBook clientrecipebook = this.minecraft.player.getRecipeBook();
         clientrecipebook.setupCollections(this.recipeManager.getOrderedRecipes(), this.minecraft.level.registryAccess());
         this.searchTrees.updateRecipes(clientrecipebook, this.registryAccess);
@@ -1507,27 +1591,30 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handleLookAt(ClientboundPlayerLookAtPacket p_105054_) {
-        PacketUtils.ensureRunningOnSameThread(p_105054_, this, this.minecraft);
-        Vec3 vec3 = p_105054_.getPosition(this.level);
+    public void handleLookAt(ClientboundPlayerLookAtPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Vec3 vec3 = packet.getPosition(this.level);
         if (vec3 != null) {
-            this.minecraft.player.lookAt(p_105054_.getFromAnchor(), vec3);
+            this.minecraft.player.lookAt(packet.getFromAnchor(), vec3);
         }
     }
 
     @Override
-    public void handleTagQueryPacket(ClientboundTagQueryPacket p_105120_) {
-        PacketUtils.ensureRunningOnSameThread(p_105120_, this, this.minecraft);
-        if (!this.debugQueryHandler.handleResponse(p_105120_.getTransactionId(), p_105120_.getTag())) {
-            LOGGER.debug("Got unhandled response to tag query {}", p_105120_.getTransactionId());
+    public void handleTagQueryPacket(ClientboundTagQueryPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        if (!this.debugQueryHandler.handleResponse(packet.getTransactionId(), packet.getTag())) {
+            LOGGER.debug("Got unhandled response to tag query {}", packet.getTransactionId());
         }
     }
 
+    /**
+     * Updates the players statistics or achievements
+     */
     @Override
-    public void handleAwardStats(ClientboundAwardStatsPacket p_104970_) {
-        PacketUtils.ensureRunningOnSameThread(p_104970_, this, this.minecraft);
+    public void handleAwardStats(ClientboundAwardStatsPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
 
-        for (Entry<Stat<?>> entry : p_104970_.stats().object2IntEntrySet()) {
+        for (Entry<Stat<?>> entry : packet.stats().object2IntEntrySet()) {
             Stat<?> stat = entry.getKey();
             int i = entry.getIntValue();
             this.minecraft.player.getStats().setValue(this.minecraft.player, stat, i);
@@ -1539,28 +1626,28 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handleAddOrRemoveRecipes(ClientboundRecipePacket p_105058_) {
-        PacketUtils.ensureRunningOnSameThread(p_105058_, this, this.minecraft);
+    public void handleAddOrRemoveRecipes(ClientboundRecipePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         ClientRecipeBook clientrecipebook = this.minecraft.player.getRecipeBook();
-        clientrecipebook.setBookSettings(p_105058_.getBookSettings());
-        ClientboundRecipePacket.State clientboundrecipepacket$state = p_105058_.getState();
+        clientrecipebook.setBookSettings(packet.getBookSettings());
+        ClientboundRecipePacket.State clientboundrecipepacket$state = packet.getState();
         switch (clientboundrecipepacket$state) {
             case REMOVE:
-                for (ResourceLocation resourcelocation3 : p_105058_.getRecipes()) {
+                for (ResourceLocation resourcelocation3 : packet.getRecipes()) {
                     this.recipeManager.byKey(resourcelocation3).ifPresent(clientrecipebook::remove);
                 }
                 break;
             case INIT:
-                for (ResourceLocation resourcelocation1 : p_105058_.getRecipes()) {
+                for (ResourceLocation resourcelocation1 : packet.getRecipes()) {
                     this.recipeManager.byKey(resourcelocation1).ifPresent(clientrecipebook::add);
                 }
 
-                for (ResourceLocation resourcelocation2 : p_105058_.getHighlights()) {
+                for (ResourceLocation resourcelocation2 : packet.getHighlights()) {
                     this.recipeManager.byKey(resourcelocation2).ifPresent(clientrecipebook::addHighlight);
                 }
                 break;
             case ADD:
-                for (ResourceLocation resourcelocation : p_105058_.getRecipes()) {
+                for (ResourceLocation resourcelocation : packet.getRecipes()) {
                     this.recipeManager.byKey(resourcelocation).ifPresent(p_300677_ -> {
                         clientrecipebook.add((RecipeHolder<?>)p_300677_);
                         clientrecipebook.addHighlight((RecipeHolder<?>)p_300677_);
@@ -1578,21 +1665,21 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handleUpdateMobEffect(ClientboundUpdateMobEffectPacket p_105130_) {
-        PacketUtils.ensureRunningOnSameThread(p_105130_, this, this.minecraft);
-        Entity entity = this.level.getEntity(p_105130_.getEntityId());
+    public void handleUpdateMobEffect(ClientboundUpdateMobEffectPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.level.getEntity(packet.getEntityId());
         if (entity instanceof LivingEntity) {
-            Holder<MobEffect> holder = p_105130_.getEffect();
+            Holder<MobEffect> holder = packet.getEffect();
             MobEffectInstance mobeffectinstance = new MobEffectInstance(
                 holder,
-                p_105130_.getEffectDurationTicks(),
-                p_105130_.getEffectAmplifier(),
-                p_105130_.isEffectAmbient(),
-                p_105130_.isEffectVisible(),
-                p_105130_.effectShowsIcon(),
+                packet.getEffectDurationTicks(),
+                packet.getEffectAmplifier(),
+                packet.isEffectAmbient(),
+                packet.isEffectVisible(),
+                packet.effectShowsIcon(),
                 null
             );
-            if (!p_105130_.shouldBlend()) {
+            if (!packet.shouldBlend()) {
                 mobeffectinstance.skipBlending();
             }
 
@@ -1601,10 +1688,10 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handleUpdateTags(ClientboundUpdateTagsPacket p_294888_) {
-        PacketUtils.ensureRunningOnSameThread(p_294888_, this, this.minecraft);
+    public void handleUpdateTags(ClientboundUpdateTagsPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         TagCollector tagcollector = new TagCollector();
-        p_294888_.getTags().forEach(tagcollector::append);
+        packet.getTags().forEach(tagcollector::append);
         tagcollector.updateTags(this.registryAccess, this.connection.isMemoryConnection());
         CreativeModeTabs.allTabs().stream().filter(net.minecraft.world.item.CreativeModeTab::hasSearchBar).forEach(tab -> {
             List<ItemStack> list = List.copyOf(tab.getDisplayItems());
@@ -1613,20 +1700,20 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handlePlayerCombatEnd(ClientboundPlayerCombatEndPacket p_171771_) {
+    public void handlePlayerCombatEnd(ClientboundPlayerCombatEndPacket packet) {
     }
 
     @Override
-    public void handlePlayerCombatEnter(ClientboundPlayerCombatEnterPacket p_171773_) {
+    public void handlePlayerCombatEnter(ClientboundPlayerCombatEnterPacket packet) {
     }
 
     @Override
-    public void handlePlayerCombatKill(ClientboundPlayerCombatKillPacket p_171775_) {
-        PacketUtils.ensureRunningOnSameThread(p_171775_, this, this.minecraft);
-        Entity entity = this.level.getEntity(p_171775_.playerId());
+    public void handlePlayerCombatKill(ClientboundPlayerCombatKillPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.level.getEntity(packet.playerId());
         if (entity == this.minecraft.player) {
             if (this.minecraft.player.shouldShowDeathScreen()) {
-                this.minecraft.setScreen(new DeathScreen(p_171775_.message(), this.level.getLevelData().isHardcore()));
+                this.minecraft.setScreen(new DeathScreen(packet.message(), this.level.getLevelData().isHardcore()));
             } else {
                 this.minecraft.player.respawn();
             }
@@ -1634,137 +1721,137 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handleChangeDifficulty(ClientboundChangeDifficultyPacket p_104984_) {
-        PacketUtils.ensureRunningOnSameThread(p_104984_, this, this.minecraft);
-        this.levelData.setDifficulty(p_104984_.getDifficulty());
-        this.levelData.setDifficultyLocked(p_104984_.isLocked());
+    public void handleChangeDifficulty(ClientboundChangeDifficultyPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.levelData.setDifficulty(packet.getDifficulty());
+        this.levelData.setDifficultyLocked(packet.isLocked());
     }
 
     @Override
-    public void handleSetCamera(ClientboundSetCameraPacket p_105076_) {
-        PacketUtils.ensureRunningOnSameThread(p_105076_, this, this.minecraft);
-        Entity entity = p_105076_.getEntity(this.level);
+    public void handleSetCamera(ClientboundSetCameraPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = packet.getEntity(this.level);
         if (entity != null) {
             this.minecraft.setCameraEntity(entity);
         }
     }
 
     @Override
-    public void handleInitializeBorder(ClientboundInitializeBorderPacket p_171767_) {
-        PacketUtils.ensureRunningOnSameThread(p_171767_, this, this.minecraft);
+    public void handleInitializeBorder(ClientboundInitializeBorderPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         WorldBorder worldborder = this.level.getWorldBorder();
-        worldborder.setCenter(p_171767_.getNewCenterX(), p_171767_.getNewCenterZ());
-        long i = p_171767_.getLerpTime();
+        worldborder.setCenter(packet.getNewCenterX(), packet.getNewCenterZ());
+        long i = packet.getLerpTime();
         if (i > 0L) {
-            worldborder.lerpSizeBetween(p_171767_.getOldSize(), p_171767_.getNewSize(), i);
+            worldborder.lerpSizeBetween(packet.getOldSize(), packet.getNewSize(), i);
         } else {
-            worldborder.setSize(p_171767_.getNewSize());
+            worldborder.setSize(packet.getNewSize());
         }
 
-        worldborder.setAbsoluteMaxSize(p_171767_.getNewAbsoluteMaxSize());
-        worldborder.setWarningBlocks(p_171767_.getWarningBlocks());
-        worldborder.setWarningTime(p_171767_.getWarningTime());
+        worldborder.setAbsoluteMaxSize(packet.getNewAbsoluteMaxSize());
+        worldborder.setWarningBlocks(packet.getWarningBlocks());
+        worldborder.setWarningTime(packet.getWarningTime());
     }
 
     @Override
-    public void handleSetBorderCenter(ClientboundSetBorderCenterPacket p_171781_) {
-        PacketUtils.ensureRunningOnSameThread(p_171781_, this, this.minecraft);
-        this.level.getWorldBorder().setCenter(p_171781_.getNewCenterX(), p_171781_.getNewCenterZ());
+    public void handleSetBorderCenter(ClientboundSetBorderCenterPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.level.getWorldBorder().setCenter(packet.getNewCenterX(), packet.getNewCenterZ());
     }
 
     @Override
-    public void handleSetBorderLerpSize(ClientboundSetBorderLerpSizePacket p_171783_) {
-        PacketUtils.ensureRunningOnSameThread(p_171783_, this, this.minecraft);
-        this.level.getWorldBorder().lerpSizeBetween(p_171783_.getOldSize(), p_171783_.getNewSize(), p_171783_.getLerpTime());
+    public void handleSetBorderLerpSize(ClientboundSetBorderLerpSizePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.level.getWorldBorder().lerpSizeBetween(packet.getOldSize(), packet.getNewSize(), packet.getLerpTime());
     }
 
     @Override
-    public void handleSetBorderSize(ClientboundSetBorderSizePacket p_171785_) {
-        PacketUtils.ensureRunningOnSameThread(p_171785_, this, this.minecraft);
-        this.level.getWorldBorder().setSize(p_171785_.getSize());
+    public void handleSetBorderSize(ClientboundSetBorderSizePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.level.getWorldBorder().setSize(packet.getSize());
     }
 
     @Override
-    public void handleSetBorderWarningDistance(ClientboundSetBorderWarningDistancePacket p_171789_) {
-        PacketUtils.ensureRunningOnSameThread(p_171789_, this, this.minecraft);
-        this.level.getWorldBorder().setWarningBlocks(p_171789_.getWarningBlocks());
+    public void handleSetBorderWarningDistance(ClientboundSetBorderWarningDistancePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.level.getWorldBorder().setWarningBlocks(packet.getWarningBlocks());
     }
 
     @Override
-    public void handleSetBorderWarningDelay(ClientboundSetBorderWarningDelayPacket p_171787_) {
-        PacketUtils.ensureRunningOnSameThread(p_171787_, this, this.minecraft);
-        this.level.getWorldBorder().setWarningTime(p_171787_.getWarningDelay());
+    public void handleSetBorderWarningDelay(ClientboundSetBorderWarningDelayPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.level.getWorldBorder().setWarningTime(packet.getWarningDelay());
     }
 
     @Override
-    public void handleTitlesClear(ClientboundClearTitlesPacket p_171765_) {
-        PacketUtils.ensureRunningOnSameThread(p_171765_, this, this.minecraft);
+    public void handleTitlesClear(ClientboundClearTitlesPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         this.minecraft.gui.clear();
-        if (p_171765_.shouldResetTimes()) {
+        if (packet.shouldResetTimes()) {
             this.minecraft.gui.resetTitleTimes();
         }
     }
 
     @Override
-    public void handleServerData(ClientboundServerDataPacket p_233704_) {
-        PacketUtils.ensureRunningOnSameThread(p_233704_, this, this.minecraft);
+    public void handleServerData(ClientboundServerDataPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         if (this.serverData != null) {
-            this.serverData.motd = p_233704_.motd();
-            p_233704_.iconBytes().map(ServerData::validateIcon).ifPresent(this.serverData::setIconBytes);
+            this.serverData.motd = packet.motd();
+            packet.iconBytes().map(ServerData::validateIcon).ifPresent(this.serverData::setIconBytes);
             ServerList.saveSingleServer(this.serverData);
         }
     }
 
     @Override
-    public void handleCustomChatCompletions(ClientboundCustomChatCompletionsPacket p_240832_) {
-        PacketUtils.ensureRunningOnSameThread(p_240832_, this, this.minecraft);
-        this.suggestionsProvider.modifyCustomCompletions(p_240832_.action(), p_240832_.entries());
+    public void handleCustomChatCompletions(ClientboundCustomChatCompletionsPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.suggestionsProvider.modifyCustomCompletions(packet.action(), packet.entries());
     }
 
     @Override
-    public void setActionBarText(ClientboundSetActionBarTextPacket p_171779_) {
-        PacketUtils.ensureRunningOnSameThread(p_171779_, this, this.minecraft);
-        this.minecraft.gui.setOverlayMessage(p_171779_.text(), false);
+    public void setActionBarText(ClientboundSetActionBarTextPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.gui.setOverlayMessage(packet.text(), false);
     }
 
     @Override
-    public void setTitleText(ClientboundSetTitleTextPacket p_171793_) {
-        PacketUtils.ensureRunningOnSameThread(p_171793_, this, this.minecraft);
-        this.minecraft.gui.setTitle(p_171793_.text());
+    public void setTitleText(ClientboundSetTitleTextPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.gui.setTitle(packet.text());
     }
 
     @Override
-    public void setSubtitleText(ClientboundSetSubtitleTextPacket p_171791_) {
-        PacketUtils.ensureRunningOnSameThread(p_171791_, this, this.minecraft);
-        this.minecraft.gui.setSubtitle(p_171791_.text());
+    public void setSubtitleText(ClientboundSetSubtitleTextPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.gui.setSubtitle(packet.text());
     }
 
     @Override
-    public void setTitlesAnimation(ClientboundSetTitlesAnimationPacket p_171795_) {
-        PacketUtils.ensureRunningOnSameThread(p_171795_, this, this.minecraft);
-        this.minecraft.gui.setTimes(p_171795_.getFadeIn(), p_171795_.getStay(), p_171795_.getFadeOut());
+    public void setTitlesAnimation(ClientboundSetTitlesAnimationPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.gui.setTimes(packet.getFadeIn(), packet.getStay(), packet.getFadeOut());
     }
 
     @Override
-    public void handleTabListCustomisation(ClientboundTabListPacket p_105118_) {
-        PacketUtils.ensureRunningOnSameThread(p_105118_, this, this.minecraft);
-        this.minecraft.gui.getTabList().setHeader(p_105118_.header().getString().isEmpty() ? null : p_105118_.header());
-        this.minecraft.gui.getTabList().setFooter(p_105118_.footer().getString().isEmpty() ? null : p_105118_.footer());
+    public void handleTabListCustomisation(ClientboundTabListPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.gui.getTabList().setHeader(packet.header().getString().isEmpty() ? null : packet.header());
+        this.minecraft.gui.getTabList().setFooter(packet.footer().getString().isEmpty() ? null : packet.footer());
     }
 
     @Override
-    public void handleRemoveMobEffect(ClientboundRemoveMobEffectPacket p_105062_) {
-        PacketUtils.ensureRunningOnSameThread(p_105062_, this, this.minecraft);
-        if (p_105062_.getEntity(this.level) instanceof LivingEntity livingentity) {
-            livingentity.removeEffectNoUpdate(p_105062_.effect());
+    public void handleRemoveMobEffect(ClientboundRemoveMobEffectPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        if (packet.getEntity(this.level) instanceof LivingEntity livingentity) {
+            livingentity.removeEffectNoUpdate(packet.effect());
         }
     }
 
     @Override
-    public void handlePlayerInfoRemove(ClientboundPlayerInfoRemovePacket p_248731_) {
-        PacketUtils.ensureRunningOnSameThread(p_248731_, this, this.minecraft);
+    public void handlePlayerInfoRemove(ClientboundPlayerInfoRemovePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
 
-        for (UUID uuid : p_248731_.profileIds()) {
+        for (UUID uuid : packet.profileIds()) {
             this.minecraft.getPlayerSocialManager().removePlayer(uuid);
             PlayerInfo playerinfo = this.playerInfoMap.remove(uuid);
             if (playerinfo != null) {
@@ -1774,22 +1861,22 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handlePlayerInfoUpdate(ClientboundPlayerInfoUpdatePacket p_250115_) {
-        PacketUtils.ensureRunningOnSameThread(p_250115_, this, this.minecraft);
+    public void handlePlayerInfoUpdate(ClientboundPlayerInfoUpdatePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
 
-        for (ClientboundPlayerInfoUpdatePacket.Entry clientboundplayerinfoupdatepacket$entry : p_250115_.newEntries()) {
+        for (ClientboundPlayerInfoUpdatePacket.Entry clientboundplayerinfoupdatepacket$entry : packet.newEntries()) {
             PlayerInfo playerinfo = new PlayerInfo(Objects.requireNonNull(clientboundplayerinfoupdatepacket$entry.profile()), this.enforcesSecureChat());
             if (this.playerInfoMap.putIfAbsent(clientboundplayerinfoupdatepacket$entry.profileId(), playerinfo) == null) {
                 this.minecraft.getPlayerSocialManager().addPlayer(playerinfo);
             }
         }
 
-        for (ClientboundPlayerInfoUpdatePacket.Entry clientboundplayerinfoupdatepacket$entry1 : p_250115_.entries()) {
+        for (ClientboundPlayerInfoUpdatePacket.Entry clientboundplayerinfoupdatepacket$entry1 : packet.entries()) {
             PlayerInfo playerinfo1 = this.playerInfoMap.get(clientboundplayerinfoupdatepacket$entry1.profileId());
             if (playerinfo1 == null) {
-                LOGGER.warn("Ignoring player info update for unknown player {} ({})", clientboundplayerinfoupdatepacket$entry1.profileId(), p_250115_.actions());
+                LOGGER.warn("Ignoring player info update for unknown player {} ({})", clientboundplayerinfoupdatepacket$entry1.profileId(), packet.actions());
             } else {
-                for (ClientboundPlayerInfoUpdatePacket.Action clientboundplayerinfoupdatepacket$action : p_250115_.actions()) {
+                for (ClientboundPlayerInfoUpdatePacket.Action clientboundplayerinfoupdatepacket$action : packet.actions()) {
                     this.applyPlayerInfoUpdate(clientboundplayerinfoupdatepacket$action, clientboundplayerinfoupdatepacket$entry1, playerinfo1);
                 }
             }
@@ -1797,54 +1884,54 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     private void applyPlayerInfoUpdate(
-        ClientboundPlayerInfoUpdatePacket.Action p_248954_, ClientboundPlayerInfoUpdatePacket.Entry p_251310_, PlayerInfo p_251146_
+        ClientboundPlayerInfoUpdatePacket.Action action, ClientboundPlayerInfoUpdatePacket.Entry entry, PlayerInfo playerInfo
     ) {
-        switch (p_248954_) {
+        switch (action) {
             case INITIALIZE_CHAT:
-                this.initializeChatSession(p_251310_, p_251146_);
+                this.initializeChatSession(entry, playerInfo);
                 break;
             case UPDATE_GAME_MODE:
-                if (p_251146_.getGameMode() != p_251310_.gameMode()
+                if (playerInfo.getGameMode() != entry.gameMode()
                     && this.minecraft.player != null
-                    && this.minecraft.player.getUUID().equals(p_251310_.profileId())) {
-                    this.minecraft.player.onGameModeChanged(p_251310_.gameMode());
+                    && this.minecraft.player.getUUID().equals(entry.profileId())) {
+                    this.minecraft.player.onGameModeChanged(entry.gameMode());
                 }
 
-                p_251146_.setGameMode(p_251310_.gameMode());
+                playerInfo.setGameMode(entry.gameMode());
                 break;
             case UPDATE_LISTED:
-                if (p_251310_.listed()) {
-                    this.listedPlayers.add(p_251146_);
+                if (entry.listed()) {
+                    this.listedPlayers.add(playerInfo);
                 } else {
-                    this.listedPlayers.remove(p_251146_);
+                    this.listedPlayers.remove(playerInfo);
                 }
                 break;
             case UPDATE_LATENCY:
-                p_251146_.setLatency(p_251310_.latency());
+                playerInfo.setLatency(entry.latency());
                 break;
             case UPDATE_DISPLAY_NAME:
-                p_251146_.setTabListDisplayName(p_251310_.displayName());
+                playerInfo.setTabListDisplayName(entry.displayName());
         }
     }
 
-    private void initializeChatSession(ClientboundPlayerInfoUpdatePacket.Entry p_248806_, PlayerInfo p_251136_) {
-        GameProfile gameprofile = p_251136_.getProfile();
+    private void initializeChatSession(ClientboundPlayerInfoUpdatePacket.Entry entry, PlayerInfo playerInfo) {
+        GameProfile gameprofile = playerInfo.getProfile();
         SignatureValidator signaturevalidator = this.minecraft.getProfileKeySignatureValidator();
         if (signaturevalidator == null) {
             LOGGER.warn("Ignoring chat session from {} due to missing Services public key", gameprofile.getName());
-            p_251136_.clearChatSession(this.enforcesSecureChat());
+            playerInfo.clearChatSession(this.enforcesSecureChat());
         } else {
-            RemoteChatSession.Data remotechatsession$data = p_248806_.chatSession();
+            RemoteChatSession.Data remotechatsession$data = entry.chatSession();
             if (remotechatsession$data != null) {
                 try {
                     RemoteChatSession remotechatsession = remotechatsession$data.validate(gameprofile, signaturevalidator);
-                    p_251136_.setChatSession(remotechatsession);
+                    playerInfo.setChatSession(remotechatsession);
                 } catch (ProfilePublicKey.ValidationException profilepublickey$validationexception) {
                     LOGGER.error("Failed to validate profile key for player: '{}'", gameprofile.getName(), profilepublickey$validationexception);
-                    p_251136_.clearChatSession(this.enforcesSecureChat());
+                    playerInfo.clearChatSession(this.enforcesSecureChat());
                 }
             } else {
-                p_251136_.clearChatSession(this.enforcesSecureChat());
+                playerInfo.clearChatSession(this.enforcesSecureChat());
             }
         }
     }
@@ -1854,84 +1941,84 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handlePlayerAbilities(ClientboundPlayerAbilitiesPacket p_105048_) {
-        PacketUtils.ensureRunningOnSameThread(p_105048_, this, this.minecraft);
+    public void handlePlayerAbilities(ClientboundPlayerAbilitiesPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         Player player = this.minecraft.player;
-        player.getAbilities().flying = p_105048_.isFlying();
-        player.getAbilities().instabuild = p_105048_.canInstabuild();
-        player.getAbilities().invulnerable = p_105048_.isInvulnerable();
-        player.getAbilities().mayfly = p_105048_.canFly();
-        player.getAbilities().setFlyingSpeed(p_105048_.getFlyingSpeed());
-        player.getAbilities().setWalkingSpeed(p_105048_.getWalkingSpeed());
+        player.getAbilities().flying = packet.isFlying();
+        player.getAbilities().instabuild = packet.canInstabuild();
+        player.getAbilities().invulnerable = packet.isInvulnerable();
+        player.getAbilities().mayfly = packet.canFly();
+        player.getAbilities().setFlyingSpeed(packet.getFlyingSpeed());
+        player.getAbilities().setWalkingSpeed(packet.getWalkingSpeed());
     }
 
     @Override
-    public void handleSoundEvent(ClientboundSoundPacket p_105114_) {
-        PacketUtils.ensureRunningOnSameThread(p_105114_, this, this.minecraft);
+    public void handleSoundEvent(ClientboundSoundPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         this.minecraft
             .level
             .playSeededSound(
                 this.minecraft.player,
-                p_105114_.getX(),
-                p_105114_.getY(),
-                p_105114_.getZ(),
-                p_105114_.getSound(),
-                p_105114_.getSource(),
-                p_105114_.getVolume(),
-                p_105114_.getPitch(),
-                p_105114_.getSeed()
+                packet.getX(),
+                packet.getY(),
+                packet.getZ(),
+                packet.getSound(),
+                packet.getSource(),
+                packet.getVolume(),
+                packet.getPitch(),
+                packet.getSeed()
             );
     }
 
     @Override
-    public void handleSoundEntityEvent(ClientboundSoundEntityPacket p_105112_) {
-        PacketUtils.ensureRunningOnSameThread(p_105112_, this, this.minecraft);
-        Entity entity = this.level.getEntity(p_105112_.getId());
+    public void handleSoundEntityEvent(ClientboundSoundEntityPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.level.getEntity(packet.getId());
         if (entity != null) {
             this.minecraft
                 .level
                 .playSeededSound(
                     this.minecraft.player,
                     entity,
-                    p_105112_.getSound(),
-                    p_105112_.getSource(),
-                    p_105112_.getVolume(),
-                    p_105112_.getPitch(),
-                    p_105112_.getSeed()
+                    packet.getSound(),
+                    packet.getSource(),
+                    packet.getVolume(),
+                    packet.getPitch(),
+                    packet.getSeed()
                 );
         }
     }
 
     @Override
-    public void handleBossUpdate(ClientboundBossEventPacket p_104982_) {
-        PacketUtils.ensureRunningOnSameThread(p_104982_, this, this.minecraft);
-        this.minecraft.gui.getBossOverlay().update(p_104982_);
+    public void handleBossUpdate(ClientboundBossEventPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.minecraft.gui.getBossOverlay().update(packet);
     }
 
     @Override
-    public void handleItemCooldown(ClientboundCooldownPacket p_105002_) {
-        PacketUtils.ensureRunningOnSameThread(p_105002_, this, this.minecraft);
-        if (p_105002_.duration() == 0) {
-            this.minecraft.player.getCooldowns().removeCooldown(p_105002_.item());
+    public void handleItemCooldown(ClientboundCooldownPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        if (packet.duration() == 0) {
+            this.minecraft.player.getCooldowns().removeCooldown(packet.item());
         } else {
-            this.minecraft.player.getCooldowns().addCooldown(p_105002_.item(), p_105002_.duration());
+            this.minecraft.player.getCooldowns().addCooldown(packet.item(), packet.duration());
         }
     }
 
     @Override
-    public void handleMoveVehicle(ClientboundMoveVehiclePacket p_105038_) {
-        PacketUtils.ensureRunningOnSameThread(p_105038_, this, this.minecraft);
+    public void handleMoveVehicle(ClientboundMoveVehiclePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         Entity entity = this.minecraft.player.getRootVehicle();
         if (entity != this.minecraft.player && entity.isControlledByLocalInstance()) {
-            entity.absMoveTo(p_105038_.getX(), p_105038_.getY(), p_105038_.getZ(), p_105038_.getYRot(), p_105038_.getXRot());
+            entity.absMoveTo(packet.getX(), packet.getY(), packet.getZ(), packet.getYRot(), packet.getXRot());
             this.connection.send(new ServerboundMoveVehiclePacket(entity));
         }
     }
 
     @Override
-    public void handleOpenBook(ClientboundOpenBookPacket p_105040_) {
-        PacketUtils.ensureRunningOnSameThread(p_105040_, this, this.minecraft);
-        ItemStack itemstack = this.minecraft.player.getItemInHand(p_105040_.getHand());
+    public void handleOpenBook(ClientboundOpenBookPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        ItemStack itemstack = this.minecraft.player.getItemInHand(packet.getHand());
         BookViewScreen.BookAccess bookviewscreen$bookaccess = BookViewScreen.BookAccess.fromItem(itemstack);
         if (bookviewscreen$bookaccess != null) {
             this.minecraft.setScreen(new BookViewScreen(bookviewscreen$bookaccess));
@@ -1939,21 +2026,21 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handleCustomPayload(CustomPacketPayload p_295851_) {
-        if (p_295851_ instanceof PathfindingDebugPayload pathfindingdebugpayload) {
+    public void handleCustomPayload(CustomPacketPayload payload) {
+        if (payload instanceof PathfindingDebugPayload pathfindingdebugpayload) {
             this.minecraft
                 .debugRenderer
                 .pathfindingRenderer
                 .addPath(pathfindingdebugpayload.entityId(), pathfindingdebugpayload.path(), pathfindingdebugpayload.maxNodeDistance());
-        } else if (p_295851_ instanceof NeighborUpdatesDebugPayload neighborupdatesdebugpayload) {
+        } else if (payload instanceof NeighborUpdatesDebugPayload neighborupdatesdebugpayload) {
             ((NeighborsUpdateRenderer)this.minecraft.debugRenderer.neighborsUpdateRenderer)
                 .addUpdate(neighborupdatesdebugpayload.time(), neighborupdatesdebugpayload.pos());
-        } else if (p_295851_ instanceof StructuresDebugPayload structuresdebugpayload) {
+        } else if (payload instanceof StructuresDebugPayload structuresdebugpayload) {
             this.minecraft
                 .debugRenderer
                 .structureRenderer
                 .addBoundingBox(structuresdebugpayload.mainBB(), structuresdebugpayload.pieces(), structuresdebugpayload.dimension());
-        } else if (p_295851_ instanceof WorldGenAttemptDebugPayload worldgenattemptdebugpayload) {
+        } else if (payload instanceof WorldGenAttemptDebugPayload worldgenattemptdebugpayload) {
             ((WorldGenAttemptRenderer)this.minecraft.debugRenderer.worldGenAttemptRenderer)
                 .addPos(
                     worldgenattemptdebugpayload.pos(),
@@ -1963,28 +2050,28 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
                     worldgenattemptdebugpayload.blue(),
                     worldgenattemptdebugpayload.alpha()
                 );
-        } else if (p_295851_ instanceof PoiTicketCountDebugPayload poiticketcountdebugpayload) {
+        } else if (payload instanceof PoiTicketCountDebugPayload poiticketcountdebugpayload) {
             this.minecraft.debugRenderer.brainDebugRenderer.setFreeTicketCount(poiticketcountdebugpayload.pos(), poiticketcountdebugpayload.freeTicketCount());
-        } else if (p_295851_ instanceof PoiAddedDebugPayload poiaddeddebugpayload) {
+        } else if (payload instanceof PoiAddedDebugPayload poiaddeddebugpayload) {
             BrainDebugRenderer.PoiInfo braindebugrenderer$poiinfo = new BrainDebugRenderer.PoiInfo(
                 poiaddeddebugpayload.pos(), poiaddeddebugpayload.poiType(), poiaddeddebugpayload.freeTicketCount()
             );
             this.minecraft.debugRenderer.brainDebugRenderer.addPoi(braindebugrenderer$poiinfo);
-        } else if (p_295851_ instanceof PoiRemovedDebugPayload poiremoveddebugpayload) {
+        } else if (payload instanceof PoiRemovedDebugPayload poiremoveddebugpayload) {
             this.minecraft.debugRenderer.brainDebugRenderer.removePoi(poiremoveddebugpayload.pos());
-        } else if (p_295851_ instanceof VillageSectionsDebugPayload villagesectionsdebugpayload) {
+        } else if (payload instanceof VillageSectionsDebugPayload villagesectionsdebugpayload) {
             VillageSectionsDebugRenderer villagesectionsdebugrenderer = this.minecraft.debugRenderer.villageSectionsDebugRenderer;
             villagesectionsdebugpayload.villageChunks().forEach(villagesectionsdebugrenderer::setVillageSection);
             villagesectionsdebugpayload.notVillageChunks().forEach(villagesectionsdebugrenderer::setNotVillageSection);
-        } else if (p_295851_ instanceof GoalDebugPayload goaldebugpayload) {
+        } else if (payload instanceof GoalDebugPayload goaldebugpayload) {
             this.minecraft.debugRenderer.goalSelectorRenderer.addGoalSelector(goaldebugpayload.entityId(), goaldebugpayload.pos(), goaldebugpayload.goals());
-        } else if (p_295851_ instanceof BrainDebugPayload braindebugpayload) {
+        } else if (payload instanceof BrainDebugPayload braindebugpayload) {
             this.minecraft.debugRenderer.brainDebugRenderer.addOrUpdateBrainDump(braindebugpayload.brainDump());
-        } else if (p_295851_ instanceof BeeDebugPayload beedebugpayload) {
+        } else if (payload instanceof BeeDebugPayload beedebugpayload) {
             this.minecraft.debugRenderer.beeDebugRenderer.addOrUpdateBeeInfo(beedebugpayload.beeInfo());
-        } else if (p_295851_ instanceof HiveDebugPayload hivedebugpayload) {
+        } else if (payload instanceof HiveDebugPayload hivedebugpayload) {
             this.minecraft.debugRenderer.beeDebugRenderer.addOrUpdateHiveInfo(hivedebugpayload.hiveInfo(), this.level.getGameTime());
-        } else if (p_295851_ instanceof GameTestAddMarkerDebugPayload gametestaddmarkerdebugpayload) {
+        } else if (payload instanceof GameTestAddMarkerDebugPayload gametestaddmarkerdebugpayload) {
             this.minecraft
                 .debugRenderer
                 .gameTestDebugRenderer
@@ -1994,72 +2081,78 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
                     gametestaddmarkerdebugpayload.text(),
                     gametestaddmarkerdebugpayload.durationMs()
                 );
-        } else if (p_295851_ instanceof GameTestClearMarkersDebugPayload) {
+        } else if (payload instanceof GameTestClearMarkersDebugPayload) {
             this.minecraft.debugRenderer.gameTestDebugRenderer.clear();
-        } else if (p_295851_ instanceof RaidsDebugPayload raidsdebugpayload) {
+        } else if (payload instanceof RaidsDebugPayload raidsdebugpayload) {
             this.minecraft.debugRenderer.raidDebugRenderer.setRaidCenters(raidsdebugpayload.raidCenters());
-        } else if (p_295851_ instanceof GameEventDebugPayload gameeventdebugpayload) {
+        } else if (payload instanceof GameEventDebugPayload gameeventdebugpayload) {
             this.minecraft.debugRenderer.gameEventListenerRenderer.trackGameEvent(gameeventdebugpayload.gameEventType(), gameeventdebugpayload.pos());
-        } else if (p_295851_ instanceof GameEventListenerDebugPayload gameeventlistenerdebugpayload) {
+        } else if (payload instanceof GameEventListenerDebugPayload gameeventlistenerdebugpayload) {
             this.minecraft
                 .debugRenderer
                 .gameEventListenerRenderer
                 .trackListener(gameeventlistenerdebugpayload.listenerPos(), gameeventlistenerdebugpayload.listenerRange());
-        } else if (p_295851_ instanceof BreezeDebugPayload breezedebugpayload) {
+        } else if (payload instanceof BreezeDebugPayload breezedebugpayload) {
             this.minecraft.debugRenderer.breezeDebugRenderer.add(breezedebugpayload.breezeInfo());
         } else {
-            this.handleUnknownCustomPayload(p_295851_);
+            this.handleUnknownCustomPayload(payload);
         }
     }
 
-    private void handleUnknownCustomPayload(CustomPacketPayload p_294389_) {
-        LOGGER.warn("Unknown custom packet payload: {}", p_294389_.type().id());
+    private void handleUnknownCustomPayload(CustomPacketPayload packet) {
+        LOGGER.warn("Unknown custom packet payload: {}", packet.type().id());
     }
 
+    /**
+     * May create a scoreboard objective, remove an objective from the scoreboard or update an objectives' displayname
+     */
     @Override
-    public void handleAddObjective(ClientboundSetObjectivePacket p_105100_) {
-        PacketUtils.ensureRunningOnSameThread(p_105100_, this, this.minecraft);
-        String s = p_105100_.getObjectiveName();
-        if (p_105100_.getMethod() == 0) {
+    public void handleAddObjective(ClientboundSetObjectivePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        String s = packet.getObjectiveName();
+        if (packet.getMethod() == 0) {
             this.scoreboard
                 .addObjective(
-                    s, ObjectiveCriteria.DUMMY, p_105100_.getDisplayName(), p_105100_.getRenderType(), false, p_105100_.getNumberFormat().orElse(null)
+                    s, ObjectiveCriteria.DUMMY, packet.getDisplayName(), packet.getRenderType(), false, packet.getNumberFormat().orElse(null)
                 );
         } else {
             Objective objective = this.scoreboard.getObjective(s);
             if (objective != null) {
-                if (p_105100_.getMethod() == 1) {
+                if (packet.getMethod() == 1) {
                     this.scoreboard.removeObjective(objective);
-                } else if (p_105100_.getMethod() == 2) {
-                    objective.setRenderType(p_105100_.getRenderType());
-                    objective.setDisplayName(p_105100_.getDisplayName());
-                    objective.setNumberFormat(p_105100_.getNumberFormat().orElse(null));
+                } else if (packet.getMethod() == 2) {
+                    objective.setRenderType(packet.getRenderType());
+                    objective.setDisplayName(packet.getDisplayName());
+                    objective.setNumberFormat(packet.getNumberFormat().orElse(null));
                 }
             }
         }
     }
 
+    /**
+     * Either updates the score with a specified value or removes the score for an objective
+     */
     @Override
-    public void handleSetScore(ClientboundSetScorePacket p_105106_) {
-        PacketUtils.ensureRunningOnSameThread(p_105106_, this, this.minecraft);
-        String s = p_105106_.objectiveName();
-        ScoreHolder scoreholder = ScoreHolder.forNameOnly(p_105106_.owner());
+    public void handleSetScore(ClientboundSetScorePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        String s = packet.objectiveName();
+        ScoreHolder scoreholder = ScoreHolder.forNameOnly(packet.owner());
         Objective objective = this.scoreboard.getObjective(s);
         if (objective != null) {
             ScoreAccess scoreaccess = this.scoreboard.getOrCreatePlayerScore(scoreholder, objective, true);
-            scoreaccess.set(p_105106_.score());
-            scoreaccess.display(p_105106_.display().orElse(null));
-            scoreaccess.numberFormatOverride(p_105106_.numberFormat().orElse(null));
+            scoreaccess.set(packet.score());
+            scoreaccess.display(packet.display().orElse(null));
+            scoreaccess.numberFormatOverride(packet.numberFormat().orElse(null));
         } else {
             LOGGER.warn("Received packet for unknown scoreboard objective: {}", s);
         }
     }
 
     @Override
-    public void handleResetScore(ClientboundResetScorePacket p_313768_) {
-        PacketUtils.ensureRunningOnSameThread(p_313768_, this, this.minecraft);
-        String s = p_313768_.objectiveName();
-        ScoreHolder scoreholder = ScoreHolder.forNameOnly(p_313768_.owner());
+    public void handleResetScore(ClientboundResetScorePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        String s = packet.objectiveName();
+        ScoreHolder scoreholder = ScoreHolder.forNameOnly(packet.owner());
         if (s == null) {
             this.scoreboard.resetAllPlayerScores(scoreholder);
         } else {
@@ -2072,35 +2165,41 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         }
     }
 
+    /**
+     * Removes or sets the ScoreObjective to be displayed at a particular scoreboard position (list, sidebar, below name)
+     */
     @Override
-    public void handleSetDisplayObjective(ClientboundSetDisplayObjectivePacket p_105086_) {
-        PacketUtils.ensureRunningOnSameThread(p_105086_, this, this.minecraft);
-        String s = p_105086_.getObjectiveName();
+    public void handleSetDisplayObjective(ClientboundSetDisplayObjectivePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        String s = packet.getObjectiveName();
         Objective objective = s == null ? null : this.scoreboard.getObjective(s);
-        this.scoreboard.setDisplayObjective(p_105086_.getSlot(), objective);
+        this.scoreboard.setDisplayObjective(packet.getSlot(), objective);
     }
 
+    /**
+     * Updates a team managed by the scoreboard: Create/Remove the team registration, Register/Remove the player-team-memberships, Set team displayname/prefix/suffix and/or whether friendly fire is enabled
+     */
     @Override
-    public void handleSetPlayerTeamPacket(ClientboundSetPlayerTeamPacket p_105104_) {
-        PacketUtils.ensureRunningOnSameThread(p_105104_, this, this.minecraft);
-        ClientboundSetPlayerTeamPacket.Action clientboundsetplayerteampacket$action = p_105104_.getTeamAction();
+    public void handleSetPlayerTeamPacket(ClientboundSetPlayerTeamPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        ClientboundSetPlayerTeamPacket.Action clientboundsetplayerteampacket$action = packet.getTeamAction();
         PlayerTeam playerteam;
         if (clientboundsetplayerteampacket$action == ClientboundSetPlayerTeamPacket.Action.ADD) {
-            playerteam = this.scoreboard.addPlayerTeam(p_105104_.getName());
+            playerteam = this.scoreboard.addPlayerTeam(packet.getName());
         } else {
-            playerteam = this.scoreboard.getPlayerTeam(p_105104_.getName());
+            playerteam = this.scoreboard.getPlayerTeam(packet.getName());
             if (playerteam == null) {
                 LOGGER.warn(
                     "Received packet for unknown team {}: team action: {}, player action: {}",
-                    p_105104_.getName(),
-                    p_105104_.getTeamAction(),
-                    p_105104_.getPlayerAction()
+                    packet.getName(),
+                    packet.getTeamAction(),
+                    packet.getPlayerAction()
                 );
                 return;
             }
         }
 
-        Optional<ClientboundSetPlayerTeamPacket.Parameters> optional = p_105104_.getParameters();
+        Optional<ClientboundSetPlayerTeamPacket.Parameters> optional = packet.getParameters();
         optional.ifPresent(p_233670_ -> {
             playerteam.setDisplayName(p_233670_.getDisplayName());
             playerteam.setColor(p_233670_.getColor());
@@ -2118,13 +2217,13 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
             playerteam.setPlayerPrefix(p_233670_.getPlayerPrefix());
             playerteam.setPlayerSuffix(p_233670_.getPlayerSuffix());
         });
-        ClientboundSetPlayerTeamPacket.Action clientboundsetplayerteampacket$action1 = p_105104_.getPlayerAction();
+        ClientboundSetPlayerTeamPacket.Action clientboundsetplayerteampacket$action1 = packet.getPlayerAction();
         if (clientboundsetplayerteampacket$action1 == ClientboundSetPlayerTeamPacket.Action.ADD) {
-            for (String s : p_105104_.getPlayers()) {
+            for (String s : packet.getPlayers()) {
                 this.scoreboard.addPlayerToTeam(s, playerteam);
             }
         } else if (clientboundsetplayerteampacket$action1 == ClientboundSetPlayerTeamPacket.Action.REMOVE) {
-            for (String s1 : p_105104_.getPlayers()) {
+            for (String s1 : packet.getPlayers()) {
                 this.scoreboard.removePlayerFromTeam(s1, playerteam);
             }
         }
@@ -2134,60 +2233,66 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         }
     }
 
+    /**
+     * Spawns a specified number of particles at the specified location with a randomized displacement according to specified bounds
+     */
     @Override
-    public void handleParticleEvent(ClientboundLevelParticlesPacket p_105026_) {
-        PacketUtils.ensureRunningOnSameThread(p_105026_, this, this.minecraft);
-        if (p_105026_.getCount() == 0) {
-            double d0 = (double)(p_105026_.getMaxSpeed() * p_105026_.getXDist());
-            double d2 = (double)(p_105026_.getMaxSpeed() * p_105026_.getYDist());
-            double d4 = (double)(p_105026_.getMaxSpeed() * p_105026_.getZDist());
+    public void handleParticleEvent(ClientboundLevelParticlesPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        if (packet.getCount() == 0) {
+            double d0 = (double)(packet.getMaxSpeed() * packet.getXDist());
+            double d2 = (double)(packet.getMaxSpeed() * packet.getYDist());
+            double d4 = (double)(packet.getMaxSpeed() * packet.getZDist());
 
             try {
                 this.level
-                    .addParticle(p_105026_.getParticle(), p_105026_.isOverrideLimiter(), p_105026_.getX(), p_105026_.getY(), p_105026_.getZ(), d0, d2, d4);
+                    .addParticle(packet.getParticle(), packet.isOverrideLimiter(), packet.getX(), packet.getY(), packet.getZ(), d0, d2, d4);
             } catch (Throwable throwable1) {
-                LOGGER.warn("Could not spawn particle effect {}", p_105026_.getParticle());
+                LOGGER.warn("Could not spawn particle effect {}", packet.getParticle());
             }
         } else {
-            for (int i = 0; i < p_105026_.getCount(); i++) {
-                double d1 = this.random.nextGaussian() * (double)p_105026_.getXDist();
-                double d3 = this.random.nextGaussian() * (double)p_105026_.getYDist();
-                double d5 = this.random.nextGaussian() * (double)p_105026_.getZDist();
-                double d6 = this.random.nextGaussian() * (double)p_105026_.getMaxSpeed();
-                double d7 = this.random.nextGaussian() * (double)p_105026_.getMaxSpeed();
-                double d8 = this.random.nextGaussian() * (double)p_105026_.getMaxSpeed();
+            for (int i = 0; i < packet.getCount(); i++) {
+                double d1 = this.random.nextGaussian() * (double)packet.getXDist();
+                double d3 = this.random.nextGaussian() * (double)packet.getYDist();
+                double d5 = this.random.nextGaussian() * (double)packet.getZDist();
+                double d6 = this.random.nextGaussian() * (double)packet.getMaxSpeed();
+                double d7 = this.random.nextGaussian() * (double)packet.getMaxSpeed();
+                double d8 = this.random.nextGaussian() * (double)packet.getMaxSpeed();
 
                 try {
                     this.level
                         .addParticle(
-                            p_105026_.getParticle(),
-                            p_105026_.isOverrideLimiter(),
-                            p_105026_.getX() + d1,
-                            p_105026_.getY() + d3,
-                            p_105026_.getZ() + d5,
+                            packet.getParticle(),
+                            packet.isOverrideLimiter(),
+                            packet.getX() + d1,
+                            packet.getY() + d3,
+                            packet.getZ() + d5,
                             d6,
                             d7,
                             d8
                         );
                 } catch (Throwable throwable) {
-                    LOGGER.warn("Could not spawn particle effect {}", p_105026_.getParticle());
+                    LOGGER.warn("Could not spawn particle effect {}", packet.getParticle());
                     return;
                 }
             }
         }
     }
 
+    /**
+     * Updates en entity's attributes and their respective modifiers, which are used for speed bonuses (player sprinting, animals fleeing, baby speed), weapon/tool attackDamage, hostiles followRange randomization, zombie maxHealth and knockback resistance as well as reinforcement spawning chance.
+     */
     @Override
-    public void handleUpdateAttributes(ClientboundUpdateAttributesPacket p_105128_) {
-        PacketUtils.ensureRunningOnSameThread(p_105128_, this, this.minecraft);
-        Entity entity = this.level.getEntity(p_105128_.getEntityId());
+    public void handleUpdateAttributes(ClientboundUpdateAttributesPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        Entity entity = this.level.getEntity(packet.getEntityId());
         if (entity != null) {
             if (!(entity instanceof LivingEntity)) {
                 throw new IllegalStateException("Server tried to update attributes of a non-living entity (actually: " + entity + ")");
             } else {
                 AttributeMap attributemap = ((LivingEntity)entity).getAttributes();
 
-                for (ClientboundUpdateAttributesPacket.AttributeSnapshot clientboundupdateattributespacket$attributesnapshot : p_105128_.getValues()) {
+                for (ClientboundUpdateAttributesPacket.AttributeSnapshot clientboundupdateattributespacket$attributesnapshot : packet.getValues()) {
                     AttributeInstance attributeinstance = attributemap.getInstance(clientboundupdateattributespacket$attributesnapshot.attribute());
                     if (attributeinstance == null) {
                         LOGGER.warn(
@@ -2207,11 +2312,11 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handlePlaceRecipe(ClientboundPlaceGhostRecipePacket p_105046_) {
-        PacketUtils.ensureRunningOnSameThread(p_105046_, this, this.minecraft);
+    public void handlePlaceRecipe(ClientboundPlaceGhostRecipePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         AbstractContainerMenu abstractcontainermenu = this.minecraft.player.containerMenu;
-        if (abstractcontainermenu.containerId == p_105046_.getContainerId()) {
-            this.recipeManager.byKey(p_105046_.getRecipe()).ifPresent(p_300679_ -> {
+        if (abstractcontainermenu.containerId == packet.getContainerId()) {
+            this.recipeManager.byKey(packet.getRecipe()).ifPresent(p_300679_ -> {
                 if (this.minecraft.screen instanceof RecipeUpdateListener) {
                     RecipeBookComponent recipebookcomponent = ((RecipeUpdateListener)this.minecraft.screen).getRecipeBookComponent();
                     recipebookcomponent.setupGhostRecipe((RecipeHolder<?>)p_300679_, abstractcontainermenu.slots);
@@ -2221,117 +2326,117 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Override
-    public void handleLightUpdatePacket(ClientboundLightUpdatePacket p_194243_) {
-        PacketUtils.ensureRunningOnSameThread(p_194243_, this, this.minecraft);
-        int i = p_194243_.getX();
-        int j = p_194243_.getZ();
-        ClientboundLightUpdatePacketData clientboundlightupdatepacketdata = p_194243_.getLightData();
+    public void handleLightUpdatePacket(ClientboundLightUpdatePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        int i = packet.getX();
+        int j = packet.getZ();
+        ClientboundLightUpdatePacketData clientboundlightupdatepacketdata = packet.getLightData();
         this.level.queueLightUpdate(() -> this.applyLightData(i, j, clientboundlightupdatepacketdata));
     }
 
-    private void applyLightData(int p_194249_, int p_194250_, ClientboundLightUpdatePacketData p_194251_) {
+    private void applyLightData(int x, int z, ClientboundLightUpdatePacketData data) {
         LevelLightEngine levellightengine = this.level.getChunkSource().getLightEngine();
-        BitSet bitset = p_194251_.getSkyYMask();
-        BitSet bitset1 = p_194251_.getEmptySkyYMask();
-        Iterator<byte[]> iterator = p_194251_.getSkyUpdates().iterator();
-        this.readSectionList(p_194249_, p_194250_, levellightengine, LightLayer.SKY, bitset, bitset1, iterator);
-        BitSet bitset2 = p_194251_.getBlockYMask();
-        BitSet bitset3 = p_194251_.getEmptyBlockYMask();
-        Iterator<byte[]> iterator1 = p_194251_.getBlockUpdates().iterator();
-        this.readSectionList(p_194249_, p_194250_, levellightengine, LightLayer.BLOCK, bitset2, bitset3, iterator1);
-        levellightengine.setLightEnabled(new ChunkPos(p_194249_, p_194250_), true);
+        BitSet bitset = data.getSkyYMask();
+        BitSet bitset1 = data.getEmptySkyYMask();
+        Iterator<byte[]> iterator = data.getSkyUpdates().iterator();
+        this.readSectionList(x, z, levellightengine, LightLayer.SKY, bitset, bitset1, iterator);
+        BitSet bitset2 = data.getBlockYMask();
+        BitSet bitset3 = data.getEmptyBlockYMask();
+        Iterator<byte[]> iterator1 = data.getBlockUpdates().iterator();
+        this.readSectionList(x, z, levellightengine, LightLayer.BLOCK, bitset2, bitset3, iterator1);
+        levellightengine.setLightEnabled(new ChunkPos(x, z), true);
     }
 
     @Override
-    public void handleMerchantOffers(ClientboundMerchantOffersPacket p_105034_) {
-        PacketUtils.ensureRunningOnSameThread(p_105034_, this, this.minecraft);
+    public void handleMerchantOffers(ClientboundMerchantOffersPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         AbstractContainerMenu abstractcontainermenu = this.minecraft.player.containerMenu;
-        if (p_105034_.getContainerId() == abstractcontainermenu.containerId && abstractcontainermenu instanceof MerchantMenu merchantmenu) {
-            merchantmenu.setOffers(p_105034_.getOffers());
-            merchantmenu.setXp(p_105034_.getVillagerXp());
-            merchantmenu.setMerchantLevel(p_105034_.getVillagerLevel());
-            merchantmenu.setShowProgressBar(p_105034_.showProgress());
-            merchantmenu.setCanRestock(p_105034_.canRestock());
+        if (packet.getContainerId() == abstractcontainermenu.containerId && abstractcontainermenu instanceof MerchantMenu merchantmenu) {
+            merchantmenu.setOffers(packet.getOffers());
+            merchantmenu.setXp(packet.getVillagerXp());
+            merchantmenu.setMerchantLevel(packet.getVillagerLevel());
+            merchantmenu.setShowProgressBar(packet.showProgress());
+            merchantmenu.setCanRestock(packet.canRestock());
         }
     }
 
     @Override
-    public void handleSetChunkCacheRadius(ClientboundSetChunkCacheRadiusPacket p_105082_) {
-        PacketUtils.ensureRunningOnSameThread(p_105082_, this, this.minecraft);
-        this.serverChunkRadius = p_105082_.getRadius();
+    public void handleSetChunkCacheRadius(ClientboundSetChunkCacheRadiusPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.serverChunkRadius = packet.getRadius();
         this.minecraft.options.setServerRenderDistance(this.serverChunkRadius);
-        this.level.getChunkSource().updateViewRadius(p_105082_.getRadius());
+        this.level.getChunkSource().updateViewRadius(packet.getRadius());
     }
 
     @Override
-    public void handleSetSimulationDistance(ClientboundSetSimulationDistancePacket p_194245_) {
-        PacketUtils.ensureRunningOnSameThread(p_194245_, this, this.minecraft);
-        this.serverSimulationDistance = p_194245_.simulationDistance();
+    public void handleSetSimulationDistance(ClientboundSetSimulationDistancePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.serverSimulationDistance = packet.simulationDistance();
         this.level.setServerSimulationDistance(this.serverSimulationDistance);
     }
 
     @Override
-    public void handleSetChunkCacheCenter(ClientboundSetChunkCacheCenterPacket p_105080_) {
-        PacketUtils.ensureRunningOnSameThread(p_105080_, this, this.minecraft);
-        this.level.getChunkSource().updateViewCenter(p_105080_.getX(), p_105080_.getZ());
+    public void handleSetChunkCacheCenter(ClientboundSetChunkCacheCenterPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.level.getChunkSource().updateViewCenter(packet.getX(), packet.getZ());
     }
 
     @Override
-    public void handleBlockChangedAck(ClientboundBlockChangedAckPacket p_233698_) {
-        PacketUtils.ensureRunningOnSameThread(p_233698_, this, this.minecraft);
-        this.level.handleBlockChangedAck(p_233698_.sequence());
+    public void handleBlockChangedAck(ClientboundBlockChangedAckPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.level.handleBlockChangedAck(packet.sequence());
     }
 
     @Override
-    public void handleBundlePacket(ClientboundBundlePacket p_265195_) {
-        PacketUtils.ensureRunningOnSameThread(p_265195_, this, this.minecraft);
+    public void handleBundlePacket(ClientboundBundlePacket p_packet) {
+        PacketUtils.ensureRunningOnSameThread(p_packet, this, this.minecraft);
 
-        for (Packet<? super ClientGamePacketListener> packet : p_265195_.subPackets()) {
+        for (Packet<? super ClientGamePacketListener> packet : p_packet.subPackets()) {
             packet.handle(this);
         }
     }
 
     @Override
-    public void handleProjectilePowerPacket(ClientboundProjectilePowerPacket p_339600_) {
-        PacketUtils.ensureRunningOnSameThread(p_339600_, this, this.minecraft);
-        if (this.level.getEntity(p_339600_.getId()) instanceof AbstractHurtingProjectile abstracthurtingprojectile) {
-            abstracthurtingprojectile.accelerationPower = p_339600_.getAccelerationPower();
+    public void handleProjectilePowerPacket(ClientboundProjectilePowerPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        if (this.level.getEntity(packet.getId()) instanceof AbstractHurtingProjectile abstracthurtingprojectile) {
+            abstracthurtingprojectile.accelerationPower = packet.getAccelerationPower();
         }
     }
 
     @Override
-    public void handleChunkBatchStart(ClientboundChunkBatchStartPacket p_295704_) {
+    public void handleChunkBatchStart(ClientboundChunkBatchStartPacket packet) {
         this.chunkBatchSizeCalculator.onBatchStart();
     }
 
     @Override
-    public void handleChunkBatchFinished(ClientboundChunkBatchFinishedPacket p_295731_) {
-        this.chunkBatchSizeCalculator.onBatchFinished(p_295731_.batchSize());
+    public void handleChunkBatchFinished(ClientboundChunkBatchFinishedPacket packet) {
+        this.chunkBatchSizeCalculator.onBatchFinished(packet.batchSize());
         this.send(new ServerboundChunkBatchReceivedPacket(this.chunkBatchSizeCalculator.getDesiredChunksPerTick()));
     }
 
     @Override
-    public void handleDebugSample(ClientboundDebugSamplePacket p_324125_) {
-        this.minecraft.getDebugOverlay().logRemoteSample(p_324125_.sample(), p_324125_.debugSampleType());
+    public void handleDebugSample(ClientboundDebugSamplePacket packet) {
+        this.minecraft.getDebugOverlay().logRemoteSample(packet.sample(), packet.debugSampleType());
     }
 
     @Override
-    public void handlePongResponse(ClientboundPongResponsePacket p_320651_) {
-        this.pingDebugMonitor.onPongReceived(p_320651_);
+    public void handlePongResponse(ClientboundPongResponsePacket packet) {
+        this.pingDebugMonitor.onPongReceived(packet);
     }
 
     private void readSectionList(
-        int p_171735_, int p_171736_, LevelLightEngine p_171737_, LightLayer p_171738_, BitSet p_171739_, BitSet p_171740_, Iterator<byte[]> p_171741_
+        int x, int z, LevelLightEngine lightEngine, LightLayer lightLayer, BitSet skyYMask, BitSet emptySkyYMask, Iterator<byte[]> skyUpdates
     ) {
-        for (int i = 0; i < p_171737_.getLightSectionCount(); i++) {
-            int j = p_171737_.getMinLightSection() + i;
-            boolean flag = p_171739_.get(i);
-            boolean flag1 = p_171740_.get(i);
+        for (int i = 0; i < lightEngine.getLightSectionCount(); i++) {
+            int j = lightEngine.getMinLightSection() + i;
+            boolean flag = skyYMask.get(i);
+            boolean flag1 = emptySkyYMask.get(i);
             if (flag || flag1) {
-                p_171737_.queueSectionData(
-                    p_171738_, SectionPos.of(p_171735_, j, p_171736_), flag ? new DataLayer((byte[])p_171741_.next().clone()) : new DataLayer()
+                lightEngine.queueSectionData(
+                    lightLayer, SectionPos.of(x, j, z), flag ? new DataLayer((byte[])skyUpdates.next().clone()) : new DataLayer()
                 );
-                this.level.setSectionDirtyWithNeighbors(p_171735_, j, p_171736_);
+                this.level.setSectionDirtyWithNeighbors(x, j, z);
             }
         }
     }
@@ -2358,14 +2463,17 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
     }
 
     @Nullable
-    public PlayerInfo getPlayerInfo(UUID p_104950_) {
-        return this.playerInfoMap.get(p_104950_);
+    public PlayerInfo getPlayerInfo(UUID uniqueId) {
+        return this.playerInfoMap.get(uniqueId);
     }
 
+    /**
+     * Gets the client's description information about another player on the server.
+     */
     @Nullable
-    public PlayerInfo getPlayerInfo(String p_104939_) {
+    public PlayerInfo getPlayerInfo(String name) {
         for (PlayerInfo playerinfo : this.playerInfoMap.values()) {
-            if (playerinfo.getProfile().getName().equals(p_104939_)) {
+            if (playerinfo.getProfile().getName().equals(name)) {
                 return playerinfo;
             }
         }
@@ -2405,9 +2513,9 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         return this.registryAccess;
     }
 
-    public void markMessageAsProcessed(PlayerChatMessage p_242356_, boolean p_242455_) {
-        MessageSignature messagesignature = p_242356_.signature();
-        if (messagesignature != null && this.lastSeenMessages.addPending(messagesignature, p_242455_) && this.lastSeenMessages.offset() > 64) {
+    public void markMessageAsProcessed(PlayerChatMessage chatMessage, boolean acknowledged) {
+        MessageSignature messagesignature = chatMessage.signature();
+        if (messagesignature != null && this.lastSeenMessages.addPending(messagesignature, acknowledged) && this.lastSeenMessages.offset() > 64) {
             this.sendChatAcknowledgement();
         }
     }
@@ -2419,22 +2527,22 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         }
     }
 
-    public void sendChat(String p_249888_) {
-        p_249888_ = net.neoforged.neoforge.client.ClientHooks.onClientSendMessage(p_249888_);
-        if (p_249888_.isEmpty()) return;
+    public void sendChat(String message) {
+        message = net.neoforged.neoforge.client.ClientHooks.onClientSendMessage(message);
+        if (message.isEmpty()) return;
         Instant instant = Instant.now();
         long i = Crypt.SaltSupplier.getLong();
         LastSeenMessagesTracker.Update lastseenmessagestracker$update = this.lastSeenMessages.generateAndApplyUpdate();
         MessageSignature messagesignature = this.signedMessageEncoder
-            .pack(new SignedMessageBody(p_249888_, instant, i, lastseenmessagestracker$update.lastSeen()));
-        this.send(new ServerboundChatPacket(p_249888_, instant, i, messagesignature, lastseenmessagestracker$update.update()));
+            .pack(new SignedMessageBody(message, instant, i, lastseenmessagestracker$update.lastSeen()));
+        this.send(new ServerboundChatPacket(message, instant, i, messagesignature, lastseenmessagestracker$update.update()));
     }
 
-    public void sendCommand(String p_250092_) {
-        if (net.neoforged.neoforge.client.ClientCommandHandler.runCommand(p_250092_)) return;
-        SignableCommand<SharedSuggestionProvider> signablecommand = SignableCommand.of(this.parseCommand(p_250092_));
+    public void sendCommand(String command) {
+        if (net.neoforged.neoforge.client.ClientCommandHandler.runCommand(command)) return;
+        SignableCommand<SharedSuggestionProvider> signablecommand = SignableCommand.of(this.parseCommand(command));
         if (signablecommand.arguments().isEmpty()) {
-            this.send(new ServerboundChatCommandPacket(p_250092_));
+            this.send(new ServerboundChatCommandPacket(command));
         } else {
             Instant instant = Instant.now();
             long i = Crypt.SaltSupplier.getLong();
@@ -2443,23 +2551,23 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
                 SignedMessageBody signedmessagebody = new SignedMessageBody(p_247875_, instant, i, lastseenmessagestracker$update.lastSeen());
                 return this.signedMessageEncoder.pack(signedmessagebody);
             });
-            this.send(new ServerboundChatCommandSignedPacket(p_250092_, instant, i, argumentsignatures, lastseenmessagestracker$update.update()));
+            this.send(new ServerboundChatCommandSignedPacket(command, instant, i, argumentsignatures, lastseenmessagestracker$update.update()));
         }
     }
 
-    public boolean sendUnsignedCommand(String p_251509_) {
+    public boolean sendUnsignedCommand(String command) {
         // Neo: Dispatch client commands for text component click actions.
-        if (net.neoforged.neoforge.client.ClientCommandHandler.runCommand(p_251509_)) return true;
-        if (!SignableCommand.hasSignableArguments(this.parseCommand(p_251509_))) {
-            this.send(new ServerboundChatCommandPacket(p_251509_));
+        if (net.neoforged.neoforge.client.ClientCommandHandler.runCommand(command)) return true;
+        if (!SignableCommand.hasSignableArguments(this.parseCommand(command))) {
+            this.send(new ServerboundChatCommandPacket(command));
             return true;
         } else {
             return false;
         }
     }
 
-    private ParseResults<SharedSuggestionProvider> parseCommand(String p_249982_) {
-        return this.commands.parse(p_249982_, this.suggestionsProvider);
+    private ParseResults<SharedSuggestionProvider> parseCommand(String command) {
+        return this.commands.parse(command, this.suggestionsProvider);
     }
 
     @Override
@@ -2483,10 +2591,10 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         }
     }
 
-    public void setKeyPair(ProfileKeyPair p_261475_) {
+    public void setKeyPair(ProfileKeyPair keyPair) {
         if (this.minecraft.isLocalPlayer(this.localGameProfile.getId())) {
-            if (this.chatSession == null || !this.chatSession.keyPair().equals(p_261475_)) {
-                this.chatSession = LocalChatSession.create(p_261475_);
+            if (this.chatSession == null || !this.chatSession.keyPair().equals(keyPair)) {
+                this.chatSession = LocalChatSession.create(keyPair);
                 this.signedMessageEncoder = this.chatSession.createMessageEncoder(this.localGameProfile.getId());
                 this.send(new ServerboundChatSessionUpdatePacket(this.chatSession.asRemote().asData()));
             }
@@ -2502,8 +2610,8 @@ public class ClientPacketListener extends ClientCommonPacketListenerImpl impleme
         return this.enabledFeatures;
     }
 
-    public boolean isFeatureEnabled(FeatureFlagSet p_250605_) {
-        return p_250605_.isSubsetOf(this.enabledFeatures());
+    public boolean isFeatureEnabled(FeatureFlagSet enabledFeatures) {
+        return enabledFeatures.isSubsetOf(this.enabledFeatures());
     }
 
     public Scoreboard scoreboard() {

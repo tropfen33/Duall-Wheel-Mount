@@ -11,13 +11,13 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class ResettingTemplateWorldTask extends ResettingWorldTask {
     private final WorldTemplate template;
 
-    public ResettingTemplateWorldTask(WorldTemplate p_167668_, long p_167669_, Component p_167670_, Runnable p_167671_) {
-        super(p_167669_, p_167670_, p_167671_);
-        this.template = p_167668_;
+    public ResettingTemplateWorldTask(WorldTemplate template, long serverId, Component title, Runnable callback) {
+        super(serverId, title, callback);
+        this.template = template;
     }
 
     @Override
-    protected void sendResetRequest(RealmsClient p_167673_, long p_167674_) throws RealmsServiceException {
-        p_167673_.resetWorldWithTemplate(p_167674_, this.template.id);
+    protected void sendResetRequest(RealmsClient client, long serverId) throws RealmsServiceException {
+        client.resetWorldWithTemplate(serverId, this.template.id);
     }
 }

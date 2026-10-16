@@ -13,9 +13,9 @@ public class UnderwaterAmbientSoundInstances {
     public static class SubSound extends AbstractTickableSoundInstance {
         private final LocalPlayer player;
 
-        protected SubSound(LocalPlayer p_119861_, SoundEvent p_119862_) {
-            super(p_119862_, SoundSource.AMBIENT, SoundInstance.createUnseededRandom());
-            this.player = p_119861_;
+        protected SubSound(LocalPlayer player, SoundEvent soundEvent) {
+            super(soundEvent, SoundSource.AMBIENT, SoundInstance.createUnseededRandom());
+            this.player = player;
             this.looping = false;
             this.delay = 0;
             this.volume = 1.0F;
@@ -36,9 +36,9 @@ public class UnderwaterAmbientSoundInstances {
         private final LocalPlayer player;
         private int fade;
 
-        public UnderwaterAmbientSoundInstance(LocalPlayer p_119867_) {
+        public UnderwaterAmbientSoundInstance(LocalPlayer player) {
             super(SoundEvents.AMBIENT_UNDERWATER_LOOP, SoundSource.AMBIENT, SoundInstance.createUnseededRandom());
-            this.player = p_119867_;
+            this.player = player;
             this.looping = true;
             this.delay = 0;
             this.volume = 1.0F;

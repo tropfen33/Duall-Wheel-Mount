@@ -7,8 +7,8 @@ import java.util.function.Supplier;
 public class LazyLoadedValue<T> {
     private final Supplier<T> factory;
 
-    public LazyLoadedValue(Supplier<T> p_13970_) {
-        this.factory = Suppliers.memoize(p_13970_::get);
+    public LazyLoadedValue(Supplier<T> supplier) {
+        this.factory = Suppliers.memoize(supplier::get);
     }
 
     public T get() {

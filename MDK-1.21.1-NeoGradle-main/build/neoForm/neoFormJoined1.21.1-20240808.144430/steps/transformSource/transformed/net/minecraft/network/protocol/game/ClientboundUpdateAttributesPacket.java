@@ -27,11 +27,11 @@ public class ClientboundUpdateAttributesPacket implements Packet<ClientGamePacke
     private final int entityId;
     private final List<ClientboundUpdateAttributesPacket.AttributeSnapshot> attributes;
 
-    public ClientboundUpdateAttributesPacket(int p_133580_, Collection<AttributeInstance> p_133581_) {
-        this.entityId = p_133580_;
+    public ClientboundUpdateAttributesPacket(int entityId, Collection<AttributeInstance> attributes) {
+        this.entityId = entityId;
         this.attributes = Lists.newArrayList();
 
-        for (AttributeInstance attributeinstance : p_133581_) {
+        for (AttributeInstance attributeinstance : attributes) {
             this.attributes
                 .add(
                     new ClientboundUpdateAttributesPacket.AttributeSnapshot(
@@ -41,9 +41,9 @@ public class ClientboundUpdateAttributesPacket implements Packet<ClientGamePacke
         }
     }
 
-    private ClientboundUpdateAttributesPacket(int p_320052_, List<ClientboundUpdateAttributesPacket.AttributeSnapshot> p_320480_) {
-        this.entityId = p_320052_;
-        this.attributes = p_320480_;
+    private ClientboundUpdateAttributesPacket(int entityId, List<ClientboundUpdateAttributesPacket.AttributeSnapshot> attributes) {
+        this.entityId = entityId;
+        this.attributes = attributes;
     }
 
     @Override
@@ -51,8 +51,11 @@ public class ClientboundUpdateAttributesPacket implements Packet<ClientGamePacke
         return GamePacketTypes.CLIENTBOUND_UPDATE_ATTRIBUTES;
     }
 
-    public void handle(ClientGamePacketListener p_133587_) {
-        p_133587_.handleUpdateAttributes(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleUpdateAttributes(this);
     }
 
     public int getEntityId() {

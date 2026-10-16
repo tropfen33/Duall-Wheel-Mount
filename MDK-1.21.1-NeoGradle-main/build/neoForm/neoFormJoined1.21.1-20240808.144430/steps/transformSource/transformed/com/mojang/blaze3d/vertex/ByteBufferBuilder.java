@@ -22,37 +22,37 @@ public class ByteBufferBuilder implements AutoCloseable {
     private int resultCount;
     private int generation;
 
-    public ByteBufferBuilder(int p_350446_) {
-        this.capacity = p_350446_;
-        this.pointer = ALLOCATOR.malloc((long)p_350446_);
+    public ByteBufferBuilder(int capacity) {
+        this.capacity = capacity;
+        this.pointer = ALLOCATOR.malloc((long)capacity);
         if (this.pointer == 0L) {
-            throw new OutOfMemoryError("Failed to allocate " + p_350446_ + " bytes");
+            throw new OutOfMemoryError("Failed to allocate " + capacity + " bytes");
         }
     }
 
-    public long reserve(int p_350289_) {
+    public long reserve(int bytes) {
         int i = this.writeOffset;
-        int j = i + p_350289_;
+        int j = i + bytes;
         this.ensureCapacity(j);
         this.writeOffset = j;
         return this.pointer + (long)i;
     }
 
-    private void ensureCapacity(int p_350893_) {
-        if (p_350893_ > this.capacity) {
+    private void ensureCapacity(int size) {
+        if (size > this.capacity) {
             int i = Math.min(this.capacity, 2097152);
-            int j = Math.max(this.capacity + i, p_350893_);
+            int j = Math.max(this.capacity + i, size);
             this.resize(j);
         }
     }
 
-    private void resize(int p_350909_) {
-        this.pointer = ALLOCATOR.realloc(this.pointer, (long)p_350909_);
-        LOGGER.debug("Needed to grow BufferBuilder buffer: Old size {} bytes, new size {} bytes.", this.capacity, p_350909_);
+    private void resize(int newSize) {
+        this.pointer = ALLOCATOR.realloc(this.pointer, (long)newSize);
+        LOGGER.debug("Needed to grow BufferBuilder buffer: Old size {} bytes, new size {} bytes.", this.capacity, newSize);
         if (this.pointer == 0L) {
-            throw new OutOfMemoryError("Failed to resize buffer from " + this.capacity + " bytes to " + p_350909_ + " bytes");
+            throw new OutOfMemoryError("Failed to resize buffer from " + this.capacity + " bytes to " + newSize + " bytes");
         } else {
-            this.capacity = p_350909_;
+            this.capacity = newSize;
         }
     }
 
@@ -86,8 +86,8 @@ public class ByteBufferBuilder implements AutoCloseable {
         }
     }
 
-    boolean isValid(int p_350321_) {
-        return p_350321_ == this.generation;
+    boolean isValid(int generation) {
+        return generation == this.generation;
     }
 
     void freeResult() {
@@ -129,10 +129,10 @@ public class ByteBufferBuilder implements AutoCloseable {
         private final int generation;
         private boolean closed;
 
-        Result(int p_350632_, int p_350856_, int p_350616_) {
-            this.offset = p_350632_;
-            this.capacity = p_350856_;
-            this.generation = p_350616_;
+        Result(int offset, int capacity, int generation) {
+            this.offset = offset;
+            this.capacity = capacity;
+            this.generation = generation;
         }
 
         public ByteBuffer byteBuffer() {

@@ -53,11 +53,11 @@ public class RealmsBackupScreen extends RealmsScreen {
     final RealmsServer serverData;
     boolean noBackups = false;
 
-    public RealmsBackupScreen(RealmsConfigureWorldScreen p_88126_, RealmsServer p_88127_, int p_88128_) {
+    public RealmsBackupScreen(RealmsConfigureWorldScreen lastScreen, RealmsServer serverData, int slotId) {
         super(TITLE);
-        this.lastScreen = p_88126_;
-        this.serverData = p_88127_;
-        this.slotId = p_88128_;
+        this.lastScreen = lastScreen;
+        this.serverData = serverData;
+        this.slotId = slotId;
     }
 
     @Override
@@ -75,11 +75,19 @@ public class RealmsBackupScreen extends RealmsScreen {
         this.fetchRealmsBackups();
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283405_, int p_282020_, int p_282404_, float p_281280_) {
-        super.render(p_283405_, p_282020_, p_282404_, p_281280_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         if (this.noBackups && this.backupList != null) {
-            p_283405_.drawString(
+            guiGraphics.drawString(
                 this.font,
                 NO_BACKUPS_LABEL,
                 this.width / 2 - this.font.width(NO_BACKUPS_LABEL) / 2,
@@ -172,8 +180,8 @@ public class RealmsBackupScreen extends RealmsScreen {
             );
         }
 
-        public void addEntry(Backup p_88235_) {
-            this.addEntry(RealmsBackupScreen.this.new Entry(p_88235_));
+        public void addEntry(Backup backup) {
+            this.addEntry(RealmsBackupScreen.this.new Entry(backup));
         }
 
         @Override
@@ -197,10 +205,10 @@ public class RealmsBackupScreen extends RealmsScreen {
         private Button changesButton;
         private final List<AbstractWidget> children = new ArrayList<>();
 
-        public Entry(Backup p_88250_) {
-            this.backup = p_88250_;
-            this.populateChangeList(p_88250_);
-            if (!p_88250_.changeList.isEmpty()) {
+        public Entry(Backup backup) {
+            this.backup = backup;
+            this.populateChangeList(backup);
+            if (!backup.changeList.isEmpty()) {
                 this.changesButton = Button.builder(
                         RealmsBackupScreen.HAS_CHANGES_TOOLTIP,
                         p_344115_ -> RealmsBackupScreen.this.minecraft.setScreen(new RealmsBackupInfoScreen(RealmsBackupScreen.this, this.backup))
@@ -228,14 +236,14 @@ public class RealmsBackupScreen extends RealmsScreen {
             }
         }
 
-        private void populateChangeList(Backup p_279365_) {
-            int i = RealmsBackupScreen.this.backups.indexOf(p_279365_);
+        private void populateChangeList(Backup p_backup) {
+            int i = RealmsBackupScreen.this.backups.indexOf(p_backup);
             if (i != RealmsBackupScreen.this.backups.size() - 1) {
                 Backup backup = RealmsBackupScreen.this.backups.get(i + 1);
 
-                for (String s : p_279365_.metadata.keySet()) {
+                for (String s : p_backup.metadata.keySet()) {
                     if (!s.contains("uploaded") && backup.metadata.containsKey(s)) {
-                        if (!p_279365_.metadata.get(s).equals(backup.metadata.get(s))) {
+                        if (!p_backup.metadata.get(s).equals(backup.metadata.get(s))) {
                             this.addToChangeList(s);
                         }
                     } else {
@@ -245,13 +253,13 @@ public class RealmsBackupScreen extends RealmsScreen {
             }
         }
 
-        private void addToChangeList(String p_279195_) {
-            if (p_279195_.contains("uploaded")) {
+        private void addToChangeList(String change) {
+            if (change.contains("uploaded")) {
                 String s = DateFormat.getDateTimeInstance(3, 3).format(this.backup.lastModifiedDate);
-                this.backup.changeList.put(p_279195_, s);
+                this.backup.changeList.put(change, s);
                 this.backup.setUploadedVersion(true);
             } else {
-                this.backup.changeList.put(p_279195_, this.backup.metadata.get(p_279195_));
+                this.backup.changeList.put(change, this.backup.metadata.get(change));
             }
         }
 
@@ -290,49 +298,49 @@ public class RealmsBackupScreen extends RealmsScreen {
 
         @Override
         public void render(
-            GuiGraphics p_281408_,
-            int p_281974_,
-            int p_282495_,
-            int p_282463_,
-            int p_281562_,
-            int p_282782_,
-            int p_281638_,
-            int p_283190_,
-            boolean p_283105_,
-            float p_282066_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
-            int i = p_282495_ + p_282782_ / 2;
+            int i = top + height / 2;
             int j = i - 9 - 2;
             int k = i + 2;
             int l = this.backup.isUploadedVersion() ? -8388737 : -1;
-            p_281408_.drawString(
+            guiGraphics.drawString(
                 RealmsBackupScreen.this.font,
                 Component.translatable("mco.backup.entry", RealmsUtil.convertToAgePresentationFromInstant(this.backup.lastModifiedDate)),
-                p_282463_,
+                left,
                 j,
                 l,
                 false
             );
-            p_281408_.drawString(RealmsBackupScreen.this.font, this.getMediumDatePresentation(this.backup.lastModifiedDate), p_282463_, k, 5000268, false);
+            guiGraphics.drawString(RealmsBackupScreen.this.font, this.getMediumDatePresentation(this.backup.lastModifiedDate), left, k, 5000268, false);
             int i1 = 0;
-            int j1 = p_282495_ + p_282782_ / 2 - 10;
+            int j1 = top + height / 2 - 10;
             if (this.restoreButton != null) {
                 i1 += this.restoreButton.getWidth() + 8;
-                this.restoreButton.setX(p_282463_ + p_281562_ - i1);
+                this.restoreButton.setX(left + width - i1);
                 this.restoreButton.setY(j1);
-                this.restoreButton.render(p_281408_, p_281638_, p_283190_, p_282066_);
+                this.restoreButton.render(guiGraphics, mouseX, mouseY, partialTick);
             }
 
             if (this.changesButton != null) {
                 i1 += this.changesButton.getWidth() + 8;
-                this.changesButton.setX(p_282463_ + p_281562_ - i1);
+                this.changesButton.setX(left + width - i1);
                 this.changesButton.setY(j1);
-                this.changesButton.render(p_281408_, p_281638_, p_283190_, p_282066_);
+                this.changesButton.render(guiGraphics, mouseX, mouseY, partialTick);
             }
         }
 
-        private String getMediumDatePresentation(Date p_88276_) {
-            return DateFormat.getDateTimeInstance(3, 3).format(p_88276_);
+        private String getMediumDatePresentation(Date date) {
+            return DateFormat.getDateTimeInstance(3, 3).format(date);
         }
     }
 }

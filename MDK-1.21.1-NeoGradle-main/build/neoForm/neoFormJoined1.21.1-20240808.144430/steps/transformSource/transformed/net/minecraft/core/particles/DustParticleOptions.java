@@ -25,9 +25,9 @@ public class DustParticleOptions extends ScalableParticleOptionsBase {
     );
     private final Vector3f color;
 
-    public DustParticleOptions(Vector3f p_253868_, float p_254154_) {
-        super(p_254154_);
-        this.color = p_253868_;
+    public DustParticleOptions(Vector3f color, float scale) {
+        super(scale);
+        this.color = color;
     }
 
     @Override

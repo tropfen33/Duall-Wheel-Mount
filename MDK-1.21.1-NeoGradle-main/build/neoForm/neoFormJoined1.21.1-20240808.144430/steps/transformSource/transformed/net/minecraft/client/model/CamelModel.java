@@ -29,9 +29,9 @@ public class CamelModel<T extends Camel> extends HierarchicalModel<T> {
     private final ModelPart[] saddleParts;
     private final ModelPart[] ridingParts;
 
-    public CamelModel(ModelPart p_251834_) {
-        this.root = p_251834_;
-        ModelPart modelpart = p_251834_.getChild("body");
+    public CamelModel(ModelPart root) {
+        this.root = root;
+        ModelPart modelpart = root.getChild("body");
         this.head = modelpart.getChild("head");
         this.saddleParts = new ModelPart[]{modelpart.getChild("saddle"), this.head.getChild("bridle")};
         this.ridingParts = new ModelPart[]{this.head.getChild("reins")};
@@ -120,34 +120,37 @@ public class CamelModel<T extends Camel> extends HierarchicalModel<T> {
         return LayerDefinition.create(meshdefinition, 128, 128);
     }
 
-    public void setupAnim(T p_250657_, float p_250501_, float p_249554_, float p_249527_, float p_248774_, float p_250710_) {
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.root().getAllParts().forEach(ModelPart::resetPose);
-        this.applyHeadRotation(p_250657_, p_248774_, p_250710_, p_249527_);
-        this.toggleInvisibleParts(p_250657_);
-        this.animateWalk(CamelAnimation.CAMEL_WALK, p_250501_, p_249554_, 2.0F, 2.5F);
-        this.animate(p_250657_.sitAnimationState, CamelAnimation.CAMEL_SIT, p_249527_, 1.0F);
-        this.animate(p_250657_.sitPoseAnimationState, CamelAnimation.CAMEL_SIT_POSE, p_249527_, 1.0F);
-        this.animate(p_250657_.sitUpAnimationState, CamelAnimation.CAMEL_STANDUP, p_249527_, 1.0F);
-        this.animate(p_250657_.idleAnimationState, CamelAnimation.CAMEL_IDLE, p_249527_, 1.0F);
-        this.animate(p_250657_.dashAnimationState, CamelAnimation.CAMEL_DASH, p_249527_, 1.0F);
+        this.applyHeadRotation(entity, netHeadYaw, headPitch, ageInTicks);
+        this.toggleInvisibleParts(entity);
+        this.animateWalk(CamelAnimation.CAMEL_WALK, limbSwing, limbSwingAmount, 2.0F, 2.5F);
+        this.animate(entity.sitAnimationState, CamelAnimation.CAMEL_SIT, ageInTicks, 1.0F);
+        this.animate(entity.sitPoseAnimationState, CamelAnimation.CAMEL_SIT_POSE, ageInTicks, 1.0F);
+        this.animate(entity.sitUpAnimationState, CamelAnimation.CAMEL_STANDUP, ageInTicks, 1.0F);
+        this.animate(entity.idleAnimationState, CamelAnimation.CAMEL_IDLE, ageInTicks, 1.0F);
+        this.animate(entity.dashAnimationState, CamelAnimation.CAMEL_DASH, ageInTicks, 1.0F);
     }
 
-    private void applyHeadRotation(T p_250436_, float p_249176_, float p_251814_, float p_248796_) {
-        p_249176_ = Mth.clamp(p_249176_, -30.0F, 30.0F);
-        p_251814_ = Mth.clamp(p_251814_, -25.0F, 45.0F);
-        if (p_250436_.getJumpCooldown() > 0) {
-            float f = p_248796_ - (float)p_250436_.tickCount;
-            float f1 = 45.0F * ((float)p_250436_.getJumpCooldown() - f) / 55.0F;
-            p_251814_ = Mth.clamp(p_251814_ + f1, -25.0F, 70.0F);
+    private void applyHeadRotation(T entity, float netHeadYaw, float headPitch, float ageInTicks) {
+        netHeadYaw = Mth.clamp(netHeadYaw, -30.0F, 30.0F);
+        headPitch = Mth.clamp(headPitch, -25.0F, 45.0F);
+        if (entity.getJumpCooldown() > 0) {
+            float f = ageInTicks - (float)entity.tickCount;
+            float f1 = 45.0F * ((float)entity.getJumpCooldown() - f) / 55.0F;
+            headPitch = Mth.clamp(headPitch + f1, -25.0F, 70.0F);
         }
 
-        this.head.yRot = p_249176_ * (float) (Math.PI / 180.0);
-        this.head.xRot = p_251814_ * (float) (Math.PI / 180.0);
+        this.head.yRot = netHeadYaw * (float) (Math.PI / 180.0);
+        this.head.xRot = headPitch * (float) (Math.PI / 180.0);
     }
 
-    private void toggleInvisibleParts(T p_251765_) {
-        boolean flag = p_251765_.isSaddled();
-        boolean flag1 = p_251765_.isVehicle();
+    private void toggleInvisibleParts(T entity) {
+        boolean flag = entity.isSaddled();
+        boolean flag1 = entity.isVehicle();
 
         for (ModelPart modelpart : this.saddleParts) {
             modelpart.visible = flag;
@@ -159,15 +162,15 @@ public class CamelModel<T extends Camel> extends HierarchicalModel<T> {
     }
 
     @Override
-    public void renderToBuffer(PoseStack p_250278_, VertexConsumer p_251678_, int p_249298_, int p_251841_, int p_350307_) {
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
         if (this.young) {
-            p_250278_.pushPose();
-            p_250278_.scale(0.45F, 0.45F, 0.45F);
-            p_250278_.translate(0.0F, 1.834375F, 0.0F);
-            this.root().render(p_250278_, p_251678_, p_249298_, p_251841_, p_350307_);
-            p_250278_.popPose();
+            poseStack.pushPose();
+            poseStack.scale(0.45F, 0.45F, 0.45F);
+            poseStack.translate(0.0F, 1.834375F, 0.0F);
+            this.root().render(poseStack, buffer, packedLight, packedOverlay, color);
+            poseStack.popPose();
         } else {
-            this.root().render(p_250278_, p_251678_, p_249298_, p_251841_, p_350307_);
+            this.root().render(poseStack, buffer, packedLight, packedOverlay, color);
         }
     }
 

@@ -20,11 +20,11 @@ public final class OreVeinifier {
     }
 
     protected static NoiseChunk.BlockStateFiller create(
-        DensityFunction p_209668_, DensityFunction p_209669_, DensityFunction p_209670_, PositionalRandomFactory p_209671_
+        DensityFunction veinToggle, DensityFunction veinRidged, DensityFunction veinGap, PositionalRandomFactory random
     ) {
         BlockState blockstate = null;
         return p_209666_ -> {
-            double d0 = p_209668_.compute(p_209666_);
+            double d0 = veinToggle.compute(p_209666_);
             int i = p_209666_.blockY();
             OreVeinifier.VeinType oreveinifier$veintype = d0 > 0.0 ? OreVeinifier.VeinType.COPPER : OreVeinifier.VeinType.IRON;
             double d1 = Math.abs(d0);
@@ -36,14 +36,14 @@ public final class OreVeinifier {
                 if (d1 + d2 < 0.4F) {
                     return blockstate;
                 } else {
-                    RandomSource randomsource = p_209671_.at(p_209666_.blockX(), i, p_209666_.blockZ());
+                    RandomSource randomsource = random.at(p_209666_.blockX(), i, p_209666_.blockZ());
                     if (randomsource.nextFloat() > 0.7F) {
                         return blockstate;
-                    } else if (p_209669_.compute(p_209666_) >= 0.0) {
+                    } else if (veinRidged.compute(p_209666_) >= 0.0) {
                         return blockstate;
                     } else {
                         double d3 = Mth.clampedMap(d1, 0.4F, 0.6F, 0.1F, 0.3F);
-                        if ((double)randomsource.nextFloat() < d3 && p_209670_.compute(p_209666_) > -0.3F) {
+                        if ((double)randomsource.nextFloat() < d3 && veinGap.compute(p_209666_) > -0.3F) {
                             return randomsource.nextFloat() < 0.02F ? oreveinifier$veintype.rawOreBlock : oreveinifier$veintype.ore;
                         } else {
                             return oreveinifier$veintype.filler;
@@ -66,12 +66,12 @@ public final class OreVeinifier {
         protected final int minY;
         protected final int maxY;
 
-        private VeinType(BlockState p_209684_, BlockState p_209685_, BlockState p_209686_, int p_209687_, int p_209688_) {
-            this.ore = p_209684_;
-            this.rawOreBlock = p_209685_;
-            this.filler = p_209686_;
-            this.minY = p_209687_;
-            this.maxY = p_209688_;
+        private VeinType(BlockState ore, BlockState rawOreBlock, BlockState filler, int minY, int maxY) {
+            this.ore = ore;
+            this.rawOreBlock = rawOreBlock;
+            this.filler = filler;
+            this.minY = minY;
+            this.maxY = maxY;
         }
     }
 }

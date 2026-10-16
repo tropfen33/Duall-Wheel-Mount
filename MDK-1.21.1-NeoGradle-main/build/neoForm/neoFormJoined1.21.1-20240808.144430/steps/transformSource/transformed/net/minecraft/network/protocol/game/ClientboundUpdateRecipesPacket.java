@@ -15,8 +15,8 @@ public class ClientboundUpdateRecipesPacket implements Packet<ClientGamePacketLi
     );
     private final List<RecipeHolder<?>> recipes;
 
-    public ClientboundUpdateRecipesPacket(Collection<RecipeHolder<?>> p_133632_) {
-        this.recipes = List.copyOf(p_133632_);
+    public ClientboundUpdateRecipesPacket(Collection<RecipeHolder<?>> recipes) {
+        this.recipes = List.copyOf(recipes);
     }
 
     @Override
@@ -24,8 +24,11 @@ public class ClientboundUpdateRecipesPacket implements Packet<ClientGamePacketLi
         return GamePacketTypes.CLIENTBOUND_UPDATE_RECIPES;
     }
 
-    public void handle(ClientGamePacketListener p_133641_) {
-        p_133641_.handleUpdateRecipes(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleUpdateRecipes(this);
     }
 
     public List<RecipeHolder<?>> getRecipes() {

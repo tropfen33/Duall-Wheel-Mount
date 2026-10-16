@@ -9,19 +9,22 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.gameevent.GameEvent;
 
 public class SaddleItem extends Item {
-    public SaddleItem(Item.Properties p_43053_) {
-        super(p_43053_);
+    public SaddleItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Try interacting with given entity. Return {@code InteractionResult.PASS} if nothing should happen.
+     */
     @Override
-    public InteractionResult interactLivingEntity(ItemStack p_43055_, Player p_43056_, LivingEntity p_43057_, InteractionHand p_43058_) {
-        if (p_43057_ instanceof Saddleable saddleable && p_43057_.isAlive() && !saddleable.isSaddled() && saddleable.isSaddleable()) {
-            if (!p_43056_.level().isClientSide) {
-                saddleable.equipSaddle(p_43055_.split(1), SoundSource.NEUTRAL);
-                p_43057_.level().gameEvent(p_43057_, GameEvent.EQUIP, p_43057_.position());
+    public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity target, InteractionHand hand) {
+        if (target instanceof Saddleable saddleable && target.isAlive() && !saddleable.isSaddled() && saddleable.isSaddleable()) {
+            if (!player.level().isClientSide) {
+                saddleable.equipSaddle(stack.split(1), SoundSource.NEUTRAL);
+                target.level().gameEvent(target, GameEvent.EQUIP, target.position());
             }
 
-            return InteractionResult.sidedSuccess(p_43056_.level().isClientSide);
+            return InteractionResult.sidedSuccess(player.level().isClientSide);
         }
 
         return InteractionResult.PASS;

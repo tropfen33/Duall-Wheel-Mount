@@ -105,17 +105,17 @@ public interface CauldronInteraction {
         }
     };
 
-    static CauldronInteraction.InteractionMap newInteractionMap(String p_304841_) {
+    static CauldronInteraction.InteractionMap newInteractionMap(String name) {
         Object2ObjectOpenHashMap<Item, CauldronInteraction> object2objectopenhashmap = new Object2ObjectOpenHashMap<>();
         object2objectopenhashmap.defaultReturnValue(
             (p_315883_, p_315884_, p_315885_, p_315886_, p_315887_, p_315888_) -> ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION
         );
-        CauldronInteraction.InteractionMap cauldroninteraction$interactionmap = new CauldronInteraction.InteractionMap(p_304841_, object2objectopenhashmap);
-        INTERACTIONS.put(p_304841_, cauldroninteraction$interactionmap);
+        CauldronInteraction.InteractionMap cauldroninteraction$interactionmap = new CauldronInteraction.InteractionMap(name, object2objectopenhashmap);
+        INTERACTIONS.put(name, cauldroninteraction$interactionmap);
         return cauldroninteraction$interactionmap;
     }
 
-    ItemInteractionResult interact(BlockState p_175711_, Level p_175712_, BlockPos p_175713_, Player p_175714_, InteractionHand p_175715_, ItemStack p_175716_);
+    ItemInteractionResult interact(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, ItemStack stack);
 
     static void bootStrap() {
         Map<Item, CauldronInteraction> map = EMPTY.map();
@@ -265,54 +265,54 @@ public interface CauldronInteraction {
         addDefaultInteractions(map3);
     }
 
-    static void addDefaultInteractions(Map<Item, CauldronInteraction> p_175648_) {
-        p_175648_.put(Items.LAVA_BUCKET, FILL_LAVA);
-        p_175648_.put(Items.WATER_BUCKET, FILL_WATER);
-        p_175648_.put(Items.POWDER_SNOW_BUCKET, FILL_POWDER_SNOW);
+    static void addDefaultInteractions(Map<Item, CauldronInteraction> interactionsMap) {
+        interactionsMap.put(Items.LAVA_BUCKET, FILL_LAVA);
+        interactionsMap.put(Items.WATER_BUCKET, FILL_WATER);
+        interactionsMap.put(Items.POWDER_SNOW_BUCKET, FILL_POWDER_SNOW);
     }
 
     static ItemInteractionResult fillBucket(
-        BlockState p_175636_,
-        Level p_175637_,
-        BlockPos p_175638_,
-        Player p_175639_,
-        InteractionHand p_175640_,
-        ItemStack p_175641_,
-        ItemStack p_175642_,
-        Predicate<BlockState> p_175643_,
-        SoundEvent p_175644_
+        BlockState state,
+        Level level,
+        BlockPos pos,
+        Player player,
+        InteractionHand hand,
+        ItemStack emptyStack,
+        ItemStack filledStack,
+        Predicate<BlockState> statePredicate,
+        SoundEvent fillSound
     ) {
-        if (!p_175643_.test(p_175636_)) {
+        if (!statePredicate.test(state)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         } else {
-            if (!p_175637_.isClientSide) {
-                Item item = p_175641_.getItem();
-                p_175639_.setItemInHand(p_175640_, ItemUtils.createFilledResult(p_175641_, p_175639_, p_175642_));
-                p_175639_.awardStat(Stats.USE_CAULDRON);
-                p_175639_.awardStat(Stats.ITEM_USED.get(item));
-                p_175637_.setBlockAndUpdate(p_175638_, Blocks.CAULDRON.defaultBlockState());
-                p_175637_.playSound(null, p_175638_, p_175644_, SoundSource.BLOCKS, 1.0F, 1.0F);
-                p_175637_.gameEvent(null, GameEvent.FLUID_PICKUP, p_175638_);
+            if (!level.isClientSide) {
+                Item item = emptyStack.getItem();
+                player.setItemInHand(hand, ItemUtils.createFilledResult(emptyStack, player, filledStack));
+                player.awardStat(Stats.USE_CAULDRON);
+                player.awardStat(Stats.ITEM_USED.get(item));
+                level.setBlockAndUpdate(pos, Blocks.CAULDRON.defaultBlockState());
+                level.playSound(null, pos, fillSound, SoundSource.BLOCKS, 1.0F, 1.0F);
+                level.gameEvent(null, GameEvent.FLUID_PICKUP, pos);
             }
 
-            return ItemInteractionResult.sidedSuccess(p_175637_.isClientSide);
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
     }
 
     static ItemInteractionResult emptyBucket(
-        Level p_175619_, BlockPos p_175620_, Player p_175621_, InteractionHand p_175622_, ItemStack p_175623_, BlockState p_175624_, SoundEvent p_175625_
+        Level level, BlockPos pos, Player player, InteractionHand hand, ItemStack filledStack, BlockState state, SoundEvent emptySound
     ) {
-        if (!p_175619_.isClientSide) {
-            Item item = p_175623_.getItem();
-            p_175621_.setItemInHand(p_175622_, ItemUtils.createFilledResult(p_175623_, p_175621_, new ItemStack(Items.BUCKET)));
-            p_175621_.awardStat(Stats.FILL_CAULDRON);
-            p_175621_.awardStat(Stats.ITEM_USED.get(item));
-            p_175619_.setBlockAndUpdate(p_175620_, p_175624_);
-            p_175619_.playSound(null, p_175620_, p_175625_, SoundSource.BLOCKS, 1.0F, 1.0F);
-            p_175619_.gameEvent(null, GameEvent.FLUID_PLACE, p_175620_);
+        if (!level.isClientSide) {
+            Item item = filledStack.getItem();
+            player.setItemInHand(hand, ItemUtils.createFilledResult(filledStack, player, new ItemStack(Items.BUCKET)));
+            player.awardStat(Stats.FILL_CAULDRON);
+            player.awardStat(Stats.ITEM_USED.get(item));
+            level.setBlockAndUpdate(pos, state);
+            level.playSound(null, pos, emptySound, SoundSource.BLOCKS, 1.0F, 1.0F);
+            level.gameEvent(null, GameEvent.FLUID_PLACE, pos);
         }
 
-        return ItemInteractionResult.sidedSuccess(p_175619_.isClientSide);
+        return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
 
     public static record InteractionMap(String name, Map<Item, CauldronInteraction> map) {

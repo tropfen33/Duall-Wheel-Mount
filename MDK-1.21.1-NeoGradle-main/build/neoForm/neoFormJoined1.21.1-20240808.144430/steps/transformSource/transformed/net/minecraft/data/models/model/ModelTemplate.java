@@ -19,64 +19,64 @@ public class ModelTemplate {
     private final Set<TextureSlot> requiredSlots;
     private final Optional<String> suffix;
 
-    public ModelTemplate(Optional<ResourceLocation> p_125589_, Optional<String> p_125590_, TextureSlot... p_125591_) {
-        this.model = p_125589_;
-        this.suffix = p_125590_;
-        this.requiredSlots = ImmutableSet.copyOf(p_125591_);
+    public ModelTemplate(Optional<ResourceLocation> model, Optional<String> suffix, TextureSlot... requiredSlots) {
+        this.model = model;
+        this.suffix = suffix;
+        this.requiredSlots = ImmutableSet.copyOf(requiredSlots);
     }
 
-    public ResourceLocation getDefaultModelLocation(Block p_309103_) {
-        return ModelLocationUtils.getModelLocation(p_309103_, this.suffix.orElse(""));
+    public ResourceLocation getDefaultModelLocation(Block block) {
+        return ModelLocationUtils.getModelLocation(block, this.suffix.orElse(""));
     }
 
-    public ResourceLocation create(Block p_125593_, TextureMapping p_125594_, BiConsumer<ResourceLocation, Supplier<JsonElement>> p_125595_) {
-        return this.create(ModelLocationUtils.getModelLocation(p_125593_, this.suffix.orElse("")), p_125594_, p_125595_);
+    public ResourceLocation create(Block modelBlock, TextureMapping textureMapping, BiConsumer<ResourceLocation, Supplier<JsonElement>> modelOutput) {
+        return this.create(ModelLocationUtils.getModelLocation(modelBlock, this.suffix.orElse("")), textureMapping, modelOutput);
     }
 
     public ResourceLocation createWithSuffix(
-        Block p_125597_, String p_125598_, TextureMapping p_125599_, BiConsumer<ResourceLocation, Supplier<JsonElement>> p_125600_
+        Block modelBlock, String modelLocationSuffix, TextureMapping textureMapping, BiConsumer<ResourceLocation, Supplier<JsonElement>> modelOutput
     ) {
-        return this.create(ModelLocationUtils.getModelLocation(p_125597_, p_125598_ + this.suffix.orElse("")), p_125599_, p_125600_);
+        return this.create(ModelLocationUtils.getModelLocation(modelBlock, modelLocationSuffix + this.suffix.orElse("")), textureMapping, modelOutput);
     }
 
     public ResourceLocation createWithOverride(
-        Block p_125617_, String p_125618_, TextureMapping p_125619_, BiConsumer<ResourceLocation, Supplier<JsonElement>> p_125620_
+        Block modelBlock, String modelLocationSuffix, TextureMapping textureMapping, BiConsumer<ResourceLocation, Supplier<JsonElement>> modelOutput
     ) {
-        return this.create(ModelLocationUtils.getModelLocation(p_125617_, p_125618_), p_125619_, p_125620_);
+        return this.create(ModelLocationUtils.getModelLocation(modelBlock, modelLocationSuffix), textureMapping, modelOutput);
     }
 
-    public ResourceLocation create(ResourceLocation p_125613_, TextureMapping p_125614_, BiConsumer<ResourceLocation, Supplier<JsonElement>> p_125615_) {
-        return this.create(p_125613_, p_125614_, p_125615_, this::createBaseTemplate);
+    public ResourceLocation create(ResourceLocation modelLocation, TextureMapping textureMapping, BiConsumer<ResourceLocation, Supplier<JsonElement>> modelOutput) {
+        return this.create(modelLocation, textureMapping, modelOutput, this::createBaseTemplate);
     }
 
     public ResourceLocation create(
-        ResourceLocation p_266990_,
-        TextureMapping p_267329_,
-        BiConsumer<ResourceLocation, Supplier<JsonElement>> p_266768_,
-        ModelTemplate.JsonFactory p_266906_
+        ResourceLocation modelLocation,
+        TextureMapping textureMapping,
+        BiConsumer<ResourceLocation, Supplier<JsonElement>> modelOutput,
+        ModelTemplate.JsonFactory factory
     ) {
-        Map<TextureSlot, ResourceLocation> map = this.createMap(p_267329_);
-        p_266768_.accept(p_266990_, () -> p_266906_.create(p_266990_, map));
-        return p_266990_;
+        Map<TextureSlot, ResourceLocation> map = this.createMap(textureMapping);
+        modelOutput.accept(modelLocation, () -> factory.create(modelLocation, map));
+        return modelLocation;
     }
 
-    public JsonObject createBaseTemplate(ResourceLocation p_266830_, Map<TextureSlot, ResourceLocation> p_266912_) {
+    public JsonObject createBaseTemplate(ResourceLocation modelLocation, Map<TextureSlot, ResourceLocation> modelGetter) {
         JsonObject jsonobject = new JsonObject();
         this.model.ifPresent(p_176461_ -> jsonobject.addProperty("parent", p_176461_.toString()));
-        if (!p_266912_.isEmpty()) {
+        if (!modelGetter.isEmpty()) {
             JsonObject jsonobject1 = new JsonObject();
-            p_266912_.forEach((p_176457_, p_176458_) -> jsonobject1.addProperty(p_176457_.getId(), p_176458_.toString()));
+            modelGetter.forEach((p_176457_, p_176458_) -> jsonobject1.addProperty(p_176457_.getId(), p_176458_.toString()));
             jsonobject.add("textures", jsonobject1);
         }
 
         return jsonobject;
     }
 
-    private Map<TextureSlot, ResourceLocation> createMap(TextureMapping p_125609_) {
-        return Streams.concat(this.requiredSlots.stream(), p_125609_.getForced()).collect(ImmutableMap.toImmutableMap(Function.identity(), p_125609_::get));
+    private Map<TextureSlot, ResourceLocation> createMap(TextureMapping textureMapping) {
+        return Streams.concat(this.requiredSlots.stream(), textureMapping.getForced()).collect(ImmutableMap.toImmutableMap(Function.identity(), textureMapping::get));
     }
 
     public interface JsonFactory {
-        JsonObject create(ResourceLocation p_266987_, Map<TextureSlot, ResourceLocation> p_266933_);
+        JsonObject create(ResourceLocation modelLocation, Map<TextureSlot, ResourceLocation> modelGetter);
     }
 }

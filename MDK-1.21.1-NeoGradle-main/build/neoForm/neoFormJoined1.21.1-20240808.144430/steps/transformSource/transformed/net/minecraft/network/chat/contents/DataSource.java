@@ -13,7 +13,7 @@ public interface DataSource {
         new DataSource.Type[]{EntityDataSource.TYPE, BlockDataSource.TYPE, StorageDataSource.TYPE}, DataSource.Type::codec, DataSource::type, "source"
     );
 
-    Stream<CompoundTag> getData(CommandSourceStack p_237326_) throws CommandSyntaxException;
+    Stream<CompoundTag> getData(CommandSourceStack source) throws CommandSyntaxException;
 
     DataSource.Type<?> type();
 

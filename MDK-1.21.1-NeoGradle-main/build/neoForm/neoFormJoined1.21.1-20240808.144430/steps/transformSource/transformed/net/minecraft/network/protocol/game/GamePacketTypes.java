@@ -182,11 +182,11 @@ public class GamePacketTypes {
     public static final PacketType<ClientboundTickingStatePacket> CLIENTBOUND_TICKING_STATE = createClientbound("ticking_state");
     public static final PacketType<ClientboundTickingStepPacket> CLIENTBOUND_TICKING_STEP = createClientbound("ticking_step");
 
-    private static <T extends Packet<ClientGamePacketListener>> PacketType<T> createClientbound(String p_319846_) {
-        return new PacketType<>(PacketFlow.CLIENTBOUND, ResourceLocation.withDefaultNamespace(p_319846_));
+    private static <T extends Packet<ClientGamePacketListener>> PacketType<T> createClientbound(String id) {
+        return new PacketType<>(PacketFlow.CLIENTBOUND, ResourceLocation.withDefaultNamespace(id));
     }
 
-    private static <T extends Packet<ServerGamePacketListener>> PacketType<T> createServerbound(String p_320667_) {
-        return new PacketType<>(PacketFlow.SERVERBOUND, ResourceLocation.withDefaultNamespace(p_320667_));
+    private static <T extends Packet<ServerGamePacketListener>> PacketType<T> createServerbound(String id) {
+        return new PacketType<>(PacketFlow.SERVERBOUND, ResourceLocation.withDefaultNamespace(id));
     }
 }

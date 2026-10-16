@@ -14,16 +14,24 @@ public class RealmsLabel implements Renderable {
     private final int y;
     private final int color;
 
-    public RealmsLabel(Component p_120736_, int p_120737_, int p_120738_, int p_120739_) {
-        this.text = p_120736_;
-        this.x = p_120737_;
-        this.y = p_120738_;
-        this.color = p_120739_;
+    public RealmsLabel(Component text, int x, int y, int color) {
+        this.text = text;
+        this.x = x;
+        this.y = y;
+        this.color = color;
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281597_, int p_282874_, int p_281694_, float p_282363_) {
-        p_281597_.drawCenteredString(Minecraft.getInstance().font, this.text, this.x, this.y, this.color);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        guiGraphics.drawCenteredString(Minecraft.getInstance().font, this.text, this.x, this.y, this.color);
     }
 
     public Component getText() {

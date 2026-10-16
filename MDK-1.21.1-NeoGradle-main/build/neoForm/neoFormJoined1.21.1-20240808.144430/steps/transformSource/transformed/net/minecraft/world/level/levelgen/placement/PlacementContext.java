@@ -17,23 +17,23 @@ public class PlacementContext extends WorldGenerationContext {
     private final ChunkGenerator generator;
     private final Optional<PlacedFeature> topFeature;
 
-    public PlacementContext(WorldGenLevel p_191818_, ChunkGenerator p_191819_, Optional<PlacedFeature> p_191820_) {
-        super(p_191819_, p_191818_);
-        this.level = p_191818_;
-        this.generator = p_191819_;
-        this.topFeature = p_191820_;
+    public PlacementContext(WorldGenLevel level, ChunkGenerator generator, Optional<PlacedFeature> topFeature) {
+        super(generator, level);
+        this.level = level;
+        this.generator = generator;
+        this.topFeature = topFeature;
     }
 
-    public int getHeight(Heightmap.Types p_191825_, int p_191826_, int p_191827_) {
-        return this.level.getHeight(p_191825_, p_191826_, p_191827_);
+    public int getHeight(Heightmap.Types heightmapType, int x, int z) {
+        return this.level.getHeight(heightmapType, x, z);
     }
 
-    public CarvingMask getCarvingMask(ChunkPos p_191822_, GenerationStep.Carving p_191823_) {
-        return ((ProtoChunk)this.level.getChunk(p_191822_.x, p_191822_.z)).getOrCreateCarvingMask(p_191823_);
+    public CarvingMask getCarvingMask(ChunkPos chunkPos, GenerationStep.Carving step) {
+        return ((ProtoChunk)this.level.getChunk(chunkPos.x, chunkPos.z)).getOrCreateCarvingMask(step);
     }
 
-    public BlockState getBlockState(BlockPos p_191829_) {
-        return this.level.getBlockState(p_191829_);
+    public BlockState getBlockState(BlockPos pos) {
+        return this.level.getBlockState(pos);
     }
 
     public int getMinBuildHeight() {

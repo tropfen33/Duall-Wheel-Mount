@@ -61,8 +61,8 @@ public abstract class AbstractSkeleton extends Monster implements RangedAttackMo
         }
     };
 
-    protected AbstractSkeleton(EntityType<? extends AbstractSkeleton> p_32133_, Level p_32134_) {
-        super(p_32133_, p_32134_);
+    protected AbstractSkeleton(EntityType<? extends AbstractSkeleton> entityType, Level level) {
+        super(entityType, level);
         this.reassessWeaponGoal();
     }
 
@@ -85,7 +85,7 @@ public abstract class AbstractSkeleton extends Monster implements RangedAttackMo
     }
 
     @Override
-    protected void playStepSound(BlockPos p_32159_, BlockState p_32160_) {
+    protected void playStepSound(BlockPos pos, BlockState block) {
         this.playSound(this.getStepSound(), 0.15F, 1.0F);
     }
 
@@ -126,20 +126,20 @@ public abstract class AbstractSkeleton extends Monster implements RangedAttackMo
     }
 
     @Override
-    protected void populateDefaultEquipmentSlots(RandomSource p_218949_, DifficultyInstance p_218950_) {
-        super.populateDefaultEquipmentSlots(p_218949_, p_218950_);
+    protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
+        super.populateDefaultEquipmentSlots(random, difficulty);
         this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
     }
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_32146_, DifficultyInstance p_32147_, MobSpawnType p_32148_, @Nullable SpawnGroupData p_32149_) {
-        p_32149_ = super.finalizeSpawn(p_32146_, p_32147_, p_32148_, p_32149_);
-        RandomSource randomsource = p_32146_.getRandom();
-        this.populateDefaultEquipmentSlots(randomsource, p_32147_);
-        this.populateDefaultEquipmentEnchantments(p_32146_, randomsource, p_32147_);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        spawnGroupData = super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+        RandomSource randomsource = level.getRandom();
+        this.populateDefaultEquipmentSlots(randomsource, difficulty);
+        this.populateDefaultEquipmentEnchantments(level, randomsource, difficulty);
         this.reassessWeaponGoal();
-        this.setCanPickUpLoot(randomsource.nextFloat() < 0.55F * p_32147_.getSpecialMultiplier());
+        this.setCanPickUpLoot(randomsource.nextFloat() < 0.55F * difficulty.getSpecialMultiplier());
         if (this.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) {
             LocalDate localdate = LocalDate.now();
             int i = localdate.get(ChronoField.DAY_OF_MONTH);
@@ -150,7 +150,7 @@ public abstract class AbstractSkeleton extends Monster implements RangedAttackMo
             }
         }
 
-        return p_32149_;
+        return spawnGroupData;
     }
 
     public void reassessWeaponGoal() {
@@ -180,40 +180,46 @@ public abstract class AbstractSkeleton extends Monster implements RangedAttackMo
         return 40;
     }
 
+    /**
+     * Attack the specified entity using a ranged attack.
+     */
     @Override
-    public void performRangedAttack(LivingEntity p_32141_, float p_32142_) {
+    public void performRangedAttack(LivingEntity target, float distanceFactor) {
         ItemStack weapon = this.getItemInHand(ProjectileUtil.getWeaponHoldingHand(this, item -> item instanceof net.minecraft.world.item.BowItem));
         ItemStack itemstack1 = this.getProjectile(weapon);
-        AbstractArrow abstractarrow = this.getArrow(itemstack1, p_32142_, weapon);
+        AbstractArrow abstractarrow = this.getArrow(itemstack1, distanceFactor, weapon);
         if (weapon.getItem() instanceof net.minecraft.world.item.ProjectileWeaponItem weaponItem)
             abstractarrow = weaponItem.customArrow(abstractarrow, itemstack1, weapon);
-        double d0 = p_32141_.getX() - this.getX();
-        double d1 = p_32141_.getY(0.3333333333333333) - abstractarrow.getY();
-        double d2 = p_32141_.getZ() - this.getZ();
+        double d0 = target.getX() - this.getX();
+        double d1 = target.getY(0.3333333333333333) - abstractarrow.getY();
+        double d2 = target.getZ() - this.getZ();
         double d3 = Math.sqrt(d0 * d0 + d2 * d2);
         abstractarrow.shoot(d0, d1 + d3 * 0.2F, d2, 1.6F, (float)(14 - this.level().getDifficulty().getId() * 4));
         this.playSound(SoundEvents.SKELETON_SHOOT, 1.0F, 1.0F / (this.getRandom().nextFloat() * 0.4F + 0.8F));
         this.level().addFreshEntity(abstractarrow);
     }
 
-    protected AbstractArrow getArrow(ItemStack p_32156_, float p_32157_, @Nullable ItemStack p_346155_) {
-        return ProjectileUtil.getMobArrow(this, p_32156_, p_32157_, p_346155_);
+    protected AbstractArrow getArrow(ItemStack arrow, float velocity, @Nullable ItemStack weapon) {
+        return ProjectileUtil.getMobArrow(this, arrow, velocity, weapon);
     }
 
     @Override
-    public boolean canFireProjectileWeapon(ProjectileWeaponItem p_32144_) {
-        return p_32144_ == Items.BOW;
+    public boolean canFireProjectileWeapon(ProjectileWeaponItem projectileWeapon) {
+        return projectileWeapon == Items.BOW;
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_32152_) {
-        super.readAdditionalSaveData(p_32152_);
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
         this.reassessWeaponGoal();
     }
 
     @Override
-    public void setItemSlot(EquipmentSlot p_32138_, ItemStack p_32139_) {
-        super.setItemSlot(p_32138_, p_32139_);
+    public void setItemSlot(EquipmentSlot slot, ItemStack stack) {
+        super.setItemSlot(slot, stack);
         if (!this.level().isClientSide) {
             this.reassessWeaponGoal();
         }

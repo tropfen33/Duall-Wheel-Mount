@@ -12,8 +12,8 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.gameevent.vibrations.VibrationSystem;
 
 public class CalibratedSculkSensorBlockEntity extends SculkSensorBlockEntity {
-    public CalibratedSculkSensorBlockEntity(BlockPos p_277459_, BlockState p_278100_) {
-        super(BlockEntityType.CALIBRATED_SCULK_SENSOR, p_277459_, p_278100_);
+    public CalibratedSculkSensorBlockEntity(BlockPos pos, BlockState blockState) {
+        super(BlockEntityType.CALIBRATED_SCULK_SENSOR, pos, blockState);
     }
 
     @Override
@@ -22,8 +22,8 @@ public class CalibratedSculkSensorBlockEntity extends SculkSensorBlockEntity {
     }
 
     protected class VibrationUser extends SculkSensorBlockEntity.VibrationUser {
-        public VibrationUser(BlockPos p_281602_) {
-            super(p_281602_);
+        public VibrationUser(BlockPos pos) {
+            super(pos);
         }
 
         @Override
@@ -32,16 +32,16 @@ public class CalibratedSculkSensorBlockEntity extends SculkSensorBlockEntity {
         }
 
         @Override
-        public boolean canReceiveVibration(ServerLevel p_282061_, BlockPos p_282550_, Holder<GameEvent> p_316545_, @Nullable GameEvent.Context p_281456_) {
-            int i = this.getBackSignal(p_282061_, this.blockPos, CalibratedSculkSensorBlockEntity.this.getBlockState());
-            return i != 0 && VibrationSystem.getGameEventFrequency(p_316545_) != i
+        public boolean canReceiveVibration(ServerLevel level, BlockPos pos, Holder<GameEvent> gameEvent, @Nullable GameEvent.Context context) {
+            int i = this.getBackSignal(level, this.blockPos, CalibratedSculkSensorBlockEntity.this.getBlockState());
+            return i != 0 && VibrationSystem.getGameEventFrequency(gameEvent) != i
                 ? false
-                : super.canReceiveVibration(p_282061_, p_282550_, p_316545_, p_281456_);
+                : super.canReceiveVibration(level, pos, gameEvent, context);
         }
 
-        private int getBackSignal(Level p_282204_, BlockPos p_282397_, BlockState p_282240_) {
-            Direction direction = p_282240_.getValue(CalibratedSculkSensorBlock.FACING).getOpposite();
-            return p_282204_.getSignal(p_282397_.relative(direction), direction);
+        private int getBackSignal(Level level, BlockPos pos, BlockState state) {
+            Direction direction = state.getValue(CalibratedSculkSensorBlock.FACING).getOpposite();
+            return level.getSignal(pos.relative(direction), direction);
         }
     }
 }

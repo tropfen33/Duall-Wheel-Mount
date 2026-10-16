@@ -10,33 +10,33 @@ public interface ContainerComponentManipulator<T> {
 
     T empty();
 
-    T setContents(T p_341056_, Stream<ItemStack> p_341252_);
+    T setContents(T contents, Stream<ItemStack> items);
 
-    Stream<ItemStack> getContents(T p_341229_);
+    Stream<ItemStack> getContents(T contents);
 
-    default void setContents(ItemStack p_340824_, T p_341046_, Stream<ItemStack> p_341372_) {
-        T t = p_340824_.getOrDefault(this.type(), p_341046_);
-        T t1 = this.setContents(t, p_341372_);
-        p_340824_.set(this.type(), t1);
+    default void setContents(ItemStack stack, T contents, Stream<ItemStack> items) {
+        T t = stack.getOrDefault(this.type(), contents);
+        T t1 = this.setContents(t, items);
+        stack.set(this.type(), t1);
     }
 
-    default void setContents(ItemStack p_340943_, Stream<ItemStack> p_340843_) {
-        this.setContents(p_340943_, this.empty(), p_340843_);
+    default void setContents(ItemStack stack, Stream<ItemStack> items) {
+        this.setContents(stack, this.empty(), items);
     }
 
-    default void modifyItems(ItemStack p_340919_, UnaryOperator<ItemStack> p_341245_) {
-        T t = p_340919_.get(this.type());
+    default void modifyItems(ItemStack stack, UnaryOperator<ItemStack> modifier) {
+        T t = stack.get(this.type());
         if (t != null) {
             UnaryOperator<ItemStack> unaryoperator = p_344668_ -> {
                 if (p_344668_.isEmpty()) {
                     return p_344668_;
                 } else {
-                    ItemStack itemstack = p_341245_.apply(p_344668_);
+                    ItemStack itemstack = modifier.apply(p_344668_);
                     itemstack.limitSize(itemstack.getMaxStackSize());
                     return itemstack;
                 }
             };
-            this.setContents(p_340919_, this.getContents(t).map(unaryoperator));
+            this.setContents(stack, this.getContents(t).map(unaryoperator));
         }
     }
 }

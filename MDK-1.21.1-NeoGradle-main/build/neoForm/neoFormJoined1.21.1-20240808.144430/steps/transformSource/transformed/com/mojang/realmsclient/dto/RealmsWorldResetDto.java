@@ -18,11 +18,11 @@ public class RealmsWorldResetDto extends ValueObject implements ReflectionBasedS
     @SerializedName("experiments")
     private final Set<String> experiments;
 
-    public RealmsWorldResetDto(String p_87643_, long p_87644_, int p_87645_, boolean p_87646_, Set<String> p_305885_) {
-        this.seed = p_87643_;
-        this.worldTemplateId = p_87644_;
-        this.levelType = p_87645_;
-        this.generateStructures = p_87646_;
-        this.experiments = p_305885_;
+    public RealmsWorldResetDto(String seed, long worldTemplateId, int levelType, boolean generateStructures, Set<String> experiments) {
+        this.seed = seed;
+        this.worldTemplateId = worldTemplateId;
+        this.levelType = levelType;
+        this.generateStructures = generateStructures;
+        this.experiments = experiments;
     }
 }

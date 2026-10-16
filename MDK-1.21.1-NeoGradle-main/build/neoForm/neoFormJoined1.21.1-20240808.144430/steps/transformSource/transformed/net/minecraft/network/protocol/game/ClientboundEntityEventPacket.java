@@ -15,19 +15,22 @@ public class ClientboundEntityEventPacket implements Packet<ClientGamePacketList
     private final int entityId;
     private final byte eventId;
 
-    public ClientboundEntityEventPacket(Entity p_132092_, byte p_132093_) {
-        this.entityId = p_132092_.getId();
-        this.eventId = p_132093_;
+    public ClientboundEntityEventPacket(Entity entity, byte eventId) {
+        this.entityId = entity.getId();
+        this.eventId = eventId;
     }
 
-    private ClientboundEntityEventPacket(FriendlyByteBuf p_178843_) {
-        this.entityId = p_178843_.readInt();
-        this.eventId = p_178843_.readByte();
+    private ClientboundEntityEventPacket(FriendlyByteBuf buffer) {
+        this.entityId = buffer.readInt();
+        this.eventId = buffer.readByte();
     }
 
-    private void write(FriendlyByteBuf p_132104_) {
-        p_132104_.writeInt(this.entityId);
-        p_132104_.writeByte(this.eventId);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeInt(this.entityId);
+        buffer.writeByte(this.eventId);
     }
 
     @Override
@@ -35,13 +38,16 @@ public class ClientboundEntityEventPacket implements Packet<ClientGamePacketList
         return GamePacketTypes.CLIENTBOUND_ENTITY_EVENT;
     }
 
-    public void handle(ClientGamePacketListener p_132101_) {
-        p_132101_.handleEntityEvent(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleEntityEvent(this);
     }
 
     @Nullable
-    public Entity getEntity(Level p_132095_) {
-        return p_132095_.getEntity(this.entityId);
+    public Entity getEntity(Level level) {
+        return level.getEntity(this.entityId);
     }
 
     public byte getEventId() {

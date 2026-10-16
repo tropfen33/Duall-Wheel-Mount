@@ -15,13 +15,13 @@ public class LegacyQueryHandler extends ChannelInboundHandlerAdapter {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final ServerInfo server;
 
-    public LegacyQueryHandler(ServerInfo p_296029_) {
-        this.server = p_296029_;
+    public LegacyQueryHandler(ServerInfo server) {
+        this.server = server;
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext p_9686_, Object p_9687_) {
-        ByteBuf bytebuf = (ByteBuf)p_9687_;
+    public void channelRead(ChannelHandlerContext context, Object message) {
+        ByteBuf bytebuf = (ByteBuf)message;
         bytebuf.markReaderIndex();
         boolean flag = true;
 
@@ -31,12 +31,12 @@ public class LegacyQueryHandler extends ChannelInboundHandlerAdapter {
                     return;
                 }
 
-                SocketAddress socketaddress = p_9686_.channel().remoteAddress();
+                SocketAddress socketaddress = context.channel().remoteAddress();
                 int i = bytebuf.readableBytes();
                 if (i == 0) {
                     LOGGER.debug("Ping: (<1.3.x) from {}", socketaddress);
                     String s = createVersion0Response(this.server);
-                    sendFlushAndClose(p_9686_, createLegacyDisconnectPacket(p_9686_.alloc(), s));
+                    sendFlushAndClose(context, createLegacyDisconnectPacket(context.alloc(), s));
                 } else {
                     if (bytebuf.readUnsignedByte() != 1) {
                         return;
@@ -53,7 +53,7 @@ public class LegacyQueryHandler extends ChannelInboundHandlerAdapter {
                     }
 
                     String s1 = createVersion1Response(this.server);
-                    sendFlushAndClose(p_9686_, createLegacyDisconnectPacket(p_9686_.alloc(), s1));
+                    sendFlushAndClose(context, createLegacyDisconnectPacket(context.alloc(), s1));
                 }
 
                 bytebuf.release();
@@ -63,31 +63,31 @@ public class LegacyQueryHandler extends ChannelInboundHandlerAdapter {
         } finally {
             if (flag) {
                 bytebuf.resetReaderIndex();
-                p_9686_.channel().pipeline().remove(this);
-                p_9686_.fireChannelRead(p_9687_);
+                context.channel().pipeline().remove(this);
+                context.fireChannelRead(message);
             }
         }
     }
 
-    private static boolean readCustomPayloadPacket(ByteBuf p_294725_) {
-        short short1 = p_294725_.readUnsignedByte();
+    private static boolean readCustomPayloadPacket(ByteBuf buffer) {
+        short short1 = buffer.readUnsignedByte();
         if (short1 != 250) {
             return false;
         } else {
-            String s = LegacyProtocolUtils.readLegacyString(p_294725_);
+            String s = LegacyProtocolUtils.readLegacyString(buffer);
             if (!"MC|PingHost".equals(s)) {
                 return false;
             } else {
-                int i = p_294725_.readUnsignedShort();
-                if (p_294725_.readableBytes() != i) {
+                int i = buffer.readUnsignedShort();
+                if (buffer.readableBytes() != i) {
                     return false;
                 } else {
-                    short short2 = p_294725_.readUnsignedByte();
+                    short short2 = buffer.readUnsignedByte();
                     if (short2 < 73) {
                         return false;
                     } else {
-                        String s1 = LegacyProtocolUtils.readLegacyString(p_294725_);
-                        int j = p_294725_.readInt();
+                        String s1 = LegacyProtocolUtils.readLegacyString(buffer);
+                        int j = buffer.readInt();
                         return j <= 65535;
                     }
                 }
@@ -95,30 +95,30 @@ public class LegacyQueryHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    private static String createVersion0Response(ServerInfo p_294449_) {
-        return String.format(Locale.ROOT, "%s\u00a7%d\u00a7%d", p_294449_.getMotd(), p_294449_.getPlayerCount(), p_294449_.getMaxPlayers());
+    private static String createVersion0Response(ServerInfo server) {
+        return String.format(Locale.ROOT, "%s\u00a7%d\u00a7%d", server.getMotd(), server.getPlayerCount(), server.getMaxPlayers());
     }
 
-    private static String createVersion1Response(ServerInfo p_295503_) {
+    private static String createVersion1Response(ServerInfo server) {
         return String.format(
             Locale.ROOT,
             "\u00a71\u0000%d\u0000%s\u0000%s\u0000%d\u0000%d",
             127,
-            p_295503_.getServerVersion(),
-            p_295503_.getMotd(),
-            p_295503_.getPlayerCount(),
-            p_295503_.getMaxPlayers()
+            server.getServerVersion(),
+            server.getMotd(),
+            server.getPlayerCount(),
+            server.getMaxPlayers()
         );
     }
 
-    private static void sendFlushAndClose(ChannelHandlerContext p_9681_, ByteBuf p_9682_) {
-        p_9681_.pipeline().firstContext().writeAndFlush(p_9682_).addListener(ChannelFutureListener.CLOSE);
+    private static void sendFlushAndClose(ChannelHandlerContext context, ByteBuf buffer) {
+        context.pipeline().firstContext().writeAndFlush(buffer).addListener(ChannelFutureListener.CLOSE);
     }
 
-    private static ByteBuf createLegacyDisconnectPacket(ByteBufAllocator p_294764_, String p_296452_) {
-        ByteBuf bytebuf = p_294764_.buffer();
+    private static ByteBuf createLegacyDisconnectPacket(ByteBufAllocator bufferAllocator, String reason) {
+        ByteBuf bytebuf = bufferAllocator.buffer();
         bytebuf.writeByte(255);
-        LegacyProtocolUtils.writeLegacyString(bytebuf, p_296452_);
+        LegacyProtocolUtils.writeLegacyString(bytebuf, reason);
         return bytebuf;
     }
 }

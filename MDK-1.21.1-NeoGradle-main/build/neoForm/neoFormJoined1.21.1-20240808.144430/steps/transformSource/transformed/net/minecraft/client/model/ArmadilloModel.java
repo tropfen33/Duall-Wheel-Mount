@@ -31,15 +31,15 @@ public class ArmadilloModel extends AgeableHierarchicalModel<Armadillo> {
     private final ModelPart head;
     private final ModelPart tail;
 
-    public ArmadilloModel(ModelPart p_316704_) {
+    public ArmadilloModel(ModelPart root) {
         super(0.6F, 16.02F);
-        this.root = p_316704_;
-        this.body = p_316704_.getChild("body");
-        this.rightHindLeg = p_316704_.getChild("right_hind_leg");
-        this.leftHindLeg = p_316704_.getChild("left_hind_leg");
+        this.root = root;
+        this.body = root.getChild("body");
+        this.rightHindLeg = root.getChild("right_hind_leg");
+        this.leftHindLeg = root.getChild("left_hind_leg");
         this.head = this.body.getChild("head");
         this.tail = this.body.getChild("tail");
-        this.cube = p_316704_.getChild("cube");
+        this.cube = root.getChild("cube");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -110,9 +110,12 @@ public class ArmadilloModel extends AgeableHierarchicalModel<Armadillo> {
         return this.root;
     }
 
-    public void setupAnim(Armadillo p_316579_, float p_316251_, float p_316543_, float p_316697_, float p_316591_, float p_316280_) {
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(Armadillo entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.root().getAllParts().forEach(ModelPart::resetPose);
-        if (p_316579_.shouldHideInShell()) {
+        if (entity.shouldHideInShell()) {
             this.body.skipDraw = true;
             this.leftHindLeg.visible = false;
             this.rightHindLeg.visible = false;
@@ -124,13 +127,13 @@ public class ArmadilloModel extends AgeableHierarchicalModel<Armadillo> {
             this.rightHindLeg.visible = true;
             this.tail.visible = true;
             this.cube.visible = false;
-            this.head.xRot = Mth.clamp(p_316280_, -22.5F, 25.0F) * (float) (Math.PI / 180.0);
-            this.head.yRot = Mth.clamp(p_316591_, -32.5F, 32.5F) * (float) (Math.PI / 180.0);
+            this.head.xRot = Mth.clamp(headPitch, -22.5F, 25.0F) * (float) (Math.PI / 180.0);
+            this.head.yRot = Mth.clamp(netHeadYaw, -32.5F, 32.5F) * (float) (Math.PI / 180.0);
         }
 
-        this.animateWalk(ArmadilloAnimation.ARMADILLO_WALK, p_316251_, p_316543_, 16.5F, 2.5F);
-        this.animate(p_316579_.rollOutAnimationState, ArmadilloAnimation.ARMADILLO_ROLL_OUT, p_316697_, 1.0F);
-        this.animate(p_316579_.rollUpAnimationState, ArmadilloAnimation.ARMADILLO_ROLL_UP, p_316697_, 1.0F);
-        this.animate(p_316579_.peekAnimationState, ArmadilloAnimation.ARMADILLO_PEEK, p_316697_, 1.0F);
+        this.animateWalk(ArmadilloAnimation.ARMADILLO_WALK, limbSwing, limbSwingAmount, 16.5F, 2.5F);
+        this.animate(entity.rollOutAnimationState, ArmadilloAnimation.ARMADILLO_ROLL_OUT, ageInTicks, 1.0F);
+        this.animate(entity.rollUpAnimationState, ArmadilloAnimation.ARMADILLO_ROLL_UP, ageInTicks, 1.0F);
+        this.animate(entity.peekAnimationState, ArmadilloAnimation.ARMADILLO_PEEK, ageInTicks, 1.0F);
     }
 }

@@ -14,8 +14,8 @@ public record EnchantmentActiveCheck(boolean active) implements LootItemConditio
         p_345271_ -> p_345271_.group(Codec.BOOL.fieldOf("active").forGetter(EnchantmentActiveCheck::active)).apply(p_345271_, EnchantmentActiveCheck::new)
     );
 
-    public boolean test(LootContext p_346268_) {
-        return p_346268_.getParam(LootContextParams.ENCHANTMENT_ACTIVE) == this.active;
+    public boolean test(LootContext context) {
+        return context.getParam(LootContextParams.ENCHANTMENT_ACTIVE) == this.active;
     }
 
     @Override

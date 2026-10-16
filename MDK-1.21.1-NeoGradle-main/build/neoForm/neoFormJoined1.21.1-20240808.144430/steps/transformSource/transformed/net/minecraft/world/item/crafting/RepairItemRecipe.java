@@ -13,17 +13,17 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.Level;
 
 public class RepairItemRecipe extends CustomRecipe {
-    public RepairItemRecipe(CraftingBookCategory p_248679_) {
-        super(p_248679_);
+    public RepairItemRecipe(CraftingBookCategory category) {
+        super(category);
     }
 
     @Nullable
-    private Pair<ItemStack, ItemStack> getItemsToCombine(CraftingInput p_345543_) {
+    private Pair<ItemStack, ItemStack> getItemsToCombine(CraftingInput input) {
         ItemStack itemstack = null;
         ItemStack itemstack1 = null;
 
-        for (int i = 0; i < p_345543_.size(); i++) {
-            ItemStack itemstack2 = p_345543_.getItem(i);
+        for (int i = 0; i < input.size(); i++) {
+            ItemStack itemstack2 = input.getItem(i);
             if (!itemstack2.isEmpty()) {
                 if (itemstack == null) {
                     itemstack = itemstack2;
@@ -40,24 +40,24 @@ public class RepairItemRecipe extends CustomRecipe {
         return itemstack != null && itemstack1 != null && canCombine(itemstack, itemstack1) ? Pair.of(itemstack, itemstack1) : null;
     }
 
-    private static boolean canCombine(ItemStack p_336139_, ItemStack p_335795_) {
-        return p_335795_.is(p_336139_.getItem())
-            && p_336139_.getCount() == 1
-            && p_335795_.getCount() == 1
-            && p_336139_.has(DataComponents.MAX_DAMAGE)
-            && p_335795_.has(DataComponents.MAX_DAMAGE)
-            && p_336139_.has(DataComponents.DAMAGE)
-            && p_335795_.has(DataComponents.DAMAGE)
-            && p_336139_.isRepairable()
-            && p_335795_.isRepairable();
+    private static boolean canCombine(ItemStack stack1, ItemStack stack2) {
+        return stack2.is(stack1.getItem())
+            && stack1.getCount() == 1
+            && stack2.getCount() == 1
+            && stack1.has(DataComponents.MAX_DAMAGE)
+            && stack2.has(DataComponents.MAX_DAMAGE)
+            && stack1.has(DataComponents.DAMAGE)
+            && stack2.has(DataComponents.DAMAGE)
+            && stack1.isRepairable()
+            && stack2.isRepairable();
     }
 
-    public boolean matches(CraftingInput p_345243_, Level p_44139_) {
-        return this.getItemsToCombine(p_345243_) != null;
+    public boolean matches(CraftingInput input, Level level) {
+        return this.getItemsToCombine(input) != null;
     }
 
-    public ItemStack assemble(CraftingInput p_346224_, HolderLookup.Provider p_335610_) {
-        Pair<ItemStack, ItemStack> pair = this.getItemsToCombine(p_346224_);
+    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
+        Pair<ItemStack, ItemStack> pair = this.getItemsToCombine(input);
         if (pair == null) {
             return ItemStack.EMPTY;
         } else {
@@ -74,7 +74,7 @@ public class RepairItemRecipe extends CustomRecipe {
             ItemEnchantments itemenchantments1 = EnchantmentHelper.getEnchantmentsForCrafting(itemstack1);
             EnchantmentHelper.updateEnchantments(
                 itemstack2,
-                p_344422_ -> p_335610_.lookupOrThrow(Registries.ENCHANTMENT)
+                p_344422_ -> registries.lookupOrThrow(Registries.ENCHANTMENT)
                         .listElements()
                         .filter(p_344414_ -> p_344414_.is(EnchantmentTags.CURSE))
                         .forEach(p_344418_ -> {
@@ -88,9 +88,12 @@ public class RepairItemRecipe extends CustomRecipe {
         }
     }
 
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
     @Override
-    public boolean canCraftInDimensions(int p_44128_, int p_44129_) {
-        return p_44128_ * p_44129_ >= 2;
+    public boolean canCraftInDimensions(int width, int height) {
+        return width * height >= 2;
     }
 
     @Override

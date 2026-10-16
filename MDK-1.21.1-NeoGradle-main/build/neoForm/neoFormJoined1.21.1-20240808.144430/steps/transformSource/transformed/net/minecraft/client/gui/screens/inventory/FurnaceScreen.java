@@ -14,7 +14,7 @@ public class FurnaceScreen extends AbstractFurnaceScreen<FurnaceMenu> {
     private static final ResourceLocation BURN_PROGRESS_SPRITE = ResourceLocation.withDefaultNamespace("container/furnace/burn_progress");
     private static final ResourceLocation TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/container/furnace.png");
 
-    public FurnaceScreen(FurnaceMenu p_98776_, Inventory p_98777_, Component p_98778_) {
-        super(p_98776_, new SmeltingRecipeBookComponent(), p_98777_, p_98778_, TEXTURE, LIT_PROGRESS_SPRITE, BURN_PROGRESS_SPRITE);
+    public FurnaceScreen(FurnaceMenu menu, Inventory playerInventory, Component title) {
+        super(menu, new SmeltingRecipeBookComponent(), playerInventory, title, TEXTURE, LIT_PROGRESS_SPRITE, BURN_PROGRESS_SPRITE);
     }
 }

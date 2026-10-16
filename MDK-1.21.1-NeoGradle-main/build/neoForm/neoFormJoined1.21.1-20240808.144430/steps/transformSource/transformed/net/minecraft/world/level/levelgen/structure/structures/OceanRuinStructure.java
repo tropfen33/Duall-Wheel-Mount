@@ -27,22 +27,22 @@ public class OceanRuinStructure extends Structure {
     public final float largeProbability;
     public final float clusterProbability;
 
-    public OceanRuinStructure(Structure.StructureSettings p_229060_, OceanRuinStructure.Type p_229061_, float p_229062_, float p_229063_) {
-        super(p_229060_);
-        this.biomeTemp = p_229061_;
-        this.largeProbability = p_229062_;
-        this.clusterProbability = p_229063_;
+    public OceanRuinStructure(Structure.StructureSettings settings, OceanRuinStructure.Type biomeTemp, float largeProbability, float clusterProbability) {
+        super(settings);
+        this.biomeTemp = biomeTemp;
+        this.largeProbability = largeProbability;
+        this.clusterProbability = clusterProbability;
     }
 
     @Override
-    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext p_229065_) {
-        return onTopOfChunkCenter(p_229065_, Heightmap.Types.OCEAN_FLOOR_WG, p_229068_ -> this.generatePieces(p_229068_, p_229065_));
+    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext context) {
+        return onTopOfChunkCenter(context, Heightmap.Types.OCEAN_FLOOR_WG, p_229068_ -> this.generatePieces(p_229068_, context));
     }
 
-    private void generatePieces(StructurePiecesBuilder p_229070_, Structure.GenerationContext p_229071_) {
-        BlockPos blockpos = new BlockPos(p_229071_.chunkPos().getMinBlockX(), 90, p_229071_.chunkPos().getMinBlockZ());
-        Rotation rotation = Rotation.getRandom(p_229071_.random());
-        OceanRuinPieces.addPieces(p_229071_.structureTemplateManager(), blockpos, rotation, p_229070_, p_229071_.random(), this);
+    private void generatePieces(StructurePiecesBuilder builder, Structure.GenerationContext context) {
+        BlockPos blockpos = new BlockPos(context.chunkPos().getMinBlockX(), 90, context.chunkPos().getMinBlockZ());
+        Rotation rotation = Rotation.getRandom(context.random());
+        OceanRuinPieces.addPieces(context.structureTemplateManager(), blockpos, rotation, builder, context.random(), this);
     }
 
     @Override
@@ -57,8 +57,8 @@ public class OceanRuinStructure extends Structure {
         public static final Codec<OceanRuinStructure.Type> CODEC = StringRepresentable.fromEnum(OceanRuinStructure.Type::values);
         private final String name;
 
-        private Type(String p_229090_) {
-            this.name = p_229090_;
+        private Type(String name) {
+            this.name = name;
         }
 
         public String getName() {

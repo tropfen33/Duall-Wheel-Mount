@@ -32,20 +32,20 @@ public class LanternBlock extends Block implements SimpleWaterloggedBlock {
         return CODEC;
     }
 
-    public LanternBlock(BlockBehaviour.Properties p_153465_) {
-        super(p_153465_);
+    public LanternBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(HANGING, Boolean.valueOf(false)).setValue(WATERLOGGED, Boolean.valueOf(false)));
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_153467_) {
-        FluidState fluidstate = p_153467_.getLevel().getFluidState(p_153467_.getClickedPos());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
 
-        for (Direction direction : p_153467_.getNearestLookingDirections()) {
+        for (Direction direction : context.getNearestLookingDirections()) {
             if (direction.getAxis() == Direction.Axis.Y) {
                 BlockState blockstate = this.defaultBlockState().setValue(HANGING, Boolean.valueOf(direction == Direction.UP));
-                if (blockstate.canSurvive(p_153467_.getLevel(), p_153467_.getClickedPos())) {
+                if (blockstate.canSurvive(context.getLevel(), context.getClickedPos())) {
                     return blockstate.setValue(WATERLOGGED, Boolean.valueOf(fluidstate.getType() == Fluids.WATER));
                 }
             }
@@ -55,45 +55,50 @@ public class LanternBlock extends Block implements SimpleWaterloggedBlock {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_153474_, BlockGetter p_153475_, BlockPos p_153476_, CollisionContext p_153477_) {
-        return p_153474_.getValue(HANGING) ? HANGING_AABB : AABB;
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return state.getValue(HANGING) ? HANGING_AABB : AABB;
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_153490_) {
-        p_153490_.add(HANGING, WATERLOGGED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(HANGING, WATERLOGGED);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_153479_, LevelReader p_153480_, BlockPos p_153481_) {
-        Direction direction = getConnectedDirection(p_153479_).getOpposite();
-        return Block.canSupportCenter(p_153480_, p_153481_.relative(direction), direction.getOpposite());
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        Direction direction = getConnectedDirection(state).getOpposite();
+        return Block.canSupportCenter(level, pos.relative(direction), direction.getOpposite());
     }
 
-    protected static Direction getConnectedDirection(BlockState p_153496_) {
-        return p_153496_.getValue(HANGING) ? Direction.DOWN : Direction.UP;
+    protected static Direction getConnectedDirection(BlockState state) {
+        return state.getValue(HANGING) ? Direction.DOWN : Direction.UP;
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
     protected BlockState updateShape(
-        BlockState p_153483_, Direction p_153484_, BlockState p_153485_, LevelAccessor p_153486_, BlockPos p_153487_, BlockPos p_153488_
+        BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos
     ) {
-        if (p_153483_.getValue(WATERLOGGED)) {
-            p_153486_.scheduleTick(p_153487_, Fluids.WATER, Fluids.WATER.getTickDelay(p_153486_));
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        return getConnectedDirection(p_153483_).getOpposite() == p_153484_ && !p_153483_.canSurvive(p_153486_, p_153487_)
+        return getConnectedDirection(state).getOpposite() == direction && !state.canSurvive(level, pos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_153483_, p_153484_, p_153485_, p_153486_, p_153487_, p_153488_);
+            : super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_153492_) {
-        return p_153492_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_153492_);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_153469_, PathComputationType p_153472_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

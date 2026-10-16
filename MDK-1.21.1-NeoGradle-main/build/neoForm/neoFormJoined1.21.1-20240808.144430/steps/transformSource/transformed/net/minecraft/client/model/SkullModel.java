@@ -17,9 +17,9 @@ public class SkullModel extends SkullModelBase {
     private final ModelPart root;
     protected final ModelPart head;
 
-    public SkullModel(ModelPart p_170945_) {
-        this.root = p_170945_;
-        this.head = p_170945_.getChild("head");
+    public SkullModel(ModelPart root) {
+        this.root = root;
+        this.head = root.getChild("head");
     }
 
     public static MeshDefinition createHeadModel() {
@@ -45,13 +45,13 @@ public class SkullModel extends SkullModelBase {
     }
 
     @Override
-    public void setupAnim(float p_103811_, float p_103812_, float p_103813_) {
-        this.head.yRot = p_103812_ * (float) (Math.PI / 180.0);
-        this.head.xRot = p_103813_ * (float) (Math.PI / 180.0);
+    public void setupAnim(float mouthAnimation, float yRot, float xRot) {
+        this.head.yRot = yRot * (float) (Math.PI / 180.0);
+        this.head.xRot = xRot * (float) (Math.PI / 180.0);
     }
 
     @Override
-    public void renderToBuffer(PoseStack p_103815_, VertexConsumer p_103816_, int p_103817_, int p_103818_, int p_350840_) {
-        this.root.render(p_103815_, p_103816_, p_103817_, p_103818_, p_350840_);
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
+        this.root.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 }

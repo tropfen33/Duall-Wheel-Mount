@@ -50,99 +50,108 @@ public class CandleCakeBlock extends AbstractCandleBlock {
         return CODEC;
     }
 
-    public CandleCakeBlock(Block p_152859_, BlockBehaviour.Properties p_152860_) {
-        super(p_152860_);
+    public CandleCakeBlock(Block candleBlock, BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(LIT, Boolean.valueOf(false)));
-        if (p_152859_ instanceof CandleBlock candleblock) {
+        if (candleBlock instanceof CandleBlock candleblock) {
             BY_CANDLE.put(candleblock, this);
             this.candleBlock = candleblock;
         } else {
-            throw new IllegalArgumentException("Expected block to be of " + CandleBlock.class + " was " + p_152859_.getClass());
+            throw new IllegalArgumentException("Expected block to be of " + CandleBlock.class + " was " + candleBlock.getClass());
         }
     }
 
     @Override
-    protected Iterable<Vec3> getParticleOffsets(BlockState p_152868_) {
+    protected Iterable<Vec3> getParticleOffsets(BlockState state) {
         return PARTICLE_OFFSETS;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_152875_, BlockGetter p_152876_, BlockPos p_152877_, CollisionContext p_152878_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
     protected ItemInteractionResult useItemOn(
-        ItemStack p_316571_, BlockState p_316514_, Level p_316171_, BlockPos p_316112_, Player p_316172_, InteractionHand p_316257_, BlockHitResult p_316286_
+        ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult
     ) {
-        if (p_316571_.is(Items.FLINT_AND_STEEL) || p_316571_.is(Items.FIRE_CHARGE)) {
+        if (stack.is(Items.FLINT_AND_STEEL) || stack.is(Items.FIRE_CHARGE)) {
             return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
-        } else if (candleHit(p_316286_) && p_316571_.isEmpty() && p_316514_.getValue(LIT)) {
-            extinguish(p_316172_, p_316514_, p_316171_, p_316112_);
-            return ItemInteractionResult.sidedSuccess(p_316171_.isClientSide);
+        } else if (candleHit(hitResult) && stack.isEmpty() && state.getValue(LIT)) {
+            extinguish(player, state, level, pos);
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
         } else {
-            return super.useItemOn(p_316571_, p_316514_, p_316171_, p_316112_, p_316172_, p_316257_, p_316286_);
+            return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
         }
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_316519_, Level p_316226_, BlockPos p_316122_, Player p_316438_, BlockHitResult p_316849_) {
-        InteractionResult interactionresult = CakeBlock.eat(p_316226_, p_316122_, Blocks.CAKE.defaultBlockState(), p_316438_);
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        InteractionResult interactionresult = CakeBlock.eat(level, pos, Blocks.CAKE.defaultBlockState(), player);
         if (interactionresult.consumesAction()) {
-            dropResources(p_316519_, p_316226_, p_316122_);
+            dropResources(state, level, pos);
         }
 
         return interactionresult;
     }
 
-    private static boolean candleHit(BlockHitResult p_152907_) {
-        return p_152907_.getLocation().y - (double)p_152907_.getBlockPos().getY() > 0.5;
+    private static boolean candleHit(BlockHitResult hit) {
+        return hit.getLocation().y - (double)hit.getBlockPos().getY() > 0.5;
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_152905_) {
-        p_152905_.add(LIT);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(LIT);
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader p_304662_, BlockPos p_152863_, BlockState p_152864_) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         return new ItemStack(Blocks.CAKE);
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
     protected BlockState updateShape(
-        BlockState p_152898_, Direction p_152899_, BlockState p_152900_, LevelAccessor p_152901_, BlockPos p_152902_, BlockPos p_152903_
+        BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos
     ) {
-        return p_152899_ == Direction.DOWN && !p_152898_.canSurvive(p_152901_, p_152902_)
+        return direction == Direction.DOWN && !state.canSurvive(level, pos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_152898_, p_152899_, p_152900_, p_152901_, p_152902_, p_152903_);
+            : super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_152891_, LevelReader p_152892_, BlockPos p_152893_) {
-        return p_152892_.getBlockState(p_152893_.below()).isSolid();
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        return level.getBlockState(pos.below()).isSolid();
     }
 
+    /**
+     * Returns the analog signal this block emits. This is the signal a comparator can read from it.
+     *
+     */
     @Override
-    protected int getAnalogOutputSignal(BlockState p_152880_, Level p_152881_, BlockPos p_152882_) {
+    protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
         return CakeBlock.FULL_CAKE_SIGNAL;
     }
 
     @Override
-    protected boolean hasAnalogOutputSignal(BlockState p_152909_) {
+    protected boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_152870_, PathComputationType p_152873_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
-    public static BlockState byCandle(CandleBlock p_316552_) {
-        return BY_CANDLE.get(p_316552_).defaultBlockState();
+    public static BlockState byCandle(CandleBlock candle) {
+        return BY_CANDLE.get(candle).defaultBlockState();
     }
 
-    public static boolean canLight(BlockState p_152911_) {
-        return p_152911_.is(BlockTags.CANDLE_CAKES, p_152896_ -> p_152896_.hasProperty(LIT) && !p_152911_.getValue(LIT));
+    public static boolean canLight(BlockState state) {
+        return state.is(BlockTags.CANDLE_CAKES, p_152896_ -> p_152896_.hasProperty(LIT) && !state.getValue(LIT));
     }
 }

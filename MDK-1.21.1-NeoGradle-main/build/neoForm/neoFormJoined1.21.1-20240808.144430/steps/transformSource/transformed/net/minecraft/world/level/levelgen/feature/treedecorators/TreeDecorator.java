@@ -22,7 +22,7 @@ public abstract class TreeDecorator {
 
     protected abstract TreeDecoratorType<?> type();
 
-    public abstract void place(TreeDecorator.Context p_226044_);
+    public abstract void place(TreeDecorator.Context context);
 
     public static final class Context {
         private final LevelSimulatedReader level;
@@ -33,34 +33,34 @@ public abstract class TreeDecorator {
         private final ObjectArrayList<BlockPos> roots;
 
         public Context(
-            LevelSimulatedReader p_226052_,
-            BiConsumer<BlockPos, BlockState> p_226053_,
-            RandomSource p_226054_,
-            Set<BlockPos> p_226055_,
-            Set<BlockPos> p_226056_,
-            Set<BlockPos> p_226057_
+            LevelSimulatedReader level,
+            BiConsumer<BlockPos, BlockState> decorationSetter,
+            RandomSource random,
+            Set<BlockPos> logs,
+            Set<BlockPos> leaves,
+            Set<BlockPos> roots
         ) {
-            this.level = p_226052_;
-            this.decorationSetter = p_226053_;
-            this.random = p_226054_;
-            this.roots = new ObjectArrayList<>(p_226057_);
-            this.logs = new ObjectArrayList<>(p_226055_);
-            this.leaves = new ObjectArrayList<>(p_226056_);
+            this.level = level;
+            this.decorationSetter = decorationSetter;
+            this.random = random;
+            this.roots = new ObjectArrayList<>(roots);
+            this.logs = new ObjectArrayList<>(logs);
+            this.leaves = new ObjectArrayList<>(leaves);
             this.logs.sort(Comparator.comparingInt(Vec3i::getY));
             this.leaves.sort(Comparator.comparingInt(Vec3i::getY));
             this.roots.sort(Comparator.comparingInt(Vec3i::getY));
         }
 
-        public void placeVine(BlockPos p_226065_, BooleanProperty p_226066_) {
-            this.setBlock(p_226065_, Blocks.VINE.defaultBlockState().setValue(p_226066_, Boolean.valueOf(true)));
+        public void placeVine(BlockPos pos, BooleanProperty sideProperty) {
+            this.setBlock(pos, Blocks.VINE.defaultBlockState().setValue(sideProperty, Boolean.valueOf(true)));
         }
 
-        public void setBlock(BlockPos p_226062_, BlockState p_226063_) {
-            this.decorationSetter.accept(p_226062_, p_226063_);
+        public void setBlock(BlockPos pos, BlockState state) {
+            this.decorationSetter.accept(pos, state);
         }
 
-        public boolean isAir(BlockPos p_226060_) {
-            return this.level.isStateAtPosition(p_226060_, BlockBehaviour.BlockStateBase::isAir);
+        public boolean isAir(BlockPos pos) {
+            return this.level.isStateAtPosition(pos, BlockBehaviour.BlockStateBase::isAir);
         }
 
         public LevelSimulatedReader level() {

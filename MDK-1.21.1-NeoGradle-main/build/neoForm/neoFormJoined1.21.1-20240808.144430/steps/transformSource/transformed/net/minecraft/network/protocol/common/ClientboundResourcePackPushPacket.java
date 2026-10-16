@@ -45,7 +45,10 @@ public record ClientboundResourcePackPushPacket(UUID id, String url, String hash
         return CommonPacketTypes.CLIENTBOUND_RESOURCE_PACK_PUSH;
     }
 
-    public void handle(ClientCommonPacketListener p_314609_) {
-        p_314609_.handleResourcePackPush(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientCommonPacketListener handler) {
+        handler.handleResourcePackPush(this);
     }
 }

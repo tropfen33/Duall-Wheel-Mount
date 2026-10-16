@@ -8,16 +8,16 @@ import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.RandomSource;
 
 public class SimpleWeightedRandomList<E> extends WeightedRandomList<WeightedEntry.Wrapper<E>> {
-    public static <E> Codec<SimpleWeightedRandomList<E>> wrappedCodecAllowingEmpty(Codec<E> p_185861_) {
-        return WeightedEntry.Wrapper.codec(p_185861_).listOf().xmap(SimpleWeightedRandomList::new, WeightedRandomList::unwrap);
+    public static <E> Codec<SimpleWeightedRandomList<E>> wrappedCodecAllowingEmpty(Codec<E> codec) {
+        return WeightedEntry.Wrapper.codec(codec).listOf().xmap(SimpleWeightedRandomList::new, WeightedRandomList::unwrap);
     }
 
-    public static <E> Codec<SimpleWeightedRandomList<E>> wrappedCodec(Codec<E> p_146265_) {
-        return ExtraCodecs.nonEmptyList(WeightedEntry.Wrapper.codec(p_146265_).listOf()).xmap(SimpleWeightedRandomList::new, WeightedRandomList::unwrap);
+    public static <E> Codec<SimpleWeightedRandomList<E>> wrappedCodec(Codec<E> elementCodec) {
+        return ExtraCodecs.nonEmptyList(WeightedEntry.Wrapper.codec(elementCodec).listOf()).xmap(SimpleWeightedRandomList::new, WeightedRandomList::unwrap);
     }
 
-    SimpleWeightedRandomList(List<? extends WeightedEntry.Wrapper<E>> p_146262_) {
-        super(p_146262_);
+    SimpleWeightedRandomList(List<? extends WeightedEntry.Wrapper<E>> items) {
+        super(items);
     }
 
     public static <E> SimpleWeightedRandomList.Builder<E> builder() {
@@ -28,23 +28,23 @@ public class SimpleWeightedRandomList<E> extends WeightedRandomList<WeightedEntr
         return new SimpleWeightedRandomList<>(List.of());
     }
 
-    public static <E> SimpleWeightedRandomList<E> single(E p_185863_) {
-        return new SimpleWeightedRandomList<>(List.of(WeightedEntry.wrap(p_185863_, 1)));
+    public static <E> SimpleWeightedRandomList<E> single(E data) {
+        return new SimpleWeightedRandomList<>(List.of(WeightedEntry.wrap(data, 1)));
     }
 
-    public Optional<E> getRandomValue(RandomSource p_216821_) {
-        return this.getRandom(p_216821_).map(WeightedEntry.Wrapper::data);
+    public Optional<E> getRandomValue(RandomSource random) {
+        return this.getRandom(random).map(WeightedEntry.Wrapper::data);
     }
 
     public static class Builder<E> {
         private final ImmutableList.Builder<WeightedEntry.Wrapper<E>> result = ImmutableList.builder();
 
-        public SimpleWeightedRandomList.Builder<E> add(E p_307448_) {
-            return this.add(p_307448_, 1);
+        public SimpleWeightedRandomList.Builder<E> add(E data) {
+            return this.add(data, 1);
         }
 
-        public SimpleWeightedRandomList.Builder<E> add(E p_146272_, int p_146273_) {
-            this.result.add(WeightedEntry.wrap(p_146272_, p_146273_));
+        public SimpleWeightedRandomList.Builder<E> add(E data, int weight) {
+            this.result.add(WeightedEntry.wrap(data, weight));
             return this;
         }
 

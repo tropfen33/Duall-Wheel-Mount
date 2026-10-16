@@ -25,14 +25,22 @@ public abstract class EffectRenderingInventoryScreen<T extends AbstractContainer
     private static final ResourceLocation EFFECT_BACKGROUND_LARGE_SPRITE = ResourceLocation.withDefaultNamespace("container/inventory/effect_background_large");
     private static final ResourceLocation EFFECT_BACKGROUND_SMALL_SPRITE = ResourceLocation.withDefaultNamespace("container/inventory/effect_background_small");
 
-    public EffectRenderingInventoryScreen(T p_98701_, Inventory p_98702_, Component p_98703_) {
-        super(p_98701_, p_98702_, p_98703_);
+    public EffectRenderingInventoryScreen(T menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title);
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283027_, int p_281444_, int p_282953_, float p_281666_) {
-        super.render(p_283027_, p_281444_, p_282953_, p_281666_);
-        this.renderEffects(p_283027_, p_281444_, p_282953_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderEffects(guiGraphics, mouseX, mouseY);
     }
 
     public boolean canSeeEffects() {
@@ -41,7 +49,7 @@ public abstract class EffectRenderingInventoryScreen<T extends AbstractContainer
         return j >= 32;
     }
 
-    private void renderEffects(GuiGraphics p_281945_, int p_282601_, int p_282335_) {
+    private void renderEffects(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         int i = this.leftPos + this.imageWidth + 2;
         int j = this.width - i;
         Collection<MobEffectInstance> collection = this.minecraft.player.getActiveEffects();
@@ -58,16 +66,16 @@ public abstract class EffectRenderingInventoryScreen<T extends AbstractContainer
 
 
             Iterable<MobEffectInstance> iterable = collection.stream().filter(net.neoforged.neoforge.client.ClientHooks::shouldRenderEffect).sorted().collect(java.util.stream.Collectors.toList());
-            this.renderBackgrounds(p_281945_, i, k, iterable, flag);
-            this.renderIcons(p_281945_, i, k, iterable, flag);
+            this.renderBackgrounds(guiGraphics, i, k, iterable, flag);
+            this.renderIcons(guiGraphics, i, k, iterable, flag);
             if (flag) {
-                this.renderLabels(p_281945_, i, k, iterable);
-            } else if (p_282601_ >= i && p_282601_ <= i + 33) {
+                this.renderLabels(guiGraphics, i, k, iterable);
+            } else if (mouseX >= i && mouseX <= i + 33) {
                 int l = this.topPos;
                 MobEffectInstance mobeffectinstance = null;
 
                 for (MobEffectInstance mobeffectinstance1 : iterable) {
-                    if (p_282335_ >= l && p_282335_ <= l + k) {
+                    if (mouseY >= l && mouseY <= l + k) {
                         mobeffectinstance = mobeffectinstance1;
                     }
 
@@ -81,64 +89,64 @@ public abstract class EffectRenderingInventoryScreen<T extends AbstractContainer
                     );
                     // Neo: Allow mods to adjust the tooltip shown when hovering a mob effect.
                     list = net.neoforged.neoforge.client.ClientHooks.getEffectTooltip(this, mobeffectinstance, list);
-                    p_281945_.renderTooltip(this.font, list, Optional.empty(), p_282601_, p_282335_);
+                    guiGraphics.renderTooltip(this.font, list, Optional.empty(), mouseX, mouseY);
                 }
             }
         }
     }
 
-    private void renderBackgrounds(GuiGraphics p_281540_, int p_282479_, int p_283680_, Iterable<MobEffectInstance> p_282013_, boolean p_283630_) {
+    private void renderBackgrounds(GuiGraphics guiGraphics, int renderX, int yOffset, Iterable<MobEffectInstance> effects, boolean isSmall) {
         int i = this.topPos;
 
-        for (MobEffectInstance mobeffectinstance : p_282013_) {
-            if (p_283630_) {
-                p_281540_.blitSprite(EFFECT_BACKGROUND_LARGE_SPRITE, p_282479_, i, 120, 32);
+        for (MobEffectInstance mobeffectinstance : effects) {
+            if (isSmall) {
+                guiGraphics.blitSprite(EFFECT_BACKGROUND_LARGE_SPRITE, renderX, i, 120, 32);
             } else {
-                p_281540_.blitSprite(EFFECT_BACKGROUND_SMALL_SPRITE, p_282479_, i, 32, 32);
+                guiGraphics.blitSprite(EFFECT_BACKGROUND_SMALL_SPRITE, renderX, i, 32, 32);
             }
 
-            i += p_283680_;
+            i += yOffset;
         }
     }
 
-    private void renderIcons(GuiGraphics p_282745_, int p_282521_, int p_282291_, Iterable<MobEffectInstance> p_282642_, boolean p_281536_) {
+    private void renderIcons(GuiGraphics guiGraphics, int renderX, int yOffset, Iterable<MobEffectInstance> effects, boolean isSmall) {
         MobEffectTextureManager mobeffecttexturemanager = this.minecraft.getMobEffectTextures();
         int i = this.topPos;
 
-        for (MobEffectInstance mobeffectinstance : p_282642_) {
+        for (MobEffectInstance mobeffectinstance : effects) {
             var renderer = net.neoforged.neoforge.client.extensions.common.IClientMobEffectExtensions.of(mobeffectinstance);
-            if (renderer.renderInventoryIcon(mobeffectinstance, this, p_282745_, p_282521_ + (p_281536_ ? 6 : 7), i, 0)) {
-                i += p_282291_;
+            if (renderer.renderInventoryIcon(mobeffectinstance, this, guiGraphics, renderX + (isSmall ? 6 : 7), i, 0)) {
+                i += yOffset;
                 continue;
             }
             Holder<MobEffect> holder = mobeffectinstance.getEffect();
             TextureAtlasSprite textureatlassprite = mobeffecttexturemanager.get(holder);
-            p_282745_.blit(p_282521_ + (p_281536_ ? 6 : 7), i + 7, 0, 18, 18, textureatlassprite);
-            i += p_282291_;
+            guiGraphics.blit(renderX + (isSmall ? 6 : 7), i + 7, 0, 18, 18, textureatlassprite);
+            i += yOffset;
         }
     }
 
-    private void renderLabels(GuiGraphics p_281462_, int p_283484_, int p_282057_, Iterable<MobEffectInstance> p_281986_) {
+    private void renderLabels(GuiGraphics guiGraphics, int renderX, int yOffset, Iterable<MobEffectInstance> effects) {
         int i = this.topPos;
 
-        for (MobEffectInstance mobeffectinstance : p_281986_) {
+        for (MobEffectInstance mobeffectinstance : effects) {
             var renderer = net.neoforged.neoforge.client.extensions.common.IClientMobEffectExtensions.of(mobeffectinstance);
-            if (renderer.renderInventoryText(mobeffectinstance, this, p_281462_, p_283484_, i, 0)) {
-                i += p_282057_;
+            if (renderer.renderInventoryText(mobeffectinstance, this, guiGraphics, renderX, i, 0)) {
+                i += yOffset;
                 continue;
             }
             Component component = this.getEffectName(mobeffectinstance);
-            p_281462_.drawString(this.font, component, p_283484_ + 10 + 18, i + 6, 16777215);
+            guiGraphics.drawString(this.font, component, renderX + 10 + 18, i + 6, 16777215);
             Component component1 = MobEffectUtil.formatDuration(mobeffectinstance, 1.0F, this.minecraft.level.tickRateManager().tickrate());
-            p_281462_.drawString(this.font, component1, p_283484_ + 10 + 18, i + 6 + 10, 8355711);
-            i += p_282057_;
+            guiGraphics.drawString(this.font, component1, renderX + 10 + 18, i + 6 + 10, 8355711);
+            i += yOffset;
         }
     }
 
-    private Component getEffectName(MobEffectInstance p_194001_) {
-        MutableComponent mutablecomponent = p_194001_.getEffect().value().getDisplayName().copy();
-        if (p_194001_.getAmplifier() >= 1 && p_194001_.getAmplifier() <= 9) {
-            mutablecomponent.append(CommonComponents.SPACE).append(Component.translatable("enchantment.level." + (p_194001_.getAmplifier() + 1)));
+    private Component getEffectName(MobEffectInstance effect) {
+        MutableComponent mutablecomponent = effect.getEffect().value().getDisplayName().copy();
+        if (effect.getAmplifier() >= 1 && effect.getAmplifier() <= 9) {
+            mutablecomponent.append(CommonComponents.SPACE).append(Component.translatable("enchantment.level." + (effect.getAmplifier() + 1)));
         }
 
         return mutablecomponent;

@@ -9,40 +9,40 @@ import net.minecraft.network.codec.StreamCodec;
 
 public record TypedDataComponent<T>(DataComponentType<T> type, T value) {
     public static final StreamCodec<RegistryFriendlyByteBuf, TypedDataComponent<?>> STREAM_CODEC = new StreamCodec<RegistryFriendlyByteBuf, TypedDataComponent<?>>() {
-        public TypedDataComponent<?> decode(RegistryFriendlyByteBuf p_331219_) {
-            DataComponentType<?> datacomponenttype = DataComponentType.STREAM_CODEC.decode(p_331219_);
-            return decodeTyped(p_331219_, datacomponenttype);
+        public TypedDataComponent<?> decode(RegistryFriendlyByteBuf buffer) {
+            DataComponentType<?> datacomponenttype = DataComponentType.STREAM_CODEC.decode(buffer);
+            return decodeTyped(buffer, datacomponenttype);
         }
 
-        private static <T> TypedDataComponent<T> decodeTyped(RegistryFriendlyByteBuf p_331307_, DataComponentType<T> p_330560_) {
-            return new TypedDataComponent<>(p_330560_, p_330560_.streamCodec().decode(p_331307_));
+        private static <T> TypedDataComponent<T> decodeTyped(RegistryFriendlyByteBuf buffer, DataComponentType<T> component) {
+            return new TypedDataComponent<>(component, component.streamCodec().decode(buffer));
         }
 
-        public void encode(RegistryFriendlyByteBuf p_330591_, TypedDataComponent<?> p_331491_) {
-            encodeCap(p_330591_, p_331491_);
+        public void encode(RegistryFriendlyByteBuf buffer, TypedDataComponent<?> value) {
+            encodeCap(buffer, value);
         }
 
-        private static <T> void encodeCap(RegistryFriendlyByteBuf p_331348_, TypedDataComponent<T> p_331234_) {
-            DataComponentType.STREAM_CODEC.encode(p_331348_, p_331234_.type());
-            p_331234_.type().streamCodec().encode(p_331348_, p_331234_.value());
+        private static <T> void encodeCap(RegistryFriendlyByteBuf buffer, TypedDataComponent<T> component) {
+            DataComponentType.STREAM_CODEC.encode(buffer, component.type());
+            component.type().streamCodec().encode(buffer, component.value());
         }
     };
 
-    static TypedDataComponent<?> fromEntryUnchecked(Entry<DataComponentType<?>, Object> p_332125_) {
-        return createUnchecked(p_332125_.getKey(), p_332125_.getValue());
+    static TypedDataComponent<?> fromEntryUnchecked(Entry<DataComponentType<?>, Object> entry) {
+        return createUnchecked(entry.getKey(), entry.getValue());
     }
 
-    public static <T> TypedDataComponent<T> createUnchecked(DataComponentType<T> p_332026_, Object p_331462_) {
-        return new TypedDataComponent<>(p_332026_, (T)p_331462_);
+    public static <T> TypedDataComponent<T> createUnchecked(DataComponentType<T> type, Object value) {
+        return new TypedDataComponent<>(type, (T)value);
     }
 
-    public void applyTo(PatchedDataComponentMap p_332099_) {
-        p_332099_.set(this.type, this.value);
+    public void applyTo(PatchedDataComponentMap map) {
+        map.set(this.type, this.value);
     }
 
-    public <D> DataResult<D> encodeValue(DynamicOps<D> p_331363_) {
+    public <D> DataResult<D> encodeValue(DynamicOps<D> ops) {
         Codec<T> codec = this.type.codec();
-        return codec == null ? DataResult.error(() -> "Component of type " + this.type + " is not encodable") : codec.encodeStart(p_331363_, this.value);
+        return codec == null ? DataResult.error(() -> "Component of type " + this.type + " is not encodable") : codec.encodeStart(ops, this.value);
     }
 
     @Override

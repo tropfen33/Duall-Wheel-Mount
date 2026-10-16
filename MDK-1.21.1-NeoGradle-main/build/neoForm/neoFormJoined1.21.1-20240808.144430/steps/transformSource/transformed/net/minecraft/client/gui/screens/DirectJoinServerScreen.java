@@ -21,17 +21,17 @@ public class DirectJoinServerScreen extends Screen {
     private final BooleanConsumer callback;
     private final Screen lastScreen;
 
-    public DirectJoinServerScreen(Screen p_95960_, BooleanConsumer p_95961_, ServerData p_95962_) {
+    public DirectJoinServerScreen(Screen lastScreen, BooleanConsumer callback, ServerData serverData) {
         super(Component.translatable("selectServer.direct"));
-        this.lastScreen = p_95960_;
-        this.serverData = p_95962_;
-        this.callback = p_95961_;
+        this.lastScreen = lastScreen;
+        this.serverData = serverData;
+        this.callback = callback;
     }
 
     @Override
-    public boolean keyPressed(int p_95964_, int p_95965_, int p_95966_) {
-        if (!this.selectButton.active || this.getFocused() != this.ipEdit || p_95964_ != 257 && p_95964_ != 335) {
-            return super.keyPressed(p_95964_, p_95965_, p_95966_);
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (!this.selectButton.active || this.getFocused() != this.ipEdit || keyCode != 257 && keyCode != 335) {
+            return super.keyPressed(keyCode, scanCode, modifiers);
         } else {
             this.onSelect();
             return true;
@@ -64,9 +64,9 @@ public class DirectJoinServerScreen extends Screen {
     }
 
     @Override
-    public void resize(Minecraft p_95973_, int p_95974_, int p_95975_) {
+    public void resize(Minecraft minecraft, int width, int height) {
         String s = this.ipEdit.getValue();
-        this.init(p_95973_, p_95974_, p_95975_);
+        this.init(minecraft, width, height);
         this.ipEdit.setValue(s);
     }
 
@@ -90,11 +90,19 @@ public class DirectJoinServerScreen extends Screen {
         this.selectButton.active = ServerAddress.isValidAddress(this.ipEdit.getValue());
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282464_, int p_95969_, int p_95970_, float p_95971_) {
-        super.render(p_282464_, p_95969_, p_95970_, p_95971_);
-        p_282464_.drawCenteredString(this.font, this.title, this.width / 2, 20, 16777215);
-        p_282464_.drawString(this.font, ENTER_IP_LABEL, this.width / 2 - 100 + 1, 100, 10526880);
-        this.ipEdit.render(p_282464_, p_95969_, p_95970_, p_95971_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 20, 16777215);
+        guiGraphics.drawString(this.font, ENTER_IP_LABEL, this.width / 2 - 100 + 1, 100, 10526880);
+        this.ipEdit.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 }

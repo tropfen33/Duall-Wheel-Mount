@@ -27,41 +27,41 @@ public class BundleItem extends Item {
     private static final int BAR_COLOR = Mth.color(0.4F, 0.4F, 1.0F);
     private static final int TOOLTIP_MAX_WEIGHT = 64;
 
-    public BundleItem(Item.Properties p_150726_) {
-        super(p_150726_);
+    public BundleItem(Item.Properties properties) {
+        super(properties);
     }
 
-    public static float getFullnessDisplay(ItemStack p_150767_) {
-        BundleContents bundlecontents = p_150767_.getOrDefault(DataComponents.BUNDLE_CONTENTS, BundleContents.EMPTY);
+    public static float getFullnessDisplay(ItemStack stack) {
+        BundleContents bundlecontents = stack.getOrDefault(DataComponents.BUNDLE_CONTENTS, BundleContents.EMPTY);
         return bundlecontents.weight().floatValue();
     }
 
     @Override
-    public boolean overrideStackedOnOther(ItemStack p_150733_, Slot p_150734_, ClickAction p_150735_, Player p_150736_) {
-        if (p_150733_.getCount() != 1 || p_150735_ != ClickAction.SECONDARY) {
+    public boolean overrideStackedOnOther(ItemStack stack, Slot slot, ClickAction action, Player player) {
+        if (stack.getCount() != 1 || action != ClickAction.SECONDARY) {
             return false;
         } else {
-            BundleContents bundlecontents = p_150733_.get(DataComponents.BUNDLE_CONTENTS);
+            BundleContents bundlecontents = stack.get(DataComponents.BUNDLE_CONTENTS);
             if (bundlecontents == null) {
                 return false;
             } else {
-                ItemStack itemstack = p_150734_.getItem();
+                ItemStack itemstack = slot.getItem();
                 BundleContents.Mutable bundlecontents$mutable = new BundleContents.Mutable(bundlecontents);
                 if (itemstack.isEmpty()) {
-                    this.playRemoveOneSound(p_150736_);
+                    this.playRemoveOneSound(player);
                     ItemStack itemstack1 = bundlecontents$mutable.removeOne();
                     if (itemstack1 != null) {
-                        ItemStack itemstack2 = p_150734_.safeInsert(itemstack1);
+                        ItemStack itemstack2 = slot.safeInsert(itemstack1);
                         bundlecontents$mutable.tryInsert(itemstack2);
                     }
                 } else if (itemstack.canFitInsideContainerItems()) { // Neo: stack-aware placeability check
-                    int i = bundlecontents$mutable.tryTransfer(p_150734_, p_150736_);
+                    int i = bundlecontents$mutable.tryTransfer(slot, player);
                     if (i > 0) {
-                        this.playInsertSound(p_150736_);
+                        this.playInsertSound(player);
                     }
                 }
 
-                p_150733_.set(DataComponents.BUNDLE_CONTENTS, bundlecontents$mutable.toImmutable());
+                stack.set(DataComponents.BUNDLE_CONTENTS, bundlecontents$mutable.toImmutable());
                 return true;
             }
         }
@@ -69,29 +69,29 @@ public class BundleItem extends Item {
 
     @Override
     public boolean overrideOtherStackedOnMe(
-        ItemStack p_150742_, ItemStack p_150743_, Slot p_150744_, ClickAction p_150745_, Player p_150746_, SlotAccess p_150747_
+        ItemStack stack, ItemStack other, Slot slot, ClickAction action, Player player, SlotAccess access
     ) {
-        if (p_150742_.getCount() != 1) return false;
-        if (p_150745_ == ClickAction.SECONDARY && p_150744_.allowModification(p_150746_)) {
-            BundleContents bundlecontents = p_150742_.get(DataComponents.BUNDLE_CONTENTS);
+        if (stack.getCount() != 1) return false;
+        if (action == ClickAction.SECONDARY && slot.allowModification(player)) {
+            BundleContents bundlecontents = stack.get(DataComponents.BUNDLE_CONTENTS);
             if (bundlecontents == null) {
                 return false;
             } else {
                 BundleContents.Mutable bundlecontents$mutable = new BundleContents.Mutable(bundlecontents);
-                if (p_150743_.isEmpty()) {
+                if (other.isEmpty()) {
                     ItemStack itemstack = bundlecontents$mutable.removeOne();
                     if (itemstack != null) {
-                        this.playRemoveOneSound(p_150746_);
-                        p_150747_.set(itemstack);
+                        this.playRemoveOneSound(player);
+                        access.set(itemstack);
                     }
                 } else {
-                    int i = bundlecontents$mutable.tryInsert(p_150743_);
+                    int i = bundlecontents$mutable.tryInsert(other);
                     if (i > 0) {
-                        this.playInsertSound(p_150746_);
+                        this.playInsertSound(player);
                     }
                 }
 
-                p_150742_.set(DataComponents.BUNDLE_CONTENTS, bundlecontents$mutable.toImmutable());
+                stack.set(DataComponents.BUNDLE_CONTENTS, bundlecontents$mutable.toImmutable());
                 return true;
             }
         } else {
@@ -99,41 +99,44 @@ public class BundleItem extends Item {
         }
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link net.minecraft.world.item.Item#useOn(net.minecraft.world.item.context.UseOnContext)}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_150760_, Player p_150761_, InteractionHand p_150762_) {
-        ItemStack itemstack = p_150761_.getItemInHand(p_150762_);
-        if (dropContents(itemstack, p_150761_)) {
-            this.playDropContentsSound(p_150761_);
-            p_150761_.awardStat(Stats.ITEM_USED.get(this));
-            return InteractionResultHolder.sidedSuccess(itemstack, p_150760_.isClientSide());
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
+        ItemStack itemstack = player.getItemInHand(usedHand);
+        if (dropContents(itemstack, player)) {
+            this.playDropContentsSound(player);
+            player.awardStat(Stats.ITEM_USED.get(this));
+            return InteractionResultHolder.sidedSuccess(itemstack, level.isClientSide());
         } else {
             return InteractionResultHolder.fail(itemstack);
         }
     }
 
     @Override
-    public boolean isBarVisible(ItemStack p_150769_) {
-        BundleContents bundlecontents = p_150769_.getOrDefault(DataComponents.BUNDLE_CONTENTS, BundleContents.EMPTY);
+    public boolean isBarVisible(ItemStack stack) {
+        BundleContents bundlecontents = stack.getOrDefault(DataComponents.BUNDLE_CONTENTS, BundleContents.EMPTY);
         return bundlecontents.weight().compareTo(Fraction.ZERO) > 0;
     }
 
     @Override
-    public int getBarWidth(ItemStack p_150771_) {
-        BundleContents bundlecontents = p_150771_.getOrDefault(DataComponents.BUNDLE_CONTENTS, BundleContents.EMPTY);
+    public int getBarWidth(ItemStack stack) {
+        BundleContents bundlecontents = stack.getOrDefault(DataComponents.BUNDLE_CONTENTS, BundleContents.EMPTY);
         return Math.min(1 + Mth.mulAndTruncate(bundlecontents.weight(), 12), 13);
     }
 
     @Override
-    public int getBarColor(ItemStack p_150773_) {
+    public int getBarColor(ItemStack stack) {
         return BAR_COLOR;
     }
 
-    private static boolean dropContents(ItemStack p_150730_, Player p_150731_) {
-        BundleContents bundlecontents = p_150730_.get(DataComponents.BUNDLE_CONTENTS);
+    private static boolean dropContents(ItemStack stack, Player player) {
+        BundleContents bundlecontents = stack.get(DataComponents.BUNDLE_CONTENTS);
         if (bundlecontents != null && !bundlecontents.isEmpty()) {
-            p_150730_.set(DataComponents.BUNDLE_CONTENTS, BundleContents.EMPTY);
-            if (p_150731_ instanceof ServerPlayer) {
-                bundlecontents.itemsCopy().forEach(p_330078_ -> p_150731_.drop(p_330078_, true));
+            stack.set(DataComponents.BUNDLE_CONTENTS, BundleContents.EMPTY);
+            if (player instanceof ServerPlayer) {
+                bundlecontents.itemsCopy().forEach(p_330078_ -> player.drop(p_330078_, true));
             }
 
             return true;
@@ -143,39 +146,39 @@ public class BundleItem extends Item {
     }
 
     @Override
-    public Optional<TooltipComponent> getTooltipImage(ItemStack p_150775_) {
-        return !p_150775_.has(DataComponents.HIDE_TOOLTIP) && !p_150775_.has(DataComponents.HIDE_ADDITIONAL_TOOLTIP)
-            ? Optional.ofNullable(p_150775_.get(DataComponents.BUNDLE_CONTENTS)).map(BundleTooltip::new)
+    public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
+        return !stack.has(DataComponents.HIDE_TOOLTIP) && !stack.has(DataComponents.HIDE_ADDITIONAL_TOOLTIP)
+            ? Optional.ofNullable(stack.get(DataComponents.BUNDLE_CONTENTS)).map(BundleTooltip::new)
             : Optional.empty();
     }
 
     @Override
-    public void appendHoverText(ItemStack p_150749_, Item.TooltipContext p_339687_, List<Component> p_150751_, TooltipFlag p_150752_) {
-        BundleContents bundlecontents = p_150749_.get(DataComponents.BUNDLE_CONTENTS);
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        BundleContents bundlecontents = stack.get(DataComponents.BUNDLE_CONTENTS);
         if (bundlecontents != null) {
             int i = Mth.mulAndTruncate(bundlecontents.weight(), 64);
-            p_150751_.add(Component.translatable("item.minecraft.bundle.fullness", i, 64).withStyle(ChatFormatting.GRAY));
+            tooltipComponents.add(Component.translatable("item.minecraft.bundle.fullness", i, 64).withStyle(ChatFormatting.GRAY));
         }
     }
 
     @Override
-    public void onDestroyed(ItemEntity p_150728_) {
-        BundleContents bundlecontents = p_150728_.getItem().get(DataComponents.BUNDLE_CONTENTS);
+    public void onDestroyed(ItemEntity itemEntity) {
+        BundleContents bundlecontents = itemEntity.getItem().get(DataComponents.BUNDLE_CONTENTS);
         if (bundlecontents != null) {
-            p_150728_.getItem().set(DataComponents.BUNDLE_CONTENTS, BundleContents.EMPTY);
-            ItemUtils.onContainerDestroyed(p_150728_, bundlecontents.itemsCopy());
+            itemEntity.getItem().set(DataComponents.BUNDLE_CONTENTS, BundleContents.EMPTY);
+            ItemUtils.onContainerDestroyed(itemEntity, bundlecontents.itemsCopy());
         }
     }
 
-    private void playRemoveOneSound(Entity p_186343_) {
-        p_186343_.playSound(SoundEvents.BUNDLE_REMOVE_ONE, 0.8F, 0.8F + p_186343_.level().getRandom().nextFloat() * 0.4F);
+    private void playRemoveOneSound(Entity entity) {
+        entity.playSound(SoundEvents.BUNDLE_REMOVE_ONE, 0.8F, 0.8F + entity.level().getRandom().nextFloat() * 0.4F);
     }
 
-    private void playInsertSound(Entity p_186352_) {
-        p_186352_.playSound(SoundEvents.BUNDLE_INSERT, 0.8F, 0.8F + p_186352_.level().getRandom().nextFloat() * 0.4F);
+    private void playInsertSound(Entity entity) {
+        entity.playSound(SoundEvents.BUNDLE_INSERT, 0.8F, 0.8F + entity.level().getRandom().nextFloat() * 0.4F);
     }
 
-    private void playDropContentsSound(Entity p_186354_) {
-        p_186354_.playSound(SoundEvents.BUNDLE_DROP_CONTENTS, 0.8F, 0.8F + p_186354_.level().getRandom().nextFloat() * 0.4F);
+    private void playDropContentsSound(Entity entity) {
+        entity.playSound(SoundEvents.BUNDLE_DROP_CONTENTS, 0.8F, 0.8F + entity.level().getRandom().nextFloat() * 0.4F);
     }
 }

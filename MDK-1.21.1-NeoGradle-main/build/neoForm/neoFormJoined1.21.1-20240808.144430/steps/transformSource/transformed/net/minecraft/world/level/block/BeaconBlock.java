@@ -24,8 +24,8 @@ public class BeaconBlock extends BaseEntityBlock implements BeaconBeamBlock {
         return CODEC;
     }
 
-    public BeaconBlock(BlockBehaviour.Properties p_49421_) {
-        super(p_49421_);
+    public BeaconBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
@@ -34,32 +34,35 @@ public class BeaconBlock extends BaseEntityBlock implements BeaconBeamBlock {
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_152164_, BlockState p_152165_) {
-        return new BeaconBlockEntity(p_152164_, p_152165_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new BeaconBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_152160_, BlockState p_152161_, BlockEntityType<T> p_152162_) {
-        return createTickerHelper(p_152162_, BlockEntityType.BEACON, BeaconBlockEntity::tick);
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        return createTickerHelper(blockEntityType, BlockEntityType.BEACON, BeaconBlockEntity::tick);
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_49432_, Level p_49433_, BlockPos p_49434_, Player p_49435_, BlockHitResult p_49437_) {
-        if (p_49433_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
-            if (p_49433_.getBlockEntity(p_49434_) instanceof BeaconBlockEntity beaconblockentity) {
-                p_49435_.openMenu(beaconblockentity);
-                p_49435_.awardStat(Stats.INTERACT_WITH_BEACON);
+            if (level.getBlockEntity(pos) instanceof BeaconBlockEntity beaconblockentity) {
+                player.openMenu(beaconblockentity);
+                player.awardStat(Stats.INTERACT_WITH_BEACON);
             }
 
             return InteractionResult.CONSUME;
         }
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_49439_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 }

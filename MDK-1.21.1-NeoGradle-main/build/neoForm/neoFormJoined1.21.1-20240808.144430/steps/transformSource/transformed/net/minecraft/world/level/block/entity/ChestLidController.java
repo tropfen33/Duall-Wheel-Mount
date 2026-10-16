@@ -17,11 +17,11 @@ public class ChestLidController {
         }
     }
 
-    public float getOpenness(float p_155376_) {
-        return Mth.lerp(p_155376_, this.oOpenness, this.openness);
+    public float getOpenness(float partialTicks) {
+        return Mth.lerp(partialTicks, this.oOpenness, this.openness);
     }
 
-    public void shouldBeOpen(boolean p_155378_) {
-        this.shouldBeOpen = p_155378_;
+    public void shouldBeOpen(boolean shouldBeOpen) {
+        this.shouldBeOpen = shouldBeOpen;
     }
 }

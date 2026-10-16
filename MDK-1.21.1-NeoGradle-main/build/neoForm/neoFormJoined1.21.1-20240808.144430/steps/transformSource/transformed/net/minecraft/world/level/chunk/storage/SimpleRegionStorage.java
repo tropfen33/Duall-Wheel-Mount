@@ -18,31 +18,31 @@ public class SimpleRegionStorage implements AutoCloseable {
     private final DataFixer fixerUpper;
     private final DataFixTypes dataFixType;
 
-    public SimpleRegionStorage(RegionStorageInfo p_326109_, Path p_321582_, DataFixer p_321815_, boolean p_321788_, DataFixTypes p_321522_) {
-        this.fixerUpper = p_321815_;
-        this.dataFixType = p_321522_;
-        this.worker = new IOWorker(p_326109_, p_321582_, p_321788_);
+    public SimpleRegionStorage(RegionStorageInfo info, Path folder, DataFixer fixerUpper, boolean sync, DataFixTypes dataFixType) {
+        this.fixerUpper = fixerUpper;
+        this.dataFixType = dataFixType;
+        this.worker = new IOWorker(info, folder, sync);
     }
 
-    public CompletableFuture<Optional<CompoundTag>> read(ChunkPos p_321653_) {
-        return this.worker.loadAsync(p_321653_);
+    public CompletableFuture<Optional<CompoundTag>> read(ChunkPos chunkPos) {
+        return this.worker.loadAsync(chunkPos);
     }
 
-    public CompletableFuture<Void> write(ChunkPos p_321715_, @Nullable CompoundTag p_321816_) {
-        return this.worker.store(p_321715_, p_321816_);
+    public CompletableFuture<Void> write(ChunkPos chunkPos, @Nullable CompoundTag data) {
+        return this.worker.store(chunkPos, data);
     }
 
-    public CompoundTag upgradeChunkTag(CompoundTag p_321601_, int p_321496_) {
-        int i = NbtUtils.getDataVersion(p_321601_, p_321496_);
-        return this.dataFixType.updateToCurrentVersion(this.fixerUpper, p_321601_, i);
+    public CompoundTag upgradeChunkTag(CompoundTag tag, int version) {
+        int i = NbtUtils.getDataVersion(tag, version);
+        return this.dataFixType.updateToCurrentVersion(this.fixerUpper, tag, i);
     }
 
-    public Dynamic<Tag> upgradeChunkTag(Dynamic<Tag> p_321643_, int p_321759_) {
-        return this.dataFixType.updateToCurrentVersion(this.fixerUpper, p_321643_, p_321759_);
+    public Dynamic<Tag> upgradeChunkTag(Dynamic<Tag> tag, int version) {
+        return this.dataFixType.updateToCurrentVersion(this.fixerUpper, tag, version);
     }
 
-    public CompletableFuture<Void> synchronize(boolean p_321682_) {
-        return this.worker.synchronize(p_321682_);
+    public CompletableFuture<Void> synchronize(boolean flushStorage) {
+        return this.worker.synchronize(flushStorage);
     }
 
     @Override

@@ -20,30 +20,30 @@ public class BreezeWindLayer extends RenderLayer<Breeze, BreezeModel<Breeze>> {
     private static final ResourceLocation TEXTURE_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/breeze/breeze_wind.png");
     private final BreezeModel<Breeze> model;
 
-    public BreezeWindLayer(EntityRendererProvider.Context p_350777_, RenderLayerParent<Breeze, BreezeModel<Breeze>> p_312625_) {
-        super(p_312625_);
-        this.model = new BreezeModel<>(p_350777_.bakeLayer(ModelLayers.BREEZE_WIND));
+    public BreezeWindLayer(EntityRendererProvider.Context context, RenderLayerParent<Breeze, BreezeModel<Breeze>> renderer) {
+        super(renderer);
+        this.model = new BreezeModel<>(context.bakeLayer(ModelLayers.BREEZE_WIND));
     }
 
     public void render(
-        PoseStack p_312822_,
-        MultiBufferSource p_312869_,
-        int p_311783_,
-        Breeze p_312046_,
-        float p_312170_,
-        float p_311773_,
-        float p_312428_,
-        float p_312287_,
-        float p_312118_,
-        float p_312531_
+        PoseStack poseStack,
+        MultiBufferSource bufferSource,
+        int packedLight,
+        Breeze livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTick,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
-        float f = (float)p_312046_.tickCount + p_312428_;
-        VertexConsumer vertexconsumer = p_312869_.getBuffer(RenderType.breezeWind(TEXTURE_LOCATION, this.xOffset(f) % 1.0F, 0.0F));
-        this.model.setupAnim(p_312046_, p_312170_, p_311773_, p_312287_, p_312118_, p_312531_);
-        BreezeRenderer.enable(this.model, this.model.wind()).renderToBuffer(p_312822_, vertexconsumer, p_311783_, OverlayTexture.NO_OVERLAY);
+        float f = (float)livingEntity.tickCount + partialTick;
+        VertexConsumer vertexconsumer = bufferSource.getBuffer(RenderType.breezeWind(TEXTURE_LOCATION, this.xOffset(f) % 1.0F, 0.0F));
+        this.model.setupAnim(livingEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+        BreezeRenderer.enable(this.model, this.model.wind()).renderToBuffer(poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY);
     }
 
-    private float xOffset(float p_312086_) {
-        return p_312086_ * 0.02F;
+    private float xOffset(float tickCount) {
+        return tickCount * 0.02F;
     }
 }

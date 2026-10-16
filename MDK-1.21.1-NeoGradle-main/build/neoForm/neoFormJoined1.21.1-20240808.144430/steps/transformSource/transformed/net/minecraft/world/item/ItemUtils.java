@@ -7,41 +7,41 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 public class ItemUtils {
-    public static InteractionResultHolder<ItemStack> startUsingInstantly(Level p_150960_, Player p_150961_, InteractionHand p_150962_) {
-        p_150961_.startUsingItem(p_150962_);
-        return InteractionResultHolder.consume(p_150961_.getItemInHand(p_150962_));
+    public static InteractionResultHolder<ItemStack> startUsingInstantly(Level level, Player player, InteractionHand hand) {
+        player.startUsingItem(hand);
+        return InteractionResultHolder.consume(player.getItemInHand(hand));
     }
 
-    public static ItemStack createFilledResult(ItemStack p_41818_, Player p_41819_, ItemStack p_41820_, boolean p_41821_) {
-        boolean flag = p_41819_.hasInfiniteMaterials();
-        if (p_41821_ && flag) {
-            if (!p_41819_.getInventory().contains(p_41820_)) {
-                p_41819_.getInventory().add(p_41820_);
+    public static ItemStack createFilledResult(ItemStack emptyStack, Player player, ItemStack filledStack, boolean preventDuplicates) {
+        boolean flag = player.hasInfiniteMaterials();
+        if (preventDuplicates && flag) {
+            if (!player.getInventory().contains(filledStack)) {
+                player.getInventory().add(filledStack);
             }
 
-            return p_41818_;
+            return emptyStack;
         } else {
-            p_41818_.consume(1, p_41819_);
-            if (p_41818_.isEmpty()) {
-                return p_41820_;
+            emptyStack.consume(1, player);
+            if (emptyStack.isEmpty()) {
+                return filledStack;
             } else {
-                if (!p_41819_.getInventory().add(p_41820_)) {
-                    p_41819_.drop(p_41820_, false);
+                if (!player.getInventory().add(filledStack)) {
+                    player.drop(filledStack, false);
                 }
 
-                return p_41818_;
+                return emptyStack;
             }
         }
     }
 
-    public static ItemStack createFilledResult(ItemStack p_41814_, Player p_41815_, ItemStack p_41816_) {
-        return createFilledResult(p_41814_, p_41815_, p_41816_, true);
+    public static ItemStack createFilledResult(ItemStack emptyStack, Player player, ItemStack filledStack) {
+        return createFilledResult(emptyStack, player, filledStack, true);
     }
 
-    public static void onContainerDestroyed(ItemEntity p_150953_, Iterable<ItemStack> p_340959_) {
-        Level level = p_150953_.level();
+    public static void onContainerDestroyed(ItemEntity container, Iterable<ItemStack> contents) {
+        Level level = container.level();
         if (!level.isClientSide) {
-            p_340959_.forEach(p_352858_ -> level.addFreshEntity(new ItemEntity(level, p_150953_.getX(), p_150953_.getY(), p_150953_.getZ(), p_352858_)));
+            contents.forEach(p_352858_ -> level.addFreshEntity(new ItemEntity(level, container.getX(), container.getY(), container.getZ(), p_352858_)));
         }
     }
 }

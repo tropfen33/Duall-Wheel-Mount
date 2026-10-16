@@ -21,14 +21,14 @@ import net.minecraft.world.item.ItemStack;
 public class GiveCommand {
     public static final int MAX_ALLOWED_ITEMSTACKS = 100;
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_214446_, CommandBuildContext p_214447_) {
-        p_214446_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
+        dispatcher.register(
             Commands.literal("give")
                 .requires(p_137777_ -> p_137777_.hasPermission(2))
                 .then(
                     Commands.argument("targets", EntityArgument.players())
                         .then(
-                            Commands.argument("item", ItemArgument.item(p_214447_))
+                            Commands.argument("item", ItemArgument.item(context))
                                 .executes(
                                     p_137784_ -> giveItem(
                                             p_137784_.getSource(), ItemArgument.getItem(p_137784_, "item"), EntityArgument.getPlayers(p_137784_, "targets"), 1
@@ -50,21 +50,21 @@ public class GiveCommand {
         );
     }
 
-    private static int giveItem(CommandSourceStack p_137779_, ItemInput p_137780_, Collection<ServerPlayer> p_137781_, int p_137782_) throws CommandSyntaxException {
-        ItemStack itemstack = p_137780_.createItemStack(1, false);
+    private static int giveItem(CommandSourceStack source, ItemInput item, Collection<ServerPlayer> targets, int count) throws CommandSyntaxException {
+        ItemStack itemstack = item.createItemStack(1, false);
         int i = itemstack.getMaxStackSize();
         int j = i * 100;
-        if (p_137782_ > j) {
-            p_137779_.sendFailure(Component.translatable("commands.give.failed.toomanyitems", j, itemstack.getDisplayName()));
+        if (count > j) {
+            source.sendFailure(Component.translatable("commands.give.failed.toomanyitems", j, itemstack.getDisplayName()));
             return 0;
         } else {
-            for (ServerPlayer serverplayer : p_137781_) {
-                int k = p_137782_;
+            for (ServerPlayer serverplayer : targets) {
+                int k = count;
 
                 while (k > 0) {
                     int l = Math.min(i, k);
                     k -= l;
-                    ItemStack itemstack1 = p_137780_.createItemStack(l, false);
+                    ItemStack itemstack1 = item.createItemStack(l, false);
                     boolean flag = serverplayer.getInventory().add(itemstack1);
                     if (flag && itemstack1.isEmpty()) {
                         ItemEntity itementity1 = serverplayer.drop(itemstack, false);
@@ -94,20 +94,20 @@ public class GiveCommand {
                 }
             }
 
-            if (p_137781_.size() == 1) {
-                p_137779_.sendSuccess(
+            if (targets.size() == 1) {
+                source.sendSuccess(
                     () -> Component.translatable(
-                            "commands.give.success.single", p_137782_, itemstack.getDisplayName(), p_137781_.iterator().next().getDisplayName()
+                            "commands.give.success.single", count, itemstack.getDisplayName(), targets.iterator().next().getDisplayName()
                         ),
                     true
                 );
             } else {
-                p_137779_.sendSuccess(
-                    () -> Component.translatable("commands.give.success.single", p_137782_, itemstack.getDisplayName(), p_137781_.size()), true
+                source.sendSuccess(
+                    () -> Component.translatable("commands.give.success.single", count, itemstack.getDisplayName(), targets.size()), true
                 );
             }
 
-            return p_137781_.size();
+            return targets.size();
         }
     }
 }

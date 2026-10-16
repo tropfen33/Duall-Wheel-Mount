@@ -14,14 +14,17 @@ public abstract class FloatProvider implements SampledFloat {
         p_146513_ -> p_146513_.getType() == FloatProviderType.CONSTANT ? Either.left(((ConstantFloat)p_146513_).getValue()) : Either.right(p_146513_)
     );
 
-    public static Codec<FloatProvider> codec(float p_146506_, float p_146507_) {
+    /**
+     * Creates a codec for a FloatProvider that only accepts numbers in the given range.
+     */
+    public static Codec<FloatProvider> codec(float minInclusive, float maxInclusive) {
         return CODEC.validate(
             p_274942_ -> {
-                if (p_274942_.getMinValue() < p_146506_) {
-                    return DataResult.error(() -> "Value provider too low: " + p_146506_ + " [" + p_274942_.getMinValue() + "-" + p_274942_.getMaxValue() + "]");
+                if (p_274942_.getMinValue() < minInclusive) {
+                    return DataResult.error(() -> "Value provider too low: " + minInclusive + " [" + p_274942_.getMinValue() + "-" + p_274942_.getMaxValue() + "]");
                 } else {
-                    return p_274942_.getMaxValue() > p_146507_
-                        ? DataResult.error(() -> "Value provider too high: " + p_146507_ + " [" + p_274942_.getMinValue() + "-" + p_274942_.getMaxValue() + "]")
+                    return p_274942_.getMaxValue() > maxInclusive
+                        ? DataResult.error(() -> "Value provider too high: " + maxInclusive + " [" + p_274942_.getMinValue() + "-" + p_274942_.getMaxValue() + "]")
                         : DataResult.success(p_274942_);
                 }
             }

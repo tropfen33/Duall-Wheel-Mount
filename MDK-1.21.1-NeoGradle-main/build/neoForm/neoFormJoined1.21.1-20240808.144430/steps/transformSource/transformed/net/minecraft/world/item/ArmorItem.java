@@ -38,20 +38,20 @@ public class ArmorItem extends Item implements Equipable {
     protected final Holder<ArmorMaterial> material;
     private final Supplier<ItemAttributeModifiers> defaultModifiers;
 
-    public static boolean dispenseArmor(BlockSource p_302421_, ItemStack p_40400_) {
-        BlockPos blockpos = p_302421_.pos().relative(p_302421_.state().getValue(DispenserBlock.FACING));
-        List<LivingEntity> list = p_302421_.level()
+    public static boolean dispenseArmor(BlockSource blockSource, ItemStack armorItem) {
+        BlockPos blockpos = blockSource.pos().relative(blockSource.state().getValue(DispenserBlock.FACING));
+        List<LivingEntity> list = blockSource.level()
             .getEntitiesOfClass(
-                LivingEntity.class, new AABB(blockpos), EntitySelector.NO_SPECTATORS.and(new EntitySelector.MobCanWearArmorEntitySelector(p_40400_))
+                LivingEntity.class, new AABB(blockpos), EntitySelector.NO_SPECTATORS.and(new EntitySelector.MobCanWearArmorEntitySelector(armorItem))
             );
         if (list.isEmpty()) {
             return false;
         } else {
             LivingEntity livingentity = list.get(0);
-            EquipmentSlot equipmentslot = livingentity.getEquipmentSlotForItem(p_40400_);
+            EquipmentSlot equipmentslot = livingentity.getEquipmentSlotForItem(armorItem);
             // Neo: Respect IItemExtension#canEquip in dispenseArmor
-            if (!p_40400_.canEquip(equipmentslot, livingentity)) return false;
-            ItemStack itemstack = p_40400_.split(1);
+            if (!armorItem.canEquip(equipmentslot, livingentity)) return false;
+            ItemStack itemstack = armorItem.split(1);
             livingentity.setItemSlot(equipmentslot, itemstack);
             if (livingentity instanceof Mob) {
                 ((Mob)livingentity).setDropChance(equipmentslot, 2.0F);
@@ -62,25 +62,25 @@ public class ArmorItem extends Item implements Equipable {
         }
     }
 
-    public ArmorItem(Holder<ArmorMaterial> p_323783_, ArmorItem.Type p_266831_, Item.Properties p_40388_) {
-        super(p_40388_);
-        this.material = p_323783_;
-        this.type = p_266831_;
+    public ArmorItem(Holder<ArmorMaterial> material, ArmorItem.Type type, Item.Properties properties) {
+        super(properties);
+        this.material = material;
+        this.type = type;
         DispenserBlock.registerBehavior(this, DISPENSE_ITEM_BEHAVIOR);
         this.defaultModifiers = Suppliers.memoize(
             () -> {
-                int i = p_323783_.value().getDefense(p_266831_);
-                float f = p_323783_.value().toughness();
+                int i = material.value().getDefense(type);
+                float f = material.value().toughness();
                 ItemAttributeModifiers.Builder itemattributemodifiers$builder = ItemAttributeModifiers.builder();
-                EquipmentSlotGroup equipmentslotgroup = EquipmentSlotGroup.bySlot(p_266831_.getSlot());
-                ResourceLocation resourcelocation = ResourceLocation.withDefaultNamespace("armor." + p_266831_.getName());
+                EquipmentSlotGroup equipmentslotgroup = EquipmentSlotGroup.bySlot(type.getSlot());
+                ResourceLocation resourcelocation = ResourceLocation.withDefaultNamespace("armor." + type.getName());
                 itemattributemodifiers$builder.add(
                     Attributes.ARMOR, new AttributeModifier(resourcelocation, (double)i, AttributeModifier.Operation.ADD_VALUE), equipmentslotgroup
                 );
                 itemattributemodifiers$builder.add(
                     Attributes.ARMOR_TOUGHNESS, new AttributeModifier(resourcelocation, (double)f, AttributeModifier.Operation.ADD_VALUE), equipmentslotgroup
                 );
-                float f1 = p_323783_.value().knockbackResistance();
+                float f1 = material.value().knockbackResistance();
                 if (f1 > 0.0F) {
                     itemattributemodifiers$builder.add(
                         Attributes.KNOCKBACK_RESISTANCE,
@@ -107,14 +107,20 @@ public class ArmorItem extends Item implements Equipable {
         return this.material;
     }
 
+    /**
+     * Return whether this item is repairable in an anvil.
+     */
     @Override
-    public boolean isValidRepairItem(ItemStack p_40392_, ItemStack p_40393_) {
-        return this.material.value().repairIngredient().get().test(p_40393_) || super.isValidRepairItem(p_40392_, p_40393_);
+    public boolean isValidRepairItem(ItemStack toRepair, ItemStack repair) {
+        return this.material.value().repairIngredient().get().test(repair) || super.isValidRepairItem(toRepair, repair);
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_40395_, Player p_40396_, InteractionHand p_40397_) {
-        return this.swapWithEquipmentSlot(this, p_40395_, p_40396_, p_40397_);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        return this.swapWithEquipmentSlot(this, level, player, hand);
     }
 
     @Override
@@ -152,14 +158,14 @@ public class ArmorItem extends Item implements Equipable {
         private final String name;
         private final int durability;
 
-        private Type(EquipmentSlot p_266754_, int p_332191_, String p_266886_) {
-            this.slot = p_266754_;
-            this.name = p_266886_;
-            this.durability = p_332191_;
+        private Type(EquipmentSlot slot, int durability, String name) {
+            this.slot = slot;
+            this.name = name;
+            this.durability = durability;
         }
 
-        public int getDurability(int p_323808_) {
-            return this.durability * p_323808_;
+        public int getDurability(int durabilityFactor) {
+            return this.durability * durabilityFactor;
         }
 
         public EquipmentSlot getSlot() {

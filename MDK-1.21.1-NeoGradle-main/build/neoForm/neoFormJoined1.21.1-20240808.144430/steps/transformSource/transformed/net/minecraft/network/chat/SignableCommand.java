@@ -12,13 +12,13 @@ import javax.annotation.Nullable;
 import net.minecraft.commands.arguments.SignedArgument;
 
 public record SignableCommand<S>(List<SignableCommand.Argument<S>> arguments) {
-    public static <S> boolean hasSignableArguments(ParseResults<S> p_338893_) {
-        return !of(p_338893_).arguments().isEmpty();
+    public static <S> boolean hasSignableArguments(ParseResults<S> parseResults) {
+        return !of(parseResults).arguments().isEmpty();
     }
 
-    public static <S> SignableCommand<S> of(ParseResults<S> p_250316_) {
-        String s = p_250316_.getReader().getString();
-        CommandContextBuilder<S> commandcontextbuilder = p_250316_.getContext();
+    public static <S> SignableCommand<S> of(ParseResults<S> results) {
+        String s = results.getReader().getString();
+        CommandContextBuilder<S> commandcontextbuilder = results.getContext();
         CommandContextBuilder<S> commandcontextbuilder1 = commandcontextbuilder;
         List<SignableCommand.Argument<S>> list = collectArguments(s, commandcontextbuilder);
 
@@ -34,17 +34,17 @@ public record SignableCommand<S>(List<SignableCommand.Argument<S>> arguments) {
         return new SignableCommand<>(list);
     }
 
-    private static <S> List<SignableCommand.Argument<S>> collectArguments(String p_252055_, CommandContextBuilder<S> p_251770_) {
+    private static <S> List<SignableCommand.Argument<S>> collectArguments(String key, CommandContextBuilder<S> contextBuilder) {
         List<SignableCommand.Argument<S>> list = new ArrayList<>();
 
-        for (ParsedCommandNode<S> parsedcommandnode : p_251770_.getNodes()) {
+        for (ParsedCommandNode<S> parsedcommandnode : contextBuilder.getNodes()) {
             CommandNode $$5 = parsedcommandnode.getNode();
             if ($$5 instanceof ArgumentCommandNode) {
                 ArgumentCommandNode<S, ?> argumentcommandnode = (ArgumentCommandNode<S, ?>)$$5;
                 if (argumentcommandnode.getType() instanceof SignedArgument) {
-                    ParsedArgument<S, ?> parsedargument = p_251770_.getArguments().get(argumentcommandnode.getName());
+                    ParsedArgument<S, ?> parsedargument = contextBuilder.getArguments().get(argumentcommandnode.getName());
                     if (parsedargument != null) {
-                        String s = parsedargument.getRange().get(p_252055_);
+                        String s = parsedargument.getRange().get(key);
                         list.add(new SignableCommand.Argument<>(argumentcommandnode, s));
                     }
                 }
@@ -55,9 +55,9 @@ public record SignableCommand<S>(List<SignableCommand.Argument<S>> arguments) {
     }
 
     @Nullable
-    public SignableCommand.Argument<S> getArgument(String p_338342_) {
+    public SignableCommand.Argument<S> getArgument(String p_argument) {
         for (SignableCommand.Argument<S> argument : this.arguments) {
-            if (p_338342_.equals(argument.name())) {
+            if (p_argument.equals(argument.name())) {
                 return argument;
             }
         }

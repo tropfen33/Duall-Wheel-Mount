@@ -355,10 +355,10 @@ public abstract class RenderStateShard {
         RenderSystem.logicOp(GlStateManager.LogicOp.OR_REVERSE);
     }, () -> RenderSystem.disableColorLogicOp());
 
-    public RenderStateShard(String p_110161_, Runnable p_110162_, Runnable p_110163_) {
-        this.name = p_110161_;
-        this.setupState = p_110162_;
-        this.clearState = p_110163_;
+    public RenderStateShard(String name, Runnable setupState, Runnable clearState) {
+        this.name = name;
+        this.setupState = setupState;
+        this.clearState = clearState;
     }
 
     public void setupRenderState() {
@@ -374,12 +374,12 @@ public abstract class RenderStateShard {
         return this.name;
     }
 
-    public static void setupGlintTexturing(float p_110187_) {
+    public static void setupGlintTexturing(float scale) {
         long i = (long)((double)Util.getMillis() * Minecraft.getInstance().options.glintSpeed().get() * 8.0);
         float f = (float)(i % 110000L) / 110000.0F;
         float f1 = (float)(i % 30000L) / 30000.0F;
         Matrix4f matrix4f = new Matrix4f().translation(-f, f1, 0.0F);
-        matrix4f.rotateZ((float) (Math.PI / 18)).scale(p_110187_);
+        matrix4f.rotateZ((float) (Math.PI / 18)).scale(scale);
         RenderSystem.setTextureMatrix(matrix4f);
     }
 
@@ -387,9 +387,9 @@ public abstract class RenderStateShard {
     public static class BooleanStateShard extends RenderStateShard {
         private final boolean enabled;
 
-        public BooleanStateShard(String p_110229_, Runnable p_110230_, Runnable p_110231_, boolean p_110232_) {
-            super(p_110229_, p_110230_, p_110231_);
-            this.enabled = p_110232_;
+        public BooleanStateShard(String name, Runnable setupState, Runnable clearState, boolean enabled) {
+            super(name, setupState, clearState);
+            this.enabled = enabled;
         }
 
         @Override
@@ -407,16 +407,16 @@ public abstract class RenderStateShard {
 
     @OnlyIn(Dist.CLIENT)
     public static class CullStateShard extends RenderStateShard.BooleanStateShard {
-        public CullStateShard(boolean p_110238_) {
+        public CullStateShard(boolean useCull) {
             super("cull", () -> {
-                if (!p_110238_) {
+                if (!useCull) {
                     RenderSystem.disableCull();
                 }
             }, () -> {
-                if (!p_110238_) {
+                if (!useCull) {
                     RenderSystem.enableCull();
                 }
-            }, p_110238_);
+            }, useCull);
         }
     }
 
@@ -424,19 +424,19 @@ public abstract class RenderStateShard {
     public static class DepthTestStateShard extends RenderStateShard {
         private final String functionName;
 
-        public DepthTestStateShard(String p_110246_, int p_110247_) {
+        public DepthTestStateShard(String functionName, int depthFunc) {
             super("depth_test", () -> {
-                if (p_110247_ != 519) {
+                if (depthFunc != 519) {
                     RenderSystem.enableDepthTest();
-                    RenderSystem.depthFunc(p_110247_);
+                    RenderSystem.depthFunc(depthFunc);
                 }
             }, () -> {
-                if (p_110247_ != 519) {
+                if (depthFunc != 519) {
                     RenderSystem.disableDepthTest();
                     RenderSystem.depthFunc(515);
                 }
             });
-            this.functionName = p_110246_;
+            this.functionName = functionName;
         }
 
         @Override
@@ -447,8 +447,8 @@ public abstract class RenderStateShard {
 
     @OnlyIn(Dist.CLIENT)
     public static class EmptyTextureStateShard extends RenderStateShard {
-        public EmptyTextureStateShard(Runnable p_173117_, Runnable p_173118_) {
-            super("texture", p_173117_, p_173118_);
+        public EmptyTextureStateShard(Runnable setupState, Runnable clearState) {
+            super("texture", setupState, clearState);
         }
 
         EmptyTextureStateShard() {
@@ -471,16 +471,16 @@ public abstract class RenderStateShard {
 
     @OnlyIn(Dist.CLIENT)
     public static class LightmapStateShard extends RenderStateShard.BooleanStateShard {
-        public LightmapStateShard(boolean p_110271_) {
+        public LightmapStateShard(boolean useLightmap) {
             super("lightmap", () -> {
-                if (p_110271_) {
+                if (useLightmap) {
                     Minecraft.getInstance().gameRenderer.lightTexture().turnOnLightLayer();
                 }
             }, () -> {
-                if (p_110271_) {
+                if (useLightmap) {
                     Minecraft.getInstance().gameRenderer.lightTexture().turnOffLightLayer();
                 }
-            }, p_110271_);
+            }, useLightmap);
         }
     }
 
@@ -488,21 +488,21 @@ public abstract class RenderStateShard {
     public static class LineStateShard extends RenderStateShard {
         private final OptionalDouble width;
 
-        public LineStateShard(OptionalDouble p_110278_) {
+        public LineStateShard(OptionalDouble width) {
             super("line_width", () -> {
-                if (!Objects.equals(p_110278_, OptionalDouble.of(1.0))) {
-                    if (p_110278_.isPresent()) {
-                        RenderSystem.lineWidth((float)p_110278_.getAsDouble());
+                if (!Objects.equals(width, OptionalDouble.of(1.0))) {
+                    if (width.isPresent()) {
+                        RenderSystem.lineWidth((float)width.getAsDouble());
                     } else {
                         RenderSystem.lineWidth(Math.max(2.5F, (float)Minecraft.getInstance().getWindow().getWidth() / 1920.0F * 2.5F));
                     }
                 }
             }, () -> {
-                if (!Objects.equals(p_110278_, OptionalDouble.of(1.0))) {
+                if (!Objects.equals(width, OptionalDouble.of(1.0))) {
                     RenderSystem.lineWidth(1.0F);
                 }
             });
-            this.width = p_110278_;
+            this.width = width;
         }
 
         @Override
@@ -515,18 +515,18 @@ public abstract class RenderStateShard {
     public static class MultiTextureStateShard extends RenderStateShard.EmptyTextureStateShard {
         private final Optional<ResourceLocation> cutoutTexture;
 
-        MultiTextureStateShard(ImmutableList<Triple<ResourceLocation, Boolean, Boolean>> p_173123_) {
+        MultiTextureStateShard(ImmutableList<Triple<ResourceLocation, Boolean, Boolean>> textures) {
             super(() -> {
                 int i = 0;
 
-                for (Triple<ResourceLocation, Boolean, Boolean> triple : p_173123_) {
+                for (Triple<ResourceLocation, Boolean, Boolean> triple : textures) {
                     TextureManager texturemanager = Minecraft.getInstance().getTextureManager();
                     texturemanager.getTexture(triple.getLeft()).setFilter(triple.getMiddle(), triple.getRight());
                     RenderSystem.setShaderTexture(i++, triple.getLeft());
                 }
             }, () -> {
             });
-            this.cutoutTexture = p_173123_.stream().findFirst().map(Triple::getLeft);
+            this.cutoutTexture = textures.stream().findFirst().map(Triple::getLeft);
         }
 
         @Override
@@ -542,8 +542,8 @@ public abstract class RenderStateShard {
         public static final class Builder {
             private final ImmutableList.Builder<Triple<ResourceLocation, Boolean, Boolean>> builder = new ImmutableList.Builder<>();
 
-            public RenderStateShard.MultiTextureStateShard.Builder add(ResourceLocation p_173133_, boolean p_173134_, boolean p_173135_) {
-                this.builder.add(Triple.of(p_173133_, p_173134_, p_173135_));
+            public RenderStateShard.MultiTextureStateShard.Builder add(ResourceLocation texture, boolean blur, boolean mipmap) {
+                this.builder.add(Triple.of(texture, blur, mipmap));
                 return this;
             }
 
@@ -555,10 +555,10 @@ public abstract class RenderStateShard {
 
     @OnlyIn(Dist.CLIENT)
     public static final class OffsetTexturingStateShard extends RenderStateShard.TexturingStateShard {
-        public OffsetTexturingStateShard(float p_110290_, float p_110291_) {
+        public OffsetTexturingStateShard(float u, float v) {
             super(
                 "offset_texturing",
-                () -> RenderSystem.setTextureMatrix(new Matrix4f().translation(p_110290_, p_110291_, 0.0F)),
+                () -> RenderSystem.setTextureMatrix(new Matrix4f().translation(u, v, 0.0F)),
                 () -> RenderSystem.resetTextureMatrix()
             );
         }
@@ -573,16 +573,16 @@ public abstract class RenderStateShard {
 
     @OnlyIn(Dist.CLIENT)
     public static class OverlayStateShard extends RenderStateShard.BooleanStateShard {
-        public OverlayStateShard(boolean p_110304_) {
+        public OverlayStateShard(boolean useOverlay) {
             super("overlay", () -> {
-                if (p_110304_) {
+                if (useOverlay) {
                     Minecraft.getInstance().gameRenderer.overlayTexture().setupOverlayColor();
                 }
             }, () -> {
-                if (p_110304_) {
+                if (useOverlay) {
                     Minecraft.getInstance().gameRenderer.overlayTexture().teardownOverlayColor();
                 }
-            }, p_110304_);
+            }, useOverlay);
         }
     }
 
@@ -590,10 +590,10 @@ public abstract class RenderStateShard {
     public static class ShaderStateShard extends RenderStateShard {
         private final Optional<Supplier<ShaderInstance>> shader;
 
-        public ShaderStateShard(Supplier<ShaderInstance> p_173139_) {
-            super("shader", () -> RenderSystem.setShader(p_173139_), () -> {
+        public ShaderStateShard(Supplier<ShaderInstance> shader) {
+            super("shader", () -> RenderSystem.setShader(shader), () -> {
             });
-            this.shader = Optional.of(p_173139_);
+            this.shader = Optional.of(shader);
         }
 
         public ShaderStateShard() {
@@ -614,16 +614,16 @@ public abstract class RenderStateShard {
         protected boolean blur;
         protected boolean mipmap;
 
-        public TextureStateShard(ResourceLocation p_110333_, boolean p_110334_, boolean p_110335_) {
+        public TextureStateShard(ResourceLocation texture, boolean blur, boolean mipmap) {
             super(() -> {
                 TextureManager texturemanager = Minecraft.getInstance().getTextureManager();
-                texturemanager.getTexture(p_110333_).setFilter(p_110334_, p_110335_);
-                RenderSystem.setShaderTexture(0, p_110333_);
+                texturemanager.getTexture(texture).setFilter(blur, mipmap);
+                RenderSystem.setShaderTexture(0, texture);
             }, () -> {
             });
-            this.texture = Optional.of(p_110333_);
-            this.blur = p_110334_;
-            this.mipmap = p_110335_;
+            this.texture = Optional.of(texture);
+            this.blur = blur;
+            this.mipmap = mipmap;
         }
 
         @Override
@@ -656,26 +656,26 @@ public abstract class RenderStateShard {
         private final boolean writeColor;
         private final boolean writeDepth;
 
-        public WriteMaskStateShard(boolean p_110359_, boolean p_110360_) {
+        public WriteMaskStateShard(boolean writeColor, boolean writeDepth) {
             super("write_mask_state", () -> {
-                if (!p_110360_) {
-                    RenderSystem.depthMask(p_110360_);
+                if (!writeDepth) {
+                    RenderSystem.depthMask(writeDepth);
                 }
 
-                if (!p_110359_) {
-                    RenderSystem.colorMask(p_110359_, p_110359_, p_110359_, p_110359_);
+                if (!writeColor) {
+                    RenderSystem.colorMask(writeColor, writeColor, writeColor, writeColor);
                 }
             }, () -> {
-                if (!p_110360_) {
+                if (!writeDepth) {
                     RenderSystem.depthMask(true);
                 }
 
-                if (!p_110359_) {
+                if (!writeColor) {
                     RenderSystem.colorMask(true, true, true, true);
                 }
             });
-            this.writeColor = p_110359_;
-            this.writeDepth = p_110360_;
+            this.writeColor = writeColor;
+            this.writeDepth = writeDepth;
         }
 
         @Override

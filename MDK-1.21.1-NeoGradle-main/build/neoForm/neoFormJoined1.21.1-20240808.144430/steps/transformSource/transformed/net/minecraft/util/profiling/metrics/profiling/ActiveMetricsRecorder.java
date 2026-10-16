@@ -46,34 +46,34 @@ public class ActiveMetricsRecorder implements MetricsRecorder {
     private Set<MetricSampler> thisTickSamplers = ImmutableSet.of();
 
     private ActiveMetricsRecorder(
-        MetricsSamplerProvider p_146121_,
-        LongSupplier p_146122_,
-        Executor p_146123_,
-        MetricsPersister p_146124_,
-        Consumer<ProfileResults> p_146125_,
-        Consumer<Path> p_146126_
+        MetricsSamplerProvider metricsSamplerProvider,
+        LongSupplier wallTimeSource,
+        Executor ioExecutor,
+        MetricsPersister metricPersister,
+        Consumer<ProfileResults> onProfilerEnd,
+        Consumer<Path> onReportFinished
     ) {
-        this.metricsSamplerProvider = p_146121_;
-        this.wallTimeSource = p_146122_;
-        this.taskProfiler = new ContinuousProfiler(p_146122_, () -> this.currentTick);
-        this.ioExecutor = p_146123_;
-        this.metricsPersister = p_146124_;
-        this.onProfilingEnd = p_146125_;
-        this.onReportFinished = globalOnReportFinished == null ? p_146126_ : p_146126_.andThen(globalOnReportFinished);
-        this.deadlineNano = p_146122_.getAsLong() + TimeUnit.NANOSECONDS.convert(10L, TimeUnit.SECONDS);
+        this.metricsSamplerProvider = metricsSamplerProvider;
+        this.wallTimeSource = wallTimeSource;
+        this.taskProfiler = new ContinuousProfiler(wallTimeSource, () -> this.currentTick);
+        this.ioExecutor = ioExecutor;
+        this.metricsPersister = metricPersister;
+        this.onProfilingEnd = onProfilerEnd;
+        this.onReportFinished = globalOnReportFinished == null ? onReportFinished : onReportFinished.andThen(globalOnReportFinished);
+        this.deadlineNano = wallTimeSource.getAsLong() + TimeUnit.NANOSECONDS.convert(10L, TimeUnit.SECONDS);
         this.singleTickProfiler = new ActiveProfiler(this.wallTimeSource, () -> this.currentTick, false);
         this.taskProfiler.enable();
     }
 
     public static ActiveMetricsRecorder createStarted(
-        MetricsSamplerProvider p_146133_,
-        LongSupplier p_146134_,
-        Executor p_146135_,
-        MetricsPersister p_146136_,
-        Consumer<ProfileResults> p_146137_,
-        Consumer<Path> p_146138_
+        MetricsSamplerProvider metricsSamplerProvider,
+        LongSupplier wallTimeSource,
+        Executor ioExecutor,
+        MetricsPersister metricsPersister,
+        Consumer<ProfileResults> onProfilerEnd,
+        Consumer<Path> onReportFinished
     ) {
-        return new ActiveMetricsRecorder(p_146133_, p_146134_, p_146135_, p_146136_, p_146137_, p_146138_);
+        return new ActiveMetricsRecorder(metricsSamplerProvider, wallTimeSource, ioExecutor, metricsPersister, onProfilerEnd, onReportFinished);
     }
 
     @Override
@@ -144,17 +144,17 @@ public class ActiveMetricsRecorder implements MetricsRecorder {
         }
     }
 
-    private void scheduleSaveResults(ProfileResults p_146129_) {
+    private void scheduleSaveResults(ProfileResults results) {
         HashSet<MetricSampler> hashset = new HashSet<>(this.thisTickSamplers);
         this.ioExecutor.execute(() -> {
-            Path path = this.metricsPersister.saveReports(hashset, this.deviationsBySampler, p_146129_);
+            Path path = this.metricsPersister.saveReports(hashset, this.deviationsBySampler, results);
             this.cleanup(hashset);
             this.onReportFinished.accept(path);
         });
     }
 
-    private void cleanup(Collection<MetricSampler> p_216817_) {
-        for (MetricSampler metricsampler : p_216817_) {
+    private void cleanup(Collection<MetricSampler> samplers) {
+        for (MetricSampler metricsampler : samplers) {
             metricsampler.onFinished();
         }
 
@@ -162,7 +162,7 @@ public class ActiveMetricsRecorder implements MetricsRecorder {
         this.taskProfiler.disable();
     }
 
-    public static void registerGlobalCompletionCallback(Consumer<Path> p_146143_) {
-        globalOnReportFinished = p_146143_;
+    public static void registerGlobalCompletionCallback(Consumer<Path> p_globalOnReportFinished) {
+        globalOnReportFinished = p_globalOnReportFinished;
     }
 }

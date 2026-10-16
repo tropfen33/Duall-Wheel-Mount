@@ -22,9 +22,9 @@ public class ItemOverride {
     private final ResourceLocation model;
     private final List<ItemOverride.Predicate> predicates;
 
-    public ItemOverride(ResourceLocation p_173447_, List<ItemOverride.Predicate> p_173448_) {
-        this.model = p_173447_;
-        this.predicates = ImmutableList.copyOf(p_173448_);
+    public ItemOverride(ResourceLocation model, List<ItemOverride.Predicate> predicates) {
+        this.model = model;
+        this.predicates = ImmutableList.copyOf(predicates);
     }
 
     public ResourceLocation getModel() {
@@ -37,16 +37,16 @@ public class ItemOverride {
 
     @OnlyIn(Dist.CLIENT)
     public static class Deserializer implements JsonDeserializer<ItemOverride> {
-        public ItemOverride deserialize(JsonElement p_111725_, Type p_111726_, JsonDeserializationContext p_111727_) throws JsonParseException {
-            JsonObject jsonobject = p_111725_.getAsJsonObject();
+        public ItemOverride deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonobject = json.getAsJsonObject();
             ResourceLocation resourcelocation = ResourceLocation.parse(GsonHelper.getAsString(jsonobject, "model"));
             List<ItemOverride.Predicate> list = this.getPredicates(jsonobject);
             return new ItemOverride(resourcelocation, list);
         }
 
-        protected List<ItemOverride.Predicate> getPredicates(JsonObject p_173451_) {
+        protected List<ItemOverride.Predicate> getPredicates(JsonObject json) {
             Map<ResourceLocation, Float> map = Maps.newLinkedHashMap();
-            JsonObject jsonobject = GsonHelper.getAsJsonObject(p_173451_, "predicate");
+            JsonObject jsonobject = GsonHelper.getAsJsonObject(json, "predicate");
 
             for (Entry<String, JsonElement> entry : jsonobject.entrySet()) {
                 map.put(ResourceLocation.parse(entry.getKey()), GsonHelper.convertToFloat(entry.getValue(), entry.getKey()));
@@ -64,9 +64,9 @@ public class ItemOverride {
         private final ResourceLocation property;
         private final float value;
 
-        public Predicate(ResourceLocation p_173457_, float p_173458_) {
-            this.property = p_173457_;
-            this.value = p_173458_;
+        public Predicate(ResourceLocation property, float value) {
+            this.property = property;
+            this.value = value;
         }
 
         public ResourceLocation getProperty() {

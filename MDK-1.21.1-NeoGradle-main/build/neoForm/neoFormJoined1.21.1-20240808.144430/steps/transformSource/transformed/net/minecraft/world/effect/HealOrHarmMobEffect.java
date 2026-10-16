@@ -7,33 +7,33 @@ import net.minecraft.world.entity.LivingEntity;
 class HealOrHarmMobEffect extends InstantenousMobEffect {
     private final boolean isHarm;
 
-    public HealOrHarmMobEffect(MobEffectCategory p_296444_, int p_294226_, boolean p_295780_) {
-        super(p_296444_, p_294226_);
-        this.isHarm = p_295780_;
+    public HealOrHarmMobEffect(MobEffectCategory category, int color, boolean isHarm) {
+        super(category, color);
+        this.isHarm = isHarm;
     }
 
     @Override
-    public boolean applyEffectTick(LivingEntity p_295255_, int p_295147_) {
-        if (this.isHarm == p_295255_.isInvertedHealAndHarm()) {
-            p_295255_.heal((float)Math.max(4 << p_295147_, 0));
+    public boolean applyEffectTick(LivingEntity livingEntity, int amplifier) {
+        if (this.isHarm == livingEntity.isInvertedHealAndHarm()) {
+            livingEntity.heal((float)Math.max(4 << amplifier, 0));
         } else {
-            p_295255_.hurt(p_295255_.damageSources().magic(), (float)(6 << p_295147_));
+            livingEntity.hurt(livingEntity.damageSources().magic(), (float)(6 << amplifier));
         }
 
         return true;
     }
 
     @Override
-    public void applyInstantenousEffect(@Nullable Entity p_294574_, @Nullable Entity p_295692_, LivingEntity p_296483_, int p_296095_, double p_295178_) {
-        if (this.isHarm == p_296483_.isInvertedHealAndHarm()) {
-            int i = (int)(p_295178_ * (double)(4 << p_296095_) + 0.5);
-            p_296483_.heal((float)i);
+    public void applyInstantenousEffect(@Nullable Entity source, @Nullable Entity indirectSource, LivingEntity livingEntity, int amplifier, double health) {
+        if (this.isHarm == livingEntity.isInvertedHealAndHarm()) {
+            int i = (int)(health * (double)(4 << amplifier) + 0.5);
+            livingEntity.heal((float)i);
         } else {
-            int j = (int)(p_295178_ * (double)(6 << p_296095_) + 0.5);
-            if (p_294574_ == null) {
-                p_296483_.hurt(p_296483_.damageSources().magic(), (float)j);
+            int j = (int)(health * (double)(6 << amplifier) + 0.5);
+            if (source == null) {
+                livingEntity.hurt(livingEntity.damageSources().magic(), (float)j);
             } else {
-                p_296483_.hurt(p_296483_.damageSources().indirectMagic(p_294574_, p_295692_), (float)j);
+                livingEntity.hurt(livingEntity.damageSources().indirectMagic(source, indirectSource), (float)j);
             }
         }
     }

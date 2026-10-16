@@ -79,30 +79,30 @@ public class BlockModel implements UnbakedModel {
     protected ResourceLocation parentLocation;
     public final net.neoforged.neoforge.client.model.geometry.BlockGeometryBakingContext customData = new net.neoforged.neoforge.client.model.geometry.BlockGeometryBakingContext(this);
 
-    public static BlockModel fromStream(Reader p_111462_) {
-        return GsonHelper.fromJson(net.neoforged.neoforge.client.model.ExtendedBlockModelDeserializer.INSTANCE, p_111462_, BlockModel.class);
+    public static BlockModel fromStream(Reader reader) {
+        return GsonHelper.fromJson(net.neoforged.neoforge.client.model.ExtendedBlockModelDeserializer.INSTANCE, reader, BlockModel.class);
     }
 
-    public static BlockModel fromString(String p_111464_) {
-        return fromStream(new StringReader(p_111464_));
+    public static BlockModel fromString(String jsonString) {
+        return fromStream(new StringReader(jsonString));
     }
 
     public BlockModel(
-        @Nullable ResourceLocation p_273263_,
-        List<BlockElement> p_272668_,
-        Map<String, Either<Material, String>> p_272821_,
-        @Nullable Boolean p_272676_,
-        @Nullable BlockModel.GuiLight p_273072_,
-        ItemTransforms p_273480_,
-        List<ItemOverride> p_273099_
+        @Nullable ResourceLocation parentLocation,
+        List<BlockElement> elements,
+        Map<String, Either<Material, String>> textureMap,
+        @Nullable Boolean hasAmbientOcclusion,
+        @Nullable BlockModel.GuiLight guiLight,
+        ItemTransforms transforms,
+        List<ItemOverride> overrides
     ) {
-        this.elements = p_272668_;
-        this.hasAmbientOcclusion = p_272676_;
-        this.guiLight = p_273072_;
-        this.textureMap = p_272821_;
-        this.parentLocation = p_273263_;
-        this.transforms = p_273480_;
-        this.overrides = p_273099_;
+        this.elements = elements;
+        this.hasAmbientOcclusion = hasAmbientOcclusion;
+        this.guiLight = guiLight;
+        this.textureMap = textureMap;
+        this.parentLocation = parentLocation;
+        this.transforms = transforms;
+        this.overrides = overrides;
     }
 
     @Deprecated
@@ -138,8 +138,8 @@ public class BlockModel implements UnbakedModel {
         return this.overrides;
     }
 
-    private ItemOverrides getItemOverrides(ModelBaker p_250138_, BlockModel p_251800_) {
-        return this.overrides.isEmpty() ? ItemOverrides.EMPTY : new ItemOverrides(p_250138_, p_251800_, this.overrides);
+    private ItemOverrides getItemOverrides(ModelBaker baker, BlockModel model) {
+        return this.overrides.isEmpty() ? ItemOverrides.EMPTY : new ItemOverrides(baker, model, this.overrides);
     }
 
     public ItemOverrides getOverrides(ModelBaker p_250138_, BlockModel p_251800_, Function<Material, TextureAtlasSprite> spriteGetter) {
@@ -162,12 +162,12 @@ public class BlockModel implements UnbakedModel {
     }
 
     @Override
-    public void resolveParents(Function<ResourceLocation, UnbakedModel> p_249059_) {
+    public void resolveParents(Function<ResourceLocation, UnbakedModel> resolver) {
         Set<UnbakedModel> set = Sets.newLinkedHashSet();
 
         for (BlockModel blockmodel = this; blockmodel.parentLocation != null && blockmodel.parent == null; blockmodel = blockmodel.parent) {
             set.add(blockmodel);
-            UnbakedModel unbakedmodel = p_249059_.apply(blockmodel.parentLocation);
+            UnbakedModel unbakedmodel = resolver.apply(blockmodel.parentLocation);
             if (unbakedmodel == null) {
                 LOGGER.warn("No parent '{}' while loading model '{}'", this.parentLocation, blockmodel);
             }
@@ -184,7 +184,7 @@ public class BlockModel implements UnbakedModel {
 
             if (unbakedmodel == null) {
                 blockmodel.parentLocation = ModelBakery.MISSING_MODEL_LOCATION;
-                unbakedmodel = p_249059_.apply(blockmodel.parentLocation);
+                unbakedmodel = resolver.apply(blockmodel.parentLocation);
             }
 
             if (!(unbakedmodel instanceof BlockModel)) {
@@ -195,26 +195,26 @@ public class BlockModel implements UnbakedModel {
         }
 
         if (customData.hasCustomGeometry()) {
-            customData.getCustomGeometry().resolveParents(p_249059_, customData);
+            customData.getCustomGeometry().resolveParents(resolver, customData);
         }
 
         this.overrides.forEach(p_247932_ -> {
-            UnbakedModel unbakedmodel1 = p_249059_.apply(p_247932_.getModel());
+            UnbakedModel unbakedmodel1 = resolver.apply(p_247932_.getModel());
             if (!Objects.equals(unbakedmodel1, this)) {
-                unbakedmodel1.resolveParents(p_249059_);
+                unbakedmodel1.resolveParents(resolver);
             }
         });
     }
 
     @Override
-    public BakedModel bake(ModelBaker p_252120_, Function<Material, TextureAtlasSprite> p_250023_, ModelState p_251130_) {
-        return this.bake(p_252120_, this, p_250023_, p_251130_, true);
+    public BakedModel bake(ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState state) {
+        return this.bake(baker, this, spriteGetter, state, true);
     }
 
     public BakedModel bake(
-            ModelBaker p_249720_, BlockModel p_111451_, Function<Material, TextureAtlasSprite> p_111452_, ModelState p_111453_, boolean p_111455_
+            ModelBaker baker, BlockModel model, Function<Material, TextureAtlasSprite> spriteGetter, ModelState state, boolean guiLight3d
     ) {
-        return net.neoforged.neoforge.client.model.geometry.UnbakedGeometryHelper.bake(this, p_249720_, p_111451_, p_111452_, p_111453_, p_111455_);
+        return net.neoforged.neoforge.client.model.geometry.UnbakedGeometryHelper.bake(this, baker, model, spriteGetter, state, guiLight3d);
     }
 
     public BakedModel bakeVanilla(
@@ -247,42 +247,42 @@ public class BlockModel implements UnbakedModel {
     }
 
     public static BakedQuad bakeFace(
-        BlockElement p_111438_, BlockElementFace p_111439_, TextureAtlasSprite p_111440_, Direction p_111441_, ModelState p_111442_
+        BlockElement element, BlockElementFace face, TextureAtlasSprite sprite, Direction facing, ModelState state
     ) {
-        return FACE_BAKERY.bakeQuad(p_111438_.from, p_111438_.to, p_111439_, p_111440_, p_111441_, p_111442_, p_111438_.rotation, p_111438_.shade);
+        return FACE_BAKERY.bakeQuad(element.from, element.to, face, sprite, facing, state, element.rotation, element.shade);
     }
 
-    public boolean hasTexture(String p_111478_) {
-        return !MissingTextureAtlasSprite.getLocation().equals(this.getMaterial(p_111478_).texture());
+    public boolean hasTexture(String textureName) {
+        return !MissingTextureAtlasSprite.getLocation().equals(this.getMaterial(textureName).texture());
     }
 
-    public Material getMaterial(String p_111481_) {
-        if (isTextureReference(p_111481_)) {
-            p_111481_ = p_111481_.substring(1);
+    public Material getMaterial(String name) {
+        if (isTextureReference(name)) {
+            name = name.substring(1);
         }
 
         List<String> list = Lists.newArrayList();
 
         while (true) {
-            Either<Material, String> either = this.findTextureEntry(p_111481_);
+            Either<Material, String> either = this.findTextureEntry(name);
             Optional<Material> optional = either.left();
             if (optional.isPresent()) {
                 return optional.get();
             }
 
-            p_111481_ = either.right().get();
-            if (list.contains(p_111481_)) {
-                LOGGER.warn("Unable to resolve texture due to reference chain {}->{} in {}", Joiner.on("->").join(list), p_111481_, this.name);
+            name = either.right().get();
+            if (list.contains(name)) {
+                LOGGER.warn("Unable to resolve texture due to reference chain {}->{} in {}", Joiner.on("->").join(list), name, this.name);
                 return new Material(TextureAtlas.LOCATION_BLOCKS, MissingTextureAtlasSprite.getLocation());
             }
 
-            list.add(p_111481_);
+            list.add(name);
         }
     }
 
-    private Either<Material, String> findTextureEntry(String p_111486_) {
+    private Either<Material, String> findTextureEntry(String name) {
         for (BlockModel blockmodel = this; blockmodel != null; blockmodel = blockmodel.parent) {
-            Either<Material, String> either = blockmodel.textureMap.get(p_111486_);
+            Either<Material, String> either = blockmodel.textureMap.get(name);
             if (either != null) {
                 return either;
             }
@@ -291,8 +291,8 @@ public class BlockModel implements UnbakedModel {
         return Either.left(new Material(TextureAtlas.LOCATION_BLOCKS, MissingTextureAtlasSprite.getLocation()));
     }
 
-    static boolean isTextureReference(String p_111489_) {
-        return p_111489_.charAt(0) == '#';
+    static boolean isTextureReference(String str) {
+        return str.charAt(0) == '#';
     }
 
     public BlockModel getRootModel() {
@@ -322,8 +322,8 @@ public class BlockModel implements UnbakedModel {
         return new ItemTransforms(itemtransform, itemtransform1, itemtransform2, itemtransform3, itemtransform4, itemtransform5, itemtransform6, itemtransform7, builder.build());
     }
 
-    private ItemTransform getTransform(ItemDisplayContext p_270662_) {
-        return this.parent != null && !this.transforms.hasTransform(p_270662_) ? this.parent.getTransform(p_270662_) : this.transforms.getTransform(p_270662_);
+    private ItemTransform getTransform(ItemDisplayContext displayContext) {
+        return this.parent != null && !this.transforms.hasTransform(displayContext) ? this.parent.getTransform(displayContext) : this.transforms.getTransform(displayContext);
     }
 
     @Override
@@ -333,19 +333,19 @@ public class BlockModel implements UnbakedModel {
 
     @OnlyIn(Dist.CLIENT)
     public static class Deserializer implements JsonDeserializer<BlockModel> {
-        public BlockModel deserialize(JsonElement p_111498_, Type p_111499_, JsonDeserializationContext p_111500_) throws JsonParseException {
-            JsonObject jsonobject = p_111498_.getAsJsonObject();
-            List<BlockElement> list = this.getElements(p_111500_, jsonobject);
+        public BlockModel deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonobject = json.getAsJsonObject();
+            List<BlockElement> list = this.getElements(context, jsonobject);
             String s = this.getParentName(jsonobject);
             Map<String, Either<Material, String>> map = this.getTextureMap(jsonobject);
             Boolean obool = this.getAmbientOcclusion(jsonobject);
             ItemTransforms itemtransforms = ItemTransforms.NO_TRANSFORMS;
             if (jsonobject.has("display")) {
                 JsonObject jsonobject1 = GsonHelper.getAsJsonObject(jsonobject, "display");
-                itemtransforms = p_111500_.deserialize(jsonobject1, ItemTransforms.class);
+                itemtransforms = context.deserialize(jsonobject1, ItemTransforms.class);
             }
 
-            List<ItemOverride> list1 = this.getOverrides(p_111500_, jsonobject);
+            List<ItemOverride> list1 = this.getOverrides(context, jsonobject);
             BlockModel.GuiLight blockmodel$guilight = null;
             if (jsonobject.has("gui_light")) {
                 blockmodel$guilight = BlockModel.GuiLight.getByName(GsonHelper.getAsString(jsonobject, "gui_light"));
@@ -355,22 +355,22 @@ public class BlockModel implements UnbakedModel {
             return new BlockModel(resourcelocation, list, map, obool, blockmodel$guilight, itemtransforms, list1);
         }
 
-        protected List<ItemOverride> getOverrides(JsonDeserializationContext p_111495_, JsonObject p_111496_) {
+        protected List<ItemOverride> getOverrides(JsonDeserializationContext context, JsonObject json) {
             List<ItemOverride> list = Lists.newArrayList();
-            if (p_111496_.has("overrides")) {
-                for (JsonElement jsonelement : GsonHelper.getAsJsonArray(p_111496_, "overrides")) {
-                    list.add(p_111495_.deserialize(jsonelement, ItemOverride.class));
+            if (json.has("overrides")) {
+                for (JsonElement jsonelement : GsonHelper.getAsJsonArray(json, "overrides")) {
+                    list.add(context.deserialize(jsonelement, ItemOverride.class));
                 }
             }
 
             return list;
         }
 
-        private Map<String, Either<Material, String>> getTextureMap(JsonObject p_111510_) {
+        private Map<String, Either<Material, String>> getTextureMap(JsonObject json) {
             ResourceLocation resourcelocation = TextureAtlas.LOCATION_BLOCKS;
             Map<String, Either<Material, String>> map = Maps.newHashMap();
-            if (p_111510_.has("textures")) {
-                JsonObject jsonobject = GsonHelper.getAsJsonObject(p_111510_, "textures");
+            if (json.has("textures")) {
+                JsonObject jsonobject = GsonHelper.getAsJsonObject(json, "textures");
 
                 for (Entry<String, JsonElement> entry : jsonobject.entrySet()) {
                     map.put(entry.getKey(), parseTextureLocationOrReference(resourcelocation, entry.getValue().getAsString()));
@@ -380,33 +380,33 @@ public class BlockModel implements UnbakedModel {
             return map;
         }
 
-        private static Either<Material, String> parseTextureLocationOrReference(ResourceLocation p_111504_, String p_111505_) {
-            if (BlockModel.isTextureReference(p_111505_)) {
-                return Either.right(p_111505_.substring(1));
+        private static Either<Material, String> parseTextureLocationOrReference(ResourceLocation location, String name) {
+            if (BlockModel.isTextureReference(name)) {
+                return Either.right(name.substring(1));
             } else {
-                ResourceLocation resourcelocation = ResourceLocation.tryParse(p_111505_);
+                ResourceLocation resourcelocation = ResourceLocation.tryParse(name);
                 if (resourcelocation == null) {
-                    throw new JsonParseException(p_111505_ + " is not valid resource location");
+                    throw new JsonParseException(name + " is not valid resource location");
                 } else {
-                    return Either.left(new Material(p_111504_, resourcelocation));
+                    return Either.left(new Material(location, resourcelocation));
                 }
             }
         }
 
-        private String getParentName(JsonObject p_111512_) {
-            return GsonHelper.getAsString(p_111512_, "parent", "");
+        private String getParentName(JsonObject json) {
+            return GsonHelper.getAsString(json, "parent", "");
         }
 
         @Nullable
-        protected Boolean getAmbientOcclusion(JsonObject p_273052_) {
-            return p_273052_.has("ambientocclusion") ? GsonHelper.getAsBoolean(p_273052_, "ambientocclusion") : null;
+        protected Boolean getAmbientOcclusion(JsonObject json) {
+            return json.has("ambientocclusion") ? GsonHelper.getAsBoolean(json, "ambientocclusion") : null;
         }
 
-        protected List<BlockElement> getElements(JsonDeserializationContext p_111507_, JsonObject p_111508_) {
+        protected List<BlockElement> getElements(JsonDeserializationContext context, JsonObject json) {
             List<BlockElement> list = Lists.newArrayList();
-            if (p_111508_.has("elements")) {
-                for (JsonElement jsonelement : GsonHelper.getAsJsonArray(p_111508_, "elements")) {
-                    list.add(p_111507_.deserialize(jsonelement, BlockElement.class));
+            if (json.has("elements")) {
+                for (JsonElement jsonelement : GsonHelper.getAsJsonArray(json, "elements")) {
+                    list.add(context.deserialize(jsonelement, BlockElement.class));
                 }
             }
 
@@ -421,18 +421,18 @@ public class BlockModel implements UnbakedModel {
 
         private final String name;
 
-        private GuiLight(String p_111525_) {
-            this.name = p_111525_;
+        private GuiLight(String name) {
+            this.name = name;
         }
 
-        public static BlockModel.GuiLight getByName(String p_111528_) {
+        public static BlockModel.GuiLight getByName(String name) {
             for (BlockModel.GuiLight blockmodel$guilight : values()) {
-                if (blockmodel$guilight.name.equals(p_111528_)) {
+                if (blockmodel$guilight.name.equals(name)) {
                     return blockmodel$guilight;
                 }
             }
 
-            throw new IllegalArgumentException("Invalid gui light: " + p_111528_);
+            throw new IllegalArgumentException("Invalid gui light: " + name);
         }
 
         public boolean lightLikeBlock() {
@@ -444,8 +444,8 @@ public class BlockModel implements UnbakedModel {
 
     @OnlyIn(Dist.CLIENT)
     public static class LoopException extends RuntimeException {
-        public LoopException(String p_173424_) {
-            super(p_173424_);
+        public LoopException(String message) {
+            super(message);
         }
     }
 }

@@ -5,48 +5,48 @@ import com.google.common.collect.ImmutableList.Builder;
 import java.util.List;
 
 public record StringTemplate(List<String> segments, List<String> variables) {
-    public static StringTemplate fromString(String p_306229_, int p_305937_) {
+    public static StringTemplate fromString(String name, int lineNumber) {
         Builder<String> builder = ImmutableList.builder();
         Builder<String> builder1 = ImmutableList.builder();
-        int i = p_306229_.length();
+        int i = name.length();
         int j = 0;
-        int k = p_306229_.indexOf(36);
+        int k = name.indexOf(36);
 
         while (k != -1) {
-            if (k != i - 1 && p_306229_.charAt(k + 1) == '(') {
-                builder.add(p_306229_.substring(j, k));
-                int l = p_306229_.indexOf(41, k + 1);
+            if (k != i - 1 && name.charAt(k + 1) == '(') {
+                builder.add(name.substring(j, k));
+                int l = name.indexOf(41, k + 1);
                 if (l == -1) {
-                    throw new IllegalArgumentException("Unterminated macro variable in macro '" + p_306229_ + "' on line " + p_305937_);
+                    throw new IllegalArgumentException("Unterminated macro variable in macro '" + name + "' on line " + lineNumber);
                 }
 
-                String s = p_306229_.substring(k + 2, l);
+                String s = name.substring(k + 2, l);
                 if (!isValidVariableName(s)) {
-                    throw new IllegalArgumentException("Invalid macro variable name '" + s + "' on line " + p_305937_);
+                    throw new IllegalArgumentException("Invalid macro variable name '" + s + "' on line " + lineNumber);
                 }
 
                 builder1.add(s);
                 j = l + 1;
-                k = p_306229_.indexOf(36, j);
+                k = name.indexOf(36, j);
             } else {
-                k = p_306229_.indexOf(36, k + 1);
+                k = name.indexOf(36, k + 1);
             }
         }
 
         if (j == 0) {
-            throw new IllegalArgumentException("Macro without variables on line " + p_305937_);
+            throw new IllegalArgumentException("Macro without variables on line " + lineNumber);
         } else {
             if (j != i) {
-                builder.add(p_306229_.substring(j));
+                builder.add(name.substring(j));
             }
 
             return new StringTemplate(builder.build(), builder1.build());
         }
     }
 
-    private static boolean isValidVariableName(String p_306141_) {
-        for (int i = 0; i < p_306141_.length(); i++) {
-            char c0 = p_306141_.charAt(i);
+    private static boolean isValidVariableName(String variableName) {
+        for (int i = 0; i < variableName.length(); i++) {
+            char c0 = variableName.charAt(i);
             if (!Character.isLetterOrDigit(c0) && c0 != '_') {
                 return false;
             }
@@ -55,11 +55,11 @@ public record StringTemplate(List<String> segments, List<String> variables) {
         return true;
     }
 
-    public String substitute(List<String> p_306329_) {
+    public String substitute(List<String> arguments) {
         StringBuilder stringbuilder = new StringBuilder();
 
         for (int i = 0; i < this.variables.size(); i++) {
-            stringbuilder.append(this.segments.get(i)).append(p_306329_.get(i));
+            stringbuilder.append(this.segments.get(i)).append(arguments.get(i));
             CommandFunction.checkCommandLineLength(stringbuilder);
         }
 

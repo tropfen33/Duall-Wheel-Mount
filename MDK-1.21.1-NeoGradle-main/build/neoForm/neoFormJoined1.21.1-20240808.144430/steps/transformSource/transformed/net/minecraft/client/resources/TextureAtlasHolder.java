@@ -21,43 +21,46 @@ public abstract class TextureAtlasHolder implements PreparableReloadListener, Au
     private final ResourceLocation atlasInfoLocation;
     private final Set<MetadataSectionSerializer<?>> metadataSections;
 
-    public TextureAtlasHolder(TextureManager p_262057_, ResourceLocation p_261554_, ResourceLocation p_262147_) {
-        this(p_262057_, p_261554_, p_262147_, SpriteLoader.DEFAULT_METADATA_SECTIONS);
+    public TextureAtlasHolder(TextureManager textureManager, ResourceLocation textureAtlasLocation, ResourceLocation atlasInfoLocation) {
+        this(textureManager, textureAtlasLocation, atlasInfoLocation, SpriteLoader.DEFAULT_METADATA_SECTIONS);
     }
 
-    public TextureAtlasHolder(TextureManager p_294921_, ResourceLocation p_295514_, ResourceLocation p_294920_, Set<MetadataSectionSerializer<?>> p_295003_) {
-        this.atlasInfoLocation = p_294920_;
-        this.textureAtlas = new TextureAtlas(p_295514_);
-        p_294921_.register(this.textureAtlas.location(), this.textureAtlas);
-        this.metadataSections = p_295003_;
+    public TextureAtlasHolder(TextureManager textureManager, ResourceLocation textureAtlasLocation, ResourceLocation atlasInfoLocation, Set<MetadataSectionSerializer<?>> metadataSections) {
+        this.atlasInfoLocation = atlasInfoLocation;
+        this.textureAtlas = new TextureAtlas(textureAtlasLocation);
+        textureManager.register(this.textureAtlas.location(), this.textureAtlas);
+        this.metadataSections = metadataSections;
     }
 
-    protected TextureAtlasSprite getSprite(ResourceLocation p_118902_) {
-        return this.textureAtlas.getSprite(p_118902_);
+    /**
+     * Gets a sprite associated with the passed resource location.
+     */
+    protected TextureAtlasSprite getSprite(ResourceLocation location) {
+        return this.textureAtlas.getSprite(location);
     }
 
     @Override
     public final CompletableFuture<Void> reload(
-        PreparableReloadListener.PreparationBarrier p_249641_,
-        ResourceManager p_250036_,
-        ProfilerFiller p_249806_,
-        ProfilerFiller p_250732_,
-        Executor p_249427_,
-        Executor p_250510_
+        PreparableReloadListener.PreparationBarrier preparationBarrier,
+        ResourceManager resourceManager,
+        ProfilerFiller preparationsProfiler,
+        ProfilerFiller reloadProfiler,
+        Executor backgroundExecutor,
+        Executor gameExecutor
     ) {
         return SpriteLoader.create(this.textureAtlas)
-            .loadAndStitch(p_250036_, this.atlasInfoLocation, 0, p_249427_, this.metadataSections)
+            .loadAndStitch(resourceManager, this.atlasInfoLocation, 0, backgroundExecutor, this.metadataSections)
             .thenCompose(SpriteLoader.Preparations::waitForUpload)
-            .thenCompose(p_249641_::wait)
-            .thenAcceptAsync(p_249246_ -> this.apply(p_249246_, p_250732_), p_250510_);
+            .thenCompose(preparationBarrier::wait)
+            .thenAcceptAsync(p_249246_ -> this.apply(p_249246_, reloadProfiler), gameExecutor);
     }
 
-    private void apply(SpriteLoader.Preparations p_252333_, ProfilerFiller p_250624_) {
-        p_250624_.startTick();
-        p_250624_.push("upload");
-        this.textureAtlas.upload(p_252333_);
-        p_250624_.pop();
-        p_250624_.endTick();
+    private void apply(SpriteLoader.Preparations preparations, ProfilerFiller profiler) {
+        profiler.startTick();
+        profiler.push("upload");
+        this.textureAtlas.upload(preparations);
+        profiler.pop();
+        profiler.endTick();
     }
 
     @Override

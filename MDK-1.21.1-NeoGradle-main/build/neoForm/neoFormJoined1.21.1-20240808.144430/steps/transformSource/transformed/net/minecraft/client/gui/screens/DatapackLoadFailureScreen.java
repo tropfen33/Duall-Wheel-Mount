@@ -14,10 +14,10 @@ public class DatapackLoadFailureScreen extends Screen {
     private final Runnable cancelCallback;
     private final Runnable safeModeCallback;
 
-    public DatapackLoadFailureScreen(Runnable p_95894_, Runnable p_307402_) {
+    public DatapackLoadFailureScreen(Runnable cancelCallback, Runnable safeModeCallback) {
         super(Component.translatable("datapackFailure.title"));
-        this.cancelCallback = p_95894_;
-        this.safeModeCallback = p_307402_;
+        this.cancelCallback = cancelCallback;
+        this.safeModeCallback = safeModeCallback;
     }
 
     @Override
@@ -36,10 +36,18 @@ public class DatapackLoadFailureScreen extends Screen {
         );
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283519_, int p_282196_, int p_283357_, float p_283026_) {
-        super.render(p_283519_, p_282196_, p_283357_, p_283026_);
-        this.message.renderCentered(p_283519_, this.width / 2, 70);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.message.renderCentered(guiGraphics, this.width / 2, 70);
     }
 
     @Override

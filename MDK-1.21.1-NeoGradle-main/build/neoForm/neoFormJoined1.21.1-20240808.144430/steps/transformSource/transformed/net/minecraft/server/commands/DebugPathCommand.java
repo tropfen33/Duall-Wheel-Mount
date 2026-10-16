@@ -20,8 +20,8 @@ public class DebugPathCommand {
     private static final SimpleCommandExceptionType ERROR_NO_PATH = new SimpleCommandExceptionType(Component.literal("Path not found"));
     private static final SimpleCommandExceptionType ERROR_NOT_COMPLETE = new SimpleCommandExceptionType(Component.literal("Target not reached"));
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_180124_) {
-        p_180124_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("debugpath")
                 .requires(p_180128_ -> p_180128_.hasPermission(2))
                 .then(
@@ -31,19 +31,19 @@ public class DebugPathCommand {
         );
     }
 
-    private static int fillBlocks(CommandSourceStack p_180130_, BlockPos p_180131_) throws CommandSyntaxException {
-        if (!(p_180130_.getEntity() instanceof Mob mob)) {
+    private static int fillBlocks(CommandSourceStack stack, BlockPos pos) throws CommandSyntaxException {
+        if (!(stack.getEntity() instanceof Mob mob)) {
             throw ERROR_NOT_MOB.create();
         } else {
-            PathNavigation pathnavigation = new GroundPathNavigation(mob, p_180130_.getLevel());
-            Path path = pathnavigation.createPath(p_180131_, 0);
-            DebugPackets.sendPathFindingPacket(p_180130_.getLevel(), mob, path, pathnavigation.getMaxDistanceToWaypoint());
+            PathNavigation pathnavigation = new GroundPathNavigation(mob, stack.getLevel());
+            Path path = pathnavigation.createPath(pos, 0);
+            DebugPackets.sendPathFindingPacket(stack.getLevel(), mob, path, pathnavigation.getMaxDistanceToWaypoint());
             if (path == null) {
                 throw ERROR_NO_PATH.create();
             } else if (!path.canReach()) {
                 throw ERROR_NOT_COMPLETE.create();
             } else {
-                p_180130_.sendSuccess(() -> Component.literal("Made path"), true);
+                stack.sendSuccess(() -> Component.literal("Made path"), true);
                 return 1;
             }
         }

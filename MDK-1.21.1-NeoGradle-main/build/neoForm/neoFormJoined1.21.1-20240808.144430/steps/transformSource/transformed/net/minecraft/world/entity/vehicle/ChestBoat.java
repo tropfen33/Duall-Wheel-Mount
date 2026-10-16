@@ -31,16 +31,16 @@ public class ChestBoat extends Boat implements HasCustomInventoryScreen, Contain
     private ResourceKey<LootTable> lootTable;
     private long lootTableSeed;
 
-    public ChestBoat(EntityType<? extends Boat> p_219869_, Level p_219870_) {
-        super(p_219869_, p_219870_);
+    public ChestBoat(EntityType<? extends Boat> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public ChestBoat(Level p_219872_, double p_219873_, double p_219874_, double p_219875_) {
-        super(EntityType.CHEST_BOAT, p_219872_);
-        this.setPos(p_219873_, p_219874_, p_219875_);
-        this.xo = p_219873_;
-        this.yo = p_219874_;
-        this.zo = p_219875_;
+    public ChestBoat(Level level, double x, double y, double z) {
+        super(EntityType.CHEST_BOAT, level);
+        this.setPos(x, y, z);
+        this.xo = x;
+        this.yo = y;
+        this.zo = z;
     }
 
     @Override
@@ -54,48 +54,51 @@ public class ChestBoat extends Boat implements HasCustomInventoryScreen, Contain
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_219908_) {
-        super.addAdditionalSaveData(p_219908_);
-        this.addChestVehicleSaveData(p_219908_, this.registryAccess());
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        this.addChestVehicleSaveData(compound, this.registryAccess());
+    }
+
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    @Override
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.readChestVehicleSaveData(compound, this.registryAccess());
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_219901_) {
-        super.readAdditionalSaveData(p_219901_);
-        this.readChestVehicleSaveData(p_219901_, this.registryAccess());
-    }
-
-    @Override
-    public void destroy(DamageSource p_219892_) {
+    public void destroy(DamageSource source) {
         this.destroy(this.getDropItem());
-        this.chestVehicleDestroyed(p_219892_, this.level(), this);
+        this.chestVehicleDestroyed(source, this.level(), this);
     }
 
     @Override
-    public void remove(Entity.RemovalReason p_219894_) {
-        if (!this.level().isClientSide && p_219894_.shouldDestroy()) {
+    public void remove(Entity.RemovalReason reason) {
+        if (!this.level().isClientSide && reason.shouldDestroy()) {
             Containers.dropContents(this.level(), this, this);
         }
 
-        super.remove(p_219894_);
+        super.remove(reason);
     }
 
     @Override
-    public InteractionResult interact(Player p_219898_, InteractionHand p_219899_) {
-        if (!p_219898_.isSecondaryUseActive()) {
-            InteractionResult interactionresult = super.interact(p_219898_, p_219899_);
+    public InteractionResult interact(Player player, InteractionHand hand) {
+        if (!player.isSecondaryUseActive()) {
+            InteractionResult interactionresult = super.interact(player, hand);
             if (interactionresult != InteractionResult.PASS) {
                 return interactionresult;
             }
         }
 
-        if (this.canAddPassenger(p_219898_) && !p_219898_.isSecondaryUseActive()) {
+        if (this.canAddPassenger(player) && !player.isSecondaryUseActive()) {
             return InteractionResult.PASS;
         } else {
-            InteractionResult interactionresult1 = this.interactWithContainerVehicle(p_219898_);
+            InteractionResult interactionresult1 = this.interactWithContainerVehicle(player);
             if (interactionresult1.consumesAction()) {
-                this.gameEvent(GameEvent.CONTAINER_OPEN, p_219898_);
-                PiglinAi.angerNearbyPiglins(p_219898_, true);
+                this.gameEvent(GameEvent.CONTAINER_OPEN, player);
+                PiglinAi.angerNearbyPiglins(player, true);
             }
 
             return interactionresult1;
@@ -103,11 +106,11 @@ public class ChestBoat extends Boat implements HasCustomInventoryScreen, Contain
     }
 
     @Override
-    public void openCustomInventoryScreen(Player p_219906_) {
-        p_219906_.openMenu(this);
-        if (!p_219906_.level().isClientSide) {
-            this.gameEvent(GameEvent.CONTAINER_OPEN, p_219906_);
-            PiglinAi.angerNearbyPiglins(p_219906_, true);
+    public void openCustomInventoryScreen(Player player) {
+        player.openMenu(this);
+        if (!player.level().isClientSide) {
+            this.gameEvent(GameEvent.CONTAINER_OPEN, player);
+            PiglinAi.angerNearbyPiglins(player, true);
         }
     }
 
@@ -137,53 +140,68 @@ public class ChestBoat extends Boat implements HasCustomInventoryScreen, Contain
         return 27;
     }
 
+    /**
+     * Returns the stack in the given slot.
+     */
     @Override
-    public ItemStack getItem(int p_219880_) {
-        return this.getChestVehicleItem(p_219880_);
+    public ItemStack getItem(int slot) {
+        return this.getChestVehicleItem(slot);
+    }
+
+    /**
+     * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
+     */
+    @Override
+    public ItemStack removeItem(int slot, int amount) {
+        return this.removeChestVehicleItem(slot, amount);
+    }
+
+    /**
+     * Removes a stack from the given slot and returns it.
+     */
+    @Override
+    public ItemStack removeItemNoUpdate(int slot) {
+        return this.removeChestVehicleItemNoUpdate(slot);
+    }
+
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
+    @Override
+    public void setItem(int slot, ItemStack stack) {
+        this.setChestVehicleItem(slot, stack);
     }
 
     @Override
-    public ItemStack removeItem(int p_219882_, int p_219883_) {
-        return this.removeChestVehicleItem(p_219882_, p_219883_);
-    }
-
-    @Override
-    public ItemStack removeItemNoUpdate(int p_219904_) {
-        return this.removeChestVehicleItemNoUpdate(p_219904_);
-    }
-
-    @Override
-    public void setItem(int p_219885_, ItemStack p_219886_) {
-        this.setChestVehicleItem(p_219885_, p_219886_);
-    }
-
-    @Override
-    public SlotAccess getSlot(int p_219918_) {
-        return this.getChestVehicleSlot(p_219918_);
+    public SlotAccess getSlot(int slot) {
+        return this.getChestVehicleSlot(slot);
     }
 
     @Override
     public void setChanged() {
     }
 
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
     @Override
-    public boolean stillValid(Player p_219896_) {
-        return this.isChestVehicleStillValid(p_219896_);
+    public boolean stillValid(Player player) {
+        return this.isChestVehicleStillValid(player);
     }
 
     @Nullable
     @Override
-    public AbstractContainerMenu createMenu(int p_219910_, Inventory p_219911_, Player p_219912_) {
-        if (this.lootTable != null && p_219912_.isSpectator()) {
+    public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
+        if (this.lootTable != null && player.isSpectator()) {
             return null;
         } else {
-            this.unpackLootTable(p_219911_.player);
-            return ChestMenu.threeRows(p_219910_, p_219911_, this);
+            this.unpackLootTable(playerInventory.player);
+            return ChestMenu.threeRows(containerId, playerInventory, this);
         }
     }
 
-    public void unpackLootTable(@Nullable Player p_219914_) {
-        this.unpackChestVehicleLootTable(p_219914_);
+    public void unpackLootTable(@Nullable Player player) {
+        this.unpackChestVehicleLootTable(player);
     }
 
     @Nullable
@@ -193,8 +211,8 @@ public class ChestBoat extends Boat implements HasCustomInventoryScreen, Contain
     }
 
     @Override
-    public void setLootTable(@Nullable ResourceKey<LootTable> p_335715_) {
-        this.lootTable = p_335715_;
+    public void setLootTable(@Nullable ResourceKey<LootTable> lootTable) {
+        this.lootTable = lootTable;
     }
 
     @Override
@@ -203,8 +221,8 @@ public class ChestBoat extends Boat implements HasCustomInventoryScreen, Contain
     }
 
     @Override
-    public void setLootTableSeed(long p_219888_) {
-        this.lootTableSeed = p_219888_;
+    public void setLootTableSeed(long lootTableSeed) {
+        this.lootTableSeed = lootTableSeed;
     }
 
     @Override
@@ -218,7 +236,7 @@ public class ChestBoat extends Boat implements HasCustomInventoryScreen, Contain
     }
 
     @Override
-    public void stopOpen(Player p_270286_) {
-        this.level().gameEvent(GameEvent.CONTAINER_CLOSE, this.position(), GameEvent.Context.of(p_270286_));
+    public void stopOpen(Player player) {
+        this.level().gameEvent(GameEvent.CONTAINER_CLOSE, this.position(), GameEvent.Context.of(player));
     }
 }

@@ -7,9 +7,9 @@ import net.minecraft.world.level.levelgen.FlatLevelSource;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 
 public class ChunkGenerators {
-    public static MapCodec<? extends ChunkGenerator> bootstrap(Registry<MapCodec<? extends ChunkGenerator>> p_223243_) {
-        Registry.register(p_223243_, "noise", NoiseBasedChunkGenerator.CODEC);
-        Registry.register(p_223243_, "flat", FlatLevelSource.CODEC);
-        return Registry.register(p_223243_, "debug", DebugLevelSource.CODEC);
+    public static MapCodec<? extends ChunkGenerator> bootstrap(Registry<MapCodec<? extends ChunkGenerator>> registry) {
+        Registry.register(registry, "noise", NoiseBasedChunkGenerator.CODEC);
+        Registry.register(registry, "flat", FlatLevelSource.CODEC);
+        return Registry.register(registry, "debug", DebugLevelSource.CODEC);
     }
 }

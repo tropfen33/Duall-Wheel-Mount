@@ -18,24 +18,27 @@ public class LlamaSpitRenderer extends EntityRenderer<LlamaSpit> {
     private static final ResourceLocation LLAMA_SPIT_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/llama/spit.png");
     private final LlamaSpitModel<LlamaSpit> model;
 
-    public LlamaSpitRenderer(EntityRendererProvider.Context p_174296_) {
-        super(p_174296_);
-        this.model = new LlamaSpitModel<>(p_174296_.bakeLayer(ModelLayers.LLAMA_SPIT));
+    public LlamaSpitRenderer(EntityRendererProvider.Context context) {
+        super(context);
+        this.model = new LlamaSpitModel<>(context.bakeLayer(ModelLayers.LLAMA_SPIT));
     }
 
-    public void render(LlamaSpit p_115373_, float p_115374_, float p_115375_, PoseStack p_115376_, MultiBufferSource p_115377_, int p_115378_) {
-        p_115376_.pushPose();
-        p_115376_.translate(0.0F, 0.15F, 0.0F);
-        p_115376_.mulPose(Axis.YP.rotationDegrees(Mth.lerp(p_115375_, p_115373_.yRotO, p_115373_.getYRot()) - 90.0F));
-        p_115376_.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(p_115375_, p_115373_.xRotO, p_115373_.getXRot())));
-        this.model.setupAnim(p_115373_, p_115375_, 0.0F, -0.1F, 0.0F, 0.0F);
-        VertexConsumer vertexconsumer = p_115377_.getBuffer(this.model.renderType(LLAMA_SPIT_LOCATION));
-        this.model.renderToBuffer(p_115376_, vertexconsumer, p_115378_, OverlayTexture.NO_OVERLAY);
-        p_115376_.popPose();
-        super.render(p_115373_, p_115374_, p_115375_, p_115376_, p_115377_, p_115378_);
+    public void render(LlamaSpit entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        poseStack.pushPose();
+        poseStack.translate(0.0F, 0.15F, 0.0F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, entity.yRotO, entity.getYRot()) - 90.0F));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(partialTicks, entity.xRotO, entity.getXRot())));
+        this.model.setupAnim(entity, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
+        VertexConsumer vertexconsumer = buffer.getBuffer(this.model.renderType(LLAMA_SPIT_LOCATION));
+        this.model.renderToBuffer(poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY);
+        poseStack.popPose();
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 
-    public ResourceLocation getTextureLocation(LlamaSpit p_115371_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(LlamaSpit entity) {
         return LLAMA_SPIT_LOCATION;
     }
 }

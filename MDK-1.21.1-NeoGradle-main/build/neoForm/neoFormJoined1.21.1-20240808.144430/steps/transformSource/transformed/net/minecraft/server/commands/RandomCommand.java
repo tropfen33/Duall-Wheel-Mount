@@ -34,8 +34,8 @@ public class RandomCommand {
         Component.translatable("commands.random.error.range_too_small")
     );
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_295018_) {
-        p_295018_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("random")
                 .then(drawRandomValueTree("value", false))
                 .then(drawRandomValueTree("roll", true))
@@ -121,11 +121,11 @@ public class RandomCommand {
         );
     }
 
-    private static LiteralArgumentBuilder<CommandSourceStack> drawRandomValueTree(String p_295419_, boolean p_295785_) {
-        return Commands.literal(p_295419_)
+    private static LiteralArgumentBuilder<CommandSourceStack> drawRandomValueTree(String subcommand, boolean displayResult) {
+        return Commands.literal(subcommand)
             .then(
                 Commands.argument("range", RangeArgument.intRange())
-                    .executes(p_294702_ -> randomSample(p_294702_.getSource(), RangeArgument.Ints.getRange(p_294702_, "range"), null, p_295785_))
+                    .executes(p_294702_ -> randomSample(p_294702_.getSource(), RangeArgument.Ints.getRange(p_294702_, "range"), null, displayResult))
                     .then(
                         Commands.argument("sequence", ResourceLocationArgument.id())
                             .suggests(RandomCommand::suggestRandomSequence)
@@ -135,29 +135,29 @@ public class RandomCommand {
                                         p_295226_.getSource(),
                                         RangeArgument.Ints.getRange(p_295226_, "range"),
                                         ResourceLocationArgument.getId(p_295226_, "sequence"),
-                                        p_295785_
+                                        displayResult
                                     )
                             )
                     )
             );
     }
 
-    private static CompletableFuture<Suggestions> suggestRandomSequence(CommandContext<CommandSourceStack> p_296223_, SuggestionsBuilder p_295797_) {
+    private static CompletableFuture<Suggestions> suggestRandomSequence(CommandContext<CommandSourceStack> context, SuggestionsBuilder suggestionsBuilder) {
         List<String> list = Lists.newArrayList();
-        p_296223_.getSource().getLevel().getRandomSequences().forAllSequences((p_294879_, p_294337_) -> list.add(p_294879_.toString()));
-        return SharedSuggestionProvider.suggest(list, p_295797_);
+        context.getSource().getLevel().getRandomSequences().forAllSequences((p_294879_, p_294337_) -> list.add(p_294879_.toString()));
+        return SharedSuggestionProvider.suggest(list, suggestionsBuilder);
     }
 
-    private static int randomSample(CommandSourceStack p_295774_, MinMaxBounds.Ints p_295453_, @Nullable ResourceLocation p_294336_, boolean p_296222_) throws CommandSyntaxException {
+    private static int randomSample(CommandSourceStack source, MinMaxBounds.Ints range, @Nullable ResourceLocation sequence, boolean displayResult) throws CommandSyntaxException {
         RandomSource randomsource;
-        if (p_294336_ != null) {
-            randomsource = p_295774_.getLevel().getRandomSequence(p_294336_);
+        if (sequence != null) {
+            randomsource = source.getLevel().getRandomSequence(sequence);
         } else {
-            randomsource = p_295774_.getLevel().getRandom();
+            randomsource = source.getLevel().getRandom();
         }
 
-        int i = p_295453_.min().orElse(Integer.MIN_VALUE);
-        int j = p_295453_.max().orElse(Integer.MAX_VALUE);
+        int i = range.min().orElse(Integer.MIN_VALUE);
+        int j = range.max().orElse(Integer.MAX_VALUE);
         long k = (long)j - (long)i;
         if (k == 0L) {
             throw ERROR_RANGE_TOO_SMALL.create();
@@ -165,41 +165,41 @@ public class RandomCommand {
             throw ERROR_RANGE_TOO_LARGE.create();
         } else {
             int l = Mth.randomBetweenInclusive(randomsource, i, j);
-            if (p_296222_) {
-                p_295774_.getServer()
+            if (displayResult) {
+                source.getServer()
                     .getPlayerList()
-                    .broadcastSystemMessage(Component.translatable("commands.random.roll", p_295774_.getDisplayName(), l, i, j), false);
+                    .broadcastSystemMessage(Component.translatable("commands.random.roll", source.getDisplayName(), l, i, j), false);
             } else {
-                p_295774_.sendSuccess(() -> Component.translatable("commands.random.sample.success", l), false);
+                source.sendSuccess(() -> Component.translatable("commands.random.sample.success", l), false);
             }
 
             return l;
         }
     }
 
-    private static int resetSequence(CommandSourceStack p_295984_, ResourceLocation p_296220_) throws CommandSyntaxException {
-        p_295984_.getLevel().getRandomSequences().reset(p_296220_);
-        p_295984_.sendSuccess(() -> Component.translatable("commands.random.reset.success", Component.translationArg(p_296220_)), false);
+    private static int resetSequence(CommandSourceStack source, ResourceLocation sequence) throws CommandSyntaxException {
+        source.getLevel().getRandomSequences().reset(sequence);
+        source.sendSuccess(() -> Component.translatable("commands.random.reset.success", Component.translationArg(sequence)), false);
         return 1;
     }
 
-    private static int resetSequence(CommandSourceStack p_296416_, ResourceLocation p_294611_, int p_295199_, boolean p_295241_, boolean p_294844_) throws CommandSyntaxException {
-        p_296416_.getLevel().getRandomSequences().reset(p_294611_, p_295199_, p_295241_, p_294844_);
-        p_296416_.sendSuccess(() -> Component.translatable("commands.random.reset.success", Component.translationArg(p_294611_)), false);
+    private static int resetSequence(CommandSourceStack source, ResourceLocation sequence, int seed, boolean includeWorldSeed, boolean includeSequenceId) throws CommandSyntaxException {
+        source.getLevel().getRandomSequences().reset(sequence, seed, includeWorldSeed, includeSequenceId);
+        source.sendSuccess(() -> Component.translatable("commands.random.reset.success", Component.translationArg(sequence)), false);
         return 1;
     }
 
-    private static int resetAllSequences(CommandSourceStack p_294291_) {
-        int i = p_294291_.getLevel().getRandomSequences().clear();
-        p_294291_.sendSuccess(() -> Component.translatable("commands.random.reset.all.success", i), false);
+    private static int resetAllSequences(CommandSourceStack source) {
+        int i = source.getLevel().getRandomSequences().clear();
+        source.sendSuccess(() -> Component.translatable("commands.random.reset.all.success", i), false);
         return i;
     }
 
-    private static int resetAllSequencesAndSetNewDefaults(CommandSourceStack p_294151_, int p_295754_, boolean p_294405_, boolean p_294396_) {
-        RandomSequences randomsequences = p_294151_.getLevel().getRandomSequences();
-        randomsequences.setSeedDefaults(p_295754_, p_294405_, p_294396_);
+    private static int resetAllSequencesAndSetNewDefaults(CommandSourceStack source, int seed, boolean includeWorldSeed, boolean includeSequenceId) {
+        RandomSequences randomsequences = source.getLevel().getRandomSequences();
+        randomsequences.setSeedDefaults(seed, includeWorldSeed, includeSequenceId);
         int i = randomsequences.clear();
-        p_294151_.sendSuccess(() -> Component.translatable("commands.random.reset.all.success", i), false);
+        source.sendSuccess(() -> Component.translatable("commands.random.reset.all.success", i), false);
         return i;
     }
 }

@@ -54,33 +54,33 @@ public class ItemEntity extends Entity implements TraceableEntity {
      */
     public int lifespan = ItemEntity.LIFETIME;
 
-    public ItemEntity(EntityType<? extends ItemEntity> p_31991_, Level p_31992_) {
-        super(p_31991_, p_31992_);
+    public ItemEntity(EntityType<? extends ItemEntity> entityType, Level level) {
+        super(entityType, level);
         this.bobOffs = this.random.nextFloat() * (float) Math.PI * 2.0F;
         this.setYRot(this.random.nextFloat() * 360.0F);
     }
 
-    public ItemEntity(Level p_32001_, double p_32002_, double p_32003_, double p_32004_, ItemStack p_32005_) {
-        this(p_32001_, p_32002_, p_32003_, p_32004_, p_32005_, p_32001_.random.nextDouble() * 0.2 - 0.1, 0.2, p_32001_.random.nextDouble() * 0.2 - 0.1);
+    public ItemEntity(Level level, double posX, double posY, double posZ, ItemStack itemStack) {
+        this(level, posX, posY, posZ, itemStack, level.random.nextDouble() * 0.2 - 0.1, 0.2, level.random.nextDouble() * 0.2 - 0.1);
     }
 
     public ItemEntity(
-        Level p_149663_, double p_149664_, double p_149665_, double p_149666_, ItemStack p_149667_, double p_149668_, double p_149669_, double p_149670_
+        Level level, double posX, double posY, double posZ, ItemStack itemStack, double deltaX, double deltaY, double deltaZ
     ) {
-        this(EntityType.ITEM, p_149663_);
-        this.setPos(p_149664_, p_149665_, p_149666_);
-        this.setDeltaMovement(p_149668_, p_149669_, p_149670_);
-        this.setItem(p_149667_);
-        this.lifespan = (p_149667_.getItem() == null ? ItemEntity.LIFETIME : p_149667_.getEntityLifespan(p_149663_));
+        this(EntityType.ITEM, level);
+        this.setPos(posX, posY, posZ);
+        this.setDeltaMovement(deltaX, deltaY, deltaZ);
+        this.setItem(itemStack);
+        this.lifespan = (itemStack.getItem() == null ? ItemEntity.LIFETIME : itemStack.getEntityLifespan(level));
     }
 
-    private ItemEntity(ItemEntity p_31994_) {
-        super(p_31994_.getType(), p_31994_.level());
-        this.setItem(p_31994_.getItem().copy());
-        this.copyPosition(p_31994_);
-        this.age = p_31994_.age;
-        this.bobOffs = p_31994_.bobOffs;
-        this.lifespan = p_31994_.lifespan;
+    private ItemEntity(ItemEntity other) {
+        super(other.getType(), other.level());
+        this.setItem(other.getItem().copy());
+        this.copyPosition(other);
+        this.age = other.age;
+        this.bobOffs = other.bobOffs;
+        this.lifespan = other.lifespan;
     }
 
     @Override
@@ -101,10 +101,13 @@ public class ItemEntity extends Entity implements TraceableEntity {
         }
     }
 
+    /**
+     * Prepares this entity in new dimension by copying NBT data from entity in old dimension
+     */
     @Override
-    public void restoreFrom(Entity p_305965_) {
-        super.restoreFrom(p_305965_);
-        if (p_305965_ instanceof ItemEntity itementity) {
+    public void restoreFrom(Entity entity) {
+        super.restoreFrom(entity);
+        if (entity instanceof ItemEntity itementity) {
             this.cachedThrower = itementity.cachedThrower;
         }
     }
@@ -115,8 +118,8 @@ public class ItemEntity extends Entity implements TraceableEntity {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326372_) {
-        p_326372_.define(DATA_ITEM, ItemStack.EMPTY);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_ITEM, ItemStack.EMPTY);
     }
 
     @Override
@@ -244,40 +247,40 @@ public class ItemEntity extends Entity implements TraceableEntity {
         return this.isAlive() && this.pickupDelay != 32767 && this.age != -32768 && this.age < 6000 && itemstack.getCount() < itemstack.getMaxStackSize();
     }
 
-    private void tryToMerge(ItemEntity p_32016_) {
+    private void tryToMerge(ItemEntity itemEntity) {
         ItemStack itemstack = this.getItem();
-        ItemStack itemstack1 = p_32016_.getItem();
-        if (Objects.equals(this.target, p_32016_.target) && areMergable(itemstack, itemstack1)) {
+        ItemStack itemstack1 = itemEntity.getItem();
+        if (Objects.equals(this.target, itemEntity.target) && areMergable(itemstack, itemstack1)) {
             if (itemstack1.getCount() < itemstack.getCount()) {
-                merge(this, itemstack, p_32016_, itemstack1);
+                merge(this, itemstack, itemEntity, itemstack1);
             } else {
-                merge(p_32016_, itemstack1, this, itemstack);
+                merge(itemEntity, itemstack1, this, itemstack);
             }
         }
     }
 
-    public static boolean areMergable(ItemStack p_32027_, ItemStack p_32028_) {
-        return p_32028_.getCount() + p_32027_.getCount() > p_32028_.getMaxStackSize() ? false : ItemStack.isSameItemSameComponents(p_32027_, p_32028_);
+    public static boolean areMergable(ItemStack destinationStack, ItemStack originStack) {
+        return originStack.getCount() + destinationStack.getCount() > originStack.getMaxStackSize() ? false : ItemStack.isSameItemSameComponents(destinationStack, originStack);
     }
 
-    public static ItemStack merge(ItemStack p_32030_, ItemStack p_32031_, int p_32032_) {
-        int i = Math.min(Math.min(p_32030_.getMaxStackSize(), p_32032_) - p_32030_.getCount(), p_32031_.getCount());
-        ItemStack itemstack = p_32030_.copyWithCount(p_32030_.getCount() + i);
-        p_32031_.shrink(i);
+    public static ItemStack merge(ItemStack destinationStack, ItemStack originStack, int amount) {
+        int i = Math.min(Math.min(destinationStack.getMaxStackSize(), amount) - destinationStack.getCount(), originStack.getCount());
+        ItemStack itemstack = destinationStack.copyWithCount(destinationStack.getCount() + i);
+        originStack.shrink(i);
         return itemstack;
     }
 
-    private static void merge(ItemEntity p_32023_, ItemStack p_32024_, ItemStack p_32025_) {
-        ItemStack itemstack = merge(p_32024_, p_32025_, 64);
-        p_32023_.setItem(itemstack);
+    private static void merge(ItemEntity destinationEntity, ItemStack destinationStack, ItemStack originStack) {
+        ItemStack itemstack = merge(destinationStack, originStack, 64);
+        destinationEntity.setItem(itemstack);
     }
 
-    private static void merge(ItemEntity p_32018_, ItemStack p_32019_, ItemEntity p_32020_, ItemStack p_32021_) {
-        merge(p_32018_, p_32019_, p_32021_);
-        p_32018_.pickupDelay = Math.max(p_32018_.pickupDelay, p_32020_.pickupDelay);
-        p_32018_.age = Math.min(p_32018_.age, p_32020_.age);
-        if (p_32021_.isEmpty()) {
-            p_32020_.discard();
+    private static void merge(ItemEntity destinationEntity, ItemStack destinationStack, ItemEntity originEntity, ItemStack originStack) {
+        merge(destinationEntity, destinationStack, originStack);
+        destinationEntity.pickupDelay = Math.max(destinationEntity.pickupDelay, originEntity.pickupDelay);
+        destinationEntity.age = Math.min(destinationEntity.age, originEntity.age);
+        if (originStack.isEmpty()) {
+            originEntity.discard();
         }
     }
 
@@ -286,22 +289,25 @@ public class ItemEntity extends Entity implements TraceableEntity {
         return this.getItem().has(DataComponents.FIRE_RESISTANT) || super.fireImmune();
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_32013_, float p_32014_) {
-        if (this.isInvulnerableTo(p_32013_)) {
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isInvulnerableTo(source)) {
             return false;
-        } else if (!this.getItem().isEmpty() && this.getItem().is(Items.NETHER_STAR) && p_32013_.is(DamageTypeTags.IS_EXPLOSION)) {
+        } else if (!this.getItem().isEmpty() && this.getItem().is(Items.NETHER_STAR) && source.is(DamageTypeTags.IS_EXPLOSION)) {
             return false;
-        } else if (!this.getItem().canBeHurtBy(p_32013_)) {
+        } else if (!this.getItem().canBeHurtBy(source)) {
             return false;
         } else if (this.level().isClientSide) {
             return true;
         } else {
             this.markHurt();
-            this.health = (int)((float)this.health - p_32014_);
-            this.gameEvent(GameEvent.ENTITY_DAMAGE, p_32013_.getEntity());
+            this.health = (int)((float)this.health - amount);
+            this.gameEvent(GameEvent.ENTITY_DAMAGE, source.getEntity());
             if (this.health <= 0) {
-                this.getItem().onDestroyed(this, p_32013_);
+                this.getItem().onDestroyed(this, source);
                 this.discard();
             }
 
@@ -310,46 +316,49 @@ public class ItemEntity extends Entity implements TraceableEntity {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_32050_) {
-        p_32050_.putShort("Health", (short)this.health);
-        p_32050_.putShort("Age", (short)this.age);
-        p_32050_.putShort("PickupDelay", (short)this.pickupDelay);
-        p_32050_.putInt("Lifespan", this.lifespan);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        compound.putShort("Health", (short)this.health);
+        compound.putShort("Age", (short)this.age);
+        compound.putShort("PickupDelay", (short)this.pickupDelay);
+        compound.putInt("Lifespan", this.lifespan);
         if (this.thrower != null) {
-            p_32050_.putUUID("Thrower", this.thrower);
+            compound.putUUID("Thrower", this.thrower);
         }
 
         if (this.target != null) {
-            p_32050_.putUUID("Owner", this.target);
+            compound.putUUID("Owner", this.target);
         }
 
         if (!this.getItem().isEmpty()) {
-            p_32050_.put("Item", this.getItem().save(this.registryAccess()));
+            compound.put("Item", this.getItem().save(this.registryAccess()));
         }
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_32034_) {
-        this.health = p_32034_.getShort("Health");
-        this.age = p_32034_.getShort("Age");
-        if (p_32034_.contains("PickupDelay")) {
-            this.pickupDelay = p_32034_.getShort("PickupDelay");
+    public void readAdditionalSaveData(CompoundTag compound) {
+        this.health = compound.getShort("Health");
+        this.age = compound.getShort("Age");
+        if (compound.contains("PickupDelay")) {
+            this.pickupDelay = compound.getShort("PickupDelay");
         }
-        if (p_32034_.contains("Lifespan")) {
-            this.lifespan = p_32034_.getInt("Lifespan");
-        }
-
-        if (p_32034_.hasUUID("Owner")) {
-            this.target = p_32034_.getUUID("Owner");
+        if (compound.contains("Lifespan")) {
+            this.lifespan = compound.getInt("Lifespan");
         }
 
-        if (p_32034_.hasUUID("Thrower")) {
-            this.thrower = p_32034_.getUUID("Thrower");
+        if (compound.hasUUID("Owner")) {
+            this.target = compound.getUUID("Owner");
+        }
+
+        if (compound.hasUUID("Thrower")) {
+            this.thrower = compound.getUUID("Thrower");
             this.cachedThrower = null;
         }
 
-        if (p_32034_.contains("Item", 10)) {
-            CompoundTag compoundtag = p_32034_.getCompound("Item");
+        if (compound.contains("Item", 10)) {
+            CompoundTag compoundtag = compound.getCompound("Item");
             this.setItem(ItemStack.parse(this.registryAccess(), compoundtag).orElse(ItemStack.EMPTY));
         } else {
             this.setItem(ItemStack.EMPTY);
@@ -360,15 +369,18 @@ public class ItemEntity extends Entity implements TraceableEntity {
         }
     }
 
+    /**
+     * Called by a player entity when they collide with an entity
+     */
     @Override
-    public void playerTouch(Player p_32040_) {
+    public void playerTouch(Player entity) {
         if (!this.level().isClientSide) {
             ItemStack itemstack = this.getItem();
             Item item = itemstack.getItem();
             int i = itemstack.getCount();
 
             // Neo: Fire item pickup pre/post and adjust handling logic to adhere to the event result.
-            var result = net.neoforged.neoforge.event.EventHooks.fireItemPickupPre(this, p_32040_).canPickup();
+            var result = net.neoforged.neoforge.event.EventHooks.fireItemPickupPre(this, entity).canPickup();
             if (result.isFalse()) {
                 return;
             }
@@ -376,20 +388,20 @@ public class ItemEntity extends Entity implements TraceableEntity {
             // Make a copy of the original stack for use in ItemEntityPickupEvent.Post
             ItemStack originalCopy = itemstack.copy();
             // Subvert the vanilla conditions (pickup delay and target check) if the result is true.
-            if ((result.isTrue() || this.pickupDelay == 0 && (this.target == null || this.target.equals(p_32040_.getUUID()))) && p_32040_.getInventory().add(itemstack)) {
+            if ((result.isTrue() || this.pickupDelay == 0 && (this.target == null || this.target.equals(entity.getUUID()))) && entity.getInventory().add(itemstack)) {
                 // Fire ItemEntityPickupEvent.Post
-                net.neoforged.neoforge.event.EventHooks.fireItemPickupPost(this, p_32040_, originalCopy);
+                net.neoforged.neoforge.event.EventHooks.fireItemPickupPost(this, entity, originalCopy);
                 // Update `i` to reflect the actual pickup amount. Vanilla is wrong here and always reports the whole stack.
                 i = originalCopy.getCount() - itemstack.getCount();
 
-                p_32040_.take(this, i);
+                entity.take(this, i);
                 if (itemstack.isEmpty()) {
                     this.discard();
                     itemstack.setCount(i);
                 }
 
-                p_32040_.awardStat(Stats.ITEM_PICKED_UP.get(item), i);
-                p_32040_.onItemPickup(this);
+                entity.awardStat(Stats.ITEM_PICKED_UP.get(item), i);
+                entity.onItemPickup(this);
             }
         }
     }
@@ -407,8 +419,8 @@ public class ItemEntity extends Entity implements TraceableEntity {
 
     @Nullable
     @Override
-    public Entity changeDimension(DimensionTransition p_350598_) {
-        Entity entity = super.changeDimension(p_350598_);
+    public Entity changeDimension(DimensionTransition transition) {
+        Entity entity = super.changeDimension(transition);
         if (!this.level().isClientSide && entity instanceof ItemEntity itementity) {
             itementity.mergeWithNeighbours();
         }
@@ -420,20 +432,23 @@ public class ItemEntity extends Entity implements TraceableEntity {
         return this.getEntityData().get(DATA_ITEM);
     }
 
-    public void setItem(ItemStack p_32046_) {
-        this.getEntityData().set(DATA_ITEM, p_32046_);
+    /**
+     * Sets the item that this entity represents.
+     */
+    public void setItem(ItemStack stack) {
+        this.getEntityData().set(DATA_ITEM, stack);
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_32036_) {
-        super.onSyncedDataUpdated(p_32036_);
-        if (DATA_ITEM.equals(p_32036_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (DATA_ITEM.equals(key)) {
             this.getItem().setEntityRepresentation(this);
         }
     }
 
-    public void setTarget(@Nullable UUID p_266724_) {
-        this.target = p_266724_;
+    public void setTarget(@Nullable UUID target) {
+        this.target = target;
     }
 
     /**
@@ -445,9 +460,9 @@ public class ItemEntity extends Entity implements TraceableEntity {
         return this.target;
     }
 
-    public void setThrower(Entity p_306324_) {
-        this.thrower = p_306324_.getUUID();
-        this.cachedThrower = p_306324_;
+    public void setThrower(Entity thrower) {
+        this.thrower = thrower.getUUID();
+        this.cachedThrower = thrower;
     }
 
     public int getAge() {
@@ -466,8 +481,8 @@ public class ItemEntity extends Entity implements TraceableEntity {
         this.pickupDelay = 32767;
     }
 
-    public void setPickUpDelay(int p_32011_) {
-        this.pickupDelay = p_32011_;
+    public void setPickUpDelay(int pickupDelay) {
+        this.pickupDelay = pickupDelay;
     }
 
     public boolean hasPickUpDelay() {
@@ -487,8 +502,8 @@ public class ItemEntity extends Entity implements TraceableEntity {
         this.age = getItem().getEntityLifespan(this.level()) - 1;
     }
 
-    public float getSpin(float p_32009_) {
-        return ((float)this.getAge() + p_32009_) / 20.0F + this.bobOffs;
+    public float getSpin(float partialTicks) {
+        return ((float)this.getAge() + partialTicks) / 20.0F + this.bobOffs;
     }
 
     public ItemEntity copy() {
@@ -506,7 +521,7 @@ public class ItemEntity extends Entity implements TraceableEntity {
     }
 
     @Override
-    public SlotAccess getSlot(int p_333779_) {
-        return p_333779_ == 0 ? SlotAccess.of(this::getItem, this::setItem) : super.getSlot(p_333779_);
+    public SlotAccess getSlot(int slot) {
+        return slot == 0 ? SlotAccess.of(this::getItem, this::setItem) : super.getSlot(slot);
     }
 }

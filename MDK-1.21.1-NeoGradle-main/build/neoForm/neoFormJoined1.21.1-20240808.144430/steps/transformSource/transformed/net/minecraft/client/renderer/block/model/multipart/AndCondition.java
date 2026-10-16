@@ -15,13 +15,13 @@ public class AndCondition implements Condition {
     public static final String TOKEN = "AND";
     private final Iterable<? extends Condition> conditions;
 
-    public AndCondition(Iterable<? extends Condition> p_111910_) {
-        this.conditions = p_111910_;
+    public AndCondition(Iterable<? extends Condition> conditions) {
+        this.conditions = conditions;
     }
 
     @Override
-    public Predicate<BlockState> getPredicate(StateDefinition<Block, BlockState> p_111921_) {
-        List<Predicate<BlockState>> list = Streams.stream(this.conditions).map(p_111916_ -> p_111916_.getPredicate(p_111921_)).collect(Collectors.toList());
+    public Predicate<BlockState> getPredicate(StateDefinition<Block, BlockState> definition) {
+        List<Predicate<BlockState>> list = Streams.stream(this.conditions).map(p_111916_ -> p_111916_.getPredicate(definition)).collect(Collectors.toList());
         return p_111919_ -> list.stream().allMatch(p_173502_ -> p_173502_.test(p_111919_));
     }
 }

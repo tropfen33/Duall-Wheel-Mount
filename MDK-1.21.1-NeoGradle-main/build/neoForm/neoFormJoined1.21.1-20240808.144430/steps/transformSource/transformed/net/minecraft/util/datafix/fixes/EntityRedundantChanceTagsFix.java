@@ -13,8 +13,8 @@ import java.util.List;
 public class EntityRedundantChanceTagsFix extends DataFix {
     private static final Codec<List<Float>> FLOAT_LIST_CODEC = Codec.FLOAT.listOf();
 
-    public EntityRedundantChanceTagsFix(Schema p_15601_, boolean p_15602_) {
-        super(p_15601_, p_15602_);
+    public EntityRedundantChanceTagsFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -34,9 +34,9 @@ public class EntityRedundantChanceTagsFix extends DataFix {
         );
     }
 
-    private static boolean isZeroList(OptionalDynamic<?> p_15611_, int p_15612_) {
-        return p_15611_.flatMap(FLOAT_LIST_CODEC::parse)
-            .map(p_15605_ -> p_15605_.size() == p_15612_ && p_15605_.stream().allMatch(p_145306_ -> p_145306_ == 0.0F))
+    private static boolean isZeroList(OptionalDynamic<?> list, int size) {
+        return list.flatMap(FLOAT_LIST_CODEC::parse)
+            .map(p_15605_ -> p_15605_.size() == size && p_15605_.stream().allMatch(p_145306_ -> p_145306_ == 0.0F))
             .result()
             .orElse(false);
     }

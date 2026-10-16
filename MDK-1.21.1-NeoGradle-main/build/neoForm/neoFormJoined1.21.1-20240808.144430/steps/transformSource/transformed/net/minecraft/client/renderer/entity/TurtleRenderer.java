@@ -15,12 +15,15 @@ public class TurtleRenderer extends MobRenderer<Turtle, TurtleModel<Turtle>> {
         super(p_174430_, new TurtleModel<>(p_174430_.bakeLayer(ModelLayers.TURTLE)), 0.7F);
     }
 
-    protected float getShadowRadius(Turtle p_316236_) {
-        float f = super.getShadowRadius(p_316236_);
-        return p_316236_.isBaby() ? f * 0.83F : f;
+    protected float getShadowRadius(Turtle entity) {
+        float f = super.getShadowRadius(entity);
+        return entity.isBaby() ? f * 0.83F : f;
     }
 
-    public ResourceLocation getTextureLocation(Turtle p_116259_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Turtle entity) {
         return TURTLE_LOCATION;
     }
 }

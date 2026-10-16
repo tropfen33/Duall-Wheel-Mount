@@ -46,15 +46,15 @@ public class SurfaceRuleData {
     private static final SurfaceRules.RuleSource CRIMSON_NYLIUM = makeStateRule(Blocks.CRIMSON_NYLIUM);
     private static final SurfaceRules.RuleSource ENDSTONE = makeStateRule(Blocks.END_STONE);
 
-    private static SurfaceRules.RuleSource makeStateRule(Block p_194811_) {
-        return SurfaceRules.state(p_194811_.defaultBlockState());
+    private static SurfaceRules.RuleSource makeStateRule(Block block) {
+        return SurfaceRules.state(block.defaultBlockState());
     }
 
     public static SurfaceRules.RuleSource overworld() {
         return overworldLike(true, false, true);
     }
 
-    public static SurfaceRules.RuleSource overworldLike(boolean p_198381_, boolean p_198382_, boolean p_198383_) {
+    public static SurfaceRules.RuleSource overworldLike(boolean aboveGround, boolean bedrockRoof, boolean bedrockFloor) {
         SurfaceRules.ConditionSource surfacerules$conditionsource = SurfaceRules.yBlockCheck(VerticalAnchor.absolute(97), 2);
         SurfaceRules.ConditionSource surfacerules$conditionsource1 = SurfaceRules.yBlockCheck(VerticalAnchor.absolute(256), 0);
         SurfaceRules.ConditionSource surfacerules$conditionsource2 = SurfaceRules.yStartCheck(VerticalAnchor.absolute(63), -1);
@@ -292,18 +292,18 @@ public class SurfaceRuleData {
             )
         );
         Builder<SurfaceRules.RuleSource> builder = ImmutableList.builder();
-        if (p_198382_) {
+        if (bedrockRoof) {
             builder.add(
                 SurfaceRules.ifTrue(SurfaceRules.not(SurfaceRules.verticalGradient("bedrock_roof", VerticalAnchor.belowTop(5), VerticalAnchor.top())), BEDROCK)
             );
         }
 
-        if (p_198383_) {
+        if (bedrockFloor) {
             builder.add(SurfaceRules.ifTrue(SurfaceRules.verticalGradient("bedrock_floor", VerticalAnchor.bottom(), VerticalAnchor.aboveBottom(5)), BEDROCK));
         }
 
         SurfaceRules.RuleSource surfacerules$rulesource9 = SurfaceRules.ifTrue(SurfaceRules.abovePreliminarySurface(), surfacerules$rulesource8);
-        builder.add(p_198381_ ? surfacerules$rulesource9 : surfacerules$rulesource8);
+        builder.add(aboveGround ? surfacerules$rulesource9 : surfacerules$rulesource8);
         builder.add(SurfaceRules.ifTrue(SurfaceRules.verticalGradient("deepslate", VerticalAnchor.absolute(0), VerticalAnchor.absolute(8)), DEEPSLATE));
         return SurfaceRules.sequence(builder.build().toArray(SurfaceRules.RuleSource[]::new));
     }
@@ -422,7 +422,7 @@ public class SurfaceRuleData {
         return AIR;
     }
 
-    private static SurfaceRules.ConditionSource surfaceNoiseAbove(double p_194809_) {
-        return SurfaceRules.noiseCondition(Noises.SURFACE, p_194809_ / 8.25, Double.MAX_VALUE);
+    private static SurfaceRules.ConditionSource surfaceNoiseAbove(double value) {
+        return SurfaceRules.noiseCondition(Noises.SURFACE, value / 8.25, Double.MAX_VALUE);
     }
 }

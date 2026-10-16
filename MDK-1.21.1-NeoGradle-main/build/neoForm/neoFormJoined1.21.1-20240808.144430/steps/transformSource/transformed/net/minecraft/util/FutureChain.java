@@ -14,15 +14,15 @@ public class FutureChain implements TaskChainer, AutoCloseable {
     private final Executor executor;
     private volatile boolean closed;
 
-    public FutureChain(Executor p_242395_) {
-        this.executor = p_242395_;
+    public FutureChain(Executor executor) {
+        this.executor = executor;
     }
 
     @Override
-    public <T> void append(CompletableFuture<T> p_307286_, Consumer<T> p_307337_) {
-        this.head = this.head.<T, Object>thenCombine(p_307286_, (p_307163_, p_307164_) -> p_307164_).thenAcceptAsync(p_307166_ -> {
+    public <T> void append(CompletableFuture<T> future, Consumer<T> consumer) {
+        this.head = this.head.<T, Object>thenCombine(future, (p_307163_, p_307164_) -> p_307164_).thenAcceptAsync(p_307166_ -> {
             if (!this.closed) {
-                p_307337_.accept((T)p_307166_);
+                consumer.accept((T)p_307166_);
             }
         }, this.executor).exceptionally(p_242215_ -> {
             if (p_242215_ instanceof CompletionException completionexception) {

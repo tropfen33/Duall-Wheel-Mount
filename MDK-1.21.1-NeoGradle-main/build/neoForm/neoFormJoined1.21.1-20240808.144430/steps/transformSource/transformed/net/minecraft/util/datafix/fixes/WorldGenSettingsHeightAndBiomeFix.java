@@ -18,8 +18,8 @@ public class WorldGenSettingsHeightAndBiomeFix extends DataFix {
     private static final String NAME = "WorldGenSettingsHeightAndBiomeFix";
     public static final String WAS_PREVIOUSLY_INCREASED_KEY = "has_increased_height_already";
 
-    public WorldGenSettingsHeightAndBiomeFix(Schema p_185174_) {
-        super(p_185174_, true);
+    public WorldGenSettingsHeightAndBiomeFix(Schema outputSchema) {
+        super(outputSchema, true);
     }
 
     @Override
@@ -100,10 +100,10 @@ public class WorldGenSettingsHeightAndBiomeFix extends DataFix {
         );
     }
 
-    private static Dynamic<?> updateLayers(Dynamic<?> p_185181_) {
-        Dynamic<?> dynamic = p_185181_.createMap(
-            ImmutableMap.of(p_185181_.createString("height"), p_185181_.createInt(64), p_185181_.createString("block"), p_185181_.createString("minecraft:air"))
+    private static Dynamic<?> updateLayers(Dynamic<?> p_dynamic) {
+        Dynamic<?> dynamic = p_dynamic.createMap(
+            ImmutableMap.of(p_dynamic.createString("height"), p_dynamic.createInt(64), p_dynamic.createString("block"), p_dynamic.createString("minecraft:air"))
         );
-        return p_185181_.createList(Stream.concat(Stream.of(dynamic), p_185181_.asStream()));
+        return p_dynamic.createList(Stream.concat(Stream.of(dynamic), p_dynamic.asStream()));
     }
 }

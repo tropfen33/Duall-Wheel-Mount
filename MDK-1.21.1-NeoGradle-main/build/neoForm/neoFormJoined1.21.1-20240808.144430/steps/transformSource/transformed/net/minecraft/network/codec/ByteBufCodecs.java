@@ -124,12 +124,12 @@ public interface ByteBufCodecs {
         }
     };
     StreamCodec<ByteBuf, byte[]> BYTE_ARRAY = new StreamCodec<ByteBuf, byte[]>() {
-        public byte[] decode(ByteBuf p_320167_) {
-            return FriendlyByteBuf.readByteArray(p_320167_);
+        public byte[] decode(ByteBuf buffer) {
+            return FriendlyByteBuf.readByteArray(buffer);
         }
 
-        public void encode(ByteBuf p_320240_, byte[] p_341316_) {
-            FriendlyByteBuf.writeByteArray(p_320240_, p_341316_);
+        public void encode(ByteBuf buffer, byte[] value) {
+            FriendlyByteBuf.writeByteArray(buffer, value);
         }
     };
     StreamCodec<ByteBuf, String> STRING_UTF8 = stringUtf8(32767);
@@ -211,15 +211,15 @@ public interface ByteBufCodecs {
         }
     };
 
-    static StreamCodec<ByteBuf, byte[]> byteArray(final int p_324182_) {
+    static StreamCodec<ByteBuf, byte[]> byteArray(final int maxSize) {
         return new StreamCodec<ByteBuf, byte[]>() {
             public byte[] decode(ByteBuf p_319947_) {
-                return FriendlyByteBuf.readByteArray(p_319947_, p_324182_);
+                return FriendlyByteBuf.readByteArray(p_319947_, maxSize);
             }
 
             public void encode(ByteBuf p_320370_, byte[] p_331189_) {
-                if (p_331189_.length > p_324182_) {
-                    throw new EncoderException("ByteArray with size " + p_331189_.length + " is bigger than allowed " + p_324182_);
+                if (p_331189_.length > maxSize) {
+                    throw new EncoderException("ByteArray with size " + p_331189_.length + " is bigger than allowed " + maxSize);
                 } else {
                     FriendlyByteBuf.writeByteArray(p_320370_, p_331189_);
                 }
@@ -227,22 +227,22 @@ public interface ByteBufCodecs {
         };
     }
 
-    static StreamCodec<ByteBuf, String> stringUtf8(final int p_320693_) {
+    static StreamCodec<ByteBuf, String> stringUtf8(final int maxLength) {
         return new StreamCodec<ByteBuf, String>() {
             public String decode(ByteBuf p_332176_) {
-                return Utf8String.read(p_332176_, p_320693_);
+                return Utf8String.read(p_332176_, maxLength);
             }
 
             public void encode(ByteBuf p_331068_, String p_341104_) {
-                Utf8String.write(p_331068_, p_341104_, p_320693_);
+                Utf8String.write(p_331068_, p_341104_, maxLength);
             }
         };
     }
 
-    static StreamCodec<ByteBuf, Tag> tagCodec(final Supplier<NbtAccounter> p_320506_) {
+    static StreamCodec<ByteBuf, Tag> tagCodec(final Supplier<NbtAccounter> accounter) {
         return new StreamCodec<ByteBuf, Tag>() {
             public Tag decode(ByteBuf p_341393_) {
-                Tag tag = FriendlyByteBuf.readNbt(p_341393_, p_320506_.get());
+                Tag tag = FriendlyByteBuf.readNbt(p_341393_, accounter.get());
                 if (tag == null) {
                     throw new DecoderException("Expected non-null compound tag");
                 } else {
@@ -260,8 +260,8 @@ public interface ByteBufCodecs {
         };
     }
 
-    static StreamCodec<ByteBuf, CompoundTag> compoundTagCodec(Supplier<NbtAccounter> p_331128_) {
-        return tagCodec(p_331128_).map(p_339405_ -> {
+    static StreamCodec<ByteBuf, CompoundTag> compoundTagCodec(Supplier<NbtAccounter> accounterSupplier) {
+        return tagCodec(accounterSupplier).map(p_339405_ -> {
             if (p_339405_ instanceof CompoundTag) {
                 return (CompoundTag)p_339405_;
             } else {
@@ -270,60 +270,60 @@ public interface ByteBufCodecs {
         }, p_330975_ -> (Tag)p_330975_);
     }
 
-    static <T> StreamCodec<ByteBuf, T> fromCodecTrusted(Codec<T> p_331105_) {
-        return fromCodec(p_331105_, NbtAccounter::unlimitedHeap);
+    static <T> StreamCodec<ByteBuf, T> fromCodecTrusted(Codec<T> codec) {
+        return fromCodec(codec, NbtAccounter::unlimitedHeap);
     }
 
-    static <T> StreamCodec<ByteBuf, T> fromCodec(Codec<T> p_320615_) {
-        return fromCodec(p_320615_, () -> NbtAccounter.create(2097152L));
+    static <T> StreamCodec<ByteBuf, T> fromCodec(Codec<T> codec) {
+        return fromCodec(codec, () -> NbtAccounter.create(2097152L));
     }
 
-    static <T> StreamCodec<ByteBuf, T> fromCodec(Codec<T> p_330943_, Supplier<NbtAccounter> p_330382_) {
-        return tagCodec(p_330382_)
+    static <T> StreamCodec<ByteBuf, T> fromCodec(Codec<T> codec, Supplier<NbtAccounter> accounterSupplier) {
+        return tagCodec(accounterSupplier)
             .map(
-                p_337514_ -> p_330943_.parse(NbtOps.INSTANCE, p_337514_)
+                p_337514_ -> codec.parse(NbtOps.INSTANCE, p_337514_)
                         .getOrThrow(p_339407_ -> new DecoderException("Failed to decode: " + p_339407_ + " " + p_337514_)),
-                p_337516_ -> p_330943_.encodeStart(NbtOps.INSTANCE, (T)p_337516_)
+                p_337516_ -> codec.encodeStart(NbtOps.INSTANCE, (T)p_337516_)
                         .getOrThrow(p_339409_ -> new EncoderException("Failed to encode: " + p_339409_ + " " + p_337516_))
             );
     }
 
-    static <T> StreamCodec<RegistryFriendlyByteBuf, T> fromCodecWithRegistriesTrusted(Codec<T> p_331713_) {
-        return fromCodecWithRegistries(p_331713_, NbtAccounter::unlimitedHeap);
+    static <T> StreamCodec<RegistryFriendlyByteBuf, T> fromCodecWithRegistriesTrusted(Codec<T> codec) {
+        return fromCodecWithRegistries(codec, NbtAccounter::unlimitedHeap);
     }
 
-    static <T> StreamCodec<RegistryFriendlyByteBuf, T> fromCodecWithRegistries(Codec<T> p_323797_) {
-        return fromCodecWithRegistries(p_323797_, () -> NbtAccounter.create(2097152L));
+    static <T> StreamCodec<RegistryFriendlyByteBuf, T> fromCodecWithRegistries(Codec<T> codec) {
+        return fromCodecWithRegistries(codec, () -> NbtAccounter.create(2097152L));
     }
 
-    static <T> StreamCodec<RegistryFriendlyByteBuf, T> fromCodecWithRegistries(final Codec<T> p_331571_, Supplier<NbtAccounter> p_331922_) {
-        final StreamCodec<ByteBuf, Tag> streamcodec = tagCodec(p_331922_);
+    static <T> StreamCodec<RegistryFriendlyByteBuf, T> fromCodecWithRegistries(final Codec<T> codec, Supplier<NbtAccounter> accounterSupplier) {
+        final StreamCodec<ByteBuf, Tag> streamcodec = tagCodec(accounterSupplier);
         return new StreamCodec<RegistryFriendlyByteBuf, T>() {
             public T decode(RegistryFriendlyByteBuf p_340878_) {
                 Tag tag = streamcodec.decode(p_340878_);
                 RegistryOps<Tag> registryops = p_340878_.registryAccess().createSerializationContext(NbtOps.INSTANCE);
-                return p_331571_.parse(registryops, tag).getOrThrow(p_340924_ -> new DecoderException("Failed to decode: " + p_340924_ + " " + tag));
+                return codec.parse(registryops, tag).getOrThrow(p_340924_ -> new DecoderException("Failed to decode: " + p_340924_ + " " + tag));
             }
 
             public void encode(RegistryFriendlyByteBuf p_341221_, T p_341320_) {
                 RegistryOps<Tag> registryops = p_341221_.registryAccess().createSerializationContext(NbtOps.INSTANCE);
-                Tag tag = p_331571_.encodeStart(registryops, p_341320_)
+                Tag tag = codec.encodeStart(registryops, p_341320_)
                     .getOrThrow(p_341126_ -> new EncoderException("Failed to encode: " + p_341126_ + " " + p_341320_));
                 streamcodec.encode(p_341221_, tag);
             }
         };
     }
 
-    static <B extends ByteBuf, V> StreamCodec<B, Optional<V>> optional(final StreamCodec<B, V> p_320522_) {
+    static <B extends ByteBuf, V> StreamCodec<B, Optional<V>> optional(final StreamCodec<B, V> codec) {
         return new StreamCodec<B, Optional<V>>() {
             public Optional<V> decode(B p_324595_) {
-                return p_324595_.readBoolean() ? Optional.of(p_320522_.decode(p_324595_)) : Optional.empty();
+                return p_324595_.readBoolean() ? Optional.of(codec.decode(p_324595_)) : Optional.empty();
             }
 
             public void encode(B p_324147_, Optional<V> p_340875_) {
                 if (p_340875_.isPresent()) {
                     p_324147_.writeBoolean(true);
-                    p_320522_.encode(p_324147_, p_340875_.get());
+                    codec.encode(p_324147_, p_340875_.get());
                 } else {
                     p_324147_.writeBoolean(false);
                 }
@@ -331,89 +331,89 @@ public interface ByteBufCodecs {
         };
     }
 
-    static int readCount(ByteBuf p_331813_, int p_331668_) {
-        int i = VarInt.read(p_331813_);
-        if (i > p_331668_) {
-            throw new DecoderException(i + " elements exceeded max size of: " + p_331668_);
+    static int readCount(ByteBuf buffer, int maxSize) {
+        int i = VarInt.read(buffer);
+        if (i > maxSize) {
+            throw new DecoderException(i + " elements exceeded max size of: " + maxSize);
         } else {
             return i;
         }
     }
 
-    static void writeCount(ByteBuf p_330907_, int p_330535_, int p_331447_) {
-        if (p_330535_ > p_331447_) {
-            throw new EncoderException(p_330535_ + " elements exceeded max size of: " + p_331447_);
+    static void writeCount(ByteBuf buffer, int count, int maxSize) {
+        if (count > maxSize) {
+            throw new EncoderException(count + " elements exceeded max size of: " + maxSize);
         } else {
-            VarInt.write(p_330907_, p_330535_);
+            VarInt.write(buffer, count);
         }
     }
 
-    static <B extends ByteBuf, V, C extends Collection<V>> StreamCodec<B, C> collection(IntFunction<C> p_320579_, StreamCodec<? super B, V> p_319970_) {
-        return collection(p_320579_, p_319970_, Integer.MAX_VALUE);
+    static <B extends ByteBuf, V, C extends Collection<V>> StreamCodec<B, C> collection(IntFunction<C> factory, StreamCodec<? super B, V> codec) {
+        return collection(factory, codec, Integer.MAX_VALUE);
     }
 
     static <B extends ByteBuf, V, C extends Collection<V>> StreamCodec<B, C> collection(
-        final IntFunction<C> p_332198_, final StreamCodec<? super B, V> p_332183_, final int p_332173_
+        final IntFunction<C> factory, final StreamCodec<? super B, V> codec, final int maxSize
     ) {
         return new StreamCodec<B, C>() {
             public C decode(B p_324220_) {
-                int i = ByteBufCodecs.readCount(p_324220_, p_332173_);
-                C c = p_332198_.apply(Math.min(i, 65536));
+                int i = ByteBufCodecs.readCount(p_324220_, maxSize);
+                C c = factory.apply(Math.min(i, 65536));
 
                 for (int j = 0; j < i; j++) {
-                    c.add(p_332183_.decode(p_324220_));
+                    c.add(codec.decode(p_324220_));
                 }
 
                 return c;
             }
 
             public void encode(B p_323874_, C p_340813_) {
-                ByteBufCodecs.writeCount(p_323874_, p_340813_.size(), p_332173_);
+                ByteBufCodecs.writeCount(p_323874_, p_340813_.size(), maxSize);
 
                 for (V v : p_340813_) {
-                    p_332183_.encode(p_323874_, v);
+                    codec.encode(p_323874_, v);
                 }
             }
         };
     }
 
-    static <B extends ByteBuf, V, C extends Collection<V>> StreamCodec.CodecOperation<B, V, C> collection(IntFunction<C> p_319808_) {
-        return p_319785_ -> collection(p_319808_, p_319785_);
+    static <B extends ByteBuf, V, C extends Collection<V>> StreamCodec.CodecOperation<B, V, C> collection(IntFunction<C> factory) {
+        return p_319785_ -> collection(factory, p_319785_);
     }
 
     static <B extends ByteBuf, V> StreamCodec.CodecOperation<B, V, List<V>> list() {
         return p_320272_ -> collection(ArrayList::new, p_320272_);
     }
 
-    static <B extends ByteBuf, V> StreamCodec.CodecOperation<B, V, List<V>> list(int p_330434_) {
-        return p_329871_ -> collection(ArrayList::new, p_329871_, p_330434_);
+    static <B extends ByteBuf, V> StreamCodec.CodecOperation<B, V, List<V>> list(int maxSize) {
+        return p_329871_ -> collection(ArrayList::new, p_329871_, maxSize);
     }
 
     static <B extends ByteBuf, K, V, M extends Map<K, V>> StreamCodec<B, M> map(
-        IntFunction<? extends M> p_320265_, StreamCodec<? super B, K> p_320113_, StreamCodec<? super B, V> p_320275_
+        IntFunction<? extends M> factory, StreamCodec<? super B, K> keyCodec, StreamCodec<? super B, V> valueCodec
     ) {
-        return map(p_320265_, p_320113_, p_320275_, Integer.MAX_VALUE);
+        return map(factory, keyCodec, valueCodec, Integer.MAX_VALUE);
     }
 
     static <B extends ByteBuf, K, V, M extends Map<K, V>> StreamCodec<B, M> map(
-        final IntFunction<? extends M> p_331325_, final StreamCodec<? super B, K> p_331975_, final StreamCodec<? super B, V> p_331254_, final int p_330938_
+        final IntFunction<? extends M> factory, final StreamCodec<? super B, K> keyCodec, final StreamCodec<? super B, V> valueCodec, final int maxSize
     ) {
         return new StreamCodec<B, M>() {
             public void encode(B p_331539_, M p_341314_) {
-                ByteBufCodecs.writeCount(p_331539_, p_341314_.size(), p_330938_);
+                ByteBufCodecs.writeCount(p_331539_, p_341314_.size(), maxSize);
                 p_341314_.forEach((p_340647_, p_340648_) -> {
-                    p_331975_.encode(p_331539_, (K)p_340647_);
-                    p_331254_.encode(p_331539_, (V)p_340648_);
+                    keyCodec.encode(p_331539_, (K)p_340647_);
+                    valueCodec.encode(p_331539_, (V)p_340648_);
                 });
             }
 
             public M decode(B p_331901_) {
-                int i = ByteBufCodecs.readCount(p_331901_, p_330938_);
-                M m = (M)p_331325_.apply(Math.min(i, 65536));
+                int i = ByteBufCodecs.readCount(p_331901_, maxSize);
+                M m = (M)factory.apply(Math.min(i, 65536));
 
                 for (int j = 0; j < i; j++) {
-                    K k = p_331975_.decode(p_331901_);
-                    V v = p_331254_.decode(p_331901_);
+                    K k = keyCodec.decode(p_331901_);
+                    V v = valueCodec.decode(p_331901_);
                     m.put(k, v);
                 }
 
@@ -422,52 +422,52 @@ public interface ByteBufCodecs {
         };
     }
 
-    static <B extends ByteBuf, L, R> StreamCodec<B, Either<L, R>> either(final StreamCodec<? super B, L> p_331983_, final StreamCodec<? super B, R> p_332156_) {
+    static <B extends ByteBuf, L, R> StreamCodec<B, Either<L, R>> either(final StreamCodec<? super B, L> leftCodec, final StreamCodec<? super B, R> rightCodec) {
         return new StreamCodec<B, Either<L, R>>() {
             public Either<L, R> decode(B p_332082_) {
-                return p_332082_.readBoolean() ? Either.left(p_331983_.decode(p_332082_)) : Either.right(p_332156_.decode(p_332082_));
+                return p_332082_.readBoolean() ? Either.left(leftCodec.decode(p_332082_)) : Either.right(rightCodec.decode(p_332082_));
             }
 
             public void encode(B p_331172_, Either<L, R> p_340944_) {
                 p_340944_.ifLeft(p_341317_ -> {
                     p_331172_.writeBoolean(true);
-                    p_331983_.encode(p_331172_, (L)p_341317_);
+                    leftCodec.encode(p_331172_, (L)p_341317_);
                 }).ifRight(p_341155_ -> {
                     p_331172_.writeBoolean(false);
-                    p_332156_.encode(p_331172_, (R)p_341155_);
+                    rightCodec.encode(p_331172_, (R)p_341155_);
                 });
             }
         };
     }
 
-    static <T> StreamCodec<ByteBuf, T> idMapper(final IntFunction<T> p_320877_, final ToIntFunction<T> p_319985_) {
+    static <T> StreamCodec<ByteBuf, T> idMapper(final IntFunction<T> idLookup, final ToIntFunction<T> idGetter) {
         return new StreamCodec<ByteBuf, T>() {
             public T decode(ByteBuf p_340809_) {
                 int i = VarInt.read(p_340809_);
-                return p_320877_.apply(i);
+                return idLookup.apply(i);
             }
 
             public void encode(ByteBuf p_341417_, T p_330257_) {
-                int i = p_319985_.applyAsInt(p_330257_);
+                int i = idGetter.applyAsInt(p_330257_);
                 VarInt.write(p_341417_, i);
             }
         };
     }
 
-    static <T> StreamCodec<ByteBuf, T> idMapper(IdMap<T> p_319822_) {
-        return idMapper(p_319822_::byIdOrThrow, p_319822_::getIdOrThrow);
+    static <T> StreamCodec<ByteBuf, T> idMapper(IdMap<T> idMap) {
+        return idMapper(idMap::byIdOrThrow, idMap::getIdOrThrow);
     }
 
     private static <T, R> StreamCodec<RegistryFriendlyByteBuf, R> registry(
-        final ResourceKey<? extends Registry<T>> p_319942_, final Function<Registry<T>, IdMap<R>> p_320353_
+        final ResourceKey<? extends Registry<T>> registryKey, final Function<Registry<T>, IdMap<R>> idGetter
     ) {
         return new StreamCodec<RegistryFriendlyByteBuf, R>() {
             private IdMap<R> getRegistryOrThrow(RegistryFriendlyByteBuf p_330361_) {
-                var registry = p_330361_.registryAccess().registryOrThrow(p_319942_);
+                var registry = p_330361_.registryAccess().registryOrThrow(registryKey);
                 if (net.neoforged.neoforge.registries.RegistryManager.isNonSyncedBuiltInRegistry(registry)) {
                     throw new IllegalStateException("Cannot use ID syncing for non-synced built-in registry: " + registry.key());
                 }
-                return p_320353_.apply(registry);
+                return idGetter.apply(registry);
             }
 
             public R decode(RegistryFriendlyByteBuf p_331253_) {
@@ -482,27 +482,27 @@ public interface ByteBufCodecs {
         };
     }
 
-    static <T> StreamCodec<RegistryFriendlyByteBuf, T> registry(ResourceKey<? extends Registry<T>> p_320404_) {
-        return registry(p_320404_, p_332056_ -> p_332056_);
+    static <T> StreamCodec<RegistryFriendlyByteBuf, T> registry(ResourceKey<? extends Registry<T>> registryKey) {
+        return registry(registryKey, p_332056_ -> p_332056_);
     }
 
-    static <T> StreamCodec<RegistryFriendlyByteBuf, Holder<T>> holderRegistry(ResourceKey<? extends Registry<T>> p_320387_) {
-        return registry(p_320387_, Registry::asHolderIdMap);
+    static <T> StreamCodec<RegistryFriendlyByteBuf, Holder<T>> holderRegistry(ResourceKey<? extends Registry<T>> registryKey) {
+        return registry(registryKey, Registry::asHolderIdMap);
     }
 
     static <T> StreamCodec<RegistryFriendlyByteBuf, Holder<T>> holder(
-        final ResourceKey<? extends Registry<T>> p_320391_, final StreamCodec<? super RegistryFriendlyByteBuf, T> p_320595_
+        final ResourceKey<? extends Registry<T>> registryKey, final StreamCodec<? super RegistryFriendlyByteBuf, T> codec
     ) {
         return new StreamCodec<RegistryFriendlyByteBuf, Holder<T>>() {
             private static final int DIRECT_HOLDER_ID = 0;
 
             private IdMap<Holder<T>> getRegistryOrThrow(RegistryFriendlyByteBuf p_341377_) {
-                return p_341377_.registryAccess().registryOrThrow(p_320391_).asHolderIdMap();
+                return p_341377_.registryAccess().registryOrThrow(registryKey).asHolderIdMap();
             }
 
             public Holder<T> decode(RegistryFriendlyByteBuf p_330998_) {
                 int i = VarInt.read(p_330998_);
-                return i == 0 ? Holder.direct(p_320595_.decode(p_330998_)) : (Holder)this.getRegistryOrThrow(p_330998_).byIdOrThrow(i - 1);
+                return i == 0 ? Holder.direct(codec.decode(p_330998_)) : (Holder)this.getRegistryOrThrow(p_330998_).byIdOrThrow(i - 1);
             }
 
             public void encode(RegistryFriendlyByteBuf p_330557_, Holder<T> p_341109_) {
@@ -513,21 +513,21 @@ public interface ByteBufCodecs {
                         break;
                     case DIRECT:
                         VarInt.write(p_330557_, 0);
-                        p_320595_.encode(p_330557_, p_341109_.value());
+                        codec.encode(p_330557_, p_341109_.value());
                 }
             }
         };
     }
 
-    static <T> StreamCodec<RegistryFriendlyByteBuf, HolderSet<T>> holderSet(final ResourceKey<? extends Registry<T>> p_332137_) {
+    static <T> StreamCodec<RegistryFriendlyByteBuf, HolderSet<T>> holderSet(final ResourceKey<? extends Registry<T>> registryKey) {
         return new StreamCodec<RegistryFriendlyByteBuf, HolderSet<T>>() {
             private static final int NAMED_SET = -1;
-            private final StreamCodec<RegistryFriendlyByteBuf, Holder<T>> holderCodec = ByteBufCodecs.holderRegistry(p_332137_);
+            private final StreamCodec<RegistryFriendlyByteBuf, Holder<T>> holderCodec = ByteBufCodecs.holderRegistry(registryKey);
 
             private final Map<net.neoforged.neoforge.registries.holdersets.HolderSetType, StreamCodec<RegistryFriendlyByteBuf, ? extends net.neoforged.neoforge.registries.holdersets.ICustomHolderSet<T>>> holderSetCodecs = new java.util.concurrent.ConcurrentHashMap<>();
 
             private StreamCodec<RegistryFriendlyByteBuf, ? extends net.neoforged.neoforge.registries.holdersets.ICustomHolderSet<T>> holderSetCodec(net.neoforged.neoforge.registries.holdersets.HolderSetType type) {
-                return this.holderSetCodecs.computeIfAbsent(type, key -> key.makeStreamCodec(p_332137_));
+                return this.holderSetCodecs.computeIfAbsent(type, key -> key.makeStreamCodec(registryKey));
             }
 
             private <H extends net.neoforged.neoforge.registries.holdersets.ICustomHolderSet<T>> H cast(net.neoforged.neoforge.registries.holdersets.ICustomHolderSet<T> holderSet) {
@@ -544,8 +544,8 @@ public interface ByteBufCodecs {
                     return this.holderSetCodec(net.neoforged.neoforge.registries.NeoForgeRegistries.HOLDER_SET_TYPES.byIdOrThrow(-2 - i)).decode(p_340887_);
                 }
                 if (i == -1) {
-                    Registry<T> registry = p_340887_.registryAccess().registryOrThrow(p_332137_);
-                    return registry.getTag(TagKey.create(p_332137_, ResourceLocation.STREAM_CODEC.decode(p_340887_))).orElseThrow();
+                    Registry<T> registry = p_340887_.registryAccess().registryOrThrow(registryKey);
+                    return registry.getTag(TagKey.create(registryKey, ResourceLocation.STREAM_CODEC.decode(p_340887_))).orElseThrow();
                 } else {
                     List<Holder<T>> list = new ArrayList<>(Math.min(i, 65536));
 

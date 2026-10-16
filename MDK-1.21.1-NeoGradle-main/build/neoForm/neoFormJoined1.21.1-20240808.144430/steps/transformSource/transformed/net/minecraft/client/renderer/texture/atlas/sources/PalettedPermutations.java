@@ -49,26 +49,26 @@ public class PalettedPermutations implements SpriteSource {
     private final Map<String, ResourceLocation> permutations;
     private final ResourceLocation paletteKey;
 
-    public PalettedPermutations(List<ResourceLocation> p_267282_, ResourceLocation p_266681_, Map<String, ResourceLocation> p_266741_) {
-        this.textures = p_267282_;
-        this.permutations = p_266741_;
-        this.paletteKey = p_266681_;
+    public PalettedPermutations(List<ResourceLocation> textures, ResourceLocation paletteKey, Map<String, ResourceLocation> permutations) {
+        this.textures = textures;
+        this.permutations = permutations;
+        this.paletteKey = paletteKey;
     }
 
     @Override
-    public void run(ResourceManager p_267219_, SpriteSource.Output p_267250_) {
-        Supplier<int[]> supplier = Suppliers.memoize(() -> loadPaletteEntryFromImage(p_267219_, this.paletteKey));
+    public void run(ResourceManager resourceManager, SpriteSource.Output output) {
+        Supplier<int[]> supplier = Suppliers.memoize(() -> loadPaletteEntryFromImage(resourceManager, this.paletteKey));
         Map<String, Supplier<IntUnaryOperator>> map = new HashMap<>();
         this.permutations
             .forEach(
                 (p_267108_, p_266969_) -> map.put(
-                        p_267108_, Suppliers.memoize(() -> createPaletteMapping(supplier.get(), loadPaletteEntryFromImage(p_267219_, p_266969_)))
+                        p_267108_, Suppliers.memoize(() -> createPaletteMapping(supplier.get(), loadPaletteEntryFromImage(resourceManager, p_266969_)))
                     )
             );
 
         for (ResourceLocation resourcelocation : this.textures) {
             ResourceLocation resourcelocation1 = TEXTURE_ID_CONVERTER.idToFile(resourcelocation);
-            Optional<Resource> optional = p_267219_.getResource(resourcelocation1);
+            Optional<Resource> optional = resourceManager.getResource(resourcelocation1);
             if (optional.isEmpty()) {
                 LOGGER.warn("Unable to find texture {}", resourcelocation1);
             } else {
@@ -76,7 +76,7 @@ public class PalettedPermutations implements SpriteSource {
 
                 for (Entry<String, Supplier<IntUnaryOperator>> entry : map.entrySet()) {
                     ResourceLocation resourcelocation2 = resourcelocation.withSuffix("_" + entry.getKey());
-                    p_267250_.add(resourcelocation2, new PalettedPermutations.PalettedSpriteSupplier(lazyloadedimage, entry.getValue(), resourcelocation2));
+                    output.add(resourcelocation2, new PalettedPermutations.PalettedSpriteSupplier(lazyloadedimage, entry.getValue(), resourcelocation2));
                 }
             }
         }
@@ -110,10 +110,10 @@ public class PalettedPermutations implements SpriteSource {
         }
     }
 
-    public static int[] loadPaletteEntryFromImage(ResourceManager p_267184_, ResourceLocation p_267059_) {
-        Optional<Resource> optional = p_267184_.getResource(TEXTURE_ID_CONVERTER.idToFile(p_267059_));
+    public static int[] loadPaletteEntryFromImage(ResourceManager resourceMananger, ResourceLocation palette) {
+        Optional<Resource> optional = resourceMananger.getResource(TEXTURE_ID_CONVERTER.idToFile(palette));
         if (optional.isEmpty()) {
-            LOGGER.error("Failed to load palette image {}", p_267059_);
+            LOGGER.error("Failed to load palette image {}", palette);
             throw new IllegalArgumentException();
         } else {
             try {
@@ -127,7 +127,7 @@ public class PalettedPermutations implements SpriteSource {
 
                 return aint;
             } catch (Exception exception) {
-                LOGGER.error("Couldn't load texture {}", p_267059_, exception);
+                LOGGER.error("Couldn't load texture {}", palette, exception);
                 throw new IllegalArgumentException();
             }
         }

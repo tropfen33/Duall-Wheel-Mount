@@ -17,10 +17,10 @@ public enum CloudStatus implements OptionEnum, StringRepresentable {
     private final String legacyName;
     private final String key;
 
-    private CloudStatus(int p_231334_, String p_231335_, String p_296084_) {
-        this.id = p_231334_;
-        this.legacyName = p_231335_;
-        this.key = p_296084_;
+    private CloudStatus(int id, String legacyName, String key) {
+        this.id = id;
+        this.legacyName = legacyName;
+        this.key = key;
     }
 
     @Override

@@ -72,86 +72,95 @@ public abstract class AbstractArrow extends Projectile {
     @Nullable
     private ItemStack firedFromWeapon = null;
 
-    protected AbstractArrow(EntityType<? extends AbstractArrow> p_331098_, Level p_331626_) {
-        super(p_331098_, p_331626_);
+    protected AbstractArrow(EntityType<? extends AbstractArrow> entityType, Level level) {
+        super(entityType, level);
     }
 
     protected AbstractArrow(
-        EntityType<? extends AbstractArrow> p_36717_,
-        double p_346045_,
-        double p_344855_,
-        double p_345999_,
-        Level p_36719_,
-        ItemStack p_309031_,
-        @Nullable ItemStack p_345487_
+        EntityType<? extends AbstractArrow> entityType,
+        double x,
+        double y,
+        double z,
+        Level level,
+        ItemStack pickupItemStack,
+        @Nullable ItemStack firedFromWeapon
     ) {
-        this(p_36717_, p_36719_);
-        this.pickupItemStack = p_309031_.copy();
-        this.setCustomName(p_309031_.get(DataComponents.CUSTOM_NAME));
-        Unit unit = p_309031_.remove(DataComponents.INTANGIBLE_PROJECTILE);
+        this(entityType, level);
+        this.pickupItemStack = pickupItemStack.copy();
+        this.setCustomName(pickupItemStack.get(DataComponents.CUSTOM_NAME));
+        Unit unit = pickupItemStack.remove(DataComponents.INTANGIBLE_PROJECTILE);
         if (unit != null) {
             this.pickup = AbstractArrow.Pickup.CREATIVE_ONLY;
         }
 
-        this.setPos(p_346045_, p_344855_, p_345999_);
-        if (p_345487_ != null && p_36719_ instanceof ServerLevel serverlevel) {
-            if (p_345487_.isEmpty()) {
+        this.setPos(x, y, z);
+        if (firedFromWeapon != null && level instanceof ServerLevel serverlevel) {
+            if (firedFromWeapon.isEmpty()) {
                 throw new IllegalArgumentException("Invalid weapon firing an arrow");
             }
 
-            this.firedFromWeapon = p_345487_.copy();
-            int i = EnchantmentHelper.getPiercingCount(serverlevel, p_345487_, this.pickupItemStack);
+            this.firedFromWeapon = firedFromWeapon.copy();
+            int i = EnchantmentHelper.getPiercingCount(serverlevel, firedFromWeapon, this.pickupItemStack);
             if (i > 0) {
                 this.setPierceLevel((byte)i);
             }
 
-            EnchantmentHelper.onProjectileSpawned(serverlevel, p_345487_, this, p_348347_ -> this.firedFromWeapon = null);
+            EnchantmentHelper.onProjectileSpawned(serverlevel, firedFromWeapon, this, p_348347_ -> this.firedFromWeapon = null);
         }
     }
 
     protected AbstractArrow(
-        EntityType<? extends AbstractArrow> p_36721_, LivingEntity p_345310_, Level p_36722_, ItemStack p_309145_, @Nullable ItemStack p_345000_
+        EntityType<? extends AbstractArrow> entityType, LivingEntity owner, Level level, ItemStack pickupItemStack, @Nullable ItemStack firedFromWeapon
     ) {
-        this(p_36721_, p_345310_.getX(), p_345310_.getEyeY() - 0.1F, p_345310_.getZ(), p_36722_, p_309145_, p_345000_);
-        this.setOwner(p_345310_);
+        this(entityType, owner.getX(), owner.getEyeY() - 0.1F, owner.getZ(), level, pickupItemStack, firedFromWeapon);
+        this.setOwner(owner);
     }
 
-    public void setSoundEvent(SoundEvent p_36741_) {
-        this.soundEvent = p_36741_;
+    public void setSoundEvent(SoundEvent soundEvent) {
+        this.soundEvent = soundEvent;
     }
 
+    /**
+     * Checks if the entity is in range to render.
+     */
     @Override
-    public boolean shouldRenderAtSqrDistance(double p_36726_) {
+    public boolean shouldRenderAtSqrDistance(double distance) {
         double d0 = this.getBoundingBox().getSize() * 10.0;
         if (Double.isNaN(d0)) {
             d0 = 1.0;
         }
 
         d0 *= 64.0 * getViewScale();
-        return p_36726_ < d0 * d0;
+        return distance < d0 * d0;
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_325945_) {
-        p_325945_.define(ID_FLAGS, (byte)0);
-        p_325945_.define(PIERCE_LEVEL, (byte)0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(ID_FLAGS, (byte)0);
+        builder.define(PIERCE_LEVEL, (byte)0);
     }
 
+    /**
+     * Similar to setArrowHeading, it's point the throwable entity to a x, y, z direction.
+     */
     @Override
-    public void shoot(double p_36775_, double p_36776_, double p_36777_, float p_36778_, float p_36779_) {
-        super.shoot(p_36775_, p_36776_, p_36777_, p_36778_, p_36779_);
+    public void shoot(double x, double y, double z, float velocity, float inaccuracy) {
+        super.shoot(x, y, z, velocity, inaccuracy);
         this.life = 0;
     }
 
     @Override
-    public void lerpTo(double p_36728_, double p_36729_, double p_36730_, float p_36731_, float p_36732_, int p_36733_) {
-        this.setPos(p_36728_, p_36729_, p_36730_);
-        this.setRot(p_36731_, p_36732_);
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+        this.setPos(x, y, z);
+        this.setRot(yRot, xRot);
     }
 
+    /**
+     * Updates the entity motion clientside, called by packets from the server
+     */
     @Override
-    public void lerpMotion(double p_36786_, double p_36787_, double p_36788_) {
-        super.lerpMotion(p_36786_, p_36787_, p_36788_);
+    public void lerpMotion(double x, double y, double z) {
+        super.lerpMotion(x, y, z);
         this.life = 0;
     }
 
@@ -312,9 +321,9 @@ public abstract class AbstractArrow extends Projectile {
     }
 
     @Override
-    public void move(MoverType p_36749_, Vec3 p_36750_) {
-        super.move(p_36749_, p_36750_);
-        if (p_36749_ != MoverType.SELF && this.shouldFall()) {
+    public void move(MoverType type, Vec3 pos) {
+        super.move(type, pos);
+        if (type != MoverType.SELF && this.shouldFall()) {
             this.startFalling();
         }
     }
@@ -336,10 +345,13 @@ public abstract class AbstractArrow extends Projectile {
         }
     }
 
+    /**
+     * Called when the arrow hits an entity
+     */
     @Override
-    protected void onHitEntity(EntityHitResult p_36757_) {
-        super.onHitEntity(p_36757_);
-        Entity entity = p_36757_.getEntity();
+    protected void onHitEntity(EntityHitResult result) {
+        super.onHitEntity(result);
+        Entity entity = result.getEntity();
         float f = (float)this.getDeltaMovement().length();
         double d0 = this.baseDamage;
         Entity entity1 = this.getOwner();
@@ -432,30 +444,30 @@ public abstract class AbstractArrow extends Projectile {
         }
     }
 
-    protected void doKnockback(LivingEntity p_346111_, DamageSource p_346412_) {
+    protected void doKnockback(LivingEntity entity, DamageSource damageSource) {
         double d0 = (double)(
             this.firedFromWeapon != null && this.level() instanceof ServerLevel serverlevel
-                ? EnchantmentHelper.modifyKnockback(serverlevel, this.firedFromWeapon, p_346111_, p_346412_, 0.0F)
+                ? EnchantmentHelper.modifyKnockback(serverlevel, this.firedFromWeapon, entity, damageSource, 0.0F)
                 : 0.0F
         );
         if (d0 > 0.0) {
-            double d1 = Math.max(0.0, 1.0 - p_346111_.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE));
+            double d1 = Math.max(0.0, 1.0 - entity.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE));
             Vec3 vec3 = this.getDeltaMovement().multiply(1.0, 0.0, 1.0).normalize().scale(d0 * 0.6 * d1);
             if (vec3.lengthSqr() > 0.0) {
-                p_346111_.push(vec3.x, 0.1, vec3.z);
+                entity.push(vec3.x, 0.1, vec3.z);
             }
         }
     }
 
     @Override
-    protected void onHitBlock(BlockHitResult p_36755_) {
-        this.lastState = this.level().getBlockState(p_36755_.getBlockPos());
-        super.onHitBlock(p_36755_);
-        Vec3 vec3 = p_36755_.getLocation().subtract(this.getX(), this.getY(), this.getZ());
+    protected void onHitBlock(BlockHitResult result) {
+        this.lastState = this.level().getBlockState(result.getBlockPos());
+        super.onHitBlock(result);
+        Vec3 vec3 = result.getLocation().subtract(this.getX(), this.getY(), this.getZ());
         this.setDeltaMovement(vec3);
         ItemStack itemstack = this.getWeaponItem();
         if (this.level() instanceof ServerLevel serverlevel && itemstack != null) {
-            this.hitBlockEnchantmentEffects(serverlevel, p_36755_, itemstack);
+            this.hitBlockEnchantmentEffects(serverlevel, result, itemstack);
         }
 
         Vec3 vec31 = vec3.normalize().scale(0.05F);
@@ -469,16 +481,16 @@ public abstract class AbstractArrow extends Projectile {
         this.resetPiercedEntities();
     }
 
-    protected void hitBlockEnchantmentEffects(ServerLevel p_345462_, BlockHitResult p_345204_, ItemStack p_345083_) {
-        Vec3 vec3 = p_345204_.getBlockPos().clampLocationWithin(p_345204_.getLocation());
+    protected void hitBlockEnchantmentEffects(ServerLevel level, BlockHitResult hitResult, ItemStack stack) {
+        Vec3 vec3 = hitResult.getBlockPos().clampLocationWithin(hitResult.getLocation());
         EnchantmentHelper.onHitBlock(
-            p_345462_,
-            p_345083_,
+            level,
+            stack,
             this.getOwner() instanceof LivingEntity livingentity ? livingentity : null,
             this,
             null,
             vec3,
-            p_345462_.getBlockState(p_345204_.getBlockPos()),
+            level.getBlockState(hitResult.getBlockPos()),
             p_348569_ -> this.firedFromWeapon = null
         );
     }
@@ -496,104 +508,113 @@ public abstract class AbstractArrow extends Projectile {
         return this.soundEvent;
     }
 
-    protected void doPostHurtEffects(LivingEntity p_36744_) {
+    protected void doPostHurtEffects(LivingEntity target) {
     }
 
+    /**
+     * Gets the EntityRayTraceResult representing the entity hit
+     */
     @Nullable
-    protected EntityHitResult findHitEntity(Vec3 p_36758_, Vec3 p_36759_) {
+    protected EntityHitResult findHitEntity(Vec3 startVec, Vec3 endVec) {
         return ProjectileUtil.getEntityHitResult(
-            this.level(), this, p_36758_, p_36759_, this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(1.0), this::canHitEntity
+            this.level(), this, startVec, endVec, this.getBoundingBox().expandTowards(this.getDeltaMovement()).inflate(1.0), this::canHitEntity
         );
     }
 
     @Override
-    protected boolean canHitEntity(Entity p_36743_) {
-        return super.canHitEntity(p_36743_) && (this.piercingIgnoreEntityIds == null || !this.piercingIgnoreEntityIds.contains(p_36743_.getId()));
+    protected boolean canHitEntity(Entity target) {
+        return super.canHitEntity(target) && (this.piercingIgnoreEntityIds == null || !this.piercingIgnoreEntityIds.contains(target.getId()));
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_36772_) {
-        super.addAdditionalSaveData(p_36772_);
-        p_36772_.putShort("life", (short)this.life);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putShort("life", (short)this.life);
         if (this.lastState != null) {
-            p_36772_.put("inBlockState", NbtUtils.writeBlockState(this.lastState));
+            compound.put("inBlockState", NbtUtils.writeBlockState(this.lastState));
         }
 
-        p_36772_.putByte("shake", (byte)this.shakeTime);
-        p_36772_.putBoolean("inGround", this.inGround);
-        p_36772_.putByte("pickup", (byte)this.pickup.ordinal());
-        p_36772_.putDouble("damage", this.baseDamage);
-        p_36772_.putBoolean("crit", this.isCritArrow());
-        p_36772_.putByte("PierceLevel", this.getPierceLevel());
-        p_36772_.putString("SoundEvent", BuiltInRegistries.SOUND_EVENT.getKey(this.soundEvent).toString());
-        p_36772_.put("item", this.pickupItemStack.save(this.registryAccess()));
+        compound.putByte("shake", (byte)this.shakeTime);
+        compound.putBoolean("inGround", this.inGround);
+        compound.putByte("pickup", (byte)this.pickup.ordinal());
+        compound.putDouble("damage", this.baseDamage);
+        compound.putBoolean("crit", this.isCritArrow());
+        compound.putByte("PierceLevel", this.getPierceLevel());
+        compound.putString("SoundEvent", BuiltInRegistries.SOUND_EVENT.getKey(this.soundEvent).toString());
+        compound.put("item", this.pickupItemStack.save(this.registryAccess()));
         if (this.firedFromWeapon != null) {
-            p_36772_.put("weapon", this.firedFromWeapon.save(this.registryAccess(), new CompoundTag()));
+            compound.put("weapon", this.firedFromWeapon.save(this.registryAccess(), new CompoundTag()));
         }
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_36761_) {
-        super.readAdditionalSaveData(p_36761_);
-        this.life = p_36761_.getShort("life");
-        if (p_36761_.contains("inBlockState", 10)) {
-            this.lastState = NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), p_36761_.getCompound("inBlockState"));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.life = compound.getShort("life");
+        if (compound.contains("inBlockState", 10)) {
+            this.lastState = NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), compound.getCompound("inBlockState"));
         }
 
-        this.shakeTime = p_36761_.getByte("shake") & 255;
-        this.inGround = p_36761_.getBoolean("inGround");
-        if (p_36761_.contains("damage", 99)) {
-            this.baseDamage = p_36761_.getDouble("damage");
+        this.shakeTime = compound.getByte("shake") & 255;
+        this.inGround = compound.getBoolean("inGround");
+        if (compound.contains("damage", 99)) {
+            this.baseDamage = compound.getDouble("damage");
         }
 
-        this.pickup = AbstractArrow.Pickup.byOrdinal(p_36761_.getByte("pickup"));
-        this.setCritArrow(p_36761_.getBoolean("crit"));
-        this.setPierceLevel(p_36761_.getByte("PierceLevel"));
-        if (p_36761_.contains("SoundEvent", 8)) {
+        this.pickup = AbstractArrow.Pickup.byOrdinal(compound.getByte("pickup"));
+        this.setCritArrow(compound.getBoolean("crit"));
+        this.setPierceLevel(compound.getByte("PierceLevel"));
+        if (compound.contains("SoundEvent", 8)) {
             this.soundEvent = BuiltInRegistries.SOUND_EVENT
-                .getOptional(ResourceLocation.parse(p_36761_.getString("SoundEvent")))
+                .getOptional(ResourceLocation.parse(compound.getString("SoundEvent")))
                 .orElse(this.getDefaultHitGroundSoundEvent());
         }
 
-        if (p_36761_.contains("item", 10)) {
-            this.setPickupItemStack(ItemStack.parse(this.registryAccess(), p_36761_.getCompound("item")).orElse(this.getDefaultPickupItem()));
+        if (compound.contains("item", 10)) {
+            this.setPickupItemStack(ItemStack.parse(this.registryAccess(), compound.getCompound("item")).orElse(this.getDefaultPickupItem()));
         } else {
             this.setPickupItemStack(this.getDefaultPickupItem());
         }
 
-        if (p_36761_.contains("weapon", 10)) {
-            this.firedFromWeapon = ItemStack.parse(this.registryAccess(), p_36761_.getCompound("weapon")).orElse(null);
+        if (compound.contains("weapon", 10)) {
+            this.firedFromWeapon = ItemStack.parse(this.registryAccess(), compound.getCompound("weapon")).orElse(null);
         } else {
             this.firedFromWeapon = null;
         }
     }
 
     @Override
-    public void setOwner(@Nullable Entity p_36770_) {
-        super.setOwner(p_36770_);
+    public void setOwner(@Nullable Entity entity) {
+        super.setOwner(entity);
 
-        this.pickup = switch (p_36770_) {
+        this.pickup = switch (entity) {
             case Player player when this.pickup == AbstractArrow.Pickup.DISALLOWED -> AbstractArrow.Pickup.ALLOWED;
             case OminousItemSpawner ominousitemspawner -> AbstractArrow.Pickup.DISALLOWED;
             case null, default -> this.pickup;
         };
     }
 
+    /**
+     * Called by a player entity when they collide with an entity
+     */
     @Override
-    public void playerTouch(Player p_36766_) {
+    public void playerTouch(Player entity) {
         if (!this.level().isClientSide && (this.inGround || this.isNoPhysics()) && this.shakeTime <= 0) {
-            if (this.tryPickup(p_36766_)) {
-                p_36766_.take(this, 1);
+            if (this.tryPickup(entity)) {
+                entity.take(this, 1);
                 this.discard();
             }
         }
     }
 
-    protected boolean tryPickup(Player p_150121_) {
+    protected boolean tryPickup(Player player) {
         return switch (this.pickup) {
             case DISALLOWED -> false;
-            case ALLOWED -> p_150121_.getInventory().add(this.getPickupItem());
-            case CREATIVE_ONLY -> p_150121_.hasInfiniteMaterials();
+            case ALLOWED -> player.getInventory().add(this.getPickupItem());
+            case CREATIVE_ONLY -> player.hasInfiniteMaterials();
         };
     }
 
@@ -612,8 +633,8 @@ public abstract class AbstractArrow extends Projectile {
         return this.pickupItemStack;
     }
 
-    public void setBaseDamage(double p_36782_) {
-        this.baseDamage = p_36782_;
+    public void setBaseDamage(double baseDamage) {
+        this.baseDamage = baseDamage;
     }
 
     public double getBaseDamage() {
@@ -625,26 +646,29 @@ public abstract class AbstractArrow extends Projectile {
         return this.getType().is(EntityTypeTags.REDIRECTABLE_PROJECTILE);
     }
 
-    public void setCritArrow(boolean p_36763_) {
-        this.setFlag(1, p_36763_);
+    /**
+     * Whether the arrow has a stream of critical hit particles flying behind it.
+     */
+    public void setCritArrow(boolean critArrow) {
+        this.setFlag(1, critArrow);
     }
 
-    private void setPierceLevel(byte p_36768_) {
-        this.entityData.set(PIERCE_LEVEL, p_36768_);
+    private void setPierceLevel(byte pierceLevel) {
+        this.entityData.set(PIERCE_LEVEL, pierceLevel);
     }
 
-    private void setFlag(int p_36738_, boolean p_36739_) {
+    private void setFlag(int id, boolean value) {
         byte b0 = this.entityData.get(ID_FLAGS);
-        if (p_36739_) {
-            this.entityData.set(ID_FLAGS, (byte)(b0 | p_36738_));
+        if (value) {
+            this.entityData.set(ID_FLAGS, (byte)(b0 | id));
         } else {
-            this.entityData.set(ID_FLAGS, (byte)(b0 & ~p_36738_));
+            this.entityData.set(ID_FLAGS, (byte)(b0 & ~id));
         }
     }
 
-    protected void setPickupItemStack(ItemStack p_331486_) {
-        if (!p_331486_.isEmpty()) {
-            this.pickupItemStack = p_331486_;
+    protected void setPickupItemStack(ItemStack pickupItemStack) {
+        if (!pickupItemStack.isEmpty()) {
+            this.pickupItemStack = pickupItemStack;
         } else {
             this.pickupItemStack = this.getDefaultPickupItem();
         }
@@ -663,17 +687,20 @@ public abstract class AbstractArrow extends Projectile {
         return this.entityData.get(PIERCE_LEVEL);
     }
 
-    public void setBaseDamageFromMob(float p_345515_) {
-        this.setBaseDamage((double)(p_345515_ * 2.0F) + this.random.triangle((double)this.level().getDifficulty().getId() * 0.11, 0.57425));
+    public void setBaseDamageFromMob(float velocity) {
+        this.setBaseDamage((double)(velocity * 2.0F) + this.random.triangle((double)this.level().getDifficulty().getId() * 0.11, 0.57425));
     }
 
     protected float getWaterInertia() {
         return 0.6F;
     }
 
-    public void setNoPhysics(boolean p_36791_) {
-        this.noPhysics = p_36791_;
-        this.setFlag(2, p_36791_);
+    /**
+     * Sets if this arrow can noClip
+     */
+    public void setNoPhysics(boolean noPhysics) {
+        this.noPhysics = noPhysics;
+        this.setFlag(2, noPhysics);
     }
 
     public boolean isNoPhysics() {
@@ -686,8 +713,8 @@ public abstract class AbstractArrow extends Projectile {
     }
 
     @Override
-    public SlotAccess getSlot(int p_341328_) {
-        return p_341328_ == 0 ? SlotAccess.of(this::getPickupItemStackOrigin, this::setPickupItemStack) : super.getSlot(p_341328_);
+    public SlotAccess getSlot(int slot) {
+        return slot == 0 ? SlotAccess.of(this::getPickupItemStackOrigin, this::setPickupItemStack) : super.getSlot(slot);
     }
 
     public static enum Pickup {
@@ -695,12 +722,12 @@ public abstract class AbstractArrow extends Projectile {
         ALLOWED,
         CREATIVE_ONLY;
 
-        public static AbstractArrow.Pickup byOrdinal(int p_36809_) {
-            if (p_36809_ < 0 || p_36809_ > values().length) {
-                p_36809_ = 0;
+        public static AbstractArrow.Pickup byOrdinal(int ordinal) {
+            if (ordinal < 0 || ordinal > values().length) {
+                ordinal = 0;
             }
 
-            return values()[p_36809_];
+            return values()[ordinal];
         }
     }
 }

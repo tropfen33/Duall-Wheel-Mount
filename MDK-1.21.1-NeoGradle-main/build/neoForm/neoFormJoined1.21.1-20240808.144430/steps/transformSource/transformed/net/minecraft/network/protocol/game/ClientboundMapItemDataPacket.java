@@ -41,12 +41,18 @@ public record ClientboundMapItemDataPacket(
         return GamePacketTypes.CLIENTBOUND_MAP_ITEM_DATA;
     }
 
-    public void handle(ClientGamePacketListener p_132444_) {
-        p_132444_.handleMapItemData(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleMapItemData(this);
     }
 
-    public void applyToMap(MapItemSavedData p_132438_) {
-        this.decorations.ifPresent(p_132438_::addClientSideDecorations);
-        this.colorPatch.ifPresent(p_323145_ -> p_323145_.applyToMap(p_132438_));
+    /**
+     * Sets new MapData from the packet to given MapData param
+     */
+    public void applyToMap(MapItemSavedData mapData) {
+        this.decorations.ifPresent(mapData::addClientSideDecorations);
+        this.colorPatch.ifPresent(p_323145_ -> p_323145_.applyToMap(mapData));
     }
 }

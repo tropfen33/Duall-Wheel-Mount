@@ -28,14 +28,14 @@ public class DimensionArgument implements ArgumentType<ResourceLocation> {
         p_304084_ -> Component.translatableEscape("argument.dimension.invalid", p_304084_)
     );
 
-    public ResourceLocation parse(StringReader p_88807_) throws CommandSyntaxException {
-        return ResourceLocation.read(p_88807_);
+    public ResourceLocation parse(StringReader reader) throws CommandSyntaxException {
+        return ResourceLocation.read(reader);
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_88817_, SuggestionsBuilder p_88818_) {
-        return p_88817_.getSource() instanceof SharedSuggestionProvider
-            ? SharedSuggestionProvider.suggestResource(((SharedSuggestionProvider)p_88817_.getSource()).levels().stream().map(ResourceKey::location), p_88818_)
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
+        return context.getSource() instanceof SharedSuggestionProvider
+            ? SharedSuggestionProvider.suggestResource(((SharedSuggestionProvider)context.getSource()).levels().stream().map(ResourceKey::location), builder)
             : Suggestions.empty();
     }
 
@@ -48,10 +48,10 @@ public class DimensionArgument implements ArgumentType<ResourceLocation> {
         return new DimensionArgument();
     }
 
-    public static ServerLevel getDimension(CommandContext<CommandSourceStack> p_88809_, String p_88810_) throws CommandSyntaxException {
-        ResourceLocation resourcelocation = p_88809_.getArgument(p_88810_, ResourceLocation.class);
+    public static ServerLevel getDimension(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
+        ResourceLocation resourcelocation = context.getArgument(name, ResourceLocation.class);
         ResourceKey<Level> resourcekey = ResourceKey.create(Registries.DIMENSION, resourcelocation);
-        ServerLevel serverlevel = p_88809_.getSource().getServer().getLevel(resourcekey);
+        ServerLevel serverlevel = context.getSource().getServer().getLevel(resourcekey);
         if (serverlevel == null) {
             throw ERROR_INVALID_VALUE.create(resourcelocation);
         } else {

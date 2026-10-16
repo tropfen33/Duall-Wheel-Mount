@@ -52,39 +52,42 @@ public class CocoaBlock extends HorizontalDirectionalBlock implements Bonemealab
         return CODEC;
     }
 
-    public CocoaBlock(BlockBehaviour.Properties p_51743_) {
-        super(p_51743_);
+    public CocoaBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(AGE, Integer.valueOf(0)));
     }
 
     @Override
-    protected boolean isRandomlyTicking(BlockState p_51780_) {
-        return p_51780_.getValue(AGE) < 2;
+    protected boolean isRandomlyTicking(BlockState state) {
+        return state.getValue(AGE) < 2;
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_221000_, ServerLevel p_221001_, BlockPos p_221002_, RandomSource p_221003_) {
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         if (true) {
-            int i = p_221000_.getValue(AGE);
-            if (i < 2 && net.neoforged.neoforge.common.CommonHooks.canCropGrow(p_221001_, p_221002_, p_221000_, p_221001_.random.nextInt(5) == 0)) {
-                p_221001_.setBlock(p_221002_, p_221000_.setValue(AGE, Integer.valueOf(i + 1)), 2);
-                net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(p_221001_, p_221002_, p_221000_);
+            int i = state.getValue(AGE);
+            if (i < 2 && net.neoforged.neoforge.common.CommonHooks.canCropGrow(level, pos, state, level.random.nextInt(5) == 0)) {
+                level.setBlock(pos, state.setValue(AGE, Integer.valueOf(i + 1)), 2);
+                net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(level, pos, state);
             }
         }
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_51767_, LevelReader p_51768_, BlockPos p_51769_) {
-        BlockState blockstate = p_51768_.getBlockState(p_51769_.relative(p_51767_.getValue(FACING)));
-        net.neoforged.neoforge.common.util.TriState soilDecision = blockstate.canSustainPlant(p_51768_, p_51769_.relative(p_51767_.getValue(FACING)), p_51767_.getValue(FACING).getOpposite(), p_51767_);
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos.relative(state.getValue(FACING)));
+        net.neoforged.neoforge.common.util.TriState soilDecision = blockstate.canSustainPlant(level, pos.relative(state.getValue(FACING)), state.getValue(FACING).getOpposite(), state);
         if (!soilDecision.isDefault()) return soilDecision.isTrue();
         return blockstate.is(BlockTags.JUNGLE_LOGS);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_51787_, BlockGetter p_51788_, BlockPos p_51789_, CollisionContext p_51790_) {
-        int i = p_51787_.getValue(AGE);
-        switch ((Direction)p_51787_.getValue(FACING)) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        int i = state.getValue(AGE);
+        switch ((Direction)state.getValue(FACING)) {
             case SOUTH:
                 return SOUTH_AABB[i];
             case NORTH:
@@ -99,12 +102,12 @@ public class CocoaBlock extends HorizontalDirectionalBlock implements Bonemealab
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_51750_) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState blockstate = this.defaultBlockState();
-        LevelReader levelreader = p_51750_.getLevel();
-        BlockPos blockpos = p_51750_.getClickedPos();
+        LevelReader levelreader = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
 
-        for (Direction direction : p_51750_.getNearestLookingDirections()) {
+        for (Direction direction : context.getNearestLookingDirections()) {
             if (direction.getAxis().isHorizontal()) {
                 blockstate = blockstate.setValue(FACING, direction);
                 if (blockstate.canSurvive(levelreader, blockpos)) {
@@ -116,35 +119,40 @@ public class CocoaBlock extends HorizontalDirectionalBlock implements Bonemealab
         return null;
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_51771_, Direction p_51772_, BlockState p_51773_, LevelAccessor p_51774_, BlockPos p_51775_, BlockPos p_51776_) {
-        return p_51772_ == p_51771_.getValue(FACING) && !p_51771_.canSurvive(p_51774_, p_51775_)
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return facing == state.getValue(FACING) && !state.canSurvive(level, currentPos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_51771_, p_51772_, p_51773_, p_51774_, p_51775_, p_51776_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader p_256189_, BlockPos p_51753_, BlockState p_51754_) {
-        return p_51754_.getValue(AGE) < 2;
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+        return state.getValue(AGE) < 2;
     }
 
     @Override
-    public boolean isBonemealSuccess(Level p_220995_, RandomSource p_220996_, BlockPos p_220997_, BlockState p_220998_) {
+    public boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel p_220990_, RandomSource p_220991_, BlockPos p_220992_, BlockState p_220993_) {
-        p_220990_.setBlock(p_220992_, p_220993_.setValue(AGE, Integer.valueOf(p_220993_.getValue(AGE) + 1)), 2);
+    public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
+        level.setBlock(pos, state.setValue(AGE, Integer.valueOf(state.getValue(AGE) + 1)), 2);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_51778_) {
-        p_51778_.add(FACING, AGE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, AGE);
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_51762_, PathComputationType p_51765_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

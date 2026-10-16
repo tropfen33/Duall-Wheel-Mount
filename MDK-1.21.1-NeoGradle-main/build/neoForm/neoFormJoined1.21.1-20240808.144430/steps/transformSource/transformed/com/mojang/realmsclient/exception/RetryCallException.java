@@ -9,10 +9,10 @@ public class RetryCallException extends RealmsServiceException {
     public static final int DEFAULT_DELAY = 5;
     public final int delaySeconds;
 
-    public RetryCallException(int p_87789_, int p_87790_) {
-        super(RealmsError.CustomError.retry(p_87790_));
-        if (p_87789_ >= 0 && p_87789_ <= 120) {
-            this.delaySeconds = p_87789_;
+    public RetryCallException(int retryAfter, int httpResultCode) {
+        super(RealmsError.CustomError.retry(httpResultCode));
+        if (retryAfter >= 0 && retryAfter <= 120) {
+            this.delaySeconds = retryAfter;
         } else {
             this.delaySeconds = 5;
         }

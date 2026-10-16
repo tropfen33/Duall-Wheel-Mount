@@ -11,9 +11,9 @@ public record RetryOptions(int numberOfTries, boolean haltOnFailure) {
         return this.numberOfTries < 1;
     }
 
-    public boolean hasTriesLeft(int p_320828_, int p_320137_) {
-        boolean flag = p_320828_ != p_320137_;
-        boolean flag1 = this.unlimitedTries() || p_320828_ < this.numberOfTries;
+    public boolean hasTriesLeft(int attempts, int successes) {
+        boolean flag = attempts != successes;
+        boolean flag1 = this.unlimitedTries() || attempts < this.numberOfTries;
         return flag1 && (!flag || !this.haltOnFailure);
     }
 

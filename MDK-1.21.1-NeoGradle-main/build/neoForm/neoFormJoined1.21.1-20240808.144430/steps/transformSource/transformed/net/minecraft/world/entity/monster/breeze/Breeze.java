@@ -64,16 +64,16 @@ public class Breeze extends Monster {
             .add(Attributes.ATTACK_DAMAGE, 3.0);
     }
 
-    public Breeze(EntityType<? extends Monster> p_312213_, Level p_312377_) {
-        super(p_312213_, p_312377_);
+    public Breeze(EntityType<? extends Monster> entityType, Level level) {
+        super(entityType, level);
         this.setPathfindingMalus(PathType.DANGER_TRAPDOOR, -1.0F);
         this.setPathfindingMalus(PathType.DAMAGE_FIRE, -1.0F);
         this.xpReward = 10;
     }
 
     @Override
-    protected Brain<?> makeBrain(Dynamic<?> p_312201_) {
-        return BreezeAi.makeBrain(this, this.brainProvider().makeBrain(p_312201_));
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return BreezeAi.makeBrain(this, this.brainProvider().makeBrain(dynamic));
     }
 
     @Override
@@ -87,8 +87,8 @@ public class Breeze extends Monster {
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_312373_) {
-        if (this.level().isClientSide() && DATA_POSE.equals(p_312373_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        if (this.level().isClientSide() && DATA_POSE.equals(key)) {
             this.resetAnimations();
             Pose pose = this.getPose();
             switch (pose) {
@@ -103,7 +103,7 @@ public class Breeze extends Monster {
             }
         }
 
-        super.onSyncedDataUpdated(p_312373_);
+        super.onSyncedDataUpdated(key);
     }
 
     private void resetAnimations() {
@@ -159,13 +159,13 @@ public class Breeze extends Monster {
         }
     }
 
-    public void emitGroundParticles(int p_312637_) {
+    public void emitGroundParticles(int count) {
         if (!this.isPassenger()) {
             Vec3 vec3 = this.getBoundingBox().getCenter();
             Vec3 vec31 = new Vec3(vec3.x, this.position().y, vec3.z);
             BlockState blockstate = !this.getInBlockState().isAir() ? this.getInBlockState() : this.getBlockStateOn();
             if (blockstate.getRenderShape() != RenderShape.INVISIBLE) {
-                for (int i = 0; i < p_312637_; i++) {
+                for (int i = 0; i < count; i++) {
                     this.level().addParticle(new BlockParticleOption(ParticleTypes.BLOCK, blockstate), vec31.x, vec31.y, vec31.z, 0.0, 0.0, 0.0);
                 }
             }
@@ -186,8 +186,8 @@ public class Breeze extends Monster {
     }
 
     @Override
-    public ProjectileDeflection deflection(Projectile p_320843_) {
-        if (p_320843_.getType() != EntityType.BREEZE_WIND_CHARGE && p_320843_.getType() != EntityType.WIND_CHARGE) {
+    public ProjectileDeflection deflection(Projectile projectile) {
+        if (projectile.getType() != EntityType.BREEZE_WIND_CHARGE && projectile.getType() != EntityType.WIND_CHARGE) {
             return this.getType().is(EntityTypeTags.DEFLECTS_PROJECTILES) ? PROJECTILE_DEFLECTION : ProjectileDeflection.NONE;
         } else {
             return ProjectileDeflection.NONE;
@@ -205,7 +205,7 @@ public class Breeze extends Monster {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_312252_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.BREEZE_HURT;
     }
 
@@ -222,9 +222,9 @@ public class Breeze extends Monster {
             .map(p_321468_ -> (LivingEntity)p_321468_);
     }
 
-    public boolean withinInnerCircleRange(Vec3 p_312331_) {
+    public boolean withinInnerCircleRange(Vec3 pos) {
         Vec3 vec3 = this.blockPosition().getCenter();
-        return p_312331_.closerThan(vec3, 4.0, 10.0);
+        return pos.closerThan(vec3, 4.0, 10.0);
     }
 
     @Override
@@ -245,8 +245,8 @@ public class Breeze extends Monster {
     }
 
     @Override
-    public boolean canAttackType(EntityType<?> p_312806_) {
-        return p_312806_ == EntityType.PLAYER || p_312806_ == EntityType.IRON_GOLEM;
+    public boolean canAttackType(EntityType<?> type) {
+        return type == EntityType.PLAYER || type == EntityType.IRON_GOLEM;
     }
 
     @Override
@@ -263,9 +263,12 @@ public class Breeze extends Monster {
         return this.getEyeY() - 0.4;
     }
 
+    /**
+     * Returns whether this Entity is invulnerable to the given DamageSource.
+     */
     @Override
-    public boolean isInvulnerableTo(DamageSource p_312691_) {
-        return p_312691_.getEntity() instanceof Breeze || super.isInvulnerableTo(p_312691_);
+    public boolean isInvulnerableTo(DamageSource source) {
+        return source.getEntity() instanceof Breeze || super.isInvulnerableTo(source);
     }
 
     @Override
@@ -274,12 +277,12 @@ public class Breeze extends Monster {
     }
 
     @Override
-    public boolean causeFallDamage(float p_312702_, float p_312120_, DamageSource p_312076_) {
-        if (p_312702_ > 3.0F) {
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
+        if (fallDistance > 3.0F) {
             this.playSound(SoundEvents.BREEZE_LAND, 1.0F, 1.0F);
         }
 
-        return super.causeFallDamage(p_312702_, p_312120_, p_312076_);
+        return super.causeFallDamage(fallDistance, multiplier, source);
     }
 
     @Override

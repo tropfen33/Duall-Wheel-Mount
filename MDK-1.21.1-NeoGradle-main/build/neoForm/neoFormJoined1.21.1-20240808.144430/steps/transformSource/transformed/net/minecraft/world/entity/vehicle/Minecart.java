@@ -9,24 +9,24 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
 public class Minecart extends AbstractMinecart {
-    public Minecart(EntityType<?> p_38470_, Level p_38471_) {
-        super(p_38470_, p_38471_);
+    public Minecart(EntityType<?> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public Minecart(Level p_38473_, double p_38474_, double p_38475_, double p_38476_) {
-        super(EntityType.MINECART, p_38473_, p_38474_, p_38475_, p_38476_);
+    public Minecart(Level level, double x, double y, double z) {
+        super(EntityType.MINECART, level, x, y, z);
     }
 
     @Override
-    public InteractionResult interact(Player p_38483_, InteractionHand p_38484_) {
-        InteractionResult ret = super.interact(p_38483_, p_38484_);
+    public InteractionResult interact(Player player, InteractionHand hand) {
+        InteractionResult ret = super.interact(player, hand);
         if (ret.consumesAction()) return ret;
-        if (p_38483_.isSecondaryUseActive()) {
+        if (player.isSecondaryUseActive()) {
             return InteractionResult.PASS;
         } else if (this.isVehicle()) {
             return InteractionResult.PASS;
         } else if (!this.level().isClientSide) {
-            return p_38483_.startRiding(this) ? InteractionResult.CONSUME : InteractionResult.PASS;
+            return player.startRiding(this) ? InteractionResult.CONSUME : InteractionResult.PASS;
         } else {
             return InteractionResult.SUCCESS;
         }
@@ -37,9 +37,12 @@ public class Minecart extends AbstractMinecart {
         return Items.MINECART;
     }
 
+    /**
+     * Called every tick the minecart is on an activator rail.
+     */
     @Override
-    public void activateMinecart(int p_38478_, int p_38479_, int p_38480_, boolean p_38481_) {
-        if (p_38481_) {
+    public void activateMinecart(int x, int y, int z, boolean receivingPower) {
+        if (receivingPower) {
             if (this.isVehicle()) {
                 this.ejectPassengers();
             }

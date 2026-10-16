@@ -31,46 +31,52 @@ public class MerchantMenu extends AbstractContainerMenu {
     private boolean showProgressBar;
     private boolean canRestock;
 
-    public MerchantMenu(int p_40033_, Inventory p_40034_) {
-        this(p_40033_, p_40034_, new ClientSideMerchant(p_40034_.player));
+    public MerchantMenu(int containerId, Inventory playerInventory) {
+        this(containerId, playerInventory, new ClientSideMerchant(playerInventory.player));
     }
 
-    public MerchantMenu(int p_40036_, Inventory p_40037_, Merchant p_40038_) {
-        super(MenuType.MERCHANT, p_40036_);
-        this.trader = p_40038_;
-        this.tradeContainer = new MerchantContainer(p_40038_);
+    public MerchantMenu(int containerId, Inventory playerInventory, Merchant trader) {
+        super(MenuType.MERCHANT, containerId);
+        this.trader = trader;
+        this.tradeContainer = new MerchantContainer(trader);
         this.addSlot(new Slot(this.tradeContainer, 0, 136, 37));
         this.addSlot(new Slot(this.tradeContainer, 1, 162, 37));
-        this.addSlot(new MerchantResultSlot(p_40037_.player, p_40038_, this.tradeContainer, 2, 220, 37));
+        this.addSlot(new MerchantResultSlot(playerInventory.player, trader, this.tradeContainer, 2, 220, 37));
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 9; j++) {
-                this.addSlot(new Slot(p_40037_, j + i * 9 + 9, 108 + j * 18, 84 + i * 18));
+                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 108 + j * 18, 84 + i * 18));
             }
         }
 
         for (int k = 0; k < 9; k++) {
-            this.addSlot(new Slot(p_40037_, k, 108 + k * 18, 142));
+            this.addSlot(new Slot(playerInventory, k, 108 + k * 18, 142));
         }
     }
 
-    public void setShowProgressBar(boolean p_40049_) {
-        this.showProgressBar = p_40049_;
+    public void setShowProgressBar(boolean showProgressBar) {
+        this.showProgressBar = showProgressBar;
     }
 
+    /**
+     * Callback for when the crafting matrix is changed.
+     */
     @Override
-    public void slotsChanged(Container p_40040_) {
+    public void slotsChanged(Container inventory) {
         this.tradeContainer.updateSellItem();
-        super.slotsChanged(p_40040_);
+        super.slotsChanged(inventory);
     }
 
-    public void setSelectionHint(int p_40064_) {
-        this.tradeContainer.setSelectionHint(p_40064_);
+    public void setSelectionHint(int currentRecipeIndex) {
+        this.tradeContainer.setSelectionHint(currentRecipeIndex);
     }
 
+    /**
+     * Determines whether supplied player can use this container
+     */
     @Override
-    public boolean stillValid(Player p_40042_) {
-        return this.trader.getTradingPlayer() == p_40042_;
+    public boolean stillValid(Player player) {
+        return this.trader.getTradingPlayer() == player;
     }
 
     public int getTraderXp() {
@@ -81,51 +87,57 @@ public class MerchantMenu extends AbstractContainerMenu {
         return this.tradeContainer.getFutureXp();
     }
 
-    public void setXp(int p_40067_) {
-        this.trader.overrideXp(p_40067_);
+    public void setXp(int xp) {
+        this.trader.overrideXp(xp);
     }
 
     public int getTraderLevel() {
         return this.merchantLevel;
     }
 
-    public void setMerchantLevel(int p_40070_) {
-        this.merchantLevel = p_40070_;
+    public void setMerchantLevel(int level) {
+        this.merchantLevel = level;
     }
 
-    public void setCanRestock(boolean p_40059_) {
-        this.canRestock = p_40059_;
+    public void setCanRestock(boolean canRestock) {
+        this.canRestock = canRestock;
     }
 
     public boolean canRestock() {
         return this.canRestock;
     }
 
+    /**
+     * Called to determine if the current slot is valid for the stack merging (double-click) code. The stack passed in is null for the initial slot that was double-clicked.
+     */
     @Override
-    public boolean canTakeItemForPickAll(ItemStack p_40044_, Slot p_40045_) {
+    public boolean canTakeItemForPickAll(ItemStack stack, Slot slot) {
         return false;
     }
 
+    /**
+     * Handle when the stack in slot {@code index} is shift-clicked. Normally this moves the stack between the player inventory and the other inventory(s).
+     */
     @Override
-    public ItemStack quickMoveStack(Player p_40053_, int p_40054_) {
+    public ItemStack quickMoveStack(Player player, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(p_40054_);
+        Slot slot = this.slots.get(index);
         if (slot != null && slot.hasItem()) {
             ItemStack itemstack1 = slot.getItem();
             itemstack = itemstack1.copy();
-            if (p_40054_ == 2) {
+            if (index == 2) {
                 if (!this.moveItemStackTo(itemstack1, 3, 39, true)) {
                     return ItemStack.EMPTY;
                 }
 
                 slot.onQuickCraft(itemstack1, itemstack);
                 this.playTradeSound();
-            } else if (p_40054_ != 0 && p_40054_ != 1) {
-                if (p_40054_ >= 3 && p_40054_ < 30) {
+            } else if (index != 0 && index != 1) {
+                if (index >= 3 && index < 30) {
                     if (!this.moveItemStackTo(itemstack1, 30, 39, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (p_40054_ >= 30 && p_40054_ < 39 && !this.moveItemStackTo(itemstack1, 3, 30, false)) {
+                } else if (index >= 30 && index < 39 && !this.moveItemStackTo(itemstack1, 3, 30, false)) {
                     return ItemStack.EMPTY;
                 }
             } else if (!this.moveItemStackTo(itemstack1, 3, 39, false)) {
@@ -142,7 +154,7 @@ public class MerchantMenu extends AbstractContainerMenu {
                 return ItemStack.EMPTY;
             }
 
-            slot.onTake(p_40053_, itemstack1);
+            slot.onTake(player, itemstack1);
         }
 
         return itemstack;
@@ -156,30 +168,33 @@ public class MerchantMenu extends AbstractContainerMenu {
         }
     }
 
+    /**
+     * Called when the container is closed.
+     */
     @Override
-    public void removed(Player p_40051_) {
-        super.removed(p_40051_);
+    public void removed(Player player) {
+        super.removed(player);
         this.trader.setTradingPlayer(null);
         if (!this.trader.isClientSide()) {
-            if (!p_40051_.isAlive() || p_40051_ instanceof ServerPlayer && ((ServerPlayer)p_40051_).hasDisconnected()) {
+            if (!player.isAlive() || player instanceof ServerPlayer && ((ServerPlayer)player).hasDisconnected()) {
                 ItemStack itemstack = this.tradeContainer.removeItemNoUpdate(0);
                 if (!itemstack.isEmpty()) {
-                    p_40051_.drop(itemstack, false);
+                    player.drop(itemstack, false);
                 }
 
                 itemstack = this.tradeContainer.removeItemNoUpdate(1);
                 if (!itemstack.isEmpty()) {
-                    p_40051_.drop(itemstack, false);
+                    player.drop(itemstack, false);
                 }
-            } else if (p_40051_ instanceof ServerPlayer) {
-                p_40051_.getInventory().placeItemBackInInventory(this.tradeContainer.removeItemNoUpdate(0));
-                p_40051_.getInventory().placeItemBackInInventory(this.tradeContainer.removeItemNoUpdate(1));
+            } else if (player instanceof ServerPlayer) {
+                player.getInventory().placeItemBackInInventory(this.tradeContainer.removeItemNoUpdate(0));
+                player.getInventory().placeItemBackInInventory(this.tradeContainer.removeItemNoUpdate(1));
             }
         }
     }
 
-    public void tryMoveItems(int p_40073_) {
-        if (p_40073_ >= 0 && this.getOffers().size() > p_40073_) {
+    public void tryMoveItems(int selectedMerchantRecipe) {
+        if (selectedMerchantRecipe >= 0 && this.getOffers().size() > selectedMerchantRecipe) {
             ItemStack itemstack = this.tradeContainer.getItem(0);
             if (!itemstack.isEmpty()) {
                 if (!this.moveItemStackTo(itemstack, 3, 39, true)) {
@@ -199,24 +214,24 @@ public class MerchantMenu extends AbstractContainerMenu {
             }
 
             if (this.tradeContainer.getItem(0).isEmpty() && this.tradeContainer.getItem(1).isEmpty()) {
-                MerchantOffer merchantoffer = this.getOffers().get(p_40073_);
+                MerchantOffer merchantoffer = this.getOffers().get(selectedMerchantRecipe);
                 this.moveFromInventoryToPaymentSlot(0, merchantoffer.getItemCostA());
                 merchantoffer.getItemCostB().ifPresent(p_330236_ -> this.moveFromInventoryToPaymentSlot(1, p_330236_));
             }
         }
     }
 
-    private void moveFromInventoryToPaymentSlot(int p_40061_, ItemCost p_331779_) {
+    private void moveFromInventoryToPaymentSlot(int paymentSlotIndex, ItemCost payment) {
         for (int i = 3; i < 39; i++) {
             ItemStack itemstack = this.slots.get(i).getItem();
-            if (!itemstack.isEmpty() && p_331779_.test(itemstack)) {
-                ItemStack itemstack1 = this.tradeContainer.getItem(p_40061_);
+            if (!itemstack.isEmpty() && payment.test(itemstack)) {
+                ItemStack itemstack1 = this.tradeContainer.getItem(paymentSlotIndex);
                 if (itemstack1.isEmpty() || ItemStack.isSameItemSameComponents(itemstack, itemstack1)) {
                     int j = itemstack.getMaxStackSize();
                     int k = Math.min(j - itemstack1.getCount(), itemstack.getCount());
                     ItemStack itemstack2 = itemstack.copyWithCount(itemstack1.getCount() + k);
                     itemstack.shrink(k);
-                    this.tradeContainer.setItem(p_40061_, itemstack2);
+                    this.tradeContainer.setItem(paymentSlotIndex, itemstack2);
                     if (itemstack2.getCount() >= j) {
                         break;
                     }
@@ -225,8 +240,11 @@ public class MerchantMenu extends AbstractContainerMenu {
         }
     }
 
-    public void setOffers(MerchantOffers p_40047_) {
-        this.trader.overrideOffers(p_40047_);
+    /**
+     * {@link net.minecraft.client.multiplayer.ClientPacketListener} uses this to set offers for the client side MerchantContainer.
+     */
+    public void setOffers(MerchantOffers offers) {
+        this.trader.overrideOffers(offers);
     }
 
     public MerchantOffers getOffers() {

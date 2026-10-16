@@ -18,18 +18,18 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class ComponentRenderUtils {
     private static final FormattedCharSequence INDENT = FormattedCharSequence.codepoint(32, Style.EMPTY);
 
-    private static String stripColor(String p_94000_) {
-        return Minecraft.getInstance().options.chatColors().get() ? p_94000_ : ChatFormatting.stripFormatting(p_94000_);
+    private static String stripColor(String text) {
+        return Minecraft.getInstance().options.chatColors().get() ? text : ChatFormatting.stripFormatting(text);
     }
 
-    public static List<FormattedCharSequence> wrapComponents(FormattedText p_94006_, int p_94007_, Font p_94008_) {
+    public static List<FormattedCharSequence> wrapComponents(FormattedText component, int maxWidth, Font font) {
         ComponentCollector componentcollector = new ComponentCollector();
-        p_94006_.visit((p_93997_, p_93998_) -> {
+        component.visit((p_93997_, p_93998_) -> {
             componentcollector.append(FormattedText.of(stripColor(p_93998_), p_93997_));
             return Optional.empty();
         }, Style.EMPTY);
         List<FormattedCharSequence> list = Lists.newArrayList();
-        p_94008_.getSplitter().splitLines(componentcollector.getResultOrEmpty(), p_94007_, Style.EMPTY, (p_94003_, p_94004_) -> {
+        font.getSplitter().splitLines(componentcollector.getResultOrEmpty(), maxWidth, Style.EMPTY, (p_94003_, p_94004_) -> {
             FormattedCharSequence formattedcharsequence = Language.getInstance().getVisualOrder(p_94003_);
             list.add(p_94004_ ? FormattedCharSequence.composite(INDENT, formattedcharsequence) : formattedcharsequence);
         });

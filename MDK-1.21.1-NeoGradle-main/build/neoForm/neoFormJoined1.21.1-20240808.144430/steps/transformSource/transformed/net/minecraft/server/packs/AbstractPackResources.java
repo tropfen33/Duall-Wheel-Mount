@@ -17,20 +17,20 @@ public abstract class AbstractPackResources implements PackResources {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final PackLocationInfo location;
 
-    protected AbstractPackResources(PackLocationInfo p_326071_) {
-        this.location = p_326071_;
+    protected AbstractPackResources(PackLocationInfo location) {
+        this.location = location;
     }
 
     @Nullable
     @Override
-    public <T> T getMetadataSection(MetadataSectionSerializer<T> p_10213_) throws IOException {
+    public <T> T getMetadataSection(MetadataSectionSerializer<T> deserializer) throws IOException {
         IoSupplier<InputStream> iosupplier = this.getRootResource(new String[]{"pack.mcmeta"});
         if (iosupplier == null) {
             return null;
         } else {
             Object object;
             try (InputStream inputstream = iosupplier.get()) {
-                object = getMetadataFromStream(p_10213_, inputstream);
+                object = getMetadataFromStream(deserializer, inputstream);
             }
 
             return (T)object;
@@ -38,22 +38,22 @@ public abstract class AbstractPackResources implements PackResources {
     }
 
     @Nullable
-    public static <T> T getMetadataFromStream(MetadataSectionSerializer<T> p_10215_, InputStream p_10216_) {
+    public static <T> T getMetadataFromStream(MetadataSectionSerializer<T> deserializer, InputStream inputStream) {
         JsonObject jsonobject;
-        try (BufferedReader bufferedreader = new BufferedReader(new InputStreamReader(p_10216_, StandardCharsets.UTF_8))) {
+        try (BufferedReader bufferedreader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             jsonobject = GsonHelper.parse(bufferedreader);
         } catch (Exception exception1) {
-            LOGGER.error("Couldn't load {} metadata", p_10215_.getMetadataSectionName(), exception1);
+            LOGGER.error("Couldn't load {} metadata", deserializer.getMetadataSectionName(), exception1);
             return null;
         }
 
-        if (!jsonobject.has(p_10215_.getMetadataSectionName())) {
+        if (!jsonobject.has(deserializer.getMetadataSectionName())) {
             return null;
         } else {
             try {
-                return p_10215_.fromJson(GsonHelper.getAsJsonObject(jsonobject, p_10215_.getMetadataSectionName()));
+                return deserializer.fromJson(GsonHelper.getAsJsonObject(jsonobject, deserializer.getMetadataSectionName()));
             } catch (Exception exception) {
-                LOGGER.error("Couldn't load {} metadata", p_10215_.getMetadataSectionName(), exception);
+                LOGGER.error("Couldn't load {} metadata", deserializer.getMetadataSectionName(), exception);
                 return null;
             }
         }

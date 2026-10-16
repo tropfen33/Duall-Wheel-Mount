@@ -41,7 +41,7 @@ public record TrimPattern(ResourceLocation assetId, Holder<Item> templateItem, C
         Registries.TRIM_PATTERN, DIRECT_STREAM_CODEC
     );
 
-    public Component copyWithStyle(Holder<TrimMaterial> p_266827_) {
-        return this.description.copy().withStyle(p_266827_.value().description().getStyle());
+    public Component copyWithStyle(Holder<TrimMaterial> trimMaterial) {
+        return this.description.copy().withStyle(trimMaterial.value().description().getStyle());
     }
 }

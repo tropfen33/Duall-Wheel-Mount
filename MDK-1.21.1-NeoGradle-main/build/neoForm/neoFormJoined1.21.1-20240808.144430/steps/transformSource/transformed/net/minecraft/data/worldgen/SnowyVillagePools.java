@@ -16,19 +16,19 @@ public class SnowyVillagePools {
     public static final ResourceKey<StructureTemplatePool> START = Pools.createKey("village/snowy/town_centers");
     private static final ResourceKey<StructureTemplatePool> TERMINATORS_KEY = Pools.createKey("village/snowy/terminators");
 
-    public static void bootstrap(BootstrapContext<StructureTemplatePool> p_321804_) {
-        HolderGetter<PlacedFeature> holdergetter = p_321804_.lookup(Registries.PLACED_FEATURE);
+    public static void bootstrap(BootstrapContext<StructureTemplatePool> context) {
+        HolderGetter<PlacedFeature> holdergetter = context.lookup(Registries.PLACED_FEATURE);
         Holder<PlacedFeature> holder = holdergetter.getOrThrow(VillagePlacements.SPRUCE_VILLAGE);
         Holder<PlacedFeature> holder1 = holdergetter.getOrThrow(VillagePlacements.PILE_SNOW_VILLAGE);
         Holder<PlacedFeature> holder2 = holdergetter.getOrThrow(VillagePlacements.PILE_ICE_VILLAGE);
-        HolderGetter<StructureProcessorList> holdergetter1 = p_321804_.lookup(Registries.PROCESSOR_LIST);
+        HolderGetter<StructureProcessorList> holdergetter1 = context.lookup(Registries.PROCESSOR_LIST);
         Holder<StructureProcessorList> holder3 = holdergetter1.getOrThrow(ProcessorLists.STREET_SNOWY_OR_TAIGA);
         Holder<StructureProcessorList> holder4 = holdergetter1.getOrThrow(ProcessorLists.FARM_SNOWY);
         Holder<StructureProcessorList> holder5 = holdergetter1.getOrThrow(ProcessorLists.ZOMBIE_SNOWY);
-        HolderGetter<StructureTemplatePool> holdergetter2 = p_321804_.lookup(Registries.TEMPLATE_POOL);
+        HolderGetter<StructureTemplatePool> holdergetter2 = context.lookup(Registries.TEMPLATE_POOL);
         Holder<StructureTemplatePool> holder6 = holdergetter2.getOrThrow(Pools.EMPTY);
         Holder<StructureTemplatePool> holder7 = holdergetter2.getOrThrow(TERMINATORS_KEY);
-        p_321804_.register(
+        context.register(
             START,
             new StructureTemplatePool(
                 holder6,
@@ -44,7 +44,7 @@ public class SnowyVillagePools {
             )
         );
         Pools.register(
-            p_321804_,
+            context,
             "village/snowy/streets",
             new StructureTemplatePool(
                 holder7,
@@ -70,7 +70,7 @@ public class SnowyVillagePools {
             )
         );
         Pools.register(
-            p_321804_,
+            context,
             "village/snowy/zombie/streets",
             new StructureTemplatePool(
                 holder7,
@@ -96,7 +96,7 @@ public class SnowyVillagePools {
             )
         );
         Pools.register(
-            p_321804_,
+            context,
             "village/snowy/houses",
             new StructureTemplatePool(
                 holder7,
@@ -137,7 +137,7 @@ public class SnowyVillagePools {
             )
         );
         Pools.register(
-            p_321804_,
+            context,
             "village/snowy/zombie/houses",
             new StructureTemplatePool(
                 holder7,
@@ -177,7 +177,7 @@ public class SnowyVillagePools {
                 StructureTemplatePool.Projection.RIGID
             )
         );
-        p_321804_.register(
+        context.register(
             TERMINATORS_KEY,
             new StructureTemplatePool(
                 holder6,
@@ -191,12 +191,12 @@ public class SnowyVillagePools {
             )
         );
         Pools.register(
-            p_321804_,
+            context,
             "village/snowy/trees",
             new StructureTemplatePool(holder6, ImmutableList.of(Pair.of(StructurePoolElement.feature(holder), 1)), StructureTemplatePool.Projection.RIGID)
         );
         Pools.register(
-            p_321804_,
+            context,
             "village/snowy/decor",
             new StructureTemplatePool(
                 holder6,
@@ -213,7 +213,7 @@ public class SnowyVillagePools {
             )
         );
         Pools.register(
-            p_321804_,
+            context,
             "village/snowy/zombie/decor",
             new StructureTemplatePool(
                 holder6,
@@ -230,7 +230,7 @@ public class SnowyVillagePools {
             )
         );
         Pools.register(
-            p_321804_,
+            context,
             "village/snowy/villagers",
             new StructureTemplatePool(
                 holder6,
@@ -243,7 +243,7 @@ public class SnowyVillagePools {
             )
         );
         Pools.register(
-            p_321804_,
+            context,
             "village/snowy/zombie/villagers",
             new StructureTemplatePool(
                 holder6,

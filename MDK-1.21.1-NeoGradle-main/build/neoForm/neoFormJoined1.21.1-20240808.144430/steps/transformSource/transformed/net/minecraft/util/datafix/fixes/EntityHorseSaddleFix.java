@@ -11,28 +11,28 @@ import java.util.Optional;
 import net.minecraft.util.datafix.schemas.NamespacedSchema;
 
 public class EntityHorseSaddleFix extends NamedEntityFix {
-    public EntityHorseSaddleFix(Schema p_15442_, boolean p_15443_) {
-        super(p_15442_, p_15443_, "EntityHorseSaddleFix", References.ENTITY, "EntityHorse");
+    public EntityHorseSaddleFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType, "EntityHorseSaddleFix", References.ENTITY, "EntityHorse");
     }
 
     @Override
-    protected Typed<?> fix(Typed<?> p_15445_) {
+    protected Typed<?> fix(Typed<?> p_typed) {
         OpticFinder<Pair<String, String>> opticfinder = DSL.fieldFinder("id", DSL.named(References.ITEM_NAME.typeName(), NamespacedSchema.namespacedString()));
         Type<?> type = this.getInputSchema().getTypeRaw(References.ITEM_STACK);
         OpticFinder<?> opticfinder1 = DSL.fieldFinder("SaddleItem", type);
-        Optional<? extends Typed<?>> optional = p_15445_.getOptionalTyped(opticfinder1);
-        Dynamic<?> dynamic = p_15445_.get(DSL.remainderFinder());
+        Optional<? extends Typed<?>> optional = p_typed.getOptionalTyped(opticfinder1);
+        Dynamic<?> dynamic = p_typed.get(DSL.remainderFinder());
         if (optional.isEmpty() && dynamic.get("Saddle").asBoolean(false)) {
-            Typed<?> typed = type.pointTyped(p_15445_.getOps()).orElseThrow(IllegalStateException::new);
+            Typed<?> typed = type.pointTyped(p_typed.getOps()).orElseThrow(IllegalStateException::new);
             typed = typed.set(opticfinder, Pair.of(References.ITEM_NAME.typeName(), "minecraft:saddle"));
             Dynamic<?> dynamic1 = dynamic.emptyMap();
             dynamic1 = dynamic1.set("Count", dynamic1.createByte((byte)1));
             dynamic1 = dynamic1.set("Damage", dynamic1.createShort((short)0));
             typed = typed.set(DSL.remainderFinder(), dynamic1);
             dynamic.remove("Saddle");
-            return p_15445_.set(opticfinder1, typed).set(DSL.remainderFinder(), dynamic);
+            return p_typed.set(opticfinder1, typed).set(DSL.remainderFinder(), dynamic);
         } else {
-            return p_15445_;
+            return p_typed;
         }
     }
 }

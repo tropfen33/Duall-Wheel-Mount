@@ -14,16 +14,16 @@ import net.minecraft.world.level.Level;
 public class SpectralArrow extends AbstractArrow {
     private int duration = 200;
 
-    public SpectralArrow(EntityType<? extends SpectralArrow> p_37411_, Level p_37412_) {
-        super(p_37411_, p_37412_);
+    public SpectralArrow(EntityType<? extends SpectralArrow> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public SpectralArrow(Level p_37414_, LivingEntity p_309162_, ItemStack p_309167_, @Nullable ItemStack p_346408_) {
-        super(EntityType.SPECTRAL_ARROW, p_309162_, p_37414_, p_309167_, p_346408_);
+    public SpectralArrow(Level level, LivingEntity owner, ItemStack pickupItemStack, @Nullable ItemStack firedFromWeapon) {
+        super(EntityType.SPECTRAL_ARROW, owner, level, pickupItemStack, firedFromWeapon);
     }
 
-    public SpectralArrow(Level p_37419_, double p_309044_, double p_309099_, double p_308873_, ItemStack p_308959_, @Nullable ItemStack p_345907_) {
-        super(EntityType.SPECTRAL_ARROW, p_309044_, p_309099_, p_308873_, p_37419_, p_308959_, p_345907_);
+    public SpectralArrow(Level level, double x, double y, double z, ItemStack pickupItemStack, @Nullable ItemStack firedFromWeapon) {
+        super(EntityType.SPECTRAL_ARROW, x, y, z, level, pickupItemStack, firedFromWeapon);
     }
 
     @Override
@@ -35,24 +35,27 @@ public class SpectralArrow extends AbstractArrow {
     }
 
     @Override
-    protected void doPostHurtEffects(LivingEntity p_37422_) {
-        super.doPostHurtEffects(p_37422_);
+    protected void doPostHurtEffects(LivingEntity living) {
+        super.doPostHurtEffects(living);
         MobEffectInstance mobeffectinstance = new MobEffectInstance(MobEffects.GLOWING, this.duration, 0);
-        p_37422_.addEffect(mobeffectinstance, this.getEffectSource());
+        living.addEffect(mobeffectinstance, this.getEffectSource());
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_37424_) {
-        super.readAdditionalSaveData(p_37424_);
-        if (p_37424_.contains("Duration")) {
-            this.duration = p_37424_.getInt("Duration");
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.contains("Duration")) {
+            this.duration = compound.getInt("Duration");
         }
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_37426_) {
-        super.addAdditionalSaveData(p_37426_);
-        p_37426_.putInt("Duration", this.duration);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("Duration", this.duration);
     }
 
     @Override

@@ -44,41 +44,41 @@ public class MultifaceGrowthConfiguration implements FeatureConfiguration {
     public final HolderSet<Block> canBePlacedOn;
     private final ObjectArrayList<Direction> validDirections;
 
-    private static DataResult<MultifaceBlock> apply(Block p_225405_) {
-        return p_225405_ instanceof MultifaceBlock multifaceblock
+    private static DataResult<MultifaceBlock> apply(Block block) {
+        return block instanceof MultifaceBlock multifaceblock
             ? DataResult.success(multifaceblock)
             : DataResult.error(() -> "Growth block should be a multiface block");
     }
 
     public MultifaceGrowthConfiguration(
-        MultifaceBlock p_225392_, int p_225393_, boolean p_225394_, boolean p_225395_, boolean p_225396_, float p_225397_, HolderSet<Block> p_225398_
+        MultifaceBlock placeBlock, int searchRange, boolean canPlaceOnFloor, boolean canPlaceOnCeiling, boolean canPlaceOnWall, float chanceOfSpreading, HolderSet<Block> canBePlacedOn
     ) {
-        this.placeBlock = p_225392_;
-        this.searchRange = p_225393_;
-        this.canPlaceOnFloor = p_225394_;
-        this.canPlaceOnCeiling = p_225395_;
-        this.canPlaceOnWall = p_225396_;
-        this.chanceOfSpreading = p_225397_;
-        this.canBePlacedOn = p_225398_;
+        this.placeBlock = placeBlock;
+        this.searchRange = searchRange;
+        this.canPlaceOnFloor = canPlaceOnFloor;
+        this.canPlaceOnCeiling = canPlaceOnCeiling;
+        this.canPlaceOnWall = canPlaceOnWall;
+        this.chanceOfSpreading = chanceOfSpreading;
+        this.canBePlacedOn = canBePlacedOn;
         this.validDirections = new ObjectArrayList<>(6);
-        if (p_225395_) {
+        if (canPlaceOnCeiling) {
             this.validDirections.add(Direction.UP);
         }
 
-        if (p_225394_) {
+        if (canPlaceOnFloor) {
             this.validDirections.add(Direction.DOWN);
         }
 
-        if (p_225396_) {
+        if (canPlaceOnWall) {
             Direction.Plane.HORIZONTAL.forEach(this.validDirections::add);
         }
     }
 
-    public List<Direction> getShuffledDirectionsExcept(RandomSource p_225402_, Direction p_225403_) {
-        return Util.toShuffledList(this.validDirections.stream().filter(p_225412_ -> p_225412_ != p_225403_), p_225402_);
+    public List<Direction> getShuffledDirectionsExcept(RandomSource random, Direction direction) {
+        return Util.toShuffledList(this.validDirections.stream().filter(p_225412_ -> p_225412_ != direction), random);
     }
 
-    public List<Direction> getShuffledDirections(RandomSource p_225400_) {
-        return Util.shuffledCopy(this.validDirections, p_225400_);
+    public List<Direction> getShuffledDirections(RandomSource random) {
+        return Util.shuffledCopy(this.validDirections, random);
     }
 }

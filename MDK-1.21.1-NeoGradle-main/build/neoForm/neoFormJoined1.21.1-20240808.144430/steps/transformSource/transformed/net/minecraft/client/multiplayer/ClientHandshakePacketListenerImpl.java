@@ -76,39 +76,39 @@ public class ClientHandshakePacketListenerImpl implements ClientLoginPacketListe
     private final AtomicReference<ClientHandshakePacketListenerImpl.State> state = new AtomicReference<>(ClientHandshakePacketListenerImpl.State.CONNECTING);
 
     public ClientHandshakePacketListenerImpl(
-        Connection p_261697_,
-        Minecraft p_261835_,
-        @Nullable ServerData p_261938_,
-        @Nullable Screen p_261783_,
-        boolean p_261562_,
-        @Nullable Duration p_261673_,
-        Consumer<Component> p_261945_,
-        @Nullable TransferState p_320762_
+        Connection connection,
+        Minecraft minecraft,
+        @Nullable ServerData serverData,
+        @Nullable Screen parent,
+        boolean newWorld,
+        @Nullable Duration worldLoadDuration,
+        Consumer<Component> updateStatus,
+        @Nullable TransferState cookies
     ) {
-        this.connection = p_261697_;
-        this.minecraft = p_261835_;
-        this.serverData = p_261938_;
-        this.parent = p_261783_;
-        this.updateStatus = p_261945_;
-        this.newWorld = p_261562_;
-        this.worldLoadDuration = p_261673_;
-        this.cookies = p_320762_ != null ? new HashMap<>(p_320762_.cookies()) : new HashMap<>();
-        this.wasTransferredTo = p_320762_ != null;
+        this.connection = connection;
+        this.minecraft = minecraft;
+        this.serverData = serverData;
+        this.parent = parent;
+        this.updateStatus = updateStatus;
+        this.newWorld = newWorld;
+        this.worldLoadDuration = worldLoadDuration;
+        this.cookies = cookies != null ? new HashMap<>(cookies.cookies()) : new HashMap<>();
+        this.wasTransferredTo = cookies != null;
     }
 
-    private void switchState(ClientHandshakePacketListenerImpl.State p_302230_) {
+    private void switchState(ClientHandshakePacketListenerImpl.State state) {
         ClientHandshakePacketListenerImpl.State clienthandshakepacketlistenerimpl$state = this.state.updateAndGet(p_339288_ -> {
-            if (!p_302230_.fromStates.contains(p_339288_)) {
-                throw new IllegalStateException("Tried to switch to " + p_302230_ + " from " + p_339288_ + ", but expected one of " + p_302230_.fromStates);
+            if (!state.fromStates.contains(p_339288_)) {
+                throw new IllegalStateException("Tried to switch to " + state + " from " + p_339288_ + ", but expected one of " + state.fromStates);
             } else {
-                return p_302230_;
+                return state;
             }
         });
         this.updateStatus.accept(clienthandshakepacketlistenerimpl$state.message);
     }
 
     @Override
-    public void handleHello(ClientboundHelloPacket p_104549_) {
+    public void handleHello(ClientboundHelloPacket packet) {
         this.switchState(ClientHandshakePacketListenerImpl.State.AUTHORIZING);
 
         Cipher cipher;
@@ -117,17 +117,17 @@ public class ClientHandshakePacketListenerImpl implements ClientLoginPacketListe
         ServerboundKeyPacket serverboundkeypacket;
         try {
             SecretKey secretkey = Crypt.generateSecretKey();
-            PublicKey publickey = p_104549_.getPublicKey();
-            s = new BigInteger(Crypt.digestData(p_104549_.getServerId(), publickey, secretkey)).toString(16);
+            PublicKey publickey = packet.getPublicKey();
+            s = new BigInteger(Crypt.digestData(packet.getServerId(), publickey, secretkey)).toString(16);
             cipher = Crypt.getCipher(2, secretkey);
             cipher1 = Crypt.getCipher(1, secretkey);
-            byte[] abyte = p_104549_.getChallenge();
+            byte[] abyte = packet.getChallenge();
             serverboundkeypacket = new ServerboundKeyPacket(secretkey, publickey, abyte);
         } catch (Exception exception) {
             throw new IllegalStateException("Protocol error", exception);
         }
 
-        if (p_104549_.shouldAuthenticate()) {
+        if (packet.shouldAuthenticate()) {
             Util.ioPool().submit(() -> {
                 Component component = this.authenticateServer(s);
                 if (component != null) {
@@ -146,15 +146,15 @@ public class ClientHandshakePacketListenerImpl implements ClientLoginPacketListe
         }
     }
 
-    private void setEncryption(ServerboundKeyPacket p_319860_, Cipher p_320550_, Cipher p_320442_) {
+    private void setEncryption(ServerboundKeyPacket keyPacket, Cipher decryptingCypher, Cipher encryptingCypher) {
         this.switchState(ClientHandshakePacketListenerImpl.State.ENCRYPTING);
-        this.connection.send(p_319860_, PacketSendListener.thenRun(() -> this.connection.setEncryptionKey(p_320550_, p_320442_)));
+        this.connection.send(keyPacket, PacketSendListener.thenRun(() -> this.connection.setEncryptionKey(decryptingCypher, encryptingCypher)));
     }
 
     @Nullable
-    private Component authenticateServer(String p_104532_) {
+    private Component authenticateServer(String serverHash) {
         try {
-            this.getMinecraftSessionService().joinServer(this.minecraft.getUser().getProfileId(), this.minecraft.getUser().getAccessToken(), p_104532_);
+            this.getMinecraftSessionService().joinServer(this.minecraft.getUser().getProfileId(), this.minecraft.getUser().getAccessToken(), serverHash);
             return null;
         } catch (AuthenticationUnavailableException authenticationunavailableexception) {
             return Component.translatable("disconnect.loginFailedInfo", Component.translatable("disconnect.loginFailedInfo.serversUnavailable"));
@@ -174,9 +174,9 @@ public class ClientHandshakePacketListenerImpl implements ClientLoginPacketListe
     }
 
     @Override
-    public void handleGameProfile(ClientboundGameProfilePacket p_104547_) {
+    public void handleGameProfile(ClientboundGameProfilePacket packet) {
         this.switchState(ClientHandshakePacketListenerImpl.State.JOINING);
-        GameProfile gameprofile = p_104547_.gameProfile();
+        GameProfile gameprofile = packet.gameProfile();
         this.connection
             .setupInboundProtocol(
                 ConfigurationProtocols.CLIENTBOUND,
@@ -193,7 +193,7 @@ public class ClientHandshakePacketListenerImpl implements ClientLoginPacketListe
                         this.parent,
                         this.cookies,
                         null,
-                        p_104547_.strictErrorHandling(),
+                        packet.strictErrorHandling(),
                         Map.of(),
                         ServerLinks.EMPTY
                     )
@@ -206,12 +206,12 @@ public class ClientHandshakePacketListenerImpl implements ClientLoginPacketListe
     }
 
     @Override
-    public void onDisconnect(DisconnectionDetails p_350923_) {
+    public void onDisconnect(DisconnectionDetails details) {
         Component component = this.wasTransferredTo ? CommonComponents.TRANSFER_CONNECT_FAILED : CommonComponents.CONNECT_FAILED;
         if (this.serverData != null && this.serverData.isRealm()) {
-            this.minecraft.setScreen(new DisconnectedRealmsScreen(this.parent, component, p_350923_.reason()));
+            this.minecraft.setScreen(new DisconnectedRealmsScreen(this.parent, component, details.reason()));
         } else {
-            this.minecraft.setScreen(new DisconnectedScreen(this.parent, component, p_350923_));
+            this.minecraft.setScreen(new DisconnectedScreen(this.parent, component, details));
         }
     }
 
@@ -221,36 +221,36 @@ public class ClientHandshakePacketListenerImpl implements ClientLoginPacketListe
     }
 
     @Override
-    public void handleDisconnect(ClientboundLoginDisconnectPacket p_104553_) {
-        this.connection.disconnect(p_104553_.getReason());
+    public void handleDisconnect(ClientboundLoginDisconnectPacket packet) {
+        this.connection.disconnect(packet.getReason());
     }
 
     @Override
-    public void handleCompression(ClientboundLoginCompressionPacket p_104551_) {
+    public void handleCompression(ClientboundLoginCompressionPacket packet) {
         if (!this.connection.isMemoryConnection()) {
-            this.connection.setupCompression(p_104551_.getCompressionThreshold(), false);
+            this.connection.setupCompression(packet.getCompressionThreshold(), false);
         }
     }
 
     @Override
-    public void handleCustomQuery(ClientboundCustomQueryPacket p_104545_) {
+    public void handleCustomQuery(ClientboundCustomQueryPacket packet) {
         this.updateStatus.accept(Component.translatable("connect.negotiating"));
-        this.connection.send(new ServerboundCustomQueryAnswerPacket(p_104545_.transactionId(), null));
+        this.connection.send(new ServerboundCustomQueryAnswerPacket(packet.transactionId(), null));
     }
 
-    public void setMinigameName(@Nullable String p_286653_) {
-        this.minigameName = p_286653_;
-    }
-
-    @Override
-    public void handleRequestCookie(ClientboundCookieRequestPacket p_319938_) {
-        this.connection.send(new ServerboundCookieResponsePacket(p_319938_.key(), this.cookies.get(p_319938_.key())));
+    public void setMinigameName(@Nullable String minigameName) {
+        this.minigameName = minigameName;
     }
 
     @Override
-    public void fillListenerSpecificCrashDetails(CrashReport p_350555_, CrashReportCategory p_315015_) {
-        p_315015_.setDetail("Server type", () -> this.serverData != null ? this.serverData.type().toString() : "<unknown>");
-        p_315015_.setDetail("Login phase", () -> this.state.get().toString());
+    public void handleRequestCookie(ClientboundCookieRequestPacket packet) {
+        this.connection.send(new ServerboundCookieResponsePacket(packet.key(), this.cookies.get(packet.key())));
+    }
+
+    @Override
+    public void fillListenerSpecificCrashDetails(CrashReport crashReport, CrashReportCategory category) {
+        category.setDetail("Server type", () -> this.serverData != null ? this.serverData.type().toString() : "<unknown>");
+        category.setDetail("Login phase", () -> this.state.get().toString());
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -263,9 +263,9 @@ public class ClientHandshakePacketListenerImpl implements ClientLoginPacketListe
         final Component message;
         final Set<ClientHandshakePacketListenerImpl.State> fromStates;
 
-        private State(Component p_302239_, Set<ClientHandshakePacketListenerImpl.State> p_302236_) {
-            this.message = p_302239_;
-            this.fromStates = p_302236_;
+        private State(Component message, Set<ClientHandshakePacketListenerImpl.State> fromStates) {
+            this.message = message;
+            this.fromStates = fromStates;
         }
     }
 }

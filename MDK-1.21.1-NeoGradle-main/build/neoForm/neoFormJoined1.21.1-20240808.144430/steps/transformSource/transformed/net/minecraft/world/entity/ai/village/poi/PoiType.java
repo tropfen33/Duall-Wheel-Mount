@@ -15,7 +15,7 @@ public record PoiType(Set<BlockState> matchingStates, int maxTickets, int validR
         this.validRange = validRange;
     }
 
-    public boolean is(BlockState p_148693_) {
-        return this.matchingStates.contains(p_148693_);
+    public boolean is(BlockState state) {
+        return this.matchingStates.contains(state);
     }
 }

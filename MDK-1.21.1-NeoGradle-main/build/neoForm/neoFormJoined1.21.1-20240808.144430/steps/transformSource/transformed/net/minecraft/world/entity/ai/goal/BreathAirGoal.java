@@ -14,8 +14,8 @@ import net.minecraft.world.phys.Vec3;
 public class BreathAirGoal extends Goal {
     private final PathfinderMob mob;
 
-    public BreathAirGoal(PathfinderMob p_25103_) {
-        this.mob = p_25103_;
+    public BreathAirGoal(PathfinderMob mob) {
+        this.mob = mob;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
     }
 
@@ -71,8 +71,8 @@ public class BreathAirGoal extends Goal {
         this.mob.move(MoverType.SELF, this.mob.getDeltaMovement());
     }
 
-    private boolean givesAir(LevelReader p_25107_, BlockPos p_25108_) {
-        BlockState blockstate = p_25107_.getBlockState(p_25108_);
-        return (p_25107_.getFluidState(p_25108_).isEmpty() || blockstate.is(Blocks.BUBBLE_COLUMN)) && blockstate.isPathfindable(PathComputationType.LAND);
+    private boolean givesAir(LevelReader level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
+        return (level.getFluidState(pos).isEmpty() || blockstate.is(Blocks.BUBBLE_COLUMN)) && blockstate.isPathfindable(PathComputationType.LAND);
     }
 }

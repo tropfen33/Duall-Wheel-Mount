@@ -15,8 +15,8 @@ public record ServerboundDebugSampleSubscriptionPacket(RemoteDebugSampleType sam
         this(p_323947_.readEnum(RemoteDebugSampleType.class));
     }
 
-    private void write(FriendlyByteBuf p_323974_) {
-        p_323974_.writeEnum(this.sampleType);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeEnum(this.sampleType);
     }
 
     @Override
@@ -24,7 +24,10 @@ public record ServerboundDebugSampleSubscriptionPacket(RemoteDebugSampleType sam
         return GamePacketTypes.SERVERBOUND_DEBUG_SAMPLE_SUBSCRIPTION;
     }
 
-    public void handle(ServerGamePacketListener p_323999_) {
-        p_323999_.handleDebugSampleSubscription(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleDebugSampleSubscription(this);
     }
 }

@@ -29,27 +29,27 @@ public interface HolderLookup<T> extends HolderGetter<T> {
     public interface Provider extends net.neoforged.neoforge.common.extensions.IHolderLookupProviderExtension {
         Stream<ResourceKey<? extends Registry<?>>> listRegistries();
 
-        <T> Optional<HolderLookup.RegistryLookup<T>> lookup(ResourceKey<? extends Registry<? extends T>> p_256285_);
+        <T> Optional<HolderLookup.RegistryLookup<T>> lookup(ResourceKey<? extends Registry<? extends T>> registryKey);
 
-        default <T> HolderLookup.RegistryLookup<T> lookupOrThrow(ResourceKey<? extends Registry<? extends T>> p_255957_) {
-            return this.lookup(p_255957_).orElseThrow(() -> new IllegalStateException("Registry " + p_255957_.location() + " not found"));
+        default <T> HolderLookup.RegistryLookup<T> lookupOrThrow(ResourceKey<? extends Registry<? extends T>> registryKey) {
+            return this.lookup(registryKey).orElseThrow(() -> new IllegalStateException("Registry " + registryKey.location() + " not found"));
         }
 
-        default <V> RegistryOps<V> createSerializationContext(DynamicOps<V> p_326817_) {
-            return RegistryOps.create(p_326817_, this);
+        default <V> RegistryOps<V> createSerializationContext(DynamicOps<V> ops) {
+            return RegistryOps.create(ops, this);
         }
 
         default HolderGetter.Provider asGetterLookup() {
             return new HolderGetter.Provider() {
                 @Override
-                public <T> Optional<HolderGetter<T>> lookup(ResourceKey<? extends Registry<? extends T>> p_256379_) {
-                    return Provider.this.lookup(p_256379_).map(p_255952_ -> (HolderGetter<T>)p_255952_);
+                public <T> Optional<HolderGetter<T>> lookup(ResourceKey<? extends Registry<? extends T>> registryKey) {
+                    return Provider.this.lookup(registryKey).map(p_255952_ -> (HolderGetter<T>)p_255952_);
                 }
             };
         }
 
-        static HolderLookup.Provider create(Stream<HolderLookup.RegistryLookup<?>> p_256054_) {
-            final Map<ResourceKey<? extends Registry<?>>, HolderLookup.RegistryLookup<?>> map = p_256054_.collect(
+        static HolderLookup.Provider create(Stream<HolderLookup.RegistryLookup<?>> lookupStream) {
+            final Map<ResourceKey<? extends Registry<?>>, HolderLookup.RegistryLookup<?>> map = lookupStream.collect(
                 Collectors.toUnmodifiableMap(HolderLookup.RegistryLookup::key, p_256335_ -> p_256335_)
             );
             return new HolderLookup.Provider() {
@@ -71,13 +71,13 @@ public interface HolderLookup<T> extends HolderGetter<T> {
 
         Lifecycle registryLifecycle();
 
-        default HolderLookup.RegistryLookup<T> filterFeatures(FeatureFlagSet p_249397_) {
+        default HolderLookup.RegistryLookup<T> filterFeatures(FeatureFlagSet enabledFeatures) {
             return FeatureElement.FILTERED_REGISTRIES.contains(this.key())
-                ? this.filterElements(p_250240_ -> ((FeatureElement)p_250240_).isEnabled(p_249397_))
+                ? this.filterElements(p_250240_ -> ((FeatureElement)p_250240_).isEnabled(enabledFeatures))
                 : this;
         }
 
-        default HolderLookup.RegistryLookup<T> filterElements(final Predicate<T> p_324043_) {
+        default HolderLookup.RegistryLookup<T> filterElements(final Predicate<T> predicate) {
             return new HolderLookup.RegistryLookup.Delegate<T>() {
                 @Override
                 public HolderLookup.RegistryLookup<T> parent() {
@@ -86,12 +86,12 @@ public interface HolderLookup<T> extends HolderGetter<T> {
 
                 @Override
                 public Optional<Holder.Reference<T>> get(ResourceKey<T> p_323784_) {
-                    return this.parent().get(p_323784_).filter(p_324360_ -> p_324043_.test(p_324360_.value()));
+                    return this.parent().get(p_323784_).filter(p_324360_ -> predicate.test(p_324360_.value()));
                 }
 
                 @Override
                 public Stream<Holder.Reference<T>> listElements() {
-                    return this.parent().listElements().filter(p_324273_ -> p_324043_.test(p_324273_.value()));
+                    return this.parent().listElements().filter(p_324273_ -> predicate.test(p_324273_.value()));
                 }
             };
         }

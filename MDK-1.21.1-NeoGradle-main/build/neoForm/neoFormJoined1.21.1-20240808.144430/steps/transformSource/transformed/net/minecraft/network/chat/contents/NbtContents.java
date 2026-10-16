@@ -43,22 +43,22 @@ public class NbtContents implements ComponentContents {
     @Nullable
     protected final NbtPathArgument.NbtPath compiledNbtPath;
 
-    public NbtContents(String p_237395_, boolean p_237396_, Optional<Component> p_237397_, DataSource p_237398_) {
-        this(p_237395_, compileNbtPath(p_237395_), p_237396_, p_237397_, p_237398_);
+    public NbtContents(String nbtPathPattern, boolean interpreting, Optional<Component> separator, DataSource dataSource) {
+        this(nbtPathPattern, compileNbtPath(nbtPathPattern), interpreting, separator, dataSource);
     }
 
-    private NbtContents(String p_237389_, @Nullable NbtPathArgument.NbtPath p_237390_, boolean p_237391_, Optional<Component> p_237392_, DataSource p_237393_) {
-        this.nbtPathPattern = p_237389_;
-        this.compiledNbtPath = p_237390_;
-        this.interpreting = p_237391_;
-        this.separator = p_237392_;
-        this.dataSource = p_237393_;
+    private NbtContents(String nbtPathPattern, @Nullable NbtPathArgument.NbtPath compiledNbtPath, boolean interpreting, Optional<Component> separator, DataSource dataSource) {
+        this.nbtPathPattern = nbtPathPattern;
+        this.compiledNbtPath = compiledNbtPath;
+        this.interpreting = interpreting;
+        this.separator = separator;
+        this.dataSource = dataSource;
     }
 
     @Nullable
-    private static NbtPathArgument.NbtPath compileNbtPath(String p_237410_) {
+    private static NbtPathArgument.NbtPath compileNbtPath(String nbtPathPattern) {
         try {
-            return new NbtPathArgument().parse(new StringReader(p_237410_));
+            return new NbtPathArgument().parse(new StringReader(nbtPathPattern));
         } catch (CommandSyntaxException commandsyntaxexception) {
             return null;
         }
@@ -81,11 +81,11 @@ public class NbtContents implements ComponentContents {
     }
 
     @Override
-    public boolean equals(Object p_237430_) {
-        if (this == p_237430_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            if (p_237430_ instanceof NbtContents nbtcontents
+            if (other instanceof NbtContents nbtcontents
                 && this.dataSource.equals(nbtcontents.dataSource)
                 && this.separator.equals(nbtcontents.separator)
                 && this.interpreting == nbtcontents.interpreting
@@ -111,9 +111,9 @@ public class NbtContents implements ComponentContents {
     }
 
     @Override
-    public MutableComponent resolve(@Nullable CommandSourceStack p_237401_, @Nullable Entity p_237402_, int p_237403_) throws CommandSyntaxException {
-        if (p_237401_ != null && this.compiledNbtPath != null) {
-            Stream<String> stream = this.dataSource.getData(p_237401_).flatMap(p_237417_ -> {
+    public MutableComponent resolve(@Nullable CommandSourceStack nbtPathPattern, @Nullable Entity entity, int recursionDepth) throws CommandSyntaxException {
+        if (nbtPathPattern != null && this.compiledNbtPath != null) {
+            Stream<String> stream = this.dataSource.getData(nbtPathPattern).flatMap(p_237417_ -> {
                 try {
                     return this.compiledNbtPath.get(p_237417_).stream();
                 } catch (CommandSyntaxException commandsyntaxexception) {
@@ -122,19 +122,19 @@ public class NbtContents implements ComponentContents {
             }).map(Tag::getAsString);
             if (this.interpreting) {
                 Component component = DataFixUtils.orElse(
-                    ComponentUtils.updateForEntity(p_237401_, this.separator, p_237402_, p_237403_), ComponentUtils.DEFAULT_NO_STYLE_SEPARATOR
+                    ComponentUtils.updateForEntity(nbtPathPattern, this.separator, entity, recursionDepth), ComponentUtils.DEFAULT_NO_STYLE_SEPARATOR
                 );
                 return stream.flatMap(p_329869_ -> {
                     try {
-                        MutableComponent mutablecomponent = Component.Serializer.fromJson(p_329869_, p_237401_.registryAccess());
-                        return Stream.of(ComponentUtils.updateForEntity(p_237401_, mutablecomponent, p_237402_, p_237403_));
+                        MutableComponent mutablecomponent = Component.Serializer.fromJson(p_329869_, nbtPathPattern.registryAccess());
+                        return Stream.of(ComponentUtils.updateForEntity(nbtPathPattern, mutablecomponent, entity, recursionDepth));
                     } catch (Exception exception) {
                         LOGGER.warn("Failed to parse component: {}", p_329869_, exception);
                         return Stream.of();
                     }
                 }).reduce((p_237420_, p_237421_) -> p_237420_.append(component).append(p_237421_)).orElseGet(Component::empty);
             } else {
-                return ComponentUtils.updateForEntity(p_237401_, this.separator, p_237402_, p_237403_)
+                return ComponentUtils.updateForEntity(nbtPathPattern, this.separator, entity, recursionDepth)
                     .map(
                         p_237415_ -> stream.map(Component::literal)
                                 .reduce((p_237424_, p_237425_) -> p_237424_.append(p_237415_).append(p_237425_))

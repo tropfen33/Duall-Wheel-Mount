@@ -33,25 +33,25 @@ public class Activity {
     private final String name;
     private final int hashCode;
 
-    public Activity(String p_37997_) {
-        this.name = p_37997_;
-        this.hashCode = p_37997_.hashCode();
+    public Activity(String name) {
+        this.name = name;
+        this.hashCode = name.hashCode();
     }
 
     public String getName() {
         return this.name;
     }
 
-    private static Activity register(String p_38000_) {
-        return Registry.register(BuiltInRegistries.ACTIVITY, p_38000_, new Activity(p_38000_));
+    private static Activity register(String key) {
+        return Registry.register(BuiltInRegistries.ACTIVITY, key, new Activity(key));
     }
 
     @Override
-    public boolean equals(Object p_38002_) {
-        if (this == p_38002_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        } else if (p_38002_ != null && this.getClass() == p_38002_.getClass()) {
-            Activity activity = (Activity)p_38002_;
+        } else if (other != null && this.getClass() == other.getClass()) {
+            Activity activity = (Activity)other;
             return this.name.equals(activity.name);
         } else {
             return false;

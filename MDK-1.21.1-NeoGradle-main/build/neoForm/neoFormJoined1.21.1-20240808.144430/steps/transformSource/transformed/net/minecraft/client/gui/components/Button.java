@@ -19,16 +19,16 @@ public class Button extends AbstractButton {
     protected final Button.OnPress onPress;
     protected final Button.CreateNarration createNarration;
 
-    public static Button.Builder builder(Component p_254439_, Button.OnPress p_254567_) {
-        return new Button.Builder(p_254439_, p_254567_);
+    public static Button.Builder builder(Component message, Button.OnPress onPress) {
+        return new Button.Builder(message, onPress);
     }
 
     protected Button(
-        int p_259075_, int p_259271_, int p_260232_, int p_260028_, Component p_259351_, Button.OnPress p_260152_, Button.CreateNarration p_259552_
+        int x, int y, int width, int height, Component message, Button.OnPress onPress, Button.CreateNarration createNarration
     ) {
-        super(p_259075_, p_259271_, p_260232_, p_260028_, p_259351_);
-        this.onPress = p_260152_;
-        this.createNarration = p_259552_;
+        super(x, y, width, height, message);
+        this.onPress = onPress;
+        this.createNarration = createNarration;
     }
 
     protected Button(Builder builder) {
@@ -47,8 +47,8 @@ public class Button extends AbstractButton {
     }
 
     @Override
-    public void updateWidgetNarration(NarrationElementOutput p_259196_) {
-        this.defaultButtonNarrationText(p_259196_);
+    public void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+        this.defaultButtonNarrationText(narrationElementOutput);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -63,39 +63,39 @@ public class Button extends AbstractButton {
         private int height = 20;
         private Button.CreateNarration createNarration = Button.DEFAULT_NARRATION;
 
-        public Builder(Component p_254097_, Button.OnPress p_253761_) {
-            this.message = p_254097_;
-            this.onPress = p_253761_;
+        public Builder(Component message, Button.OnPress onPress) {
+            this.message = message;
+            this.onPress = onPress;
         }
 
-        public Button.Builder pos(int p_254538_, int p_254216_) {
-            this.x = p_254538_;
-            this.y = p_254216_;
+        public Button.Builder pos(int x, int y) {
+            this.x = x;
+            this.y = y;
             return this;
         }
 
-        public Button.Builder width(int p_254259_) {
-            this.width = p_254259_;
+        public Button.Builder width(int width) {
+            this.width = width;
             return this;
         }
 
-        public Button.Builder size(int p_253727_, int p_254457_) {
-            this.width = p_253727_;
-            this.height = p_254457_;
+        public Button.Builder size(int width, int height) {
+            this.width = width;
+            this.height = height;
             return this;
         }
 
-        public Button.Builder bounds(int p_254166_, int p_253872_, int p_254522_, int p_253985_) {
-            return this.pos(p_254166_, p_253872_).size(p_254522_, p_253985_);
+        public Button.Builder bounds(int x, int y, int width, int height) {
+            return this.pos(x, y).size(width, height);
         }
 
-        public Button.Builder tooltip(@Nullable Tooltip p_259609_) {
-            this.tooltip = p_259609_;
+        public Button.Builder tooltip(@Nullable Tooltip tooltip) {
+            this.tooltip = tooltip;
             return this;
         }
 
-        public Button.Builder createNarration(Button.CreateNarration p_253638_) {
-            this.createNarration = p_253638_;
+        public Button.Builder createNarration(Button.CreateNarration createNarration) {
+            this.createNarration = createNarration;
             return this;
         }
 
@@ -110,11 +110,11 @@ public class Button extends AbstractButton {
 
     @OnlyIn(Dist.CLIENT)
     public interface CreateNarration {
-        MutableComponent createNarrationMessage(Supplier<MutableComponent> p_253695_);
+        MutableComponent createNarrationMessage(Supplier<MutableComponent> messageSupplier);
     }
 
     @OnlyIn(Dist.CLIENT)
     public interface OnPress {
-        void onPress(Button p_93751_);
+        void onPress(Button button);
     }
 }

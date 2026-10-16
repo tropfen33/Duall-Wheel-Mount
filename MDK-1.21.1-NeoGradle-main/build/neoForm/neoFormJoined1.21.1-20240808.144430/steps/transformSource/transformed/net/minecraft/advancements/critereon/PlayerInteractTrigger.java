@@ -17,9 +17,9 @@ public class PlayerInteractTrigger extends SimpleCriterionTrigger<PlayerInteract
         return PlayerInteractTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_61495_, ItemStack p_61496_, Entity p_61497_) {
-        LootContext lootcontext = EntityPredicate.createContext(p_61495_, p_61497_);
-        this.trigger(p_61495_, p_61501_ -> p_61501_.matches(p_61496_, lootcontext));
+    public void trigger(ServerPlayer player, ItemStack item, Entity entity) {
+        LootContext lootcontext = EntityPredicate.createContext(player, entity);
+        this.trigger(player, p_61501_ -> p_61501_.matches(item, lootcontext));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, Optional<ItemPredicate> item, Optional<ContextAwarePredicate> entity)
@@ -34,26 +34,26 @@ public class PlayerInteractTrigger extends SimpleCriterionTrigger<PlayerInteract
         );
 
         public static Criterion<PlayerInteractTrigger.TriggerInstance> itemUsedOnEntity(
-            Optional<ContextAwarePredicate> p_299056_, ItemPredicate.Builder p_286289_, Optional<ContextAwarePredicate> p_301218_
+            Optional<ContextAwarePredicate> player, ItemPredicate.Builder item, Optional<ContextAwarePredicate> entity
         ) {
             return CriteriaTriggers.PLAYER_INTERACTED_WITH_ENTITY
-                .createCriterion(new PlayerInteractTrigger.TriggerInstance(p_299056_, Optional.of(p_286289_.build()), p_301218_));
+                .createCriterion(new PlayerInteractTrigger.TriggerInstance(player, Optional.of(item.build()), entity));
         }
 
         public static Criterion<PlayerInteractTrigger.TriggerInstance> itemUsedOnEntity(
-            ItemPredicate.Builder p_286235_, Optional<ContextAwarePredicate> p_298893_
+            ItemPredicate.Builder item, Optional<ContextAwarePredicate> entity
         ) {
-            return itemUsedOnEntity(Optional.empty(), p_286235_, p_298893_);
+            return itemUsedOnEntity(Optional.empty(), item, entity);
         }
 
-        public boolean matches(ItemStack p_61522_, LootContext p_61523_) {
-            return this.item.isPresent() && !this.item.get().test(p_61522_) ? false : this.entity.isEmpty() || this.entity.get().matches(p_61523_);
+        public boolean matches(ItemStack item, LootContext lootContext) {
+            return this.item.isPresent() && !this.item.get().test(item) ? false : this.entity.isEmpty() || this.entity.get().matches(lootContext);
         }
 
         @Override
-        public void validate(CriterionValidator p_312461_) {
-            SimpleCriterionTrigger.SimpleInstance.super.validate(p_312461_);
-            p_312461_.validateEntity(this.entity, ".entity");
+        public void validate(CriterionValidator validator) {
+            SimpleCriterionTrigger.SimpleInstance.super.validate(validator);
+            validator.validateEntity(this.entity, ".entity");
         }
     }
 }

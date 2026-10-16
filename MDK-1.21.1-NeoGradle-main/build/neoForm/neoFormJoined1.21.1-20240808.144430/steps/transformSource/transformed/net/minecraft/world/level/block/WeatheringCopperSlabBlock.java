@@ -21,19 +21,22 @@ public class WeatheringCopperSlabBlock extends SlabBlock implements WeatheringCo
         return CODEC;
     }
 
-    public WeatheringCopperSlabBlock(WeatheringCopper.WeatherState p_154938_, BlockBehaviour.Properties p_154939_) {
-        super(p_154939_);
-        this.weatherState = p_154938_;
+    public WeatheringCopperSlabBlock(WeatheringCopper.WeatherState weatherState, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.weatherState = weatherState;
+    }
+
+    /**
+     * Performs a random tick on a block.
+     */
+    @Override
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        this.changeOverTime(state, level, pos, random);
     }
 
     @Override
-    protected void randomTick(BlockState p_222670_, ServerLevel p_222671_, BlockPos p_222672_, RandomSource p_222673_) {
-        this.changeOverTime(p_222670_, p_222671_, p_222672_, p_222673_);
-    }
-
-    @Override
-    protected boolean isRandomlyTicking(BlockState p_154947_) {
-        return WeatheringCopper.getNext(p_154947_.getBlock()).isPresent();
+    protected boolean isRandomlyTicking(BlockState state) {
+        return WeatheringCopper.getNext(state.getBlock()).isPresent();
     }
 
     public WeatheringCopper.WeatherState getAge() {

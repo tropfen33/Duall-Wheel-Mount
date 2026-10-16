@@ -22,17 +22,20 @@ public class VillagerRenderer extends MobRenderer<Villager, VillagerModel<Villag
         this.addLayer(new CrossedArmsItemLayer<>(this, p_174437_.getItemInHandRenderer()));
     }
 
-    public ResourceLocation getTextureLocation(Villager p_116312_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Villager entity) {
         return VILLAGER_BASE_SKIN;
     }
 
-    protected void scale(Villager p_116314_, PoseStack p_116315_, float p_116316_) {
-        float f = 0.9375F * p_116314_.getAgeScale();
-        p_116315_.scale(f, f, f);
+    protected void scale(Villager livingEntity, PoseStack poseStack, float partialTickTime) {
+        float f = 0.9375F * livingEntity.getAgeScale();
+        poseStack.scale(f, f, f);
     }
 
-    protected float getShadowRadius(Villager p_316668_) {
-        float f = super.getShadowRadius(p_316668_);
-        return p_316668_.isBaby() ? f * 0.5F : f;
+    protected float getShadowRadius(Villager entity) {
+        float f = super.getShadowRadius(entity);
+        return entity.isBaby() ? f * 0.5F : f;
     }
 }

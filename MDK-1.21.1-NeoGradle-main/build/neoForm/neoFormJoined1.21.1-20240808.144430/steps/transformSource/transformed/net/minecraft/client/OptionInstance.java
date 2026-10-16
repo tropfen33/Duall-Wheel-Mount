@@ -48,63 +48,63 @@ public final class OptionInstance<T> {
     public final Component caption;
     T value;
 
-    public static OptionInstance<Boolean> createBoolean(String p_231529_, boolean p_231530_, Consumer<Boolean> p_231531_) {
-        return createBoolean(p_231529_, noTooltip(), p_231530_, p_231531_);
+    public static OptionInstance<Boolean> createBoolean(String key, boolean initialValue, Consumer<Boolean> onValueUpdate) {
+        return createBoolean(key, noTooltip(), initialValue, onValueUpdate);
     }
 
-    public static OptionInstance<Boolean> createBoolean(String p_231526_, boolean p_231527_) {
-        return createBoolean(p_231526_, noTooltip(), p_231527_, p_231548_ -> {
+    public static OptionInstance<Boolean> createBoolean(String key, boolean initialValue) {
+        return createBoolean(key, noTooltip(), initialValue, p_231548_ -> {
         });
     }
 
-    public static OptionInstance<Boolean> createBoolean(String p_259291_, OptionInstance.TooltipSupplier<Boolean> p_260306_, boolean p_259985_) {
-        return createBoolean(p_259291_, p_260306_, p_259985_, p_231513_ -> {
+    public static OptionInstance<Boolean> createBoolean(String caption, OptionInstance.TooltipSupplier<Boolean> tooltip, boolean initialValue) {
+        return createBoolean(caption, tooltip, initialValue, p_231513_ -> {
         });
     }
 
     public static OptionInstance<Boolean> createBoolean(
-        String p_259289_, OptionInstance.TooltipSupplier<Boolean> p_260210_, boolean p_259359_, Consumer<Boolean> p_259975_
+        String caption, OptionInstance.TooltipSupplier<Boolean> tooltip, boolean initialValue, Consumer<Boolean> onValueUpdate
     ) {
-        return createBoolean(p_259289_, p_260210_, BOOLEAN_TO_STRING, p_259359_, p_259975_);
+        return createBoolean(caption, tooltip, BOOLEAN_TO_STRING, initialValue, onValueUpdate);
     }
 
     public static OptionInstance<Boolean> createBoolean(
-        String p_262002_,
-        OptionInstance.TooltipSupplier<Boolean> p_261507_,
-        OptionInstance.CaptionBasedToString<Boolean> p_262099_,
-        boolean p_262136_,
-        Consumer<Boolean> p_261984_
+        String caption,
+        OptionInstance.TooltipSupplier<Boolean> tooltip,
+        OptionInstance.CaptionBasedToString<Boolean> valueStringifier,
+        boolean initialValue,
+        Consumer<Boolean> onValueUpdate
     ) {
-        return new OptionInstance<>(p_262002_, p_261507_, p_262099_, BOOLEAN_VALUES, p_262136_, p_261984_);
+        return new OptionInstance<>(caption, tooltip, valueStringifier, BOOLEAN_VALUES, initialValue, onValueUpdate);
     }
 
     public OptionInstance(
-        String p_260248_,
-        OptionInstance.TooltipSupplier<T> p_259437_,
-        OptionInstance.CaptionBasedToString<T> p_259148_,
-        OptionInstance.ValueSet<T> p_259590_,
-        T p_260067_,
-        Consumer<T> p_259392_
+        String caption,
+        OptionInstance.TooltipSupplier<T> tooltip,
+        OptionInstance.CaptionBasedToString<T> valueStringifier,
+        OptionInstance.ValueSet<T> values,
+        T initialValue,
+        Consumer<T> onValueUpdate
     ) {
-        this(p_260248_, p_259437_, p_259148_, p_259590_, p_259590_.codec(), p_260067_, p_259392_);
+        this(caption, tooltip, valueStringifier, values, values.codec(), initialValue, onValueUpdate);
     }
 
     public OptionInstance(
-        String p_259964_,
-        OptionInstance.TooltipSupplier<T> p_260354_,
-        OptionInstance.CaptionBasedToString<T> p_259496_,
-        OptionInstance.ValueSet<T> p_259090_,
-        Codec<T> p_259043_,
-        T p_259396_,
-        Consumer<T> p_260147_
+        String caption,
+        OptionInstance.TooltipSupplier<T> tooltip,
+        OptionInstance.CaptionBasedToString<T> valueStringifier,
+        OptionInstance.ValueSet<T> values,
+        Codec<T> codec,
+        T initialValue,
+        Consumer<T> onValueUpdate
     ) {
-        this.caption = Component.translatable(p_259964_);
-        this.tooltip = p_260354_;
-        this.toString = p_231506_ -> p_259496_.toString(this.caption, p_231506_);
-        this.values = p_259090_;
-        this.codec = p_259043_;
-        this.initialValue = p_259396_;
-        this.onValueUpdate = p_260147_;
+        this.caption = Component.translatable(caption);
+        this.tooltip = tooltip;
+        this.toString = p_231506_ -> valueStringifier.toString(this.caption, p_231506_);
+        this.values = values;
+        this.codec = codec;
+        this.initialValue = initialValue;
+        this.onValueUpdate = onValueUpdate;
         this.value = this.initialValue;
     }
 
@@ -112,25 +112,25 @@ public final class OptionInstance<T> {
         return p_258114_ -> null;
     }
 
-    public static <T> OptionInstance.TooltipSupplier<T> cachedConstantTooltip(Component p_231536_) {
-        return p_258116_ -> Tooltip.create(p_231536_);
+    public static <T> OptionInstance.TooltipSupplier<T> cachedConstantTooltip(Component message) {
+        return p_258116_ -> Tooltip.create(message);
     }
 
     public static <T extends OptionEnum> OptionInstance.CaptionBasedToString<T> forOptionEnum() {
         return (p_231538_, p_231539_) -> p_231539_.getCaption();
     }
 
-    public AbstractWidget createButton(Options p_332030_) {
-        return this.createButton(p_332030_, 0, 0, 150);
+    public AbstractWidget createButton(Options options) {
+        return this.createButton(options, 0, 0, 150);
     }
 
-    public AbstractWidget createButton(Options p_231508_, int p_231509_, int p_231510_, int p_231511_) {
-        return this.createButton(p_231508_, p_231509_, p_231510_, p_231511_, p_261336_ -> {
+    public AbstractWidget createButton(Options options, int x, int y, int width) {
+        return this.createButton(options, x, y, width, p_261336_ -> {
         });
     }
 
-    public AbstractWidget createButton(Options p_261971_, int p_261486_, int p_261569_, int p_261677_, Consumer<T> p_261912_) {
-        return this.values.createButton(this.tooltip, p_261971_, p_261486_, p_261569_, p_261677_, p_261912_).apply(this);
+    public AbstractWidget createButton(Options options, int x, int y, int width, Consumer<T> onValueChanged) {
+        return this.values.createButton(this.tooltip, options, x, y, width, onValueChanged).apply(this);
     }
 
     public T get() {
@@ -146,9 +146,9 @@ public final class OptionInstance<T> {
         return this.caption.getString();
     }
 
-    public void set(T p_231515_) {
-        T t = this.values.validateValue(p_231515_).orElseGet(() -> {
-            LOGGER.error("Illegal option value " + p_231515_ + " for " + this.caption);
+    public void set(T value) {
+        T t = this.values.validateValue(value).orElseGet(() -> {
+            LOGGER.error("Illegal option value " + value + " for " + this.caption);
             return this.initialValue;
         });
         if (!Minecraft.getInstance().isRunning()) {
@@ -182,15 +182,15 @@ public final class OptionInstance<T> {
 
     @OnlyIn(Dist.CLIENT)
     public interface CaptionBasedToString<T> {
-        Component toString(Component p_231581_, T p_231582_);
+        Component toString(Component caption, T value);
     }
 
     @OnlyIn(Dist.CLIENT)
     public static record ClampingLazyMaxIntRange(int minInclusive, IntSupplier maxSupplier, int encodableMaxInclusive)
         implements OptionInstance.IntRangeBase,
         OptionInstance.SliderableOrCyclableValueSet<Integer> {
-        public Optional<Integer> validateValue(Integer p_231590_) {
-            return Optional.of(Mth.clamp(p_231590_, this.minInclusive(), this.maxInclusive()));
+        public Optional<Integer> validateValue(Integer value) {
+            return Optional.of(Mth.clamp(value, this.minInclusive(), this.maxInclusive()));
         }
 
         @Override
@@ -232,22 +232,22 @@ public final class OptionInstance<T> {
 
         @Override
         default Function<OptionInstance<T>, AbstractWidget> createButton(
-            OptionInstance.TooltipSupplier<T> p_261801_, Options p_261824_, int p_261649_, int p_262114_, int p_261536_, Consumer<T> p_261642_
+            OptionInstance.TooltipSupplier<T> tooltipSupplier, Options options, int x, int y, int width, Consumer<T> onValueChanged
         ) {
             return p_261343_ -> CycleButton.builder(p_261343_.toString)
                     .withValues(this.valueListSupplier())
-                    .withTooltip(p_261801_)
+                    .withTooltip(tooltipSupplier)
                     .withInitialValue(p_261343_.value)
-                    .create(p_261649_, p_262114_, p_261536_, 20, p_261343_.caption, (p_261347_, p_261348_) -> {
+                    .create(x, y, width, 20, p_261343_.caption, (p_261347_, p_261348_) -> {
                         this.valueSetter().set(p_261343_, p_261348_);
-                        p_261824_.save();
-                        p_261642_.accept(p_261348_);
+                        options.save();
+                        onValueChanged.accept(p_261348_);
                     });
         }
 
         @OnlyIn(Dist.CLIENT)
         public interface ValueSetter<T> {
-            void set(OptionInstance<T> p_231623_, T p_231624_);
+            void set(OptionInstance<T> instance, T value);
         }
     }
 
@@ -270,8 +270,8 @@ public final class OptionInstance<T> {
             this(p_231642_, p_231643_, true);
         }
 
-        public Optional<Integer> validateValue(Integer p_231645_) {
-            return p_231645_.compareTo(this.minInclusive()) >= 0 && p_231645_.compareTo(this.maxInclusive()) <= 0 ? Optional.of(p_231645_) : Optional.empty();
+        public Optional<Integer> validateValue(Integer value) {
+            return value.compareTo(this.minInclusive()) >= 0 && value.compareTo(this.maxInclusive()) <= 0 ? Optional.of(value) : Optional.empty();
         }
 
         @Override
@@ -286,44 +286,44 @@ public final class OptionInstance<T> {
 
         int maxInclusive();
 
-        default double toSliderValue(Integer p_231663_) {
-            if (p_231663_ == this.minInclusive()) {
+        default double toSliderValue(Integer value) {
+            if (value == this.minInclusive()) {
                 return 0.0;
             } else {
-                return p_231663_ == this.maxInclusive()
+                return value == this.maxInclusive()
                     ? 1.0
-                    : Mth.map((double)p_231663_.intValue() + 0.5, (double)this.minInclusive(), (double)this.maxInclusive() + 1.0, 0.0, 1.0);
+                    : Mth.map((double)value.intValue() + 0.5, (double)this.minInclusive(), (double)this.maxInclusive() + 1.0, 0.0, 1.0);
             }
         }
 
-        default Integer fromSliderValue(double p_231656_) {
-            if (p_231656_ >= 1.0) {
-                p_231656_ = 0.99999F;
+        default Integer fromSliderValue(double value) {
+            if (value >= 1.0) {
+                value = 0.99999F;
             }
 
-            return Mth.floor(Mth.map(p_231656_, 0.0, 1.0, (double)this.minInclusive(), (double)this.maxInclusive() + 1.0));
+            return Mth.floor(Mth.map(value, 0.0, 1.0, (double)this.minInclusive(), (double)this.maxInclusive() + 1.0));
         }
 
-        default <R> OptionInstance.SliderableValueSet<R> xmap(final IntFunction<? extends R> p_231658_, final ToIntFunction<? super R> p_231659_) {
+        default <R> OptionInstance.SliderableValueSet<R> xmap(final IntFunction<? extends R> to, final ToIntFunction<? super R> from) {
             return new OptionInstance.SliderableValueSet<R>() {
                 @Override
                 public Optional<R> validateValue(R p_231674_) {
-                    return IntRangeBase.this.validateValue(Integer.valueOf(p_231659_.applyAsInt(p_231674_))).map(p_231658_::apply);
+                    return IntRangeBase.this.validateValue(Integer.valueOf(from.applyAsInt(p_231674_))).map(to::apply);
                 }
 
                 @Override
                 public double toSliderValue(R p_231678_) {
-                    return IntRangeBase.this.toSliderValue(p_231659_.applyAsInt(p_231678_));
+                    return IntRangeBase.this.toSliderValue(from.applyAsInt(p_231678_));
                 }
 
                 @Override
                 public R fromSliderValue(double p_231676_) {
-                    return (R)p_231658_.apply(IntRangeBase.this.fromSliderValue(p_231676_));
+                    return (R)to.apply(IntRangeBase.this.fromSliderValue(p_231676_));
                 }
 
                 @Override
                 public Codec<R> codec() {
-                    return IntRangeBase.this.codec().xmap(p_231658_::apply, p_231659_::applyAsInt);
+                    return IntRangeBase.this.codec().xmap(to::apply, from::applyAsInt);
                 }
             };
         }
@@ -354,23 +354,23 @@ public final class OptionInstance<T> {
         private final boolean applyValueImmediately;
 
         OptionInstanceSliderButton(
-            Options p_261713_,
-            int p_261873_,
-            int p_261656_,
-            int p_261799_,
-            int p_261893_,
-            OptionInstance<N> p_262129_,
-            OptionInstance.SliderableValueSet<N> p_261995_,
-            OptionInstance.TooltipSupplier<N> p_261963_,
-            Consumer<N> p_261829_,
-            boolean p_341915_
+            Options options,
+            int x,
+            int y,
+            int width,
+            int height,
+            OptionInstance<N> instance,
+            OptionInstance.SliderableValueSet<N> values,
+            OptionInstance.TooltipSupplier<N> tooltipSupplier,
+            Consumer<N> onValueChanged,
+            boolean applyValueImmediately
         ) {
-            super(p_261713_, p_261873_, p_261656_, p_261799_, p_261893_, p_261995_.toSliderValue(p_262129_.get()));
-            this.instance = p_262129_;
-            this.values = p_261995_;
-            this.tooltipSupplier = p_261963_;
-            this.onValueChanged = p_261829_;
-            this.applyValueImmediately = p_341915_;
+            super(options, x, y, width, height, values.toSliderValue(instance.get()));
+            this.instance = instance;
+            this.values = values;
+            this.tooltipSupplier = tooltipSupplier;
+            this.onValueChanged = onValueChanged;
+            this.applyValueImmediately = applyValueImmediately;
             this.updateMessage();
         }
 
@@ -399,8 +399,8 @@ public final class OptionInstance<T> {
         }
 
         @Override
-        public void renderWidget(GuiGraphics p_341923_, int p_341938_, int p_341892_, float p_341933_) {
-            super.renderWidget(p_341923_, p_341938_, p_341892_, p_341933_);
+        public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+            super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
             if (this.delayedApplyAt != null && Util.getMillis() >= this.delayedApplyAt) {
                 this.delayedApplyAt = null;
                 this.applyUnsavedValue();
@@ -424,9 +424,9 @@ public final class OptionInstance<T> {
 
     @OnlyIn(Dist.CLIENT)
     interface SliderableValueSet<T> extends OptionInstance.ValueSet<T> {
-        double toSliderValue(T p_231732_);
+        double toSliderValue(T value);
 
-        T fromSliderValue(double p_231731_);
+        T fromSliderValue(double value);
 
         default boolean applyValueImmediately() {
             return true;
@@ -434,10 +434,10 @@ public final class OptionInstance<T> {
 
         @Override
         default Function<OptionInstance<T>, AbstractWidget> createButton(
-            OptionInstance.TooltipSupplier<T> p_261993_, Options p_262177_, int p_261706_, int p_261683_, int p_261573_, Consumer<T> p_261969_
+            OptionInstance.TooltipSupplier<T> tooltipSupplier, Options options, int x, int y, int width, Consumer<T> onValueChanged
         ) {
             return p_341831_ -> new OptionInstance.OptionInstanceSliderButton<>(
-                    p_262177_, p_261706_, p_261683_, p_261573_, 20, p_341831_, this, p_261993_, p_261969_, this.applyValueImmediately()
+                    options, x, y, width, 20, p_341831_, this, tooltipSupplier, onValueChanged, this.applyValueImmediately()
                 );
         }
     }
@@ -446,45 +446,45 @@ public final class OptionInstance<T> {
     @OnlyIn(Dist.CLIENT)
     public interface TooltipSupplier<T> {
         @Nullable
-        Tooltip apply(T p_259319_);
+        Tooltip apply(T value);
     }
 
     @OnlyIn(Dist.CLIENT)
     public static enum UnitDouble implements OptionInstance.SliderableValueSet<Double> {
         INSTANCE;
 
-        public Optional<Double> validateValue(Double p_231747_) {
-            return p_231747_ >= 0.0 && p_231747_ <= 1.0 ? Optional.of(p_231747_) : Optional.empty();
+        public Optional<Double> validateValue(Double value) {
+            return value >= 0.0 && value <= 1.0 ? Optional.of(value) : Optional.empty();
         }
 
-        public double toSliderValue(Double p_231756_) {
-            return p_231756_;
+        public double toSliderValue(Double value) {
+            return value;
         }
 
-        public Double fromSliderValue(double p_231741_) {
-            return p_231741_;
+        public Double fromSliderValue(double value) {
+            return value;
         }
 
-        public <R> OptionInstance.SliderableValueSet<R> xmap(final DoubleFunction<? extends R> p_231751_, final ToDoubleFunction<? super R> p_231752_) {
+        public <R> OptionInstance.SliderableValueSet<R> xmap(final DoubleFunction<? extends R> encoder, final ToDoubleFunction<? super R> decoder) {
             return new OptionInstance.SliderableValueSet<R>() {
                 @Override
                 public Optional<R> validateValue(R p_231773_) {
-                    return UnitDouble.this.validateValue(p_231752_.applyAsDouble(p_231773_)).map(p_231751_::apply);
+                    return UnitDouble.this.validateValue(decoder.applyAsDouble(p_231773_)).map(encoder::apply);
                 }
 
                 @Override
                 public double toSliderValue(R p_231777_) {
-                    return UnitDouble.this.toSliderValue(p_231752_.applyAsDouble(p_231777_));
+                    return UnitDouble.this.toSliderValue(decoder.applyAsDouble(p_231777_));
                 }
 
                 @Override
                 public R fromSliderValue(double p_231775_) {
-                    return (R)p_231751_.apply(UnitDouble.this.fromSliderValue(p_231775_));
+                    return (R)encoder.apply(UnitDouble.this.fromSliderValue(p_231775_));
                 }
 
                 @Override
                 public Codec<R> codec() {
-                    return UnitDouble.this.codec().xmap(p_231751_::apply, p_231752_::applyAsDouble);
+                    return UnitDouble.this.codec().xmap(encoder::apply, decoder::applyAsDouble);
                 }
             };
         }
@@ -498,10 +498,10 @@ public final class OptionInstance<T> {
     @OnlyIn(Dist.CLIENT)
     public interface ValueSet<T> {
         Function<OptionInstance<T>, AbstractWidget> createButton(
-            OptionInstance.TooltipSupplier<T> p_231779_, Options p_231780_, int p_231781_, int p_231782_, int p_231783_, Consumer<T> p_261976_
+            OptionInstance.TooltipSupplier<T> tooltipSupplier, Options options, int x, int y, int width, Consumer<T> onValueChanged
         );
 
-        Optional<T> validateValue(T p_231784_);
+        Optional<T> validateValue(T value);
 
         Codec<T> codec();
     }

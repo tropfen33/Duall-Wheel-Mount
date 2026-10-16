@@ -8,20 +8,20 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class RealmsObjectSelectionList<E extends ObjectSelectionList.Entry<E>> extends ObjectSelectionList<E> {
-    protected RealmsObjectSelectionList(int p_120745_, int p_120746_, int p_120747_, int p_120748_) {
-        super(Minecraft.getInstance(), p_120745_, p_120746_, p_120747_, p_120748_);
+    protected RealmsObjectSelectionList(int width, int height, int y, int itemHeight) {
+        super(Minecraft.getInstance(), width, height, y, itemHeight);
     }
 
-    public void setSelectedItem(int p_120768_) {
-        if (p_120768_ == -1) {
+    public void setSelectedItem(int index) {
+        if (index == -1) {
             this.setSelected(null);
         } else if (super.getItemCount() != 0) {
-            this.setSelected(this.getEntry(p_120768_));
+            this.setSelected(this.getEntry(index));
         }
     }
 
-    public void selectItem(int p_120750_) {
-        this.setSelectedItem(p_120750_);
+    public void selectItem(int index) {
+        this.setSelectedItem(index);
     }
 
     @Override
@@ -35,8 +35,8 @@ public abstract class RealmsObjectSelectionList<E extends ObjectSelectionList.En
     }
 
     @Override
-    public void replaceEntries(Collection<E> p_120759_) {
-        super.replaceEntries(p_120759_);
+    public void replaceEntries(Collection<E> entries) {
+        super.replaceEntries(entries);
     }
 
     @Override
@@ -45,8 +45,8 @@ public abstract class RealmsObjectSelectionList<E extends ObjectSelectionList.En
     }
 
     @Override
-    public int getRowTop(int p_120766_) {
-        return super.getRowTop(p_120766_);
+    public int getRowTop(int index) {
+        return super.getRowTop(index);
     }
 
     @Override
@@ -54,8 +54,8 @@ public abstract class RealmsObjectSelectionList<E extends ObjectSelectionList.En
         return super.getRowLeft();
     }
 
-    public int addEntry(E p_120757_) {
-        return super.addEntry(p_120757_);
+    public int addEntry(E entry) {
+        return super.addEntry(entry);
     }
 
     public void clear() {

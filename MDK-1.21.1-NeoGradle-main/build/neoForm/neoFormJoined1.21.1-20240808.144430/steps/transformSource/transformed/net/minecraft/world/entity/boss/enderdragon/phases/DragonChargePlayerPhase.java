@@ -13,8 +13,8 @@ public class DragonChargePlayerPhase extends AbstractDragonPhaseInstance {
     private Vec3 targetLocation;
     private int timeSinceCharge;
 
-    public DragonChargePlayerPhase(EnderDragon p_31206_) {
-        super(p_31206_);
+    public DragonChargePlayerPhase(EnderDragon dragon) {
+        super(dragon);
     }
 
     @Override
@@ -38,8 +38,8 @@ public class DragonChargePlayerPhase extends AbstractDragonPhaseInstance {
         this.timeSinceCharge = 0;
     }
 
-    public void setTarget(Vec3 p_31208_) {
-        this.targetLocation = p_31208_;
+    public void setTarget(Vec3 targetLocation) {
+        this.targetLocation = targetLocation;
     }
 
     @Override

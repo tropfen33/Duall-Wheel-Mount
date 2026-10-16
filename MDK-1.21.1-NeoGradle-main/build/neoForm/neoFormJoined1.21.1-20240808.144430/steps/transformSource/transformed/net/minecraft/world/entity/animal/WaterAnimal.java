@@ -13,14 +13,14 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.pathfinder.PathType;
 
 public abstract class WaterAnimal extends PathfinderMob {
-    protected WaterAnimal(EntityType<? extends WaterAnimal> p_30341_, Level p_30342_) {
-        super(p_30341_, p_30342_);
+    protected WaterAnimal(EntityType<? extends WaterAnimal> entityType, Level level) {
+        super(entityType, level);
         this.setPathfindingMalus(PathType.WATER, 0.0F);
     }
 
     @Override
-    public boolean checkSpawnObstruction(LevelReader p_30348_) {
-        return p_30348_.isUnobstructed(this);
+    public boolean checkSpawnObstruction(LevelReader level) {
+        return level.isUnobstructed(this);
     }
 
     @Override
@@ -33,9 +33,9 @@ public abstract class WaterAnimal extends PathfinderMob {
         return 1 + this.level().random.nextInt(3);
     }
 
-    protected void handleAirSupply(int p_30344_) {
+    protected void handleAirSupply(int airSupply) {
         if (this.isAlive() && !this.isInWaterOrBubble()) {
-            this.setAirSupply(p_30344_ - 1);
+            this.setAirSupply(airSupply - 1);
             if (this.getAirSupply() == -20) {
                 this.setAirSupply(0);
                 this.hurt(this.damageSources().drown(), 2.0F);
@@ -63,13 +63,13 @@ public abstract class WaterAnimal extends PathfinderMob {
     }
 
     public static boolean checkSurfaceWaterAnimalSpawnRules(
-        EntityType<? extends WaterAnimal> p_218283_, LevelAccessor p_218284_, MobSpawnType p_218285_, BlockPos p_218286_, RandomSource p_218287_
+        EntityType<? extends WaterAnimal> waterAnimal, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        int i = p_218284_.getSeaLevel();
+        int i = level.getSeaLevel();
         int j = i - 13;
-        return p_218286_.getY() >= j
-            && p_218286_.getY() <= i
-            && p_218284_.getFluidState(p_218286_.below()).is(FluidTags.WATER)
-            && p_218284_.getBlockState(p_218286_.above()).is(Blocks.WATER);
+        return pos.getY() >= j
+            && pos.getY() <= i
+            && level.getFluidState(pos.below()).is(FluidTags.WATER)
+            && level.getBlockState(pos.above()).is(Blocks.WATER);
     }
 }

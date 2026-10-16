@@ -15,8 +15,8 @@ public class CocoaDecorator extends TreeDecorator {
         .xmap(CocoaDecorator::new, p_69989_ -> p_69989_.probability);
     private final float probability;
 
-    public CocoaDecorator(float p_69976_) {
-        this.probability = p_69976_;
+    public CocoaDecorator(float probability) {
+        this.probability = probability;
     }
 
     @Override
@@ -25,10 +25,10 @@ public class CocoaDecorator extends TreeDecorator {
     }
 
     @Override
-    public void place(TreeDecorator.Context p_226028_) {
-        RandomSource randomsource = p_226028_.random();
+    public void place(TreeDecorator.Context context) {
+        RandomSource randomsource = context.random();
         if (!(randomsource.nextFloat() >= this.probability)) {
-            List<BlockPos> list = p_226028_.logs();
+            List<BlockPos> list = context.logs();
             int i = list.get(0).getY();
             list.stream()
                 .filter(p_69980_ -> p_69980_.getY() - i <= 2)
@@ -38,8 +38,8 @@ public class CocoaDecorator extends TreeDecorator {
                             if (randomsource.nextFloat() <= 0.25F) {
                                 Direction direction1 = direction.getOpposite();
                                 BlockPos blockpos = p_226026_.offset(direction1.getStepX(), 0, direction1.getStepZ());
-                                if (p_226028_.isAir(blockpos)) {
-                                    p_226028_.setBlock(
+                                if (context.isAir(blockpos)) {
+                                    context.setBlock(
                                         blockpos,
                                         Blocks.COCOA
                                             .defaultBlockState()

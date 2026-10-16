@@ -27,14 +27,14 @@ public class FoxModel<T extends Fox> extends AgeableListModel<T> {
     private static final float LEG_POS = 17.5F;
     private float legMotionPos;
 
-    public FoxModel(ModelPart p_170566_) {
+    public FoxModel(ModelPart root) {
         super(true, 8.0F, 3.35F);
-        this.head = p_170566_.getChild("head");
-        this.body = p_170566_.getChild("body");
-        this.rightHindLeg = p_170566_.getChild("right_hind_leg");
-        this.leftHindLeg = p_170566_.getChild("left_hind_leg");
-        this.rightFrontLeg = p_170566_.getChild("right_front_leg");
-        this.leftFrontLeg = p_170566_.getChild("left_front_leg");
+        this.head = root.getChild("head");
+        this.body = root.getChild("body");
+        this.rightHindLeg = root.getChild("right_hind_leg");
+        this.leftHindLeg = root.getChild("left_hind_leg");
+        this.rightFrontLeg = root.getChild("right_front_leg");
+        this.leftFrontLeg = root.getChild("left_front_leg");
         this.tail = this.body.getChild("tail");
     }
 
@@ -67,16 +67,16 @@ public class FoxModel<T extends Fox> extends AgeableListModel<T> {
         return LayerDefinition.create(meshdefinition, 48, 32);
     }
 
-    public void prepareMobModel(T p_102664_, float p_102665_, float p_102666_, float p_102667_) {
+    public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float partialTick) {
         this.body.xRot = (float) (Math.PI / 2);
         this.tail.xRot = -0.05235988F;
-        this.rightHindLeg.xRot = Mth.cos(p_102665_ * 0.6662F) * 1.4F * p_102666_;
-        this.leftHindLeg.xRot = Mth.cos(p_102665_ * 0.6662F + (float) Math.PI) * 1.4F * p_102666_;
-        this.rightFrontLeg.xRot = Mth.cos(p_102665_ * 0.6662F + (float) Math.PI) * 1.4F * p_102666_;
-        this.leftFrontLeg.xRot = Mth.cos(p_102665_ * 0.6662F) * 1.4F * p_102666_;
+        this.rightHindLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
+        this.leftHindLeg.xRot = Mth.cos(limbSwing * 0.6662F + (float) Math.PI) * 1.4F * limbSwingAmount;
+        this.rightFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F + (float) Math.PI) * 1.4F * limbSwingAmount;
+        this.leftFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
         this.head.setPos(-1.0F, 16.5F, -3.0F);
         this.head.yRot = 0.0F;
-        this.head.zRot = p_102664_.getHeadRollAngle(p_102667_);
+        this.head.zRot = entity.getHeadRollAngle(partialTick);
         this.rightHindLeg.visible = true;
         this.leftHindLeg.visible = true;
         this.rightFrontLeg.visible = true;
@@ -85,13 +85,13 @@ public class FoxModel<T extends Fox> extends AgeableListModel<T> {
         this.body.zRot = 0.0F;
         this.rightHindLeg.setPos(-5.0F, 17.5F, 7.0F);
         this.leftHindLeg.setPos(-1.0F, 17.5F, 7.0F);
-        if (p_102664_.isCrouching()) {
+        if (entity.isCrouching()) {
             this.body.xRot = 1.6755161F;
-            float f = p_102664_.getCrouchAmount(p_102667_);
-            this.body.setPos(0.0F, 16.0F + p_102664_.getCrouchAmount(p_102667_), -6.0F);
+            float f = entity.getCrouchAmount(partialTick);
+            this.body.setPos(0.0F, 16.0F + entity.getCrouchAmount(partialTick), -6.0F);
             this.head.setPos(-1.0F, 16.5F + f, -3.0F);
             this.head.yRot = 0.0F;
-        } else if (p_102664_.isSleeping()) {
+        } else if (entity.isSleeping()) {
             this.body.zRot = (float) (-Math.PI / 2);
             this.body.setPos(0.0F, 21.0F, -6.0F);
             this.tail.xRot = (float) (-Math.PI * 5.0 / 6.0);
@@ -108,7 +108,7 @@ public class FoxModel<T extends Fox> extends AgeableListModel<T> {
             this.leftHindLeg.visible = false;
             this.rightFrontLeg.visible = false;
             this.leftFrontLeg.visible = false;
-        } else if (p_102664_.isSitting()) {
+        } else if (entity.isSitting()) {
             this.body.xRot = (float) (Math.PI / 6);
             this.body.setPos(0.0F, 9.0F, -3.0F);
             this.tail.xRot = (float) (Math.PI / 4);
@@ -139,20 +139,23 @@ public class FoxModel<T extends Fox> extends AgeableListModel<T> {
         return ImmutableList.of(this.body, this.rightHindLeg, this.leftHindLeg, this.rightFrontLeg, this.leftFrontLeg);
     }
 
-    public void setupAnim(T p_102669_, float p_102670_, float p_102671_, float p_102672_, float p_102673_, float p_102674_) {
-        if (!p_102669_.isSleeping() && !p_102669_.isFaceplanted() && !p_102669_.isCrouching()) {
-            this.head.xRot = p_102674_ * (float) (Math.PI / 180.0);
-            this.head.yRot = p_102673_ * (float) (Math.PI / 180.0);
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        if (!entity.isSleeping() && !entity.isFaceplanted() && !entity.isCrouching()) {
+            this.head.xRot = headPitch * (float) (Math.PI / 180.0);
+            this.head.yRot = netHeadYaw * (float) (Math.PI / 180.0);
         }
 
-        if (p_102669_.isSleeping()) {
+        if (entity.isSleeping()) {
             this.head.xRot = 0.0F;
             this.head.yRot = (float) (-Math.PI * 2.0 / 3.0);
-            this.head.zRot = Mth.cos(p_102672_ * 0.027F) / 22.0F;
+            this.head.zRot = Mth.cos(ageInTicks * 0.027F) / 22.0F;
         }
 
-        if (p_102669_.isCrouching()) {
-            float f = Mth.cos(p_102672_) * 0.01F;
+        if (entity.isCrouching()) {
+            float f = Mth.cos(ageInTicks) * 0.01F;
             this.body.yRot = f;
             this.rightHindLeg.zRot = f;
             this.leftHindLeg.zRot = f;
@@ -160,7 +163,7 @@ public class FoxModel<T extends Fox> extends AgeableListModel<T> {
             this.leftFrontLeg.zRot = f / 2.0F;
         }
 
-        if (p_102669_.isFaceplanted()) {
+        if (entity.isFaceplanted()) {
             float f1 = 0.1F;
             this.legMotionPos += 0.67F;
             this.rightHindLeg.xRot = Mth.cos(this.legMotionPos * 0.4662F) * 0.1F;

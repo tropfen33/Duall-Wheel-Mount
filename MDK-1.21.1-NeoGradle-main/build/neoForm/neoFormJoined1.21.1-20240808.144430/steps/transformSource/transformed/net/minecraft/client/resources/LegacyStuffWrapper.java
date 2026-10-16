@@ -11,10 +11,10 @@ import net.neoforged.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public class LegacyStuffWrapper {
     @Deprecated
-    public static int[] getPixels(ResourceManager p_118727_, ResourceLocation p_118728_) throws IOException {
+    public static int[] getPixels(ResourceManager manager, ResourceLocation location) throws IOException {
         int[] aint;
         try (
-            InputStream inputstream = p_118727_.open(p_118728_);
+            InputStream inputstream = manager.open(location);
             NativeImage nativeimage = NativeImage.read(inputstream);
         ) {
             aint = nativeimage.makePixelArray();

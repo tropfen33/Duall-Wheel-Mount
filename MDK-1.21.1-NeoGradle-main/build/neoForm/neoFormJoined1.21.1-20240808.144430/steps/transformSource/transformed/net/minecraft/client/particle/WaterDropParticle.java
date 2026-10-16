@@ -9,8 +9,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class WaterDropParticle extends TextureSheetParticle {
-    protected WaterDropParticle(ClientLevel p_108484_, double p_108485_, double p_108486_, double p_108487_) {
-        super(p_108484_, p_108485_, p_108486_, p_108487_, 0.0, 0.0, 0.0);
+    protected WaterDropParticle(ClientLevel level, double x, double y, double z) {
+        super(level, x, y, z, 0.0, 0.0, 0.0);
         this.xd *= 0.3F;
         this.yd = Math.random() * 0.2F + 0.1F;
         this.zd *= 0.3F;
@@ -64,21 +64,21 @@ public class WaterDropParticle extends TextureSheetParticle {
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprite;
 
-        public Provider(SpriteSet p_108492_) {
-            this.sprite = p_108492_;
+        public Provider(SpriteSet sprites) {
+            this.sprite = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_108503_,
-            ClientLevel p_108504_,
-            double p_108505_,
-            double p_108506_,
-            double p_108507_,
-            double p_108508_,
-            double p_108509_,
-            double p_108510_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            WaterDropParticle waterdropparticle = new WaterDropParticle(p_108504_, p_108505_, p_108506_, p_108507_);
+            WaterDropParticle waterdropparticle = new WaterDropParticle(level, x, y, z);
             waterdropparticle.pickSprite(this.sprite);
             return waterdropparticle;
         }

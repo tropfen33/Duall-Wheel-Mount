@@ -13,22 +13,25 @@ public class ClientboundSetExperiencePacket implements Packet<ClientGamePacketLi
     private final int totalExperience;
     private final int experienceLevel;
 
-    public ClientboundSetExperiencePacket(float p_133219_, int p_133220_, int p_133221_) {
-        this.experienceProgress = p_133219_;
-        this.totalExperience = p_133220_;
-        this.experienceLevel = p_133221_;
+    public ClientboundSetExperiencePacket(float experienceProgress, int totalExperience, int experienceLevel) {
+        this.experienceProgress = experienceProgress;
+        this.totalExperience = totalExperience;
+        this.experienceLevel = experienceLevel;
     }
 
-    private ClientboundSetExperiencePacket(FriendlyByteBuf p_179299_) {
-        this.experienceProgress = p_179299_.readFloat();
-        this.experienceLevel = p_179299_.readVarInt();
-        this.totalExperience = p_179299_.readVarInt();
+    private ClientboundSetExperiencePacket(FriendlyByteBuf buffer) {
+        this.experienceProgress = buffer.readFloat();
+        this.experienceLevel = buffer.readVarInt();
+        this.totalExperience = buffer.readVarInt();
     }
 
-    private void write(FriendlyByteBuf p_133230_) {
-        p_133230_.writeFloat(this.experienceProgress);
-        p_133230_.writeVarInt(this.experienceLevel);
-        p_133230_.writeVarInt(this.totalExperience);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeFloat(this.experienceProgress);
+        buffer.writeVarInt(this.experienceLevel);
+        buffer.writeVarInt(this.totalExperience);
     }
 
     @Override
@@ -36,8 +39,11 @@ public class ClientboundSetExperiencePacket implements Packet<ClientGamePacketLi
         return GamePacketTypes.CLIENTBOUND_SET_EXPERIENCE;
     }
 
-    public void handle(ClientGamePacketListener p_133227_) {
-        p_133227_.handleSetExperience(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleSetExperience(this);
     }
 
     public float getExperienceProgress() {

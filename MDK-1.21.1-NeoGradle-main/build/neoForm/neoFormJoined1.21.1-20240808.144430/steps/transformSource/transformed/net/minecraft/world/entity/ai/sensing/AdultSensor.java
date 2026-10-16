@@ -15,15 +15,15 @@ public class AdultSensor extends Sensor<AgeableMob> {
         return ImmutableSet.of(MemoryModuleType.NEAREST_VISIBLE_ADULT, MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES);
     }
 
-    protected void doTick(ServerLevel p_148248_, AgeableMob p_148249_) {
-        p_148249_.getBrain()
+    protected void doTick(ServerLevel level, AgeableMob entity) {
+        entity.getBrain()
             .getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES)
-            .ifPresent(p_186145_ -> this.setNearestVisibleAdult(p_148249_, p_186145_));
+            .ifPresent(p_186145_ -> this.setNearestVisibleAdult(entity, p_186145_));
     }
 
-    private void setNearestVisibleAdult(AgeableMob p_186141_, NearestVisibleLivingEntities p_186142_) {
-        Optional<AgeableMob> optional = p_186142_.findClosest(p_348252_ -> p_348252_.getType() == p_186141_.getType() && !p_348252_.isBaby())
+    private void setNearestVisibleAdult(AgeableMob mob, NearestVisibleLivingEntities nearbyEntities) {
+        Optional<AgeableMob> optional = nearbyEntities.findClosest(p_348252_ -> p_348252_.getType() == mob.getType() && !p_348252_.isBaby())
             .map(AgeableMob.class::cast);
-        p_186141_.getBrain().setMemory(MemoryModuleType.NEAREST_VISIBLE_ADULT, optional);
+        mob.getBrain().setMemory(MemoryModuleType.NEAREST_VISIBLE_ADULT, optional);
     }
 }

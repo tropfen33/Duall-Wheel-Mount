@@ -13,32 +13,38 @@ public class ServerboundPlayerActionPacket implements Packet<ServerGamePacketLis
     );
     private final BlockPos pos;
     private final Direction direction;
+    /**
+     * Status of the digging (started, ongoing, broken).
+     */
     private final ServerboundPlayerActionPacket.Action action;
     private final int sequence;
 
-    public ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action p_237983_, BlockPos p_237984_, Direction p_237985_, int p_237986_) {
-        this.action = p_237983_;
-        this.pos = p_237984_.immutable();
-        this.direction = p_237985_;
-        this.sequence = p_237986_;
+    public ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action action, BlockPos pos, Direction direction, int sequence) {
+        this.action = action;
+        this.pos = pos.immutable();
+        this.direction = direction;
+        this.sequence = sequence;
     }
 
-    public ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action p_134272_, BlockPos p_134273_, Direction p_134274_) {
-        this(p_134272_, p_134273_, p_134274_, 0);
+    public ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action action, BlockPos pos, Direction direction) {
+        this(action, pos, direction, 0);
     }
 
-    private ServerboundPlayerActionPacket(FriendlyByteBuf p_179711_) {
-        this.action = p_179711_.readEnum(ServerboundPlayerActionPacket.Action.class);
-        this.pos = p_179711_.readBlockPos();
-        this.direction = Direction.from3DDataValue(p_179711_.readUnsignedByte());
-        this.sequence = p_179711_.readVarInt();
+    private ServerboundPlayerActionPacket(FriendlyByteBuf buffer) {
+        this.action = buffer.readEnum(ServerboundPlayerActionPacket.Action.class);
+        this.pos = buffer.readBlockPos();
+        this.direction = Direction.from3DDataValue(buffer.readUnsignedByte());
+        this.sequence = buffer.readVarInt();
     }
 
-    private void write(FriendlyByteBuf p_134283_) {
-        p_134283_.writeEnum(this.action);
-        p_134283_.writeBlockPos(this.pos);
-        p_134283_.writeByte(this.direction.get3DDataValue());
-        p_134283_.writeVarInt(this.sequence);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeEnum(this.action);
+        buffer.writeBlockPos(this.pos);
+        buffer.writeByte(this.direction.get3DDataValue());
+        buffer.writeVarInt(this.sequence);
     }
 
     @Override
@@ -46,8 +52,11 @@ public class ServerboundPlayerActionPacket implements Packet<ServerGamePacketLis
         return GamePacketTypes.SERVERBOUND_PLAYER_ACTION;
     }
 
-    public void handle(ServerGamePacketListener p_134280_) {
-        p_134280_.handlePlayerAction(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handlePlayerAction(this);
     }
 
     public BlockPos getPos() {

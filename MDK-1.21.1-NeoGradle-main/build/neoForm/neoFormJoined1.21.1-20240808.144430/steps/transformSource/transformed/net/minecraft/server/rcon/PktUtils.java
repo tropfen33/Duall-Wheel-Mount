@@ -6,34 +6,49 @@ public class PktUtils {
     public static final int MAX_PACKET_SIZE = 1460;
     public static final char[] HEX_CHAR = new char[]{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
-    public static String stringFromByteArray(byte[] p_11489_, int p_11490_, int p_11491_) {
-        int i = p_11491_ - 1;
-        int j = p_11490_ > i ? i : p_11490_;
+    /**
+     * Read a null-terminated string from the given byte array
+     */
+    public static String stringFromByteArray(byte[] input, int offset, int length) {
+        int i = length - 1;
+        int j = offset > i ? i : offset;
 
-        while (0 != p_11489_[j] && j < i) {
+        while (0 != input[j] && j < i) {
             j++;
         }
 
-        return new String(p_11489_, p_11490_, j - p_11490_, StandardCharsets.UTF_8);
+        return new String(input, offset, j - offset, StandardCharsets.UTF_8);
     }
 
-    public static int intFromByteArray(byte[] p_11486_, int p_11487_) {
-        return intFromByteArray(p_11486_, p_11487_, p_11486_.length);
+    /**
+     * Read 4 bytes from the
+     */
+    public static int intFromByteArray(byte[] input, int offset) {
+        return intFromByteArray(input, offset, input.length);
     }
 
-    public static int intFromByteArray(byte[] p_11493_, int p_11494_, int p_11495_) {
-        return 0 > p_11495_ - p_11494_ - 4
+    /**
+     * Read 4 bytes from the given array in little-endian format and return them as an int
+     */
+    public static int intFromByteArray(byte[] input, int offset, int length) {
+        return 0 > length - offset - 4
             ? 0
-            : p_11493_[p_11494_ + 3] << 24 | (p_11493_[p_11494_ + 2] & 0xFF) << 16 | (p_11493_[p_11494_ + 1] & 0xFF) << 8 | p_11493_[p_11494_] & 0xFF;
+            : input[offset + 3] << 24 | (input[offset + 2] & 0xFF) << 16 | (input[offset + 1] & 0xFF) << 8 | input[offset] & 0xFF;
     }
 
-    public static int intFromNetworkByteArray(byte[] p_11497_, int p_11498_, int p_11499_) {
-        return 0 > p_11499_ - p_11498_ - 4
+    /**
+     * Read 4 bytes from the given array in big-endian format and return them as an int
+     */
+    public static int intFromNetworkByteArray(byte[] input, int offset, int length) {
+        return 0 > length - offset - 4
             ? 0
-            : p_11497_[p_11498_] << 24 | (p_11497_[p_11498_ + 1] & 0xFF) << 16 | (p_11497_[p_11498_ + 2] & 0xFF) << 8 | p_11497_[p_11498_ + 3] & 0xFF;
+            : input[offset] << 24 | (input[offset + 1] & 0xFF) << 16 | (input[offset + 2] & 0xFF) << 8 | input[offset + 3] & 0xFF;
     }
 
-    public static String toHexString(byte p_11484_) {
-        return "" + HEX_CHAR[(p_11484_ & 240) >>> 4] + HEX_CHAR[p_11484_ & 15];
+    /**
+     * Returns a String representation of the byte in hexadecimal format
+     */
+    public static String toHexString(byte input) {
+        return "" + HEX_CHAR[(input & 240) >>> 4] + HEX_CHAR[input & 15];
     }
 }

@@ -46,20 +46,20 @@ public final class Transformation implements net.neoforged.neoforge.common.exten
         return transformation;
     });
 
-    public Transformation(@Nullable Matrix4f p_253689_) {
-        if (p_253689_ == null) {
+    public Transformation(@Nullable Matrix4f matrix) {
+        if (matrix == null) {
             this.matrix = new Matrix4f();
         } else {
-            this.matrix = p_253689_;
+            this.matrix = matrix;
         }
     }
 
-    public Transformation(@Nullable Vector3f p_253831_, @Nullable Quaternionf p_253846_, @Nullable Vector3f p_254502_, @Nullable Quaternionf p_253912_) {
-        this.matrix = compose(p_253831_, p_253846_, p_254502_, p_253912_);
-        this.translation = p_253831_ != null ? p_253831_ : new Vector3f();
-        this.leftRotation = p_253846_ != null ? p_253846_ : new Quaternionf();
-        this.scale = p_254502_ != null ? p_254502_ : new Vector3f(1.0F, 1.0F, 1.0F);
-        this.rightRotation = p_253912_ != null ? p_253912_ : new Quaternionf();
+    public Transformation(@Nullable Vector3f translation, @Nullable Quaternionf leftRotation, @Nullable Vector3f scale, @Nullable Quaternionf rightRotation) {
+        this.matrix = compose(translation, leftRotation, scale, rightRotation);
+        this.translation = translation != null ? translation : new Vector3f();
+        this.leftRotation = leftRotation != null ? leftRotation : new Quaternionf();
+        this.scale = scale != null ? scale : new Vector3f(1.0F, 1.0F, 1.0F);
+        this.rightRotation = rightRotation != null ? rightRotation : new Quaternionf();
         this.decomposed = true;
     }
 
@@ -67,9 +67,9 @@ public final class Transformation implements net.neoforged.neoforge.common.exten
         return IDENTITY;
     }
 
-    public Transformation compose(Transformation p_121097_) {
+    public Transformation compose(Transformation other) {
         Matrix4f matrix4f = this.getMatrix();
-        matrix4f.mul(p_121097_.getMatrix());
+        matrix4f.mul(other.getMatrix());
         return new Transformation(matrix4f);
     }
 
@@ -96,23 +96,23 @@ public final class Transformation implements net.neoforged.neoforge.common.exten
     }
 
     private static Matrix4f compose(
-        @Nullable Vector3f p_254465_, @Nullable Quaternionf p_254416_, @Nullable Vector3f p_254499_, @Nullable Quaternionf p_254334_
+        @Nullable Vector3f translation, @Nullable Quaternionf leftRotation, @Nullable Vector3f scale, @Nullable Quaternionf rightRotation
     ) {
         Matrix4f matrix4f = new Matrix4f();
-        if (p_254465_ != null) {
-            matrix4f.translation(p_254465_);
+        if (translation != null) {
+            matrix4f.translation(translation);
         }
 
-        if (p_254416_ != null) {
-            matrix4f.rotate(p_254416_);
+        if (leftRotation != null) {
+            matrix4f.rotate(leftRotation);
         }
 
-        if (p_254499_ != null) {
-            matrix4f.scale(p_254499_);
+        if (scale != null) {
+            matrix4f.scale(scale);
         }
 
-        if (p_254334_ != null) {
-            matrix4f.rotate(p_254334_);
+        if (rightRotation != null) {
+            matrix4f.rotate(rightRotation);
         }
 
         return matrix4f;
@@ -143,11 +143,11 @@ public final class Transformation implements net.neoforged.neoforge.common.exten
     }
 
     @Override
-    public boolean equals(Object p_121108_) {
-        if (this == p_121108_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        } else if (p_121108_ != null && this.getClass() == p_121108_.getClass()) {
-            Transformation transformation = (Transformation)p_121108_;
+        } else if (other != null && this.getClass() == other.getClass()) {
+            Transformation transformation = (Transformation)other;
             return Objects.equals(this.matrix, transformation.matrix);
         } else {
             return false;
@@ -172,15 +172,15 @@ public final class Transformation implements net.neoforged.neoforge.common.exten
         }
     }
 
-    public Transformation slerp(Transformation p_175938_, float p_175939_) {
+    public Transformation slerp(Transformation transformation, float delta) {
         Vector3f vector3f = this.getTranslation();
         Quaternionf quaternionf = this.getLeftRotation();
         Vector3f vector3f1 = this.getScale();
         Quaternionf quaternionf1 = this.getRightRotation();
-        vector3f.lerp(p_175938_.getTranslation(), p_175939_);
-        quaternionf.slerp(p_175938_.getLeftRotation(), p_175939_);
-        vector3f1.lerp(p_175938_.getScale(), p_175939_);
-        quaternionf1.slerp(p_175938_.getRightRotation(), p_175939_);
+        vector3f.lerp(transformation.getTranslation(), delta);
+        quaternionf.slerp(transformation.getLeftRotation(), delta);
+        vector3f1.lerp(transformation.getScale(), delta);
+        quaternionf1.slerp(transformation.getRightRotation(), delta);
         return new Transformation(vector3f, quaternionf, vector3f1, quaternionf1);
     }
 }

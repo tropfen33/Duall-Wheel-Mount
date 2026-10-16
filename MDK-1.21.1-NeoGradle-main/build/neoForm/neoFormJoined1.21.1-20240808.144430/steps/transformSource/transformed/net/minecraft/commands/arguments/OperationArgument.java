@@ -27,27 +27,27 @@ public class OperationArgument implements ArgumentType<OperationArgument.Operati
         return new OperationArgument();
     }
 
-    public static OperationArgument.Operation getOperation(CommandContext<CommandSourceStack> p_103276_, String p_103277_) {
-        return p_103276_.getArgument(p_103277_, OperationArgument.Operation.class);
+    public static OperationArgument.Operation getOperation(CommandContext<CommandSourceStack> context, String name) {
+        return context.getArgument(name, OperationArgument.Operation.class);
     }
 
-    public OperationArgument.Operation parse(StringReader p_103274_) throws CommandSyntaxException {
-        if (!p_103274_.canRead()) {
-            throw ERROR_INVALID_OPERATION.createWithContext(p_103274_);
+    public OperationArgument.Operation parse(StringReader reader) throws CommandSyntaxException {
+        if (!reader.canRead()) {
+            throw ERROR_INVALID_OPERATION.createWithContext(reader);
         } else {
-            int i = p_103274_.getCursor();
+            int i = reader.getCursor();
 
-            while (p_103274_.canRead() && p_103274_.peek() != ' ') {
-                p_103274_.skip();
+            while (reader.canRead() && reader.peek() != ' ') {
+                reader.skip();
             }
 
-            return getOperation(p_103274_.getString().substring(i, p_103274_.getCursor()));
+            return getOperation(reader.getString().substring(i, reader.getCursor()));
         }
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_103302_, SuggestionsBuilder p_103303_) {
-        return SharedSuggestionProvider.suggest(new String[]{"=", "+=", "-=", "*=", "/=", "%=", "<", ">", "><"}, p_103303_);
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
+        return SharedSuggestionProvider.suggest(new String[]{"=", "+=", "-=", "*=", "/=", "%=", "<", ">", "><"}, builder);
     }
 
     @Override
@@ -55,16 +55,22 @@ public class OperationArgument implements ArgumentType<OperationArgument.Operati
         return EXAMPLES;
     }
 
-    private static OperationArgument.Operation getOperation(String p_103282_) throws CommandSyntaxException {
-        return (p_103282_.equals("><") ? (p_313447_, p_313448_) -> {
+    /**
+     * Makes an {@link net.minecraft.commands.arguments.OperationArgument.Operation} instance based on the given name. This method handles all operations.
+     */
+    private static OperationArgument.Operation getOperation(String name) throws CommandSyntaxException {
+        return (name.equals("><") ? (p_313447_, p_313448_) -> {
             int i = p_313447_.get();
             p_313447_.set(p_313448_.get());
             p_313448_.set(i);
-        } : getSimpleOperation(p_103282_));
+        } : getSimpleOperation(name));
     }
 
-    private static OperationArgument.SimpleOperation getSimpleOperation(String p_103287_) throws CommandSyntaxException {
-        return switch (p_103287_) {
+    /**
+     * Makes an {@link net.minecraft.commands.arguments.OperationArgument.Operation} instance based on the given name. This method actually returns {@link net.minecraft.commands.arguments.OperationArgument.SimpleOperation}, which is used as a functional interface target with 2 ints. It handles all operations other than swap (><).
+     */
+    private static OperationArgument.SimpleOperation getSimpleOperation(String name) throws CommandSyntaxException {
+        return switch (name) {
             case "=" -> (p_103298_, p_103299_) -> p_103299_;
             case "+=" -> Integer::sum;
             case "-=" -> (p_103292_, p_103293_) -> p_103292_ - p_103293_;
@@ -91,16 +97,16 @@ public class OperationArgument implements ArgumentType<OperationArgument.Operati
 
     @FunctionalInterface
     public interface Operation {
-        void apply(ScoreAccess p_313872_, ScoreAccess p_313910_) throws CommandSyntaxException;
+        void apply(ScoreAccess targetScore, ScoreAccess sourceScore) throws CommandSyntaxException;
     }
 
     @FunctionalInterface
     interface SimpleOperation extends OperationArgument.Operation {
-        int apply(int p_103309_, int p_103310_) throws CommandSyntaxException;
+        int apply(int targetScore, int sourceScore) throws CommandSyntaxException;
 
         @Override
-        default void apply(ScoreAccess p_313880_, ScoreAccess p_313804_) throws CommandSyntaxException {
-            p_313880_.set(this.apply(p_313880_.get(), p_313804_.get()));
+        default void apply(ScoreAccess targetScore, ScoreAccess sourceScore) throws CommandSyntaxException {
+            targetScore.set(this.apply(targetScore.get(), sourceScore.get()));
         }
     }
 }

@@ -13,11 +13,11 @@ public class OptionsRenameFieldFix extends DataFix {
     private final String fieldFrom;
     private final String fieldTo;
 
-    public OptionsRenameFieldFix(Schema p_16670_, boolean p_16671_, String p_16672_, String p_16673_, String p_16674_) {
-        super(p_16670_, p_16671_);
-        this.fixName = p_16672_;
-        this.fieldFrom = p_16673_;
-        this.fieldTo = p_16674_;
+    public OptionsRenameFieldFix(Schema outputSchema, boolean changesType, String fixName, String fieldFrom, String fieldTo) {
+        super(outputSchema, changesType);
+        this.fixName = fixName;
+        this.fieldFrom = fieldFrom;
+        this.fieldTo = fieldTo;
     }
 
     @Override

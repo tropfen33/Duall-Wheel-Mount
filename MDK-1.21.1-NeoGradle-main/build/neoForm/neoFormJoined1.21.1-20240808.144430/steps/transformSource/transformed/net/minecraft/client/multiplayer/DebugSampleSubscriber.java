@@ -15,9 +15,9 @@ public class DebugSampleSubscriber {
     private final DebugScreenOverlay debugScreenOverlay;
     private final EnumMap<RemoteDebugSampleType, Long> lastRequested;
 
-    public DebugSampleSubscriber(ClientPacketListener p_324284_, DebugScreenOverlay p_324198_) {
-        this.debugScreenOverlay = p_324198_;
-        this.connection = p_324284_;
+    public DebugSampleSubscriber(ClientPacketListener connection, DebugScreenOverlay debugScreenOverlay) {
+        this.debugScreenOverlay = debugScreenOverlay;
+        this.connection = connection;
         this.lastRequested = new EnumMap<>(RemoteDebugSampleType.class);
     }
 
@@ -27,11 +27,11 @@ public class DebugSampleSubscriber {
         }
     }
 
-    private void sendSubscriptionRequestIfNeeded(RemoteDebugSampleType p_324259_) {
+    private void sendSubscriptionRequestIfNeeded(RemoteDebugSampleType sampleType) {
         long i = Util.getMillis();
-        if (i > this.lastRequested.getOrDefault(p_324259_, Long.valueOf(0L)) + 5000L) {
-            this.connection.send(new ServerboundDebugSampleSubscriptionPacket(p_324259_));
-            this.lastRequested.put(p_324259_, i);
+        if (i > this.lastRequested.getOrDefault(sampleType, Long.valueOf(0L)) + 5000L) {
+            this.connection.send(new ServerboundDebugSampleSubscriptionPacket(sampleType));
+            this.lastRequested.put(sampleType, i);
         }
     }
 }

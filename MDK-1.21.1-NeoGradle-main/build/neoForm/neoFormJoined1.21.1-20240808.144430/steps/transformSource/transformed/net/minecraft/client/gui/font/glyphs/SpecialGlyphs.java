@@ -22,12 +22,12 @@ public enum SpecialGlyphs implements GlyphInfo {
 
     final NativeImage image;
 
-    private static NativeImage generate(int p_232609_, int p_232610_, SpecialGlyphs.PixelProvider p_232611_) {
-        NativeImage nativeimage = new NativeImage(NativeImage.Format.RGBA, p_232609_, p_232610_, false);
+    private static NativeImage generate(int width, int height, SpecialGlyphs.PixelProvider pixelProvider) {
+        NativeImage nativeimage = new NativeImage(NativeImage.Format.RGBA, width, height, false);
 
-        for (int i = 0; i < p_232610_; i++) {
-            for (int j = 0; j < p_232609_; j++) {
-                nativeimage.setPixelRGBA(j, i, p_232611_.getColor(j, i));
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                nativeimage.setPixelRGBA(j, i, pixelProvider.getColor(j, i));
             }
         }
 
@@ -35,8 +35,8 @@ public enum SpecialGlyphs implements GlyphInfo {
         return nativeimage;
     }
 
-    private SpecialGlyphs(Supplier<NativeImage> p_232604_) {
-        this.image = p_232604_.get();
+    private SpecialGlyphs(Supplier<NativeImage> image) {
+        this.image = image.get();
     }
 
     @Override
@@ -45,8 +45,8 @@ public enum SpecialGlyphs implements GlyphInfo {
     }
 
     @Override
-    public BakedGlyph bake(Function<SheetGlyphInfo, BakedGlyph> p_232616_) {
-        return p_232616_.apply(new SheetGlyphInfo() {
+    public BakedGlyph bake(Function<SheetGlyphInfo, BakedGlyph> glyphProvider) {
+        return glyphProvider.apply(new SheetGlyphInfo() {
             @Override
             public int getPixelWidth() {
                 return SpecialGlyphs.this.image.getWidth();
@@ -77,6 +77,6 @@ public enum SpecialGlyphs implements GlyphInfo {
     @FunctionalInterface
     @OnlyIn(Dist.CLIENT)
     interface PixelProvider {
-        int getColor(int p_232635_, int p_232636_);
+        int getColor(int x, int y);
     }
 }

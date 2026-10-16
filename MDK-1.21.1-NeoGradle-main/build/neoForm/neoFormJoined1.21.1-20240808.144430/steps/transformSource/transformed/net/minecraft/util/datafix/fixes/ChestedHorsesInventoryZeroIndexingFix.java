@@ -13,8 +13,8 @@ import com.mojang.datafixers.util.Unit;
 import com.mojang.serialization.Dynamic;
 
 public class ChestedHorsesInventoryZeroIndexingFix extends DataFix {
-    public ChestedHorsesInventoryZeroIndexingFix(Schema p_324298_) {
-        super(p_324298_, false);
+    public ChestedHorsesInventoryZeroIndexingFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
     @Override
@@ -33,20 +33,20 @@ public class ChestedHorsesInventoryZeroIndexingFix extends DataFix {
     }
 
     private TypeRewriteRule horseLikeInventoryIndexingFixer(
-        OpticFinder<Pair<String, Pair<Either<Pair<String, String>, Unit>, Pair<Either<?, Unit>, Dynamic<?>>>>> p_324299_, Type<?> p_323519_, String p_324132_
+        OpticFinder<Pair<String, Pair<Either<Pair<String, String>, Unit>, Pair<Either<?, Unit>, Dynamic<?>>>>> opticFinder, Type<?> p_type, String entityId
     ) {
-        Type<?> type = this.getInputSchema().getChoiceType(References.ENTITY, p_324132_);
-        OpticFinder<?> opticfinder = DSL.namedChoice(p_324132_, type);
+        Type<?> type = this.getInputSchema().getChoiceType(References.ENTITY, entityId);
+        OpticFinder<?> opticfinder = DSL.namedChoice(entityId, type);
         OpticFinder<?> opticfinder1 = type.findField("Items");
         return this.fixTypeEverywhereTyped(
-            "Fix non-zero indexing in chest horse type " + p_324132_,
-            p_323519_,
+            "Fix non-zero indexing in chest horse type " + entityId,
+            p_type,
             p_324100_ -> p_324100_.updateTyped(
                     opticfinder,
                     p_323809_ -> p_323809_.updateTyped(
                             opticfinder1,
                             p_324159_ -> p_324159_.update(
-                                    p_324299_,
+                                    opticFinder,
                                     p_323642_ -> p_323642_.mapSecond(
                                             p_324444_ -> p_324444_.mapSecond(
                                                     p_323677_ -> p_323677_.mapSecond(

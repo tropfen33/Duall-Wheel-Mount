@@ -23,31 +23,31 @@ public interface LevelBasedValue {
                     : Either.right(p_346307_)
         );
 
-    static MapCodec<? extends LevelBasedValue> bootstrap(Registry<MapCodec<? extends LevelBasedValue>> p_345955_) {
-        Registry.register(p_345955_, "clamped", LevelBasedValue.Clamped.CODEC);
-        Registry.register(p_345955_, "fraction", LevelBasedValue.Fraction.CODEC);
-        Registry.register(p_345955_, "levels_squared", LevelBasedValue.LevelsSquared.CODEC);
-        Registry.register(p_345955_, "linear", LevelBasedValue.Linear.CODEC);
-        return Registry.register(p_345955_, "lookup", LevelBasedValue.Lookup.CODEC);
+    static MapCodec<? extends LevelBasedValue> bootstrap(Registry<MapCodec<? extends LevelBasedValue>> registry) {
+        Registry.register(registry, "clamped", LevelBasedValue.Clamped.CODEC);
+        Registry.register(registry, "fraction", LevelBasedValue.Fraction.CODEC);
+        Registry.register(registry, "levels_squared", LevelBasedValue.LevelsSquared.CODEC);
+        Registry.register(registry, "linear", LevelBasedValue.Linear.CODEC);
+        return Registry.register(registry, "lookup", LevelBasedValue.Lookup.CODEC);
     }
 
-    static LevelBasedValue.Constant constant(float p_344768_) {
-        return new LevelBasedValue.Constant(p_344768_);
+    static LevelBasedValue.Constant constant(float value) {
+        return new LevelBasedValue.Constant(value);
     }
 
-    static LevelBasedValue.Linear perLevel(float p_346188_, float p_346397_) {
-        return new LevelBasedValue.Linear(p_346188_, p_346397_);
+    static LevelBasedValue.Linear perLevel(float base, float perLevelAfterFirst) {
+        return new LevelBasedValue.Linear(base, perLevelAfterFirst);
     }
 
-    static LevelBasedValue.Linear perLevel(float p_345221_) {
-        return perLevel(p_345221_, p_345221_);
+    static LevelBasedValue.Linear perLevel(float p_perLevel) {
+        return perLevel(p_perLevel, p_perLevel);
     }
 
-    static LevelBasedValue.Lookup lookup(List<Float> p_352164_, LevelBasedValue p_352467_) {
-        return new LevelBasedValue.Lookup(p_352164_, p_352467_);
+    static LevelBasedValue.Lookup lookup(List<Float> values, LevelBasedValue fallback) {
+        return new LevelBasedValue.Lookup(values, fallback);
     }
 
-    float calculate(int p_345587_);
+    float calculate(int level);
 
     MapCodec<? extends LevelBasedValue> codec();
 
@@ -67,8 +67,8 @@ public interface LevelBasedValue {
             );
 
         @Override
-        public float calculate(int p_345820_) {
-            return Mth.clamp(this.value.calculate(p_345820_), this.min, this.max);
+        public float calculate(int level) {
+            return Mth.clamp(this.value.calculate(level), this.min, this.max);
         }
 
         @Override
@@ -85,7 +85,7 @@ public interface LevelBasedValue {
         );
 
         @Override
-        public float calculate(int p_346274_) {
+        public float calculate(int level) {
             return this.value;
         }
 
@@ -105,9 +105,9 @@ public interface LevelBasedValue {
         );
 
         @Override
-        public float calculate(int p_345976_) {
-            float f = this.denominator.calculate(p_345976_);
-            return f == 0.0F ? 0.0F : this.numerator.calculate(p_345976_) / f;
+        public float calculate(int level) {
+            float f = this.denominator.calculate(level);
+            return f == 0.0F ? 0.0F : this.numerator.calculate(level) / f;
         }
 
         @Override
@@ -123,8 +123,8 @@ public interface LevelBasedValue {
         );
 
         @Override
-        public float calculate(int p_344759_) {
-            return (float)Mth.square(p_344759_) + this.added;
+        public float calculate(int level) {
+            return (float)Mth.square(level) + this.added;
         }
 
         @Override
@@ -143,8 +143,8 @@ public interface LevelBasedValue {
         );
 
         @Override
-        public float calculate(int p_345943_) {
-            return this.base + this.perLevelAboveFirst * (float)(p_345943_ - 1);
+        public float calculate(int level) {
+            return this.base + this.perLevelAboveFirst * (float)(level - 1);
         }
 
         @Override
@@ -163,8 +163,8 @@ public interface LevelBasedValue {
         );
 
         @Override
-        public float calculate(int p_352377_) {
-            return p_352377_ <= this.values.size() ? this.values.get(p_352377_ - 1) : this.fallback.calculate(p_352377_);
+        public float calculate(int level) {
+            return level <= this.values.size() ? this.values.get(level - 1) : this.fallback.calculate(level);
         }
 
         @Override

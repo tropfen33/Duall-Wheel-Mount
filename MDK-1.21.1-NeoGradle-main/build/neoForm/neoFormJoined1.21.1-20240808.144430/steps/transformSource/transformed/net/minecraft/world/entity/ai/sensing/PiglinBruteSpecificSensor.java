@@ -25,8 +25,8 @@ public class PiglinBruteSpecificSensor extends Sensor<LivingEntity> {
     }
 
     @Override
-    protected void doTick(ServerLevel p_26721_, LivingEntity p_26722_) {
-        Brain<?> brain = p_26722_.getBrain();
+    protected void doTick(ServerLevel level, LivingEntity entity) {
+        Brain<?> brain = entity.getBrain();
         List<AbstractPiglin> list = Lists.newArrayList();
         NearestVisibleLivingEntities nearestvisiblelivingentities = brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES)
             .orElse(NearestVisibleLivingEntities.empty());

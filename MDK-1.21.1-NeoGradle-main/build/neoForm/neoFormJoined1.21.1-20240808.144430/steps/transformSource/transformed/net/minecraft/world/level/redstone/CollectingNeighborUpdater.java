@@ -20,47 +20,47 @@ public class CollectingNeighborUpdater implements NeighborUpdater {
     private final List<CollectingNeighborUpdater.NeighborUpdates> addedThisLayer = new ArrayList<>();
     private int count = 0;
 
-    public CollectingNeighborUpdater(Level p_230643_, int p_230644_) {
-        this.level = p_230643_;
-        this.maxChainedNeighborUpdates = p_230644_;
+    public CollectingNeighborUpdater(Level level, int maxChainedNeighborUpdates) {
+        this.level = level;
+        this.maxChainedNeighborUpdates = maxChainedNeighborUpdates;
     }
 
     @Override
-    public void shapeUpdate(Direction p_230664_, BlockState p_230665_, BlockPos p_230666_, BlockPos p_230667_, int p_230668_, int p_230669_) {
+    public void shapeUpdate(Direction direction, BlockState state, BlockPos pos, BlockPos neighborPos, int flags, int recursionLevel) {
         this.addAndRun(
-            p_230666_, new CollectingNeighborUpdater.ShapeUpdate(p_230664_, p_230665_, p_230666_.immutable(), p_230667_.immutable(), p_230668_, p_230669_)
+            pos, new CollectingNeighborUpdater.ShapeUpdate(direction, state, pos.immutable(), neighborPos.immutable(), flags, recursionLevel)
         );
     }
 
     @Override
-    public void neighborChanged(BlockPos p_230653_, Block p_230654_, BlockPos p_230655_) {
-        this.addAndRun(p_230653_, new CollectingNeighborUpdater.SimpleNeighborUpdate(p_230653_, p_230654_, p_230655_.immutable()));
+    public void neighborChanged(BlockPos pos, Block neighborBlock, BlockPos neighborPos) {
+        this.addAndRun(pos, new CollectingNeighborUpdater.SimpleNeighborUpdate(pos, neighborBlock, neighborPos.immutable()));
     }
 
     @Override
-    public void neighborChanged(BlockState p_230647_, BlockPos p_230648_, Block p_230649_, BlockPos p_230650_, boolean p_230651_) {
+    public void neighborChanged(BlockState state, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         this.addAndRun(
-            p_230648_, new CollectingNeighborUpdater.FullNeighborUpdate(p_230647_, p_230648_.immutable(), p_230649_, p_230650_.immutable(), p_230651_)
+            pos, new CollectingNeighborUpdater.FullNeighborUpdate(state, pos.immutable(), neighborBlock, neighborPos.immutable(), movedByPiston)
         );
     }
 
     @Override
-    public void updateNeighborsAtExceptFromFacing(BlockPos p_230657_, Block p_230658_, @Nullable Direction p_230659_) {
-        this.addAndRun(p_230657_, new CollectingNeighborUpdater.MultiNeighborUpdate(p_230657_.immutable(), p_230658_, p_230659_));
+    public void updateNeighborsAtExceptFromFacing(BlockPos pos, Block block, @Nullable Direction facing) {
+        this.addAndRun(pos, new CollectingNeighborUpdater.MultiNeighborUpdate(pos.immutable(), block, facing));
     }
 
-    private void addAndRun(BlockPos p_230661_, CollectingNeighborUpdater.NeighborUpdates p_230662_) {
+    private void addAndRun(BlockPos pos, CollectingNeighborUpdater.NeighborUpdates updates) {
         boolean flag = this.count > 0;
         boolean flag1 = this.maxChainedNeighborUpdates >= 0 && this.count >= this.maxChainedNeighborUpdates;
         this.count++;
         if (!flag1) {
             if (flag) {
-                this.addedThisLayer.add(p_230662_);
+                this.addedThisLayer.add(updates);
             } else {
-                this.stack.push(p_230662_);
+                this.stack.push(updates);
             }
         } else if (this.count - 1 == this.maxChainedNeighborUpdates) {
-            LOGGER.error("Too many chained neighbor updates. Skipping the rest. First skipped position: " + p_230661_.toShortString());
+            LOGGER.error("Too many chained neighbor updates. Skipping the rest. First skipped position: " + pos.toShortString());
         }
 
         if (!flag) {
@@ -108,20 +108,20 @@ public class CollectingNeighborUpdater implements NeighborUpdater {
         private final Direction skipDirection;
         private int idx = 0;
 
-        MultiNeighborUpdate(BlockPos p_230697_, Block p_230698_, @Nullable Direction p_230699_) {
-            this.sourcePos = p_230697_;
-            this.sourceBlock = p_230698_;
-            this.skipDirection = p_230699_;
-            if (NeighborUpdater.UPDATE_ORDER[this.idx] == p_230699_) {
+        MultiNeighborUpdate(BlockPos sourcePos, Block sourceBlock, @Nullable Direction skipDirection) {
+            this.sourcePos = sourcePos;
+            this.sourceBlock = sourceBlock;
+            this.skipDirection = skipDirection;
+            if (NeighborUpdater.UPDATE_ORDER[this.idx] == skipDirection) {
                 this.idx++;
             }
         }
 
         @Override
-        public boolean runNext(Level p_230701_) {
+        public boolean runNext(Level level) {
             BlockPos blockpos = this.sourcePos.relative(NeighborUpdater.UPDATE_ORDER[this.idx++]);
-            BlockState blockstate = p_230701_.getBlockState(blockpos);
-            NeighborUpdater.executeUpdate(p_230701_, blockstate, blockpos, this.sourceBlock, this.sourcePos, false);
+            BlockState blockstate = level.getBlockState(blockpos);
+            NeighborUpdater.executeUpdate(level, blockstate, blockpos, this.sourceBlock, this.sourcePos, false);
             if (this.idx < NeighborUpdater.UPDATE_ORDER.length && NeighborUpdater.UPDATE_ORDER[this.idx] == this.skipDirection) {
                 this.idx++;
             }
@@ -131,7 +131,7 @@ public class CollectingNeighborUpdater implements NeighborUpdater {
     }
 
     interface NeighborUpdates {
-        boolean runNext(Level p_230702_);
+        boolean runNext(Level level);
     }
 
     static record ShapeUpdate(Direction direction, BlockState state, BlockPos pos, BlockPos neighborPos, int updateFlags, int updateLimit)

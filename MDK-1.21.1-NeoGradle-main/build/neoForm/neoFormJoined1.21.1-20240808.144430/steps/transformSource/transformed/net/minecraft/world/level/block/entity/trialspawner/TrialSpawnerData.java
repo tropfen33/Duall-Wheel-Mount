@@ -79,21 +79,21 @@ public class TrialSpawnerData {
     }
 
     public TrialSpawnerData(
-        Set<UUID> p_312283_,
-        Set<UUID> p_312919_,
-        long p_312537_,
-        long p_311955_,
-        int p_312227_,
-        Optional<SpawnData> p_312562_,
-        Optional<ResourceKey<LootTable>> p_312406_
+        Set<UUID> detectedPlayers,
+        Set<UUID> currentMobs,
+        long cooldownEndsAt,
+        long nextMobSpawnsAt,
+        int totalMobsSpawned,
+        Optional<SpawnData> nextSpawnData,
+        Optional<ResourceKey<LootTable>> ejectingLootTable
     ) {
-        this.detectedPlayers.addAll(p_312283_);
-        this.currentMobs.addAll(p_312919_);
-        this.cooldownEndsAt = p_312537_;
-        this.nextMobSpawnsAt = p_311955_;
-        this.totalMobsSpawned = p_312227_;
-        this.nextSpawnData = p_312562_;
-        this.ejectingLootTable = p_312406_;
+        this.detectedPlayers.addAll(detectedPlayers);
+        this.currentMobs.addAll(currentMobs);
+        this.cooldownEndsAt = cooldownEndsAt;
+        this.nextMobSpawnsAt = nextMobSpawnsAt;
+        this.totalMobsSpawned = totalMobsSpawned;
+        this.nextSpawnData = nextSpawnData;
+        this.ejectingLootTable = ejectingLootTable;
     }
 
     public void reset() {
@@ -105,65 +105,65 @@ public class TrialSpawnerData {
         this.nextSpawnData = Optional.empty();
     }
 
-    public boolean hasMobToSpawn(TrialSpawner p_331432_, RandomSource p_330985_) {
-        boolean flag = this.getOrCreateNextSpawnData(p_331432_, p_330985_).getEntityToSpawn().contains("id", 8);
-        return flag || !p_331432_.getConfig().spawnPotentialsDefinition().isEmpty();
+    public boolean hasMobToSpawn(TrialSpawner trialSpawner, RandomSource random) {
+        boolean flag = this.getOrCreateNextSpawnData(trialSpawner, random).getEntityToSpawn().contains("id", 8);
+        return flag || !trialSpawner.getConfig().spawnPotentialsDefinition().isEmpty();
     }
 
-    public boolean hasFinishedSpawningAllMobs(TrialSpawnerConfig p_311805_, int p_312034_) {
-        return this.totalMobsSpawned >= p_311805_.calculateTargetTotalMobs(p_312034_);
+    public boolean hasFinishedSpawningAllMobs(TrialSpawnerConfig config, int players) {
+        return this.totalMobsSpawned >= config.calculateTargetTotalMobs(players);
     }
 
     public boolean haveAllCurrentMobsDied() {
         return this.currentMobs.isEmpty();
     }
 
-    public boolean isReadyToSpawnNextMob(ServerLevel p_311818_, TrialSpawnerConfig p_312100_, int p_312550_) {
-        return p_311818_.getGameTime() >= this.nextMobSpawnsAt && this.currentMobs.size() < p_312100_.calculateTargetSimultaneousMobs(p_312550_);
+    public boolean isReadyToSpawnNextMob(ServerLevel level, TrialSpawnerConfig config, int players) {
+        return level.getGameTime() >= this.nextMobSpawnsAt && this.currentMobs.size() < config.calculateTargetSimultaneousMobs(players);
     }
 
-    public int countAdditionalPlayers(BlockPos p_312262_) {
+    public int countAdditionalPlayers(BlockPos pos) {
         if (this.detectedPlayers.isEmpty()) {
-            Util.logAndPauseIfInIde("Trial Spawner at " + p_312262_ + " has no detected players");
+            Util.logAndPauseIfInIde("Trial Spawner at " + pos + " has no detected players");
         }
 
         return Math.max(0, this.detectedPlayers.size() - 1);
     }
 
-    public void tryDetectPlayers(ServerLevel p_311852_, BlockPos p_312503_, TrialSpawner p_338452_) {
-        boolean flag = (p_312503_.asLong() + p_311852_.getGameTime()) % 20L != 0L;
+    public void tryDetectPlayers(ServerLevel level, BlockPos pos, TrialSpawner spawner) {
+        boolean flag = (pos.asLong() + level.getGameTime()) % 20L != 0L;
         if (!flag) {
-            if (!p_338452_.getState().equals(TrialSpawnerState.COOLDOWN) || !p_338452_.isOminous()) {
-                List<UUID> list = p_338452_.getPlayerDetector()
-                    .detect(p_311852_, p_338452_.getEntitySelector(), p_312503_, (double)p_338452_.getRequiredPlayerRange(), true);
+            if (!spawner.getState().equals(TrialSpawnerState.COOLDOWN) || !spawner.isOminous()) {
+                List<UUID> list = spawner.getPlayerDetector()
+                    .detect(level, spawner.getEntitySelector(), pos, (double)spawner.getRequiredPlayerRange(), true);
                 boolean flag1;
-                if (!p_338452_.isOminous() && !list.isEmpty()) {
-                    Optional<Pair<Player, Holder<MobEffect>>> optional = findPlayerWithOminousEffect(p_311852_, list);
+                if (!spawner.isOminous() && !list.isEmpty()) {
+                    Optional<Pair<Player, Holder<MobEffect>>> optional = findPlayerWithOminousEffect(level, list);
                     optional.ifPresent(p_350233_ -> {
                         Player player = p_350233_.getFirst();
                         if (p_350233_.getSecond() == MobEffects.BAD_OMEN) {
                             transformBadOmenIntoTrialOmen(player);
                         }
 
-                        p_311852_.levelEvent(3020, BlockPos.containing(player.getEyePosition()), 0);
-                        p_338452_.applyOminous(p_311852_, p_312503_);
+                        level.levelEvent(3020, BlockPos.containing(player.getEyePosition()), 0);
+                        spawner.applyOminous(level, pos);
                     });
                     flag1 = optional.isPresent();
                 } else {
                     flag1 = false;
                 }
 
-                if (!p_338452_.getState().equals(TrialSpawnerState.COOLDOWN) || flag1) {
-                    boolean flag2 = p_338452_.getData().detectedPlayers.isEmpty();
+                if (!spawner.getState().equals(TrialSpawnerState.COOLDOWN) || flag1) {
+                    boolean flag2 = spawner.getData().detectedPlayers.isEmpty();
                     List<UUID> list1 = flag2
                         ? list
-                        : p_338452_.getPlayerDetector()
-                            .detect(p_311852_, p_338452_.getEntitySelector(), p_312503_, (double)p_338452_.getRequiredPlayerRange(), false);
+                        : spawner.getPlayerDetector()
+                            .detect(level, spawner.getEntitySelector(), pos, (double)spawner.getRequiredPlayerRange(), false);
                     if (this.detectedPlayers.addAll(list1)) {
-                        this.nextMobSpawnsAt = Math.max(p_311852_.getGameTime() + 40L, this.nextMobSpawnsAt);
+                        this.nextMobSpawnsAt = Math.max(level.getGameTime() + 40L, this.nextMobSpawnsAt);
                         if (!flag1) {
-                            int i = p_338452_.isOminous() ? 3019 : 3013;
-                            p_311852_.levelEvent(i, p_312503_, this.detectedPlayers.size());
+                            int i = spawner.isOminous() ? 3019 : 3013;
+                            level.levelEvent(i, pos, this.detectedPlayers.size());
                         }
                     }
                 }
@@ -171,11 +171,11 @@ public class TrialSpawnerData {
         }
     }
 
-    private static Optional<Pair<Player, Holder<MobEffect>>> findPlayerWithOminousEffect(ServerLevel p_350655_, List<UUID> p_350735_) {
+    private static Optional<Pair<Player, Holder<MobEffect>>> findPlayerWithOminousEffect(ServerLevel level, List<UUID> players) {
         Player player = null;
 
-        for (UUID uuid : p_350735_) {
-            Player player1 = p_350655_.getPlayerByUUID(uuid);
+        for (UUID uuid : players) {
+            Player player1 = level.getPlayerByUUID(uuid);
             if (player1 != null) {
                 Holder<MobEffect> holder = MobEffects.TRIAL_OMEN;
                 if (player1.hasEffect(holder)) {
@@ -191,10 +191,10 @@ public class TrialSpawnerData {
         return Optional.ofNullable(player).map(p_350229_ -> Pair.of(p_350229_, MobEffects.BAD_OMEN));
     }
 
-    public void resetAfterBecomingOminous(TrialSpawner p_338478_, ServerLevel p_338185_) {
-        this.currentMobs.stream().map(p_338185_::getEntity).forEach(p_351984_ -> {
+    public void resetAfterBecomingOminous(TrialSpawner spawner, ServerLevel level) {
+        this.currentMobs.stream().map(level::getEntity).forEach(p_351984_ -> {
             if (p_351984_ != null) {
-                p_338185_.levelEvent(3012, p_351984_.blockPosition(), TrialSpawner.FlameParticle.NORMAL.encode());
+                level.levelEvent(3012, p_351984_.blockPosition(), TrialSpawner.FlameParticle.NORMAL.encode());
                 if (p_351984_ instanceof Mob mob) {
                     mob.dropPreservedEquipment();
                 }
@@ -202,68 +202,68 @@ public class TrialSpawnerData {
                 p_351984_.remove(Entity.RemovalReason.DISCARDED);
             }
         });
-        if (!p_338478_.getOminousConfig().spawnPotentialsDefinition().isEmpty()) {
+        if (!spawner.getOminousConfig().spawnPotentialsDefinition().isEmpty()) {
             this.nextSpawnData = Optional.empty();
         }
 
         this.totalMobsSpawned = 0;
         this.currentMobs.clear();
-        this.nextMobSpawnsAt = p_338185_.getGameTime() + (long)p_338478_.getOminousConfig().ticksBetweenSpawn();
-        p_338478_.markUpdated();
-        this.cooldownEndsAt = p_338185_.getGameTime() + p_338478_.getOminousConfig().ticksBetweenItemSpawners();
+        this.nextMobSpawnsAt = level.getGameTime() + (long)spawner.getOminousConfig().ticksBetweenSpawn();
+        spawner.markUpdated();
+        this.cooldownEndsAt = level.getGameTime() + spawner.getOminousConfig().ticksBetweenItemSpawners();
     }
 
-    private static void transformBadOmenIntoTrialOmen(Player p_338616_) {
-        MobEffectInstance mobeffectinstance = p_338616_.getEffect(MobEffects.BAD_OMEN);
+    private static void transformBadOmenIntoTrialOmen(Player player) {
+        MobEffectInstance mobeffectinstance = player.getEffect(MobEffects.BAD_OMEN);
         if (mobeffectinstance != null) {
             int i = mobeffectinstance.getAmplifier() + 1;
             int j = 18000 * i;
-            p_338616_.removeEffect(MobEffects.BAD_OMEN);
-            p_338616_.addEffect(new MobEffectInstance(MobEffects.TRIAL_OMEN, j, 0));
+            player.removeEffect(MobEffects.BAD_OMEN);
+            player.addEffect(new MobEffectInstance(MobEffects.TRIAL_OMEN, j, 0));
         }
     }
 
-    public boolean isReadyToOpenShutter(ServerLevel p_312291_, float p_312417_, int p_338634_) {
-        long i = this.cooldownEndsAt - (long)p_338634_;
-        return (float)p_312291_.getGameTime() >= (float)i + p_312417_;
+    public boolean isReadyToOpenShutter(ServerLevel level, float delay, int targetCooldownLength) {
+        long i = this.cooldownEndsAt - (long)targetCooldownLength;
+        return (float)level.getGameTime() >= (float)i + delay;
     }
 
-    public boolean isReadyToEjectItems(ServerLevel p_312692_, float p_312374_, int p_338651_) {
-        long i = this.cooldownEndsAt - (long)p_338651_;
-        return (float)(p_312692_.getGameTime() - i) % p_312374_ == 0.0F;
+    public boolean isReadyToEjectItems(ServerLevel level, float delay, int targetCooldownLength) {
+        long i = this.cooldownEndsAt - (long)targetCooldownLength;
+        return (float)(level.getGameTime() - i) % delay == 0.0F;
     }
 
-    public boolean isCooldownFinished(ServerLevel p_312743_) {
-        return p_312743_.getGameTime() >= this.cooldownEndsAt;
+    public boolean isCooldownFinished(ServerLevel level) {
+        return level.getGameTime() >= this.cooldownEndsAt;
     }
 
-    public void setEntityId(TrialSpawner p_312044_, RandomSource p_312864_, EntityType<?> p_312415_) {
-        this.getOrCreateNextSpawnData(p_312044_, p_312864_).getEntityToSpawn().putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(p_312415_).toString());
+    public void setEntityId(TrialSpawner spawner, RandomSource random, EntityType<?> entityType) {
+        this.getOrCreateNextSpawnData(spawner, random).getEntityToSpawn().putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(entityType).toString());
     }
 
-    protected SpawnData getOrCreateNextSpawnData(TrialSpawner p_312745_, RandomSource p_312242_) {
+    protected SpawnData getOrCreateNextSpawnData(TrialSpawner spawner, RandomSource random) {
         if (this.nextSpawnData.isPresent()) {
             return this.nextSpawnData.get();
         } else {
-            SimpleWeightedRandomList<SpawnData> simpleweightedrandomlist = p_312745_.getConfig().spawnPotentialsDefinition();
+            SimpleWeightedRandomList<SpawnData> simpleweightedrandomlist = spawner.getConfig().spawnPotentialsDefinition();
             Optional<SpawnData> optional = simpleweightedrandomlist.isEmpty()
                 ? this.nextSpawnData
-                : simpleweightedrandomlist.getRandom(p_312242_).map(WeightedEntry.Wrapper::data);
+                : simpleweightedrandomlist.getRandom(random).map(WeightedEntry.Wrapper::data);
             this.nextSpawnData = Optional.of(optional.orElseGet(SpawnData::new));
-            p_312745_.markUpdated();
+            spawner.markUpdated();
             return this.nextSpawnData.get();
         }
     }
 
     @Nullable
-    public Entity getOrCreateDisplayEntity(TrialSpawner p_312366_, Level p_312148_, TrialSpawnerState p_311790_) {
-        if (!p_311790_.hasSpinningMob()) {
+    public Entity getOrCreateDisplayEntity(TrialSpawner spawner, Level level, TrialSpawnerState spawnerState) {
+        if (!spawnerState.hasSpinningMob()) {
             return null;
         } else {
             if (this.displayEntity == null) {
-                CompoundTag compoundtag = this.getOrCreateNextSpawnData(p_312366_, p_312148_.getRandom()).getEntityToSpawn();
+                CompoundTag compoundtag = this.getOrCreateNextSpawnData(spawner, level.getRandom()).getEntityToSpawn();
                 if (compoundtag.contains("id", 8)) {
-                    this.displayEntity = EntityType.loadEntityRecursive(compoundtag, p_312148_, Function.identity());
+                    this.displayEntity = EntityType.loadEntityRecursive(compoundtag, level, Function.identity());
                 }
             }
 
@@ -271,9 +271,9 @@ public class TrialSpawnerData {
         }
     }
 
-    public CompoundTag getUpdateTag(TrialSpawnerState p_312104_) {
+    public CompoundTag getUpdateTag(TrialSpawnerState spawnerState) {
         CompoundTag compoundtag = new CompoundTag();
-        if (p_312104_ == TrialSpawnerState.ACTIVE) {
+        if (spawnerState == TrialSpawnerState.ACTIVE) {
             compoundtag.putLong("next_mob_spawns_at", this.nextMobSpawnsAt);
         }
 
@@ -295,13 +295,13 @@ public class TrialSpawnerData {
         return this.oSpin;
     }
 
-    SimpleWeightedRandomList<ItemStack> getDispensingItems(ServerLevel p_338857_, TrialSpawnerConfig p_338213_, BlockPos p_338577_) {
+    SimpleWeightedRandomList<ItemStack> getDispensingItems(ServerLevel level, TrialSpawnerConfig config, BlockPos pos) {
         if (this.dispensing != null) {
             return this.dispensing;
         } else {
-            LootTable loottable = p_338857_.getServer().reloadableRegistries().getLootTable(p_338213_.itemsToDropWhenOminous());
-            LootParams lootparams = new LootParams.Builder(p_338857_).create(LootContextParamSets.EMPTY);
-            long i = lowResolutionPosition(p_338857_, p_338577_);
+            LootTable loottable = level.getServer().reloadableRegistries().getLootTable(config.itemsToDropWhenOminous());
+            LootParams lootparams = new LootParams.Builder(level).create(LootContextParamSets.EMPTY);
+            long i = lowResolutionPosition(level, pos);
             ObjectArrayList<ItemStack> objectarraylist = loottable.getRandomItems(lootparams, i);
             if (objectarraylist.isEmpty()) {
                 return SimpleWeightedRandomList.empty();
@@ -318,10 +318,10 @@ public class TrialSpawnerData {
         }
     }
 
-    private static long lowResolutionPosition(ServerLevel p_338878_, BlockPos p_338542_) {
+    private static long lowResolutionPosition(ServerLevel level, BlockPos pos) {
         BlockPos blockpos = new BlockPos(
-            Mth.floor((float)p_338542_.getX() / 30.0F), Mth.floor((float)p_338542_.getY() / 20.0F), Mth.floor((float)p_338542_.getZ() / 30.0F)
+            Mth.floor((float)pos.getX() / 30.0F), Mth.floor((float)pos.getY() / 20.0F), Mth.floor((float)pos.getZ() / 30.0F)
         );
-        return p_338878_.getSeed() + blockpos.asLong();
+        return level.getSeed() + blockpos.asLong();
     }
 }

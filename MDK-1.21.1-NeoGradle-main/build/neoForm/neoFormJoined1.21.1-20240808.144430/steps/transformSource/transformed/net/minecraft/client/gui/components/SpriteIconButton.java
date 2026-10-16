@@ -15,23 +15,23 @@ public abstract class SpriteIconButton extends Button {
     protected final int spriteHeight;
 
     SpriteIconButton(
-        int p_294218_,
-        int p_294461_,
-        Component p_294760_,
-        int p_296342_,
-        int p_296291_,
-        ResourceLocation p_294131_,
-        Button.OnPress p_295667_,
-        @Nullable Button.CreateNarration p_332100_
+        int width,
+        int height,
+        Component message,
+        int spriteWidth,
+        int spriteHeight,
+        ResourceLocation sprite,
+        Button.OnPress onPress,
+        @Nullable Button.CreateNarration createNarration
     ) {
-        super(0, 0, p_294218_, p_294461_, p_294760_, p_295667_, p_332100_ == null ? DEFAULT_NARRATION : p_332100_);
-        this.spriteWidth = p_296342_;
-        this.spriteHeight = p_296291_;
-        this.sprite = p_294131_;
+        super(0, 0, width, height, message, onPress, createNarration == null ? DEFAULT_NARRATION : createNarration);
+        this.spriteWidth = spriteWidth;
+        this.spriteHeight = spriteHeight;
+        this.sprite = sprite;
     }
 
-    public static SpriteIconButton.Builder builder(Component p_294639_, Button.OnPress p_295155_, boolean p_295622_) {
-        return new SpriteIconButton.Builder(p_294639_, p_295155_, p_295622_);
+    public static SpriteIconButton.Builder builder(Component message, Button.OnPress onPress, boolean iconOnly) {
+        return new SpriteIconButton.Builder(message, onPress, iconOnly);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -48,32 +48,32 @@ public abstract class SpriteIconButton extends Button {
         @Nullable
         Button.CreateNarration narration;
 
-        public Builder(Component p_294568_, Button.OnPress p_294520_, boolean p_294559_) {
-            this.message = p_294568_;
-            this.onPress = p_294520_;
-            this.iconOnly = p_294559_;
+        public Builder(Component message, Button.OnPress onPress, boolean iconOnly) {
+            this.message = message;
+            this.onPress = onPress;
+            this.iconOnly = iconOnly;
         }
 
-        public SpriteIconButton.Builder width(int p_295136_) {
-            this.width = p_295136_;
+        public SpriteIconButton.Builder width(int width) {
+            this.width = width;
             return this;
         }
 
-        public SpriteIconButton.Builder size(int p_295812_, int p_296135_) {
-            this.width = p_295812_;
-            this.height = p_296135_;
+        public SpriteIconButton.Builder size(int width, int height) {
+            this.width = width;
+            this.height = height;
             return this;
         }
 
-        public SpriteIconButton.Builder sprite(ResourceLocation p_295718_, int p_296046_, int p_295188_) {
-            this.sprite = p_295718_;
-            this.spriteWidth = p_296046_;
-            this.spriteHeight = p_295188_;
+        public SpriteIconButton.Builder sprite(ResourceLocation sprite, int spriteWidth, int spriteHeight) {
+            this.sprite = sprite;
+            this.spriteWidth = spriteWidth;
+            this.spriteHeight = spriteHeight;
             return this;
         }
 
-        public SpriteIconButton.Builder narration(Button.CreateNarration p_331295_) {
-            this.narration = p_331295_;
+        public SpriteIconButton.Builder narration(Button.CreateNarration narration) {
+            this.narration = narration;
             return this;
         }
 

@@ -17,18 +17,18 @@ public class MipmapGenerator {
     private MipmapGenerator() {
     }
 
-    public static NativeImage[] generateMipLevels(NativeImage[] p_251300_, int p_252326_) {
-        if (p_252326_ + 1 <= p_251300_.length) {
-            return p_251300_;
+    public static NativeImage[] generateMipLevels(NativeImage[] images, int mipLevel) {
+        if (mipLevel + 1 <= images.length) {
+            return images;
         } else {
-            NativeImage[] anativeimage = new NativeImage[p_252326_ + 1];
-            anativeimage[0] = p_251300_[0];
+            NativeImage[] anativeimage = new NativeImage[mipLevel + 1];
+            anativeimage[0] = images[0];
             boolean flag = hasTransparentPixel(anativeimage[0]);
 
             int maxMipmapLevel = net.neoforged.neoforge.client.ClientHooks.getMaxMipmapLevel(anativeimage[0].getWidth(), anativeimage[0].getHeight());
-            for (int i = 1; i <= p_252326_; i++) {
-                if (i < p_251300_.length) {
-                    anativeimage[i] = p_251300_[i];
+            for (int i = 1; i <= mipLevel; i++) {
+                if (i < images.length) {
+                    anativeimage[i] = images[i];
                 } else {
                     NativeImage nativeimage = anativeimage[i - 1];
                     // Forge: Guard against invalid texture size, because we allow generating mipmaps regardless of texture sizes
@@ -62,10 +62,10 @@ public class MipmapGenerator {
         }
     }
 
-    private static boolean hasTransparentPixel(NativeImage p_252279_) {
-        for (int i = 0; i < p_252279_.getWidth(); i++) {
-            for (int j = 0; j < p_252279_.getHeight(); j++) {
-                if (p_252279_.getPixelRGBA(i, j) >> 24 == 0) {
+    private static boolean hasTransparentPixel(NativeImage image) {
+        for (int i = 0; i < image.getWidth(); i++) {
+            for (int j = 0; j < image.getHeight(); j++) {
+                if (image.getPixelRGBA(i, j) >> 24 == 0) {
                     return true;
                 }
             }
@@ -74,38 +74,38 @@ public class MipmapGenerator {
         return false;
     }
 
-    private static int alphaBlend(int p_118049_, int p_118050_, int p_118051_, int p_118052_, boolean p_118053_) {
-        if (p_118053_) {
+    private static int alphaBlend(int col0, int col1, int col2, int col3, boolean transparent) {
+        if (transparent) {
             float f = 0.0F;
             float f1 = 0.0F;
             float f2 = 0.0F;
             float f3 = 0.0F;
-            if (p_118049_ >> 24 != 0) {
-                f += getPow22(p_118049_ >> 24);
-                f1 += getPow22(p_118049_ >> 16);
-                f2 += getPow22(p_118049_ >> 8);
-                f3 += getPow22(p_118049_ >> 0);
+            if (col0 >> 24 != 0) {
+                f += getPow22(col0 >> 24);
+                f1 += getPow22(col0 >> 16);
+                f2 += getPow22(col0 >> 8);
+                f3 += getPow22(col0 >> 0);
             }
 
-            if (p_118050_ >> 24 != 0) {
-                f += getPow22(p_118050_ >> 24);
-                f1 += getPow22(p_118050_ >> 16);
-                f2 += getPow22(p_118050_ >> 8);
-                f3 += getPow22(p_118050_ >> 0);
+            if (col1 >> 24 != 0) {
+                f += getPow22(col1 >> 24);
+                f1 += getPow22(col1 >> 16);
+                f2 += getPow22(col1 >> 8);
+                f3 += getPow22(col1 >> 0);
             }
 
-            if (p_118051_ >> 24 != 0) {
-                f += getPow22(p_118051_ >> 24);
-                f1 += getPow22(p_118051_ >> 16);
-                f2 += getPow22(p_118051_ >> 8);
-                f3 += getPow22(p_118051_ >> 0);
+            if (col2 >> 24 != 0) {
+                f += getPow22(col2 >> 24);
+                f1 += getPow22(col2 >> 16);
+                f2 += getPow22(col2 >> 8);
+                f3 += getPow22(col2 >> 0);
             }
 
-            if (p_118052_ >> 24 != 0) {
-                f += getPow22(p_118052_ >> 24);
-                f1 += getPow22(p_118052_ >> 16);
-                f2 += getPow22(p_118052_ >> 8);
-                f3 += getPow22(p_118052_ >> 0);
+            if (col3 >> 24 != 0) {
+                f += getPow22(col3 >> 24);
+                f1 += getPow22(col3 >> 16);
+                f2 += getPow22(col3 >> 8);
+                f3 += getPow22(col3 >> 0);
             }
 
             f /= 4.0F;
@@ -122,24 +122,24 @@ public class MipmapGenerator {
 
             return i1 << 24 | j1 << 16 | k1 << 8 | l1;
         } else {
-            int i = gammaBlend(p_118049_, p_118050_, p_118051_, p_118052_, 24);
-            int j = gammaBlend(p_118049_, p_118050_, p_118051_, p_118052_, 16);
-            int k = gammaBlend(p_118049_, p_118050_, p_118051_, p_118052_, 8);
-            int l = gammaBlend(p_118049_, p_118050_, p_118051_, p_118052_, 0);
+            int i = gammaBlend(col0, col1, col2, col3, 24);
+            int j = gammaBlend(col0, col1, col2, col3, 16);
+            int k = gammaBlend(col0, col1, col2, col3, 8);
+            int l = gammaBlend(col0, col1, col2, col3, 0);
             return i << 24 | j << 16 | k << 8 | l;
         }
     }
 
-    private static int gammaBlend(int p_118043_, int p_118044_, int p_118045_, int p_118046_, int p_118047_) {
-        float f = getPow22(p_118043_ >> p_118047_);
-        float f1 = getPow22(p_118044_ >> p_118047_);
-        float f2 = getPow22(p_118045_ >> p_118047_);
-        float f3 = getPow22(p_118046_ >> p_118047_);
+    private static int gammaBlend(int col0, int col1, int col2, int col3, int bitOffset) {
+        float f = getPow22(col0 >> bitOffset);
+        float f1 = getPow22(col1 >> bitOffset);
+        float f2 = getPow22(col2 >> bitOffset);
+        float f3 = getPow22(col3 >> bitOffset);
         float f4 = (float)((double)((float)Math.pow((double)(f + f1 + f2 + f3) * 0.25, 0.45454545454545453)));
         return (int)((double)f4 * 255.0);
     }
 
-    private static float getPow22(int p_118041_) {
-        return POW22[p_118041_ & 0xFF];
+    private static float getPow22(int value) {
+        return POW22[value & 0xFF];
     }
 }

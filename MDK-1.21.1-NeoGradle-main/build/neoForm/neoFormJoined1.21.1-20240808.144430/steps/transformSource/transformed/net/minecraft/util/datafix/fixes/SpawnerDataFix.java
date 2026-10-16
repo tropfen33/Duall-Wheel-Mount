@@ -12,8 +12,8 @@ import com.mojang.serialization.DynamicOps;
 import java.util.List;
 
 public class SpawnerDataFix extends DataFix {
-    public SpawnerDataFix(Schema p_185133_) {
-        super(p_185133_, true);
+    public SpawnerDataFix(Schema outputSchema) {
+        super(outputSchema, true);
     }
 
     @Override
@@ -33,14 +33,14 @@ public class SpawnerDataFix extends DataFix {
         );
     }
 
-    private <T> Typed<T> wrapEntityToSpawnData(Type<T> p_185141_, Typed<?> p_185142_) {
-        DynamicOps<?> dynamicops = p_185142_.getOps();
-        return new Typed<>(p_185141_, dynamicops, (T)Pair.<Object, Dynamic<?>>of(p_185142_.getValue(), new Dynamic<>(dynamicops)));
+    private <T> Typed<T> wrapEntityToSpawnData(Type<T> type, Typed<?> typed) {
+        DynamicOps<?> dynamicops = typed.getOps();
+        return new Typed<>(type, dynamicops, (T)Pair.<Object, Dynamic<?>>of(typed.getValue(), new Dynamic<>(dynamicops)));
     }
 
-    private <T> Typed<T> wrapSpawnPotentialsToWeightedEntries(Type<T> p_185147_, Typed<?> p_185148_) {
-        DynamicOps<?> dynamicops = p_185148_.getOps();
-        List<?> list = (List<?>)p_185148_.getValue();
+    private <T> Typed<T> wrapSpawnPotentialsToWeightedEntries(Type<T> type, Typed<?> typed) {
+        DynamicOps<?> dynamicops = typed.getOps();
+        List<?> list = (List<?>)typed.getValue();
         List<?> list1 = list.stream().map(p_185145_ -> {
             Pair<Object, Dynamic<?>> pair = (Pair<Object, Dynamic<?>>)p_185145_;
             int i = pair.getSecond().get("Weight").asNumber().result().orElse(1).intValue();
@@ -49,6 +49,6 @@ public class SpawnerDataFix extends DataFix {
             Dynamic<?> dynamic1 = pair.getSecond().remove("Weight").remove("Entity");
             return Pair.of(Pair.of(pair.getFirst(), dynamic1), dynamic);
         }).toList();
-        return new Typed<>(p_185147_, dynamicops, (T)list1);
+        return new Typed<>(type, dynamicops, (T)list1);
     }
 }

@@ -28,71 +28,71 @@ public class BoatModel extends ListModel<Boat> implements WaterPatchModel {
     private final ModelPart waterPatch;
     private final ImmutableList<ModelPart> parts;
 
-    public BoatModel(ModelPart p_250599_) {
-        this.leftPaddle = p_250599_.getChild("left_paddle");
-        this.rightPaddle = p_250599_.getChild("right_paddle");
-        this.waterPatch = p_250599_.getChild("water_patch");
-        this.parts = this.createPartsBuilder(p_250599_).build();
+    public BoatModel(ModelPart root) {
+        this.leftPaddle = root.getChild("left_paddle");
+        this.rightPaddle = root.getChild("right_paddle");
+        this.waterPatch = root.getChild("water_patch");
+        this.parts = this.createPartsBuilder(root).build();
     }
 
-    protected Builder<ModelPart> createPartsBuilder(ModelPart p_252283_) {
+    protected Builder<ModelPart> createPartsBuilder(ModelPart root) {
         Builder<ModelPart> builder = new Builder<>();
         builder.add(
-            p_252283_.getChild("bottom"),
-            p_252283_.getChild("back"),
-            p_252283_.getChild("front"),
-            p_252283_.getChild("right"),
-            p_252283_.getChild("left"),
+            root.getChild("bottom"),
+            root.getChild("back"),
+            root.getChild("front"),
+            root.getChild("right"),
+            root.getChild("left"),
             this.leftPaddle,
             this.rightPaddle
         );
         return builder;
     }
 
-    public static void createChildren(PartDefinition p_250572_) {
+    public static void createChildren(PartDefinition root) {
         int i = 32;
         int j = 6;
         int k = 20;
         int l = 4;
         int i1 = 28;
-        p_250572_.addOrReplaceChild(
+        root.addOrReplaceChild(
             "bottom",
             CubeListBuilder.create().texOffs(0, 0).addBox(-14.0F, -9.0F, -3.0F, 28.0F, 16.0F, 3.0F),
             PartPose.offsetAndRotation(0.0F, 3.0F, 1.0F, (float) (Math.PI / 2), 0.0F, 0.0F)
         );
-        p_250572_.addOrReplaceChild(
+        root.addOrReplaceChild(
             "back",
             CubeListBuilder.create().texOffs(0, 19).addBox(-13.0F, -7.0F, -1.0F, 18.0F, 6.0F, 2.0F),
             PartPose.offsetAndRotation(-15.0F, 4.0F, 4.0F, 0.0F, (float) (Math.PI * 3.0 / 2.0), 0.0F)
         );
-        p_250572_.addOrReplaceChild(
+        root.addOrReplaceChild(
             "front",
             CubeListBuilder.create().texOffs(0, 27).addBox(-8.0F, -7.0F, -1.0F, 16.0F, 6.0F, 2.0F),
             PartPose.offsetAndRotation(15.0F, 4.0F, 0.0F, 0.0F, (float) (Math.PI / 2), 0.0F)
         );
-        p_250572_.addOrReplaceChild(
+        root.addOrReplaceChild(
             "right",
             CubeListBuilder.create().texOffs(0, 35).addBox(-14.0F, -7.0F, -1.0F, 28.0F, 6.0F, 2.0F),
             PartPose.offsetAndRotation(0.0F, 4.0F, -9.0F, 0.0F, (float) Math.PI, 0.0F)
         );
-        p_250572_.addOrReplaceChild(
+        root.addOrReplaceChild(
             "left", CubeListBuilder.create().texOffs(0, 43).addBox(-14.0F, -7.0F, -1.0F, 28.0F, 6.0F, 2.0F), PartPose.offset(0.0F, 4.0F, 9.0F)
         );
         int j1 = 20;
         int k1 = 7;
         int l1 = 6;
         float f = -5.0F;
-        p_250572_.addOrReplaceChild(
+        root.addOrReplaceChild(
             "left_paddle",
             CubeListBuilder.create().texOffs(62, 0).addBox(-1.0F, 0.0F, -5.0F, 2.0F, 2.0F, 18.0F).addBox(-1.001F, -3.0F, 8.0F, 1.0F, 6.0F, 7.0F),
             PartPose.offsetAndRotation(3.0F, -5.0F, 9.0F, 0.0F, 0.0F, (float) (Math.PI / 16))
         );
-        p_250572_.addOrReplaceChild(
+        root.addOrReplaceChild(
             "right_paddle",
             CubeListBuilder.create().texOffs(62, 20).addBox(-1.0F, 0.0F, -5.0F, 2.0F, 2.0F, 18.0F).addBox(0.001F, -3.0F, 8.0F, 1.0F, 6.0F, 7.0F),
             PartPose.offsetAndRotation(3.0F, -5.0F, -9.0F, 0.0F, (float) Math.PI, (float) (Math.PI / 16))
         );
-        p_250572_.addOrReplaceChild(
+        root.addOrReplaceChild(
             "water_patch",
             CubeListBuilder.create().texOffs(0, 0).addBox(-14.0F, -9.0F, -3.0F, 28.0F, 16.0F, 3.0F),
             PartPose.offsetAndRotation(0.0F, -3.0F, 1.0F, (float) (Math.PI / 2), 0.0F, 0.0F)
@@ -106,9 +106,12 @@ public class BoatModel extends ListModel<Boat> implements WaterPatchModel {
         return LayerDefinition.create(meshdefinition, 128, 64);
     }
 
-    public void setupAnim(Boat p_102269_, float p_102270_, float p_102271_, float p_102272_, float p_102273_, float p_102274_) {
-        animatePaddle(p_102269_, 0, this.leftPaddle, p_102270_);
-        animatePaddle(p_102269_, 1, this.rightPaddle, p_102270_);
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(Boat entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        animatePaddle(entity, 0, this.leftPaddle, limbSwing);
+        animatePaddle(entity, 1, this.rightPaddle, limbSwing);
     }
 
     public ImmutableList<ModelPart> parts() {
@@ -120,12 +123,12 @@ public class BoatModel extends ListModel<Boat> implements WaterPatchModel {
         return this.waterPatch;
     }
 
-    private static void animatePaddle(Boat p_170465_, int p_170466_, ModelPart p_170467_, float p_170468_) {
-        float f = p_170465_.getRowingTime(p_170466_, p_170468_);
-        p_170467_.xRot = Mth.clampedLerp((float) (-Math.PI / 3), (float) (-Math.PI / 12), (Mth.sin(-f) + 1.0F) / 2.0F);
-        p_170467_.yRot = Mth.clampedLerp((float) (-Math.PI / 4), (float) (Math.PI / 4), (Mth.sin(-f + 1.0F) + 1.0F) / 2.0F);
-        if (p_170466_ == 1) {
-            p_170467_.yRot = (float) Math.PI - p_170467_.yRot;
+    private static void animatePaddle(Boat boat, int side, ModelPart paddle, float limbSwing) {
+        float f = boat.getRowingTime(side, limbSwing);
+        paddle.xRot = Mth.clampedLerp((float) (-Math.PI / 3), (float) (-Math.PI / 12), (Mth.sin(-f) + 1.0F) / 2.0F);
+        paddle.yRot = Mth.clampedLerp((float) (-Math.PI / 4), (float) (Math.PI / 4), (Mth.sin(-f + 1.0F) + 1.0F) / 2.0F);
+        if (side == 1) {
+            paddle.yRot = (float) Math.PI - paddle.yRot;
         }
     }
 }

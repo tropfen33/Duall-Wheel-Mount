@@ -34,16 +34,16 @@ public class RealmsLongRunningMcoTaskScreen extends RealmsScreen {
     @Nullable
     private LoadingDotsWidget loadingDotsWidget;
 
-    public RealmsLongRunningMcoTaskScreen(Screen p_88777_, LongRunningTask... p_305868_) {
+    public RealmsLongRunningMcoTaskScreen(Screen lastScreen, LongRunningTask... queuedTasks) {
         super(GameNarrator.NO_TITLE);
-        this.lastScreen = p_88777_;
-        this.queuedTasks = List.of(p_305868_);
+        this.lastScreen = lastScreen;
+        this.queuedTasks = List.of(queuedTasks);
         if (this.queuedTasks.isEmpty()) {
             throw new IllegalArgumentException("No tasks added");
         } else {
             this.title = this.queuedTasks.get(0).getTitle();
             Runnable runnable = () -> {
-                for (LongRunningTask longrunningtask : p_305868_) {
+                for (LongRunningTask longrunningtask : queuedTasks) {
                     this.setTitle(longrunningtask.getTitle());
                     if (longrunningtask.aborted()) {
                         break;
@@ -70,12 +70,12 @@ public class RealmsLongRunningMcoTaskScreen extends RealmsScreen {
     }
 
     @Override
-    public boolean keyPressed(int p_88781_, int p_88782_, int p_88783_) {
-        if (p_88781_ == 256) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 256) {
             this.cancel();
             return true;
         } else {
-            return super.keyPressed(p_88781_, p_88782_, p_88783_);
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
     }
 
@@ -105,11 +105,11 @@ public class RealmsLongRunningMcoTaskScreen extends RealmsScreen {
         this.minecraft.setScreen(this.lastScreen);
     }
 
-    public void setTitle(Component p_88797_) {
+    public void setTitle(Component title) {
         if (this.loadingDotsWidget != null) {
-            this.loadingDotsWidget.setMessage(p_88797_);
+            this.loadingDotsWidget.setMessage(title);
         }
 
-        this.title = p_88797_;
+        this.title = title;
     }
 }

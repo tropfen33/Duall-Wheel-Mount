@@ -11,24 +11,24 @@ public class ArrayVoxelShape extends VoxelShape {
     private final DoubleList ys;
     private final DoubleList zs;
 
-    protected ArrayVoxelShape(DiscreteVoxelShape p_82572_, double[] p_82573_, double[] p_82574_, double[] p_82575_) {
+    protected ArrayVoxelShape(DiscreteVoxelShape shape, double[] xs, double[] ys, double[] zs) {
         this(
-            p_82572_,
-            DoubleArrayList.wrap(Arrays.copyOf(p_82573_, p_82572_.getXSize() + 1)),
-            DoubleArrayList.wrap(Arrays.copyOf(p_82574_, p_82572_.getYSize() + 1)),
-            DoubleArrayList.wrap(Arrays.copyOf(p_82575_, p_82572_.getZSize() + 1))
+            shape,
+            DoubleArrayList.wrap(Arrays.copyOf(xs, shape.getXSize() + 1)),
+            DoubleArrayList.wrap(Arrays.copyOf(ys, shape.getYSize() + 1)),
+            DoubleArrayList.wrap(Arrays.copyOf(zs, shape.getZSize() + 1))
         );
     }
 
-    ArrayVoxelShape(DiscreteVoxelShape p_82567_, DoubleList p_82568_, DoubleList p_82569_, DoubleList p_82570_) {
-        super(p_82567_);
-        int i = p_82567_.getXSize() + 1;
-        int j = p_82567_.getYSize() + 1;
-        int k = p_82567_.getZSize() + 1;
-        if (i == p_82568_.size() && j == p_82569_.size() && k == p_82570_.size()) {
-            this.xs = p_82568_;
-            this.ys = p_82569_;
-            this.zs = p_82570_;
+    ArrayVoxelShape(DiscreteVoxelShape shape, DoubleList xs, DoubleList ys, DoubleList zs) {
+        super(shape);
+        int i = shape.getXSize() + 1;
+        int j = shape.getYSize() + 1;
+        int k = shape.getZSize() + 1;
+        if (i == xs.size() && j == ys.size() && k == zs.size()) {
+            this.xs = xs;
+            this.ys = ys;
+            this.zs = zs;
         } else {
             throw (IllegalArgumentException)Util.pauseInIde(
                 new IllegalArgumentException("Lengths of point arrays must be consistent with the size of the VoxelShape.")
@@ -37,8 +37,8 @@ public class ArrayVoxelShape extends VoxelShape {
     }
 
     @Override
-    public DoubleList getCoords(Direction.Axis p_82577_) {
-        switch (p_82577_) {
+    public DoubleList getCoords(Direction.Axis axis) {
+        switch (axis) {
             case X:
                 return this.xs;
             case Y:

@@ -7,15 +7,15 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class ReversePortalParticle extends PortalParticle {
-    protected ReversePortalParticle(ClientLevel p_107590_, double p_107591_, double p_107592_, double p_107593_, double p_107594_, double p_107595_, double p_107596_) {
-        super(p_107590_, p_107591_, p_107592_, p_107593_, p_107594_, p_107595_, p_107596_);
+    protected ReversePortalParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+        super(level, x, y, z, xSpeed, ySpeed, zSpeed);
         this.quadSize *= 1.5F;
         this.lifetime = (int)(Math.random() * 2.0) + 60;
     }
 
     @Override
-    public float getQuadSize(float p_107608_) {
-        float f = 1.0F - ((float)this.age + p_107608_) / ((float)this.lifetime * 1.5F);
+    public float getQuadSize(float scaleFactor) {
+        float f = 1.0F - ((float)this.age + scaleFactor) / ((float)this.lifetime * 1.5F);
         return this.quadSize * f;
     }
 
@@ -39,21 +39,21 @@ public class ReversePortalParticle extends PortalParticle {
     public static class ReversePortalProvider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprite;
 
-        public ReversePortalProvider(SpriteSet p_107611_) {
-            this.sprite = p_107611_;
+        public ReversePortalProvider(SpriteSet sprites) {
+            this.sprite = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_107622_,
-            ClientLevel p_107623_,
-            double p_107624_,
-            double p_107625_,
-            double p_107626_,
-            double p_107627_,
-            double p_107628_,
-            double p_107629_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            ReversePortalParticle reverseportalparticle = new ReversePortalParticle(p_107623_, p_107624_, p_107625_, p_107626_, p_107627_, p_107628_, p_107629_);
+            ReversePortalParticle reverseportalparticle = new ReversePortalParticle(level, x, y, z, xSpeed, ySpeed, zSpeed);
             reverseportalparticle.pickSprite(this.sprite);
             return reverseportalparticle;
         }

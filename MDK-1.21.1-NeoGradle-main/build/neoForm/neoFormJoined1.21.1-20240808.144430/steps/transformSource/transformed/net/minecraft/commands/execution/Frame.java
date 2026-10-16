@@ -3,8 +3,8 @@ package net.minecraft.commands.execution;
 import net.minecraft.commands.CommandResultCallback;
 
 public record Frame(int depth, CommandResultCallback returnValueConsumer, Frame.FrameControl frameControl) {
-    public void returnSuccess(int p_309616_) {
-        this.returnValueConsumer.onSuccess(p_309616_);
+    public void returnSuccess(int result) {
+        this.returnValueConsumer.onSuccess(result);
     }
 
     public void returnFailure() {

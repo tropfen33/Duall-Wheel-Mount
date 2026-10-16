@@ -15,19 +15,19 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class TrialSpawnerRenderer implements BlockEntityRenderer<TrialSpawnerBlockEntity> {
     private final EntityRenderDispatcher entityRenderer;
 
-    public TrialSpawnerRenderer(BlockEntityRendererProvider.Context p_312398_) {
-        this.entityRenderer = p_312398_.getEntityRenderer();
+    public TrialSpawnerRenderer(BlockEntityRendererProvider.Context context) {
+        this.entityRenderer = context.getEntityRenderer();
     }
 
-    public void render(TrialSpawnerBlockEntity p_312217_, float p_312274_, PoseStack p_312684_, MultiBufferSource p_312816_, int p_312320_, int p_312349_) {
-        Level level = p_312217_.getLevel();
+    public void render(TrialSpawnerBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        Level level = blockEntity.getLevel();
         if (level != null) {
-            TrialSpawner trialspawner = p_312217_.getTrialSpawner();
+            TrialSpawner trialspawner = blockEntity.getTrialSpawner();
             TrialSpawnerData trialspawnerdata = trialspawner.getData();
             Entity entity = trialspawnerdata.getOrCreateDisplayEntity(trialspawner, level, trialspawner.getState());
             if (entity != null) {
                 SpawnerRenderer.renderEntityInSpawner(
-                    p_312274_, p_312684_, p_312816_, p_312320_, entity, this.entityRenderer, trialspawnerdata.getOSpin(), trialspawnerdata.getSpin()
+                    partialTick, poseStack, bufferSource, packedLight, entity, this.entityRenderer, trialspawnerdata.getOSpin(), trialspawnerdata.getSpin()
                 );
             }
         }

@@ -13,7 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ProjectileWeaponItem;
 
 public class MeleeAttack {
-    public static OneShot<Mob> create(int p_259758_) {
+    public static OneShot<Mob> create(int cooldownBetweenAttacks) {
         return BehaviorBuilder.create(
             p_258526_ -> p_258526_.group(
                         p_258526_.registered(MemoryModuleType.LOOK_TARGET),
@@ -31,7 +31,7 @@ public class MeleeAttack {
                                     p_258529_.set(new EntityTracker(livingentity, true));
                                     p_258540_.swing(InteractionHand.MAIN_HAND);
                                     p_258540_.doHurtTarget(livingentity);
-                                    p_258531_.setWithExpiry(true, (long)p_259758_);
+                                    p_258531_.setWithExpiry(true, (long)cooldownBetweenAttacks);
                                     return true;
                                 } else {
                                     return false;
@@ -41,10 +41,10 @@ public class MeleeAttack {
         );
     }
 
-    private static boolean isHoldingUsableProjectileWeapon(Mob p_23528_) {
-        return p_23528_.isHolding(p_147697_ -> {
+    private static boolean isHoldingUsableProjectileWeapon(Mob mob) {
+        return mob.isHolding(p_147697_ -> {
             Item item = p_147697_.getItem();
-            return item instanceof ProjectileWeaponItem && p_23528_.canFireProjectileWeapon((ProjectileWeaponItem)item);
+            return item instanceof ProjectileWeaponItem && mob.canFireProjectileWeapon((ProjectileWeaponItem)item);
         });
     }
 }

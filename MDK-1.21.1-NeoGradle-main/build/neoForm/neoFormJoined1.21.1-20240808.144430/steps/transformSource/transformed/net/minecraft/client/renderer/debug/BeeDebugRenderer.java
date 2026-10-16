@@ -62,8 +62,8 @@ public class BeeDebugRenderer implements DebugRenderer.SimpleDebugRenderer {
     @Nullable
     private UUID lastLookedAtUuid;
 
-    public BeeDebugRenderer(Minecraft p_113053_) {
-        this.minecraft = p_113053_;
+    public BeeDebugRenderer(Minecraft minecraft) {
+        this.minecraft = minecraft;
     }
 
     @Override
@@ -73,23 +73,23 @@ public class BeeDebugRenderer implements DebugRenderer.SimpleDebugRenderer {
         this.lastLookedAtUuid = null;
     }
 
-    public void addOrUpdateHiveInfo(HiveDebugPayload.HiveInfo p_294147_, long p_296079_) {
-        this.hives.put(p_294147_.pos(), new BeeDebugRenderer.HiveDebugInfo(p_294147_, p_296079_));
+    public void addOrUpdateHiveInfo(HiveDebugPayload.HiveInfo hiveInfo, long lastSeen) {
+        this.hives.put(hiveInfo.pos(), new BeeDebugRenderer.HiveDebugInfo(hiveInfo, lastSeen));
     }
 
-    public void addOrUpdateBeeInfo(BeeDebugPayload.BeeInfo p_294571_) {
-        this.beeInfosPerEntity.put(p_294571_.uuid(), p_294571_);
+    public void addOrUpdateBeeInfo(BeeDebugPayload.BeeInfo beeInfo) {
+        this.beeInfosPerEntity.put(beeInfo.uuid(), beeInfo);
     }
 
-    public void removeBeeInfo(int p_173764_) {
-        this.beeInfosPerEntity.values().removeIf(p_293626_ -> p_293626_.id() == p_173764_);
+    public void removeBeeInfo(int id) {
+        this.beeInfosPerEntity.values().removeIf(p_293626_ -> p_293626_.id() == id);
     }
 
     @Override
-    public void render(PoseStack p_113061_, MultiBufferSource p_113062_, double p_113063_, double p_113064_, double p_113065_) {
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, double camX, double camY, double camZ) {
         this.clearRemovedHives();
         this.clearRemovedBees();
-        this.doRender(p_113061_, p_113062_);
+        this.doRender(poseStack, bufferSource);
         if (!this.minecraft.player.isSpectator()) {
             this.updateLastLookedAtUuid();
         }
@@ -104,18 +104,18 @@ public class BeeDebugRenderer implements DebugRenderer.SimpleDebugRenderer {
         this.hives.entrySet().removeIf(p_293628_ -> p_293628_.getValue().lastSeen() < i);
     }
 
-    private void doRender(PoseStack p_270886_, MultiBufferSource p_270808_) {
+    private void doRender(PoseStack poseStack, MultiBufferSource buffer) {
         BlockPos blockpos = this.getCamera().getBlockPosition();
         this.beeInfosPerEntity.values().forEach(p_293636_ -> {
             if (this.isPlayerCloseEnoughToMob(p_293636_)) {
-                this.renderBeeInfo(p_270886_, p_270808_, p_293636_);
+                this.renderBeeInfo(poseStack, buffer, p_293636_);
             }
         });
-        this.renderFlowerInfos(p_270886_, p_270808_);
+        this.renderFlowerInfos(poseStack, buffer);
 
         for (BlockPos blockpos1 : this.hives.keySet()) {
             if (blockpos.closerThan(blockpos1, 30.0)) {
-                highlightHive(p_270886_, p_270808_, blockpos1);
+                highlightHive(poseStack, buffer, blockpos1);
             }
         }
 
@@ -123,12 +123,12 @@ public class BeeDebugRenderer implements DebugRenderer.SimpleDebugRenderer {
         this.hives.values().forEach(p_293646_ -> {
             if (blockpos.closerThan(p_293646_.info.pos(), 30.0)) {
                 Set<UUID> set = map.get(p_293646_.info.pos());
-                this.renderHiveInfo(p_270886_, p_270808_, p_293646_.info, (Collection<UUID>)(set == null ? Sets.newHashSet() : set));
+                this.renderHiveInfo(poseStack, buffer, p_293646_.info, (Collection<UUID>)(set == null ? Sets.newHashSet() : set));
             }
         });
         this.getGhostHives().forEach((p_269699_, p_269700_) -> {
             if (blockpos.closerThan(p_269699_, 30.0)) {
-                this.renderGhostHive(p_270886_, p_270808_, p_269699_, (List<String>)p_269700_);
+                this.renderGhostHive(poseStack, buffer, p_269699_, (List<String>)p_269700_);
             }
         });
     }
@@ -144,7 +144,7 @@ public class BeeDebugRenderer implements DebugRenderer.SimpleDebugRenderer {
         return map;
     }
 
-    private void renderFlowerInfos(PoseStack p_270578_, MultiBufferSource p_270098_) {
+    private void renderFlowerInfos(PoseStack poseStack, MultiBufferSource buffer) {
         Map<BlockPos, Set<UUID>> map = Maps.newHashMap();
         this.beeInfosPerEntity.values().forEach(p_293651_ -> {
             if (p_293651_.flowerPos() != null) {
@@ -154,60 +154,60 @@ public class BeeDebugRenderer implements DebugRenderer.SimpleDebugRenderer {
         map.forEach((p_339302_, p_339303_) -> {
             Set<String> set = p_339303_.stream().map(DebugEntityNameGenerator::getEntityName).collect(Collectors.toSet());
             int i = 1;
-            renderTextOverPos(p_270578_, p_270098_, set.toString(), p_339302_, i++, -256);
-            renderTextOverPos(p_270578_, p_270098_, "Flower", p_339302_, i++, -1);
+            renderTextOverPos(poseStack, buffer, set.toString(), p_339302_, i++, -256);
+            renderTextOverPos(poseStack, buffer, "Flower", p_339302_, i++, -1);
             float f = 0.05F;
-            DebugRenderer.renderFilledBox(p_270578_, p_270098_, p_339302_, 0.05F, 0.8F, 0.8F, 0.0F, 0.3F);
+            DebugRenderer.renderFilledBox(poseStack, buffer, p_339302_, 0.05F, 0.8F, 0.8F, 0.0F, 0.3F);
         });
     }
 
-    private static String getBeeUuidsAsString(Collection<UUID> p_113116_) {
-        if (p_113116_.isEmpty()) {
+    private static String getBeeUuidsAsString(Collection<UUID> beeUuids) {
+        if (beeUuids.isEmpty()) {
             return "-";
         } else {
-            return p_113116_.size() > 3
-                ? p_113116_.size() + " bees"
-                : p_113116_.stream().map(DebugEntityNameGenerator::getEntityName).collect(Collectors.toSet()).toString();
+            return beeUuids.size() > 3
+                ? beeUuids.size() + " bees"
+                : beeUuids.stream().map(DebugEntityNameGenerator::getEntityName).collect(Collectors.toSet()).toString();
         }
     }
 
-    private static void highlightHive(PoseStack p_270133_, MultiBufferSource p_270766_, BlockPos p_270687_) {
+    private static void highlightHive(PoseStack poseStack, MultiBufferSource buffer, BlockPos hivePos) {
         float f = 0.05F;
-        DebugRenderer.renderFilledBox(p_270133_, p_270766_, p_270687_, 0.05F, 0.2F, 0.2F, 1.0F, 0.3F);
+        DebugRenderer.renderFilledBox(poseStack, buffer, hivePos, 0.05F, 0.2F, 0.2F, 1.0F, 0.3F);
     }
 
-    private void renderGhostHive(PoseStack p_270949_, MultiBufferSource p_270718_, BlockPos p_270550_, List<String> p_270221_) {
+    private void renderGhostHive(PoseStack poseStack, MultiBufferSource buffer, BlockPos hivePos, List<String> ghostHives) {
         float f = 0.05F;
-        DebugRenderer.renderFilledBox(p_270949_, p_270718_, p_270550_, 0.05F, 0.2F, 0.2F, 1.0F, 0.3F);
-        renderTextOverPos(p_270949_, p_270718_, p_270221_ + "", p_270550_, 0, -256);
-        renderTextOverPos(p_270949_, p_270718_, "Ghost Hive", p_270550_, 1, -65536);
+        DebugRenderer.renderFilledBox(poseStack, buffer, hivePos, 0.05F, 0.2F, 0.2F, 1.0F, 0.3F);
+        renderTextOverPos(poseStack, buffer, ghostHives + "", hivePos, 0, -256);
+        renderTextOverPos(poseStack, buffer, "Ghost Hive", hivePos, 1, -65536);
     }
 
-    private void renderHiveInfo(PoseStack p_270194_, MultiBufferSource p_270431_, HiveDebugPayload.HiveInfo p_295856_, Collection<UUID> p_270946_) {
+    private void renderHiveInfo(PoseStack poseStack, MultiBufferSource buffer, HiveDebugPayload.HiveInfo hiveInfo, Collection<UUID> beeUuids) {
         int i = 0;
-        if (!p_270946_.isEmpty()) {
-            renderTextOverHive(p_270194_, p_270431_, "Blacklisted by " + getBeeUuidsAsString(p_270946_), p_295856_, i++, -65536);
+        if (!beeUuids.isEmpty()) {
+            renderTextOverHive(poseStack, buffer, "Blacklisted by " + getBeeUuidsAsString(beeUuids), hiveInfo, i++, -65536);
         }
 
-        renderTextOverHive(p_270194_, p_270431_, "Out: " + getBeeUuidsAsString(this.getHiveMembers(p_295856_.pos())), p_295856_, i++, -3355444);
-        if (p_295856_.occupantCount() == 0) {
-            renderTextOverHive(p_270194_, p_270431_, "In: -", p_295856_, i++, -256);
-        } else if (p_295856_.occupantCount() == 1) {
-            renderTextOverHive(p_270194_, p_270431_, "In: 1 bee", p_295856_, i++, -256);
+        renderTextOverHive(poseStack, buffer, "Out: " + getBeeUuidsAsString(this.getHiveMembers(hiveInfo.pos())), hiveInfo, i++, -3355444);
+        if (hiveInfo.occupantCount() == 0) {
+            renderTextOverHive(poseStack, buffer, "In: -", hiveInfo, i++, -256);
+        } else if (hiveInfo.occupantCount() == 1) {
+            renderTextOverHive(poseStack, buffer, "In: 1 bee", hiveInfo, i++, -256);
         } else {
-            renderTextOverHive(p_270194_, p_270431_, "In: " + p_295856_.occupantCount() + " bees", p_295856_, i++, -256);
+            renderTextOverHive(poseStack, buffer, "In: " + hiveInfo.occupantCount() + " bees", hiveInfo, i++, -256);
         }
 
-        renderTextOverHive(p_270194_, p_270431_, "Honey: " + p_295856_.honeyLevel(), p_295856_, i++, -23296);
-        renderTextOverHive(p_270194_, p_270431_, p_295856_.hiveType() + (p_295856_.sedated() ? " (sedated)" : ""), p_295856_, i++, -1);
+        renderTextOverHive(poseStack, buffer, "Honey: " + hiveInfo.honeyLevel(), hiveInfo, i++, -23296);
+        renderTextOverHive(poseStack, buffer, hiveInfo.hiveType() + (hiveInfo.sedated() ? " (sedated)" : ""), hiveInfo, i++, -1);
     }
 
-    private void renderPath(PoseStack p_270424_, MultiBufferSource p_270123_, BeeDebugPayload.BeeInfo p_294313_) {
-        if (p_294313_.path() != null) {
+    private void renderPath(PoseStack poseStack, MultiBufferSource buffer, BeeDebugPayload.BeeInfo beeInfo) {
+        if (beeInfo.path() != null) {
             PathfindingRenderer.renderPath(
-                p_270424_,
-                p_270123_,
-                p_294313_.path(),
+                poseStack,
+                buffer,
+                beeInfo.path(),
                 0.5F,
                 false,
                 false,
@@ -218,94 +218,94 @@ public class BeeDebugRenderer implements DebugRenderer.SimpleDebugRenderer {
         }
     }
 
-    private void renderBeeInfo(PoseStack p_270154_, MultiBufferSource p_270397_, BeeDebugPayload.BeeInfo p_294247_) {
-        boolean flag = this.isBeeSelected(p_294247_);
+    private void renderBeeInfo(PoseStack poseStack, MultiBufferSource buffer, BeeDebugPayload.BeeInfo beeInfo) {
+        boolean flag = this.isBeeSelected(beeInfo);
         int i = 0;
-        renderTextOverMob(p_270154_, p_270397_, p_294247_.pos(), i++, p_294247_.toString(), -1, 0.03F);
-        if (p_294247_.hivePos() == null) {
-            renderTextOverMob(p_270154_, p_270397_, p_294247_.pos(), i++, "No hive", -98404, 0.02F);
+        renderTextOverMob(poseStack, buffer, beeInfo.pos(), i++, beeInfo.toString(), -1, 0.03F);
+        if (beeInfo.hivePos() == null) {
+            renderTextOverMob(poseStack, buffer, beeInfo.pos(), i++, "No hive", -98404, 0.02F);
         } else {
-            renderTextOverMob(p_270154_, p_270397_, p_294247_.pos(), i++, "Hive: " + this.getPosDescription(p_294247_, p_294247_.hivePos()), -256, 0.02F);
+            renderTextOverMob(poseStack, buffer, beeInfo.pos(), i++, "Hive: " + this.getPosDescription(beeInfo, beeInfo.hivePos()), -256, 0.02F);
         }
 
-        if (p_294247_.flowerPos() == null) {
-            renderTextOverMob(p_270154_, p_270397_, p_294247_.pos(), i++, "No flower", -98404, 0.02F);
+        if (beeInfo.flowerPos() == null) {
+            renderTextOverMob(poseStack, buffer, beeInfo.pos(), i++, "No flower", -98404, 0.02F);
         } else {
-            renderTextOverMob(p_270154_, p_270397_, p_294247_.pos(), i++, "Flower: " + this.getPosDescription(p_294247_, p_294247_.flowerPos()), -256, 0.02F);
+            renderTextOverMob(poseStack, buffer, beeInfo.pos(), i++, "Flower: " + this.getPosDescription(beeInfo, beeInfo.flowerPos()), -256, 0.02F);
         }
 
-        for (String s : p_294247_.goals()) {
-            renderTextOverMob(p_270154_, p_270397_, p_294247_.pos(), i++, s, -16711936, 0.02F);
+        for (String s : beeInfo.goals()) {
+            renderTextOverMob(poseStack, buffer, beeInfo.pos(), i++, s, -16711936, 0.02F);
         }
 
         if (flag) {
-            this.renderPath(p_270154_, p_270397_, p_294247_);
+            this.renderPath(poseStack, buffer, beeInfo);
         }
 
-        if (p_294247_.travelTicks() > 0) {
-            int j = p_294247_.travelTicks() < 600 ? -3355444 : -23296;
-            renderTextOverMob(p_270154_, p_270397_, p_294247_.pos(), i++, "Travelling: " + p_294247_.travelTicks() + " ticks", j, 0.02F);
+        if (beeInfo.travelTicks() > 0) {
+            int j = beeInfo.travelTicks() < 600 ? -3355444 : -23296;
+            renderTextOverMob(poseStack, buffer, beeInfo.pos(), i++, "Travelling: " + beeInfo.travelTicks() + " ticks", j, 0.02F);
         }
     }
 
     private static void renderTextOverHive(
-        PoseStack p_270915_, MultiBufferSource p_270663_, String p_270119_, HiveDebugPayload.HiveInfo p_294995_, int p_270930_, int p_270094_
+        PoseStack poseStack, MultiBufferSource buffer, String text, HiveDebugPayload.HiveInfo hiveInfo, int layer, int color
     ) {
-        renderTextOverPos(p_270915_, p_270663_, p_270119_, p_294995_.pos(), p_270930_, p_270094_);
+        renderTextOverPos(poseStack, buffer, text, hiveInfo.pos(), layer, color);
     }
 
-    private static void renderTextOverPos(PoseStack p_270438_, MultiBufferSource p_270244_, String p_270486_, BlockPos p_270062_, int p_270574_, int p_270228_) {
+    private static void renderTextOverPos(PoseStack poseStack, MultiBufferSource buffer, String text, BlockPos pos, int layer, int color) {
         double d0 = 1.3;
         double d1 = 0.2;
-        double d2 = (double)p_270062_.getX() + 0.5;
-        double d3 = (double)p_270062_.getY() + 1.3 + (double)p_270574_ * 0.2;
-        double d4 = (double)p_270062_.getZ() + 0.5;
-        DebugRenderer.renderFloatingText(p_270438_, p_270244_, p_270486_, d2, d3, d4, p_270228_, 0.02F, true, 0.0F, true);
+        double d2 = (double)pos.getX() + 0.5;
+        double d3 = (double)pos.getY() + 1.3 + (double)layer * 0.2;
+        double d4 = (double)pos.getZ() + 0.5;
+        DebugRenderer.renderFloatingText(poseStack, buffer, text, d2, d3, d4, color, 0.02F, true, 0.0F, true);
     }
 
     private static void renderTextOverMob(
-        PoseStack p_270426_, MultiBufferSource p_270600_, Position p_270548_, int p_270592_, String p_270198_, int p_270792_, float p_270938_
+        PoseStack poseStack, MultiBufferSource buffer, Position pos, int layer, String text, int color, float scale
     ) {
         double d0 = 2.4;
         double d1 = 0.25;
-        BlockPos blockpos = BlockPos.containing(p_270548_);
+        BlockPos blockpos = BlockPos.containing(pos);
         double d2 = (double)blockpos.getX() + 0.5;
-        double d3 = p_270548_.y() + 2.4 + (double)p_270592_ * 0.25;
+        double d3 = pos.y() + 2.4 + (double)layer * 0.25;
         double d4 = (double)blockpos.getZ() + 0.5;
         float f = 0.5F;
-        DebugRenderer.renderFloatingText(p_270426_, p_270600_, p_270198_, d2, d3, d4, p_270792_, p_270938_, false, 0.5F, true);
+        DebugRenderer.renderFloatingText(poseStack, buffer, text, d2, d3, d4, color, scale, false, 0.5F, true);
     }
 
     private Camera getCamera() {
         return this.minecraft.gameRenderer.getMainCamera();
     }
 
-    private Set<String> getHiveMemberNames(HiveDebugPayload.HiveInfo p_296213_) {
-        return this.getHiveMembers(p_296213_.pos()).stream().map(DebugEntityNameGenerator::getEntityName).collect(Collectors.toSet());
+    private Set<String> getHiveMemberNames(HiveDebugPayload.HiveInfo hiveInfo) {
+        return this.getHiveMembers(hiveInfo.pos()).stream().map(DebugEntityNameGenerator::getEntityName).collect(Collectors.toSet());
     }
 
-    private String getPosDescription(BeeDebugPayload.BeeInfo p_296210_, BlockPos p_113070_) {
-        double d0 = Math.sqrt(p_113070_.distToCenterSqr(p_296210_.pos()));
+    private String getPosDescription(BeeDebugPayload.BeeInfo beeInfo, BlockPos pos) {
+        double d0 = Math.sqrt(pos.distToCenterSqr(beeInfo.pos()));
         double d1 = (double)Math.round(d0 * 10.0) / 10.0;
-        return p_113070_.toShortString() + " (dist " + d1 + ")";
+        return pos.toShortString() + " (dist " + d1 + ")";
     }
 
-    private boolean isBeeSelected(BeeDebugPayload.BeeInfo p_295996_) {
-        return Objects.equals(this.lastLookedAtUuid, p_295996_.uuid());
+    private boolean isBeeSelected(BeeDebugPayload.BeeInfo beeInfo) {
+        return Objects.equals(this.lastLookedAtUuid, beeInfo.uuid());
     }
 
-    private boolean isPlayerCloseEnoughToMob(BeeDebugPayload.BeeInfo p_294724_) {
+    private boolean isPlayerCloseEnoughToMob(BeeDebugPayload.BeeInfo beeInfo) {
         Player player = this.minecraft.player;
-        BlockPos blockpos = BlockPos.containing(player.getX(), p_294724_.pos().y(), player.getZ());
-        BlockPos blockpos1 = BlockPos.containing(p_294724_.pos());
+        BlockPos blockpos = BlockPos.containing(player.getX(), beeInfo.pos().y(), player.getZ());
+        BlockPos blockpos1 = BlockPos.containing(beeInfo.pos());
         return blockpos.closerThan(blockpos1, 30.0);
     }
 
-    private Collection<UUID> getHiveMembers(BlockPos p_113130_) {
+    private Collection<UUID> getHiveMembers(BlockPos pos) {
         return this.beeInfosPerEntity
             .values()
             .stream()
-            .filter(p_293648_ -> p_293648_.hasHive(p_113130_))
+            .filter(p_293648_ -> p_293648_.hasHive(pos))
             .map(BeeDebugPayload.BeeInfo::uuid)
             .collect(Collectors.toSet());
     }

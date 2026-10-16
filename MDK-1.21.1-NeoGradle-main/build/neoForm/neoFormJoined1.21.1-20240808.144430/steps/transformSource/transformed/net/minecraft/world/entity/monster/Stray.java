@@ -18,21 +18,21 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Blocks;
 
 public class Stray extends AbstractSkeleton {
-    public Stray(EntityType<? extends Stray> p_33836_, Level p_33837_) {
-        super(p_33836_, p_33837_);
+    public Stray(EntityType<? extends Stray> entityType, Level level) {
+        super(entityType, level);
     }
 
     public static boolean checkStraySpawnRules(
-        EntityType<Stray> p_219121_, ServerLevelAccessor p_219122_, MobSpawnType p_219123_, BlockPos p_219124_, RandomSource p_219125_
+        EntityType<Stray> stray, ServerLevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        BlockPos blockpos = p_219124_;
+        BlockPos blockpos = pos;
 
         do {
             blockpos = blockpos.above();
-        } while (p_219122_.getBlockState(blockpos).is(Blocks.POWDER_SNOW));
+        } while (level.getBlockState(blockpos).is(Blocks.POWDER_SNOW));
 
-        return checkMonsterSpawnRules(p_219121_, p_219122_, p_219123_, p_219124_, p_219125_)
-            && (MobSpawnType.isSpawner(p_219123_) || p_219122_.canSeeSky(blockpos.below()));
+        return checkMonsterSpawnRules(stray, level, spawnType, pos, random)
+            && (MobSpawnType.isSpawner(spawnType) || level.canSeeSky(blockpos.below()));
     }
 
     @Override
@@ -41,7 +41,7 @@ public class Stray extends AbstractSkeleton {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_33850_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.STRAY_HURT;
     }
 
@@ -56,8 +56,8 @@ public class Stray extends AbstractSkeleton {
     }
 
     @Override
-    protected AbstractArrow getArrow(ItemStack p_33846_, float p_33847_, @Nullable ItemStack p_345505_) {
-        AbstractArrow abstractarrow = super.getArrow(p_33846_, p_33847_, p_345505_);
+    protected AbstractArrow getArrow(ItemStack arrow, float velocity, @Nullable ItemStack weapon) {
+        AbstractArrow abstractarrow = super.getArrow(arrow, velocity, weapon);
         if (abstractarrow instanceof Arrow) {
             ((Arrow)abstractarrow).addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 600));
         }

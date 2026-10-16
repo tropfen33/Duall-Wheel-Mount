@@ -16,8 +16,8 @@ public class ConsumeItemTrigger extends SimpleCriterionTrigger<ConsumeItemTrigge
         return ConsumeItemTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_23683_, ItemStack p_23684_) {
-        this.trigger(p_23683_, p_23687_ -> p_23687_.matches(p_23684_));
+    public void trigger(ServerPlayer player, ItemStack item) {
+        this.trigger(player, p_23687_ -> p_23687_.matches(item));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, Optional<ItemPredicate> item) implements SimpleCriterionTrigger.SimpleInstance {
@@ -33,16 +33,16 @@ public class ConsumeItemTrigger extends SimpleCriterionTrigger<ConsumeItemTrigge
             return CriteriaTriggers.CONSUME_ITEM.createCriterion(new ConsumeItemTrigger.TriggerInstance(Optional.empty(), Optional.empty()));
         }
 
-        public static Criterion<ConsumeItemTrigger.TriggerInstance> usedItem(ItemLike p_301200_) {
-            return usedItem(ItemPredicate.Builder.item().of(p_301200_.asItem()));
+        public static Criterion<ConsumeItemTrigger.TriggerInstance> usedItem(ItemLike item) {
+            return usedItem(ItemPredicate.Builder.item().of(item.asItem()));
         }
 
-        public static Criterion<ConsumeItemTrigger.TriggerInstance> usedItem(ItemPredicate.Builder p_300855_) {
-            return CriteriaTriggers.CONSUME_ITEM.createCriterion(new ConsumeItemTrigger.TriggerInstance(Optional.empty(), Optional.of(p_300855_.build())));
+        public static Criterion<ConsumeItemTrigger.TriggerInstance> usedItem(ItemPredicate.Builder item) {
+            return CriteriaTriggers.CONSUME_ITEM.createCriterion(new ConsumeItemTrigger.TriggerInstance(Optional.empty(), Optional.of(item.build())));
         }
 
-        public boolean matches(ItemStack p_23702_) {
-            return this.item.isEmpty() || this.item.get().test(p_23702_);
+        public boolean matches(ItemStack item) {
+            return this.item.isEmpty() || this.item.get().test(item);
         }
     }
 }

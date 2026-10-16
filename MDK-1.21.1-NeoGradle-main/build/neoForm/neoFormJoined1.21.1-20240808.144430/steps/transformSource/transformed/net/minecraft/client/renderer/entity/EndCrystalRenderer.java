@@ -33,10 +33,10 @@ public class EndCrystalRenderer extends EntityRenderer<EndCrystal> {
     private final ModelPart glass;
     private final ModelPart base;
 
-    public EndCrystalRenderer(EntityRendererProvider.Context p_173970_) {
-        super(p_173970_);
+    public EndCrystalRenderer(EntityRendererProvider.Context context) {
+        super(context);
         this.shadowRadius = 0.5F;
-        ModelPart modelpart = p_173970_.bakeLayer(ModelLayers.END_CRYSTAL);
+        ModelPart modelpart = context.bakeLayer(ModelLayers.END_CRYSTAL);
         this.glass = modelpart.getChild("glass");
         this.cube = modelpart.getChild("cube");
         this.base = modelpart.getChild("base");
@@ -51,61 +51,64 @@ public class EndCrystalRenderer extends EntityRenderer<EndCrystal> {
         return LayerDefinition.create(meshdefinition, 64, 32);
     }
 
-    public void render(EndCrystal p_114162_, float p_114163_, float p_114164_, PoseStack p_114165_, MultiBufferSource p_114166_, int p_114167_) {
-        p_114165_.pushPose();
-        float f = getY(p_114162_, p_114164_);
-        float f1 = ((float)p_114162_.time + p_114164_) * 3.0F;
-        VertexConsumer vertexconsumer = p_114166_.getBuffer(RENDER_TYPE);
-        p_114165_.pushPose();
-        p_114165_.scale(2.0F, 2.0F, 2.0F);
-        p_114165_.translate(0.0F, -0.5F, 0.0F);
+    public void render(EndCrystal entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        poseStack.pushPose();
+        float f = getY(entity, partialTicks);
+        float f1 = ((float)entity.time + partialTicks) * 3.0F;
+        VertexConsumer vertexconsumer = buffer.getBuffer(RENDER_TYPE);
+        poseStack.pushPose();
+        poseStack.scale(2.0F, 2.0F, 2.0F);
+        poseStack.translate(0.0F, -0.5F, 0.0F);
         int i = OverlayTexture.NO_OVERLAY;
-        if (p_114162_.showsBottom()) {
-            this.base.render(p_114165_, vertexconsumer, p_114167_, i);
+        if (entity.showsBottom()) {
+            this.base.render(poseStack, vertexconsumer, packedLight, i);
         }
 
-        p_114165_.mulPose(Axis.YP.rotationDegrees(f1));
-        p_114165_.translate(0.0F, 1.5F + f / 2.0F, 0.0F);
-        p_114165_.mulPose(new Quaternionf().setAngleAxis((float) (Math.PI / 3), SIN_45, 0.0F, SIN_45));
-        this.glass.render(p_114165_, vertexconsumer, p_114167_, i);
+        poseStack.mulPose(Axis.YP.rotationDegrees(f1));
+        poseStack.translate(0.0F, 1.5F + f / 2.0F, 0.0F);
+        poseStack.mulPose(new Quaternionf().setAngleAxis((float) (Math.PI / 3), SIN_45, 0.0F, SIN_45));
+        this.glass.render(poseStack, vertexconsumer, packedLight, i);
         float f2 = 0.875F;
-        p_114165_.scale(0.875F, 0.875F, 0.875F);
-        p_114165_.mulPose(new Quaternionf().setAngleAxis((float) (Math.PI / 3), SIN_45, 0.0F, SIN_45));
-        p_114165_.mulPose(Axis.YP.rotationDegrees(f1));
-        this.glass.render(p_114165_, vertexconsumer, p_114167_, i);
-        p_114165_.scale(0.875F, 0.875F, 0.875F);
-        p_114165_.mulPose(new Quaternionf().setAngleAxis((float) (Math.PI / 3), SIN_45, 0.0F, SIN_45));
-        p_114165_.mulPose(Axis.YP.rotationDegrees(f1));
-        this.cube.render(p_114165_, vertexconsumer, p_114167_, i);
-        p_114165_.popPose();
-        p_114165_.popPose();
-        BlockPos blockpos = p_114162_.getBeamTarget();
+        poseStack.scale(0.875F, 0.875F, 0.875F);
+        poseStack.mulPose(new Quaternionf().setAngleAxis((float) (Math.PI / 3), SIN_45, 0.0F, SIN_45));
+        poseStack.mulPose(Axis.YP.rotationDegrees(f1));
+        this.glass.render(poseStack, vertexconsumer, packedLight, i);
+        poseStack.scale(0.875F, 0.875F, 0.875F);
+        poseStack.mulPose(new Quaternionf().setAngleAxis((float) (Math.PI / 3), SIN_45, 0.0F, SIN_45));
+        poseStack.mulPose(Axis.YP.rotationDegrees(f1));
+        this.cube.render(poseStack, vertexconsumer, packedLight, i);
+        poseStack.popPose();
+        poseStack.popPose();
+        BlockPos blockpos = entity.getBeamTarget();
         if (blockpos != null) {
             float f3 = (float)blockpos.getX() + 0.5F;
             float f4 = (float)blockpos.getY() + 0.5F;
             float f5 = (float)blockpos.getZ() + 0.5F;
-            float f6 = (float)((double)f3 - p_114162_.getX());
-            float f7 = (float)((double)f4 - p_114162_.getY());
-            float f8 = (float)((double)f5 - p_114162_.getZ());
-            p_114165_.translate(f6, f7, f8);
-            EnderDragonRenderer.renderCrystalBeams(-f6, -f7 + f, -f8, p_114164_, p_114162_.time, p_114165_, p_114166_, p_114167_);
+            float f6 = (float)((double)f3 - entity.getX());
+            float f7 = (float)((double)f4 - entity.getY());
+            float f8 = (float)((double)f5 - entity.getZ());
+            poseStack.translate(f6, f7, f8);
+            EnderDragonRenderer.renderCrystalBeams(-f6, -f7 + f, -f8, partialTicks, entity.time, poseStack, buffer, packedLight);
         }
 
-        super.render(p_114162_, p_114163_, p_114164_, p_114165_, p_114166_, p_114167_);
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 
-    public static float getY(EndCrystal p_114159_, float p_114160_) {
-        float f = (float)p_114159_.time + p_114160_;
+    public static float getY(EndCrystal endCrystal, float partialTick) {
+        float f = (float)endCrystal.time + partialTick;
         float f1 = Mth.sin(f * 0.2F) / 2.0F + 0.5F;
         f1 = (f1 * f1 + f1) * 0.4F;
         return f1 - 1.4F;
     }
 
-    public ResourceLocation getTextureLocation(EndCrystal p_114157_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(EndCrystal entity) {
         return END_CRYSTAL_LOCATION;
     }
 
-    public boolean shouldRender(EndCrystal p_114169_, Frustum p_114170_, double p_114171_, double p_114172_, double p_114173_) {
-        return super.shouldRender(p_114169_, p_114170_, p_114171_, p_114172_, p_114173_) || p_114169_.getBeamTarget() != null;
+    public boolean shouldRender(EndCrystal livingEntity, Frustum camera, double camX, double camY, double camZ) {
+        return super.shouldRender(livingEntity, camera, camX, camY, camZ) || livingEntity.getBeamTarget() != null;
     }
 }

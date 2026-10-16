@@ -18,13 +18,13 @@ public class SwimNodeEvaluator extends NodeEvaluator {
     private final boolean allowBreaching;
     private final Long2ObjectMap<PathType> pathTypesByPosCache = new Long2ObjectOpenHashMap<>();
 
-    public SwimNodeEvaluator(boolean p_77457_) {
-        this.allowBreaching = p_77457_;
+    public SwimNodeEvaluator(boolean allowBreaching) {
+        this.allowBreaching = allowBreaching;
     }
 
     @Override
-    public void prepare(PathNavigationRegion p_192959_, Mob p_192960_) {
-        super.prepare(p_192959_, p_192960_);
+    public void prepare(PathNavigationRegion level, Mob mob) {
+        super.prepare(level, mob);
         this.pathTypesByPosCache.clear();
     }
 
@@ -42,20 +42,20 @@ public class SwimNodeEvaluator extends NodeEvaluator {
     }
 
     @Override
-    public Target getTarget(double p_326917_, double p_326806_, double p_326896_) {
-        return this.getTargetNodeAt(p_326917_, p_326806_, p_326896_);
+    public Target getTarget(double x, double y, double z) {
+        return this.getTargetNodeAt(x, y, z);
     }
 
     @Override
-    public int getNeighbors(Node[] p_77483_, Node p_77484_) {
+    public int getNeighbors(Node[] outputArray, Node p_node) {
         int i = 0;
         Map<Direction, Node> map = Maps.newEnumMap(Direction.class);
 
         for (Direction direction : Direction.values()) {
-            Node node = this.findAcceptedNode(p_77484_.x + direction.getStepX(), p_77484_.y + direction.getStepY(), p_77484_.z + direction.getStepZ());
+            Node node = this.findAcceptedNode(p_node.x + direction.getStepX(), p_node.y + direction.getStepY(), p_node.z + direction.getStepZ());
             map.put(direction, node);
             if (this.isNodeValid(node)) {
-                p_77483_[i++] = node;
+                outputArray[i++] = node;
             }
         }
 
@@ -63,10 +63,10 @@ public class SwimNodeEvaluator extends NodeEvaluator {
             Direction direction2 = direction1.getClockWise();
             if (hasMalus(map.get(direction1)) && hasMalus(map.get(direction2))) {
                 Node node1 = this.findAcceptedNode(
-                    p_77484_.x + direction1.getStepX() + direction2.getStepX(), p_77484_.y, p_77484_.z + direction1.getStepZ() + direction2.getStepZ()
+                    p_node.x + direction1.getStepX() + direction2.getStepX(), p_node.y, p_node.z + direction1.getStepZ() + direction2.getStepZ()
                 );
                 if (this.isNodeValid(node1)) {
-                    p_77483_[i++] = node1;
+                    outputArray[i++] = node1;
                 }
             }
         }
@@ -74,25 +74,25 @@ public class SwimNodeEvaluator extends NodeEvaluator {
         return i;
     }
 
-    protected boolean isNodeValid(@Nullable Node p_192962_) {
-        return p_192962_ != null && !p_192962_.closed;
+    protected boolean isNodeValid(@Nullable Node node) {
+        return node != null && !node.closed;
     }
 
-    private static boolean hasMalus(@Nullable Node p_326813_) {
-        return p_326813_ != null && p_326813_.costMalus >= 0.0F;
+    private static boolean hasMalus(@Nullable Node node) {
+        return node != null && node.costMalus >= 0.0F;
     }
 
     @Nullable
-    protected Node findAcceptedNode(int p_263032_, int p_263066_, int p_263105_) {
+    protected Node findAcceptedNode(int x, int y, int z) {
         Node node = null;
-        PathType pathtype = this.getCachedBlockType(p_263032_, p_263066_, p_263105_);
+        PathType pathtype = this.getCachedBlockType(x, y, z);
         if (this.allowBreaching && pathtype == PathType.BREACH || pathtype == PathType.WATER) {
             float f = this.mob.getPathfindingMalus(pathtype);
             if (f >= 0.0F) {
-                node = this.getNode(p_263032_, p_263066_, p_263105_);
+                node = this.getNode(x, y, z);
                 node.type = pathtype;
                 node.costMalus = Math.max(node.costMalus, f);
-                if (this.currentContext.level().getFluidState(new BlockPos(p_263032_, p_263066_, p_263105_)).isEmpty()) {
+                if (this.currentContext.level().getFluidState(new BlockPos(x, y, z)).isEmpty()) {
                     node.costMalus += 8.0F;
                 }
             }
@@ -101,26 +101,26 @@ public class SwimNodeEvaluator extends NodeEvaluator {
         return node;
     }
 
-    protected PathType getCachedBlockType(int p_192968_, int p_192969_, int p_192970_) {
+    protected PathType getCachedBlockType(int x, int y, int z) {
         return this.pathTypesByPosCache
             .computeIfAbsent(
-                BlockPos.asLong(p_192968_, p_192969_, p_192970_), p_330157_ -> this.getPathType(this.currentContext, p_192968_, p_192969_, p_192970_)
+                BlockPos.asLong(x, y, z), p_330157_ -> this.getPathType(this.currentContext, x, y, z)
             );
     }
 
     @Override
-    public PathType getPathType(PathfindingContext p_330490_, int p_326812_, int p_326835_, int p_326945_) {
-        return this.getPathTypeOfMob(p_330490_, p_326812_, p_326835_, p_326945_, this.mob);
+    public PathType getPathType(PathfindingContext context, int x, int y, int z) {
+        return this.getPathTypeOfMob(context, x, y, z, this.mob);
     }
 
     @Override
-    public PathType getPathTypeOfMob(PathfindingContext p_330584_, int p_77473_, int p_77474_, int p_77475_, Mob p_77476_) {
+    public PathType getPathTypeOfMob(PathfindingContext context, int x, int y, int z, Mob mob) {
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
-        for (int i = p_77473_; i < p_77473_ + this.entityWidth; i++) {
-            for (int j = p_77474_; j < p_77474_ + this.entityHeight; j++) {
-                for (int k = p_77475_; k < p_77475_ + this.entityDepth; k++) {
-                    BlockState blockstate = p_330584_.getBlockState(blockpos$mutableblockpos.set(i, j, k));
+        for (int i = x; i < x + this.entityWidth; i++) {
+            for (int j = y; j < y + this.entityHeight; j++) {
+                for (int k = z; k < z + this.entityDepth; k++) {
+                    BlockState blockstate = context.getBlockState(blockpos$mutableblockpos.set(i, j, k));
                     FluidState fluidstate = blockstate.getFluidState();
                     if (fluidstate.isEmpty() && blockstate.isPathfindable(PathComputationType.WATER) && blockstate.isAir()) {
                         return PathType.BREACH;
@@ -133,7 +133,7 @@ public class SwimNodeEvaluator extends NodeEvaluator {
             }
         }
 
-        BlockState blockstate1 = p_330584_.getBlockState(blockpos$mutableblockpos);
+        BlockState blockstate1 = context.getBlockState(blockpos$mutableblockpos);
         return blockstate1.isPathfindable(PathComputationType.WATER) ? PathType.WATER : PathType.BLOCKED;
     }
 }

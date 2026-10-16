@@ -21,11 +21,11 @@ public abstract class NamedEntityWriteReadFix extends DataFix {
     private final String entityName;
     private final TypeReference type;
 
-    public NamedEntityWriteReadFix(Schema p_307236_, boolean p_307467_, String p_307246_, TypeReference p_307497_, String p_307636_) {
-        super(p_307236_, p_307467_);
-        this.name = p_307246_;
-        this.type = p_307497_;
-        this.entityName = p_307636_;
+    public NamedEntityWriteReadFix(Schema outputSchema, boolean changesType, String name, TypeReference type, String entityName) {
+        super(outputSchema, changesType);
+        this.name = name;
+        this.type = type;
+        this.entityName = entityName;
     }
 
     @Override
@@ -39,22 +39,22 @@ public abstract class NamedEntityWriteReadFix extends DataFix {
         return this.fix(type, type2, opticfinder, type3, type4);
     }
 
-    private <S, T, A, B> TypeRewriteRule fix(Type<S> p_324369_, Type<T> p_323537_, OpticFinder<A> p_324194_, Type<B> p_324518_, Type<?> p_324108_) {
-        return this.fixTypeEverywhere(this.name, p_324369_, p_323537_, p_323223_ -> p_323218_ -> {
-                Typed<S> typed = new Typed<>(p_324369_, p_323223_, p_323218_);
-                return (T)typed.update(p_324194_, p_324518_, p_323212_ -> {
-                    Typed<A> typed1 = new Typed<>((Type<A>)p_324108_, p_323223_, p_323212_);
-                    return Util.<A, B>writeAndReadTypedOrThrow(typed1, p_324518_, this::fix).getValue();
+    private <S, T, A, B> TypeRewriteRule fix(Type<S> inputType, Type<T> outputType, OpticFinder<A> finder, Type<B> outputChoiceType, Type<?> newType) {
+        return this.fixTypeEverywhere(this.name, inputType, outputType, p_323223_ -> p_323218_ -> {
+                Typed<S> typed = new Typed<>(inputType, p_323223_, p_323218_);
+                return (T)typed.update(finder, outputChoiceType, p_323212_ -> {
+                    Typed<A> typed1 = new Typed<>((Type<A>)newType, p_323223_, p_323212_);
+                    return Util.<A, B>writeAndReadTypedOrThrow(typed1, outputChoiceType, this::fix).getValue();
                 }).getValue();
             });
     }
 
-    private static <A, B> TypeRewriteRule typePatcher(Type<A> p_323821_, Type<B> p_323735_) {
-        RewriteResult<A, B> rewriteresult = RewriteResult.create(View.create("Patcher", p_323821_, p_323735_, p_323208_ -> p_323224_ -> {
+    private static <A, B> TypeRewriteRule typePatcher(Type<A> type, Type<B> newType) {
+        RewriteResult<A, B> rewriteresult = RewriteResult.create(View.create("Patcher", type, newType, p_323208_ -> p_323224_ -> {
                 throw new UnsupportedOperationException();
             }), new BitSet());
-        return TypeRewriteRule.everywhere(TypeRewriteRule.ifSame(p_323821_, rewriteresult), PointFreeRule.nop(), true, true);
+        return TypeRewriteRule.everywhere(TypeRewriteRule.ifSame(type, rewriteresult), PointFreeRule.nop(), true, true);
     }
 
-    protected abstract <T> Dynamic<T> fix(Dynamic<T> p_307318_);
+    protected abstract <T> Dynamic<T> fix(Dynamic<T> tag);
 }

@@ -19,46 +19,49 @@ public class ThrownItemRenderer<T extends Entity & ItemSupplier> extends EntityR
     private final float scale;
     private final boolean fullBright;
 
-    public ThrownItemRenderer(EntityRendererProvider.Context p_174416_, float p_174417_, boolean p_174418_) {
-        super(p_174416_);
-        this.itemRenderer = p_174416_.getItemRenderer();
-        this.scale = p_174417_;
-        this.fullBright = p_174418_;
+    public ThrownItemRenderer(EntityRendererProvider.Context context, float scale, boolean fullBright) {
+        super(context);
+        this.itemRenderer = context.getItemRenderer();
+        this.scale = scale;
+        this.fullBright = fullBright;
     }
 
-    public ThrownItemRenderer(EntityRendererProvider.Context p_174414_) {
-        this(p_174414_, 1.0F, false);
-    }
-
-    @Override
-    protected int getBlockLightLevel(T p_116092_, BlockPos p_116093_) {
-        return this.fullBright ? 15 : super.getBlockLightLevel(p_116092_, p_116093_);
+    public ThrownItemRenderer(EntityRendererProvider.Context context) {
+        this(context, 1.0F, false);
     }
 
     @Override
-    public void render(T p_116085_, float p_116086_, float p_116087_, PoseStack p_116088_, MultiBufferSource p_116089_, int p_116090_) {
-        if (p_116085_.tickCount >= 2 || !(this.entityRenderDispatcher.camera.getEntity().distanceToSqr(p_116085_) < 12.25)) {
-            p_116088_.pushPose();
-            p_116088_.scale(this.scale, this.scale, this.scale);
-            p_116088_.mulPose(this.entityRenderDispatcher.cameraOrientation());
+    protected int getBlockLightLevel(T entity, BlockPos pos) {
+        return this.fullBright ? 15 : super.getBlockLightLevel(entity, pos);
+    }
+
+    @Override
+    public void render(T entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        if (entity.tickCount >= 2 || !(this.entityRenderDispatcher.camera.getEntity().distanceToSqr(entity) < 12.25)) {
+            poseStack.pushPose();
+            poseStack.scale(this.scale, this.scale, this.scale);
+            poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
             this.itemRenderer
                 .renderStatic(
-                    p_116085_.getItem(),
+                    entity.getItem(),
                     ItemDisplayContext.GROUND,
-                    p_116090_,
+                    packedLight,
                     OverlayTexture.NO_OVERLAY,
-                    p_116088_,
-                    p_116089_,
-                    p_116085_.level(),
-                    p_116085_.getId()
+                    poseStack,
+                    buffer,
+                    entity.level(),
+                    entity.getId()
                 );
-            p_116088_.popPose();
-            super.render(p_116085_, p_116086_, p_116087_, p_116088_, p_116089_, p_116090_);
+            poseStack.popPose();
+            super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
         }
     }
 
+    /**
+     * Returns the location of an entity's texture.
+     */
     @Override
-    public ResourceLocation getTextureLocation(Entity p_116083_) {
+    public ResourceLocation getTextureLocation(Entity entity) {
         return TextureAtlas.LOCATION_BLOCKS;
     }
 }

@@ -4,13 +4,16 @@ import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 
 public class ShulkerBoxSlot extends Slot {
-    public ShulkerBoxSlot(Container p_40202_, int p_40203_, int p_40204_, int p_40205_) {
-        super(p_40202_, p_40203_, p_40204_, p_40205_);
+    public ShulkerBoxSlot(Container container, int slot, int x, int y) {
+        super(container, slot, x, y);
     }
 
+    /**
+     * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+     */
     @Override
-    public boolean mayPlace(ItemStack p_40207_) {
+    public boolean mayPlace(ItemStack stack) {
         // Neo: stack-aware placeability check
-        return p_40207_.canFitInsideContainerItems();
+        return stack.canFitInsideContainerItems();
     }
 }

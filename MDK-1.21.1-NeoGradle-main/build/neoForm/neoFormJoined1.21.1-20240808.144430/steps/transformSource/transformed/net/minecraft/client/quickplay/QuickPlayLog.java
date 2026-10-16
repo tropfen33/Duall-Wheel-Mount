@@ -41,20 +41,20 @@ public class QuickPlayLog {
     @Nullable
     private QuickPlayLog.QuickPlayWorld worldData;
 
-    QuickPlayLog(String p_279463_) {
-        this.path = Minecraft.getInstance().gameDirectory.toPath().resolve(p_279463_);
+    QuickPlayLog(String path) {
+        this.path = Minecraft.getInstance().gameDirectory.toPath().resolve(path);
     }
 
-    public static QuickPlayLog of(@Nullable String p_279275_) {
-        return p_279275_ == null ? INACTIVE : new QuickPlayLog(p_279275_);
+    public static QuickPlayLog of(@Nullable String path) {
+        return path == null ? INACTIVE : new QuickPlayLog(path);
     }
 
-    public void setWorldData(QuickPlayLog.Type p_279380_, String p_279427_, String p_279470_) {
-        this.worldData = new QuickPlayLog.QuickPlayWorld(p_279380_, p_279427_, p_279470_);
+    public void setWorldData(QuickPlayLog.Type type, String id, String name) {
+        this.worldData = new QuickPlayLog.QuickPlayWorld(type, id, name);
     }
 
-    public void log(Minecraft p_279258_) {
-        if (p_279258_.gameMode != null && this.worldData != null) {
+    public void log(Minecraft minecraft) {
+        if (minecraft.gameMode != null && this.worldData != null) {
             Util.ioPool()
                 .execute(
                     () -> {
@@ -65,7 +65,7 @@ public class QuickPlayLog {
                         }
 
                         QuickPlayLog.QuickPlayEntry quickplaylog$quickplayentry = new QuickPlayLog.QuickPlayEntry(
-                            this.worldData, Instant.now(), p_279258_.gameMode.getPlayerMode()
+                            this.worldData, Instant.now(), minecraft.gameMode.getPlayerMode()
                         );
                         Codec.list(QuickPlayLog.QuickPlayEntry.CODEC)
                             .encodeStart(JsonOps.INSTANCE, List.of(quickplaylog$quickplayentry))
@@ -118,8 +118,8 @@ public class QuickPlayLog {
         static final Codec<QuickPlayLog.Type> CODEC = StringRepresentable.fromEnum(QuickPlayLog.Type::values);
         private final String name;
 
-        private Type(String p_279349_) {
-            this.name = p_279349_;
+        private Type(String name) {
+            this.name = name;
         }
 
         @Override

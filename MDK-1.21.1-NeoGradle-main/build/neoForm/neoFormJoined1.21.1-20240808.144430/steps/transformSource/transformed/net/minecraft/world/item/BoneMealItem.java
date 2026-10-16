@@ -28,28 +28,31 @@ public class BoneMealItem extends Item {
     public static final int GRASS_SPREAD_HEIGHT = 1;
     public static final int GRASS_COUNT_MULTIPLIER = 3;
 
-    public BoneMealItem(Item.Properties p_40626_) {
-        super(p_40626_);
+    public BoneMealItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_40637_) {
-        Level level = p_40637_.getLevel();
-        BlockPos blockpos = p_40637_.getClickedPos();
-        BlockPos blockpos1 = blockpos.relative(p_40637_.getClickedFace());
-        if (applyBonemeal(p_40637_.getItemInHand(), level, blockpos, p_40637_.getPlayer())) {
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
+        BlockPos blockpos1 = blockpos.relative(context.getClickedFace());
+        if (applyBonemeal(context.getItemInHand(), level, blockpos, context.getPlayer())) {
             if (!level.isClientSide) {
-                p_40637_.getPlayer().gameEvent(GameEvent.ITEM_INTERACT_FINISH);
+                context.getPlayer().gameEvent(GameEvent.ITEM_INTERACT_FINISH);
                 level.levelEvent(1505, blockpos, 15);
             }
 
             return InteractionResult.sidedSuccess(level.isClientSide);
         } else {
             BlockState blockstate = level.getBlockState(blockpos);
-            boolean flag = blockstate.isFaceSturdy(level, blockpos, p_40637_.getClickedFace());
-            if (flag && growWaterPlant(p_40637_.getItemInHand(), level, blockpos1, p_40637_.getClickedFace())) {
+            boolean flag = blockstate.isFaceSturdy(level, blockpos, context.getClickedFace());
+            if (flag && growWaterPlant(context.getItemInHand(), level, blockpos1, context.getClickedFace())) {
                 if (!level.isClientSide) {
-                    p_40637_.getPlayer().gameEvent(GameEvent.ITEM_INTERACT_FINISH);
+                    context.getPlayer().gameEvent(GameEvent.ITEM_INTERACT_FINISH);
                     level.levelEvent(1505, blockpos1, 15);
                 }
 
@@ -61,9 +64,9 @@ public class BoneMealItem extends Item {
     }
 
     @Deprecated //Forge: Use Player/Hand version
-    public static boolean growCrop(ItemStack p_40628_, Level p_40629_, BlockPos p_40630_) {
-        if (p_40629_ instanceof net.minecraft.server.level.ServerLevel)
-            return applyBonemeal(p_40628_, p_40629_, p_40630_, null);
+    public static boolean growCrop(ItemStack stack, Level level, BlockPos pos) {
+        if (level instanceof net.minecraft.server.level.ServerLevel)
+            return applyBonemeal(stack, level, pos, null);
         return false;
     }
 
@@ -86,62 +89,62 @@ public class BoneMealItem extends Item {
         return false;
     }
 
-    public static boolean growWaterPlant(ItemStack p_40632_, Level p_40633_, BlockPos p_40634_, @Nullable Direction p_40635_) {
-        if (p_40633_.getBlockState(p_40634_).is(Blocks.WATER) && p_40633_.getFluidState(p_40634_).getAmount() == 8) {
-            if (!(p_40633_ instanceof ServerLevel)) {
+    public static boolean growWaterPlant(ItemStack stack, Level level, BlockPos pos, @Nullable Direction clickedSide) {
+        if (level.getBlockState(pos).is(Blocks.WATER) && level.getFluidState(pos).getAmount() == 8) {
+            if (!(level instanceof ServerLevel)) {
                 return true;
             } else {
-                RandomSource randomsource = p_40633_.getRandom();
+                RandomSource randomsource = level.getRandom();
 
                 label78:
                 for (int i = 0; i < 128; i++) {
-                    BlockPos blockpos = p_40634_;
+                    BlockPos blockpos = pos;
                     BlockState blockstate = Blocks.SEAGRASS.defaultBlockState();
 
                     for (int j = 0; j < i / 16; j++) {
                         blockpos = blockpos.offset(
                             randomsource.nextInt(3) - 1, (randomsource.nextInt(3) - 1) * randomsource.nextInt(3) / 2, randomsource.nextInt(3) - 1
                         );
-                        if (p_40633_.getBlockState(blockpos).isCollisionShapeFullBlock(p_40633_, blockpos)) {
+                        if (level.getBlockState(blockpos).isCollisionShapeFullBlock(level, blockpos)) {
                             continue label78;
                         }
                     }
 
-                    Holder<Biome> holder = p_40633_.getBiome(blockpos);
+                    Holder<Biome> holder = level.getBiome(blockpos);
                     if (holder.is(BiomeTags.PRODUCES_CORALS_FROM_BONEMEAL)) {
-                        if (i == 0 && p_40635_ != null && p_40635_.getAxis().isHorizontal()) {
+                        if (i == 0 && clickedSide != null && clickedSide.getAxis().isHorizontal()) {
                             blockstate = BuiltInRegistries.BLOCK
-                                .getRandomElementOf(BlockTags.WALL_CORALS, p_40633_.random)
+                                .getRandomElementOf(BlockTags.WALL_CORALS, level.random)
                                 .map(p_204100_ -> p_204100_.value().defaultBlockState())
                                 .orElse(blockstate);
                             if (blockstate.hasProperty(BaseCoralWallFanBlock.FACING)) {
-                                blockstate = blockstate.setValue(BaseCoralWallFanBlock.FACING, p_40635_);
+                                blockstate = blockstate.setValue(BaseCoralWallFanBlock.FACING, clickedSide);
                             }
                         } else if (randomsource.nextInt(4) == 0) {
                             blockstate = BuiltInRegistries.BLOCK
-                                .getRandomElementOf(BlockTags.UNDERWATER_BONEMEALS, p_40633_.random)
+                                .getRandomElementOf(BlockTags.UNDERWATER_BONEMEALS, level.random)
                                 .map(p_204095_ -> p_204095_.value().defaultBlockState())
                                 .orElse(blockstate);
                         }
                     }
 
                     if (blockstate.is(BlockTags.WALL_CORALS, p_204093_ -> p_204093_.hasProperty(BaseCoralWallFanBlock.FACING))) {
-                        for (int k = 0; !blockstate.canSurvive(p_40633_, blockpos) && k < 4; k++) {
+                        for (int k = 0; !blockstate.canSurvive(level, blockpos) && k < 4; k++) {
                             blockstate = blockstate.setValue(BaseCoralWallFanBlock.FACING, Direction.Plane.HORIZONTAL.getRandomDirection(randomsource));
                         }
                     }
 
-                    if (blockstate.canSurvive(p_40633_, blockpos)) {
-                        BlockState blockstate1 = p_40633_.getBlockState(blockpos);
-                        if (blockstate1.is(Blocks.WATER) && p_40633_.getFluidState(blockpos).getAmount() == 8) {
-                            p_40633_.setBlock(blockpos, blockstate, 3);
+                    if (blockstate.canSurvive(level, blockpos)) {
+                        BlockState blockstate1 = level.getBlockState(blockpos);
+                        if (blockstate1.is(Blocks.WATER) && level.getFluidState(blockpos).getAmount() == 8) {
+                            level.setBlock(blockpos, blockstate, 3);
                         } else if (blockstate1.is(Blocks.SEAGRASS) && randomsource.nextInt(10) == 0) {
-                            ((BonemealableBlock)Blocks.SEAGRASS).performBonemeal((ServerLevel)p_40633_, randomsource, blockpos, blockstate1);
+                            ((BonemealableBlock)Blocks.SEAGRASS).performBonemeal((ServerLevel)level, randomsource, blockpos, blockstate1);
                         }
                     }
                 }
 
-                p_40632_.shrink(1);
+                stack.shrink(1);
                 return true;
             }
         } else {
@@ -149,19 +152,19 @@ public class BoneMealItem extends Item {
         }
     }
 
-    public static void addGrowthParticles(LevelAccessor p_40639_, BlockPos p_40640_, int p_40641_) {
-        BlockState blockstate = p_40639_.getBlockState(p_40640_);
+    public static void addGrowthParticles(LevelAccessor level, BlockPos pos, int data) {
+        BlockState blockstate = level.getBlockState(pos);
         if (blockstate.getBlock() instanceof BonemealableBlock bonemealableblock) {
-            BlockPos blockpos = bonemealableblock.getParticlePos(p_40640_);
+            BlockPos blockpos = bonemealableblock.getParticlePos(pos);
             switch (bonemealableblock.getType()) {
                 case NEIGHBOR_SPREADER:
-                    ParticleUtils.spawnParticles(p_40639_, blockpos, p_40641_ * 3, 3.0, 1.0, false, ParticleTypes.HAPPY_VILLAGER);
+                    ParticleUtils.spawnParticles(level, blockpos, data * 3, 3.0, 1.0, false, ParticleTypes.HAPPY_VILLAGER);
                     break;
                 case GROWER:
-                    ParticleUtils.spawnParticleInBlock(p_40639_, blockpos, p_40641_, ParticleTypes.HAPPY_VILLAGER);
+                    ParticleUtils.spawnParticleInBlock(level, blockpos, data, ParticleTypes.HAPPY_VILLAGER);
             }
         } else if (blockstate.is(Blocks.WATER)) {
-            ParticleUtils.spawnParticles(p_40639_, p_40640_, p_40641_ * 3, 3.0, 1.0, false, ParticleTypes.HAPPY_VILLAGER);
+            ParticleUtils.spawnParticles(level, pos, data * 3, 3.0, 1.0, false, ParticleTypes.HAPPY_VILLAGER);
         }
     }
 }

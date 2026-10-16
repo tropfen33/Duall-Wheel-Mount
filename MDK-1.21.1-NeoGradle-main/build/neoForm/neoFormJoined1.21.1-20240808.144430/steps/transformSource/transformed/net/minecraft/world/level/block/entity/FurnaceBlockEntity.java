@@ -9,8 +9,8 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class FurnaceBlockEntity extends AbstractFurnaceBlockEntity {
-    public FurnaceBlockEntity(BlockPos p_155545_, BlockState p_155546_) {
-        super(BlockEntityType.FURNACE, p_155545_, p_155546_, RecipeType.SMELTING);
+    public FurnaceBlockEntity(BlockPos pos, BlockState blockState) {
+        super(BlockEntityType.FURNACE, pos, blockState, RecipeType.SMELTING);
     }
 
     @Override
@@ -19,7 +19,7 @@ public class FurnaceBlockEntity extends AbstractFurnaceBlockEntity {
     }
 
     @Override
-    protected AbstractContainerMenu createMenu(int p_59293_, Inventory p_59294_) {
-        return new FurnaceMenu(p_59293_, p_59294_, this, this.dataAccess);
+    protected AbstractContainerMenu createMenu(int id, Inventory player) {
+        return new FurnaceMenu(id, player, this, this.dataAccess);
     }
 }

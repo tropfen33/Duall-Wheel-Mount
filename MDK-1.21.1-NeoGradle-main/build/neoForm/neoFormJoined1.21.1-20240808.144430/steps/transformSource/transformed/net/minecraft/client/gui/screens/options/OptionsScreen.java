@@ -55,10 +55,10 @@ public class OptionsScreen extends Screen {
     @Nullable
     private LockIconButton lockButton;
 
-    public OptionsScreen(Screen p_346430_, Options p_344748_) {
+    public OptionsScreen(Screen lastScreen, Options options) {
         super(TITLE);
-        this.lastScreen = p_346430_;
-        this.options = p_344748_;
+        this.lastScreen = lastScreen;
+        this.options = options;
     }
 
     @Override
@@ -114,8 +114,8 @@ public class OptionsScreen extends Screen {
         this.minecraft.setScreen(this.lastScreen);
     }
 
-    private void applyPacks(PackRepository p_345689_) {
-        this.options.updateResourcePacks(p_345689_);
+    private void applyPacks(PackRepository packRepository) {
+        this.options.updateResourcePacks(packRepository);
         this.minecraft.setScreen(this);
     }
 
@@ -154,23 +154,23 @@ public class OptionsScreen extends Screen {
         }
     }
 
-    public static CycleButton<Difficulty> createDifficultyButton(int p_346201_, int p_346398_, String p_346029_, Minecraft p_345232_) {
+    public static CycleButton<Difficulty> createDifficultyButton(int x, int y, String name, Minecraft minecraft) {
         return CycleButton.builder(Difficulty::getDisplayName)
             .withValues(Difficulty.values())
-            .withInitialValue(p_345232_.level.getDifficulty())
+            .withInitialValue(minecraft.level.getDifficulty())
             .create(
-                p_346201_,
-                p_346398_,
+                x,
+                y,
                 150,
                 20,
-                Component.translatable(p_346029_),
-                (p_346187_, p_345178_) -> p_345232_.getConnection().send(new ServerboundChangeDifficultyPacket(p_345178_))
+                Component.translatable(name),
+                (p_346187_, p_345178_) -> minecraft.getConnection().send(new ServerboundChangeDifficultyPacket(p_345178_))
             );
     }
 
-    private void lockCallback(boolean p_346102_) {
+    private void lockCallback(boolean confirmed) {
         this.minecraft.setScreen(this);
-        if (p_346102_ && this.minecraft.level != null && this.lockButton != null && this.difficultyButton != null) {
+        if (confirmed && this.minecraft.level != null && this.lockButton != null && this.difficultyButton != null) {
             this.minecraft.getConnection().send(new ServerboundLockDifficultyPacket(true));
             this.lockButton.setLocked(true);
             this.lockButton.active = false;
@@ -183,7 +183,7 @@ public class OptionsScreen extends Screen {
         this.options.save();
     }
 
-    private Button openScreenButton(Component p_345646_, Supplier<Screen> p_345565_) {
-        return Button.builder(p_345646_, p_344786_ -> this.minecraft.setScreen(p_345565_.get())).build();
+    private Button openScreenButton(Component name, Supplier<Screen> screenSupplier) {
+        return Button.builder(name, p_344786_ -> this.minecraft.setScreen(screenSupplier.get())).build();
     }
 }

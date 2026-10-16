@@ -35,9 +35,9 @@ public class Lighting {
         RenderSystem.setShaderLights(INVENTORY_DIFFUSE_LIGHT_0, INVENTORY_DIFFUSE_LIGHT_1);
     }
 
-    public static void setupForEntityInInventory(Quaternionf p_324524_) {
+    public static void setupForEntityInInventory(Quaternionf quaternion) {
         RenderSystem.setShaderLights(
-            p_324524_.transform(INVENTORY_DIFFUSE_LIGHT_0, new Vector3f()), p_324524_.transform(INVENTORY_DIFFUSE_LIGHT_1, new Vector3f())
+            quaternion.transform(INVENTORY_DIFFUSE_LIGHT_0, new Vector3f()), quaternion.transform(INVENTORY_DIFFUSE_LIGHT_1, new Vector3f())
         );
     }
 }

@@ -18,9 +18,9 @@ public class HugeMushroomFeatureConfiguration implements FeatureConfiguration {
     public final BlockStateProvider stemProvider;
     public final int foliageRadius;
 
-    public HugeMushroomFeatureConfiguration(BlockStateProvider p_67745_, BlockStateProvider p_67746_, int p_67747_) {
-        this.capProvider = p_67745_;
-        this.stemProvider = p_67746_;
-        this.foliageRadius = p_67747_;
+    public HugeMushroomFeatureConfiguration(BlockStateProvider capProvider, BlockStateProvider stemProvider, int foliageRadius) {
+        this.capProvider = capProvider;
+        this.stemProvider = stemProvider;
+        this.foliageRadius = foliageRadius;
     }
 }

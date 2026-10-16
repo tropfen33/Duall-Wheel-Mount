@@ -23,26 +23,26 @@ public abstract class BaseCoralPlantTypeBlock extends Block implements SimpleWat
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
     private static final VoxelShape AABB = Block.box(2.0, 0.0, 2.0, 14.0, 4.0, 14.0);
 
-    public BaseCoralPlantTypeBlock(BlockBehaviour.Properties p_49161_) {
-        super(p_49161_);
+    public BaseCoralPlantTypeBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(WATERLOGGED, Boolean.valueOf(true)));
     }
 
     @Override
     protected abstract MapCodec<? extends BaseCoralPlantTypeBlock> codec();
 
-    protected void tryScheduleDieTick(BlockState p_49165_, LevelAccessor p_49166_, BlockPos p_49167_) {
-        if (!scanForWater(p_49165_, p_49166_, p_49167_)) {
-            p_49166_.scheduleTick(p_49167_, this, 60 + p_49166_.getRandom().nextInt(40));
+    protected void tryScheduleDieTick(BlockState state, LevelAccessor level, BlockPos pos) {
+        if (!scanForWater(state, level, pos)) {
+            level.scheduleTick(pos, this, 60 + level.getRandom().nextInt(40));
         }
     }
 
-    protected static boolean scanForWater(BlockState p_49187_, BlockGetter p_49188_, BlockPos p_49189_) {
-        if (p_49187_.getValue(WATERLOGGED)) {
+    protected static boolean scanForWater(BlockState state, BlockGetter level, BlockPos pos) {
+        if (state.getValue(WATERLOGGED)) {
             return true;
         } else {
             for (Direction direction : Direction.values()) {
-                if (p_49188_.getFluidState(p_49189_.relative(direction)).is(FluidTags.WATER)) {
+                if (level.getFluidState(pos.relative(direction)).is(FluidTags.WATER)) {
                     return true;
                 }
             }
@@ -53,40 +53,45 @@ public abstract class BaseCoralPlantTypeBlock extends Block implements SimpleWat
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_49163_) {
-        FluidState fluidstate = p_49163_.getLevel().getFluidState(p_49163_.getClickedPos());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
         return this.defaultBlockState().setValue(WATERLOGGED, Boolean.valueOf(fluidstate.is(FluidTags.WATER) && fluidstate.getAmount() == 8));
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_49182_, BlockGetter p_49183_, BlockPos p_49184_, CollisionContext p_49185_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return AABB;
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_49173_, Direction p_49174_, BlockState p_49175_, LevelAccessor p_49176_, BlockPos p_49177_, BlockPos p_49178_) {
-        if (p_49173_.getValue(WATERLOGGED)) {
-            p_49176_.scheduleTick(p_49177_, Fluids.WATER, Fluids.WATER.getTickDelay(p_49176_));
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        return p_49174_ == Direction.DOWN && !this.canSurvive(p_49173_, p_49176_, p_49177_)
+        return facing == Direction.DOWN && !this.canSurvive(state, level, currentPos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_49173_, p_49174_, p_49175_, p_49176_, p_49177_, p_49178_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_49169_, LevelReader p_49170_, BlockPos p_49171_) {
-        BlockPos blockpos = p_49171_.below();
-        return p_49170_.getBlockState(blockpos).isFaceSturdy(p_49170_, blockpos, Direction.UP);
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        BlockPos blockpos = pos.below();
+        return level.getBlockState(blockpos).isFaceSturdy(level, blockpos, Direction.UP);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_49180_) {
-        p_49180_.add(WATERLOGGED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(WATERLOGGED);
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_49191_) {
-        return p_49191_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_49191_);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 }

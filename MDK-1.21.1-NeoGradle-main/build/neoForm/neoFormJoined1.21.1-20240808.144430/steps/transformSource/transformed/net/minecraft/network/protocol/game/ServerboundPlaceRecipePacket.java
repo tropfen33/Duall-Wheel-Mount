@@ -15,22 +15,25 @@ public class ServerboundPlaceRecipePacket implements Packet<ServerGamePacketList
     private final ResourceLocation recipe;
     private final boolean shiftDown;
 
-    public ServerboundPlaceRecipePacket(int p_134240_, RecipeHolder<?> p_300889_, boolean p_134242_) {
-        this.containerId = p_134240_;
-        this.recipe = p_300889_.id();
-        this.shiftDown = p_134242_;
+    public ServerboundPlaceRecipePacket(int containerId, RecipeHolder<?> recipe, boolean shiftDown) {
+        this.containerId = containerId;
+        this.recipe = recipe.id();
+        this.shiftDown = shiftDown;
     }
 
-    private ServerboundPlaceRecipePacket(FriendlyByteBuf p_179706_) {
-        this.containerId = p_179706_.readByte();
-        this.recipe = p_179706_.readResourceLocation();
-        this.shiftDown = p_179706_.readBoolean();
+    private ServerboundPlaceRecipePacket(FriendlyByteBuf buffer) {
+        this.containerId = buffer.readByte();
+        this.recipe = buffer.readResourceLocation();
+        this.shiftDown = buffer.readBoolean();
     }
 
-    private void write(FriendlyByteBuf p_134251_) {
-        p_134251_.writeByte(this.containerId);
-        p_134251_.writeResourceLocation(this.recipe);
-        p_134251_.writeBoolean(this.shiftDown);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeByte(this.containerId);
+        buffer.writeResourceLocation(this.recipe);
+        buffer.writeBoolean(this.shiftDown);
     }
 
     @Override
@@ -38,8 +41,11 @@ public class ServerboundPlaceRecipePacket implements Packet<ServerGamePacketList
         return GamePacketTypes.SERVERBOUND_PLACE_RECIPE;
     }
 
-    public void handle(ServerGamePacketListener p_134248_) {
-        p_134248_.handlePlaceRecipe(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handlePlaceRecipe(this);
     }
 
     public int getContainerId() {

@@ -12,11 +12,11 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class MobEffectTextureManager extends TextureAtlasHolder {
-    public MobEffectTextureManager(TextureManager p_118730_) {
-        super(p_118730_, ResourceLocation.withDefaultNamespace("textures/atlas/mob_effects.png"), ResourceLocation.withDefaultNamespace("mob_effects"));
+    public MobEffectTextureManager(TextureManager textureManager) {
+        super(textureManager, ResourceLocation.withDefaultNamespace("textures/atlas/mob_effects.png"), ResourceLocation.withDefaultNamespace("mob_effects"));
     }
 
-    public TextureAtlasSprite get(Holder<MobEffect> p_316705_) {
-        return this.getSprite(p_316705_.unwrapKey().map(ResourceKey::location).orElseGet(MissingTextureAtlasSprite::getLocation));
+    public TextureAtlasSprite get(Holder<MobEffect> effect) {
+        return this.getSprite(effect.unwrapKey().map(ResourceKey::location).orElseGet(MissingTextureAtlasSprite::getLocation));
     }
 }

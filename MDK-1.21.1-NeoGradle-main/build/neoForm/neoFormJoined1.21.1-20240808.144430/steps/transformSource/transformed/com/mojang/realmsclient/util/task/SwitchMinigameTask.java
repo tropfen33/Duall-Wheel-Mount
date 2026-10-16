@@ -18,10 +18,10 @@ public class SwitchMinigameTask extends LongRunningTask {
     private final WorldTemplate worldTemplate;
     private final RealmsConfigureWorldScreen lastScreen;
 
-    public SwitchMinigameTask(long p_90451_, WorldTemplate p_90452_, RealmsConfigureWorldScreen p_90453_) {
-        this.realmId = p_90451_;
-        this.worldTemplate = p_90452_;
-        this.lastScreen = p_90453_;
+    public SwitchMinigameTask(long worldId, WorldTemplate worldTemplate, RealmsConfigureWorldScreen lastScreen) {
+        this.realmId = worldId;
+        this.worldTemplate = worldTemplate;
+        this.lastScreen = lastScreen;
     }
 
     @Override

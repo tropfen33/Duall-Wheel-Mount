@@ -24,22 +24,30 @@ public class CartographyTableScreen extends AbstractContainerScreen<CartographyT
     private static final ResourceLocation LOCKED_SPRITE = ResourceLocation.withDefaultNamespace("container/cartography_table/locked");
     private static final ResourceLocation BG_LOCATION = ResourceLocation.withDefaultNamespace("textures/gui/container/cartography_table.png");
 
-    public CartographyTableScreen(CartographyTableMenu p_98349_, Inventory p_98350_, Component p_98351_) {
-        super(p_98349_, p_98350_, p_98351_);
+    public CartographyTableScreen(CartographyTableMenu menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title);
         this.titleLabelY -= 2;
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281331_, int p_281706_, int p_282996_, float p_283037_) {
-        super.render(p_281331_, p_281706_, p_282996_, p_283037_);
-        this.renderTooltip(p_281331_, p_281706_, p_282996_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
     @Override
-    protected void renderBg(GuiGraphics p_282101_, float p_282697_, int p_282380_, int p_282327_) {
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         int i = this.leftPos;
         int j = this.topPos;
-        p_282101_.blit(BG_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
+        guiGraphics.blit(BG_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
         ItemStack itemstack = this.menu.getSlot(1).getItem();
         boolean flag = itemstack.is(Items.MAP);
         boolean flag1 = itemstack.is(Items.PAPER);
@@ -54,67 +62,67 @@ public class CartographyTableScreen extends AbstractContainerScreen<CartographyT
                 if (mapitemsaveddata.locked) {
                     flag3 = true;
                     if (flag1 || flag2) {
-                        p_282101_.blitSprite(ERROR_SPRITE, i + 35, j + 31, 28, 21);
+                        guiGraphics.blitSprite(ERROR_SPRITE, i + 35, j + 31, 28, 21);
                     }
                 }
 
                 if (flag1 && mapitemsaveddata.scale >= 4) {
                     flag3 = true;
-                    p_282101_.blitSprite(ERROR_SPRITE, i + 35, j + 31, 28, 21);
+                    guiGraphics.blitSprite(ERROR_SPRITE, i + 35, j + 31, 28, 21);
                 }
             }
         } else {
             mapitemsaveddata = null;
         }
 
-        this.renderResultingMap(p_282101_, mapid, mapitemsaveddata, flag, flag1, flag2, flag3);
+        this.renderResultingMap(guiGraphics, mapid, mapitemsaveddata, flag, flag1, flag2, flag3);
     }
 
     private void renderResultingMap(
-        GuiGraphics p_282167_,
-        @Nullable MapId p_323466_,
-        @Nullable MapItemSavedData p_282045_,
-        boolean p_282086_,
-        boolean p_283531_,
-        boolean p_282645_,
-        boolean p_281646_
+        GuiGraphics guiGraphics,
+        @Nullable MapId mapId,
+        @Nullable MapItemSavedData mapData,
+        boolean hasMap,
+        boolean hasPaper,
+        boolean hasGlassPane,
+        boolean isMaxSize
     ) {
         int i = this.leftPos;
         int j = this.topPos;
-        if (p_283531_ && !p_281646_) {
-            p_282167_.blitSprite(SCALED_MAP_SPRITE, i + 67, j + 13, 66, 66);
-            this.renderMap(p_282167_, p_323466_, p_282045_, i + 85, j + 31, 0.226F);
-        } else if (p_282086_) {
-            p_282167_.blitSprite(DUPLICATED_MAP_SPRITE, i + 67 + 16, j + 13, 50, 66);
-            this.renderMap(p_282167_, p_323466_, p_282045_, i + 86, j + 16, 0.34F);
-            p_282167_.pose().pushPose();
-            p_282167_.pose().translate(0.0F, 0.0F, 1.0F);
-            p_282167_.blitSprite(DUPLICATED_MAP_SPRITE, i + 67, j + 13 + 16, 50, 66);
-            this.renderMap(p_282167_, p_323466_, p_282045_, i + 70, j + 32, 0.34F);
-            p_282167_.pose().popPose();
-        } else if (p_282645_) {
-            p_282167_.blitSprite(MAP_SPRITE, i + 67, j + 13, 66, 66);
-            this.renderMap(p_282167_, p_323466_, p_282045_, i + 71, j + 17, 0.45F);
-            p_282167_.pose().pushPose();
-            p_282167_.pose().translate(0.0F, 0.0F, 1.0F);
-            p_282167_.blitSprite(LOCKED_SPRITE, i + 118, j + 60, 10, 14);
-            p_282167_.pose().popPose();
+        if (hasPaper && !isMaxSize) {
+            guiGraphics.blitSprite(SCALED_MAP_SPRITE, i + 67, j + 13, 66, 66);
+            this.renderMap(guiGraphics, mapId, mapData, i + 85, j + 31, 0.226F);
+        } else if (hasMap) {
+            guiGraphics.blitSprite(DUPLICATED_MAP_SPRITE, i + 67 + 16, j + 13, 50, 66);
+            this.renderMap(guiGraphics, mapId, mapData, i + 86, j + 16, 0.34F);
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(0.0F, 0.0F, 1.0F);
+            guiGraphics.blitSprite(DUPLICATED_MAP_SPRITE, i + 67, j + 13 + 16, 50, 66);
+            this.renderMap(guiGraphics, mapId, mapData, i + 70, j + 32, 0.34F);
+            guiGraphics.pose().popPose();
+        } else if (hasGlassPane) {
+            guiGraphics.blitSprite(MAP_SPRITE, i + 67, j + 13, 66, 66);
+            this.renderMap(guiGraphics, mapId, mapData, i + 71, j + 17, 0.45F);
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(0.0F, 0.0F, 1.0F);
+            guiGraphics.blitSprite(LOCKED_SPRITE, i + 118, j + 60, 10, 14);
+            guiGraphics.pose().popPose();
         } else {
-            p_282167_.blitSprite(MAP_SPRITE, i + 67, j + 13, 66, 66);
-            this.renderMap(p_282167_, p_323466_, p_282045_, i + 71, j + 17, 0.45F);
+            guiGraphics.blitSprite(MAP_SPRITE, i + 67, j + 13, 66, 66);
+            this.renderMap(guiGraphics, mapId, mapData, i + 71, j + 17, 0.45F);
         }
     }
 
     private void renderMap(
-        GuiGraphics p_282298_, @Nullable MapId p_324470_, @Nullable MapItemSavedData p_282897_, int p_281632_, int p_282115_, float p_283388_
+        GuiGraphics guiGraphics, @Nullable MapId mapId, @Nullable MapItemSavedData mapData, int x, int y, float scale
     ) {
-        if (p_324470_ != null && p_282897_ != null) {
-            p_282298_.pose().pushPose();
-            p_282298_.pose().translate((float)p_281632_, (float)p_282115_, 1.0F);
-            p_282298_.pose().scale(p_283388_, p_283388_, 1.0F);
-            this.minecraft.gameRenderer.getMapRenderer().render(p_282298_.pose(), p_282298_.bufferSource(), p_324470_, p_282897_, true, 15728880);
-            p_282298_.flush();
-            p_282298_.pose().popPose();
+        if (mapId != null && mapData != null) {
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate((float)x, (float)y, 1.0F);
+            guiGraphics.pose().scale(scale, scale, 1.0F);
+            this.minecraft.gameRenderer.getMapRenderer().render(guiGraphics.pose(), guiGraphics.bufferSource(), mapId, mapData, true, 15728880);
+            guiGraphics.flush();
+            guiGraphics.pose().popPose();
         }
     }
 }

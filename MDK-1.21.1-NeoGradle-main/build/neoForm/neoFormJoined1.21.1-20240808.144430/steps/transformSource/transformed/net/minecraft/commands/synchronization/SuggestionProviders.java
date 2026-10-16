@@ -43,40 +43,46 @@ public class SuggestionProviders {
     );
 
     public static <S extends SharedSuggestionProvider> SuggestionProvider<S> register(
-        ResourceLocation p_121659_, SuggestionProvider<SharedSuggestionProvider> p_121660_
+        ResourceLocation name, SuggestionProvider<SharedSuggestionProvider> provider
     ) {
-        if (PROVIDERS_BY_NAME.containsKey(p_121659_)) {
-            throw new IllegalArgumentException("A command suggestion provider is already registered with the name " + p_121659_);
+        if (PROVIDERS_BY_NAME.containsKey(name)) {
+            throw new IllegalArgumentException("A command suggestion provider is already registered with the name " + name);
         } else {
-            PROVIDERS_BY_NAME.put(p_121659_, p_121660_);
-            return (SuggestionProvider<S>)new SuggestionProviders.Wrapper(p_121659_, p_121660_);
+            PROVIDERS_BY_NAME.put(name, provider);
+            return (SuggestionProvider<S>)new SuggestionProviders.Wrapper(name, provider);
         }
     }
 
-    public static SuggestionProvider<SharedSuggestionProvider> getProvider(ResourceLocation p_121657_) {
-        return PROVIDERS_BY_NAME.getOrDefault(p_121657_, ASK_SERVER);
+    public static SuggestionProvider<SharedSuggestionProvider> getProvider(ResourceLocation name) {
+        return PROVIDERS_BY_NAME.getOrDefault(name, ASK_SERVER);
     }
 
-    public static ResourceLocation getName(SuggestionProvider<SharedSuggestionProvider> p_121655_) {
-        return p_121655_ instanceof SuggestionProviders.Wrapper ? ((SuggestionProviders.Wrapper)p_121655_).name : DEFAULT_NAME;
+    /**
+     * Gets the ID for the given provider. If the provider is not a wrapped one created via {@link #register}, then it returns {@link #ASK_SERVER_ID} instead, as there is no known ID but ASK_SERVER always works.
+     */
+    public static ResourceLocation getName(SuggestionProvider<SharedSuggestionProvider> provider) {
+        return provider instanceof SuggestionProviders.Wrapper ? ((SuggestionProviders.Wrapper)provider).name : DEFAULT_NAME;
     }
 
-    public static SuggestionProvider<SharedSuggestionProvider> safelySwap(SuggestionProvider<SharedSuggestionProvider> p_121665_) {
-        return p_121665_ instanceof SuggestionProviders.Wrapper ? p_121665_ : ASK_SERVER;
+    /**
+     * Checks to make sure that the given suggestion provider is a wrapped one that was created via {@link #register}. If not, returns {@link #ASK_SERVER}. Needed because custom providers don't have a known ID to send to the client, but ASK_SERVER always works.
+     */
+    public static SuggestionProvider<SharedSuggestionProvider> safelySwap(SuggestionProvider<SharedSuggestionProvider> provider) {
+        return provider instanceof SuggestionProviders.Wrapper ? provider : ASK_SERVER;
     }
 
     protected static class Wrapper implements SuggestionProvider<SharedSuggestionProvider> {
         private final SuggestionProvider<SharedSuggestionProvider> delegate;
         final ResourceLocation name;
 
-        public Wrapper(ResourceLocation p_121678_, SuggestionProvider<SharedSuggestionProvider> p_121679_) {
-            this.delegate = p_121679_;
-            this.name = p_121678_;
+        public Wrapper(ResourceLocation name, SuggestionProvider<SharedSuggestionProvider> delegate) {
+            this.delegate = delegate;
+            this.name = name;
         }
 
         @Override
-        public CompletableFuture<Suggestions> getSuggestions(CommandContext<SharedSuggestionProvider> p_121683_, SuggestionsBuilder p_121684_) throws CommandSyntaxException {
-            return this.delegate.getSuggestions(p_121683_, p_121684_);
+        public CompletableFuture<Suggestions> getSuggestions(CommandContext<SharedSuggestionProvider> context, SuggestionsBuilder builder) throws CommandSyntaxException {
+            return this.delegate.getSuggestions(context, builder);
         }
     }
 }

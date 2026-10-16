@@ -13,11 +13,11 @@ public record AdvancementHolder(ResourceLocation id, Advancement value) {
     public static final StreamCodec<RegistryFriendlyByteBuf, List<AdvancementHolder>> LIST_STREAM_CODEC = STREAM_CODEC.apply(ByteBufCodecs.list());
 
     @Override
-    public boolean equals(Object p_301145_) {
-        if (this == p_301145_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            if (p_301145_ instanceof AdvancementHolder advancementholder && this.id.equals(advancementholder.id)) {
+            if (other instanceof AdvancementHolder advancementholder && this.id.equals(advancementholder.id)) {
                 return true;
             }
 

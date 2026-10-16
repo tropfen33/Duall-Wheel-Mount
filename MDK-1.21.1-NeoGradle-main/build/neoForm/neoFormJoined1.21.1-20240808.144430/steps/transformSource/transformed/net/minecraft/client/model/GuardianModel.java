@@ -32,10 +32,10 @@ public class GuardianModel extends HierarchicalModel<Guardian> {
     private final ModelPart[] spikeParts;
     private final ModelPart[] tailParts;
 
-    public GuardianModel(ModelPart p_170600_) {
-        this.root = p_170600_;
+    public GuardianModel(ModelPart root) {
+        this.root = root;
         this.spikeParts = new ModelPart[12];
-        this.head = p_170600_.getChild("head");
+        this.head = root.getChild("head");
 
         for (int i = 0; i < this.spikeParts.length; i++) {
             this.spikeParts[i] = this.head.getChild(createSpikeName(i));
@@ -48,8 +48,8 @@ public class GuardianModel extends HierarchicalModel<Guardian> {
         this.tailParts[2] = this.tailParts[1].getChild("tail2");
     }
 
-    private static String createSpikeName(int p_170603_) {
-        return "spike" + p_170603_;
+    private static String createSpikeName(int index) {
+        return "spike" + index;
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -104,20 +104,23 @@ public class GuardianModel extends HierarchicalModel<Guardian> {
         return this.root;
     }
 
-    public void setupAnim(Guardian p_102719_, float p_102720_, float p_102721_, float p_102722_, float p_102723_, float p_102724_) {
-        float f = p_102722_ - (float)p_102719_.tickCount;
-        this.head.yRot = p_102723_ * (float) (Math.PI / 180.0);
-        this.head.xRot = p_102724_ * (float) (Math.PI / 180.0);
-        float f1 = (1.0F - p_102719_.getSpikesAnimation(f)) * 0.55F;
-        this.setupSpikes(p_102722_, f1);
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(Guardian p_entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        float f = ageInTicks - (float)p_entity.tickCount;
+        this.head.yRot = netHeadYaw * (float) (Math.PI / 180.0);
+        this.head.xRot = headPitch * (float) (Math.PI / 180.0);
+        float f1 = (1.0F - p_entity.getSpikesAnimation(f)) * 0.55F;
+        this.setupSpikes(ageInTicks, f1);
         Entity entity = Minecraft.getInstance().getCameraEntity();
-        if (p_102719_.hasActiveAttackTarget()) {
-            entity = p_102719_.getActiveAttackTarget();
+        if (p_entity.hasActiveAttackTarget()) {
+            entity = p_entity.getActiveAttackTarget();
         }
 
         if (entity != null) {
             Vec3 vec3 = entity.getEyePosition(0.0F);
-            Vec3 vec31 = p_102719_.getEyePosition(0.0F);
+            Vec3 vec31 = p_entity.getEyePosition(0.0F);
             double d0 = vec3.y - vec31.y;
             if (d0 > 0.0) {
                 this.eye.y = 0.0F;
@@ -125,7 +128,7 @@ public class GuardianModel extends HierarchicalModel<Guardian> {
                 this.eye.y = 1.0F;
             }
 
-            Vec3 vec32 = p_102719_.getViewVector(0.0F);
+            Vec3 vec32 = p_entity.getViewVector(0.0F);
             vec32 = new Vec3(vec32.x, 0.0, vec32.z);
             Vec3 vec33 = new Vec3(vec31.x - vec3.x, 0.0, vec31.z - vec3.z).normalize().yRot((float) (Math.PI / 2));
             double d1 = vec32.dot(vec33);
@@ -133,33 +136,33 @@ public class GuardianModel extends HierarchicalModel<Guardian> {
         }
 
         this.eye.visible = true;
-        float f2 = p_102719_.getTailAnimation(f);
+        float f2 = p_entity.getTailAnimation(f);
         this.tailParts[0].yRot = Mth.sin(f2) * (float) Math.PI * 0.05F;
         this.tailParts[1].yRot = Mth.sin(f2) * (float) Math.PI * 0.1F;
         this.tailParts[2].yRot = Mth.sin(f2) * (float) Math.PI * 0.15F;
     }
 
-    private void setupSpikes(float p_102709_, float p_102710_) {
+    private void setupSpikes(float ageInTicks, float p_102710_) {
         for (int i = 0; i < 12; i++) {
-            this.spikeParts[i].x = getSpikeX(i, p_102709_, p_102710_);
-            this.spikeParts[i].y = getSpikeY(i, p_102709_, p_102710_);
-            this.spikeParts[i].z = getSpikeZ(i, p_102709_, p_102710_);
+            this.spikeParts[i].x = getSpikeX(i, ageInTicks, p_102710_);
+            this.spikeParts[i].y = getSpikeY(i, ageInTicks, p_102710_);
+            this.spikeParts[i].z = getSpikeZ(i, ageInTicks, p_102710_);
         }
     }
 
-    private static float getSpikeOffset(int p_170605_, float p_170606_, float p_170607_) {
-        return 1.0F + Mth.cos(p_170606_ * 1.5F + (float)p_170605_) * 0.01F - p_170607_;
+    private static float getSpikeOffset(int index, float ageInTicks, float p_170607_) {
+        return 1.0F + Mth.cos(ageInTicks * 1.5F + (float)index) * 0.01F - p_170607_;
     }
 
-    private static float getSpikeX(int p_170610_, float p_170611_, float p_170612_) {
-        return SPIKE_X[p_170610_] * getSpikeOffset(p_170610_, p_170611_, p_170612_);
+    private static float getSpikeX(int index, float ageInTicks, float p_170612_) {
+        return SPIKE_X[index] * getSpikeOffset(index, ageInTicks, p_170612_);
     }
 
-    private static float getSpikeY(int p_170614_, float p_170615_, float p_170616_) {
-        return 16.0F + SPIKE_Y[p_170614_] * getSpikeOffset(p_170614_, p_170615_, p_170616_);
+    private static float getSpikeY(int index, float ageInTicks, float p_170616_) {
+        return 16.0F + SPIKE_Y[index] * getSpikeOffset(index, ageInTicks, p_170616_);
     }
 
-    private static float getSpikeZ(int p_170618_, float p_170619_, float p_170620_) {
-        return SPIKE_Z[p_170618_] * getSpikeOffset(p_170618_, p_170619_, p_170620_);
+    private static float getSpikeZ(int index, float ageInTicks, float p_170620_) {
+        return SPIKE_Z[index] * getSpikeOffset(index, ageInTicks, p_170620_);
     }
 }

@@ -18,9 +18,9 @@ public class ProgressScreen extends Screen implements ProgressListener {
     private boolean stop;
     private final boolean clearScreenAfterStop;
 
-    public ProgressScreen(boolean p_169364_) {
+    public ProgressScreen(boolean clearScreenAfterStop) {
         super(GameNarrator.NO_TITLE);
-        this.clearScreenAfterStop = p_169364_;
+        this.clearScreenAfterStop = clearScreenAfterStop;
     }
 
     @Override
@@ -34,25 +34,28 @@ public class ProgressScreen extends Screen implements ProgressListener {
     }
 
     @Override
-    public void progressStartNoAbort(Component p_96520_) {
-        this.progressStart(p_96520_);
+    public void progressStartNoAbort(Component component) {
+        this.progressStart(component);
     }
 
     @Override
-    public void progressStart(Component p_96523_) {
-        this.header = p_96523_;
+    public void progressStart(Component component) {
+        this.header = component;
         this.progressStage(Component.translatable("menu.working"));
     }
 
     @Override
-    public void progressStage(Component p_96525_) {
-        this.stage = p_96525_;
+    public void progressStage(Component component) {
+        this.stage = component;
         this.progressStagePercentage(0);
     }
 
+    /**
+     * Updates the progress bar on the loading screen to the specified amount.
+     */
     @Override
-    public void progressStagePercentage(int p_96513_) {
-        this.progress = p_96513_;
+    public void progressStagePercentage(int progress) {
+        this.progress = progress;
     }
 
     @Override
@@ -60,20 +63,28 @@ public class ProgressScreen extends Screen implements ProgressListener {
         this.stop = true;
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283582_, int p_96516_, int p_96517_, float p_96518_) {
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.stop) {
             if (this.clearScreenAfterStop) {
                 this.minecraft.setScreen(null);
             }
         } else {
-            super.render(p_283582_, p_96516_, p_96517_, p_96518_);
+            super.render(guiGraphics, mouseX, mouseY, partialTick);
             if (this.header != null) {
-                p_283582_.drawCenteredString(this.font, this.header, this.width / 2, 70, 16777215);
+                guiGraphics.drawCenteredString(this.font, this.header, this.width / 2, 70, 16777215);
             }
 
             if (this.stage != null && this.progress != 0) {
-                p_283582_.drawCenteredString(this.font, Component.empty().append(this.stage).append(" " + this.progress + "%"), this.width / 2, 90, 16777215);
+                guiGraphics.drawCenteredString(this.font, Component.empty().append(this.stage).append(" " + this.progress + "%"), this.width / 2, 90, 16777215);
             }
         }
     }

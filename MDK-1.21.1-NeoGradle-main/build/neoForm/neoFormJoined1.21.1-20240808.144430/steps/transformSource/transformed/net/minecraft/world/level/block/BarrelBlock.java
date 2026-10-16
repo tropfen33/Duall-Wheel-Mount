@@ -34,21 +34,21 @@ public class BarrelBlock extends BaseEntityBlock {
         return CODEC;
     }
 
-    public BarrelBlock(BlockBehaviour.Properties p_49046_) {
-        super(p_49046_);
+    public BarrelBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(OPEN, Boolean.valueOf(false)));
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_49069_, Level p_49070_, BlockPos p_49071_, Player p_49072_, BlockHitResult p_49074_) {
-        if (p_49070_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
-            BlockEntity blockentity = p_49070_.getBlockEntity(p_49071_);
+            BlockEntity blockentity = level.getBlockEntity(pos);
             if (blockentity instanceof BarrelBlockEntity) {
-                p_49072_.openMenu((BarrelBlockEntity)blockentity);
-                p_49072_.awardStat(Stats.OPEN_BARREL);
-                PiglinAi.angerNearbyPiglins(p_49072_, true);
+                player.openMenu((BarrelBlockEntity)blockentity);
+                player.awardStat(Stats.OPEN_BARREL);
+                PiglinAi.angerNearbyPiglins(player, true);
             }
 
             return InteractionResult.CONSUME;
@@ -56,14 +56,14 @@ public class BarrelBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected void onRemove(BlockState p_49076_, Level p_49077_, BlockPos p_49078_, BlockState p_49079_, boolean p_49080_) {
-        Containers.dropContentsOnDestroy(p_49076_, p_49079_, p_49077_, p_49078_);
-        super.onRemove(p_49076_, p_49077_, p_49078_, p_49079_, p_49080_);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        Containers.dropContentsOnDestroy(state, newState, level, pos);
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 
     @Override
-    protected void tick(BlockState p_220758_, ServerLevel p_220759_, BlockPos p_220760_, RandomSource p_220761_) {
-        BlockEntity blockentity = p_220759_.getBlockEntity(p_220760_);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        BlockEntity blockentity = level.getBlockEntity(pos);
         if (blockentity instanceof BarrelBlockEntity) {
             ((BarrelBlockEntity)blockentity).recheckOpen();
         }
@@ -71,42 +71,52 @@ public class BarrelBlock extends BaseEntityBlock {
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_152102_, BlockState p_152103_) {
-        return new BarrelBlockEntity(p_152102_, p_152103_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new BarrelBlockEntity(pos, state);
     }
 
     @Override
-    protected RenderShape getRenderShape(BlockState p_49090_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
     @Override
-    protected boolean hasAnalogOutputSignal(BlockState p_49058_) {
+    protected boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
+    /**
+     * Returns the analog signal this block emits. This is the signal a comparator can read from it.
+     *
+     */
     @Override
-    protected int getAnalogOutputSignal(BlockState p_49065_, Level p_49066_, BlockPos p_49067_) {
-        return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(p_49066_.getBlockEntity(p_49067_));
+    protected int getAnalogOutputSignal(BlockState blockState, Level level, BlockPos pos) {
+        return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(level.getBlockEntity(pos));
+    }
+
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState rotate(BlockState p_49085_, Rotation p_49086_) {
-        return p_49085_.setValue(FACING, p_49086_.rotate(p_49085_.getValue(FACING)));
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, OPEN);
     }
 
     @Override
-    protected BlockState mirror(BlockState p_49082_, Mirror p_49083_) {
-        return p_49082_.rotate(p_49083_.getRotation(p_49082_.getValue(FACING)));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_49088_) {
-        p_49088_.add(FACING, OPEN);
-    }
-
-    @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_49048_) {
-        return this.defaultBlockState().setValue(FACING, p_49048_.getNearestLookingDirection().getOpposite());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(FACING, context.getNearestLookingDirection().getOpposite());
     }
 }

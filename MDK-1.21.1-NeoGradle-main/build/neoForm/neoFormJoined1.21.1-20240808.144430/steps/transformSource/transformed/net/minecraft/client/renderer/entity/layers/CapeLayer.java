@@ -20,33 +20,33 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class CapeLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
-    public CapeLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> p_116602_) {
-        super(p_116602_);
+    public CapeLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> renderer) {
+        super(renderer);
     }
 
     public void render(
-        PoseStack p_116615_,
-        MultiBufferSource p_116616_,
-        int p_116617_,
-        AbstractClientPlayer p_116618_,
-        float p_116619_,
-        float p_116620_,
-        float p_116621_,
-        float p_116622_,
-        float p_116623_,
-        float p_116624_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        AbstractClientPlayer livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTicks,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
-        if (!p_116618_.isInvisible() && p_116618_.isModelPartShown(PlayerModelPart.CAPE)) {
-            PlayerSkin playerskin = p_116618_.getSkin();
+        if (!livingEntity.isInvisible() && livingEntity.isModelPartShown(PlayerModelPart.CAPE)) {
+            PlayerSkin playerskin = livingEntity.getSkin();
             if (playerskin.capeTexture() != null) {
-                ItemStack itemstack = p_116618_.getItemBySlot(EquipmentSlot.CHEST);
+                ItemStack itemstack = livingEntity.getItemBySlot(EquipmentSlot.CHEST);
                 if (!itemstack.is(Items.ELYTRA)) {
-                    p_116615_.pushPose();
-                    p_116615_.translate(0.0F, 0.0F, 0.125F);
-                    double d0 = Mth.lerp((double)p_116621_, p_116618_.xCloakO, p_116618_.xCloak) - Mth.lerp((double)p_116621_, p_116618_.xo, p_116618_.getX());
-                    double d1 = Mth.lerp((double)p_116621_, p_116618_.yCloakO, p_116618_.yCloak) - Mth.lerp((double)p_116621_, p_116618_.yo, p_116618_.getY());
-                    double d2 = Mth.lerp((double)p_116621_, p_116618_.zCloakO, p_116618_.zCloak) - Mth.lerp((double)p_116621_, p_116618_.zo, p_116618_.getZ());
-                    float f = Mth.rotLerp(p_116621_, p_116618_.yBodyRotO, p_116618_.yBodyRot);
+                    poseStack.pushPose();
+                    poseStack.translate(0.0F, 0.0F, 0.125F);
+                    double d0 = Mth.lerp((double)partialTicks, livingEntity.xCloakO, livingEntity.xCloak) - Mth.lerp((double)partialTicks, livingEntity.xo, livingEntity.getX());
+                    double d1 = Mth.lerp((double)partialTicks, livingEntity.yCloakO, livingEntity.yCloak) - Mth.lerp((double)partialTicks, livingEntity.yo, livingEntity.getY());
+                    double d2 = Mth.lerp((double)partialTicks, livingEntity.zCloakO, livingEntity.zCloak) - Mth.lerp((double)partialTicks, livingEntity.zo, livingEntity.getZ());
+                    float f = Mth.rotLerp(partialTicks, livingEntity.yBodyRotO, livingEntity.yBodyRot);
                     double d3 = (double)Mth.sin(f * (float) (Math.PI / 180.0));
                     double d4 = (double)(-Mth.cos(f * (float) (Math.PI / 180.0)));
                     float f1 = (float)d1 * 10.0F;
@@ -59,18 +59,18 @@ public class CapeLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<Abs
                         f2 = 0.0F;
                     }
 
-                    float f4 = Mth.lerp(p_116621_, p_116618_.oBob, p_116618_.bob);
-                    f1 += Mth.sin(Mth.lerp(p_116621_, p_116618_.walkDistO, p_116618_.walkDist) * 6.0F) * 32.0F * f4;
-                    if (p_116618_.isCrouching()) {
+                    float f4 = Mth.lerp(partialTicks, livingEntity.oBob, livingEntity.bob);
+                    f1 += Mth.sin(Mth.lerp(partialTicks, livingEntity.walkDistO, livingEntity.walkDist) * 6.0F) * 32.0F * f4;
+                    if (livingEntity.isCrouching()) {
                         f1 += 25.0F;
                     }
 
-                    p_116615_.mulPose(Axis.XP.rotationDegrees(6.0F + f2 / 2.0F + f1));
-                    p_116615_.mulPose(Axis.ZP.rotationDegrees(f3 / 2.0F));
-                    p_116615_.mulPose(Axis.YP.rotationDegrees(180.0F - f3 / 2.0F));
-                    VertexConsumer vertexconsumer = p_116616_.getBuffer(RenderType.entitySolid(playerskin.capeTexture()));
-                    this.getParentModel().renderCloak(p_116615_, vertexconsumer, p_116617_, OverlayTexture.NO_OVERLAY);
-                    p_116615_.popPose();
+                    poseStack.mulPose(Axis.XP.rotationDegrees(6.0F + f2 / 2.0F + f1));
+                    poseStack.mulPose(Axis.ZP.rotationDegrees(f3 / 2.0F));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - f3 / 2.0F));
+                    VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.entitySolid(playerskin.capeTexture()));
+                    this.getParentModel().renderCloak(poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY);
+                    poseStack.popPose();
                 }
             }
         }

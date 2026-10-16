@@ -28,22 +28,22 @@ public abstract class DimensionSpecialEffects implements net.neoforged.neoforge.
     private final boolean forceBrightLightmap;
     private final boolean constantAmbientLight;
 
-    public DimensionSpecialEffects(float p_108866_, boolean p_108867_, DimensionSpecialEffects.SkyType p_108868_, boolean p_108869_, boolean p_108870_) {
-        this.cloudLevel = p_108866_;
-        this.hasGround = p_108867_;
-        this.skyType = p_108868_;
-        this.forceBrightLightmap = p_108869_;
-        this.constantAmbientLight = p_108870_;
+    public DimensionSpecialEffects(float cloudLevel, boolean hasGround, DimensionSpecialEffects.SkyType skyType, boolean forceBrightLightmap, boolean constantAmbientLight) {
+        this.cloudLevel = cloudLevel;
+        this.hasGround = hasGround;
+        this.skyType = skyType;
+        this.forceBrightLightmap = forceBrightLightmap;
+        this.constantAmbientLight = constantAmbientLight;
     }
 
-    public static DimensionSpecialEffects forType(DimensionType p_108877_) {
-        return net.neoforged.neoforge.client.DimensionSpecialEffectsManager.getForType(p_108877_.effectsLocation());
+    public static DimensionSpecialEffects forType(DimensionType dimensionType) {
+        return net.neoforged.neoforge.client.DimensionSpecialEffectsManager.getForType(dimensionType.effectsLocation());
     }
 
     @Nullable
-    public float[] getSunriseColor(float p_108872_, float p_108873_) {
+    public float[] getSunriseColor(float timeOfDay, float partialTicks) {
         float f = 0.4F;
-        float f1 = Mth.cos(p_108872_ * (float) (Math.PI * 2)) - 0.0F;
+        float f1 = Mth.cos(timeOfDay * (float) (Math.PI * 2)) - 0.0F;
         float f2 = -0.0F;
         if (f1 >= -0.4F && f1 <= 0.4F) {
             float f3 = (f1 - -0.0F) / 0.4F * 0.5F + 0.5F;
@@ -67,9 +67,9 @@ public abstract class DimensionSpecialEffects implements net.neoforged.neoforge.
         return this.hasGround;
     }
 
-    public abstract Vec3 getBrightnessDependentFogColor(Vec3 p_108878_, float p_108879_);
+    public abstract Vec3 getBrightnessDependentFogColor(Vec3 fogColor, float brightness);
 
-    public abstract boolean isFoggyAt(int p_108874_, int p_108875_);
+    public abstract boolean isFoggyAt(int x, int y);
 
     public DimensionSpecialEffects.SkyType skyType() {
         return this.skyType;

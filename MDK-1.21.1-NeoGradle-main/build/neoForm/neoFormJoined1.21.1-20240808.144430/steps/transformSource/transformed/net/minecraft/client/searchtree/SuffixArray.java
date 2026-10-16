@@ -31,20 +31,20 @@ public class SuffixArray<T> {
     private IntList offsets = new IntArrayList();
     private int maxStringLength;
 
-    public void add(T p_119971_, String p_119972_) {
-        this.maxStringLength = Math.max(this.maxStringLength, p_119972_.length());
+    public void add(T object, String contents) {
+        this.maxStringLength = Math.max(this.maxStringLength, contents.length());
         int i = this.list.size();
-        this.list.add(p_119971_);
+        this.list.add(object);
         this.wordStarts.add(this.chars.size());
 
-        for (int j = 0; j < p_119972_.length(); j++) {
+        for (int j = 0; j < contents.length(); j++) {
             this.suffixToT.add(i);
             this.offsets.add(j);
-            this.chars.add(p_119972_.charAt(j));
+            this.chars.add(contents.charAt(j));
         }
 
         this.suffixToT.add(i);
-        this.offsets.add(p_119972_.length());
+        this.offsets.add(contents.length());
         this.chars.add(-1);
     }
 
@@ -163,16 +163,16 @@ public class SuffixArray<T> {
         return 0;
     }
 
-    public List<T> search(String p_119974_) {
+    public List<T> search(String query) {
         int i = this.suffixToT.size();
         int j = 0;
         int k = i;
 
         while (j < k) {
             int l = j + (k - j) / 2;
-            int i1 = this.compare(p_119974_, l);
+            int i1 = this.compare(query, l);
             if (DEBUG_COMPARISONS) {
-                LOGGER.debug("comparing lower \"{}\" with {} \"{}\": {}", p_119974_, l, this.getString(l), i1);
+                LOGGER.debug("comparing lower \"{}\" with {} \"{}\": {}", query, l, this.getString(l), i1);
             }
 
             if (i1 > 0) {
@@ -188,9 +188,9 @@ public class SuffixArray<T> {
 
             while (j < k) {
                 int j2 = j + (k - j) / 2;
-                int j1 = this.compare(p_119974_, j2);
+                int j1 = this.compare(query, j2);
                 if (DEBUG_COMPARISONS) {
-                    LOGGER.debug("comparing upper \"{}\" with {} \"{}\": {}", p_119974_, j2, this.getString(j2), j1);
+                    LOGGER.debug("comparing upper \"{}\" with {} \"{}\": {}", query, j2, this.getString(j2), j1);
                 }
 
                 if (j1 >= 0) {

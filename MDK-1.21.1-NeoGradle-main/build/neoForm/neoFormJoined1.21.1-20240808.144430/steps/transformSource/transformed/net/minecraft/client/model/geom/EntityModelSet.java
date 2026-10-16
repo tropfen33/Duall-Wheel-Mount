@@ -12,17 +12,17 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class EntityModelSet implements ResourceManagerReloadListener {
     private Map<ModelLayerLocation, LayerDefinition> roots = ImmutableMap.of();
 
-    public ModelPart bakeLayer(ModelLayerLocation p_171104_) {
-        LayerDefinition layerdefinition = this.roots.get(p_171104_);
+    public ModelPart bakeLayer(ModelLayerLocation modelLayerLocation) {
+        LayerDefinition layerdefinition = this.roots.get(modelLayerLocation);
         if (layerdefinition == null) {
-            throw new IllegalArgumentException("No model for layer " + p_171104_);
+            throw new IllegalArgumentException("No model for layer " + modelLayerLocation);
         } else {
             return layerdefinition.bakeRoot();
         }
     }
 
     @Override
-    public void onResourceManagerReload(ResourceManager p_171102_) {
+    public void onResourceManagerReload(ResourceManager resourceManager) {
         this.roots = ImmutableMap.copyOf(LayerDefinitions.createRoots());
     }
 }

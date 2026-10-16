@@ -23,16 +23,16 @@ public class VertexFormat {
     @Nullable
     private VertexBuffer immediateDrawVertexBuffer;
 
-    VertexFormat(List<VertexFormatElement> p_350393_, List<String> p_350887_, IntList p_350817_, int p_350310_) {
-        this.elements = p_350393_;
-        this.names = p_350887_;
-        this.vertexSize = p_350310_;
-        this.elementsMask = p_350393_.stream().mapToInt(VertexFormatElement::mask).reduce(0, (p_350941_, p_350570_) -> p_350941_ | p_350570_);
+    VertexFormat(List<VertexFormatElement> elements, List<String> names, IntList offsets, int vertexSize) {
+        this.elements = elements;
+        this.names = names;
+        this.vertexSize = vertexSize;
+        this.elementsMask = elements.stream().mapToInt(VertexFormatElement::mask).reduce(0, (p_350941_, p_350570_) -> p_350941_ | p_350570_);
 
         for (int i = 0; i < this.offsetsByElement.length; i++) {
             VertexFormatElement vertexformatelement = VertexFormatElement.byId(i);
-            int j = vertexformatelement != null ? p_350393_.indexOf(vertexformatelement) : -1;
-            this.offsetsByElement[i] = j != -1 ? p_350817_.getInt(j) : -1;
+            int j = vertexformatelement != null ? elements.indexOf(vertexformatelement) : -1;
+            this.offsetsByElement[i] = j != -1 ? offsets.getInt(j) : -1;
         }
     }
 
@@ -75,33 +75,33 @@ public class VertexFormat {
         return this.offsetsByElement;
     }
 
-    public int getOffset(VertexFormatElement p_350713_) {
-        return this.offsetsByElement[p_350713_.id()];
+    public int getOffset(VertexFormatElement element) {
+        return this.offsetsByElement[element.id()];
     }
 
-    public boolean contains(VertexFormatElement p_351022_) {
-        return (this.elementsMask & p_351022_.mask()) != 0;
+    public boolean contains(VertexFormatElement element) {
+        return (this.elementsMask & element.mask()) != 0;
     }
 
     public int getElementsMask() {
         return this.elementsMask;
     }
 
-    public String getElementName(VertexFormatElement p_350904_) {
-        int i = this.elements.indexOf(p_350904_);
+    public String getElementName(VertexFormatElement element) {
+        int i = this.elements.indexOf(element);
         if (i == -1) {
-            throw new IllegalArgumentException(p_350904_ + " is not contained in format");
+            throw new IllegalArgumentException(element + " is not contained in format");
         } else {
             return this.names.get(i);
         }
     }
 
     @Override
-    public boolean equals(Object p_86026_) {
-        if (this == p_86026_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            if (p_86026_ instanceof VertexFormat vertexformat
+            if (other instanceof VertexFormat vertexformat
                 && this.elementsMask == vertexformat.elementsMask
                 && this.vertexSize == vertexformat.vertexSize
                 && this.names.equals(vertexformat.names)
@@ -168,15 +168,15 @@ public class VertexFormat {
         Builder() {
         }
 
-        public VertexFormat.Builder add(String p_350281_, VertexFormatElement p_350956_) {
-            this.elements.put(p_350281_, p_350956_);
+        public VertexFormat.Builder add(String name, VertexFormatElement element) {
+            this.elements.put(name, element);
             this.offsets.add(this.offset);
-            this.offset = this.offset + p_350956_.byteSize();
+            this.offset = this.offset + element.byteSize();
             return this;
         }
 
-        public VertexFormat.Builder padding(int p_351055_) {
-            this.offset += p_351055_;
+        public VertexFormat.Builder padding(int padding) {
+            this.offset += padding;
             return this;
         }
 
@@ -196,13 +196,13 @@ public class VertexFormat {
         public final int asGLType;
         public final int bytes;
 
-        private IndexType(int p_166930_, int p_166931_) {
-            this.asGLType = p_166930_;
-            this.bytes = p_166931_;
+        private IndexType(int asGLType, int bytes) {
+            this.asGLType = asGLType;
+            this.bytes = bytes;
         }
 
-        public static VertexFormat.IndexType least(int p_166934_) {
-            return (p_166934_ & -65536) != 0 ? INT : SHORT;
+        public static VertexFormat.IndexType least(int indexCount) {
+            return (indexCount & -65536) != 0 ? INT : SHORT;
         }
     }
 
@@ -222,17 +222,17 @@ public class VertexFormat {
         public final int primitiveStride;
         public final boolean connectedPrimitives;
 
-        private Mode(int p_231238_, int p_231239_, int p_231240_, boolean p_231241_) {
-            this.asGLMode = p_231238_;
-            this.primitiveLength = p_231239_;
-            this.primitiveStride = p_231240_;
-            this.connectedPrimitives = p_231241_;
+        private Mode(int asGLMode, int primitiveLength, int primitiveStride, boolean connectedPrimitives) {
+            this.asGLMode = asGLMode;
+            this.primitiveLength = primitiveLength;
+            this.primitiveStride = primitiveStride;
+            this.connectedPrimitives = connectedPrimitives;
         }
 
-        public int indexCount(int p_166959_) {
+        public int indexCount(int vertices) {
             return switch (this) {
-                case LINES, QUADS -> p_166959_ / 4 * 6;
-                case LINE_STRIP, DEBUG_LINES, DEBUG_LINE_STRIP, TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN -> p_166959_;
+                case LINES, QUADS -> vertices / 4 * 6;
+                case LINE_STRIP, DEBUG_LINES, DEBUG_LINE_STRIP, TRIANGLES, TRIANGLE_STRIP, TRIANGLE_FAN -> vertices;
                 default -> 0;
             };
         }

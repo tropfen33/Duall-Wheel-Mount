@@ -22,9 +22,9 @@ public class RealmsClientOutdatedScreen extends RealmsScreen {
     private final Screen lastScreen;
     private final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
 
-    public RealmsClientOutdatedScreen(Screen p_231304_) {
+    public RealmsClientOutdatedScreen(Screen lastScreen) {
         super(INCOMPATIBLE_TITLE);
-        this.lastScreen = p_231304_;
+        this.lastScreen = lastScreen;
     }
 
     @Override

@@ -6,6 +6,9 @@ import java.text.NumberFormat;
 import java.util.Locale;
 import net.minecraft.Util;
 
+/**
+ * A formatter for a {@linkplain Stat statistic}'s corresponding count.
+ */
 public interface StatFormatter {
     DecimalFormat DECIMAL_FORMAT = Util.make(
         new DecimalFormat("########0.00"), p_12881_ -> p_12881_.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.ROOT))
@@ -38,5 +41,12 @@ public interface StatFormatter {
         }
     };
 
-    String format(int p_12887_);
+    /**
+     * Formats the specified {@code value} of a statistic.
+     *
+     * @return the formatted {@code value}
+     *
+     * @param value the statistic's associated count to format
+     */
+    String format(int value);
 }

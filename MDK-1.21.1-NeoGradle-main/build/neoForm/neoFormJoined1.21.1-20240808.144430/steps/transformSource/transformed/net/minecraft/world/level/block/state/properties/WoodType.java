@@ -65,9 +65,9 @@ public record WoodType(
         this(p_273766_, p_273104_, SoundType.WOOD, SoundType.HANGING_SIGN, SoundEvents.FENCE_GATE_CLOSE, SoundEvents.FENCE_GATE_OPEN);
     }
 
-    public static WoodType register(WoodType p_61845_) {
-        TYPES.put(p_61845_.name(), p_61845_);
-        return p_61845_;
+    public static WoodType register(WoodType woodType) {
+        TYPES.put(woodType.name(), woodType);
+        return woodType;
     }
 
     public static Stream<WoodType> values() {

@@ -22,22 +22,22 @@ public record SignedMessageLink(int index, UUID sender, UUID sessionId) {
                 .apply(p_253768_, SignedMessageLink::new)
     );
 
-    public static SignedMessageLink unsigned(UUID p_251496_) {
-        return root(p_251496_, Util.NIL_UUID);
+    public static SignedMessageLink unsigned(UUID sender) {
+        return root(sender, Util.NIL_UUID);
     }
 
-    public static SignedMessageLink root(UUID p_249990_, UUID p_248913_) {
-        return new SignedMessageLink(0, p_249990_, p_248913_);
+    public static SignedMessageLink root(UUID sender, UUID sessionId) {
+        return new SignedMessageLink(0, sender, sessionId);
     }
 
-    public void updateSignature(SignatureUpdater.Output p_249261_) throws SignatureException {
-        p_249261_.update(UUIDUtil.uuidToByteArray(this.sender));
-        p_249261_.update(UUIDUtil.uuidToByteArray(this.sessionId));
-        p_249261_.update(Ints.toByteArray(this.index));
+    public void updateSignature(SignatureUpdater.Output output) throws SignatureException {
+        output.update(UUIDUtil.uuidToByteArray(this.sender));
+        output.update(UUIDUtil.uuidToByteArray(this.sessionId));
+        output.update(Ints.toByteArray(this.index));
     }
 
-    public boolean isDescendantOf(SignedMessageLink p_250977_) {
-        return this.index > p_250977_.index() && this.sender.equals(p_250977_.sender()) && this.sessionId.equals(p_250977_.sessionId());
+    public boolean isDescendantOf(SignedMessageLink other) {
+        return this.index > other.index() && this.sender.equals(other.sender()) && this.sessionId.equals(other.sessionId());
     }
 
     @Nullable

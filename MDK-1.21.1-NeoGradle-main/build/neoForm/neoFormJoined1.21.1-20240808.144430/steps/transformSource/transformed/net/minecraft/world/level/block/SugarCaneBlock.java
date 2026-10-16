@@ -30,71 +30,79 @@ public class SugarCaneBlock extends Block {
         return CODEC;
     }
 
-    public SugarCaneBlock(BlockBehaviour.Properties p_57168_) {
-        super(p_57168_);
+    public SugarCaneBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(AGE, Integer.valueOf(0)));
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_57193_, BlockGetter p_57194_, BlockPos p_57195_, CollisionContext p_57196_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    protected void tick(BlockState p_222543_, ServerLevel p_222544_, BlockPos p_222545_, RandomSource p_222546_) {
-        if (!p_222543_.canSurvive(p_222544_, p_222545_)) {
-            p_222544_.destroyBlock(p_222545_, true);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!state.canSurvive(level, pos)) {
+            level.destroyBlock(pos, true);
         }
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_222548_, ServerLevel p_222549_, BlockPos p_222550_, RandomSource p_222551_) {
-        if (p_222549_.isEmptyBlock(p_222550_.above())) {
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (level.isEmptyBlock(pos.above())) {
             int i = 1;
 
-            while (p_222549_.getBlockState(p_222550_.below(i)).is(this)) {
+            while (level.getBlockState(pos.below(i)).is(this)) {
                 i++;
             }
 
             if (i < 3) {
-                int j = p_222548_.getValue(AGE);
-                if (net.neoforged.neoforge.common.CommonHooks.canCropGrow(p_222549_, p_222550_, p_222548_, true)) {
+                int j = state.getValue(AGE);
+                if (net.neoforged.neoforge.common.CommonHooks.canCropGrow(level, pos, state, true)) {
                 if (j == 15) {
-                    p_222549_.setBlockAndUpdate(p_222550_.above(), this.defaultBlockState());
-                    net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(p_222549_, p_222550_.above(), this.defaultBlockState());
-                    p_222549_.setBlock(p_222550_, p_222548_.setValue(AGE, Integer.valueOf(0)), 4);
+                    level.setBlockAndUpdate(pos.above(), this.defaultBlockState());
+                    net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(level, pos.above(), this.defaultBlockState());
+                    level.setBlock(pos, state.setValue(AGE, Integer.valueOf(0)), 4);
                 } else {
-                    p_222549_.setBlock(p_222550_, p_222548_.setValue(AGE, Integer.valueOf(j + 1)), 4);
+                    level.setBlock(pos, state.setValue(AGE, Integer.valueOf(j + 1)), 4);
                 }
                 }
             }
         }
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_57179_, Direction p_57180_, BlockState p_57181_, LevelAccessor p_57182_, BlockPos p_57183_, BlockPos p_57184_) {
-        if (!p_57179_.canSurvive(p_57182_, p_57183_)) {
-            p_57182_.scheduleTick(p_57183_, this, 1);
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (!state.canSurvive(level, currentPos)) {
+            level.scheduleTick(currentPos, this, 1);
         }
 
-        return super.updateShape(p_57179_, p_57180_, p_57181_, p_57182_, p_57183_, p_57184_);
+        return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_57175_, LevelReader p_57176_, BlockPos p_57177_) {
-        BlockState blockstate = p_57176_.getBlockState(p_57177_.below());
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos.below());
         if (blockstate.is(this)) {
             return true;
         } else {
-            net.neoforged.neoforge.common.util.TriState soilDecision = blockstate.canSustainPlant(p_57176_, p_57177_.below(), Direction.UP, p_57175_);
+            net.neoforged.neoforge.common.util.TriState soilDecision = blockstate.canSustainPlant(level, pos.below(), Direction.UP, state);
             if (!soilDecision.isDefault()) return soilDecision.isTrue();
             if (blockstate.is(BlockTags.DIRT) || blockstate.is(BlockTags.SAND)) {
-                BlockPos blockpos = p_57177_.below();
+                BlockPos blockpos = pos.below();
 
                 for (Direction direction : Direction.Plane.HORIZONTAL) {
-                    BlockState blockstate1 = p_57176_.getBlockState(blockpos.relative(direction));
-                    FluidState fluidstate = p_57176_.getFluidState(blockpos.relative(direction));
-                    if (p_57175_.canBeHydrated(p_57176_, p_57177_, fluidstate, blockpos.relative(direction)) || blockstate1.is(Blocks.FROSTED_ICE)) {
+                    BlockState blockstate1 = level.getBlockState(blockpos.relative(direction));
+                    FluidState fluidstate = level.getFluidState(blockpos.relative(direction));
+                    if (state.canBeHydrated(level, pos, fluidstate, blockpos.relative(direction)) || blockstate1.is(Blocks.FROSTED_ICE)) {
                         return true;
                     }
                 }
@@ -105,7 +113,7 @@ public class SugarCaneBlock extends Block {
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_57186_) {
-        p_57186_.add(AGE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AGE);
     }
 }

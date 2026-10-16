@@ -87,18 +87,18 @@ public class ArmadilloAi {
         return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);
     }
 
-    protected static Brain<?> makeBrain(Brain<Armadillo> p_316225_) {
-        initCoreActivity(p_316225_);
-        initIdleActivity(p_316225_);
-        initScaredActivity(p_316225_);
-        p_316225_.setCoreActivities(Set.of(Activity.CORE));
-        p_316225_.setDefaultActivity(Activity.IDLE);
-        p_316225_.useDefaultActivity();
-        return p_316225_;
+    protected static Brain<?> makeBrain(Brain<Armadillo> brain) {
+        initCoreActivity(brain);
+        initIdleActivity(brain);
+        initScaredActivity(brain);
+        brain.setCoreActivities(Set.of(Activity.CORE));
+        brain.setDefaultActivity(Activity.IDLE);
+        brain.useDefaultActivity();
+        return brain;
     }
 
-    private static void initCoreActivity(Brain<Armadillo> p_316229_) {
-        p_316229_.addActivity(
+    private static void initCoreActivity(Brain<Armadillo> brain) {
+        brain.addActivity(
             Activity.CORE,
             0,
             ImmutableList.of(
@@ -122,8 +122,8 @@ public class ArmadilloAi {
         );
     }
 
-    private static void initIdleActivity(Brain<Armadillo> p_316840_) {
-        p_316840_.addActivity(
+    private static void initIdleActivity(Brain<Armadillo> brain) {
+        brain.addActivity(
             Activity.IDLE,
             ImmutableList.of(
                 Pair.of(0, SetEntityLookTargetSometimes.create(EntityType.PLAYER, 6.0F, UniformInt.of(30, 60))),
@@ -151,8 +151,8 @@ public class ArmadilloAi {
         );
     }
 
-    private static void initScaredActivity(Brain<Armadillo> p_316854_) {
-        p_316854_.addActivityWithConditions(
+    private static void initScaredActivity(Brain<Armadillo> brain) {
+        brain.addActivityWithConditions(
             Activity.PANIC,
             ImmutableList.of(Pair.of(0, new ArmadilloAi.ArmadilloBallUp())),
             Set.of(
@@ -162,8 +162,8 @@ public class ArmadilloAi {
         );
     }
 
-    public static void updateActivity(Armadillo p_316575_) {
-        p_316575_.getBrain().setActiveActivityToFirstValid(ImmutableList.of(Activity.PANIC, Activity.IDLE));
+    public static void updateActivity(Armadillo armadillo) {
+        armadillo.getBrain().setActiveActivityToFirstValid(ImmutableList.of(Activity.PANIC, Activity.IDLE));
     }
 
     public static Predicate<ItemStack> getTemptations() {
@@ -181,61 +181,61 @@ public class ArmadilloAi {
             super(Map.of(), BALL_UP_STAY_IN_STATE);
         }
 
-        protected void tick(ServerLevel p_316315_, Armadillo p_316310_, long p_316415_) {
-            super.tick(p_316315_, p_316310_, p_316415_);
+        protected void tick(ServerLevel level, Armadillo owner, long gameTime) {
+            super.tick(level, owner, gameTime);
             if (this.nextPeekTimer > 0) {
                 this.nextPeekTimer--;
             }
 
-            if (p_316310_.shouldSwitchToScaredState()) {
-                p_316310_.switchToState(Armadillo.ArmadilloState.SCARED);
-                if (p_316310_.onGround()) {
-                    p_316310_.playSound(SoundEvents.ARMADILLO_LAND);
+            if (owner.shouldSwitchToScaredState()) {
+                owner.switchToState(Armadillo.ArmadilloState.SCARED);
+                if (owner.onGround()) {
+                    owner.playSound(SoundEvents.ARMADILLO_LAND);
                 }
             } else {
-                Armadillo.ArmadilloState armadillo$armadillostate = p_316310_.getState();
-                long i = p_316310_.getBrain().getTimeUntilExpiry(MemoryModuleType.DANGER_DETECTED_RECENTLY);
+                Armadillo.ArmadilloState armadillo$armadillostate = owner.getState();
+                long i = owner.getBrain().getTimeUntilExpiry(MemoryModuleType.DANGER_DETECTED_RECENTLY);
                 boolean flag = i > 75L;
                 if (flag != this.dangerWasAround) {
-                    this.nextPeekTimer = this.pickNextPeekTimer(p_316310_);
+                    this.nextPeekTimer = this.pickNextPeekTimer(owner);
                 }
 
                 this.dangerWasAround = flag;
                 if (armadillo$armadillostate == Armadillo.ArmadilloState.SCARED) {
-                    if (this.nextPeekTimer == 0 && p_316310_.onGround() && flag) {
-                        p_316315_.broadcastEntityEvent(p_316310_, (byte)64);
-                        this.nextPeekTimer = this.pickNextPeekTimer(p_316310_);
+                    if (this.nextPeekTimer == 0 && owner.onGround() && flag) {
+                        level.broadcastEntityEvent(owner, (byte)64);
+                        this.nextPeekTimer = this.pickNextPeekTimer(owner);
                     }
 
                     if (i < (long)Armadillo.ArmadilloState.UNROLLING.animationDuration()) {
-                        p_316310_.playSound(SoundEvents.ARMADILLO_UNROLL_START);
-                        p_316310_.switchToState(Armadillo.ArmadilloState.UNROLLING);
+                        owner.playSound(SoundEvents.ARMADILLO_UNROLL_START);
+                        owner.switchToState(Armadillo.ArmadilloState.UNROLLING);
                     }
                 } else if (armadillo$armadillostate == Armadillo.ArmadilloState.UNROLLING && i > (long)Armadillo.ArmadilloState.UNROLLING.animationDuration()) {
-                    p_316310_.switchToState(Armadillo.ArmadilloState.SCARED);
+                    owner.switchToState(Armadillo.ArmadilloState.SCARED);
                 }
             }
         }
 
-        private int pickNextPeekTimer(Armadillo p_326014_) {
-            return Armadillo.ArmadilloState.SCARED.animationDuration() + p_326014_.getRandom().nextIntBetweenInclusive(100, 400);
+        private int pickNextPeekTimer(Armadillo armadillo) {
+            return Armadillo.ArmadilloState.SCARED.animationDuration() + armadillo.getRandom().nextIntBetweenInclusive(100, 400);
         }
 
-        protected boolean checkExtraStartConditions(ServerLevel p_316768_, Armadillo p_316762_) {
-            return p_316762_.onGround();
+        protected boolean checkExtraStartConditions(ServerLevel level, Armadillo owner) {
+            return owner.onGround();
         }
 
-        protected boolean canStillUse(ServerLevel p_316577_, Armadillo p_316565_, long p_316753_) {
-            return p_316565_.getState().isThreatened();
+        protected boolean canStillUse(ServerLevel level, Armadillo entity, long gameTime) {
+            return entity.getState().isThreatened();
         }
 
-        protected void start(ServerLevel p_316659_, Armadillo p_316121_, long p_316872_) {
-            p_316121_.rollUp();
+        protected void start(ServerLevel level, Armadillo entity, long gameTime) {
+            entity.rollUp();
         }
 
-        protected void stop(ServerLevel p_316572_, Armadillo p_316192_, long p_316823_) {
-            if (!p_316192_.canStayRolledUp()) {
-                p_316192_.rollOut();
+        protected void stop(ServerLevel level, Armadillo entity, long gameTime) {
+            if (!entity.canStayRolledUp()) {
+                entity.rollOut();
             }
         }
     }

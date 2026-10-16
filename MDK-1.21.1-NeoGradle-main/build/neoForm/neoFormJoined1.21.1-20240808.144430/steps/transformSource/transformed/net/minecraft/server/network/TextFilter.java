@@ -29,7 +29,7 @@ public interface TextFilter {
 
     void leave();
 
-    CompletableFuture<FilteredText> processStreamMessage(String p_10096_);
+    CompletableFuture<FilteredText> processStreamMessage(String text);
 
-    CompletableFuture<List<FilteredText>> processMessageBundle(List<String> p_10097_);
+    CompletableFuture<List<FilteredText>> processMessageBundle(List<String> texts);
 }

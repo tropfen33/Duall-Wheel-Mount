@@ -27,25 +27,25 @@ public abstract class BaseContainerBlockEntity extends BlockEntity implements Co
     @Nullable
     private Component name;
 
-    protected BaseContainerBlockEntity(BlockEntityType<?> p_155076_, BlockPos p_155077_, BlockState p_155078_) {
-        super(p_155076_, p_155077_, p_155078_);
+    protected BaseContainerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState blockState) {
+        super(type, pos, blockState);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_338606_, HolderLookup.Provider p_338309_) {
-        super.loadAdditional(p_338606_, p_338309_);
-        this.lockKey = LockCode.fromTag(p_338606_);
-        if (p_338606_.contains("CustomName", 8)) {
-            this.name = parseCustomNameSafe(p_338606_.getString("CustomName"), p_338309_);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        this.lockKey = LockCode.fromTag(tag);
+        if (tag.contains("CustomName", 8)) {
+            this.name = parseCustomNameSafe(tag.getString("CustomName"), registries);
         }
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_187461_, HolderLookup.Provider p_324280_) {
-        super.saveAdditional(p_187461_, p_324280_);
-        this.lockKey.addToTag(p_187461_);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        this.lockKey.addToTag(tag);
         if (this.name != null) {
-            p_187461_.putString("CustomName", Component.Serializer.toJson(this.name, p_324280_));
+            tag.putString("CustomName", Component.Serializer.toJson(this.name, registries));
         }
     }
 
@@ -67,14 +67,14 @@ public abstract class BaseContainerBlockEntity extends BlockEntity implements Co
 
     protected abstract Component getDefaultName();
 
-    public boolean canOpen(Player p_58645_) {
-        return canUnlock(p_58645_, this.lockKey, this.getDisplayName());
+    public boolean canOpen(Player player) {
+        return canUnlock(player, this.lockKey, this.getDisplayName());
     }
 
-    public static boolean canUnlock(Player p_58630_, LockCode p_58631_, Component p_58632_) {
-        if (!p_58630_.isSpectator() && !p_58631_.unlocksWith(p_58630_.getMainHandItem())) {
-            p_58630_.displayClientMessage(Component.translatable("container.isLocked", p_58632_), true);
-            p_58630_.playNotifySound(SoundEvents.CHEST_LOCKED, SoundSource.BLOCKS, 1.0F, 1.0F);
+    public static boolean canUnlock(Player player, LockCode code, Component displayName) {
+        if (!player.isSpectator() && !code.unlocksWith(player.getMainHandItem())) {
+            player.displayClientMessage(Component.translatable("container.isLocked", displayName), true);
+            player.playNotifySound(SoundEvents.CHEST_LOCKED, SoundSource.BLOCKS, 1.0F, 1.0F);
             return false;
         } else {
             return true;
@@ -83,7 +83,7 @@ public abstract class BaseContainerBlockEntity extends BlockEntity implements Co
 
     protected abstract NonNullList<ItemStack> getItems();
 
-    protected abstract void setItems(NonNullList<ItemStack> p_332640_);
+    protected abstract void setItems(NonNullList<ItemStack> items);
 
     @Override
     public boolean isEmpty() {
@@ -96,14 +96,20 @@ public abstract class BaseContainerBlockEntity extends BlockEntity implements Co
         return true;
     }
 
+    /**
+     * Returns the stack in the given slot.
+     */
     @Override
-    public ItemStack getItem(int p_332727_) {
-        return this.getItems().get(p_332727_);
+    public ItemStack getItem(int slot) {
+        return this.getItems().get(slot);
     }
 
+    /**
+     * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
+     */
     @Override
-    public ItemStack removeItem(int p_332707_, int p_332672_) {
-        ItemStack itemstack = ContainerHelper.removeItem(this.getItems(), p_332707_, p_332672_);
+    public ItemStack removeItem(int slot, int amount) {
+        ItemStack itemstack = ContainerHelper.removeItem(this.getItems(), slot, amount);
         if (!itemstack.isEmpty()) {
             this.setChanged();
         }
@@ -111,21 +117,30 @@ public abstract class BaseContainerBlockEntity extends BlockEntity implements Co
         return itemstack;
     }
 
+    /**
+     * Removes a stack from the given slot and returns it.
+     */
     @Override
-    public ItemStack removeItemNoUpdate(int p_332812_) {
-        return ContainerHelper.takeItem(this.getItems(), p_332812_);
+    public ItemStack removeItemNoUpdate(int slot) {
+        return ContainerHelper.takeItem(this.getItems(), slot);
     }
 
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
     @Override
-    public void setItem(int p_332705_, ItemStack p_332643_) {
-        this.getItems().set(p_332705_, p_332643_);
-        p_332643_.limitSize(this.getMaxStackSize(p_332643_));
+    public void setItem(int slot, ItemStack stack) {
+        this.getItems().set(slot, stack);
+        stack.limitSize(this.getMaxStackSize(stack));
         this.setChanged();
     }
 
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
     @Override
-    public boolean stillValid(Player p_332791_) {
-        return Container.stillValidBlockEntity(this, p_332791_);
+    public boolean stillValid(Player player) {
+        return Container.stillValidBlockEntity(this, player);
     }
 
     @Override
@@ -135,35 +150,35 @@ public abstract class BaseContainerBlockEntity extends BlockEntity implements Co
 
     @Nullable
     @Override
-    public AbstractContainerMenu createMenu(int p_58641_, Inventory p_58642_, Player p_58643_) {
-        return this.canOpen(p_58643_) ? this.createMenu(p_58641_, p_58642_) : null;
+    public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
+        return this.canOpen(player) ? this.createMenu(containerId, playerInventory) : null;
     }
 
-    protected abstract AbstractContainerMenu createMenu(int p_58627_, Inventory p_58628_);
+    protected abstract AbstractContainerMenu createMenu(int containerId, Inventory inventory);
 
     @Override
-    protected void applyImplicitComponents(BlockEntity.DataComponentInput p_338855_) {
-        super.applyImplicitComponents(p_338855_);
-        this.name = p_338855_.get(DataComponents.CUSTOM_NAME);
-        this.lockKey = p_338855_.getOrDefault(DataComponents.LOCK, LockCode.NO_LOCK);
-        p_338855_.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).copyInto(this.getItems());
+    protected void applyImplicitComponents(BlockEntity.DataComponentInput componentInput) {
+        super.applyImplicitComponents(componentInput);
+        this.name = componentInput.get(DataComponents.CUSTOM_NAME);
+        this.lockKey = componentInput.getOrDefault(DataComponents.LOCK, LockCode.NO_LOCK);
+        componentInput.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).copyInto(this.getItems());
     }
 
     @Override
-    protected void collectImplicitComponents(DataComponentMap.Builder p_338252_) {
-        super.collectImplicitComponents(p_338252_);
-        p_338252_.set(DataComponents.CUSTOM_NAME, this.name);
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        components.set(DataComponents.CUSTOM_NAME, this.name);
         if (!this.lockKey.equals(LockCode.NO_LOCK)) {
-            p_338252_.set(DataComponents.LOCK, this.lockKey);
+            components.set(DataComponents.LOCK, this.lockKey);
         }
 
-        p_338252_.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(this.getItems()));
+        components.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(this.getItems()));
     }
 
     @Override
-    public void removeComponentsFromTag(CompoundTag p_330762_) {
-        p_330762_.remove("CustomName");
-        p_330762_.remove("Lock");
-        p_330762_.remove("Items");
+    public void removeComponentsFromTag(CompoundTag tag) {
+        tag.remove("CustomName");
+        tag.remove("Lock");
+        tag.remove("Items");
     }
 }

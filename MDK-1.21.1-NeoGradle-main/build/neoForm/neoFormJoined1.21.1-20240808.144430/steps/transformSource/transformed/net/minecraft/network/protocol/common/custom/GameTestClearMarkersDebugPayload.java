@@ -13,7 +13,7 @@ public record GameTestClearMarkersDebugPayload() implements CustomPacketPayload 
         this();
     }
 
-    private void write(FriendlyByteBuf p_294656_) {
+    private void write(FriendlyByteBuf buffer) {
     }
 
     @Override

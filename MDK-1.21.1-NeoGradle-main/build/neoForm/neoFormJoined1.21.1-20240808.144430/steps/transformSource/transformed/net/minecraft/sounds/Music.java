@@ -20,11 +20,11 @@ public class Music {
     private final int maxDelay;
     private final boolean replaceCurrentMusic;
 
-    public Music(Holder<SoundEvent> p_263426_, int p_263377_, int p_263383_, boolean p_263387_) {
-        this.event = p_263426_;
-        this.minDelay = p_263377_;
-        this.maxDelay = p_263383_;
-        this.replaceCurrentMusic = p_263387_;
+    public Music(Holder<SoundEvent> event, int minDelay, int maxDelay, boolean replaceCurrentMusic) {
+        this.event = event;
+        this.minDelay = minDelay;
+        this.maxDelay = maxDelay;
+        this.replaceCurrentMusic = replaceCurrentMusic;
     }
 
     public Holder<SoundEvent> getEvent() {

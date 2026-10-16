@@ -9,9 +9,9 @@ public final class ModelLayerLocation {
     private final ResourceLocation model;
     private final String layer;
 
-    public ModelLayerLocation(ResourceLocation p_171121_, String p_171122_) {
-        this.model = p_171121_;
-        this.layer = p_171122_;
+    public ModelLayerLocation(ResourceLocation model, String layer) {
+        this.model = model;
+        this.layer = layer;
     }
 
     public ResourceLocation getModel() {
@@ -23,11 +23,11 @@ public final class ModelLayerLocation {
     }
 
     @Override
-    public boolean equals(Object p_171126_) {
-        if (this == p_171126_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return !(p_171126_ instanceof ModelLayerLocation modellayerlocation)
+            return !(other instanceof ModelLayerLocation modellayerlocation)
                 ? false
                 : this.model.equals(modellayerlocation.model) && this.layer.equals(modellayerlocation.layer);
         }

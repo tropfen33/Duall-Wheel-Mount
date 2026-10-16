@@ -15,15 +15,15 @@ public class ResourceFilterSection {
     public static final MetadataSectionType<ResourceFilterSection> TYPE = MetadataSectionType.fromCodec("filter", CODEC);
     private final List<ResourceLocationPattern> blockList;
 
-    public ResourceFilterSection(List<ResourceLocationPattern> p_215518_) {
-        this.blockList = List.copyOf(p_215518_);
+    public ResourceFilterSection(List<ResourceLocationPattern> blockList) {
+        this.blockList = List.copyOf(blockList);
     }
 
-    public boolean isNamespaceFiltered(String p_215524_) {
-        return this.blockList.stream().anyMatch(p_261433_ -> p_261433_.namespacePredicate().test(p_215524_));
+    public boolean isNamespaceFiltered(String namespace) {
+        return this.blockList.stream().anyMatch(p_261433_ -> p_261433_.namespacePredicate().test(namespace));
     }
 
-    public boolean isPathFiltered(String p_215529_) {
-        return this.blockList.stream().anyMatch(p_261430_ -> p_261430_.pathPredicate().test(p_215529_));
+    public boolean isPathFiltered(String path) {
+        return this.blockList.stream().anyMatch(p_261430_ -> p_261430_.pathPredicate().test(path));
     }
 }

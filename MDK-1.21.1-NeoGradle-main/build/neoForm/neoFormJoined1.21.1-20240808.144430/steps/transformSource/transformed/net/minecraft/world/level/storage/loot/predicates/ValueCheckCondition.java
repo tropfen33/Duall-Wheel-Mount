@@ -11,6 +11,9 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 import net.minecraft.world.level.storage.loot.providers.number.NumberProvider;
 import net.minecraft.world.level.storage.loot.providers.number.NumberProviders;
 
+/**
+ * LootItemCondition that checks if a number provided by a {@link NumberProvider} is within an {@link IntRange}.
+ */
 public record ValueCheckCondition(NumberProvider provider, IntRange range) implements LootItemCondition {
     public static final MapCodec<ValueCheckCondition> CODEC = RecordCodecBuilder.mapCodec(
         p_298196_ -> p_298196_.group(
@@ -30,11 +33,11 @@ public record ValueCheckCondition(NumberProvider provider, IntRange range) imple
         return Sets.union(this.provider.getReferencedContextParams(), this.range.getReferencedContextParams());
     }
 
-    public boolean test(LootContext p_165527_) {
-        return this.range.test(p_165527_, this.provider.getInt(p_165527_));
+    public boolean test(LootContext context) {
+        return this.range.test(context, this.provider.getInt(context));
     }
 
-    public static LootItemCondition.Builder hasValue(NumberProvider p_165529_, IntRange p_165530_) {
-        return () -> new ValueCheckCondition(p_165529_, p_165530_);
+    public static LootItemCondition.Builder hasValue(NumberProvider provider, IntRange range) {
+        return () -> new ValueCheckCondition(provider, range);
     }
 }

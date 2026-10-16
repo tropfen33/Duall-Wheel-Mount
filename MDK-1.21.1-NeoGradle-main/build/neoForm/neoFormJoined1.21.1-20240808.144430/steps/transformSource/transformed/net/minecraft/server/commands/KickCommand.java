@@ -18,8 +18,8 @@ public class KickCommand {
         Component.translatable("commands.kick.singleplayer.failed")
     );
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_137796_) {
-        p_137796_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("kick")
                 .requires(p_137800_ -> p_137800_.hasPermission(3))
                 .then(
@@ -45,16 +45,16 @@ public class KickCommand {
         );
     }
 
-    private static int kickPlayers(CommandSourceStack p_137802_, Collection<ServerPlayer> p_137803_, Component p_137804_) throws CommandSyntaxException {
-        if (!p_137802_.getServer().isPublished()) {
+    private static int kickPlayers(CommandSourceStack source, Collection<ServerPlayer> players, Component reason) throws CommandSyntaxException {
+        if (!source.getServer().isPublished()) {
             throw ERROR_SINGLEPLAYER.create();
         } else {
             int i = 0;
 
-            for (ServerPlayer serverplayer : p_137803_) {
-                if (!p_137802_.getServer().isSingleplayerOwner(serverplayer.getGameProfile())) {
-                    serverplayer.connection.disconnect(p_137804_);
-                    p_137802_.sendSuccess(() -> Component.translatable("commands.kick.success", serverplayer.getDisplayName(), p_137804_), true);
+            for (ServerPlayer serverplayer : players) {
+                if (!source.getServer().isSingleplayerOwner(serverplayer.getGameProfile())) {
+                    serverplayer.connection.disconnect(reason);
+                    source.sendSuccess(() -> Component.translatable("commands.kick.success", serverplayer.getDisplayName(), reason), true);
                     i++;
                 }
             }

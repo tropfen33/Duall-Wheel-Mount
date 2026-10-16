@@ -17,27 +17,27 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class LoadingDotsWidget extends AbstractWidget {
     private final Font font;
 
-    public LoadingDotsWidget(Font p_295952_, Component p_295297_) {
-        super(0, 0, p_295952_.width(p_295297_), 9 * 3, p_295297_);
-        this.font = p_295952_;
+    public LoadingDotsWidget(Font font, Component message) {
+        super(0, 0, font.width(message), 9 * 3, message);
+        this.font = font;
     }
 
     @Override
-    protected void renderWidget(GuiGraphics p_295359_, int p_296296_, int p_294395_, float p_294654_) {
+    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         int i = this.getX() + this.getWidth() / 2;
         int j = this.getY() + this.getHeight() / 2;
         Component component = this.getMessage();
-        p_295359_.drawString(this.font, component, i - this.font.width(component) / 2, j - 9, -1, false);
+        guiGraphics.drawString(this.font, component, i - this.font.width(component) / 2, j - 9, -1, false);
         String s = LoadingDotsText.get(Util.getMillis());
-        p_295359_.drawString(this.font, s, i - this.font.width(s) / 2, j + 9, -8355712, false);
+        guiGraphics.drawString(this.font, s, i - this.font.width(s) / 2, j + 9, -8355712, false);
     }
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput p_294479_) {
+    protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
     }
 
     @Override
-    public void playDownSound(SoundManager p_305986_) {
+    public void playDownSound(SoundManager handler) {
     }
 
     @Override
@@ -45,9 +45,16 @@ public class LoadingDotsWidget extends AbstractWidget {
         return false;
     }
 
+    /**
+     * Retrieves the next focus path based on the given focus navigation event.
+     * <p>
+     * @return the next focus path as a ComponentPath, or {@code null} if there is no next focus path.
+     *
+     * @param event the focus navigation event.
+     */
     @Nullable
     @Override
-    public ComponentPath nextFocusPath(FocusNavigationEvent p_306162_) {
+    public ComponentPath nextFocusPath(FocusNavigationEvent event) {
         return null;
     }
 }

@@ -47,28 +47,28 @@ public class RecoverWorldDataScreen extends Screen {
     private final MultiLineTextWidget issuesWidget;
     private final LevelStorageSource.LevelStorageAccess storageAccess;
 
-    public RecoverWorldDataScreen(Minecraft p_307263_, BooleanConsumer p_307619_, LevelStorageSource.LevelStorageAccess p_307488_) {
+    public RecoverWorldDataScreen(Minecraft minecraft, BooleanConsumer callback, LevelStorageSource.LevelStorageAccess storageAccess) {
         super(TITLE);
-        this.callback = p_307619_;
-        this.message = Component.translatable("recover_world.message", Component.literal(p_307488_.getLevelId()).withStyle(ChatFormatting.GRAY));
-        this.messageWidget = new MultiLineTextWidget(this.message, p_307263_.font);
-        this.storageAccess = p_307488_;
-        Exception exception = this.collectIssue(p_307488_, false);
-        Exception exception1 = this.collectIssue(p_307488_, true);
+        this.callback = callback;
+        this.message = Component.translatable("recover_world.message", Component.literal(storageAccess.getLevelId()).withStyle(ChatFormatting.GRAY));
+        this.messageWidget = new MultiLineTextWidget(this.message, minecraft.font);
+        this.storageAccess = storageAccess;
+        Exception exception = this.collectIssue(storageAccess, false);
+        Exception exception1 = this.collectIssue(storageAccess, true);
         Component component = Component.empty()
-            .append(this.buildInfo(p_307488_, false, exception))
+            .append(this.buildInfo(storageAccess, false, exception))
             .append("\n")
-            .append(this.buildInfo(p_307488_, true, exception1));
-        this.issuesWidget = new MultiLineTextWidget(component, p_307263_.font);
+            .append(this.buildInfo(storageAccess, true, exception1));
+        this.issuesWidget = new MultiLineTextWidget(component, minecraft.font);
         boolean flag = exception != null && exception1 == null;
         this.layout.defaultCellSetting().alignHorizontallyCenter();
-        this.layout.addChild(new StringWidget(this.title, p_307263_.font));
+        this.layout.addChild(new StringWidget(this.title, minecraft.font));
         this.layout.addChild(this.messageWidget.setCentered(true));
         this.layout.addChild(this.issuesWidget);
         LinearLayout linearlayout = LinearLayout.horizontal().spacing(5);
         linearlayout.addChild(Button.builder(BUGTRACKER_BUTTON, ConfirmLinkScreen.confirmLink(this, CommonLinks.SNAPSHOT_BUGS_FEEDBACK)).size(120, 20).build());
         linearlayout.addChild(
-                Button.builder(RESTORE_BUTTON, p_307556_ -> this.attemptRestore(p_307263_))
+                Button.builder(RESTORE_BUTTON, p_307556_ -> this.attemptRestore(minecraft))
                     .size(120, 20)
                     .tooltip(flag ? null : Tooltip.create(NO_FALLBACK_TOOLTIP))
                     .build()
@@ -79,16 +79,16 @@ public class RecoverWorldDataScreen extends Screen {
         this.layout.visitWidgets(this::addRenderableWidget);
     }
 
-    private void attemptRestore(Minecraft p_307224_) {
+    private void attemptRestore(Minecraft minecraft) {
         Exception exception = this.collectIssue(this.storageAccess, false);
         Exception exception1 = this.collectIssue(this.storageAccess, true);
         if (exception != null && exception1 == null) {
-            p_307224_.forceSetScreen(new GenericMessageScreen(Component.translatable("recover_world.restoring")));
+            minecraft.forceSetScreen(new GenericMessageScreen(Component.translatable("recover_world.restoring")));
             EditWorldScreen.makeBackupAndShowToast(this.storageAccess);
             if (this.storageAccess.restoreLevelDataFromOld()) {
-                p_307224_.setScreen(new ConfirmScreen(this.callback, DONE_TITLE, DONE_SUCCESS, CommonComponents.GUI_CONTINUE, CommonComponents.GUI_BACK));
+                minecraft.setScreen(new ConfirmScreen(this.callback, DONE_TITLE, DONE_SUCCESS, CommonComponents.GUI_CONTINUE, CommonComponents.GUI_BACK));
             } else {
-                p_307224_.setScreen(new AlertScreen(() -> this.callback.accept(false), DONE_TITLE, DONE_FAILED));
+                minecraft.setScreen(new AlertScreen(() -> this.callback.accept(false), DONE_TITLE, DONE_FAILED));
             }
         } else {
             LOGGER.error(
@@ -96,28 +96,28 @@ public class RecoverWorldDataScreen extends Screen {
                 exception != null ? exception.getMessage() : "no issues",
                 exception1 != null ? exception1.getMessage() : "no issues"
             );
-            p_307224_.setScreen(new AlertScreen(() -> this.callback.accept(false), DONE_TITLE, DONE_FAILED));
+            minecraft.setScreen(new AlertScreen(() -> this.callback.accept(false), DONE_TITLE, DONE_FAILED));
         }
     }
 
-    private Component buildInfo(LevelStorageSource.LevelStorageAccess p_307659_, boolean p_307410_, @Nullable Exception p_307637_) {
-        if (p_307410_ && p_307637_ instanceof FileNotFoundException) {
+    private Component buildInfo(LevelStorageSource.LevelStorageAccess level, boolean useFallback, @Nullable Exception exception) {
+        if (useFallback && exception instanceof FileNotFoundException) {
             return Component.empty();
         } else {
             MutableComponent mutablecomponent = Component.empty();
-            Instant instant = p_307659_.getFileModificationTime(p_307410_);
+            Instant instant = level.getFileModificationTime(useFallback);
             MutableComponent mutablecomponent1 = instant != null
                 ? Component.literal(WorldSelectionList.DATE_FORMAT.format(instant))
                 : Component.translatable("recover_world.state_entry.unknown");
             mutablecomponent.append(Component.translatable("recover_world.state_entry", mutablecomponent1.withStyle(ChatFormatting.GRAY)));
-            if (p_307637_ == null) {
+            if (exception == null) {
                 mutablecomponent.append(NO_ISSUES);
-            } else if (p_307637_ instanceof FileNotFoundException) {
+            } else if (exception instanceof FileNotFoundException) {
                 mutablecomponent.append(MISSING_FILE);
-            } else if (p_307637_ instanceof ReportedNbtException) {
-                mutablecomponent.append(Component.literal(p_307637_.getCause().toString()).withStyle(ChatFormatting.RED));
+            } else if (exception instanceof ReportedNbtException) {
+                mutablecomponent.append(Component.literal(exception.getCause().toString()).withStyle(ChatFormatting.RED));
             } else {
-                mutablecomponent.append(Component.literal(p_307637_.toString()).withStyle(ChatFormatting.RED));
+                mutablecomponent.append(Component.literal(exception.toString()).withStyle(ChatFormatting.RED));
             }
 
             return mutablecomponent;
@@ -125,12 +125,12 @@ public class RecoverWorldDataScreen extends Screen {
     }
 
     @Nullable
-    private Exception collectIssue(LevelStorageSource.LevelStorageAccess p_307217_, boolean p_307519_) {
+    private Exception collectIssue(LevelStorageSource.LevelStorageAccess level, boolean useFallback) {
         try {
-            if (!p_307519_) {
-                p_307217_.getSummary(p_307217_.getDataTag());
+            if (!useFallback) {
+                level.getSummary(level.getDataTag());
             } else {
-                p_307217_.getSummary(p_307217_.getDataTagFallback());
+                level.getSummary(level.getDataTagFallback());
             }
 
             return null;

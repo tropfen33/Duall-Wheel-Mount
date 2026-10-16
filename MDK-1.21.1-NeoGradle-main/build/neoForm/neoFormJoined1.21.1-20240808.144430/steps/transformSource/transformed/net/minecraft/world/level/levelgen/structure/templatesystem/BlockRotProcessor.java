@@ -25,33 +25,33 @@ public class BlockRotProcessor extends StructureProcessor {
     private final Optional<HolderSet<Block>> rottableBlocks;
     private final float integrity;
 
-    public BlockRotProcessor(HolderSet<Block> p_255622_, float p_256468_) {
-        this(Optional.of(p_255622_), p_256468_);
+    public BlockRotProcessor(HolderSet<Block> rottableBlocks, float integrity) {
+        this(Optional.of(rottableBlocks), integrity);
     }
 
-    public BlockRotProcessor(float p_74078_) {
-        this(Optional.empty(), p_74078_);
+    public BlockRotProcessor(float integrity) {
+        this(Optional.empty(), integrity);
     }
 
-    private BlockRotProcessor(Optional<HolderSet<Block>> p_230284_, float p_230285_) {
-        this.integrity = p_230285_;
-        this.rottableBlocks = p_230284_;
+    private BlockRotProcessor(Optional<HolderSet<Block>> rottableBlocks, float integrity) {
+        this.integrity = integrity;
+        this.rottableBlocks = rottableBlocks;
     }
 
     @Nullable
     @Override
     public StructureTemplate.StructureBlockInfo processBlock(
-        LevelReader p_74081_,
-        BlockPos p_74082_,
-        BlockPos p_74083_,
-        StructureTemplate.StructureBlockInfo p_74084_,
-        StructureTemplate.StructureBlockInfo p_74085_,
-        StructurePlaceSettings p_74086_
+        LevelReader level,
+        BlockPos offset,
+        BlockPos pos,
+        StructureTemplate.StructureBlockInfo blockInfo,
+        StructureTemplate.StructureBlockInfo relativeBlockInfo,
+        StructurePlaceSettings settings
     ) {
-        RandomSource randomsource = p_74086_.getRandom(p_74085_.pos());
-        return (!this.rottableBlocks.isPresent() || p_74084_.state().is(this.rottableBlocks.get())) && !(randomsource.nextFloat() <= this.integrity)
+        RandomSource randomsource = settings.getRandom(relativeBlockInfo.pos());
+        return (!this.rottableBlocks.isPresent() || blockInfo.state().is(this.rottableBlocks.get())) && !(randomsource.nextFloat() <= this.integrity)
             ? null
-            : p_74085_;
+            : relativeBlockInfo;
     }
 
     @Override

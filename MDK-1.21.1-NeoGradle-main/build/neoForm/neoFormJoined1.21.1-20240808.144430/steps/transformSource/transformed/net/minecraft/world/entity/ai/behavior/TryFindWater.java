@@ -13,7 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.apache.commons.lang3.mutable.MutableLong;
 
 public class TryFindWater {
-    public static BehaviorControl<PathfinderMob> create(int p_259298_, float p_259140_) {
+    public static BehaviorControl<PathfinderMob> create(int range, float speedModifier) {
         MutableLong mutablelong = new MutableLong(0L);
         return BehaviorBuilder.create(
             p_260101_ -> p_260101_.group(
@@ -32,7 +32,7 @@ public class TryFindWater {
                                 BlockPos blockpos1 = null;
                                 BlockPos blockpos2 = p_259212_.blockPosition();
 
-                                for (BlockPos blockpos3 : BlockPos.withinManhattan(blockpos2, p_259298_, p_259298_, p_259298_)) {
+                                for (BlockPos blockpos3 : BlockPos.withinManhattan(blockpos2, range, range, range)) {
                                     if (blockpos3.getX() != blockpos2.getX() || blockpos3.getZ() != blockpos2.getZ()) {
                                         BlockState blockstate = p_259212_.level().getBlockState(blockpos3.above());
                                         BlockState blockstate1 = p_259212_.level().getBlockState(blockpos3);
@@ -55,7 +55,7 @@ public class TryFindWater {
 
                                 if (blockpos != null) {
                                     p_259819_.set(new BlockPosTracker(blockpos));
-                                    p_259692_.set(new WalkTarget(new BlockPosTracker(blockpos), p_259140_, 0));
+                                    p_259692_.set(new WalkTarget(new BlockPosTracker(blockpos), speedModifier, 0));
                                 }
 
                                 mutablelong.setValue(p_260041_ + 40L);

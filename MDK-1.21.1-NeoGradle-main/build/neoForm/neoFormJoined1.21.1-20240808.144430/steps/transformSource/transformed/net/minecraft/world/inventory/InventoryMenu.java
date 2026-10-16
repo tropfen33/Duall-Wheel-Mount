@@ -49,11 +49,11 @@ public class InventoryMenu extends RecipeBookMenu<CraftingInput, CraftingRecipe>
     public final boolean active;
     private final Player owner;
 
-    public InventoryMenu(Inventory p_39706_, boolean p_39707_, final Player p_39708_) {
+    public InventoryMenu(Inventory playerInventory, boolean active, final Player owner) {
         super(null, 0);
-        this.active = p_39707_;
-        this.owner = p_39708_;
-        this.addSlot(new ResultSlot(p_39706_.player, this.craftSlots, this.resultSlots, 0, 154, 28));
+        this.active = active;
+        this.owner = owner;
+        this.addSlot(new ResultSlot(playerInventory.player, this.craftSlots, this.resultSlots, 0, 154, 28));
 
         for (int i = 0; i < 2; i++) {
             for (int j = 0; j < 2; j++) {
@@ -64,23 +64,23 @@ public class InventoryMenu extends RecipeBookMenu<CraftingInput, CraftingRecipe>
         for (int k = 0; k < 4; k++) {
             EquipmentSlot equipmentslot = SLOT_IDS[k];
             ResourceLocation resourcelocation = TEXTURE_EMPTY_SLOTS.get(equipmentslot);
-            this.addSlot(new ArmorSlot(p_39706_, p_39708_, equipmentslot, 39 - k, 8, 8 + k * 18, resourcelocation));
+            this.addSlot(new ArmorSlot(playerInventory, owner, equipmentslot, 39 - k, 8, 8 + k * 18, resourcelocation));
         }
 
         for (int l = 0; l < 3; l++) {
             for (int j1 = 0; j1 < 9; j1++) {
-                this.addSlot(new Slot(p_39706_, j1 + (l + 1) * 9, 8 + j1 * 18, 84 + l * 18));
+                this.addSlot(new Slot(playerInventory, j1 + (l + 1) * 9, 8 + j1 * 18, 84 + l * 18));
             }
         }
 
         for (int i1 = 0; i1 < 9; i1++) {
-            this.addSlot(new Slot(p_39706_, i1, 8 + i1 * 18, 142));
+            this.addSlot(new Slot(playerInventory, i1, 8 + i1 * 18, 142));
         }
 
-        this.addSlot(new Slot(p_39706_, 40, 77, 62) {
+        this.addSlot(new Slot(playerInventory, 40, 77, 62) {
             @Override
             public void setByPlayer(ItemStack p_270969_, ItemStack p_299918_) {
-                p_39708_.onEquipItem(EquipmentSlot.OFFHAND, p_299918_, p_270969_);
+                owner.onEquipItem(EquipmentSlot.OFFHAND, p_299918_, p_270969_);
                 super.setByPlayer(p_270969_, p_299918_);
             }
 
@@ -91,13 +91,13 @@ public class InventoryMenu extends RecipeBookMenu<CraftingInput, CraftingRecipe>
         });
     }
 
-    public static boolean isHotbarSlot(int p_150593_) {
-        return p_150593_ >= 36 && p_150593_ < 45 || p_150593_ == 45;
+    public static boolean isHotbarSlot(int index) {
+        return index >= 36 && index < 45 || index == 45;
     }
 
     @Override
-    public void fillCraftSlotsStackedContents(StackedContents p_39714_) {
-        this.craftSlots.fillStackedContents(p_39714_);
+    public void fillCraftSlotsStackedContents(StackedContents itemHelper) {
+        this.craftSlots.fillStackedContents(itemHelper);
     }
 
     @Override
@@ -107,48 +107,60 @@ public class InventoryMenu extends RecipeBookMenu<CraftingInput, CraftingRecipe>
     }
 
     @Override
-    public boolean recipeMatches(RecipeHolder<CraftingRecipe> p_300901_) {
-        return p_300901_.value().matches(this.craftSlots.asCraftInput(), this.owner.level());
+    public boolean recipeMatches(RecipeHolder<CraftingRecipe> recipe) {
+        return recipe.value().matches(this.craftSlots.asCraftInput(), this.owner.level());
     }
 
+    /**
+     * Callback for when the crafting matrix is changed.
+     */
     @Override
-    public void slotsChanged(Container p_39710_) {
+    public void slotsChanged(Container inventory) {
         CraftingMenu.slotChangedCraftingGrid(this, this.owner.level(), this.owner, this.craftSlots, this.resultSlots, null);
     }
 
+    /**
+     * Called when the container is closed.
+     */
     @Override
-    public void removed(Player p_39721_) {
-        super.removed(p_39721_);
+    public void removed(Player player) {
+        super.removed(player);
         this.resultSlots.clearContent();
-        if (!p_39721_.level().isClientSide) {
-            this.clearContainer(p_39721_, this.craftSlots);
+        if (!player.level().isClientSide) {
+            this.clearContainer(player, this.craftSlots);
         }
     }
 
+    /**
+     * Determines whether supplied player can use this container
+     */
     @Override
-    public boolean stillValid(Player p_39712_) {
+    public boolean stillValid(Player player) {
         return true;
     }
 
+    /**
+     * Handle when the stack in slot {@code index} is shift-clicked. Normally this moves the stack between the player inventory and the other inventory(s).
+     */
     @Override
-    public ItemStack quickMoveStack(Player p_39723_, int p_39724_) {
+    public ItemStack quickMoveStack(Player player, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(p_39724_);
+        Slot slot = this.slots.get(index);
         if (slot.hasItem()) {
             ItemStack itemstack1 = slot.getItem();
             itemstack = itemstack1.copy();
-            EquipmentSlot equipmentslot = p_39723_.getEquipmentSlotForItem(itemstack);
-            if (p_39724_ == 0) {
+            EquipmentSlot equipmentslot = player.getEquipmentSlotForItem(itemstack);
+            if (index == 0) {
                 if (!this.moveItemStackTo(itemstack1, 9, 45, true)) {
                     return ItemStack.EMPTY;
                 }
 
                 slot.onQuickCraft(itemstack1, itemstack);
-            } else if (p_39724_ >= 1 && p_39724_ < 5) {
+            } else if (index >= 1 && index < 5) {
                 if (!this.moveItemStackTo(itemstack1, 9, 45, false)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (p_39724_ >= 5 && p_39724_ < 9) {
+            } else if (index >= 5 && index < 9) {
                 if (!this.moveItemStackTo(itemstack1, 9, 45, false)) {
                     return ItemStack.EMPTY;
                 }
@@ -161,11 +173,11 @@ public class InventoryMenu extends RecipeBookMenu<CraftingInput, CraftingRecipe>
                 if (!this.moveItemStackTo(itemstack1, 45, 46, false)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (p_39724_ >= 9 && p_39724_ < 36) {
+            } else if (index >= 9 && index < 36) {
                 if (!this.moveItemStackTo(itemstack1, 36, 45, false)) {
                     return ItemStack.EMPTY;
                 }
-            } else if (p_39724_ >= 36 && p_39724_ < 45) {
+            } else if (index >= 36 && index < 45) {
                 if (!this.moveItemStackTo(itemstack1, 9, 36, false)) {
                     return ItemStack.EMPTY;
                 }
@@ -183,18 +195,21 @@ public class InventoryMenu extends RecipeBookMenu<CraftingInput, CraftingRecipe>
                 return ItemStack.EMPTY;
             }
 
-            slot.onTake(p_39723_, itemstack1);
-            if (p_39724_ == 0) {
-                p_39723_.drop(itemstack1, false);
+            slot.onTake(player, itemstack1);
+            if (index == 0) {
+                player.drop(itemstack1, false);
             }
         }
 
         return itemstack;
     }
 
+    /**
+     * Called to determine if the current slot is valid for the stack merging (double-click) code. The stack passed in is null for the initial slot that was double-clicked.
+     */
     @Override
-    public boolean canTakeItemForPickAll(ItemStack p_39716_, Slot p_39717_) {
-        return p_39717_.container != this.resultSlots && super.canTakeItemForPickAll(p_39716_, p_39717_);
+    public boolean canTakeItemForPickAll(ItemStack stack, Slot slot) {
+        return slot.container != this.resultSlots && super.canTakeItemForPickAll(stack, slot);
     }
 
     @Override
@@ -227,7 +242,7 @@ public class InventoryMenu extends RecipeBookMenu<CraftingInput, CraftingRecipe>
     }
 
     @Override
-    public boolean shouldMoveToInventory(int p_150591_) {
-        return p_150591_ != this.getResultSlotIndex();
+    public boolean shouldMoveToInventory(int slotIndex) {
+        return slotIndex != this.getResultSlotIndex();
     }
 }

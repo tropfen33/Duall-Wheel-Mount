@@ -31,10 +31,10 @@ public class KeyBindsList extends ContainerObjectSelectionList<KeyBindsList.Entr
     final KeyBindsScreen keyBindsScreen;
     private int maxNameWidth;
 
-    public KeyBindsList(KeyBindsScreen p_345102_, Minecraft p_346132_) {
-        super(p_346132_, p_345102_.width, p_345102_.layout.getContentHeight(), p_345102_.layout.getHeaderHeight(), 20);
-        this.keyBindsScreen = p_345102_;
-        KeyMapping[] akeymapping = ArrayUtils.clone((KeyMapping[])p_346132_.options.keyMappings);
+    public KeyBindsList(KeyBindsScreen keyBindsScreen, Minecraft minecraft) {
+        super(minecraft, keyBindsScreen.width, keyBindsScreen.layout.getContentHeight(), keyBindsScreen.layout.getHeaderHeight(), 20);
+        this.keyBindsScreen = keyBindsScreen;
+        KeyMapping[] akeymapping = ArrayUtils.clone((KeyMapping[])minecraft.options.keyMappings);
         Arrays.sort((Object[])akeymapping);
         String s = null;
 
@@ -46,7 +46,7 @@ public class KeyBindsList extends ContainerObjectSelectionList<KeyBindsList.Entr
             }
 
             Component component = keymapping.getDisplayName();
-            int i = p_346132_.font.width(component);
+            int i = minecraft.font.width(component);
             if (i > this.maxNameWidth) {
                 this.maxNameWidth = i;
             }
@@ -74,32 +74,39 @@ public class KeyBindsList extends ContainerObjectSelectionList<KeyBindsList.Entr
         final Component name;
         private final int width;
 
-        public CategoryEntry(Component p_345224_) {
-            this.name = p_345224_;
+        public CategoryEntry(Component name) {
+            this.name = name;
             this.width = KeyBindsList.this.minecraft.font.width(this.name);
         }
 
         @Override
         public void render(
-            GuiGraphics p_345402_,
-            int p_345541_,
-            int p_345306_,
-            int p_346166_,
-            int p_346154_,
-            int p_345075_,
-            int p_346184_,
-            int p_346385_,
-            boolean p_346139_,
-            float p_345189_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
-            p_345402_.drawString(
-                KeyBindsList.this.minecraft.font, this.name, KeyBindsList.this.width / 2 - this.width / 2, p_345306_ + p_345075_ - 9 - 1, -1, false
+            guiGraphics.drawString(
+                KeyBindsList.this.minecraft.font, this.name, KeyBindsList.this.width / 2 - this.width / 2, top + height - 9 - 1, -1, false
             );
         }
 
+        /**
+         * Retrieves the next focus path based on the given focus navigation event.
+         * <p>
+         * @return the next focus path as a ComponentPath, or {@code null} if there is no next focus path.
+         *
+         * @param event the focus navigation event.
+         */
         @Nullable
         @Override
-        public ComponentPath nextFocusPath(FocusNavigationEvent p_344970_) {
+        public ComponentPath nextFocusPath(FocusNavigationEvent event) {
             return null;
         }
 
@@ -143,53 +150,53 @@ public class KeyBindsList extends ContainerObjectSelectionList<KeyBindsList.Entr
         private final Button resetButton;
         private boolean hasCollision = false;
 
-        KeyEntry(KeyMapping p_345998_, Component p_345196_) {
-            this.key = p_345998_;
-            this.name = p_345196_;
-            this.changeButton = Button.builder(p_345196_, p_345593_ -> {
-                    KeyBindsList.this.keyBindsScreen.selectedKey = p_345998_;
+        KeyEntry(KeyMapping key, Component name) {
+            this.key = key;
+            this.name = name;
+            this.changeButton = Button.builder(name, p_345593_ -> {
+                    KeyBindsList.this.keyBindsScreen.selectedKey = key;
                     KeyBindsList.this.resetMappingAndUpdateButtons();
                 })
                 .bounds(0, 0, 75, 20)
                 .createNarration(
-                    p_346090_ -> p_345998_.isUnbound()
-                            ? Component.translatable("narrator.controls.unbound", p_345196_)
-                            : Component.translatable("narrator.controls.bound", p_345196_, p_346090_.get())
+                    p_346090_ -> key.isUnbound()
+                            ? Component.translatable("narrator.controls.unbound", name)
+                            : Component.translatable("narrator.controls.bound", name, p_346090_.get())
                 )
                 .build();
             this.resetButton = Button.builder(RESET_BUTTON_TITLE, p_346334_ -> {
                 this.key.setToDefault();
-                KeyBindsList.this.minecraft.options.setKey(p_345998_, p_345998_.getDefaultKey());
+                KeyBindsList.this.minecraft.options.setKey(key, key.getDefaultKey());
                 KeyBindsList.this.resetMappingAndUpdateButtons();
-            }).bounds(0, 0, 50, 20).createNarration(p_344899_ -> Component.translatable("narrator.controls.reset", p_345196_)).build();
+            }).bounds(0, 0, 50, 20).createNarration(p_344899_ -> Component.translatable("narrator.controls.reset", name)).build();
             this.refreshEntry();
         }
 
         @Override
         public void render(
-            GuiGraphics p_345065_,
-            int p_345504_,
-            int p_345678_,
-            int p_344740_,
-            int p_345885_,
-            int p_344888_,
-            int p_345213_,
-            int p_344829_,
-            boolean p_346415_,
-            float p_345934_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
             int i = KeyBindsList.this.getScrollbarPosition() - this.resetButton.getWidth() - 10;
-            int j = p_345678_ - 2;
+            int j = top - 2;
             this.resetButton.setPosition(i, j);
-            this.resetButton.render(p_345065_, p_345213_, p_344829_, p_345934_);
+            this.resetButton.render(guiGraphics, mouseX, mouseY, partialTick);
             int k = i - 5 - this.changeButton.getWidth();
             this.changeButton.setPosition(k, j);
-            this.changeButton.render(p_345065_, p_345213_, p_344829_, p_345934_);
-            p_345065_.drawString(KeyBindsList.this.minecraft.font, this.name, p_344740_, p_345678_ + p_344888_ / 2 - 9 / 2, -1);
+            this.changeButton.render(guiGraphics, mouseX, mouseY, partialTick);
+            guiGraphics.drawString(KeyBindsList.this.minecraft.font, this.name, left, top + height / 2 - 9 / 2, -1);
             if (this.hasCollision) {
                 int l = 3;
                 int i1 = this.changeButton.getX() - 6;
-                p_345065_.fill(i1, p_345678_ - 1, i1 + 3, p_345678_ + p_344888_, -65536);
+                guiGraphics.fill(i1, top - 1, i1 + 3, top + height, -65536);
             }
         }
 

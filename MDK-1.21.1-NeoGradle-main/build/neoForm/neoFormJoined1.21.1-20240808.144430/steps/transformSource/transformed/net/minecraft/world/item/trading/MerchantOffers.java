@@ -18,23 +18,23 @@ public class MerchantOffers extends ArrayList<MerchantOffer> {
     public MerchantOffers() {
     }
 
-    private MerchantOffers(int p_220323_) {
-        super(p_220323_);
+    private MerchantOffers(int size) {
+        super(size);
     }
 
-    private MerchantOffers(Collection<MerchantOffer> p_323676_) {
-        super(p_323676_);
+    private MerchantOffers(Collection<MerchantOffer> offers) {
+        super(offers);
     }
 
     @Nullable
-    public MerchantOffer getRecipeFor(ItemStack p_45390_, ItemStack p_45391_, int p_45392_) {
-        if (p_45392_ > 0 && p_45392_ < this.size()) {
-            MerchantOffer merchantoffer1 = this.get(p_45392_);
-            return merchantoffer1.satisfiedBy(p_45390_, p_45391_) ? merchantoffer1 : null;
+    public MerchantOffer getRecipeFor(ItemStack stackA, ItemStack stackB, int index) {
+        if (index > 0 && index < this.size()) {
+            MerchantOffer merchantoffer1 = this.get(index);
+            return merchantoffer1.satisfiedBy(stackA, stackB) ? merchantoffer1 : null;
         } else {
             for (int i = 0; i < this.size(); i++) {
                 MerchantOffer merchantoffer = this.get(i);
-                if (merchantoffer.satisfiedBy(p_45390_, p_45391_)) {
+                if (merchantoffer.satisfiedBy(stackA, stackB)) {
                     return merchantoffer;
                 }
             }

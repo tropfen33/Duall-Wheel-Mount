@@ -24,9 +24,12 @@ import org.joml.Vector2i;
 public interface ContainerEventHandler extends GuiEventListener {
     List<? extends GuiEventListener> children();
 
-    default Optional<GuiEventListener> getChildAt(double p_94730_, double p_94731_) {
+    /**
+     * Returns the first event listener that intersects with the mouse coordinates.
+     */
+    default Optional<GuiEventListener> getChildAt(double mouseX, double mouseY) {
         for (GuiEventListener guieventlistener : this.children()) {
-            if (guieventlistener.isMouseOver(p_94730_, p_94731_)) {
+            if (guieventlistener.isMouseOver(mouseX, mouseY)) {
                 return Optional.of(guieventlistener);
             }
         }
@@ -34,12 +37,21 @@ public interface ContainerEventHandler extends GuiEventListener {
         return Optional.empty();
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    default boolean mouseClicked(double p_94695_, double p_94696_, int p_94697_) {
+    default boolean mouseClicked(double mouseX, double mouseY, int button) {
         for (GuiEventListener guieventlistener : this.children()) {
-            if (guieventlistener.mouseClicked(p_94695_, p_94696_, p_94697_)) {
+            if (guieventlistener.mouseClicked(mouseX, mouseY, button)) {
                 this.setFocused(guieventlistener);
-                if (p_94697_ == 0) {
+                if (button == 0) {
                     this.setDragging(true);
                 }
 
@@ -50,56 +62,117 @@ public interface ContainerEventHandler extends GuiEventListener {
         return false;
     }
 
+    /**
+     * Called when a mouse button is released within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was released.
+     */
     @Override
-    default boolean mouseReleased(double p_94722_, double p_94723_, int p_94724_) {
-        if (p_94724_ == 0 && this.isDragging()) {
+    default boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (button == 0 && this.isDragging()) {
             this.setDragging(false);
             if (this.getFocused() != null) {
-                return this.getFocused().mouseReleased(p_94722_, p_94723_, p_94724_);
+                return this.getFocused().mouseReleased(mouseX, mouseY, button);
             }
         }
 
-        return this.getChildAt(p_94722_, p_94723_).filter(p_94708_ -> p_94708_.mouseReleased(p_94722_, p_94723_, p_94724_)).isPresent();
+        return this.getChildAt(mouseX, mouseY).filter(p_94708_ -> p_94708_.mouseReleased(mouseX, mouseY, button)).isPresent();
     }
 
+    /**
+     * Called when the mouse is dragged within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that is being dragged.
+     * @param dragX  the X distance of the drag.
+     * @param dragY  the Y distance of the drag.
+     */
     @Override
-    default boolean mouseDragged(double p_94699_, double p_94700_, int p_94701_, double p_94702_, double p_94703_) {
-        return this.getFocused() != null && this.isDragging() && p_94701_ == 0
-            ? this.getFocused().mouseDragged(p_94699_, p_94700_, p_94701_, p_94702_, p_94703_)
+    default boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        return this.getFocused() != null && this.isDragging() && button == 0
+            ? this.getFocused().mouseDragged(mouseX, mouseY, button, dragX, dragY)
             : false;
     }
 
     boolean isDragging();
 
-    void setDragging(boolean p_94720_);
+    /**
+     * Sets if the GUI element is dragging or not.
+     *
+     * @param isDragging the dragging state of the GUI element.
+     */
+    void setDragging(boolean isDragging);
 
     @Override
-    default boolean mouseScrolled(double p_94686_, double p_94687_, double p_94688_, double p_294830_) {
-        return this.getChildAt(p_94686_, p_94687_).filter(p_293596_ -> p_293596_.mouseScrolled(p_94686_, p_94687_, p_94688_, p_294830_)).isPresent();
+    default boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        return this.getChildAt(mouseX, mouseY).filter(p_293596_ -> p_293596_.mouseScrolled(mouseX, mouseY, scrollX, scrollY)).isPresent();
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    default boolean keyPressed(int p_94710_, int p_94711_, int p_94712_) {
-        return this.getFocused() != null && this.getFocused().keyPressed(p_94710_, p_94711_, p_94712_);
+    default boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return this.getFocused() != null && this.getFocused().keyPressed(keyCode, scanCode, modifiers);
     }
 
+    /**
+     * Called when a keyboard key is released within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the released key.
+     * @param scanCode  the scan code of the released key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    default boolean keyReleased(int p_94715_, int p_94716_, int p_94717_) {
-        return this.getFocused() != null && this.getFocused().keyReleased(p_94715_, p_94716_, p_94717_);
+    default boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+        return this.getFocused() != null && this.getFocused().keyReleased(keyCode, scanCode, modifiers);
     }
 
+    /**
+     * Called when a character is typed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param codePoint the code point of the typed character.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    default boolean charTyped(char p_94683_, int p_94684_) {
-        return this.getFocused() != null && this.getFocused().charTyped(p_94683_, p_94684_);
+    default boolean charTyped(char codePoint, int modifiers) {
+        return this.getFocused() != null && this.getFocused().charTyped(codePoint, modifiers);
     }
 
     @Nullable
     GuiEventListener getFocused();
 
-    void setFocused(@Nullable GuiEventListener p_94713_);
+    /**
+     * Sets the focus state of the GUI element.
+     *
+     * @param focused the focused GUI element.
+     */
+    void setFocused(@Nullable GuiEventListener focused);
 
+    /**
+     * Sets the focus state of the GUI element.
+     *
+     * @param focused {@code true} to apply focus, {@code false} to remove focus
+     */
     @Override
-    default void setFocused(boolean p_265504_) {
+    default void setFocused(boolean focused) {
     }
 
     @Override
@@ -114,29 +187,43 @@ public interface ContainerEventHandler extends GuiEventListener {
         return guieventlistener != null ? ComponentPath.path(this, guieventlistener.getCurrentFocusPath()) : null;
     }
 
+    /**
+     * Retrieves the next focus path based on the given focus navigation event.
+     * <p>
+     * @return The next focus path as a ComponentPath, or {@code null} if there is no next focus path.
+     *
+     * @param event the focus navigation event.
+     */
     @Nullable
     @Override
-    default ComponentPath nextFocusPath(FocusNavigationEvent p_265668_) {
+    default ComponentPath nextFocusPath(FocusNavigationEvent event) {
         GuiEventListener guieventlistener = this.getFocused();
         if (guieventlistener != null) {
-            ComponentPath componentpath = guieventlistener.nextFocusPath(p_265668_);
+            ComponentPath componentpath = guieventlistener.nextFocusPath(event);
             if (componentpath != null) {
                 return ComponentPath.path(this, componentpath);
             }
         }
 
-        if (p_265668_ instanceof FocusNavigationEvent.TabNavigation focusnavigationevent$tabnavigation) {
+        if (event instanceof FocusNavigationEvent.TabNavigation focusnavigationevent$tabnavigation) {
             return this.handleTabNavigation(focusnavigationevent$tabnavigation);
         } else {
-            return p_265668_ instanceof FocusNavigationEvent.ArrowNavigation focusnavigationevent$arrownavigation
+            return event instanceof FocusNavigationEvent.ArrowNavigation focusnavigationevent$arrownavigation
                 ? this.handleArrowNavigation(focusnavigationevent$arrownavigation)
                 : null;
         }
     }
 
+    /**
+     * Handles tab-based navigation events.
+     * <p>
+     * @return The next focus path for tab navigation, or {@code null} if no suitable path is found.
+     *
+     * @param tabNavigation The tab navigation event.
+     */
     @Nullable
-    private ComponentPath handleTabNavigation(FocusNavigationEvent.TabNavigation p_265354_) {
-        boolean flag = p_265354_.forward();
+    private ComponentPath handleTabNavigation(FocusNavigationEvent.TabNavigation tabNavigation) {
+        boolean flag = tabNavigation.forward();
         GuiEventListener guieventlistener = this.getFocused();
         List<? extends GuiEventListener> list = new ArrayList<>(this.children());
         Collections.sort(list, Comparator.comparingInt(p_344153_ -> p_344153_.getTabOrderGroup()));
@@ -156,7 +243,7 @@ public interface ContainerEventHandler extends GuiEventListener {
 
         while (booleansupplier.getAsBoolean()) {
             GuiEventListener guieventlistener1 = supplier.get();
-            ComponentPath componentpath = guieventlistener1.nextFocusPath(p_265354_);
+            ComponentPath componentpath = guieventlistener1.nextFocusPath(tabNavigation);
             if (componentpath != null) {
                 return ComponentPath.path(this, componentpath);
             }
@@ -165,37 +252,54 @@ public interface ContainerEventHandler extends GuiEventListener {
         return null;
     }
 
+    /**
+     * Handles arrow-based navigation events.
+     * <p>
+     * @return The next focus path for arrow navigation, or {@code null} if no suitable path is found.
+     *
+     * @param arrowNavigation The arrow navigation event.
+     */
     @Nullable
-    private ComponentPath handleArrowNavigation(FocusNavigationEvent.ArrowNavigation p_265760_) {
+    private ComponentPath handleArrowNavigation(FocusNavigationEvent.ArrowNavigation arrowNavigation) {
         GuiEventListener guieventlistener = this.getFocused();
         if (guieventlistener == null) {
-            ScreenDirection screendirection = p_265760_.direction();
+            ScreenDirection screendirection = arrowNavigation.direction();
             ScreenRectangle screenrectangle1 = this.getRectangle().getBorder(screendirection.getOpposite());
-            return ComponentPath.path(this, this.nextFocusPathInDirection(screenrectangle1, screendirection, null, p_265760_));
+            return ComponentPath.path(this, this.nextFocusPathInDirection(screenrectangle1, screendirection, null, arrowNavigation));
         } else {
             ScreenRectangle screenrectangle = guieventlistener.getRectangle();
-            return ComponentPath.path(this, this.nextFocusPathInDirection(screenrectangle, p_265760_.direction(), guieventlistener, p_265760_));
+            return ComponentPath.path(this, this.nextFocusPathInDirection(screenrectangle, arrowNavigation.direction(), guieventlistener, arrowNavigation));
         }
     }
 
+    /**
+     * Calculates the next focus path in a specific direction.
+     * <p>
+     * @return The next focus path in the specified direction, or {@code null} if no suitable path is found.
+     *
+     * @param rectangle The screen rectangle.
+     * @param direction The direction of navigation.
+     * @param listener  The currently focused GUI event listener.
+     * @param event     The focus navigation event.
+     */
     @Nullable
     private ComponentPath nextFocusPathInDirection(
-        ScreenRectangle p_265054_, ScreenDirection p_265167_, @Nullable GuiEventListener p_265476_, FocusNavigationEvent p_265762_
+        ScreenRectangle rectangle, ScreenDirection direction, @Nullable GuiEventListener listener, FocusNavigationEvent event
     ) {
-        ScreenAxis screenaxis = p_265167_.getAxis();
+        ScreenAxis screenaxis = direction.getAxis();
         ScreenAxis screenaxis1 = screenaxis.orthogonal();
         ScreenDirection screendirection = screenaxis1.getPositive();
-        int i = p_265054_.getBoundInDirection(p_265167_.getOpposite());
+        int i = rectangle.getBoundInDirection(direction.getOpposite());
         List<GuiEventListener> list = new ArrayList<>();
 
         for (GuiEventListener guieventlistener : this.children()) {
-            if (guieventlistener != p_265476_) {
+            if (guieventlistener != listener) {
                 ScreenRectangle screenrectangle = guieventlistener.getRectangle();
-                if (screenrectangle.overlapsInAxis(p_265054_, screenaxis1)) {
-                    int j = screenrectangle.getBoundInDirection(p_265167_.getOpposite());
-                    if (p_265167_.isAfter(j, i)) {
+                if (screenrectangle.overlapsInAxis(rectangle, screenaxis1)) {
+                    int j = screenrectangle.getBoundInDirection(direction.getOpposite());
+                    if (direction.isAfter(j, i)) {
                         list.add(guieventlistener);
-                    } else if (j == i && p_265167_.isAfter(screenrectangle.getBoundInDirection(p_265167_), p_265054_.getBoundInDirection(p_265167_))) {
+                    } else if (j == i && direction.isAfter(screenrectangle.getBoundInDirection(direction), rectangle.getBoundInDirection(direction))) {
                         list.add(guieventlistener);
                     }
                 }
@@ -203,7 +307,7 @@ public interface ContainerEventHandler extends GuiEventListener {
         }
 
         Comparator<GuiEventListener> comparator = Comparator.comparing(
-            p_264674_ -> p_264674_.getRectangle().getBoundInDirection(p_265167_.getOpposite()), p_265167_.coordinateValueComparator()
+            p_264674_ -> p_264674_.getRectangle().getBoundInDirection(direction.getOpposite()), direction.coordinateValueComparator()
         );
         Comparator<GuiEventListener> comparator1 = Comparator.comparing(
             p_264676_ -> p_264676_.getRectangle().getBoundInDirection(screendirection.getOpposite()), screendirection.coordinateValueComparator()
@@ -211,31 +315,41 @@ public interface ContainerEventHandler extends GuiEventListener {
         list.sort(comparator.thenComparing(comparator1));
 
         for (GuiEventListener guieventlistener1 : list) {
-            ComponentPath componentpath = guieventlistener1.nextFocusPath(p_265762_);
+            ComponentPath componentpath = guieventlistener1.nextFocusPath(event);
             if (componentpath != null) {
                 return componentpath;
             }
         }
 
-        return this.nextFocusPathVaguelyInDirection(p_265054_, p_265167_, p_265476_, p_265762_);
+        return this.nextFocusPathVaguelyInDirection(rectangle, direction, listener, event);
     }
 
+    /**
+     * Calculates the next focus path in a vague direction.
+     * <p>
+     * @return The next focus path in the vague direction, or {@code null} if no suitable path is found.
+     *
+     * @param rectangle The screen rectangle.
+     * @param direction The direction of navigation.
+     * @param listener  The currently focused GUI event listener.
+     * @param event     The focus navigation event.
+     */
     @Nullable
     private ComponentPath nextFocusPathVaguelyInDirection(
-        ScreenRectangle p_265390_, ScreenDirection p_265687_, @Nullable GuiEventListener p_265498_, FocusNavigationEvent p_265048_
+        ScreenRectangle rectangle, ScreenDirection direction, @Nullable GuiEventListener listener, FocusNavigationEvent event
     ) {
-        ScreenAxis screenaxis = p_265687_.getAxis();
+        ScreenAxis screenaxis = direction.getAxis();
         ScreenAxis screenaxis1 = screenaxis.orthogonal();
         List<Pair<GuiEventListener, Long>> list = new ArrayList<>();
-        ScreenPosition screenposition = ScreenPosition.of(screenaxis, p_265390_.getBoundInDirection(p_265687_), p_265390_.getCenterInAxis(screenaxis1));
+        ScreenPosition screenposition = ScreenPosition.of(screenaxis, rectangle.getBoundInDirection(direction), rectangle.getCenterInAxis(screenaxis1));
 
         for (GuiEventListener guieventlistener : this.children()) {
-            if (guieventlistener != p_265498_) {
+            if (guieventlistener != listener) {
                 ScreenRectangle screenrectangle = guieventlistener.getRectangle();
                 ScreenPosition screenposition1 = ScreenPosition.of(
-                    screenaxis, screenrectangle.getBoundInDirection(p_265687_.getOpposite()), screenrectangle.getCenterInAxis(screenaxis1)
+                    screenaxis, screenrectangle.getBoundInDirection(direction.getOpposite()), screenrectangle.getCenterInAxis(screenaxis1)
                 );
-                if (p_265687_.isAfter(screenposition1.getCoordinate(screenaxis), screenposition.getCoordinate(screenaxis))) {
+                if (direction.isAfter(screenposition1.getCoordinate(screenaxis), screenposition.getCoordinate(screenaxis))) {
                     long i = Vector2i.distanceSquared(screenposition.x(), screenposition.y(), screenposition1.x(), screenposition1.y());
                     list.add(Pair.of(guieventlistener, i));
                 }
@@ -245,7 +359,7 @@ public interface ContainerEventHandler extends GuiEventListener {
         list.sort(Comparator.comparingDouble(Pair::getSecond));
 
         for (Pair<GuiEventListener, Long> pair : list) {
-            ComponentPath componentpath = pair.getFirst().nextFocusPath(p_265048_);
+            ComponentPath componentpath = pair.getFirst().nextFocusPath(event);
             if (componentpath != null) {
                 return componentpath;
             }

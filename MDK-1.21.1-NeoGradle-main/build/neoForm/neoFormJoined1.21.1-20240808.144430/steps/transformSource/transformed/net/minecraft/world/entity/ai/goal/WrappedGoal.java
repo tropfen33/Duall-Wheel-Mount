@@ -3,18 +3,25 @@ package net.minecraft.world.entity.ai.goal;
 import java.util.EnumSet;
 import javax.annotation.Nullable;
 
+/**
+ * This is an internal object used by the GoalSelector to choose between Goals.
+ * In most cases, it should not be constructed directly.
+ *
+ * For information on how individual methods work, see the javadocs for Goal:
+ * {@link net.minecraft.entity.ai.goal.Goal}
+ */
 public class WrappedGoal extends Goal {
     private final Goal goal;
     private final int priority;
     private boolean isRunning;
 
-    public WrappedGoal(int p_25998_, Goal p_25999_) {
-        this.priority = p_25998_;
-        this.goal = p_25999_;
+    public WrappedGoal(int priority, Goal goal) {
+        this.priority = priority;
+        this.goal = goal;
     }
 
-    public boolean canBeReplacedBy(WrappedGoal p_26003_) {
-        return this.isInterruptable() && p_26003_.getPriority() < this.getPriority();
+    public boolean canBeReplacedBy(WrappedGoal other) {
+        return this.isInterruptable() && other.getPriority() < this.getPriority();
     }
 
     @Override
@@ -54,8 +61,8 @@ public class WrappedGoal extends Goal {
     }
 
     @Override
-    protected int adjustedTickDelay(int p_186092_) {
-        return this.goal.adjustedTickDelay(p_186092_);
+    protected int adjustedTickDelay(int adjustment) {
+        return this.goal.adjustedTickDelay(adjustment);
     }
 
     @Override
@@ -64,8 +71,8 @@ public class WrappedGoal extends Goal {
     }
 
     @Override
-    public void setFlags(EnumSet<Goal.Flag> p_26005_) {
-        this.goal.setFlags(p_26005_);
+    public void setFlags(EnumSet<Goal.Flag> flagSet) {
+        this.goal.setFlags(flagSet);
     }
 
     @Override
@@ -86,11 +93,11 @@ public class WrappedGoal extends Goal {
     }
 
     @Override
-    public boolean equals(@Nullable Object p_26011_) {
-        if (this == p_26011_) {
+    public boolean equals(@Nullable Object other) {
+        if (this == other) {
             return true;
         } else {
-            return p_26011_ != null && this.getClass() == p_26011_.getClass() ? this.goal.equals(((WrappedGoal)p_26011_).goal) : false;
+            return other != null && this.getClass() == other.getClass() ? this.goal.equals(((WrappedGoal)other).goal) : false;
         }
     }
 

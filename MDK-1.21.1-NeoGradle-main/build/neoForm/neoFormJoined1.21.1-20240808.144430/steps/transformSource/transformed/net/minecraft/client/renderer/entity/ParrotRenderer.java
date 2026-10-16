@@ -20,12 +20,15 @@ public class ParrotRenderer extends MobRenderer<Parrot, ParrotModel> {
         super(p_174336_, new ParrotModel(p_174336_.bakeLayer(ModelLayers.PARROT)), 0.3F);
     }
 
-    public ResourceLocation getTextureLocation(Parrot p_115658_) {
-        return getVariantTexture(p_115658_.getVariant());
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Parrot entity) {
+        return getVariantTexture(entity.getVariant());
     }
 
-    public static ResourceLocation getVariantTexture(Parrot.Variant p_262577_) {
-        return switch (p_262577_) {
+    public static ResourceLocation getVariantTexture(Parrot.Variant variant) {
+        return switch (variant) {
             case RED_BLUE -> RED_BLUE;
             case BLUE -> BLUE;
             case GREEN -> GREEN;
@@ -34,9 +37,12 @@ public class ParrotRenderer extends MobRenderer<Parrot, ParrotModel> {
         };
     }
 
-    public float getBob(Parrot p_115660_, float p_115661_) {
-        float f = Mth.lerp(p_115661_, p_115660_.oFlap, p_115660_.flap);
-        float f1 = Mth.lerp(p_115661_, p_115660_.oFlapSpeed, p_115660_.flapSpeed);
+    /**
+     * Defines what float the third param in setRotationAngles of ModelBase is
+     */
+    public float getBob(Parrot livingBase, float partialTicks) {
+        float f = Mth.lerp(partialTicks, livingBase.oFlap, livingBase.flap);
+        float f1 = Mth.lerp(partialTicks, livingBase.oFlapSpeed, livingBase.flapSpeed);
         return (Mth.sin(f) + 1.0F) * f1;
     }
 }

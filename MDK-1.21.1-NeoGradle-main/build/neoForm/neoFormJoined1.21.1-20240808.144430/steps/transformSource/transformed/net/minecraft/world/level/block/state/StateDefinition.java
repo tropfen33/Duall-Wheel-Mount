@@ -30,10 +30,10 @@ public class StateDefinition<O, S extends StateHolder<O, S>> {
     private final ImmutableSortedMap<String, Property<?>> propertiesByName;
     private final ImmutableList<S> states;
 
-    protected StateDefinition(Function<O, S> p_61052_, O p_61053_, StateDefinition.Factory<O, S> p_61054_, Map<String, Property<?>> p_61055_) {
-        this.owner = p_61053_;
-        this.propertiesByName = ImmutableSortedMap.copyOf(p_61055_);
-        Supplier<S> supplier = () -> p_61052_.apply(p_61053_);
+    protected StateDefinition(Function<O, S> stateValueFunction, O owner, StateDefinition.Factory<O, S> valueFunction, Map<String, Property<?>> propertiesByName) {
+        this.owner = owner;
+        this.propertiesByName = ImmutableSortedMap.copyOf(propertiesByName);
+        Supplier<S> supplier = () -> stateValueFunction.apply(owner);
         MapCodec<S> mapcodec = MapCodec.of(Encoder.empty(), Decoder.unit(supplier));
 
         for (Entry<String, Property<?>> entry : this.propertiesByName.entrySet()) {
@@ -60,7 +60,7 @@ public class StateDefinition<O, S extends StateHolder<O, S>> {
                 reference2objectarraymap.put(pair.getFirst(), pair.getSecond());
             }
 
-            S s1 = p_61054_.create(p_61053_, reference2objectarraymap, mapcodec1);
+            S s1 = valueFunction.create(owner, reference2objectarraymap, mapcodec1);
             map.put(reference2objectarraymap, s1);
             list.add(s1);
         });
@@ -73,13 +73,13 @@ public class StateDefinition<O, S extends StateHolder<O, S>> {
     }
 
     private static <S extends StateHolder<?, S>, T extends Comparable<T>> MapCodec<S> appendPropertyCodec(
-        MapCodec<S> p_61077_, Supplier<S> p_61078_, String p_61079_, Property<T> p_61080_
+        MapCodec<S> propertyCodec, Supplier<S> holderSupplier, String value, Property<T> property
     ) {
-        return Codec.mapPair(p_61077_, p_61080_.valueCodec().fieldOf(p_61079_).orElseGet(p_187541_ -> {
-            }, () -> p_61080_.value(p_61078_.get())))
+        return Codec.mapPair(propertyCodec, property.valueCodec().fieldOf(value).orElseGet(p_187541_ -> {
+            }, () -> property.value(holderSupplier.get())))
             .xmap(
-                p_187536_ -> p_187536_.getFirst().setValue(p_61080_, p_187536_.getSecond().value()),
-                p_187533_ -> Pair.of((S)p_187533_, p_61080_.value(p_187533_))
+                p_187536_ -> p_187536_.getFirst().setValue(property, p_187536_.getSecond().value()),
+                p_187533_ -> Pair.of((S)p_187533_, property.value(p_187533_))
             );
     }
 
@@ -108,20 +108,20 @@ public class StateDefinition<O, S extends StateHolder<O, S>> {
     }
 
     @Nullable
-    public Property<?> getProperty(String p_61082_) {
-        return this.propertiesByName.get(p_61082_);
+    public Property<?> getProperty(String propertyName) {
+        return this.propertiesByName.get(propertyName);
     }
 
     public static class Builder<O, S extends StateHolder<O, S>> {
         private final O owner;
         private final Map<String, Property<?>> properties = Maps.newHashMap();
 
-        public Builder(O p_61098_) {
-            this.owner = p_61098_;
+        public Builder(O owner) {
+            this.owner = owner;
         }
 
-        public StateDefinition.Builder<O, S> add(Property<?>... p_61105_) {
-            for (Property<?> property : p_61105_) {
+        public StateDefinition.Builder<O, S> add(Property<?>... properties) {
+            for (Property<?> property : properties) {
                 this.validateProperty(property);
                 this.properties.put(property.getName(), property);
             }
@@ -129,17 +129,17 @@ public class StateDefinition<O, S extends StateHolder<O, S>> {
             return this;
         }
 
-        private <T extends Comparable<T>> void validateProperty(Property<T> p_61100_) {
-            String s = p_61100_.getName();
+        private <T extends Comparable<T>> void validateProperty(Property<T> property) {
+            String s = property.getName();
             if (!StateDefinition.NAME_PATTERN.matcher(s).matches()) {
                 throw new IllegalArgumentException(this.owner + " has invalidly named property: " + s);
             } else {
-                Collection<T> collection = p_61100_.getPossibleValues();
+                Collection<T> collection = property.getPossibleValues();
                 if (collection.size() <= 1) {
                     throw new IllegalArgumentException(this.owner + " attempted use property " + s + " with <= 1 possible values");
                 } else {
                     for (T t : collection) {
-                        String s1 = p_61100_.getName(t);
+                        String s1 = property.getName(t);
                         if (!StateDefinition.NAME_PATTERN.matcher(s1).matches()) {
                             throw new IllegalArgumentException(this.owner + " has property: " + s + " with invalidly named value: " + s1);
                         }
@@ -152,12 +152,12 @@ public class StateDefinition<O, S extends StateHolder<O, S>> {
             }
         }
 
-        public StateDefinition<O, S> create(Function<O, S> p_61102_, StateDefinition.Factory<O, S> p_61103_) {
-            return new StateDefinition<>(p_61102_, this.owner, p_61103_, this.properties);
+        public StateDefinition<O, S> create(Function<O, S> stateValueFunction, StateDefinition.Factory<O, S> stateFunction) {
+            return new StateDefinition<>(stateValueFunction, this.owner, stateFunction, this.properties);
         }
     }
 
     public interface Factory<O, S> {
-        S create(O p_61107_, Reference2ObjectArrayMap<Property<?>, Comparable<?>> p_326428_, MapCodec<S> p_61109_);
+        S create(O owner, Reference2ObjectArrayMap<Property<?>, Comparable<?>> values, MapCodec<S> propertiesCodec);
     }
 }

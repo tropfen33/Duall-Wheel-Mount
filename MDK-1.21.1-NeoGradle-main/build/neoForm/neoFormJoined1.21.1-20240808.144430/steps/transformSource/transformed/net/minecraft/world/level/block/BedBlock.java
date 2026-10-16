@@ -66,51 +66,51 @@ public class BedBlock extends HorizontalDirectionalBlock implements EntityBlock 
         return CODEC;
     }
 
-    public BedBlock(DyeColor p_49454_, BlockBehaviour.Properties p_49455_) {
-        super(p_49455_);
-        this.color = p_49454_;
+    public BedBlock(DyeColor color, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.color = color;
         this.registerDefaultState(this.stateDefinition.any().setValue(PART, BedPart.FOOT).setValue(OCCUPIED, Boolean.valueOf(false)));
     }
 
     @Nullable
-    public static Direction getBedOrientation(BlockGetter p_49486_, BlockPos p_49487_) {
-        BlockState blockstate = p_49486_.getBlockState(p_49487_);
+    public static Direction getBedOrientation(BlockGetter level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
         return blockstate.getBlock() instanceof BedBlock ? blockstate.getValue(FACING) : null;
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_49515_, Level p_49516_, BlockPos p_49517_, Player p_49518_, BlockHitResult p_49520_) {
-        if (p_49516_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
             return InteractionResult.CONSUME;
         } else {
-            if (p_49515_.getValue(PART) != BedPart.HEAD) {
-                p_49517_ = p_49517_.relative(p_49515_.getValue(FACING));
-                p_49515_ = p_49516_.getBlockState(p_49517_);
-                if (!p_49515_.is(this)) {
+            if (state.getValue(PART) != BedPart.HEAD) {
+                pos = pos.relative(state.getValue(FACING));
+                state = level.getBlockState(pos);
+                if (!state.is(this)) {
                     return InteractionResult.CONSUME;
                 }
             }
 
-            if (!canSetSpawn(p_49516_)) {
-                p_49516_.removeBlock(p_49517_, false);
-                BlockPos blockpos = p_49517_.relative(p_49515_.getValue(FACING).getOpposite());
-                if (p_49516_.getBlockState(blockpos).is(this)) {
-                    p_49516_.removeBlock(blockpos, false);
+            if (!canSetSpawn(level)) {
+                level.removeBlock(pos, false);
+                BlockPos blockpos = pos.relative(state.getValue(FACING).getOpposite());
+                if (level.getBlockState(blockpos).is(this)) {
+                    level.removeBlock(blockpos, false);
                 }
 
-                Vec3 vec3 = p_49517_.getCenter();
-                p_49516_.explode(null, p_49516_.damageSources().badRespawnPointExplosion(vec3), null, vec3, 5.0F, true, Level.ExplosionInteraction.BLOCK);
+                Vec3 vec3 = pos.getCenter();
+                level.explode(null, level.damageSources().badRespawnPointExplosion(vec3), null, vec3, 5.0F, true, Level.ExplosionInteraction.BLOCK);
                 return InteractionResult.SUCCESS;
-            } else if (p_49515_.getValue(OCCUPIED)) {
-                if (!this.kickVillagerOutOfBed(p_49516_, p_49517_)) {
-                    p_49518_.displayClientMessage(Component.translatable("block.minecraft.bed.occupied"), true);
+            } else if (state.getValue(OCCUPIED)) {
+                if (!this.kickVillagerOutOfBed(level, pos)) {
+                    player.displayClientMessage(Component.translatable("block.minecraft.bed.occupied"), true);
                 }
 
                 return InteractionResult.SUCCESS;
             } else {
-                p_49518_.startSleepInBed(p_49517_).ifLeft(p_49477_ -> {
+                player.startSleepInBed(pos).ifLeft(p_49477_ -> {
                     if (p_49477_.getMessage() != null) {
-                        p_49518_.displayClientMessage(p_49477_.getMessage(), true);
+                        player.displayClientMessage(p_49477_.getMessage(), true);
                     }
                 });
                 return InteractionResult.SUCCESS;
@@ -118,12 +118,12 @@ public class BedBlock extends HorizontalDirectionalBlock implements EntityBlock 
         }
     }
 
-    public static boolean canSetSpawn(Level p_49489_) {
-        return p_49489_.dimensionType().bedWorks();
+    public static boolean canSetSpawn(Level level) {
+        return level.dimensionType().bedWorks();
     }
 
-    private boolean kickVillagerOutOfBed(Level p_49491_, BlockPos p_49492_) {
-        List<Villager> list = p_49491_.getEntitiesOfClass(Villager.class, new AABB(p_49492_), LivingEntity::isSleeping);
+    private boolean kickVillagerOutOfBed(Level level, BlockPos pos) {
+        List<Villager> list = level.getEntitiesOfClass(Villager.class, new AABB(pos), LivingEntity::isSleeping);
         if (list.isEmpty()) {
             return false;
         } else {
@@ -133,74 +133,86 @@ public class BedBlock extends HorizontalDirectionalBlock implements EntityBlock 
     }
 
     @Override
-    public void fallOn(Level p_152169_, BlockState p_152170_, BlockPos p_152171_, Entity p_152172_, float p_152173_) {
-        super.fallOn(p_152169_, p_152170_, p_152171_, p_152172_, p_152173_ * 0.5F);
+    public void fallOn(Level level, BlockState state, BlockPos pos, Entity entity, float fallDistance) {
+        super.fallOn(level, state, pos, entity, fallDistance * 0.5F);
     }
 
+    /**
+     * Called when an Entity lands on this Block.
+     * This method is responsible for doing any modification on the motion of the entity that should result from the landing.
+     */
     @Override
-    public void updateEntityAfterFallOn(BlockGetter p_49483_, Entity p_49484_) {
-        if (p_49484_.isSuppressingBounce()) {
-            super.updateEntityAfterFallOn(p_49483_, p_49484_);
+    public void updateEntityAfterFallOn(BlockGetter level, Entity entity) {
+        if (entity.isSuppressingBounce()) {
+            super.updateEntityAfterFallOn(level, entity);
         } else {
-            this.bounceUp(p_49484_);
+            this.bounceUp(entity);
         }
     }
 
-    private void bounceUp(Entity p_49457_) {
-        Vec3 vec3 = p_49457_.getDeltaMovement();
+    private void bounceUp(Entity entity) {
+        Vec3 vec3 = entity.getDeltaMovement();
         if (vec3.y < 0.0) {
-            double d0 = p_49457_ instanceof LivingEntity ? 1.0 : 0.8;
-            p_49457_.setDeltaMovement(vec3.x, -vec3.y * 0.66F * d0, vec3.z);
+            double d0 = entity instanceof LivingEntity ? 1.0 : 0.8;
+            entity.setDeltaMovement(vec3.x, -vec3.y * 0.66F * d0, vec3.z);
         }
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_49525_, Direction p_49526_, BlockState p_49527_, LevelAccessor p_49528_, BlockPos p_49529_, BlockPos p_49530_) {
-        if (p_49526_ == getNeighbourDirection(p_49525_.getValue(PART), p_49525_.getValue(FACING))) {
-            return p_49527_.is(this) && p_49527_.getValue(PART) != p_49525_.getValue(PART)
-                ? p_49525_.setValue(OCCUPIED, p_49527_.getValue(OCCUPIED))
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (facing == getNeighbourDirection(state.getValue(PART), state.getValue(FACING))) {
+            return facingState.is(this) && facingState.getValue(PART) != state.getValue(PART)
+                ? state.setValue(OCCUPIED, facingState.getValue(OCCUPIED))
                 : Blocks.AIR.defaultBlockState();
         } else {
-            return super.updateShape(p_49525_, p_49526_, p_49527_, p_49528_, p_49529_, p_49530_);
+            return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
         }
     }
 
-    private static Direction getNeighbourDirection(BedPart p_49534_, Direction p_49535_) {
-        return p_49534_ == BedPart.FOOT ? p_49535_ : p_49535_.getOpposite();
+    /**
+     * Given a bed part and the direction it's facing, find the direction to move to get the other bed part
+     */
+    private static Direction getNeighbourDirection(BedPart part, Direction direction) {
+        return part == BedPart.FOOT ? direction : direction.getOpposite();
     }
 
     @Override
-    public BlockState playerWillDestroy(Level p_49505_, BlockPos p_49506_, BlockState p_49507_, Player p_49508_) {
-        if (!p_49505_.isClientSide && p_49508_.isCreative()) {
-            BedPart bedpart = p_49507_.getValue(PART);
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide && player.isCreative()) {
+            BedPart bedpart = state.getValue(PART);
             if (bedpart == BedPart.FOOT) {
-                BlockPos blockpos = p_49506_.relative(getNeighbourDirection(bedpart, p_49507_.getValue(FACING)));
-                BlockState blockstate = p_49505_.getBlockState(blockpos);
+                BlockPos blockpos = pos.relative(getNeighbourDirection(bedpart, state.getValue(FACING)));
+                BlockState blockstate = level.getBlockState(blockpos);
                 if (blockstate.is(this) && blockstate.getValue(PART) == BedPart.HEAD) {
-                    p_49505_.setBlock(blockpos, Blocks.AIR.defaultBlockState(), 35);
-                    p_49505_.levelEvent(p_49508_, 2001, blockpos, Block.getId(blockstate));
+                    level.setBlock(blockpos, Blocks.AIR.defaultBlockState(), 35);
+                    level.levelEvent(player, 2001, blockpos, Block.getId(blockstate));
                 }
             }
         }
 
-        return super.playerWillDestroy(p_49505_, p_49506_, p_49507_, p_49508_);
+        return super.playerWillDestroy(level, pos, state, player);
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_49479_) {
-        Direction direction = p_49479_.getHorizontalDirection();
-        BlockPos blockpos = p_49479_.getClickedPos();
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Direction direction = context.getHorizontalDirection();
+        BlockPos blockpos = context.getClickedPos();
         BlockPos blockpos1 = blockpos.relative(direction);
-        Level level = p_49479_.getLevel();
-        return level.getBlockState(blockpos1).canBeReplaced(p_49479_) && level.getWorldBorder().isWithinBounds(blockpos1)
+        Level level = context.getLevel();
+        return level.getBlockState(blockpos1).canBeReplaced(context) && level.getWorldBorder().isWithinBounds(blockpos1)
             ? this.defaultBlockState().setValue(FACING, direction)
             : null;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_49547_, BlockGetter p_49548_, BlockPos p_49549_, CollisionContext p_49550_) {
-        Direction direction = getConnectedDirection(p_49547_).getOpposite();
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        Direction direction = getConnectedDirection(state).getOpposite();
         switch (direction) {
             case NORTH:
                 return NORTH_SHAPE;
@@ -213,58 +225,58 @@ public class BedBlock extends HorizontalDirectionalBlock implements EntityBlock 
         }
     }
 
-    public static Direction getConnectedDirection(BlockState p_49558_) {
-        Direction direction = p_49558_.getValue(FACING);
-        return p_49558_.getValue(PART) == BedPart.HEAD ? direction.getOpposite() : direction;
+    public static Direction getConnectedDirection(BlockState state) {
+        Direction direction = state.getValue(FACING);
+        return state.getValue(PART) == BedPart.HEAD ? direction.getOpposite() : direction;
     }
 
-    public static DoubleBlockCombiner.BlockType getBlockType(BlockState p_49560_) {
-        BedPart bedpart = p_49560_.getValue(PART);
+    public static DoubleBlockCombiner.BlockType getBlockType(BlockState state) {
+        BedPart bedpart = state.getValue(PART);
         return bedpart == BedPart.HEAD ? DoubleBlockCombiner.BlockType.FIRST : DoubleBlockCombiner.BlockType.SECOND;
     }
 
-    private static boolean isBunkBed(BlockGetter p_49542_, BlockPos p_49543_) {
-        return p_49542_.getBlockState(p_49543_.below()).getBlock() instanceof BedBlock;
+    private static boolean isBunkBed(BlockGetter level, BlockPos pos) {
+        return level.getBlockState(pos.below()).getBlock() instanceof BedBlock;
     }
 
     public static Optional<Vec3> findStandUpPosition(
-        EntityType<?> p_261547_, CollisionGetter p_261946_, BlockPos p_261614_, Direction p_261648_, float p_261680_
+        EntityType<?> entityType, CollisionGetter collisionGetter, BlockPos pos, Direction p_direction, float yRot
     ) {
-        Direction direction = p_261648_.getClockWise();
-        Direction direction1 = direction.isFacingAngle(p_261680_) ? direction.getOpposite() : direction;
-        if (isBunkBed(p_261946_, p_261614_)) {
-            return findBunkBedStandUpPosition(p_261547_, p_261946_, p_261614_, p_261648_, direction1);
+        Direction direction = p_direction.getClockWise();
+        Direction direction1 = direction.isFacingAngle(yRot) ? direction.getOpposite() : direction;
+        if (isBunkBed(collisionGetter, pos)) {
+            return findBunkBedStandUpPosition(entityType, collisionGetter, pos, p_direction, direction1);
         } else {
-            int[][] aint = bedStandUpOffsets(p_261648_, direction1);
-            Optional<Vec3> optional = findStandUpPositionAtOffset(p_261547_, p_261946_, p_261614_, aint, true);
-            return optional.isPresent() ? optional : findStandUpPositionAtOffset(p_261547_, p_261946_, p_261614_, aint, false);
+            int[][] aint = bedStandUpOffsets(p_direction, direction1);
+            Optional<Vec3> optional = findStandUpPositionAtOffset(entityType, collisionGetter, pos, aint, true);
+            return optional.isPresent() ? optional : findStandUpPositionAtOffset(entityType, collisionGetter, pos, aint, false);
         }
     }
 
     private static Optional<Vec3> findBunkBedStandUpPosition(
-        EntityType<?> p_49464_, CollisionGetter p_49465_, BlockPos p_49466_, Direction p_49467_, Direction p_49468_
+        EntityType<?> entityType, CollisionGetter collisionGetter, BlockPos pos, Direction stateFacing, Direction entityFacing
     ) {
-        int[][] aint = bedSurroundStandUpOffsets(p_49467_, p_49468_);
-        Optional<Vec3> optional = findStandUpPositionAtOffset(p_49464_, p_49465_, p_49466_, aint, true);
+        int[][] aint = bedSurroundStandUpOffsets(stateFacing, entityFacing);
+        Optional<Vec3> optional = findStandUpPositionAtOffset(entityType, collisionGetter, pos, aint, true);
         if (optional.isPresent()) {
             return optional;
         } else {
-            BlockPos blockpos = p_49466_.below();
-            Optional<Vec3> optional1 = findStandUpPositionAtOffset(p_49464_, p_49465_, blockpos, aint, true);
+            BlockPos blockpos = pos.below();
+            Optional<Vec3> optional1 = findStandUpPositionAtOffset(entityType, collisionGetter, blockpos, aint, true);
             if (optional1.isPresent()) {
                 return optional1;
             } else {
-                int[][] aint1 = bedAboveStandUpOffsets(p_49467_);
-                Optional<Vec3> optional2 = findStandUpPositionAtOffset(p_49464_, p_49465_, p_49466_, aint1, true);
+                int[][] aint1 = bedAboveStandUpOffsets(stateFacing);
+                Optional<Vec3> optional2 = findStandUpPositionAtOffset(entityType, collisionGetter, pos, aint1, true);
                 if (optional2.isPresent()) {
                     return optional2;
                 } else {
-                    Optional<Vec3> optional3 = findStandUpPositionAtOffset(p_49464_, p_49465_, p_49466_, aint, false);
+                    Optional<Vec3> optional3 = findStandUpPositionAtOffset(entityType, collisionGetter, pos, aint, false);
                     if (optional3.isPresent()) {
                         return optional3;
                     } else {
-                        Optional<Vec3> optional4 = findStandUpPositionAtOffset(p_49464_, p_49465_, blockpos, aint, false);
-                        return optional4.isPresent() ? optional4 : findStandUpPositionAtOffset(p_49464_, p_49465_, p_49466_, aint1, false);
+                        Optional<Vec3> optional4 = findStandUpPositionAtOffset(entityType, collisionGetter, blockpos, aint, false);
+                        return optional4.isPresent() ? optional4 : findStandUpPositionAtOffset(entityType, collisionGetter, pos, aint1, false);
                     }
                 }
             }
@@ -272,13 +284,13 @@ public class BedBlock extends HorizontalDirectionalBlock implements EntityBlock 
     }
 
     private static Optional<Vec3> findStandUpPositionAtOffset(
-        EntityType<?> p_49470_, CollisionGetter p_49471_, BlockPos p_49472_, int[][] p_49473_, boolean p_49474_
+        EntityType<?> entityType, CollisionGetter collisionGetter, BlockPos pos, int[][] offsets, boolean simulate
     ) {
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
-        for (int[] aint : p_49473_) {
-            blockpos$mutableblockpos.set(p_49472_.getX() + aint[0], p_49472_.getY(), p_49472_.getZ() + aint[1]);
-            Vec3 vec3 = DismountHelper.findSafeDismountLocation(p_49470_, p_49471_, blockpos$mutableblockpos, p_49474_);
+        for (int[] aint : offsets) {
+            blockpos$mutableblockpos.set(pos.getX() + aint[0], pos.getY(), pos.getZ() + aint[1]);
+            Vec3 vec3 = DismountHelper.findSafeDismountLocation(entityType, collisionGetter, blockpos$mutableblockpos, simulate);
             if (vec3 != null) {
                 return Optional.of(vec3);
             }
@@ -287,29 +299,35 @@ public class BedBlock extends HorizontalDirectionalBlock implements EntityBlock 
         return Optional.empty();
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_49545_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_49532_) {
-        p_49532_.add(FACING, PART, OCCUPIED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, PART, OCCUPIED);
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_152175_, BlockState p_152176_) {
-        return new BedBlockEntity(p_152175_, p_152176_, this.color);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new BedBlockEntity(pos, state, this.color);
     }
 
+    /**
+     * Called by BlockItem after this block has been placed.
+     */
     @Override
-    public void setPlacedBy(Level p_49499_, BlockPos p_49500_, BlockState p_49501_, @Nullable LivingEntity p_49502_, ItemStack p_49503_) {
-        super.setPlacedBy(p_49499_, p_49500_, p_49501_, p_49502_, p_49503_);
-        if (!p_49499_.isClientSide) {
-            BlockPos blockpos = p_49500_.relative(p_49501_.getValue(FACING));
-            p_49499_.setBlock(blockpos, p_49501_.setValue(PART, BedPart.HEAD), 3);
-            p_49499_.blockUpdated(p_49500_, Blocks.AIR);
-            p_49501_.updateNeighbourShapes(p_49499_, p_49500_, 3);
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide) {
+            BlockPos blockpos = pos.relative(state.getValue(FACING));
+            level.setBlock(blockpos, state.setValue(PART, BedPart.HEAD), 3);
+            level.blockUpdated(pos, Blocks.AIR);
+            state.updateNeighbourShapes(level, pos, 3);
         }
     }
 
@@ -317,37 +335,40 @@ public class BedBlock extends HorizontalDirectionalBlock implements EntityBlock 
         return this.color;
     }
 
+    /**
+     * Return a random long to be passed to {@link net.minecraft.client.resources.model.BakedModel#getQuads}, used for random model rotations
+     */
     @Override
-    protected long getSeed(BlockState p_49522_, BlockPos p_49523_) {
-        BlockPos blockpos = p_49523_.relative(p_49522_.getValue(FACING), p_49522_.getValue(PART) == BedPart.HEAD ? 0 : 1);
-        return Mth.getSeed(blockpos.getX(), p_49523_.getY(), blockpos.getZ());
+    protected long getSeed(BlockState state, BlockPos pos) {
+        BlockPos blockpos = pos.relative(state.getValue(FACING), state.getValue(PART) == BedPart.HEAD ? 0 : 1);
+        return Mth.getSeed(blockpos.getX(), pos.getY(), blockpos.getZ());
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_49510_, PathComputationType p_49513_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
-    private static int[][] bedStandUpOffsets(Direction p_49539_, Direction p_49540_) {
-        return ArrayUtils.addAll((int[][])bedSurroundStandUpOffsets(p_49539_, p_49540_), (int[][])bedAboveStandUpOffsets(p_49539_));
+    private static int[][] bedStandUpOffsets(Direction firstDir, Direction secondDir) {
+        return ArrayUtils.addAll((int[][])bedSurroundStandUpOffsets(firstDir, secondDir), (int[][])bedAboveStandUpOffsets(firstDir));
     }
 
-    private static int[][] bedSurroundStandUpOffsets(Direction p_49552_, Direction p_49553_) {
+    private static int[][] bedSurroundStandUpOffsets(Direction firstDir, Direction secondDir) {
         return new int[][]{
-            {p_49553_.getStepX(), p_49553_.getStepZ()},
-            {p_49553_.getStepX() - p_49552_.getStepX(), p_49553_.getStepZ() - p_49552_.getStepZ()},
-            {p_49553_.getStepX() - p_49552_.getStepX() * 2, p_49553_.getStepZ() - p_49552_.getStepZ() * 2},
-            {-p_49552_.getStepX() * 2, -p_49552_.getStepZ() * 2},
-            {-p_49553_.getStepX() - p_49552_.getStepX() * 2, -p_49553_.getStepZ() - p_49552_.getStepZ() * 2},
-            {-p_49553_.getStepX() - p_49552_.getStepX(), -p_49553_.getStepZ() - p_49552_.getStepZ()},
-            {-p_49553_.getStepX(), -p_49553_.getStepZ()},
-            {-p_49553_.getStepX() + p_49552_.getStepX(), -p_49553_.getStepZ() + p_49552_.getStepZ()},
-            {p_49552_.getStepX(), p_49552_.getStepZ()},
-            {p_49553_.getStepX() + p_49552_.getStepX(), p_49553_.getStepZ() + p_49552_.getStepZ()}
+            {secondDir.getStepX(), secondDir.getStepZ()},
+            {secondDir.getStepX() - firstDir.getStepX(), secondDir.getStepZ() - firstDir.getStepZ()},
+            {secondDir.getStepX() - firstDir.getStepX() * 2, secondDir.getStepZ() - firstDir.getStepZ() * 2},
+            {-firstDir.getStepX() * 2, -firstDir.getStepZ() * 2},
+            {-secondDir.getStepX() - firstDir.getStepX() * 2, -secondDir.getStepZ() - firstDir.getStepZ() * 2},
+            {-secondDir.getStepX() - firstDir.getStepX(), -secondDir.getStepZ() - firstDir.getStepZ()},
+            {-secondDir.getStepX(), -secondDir.getStepZ()},
+            {-secondDir.getStepX() + firstDir.getStepX(), -secondDir.getStepZ() + firstDir.getStepZ()},
+            {firstDir.getStepX(), firstDir.getStepZ()},
+            {secondDir.getStepX() + firstDir.getStepX(), secondDir.getStepZ() + firstDir.getStepZ()}
         };
     }
 
-    private static int[][] bedAboveStandUpOffsets(Direction p_49537_) {
-        return new int[][]{{0, 0}, {-p_49537_.getStepX(), -p_49537_.getStepZ()}};
+    private static int[][] bedAboveStandUpOffsets(Direction dir) {
+        return new int[][]{{0, 0}, {-dir.getStepX(), -dir.getStepZ()}};
     }
 }

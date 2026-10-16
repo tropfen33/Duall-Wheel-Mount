@@ -7,19 +7,22 @@ import net.minecraft.util.profiling.ProfilerFiller;
 public abstract class SimplePreparableReloadListener<T> extends net.neoforged.neoforge.resource.ContextAwareReloadListener implements PreparableReloadListener {
     @Override
     public final CompletableFuture<Void> reload(
-        PreparableReloadListener.PreparationBarrier p_10780_,
-        ResourceManager p_10781_,
-        ProfilerFiller p_10782_,
-        ProfilerFiller p_10783_,
-        Executor p_10784_,
-        Executor p_10785_
+        PreparableReloadListener.PreparationBarrier stage,
+        ResourceManager resourceManager,
+        ProfilerFiller preparationsProfiler,
+        ProfilerFiller reloadProfiler,
+        Executor backgroundExecutor,
+        Executor gameExecutor
     ) {
-        return CompletableFuture.<T>supplyAsync(() -> this.prepare(p_10781_, p_10782_), p_10784_)
-            .thenCompose(p_10780_::wait)
-            .thenAcceptAsync(p_10792_ -> this.apply((T)p_10792_, p_10781_, p_10783_), p_10785_);
+        return CompletableFuture.<T>supplyAsync(() -> this.prepare(resourceManager, preparationsProfiler), backgroundExecutor)
+            .thenCompose(stage::wait)
+            .thenAcceptAsync(p_10792_ -> this.apply((T)p_10792_, resourceManager, reloadProfiler), gameExecutor);
     }
 
-    protected abstract T prepare(ResourceManager p_10796_, ProfilerFiller p_10797_);
+    /**
+     * Performs any reloading that can be done off-thread, such as file IO
+     */
+    protected abstract T prepare(ResourceManager resourceManager, ProfilerFiller profiler);
 
-    protected abstract void apply(T p_10793_, ResourceManager p_10794_, ProfilerFiller p_10795_);
+    protected abstract void apply(T object, ResourceManager resourceManager, ProfilerFiller profiler);
 }

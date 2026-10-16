@@ -15,14 +15,14 @@ public class GoatHornIdFix extends ItemStackTagFix {
         "minecraft:dream_goat_horn"
     };
 
-    public GoatHornIdFix(Schema p_216674_) {
-        super(p_216674_, "GoatHornIdFix", p_216678_ -> p_216678_.equals("minecraft:goat_horn"));
+    public GoatHornIdFix(Schema outputSchema) {
+        super(outputSchema, "GoatHornIdFix", p_216678_ -> p_216678_.equals("minecraft:goat_horn"));
     }
 
     @Override
-    protected <T> Dynamic<T> fixItemStackTag(Dynamic<T> p_216676_) {
-        int i = p_216676_.get("SoundVariant").asInt(0);
+    protected <T> Dynamic<T> fixItemStackTag(Dynamic<T> itemStackTag) {
+        int i = itemStackTag.get("SoundVariant").asInt(0);
         String s = INSTRUMENTS[i >= 0 && i < INSTRUMENTS.length ? i : 0];
-        return p_216676_.remove("SoundVariant").set("instrument", p_216676_.createString(s));
+        return itemStackTag.remove("SoundVariant").set("instrument", itemStackTag.createString(s));
     }
 }

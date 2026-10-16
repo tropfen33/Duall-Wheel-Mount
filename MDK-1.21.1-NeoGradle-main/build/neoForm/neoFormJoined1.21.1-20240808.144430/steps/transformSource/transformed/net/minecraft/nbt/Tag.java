@@ -24,7 +24,7 @@ public interface Tag {
     byte TAG_ANY_NUMERIC = 99;
     int MAX_DEPTH = 512;
 
-    void write(DataOutput p_129329_) throws IOException;
+    void write(DataOutput output) throws IOException;
 
     @Override
     String toString();
@@ -41,14 +41,14 @@ public interface Tag {
         return new StringTagVisitor().visit(this);
     }
 
-    void accept(TagVisitor p_178208_);
+    void accept(TagVisitor visitor);
 
-    StreamTagVisitor.ValueResult accept(StreamTagVisitor p_197572_);
+    StreamTagVisitor.ValueResult accept(StreamTagVisitor visitor);
 
-    default void acceptAsRoot(StreamTagVisitor p_197574_) {
-        StreamTagVisitor.ValueResult streamtagvisitor$valueresult = p_197574_.visitRootEntry(this.getType());
+    default void acceptAsRoot(StreamTagVisitor visitor) {
+        StreamTagVisitor.ValueResult streamtagvisitor$valueresult = visitor.visitRootEntry(this.getType());
         if (streamtagvisitor$valueresult == StreamTagVisitor.ValueResult.CONTINUE) {
-            this.accept(p_197574_);
+            this.accept(visitor);
         }
     }
 }

@@ -344,10 +344,14 @@ public class ItemBlockRenderTypes {
     });
     private static boolean renderCutout;
 
-    /** @deprecated Forge: Use {@link net.minecraft.client.resources.model.BakedModel#getRenderTypes(BlockState, net.minecraft.util.RandomSource, net.neoforged.neoforge.client.model.data.ModelData)}. */
+    /**
+ * @deprecated Forge: Use {@link net.minecraft.client.resources.model.BakedModel#
+ *             getRenderTypes(BlockState, net.minecraft.util.RandomSource,
+ *             net.neoforged.neoforge.client.model.data.ModelData)}.
+ */
     @Deprecated // Note: this method does NOT support model-based render types
-    public static RenderType getChunkRenderType(BlockState p_109283_) {
-        Block block = p_109283_.getBlock();
+    public static RenderType getChunkRenderType(BlockState state) {
+        Block block = state.getBlock();
         if (block instanceof LeavesBlock) {
             return renderCutout ? RenderType.cutoutMipped() : RenderType.solid();
         } else {
@@ -356,10 +360,16 @@ public class ItemBlockRenderTypes {
         }
     }
 
-    /** @deprecated Forge: Use {@link net.neoforged.neoforge.client.RenderTypeHelper#getMovingBlockRenderType(RenderType)} while iterating through {@link net.minecraft.client.resources.model.BakedModel#getRenderTypes(BlockState, net.minecraft.util.RandomSource, net.neoforged.neoforge.client.model.data.ModelData)}. */
+    /**
+ * @deprecated Forge: Use {@link net.neoforged.neoforge.client.RenderTypeHelper#
+ *             getMovingBlockRenderType(RenderType)} while iterating through {@
+ *             link net.minecraft.client.resources.model.BakedModel#getRenderTypes
+ *             (BlockState, net.minecraft.util.RandomSource,
+ *             net.neoforged.neoforge.client.model.data.ModelData)}.
+ */
     @Deprecated // Note: this method does NOT support model-based render types
-    public static RenderType getMovingBlockRenderType(BlockState p_109294_) {
-        Block block = p_109294_.getBlock();
+    public static RenderType getMovingBlockRenderType(BlockState state) {
+        Block block = state.getBlock();
         if (block instanceof LeavesBlock) {
             return renderCutout ? RenderType.cutoutMipped() : RenderType.solid();
         } else {
@@ -372,40 +382,51 @@ public class ItemBlockRenderTypes {
         }
     }
 
-    /** @deprecated Forge: Use {@link net.neoforged.neoforge.client.RenderTypeHelper#getEntityRenderType(RenderType, boolean)} while iterating through {@link net.minecraft.client.resources.model.BakedModel#getRenderTypes(BlockState, net.minecraft.util.RandomSource, net.neoforged.neoforge.client.model.data.ModelData)}. */
+    /**
+ * @deprecated Forge: Use {@link net.neoforged.neoforge.client.RenderTypeHelper#
+ *             getEntityRenderType(RenderType, boolean)} while iterating through {
+ *             @link net.minecraft.client.resources.model.BakedModel#
+ *             getRenderTypes(BlockState, net.minecraft.util.RandomSource,
+ *             net.neoforged.neoforge.client.model.data.ModelData)}.
+ */
     @Deprecated // Note: this method does NOT support model-based render types
-    public static RenderType getRenderType(BlockState p_109285_, boolean p_109286_) {
-        RenderType rendertype = getChunkRenderType(p_109285_);
+    public static RenderType getRenderType(BlockState state, boolean cull) {
+        RenderType rendertype = getChunkRenderType(state);
         if (rendertype == RenderType.translucent()) {
             if (!Minecraft.useShaderTransparency()) {
                 return Sheets.translucentCullBlockSheet();
             } else {
-                return p_109286_ ? Sheets.translucentCullBlockSheet() : Sheets.translucentItemSheet();
+                return cull ? Sheets.translucentCullBlockSheet() : Sheets.translucentItemSheet();
             }
         } else {
             return Sheets.cutoutBlockSheet();
         }
     }
 
-    /** @deprecated Forge: Use {@link net.minecraft.client.resources.model.BakedModel#getRenderPasses(ItemStack, boolean)} and {@link net.minecraft.client.resources.model.BakedModel#getRenderTypes(ItemStack, boolean)}. */
+    /**
+ * @deprecated Forge: Use {@link net.minecraft.client.resources.model.BakedModel#
+ *             getRenderPasses(ItemStack, boolean)} and {@link
+ *             net.minecraft.client.resources.model.BakedModel#getRenderTypes(
+ *             ItemStack, boolean)}.
+ */
     @Deprecated // Note: this method does NOT support model-based render types
-    public static RenderType getRenderType(ItemStack p_109280_, boolean p_109281_) {
-        Item item = p_109280_.getItem();
+    public static RenderType getRenderType(ItemStack stack, boolean cull) {
+        Item item = stack.getItem();
         if (item instanceof BlockItem) {
             Block block = ((BlockItem)item).getBlock();
-            return getRenderType(block.defaultBlockState(), p_109281_);
+            return getRenderType(block.defaultBlockState(), cull);
         } else {
-            return p_109281_ ? Sheets.translucentCullBlockSheet() : Sheets.translucentItemSheet();
+            return cull ? Sheets.translucentCullBlockSheet() : Sheets.translucentItemSheet();
         }
     }
 
-    public static RenderType getRenderLayer(FluidState p_109288_) {
-        RenderType rendertype = TYPE_BY_FLUID.get(p_109288_.getType());
+    public static RenderType getRenderLayer(FluidState fluidState) {
+        RenderType rendertype = TYPE_BY_FLUID.get(fluidState.getType());
         return rendertype != null ? rendertype : RenderType.solid();
     }
 
-    public static void setFancy(boolean p_109292_) {
-        renderCutout = p_109292_;
+    public static void setFancy(boolean fancy) {
+        renderCutout = fancy;
     }
 
     // Neo: Injected new ChunkRenderTypeSets for Blocks to be able to use

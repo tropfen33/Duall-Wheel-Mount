@@ -14,25 +14,25 @@ import net.minecraft.core.Registry;
 public final class RegistryFixedCodec<E> implements Codec<Holder<E>> {
     private final ResourceKey<? extends Registry<E>> registryKey;
 
-    public static <E> RegistryFixedCodec<E> create(ResourceKey<? extends Registry<E>> p_206741_) {
-        return new RegistryFixedCodec<>(p_206741_);
+    public static <E> RegistryFixedCodec<E> create(ResourceKey<? extends Registry<E>> registryKey) {
+        return new RegistryFixedCodec<>(registryKey);
     }
 
-    private RegistryFixedCodec(ResourceKey<? extends Registry<E>> p_206723_) {
-        this.registryKey = p_206723_;
+    private RegistryFixedCodec(ResourceKey<? extends Registry<E>> registryKey) {
+        this.registryKey = registryKey;
     }
 
-    public <T> DataResult<T> encode(Holder<E> p_206729_, DynamicOps<T> p_206730_, T p_206731_) {
-        if (p_206730_ instanceof RegistryOps<?> registryops) {
+    public <T> DataResult<T> encode(Holder<E> holder, DynamicOps<T> ops, T value) {
+        if (ops instanceof RegistryOps<?> registryops) {
             Optional<HolderOwner<E>> optional = registryops.owner(this.registryKey);
             if (optional.isPresent()) {
-                if (!p_206729_.canSerializeIn(optional.get())) {
-                    return DataResult.error(() -> "Element " + p_206729_ + " is not valid in current registry set");
+                if (!holder.canSerializeIn(optional.get())) {
+                    return DataResult.error(() -> "Element " + holder + " is not valid in current registry set");
                 }
 
-                return p_206729_.unwrap()
+                return holder.unwrap()
                     .map(
-                        p_206727_ -> ResourceLocation.CODEC.encode(p_206727_.location(), p_206730_, p_206731_),
+                        p_206727_ -> ResourceLocation.CODEC.encode(p_206727_.location(), ops, value),
                         p_274804_ -> DataResult.error(() -> "Elements from registry " + this.registryKey + " can't be serialized to a value")
                     );
             }
@@ -42,12 +42,12 @@ public final class RegistryFixedCodec<E> implements Codec<Holder<E>> {
     }
 
     @Override
-    public <T> DataResult<Pair<Holder<E>, T>> decode(DynamicOps<T> p_206743_, T p_206744_) {
-        if (p_206743_ instanceof RegistryOps<?> registryops) {
+    public <T> DataResult<Pair<Holder<E>, T>> decode(DynamicOps<T> ops, T value) {
+        if (ops instanceof RegistryOps<?> registryops) {
             Optional<HolderGetter<E>> optional = registryops.getter(this.registryKey);
             if (optional.isPresent()) {
                 return ResourceLocation.CODEC
-                    .decode(p_206743_, p_206744_)
+                    .decode(ops, value)
                     .flatMap(
                         p_337524_ -> {
                             ResourceLocation resourcelocation = p_337524_.getFirst();

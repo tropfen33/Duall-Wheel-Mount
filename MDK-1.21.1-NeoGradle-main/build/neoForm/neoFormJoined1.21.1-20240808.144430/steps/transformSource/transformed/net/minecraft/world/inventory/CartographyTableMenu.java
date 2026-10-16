@@ -41,13 +41,13 @@ public class CartographyTableMenu extends AbstractContainerMenu {
         }
     };
 
-    public CartographyTableMenu(int p_39140_, Inventory p_39141_) {
-        this(p_39140_, p_39141_, ContainerLevelAccess.NULL);
+    public CartographyTableMenu(int containerId, Inventory playerInventory) {
+        this(containerId, playerInventory, ContainerLevelAccess.NULL);
     }
 
-    public CartographyTableMenu(int p_39143_, Inventory p_39144_, final ContainerLevelAccess p_39145_) {
-        super(MenuType.CARTOGRAPHY_TABLE, p_39143_);
-        this.access = p_39145_;
+    public CartographyTableMenu(int containerId, Inventory playerInventory, final ContainerLevelAccess access) {
+        super(MenuType.CARTOGRAPHY_TABLE, containerId);
+        this.access = access;
         this.addSlot(new Slot(this.container, 0, 15, 15) {
             @Override
             public boolean mayPlace(ItemStack p_39194_) {
@@ -71,7 +71,7 @@ public class CartographyTableMenu extends AbstractContainerMenu {
                 CartographyTableMenu.this.slots.get(0).remove(1);
                 CartographyTableMenu.this.slots.get(1).remove(1);
                 p_150510_.getItem().onCraftedBy(p_150510_, p_150509_.level(), p_150509_);
-                p_39145_.execute((p_39219_, p_39220_) -> {
+                access.execute((p_39219_, p_39220_) -> {
                     long l = p_39219_.getGameTime();
                     if (CartographyTableMenu.this.lastSoundTime != l) {
                         p_39219_.playSound(null, p_39220_, SoundEvents.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, SoundSource.BLOCKS, 1.0F, 1.0F);
@@ -84,22 +84,28 @@ public class CartographyTableMenu extends AbstractContainerMenu {
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 9; j++) {
-                this.addSlot(new Slot(p_39144_, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
             }
         }
 
         for (int k = 0; k < 9; k++) {
-            this.addSlot(new Slot(p_39144_, k, 8 + k * 18, 142));
+            this.addSlot(new Slot(playerInventory, k, 8 + k * 18, 142));
         }
     }
 
+    /**
+     * Determines whether supplied player can use this container
+     */
     @Override
-    public boolean stillValid(Player p_39149_) {
-        return stillValid(this.access, p_39149_, Blocks.CARTOGRAPHY_TABLE);
+    public boolean stillValid(Player player) {
+        return stillValid(this.access, player, Blocks.CARTOGRAPHY_TABLE);
     }
 
+    /**
+     * Callback for when the crafting matrix is changed.
+     */
     @Override
-    public void slotsChanged(Container p_39147_) {
+    public void slotsChanged(Container inventory) {
         ItemStack itemstack = this.container.getItem(0);
         ItemStack itemstack1 = this.container.getItem(1);
         ItemStack itemstack2 = this.resultContainer.getItem(2);
@@ -112,31 +118,31 @@ public class CartographyTableMenu extends AbstractContainerMenu {
         }
     }
 
-    private void setupResultSlot(ItemStack p_39163_, ItemStack p_39164_, ItemStack p_39165_) {
+    private void setupResultSlot(ItemStack map, ItemStack firstSlotStack, ItemStack resultOutput) {
         this.access.execute((p_279039_, p_279040_) -> {
-            MapItemSavedData mapitemsaveddata = MapItem.getSavedData(p_39163_, p_279039_);
+            MapItemSavedData mapitemsaveddata = MapItem.getSavedData(map, p_279039_);
             if (mapitemsaveddata != null) {
                 ItemStack itemstack;
-                if (p_39164_.is(Items.PAPER) && !mapitemsaveddata.locked && mapitemsaveddata.scale < 4) {
-                    itemstack = p_39163_.copyWithCount(1);
+                if (firstSlotStack.is(Items.PAPER) && !mapitemsaveddata.locked && mapitemsaveddata.scale < 4) {
+                    itemstack = map.copyWithCount(1);
                     itemstack.set(DataComponents.MAP_POST_PROCESSING, MapPostProcessing.SCALE);
                     this.broadcastChanges();
-                } else if (p_39164_.is(Items.GLASS_PANE) && !mapitemsaveddata.locked) {
-                    itemstack = p_39163_.copyWithCount(1);
+                } else if (firstSlotStack.is(Items.GLASS_PANE) && !mapitemsaveddata.locked) {
+                    itemstack = map.copyWithCount(1);
                     itemstack.set(DataComponents.MAP_POST_PROCESSING, MapPostProcessing.LOCK);
                     this.broadcastChanges();
                 } else {
-                    if (!p_39164_.is(Items.MAP)) {
+                    if (!firstSlotStack.is(Items.MAP)) {
                         this.resultContainer.removeItemNoUpdate(2);
                         this.broadcastChanges();
                         return;
                     }
 
-                    itemstack = p_39163_.copyWithCount(2);
+                    itemstack = map.copyWithCount(2);
                     this.broadcastChanges();
                 }
 
-                if (!ItemStack.matches(itemstack, p_39165_)) {
+                if (!ItemStack.matches(itemstack, resultOutput)) {
                     this.resultContainer.setItem(2, itemstack);
                     this.broadcastChanges();
                 }
@@ -144,36 +150,42 @@ public class CartographyTableMenu extends AbstractContainerMenu {
         });
     }
 
+    /**
+     * Called to determine if the current slot is valid for the stack merging (double-click) code. The stack passed in is null for the initial slot that was double-clicked.
+     */
     @Override
-    public boolean canTakeItemForPickAll(ItemStack p_39160_, Slot p_39161_) {
-        return p_39161_.container != this.resultContainer && super.canTakeItemForPickAll(p_39160_, p_39161_);
+    public boolean canTakeItemForPickAll(ItemStack stack, Slot slot) {
+        return slot.container != this.resultContainer && super.canTakeItemForPickAll(stack, slot);
     }
 
+    /**
+     * Handle when the stack in slot {@code index} is shift-clicked. Normally this moves the stack between the player inventory and the other inventory(s).
+     */
     @Override
-    public ItemStack quickMoveStack(Player p_39175_, int p_39176_) {
+    public ItemStack quickMoveStack(Player player, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(p_39176_);
+        Slot slot = this.slots.get(index);
         if (slot != null && slot.hasItem()) {
             ItemStack itemstack1 = slot.getItem();
             itemstack = itemstack1.copy();
-            if (p_39176_ == 2) {
-                itemstack1.getItem().onCraftedBy(itemstack1, p_39175_.level(), p_39175_);
+            if (index == 2) {
+                itemstack1.getItem().onCraftedBy(itemstack1, player.level(), player);
                 if (!this.moveItemStackTo(itemstack1, 3, 39, true)) {
                     return ItemStack.EMPTY;
                 }
 
                 slot.onQuickCraft(itemstack1, itemstack);
-            } else if (p_39176_ != 1 && p_39176_ != 0) {
+            } else if (index != 1 && index != 0) {
                 if (itemstack1.is(Items.FILLED_MAP)) {
                     if (!this.moveItemStackTo(itemstack1, 0, 1, false)) {
                         return ItemStack.EMPTY;
                     }
                 } else if (!itemstack1.is(Items.PAPER) && !itemstack1.is(Items.MAP) && !itemstack1.is(Items.GLASS_PANE)) {
-                    if (p_39176_ >= 3 && p_39176_ < 30) {
+                    if (index >= 3 && index < 30) {
                         if (!this.moveItemStackTo(itemstack1, 30, 39, false)) {
                             return ItemStack.EMPTY;
                         }
-                    } else if (p_39176_ >= 30 && p_39176_ < 39 && !this.moveItemStackTo(itemstack1, 3, 30, false)) {
+                    } else if (index >= 30 && index < 39 && !this.moveItemStackTo(itemstack1, 3, 30, false)) {
                         return ItemStack.EMPTY;
                     }
                 } else if (!this.moveItemStackTo(itemstack1, 1, 2, false)) {
@@ -192,17 +204,20 @@ public class CartographyTableMenu extends AbstractContainerMenu {
                 return ItemStack.EMPTY;
             }
 
-            slot.onTake(p_39175_, itemstack1);
+            slot.onTake(player, itemstack1);
             this.broadcastChanges();
         }
 
         return itemstack;
     }
 
+    /**
+     * Called when the container is closed.
+     */
     @Override
-    public void removed(Player p_39173_) {
-        super.removed(p_39173_);
+    public void removed(Player player) {
+        super.removed(player);
         this.resultContainer.removeItemNoUpdate(2);
-        this.access.execute((p_39152_, p_39153_) -> this.clearContainer(p_39173_, this.container));
+        this.access.execute((p_39152_, p_39153_) -> this.clearContainer(player, this.container));
     }
 }

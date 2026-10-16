@@ -21,16 +21,16 @@ public class EnderDragonPhase<T extends DragonPhaseInstance> {
     private final int id;
     private final String name;
 
-    private EnderDragonPhase(int p_31394_, Class<? extends DragonPhaseInstance> p_31395_, String p_31396_) {
-        this.id = p_31394_;
-        this.instanceClass = p_31395_;
-        this.name = p_31396_;
+    private EnderDragonPhase(int id, Class<? extends DragonPhaseInstance> instanceClass, String name) {
+        this.id = id;
+        this.instanceClass = instanceClass;
+        this.name = name;
     }
 
-    public DragonPhaseInstance createInstance(EnderDragon p_31401_) {
+    public DragonPhaseInstance createInstance(EnderDragon dragon) {
         try {
             Constructor<? extends DragonPhaseInstance> constructor = this.getConstructor();
-            return constructor.newInstance(p_31401_);
+            return constructor.newInstance(dragon);
         } catch (Exception exception) {
             throw new Error(exception);
         }
@@ -49,16 +49,19 @@ public class EnderDragonPhase<T extends DragonPhaseInstance> {
         return this.name + " (#" + this.id + ")";
     }
 
-    public static EnderDragonPhase<?> getById(int p_31399_) {
-        return p_31399_ >= 0 && p_31399_ < phases.length ? phases[p_31399_] : HOLDING_PATTERN;
+    /**
+     * Gets a phase by its ID. If the phase is out of bounds (negative or beyond the end of the phase array), returns {@link #HOLDING_PATTERN}.
+     */
+    public static EnderDragonPhase<?> getById(int id) {
+        return id >= 0 && id < phases.length ? phases[id] : HOLDING_PATTERN;
     }
 
     public static int getCount() {
         return phases.length;
     }
 
-    private static <T extends DragonPhaseInstance> EnderDragonPhase<T> create(Class<T> p_31403_, String p_31404_) {
-        EnderDragonPhase<T> enderdragonphase = new EnderDragonPhase<>(phases.length, p_31403_, p_31404_);
+    private static <T extends DragonPhaseInstance> EnderDragonPhase<T> create(Class<T> phase, String name) {
+        EnderDragonPhase<T> enderdragonphase = new EnderDragonPhase<>(phases.length, phase, name);
         phases = Arrays.copyOf(phases, phases.length + 1);
         phases[enderdragonphase.getId()] = enderdragonphase;
         return enderdragonphase;

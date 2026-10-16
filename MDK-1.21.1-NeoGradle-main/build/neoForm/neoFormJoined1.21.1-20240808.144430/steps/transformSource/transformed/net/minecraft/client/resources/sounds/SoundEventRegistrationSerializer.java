@@ -29,10 +29,10 @@ public class SoundEventRegistrationSerializer implements JsonDeserializer<SoundE
         return new SoundEventRegistration(list, flag, s);
     }
 
-    private List<Sound> getSounds(JsonObject p_119831_) {
+    private List<Sound> getSounds(JsonObject object) {
         List<Sound> list = Lists.newArrayList();
-        if (p_119831_.has("sounds")) {
-            JsonArray jsonarray = GsonHelper.getAsJsonArray(p_119831_, "sounds");
+        if (object.has("sounds")) {
+            JsonArray jsonarray = GsonHelper.getAsJsonArray(object, "sounds");
 
             for (int i = 0; i < jsonarray.size(); i++) {
                 JsonElement jsonelement = jsonarray.get(i);
@@ -48,25 +48,25 @@ public class SoundEventRegistrationSerializer implements JsonDeserializer<SoundE
         return list;
     }
 
-    private Sound getSound(JsonObject p_119836_) {
-        ResourceLocation resourcelocation = ResourceLocation.parse(GsonHelper.getAsString(p_119836_, "name"));
-        Sound.Type sound$type = this.getType(p_119836_, Sound.Type.FILE);
-        float f = GsonHelper.getAsFloat(p_119836_, "volume", 1.0F);
+    private Sound getSound(JsonObject object) {
+        ResourceLocation resourcelocation = ResourceLocation.parse(GsonHelper.getAsString(object, "name"));
+        Sound.Type sound$type = this.getType(object, Sound.Type.FILE);
+        float f = GsonHelper.getAsFloat(object, "volume", 1.0F);
         Validate.isTrue(f > 0.0F, "Invalid volume");
-        float f1 = GsonHelper.getAsFloat(p_119836_, "pitch", 1.0F);
+        float f1 = GsonHelper.getAsFloat(object, "pitch", 1.0F);
         Validate.isTrue(f1 > 0.0F, "Invalid pitch");
-        int i = GsonHelper.getAsInt(p_119836_, "weight", 1);
+        int i = GsonHelper.getAsInt(object, "weight", 1);
         Validate.isTrue(i > 0, "Invalid weight");
-        boolean flag = GsonHelper.getAsBoolean(p_119836_, "preload", false);
-        boolean flag1 = GsonHelper.getAsBoolean(p_119836_, "stream", false);
-        int j = GsonHelper.getAsInt(p_119836_, "attenuation_distance", 16);
+        boolean flag = GsonHelper.getAsBoolean(object, "preload", false);
+        boolean flag1 = GsonHelper.getAsBoolean(object, "stream", false);
+        int j = GsonHelper.getAsInt(object, "attenuation_distance", 16);
         return new Sound(resourcelocation, ConstantFloat.of(f), ConstantFloat.of(f1), i, sound$type, flag1, flag, j);
     }
 
-    private Sound.Type getType(JsonObject p_119833_, Sound.Type p_119834_) {
-        Sound.Type sound$type = p_119834_;
-        if (p_119833_.has("type")) {
-            sound$type = Sound.Type.getByName(GsonHelper.getAsString(p_119833_, "type"));
+    private Sound.Type getType(JsonObject object, Sound.Type defaultValue) {
+        Sound.Type sound$type = defaultValue;
+        if (object.has("type")) {
+            sound$type = Sound.Type.getByName(GsonHelper.getAsString(object, "type"));
             Validate.notNull(sound$type, "Invalid type");
         }
 

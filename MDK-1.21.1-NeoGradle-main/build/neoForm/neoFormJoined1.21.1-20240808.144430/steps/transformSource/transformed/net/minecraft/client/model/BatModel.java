@@ -23,11 +23,11 @@ public class BatModel extends HierarchicalModel<Bat> {
     private final ModelPart leftWingTip;
     private final ModelPart feet;
 
-    public BatModel(ModelPart p_170427_) {
+    public BatModel(ModelPart root) {
         super(RenderType::entityCutout);
-        this.root = p_170427_;
-        this.body = p_170427_.getChild("body");
-        this.head = p_170427_.getChild("head");
+        this.root = root;
+        this.body = root.getChild("body");
+        this.head = root.getChild("head");
         this.rightWing = this.body.getChild("right_wing");
         this.rightWingTip = this.rightWing.getChild("right_wing_tip");
         this.leftWing = this.body.getChild("left_wing");
@@ -73,17 +73,20 @@ public class BatModel extends HierarchicalModel<Bat> {
         return this.root;
     }
 
-    public void setupAnim(Bat p_102200_, float p_102201_, float p_102202_, float p_102203_, float p_102204_, float p_102205_) {
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(Bat entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.root().getAllParts().forEach(ModelPart::resetPose);
-        if (p_102200_.isResting()) {
-            this.applyHeadRotation(p_102204_);
+        if (entity.isResting()) {
+            this.applyHeadRotation(netHeadYaw);
         }
 
-        this.animate(p_102200_.flyAnimationState, BatAnimation.BAT_FLYING, p_102203_, 1.0F);
-        this.animate(p_102200_.restAnimationState, BatAnimation.BAT_RESTING, p_102203_, 1.0F);
+        this.animate(entity.flyAnimationState, BatAnimation.BAT_FLYING, ageInTicks, 1.0F);
+        this.animate(entity.restAnimationState, BatAnimation.BAT_RESTING, ageInTicks, 1.0F);
     }
 
-    private void applyHeadRotation(float p_309007_) {
-        this.head.yRot = p_309007_ * (float) (Math.PI / 180.0);
+    private void applyHeadRotation(float headRotation) {
+        this.head.yRot = headRotation * (float) (Math.PI / 180.0);
     }
 }

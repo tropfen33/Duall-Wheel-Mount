@@ -8,12 +8,12 @@ import net.minecraft.util.SignatureValidator;
 import net.minecraft.world.entity.player.ProfilePublicKey;
 
 public record RemoteChatSession(UUID sessionId, ProfilePublicKey profilePublicKey) {
-    public SignedMessageValidator createMessageValidator(Duration p_298238_) {
-        return new SignedMessageValidator.KeyBased(this.profilePublicKey.createSignatureValidator(), () -> this.profilePublicKey.data().hasExpired(p_298238_));
+    public SignedMessageValidator createMessageValidator(Duration duration) {
+        return new SignedMessageValidator.KeyBased(this.profilePublicKey.createSignatureValidator(), () -> this.profilePublicKey.data().hasExpired(duration));
     }
 
-    public SignedMessageChain.Decoder createMessageDecoder(UUID p_249107_) {
-        return new SignedMessageChain(p_249107_, this.sessionId).decoder(this.profilePublicKey);
+    public SignedMessageChain.Decoder createMessageDecoder(UUID sender) {
+        return new SignedMessageChain(sender, this.sessionId).decoder(this.profilePublicKey);
     }
 
     public RemoteChatSession.Data asData() {
@@ -25,17 +25,17 @@ public record RemoteChatSession(UUID sessionId, ProfilePublicKey profilePublicKe
     }
 
     public static record Data(UUID sessionId, ProfilePublicKey.Data profilePublicKey) {
-        public static RemoteChatSession.Data read(FriendlyByteBuf p_252181_) {
-            return new RemoteChatSession.Data(p_252181_.readUUID(), new ProfilePublicKey.Data(p_252181_));
+        public static RemoteChatSession.Data read(FriendlyByteBuf buffer) {
+            return new RemoteChatSession.Data(buffer.readUUID(), new ProfilePublicKey.Data(buffer));
         }
 
-        public static void write(FriendlyByteBuf p_248910_, RemoteChatSession.Data p_250537_) {
-            p_248910_.writeUUID(p_250537_.sessionId);
-            p_250537_.profilePublicKey.write(p_248910_);
+        public static void write(FriendlyByteBuf buffer, RemoteChatSession.Data data) {
+            buffer.writeUUID(data.sessionId);
+            data.profilePublicKey.write(buffer);
         }
 
-        public RemoteChatSession validate(GameProfile p_251231_, SignatureValidator p_248970_) throws ProfilePublicKey.ValidationException {
-            return new RemoteChatSession(this.sessionId, ProfilePublicKey.createValidated(p_248970_, p_251231_.getId(), this.profilePublicKey));
+        public RemoteChatSession validate(GameProfile profile, SignatureValidator signatureValidator) throws ProfilePublicKey.ValidationException {
+            return new RemoteChatSession(this.sessionId, ProfilePublicKey.createValidated(signatureValidator, profile.getId(), this.profilePublicKey));
         }
     }
 }

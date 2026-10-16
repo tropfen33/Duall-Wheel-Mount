@@ -14,22 +14,25 @@ public class ServerboundRecipeBookChangeSettingsPacket implements Packet<ServerG
     private final boolean isOpen;
     private final boolean isFiltering;
 
-    public ServerboundRecipeBookChangeSettingsPacket(RecipeBookType p_134366_, boolean p_134367_, boolean p_134368_) {
-        this.bookType = p_134366_;
-        this.isOpen = p_134367_;
-        this.isFiltering = p_134368_;
+    public ServerboundRecipeBookChangeSettingsPacket(RecipeBookType bookType, boolean isOpen, boolean isFiltering) {
+        this.bookType = bookType;
+        this.isOpen = isOpen;
+        this.isFiltering = isFiltering;
     }
 
-    private ServerboundRecipeBookChangeSettingsPacket(FriendlyByteBuf p_179734_) {
-        this.bookType = p_179734_.readEnum(RecipeBookType.class);
-        this.isOpen = p_179734_.readBoolean();
-        this.isFiltering = p_179734_.readBoolean();
+    private ServerboundRecipeBookChangeSettingsPacket(FriendlyByteBuf buffer) {
+        this.bookType = buffer.readEnum(RecipeBookType.class);
+        this.isOpen = buffer.readBoolean();
+        this.isFiltering = buffer.readBoolean();
     }
 
-    private void write(FriendlyByteBuf p_134377_) {
-        p_134377_.writeEnum(this.bookType);
-        p_134377_.writeBoolean(this.isOpen);
-        p_134377_.writeBoolean(this.isFiltering);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeEnum(this.bookType);
+        buffer.writeBoolean(this.isOpen);
+        buffer.writeBoolean(this.isFiltering);
     }
 
     @Override
@@ -37,8 +40,11 @@ public class ServerboundRecipeBookChangeSettingsPacket implements Packet<ServerG
         return GamePacketTypes.SERVERBOUND_RECIPE_BOOK_CHANGE_SETTINGS;
     }
 
-    public void handle(ServerGamePacketListener p_134374_) {
-        p_134374_.handleRecipeBookChangeSettingsPacket(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleRecipeBookChangeSettingsPacket(this);
     }
 
     public RecipeBookType getBookType() {

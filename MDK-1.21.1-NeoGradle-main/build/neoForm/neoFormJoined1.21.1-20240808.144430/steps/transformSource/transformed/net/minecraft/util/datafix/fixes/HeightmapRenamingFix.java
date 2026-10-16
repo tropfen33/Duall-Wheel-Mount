@@ -11,8 +11,8 @@ import com.mojang.serialization.Dynamic;
 import java.util.Optional;
 
 public class HeightmapRenamingFix extends DataFix {
-    public HeightmapRenamingFix(Schema p_15891_, boolean p_15892_) {
-        super(p_15891_, p_15892_);
+    public HeightmapRenamingFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -24,10 +24,10 @@ public class HeightmapRenamingFix extends DataFix {
         );
     }
 
-    private Dynamic<?> fix(Dynamic<?> p_15899_) {
-        Optional<? extends Dynamic<?>> optional = p_15899_.get("Heightmaps").result();
+    private Dynamic<?> fix(Dynamic<?> p_dynamic) {
+        Optional<? extends Dynamic<?>> optional = p_dynamic.get("Heightmaps").result();
         if (optional.isEmpty()) {
-            return p_15899_;
+            return p_dynamic;
         } else {
             Dynamic<?> dynamic = (Dynamic<?>)optional.get();
             Optional<? extends Dynamic<?>> optional1 = dynamic.get("LIQUID").result();
@@ -56,7 +56,7 @@ public class HeightmapRenamingFix extends DataFix {
                 dynamic = dynamic.set("MOTION_BLOCKING_NO_LEAVES", (Dynamic<?>)optional4.get());
             }
 
-            return p_15899_.set("Heightmaps", dynamic);
+            return p_dynamic.set("Heightmaps", dynamic);
         }
     }
 }

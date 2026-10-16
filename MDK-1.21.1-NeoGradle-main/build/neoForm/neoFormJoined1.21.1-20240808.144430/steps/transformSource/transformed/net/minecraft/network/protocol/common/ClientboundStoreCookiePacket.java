@@ -19,9 +19,9 @@ public record ClientboundStoreCookiePacket(ResourceLocation key, byte[] payload)
         this(p_320774_.readResourceLocation(), PAYLOAD_STREAM_CODEC.decode(p_320774_));
     }
 
-    private void write(FriendlyByteBuf p_320675_) {
-        p_320675_.writeResourceLocation(this.key);
-        PAYLOAD_STREAM_CODEC.encode(p_320675_, this.payload);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeResourceLocation(this.key);
+        PAYLOAD_STREAM_CODEC.encode(buffer, this.payload);
     }
 
     @Override
@@ -29,7 +29,10 @@ public record ClientboundStoreCookiePacket(ResourceLocation key, byte[] payload)
         return CommonPacketTypes.CLIENTBOUND_STORE_COOKIE;
     }
 
-    public void handle(ClientCommonPacketListener p_320581_) {
-        p_320581_.handleStoreCookie(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientCommonPacketListener handler) {
+        handler.handleStoreCookie(this);
     }
 }

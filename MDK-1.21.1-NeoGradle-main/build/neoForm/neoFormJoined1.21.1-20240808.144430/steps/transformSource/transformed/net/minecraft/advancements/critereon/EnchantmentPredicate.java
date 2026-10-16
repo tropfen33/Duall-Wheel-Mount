@@ -29,17 +29,17 @@ public record EnchantmentPredicate(Optional<HolderSet<Enchantment>> enchantments
         this(Optional.of(p_346051_), p_30472_);
     }
 
-    public boolean containedIn(ItemEnchantments p_330878_) {
+    public boolean containedIn(ItemEnchantments enchantments) {
         if (this.enchantments.isPresent()) {
             for (Holder<Enchantment> holder : this.enchantments.get()) {
-                if (this.matchesEnchantment(p_330878_, holder)) {
+                if (this.matchesEnchantment(enchantments, holder)) {
                     return true;
                 }
             }
 
             return false;
         } else if (this.level != MinMaxBounds.Ints.ANY) {
-            for (Entry<Holder<Enchantment>> entry : p_330878_.entrySet()) {
+            for (Entry<Holder<Enchantment>> entry : enchantments.entrySet()) {
                 if (this.level.matches(entry.getIntValue())) {
                     return true;
                 }
@@ -47,12 +47,12 @@ public record EnchantmentPredicate(Optional<HolderSet<Enchantment>> enchantments
 
             return false;
         } else {
-            return !p_330878_.isEmpty();
+            return !enchantments.isEmpty();
         }
     }
 
-    private boolean matchesEnchantment(ItemEnchantments p_346384_, Holder<Enchantment> p_345318_) {
-        int i = p_346384_.getLevel(p_345318_);
+    private boolean matchesEnchantment(ItemEnchantments itemEnchantments, Holder<Enchantment> enchantment) {
+        int i = itemEnchantments.getLevel(enchantment);
         if (i == 0) {
             return false;
         } else {

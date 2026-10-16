@@ -14,19 +14,19 @@ public class EntityVariantFix extends NamedEntityFix {
     private final String fieldName;
     private final IntFunction<String> idConversions;
 
-    public EntityVariantFix(Schema p_216623_, String p_216624_, TypeReference p_216625_, String p_216626_, String p_216627_, IntFunction<String> p_216628_) {
-        super(p_216623_, false, p_216624_, p_216625_, p_216626_);
-        this.fieldName = p_216627_;
-        this.idConversions = p_216628_;
+    public EntityVariantFix(Schema outputSchema, String name, TypeReference type, String entityName, String fieldName, IntFunction<String> idConversions) {
+        super(outputSchema, false, name, type, entityName);
+        this.fieldName = fieldName;
+        this.idConversions = idConversions;
     }
 
-    private static <T> Dynamic<T> updateAndRename(Dynamic<T> p_216637_, String p_216638_, String p_216639_, Function<Dynamic<T>, Dynamic<T>> p_216640_) {
-        return p_216637_.map(
+    private static <T> Dynamic<T> updateAndRename(Dynamic<T> dynamic, String fieldName, String newFieldName, Function<Dynamic<T>, Dynamic<T>> fixer) {
+        return dynamic.map(
             p_337624_ -> {
-                DynamicOps<T> dynamicops = p_216637_.getOps();
-                Function<T, T> function = p_216656_ -> p_216640_.apply(new Dynamic<>(dynamicops, p_216656_)).getValue();
-                return dynamicops.get((T)p_337624_, p_216638_)
-                    .map(p_216652_ -> dynamicops.set((T)p_337624_, p_216639_, function.apply((T)p_216652_)))
+                DynamicOps<T> dynamicops = dynamic.getOps();
+                Function<T, T> function = p_216656_ -> fixer.apply(new Dynamic<>(dynamicops, p_216656_)).getValue();
+                return dynamicops.get((T)p_337624_, fieldName)
+                    .map(p_216652_ -> dynamicops.set((T)p_337624_, newFieldName, function.apply((T)p_216652_)))
                     .result()
                     .orElse((T)p_337624_);
             }
@@ -34,8 +34,8 @@ public class EntityVariantFix extends NamedEntityFix {
     }
 
     @Override
-    protected Typed<?> fix(Typed<?> p_216630_) {
-        return p_216630_.update(
+    protected Typed<?> fix(Typed<?> typed) {
+        return typed.update(
             DSL.remainderFinder(),
             p_216632_ -> updateAndRename(
                     p_216632_,

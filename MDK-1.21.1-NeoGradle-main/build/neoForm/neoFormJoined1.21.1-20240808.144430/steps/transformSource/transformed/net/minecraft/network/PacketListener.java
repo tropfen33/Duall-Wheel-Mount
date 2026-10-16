@@ -8,34 +8,37 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.PacketUtils;
 
+/**
+ * Describes how packets are handled. There are various implementations of this class for each possible protocol (e.g. PLAY, CLIENTBOUND; PLAY, SERVERBOUND; etc.)
+ */
 public interface PacketListener {
     PacketFlow flow();
 
     ConnectionProtocol protocol();
 
-    void onDisconnect(DisconnectionDetails p_350287_);
+    void onDisconnect(DisconnectionDetails details);
 
-    default void onPacketError(Packet p_341593_, Exception p_341607_) throws ReportedException {
-        throw PacketUtils.makeReportedException(p_341607_, p_341593_, this);
+    default void onPacketError(Packet packet, Exception exception) throws ReportedException {
+        throw PacketUtils.makeReportedException(exception, packet, this);
     }
 
-    default DisconnectionDetails createDisconnectionInfo(Component p_350812_, Throwable p_351028_) {
-        return new DisconnectionDetails(p_350812_);
+    default DisconnectionDetails createDisconnectionInfo(Component reason, Throwable error) {
+        return new DisconnectionDetails(reason);
     }
 
     boolean isAcceptingMessages();
 
-    default boolean shouldHandleMessage(Packet<?> p_295210_) {
+    default boolean shouldHandleMessage(Packet<?> packet) {
         return this.isAcceptingMessages();
     }
 
-    default void fillCrashReport(CrashReport p_314927_) {
-        CrashReportCategory crashreportcategory = p_314927_.addCategory("Connection");
+    default void fillCrashReport(CrashReport crashReport) {
+        CrashReportCategory crashreportcategory = crashReport.addCategory("Connection");
         crashreportcategory.setDetail("Protocol", () -> this.protocol().id());
         crashreportcategory.setDetail("Flow", () -> this.flow().toString());
-        this.fillListenerSpecificCrashDetails(p_314927_, crashreportcategory);
+        this.fillListenerSpecificCrashDetails(crashReport, crashreportcategory);
     }
 
-    default void fillListenerSpecificCrashDetails(CrashReport p_350278_, CrashReportCategory p_314965_) {
+    default void fillListenerSpecificCrashDetails(CrashReport crashReport, CrashReportCategory category) {
     }
 }

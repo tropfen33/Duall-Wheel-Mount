@@ -72,56 +72,56 @@ public class RealmsResetWorldScreen extends RealmsScreen {
     private final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
 
     private RealmsResetWorldScreen(
-        Screen p_89329_, RealmsServer p_89330_, int p_300857_, Component p_301121_, Component p_300859_, int p_300978_, Component p_300942_, Runnable p_89331_
+        Screen lastScreen, RealmsServer serverData, int slot, Component title, Component subtitle, int subtitleColor, Component resetTaskTitle, Runnable resetWorldRunnable
     ) {
-        this(p_89329_, p_89330_, p_300857_, p_301121_, p_300859_, p_300978_, p_300942_, null, p_89331_);
+        this(lastScreen, serverData, slot, title, subtitle, subtitleColor, resetTaskTitle, null, resetWorldRunnable);
     }
 
     public RealmsResetWorldScreen(
-        Screen p_306282_,
-        RealmsServer p_306292_,
-        int p_305906_,
-        Component p_306014_,
-        Component p_306028_,
-        int p_306044_,
-        Component p_306316_,
-        @Nullable RealmCreationTask p_320691_,
-        Runnable p_306029_
+        Screen lastScreen,
+        RealmsServer serverData,
+        int slot,
+        Component title,
+        Component subtitle,
+        int subtitleColor,
+        Component resetTaskTitle,
+        @Nullable RealmCreationTask realmCreationTask,
+        Runnable resetWorldRunnable
     ) {
-        super(p_306014_);
-        this.lastScreen = p_306282_;
-        this.serverData = p_306292_;
-        this.slot = p_305906_;
-        this.subtitle = p_306028_;
-        this.subtitleColor = p_306044_;
-        this.resetTaskTitle = p_306316_;
-        this.realmCreationTask = p_320691_;
-        this.resetWorldRunnable = p_306029_;
+        super(title);
+        this.lastScreen = lastScreen;
+        this.serverData = serverData;
+        this.slot = slot;
+        this.subtitle = subtitle;
+        this.subtitleColor = subtitleColor;
+        this.resetTaskTitle = resetTaskTitle;
+        this.realmCreationTask = realmCreationTask;
+        this.resetWorldRunnable = resetWorldRunnable;
     }
 
-    public static RealmsResetWorldScreen forNewRealm(Screen p_300881_, RealmsServer p_301228_, RealmCreationTask p_320942_, Runnable p_300926_) {
+    public static RealmsResetWorldScreen forNewRealm(Screen lastScreen, RealmsServer serverData, RealmCreationTask realmCreationTask, Runnable resetWorldRunnable) {
         return new RealmsResetWorldScreen(
-            p_300881_,
-            p_301228_,
-            p_301228_.activeSlot,
+            lastScreen,
+            serverData,
+            serverData.activeSlot,
             CREATE_REALM_TITLE,
             CREATE_REALM_SUBTITLE,
             -6250336,
             CREATE_WORLD_RESET_TASK_TITLE,
-            p_320942_,
-            p_300926_
+            realmCreationTask,
+            resetWorldRunnable
         );
     }
 
-    public static RealmsResetWorldScreen forEmptySlot(Screen p_300943_, int p_301275_, RealmsServer p_301312_, Runnable p_301297_) {
+    public static RealmsResetWorldScreen forEmptySlot(Screen lastScreen, int slot, RealmsServer serverData, Runnable resetWorldRunnable) {
         return new RealmsResetWorldScreen(
-            p_300943_, p_301312_, p_301275_, CREATE_WORLD_TITLE, CREATE_WORLD_SUBTITLE, -6250336, CREATE_WORLD_RESET_TASK_TITLE, p_301297_
+            lastScreen, serverData, slot, CREATE_WORLD_TITLE, CREATE_WORLD_SUBTITLE, -6250336, CREATE_WORLD_RESET_TASK_TITLE, resetWorldRunnable
         );
     }
 
-    public static RealmsResetWorldScreen forResetSlot(Screen p_301039_, RealmsServer p_300914_, Runnable p_301017_) {
+    public static RealmsResetWorldScreen forResetSlot(Screen lastScreen, RealmsServer serverData, Runnable resetWorldRunnable) {
         return new RealmsResetWorldScreen(
-            p_301039_, p_300914_, p_300914_.activeSlot, RESET_WORLD_TITLE, RESET_WORLD_SUBTITLE, -65536, RESET_WORLD_RESET_TASK_TITLE, p_301017_
+            lastScreen, serverData, serverData.activeSlot, RESET_WORLD_TITLE, RESET_WORLD_SUBTITLE, -65536, RESET_WORLD_RESET_TASK_TITLE, resetWorldRunnable
         );
     }
 
@@ -246,21 +246,21 @@ public class RealmsResetWorldScreen extends RealmsScreen {
         this.minecraft.setScreen(this.lastScreen);
     }
 
-    private void templateSelectionCallback(@Nullable WorldTemplate p_167454_) {
+    private void templateSelectionCallback(@Nullable WorldTemplate template) {
         this.minecraft.setScreen(this);
-        if (p_167454_ != null) {
-            this.runResetTasks(new ResettingTemplateWorldTask(p_167454_, this.serverData.id, this.resetTaskTitle, this.resetWorldRunnable));
+        if (template != null) {
+            this.runResetTasks(new ResettingTemplateWorldTask(template, this.serverData.id, this.resetTaskTitle, this.resetWorldRunnable));
         }
     }
 
-    private void generationSelectionCallback(@Nullable WorldGenerationInfo p_167456_) {
+    private void generationSelectionCallback(@Nullable WorldGenerationInfo generationInfo) {
         this.minecraft.setScreen(this);
-        if (p_167456_ != null) {
-            this.runResetTasks(new ResettingGeneratedWorldTask(p_167456_, this.serverData.id, this.resetTaskTitle, this.resetWorldRunnable));
+        if (generationInfo != null) {
+            this.runResetTasks(new ResettingGeneratedWorldTask(generationInfo, this.serverData.id, this.resetTaskTitle, this.resetWorldRunnable));
         }
     }
 
-    private void runResetTasks(LongRunningTask p_305864_) {
+    private void runResetTasks(LongRunningTask task) {
         List<LongRunningTask> list = new ArrayList<>();
         if (this.realmCreationTask != null) {
             list.add(this.realmCreationTask);
@@ -271,7 +271,7 @@ public class RealmsResetWorldScreen extends RealmsScreen {
             }));
         }
 
-        list.add(p_305864_);
+        list.add(task);
         this.minecraft.setScreen(new RealmsLongRunningMcoTaskScreen(this.lastScreen, list.toArray(new LongRunningTask[0])));
     }
 
@@ -283,25 +283,25 @@ public class RealmsResetWorldScreen extends RealmsScreen {
         private static final int IMAGE_SIZE = 56;
         private final ResourceLocation image;
 
-        FrameButton(Font p_335556_, Component p_89441_, ResourceLocation p_89442_, Button.OnPress p_89443_) {
-            super(0, 0, 60, 60 + 9, p_89441_, p_89443_, DEFAULT_NARRATION);
-            this.image = p_89442_;
+        FrameButton(Font font, Component message, ResourceLocation image, Button.OnPress onPress) {
+            super(0, 0, 60, 60 + 9, message, onPress, DEFAULT_NARRATION);
+            this.image = image;
         }
 
         @Override
-        public void renderWidget(GuiGraphics p_282595_, int p_282741_, int p_283560_, float p_281923_) {
+        public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
             boolean flag = this.isHoveredOrFocused();
             if (flag) {
-                p_282595_.setColor(0.56F, 0.56F, 0.56F, 1.0F);
+                guiGraphics.setColor(0.56F, 0.56F, 0.56F, 1.0F);
             }
 
             int i = this.getX();
             int j = this.getY();
-            p_282595_.blit(this.image, i + 2, j + 2, 0.0F, 0.0F, 56, 56, 56, 56);
-            p_282595_.blitSprite(SLOT_FRAME_SPRITE, i, j, 60, 60);
-            p_282595_.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+            guiGraphics.blit(this.image, i + 2, j + 2, 0.0F, 0.0F, 56, 56, 56, 56);
+            guiGraphics.blitSprite(SLOT_FRAME_SPRITE, i, j, 60, 60);
+            guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
             int k = flag ? -6250336 : -1;
-            p_282595_.drawCenteredString(RealmsResetWorldScreen.this.font, this.getMessage(), i + 28, j - 14, k);
+            guiGraphics.drawCenteredString(RealmsResetWorldScreen.this.font, this.getMessage(), i + 28, j - 14, k);
         }
     }
 }

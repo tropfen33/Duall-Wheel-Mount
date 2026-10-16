@@ -38,27 +38,30 @@ public class WitherSkullBlock extends SkullBlock {
         super(SkullBlock.Types.WITHER_SKELETON, p_58254_);
     }
 
+    /**
+     * Called by BlockItem after this block has been placed.
+     */
     @Override
-    public void setPlacedBy(Level p_58260_, BlockPos p_58261_, BlockState p_58262_, @Nullable LivingEntity p_58263_, ItemStack p_58264_) {
-        checkSpawn(p_58260_, p_58261_);
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        checkSpawn(level, pos);
     }
 
-    public static void checkSpawn(Level p_320011_, BlockPos p_320602_) {
-        if (p_320011_.getBlockEntity(p_320602_) instanceof SkullBlockEntity skullblockentity) {
-            checkSpawn(p_320011_, p_320602_, skullblockentity);
+    public static void checkSpawn(Level level, BlockPos pos) {
+        if (level.getBlockEntity(pos) instanceof SkullBlockEntity skullblockentity) {
+            checkSpawn(level, pos, skullblockentity);
         }
     }
 
-    public static void checkSpawn(Level p_58256_, BlockPos p_58257_, SkullBlockEntity p_58258_) {
-        if (!p_58256_.isClientSide) {
-            BlockState blockstate = p_58258_.getBlockState();
+    public static void checkSpawn(Level level, BlockPos pos, SkullBlockEntity blockEntity) {
+        if (!level.isClientSide) {
+            BlockState blockstate = blockEntity.getBlockState();
             boolean flag = blockstate.is(Blocks.WITHER_SKELETON_SKULL) || blockstate.is(Blocks.WITHER_SKELETON_WALL_SKULL);
-            if (flag && p_58257_.getY() >= p_58256_.getMinBuildHeight() && p_58256_.getDifficulty() != Difficulty.PEACEFUL) {
-                BlockPattern.BlockPatternMatch blockpattern$blockpatternmatch = getOrCreateWitherFull().find(p_58256_, p_58257_);
+            if (flag && pos.getY() >= level.getMinBuildHeight() && level.getDifficulty() != Difficulty.PEACEFUL) {
+                BlockPattern.BlockPatternMatch blockpattern$blockpatternmatch = getOrCreateWitherFull().find(level, pos);
                 if (blockpattern$blockpatternmatch != null) {
-                    WitherBoss witherboss = EntityType.WITHER.create(p_58256_);
+                    WitherBoss witherboss = EntityType.WITHER.create(level);
                     if (witherboss != null) {
-                        CarvedPumpkinBlock.clearPatternBlocks(p_58256_, blockpattern$blockpatternmatch);
+                        CarvedPumpkinBlock.clearPatternBlocks(level, blockpattern$blockpatternmatch);
                         BlockPos blockpos = blockpattern$blockpatternmatch.getBlock(1, 2, 0).getPos();
                         witherboss.moveTo(
                             (double)blockpos.getX() + 0.5,
@@ -70,24 +73,24 @@ public class WitherSkullBlock extends SkullBlock {
                         witherboss.yBodyRot = blockpattern$blockpatternmatch.getForwards().getAxis() == Direction.Axis.X ? 0.0F : 90.0F;
                         witherboss.makeInvulnerable();
 
-                        for (ServerPlayer serverplayer : p_58256_.getEntitiesOfClass(ServerPlayer.class, witherboss.getBoundingBox().inflate(50.0))) {
+                        for (ServerPlayer serverplayer : level.getEntitiesOfClass(ServerPlayer.class, witherboss.getBoundingBox().inflate(50.0))) {
                             CriteriaTriggers.SUMMONED_ENTITY.trigger(serverplayer, witherboss);
                         }
 
-                        p_58256_.addFreshEntity(witherboss);
-                        CarvedPumpkinBlock.updatePatternBlocks(p_58256_, blockpattern$blockpatternmatch);
+                        level.addFreshEntity(witherboss);
+                        CarvedPumpkinBlock.updatePatternBlocks(level, blockpattern$blockpatternmatch);
                     }
                 }
             }
         }
     }
 
-    public static boolean canSpawnMob(Level p_58268_, BlockPos p_58269_, ItemStack p_58270_) {
-        return p_58270_.is(Items.WITHER_SKELETON_SKULL)
-                && p_58269_.getY() >= p_58268_.getMinBuildHeight() + 2
-                && p_58268_.getDifficulty() != Difficulty.PEACEFUL
-                && !p_58268_.isClientSide
-            ? getOrCreateWitherBase().find(p_58268_, p_58269_) != null
+    public static boolean canSpawnMob(Level level, BlockPos pos, ItemStack stack) {
+        return stack.is(Items.WITHER_SKELETON_SKULL)
+                && pos.getY() >= level.getMinBuildHeight() + 2
+                && level.getDifficulty() != Difficulty.PEACEFUL
+                && !level.isClientSide
+            ? getOrCreateWitherBase().find(level, pos) != null
             : false;
     }
 

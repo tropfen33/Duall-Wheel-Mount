@@ -16,9 +16,9 @@ public record VillageSectionsDebugPayload(Set<SectionPos> villageChunks, Set<Sec
         this(p_295961_.readCollection(HashSet::new, FriendlyByteBuf::readSectionPos), p_295961_.readCollection(HashSet::new, FriendlyByteBuf::readSectionPos));
     }
 
-    private void write(FriendlyByteBuf p_295698_) {
-        p_295698_.writeCollection(this.villageChunks, FriendlyByteBuf::writeSectionPos);
-        p_295698_.writeCollection(this.notVillageChunks, FriendlyByteBuf::writeSectionPos);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeCollection(this.villageChunks, FriendlyByteBuf::writeSectionPos);
+        buffer.writeCollection(this.notVillageChunks, FriendlyByteBuf::writeSectionPos);
     }
 
     @Override

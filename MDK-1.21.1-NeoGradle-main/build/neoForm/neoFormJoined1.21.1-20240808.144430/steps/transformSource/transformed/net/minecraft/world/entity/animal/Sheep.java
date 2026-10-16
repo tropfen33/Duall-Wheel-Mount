@@ -88,11 +88,11 @@ public class Sheep extends Animal implements Shearable {
     private int eatAnimationTick;
     private EatBlockGoal eatBlockGoal;
 
-    private static int createSheepColor(DyeColor p_29866_) {
-        if (p_29866_ == DyeColor.WHITE) {
+    private static int createSheepColor(DyeColor dyeColor) {
+        if (dyeColor == DyeColor.WHITE) {
             return -1644826;
         } else {
-            int i = p_29866_.getTextureDiffuseColor();
+            int i = dyeColor.getTextureDiffuseColor();
             float f = 0.75F;
             return FastColor.ARGB32.color(
                 255,
@@ -103,12 +103,12 @@ public class Sheep extends Animal implements Shearable {
         }
     }
 
-    public static int getColor(DyeColor p_350926_) {
-        return COLOR_BY_DYE.get(p_350926_);
+    public static int getColor(DyeColor dyeColor) {
+        return COLOR_BY_DYE.get(dyeColor);
     }
 
-    public Sheep(EntityType<? extends Sheep> p_29806_, Level p_29807_) {
-        super(p_29806_, p_29807_);
+    public Sheep(EntityType<? extends Sheep> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
@@ -125,9 +125,12 @@ public class Sheep extends Animal implements Shearable {
         this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
     }
 
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on the animal type)
+     */
     @Override
-    public boolean isFood(ItemStack p_335372_) {
-        return p_335372_.is(ItemTags.SHEEP_FOOD);
+    public boolean isFood(ItemStack stack) {
+        return stack.is(ItemTags.SHEEP_FOOD);
     }
 
     @Override
@@ -150,9 +153,9 @@ public class Sheep extends Animal implements Shearable {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_325952_) {
-        super.defineSynchedData(p_325952_);
-        p_325952_.define(DATA_WOOL_ID, (byte)0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_WOOL_ID, (byte)0);
     }
 
     @Override
@@ -181,28 +184,31 @@ public class Sheep extends Animal implements Shearable {
         }
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @Override
-    public void handleEntityEvent(byte p_29814_) {
-        if (p_29814_ == 10) {
+    public void handleEntityEvent(byte id) {
+        if (id == 10) {
             this.eatAnimationTick = 40;
         } else {
-            super.handleEntityEvent(p_29814_);
+            super.handleEntityEvent(id);
         }
     }
 
-    public float getHeadEatPositionScale(float p_29881_) {
+    public float getHeadEatPositionScale(float partialTick) {
         if (this.eatAnimationTick <= 0) {
             return 0.0F;
         } else if (this.eatAnimationTick >= 4 && this.eatAnimationTick <= 36) {
             return 1.0F;
         } else {
-            return this.eatAnimationTick < 4 ? ((float)this.eatAnimationTick - p_29881_) / 4.0F : -((float)(this.eatAnimationTick - 40) - p_29881_) / 4.0F;
+            return this.eatAnimationTick < 4 ? ((float)this.eatAnimationTick - partialTick) / 4.0F : -((float)(this.eatAnimationTick - 40) - partialTick) / 4.0F;
         }
     }
 
-    public float getHeadEatAngleScale(float p_29883_) {
+    public float getHeadEatAngleScale(float partialTick) {
         if (this.eatAnimationTick > 4 && this.eatAnimationTick <= 36) {
-            float f = ((float)(this.eatAnimationTick - 4) - p_29883_) / 32.0F;
+            float f = ((float)(this.eatAnimationTick - 4) - partialTick) / 32.0F;
             return (float) (Math.PI / 5) + 0.21991149F * Mth.sin(f * 28.7F);
         } else {
             return this.eatAnimationTick > 0 ? (float) (Math.PI / 5) : this.getXRot() * (float) (Math.PI / 180.0);
@@ -210,25 +216,25 @@ public class Sheep extends Animal implements Shearable {
     }
 
     @Override
-    public InteractionResult mobInteract(Player p_29853_, InteractionHand p_29854_) {
-        ItemStack itemstack = p_29853_.getItemInHand(p_29854_);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
         if (false && itemstack.is(Items.SHEARS)) { // Neo: Shear logic is handled by IShearable
             if (!this.level().isClientSide && this.readyForShearing()) {
                 this.shear(SoundSource.PLAYERS);
-                this.gameEvent(GameEvent.SHEAR, p_29853_);
-                itemstack.hurtAndBreak(1, p_29853_, getSlotForHand(p_29854_));
+                this.gameEvent(GameEvent.SHEAR, player);
+                itemstack.hurtAndBreak(1, player, getSlotForHand(hand));
                 return InteractionResult.SUCCESS;
             } else {
                 return InteractionResult.CONSUME;
             }
         } else {
-            return super.mobInteract(p_29853_, p_29854_);
+            return super.mobInteract(player, hand);
         }
     }
 
     @Override
-    public void shear(SoundSource p_29819_) {
-        this.level().playSound(null, this, SoundEvents.SHEEP_SHEAR, p_29819_, 1.0F, 1.0F);
+    public void shear(SoundSource category) {
+        this.level().playSound(null, this, SoundEvents.SHEEP_SHEAR, category, 1.0F, 1.0F);
         this.setSheared(true);
         int i = 1 + this.random.nextInt(3);
 
@@ -253,17 +259,20 @@ public class Sheep extends Animal implements Shearable {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_29864_) {
-        super.addAdditionalSaveData(p_29864_);
-        p_29864_.putBoolean("Sheared", this.isSheared());
-        p_29864_.putByte("Color", (byte)this.getColor().getId());
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putBoolean("Sheared", this.isSheared());
+        compound.putByte("Color", (byte)this.getColor().getId());
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_29845_) {
-        super.readAdditionalSaveData(p_29845_);
-        this.setSheared(p_29845_.getBoolean("Sheared"));
-        this.setColor(DyeColor.byId(p_29845_.getByte("Color")));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.setSheared(compound.getBoolean("Sheared"));
+        this.setColor(DyeColor.byId(compound.getByte("Color")));
     }
 
     @Override
@@ -272,7 +281,7 @@ public class Sheep extends Animal implements Shearable {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_29872_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.SHEEP_HURT;
     }
 
@@ -282,7 +291,7 @@ public class Sheep extends Animal implements Shearable {
     }
 
     @Override
-    protected void playStepSound(BlockPos p_29861_, BlockState p_29862_) {
+    protected void playStepSound(BlockPos pos, BlockState block) {
         this.playSound(SoundEvents.SHEEP_STEP, 0.15F, 1.0F);
     }
 
@@ -290,26 +299,32 @@ public class Sheep extends Animal implements Shearable {
         return DyeColor.byId(this.entityData.get(DATA_WOOL_ID) & 15);
     }
 
-    public void setColor(DyeColor p_29856_) {
+    /**
+     * Sets the wool color of this sheep
+     */
+    public void setColor(DyeColor dyeColor) {
         byte b0 = this.entityData.get(DATA_WOOL_ID);
-        this.entityData.set(DATA_WOOL_ID, (byte)(b0 & 240 | p_29856_.getId() & 15));
+        this.entityData.set(DATA_WOOL_ID, (byte)(b0 & 240 | dyeColor.getId() & 15));
     }
 
     public boolean isSheared() {
         return (this.entityData.get(DATA_WOOL_ID) & 16) != 0;
     }
 
-    public void setSheared(boolean p_29879_) {
+    /**
+     * Makes a sheep sheared if set to {@code true}.
+     */
+    public void setSheared(boolean sheared) {
         byte b0 = this.entityData.get(DATA_WOOL_ID);
-        if (p_29879_) {
+        if (sheared) {
             this.entityData.set(DATA_WOOL_ID, (byte)(b0 | 16));
         } else {
             this.entityData.set(DATA_WOOL_ID, (byte)(b0 & -17));
         }
     }
 
-    public static DyeColor getRandomSheepColor(RandomSource p_218262_) {
-        int i = p_218262_.nextInt(100);
+    public static DyeColor getRandomSheepColor(RandomSource random) {
+        int i = random.nextInt(100);
         if (i < 5) {
             return DyeColor.BLACK;
         } else if (i < 10) {
@@ -319,15 +334,15 @@ public class Sheep extends Animal implements Shearable {
         } else if (i < 18) {
             return DyeColor.BROWN;
         } else {
-            return p_218262_.nextInt(500) == 0 ? DyeColor.PINK : DyeColor.WHITE;
+            return random.nextInt(500) == 0 ? DyeColor.PINK : DyeColor.WHITE;
         }
     }
 
     @Nullable
-    public Sheep getBreedOffspring(ServerLevel p_149044_, AgeableMob p_149045_) {
-        Sheep sheep = EntityType.SHEEP.create(p_149044_);
+    public Sheep getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        Sheep sheep = EntityType.SHEEP.create(level);
         if (sheep != null) {
-            sheep.setColor(this.getOffspringColor(this, (Sheep)p_149045_));
+            sheep.setColor(this.getOffspringColor(this, (Sheep)otherParent));
         }
 
         return sheep;
@@ -344,14 +359,17 @@ public class Sheep extends Animal implements Shearable {
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_29835_, DifficultyInstance p_29836_, MobSpawnType p_29837_, @Nullable SpawnGroupData p_29838_) {
-        this.setColor(getRandomSheepColor(p_29835_.getRandom()));
-        return super.finalizeSpawn(p_29835_, p_29836_, p_29837_, p_29838_);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        this.setColor(getRandomSheepColor(level.getRandom()));
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
-    private DyeColor getOffspringColor(Animal p_29824_, Animal p_29825_) {
-        DyeColor dyecolor = ((Sheep)p_29824_).getColor();
-        DyeColor dyecolor1 = ((Sheep)p_29825_).getColor();
+    /**
+     * Attempts to mix both parent sheep to come up with a mixed dye color.
+     */
+    private DyeColor getOffspringColor(Animal father, Animal mother) {
+        DyeColor dyecolor = ((Sheep)father).getColor();
+        DyeColor dyecolor1 = ((Sheep)mother).getColor();
         CraftingInput craftinginput = makeCraftInput(dyecolor, dyecolor1);
         return this.level()
             .getRecipeManager()
@@ -364,7 +382,7 @@ public class Sheep extends Animal implements Shearable {
             .orElseGet(() -> this.level().random.nextBoolean() ? dyecolor : dyecolor1);
     }
 
-    private static CraftingInput makeCraftInput(DyeColor p_346067_, DyeColor p_345681_) {
-        return CraftingInput.of(2, 1, List.of(new ItemStack(DyeItem.byColor(p_346067_)), new ItemStack(DyeItem.byColor(p_345681_))));
+    private static CraftingInput makeCraftInput(DyeColor color1, DyeColor color2) {
+        return CraftingInput.of(2, 1, List.of(new ItemStack(DyeItem.byColor(color1)), new ItemStack(DyeItem.byColor(color2))));
     }
 }

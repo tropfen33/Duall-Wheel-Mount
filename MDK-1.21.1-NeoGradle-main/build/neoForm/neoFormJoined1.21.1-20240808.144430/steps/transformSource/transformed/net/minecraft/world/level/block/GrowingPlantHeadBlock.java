@@ -21,9 +21,9 @@ public abstract class GrowingPlantHeadBlock extends GrowingPlantBlock implements
     public static final int MAX_AGE = 25;
     private final double growPerTickProbability;
 
-    protected GrowingPlantHeadBlock(BlockBehaviour.Properties p_53928_, Direction p_53929_, VoxelShape p_53930_, boolean p_53931_, double p_53932_) {
-        super(p_53928_, p_53929_, p_53930_, p_53931_);
-        this.growPerTickProbability = p_53932_;
+    protected GrowingPlantHeadBlock(BlockBehaviour.Properties properties, Direction growthDirection, VoxelShape shape, boolean scheduleFluidTicks, double growPerTickProbability) {
+        super(properties, growthDirection, shape, scheduleFluidTicks);
+        this.growPerTickProbability = growPerTickProbability;
         this.registerDefaultState(this.stateDefinition.any().setValue(AGE, Integer.valueOf(0)));
     }
 
@@ -31,90 +31,98 @@ public abstract class GrowingPlantHeadBlock extends GrowingPlantBlock implements
     protected abstract MapCodec<? extends GrowingPlantHeadBlock> codec();
 
     @Override
-    public BlockState getStateForPlacement(LevelAccessor p_53949_) {
-        return this.defaultBlockState().setValue(AGE, Integer.valueOf(p_53949_.getRandom().nextInt(25)));
+    public BlockState getStateForPlacement(LevelAccessor level) {
+        return this.defaultBlockState().setValue(AGE, Integer.valueOf(level.getRandom().nextInt(25)));
     }
 
     @Override
-    protected boolean isRandomlyTicking(BlockState p_53961_) {
-        return p_53961_.getValue(AGE) < 25;
+    protected boolean isRandomlyTicking(BlockState state) {
+        return state.getValue(AGE) < 25;
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_221350_, ServerLevel p_221351_, BlockPos p_221352_, RandomSource p_221353_) {
-        if (p_221350_.getValue(AGE) < 25 && net.neoforged.neoforge.common.CommonHooks.canCropGrow(p_221351_, p_221352_.relative(this.growthDirection), p_221350_, p_221353_.nextDouble() < this.growPerTickProbability)) {
-            BlockPos blockpos = p_221352_.relative(this.growthDirection);
-            if (this.canGrowInto(p_221351_.getBlockState(blockpos))) {
-                p_221351_.setBlockAndUpdate(blockpos, this.getGrowIntoState(p_221350_, p_221351_.random));
-                net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(p_221351_, blockpos, p_221351_.getBlockState(blockpos));
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (state.getValue(AGE) < 25 && net.neoforged.neoforge.common.CommonHooks.canCropGrow(level, pos.relative(this.growthDirection), state, random.nextDouble() < this.growPerTickProbability)) {
+            BlockPos blockpos = pos.relative(this.growthDirection);
+            if (this.canGrowInto(level.getBlockState(blockpos))) {
+                level.setBlockAndUpdate(blockpos, this.getGrowIntoState(state, level.random));
+                net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(level, blockpos, level.getBlockState(blockpos));
             }
         }
     }
 
-    protected BlockState getGrowIntoState(BlockState p_221347_, RandomSource p_221348_) {
-        return p_221347_.cycle(AGE);
+    protected BlockState getGrowIntoState(BlockState state, RandomSource random) {
+        return state.cycle(AGE);
     }
 
-    public BlockState getMaxAgeState(BlockState p_187439_) {
-        return p_187439_.setValue(AGE, Integer.valueOf(25));
+    public BlockState getMaxAgeState(BlockState state) {
+        return state.setValue(AGE, Integer.valueOf(25));
     }
 
-    public boolean isMaxAge(BlockState p_187441_) {
-        return p_187441_.getValue(AGE) == 25;
+    public boolean isMaxAge(BlockState state) {
+        return state.getValue(AGE) == 25;
     }
 
-    protected BlockState updateBodyAfterConvertedFromHead(BlockState p_153329_, BlockState p_153330_) {
-        return p_153330_;
+    protected BlockState updateBodyAfterConvertedFromHead(BlockState head, BlockState body) {
+        return body;
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_53951_, Direction p_53952_, BlockState p_53953_, LevelAccessor p_53954_, BlockPos p_53955_, BlockPos p_53956_) {
-        if (p_53952_ == this.growthDirection.getOpposite() && !p_53951_.canSurvive(p_53954_, p_53955_)) {
-            p_53954_.scheduleTick(p_53955_, this, 1);
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (facing == this.growthDirection.getOpposite() && !state.canSurvive(level, currentPos)) {
+            level.scheduleTick(currentPos, this, 1);
         }
 
-        if (p_53952_ != this.growthDirection || !p_53953_.is(this) && !p_53953_.is(this.getBodyBlock())) {
+        if (facing != this.growthDirection || !facingState.is(this) && !facingState.is(this.getBodyBlock())) {
             if (this.scheduleFluidTicks) {
-                p_53954_.scheduleTick(p_53955_, Fluids.WATER, Fluids.WATER.getTickDelay(p_53954_));
+                level.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
             }
 
-            return super.updateShape(p_53951_, p_53952_, p_53953_, p_53954_, p_53955_, p_53956_);
+            return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
         } else {
-            return this.updateBodyAfterConvertedFromHead(p_53951_, this.getBodyBlock().defaultBlockState());
+            return this.updateBodyAfterConvertedFromHead(state, this.getBodyBlock().defaultBlockState());
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_53958_) {
-        p_53958_.add(AGE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AGE);
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader p_255931_, BlockPos p_256046_, BlockState p_256550_) {
-        return this.canGrowInto(p_255931_.getBlockState(p_256046_.relative(this.growthDirection)));
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+        return this.canGrowInto(level.getBlockState(pos.relative(this.growthDirection)));
     }
 
     @Override
-    public boolean isBonemealSuccess(Level p_221343_, RandomSource p_221344_, BlockPos p_221345_, BlockState p_221346_) {
+    public boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel p_221337_, RandomSource p_221338_, BlockPos p_221339_, BlockState p_221340_) {
-        BlockPos blockpos = p_221339_.relative(this.growthDirection);
-        int i = Math.min(p_221340_.getValue(AGE) + 1, 25);
-        int j = this.getBlocksToGrowWhenBonemealed(p_221338_);
+    public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
+        BlockPos blockpos = pos.relative(this.growthDirection);
+        int i = Math.min(state.getValue(AGE) + 1, 25);
+        int j = this.getBlocksToGrowWhenBonemealed(random);
 
-        for (int k = 0; k < j && this.canGrowInto(p_221337_.getBlockState(blockpos)); k++) {
-            p_221337_.setBlockAndUpdate(blockpos, p_221340_.setValue(AGE, Integer.valueOf(i)));
+        for (int k = 0; k < j && this.canGrowInto(level.getBlockState(blockpos)); k++) {
+            level.setBlockAndUpdate(blockpos, state.setValue(AGE, Integer.valueOf(i)));
             blockpos = blockpos.relative(this.growthDirection);
             i = Math.min(i + 1, 25);
         }
     }
 
-    protected abstract int getBlocksToGrowWhenBonemealed(RandomSource p_221341_);
+    protected abstract int getBlocksToGrowWhenBonemealed(RandomSource random);
 
-    protected abstract boolean canGrowInto(BlockState p_53968_);
+    protected abstract boolean canGrowInto(BlockState state);
 
     @Override
     protected GrowingPlantHeadBlock getHeadBlock() {

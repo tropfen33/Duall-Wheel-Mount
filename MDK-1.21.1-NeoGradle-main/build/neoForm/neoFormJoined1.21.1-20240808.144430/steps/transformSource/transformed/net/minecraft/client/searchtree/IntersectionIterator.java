@@ -14,10 +14,10 @@ public class IntersectionIterator<T> extends AbstractIterator<T> {
     private final PeekingIterator<T> secondIterator;
     private final Comparator<T> comparator;
 
-    public IntersectionIterator(Iterator<T> p_235178_, Iterator<T> p_235179_, Comparator<T> p_235180_) {
-        this.firstIterator = Iterators.peekingIterator(p_235178_);
-        this.secondIterator = Iterators.peekingIterator(p_235179_);
-        this.comparator = p_235180_;
+    public IntersectionIterator(Iterator<T> firstIterator, Iterator<T> secondIterator, Comparator<T> comparator) {
+        this.firstIterator = Iterators.peekingIterator(firstIterator);
+        this.secondIterator = Iterators.peekingIterator(secondIterator);
+        this.comparator = comparator;
     }
 
     @Override

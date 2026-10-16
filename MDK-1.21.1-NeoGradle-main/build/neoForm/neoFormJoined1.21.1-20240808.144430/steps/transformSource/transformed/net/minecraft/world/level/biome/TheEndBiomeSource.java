@@ -28,22 +28,22 @@ public class TheEndBiomeSource extends BiomeSource {
     private final Holder<Biome> islands;
     private final Holder<Biome> barrens;
 
-    public static TheEndBiomeSource create(HolderGetter<Biome> p_256561_) {
+    public static TheEndBiomeSource create(HolderGetter<Biome> biomeGetter) {
         return new TheEndBiomeSource(
-            p_256561_.getOrThrow(Biomes.THE_END),
-            p_256561_.getOrThrow(Biomes.END_HIGHLANDS),
-            p_256561_.getOrThrow(Biomes.END_MIDLANDS),
-            p_256561_.getOrThrow(Biomes.SMALL_END_ISLANDS),
-            p_256561_.getOrThrow(Biomes.END_BARRENS)
+            biomeGetter.getOrThrow(Biomes.THE_END),
+            biomeGetter.getOrThrow(Biomes.END_HIGHLANDS),
+            biomeGetter.getOrThrow(Biomes.END_MIDLANDS),
+            biomeGetter.getOrThrow(Biomes.SMALL_END_ISLANDS),
+            biomeGetter.getOrThrow(Biomes.END_BARRENS)
         );
     }
 
-    private TheEndBiomeSource(Holder<Biome> p_220678_, Holder<Biome> p_220679_, Holder<Biome> p_220680_, Holder<Biome> p_220681_, Holder<Biome> p_220682_) {
-        this.end = p_220678_;
-        this.highlands = p_220679_;
-        this.midlands = p_220680_;
-        this.islands = p_220681_;
-        this.barrens = p_220682_;
+    private TheEndBiomeSource(Holder<Biome> end, Holder<Biome> highlands, Holder<Biome> midlands, Holder<Biome> islands, Holder<Biome> barrens) {
+        this.end = end;
+        this.highlands = highlands;
+        this.midlands = midlands;
+        this.islands = islands;
+        this.barrens = barrens;
     }
 
     @Override
@@ -57,10 +57,10 @@ public class TheEndBiomeSource extends BiomeSource {
     }
 
     @Override
-    public Holder<Biome> getNoiseBiome(int p_204292_, int p_204293_, int p_204294_, Climate.Sampler p_204295_) {
-        int i = QuartPos.toBlock(p_204292_);
-        int j = QuartPos.toBlock(p_204293_);
-        int k = QuartPos.toBlock(p_204294_);
+    public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
+        int i = QuartPos.toBlock(x);
+        int j = QuartPos.toBlock(y);
+        int k = QuartPos.toBlock(z);
         int l = SectionPos.blockToSectionCoord(i);
         int i1 = SectionPos.blockToSectionCoord(k);
         if ((long)l * (long)l + (long)i1 * (long)i1 <= 4096L) {
@@ -68,7 +68,7 @@ public class TheEndBiomeSource extends BiomeSource {
         } else {
             int j1 = (SectionPos.blockToSectionCoord(i) * 2 + 1) * 8;
             int k1 = (SectionPos.blockToSectionCoord(k) * 2 + 1) * 8;
-            double d0 = p_204295_.erosion().compute(new DensityFunction.SinglePointContext(j1, j, k1));
+            double d0 = sampler.erosion().compute(new DensityFunction.SinglePointContext(j1, j, k1));
             if (d0 > 0.25) {
                 return this.highlands;
             } else if (d0 >= -0.0625) {

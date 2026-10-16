@@ -57,64 +57,64 @@ public class PaintingVariants {
     public static final ResourceKey<PaintingVariant> SUNFLOWERS = create("sunflowers");
     public static final ResourceKey<PaintingVariant> TIDES = create("tides");
 
-    public static void bootstrap(BootstrapContext<PaintingVariant> p_345677_) {
-        register(p_345677_, KEBAB, 1, 1);
-        register(p_345677_, AZTEC, 1, 1);
-        register(p_345677_, ALBAN, 1, 1);
-        register(p_345677_, AZTEC2, 1, 1);
-        register(p_345677_, BOMB, 1, 1);
-        register(p_345677_, PLANT, 1, 1);
-        register(p_345677_, WASTELAND, 1, 1);
-        register(p_345677_, POOL, 2, 1);
-        register(p_345677_, COURBET, 2, 1);
-        register(p_345677_, SEA, 2, 1);
-        register(p_345677_, SUNSET, 2, 1);
-        register(p_345677_, CREEBET, 2, 1);
-        register(p_345677_, WANDERER, 1, 2);
-        register(p_345677_, GRAHAM, 1, 2);
-        register(p_345677_, MATCH, 2, 2);
-        register(p_345677_, BUST, 2, 2);
-        register(p_345677_, STAGE, 2, 2);
-        register(p_345677_, VOID, 2, 2);
-        register(p_345677_, SKULL_AND_ROSES, 2, 2);
-        register(p_345677_, WITHER, 2, 2);
-        register(p_345677_, FIGHTERS, 4, 2);
-        register(p_345677_, POINTER, 4, 4);
-        register(p_345677_, PIGSCENE, 4, 4);
-        register(p_345677_, BURNING_SKULL, 4, 4);
-        register(p_345677_, SKELETON, 4, 3);
-        register(p_345677_, EARTH, 2, 2);
-        register(p_345677_, WIND, 2, 2);
-        register(p_345677_, WATER, 2, 2);
-        register(p_345677_, FIRE, 2, 2);
-        register(p_345677_, DONKEY_KONG, 4, 3);
-        register(p_345677_, BAROQUE, 2, 2);
-        register(p_345677_, HUMBLE, 2, 2);
-        register(p_345677_, MEDITATIVE, 1, 1);
-        register(p_345677_, PRAIRIE_RIDE, 1, 2);
-        register(p_345677_, UNPACKED, 4, 4);
-        register(p_345677_, BACKYARD, 3, 4);
-        register(p_345677_, BOUQUET, 3, 3);
-        register(p_345677_, CAVEBIRD, 3, 3);
-        register(p_345677_, CHANGING, 4, 2);
-        register(p_345677_, COTAN, 3, 3);
-        register(p_345677_, ENDBOSS, 3, 3);
-        register(p_345677_, FERN, 3, 3);
-        register(p_345677_, FINDING, 4, 2);
-        register(p_345677_, LOWMIST, 4, 2);
-        register(p_345677_, ORB, 4, 4);
-        register(p_345677_, OWLEMONS, 3, 3);
-        register(p_345677_, PASSAGE, 4, 2);
-        register(p_345677_, POND, 3, 4);
-        register(p_345677_, SUNFLOWERS, 3, 3);
-        register(p_345677_, TIDES, 3, 3);
+    public static void bootstrap(BootstrapContext<PaintingVariant> context) {
+        register(context, KEBAB, 1, 1);
+        register(context, AZTEC, 1, 1);
+        register(context, ALBAN, 1, 1);
+        register(context, AZTEC2, 1, 1);
+        register(context, BOMB, 1, 1);
+        register(context, PLANT, 1, 1);
+        register(context, WASTELAND, 1, 1);
+        register(context, POOL, 2, 1);
+        register(context, COURBET, 2, 1);
+        register(context, SEA, 2, 1);
+        register(context, SUNSET, 2, 1);
+        register(context, CREEBET, 2, 1);
+        register(context, WANDERER, 1, 2);
+        register(context, GRAHAM, 1, 2);
+        register(context, MATCH, 2, 2);
+        register(context, BUST, 2, 2);
+        register(context, STAGE, 2, 2);
+        register(context, VOID, 2, 2);
+        register(context, SKULL_AND_ROSES, 2, 2);
+        register(context, WITHER, 2, 2);
+        register(context, FIGHTERS, 4, 2);
+        register(context, POINTER, 4, 4);
+        register(context, PIGSCENE, 4, 4);
+        register(context, BURNING_SKULL, 4, 4);
+        register(context, SKELETON, 4, 3);
+        register(context, EARTH, 2, 2);
+        register(context, WIND, 2, 2);
+        register(context, WATER, 2, 2);
+        register(context, FIRE, 2, 2);
+        register(context, DONKEY_KONG, 4, 3);
+        register(context, BAROQUE, 2, 2);
+        register(context, HUMBLE, 2, 2);
+        register(context, MEDITATIVE, 1, 1);
+        register(context, PRAIRIE_RIDE, 1, 2);
+        register(context, UNPACKED, 4, 4);
+        register(context, BACKYARD, 3, 4);
+        register(context, BOUQUET, 3, 3);
+        register(context, CAVEBIRD, 3, 3);
+        register(context, CHANGING, 4, 2);
+        register(context, COTAN, 3, 3);
+        register(context, ENDBOSS, 3, 3);
+        register(context, FERN, 3, 3);
+        register(context, FINDING, 4, 2);
+        register(context, LOWMIST, 4, 2);
+        register(context, ORB, 4, 4);
+        register(context, OWLEMONS, 3, 3);
+        register(context, PASSAGE, 4, 2);
+        register(context, POND, 3, 4);
+        register(context, SUNFLOWERS, 3, 3);
+        register(context, TIDES, 3, 3);
     }
 
-    private static void register(BootstrapContext<PaintingVariant> p_345930_, ResourceKey<PaintingVariant> p_345276_, int p_344851_, int p_345199_) {
-        p_345930_.register(p_345276_, new PaintingVariant(p_344851_, p_345199_, p_345276_.location()));
+    private static void register(BootstrapContext<PaintingVariant> context, ResourceKey<PaintingVariant> key, int width, int height) {
+        context.register(key, new PaintingVariant(width, height, key.location()));
     }
 
-    private static ResourceKey<PaintingVariant> create(String p_218945_) {
-        return ResourceKey.create(Registries.PAINTING_VARIANT, ResourceLocation.withDefaultNamespace(p_218945_));
+    private static ResourceKey<PaintingVariant> create(String name) {
+        return ResourceKey.create(Registries.PAINTING_VARIANT, ResourceLocation.withDefaultNamespace(name));
     }
 }

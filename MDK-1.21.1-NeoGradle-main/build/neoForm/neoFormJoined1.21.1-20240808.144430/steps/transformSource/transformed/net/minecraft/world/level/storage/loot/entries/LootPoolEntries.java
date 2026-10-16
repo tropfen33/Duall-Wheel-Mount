@@ -6,6 +6,9 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 
+/**
+ * Registration for {@link LootPoolEntryType}.
+ */
 public class LootPoolEntries {
     public static final Codec<LootPoolEntryContainer> CODEC = BuiltInRegistries.LOOT_POOL_ENTRY_TYPE
         .byNameCodec()
@@ -19,7 +22,7 @@ public class LootPoolEntries {
     public static final LootPoolEntryType SEQUENCE = register("sequence", SequentialEntry.CODEC);
     public static final LootPoolEntryType GROUP = register("group", EntryGroup.CODEC);
 
-    private static LootPoolEntryType register(String p_79630_, MapCodec<? extends LootPoolEntryContainer> p_338753_) {
-        return Registry.register(BuiltInRegistries.LOOT_POOL_ENTRY_TYPE, ResourceLocation.withDefaultNamespace(p_79630_), new LootPoolEntryType(p_338753_));
+    private static LootPoolEntryType register(String name, MapCodec<? extends LootPoolEntryContainer> codec) {
+        return Registry.register(BuiltInRegistries.LOOT_POOL_ENTRY_TYPE, ResourceLocation.withDefaultNamespace(name), new LootPoolEntryType(codec));
     }
 }

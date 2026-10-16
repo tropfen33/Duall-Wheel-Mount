@@ -7,6 +7,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 
+/**
+ * Defines all of the potion types registered by Minecraft itself.
+ * @see net.minecraft.core.Registry#POTION
+ */
 public class Potions {
     public static final Holder<Potion> WATER = register("water", new Potion());
     public static final Holder<Potion> MUNDANE = register("mundane", new Potion());
@@ -88,11 +92,11 @@ public class Potions {
     public static final Holder<Potion> OOZING = register("oozing", new Potion("oozing", new MobEffectInstance(MobEffects.OOZING, 3600)));
     public static final Holder<Potion> INFESTED = register("infested", new Potion("infested", new MobEffectInstance(MobEffects.INFESTED, 3600)));
 
-    private static Holder<Potion> register(String p_43626_, Potion p_43627_) {
-        return Registry.registerForHolder(BuiltInRegistries.POTION, ResourceLocation.withDefaultNamespace(p_43626_), p_43627_);
+    private static Holder<Potion> register(String name, Potion potion) {
+        return Registry.registerForHolder(BuiltInRegistries.POTION, ResourceLocation.withDefaultNamespace(name), potion);
     }
 
-    public static Holder<Potion> bootstrap(Registry<Potion> p_316701_) {
+    public static Holder<Potion> bootstrap(Registry<Potion> registry) {
         return WATER;
     }
 }

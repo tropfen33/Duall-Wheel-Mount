@@ -16,37 +16,37 @@ public class MultiLineTextWidget extends AbstractStringWidget {
     private final SingleKeyCache<MultiLineTextWidget.CacheKey, MultiLineLabel> cache;
     private boolean centered = false;
 
-    public MultiLineTextWidget(Component p_270532_, Font p_270639_) {
-        this(0, 0, p_270532_, p_270639_);
+    public MultiLineTextWidget(Component message, Font font) {
+        this(0, 0, message, font);
     }
 
-    public MultiLineTextWidget(int p_270325_, int p_270355_, Component p_270069_, Font p_270673_) {
-        super(p_270325_, p_270355_, 0, 0, p_270069_, p_270673_);
+    public MultiLineTextWidget(int x, int y, Component message, Font font) {
+        super(x, y, 0, 0, message, font);
         this.cache = Util.singleKeyCache(
             p_352660_ -> p_352660_.maxRows.isPresent()
-                    ? MultiLineLabel.create(p_270673_, p_352660_.maxWidth, p_352660_.maxRows.getAsInt(), p_352660_.message)
-                    : MultiLineLabel.create(p_270673_, p_352660_.message, p_352660_.maxWidth)
+                    ? MultiLineLabel.create(font, p_352660_.maxWidth, p_352660_.maxRows.getAsInt(), p_352660_.message)
+                    : MultiLineLabel.create(font, p_352660_.message, p_352660_.maxWidth)
         );
         this.active = false;
     }
 
-    public MultiLineTextWidget setColor(int p_270378_) {
-        super.setColor(p_270378_);
+    public MultiLineTextWidget setColor(int color) {
+        super.setColor(color);
         return this;
     }
 
-    public MultiLineTextWidget setMaxWidth(int p_270776_) {
-        this.maxWidth = OptionalInt.of(p_270776_);
+    public MultiLineTextWidget setMaxWidth(int maxWidth) {
+        this.maxWidth = OptionalInt.of(maxWidth);
         return this;
     }
 
-    public MultiLineTextWidget setMaxRows(int p_270085_) {
-        this.maxRows = OptionalInt.of(p_270085_);
+    public MultiLineTextWidget setMaxRows(int maxRows) {
+        this.maxRows = OptionalInt.of(maxRows);
         return this;
     }
 
-    public MultiLineTextWidget setCentered(boolean p_270493_) {
-        this.centered = p_270493_;
+    public MultiLineTextWidget setCentered(boolean centered) {
+        this.centered = centered;
         return this;
     }
 
@@ -61,16 +61,16 @@ public class MultiLineTextWidget extends AbstractStringWidget {
     }
 
     @Override
-    public void renderWidget(GuiGraphics p_282535_, int p_261774_, int p_261640_, float p_261514_) {
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         MultiLineLabel multilinelabel = this.cache.getValue(this.getFreshCacheKey());
         int i = this.getX();
         int j = this.getY();
         int k = 9;
         int l = this.getColor();
         if (this.centered) {
-            multilinelabel.renderCentered(p_282535_, i + this.getWidth() / 2, j, k, l);
+            multilinelabel.renderCentered(guiGraphics, i + this.getWidth() / 2, j, k, l);
         } else {
-            multilinelabel.renderLeftAligned(p_282535_, i, j, k, l);
+            multilinelabel.renderLeftAligned(guiGraphics, i, j, k, l);
         }
     }
 

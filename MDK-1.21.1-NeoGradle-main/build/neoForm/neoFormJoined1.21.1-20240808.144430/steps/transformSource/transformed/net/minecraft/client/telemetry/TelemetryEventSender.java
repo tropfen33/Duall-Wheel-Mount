@@ -17,5 +17,5 @@ public interface TelemetryEventSender {
             });
     }
 
-    void send(TelemetryEventType p_261620_, Consumer<TelemetryPropertyMap.Builder> p_262079_);
+    void send(TelemetryEventType eventType, Consumer<TelemetryPropertyMap.Builder> p_262079_);
 }

@@ -18,13 +18,13 @@ public class ItemListReport implements DataProvider {
     private final PackOutput output;
     private final CompletableFuture<HolderLookup.Provider> registries;
 
-    public ItemListReport(PackOutput p_331079_, CompletableFuture<HolderLookup.Provider> p_330936_) {
-        this.output = p_331079_;
-        this.registries = p_330936_;
+    public ItemListReport(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
+        this.output = output;
+        this.registries = registries;
     }
 
     @Override
-    public CompletableFuture<?> run(CachedOutput p_330682_) {
+    public CompletableFuture<?> run(CachedOutput output) {
         Path path = this.output.getOutputFolder(PackOutput.Target.REPORTS).resolve("items.json");
         return this.registries
             .thenCompose(
@@ -45,7 +45,7 @@ public class ItemListReport implements DataProvider {
                                 jsonobject.add(p_347011_.getRegisteredName(), jsonobject1);
                             }
                         );
-                    return DataProvider.saveStable(p_330682_, jsonobject, path);
+                    return DataProvider.saveStable(output, jsonobject, path);
                 }
             );
     }

@@ -17,25 +17,31 @@ import net.minecraft.world.flag.FeatureFlag;
 import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.flag.FeatureFlags;
 
+/**
+ * Defines a type of potion in the game. These are used to associate one or more effects with items such as the bottled potion or the tipped arrows.
+ */
 public class Potion implements FeatureElement {
     public static final Codec<Holder<Potion>> CODEC = BuiltInRegistries.POTION.holderByNameCodec();
     public static final StreamCodec<RegistryFriendlyByteBuf, Holder<Potion>> STREAM_CODEC = ByteBufCodecs.holderRegistry(Registries.POTION);
+    /**
+     * The base name for the potion type.
+     */
     @Nullable
     private final String name;
     private final List<MobEffectInstance> effects;
     private FeatureFlagSet requiredFeatures = FeatureFlags.VANILLA_SET;
 
-    public Potion(MobEffectInstance... p_43487_) {
-        this(null, p_43487_);
+    public Potion(MobEffectInstance... effects) {
+        this(null, effects);
     }
 
-    public Potion(@Nullable String p_43484_, MobEffectInstance... p_43485_) {
-        this.name = p_43484_;
-        this.effects = List.of(p_43485_);
+    public Potion(@Nullable String name, MobEffectInstance... effects) {
+        this.name = name;
+        this.effects = List.of(effects);
     }
 
-    public Potion requiredFeatures(FeatureFlag... p_338520_) {
-        this.requiredFeatures = FeatureFlags.REGISTRY.subset(p_338520_);
+    public Potion requiredFeatures(FeatureFlag... requiredFeatures) {
+        this.requiredFeatures = FeatureFlags.REGISTRY.subset(requiredFeatures);
         return this;
     }
 
@@ -44,16 +50,16 @@ public class Potion implements FeatureElement {
         return this.requiredFeatures;
     }
 
-    public static String getName(Optional<Holder<Potion>> p_330503_, String p_43493_) {
-        if (p_330503_.isPresent()) {
-            String s = p_330503_.get().value().name;
+    public static String getName(Optional<Holder<Potion>> potion, String descriptionId) {
+        if (potion.isPresent()) {
+            String s = potion.get().value().name;
             if (s != null) {
-                return p_43493_ + s;
+                return descriptionId + s;
             }
         }
 
-        String s1 = p_330503_.flatMap(Holder::unwrapKey).map(p_331494_ -> p_331494_.location().getPath()).orElse("empty");
-        return p_43493_ + s1;
+        String s1 = potion.flatMap(Holder::unwrapKey).map(p_331494_ -> p_331494_.location().getPath()).orElse("empty");
+        return descriptionId + s1;
     }
 
     public List<MobEffectInstance> getEffects() {

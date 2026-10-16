@@ -11,8 +11,8 @@ import com.mojang.serialization.DynamicOps;
 import java.util.Objects;
 
 public class ForcePoiRebuild extends DataFix {
-    public ForcePoiRebuild(Schema p_15821_, boolean p_15822_) {
-        super(p_15821_, p_15822_);
+    public ForcePoiRebuild(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -25,7 +25,7 @@ public class ForcePoiRebuild extends DataFix {
         }
     }
 
-    private static <T> Dynamic<T> cap(Dynamic<T> p_15826_) {
-        return p_15826_.update("Sections", p_15832_ -> p_15832_.updateMapValues(p_145352_ -> p_145352_.mapSecond(p_145356_ -> p_145356_.remove("Valid"))));
+    private static <T> Dynamic<T> cap(Dynamic<T> dynamic) {
+        return dynamic.update("Sections", p_15832_ -> p_15832_.updateMapValues(p_145352_ -> p_145352_.mapSecond(p_145356_ -> p_145356_.remove("Valid"))));
     }
 }

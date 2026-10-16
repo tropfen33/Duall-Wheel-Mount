@@ -16,9 +16,9 @@ public class SummonedEntityTrigger extends SimpleCriterionTrigger<SummonedEntity
         return SummonedEntityTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_68257_, Entity p_68258_) {
-        LootContext lootcontext = EntityPredicate.createContext(p_68257_, p_68258_);
-        this.trigger(p_68257_, p_68265_ -> p_68265_.matches(lootcontext));
+    public void trigger(ServerPlayer player, Entity entity) {
+        LootContext lootcontext = EntityPredicate.createContext(player, entity);
+        this.trigger(player, p_68265_ -> p_68265_.matches(lootcontext));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, Optional<ContextAwarePredicate> entity)
@@ -31,19 +31,19 @@ public class SummonedEntityTrigger extends SimpleCriterionTrigger<SummonedEntity
                     .apply(p_337398_, SummonedEntityTrigger.TriggerInstance::new)
         );
 
-        public static Criterion<SummonedEntityTrigger.TriggerInstance> summonedEntity(EntityPredicate.Builder p_68276_) {
+        public static Criterion<SummonedEntityTrigger.TriggerInstance> summonedEntity(EntityPredicate.Builder entity) {
             return CriteriaTriggers.SUMMONED_ENTITY
-                .createCriterion(new SummonedEntityTrigger.TriggerInstance(Optional.empty(), Optional.of(EntityPredicate.wrap(p_68276_))));
+                .createCriterion(new SummonedEntityTrigger.TriggerInstance(Optional.empty(), Optional.of(EntityPredicate.wrap(entity))));
         }
 
-        public boolean matches(LootContext p_68280_) {
-            return this.entity.isEmpty() || this.entity.get().matches(p_68280_);
+        public boolean matches(LootContext lootContext) {
+            return this.entity.isEmpty() || this.entity.get().matches(lootContext);
         }
 
         @Override
-        public void validate(CriterionValidator p_312389_) {
-            SimpleCriterionTrigger.SimpleInstance.super.validate(p_312389_);
-            p_312389_.validateEntity(this.entity, ".entity");
+        public void validate(CriterionValidator validator) {
+            SimpleCriterionTrigger.SimpleInstance.super.validate(validator);
+            validator.validateEntity(this.entity, ".entity");
         }
     }
 }

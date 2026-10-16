@@ -19,17 +19,24 @@ public class DeltaFeature extends Feature<DeltaFeatureConfiguration> {
     private static final Direction[] DIRECTIONS = Direction.values();
     private static final double RIM_SPAWN_CHANCE = 0.9;
 
-    public DeltaFeature(Codec<DeltaFeatureConfiguration> p_65550_) {
-        super(p_65550_);
+    public DeltaFeature(Codec<DeltaFeatureConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<DeltaFeatureConfiguration> p_159548_) {
+    public boolean place(FeaturePlaceContext<DeltaFeatureConfiguration> context) {
         boolean flag = false;
-        RandomSource randomsource = p_159548_.random();
-        WorldGenLevel worldgenlevel = p_159548_.level();
-        DeltaFeatureConfiguration deltafeatureconfiguration = p_159548_.config();
-        BlockPos blockpos = p_159548_.origin();
+        RandomSource randomsource = context.random();
+        WorldGenLevel worldgenlevel = context.level();
+        DeltaFeatureConfiguration deltafeatureconfiguration = context.config();
+        BlockPos blockpos = context.origin();
         boolean flag1 = randomsource.nextDouble() < 0.9;
         int i = flag1 ? deltafeatureconfiguration.rimSize().sample(randomsource) : 0;
         int j = flag1 ? deltafeatureconfiguration.rimSize().sample(randomsource) : 0;
@@ -60,15 +67,15 @@ public class DeltaFeature extends Feature<DeltaFeatureConfiguration> {
         return flag;
     }
 
-    private static boolean isClear(LevelAccessor p_65552_, BlockPos p_65553_, DeltaFeatureConfiguration p_65554_) {
-        BlockState blockstate = p_65552_.getBlockState(p_65553_);
-        if (blockstate.is(p_65554_.contents().getBlock())) {
+    private static boolean isClear(LevelAccessor level, BlockPos pos, DeltaFeatureConfiguration config) {
+        BlockState blockstate = level.getBlockState(pos);
+        if (blockstate.is(config.contents().getBlock())) {
             return false;
         } else if (CANNOT_REPLACE.contains(blockstate.getBlock())) {
             return false;
         } else {
             for (Direction direction : DIRECTIONS) {
-                boolean flag = p_65552_.getBlockState(p_65553_.relative(direction)).isAir();
+                boolean flag = level.getBlockState(pos.relative(direction)).isAir();
                 if (flag && direction != Direction.UP || !flag && direction == Direction.UP) {
                     return false;
                 }

@@ -7,6 +7,9 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 
+/**
+ * Registration for {@link ScoreboardNameProvider}.
+ */
 public class ScoreboardNameProviders {
     private static final Codec<ScoreboardNameProvider> TYPED_CODEC = BuiltInRegistries.LOOT_SCORE_PROVIDER_TYPE
         .byNameCodec()
@@ -23,9 +26,9 @@ public class ScoreboardNameProviders {
     public static final LootScoreProviderType FIXED = register("fixed", FixedScoreboardNameProvider.CODEC);
     public static final LootScoreProviderType CONTEXT = register("context", ContextScoreboardNameProvider.CODEC);
 
-    private static LootScoreProviderType register(String p_165874_, MapCodec<? extends ScoreboardNameProvider> p_338825_) {
+    private static LootScoreProviderType register(String name, MapCodec<? extends ScoreboardNameProvider> codec) {
         return Registry.register(
-            BuiltInRegistries.LOOT_SCORE_PROVIDER_TYPE, ResourceLocation.withDefaultNamespace(p_165874_), new LootScoreProviderType(p_338825_)
+            BuiltInRegistries.LOOT_SCORE_PROVIDER_TYPE, ResourceLocation.withDefaultNamespace(name), new LootScoreProviderType(codec)
         );
     }
 }

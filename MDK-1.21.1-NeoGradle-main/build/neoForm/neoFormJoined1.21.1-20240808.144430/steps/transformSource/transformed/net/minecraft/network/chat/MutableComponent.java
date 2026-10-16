@@ -9,6 +9,9 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.locale.Language;
 import net.minecraft.util.FormattedCharSequence;
 
+/**
+ * A Component which can have its Style and siblings modified.
+ */
 public class MutableComponent implements Component {
     private final ComponentContents contents;
     private final List<Component> siblings;
@@ -17,14 +20,14 @@ public class MutableComponent implements Component {
     @Nullable
     private Language decomposedWith;
 
-    MutableComponent(ComponentContents p_237200_, List<Component> p_237201_, Style p_237202_) {
-        this.contents = p_237200_;
-        this.siblings = p_237201_;
-        this.style = p_237202_;
+    MutableComponent(ComponentContents contents, List<Component> siblings, Style style) {
+        this.contents = contents;
+        this.siblings = siblings;
+        this.style = style;
     }
 
-    public static MutableComponent create(ComponentContents p_237205_) {
-        return new MutableComponent(p_237205_, Lists.newArrayList(), Style.EMPTY);
+    public static MutableComponent create(ComponentContents contents) {
+        return new MutableComponent(contents, Lists.newArrayList(), Style.EMPTY);
     }
 
     @Override
@@ -37,8 +40,11 @@ public class MutableComponent implements Component {
         return this.siblings;
     }
 
-    public MutableComponent setStyle(Style p_130943_) {
-        this.style = p_130943_;
+    /**
+     * Sets the style for this component and returns the component itself.
+     */
+    public MutableComponent setStyle(Style style) {
+        this.style = style;
         return this;
     }
 
@@ -47,37 +53,47 @@ public class MutableComponent implements Component {
         return this.style;
     }
 
-    public MutableComponent append(String p_130947_) {
-        return p_130947_.isEmpty() ? this : this.append(Component.literal(p_130947_));
+    /**
+     * Add the given text to this component's siblings.
+     *
+     * Note: If this component turns the text bold, that will apply to all the siblings until a later sibling turns the text something else.
+     */
+    public MutableComponent append(String string) {
+        return string.isEmpty() ? this : this.append(Component.literal(string));
     }
 
-    public MutableComponent append(Component p_130942_) {
-        this.siblings.add(p_130942_);
+    /**
+     * Add the given component to this component's siblings.
+     *
+     * Note: If this component turns the text bold, that will apply to all the siblings until a later sibling turns the text something else.
+     */
+    public MutableComponent append(Component sibling) {
+        this.siblings.add(sibling);
         return this;
     }
 
-    public MutableComponent withStyle(UnaryOperator<Style> p_130939_) {
-        this.setStyle(p_130939_.apply(this.getStyle()));
+    public MutableComponent withStyle(UnaryOperator<Style> modifyFunc) {
+        this.setStyle(modifyFunc.apply(this.getStyle()));
         return this;
     }
 
-    public MutableComponent withStyle(Style p_130949_) {
-        this.setStyle(p_130949_.applyTo(this.getStyle()));
+    public MutableComponent withStyle(Style style) {
+        this.setStyle(style.applyTo(this.getStyle()));
         return this;
     }
 
-    public MutableComponent withStyle(ChatFormatting... p_130945_) {
-        this.setStyle(this.getStyle().applyFormats(p_130945_));
+    public MutableComponent withStyle(ChatFormatting... formats) {
+        this.setStyle(this.getStyle().applyFormats(formats));
         return this;
     }
 
-    public MutableComponent withStyle(ChatFormatting p_130941_) {
-        this.setStyle(this.getStyle().applyFormat(p_130941_));
+    public MutableComponent withStyle(ChatFormatting format) {
+        this.setStyle(this.getStyle().applyFormat(format));
         return this;
     }
 
-    public MutableComponent withColor(int p_307552_) {
-        this.setStyle(this.getStyle().withColor(p_307552_));
+    public MutableComponent withColor(int color) {
+        this.setStyle(this.getStyle().withColor(color));
         return this;
     }
 
@@ -93,11 +109,11 @@ public class MutableComponent implements Component {
     }
 
     @Override
-    public boolean equals(Object p_237209_) {
-        if (this == p_237209_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return !(p_237209_ instanceof MutableComponent mutablecomponent)
+            return !(other instanceof MutableComponent mutablecomponent)
                 ? false
                 : this.contents.equals(mutablecomponent.contents)
                     && this.style.equals(mutablecomponent.style)

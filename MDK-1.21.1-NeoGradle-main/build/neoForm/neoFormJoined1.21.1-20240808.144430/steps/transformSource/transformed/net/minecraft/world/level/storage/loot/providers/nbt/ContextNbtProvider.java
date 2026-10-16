@@ -15,6 +15,9 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 
+/**
+ * A NbtProvider that provides either the {@linkplain LootContextParams#BLOCK_ENTITY block entity}'s NBT data or an entity's NBT data based on an {@link LootContext.EntityTarget}.
+ */
 public class ContextNbtProvider implements NbtProvider {
     private static final String BLOCK_ENTITY_ID = "block_entity";
     private static final ContextNbtProvider.Getter BLOCK_ENTITY_PROVIDER = new ContextNbtProvider.Getter() {
@@ -49,29 +52,29 @@ public class ContextNbtProvider implements NbtProvider {
     public static final Codec<ContextNbtProvider> INLINE_CODEC = GETTER_CODEC.xmap(ContextNbtProvider::new, p_298731_ -> p_298731_.getter);
     private final ContextNbtProvider.Getter getter;
 
-    private static ContextNbtProvider.Getter forEntity(final LootContext.EntityTarget p_165578_) {
+    private static ContextNbtProvider.Getter forEntity(final LootContext.EntityTarget entityTarget) {
         return new ContextNbtProvider.Getter() {
             @Nullable
             @Override
             public Tag get(LootContext p_165589_) {
-                Entity entity = p_165589_.getParamOrNull(p_165578_.getParam());
+                Entity entity = p_165589_.getParamOrNull(entityTarget.getParam());
                 return entity != null ? NbtPredicate.getEntityTagToCompare(entity) : null;
             }
 
             @Override
             public String getId() {
-                return p_165578_.getName();
+                return entityTarget.getName();
             }
 
             @Override
             public Set<LootContextParam<?>> getReferencedContextParams() {
-                return ImmutableSet.of(p_165578_.getParam());
+                return ImmutableSet.of(entityTarget.getParam());
             }
         };
     }
 
-    private ContextNbtProvider(ContextNbtProvider.Getter p_165568_) {
-        this.getter = p_165568_;
+    private ContextNbtProvider(ContextNbtProvider.Getter getter) {
+        this.getter = getter;
     }
 
     @Override
@@ -81,8 +84,8 @@ public class ContextNbtProvider implements NbtProvider {
 
     @Nullable
     @Override
-    public Tag get(LootContext p_165573_) {
-        return this.getter.get(p_165573_);
+    public Tag get(LootContext lootContext) {
+        return this.getter.get(lootContext);
     }
 
     @Override
@@ -90,13 +93,13 @@ public class ContextNbtProvider implements NbtProvider {
         return this.getter.getReferencedContextParams();
     }
 
-    public static NbtProvider forContextEntity(LootContext.EntityTarget p_165571_) {
-        return new ContextNbtProvider(forEntity(p_165571_));
+    public static NbtProvider forContextEntity(LootContext.EntityTarget entityTarget) {
+        return new ContextNbtProvider(forEntity(entityTarget));
     }
 
     interface Getter {
         @Nullable
-        Tag get(LootContext p_165591_);
+        Tag get(LootContext lootContext);
 
         String getId();
 

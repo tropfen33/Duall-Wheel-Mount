@@ -22,11 +22,14 @@ public class ChestedHorseRenderer<T extends AbstractChestedHorse> extends Abstra
         )
     );
 
-    public ChestedHorseRenderer(EntityRendererProvider.Context p_173948_, float p_173949_, ModelLayerLocation p_173950_) {
-        super(p_173948_, new ChestedHorseModel<>(p_173948_.bakeLayer(p_173950_)), p_173949_);
+    public ChestedHorseRenderer(EntityRendererProvider.Context context, float scale, ModelLayerLocation layer) {
+        super(context, new ChestedHorseModel<>(context.bakeLayer(layer)), scale);
     }
 
-    public ResourceLocation getTextureLocation(T p_113987_) {
-        return MAP.get(p_113987_.getType());
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(T entity) {
+        return MAP.get(entity.getType());
     }
 }

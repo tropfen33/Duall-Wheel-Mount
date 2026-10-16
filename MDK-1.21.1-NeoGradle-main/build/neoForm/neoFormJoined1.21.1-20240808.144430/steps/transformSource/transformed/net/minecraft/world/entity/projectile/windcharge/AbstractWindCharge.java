@@ -31,23 +31,23 @@ public abstract class AbstractWindCharge extends AbstractHurtingProjectile imple
     );
     public static final double JUMP_SCALE = 0.25;
 
-    public AbstractWindCharge(EntityType<? extends AbstractWindCharge> p_325927_, Level p_326350_) {
-        super(p_325927_, p_326350_);
+    public AbstractWindCharge(EntityType<? extends AbstractWindCharge> entityType, Level level) {
+        super(entityType, level);
         this.accelerationPower = 0.0;
     }
 
     public AbstractWindCharge(
-        EntityType<? extends AbstractWindCharge> p_326427_, Level p_325931_, Entity p_325997_, double p_326275_, double p_325936_, double p_326369_
+        EntityType<? extends AbstractWindCharge> entityType, Level level, Entity owner, double x, double y, double z
     ) {
-        super(p_326427_, p_326275_, p_325936_, p_326369_, p_325931_);
-        this.setOwner(p_325997_);
+        super(entityType, x, y, z, level);
+        this.setOwner(owner);
         this.accelerationPower = 0.0;
     }
 
     AbstractWindCharge(
-        EntityType<? extends AbstractWindCharge> p_326232_, double p_326236_, double p_326440_, double p_326413_, Vec3 p_347459_, Level p_326449_
+        EntityType<? extends AbstractWindCharge> entityType, double x, double y, double z, Vec3 movement, Level level
     ) {
-        super(p_326232_, p_326236_, p_326440_, p_326413_, p_347459_, p_326449_);
+        super(entityType, x, y, z, movement, level);
         this.accelerationPower = 0.0;
     }
 
@@ -67,25 +67,28 @@ public abstract class AbstractWindCharge extends AbstractHurtingProjectile imple
     }
 
     @Override
-    public boolean canCollideWith(Entity p_326023_) {
-        return p_326023_ instanceof AbstractWindCharge ? false : super.canCollideWith(p_326023_);
+    public boolean canCollideWith(Entity entity) {
+        return entity instanceof AbstractWindCharge ? false : super.canCollideWith(entity);
     }
 
     @Override
-    protected boolean canHitEntity(Entity p_326159_) {
-        if (p_326159_ instanceof AbstractWindCharge) {
+    protected boolean canHitEntity(Entity target) {
+        if (target instanceof AbstractWindCharge) {
             return false;
         } else {
-            return p_326159_.getType() == EntityType.END_CRYSTAL ? false : super.canHitEntity(p_326159_);
+            return target.getType() == EntityType.END_CRYSTAL ? false : super.canHitEntity(target);
         }
     }
 
+    /**
+     * Called when the arrow hits an entity
+     */
     @Override
-    protected void onHitEntity(EntityHitResult p_326121_) {
-        super.onHitEntity(p_326121_);
+    protected void onHitEntity(EntityHitResult result) {
+        super.onHitEntity(result);
         if (!this.level().isClientSide) {
             LivingEntity livingentity = this.getOwner() instanceof LivingEntity livingentity1 ? livingentity1 : null;
-            Entity entity = p_326121_.getEntity();
+            Entity entity = result.getEntity();
             if (livingentity != null) {
                 livingentity.setLastHurtMob(entity);
             }
@@ -99,27 +102,33 @@ public abstract class AbstractWindCharge extends AbstractHurtingProjectile imple
         }
     }
 
+    /**
+     * Adds to the current velocity of the entity, and sets {@link #isAirBorne} to true.
+     */
     @Override
-    public void push(double p_334071_, double p_333979_, double p_333996_) {
+    public void push(double x, double y, double z) {
     }
 
-    protected abstract void explode(Vec3 p_352265_);
+    protected abstract void explode(Vec3 pos);
 
     @Override
-    protected void onHitBlock(BlockHitResult p_325933_) {
-        super.onHitBlock(p_325933_);
+    protected void onHitBlock(BlockHitResult result) {
+        super.onHitBlock(result);
         if (!this.level().isClientSide) {
-            Vec3i vec3i = p_325933_.getDirection().getNormal();
+            Vec3i vec3i = result.getDirection().getNormal();
             Vec3 vec3 = Vec3.atLowerCornerOf(vec3i).multiply(0.25, 0.25, 0.25);
-            Vec3 vec31 = p_325933_.getLocation().add(vec3);
+            Vec3 vec31 = result.getLocation().add(vec3);
             this.explode(vec31);
             this.discard();
         }
     }
 
+    /**
+     * Called when this EntityFireball hits a block or entity.
+     */
     @Override
-    protected void onHit(HitResult p_326337_) {
-        super.onHit(p_326337_);
+    protected void onHit(HitResult result) {
+        super.onHit(result);
         if (!this.level().isClientSide) {
             this.discard();
         }
@@ -161,8 +170,11 @@ public abstract class AbstractWindCharge extends AbstractHurtingProjectile imple
         }
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_352147_, float p_352222_) {
+    public boolean hurt(DamageSource source, float amount) {
         return false;
     }
 }

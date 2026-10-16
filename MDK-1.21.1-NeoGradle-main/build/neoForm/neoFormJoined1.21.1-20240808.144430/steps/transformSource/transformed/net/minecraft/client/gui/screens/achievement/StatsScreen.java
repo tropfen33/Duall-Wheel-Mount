@@ -63,12 +63,15 @@ public class StatsScreen extends Screen {
     final StatsCounter stats;
     @Nullable
     private ObjectSelectionList<?> activeList;
+    /**
+     * When true, the game will be paused when the gui is shown
+     */
     private boolean isLoading = true;
 
-    public StatsScreen(Screen p_96906_, StatsCounter p_96907_) {
+    public StatsScreen(Screen lastScreen, StatsCounter stats) {
         super(TITLE);
-        this.lastScreen = p_96906_;
-        this.stats = p_96907_;
+        this.lastScreen = lastScreen;
+        this.stats = stats;
     }
 
     @Override
@@ -136,26 +139,26 @@ public class StatsScreen extends Screen {
         return !this.isLoading;
     }
 
-    public void setActiveList(@Nullable ObjectSelectionList<?> p_96925_) {
+    public void setActiveList(@Nullable ObjectSelectionList<?> activeList) {
         if (this.activeList != null) {
             this.removeWidget(this.activeList);
         }
 
-        if (p_96925_ != null) {
-            this.addRenderableWidget(p_96925_);
-            this.activeList = p_96925_;
+        if (activeList != null) {
+            this.addRenderableWidget(activeList);
+            this.activeList = activeList;
             this.repositionElements();
         }
     }
 
-    static String getTranslationKey(Stat<ResourceLocation> p_96947_) {
-        return "stat." + p_96947_.getValue().toString().replace(':', '.');
+    static String getTranslationKey(Stat<ResourceLocation> stat) {
+        return "stat." + stat.getValue().toString().replace(':', '.');
     }
 
     @OnlyIn(Dist.CLIENT)
     class GeneralStatisticsList extends ObjectSelectionList<StatsScreen.GeneralStatisticsList.Entry> {
-        public GeneralStatisticsList(Minecraft p_96995_) {
-            super(p_96995_, StatsScreen.this.width, StatsScreen.this.height - 33 - 58, 33, 14);
+        public GeneralStatisticsList(Minecraft minecraft) {
+            super(minecraft, StatsScreen.this.width, StatsScreen.this.height - 33 - 58, 33, 14);
             ObjectArrayList<Stat<ResourceLocation>> objectarraylist = new ObjectArrayList<>(Stats.CUSTOM.iterator());
             objectarraylist.sort(Comparator.comparing(p_96997_ -> I18n.get(StatsScreen.getTranslationKey((Stat<ResourceLocation>)p_96997_))));
 
@@ -174,9 +177,9 @@ public class StatsScreen extends Screen {
             private final Stat<ResourceLocation> stat;
             private final Component statDisplay;
 
-            Entry(Stat<ResourceLocation> p_97005_) {
-                this.stat = p_97005_;
-                this.statDisplay = Component.translatable(StatsScreen.getTranslationKey(p_97005_));
+            Entry(Stat<ResourceLocation> stat) {
+                this.stat = stat;
+                this.statDisplay = Component.translatable(StatsScreen.getTranslationKey(stat));
             }
 
             private String getValueText() {
@@ -185,22 +188,22 @@ public class StatsScreen extends Screen {
 
             @Override
             public void render(
-                GuiGraphics p_283043_,
-                int p_97012_,
-                int p_97013_,
-                int p_97014_,
-                int p_97015_,
-                int p_97016_,
-                int p_97017_,
-                int p_97018_,
-                boolean p_97019_,
-                float p_97020_
+                GuiGraphics guiGraphics,
+                int index,
+                int top,
+                int left,
+                int width,
+                int height,
+                int mouseX,
+                int mouseY,
+                boolean hovering,
+                float partialTick
             ) {
-                int i = p_97013_ + p_97016_ / 2 - 9 / 2;
-                int j = p_97012_ % 2 == 0 ? -1 : -4539718;
-                p_283043_.drawString(StatsScreen.this.font, this.statDisplay, p_97014_ + 2, i, j);
+                int i = top + height / 2 - 9 / 2;
+                int j = index % 2 == 0 ? -1 : -4539718;
+                guiGraphics.drawString(StatsScreen.this.font, this.statDisplay, left + 2, i, j);
                 String s = this.getValueText();
-                p_283043_.drawString(StatsScreen.this.font, s, p_97014_ + p_97015_ - StatsScreen.this.font.width(s) - 4, i, j);
+                guiGraphics.drawString(StatsScreen.this.font, s, left + width - StatsScreen.this.font.width(s) - 4, i, j);
             }
 
             @Override
@@ -236,8 +239,8 @@ public class StatsScreen extends Screen {
         protected int headerPressed = -1;
         protected int sortOrder;
 
-        public ItemStatisticsList(Minecraft p_97032_) {
-            super(p_97032_, StatsScreen.this.width, StatsScreen.this.height - 33 - 58, 33, 22);
+        public ItemStatisticsList(Minecraft minecraft) {
+            super(minecraft, StatsScreen.this.width, StatsScreen.this.height - 33 - 58, 33, 22);
             this.blockColumns = Lists.newArrayList();
             this.blockColumns.add(Stats.BLOCK_MINED);
             this.itemColumns = Lists.newArrayList(Stats.ITEM_BROKEN, Stats.ITEM_CRAFTED, Stats.ITEM_USED, Stats.ITEM_PICKED_UP, Stats.ITEM_DROPPED);
@@ -279,30 +282,30 @@ public class StatsScreen extends Screen {
             }
         }
 
-        int getColumnX(int p_331965_) {
-            return 75 + 40 * p_331965_;
+        int getColumnX(int index) {
+            return 75 + 40 * index;
         }
 
         @Override
-        protected void renderHeader(GuiGraphics p_282214_, int p_97050_, int p_97051_) {
+        protected void renderHeader(GuiGraphics guiGraphics, int x, int y) {
             if (!this.minecraft.mouseHandler.isLeftPressed()) {
                 this.headerPressed = -1;
             }
 
             for (int i = 0; i < this.iconSprites.length; i++) {
                 ResourceLocation resourcelocation = this.headerPressed == i ? StatsScreen.SLOT_SPRITE : StatsScreen.HEADER_SPRITE;
-                p_282214_.blitSprite(resourcelocation, p_97050_ + this.getColumnX(i) - 18, p_97051_ + 1, 0, 18, 18);
+                guiGraphics.blitSprite(resourcelocation, x + this.getColumnX(i) - 18, y + 1, 0, 18, 18);
             }
 
             if (this.sortColumn != null) {
                 int j = this.getColumnX(this.getColumnIndex(this.sortColumn)) - 36;
                 ResourceLocation resourcelocation1 = this.sortOrder == 1 ? StatsScreen.SORT_UP_SPRITE : StatsScreen.SORT_DOWN_SPRITE;
-                p_282214_.blitSprite(resourcelocation1, p_97050_ + j, p_97051_ + 1, 0, 18, 18);
+                guiGraphics.blitSprite(resourcelocation1, x + j, y + 1, 0, 18, 18);
             }
 
             for (int k = 0; k < this.iconSprites.length; k++) {
                 int l = this.headerPressed == k ? 1 : 0;
-                p_282214_.blitSprite(this.iconSprites[k], p_97050_ + this.getColumnX(k) - 18 + l, p_97051_ + 1 + l, 0, 18, 18);
+                guiGraphics.blitSprite(this.iconSprites[k], x + this.getColumnX(k) - 18 + l, y + 1 + l, 0, 18, 18);
             }
         }
 
@@ -312,11 +315,11 @@ public class StatsScreen extends Screen {
         }
 
         @Override
-        protected boolean clickedHeader(int p_97036_, int p_97037_) {
+        protected boolean clickedHeader(int x, int y) {
             this.headerPressed = -1;
 
             for (int i = 0; i < this.iconSprites.length; i++) {
-                int j = p_97036_ - this.getColumnX(i);
+                int j = x - this.getColumnX(i);
                 if (j >= -36 && j <= 0) {
                     this.headerPressed = i;
                     break;
@@ -328,39 +331,39 @@ public class StatsScreen extends Screen {
                 this.minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 return true;
             } else {
-                return super.clickedHeader(p_97036_, p_97037_);
+                return super.clickedHeader(x, y);
             }
         }
 
-        private StatType<?> getColumn(int p_97034_) {
-            return p_97034_ < this.blockColumns.size() ? this.blockColumns.get(p_97034_) : this.itemColumns.get(p_97034_ - this.blockColumns.size());
+        private StatType<?> getColumn(int index) {
+            return index < this.blockColumns.size() ? this.blockColumns.get(index) : this.itemColumns.get(index - this.blockColumns.size());
         }
 
-        private int getColumnIndex(StatType<?> p_97059_) {
-            int i = this.blockColumns.indexOf(p_97059_);
+        private int getColumnIndex(StatType<?> statType) {
+            int i = this.blockColumns.indexOf(statType);
             if (i >= 0) {
                 return i;
             } else {
-                int j = this.itemColumns.indexOf(p_97059_);
+                int j = this.itemColumns.indexOf(statType);
                 return j >= 0 ? j + this.blockColumns.size() : -1;
             }
         }
 
         @Override
-        protected void renderDecorations(GuiGraphics p_283203_, int p_97046_, int p_97047_) {
-            if (p_97047_ >= this.getY() && p_97047_ <= this.getBottom()) {
+        protected void renderDecorations(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+            if (mouseY >= this.getY() && mouseY <= this.getBottom()) {
                 StatsScreen.ItemStatisticsList.ItemRow statsscreen$itemstatisticslist$itemrow = this.getHovered();
                 int i = this.getRowLeft();
                 if (statsscreen$itemstatisticslist$itemrow != null) {
-                    if (p_97046_ < i || p_97046_ > i + 18) {
+                    if (mouseX < i || mouseX > i + 18) {
                         return;
                     }
 
                     Item item = statsscreen$itemstatisticslist$itemrow.getItem();
-                    p_283203_.renderTooltip(StatsScreen.this.font, item.getDescription(), p_97046_, p_97047_);
+                    guiGraphics.renderTooltip(StatsScreen.this.font, item.getDescription(), mouseX, mouseY);
                 } else {
                     Component component = null;
-                    int j = p_97046_ - i;
+                    int j = mouseX - i;
 
                     for (int k = 0; k < this.iconSprites.length; k++) {
                         int l = this.getColumnX(k);
@@ -371,15 +374,15 @@ public class StatsScreen extends Screen {
                     }
 
                     if (component != null) {
-                        p_283203_.renderTooltip(StatsScreen.this.font, component, p_97046_, p_97047_);
+                        guiGraphics.renderTooltip(StatsScreen.this.font, component, mouseX, mouseY);
                     }
                 }
             }
         }
 
-        protected void sortByColumn(StatType<?> p_97039_) {
-            if (p_97039_ != this.sortColumn) {
-                this.sortColumn = p_97039_;
+        protected void sortByColumn(StatType<?> statType) {
+            if (statType != this.sortColumn) {
+                this.sortColumn = statType;
                 this.sortOrder = -1;
             } else if (this.sortOrder == -1) {
                 this.sortOrder = 1;
@@ -395,8 +398,8 @@ public class StatsScreen extends Screen {
         class ItemRow extends ObjectSelectionList.Entry<StatsScreen.ItemStatisticsList.ItemRow> {
             private final Item item;
 
-            ItemRow(Item p_169517_) {
-                this.item = p_169517_;
+            ItemRow(Item item) {
+                this.item = item;
             }
 
             public Item getItem() {
@@ -405,19 +408,19 @@ public class StatsScreen extends Screen {
 
             @Override
             public void render(
-                GuiGraphics p_283614_,
-                int p_97082_,
-                int p_97083_,
-                int p_97084_,
-                int p_97085_,
-                int p_97086_,
-                int p_97087_,
-                int p_97088_,
-                boolean p_97089_,
-                float p_97090_
+                GuiGraphics guiGraphics,
+                int index,
+                int top,
+                int left,
+                int width,
+                int height,
+                int mouseX,
+                int mouseY,
+                boolean hovering,
+                float partialTick
             ) {
-                p_283614_.blitSprite(StatsScreen.SLOT_SPRITE, p_97084_, p_97083_, 0, 18, 18);
-                p_283614_.renderFakeItem(this.item.getDefaultInstance(), p_97084_ + 1, p_97083_ + 1);
+                guiGraphics.blitSprite(StatsScreen.SLOT_SPRITE, left, top, 0, 18, 18);
+                guiGraphics.renderFakeItem(this.item.getDefaultInstance(), left + 1, top + 1);
                 if (StatsScreen.this.itemStatsList != null) {
                     for (int i = 0; i < StatsScreen.this.itemStatsList.blockColumns.size(); i++) {
                         Stat<Block> stat;
@@ -427,26 +430,26 @@ public class StatsScreen extends Screen {
                             stat = null;
                         }
 
-                        this.renderStat(p_283614_, stat, p_97084_ + ItemStatisticsList.this.getColumnX(i), p_97083_ + p_97086_ / 2 - 9 / 2, p_97082_ % 2 == 0);
+                        this.renderStat(guiGraphics, stat, left + ItemStatisticsList.this.getColumnX(i), top + height / 2 - 9 / 2, index % 2 == 0);
                     }
 
                     for (int j = 0; j < StatsScreen.this.itemStatsList.itemColumns.size(); j++) {
                         this.renderStat(
-                            p_283614_,
+                            guiGraphics,
                             StatsScreen.this.itemStatsList.itemColumns.get(j).get(this.item),
-                            p_97084_ + ItemStatisticsList.this.getColumnX(j + StatsScreen.this.itemStatsList.blockColumns.size()),
-                            p_97083_ + p_97086_ / 2 - 9 / 2,
-                            p_97082_ % 2 == 0
+                            left + ItemStatisticsList.this.getColumnX(j + StatsScreen.this.itemStatsList.blockColumns.size()),
+                            top + height / 2 - 9 / 2,
+                            index % 2 == 0
                         );
                     }
                 }
             }
 
-            protected void renderStat(GuiGraphics p_282544_, @Nullable Stat<?> p_97093_, int p_97094_, int p_97095_, boolean p_97096_) {
-                Component component = (Component)(p_97093_ == null
+            protected void renderStat(GuiGraphics guiGraphics, @Nullable Stat<?> stat, int x, int y, boolean evenRow) {
+                Component component = (Component)(stat == null
                     ? StatsScreen.NO_VALUE_DISPLAY
-                    : Component.literal(p_97093_.format(StatsScreen.this.stats.getValue(p_97093_))));
-                p_282544_.drawString(StatsScreen.this.font, component, p_97094_ - StatsScreen.this.font.width(component), p_97095_, p_97096_ ? -1 : -4539718);
+                    : Component.literal(stat.format(StatsScreen.this.stats.getValue(stat))));
+                guiGraphics.drawString(StatsScreen.this.font, component, x - StatsScreen.this.font.width(component), y, evenRow ? -1 : -4539718);
             }
 
             @Override
@@ -457,9 +460,9 @@ public class StatsScreen extends Screen {
 
         @OnlyIn(Dist.CLIENT)
         class ItemRowComparator implements Comparator<StatsScreen.ItemStatisticsList.ItemRow> {
-            public int compare(StatsScreen.ItemStatisticsList.ItemRow p_169524_, StatsScreen.ItemStatisticsList.ItemRow p_169525_) {
-                Item item = p_169524_.getItem();
-                Item item1 = p_169525_.getItem();
+            public int compare(StatsScreen.ItemStatisticsList.ItemRow row1, StatsScreen.ItemStatisticsList.ItemRow row2) {
+                Item item = row1.getItem();
+                Item item1 = row2.getItem();
                 int i;
                 int j;
                 if (ItemStatisticsList.this.sortColumn == null) {
@@ -484,8 +487,8 @@ public class StatsScreen extends Screen {
 
     @OnlyIn(Dist.CLIENT)
     class MobsStatisticsList extends ObjectSelectionList<StatsScreen.MobsStatisticsList.MobRow> {
-        public MobsStatisticsList(Minecraft p_97100_) {
-            super(p_97100_, StatsScreen.this.width, StatsScreen.this.height - 33 - 58, 33, 9 * 4);
+        public MobsStatisticsList(Minecraft minecraft) {
+            super(minecraft, StatsScreen.this.width, StatsScreen.this.height - 33 - 58, 33, 9 * 4);
 
             for (EntityType<?> entitytype : BuiltInRegistries.ENTITY_TYPE) {
                 if (StatsScreen.this.stats.getValue(Stats.ENTITY_KILLED.get(entitytype)) > 0
@@ -508,9 +511,9 @@ public class StatsScreen extends Screen {
             private final boolean hasKills;
             private final boolean wasKilledBy;
 
-            public MobRow(EntityType<?> p_97112_) {
-                this.mobName = p_97112_.getDescription();
-                int i = StatsScreen.this.stats.getValue(Stats.ENTITY_KILLED.get(p_97112_));
+            public MobRow(EntityType<?> entityType) {
+                this.mobName = entityType.getDescription();
+                int i = StatsScreen.this.stats.getValue(Stats.ENTITY_KILLED.get(entityType));
                 if (i == 0) {
                     this.kills = Component.translatable("stat_type.minecraft.killed.none", this.mobName);
                     this.hasKills = false;
@@ -519,7 +522,7 @@ public class StatsScreen extends Screen {
                     this.hasKills = true;
                 }
 
-                int j = StatsScreen.this.stats.getValue(Stats.ENTITY_KILLED_BY.get(p_97112_));
+                int j = StatsScreen.this.stats.getValue(Stats.ENTITY_KILLED_BY.get(entityType));
                 if (j == 0) {
                     this.killedBy = Component.translatable("stat_type.minecraft.killed_by.none", this.mobName);
                     this.wasKilledBy = false;
@@ -531,20 +534,20 @@ public class StatsScreen extends Screen {
 
             @Override
             public void render(
-                GuiGraphics p_283265_,
-                int p_97115_,
-                int p_97116_,
-                int p_97117_,
-                int p_97118_,
-                int p_97119_,
-                int p_97120_,
-                int p_97121_,
-                boolean p_97122_,
-                float p_97123_
+                GuiGraphics guiGraphics,
+                int index,
+                int top,
+                int left,
+                int width,
+                int height,
+                int mouseX,
+                int mouseY,
+                boolean hovering,
+                float partialTick
             ) {
-                p_283265_.drawString(StatsScreen.this.font, this.mobName, p_97117_ + 2, p_97116_ + 1, -1);
-                p_283265_.drawString(StatsScreen.this.font, this.kills, p_97117_ + 2 + 10, p_97116_ + 1 + 9, this.hasKills ? -4539718 : -8355712);
-                p_283265_.drawString(StatsScreen.this.font, this.killedBy, p_97117_ + 2 + 10, p_97116_ + 1 + 9 * 2, this.wasKilledBy ? -4539718 : -8355712);
+                guiGraphics.drawString(StatsScreen.this.font, this.mobName, left + 2, top + 1, -1);
+                guiGraphics.drawString(StatsScreen.this.font, this.kills, left + 2 + 10, top + 1 + 9, this.hasKills ? -4539718 : -8355712);
+                guiGraphics.drawString(StatsScreen.this.font, this.killedBy, left + 2 + 10, top + 1 + 9 * 2, this.wasKilledBy ? -4539718 : -8355712);
             }
 
             @Override

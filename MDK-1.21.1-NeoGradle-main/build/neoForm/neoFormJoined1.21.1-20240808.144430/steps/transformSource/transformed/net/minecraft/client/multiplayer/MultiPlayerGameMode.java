@@ -76,27 +76,33 @@ public class MultiPlayerGameMode {
     private GameType previousLocalPlayerMode;
     private int carriedIndex;
 
-    public MultiPlayerGameMode(Minecraft p_105203_, ClientPacketListener p_105204_) {
-        this.minecraft = p_105203_;
-        this.connection = p_105204_;
+    public MultiPlayerGameMode(Minecraft minecraft, ClientPacketListener connection) {
+        this.minecraft = minecraft;
+        this.connection = connection;
     }
 
-    public void adjustPlayer(Player p_105222_) {
-        this.localPlayerMode.updatePlayerAbilities(p_105222_.getAbilities());
+    /**
+     * Sets player capabilities depending on current gametype.
+     */
+    public void adjustPlayer(Player player) {
+        this.localPlayerMode.updatePlayerAbilities(player.getAbilities());
     }
 
-    public void setLocalMode(GameType p_171806_, @Nullable GameType p_171807_) {
-        this.localPlayerMode = p_171806_;
-        this.previousLocalPlayerMode = p_171807_;
+    public void setLocalMode(GameType localPlayerMode, @Nullable GameType previousLocalPlayerMode) {
+        this.localPlayerMode = localPlayerMode;
+        this.previousLocalPlayerMode = previousLocalPlayerMode;
         this.localPlayerMode.updatePlayerAbilities(this.minecraft.player.getAbilities());
     }
 
-    public void setLocalMode(GameType p_105280_) {
-        if (p_105280_ != this.localPlayerMode) {
+    /**
+     * Sets the game type for the player.
+     */
+    public void setLocalMode(GameType type) {
+        if (type != this.localPlayerMode) {
             this.previousLocalPlayerMode = this.localPlayerMode;
         }
 
-        this.localPlayerMode = p_105280_;
+        this.localPlayerMode = type;
         this.localPlayerMode.updatePlayerAbilities(this.minecraft.player.getAbilities());
     }
 
@@ -104,13 +110,13 @@ public class MultiPlayerGameMode {
         return this.localPlayerMode.isSurvival();
     }
 
-    public boolean destroyBlock(BlockPos p_105268_) {
-        if (this.minecraft.player.blockActionRestricted(this.minecraft.level, p_105268_, this.localPlayerMode)) {
+    public boolean destroyBlock(BlockPos pos) {
+        if (this.minecraft.player.blockActionRestricted(this.minecraft.level, pos, this.localPlayerMode)) {
             return false;
         } else {
             Level level = this.minecraft.level;
-            BlockState blockstate = level.getBlockState(p_105268_);
-            if (!this.minecraft.player.getMainHandItem().getItem().canAttackBlock(blockstate, level, p_105268_, this.minecraft.player)) {
+            BlockState blockstate = level.getBlockState(pos);
+            if (!this.minecraft.player.getMainHandItem().getItem().canAttackBlock(blockstate, level, pos, this.minecraft.player)) {
                 return false;
             } else {
                 Block block = blockstate.getBlock();
@@ -120,11 +126,11 @@ public class MultiPlayerGameMode {
                     return false;
                 } else {
                     BlockState removedBlockState =
-                    block.playerWillDestroy(level, p_105268_, blockstate, this.minecraft.player);
-                    FluidState fluidstate = level.getFluidState(p_105268_);
-                    boolean flag = blockstate.onDestroyedByPlayer(level, p_105268_, minecraft.player, false, fluidstate);
+                    block.playerWillDestroy(level, pos, blockstate, this.minecraft.player);
+                    FluidState fluidstate = level.getFluidState(pos);
+                    boolean flag = blockstate.onDestroyedByPlayer(level, pos, minecraft.player, false, fluidstate);
                     if (flag) {
-                        block.destroy(level, p_105268_, removedBlockState);
+                        block.destroy(level, pos, removedBlockState);
                     }
 
                     return flag;
@@ -133,44 +139,47 @@ public class MultiPlayerGameMode {
         }
     }
 
-    public boolean startDestroyBlock(BlockPos p_105270_, Direction p_105271_) {
-        if (this.minecraft.player.blockActionRestricted(this.minecraft.level, p_105270_, this.localPlayerMode)) {
+    /**
+     * Called when the player is hitting a block with an item.
+     */
+    public boolean startDestroyBlock(BlockPos loc, Direction face) {
+        if (this.minecraft.player.blockActionRestricted(this.minecraft.level, loc, this.localPlayerMode)) {
             return false;
-        } else if (!this.minecraft.level.getWorldBorder().isWithinBounds(p_105270_)) {
+        } else if (!this.minecraft.level.getWorldBorder().isWithinBounds(loc)) {
             return false;
         } else {
             if (this.localPlayerMode.isCreative()) {
-                BlockState blockstate = this.minecraft.level.getBlockState(p_105270_);
-                this.minecraft.getTutorial().onDestroyBlock(this.minecraft.level, p_105270_, blockstate, 1.0F);
+                BlockState blockstate = this.minecraft.level.getBlockState(loc);
+                this.minecraft.getTutorial().onDestroyBlock(this.minecraft.level, loc, blockstate, 1.0F);
                 this.startPrediction(this.minecraft.level, p_233757_ -> {
-                    if (!net.neoforged.neoforge.common.CommonHooks.onLeftClickBlock(this.minecraft.player, p_105270_, p_105271_, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK).isCanceled())
-                    this.destroyBlock(p_105270_);
-                    return new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, p_105270_, p_105271_, p_233757_);
+                    if (!net.neoforged.neoforge.common.CommonHooks.onLeftClickBlock(this.minecraft.player, loc, face, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK).isCanceled())
+                    this.destroyBlock(loc);
+                    return new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, loc, face, p_233757_);
                 });
                 this.destroyDelay = 5;
-            } else if (!this.isDestroying || !this.sameDestroyTarget(p_105270_)) {
+            } else if (!this.isDestroying || !this.sameDestroyTarget(loc)) {
                 if (this.isDestroying) {
                     this.connection
-                        .send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, this.destroyBlockPos, p_105271_));
+                        .send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, this.destroyBlockPos, face));
                 }
-                net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.LeftClickBlock event = net.neoforged.neoforge.common.CommonHooks.onLeftClickBlock(this.minecraft.player, p_105270_, p_105271_, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK);
+                net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.LeftClickBlock event = net.neoforged.neoforge.common.CommonHooks.onLeftClickBlock(this.minecraft.player, loc, face, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK);
 
-                BlockState blockstate1 = this.minecraft.level.getBlockState(p_105270_);
-                this.minecraft.getTutorial().onDestroyBlock(this.minecraft.level, p_105270_, blockstate1, 0.0F);
+                BlockState blockstate1 = this.minecraft.level.getBlockState(loc);
+                this.minecraft.getTutorial().onDestroyBlock(this.minecraft.level, loc, blockstate1, 0.0F);
                 this.startPrediction(this.minecraft.level, p_233728_ -> {
                     boolean flag = !blockstate1.isAir();
                     if (flag && this.destroyProgress == 0.0F) {
                         if (event.getUseBlock() != net.neoforged.neoforge.common.util.TriState.FALSE)
-                        blockstate1.attack(this.minecraft.level, p_105270_, this.minecraft.player);
+                        blockstate1.attack(this.minecraft.level, loc, this.minecraft.player);
                     }
 
-                    ServerboundPlayerActionPacket packet = new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, p_105270_, p_105271_, p_233728_);
+                    ServerboundPlayerActionPacket packet = new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, loc, face, p_233728_);
                     if (event.getUseItem().isFalse()) return packet;
-                    if (flag && blockstate1.getDestroyProgress(this.minecraft.player, this.minecraft.player.level(), p_105270_) >= 1.0F) {
-                        this.destroyBlock(p_105270_);
+                    if (flag && blockstate1.getDestroyProgress(this.minecraft.player, this.minecraft.player.level(), loc) >= 1.0F) {
+                        this.destroyBlock(loc);
                     } else {
                         this.isDestroying = true;
-                        this.destroyBlockPos = p_105270_;
+                        this.destroyBlockPos = loc;
                         this.destroyingItem = this.minecraft.player.getMainHandItem();
                         this.destroyProgress = 0.0F;
                         this.destroyTicks = 0.0F;
@@ -198,30 +207,30 @@ public class MultiPlayerGameMode {
         }
     }
 
-    public boolean continueDestroyBlock(BlockPos p_105284_, Direction p_105285_) {
+    public boolean continueDestroyBlock(BlockPos posBlock, Direction directionFacing) {
         this.ensureHasSentCarriedItem();
         if (this.destroyDelay > 0) {
             this.destroyDelay--;
             return true;
-        } else if (this.localPlayerMode.isCreative() && this.minecraft.level.getWorldBorder().isWithinBounds(p_105284_)) {
+        } else if (this.localPlayerMode.isCreative() && this.minecraft.level.getWorldBorder().isWithinBounds(posBlock)) {
             this.destroyDelay = 5;
-            BlockState blockstate1 = this.minecraft.level.getBlockState(p_105284_);
-            this.minecraft.getTutorial().onDestroyBlock(this.minecraft.level, p_105284_, blockstate1, 1.0F);
+            BlockState blockstate1 = this.minecraft.level.getBlockState(posBlock);
+            this.minecraft.getTutorial().onDestroyBlock(this.minecraft.level, posBlock, blockstate1, 1.0F);
             this.startPrediction(this.minecraft.level, p_233753_ -> {
-                if (!net.neoforged.neoforge.common.CommonHooks.onLeftClickBlock(this.minecraft.player, p_105284_, p_105285_, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK).isCanceled())
-                this.destroyBlock(p_105284_);
-                return new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, p_105284_, p_105285_, p_233753_);
+                if (!net.neoforged.neoforge.common.CommonHooks.onLeftClickBlock(this.minecraft.player, posBlock, directionFacing, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK).isCanceled())
+                this.destroyBlock(posBlock);
+                return new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, posBlock, directionFacing, p_233753_);
             });
             return true;
-        } else if (this.sameDestroyTarget(p_105284_)) {
-            BlockState blockstate = this.minecraft.level.getBlockState(p_105284_);
+        } else if (this.sameDestroyTarget(posBlock)) {
+            BlockState blockstate = this.minecraft.level.getBlockState(posBlock);
             if (blockstate.isAir()) {
                 this.isDestroying = false;
                 return false;
             } else {
-                this.destroyProgress = this.destroyProgress + blockstate.getDestroyProgress(this.minecraft.player, this.minecraft.player.level(), p_105284_);
+                this.destroyProgress = this.destroyProgress + blockstate.getDestroyProgress(this.minecraft.player, this.minecraft.player.level(), posBlock);
                 if (this.destroyTicks % 4.0F == 0.0F) {
-                    SoundType soundtype = blockstate.getSoundType(this.minecraft.level, p_105284_, this.minecraft.player);
+                    SoundType soundtype = blockstate.getSoundType(this.minecraft.level, posBlock, this.minecraft.player);
                     this.minecraft
                         .getSoundManager()
                         .play(
@@ -231,19 +240,19 @@ public class MultiPlayerGameMode {
                                 (soundtype.getVolume() + 1.0F) / 8.0F,
                                 soundtype.getPitch() * 0.5F,
                                 SoundInstance.createUnseededRandom(),
-                                p_105284_
+                                posBlock
                             )
                         );
                 }
 
                 this.destroyTicks++;
-                this.minecraft.getTutorial().onDestroyBlock(this.minecraft.level, p_105284_, blockstate, Mth.clamp(this.destroyProgress, 0.0F, 1.0F));
-                if (net.neoforged.neoforge.common.CommonHooks.onClientMineHold(this.minecraft.player, p_105284_, p_105285_).getUseItem().isFalse()) return true;
+                this.minecraft.getTutorial().onDestroyBlock(this.minecraft.level, posBlock, blockstate, Mth.clamp(this.destroyProgress, 0.0F, 1.0F));
+                if (net.neoforged.neoforge.common.CommonHooks.onClientMineHold(this.minecraft.player, posBlock, directionFacing).getUseItem().isFalse()) return true;
                 if (this.destroyProgress >= 1.0F) {
                     this.isDestroying = false;
                     this.startPrediction(this.minecraft.level, p_233739_ -> {
-                        this.destroyBlock(p_105284_);
-                        return new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, p_105284_, p_105285_, p_233739_);
+                        this.destroyBlock(posBlock);
+                        return new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, posBlock, directionFacing, p_233739_);
                     });
                     this.destroyProgress = 0.0F;
                     this.destroyTicks = 0.0F;
@@ -254,14 +263,14 @@ public class MultiPlayerGameMode {
                 return true;
             }
         } else {
-            return this.startDestroyBlock(p_105284_, p_105285_);
+            return this.startDestroyBlock(posBlock, directionFacing);
         }
     }
 
-    private void startPrediction(ClientLevel p_233730_, PredictiveAction p_233731_) {
-        try (BlockStatePredictionHandler blockstatepredictionhandler = p_233730_.getBlockStatePredictionHandler().startPredicting()) {
+    private void startPrediction(ClientLevel level, PredictiveAction action) {
+        try (BlockStatePredictionHandler blockstatepredictionhandler = level.getBlockStatePredictionHandler().startPredicting()) {
             int i = blockstatepredictionhandler.currentSequence();
-            Packet<ServerGamePacketListener> packet = p_233731_.predict(i);
+            Packet<ServerGamePacketListener> packet = action.predict(i);
             this.connection.send(packet);
         }
     }
@@ -275,9 +284,9 @@ public class MultiPlayerGameMode {
         }
     }
 
-    private boolean sameDestroyTarget(BlockPos p_105282_) {
+    private boolean sameDestroyTarget(BlockPos pos) {
         ItemStack itemstack = this.minecraft.player.getMainHandItem();
-        return p_105282_.equals(this.destroyBlockPos) && !destroyingItem.shouldCauseBlockBreakReset(itemstack);
+        return pos.equals(this.destroyBlockPos) && !destroyingItem.shouldCauseBlockBreakReset(itemstack);
     }
 
     private void ensureHasSentCarriedItem() {
@@ -288,39 +297,39 @@ public class MultiPlayerGameMode {
         }
     }
 
-    public InteractionResult useItemOn(LocalPlayer p_233733_, InteractionHand p_233734_, BlockHitResult p_233735_) {
+    public InteractionResult useItemOn(LocalPlayer player, InteractionHand hand, BlockHitResult result) {
         this.ensureHasSentCarriedItem();
-        if (!this.minecraft.level.getWorldBorder().isWithinBounds(p_233735_.getBlockPos())) {
+        if (!this.minecraft.level.getWorldBorder().isWithinBounds(result.getBlockPos())) {
             return InteractionResult.FAIL;
         } else {
             MutableObject<InteractionResult> mutableobject = new MutableObject<>();
             this.startPrediction(this.minecraft.level, p_233745_ -> {
-                mutableobject.setValue(this.performUseItemOn(p_233733_, p_233734_, p_233735_));
-                return new ServerboundUseItemOnPacket(p_233734_, p_233735_, p_233745_);
+                mutableobject.setValue(this.performUseItemOn(player, hand, result));
+                return new ServerboundUseItemOnPacket(hand, result, p_233745_);
             });
             return mutableobject.getValue();
         }
     }
 
-    private InteractionResult performUseItemOn(LocalPlayer p_233747_, InteractionHand p_233748_, BlockHitResult p_233749_) {
-        BlockPos blockpos = p_233749_.getBlockPos();
-        ItemStack itemstack = p_233747_.getItemInHand(p_233748_);
-        net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock event = net.neoforged.neoforge.common.CommonHooks.onRightClickBlock(p_233747_, p_233748_, blockpos, p_233749_);
+    private InteractionResult performUseItemOn(LocalPlayer player, InteractionHand hand, BlockHitResult p_result) {
+        BlockPos blockpos = p_result.getBlockPos();
+        ItemStack itemstack = player.getItemInHand(hand);
+        net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock event = net.neoforged.neoforge.common.CommonHooks.onRightClickBlock(player, hand, blockpos, p_result);
         if (event.isCanceled()) {
             return event.getCancellationResult();
         }
         if (this.localPlayerMode == GameType.SPECTATOR) {
             return InteractionResult.SUCCESS;
         } else {
-            UseOnContext useoncontext = new UseOnContext(p_233747_, p_233748_, p_233749_);
+            UseOnContext useoncontext = new UseOnContext(player, hand, p_result);
             if (event.getUseItem() != net.neoforged.neoforge.common.util.TriState.FALSE) {
                 InteractionResult result = itemstack.onItemUseFirst(useoncontext);
                 if (result != InteractionResult.PASS) {
                     return result;
                 }
             }
-            boolean flag = !p_233747_.getMainHandItem().doesSneakBypassUse(p_233747_.level(), blockpos, p_233747_) || !p_233747_.getOffhandItem().doesSneakBypassUse(p_233747_.level(), blockpos, p_233747_);
-            boolean flag1 = p_233747_.isSecondaryUseActive() && flag;
+            boolean flag = !player.getMainHandItem().doesSneakBypassUse(player.level(), blockpos, player) || !player.getOffhandItem().doesSneakBypassUse(player.level(), blockpos, player);
+            boolean flag1 = player.isSecondaryUseActive() && flag;
             if (event.getUseBlock().isTrue() || (event.getUseBlock().isDefault() && !flag1)) {
                 BlockState blockstate = this.minecraft.level.getBlockState(blockpos);
                 if (!this.connection.isFeatureEnabled(blockstate.getBlock().requiredFeatures())) {
@@ -328,14 +337,14 @@ public class MultiPlayerGameMode {
                 }
 
                 ItemInteractionResult iteminteractionresult = blockstate.useItemOn(
-                    p_233747_.getItemInHand(p_233748_), this.minecraft.level, p_233747_, p_233748_, p_233749_
+                    player.getItemInHand(hand), this.minecraft.level, player, hand, p_result
                 );
                 if (iteminteractionresult.consumesAction()) {
                     return iteminteractionresult.result();
                 }
 
-                if (iteminteractionresult == ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION && p_233748_ == InteractionHand.MAIN_HAND) {
-                    InteractionResult interactionresult = blockstate.useWithoutItem(this.minecraft.level, p_233747_, p_233749_);
+                if (iteminteractionresult == ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION && hand == InteractionHand.MAIN_HAND) {
+                    InteractionResult interactionresult = blockstate.useWithoutItem(this.minecraft.level, player, p_result);
                     if (interactionresult.consumesAction()) {
                         return interactionresult;
                     }
@@ -345,7 +354,7 @@ public class MultiPlayerGameMode {
             if (event.getUseItem().isFalse()) {
                 return InteractionResult.PASS;
             }
-            if (event.getUseItem().isTrue() || (!itemstack.isEmpty() && !p_233747_.getCooldowns().isOnCooldown(itemstack.getItem()))) {
+            if (event.getUseItem().isTrue() || (!itemstack.isEmpty() && !player.getCooldowns().isOnCooldown(itemstack.getItem()))) {
                 InteractionResult interactionresult1;
                 if (this.localPlayerMode.isCreative()) {
                     int i = itemstack.getCount();
@@ -362,7 +371,7 @@ public class MultiPlayerGameMode {
         }
     }
 
-    public InteractionResult useItem(Player p_233722_, InteractionHand p_233723_) {
+    public InteractionResult useItem(Player player, InteractionHand hand) {
         if (this.localPlayerMode == GameType.SPECTATOR) {
             return InteractionResult.PASS;
         } else {
@@ -372,24 +381,24 @@ public class MultiPlayerGameMode {
                 this.minecraft.level,
                 p_233720_ -> {
                     ServerboundUseItemPacket serverbounduseitempacket = new ServerboundUseItemPacket(
-                        p_233723_, p_233720_, p_233722_.getYRot(), p_233722_.getXRot()
+                        hand, p_233720_, player.getYRot(), player.getXRot()
                     );
-                    ItemStack itemstack = p_233722_.getItemInHand(p_233723_);
-                    if (p_233722_.getCooldowns().isOnCooldown(itemstack.getItem())) {
+                    ItemStack itemstack = player.getItemInHand(hand);
+                    if (player.getCooldowns().isOnCooldown(itemstack.getItem())) {
                         mutableobject.setValue(InteractionResult.PASS);
                         return serverbounduseitempacket;
                     } else {
-                        InteractionResult cancelResult = net.neoforged.neoforge.common.CommonHooks.onItemRightClick(p_233722_, p_233723_);
+                        InteractionResult cancelResult = net.neoforged.neoforge.common.CommonHooks.onItemRightClick(player, hand);
                         if (cancelResult != null) {
                             mutableobject.setValue(cancelResult);
                             return serverbounduseitempacket;
                         }
-                        InteractionResultHolder<ItemStack> interactionresultholder = itemstack.use(this.minecraft.level, p_233722_, p_233723_);
+                        InteractionResultHolder<ItemStack> interactionresultholder = itemstack.use(this.minecraft.level, player, hand);
                         ItemStack itemstack1 = interactionresultholder.getObject();
                         if (itemstack1 != itemstack) {
-                            p_233722_.setItemInHand(p_233723_, itemstack1);
+                            player.setItemInHand(hand, itemstack1);
                             if (itemstack1.isEmpty())
-                                net.neoforged.neoforge.event.EventHooks.onPlayerDestroyItem(p_233722_, itemstack, p_233723_);
+                                net.neoforged.neoforge.event.EventHooks.onPlayerDestroyItem(player, itemstack, hand);
                         }
 
                         mutableobject.setValue(interactionresultholder.getResult());
@@ -401,43 +410,52 @@ public class MultiPlayerGameMode {
         }
     }
 
-    public LocalPlayer createPlayer(ClientLevel p_105247_, StatsCounter p_105248_, ClientRecipeBook p_105249_) {
-        return this.createPlayer(p_105247_, p_105248_, p_105249_, false, false);
+    public LocalPlayer createPlayer(ClientLevel level, StatsCounter statsManager, ClientRecipeBook recipes) {
+        return this.createPlayer(level, statsManager, recipes, false, false);
     }
 
-    public LocalPlayer createPlayer(ClientLevel p_105251_, StatsCounter p_105252_, ClientRecipeBook p_105253_, boolean p_105254_, boolean p_105255_) {
-        return new LocalPlayer(this.minecraft, p_105251_, this.connection, p_105252_, p_105253_, p_105254_, p_105255_);
+    public LocalPlayer createPlayer(ClientLevel level, StatsCounter statsManager, ClientRecipeBook recipes, boolean wasShiftKeyDown, boolean wasSprinting) {
+        return new LocalPlayer(this.minecraft, level, this.connection, statsManager, recipes, wasShiftKeyDown, wasSprinting);
     }
 
-    public void attack(Player p_105224_, Entity p_105225_) {
+    /**
+     * Attacks an entity
+     */
+    public void attack(Player player, Entity targetEntity) {
         this.ensureHasSentCarriedItem();
-        this.connection.send(ServerboundInteractPacket.createAttackPacket(p_105225_, p_105224_.isShiftKeyDown()));
+        this.connection.send(ServerboundInteractPacket.createAttackPacket(targetEntity, player.isShiftKeyDown()));
         if (this.localPlayerMode != GameType.SPECTATOR) {
-            p_105224_.attack(p_105225_);
-            p_105224_.resetAttackStrengthTicker();
+            player.attack(targetEntity);
+            player.resetAttackStrengthTicker();
         }
     }
 
-    public InteractionResult interact(Player p_105227_, Entity p_105228_, InteractionHand p_105229_) {
+    /**
+     * Handles right-clicking an entity, sends a packet to the server.
+     */
+    public InteractionResult interact(Player player, Entity target, InteractionHand hand) {
         this.ensureHasSentCarriedItem();
-        this.connection.send(ServerboundInteractPacket.createInteractionPacket(p_105228_, p_105227_.isShiftKeyDown(), p_105229_));
-        return this.localPlayerMode == GameType.SPECTATOR ? InteractionResult.PASS : p_105227_.interactOn(p_105228_, p_105229_);
+        this.connection.send(ServerboundInteractPacket.createInteractionPacket(target, player.isShiftKeyDown(), hand));
+        return this.localPlayerMode == GameType.SPECTATOR ? InteractionResult.PASS : player.interactOn(target, hand);
     }
 
-    public InteractionResult interactAt(Player p_105231_, Entity p_105232_, EntityHitResult p_105233_, InteractionHand p_105234_) {
+    /**
+     * Handles right-clicking an entity from the entities side, sends a packet to the server.
+     */
+    public InteractionResult interactAt(Player player, Entity target, EntityHitResult ray, InteractionHand hand) {
         this.ensureHasSentCarriedItem();
-        Vec3 vec3 = p_105233_.getLocation().subtract(p_105232_.getX(), p_105232_.getY(), p_105232_.getZ());
-        this.connection.send(ServerboundInteractPacket.createInteractionPacket(p_105232_, p_105231_.isShiftKeyDown(), p_105234_, vec3));
+        Vec3 vec3 = ray.getLocation().subtract(target.getX(), target.getY(), target.getZ());
+        this.connection.send(ServerboundInteractPacket.createInteractionPacket(target, player.isShiftKeyDown(), hand, vec3));
         if (this.localPlayerMode == GameType.SPECTATOR) return InteractionResult.PASS; // don't fire for spectators to match non-specific EntityInteract
-        InteractionResult cancelResult = net.neoforged.neoforge.common.CommonHooks.onInteractEntityAt(p_105231_, p_105232_, p_105233_, p_105234_);
+        InteractionResult cancelResult = net.neoforged.neoforge.common.CommonHooks.onInteractEntityAt(player, target, ray, hand);
         if(cancelResult != null) return cancelResult;
-        return this.localPlayerMode == GameType.SPECTATOR ? InteractionResult.PASS : p_105232_.interactAt(p_105231_, vec3, p_105234_);
+        return this.localPlayerMode == GameType.SPECTATOR ? InteractionResult.PASS : target.interactAt(player, vec3, hand);
     }
 
-    public void handleInventoryMouseClick(int p_171800_, int p_171801_, int p_171802_, ClickType p_171803_, Player p_171804_) {
-        AbstractContainerMenu abstractcontainermenu = p_171804_.containerMenu;
-        if (p_171800_ != abstractcontainermenu.containerId) {
-            LOGGER.warn("Ignoring click in mismatching container. Click in {}, player has {}.", p_171800_, abstractcontainermenu.containerId);
+    public void handleInventoryMouseClick(int containerId, int slotId, int mouseButton, ClickType clickType, Player player) {
+        AbstractContainerMenu abstractcontainermenu = player.containerMenu;
+        if (containerId != abstractcontainermenu.containerId) {
+            LOGGER.warn("Ignoring click in mismatching container. Click in {}, player has {}.", containerId, abstractcontainermenu.containerId);
         } else {
             NonNullList<Slot> nonnulllist = abstractcontainermenu.slots;
             int i = nonnulllist.size();
@@ -447,7 +465,7 @@ public class MultiPlayerGameMode {
                 list.add(slot.getItem().copy());
             }
 
-            abstractcontainermenu.clicked(p_171801_, p_171802_, p_171803_, p_171804_);
+            abstractcontainermenu.clicked(slotId, mouseButton, clickType, player);
             Int2ObjectMap<ItemStack> int2objectmap = new Int2ObjectOpenHashMap<>();
 
             for (int j = 0; j < i; j++) {
@@ -461,11 +479,11 @@ public class MultiPlayerGameMode {
             this.connection
                 .send(
                     new ServerboundContainerClickPacket(
-                        p_171800_,
+                        containerId,
                         abstractcontainermenu.getStateId(),
-                        p_171801_,
-                        p_171802_,
-                        p_171803_,
+                        slotId,
+                        mouseButton,
+                        clickType,
                         abstractcontainermenu.getCarried().copy(),
                         int2objectmap
                     )
@@ -473,30 +491,39 @@ public class MultiPlayerGameMode {
         }
     }
 
-    public void handlePlaceRecipe(int p_105218_, RecipeHolder<?> p_301105_, boolean p_105220_) {
-        this.connection.send(new ServerboundPlaceRecipePacket(p_105218_, p_301105_, p_105220_));
+    public void handlePlaceRecipe(int containerId, RecipeHolder<?> recipe, boolean shiftDown) {
+        this.connection.send(new ServerboundPlaceRecipePacket(containerId, recipe, shiftDown));
     }
 
-    public void handleInventoryButtonClick(int p_105209_, int p_105210_) {
-        this.connection.send(new ServerboundContainerButtonClickPacket(p_105209_, p_105210_));
+    /**
+     * GuiEnchantment uses this during multiplayer to tell PlayerControllerMP to send a packet indicating the enchantment action the player has taken.
+     */
+    public void handleInventoryButtonClick(int containerId, int buttonId) {
+        this.connection.send(new ServerboundContainerButtonClickPacket(containerId, buttonId));
     }
 
-    public void handleCreativeModeItemAdd(ItemStack p_105242_, int p_105243_) {
-        if (this.localPlayerMode.isCreative() && this.connection.isFeatureEnabled(p_105242_.getItem().requiredFeatures())) {
-            this.connection.send(new ServerboundSetCreativeModeSlotPacket(p_105243_, p_105242_));
+    /**
+     * Used in PlayerControllerMP to update the server with an ItemStack in a slot.
+     */
+    public void handleCreativeModeItemAdd(ItemStack stack, int slotId) {
+        if (this.localPlayerMode.isCreative() && this.connection.isFeatureEnabled(stack.getItem().requiredFeatures())) {
+            this.connection.send(new ServerboundSetCreativeModeSlotPacket(slotId, stack));
         }
     }
 
-    public void handleCreativeModeItemDrop(ItemStack p_105240_) {
-        if (this.localPlayerMode.isCreative() && !p_105240_.isEmpty() && this.connection.isFeatureEnabled(p_105240_.getItem().requiredFeatures())) {
-            this.connection.send(new ServerboundSetCreativeModeSlotPacket(-1, p_105240_));
+    /**
+     * Sends a Packet107 to the server to drop the item on the ground
+     */
+    public void handleCreativeModeItemDrop(ItemStack stack) {
+        if (this.localPlayerMode.isCreative() && !stack.isEmpty() && this.connection.isFeatureEnabled(stack.getItem().requiredFeatures())) {
+            this.connection.send(new ServerboundSetCreativeModeSlotPacket(-1, stack));
         }
     }
 
-    public void releaseUsingItem(Player p_105278_) {
+    public void releaseUsingItem(Player player) {
         this.ensureHasSentCarriedItem();
         this.connection.send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.RELEASE_USE_ITEM, BlockPos.ZERO, Direction.DOWN));
-        p_105278_.releaseUsingItem();
+        player.releaseUsingItem();
     }
 
     public boolean hasExperience() {
@@ -536,11 +563,11 @@ public class MultiPlayerGameMode {
         return this.destroyProgress > 0.0F ? (int)(this.destroyProgress * 10.0F) : -1;
     }
 
-    public void handlePickItem(int p_105207_) {
-        this.connection.send(new ServerboundPickItemPacket(p_105207_));
+    public void handlePickItem(int index) {
+        this.connection.send(new ServerboundPickItemPacket(index));
     }
 
-    public void handleSlotStateChanged(int p_307527_, int p_307194_, boolean p_307559_) {
-        this.connection.send(new ServerboundContainerSlotStateChangedPacket(p_307527_, p_307194_, p_307559_));
+    public void handleSlotStateChanged(int slotId, int containerId, boolean newState) {
+        this.connection.send(new ServerboundContainerSlotStateChangedPacket(slotId, containerId, newState));
     }
 }

@@ -12,25 +12,25 @@ public class PortalProcessor {
     private int portalTime;
     private boolean insidePortalThisTick;
 
-    public PortalProcessor(Portal p_350931_, BlockPos p_350699_) {
-        this.portal = p_350931_;
-        this.entryPosition = p_350699_;
+    public PortalProcessor(Portal portal, BlockPos entryPosition) {
+        this.portal = portal;
+        this.entryPosition = entryPosition;
         this.insidePortalThisTick = true;
     }
 
-    public boolean processPortalTeleportation(ServerLevel p_350279_, Entity p_350646_, boolean p_350822_) {
+    public boolean processPortalTeleportation(ServerLevel level, Entity entity, boolean canChangeDimensions) {
         if (!this.insidePortalThisTick) {
             this.decayTick();
             return false;
         } else {
             this.insidePortalThisTick = false;
-            return p_350822_ && this.portalTime++ >= this.portal.getPortalTransitionTime(p_350279_, p_350646_);
+            return canChangeDimensions && this.portalTime++ >= this.portal.getPortalTransitionTime(level, entity);
         }
     }
 
     @Nullable
-    public DimensionTransition getPortalDestination(ServerLevel p_350593_, Entity p_350987_) {
-        return this.portal.getPortalDestination(p_350593_, p_350987_, this.entryPosition);
+    public DimensionTransition getPortalDestination(ServerLevel level, Entity entity) {
+        return this.portal.getPortalDestination(level, entity, this.entryPosition);
     }
 
     public Portal.Transition getPortalLocalTransition() {
@@ -49,8 +49,8 @@ public class PortalProcessor {
         return this.entryPosition;
     }
 
-    public void updateEntryPosition(BlockPos p_350726_) {
-        this.entryPosition = p_350726_;
+    public void updateEntryPosition(BlockPos entryPosition) {
+        this.entryPosition = entryPosition;
     }
 
     public int getPortalTime() {
@@ -61,11 +61,11 @@ public class PortalProcessor {
         return this.insidePortalThisTick;
     }
 
-    public void setAsInsidePortalThisTick(boolean p_350796_) {
-        this.insidePortalThisTick = p_350796_;
+    public void setAsInsidePortalThisTick(boolean insidePortalThisTick) {
+        this.insidePortalThisTick = insidePortalThisTick;
     }
 
-    public boolean isSamePortal(Portal p_350902_) {
-        return this.portal == p_350902_;
+    public boolean isSamePortal(Portal portal) {
+        return this.portal == portal;
     }
 }

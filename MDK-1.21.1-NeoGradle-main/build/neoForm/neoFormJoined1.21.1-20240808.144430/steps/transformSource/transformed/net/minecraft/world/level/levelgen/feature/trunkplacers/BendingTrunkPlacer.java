@@ -31,10 +31,10 @@ public class BendingTrunkPlacer extends TrunkPlacer {
     private final int minHeightForLeaves;
     private final IntProvider bendLength;
 
-    public BendingTrunkPlacer(int p_161770_, int p_161771_, int p_161772_, int p_161773_, IntProvider p_161774_) {
-        super(p_161770_, p_161771_, p_161772_);
-        this.minHeightForLeaves = p_161773_;
-        this.bendLength = p_161774_;
+    public BendingTrunkPlacer(int baseHeight, int heightRandA, int heightRandB, int minHeightForLeaves, IntProvider bendLength) {
+        super(baseHeight, heightRandA, heightRandB);
+        this.minHeightForLeaves = minHeightForLeaves;
+        this.bendLength = bendLength;
     }
 
     @Override
@@ -44,27 +44,27 @@ public class BendingTrunkPlacer extends TrunkPlacer {
 
     @Override
     public List<FoliagePlacer.FoliageAttachment> placeTrunk(
-        LevelSimulatedReader p_226079_,
-        BiConsumer<BlockPos, BlockState> p_226080_,
-        RandomSource p_226081_,
-        int p_226082_,
-        BlockPos p_226083_,
-        TreeConfiguration p_226084_
+        LevelSimulatedReader level,
+        BiConsumer<BlockPos, BlockState> blockSetter,
+        RandomSource random,
+        int freeTreeHeight,
+        BlockPos pos,
+        TreeConfiguration config
     ) {
-        Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(p_226081_);
-        int i = p_226082_ - 1;
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = p_226083_.mutable();
+        Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(random);
+        int i = freeTreeHeight - 1;
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = pos.mutable();
         BlockPos blockpos = blockpos$mutableblockpos.below();
-        setDirtAt(p_226079_, p_226080_, p_226081_, blockpos, p_226084_);
+        setDirtAt(level, blockSetter, random, blockpos, config);
         List<FoliagePlacer.FoliageAttachment> list = Lists.newArrayList();
 
         for (int j = 0; j <= i; j++) {
-            if (j + 1 >= i + p_226081_.nextInt(2)) {
+            if (j + 1 >= i + random.nextInt(2)) {
                 blockpos$mutableblockpos.move(direction);
             }
 
-            if (TreeFeature.validTreePos(p_226079_, blockpos$mutableblockpos)) {
-                this.placeLog(p_226079_, p_226080_, p_226081_, blockpos$mutableblockpos, p_226084_);
+            if (TreeFeature.validTreePos(level, blockpos$mutableblockpos)) {
+                this.placeLog(level, blockSetter, random, blockpos$mutableblockpos, config);
             }
 
             if (j >= this.minHeightForLeaves) {
@@ -74,11 +74,11 @@ public class BendingTrunkPlacer extends TrunkPlacer {
             blockpos$mutableblockpos.move(Direction.UP);
         }
 
-        int l = this.bendLength.sample(p_226081_);
+        int l = this.bendLength.sample(random);
 
         for (int k = 0; k <= l; k++) {
-            if (TreeFeature.validTreePos(p_226079_, blockpos$mutableblockpos)) {
-                this.placeLog(p_226079_, p_226080_, p_226081_, blockpos$mutableblockpos, p_226084_);
+            if (TreeFeature.validTreePos(level, blockpos$mutableblockpos)) {
+                this.placeLog(level, blockSetter, random, blockpos$mutableblockpos, config);
             }
 
             list.add(new FoliagePlacer.FoliageAttachment(blockpos$mutableblockpos.immutable(), 0, false));

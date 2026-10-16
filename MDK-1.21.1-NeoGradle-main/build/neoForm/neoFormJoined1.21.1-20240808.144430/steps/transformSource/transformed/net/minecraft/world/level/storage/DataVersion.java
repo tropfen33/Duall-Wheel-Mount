@@ -5,13 +5,13 @@ public class DataVersion {
     private final String series;
     public static String MAIN_SERIES = "main";
 
-    public DataVersion(int p_192998_) {
-        this(p_192998_, MAIN_SERIES);
+    public DataVersion(int version) {
+        this(version, MAIN_SERIES);
     }
 
-    public DataVersion(int p_193000_, String p_193001_) {
-        this.version = p_193000_;
-        this.series = p_193001_;
+    public DataVersion(int version, String series) {
+        this.version = version;
+        this.series = series;
     }
 
     public boolean isSideSeries() {
@@ -26,7 +26,7 @@ public class DataVersion {
         return this.version;
     }
 
-    public boolean isCompatible(DataVersion p_193004_) {
-        return this.getSeries().equals(p_193004_.getSeries());
+    public boolean isCompatible(DataVersion dataVersion) {
+        return this.getSeries().equals(dataVersion.getSeries());
     }
 }

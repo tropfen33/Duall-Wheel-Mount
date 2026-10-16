@@ -31,12 +31,12 @@ public record SetBlockProperties(BlockItemStateProperties properties, Vec3i offs
     }
 
     @Override
-    public void apply(ServerLevel p_346105_, int p_345373_, EnchantedItemInUse p_346028_, Entity p_346068_, Vec3 p_345511_) {
-        BlockPos blockpos = BlockPos.containing(p_345511_).offset(this.offset);
-        BlockState blockstate = p_346068_.level().getBlockState(blockpos);
+    public void apply(ServerLevel level, int enchantmentLevel, EnchantedItemInUse item, Entity entity, Vec3 origin) {
+        BlockPos blockpos = BlockPos.containing(origin).offset(this.offset);
+        BlockState blockstate = entity.level().getBlockState(blockpos);
         BlockState blockstate1 = this.properties.apply(blockstate);
-        if (!blockstate.equals(blockstate1) && p_346068_.level().setBlock(blockpos, blockstate1, 3)) {
-            this.triggerGameEvent.ifPresent(p_347365_ -> p_346105_.gameEvent(p_346068_, (Holder<GameEvent>)p_347365_, blockpos));
+        if (!blockstate.equals(blockstate1) && entity.level().setBlock(blockpos, blockstate1, 3)) {
+            this.triggerGameEvent.ifPresent(p_347365_ -> level.gameEvent(entity, (Holder<GameEvent>)p_347365_, blockpos));
         }
     }
 

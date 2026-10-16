@@ -22,17 +22,17 @@ public class WeightedBakedModel implements BakedModel, net.neoforged.neoforge.cl
     private final List<WeightedEntry.Wrapper<BakedModel>> list;
     private final BakedModel wrapped;
 
-    public WeightedBakedModel(List<WeightedEntry.Wrapper<BakedModel>> p_119544_) {
-        this.list = p_119544_;
-        this.totalWeight = WeightedRandom.getTotalWeight(p_119544_);
-        this.wrapped = p_119544_.get(0).data();
+    public WeightedBakedModel(List<WeightedEntry.Wrapper<BakedModel>> list) {
+        this.list = list;
+        this.totalWeight = WeightedRandom.getTotalWeight(list);
+        this.wrapped = list.get(0).data();
     }
 
     @Override
     // FORGE: Implement our overloads (here and below) so child models can have custom logic
-    public List<BakedQuad> getQuads(@Nullable BlockState p_235058_, @Nullable Direction p_235059_, RandomSource p_235060_, net.neoforged.neoforge.client.model.data.ModelData modelData, @org.jetbrains.annotations.Nullable net.minecraft.client.renderer.RenderType renderType) {
-        return WeightedRandom.getWeightedItem(this.list, Math.abs((int)p_235060_.nextLong()) % this.totalWeight)
-            .map(p_235065_ -> p_235065_.data().getQuads(p_235058_, p_235059_, p_235060_, modelData, renderType))
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction direction, RandomSource random, net.neoforged.neoforge.client.model.data.ModelData modelData, @org.jetbrains.annotations.Nullable net.minecraft.client.renderer.RenderType renderType) {
+        return WeightedRandom.getWeightedItem(this.list, Math.abs((int)random.nextLong()) % this.totalWeight)
+            .map(p_235065_ -> p_235065_.data().getQuads(state, direction, random, modelData, renderType))
             .orElse(Collections.emptyList());
     }
 
@@ -102,9 +102,9 @@ public class WeightedBakedModel implements BakedModel, net.neoforged.neoforge.cl
     public static class Builder {
         private final List<WeightedEntry.Wrapper<BakedModel>> list = Lists.newArrayList();
 
-        public WeightedBakedModel.Builder add(@Nullable BakedModel p_119560_, int p_119561_) {
-            if (p_119560_ != null) {
-                this.list.add(WeightedEntry.wrap(p_119560_, p_119561_));
+        public WeightedBakedModel.Builder add(@Nullable BakedModel model, int weight) {
+            if (model != null) {
+                this.list.add(WeightedEntry.wrap(model, weight));
             }
 
             return this;

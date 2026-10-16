@@ -70,18 +70,21 @@ public class HoneycombItem extends Item implements SignApplicator {
     @Deprecated
     public static final Supplier<BiMap<Block, Block>> WAX_OFF_BY_BLOCK = Suppliers.memoize(() -> WAXABLES.get().inverse());
 
-    public HoneycombItem(Item.Properties p_150867_) {
-        super(p_150867_);
+    public HoneycombItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_150869_) {
-        Level level = p_150869_.getLevel();
-        BlockPos blockpos = p_150869_.getClickedPos();
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
         BlockState blockstate = level.getBlockState(blockpos);
         return getWaxed(blockstate).map(p_308989_ -> {
-            Player player = p_150869_.getPlayer();
-            ItemStack itemstack = p_150869_.getItemInHand();
+            Player player = context.getPlayer();
+            ItemStack itemstack = context.getItemInHand();
             if (player instanceof ServerPlayer) {
                 CriteriaTriggers.ITEM_USED_ON_BLOCK.trigger((ServerPlayer)player, blockpos, itemstack);
             }
@@ -94,14 +97,14 @@ public class HoneycombItem extends Item implements SignApplicator {
         }).orElse(InteractionResult.PASS);
     }
 
-    public static Optional<BlockState> getWaxed(BlockState p_150879_) {
-        return Optional.ofNullable(net.neoforged.neoforge.common.DataMapHooks.getBlockWaxed(p_150879_.getBlock())).map(p_150877_ -> p_150877_.withPropertiesOf(p_150879_));
+    public static Optional<BlockState> getWaxed(BlockState state) {
+        return Optional.ofNullable(net.neoforged.neoforge.common.DataMapHooks.getBlockWaxed(state.getBlock())).map(p_150877_ -> p_150877_.withPropertiesOf(state));
     }
 
     @Override
-    public boolean tryApplyToSign(Level p_277838_, SignBlockEntity p_277988_, boolean p_277394_, Player p_277816_) {
-        if (p_277988_.setWaxed(true)) {
-            p_277838_.levelEvent(null, 3003, p_277988_.getBlockPos(), 0);
+    public boolean tryApplyToSign(Level level, SignBlockEntity sign, boolean isFront, Player player) {
+        if (sign.setWaxed(true)) {
+            level.levelEvent(null, 3003, sign.getBlockPos(), 0);
             return true;
         } else {
             return false;
@@ -109,7 +112,7 @@ public class HoneycombItem extends Item implements SignApplicator {
     }
 
     @Override
-    public boolean canApplyToSign(SignText p_277550_, Player p_277640_) {
+    public boolean canApplyToSign(SignText text, Player player) {
         return true;
     }
 }

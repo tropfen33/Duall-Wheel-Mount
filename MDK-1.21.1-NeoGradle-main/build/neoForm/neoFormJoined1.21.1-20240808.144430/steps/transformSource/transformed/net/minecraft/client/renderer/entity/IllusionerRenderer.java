@@ -41,31 +41,34 @@ public class IllusionerRenderer extends IllagerRenderer<Illusioner> {
         this.model.getHat().visible = true;
     }
 
-    public ResourceLocation getTextureLocation(Illusioner p_114950_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Illusioner entity) {
         return ILLUSIONER;
     }
 
-    public void render(Illusioner p_114952_, float p_114953_, float p_114954_, PoseStack p_114955_, MultiBufferSource p_114956_, int p_114957_) {
-        if (p_114952_.isInvisible()) {
-            Vec3[] avec3 = p_114952_.getIllusionOffsets(p_114954_);
-            float f = this.getBob(p_114952_, p_114954_);
+    public void render(Illusioner entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        if (entity.isInvisible()) {
+            Vec3[] avec3 = entity.getIllusionOffsets(partialTicks);
+            float f = this.getBob(entity, partialTicks);
 
             for (int i = 0; i < avec3.length; i++) {
-                p_114955_.pushPose();
-                p_114955_.translate(
+                poseStack.pushPose();
+                poseStack.translate(
                     avec3[i].x + (double)Mth.cos((float)i + f * 0.5F) * 0.025,
                     avec3[i].y + (double)Mth.cos((float)i + f * 0.75F) * 0.0125,
                     avec3[i].z + (double)Mth.cos((float)i + f * 0.7F) * 0.025
                 );
-                super.render(p_114952_, p_114953_, p_114954_, p_114955_, p_114956_, p_114957_);
-                p_114955_.popPose();
+                super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+                poseStack.popPose();
             }
         } else {
-            super.render(p_114952_, p_114953_, p_114954_, p_114955_, p_114956_, p_114957_);
+            super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
         }
     }
 
-    protected boolean isBodyVisible(Illusioner p_114959_) {
+    protected boolean isBodyVisible(Illusioner livingEntity) {
         return true;
     }
 }

@@ -9,16 +9,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BannerPatternLayers;
 
 public class ShieldDecorationRecipe extends CustomRecipe {
-    public ShieldDecorationRecipe(CraftingBookCategory p_251065_) {
-        super(p_251065_);
+    public ShieldDecorationRecipe(CraftingBookCategory category) {
+        super(category);
     }
 
-    public boolean matches(CraftingInput p_344969_, Level p_44309_) {
+    public boolean matches(CraftingInput input, Level level) {
         ItemStack itemstack = ItemStack.EMPTY;
         ItemStack itemstack1 = ItemStack.EMPTY;
 
-        for (int i = 0; i < p_344969_.size(); i++) {
-            ItemStack itemstack2 = p_344969_.getItem(i);
+        for (int i = 0; i < input.size(); i++) {
+            ItemStack itemstack2 = input.getItem(i);
             if (!itemstack2.isEmpty()) {
                 if (itemstack2.getItem() instanceof BannerItem) {
                     if (!itemstack1.isEmpty()) {
@@ -48,12 +48,12 @@ public class ShieldDecorationRecipe extends CustomRecipe {
         return !itemstack.isEmpty() && !itemstack1.isEmpty();
     }
 
-    public ItemStack assemble(CraftingInput p_345351_, HolderLookup.Provider p_335895_) {
+    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
         ItemStack itemstack = ItemStack.EMPTY;
         ItemStack itemstack1 = ItemStack.EMPTY;
 
-        for (int i = 0; i < p_345351_.size(); i++) {
-            ItemStack itemstack2 = p_345351_.getItem(i);
+        for (int i = 0; i < input.size(); i++) {
+            ItemStack itemstack2 = input.getItem(i);
             if (!itemstack2.isEmpty()) {
                 if (itemstack2.getItem() instanceof BannerItem) {
                     itemstack = itemstack2;
@@ -72,9 +72,12 @@ public class ShieldDecorationRecipe extends CustomRecipe {
         }
     }
 
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
     @Override
-    public boolean canCraftInDimensions(int p_44298_, int p_44299_) {
-        return p_44298_ * p_44299_ >= 2;
+    public boolean canCraftInDimensions(int width, int height) {
+        return width * height >= 2;
     }
 
     @Override

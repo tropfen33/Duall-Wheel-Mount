@@ -39,8 +39,8 @@ public class NetherPlacements {
     public static final ResourceKey<PlacedFeature> PATCH_SOUL_FIRE = PlacementUtils.createKey("patch_soul_fire");
     public static final ResourceKey<PlacedFeature> PATCH_FIRE = PlacementUtils.createKey("patch_fire");
 
-    public static void bootstrap(BootstrapContext<PlacedFeature> p_321634_) {
-        HolderGetter<ConfiguredFeature<?, ?>> holdergetter = p_321634_.lookup(Registries.CONFIGURED_FEATURE);
+    public static void bootstrap(BootstrapContext<PlacedFeature> context) {
+        HolderGetter<ConfiguredFeature<?, ?>> holdergetter = context.lookup(Registries.CONFIGURED_FEATURE);
         Holder<ConfiguredFeature<?, ?>> holder = holdergetter.getOrThrow(NetherFeatures.DELTA);
         Holder<ConfiguredFeature<?, ?>> holder1 = holdergetter.getOrThrow(NetherFeatures.SMALL_BASALT_COLUMNS);
         Holder<ConfiguredFeature<?, ?>> holder2 = holdergetter.getOrThrow(NetherFeatures.LARGE_BASALT_COLUMNS);
@@ -59,17 +59,17 @@ public class NetherPlacements {
         Holder<ConfiguredFeature<?, ?>> holder15 = holdergetter.getOrThrow(NetherFeatures.SPRING_NETHER_OPEN);
         Holder<ConfiguredFeature<?, ?>> holder16 = holdergetter.getOrThrow(NetherFeatures.PATCH_SOUL_FIRE);
         Holder<ConfiguredFeature<?, ?>> holder17 = holdergetter.getOrThrow(NetherFeatures.PATCH_FIRE);
-        PlacementUtils.register(p_321634_, DELTA, holder, CountOnEveryLayerPlacement.of(40), BiomeFilter.biome());
-        PlacementUtils.register(p_321634_, SMALL_BASALT_COLUMNS, holder1, CountOnEveryLayerPlacement.of(4), BiomeFilter.biome());
-        PlacementUtils.register(p_321634_, LARGE_BASALT_COLUMNS, holder2, CountOnEveryLayerPlacement.of(2), BiomeFilter.biome());
+        PlacementUtils.register(context, DELTA, holder, CountOnEveryLayerPlacement.of(40), BiomeFilter.biome());
+        PlacementUtils.register(context, SMALL_BASALT_COLUMNS, holder1, CountOnEveryLayerPlacement.of(4), BiomeFilter.biome());
+        PlacementUtils.register(context, LARGE_BASALT_COLUMNS, holder2, CountOnEveryLayerPlacement.of(2), BiomeFilter.biome());
         PlacementUtils.register(
-            p_321634_, BASALT_BLOBS, holder3, CountPlacement.of(75), InSquarePlacement.spread(), PlacementUtils.FULL_RANGE, BiomeFilter.biome()
+            context, BASALT_BLOBS, holder3, CountPlacement.of(75), InSquarePlacement.spread(), PlacementUtils.FULL_RANGE, BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321634_, BLACKSTONE_BLOBS, holder4, CountPlacement.of(25), InSquarePlacement.spread(), PlacementUtils.FULL_RANGE, BiomeFilter.biome()
+            context, BLACKSTONE_BLOBS, holder4, CountPlacement.of(25), InSquarePlacement.spread(), PlacementUtils.FULL_RANGE, BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321634_,
+            context,
             GLOWSTONE_EXTRA,
             holder5,
             CountPlacement.of(BiasedToBottomInt.of(0, 9)),
@@ -78,37 +78,37 @@ public class NetherPlacements {
             BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321634_, GLOWSTONE, holder5, CountPlacement.of(10), InSquarePlacement.spread(), PlacementUtils.FULL_RANGE, BiomeFilter.biome()
+            context, GLOWSTONE, holder5, CountPlacement.of(10), InSquarePlacement.spread(), PlacementUtils.FULL_RANGE, BiomeFilter.biome()
         );
-        PlacementUtils.register(p_321634_, CRIMSON_FOREST_VEGETATION, holder6, CountOnEveryLayerPlacement.of(6), BiomeFilter.biome());
-        PlacementUtils.register(p_321634_, WARPED_FOREST_VEGETATION, holder7, CountOnEveryLayerPlacement.of(5), BiomeFilter.biome());
-        PlacementUtils.register(p_321634_, NETHER_SPROUTS, holder8, CountOnEveryLayerPlacement.of(4), BiomeFilter.biome());
+        PlacementUtils.register(context, CRIMSON_FOREST_VEGETATION, holder6, CountOnEveryLayerPlacement.of(6), BiomeFilter.biome());
+        PlacementUtils.register(context, WARPED_FOREST_VEGETATION, holder7, CountOnEveryLayerPlacement.of(5), BiomeFilter.biome());
+        PlacementUtils.register(context, NETHER_SPROUTS, holder8, CountOnEveryLayerPlacement.of(4), BiomeFilter.biome());
         PlacementUtils.register(
-            p_321634_, TWISTING_VINES, holder9, CountPlacement.of(10), InSquarePlacement.spread(), PlacementUtils.FULL_RANGE, BiomeFilter.biome()
-        );
-        PlacementUtils.register(
-            p_321634_, WEEPING_VINES, holder10, CountPlacement.of(10), InSquarePlacement.spread(), PlacementUtils.FULL_RANGE, BiomeFilter.biome()
-        );
-        PlacementUtils.register(p_321634_, PATCH_CRIMSON_ROOTS, holder11, PlacementUtils.FULL_RANGE, BiomeFilter.biome());
-        PlacementUtils.register(
-            p_321634_, BASALT_PILLAR, holder12, CountPlacement.of(10), InSquarePlacement.spread(), PlacementUtils.FULL_RANGE, BiomeFilter.biome()
+            context, TWISTING_VINES, holder9, CountPlacement.of(10), InSquarePlacement.spread(), PlacementUtils.FULL_RANGE, BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321634_, SPRING_DELTA, holder13, CountPlacement.of(16), InSquarePlacement.spread(), PlacementUtils.RANGE_4_4, BiomeFilter.biome()
+            context, WEEPING_VINES, holder10, CountPlacement.of(10), InSquarePlacement.spread(), PlacementUtils.FULL_RANGE, BiomeFilter.biome()
+        );
+        PlacementUtils.register(context, PATCH_CRIMSON_ROOTS, holder11, PlacementUtils.FULL_RANGE, BiomeFilter.biome());
+        PlacementUtils.register(
+            context, BASALT_PILLAR, holder12, CountPlacement.of(10), InSquarePlacement.spread(), PlacementUtils.FULL_RANGE, BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321634_, SPRING_CLOSED, holder14, CountPlacement.of(16), InSquarePlacement.spread(), PlacementUtils.RANGE_10_10, BiomeFilter.biome()
+            context, SPRING_DELTA, holder13, CountPlacement.of(16), InSquarePlacement.spread(), PlacementUtils.RANGE_4_4, BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321634_, SPRING_CLOSED_DOUBLE, holder14, CountPlacement.of(32), InSquarePlacement.spread(), PlacementUtils.RANGE_10_10, BiomeFilter.biome()
+            context, SPRING_CLOSED, holder14, CountPlacement.of(16), InSquarePlacement.spread(), PlacementUtils.RANGE_10_10, BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321634_, SPRING_OPEN, holder15, CountPlacement.of(8), InSquarePlacement.spread(), PlacementUtils.RANGE_4_4, BiomeFilter.biome()
+            context, SPRING_CLOSED_DOUBLE, holder14, CountPlacement.of(32), InSquarePlacement.spread(), PlacementUtils.RANGE_10_10, BiomeFilter.biome()
+        );
+        PlacementUtils.register(
+            context, SPRING_OPEN, holder15, CountPlacement.of(8), InSquarePlacement.spread(), PlacementUtils.RANGE_4_4, BiomeFilter.biome()
         );
         List<PlacementModifier> list = List.of(
             CountPlacement.of(UniformInt.of(0, 5)), InSquarePlacement.spread(), PlacementUtils.RANGE_4_4, BiomeFilter.biome()
         );
-        PlacementUtils.register(p_321634_, PATCH_SOUL_FIRE, holder16, list);
-        PlacementUtils.register(p_321634_, PATCH_FIRE, holder17, list);
+        PlacementUtils.register(context, PATCH_SOUL_FIRE, holder16, list);
+        PlacementUtils.register(context, PATCH_FIRE, holder17, list);
     }
 }

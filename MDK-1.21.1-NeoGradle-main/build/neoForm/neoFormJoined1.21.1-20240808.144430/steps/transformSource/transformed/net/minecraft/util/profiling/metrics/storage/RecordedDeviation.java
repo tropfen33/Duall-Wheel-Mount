@@ -8,9 +8,9 @@ public final class RecordedDeviation {
     public final int tick;
     public final ProfileResults profilerResultAtTick;
 
-    public RecordedDeviation(Instant p_146258_, int p_146259_, ProfileResults p_146260_) {
-        this.timestamp = p_146258_;
-        this.tick = p_146259_;
-        this.profilerResultAtTick = p_146260_;
+    public RecordedDeviation(Instant timestamp, int tick, ProfileResults profilerResultAtTick) {
+        this.timestamp = timestamp;
+        this.tick = tick;
+        this.profilerResultAtTick = profilerResultAtTick;
     }
 }

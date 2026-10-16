@@ -10,28 +10,28 @@ import java.util.function.Supplier;
 import net.minecraft.util.datafix.fixes.References;
 
 public class V102 extends Schema {
-    public V102(int p_17356_, Schema p_17357_) {
-        super(p_17356_, p_17357_);
+    public V102(int versionKey, Schema parent) {
+        super(versionKey, parent);
     }
 
     @Override
-    public void registerTypes(Schema p_17361_, Map<String, Supplier<TypeTemplate>> p_17362_, Map<String, Supplier<TypeTemplate>> p_17363_) {
-        super.registerTypes(p_17361_, p_17362_, p_17363_);
-        p_17361_.registerType(
+    public void registerTypes(Schema schema, Map<String, Supplier<TypeTemplate>> entityTypes, Map<String, Supplier<TypeTemplate>> blockEntityTypes) {
+        super.registerTypes(schema, entityTypes, blockEntityTypes);
+        schema.registerType(
             true,
             References.ITEM_STACK,
             () -> DSL.hook(
                     DSL.optionalFields(
                         "id",
-                        References.ITEM_NAME.in(p_17361_),
+                        References.ITEM_NAME.in(schema),
                         "tag",
                         DSL.optionalFields(
-                            Pair.of("EntityTag", References.ENTITY_TREE.in(p_17361_)),
-                            Pair.of("BlockEntityTag", References.BLOCK_ENTITY.in(p_17361_)),
-                            Pair.of("CanDestroy", DSL.list(References.BLOCK_NAME.in(p_17361_))),
-                            Pair.of("CanPlaceOn", DSL.list(References.BLOCK_NAME.in(p_17361_))),
-                            Pair.of("Items", DSL.list(References.ITEM_STACK.in(p_17361_))),
-                            Pair.of("ChargedProjectiles", DSL.list(References.ITEM_STACK.in(p_17361_)))
+                            Pair.of("EntityTag", References.ENTITY_TREE.in(schema)),
+                            Pair.of("BlockEntityTag", References.BLOCK_ENTITY.in(schema)),
+                            Pair.of("CanDestroy", DSL.list(References.BLOCK_NAME.in(schema))),
+                            Pair.of("CanPlaceOn", DSL.list(References.BLOCK_NAME.in(schema))),
+                            Pair.of("Items", DSL.list(References.ITEM_STACK.in(schema))),
+                            Pair.of("ChargedProjectiles", DSL.list(References.ITEM_STACK.in(schema)))
                         )
                     ),
                     V99.ADD_NAMES,

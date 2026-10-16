@@ -1,13 +1,16 @@
 package net.minecraft.network.protocol;
 
+/**
+ * The direction of packets.
+ */
 public enum PacketFlow implements net.neoforged.neoforge.common.extensions.IPacketFlowExtension {
     SERVERBOUND("serverbound"),
     CLIENTBOUND("clientbound");
 
     private final String id;
 
-    private PacketFlow(String p_320377_) {
-        this.id = p_320377_;
+    private PacketFlow(String id) {
+        this.id = id;
     }
 
     public PacketFlow getOpposite() {

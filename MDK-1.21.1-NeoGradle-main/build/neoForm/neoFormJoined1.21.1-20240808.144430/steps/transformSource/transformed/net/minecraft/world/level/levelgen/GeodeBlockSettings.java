@@ -35,22 +35,22 @@ public class GeodeBlockSettings {
     );
 
     public GeodeBlockSettings(
-        BlockStateProvider p_204555_,
-        BlockStateProvider p_204556_,
-        BlockStateProvider p_204557_,
-        BlockStateProvider p_204558_,
-        BlockStateProvider p_204559_,
-        List<BlockState> p_204560_,
-        TagKey<Block> p_204561_,
-        TagKey<Block> p_204562_
+        BlockStateProvider fillingProvider,
+        BlockStateProvider innerLayerProvider,
+        BlockStateProvider alternateInnerLayerProvider,
+        BlockStateProvider middleLayerProvider,
+        BlockStateProvider outerLayerProvider,
+        List<BlockState> innerPlacements,
+        TagKey<Block> cannotReplace,
+        TagKey<Block> invalidBlocks
     ) {
-        this.fillingProvider = p_204555_;
-        this.innerLayerProvider = p_204556_;
-        this.alternateInnerLayerProvider = p_204557_;
-        this.middleLayerProvider = p_204558_;
-        this.outerLayerProvider = p_204559_;
-        this.innerPlacements = p_204560_;
-        this.cannotReplace = p_204561_;
-        this.invalidBlocks = p_204562_;
+        this.fillingProvider = fillingProvider;
+        this.innerLayerProvider = innerLayerProvider;
+        this.alternateInnerLayerProvider = alternateInnerLayerProvider;
+        this.middleLayerProvider = middleLayerProvider;
+        this.outerLayerProvider = outerLayerProvider;
+        this.innerPlacements = innerPlacements;
+        this.cannotReplace = cannotReplace;
+        this.invalidBlocks = invalidBlocks;
     }
 }

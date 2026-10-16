@@ -59,19 +59,19 @@ public class RuinedPortalStructure extends Structure {
                 .apply(p_229304_, RuinedPortalStructure::new)
     );
 
-    public RuinedPortalStructure(Structure.StructureSettings p_229260_, List<RuinedPortalStructure.Setup> p_229261_) {
-        super(p_229260_);
-        this.setups = p_229261_;
+    public RuinedPortalStructure(Structure.StructureSettings settings, List<RuinedPortalStructure.Setup> setups) {
+        super(settings);
+        this.setups = setups;
     }
 
-    public RuinedPortalStructure(Structure.StructureSettings p_229257_, RuinedPortalStructure.Setup p_229258_) {
-        this(p_229257_, List.of(p_229258_));
+    public RuinedPortalStructure(Structure.StructureSettings settings, RuinedPortalStructure.Setup setup) {
+        this(settings, List.of(setup));
     }
 
     @Override
-    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext p_229285_) {
+    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext context) {
         RuinedPortalPiece.Properties ruinedportalpiece$properties = new RuinedPortalPiece.Properties();
-        WorldgenRandom worldgenrandom = p_229285_.random();
+        WorldgenRandom worldgenrandom = context.random();
         RuinedPortalStructure.Setup ruinedportalstructure$setup = null;
         if (this.setups.size() > 1) {
             float f = 0.0F;
@@ -111,14 +111,14 @@ public class RuinedPortalStructure extends Structure {
                 resourcelocation = ResourceLocation.withDefaultNamespace(STRUCTURE_LOCATION_PORTALS[worldgenrandom.nextInt(STRUCTURE_LOCATION_PORTALS.length)]);
             }
 
-            StructureTemplate structuretemplate = p_229285_.structureTemplateManager().getOrCreate(resourcelocation);
+            StructureTemplate structuretemplate = context.structureTemplateManager().getOrCreate(resourcelocation);
             Rotation rotation = Util.getRandom(Rotation.values(), worldgenrandom);
             Mirror mirror = worldgenrandom.nextFloat() < 0.5F ? Mirror.NONE : Mirror.FRONT_BACK;
             BlockPos blockpos = new BlockPos(structuretemplate.getSize().getX() / 2, 0, structuretemplate.getSize().getZ() / 2);
-            ChunkGenerator chunkgenerator = p_229285_.chunkGenerator();
-            LevelHeightAccessor levelheightaccessor = p_229285_.heightAccessor();
-            RandomState randomstate = p_229285_.randomState();
-            BlockPos blockpos1 = p_229285_.chunkPos().getWorldPosition();
+            ChunkGenerator chunkgenerator = context.chunkGenerator();
+            LevelHeightAccessor levelheightaccessor = context.heightAccessor();
+            RandomState randomstate = context.randomState();
+            BlockPos blockpos1 = context.chunkPos().getWorldPosition();
             BoundingBox boundingbox = structuretemplate.getBoundingBox(blockpos1, rotation, blockpos, mirror);
             BlockPos blockpos2 = boundingbox.getCenter();
             int i = chunkgenerator.getBaseHeight(
@@ -148,7 +148,7 @@ public class RuinedPortalStructure extends Structure {
                         if (ruinedportalstructure$setup3.canBeCold()) {
                             ruinedportalpiece$properties.cold = isCold(
                                 blockpos3,
-                                p_229285_.chunkGenerator()
+                                context.chunkGenerator()
                                     .getBiomeSource()
                                     .getNoiseBiome(
                                         QuartPos.fromBlock(blockpos3.getX()),
@@ -161,7 +161,7 @@ public class RuinedPortalStructure extends Structure {
 
                         p_229297_.addPiece(
                             new RuinedPortalPiece(
-                                p_229285_.structureTemplateManager(),
+                                context.structureTemplateManager(),
                                 blockpos3,
                                 ruinedportalstructure$setup3.placement(),
                                 ruinedportalpiece$properties,
@@ -178,61 +178,61 @@ public class RuinedPortalStructure extends Structure {
         }
     }
 
-    private static boolean sample(WorldgenRandom p_229282_, float p_229283_) {
-        if (p_229283_ == 0.0F) {
+    private static boolean sample(WorldgenRandom random, float threshold) {
+        if (threshold == 0.0F) {
             return false;
         } else {
-            return p_229283_ == 1.0F ? true : p_229282_.nextFloat() < p_229283_;
+            return threshold == 1.0F ? true : random.nextFloat() < threshold;
         }
     }
 
-    private static boolean isCold(BlockPos p_229301_, Holder<Biome> p_229302_) {
-        return p_229302_.value().coldEnoughToSnow(p_229301_);
+    private static boolean isCold(BlockPos pos, Holder<Biome> biome) {
+        return biome.value().coldEnoughToSnow(pos);
     }
 
     private static int findSuitableY(
-        RandomSource p_229267_,
-        ChunkGenerator p_229268_,
-        RuinedPortalPiece.VerticalPlacement p_229269_,
-        boolean p_229270_,
-        int p_229271_,
-        int p_229272_,
-        BoundingBox p_229273_,
-        LevelHeightAccessor p_229274_,
-        RandomState p_229275_
+        RandomSource random,
+        ChunkGenerator chunkGenerator,
+        RuinedPortalPiece.VerticalPlacement verticalPlacement,
+        boolean airPocket,
+        int height,
+        int blockCountY,
+        BoundingBox box,
+        LevelHeightAccessor level,
+        RandomState randomState
     ) {
-        int j = p_229274_.getMinBuildHeight() + 15;
+        int j = level.getMinBuildHeight() + 15;
         int i;
-        if (p_229269_ == RuinedPortalPiece.VerticalPlacement.IN_NETHER) {
-            if (p_229270_) {
-                i = Mth.randomBetweenInclusive(p_229267_, 32, 100);
-            } else if (p_229267_.nextFloat() < 0.5F) {
-                i = Mth.randomBetweenInclusive(p_229267_, 27, 29);
+        if (verticalPlacement == RuinedPortalPiece.VerticalPlacement.IN_NETHER) {
+            if (airPocket) {
+                i = Mth.randomBetweenInclusive(random, 32, 100);
+            } else if (random.nextFloat() < 0.5F) {
+                i = Mth.randomBetweenInclusive(random, 27, 29);
             } else {
-                i = Mth.randomBetweenInclusive(p_229267_, 29, 100);
+                i = Mth.randomBetweenInclusive(random, 29, 100);
             }
-        } else if (p_229269_ == RuinedPortalPiece.VerticalPlacement.IN_MOUNTAIN) {
-            int k = p_229271_ - p_229272_;
-            i = getRandomWithinInterval(p_229267_, 70, k);
-        } else if (p_229269_ == RuinedPortalPiece.VerticalPlacement.UNDERGROUND) {
-            int j1 = p_229271_ - p_229272_;
-            i = getRandomWithinInterval(p_229267_, j, j1);
-        } else if (p_229269_ == RuinedPortalPiece.VerticalPlacement.PARTLY_BURIED) {
-            i = p_229271_ - p_229272_ + Mth.randomBetweenInclusive(p_229267_, 2, 8);
+        } else if (verticalPlacement == RuinedPortalPiece.VerticalPlacement.IN_MOUNTAIN) {
+            int k = height - blockCountY;
+            i = getRandomWithinInterval(random, 70, k);
+        } else if (verticalPlacement == RuinedPortalPiece.VerticalPlacement.UNDERGROUND) {
+            int j1 = height - blockCountY;
+            i = getRandomWithinInterval(random, j, j1);
+        } else if (verticalPlacement == RuinedPortalPiece.VerticalPlacement.PARTLY_BURIED) {
+            i = height - blockCountY + Mth.randomBetweenInclusive(random, 2, 8);
         } else {
-            i = p_229271_;
+            i = height;
         }
 
         List<BlockPos> list1 = ImmutableList.of(
-            new BlockPos(p_229273_.minX(), 0, p_229273_.minZ()),
-            new BlockPos(p_229273_.maxX(), 0, p_229273_.minZ()),
-            new BlockPos(p_229273_.minX(), 0, p_229273_.maxZ()),
-            new BlockPos(p_229273_.maxX(), 0, p_229273_.maxZ())
+            new BlockPos(box.minX(), 0, box.minZ()),
+            new BlockPos(box.maxX(), 0, box.minZ()),
+            new BlockPos(box.minX(), 0, box.maxZ()),
+            new BlockPos(box.maxX(), 0, box.maxZ())
         );
         List<NoiseColumn> list = list1.stream()
-            .map(p_229280_ -> p_229268_.getBaseColumn(p_229280_.getX(), p_229280_.getZ(), p_229274_, p_229275_))
+            .map(p_229280_ -> chunkGenerator.getBaseColumn(p_229280_.getX(), p_229280_.getZ(), level, randomState))
             .collect(Collectors.toList());
-        Heightmap.Types heightmap$types = p_229269_ == RuinedPortalPiece.VerticalPlacement.ON_OCEAN_FLOOR
+        Heightmap.Types heightmap$types = verticalPlacement == RuinedPortalPiece.VerticalPlacement.ON_OCEAN_FLOOR
             ? Heightmap.Types.OCEAN_FLOOR_WG
             : Heightmap.Types.WORLD_SURFACE_WG;
 
@@ -253,8 +253,8 @@ public class RuinedPortalStructure extends Structure {
         return l;
     }
 
-    private static int getRandomWithinInterval(RandomSource p_229263_, int p_229264_, int p_229265_) {
-        return p_229264_ < p_229265_ ? Mth.randomBetweenInclusive(p_229263_, p_229264_, p_229265_) : p_229265_;
+    private static int getRandomWithinInterval(RandomSource random, int min, int max) {
+        return min < max ? Mth.randomBetweenInclusive(random, min, max) : max;
     }
 
     @Override

@@ -65,39 +65,39 @@ public record Advancement(
         this(p_300893_, p_301147_, p_286389_, Map.copyOf(p_286635_), p_301002_, p_286478_, p_301147_.map(Advancement::decorateName));
     }
 
-    private static DataResult<Advancement> validate(Advancement p_312433_) {
-        return p_312433_.requirements().validate(p_312433_.criteria().keySet()).map(p_311382_ -> p_312433_);
+    private static DataResult<Advancement> validate(Advancement advancement) {
+        return advancement.requirements().validate(advancement.criteria().keySet()).map(p_311382_ -> advancement);
     }
 
-    private static Component decorateName(DisplayInfo p_301019_) {
-        Component component = p_301019_.getTitle();
-        ChatFormatting chatformatting = p_301019_.getType().getChatColor();
+    private static Component decorateName(DisplayInfo display) {
+        Component component = display.getTitle();
+        ChatFormatting chatformatting = display.getType().getChatColor();
         Component component1 = ComponentUtils.mergeStyles(component.copy(), Style.EMPTY.withColor(chatformatting))
             .append("\n")
-            .append(p_301019_.getDescription());
+            .append(display.getDescription());
         Component component2 = component.copy().withStyle(p_138316_ -> p_138316_.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, component1)));
         return ComponentUtils.wrapInSquareBrackets(component2).withStyle(chatformatting);
     }
 
-    public static Component name(AdvancementHolder p_300875_) {
-        return p_300875_.value().name().orElseGet(() -> Component.literal(p_300875_.id().toString()));
+    public static Component name(AdvancementHolder advancement) {
+        return advancement.value().name().orElseGet(() -> Component.literal(advancement.id().toString()));
     }
 
-    private void write(RegistryFriendlyByteBuf p_320833_) {
-        p_320833_.writeOptional(this.parent, FriendlyByteBuf::writeResourceLocation);
-        DisplayInfo.STREAM_CODEC.apply(ByteBufCodecs::optional).encode(p_320833_, this.display);
-        this.requirements.write(p_320833_);
-        p_320833_.writeBoolean(this.sendsTelemetryEvent);
+    private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeOptional(this.parent, FriendlyByteBuf::writeResourceLocation);
+        DisplayInfo.STREAM_CODEC.apply(ByteBufCodecs::optional).encode(buffer, this.display);
+        this.requirements.write(buffer);
+        buffer.writeBoolean(this.sendsTelemetryEvent);
     }
 
-    private static Advancement read(RegistryFriendlyByteBuf p_320555_) {
+    private static Advancement read(RegistryFriendlyByteBuf buffer) {
         return new Advancement(
-            p_320555_.readOptional(FriendlyByteBuf::readResourceLocation),
-            (Optional<DisplayInfo>)DisplayInfo.STREAM_CODEC.apply(ByteBufCodecs::optional).decode(p_320555_),
+            buffer.readOptional(FriendlyByteBuf::readResourceLocation),
+            (Optional<DisplayInfo>)DisplayInfo.STREAM_CODEC.apply(ByteBufCodecs::optional).decode(buffer),
             AdvancementRewards.EMPTY,
             Map.of(),
-            new AdvancementRequirements(p_320555_),
-            p_320555_.readBoolean()
+            new AdvancementRequirements(buffer),
+            buffer.readBoolean()
         );
     }
 
@@ -105,9 +105,9 @@ public record Advancement(
         return this.parent.isEmpty();
     }
 
-    public void validate(ProblemReporter p_311766_, HolderGetter.Provider p_335685_) {
+    public void validate(ProblemReporter reporter, HolderGetter.Provider lootData) {
         this.criteria.forEach((p_335153_, p_335154_) -> {
-            CriterionValidator criterionvalidator = new CriterionValidator(p_311766_.forChild(p_335153_), p_335685_);
+            CriterionValidator criterionvalidator = new CriterionValidator(reporter.forChild(p_335153_), lootData);
             p_335154_.triggerInstance().validate(criterionvalidator);
         });
     }
@@ -129,75 +129,75 @@ public record Advancement(
             return new Advancement.Builder();
         }
 
-        public Advancement.Builder parent(AdvancementHolder p_301226_) {
-            this.parent = Optional.of(p_301226_.id());
+        public Advancement.Builder parent(AdvancementHolder parent) {
+            this.parent = Optional.of(parent.id());
             return this;
         }
 
         @Deprecated(
             forRemoval = true
         )
-        public Advancement.Builder parent(ResourceLocation p_138397_) {
-            this.parent = Optional.of(p_138397_);
+        public Advancement.Builder parent(ResourceLocation parentId) {
+            this.parent = Optional.of(parentId);
             return this;
         }
 
         public Advancement.Builder display(
-            ItemStack p_312724_,
-            Component p_138373_,
-            Component p_138374_,
-            @Nullable ResourceLocation p_138375_,
-            AdvancementType p_312711_,
-            boolean p_138377_,
-            boolean p_138378_,
-            boolean p_138379_
+            ItemStack icon,
+            Component title,
+            Component description,
+            @Nullable ResourceLocation background,
+            AdvancementType type,
+            boolean showToast,
+            boolean announceChat,
+            boolean hidden
         ) {
-            return this.display(new DisplayInfo(p_312724_, p_138373_, p_138374_, Optional.ofNullable(p_138375_), p_312711_, p_138377_, p_138378_, p_138379_));
+            return this.display(new DisplayInfo(icon, title, description, Optional.ofNullable(background), type, showToast, announceChat, hidden));
         }
 
         public Advancement.Builder display(
-            ItemLike p_311787_,
-            Component p_138364_,
-            Component p_138365_,
-            @Nullable ResourceLocation p_138366_,
-            AdvancementType p_312847_,
-            boolean p_138368_,
-            boolean p_138369_,
-            boolean p_138370_
+            ItemLike icon,
+            Component title,
+            Component description,
+            @Nullable ResourceLocation background,
+            AdvancementType type,
+            boolean showToast,
+            boolean announceChat,
+            boolean hidden
         ) {
             return this.display(
                 new DisplayInfo(
-                    new ItemStack(p_311787_.asItem()), p_138364_, p_138365_, Optional.ofNullable(p_138366_), p_312847_, p_138368_, p_138369_, p_138370_
+                    new ItemStack(icon.asItem()), title, description, Optional.ofNullable(background), type, showToast, announceChat, hidden
                 )
             );
         }
 
-        public Advancement.Builder display(DisplayInfo p_138359_) {
-            this.display = Optional.of(p_138359_);
+        public Advancement.Builder display(DisplayInfo display) {
+            this.display = Optional.of(display);
             return this;
         }
 
-        public Advancement.Builder rewards(AdvancementRewards.Builder p_138355_) {
-            return this.rewards(p_138355_.build());
+        public Advancement.Builder rewards(AdvancementRewards.Builder rewardsBuilder) {
+            return this.rewards(rewardsBuilder.build());
         }
 
-        public Advancement.Builder rewards(AdvancementRewards p_138357_) {
-            this.rewards = p_138357_;
+        public Advancement.Builder rewards(AdvancementRewards rewards) {
+            this.rewards = rewards;
             return this;
         }
 
-        public Advancement.Builder addCriterion(String p_138384_, Criterion<?> p_138385_) {
-            this.criteria.put(p_138384_, p_138385_);
+        public Advancement.Builder addCriterion(String key, Criterion<?> criterion) {
+            this.criteria.put(key, criterion);
             return this;
         }
 
-        public Advancement.Builder requirements(AdvancementRequirements.Strategy p_300955_) {
-            this.requirementsStrategy = p_300955_;
+        public Advancement.Builder requirements(AdvancementRequirements.Strategy requirementsStrategy) {
+            this.requirementsStrategy = requirementsStrategy;
             return this;
         }
 
-        public Advancement.Builder requirements(AdvancementRequirements p_301103_) {
-            this.requirements = Optional.of(p_301103_);
+        public Advancement.Builder requirements(AdvancementRequirements requirements) {
+            this.requirements = Optional.of(requirements);
             return this;
         }
 
@@ -206,17 +206,17 @@ public record Advancement(
             return this;
         }
 
-        public AdvancementHolder build(ResourceLocation p_138404_) {
+        public AdvancementHolder build(ResourceLocation id) {
             Map<String, Criterion<?>> map = this.criteria.buildOrThrow();
             AdvancementRequirements advancementrequirements = this.requirements.orElseGet(() -> this.requirementsStrategy.create(map.keySet()));
             return new AdvancementHolder(
-                p_138404_, new Advancement(this.parent, this.display, this.rewards, map, advancementrequirements, this.sendsTelemetryEvent)
+                id, new Advancement(this.parent, this.display, this.rewards, map, advancementrequirements, this.sendsTelemetryEvent)
             );
         }
 
-        public AdvancementHolder save(Consumer<AdvancementHolder> p_138390_, String p_138391_) {
-            AdvancementHolder advancementholder = this.build(ResourceLocation.parse(p_138391_));
-            p_138390_.accept(advancementholder);
+        public AdvancementHolder save(Consumer<AdvancementHolder> output, String id) {
+            AdvancementHolder advancementholder = this.build(ResourceLocation.parse(id));
+            output.accept(advancementholder);
             return advancementholder;
         }
     }

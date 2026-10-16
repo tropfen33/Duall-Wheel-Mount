@@ -29,73 +29,76 @@ import org.joml.Quaternionf;
 public abstract class DisplayRenderer<T extends Display, S> extends EntityRenderer<T> {
     private final EntityRenderDispatcher entityRenderDispatcher;
 
-    protected DisplayRenderer(EntityRendererProvider.Context p_270168_) {
-        super(p_270168_);
-        this.entityRenderDispatcher = p_270168_.getEntityRenderDispatcher();
+    protected DisplayRenderer(EntityRendererProvider.Context context) {
+        super(context);
+        this.entityRenderDispatcher = context.getEntityRenderDispatcher();
     }
 
-    public ResourceLocation getTextureLocation(T p_270675_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(T entity) {
         return TextureAtlas.LOCATION_BLOCKS;
     }
 
-    public void render(T p_270405_, float p_270225_, float p_270279_, PoseStack p_270728_, MultiBufferSource p_270209_, int p_270298_) {
-        Display.RenderState display$renderstate = p_270405_.renderState();
+    public void render(T entity, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        Display.RenderState display$renderstate = entity.renderState();
         if (display$renderstate != null) {
-            S s = this.getSubState(p_270405_);
+            S s = this.getSubState(entity);
             if (s != null) {
-                float f = p_270405_.calculateInterpolationProgress(p_270279_);
+                float f = entity.calculateInterpolationProgress(partialTick);
                 this.shadowRadius = display$renderstate.shadowRadius().get(f);
                 this.shadowStrength = display$renderstate.shadowStrength().get(f);
                 int i = display$renderstate.brightnessOverride();
-                int j = i != -1 ? i : p_270298_;
-                super.render(p_270405_, p_270225_, p_270279_, p_270728_, p_270209_, j);
-                p_270728_.pushPose();
-                p_270728_.mulPose(this.calculateOrientation(display$renderstate, p_270405_, p_270279_, new Quaternionf()));
+                int j = i != -1 ? i : packedLight;
+                super.render(entity, entityYaw, partialTick, poseStack, buffer, j);
+                poseStack.pushPose();
+                poseStack.mulPose(this.calculateOrientation(display$renderstate, entity, partialTick, new Quaternionf()));
                 Transformation transformation = display$renderstate.transformation().get(f);
-                p_270728_.mulPose(transformation.getMatrix());
-                this.renderInner(p_270405_, s, p_270728_, p_270209_, j, f);
-                p_270728_.popPose();
+                poseStack.mulPose(transformation.getMatrix());
+                this.renderInner(entity, s, poseStack, buffer, j, f);
+                poseStack.popPose();
             }
         }
     }
 
-    private Quaternionf calculateOrientation(Display.RenderState p_277846_, T p_271013_, float p_294432_, Quaternionf p_295809_) {
+    private Quaternionf calculateOrientation(Display.RenderState renderState, T entity, float partialTick, Quaternionf quaternion) {
         Camera camera = this.entityRenderDispatcher.camera;
 
-        return switch (p_277846_.billboardConstraints()) {
-            case FIXED -> p_295809_.rotationYXZ(
-            (float) (-Math.PI / 180.0) * entityYRot(p_271013_, p_294432_), (float) (Math.PI / 180.0) * entityXRot(p_271013_, p_294432_), 0.0F
+        return switch (renderState.billboardConstraints()) {
+            case FIXED -> quaternion.rotationYXZ(
+            (float) (-Math.PI / 180.0) * entityYRot(entity, partialTick), (float) (Math.PI / 180.0) * entityXRot(entity, partialTick), 0.0F
         );
-            case HORIZONTAL -> p_295809_.rotationYXZ(
-            (float) (-Math.PI / 180.0) * entityYRot(p_271013_, p_294432_), (float) (Math.PI / 180.0) * cameraXRot(camera), 0.0F
+            case HORIZONTAL -> quaternion.rotationYXZ(
+            (float) (-Math.PI / 180.0) * entityYRot(entity, partialTick), (float) (Math.PI / 180.0) * cameraXRot(camera), 0.0F
         );
-            case VERTICAL -> p_295809_.rotationYXZ(
-            (float) (-Math.PI / 180.0) * cameraYrot(camera), (float) (Math.PI / 180.0) * entityXRot(p_271013_, p_294432_), 0.0F
+            case VERTICAL -> quaternion.rotationYXZ(
+            (float) (-Math.PI / 180.0) * cameraYrot(camera), (float) (Math.PI / 180.0) * entityXRot(entity, partialTick), 0.0F
         );
-            case CENTER -> p_295809_.rotationYXZ((float) (-Math.PI / 180.0) * cameraYrot(camera), (float) (Math.PI / 180.0) * cameraXRot(camera), 0.0F);
+            case CENTER -> quaternion.rotationYXZ((float) (-Math.PI / 180.0) * cameraYrot(camera), (float) (Math.PI / 180.0) * cameraXRot(camera), 0.0F);
         };
     }
 
-    private static float cameraYrot(Camera p_295988_) {
-        return p_295988_.getYRot() - 180.0F;
+    private static float cameraYrot(Camera camera) {
+        return camera.getYRot() - 180.0F;
     }
 
-    private static float cameraXRot(Camera p_295299_) {
-        return -p_295299_.getXRot();
+    private static float cameraXRot(Camera camera) {
+        return -camera.getXRot();
     }
 
-    private static <T extends Display> float entityYRot(T p_295109_, float p_295760_) {
-        return Mth.rotLerp(p_295760_, p_295109_.yRotO, p_295109_.getYRot());
+    private static <T extends Display> float entityYRot(T entity, float partialTick) {
+        return Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot());
     }
 
-    private static <T extends Display> float entityXRot(T p_295884_, float p_294935_) {
-        return Mth.lerp(p_294935_, p_295884_.xRotO, p_295884_.getXRot());
+    private static <T extends Display> float entityXRot(T entity, float partialTick) {
+        return Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
     }
 
     @Nullable
-    protected abstract S getSubState(T p_270246_);
+    protected abstract S getSubState(T textDisplay);
 
-    protected abstract void renderInner(T p_277862_, S p_277363_, PoseStack p_277686_, MultiBufferSource p_277429_, int p_278023_, float p_277453_);
+    protected abstract void renderInner(T textDisplay, S renderState, PoseStack poseStack, MultiBufferSource buffer, int lightmapUV, float partialTick);
 
     @OnlyIn(Dist.CLIENT)
     public static class BlockDisplayRenderer extends DisplayRenderer<Display.BlockDisplay, Display.BlockDisplay.BlockRenderState> {
@@ -164,13 +167,13 @@ public abstract class DisplayRenderer<T extends Display, S> extends EntityRender
     public static class TextDisplayRenderer extends DisplayRenderer<Display.TextDisplay, Display.TextDisplay.TextRenderState> {
         private final Font font;
 
-        protected TextDisplayRenderer(EntityRendererProvider.Context p_271012_) {
-            super(p_271012_);
-            this.font = p_271012_.getFont();
+        protected TextDisplayRenderer(EntityRendererProvider.Context context) {
+            super(context);
+            this.font = context.getFont();
         }
 
-        private Display.TextDisplay.CachedInfo splitLines(Component p_270823_, int p_270893_) {
-            List<FormattedCharSequence> list = this.font.split(p_270823_, p_270893_);
+        private Display.TextDisplay.CachedInfo splitLines(Component text, int maxWidth) {
+            List<FormattedCharSequence> list = this.font.split(text, maxWidth);
             List<Display.TextDisplay.CachedLine> list1 = new ArrayList<>(list.size());
             int i = 0;
 
@@ -184,47 +187,47 @@ public abstract class DisplayRenderer<T extends Display, S> extends EntityRender
         }
 
         @Nullable
-        protected Display.TextDisplay.TextRenderState getSubState(Display.TextDisplay p_277947_) {
-            return p_277947_.textRenderState();
+        protected Display.TextDisplay.TextRenderState getSubState(Display.TextDisplay textDisplay) {
+            return textDisplay.textRenderState();
         }
 
         public void renderInner(
-            Display.TextDisplay p_277522_,
-            Display.TextDisplay.TextRenderState p_277620_,
-            PoseStack p_277536_,
-            MultiBufferSource p_277845_,
-            int p_278046_,
-            float p_277769_
+            Display.TextDisplay textDisplay,
+            Display.TextDisplay.TextRenderState renderState,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int lightmapUV,
+            float partialTick
         ) {
-            byte b0 = p_277620_.flags();
+            byte b0 = renderState.flags();
             boolean flag = (b0 & 2) != 0;
             boolean flag1 = (b0 & 4) != 0;
             boolean flag2 = (b0 & 1) != 0;
             Display.TextDisplay.Align display$textdisplay$align = Display.TextDisplay.getAlign(b0);
-            byte b1 = (byte)p_277620_.textOpacity().get(p_277769_);
+            byte b1 = (byte)renderState.textOpacity().get(partialTick);
             int i;
             if (flag1) {
                 float f = Minecraft.getInstance().options.getBackgroundOpacity(0.25F);
                 i = (int)(f * 255.0F) << 24;
             } else {
-                i = p_277620_.backgroundColor().get(p_277769_);
+                i = renderState.backgroundColor().get(partialTick);
             }
 
             float f2 = 0.0F;
-            Matrix4f matrix4f = p_277536_.last().pose();
+            Matrix4f matrix4f = poseStack.last().pose();
             matrix4f.rotate((float) Math.PI, 0.0F, 1.0F, 0.0F);
             matrix4f.scale(-0.025F, -0.025F, -0.025F);
-            Display.TextDisplay.CachedInfo display$textdisplay$cachedinfo = p_277522_.cacheDisplay(this::splitLines);
+            Display.TextDisplay.CachedInfo display$textdisplay$cachedinfo = textDisplay.cacheDisplay(this::splitLines);
             int j = 9 + 1;
             int k = display$textdisplay$cachedinfo.width();
             int l = display$textdisplay$cachedinfo.lines().size() * j;
             matrix4f.translate(1.0F - (float)k / 2.0F, (float)(-l), 0.0F);
             if (i != 0) {
-                VertexConsumer vertexconsumer = p_277845_.getBuffer(flag ? RenderType.textBackgroundSeeThrough() : RenderType.textBackground());
-                vertexconsumer.addVertex(matrix4f, -1.0F, -1.0F, 0.0F).setColor(i).setLight(p_278046_);
-                vertexconsumer.addVertex(matrix4f, -1.0F, (float)l, 0.0F).setColor(i).setLight(p_278046_);
-                vertexconsumer.addVertex(matrix4f, (float)k, (float)l, 0.0F).setColor(i).setLight(p_278046_);
-                vertexconsumer.addVertex(matrix4f, (float)k, -1.0F, 0.0F).setColor(i).setLight(p_278046_);
+                VertexConsumer vertexconsumer = buffer.getBuffer(flag ? RenderType.textBackgroundSeeThrough() : RenderType.textBackground());
+                vertexconsumer.addVertex(matrix4f, -1.0F, -1.0F, 0.0F).setColor(i).setLight(lightmapUV);
+                vertexconsumer.addVertex(matrix4f, -1.0F, (float)l, 0.0F).setColor(i).setLight(lightmapUV);
+                vertexconsumer.addVertex(matrix4f, (float)k, (float)l, 0.0F).setColor(i).setLight(lightmapUV);
+                vertexconsumer.addVertex(matrix4f, (float)k, -1.0F, 0.0F).setColor(i).setLight(lightmapUV);
             }
 
             for (Display.TextDisplay.CachedLine display$textdisplay$cachedline : display$textdisplay$cachedinfo.lines()) {
@@ -241,10 +244,10 @@ public abstract class DisplayRenderer<T extends Display, S> extends EntityRender
                         b1 << 24 | 16777215,
                         flag2,
                         matrix4f,
-                        p_277845_,
+                        buffer,
                         flag ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.POLYGON_OFFSET,
                         0,
-                        p_278046_
+                        lightmapUV
                     );
                 f2 += (float)j;
             }

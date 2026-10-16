@@ -70,38 +70,38 @@ public class BlockEntityWithoutLevelRenderer implements ResourceManagerReloadLis
     private final BlockEntityRenderDispatcher blockEntityRenderDispatcher;
     private final EntityModelSet entityModelSet;
 
-    public BlockEntityWithoutLevelRenderer(BlockEntityRenderDispatcher p_172550_, EntityModelSet p_172551_) {
-        this.blockEntityRenderDispatcher = p_172550_;
-        this.entityModelSet = p_172551_;
+    public BlockEntityWithoutLevelRenderer(BlockEntityRenderDispatcher blockEntityRenderDispatcher, EntityModelSet entityModelSet) {
+        this.blockEntityRenderDispatcher = blockEntityRenderDispatcher;
+        this.entityModelSet = entityModelSet;
     }
 
     @Override
-    public void onResourceManagerReload(ResourceManager p_172555_) {
+    public void onResourceManagerReload(ResourceManager resourceManager) {
         this.shieldModel = new ShieldModel(this.entityModelSet.bakeLayer(ModelLayers.SHIELD));
         this.tridentModel = new TridentModel(this.entityModelSet.bakeLayer(ModelLayers.TRIDENT));
         this.skullModels = SkullBlockRenderer.createSkullRenderers(this.entityModelSet);
     }
 
-    public void renderByItem(ItemStack p_108830_, ItemDisplayContext p_270899_, PoseStack p_108832_, MultiBufferSource p_108833_, int p_108834_, int p_108835_) {
-        Item item = p_108830_.getItem();
+    public void renderByItem(ItemStack stack, ItemDisplayContext displayContext, PoseStack poseStack, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        Item item = stack.getItem();
         if (item instanceof BlockItem) {
             Block block = ((BlockItem)item).getBlock();
             if (block instanceof AbstractSkullBlock abstractskullblock) {
-                ResolvableProfile resolvableprofile = p_108830_.get(DataComponents.PROFILE);
+                ResolvableProfile resolvableprofile = stack.get(DataComponents.PROFILE);
                 if (resolvableprofile != null && !resolvableprofile.isResolved()) {
-                    p_108830_.remove(DataComponents.PROFILE);
-                    resolvableprofile.resolve().thenAcceptAsync(p_329787_ -> p_108830_.set(DataComponents.PROFILE, p_329787_), Minecraft.getInstance());
+                    stack.remove(DataComponents.PROFILE);
+                    resolvableprofile.resolve().thenAcceptAsync(p_329787_ -> stack.set(DataComponents.PROFILE, p_329787_), Minecraft.getInstance());
                     resolvableprofile = null;
                 }
 
                 SkullModelBase skullmodelbase = this.skullModels.get(abstractskullblock.getType());
                 RenderType rendertype = SkullBlockRenderer.getRenderType(abstractskullblock.getType(), resolvableprofile);
-                SkullBlockRenderer.renderSkull(null, 180.0F, 0.0F, p_108832_, p_108833_, p_108834_, skullmodelbase, rendertype);
+                SkullBlockRenderer.renderSkull(null, 180.0F, 0.0F, poseStack, buffer, packedLight, skullmodelbase, rendertype);
             } else {
                 BlockState blockstate = block.defaultBlockState();
                 BlockEntity blockentity;
                 if (block instanceof AbstractBannerBlock) {
-                    this.banner.fromItem(p_108830_, ((AbstractBannerBlock)block).getColor());
+                    this.banner.fromItem(stack, ((AbstractBannerBlock)block).getColor());
                     blockentity = this.banner;
                 } else if (block instanceof BedBlock) {
                     this.bed.setColor(((BedBlock)block).getColor());
@@ -115,7 +115,7 @@ public class BlockEntityWithoutLevelRenderer implements ResourceManagerReloadLis
                 } else if (blockstate.is(Blocks.TRAPPED_CHEST)) {
                     blockentity = this.trappedChest;
                 } else if (blockstate.is(Blocks.DECORATED_POT)) {
-                    this.decoratedPot.setFromItem(p_108830_);
+                    this.decoratedPot.setFromItem(stack);
                     blockentity = this.decoratedPot;
                 } else {
                     if (!(block instanceof ShulkerBoxBlock)) {
@@ -130,45 +130,45 @@ public class BlockEntityWithoutLevelRenderer implements ResourceManagerReloadLis
                     }
                 }
 
-                this.blockEntityRenderDispatcher.renderItem(blockentity, p_108832_, p_108833_, p_108834_, p_108835_);
+                this.blockEntityRenderDispatcher.renderItem(blockentity, poseStack, buffer, packedLight, packedOverlay);
             }
         } else {
-            if (p_108830_.is(Items.SHIELD)) {
-                BannerPatternLayers bannerpatternlayers = p_108830_.getOrDefault(DataComponents.BANNER_PATTERNS, BannerPatternLayers.EMPTY);
-                DyeColor dyecolor = p_108830_.get(DataComponents.BASE_COLOR);
+            if (stack.is(Items.SHIELD)) {
+                BannerPatternLayers bannerpatternlayers = stack.getOrDefault(DataComponents.BANNER_PATTERNS, BannerPatternLayers.EMPTY);
+                DyeColor dyecolor = stack.get(DataComponents.BASE_COLOR);
                 boolean flag = !bannerpatternlayers.layers().isEmpty() || dyecolor != null;
-                p_108832_.pushPose();
-                p_108832_.scale(1.0F, -1.0F, -1.0F);
+                poseStack.pushPose();
+                poseStack.scale(1.0F, -1.0F, -1.0F);
                 Material material = flag ? ModelBakery.SHIELD_BASE : ModelBakery.NO_PATTERN_SHIELD;
                 VertexConsumer vertexconsumer = material.sprite()
-                    .wrap(ItemRenderer.getFoilBufferDirect(p_108833_, this.shieldModel.renderType(material.atlasLocation()), true, p_108830_.hasFoil()));
-                this.shieldModel.handle().render(p_108832_, vertexconsumer, p_108834_, p_108835_);
+                    .wrap(ItemRenderer.getFoilBufferDirect(buffer, this.shieldModel.renderType(material.atlasLocation()), true, stack.hasFoil()));
+                this.shieldModel.handle().render(poseStack, vertexconsumer, packedLight, packedOverlay);
                 if (flag) {
                     BannerRenderer.renderPatterns(
-                        p_108832_,
-                        p_108833_,
-                        p_108834_,
-                        p_108835_,
+                        poseStack,
+                        buffer,
+                        packedLight,
+                        packedOverlay,
                         this.shieldModel.plate(),
                         material,
                         false,
                         Objects.requireNonNullElse(dyecolor, DyeColor.WHITE),
                         bannerpatternlayers,
-                        p_108830_.hasFoil()
+                        stack.hasFoil()
                     );
                 } else {
-                    this.shieldModel.plate().render(p_108832_, vertexconsumer, p_108834_, p_108835_);
+                    this.shieldModel.plate().render(poseStack, vertexconsumer, packedLight, packedOverlay);
                 }
 
-                p_108832_.popPose();
-            } else if (p_108830_.is(Items.TRIDENT)) {
-                p_108832_.pushPose();
-                p_108832_.scale(1.0F, -1.0F, -1.0F);
+                poseStack.popPose();
+            } else if (stack.is(Items.TRIDENT)) {
+                poseStack.pushPose();
+                poseStack.scale(1.0F, -1.0F, -1.0F);
                 VertexConsumer vertexconsumer1 = ItemRenderer.getFoilBufferDirect(
-                    p_108833_, this.tridentModel.renderType(TridentModel.TEXTURE), false, p_108830_.hasFoil()
+                    buffer, this.tridentModel.renderType(TridentModel.TEXTURE), false, stack.hasFoil()
                 );
-                this.tridentModel.renderToBuffer(p_108832_, vertexconsumer1, p_108834_, p_108835_);
-                p_108832_.popPose();
+                this.tridentModel.renderToBuffer(poseStack, vertexconsumer1, packedLight, packedOverlay);
+                poseStack.popPose();
             }
         }
     }

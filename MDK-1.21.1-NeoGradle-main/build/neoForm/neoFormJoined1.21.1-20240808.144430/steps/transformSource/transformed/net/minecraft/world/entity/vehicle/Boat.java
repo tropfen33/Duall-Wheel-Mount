@@ -90,17 +90,17 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
     @Nullable
     private Leashable.LeashData leashData;
 
-    public Boat(EntityType<? extends Boat> p_38290_, Level p_38291_) {
-        super(p_38290_, p_38291_);
+    public Boat(EntityType<? extends Boat> entityType, Level level) {
+        super(entityType, level);
         this.blocksBuilding = true;
     }
 
-    public Boat(Level p_38293_, double p_38294_, double p_38295_, double p_38296_) {
-        this(EntityType.BOAT, p_38293_);
-        this.setPos(p_38294_, p_38295_, p_38296_);
-        this.xo = p_38294_;
-        this.yo = p_38295_;
-        this.zo = p_38296_;
+    public Boat(Level level, double x, double y, double z) {
+        this(EntityType.BOAT, level);
+        this.setPos(x, y, z);
+        this.xo = x;
+        this.yo = y;
+        this.zo = z;
     }
 
     @Override
@@ -109,21 +109,21 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326198_) {
-        super.defineSynchedData(p_326198_);
-        p_326198_.define(DATA_ID_TYPE, Boat.Type.OAK.ordinal());
-        p_326198_.define(DATA_ID_PADDLE_LEFT, false);
-        p_326198_.define(DATA_ID_PADDLE_RIGHT, false);
-        p_326198_.define(DATA_ID_BUBBLE_TIME, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_ID_TYPE, Boat.Type.OAK.ordinal());
+        builder.define(DATA_ID_PADDLE_LEFT, false);
+        builder.define(DATA_ID_PADDLE_RIGHT, false);
+        builder.define(DATA_ID_BUBBLE_TIME, 0);
     }
 
     @Override
-    public boolean canCollideWith(Entity p_38376_) {
-        return canVehicleCollide(this, p_38376_);
+    public boolean canCollideWith(Entity entity) {
+        return canVehicleCollide(this, entity);
     }
 
-    public static boolean canVehicleCollide(Entity p_38324_, Entity p_38325_) {
-        return (p_38325_.canBeCollidedWith() || p_38325_.isPushable()) && !p_38324_.isPassengerOfSameVehicle(p_38325_);
+    public static boolean canVehicleCollide(Entity vehicle, Entity entity) {
+        return (entity.canBeCollidedWith() || entity.isPushable()) && !vehicle.isPassengerOfSameVehicle(entity);
     }
 
     @Override
@@ -137,35 +137,35 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
     }
 
     @Override
-    public Vec3 getRelativePortalPosition(Direction.Axis p_38335_, BlockUtil.FoundRectangle p_38336_) {
-        return LivingEntity.resetForwardDirectionOfRelativePortalPosition(super.getRelativePortalPosition(p_38335_, p_38336_));
+    public Vec3 getRelativePortalPosition(Direction.Axis axis, BlockUtil.FoundRectangle portal) {
+        return LivingEntity.resetForwardDirectionOfRelativePortalPosition(super.getRelativePortalPosition(axis, portal));
     }
 
     @Override
-    protected Vec3 getPassengerAttachmentPoint(Entity p_294665_, EntityDimensions p_295933_, float p_295585_) {
+    protected Vec3 getPassengerAttachmentPoint(Entity entity, EntityDimensions dimensions, float partialTick) {
         float f = this.getSinglePassengerXOffset();
         if (this.getPassengers().size() > 1) {
-            int i = this.getPassengers().indexOf(p_294665_);
+            int i = this.getPassengers().indexOf(entity);
             if (i == 0) {
                 f = 0.2F;
             } else {
                 f = -0.6F;
             }
 
-            if (p_294665_ instanceof Animal) {
+            if (entity instanceof Animal) {
                 f += 0.2F;
             }
         }
 
-        return new Vec3(0.0, this.getVariant().isRaft() ? (double)(p_295933_.height() * 0.8888889F) : (double)(p_295933_.height() / 3.0F), (double)f)
+        return new Vec3(0.0, this.getVariant().isRaft() ? (double)(dimensions.height() * 0.8888889F) : (double)(dimensions.height() / 3.0F), (double)f)
             .yRot(-this.getYRot() * (float) (Math.PI / 180.0));
     }
 
     @Override
-    public void onAboveBubbleCol(boolean p_38381_) {
+    public void onAboveBubbleCol(boolean downwards) {
         if (!this.level().isClientSide) {
             this.isAboveBubbleColumn = true;
-            this.bubbleColumnDirectionIsDown = p_38381_;
+            this.bubbleColumnDirectionIsDown = downwards;
             if (this.getBubbleTime() == 0) {
                 this.setBubbleTime(60);
             }
@@ -190,14 +190,17 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
         }
     }
 
+    /**
+     * Applies a velocity to the entities, to push them away from each other.
+     */
     @Override
-    public void push(Entity p_38373_) {
-        if (p_38373_ instanceof Boat) {
-            if (p_38373_.getBoundingBox().minY < this.getBoundingBox().maxY) {
-                super.push(p_38373_);
+    public void push(Entity entity) {
+        if (entity instanceof Boat) {
+            if (entity.getBoundingBox().minY < this.getBoundingBox().maxY) {
+                super.push(entity);
             }
-        } else if (p_38373_.getBoundingBox().minY <= this.getBoundingBox().minY) {
-            super.push(p_38373_);
+        } else if (entity.getBoundingBox().minY <= this.getBoundingBox().minY) {
+            super.push(entity);
         }
     }
 
@@ -218,7 +221,7 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
     }
 
     @Override
-    public void animateHurt(float p_265761_) {
+    public void animateHurt(float yaw) {
         this.setHurtDir(-this.getHurtDir());
         this.setHurtTime(10);
         this.setDamage(this.getDamage() * 11.0F);
@@ -230,12 +233,12 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
     }
 
     @Override
-    public void lerpTo(double p_38299_, double p_38300_, double p_38301_, float p_38302_, float p_38303_, int p_38304_) {
-        this.lerpX = p_38299_;
-        this.lerpY = p_38300_;
-        this.lerpZ = p_38301_;
-        this.lerpYRot = (double)p_38302_;
-        this.lerpXRot = (double)p_38303_;
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+        this.lerpX = x;
+        this.lerpY = y;
+        this.lerpZ = z;
+        this.lerpYRot = (double)yRot;
+        this.lerpXRot = (double)xRot;
         this.lerpSteps = 10;
     }
 
@@ -428,14 +431,14 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
         }
     }
 
-    public void setPaddleState(boolean p_38340_, boolean p_38341_) {
-        this.entityData.set(DATA_ID_PADDLE_LEFT, p_38340_);
-        this.entityData.set(DATA_ID_PADDLE_RIGHT, p_38341_);
+    public void setPaddleState(boolean left, boolean right) {
+        this.entityData.set(DATA_ID_PADDLE_LEFT, left);
+        this.entityData.set(DATA_ID_PADDLE_RIGHT, right);
     }
 
-    public float getRowingTime(int p_38316_, float p_38317_) {
-        return this.getPaddleState(p_38316_)
-            ? Mth.clampedLerp(this.paddlePositions[p_38316_] - (float) (Math.PI / 8), this.paddlePositions[p_38316_], p_38317_)
+    public float getRowingTime(int side, float limbSwing) {
+        return this.getPaddleState(side)
+            ? Mth.clampedLerp(this.paddlePositions[side] - (float) (Math.PI / 8), this.paddlePositions[side], limbSwing)
             : 0.0F;
     }
 
@@ -446,8 +449,8 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
     }
 
     @Override
-    public void setLeashData(@Nullable Leashable.LeashData p_352187_) {
-        this.leashData = p_352187_;
+    public void setLeashData(@Nullable Leashable.LeashData leashData) {
+        this.leashData = leashData;
     }
 
     @Override
@@ -456,8 +459,8 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
     }
 
     @Override
-    public void elasticRangeLeashBehaviour(Entity p_353067_, float p_353071_) {
-        Vec3 vec3 = p_353067_.position().subtract(this.position()).normalize().scale((double)p_353071_ - 6.0);
+    public void elasticRangeLeashBehaviour(Entity leashHolder, float distance) {
+        Vec3 vec3 = leashHolder.position().subtract(this.position()).normalize().scale((double)distance - 6.0);
         Vec3 vec31 = this.getDeltaMovement();
         boolean flag = vec31.dot(vec3) > 0.0;
         this.setDeltaMovement(vec31.add(vec3.scale(flag ? 0.15F : 0.2F)));
@@ -707,28 +710,28 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
         return 0.0F;
     }
 
-    public boolean hasEnoughSpaceFor(Entity p_273171_) {
-        return p_273171_.getBbWidth() < this.getBbWidth();
+    public boolean hasEnoughSpaceFor(Entity entity) {
+        return entity.getBbWidth() < this.getBbWidth();
     }
 
     @Override
-    protected void positionRider(Entity p_289552_, Entity.MoveFunction p_289571_) {
-        super.positionRider(p_289552_, p_289571_);
-        if (!p_289552_.getType().is(EntityTypeTags.CAN_TURN_IN_BOATS)) {
-            p_289552_.setYRot(p_289552_.getYRot() + this.deltaRotation);
-            p_289552_.setYHeadRot(p_289552_.getYHeadRot() + this.deltaRotation);
-            this.clampRotation(p_289552_);
-            if (p_289552_ instanceof Animal && this.getPassengers().size() == this.getMaxPassengers()) {
-                int i = p_289552_.getId() % 2 == 0 ? 90 : 270;
-                p_289552_.setYBodyRot(((Animal)p_289552_).yBodyRot + (float)i);
-                p_289552_.setYHeadRot(p_289552_.getYHeadRot() + (float)i);
+    protected void positionRider(Entity passenger, Entity.MoveFunction callback) {
+        super.positionRider(passenger, callback);
+        if (!passenger.getType().is(EntityTypeTags.CAN_TURN_IN_BOATS)) {
+            passenger.setYRot(passenger.getYRot() + this.deltaRotation);
+            passenger.setYHeadRot(passenger.getYHeadRot() + this.deltaRotation);
+            this.clampRotation(passenger);
+            if (passenger instanceof Animal && this.getPassengers().size() == this.getMaxPassengers()) {
+                int i = passenger.getId() % 2 == 0 ? 90 : 270;
+                passenger.setYBodyRot(((Animal)passenger).yBodyRot + (float)i);
+                passenger.setYHeadRot(passenger.getYHeadRot() + (float)i);
             }
         }
     }
 
     @Override
-    public Vec3 getDismountLocationForPassenger(LivingEntity p_38357_) {
-        Vec3 vec3 = getCollisionHorizontalEscapeVector((double)(this.getBbWidth() * Mth.SQRT_OF_TWO), (double)p_38357_.getBbWidth(), p_38357_.getYRot());
+    public Vec3 getDismountLocationForPassenger(LivingEntity livingEntity) {
+        Vec3 vec3 = getCollisionHorizontalEscapeVector((double)(this.getBbWidth() * Mth.SQRT_OF_TWO), (double)livingEntity.getBbWidth(), livingEntity.getYRot());
         double d0 = this.getX() + vec3.x;
         double d1 = this.getZ() + vec3.z;
         BlockPos blockpos = BlockPos.containing(d0, this.getBoundingBox().maxY, d1);
@@ -745,57 +748,66 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
                 list.add(new Vec3(d0, (double)blockpos1.getY() + d3, d1));
             }
 
-            for (Pose pose : p_38357_.getDismountPoses()) {
+            for (Pose pose : livingEntity.getDismountPoses()) {
                 for (Vec3 vec31 : list) {
-                    if (DismountHelper.canDismountTo(this.level(), vec31, p_38357_, pose)) {
-                        p_38357_.setPose(pose);
+                    if (DismountHelper.canDismountTo(this.level(), vec31, livingEntity, pose)) {
+                        livingEntity.setPose(pose);
                         return vec31;
                     }
                 }
             }
         }
 
-        return super.getDismountLocationForPassenger(p_38357_);
+        return super.getDismountLocationForPassenger(livingEntity);
     }
 
-    protected void clampRotation(Entity p_38322_) {
-        p_38322_.setYBodyRot(this.getYRot());
-        float f = Mth.wrapDegrees(p_38322_.getYRot() - this.getYRot());
+    /**
+     * Applies this boat's yaw to the given entity. Used to update the orientation of its passenger.
+     */
+    protected void clampRotation(Entity entityToUpdate) {
+        entityToUpdate.setYBodyRot(this.getYRot());
+        float f = Mth.wrapDegrees(entityToUpdate.getYRot() - this.getYRot());
         float f1 = Mth.clamp(f, -105.0F, 105.0F);
-        p_38322_.yRotO += f1 - f;
-        p_38322_.setYRot(p_38322_.getYRot() + f1 - f);
-        p_38322_.setYHeadRot(p_38322_.getYRot());
+        entityToUpdate.yRotO += f1 - f;
+        entityToUpdate.setYRot(entityToUpdate.getYRot() + f1 - f);
+        entityToUpdate.setYHeadRot(entityToUpdate.getYRot());
+    }
+
+    /**
+     * Applies this entity's orientation (pitch/yaw) to another entity. Used to update passenger orientation.
+     */
+    @Override
+    public void onPassengerTurned(Entity entityToUpdate) {
+        this.clampRotation(entityToUpdate);
     }
 
     @Override
-    public void onPassengerTurned(Entity p_38383_) {
-        this.clampRotation(p_38383_);
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        this.writeLeashData(compound, this.leashData);
+        compound.putString("Type", this.getVariant().getSerializedName());
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_38359_) {
-        this.writeLeashData(p_38359_, this.leashData);
-        p_38359_.putString("Type", this.getVariant().getSerializedName());
-    }
-
-    @Override
-    protected void readAdditionalSaveData(CompoundTag p_38338_) {
-        this.leashData = this.readLeashData(p_38338_);
-        if (p_38338_.contains("Type", 8)) {
-            this.setVariant(Boat.Type.byName(p_38338_.getString("Type")));
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        this.leashData = this.readLeashData(compound);
+        if (compound.contains("Type", 8)) {
+            this.setVariant(Boat.Type.byName(compound.getString("Type")));
         }
     }
 
     @Override
-    public InteractionResult interact(Player p_38330_, InteractionHand p_38331_) {
-        InteractionResult interactionresult = super.interact(p_38330_, p_38331_);
+    public InteractionResult interact(Player player, InteractionHand hand) {
+        InteractionResult interactionresult = super.interact(player, hand);
         if (interactionresult != InteractionResult.PASS) {
             return interactionresult;
-        } else if (p_38330_.isSecondaryUseActive()) {
+        } else if (player.isSecondaryUseActive()) {
             return InteractionResult.PASS;
         } else if (this.outOfControlTicks < 60.0F) {
             if (!this.level().isClientSide) {
-                return p_38330_.startRiding(this) ? InteractionResult.CONSUME : InteractionResult.PASS;
+                return player.startRiding(this) ? InteractionResult.CONSUME : InteractionResult.PASS;
             } else {
                 return InteractionResult.SUCCESS;
             }
@@ -805,19 +817,19 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
     }
 
     @Override
-    public void remove(Entity.RemovalReason p_352927_) {
-        if (!this.level().isClientSide && p_352927_.shouldDestroy() && this.isLeashed()) {
+    public void remove(Entity.RemovalReason reason) {
+        if (!this.level().isClientSide && reason.shouldDestroy() && this.isLeashed()) {
             this.dropLeash(true, true);
         }
 
-        super.remove(p_352927_);
+        super.remove(reason);
     }
 
     @Override
-    protected void checkFallDamage(double p_38307_, boolean p_38308_, BlockState p_38309_, BlockPos p_38310_) {
+    protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
         this.lastYd = this.getDeltaMovement().y;
         if (!this.isPassenger()) {
-            if (p_38308_) {
+            if (onGround) {
                 if (this.fallDistance > 3.0F) {
                     if (this.status != Boat.Status.ON_LAND) {
                         this.resetFallDistance();
@@ -841,30 +853,30 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
                 }
 
                 this.resetFallDistance();
-            } else if (!this.canBoatInFluid(this.level().getFluidState(this.blockPosition().below())) && p_38307_ < 0.0D) {
-                this.fallDistance -= (float)p_38307_;
+            } else if (!this.canBoatInFluid(this.level().getFluidState(this.blockPosition().below())) && y < 0.0D) {
+                this.fallDistance -= (float)y;
             }
         }
     }
 
-    public boolean getPaddleState(int p_38314_) {
-        return this.entityData.get(p_38314_ == 0 ? DATA_ID_PADDLE_LEFT : DATA_ID_PADDLE_RIGHT) && this.getControllingPassenger() != null;
+    public boolean getPaddleState(int side) {
+        return this.entityData.get(side == 0 ? DATA_ID_PADDLE_LEFT : DATA_ID_PADDLE_RIGHT) && this.getControllingPassenger() != null;
     }
 
-    private void setBubbleTime(int p_38367_) {
-        this.entityData.set(DATA_ID_BUBBLE_TIME, p_38367_);
+    private void setBubbleTime(int bubbleTime) {
+        this.entityData.set(DATA_ID_BUBBLE_TIME, bubbleTime);
     }
 
     private int getBubbleTime() {
         return this.entityData.get(DATA_ID_BUBBLE_TIME);
     }
 
-    public float getBubbleAngle(float p_38353_) {
-        return Mth.lerp(p_38353_, this.bubbleAngleO, this.bubbleAngle);
+    public float getBubbleAngle(float partialTicks) {
+        return Mth.lerp(partialTicks, this.bubbleAngleO, this.bubbleAngle);
     }
 
-    public void setVariant(Boat.Type p_38333_) {
-        this.entityData.set(DATA_ID_TYPE, p_38333_.ordinal());
+    public void setVariant(Boat.Type variant) {
+        this.entityData.set(DATA_ID_TYPE, variant.ordinal());
     }
 
     public Boat.Type getVariant() {
@@ -872,7 +884,7 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
     }
 
     @Override
-    protected boolean canAddPassenger(Entity p_38390_) {
+    protected boolean canAddPassenger(Entity passenger) {
         return this.getPassengers().size() < this.getMaxPassengers() && !this.canBoatInFluid(this.getEyeInFluidType());
     }
 
@@ -886,11 +898,11 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
         return this.getFirstPassenger() instanceof LivingEntity livingentity ? livingentity : super.getControllingPassenger();
     }
 
-    public void setInput(boolean p_38343_, boolean p_38344_, boolean p_38345_, boolean p_38346_) {
-        this.inputLeft = p_38343_;
-        this.inputRight = p_38344_;
-        this.inputUp = p_38345_;
-        this.inputDown = p_38346_;
+    public void setInput(boolean inputLeft, boolean inputRight, boolean inputUp, boolean inputDown) {
+        this.inputLeft = inputLeft;
+        this.inputRight = inputRight;
+        this.inputUp = inputUp;
+        this.inputDown = inputDown;
     }
 
     @Override
@@ -942,15 +954,15 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
         private static final IntFunction<Boat.Type> BY_ID = ByIdMap.continuous(Enum::ordinal, values(), ByIdMap.OutOfBoundsStrategy.ZERO);
 
         @net.neoforged.fml.common.asm.enumextension.ReservedConstructor
-        private Type(Block p_38427_, String p_38428_) {
-            this(p_38427_, p_38428_, false);
+        private Type(Block planks, String name) {
+            this(planks, name, false);
         }
 
         @net.neoforged.fml.common.asm.enumextension.ReservedConstructor
-        private Type(Block p_38427_, String p_38428_, boolean raft) {
-            this.name = p_38428_;
-            this.planks = p_38427_;
-            this.planksSupplier = () -> p_38427_;
+        private Type(Block planks, String name, boolean raft) {
+            this.name = name;
+            this.planks = planks;
+            this.planksSupplier = () -> planks;
             this.boatItem = () -> Items.AIR;
             this.chestBoatItem = () -> Items.AIR;
             this.stickItem = () -> Items.STICK;
@@ -1008,12 +1020,15 @@ public class Boat extends VehicleEntity implements Leashable, VariantHolder<Boat
             return this.name;
         }
 
-        public static Boat.Type byId(int p_38431_) {
-            return BY_ID.apply(p_38431_);
+        /**
+         * Get a boat type by its enum ordinal
+         */
+        public static Boat.Type byId(int id) {
+            return BY_ID.apply(id);
         }
 
-        public static Boat.Type byName(String p_38433_) {
-            return CODEC.byName(p_38433_, OAK);
+        public static Boat.Type byName(String name) {
+            return CODEC.byName(name, OAK);
         }
 
         public static net.neoforged.fml.common.asm.enumextension.ExtensionInfo getExtensionInfo() {

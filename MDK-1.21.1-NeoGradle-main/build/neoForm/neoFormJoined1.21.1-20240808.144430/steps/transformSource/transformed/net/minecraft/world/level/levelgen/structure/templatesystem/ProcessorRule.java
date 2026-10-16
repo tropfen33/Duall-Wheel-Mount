@@ -31,26 +31,36 @@ public class ProcessorRule {
     private final BlockState outputState;
     private final RuleBlockEntityModifier blockEntityModifier;
 
-    public ProcessorRule(RuleTest p_74223_, RuleTest p_74224_, BlockState p_74225_) {
-        this(p_74223_, p_74224_, PosAlwaysTrueTest.INSTANCE, p_74225_);
+    public ProcessorRule(RuleTest inputPredicate, RuleTest locPredicate, BlockState outputState) {
+        this(inputPredicate, locPredicate, PosAlwaysTrueTest.INSTANCE, outputState);
     }
 
-    public ProcessorRule(RuleTest p_74227_, RuleTest p_74228_, PosRuleTest p_74229_, BlockState p_74230_) {
-        this(p_74227_, p_74228_, p_74229_, p_74230_, DEFAULT_BLOCK_ENTITY_MODIFIER);
+    public ProcessorRule(RuleTest inputPredicate, RuleTest locPredicate, PosRuleTest posPredicate, BlockState outputState) {
+        this(inputPredicate, locPredicate, posPredicate, outputState, DEFAULT_BLOCK_ENTITY_MODIFIER);
     }
 
-    public ProcessorRule(RuleTest p_277678_, RuleTest p_277379_, PosRuleTest p_278018_, BlockState p_277412_, RuleBlockEntityModifier p_277808_) {
-        this.inputPredicate = p_277678_;
-        this.locPredicate = p_277379_;
-        this.posPredicate = p_278018_;
-        this.outputState = p_277412_;
-        this.blockEntityModifier = p_277808_;
+    public ProcessorRule(RuleTest inputPredicate, RuleTest locPredicate, PosRuleTest posPredicate, BlockState outputState, RuleBlockEntityModifier blockEntityModifier) {
+        this.inputPredicate = inputPredicate;
+        this.locPredicate = locPredicate;
+        this.posPredicate = posPredicate;
+        this.outputState = outputState;
+        this.blockEntityModifier = blockEntityModifier;
     }
 
-    public boolean test(BlockState p_230310_, BlockState p_230311_, BlockPos p_230312_, BlockPos p_230313_, BlockPos p_230314_, RandomSource p_230315_) {
-        return this.inputPredicate.test(p_230310_, p_230315_)
-            && this.locPredicate.test(p_230311_, p_230315_)
-            && this.posPredicate.test(p_230312_, p_230313_, p_230314_, p_230315_);
+    /**
+     * @param inputState    The incoming state from the structure.
+     * @param existingState The current state in the world.
+     * @param localPos      The local position of the target state, relative to the
+     *                      structure origin.
+     * @param relativePos   The actual position of the target state. {@code
+     *                      existingState} is the current in world state at this
+     *                      position.
+     * @param structurePos  The origin position of the structure.
+     */
+    public boolean test(BlockState inputState, BlockState existingState, BlockPos localPos, BlockPos relativePos, BlockPos structurePos, RandomSource random) {
+        return this.inputPredicate.test(inputState, random)
+            && this.locPredicate.test(existingState, random)
+            && this.posPredicate.test(localPos, relativePos, structurePos, random);
     }
 
     public BlockState getOutputState() {
@@ -58,7 +68,7 @@ public class ProcessorRule {
     }
 
     @Nullable
-    public CompoundTag getOutputTag(RandomSource p_277551_, @Nullable CompoundTag p_277867_) {
-        return this.blockEntityModifier.apply(p_277551_, p_277867_);
+    public CompoundTag getOutputTag(RandomSource random, @Nullable CompoundTag tag) {
+        return this.blockEntityModifier.apply(random, tag);
     }
 }

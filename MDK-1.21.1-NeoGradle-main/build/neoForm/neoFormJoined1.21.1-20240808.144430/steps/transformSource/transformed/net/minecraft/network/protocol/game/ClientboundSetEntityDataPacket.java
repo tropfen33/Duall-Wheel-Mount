@@ -18,28 +18,28 @@ public record ClientboundSetEntityDataPacket(int id, List<SynchedEntityData.Data
         this(p_319996_.readVarInt(), unpack(p_319996_));
     }
 
-    private static void pack(List<SynchedEntityData.DataValue<?>> p_253940_, RegistryFriendlyByteBuf p_320247_) {
-        for (SynchedEntityData.DataValue<?> datavalue : p_253940_) {
-            datavalue.write(p_320247_);
+    private static void pack(List<SynchedEntityData.DataValue<?>> dataValues, RegistryFriendlyByteBuf buffer) {
+        for (SynchedEntityData.DataValue<?> datavalue : dataValues) {
+            datavalue.write(buffer);
         }
 
-        p_320247_.writeByte(255);
+        buffer.writeByte(255);
     }
 
-    private static List<SynchedEntityData.DataValue<?>> unpack(RegistryFriendlyByteBuf p_320523_) {
+    private static List<SynchedEntityData.DataValue<?>> unpack(RegistryFriendlyByteBuf buffer) {
         List<SynchedEntityData.DataValue<?>> list = new ArrayList<>();
 
         int i;
-        while ((i = p_320523_.readUnsignedByte()) != 255) {
-            list.add(SynchedEntityData.DataValue.read(p_320523_, i));
+        while ((i = buffer.readUnsignedByte()) != 255) {
+            list.add(SynchedEntityData.DataValue.read(buffer, i));
         }
 
         return list;
     }
 
-    private void write(RegistryFriendlyByteBuf p_320560_) {
-        p_320560_.writeVarInt(this.id);
-        pack(this.packedItems, p_320560_);
+    private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.id);
+        pack(this.packedItems, buffer);
     }
 
     @Override
@@ -47,7 +47,10 @@ public record ClientboundSetEntityDataPacket(int id, List<SynchedEntityData.Data
         return GamePacketTypes.CLIENTBOUND_SET_ENTITY_DATA;
     }
 
-    public void handle(ClientGamePacketListener p_133155_) {
-        p_133155_.handleSetEntityData(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleSetEntityData(this);
     }
 }

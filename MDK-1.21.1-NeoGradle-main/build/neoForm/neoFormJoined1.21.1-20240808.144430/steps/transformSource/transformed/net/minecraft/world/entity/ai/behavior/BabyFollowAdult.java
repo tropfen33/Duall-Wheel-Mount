@@ -11,11 +11,11 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
 
 public class BabyFollowAdult {
-    public static OneShot<AgeableMob> create(UniformInt p_260109_, float p_259621_) {
-        return create(p_260109_, p_147421_ -> p_259621_);
+    public static OneShot<AgeableMob> create(UniformInt followRange, float speedModifier) {
+        return create(followRange, p_147421_ -> speedModifier);
     }
 
-    public static OneShot<AgeableMob> create(UniformInt p_259321_, Function<LivingEntity, Float> p_259190_) {
+    public static OneShot<AgeableMob> create(UniformInt followRange, Function<LivingEntity, Float> speedModifier) {
         return BehaviorBuilder.create(
             p_258331_ -> p_258331_.group(
                         p_258331_.present(MemoryModuleType.NEAREST_VISIBLE_ADULT),
@@ -29,10 +29,10 @@ public class BabyFollowAdult {
                                     return false;
                                 } else {
                                     AgeableMob ageablemob = p_258331_.get(p_258317_);
-                                    if (p_258327_.closerThan(ageablemob, (double)(p_259321_.getMaxValue() + 1))
-                                        && !p_258327_.closerThan(ageablemob, (double)p_259321_.getMinValue())) {
+                                    if (p_258327_.closerThan(ageablemob, (double)(followRange.getMaxValue() + 1))
+                                        && !p_258327_.closerThan(ageablemob, (double)followRange.getMinValue())) {
                                         WalkTarget walktarget = new WalkTarget(
-                                            new EntityTracker(ageablemob, false), p_259190_.apply(p_258327_), p_259321_.getMinValue() - 1
+                                            new EntityTracker(ageablemob, false), speedModifier.apply(p_258327_), followRange.getMinValue() - 1
                                         );
                                         p_258318_.set(new EntityTracker(ageablemob, true));
                                         p_258319_.set(walktarget);

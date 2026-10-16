@@ -36,18 +36,18 @@ public class ExperienceOrb extends Entity {
     private int count = 1;
     private Player followingPlayer;
 
-    public ExperienceOrb(Level p_20776_, double p_20777_, double p_20778_, double p_20779_, int p_20780_) {
-        this(EntityType.EXPERIENCE_ORB, p_20776_);
-        this.setPos(p_20777_, p_20778_, p_20779_);
+    public ExperienceOrb(Level level, double x, double y, double z, int value) {
+        this(EntityType.EXPERIENCE_ORB, level);
+        this.setPos(x, y, z);
         this.setYRot((float)(this.random.nextDouble() * 360.0));
         this.setDeltaMovement(
             (this.random.nextDouble() * 0.2F - 0.1F) * 2.0, this.random.nextDouble() * 0.2 * 2.0, (this.random.nextDouble() * 0.2F - 0.1F) * 2.0
         );
-        this.value = p_20780_;
+        this.value = value;
     }
 
-    public ExperienceOrb(EntityType<? extends ExperienceOrb> p_20773_, Level p_20774_) {
-        super(p_20773_, p_20774_);
+    public ExperienceOrb(EntityType<? extends ExperienceOrb> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
@@ -56,7 +56,7 @@ public class ExperienceOrb extends Entity {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_325930_) {
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
     }
 
     @Override
@@ -145,20 +145,20 @@ public class ExperienceOrb extends Entity {
         }
     }
 
-    public static void award(ServerLevel p_147083_, Vec3 p_147084_, int p_147085_) {
-        while (p_147085_ > 0) {
-            int i = getExperienceValue(p_147085_);
-            p_147085_ -= i;
-            if (!tryMergeToExisting(p_147083_, p_147084_, i)) {
-                p_147083_.addFreshEntity(new ExperienceOrb(p_147083_, p_147084_.x(), p_147084_.y(), p_147084_.z(), i));
+    public static void award(ServerLevel level, Vec3 pos, int amount) {
+        while (amount > 0) {
+            int i = getExperienceValue(amount);
+            amount -= i;
+            if (!tryMergeToExisting(level, pos, i)) {
+                level.addFreshEntity(new ExperienceOrb(level, pos.x(), pos.y(), pos.z(), i));
             }
         }
     }
 
-    private static boolean tryMergeToExisting(ServerLevel p_147097_, Vec3 p_147098_, int p_147099_) {
-        AABB aabb = AABB.ofSize(p_147098_, 1.0, 1.0, 1.0);
-        int i = p_147097_.getRandom().nextInt(40);
-        List<ExperienceOrb> list = p_147097_.getEntities(EntityTypeTest.forClass(ExperienceOrb.class), aabb, p_147081_ -> canMerge(p_147081_, i, p_147099_));
+    private static boolean tryMergeToExisting(ServerLevel level, Vec3 pos, int amount) {
+        AABB aabb = AABB.ofSize(pos, 1.0, 1.0, 1.0);
+        int i = level.getRandom().nextInt(40);
+        List<ExperienceOrb> list = level.getEntities(EntityTypeTest.forClass(ExperienceOrb.class), aabb, p_147081_ -> canMerge(p_147081_, i, amount));
         if (!list.isEmpty()) {
             ExperienceOrb experienceorb = list.get(0);
             experienceorb.count++;
@@ -169,18 +169,18 @@ public class ExperienceOrb extends Entity {
         }
     }
 
-    private boolean canMerge(ExperienceOrb p_147087_) {
-        return p_147087_ != this && canMerge(p_147087_, this.getId(), this.value);
+    private boolean canMerge(ExperienceOrb orb) {
+        return orb != this && canMerge(orb, this.getId(), this.value);
     }
 
-    private static boolean canMerge(ExperienceOrb p_147089_, int p_147090_, int p_147091_) {
-        return !p_147089_.isRemoved() && (p_147089_.getId() - p_147090_) % 40 == 0 && p_147089_.value == p_147091_;
+    private static boolean canMerge(ExperienceOrb orb, int amount, int other) {
+        return !orb.isRemoved() && (orb.getId() - amount) % 40 == 0 && orb.value == other;
     }
 
-    private void merge(ExperienceOrb p_147101_) {
-        this.count = this.count + p_147101_.count;
-        this.age = Math.min(this.age, p_147101_.age);
-        p_147101_.discard();
+    private void merge(ExperienceOrb orb) {
+        this.count = this.count + orb.count;
+        this.age = Math.min(this.age, orb.age);
+        orb.discard();
     }
 
     private void setUnderwaterMovement() {
@@ -192,15 +192,18 @@ public class ExperienceOrb extends Entity {
     protected void doWaterSplashEffect() {
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_20785_, float p_20786_) {
-        if (this.isInvulnerableTo(p_20785_)) {
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isInvulnerableTo(source)) {
             return false;
         } else if (this.level().isClientSide) {
             return true;
         } else {
             this.markHurt();
-            this.health = (int)((float)this.health - p_20786_);
+            this.health = (int)((float)this.health - amount);
             if (this.health <= 0) {
                 this.discard();
             }
@@ -210,31 +213,37 @@ public class ExperienceOrb extends Entity {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_20796_) {
-        p_20796_.putShort("Health", (short)this.health);
-        p_20796_.putShort("Age", (short)this.age);
-        p_20796_.putShort("Value", (short)this.value);
-        p_20796_.putInt("Count", this.count);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        compound.putShort("Health", (short)this.health);
+        compound.putShort("Age", (short)this.age);
+        compound.putShort("Value", (short)this.value);
+        compound.putInt("Count", this.count);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_20788_) {
-        this.health = p_20788_.getShort("Health");
-        this.age = p_20788_.getShort("Age");
-        this.value = p_20788_.getShort("Value");
-        this.count = Math.max(p_20788_.getInt("Count"), 1);
+    public void readAdditionalSaveData(CompoundTag compound) {
+        this.health = compound.getShort("Health");
+        this.age = compound.getShort("Age");
+        this.value = compound.getShort("Value");
+        this.count = Math.max(compound.getInt("Count"), 1);
     }
 
+    /**
+     * Called by a player entity when they collide with an entity
+     */
     @Override
-    public void playerTouch(Player p_20792_) {
-        if (p_20792_ instanceof ServerPlayer serverplayer) {
-            if (p_20792_.takeXpDelay == 0) {
-                if (net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.player.PlayerXpEvent.PickupXp(p_20792_, this)).isCanceled()) return;
-                p_20792_.takeXpDelay = 2;
-                p_20792_.take(this, 1);
+    public void playerTouch(Player entity) {
+        if (entity instanceof ServerPlayer serverplayer) {
+            if (entity.takeXpDelay == 0) {
+                if (net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.player.PlayerXpEvent.PickupXp(entity, this)).isCanceled()) return;
+                entity.takeXpDelay = 2;
+                entity.take(this, 1);
                 int i = this.repairPlayerItems(serverplayer, this.value);
                 if (i > 0) {
-                    p_20792_.giveExperiencePoints(i);
+                    entity.giveExperiencePoints(i);
                 }
 
                 this.count--;
@@ -245,23 +254,23 @@ public class ExperienceOrb extends Entity {
         }
     }
 
-    private int repairPlayerItems(ServerPlayer p_344821_, int p_147094_) {
-        Optional<EnchantedItemInUse> optional = EnchantmentHelper.getRandomItemWith(EnchantmentEffectComponents.REPAIR_WITH_XP, p_344821_, ItemStack::isDamaged);
+    private int repairPlayerItems(ServerPlayer player, int value) {
+        Optional<EnchantedItemInUse> optional = EnchantmentHelper.getRandomItemWith(EnchantmentEffectComponents.REPAIR_WITH_XP, player, ItemStack::isDamaged);
         if (optional.isPresent()) {
             ItemStack itemstack = optional.get().itemStack();
-            int i = EnchantmentHelper.modifyDurabilityToRepairFromXp(p_344821_.serverLevel(), itemstack, (int) (p_147094_ * itemstack.getXpRepairRatio()));
+            int i = EnchantmentHelper.modifyDurabilityToRepairFromXp(player.serverLevel(), itemstack, (int) (value * itemstack.getXpRepairRatio()));
             int j = Math.min(i, itemstack.getDamageValue());
             itemstack.setDamageValue(itemstack.getDamageValue() - j);
             if (j > 0) {
-                int k = p_147094_ - j * p_147094_ / i;
+                int k = value - j * value / i;
                 if (k > 0) {
-                    return this.repairPlayerItems(p_344821_, k);
+                    return this.repairPlayerItems(player, k);
                 }
             }
 
             return 0;
         } else {
-            return p_147094_;
+            return value;
         }
     }
 
@@ -293,27 +302,30 @@ public class ExperienceOrb extends Entity {
         }
     }
 
-    public static int getExperienceValue(int p_20783_) {
-        if (p_20783_ >= 2477) {
+    /**
+     * Get a fragment of the maximum experience points value for the supplied value of experience points value.
+     */
+    public static int getExperienceValue(int expValue) {
+        if (expValue >= 2477) {
             return 2477;
-        } else if (p_20783_ >= 1237) {
+        } else if (expValue >= 1237) {
             return 1237;
-        } else if (p_20783_ >= 617) {
+        } else if (expValue >= 617) {
             return 617;
-        } else if (p_20783_ >= 307) {
+        } else if (expValue >= 307) {
             return 307;
-        } else if (p_20783_ >= 149) {
+        } else if (expValue >= 149) {
             return 149;
-        } else if (p_20783_ >= 73) {
+        } else if (expValue >= 73) {
             return 73;
-        } else if (p_20783_ >= 37) {
+        } else if (expValue >= 37) {
             return 37;
-        } else if (p_20783_ >= 17) {
+        } else if (expValue >= 17) {
             return 17;
-        } else if (p_20783_ >= 7) {
+        } else if (expValue >= 7) {
             return 7;
         } else {
-            return p_20783_ >= 3 ? 3 : 1;
+            return expValue >= 3 ? 3 : 1;
         }
     }
 
@@ -323,8 +335,8 @@ public class ExperienceOrb extends Entity {
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity p_352351_) {
-        return new ClientboundAddExperienceOrbPacket(this, p_352351_);
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
+        return new ClientboundAddExperienceOrbPacket(this, entity);
     }
 
     @Override

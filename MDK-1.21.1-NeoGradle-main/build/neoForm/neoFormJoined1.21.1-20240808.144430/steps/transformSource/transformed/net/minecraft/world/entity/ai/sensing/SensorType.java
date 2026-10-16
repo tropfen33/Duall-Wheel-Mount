@@ -53,15 +53,15 @@ public class SensorType<U extends Sensor<?>> {
     );
     private final Supplier<U> factory;
 
-    public SensorType(Supplier<U> p_26826_) {
-        this.factory = p_26826_;
+    public SensorType(Supplier<U> factory) {
+        this.factory = factory;
     }
 
     public U create() {
         return this.factory.get();
     }
 
-    private static <U extends Sensor<?>> SensorType<U> register(String p_26829_, Supplier<U> p_26830_) {
-        return Registry.register(BuiltInRegistries.SENSOR_TYPE, ResourceLocation.withDefaultNamespace(p_26829_), new SensorType<>(p_26830_));
+    private static <U extends Sensor<?>> SensorType<U> register(String key, Supplier<U> sensorSupplier) {
+        return Registry.register(BuiltInRegistries.SENSOR_TYPE, ResourceLocation.withDefaultNamespace(key), new SensorType<>(sensorSupplier));
     }
 }

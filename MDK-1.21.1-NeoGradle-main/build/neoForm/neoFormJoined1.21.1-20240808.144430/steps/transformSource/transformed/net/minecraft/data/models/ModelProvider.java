@@ -28,13 +28,13 @@ public class ModelProvider implements DataProvider {
     private final PackOutput.PathProvider blockStatePathProvider;
     private final PackOutput.PathProvider modelPathProvider;
 
-    public ModelProvider(PackOutput p_252226_) {
-        this.blockStatePathProvider = p_252226_.createPathProvider(PackOutput.Target.RESOURCE_PACK, "blockstates");
-        this.modelPathProvider = p_252226_.createPathProvider(PackOutput.Target.RESOURCE_PACK, "models");
+    public ModelProvider(PackOutput output) {
+        this.blockStatePathProvider = output.createPathProvider(PackOutput.Target.RESOURCE_PACK, "blockstates");
+        this.modelPathProvider = output.createPathProvider(PackOutput.Target.RESOURCE_PACK, "models");
     }
 
     @Override
-    public CompletableFuture<?> run(CachedOutput p_253790_) {
+    public CompletableFuture<?> run(CachedOutput output) {
         Map<Block, BlockStateGenerator> map = Maps.newHashMap();
         Consumer<BlockStateGenerator> consumer = p_339377_ -> {
             Block block = p_339377_.getBlock();
@@ -78,17 +78,17 @@ public class ModelProvider implements DataProvider {
                 }
             });
             return CompletableFuture.allOf(
-                this.saveCollection(p_253790_, map, p_248016_ -> this.blockStatePathProvider.json(p_248016_.builtInRegistryHolder().key().location())),
-                this.saveCollection(p_253790_, map1, this.modelPathProvider::json)
+                this.saveCollection(output, map, p_248016_ -> this.blockStatePathProvider.json(p_248016_.builtInRegistryHolder().key().location())),
+                this.saveCollection(output, map1, this.modelPathProvider::json)
             );
         }
     }
 
-    private <T> CompletableFuture<?> saveCollection(CachedOutput p_254549_, Map<T, ? extends Supplier<JsonElement>> p_253779_, Function<T, Path> p_254013_) {
-        return CompletableFuture.allOf(p_253779_.entrySet().stream().map(p_253408_ -> {
-            Path path = p_254013_.apply(p_253408_.getKey());
+    private <T> CompletableFuture<?> saveCollection(CachedOutput output, Map<T, ? extends Supplier<JsonElement>> objectToJsonMap, Function<T, Path> resolveObjectPath) {
+        return CompletableFuture.allOf(objectToJsonMap.entrySet().stream().map(p_253408_ -> {
+            Path path = resolveObjectPath.apply(p_253408_.getKey());
             JsonElement jsonelement = p_253408_.getValue().get();
-            return DataProvider.saveStable(p_254549_, jsonelement, path);
+            return DataProvider.saveStable(output, jsonelement, path);
         }).toArray(CompletableFuture[]::new));
     }
 

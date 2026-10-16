@@ -5,28 +5,28 @@ import javax.annotation.Nullable;
 import net.minecraft.network.protocol.Packet;
 
 public interface PacketSendListener {
-    static PacketSendListener thenRun(final Runnable p_243267_) {
+    static PacketSendListener thenRun(final Runnable onSuccessOrFailure) {
         return new PacketSendListener() {
             @Override
             public void onSuccess() {
-                p_243267_.run();
+                onSuccessOrFailure.run();
             }
 
             @Nullable
             @Override
             public Packet<?> onFailure() {
-                p_243267_.run();
+                onSuccessOrFailure.run();
                 return null;
             }
         };
     }
 
-    static PacketSendListener exceptionallySend(final Supplier<Packet<?>> p_243289_) {
+    static PacketSendListener exceptionallySend(final Supplier<Packet<?>> exceptionalPacketSupplier) {
         return new PacketSendListener() {
             @Nullable
             @Override
             public Packet<?> onFailure() {
-                return p_243289_.get();
+                return exceptionalPacketSupplier.get();
             }
         };
     }

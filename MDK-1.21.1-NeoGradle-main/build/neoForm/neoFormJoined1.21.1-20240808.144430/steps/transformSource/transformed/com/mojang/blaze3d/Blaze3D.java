@@ -10,12 +10,12 @@ import org.lwjgl.system.MemoryUtil;
 
 @OnlyIn(Dist.CLIENT)
 public class Blaze3D {
-    public static void process(RenderPipeline p_166119_, float p_166120_) {
-        ConcurrentLinkedQueue<RenderCall> concurrentlinkedqueue = p_166119_.getRecordingQueue();
+    public static void process(RenderPipeline pipeline, float unknown) {
+        ConcurrentLinkedQueue<RenderCall> concurrentlinkedqueue = pipeline.getRecordingQueue();
     }
 
-    public static void render(RenderPipeline p_166122_, float p_166123_) {
-        ConcurrentLinkedQueue<RenderCall> concurrentlinkedqueue = p_166122_.getProcessedQueue();
+    public static void render(RenderPipeline pipeline, float unknown) {
+        ConcurrentLinkedQueue<RenderCall> concurrentlinkedqueue = pipeline.getProcessedQueue();
     }
 
     public static void youJustLostTheGame() {

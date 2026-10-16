@@ -10,7 +10,7 @@ public interface StructurePlacementType<SP extends StructurePlacement> {
 
     MapCodec<SP> codec();
 
-    private static <SP extends StructurePlacement> StructurePlacementType<SP> register(String p_205047_, MapCodec<SP> p_338696_) {
-        return Registry.register(BuiltInRegistries.STRUCTURE_PLACEMENT, p_205047_, () -> p_338696_);
+    private static <SP extends StructurePlacement> StructurePlacementType<SP> register(String name, MapCodec<SP> codec) {
+        return Registry.register(BuiltInRegistries.STRUCTURE_PLACEMENT, name, () -> codec);
     }
 }

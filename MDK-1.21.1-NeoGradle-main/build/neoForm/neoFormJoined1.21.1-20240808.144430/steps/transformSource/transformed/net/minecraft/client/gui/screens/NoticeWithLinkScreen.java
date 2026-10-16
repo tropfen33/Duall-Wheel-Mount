@@ -29,19 +29,19 @@ public class NoticeWithLinkScreen extends Screen {
     private final Runnable onClose;
     private final GridLayout layout = new GridLayout().rowSpacing(10);
 
-    public NoticeWithLinkScreen(Component p_294500_, Component p_296071_, URI p_352316_, Runnable p_307469_) {
-        super(p_294500_);
-        this.message = p_296071_;
-        this.uri = p_352316_;
-        this.onClose = p_307469_;
+    public NoticeWithLinkScreen(Component title, Component message, URI uri, Runnable onClose) {
+        super(title);
+        this.message = message;
+        this.uri = uri;
+        this.onClose = onClose;
     }
 
-    public static Screen createWorldSymlinkWarningScreen(Runnable p_307422_) {
-        return new NoticeWithLinkScreen(SYMLINK_WORLD_TITLE, SYMLINK_WORLD_MESSAGE_TEXT, CommonLinks.SYMLINK_HELP, p_307422_);
+    public static Screen createWorldSymlinkWarningScreen(Runnable onClose) {
+        return new NoticeWithLinkScreen(SYMLINK_WORLD_TITLE, SYMLINK_WORLD_MESSAGE_TEXT, CommonLinks.SYMLINK_HELP, onClose);
     }
 
-    public static Screen createPackSymlinkWarningScreen(Runnable p_307294_) {
-        return new NoticeWithLinkScreen(SYMLINK_PACK_TITLE, SYMLINK_PACK_MESSAGE_TEXT, CommonLinks.SYMLINK_HELP, p_307294_);
+    public static Screen createPackSymlinkWarningScreen(Runnable onClose) {
+        return new NoticeWithLinkScreen(SYMLINK_PACK_TITLE, SYMLINK_PACK_MESSAGE_TEXT, CommonLinks.SYMLINK_HELP, onClose);
     }
 
     @Override

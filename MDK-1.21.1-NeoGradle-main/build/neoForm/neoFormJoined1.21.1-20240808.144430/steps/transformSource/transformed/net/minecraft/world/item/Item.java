@@ -72,30 +72,30 @@ public class Item implements FeatureElement, ItemLike, net.neoforged.neoforge.co
     private String descriptionId;
     private final FeatureFlagSet requiredFeatures;
 
-    public static int getId(Item p_41394_) {
-        return p_41394_ == null ? 0 : BuiltInRegistries.ITEM.getId(p_41394_);
+    public static int getId(Item item) {
+        return item == null ? 0 : BuiltInRegistries.ITEM.getId(item);
     }
 
-    public static Item byId(int p_41446_) {
-        return BuiltInRegistries.ITEM.byId(p_41446_);
+    public static Item byId(int id) {
+        return BuiltInRegistries.ITEM.byId(id);
     }
 
     @Deprecated
-    public static Item byBlock(Block p_41440_) {
-        return BY_BLOCK.getOrDefault(p_41440_, Items.AIR);
+    public static Item byBlock(Block block) {
+        return BY_BLOCK.getOrDefault(block, Items.AIR);
     }
 
-    public Item(Item.Properties p_41383_) {
-        this.components = p_41383_.buildAndValidateComponents();
-        this.craftingRemainingItem = p_41383_.craftingRemainingItem;
-        this.requiredFeatures = p_41383_.requiredFeatures;
+    public Item(Item.Properties properties) {
+        this.components = properties.buildAndValidateComponents();
+        this.craftingRemainingItem = properties.craftingRemainingItem;
+        this.requiredFeatures = properties.requiredFeatures;
         if (SharedConstants.IS_RUNNING_IN_IDE && false) {
             String s = this.getClass().getSimpleName();
             if (!s.endsWith("Item")) {
                 LOGGER.error("Item classes should end with Item and {} doesn't.", s);
             }
         }
-        this.canRepair = p_41383_.canRepair;
+        this.canRepair = properties.canRepair;
     }
 
     @Deprecated
@@ -120,18 +120,25 @@ public class Item implements FeatureElement, ItemLike, net.neoforged.neoforge.co
         return this.components.getOrDefault(DataComponents.MAX_STACK_SIZE, 1);
     }
 
-    public void onUseTick(Level p_41428_, LivingEntity p_41429_, ItemStack p_41430_, int p_41431_) {
+    /**
+     * Called as the item is being used by an entity.
+     */
+    public void onUseTick(Level level, LivingEntity livingEntity, ItemStack stack, int remainingUseDuration) {
     }
 
-    /** @deprecated Forge: {@link net.neoforged.neoforge.common.extensions.IItemExtension#onDestroyed(ItemEntity, DamageSource) Use damage source sensitive version} */
+    /**
+ * @deprecated Forge: {@link
+ *             net.neoforged.neoforge.common.extensions.IItemExtension#onDestroyed
+ *             (ItemEntity, DamageSource) Use damage source sensitive version}
+ */
     @Deprecated
-    public void onDestroyed(ItemEntity p_150887_) {
+    public void onDestroyed(ItemEntity itemEntity) {
     }
 
-    public void verifyComponentsAfterLoad(ItemStack p_331627_) {
+    public void verifyComponentsAfterLoad(ItemStack stack) {
     }
 
-    public boolean canAttackBlock(BlockState p_41441_, Level p_41442_, BlockPos p_41443_, Player p_41444_) {
+    public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
         return true;
     }
 
@@ -140,90 +147,108 @@ public class Item implements FeatureElement, ItemLike, net.neoforged.neoforge.co
         return this;
     }
 
-    public InteractionResult useOn(UseOnContext p_41427_) {
+    /**
+     * Called when this item is used when targeting a Block
+     */
+    public InteractionResult useOn(UseOnContext context) {
         return InteractionResult.PASS;
     }
 
-    public float getDestroySpeed(ItemStack p_41425_, BlockState p_41426_) {
-        Tool tool = p_41425_.get(DataComponents.TOOL);
-        return tool != null ? tool.getMiningSpeed(p_41426_) : 1.0F;
+    public float getDestroySpeed(ItemStack stack, BlockState state) {
+        Tool tool = stack.get(DataComponents.TOOL);
+        return tool != null ? tool.getMiningSpeed(state) : 1.0F;
     }
 
-    public InteractionResultHolder<ItemStack> use(Level p_41432_, Player p_41433_, InteractionHand p_41434_) {
-        ItemStack itemstack = p_41433_.getItemInHand(p_41434_);
-        FoodProperties foodproperties = itemstack.getFoodProperties(p_41433_);
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link net.minecraft.world.item.Item#useOn(net.minecraft.world.item.context.UseOnContext)}.
+     */
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
+        ItemStack itemstack = player.getItemInHand(usedHand);
+        FoodProperties foodproperties = itemstack.getFoodProperties(player);
         if (foodproperties != null) {
-            if (p_41433_.canEat(foodproperties.canAlwaysEat())) {
-                p_41433_.startUsingItem(p_41434_);
+            if (player.canEat(foodproperties.canAlwaysEat())) {
+                player.startUsingItem(usedHand);
                 return InteractionResultHolder.consume(itemstack);
             } else {
                 return InteractionResultHolder.fail(itemstack);
             }
         } else {
-            return InteractionResultHolder.pass(p_41433_.getItemInHand(p_41434_));
+            return InteractionResultHolder.pass(player.getItemInHand(usedHand));
         }
     }
 
-    public ItemStack finishUsingItem(ItemStack p_41409_, Level p_41410_, LivingEntity p_41411_) {
-        FoodProperties foodproperties = p_41409_.getFoodProperties(p_41411_);
-        return foodproperties != null ? p_41411_.eat(p_41410_, p_41409_, foodproperties) : p_41409_;
+    /**
+     * Called when the player finishes using this Item (E.g. finishes eating.). Not called when the player stops using the Item before the action is complete.
+     */
+    public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity livingEntity) {
+        FoodProperties foodproperties = stack.getFoodProperties(livingEntity);
+        return foodproperties != null ? livingEntity.eat(level, stack, foodproperties) : stack;
     }
 
-    public boolean isBarVisible(ItemStack p_150899_) {
-        return p_150899_.isDamaged();
+    public boolean isBarVisible(ItemStack stack) {
+        return stack.isDamaged();
     }
 
-    public int getBarWidth(ItemStack p_150900_) {
-        return Math.round(13.0F - (float)p_150900_.getDamageValue() * 13.0F / (float)this.getMaxDamage(p_150900_));
+    public int getBarWidth(ItemStack stack) {
+        return Math.round(13.0F - (float)stack.getDamageValue() * 13.0F / (float)this.getMaxDamage(stack));
     }
 
-    public int getBarColor(ItemStack p_150901_) {
-        int i = p_150901_.getMaxDamage();
-        float stackMaxDamage = this.getMaxDamage(p_150901_);
-        float f = Math.max(0.0F, (stackMaxDamage - (float)p_150901_.getDamageValue()) / stackMaxDamage);
+    public int getBarColor(ItemStack stack) {
+        int i = stack.getMaxDamage();
+        float stackMaxDamage = this.getMaxDamage(stack);
+        float f = Math.max(0.0F, (stackMaxDamage - (float)stack.getDamageValue()) / stackMaxDamage);
         return Mth.hsvToRgb(f / 3.0F, 1.0F, 1.0F);
     }
 
-    public boolean overrideStackedOnOther(ItemStack p_150888_, Slot p_150889_, ClickAction p_150890_, Player p_150891_) {
+    public boolean overrideStackedOnOther(ItemStack stack, Slot slot, ClickAction action, Player player) {
         return false;
     }
 
     public boolean overrideOtherStackedOnMe(
-        ItemStack p_150892_, ItemStack p_150893_, Slot p_150894_, ClickAction p_150895_, Player p_150896_, SlotAccess p_150897_
+        ItemStack stack, ItemStack other, Slot slot, ClickAction action, Player player, SlotAccess access
     ) {
         return false;
     }
 
-    public float getAttackDamageBonus(Entity p_345249_, float p_336179_, DamageSource p_345403_) {
+    public float getAttackDamageBonus(Entity target, float damage, DamageSource damageSource) {
         return 0.0F;
     }
 
-    public boolean hurtEnemy(ItemStack p_41395_, LivingEntity p_41396_, LivingEntity p_41397_) {
+    /**
+     * Current implementations of this method in child classes do not use the entry argument beside ev. They just raise the damage on the stack.
+     */
+    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         return false;
     }
 
-    public void postHurtEnemy(ItemStack p_346136_, LivingEntity p_346250_, LivingEntity p_346014_) {
+    public void postHurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
     }
 
-    public boolean mineBlock(ItemStack p_41416_, Level p_41417_, BlockState p_41418_, BlockPos p_41419_, LivingEntity p_41420_) {
-        Tool tool = p_41416_.get(DataComponents.TOOL);
+    /**
+     * Called when a {@link net.minecraft.world.level.block.Block} is destroyed using this Item. Return {@code true} to trigger the "Use Item" statistic.
+     */
+    public boolean mineBlock(ItemStack stack, Level level, BlockState state, BlockPos pos, LivingEntity miningEntity) {
+        Tool tool = stack.get(DataComponents.TOOL);
         if (tool == null) {
             return false;
         } else {
-            if (!p_41417_.isClientSide && p_41418_.getDestroySpeed(p_41417_, p_41419_) != 0.0F && tool.damagePerBlock() > 0) {
-                p_41416_.hurtAndBreak(tool.damagePerBlock(), p_41420_, EquipmentSlot.MAINHAND);
+            if (!level.isClientSide && state.getDestroySpeed(level, pos) != 0.0F && tool.damagePerBlock() > 0) {
+                stack.hurtAndBreak(tool.damagePerBlock(), miningEntity, EquipmentSlot.MAINHAND);
             }
 
             return true;
         }
     }
 
-    public boolean isCorrectToolForDrops(ItemStack p_336002_, BlockState p_41450_) {
-        Tool tool = p_336002_.get(DataComponents.TOOL);
-        return tool != null && tool.isCorrectForDrops(p_41450_);
+    public boolean isCorrectToolForDrops(ItemStack stack, BlockState state) {
+        Tool tool = stack.get(DataComponents.TOOL);
+        return tool != null && tool.isCorrectForDrops(state);
     }
 
-    public InteractionResult interactLivingEntity(ItemStack p_41398_, Player p_41399_, LivingEntity p_41400_, InteractionHand p_41401_) {
+    /**
+     * Try interacting with given entity. Return {@code InteractionResult.PASS} if nothing should happen.
+     */
+    public InteractionResult interactLivingEntity(ItemStack stack, Player player, LivingEntity interactionTarget, InteractionHand usedHand) {
         return InteractionResult.PASS;
     }
 
@@ -248,7 +273,10 @@ public class Item implements FeatureElement, ItemLike, net.neoforged.neoforge.co
         return this.getOrCreateDescriptionId();
     }
 
-    public String getDescriptionId(ItemStack p_41455_) {
+    /**
+     * Returns the unlocalized name of this item. This version accepts an ItemStack so different stacks can have different names based on their damage or NBT.
+     */
+    public String getDescriptionId(ItemStack stack) {
         return this.getDescriptionId();
     }
 
@@ -263,55 +291,75 @@ public class Item implements FeatureElement, ItemLike, net.neoforged.neoforge.co
         return this.craftingRemainingItem != null;
     }
 
-    public void inventoryTick(ItemStack p_41404_, Level p_41405_, Entity p_41406_, int p_41407_, boolean p_41408_) {
+    /**
+     * Called each tick as long the item is in a player's inventory. Used by maps to check if it's in a player's hand and update its contents.
+     */
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
     }
 
-    public void onCraftedBy(ItemStack p_41447_, Level p_41448_, Player p_41449_) {
-        this.onCraftedPostProcess(p_41447_, p_41448_);
+    /**
+     * Called when item is crafted/smelted. Used only by maps so far.
+     */
+    public void onCraftedBy(ItemStack stack, Level level, Player player) {
+        this.onCraftedPostProcess(stack, level);
     }
 
-    public void onCraftedPostProcess(ItemStack p_307483_, Level p_307537_) {
+    public void onCraftedPostProcess(ItemStack stack, Level level) {
     }
 
     public boolean isComplex() {
         return false;
     }
 
-    public UseAnim getUseAnimation(ItemStack p_41452_) {
-        return p_41452_.has(DataComponents.FOOD) ? UseAnim.EAT : UseAnim.NONE;
+    /**
+     * Returns the action that specifies what animation to play when the item is being used.
+     */
+    public UseAnim getUseAnimation(ItemStack stack) {
+        return stack.has(DataComponents.FOOD) ? UseAnim.EAT : UseAnim.NONE;
     }
 
-    public int getUseDuration(ItemStack p_41454_, LivingEntity p_344979_) {
-        FoodProperties foodproperties = p_41454_.getFoodProperties(null);
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
+        FoodProperties foodproperties = stack.getFoodProperties(null);
         return foodproperties != null ? foodproperties.eatDurationTicks() : 0;
     }
 
-    public void releaseUsing(ItemStack p_41412_, Level p_41413_, LivingEntity p_41414_, int p_41415_) {
+    /**
+     * Called when the player stops using an Item (stops holding the right mouse button).
+     */
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity livingEntity, int timeCharged) {
     }
 
-    public void appendHoverText(ItemStack p_41421_, Item.TooltipContext p_339594_, List<Component> p_41423_, TooltipFlag p_41424_) {
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
     }
 
-    public Optional<TooltipComponent> getTooltipImage(ItemStack p_150902_) {
+    public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
         return Optional.empty();
     }
 
-    public Component getName(ItemStack p_41458_) {
-        return Component.translatable(this.getDescriptionId(p_41458_));
+    public Component getName(ItemStack stack) {
+        return Component.translatable(this.getDescriptionId(stack));
     }
 
-    public boolean isFoil(ItemStack p_41453_) {
-        return p_41453_.isEnchanted();
+    /**
+     * Returns {@code true} if this item has an enchantment glint. By default, this returns {@code stack.isEnchanted()}, but other items can override it (for instance, written books always return true).
+     *
+     * Note that if you override this method, you generally want to also call the super version (on {@link Item}) to get the glint for enchanted items. Of course, that is unnecessary if the overwritten version always returns true.
+     */
+    public boolean isFoil(ItemStack stack) {
+        return stack.isEnchanted();
     }
 
-    public boolean isEnchantable(ItemStack p_41456_) {
-        return p_41456_.getMaxStackSize() == 1 && p_41456_.has(DataComponents.MAX_DAMAGE);
+    /**
+     * Checks isDamagable and if it cannot be stacked
+     */
+    public boolean isEnchantable(ItemStack stack) {
+        return stack.getMaxStackSize() == 1 && stack.has(DataComponents.MAX_DAMAGE);
     }
 
-    public static BlockHitResult getPlayerPOVHitResult(Level p_41436_, Player p_41437_, ClipContext.Fluid p_41438_) {
-        Vec3 vec3 = p_41437_.getEyePosition();
-        Vec3 vec31 = vec3.add(p_41437_.calculateViewVector(p_41437_.getXRot(), p_41437_.getYRot()).scale(p_41437_.blockInteractionRange()));
-        return p_41436_.clip(new ClipContext(vec3, vec31, ClipContext.Block.OUTLINE, p_41438_, p_41437_));
+    public static BlockHitResult getPlayerPOVHitResult(Level level, Player player, ClipContext.Fluid fluidMode) {
+        Vec3 vec3 = player.getEyePosition();
+        Vec3 vec31 = vec3.add(player.calculateViewVector(player.getXRot(), player.getYRot()).scale(player.blockInteractionRange()));
+        return level.clip(new ClipContext(vec3, vec31, ClipContext.Block.OUTLINE, fluidMode, player));
     }
 
     /** @deprecated Neo: Use ItemStack sensitive version. */
@@ -320,7 +368,10 @@ public class Item implements FeatureElement, ItemLike, net.neoforged.neoforge.co
         return 0;
     }
 
-    public boolean isValidRepairItem(ItemStack p_41402_, ItemStack p_41403_) {
+    /**
+     * Return whether this item is repairable in an anvil.
+     */
+    public boolean isValidRepairItem(ItemStack stack, ItemStack repairCandidate) {
         return false;
     }
 
@@ -339,8 +390,11 @@ public class Item implements FeatureElement, ItemLike, net.neoforged.neoforge.co
         return canRepair && isDamageable(stack);
     }
 
-    public boolean useOnRelease(ItemStack p_41464_) {
-        return p_41464_.getItem() == Items.CROSSBOW;
+    /**
+     * If this stack's item is a crossbow
+     */
+    public boolean useOnRelease(ItemStack stack) {
+        return stack.getItem() == Items.CROSSBOW;
     }
 
     public ItemStack getDefaultInstance() {
@@ -391,36 +445,36 @@ public class Item implements FeatureElement, ItemLike, net.neoforged.neoforge.co
         FeatureFlagSet requiredFeatures = FeatureFlags.VANILLA_SET;
         private boolean canRepair = true;
 
-        public Item.Properties food(FoodProperties p_41490_) {
-            return this.component(DataComponents.FOOD, p_41490_);
+        public Item.Properties food(FoodProperties food) {
+            return this.component(DataComponents.FOOD, food);
         }
 
-        public Item.Properties stacksTo(int p_41488_) {
-            return this.component(DataComponents.MAX_STACK_SIZE, p_41488_);
+        public Item.Properties stacksTo(int maxStackSize) {
+            return this.component(DataComponents.MAX_STACK_SIZE, maxStackSize);
         }
 
-        public Item.Properties durability(int p_41504_) {
-            this.component(DataComponents.MAX_DAMAGE, p_41504_);
+        public Item.Properties durability(int maxDamage) {
+            this.component(DataComponents.MAX_DAMAGE, maxDamage);
             this.component(DataComponents.MAX_STACK_SIZE, 1);
             this.component(DataComponents.DAMAGE, 0);
             return this;
         }
 
-        public Item.Properties craftRemainder(Item p_41496_) {
-            this.craftingRemainingItem = p_41496_;
+        public Item.Properties craftRemainder(Item craftingRemainingItem) {
+            this.craftingRemainingItem = craftingRemainingItem;
             return this;
         }
 
-        public Item.Properties rarity(Rarity p_41498_) {
-            return this.component(DataComponents.RARITY, p_41498_);
+        public Item.Properties rarity(Rarity rarity) {
+            return this.component(DataComponents.RARITY, rarity);
         }
 
         public Item.Properties fireResistant() {
             return this.component(DataComponents.FIRE_RESISTANT, Unit.INSTANCE);
         }
 
-        public Item.Properties jukeboxPlayable(ResourceKey<JukeboxSong> p_350862_) {
-            return this.component(DataComponents.JUKEBOX_PLAYABLE, new JukeboxPlayable(new EitherHolder<>(p_350862_), true));
+        public Item.Properties jukeboxPlayable(ResourceKey<JukeboxSong> song) {
+            return this.component(DataComponents.JUKEBOX_PLAYABLE, new JukeboxPlayable(new EitherHolder<>(song), true));
         }
 
         public Item.Properties setNoRepair() {
@@ -428,23 +482,23 @@ public class Item implements FeatureElement, ItemLike, net.neoforged.neoforge.co
             return this;
         }
 
-        public Item.Properties requiredFeatures(FeatureFlag... p_250948_) {
-            this.requiredFeatures = FeatureFlags.REGISTRY.subset(p_250948_);
+        public Item.Properties requiredFeatures(FeatureFlag... requiredFeatures) {
+            this.requiredFeatures = FeatureFlags.REGISTRY.subset(requiredFeatures);
             return this;
         }
 
-        public <T> Item.Properties component(DataComponentType<T> p_330871_, T p_330323_) {
-            net.neoforged.neoforge.common.CommonHooks.validateComponent(p_330323_);
+        public <T> Item.Properties component(DataComponentType<T> component, T value) {
+            net.neoforged.neoforge.common.CommonHooks.validateComponent(value);
             if (this.components == null) {
                 this.components = DataComponentMap.builder().addAll(DataComponents.COMMON_ITEM_COMPONENTS);
             }
 
-            this.components.set(p_330871_, p_330323_);
+            this.components.set(component, value);
             return this;
         }
 
-        public Item.Properties attributes(ItemAttributeModifiers p_331533_) {
-            return this.component(DataComponents.ATTRIBUTE_MODIFIERS, p_331533_);
+        public Item.Properties attributes(ItemAttributeModifiers attributes) {
+            return this.component(DataComponents.ATTRIBUTE_MODIFIERS, attributes);
         }
 
         DataComponentMap buildAndValidateComponents() {
@@ -491,7 +545,7 @@ public class Item implements FeatureElement, ItemLike, net.neoforged.neoforge.co
         float tickRate();
 
         @Nullable
-        MapItemSavedData mapData(MapId p_339670_);
+        MapItemSavedData mapData(MapId mapId);
 
         /**
          * Neo: Returns the level if it's available.
@@ -501,35 +555,35 @@ public class Item implements FeatureElement, ItemLike, net.neoforged.neoforge.co
             return null;
         }
 
-        static Item.TooltipContext of(@Nullable final Level p_339599_) {
-            return p_339599_ == null ? EMPTY : new Item.TooltipContext() {
+        static Item.TooltipContext of(@Nullable final Level level) {
+            return level == null ? EMPTY : new Item.TooltipContext() {
                 @Override
                 public HolderLookup.Provider registries() {
-                    return p_339599_.registryAccess();
+                    return level.registryAccess();
                 }
 
                 @Override
                 public float tickRate() {
-                    return p_339599_.tickRateManager().tickrate();
+                    return level.tickRateManager().tickrate();
                 }
 
                 @Override
                 public MapItemSavedData mapData(MapId p_339628_) {
-                    return p_339599_.getMapData(p_339628_);
+                    return level.getMapData(p_339628_);
                 }
 
                 @Override
                 public Level level() {
-                    return p_339599_;
+                    return level;
                 }
             };
         }
 
-        static Item.TooltipContext of(final HolderLookup.Provider p_339633_) {
+        static Item.TooltipContext of(final HolderLookup.Provider registries) {
             return new Item.TooltipContext() {
                 @Override
                 public HolderLookup.Provider registries() {
-                    return p_339633_;
+                    return registries;
                 }
 
                 @Override

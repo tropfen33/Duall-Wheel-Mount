@@ -44,8 +44,8 @@ public class NoteBlock extends Block {
         return CODEC;
     }
 
-    public NoteBlock(BlockBehaviour.Properties p_55016_) {
-        super(p_55016_);
+    public NoteBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(
             this.stateDefinition
                 .any()
@@ -55,95 +55,103 @@ public class NoteBlock extends Block {
         );
     }
 
-    private BlockState setInstrument(LevelAccessor p_262117_, BlockPos p_261908_, BlockState p_262130_) {
-        NoteBlockInstrument noteblockinstrument = p_262117_.getBlockState(p_261908_.above()).instrument();
+    private BlockState setInstrument(LevelAccessor level, BlockPos pos, BlockState state) {
+        NoteBlockInstrument noteblockinstrument = level.getBlockState(pos.above()).instrument();
         if (noteblockinstrument.worksAboveNoteBlock()) {
-            return p_262130_.setValue(INSTRUMENT, noteblockinstrument);
+            return state.setValue(INSTRUMENT, noteblockinstrument);
         } else {
-            NoteBlockInstrument noteblockinstrument1 = p_262117_.getBlockState(p_261908_.below()).instrument();
+            NoteBlockInstrument noteblockinstrument1 = level.getBlockState(pos.below()).instrument();
             NoteBlockInstrument noteblockinstrument2 = noteblockinstrument1.worksAboveNoteBlock() ? NoteBlockInstrument.HARP : noteblockinstrument1;
-            return p_262130_.setValue(INSTRUMENT, noteblockinstrument2);
+            return state.setValue(INSTRUMENT, noteblockinstrument2);
         }
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_55018_) {
-        return this.setInstrument(p_55018_.getLevel(), p_55018_.getClickedPos(), this.defaultBlockState());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.setInstrument(context.getLevel(), context.getClickedPos(), this.defaultBlockState());
+    }
+
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
+    @Override
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        boolean flag = facing.getAxis() == Direction.Axis.Y;
+        return flag ? this.setInstrument(level, currentPos, state) : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected BlockState updateShape(BlockState p_55048_, Direction p_55049_, BlockState p_55050_, LevelAccessor p_55051_, BlockPos p_55052_, BlockPos p_55053_) {
-        boolean flag = p_55049_.getAxis() == Direction.Axis.Y;
-        return flag ? this.setInstrument(p_55051_, p_55052_, p_55048_) : super.updateShape(p_55048_, p_55049_, p_55050_, p_55051_, p_55052_, p_55053_);
-    }
-
-    @Override
-    protected void neighborChanged(BlockState p_55041_, Level p_55042_, BlockPos p_55043_, Block p_55044_, BlockPos p_55045_, boolean p_55046_) {
-        boolean flag = p_55042_.hasNeighborSignal(p_55043_);
-        if (flag != p_55041_.getValue(POWERED)) {
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        boolean flag = level.hasNeighborSignal(pos);
+        if (flag != state.getValue(POWERED)) {
             if (flag) {
-                this.playNote(null, p_55041_, p_55042_, p_55043_);
+                this.playNote(null, state, level, pos);
             }
 
-            p_55042_.setBlock(p_55043_, p_55041_.setValue(POWERED, Boolean.valueOf(flag)), 3);
+            level.setBlock(pos, state.setValue(POWERED, Boolean.valueOf(flag)), 3);
         }
     }
 
-    private void playNote(@Nullable Entity p_261664_, BlockState p_261606_, Level p_261819_, BlockPos p_262042_) {
-        if (p_261606_.getValue(INSTRUMENT).worksAboveNoteBlock() || p_261819_.getBlockState(p_262042_.above()).isAir()) {
-            p_261819_.blockEvent(p_262042_, this, 0, 0);
-            p_261819_.gameEvent(p_261664_, GameEvent.NOTE_BLOCK_PLAY, p_262042_);
+    private void playNote(@Nullable Entity entity, BlockState state, Level level, BlockPos pos) {
+        if (state.getValue(INSTRUMENT).worksAboveNoteBlock() || level.getBlockState(pos.above()).isAir()) {
+            level.blockEvent(pos, this, 0, 0);
+            level.gameEvent(entity, GameEvent.NOTE_BLOCK_PLAY, pos);
         }
     }
 
     @Override
     protected ItemInteractionResult useItemOn(
-        ItemStack p_316716_, BlockState p_316688_, Level p_316672_, BlockPos p_316355_, Player p_316822_, InteractionHand p_316505_, BlockHitResult p_316667_
+        ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult
     ) {
-        return p_316716_.is(ItemTags.NOTE_BLOCK_TOP_INSTRUMENTS) && p_316667_.getDirection() == Direction.UP
+        return stack.is(ItemTags.NOTE_BLOCK_TOP_INSTRUMENTS) && hitResult.getDirection() == Direction.UP
             ? ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION
-            : super.useItemOn(p_316716_, p_316688_, p_316672_, p_316355_, p_316822_, p_316505_, p_316667_);
+            : super.useItemOn(stack, state, level, pos, player, hand, hitResult);
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_316441_, Level p_316774_, BlockPos p_316344_, Player p_316884_, BlockHitResult p_316631_) {
-        if (p_316774_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
-            int _new = net.neoforged.neoforge.common.CommonHooks.onNoteChange(p_316774_, p_316344_, p_316441_, p_316441_.getValue(NOTE), p_316441_.cycle(NOTE).getValue(NOTE));
+            int _new = net.neoforged.neoforge.common.CommonHooks.onNoteChange(level, pos, state, state.getValue(NOTE), state.cycle(NOTE).getValue(NOTE));
             if (_new == -1) return InteractionResult.FAIL;
-            p_316441_ = p_316441_.setValue(NOTE, _new);
-            p_316774_.setBlock(p_316344_, p_316441_, 3);
-            this.playNote(p_316884_, p_316441_, p_316774_, p_316344_);
-            p_316884_.awardStat(Stats.TUNE_NOTEBLOCK);
+            state = state.setValue(NOTE, _new);
+            level.setBlock(pos, state, 3);
+            this.playNote(player, state, level, pos);
+            player.awardStat(Stats.TUNE_NOTEBLOCK);
             return InteractionResult.CONSUME;
         }
     }
 
     @Override
-    protected void attack(BlockState p_55029_, Level p_55030_, BlockPos p_55031_, Player p_55032_) {
-        if (!p_55030_.isClientSide) {
-            this.playNote(p_55032_, p_55029_, p_55030_, p_55031_);
-            p_55032_.awardStat(Stats.PLAY_NOTEBLOCK);
+    protected void attack(BlockState state, Level level, BlockPos pos, Player player) {
+        if (!level.isClientSide) {
+            this.playNote(player, state, level, pos);
+            player.awardStat(Stats.PLAY_NOTEBLOCK);
         }
     }
 
-    public static float getPitchFromNote(int p_277409_) {
-        return (float)Math.pow(2.0, (double)(p_277409_ - 12) / 12.0);
+    public static float getPitchFromNote(int note) {
+        return (float)Math.pow(2.0, (double)(note - 12) / 12.0);
     }
 
+    /**
+     * Called on server when {@link net.minecraft.world.level.Level#blockEvent} is called. If server returns true, then also called on the client. On the Server, this may perform additional changes to the world, like pistons replacing the block with an extended base. On the client, the update may involve replacing block entities or effects such as sounds or particles
+     */
     @Override
-    protected boolean triggerEvent(BlockState p_55023_, Level p_55024_, BlockPos p_55025_, int p_55026_, int p_55027_) {
-        net.neoforged.neoforge.event.level.NoteBlockEvent.Play e = new net.neoforged.neoforge.event.level.NoteBlockEvent.Play(p_55024_, p_55025_, p_55023_, p_55023_.getValue(NOTE), p_55023_.getValue(INSTRUMENT));
+    protected boolean triggerEvent(BlockState state, Level level, BlockPos pos, int id, int param) {
+        net.neoforged.neoforge.event.level.NoteBlockEvent.Play e = new net.neoforged.neoforge.event.level.NoteBlockEvent.Play(level, pos, state, state.getValue(NOTE), state.getValue(INSTRUMENT));
         if (net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(e).isCanceled()) return false;
-        p_55023_ = p_55023_.setValue(NOTE, e.getVanillaNoteId()).setValue(INSTRUMENT, e.getInstrument());
-        NoteBlockInstrument noteblockinstrument = p_55023_.getValue(INSTRUMENT);
+        state = state.setValue(NOTE, e.getVanillaNoteId()).setValue(INSTRUMENT, e.getInstrument());
+        NoteBlockInstrument noteblockinstrument = state.getValue(INSTRUMENT);
         float f;
         if (noteblockinstrument.isTunable()) {
-            int i = p_55023_.getValue(NOTE);
+            int i = state.getValue(NOTE);
             f = getPitchFromNote(i);
-            p_55024_.addParticle(
-                ParticleTypes.NOTE, (double)p_55025_.getX() + 0.5, (double)p_55025_.getY() + 1.2, (double)p_55025_.getZ() + 0.5, (double)i / 24.0, 0.0, 0.0
+            level.addParticle(
+                ParticleTypes.NOTE, (double)pos.getX() + 0.5, (double)pos.getY() + 1.2, (double)pos.getZ() + 0.5, (double)i / 24.0, 0.0, 0.0
             );
         } else {
             f = 1.0F;
@@ -151,7 +159,7 @@ public class NoteBlock extends Block {
 
         Holder<SoundEvent> holder;
         if (noteblockinstrument.hasCustomSound()) {
-            ResourceLocation resourcelocation = this.getCustomSoundId(p_55024_, p_55025_);
+            ResourceLocation resourcelocation = this.getCustomSoundId(level, pos);
             if (resourcelocation == null) {
                 return false;
             }
@@ -161,27 +169,27 @@ public class NoteBlock extends Block {
             holder = noteblockinstrument.getSoundEvent();
         }
 
-        p_55024_.playSeededSound(
+        level.playSeededSound(
             null,
-            (double)p_55025_.getX() + 0.5,
-            (double)p_55025_.getY() + 0.5,
-            (double)p_55025_.getZ() + 0.5,
+            (double)pos.getX() + 0.5,
+            (double)pos.getY() + 0.5,
+            (double)pos.getZ() + 0.5,
             holder,
             SoundSource.RECORDS,
             3.0F,
             f,
-            p_55024_.random.nextLong()
+            level.random.nextLong()
         );
         return true;
     }
 
     @Nullable
-    private ResourceLocation getCustomSoundId(Level p_263070_, BlockPos p_262999_) {
-        return p_263070_.getBlockEntity(p_262999_.above()) instanceof SkullBlockEntity skullblockentity ? skullblockentity.getNoteBlockSound() : null;
+    private ResourceLocation getCustomSoundId(Level level, BlockPos pos) {
+        return level.getBlockEntity(pos.above()) instanceof SkullBlockEntity skullblockentity ? skullblockentity.getNoteBlockSound() : null;
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_55055_) {
-        p_55055_.add(INSTRUMENT, POWERED, NOTE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(INSTRUMENT, POWERED, NOTE);
     }
 }

@@ -47,20 +47,20 @@ public class GameTestInfo {
     @Nullable
     private StructureBlockEntity structureBlockEntity;
 
-    public GameTestInfo(TestFunction p_127613_, Rotation p_127614_, ServerLevel p_127615_, RetryOptions p_320308_) {
-        this.testFunction = p_127613_;
-        this.level = p_127615_;
-        this.retryOptions = p_320308_;
-        this.timeoutTicks = p_127613_.maxTicks();
-        this.rotation = p_127613_.rotation().getRotated(p_127614_);
+    public GameTestInfo(TestFunction testFunction, Rotation rotation, ServerLevel level, RetryOptions retryOptions) {
+        this.testFunction = testFunction;
+        this.level = level;
+        this.retryOptions = retryOptions;
+        this.timeoutTicks = testFunction.maxTicks();
+        this.rotation = testFunction.rotation().getRotated(rotation);
     }
 
-    void setStructureBlockPos(BlockPos p_127618_) {
-        this.structureBlockPos = p_127618_;
+    void setStructureBlockPos(BlockPos pos) {
+        this.structureBlockPos = pos;
     }
 
-    public GameTestInfo startExecution(int p_320211_) {
-        this.startTick = this.level.getGameTime() + this.testFunction.setupTicks() + (long)p_320211_;
+    public GameTestInfo startExecution(int delay) {
+        this.startTick = this.level.getGameTime() + this.testFunction.setupTicks() + (long)delay;
         this.timer.start();
         return this;
     }
@@ -92,7 +92,7 @@ public class GameTestInfo {
         }
     }
 
-    public void tick(GameTestRunner p_320062_) {
+    public void tick(GameTestRunner runner) {
         if (!this.isDone()) {
             if (this.structureBlockEntity == null) {
                 this.fail(new IllegalStateException("Running test without structure block entity"));
@@ -107,9 +107,9 @@ public class GameTestInfo {
                     this.tickInternal();
                     if (this.isDone()) {
                         if (this.error != null) {
-                            this.listeners.forEach(p_319458_ -> p_319458_.testFailed(this, p_320062_));
+                            this.listeners.forEach(p_319458_ -> p_319458_.testFailed(this, runner));
                         } else {
-                            this.listeners.forEach(p_319456_ -> p_319456_.testPassed(this, p_320062_));
+                            this.listeners.forEach(p_319456_ -> p_319456_.testPassed(this, runner));
                         }
                     }
                 }
@@ -166,8 +166,8 @@ public class GameTestInfo {
         }
     }
 
-    public void setRunAtTickTime(long p_177473_, Runnable p_177474_) {
-        this.runAtTickTimeMap.put(p_177474_, p_177473_);
+    public void setRunAtTickTime(long tickTime, Runnable task) {
+        this.runAtTickTimeMap.put(task, tickTime);
     }
 
     public String getTestName() {
@@ -241,8 +241,8 @@ public class GameTestInfo {
         }
     }
 
-    public void fail(Throwable p_127623_) {
-        this.error = p_127623_;
+    public void fail(Throwable error) {
+        this.error = error;
         this.finish();
     }
 
@@ -256,8 +256,8 @@ public class GameTestInfo {
         return this.getTestName();
     }
 
-    public void addListener(GameTestListener p_127625_) {
-        this.listeners.add(p_127625_);
+    public void addListener(GameTestListener listener) {
+        this.listeners.add(listener);
     }
 
     public GameTestInfo prepareTestStructure() {
@@ -347,7 +347,7 @@ public class GameTestInfo {
         return this.northWestCorner;
     }
 
-    public void setNorthWestCorner(BlockPos p_320945_) {
-        this.northWestCorner = p_320945_;
+    public void setNorthWestCorner(BlockPos northWestCorner) {
+        this.northWestCorner = northWestCorner;
     }
 }

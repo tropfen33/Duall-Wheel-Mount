@@ -19,8 +19,8 @@ import java.util.Map;
 import java.util.function.Function;
 
 public class ChunkBedBlockEntityInjecterFix extends DataFix {
-    public ChunkBedBlockEntityInjecterFix(Schema p_184825_, boolean p_184826_) {
-        super(p_184825_, p_184826_);
+    public ChunkBedBlockEntityInjecterFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -34,10 +34,10 @@ public class ChunkBedBlockEntityInjecterFix extends DataFix {
         }
     }
 
-    private <TE> TypeRewriteRule cap(Type<?> p_184834_, ListType<TE> p_184835_) {
-        Type<TE> type = p_184835_.getElement();
-        OpticFinder<?> opticfinder = DSL.fieldFinder("Level", p_184834_);
-        OpticFinder<List<TE>> opticfinder1 = DSL.fieldFinder("TileEntities", p_184835_);
+    private <TE> TypeRewriteRule cap(Type<?> levelType, ListType<TE> tileEntityTypes) {
+        Type<TE> type = tileEntityTypes.getElement();
+        OpticFinder<?> opticfinder = DSL.fieldFinder("Level", levelType);
+        OpticFinder<List<TE>> opticfinder1 = DSL.fieldFinder("TileEntities", tileEntityTypes);
         int i = 416;
         return TypeRewriteRule.seq(
             this.fixTypeEverywhere(

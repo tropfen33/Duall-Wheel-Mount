@@ -32,27 +32,27 @@ public class DecoratedPotBlockEntity extends BlockEntity implements Randomizable
     protected ResourceKey<LootTable> lootTable;
     protected long lootTableSeed;
 
-    public DecoratedPotBlockEntity(BlockPos p_273660_, BlockState p_272831_) {
-        super(BlockEntityType.DECORATED_POT, p_273660_, p_272831_);
+    public DecoratedPotBlockEntity(BlockPos pos, BlockState state) {
+        super(BlockEntityType.DECORATED_POT, pos, state);
         this.decorations = PotDecorations.EMPTY;
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_272957_, HolderLookup.Provider p_323719_) {
-        super.saveAdditional(p_272957_, p_323719_);
-        this.decorations.save(p_272957_);
-        if (!this.trySaveLootTable(p_272957_) && !this.item.isEmpty()) {
-            p_272957_.put("item", this.item.save(p_323719_));
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        this.decorations.save(tag);
+        if (!this.trySaveLootTable(tag) && !this.item.isEmpty()) {
+            tag.put("item", this.item.save(registries));
         }
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_338486_, HolderLookup.Provider p_338310_) {
-        super.loadAdditional(p_338486_, p_338310_);
-        this.decorations = PotDecorations.load(p_338486_);
-        if (!this.tryLoadLootTable(p_338486_)) {
-            if (p_338486_.contains("item", 10)) {
-                this.item = ItemStack.parse(p_338310_, p_338486_.getCompound("item")).orElse(ItemStack.EMPTY);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        this.decorations = PotDecorations.load(tag);
+        if (!this.tryLoadLootTable(tag)) {
+            if (tag.contains("item", 10)) {
+                this.item = ItemStack.parse(registries, tag.getCompound("item")).orElse(ItemStack.EMPTY);
             } else {
                 this.item = ItemStack.EMPTY;
             }
@@ -64,8 +64,8 @@ public class DecoratedPotBlockEntity extends BlockEntity implements Randomizable
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider p_324359_) {
-        return this.saveCustomOnly(p_324359_);
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        return this.saveCustomOnly(registries);
     }
 
     public Direction getDirection() {
@@ -76,8 +76,8 @@ public class DecoratedPotBlockEntity extends BlockEntity implements Randomizable
         return this.decorations;
     }
 
-    public void setFromItem(ItemStack p_273109_) {
-        this.applyComponentsFromItemStack(p_273109_);
+    public void setFromItem(ItemStack item) {
+        this.applyComponentsFromItemStack(item);
     }
 
     public ItemStack getPotAsItem() {
@@ -86,9 +86,9 @@ public class DecoratedPotBlockEntity extends BlockEntity implements Randomizable
         return itemstack;
     }
 
-    public static ItemStack createDecoratedPotItem(PotDecorations p_330827_) {
+    public static ItemStack createDecoratedPotItem(PotDecorations decorations) {
         ItemStack itemstack = Items.DECORATED_POT.getDefaultInstance();
-        itemstack.set(DataComponents.POT_DECORATIONS, p_330827_);
+        itemstack.set(DataComponents.POT_DECORATIONS, decorations);
         return itemstack;
     }
 
@@ -99,8 +99,8 @@ public class DecoratedPotBlockEntity extends BlockEntity implements Randomizable
     }
 
     @Override
-    public void setLootTable(@Nullable ResourceKey<LootTable> p_336080_) {
-        this.lootTable = p_336080_;
+    public void setLootTable(@Nullable ResourceKey<LootTable> lootTable) {
+        this.lootTable = lootTable;
     }
 
     @Override
@@ -109,29 +109,29 @@ public class DecoratedPotBlockEntity extends BlockEntity implements Randomizable
     }
 
     @Override
-    public void setLootTableSeed(long p_309580_) {
-        this.lootTableSeed = p_309580_;
+    public void setLootTableSeed(long seed) {
+        this.lootTableSeed = seed;
     }
 
     @Override
-    protected void collectImplicitComponents(DataComponentMap.Builder p_338608_) {
-        super.collectImplicitComponents(p_338608_);
-        p_338608_.set(DataComponents.POT_DECORATIONS, this.decorations);
-        p_338608_.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(List.of(this.item)));
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        components.set(DataComponents.POT_DECORATIONS, this.decorations);
+        components.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(List.of(this.item)));
     }
 
     @Override
-    protected void applyImplicitComponents(BlockEntity.DataComponentInput p_338521_) {
-        super.applyImplicitComponents(p_338521_);
-        this.decorations = p_338521_.getOrDefault(DataComponents.POT_DECORATIONS, PotDecorations.EMPTY);
-        this.item = p_338521_.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).copyOne();
+    protected void applyImplicitComponents(BlockEntity.DataComponentInput componentInput) {
+        super.applyImplicitComponents(componentInput);
+        this.decorations = componentInput.getOrDefault(DataComponents.POT_DECORATIONS, PotDecorations.EMPTY);
+        this.item = componentInput.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).copyOne();
     }
 
     @Override
-    public void removeComponentsFromTag(CompoundTag p_330569_) {
-        super.removeComponentsFromTag(p_330569_);
-        p_330569_.remove("sherds");
-        p_330569_.remove("item");
+    public void removeComponentsFromTag(CompoundTag tag) {
+        super.removeComponentsFromTag(tag);
+        tag.remove("sherds");
+        tag.remove("item");
     }
 
     @Override
@@ -141,9 +141,9 @@ public class DecoratedPotBlockEntity extends BlockEntity implements Randomizable
     }
 
     @Override
-    public ItemStack splitTheItem(int p_305991_) {
+    public ItemStack splitTheItem(int amount) {
         this.unpackLootTable(null);
-        ItemStack itemstack = this.item.split(p_305991_);
+        ItemStack itemstack = this.item.split(amount);
         if (this.item.isEmpty()) {
             this.item = ItemStack.EMPTY;
         }
@@ -152,9 +152,9 @@ public class DecoratedPotBlockEntity extends BlockEntity implements Randomizable
     }
 
     @Override
-    public void setTheItem(ItemStack p_305817_) {
+    public void setTheItem(ItemStack item) {
         this.unpackLootTable(null);
-        this.item = p_305817_;
+        this.item = item;
     }
 
     @Override
@@ -162,20 +162,20 @@ public class DecoratedPotBlockEntity extends BlockEntity implements Randomizable
         return this;
     }
 
-    public void wobble(DecoratedPotBlockEntity.WobbleStyle p_305984_) {
+    public void wobble(DecoratedPotBlockEntity.WobbleStyle style) {
         if (this.level != null && !this.level.isClientSide()) {
-            this.level.blockEvent(this.getBlockPos(), this.getBlockState().getBlock(), 1, p_305984_.ordinal());
+            this.level.blockEvent(this.getBlockPos(), this.getBlockState().getBlock(), 1, style.ordinal());
         }
     }
 
     @Override
-    public boolean triggerEvent(int p_306146_, int p_305858_) {
-        if (this.level != null && p_306146_ == 1 && p_305858_ >= 0 && p_305858_ < DecoratedPotBlockEntity.WobbleStyle.values().length) {
+    public boolean triggerEvent(int id, int type) {
+        if (this.level != null && id == 1 && type >= 0 && type < DecoratedPotBlockEntity.WobbleStyle.values().length) {
             this.wobbleStartedAtTick = this.level.getGameTime();
-            this.lastWobbleStyle = DecoratedPotBlockEntity.WobbleStyle.values()[p_305858_];
+            this.lastWobbleStyle = DecoratedPotBlockEntity.WobbleStyle.values()[type];
             return true;
         } else {
-            return super.triggerEvent(p_306146_, p_305858_);
+            return super.triggerEvent(id, type);
         }
     }
 
@@ -185,8 +185,8 @@ public class DecoratedPotBlockEntity extends BlockEntity implements Randomizable
 
         public final int duration;
 
-        private WobbleStyle(int p_305780_) {
-            this.duration = p_305780_;
+        private WobbleStyle(int duration) {
+            this.duration = duration;
         }
     }
 }

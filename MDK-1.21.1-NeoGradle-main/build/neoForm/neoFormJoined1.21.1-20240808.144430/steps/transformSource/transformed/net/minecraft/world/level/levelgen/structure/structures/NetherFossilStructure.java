@@ -24,20 +24,20 @@ public class NetherFossilStructure extends Structure {
     );
     public final HeightProvider height;
 
-    public NetherFossilStructure(Structure.StructureSettings p_228573_, HeightProvider p_228574_) {
-        super(p_228573_);
-        this.height = p_228574_;
+    public NetherFossilStructure(Structure.StructureSettings settings, HeightProvider height) {
+        super(settings);
+        this.height = height;
     }
 
     @Override
-    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext p_228576_) {
-        WorldgenRandom worldgenrandom = p_228576_.random();
-        int i = p_228576_.chunkPos().getMinBlockX() + worldgenrandom.nextInt(16);
-        int j = p_228576_.chunkPos().getMinBlockZ() + worldgenrandom.nextInt(16);
-        int k = p_228576_.chunkGenerator().getSeaLevel();
-        WorldGenerationContext worldgenerationcontext = new WorldGenerationContext(p_228576_.chunkGenerator(), p_228576_.heightAccessor());
+    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext context) {
+        WorldgenRandom worldgenrandom = context.random();
+        int i = context.chunkPos().getMinBlockX() + worldgenrandom.nextInt(16);
+        int j = context.chunkPos().getMinBlockZ() + worldgenrandom.nextInt(16);
+        int k = context.chunkGenerator().getSeaLevel();
+        WorldGenerationContext worldgenerationcontext = new WorldGenerationContext(context.chunkGenerator(), context.heightAccessor());
         int l = this.height.sample(worldgenrandom, worldgenerationcontext);
-        NoiseColumn noisecolumn = p_228576_.chunkGenerator().getBaseColumn(i, j, p_228576_.heightAccessor(), p_228576_.randomState());
+        NoiseColumn noisecolumn = context.chunkGenerator().getBaseColumn(i, j, context.heightAccessor(), context.randomState());
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos(i, l, j);
 
         while (l > k) {
@@ -55,7 +55,7 @@ public class NetherFossilStructure extends Structure {
             BlockPos blockpos = new BlockPos(i, l, j);
             return Optional.of(
                 new Structure.GenerationStub(
-                    blockpos, p_228581_ -> NetherFossilPieces.addPieces(p_228576_.structureTemplateManager(), p_228581_, worldgenrandom, blockpos)
+                    blockpos, p_228581_ -> NetherFossilPieces.addPieces(context.structureTemplateManager(), p_228581_, worldgenrandom, blockpos)
                 )
             );
         }

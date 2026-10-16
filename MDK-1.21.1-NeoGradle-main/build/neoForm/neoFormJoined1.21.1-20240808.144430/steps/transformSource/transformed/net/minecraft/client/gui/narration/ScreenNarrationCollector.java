@@ -14,27 +14,27 @@ public class ScreenNarrationCollector {
         Comparator.<ScreenNarrationCollector.EntryKey, NarratedElementType>comparing(p_169196_ -> p_169196_.type).thenComparing(p_169185_ -> p_169185_.depth)
     );
 
-    public void update(Consumer<NarrationElementOutput> p_169187_) {
+    public void update(Consumer<NarrationElementOutput> updater) {
         this.generation++;
-        p_169187_.accept(new ScreenNarrationCollector.Output(0));
+        updater.accept(new ScreenNarrationCollector.Output(0));
     }
 
-    public String collectNarrationText(boolean p_169189_) {
+    public String collectNarrationText(boolean collectAll) {
         final StringBuilder stringbuilder = new StringBuilder();
         Consumer<String> consumer = new Consumer<String>() {
             private boolean firstEntry = true;
 
-            public void accept(String p_169204_) {
+            public void accept(String str) {
                 if (!this.firstEntry) {
                     stringbuilder.append(". ");
                 }
 
                 this.firstEntry = false;
-                stringbuilder.append(p_169204_);
+                stringbuilder.append(str);
             }
         };
         this.entries.forEach((p_169193_, p_169194_) -> {
-            if (p_169194_.generation == this.generation && (p_169189_ || !p_169194_.alreadyNarrated)) {
+            if (p_169194_.generation == this.generation && (collectAll || !p_169194_.alreadyNarrated)) {
                 p_169194_.contents.getText(consumer);
                 p_169194_.alreadyNarrated = true;
             }
@@ -47,9 +47,9 @@ public class ScreenNarrationCollector {
         final NarratedElementType type;
         final int depth;
 
-        EntryKey(NarratedElementType p_169210_, int p_169211_) {
-            this.type = p_169210_;
-            this.depth = p_169211_;
+        EntryKey(NarratedElementType type, int depth) {
+            this.type = type;
+            this.depth = depth;
         }
     }
 
@@ -59,15 +59,15 @@ public class ScreenNarrationCollector {
         int generation = -1;
         boolean alreadyNarrated;
 
-        public ScreenNarrationCollector.NarrationEntry update(int p_169217_, NarrationThunk<?> p_169218_) {
-            if (!this.contents.equals(p_169218_)) {
-                this.contents = p_169218_;
+        public ScreenNarrationCollector.NarrationEntry update(int generation, NarrationThunk<?> contents) {
+            if (!this.contents.equals(contents)) {
+                this.contents = contents;
                 this.alreadyNarrated = false;
-            } else if (this.generation + 1 != p_169217_) {
+            } else if (this.generation + 1 != generation) {
                 this.alreadyNarrated = false;
             }
 
-            this.generation = p_169217_;
+            this.generation = generation;
             return this;
         }
     }
@@ -76,15 +76,15 @@ public class ScreenNarrationCollector {
     class Output implements NarrationElementOutput {
         private final int depth;
 
-        Output(int p_169223_) {
-            this.depth = p_169223_;
+        Output(int depth) {
+            this.depth = depth;
         }
 
         @Override
-        public void add(NarratedElementType p_169226_, NarrationThunk<?> p_169227_) {
+        public void add(NarratedElementType type, NarrationThunk<?> contents) {
             ScreenNarrationCollector.this.entries
-                .computeIfAbsent(new ScreenNarrationCollector.EntryKey(p_169226_, this.depth), p_169229_ -> new ScreenNarrationCollector.NarrationEntry())
-                .update(ScreenNarrationCollector.this.generation, p_169227_);
+                .computeIfAbsent(new ScreenNarrationCollector.EntryKey(type, this.depth), p_169229_ -> new ScreenNarrationCollector.NarrationEntry())
+                .update(ScreenNarrationCollector.this.generation, contents);
         }
 
         @Override

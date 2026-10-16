@@ -39,28 +39,28 @@ public class MapItem extends ComplexItem {
     public static final int IMAGE_WIDTH = 128;
     public static final int IMAGE_HEIGHT = 128;
 
-    public MapItem(Item.Properties p_42847_) {
-        super(p_42847_);
+    public MapItem(Item.Properties properties) {
+        super(properties);
     }
 
-    public static ItemStack create(Level p_42887_, int p_42888_, int p_42889_, byte p_42890_, boolean p_42891_, boolean p_42892_) {
+    public static ItemStack create(Level level, int levelX, int levelZ, byte scale, boolean trackingPosition, boolean unlimitedTracking) {
         ItemStack itemstack = new ItemStack(Items.FILLED_MAP);
-        MapId mapid = createNewSavedData(p_42887_, p_42888_, p_42889_, p_42890_, p_42891_, p_42892_, p_42887_.dimension());
+        MapId mapid = createNewSavedData(level, levelX, levelZ, scale, trackingPosition, unlimitedTracking, level.dimension());
         itemstack.set(DataComponents.MAP_ID, mapid);
         return itemstack;
     }
 
     @Nullable
-    public static MapItemSavedData getSavedData(@Nullable MapId p_324036_, Level p_151130_) {
-        return p_324036_ == null ? null : p_151130_.getMapData(p_324036_);
+    public static MapItemSavedData getSavedData(@Nullable MapId mapId, Level level) {
+        return mapId == null ? null : level.getMapData(mapId);
     }
 
     @Nullable
-    public static MapItemSavedData getSavedData(ItemStack p_42854_, Level p_42855_) {
+    public static MapItemSavedData getSavedData(ItemStack stack, Level level) {
         // Neo: Add instance method so that mods can override
-        Item map = p_42854_.getItem();
+        Item map = stack.getItem();
         if(map instanceof MapItem) {
-            return ((MapItem)map).getCustomMapData(p_42854_, p_42855_);
+            return ((MapItem)map).getCustomMapData(stack, level);
         }
         return null;
     }
@@ -72,27 +72,27 @@ public class MapItem extends ComplexItem {
     }
 
     private static MapId createNewSavedData(
-        Level p_151121_, int p_151122_, int p_151123_, int p_151124_, boolean p_151125_, boolean p_151126_, ResourceKey<Level> p_151127_
+        Level level, int x, int z, int scale, boolean trackingPosition, boolean unlimitedTracking, ResourceKey<Level> dimension
     ) {
-        MapItemSavedData mapitemsaveddata = MapItemSavedData.createFresh((double)p_151122_, (double)p_151123_, (byte)p_151124_, p_151125_, p_151126_, p_151127_);
-        MapId mapid = p_151121_.getFreeMapId();
-        p_151121_.setMapData(mapid, mapitemsaveddata);
+        MapItemSavedData mapitemsaveddata = MapItemSavedData.createFresh((double)x, (double)z, (byte)scale, trackingPosition, unlimitedTracking, dimension);
+        MapId mapid = level.getFreeMapId();
+        level.setMapData(mapid, mapitemsaveddata);
         return mapid;
     }
 
-    public void update(Level p_42894_, Entity p_42895_, MapItemSavedData p_42896_) {
-        if (p_42894_.dimension() == p_42896_.dimension && p_42895_ instanceof Player) {
-            int i = 1 << p_42896_.scale;
-            int j = p_42896_.centerX;
-            int k = p_42896_.centerZ;
-            int l = Mth.floor(p_42895_.getX() - (double)j) / i + 64;
-            int i1 = Mth.floor(p_42895_.getZ() - (double)k) / i + 64;
+    public void update(Level level, Entity viewer, MapItemSavedData data) {
+        if (level.dimension() == data.dimension && viewer instanceof Player) {
+            int i = 1 << data.scale;
+            int j = data.centerX;
+            int k = data.centerZ;
+            int l = Mth.floor(viewer.getX() - (double)j) / i + 64;
+            int i1 = Mth.floor(viewer.getZ() - (double)k) / i + 64;
             int j1 = 128 / i;
-            if (p_42894_.dimensionType().hasCeiling()) {
+            if (level.dimensionType().hasCeiling()) {
                 j1 /= 2;
             }
 
-            MapItemSavedData.HoldingPlayer mapitemsaveddata$holdingplayer = p_42896_.getHoldingPlayer((Player)p_42895_);
+            MapItemSavedData.HoldingPlayer mapitemsaveddata$holdingplayer = data.getHoldingPlayer((Player)viewer);
             mapitemsaveddata$holdingplayer.step++;
             BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
             BlockPos.MutableBlockPos blockpos$mutableblockpos1 = new BlockPos.MutableBlockPos();
@@ -110,17 +110,17 @@ public class MapItem extends ComplexItem {
                             int j2 = (j / i + k1 - 64) * i;
                             int k2 = (k / i + l1 - 64) * i;
                             Multiset<MapColor> multiset = LinkedHashMultiset.create();
-                            LevelChunk levelchunk = p_42894_.getChunk(SectionPos.blockToSectionCoord(j2), SectionPos.blockToSectionCoord(k2));
+                            LevelChunk levelchunk = level.getChunk(SectionPos.blockToSectionCoord(j2), SectionPos.blockToSectionCoord(k2));
                             if (!levelchunk.isEmpty()) {
                                 int l2 = 0;
                                 double d1 = 0.0;
-                                if (p_42894_.dimensionType().hasCeiling()) {
+                                if (level.dimensionType().hasCeiling()) {
                                     int i3 = j2 + k2 * 231871;
                                     i3 = i3 * i3 * 31287121 + i3 * 11;
                                     if ((i3 >> 20 & 1) == 0) {
-                                        multiset.add(Blocks.DIRT.defaultBlockState().getMapColor(p_42894_, BlockPos.ZERO), 10);
+                                        multiset.add(Blocks.DIRT.defaultBlockState().getMapColor(level, BlockPos.ZERO), 10);
                                     } else {
-                                        multiset.add(Blocks.STONE.defaultBlockState().getMapColor(p_42894_, BlockPos.ZERO), 100);
+                                        multiset.add(Blocks.STONE.defaultBlockState().getMapColor(level, BlockPos.ZERO), 100);
                                     }
 
                                     d1 = 100.0;
@@ -133,18 +133,18 @@ public class MapItem extends ComplexItem {
                                                 )
                                                 + 1;
                                             BlockState blockstate;
-                                            if (k3 <= p_42894_.getMinBuildHeight() + 1) {
+                                            if (k3 <= level.getMinBuildHeight() + 1) {
                                                 blockstate = Blocks.BEDROCK.defaultBlockState();
                                             } else {
                                                 do {
                                                     blockpos$mutableblockpos.setY(--k3);
                                                     blockstate = levelchunk.getBlockState(blockpos$mutableblockpos);
                                                 } while (
-                                                    blockstate.getMapColor(p_42894_, blockpos$mutableblockpos) == MapColor.NONE
-                                                        && k3 > p_42894_.getMinBuildHeight()
+                                                    blockstate.getMapColor(level, blockpos$mutableblockpos) == MapColor.NONE
+                                                        && k3 > level.getMinBuildHeight()
                                                 );
 
-                                                if (k3 > p_42894_.getMinBuildHeight() && !blockstate.getFluidState().isEmpty()) {
+                                                if (k3 > level.getMinBuildHeight() && !blockstate.getFluidState().isEmpty()) {
                                                     int l3 = k3 - 1;
                                                     blockpos$mutableblockpos1.set(blockpos$mutableblockpos);
 
@@ -153,15 +153,15 @@ public class MapItem extends ComplexItem {
                                                         blockpos$mutableblockpos1.setY(l3--);
                                                         blockstate1 = levelchunk.getBlockState(blockpos$mutableblockpos1);
                                                         l2++;
-                                                    } while (l3 > p_42894_.getMinBuildHeight() && !blockstate1.getFluidState().isEmpty());
+                                                    } while (l3 > level.getMinBuildHeight() && !blockstate1.getFluidState().isEmpty());
 
-                                                    blockstate = this.getCorrectStateForFluidBlock(p_42894_, blockstate, blockpos$mutableblockpos);
+                                                    blockstate = this.getCorrectStateForFluidBlock(level, blockstate, blockpos$mutableblockpos);
                                                 }
                                             }
 
-                                            p_42896_.checkBanners(p_42894_, blockpos$mutableblockpos.getX(), blockpos$mutableblockpos.getZ());
+                                            data.checkBanners(level, blockpos$mutableblockpos.getX(), blockpos$mutableblockpos.getZ());
                                             d1 += (double)k3 / (double)(i * i);
-                                            multiset.add(blockstate.getMapColor(p_42894_, blockpos$mutableblockpos));
+                                            multiset.add(blockstate.getMapColor(level, blockpos$mutableblockpos));
                                         }
                                     }
                                 }
@@ -191,7 +191,7 @@ public class MapItem extends ComplexItem {
 
                                 d0 = d1;
                                 if (l1 >= 0 && i2 < j1 * j1 && (!flag1 || (k1 + l1 & 1) != 0)) {
-                                    flag |= p_42896_.updateColor(k1, l1, mapcolor.getPackedId(mapcolor$brightness));
+                                    flag |= data.updateColor(k1, l1, mapcolor.getPackedId(mapcolor$brightness));
                                 }
                             }
                         }
@@ -201,19 +201,19 @@ public class MapItem extends ComplexItem {
         }
     }
 
-    private BlockState getCorrectStateForFluidBlock(Level p_42901_, BlockState p_42902_, BlockPos p_42903_) {
-        FluidState fluidstate = p_42902_.getFluidState();
-        return !fluidstate.isEmpty() && !p_42902_.isFaceSturdy(p_42901_, p_42903_, Direction.UP) ? fluidstate.createLegacyBlock() : p_42902_;
+    private BlockState getCorrectStateForFluidBlock(Level level, BlockState state, BlockPos pos) {
+        FluidState fluidstate = state.getFluidState();
+        return !fluidstate.isEmpty() && !state.isFaceSturdy(level, pos, Direction.UP) ? fluidstate.createLegacyBlock() : state;
     }
 
-    private static boolean isBiomeWatery(boolean[] p_212252_, int p_212253_, int p_212254_) {
-        return p_212252_[p_212254_ * 128 + p_212253_];
+    private static boolean isBiomeWatery(boolean[] wateryMap, int xSample, int zSample) {
+        return wateryMap[zSample * 128 + xSample];
     }
 
-    public static void renderBiomePreviewMap(ServerLevel p_42851_, ItemStack p_42852_) {
-        MapItemSavedData mapitemsaveddata = getSavedData(p_42852_, p_42851_);
+    public static void renderBiomePreviewMap(ServerLevel serverLevel, ItemStack stack) {
+        MapItemSavedData mapitemsaveddata = getSavedData(stack, serverLevel);
         if (mapitemsaveddata != null) {
-            if (p_42851_.dimension() == mapitemsaveddata.dimension) {
+            if (serverLevel.dimension() == mapitemsaveddata.dimension) {
                 int i = 1 << mapitemsaveddata.scale;
                 int j = mapitemsaveddata.centerX;
                 int k = mapitemsaveddata.centerZ;
@@ -224,7 +224,7 @@ public class MapItem extends ComplexItem {
 
                 for (int j1 = 0; j1 < 128; j1++) {
                     for (int k1 = 0; k1 < 128; k1++) {
-                        Holder<Biome> holder = p_42851_.getBiome(blockpos$mutableblockpos.set((l + k1) * i, 0, (i1 + j1) * i));
+                        Holder<Biome> holder = serverLevel.getBiome(blockpos$mutableblockpos.set((l + k1) * i, 0, (i1 + j1) * i));
                         aboolean[j1 * 128 + k1] = holder.is(BiomeTags.WATER_ON_MAP_OUTLINES);
                     }
                 }
@@ -285,17 +285,20 @@ public class MapItem extends ComplexItem {
         }
     }
 
+    /**
+     * Called each tick as long the item is in a player's inventory. Used by maps to check if it's in a player's hand and update its contents.
+     */
     @Override
-    public void inventoryTick(ItemStack p_42870_, Level p_42871_, Entity p_42872_, int p_42873_, boolean p_42874_) {
-        if (!p_42871_.isClientSide) {
-            MapItemSavedData mapitemsaveddata = getSavedData(p_42870_, p_42871_);
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int itemSlot, boolean isSelected) {
+        if (!level.isClientSide) {
+            MapItemSavedData mapitemsaveddata = getSavedData(stack, level);
             if (mapitemsaveddata != null) {
-                if (p_42872_ instanceof Player player) {
-                    mapitemsaveddata.tickCarriedBy(player, p_42870_);
+                if (entity instanceof Player player) {
+                    mapitemsaveddata.tickCarriedBy(player, stack);
                 }
 
-                if (!mapitemsaveddata.locked && (p_42874_ || p_42872_ instanceof Player && ((Player)p_42872_).getOffhandItem() == p_42870_)) {
-                    this.update(p_42871_, p_42872_, mapitemsaveddata);
+                if (!mapitemsaveddata.locked && (isSelected || entity instanceof Player && ((Player)entity).getOffhandItem() == stack)) {
+                    this.update(level, entity, mapitemsaveddata);
                 }
             }
         }
@@ -303,88 +306,91 @@ public class MapItem extends ComplexItem {
 
     @Nullable
     @Override
-    public Packet<?> getUpdatePacket(ItemStack p_42876_, Level p_42877_, Player p_42878_) {
-        MapId mapid = p_42876_.get(DataComponents.MAP_ID);
-        MapItemSavedData mapitemsaveddata = getSavedData(mapid, p_42877_);
-        return mapitemsaveddata != null ? mapitemsaveddata.getUpdatePacket(mapid, p_42878_) : null;
+    public Packet<?> getUpdatePacket(ItemStack stack, Level level, Player player) {
+        MapId mapid = stack.get(DataComponents.MAP_ID);
+        MapItemSavedData mapitemsaveddata = getSavedData(mapid, level);
+        return mapitemsaveddata != null ? mapitemsaveddata.getUpdatePacket(mapid, player) : null;
     }
 
     @Override
-    public void onCraftedPostProcess(ItemStack p_42913_, Level p_42914_) {
-        MapPostProcessing mappostprocessing = p_42913_.remove(DataComponents.MAP_POST_PROCESSING);
+    public void onCraftedPostProcess(ItemStack stack, Level level) {
+        MapPostProcessing mappostprocessing = stack.remove(DataComponents.MAP_POST_PROCESSING);
         if (mappostprocessing != null) {
             switch (mappostprocessing) {
                 case LOCK:
-                    lockMap(p_42914_, p_42913_);
+                    lockMap(level, stack);
                     break;
                 case SCALE:
-                    scaleMap(p_42913_, p_42914_);
+                    scaleMap(stack, level);
             }
         }
     }
 
-    private static void scaleMap(ItemStack p_42857_, Level p_42858_) {
-        MapItemSavedData mapitemsaveddata = getSavedData(p_42857_, p_42858_);
+    private static void scaleMap(ItemStack stack, Level level) {
+        MapItemSavedData mapitemsaveddata = getSavedData(stack, level);
         if (mapitemsaveddata != null) {
-            MapId mapid = p_42858_.getFreeMapId();
-            p_42858_.setMapData(mapid, mapitemsaveddata.scaled());
-            p_42857_.set(DataComponents.MAP_ID, mapid);
+            MapId mapid = level.getFreeMapId();
+            level.setMapData(mapid, mapitemsaveddata.scaled());
+            stack.set(DataComponents.MAP_ID, mapid);
         }
     }
 
-    public static void lockMap(Level p_42898_, ItemStack p_42899_) {
-        MapItemSavedData mapitemsaveddata = getSavedData(p_42899_, p_42898_);
+    public static void lockMap(Level level, ItemStack stack) {
+        MapItemSavedData mapitemsaveddata = getSavedData(stack, level);
         if (mapitemsaveddata != null) {
-            MapId mapid = p_42898_.getFreeMapId();
+            MapId mapid = level.getFreeMapId();
             MapItemSavedData mapitemsaveddata1 = mapitemsaveddata.locked();
-            p_42898_.setMapData(mapid, mapitemsaveddata1);
-            p_42899_.set(DataComponents.MAP_ID, mapid);
+            level.setMapData(mapid, mapitemsaveddata1);
+            stack.set(DataComponents.MAP_ID, mapid);
         }
     }
 
     @Override
-    public void appendHoverText(ItemStack p_42880_, Item.TooltipContext p_339653_, List<Component> p_42882_, TooltipFlag p_42883_) {
-        MapId mapid = p_42880_.get(DataComponents.MAP_ID);
-        MapItemSavedData mapitemsaveddata = mapid != null ? p_339653_.mapData(mapid) : null;
-        MapPostProcessing mappostprocessing = p_42880_.get(DataComponents.MAP_POST_PROCESSING);
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        MapId mapid = stack.get(DataComponents.MAP_ID);
+        MapItemSavedData mapitemsaveddata = mapid != null ? context.mapData(mapid) : null;
+        MapPostProcessing mappostprocessing = stack.get(DataComponents.MAP_POST_PROCESSING);
         if (mapitemsaveddata != null && (mapitemsaveddata.locked || mappostprocessing == MapPostProcessing.LOCK)) {
-            p_42882_.add(Component.translatable("filled_map.locked", mapid.id()).withStyle(ChatFormatting.GRAY));
+            tooltipComponents.add(Component.translatable("filled_map.locked", mapid.id()).withStyle(ChatFormatting.GRAY));
         }
 
-        if (p_42883_.isAdvanced()) {
+        if (tooltipFlag.isAdvanced()) {
             if (mapitemsaveddata != null) {
                 if (mappostprocessing == null) {
-                    p_42882_.add(getTooltipForId(mapid));
+                    tooltipComponents.add(getTooltipForId(mapid));
                 }
 
                 int i = mappostprocessing == MapPostProcessing.SCALE ? 1 : 0;
                 int j = Math.min(mapitemsaveddata.scale + i, 4);
-                p_42882_.add(Component.translatable("filled_map.scale", 1 << j).withStyle(ChatFormatting.GRAY));
-                p_42882_.add(Component.translatable("filled_map.level", j, 4).withStyle(ChatFormatting.GRAY));
+                tooltipComponents.add(Component.translatable("filled_map.scale", 1 << j).withStyle(ChatFormatting.GRAY));
+                tooltipComponents.add(Component.translatable("filled_map.level", j, 4).withStyle(ChatFormatting.GRAY));
             } else {
-                p_42882_.add(Component.translatable("filled_map.unknown").withStyle(ChatFormatting.GRAY));
+                tooltipComponents.add(Component.translatable("filled_map.unknown").withStyle(ChatFormatting.GRAY));
             }
         }
     }
 
-    public static Component getTooltipForId(MapId p_323616_) {
-        return Component.translatable("filled_map.id", p_323616_.id()).withStyle(ChatFormatting.GRAY);
+    public static Component getTooltipForId(MapId mapId) {
+        return Component.translatable("filled_map.id", mapId.id()).withStyle(ChatFormatting.GRAY);
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_42885_) {
-        BlockState blockstate = p_42885_.getLevel().getBlockState(p_42885_.getClickedPos());
+    public InteractionResult useOn(UseOnContext context) {
+        BlockState blockstate = context.getLevel().getBlockState(context.getClickedPos());
         if (blockstate.is(BlockTags.BANNERS)) {
-            if (!p_42885_.getLevel().isClientSide) {
-                MapItemSavedData mapitemsaveddata = getSavedData(p_42885_.getItemInHand(), p_42885_.getLevel());
-                if (mapitemsaveddata != null && !mapitemsaveddata.toggleBanner(p_42885_.getLevel(), p_42885_.getClickedPos())) {
+            if (!context.getLevel().isClientSide) {
+                MapItemSavedData mapitemsaveddata = getSavedData(context.getItemInHand(), context.getLevel());
+                if (mapitemsaveddata != null && !mapitemsaveddata.toggleBanner(context.getLevel(), context.getClickedPos())) {
                     return InteractionResult.FAIL;
                 }
             }
 
-            return InteractionResult.sidedSuccess(p_42885_.getLevel().isClientSide);
+            return InteractionResult.sidedSuccess(context.getLevel().isClientSide);
         } else {
-            return super.useOn(p_42885_);
+            return super.useOn(context);
         }
     }
 }

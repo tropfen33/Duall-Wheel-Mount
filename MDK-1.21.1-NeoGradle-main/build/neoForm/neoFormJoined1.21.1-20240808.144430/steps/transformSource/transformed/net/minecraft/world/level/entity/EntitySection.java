@@ -14,22 +14,22 @@ public class EntitySection<T extends EntityAccess> {
     private final ClassInstanceMultiMap<T> storage;
     private Visibility chunkStatus;
 
-    public EntitySection(Class<T> p_156831_, Visibility p_156832_) {
-        this.chunkStatus = p_156832_;
-        this.storage = new ClassInstanceMultiMap<>(p_156831_);
+    public EntitySection(Class<T> entityClazz, Visibility chunkStatus) {
+        this.chunkStatus = chunkStatus;
+        this.storage = new ClassInstanceMultiMap<>(entityClazz);
     }
 
-    public void add(T p_188347_) {
-        this.storage.add(p_188347_);
+    public void add(T entity) {
+        this.storage.add(entity);
     }
 
-    public boolean remove(T p_188356_) {
-        return this.storage.remove(p_188356_);
+    public boolean remove(T entity) {
+        return this.storage.remove(entity);
     }
 
-    public AbortableIterationConsumer.Continuation getEntities(AABB p_262016_, AbortableIterationConsumer<T> p_261863_) {
+    public AbortableIterationConsumer.Continuation getEntities(AABB bounds, AbortableIterationConsumer<T> consumer) {
         for (T t : this.storage) {
-            if (t.getBoundingBox().intersects(p_262016_) && p_261863_.accept(t).shouldAbort()) {
+            if (t.getBoundingBox().intersects(bounds) && consumer.accept(t).shouldAbort()) {
                 return AbortableIterationConsumer.Continuation.ABORT;
             }
         }
@@ -38,15 +38,15 @@ public class EntitySection<T extends EntityAccess> {
     }
 
     public <U extends T> AbortableIterationConsumer.Continuation getEntities(
-        EntityTypeTest<T, U> p_188349_, AABB p_188350_, AbortableIterationConsumer<? super U> p_261535_
+        EntityTypeTest<T, U> test, AABB bounds, AbortableIterationConsumer<? super U> consumer
     ) {
-        Collection<? extends T> collection = this.storage.find(p_188349_.getBaseClass());
+        Collection<? extends T> collection = this.storage.find(test.getBaseClass());
         if (collection.isEmpty()) {
             return AbortableIterationConsumer.Continuation.CONTINUE;
         } else {
             for (T t : collection) {
-                U u = (U)p_188349_.tryCast(t);
-                if (u != null && t.getBoundingBox().intersects(p_188350_) && p_261535_.accept(u).shouldAbort()) {
+                U u = (U)test.tryCast(t);
+                if (u != null && t.getBoundingBox().intersects(bounds) && consumer.accept(u).shouldAbort()) {
                     return AbortableIterationConsumer.Continuation.ABORT;
                 }
             }
@@ -67,9 +67,9 @@ public class EntitySection<T extends EntityAccess> {
         return this.chunkStatus;
     }
 
-    public Visibility updateChunkStatus(Visibility p_156839_) {
+    public Visibility updateChunkStatus(Visibility chunkStatus) {
         Visibility visibility = this.chunkStatus;
-        this.chunkStatus = p_156839_;
+        this.chunkStatus = chunkStatus;
         return visibility;
     }
 

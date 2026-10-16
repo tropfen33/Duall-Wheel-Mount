@@ -22,48 +22,51 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 
 public class BottleItem extends Item {
-    public BottleItem(Item.Properties p_40648_) {
-        super(p_40648_);
+    public BottleItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_40656_, Player p_40657_, InteractionHand p_40658_) {
-        List<AreaEffectCloud> list = p_40656_.getEntitiesOfClass(
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        List<AreaEffectCloud> list = level.getEntitiesOfClass(
             AreaEffectCloud.class,
-            p_40657_.getBoundingBox().inflate(2.0),
+            player.getBoundingBox().inflate(2.0),
             p_350149_ -> p_350149_ != null && p_350149_.isAlive() && p_350149_.getOwner() instanceof EnderDragon
         );
-        ItemStack itemstack = p_40657_.getItemInHand(p_40658_);
+        ItemStack itemstack = player.getItemInHand(hand);
         if (!list.isEmpty()) {
             AreaEffectCloud areaeffectcloud = list.get(0);
             areaeffectcloud.setRadius(areaeffectcloud.getRadius() - 0.5F);
-            p_40656_.playSound(null, p_40657_.getX(), p_40657_.getY(), p_40657_.getZ(), SoundEvents.BOTTLE_FILL_DRAGONBREATH, SoundSource.NEUTRAL, 1.0F, 1.0F);
-            p_40656_.gameEvent(p_40657_, GameEvent.FLUID_PICKUP, p_40657_.position());
-            if (p_40657_ instanceof ServerPlayer serverplayer) {
+            level.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BOTTLE_FILL_DRAGONBREATH, SoundSource.NEUTRAL, 1.0F, 1.0F);
+            level.gameEvent(player, GameEvent.FLUID_PICKUP, player.position());
+            if (player instanceof ServerPlayer serverplayer) {
                 CriteriaTriggers.PLAYER_INTERACTED_WITH_ENTITY.trigger(serverplayer, itemstack, areaeffectcloud);
             }
 
             return InteractionResultHolder.sidedSuccess(
-                this.turnBottleIntoItem(itemstack, p_40657_, new ItemStack(Items.DRAGON_BREATH)), p_40656_.isClientSide()
+                this.turnBottleIntoItem(itemstack, player, new ItemStack(Items.DRAGON_BREATH)), level.isClientSide()
             );
         } else {
-            BlockHitResult blockhitresult = getPlayerPOVHitResult(p_40656_, p_40657_, ClipContext.Fluid.SOURCE_ONLY);
+            BlockHitResult blockhitresult = getPlayerPOVHitResult(level, player, ClipContext.Fluid.SOURCE_ONLY);
             if (blockhitresult.getType() == HitResult.Type.MISS) {
                 return InteractionResultHolder.pass(itemstack);
             } else {
                 if (blockhitresult.getType() == HitResult.Type.BLOCK) {
                     BlockPos blockpos = blockhitresult.getBlockPos();
-                    if (!p_40656_.mayInteract(p_40657_, blockpos)) {
+                    if (!level.mayInteract(player, blockpos)) {
                         return InteractionResultHolder.pass(itemstack);
                     }
 
-                    if (p_40656_.getFluidState(blockpos).is(FluidTags.WATER)) {
-                        p_40656_.playSound(
-                            p_40657_, p_40657_.getX(), p_40657_.getY(), p_40657_.getZ(), SoundEvents.BOTTLE_FILL, SoundSource.NEUTRAL, 1.0F, 1.0F
+                    if (level.getFluidState(blockpos).is(FluidTags.WATER)) {
+                        level.playSound(
+                            player, player.getX(), player.getY(), player.getZ(), SoundEvents.BOTTLE_FILL, SoundSource.NEUTRAL, 1.0F, 1.0F
                         );
-                        p_40656_.gameEvent(p_40657_, GameEvent.FLUID_PICKUP, blockpos);
+                        level.gameEvent(player, GameEvent.FLUID_PICKUP, blockpos);
                         return InteractionResultHolder.sidedSuccess(
-                            this.turnBottleIntoItem(itemstack, p_40657_, PotionContents.createItemStack(Items.POTION, Potions.WATER)), p_40656_.isClientSide()
+                            this.turnBottleIntoItem(itemstack, player, PotionContents.createItemStack(Items.POTION, Potions.WATER)), level.isClientSide()
                         );
                     }
                 }
@@ -73,8 +76,8 @@ public class BottleItem extends Item {
         }
     }
 
-    protected ItemStack turnBottleIntoItem(ItemStack p_40652_, Player p_40653_, ItemStack p_40654_) {
-        p_40653_.awardStat(Stats.ITEM_USED.get(this));
-        return ItemUtils.createFilledResult(p_40652_, p_40653_, p_40654_);
+    protected ItemStack turnBottleIntoItem(ItemStack bottleStack, Player player, ItemStack filledBottleStack) {
+        player.awardStat(Stats.ITEM_USED.get(this));
+        return ItemUtils.createFilledResult(bottleStack, player, filledBottleStack);
     }
 }

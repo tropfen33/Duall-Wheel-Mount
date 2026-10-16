@@ -20,7 +20,7 @@ public interface Leashable {
     @Nullable
     Leashable.LeashData getLeashData();
 
-    void setLeashData(@Nullable Leashable.LeashData p_352114_);
+    void setLeashData(@Nullable Leashable.LeashData leashData);
 
     default boolean isLeashed() {
         return this.getLeashData() != null && this.getLeashData().leashHolder != null;
@@ -38,18 +38,18 @@ public interface Leashable {
         return true;
     }
 
-    default void setDelayedLeashHolderId(int p_352387_) {
-        this.setLeashData(new Leashable.LeashData(p_352387_));
+    default void setDelayedLeashHolderId(int delayedLeashHolderId) {
+        this.setLeashData(new Leashable.LeashData(delayedLeashHolderId));
         dropLeash((Entity & Leashable)this, false, false);
     }
 
     @Nullable
-    default Leashable.LeashData readLeashData(CompoundTag p_352410_) {
-        if (p_352410_.contains("leash", 10)) {
-            return new Leashable.LeashData(Either.left(p_352410_.getCompound("leash").getUUID("UUID")));
+    default Leashable.LeashData readLeashData(CompoundTag tag) {
+        if (tag.contains("leash", 10)) {
+            return new Leashable.LeashData(Either.left(tag.getCompound("leash").getUUID("UUID")));
         } else {
-            if (p_352410_.contains("leash", 11)) {
-                Either<UUID, BlockPos> either = NbtUtils.readBlockPos(p_352410_, "leash").<Either<UUID, BlockPos>>map(Either::right).orElse(null);
+            if (tag.contains("leash", 11)) {
+                Either<UUID, BlockPos> either = NbtUtils.readBlockPos(tag, "leash").<Either<UUID, BlockPos>>map(Either::right).orElse(null);
                 if (either != null) {
                     return new Leashable.LeashData(either);
                 }
@@ -59,17 +59,17 @@ public interface Leashable {
         }
     }
 
-    default void writeLeashData(CompoundTag p_352349_, @Nullable Leashable.LeashData p_352363_) {
-        if (p_352363_ != null) {
-            Either<UUID, BlockPos> either = p_352363_.delayedLeashInfo;
-            if (p_352363_.leashHolder instanceof LeashFenceKnotEntity leashfenceknotentity) {
+    default void writeLeashData(CompoundTag tag, @Nullable Leashable.LeashData leashData) {
+        if (leashData != null) {
+            Either<UUID, BlockPos> either = leashData.delayedLeashInfo;
+            if (leashData.leashHolder instanceof LeashFenceKnotEntity leashfenceknotentity) {
                 either = Either.right(leashfenceknotentity.getPos());
-            } else if (p_352363_.leashHolder != null) {
-                either = Either.left(p_352363_.leashHolder.getUUID());
+            } else if (leashData.leashHolder != null) {
+                either = Either.left(leashData.leashHolder.getUUID());
             }
 
             if (either != null) {
-                p_352349_.put("leash", either.map(p_352326_ -> {
+                tag.put("leash", either.map(p_352326_ -> {
                     CompoundTag compoundtag = new CompoundTag();
                     compoundtag.putUUID("UUID", p_352326_);
                     return compoundtag;
@@ -78,77 +78,77 @@ public interface Leashable {
         }
     }
 
-    private static <E extends Entity & Leashable> void restoreLeashFromSave(E p_352354_, Leashable.LeashData p_352106_) {
-        if (p_352106_.delayedLeashInfo != null && p_352354_.level() instanceof ServerLevel serverlevel) {
-            Optional<UUID> optional1 = p_352106_.delayedLeashInfo.left();
-            Optional<BlockPos> optional = p_352106_.delayedLeashInfo.right();
+    private static <E extends Entity & Leashable> void restoreLeashFromSave(E p_entity, Leashable.LeashData leashData) {
+        if (leashData.delayedLeashInfo != null && p_entity.level() instanceof ServerLevel serverlevel) {
+            Optional<UUID> optional1 = leashData.delayedLeashInfo.left();
+            Optional<BlockPos> optional = leashData.delayedLeashInfo.right();
             if (optional1.isPresent()) {
                 Entity entity = serverlevel.getEntity(optional1.get());
                 if (entity != null) {
-                    setLeashedTo(p_352354_, entity, true);
+                    setLeashedTo(p_entity, entity, true);
                     return;
                 }
             } else if (optional.isPresent()) {
-                setLeashedTo(p_352354_, LeashFenceKnotEntity.getOrCreateKnot(serverlevel, optional.get()), true);
+                setLeashedTo(p_entity, LeashFenceKnotEntity.getOrCreateKnot(serverlevel, optional.get()), true);
                 return;
             }
 
-            if (p_352354_.tickCount > 100) {
-                p_352354_.spawnAtLocation(Items.LEAD);
-                p_352354_.setLeashData(null);
+            if (p_entity.tickCount > 100) {
+                p_entity.spawnAtLocation(Items.LEAD);
+                p_entity.setLeashData(null);
             }
         }
     }
 
-    default void dropLeash(boolean p_352294_, boolean p_352456_) {
-        dropLeash((Entity & Leashable)this, p_352294_, p_352456_);
+    default void dropLeash(boolean broadcastPacket, boolean dropItem) {
+        dropLeash((Entity & Leashable)this, broadcastPacket, dropItem);
     }
 
-    private static <E extends Entity & Leashable> void dropLeash(E p_352163_, boolean p_352286_, boolean p_352272_) {
-        Leashable.LeashData leashable$leashdata = p_352163_.getLeashData();
+    private static <E extends Entity & Leashable> void dropLeash(E entity, boolean broadcastPacket, boolean dropItem) {
+        Leashable.LeashData leashable$leashdata = entity.getLeashData();
         if (leashable$leashdata != null && leashable$leashdata.leashHolder != null) {
-            p_352163_.setLeashData(null);
-            if (!p_352163_.level().isClientSide && p_352272_) {
-                p_352163_.spawnAtLocation(Items.LEAD);
+            entity.setLeashData(null);
+            if (!entity.level().isClientSide && dropItem) {
+                entity.spawnAtLocation(Items.LEAD);
             }
 
-            if (p_352286_ && p_352163_.level() instanceof ServerLevel serverlevel) {
-                serverlevel.getChunkSource().broadcast(p_352163_, new ClientboundSetEntityLinkPacket(p_352163_, null));
+            if (broadcastPacket && entity.level() instanceof ServerLevel serverlevel) {
+                serverlevel.getChunkSource().broadcast(entity, new ClientboundSetEntityLinkPacket(entity, null));
             }
         }
     }
 
-    static <E extends Entity & Leashable> void tickLeash(E p_352082_) {
-        Leashable.LeashData leashable$leashdata = p_352082_.getLeashData();
+    static <E extends Entity & Leashable> void tickLeash(E p_entity) {
+        Leashable.LeashData leashable$leashdata = p_entity.getLeashData();
         if (leashable$leashdata != null && leashable$leashdata.delayedLeashInfo != null) {
-            restoreLeashFromSave(p_352082_, leashable$leashdata);
+            restoreLeashFromSave(p_entity, leashable$leashdata);
         }
 
         if (leashable$leashdata != null && leashable$leashdata.leashHolder != null) {
-            if (!p_352082_.isAlive() || !leashable$leashdata.leashHolder.isAlive()) {
-                dropLeash(p_352082_, true, true);
+            if (!p_entity.isAlive() || !leashable$leashdata.leashHolder.isAlive()) {
+                dropLeash(p_entity, true, true);
             }
 
-            Entity entity = p_352082_.getLeashHolder();
-            if (entity != null && entity.level() == p_352082_.level()) {
-                float f = p_352082_.distanceTo(entity);
-                if (!p_352082_.handleLeashAtDistance(entity, f)) {
+            Entity entity = p_entity.getLeashHolder();
+            if (entity != null && entity.level() == p_entity.level()) {
+                float f = p_entity.distanceTo(entity);
+                if (!p_entity.handleLeashAtDistance(entity, f)) {
                     return;
                 }
 
                 if ((double)f > 10.0) {
-                    p_352082_.leashTooFarBehaviour();
+                    p_entity.leashTooFarBehaviour();
                 } else if ((double)f > 6.0) {
-                    p_352082_.elasticRangeLeashBehaviour(entity, f);
-                    p_352082_.checkSlowFallDistance();
+                    p_entity.elasticRangeLeashBehaviour(entity, f);
+                    p_entity.checkSlowFallDistance();
                 } else {
-                    p_352082_.closeRangeLeashBehaviour(entity);
+                    p_entity.closeRangeLeashBehaviour(entity);
                 }
             }
         }
     }
 
-    default boolean handleLeashAtDistance(Entity p_352458_, float p_352101_) {
+    default boolean handleLeashAtDistance(Entity leashHolder, float distance) {
         return true;
     }
 
@@ -156,41 +156,41 @@ public interface Leashable {
         this.dropLeash(true, true);
     }
 
-    default void closeRangeLeashBehaviour(Entity p_352073_) {
+    default void closeRangeLeashBehaviour(Entity entity) {
     }
 
-    default void elasticRangeLeashBehaviour(Entity p_353036_, float p_353047_) {
-        legacyElasticRangeLeashBehaviour((Entity & Leashable)this, p_353036_, p_353047_);
+    default void elasticRangeLeashBehaviour(Entity leashHolder, float distance) {
+        legacyElasticRangeLeashBehaviour((Entity & Leashable)this, leashHolder, distance);
     }
 
-    private static <E extends Entity & Leashable> void legacyElasticRangeLeashBehaviour(E p_353048_, Entity p_353039_, float p_353053_) {
-        double d0 = (p_353039_.getX() - p_353048_.getX()) / (double)p_353053_;
-        double d1 = (p_353039_.getY() - p_353048_.getY()) / (double)p_353053_;
-        double d2 = (p_353039_.getZ() - p_353048_.getZ()) / (double)p_353053_;
-        p_353048_.setDeltaMovement(
-            p_353048_.getDeltaMovement().add(Math.copySign(d0 * d0 * 0.4, d0), Math.copySign(d1 * d1 * 0.4, d1), Math.copySign(d2 * d2 * 0.4, d2))
+    private static <E extends Entity & Leashable> void legacyElasticRangeLeashBehaviour(E entity, Entity leashHolder, float distance) {
+        double d0 = (leashHolder.getX() - entity.getX()) / (double)distance;
+        double d1 = (leashHolder.getY() - entity.getY()) / (double)distance;
+        double d2 = (leashHolder.getZ() - entity.getZ()) / (double)distance;
+        entity.setDeltaMovement(
+            entity.getDeltaMovement().add(Math.copySign(d0 * d0 * 0.4, d0), Math.copySign(d1 * d1 * 0.4, d1), Math.copySign(d2 * d2 * 0.4, d2))
         );
     }
 
-    default void setLeashedTo(Entity p_352411_, boolean p_352183_) {
-        setLeashedTo((Entity & Leashable)this, p_352411_, p_352183_);
+    default void setLeashedTo(Entity leashHolder, boolean broadcastPacket) {
+        setLeashedTo((Entity & Leashable)this, leashHolder, broadcastPacket);
     }
 
-    private static <E extends Entity & Leashable> void setLeashedTo(E p_352280_, Entity p_352109_, boolean p_352239_) {
-        Leashable.LeashData leashable$leashdata = p_352280_.getLeashData();
+    private static <E extends Entity & Leashable> void setLeashedTo(E entity, Entity leashHolder, boolean broadcastPacket) {
+        Leashable.LeashData leashable$leashdata = entity.getLeashData();
         if (leashable$leashdata == null) {
-            leashable$leashdata = new Leashable.LeashData(p_352109_);
-            p_352280_.setLeashData(leashable$leashdata);
+            leashable$leashdata = new Leashable.LeashData(leashHolder);
+            entity.setLeashData(leashable$leashdata);
         } else {
-            leashable$leashdata.setLeashHolder(p_352109_);
+            leashable$leashdata.setLeashHolder(leashHolder);
         }
 
-        if (p_352239_ && p_352280_.level() instanceof ServerLevel serverlevel) {
-            serverlevel.getChunkSource().broadcast(p_352280_, new ClientboundSetEntityLinkPacket(p_352280_, p_352109_));
+        if (broadcastPacket && entity.level() instanceof ServerLevel serverlevel) {
+            serverlevel.getChunkSource().broadcast(entity, new ClientboundSetEntityLinkPacket(entity, leashHolder));
         }
 
-        if (p_352280_.isPassenger()) {
-            p_352280_.stopRiding();
+        if (entity.isPassenger()) {
+            entity.stopRiding();
         }
     }
 
@@ -200,13 +200,13 @@ public interface Leashable {
     }
 
     @Nullable
-    private static <E extends Entity & Leashable> Entity getLeashHolder(E p_352466_) {
-        Leashable.LeashData leashable$leashdata = p_352466_.getLeashData();
+    private static <E extends Entity & Leashable> Entity getLeashHolder(E p_entity) {
+        Leashable.LeashData leashable$leashdata = p_entity.getLeashData();
         if (leashable$leashdata == null) {
             return null;
         } else {
-            if (leashable$leashdata.delayedLeashHolderId != 0 && p_352466_.level().isClientSide) {
-                Entity entity = p_352466_.level().getEntity(leashable$leashdata.delayedLeashHolderId);
+            if (leashable$leashdata.delayedLeashHolderId != 0 && p_entity.level().isClientSide) {
+                Entity entity = p_entity.level().getEntity(leashable$leashdata.delayedLeashHolderId);
                 if (entity instanceof Entity) {
                     leashable$leashdata.setLeashHolder(entity);
                 }
@@ -223,20 +223,20 @@ public interface Leashable {
         @Nullable
         public Either<UUID, BlockPos> delayedLeashInfo;
 
-        LeashData(Either<UUID, BlockPos> p_352282_) {
-            this.delayedLeashInfo = p_352282_;
+        LeashData(Either<UUID, BlockPos> delayedLeashInfo) {
+            this.delayedLeashInfo = delayedLeashInfo;
         }
 
-        LeashData(Entity p_352066_) {
-            this.leashHolder = p_352066_;
+        LeashData(Entity leashHolder) {
+            this.leashHolder = leashHolder;
         }
 
-        LeashData(int p_352297_) {
-            this.delayedLeashHolderId = p_352297_;
+        LeashData(int delayedLeashInfoId) {
+            this.delayedLeashHolderId = delayedLeashInfoId;
         }
 
-        public void setLeashHolder(Entity p_352464_) {
-            this.leashHolder = p_352464_;
+        public void setLeashHolder(Entity leashHolder) {
+            this.leashHolder = leashHolder;
             this.delayedLeashInfo = null;
             this.delayedLeashHolderId = 0;
         }

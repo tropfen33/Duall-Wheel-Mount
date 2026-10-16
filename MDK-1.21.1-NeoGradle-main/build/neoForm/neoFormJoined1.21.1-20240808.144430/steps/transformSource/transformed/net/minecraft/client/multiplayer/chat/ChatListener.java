@@ -30,8 +30,8 @@ public class ChatListener {
     private long messageDelay;
     private long previousMessageTime;
 
-    public ChatListener(Minecraft p_240569_) {
-        this.minecraft = p_240569_;
+    public ChatListener(Minecraft minecraft) {
+        this.minecraft = minecraft;
     }
 
     public void tick() {
@@ -46,8 +46,8 @@ public class ChatListener {
         }
     }
 
-    public void setMessageDelay(double p_240785_) {
-        long i = (long)(p_240785_ * 1000.0);
+    public void setMessageDelay(double delaySeconds) {
+        long i = (long)(delaySeconds * 1000.0);
         if (i == 0L && this.messageDelay > 0L) {
             this.delayedMessageQueue.forEach(ChatListener.Message::accept);
             this.delayedMessageQueue.clear();
@@ -69,44 +69,44 @@ public class ChatListener {
         this.delayedMessageQueue.clear();
     }
 
-    public boolean removeFromDelayedMessageQueue(MessageSignature p_241445_) {
-        return this.delayedMessageQueue.removeIf(p_247887_ -> p_241445_.equals(p_247887_.signature()));
+    public boolean removeFromDelayedMessageQueue(MessageSignature signature) {
+        return this.delayedMessageQueue.removeIf(p_247887_ -> signature.equals(p_247887_.signature()));
     }
 
     private boolean willDelayMessages() {
         return this.messageDelay > 0L && Util.getMillis() < this.previousMessageTime + this.messageDelay;
     }
 
-    private void handleMessage(@Nullable MessageSignature p_249408_, BooleanSupplier p_250870_) {
+    private void handleMessage(@Nullable MessageSignature signature, BooleanSupplier handler) {
         if (this.willDelayMessages()) {
-            this.delayedMessageQueue.add(new ChatListener.Message(p_249408_, p_250870_));
+            this.delayedMessageQueue.add(new ChatListener.Message(signature, handler));
         } else {
-            p_250870_.getAsBoolean();
+            handler.getAsBoolean();
         }
     }
 
-    public void handlePlayerChatMessage(PlayerChatMessage p_251553_, GameProfile p_250022_, ChatType.Bound p_252158_) {
+    public void handlePlayerChatMessage(PlayerChatMessage chatMessage, GameProfile gameProfile, ChatType.Bound boundChatType) {
         boolean flag = this.minecraft.options.onlyShowSecureChat().get();
-        PlayerChatMessage playerchatmessage = flag ? p_251553_.removeUnsignedContent() : p_251553_;
-        Component component = p_252158_.decorate(playerchatmessage.decoratedContent());
+        PlayerChatMessage playerchatmessage = flag ? chatMessage.removeUnsignedContent() : chatMessage;
+        Component component = boundChatType.decorate(playerchatmessage.decoratedContent());
         Instant instant = Instant.now();
-        this.handleMessage(p_251553_.signature(), () -> {
-            boolean flag1 = this.showMessageToPlayer(p_252158_, p_251553_, component, p_250022_, flag, instant);
+        this.handleMessage(chatMessage.signature(), () -> {
+            boolean flag1 = this.showMessageToPlayer(boundChatType, chatMessage, component, gameProfile, flag, instant);
             ClientPacketListener clientpacketlistener = this.minecraft.getConnection();
             if (clientpacketlistener != null) {
-                clientpacketlistener.markMessageAsProcessed(p_251553_, flag1);
+                clientpacketlistener.markMessageAsProcessed(chatMessage, flag1);
             }
 
             return flag1;
         });
     }
 
-    public void handleChatMessageError(UUID p_299306_, ChatType.Bound p_298901_) {
+    public void handleChatMessageError(UUID sender, ChatType.Bound boundChatType) {
         this.handleMessage(null, () -> {
-            if (this.minecraft.isBlocked(p_299306_)) {
+            if (this.minecraft.isBlocked(sender)) {
                 return false;
             } else {
-                Component component = p_298901_.decorate(CHAT_VALIDATION_ERROR);
+                Component component = boundChatType.decorate(CHAT_VALIDATION_ERROR);
                 this.minecraft.gui.getChat().addMessage(component, null, GuiMessageTag.chatError());
                 this.previousMessageTime = Util.getMillis();
                 return true;
@@ -114,14 +114,14 @@ public class ChatListener {
         });
     }
 
-    public void handleDisguisedChatMessage(Component p_250375_, ChatType.Bound p_251256_) {
+    public void handleDisguisedChatMessage(Component message, ChatType.Bound boundChatType) {
         Instant instant = Instant.now();
         this.handleMessage(null, () -> {
-            Component component = p_251256_.decorate(p_250375_);
-            Component forgeComponent = net.neoforged.neoforge.client.ClientHooks.onClientChat(p_251256_, component, Util.NIL_UUID);
+            Component component = boundChatType.decorate(message);
+            Component forgeComponent = net.neoforged.neoforge.client.ClientHooks.onClientChat(boundChatType, component, Util.NIL_UUID);
             if (forgeComponent == null) return false;
             this.minecraft.gui.getChat().addMessage(forgeComponent);
-            this.narrateChatMessage(p_251256_, p_250375_);
+            this.narrateChatMessage(boundChatType, message);
             this.logSystemMessage(component, instant);
             this.previousMessageTime = Util.getMillis();
             return true;
@@ -129,31 +129,31 @@ public class ChatListener {
     }
 
     private boolean showMessageToPlayer(
-        ChatType.Bound p_251766_, PlayerChatMessage p_249430_, Component p_249231_, GameProfile p_249177_, boolean p_251638_, Instant p_249665_
+        ChatType.Bound boundChatType, PlayerChatMessage chatMessage, Component decoratedServerContent, GameProfile gameProfile, boolean onlyShowSecureChat, Instant timestamp
     ) {
-        ChatTrustLevel chattrustlevel = this.evaluateTrustLevel(p_249430_, p_249231_, p_249665_);
-        if (p_251638_ && chattrustlevel.isNotSecure()) {
+        ChatTrustLevel chattrustlevel = this.evaluateTrustLevel(chatMessage, decoratedServerContent, timestamp);
+        if (onlyShowSecureChat && chattrustlevel.isNotSecure()) {
             return false;
-        } else if (!this.minecraft.isBlocked(p_249430_.sender()) && !p_249430_.isFullyFiltered()) {
-            GuiMessageTag guimessagetag = chattrustlevel.createTag(p_249430_);
-            MessageSignature messagesignature = p_249430_.signature();
-            FilterMask filtermask = p_249430_.filterMask();
+        } else if (!this.minecraft.isBlocked(chatMessage.sender()) && !chatMessage.isFullyFiltered()) {
+            GuiMessageTag guimessagetag = chattrustlevel.createTag(chatMessage);
+            MessageSignature messagesignature = chatMessage.signature();
+            FilterMask filtermask = chatMessage.filterMask();
             if (filtermask.isEmpty()) {
-                Component forgeComponent = net.neoforged.neoforge.client.ClientHooks.onClientPlayerChat(p_251766_, p_249231_, p_249430_, p_249430_.sender());
+                Component forgeComponent = net.neoforged.neoforge.client.ClientHooks.onClientPlayerChat(boundChatType, decoratedServerContent, chatMessage, chatMessage.sender());
                 if (forgeComponent == null) return false;
                 this.minecraft.gui.getChat().addMessage(forgeComponent, messagesignature, guimessagetag);
-                this.narrateChatMessage(p_251766_, p_249430_.decoratedContent());
+                this.narrateChatMessage(boundChatType, chatMessage.decoratedContent());
             } else {
-                Component component = filtermask.applyWithFormatting(p_249430_.signedContent());
+                Component component = filtermask.applyWithFormatting(chatMessage.signedContent());
                 if (component != null) {
-                    Component forgeComponent = net.neoforged.neoforge.client.ClientHooks.onClientPlayerChat(p_251766_, p_251766_.decorate(component), p_249430_, p_249430_.sender());
+                    Component forgeComponent = net.neoforged.neoforge.client.ClientHooks.onClientPlayerChat(boundChatType, boundChatType.decorate(component), chatMessage, chatMessage.sender());
                     if (forgeComponent == null) return false;
                     this.minecraft.gui.getChat().addMessage(forgeComponent, messagesignature, guimessagetag);
-                    this.narrateChatMessage(p_251766_, component);
+                    this.narrateChatMessage(boundChatType, component);
                 }
             }
 
-            this.logPlayerMessage(p_249430_, p_251766_, p_249177_, chattrustlevel);
+            this.logPlayerMessage(chatMessage, boundChatType, gameProfile, chattrustlevel);
             this.previousMessageTime = Util.getMillis();
             return true;
         } else {
@@ -161,49 +161,49 @@ public class ChatListener {
         }
     }
 
-    private void narrateChatMessage(ChatType.Bound p_241352_, Component p_243262_) {
-        this.minecraft.getNarrator().sayChat(p_241352_.decorateNarration(p_243262_));
+    private void narrateChatMessage(ChatType.Bound boundChatType, Component message) {
+        this.minecraft.getNarrator().sayChat(boundChatType.decorateNarration(message));
     }
 
-    private ChatTrustLevel evaluateTrustLevel(PlayerChatMessage p_251246_, Component p_250576_, Instant p_249995_) {
-        return this.isSenderLocalPlayer(p_251246_.sender()) ? ChatTrustLevel.SECURE : ChatTrustLevel.evaluate(p_251246_, p_250576_, p_249995_);
+    private ChatTrustLevel evaluateTrustLevel(PlayerChatMessage chatMessage, Component decoratedServerContent, Instant timestamp) {
+        return this.isSenderLocalPlayer(chatMessage.sender()) ? ChatTrustLevel.SECURE : ChatTrustLevel.evaluate(chatMessage, decoratedServerContent, timestamp);
     }
 
-    private void logPlayerMessage(PlayerChatMessage p_252155_, ChatType.Bound p_249730_, GameProfile p_248589_, ChatTrustLevel p_248881_) {
+    private void logPlayerMessage(PlayerChatMessage message, ChatType.Bound boundChatType, GameProfile gameProfile, ChatTrustLevel trustLevel) {
         ChatLog chatlog = this.minecraft.getReportingContext().chatLog();
-        chatlog.push(LoggedChatMessage.player(p_248589_, p_252155_, p_248881_));
+        chatlog.push(LoggedChatMessage.player(gameProfile, message, trustLevel));
     }
 
-    private void logSystemMessage(Component p_240609_, Instant p_240541_) {
+    private void logSystemMessage(Component message, Instant timestamp) {
         ChatLog chatlog = this.minecraft.getReportingContext().chatLog();
-        chatlog.push(LoggedChatMessage.system(p_240609_, p_240541_));
+        chatlog.push(LoggedChatMessage.system(message, timestamp));
     }
 
-    public void handleSystemMessage(Component p_240522_, boolean p_240642_) {
-        if (!this.minecraft.options.hideMatchedNames().get() || !this.minecraft.isBlocked(this.guessChatUUID(p_240522_))) {
-            p_240522_ = net.neoforged.neoforge.client.ClientHooks.onClientSystemChat(p_240522_, p_240642_);
-            if (p_240522_ == null) return;
-            if (p_240642_) {
-                this.minecraft.gui.setOverlayMessage(p_240522_, false);
+    public void handleSystemMessage(Component message, boolean isOverlay) {
+        if (!this.minecraft.options.hideMatchedNames().get() || !this.minecraft.isBlocked(this.guessChatUUID(message))) {
+            message = net.neoforged.neoforge.client.ClientHooks.onClientSystemChat(message, isOverlay);
+            if (message == null) return;
+            if (isOverlay) {
+                this.minecraft.gui.setOverlayMessage(message, false);
             } else {
-                this.minecraft.gui.getChat().addMessage(p_240522_);
-                this.logSystemMessage(p_240522_, Instant.now());
+                this.minecraft.gui.getChat().addMessage(message);
+                this.logSystemMessage(message, Instant.now());
             }
 
-            this.minecraft.getNarrator().say(p_240522_);
+            this.minecraft.getNarrator().say(message);
         }
     }
 
-    private UUID guessChatUUID(Component p_240595_) {
-        String s = StringDecomposer.getPlainText(p_240595_);
+    private UUID guessChatUUID(Component message) {
+        String s = StringDecomposer.getPlainText(message);
         String s1 = StringUtils.substringBetween(s, "<", ">");
         return s1 == null ? Util.NIL_UUID : this.minecraft.getPlayerSocialManager().getDiscoveredUUID(s1);
     }
 
-    private boolean isSenderLocalPlayer(UUID p_241343_) {
+    private boolean isSenderLocalPlayer(UUID sender) {
         if (this.minecraft.isLocalServer() && this.minecraft.player != null) {
             UUID uuid = this.minecraft.player.getGameProfile().getId();
-            return uuid.equals(p_241343_);
+            return uuid.equals(sender);
         } else {
             return false;
         }

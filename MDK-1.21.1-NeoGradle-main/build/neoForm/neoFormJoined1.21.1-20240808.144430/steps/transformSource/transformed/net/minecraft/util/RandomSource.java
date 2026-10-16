@@ -7,6 +7,13 @@ import net.minecraft.world.level.levelgen.RandomSupport;
 import net.minecraft.world.level.levelgen.SingleThreadedRandomSource;
 import net.minecraft.world.level.levelgen.ThreadSafeLegacyRandomSource;
 
+/**
+ * A basic interface for random number generation. This mirrors the same methods in {@link java.util.Random}, however it does not make any guarantee that these are thread-safe, unlike {@code Random}.
+ * The notable difference is that {@link #setSeed(long)} is not {@code synchronized} and should not be accessed from multiple threads.
+ * The documentation for each individual method can be assumed to be otherwise the same as the identically named method in {@link java.util.Random}.
+ * @see java.util.Random
+ * @see net.minecraft.world.level.levelgen.SimpleRandomSource
+ */
 public interface RandomSource {
     @Deprecated
     double GAUSSIAN_SPREAD_FACTOR = 2.297;
@@ -20,8 +27,8 @@ public interface RandomSource {
         return new ThreadSafeLegacyRandomSource(RandomSupport.generateUniqueSeed());
     }
 
-    static RandomSource create(long p_216336_) {
-        return new LegacyRandomSource(p_216336_);
+    static RandomSource create(long seed) {
+        return new LegacyRandomSource(seed);
     }
 
     static RandomSource createNewThreadLocalInstance() {
@@ -32,14 +39,14 @@ public interface RandomSource {
 
     PositionalRandomFactory forkPositional();
 
-    void setSeed(long p_216342_);
+    void setSeed(long seed);
 
     int nextInt();
 
-    int nextInt(int p_216331_);
+    int nextInt(int bound);
 
-    default int nextIntBetweenInclusive(int p_216333_, int p_216334_) {
-        return this.nextInt(p_216334_ - p_216333_ + 1) + p_216333_;
+    default int nextIntBetweenInclusive(int min, int max) {
+        return this.nextInt(max - min + 1) + min;
     }
 
     long nextLong();
@@ -52,21 +59,21 @@ public interface RandomSource {
 
     double nextGaussian();
 
-    default double triangle(double p_216329_, double p_216330_) {
-        return p_216329_ + p_216330_ * (this.nextDouble() - this.nextDouble());
+    default double triangle(double center, double maxDeviation) {
+        return center + maxDeviation * (this.nextDouble() - this.nextDouble());
     }
 
-    default void consumeCount(int p_216338_) {
-        for (int i = 0; i < p_216338_; i++) {
+    default void consumeCount(int count) {
+        for (int i = 0; i < count; i++) {
             this.nextInt();
         }
     }
 
-    default int nextInt(int p_216340_, int p_216341_) {
-        if (p_216340_ >= p_216341_) {
+    default int nextInt(int origin, int bound) {
+        if (origin >= bound) {
             throw new IllegalArgumentException("bound - origin is non positive");
         } else {
-            return p_216340_ + this.nextInt(p_216341_ - p_216340_);
+            return origin + this.nextInt(bound - origin);
         }
     }
 }

@@ -8,33 +8,45 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Path;
 
 public class WallClimberNavigation extends GroundPathNavigation {
+    /**
+     * Current path navigation target
+     */
     @Nullable
     private BlockPos pathToPosition;
 
-    public WallClimberNavigation(Mob p_26580_, Level p_26581_) {
-        super(p_26580_, p_26581_);
+    public WallClimberNavigation(Mob mob, Level level) {
+        super(mob, level);
     }
 
+    /**
+     * Returns path to given BlockPos
+     */
     @Override
-    public Path createPath(BlockPos p_26589_, int p_26590_) {
-        this.pathToPosition = p_26589_;
-        return super.createPath(p_26589_, p_26590_);
+    public Path createPath(BlockPos pos, int accuracy) {
+        this.pathToPosition = pos;
+        return super.createPath(pos, accuracy);
     }
 
+    /**
+     * Returns a path to the given entity or null
+     */
     @Override
-    public Path createPath(Entity p_26586_, int p_26587_) {
-        this.pathToPosition = p_26586_.blockPosition();
-        return super.createPath(p_26586_, p_26587_);
+    public Path createPath(Entity entity, int accuracy) {
+        this.pathToPosition = entity.blockPosition();
+        return super.createPath(entity, accuracy);
     }
 
+    /**
+     * Try to find and set a path to EntityLiving. Returns {@code true} if successful.
+     */
     @Override
-    public boolean moveTo(Entity p_26583_, double p_26584_) {
-        Path path = this.createPath(p_26583_, 0);
+    public boolean moveTo(Entity entity, double speed) {
+        Path path = this.createPath(entity, 0);
         if (path != null) {
-            return this.moveTo(path, p_26584_);
+            return this.moveTo(path, speed);
         } else {
-            this.pathToPosition = p_26583_.blockPosition();
-            this.speedModifier = p_26584_;
+            this.pathToPosition = entity.blockPosition();
+            this.speedModifier = speed;
             return true;
         }
     }

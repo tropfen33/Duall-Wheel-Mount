@@ -29,14 +29,14 @@ public class LanguageManager implements ResourceManagerReloadListener {
     private String currentCode;
     private final Consumer<ClientLanguage> reloadCallback;
 
-    public LanguageManager(String p_118971_, Consumer<ClientLanguage> p_345582_) {
-        setSelected(p_118971_);
-        this.reloadCallback = p_345582_;
+    public LanguageManager(String currentCode, Consumer<ClientLanguage> reloadFallback) {
+        setSelected(currentCode);
+        this.reloadCallback = reloadFallback;
     }
 
-    private static Map<String, LanguageInfo> extractLanguages(Stream<PackResources> p_118982_) {
+    private static Map<String, LanguageInfo> extractLanguages(Stream<PackResources> packResources) {
         Map<String, LanguageInfo> map = Maps.newHashMap();
-        p_118982_.forEach(p_264712_ -> {
+        packResources.forEach(p_264712_ -> {
             try {
                 LanguageMetadataSection languagemetadatasection = p_264712_.getMetadataSection(LanguageMetadataSection.TYPE);
                 if (languagemetadatasection != null) {
@@ -50,8 +50,8 @@ public class LanguageManager implements ResourceManagerReloadListener {
     }
 
     @Override
-    public void onResourceManagerReload(ResourceManager p_118973_) {
-        this.languages = extractLanguages(p_118973_.listPacks());
+    public void onResourceManagerReload(ResourceManager resourceManager) {
+        this.languages = extractLanguages(resourceManager.listPacks());
         List<String> list = new ArrayList<>(2);
         boolean flag = DEFAULT_LANGUAGE.bidirectional();
         list.add("en_us");
@@ -63,7 +63,7 @@ public class LanguageManager implements ResourceManagerReloadListener {
             }
         }
 
-        ClientLanguage clientlanguage = ClientLanguage.loadFrom(p_118973_, list, flag);
+        ClientLanguage clientlanguage = ClientLanguage.loadFrom(resourceManager, list, flag);
         I18n.setLanguage(clientlanguage);
         Language.inject(clientlanguage);
         this.reloadCallback.accept(clientlanguage);
@@ -71,9 +71,9 @@ public class LanguageManager implements ResourceManagerReloadListener {
 
     private java.util.Locale javaLocale; // Forge: add locale information for modders
     public java.util.Locale getJavaLocale() { return javaLocale; }
-    public void setSelected(String p_265224_) {
-        this.currentCode = p_265224_;
-        final String[] langSplit = p_265224_.split("_", 2);
+    public void setSelected(String selected) {
+        this.currentCode = selected;
+        final String[] langSplit = selected.split("_", 2);
         this.javaLocale = langSplit.length == 1 ? new java.util.Locale(langSplit[0]) : new java.util.Locale(langSplit[0], langSplit[1]);
     }
 
@@ -86,7 +86,7 @@ public class LanguageManager implements ResourceManagerReloadListener {
     }
 
     @Nullable
-    public LanguageInfo getLanguage(String p_118977_) {
-        return this.languages.get(p_118977_);
+    public LanguageInfo getLanguage(String code) {
+        return this.languages.get(code);
     }
 }

@@ -33,8 +33,8 @@ public class ItemShulkerBoxColorFix extends DataFix {
         "minecraft:black_shulker_box"
     };
 
-    public ItemShulkerBoxColorFix(Schema p_16023_, boolean p_16024_) {
-        super(p_16023_, p_16024_);
+    public ItemShulkerBoxColorFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override

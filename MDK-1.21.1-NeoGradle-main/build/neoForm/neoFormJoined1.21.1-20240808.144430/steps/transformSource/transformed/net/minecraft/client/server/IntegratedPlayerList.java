@@ -18,25 +18,28 @@ public class IntegratedPlayerList extends PlayerList {
     @Nullable
     private CompoundTag playerData;
 
-    public IntegratedPlayerList(IntegratedServer p_251269_, LayeredRegistryAccess<RegistryLayer> p_250644_, PlayerDataStorage p_249022_) {
-        super(p_251269_, p_250644_, p_249022_, 8);
+    public IntegratedPlayerList(IntegratedServer server, LayeredRegistryAccess<RegistryLayer> registries, PlayerDataStorage playerIo) {
+        super(server, registries, playerIo, 8);
         this.setViewDistance(10);
     }
 
+    /**
+     * Also stores the NBTTags if this is an IntegratedPlayerList.
+     */
     @Override
-    protected void save(ServerPlayer p_120011_) {
-        if (this.getServer().isSingleplayerOwner(p_120011_.getGameProfile())) {
-            this.playerData = p_120011_.saveWithoutId(new CompoundTag());
+    protected void save(ServerPlayer player) {
+        if (this.getServer().isSingleplayerOwner(player.getGameProfile())) {
+            this.playerData = player.saveWithoutId(new CompoundTag());
         }
 
-        super.save(p_120011_);
+        super.save(player);
     }
 
     @Override
-    public Component canPlayerLogin(SocketAddress p_120007_, GameProfile p_120008_) {
-        return (Component)(this.getServer().isSingleplayerOwner(p_120008_) && this.getPlayerByName(p_120008_.getName()) != null
+    public Component canPlayerLogin(SocketAddress socketAddress, GameProfile gameProfile) {
+        return (Component)(this.getServer().isSingleplayerOwner(gameProfile) && this.getPlayerByName(gameProfile.getName()) != null
             ? Component.translatable("multiplayer.disconnect.name_taken")
-            : super.canPlayerLogin(p_120007_, p_120008_));
+            : super.canPlayerLogin(socketAddress, gameProfile));
     }
 
     public IntegratedServer getServer() {

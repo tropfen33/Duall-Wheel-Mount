@@ -16,8 +16,8 @@ public class RotatedBlockProvider extends BlockStateProvider {
         .xmap(RotatedBlockProvider::new, p_68793_ -> p_68793_.block);
     private final Block block;
 
-    public RotatedBlockProvider(Block p_68790_) {
-        this.block = p_68790_;
+    public RotatedBlockProvider(Block block) {
+        this.block = block;
     }
 
     @Override
@@ -26,8 +26,8 @@ public class RotatedBlockProvider extends BlockStateProvider {
     }
 
     @Override
-    public BlockState getState(RandomSource p_225922_, BlockPos p_225923_) {
-        Direction.Axis direction$axis = Direction.Axis.getRandom(p_225922_);
+    public BlockState getState(RandomSource random, BlockPos pos) {
+        Direction.Axis direction$axis = Direction.Axis.getRandom(random);
         return this.block.defaultBlockState().trySetValue(RotatedPillarBlock.AXIS, direction$axis);
     }
 }

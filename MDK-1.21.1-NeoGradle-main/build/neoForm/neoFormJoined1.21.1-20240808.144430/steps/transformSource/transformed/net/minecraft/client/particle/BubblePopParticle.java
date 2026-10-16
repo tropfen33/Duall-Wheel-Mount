@@ -10,16 +10,16 @@ public class BubblePopParticle extends TextureSheetParticle {
     private final SpriteSet sprites;
 
     protected BubblePopParticle(
-        ClientLevel p_105814_, double p_105815_, double p_105816_, double p_105817_, double p_105818_, double p_105819_, double p_105820_, SpriteSet p_105821_
+        ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, SpriteSet sprites
     ) {
-        super(p_105814_, p_105815_, p_105816_, p_105817_);
-        this.sprites = p_105821_;
+        super(level, x, y, z);
+        this.sprites = sprites;
         this.lifetime = 4;
         this.gravity = 0.008F;
-        this.xd = p_105818_;
-        this.yd = p_105819_;
-        this.zd = p_105820_;
-        this.setSpriteFromAge(p_105821_);
+        this.xd = xSpeed;
+        this.yd = ySpeed;
+        this.zd = zSpeed;
+        this.setSpriteFromAge(sprites);
     }
 
     @Override
@@ -45,21 +45,21 @@ public class BubblePopParticle extends TextureSheetParticle {
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprites;
 
-        public Provider(SpriteSet p_105836_) {
-            this.sprites = p_105836_;
+        public Provider(SpriteSet sprites) {
+            this.sprites = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_105847_,
-            ClientLevel p_105848_,
-            double p_105849_,
-            double p_105850_,
-            double p_105851_,
-            double p_105852_,
-            double p_105853_,
-            double p_105854_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            return new BubblePopParticle(p_105848_, p_105849_, p_105850_, p_105851_, p_105852_, p_105853_, p_105854_, this.sprites);
+            return new BubblePopParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, this.sprites);
         }
     }
 }

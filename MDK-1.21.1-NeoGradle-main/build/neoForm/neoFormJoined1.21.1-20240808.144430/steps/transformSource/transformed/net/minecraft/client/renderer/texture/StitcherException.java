@@ -9,17 +9,17 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class StitcherException extends RuntimeException {
     private final Collection<Stitcher.Entry> allSprites;
 
-    public StitcherException(Stitcher.Entry p_250177_, Collection<Stitcher.Entry> p_248618_) {
+    public StitcherException(Stitcher.Entry entry, Collection<Stitcher.Entry> allSprites) {
         super(
             String.format(
                 Locale.ROOT,
                 "Unable to fit: %s - size: %dx%d - Maybe try a lower resolution resourcepack?",
-                p_250177_.name(),
-                p_250177_.width(),
-                p_250177_.height()
+                entry.name(),
+                entry.width(),
+                entry.height()
             )
         );
-        this.allSprites = p_248618_;
+        this.allSprites = allSprites;
     }
 
     public Collection<Stitcher.Entry> getAllSprites() {

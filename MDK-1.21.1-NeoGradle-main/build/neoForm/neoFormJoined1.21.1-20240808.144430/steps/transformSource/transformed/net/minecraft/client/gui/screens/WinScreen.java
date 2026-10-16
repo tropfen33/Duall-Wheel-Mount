@@ -55,11 +55,11 @@ public class WinScreen extends Screen {
     private int direction;
     private final LogoRenderer logoRenderer = new LogoRenderer(false);
 
-    public WinScreen(boolean p_276286_, Runnable p_276294_) {
+    public WinScreen(boolean poem, Runnable onFinished) {
         super(GameNarrator.NO_TITLE);
-        this.poem = p_276286_;
-        this.onFinished = p_276294_;
-        if (!p_276286_) {
+        this.poem = poem;
+        this.onFinished = onFinished;
+        if (!poem) {
             this.unmodifiedScrollSpeed = 0.75F;
         } else {
             this.unmodifiedScrollSpeed = 0.5F;
@@ -85,34 +85,52 @@ public class WinScreen extends Screen {
         }
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_169469_, int p_169470_, int p_169471_) {
-        if (p_169469_ == 265) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 265) {
             this.direction = -1;
-        } else if (p_169469_ == 341 || p_169469_ == 345) {
-            this.speedupModifiers.add(p_169469_);
-        } else if (p_169469_ == 32) {
+        } else if (keyCode == 341 || keyCode == 345) {
+            this.speedupModifiers.add(keyCode);
+        } else if (keyCode == 32) {
             this.speedupActive = true;
         }
 
         this.scrollSpeed = this.calculateScrollSpeed();
-        return super.keyPressed(p_169469_, p_169470_, p_169471_);
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
+    /**
+     * Called when a keyboard key is released within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the released key.
+     * @param scanCode  the scan code of the released key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyReleased(int p_169476_, int p_169477_, int p_169478_) {
-        if (p_169476_ == 265) {
+    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 265) {
             this.direction = 1;
         }
 
-        if (p_169476_ == 32) {
+        if (keyCode == 32) {
             this.speedupActive = false;
-        } else if (p_169476_ == 341 || p_169476_ == 345) {
-            this.speedupModifiers.remove(p_169476_);
+        } else if (keyCode == 341 || keyCode == 345) {
+            this.speedupModifiers.remove(keyCode);
         }
 
         this.scrollSpeed = this.calculateScrollSpeed();
-        return super.keyReleased(p_169476_, p_169477_, p_169478_);
+        return super.keyReleased(keyCode, scanCode, modifiers);
     }
 
     @Override
@@ -142,16 +160,16 @@ public class WinScreen extends Screen {
         }
     }
 
-    private void wrapCreditsIO(ResourceLocation p_350854_, WinScreen.CreditsReader p_197400_) {
-        try (Reader reader = this.minecraft.getResourceManager().openAsReader(p_350854_)) {
-            p_197400_.read(reader);
+    private void wrapCreditsIO(ResourceLocation location, WinScreen.CreditsReader p_reader) {
+        try (Reader reader = this.minecraft.getResourceManager().openAsReader(location)) {
+            p_reader.read(reader);
         } catch (Exception exception) {
-            LOGGER.error("Couldn't load credits from file {}", p_350854_, exception);
+            LOGGER.error("Couldn't load credits from file {}", location, exception);
         }
     }
 
-    private void addPoemFile(Reader p_232818_) throws IOException {
-        BufferedReader bufferedreader = new BufferedReader(p_232818_);
+    private void addPoemFile(Reader reader) throws IOException {
+        BufferedReader bufferedreader = new BufferedReader(reader);
         RandomSource randomsource = RandomSource.create(8124371L);
 
         String s;
@@ -174,8 +192,8 @@ public class WinScreen extends Screen {
         }
     }
 
-    private void addCreditsFile(Reader p_232820_) {
-        for (JsonElement jsonelement : GsonHelper.parseArray(p_232820_)) {
+    private void addCreditsFile(Reader reader) {
+        for (JsonElement jsonelement : GsonHelper.parseArray(reader)) {
             JsonObject jsonobject = jsonelement.getAsJsonObject();
             String s = jsonobject.get("section").getAsString();
             this.addCreditsLine(SECTION_HEADING, true);
@@ -215,75 +233,83 @@ public class WinScreen extends Screen {
         this.lines.add(FormattedCharSequence.EMPTY);
     }
 
-    private void addPoemLines(String p_181398_) {
-        this.lines.addAll(this.minecraft.font.split(Component.literal(p_181398_), 256));
+    private void addPoemLines(String text) {
+        this.lines.addAll(this.minecraft.font.split(Component.literal(text), 256));
     }
 
-    private void addCreditsLine(Component p_169473_, boolean p_169474_) {
-        if (p_169474_) {
+    private void addCreditsLine(Component creditsLine, boolean centered) {
+        if (centered) {
             this.centeredLines.add(this.lines.size());
         }
 
-        this.lines.add(p_169473_.getVisualOrderText());
+        this.lines.add(creditsLine.getVisualOrderText());
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281907_, int p_282364_, int p_282696_, float p_281316_) {
-        super.render(p_281907_, p_282364_, p_282696_, p_281316_);
-        this.renderVignette(p_281907_);
-        this.scroll = Math.max(0.0F, this.scroll + p_281316_ * this.scrollSpeed);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderVignette(guiGraphics);
+        this.scroll = Math.max(0.0F, this.scroll + partialTick * this.scrollSpeed);
         int i = this.width / 2 - 128;
         int j = this.height + 50;
         float f = -this.scroll;
-        p_281907_.pose().pushPose();
-        p_281907_.pose().translate(0.0F, f, 0.0F);
-        this.logoRenderer.renderLogo(p_281907_, this.width, 1.0F, j);
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0.0F, f, 0.0F);
+        this.logoRenderer.renderLogo(guiGraphics, this.width, 1.0F, j);
         int k = j + 100;
 
         for (int l = 0; l < this.lines.size(); l++) {
             if (l == this.lines.size() - 1) {
                 float f1 = (float)k + f - (float)(this.height / 2 - 6);
                 if (f1 < 0.0F) {
-                    p_281907_.pose().translate(0.0F, -f1, 0.0F);
+                    guiGraphics.pose().translate(0.0F, -f1, 0.0F);
                 }
             }
 
             if ((float)k + f + 12.0F + 8.0F > 0.0F && (float)k + f < (float)this.height) {
                 FormattedCharSequence formattedcharsequence = this.lines.get(l);
                 if (this.centeredLines.contains(l)) {
-                    p_281907_.drawCenteredString(this.font, formattedcharsequence, i + 128, k, -1);
+                    guiGraphics.drawCenteredString(this.font, formattedcharsequence, i + 128, k, -1);
                 } else {
-                    p_281907_.drawString(this.font, formattedcharsequence, i, k, -1);
+                    guiGraphics.drawString(this.font, formattedcharsequence, i, k, -1);
                 }
             }
 
             k += 12;
         }
 
-        p_281907_.pose().popPose();
+        guiGraphics.pose().popPose();
     }
 
-    private void renderVignette(GuiGraphics p_331973_) {
+    private void renderVignette(GuiGraphics guiGraphics) {
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR);
-        p_331973_.blit(VIGNETTE_LOCATION, 0, 0, 0, 0.0F, 0.0F, this.width, this.height, this.width, this.height);
+        guiGraphics.blit(VIGNETTE_LOCATION, 0, 0, 0, 0.0F, 0.0F, this.width, this.height, this.width, this.height);
         RenderSystem.disableBlend();
         RenderSystem.defaultBlendFunc();
     }
 
     @Override
-    public void renderBackground(GuiGraphics p_282239_, int p_294762_, int p_295473_, float p_296441_) {
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.poem) {
-            p_282239_.fillRenderType(RenderType.endPortal(), 0, 0, this.width, this.height, 0);
+            guiGraphics.fillRenderType(RenderType.endPortal(), 0, 0, this.width, this.height, 0);
         } else {
-            super.renderBackground(p_282239_, p_294762_, p_295473_, p_296441_);
+            super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         }
     }
 
     @Override
-    protected void renderMenuBackground(GuiGraphics p_333914_, int p_333869_, int p_334014_, int p_333930_, int p_333890_) {
+    protected void renderMenuBackground(GuiGraphics guiGraphics, int x, int y, int width, int height) {
         float f = this.scroll * 0.5F;
-        Screen.renderMenuBackgroundTexture(p_333914_, Screen.MENU_BACKGROUND, 0, 0, 0.0F, f, p_333930_, p_333890_);
+        Screen.renderMenuBackgroundTexture(guiGraphics, Screen.MENU_BACKGROUND, 0, 0, 0.0F, f, width, height);
     }
 
     @Override
@@ -304,6 +330,6 @@ public class WinScreen extends Screen {
     @FunctionalInterface
     @OnlyIn(Dist.CLIENT)
     interface CreditsReader {
-        void read(Reader p_232822_) throws IOException;
+        void read(Reader reader) throws IOException;
     }
 }

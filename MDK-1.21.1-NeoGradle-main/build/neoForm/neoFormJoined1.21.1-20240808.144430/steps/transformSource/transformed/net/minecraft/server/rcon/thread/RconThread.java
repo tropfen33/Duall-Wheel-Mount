@@ -20,11 +20,11 @@ public class RconThread extends GenericThread {
     private final List<RconClient> clients = Lists.newArrayList();
     private final ServerInterface serverInterface;
 
-    private RconThread(ServerInterface p_11608_, ServerSocket p_11609_, String p_11610_) {
+    private RconThread(ServerInterface serverInterface, ServerSocket socket, String rconPassword) {
         super("RCON Listener");
-        this.serverInterface = p_11608_;
-        this.socket = p_11609_;
-        this.rconPassword = p_11610_;
+        this.serverInterface = serverInterface;
+        this.socket = socket;
+        this.rconPassword = rconPassword;
     }
 
     private void clearClients() {
@@ -55,9 +55,9 @@ public class RconThread extends GenericThread {
     }
 
     @Nullable
-    public static RconThread create(ServerInterface p_11616_) {
-        DedicatedServerProperties dedicatedserverproperties = p_11616_.getProperties();
-        String s = p_11616_.getServerIp();
+    public static RconThread create(ServerInterface serverInterface) {
+        DedicatedServerProperties dedicatedserverproperties = serverInterface.getProperties();
+        String s = serverInterface.getServerIp();
         if (s.isEmpty()) {
             s = "0.0.0.0";
         }
@@ -72,7 +72,7 @@ public class RconThread extends GenericThread {
                 try {
                     ServerSocket serversocket = new ServerSocket(i, 0, InetAddress.getByName(s));
                     serversocket.setSoTimeout(500);
-                    RconThread rconthread = new RconThread(p_11616_, serversocket, s1);
+                    RconThread rconthread = new RconThread(serverInterface, serversocket, s1);
                     if (!rconthread.start()) {
                         return null;
                     } else {
@@ -105,11 +105,11 @@ public class RconThread extends GenericThread {
         this.clients.clear();
     }
 
-    private void closeSocket(ServerSocket p_11614_) {
-        LOGGER.debug("closeSocket: {}", p_11614_);
+    private void closeSocket(ServerSocket socket) {
+        LOGGER.debug("closeSocket: {}", socket);
 
         try {
-            p_11614_.close();
+            socket.close();
         } catch (IOException ioexception) {
             LOGGER.warn("Failed to close socket", (Throwable)ioexception);
         }

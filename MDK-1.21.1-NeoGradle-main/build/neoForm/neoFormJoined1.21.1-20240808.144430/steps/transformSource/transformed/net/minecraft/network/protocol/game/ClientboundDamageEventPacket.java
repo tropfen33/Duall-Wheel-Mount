@@ -39,20 +39,20 @@ public record ClientboundDamageEventPacket(int entityId, Holder<DamageType> sour
         );
     }
 
-    private static void writeOptionalEntityId(FriendlyByteBuf p_270812_, int p_270852_) {
-        p_270812_.writeVarInt(p_270852_ + 1);
+    private static void writeOptionalEntityId(FriendlyByteBuf buffer, int optionalEntityId) {
+        buffer.writeVarInt(optionalEntityId + 1);
     }
 
-    private static int readOptionalEntityId(FriendlyByteBuf p_270462_) {
-        return p_270462_.readVarInt() - 1;
+    private static int readOptionalEntityId(FriendlyByteBuf buffer) {
+        return buffer.readVarInt() - 1;
     }
 
-    private void write(RegistryFriendlyByteBuf p_321775_) {
-        p_321775_.writeVarInt(this.entityId);
-        DamageType.STREAM_CODEC.encode(p_321775_, this.sourceType);
-        writeOptionalEntityId(p_321775_, this.sourceCauseId);
-        writeOptionalEntityId(p_321775_, this.sourceDirectId);
-        p_321775_.writeOptional(this.sourcePosition, (p_293723_, p_293724_) -> {
+    private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.entityId);
+        DamageType.STREAM_CODEC.encode(buffer, this.sourceType);
+        writeOptionalEntityId(buffer, this.sourceCauseId);
+        writeOptionalEntityId(buffer, this.sourceDirectId);
+        buffer.writeOptional(this.sourcePosition, (p_293723_, p_293724_) -> {
             p_293723_.writeDouble(p_293724_.x());
             p_293723_.writeDouble(p_293724_.y());
             p_293723_.writeDouble(p_293724_.z());
@@ -64,16 +64,19 @@ public record ClientboundDamageEventPacket(int entityId, Holder<DamageType> sour
         return GamePacketTypes.CLIENTBOUND_DAMAGE_EVENT;
     }
 
-    public void handle(ClientGamePacketListener p_270510_) {
-        p_270510_.handleDamageEvent(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleDamageEvent(this);
     }
 
-    public DamageSource getSource(Level p_270943_) {
+    public DamageSource getSource(Level level) {
         if (this.sourcePosition.isPresent()) {
             return new DamageSource(this.sourceType, this.sourcePosition.get());
         } else {
-            Entity entity = p_270943_.getEntity(this.sourceCauseId);
-            Entity entity1 = p_270943_.getEntity(this.sourceDirectId);
+            Entity entity = level.getEntity(this.sourceCauseId);
+            Entity entity1 = level.getEntity(this.sourceDirectId);
             return new DamageSource(this.sourceType, entity1, entity);
         }
     }

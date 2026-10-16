@@ -24,16 +24,23 @@ public class MonsterRoomFeature extends Feature<NoneFeatureConfiguration> {
     private static final EntityType<?>[] MOBS = new EntityType[]{EntityType.SKELETON, EntityType.ZOMBIE, EntityType.ZOMBIE, EntityType.SPIDER};
     private static final BlockState AIR = Blocks.CAVE_AIR.defaultBlockState();
 
-    public MonsterRoomFeature(Codec<NoneFeatureConfiguration> p_66345_) {
-        super(p_66345_);
+    public MonsterRoomFeature(Codec<NoneFeatureConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> p_160066_) {
+    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         Predicate<BlockState> predicate = Feature.isReplaceable(BlockTags.FEATURES_CANNOT_REPLACE);
-        BlockPos blockpos = p_160066_.origin();
-        RandomSource randomsource = p_160066_.random();
-        WorldGenLevel worldgenlevel = p_160066_.level();
+        BlockPos blockpos = context.origin();
+        RandomSource randomsource = context.random();
+        WorldGenLevel worldgenlevel = context.level();
         int i = 3;
         int j = randomsource.nextInt(2) + 2;
         int k = -j - 1;
@@ -130,7 +137,7 @@ public class MonsterRoomFeature extends Feature<NoneFeatureConfiguration> {
         }
     }
 
-    private EntityType<?> randomEntityId(RandomSource p_225154_) {
-        return net.neoforged.neoforge.common.MonsterRoomHooks.getRandomMonsterRoomMob(p_225154_);
+    private EntityType<?> randomEntityId(RandomSource random) {
+        return net.neoforged.neoforge.common.MonsterRoomHooks.getRandomMonsterRoomMob(random);
     }
 }

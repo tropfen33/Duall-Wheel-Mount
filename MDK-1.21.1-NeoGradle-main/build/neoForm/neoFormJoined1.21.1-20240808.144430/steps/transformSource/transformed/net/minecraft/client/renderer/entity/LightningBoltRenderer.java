@@ -14,16 +14,16 @@ import org.joml.Matrix4f;
 
 @OnlyIn(Dist.CLIENT)
 public class LightningBoltRenderer extends EntityRenderer<LightningBolt> {
-    public LightningBoltRenderer(EntityRendererProvider.Context p_174286_) {
-        super(p_174286_);
+    public LightningBoltRenderer(EntityRendererProvider.Context context) {
+        super(context);
     }
 
-    public void render(LightningBolt p_115266_, float p_115267_, float p_115268_, PoseStack p_115269_, MultiBufferSource p_115270_, int p_115271_) {
+    public void render(LightningBolt entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         float[] afloat = new float[8];
         float[] afloat1 = new float[8];
         float f = 0.0F;
         float f1 = 0.0F;
-        RandomSource randomsource = RandomSource.create(p_115266_.seed);
+        RandomSource randomsource = RandomSource.create(entity.seed);
 
         for (int i = 7; i >= 0; i--) {
             afloat[i] = f;
@@ -32,11 +32,11 @@ public class LightningBoltRenderer extends EntityRenderer<LightningBolt> {
             f1 += (float)(randomsource.nextInt(11) - 5);
         }
 
-        VertexConsumer vertexconsumer = p_115270_.getBuffer(RenderType.lightning());
-        Matrix4f matrix4f = p_115269_.last().pose();
+        VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.lightning());
+        Matrix4f matrix4f = poseStack.last().pose();
 
         for (int j = 0; j < 4; j++) {
-            RandomSource randomsource1 = RandomSource.create(p_115266_.seed);
+            RandomSource randomsource1 = RandomSource.create(entity.seed);
 
             for (int k = 0; k < 3; k++) {
                 int l = 7;
@@ -87,16 +87,16 @@ public class LightningBoltRenderer extends EntityRenderer<LightningBolt> {
     }
 
     private static void quad(
-        Matrix4f p_253966_,
-        VertexConsumer p_115274_,
-        float p_115275_,
-        float p_115276_,
-        int p_115277_,
-        float p_115278_,
-        float p_115279_,
-        float p_115280_,
-        float p_115281_,
-        float p_115282_,
+        Matrix4f matrix,
+        VertexConsumer consumer,
+        float x1,
+        float z1,
+        int index,
+        float x2,
+        float z2,
+        float red,
+        float green,
+        float blue,
         float p_115283_,
         float p_115284_,
         boolean p_115285_,
@@ -104,25 +104,28 @@ public class LightningBoltRenderer extends EntityRenderer<LightningBolt> {
         boolean p_115287_,
         boolean p_115288_
     ) {
-        p_115274_.addVertex(
-                p_253966_, p_115275_ + (p_115285_ ? p_115284_ : -p_115284_), (float)(p_115277_ * 16), p_115276_ + (p_115286_ ? p_115284_ : -p_115284_)
+        consumer.addVertex(
+                matrix, x1 + (p_115285_ ? p_115284_ : -p_115284_), (float)(index * 16), z1 + (p_115286_ ? p_115284_ : -p_115284_)
             )
-            .setColor(p_115280_, p_115281_, p_115282_, 0.3F);
-        p_115274_.addVertex(
-                p_253966_, p_115278_ + (p_115285_ ? p_115283_ : -p_115283_), (float)((p_115277_ + 1) * 16), p_115279_ + (p_115286_ ? p_115283_ : -p_115283_)
+            .setColor(red, green, blue, 0.3F);
+        consumer.addVertex(
+                matrix, x2 + (p_115285_ ? p_115283_ : -p_115283_), (float)((index + 1) * 16), z2 + (p_115286_ ? p_115283_ : -p_115283_)
             )
-            .setColor(p_115280_, p_115281_, p_115282_, 0.3F);
-        p_115274_.addVertex(
-                p_253966_, p_115278_ + (p_115287_ ? p_115283_ : -p_115283_), (float)((p_115277_ + 1) * 16), p_115279_ + (p_115288_ ? p_115283_ : -p_115283_)
+            .setColor(red, green, blue, 0.3F);
+        consumer.addVertex(
+                matrix, x2 + (p_115287_ ? p_115283_ : -p_115283_), (float)((index + 1) * 16), z2 + (p_115288_ ? p_115283_ : -p_115283_)
             )
-            .setColor(p_115280_, p_115281_, p_115282_, 0.3F);
-        p_115274_.addVertex(
-                p_253966_, p_115275_ + (p_115287_ ? p_115284_ : -p_115284_), (float)(p_115277_ * 16), p_115276_ + (p_115288_ ? p_115284_ : -p_115284_)
+            .setColor(red, green, blue, 0.3F);
+        consumer.addVertex(
+                matrix, x1 + (p_115287_ ? p_115284_ : -p_115284_), (float)(index * 16), z1 + (p_115288_ ? p_115284_ : -p_115284_)
             )
-            .setColor(p_115280_, p_115281_, p_115282_, 0.3F);
+            .setColor(red, green, blue, 0.3F);
     }
 
-    public ResourceLocation getTextureLocation(LightningBolt p_115264_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(LightningBolt entity) {
         return TextureAtlas.LOCATION_BLOCKS;
     }
 }

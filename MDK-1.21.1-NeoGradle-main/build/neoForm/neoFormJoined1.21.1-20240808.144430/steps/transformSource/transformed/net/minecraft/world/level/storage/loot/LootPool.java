@@ -47,31 +47,31 @@ public class LootPool {
     private NumberProvider bonusRolls;
 
     LootPool(
-        List<LootPoolEntryContainer> p_298764_,
-        List<LootItemCondition> p_299316_,
-        List<LootItemFunction> p_298954_,
-        NumberProvider p_165131_,
-        NumberProvider p_165132_,
+        List<LootPoolEntryContainer> entries,
+        List<LootItemCondition> conditions,
+        List<LootItemFunction> functions,
+        NumberProvider rolls,
+        NumberProvider bonusRolls,
         java.util.Optional<String> name
     ) {
-        this.entries = p_298764_;
-        this.conditions = p_299316_;
-        this.compositeCondition = Util.allOf(p_299316_);
-        this.functions = p_298954_;
-        this.compositeFunction = LootItemFunctions.compose(p_298954_);
-        this.rolls = p_165131_;
-        this.bonusRolls = p_165132_;
+        this.entries = entries;
+        this.conditions = conditions;
+        this.compositeCondition = Util.allOf(conditions);
+        this.functions = functions;
+        this.compositeFunction = LootItemFunctions.compose(functions);
+        this.rolls = rolls;
+        this.bonusRolls = bonusRolls;
         this.name = name.orElse(null);
     }
 
-    private void addRandomItem(Consumer<ItemStack> p_79059_, LootContext p_79060_) {
-        RandomSource randomsource = p_79060_.getRandom();
+    private void addRandomItem(Consumer<ItemStack> stackConsumer, LootContext context) {
+        RandomSource randomsource = context.getRandom();
         List<LootPoolEntry> list = Lists.newArrayList();
         MutableInt mutableint = new MutableInt();
 
         for (LootPoolEntryContainer lootpoolentrycontainer : this.entries) {
-            lootpoolentrycontainer.expand(p_79060_, p_79048_ -> {
-                int k = p_79048_.getWeight(p_79060_.getLuck());
+            lootpoolentrycontainer.expand(context, p_79048_ -> {
+                int k = p_79048_.getWeight(context.getLuck());
                 if (k > 0) {
                     list.add(p_79048_);
                     mutableint.add(k);
@@ -82,14 +82,14 @@ public class LootPool {
         int i = list.size();
         if (mutableint.intValue() != 0 && i != 0) {
             if (i == 1) {
-                list.get(0).createItemStack(p_79059_, p_79060_);
+                list.get(0).createItemStack(stackConsumer, context);
             } else {
                 int j = randomsource.nextInt(mutableint.intValue());
 
                 for (LootPoolEntry lootpoolentry : list) {
-                    j -= lootpoolentry.getWeight(p_79060_.getLuck());
+                    j -= lootpoolentry.getWeight(context.getLuck());
                     if (j < 0) {
-                        lootpoolentry.createItemStack(p_79059_, p_79060_);
+                        lootpoolentry.createItemStack(stackConsumer, context);
                         return;
                     }
                 }
@@ -97,32 +97,40 @@ public class LootPool {
         }
     }
 
-    public void addRandomItems(Consumer<ItemStack> p_79054_, LootContext p_79055_) {
-        if (this.compositeCondition.test(p_79055_)) {
-            Consumer<ItemStack> consumer = LootItemFunction.decorate(this.compositeFunction, p_79054_, p_79055_);
-            int i = this.rolls.getInt(p_79055_) + Mth.floor(this.bonusRolls.getFloat(p_79055_) * p_79055_.getLuck());
+    /**
+     * Generate the random items from this LootPool to the given {@code stackConsumer}.
+     * This first checks this pool's conditions, generating nothing if they do not match.
+     * Then the random items are generated based on the {@link LootPoolEntry LootPoolEntries} in this pool according to the rolls and bonusRolls, applying any loot functions.
+     */
+    public void addRandomItems(Consumer<ItemStack> stackConsumer, LootContext lootContext) {
+        if (this.compositeCondition.test(lootContext)) {
+            Consumer<ItemStack> consumer = LootItemFunction.decorate(this.compositeFunction, stackConsumer, lootContext);
+            int i = this.rolls.getInt(lootContext) + Mth.floor(this.bonusRolls.getFloat(lootContext) * lootContext.getLuck());
 
             for (int j = 0; j < i; j++) {
-                this.addRandomItem(consumer, p_79055_);
+                this.addRandomItem(consumer, lootContext);
             }
         }
     }
 
-    public void validate(ValidationContext p_79052_) {
+    /**
+     * Validate this LootPool according to the given context.
+     */
+    public void validate(ValidationContext context) {
         for (int i = 0; i < this.conditions.size(); i++) {
-            this.conditions.get(i).validate(p_79052_.forChild(".condition[" + i + "]"));
+            this.conditions.get(i).validate(context.forChild(".condition[" + i + "]"));
         }
 
         for (int j = 0; j < this.functions.size(); j++) {
-            this.functions.get(j).validate(p_79052_.forChild(".functions[" + j + "]"));
+            this.functions.get(j).validate(context.forChild(".functions[" + j + "]"));
         }
 
         for (int k = 0; k < this.entries.size(); k++) {
-            this.entries.get(k).validate(p_79052_.forChild(".entries[" + k + "]"));
+            this.entries.get(k).validate(context.forChild(".entries[" + k + "]"));
         }
 
-        this.rolls.validate(p_79052_.forChild(".rolls"));
-        this.bonusRolls.validate(p_79052_.forChild(".bonusRolls"));
+        this.rolls.validate(context.forChild(".rolls"));
+        this.bonusRolls.validate(context.forChild(".bonusRolls"));
     }
 
     // Neo: Implement LootPool freezing to prevent manipulation outside of Neo APIs
@@ -189,8 +197,8 @@ public class LootPool {
         @org.jetbrains.annotations.Nullable
         private String name;
 
-        public LootPool.Builder setRolls(NumberProvider p_165134_) {
-            this.rolls = p_165134_;
+        public LootPool.Builder setRolls(NumberProvider rolls) {
+            this.rolls = rolls;
             return this;
         }
 
@@ -198,23 +206,23 @@ public class LootPool {
             return this;
         }
 
-        public LootPool.Builder setBonusRolls(NumberProvider p_165136_) {
-            this.bonusRolls = p_165136_;
+        public LootPool.Builder setBonusRolls(NumberProvider bonusRolls) {
+            this.bonusRolls = bonusRolls;
             return this;
         }
 
-        public LootPool.Builder add(LootPoolEntryContainer.Builder<?> p_79077_) {
-            this.entries.add(p_79077_.build());
+        public LootPool.Builder add(LootPoolEntryContainer.Builder<?> entriesBuilder) {
+            this.entries.add(entriesBuilder.build());
             return this;
         }
 
-        public LootPool.Builder when(LootItemCondition.Builder p_79081_) {
-            this.conditions.add(p_79081_.build());
+        public LootPool.Builder when(LootItemCondition.Builder conditionBuilder) {
+            this.conditions.add(conditionBuilder.build());
             return this;
         }
 
-        public LootPool.Builder apply(LootItemFunction.Builder p_79079_) {
-            this.functions.add(p_79079_.build());
+        public LootPool.Builder apply(LootItemFunction.Builder functionBuilder) {
+            this.functions.add(functionBuilder.build());
             return this;
         }
 

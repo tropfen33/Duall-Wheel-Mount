@@ -11,7 +11,7 @@ public abstract class PlacementModifier {
         .byNameCodec()
         .dispatch(PlacementModifier::type, PlacementModifierType::codec);
 
-    public abstract Stream<BlockPos> getPositions(PlacementContext p_226389_, RandomSource p_226390_, BlockPos p_226391_);
+    public abstract Stream<BlockPos> getPositions(PlacementContext context, RandomSource random, BlockPos pos);
 
     public abstract PlacementModifierType<?> type();
 }

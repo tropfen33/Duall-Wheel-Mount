@@ -13,13 +13,13 @@ import net.minecraft.world.phys.AABB;
 
 public class NearestLivingEntitySensor<T extends LivingEntity> extends Sensor<T> {
     @Override
-    protected void doTick(ServerLevel p_26710_, T p_26711_) {
-        AABB aabb = p_26711_.getBoundingBox().inflate((double)this.radiusXZ(), (double)this.radiusY(), (double)this.radiusXZ());
-        List<LivingEntity> list = p_26710_.getEntitiesOfClass(LivingEntity.class, aabb, p_26717_ -> p_26717_ != p_26711_ && p_26717_.isAlive());
-        list.sort(Comparator.comparingDouble(p_26711_::distanceToSqr));
-        Brain<?> brain = p_26711_.getBrain();
+    protected void doTick(ServerLevel level, T entity) {
+        AABB aabb = entity.getBoundingBox().inflate((double)this.radiusXZ(), (double)this.radiusY(), (double)this.radiusXZ());
+        List<LivingEntity> list = level.getEntitiesOfClass(LivingEntity.class, aabb, p_26717_ -> p_26717_ != entity && p_26717_.isAlive());
+        list.sort(Comparator.comparingDouble(entity::distanceToSqr));
+        Brain<?> brain = entity.getBrain();
         brain.setMemory(MemoryModuleType.NEAREST_LIVING_ENTITIES, list);
-        brain.setMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES, new NearestVisibleLivingEntities(p_26711_, list));
+        brain.setMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES, new NearestVisibleLivingEntities(entity, list));
     }
 
     protected int radiusXZ() {

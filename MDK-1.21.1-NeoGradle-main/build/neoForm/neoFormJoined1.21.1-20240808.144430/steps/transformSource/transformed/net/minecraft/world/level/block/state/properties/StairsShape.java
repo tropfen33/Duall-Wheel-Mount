@@ -11,8 +11,8 @@ public enum StairsShape implements StringRepresentable {
 
     private final String name;
 
-    private StairsShape(String p_61792_) {
-        this.name = p_61792_;
+    private StairsShape(String name) {
+        this.name = name;
     }
 
     @Override

@@ -40,7 +40,7 @@ public interface StructureType<S extends Structure> {
 
     MapCodec<S> codec();
 
-    private static <S extends Structure> StructureType<S> register(String p_226882_, MapCodec<S> p_338639_) {
-        return Registry.register(BuiltInRegistries.STRUCTURE_TYPE, p_226882_, () -> p_338639_);
+    private static <S extends Structure> StructureType<S> register(String name, MapCodec<S> codec) {
+        return Registry.register(BuiltInRegistries.STRUCTURE_TYPE, name, () -> codec);
     }
 }

@@ -42,12 +42,12 @@ public class RealmsSelectFileToUploadScreen extends RealmsScreen {
     int selectedWorld = -1;
     RealmsSelectFileToUploadScreen.WorldSelectionList worldSelectionList;
 
-    public RealmsSelectFileToUploadScreen(@Nullable RealmCreationTask p_320720_, long p_89498_, int p_89499_, RealmsResetWorldScreen p_89500_) {
+    public RealmsSelectFileToUploadScreen(@Nullable RealmCreationTask realmCreationTask, long realmId, int slotId, RealmsResetWorldScreen lastScreen) {
         super(TITLE);
-        this.realmCreationTask = p_320720_;
-        this.lastScreen = p_89500_;
-        this.realmId = p_89498_;
-        this.slotId = p_89499_;
+        this.realmCreationTask = realmCreationTask;
+        this.lastScreen = lastScreen;
+        this.realmId = realmId;
+        this.slotId = slotId;
     }
 
     private void loadLevelList() {
@@ -106,28 +106,36 @@ public class RealmsSelectFileToUploadScreen extends RealmsScreen {
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281244_, int p_282772_, int p_281746_, float p_281757_) {
-        super.render(p_281244_, p_282772_, p_281746_, p_281757_);
-        p_281244_.drawCenteredString(this.font, this.title, this.width / 2, 13, -1);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 13, -1);
     }
 
     @Override
-    public boolean keyPressed(int p_89506_, int p_89507_, int p_89508_) {
-        if (p_89506_ == 256) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 256) {
             this.minecraft.setScreen(this.lastScreen);
             return true;
         } else {
-            return super.keyPressed(p_89506_, p_89507_, p_89508_);
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
     }
 
-    static Component gameModeName(LevelSummary p_89535_) {
-        return p_89535_.getGameMode().getLongDisplayName();
+    static Component gameModeName(LevelSummary levelSummary) {
+        return levelSummary.getGameMode().getLongDisplayName();
     }
 
-    static String formatLastPlayed(LevelSummary p_89539_) {
-        return DATE_FORMAT.format(new Date(p_89539_.getLastPlayed()));
+    static String formatLastPlayed(LevelSummary levelSummary) {
+        return DATE_FORMAT.format(new Date(levelSummary.getLastPlayed()));
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -137,46 +145,55 @@ public class RealmsSelectFileToUploadScreen extends RealmsScreen {
         private final Component id;
         private final Component info;
 
-        public Entry(LevelSummary p_89560_) {
-            this.levelSummary = p_89560_;
-            this.name = p_89560_.getLevelName();
-            this.id = Component.translatable("mco.upload.entry.id", p_89560_.getLevelId(), RealmsSelectFileToUploadScreen.formatLastPlayed(p_89560_));
-            this.info = p_89560_.getInfo();
+        public Entry(LevelSummary levelSummary) {
+            this.levelSummary = levelSummary;
+            this.name = levelSummary.getLevelName();
+            this.id = Component.translatable("mco.upload.entry.id", levelSummary.getLevelId(), RealmsSelectFileToUploadScreen.formatLastPlayed(levelSummary));
+            this.info = levelSummary.getInfo();
         }
 
         @Override
         public void render(
-            GuiGraphics p_282307_,
-            int p_281918_,
-            int p_281770_,
-            int p_282954_,
-            int p_281599_,
-            int p_281852_,
-            int p_283452_,
-            int p_282531_,
-            boolean p_283120_,
-            float p_282082_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
-            this.renderItem(p_282307_, p_281918_, p_282954_, p_281770_);
+            this.renderItem(guiGraphics, index, left, top);
         }
 
+        /**
+         * Called when a mouse button is clicked within the GUI element.
+         * <p>
+         * @return {@code true} if the event is consumed, {@code false} otherwise.
+         *
+         * @param mouseX the X coordinate of the mouse.
+         * @param mouseY the Y coordinate of the mouse.
+         * @param button the button that was clicked.
+         */
         @Override
-        public boolean mouseClicked(double p_89562_, double p_89563_, int p_89564_) {
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
             RealmsSelectFileToUploadScreen.this.worldSelectionList.selectItem(RealmsSelectFileToUploadScreen.this.levelList.indexOf(this.levelSummary));
-            return super.mouseClicked(p_89562_, p_89563_, p_89564_);
+            return super.mouseClicked(mouseX, mouseY, button);
         }
 
-        protected void renderItem(GuiGraphics p_282872_, int p_283187_, int p_283611_, int p_282173_) {
+        protected void renderItem(GuiGraphics guiGraphics, int index, int x, int y) {
             String s;
             if (this.name.isEmpty()) {
-                s = RealmsSelectFileToUploadScreen.WORLD_TEXT + " " + (p_283187_ + 1);
+                s = RealmsSelectFileToUploadScreen.WORLD_TEXT + " " + (index + 1);
             } else {
                 s = this.name;
             }
 
-            p_282872_.drawString(RealmsSelectFileToUploadScreen.this.font, s, p_283611_ + 2, p_282173_ + 1, 16777215, false);
-            p_282872_.drawString(RealmsSelectFileToUploadScreen.this.font, this.id, p_283611_ + 2, p_282173_ + 12, -8355712, false);
-            p_282872_.drawString(RealmsSelectFileToUploadScreen.this.font, this.info, p_283611_ + 2, p_282173_ + 12 + 10, -8355712, false);
+            guiGraphics.drawString(RealmsSelectFileToUploadScreen.this.font, s, x + 2, y + 1, 16777215, false);
+            guiGraphics.drawString(RealmsSelectFileToUploadScreen.this.font, this.id, x + 2, y + 12, -8355712, false);
+            guiGraphics.drawString(RealmsSelectFileToUploadScreen.this.font, this.info, x + 2, y + 12 + 10, -8355712, false);
         }
 
         @Override
@@ -201,8 +218,8 @@ public class RealmsSelectFileToUploadScreen extends RealmsScreen {
             );
         }
 
-        public void addEntry(LevelSummary p_89588_) {
-            this.addEntry(RealmsSelectFileToUploadScreen.this.new Entry(p_89588_));
+        public void addEntry(LevelSummary levelSummary) {
+            this.addEntry(RealmsSelectFileToUploadScreen.this.new Entry(levelSummary));
         }
 
         @Override
@@ -210,9 +227,9 @@ public class RealmsSelectFileToUploadScreen extends RealmsScreen {
             return RealmsSelectFileToUploadScreen.this.levelList.size() * 36;
         }
 
-        public void setSelected(@Nullable RealmsSelectFileToUploadScreen.Entry p_89592_) {
-            super.setSelected(p_89592_);
-            RealmsSelectFileToUploadScreen.this.selectedWorld = this.children().indexOf(p_89592_);
+        public void setSelected(@Nullable RealmsSelectFileToUploadScreen.Entry selected) {
+            super.setSelected(selected);
+            RealmsSelectFileToUploadScreen.this.selectedWorld = this.children().indexOf(selected);
             RealmsSelectFileToUploadScreen.this.uploadButton.active = RealmsSelectFileToUploadScreen.this.selectedWorld >= 0
                 && RealmsSelectFileToUploadScreen.this.selectedWorld < this.getItemCount()
                 && !RealmsSelectFileToUploadScreen.this.levelList.get(RealmsSelectFileToUploadScreen.this.selectedWorld).isHardcore();

@@ -18,28 +18,28 @@ public class CampfireRenderer implements BlockEntityRenderer<CampfireBlockEntity
     private static final float SIZE = 0.375F;
     private final ItemRenderer itemRenderer;
 
-    public CampfireRenderer(BlockEntityRendererProvider.Context p_173602_) {
-        this.itemRenderer = p_173602_.getItemRenderer();
+    public CampfireRenderer(BlockEntityRendererProvider.Context context) {
+        this.itemRenderer = context.getItemRenderer();
     }
 
-    public void render(CampfireBlockEntity p_112344_, float p_112345_, PoseStack p_112346_, MultiBufferSource p_112347_, int p_112348_, int p_112349_) {
-        Direction direction = p_112344_.getBlockState().getValue(CampfireBlock.FACING);
-        NonNullList<ItemStack> nonnulllist = p_112344_.getItems();
-        int i = (int)p_112344_.getBlockPos().asLong();
+    public void render(CampfireBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        Direction direction = blockEntity.getBlockState().getValue(CampfireBlock.FACING);
+        NonNullList<ItemStack> nonnulllist = blockEntity.getItems();
+        int i = (int)blockEntity.getBlockPos().asLong();
 
         for (int j = 0; j < nonnulllist.size(); j++) {
             ItemStack itemstack = nonnulllist.get(j);
             if (itemstack != ItemStack.EMPTY) {
-                p_112346_.pushPose();
-                p_112346_.translate(0.5F, 0.44921875F, 0.5F);
+                poseStack.pushPose();
+                poseStack.translate(0.5F, 0.44921875F, 0.5F);
                 Direction direction1 = Direction.from2DDataValue((j + direction.get2DDataValue()) % 4);
                 float f = -direction1.toYRot();
-                p_112346_.mulPose(Axis.YP.rotationDegrees(f));
-                p_112346_.mulPose(Axis.XP.rotationDegrees(90.0F));
-                p_112346_.translate(-0.3125F, -0.3125F, 0.0F);
-                p_112346_.scale(0.375F, 0.375F, 0.375F);
-                this.itemRenderer.renderStatic(itemstack, ItemDisplayContext.FIXED, p_112348_, p_112349_, p_112346_, p_112347_, p_112344_.getLevel(), i + j);
-                p_112346_.popPose();
+                poseStack.mulPose(Axis.YP.rotationDegrees(f));
+                poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+                poseStack.translate(-0.3125F, -0.3125F, 0.0F);
+                poseStack.scale(0.375F, 0.375F, 0.375F);
+                this.itemRenderer.renderStatic(itemstack, ItemDisplayContext.FIXED, packedLight, packedOverlay, poseStack, bufferSource, blockEntity.getLevel(), i + j);
+                poseStack.popPose();
             }
         }
     }

@@ -3,30 +3,30 @@ package net.minecraft.world.inventory;
 public abstract class DataSlot {
     private int prevValue;
 
-    public static DataSlot forContainer(final ContainerData p_39404_, final int p_39405_) {
+    public static DataSlot forContainer(final ContainerData data, final int idx) {
         return new DataSlot() {
             @Override
             public int get() {
-                return p_39404_.get(p_39405_);
+                return data.get(idx);
             }
 
             @Override
             public void set(int p_39416_) {
-                p_39404_.set(p_39405_, p_39416_);
+                data.set(idx, p_39416_);
             }
         };
     }
 
-    public static DataSlot shared(final int[] p_39407_, final int p_39408_) {
+    public static DataSlot shared(final int[] data, final int idx) {
         return new DataSlot() {
             @Override
             public int get() {
-                return p_39407_[p_39408_];
+                return data[idx];
             }
 
             @Override
             public void set(int p_39424_) {
-                p_39407_[p_39408_] = p_39424_;
+                data[idx] = p_39424_;
             }
         };
     }
@@ -49,7 +49,7 @@ public abstract class DataSlot {
 
     public abstract int get();
 
-    public abstract void set(int p_39402_);
+    public abstract void set(int value);
 
     public boolean checkAndClearUpdateFlag() {
         int i = this.get();

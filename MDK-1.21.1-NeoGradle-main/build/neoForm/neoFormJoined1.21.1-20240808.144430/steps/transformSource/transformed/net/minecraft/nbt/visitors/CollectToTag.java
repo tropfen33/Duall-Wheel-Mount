@@ -36,8 +36,8 @@ public class CollectToTag implements StreamTagVisitor {
         return this.consumerStack.size();
     }
 
-    private void appendEntry(Tag p_197683_) {
-        this.consumerStack.getLast().accept(p_197683_);
+    private void appendEntry(Tag tag) {
+        this.consumerStack.getLast().accept(tag);
     }
 
     @Override
@@ -47,94 +47,94 @@ public class CollectToTag implements StreamTagVisitor {
     }
 
     @Override
-    public StreamTagVisitor.ValueResult visit(String p_197678_) {
-        this.appendEntry(StringTag.valueOf(p_197678_));
+    public StreamTagVisitor.ValueResult visit(String entry) {
+        this.appendEntry(StringTag.valueOf(entry));
         return StreamTagVisitor.ValueResult.CONTINUE;
     }
 
     @Override
-    public StreamTagVisitor.ValueResult visit(byte p_197668_) {
-        this.appendEntry(ByteTag.valueOf(p_197668_));
+    public StreamTagVisitor.ValueResult visit(byte entry) {
+        this.appendEntry(ByteTag.valueOf(entry));
         return StreamTagVisitor.ValueResult.CONTINUE;
     }
 
     @Override
-    public StreamTagVisitor.ValueResult visit(short p_197693_) {
-        this.appendEntry(ShortTag.valueOf(p_197693_));
+    public StreamTagVisitor.ValueResult visit(short entry) {
+        this.appendEntry(ShortTag.valueOf(entry));
         return StreamTagVisitor.ValueResult.CONTINUE;
     }
 
     @Override
-    public StreamTagVisitor.ValueResult visit(int p_197674_) {
-        this.appendEntry(IntTag.valueOf(p_197674_));
+    public StreamTagVisitor.ValueResult visit(int entry) {
+        this.appendEntry(IntTag.valueOf(entry));
         return StreamTagVisitor.ValueResult.CONTINUE;
     }
 
     @Override
-    public StreamTagVisitor.ValueResult visit(long p_197676_) {
-        this.appendEntry(LongTag.valueOf(p_197676_));
+    public StreamTagVisitor.ValueResult visit(long entry) {
+        this.appendEntry(LongTag.valueOf(entry));
         return StreamTagVisitor.ValueResult.CONTINUE;
     }
 
     @Override
-    public StreamTagVisitor.ValueResult visit(float p_197672_) {
-        this.appendEntry(FloatTag.valueOf(p_197672_));
+    public StreamTagVisitor.ValueResult visit(float entry) {
+        this.appendEntry(FloatTag.valueOf(entry));
         return StreamTagVisitor.ValueResult.CONTINUE;
     }
 
     @Override
-    public StreamTagVisitor.ValueResult visit(double p_197670_) {
-        this.appendEntry(DoubleTag.valueOf(p_197670_));
+    public StreamTagVisitor.ValueResult visit(double entry) {
+        this.appendEntry(DoubleTag.valueOf(entry));
         return StreamTagVisitor.ValueResult.CONTINUE;
     }
 
     @Override
-    public StreamTagVisitor.ValueResult visit(byte[] p_197695_) {
-        this.appendEntry(new ByteArrayTag(p_197695_));
+    public StreamTagVisitor.ValueResult visit(byte[] entry) {
+        this.appendEntry(new ByteArrayTag(entry));
         return StreamTagVisitor.ValueResult.CONTINUE;
     }
 
     @Override
-    public StreamTagVisitor.ValueResult visit(int[] p_197697_) {
-        this.appendEntry(new IntArrayTag(p_197697_));
+    public StreamTagVisitor.ValueResult visit(int[] entry) {
+        this.appendEntry(new IntArrayTag(entry));
         return StreamTagVisitor.ValueResult.CONTINUE;
     }
 
     @Override
-    public StreamTagVisitor.ValueResult visit(long[] p_197699_) {
-        this.appendEntry(new LongArrayTag(p_197699_));
+    public StreamTagVisitor.ValueResult visit(long[] entry) {
+        this.appendEntry(new LongArrayTag(entry));
         return StreamTagVisitor.ValueResult.CONTINUE;
     }
 
     @Override
-    public StreamTagVisitor.ValueResult visitList(TagType<?> p_197687_, int p_197688_) {
+    public StreamTagVisitor.ValueResult visitList(TagType<?> type, int size) {
         return StreamTagVisitor.ValueResult.CONTINUE;
     }
 
     @Override
-    public StreamTagVisitor.EntryResult visitElement(TagType<?> p_197709_, int p_197710_) {
-        this.enterContainerIfNeeded(p_197709_);
+    public StreamTagVisitor.EntryResult visitElement(TagType<?> type, int size) {
+        this.enterContainerIfNeeded(type);
         return StreamTagVisitor.EntryResult.ENTER;
     }
 
     @Override
-    public StreamTagVisitor.EntryResult visitEntry(TagType<?> p_197685_) {
+    public StreamTagVisitor.EntryResult visitEntry(TagType<?> type) {
         return StreamTagVisitor.EntryResult.ENTER;
     }
 
     @Override
-    public StreamTagVisitor.EntryResult visitEntry(TagType<?> p_197690_, String p_197691_) {
-        this.lastId = p_197691_;
-        this.enterContainerIfNeeded(p_197690_);
+    public StreamTagVisitor.EntryResult visitEntry(TagType<?> type, String id) {
+        this.lastId = id;
+        this.enterContainerIfNeeded(type);
         return StreamTagVisitor.EntryResult.ENTER;
     }
 
-    private void enterContainerIfNeeded(TagType<?> p_197712_) {
-        if (p_197712_ == ListTag.TYPE) {
+    private void enterContainerIfNeeded(TagType<?> type) {
+        if (type == ListTag.TYPE) {
             ListTag listtag = new ListTag();
             this.appendEntry(listtag);
             this.consumerStack.addLast(listtag::add);
-        } else if (p_197712_ == CompoundTag.TYPE) {
+        } else if (type == CompoundTag.TYPE) {
             CompoundTag compoundtag = new CompoundTag();
             this.appendEntry(compoundtag);
             this.consumerStack.addLast(p_197703_ -> compoundtag.put(this.lastId, p_197703_));
@@ -148,12 +148,12 @@ public class CollectToTag implements StreamTagVisitor {
     }
 
     @Override
-    public StreamTagVisitor.ValueResult visitRootEntry(TagType<?> p_197707_) {
-        if (p_197707_ == ListTag.TYPE) {
+    public StreamTagVisitor.ValueResult visitRootEntry(TagType<?> type) {
+        if (type == ListTag.TYPE) {
             ListTag listtag = new ListTag();
             this.rootTag = listtag;
             this.consumerStack.addLast(listtag::add);
-        } else if (p_197707_ == CompoundTag.TYPE) {
+        } else if (type == CompoundTag.TYPE) {
             CompoundTag compoundtag = new CompoundTag();
             this.rootTag = compoundtag;
             this.consumerStack.addLast(p_197681_ -> compoundtag.put(this.lastId, p_197681_));

@@ -29,28 +29,28 @@ public class SnbtToNbt implements DataProvider {
     private final Iterable<Path> inputFolders;
     private final List<SnbtToNbt.Filter> filters = Lists.newArrayList();
 
-    public SnbtToNbt(PackOutput p_249104_, Iterable<Path> p_249523_) {
-        this.output = p_249104_;
-        this.inputFolders = p_249523_;
+    public SnbtToNbt(PackOutput output, Iterable<Path> inputFolders) {
+        this.output = output;
+        this.inputFolders = inputFolders;
     }
 
-    public SnbtToNbt addFilter(SnbtToNbt.Filter p_126476_) {
-        this.filters.add(p_126476_);
+    public SnbtToNbt addFilter(SnbtToNbt.Filter filter) {
+        this.filters.add(filter);
         return this;
     }
 
-    private CompoundTag applyFilters(String p_126461_, CompoundTag p_126462_) {
-        CompoundTag compoundtag = p_126462_;
+    private CompoundTag applyFilters(String fileName, CompoundTag tag) {
+        CompoundTag compoundtag = tag;
 
         for (SnbtToNbt.Filter snbttonbt$filter : this.filters) {
-            compoundtag = snbttonbt$filter.apply(p_126461_, compoundtag);
+            compoundtag = snbttonbt$filter.apply(fileName, compoundtag);
         }
 
         return compoundtag;
     }
 
     @Override
-    public CompletableFuture<?> run(CachedOutput p_254336_) {
+    public CompletableFuture<?> run(CachedOutput output) {
         Path path = this.output.getOutputFolder();
         List<CompletableFuture<?>> list = Lists.newArrayList();
 
@@ -64,7 +64,7 @@ public class SnbtToNbt implements DataProvider {
                                     completablefuture = CompletableFuture.allOf(
                                         stream.filter(p_126464_ -> p_126464_.toString().endsWith(".snbt")).map(p_253432_ -> CompletableFuture.runAsync(() -> {
                                                 SnbtToNbt.TaskResult snbttonbt$taskresult = this.readStructure(p_253432_, this.getName(path1, p_253432_));
-                                                this.storeStructureIfChanged(p_254336_, snbttonbt$taskresult, path);
+                                                this.storeStructureIfChanged(output, snbttonbt$taskresult, path);
                                             }, Util.backgroundExecutor())).toArray(CompletableFuture[]::new)
                                     );
                                 }
@@ -88,49 +88,55 @@ public class SnbtToNbt implements DataProvider {
         return "SNBT -> NBT";
     }
 
-    private String getName(Path p_126469_, Path p_126470_) {
-        String s = p_126469_.relativize(p_126470_).toString().replaceAll("\\\\", "/");
+    /**
+     * Gets the name of the given SNBT file, based on its path and the input directory. The result does not have the ".snbt" extension.
+     */
+    private String getName(Path inputFolder, Path file) {
+        String s = inputFolder.relativize(file).toString().replaceAll("\\\\", "/");
         return s.substring(0, s.length() - ".snbt".length());
     }
 
-    private SnbtToNbt.TaskResult readStructure(Path p_126466_, String p_126467_) {
+    private SnbtToNbt.TaskResult readStructure(Path filePath, String fileName) {
         try {
             SnbtToNbt.TaskResult snbttonbt$taskresult;
-            try (BufferedReader bufferedreader = Files.newBufferedReader(p_126466_)) {
+            try (BufferedReader bufferedreader = Files.newBufferedReader(filePath)) {
                 String s = IOUtils.toString(bufferedreader);
-                CompoundTag compoundtag = this.applyFilters(p_126467_, NbtUtils.snbtToStructure(s));
+                CompoundTag compoundtag = this.applyFilters(fileName, NbtUtils.snbtToStructure(s));
                 ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream();
                 HashingOutputStream hashingoutputstream = new HashingOutputStream(Hashing.sha1(), bytearrayoutputstream);
                 NbtIo.writeCompressed(compoundtag, hashingoutputstream);
                 byte[] abyte = bytearrayoutputstream.toByteArray();
                 HashCode hashcode = hashingoutputstream.hash();
-                snbttonbt$taskresult = new SnbtToNbt.TaskResult(p_126467_, abyte, hashcode);
+                snbttonbt$taskresult = new SnbtToNbt.TaskResult(fileName, abyte, hashcode);
             }
 
             return snbttonbt$taskresult;
         } catch (Throwable throwable1) {
-            throw new SnbtToNbt.StructureConversionException(p_126466_, throwable1);
+            throw new SnbtToNbt.StructureConversionException(filePath, throwable1);
         }
     }
 
-    private void storeStructureIfChanged(CachedOutput p_236394_, SnbtToNbt.TaskResult p_236395_, Path p_236396_) {
-        Path path = p_236396_.resolve(p_236395_.name + ".nbt");
+    private void storeStructureIfChanged(CachedOutput output, SnbtToNbt.TaskResult taskResult, Path directoryPath) {
+        Path path = directoryPath.resolve(taskResult.name + ".nbt");
 
         try {
-            p_236394_.writeIfNeeded(path, p_236395_.payload, p_236395_.hash);
+            output.writeIfNeeded(path, taskResult.payload, taskResult.hash);
         } catch (IOException ioexception) {
-            LOGGER.error("Couldn't write structure {} at {}", p_236395_.name, path, ioexception);
+            LOGGER.error("Couldn't write structure {} at {}", taskResult.name, path, ioexception);
         }
     }
 
     @FunctionalInterface
     public interface Filter {
-        CompoundTag apply(String p_126480_, CompoundTag p_126481_);
+        CompoundTag apply(String structureLocationPath, CompoundTag tag);
     }
 
+    /**
+     * Wraps exceptions thrown while reading structures to include the path of the structure in the exception message.
+     */
     static class StructureConversionException extends RuntimeException {
-        public StructureConversionException(Path p_176820_, Throwable p_176821_) {
-            super(p_176820_.toAbsolutePath().toString(), p_176821_);
+        public StructureConversionException(Path path, Throwable cause) {
+            super(path.toAbsolutePath().toString(), cause);
         }
     }
 

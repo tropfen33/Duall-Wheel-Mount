@@ -45,12 +45,12 @@ public class AnvilMenu extends ItemCombinerMenu {
     private static final int RESULT_SLOT_X_PLACEMENT = 134;
     private static final int SLOT_Y_PLACEMENT = 47;
 
-    public AnvilMenu(int p_39005_, Inventory p_39006_) {
-        this(p_39005_, p_39006_, ContainerLevelAccess.NULL);
+    public AnvilMenu(int containerId, Inventory playerInventory) {
+        this(containerId, playerInventory, ContainerLevelAccess.NULL);
     }
 
-    public AnvilMenu(int p_39008_, Inventory p_39009_, ContainerLevelAccess p_39010_) {
-        super(MenuType.ANVIL, p_39008_, p_39009_, p_39010_);
+    public AnvilMenu(int containerId, Inventory playerInventory, ContainerLevelAccess access) {
+        super(MenuType.ANVIL, containerId, playerInventory, access);
         this.addDataSlot(this.cost);
     }
 
@@ -64,22 +64,22 @@ public class AnvilMenu extends ItemCombinerMenu {
     }
 
     @Override
-    protected boolean isValidBlock(BlockState p_39019_) {
-        return p_39019_.is(BlockTags.ANVIL);
+    protected boolean isValidBlock(BlockState state) {
+        return state.is(BlockTags.ANVIL);
     }
 
     @Override
-    protected boolean mayPickup(Player p_39023_, boolean p_39024_) {
-        return (p_39023_.hasInfiniteMaterials() || p_39023_.experienceLevel >= this.cost.get()) && this.cost.get() > 0;
+    protected boolean mayPickup(Player player, boolean hasStack) {
+        return (player.hasInfiniteMaterials() || player.experienceLevel >= this.cost.get()) && this.cost.get() > 0;
     }
 
     @Override
-    protected void onTake(Player p_150474_, ItemStack p_150475_) {
-        if (!p_150474_.getAbilities().instabuild) {
-            p_150474_.giveExperienceLevels(-this.cost.get());
+    protected void onTake(Player player, ItemStack stack) {
+        if (!player.getAbilities().instabuild) {
+            player.giveExperienceLevels(-this.cost.get());
         }
 
-        float breakChance = net.neoforged.neoforge.common.CommonHooks.onAnvilRepair(p_150474_, p_150475_, AnvilMenu.this.inputSlots.getItem(0), AnvilMenu.this.inputSlots.getItem(1));
+        float breakChance = net.neoforged.neoforge.common.CommonHooks.onAnvilRepair(player, stack, AnvilMenu.this.inputSlots.getItem(0), AnvilMenu.this.inputSlots.getItem(1));
 
         this.inputSlots.setItem(0, ItemStack.EMPTY);
         if (this.repairItemCountCost > 0) {
@@ -97,7 +97,7 @@ public class AnvilMenu extends ItemCombinerMenu {
         this.cost.set(0);
         this.access.execute((p_150479_, p_150480_) -> {
             BlockState blockstate = p_150479_.getBlockState(p_150480_);
-            if (!p_150474_.getAbilities().instabuild && blockstate.is(BlockTags.ANVIL) && p_150474_.getRandom().nextFloat() < breakChance) {
+            if (!player.getAbilities().instabuild && blockstate.is(BlockTags.ANVIL) && player.getRandom().nextFloat() < breakChance) {
                 BlockState blockstate1 = AnvilBlock.damage(blockstate);
                 if (blockstate1 == null) {
                     p_150479_.removeBlock(p_150480_, false);
@@ -276,12 +276,12 @@ public class AnvilMenu extends ItemCombinerMenu {
         }
     }
 
-    public static int calculateIncreasedRepairCost(int p_39026_) {
-        return (int)Math.min((long)p_39026_ * 2L + 1L, 2147483647L);
+    public static int calculateIncreasedRepairCost(int oldRepairCost) {
+        return (int)Math.min((long)oldRepairCost * 2L + 1L, 2147483647L);
     }
 
-    public boolean setItemName(String p_288970_) {
-        String s = validateName(p_288970_);
+    public boolean setItemName(String itemName) {
+        String s = validateName(itemName);
         if (s != null && !s.equals(this.itemName)) {
             this.itemName = s;
             if (this.getSlot(2).hasItem()) {
@@ -301,8 +301,8 @@ public class AnvilMenu extends ItemCombinerMenu {
     }
 
     @Nullable
-    private static String validateName(String p_288995_) {
-        String s = StringUtil.filterText(p_288995_);
+    private static String validateName(String itemName) {
+        String s = StringUtil.filterText(itemName);
         return s.length() <= 50 ? s : null;
     }
 

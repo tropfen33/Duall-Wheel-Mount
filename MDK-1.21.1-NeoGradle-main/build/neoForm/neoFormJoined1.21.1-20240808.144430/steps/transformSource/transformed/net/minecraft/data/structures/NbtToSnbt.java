@@ -30,13 +30,13 @@ public class NbtToSnbt implements DataProvider {
     private final Iterable<Path> inputFolders;
     private final PackOutput output;
 
-    public NbtToSnbt(PackOutput p_250442_, Collection<Path> p_249158_) {
-        this.inputFolders = p_249158_;
-        this.output = p_250442_;
+    public NbtToSnbt(PackOutput output, Collection<Path> inputFolders) {
+        this.inputFolders = inputFolders;
+        this.output = output;
     }
 
     @Override
-    public CompletableFuture<?> run(CachedOutput p_254274_) {
+    public CompletableFuture<?> run(CachedOutput output) {
         Path path = this.output.getOutputFolder();
         List<CompletableFuture<?>> list = new ArrayList<>();
 
@@ -51,7 +51,7 @@ public class NbtToSnbt implements DataProvider {
                                         stream.filter(p_126430_ -> p_126430_.toString().endsWith(".nbt"))
                                             .map(
                                                 p_253418_ -> CompletableFuture.runAsync(
-                                                        () -> convertStructure(p_254274_, p_253418_, getName(path1, p_253418_), path), Util.ioPool()
+                                                        () -> convertStructure(output, p_253418_, getName(path1, p_253418_), path), Util.ioPool()
                                                     )
                                             )
                                             .toArray(CompletableFuture[]::new)
@@ -78,37 +78,40 @@ public class NbtToSnbt implements DataProvider {
         return "NBT -> SNBT";
     }
 
-    private static String getName(Path p_126436_, Path p_126437_) {
-        String s = p_126436_.relativize(p_126437_).toString().replaceAll("\\\\", "/");
+    /**
+     * Gets the name of the given NBT file, based on its path and the input directory. The result does not have the ".nbt" extension.
+     */
+    private static String getName(Path inputFolder, Path nbtPath) {
+        String s = inputFolder.relativize(nbtPath).toString().replaceAll("\\\\", "/");
         return s.substring(0, s.length() - ".nbt".length());
     }
 
     @Nullable
-    public static Path convertStructure(CachedOutput p_236382_, Path p_236383_, String p_236384_, Path p_236385_) {
+    public static Path convertStructure(CachedOutput output, Path nbtPath, String name, Path directoryPath) {
         try {
             Path path1;
             try (
-                InputStream inputstream = Files.newInputStream(p_236383_);
+                InputStream inputstream = Files.newInputStream(nbtPath);
                 InputStream inputstream1 = new FastBufferedInputStream(inputstream);
             ) {
-                Path path = p_236385_.resolve(p_236384_ + ".snbt");
-                writeSnbt(p_236382_, path, NbtUtils.structureToSnbt(NbtIo.readCompressed(inputstream1, NbtAccounter.unlimitedHeap())));
-                LOGGER.info("Converted {} from NBT to SNBT", p_236384_);
+                Path path = directoryPath.resolve(name + ".snbt");
+                writeSnbt(output, path, NbtUtils.structureToSnbt(NbtIo.readCompressed(inputstream1, NbtAccounter.unlimitedHeap())));
+                LOGGER.info("Converted {} from NBT to SNBT", name);
                 path1 = path;
             }
 
             return path1;
         } catch (IOException ioexception) {
-            LOGGER.error("Couldn't convert {} from NBT to SNBT at {}", p_236384_, p_236383_, ioexception);
+            LOGGER.error("Couldn't convert {} from NBT to SNBT at {}", name, nbtPath, ioexception);
             return null;
         }
     }
 
-    public static void writeSnbt(CachedOutput p_236378_, Path p_236379_, String p_236380_) throws IOException {
+    public static void writeSnbt(CachedOutput output, Path path, String contents) throws IOException {
         ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream();
         HashingOutputStream hashingoutputstream = new HashingOutputStream(Hashing.sha1(), bytearrayoutputstream);
-        hashingoutputstream.write(p_236380_.getBytes(StandardCharsets.UTF_8));
+        hashingoutputstream.write(contents.getBytes(StandardCharsets.UTF_8));
         hashingoutputstream.write(10);
-        p_236378_.writeIfNeeded(p_236379_, bytearrayoutputstream.toByteArray(), hashingoutputstream.hash());
+        output.writeIfNeeded(path, bytearrayoutputstream.toByteArray(), hashingoutputstream.hash());
     }
 }

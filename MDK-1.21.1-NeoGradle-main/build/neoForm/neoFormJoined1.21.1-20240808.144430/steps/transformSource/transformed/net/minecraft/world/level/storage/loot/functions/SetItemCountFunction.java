@@ -13,6 +13,9 @@ import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.level.storage.loot.providers.number.NumberProvider;
 import net.minecraft.world.level.storage.loot.providers.number.NumberProviders;
 
+/**
+ * LootItemFunction that sets the stack's count based on a {@link NumberProvider}, optionally adding to any existing count.
+ */
 public class SetItemCountFunction extends LootItemConditionalFunction {
     public static final MapCodec<SetItemCountFunction> CODEC = RecordCodecBuilder.mapCodec(
         p_298131_ -> commonFields(p_298131_)
@@ -27,10 +30,10 @@ public class SetItemCountFunction extends LootItemConditionalFunction {
     private final NumberProvider value;
     private final boolean add;
 
-    private SetItemCountFunction(List<LootItemCondition> p_299158_, NumberProvider p_165410_, boolean p_165411_) {
-        super(p_299158_);
-        this.value = p_165410_;
-        this.add = p_165411_;
+    private SetItemCountFunction(List<LootItemCondition> conditions, NumberProvider value, boolean add) {
+        super(conditions);
+        this.value = value;
+        this.add = add;
     }
 
     @Override
@@ -43,18 +46,21 @@ public class SetItemCountFunction extends LootItemConditionalFunction {
         return this.value.getReferencedContextParams();
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_81006_, LootContext p_81007_) {
-        int i = this.add ? p_81006_.getCount() : 0;
-        p_81006_.setCount(i + this.value.getInt(p_81007_));
-        return p_81006_;
+    public ItemStack run(ItemStack stack, LootContext context) {
+        int i = this.add ? stack.getCount() : 0;
+        stack.setCount(i + this.value.getInt(context));
+        return stack;
     }
 
-    public static LootItemConditionalFunction.Builder<?> setCount(NumberProvider p_165413_) {
-        return simpleBuilder(p_298130_ -> new SetItemCountFunction(p_298130_, p_165413_, false));
+    public static LootItemConditionalFunction.Builder<?> setCount(NumberProvider countValue) {
+        return simpleBuilder(p_298130_ -> new SetItemCountFunction(p_298130_, countValue, false));
     }
 
-    public static LootItemConditionalFunction.Builder<?> setCount(NumberProvider p_165415_, boolean p_165416_) {
-        return simpleBuilder(p_298128_ -> new SetItemCountFunction(p_298128_, p_165415_, p_165416_));
+    public static LootItemConditionalFunction.Builder<?> setCount(NumberProvider countValue, boolean add) {
+        return simpleBuilder(p_298128_ -> new SetItemCountFunction(p_298128_, countValue, add));
     }
 }

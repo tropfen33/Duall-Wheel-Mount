@@ -18,15 +18,15 @@ public interface SuspiciousEffectHolder {
     }
 
     @Nullable
-    static SuspiciousEffectHolder tryGet(ItemLike p_259322_) {
-        if (p_259322_.asItem() instanceof BlockItem blockitem) {
+    static SuspiciousEffectHolder tryGet(ItemLike item) {
+        if (item.asItem() instanceof BlockItem blockitem) {
             Block block = blockitem.getBlock();
             if (block instanceof SuspiciousEffectHolder) {
                 return (SuspiciousEffectHolder)block;
             }
         }
 
-        Item $$2 = p_259322_.asItem();
+        Item $$2 = item.asItem();
         return $$2 instanceof SuspiciousEffectHolder ? (SuspiciousEffectHolder)$$2 : null;
     }
 }

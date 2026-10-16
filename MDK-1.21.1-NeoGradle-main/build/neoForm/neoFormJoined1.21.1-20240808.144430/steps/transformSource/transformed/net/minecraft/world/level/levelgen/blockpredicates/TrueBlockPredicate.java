@@ -11,7 +11,7 @@ class TrueBlockPredicate implements BlockPredicate {
     private TrueBlockPredicate() {
     }
 
-    public boolean test(WorldGenLevel p_190559_, BlockPos p_190560_) {
+    public boolean test(WorldGenLevel level, BlockPos pos) {
         return true;
     }
 

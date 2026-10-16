@@ -45,44 +45,47 @@ public class Pufferfish extends AbstractFish {
     public static final int STATE_MID = 1;
     public static final int STATE_FULL = 2;
 
-    public Pufferfish(EntityType<? extends Pufferfish> p_29602_, Level p_29603_) {
-        super(p_29602_, p_29603_);
+    public Pufferfish(EntityType<? extends Pufferfish> entityType, Level level) {
+        super(entityType, level);
         this.refreshDimensions();
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326242_) {
-        super.defineSynchedData(p_326242_);
-        p_326242_.define(PUFF_STATE, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(PUFF_STATE, 0);
     }
 
     public int getPuffState() {
         return this.entityData.get(PUFF_STATE);
     }
 
-    public void setPuffState(int p_29619_) {
-        this.entityData.set(PUFF_STATE, p_29619_);
+    public void setPuffState(int puffState) {
+        this.entityData.set(PUFF_STATE, puffState);
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_29615_) {
-        if (PUFF_STATE.equals(p_29615_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        if (PUFF_STATE.equals(key)) {
             this.refreshDimensions();
         }
 
-        super.onSyncedDataUpdated(p_29615_);
+        super.onSyncedDataUpdated(key);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_29624_) {
-        super.addAdditionalSaveData(p_29624_);
-        p_29624_.putInt("PuffState", this.getPuffState());
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("PuffState", this.getPuffState());
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_29613_) {
-        super.readAdditionalSaveData(p_29613_);
-        this.setPuffState(Math.min(p_29613_.getInt("PuffState"), 2));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.setPuffState(Math.min(compound.getInt("PuffState"), 2));
     }
 
     @Override
@@ -138,23 +141,26 @@ public class Pufferfish extends AbstractFish {
         }
     }
 
-    private void touch(Mob p_29606_) {
+    private void touch(Mob mob) {
         int i = this.getPuffState();
-        if (p_29606_.hurt(this.damageSources().mobAttack(this), (float)(1 + i))) {
-            p_29606_.addEffect(new MobEffectInstance(MobEffects.POISON, 60 * i, 0), this);
+        if (mob.hurt(this.damageSources().mobAttack(this), (float)(1 + i))) {
+            mob.addEffect(new MobEffectInstance(MobEffects.POISON, 60 * i, 0), this);
             this.playSound(SoundEvents.PUFFER_FISH_STING, 1.0F, 1.0F);
         }
     }
 
+    /**
+     * Called by a player entity when they collide with an entity
+     */
     @Override
-    public void playerTouch(Player p_29617_) {
+    public void playerTouch(Player entity) {
         int i = this.getPuffState();
-        if (p_29617_ instanceof ServerPlayer && i > 0 && p_29617_.hurt(this.damageSources().mobAttack(this), (float)(1 + i))) {
+        if (entity instanceof ServerPlayer && i > 0 && entity.hurt(this.damageSources().mobAttack(this), (float)(1 + i))) {
             if (!this.isSilent()) {
-                ((ServerPlayer)p_29617_).connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.PUFFER_FISH_STING, 0.0F));
+                ((ServerPlayer)entity).connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.PUFFER_FISH_STING, 0.0F));
             }
 
-            p_29617_.addEffect(new MobEffectInstance(MobEffects.POISON, 60 * i, 0), this);
+            entity.addEffect(new MobEffectInstance(MobEffects.POISON, 60 * i, 0), this);
         }
     }
 
@@ -169,7 +175,7 @@ public class Pufferfish extends AbstractFish {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_29628_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.PUFFER_FISH_HURT;
     }
 
@@ -179,12 +185,12 @@ public class Pufferfish extends AbstractFish {
     }
 
     @Override
-    public EntityDimensions getDefaultDimensions(Pose p_316231_) {
-        return super.getDefaultDimensions(p_316231_).scale(getScale(this.getPuffState()));
+    public EntityDimensions getDefaultDimensions(Pose pose) {
+        return super.getDefaultDimensions(pose).scale(getScale(this.getPuffState()));
     }
 
-    private static float getScale(int p_29639_) {
-        switch (p_29639_) {
+    private static float getScale(int puffState) {
+        switch (puffState) {
             case 0:
                 return 0.5F;
             case 1:
@@ -197,8 +203,8 @@ public class Pufferfish extends AbstractFish {
     static class PufferfishPuffGoal extends Goal {
         private final Pufferfish fish;
 
-        public PufferfishPuffGoal(Pufferfish p_29642_) {
-            this.fish = p_29642_;
+        public PufferfishPuffGoal(Pufferfish fish) {
+            this.fish = fish;
         }
 
         @Override

@@ -20,13 +20,13 @@ public abstract class BlockAttachedEntity extends Entity {
     private int checkInterval;
     protected BlockPos pos;
 
-    protected BlockAttachedEntity(EntityType<? extends BlockAttachedEntity> p_345070_, Level p_345079_) {
-        super(p_345070_, p_345079_);
+    protected BlockAttachedEntity(EntityType<? extends BlockAttachedEntity> entityType, Level level) {
+        super(entityType, level);
     }
 
-    protected BlockAttachedEntity(EntityType<? extends BlockAttachedEntity> p_345456_, Level p_345187_, BlockPos p_345816_) {
-        this(p_345456_, p_345187_);
-        this.pos = p_345816_;
+    protected BlockAttachedEntity(EntityType<? extends BlockAttachedEntity> entityType, Level level, BlockPos pos) {
+        this(entityType, level);
+        this.pos = pos;
     }
 
     protected abstract void recalculateBoundingBox();
@@ -52,24 +52,30 @@ public abstract class BlockAttachedEntity extends Entity {
         return true;
     }
 
+    /**
+     * Called when a player attacks an entity. If this returns true the attack will not happen.
+     */
     @Override
-    public boolean skipAttackInteraction(Entity p_346423_) {
-        if (p_346423_ instanceof Player player) {
+    public boolean skipAttackInteraction(Entity entity) {
+        if (entity instanceof Player player) {
             return !this.level().mayInteract(player, this.pos) ? true : this.hurt(this.damageSources().playerAttack(player), 0.0F);
         } else {
             return false;
         }
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_345749_, float p_345893_) {
-        if (this.isInvulnerableTo(p_345749_)) {
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isInvulnerableTo(source)) {
             return false;
         } else {
             if (!this.isRemoved() && !this.level().isClientSide) {
                 this.kill();
                 this.markHurt();
-                this.dropItem(p_345749_.getEntity());
+                this.dropItem(source.getEntity());
             }
 
             return true;
@@ -77,32 +83,38 @@ public abstract class BlockAttachedEntity extends Entity {
     }
 
     @Override
-    public void move(MoverType p_345778_, Vec3 p_345301_) {
-        if (!this.level().isClientSide && !this.isRemoved() && p_345301_.lengthSqr() > 0.0) {
+    public void move(MoverType type, Vec3 pos) {
+        if (!this.level().isClientSide && !this.isRemoved() && pos.lengthSqr() > 0.0) {
+            this.kill();
+            this.dropItem(null);
+        }
+    }
+
+    /**
+     * Adds to the current velocity of the entity, and sets {@link #isAirBorne} to true.
+     */
+    @Override
+    public void push(double x, double y, double z) {
+        if (!this.level().isClientSide && !this.isRemoved() && x * x + y * y + z * z > 0.0) {
             this.kill();
             this.dropItem(null);
         }
     }
 
     @Override
-    public void push(double p_345288_, double p_346171_, double p_345389_) {
-        if (!this.level().isClientSide && !this.isRemoved() && p_345288_ * p_345288_ + p_346171_ * p_346171_ + p_345389_ * p_345389_ > 0.0) {
-            this.kill();
-            this.dropItem(null);
-        }
-    }
-
-    @Override
-    public void addAdditionalSaveData(CompoundTag p_344925_) {
+    public void addAdditionalSaveData(CompoundTag compound) {
         BlockPos blockpos = this.getPos();
-        p_344925_.putInt("TileX", blockpos.getX());
-        p_344925_.putInt("TileY", blockpos.getY());
-        p_344925_.putInt("TileZ", blockpos.getZ());
+        compound.putInt("TileX", blockpos.getX());
+        compound.putInt("TileY", blockpos.getY());
+        compound.putInt("TileZ", blockpos.getZ());
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_346402_) {
-        BlockPos blockpos = new BlockPos(p_346402_.getInt("TileX"), p_346402_.getInt("TileY"), p_346402_.getInt("TileZ"));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        BlockPos blockpos = new BlockPos(compound.getInt("TileX"), compound.getInt("TileY"), compound.getInt("TileZ"));
         if (!blockpos.closerThan(this.blockPosition(), 16.0)) {
             LOGGER.error("Block-attached entity at invalid position: {}", blockpos);
         } else {
@@ -110,16 +122,19 @@ public abstract class BlockAttachedEntity extends Entity {
         }
     }
 
-    public abstract void dropItem(@Nullable Entity p_345676_);
+    public abstract void dropItem(@Nullable Entity entity);
 
     @Override
     protected boolean repositionEntityAfterLoad() {
         return false;
     }
 
+    /**
+     * Sets the x,y,z of the entity from the given parameters. Also seems to set up a bounding box.
+     */
     @Override
-    public void setPos(double p_346360_, double p_344743_, double p_345636_) {
-        this.pos = BlockPos.containing(p_346360_, p_344743_, p_345636_);
+    public void setPos(double x, double y, double z) {
+        this.pos = BlockPos.containing(x, y, z);
         this.recalculateBoundingBox();
         this.hasImpulse = true;
     }
@@ -129,7 +144,7 @@ public abstract class BlockAttachedEntity extends Entity {
     }
 
     @Override
-    public void thunderHit(ServerLevel p_345825_, LightningBolt p_346288_) {
+    public void thunderHit(ServerLevel level, LightningBolt lightning) {
     }
 
     @Override

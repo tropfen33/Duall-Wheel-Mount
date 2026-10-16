@@ -28,8 +28,8 @@ public abstract class AbstractFurnaceBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
-    protected AbstractFurnaceBlock(BlockBehaviour.Properties p_48687_) {
-        super(p_48687_);
+    protected AbstractFurnaceBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, Boolean.valueOf(false)));
     }
 
@@ -37,74 +37,89 @@ public abstract class AbstractFurnaceBlock extends BaseEntityBlock {
     protected abstract MapCodec<? extends AbstractFurnaceBlock> codec();
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_48706_, Level p_48707_, BlockPos p_48708_, Player p_48709_, BlockHitResult p_48711_) {
-        if (p_48707_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
-            this.openContainer(p_48707_, p_48708_, p_48709_);
+            this.openContainer(level, pos, player);
             return InteractionResult.CONSUME;
         }
     }
 
-    protected abstract void openContainer(Level p_48690_, BlockPos p_48691_, Player p_48692_);
+    /**
+     * Called to open this furnace's container.
+     *
+     * @see #use
+     */
+    protected abstract void openContainer(Level level, BlockPos pos, Player player);
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_48689_) {
-        return this.defaultBlockState().setValue(FACING, p_48689_.getHorizontalDirection().getOpposite());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
     @Override
-    protected void onRemove(BlockState p_48713_, Level p_48714_, BlockPos p_48715_, BlockState p_48716_, boolean p_48717_) {
-        if (!p_48713_.is(p_48716_.getBlock())) {
-            BlockEntity blockentity = p_48714_.getBlockEntity(p_48715_);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock())) {
+            BlockEntity blockentity = level.getBlockEntity(pos);
             if (blockentity instanceof AbstractFurnaceBlockEntity) {
-                if (p_48714_ instanceof ServerLevel) {
-                    Containers.dropContents(p_48714_, p_48715_, (AbstractFurnaceBlockEntity)blockentity);
-                    ((AbstractFurnaceBlockEntity)blockentity).getRecipesToAwardAndPopExperience((ServerLevel)p_48714_, Vec3.atCenterOf(p_48715_));
+                if (level instanceof ServerLevel) {
+                    Containers.dropContents(level, pos, (AbstractFurnaceBlockEntity)blockentity);
+                    ((AbstractFurnaceBlockEntity)blockentity).getRecipesToAwardAndPopExperience((ServerLevel)level, Vec3.atCenterOf(pos));
                 }
 
-                super.onRemove(p_48713_, p_48714_, p_48715_, p_48716_, p_48717_);
-                p_48714_.updateNeighbourForOutputSignal(p_48715_, this);
+                super.onRemove(state, level, pos, newState, isMoving);
+                level.updateNeighbourForOutputSignal(pos, this);
             } else {
-                super.onRemove(p_48713_, p_48714_, p_48715_, p_48716_, p_48717_);
+                super.onRemove(state, level, pos, newState, isMoving);
             }
         }
     }
 
     @Override
-    protected boolean hasAnalogOutputSignal(BlockState p_48700_) {
+    protected boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
+    /**
+     * Returns the analog signal this block emits. This is the signal a comparator can read from it.
+     *
+     */
     @Override
-    protected int getAnalogOutputSignal(BlockState p_48702_, Level p_48703_, BlockPos p_48704_) {
-        return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(p_48703_.getBlockEntity(p_48704_));
+    protected int getAnalogOutputSignal(BlockState blockState, Level level, BlockPos pos) {
+        return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(level.getBlockEntity(pos));
     }
 
     @Override
-    protected RenderShape getRenderShape(BlockState p_48727_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_48722_, Rotation p_48723_) {
-        return p_48722_.setValue(FACING, p_48723_.rotate(p_48722_.getValue(FACING)));
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState mirror(BlockState p_48719_, Mirror p_48720_) {
-        return p_48719_.rotate(p_48720_.getRotation(p_48719_.getValue(FACING)));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_48725_) {
-        p_48725_.add(FACING, LIT);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, LIT);
     }
 
     @Nullable
     protected static <T extends BlockEntity> BlockEntityTicker<T> createFurnaceTicker(
-        Level p_151988_, BlockEntityType<T> p_151989_, BlockEntityType<? extends AbstractFurnaceBlockEntity> p_151990_
+        Level level, BlockEntityType<T> serverType, BlockEntityType<? extends AbstractFurnaceBlockEntity> clientType
     ) {
-        return p_151988_.isClientSide ? null : createTickerHelper(p_151989_, p_151990_, AbstractFurnaceBlockEntity::serverTick);
+        return level.isClientSide ? null : createTickerHelper(serverType, clientType, AbstractFurnaceBlockEntity::serverTick);
     }
 }

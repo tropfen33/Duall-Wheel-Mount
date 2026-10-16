@@ -12,7 +12,7 @@ public interface FloatProviderType<P extends FloatProvider> {
 
     MapCodec<P> codec();
 
-    static <P extends FloatProvider> FloatProviderType<P> register(String p_146527_, MapCodec<P> p_338341_) {
-        return Registry.register(BuiltInRegistries.FLOAT_PROVIDER_TYPE, p_146527_, () -> p_338341_);
+    static <P extends FloatProvider> FloatProviderType<P> register(String name, MapCodec<P> codec) {
+        return Registry.register(BuiltInRegistries.FLOAT_PROVIDER_TYPE, name, () -> codec);
     }
 }

@@ -5,7 +5,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class CommonInputs {
-    public static boolean selected(int p_279282_) {
-        return p_279282_ == 257 || p_279282_ == 32 || p_279282_ == 335;
+    public static boolean selected(int key) {
+        return key == 257 || key == 32 || key == 335;
     }
 }

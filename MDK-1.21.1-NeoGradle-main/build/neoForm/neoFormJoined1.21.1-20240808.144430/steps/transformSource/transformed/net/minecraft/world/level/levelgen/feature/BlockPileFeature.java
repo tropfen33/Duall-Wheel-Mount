@@ -11,16 +11,23 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.configurations.BlockPileConfiguration;
 
 public class BlockPileFeature extends Feature<BlockPileConfiguration> {
-    public BlockPileFeature(Codec<BlockPileConfiguration> p_65262_) {
-        super(p_65262_);
+    public BlockPileFeature(Codec<BlockPileConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<BlockPileConfiguration> p_159473_) {
-        BlockPos blockpos = p_159473_.origin();
-        WorldGenLevel worldgenlevel = p_159473_.level();
-        RandomSource randomsource = p_159473_.random();
-        BlockPileConfiguration blockpileconfiguration = p_159473_.config();
+    public boolean place(FeaturePlaceContext<BlockPileConfiguration> context) {
+        BlockPos blockpos = context.origin();
+        WorldGenLevel worldgenlevel = context.level();
+        RandomSource randomsource = context.random();
+        BlockPileConfiguration blockpileconfiguration = context.config();
         if (blockpos.getY() < worldgenlevel.getMinBuildHeight() + 5) {
             return false;
         } else {
@@ -41,15 +48,15 @@ public class BlockPileFeature extends Feature<BlockPileConfiguration> {
         }
     }
 
-    private boolean mayPlaceOn(LevelAccessor p_224945_, BlockPos p_224946_, RandomSource p_224947_) {
-        BlockPos blockpos = p_224946_.below();
-        BlockState blockstate = p_224945_.getBlockState(blockpos);
-        return blockstate.is(Blocks.DIRT_PATH) ? p_224947_.nextBoolean() : blockstate.isFaceSturdy(p_224945_, blockpos, Direction.UP);
+    private boolean mayPlaceOn(LevelAccessor level, BlockPos pos, RandomSource random) {
+        BlockPos blockpos = pos.below();
+        BlockState blockstate = level.getBlockState(blockpos);
+        return blockstate.is(Blocks.DIRT_PATH) ? random.nextBoolean() : blockstate.isFaceSturdy(level, blockpos, Direction.UP);
     }
 
-    private void tryPlaceBlock(LevelAccessor p_224949_, BlockPos p_224950_, RandomSource p_224951_, BlockPileConfiguration p_224952_) {
-        if (p_224949_.isEmptyBlock(p_224950_) && this.mayPlaceOn(p_224949_, p_224950_, p_224951_)) {
-            p_224949_.setBlock(p_224950_, p_224952_.stateProvider.getState(p_224951_, p_224950_), 4);
+    private void tryPlaceBlock(LevelAccessor level, BlockPos pos, RandomSource random, BlockPileConfiguration config) {
+        if (level.isEmptyBlock(pos) && this.mayPlaceOn(level, pos, random)) {
+            level.setBlock(pos, config.stateProvider.getState(random, pos), 4);
         }
     }
 }

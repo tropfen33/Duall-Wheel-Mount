@@ -32,8 +32,8 @@ public class RealmsAvailability {
         return future;
     }
 
-    private static boolean shouldRefresh(CompletableFuture<RealmsAvailability.Result> p_295124_) {
-        RealmsAvailability.Result realmsavailability$result = p_295124_.getNow(null);
+    private static boolean shouldRefresh(CompletableFuture<RealmsAvailability.Result> future) {
+        RealmsAvailability.Result realmsavailability$result = future.getNow(null);
         return realmsavailability$result != null && realmsavailability$result.exception() != null;
     }
 
@@ -75,15 +75,15 @@ public class RealmsAvailability {
         }
 
         @Nullable
-        public Screen createErrorScreen(Screen p_296406_) {
+        public Screen createErrorScreen(Screen lastScreen) {
             return (Screen)(switch (this.type) {
                 case SUCCESS -> null;
-                case INCOMPATIBLE_CLIENT -> new RealmsClientOutdatedScreen(p_296406_);
-                case NEEDS_PARENTAL_CONSENT -> new RealmsParentalConsentScreen(p_296406_);
+                case INCOMPATIBLE_CLIENT -> new RealmsClientOutdatedScreen(lastScreen);
+                case NEEDS_PARENTAL_CONSENT -> new RealmsParentalConsentScreen(lastScreen);
                 case AUTHENTICATION_ERROR -> new RealmsGenericErrorScreen(
-                Component.translatable("mco.error.invalid.session.title"), Component.translatable("mco.error.invalid.session.message"), p_296406_
+                Component.translatable("mco.error.invalid.session.title"), Component.translatable("mco.error.invalid.session.message"), lastScreen
             );
-                case UNEXPECTED_ERROR -> new RealmsGenericErrorScreen(Objects.requireNonNull(this.exception), p_296406_);
+                case UNEXPECTED_ERROR -> new RealmsGenericErrorScreen(Objects.requireNonNull(this.exception), lastScreen);
             });
         }
     }

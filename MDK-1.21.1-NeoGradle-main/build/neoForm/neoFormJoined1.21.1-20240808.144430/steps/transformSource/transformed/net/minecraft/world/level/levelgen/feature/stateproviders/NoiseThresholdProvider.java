@@ -32,21 +32,21 @@ public class NoiseThresholdProvider extends NoiseBasedStateProvider {
     private final List<BlockState> highStates;
 
     public NoiseThresholdProvider(
-        long p_191471_,
-        NormalNoise.NoiseParameters p_191472_,
-        float p_191473_,
-        float p_191474_,
-        float p_191475_,
-        BlockState p_191476_,
-        List<BlockState> p_191477_,
-        List<BlockState> p_191478_
+        long seed,
+        NormalNoise.NoiseParameters parameters,
+        float scale,
+        float threshold,
+        float highChance,
+        BlockState defaultState,
+        List<BlockState> lowStates,
+        List<BlockState> highStates
     ) {
-        super(p_191471_, p_191472_, p_191473_);
-        this.threshold = p_191474_;
-        this.highChance = p_191475_;
-        this.defaultState = p_191476_;
-        this.lowStates = p_191477_;
-        this.highStates = p_191478_;
+        super(seed, parameters, scale);
+        this.threshold = threshold;
+        this.highChance = highChance;
+        this.defaultState = defaultState;
+        this.lowStates = lowStates;
+        this.highStates = highStates;
     }
 
     @Override
@@ -55,12 +55,12 @@ public class NoiseThresholdProvider extends NoiseBasedStateProvider {
     }
 
     @Override
-    public BlockState getState(RandomSource p_225916_, BlockPos p_225917_) {
-        double d0 = this.getNoiseValue(p_225917_, (double)this.scale);
+    public BlockState getState(RandomSource random, BlockPos pos) {
+        double d0 = this.getNoiseValue(pos, (double)this.scale);
         if (d0 < (double)this.threshold) {
-            return Util.getRandom(this.lowStates, p_225916_);
+            return Util.getRandom(this.lowStates, random);
         } else {
-            return p_225916_.nextFloat() < this.highChance ? Util.getRandom(this.highStates, p_225916_) : this.defaultState;
+            return random.nextFloat() < this.highChance ? Util.getRandom(this.highStates, random) : this.defaultState;
         }
     }
 }

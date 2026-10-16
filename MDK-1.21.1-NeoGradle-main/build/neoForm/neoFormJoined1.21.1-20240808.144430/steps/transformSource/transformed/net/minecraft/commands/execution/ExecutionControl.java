@@ -4,36 +4,36 @@ import javax.annotation.Nullable;
 import net.minecraft.commands.ExecutionCommandSource;
 
 public interface ExecutionControl<T> {
-    void queueNext(EntryAction<T> p_305867_);
+    void queueNext(EntryAction<T> entry);
 
-    void tracer(@Nullable TraceCallbacks p_305968_);
+    void tracer(@Nullable TraceCallbacks tracer);
 
     @Nullable
     TraceCallbacks tracer();
 
     Frame currentFrame();
 
-    static <T extends ExecutionCommandSource<T>> ExecutionControl<T> create(final ExecutionContext<T> p_309708_, final Frame p_309584_) {
+    static <T extends ExecutionCommandSource<T>> ExecutionControl<T> create(final ExecutionContext<T> executionContext, final Frame frame) {
         return new ExecutionControl<T>() {
             @Override
             public void queueNext(EntryAction<T> p_309579_) {
-                p_309708_.queueNext(new CommandQueueEntry<>(p_309584_, p_309579_));
+                executionContext.queueNext(new CommandQueueEntry<>(frame, p_309579_));
             }
 
             @Override
             public void tracer(@Nullable TraceCallbacks p_309633_) {
-                p_309708_.tracer(p_309633_);
+                executionContext.tracer(p_309633_);
             }
 
             @Nullable
             @Override
             public TraceCallbacks tracer() {
-                return p_309708_.tracer();
+                return executionContext.tracer();
             }
 
             @Override
             public Frame currentFrame() {
-                return p_309584_;
+                return frame;
             }
         };
     }

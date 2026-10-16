@@ -23,20 +23,20 @@ public class GoalSelectorDebugRenderer implements DebugRenderer.SimpleDebugRende
         this.goalSelectors.clear();
     }
 
-    public void addGoalSelector(int p_113549_, BlockPos p_295031_, List<GoalDebugPayload.DebugGoal> p_113550_) {
-        this.goalSelectors.put(p_113549_, new GoalSelectorDebugRenderer.EntityGoalInfo(p_295031_, p_113550_));
+    public void addGoalSelector(int mobId, BlockPos entityPos, List<GoalDebugPayload.DebugGoal> goals) {
+        this.goalSelectors.put(mobId, new GoalSelectorDebugRenderer.EntityGoalInfo(entityPos, goals));
     }
 
-    public void removeGoalSelector(int p_173889_) {
-        this.goalSelectors.remove(p_173889_);
+    public void removeGoalSelector(int mobId) {
+        this.goalSelectors.remove(mobId);
     }
 
-    public GoalSelectorDebugRenderer(Minecraft p_113546_) {
-        this.minecraft = p_113546_;
+    public GoalSelectorDebugRenderer(Minecraft minecraft) {
+        this.minecraft = minecraft;
     }
 
     @Override
-    public void render(PoseStack p_113552_, MultiBufferSource p_113553_, double p_113554_, double p_113555_, double p_113556_) {
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, double camX, double camY, double camZ) {
         Camera camera = this.minecraft.gameRenderer.getMainCamera();
         BlockPos blockpos = BlockPos.containing(camera.getPosition().x, 0.0, camera.getPosition().z);
 
@@ -49,7 +49,7 @@ public class GoalSelectorDebugRenderer implements DebugRenderer.SimpleDebugRende
                     double d1 = (double)blockpos1.getY() + 2.0 + (double)i * 0.25;
                     double d2 = (double)blockpos1.getZ() + 0.5;
                     int j = goaldebugpayload$debuggoal.isRunning() ? -16711936 : -3355444;
-                    DebugRenderer.renderFloatingText(p_113552_, p_113553_, goaldebugpayload$debuggoal.name(), d0, d1, d2, j);
+                    DebugRenderer.renderFloatingText(poseStack, bufferSource, goaldebugpayload$debuggoal.name(), d0, d1, d2, j);
                 }
             }
         }

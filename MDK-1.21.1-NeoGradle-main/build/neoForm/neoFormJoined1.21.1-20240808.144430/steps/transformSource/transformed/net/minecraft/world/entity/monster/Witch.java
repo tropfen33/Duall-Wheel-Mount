@@ -51,8 +51,8 @@ public class Witch extends Raider implements RangedAttackMob {
     private NearestHealableRaiderTargetGoal<Raider> healRaidersGoal;
     private NearestAttackableWitchTargetGoal<Player> attackPlayersGoal;
 
-    public Witch(EntityType<? extends Witch> p_34134_, Level p_34135_) {
-        super(p_34134_, p_34135_);
+    public Witch(EntityType<? extends Witch> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
@@ -73,9 +73,9 @@ public class Witch extends Raider implements RangedAttackMob {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326280_) {
-        super.defineSynchedData(p_326280_);
-        p_326280_.define(DATA_USING_ITEM, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_USING_ITEM, false);
     }
 
     @Override
@@ -84,7 +84,7 @@ public class Witch extends Raider implements RangedAttackMob {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_34154_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.WITCH_HURT;
     }
 
@@ -93,8 +93,11 @@ public class Witch extends Raider implements RangedAttackMob {
         return SoundEvents.WITCH_DEATH;
     }
 
-    public void setUsingItem(boolean p_34164_) {
-        this.getEntityData().set(DATA_USING_ITEM, p_34164_);
+    /**
+     * Set whether this witch is aggressive at an entity.
+     */
+    public void setUsingItem(boolean usingItem) {
+        this.getEntityData().set(DATA_USING_ITEM, usingItem);
     }
 
     public boolean isDrinkingPotion() {
@@ -182,9 +185,12 @@ public class Witch extends Raider implements RangedAttackMob {
         return SoundEvents.WITCH_CELEBRATE;
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @Override
-    public void handleEntityEvent(byte p_34138_) {
-        if (p_34138_ == 15) {
+    public void handleEntityEvent(byte id) {
+        if (id == 15) {
             for (int i = 0; i < this.random.nextInt(35) + 10; i++) {
                 this.level()
                     .addParticle(
@@ -198,49 +204,55 @@ public class Witch extends Raider implements RangedAttackMob {
                     );
             }
         } else {
-            super.handleEntityEvent(p_34138_);
+            super.handleEntityEvent(id);
         }
     }
 
+    /**
+     * Reduces damage, depending on potions
+     */
     @Override
-    protected float getDamageAfterMagicAbsorb(DamageSource p_34149_, float p_34150_) {
-        p_34150_ = super.getDamageAfterMagicAbsorb(p_34149_, p_34150_);
-        if (p_34149_.getEntity() == this) {
-            this.damageContainers.peek().setReduction(net.neoforged.neoforge.common.damagesource.DamageContainer.Reduction.INNATE_RESISTANCE, p_34150_);
-            p_34150_ = 0.0F;
+    protected float getDamageAfterMagicAbsorb(DamageSource source, float damage) {
+        damage = super.getDamageAfterMagicAbsorb(source, damage);
+        if (source.getEntity() == this) {
+            this.damageContainers.peek().setReduction(net.neoforged.neoforge.common.damagesource.DamageContainer.Reduction.INNATE_RESISTANCE, damage);
+            damage = 0.0F;
         }
 
         else // Neo: Join the two ifs; if the first one runs (reducing damage to 0), the second one (reducing damage by 15%) effectively does nothing
-        if (p_34149_.is(DamageTypeTags.WITCH_RESISTANT_TO)) {
-            this.damageContainers.peek().setReduction(net.neoforged.neoforge.common.damagesource.DamageContainer.Reduction.INNATE_RESISTANCE, p_34150_ * 0.85F);
-            p_34150_ *= 0.15F;
+        if (source.is(DamageTypeTags.WITCH_RESISTANT_TO)) {
+            this.damageContainers.peek().setReduction(net.neoforged.neoforge.common.damagesource.DamageContainer.Reduction.INNATE_RESISTANCE, damage * 0.85F);
+            damage *= 0.15F;
         }
 
-        return p_34150_;
+        return damage;
     }
 
+    /**
+     * Attack the specified entity using a ranged attack.
+     */
     @Override
-    public void performRangedAttack(LivingEntity p_34143_, float p_34144_) {
+    public void performRangedAttack(LivingEntity target, float distanceFactor) {
         if (!this.isDrinkingPotion()) {
-            Vec3 vec3 = p_34143_.getDeltaMovement();
-            double d0 = p_34143_.getX() + vec3.x - this.getX();
-            double d1 = p_34143_.getEyeY() - 1.1F - this.getY();
-            double d2 = p_34143_.getZ() + vec3.z - this.getZ();
+            Vec3 vec3 = target.getDeltaMovement();
+            double d0 = target.getX() + vec3.x - this.getX();
+            double d1 = target.getEyeY() - 1.1F - this.getY();
+            double d2 = target.getZ() + vec3.z - this.getZ();
             double d3 = Math.sqrt(d0 * d0 + d2 * d2);
             Holder<Potion> holder = Potions.HARMING;
-            if (p_34143_ instanceof Raider) {
-                if (p_34143_.getHealth() <= 4.0F) {
+            if (target instanceof Raider) {
+                if (target.getHealth() <= 4.0F) {
                     holder = Potions.HEALING;
                 } else {
                     holder = Potions.REGENERATION;
                 }
 
                 this.setTarget(null);
-            } else if (d3 >= 8.0 && !p_34143_.hasEffect(MobEffects.MOVEMENT_SLOWDOWN)) {
+            } else if (d3 >= 8.0 && !target.hasEffect(MobEffects.MOVEMENT_SLOWDOWN)) {
                 holder = Potions.SLOWNESS;
-            } else if (p_34143_.getHealth() >= 8.0F && !p_34143_.hasEffect(MobEffects.POISON)) {
+            } else if (target.getHealth() >= 8.0F && !target.hasEffect(MobEffects.POISON)) {
                 holder = Potions.POISON;
-            } else if (d3 <= 3.0 && !p_34143_.hasEffect(MobEffects.WEAKNESS) && this.random.nextFloat() < 0.25F) {
+            } else if (d3 <= 3.0 && !target.hasEffect(MobEffects.WEAKNESS) && this.random.nextFloat() < 0.25F) {
                 holder = Potions.WEAKNESS;
             }
 
@@ -267,7 +279,7 @@ public class Witch extends Raider implements RangedAttackMob {
     }
 
     @Override
-    public void applyRaidBuffs(ServerLevel p_348621_, int p_34140_, boolean p_34141_) {
+    public void applyRaidBuffs(ServerLevel level, int wave, boolean unused) {
     }
 
     @Override

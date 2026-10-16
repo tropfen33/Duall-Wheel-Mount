@@ -8,18 +8,18 @@ import java.util.function.Supplier;
 import net.minecraft.util.datafix.fixes.References;
 
 public class V106 extends Schema {
-    public V106(int p_17377_, Schema p_17378_) {
-        super(p_17377_, p_17378_);
+    public V106(int versionKey, Schema parent) {
+        super(versionKey, parent);
     }
 
     @Override
-    public void registerTypes(Schema p_17382_, Map<String, Supplier<TypeTemplate>> p_17383_, Map<String, Supplier<TypeTemplate>> p_17384_) {
-        super.registerTypes(p_17382_, p_17383_, p_17384_);
-        p_17382_.registerType(
+    public void registerTypes(Schema schema, Map<String, Supplier<TypeTemplate>> entityTypes, Map<String, Supplier<TypeTemplate>> blockEntityTypes) {
+        super.registerTypes(schema, entityTypes, blockEntityTypes);
+        schema.registerType(
             true,
             References.UNTAGGED_SPAWNER,
             () -> DSL.optionalFields(
-                    "SpawnPotentials", DSL.list(DSL.fields("Entity", References.ENTITY_TREE.in(p_17382_))), "SpawnData", References.ENTITY_TREE.in(p_17382_)
+                    "SpawnPotentials", DSL.list(DSL.fields("Entity", References.ENTITY_TREE.in(schema))), "SpawnData", References.ENTITY_TREE.in(schema)
                 )
         );
     }

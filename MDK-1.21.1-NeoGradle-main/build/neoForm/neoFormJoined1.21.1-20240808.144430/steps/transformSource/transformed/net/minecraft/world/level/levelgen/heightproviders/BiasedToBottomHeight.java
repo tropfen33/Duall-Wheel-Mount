@@ -24,26 +24,26 @@ public class BiasedToBottomHeight extends HeightProvider {
     private final VerticalAnchor maxInclusive;
     private final int inner;
 
-    private BiasedToBottomHeight(VerticalAnchor p_161925_, VerticalAnchor p_161926_, int p_161927_) {
-        this.minInclusive = p_161925_;
-        this.maxInclusive = p_161926_;
-        this.inner = p_161927_;
+    private BiasedToBottomHeight(VerticalAnchor minInclusive, VerticalAnchor maxInclusive, int inner) {
+        this.minInclusive = minInclusive;
+        this.maxInclusive = maxInclusive;
+        this.inner = inner;
     }
 
-    public static BiasedToBottomHeight of(VerticalAnchor p_161932_, VerticalAnchor p_161933_, int p_161934_) {
-        return new BiasedToBottomHeight(p_161932_, p_161933_, p_161934_);
+    public static BiasedToBottomHeight of(VerticalAnchor minInclusive, VerticalAnchor maxInclusive, int inner) {
+        return new BiasedToBottomHeight(minInclusive, maxInclusive, inner);
     }
 
     @Override
-    public int sample(RandomSource p_226297_, WorldGenerationContext p_226298_) {
-        int i = this.minInclusive.resolveY(p_226298_);
-        int j = this.maxInclusive.resolveY(p_226298_);
+    public int sample(RandomSource random, WorldGenerationContext context) {
+        int i = this.minInclusive.resolveY(context);
+        int j = this.maxInclusive.resolveY(context);
         if (j - i - this.inner + 1 <= 0) {
             LOGGER.warn("Empty height range: {}", this);
             return i;
         } else {
-            int k = p_226297_.nextInt(j - i - this.inner + 1);
-            return p_226297_.nextInt(k + this.inner) + i;
+            int k = random.nextInt(j - i - this.inner + 1);
+            return random.nextInt(k + this.inner) + i;
         }
     }
 

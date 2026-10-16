@@ -38,35 +38,38 @@ public abstract class TamableAnimal extends Animal implements OwnableEntity {
     );
     private boolean orderedToSit;
 
-    protected TamableAnimal(EntityType<? extends TamableAnimal> p_21803_, Level p_21804_) {
-        super(p_21803_, p_21804_);
+    protected TamableAnimal(EntityType<? extends TamableAnimal> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326034_) {
-        super.defineSynchedData(p_326034_);
-        p_326034_.define(DATA_FLAGS_ID, (byte)0);
-        p_326034_.define(DATA_OWNERUUID_ID, Optional.empty());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_FLAGS_ID, (byte)0);
+        builder.define(DATA_OWNERUUID_ID, Optional.empty());
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_21819_) {
-        super.addAdditionalSaveData(p_21819_);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
         if (this.getOwnerUUID() != null) {
-            p_21819_.putUUID("Owner", this.getOwnerUUID());
+            compound.putUUID("Owner", this.getOwnerUUID());
         }
 
-        p_21819_.putBoolean("Sitting", this.orderedToSit);
+        compound.putBoolean("Sitting", this.orderedToSit);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_21815_) {
-        super.readAdditionalSaveData(p_21815_);
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
         UUID uuid;
-        if (p_21815_.hasUUID("Owner")) {
-            uuid = p_21815_.getUUID("Owner");
+        if (compound.hasUUID("Owner")) {
+            uuid = compound.getUUID("Owner");
         } else {
-            String s = p_21815_.getString("Owner");
+            String s = compound.getString("Owner");
             uuid = OldUsersConverter.convertMobOwnerIfNecessary(this.getServer(), s);
         }
 
@@ -79,7 +82,7 @@ public abstract class TamableAnimal extends Animal implements OwnableEntity {
             }
         }
 
-        this.orderedToSit = p_21815_.getBoolean("Sitting");
+        this.orderedToSit = compound.getBoolean("Sitting");
         this.setInSittingPose(this.orderedToSit);
     }
 
@@ -89,21 +92,24 @@ public abstract class TamableAnimal extends Animal implements OwnableEntity {
     }
 
     @Override
-    public boolean handleLeashAtDistance(Entity p_352258_, float p_352278_) {
+    public boolean handleLeashAtDistance(Entity leashHolder, float distance) {
         if (this.isInSittingPose()) {
-            if (p_352278_ > 10.0F) {
+            if (distance > 10.0F) {
                 this.dropLeash(true, true);
             }
 
             return false;
         } else {
-            return super.handleLeashAtDistance(p_352258_, p_352278_);
+            return super.handleLeashAtDistance(leashHolder, distance);
         }
     }
 
-    protected void spawnTamingParticles(boolean p_21835_) {
+    /**
+     * Play the taming effect, will either be hearts or smoke depending on status
+     */
+    protected void spawnTamingParticles(boolean tamed) {
         ParticleOptions particleoptions = ParticleTypes.HEART;
-        if (!p_21835_) {
+        if (!tamed) {
             particleoptions = ParticleTypes.SMOKE;
         }
 
@@ -115,14 +121,17 @@ public abstract class TamableAnimal extends Animal implements OwnableEntity {
         }
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @Override
-    public void handleEntityEvent(byte p_21807_) {
-        if (p_21807_ == 7) {
+    public void handleEntityEvent(byte id) {
+        if (id == 7) {
             this.spawnTamingParticles(true);
-        } else if (p_21807_ == 6) {
+        } else if (id == 6) {
             this.spawnTamingParticles(false);
         } else {
-            super.handleEntityEvent(p_21807_);
+            super.handleEntityEvent(id);
         }
     }
 
@@ -130,15 +139,15 @@ public abstract class TamableAnimal extends Animal implements OwnableEntity {
         return (this.entityData.get(DATA_FLAGS_ID) & 4) != 0;
     }
 
-    public void setTame(boolean p_21836_, boolean p_326134_) {
+    public void setTame(boolean tame, boolean applyTamingSideEffects) {
         byte b0 = this.entityData.get(DATA_FLAGS_ID);
-        if (p_21836_) {
+        if (tame) {
             this.entityData.set(DATA_FLAGS_ID, (byte)(b0 | 4));
         } else {
             this.entityData.set(DATA_FLAGS_ID, (byte)(b0 & -5));
         }
 
-        if (p_326134_) {
+        if (applyTamingSideEffects) {
             this.applyTamingSideEffects();
         }
     }
@@ -150,9 +159,9 @@ public abstract class TamableAnimal extends Animal implements OwnableEntity {
         return (this.entityData.get(DATA_FLAGS_ID) & 1) != 0;
     }
 
-    public void setInSittingPose(boolean p_21838_) {
+    public void setInSittingPose(boolean sitting) {
         byte b0 = this.entityData.get(DATA_FLAGS_ID);
-        if (p_21838_) {
+        if (sitting) {
             this.entityData.set(DATA_FLAGS_ID, (byte)(b0 | 1));
         } else {
             this.entityData.set(DATA_FLAGS_ID, (byte)(b0 & -2));
@@ -165,28 +174,28 @@ public abstract class TamableAnimal extends Animal implements OwnableEntity {
         return this.entityData.get(DATA_OWNERUUID_ID).orElse(null);
     }
 
-    public void setOwnerUUID(@Nullable UUID p_21817_) {
-        this.entityData.set(DATA_OWNERUUID_ID, Optional.ofNullable(p_21817_));
+    public void setOwnerUUID(@Nullable UUID uuid) {
+        this.entityData.set(DATA_OWNERUUID_ID, Optional.ofNullable(uuid));
     }
 
-    public void tame(Player p_21829_) {
+    public void tame(Player player) {
         this.setTame(true, true);
-        this.setOwnerUUID(p_21829_.getUUID());
-        if (p_21829_ instanceof ServerPlayer serverplayer) {
+        this.setOwnerUUID(player.getUUID());
+        if (player instanceof ServerPlayer serverplayer) {
             CriteriaTriggers.TAME_ANIMAL.trigger(serverplayer, this);
         }
     }
 
     @Override
-    public boolean canAttack(LivingEntity p_21822_) {
-        return this.isOwnedBy(p_21822_) ? false : super.canAttack(p_21822_);
+    public boolean canAttack(LivingEntity target) {
+        return this.isOwnedBy(target) ? false : super.canAttack(target);
     }
 
-    public boolean isOwnedBy(LivingEntity p_21831_) {
-        return p_21831_ == this.getOwner();
+    public boolean isOwnedBy(LivingEntity entity) {
+        return entity == this.getOwner();
     }
 
-    public boolean wantsToAttack(LivingEntity p_21810_, LivingEntity p_21811_) {
+    public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
         return true;
     }
 
@@ -202,27 +211,33 @@ public abstract class TamableAnimal extends Animal implements OwnableEntity {
         return super.getTeam();
     }
 
+    /**
+     * Returns whether this Entity is on the same team as the given Entity.
+     */
     @Override
-    public boolean isAlliedTo(Entity p_21833_) {
+    public boolean isAlliedTo(Entity entity) {
         if (this.isTame()) {
             LivingEntity livingentity = this.getOwner();
-            if (p_21833_ == livingentity) {
+            if (entity == livingentity) {
                 return true;
             }
 
             if (livingentity != null) {
-                return livingentity.isAlliedTo(p_21833_);
+                return livingentity.isAlliedTo(entity);
             }
         }
 
-        return super.isAlliedTo(p_21833_);
+        return super.isAlliedTo(entity);
     }
 
+    /**
+     * Called when the mob's health reaches 0.
+     */
     @Override
-    public void die(DamageSource p_21809_) {
+    public void die(DamageSource cause) {
         // FORGE: Super moved to top so that death message would be cancelled properly
         net.minecraft.network.chat.Component deathMessage = this.getCombatTracker().getDeathMessage();
-        super.die(p_21809_);
+        super.die(cause);
 
         if (this.dead)
         if (!this.level().isClientSide && this.level().getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES) && this.getOwner() instanceof ServerPlayer) {
@@ -235,8 +250,8 @@ public abstract class TamableAnimal extends Animal implements OwnableEntity {
         return this.orderedToSit;
     }
 
-    public void setOrderedToSit(boolean p_21840_) {
-        this.orderedToSit = p_21840_;
+    public void setOrderedToSit(boolean orderedToSit) {
+        this.orderedToSit = orderedToSit;
     }
 
     public void tryToTeleportToOwner() {
@@ -251,39 +266,39 @@ public abstract class TamableAnimal extends Animal implements OwnableEntity {
         return livingentity != null && this.distanceToSqr(this.getOwner()) >= 144.0;
     }
 
-    private void teleportToAroundBlockPos(BlockPos p_350657_) {
+    private void teleportToAroundBlockPos(BlockPos pos) {
         for (int i = 0; i < 10; i++) {
             int j = this.random.nextIntBetweenInclusive(-3, 3);
             int k = this.random.nextIntBetweenInclusive(-3, 3);
             if (Math.abs(j) >= 2 || Math.abs(k) >= 2) {
                 int l = this.random.nextIntBetweenInclusive(-1, 1);
-                if (this.maybeTeleportTo(p_350657_.getX() + j, p_350657_.getY() + l, p_350657_.getZ() + k)) {
+                if (this.maybeTeleportTo(pos.getX() + j, pos.getY() + l, pos.getZ() + k)) {
                     return;
                 }
             }
         }
     }
 
-    private boolean maybeTeleportTo(int p_350930_, int p_350303_, int p_350410_) {
-        if (!this.canTeleportTo(new BlockPos(p_350930_, p_350303_, p_350410_))) {
+    private boolean maybeTeleportTo(int x, int y, int z) {
+        if (!this.canTeleportTo(new BlockPos(x, y, z))) {
             return false;
         } else {
-            this.moveTo((double)p_350930_ + 0.5, (double)p_350303_, (double)p_350410_ + 0.5, this.getYRot(), this.getXRot());
+            this.moveTo((double)x + 0.5, (double)y, (double)z + 0.5, this.getYRot(), this.getXRot());
             this.navigation.stop();
             return true;
         }
     }
 
-    private boolean canTeleportTo(BlockPos p_350767_) {
-        PathType pathtype = WalkNodeEvaluator.getPathTypeStatic(this, p_350767_);
+    private boolean canTeleportTo(BlockPos pos) {
+        PathType pathtype = WalkNodeEvaluator.getPathTypeStatic(this, pos);
         if (pathtype != PathType.WALKABLE) {
             return false;
         } else {
-            BlockState blockstate = this.level().getBlockState(p_350767_.below());
+            BlockState blockstate = this.level().getBlockState(pos.below());
             if (!this.canFlyToOwner() && blockstate.getBlock() instanceof LeavesBlock) {
                 return false;
             } else {
-                BlockPos blockpos = p_350767_.subtract(this.blockPosition());
+                BlockPos blockpos = pos.subtract(this.blockPosition());
                 return this.level().noCollision(this, this.getBoundingBox().move(blockpos));
             }
         }
@@ -298,12 +313,12 @@ public abstract class TamableAnimal extends Animal implements OwnableEntity {
     }
 
     public class TamableAnimalPanicGoal extends PanicGoal {
-        public TamableAnimalPanicGoal(double p_350422_, TagKey<DamageType> p_350418_) {
-            super(TamableAnimal.this, p_350422_, p_350418_);
+        public TamableAnimalPanicGoal(double speedModifier, TagKey<DamageType> panicCausingDamageTypes) {
+            super(TamableAnimal.this, speedModifier, panicCausingDamageTypes);
         }
 
-        public TamableAnimalPanicGoal(double p_350932_) {
-            super(TamableAnimal.this, p_350932_);
+        public TamableAnimalPanicGoal(double speedModifier) {
+            super(TamableAnimal.this, speedModifier);
         }
 
         @Override

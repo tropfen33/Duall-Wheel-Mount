@@ -11,72 +11,72 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class AnimationUtils {
-    public static void animateCrossbowHold(ModelPart p_102098_, ModelPart p_102099_, ModelPart p_102100_, boolean p_102101_) {
-        ModelPart modelpart = p_102101_ ? p_102098_ : p_102099_;
-        ModelPart modelpart1 = p_102101_ ? p_102099_ : p_102098_;
-        modelpart.yRot = (p_102101_ ? -0.3F : 0.3F) + p_102100_.yRot;
-        modelpart1.yRot = (p_102101_ ? 0.6F : -0.6F) + p_102100_.yRot;
-        modelpart.xRot = (float) (-Math.PI / 2) + p_102100_.xRot + 0.1F;
-        modelpart1.xRot = -1.5F + p_102100_.xRot;
+    public static void animateCrossbowHold(ModelPart rightArm, ModelPart leftArm, ModelPart head, boolean rightHanded) {
+        ModelPart modelpart = rightHanded ? rightArm : leftArm;
+        ModelPart modelpart1 = rightHanded ? leftArm : rightArm;
+        modelpart.yRot = (rightHanded ? -0.3F : 0.3F) + head.yRot;
+        modelpart1.yRot = (rightHanded ? 0.6F : -0.6F) + head.yRot;
+        modelpart.xRot = (float) (-Math.PI / 2) + head.xRot + 0.1F;
+        modelpart1.xRot = -1.5F + head.xRot;
     }
 
-    public static void animateCrossbowCharge(ModelPart p_102087_, ModelPart p_102088_, LivingEntity p_102089_, boolean p_102090_) {
-        ModelPart modelpart = p_102090_ ? p_102087_ : p_102088_;
-        ModelPart modelpart1 = p_102090_ ? p_102088_ : p_102087_;
-        modelpart.yRot = p_102090_ ? -0.8F : 0.8F;
+    public static void animateCrossbowCharge(ModelPart rightArm, ModelPart leftArm, LivingEntity livingEntity, boolean rightHanded) {
+        ModelPart modelpart = rightHanded ? rightArm : leftArm;
+        ModelPart modelpart1 = rightHanded ? leftArm : rightArm;
+        modelpart.yRot = rightHanded ? -0.8F : 0.8F;
         modelpart.xRot = -0.97079635F;
         modelpart1.xRot = modelpart.xRot;
-        float f = (float)CrossbowItem.getChargeDuration(p_102089_.getUseItem(), p_102089_);
-        float f1 = Mth.clamp((float)p_102089_.getTicksUsingItem(), 0.0F, f);
+        float f = (float)CrossbowItem.getChargeDuration(livingEntity.getUseItem(), livingEntity);
+        float f1 = Mth.clamp((float)livingEntity.getTicksUsingItem(), 0.0F, f);
         float f2 = f1 / f;
-        modelpart1.yRot = Mth.lerp(f2, 0.4F, 0.85F) * (float)(p_102090_ ? 1 : -1);
+        modelpart1.yRot = Mth.lerp(f2, 0.4F, 0.85F) * (float)(rightHanded ? 1 : -1);
         modelpart1.xRot = Mth.lerp(f2, modelpart1.xRot, (float) (-Math.PI / 2));
     }
 
-    public static <T extends Mob> void swingWeaponDown(ModelPart p_102092_, ModelPart p_102093_, T p_102094_, float p_102095_, float p_102096_) {
-        float f = Mth.sin(p_102095_ * (float) Math.PI);
-        float f1 = Mth.sin((1.0F - (1.0F - p_102095_) * (1.0F - p_102095_)) * (float) Math.PI);
-        p_102092_.zRot = 0.0F;
-        p_102093_.zRot = 0.0F;
-        p_102092_.yRot = (float) (Math.PI / 20);
-        p_102093_.yRot = (float) (-Math.PI / 20);
-        if (p_102094_.getMainArm() == HumanoidArm.RIGHT) {
-            p_102092_.xRot = -1.8849558F + Mth.cos(p_102096_ * 0.09F) * 0.15F;
-            p_102093_.xRot = -0.0F + Mth.cos(p_102096_ * 0.19F) * 0.5F;
-            p_102092_.xRot += f * 2.2F - f1 * 0.4F;
-            p_102093_.xRot += f * 1.2F - f1 * 0.4F;
+    public static <T extends Mob> void swingWeaponDown(ModelPart rightArm, ModelPart leftArm, T mob, float attackTime, float ageInTicks) {
+        float f = Mth.sin(attackTime * (float) Math.PI);
+        float f1 = Mth.sin((1.0F - (1.0F - attackTime) * (1.0F - attackTime)) * (float) Math.PI);
+        rightArm.zRot = 0.0F;
+        leftArm.zRot = 0.0F;
+        rightArm.yRot = (float) (Math.PI / 20);
+        leftArm.yRot = (float) (-Math.PI / 20);
+        if (mob.getMainArm() == HumanoidArm.RIGHT) {
+            rightArm.xRot = -1.8849558F + Mth.cos(ageInTicks * 0.09F) * 0.15F;
+            leftArm.xRot = -0.0F + Mth.cos(ageInTicks * 0.19F) * 0.5F;
+            rightArm.xRot += f * 2.2F - f1 * 0.4F;
+            leftArm.xRot += f * 1.2F - f1 * 0.4F;
         } else {
-            p_102092_.xRot = -0.0F + Mth.cos(p_102096_ * 0.19F) * 0.5F;
-            p_102093_.xRot = -1.8849558F + Mth.cos(p_102096_ * 0.09F) * 0.15F;
-            p_102092_.xRot += f * 1.2F - f1 * 0.4F;
-            p_102093_.xRot += f * 2.2F - f1 * 0.4F;
+            rightArm.xRot = -0.0F + Mth.cos(ageInTicks * 0.19F) * 0.5F;
+            leftArm.xRot = -1.8849558F + Mth.cos(ageInTicks * 0.09F) * 0.15F;
+            rightArm.xRot += f * 1.2F - f1 * 0.4F;
+            leftArm.xRot += f * 2.2F - f1 * 0.4F;
         }
 
-        bobArms(p_102092_, p_102093_, p_102096_);
+        bobArms(rightArm, leftArm, ageInTicks);
     }
 
-    public static void bobModelPart(ModelPart p_170342_, float p_170343_, float p_170344_) {
-        p_170342_.zRot = p_170342_.zRot + p_170344_ * (Mth.cos(p_170343_ * 0.09F) * 0.05F + 0.05F);
-        p_170342_.xRot = p_170342_.xRot + p_170344_ * Mth.sin(p_170343_ * 0.067F) * 0.05F;
+    public static void bobModelPart(ModelPart modelPart, float ageInTicks, float multiplier) {
+        modelPart.zRot = modelPart.zRot + multiplier * (Mth.cos(ageInTicks * 0.09F) * 0.05F + 0.05F);
+        modelPart.xRot = modelPart.xRot + multiplier * Mth.sin(ageInTicks * 0.067F) * 0.05F;
     }
 
-    public static void bobArms(ModelPart p_102083_, ModelPart p_102084_, float p_102085_) {
-        bobModelPart(p_102083_, p_102085_, 1.0F);
-        bobModelPart(p_102084_, p_102085_, -1.0F);
+    public static void bobArms(ModelPart rightArm, ModelPart leftArm, float ageInTicks) {
+        bobModelPart(rightArm, ageInTicks, 1.0F);
+        bobModelPart(leftArm, ageInTicks, -1.0F);
     }
 
-    public static void animateZombieArms(ModelPart p_102103_, ModelPart p_102104_, boolean p_102105_, float p_102106_, float p_102107_) {
-        float f = Mth.sin(p_102106_ * (float) Math.PI);
-        float f1 = Mth.sin((1.0F - (1.0F - p_102106_) * (1.0F - p_102106_)) * (float) Math.PI);
-        p_102104_.zRot = 0.0F;
-        p_102103_.zRot = 0.0F;
-        p_102104_.yRot = -(0.1F - f * 0.6F);
-        p_102103_.yRot = 0.1F - f * 0.6F;
-        float f2 = (float) -Math.PI / (p_102105_ ? 1.5F : 2.25F);
-        p_102104_.xRot = f2;
-        p_102103_.xRot = f2;
-        p_102104_.xRot += f * 1.2F - f1 * 0.4F;
-        p_102103_.xRot += f * 1.2F - f1 * 0.4F;
-        bobArms(p_102104_, p_102103_, p_102107_);
+    public static void animateZombieArms(ModelPart leftArm, ModelPart rightArm, boolean isAggressive, float attackTime, float ageInTicks) {
+        float f = Mth.sin(attackTime * (float) Math.PI);
+        float f1 = Mth.sin((1.0F - (1.0F - attackTime) * (1.0F - attackTime)) * (float) Math.PI);
+        rightArm.zRot = 0.0F;
+        leftArm.zRot = 0.0F;
+        rightArm.yRot = -(0.1F - f * 0.6F);
+        leftArm.yRot = 0.1F - f * 0.6F;
+        float f2 = (float) -Math.PI / (isAggressive ? 1.5F : 2.25F);
+        rightArm.xRot = f2;
+        leftArm.xRot = f2;
+        rightArm.xRot += f * 1.2F - f1 * 0.4F;
+        leftArm.xRot += f * 1.2F - f1 * 0.4F;
+        bobArms(rightArm, leftArm, ageInTicks);
     }
 }

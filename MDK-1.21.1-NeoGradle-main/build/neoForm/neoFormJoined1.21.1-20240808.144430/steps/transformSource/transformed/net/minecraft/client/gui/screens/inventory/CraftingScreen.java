@@ -20,8 +20,8 @@ public class CraftingScreen extends AbstractContainerScreen<CraftingMenu> implem
     private final RecipeBookComponent recipeBookComponent = new RecipeBookComponent();
     private boolean widthTooNarrow;
 
-    public CraftingScreen(CraftingMenu p_98448_, Inventory p_98449_, Component p_98450_) {
-        super(p_98448_, p_98449_, p_98450_);
+    public CraftingScreen(CraftingMenu menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title);
     }
 
     @Override
@@ -45,66 +45,103 @@ public class CraftingScreen extends AbstractContainerScreen<CraftingMenu> implem
         this.recipeBookComponent.tick();
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282508_, int p_98480_, int p_98481_, float p_98482_) {
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.recipeBookComponent.isVisible() && this.widthTooNarrow) {
-            this.renderBackground(p_282508_, p_98480_, p_98481_, p_98482_);
-            this.recipeBookComponent.render(p_282508_, p_98480_, p_98481_, p_98482_);
+            this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+            this.recipeBookComponent.render(guiGraphics, mouseX, mouseY, partialTick);
         } else {
-            super.render(p_282508_, p_98480_, p_98481_, p_98482_);
-            this.recipeBookComponent.render(p_282508_, p_98480_, p_98481_, p_98482_);
-            this.recipeBookComponent.renderGhostRecipe(p_282508_, this.leftPos, this.topPos, true, p_98482_);
+            super.render(guiGraphics, mouseX, mouseY, partialTick);
+            this.recipeBookComponent.render(guiGraphics, mouseX, mouseY, partialTick);
+            this.recipeBookComponent.renderGhostRecipe(guiGraphics, this.leftPos, this.topPos, true, partialTick);
         }
 
-        this.renderTooltip(p_282508_, p_98480_, p_98481_);
-        this.recipeBookComponent.renderTooltip(p_282508_, this.leftPos, this.topPos, p_98480_, p_98481_);
+        this.renderTooltip(guiGraphics, mouseX, mouseY);
+        this.recipeBookComponent.renderTooltip(guiGraphics, this.leftPos, this.topPos, mouseX, mouseY);
     }
 
     @Override
-    protected void renderBg(GuiGraphics p_283540_, float p_282132_, int p_283078_, int p_283647_) {
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         int i = this.leftPos;
         int j = (this.height - this.imageHeight) / 2;
-        p_283540_.blit(CRAFTING_TABLE_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
+        guiGraphics.blit(CRAFTING_TABLE_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
+    }
+
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return this.recipeBookComponent.keyPressed(keyCode, scanCode, modifiers) ? true : super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    /**
+     * Called when a character is typed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param codePoint the code point of the typed character.
+     * @param modifiers the keyboard modifiers.
+     */
+    @Override
+    public boolean charTyped(char codePoint, int modifiers) {
+        return this.recipeBookComponent.charTyped(codePoint, modifiers) ? true : super.charTyped(codePoint, modifiers);
     }
 
     @Override
-    public boolean keyPressed(int p_320488_, int p_320952_, int p_320483_) {
-        return this.recipeBookComponent.keyPressed(p_320488_, p_320952_, p_320483_) ? true : super.keyPressed(p_320488_, p_320952_, p_320483_);
+    protected boolean isHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return (!this.widthTooNarrow || !this.recipeBookComponent.isVisible()) && super.isHovering(x, y, width, height, mouseX, mouseY);
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    public boolean charTyped(char p_320706_, int p_320696_) {
-        return this.recipeBookComponent.charTyped(p_320706_, p_320696_) ? true : super.charTyped(p_320706_, p_320696_);
-    }
-
-    @Override
-    protected boolean isHovering(int p_98462_, int p_98463_, int p_98464_, int p_98465_, double p_98466_, double p_98467_) {
-        return (!this.widthTooNarrow || !this.recipeBookComponent.isVisible()) && super.isHovering(p_98462_, p_98463_, p_98464_, p_98465_, p_98466_, p_98467_);
-    }
-
-    @Override
-    public boolean mouseClicked(double p_98452_, double p_98453_, int p_98454_) {
-        if (this.recipeBookComponent.mouseClicked(p_98452_, p_98453_, p_98454_)) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (this.recipeBookComponent.mouseClicked(mouseX, mouseY, button)) {
             this.setFocused(this.recipeBookComponent);
             return true;
         } else {
-            return this.widthTooNarrow && this.recipeBookComponent.isVisible() ? true : super.mouseClicked(p_98452_, p_98453_, p_98454_);
+            return this.widthTooNarrow && this.recipeBookComponent.isVisible() ? true : super.mouseClicked(mouseX, mouseY, button);
         }
     }
 
     @Override
-    protected boolean hasClickedOutside(double p_98456_, double p_98457_, int p_98458_, int p_98459_, int p_98460_) {
-        boolean flag = p_98456_ < (double)p_98458_
-            || p_98457_ < (double)p_98459_
-            || p_98456_ >= (double)(p_98458_ + this.imageWidth)
-            || p_98457_ >= (double)(p_98459_ + this.imageHeight);
-        return this.recipeBookComponent.hasClickedOutside(p_98456_, p_98457_, this.leftPos, this.topPos, this.imageWidth, this.imageHeight, p_98460_) && flag;
+    protected boolean hasClickedOutside(double mouseX, double mouseY, int guiLeft, int guiTop, int mouseButton) {
+        boolean flag = mouseX < (double)guiLeft
+            || mouseY < (double)guiTop
+            || mouseX >= (double)(guiLeft + this.imageWidth)
+            || mouseY >= (double)(guiTop + this.imageHeight);
+        return this.recipeBookComponent.hasClickedOutside(mouseX, mouseY, this.leftPos, this.topPos, this.imageWidth, this.imageHeight, mouseButton) && flag;
     }
 
+    /**
+     * Called when the mouse is clicked over a slot or outside the gui.
+     */
     @Override
-    protected void slotClicked(Slot p_98469_, int p_98470_, int p_98471_, ClickType p_98472_) {
-        super.slotClicked(p_98469_, p_98470_, p_98471_, p_98472_);
-        this.recipeBookComponent.slotClicked(p_98469_);
+    protected void slotClicked(Slot slot, int slotId, int mouseButton, ClickType type) {
+        super.slotClicked(slot, slotId, mouseButton, type);
+        this.recipeBookComponent.slotClicked(slot);
     }
 
     @Override

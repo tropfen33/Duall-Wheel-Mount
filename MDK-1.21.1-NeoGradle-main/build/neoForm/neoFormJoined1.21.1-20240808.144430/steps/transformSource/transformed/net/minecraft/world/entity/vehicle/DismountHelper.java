@@ -18,55 +18,55 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class DismountHelper {
-    public static int[][] offsetsForDirection(Direction p_38468_) {
-        Direction direction = p_38468_.getClockWise();
+    public static int[][] offsetsForDirection(Direction p_direction) {
+        Direction direction = p_direction.getClockWise();
         Direction direction1 = direction.getOpposite();
-        Direction direction2 = p_38468_.getOpposite();
+        Direction direction2 = p_direction.getOpposite();
         return new int[][]{
             {direction.getStepX(), direction.getStepZ()},
             {direction1.getStepX(), direction1.getStepZ()},
             {direction2.getStepX() + direction.getStepX(), direction2.getStepZ() + direction.getStepZ()},
             {direction2.getStepX() + direction1.getStepX(), direction2.getStepZ() + direction1.getStepZ()},
-            {p_38468_.getStepX() + direction.getStepX(), p_38468_.getStepZ() + direction.getStepZ()},
-            {p_38468_.getStepX() + direction1.getStepX(), p_38468_.getStepZ() + direction1.getStepZ()},
+            {p_direction.getStepX() + direction.getStepX(), p_direction.getStepZ() + direction.getStepZ()},
+            {p_direction.getStepX() + direction1.getStepX(), p_direction.getStepZ() + direction1.getStepZ()},
             {direction2.getStepX(), direction2.getStepZ()},
-            {p_38468_.getStepX(), p_38468_.getStepZ()}
+            {p_direction.getStepX(), p_direction.getStepZ()}
         };
     }
 
-    public static boolean isBlockFloorValid(double p_38440_) {
-        return !Double.isInfinite(p_38440_) && p_38440_ < 1.0;
+    public static boolean isBlockFloorValid(double distance) {
+        return !Double.isInfinite(distance) && distance < 1.0;
     }
 
-    public static boolean canDismountTo(CollisionGetter p_38457_, LivingEntity p_38458_, AABB p_38459_) {
-        for (VoxelShape voxelshape : p_38457_.getBlockCollisions(p_38458_, p_38459_)) {
+    public static boolean canDismountTo(CollisionGetter level, LivingEntity passenger, AABB boundingBox) {
+        for (VoxelShape voxelshape : level.getBlockCollisions(passenger, boundingBox)) {
             if (!voxelshape.isEmpty()) {
                 return false;
             }
         }
 
-        return p_38457_.getWorldBorder().isWithinBounds(p_38459_);
+        return level.getWorldBorder().isWithinBounds(boundingBox);
     }
 
-    public static boolean canDismountTo(CollisionGetter p_150280_, Vec3 p_150281_, LivingEntity p_150282_, Pose p_150283_) {
-        return canDismountTo(p_150280_, p_150282_, p_150282_.getLocalBoundsForPose(p_150283_).move(p_150281_));
+    public static boolean canDismountTo(CollisionGetter level, Vec3 offset, LivingEntity passenger, Pose pose) {
+        return canDismountTo(level, passenger, passenger.getLocalBoundsForPose(pose).move(offset));
     }
 
-    public static VoxelShape nonClimbableShape(BlockGetter p_38447_, BlockPos p_38448_) {
-        BlockState blockstate = p_38447_.getBlockState(p_38448_);
+    public static VoxelShape nonClimbableShape(BlockGetter level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
         return !blockstate.is(BlockTags.CLIMBABLE) && (!(blockstate.getBlock() instanceof TrapDoorBlock) || !blockstate.getValue(TrapDoorBlock.OPEN))
-            ? blockstate.getCollisionShape(p_38447_, p_38448_)
+            ? blockstate.getCollisionShape(level, pos)
             : Shapes.empty();
     }
 
-    public static double findCeilingFrom(BlockPos p_38464_, int p_38465_, Function<BlockPos, VoxelShape> p_38466_) {
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = p_38464_.mutable();
+    public static double findCeilingFrom(BlockPos pos, int ceiling, Function<BlockPos, VoxelShape> shapeForPos) {
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = pos.mutable();
         int i = 0;
 
-        while (i < p_38465_) {
-            VoxelShape voxelshape = p_38466_.apply(blockpos$mutableblockpos);
+        while (i < ceiling) {
+            VoxelShape voxelshape = shapeForPos.apply(blockpos$mutableblockpos);
             if (!voxelshape.isEmpty()) {
-                return (double)(p_38464_.getY() + i) + voxelshape.min(Direction.Axis.Y);
+                return (double)(pos.getY() + i) + voxelshape.min(Direction.Axis.Y);
             }
 
             i++;
@@ -77,29 +77,29 @@ public class DismountHelper {
     }
 
     @Nullable
-    public static Vec3 findSafeDismountLocation(EntityType<?> p_38442_, CollisionGetter p_38443_, BlockPos p_38444_, boolean p_38445_) {
-        if (p_38445_ && p_38442_.isBlockDangerous(p_38443_.getBlockState(p_38444_))) {
+    public static Vec3 findSafeDismountLocation(EntityType<?> entityType, CollisionGetter level, BlockPos pos, boolean onlySafePositions) {
+        if (onlySafePositions && entityType.isBlockDangerous(level.getBlockState(pos))) {
             return null;
         } else {
-            double d0 = p_38443_.getBlockFloorHeight(nonClimbableShape(p_38443_, p_38444_), () -> nonClimbableShape(p_38443_, p_38444_.below()));
+            double d0 = level.getBlockFloorHeight(nonClimbableShape(level, pos), () -> nonClimbableShape(level, pos.below()));
             if (!isBlockFloorValid(d0)) {
                 return null;
-            } else if (p_38445_ && d0 <= 0.0 && p_38442_.isBlockDangerous(p_38443_.getBlockState(p_38444_.below()))) {
+            } else if (onlySafePositions && d0 <= 0.0 && entityType.isBlockDangerous(level.getBlockState(pos.below()))) {
                 return null;
             } else {
-                Vec3 vec3 = Vec3.upFromBottomCenterOf(p_38444_, d0);
-                AABB aabb = p_38442_.getDimensions().makeBoundingBox(vec3);
+                Vec3 vec3 = Vec3.upFromBottomCenterOf(pos, d0);
+                AABB aabb = entityType.getDimensions().makeBoundingBox(vec3);
 
-                for (VoxelShape voxelshape : p_38443_.getBlockCollisions(null, aabb)) {
+                for (VoxelShape voxelshape : level.getBlockCollisions(null, aabb)) {
                     if (!voxelshape.isEmpty()) {
                         return null;
                     }
                 }
 
-                if (p_38442_ != EntityType.PLAYER
-                    || !p_38443_.getBlockState(p_38444_).is(BlockTags.INVALID_SPAWN_INSIDE)
-                        && !p_38443_.getBlockState(p_38444_.above()).is(BlockTags.INVALID_SPAWN_INSIDE)) {
-                    return !p_38443_.getWorldBorder().isWithinBounds(aabb) ? null : vec3;
+                if (entityType != EntityType.PLAYER
+                    || !level.getBlockState(pos).is(BlockTags.INVALID_SPAWN_INSIDE)
+                        && !level.getBlockState(pos.above()).is(BlockTags.INVALID_SPAWN_INSIDE)) {
+                    return !level.getWorldBorder().isWithinBounds(aabb) ? null : vec3;
                 } else {
                     return null;
                 }

@@ -18,20 +18,20 @@ public class CountOnEveryLayerPlacement extends PlacementModifier {
         .xmap(CountOnEveryLayerPlacement::new, p_191611_ -> p_191611_.count);
     private final IntProvider count;
 
-    private CountOnEveryLayerPlacement(IntProvider p_191603_) {
-        this.count = p_191603_;
+    private CountOnEveryLayerPlacement(IntProvider count) {
+        this.count = count;
     }
 
-    public static CountOnEveryLayerPlacement of(IntProvider p_191607_) {
-        return new CountOnEveryLayerPlacement(p_191607_);
+    public static CountOnEveryLayerPlacement of(IntProvider count) {
+        return new CountOnEveryLayerPlacement(count);
     }
 
-    public static CountOnEveryLayerPlacement of(int p_191605_) {
-        return of(ConstantInt.of(p_191605_));
+    public static CountOnEveryLayerPlacement of(int count) {
+        return of(ConstantInt.of(count));
     }
 
     @Override
-    public Stream<BlockPos> getPositions(PlacementContext p_226329_, RandomSource p_226330_, BlockPos p_226331_) {
+    public Stream<BlockPos> getPositions(PlacementContext context, RandomSource random, BlockPos pos) {
         Builder<BlockPos> builder = Stream.builder();
         int i = 0;
 
@@ -39,11 +39,11 @@ public class CountOnEveryLayerPlacement extends PlacementModifier {
         do {
             flag = false;
 
-            for (int j = 0; j < this.count.sample(p_226330_); j++) {
-                int k = p_226330_.nextInt(16) + p_226331_.getX();
-                int l = p_226330_.nextInt(16) + p_226331_.getZ();
-                int i1 = p_226329_.getHeight(Heightmap.Types.MOTION_BLOCKING, k, l);
-                int j1 = findOnGroundYPosition(p_226329_, k, i1, l, i);
+            for (int j = 0; j < this.count.sample(random); j++) {
+                int k = random.nextInt(16) + pos.getX();
+                int l = random.nextInt(16) + pos.getZ();
+                int i1 = context.getHeight(Heightmap.Types.MOTION_BLOCKING, k, l);
+                int j1 = findOnGroundYPosition(context, k, i1, l, i);
                 if (j1 != Integer.MAX_VALUE) {
                     builder.add(new BlockPos(k, j1, l));
                     flag = true;
@@ -61,16 +61,16 @@ public class CountOnEveryLayerPlacement extends PlacementModifier {
         return PlacementModifierType.COUNT_ON_EVERY_LAYER;
     }
 
-    private static int findOnGroundYPosition(PlacementContext p_191613_, int p_191614_, int p_191615_, int p_191616_, int p_191617_) {
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos(p_191614_, p_191615_, p_191616_);
+    private static int findOnGroundYPosition(PlacementContext context, int x, int y, int z, int count) {
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos(x, y, z);
         int i = 0;
-        BlockState blockstate = p_191613_.getBlockState(blockpos$mutableblockpos);
+        BlockState blockstate = context.getBlockState(blockpos$mutableblockpos);
 
-        for (int j = p_191615_; j >= p_191613_.getMinBuildHeight() + 1; j--) {
+        for (int j = y; j >= context.getMinBuildHeight() + 1; j--) {
             blockpos$mutableblockpos.setY(j - 1);
-            BlockState blockstate1 = p_191613_.getBlockState(blockpos$mutableblockpos);
+            BlockState blockstate1 = context.getBlockState(blockpos$mutableblockpos);
             if (!isEmpty(blockstate1) && isEmpty(blockstate) && !blockstate1.is(Blocks.BEDROCK)) {
-                if (i == p_191617_) {
+                if (i == count) {
                     return blockpos$mutableblockpos.getY() + 1;
                 }
 
@@ -83,7 +83,7 @@ public class CountOnEveryLayerPlacement extends PlacementModifier {
         return Integer.MAX_VALUE;
     }
 
-    private static boolean isEmpty(BlockState p_191609_) {
-        return p_191609_.isAir() || p_191609_.is(Blocks.WATER) || p_191609_.is(Blocks.LAVA);
+    private static boolean isEmpty(BlockState state) {
+        return state.isAir() || state.is(Blocks.WATER) || state.is(Blocks.LAVA);
     }
 }

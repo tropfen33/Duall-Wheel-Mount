@@ -25,8 +25,8 @@ public class ServerList {
     private final List<ServerData> serverList = Lists.newArrayList();
     private final List<ServerData> hiddenServerList = Lists.newArrayList();
 
-    public ServerList(Minecraft p_105430_) {
-        this.minecraft = p_105430_;
+    public ServerList(Minecraft minecraft) {
+        this.minecraft = minecraft;
     }
 
     public void load() {
@@ -83,20 +83,23 @@ public class ServerList {
         }
     }
 
-    public ServerData get(int p_105433_) {
-        return this.serverList.get(p_105433_);
+    /**
+     * Gets the ServerData instance stored for the given index in the list.
+     */
+    public ServerData get(int index) {
+        return this.serverList.get(index);
     }
 
     @Nullable
-    public ServerData get(String p_233846_) {
+    public ServerData get(String ip) {
         for (ServerData serverdata : this.serverList) {
-            if (serverdata.ip.equals(p_233846_)) {
+            if (serverdata.ip.equals(ip)) {
                 return serverdata;
             }
         }
 
         for (ServerData serverdata1 : this.hiddenServerList) {
-            if (serverdata1.ip.equals(p_233846_)) {
+            if (serverdata1.ip.equals(ip)) {
                 return serverdata1;
             }
         }
@@ -105,10 +108,10 @@ public class ServerList {
     }
 
     @Nullable
-    public ServerData unhide(String p_233848_) {
+    public ServerData unhide(String ip) {
         for (int i = 0; i < this.hiddenServerList.size(); i++) {
             ServerData serverdata = this.hiddenServerList.get(i);
-            if (serverdata.ip.equals(p_233848_)) {
+            if (serverdata.ip.equals(ip)) {
                 this.hiddenServerList.remove(i);
                 this.serverList.add(serverdata);
                 return serverdata;
@@ -118,21 +121,21 @@ public class ServerList {
         return null;
     }
 
-    public void remove(ServerData p_105441_) {
-        if (!this.serverList.remove(p_105441_)) {
-            this.hiddenServerList.remove(p_105441_);
+    public void remove(ServerData serverData) {
+        if (!this.serverList.remove(serverData)) {
+            this.hiddenServerList.remove(serverData);
         }
     }
 
-    public void add(ServerData p_233843_, boolean p_233844_) {
-        if (p_233844_) {
-            this.hiddenServerList.add(0, p_233843_);
+    public void add(ServerData server, boolean hidden) {
+        if (hidden) {
+            this.hiddenServerList.add(0, server);
 
             while (this.hiddenServerList.size() > 16) {
                 this.hiddenServerList.remove(this.hiddenServerList.size() - 1);
             }
         } else {
-            this.serverList.add(p_233843_);
+            this.serverList.add(server);
         }
     }
 
@@ -140,22 +143,25 @@ public class ServerList {
         return this.serverList.size();
     }
 
-    public void swap(int p_105435_, int p_105436_) {
-        ServerData serverdata = this.get(p_105435_);
-        this.serverList.set(p_105435_, this.get(p_105436_));
-        this.serverList.set(p_105436_, serverdata);
+    /**
+     * Takes two list indexes, and swaps their order around.
+     */
+    public void swap(int pos1, int pos2) {
+        ServerData serverdata = this.get(pos1);
+        this.serverList.set(pos1, this.get(pos2));
+        this.serverList.set(pos2, serverdata);
         this.save();
     }
 
-    public void replace(int p_105438_, ServerData p_105439_) {
-        this.serverList.set(p_105438_, p_105439_);
+    public void replace(int index, ServerData server) {
+        this.serverList.set(index, server);
     }
 
-    private static boolean set(ServerData p_233840_, List<ServerData> p_233841_) {
-        for (int i = 0; i < p_233841_.size(); i++) {
-            ServerData serverdata = p_233841_.get(i);
-            if (serverdata.name.equals(p_233840_.name) && serverdata.ip.equals(p_233840_.ip)) {
-                p_233841_.set(i, p_233840_);
+    private static boolean set(ServerData server, List<ServerData> serverList) {
+        for (int i = 0; i < serverList.size(); i++) {
+            ServerData serverdata = serverList.get(i);
+            if (serverdata.name.equals(server.name) && serverdata.ip.equals(server.ip)) {
+                serverList.set(i, server);
                 return true;
             }
         }
@@ -163,12 +169,12 @@ public class ServerList {
         return false;
     }
 
-    public static void saveSingleServer(ServerData p_105447_) {
+    public static void saveSingleServer(ServerData server) {
         IO_MAILBOX.tell(() -> {
             ServerList serverlist = new ServerList(Minecraft.getInstance());
             serverlist.load();
-            if (!set(p_105447_, serverlist.serverList)) {
-                set(p_105447_, serverlist.hiddenServerList);
+            if (!set(server, serverlist.serverList)) {
+                set(server, serverlist.hiddenServerList);
             }
 
             serverlist.save();

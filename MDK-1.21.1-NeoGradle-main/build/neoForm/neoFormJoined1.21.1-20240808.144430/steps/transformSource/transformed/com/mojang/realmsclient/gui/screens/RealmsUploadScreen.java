@@ -86,13 +86,13 @@ public class RealmsUploadScreen extends RealmsScreen {
     private long bytesPersSecond;
     private final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
 
-    public RealmsUploadScreen(@Nullable RealmCreationTask p_320023_, long p_90083_, int p_90084_, RealmsResetWorldScreen p_90085_, LevelSummary p_90086_) {
+    public RealmsUploadScreen(@Nullable RealmCreationTask realmCreationTask, long realmId, int slotId, RealmsResetWorldScreen lastScreen, LevelSummary selectedLevel) {
         super(GameNarrator.NO_TITLE);
-        this.realmCreationTask = p_320023_;
-        this.realmId = p_90083_;
-        this.slotId = p_90084_;
-        this.lastScreen = p_90085_;
-        this.selectedLevel = p_90086_;
+        this.realmCreationTask = realmCreationTask;
+        this.realmId = realmId;
+        this.slotId = slotId;
+        this.lastScreen = lastScreen;
+        this.selectedLevel = selectedLevel;
         this.uploadStatus = new UploadStatus();
         this.narrationRateLimiter = RateLimiter.create(0.1F);
     }
@@ -146,8 +146,8 @@ public class RealmsUploadScreen extends RealmsScreen {
     }
 
     @Override
-    public boolean keyPressed(int p_90089_, int p_90090_, int p_90091_) {
-        if (p_90089_ == 256) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 256) {
             if (this.showDots) {
                 this.onCancel();
             } else {
@@ -156,13 +156,21 @@ public class RealmsUploadScreen extends RealmsScreen {
 
             return true;
         } else {
-            return super.keyPressed(p_90089_, p_90090_, p_90091_);
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282140_, int p_90097_, int p_90098_, float p_90099_) {
-        super.render(p_282140_, p_90097_, p_90098_, p_90099_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         if (!this.uploadFinished
             && this.uploadStatus.bytesWritten != 0L
             && this.uploadStatus.bytesWritten == this.uploadStatus.totalBytes
@@ -171,35 +179,35 @@ public class RealmsUploadScreen extends RealmsScreen {
             this.cancelButton.active = false;
         }
 
-        p_282140_.drawCenteredString(this.font, this.status, this.width / 2, 50, -1);
+        guiGraphics.drawCenteredString(this.font, this.status, this.width / 2, 50, -1);
         if (this.showDots) {
-            p_282140_.drawString(this.font, DOTS[this.tickCount / 10 % DOTS.length], this.width / 2 + this.font.width(this.status) / 2 + 5, 50, -1, false);
+            guiGraphics.drawString(this.font, DOTS[this.tickCount / 10 % DOTS.length], this.width / 2 + this.font.width(this.status) / 2 + 5, 50, -1, false);
         }
 
         if (this.uploadStatus.bytesWritten != 0L && !this.cancelled) {
-            this.drawProgressBar(p_282140_);
-            this.drawUploadSpeed(p_282140_);
+            this.drawProgressBar(guiGraphics);
+            this.drawUploadSpeed(guiGraphics);
         }
 
         Component[] acomponent = this.errorMessage;
         if (acomponent != null) {
             for (int i = 0; i < acomponent.length; i++) {
-                p_282140_.drawCenteredString(this.font, acomponent[i], this.width / 2, 110 + 12 * i, -65536);
+                guiGraphics.drawCenteredString(this.font, acomponent[i], this.width / 2, 110 + 12 * i, -65536);
             }
         }
     }
 
-    private void drawProgressBar(GuiGraphics p_282575_) {
+    private void drawProgressBar(GuiGraphics guiGraphics) {
         double d0 = Math.min((double)this.uploadStatus.bytesWritten / (double)this.uploadStatus.totalBytes, 1.0);
         this.progress = String.format(Locale.ROOT, "%.1f", d0 * 100.0);
         int i = (this.width - 200) / 2;
         int j = i + (int)Math.round(200.0 * d0);
-        p_282575_.fill(i - 1, 79, j + 1, 96, -1);
-        p_282575_.fill(i, 80, j, 95, -8355712);
-        p_282575_.drawCenteredString(this.font, Component.translatable("mco.upload.percent", this.progress), this.width / 2, 84, -1);
+        guiGraphics.fill(i - 1, 79, j + 1, 96, -1);
+        guiGraphics.fill(i, 80, j, 95, -8355712);
+        guiGraphics.drawCenteredString(this.font, Component.translatable("mco.upload.percent", this.progress), this.width / 2, 84, -1);
     }
 
-    private void drawUploadSpeed(GuiGraphics p_281884_) {
+    private void drawUploadSpeed(GuiGraphics guiGraphics) {
         if (this.tickCount % 20 == 0) {
             if (this.previousWrittenBytes != null && this.previousTimeSnapshot != null) {
                 long i = Util.getMillis() - this.previousTimeSnapshot;
@@ -208,22 +216,22 @@ public class RealmsUploadScreen extends RealmsScreen {
                 }
 
                 this.bytesPersSecond = 1000L * (this.uploadStatus.bytesWritten - this.previousWrittenBytes) / i;
-                this.drawUploadSpeed0(p_281884_, this.bytesPersSecond);
+                this.drawUploadSpeed0(guiGraphics, this.bytesPersSecond);
             }
 
             this.previousWrittenBytes = this.uploadStatus.bytesWritten;
             this.previousTimeSnapshot = Util.getMillis();
         } else {
-            this.drawUploadSpeed0(p_281884_, this.bytesPersSecond);
+            this.drawUploadSpeed0(guiGraphics, this.bytesPersSecond);
         }
     }
 
-    private void drawUploadSpeed0(GuiGraphics p_282279_, long p_282827_) {
+    private void drawUploadSpeed0(GuiGraphics guiGraphics, long bytesPerSecond) {
         String s = this.progress;
-        if (p_282827_ > 0L && s != null) {
+        if (bytesPerSecond > 0L && s != null) {
             int i = this.font.width(s);
-            String s1 = "(" + Unit.humanReadable(p_282827_) + "/s)";
-            p_282279_.drawString(this.font, s1, this.width / 2 + i / 2 + 15, 84, -1, false);
+            String s1 = "(" + Unit.humanReadable(bytesPerSecond) + "/s)";
+            guiGraphics.drawString(this.font, s1, this.width / 2 + i / 2 + 15, 84, -1, false);
         }
     }
 
@@ -390,8 +398,8 @@ public class RealmsUploadScreen extends RealmsScreen {
             .start();
     }
 
-    private void setErrorMessage(Component... p_90113_) {
-        this.errorMessage = p_90113_;
+    private void setErrorMessage(Component... errorMessage) {
+        this.errorMessage = errorMessage;
     }
 
     private void uploadCancelled() {
@@ -399,11 +407,11 @@ public class RealmsUploadScreen extends RealmsScreen {
         LOGGER.debug("Upload was cancelled");
     }
 
-    private boolean verify(File p_90106_) {
-        return p_90106_.length() < 5368709120L;
+    private boolean verify(File file) {
+        return file.length() < 5368709120L;
     }
 
-    private File tarGzipArchive(File p_90120_) throws IOException {
+    private File tarGzipArchive(File file) throws IOException {
         TarArchiveOutputStream tararchiveoutputstream = null;
 
         File file2;
@@ -411,7 +419,7 @@ public class RealmsUploadScreen extends RealmsScreen {
             File file1 = File.createTempFile("realms-upload-file", ".tar.gz");
             tararchiveoutputstream = new TarArchiveOutputStream(new GZIPOutputStream(new FileOutputStream(file1)));
             tararchiveoutputstream.setLongFileMode(3);
-            this.addFileToTarGz(tararchiveoutputstream, p_90120_.getAbsolutePath(), "world", true);
+            this.addFileToTarGz(tararchiveoutputstream, file.getAbsolutePath(), "world", true);
             tararchiveoutputstream.finish();
             file2 = file1;
         } finally {
@@ -423,24 +431,24 @@ public class RealmsUploadScreen extends RealmsScreen {
         return file2;
     }
 
-    private void addFileToTarGz(TarArchiveOutputStream p_90108_, String p_90109_, String p_90110_, boolean p_90111_) throws IOException {
+    private void addFileToTarGz(TarArchiveOutputStream tarArchiveOutputStream, String pathname, String name, boolean rootDirectory) throws IOException {
         if (!this.cancelled) {
-            File file1 = new File(p_90109_);
-            String s = p_90111_ ? p_90110_ : p_90110_ + file1.getName();
+            File file1 = new File(pathname);
+            String s = rootDirectory ? name : name + file1.getName();
             TarArchiveEntry tararchiveentry = new TarArchiveEntry(file1, s);
-            p_90108_.putArchiveEntry(tararchiveentry);
+            tarArchiveOutputStream.putArchiveEntry(tararchiveentry);
             if (file1.isFile()) {
                 try (InputStream inputstream = new FileInputStream(file1)) {
-                    inputstream.transferTo(p_90108_);
+                    inputstream.transferTo(tarArchiveOutputStream);
                 }
 
-                p_90108_.closeArchiveEntry();
+                tarArchiveOutputStream.closeArchiveEntry();
             } else {
-                p_90108_.closeArchiveEntry();
+                tarArchiveOutputStream.closeArchiveEntry();
                 File[] afile = file1.listFiles();
                 if (afile != null) {
                     for (File file2 : afile) {
-                        this.addFileToTarGz(p_90108_, file2.getAbsolutePath(), s + "/", false);
+                        this.addFileToTarGz(tarArchiveOutputStream, file2.getAbsolutePath(), s + "/", false);
                     }
                 }
             }

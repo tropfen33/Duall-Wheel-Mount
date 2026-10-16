@@ -43,17 +43,17 @@ public class FireworkRocketEntity extends Projectile implements ItemSupplier {
     @Nullable
     private LivingEntity attachedToEntity;
 
-    public FireworkRocketEntity(EntityType<? extends FireworkRocketEntity> p_37027_, Level p_37028_) {
-        super(p_37027_, p_37028_);
+    public FireworkRocketEntity(EntityType<? extends FireworkRocketEntity> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public FireworkRocketEntity(Level p_37030_, double p_37031_, double p_37032_, double p_37033_, ItemStack p_37034_) {
-        super(EntityType.FIREWORK_ROCKET, p_37030_);
+    public FireworkRocketEntity(Level level, double x, double y, double z, ItemStack stack) {
+        super(EntityType.FIREWORK_ROCKET, level);
         this.life = 0;
-        this.setPos(p_37031_, p_37032_, p_37033_);
-        this.entityData.set(DATA_ID_FIREWORKS_ITEM, p_37034_.copy());
+        this.setPos(x, y, z);
+        this.entityData.set(DATA_ID_FIREWORKS_ITEM, stack.copy());
         int i = 1;
-        Fireworks fireworks = p_37034_.get(DataComponents.FIREWORKS);
+        Fireworks fireworks = stack.get(DataComponents.FIREWORKS);
         if (fireworks != null) {
             i += fireworks.flightDuration();
         }
@@ -62,42 +62,45 @@ public class FireworkRocketEntity extends Projectile implements ItemSupplier {
         this.lifetime = 10 * i + this.random.nextInt(6) + this.random.nextInt(7);
     }
 
-    public FireworkRocketEntity(Level p_37036_, @Nullable Entity p_37037_, double p_37038_, double p_37039_, double p_37040_, ItemStack p_37041_) {
-        this(p_37036_, p_37038_, p_37039_, p_37040_, p_37041_);
-        this.setOwner(p_37037_);
+    public FireworkRocketEntity(Level level, @Nullable Entity shooter, double x, double y, double z, ItemStack stack) {
+        this(level, x, y, z, stack);
+        this.setOwner(shooter);
     }
 
-    public FireworkRocketEntity(Level p_37058_, ItemStack p_37059_, LivingEntity p_37060_) {
-        this(p_37058_, p_37060_, p_37060_.getX(), p_37060_.getY(), p_37060_.getZ(), p_37059_);
-        this.entityData.set(DATA_ATTACHED_TO_TARGET, OptionalInt.of(p_37060_.getId()));
-        this.attachedToEntity = p_37060_;
+    public FireworkRocketEntity(Level level, ItemStack stack, LivingEntity shooter) {
+        this(level, shooter, shooter.getX(), shooter.getY(), shooter.getZ(), stack);
+        this.entityData.set(DATA_ATTACHED_TO_TARGET, OptionalInt.of(shooter.getId()));
+        this.attachedToEntity = shooter;
     }
 
-    public FireworkRocketEntity(Level p_37043_, ItemStack p_37044_, double p_37045_, double p_37046_, double p_37047_, boolean p_37048_) {
-        this(p_37043_, p_37045_, p_37046_, p_37047_, p_37044_);
-        this.entityData.set(DATA_SHOT_AT_ANGLE, p_37048_);
+    public FireworkRocketEntity(Level level, ItemStack stack, double x, double y, double z, boolean shotAtAngle) {
+        this(level, x, y, z, stack);
+        this.entityData.set(DATA_SHOT_AT_ANGLE, shotAtAngle);
     }
 
-    public FireworkRocketEntity(Level p_37050_, ItemStack p_37051_, Entity p_37052_, double p_37053_, double p_37054_, double p_37055_, boolean p_37056_) {
-        this(p_37050_, p_37051_, p_37053_, p_37054_, p_37055_, p_37056_);
-        this.setOwner(p_37052_);
-    }
-
-    @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326171_) {
-        p_326171_.define(DATA_ID_FIREWORKS_ITEM, getDefaultItem());
-        p_326171_.define(DATA_ATTACHED_TO_TARGET, OptionalInt.empty());
-        p_326171_.define(DATA_SHOT_AT_ANGLE, false);
+    public FireworkRocketEntity(Level level, ItemStack stack, Entity shooter, double x, double y, double z, boolean shotAtAngle) {
+        this(level, stack, x, y, z, shotAtAngle);
+        this.setOwner(shooter);
     }
 
     @Override
-    public boolean shouldRenderAtSqrDistance(double p_37065_) {
-        return p_37065_ < 4096.0 && !this.isAttachedToEntity();
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_ID_FIREWORKS_ITEM, getDefaultItem());
+        builder.define(DATA_ATTACHED_TO_TARGET, OptionalInt.empty());
+        builder.define(DATA_SHOT_AT_ANGLE, false);
+    }
+
+    /**
+     * Checks if the entity is in range to render.
+     */
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return distance < 4096.0 && !this.isAttachedToEntity();
     }
 
     @Override
-    public boolean shouldRender(double p_37083_, double p_37084_, double p_37085_) {
-        return super.shouldRender(p_37083_, p_37084_, p_37085_) && !this.isAttachedToEntity();
+    public boolean shouldRender(double x, double y, double z) {
+        return super.shouldRender(x, y, z) && !this.isAttachedToEntity();
     }
 
     @Override
@@ -191,23 +194,26 @@ public class FireworkRocketEntity extends Projectile implements ItemSupplier {
         this.discard();
     }
 
+    /**
+     * Called when the arrow hits an entity
+     */
     @Override
-    protected void onHitEntity(EntityHitResult p_37071_) {
-        super.onHitEntity(p_37071_);
+    protected void onHitEntity(EntityHitResult result) {
+        super.onHitEntity(result);
         if (!this.level().isClientSide) {
             this.explode();
         }
     }
 
     @Override
-    protected void onHitBlock(BlockHitResult p_37069_) {
-        BlockPos blockpos = new BlockPos(p_37069_.getBlockPos());
+    protected void onHitBlock(BlockHitResult result) {
+        BlockPos blockpos = new BlockPos(result.getBlockPos());
         this.level().getBlockState(blockpos).entityInside(this.level(), blockpos, this);
         if (!this.level().isClientSide() && this.hasExplosion()) {
             this.explode();
         }
 
-        super.onHitBlock(p_37069_);
+        super.onHitBlock(result);
     }
 
     private boolean hasExplosion() {
@@ -259,42 +265,48 @@ public class FireworkRocketEntity extends Projectile implements ItemSupplier {
         return this.entityData.get(DATA_SHOT_AT_ANGLE);
     }
 
+    /**
+     * Handles an entity event received from a {@link net.minecraft.network.protocol.game.ClientboundEntityEventPacket}.
+     */
     @Override
-    public void handleEntityEvent(byte p_37063_) {
-        if (p_37063_ == 17 && this.level().isClientSide) {
+    public void handleEntityEvent(byte id) {
+        if (id == 17 && this.level().isClientSide) {
             Vec3 vec3 = this.getDeltaMovement();
             this.level().createFireworks(this.getX(), this.getY(), this.getZ(), vec3.x, vec3.y, vec3.z, this.getExplosions());
         }
 
-        super.handleEntityEvent(p_37063_);
+        super.handleEntityEvent(id);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_37075_) {
-        super.addAdditionalSaveData(p_37075_);
-        p_37075_.putInt("Life", this.life);
-        p_37075_.putInt("LifeTime", this.lifetime);
-        p_37075_.put("FireworksItem", this.getItem().save(this.registryAccess()));
-        p_37075_.putBoolean("ShotAtAngle", this.entityData.get(DATA_SHOT_AT_ANGLE));
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("Life", this.life);
+        compound.putInt("LifeTime", this.lifetime);
+        compound.put("FireworksItem", this.getItem().save(this.registryAccess()));
+        compound.putBoolean("ShotAtAngle", this.entityData.get(DATA_SHOT_AT_ANGLE));
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_37073_) {
-        super.readAdditionalSaveData(p_37073_);
-        this.life = p_37073_.getInt("Life");
-        this.lifetime = p_37073_.getInt("LifeTime");
-        if (p_37073_.contains("FireworksItem", 10)) {
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.life = compound.getInt("Life");
+        this.lifetime = compound.getInt("LifeTime");
+        if (compound.contains("FireworksItem", 10)) {
             this.entityData
                 .set(
                     DATA_ID_FIREWORKS_ITEM,
-                    ItemStack.parse(this.registryAccess(), p_37073_.getCompound("FireworksItem")).orElseGet(FireworkRocketEntity::getDefaultItem)
+                    ItemStack.parse(this.registryAccess(), compound.getCompound("FireworksItem")).orElseGet(FireworkRocketEntity::getDefaultItem)
                 );
         } else {
             this.entityData.set(DATA_ID_FIREWORKS_ITEM, getDefaultItem());
         }
 
-        if (p_37073_.contains("ShotAtAngle")) {
-            this.entityData.set(DATA_SHOT_AT_ANGLE, p_37073_.getBoolean("ShotAtAngle"));
+        if (compound.contains("ShotAtAngle")) {
+            this.entityData.set(DATA_SHOT_AT_ANGLE, compound.getBoolean("ShotAtAngle"));
         }
     }
 
@@ -319,9 +331,9 @@ public class FireworkRocketEntity extends Projectile implements ItemSupplier {
     }
 
     @Override
-    public DoubleDoubleImmutablePair calculateHorizontalHurtKnockbackDirection(LivingEntity p_345239_, DamageSource p_345155_) {
-        double d0 = p_345239_.position().x - this.position().x;
-        double d1 = p_345239_.position().z - this.position().z;
+    public DoubleDoubleImmutablePair calculateHorizontalHurtKnockbackDirection(LivingEntity entity, DamageSource damageSource) {
+        double d0 = entity.position().x - this.position().x;
+        double d1 = entity.position().z - this.position().z;
         return DoubleDoubleImmutablePair.of(d0, d1);
     }
 }

@@ -12,11 +12,11 @@ import org.apache.commons.lang3.mutable.MutableLong;
 
 public class StrollToPoiList {
     public static BehaviorControl<Villager> create(
-        MemoryModuleType<List<GlobalPos>> p_259573_, float p_259895_, int p_260285_, int p_259533_, MemoryModuleType<GlobalPos> p_259706_
+        MemoryModuleType<List<GlobalPos>> poiListMemory, float speedModifier, int closeEnoughDist, int maxDistFromPoi, MemoryModuleType<GlobalPos> mustBeCloseToMemory
     ) {
         MutableLong mutablelong = new MutableLong(0L);
         return BehaviorBuilder.create(
-            p_259612_ -> p_259612_.group(p_259612_.registered(MemoryModuleType.WALK_TARGET), p_259612_.present(p_259573_), p_259612_.present(p_259706_))
+            p_259612_ -> p_259612_.group(p_259612_.registered(MemoryModuleType.WALK_TARGET), p_259612_.present(poiListMemory), p_259612_.present(mustBeCloseToMemory))
                     .apply(
                         p_259612_,
                         (p_259574_, p_259801_, p_259116_) -> (p_259940_, p_259222_, p_260161_) -> {
@@ -28,9 +28,9 @@ public class StrollToPoiList {
                                     GlobalPos globalpos1 = list.get(p_259940_.getRandom().nextInt(list.size()));
                                     if (globalpos1 != null
                                         && p_259940_.dimension() == globalpos1.dimension()
-                                        && globalpos.pos().closerToCenterThan(p_259222_.position(), (double)p_259533_)) {
+                                        && globalpos.pos().closerToCenterThan(p_259222_.position(), (double)maxDistFromPoi)) {
                                         if (p_260161_ > mutablelong.getValue()) {
-                                            p_259574_.set(new WalkTarget(globalpos1.pos(), p_259895_, p_260285_));
+                                            p_259574_.set(new WalkTarget(globalpos1.pos(), speedModifier, closeEnoughDist));
                                             mutablelong.setValue(p_260161_ + 100L);
                                         }
 

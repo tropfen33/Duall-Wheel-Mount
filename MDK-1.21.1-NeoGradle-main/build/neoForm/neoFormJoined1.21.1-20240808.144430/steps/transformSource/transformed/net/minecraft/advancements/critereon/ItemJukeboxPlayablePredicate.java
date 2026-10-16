@@ -28,7 +28,7 @@ public record ItemJukeboxPlayablePredicate(Optional<HolderSet<JukeboxSong>> song
         return DataComponents.JUKEBOX_PLAYABLE;
     }
 
-    public boolean matches(ItemStack p_350458_, JukeboxPlayable p_350743_) {
+    public boolean matches(ItemStack stack, JukeboxPlayable value) {
         if (!this.song.isPresent()) {
             return true;
         } else {
@@ -36,7 +36,7 @@ public record ItemJukeboxPlayablePredicate(Optional<HolderSet<JukeboxSong>> song
 
             for (Holder<JukeboxSong> holder : this.song.get()) {
                 Optional<ResourceKey<JukeboxSong>> optional = holder.unwrapKey();
-                if (!optional.isEmpty() && optional.get() == p_350743_.song().key()) {
+                if (!optional.isEmpty() && optional.get() == value.song().key()) {
                     flag = true;
                     break;
                 }

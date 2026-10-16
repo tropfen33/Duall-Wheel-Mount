@@ -11,23 +11,29 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.DispenserBlock;
 
 public class ElytraItem extends Item implements Equipable {
-    public ElytraItem(Item.Properties p_41132_) {
-        super(p_41132_);
+    public ElytraItem(Item.Properties properties) {
+        super(properties);
         DispenserBlock.registerBehavior(this, ArmorItem.DISPENSE_ITEM_BEHAVIOR);
     }
 
-    public static boolean isFlyEnabled(ItemStack p_41141_) {
-        return p_41141_.getDamageValue() < p_41141_.getMaxDamage() - 1;
+    public static boolean isFlyEnabled(ItemStack elytraStack) {
+        return elytraStack.getDamageValue() < elytraStack.getMaxDamage() - 1;
     }
 
+    /**
+     * Return whether this item is repairable in an anvil.
+     */
     @Override
-    public boolean isValidRepairItem(ItemStack p_41134_, ItemStack p_41135_) {
-        return p_41135_.is(Items.PHANTOM_MEMBRANE);
+    public boolean isValidRepairItem(ItemStack toRepair, ItemStack repair) {
+        return repair.is(Items.PHANTOM_MEMBRANE);
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_41137_, Player p_41138_, InteractionHand p_41139_) {
-        return this.swapWithEquipmentSlot(this, p_41137_, p_41138_, p_41139_);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        return this.swapWithEquipmentSlot(this, level, player, hand);
     }
 
     @Override

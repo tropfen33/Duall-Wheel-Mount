@@ -33,15 +33,15 @@ public abstract class Fluid implements net.neoforged.neoforge.common.extensions.
         this.registerDefaultState(this.stateDefinition.any());
     }
 
-    protected void createFluidStateDefinition(StateDefinition.Builder<Fluid, FluidState> p_76121_) {
+    protected void createFluidStateDefinition(StateDefinition.Builder<Fluid, FluidState> builder) {
     }
 
     public StateDefinition<Fluid, FluidState> getStateDefinition() {
         return this.stateDefinition;
     }
 
-    protected final void registerDefaultState(FluidState p_76143_) {
-        this.defaultFluidState = p_76143_;
+    protected final void registerDefaultState(FluidState state) {
+        this.defaultFluidState = state;
     }
 
     public final FluidState defaultFluidState() {
@@ -50,13 +50,13 @@ public abstract class Fluid implements net.neoforged.neoforge.common.extensions.
 
     public abstract Item getBucket();
 
-    protected void animateTick(Level p_230550_, BlockPos p_230551_, FluidState p_230552_, RandomSource p_230553_) {
+    protected void animateTick(Level level, BlockPos pos, FluidState state, RandomSource random) {
     }
 
-    protected void tick(Level p_76113_, BlockPos p_76114_, FluidState p_76115_) {
+    protected void tick(Level level, BlockPos pos, FluidState state) {
     }
 
-    protected void randomTick(Level p_230554_, BlockPos p_230555_, FluidState p_230556_, RandomSource p_230557_) {
+    protected void randomTick(Level level, BlockPos pos, FluidState state, RandomSource random) {
     }
 
     @Nullable
@@ -64,11 +64,11 @@ public abstract class Fluid implements net.neoforged.neoforge.common.extensions.
         return null;
     }
 
-    protected abstract boolean canBeReplacedWith(FluidState p_76127_, BlockGetter p_76128_, BlockPos p_76129_, Fluid p_76130_, Direction p_76131_);
+    protected abstract boolean canBeReplacedWith(FluidState state, BlockGetter level, BlockPos pos, Fluid fluid, Direction direction);
 
-    protected abstract Vec3 getFlow(BlockGetter p_76110_, BlockPos p_76111_, FluidState p_76112_);
+    protected abstract Vec3 getFlow(BlockGetter blockReader, BlockPos pos, FluidState fluidState);
 
-    public abstract int getTickDelay(LevelReader p_76120_);
+    public abstract int getTickDelay(LevelReader level);
 
     protected boolean isRandomlyTicking() {
         return false;
@@ -80,26 +80,26 @@ public abstract class Fluid implements net.neoforged.neoforge.common.extensions.
 
     protected abstract float getExplosionResistance();
 
-    public abstract float getHeight(FluidState p_76124_, BlockGetter p_76125_, BlockPos p_76126_);
+    public abstract float getHeight(FluidState state, BlockGetter level, BlockPos pos);
 
-    public abstract float getOwnHeight(FluidState p_76123_);
+    public abstract float getOwnHeight(FluidState state);
 
-    protected abstract BlockState createLegacyBlock(FluidState p_76136_);
+    protected abstract BlockState createLegacyBlock(FluidState state);
 
-    public abstract boolean isSource(FluidState p_76140_);
+    public abstract boolean isSource(FluidState state);
 
-    public abstract int getAmount(FluidState p_76141_);
+    public abstract int getAmount(FluidState state);
 
-    public boolean isSame(Fluid p_76122_) {
-        return p_76122_ == this;
+    public boolean isSame(Fluid fluid) {
+        return fluid == this;
     }
 
     @Deprecated
-    public boolean is(TagKey<Fluid> p_205068_) {
-        return this.builtInRegistryHolder.is(p_205068_);
+    public boolean is(TagKey<Fluid> tag) {
+        return this.builtInRegistryHolder.is(tag);
     }
 
-    public abstract VoxelShape getShape(FluidState p_76137_, BlockGetter p_76138_, BlockPos p_76139_);
+    public abstract VoxelShape getShape(FluidState state, BlockGetter level, BlockPos pos);
 
     @Override
     public String toString() {// Neo: Patch in a toString similar to Item#toString so that FluidStack#toStringis more readable

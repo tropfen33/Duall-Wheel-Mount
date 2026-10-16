@@ -26,24 +26,24 @@ public class StringRepresentableArgument<T extends Enum<T> & StringRepresentable
     private final Codec<T> codec;
     private final Supplier<T[]> values;
 
-    protected StringRepresentableArgument(Codec<T> p_234060_, Supplier<T[]> p_234061_) {
-        this.codec = p_234060_;
-        this.values = p_234061_;
+    protected StringRepresentableArgument(Codec<T> codec, Supplier<T[]> values) {
+        this.codec = codec;
+        this.values = values;
     }
 
-    public T parse(StringReader p_234063_) throws CommandSyntaxException {
-        String s = p_234063_.readUnquotedString();
-        return this.codec.parse(JsonOps.INSTANCE, new JsonPrimitive(s)).result().orElseThrow(() -> ERROR_INVALID_VALUE.createWithContext(p_234063_, s));
+    public T parse(StringReader stringReader) throws CommandSyntaxException {
+        String s = stringReader.readUnquotedString();
+        return this.codec.parse(JsonOps.INSTANCE, new JsonPrimitive(s)).result().orElseThrow(() -> ERROR_INVALID_VALUE.createWithContext(stringReader, s));
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_234074_, SuggestionsBuilder p_234075_) {
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
         return SharedSuggestionProvider.suggest(
             Arrays.<Enum>stream((Enum[])this.values.get())
                 .map(p_234069_ -> ((StringRepresentable)p_234069_).getSerializedName())
                 .map(this::convertId)
                 .collect(Collectors.toList()),
-            p_234075_
+            builder
         );
     }
 
@@ -56,7 +56,7 @@ public class StringRepresentableArgument<T extends Enum<T> & StringRepresentable
             .collect(Collectors.toList());
     }
 
-    protected String convertId(String p_275436_) {
-        return p_275436_;
+    protected String convertId(String id) {
+        return id;
     }
 }

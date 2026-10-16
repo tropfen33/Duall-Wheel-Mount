@@ -50,27 +50,27 @@ public class CakeBlock extends Block {
         return CODEC;
     }
 
-    public CakeBlock(BlockBehaviour.Properties p_51184_) {
-        super(p_51184_);
+    public CakeBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(BITES, Integer.valueOf(0)));
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_51222_, BlockGetter p_51223_, BlockPos p_51224_, CollisionContext p_51225_) {
-        return SHAPE_BY_BITE[p_51222_.getValue(BITES)];
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SHAPE_BY_BITE[state.getValue(BITES)];
     }
 
     @Override
     protected ItemInteractionResult useItemOn(
-        ItemStack p_316238_, BlockState p_316837_, Level p_316766_, BlockPos p_316227_, Player p_316853_, InteractionHand p_316422_, BlockHitResult p_316869_
+        ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult
     ) {
-        Item item = p_316238_.getItem();
-        if (p_316238_.is(ItemTags.CANDLES) && p_316837_.getValue(BITES) == 0 && Block.byItem(item) instanceof CandleBlock candleblock) {
-            p_316238_.consume(1, p_316853_);
-            p_316766_.playSound(null, p_316227_, SoundEvents.CAKE_ADD_CANDLE, SoundSource.BLOCKS, 1.0F, 1.0F);
-            p_316766_.setBlockAndUpdate(p_316227_, CandleCakeBlock.byCandle(candleblock));
-            p_316766_.gameEvent(p_316853_, GameEvent.BLOCK_CHANGE, p_316227_);
-            p_316853_.awardStat(Stats.ITEM_USED.get(item));
+        Item item = stack.getItem();
+        if (stack.is(ItemTags.CANDLES) && state.getValue(BITES) == 0 && Block.byItem(item) instanceof CandleBlock candleblock) {
+            stack.consume(1, player);
+            level.playSound(null, pos, SoundEvents.CAKE_ADD_CANDLE, SoundSource.BLOCKS, 1.0F, 1.0F);
+            level.setBlockAndUpdate(pos, CandleCakeBlock.byCandle(candleblock));
+            level.gameEvent(player, GameEvent.BLOCK_CHANGE, pos);
+            player.awardStat(Stats.ITEM_USED.get(item));
             return ItemInteractionResult.SUCCESS;
         } else {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
@@ -78,72 +78,81 @@ public class CakeBlock extends Block {
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_316481_, Level p_316406_, BlockPos p_316218_, Player p_316212_, BlockHitResult p_316525_) {
-        if (p_316406_.isClientSide) {
-            if (eat(p_316406_, p_316218_, p_316481_, p_316212_).consumesAction()) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
+            if (eat(level, pos, state, player).consumesAction()) {
                 return InteractionResult.SUCCESS;
             }
 
-            if (p_316212_.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
+            if (player.getItemInHand(InteractionHand.MAIN_HAND).isEmpty()) {
                 return InteractionResult.CONSUME;
             }
         }
 
-        return eat(p_316406_, p_316218_, p_316481_, p_316212_);
+        return eat(level, pos, state, player);
     }
 
-    protected static InteractionResult eat(LevelAccessor p_51186_, BlockPos p_51187_, BlockState p_51188_, Player p_51189_) {
-        if (!p_51189_.canEat(false)) {
+    protected static InteractionResult eat(LevelAccessor level, BlockPos pos, BlockState state, Player player) {
+        if (!player.canEat(false)) {
             return InteractionResult.PASS;
         } else {
-            p_51189_.awardStat(Stats.EAT_CAKE_SLICE);
-            p_51189_.getFoodData().eat(2, 0.1F);
-            int i = p_51188_.getValue(BITES);
-            p_51186_.gameEvent(p_51189_, GameEvent.EAT, p_51187_);
+            player.awardStat(Stats.EAT_CAKE_SLICE);
+            player.getFoodData().eat(2, 0.1F);
+            int i = state.getValue(BITES);
+            level.gameEvent(player, GameEvent.EAT, pos);
             if (i < 6) {
-                p_51186_.setBlock(p_51187_, p_51188_.setValue(BITES, Integer.valueOf(i + 1)), 3);
+                level.setBlock(pos, state.setValue(BITES, Integer.valueOf(i + 1)), 3);
             } else {
-                p_51186_.removeBlock(p_51187_, false);
-                p_51186_.gameEvent(p_51189_, GameEvent.BLOCK_DESTROY, p_51187_);
+                level.removeBlock(pos, false);
+                level.gameEvent(player, GameEvent.BLOCK_DESTROY, pos);
             }
 
             return InteractionResult.SUCCESS;
         }
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_51213_, Direction p_51214_, BlockState p_51215_, LevelAccessor p_51216_, BlockPos p_51217_, BlockPos p_51218_) {
-        return p_51214_ == Direction.DOWN && !p_51213_.canSurvive(p_51216_, p_51217_)
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return facing == Direction.DOWN && !state.canSurvive(level, currentPos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_51213_, p_51214_, p_51215_, p_51216_, p_51217_, p_51218_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_51209_, LevelReader p_51210_, BlockPos p_51211_) {
-        return p_51210_.getBlockState(p_51211_.below()).isSolid();
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        return level.getBlockState(pos.below()).isSolid();
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_51220_) {
-        p_51220_.add(BITES);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(BITES);
+    }
+
+    /**
+     * Returns the analog signal this block emits. This is the signal a comparator can read from it.
+     *
+     */
+    @Override
+    protected int getAnalogOutputSignal(BlockState blockState, Level level, BlockPos pos) {
+        return getOutputSignal(blockState.getValue(BITES));
+    }
+
+    public static int getOutputSignal(int eaten) {
+        return (7 - eaten) * 2;
     }
 
     @Override
-    protected int getAnalogOutputSignal(BlockState p_51198_, Level p_51199_, BlockPos p_51200_) {
-        return getOutputSignal(p_51198_.getValue(BITES));
-    }
-
-    public static int getOutputSignal(int p_152747_) {
-        return (7 - p_152747_) * 2;
-    }
-
-    @Override
-    protected boolean hasAnalogOutputSignal(BlockState p_51191_) {
+    protected boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_51193_, PathComputationType p_51196_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

@@ -17,21 +17,21 @@ public final class ChargedProjectiles {
         .map(ChargedProjectiles::new, p_330917_ -> p_330917_.items);
     private final List<ItemStack> items;
 
-    private ChargedProjectiles(List<ItemStack> p_331523_) {
-        this.items = p_331523_;
+    private ChargedProjectiles(List<ItemStack> items) {
+        this.items = items;
     }
 
-    public static ChargedProjectiles of(ItemStack p_331405_) {
-        return new ChargedProjectiles(List.of(p_331405_.copy()));
+    public static ChargedProjectiles of(ItemStack stack) {
+        return new ChargedProjectiles(List.of(stack.copy()));
     }
 
-    public static ChargedProjectiles of(List<ItemStack> p_331284_) {
-        return new ChargedProjectiles(List.copyOf(Lists.transform(p_331284_, ItemStack::copy)));
+    public static ChargedProjectiles of(List<ItemStack> stack) {
+        return new ChargedProjectiles(List.copyOf(Lists.transform(stack, ItemStack::copy)));
     }
 
-    public boolean contains(Item p_331165_) {
+    public boolean contains(Item item) {
         for (ItemStack itemstack : this.items) {
-            if (itemstack.is(p_331165_)) {
+            if (itemstack.is(item)) {
                 return true;
             }
         }
@@ -48,11 +48,11 @@ public final class ChargedProjectiles {
     }
 
     @Override
-    public boolean equals(Object p_331828_) {
-        if (this == p_331828_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            if (p_331828_ instanceof ChargedProjectiles chargedprojectiles && ItemStack.listMatches(this.items, chargedprojectiles.items)) {
+            if (other instanceof ChargedProjectiles chargedprojectiles && ItemStack.listMatches(this.items, chargedprojectiles.items)) {
                 return true;
             }
 

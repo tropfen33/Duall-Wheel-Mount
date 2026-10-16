@@ -22,19 +22,19 @@ public class ChunkGenerationTask {
     private final StaticCache2D<GenerationChunkHolder> cache;
     private boolean needsGeneration;
 
-    private ChunkGenerationTask(GeneratingChunkMap p_347493_, ChunkStatus p_347718_, ChunkPos p_347615_, StaticCache2D<GenerationChunkHolder> p_347529_) {
-        this.chunkMap = p_347493_;
-        this.targetStatus = p_347718_;
-        this.pos = p_347615_;
-        this.cache = p_347529_;
+    private ChunkGenerationTask(GeneratingChunkMap chunkMap, ChunkStatus targetStatus, ChunkPos pos, StaticCache2D<GenerationChunkHolder> cache) {
+        this.chunkMap = chunkMap;
+        this.targetStatus = targetStatus;
+        this.pos = pos;
+        this.cache = cache;
     }
 
-    public static ChunkGenerationTask create(GeneratingChunkMap p_347575_, ChunkStatus p_347556_, ChunkPos p_347630_) {
-        int i = ChunkPyramid.GENERATION_PYRAMID.getStepTo(p_347556_).getAccumulatedRadiusOf(ChunkStatus.EMPTY);
+    public static ChunkGenerationTask create(GeneratingChunkMap chunkMap, ChunkStatus targetStatus, ChunkPos pos) {
+        int i = ChunkPyramid.GENERATION_PYRAMID.getStepTo(targetStatus).getAccumulatedRadiusOf(ChunkStatus.EMPTY);
         StaticCache2D<GenerationChunkHolder> staticcache2d = StaticCache2D.create(
-            p_347630_.x, p_347630_.z, i, (p_347569_, p_347704_) -> p_347575_.acquireGeneration(ChunkPos.asLong(p_347569_, p_347704_))
+            pos.x, pos.z, i, (p_347569_, p_347704_) -> chunkMap.acquireGeneration(ChunkPos.asLong(p_347569_, p_347704_))
         );
-        return new ChunkGenerationTask(p_347575_, p_347556_, p_347630_, staticcache2d);
+        return new ChunkGenerationTask(chunkMap, targetStatus, pos, staticcache2d);
     }
 
     @Nullable
@@ -110,32 +110,32 @@ public class ChunkGenerationTask {
         return this.cache.get(this.pos.x, this.pos.z);
     }
 
-    private void scheduleLayer(ChunkStatus p_347611_, boolean p_347592_) {
-        int i = this.getRadiusForLayer(p_347611_, p_347592_);
+    private void scheduleLayer(ChunkStatus status, boolean needsGeneration) {
+        int i = this.getRadiusForLayer(status, needsGeneration);
 
         for (int j = this.pos.x - i; j <= this.pos.x + i; j++) {
             for (int k = this.pos.z - i; k <= this.pos.z + i; k++) {
                 GenerationChunkHolder generationchunkholder = this.cache.get(j, k);
-                if (this.markedForCancellation || !this.scheduleChunkInLayer(p_347611_, p_347592_, generationchunkholder)) {
+                if (this.markedForCancellation || !this.scheduleChunkInLayer(status, needsGeneration, generationchunkholder)) {
                     return;
                 }
             }
         }
     }
 
-    private int getRadiusForLayer(ChunkStatus p_347511_, boolean p_347717_) {
-        ChunkPyramid chunkpyramid = p_347717_ ? ChunkPyramid.GENERATION_PYRAMID : ChunkPyramid.LOADING_PYRAMID;
-        return chunkpyramid.getStepTo(this.targetStatus).getAccumulatedRadiusOf(p_347511_);
+    private int getRadiusForLayer(ChunkStatus status, boolean needsGeneration) {
+        ChunkPyramid chunkpyramid = needsGeneration ? ChunkPyramid.GENERATION_PYRAMID : ChunkPyramid.LOADING_PYRAMID;
+        return chunkpyramid.getStepTo(this.targetStatus).getAccumulatedRadiusOf(status);
     }
 
-    private boolean scheduleChunkInLayer(ChunkStatus p_347483_, boolean p_347471_, GenerationChunkHolder p_347684_) {
-        ChunkStatus chunkstatus = p_347684_.getPersistedStatus();
-        boolean flag = chunkstatus != null && p_347483_.isAfter(chunkstatus);
+    private boolean scheduleChunkInLayer(ChunkStatus status, boolean needsGeneration, GenerationChunkHolder chunk) {
+        ChunkStatus chunkstatus = chunk.getPersistedStatus();
+        boolean flag = chunkstatus != null && status.isAfter(chunkstatus);
         ChunkPyramid chunkpyramid = flag ? ChunkPyramid.GENERATION_PYRAMID : ChunkPyramid.LOADING_PYRAMID;
-        if (flag && !p_347471_) {
+        if (flag && !needsGeneration) {
             throw new IllegalStateException("Can't load chunk, but didn't expect to need to generate");
         } else {
-            CompletableFuture<ChunkResult<ChunkAccess>> completablefuture = p_347684_.applyStep(chunkpyramid.getStepTo(p_347483_), this.chunkMap, this.cache);
+            CompletableFuture<ChunkResult<ChunkAccess>> completablefuture = chunk.applyStep(chunkpyramid.getStepTo(status), this.chunkMap, this.cache);
             ChunkResult<ChunkAccess> chunkresult = completablefuture.getNow(null);
             if (chunkresult == null) {
                 this.scheduledLayer.add(completablefuture);

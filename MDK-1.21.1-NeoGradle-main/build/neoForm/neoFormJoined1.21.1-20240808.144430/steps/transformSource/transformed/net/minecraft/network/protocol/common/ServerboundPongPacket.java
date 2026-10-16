@@ -11,16 +11,16 @@ public class ServerboundPongPacket implements Packet<ServerCommonPacketListener>
     );
     private final int id;
 
-    public ServerboundPongPacket(int p_295752_) {
-        this.id = p_295752_;
+    public ServerboundPongPacket(int id) {
+        this.id = id;
     }
 
-    private ServerboundPongPacket(FriendlyByteBuf p_295215_) {
-        this.id = p_295215_.readInt();
+    private ServerboundPongPacket(FriendlyByteBuf buffer) {
+        this.id = buffer.readInt();
     }
 
-    private void write(FriendlyByteBuf p_295843_) {
-        p_295843_.writeInt(this.id);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeInt(this.id);
     }
 
     @Override
@@ -28,8 +28,11 @@ public class ServerboundPongPacket implements Packet<ServerCommonPacketListener>
         return CommonPacketTypes.SERVERBOUND_PONG;
     }
 
-    public void handle(ServerCommonPacketListener p_295714_) {
-        p_295714_.handlePong(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ServerCommonPacketListener handler) {
+        handler.handlePong(this);
     }
 
     public int getId() {

@@ -8,22 +8,22 @@ import java.util.function.Supplier;
 import net.minecraft.util.datafix.fixes.References;
 
 public class V3083 extends NamespacedSchema {
-    public V3083(int p_216805_, Schema p_216806_) {
-        super(p_216805_, p_216806_);
+    public V3083(int versionKey, Schema parent) {
+        super(versionKey, parent);
     }
 
     @Override
-    public Map<String, Supplier<TypeTemplate>> registerEntities(Schema p_216814_) {
-        Map<String, Supplier<TypeTemplate>> map = super.registerEntities(p_216814_);
-        p_216814_.register(
+    public Map<String, Supplier<TypeTemplate>> registerEntities(Schema schema) {
+        Map<String, Supplier<TypeTemplate>> map = super.registerEntities(schema);
+        schema.register(
             map,
             "minecraft:allay",
             () -> DSL.optionalFields(
                     "Inventory",
-                    DSL.list(References.ITEM_STACK.in(p_216814_)),
+                    DSL.list(References.ITEM_STACK.in(schema)),
                     "listener",
-                    DSL.optionalFields("event", DSL.optionalFields("game_event", References.GAME_EVENT_NAME.in(p_216814_))),
-                    V100.equipment(p_216814_)
+                    DSL.optionalFields("event", DSL.optionalFields("game_event", References.GAME_EVENT_NAME.in(schema))),
+                    V100.equipment(schema)
                 )
         );
         return map;

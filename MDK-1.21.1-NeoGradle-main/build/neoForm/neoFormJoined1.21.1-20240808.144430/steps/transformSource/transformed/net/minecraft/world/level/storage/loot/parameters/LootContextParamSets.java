@@ -8,6 +8,9 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import net.minecraft.resources.ResourceLocation;
 
+/**
+ * Registry for {@link LootContextParamSet}s.
+ */
 public class LootContextParamSets {
     private static final BiMap<ResourceLocation, LootContextParamSet> REGISTRY = HashBiMap.create();
     public static final Codec<LootContextParamSet> CODEC = ResourceLocation.CODEC
@@ -125,11 +128,11 @@ public class LootContextParamSets {
                 .required(LootContextParams.BLOCK_STATE)
     );
 
-    private static LootContextParamSet register(String p_81429_, Consumer<LootContextParamSet.Builder> p_81430_) {
+    private static LootContextParamSet register(String registryName, Consumer<LootContextParamSet.Builder> builderConsumer) {
         LootContextParamSet.Builder lootcontextparamset$builder = new LootContextParamSet.Builder();
-        p_81430_.accept(lootcontextparamset$builder);
+        builderConsumer.accept(lootcontextparamset$builder);
         LootContextParamSet lootcontextparamset = lootcontextparamset$builder.build();
-        ResourceLocation resourcelocation = ResourceLocation.withDefaultNamespace(p_81429_);
+        ResourceLocation resourcelocation = ResourceLocation.withDefaultNamespace(registryName);
         LootContextParamSet lootcontextparamset1 = REGISTRY.put(resourcelocation, lootcontextparamset);
         if (lootcontextparamset1 != null) {
             throw new IllegalStateException("Loot table parameter set " + resourcelocation + " is already registered");

@@ -12,66 +12,66 @@ public class RecipeCache {
     private final RecipeCache.Entry[] entries;
     private WeakReference<RecipeManager> cachedRecipeManager = new WeakReference<>(null);
 
-    public RecipeCache(int p_307489_) {
-        this.entries = new RecipeCache.Entry[p_307489_];
+    public RecipeCache(int size) {
+        this.entries = new RecipeCache.Entry[size];
     }
 
-    public Optional<RecipeHolder<CraftingRecipe>> get(Level p_307315_, CraftingInput p_345726_) {
-        if (p_345726_.isEmpty()) {
+    public Optional<RecipeHolder<CraftingRecipe>> get(Level level, CraftingInput input) {
+        if (input.isEmpty()) {
             return Optional.empty();
         } else {
-            this.validateRecipeManager(p_307315_);
+            this.validateRecipeManager(level);
 
             for (int i = 0; i < this.entries.length; i++) {
                 RecipeCache.Entry recipecache$entry = this.entries[i];
-                if (recipecache$entry != null && recipecache$entry.matches(p_345726_)) {
+                if (recipecache$entry != null && recipecache$entry.matches(input)) {
                     this.moveEntryToFront(i);
                     return Optional.ofNullable(recipecache$entry.value());
                 }
             }
 
-            return this.compute(p_345726_, p_307315_);
+            return this.compute(input, level);
         }
     }
 
-    private void validateRecipeManager(Level p_307638_) {
-        RecipeManager recipemanager = p_307638_.getRecipeManager();
+    private void validateRecipeManager(Level level) {
+        RecipeManager recipemanager = level.getRecipeManager();
         if (recipemanager != this.cachedRecipeManager.get()) {
             this.cachedRecipeManager = new WeakReference<>(recipemanager);
             Arrays.fill(this.entries, null);
         }
     }
 
-    private Optional<RecipeHolder<CraftingRecipe>> compute(CraftingInput p_345136_, Level p_307202_) {
-        Optional<RecipeHolder<CraftingRecipe>> optional = p_307202_.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, p_345136_, p_307202_);
-        this.insert(p_345136_, optional.orElse(null));
+    private Optional<RecipeHolder<CraftingRecipe>> compute(CraftingInput input, Level level) {
+        Optional<RecipeHolder<CraftingRecipe>> optional = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, input, level);
+        this.insert(input, optional.orElse(null));
         return optional;
     }
 
-    private void moveEntryToFront(int p_307277_) {
-        if (p_307277_ > 0) {
-            RecipeCache.Entry recipecache$entry = this.entries[p_307277_];
-            System.arraycopy(this.entries, 0, this.entries, 1, p_307277_);
+    private void moveEntryToFront(int index) {
+        if (index > 0) {
+            RecipeCache.Entry recipecache$entry = this.entries[index];
+            System.arraycopy(this.entries, 0, this.entries, 1, index);
             this.entries[0] = recipecache$entry;
         }
     }
 
-    private void insert(CraftingInput p_348525_, @Nullable RecipeHolder<CraftingRecipe> p_336146_) {
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(p_348525_.size(), ItemStack.EMPTY);
+    private void insert(CraftingInput input, @Nullable RecipeHolder<CraftingRecipe> recipe) {
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(input.size(), ItemStack.EMPTY);
 
-        for (int i = 0; i < p_348525_.size(); i++) {
-            nonnulllist.set(i, p_348525_.getItem(i).copyWithCount(1));
+        for (int i = 0; i < input.size(); i++) {
+            nonnulllist.set(i, input.getItem(i).copyWithCount(1));
         }
 
         System.arraycopy(this.entries, 0, this.entries, 1, this.entries.length - 1);
-        this.entries[0] = new RecipeCache.Entry(nonnulllist, p_348525_.width(), p_348525_.height(), p_336146_);
+        this.entries[0] = new RecipeCache.Entry(nonnulllist, input.width(), input.height(), recipe);
     }
 
     static record Entry(NonNullList<ItemStack> key, int width, int height, @Nullable RecipeHolder<CraftingRecipe> value) {
-        public boolean matches(CraftingInput p_348535_) {
-            if (this.width == p_348535_.width() && this.height == p_348535_.height()) {
+        public boolean matches(CraftingInput input) {
+            if (this.width == input.width() && this.height == input.height()) {
                 for (int i = 0; i < this.key.size(); i++) {
-                    if (!ItemStack.isSameItemSameComponents(this.key.get(i), p_348535_.getItem(i))) {
+                    if (!ItemStack.isSameItemSameComponents(this.key.get(i), input.getItem(i))) {
                         return false;
                     }
                 }

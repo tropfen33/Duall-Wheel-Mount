@@ -51,11 +51,11 @@ public class ItemEnchantments implements TooltipProvider {
     final Object2IntOpenHashMap<Holder<Enchantment>> enchantments;
     final boolean showInTooltip;
 
-    ItemEnchantments(Object2IntOpenHashMap<Holder<Enchantment>> p_341287_, boolean p_330219_) {
-        this.enchantments = p_341287_;
-        this.showInTooltip = p_330219_;
+    ItemEnchantments(Object2IntOpenHashMap<Holder<Enchantment>> enchantments, boolean showInTooltip) {
+        this.enchantments = enchantments;
+        this.showInTooltip = showInTooltip;
 
-        for (Entry<Holder<Enchantment>> entry : p_341287_.object2IntEntrySet()) {
+        for (Entry<Holder<Enchantment>> entry : enchantments.object2IntEntrySet()) {
             int i = entry.getIntValue();
             if (i < 0 || i > 255) {
                 throw new IllegalArgumentException("Enchantment " + entry.getKey() + " has invalid level " + i);
@@ -63,35 +63,35 @@ public class ItemEnchantments implements TooltipProvider {
         }
     }
 
-    public int getLevel(Holder<Enchantment> p_345693_) {
-        return this.enchantments.getInt(p_345693_);
+    public int getLevel(Holder<Enchantment> enchantment) {
+        return this.enchantments.getInt(enchantment);
     }
 
     @Override
-    public void addToTooltip(Item.TooltipContext p_341290_, Consumer<Component> p_331119_, TooltipFlag p_330400_) {
+    public void addToTooltip(Item.TooltipContext context, Consumer<Component> tooltipAdder, TooltipFlag tooltipFlag) {
         if (this.showInTooltip) {
-            HolderLookup.Provider holderlookup$provider = p_341290_.registries();
+            HolderLookup.Provider holderlookup$provider = context.registries();
             HolderSet<Enchantment> holderset = getTagOrEmpty(holderlookup$provider, Registries.ENCHANTMENT, EnchantmentTags.TOOLTIP_ORDER);
 
             for (Holder<Enchantment> holder : holderset) {
                 int i = this.enchantments.getInt(holder);
                 if (i > 0) {
-                    p_331119_.accept(Enchantment.getFullname(holder, i));
+                    tooltipAdder.accept(Enchantment.getFullname(holder, i));
                 }
             }
 
             for (Entry<Holder<Enchantment>> entry : this.enchantments.object2IntEntrySet()) {
                 Holder<Enchantment> holder1 = entry.getKey();
                 if (!holderset.contains(holder1)) {
-                    p_331119_.accept(Enchantment.getFullname(entry.getKey(), entry.getIntValue()));
+                    tooltipAdder.accept(Enchantment.getFullname(entry.getKey(), entry.getIntValue()));
                 }
             }
         }
     }
 
-    private static <T> HolderSet<T> getTagOrEmpty(@Nullable HolderLookup.Provider p_341186_, ResourceKey<Registry<T>> p_341113_, TagKey<T> p_341409_) {
-        if (p_341186_ != null) {
-            Optional<HolderSet.Named<T>> optional = p_341186_.lookupOrThrow(p_341113_).get(p_341409_);
+    private static <T> HolderSet<T> getTagOrEmpty(@Nullable HolderLookup.Provider registries, ResourceKey<Registry<T>> registryKey, TagKey<T> key) {
+        if (registries != null) {
+            Optional<HolderSet.Named<T>> optional = registries.lookupOrThrow(registryKey).get(key);
             if (optional.isPresent()) {
                 return optional.get();
             }
@@ -100,8 +100,8 @@ public class ItemEnchantments implements TooltipProvider {
         return HolderSet.direct();
     }
 
-    public ItemEnchantments withTooltip(boolean p_335616_) {
-        return new ItemEnchantments(this.enchantments, p_335616_);
+    public ItemEnchantments withTooltip(boolean showInTooltip) {
+        return new ItemEnchantments(this.enchantments, showInTooltip);
     }
 
     public Set<Holder<Enchantment>> keySet() {
@@ -121,11 +121,11 @@ public class ItemEnchantments implements TooltipProvider {
     }
 
     @Override
-    public boolean equals(Object p_331697_) {
-        if (this == p_331697_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return !(p_331697_ instanceof ItemEnchantments itemenchantments)
+            return !(other instanceof ItemEnchantments itemenchantments)
                 ? false
                 : this.showInTooltip == itemenchantments.showInTooltip && this.enchantments.equals(itemenchantments.enchantments);
         }
@@ -146,31 +146,31 @@ public class ItemEnchantments implements TooltipProvider {
         private final Object2IntOpenHashMap<Holder<Enchantment>> enchantments = new Object2IntOpenHashMap<>();
         private final boolean showInTooltip;
 
-        public Mutable(ItemEnchantments p_330722_) {
-            this.enchantments.putAll(p_330722_.enchantments);
-            this.showInTooltip = p_330722_.showInTooltip;
+        public Mutable(ItemEnchantments enchantments) {
+            this.enchantments.putAll(enchantments.enchantments);
+            this.showInTooltip = enchantments.showInTooltip;
         }
 
-        public void set(Holder<Enchantment> p_344861_, int p_330832_) {
-            if (p_330832_ <= 0) {
-                this.enchantments.removeInt(p_344861_);
+        public void set(Holder<Enchantment> enchantment, int level) {
+            if (level <= 0) {
+                this.enchantments.removeInt(enchantment);
             } else {
-                this.enchantments.put(p_344861_, Math.min(p_330832_, 255));
+                this.enchantments.put(enchantment, Math.min(level, 255));
             }
         }
 
-        public void upgrade(Holder<Enchantment> p_346263_, int p_331153_) {
-            if (p_331153_ > 0) {
-                this.enchantments.merge(p_346263_, Math.min(p_331153_, 255), Integer::max);
+        public void upgrade(Holder<Enchantment> enchantment, int level) {
+            if (level > 0) {
+                this.enchantments.merge(enchantment, Math.min(level, 255), Integer::max);
             }
         }
 
-        public void removeIf(Predicate<Holder<Enchantment>> p_332079_) {
-            this.enchantments.keySet().removeIf(p_332079_);
+        public void removeIf(Predicate<Holder<Enchantment>> predicate) {
+            this.enchantments.keySet().removeIf(predicate);
         }
 
-        public int getLevel(Holder<Enchantment> p_345430_) {
-            return this.enchantments.getOrDefault(p_345430_, 0);
+        public int getLevel(Holder<Enchantment> enchantment) {
+            return this.enchantments.getOrDefault(enchantment, 0);
         }
 
         public Set<Holder<Enchantment>> keySet() {

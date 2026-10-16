@@ -25,69 +25,69 @@ public class SnowGolemHeadLayer extends RenderLayer<SnowGolem, SnowGolemModel<Sn
     private final BlockRenderDispatcher blockRenderer;
     private final ItemRenderer itemRenderer;
 
-    public SnowGolemHeadLayer(RenderLayerParent<SnowGolem, SnowGolemModel<SnowGolem>> p_234871_, BlockRenderDispatcher p_234872_, ItemRenderer p_234873_) {
-        super(p_234871_);
-        this.blockRenderer = p_234872_;
-        this.itemRenderer = p_234873_;
+    public SnowGolemHeadLayer(RenderLayerParent<SnowGolem, SnowGolemModel<SnowGolem>> renderer, BlockRenderDispatcher blockRenderer, ItemRenderer itemRenderer) {
+        super(renderer);
+        this.blockRenderer = blockRenderer;
+        this.itemRenderer = itemRenderer;
     }
 
     public void render(
-        PoseStack p_117494_,
-        MultiBufferSource p_117495_,
-        int p_117496_,
-        SnowGolem p_117497_,
-        float p_117498_,
-        float p_117499_,
-        float p_117500_,
-        float p_117501_,
-        float p_117502_,
-        float p_117503_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        SnowGolem livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTicks,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
-        if (p_117497_.hasPumpkin()) {
-            boolean flag = Minecraft.getInstance().shouldEntityAppearGlowing(p_117497_) && p_117497_.isInvisible();
-            if (!p_117497_.isInvisible() || flag) {
-                p_117494_.pushPose();
-                this.getParentModel().getHead().translateAndRotate(p_117494_);
+        if (livingEntity.hasPumpkin()) {
+            boolean flag = Minecraft.getInstance().shouldEntityAppearGlowing(livingEntity) && livingEntity.isInvisible();
+            if (!livingEntity.isInvisible() || flag) {
+                poseStack.pushPose();
+                this.getParentModel().getHead().translateAndRotate(poseStack);
                 float f = 0.625F;
-                p_117494_.translate(0.0F, -0.34375F, 0.0F);
-                p_117494_.mulPose(Axis.YP.rotationDegrees(180.0F));
-                p_117494_.scale(0.625F, -0.625F, -0.625F);
+                poseStack.translate(0.0F, -0.34375F, 0.0F);
+                poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+                poseStack.scale(0.625F, -0.625F, -0.625F);
                 ItemStack itemstack = new ItemStack(Blocks.CARVED_PUMPKIN);
                 if (flag) {
                     BlockState blockstate = Blocks.CARVED_PUMPKIN.defaultBlockState();
                     BakedModel bakedmodel = this.blockRenderer.getBlockModel(blockstate);
-                    int i = LivingEntityRenderer.getOverlayCoords(p_117497_, 0.0F);
-                    p_117494_.translate(-0.5F, -0.5F, -0.5F);
+                    int i = LivingEntityRenderer.getOverlayCoords(livingEntity, 0.0F);
+                    poseStack.translate(-0.5F, -0.5F, -0.5F);
                     this.blockRenderer
                         .getModelRenderer()
                         .renderModel(
-                            p_117494_.last(),
-                            p_117495_.getBuffer(RenderType.outline(TextureAtlas.LOCATION_BLOCKS)),
+                            poseStack.last(),
+                            buffer.getBuffer(RenderType.outline(TextureAtlas.LOCATION_BLOCKS)),
                             blockstate,
                             bakedmodel,
                             0.0F,
                             0.0F,
                             0.0F,
-                            p_117496_,
+                            packedLight,
                             i
                         );
                 } else {
                     this.itemRenderer
                         .renderStatic(
-                            p_117497_,
+                            livingEntity,
                             itemstack,
                             ItemDisplayContext.HEAD,
                             false,
-                            p_117494_,
-                            p_117495_,
-                            p_117497_.level(),
-                            p_117496_,
-                            LivingEntityRenderer.getOverlayCoords(p_117497_, 0.0F),
-                            p_117497_.getId()
+                            poseStack,
+                            buffer,
+                            livingEntity.level(),
+                            packedLight,
+                            LivingEntityRenderer.getOverlayCoords(livingEntity, 0.0F),
+                            livingEntity.getId()
                         );
                 }
 
-                p_117494_.popPose();
+                poseStack.popPose();
             }
         }
     }

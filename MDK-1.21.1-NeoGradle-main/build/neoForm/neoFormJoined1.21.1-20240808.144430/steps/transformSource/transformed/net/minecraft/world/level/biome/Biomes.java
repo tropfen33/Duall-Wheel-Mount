@@ -70,7 +70,7 @@ public abstract class Biomes {
     public static final ResourceKey<Biome> SMALL_END_ISLANDS = register("small_end_islands");
     public static final ResourceKey<Biome> END_BARRENS = register("end_barrens");
 
-    private static ResourceKey<Biome> register(String p_48229_) {
-        return ResourceKey.create(Registries.BIOME, ResourceLocation.withDefaultNamespace(p_48229_));
+    private static ResourceKey<Biome> register(String key) {
+        return ResourceKey.create(Registries.BIOME, ResourceLocation.withDefaultNamespace(key));
     }
 }

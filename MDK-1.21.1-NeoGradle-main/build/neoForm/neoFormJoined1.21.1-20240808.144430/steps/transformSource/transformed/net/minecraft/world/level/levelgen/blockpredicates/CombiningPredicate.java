@@ -9,14 +9,14 @@ import java.util.function.Function;
 abstract class CombiningPredicate implements BlockPredicate {
     protected final List<BlockPredicate> predicates;
 
-    protected CombiningPredicate(List<BlockPredicate> p_190455_) {
-        this.predicates = p_190455_;
+    protected CombiningPredicate(List<BlockPredicate> predicates) {
+        this.predicates = predicates;
     }
 
-    public static <T extends CombiningPredicate> MapCodec<T> codec(Function<List<BlockPredicate>, T> p_190459_) {
+    public static <T extends CombiningPredicate> MapCodec<T> codec(Function<List<BlockPredicate>, T> factory) {
         return RecordCodecBuilder.mapCodec(
             p_190462_ -> p_190462_.group(BlockPredicate.CODEC.listOf().fieldOf("predicates").forGetter(p_190457_ -> p_190457_.predicates))
-                    .apply(p_190462_, p_190459_)
+                    .apply(p_190462_, factory)
         );
     }
 }

@@ -9,8 +9,8 @@ public enum ChestType implements StringRepresentable {
 
     private final String name;
 
-    private ChestType(String p_263109_) {
-        this.name = p_263109_;
+    private ChestType(String name) {
+        this.name = name;
     }
 
     @Override

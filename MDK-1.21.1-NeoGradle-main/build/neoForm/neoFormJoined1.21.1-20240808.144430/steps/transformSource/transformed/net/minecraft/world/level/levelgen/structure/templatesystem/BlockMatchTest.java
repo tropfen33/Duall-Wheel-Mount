@@ -13,13 +13,13 @@ public class BlockMatchTest extends RuleTest {
         .xmap(BlockMatchTest::new, p_74073_ -> p_74073_.block);
     private final Block block;
 
-    public BlockMatchTest(Block p_74067_) {
-        this.block = p_74067_;
+    public BlockMatchTest(Block block) {
+        this.block = block;
     }
 
     @Override
-    public boolean test(BlockState p_230277_, RandomSource p_230278_) {
-        return p_230277_.is(this.block);
+    public boolean test(BlockState state, RandomSource random) {
+        return state.is(this.block);
     }
 
     @Override

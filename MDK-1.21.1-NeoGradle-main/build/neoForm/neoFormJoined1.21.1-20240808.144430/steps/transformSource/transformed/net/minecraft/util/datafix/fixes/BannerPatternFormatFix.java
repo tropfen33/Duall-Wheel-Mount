@@ -52,35 +52,35 @@ public class BannerPatternFormatFix extends NamedEntityFix {
         Map.entry("pig", "minecraft:piglin")
     );
 
-    public BannerPatternFormatFix(Schema p_331354_) {
-        super(p_331354_, false, "BannerPatternFormatFix", References.BLOCK_ENTITY, "minecraft:banner");
+    public BannerPatternFormatFix(Schema outputSchema) {
+        super(outputSchema, false, "BannerPatternFormatFix", References.BLOCK_ENTITY, "minecraft:banner");
     }
 
     @Override
-    protected Typed<?> fix(Typed<?> p_331801_) {
-        return p_331801_.update(DSL.remainderFinder(), BannerPatternFormatFix::fixTag);
+    protected Typed<?> fix(Typed<?> typed) {
+        return typed.update(DSL.remainderFinder(), BannerPatternFormatFix::fixTag);
     }
 
-    private static Dynamic<?> fixTag(Dynamic<?> p_330421_) {
-        return p_330421_.renameAndFixField(
+    private static Dynamic<?> fixTag(Dynamic<?> tag) {
+        return tag.renameAndFixField(
             "Patterns", "patterns", p_330685_ -> p_330685_.createList(p_330685_.asStream().map(BannerPatternFormatFix::fixLayer))
         );
     }
 
-    private static Dynamic<?> fixLayer(Dynamic<?> p_331951_) {
-        p_331951_ = p_331951_.renameAndFixField(
+    private static Dynamic<?> fixLayer(Dynamic<?> tag) {
+        tag = tag.renameAndFixField(
             "Pattern",
             "pattern",
             p_337596_ -> DataFixUtils.orElse(
                     p_337596_.asString().map(p_331145_ -> PATTERN_ID_MAP.getOrDefault(p_331145_, p_331145_)).map(p_337596_::createString).result(), p_337596_
                 )
         );
-        p_331951_ = p_331951_.set("color", p_331951_.createString(fixColor(p_331951_.get("Color").asInt(0))));
-        return p_331951_.remove("Color");
+        tag = tag.set("color", tag.createString(fixColor(tag.get("Color").asInt(0))));
+        return tag.remove("Color");
     }
 
-    public static String fixColor(int p_331992_) {
-        return switch (p_331992_) {
+    public static String fixColor(int color) {
+        return switch (color) {
             case 1 -> "orange";
             case 2 -> "magenta";
             case 3 -> "light_blue";

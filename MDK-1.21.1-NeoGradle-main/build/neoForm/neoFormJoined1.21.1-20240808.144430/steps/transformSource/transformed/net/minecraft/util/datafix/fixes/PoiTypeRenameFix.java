@@ -9,14 +9,14 @@ import java.util.stream.Stream;
 public class PoiTypeRenameFix extends AbstractPoiSectionFix {
     private final Function<String, String> renamer;
 
-    public PoiTypeRenameFix(Schema p_216710_, String p_216711_, Function<String, String> p_216712_) {
-        super(p_216710_, p_216711_);
-        this.renamer = p_216712_;
+    public PoiTypeRenameFix(Schema schema, String name, Function<String, String> renamer) {
+        super(schema, name);
+        this.renamer = renamer;
     }
 
     @Override
-    protected <T> Stream<Dynamic<T>> processRecords(Stream<Dynamic<T>> p_216716_) {
-        return p_216716_.map(
+    protected <T> Stream<Dynamic<T>> processRecords(Stream<Dynamic<T>> records) {
+        return records.map(
             p_216714_ -> p_216714_.update(
                     "type", p_337661_ -> DataFixUtils.orElse(p_337661_.asString().map(this.renamer).map(p_337661_::createString).result(), p_337661_)
                 )

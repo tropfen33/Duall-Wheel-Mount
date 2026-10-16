@@ -19,42 +19,45 @@ public class EndRodBlock extends RodBlock {
         return CODEC;
     }
 
-    public EndRodBlock(BlockBehaviour.Properties p_53085_) {
-        super(p_53085_);
+    public EndRodBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.UP));
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_53087_) {
-        Direction direction = p_53087_.getClickedFace();
-        BlockState blockstate = p_53087_.getLevel().getBlockState(p_53087_.getClickedPos().relative(direction.getOpposite()));
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Direction direction = context.getClickedFace();
+        BlockState blockstate = context.getLevel().getBlockState(context.getClickedPos().relative(direction.getOpposite()));
         return blockstate.is(this) && blockstate.getValue(FACING) == direction
             ? this.defaultBlockState().setValue(FACING, direction.getOpposite())
             : this.defaultBlockState().setValue(FACING, direction);
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_221107_, Level p_221108_, BlockPos p_221109_, RandomSource p_221110_) {
-        Direction direction = p_221107_.getValue(FACING);
-        double d0 = (double)p_221109_.getX() + 0.55 - (double)(p_221110_.nextFloat() * 0.1F);
-        double d1 = (double)p_221109_.getY() + 0.55 - (double)(p_221110_.nextFloat() * 0.1F);
-        double d2 = (double)p_221109_.getZ() + 0.55 - (double)(p_221110_.nextFloat() * 0.1F);
-        double d3 = (double)(0.4F - (p_221110_.nextFloat() + p_221110_.nextFloat()) * 0.4F);
-        if (p_221110_.nextInt(5) == 0) {
-            p_221108_.addParticle(
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        Direction direction = state.getValue(FACING);
+        double d0 = (double)pos.getX() + 0.55 - (double)(random.nextFloat() * 0.1F);
+        double d1 = (double)pos.getY() + 0.55 - (double)(random.nextFloat() * 0.1F);
+        double d2 = (double)pos.getZ() + 0.55 - (double)(random.nextFloat() * 0.1F);
+        double d3 = (double)(0.4F - (random.nextFloat() + random.nextFloat()) * 0.4F);
+        if (random.nextInt(5) == 0) {
+            level.addParticle(
                 ParticleTypes.END_ROD,
                 d0 + (double)direction.getStepX() * d3,
                 d1 + (double)direction.getStepY() * d3,
                 d2 + (double)direction.getStepZ() * d3,
-                p_221110_.nextGaussian() * 0.005,
-                p_221110_.nextGaussian() * 0.005,
-                p_221110_.nextGaussian() * 0.005
+                random.nextGaussian() * 0.005,
+                random.nextGaussian() * 0.005,
+                random.nextGaussian() * 0.005
             );
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_53105_) {
-        p_53105_.add(FACING);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
     }
 }

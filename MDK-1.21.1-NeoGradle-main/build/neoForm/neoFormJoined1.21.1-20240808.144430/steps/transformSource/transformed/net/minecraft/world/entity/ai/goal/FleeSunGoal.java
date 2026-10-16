@@ -17,10 +17,10 @@ public class FleeSunGoal extends Goal {
     private final double speedModifier;
     private final Level level;
 
-    public FleeSunGoal(PathfinderMob p_25221_, double p_25222_) {
-        this.mob = p_25221_;
-        this.speedModifier = p_25222_;
-        this.level = p_25221_.level();
+    public FleeSunGoal(PathfinderMob mob, double speedModifier) {
+        this.mob = mob;
+        this.speedModifier = speedModifier;
+        this.level = mob.level();
         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
     }
 

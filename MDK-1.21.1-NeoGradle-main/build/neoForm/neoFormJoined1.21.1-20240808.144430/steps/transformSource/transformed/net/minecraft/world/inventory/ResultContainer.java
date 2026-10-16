@@ -29,32 +29,47 @@ public class ResultContainer implements Container, RecipeCraftingHolder {
         return true;
     }
 
+    /**
+     * Returns the stack in the given slot.
+     */
     @Override
-    public ItemStack getItem(int p_40147_) {
+    public ItemStack getItem(int index) {
         return this.itemStacks.get(0);
     }
 
+    /**
+     * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
+     */
     @Override
-    public ItemStack removeItem(int p_40149_, int p_40150_) {
+    public ItemStack removeItem(int index, int count) {
         return ContainerHelper.takeItem(this.itemStacks, 0);
     }
 
+    /**
+     * Removes a stack from the given slot and returns it.
+     */
     @Override
-    public ItemStack removeItemNoUpdate(int p_40160_) {
+    public ItemStack removeItemNoUpdate(int index) {
         return ContainerHelper.takeItem(this.itemStacks, 0);
     }
 
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
     @Override
-    public void setItem(int p_40152_, ItemStack p_40153_) {
-        this.itemStacks.set(0, p_40153_);
+    public void setItem(int index, ItemStack stack) {
+        this.itemStacks.set(0, stack);
     }
 
     @Override
     public void setChanged() {
     }
 
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
     @Override
-    public boolean stillValid(Player p_40155_) {
+    public boolean stillValid(Player player) {
         return true;
     }
 
@@ -64,8 +79,8 @@ public class ResultContainer implements Container, RecipeCraftingHolder {
     }
 
     @Override
-    public void setRecipeUsed(@Nullable RecipeHolder<?> p_301012_) {
-        this.recipeUsed = p_301012_;
+    public void setRecipeUsed(@Nullable RecipeHolder<?> recipe) {
+        this.recipeUsed = recipe;
     }
 
     @Nullable

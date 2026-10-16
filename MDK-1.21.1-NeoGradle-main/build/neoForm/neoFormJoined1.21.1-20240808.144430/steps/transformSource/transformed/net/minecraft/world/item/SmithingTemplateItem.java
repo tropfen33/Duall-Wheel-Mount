@@ -78,39 +78,39 @@ public class SmithingTemplateItem extends Item {
     private final List<ResourceLocation> additionalSlotEmptyIcons;
 
     public SmithingTemplateItem(
-        Component p_266834_,
-        Component p_267043_,
-        Component p_267048_,
-        Component p_267278_,
-        Component p_267090_,
-        List<ResourceLocation> p_266755_,
-        List<ResourceLocation> p_267060_,
-        FeatureFlag... p_333776_
+        Component appliesTo,
+        Component ingredients,
+        Component upgradeDescription,
+        Component baseSlotDescription,
+        Component additionsSlotDescription,
+        List<ResourceLocation> baseSlotEmptyIcons,
+        List<ResourceLocation> additionalSlotEmptyIcons,
+        FeatureFlag... requiredFeatures
     ) {
-        super(new Item.Properties().requiredFeatures(p_333776_));
-        this.appliesTo = p_266834_;
-        this.ingredients = p_267043_;
-        this.upgradeDescription = p_267048_;
-        this.baseSlotDescription = p_267278_;
-        this.additionsSlotDescription = p_267090_;
-        this.baseSlotEmptyIcons = p_266755_;
-        this.additionalSlotEmptyIcons = p_267060_;
+        super(new Item.Properties().requiredFeatures(requiredFeatures));
+        this.appliesTo = appliesTo;
+        this.ingredients = ingredients;
+        this.upgradeDescription = upgradeDescription;
+        this.baseSlotDescription = baseSlotDescription;
+        this.additionsSlotDescription = additionsSlotDescription;
+        this.baseSlotEmptyIcons = baseSlotEmptyIcons;
+        this.additionalSlotEmptyIcons = additionalSlotEmptyIcons;
     }
 
-    public static SmithingTemplateItem createArmorTrimTemplate(ResourceKey<TrimPattern> p_266875_, FeatureFlag... p_334067_) {
-        return createArmorTrimTemplate(p_266875_.location(), p_334067_);
+    public static SmithingTemplateItem createArmorTrimTemplate(ResourceKey<TrimPattern> key, FeatureFlag... requiredFeatures) {
+        return createArmorTrimTemplate(key.location(), requiredFeatures);
     }
 
-    public static SmithingTemplateItem createArmorTrimTemplate(ResourceLocation p_266880_, FeatureFlag... p_334025_) {
+    public static SmithingTemplateItem createArmorTrimTemplate(ResourceLocation name, FeatureFlag... requiredFeatures) {
         return new SmithingTemplateItem(
             ARMOR_TRIM_APPLIES_TO,
             ARMOR_TRIM_INGREDIENTS,
-            Component.translatable(Util.makeDescriptionId("trim_pattern", p_266880_)).withStyle(TITLE_FORMAT),
+            Component.translatable(Util.makeDescriptionId("trim_pattern", name)).withStyle(TITLE_FORMAT),
             ARMOR_TRIM_BASE_SLOT_DESCRIPTION,
             ARMOR_TRIM_ADDITIONS_SLOT_DESCRIPTION,
             createTrimmableArmorIconList(),
             createTrimmableMaterialIconList(),
-            p_334025_
+            requiredFeatures
         );
     }
 
@@ -161,14 +161,14 @@ public class SmithingTemplateItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack p_267313_, Item.TooltipContext p_339591_, List<Component> p_266820_, TooltipFlag p_266857_) {
-        super.appendHoverText(p_267313_, p_339591_, p_266820_, p_266857_);
-        p_266820_.add(this.upgradeDescription);
-        p_266820_.add(CommonComponents.EMPTY);
-        p_266820_.add(APPLIES_TO_TITLE);
-        p_266820_.add(CommonComponents.space().append(this.appliesTo));
-        p_266820_.add(INGREDIENTS_TITLE);
-        p_266820_.add(CommonComponents.space().append(this.ingredients));
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        tooltipComponents.add(this.upgradeDescription);
+        tooltipComponents.add(CommonComponents.EMPTY);
+        tooltipComponents.add(APPLIES_TO_TITLE);
+        tooltipComponents.add(CommonComponents.space().append(this.appliesTo));
+        tooltipComponents.add(INGREDIENTS_TITLE);
+        tooltipComponents.add(CommonComponents.space().append(this.ingredients));
     }
 
     public Component getBaseSlotDescription() {

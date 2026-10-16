@@ -32,11 +32,12 @@ public class ItemOverrides {
     }
 
     /**
-     * @deprecated Forge: Use {@link #ItemOverrides(ModelBaker, UnbakedModel, List, java.util.function.Function)}
+     * @deprecated Forge: Use {@link #ItemOverrides(ModelBaker, UnbakedModel, List,
+     *             java.util.function.Function)}
      */
     @Deprecated
-    public ItemOverrides(ModelBaker p_251211_, BlockModel p_111741_, List<ItemOverride> p_111743_) {
-        this(p_251211_, p_111741_, p_111743_, p_251211_.getModelTextureGetter());
+    public ItemOverrides(ModelBaker baker, BlockModel model, List<ItemOverride> overrides) {
+        this(baker, model, overrides, baker.getModelTextureGetter());
     }
 
     public ItemOverrides(ModelBaker p_251211_, UnbakedModel p_111741_, List<ItemOverride> p_111743_, java.util.function.Function<net.minecraft.client.resources.model.Material, net.minecraft.client.renderer.texture.TextureAtlasSprite> spriteGetter) {
@@ -73,16 +74,16 @@ public class ItemOverrides {
     }
 
     @Nullable
-    public BakedModel resolve(BakedModel p_173465_, ItemStack p_173466_, @Nullable ClientLevel p_173467_, @Nullable LivingEntity p_173468_, int p_173469_) {
+    public BakedModel resolve(BakedModel model, ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity entity, int seed) {
         if (this.overrides.length != 0) {
             int i = this.properties.length;
             float[] afloat = new float[i];
 
             for (int j = 0; j < i; j++) {
                 ResourceLocation resourcelocation = this.properties[j];
-                ItemPropertyFunction itempropertyfunction = ItemProperties.getProperty(p_173466_, resourcelocation);
+                ItemPropertyFunction itempropertyfunction = ItemProperties.getProperty(stack, resourcelocation);
                 if (itempropertyfunction != null) {
-                    afloat[j] = itempropertyfunction.call(p_173466_, p_173467_, p_173468_, p_173469_);
+                    afloat[j] = itempropertyfunction.call(stack, level, entity, seed);
                 } else {
                     afloat[j] = Float.NEGATIVE_INFINITY;
                 }
@@ -92,7 +93,7 @@ public class ItemOverrides {
                 if (itemoverrides$bakedoverride.test(afloat)) {
                     BakedModel bakedmodel = itemoverrides$bakedoverride.model;
                     if (bakedmodel == null) {
-                        return p_173465_;
+                        return model;
                     }
 
                     return bakedmodel;
@@ -100,7 +101,7 @@ public class ItemOverrides {
             }
         }
 
-        return p_173465_;
+        return model;
     }
 
     public com.google.common.collect.ImmutableList<BakedOverride> getOverrides() {
@@ -113,14 +114,14 @@ public class ItemOverrides {
         @Nullable
         final BakedModel model;
 
-        BakedOverride(ItemOverrides.PropertyMatcher[] p_173483_, @Nullable BakedModel p_173484_) {
-            this.matchers = p_173483_;
-            this.model = p_173484_;
+        BakedOverride(ItemOverrides.PropertyMatcher[] matchers, @Nullable BakedModel model) {
+            this.matchers = matchers;
+            this.model = model;
         }
 
-        boolean test(float[] p_173486_) {
+        boolean test(float[] properties) {
             for (ItemOverrides.PropertyMatcher itemoverrides$propertymatcher : this.matchers) {
-                float f = p_173486_[itemoverrides$propertymatcher.index];
+                float f = properties[itemoverrides$propertymatcher.index];
                 if (f < itemoverrides$propertymatcher.value) {
                     return false;
                 }
@@ -135,9 +136,9 @@ public class ItemOverrides {
         public final int index;
         public final float value;
 
-        PropertyMatcher(int p_173490_, float p_173491_) {
-            this.index = p_173490_;
-            this.value = p_173491_;
+        PropertyMatcher(int index, float value) {
+            this.index = index;
+            this.value = value;
         }
     }
 }

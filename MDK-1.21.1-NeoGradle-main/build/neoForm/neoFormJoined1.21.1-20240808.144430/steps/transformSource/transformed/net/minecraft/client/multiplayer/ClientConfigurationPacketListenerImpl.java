@@ -48,12 +48,12 @@ public class ClientConfigurationPacketListenerImpl extends ClientCommonPacketLis
     private boolean initializedConnection = false;
     private java.util.Map<net.minecraft.resources.ResourceLocation, net.minecraft.network.chat.Component> failureReasons = new java.util.HashMap<>();
 
-    public ClientConfigurationPacketListenerImpl(Minecraft p_295262_, Connection p_296339_, CommonListenerCookie p_294706_) {
-        super(p_295262_, p_296339_, p_294706_);
-        this.localGameProfile = p_294706_.localGameProfile();
-        this.receivedRegistries = p_294706_.receivedRegistries();
-        this.enabledFeatures = p_294706_.enabledFeatures();
-        this.chatState = p_294706_.chatState();
+    public ClientConfigurationPacketListenerImpl(Minecraft minecraft, Connection connection, CommonListenerCookie commonListenerCookie) {
+        super(minecraft, connection, commonListenerCookie);
+        this.localGameProfile = commonListenerCookie.localGameProfile();
+        this.receivedRegistries = commonListenerCookie.receivedRegistries();
+        this.enabledFeatures = commonListenerCookie.enabledFeatures();
+        this.chatState = commonListenerCookie.chatState();
     }
 
     @Override
@@ -62,29 +62,29 @@ public class ClientConfigurationPacketListenerImpl extends ClientCommonPacketLis
     }
 
     @Override
-    protected void handleCustomPayload(CustomPacketPayload p_295411_) {
-        this.handleUnknownCustomPayload(p_295411_);
+    protected void handleCustomPayload(CustomPacketPayload payload) {
+        this.handleUnknownCustomPayload(payload);
     }
 
-    private void handleUnknownCustomPayload(CustomPacketPayload p_296412_) {
-        LOGGER.warn("Unknown custom packet payload: {}", p_296412_.type().id());
-    }
-
-    @Override
-    public void handleRegistryData(ClientboundRegistryDataPacket p_295757_) {
-        PacketUtils.ensureRunningOnSameThread(p_295757_, this, this.minecraft);
-        this.registryDataCollector.appendContents(p_295757_.registry(), p_295757_.entries());
+    private void handleUnknownCustomPayload(CustomPacketPayload payload) {
+        LOGGER.warn("Unknown custom packet payload: {}", payload.type().id());
     }
 
     @Override
-    public void handleUpdateTags(ClientboundUpdateTagsPacket p_321623_) {
-        PacketUtils.ensureRunningOnSameThread(p_321623_, this, this.minecraft);
-        this.registryDataCollector.appendTags(p_321623_.getTags());
+    public void handleRegistryData(ClientboundRegistryDataPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.registryDataCollector.appendContents(packet.registry(), packet.entries());
     }
 
     @Override
-    public void handleEnabledFeatures(ClientboundUpdateEnabledFeaturesPacket p_294410_) {
-        this.enabledFeatures = FeatureFlags.REGISTRY.fromNames(p_294410_.features());
+    public void handleUpdateTags(ClientboundUpdateTagsPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.registryDataCollector.appendTags(packet.getTags());
+    }
+
+    @Override
+    public void handleEnabledFeatures(ClientboundUpdateEnabledFeaturesPacket packet) {
+        this.enabledFeatures = FeatureFlags.REGISTRY.fromNames(packet.features());
         // Neo: Fallback detection layer for vanilla servers
         if (this.connectionType.isOther()) {
             this.initializedConnection = true;
@@ -93,28 +93,28 @@ public class ClientConfigurationPacketListenerImpl extends ClientCommonPacketLis
     }
 
     @Override
-    public void handleSelectKnownPacks(ClientboundSelectKnownPacks p_325965_) {
-        PacketUtils.ensureRunningOnSameThread(p_325965_, this, this.minecraft);
+    public void handleSelectKnownPacks(ClientboundSelectKnownPacks packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         if (this.knownPacks == null) {
             this.knownPacks = new KnownPacksManager();
         }
 
-        List<KnownPack> list = this.knownPacks.trySelectingPacks(p_325965_.knownPacks());
+        List<KnownPack> list = this.knownPacks.trySelectingPacks(packet.knownPacks());
         this.send(new ServerboundSelectKnownPacks(list));
     }
 
     @Override
-    public void handleResetChat(ClientboundResetChatPacket p_338215_) {
+    public void handleResetChat(ClientboundResetChatPacket packet) {
         this.chatState = null;
     }
 
-    private <T> T runWithResources(Function<ResourceProvider, T> p_325978_) {
+    private <T> T runWithResources(Function<ResourceProvider, T> resources) {
         if (this.knownPacks == null) {
-            return p_325978_.apply(ResourceProvider.EMPTY);
+            return resources.apply(ResourceProvider.EMPTY);
         } else {
             Object object;
             try (CloseableResourceManager closeableresourcemanager = this.knownPacks.createResourceManager()) {
-                object = p_325978_.apply(closeableresourcemanager);
+                object = resources.apply(closeableresourcemanager);
             }
 
             return (T)object;
@@ -122,8 +122,8 @@ public class ClientConfigurationPacketListenerImpl extends ClientCommonPacketLis
     }
 
     @Override
-    public void handleConfigurationFinished(ClientboundFinishConfigurationPacket p_294585_) {
-        PacketUtils.ensureRunningOnSameThread(p_294585_, this, this.minecraft);
+    public void handleConfigurationFinished(ClientboundFinishConfigurationPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         RegistryAccess.Frozen registryaccess$frozen = this.runWithResources(
             p_326197_ -> this.registryDataCollector.collectGameRegistries(p_326197_, this.receivedRegistries, this.connection.isMemoryConnection())
         );
@@ -166,8 +166,8 @@ public class ClientConfigurationPacketListenerImpl extends ClientCommonPacketLis
     }
 
     @Override
-    public void onDisconnect(DisconnectionDetails p_351005_) {
-        super.onDisconnect(p_351005_);
+    public void onDisconnect(DisconnectionDetails details) {
+        super.onDisconnect(details);
         this.minecraft.clearDownloadedResourcePacks();
     }
 

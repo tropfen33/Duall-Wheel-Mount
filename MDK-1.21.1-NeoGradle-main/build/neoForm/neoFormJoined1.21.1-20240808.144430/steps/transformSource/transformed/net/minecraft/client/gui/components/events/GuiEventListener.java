@@ -8,51 +8,137 @@ import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
+/**
+ * Represents a listener for GUI events.
+ * <p>
+ * It extends the {@code TabOrderedElement} interface, providing tab order functionality for GUI components.
+ */
 @OnlyIn(Dist.CLIENT)
 public interface GuiEventListener extends TabOrderedElement {
     long DOUBLE_CLICK_THRESHOLD_MS = 250L;
 
-    default void mouseMoved(double p_94758_, double p_94759_) {
+    /**
+     * Called when the mouse is moved within the GUI element.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     */
+    default void mouseMoved(double mouseX, double mouseY) {
     }
 
-    default boolean mouseClicked(double p_94737_, double p_94738_, int p_94739_) {
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
+    default boolean mouseClicked(double mouseX, double mouseY, int button) {
         return false;
     }
 
-    default boolean mouseReleased(double p_94753_, double p_94754_, int p_94755_) {
+    /**
+     * Called when a mouse button is released within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was released.
+     */
+    default boolean mouseReleased(double mouseX, double mouseY, int button) {
         return false;
     }
 
-    default boolean mouseDragged(double p_94740_, double p_94741_, int p_94742_, double p_94743_, double p_94744_) {
+    /**
+     * Called when the mouse is dragged within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that is being dragged.
+     * @param dragX  the X distance of the drag.
+     * @param dragY  the Y distance of the drag.
+     */
+    default boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         return false;
     }
 
-    default boolean mouseScrolled(double p_94734_, double p_94735_, double p_94736_, double p_296070_) {
+    default boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         return false;
     }
 
-    default boolean keyPressed(int p_94745_, int p_94746_, int p_94747_) {
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
+    default boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         return false;
     }
 
-    default boolean keyReleased(int p_94750_, int p_94751_, int p_94752_) {
+    /**
+     * Called when a keyboard key is released within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the released key.
+     * @param scanCode  the scan code of the released key.
+     * @param modifiers the keyboard modifiers.
+     */
+    default boolean keyReleased(int keyCode, int scanCode, int modifiers) {
         return false;
     }
 
-    default boolean charTyped(char p_94732_, int p_94733_) {
+    /**
+     * Called when a character is typed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param codePoint the code point of the typed character.
+     * @param modifiers the keyboard modifiers.
+     */
+    default boolean charTyped(char codePoint, int modifiers) {
         return false;
     }
 
+    /**
+     * Retrieves the next focus path based on the given focus navigation event.
+     * <p>
+     * @return the next focus path as a ComponentPath, or {@code null} if there is no next focus path.
+     *
+     * @param event the focus navigation event.
+     */
     @Nullable
-    default ComponentPath nextFocusPath(FocusNavigationEvent p_265234_) {
+    default ComponentPath nextFocusPath(FocusNavigationEvent event) {
         return null;
     }
 
-    default boolean isMouseOver(double p_94748_, double p_94749_) {
+    /**
+     * Checks if the given mouse coordinates are over the GUI element.
+     * <p>
+     * @return {@code true} if the mouse is over the GUI element, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     */
+    default boolean isMouseOver(double mouseX, double mouseY) {
         return false;
     }
 
-    void setFocused(boolean p_265728_);
+    /**
+     * Sets the focus state of the GUI element.
+     *
+     * @param focused {@code true} to apply focus, {@code false} to remove focus
+     */
+    void setFocused(boolean focused);
 
     boolean isFocused();
 

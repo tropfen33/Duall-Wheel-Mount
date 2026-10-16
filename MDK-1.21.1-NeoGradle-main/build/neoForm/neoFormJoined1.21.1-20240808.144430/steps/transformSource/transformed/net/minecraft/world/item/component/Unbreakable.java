@@ -21,13 +21,13 @@ public record Unbreakable(boolean showInTooltip) implements TooltipProvider {
     private static final Component TOOLTIP = Component.translatable("item.unbreakable").withStyle(ChatFormatting.BLUE);
 
     @Override
-    public void addToTooltip(Item.TooltipContext p_341037_, Consumer<Component> p_330706_, TooltipFlag p_331385_) {
+    public void addToTooltip(Item.TooltipContext context, Consumer<Component> tooltipAdder, TooltipFlag tooltipFlag) {
         if (this.showInTooltip) {
-            p_330706_.accept(TOOLTIP);
+            tooltipAdder.accept(TOOLTIP);
         }
     }
 
-    public Unbreakable withTooltip(boolean p_335889_) {
-        return new Unbreakable(p_335889_);
+    public Unbreakable withTooltip(boolean showInTooltip) {
+        return new Unbreakable(showInTooltip);
     }
 }

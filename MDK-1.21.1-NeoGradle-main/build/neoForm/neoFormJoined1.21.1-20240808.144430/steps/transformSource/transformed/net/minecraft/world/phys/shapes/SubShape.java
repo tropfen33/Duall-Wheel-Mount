@@ -12,40 +12,40 @@ public final class SubShape extends DiscreteVoxelShape {
     private final int endY;
     private final int endZ;
 
-    protected SubShape(DiscreteVoxelShape p_83190_, int p_83191_, int p_83192_, int p_83193_, int p_83194_, int p_83195_, int p_83196_) {
-        super(p_83194_ - p_83191_, p_83195_ - p_83192_, p_83196_ - p_83193_);
-        this.parent = p_83190_;
-        this.startX = p_83191_;
-        this.startY = p_83192_;
-        this.startZ = p_83193_;
-        this.endX = p_83194_;
-        this.endY = p_83195_;
-        this.endZ = p_83196_;
+    protected SubShape(DiscreteVoxelShape parent, int startX, int startY, int startZ, int endX, int endY, int endZ) {
+        super(endX - startX, endY - startY, endZ - startZ);
+        this.parent = parent;
+        this.startX = startX;
+        this.startY = startY;
+        this.startZ = startZ;
+        this.endX = endX;
+        this.endY = endY;
+        this.endZ = endZ;
     }
 
     @Override
-    public boolean isFull(int p_83206_, int p_83207_, int p_83208_) {
-        return this.parent.isFull(this.startX + p_83206_, this.startY + p_83207_, this.startZ + p_83208_);
+    public boolean isFull(int x, int y, int z) {
+        return this.parent.isFull(this.startX + x, this.startY + y, this.startZ + z);
     }
 
     @Override
-    public void fill(int p_166060_, int p_166061_, int p_166062_) {
-        this.parent.fill(this.startX + p_166060_, this.startY + p_166061_, this.startZ + p_166062_);
+    public void fill(int x, int y, int z) {
+        this.parent.fill(this.startX + x, this.startY + y, this.startZ + z);
     }
 
     @Override
-    public int firstFull(Direction.Axis p_83204_) {
-        return this.clampToShape(p_83204_, this.parent.firstFull(p_83204_));
+    public int firstFull(Direction.Axis axis) {
+        return this.clampToShape(axis, this.parent.firstFull(axis));
     }
 
     @Override
-    public int lastFull(Direction.Axis p_83210_) {
-        return this.clampToShape(p_83210_, this.parent.lastFull(p_83210_));
+    public int lastFull(Direction.Axis axis) {
+        return this.clampToShape(axis, this.parent.lastFull(axis));
     }
 
-    private int clampToShape(Direction.Axis p_166057_, int p_166058_) {
-        int i = p_166057_.choose(this.startX, this.startY, this.startZ);
-        int j = p_166057_.choose(this.endX, this.endY, this.endZ);
-        return Mth.clamp(p_166058_, i, j) - i;
+    private int clampToShape(Direction.Axis axis, int value) {
+        int i = axis.choose(this.startX, this.startY, this.startZ);
+        int j = axis.choose(this.endX, this.endY, this.endZ);
+        return Mth.clamp(value, i, j) - i;
     }
 }

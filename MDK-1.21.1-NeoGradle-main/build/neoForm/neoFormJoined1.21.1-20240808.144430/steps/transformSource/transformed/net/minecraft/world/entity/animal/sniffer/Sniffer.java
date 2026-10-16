@@ -83,8 +83,8 @@ public class Sniffer extends Animal {
         return Mob.createMobAttributes().add(Attributes.MOVEMENT_SPEED, 0.1F).add(Attributes.MAX_HEALTH, 14.0);
     }
 
-    public Sniffer(EntityType<? extends Animal> p_273717_, Level p_273562_) {
-        super(p_273717_, p_273562_);
+    public Sniffer(EntityType<? extends Animal> entityType, Level level) {
+        super(entityType, level);
         this.getNavigation().setCanFloat(true);
         this.setPathfindingMalus(PathType.WATER, -1.0F);
         this.setPathfindingMalus(PathType.DANGER_POWDER_SNOW, -1.0F);
@@ -92,10 +92,10 @@ public class Sniffer extends Animal {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326082_) {
-        super.defineSynchedData(p_326082_);
-        p_326082_.define(DATA_STATE, Sniffer.State.IDLING);
-        p_326082_.define(DATA_DROP_SEED_AT_TICK, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_STATE, Sniffer.State.IDLING);
+        builder.define(DATA_DROP_SEED_AT_TICK, 0);
     }
 
     @Override
@@ -112,8 +112,8 @@ public class Sniffer extends Animal {
     }
 
     @Override
-    public EntityDimensions getDefaultDimensions(Pose p_316489_) {
-        return this.getState() == Sniffer.State.DIGGING ? DIGGING_DIMENSIONS.scale(this.getAgeScale()) : super.getDefaultDimensions(p_316489_);
+    public EntityDimensions getDefaultDimensions(Pose pose) {
+        return this.getState() == Sniffer.State.DIGGING ? DIGGING_DIMENSIONS.scale(this.getAgeScale()) : super.getDefaultDimensions(pose);
     }
 
     public boolean isSearching() {
@@ -145,14 +145,14 @@ public class Sniffer extends Animal {
         return this.entityData.get(DATA_STATE);
     }
 
-    private Sniffer setState(Sniffer.State p_273359_) {
-        this.entityData.set(DATA_STATE, p_273359_);
+    private Sniffer setState(Sniffer.State state) {
+        this.entityData.set(DATA_STATE, state);
         return this;
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_272936_) {
-        if (DATA_STATE.equals(p_272936_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        if (DATA_STATE.equals(key)) {
             Sniffer.State sniffer$state = this.getState();
             this.resetAnimations();
             switch (sniffer$state) {
@@ -177,7 +177,7 @@ public class Sniffer extends Animal {
             this.refreshDimensions();
         }
 
-        super.onSyncedDataUpdated(p_272936_);
+        super.onSyncedDataUpdated(key);
     }
 
     private void resetAnimations() {
@@ -188,8 +188,8 @@ public class Sniffer extends Animal {
         this.scentingAnimationState.stop();
     }
 
-    public Sniffer transitionTo(Sniffer.State p_273096_) {
-        switch (p_273096_) {
+    public Sniffer transitionTo(Sniffer.State state) {
+        switch (state) {
             case IDLING:
                 this.setState(Sniffer.State.IDLING);
                 break;
@@ -229,8 +229,8 @@ public class Sniffer extends Animal {
         return this;
     }
 
-    public Sniffer onDiggingComplete(boolean p_272677_) {
-        if (p_272677_) {
+    public Sniffer onDiggingComplete(boolean storeExploredPosition) {
+        if (storeExploredPosition) {
             this.storeExploredPosition(this.getOnPos());
         }
 
@@ -258,10 +258,10 @@ public class Sniffer extends Animal {
             && this.canDig(this.getHeadBlock().below());
     }
 
-    private boolean canDig(BlockPos p_272757_) {
-        return this.level().getBlockState(p_272757_).is(BlockTags.SNIFFER_DIGGABLE_BLOCK)
-            && this.getExploredPositions().noneMatch(p_352807_ -> GlobalPos.of(this.level().dimension(), p_272757_).equals(p_352807_))
-            && Optional.ofNullable(this.getNavigation().createPath(p_272757_, 1)).map(Path::canReach).orElse(false);
+    private boolean canDig(BlockPos pos) {
+        return this.level().getBlockState(pos).is(BlockTags.SNIFFER_DIGGABLE_BLOCK)
+            && this.getExploredPositions().noneMatch(p_352807_ -> GlobalPos.of(this.level().dimension(), pos).equals(p_352807_))
+            && Optional.ofNullable(this.getNavigation().createPath(pos, 1)).map(Path::canReach).orElse(false);
     }
 
     private void dropSeed() {
@@ -285,8 +285,8 @@ public class Sniffer extends Animal {
         }
     }
 
-    private Sniffer emitDiggingParticles(AnimationState p_273528_) {
-        boolean flag = p_273528_.getAccumulatedTime() > 1700L && p_273528_.getAccumulatedTime() < 6000L;
+    private Sniffer emitDiggingParticles(AnimationState animationState) {
+        boolean flag = animationState.getAccumulatedTime() > 1700L && animationState.getAccumulatedTime() < 6000L;
         if (flag) {
             BlockPos blockpos = this.getHeadBlock();
             BlockState blockstate = this.level().getBlockState(blockpos.below());
@@ -312,9 +312,9 @@ public class Sniffer extends Animal {
         return this;
     }
 
-    private Sniffer storeExploredPosition(BlockPos p_273015_) {
+    private Sniffer storeExploredPosition(BlockPos pos) {
         List<GlobalPos> list = this.getExploredPositions().limit(20L).collect(Collectors.toList());
-        list.add(0, GlobalPos.of(this.level().dimension(), p_273015_));
+        list.add(0, GlobalPos.of(this.level().dimension(), pos));
         this.getBrain().setMemory(MemoryModuleType.SNIFFER_EXPLORED_POSITIONS, list);
         return this;
     }
@@ -336,19 +336,22 @@ public class Sniffer extends Animal {
     }
 
     @Override
-    public void spawnChildFromBreeding(ServerLevel p_277923_, Animal p_277857_) {
+    public void spawnChildFromBreeding(ServerLevel level, Animal mate) {
         ItemStack itemstack = new ItemStack(Items.SNIFFER_EGG);
-        ItemEntity itementity = new ItemEntity(p_277923_, this.position().x(), this.position().y(), this.position().z(), itemstack);
+        ItemEntity itementity = new ItemEntity(level, this.position().x(), this.position().y(), this.position().z(), itemstack);
         itementity.setDefaultPickUpDelay();
-        this.finalizeSpawnChildFromBreeding(p_277923_, p_277857_, null);
+        this.finalizeSpawnChildFromBreeding(level, mate, null);
         this.playSound(SoundEvents.SNIFFER_EGG_PLOP, 1.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 0.5F);
-        p_277923_.addFreshEntity(itementity);
+        level.addFreshEntity(itementity);
     }
 
+    /**
+     * Called when the mob's health reaches 0.
+     */
     @Override
-    public void die(DamageSource p_277689_) {
+    public void die(DamageSource damageSource) {
         this.transitionTo(Sniffer.State.IDLING);
-        super.die(p_277689_);
+        super.die(damageSource);
     }
 
     @Override
@@ -365,10 +368,10 @@ public class Sniffer extends Animal {
     }
 
     @Override
-    public InteractionResult mobInteract(Player p_273046_, InteractionHand p_272687_) {
-        ItemStack itemstack = p_273046_.getItemInHand(p_272687_);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
         boolean flag = this.isFood(itemstack);
-        InteractionResult interactionresult = super.mobInteract(p_273046_, p_272687_);
+        InteractionResult interactionresult = super.mobInteract(player, hand);
         if (interactionresult.consumesAction() && flag) {
             this.level().playSound(null, this, this.getEatingSound(itemstack), SoundSource.NEUTRAL, 1.0F, Mth.randomBetween(this.level().random, 0.8F, 1.2F));
         }
@@ -383,12 +386,12 @@ public class Sniffer extends Animal {
     }
 
     @Override
-    protected void playStepSound(BlockPos p_272953_, BlockState p_273729_) {
+    protected void playStepSound(BlockPos pos, BlockState state) {
         this.playSound(SoundEvents.SNIFFER_STEP, 0.15F, 1.0F);
     }
 
     @Override
-    public SoundEvent getEatingSound(ItemStack p_272747_) {
+    public SoundEvent getEatingSound(ItemStack stack) {
         return SoundEvents.SNIFFER_EAT;
     }
 
@@ -398,7 +401,7 @@ public class Sniffer extends Animal {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_273718_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.SNIFFER_HURT;
     }
 
@@ -412,23 +415,29 @@ public class Sniffer extends Animal {
         return 50;
     }
 
+    /**
+     * Set whether this mob is a child.
+     */
     @Override
-    public void setBaby(boolean p_272995_) {
-        this.setAge(p_272995_ ? -48000 : 0);
+    public void setBaby(boolean baby) {
+        this.setAge(baby ? -48000 : 0);
     }
 
     @Override
-    public AgeableMob getBreedOffspring(ServerLevel p_273401_, AgeableMob p_273310_) {
-        return EntityType.SNIFFER.create(p_273401_);
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        return EntityType.SNIFFER.create(level);
     }
 
+    /**
+     * Returns {@code true} if the mob is currently able to mate with the specified mob.
+     */
     @Override
-    public boolean canMate(Animal p_272966_) {
-        if (!(p_272966_ instanceof Sniffer sniffer)) {
+    public boolean canMate(Animal otherAnimal) {
+        if (!(otherAnimal instanceof Sniffer sniffer)) {
             return false;
         } else {
             Set<Sniffer.State> set = Set.of(Sniffer.State.IDLING, Sniffer.State.SCENTING, Sniffer.State.FEELING_HAPPY);
-            return set.contains(this.getState()) && set.contains(sniffer.getState()) && super.canMate(p_272966_);
+            return set.contains(this.getState()) && set.contains(sniffer.getState()) && super.canMate(otherAnimal);
         }
     }
 
@@ -437,14 +446,17 @@ public class Sniffer extends Animal {
         return super.getBoundingBoxForCulling().inflate(0.6F);
     }
 
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on the animal type)
+     */
     @Override
-    public boolean isFood(ItemStack p_273659_) {
-        return p_273659_.is(ItemTags.SNIFFER_FOOD);
+    public boolean isFood(ItemStack stack) {
+        return stack.is(ItemTags.SNIFFER_FOOD);
     }
 
     @Override
-    protected Brain<?> makeBrain(Dynamic<?> p_273174_) {
-        return SnifferAi.makeBrain(this.brainProvider().makeBrain(p_273174_));
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return SnifferAi.makeBrain(this.brainProvider().makeBrain(dynamic));
     }
 
     @Override
@@ -486,8 +498,8 @@ public class Sniffer extends Animal {
         public static final StreamCodec<ByteBuf, Sniffer.State> STREAM_CODEC = ByteBufCodecs.idMapper(BY_ID, Sniffer.State::id);
         private final int id;
 
-        private State(int p_319911_) {
-            this.id = p_319911_;
+        private State(int id) {
+            this.id = id;
         }
 
         public int id() {

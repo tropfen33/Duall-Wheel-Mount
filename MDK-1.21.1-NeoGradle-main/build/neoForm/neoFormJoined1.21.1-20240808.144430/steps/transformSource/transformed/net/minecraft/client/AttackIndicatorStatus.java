@@ -16,9 +16,9 @@ public enum AttackIndicatorStatus implements OptionEnum {
     private final int id;
     private final String key;
 
-    private AttackIndicatorStatus(int p_90506_, String p_90507_) {
-        this.id = p_90506_;
-        this.key = p_90507_;
+    private AttackIndicatorStatus(int id, String key) {
+        this.id = id;
+        this.key = key;
     }
 
     @Override
@@ -31,7 +31,7 @@ public enum AttackIndicatorStatus implements OptionEnum {
         return this.key;
     }
 
-    public static AttackIndicatorStatus byId(int p_90510_) {
-        return BY_ID.apply(p_90510_);
+    public static AttackIndicatorStatus byId(int id) {
+        return BY_ID.apply(id);
     }
 }

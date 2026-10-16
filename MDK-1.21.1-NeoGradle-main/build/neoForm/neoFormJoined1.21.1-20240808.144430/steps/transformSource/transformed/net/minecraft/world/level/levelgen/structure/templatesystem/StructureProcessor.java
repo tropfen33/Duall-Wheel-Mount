@@ -8,32 +8,35 @@ import net.minecraft.world.level.ServerLevelAccessor;
 
 public abstract class StructureProcessor {
     /**
-     * @deprecated Forge: Use {@link #process(LevelReader, BlockPos, BlockPos, StructureTemplate.StructureBlockInfo, StructureTemplate.StructureBlockInfo, StructurePlaceSettings, StructureTemplate)} instead.
+     * @deprecated Forge: Use {@link #process(LevelReader, BlockPos, BlockPos,
+     *             StructureTemplate.StructureBlockInfo,
+     *             StructureTemplate.StructureBlockInfo, StructurePlaceSettings,
+     *             StructureTemplate)} instead.
      */
     @Deprecated
     @Nullable
     public StructureTemplate.StructureBlockInfo processBlock(
-        LevelReader p_74416_,
-        BlockPos p_74417_,
-        BlockPos p_74418_,
-        StructureTemplate.StructureBlockInfo p_74419_,
-        StructureTemplate.StructureBlockInfo p_74420_,
-        StructurePlaceSettings p_74421_
+        LevelReader level,
+        BlockPos offset,
+        BlockPos pos,
+        StructureTemplate.StructureBlockInfo blockInfo,
+        StructureTemplate.StructureBlockInfo relativeBlockInfo,
+        StructurePlaceSettings settings
     ) {
-        return p_74420_;
+        return relativeBlockInfo;
     }
 
     protected abstract StructureProcessorType<?> getType();
 
     public List<StructureTemplate.StructureBlockInfo> finalizeProcessing(
-        ServerLevelAccessor p_278247_,
-        BlockPos p_277590_,
-        BlockPos p_277935_,
-        List<StructureTemplate.StructureBlockInfo> p_278070_,
-        List<StructureTemplate.StructureBlockInfo> p_278053_,
-        StructurePlaceSettings p_277497_
+        ServerLevelAccessor serverLevel,
+        BlockPos offset,
+        BlockPos pos,
+        List<StructureTemplate.StructureBlockInfo> originalBlockInfos,
+        List<StructureTemplate.StructureBlockInfo> processedBlockInfos,
+        StructurePlaceSettings settings
     ) {
-        return p_278053_;
+        return processedBlockInfos;
     }
 
     @Nullable

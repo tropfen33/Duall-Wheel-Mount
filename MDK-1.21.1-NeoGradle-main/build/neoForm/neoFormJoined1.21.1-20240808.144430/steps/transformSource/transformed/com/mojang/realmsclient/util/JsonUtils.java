@@ -12,92 +12,92 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class JsonUtils {
-    public static <T> T getRequired(String p_275573_, JsonObject p_275650_, Function<JsonObject, T> p_275655_) {
-        JsonElement jsonelement = p_275650_.get(p_275573_);
+    public static <T> T getRequired(String key, JsonObject json, Function<JsonObject, T> output) {
+        JsonElement jsonelement = json.get(key);
         if (jsonelement == null || jsonelement.isJsonNull()) {
-            throw new IllegalStateException("Missing required property: " + p_275573_);
+            throw new IllegalStateException("Missing required property: " + key);
         } else if (!jsonelement.isJsonObject()) {
-            throw new IllegalStateException("Required property " + p_275573_ + " was not a JsonObject as espected");
+            throw new IllegalStateException("Required property " + key + " was not a JsonObject as espected");
         } else {
-            return p_275655_.apply(jsonelement.getAsJsonObject());
+            return output.apply(jsonelement.getAsJsonObject());
         }
     }
 
     @Nullable
-    public static <T> T getOptional(String p_304642_, JsonObject p_304910_, Function<JsonObject, T> p_304507_) {
-        JsonElement jsonelement = p_304910_.get(p_304642_);
+    public static <T> T getOptional(String key, JsonObject json, Function<JsonObject, T> output) {
+        JsonElement jsonelement = json.get(key);
         if (jsonelement == null || jsonelement.isJsonNull()) {
             return null;
         } else if (!jsonelement.isJsonObject()) {
-            throw new IllegalStateException("Required property " + p_304642_ + " was not a JsonObject as espected");
+            throw new IllegalStateException("Required property " + key + " was not a JsonObject as espected");
         } else {
-            return p_304507_.apply(jsonelement.getAsJsonObject());
+            return output.apply(jsonelement.getAsJsonObject());
         }
     }
 
-    public static String getRequiredString(String p_275692_, JsonObject p_275706_) {
-        String s = getStringOr(p_275692_, p_275706_, null);
+    public static String getRequiredString(String key, JsonObject json) {
+        String s = getStringOr(key, json, null);
         if (s == null) {
-            throw new IllegalStateException("Missing required property: " + p_275692_);
+            throw new IllegalStateException("Missing required property: " + key);
         } else {
             return s;
         }
     }
 
-    public static String getRequiredStringOr(String p_307555_, JsonObject p_307369_, String p_307525_) {
-        JsonElement jsonelement = p_307369_.get(p_307555_);
+    public static String getRequiredStringOr(String key, JsonObject json, String defaultValue) {
+        JsonElement jsonelement = json.get(key);
         if (jsonelement != null) {
-            return jsonelement.isJsonNull() ? p_307525_ : jsonelement.getAsString();
+            return jsonelement.isJsonNull() ? defaultValue : jsonelement.getAsString();
         } else {
-            return p_307525_;
+            return defaultValue;
         }
     }
 
     @Nullable
-    public static String getStringOr(String p_90162_, JsonObject p_90163_, @Nullable String p_90164_) {
-        JsonElement jsonelement = p_90163_.get(p_90162_);
+    public static String getStringOr(String key, JsonObject json, @Nullable String defaultValue) {
+        JsonElement jsonelement = json.get(key);
         if (jsonelement != null) {
-            return jsonelement.isJsonNull() ? p_90164_ : jsonelement.getAsString();
+            return jsonelement.isJsonNull() ? defaultValue : jsonelement.getAsString();
         } else {
-            return p_90164_;
+            return defaultValue;
         }
     }
 
     @Nullable
-    public static UUID getUuidOr(String p_275342_, JsonObject p_275515_, @Nullable UUID p_275232_) {
-        String s = getStringOr(p_275342_, p_275515_, null);
-        return s == null ? p_275232_ : UndashedUuid.fromStringLenient(s);
+    public static UUID getUuidOr(String key, JsonObject json, @Nullable UUID defaultValue) {
+        String s = getStringOr(key, json, null);
+        return s == null ? defaultValue : UndashedUuid.fromStringLenient(s);
     }
 
-    public static int getIntOr(String p_90154_, JsonObject p_90155_, int p_90156_) {
-        JsonElement jsonelement = p_90155_.get(p_90154_);
+    public static int getIntOr(String key, JsonObject json, int defaultValue) {
+        JsonElement jsonelement = json.get(key);
         if (jsonelement != null) {
-            return jsonelement.isJsonNull() ? p_90156_ : jsonelement.getAsInt();
+            return jsonelement.isJsonNull() ? defaultValue : jsonelement.getAsInt();
         } else {
-            return p_90156_;
+            return defaultValue;
         }
     }
 
-    public static long getLongOr(String p_90158_, JsonObject p_90159_, long p_90160_) {
-        JsonElement jsonelement = p_90159_.get(p_90158_);
+    public static long getLongOr(String key, JsonObject json, long defaultValue) {
+        JsonElement jsonelement = json.get(key);
         if (jsonelement != null) {
-            return jsonelement.isJsonNull() ? p_90160_ : jsonelement.getAsLong();
+            return jsonelement.isJsonNull() ? defaultValue : jsonelement.getAsLong();
         } else {
-            return p_90160_;
+            return defaultValue;
         }
     }
 
-    public static boolean getBooleanOr(String p_90166_, JsonObject p_90167_, boolean p_90168_) {
-        JsonElement jsonelement = p_90167_.get(p_90166_);
+    public static boolean getBooleanOr(String key, JsonObject json, boolean defaultValue) {
+        JsonElement jsonelement = json.get(key);
         if (jsonelement != null) {
-            return jsonelement.isJsonNull() ? p_90168_ : jsonelement.getAsBoolean();
+            return jsonelement.isJsonNull() ? defaultValue : jsonelement.getAsBoolean();
         } else {
-            return p_90168_;
+            return defaultValue;
         }
     }
 
-    public static Date getDateOr(String p_90151_, JsonObject p_90152_) {
-        JsonElement jsonelement = p_90152_.get(p_90151_);
+    public static Date getDateOr(String key, JsonObject json) {
+        JsonElement jsonelement = json.get(key);
         return jsonelement != null ? new Date(Long.parseLong(jsonelement.getAsString())) : new Date();
     }
 }

@@ -30,7 +30,7 @@ public class SetClosestHomeAsWalkTarget {
     private static final int RATE = 20;
     private static final int OK_DISTANCE_SQR = 4;
 
-    public static BehaviorControl<PathfinderMob> create(float p_259960_) {
+    public static BehaviorControl<PathfinderMob> create(float speedModifier) {
         Long2LongMap long2longmap = new Long2LongOpenHashMap();
         MutableLong mutablelong = new MutableLong(0L);
         return BehaviorBuilder.create(
@@ -68,7 +68,7 @@ public class SetClosestHomeAsWalkTarget {
                                             BlockPos blockpos = path.getTarget();
                                             Optional<Holder<PoiType>> optional1 = poimanager.getType(blockpos);
                                             if (optional1.isPresent()) {
-                                                p_258626_.set(new WalkTarget(blockpos, p_259960_, 1));
+                                                p_258626_.set(new WalkTarget(blockpos, speedModifier, 1));
                                                 DebugPackets.sendPoiTicketCountPacket(p_258638_, blockpos);
                                             }
                                         } else if (mutableint.getValue() < 5) {

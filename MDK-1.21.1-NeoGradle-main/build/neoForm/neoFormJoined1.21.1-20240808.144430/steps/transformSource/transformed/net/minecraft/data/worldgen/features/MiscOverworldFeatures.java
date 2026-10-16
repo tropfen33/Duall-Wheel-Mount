@@ -39,10 +39,10 @@ public class MiscOverworldFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> SPRING_LAVA_FROZEN = FeatureUtils.createKey("spring_lava_frozen");
     public static final ResourceKey<ConfiguredFeature<?, ?>> SPRING_WATER = FeatureUtils.createKey("spring_water");
 
-    public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> p_321835_) {
-        FeatureUtils.register(p_321835_, ICE_SPIKE, Feature.ICE_SPIKE);
+    public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> context) {
+        FeatureUtils.register(context, ICE_SPIKE, Feature.ICE_SPIKE);
         FeatureUtils.register(
-            p_321835_,
+            context,
             ICE_PATCH,
             Feature.DISK,
             new DiskConfiguration(
@@ -54,12 +54,12 @@ public class MiscOverworldFeatures {
                 1
             )
         );
-        FeatureUtils.register(p_321835_, FOREST_ROCK, Feature.FOREST_ROCK, new BlockStateConfiguration(Blocks.MOSSY_COBBLESTONE.defaultBlockState()));
-        FeatureUtils.register(p_321835_, ICEBERG_PACKED, Feature.ICEBERG, new BlockStateConfiguration(Blocks.PACKED_ICE.defaultBlockState()));
-        FeatureUtils.register(p_321835_, ICEBERG_BLUE, Feature.ICEBERG, new BlockStateConfiguration(Blocks.BLUE_ICE.defaultBlockState()));
-        FeatureUtils.register(p_321835_, BLUE_ICE, Feature.BLUE_ICE);
+        FeatureUtils.register(context, FOREST_ROCK, Feature.FOREST_ROCK, new BlockStateConfiguration(Blocks.MOSSY_COBBLESTONE.defaultBlockState()));
+        FeatureUtils.register(context, ICEBERG_PACKED, Feature.ICEBERG, new BlockStateConfiguration(Blocks.PACKED_ICE.defaultBlockState()));
+        FeatureUtils.register(context, ICEBERG_BLUE, Feature.ICEBERG, new BlockStateConfiguration(Blocks.BLUE_ICE.defaultBlockState()));
+        FeatureUtils.register(context, BLUE_ICE, Feature.BLUE_ICE);
         FeatureUtils.register(
-            p_321835_,
+            context,
             LAKE_LAVA,
             Feature.LAKE,
             new LakeFeature.Configuration(
@@ -67,7 +67,7 @@ public class MiscOverworldFeatures {
             )
         );
         FeatureUtils.register(
-            p_321835_,
+            context,
             DISK_CLAY,
             Feature.DISK,
             new DiskConfiguration(
@@ -75,7 +75,7 @@ public class MiscOverworldFeatures {
             )
         );
         FeatureUtils.register(
-            p_321835_,
+            context,
             DISK_GRAVEL,
             Feature.DISK,
             new DiskConfiguration(
@@ -86,7 +86,7 @@ public class MiscOverworldFeatures {
             )
         );
         FeatureUtils.register(
-            p_321835_,
+            context,
             DISK_SAND,
             Feature.DISK,
             new DiskConfiguration(
@@ -103,9 +103,9 @@ public class MiscOverworldFeatures {
                 2
             )
         );
-        FeatureUtils.register(p_321835_, FREEZE_TOP_LAYER, Feature.FREEZE_TOP_LAYER);
+        FeatureUtils.register(context, FREEZE_TOP_LAYER, Feature.FREEZE_TOP_LAYER);
         FeatureUtils.register(
-            p_321835_,
+            context,
             DISK_GRASS,
             Feature.DISK,
             new DiskConfiguration(
@@ -127,11 +127,11 @@ public class MiscOverworldFeatures {
                 2
             )
         );
-        FeatureUtils.register(p_321835_, BONUS_CHEST, Feature.BONUS_CHEST);
-        FeatureUtils.register(p_321835_, VOID_START_PLATFORM, Feature.VOID_START_PLATFORM);
-        FeatureUtils.register(p_321835_, DESERT_WELL, Feature.DESERT_WELL);
+        FeatureUtils.register(context, BONUS_CHEST, Feature.BONUS_CHEST);
+        FeatureUtils.register(context, VOID_START_PLATFORM, Feature.VOID_START_PLATFORM);
+        FeatureUtils.register(context, DESERT_WELL, Feature.DESERT_WELL);
         FeatureUtils.register(
-            p_321835_,
+            context,
             SPRING_LAVA_OVERWORLD,
             Feature.SPRING,
             new SpringConfiguration(
@@ -153,7 +153,7 @@ public class MiscOverworldFeatures {
             )
         );
         FeatureUtils.register(
-            p_321835_,
+            context,
             SPRING_LAVA_FROZEN,
             Feature.SPRING,
             new SpringConfiguration(
@@ -165,7 +165,7 @@ public class MiscOverworldFeatures {
             )
         );
         FeatureUtils.register(
-            p_321835_,
+            context,
             SPRING_WATER,
             Feature.SPRING,
             new SpringConfiguration(

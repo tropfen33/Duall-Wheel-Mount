@@ -14,8 +14,8 @@ public class GridLayoutTab implements Tab {
     private final Component title;
     protected final GridLayout layout = new GridLayout();
 
-    public GridLayoutTab(Component p_268022_) {
-        this.title = p_268022_;
+    public GridLayoutTab(Component title) {
+        this.title = title;
     }
 
     @Override
@@ -24,13 +24,13 @@ public class GridLayoutTab implements Tab {
     }
 
     @Override
-    public void visitChildren(Consumer<AbstractWidget> p_268098_) {
-        this.layout.visitWidgets(p_268098_);
+    public void visitChildren(Consumer<AbstractWidget> consumer) {
+        this.layout.visitWidgets(consumer);
     }
 
     @Override
-    public void doLayout(ScreenRectangle p_268281_) {
+    public void doLayout(ScreenRectangle rectangle) {
         this.layout.arrangeElements();
-        FrameLayout.alignInRectangle(this.layout, p_268281_, 0.5F, 0.16666667F);
+        FrameLayout.alignInRectangle(this.layout, rectangle, 0.5F, 0.16666667F);
     }
 }

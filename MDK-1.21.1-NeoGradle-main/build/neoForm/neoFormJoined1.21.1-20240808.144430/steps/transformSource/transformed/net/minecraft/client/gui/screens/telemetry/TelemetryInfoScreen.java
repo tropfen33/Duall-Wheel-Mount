@@ -42,10 +42,10 @@ public class TelemetryInfoScreen extends Screen {
     private MultiLineTextWidget description;
     private double savedScroll;
 
-    public TelemetryInfoScreen(Screen p_261720_, Options p_262019_) {
+    public TelemetryInfoScreen(Screen lastScreen, Options options) {
         super(TITLE);
-        this.lastScreen = p_261720_;
-        this.options = p_262019_;
+        this.lastScreen = lastScreen;
+        this.options = options;
     }
 
     @Override
@@ -107,21 +107,21 @@ public class TelemetryInfoScreen extends Screen {
         return Checkbox.builder(CHECKBOX_OPT_IN, this.font).selected(optioninstance).onValueChange(this::onOptInChanged).build();
     }
 
-    private void onOptInChanged(AbstractWidget p_309196_, boolean p_309095_) {
+    private void onOptInChanged(AbstractWidget widget, boolean optedIn) {
         if (this.telemetryEventWidget != null) {
-            this.telemetryEventWidget.onOptInChanged(p_309095_);
+            this.telemetryEventWidget.onOptInChanged(optedIn);
         }
     }
 
-    private void openPrivacyStatementLink(Button p_295613_) {
+    private void openPrivacyStatementLink(Button button) {
         ConfirmLinkScreen.confirmLinkNow(this, CommonLinks.PRIVACY_STATEMENT);
     }
 
-    private void openFeedbackLink(Button p_261531_) {
+    private void openFeedbackLink(Button button) {
         ConfirmLinkScreen.confirmLinkNow(this, CommonLinks.RELEASE_FEEDBACK);
     }
 
-    private void openDataFolder(Button p_261840_) {
+    private void openDataFolder(Button button) {
         Util.getPlatform().openPath(this.minecraft.getTelemetryManager().getLogDirectory());
     }
 

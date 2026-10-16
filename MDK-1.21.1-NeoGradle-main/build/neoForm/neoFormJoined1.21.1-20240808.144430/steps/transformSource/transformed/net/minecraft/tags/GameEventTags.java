@@ -11,7 +11,7 @@ public class GameEventTags {
     public static final TagKey<GameEvent> IGNORE_VIBRATIONS_SNEAKING = create("ignore_vibrations_sneaking");
     public static final TagKey<GameEvent> ALLAY_CAN_LISTEN = create("allay_can_listen");
 
-    private static TagKey<GameEvent> create(String p_203853_) {
-        return TagKey.create(Registries.GAME_EVENT, ResourceLocation.withDefaultNamespace(p_203853_));
+    private static TagKey<GameEvent> create(String name) {
+        return TagKey.create(Registries.GAME_EVENT, ResourceLocation.withDefaultNamespace(name));
     }
 }

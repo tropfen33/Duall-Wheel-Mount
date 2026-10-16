@@ -40,28 +40,28 @@ public class DisplayInfo {
     private float y;
 
     public DisplayInfo(
-        ItemStack p_14969_,
-        Component p_14970_,
-        Component p_14971_,
-        Optional<ResourceLocation> p_312452_,
-        AdvancementType p_312497_,
-        boolean p_14974_,
-        boolean p_14975_,
-        boolean p_14976_
+        ItemStack icon,
+        Component title,
+        Component description,
+        Optional<ResourceLocation> background,
+        AdvancementType type,
+        boolean showToast,
+        boolean announceChat,
+        boolean hidden
     ) {
-        this.title = p_14970_;
-        this.description = p_14971_;
-        this.icon = p_14969_;
-        this.background = p_312452_;
-        this.type = p_312497_;
-        this.showToast = p_14974_;
-        this.announceChat = p_14975_;
-        this.hidden = p_14976_;
+        this.title = title;
+        this.description = description;
+        this.icon = icon;
+        this.background = background;
+        this.type = type;
+        this.showToast = showToast;
+        this.announceChat = announceChat;
+        this.hidden = hidden;
     }
 
-    public void setLocation(float p_14979_, float p_14980_) {
-        this.x = p_14979_;
-        this.y = p_14980_;
+    public void setLocation(float x, float y) {
+        this.x = x;
+        this.y = y;
     }
 
     public Component getTitle() {
@@ -104,11 +104,11 @@ public class DisplayInfo {
         return this.hidden;
     }
 
-    private void serializeToNetwork(RegistryFriendlyByteBuf p_319889_) {
-        ComponentSerialization.TRUSTED_STREAM_CODEC.encode(p_319889_, this.title);
-        ComponentSerialization.TRUSTED_STREAM_CODEC.encode(p_319889_, this.description);
-        ItemStack.STREAM_CODEC.encode(p_319889_, this.icon);
-        p_319889_.writeEnum(this.type);
+    private void serializeToNetwork(RegistryFriendlyByteBuf buffer) {
+        ComponentSerialization.TRUSTED_STREAM_CODEC.encode(buffer, this.title);
+        ComponentSerialization.TRUSTED_STREAM_CODEC.encode(buffer, this.description);
+        ItemStack.STREAM_CODEC.encode(buffer, this.icon);
+        buffer.writeEnum(this.type);
         int i = 0;
         if (this.background.isPresent()) {
             i |= 1;
@@ -122,23 +122,23 @@ public class DisplayInfo {
             i |= 4;
         }
 
-        p_319889_.writeInt(i);
-        this.background.ifPresent(p_319889_::writeResourceLocation);
-        p_319889_.writeFloat(this.x);
-        p_319889_.writeFloat(this.y);
+        buffer.writeInt(i);
+        this.background.ifPresent(buffer::writeResourceLocation);
+        buffer.writeFloat(this.x);
+        buffer.writeFloat(this.y);
     }
 
-    private static DisplayInfo fromNetwork(RegistryFriendlyByteBuf p_319903_) {
-        Component component = ComponentSerialization.TRUSTED_STREAM_CODEC.decode(p_319903_);
-        Component component1 = ComponentSerialization.TRUSTED_STREAM_CODEC.decode(p_319903_);
-        ItemStack itemstack = ItemStack.STREAM_CODEC.decode(p_319903_);
-        AdvancementType advancementtype = p_319903_.readEnum(AdvancementType.class);
-        int i = p_319903_.readInt();
-        Optional<ResourceLocation> optional = (i & 1) != 0 ? Optional.of(p_319903_.readResourceLocation()) : Optional.empty();
+    private static DisplayInfo fromNetwork(RegistryFriendlyByteBuf buffer) {
+        Component component = ComponentSerialization.TRUSTED_STREAM_CODEC.decode(buffer);
+        Component component1 = ComponentSerialization.TRUSTED_STREAM_CODEC.decode(buffer);
+        ItemStack itemstack = ItemStack.STREAM_CODEC.decode(buffer);
+        AdvancementType advancementtype = buffer.readEnum(AdvancementType.class);
+        int i = buffer.readInt();
+        Optional<ResourceLocation> optional = (i & 1) != 0 ? Optional.of(buffer.readResourceLocation()) : Optional.empty();
         boolean flag = (i & 2) != 0;
         boolean flag1 = (i & 4) != 0;
         DisplayInfo displayinfo = new DisplayInfo(itemstack, component, component1, optional, advancementtype, flag, false, flag1);
-        displayinfo.setLocation(p_319903_.readFloat(), p_319903_.readFloat());
+        displayinfo.setLocation(buffer.readFloat(), buffer.readFloat());
         return displayinfo;
     }
 }

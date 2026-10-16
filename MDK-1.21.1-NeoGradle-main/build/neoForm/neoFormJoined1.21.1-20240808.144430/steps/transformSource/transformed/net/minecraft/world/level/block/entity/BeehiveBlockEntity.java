@@ -85,8 +85,8 @@ public class BeehiveBlockEntity extends BlockEntity {
     @Nullable
     private BlockPos savedFlowerPos;
 
-    public BeehiveBlockEntity(BlockPos p_155134_, BlockState p_155135_) {
-        super(BlockEntityType.BEEHIVE, p_155134_, p_155135_);
+    public BeehiveBlockEntity(BlockPos pos, BlockState blockState) {
+        super(BlockEntityType.BEEHIVE, pos, blockState);
     }
 
     @Override
@@ -120,15 +120,15 @@ public class BeehiveBlockEntity extends BlockEntity {
         return this.stored.size() == 3;
     }
 
-    public void emptyAllLivingFromHive(@Nullable Player p_58749_, BlockState p_58750_, BeehiveBlockEntity.BeeReleaseStatus p_58751_) {
-        List<Entity> list = this.releaseAllOccupants(p_58750_, p_58751_);
-        if (p_58749_ != null) {
+    public void emptyAllLivingFromHive(@Nullable Player player, BlockState state, BeehiveBlockEntity.BeeReleaseStatus releaseStatus) {
+        List<Entity> list = this.releaseAllOccupants(state, releaseStatus);
+        if (player != null) {
             for (Entity entity : list) {
                 if (entity instanceof Bee) {
                     Bee bee = (Bee)entity;
-                    if (p_58749_.position().distanceToSqr(entity.position()) <= 16.0) {
+                    if (player.position().distanceToSqr(entity.position()) <= 16.0) {
                         if (!this.isSedated()) {
-                            bee.setTarget(p_58749_);
+                            bee.setTarget(player);
                         } else {
                             bee.setStayOutOfHiveCountdown(400);
                         }
@@ -138,10 +138,10 @@ public class BeehiveBlockEntity extends BlockEntity {
         }
     }
 
-    private List<Entity> releaseAllOccupants(BlockState p_58760_, BeehiveBlockEntity.BeeReleaseStatus p_58761_) {
+    private List<Entity> releaseAllOccupants(BlockState state, BeehiveBlockEntity.BeeReleaseStatus releaseStatus) {
         List<Entity> list = Lists.newArrayList();
         this.stored
-            .removeIf(p_330138_ -> releaseOccupant(this.level, this.worldPosition, p_58760_, p_330138_.toOccupant(), list, p_58761_, this.savedFlowerPos));
+            .removeIf(p_330138_ -> releaseOccupant(this.level, this.worldPosition, state, p_330138_.toOccupant(), list, releaseStatus, this.savedFlowerPos));
         if (!list.isEmpty()) {
             super.setChanged();
         }
@@ -154,8 +154,8 @@ public class BeehiveBlockEntity extends BlockEntity {
         return this.stored.size();
     }
 
-    public static int getHoneyLevel(BlockState p_58753_) {
-        return p_58753_.getValue(BeehiveBlock.HONEY_LEVEL);
+    public static int getHoneyLevel(BlockState state) {
+        return state.getValue(BeehiveBlock.HONEY_LEVEL);
     }
 
     @VisibleForDebug
@@ -163,13 +163,13 @@ public class BeehiveBlockEntity extends BlockEntity {
         return CampfireBlock.isSmokeyPos(this.level, this.getBlockPos());
     }
 
-    public void addOccupant(Entity p_58742_) {
+    public void addOccupant(Entity occupant) {
         if (this.stored.size() < 3) {
-            p_58742_.stopRiding();
-            p_58742_.ejectPassengers();
-            this.storeBee(BeehiveBlockEntity.Occupant.of(p_58742_));
+            occupant.stopRiding();
+            occupant.ejectPassengers();
+            this.storeBee(BeehiveBlockEntity.Occupant.of(occupant));
             if (this.level != null) {
-                if (p_58742_ instanceof Bee bee && bee.hasSavedFlowerPos() && (!this.hasSavedFlowerPos() || this.level.random.nextBoolean())) {
+                if (occupant instanceof Bee bee && bee.hasSavedFlowerPos() && (!this.hasSavedFlowerPos() || this.level.random.nextBoolean())) {
                     this.savedFlowerPos = bee.getSavedFlowerPos();
                 }
 
@@ -185,73 +185,73 @@ public class BeehiveBlockEntity extends BlockEntity {
                         1.0F,
                         1.0F
                     );
-                this.level.gameEvent(GameEvent.BLOCK_CHANGE, blockpos, GameEvent.Context.of(p_58742_, this.getBlockState()));
+                this.level.gameEvent(GameEvent.BLOCK_CHANGE, blockpos, GameEvent.Context.of(occupant, this.getBlockState()));
             }
 
-            p_58742_.discard();
+            occupant.discard();
             super.setChanged();
         }
     }
 
-    public void storeBee(BeehiveBlockEntity.Occupant p_330820_) {
-        this.stored.add(new BeehiveBlockEntity.BeeData(p_330820_));
+    public void storeBee(BeehiveBlockEntity.Occupant occupant) {
+        this.stored.add(new BeehiveBlockEntity.BeeData(occupant));
     }
 
     private static boolean releaseOccupant(
-        Level p_155137_,
-        BlockPos p_155138_,
-        BlockState p_155139_,
-        BeehiveBlockEntity.Occupant p_332184_,
-        @Nullable List<Entity> p_155141_,
-        BeehiveBlockEntity.BeeReleaseStatus p_155142_,
-        @Nullable BlockPos p_155143_
+        Level level,
+        BlockPos pos,
+        BlockState state,
+        BeehiveBlockEntity.Occupant occupant,
+        @Nullable List<Entity> storedInHives,
+        BeehiveBlockEntity.BeeReleaseStatus releaseStatus,
+        @Nullable BlockPos storedFlowerPos
     ) {
-        if ((p_155137_.isNight() || p_155137_.isRaining()) && p_155142_ != BeehiveBlockEntity.BeeReleaseStatus.EMERGENCY) {
+        if ((level.isNight() || level.isRaining()) && releaseStatus != BeehiveBlockEntity.BeeReleaseStatus.EMERGENCY) {
             return false;
         } else {
-            Direction direction = p_155139_.getValue(BeehiveBlock.FACING);
-            BlockPos blockpos = p_155138_.relative(direction);
-            boolean flag = !p_155137_.getBlockState(blockpos).getCollisionShape(p_155137_, blockpos).isEmpty();
-            if (flag && p_155142_ != BeehiveBlockEntity.BeeReleaseStatus.EMERGENCY) {
+            Direction direction = state.getValue(BeehiveBlock.FACING);
+            BlockPos blockpos = pos.relative(direction);
+            boolean flag = !level.getBlockState(blockpos).getCollisionShape(level, blockpos).isEmpty();
+            if (flag && releaseStatus != BeehiveBlockEntity.BeeReleaseStatus.EMERGENCY) {
                 return false;
             } else {
-                Entity entity = p_332184_.createEntity(p_155137_, p_155138_);
+                Entity entity = occupant.createEntity(level, pos);
                 if (entity != null) {
                     if (entity instanceof Bee bee) {
-                        if (p_155143_ != null && !bee.hasSavedFlowerPos() && p_155137_.random.nextFloat() < 0.9F) {
-                            bee.setSavedFlowerPos(p_155143_);
+                        if (storedFlowerPos != null && !bee.hasSavedFlowerPos() && level.random.nextFloat() < 0.9F) {
+                            bee.setSavedFlowerPos(storedFlowerPos);
                         }
 
-                        if (p_155142_ == BeehiveBlockEntity.BeeReleaseStatus.HONEY_DELIVERED) {
+                        if (releaseStatus == BeehiveBlockEntity.BeeReleaseStatus.HONEY_DELIVERED) {
                             bee.dropOffNectar();
-                            if (p_155139_.is(BlockTags.BEEHIVES, p_202037_ -> p_202037_.hasProperty(BeehiveBlock.HONEY_LEVEL))) {
-                                int i = getHoneyLevel(p_155139_);
+                            if (state.is(BlockTags.BEEHIVES, p_202037_ -> p_202037_.hasProperty(BeehiveBlock.HONEY_LEVEL))) {
+                                int i = getHoneyLevel(state);
                                 if (i < 5) {
-                                    int j = p_155137_.random.nextInt(100) == 0 ? 2 : 1;
+                                    int j = level.random.nextInt(100) == 0 ? 2 : 1;
                                     if (i + j > 5) {
                                         j--;
                                     }
 
-                                    p_155137_.setBlockAndUpdate(p_155138_, p_155139_.setValue(BeehiveBlock.HONEY_LEVEL, Integer.valueOf(i + j)));
+                                    level.setBlockAndUpdate(pos, state.setValue(BeehiveBlock.HONEY_LEVEL, Integer.valueOf(i + j)));
                                 }
                             }
                         }
 
-                        if (p_155141_ != null) {
-                            p_155141_.add(bee);
+                        if (storedInHives != null) {
+                            storedInHives.add(bee);
                         }
 
                         float f = entity.getBbWidth();
                         double d3 = flag ? 0.0 : 0.55 + (double)(f / 2.0F);
-                        double d0 = (double)p_155138_.getX() + 0.5 + d3 * (double)direction.getStepX();
-                        double d1 = (double)p_155138_.getY() + 0.5 - (double)(entity.getBbHeight() / 2.0F);
-                        double d2 = (double)p_155138_.getZ() + 0.5 + d3 * (double)direction.getStepZ();
+                        double d0 = (double)pos.getX() + 0.5 + d3 * (double)direction.getStepX();
+                        double d1 = (double)pos.getY() + 0.5 - (double)(entity.getBbHeight() / 2.0F);
+                        double d2 = (double)pos.getZ() + 0.5 + d3 * (double)direction.getStepZ();
                         entity.moveTo(d0, d1, d2, entity.getYRot(), entity.getXRot());
                     }
 
-                    p_155137_.playSound(null, p_155138_, SoundEvents.BEEHIVE_EXIT, SoundSource.BLOCKS, 1.0F, 1.0F);
-                    p_155137_.gameEvent(GameEvent.BLOCK_CHANGE, p_155138_, GameEvent.Context.of(entity, p_155137_.getBlockState(p_155138_)));
-                    return p_155137_.addFreshEntity(entity);
+                    level.playSound(null, pos, SoundEvents.BEEHIVE_EXIT, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(entity, level.getBlockState(pos)));
+                    return level.addFreshEntity(entity);
                 } else {
                     return false;
                 }
@@ -264,10 +264,10 @@ public class BeehiveBlockEntity extends BlockEntity {
     }
 
     private static void tickOccupants(
-        Level p_155150_, BlockPos p_155151_, BlockState p_155152_, List<BeehiveBlockEntity.BeeData> p_155153_, @Nullable BlockPos p_155154_
+        Level level, BlockPos pos, BlockState state, List<BeehiveBlockEntity.BeeData> data, @Nullable BlockPos savedFlowerPos
     ) {
         boolean flag = false;
-        Iterator<BeehiveBlockEntity.BeeData> iterator = p_155153_.iterator();
+        Iterator<BeehiveBlockEntity.BeeData> iterator = data.iterator();
 
         while (iterator.hasNext()) {
             BeehiveBlockEntity.BeeData beehiveblockentity$beedata = iterator.next();
@@ -276,7 +276,7 @@ public class BeehiveBlockEntity extends BlockEntity {
                     ? BeehiveBlockEntity.BeeReleaseStatus.HONEY_DELIVERED
                     : BeehiveBlockEntity.BeeReleaseStatus.BEE_RELEASED;
                 if (releaseOccupant(
-                    p_155150_, p_155151_, p_155152_, beehiveblockentity$beedata.toOccupant(), null, beehiveblockentity$beereleasestatus, p_155154_
+                    level, pos, state, beehiveblockentity$beedata.toOccupant(), null, beehiveblockentity$beereleasestatus, savedFlowerPos
                 )) {
                     flag = true;
                     iterator.remove();
@@ -285,63 +285,63 @@ public class BeehiveBlockEntity extends BlockEntity {
         }
 
         if (flag) {
-            setChanged(p_155150_, p_155151_, p_155152_);
+            setChanged(level, pos, state);
         }
     }
 
-    public static void serverTick(Level p_155145_, BlockPos p_155146_, BlockState p_155147_, BeehiveBlockEntity p_155148_) {
-        tickOccupants(p_155145_, p_155146_, p_155147_, p_155148_.stored, p_155148_.savedFlowerPos);
-        if (!p_155148_.stored.isEmpty() && p_155145_.getRandom().nextDouble() < 0.005) {
-            double d0 = (double)p_155146_.getX() + 0.5;
-            double d1 = (double)p_155146_.getY();
-            double d2 = (double)p_155146_.getZ() + 0.5;
-            p_155145_.playSound(null, d0, d1, d2, SoundEvents.BEEHIVE_WORK, SoundSource.BLOCKS, 1.0F, 1.0F);
+    public static void serverTick(Level level, BlockPos pos, BlockState state, BeehiveBlockEntity beehive) {
+        tickOccupants(level, pos, state, beehive.stored, beehive.savedFlowerPos);
+        if (!beehive.stored.isEmpty() && level.getRandom().nextDouble() < 0.005) {
+            double d0 = (double)pos.getX() + 0.5;
+            double d1 = (double)pos.getY();
+            double d2 = (double)pos.getZ() + 0.5;
+            level.playSound(null, d0, d1, d2, SoundEvents.BEEHIVE_WORK, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
 
-        DebugPackets.sendHiveInfo(p_155145_, p_155146_, p_155147_, p_155148_);
+        DebugPackets.sendHiveInfo(level, pos, state, beehive);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_338675_, HolderLookup.Provider p_338666_) {
-        super.loadAdditional(p_338675_, p_338666_);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
         this.stored.clear();
-        if (p_338675_.contains("bees")) {
+        if (tag.contains("bees")) {
             BeehiveBlockEntity.Occupant.LIST_CODEC
-                .parse(NbtOps.INSTANCE, p_338675_.get("bees"))
+                .parse(NbtOps.INSTANCE, tag.get("bees"))
                 .resultOrPartial(p_330133_ -> LOGGER.error("Failed to parse bees: '{}'", p_330133_))
                 .ifPresent(p_330134_ -> p_330134_.forEach(this::storeBee));
         }
 
-        this.savedFlowerPos = NbtUtils.readBlockPos(p_338675_, "flower_pos").orElse(null);
+        this.savedFlowerPos = NbtUtils.readBlockPos(tag, "flower_pos").orElse(null);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_187467_, HolderLookup.Provider p_324426_) {
-        super.saveAdditional(p_187467_, p_324426_);
-        p_187467_.put("bees", BeehiveBlockEntity.Occupant.LIST_CODEC.encodeStart(NbtOps.INSTANCE, this.getBees()).getOrThrow());
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        tag.put("bees", BeehiveBlockEntity.Occupant.LIST_CODEC.encodeStart(NbtOps.INSTANCE, this.getBees()).getOrThrow());
         if (this.hasSavedFlowerPos()) {
-            p_187467_.put("flower_pos", NbtUtils.writeBlockPos(this.savedFlowerPos));
+            tag.put("flower_pos", NbtUtils.writeBlockPos(this.savedFlowerPos));
         }
     }
 
     @Override
-    protected void applyImplicitComponents(BlockEntity.DataComponentInput p_338335_) {
-        super.applyImplicitComponents(p_338335_);
+    protected void applyImplicitComponents(BlockEntity.DataComponentInput componentInput) {
+        super.applyImplicitComponents(componentInput);
         this.stored.clear();
-        List<BeehiveBlockEntity.Occupant> list = p_338335_.getOrDefault(DataComponents.BEES, List.of());
+        List<BeehiveBlockEntity.Occupant> list = componentInput.getOrDefault(DataComponents.BEES, List.of());
         list.forEach(this::storeBee);
     }
 
     @Override
-    protected void collectImplicitComponents(DataComponentMap.Builder p_338773_) {
-        super.collectImplicitComponents(p_338773_);
-        p_338773_.set(DataComponents.BEES, this.getBees());
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        components.set(DataComponents.BEES, this.getBees());
     }
 
     @Override
-    public void removeComponentsFromTag(CompoundTag p_331127_) {
-        super.removeComponentsFromTag(p_331127_);
-        p_331127_.remove("bees");
+    public void removeComponentsFromTag(CompoundTag tag) {
+        super.removeComponentsFromTag(tag);
+        tag.remove("bees");
     }
 
     private List<BeehiveBlockEntity.Occupant> getBees() {
@@ -352,9 +352,9 @@ public class BeehiveBlockEntity extends BlockEntity {
         private final BeehiveBlockEntity.Occupant occupant;
         private int ticksInHive;
 
-        BeeData(BeehiveBlockEntity.Occupant p_331832_) {
-            this.occupant = p_331832_;
-            this.ticksInHive = p_331832_.ticksInHive();
+        BeeData(BeehiveBlockEntity.Occupant occupant) {
+            this.occupant = occupant;
+            this.ticksInHive = occupant.ticksInHive();
         }
 
         public boolean tick() {
@@ -396,29 +396,29 @@ public class BeehiveBlockEntity extends BlockEntity {
             BeehiveBlockEntity.Occupant::new
         );
 
-        public static BeehiveBlockEntity.Occupant of(Entity p_331485_) {
+        public static BeehiveBlockEntity.Occupant of(Entity entity) {
             CompoundTag compoundtag = new CompoundTag();
-            p_331485_.save(compoundtag);
+            entity.save(compoundtag);
             BeehiveBlockEntity.IGNORED_BEE_TAGS.forEach(compoundtag::remove);
             boolean flag = compoundtag.getBoolean("HasNectar");
             return new BeehiveBlockEntity.Occupant(CustomData.of(compoundtag), 0, flag ? 2400 : 600);
         }
 
-        public static BeehiveBlockEntity.Occupant create(int p_331115_) {
+        public static BeehiveBlockEntity.Occupant create(int ticksInHive) {
             CompoundTag compoundtag = new CompoundTag();
             compoundtag.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(EntityType.BEE).toString());
-            return new BeehiveBlockEntity.Occupant(CustomData.of(compoundtag), p_331115_, 600);
+            return new BeehiveBlockEntity.Occupant(CustomData.of(compoundtag), ticksInHive, 600);
         }
 
         @Nullable
-        public Entity createEntity(Level p_331790_, BlockPos p_330712_) {
+        public Entity createEntity(Level level, BlockPos pos) {
             CompoundTag compoundtag = this.entityData.copyTag();
             BeehiveBlockEntity.IGNORED_BEE_TAGS.forEach(compoundtag::remove);
-            Entity entity = EntityType.loadEntityRecursive(compoundtag, p_331790_, p_331097_ -> p_331097_);
+            Entity entity = EntityType.loadEntityRecursive(compoundtag, level, p_331097_ -> p_331097_);
             if (entity != null && entity.getType().is(EntityTypeTags.BEEHIVE_INHABITORS)) {
                 entity.setNoGravity(true);
                 if (entity instanceof Bee bee) {
-                    bee.setHivePos(p_330712_);
+                    bee.setHivePos(pos);
                     setBeeReleaseData(this.ticksInHive, bee);
                 }
 
@@ -428,15 +428,15 @@ public class BeehiveBlockEntity extends BlockEntity {
             }
         }
 
-        private static void setBeeReleaseData(int p_331728_, Bee p_331988_) {
-            int i = p_331988_.getAge();
+        private static void setBeeReleaseData(int ticksInHive, Bee bee) {
+            int i = bee.getAge();
             if (i < 0) {
-                p_331988_.setAge(Math.min(0, i + p_331728_));
+                bee.setAge(Math.min(0, i + ticksInHive));
             } else if (i > 0) {
-                p_331988_.setAge(Math.max(0, i - p_331728_));
+                bee.setAge(Math.max(0, i - ticksInHive));
             }
 
-            p_331988_.setInLoveTime(Math.max(0, p_331988_.getInLoveTime() - p_331728_));
+            bee.setInLoveTime(Math.max(0, bee.getInLoveTime() - ticksInHive));
         }
     }
 }

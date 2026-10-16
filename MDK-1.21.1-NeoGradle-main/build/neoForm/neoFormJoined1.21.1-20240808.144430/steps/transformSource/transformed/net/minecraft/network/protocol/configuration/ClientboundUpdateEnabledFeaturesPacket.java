@@ -17,8 +17,8 @@ public record ClientboundUpdateEnabledFeaturesPacket(Set<ResourceLocation> featu
         this(p_295459_.<ResourceLocation, Set<ResourceLocation>>readCollection(HashSet::new, FriendlyByteBuf::readResourceLocation));
     }
 
-    private void write(FriendlyByteBuf p_294891_) {
-        p_294891_.writeCollection(this.features, FriendlyByteBuf::writeResourceLocation);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeCollection(this.features, FriendlyByteBuf::writeResourceLocation);
     }
 
     @Override
@@ -26,7 +26,10 @@ public record ClientboundUpdateEnabledFeaturesPacket(Set<ResourceLocation> featu
         return ConfigurationPacketTypes.CLIENTBOUND_UPDATE_ENABLED_FEATURES;
     }
 
-    public void handle(ClientConfigurationPacketListener p_294170_) {
-        p_294170_.handleEnabledFeatures(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientConfigurationPacketListener handler) {
+        handler.handleEnabledFeatures(this);
     }
 }

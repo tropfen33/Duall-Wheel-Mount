@@ -20,15 +20,15 @@ public class BuiltInModel implements BakedModel {
     private final TextureAtlasSprite particleTexture;
     private final boolean usesBlockLight;
 
-    public BuiltInModel(ItemTransforms p_119172_, ItemOverrides p_119173_, TextureAtlasSprite p_119174_, boolean p_119175_) {
-        this.itemTransforms = p_119172_;
-        this.overrides = p_119173_;
-        this.particleTexture = p_119174_;
-        this.usesBlockLight = p_119175_;
+    public BuiltInModel(ItemTransforms itemTransforms, ItemOverrides overrides, TextureAtlasSprite particleTexture, boolean usesBlockLight) {
+        this.itemTransforms = itemTransforms;
+        this.overrides = overrides;
+        this.particleTexture = particleTexture;
+        this.usesBlockLight = usesBlockLight;
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState p_235043_, @Nullable Direction p_235044_, RandomSource p_235045_) {
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction direction, RandomSource random) {
         return Collections.emptyList();
     }
 

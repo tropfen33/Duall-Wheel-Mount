@@ -8,20 +8,20 @@ public class AnimationState {
     private long lastTime = Long.MAX_VALUE;
     private long accumulatedTime;
 
-    public void start(int p_216978_) {
-        this.lastTime = (long)p_216978_ * 1000L / 20L;
+    public void start(int tickCount) {
+        this.lastTime = (long)tickCount * 1000L / 20L;
         this.accumulatedTime = 0L;
     }
 
-    public void startIfStopped(int p_216983_) {
+    public void startIfStopped(int tickCount) {
         if (!this.isStarted()) {
-            this.start(p_216983_);
+            this.start(tickCount);
         }
     }
 
-    public void animateWhen(boolean p_252220_, int p_249486_) {
-        if (p_252220_) {
-            this.startIfStopped(p_249486_);
+    public void animateWhen(boolean condition, int tickCount) {
+        if (condition) {
+            this.startIfStopped(tickCount);
         } else {
             this.stop();
         }
@@ -31,23 +31,23 @@ public class AnimationState {
         this.lastTime = Long.MAX_VALUE;
     }
 
-    public void ifStarted(Consumer<AnimationState> p_216980_) {
+    public void ifStarted(Consumer<AnimationState> action) {
         if (this.isStarted()) {
-            p_216980_.accept(this);
+            action.accept(this);
         }
     }
 
-    public void updateTime(float p_216975_, float p_216976_) {
+    public void updateTime(float ageInTicks, float speed) {
         if (this.isStarted()) {
-            long i = Mth.lfloor((double)(p_216975_ * 1000.0F / 20.0F));
-            this.accumulatedTime = this.accumulatedTime + (long)((float)(i - this.lastTime) * p_216976_);
+            long i = Mth.lfloor((double)(ageInTicks * 1000.0F / 20.0F));
+            this.accumulatedTime = this.accumulatedTime + (long)((float)(i - this.lastTime) * speed);
             this.lastTime = i;
         }
     }
 
-    public void fastForward(int p_326400_, float p_325947_) {
+    public void fastForward(int duration, float speed) {
         if (this.isStarted()) {
-            this.accumulatedTime += (long)((float)(p_326400_ * 1000) * p_325947_) / 20L;
+            this.accumulatedTime += (long)((float)(duration * 1000) * speed) / 20L;
         }
     }
 

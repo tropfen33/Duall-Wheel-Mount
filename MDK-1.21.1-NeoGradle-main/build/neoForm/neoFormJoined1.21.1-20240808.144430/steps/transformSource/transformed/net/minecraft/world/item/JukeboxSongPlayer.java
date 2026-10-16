@@ -19,9 +19,9 @@ public class JukeboxSongPlayer {
     private final BlockPos blockPos;
     private final JukeboxSongPlayer.OnSongChanged onSongChanged;
 
-    public JukeboxSongPlayer(JukeboxSongPlayer.OnSongChanged p_350439_, BlockPos p_350395_) {
-        this.onSongChanged = p_350439_;
-        this.blockPos = p_350395_;
+    public JukeboxSongPlayer(JukeboxSongPlayer.OnSongChanged onSongChanged, BlockPos blockPos) {
+        this.onSongChanged = onSongChanged;
+        this.blockPos = blockPos;
     }
 
     public boolean isPlaying() {
@@ -37,39 +37,39 @@ public class JukeboxSongPlayer {
         return this.ticksSinceSongStarted;
     }
 
-    public void setSongWithoutPlaying(Holder<JukeboxSong> p_350889_, long p_350896_) {
-        if (!p_350889_.value().hasFinished(p_350896_)) {
-            this.song = p_350889_;
-            this.ticksSinceSongStarted = p_350896_;
+    public void setSongWithoutPlaying(Holder<JukeboxSong> song, long ticksSinceSongStarted) {
+        if (!song.value().hasFinished(ticksSinceSongStarted)) {
+            this.song = song;
+            this.ticksSinceSongStarted = ticksSinceSongStarted;
         }
     }
 
-    public void play(LevelAccessor p_350839_, Holder<JukeboxSong> p_350771_) {
-        this.song = p_350771_;
+    public void play(LevelAccessor level, Holder<JukeboxSong> song) {
+        this.song = song;
         this.ticksSinceSongStarted = 0L;
-        int i = p_350839_.registryAccess().registryOrThrow(Registries.JUKEBOX_SONG).getId(this.song.value());
-        p_350839_.levelEvent(null, 1010, this.blockPos, i);
+        int i = level.registryAccess().registryOrThrow(Registries.JUKEBOX_SONG).getId(this.song.value());
+        level.levelEvent(null, 1010, this.blockPos, i);
         this.onSongChanged.notifyChange();
     }
 
-    public void stop(LevelAccessor p_350694_, @Nullable BlockState p_350611_) {
+    public void stop(LevelAccessor level, @Nullable BlockState state) {
         if (this.song != null) {
             this.song = null;
             this.ticksSinceSongStarted = 0L;
-            p_350694_.gameEvent(GameEvent.JUKEBOX_STOP_PLAY, this.blockPos, GameEvent.Context.of(p_350611_));
-            p_350694_.levelEvent(1011, this.blockPos, 0);
+            level.gameEvent(GameEvent.JUKEBOX_STOP_PLAY, this.blockPos, GameEvent.Context.of(state));
+            level.levelEvent(1011, this.blockPos, 0);
             this.onSongChanged.notifyChange();
         }
     }
 
-    public void tick(LevelAccessor p_350845_, @Nullable BlockState p_350953_) {
+    public void tick(LevelAccessor level, @Nullable BlockState state) {
         if (this.song != null) {
             if (this.song.value().hasFinished(this.ticksSinceSongStarted)) {
-                this.stop(p_350845_, p_350953_);
+                this.stop(level, state);
             } else {
                 if (this.shouldEmitJukeboxPlayingEvent()) {
-                    p_350845_.gameEvent(GameEvent.JUKEBOX_PLAY, this.blockPos, GameEvent.Context.of(p_350953_));
-                    spawnMusicParticles(p_350845_, this.blockPos);
+                    level.gameEvent(GameEvent.JUKEBOX_PLAY, this.blockPos, GameEvent.Context.of(state));
+                    spawnMusicParticles(level, this.blockPos);
                 }
 
                 this.ticksSinceSongStarted++;
@@ -81,10 +81,10 @@ public class JukeboxSongPlayer {
         return this.ticksSinceSongStarted % 20L == 0L;
     }
 
-    private static void spawnMusicParticles(LevelAccessor p_350908_, BlockPos p_350387_) {
-        if (p_350908_ instanceof ServerLevel serverlevel) {
-            Vec3 vec3 = Vec3.atBottomCenterOf(p_350387_).add(0.0, 1.2F, 0.0);
-            float f = (float)p_350908_.getRandom().nextInt(4) / 24.0F;
+    private static void spawnMusicParticles(LevelAccessor level, BlockPos pos) {
+        if (level instanceof ServerLevel serverlevel) {
+            Vec3 vec3 = Vec3.atBottomCenterOf(pos).add(0.0, 1.2F, 0.0);
+            float f = (float)level.getRandom().nextInt(4) / 24.0F;
             serverlevel.sendParticles(ParticleTypes.NOTE, vec3.x(), vec3.y(), vec3.z(), 0, (double)f, 0.0, 0.0, 1.0);
         }
     }

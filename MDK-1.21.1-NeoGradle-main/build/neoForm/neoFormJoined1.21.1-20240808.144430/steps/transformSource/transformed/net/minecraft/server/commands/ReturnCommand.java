@@ -16,8 +16,8 @@ import net.minecraft.commands.execution.tasks.BuildContexts;
 import net.minecraft.commands.execution.tasks.FallthroughTask;
 
 public class ReturnCommand {
-    public static <T extends ExecutionCommandSource<T>> void register(CommandDispatcher<T> p_282091_) {
-        p_282091_.register(
+    public static <T extends ExecutionCommandSource<T>> void register(CommandDispatcher<T> dispatcher) {
+        dispatcher.register(
             (LiteralArgumentBuilder<T>)LiteralArgumentBuilder.<T>literal("return")
                 .requires(p_305728_ -> p_305728_.hasPermission(2))
                 .then(
@@ -25,7 +25,7 @@ public class ReturnCommand {
                         .executes(new ReturnCommand.ReturnValueCustomExecutor<>())
                 )
                 .then(LiteralArgumentBuilder.<T>literal("fail").executes(new ReturnCommand.ReturnFailCustomExecutor<>()))
-                .then(LiteralArgumentBuilder.<T>literal("run").forward(p_282091_.getRoot(), new ReturnCommand.ReturnFromCommandCustomModifier<>(), false))
+                .then(LiteralArgumentBuilder.<T>literal("run").forward(dispatcher.getRoot(), new ReturnCommand.ReturnFromCommandCustomModifier<>(), false))
         );
     }
 

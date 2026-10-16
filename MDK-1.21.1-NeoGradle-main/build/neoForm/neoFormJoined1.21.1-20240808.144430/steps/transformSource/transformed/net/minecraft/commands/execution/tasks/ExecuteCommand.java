@@ -15,26 +15,26 @@ public class ExecuteCommand<T extends ExecutionCommandSource<T>> implements Unbo
     private final ChainModifiers modifiers;
     private final CommandContext<T> executionContext;
 
-    public ExecuteCommand(String p_306273_, ChainModifiers p_309556_, CommandContext<T> p_305919_) {
-        this.commandInput = p_306273_;
-        this.modifiers = p_309556_;
-        this.executionContext = p_305919_;
+    public ExecuteCommand(String commandInput, ChainModifiers modifiers, CommandContext<T> executionContext) {
+        this.commandInput = commandInput;
+        this.modifiers = modifiers;
+        this.executionContext = executionContext;
     }
 
-    public void execute(T p_305870_, ExecutionContext<T> p_306198_, Frame p_309548_) {
-        p_306198_.profiler().push(() -> "execute " + this.commandInput);
+    public void execute(T source, ExecutionContext<T> executionContext, Frame frame) {
+        executionContext.profiler().push(() -> "execute " + this.commandInput);
 
         try {
-            p_306198_.incrementCost();
-            int i = ContextChain.runExecutable(this.executionContext, p_305870_, ExecutionCommandSource.resultConsumer(), this.modifiers.isForked());
-            TraceCallbacks tracecallbacks = p_306198_.tracer();
+            executionContext.incrementCost();
+            int i = ContextChain.runExecutable(this.executionContext, source, ExecutionCommandSource.resultConsumer(), this.modifiers.isForked());
+            TraceCallbacks tracecallbacks = executionContext.tracer();
             if (tracecallbacks != null) {
-                tracecallbacks.onReturn(p_309548_.depth(), this.commandInput, i);
+                tracecallbacks.onReturn(frame.depth(), this.commandInput, i);
             }
         } catch (CommandSyntaxException commandsyntaxexception) {
-            p_305870_.handleError(commandsyntaxexception, this.modifiers.isForked(), p_306198_.tracer());
+            source.handleError(commandsyntaxexception, this.modifiers.isForked(), executionContext.tracer());
         } finally {
-            p_306198_.profiler().pop();
+            executionContext.profiler().pop();
         }
     }
 }

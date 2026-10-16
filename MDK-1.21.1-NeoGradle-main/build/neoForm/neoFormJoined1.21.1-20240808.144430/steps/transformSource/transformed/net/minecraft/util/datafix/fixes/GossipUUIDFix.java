@@ -8,13 +8,13 @@ import com.mojang.serialization.Dynamic;
 import java.util.stream.Stream;
 
 public class GossipUUIDFix extends NamedEntityFix {
-    public GossipUUIDFix(Schema p_15878_, String p_15879_) {
-        super(p_15878_, false, "Gossip for for " + p_15879_, References.ENTITY, p_15879_);
+    public GossipUUIDFix(Schema outputSchema, String entityName) {
+        super(outputSchema, false, "Gossip for for " + entityName, References.ENTITY, entityName);
     }
 
     @Override
-    protected Typed<?> fix(Typed<?> p_15881_) {
-        return p_15881_.update(
+    protected Typed<?> fix(Typed<?> typed) {
+        return typed.update(
             DSL.remainderFinder(),
             p_15883_ -> p_15883_.update(
                     "Gossips",

@@ -16,18 +16,18 @@ public class FixedPlacement extends PlacementModifier {
     );
     private final List<BlockPos> positions;
 
-    public static FixedPlacement of(BlockPos... p_352896_) {
-        return new FixedPlacement(List.of(p_352896_));
+    public static FixedPlacement of(BlockPos... positions) {
+        return new FixedPlacement(List.of(positions));
     }
 
-    private FixedPlacement(List<BlockPos> p_352933_) {
-        this.positions = p_352933_;
+    private FixedPlacement(List<BlockPos> positions) {
+        this.positions = positions;
     }
 
     @Override
-    public Stream<BlockPos> getPositions(PlacementContext p_352915_, RandomSource p_352928_, BlockPos p_352899_) {
-        int i = SectionPos.blockToSectionCoord(p_352899_.getX());
-        int j = SectionPos.blockToSectionCoord(p_352899_.getZ());
+    public Stream<BlockPos> getPositions(PlacementContext context, RandomSource random, BlockPos pos) {
+        int i = SectionPos.blockToSectionCoord(pos.getX());
+        int j = SectionPos.blockToSectionCoord(pos.getZ());
         boolean flag = false;
 
         for (BlockPos blockpos : this.positions) {
@@ -40,8 +40,8 @@ public class FixedPlacement extends PlacementModifier {
         return !flag ? Stream.empty() : this.positions.stream().filter(p_352956_ -> isSameChunk(i, j, p_352956_));
     }
 
-    private static boolean isSameChunk(int p_352906_, int p_352932_, BlockPos p_352907_) {
-        return p_352906_ == SectionPos.blockToSectionCoord(p_352907_.getX()) && p_352932_ == SectionPos.blockToSectionCoord(p_352907_.getZ());
+    private static boolean isSameChunk(int x, int z, BlockPos pos) {
+        return x == SectionPos.blockToSectionCoord(pos.getX()) && z == SectionPos.blockToSectionCoord(pos.getZ());
     }
 
     @Override

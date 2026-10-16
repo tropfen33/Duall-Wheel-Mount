@@ -16,10 +16,10 @@ public class RealmCreationTask extends LongRunningTask {
     private final String motd;
     private final long realmId;
 
-    public RealmCreationTask(long p_320686_, String p_319849_, String p_320750_) {
-        this.realmId = p_320686_;
-        this.name = p_319849_;
-        this.motd = p_320750_;
+    public RealmCreationTask(long realmId, String name, String motd) {
+        this.realmId = realmId;
+        this.name = name;
+        this.motd = motd;
     }
 
     @Override

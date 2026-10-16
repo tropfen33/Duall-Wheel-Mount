@@ -38,29 +38,29 @@ public class LlamaDecorLayer extends RenderLayer<Llama, LlamaModel<Llama>> {
     private static final ResourceLocation TRADER_LLAMA = ResourceLocation.withDefaultNamespace("textures/entity/llama/decor/trader_llama.png");
     private final LlamaModel<Llama> model;
 
-    public LlamaDecorLayer(RenderLayerParent<Llama, LlamaModel<Llama>> p_174499_, EntityModelSet p_174500_) {
-        super(p_174499_);
-        this.model = new LlamaModel<>(p_174500_.bakeLayer(ModelLayers.LLAMA_DECOR));
+    public LlamaDecorLayer(RenderLayerParent<Llama, LlamaModel<Llama>> renderer, EntityModelSet modelSet) {
+        super(renderer);
+        this.model = new LlamaModel<>(modelSet.bakeLayer(ModelLayers.LLAMA_DECOR));
     }
 
     public void render(
-        PoseStack p_117232_,
-        MultiBufferSource p_117233_,
-        int p_117234_,
-        Llama p_117235_,
-        float p_117236_,
-        float p_117237_,
-        float p_117238_,
-        float p_117239_,
-        float p_117240_,
-        float p_117241_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        Llama livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTicks,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
-        DyeColor dyecolor = p_117235_.getSwag();
+        DyeColor dyecolor = livingEntity.getSwag();
         ResourceLocation resourcelocation;
         if (dyecolor != null) {
             resourcelocation = TEXTURE_LOCATION[dyecolor.getId()];
         } else {
-            if (!p_117235_.isTraderLlama()) {
+            if (!livingEntity.isTraderLlama()) {
                 return;
             }
 
@@ -68,8 +68,8 @@ public class LlamaDecorLayer extends RenderLayer<Llama, LlamaModel<Llama>> {
         }
 
         this.getParentModel().copyPropertiesTo(this.model);
-        this.model.setupAnim(p_117235_, p_117236_, p_117237_, p_117239_, p_117240_, p_117241_);
-        VertexConsumer vertexconsumer = p_117233_.getBuffer(RenderType.entityCutoutNoCull(resourcelocation));
-        this.model.renderToBuffer(p_117232_, vertexconsumer, p_117234_, OverlayTexture.NO_OVERLAY);
+        this.model.setupAnim(livingEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+        VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.entityCutoutNoCull(resourcelocation));
+        this.model.renderToBuffer(poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY);
     }
 }

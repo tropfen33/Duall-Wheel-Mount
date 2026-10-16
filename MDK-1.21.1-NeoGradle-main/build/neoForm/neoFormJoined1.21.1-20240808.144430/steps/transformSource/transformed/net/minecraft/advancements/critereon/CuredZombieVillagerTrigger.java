@@ -17,10 +17,10 @@ public class CuredZombieVillagerTrigger extends SimpleCriterionTrigger<CuredZomb
         return CuredZombieVillagerTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_24275_, Zombie p_24276_, Villager p_24277_) {
-        LootContext lootcontext = EntityPredicate.createContext(p_24275_, p_24276_);
-        LootContext lootcontext1 = EntityPredicate.createContext(p_24275_, p_24277_);
-        this.trigger(p_24275_, p_24285_ -> p_24285_.matches(lootcontext, lootcontext1));
+    public void trigger(ServerPlayer player, Zombie zombie, Villager villager) {
+        LootContext lootcontext = EntityPredicate.createContext(player, zombie);
+        LootContext lootcontext1 = EntityPredicate.createContext(player, villager);
+        this.trigger(player, p_24285_ -> p_24285_.matches(lootcontext, lootcontext1));
     }
 
     public static record TriggerInstance(
@@ -40,17 +40,17 @@ public class CuredZombieVillagerTrigger extends SimpleCriterionTrigger<CuredZomb
                 .createCriterion(new CuredZombieVillagerTrigger.TriggerInstance(Optional.empty(), Optional.empty(), Optional.empty()));
         }
 
-        public boolean matches(LootContext p_24300_, LootContext p_24301_) {
-            return this.zombie.isPresent() && !this.zombie.get().matches(p_24300_)
+        public boolean matches(LootContext zombie, LootContext villager) {
+            return this.zombie.isPresent() && !this.zombie.get().matches(zombie)
                 ? false
-                : !this.villager.isPresent() || this.villager.get().matches(p_24301_);
+                : !this.villager.isPresent() || this.villager.get().matches(villager);
         }
 
         @Override
-        public void validate(CriterionValidator p_312270_) {
-            SimpleCriterionTrigger.SimpleInstance.super.validate(p_312270_);
-            p_312270_.validateEntity(this.zombie, ".zombie");
-            p_312270_.validateEntity(this.villager, ".villager");
+        public void validate(CriterionValidator validator) {
+            SimpleCriterionTrigger.SimpleInstance.super.validate(validator);
+            validator.validateEntity(this.zombie, ".zombie");
+            validator.validateEntity(this.villager, ".villager");
         }
     }
 }

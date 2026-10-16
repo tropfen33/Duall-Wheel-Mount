@@ -9,7 +9,7 @@ public interface InstrumentTags {
     TagKey<Instrument> SCREAMING_GOAT_HORNS = create("screaming_goat_horns");
     TagKey<Instrument> GOAT_HORNS = create("goat_horns");
 
-    private static TagKey<Instrument> create(String p_215861_) {
-        return TagKey.create(Registries.INSTRUMENT, ResourceLocation.withDefaultNamespace(p_215861_));
+    private static TagKey<Instrument> create(String name) {
+        return TagKey.create(Registries.INSTRUMENT, ResourceLocation.withDefaultNamespace(name));
     }
 }

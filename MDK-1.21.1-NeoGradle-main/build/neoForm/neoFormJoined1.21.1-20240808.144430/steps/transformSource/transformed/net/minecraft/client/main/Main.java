@@ -54,7 +54,7 @@ import org.slf4j.Logger;
 @OnlyIn(Dist.CLIENT)
 public class Main {
     @DontObfuscate
-    public static void main(String[] p_129642_) {
+    public static void main(String[] args) {
         OptionParser optionparser = new OptionParser();
         optionparser.allowsUnrecognizedOptions();
         optionparser.accepts("demo");
@@ -90,7 +90,7 @@ public class Main {
         OptionSpec<String> optionspec25 = optionparser.accepts("userType").withRequiredArg().defaultsTo("legacy");
         OptionSpec<String> optionspec26 = optionparser.accepts("versionType").withRequiredArg().defaultsTo("release");
         OptionSpec<String> optionspec27 = optionparser.nonOptions();
-        OptionSet optionset = optionparser.parse(p_129642_);
+        OptionSet optionset = optionparser.parse(args);
         File file1 = parseArgument(optionset, optionspec5);
         String s = parseArgument(optionset, optionspec17);
         String s1 = "Pre-bootstrap";
@@ -238,24 +238,27 @@ public class Main {
     }
 
     @Nullable
-    private static String unescapeJavaArgument(@Nullable String p_301984_) {
-        return p_301984_ == null ? null : StringEscapeUtils.unescapeJava(p_301984_);
+    private static String unescapeJavaArgument(@Nullable String arg) {
+        return arg == null ? null : StringEscapeUtils.unescapeJava(arg);
     }
 
-    private static Optional<String> emptyStringToEmptyOptional(String p_195487_) {
-        return p_195487_.isEmpty() ? Optional.empty() : Optional.of(p_195487_);
+    private static Optional<String> emptyStringToEmptyOptional(String input) {
+        return input.isEmpty() ? Optional.empty() : Optional.of(input);
     }
 
-    private static OptionalInt ofNullable(@Nullable Integer p_129635_) {
-        return p_129635_ != null ? OptionalInt.of(p_129635_) : OptionalInt.empty();
+    private static OptionalInt ofNullable(@Nullable Integer value) {
+        return value != null ? OptionalInt.of(value) : OptionalInt.empty();
     }
 
+    /**
+     * Gets the value of a specified command-line parameter from an OptionSet. If it doesn't exist, it returns the default value for the parameter.
+     */
     @Nullable
-    private static <T> T parseArgument(OptionSet p_129639_, OptionSpec<T> p_129640_) {
+    private static <T> T parseArgument(OptionSet set, OptionSpec<T> option) {
         try {
-            return p_129639_.valueOf(p_129640_);
+            return set.valueOf(option);
         } catch (Throwable throwable) {
-            if (p_129640_ instanceof ArgumentAcceptingOptionSpec<T> argumentacceptingoptionspec) {
+            if (option instanceof ArgumentAcceptingOptionSpec<T> argumentacceptingoptionspec) {
                 List<T> list = argumentacceptingoptionspec.defaultValues();
                 if (!list.isEmpty()) {
                     return list.get(0);
@@ -266,8 +269,11 @@ public class Main {
         }
     }
 
-    private static boolean stringHasValue(@Nullable String p_129637_) {
-        return p_129637_ != null && !p_129637_.isEmpty();
+    /**
+     * Returns {@code true} if the given string is neither null nor empty.
+     */
+    private static boolean stringHasValue(@Nullable String str) {
+        return str != null && !str.isEmpty();
     }
 
     static {

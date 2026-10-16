@@ -9,20 +9,26 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 public abstract class HorizontalDirectionalBlock extends Block {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
-    protected HorizontalDirectionalBlock(BlockBehaviour.Properties p_54120_) {
-        super(p_54120_);
+    protected HorizontalDirectionalBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
     protected abstract MapCodec<? extends HorizontalDirectionalBlock> codec();
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_54125_, Rotation p_54126_) {
-        return p_54125_.setValue(FACING, p_54126_.rotate(p_54125_.getValue(FACING)));
+    protected BlockState rotate(BlockState state, Rotation rot) {
+        return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
     }
 
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState mirror(BlockState p_54122_, Mirror p_54123_) {
-        return p_54122_.rotate(p_54123_.getRotation(p_54122_.getValue(FACING)));
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 }

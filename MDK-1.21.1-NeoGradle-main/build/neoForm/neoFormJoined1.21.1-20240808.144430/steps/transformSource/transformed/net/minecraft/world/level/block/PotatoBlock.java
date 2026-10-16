@@ -28,8 +28,8 @@ public class PotatoBlock extends CropBlock {
         return CODEC;
     }
 
-    public PotatoBlock(BlockBehaviour.Properties p_55198_) {
-        super(p_55198_);
+    public PotatoBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
@@ -38,7 +38,7 @@ public class PotatoBlock extends CropBlock {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_55200_, BlockGetter p_55201_, BlockPos p_55202_, CollisionContext p_55203_) {
-        return SHAPE_BY_AGE[this.getAge(p_55200_)];
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SHAPE_BY_AGE[this.getAge(state)];
     }
 }

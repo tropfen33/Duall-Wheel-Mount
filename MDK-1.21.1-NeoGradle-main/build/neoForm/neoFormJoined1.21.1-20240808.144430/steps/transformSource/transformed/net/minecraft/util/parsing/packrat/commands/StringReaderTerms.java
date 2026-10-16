@@ -9,12 +9,12 @@ import net.minecraft.util.parsing.packrat.Scope;
 import net.minecraft.util.parsing.packrat.Term;
 
 public interface StringReaderTerms {
-    static Term<StringReader> word(String p_335707_) {
-        return new StringReaderTerms.TerminalWord(p_335707_);
+    static Term<StringReader> word(String value) {
+        return new StringReaderTerms.TerminalWord(value);
     }
 
-    static Term<StringReader> character(char p_336175_) {
-        return new StringReaderTerms.TerminalCharacter(p_336175_);
+    static Term<StringReader> character(char value) {
+        return new StringReaderTerms.TerminalCharacter(value);
     }
 
     public static record TerminalCharacter(char value) implements Term<StringReader> {

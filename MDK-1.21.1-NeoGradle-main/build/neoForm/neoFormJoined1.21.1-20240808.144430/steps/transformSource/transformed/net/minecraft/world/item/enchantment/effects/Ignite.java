@@ -15,8 +15,8 @@ public record Ignite(LevelBasedValue duration) implements EnchantmentEntityEffec
     );
 
     @Override
-    public void apply(ServerLevel p_345606_, int p_344968_, EnchantedItemInUse p_346032_, Entity p_346370_, Vec3 p_344775_) {
-        p_346370_.igniteForSeconds(this.duration.calculate(p_344968_));
+    public void apply(ServerLevel level, int enchantmentLevel, EnchantedItemInUse item, Entity entity, Vec3 origin) {
+        entity.igniteForSeconds(this.duration.calculate(enchantmentLevel));
     }
 
     @Override

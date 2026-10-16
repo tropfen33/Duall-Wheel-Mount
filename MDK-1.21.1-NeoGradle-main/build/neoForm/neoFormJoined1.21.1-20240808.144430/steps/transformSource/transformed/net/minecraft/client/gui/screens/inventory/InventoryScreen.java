@@ -23,14 +23,20 @@ import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
 public class InventoryScreen extends EffectRenderingInventoryScreen<InventoryMenu> implements RecipeUpdateListener {
+    /**
+     * The old x position of the mouse pointer
+     */
     private float xMouse;
+    /**
+     * The old y position of the mouse pointer
+     */
     private float yMouse;
     private final RecipeBookComponent recipeBookComponent = new RecipeBookComponent();
     private boolean widthTooNarrow;
     private boolean buttonClicked;
 
-    public InventoryScreen(Player p_98839_) {
-        super(p_98839_.inventoryMenu, p_98839_.getInventory(), Component.translatable("container.crafting"));
+    public InventoryScreen(Player player) {
+        super(player.inventoryMenu, player.getInventory(), Component.translatable("container.crafting"));
         this.titleLabelX = 97;
     }
 
@@ -75,53 +81,61 @@ public class InventoryScreen extends EffectRenderingInventoryScreen<InventoryMen
     }
 
     @Override
-    protected void renderLabels(GuiGraphics p_281654_, int p_283517_, int p_283464_) {
-        p_281654_.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 4210752, false);
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 4210752, false);
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283246_, int p_98876_, int p_98877_, float p_98878_) {
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.recipeBookComponent.isVisible() && this.widthTooNarrow) {
-            this.renderBackground(p_283246_, p_98876_, p_98877_, p_98878_);
-            this.recipeBookComponent.render(p_283246_, p_98876_, p_98877_, p_98878_);
+            this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
+            this.recipeBookComponent.render(guiGraphics, mouseX, mouseY, partialTick);
         } else {
-            super.render(p_283246_, p_98876_, p_98877_, p_98878_);
-            this.recipeBookComponent.render(p_283246_, p_98876_, p_98877_, p_98878_);
-            this.recipeBookComponent.renderGhostRecipe(p_283246_, this.leftPos, this.topPos, false, p_98878_);
+            super.render(guiGraphics, mouseX, mouseY, partialTick);
+            this.recipeBookComponent.render(guiGraphics, mouseX, mouseY, partialTick);
+            this.recipeBookComponent.renderGhostRecipe(guiGraphics, this.leftPos, this.topPos, false, partialTick);
         }
 
-        this.renderTooltip(p_283246_, p_98876_, p_98877_);
-        this.recipeBookComponent.renderTooltip(p_283246_, this.leftPos, this.topPos, p_98876_, p_98877_);
-        this.xMouse = (float)p_98876_;
-        this.yMouse = (float)p_98877_;
+        this.renderTooltip(guiGraphics, mouseX, mouseY);
+        this.recipeBookComponent.renderTooltip(guiGraphics, this.leftPos, this.topPos, mouseX, mouseY);
+        this.xMouse = (float)mouseX;
+        this.yMouse = (float)mouseY;
     }
 
     @Override
-    protected void renderBg(GuiGraphics p_281500_, float p_281299_, int p_283481_, int p_281831_) {
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         int i = this.leftPos;
         int j = this.topPos;
-        p_281500_.blit(INVENTORY_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
-        renderEntityInInventoryFollowsMouse(p_281500_, i + 26, j + 8, i + 75, j + 78, 30, 0.0625F, this.xMouse, this.yMouse, this.minecraft.player);
+        guiGraphics.blit(INVENTORY_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
+        renderEntityInInventoryFollowsMouse(guiGraphics, i + 26, j + 8, i + 75, j + 78, 30, 0.0625F, this.xMouse, this.yMouse, this.minecraft.player);
     }
 
     public static void renderEntityInInventoryFollowsMouse(
-        GuiGraphics p_282802_,
-        int p_275688_,
-        int p_275245_,
-        int p_275535_,
-        int p_294406_,
-        int p_294663_,
-        float p_275604_,
-        float p_275546_,
-        float p_295352_,
-        LivingEntity p_275689_
+        GuiGraphics guiGraphics,
+        int x1,
+        int y1,
+        int x2,
+        int y2,
+        int scale,
+        float yOffset,
+        float mouseX,
+        float mouseY,
+        LivingEntity entity
     ) {
-        float f = (float)(p_275688_ + p_275535_) / 2.0F;
-        float f1 = (float)(p_275245_ + p_294406_) / 2.0F;
-        float f2 = (float)Math.atan((double)((f - p_275546_) / 40.0F));
-        float f3 = (float)Math.atan((double)((f1 - p_295352_) / 40.0F));
+        float f = (float)(x1 + x2) / 2.0F;
+        float f1 = (float)(y1 + y2) / 2.0F;
+        float f2 = (float)Math.atan((double)((f - mouseX) / 40.0F));
+        float f3 = (float)Math.atan((double)((f1 - mouseY) / 40.0F));
         // Forge: Allow passing in direct angle components instead of mouse position
-        renderEntityInInventoryFollowsAngle(p_282802_, p_275688_, p_275245_, p_275535_, p_294406_, p_294663_, p_275604_, f2, f3, p_275689_);
+        renderEntityInInventoryFollowsAngle(guiGraphics, x1, y1, x2, y2, scale, yOffset, f2, f3, entity);
     }
 
     public static void renderEntityInInventoryFollowsAngle(
@@ -167,82 +181,120 @@ public class InventoryScreen extends EffectRenderingInventoryScreen<InventoryMen
     }
 
     public static void renderEntityInInventory(
-        GuiGraphics p_282665_,
-        float p_296361_,
-        float p_294489_,
-        float p_319934_,
-        Vector3f p_295026_,
-        Quaternionf p_281880_,
-        @Nullable Quaternionf p_282882_,
-        LivingEntity p_282466_
+        GuiGraphics guiGraphics,
+        float x,
+        float y,
+        float scale,
+        Vector3f translate,
+        Quaternionf pose,
+        @Nullable Quaternionf cameraOrientation,
+        LivingEntity entity
     ) {
-        p_282665_.pose().pushPose();
-        p_282665_.pose().translate((double)p_296361_, (double)p_294489_, 50.0);
-        p_282665_.pose().scale(p_319934_, p_319934_, -p_319934_);
-        p_282665_.pose().translate(p_295026_.x, p_295026_.y, p_295026_.z);
-        p_282665_.pose().mulPose(p_281880_);
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate((double)x, (double)y, 50.0);
+        guiGraphics.pose().scale(scale, scale, -scale);
+        guiGraphics.pose().translate(translate.x, translate.y, translate.z);
+        guiGraphics.pose().mulPose(pose);
         Lighting.setupForEntityInInventory();
         EntityRenderDispatcher entityrenderdispatcher = Minecraft.getInstance().getEntityRenderDispatcher();
-        if (p_282882_ != null) {
-            entityrenderdispatcher.overrideCameraOrientation(p_282882_.conjugate(new Quaternionf()).rotateY((float) Math.PI));
+        if (cameraOrientation != null) {
+            entityrenderdispatcher.overrideCameraOrientation(cameraOrientation.conjugate(new Quaternionf()).rotateY((float) Math.PI));
         }
 
         entityrenderdispatcher.setRenderShadow(false);
-        RenderSystem.runAsFancy(() -> entityrenderdispatcher.render(p_282466_, 0.0, 0.0, 0.0, 0.0F, 1.0F, p_282665_.pose(), p_282665_.bufferSource(), 15728880));
-        p_282665_.flush();
+        RenderSystem.runAsFancy(() -> entityrenderdispatcher.render(entity, 0.0, 0.0, 0.0, 0.0F, 1.0F, guiGraphics.pose(), guiGraphics.bufferSource(), 15728880));
+        guiGraphics.flush();
         entityrenderdispatcher.setRenderShadow(true);
-        p_282665_.pose().popPose();
+        guiGraphics.pose().popPose();
         Lighting.setupFor3DItems();
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_320845_, int p_320304_, int p_320884_) {
-        return this.recipeBookComponent.keyPressed(p_320845_, p_320304_, p_320884_) ? true : super.keyPressed(p_320845_, p_320304_, p_320884_);
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return this.recipeBookComponent.keyPressed(keyCode, scanCode, modifiers) ? true : super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    /**
+     * Called when a character is typed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param codePoint the code point of the typed character.
+     * @param modifiers the keyboard modifiers.
+     */
+    @Override
+    public boolean charTyped(char codePoint, int modifiers) {
+        return this.recipeBookComponent.charTyped(codePoint, modifiers) ? true : super.charTyped(codePoint, modifiers);
     }
 
     @Override
-    public boolean charTyped(char p_319842_, int p_320393_) {
-        return this.recipeBookComponent.charTyped(p_319842_, p_320393_) ? true : super.charTyped(p_319842_, p_320393_);
+    protected boolean isHovering(int x, int y, int width, int height, double mouseX, double mouseY) {
+        return (!this.widthTooNarrow || !this.recipeBookComponent.isVisible()) && super.isHovering(x, y, width, height, mouseX, mouseY);
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    protected boolean isHovering(int p_98858_, int p_98859_, int p_98860_, int p_98861_, double p_98862_, double p_98863_) {
-        return (!this.widthTooNarrow || !this.recipeBookComponent.isVisible()) && super.isHovering(p_98858_, p_98859_, p_98860_, p_98861_, p_98862_, p_98863_);
-    }
-
-    @Override
-    public boolean mouseClicked(double p_98841_, double p_98842_, int p_98843_) {
-        if (this.recipeBookComponent.mouseClicked(p_98841_, p_98842_, p_98843_)) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (this.recipeBookComponent.mouseClicked(mouseX, mouseY, button)) {
             this.setFocused(this.recipeBookComponent);
             return true;
         } else {
-            return this.widthTooNarrow && this.recipeBookComponent.isVisible() ? false : super.mouseClicked(p_98841_, p_98842_, p_98843_);
+            return this.widthTooNarrow && this.recipeBookComponent.isVisible() ? false : super.mouseClicked(mouseX, mouseY, button);
         }
     }
 
+    /**
+     * Called when a mouse button is released within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was released.
+     */
     @Override
-    public boolean mouseReleased(double p_98893_, double p_98894_, int p_98895_) {
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (this.buttonClicked) {
             this.buttonClicked = false;
             return true;
         } else {
-            return super.mouseReleased(p_98893_, p_98894_, p_98895_);
+            return super.mouseReleased(mouseX, mouseY, button);
         }
     }
 
     @Override
-    protected boolean hasClickedOutside(double p_98845_, double p_98846_, int p_98847_, int p_98848_, int p_98849_) {
-        boolean flag = p_98845_ < (double)p_98847_
-            || p_98846_ < (double)p_98848_
-            || p_98845_ >= (double)(p_98847_ + this.imageWidth)
-            || p_98846_ >= (double)(p_98848_ + this.imageHeight);
-        return this.recipeBookComponent.hasClickedOutside(p_98845_, p_98846_, this.leftPos, this.topPos, this.imageWidth, this.imageHeight, p_98849_) && flag;
+    protected boolean hasClickedOutside(double mouseX, double mouseY, int guiLeft, int guiTop, int mouseButton) {
+        boolean flag = mouseX < (double)guiLeft
+            || mouseY < (double)guiTop
+            || mouseX >= (double)(guiLeft + this.imageWidth)
+            || mouseY >= (double)(guiTop + this.imageHeight);
+        return this.recipeBookComponent.hasClickedOutside(mouseX, mouseY, this.leftPos, this.topPos, this.imageWidth, this.imageHeight, mouseButton) && flag;
     }
 
+    /**
+     * Called when the mouse is clicked over a slot or outside the gui.
+     */
     @Override
-    protected void slotClicked(Slot p_98865_, int p_98866_, int p_98867_, ClickType p_98868_) {
-        super.slotClicked(p_98865_, p_98866_, p_98867_, p_98868_);
-        this.recipeBookComponent.slotClicked(p_98865_);
+    protected void slotClicked(Slot slot, int slotId, int mouseButton, ClickType type) {
+        super.slotClicked(slot, slotId, mouseButton, type);
+        this.recipeBookComponent.slotClicked(slot);
     }
 
     @Override

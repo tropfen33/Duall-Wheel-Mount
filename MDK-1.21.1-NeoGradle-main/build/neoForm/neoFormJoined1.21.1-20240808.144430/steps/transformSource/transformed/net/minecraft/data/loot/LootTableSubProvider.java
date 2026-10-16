@@ -6,5 +6,5 @@ import net.minecraft.world.level.storage.loot.LootTable;
 
 @FunctionalInterface
 public interface LootTableSubProvider {
-    void generate(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> p_249643_);
+    void generate(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> output);
 }

@@ -34,23 +34,23 @@ public class GameTestRunner {
     final boolean haltOnError;
 
     protected GameTestRunner(
-        GameTestRunner.GameTestBatcher p_320713_,
-        Collection<GameTestBatch> p_320022_,
-        ServerLevel p_320570_,
-        GameTestTicker p_320736_,
-        GameTestRunner.StructureSpawner p_320336_,
-        GameTestRunner.StructureSpawner p_320643_,
-        boolean p_352218_
+        GameTestRunner.GameTestBatcher testBatcher,
+        Collection<GameTestBatch> batches,
+        ServerLevel level,
+        GameTestTicker testTicker,
+        GameTestRunner.StructureSpawner existingStructureSpawner,
+        GameTestRunner.StructureSpawner newStructureSpawner,
+        boolean haltOnError
     ) {
-        this.level = p_320570_;
-        this.testTicker = p_320736_;
-        this.testBatcher = p_320713_;
-        this.existingStructureSpawner = p_320336_;
-        this.newStructureSpawner = p_320643_;
-        this.batches = ImmutableList.copyOf(p_320022_);
-        this.haltOnError = p_352218_;
+        this.level = level;
+        this.testTicker = testTicker;
+        this.testBatcher = testBatcher;
+        this.existingStructureSpawner = existingStructureSpawner;
+        this.newStructureSpawner = newStructureSpawner;
+        this.batches = ImmutableList.copyOf(batches);
+        this.haltOnError = haltOnError;
         this.allTestInfos = this.batches.stream().flatMap(p_319468_ -> p_319468_.gameTestInfos().stream()).collect(Util.toMutableList());
-        p_320736_.setRunner(this);
+        testTicker.setRunner(this);
         this.allTestInfos.forEach(p_319464_ -> p_319464_.addListener(new ReportGameListener()));
     }
 
@@ -70,9 +70,9 @@ public class GameTestRunner {
         }
     }
 
-    public void rerunTest(GameTestInfo p_320525_) {
-        GameTestInfo gametestinfo = p_320525_.copyReset();
-        p_320525_.getListeners().forEach(p_319467_ -> p_319467_.testAddedForRerun(p_320525_, gametestinfo, this));
+    public void rerunTest(GameTestInfo test) {
+        GameTestInfo gametestinfo = test.copyReset();
+        test.getListeners().forEach(p_319467_ -> p_319467_.testAddedForRerun(test, gametestinfo, this));
         this.allTestInfos.add(gametestinfo);
         this.scheduledForRerun.add(gametestinfo);
         if (this.stopped) {
@@ -80,11 +80,11 @@ public class GameTestRunner {
         }
     }
 
-    void runBatch(final int p_319917_) {
-        if (p_319917_ >= this.batches.size()) {
+    void runBatch(final int index) {
+        if (index >= this.batches.size()) {
             this.runScheduledRerunTests();
         } else {
-            this.currentBatch = this.batches.get(p_319917_);
+            this.currentBatch = this.batches.get(index);
             this.existingStructureSpawner.onBatchStart(this.level);
             this.newStructureSpawner.onBatchStart(this.level);
             Collection<GameTestInfo> collection = this.createStructuresForBatch(this.currentBatch.gameTestInfos());
@@ -101,7 +101,7 @@ public class GameTestRunner {
                         GameTestRunner.this.batchListeners.forEach(p_320644_ -> p_320644_.testBatchFinished(GameTestRunner.this.currentBatch));
                         LongSet longset = new LongArraySet(GameTestRunner.this.level.getForcedChunks());
                         longset.forEach(p_319954_ -> GameTestRunner.this.level.setChunkForced(ChunkPos.getX(p_319954_), ChunkPos.getZ(p_319954_), false));
-                        GameTestRunner.this.runBatch(p_319917_ + 1);
+                        GameTestRunner.this.runBatch(index + 1);
                     }
                 }
 
@@ -150,22 +150,22 @@ public class GameTestRunner {
         }
     }
 
-    public void addListener(GameTestBatchListener p_320573_) {
-        this.batchListeners.add(p_320573_);
+    public void addListener(GameTestBatchListener listener) {
+        this.batchListeners.add(listener);
     }
 
-    private Collection<GameTestInfo> createStructuresForBatch(Collection<GameTestInfo> p_320080_) {
-        return p_320080_.stream().map(this::spawn).flatMap(Optional::stream).toList();
+    private Collection<GameTestInfo> createStructuresForBatch(Collection<GameTestInfo> batch) {
+        return batch.stream().map(this::spawn).flatMap(Optional::stream).toList();
     }
 
-    private Optional<GameTestInfo> spawn(GameTestInfo p_320187_) {
-        return p_320187_.getStructureBlockPos() == null
-            ? this.newStructureSpawner.spawnStructure(p_320187_)
-            : this.existingStructureSpawner.spawnStructure(p_320187_);
+    private Optional<GameTestInfo> spawn(GameTestInfo test) {
+        return test.getStructureBlockPos() == null
+            ? this.newStructureSpawner.spawnStructure(test)
+            : this.existingStructureSpawner.spawnStructure(test);
     }
 
-    public static void clearMarkers(ServerLevel p_127686_) {
-        DebugPackets.sendGameTestClearPacket(p_127686_);
+    public static void clearMarkers(ServerLevel serverLevel) {
+        DebugPackets.sendGameTestClearPacket(serverLevel);
     }
 
     public static class Builder {
@@ -177,36 +177,36 @@ public class GameTestRunner {
         private final Collection<GameTestBatch> batches;
         private boolean haltOnError = false;
 
-        private Builder(Collection<GameTestBatch> p_320127_, ServerLevel p_320437_) {
-            this.batches = p_320127_;
-            this.level = p_320437_;
+        private Builder(Collection<GameTestBatch> batches, ServerLevel level) {
+            this.batches = batches;
+            this.level = level;
         }
 
-        public static GameTestRunner.Builder fromBatches(Collection<GameTestBatch> p_319850_, ServerLevel p_320176_) {
-            return new GameTestRunner.Builder(p_319850_, p_320176_);
+        public static GameTestRunner.Builder fromBatches(Collection<GameTestBatch> batches, ServerLevel level) {
+            return new GameTestRunner.Builder(batches, level);
         }
 
-        public static GameTestRunner.Builder fromInfo(Collection<GameTestInfo> p_319878_, ServerLevel p_320046_) {
-            return fromBatches(GameTestBatchFactory.fromGameTestInfo().batch(p_319878_), p_320046_);
+        public static GameTestRunner.Builder fromInfo(Collection<GameTestInfo> infos, ServerLevel level) {
+            return fromBatches(GameTestBatchFactory.fromGameTestInfo().batch(infos), level);
         }
 
-        public GameTestRunner.Builder haltOnError(boolean p_352186_) {
-            this.haltOnError = p_352186_;
+        public GameTestRunner.Builder haltOnError(boolean haltOnError) {
+            this.haltOnError = haltOnError;
             return this;
         }
 
-        public GameTestRunner.Builder newStructureSpawner(GameTestRunner.StructureSpawner p_320647_) {
-            this.newStructureSpawner = p_320647_;
+        public GameTestRunner.Builder newStructureSpawner(GameTestRunner.StructureSpawner newStructureSpawner) {
+            this.newStructureSpawner = newStructureSpawner;
             return this;
         }
 
-        public GameTestRunner.Builder existingStructureSpawner(StructureGridSpawner p_352321_) {
-            this.existingStructureSpawner = p_352321_;
+        public GameTestRunner.Builder existingStructureSpawner(StructureGridSpawner existingStructureSpawner) {
+            this.existingStructureSpawner = existingStructureSpawner;
             return this;
         }
 
-        public GameTestRunner.Builder batcher(GameTestRunner.GameTestBatcher p_352338_) {
-            this.batcher = p_352338_;
+        public GameTestRunner.Builder batcher(GameTestRunner.GameTestBatcher batcher) {
+            this.batcher = batcher;
             return this;
         }
 
@@ -218,16 +218,16 @@ public class GameTestRunner {
     }
 
     public interface GameTestBatcher {
-        Collection<GameTestBatch> batch(Collection<GameTestInfo> p_320173_);
+        Collection<GameTestBatch> batch(Collection<GameTestInfo> infos);
     }
 
     public interface StructureSpawner {
         GameTestRunner.StructureSpawner IN_PLACE = p_320288_ -> Optional.of(p_320288_.prepareTestStructure().placeStructure().startExecution(1));
         GameTestRunner.StructureSpawner NOT_SET = p_320313_ -> Optional.empty();
 
-        Optional<GameTestInfo> spawnStructure(GameTestInfo p_320038_);
+        Optional<GameTestInfo> spawnStructure(GameTestInfo gameTestInfo);
 
-        default void onBatchStart(ServerLevel p_352207_) {
+        default void onBatchStart(ServerLevel level) {
         }
     }
 }

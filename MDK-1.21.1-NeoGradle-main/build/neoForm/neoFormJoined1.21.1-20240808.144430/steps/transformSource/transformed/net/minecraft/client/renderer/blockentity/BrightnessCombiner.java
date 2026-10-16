@@ -10,10 +10,10 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class BrightnessCombiner<S extends BlockEntity> implements DoubleBlockCombiner.Combiner<S, Int2IntFunction> {
-    public Int2IntFunction acceptDouble(S p_112320_, S p_112321_) {
+    public Int2IntFunction acceptDouble(S first, S second) {
         return p_112325_ -> {
-            int i = LevelRenderer.getLightColor(p_112320_.getLevel(), p_112320_.getBlockPos());
-            int j = LevelRenderer.getLightColor(p_112321_.getLevel(), p_112321_.getBlockPos());
+            int i = LevelRenderer.getLightColor(first.getLevel(), first.getBlockPos());
+            int j = LevelRenderer.getLightColor(second.getLevel(), second.getBlockPos());
             int k = LightTexture.block(i);
             int l = LightTexture.block(j);
             int i1 = LightTexture.sky(i);
@@ -22,7 +22,7 @@ public class BrightnessCombiner<S extends BlockEntity> implements DoubleBlockCom
         };
     }
 
-    public Int2IntFunction acceptSingle(S p_112318_) {
+    public Int2IntFunction acceptSingle(S single) {
         return p_112333_ -> p_112333_;
     }
 

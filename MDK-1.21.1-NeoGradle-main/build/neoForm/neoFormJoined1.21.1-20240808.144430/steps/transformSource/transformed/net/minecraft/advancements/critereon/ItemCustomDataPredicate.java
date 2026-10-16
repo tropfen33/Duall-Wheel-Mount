@@ -7,11 +7,11 @@ public record ItemCustomDataPredicate(NbtPredicate value) implements ItemSubPred
     public static final Codec<ItemCustomDataPredicate> CODEC = NbtPredicate.CODEC.xmap(ItemCustomDataPredicate::new, ItemCustomDataPredicate::value);
 
     @Override
-    public boolean matches(ItemStack p_333825_) {
-        return this.value.matches(p_333825_);
+    public boolean matches(ItemStack stack) {
+        return this.value.matches(stack);
     }
 
-    public static ItemCustomDataPredicate customData(NbtPredicate p_334037_) {
-        return new ItemCustomDataPredicate(p_334037_);
+    public static ItemCustomDataPredicate customData(NbtPredicate value) {
+        return new ItemCustomDataPredicate(value);
     }
 }

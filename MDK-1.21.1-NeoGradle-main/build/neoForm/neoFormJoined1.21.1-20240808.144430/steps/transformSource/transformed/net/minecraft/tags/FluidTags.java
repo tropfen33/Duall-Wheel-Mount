@@ -11,8 +11,8 @@ public final class FluidTags {
     private FluidTags() {
     }
 
-    private static TagKey<Fluid> create(String p_203851_) {
-        return TagKey.create(Registries.FLUID, ResourceLocation.withDefaultNamespace(p_203851_));
+    private static TagKey<Fluid> create(String name) {
+        return TagKey.create(Registries.FLUID, ResourceLocation.withDefaultNamespace(name));
     }
 
     public static TagKey<Fluid> create(ResourceLocation name) {

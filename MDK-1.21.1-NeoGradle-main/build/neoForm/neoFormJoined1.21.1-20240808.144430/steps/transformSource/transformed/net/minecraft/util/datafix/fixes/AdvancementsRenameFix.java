@@ -13,10 +13,10 @@ public class AdvancementsRenameFix extends DataFix {
     private final String name;
     private final Function<String, String> renamer;
 
-    public AdvancementsRenameFix(Schema p_14652_, boolean p_14653_, String p_14654_, Function<String, String> p_14655_) {
-        super(p_14652_, p_14653_);
-        this.name = p_14654_;
-        this.renamer = p_14655_;
+    public AdvancementsRenameFix(Schema outputSchema, boolean changesType, String name, Function<String, String> renamer) {
+        super(outputSchema, changesType);
+        this.name = name;
+        this.renamer = renamer;
     }
 
     @Override

@@ -27,23 +27,23 @@ public class SlotsArgument implements ArgumentType<SlotRange> {
         return new SlotsArgument();
     }
 
-    public static SlotRange getSlots(CommandContext<CommandSourceStack> p_332720_, String p_332685_) {
-        return p_332720_.getArgument(p_332685_, SlotRange.class);
+    public static SlotRange getSlots(CommandContext<CommandSourceStack> context, String name) {
+        return context.getArgument(name, SlotRange.class);
     }
 
-    public SlotRange parse(StringReader p_332649_) throws CommandSyntaxException {
-        String s = ParserUtils.readWhile(p_332649_, p_332669_ -> p_332669_ != ' ');
+    public SlotRange parse(StringReader reader) throws CommandSyntaxException {
+        String s = ParserUtils.readWhile(reader, p_332669_ -> p_332669_ != ' ');
         SlotRange slotrange = SlotRanges.nameToIds(s);
         if (slotrange == null) {
-            throw ERROR_UNKNOWN_SLOT.createWithContext(p_332649_, s);
+            throw ERROR_UNKNOWN_SLOT.createWithContext(reader, s);
         } else {
             return slotrange;
         }
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_332783_, SuggestionsBuilder p_332759_) {
-        return SharedSuggestionProvider.suggest(SlotRanges.allNames(), p_332759_);
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder suggestionBuilder) {
+        return SharedSuggestionProvider.suggest(SlotRanges.allNames(), suggestionBuilder);
     }
 
     @Override

@@ -8,26 +8,26 @@ import net.minecraft.world.entity.Mob;
 public class Swim extends Behavior<Mob> {
     private final float chance;
 
-    public Swim(float p_24383_) {
+    public Swim(float chance) {
         super(ImmutableMap.of());
-        this.chance = p_24383_;
+        this.chance = chance;
     }
 
-    public static boolean shouldSwim(Mob p_316787_) {
-        return p_316787_.isInWater() && p_316787_.getFluidHeight(FluidTags.WATER) > p_316787_.getFluidJumpThreshold() || p_316787_.isInLava() || p_316787_.isInFluidType((fluidType, height) -> p_316787_.canSwimInFluidType(fluidType) && height > p_316787_.getFluidJumpThreshold());
+    public static boolean shouldSwim(Mob mob) {
+        return mob.isInWater() && mob.getFluidHeight(FluidTags.WATER) > mob.getFluidJumpThreshold() || mob.isInLava() || mob.isInFluidType((fluidType, height) -> mob.canSwimInFluidType(fluidType) && height > mob.getFluidJumpThreshold());
     }
 
-    protected boolean checkExtraStartConditions(ServerLevel p_24388_, Mob p_24389_) {
-        return shouldSwim(p_24389_);
+    protected boolean checkExtraStartConditions(ServerLevel level, Mob owner) {
+        return shouldSwim(owner);
     }
 
-    protected boolean canStillUse(ServerLevel p_24391_, Mob p_24392_, long p_24393_) {
-        return this.checkExtraStartConditions(p_24391_, p_24392_);
+    protected boolean canStillUse(ServerLevel level, Mob entity, long gameTime) {
+        return this.checkExtraStartConditions(level, entity);
     }
 
-    protected void tick(ServerLevel p_24399_, Mob p_24400_, long p_24401_) {
-        if (p_24400_.getRandom().nextFloat() < this.chance) {
-            p_24400_.getJumpControl().jump();
+    protected void tick(ServerLevel level, Mob owner, long gameTime) {
+        if (owner.getRandom().nextFloat() < this.chance) {
+            owner.getJumpControl().jump();
         }
     }
 }

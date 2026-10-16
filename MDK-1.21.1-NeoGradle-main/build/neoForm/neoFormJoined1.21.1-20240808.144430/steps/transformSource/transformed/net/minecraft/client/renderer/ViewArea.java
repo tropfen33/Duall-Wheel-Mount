@@ -20,14 +20,14 @@ public class ViewArea {
     private int viewDistance;
     public SectionRenderDispatcher.RenderSection[] sections;
 
-    public ViewArea(SectionRenderDispatcher p_296460_, Level p_110846_, int p_110847_, LevelRenderer p_110848_) {
-        this.levelRenderer = p_110848_;
-        this.level = p_110846_;
-        this.setViewDistance(p_110847_);
-        this.createSections(p_296460_);
+    public ViewArea(SectionRenderDispatcher sectionRenderDispatcher, Level level, int viewDistance, LevelRenderer levelRenderer) {
+        this.levelRenderer = levelRenderer;
+        this.level = level;
+        this.setViewDistance(viewDistance);
+        this.createSections(sectionRenderDispatcher);
     }
 
-    protected void createSections(SectionRenderDispatcher p_294825_) {
+    protected void createSections(SectionRenderDispatcher sectionRenderDispatcher) {
         if (!Minecraft.getInstance().isSameThread()) {
             throw new IllegalStateException("createSections called from wrong thread: " + Thread.currentThread().getName());
         } else {
@@ -38,7 +38,7 @@ public class ViewArea {
                 for (int k = 0; k < this.sectionGridSizeY; k++) {
                     for (int l = 0; l < this.sectionGridSizeZ; l++) {
                         int i1 = this.getSectionIndex(j, k, l);
-                        this.sections[i1] = p_294825_.new RenderSection(i1, j * 16, this.level.getMinBuildHeight() + k * 16, l * 16);
+                        this.sections[i1] = sectionRenderDispatcher.new RenderSection(i1, j * 16, this.level.getMinBuildHeight() + k * 16, l * 16);
                     }
                 }
             }
@@ -51,16 +51,16 @@ public class ViewArea {
         }
     }
 
-    private int getSectionIndex(int p_295999_, int p_294097_, int p_294966_) {
-        return (p_294966_ * this.sectionGridSizeY + p_294097_) * this.sectionGridSizeX + p_295999_;
+    private int getSectionIndex(int x, int y, int z) {
+        return (z * this.sectionGridSizeY + y) * this.sectionGridSizeX + x;
     }
 
-    protected void setViewDistance(int p_110854_) {
-        int i = p_110854_ * 2 + 1;
+    protected void setViewDistance(int renderDistanceChunks) {
+        int i = renderDistanceChunks * 2 + 1;
         this.sectionGridSizeX = i;
         this.sectionGridSizeY = this.level.getSectionsCount();
         this.sectionGridSizeZ = i;
-        this.viewDistance = p_110854_;
+        this.viewDistance = renderDistanceChunks;
     }
 
     public int getViewDistance() {
@@ -71,9 +71,9 @@ public class ViewArea {
         return this.level;
     }
 
-    public void repositionCamera(double p_110851_, double p_110852_) {
-        int i = Mth.ceil(p_110851_);
-        int j = Mth.ceil(p_110852_);
+    public void repositionCamera(double viewEntityX, double viewEntityZ) {
+        int i = Mth.ceil(viewEntityX);
+        int j = Mth.ceil(viewEntityZ);
 
         for (int k = 0; k < this.sectionGridSizeX; k++) {
             int l = this.sectionGridSizeX * 16;
@@ -97,20 +97,20 @@ public class ViewArea {
         }
     }
 
-    public void setDirty(int p_110860_, int p_110861_, int p_110862_, boolean p_110863_) {
-        int i = Math.floorMod(p_110860_, this.sectionGridSizeX);
-        int j = Math.floorMod(p_110861_ - this.level.getMinSection(), this.sectionGridSizeY);
-        int k = Math.floorMod(p_110862_, this.sectionGridSizeZ);
+    public void setDirty(int sectionX, int sectionY, int sectionZ, boolean reRenderOnMainThread) {
+        int i = Math.floorMod(sectionX, this.sectionGridSizeX);
+        int j = Math.floorMod(sectionY - this.level.getMinSection(), this.sectionGridSizeY);
+        int k = Math.floorMod(sectionZ, this.sectionGridSizeZ);
         SectionRenderDispatcher.RenderSection sectionrenderdispatcher$rendersection = this.sections[this.getSectionIndex(i, j, k)];
-        sectionrenderdispatcher$rendersection.setDirty(p_110863_);
+        sectionrenderdispatcher$rendersection.setDirty(reRenderOnMainThread);
     }
 
     @Nullable
-    protected SectionRenderDispatcher.RenderSection getRenderSectionAt(BlockPos p_294239_) {
-        int i = Mth.floorDiv(p_294239_.getY() - this.level.getMinBuildHeight(), 16);
+    protected SectionRenderDispatcher.RenderSection getRenderSectionAt(BlockPos pos) {
+        int i = Mth.floorDiv(pos.getY() - this.level.getMinBuildHeight(), 16);
         if (i >= 0 && i < this.sectionGridSizeY) {
-            int j = Mth.positiveModulo(Mth.floorDiv(p_294239_.getX(), 16), this.sectionGridSizeX);
-            int k = Mth.positiveModulo(Mth.floorDiv(p_294239_.getZ(), 16), this.sectionGridSizeZ);
+            int j = Mth.positiveModulo(Mth.floorDiv(pos.getX(), 16), this.sectionGridSizeX);
+            int k = Mth.positiveModulo(Mth.floorDiv(pos.getZ(), 16), this.sectionGridSizeZ);
             return this.sections[this.getSectionIndex(j, i, k)];
         } else {
             return null;

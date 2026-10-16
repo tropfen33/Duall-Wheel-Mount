@@ -27,12 +27,15 @@ public class PufferfishRenderer extends MobRenderer<Pufferfish, EntityModel<Puff
         this.small = new PufferfishSmallModel<>(p_174358_.bakeLayer(ModelLayers.PUFFERFISH_SMALL));
     }
 
-    public ResourceLocation getTextureLocation(Pufferfish p_115775_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Pufferfish entity) {
         return PUFFER_LOCATION;
     }
 
-    public void render(Pufferfish p_115777_, float p_115778_, float p_115779_, PoseStack p_115780_, MultiBufferSource p_115781_, int p_115782_) {
-        int i = p_115777_.getPuffState();
+    public void render(Pufferfish entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        int i = entity.getPuffState();
         if (i != this.puffStateO) {
             if (i == 0) {
                 this.model = this.small;
@@ -45,11 +48,11 @@ public class PufferfishRenderer extends MobRenderer<Pufferfish, EntityModel<Puff
 
         this.puffStateO = i;
         this.shadowRadius = 0.1F + 0.1F * (float)i;
-        super.render(p_115777_, p_115778_, p_115779_, p_115780_, p_115781_, p_115782_);
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 
-    protected void setupRotations(Pufferfish p_320383_, PoseStack p_115763_, float p_115764_, float p_115765_, float p_115766_, float p_320616_) {
-        p_115763_.translate(0.0F, Mth.cos(p_115764_ * 0.05F) * 0.08F, 0.0F);
-        super.setupRotations(p_320383_, p_115763_, p_115764_, p_115765_, p_115766_, p_320616_);
+    protected void setupRotations(Pufferfish entity, PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale) {
+        poseStack.translate(0.0F, Mth.cos(bob * 0.05F) * 0.08F, 0.0F);
+        super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
     }
 }

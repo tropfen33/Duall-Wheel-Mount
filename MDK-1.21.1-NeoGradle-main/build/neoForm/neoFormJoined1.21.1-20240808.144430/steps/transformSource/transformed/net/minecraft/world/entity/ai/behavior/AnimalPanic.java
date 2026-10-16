@@ -31,69 +31,69 @@ public class AnimalPanic<E extends PathfinderMob> extends Behavior<E> {
     private final float speedMultiplier;
     private final Function<PathfinderMob, TagKey<DamageType>> panicCausingDamageTypes;
 
-    public AnimalPanic(float p_147385_) {
-        this(p_147385_, p_349992_ -> DamageTypeTags.PANIC_CAUSES);
+    public AnimalPanic(float speedMultiplier) {
+        this(speedMultiplier, p_349992_ -> DamageTypeTags.PANIC_CAUSES);
     }
 
-    public AnimalPanic(float p_275357_, Function<PathfinderMob, TagKey<DamageType>> p_350957_) {
+    public AnimalPanic(float speedMultiplier, Function<PathfinderMob, TagKey<DamageType>> panicCausingDamageTypes) {
         super(Map.of(MemoryModuleType.IS_PANICKING, MemoryStatus.REGISTERED, MemoryModuleType.HURT_BY, MemoryStatus.REGISTERED), 100, 120);
-        this.speedMultiplier = p_275357_;
-        this.panicCausingDamageTypes = p_350957_;
+        this.speedMultiplier = speedMultiplier;
+        this.panicCausingDamageTypes = panicCausingDamageTypes;
     }
 
-    protected boolean checkExtraStartConditions(ServerLevel p_275286_, E p_275721_) {
-        return p_275721_.getBrain()
+    protected boolean checkExtraStartConditions(ServerLevel level, E owner) {
+        return owner.getBrain()
                 .getMemory(MemoryModuleType.HURT_BY)
-                .map(p_349994_ -> p_349994_.is(this.panicCausingDamageTypes.apply(p_275721_)))
+                .map(p_349994_ -> p_349994_.is(this.panicCausingDamageTypes.apply(owner)))
                 .orElse(false)
-            || p_275721_.getBrain().hasMemoryValue(MemoryModuleType.IS_PANICKING);
+            || owner.getBrain().hasMemoryValue(MemoryModuleType.IS_PANICKING);
     }
 
-    protected boolean canStillUse(ServerLevel p_147391_, E p_147392_, long p_147393_) {
+    protected boolean canStillUse(ServerLevel level, E entity, long gameTime) {
         return true;
     }
 
-    protected void start(ServerLevel p_147399_, E p_147400_, long p_147401_) {
-        p_147400_.getBrain().setMemory(MemoryModuleType.IS_PANICKING, true);
-        p_147400_.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
+    protected void start(ServerLevel level, E entity, long gameTime) {
+        entity.getBrain().setMemory(MemoryModuleType.IS_PANICKING, true);
+        entity.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
     }
 
-    protected void stop(ServerLevel p_217118_, E p_217119_, long p_217120_) {
-        Brain<?> brain = p_217119_.getBrain();
+    protected void stop(ServerLevel level, E entity, long gameTime) {
+        Brain<?> brain = entity.getBrain();
         brain.eraseMemory(MemoryModuleType.IS_PANICKING);
     }
 
-    protected void tick(ServerLevel p_147403_, E p_147404_, long p_147405_) {
-        if (p_147404_.getNavigation().isDone()) {
-            Vec3 vec3 = this.getPanicPos(p_147404_, p_147403_);
+    protected void tick(ServerLevel level, E owner, long gameTime) {
+        if (owner.getNavigation().isDone()) {
+            Vec3 vec3 = this.getPanicPos(owner, level);
             if (vec3 != null) {
-                p_147404_.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(vec3, this.speedMultiplier, 0));
+                owner.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(vec3, this.speedMultiplier, 0));
             }
         }
     }
 
     @Nullable
-    private Vec3 getPanicPos(E p_196639_, ServerLevel p_196640_) {
-        if (p_196639_.isOnFire()) {
-            Optional<Vec3> optional = this.lookForWater(p_196640_, p_196639_).map(Vec3::atBottomCenterOf);
+    private Vec3 getPanicPos(E pathfinder, ServerLevel level) {
+        if (pathfinder.isOnFire()) {
+            Optional<Vec3> optional = this.lookForWater(level, pathfinder).map(Vec3::atBottomCenterOf);
             if (optional.isPresent()) {
                 return optional.get();
             }
         }
 
-        return LandRandomPos.getPos(p_196639_, 5, 4);
+        return LandRandomPos.getPos(pathfinder, 5, 4);
     }
 
-    private Optional<BlockPos> lookForWater(BlockGetter p_196642_, Entity p_196643_) {
-        BlockPos blockpos = p_196643_.blockPosition();
-        if (!p_196642_.getBlockState(blockpos).getCollisionShape(p_196642_, blockpos).isEmpty()) {
+    private Optional<BlockPos> lookForWater(BlockGetter level, Entity entity) {
+        BlockPos blockpos = entity.blockPosition();
+        if (!level.getBlockState(blockpos).getCollisionShape(level, blockpos).isEmpty()) {
             return Optional.empty();
         } else {
             Predicate<BlockPos> predicate;
-            if (Mth.ceil(p_196643_.getBbWidth()) == 2) {
-                predicate = p_284705_ -> BlockPos.squareOutSouthEast(p_284705_).allMatch(p_196646_ -> p_196642_.getFluidState(p_196646_).is(FluidTags.WATER));
+            if (Mth.ceil(entity.getBbWidth()) == 2) {
+                predicate = p_284705_ -> BlockPos.squareOutSouthEast(p_284705_).allMatch(p_196646_ -> level.getFluidState(p_196646_).is(FluidTags.WATER));
             } else {
-                predicate = p_284707_ -> p_196642_.getFluidState(p_284707_).is(FluidTags.WATER);
+                predicate = p_284707_ -> level.getFluidState(p_284707_).is(FluidTags.WATER);
             }
 
             return BlockPos.findClosestMatch(blockpos, 5, 1, predicate);

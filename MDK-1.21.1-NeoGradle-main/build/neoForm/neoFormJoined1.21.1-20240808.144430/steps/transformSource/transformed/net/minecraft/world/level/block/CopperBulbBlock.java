@@ -22,52 +22,56 @@ public class CopperBulbBlock extends Block {
         return CODEC;
     }
 
-    public CopperBulbBlock(BlockBehaviour.Properties p_308970_) {
-        super(p_308970_);
+    public CopperBulbBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.defaultBlockState().setValue(LIT, Boolean.valueOf(false)).setValue(POWERED, Boolean.valueOf(false)));
     }
 
     @Override
-    protected void onPlace(BlockState p_309207_, Level p_309068_, BlockPos p_309087_, BlockState p_308908_, boolean p_308906_) {
-        if (p_308908_.getBlock() != p_309207_.getBlock() && p_309068_ instanceof ServerLevel serverlevel) {
-            this.checkAndFlip(p_309207_, serverlevel, p_309087_);
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        if (oldState.getBlock() != state.getBlock() && level instanceof ServerLevel serverlevel) {
+            this.checkAndFlip(state, serverlevel, pos);
         }
     }
 
     @Override
-    protected void neighborChanged(BlockState p_309025_, Level p_308955_, BlockPos p_309153_, Block p_308949_, BlockPos p_308887_, boolean p_309085_) {
-        if (p_308955_ instanceof ServerLevel serverlevel) {
-            this.checkAndFlip(p_309025_, serverlevel, p_309153_);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+        if (level instanceof ServerLevel serverlevel) {
+            this.checkAndFlip(state, serverlevel, pos);
         }
     }
 
-    public void checkAndFlip(BlockState p_313720_, ServerLevel p_313753_, BlockPos p_313735_) {
-        boolean flag = p_313753_.hasNeighborSignal(p_313735_);
-        if (flag != p_313720_.getValue(POWERED)) {
-            BlockState blockstate = p_313720_;
-            if (!p_313720_.getValue(POWERED)) {
-                blockstate = p_313720_.cycle(LIT);
-                p_313753_.playSound(
-                    null, p_313735_, blockstate.getValue(LIT) ? SoundEvents.COPPER_BULB_TURN_ON : SoundEvents.COPPER_BULB_TURN_OFF, SoundSource.BLOCKS
+    public void checkAndFlip(BlockState state, ServerLevel level, BlockPos pos) {
+        boolean flag = level.hasNeighborSignal(pos);
+        if (flag != state.getValue(POWERED)) {
+            BlockState blockstate = state;
+            if (!state.getValue(POWERED)) {
+                blockstate = state.cycle(LIT);
+                level.playSound(
+                    null, pos, blockstate.getValue(LIT) ? SoundEvents.COPPER_BULB_TURN_ON : SoundEvents.COPPER_BULB_TURN_OFF, SoundSource.BLOCKS
                 );
             }
 
-            p_313753_.setBlock(p_313735_, blockstate.setValue(POWERED, Boolean.valueOf(flag)), 3);
+            level.setBlock(pos, blockstate.setValue(POWERED, Boolean.valueOf(flag)), 3);
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_308903_) {
-        p_308903_.add(LIT, POWERED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(LIT, POWERED);
     }
 
     @Override
-    protected boolean hasAnalogOutputSignal(BlockState p_308965_) {
+    protected boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
+    /**
+     * Returns the analog signal this block emits. This is the signal a comparator can read from it.
+     *
+     */
     @Override
-    protected int getAnalogOutputSignal(BlockState p_308938_, Level p_309149_, BlockPos p_309114_) {
-        return p_309149_.getBlockState(p_309114_).getValue(LIT) ? 15 : 0;
+    protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+        return level.getBlockState(pos).getValue(LIT) ? 15 : 0;
     }
 }

@@ -11,18 +11,18 @@ import net.minecraft.world.entity.ai.behavior.declarative.MemoryAccessor;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 
 public class StartAttacking {
-    public static <E extends Mob> BehaviorControl<E> create(Function<E, Optional<? extends LivingEntity>> p_259868_) {
-        return create(p_24212_ -> true, p_259868_);
+    public static <E extends Mob> BehaviorControl<E> create(Function<E, Optional<? extends LivingEntity>> targetFinder) {
+        return create(p_24212_ -> true, targetFinder);
     }
 
-    public static <E extends Mob> BehaviorControl<E> create(Predicate<E> p_259618_, Function<E, Optional<? extends LivingEntity>> p_259435_) {
+    public static <E extends Mob> BehaviorControl<E> create(Predicate<E> canAttack, Function<E, Optional<? extends LivingEntity>> targetFinder) {
         return BehaviorBuilder.create(
             p_258782_ -> p_258782_.group(p_258782_.absent(MemoryModuleType.ATTACK_TARGET), p_258782_.registered(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE))
                     .apply(p_258782_, (p_258778_, p_258779_) -> (p_258773_, p_258774_, p_258775_) -> {
-                            if (!p_259618_.test(p_258774_)) {
+                            if (!canAttack.test(p_258774_)) {
                                 return false;
                             } else {
-                                Optional<? extends LivingEntity> optional = p_259435_.apply(p_258774_);
+                                Optional<? extends LivingEntity> optional = targetFinder.apply(p_258774_);
                                 if (optional.isEmpty()) {
                                     return false;
                                 } else {

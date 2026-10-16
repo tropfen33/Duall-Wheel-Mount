@@ -10,13 +10,13 @@ public class CubicSampler {
     private CubicSampler() {
     }
 
-    public static Vec3 gaussianSampleVec3(Vec3 p_130039_, CubicSampler.Vec3Fetcher p_130040_) {
-        int i = Mth.floor(p_130039_.x());
-        int j = Mth.floor(p_130039_.y());
-        int k = Mth.floor(p_130039_.z());
-        double d0 = p_130039_.x() - (double)i;
-        double d1 = p_130039_.y() - (double)j;
-        double d2 = p_130039_.z() - (double)k;
+    public static Vec3 gaussianSampleVec3(Vec3 vec, CubicSampler.Vec3Fetcher fetcher) {
+        int i = Mth.floor(vec.x());
+        int j = Mth.floor(vec.y());
+        int k = Mth.floor(vec.z());
+        double d0 = vec.x() - (double)i;
+        double d1 = vec.y() - (double)j;
+        double d2 = vec.z() - (double)k;
         double d3 = 0.0;
         Vec3 vec3 = Vec3.ZERO;
 
@@ -33,7 +33,7 @@ public class CubicSampler {
                     int i2 = k - 2 + l1;
                     double d7 = d4 * d5 * d6;
                     d3 += d7;
-                    vec3 = vec3.add(p_130040_.fetch(i1, k1, i2).scale(d7));
+                    vec3 = vec3.add(fetcher.fetch(i1, k1, i2).scale(d7));
                 }
             }
         }
@@ -43,6 +43,6 @@ public class CubicSampler {
 
     @FunctionalInterface
     public interface Vec3Fetcher {
-        Vec3 fetch(int p_130042_, int p_130043_, int p_130044_);
+        Vec3 fetch(int x, int y, int z);
     }
 }

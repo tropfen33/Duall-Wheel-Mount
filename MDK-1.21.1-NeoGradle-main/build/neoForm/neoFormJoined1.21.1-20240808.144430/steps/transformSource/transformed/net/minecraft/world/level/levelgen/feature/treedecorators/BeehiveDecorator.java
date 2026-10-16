@@ -24,10 +24,13 @@ public class BeehiveDecorator extends TreeDecorator {
         .stream()
         .filter(p_202307_ -> p_202307_ != WORLDGEN_FACING.getOpposite())
         .toArray(Direction[]::new);
+    /**
+     * Probability to generate a beehive
+     */
     private final float probability;
 
-    public BeehiveDecorator(float p_69958_) {
-        this.probability = p_69958_;
+    public BeehiveDecorator(float probability) {
+        this.probability = probability;
     }
 
     @Override
@@ -36,11 +39,11 @@ public class BeehiveDecorator extends TreeDecorator {
     }
 
     @Override
-    public void place(TreeDecorator.Context p_226019_) {
-        RandomSource randomsource = p_226019_.random();
+    public void place(TreeDecorator.Context context) {
+        RandomSource randomsource = context.random();
         if (!(randomsource.nextFloat() >= this.probability)) {
-            List<BlockPos> list = p_226019_.leaves();
-            List<BlockPos> list1 = p_226019_.logs();
+            List<BlockPos> list = context.leaves();
+            List<BlockPos> list1 = context.logs();
             int i = !list.isEmpty()
                 ? Math.max(list.get(0).getY() - 1, list1.get(0).getY() + 1)
                 : Math.min(list1.get(0).getY() + 1 + randomsource.nextInt(3), list1.get(list1.size() - 1).getY());
@@ -51,11 +54,11 @@ public class BeehiveDecorator extends TreeDecorator {
             if (!list2.isEmpty()) {
                 Collections.shuffle(list2);
                 Optional<BlockPos> optional = list2.stream()
-                    .filter(p_226022_ -> p_226019_.isAir(p_226022_) && p_226019_.isAir(p_226022_.relative(WORLDGEN_FACING)))
+                    .filter(p_226022_ -> context.isAir(p_226022_) && context.isAir(p_226022_.relative(WORLDGEN_FACING)))
                     .findFirst();
                 if (!optional.isEmpty()) {
-                    p_226019_.setBlock(optional.get(), Blocks.BEE_NEST.defaultBlockState().setValue(BeehiveBlock.FACING, WORLDGEN_FACING));
-                    p_226019_.level().getBlockEntity(optional.get(), BlockEntityType.BEEHIVE).ifPresent(p_330149_ -> {
+                    context.setBlock(optional.get(), Blocks.BEE_NEST.defaultBlockState().setValue(BeehiveBlock.FACING, WORLDGEN_FACING));
+                    context.level().getBlockEntity(optional.get(), BlockEntityType.BEEHIVE).ifPresent(p_330149_ -> {
                         int j = 2 + randomsource.nextInt(2);
 
                         for (int k = 0; k < j; k++) {

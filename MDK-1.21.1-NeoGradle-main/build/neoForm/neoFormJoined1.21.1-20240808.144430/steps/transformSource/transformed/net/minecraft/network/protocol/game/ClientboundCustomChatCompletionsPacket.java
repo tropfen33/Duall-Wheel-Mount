@@ -16,9 +16,9 @@ public record ClientboundCustomChatCompletionsPacket(ClientboundCustomChatComple
         this(p_243340_.readEnum(ClientboundCustomChatCompletionsPacket.Action.class), p_243340_.readList(FriendlyByteBuf::readUtf));
     }
 
-    private void write(FriendlyByteBuf p_240782_) {
-        p_240782_.writeEnum(this.action);
-        p_240782_.writeCollection(this.entries, FriendlyByteBuf::writeUtf);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeEnum(this.action);
+        buffer.writeCollection(this.entries, FriendlyByteBuf::writeUtf);
     }
 
     @Override
@@ -26,8 +26,11 @@ public record ClientboundCustomChatCompletionsPacket(ClientboundCustomChatComple
         return GamePacketTypes.CLIENTBOUND_CUSTOM_CHAT_COMPLETIONS;
     }
 
-    public void handle(ClientGamePacketListener p_240794_) {
-        p_240794_.handleCustomChatCompletions(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleCustomChatCompletions(this);
     }
 
     public static enum Action {

@@ -79,15 +79,15 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
     private boolean visible;
     private boolean widthTooNarrow;
 
-    public void init(int p_100310_, int p_100311_, Minecraft p_100312_, boolean p_100313_, RecipeBookMenu<?, ?> p_100314_) {
-        this.minecraft = p_100312_;
-        this.width = p_100310_;
-        this.height = p_100311_;
-        this.menu = p_100314_;
-        this.widthTooNarrow = p_100313_;
-        p_100312_.player.containerMenu = p_100314_;
-        this.book = p_100312_.player.getRecipeBook();
-        this.timesInventoryChanged = p_100312_.player.getInventory().getTimesChanged();
+    public void init(int width, int height, Minecraft minecraft, boolean widthTooNarrow, RecipeBookMenu<?, ?> menu) {
+        this.minecraft = minecraft;
+        this.width = width;
+        this.height = height;
+        this.menu = menu;
+        this.widthTooNarrow = widthTooNarrow;
+        minecraft.player.containerMenu = menu;
+        this.book = minecraft.player.getRecipeBook();
+        this.timesInventoryChanged = minecraft.player.getInventory().getTimesChanged();
         this.visible = this.isVisibleAccordingToBookData();
         if (this.visible) {
             this.initVisuals();
@@ -144,12 +144,12 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
         this.filterButton.initTextureValues(FILTER_BUTTON_SPRITES);
     }
 
-    public int updateScreenPosition(int p_181402_, int p_181403_) {
+    public int updateScreenPosition(int width, int imageWidth) {
         int i;
         if (this.isVisible() && !this.widthTooNarrow) {
-            i = 177 + (p_181402_ - p_181403_ - 200) / 2;
+            i = 177 + (width - imageWidth - 200) / 2;
         } else {
-            i = (p_181402_ - p_181403_) / 2;
+            i = (width - imageWidth) / 2;
         }
 
         return i;
@@ -167,22 +167,22 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
         return this.book.isOpen(this.menu.getRecipeBookType());
     }
 
-    protected void setVisible(boolean p_100370_) {
-        if (p_100370_) {
+    protected void setVisible(boolean visible) {
+        if (visible) {
             this.initVisuals();
         }
 
-        this.visible = p_100370_;
-        this.book.setOpen(this.menu.getRecipeBookType(), p_100370_);
-        if (!p_100370_) {
+        this.visible = visible;
+        this.book.setOpen(this.menu.getRecipeBookType(), visible);
+        if (!visible) {
             this.recipeBookPage.setInvisible();
         }
 
         this.sendUpdateSettings();
     }
 
-    public void slotClicked(@Nullable Slot p_100315_) {
-        if (p_100315_ != null && p_100315_.index < this.menu.getSize()) {
+    public void slotClicked(@Nullable Slot slot) {
+        if (slot != null && slot.index < this.menu.getSize()) {
             this.ghostRecipe.clear();
             if (this.isVisible()) {
                 this.updateStackedContents();
@@ -190,7 +190,7 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
         }
     }
 
-    private void updateCollections(boolean p_100383_) {
+    private void updateCollections(boolean resetPageNumber) {
         List<RecipeCollection> list = this.book.getCollection(this.selectedTab.getCategory());
         list.forEach(p_302149_ -> p_302149_.canCraft(this.stackedContents, this.menu.getGridWidth(), this.menu.getGridHeight(), this.book));
         List<RecipeCollection> list1 = Lists.newArrayList(list);
@@ -211,7 +211,7 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
             list1.removeIf(p_100331_ -> !p_100331_.hasCraftable());
         }
 
-        this.recipeBookPage.updateCollections(list1, p_100383_);
+        this.recipeBookPage.updateCollections(list1, resetPageNumber);
     }
 
     private void updateTabs() {
@@ -253,30 +253,38 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
         this.updateCollections(false);
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283597_, int p_282668_, int p_283506_, float p_282813_) {
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.isVisible()) {
-            p_283597_.pose().pushPose();
-            p_283597_.pose().translate(0.0F, 0.0F, 100.0F);
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(0.0F, 0.0F, 100.0F);
             int i = (this.width - 147) / 2 - this.xOffset;
             int j = (this.height - 166) / 2;
-            p_283597_.blit(RECIPE_BOOK_LOCATION, i, j, 1, 1, 147, 166);
-            this.searchBox.render(p_283597_, p_282668_, p_283506_, p_282813_);
+            guiGraphics.blit(RECIPE_BOOK_LOCATION, i, j, 1, 1, 147, 166);
+            this.searchBox.render(guiGraphics, mouseX, mouseY, partialTick);
 
             for (RecipeBookTabButton recipebooktabbutton : this.tabButtons) {
-                recipebooktabbutton.render(p_283597_, p_282668_, p_283506_, p_282813_);
+                recipebooktabbutton.render(guiGraphics, mouseX, mouseY, partialTick);
             }
 
-            this.filterButton.render(p_283597_, p_282668_, p_283506_, p_282813_);
-            this.recipeBookPage.render(p_283597_, i, j, p_282668_, p_283506_, p_282813_);
-            p_283597_.pose().popPose();
+            this.filterButton.render(guiGraphics, mouseX, mouseY, partialTick);
+            this.recipeBookPage.render(guiGraphics, i, j, mouseX, mouseY, partialTick);
+            guiGraphics.pose().popPose();
         }
     }
 
-    public void renderTooltip(GuiGraphics p_281740_, int p_281520_, int p_282050_, int p_282836_, int p_282758_) {
+    public void renderTooltip(GuiGraphics guiGraphics, int renderX, int renderY, int mouseX, int mouseY) {
         if (this.isVisible()) {
-            this.recipeBookPage.renderTooltip(p_281740_, p_282836_, p_282758_);
-            this.renderGhostRecipeTooltip(p_281740_, p_281520_, p_282050_, p_282836_, p_282758_);
+            this.recipeBookPage.renderTooltip(guiGraphics, mouseX, mouseY);
+            this.renderGhostRecipeTooltip(guiGraphics, renderX, renderY, mouseX, mouseY);
         }
     }
 
@@ -284,31 +292,40 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
         return ONLY_CRAFTABLES_TOOLTIP;
     }
 
-    private void renderGhostRecipeTooltip(GuiGraphics p_282776_, int p_282886_, int p_281571_, int p_282948_, int p_283050_) {
+    private void renderGhostRecipeTooltip(GuiGraphics guiGraphics, int x, int y, int mouseX, int mouseY) {
         ItemStack itemstack = null;
 
         for (int i = 0; i < this.ghostRecipe.size(); i++) {
             GhostRecipe.GhostIngredient ghostrecipe$ghostingredient = this.ghostRecipe.get(i);
-            int j = ghostrecipe$ghostingredient.getX() + p_282886_;
-            int k = ghostrecipe$ghostingredient.getY() + p_281571_;
-            if (p_282948_ >= j && p_283050_ >= k && p_282948_ < j + 16 && p_283050_ < k + 16) {
+            int j = ghostrecipe$ghostingredient.getX() + x;
+            int k = ghostrecipe$ghostingredient.getY() + y;
+            if (mouseX >= j && mouseY >= k && mouseX < j + 16 && mouseY < k + 16) {
                 itemstack = ghostrecipe$ghostingredient.getItem();
             }
         }
 
         if (itemstack != null && this.minecraft.screen != null) {
-            p_282776_.renderComponentTooltip(this.minecraft.font, Screen.getTooltipFromItem(this.minecraft, itemstack), p_282948_, p_283050_, itemstack);
+            guiGraphics.renderComponentTooltip(this.minecraft.font, Screen.getTooltipFromItem(this.minecraft, itemstack), mouseX, mouseY, itemstack);
         }
     }
 
-    public void renderGhostRecipe(GuiGraphics p_283634_, int p_283327_, int p_282027_, boolean p_283495_, float p_283514_) {
-        this.ghostRecipe.render(p_283634_, this.minecraft, p_283327_, p_282027_, p_283495_, p_283514_);
+    public void renderGhostRecipe(GuiGraphics guiGraphics, int leftPos, int topPos, boolean p_283495_, float partialTick) {
+        this.ghostRecipe.render(guiGraphics, this.minecraft, leftPos, topPos, p_283495_, partialTick);
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    public boolean mouseClicked(double p_100294_, double p_100295_, int p_100296_) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (this.isVisible() && !this.minecraft.player.isSpectator()) {
-            if (this.recipeBookPage.mouseClicked(p_100294_, p_100295_, p_100296_, (this.width - 147) / 2 - this.xOffset, (this.height - 166) / 2, 147, 166)) {
+            if (this.recipeBookPage.mouseClicked(mouseX, mouseY, button, (this.width - 147) / 2 - this.xOffset, (this.height - 166) / 2, 147, 166)) {
                 RecipeHolder<?> recipeholder = this.recipeBookPage.getLastClickedRecipe();
                 RecipeCollection recipecollection = this.recipeBookPage.getLastClickedRecipeCollection();
                 if (recipeholder != null && recipecollection != null) {
@@ -324,12 +341,12 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
                 }
 
                 return true;
-            } else if (this.searchBox.mouseClicked(p_100294_, p_100295_, p_100296_)) {
+            } else if (this.searchBox.mouseClicked(mouseX, mouseY, button)) {
                 this.searchBox.setFocused(true);
                 return true;
             } else {
                 this.searchBox.setFocused(false);
-                if (this.filterButton.mouseClicked(p_100294_, p_100295_, p_100296_)) {
+                if (this.filterButton.mouseClicked(mouseX, mouseY, button)) {
                     boolean flag = this.toggleFiltering();
                     this.filterButton.setStateTriggered(flag);
                     this.updateFilterButtonTooltip();
@@ -338,7 +355,7 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
                     return true;
                 } else {
                     for (RecipeBookTabButton recipebooktabbutton : this.tabButtons) {
-                        if (recipebooktabbutton.mouseClicked(p_100294_, p_100295_, p_100296_)) {
+                        if (recipebooktabbutton.mouseClicked(mouseX, mouseY, button)) {
                             if (this.selectedTab != recipebooktabbutton) {
                                 if (this.selectedTab != null) {
                                     this.selectedTab.setStateTriggered(false);
@@ -368,36 +385,45 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
         return flag;
     }
 
-    public boolean hasClickedOutside(double p_100298_, double p_100299_, int p_100300_, int p_100301_, int p_100302_, int p_100303_, int p_100304_) {
+    public boolean hasClickedOutside(double mouseX, double mouseY, int x, int y, int width, int height, int p_100304_) {
         if (!this.isVisible()) {
             return true;
         } else {
-            boolean flag = p_100298_ < (double)p_100300_
-                || p_100299_ < (double)p_100301_
-                || p_100298_ >= (double)(p_100300_ + p_100302_)
-                || p_100299_ >= (double)(p_100301_ + p_100303_);
-            boolean flag1 = (double)(p_100300_ - 147) < p_100298_
-                && p_100298_ < (double)p_100300_
-                && (double)p_100301_ < p_100299_
-                && p_100299_ < (double)(p_100301_ + p_100303_);
+            boolean flag = mouseX < (double)x
+                || mouseY < (double)y
+                || mouseX >= (double)(x + width)
+                || mouseY >= (double)(y + height);
+            boolean flag1 = (double)(x - 147) < mouseX
+                && mouseX < (double)x
+                && (double)y < mouseY
+                && mouseY < (double)(y + height);
             return flag && !flag1 && !this.selectedTab.isHoveredOrFocused();
         }
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_100306_, int p_100307_, int p_100308_) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         this.ignoreTextInput = false;
         if (!this.isVisible() || this.minecraft.player.isSpectator()) {
             return false;
-        } else if (p_100306_ == 256 && !this.isOffsetNextToMainGUI()) {
+        } else if (keyCode == 256 && !this.isOffsetNextToMainGUI()) {
             this.setVisible(false);
             return true;
-        } else if (this.searchBox.keyPressed(p_100306_, p_100307_, p_100308_)) {
+        } else if (this.searchBox.keyPressed(keyCode, scanCode, modifiers)) {
             this.checkSearchStringUpdate();
             return true;
-        } else if (this.searchBox.isFocused() && this.searchBox.isVisible() && p_100306_ != 256) {
+        } else if (this.searchBox.isFocused() && this.searchBox.isVisible() && keyCode != 256) {
             return true;
-        } else if (this.minecraft.options.keyChat.matches(p_100306_, p_100307_) && !this.searchBox.isFocused()) {
+        } else if (this.minecraft.options.keyChat.matches(keyCode, scanCode) && !this.searchBox.isFocused()) {
             this.ignoreTextInput = true;
             this.searchBox.setFocused(true);
             return true;
@@ -406,33 +432,63 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
         }
     }
 
+    /**
+     * Called when a keyboard key is released within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the released key.
+     * @param scanCode  the scan code of the released key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyReleased(int p_100356_, int p_100357_, int p_100358_) {
+    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
         this.ignoreTextInput = false;
-        return GuiEventListener.super.keyReleased(p_100356_, p_100357_, p_100358_);
+        return GuiEventListener.super.keyReleased(keyCode, scanCode, modifiers);
     }
 
+    /**
+     * Called when a character is typed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param codePoint the code point of the typed character.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean charTyped(char p_100291_, int p_100292_) {
+    public boolean charTyped(char codePoint, int modifiers) {
         if (this.ignoreTextInput) {
             return false;
         } else if (!this.isVisible() || this.minecraft.player.isSpectator()) {
             return false;
-        } else if (this.searchBox.charTyped(p_100291_, p_100292_)) {
+        } else if (this.searchBox.charTyped(codePoint, modifiers)) {
             this.checkSearchStringUpdate();
             return true;
         } else {
-            return GuiEventListener.super.charTyped(p_100291_, p_100292_);
+            return GuiEventListener.super.charTyped(codePoint, modifiers);
         }
     }
 
+    /**
+     * Checks if the given mouse coordinates are over the GUI element.
+     * <p>
+     * @return {@code true} if the mouse is over the GUI element, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     */
     @Override
-    public boolean isMouseOver(double p_100353_, double p_100354_) {
+    public boolean isMouseOver(double mouseX, double mouseY) {
         return false;
     }
 
+    /**
+     * Sets the focus state of the GUI element.
+     *
+     * @param focused {@code true} to apply focus, {@code false} to remove focus
+     */
     @Override
-    public void setFocused(boolean p_265089_) {
+    public void setFocused(boolean focused) {
     }
 
     @Override
@@ -449,8 +505,11 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
         }
     }
 
-    private void pirateSpeechForThePeople(String p_100336_) {
-        if ("excitedze".equals(p_100336_)) {
+    /**
+     * Check if we should activate the pirate speak easter egg.
+     */
+    private void pirateSpeechForThePeople(String text) {
+        if ("excitedze".equals(text)) {
             LanguageManager languagemanager = this.minecraft.getLanguageManager();
             String s = "en_pt";
             LanguageInfo languageinfo = languagemanager.getLanguage("en_pt");
@@ -477,25 +536,25 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
     }
 
     @Override
-    public void recipesShown(List<RecipeHolder<?>> p_100344_) {
-        for (RecipeHolder<?> recipeholder : p_100344_) {
+    public void recipesShown(List<RecipeHolder<?>> recipes) {
+        for (RecipeHolder<?> recipeholder : recipes) {
             this.minecraft.player.removeRecipeHighlight(recipeholder);
         }
     }
 
-    public void setupGhostRecipe(RecipeHolder<?> p_301197_, List<Slot> p_100317_) {
-        ItemStack itemstack = p_301197_.value().getResultItem(this.minecraft.level.registryAccess());
-        this.ghostRecipe.setRecipe(p_301197_);
-        this.ghostRecipe.addIngredient(Ingredient.of(itemstack), p_100317_.get(0).x, p_100317_.get(0).y);
+    public void setupGhostRecipe(RecipeHolder<?> recipe, List<Slot> slots) {
+        ItemStack itemstack = recipe.value().getResultItem(this.minecraft.level.registryAccess());
+        this.ghostRecipe.setRecipe(recipe);
+        this.ghostRecipe.addIngredient(Ingredient.of(itemstack), slots.get(0).x, slots.get(0).y);
         this.placeRecipe(
-            this.menu.getGridWidth(), this.menu.getGridHeight(), this.menu.getResultSlotIndex(), p_301197_, p_301197_.value().getIngredients().iterator(), 0
+            this.menu.getGridWidth(), this.menu.getGridHeight(), this.menu.getResultSlotIndex(), recipe, recipe.value().getIngredients().iterator(), 0
         );
     }
 
-    public void addItemToSlot(Ingredient p_345052_, int p_345781_, int p_345753_, int p_345694_, int p_345502_) {
-        if (!p_345052_.isEmpty()) {
-            Slot slot = this.menu.slots.get(p_345781_);
-            this.ghostRecipe.addIngredient(p_345052_, slot.x, slot.y);
+    public void addItemToSlot(Ingredient item, int p_slot, int maxAmount, int x, int y) {
+        if (!item.isEmpty()) {
+            Slot slot = this.menu.slots.get(p_slot);
+            this.ghostRecipe.addIngredient(item, slot.x, slot.y);
         }
     }
 
@@ -513,8 +572,13 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
         return this.visible ? NarratableEntry.NarrationPriority.HOVERED : NarratableEntry.NarrationPriority.NONE;
     }
 
+    /**
+     * Updates the narration output with the current narration information.
+     *
+     * @param narrationElementOutput the output to update with narration information.
+     */
     @Override
-    public void updateNarration(NarrationElementOutput p_170046_) {
+    public void updateNarration(NarrationElementOutput narrationElementOutput) {
         List<NarratableEntry> list = Lists.newArrayList();
         this.recipeBookPage.listButtons(p_170049_ -> {
             if (p_170049_.isActive()) {
@@ -526,7 +590,7 @@ public class RecipeBookComponent implements PlaceRecipe<Ingredient>, Renderable,
         list.addAll(this.tabButtons);
         Screen.NarratableSearchResult screen$narratablesearchresult = Screen.findNarratableWidget(list, null);
         if (screen$narratablesearchresult != null) {
-            screen$narratablesearchresult.entry.updateNarration(p_170046_.nest());
+            screen$narratablesearchresult.entry.updateNarration(narrationElementOutput.nest());
         }
     }
 }

@@ -9,7 +9,7 @@ public interface ServerConfigurationPacketListener extends ServerCommonPacketLis
         return ConnectionProtocol.CONFIGURATION;
     }
 
-    void handleConfigurationFinished(ServerboundFinishConfigurationPacket p_295218_);
+    void handleConfigurationFinished(ServerboundFinishConfigurationPacket packet);
 
-    void handleSelectKnownPacks(ServerboundSelectKnownPacks p_326510_);
+    void handleSelectKnownPacks(ServerboundSelectKnownPacks packet);
 }

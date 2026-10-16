@@ -18,8 +18,8 @@ import net.minecraft.server.players.PlayerList;
 public class OpCommand {
     private static final SimpleCommandExceptionType ERROR_ALREADY_OP = new SimpleCommandExceptionType(Component.translatable("commands.op.failed"));
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_138080_) {
-        p_138080_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("op")
                 .requires(p_138087_ -> p_138087_.hasPermission(3))
                 .then(
@@ -41,15 +41,15 @@ public class OpCommand {
         );
     }
 
-    private static int opPlayers(CommandSourceStack p_138089_, Collection<GameProfile> p_138090_) throws CommandSyntaxException {
-        PlayerList playerlist = p_138089_.getServer().getPlayerList();
+    private static int opPlayers(CommandSourceStack source, Collection<GameProfile> gameProfiles) throws CommandSyntaxException {
+        PlayerList playerlist = source.getServer().getPlayerList();
         int i = 0;
 
-        for (GameProfile gameprofile : p_138090_) {
+        for (GameProfile gameprofile : gameProfiles) {
             if (!playerlist.isOp(gameprofile)) {
                 playerlist.op(gameprofile);
                 i++;
-                p_138089_.sendSuccess(() -> Component.translatable("commands.op.success", p_138090_.iterator().next().getName()), true);
+                source.sendSuccess(() -> Component.translatable("commands.op.success", gameProfiles.iterator().next().getName()), true);
             }
         }
 

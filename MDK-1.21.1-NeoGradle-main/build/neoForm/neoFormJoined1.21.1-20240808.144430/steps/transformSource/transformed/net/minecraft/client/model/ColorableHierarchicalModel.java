@@ -11,12 +11,12 @@ import net.neoforged.api.distmarker.OnlyIn;
 public abstract class ColorableHierarchicalModel<E extends Entity> extends HierarchicalModel<E> {
     private int color = -1;
 
-    public void setColor(int p_351056_) {
-        this.color = p_351056_;
+    public void setColor(int color) {
+        this.color = color;
     }
 
     @Override
-    public void renderToBuffer(PoseStack p_170506_, VertexConsumer p_170507_, int p_170508_, int p_170509_, int p_350900_) {
-        super.renderToBuffer(p_170506_, p_170507_, p_170508_, p_170509_, FastColor.ARGB32.multiply(p_350900_, this.color));
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
+        super.renderToBuffer(poseStack, buffer, packedLight, packedOverlay, FastColor.ARGB32.multiply(color, this.color));
     }
 }

@@ -21,12 +21,12 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class ThrownEnderpearl extends ThrowableItemProjectile {
-    public ThrownEnderpearl(EntityType<? extends ThrownEnderpearl> p_37491_, Level p_37492_) {
-        super(p_37491_, p_37492_);
+    public ThrownEnderpearl(EntityType<? extends ThrownEnderpearl> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public ThrownEnderpearl(Level p_37499_, LivingEntity p_37500_) {
-        super(EntityType.ENDER_PEARL, p_37500_, p_37499_);
+    public ThrownEnderpearl(Level level, LivingEntity shooter) {
+        super(EntityType.ENDER_PEARL, shooter, level);
     }
 
     @Override
@@ -34,15 +34,21 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
         return Items.ENDER_PEARL;
     }
 
+    /**
+     * Called when the arrow hits an entity
+     */
     @Override
-    protected void onHitEntity(EntityHitResult p_37502_) {
-        super.onHitEntity(p_37502_);
-        p_37502_.getEntity().hurt(this.damageSources().thrown(this, this.getOwner()), 0.0F);
+    protected void onHitEntity(EntityHitResult result) {
+        super.onHitEntity(result);
+        result.getEntity().hurt(this.damageSources().thrown(this, this.getOwner()), 0.0F);
     }
 
+    /**
+     * Called when this EntityFireball hits a block or entity.
+     */
     @Override
-    protected void onHit(HitResult p_37504_) {
-        super.onHit(p_37504_);
+    protected void onHit(HitResult result) {
+        super.onHit(result);
 
         for (int i = 0; i < 32; i++) {
             this.level()
@@ -66,7 +72,7 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
 
                 if (entity instanceof ServerPlayer serverplayer) {
                     if (serverplayer.connection.isAcceptingMessages()) {
-                        net.neoforged.neoforge.event.entity.EntityTeleportEvent.EnderPearl event = net.neoforged.neoforge.event.EventHooks.onEnderPearlLand(serverplayer, this.getX(), this.getY(), this.getZ(), this, 5.0F, p_37504_);
+                        net.neoforged.neoforge.event.entity.EntityTeleportEvent.EnderPearl event = net.neoforged.neoforge.event.EventHooks.onEnderPearlLand(serverplayer, this.getX(), this.getY(), this.getZ(), this, 5.0F, result);
                         if (!event.isCanceled()) { // Don't indent to lower patch size
                         if (this.random.nextFloat() < 0.05F && serverlevel.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)) {
                             Endermite endermite = EntityType.ENDERMITE.create(serverlevel);
@@ -106,11 +112,11 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
         }
     }
 
-    private static boolean isAllowedToTeleportOwner(Entity p_352055_, Level p_352453_) {
-        if (p_352055_.level().dimension() == p_352453_.dimension()) {
-            return !(p_352055_ instanceof LivingEntity livingentity) ? p_352055_.isAlive() : livingentity.isAlive() && !livingentity.isSleeping();
+    private static boolean isAllowedToTeleportOwner(Entity entity, Level level) {
+        if (entity.level().dimension() == level.dimension()) {
+            return !(entity instanceof LivingEntity livingentity) ? entity.isAlive() : livingentity.isAlive() && !livingentity.isSleeping();
         } else {
-            return p_352055_.canUsePortal(true);
+            return entity.canUsePortal(true);
         }
     }
 
@@ -124,22 +130,22 @@ public class ThrownEnderpearl extends ThrowableItemProjectile {
         }
     }
 
-    private void playSound(Level p_350706_, Vec3 p_350543_) {
-        p_350706_.playSound(null, p_350543_.x, p_350543_.y, p_350543_.z, SoundEvents.PLAYER_TELEPORT, SoundSource.PLAYERS);
+    private void playSound(Level level, Vec3 pos) {
+        level.playSound(null, pos.x, pos.y, pos.z, SoundEvents.PLAYER_TELEPORT, SoundSource.PLAYERS);
     }
 
     @Override
-    public boolean canChangeDimensions(Level p_352941_, Level p_352929_) {
-        return p_352941_.dimension() == Level.END && this.getOwner() instanceof ServerPlayer serverplayer
-            ? super.canChangeDimensions(p_352941_, p_352929_) && serverplayer.seenCredits
-            : super.canChangeDimensions(p_352941_, p_352929_);
+    public boolean canChangeDimensions(Level oldLevel, Level newLevel) {
+        return oldLevel.dimension() == Level.END && this.getOwner() instanceof ServerPlayer serverplayer
+            ? super.canChangeDimensions(oldLevel, newLevel) && serverplayer.seenCredits
+            : super.canChangeDimensions(oldLevel, newLevel);
     }
 
     @Override
-    protected void onInsideBlock(BlockState p_353066_) {
-        super.onInsideBlock(p_353066_);
-        if (p_353066_.is(Blocks.END_GATEWAY) && this.getOwner() instanceof ServerPlayer serverplayer) {
-            serverplayer.onInsideBlock(p_353066_);
+    protected void onInsideBlock(BlockState state) {
+        super.onInsideBlock(state);
+        if (state.is(Blocks.END_GATEWAY) && this.getOwner() instanceof ServerPlayer serverplayer) {
+            serverplayer.onInsideBlock(state);
         }
     }
 }

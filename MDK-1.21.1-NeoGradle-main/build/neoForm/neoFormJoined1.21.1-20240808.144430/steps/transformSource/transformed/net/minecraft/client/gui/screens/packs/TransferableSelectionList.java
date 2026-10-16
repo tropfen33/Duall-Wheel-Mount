@@ -31,22 +31,22 @@ public class TransferableSelectionList extends ObjectSelectionList<TransferableS
     private final Component title;
     final PackSelectionScreen screen;
 
-    public TransferableSelectionList(Minecraft p_265029_, PackSelectionScreen p_265777_, int p_265774_, int p_265153_, Component p_265124_) {
-        super(p_265029_, p_265774_, p_265153_, 33, 36);
-        this.screen = p_265777_;
-        this.title = p_265124_;
+    public TransferableSelectionList(Minecraft minecraft, PackSelectionScreen screen, int width, int height, Component title) {
+        super(minecraft, width, height, 33, 36);
+        this.screen = screen;
+        this.title = title;
         this.centerListVertically = false;
         this.setRenderHeader(true, (int)(9.0F * 1.5F));
     }
 
     @Override
-    protected void renderHeader(GuiGraphics p_282135_, int p_282032_, int p_283198_) {
+    protected void renderHeader(GuiGraphics guiGraphics, int x, int y) {
         Component component = Component.empty().append(this.title).withStyle(ChatFormatting.UNDERLINE, ChatFormatting.BOLD);
-        p_282135_.drawString(
+        guiGraphics.drawString(
             this.minecraft.font,
             component,
-            p_282032_ + this.width / 2 - this.minecraft.font.width(component) / 2,
-            Math.min(this.getY() + 3, p_283198_),
+            x + this.width / 2 - this.minecraft.font.width(component) / 2,
+            Math.min(this.getY() + 3, y),
             -1,
             false
         );
@@ -63,31 +63,40 @@ public class TransferableSelectionList extends ObjectSelectionList<TransferableS
     }
 
     @Override
-    protected void renderSelection(GuiGraphics p_331958_, int p_331723_, int p_331974_, int p_330822_, int p_330632_, int p_331721_) {
+    protected void renderSelection(GuiGraphics guiGraphics, int top, int width, int height, int outerColor, int innerColor) {
         if (this.scrollbarVisible()) {
             int i = 2;
             int j = this.getRowLeft() - 2;
             int k = this.getRight() - 6 - 1;
-            int l = p_331723_ - 2;
-            int i1 = p_331723_ + p_330822_ + 2;
-            p_331958_.fill(j, l, k, i1, p_330632_);
-            p_331958_.fill(j + 1, l + 1, k - 1, i1 - 1, p_331721_);
+            int l = top - 2;
+            int i1 = top + height + 2;
+            guiGraphics.fill(j, l, k, i1, outerColor);
+            guiGraphics.fill(j + 1, l + 1, k - 1, i1 - 1, innerColor);
         } else {
-            super.renderSelection(p_331958_, p_331723_, p_331974_, p_330822_, p_330632_, p_331721_);
+            super.renderSelection(guiGraphics, top, width, height, outerColor, innerColor);
         }
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_265499_, int p_265510_, int p_265548_) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (this.getSelected() != null) {
-            switch (p_265499_) {
+            switch (keyCode) {
                 case 32:
                 case 257:
                     this.getSelected().keyboardSelection();
                     return true;
                 default:
                     if (Screen.hasShiftDown()) {
-                        switch (p_265499_) {
+                        switch (keyCode) {
                             case 264:
                                 this.getSelected().keyboardMoveDown();
                                 return true;
@@ -99,7 +108,7 @@ public class TransferableSelectionList extends ObjectSelectionList<TransferableS
             }
         }
 
-        return super.keyPressed(p_265499_, p_265510_, p_265548_);
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -115,30 +124,30 @@ public class TransferableSelectionList extends ObjectSelectionList<TransferableS
         private final FormattedCharSequence incompatibleNameDisplayCache;
         private final MultiLineLabel incompatibleDescriptionDisplayCache;
 
-        public PackEntry(Minecraft p_265717_, TransferableSelectionList p_265075_, PackSelectionModel.Entry p_265360_) {
-            this.minecraft = p_265717_;
-            this.pack = p_265360_;
-            this.parent = p_265075_;
-            this.nameDisplayCache = cacheName(p_265717_, p_265360_.getTitle());
-            this.descriptionDisplayCache = cacheDescription(p_265717_, p_265360_.getExtendedDescription());
-            this.incompatibleNameDisplayCache = cacheName(p_265717_, TransferableSelectionList.INCOMPATIBLE_TITLE);
-            this.incompatibleDescriptionDisplayCache = cacheDescription(p_265717_, p_265360_.getCompatibility().getDescription());
+        public PackEntry(Minecraft minecraft, TransferableSelectionList parent, PackSelectionModel.Entry pack) {
+            this.minecraft = minecraft;
+            this.pack = pack;
+            this.parent = parent;
+            this.nameDisplayCache = cacheName(minecraft, pack.getTitle());
+            this.descriptionDisplayCache = cacheDescription(minecraft, pack.getExtendedDescription());
+            this.incompatibleNameDisplayCache = cacheName(minecraft, TransferableSelectionList.INCOMPATIBLE_TITLE);
+            this.incompatibleDescriptionDisplayCache = cacheDescription(minecraft, pack.getCompatibility().getDescription());
         }
 
-        private static FormattedCharSequence cacheName(Minecraft p_100105_, Component p_100106_) {
-            int i = p_100105_.font.width(p_100106_);
+        private static FormattedCharSequence cacheName(Minecraft minecraft, Component name) {
+            int i = minecraft.font.width(name);
             if (i > 157) {
                 FormattedText formattedtext = FormattedText.composite(
-                    p_100105_.font.substrByWidth(p_100106_, 157 - p_100105_.font.width("...")), FormattedText.of("...")
+                    minecraft.font.substrByWidth(name, 157 - minecraft.font.width("...")), FormattedText.of("...")
                 );
                 return Language.getInstance().getVisualOrder(formattedtext);
             } else {
-                return p_100106_.getVisualOrderText();
+                return name.getVisualOrderText();
             }
         }
 
-        private static MultiLineLabel cacheDescription(Minecraft p_100110_, Component p_100111_) {
-            return MultiLineLabel.create(p_100110_.font, 157, 2, p_100111_);
+        private static MultiLineLabel cacheDescription(Minecraft minecraft, Component text) {
+            return MultiLineLabel.create(minecraft.font, 157, 2, text);
         }
 
         @Override
@@ -148,31 +157,31 @@ public class TransferableSelectionList extends ObjectSelectionList<TransferableS
 
         @Override
         public void render(
-            GuiGraphics p_281314_,
-            int p_283311_,
-            int p_281984_,
-            int p_282250_,
-            int p_281869_,
-            int p_283138_,
-            int p_282529_,
-            int p_282107_,
-            boolean p_282429_,
-            float p_282306_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
             PackCompatibility packcompatibility = this.pack.getCompatibility();
             if (!packcompatibility.isCompatible()) {
-                int i = p_282250_ + p_281869_ - 3 - (this.parent.scrollbarVisible() ? 7 : 0);
-                p_281314_.fill(p_282250_ - 1, p_281984_ - 1, i, p_281984_ + p_283138_ + 1, -8978432);
+                int i = left + width - 3 - (this.parent.scrollbarVisible() ? 7 : 0);
+                guiGraphics.fill(left - 1, top - 1, i, top + height + 1, -8978432);
             }
 
-            p_281314_.blit(this.pack.getIconTexture(), p_282250_, p_281984_, 0.0F, 0.0F, 32, 32, 32, 32);
+            guiGraphics.blit(this.pack.getIconTexture(), left, top, 0.0F, 0.0F, 32, 32, 32, 32);
             FormattedCharSequence formattedcharsequence = this.nameDisplayCache;
             MultiLineLabel multilinelabel = this.descriptionDisplayCache;
             if (this.showHoverOverlay()
-                && (this.minecraft.options.touchscreen().get() || p_282429_ || this.parent.getSelected() == this && this.parent.isFocused())) {
-                p_281314_.fill(p_282250_, p_281984_, p_282250_ + 32, p_281984_ + 32, -1601138544);
-                int j = p_282529_ - p_282250_;
-                int k = p_282107_ - p_281984_;
+                && (this.minecraft.options.touchscreen().get() || hovering || this.parent.getSelected() == this && this.parent.isFocused())) {
+                guiGraphics.fill(left, top, left + 32, top + 32, -1601138544);
+                int j = mouseX - left;
+                int k = mouseY - top;
                 if (!this.pack.getCompatibility().isCompatible()) {
                     formattedcharsequence = this.incompatibleNameDisplayCache;
                     multilinelabel = this.incompatibleDescriptionDisplayCache;
@@ -180,39 +189,39 @@ public class TransferableSelectionList extends ObjectSelectionList<TransferableS
 
                 if (this.pack.canSelect()) {
                     if (j < 32) {
-                        p_281314_.blitSprite(TransferableSelectionList.SELECT_HIGHLIGHTED_SPRITE, p_282250_, p_281984_, 32, 32);
+                        guiGraphics.blitSprite(TransferableSelectionList.SELECT_HIGHLIGHTED_SPRITE, left, top, 32, 32);
                     } else {
-                        p_281314_.blitSprite(TransferableSelectionList.SELECT_SPRITE, p_282250_, p_281984_, 32, 32);
+                        guiGraphics.blitSprite(TransferableSelectionList.SELECT_SPRITE, left, top, 32, 32);
                     }
                 } else {
                     if (this.pack.canUnselect()) {
                         if (j < 16) {
-                            p_281314_.blitSprite(TransferableSelectionList.UNSELECT_HIGHLIGHTED_SPRITE, p_282250_, p_281984_, 32, 32);
+                            guiGraphics.blitSprite(TransferableSelectionList.UNSELECT_HIGHLIGHTED_SPRITE, left, top, 32, 32);
                         } else {
-                            p_281314_.blitSprite(TransferableSelectionList.UNSELECT_SPRITE, p_282250_, p_281984_, 32, 32);
+                            guiGraphics.blitSprite(TransferableSelectionList.UNSELECT_SPRITE, left, top, 32, 32);
                         }
                     }
 
                     if (this.pack.canMoveUp()) {
                         if (j < 32 && j > 16 && k < 16) {
-                            p_281314_.blitSprite(TransferableSelectionList.MOVE_UP_HIGHLIGHTED_SPRITE, p_282250_, p_281984_, 32, 32);
+                            guiGraphics.blitSprite(TransferableSelectionList.MOVE_UP_HIGHLIGHTED_SPRITE, left, top, 32, 32);
                         } else {
-                            p_281314_.blitSprite(TransferableSelectionList.MOVE_UP_SPRITE, p_282250_, p_281984_, 32, 32);
+                            guiGraphics.blitSprite(TransferableSelectionList.MOVE_UP_SPRITE, left, top, 32, 32);
                         }
                     }
 
                     if (this.pack.canMoveDown()) {
                         if (j < 32 && j > 16 && k > 16) {
-                            p_281314_.blitSprite(TransferableSelectionList.MOVE_DOWN_HIGHLIGHTED_SPRITE, p_282250_, p_281984_, 32, 32);
+                            guiGraphics.blitSprite(TransferableSelectionList.MOVE_DOWN_HIGHLIGHTED_SPRITE, left, top, 32, 32);
                         } else {
-                            p_281314_.blitSprite(TransferableSelectionList.MOVE_DOWN_SPRITE, p_282250_, p_281984_, 32, 32);
+                            guiGraphics.blitSprite(TransferableSelectionList.MOVE_DOWN_SPRITE, left, top, 32, 32);
                         }
                     }
                 }
             }
 
-            p_281314_.drawString(this.minecraft.font, formattedcharsequence, p_282250_ + 32 + 2, p_281984_ + 1, 16777215);
-            multilinelabel.renderLeftAligned(p_281314_, p_282250_ + 32 + 2, p_281984_ + 12, 10, -8355712);
+            guiGraphics.drawString(this.minecraft.font, formattedcharsequence, left + 32 + 2, top + 1, 16777215);
+            multilinelabel.renderLeftAligned(guiGraphics, left + 32 + 2, top + 12, 10, -8355712);
         }
 
         public String getPackId() {
@@ -260,10 +269,19 @@ public class TransferableSelectionList extends ObjectSelectionList<TransferableS
             }
         }
 
+        /**
+         * Called when a mouse button is clicked within the GUI element.
+         * <p>
+         * @return {@code true} if the event is consumed, {@code false} otherwise.
+         *
+         * @param mouseX the X coordinate of the mouse.
+         * @param mouseY the Y coordinate of the mouse.
+         * @param button the button that was clicked.
+         */
         @Override
-        public boolean mouseClicked(double p_100090_, double p_100091_, int p_100092_) {
-            double d0 = p_100090_ - (double)this.parent.getRowLeft();
-            double d1 = p_100091_ - (double)this.parent.getRowTop(this.parent.children().indexOf(this));
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            double d0 = mouseX - (double)this.parent.getRowLeft();
+            double d1 = mouseY - (double)this.parent.getRowTop(this.parent.children().indexOf(this));
             if (this.showHoverOverlay() && d0 <= 32.0) {
                 this.parent.screen.clearSelected();
                 if (this.pack.canSelect()) {
@@ -287,7 +305,7 @@ public class TransferableSelectionList extends ObjectSelectionList<TransferableS
                 }
             }
 
-            return super.mouseClicked(p_100090_, p_100091_, p_100092_);
+            return super.mouseClicked(mouseX, mouseY, button);
         }
     }
 }

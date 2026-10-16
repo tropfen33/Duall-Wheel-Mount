@@ -11,8 +11,8 @@ import net.minecraft.world.phys.Vec3;
 public abstract class AbstractDragonPhaseInstance implements DragonPhaseInstance {
     protected final EnderDragon dragon;
 
-    public AbstractDragonPhaseInstance(EnderDragon p_31178_) {
-        this.dragon = p_31178_;
+    public AbstractDragonPhaseInstance(EnderDragon dragon) {
+        this.dragon = dragon;
     }
 
     @Override
@@ -29,7 +29,7 @@ public abstract class AbstractDragonPhaseInstance implements DragonPhaseInstance
     }
 
     @Override
-    public void onCrystalDestroyed(EndCrystal p_31184_, BlockPos p_31185_, DamageSource p_31186_, @Nullable Player p_31187_) {
+    public void onCrystalDestroyed(EndCrystal crystal, BlockPos pos, DamageSource dmgSrc, @Nullable Player plyr) {
     }
 
     @Override
@@ -52,8 +52,8 @@ public abstract class AbstractDragonPhaseInstance implements DragonPhaseInstance
     }
 
     @Override
-    public float onHurt(DamageSource p_31181_, float p_31182_) {
-        return p_31182_;
+    public float onHurt(DamageSource damageSource, float amount) {
+        return amount;
     }
 
     @Override

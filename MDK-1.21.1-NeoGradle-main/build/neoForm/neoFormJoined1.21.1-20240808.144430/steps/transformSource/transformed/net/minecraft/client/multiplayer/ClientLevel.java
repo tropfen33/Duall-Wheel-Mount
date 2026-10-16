@@ -132,23 +132,23 @@ public class ClientLevel extends Level {
     private final it.unimi.dsi.fastutil.ints.Int2ObjectMap<net.neoforged.neoforge.entity.PartEntity<?>> partEntities = new it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap<>();
     private final net.neoforged.neoforge.client.model.data.ModelDataManager modelDataManager = new net.neoforged.neoforge.client.model.data.ModelDataManager(this);
 
-    public void handleBlockChangedAck(int p_233652_) {
-        this.blockStatePredictionHandler.endPredictionsUpTo(p_233652_, this);
+    public void handleBlockChangedAck(int sequence) {
+        this.blockStatePredictionHandler.endPredictionsUpTo(sequence, this);
     }
 
-    public void setServerVerifiedBlockState(BlockPos p_233654_, BlockState p_233655_, int p_233656_) {
-        if (!this.blockStatePredictionHandler.updateKnownServerState(p_233654_, p_233655_)) {
-            super.setBlock(p_233654_, p_233655_, p_233656_, 512);
+    public void setServerVerifiedBlockState(BlockPos pos, BlockState state, int flags) {
+        if (!this.blockStatePredictionHandler.updateKnownServerState(pos, state)) {
+            super.setBlock(pos, state, flags, 512);
         }
     }
 
-    public void syncBlockState(BlockPos p_233648_, BlockState p_233649_, Vec3 p_233650_) {
-        BlockState blockstate = this.getBlockState(p_233648_);
-        if (blockstate != p_233649_) {
-            this.setBlock(p_233648_, p_233649_, 19);
+    public void syncBlockState(BlockPos pos, BlockState state, Vec3 playerPos) {
+        BlockState blockstate = this.getBlockState(pos);
+        if (blockstate != state) {
+            this.setBlock(pos, state, 19);
             Player player = this.minecraft.player;
-            if (this == player.level() && player.isColliding(p_233648_, p_233649_)) {
-                player.absMoveTo(p_233650_.x, p_233650_.y, p_233650_.z);
+            if (this == player.level() && player.isColliding(pos, state)) {
+                player.absMoveTo(playerPos.x, playerPos.y, playerPos.z);
             }
         }
     }
@@ -158,53 +158,53 @@ public class ClientLevel extends Level {
     }
 
     @Override
-    public boolean setBlock(BlockPos p_233643_, BlockState p_233644_, int p_233645_, int p_233646_) {
+    public boolean setBlock(BlockPos pos, BlockState state, int flags, int recursionLeft) {
         if (this.blockStatePredictionHandler.isPredicting()) {
             // Neo: Record and store a snapshot in the prediction so that BE data can be restored if the break is denied.
             // Fixes MC-36093 and permits correct server-side only cancellation of block changes.
-            var snapshot = net.neoforged.neoforge.common.util.BlockSnapshot.create(this.dimension(), this, p_233643_, p_233645_);
+            var snapshot = net.neoforged.neoforge.common.util.BlockSnapshot.create(this.dimension(), this, pos, flags);
 
-            BlockState blockstate = this.getBlockState(p_233643_);
-            boolean flag = super.setBlock(p_233643_, p_233644_, p_233645_, p_233646_);
+            BlockState blockstate = this.getBlockState(pos);
+            boolean flag = super.setBlock(pos, state, flags, recursionLeft);
             if (flag) {
-                this.blockStatePredictionHandler.retainKnownServerState(p_233643_, blockstate, this.minecraft.player);
-                this.blockStatePredictionHandler.retainSnapshot(p_233643_, snapshot);
+                this.blockStatePredictionHandler.retainKnownServerState(pos, blockstate, this.minecraft.player);
+                this.blockStatePredictionHandler.retainSnapshot(pos, snapshot);
             }
 
             return flag;
         } else {
-            return super.setBlock(p_233643_, p_233644_, p_233645_, p_233646_);
+            return super.setBlock(pos, state, flags, recursionLeft);
         }
     }
 
     public ClientLevel(
-        ClientPacketListener p_205505_,
-        ClientLevel.ClientLevelData p_205506_,
-        ResourceKey<Level> p_205507_,
-        Holder<DimensionType> p_205508_,
-        int p_205509_,
-        int p_205510_,
-        Supplier<ProfilerFiller> p_205511_,
-        LevelRenderer p_205512_,
-        boolean p_205513_,
-        long p_205514_
+        ClientPacketListener connection,
+        ClientLevel.ClientLevelData clientLevelData,
+        ResourceKey<Level> dimension,
+        Holder<DimensionType> dimensionType,
+        int viewDistance,
+        int serverSimulationDistance,
+        Supplier<ProfilerFiller> profiler,
+        LevelRenderer levelRenderer,
+        boolean isDebug,
+        long biomeZoomSeed
     ) {
-        super(p_205506_, p_205507_, p_205505_.registryAccess(), p_205508_, p_205511_, true, p_205513_, p_205514_, 1000000);
-        this.connection = p_205505_;
-        this.chunkSource = new ClientChunkCache(this, p_205509_);
+        super(clientLevelData, dimension, connection.registryAccess(), dimensionType, profiler, true, isDebug, biomeZoomSeed, 1000000);
+        this.connection = connection;
+        this.chunkSource = new ClientChunkCache(this, viewDistance);
         this.tickRateManager = new TickRateManager();
-        this.clientLevelData = p_205506_;
-        this.levelRenderer = p_205512_;
-        this.effects = DimensionSpecialEffects.forType(p_205508_.value());
+        this.clientLevelData = clientLevelData;
+        this.levelRenderer = levelRenderer;
+        this.effects = DimensionSpecialEffects.forType(dimensionType.value());
         this.setDefaultSpawnPos(new BlockPos(8, 64, 8), 0.0F);
-        this.serverSimulationDistance = p_205510_;
+        this.serverSimulationDistance = serverSimulationDistance;
         this.updateSkyBrightness();
         this.prepareWeather();
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.level.LevelEvent.Load(this));
     }
 
-    public void queueLightUpdate(Runnable p_194172_) {
-        this.lightUpdateQueue.add(p_194172_);
+    public void queueLightUpdate(Runnable task) {
+        this.lightUpdateQueue.add(task);
     }
 
     public void pollLightUpdates() {
@@ -229,7 +229,10 @@ public class ClientLevel extends Level {
         return this.effects;
     }
 
-    public void tick(BooleanSupplier p_104727_) {
+    /**
+     * Runs a single tick for the world
+     */
+    public void tick(BooleanSupplier hasTimeLeft) {
         this.getWorldBorder().tick();
         if (this.tickRateManager().runsNormally()) {
             this.tickTime();
@@ -240,7 +243,7 @@ public class ClientLevel extends Level {
         }
 
         this.getProfiler().push("blocks");
-        this.chunkSource.tick(p_104727_, true);
+        this.chunkSource.tick(hasTimeLeft, true);
         this.getProfiler().pop();
     }
 
@@ -251,19 +254,22 @@ public class ClientLevel extends Level {
         }
     }
 
-    public void setGameTime(long p_104638_) {
-        this.clientLevelData.setGameTime(p_104638_);
+    public void setGameTime(long time) {
+        this.clientLevelData.setGameTime(time);
     }
 
-    public void setDayTime(long p_104747_) {
-        if (p_104747_ < 0L) {
-            p_104747_ = -p_104747_;
+    /**
+     * Sets the world time.
+     */
+    public void setDayTime(long time) {
+        if (time < 0L) {
+            time = -time;
             this.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false, null);
         } else {
             this.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(true, null);
         }
 
-        this.clientLevelData.setDayTime(p_104747_);
+        this.clientLevelData.setDayTime(time);
     }
 
     public Iterable<Entity> entitiesForRendering() {
@@ -283,50 +289,50 @@ public class ClientLevel extends Level {
     }
 
     @Override
-    public boolean shouldTickDeath(Entity p_194185_) {
-        return p_194185_.chunkPosition().getChessboardDistance(this.minecraft.player.chunkPosition()) <= this.serverSimulationDistance;
+    public boolean shouldTickDeath(Entity entity) {
+        return entity.chunkPosition().getChessboardDistance(this.minecraft.player.chunkPosition()) <= this.serverSimulationDistance;
     }
 
-    public void tickNonPassenger(Entity p_104640_) {
-        p_104640_.setOldPosAndRot();
-        p_104640_.tickCount++;
-        this.getProfiler().push(() -> BuiltInRegistries.ENTITY_TYPE.getKey(p_104640_.getType()).toString());
+    public void tickNonPassenger(Entity p_entity) {
+        p_entity.setOldPosAndRot();
+        p_entity.tickCount++;
+        this.getProfiler().push(() -> BuiltInRegistries.ENTITY_TYPE.getKey(p_entity.getType()).toString());
         // Neo: Permit cancellation of Entity#tick via EntityTickEvent.Pre
-        if (!net.neoforged.neoforge.event.EventHooks.fireEntityTickPre(p_104640_).isCanceled()) {
-            p_104640_.tick();
-            net.neoforged.neoforge.event.EventHooks.fireEntityTickPost(p_104640_);
+        if (!net.neoforged.neoforge.event.EventHooks.fireEntityTickPre(p_entity).isCanceled()) {
+            p_entity.tick();
+            net.neoforged.neoforge.event.EventHooks.fireEntityTickPost(p_entity);
         }
         this.getProfiler().pop();
 
-        for (Entity entity : p_104640_.getPassengers()) {
-            this.tickPassenger(p_104640_, entity);
+        for (Entity entity : p_entity.getPassengers()) {
+            this.tickPassenger(p_entity, entity);
         }
     }
 
-    private void tickPassenger(Entity p_104642_, Entity p_104643_) {
-        if (p_104643_.isRemoved() || p_104643_.getVehicle() != p_104642_) {
-            p_104643_.stopRiding();
-        } else if (p_104643_ instanceof Player || this.tickingEntities.contains(p_104643_)) {
-            p_104643_.setOldPosAndRot();
-            p_104643_.tickCount++;
-            p_104643_.rideTick();
+    private void tickPassenger(Entity mount, Entity rider) {
+        if (rider.isRemoved() || rider.getVehicle() != mount) {
+            rider.stopRiding();
+        } else if (rider instanceof Player || this.tickingEntities.contains(rider)) {
+            rider.setOldPosAndRot();
+            rider.tickCount++;
+            rider.rideTick();
 
-            for (Entity entity : p_104643_.getPassengers()) {
-                this.tickPassenger(p_104643_, entity);
+            for (Entity entity : rider.getPassengers()) {
+                this.tickPassenger(rider, entity);
             }
         }
     }
 
-    public void unload(LevelChunk p_104666_) {
-        p_104666_.clearAllBlockEntities();
-        this.chunkSource.getLightEngine().setLightEnabled(p_104666_.getPos(), false);
-        this.entityStorage.stopTicking(p_104666_.getPos());
+    public void unload(LevelChunk chunk) {
+        chunk.clearAllBlockEntities();
+        this.chunkSource.getLightEngine().setLightEnabled(chunk.getPos(), false);
+        this.entityStorage.stopTicking(chunk.getPos());
     }
 
-    public void onChunkLoaded(ChunkPos p_171650_) {
-        this.tintCaches.forEach((p_194154_, p_194155_) -> p_194155_.invalidateForChunk(p_171650_.x, p_171650_.z));
-        this.entityStorage.startTicking(p_171650_);
-        this.levelRenderer.onChunkLoaded(p_171650_);
+    public void onChunkLoaded(ChunkPos chunkPos) {
+        this.tintCaches.forEach((p_194154_, p_194155_) -> p_194155_.invalidateForChunk(chunkPos.x, chunkPos.z));
+        this.entityStorage.startTicking(chunkPos);
+        this.levelRenderer.onChunkLoaded(chunkPos);
     }
 
     public void clearTintCaches() {
@@ -334,7 +340,7 @@ public class ClientLevel extends Level {
     }
 
     @Override
-    public boolean hasChunk(int p_104737_, int p_104738_) {
+    public boolean hasChunk(int chunkX, int chunkZ) {
         return true;
     }
 
@@ -342,25 +348,28 @@ public class ClientLevel extends Level {
         return this.entityStorage.count();
     }
 
-    public void addEntity(Entity p_104741_) {
-        if (net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.EntityJoinLevelEvent(p_104741_, this)).isCanceled()) return;
-        this.removeEntity(p_104741_.getId(), Entity.RemovalReason.DISCARDED);
-        this.entityStorage.addEntity(p_104741_);
-        p_104741_.onAddedToLevel();
+    public void addEntity(Entity entity) {
+        if (net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.EntityJoinLevelEvent(entity, this)).isCanceled()) return;
+        this.removeEntity(entity.getId(), Entity.RemovalReason.DISCARDED);
+        this.entityStorage.addEntity(entity);
+        entity.onAddedToLevel();
     }
 
-    public void removeEntity(int p_171643_, Entity.RemovalReason p_171644_) {
-        Entity entity = this.getEntities().get(p_171643_);
+    public void removeEntity(int entityId, Entity.RemovalReason reason) {
+        Entity entity = this.getEntities().get(entityId);
         if (entity != null) {
-            entity.setRemoved(p_171644_);
+            entity.setRemoved(reason);
             entity.onClientRemoval();
         }
     }
 
+    /**
+     * Returns the Entity with the given ID, or null if it doesn't exist in this World.
+     */
     @Nullable
     @Override
-    public Entity getEntity(int p_104609_) {
-        return this.getEntities().get(p_104609_);
+    public Entity getEntity(int id) {
+        return this.getEntities().get(id);
     }
 
     @Override
@@ -368,15 +377,15 @@ public class ClientLevel extends Level {
         this.connection.getConnection().disconnect(Component.translatable("multiplayer.status.quitting"));
     }
 
-    public void animateTick(int p_104785_, int p_104786_, int p_104787_) {
+    public void animateTick(int posX, int posY, int posZ) {
         int i = 32;
         RandomSource randomsource = RandomSource.create();
         Block block = this.getMarkerParticleTarget();
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
         for (int j = 0; j < 667; j++) {
-            this.doAnimateTick(p_104785_, p_104786_, p_104787_, 16, randomsource, block, blockpos$mutableblockpos);
-            this.doAnimateTick(p_104785_, p_104786_, p_104787_, 32, randomsource, block, blockpos$mutableblockpos);
+            this.doAnimateTick(posX, posY, posZ, 16, randomsource, block, blockpos$mutableblockpos);
+            this.doAnimateTick(posX, posY, posZ, 32, randomsource, block, blockpos$mutableblockpos);
         }
     }
 
@@ -394,31 +403,31 @@ public class ClientLevel extends Level {
     }
 
     public void doAnimateTick(
-        int p_233613_, int p_233614_, int p_233615_, int p_233616_, RandomSource p_233617_, @Nullable Block p_233618_, BlockPos.MutableBlockPos p_233619_
+        int posX, int posY, int posZ, int range, RandomSource random, @Nullable Block block, BlockPos.MutableBlockPos blockPos
     ) {
-        int i = p_233613_ + this.random.nextInt(p_233616_) - this.random.nextInt(p_233616_);
-        int j = p_233614_ + this.random.nextInt(p_233616_) - this.random.nextInt(p_233616_);
-        int k = p_233615_ + this.random.nextInt(p_233616_) - this.random.nextInt(p_233616_);
-        p_233619_.set(i, j, k);
-        BlockState blockstate = this.getBlockState(p_233619_);
-        blockstate.getBlock().animateTick(blockstate, this, p_233619_, p_233617_);
-        FluidState fluidstate = this.getFluidState(p_233619_);
+        int i = posX + this.random.nextInt(range) - this.random.nextInt(range);
+        int j = posY + this.random.nextInt(range) - this.random.nextInt(range);
+        int k = posZ + this.random.nextInt(range) - this.random.nextInt(range);
+        blockPos.set(i, j, k);
+        BlockState blockstate = this.getBlockState(blockPos);
+        blockstate.getBlock().animateTick(blockstate, this, blockPos, random);
+        FluidState fluidstate = this.getFluidState(blockPos);
         if (!fluidstate.isEmpty()) {
-            fluidstate.animateTick(this, p_233619_, p_233617_);
+            fluidstate.animateTick(this, blockPos, random);
             ParticleOptions particleoptions = fluidstate.getDripParticle();
             if (particleoptions != null && this.random.nextInt(10) == 0) {
-                boolean flag = blockstate.isFaceSturdy(this, p_233619_, Direction.DOWN);
-                BlockPos blockpos = p_233619_.below();
+                boolean flag = blockstate.isFaceSturdy(this, blockPos, Direction.DOWN);
+                BlockPos blockpos = blockPos.below();
                 this.trySpawnDripParticles(blockpos, this.getBlockState(blockpos), particleoptions, flag);
             }
         }
 
-        if (p_233618_ == blockstate.getBlock()) {
+        if (block == blockstate.getBlock()) {
             this.addParticle(new BlockParticleOption(ParticleTypes.BLOCK_MARKER, blockstate), (double)i + 0.5, (double)j + 0.5, (double)k + 0.5, 0.0, 0.0, 0.0);
         }
 
-        if (!blockstate.isCollisionShapeFullBlock(this, p_233619_)) {
-            this.getBiome(p_233619_)
+        if (!blockstate.isCollisionShapeFullBlock(this, blockPos)) {
+            this.getBiome(blockPos)
                 .value()
                 .getAmbientParticle()
                 .ifPresent(
@@ -426,9 +435,9 @@ public class ClientLevel extends Level {
                         if (p_264703_.canSpawn(this.random)) {
                             this.addParticle(
                                 p_264703_.getOptions(),
-                                (double)p_233619_.getX() + this.random.nextDouble(),
-                                (double)p_233619_.getY() + this.random.nextDouble(),
-                                (double)p_233619_.getZ() + this.random.nextDouble(),
+                                (double)blockPos.getX() + this.random.nextDouble(),
+                                (double)blockPos.getY() + this.random.nextDouble(),
+                                (double)blockPos.getZ() + this.random.nextDouble(),
                                 0.0,
                                 0.0,
                                 0.0
@@ -439,64 +448,67 @@ public class ClientLevel extends Level {
         }
     }
 
-    private void trySpawnDripParticles(BlockPos p_104690_, BlockState p_104691_, ParticleOptions p_104692_, boolean p_104693_) {
-        if (p_104691_.getFluidState().isEmpty()) {
-            VoxelShape voxelshape = p_104691_.getCollisionShape(this, p_104690_);
+    private void trySpawnDripParticles(BlockPos blockPos, BlockState blockState, ParticleOptions particleData, boolean shapeDownSolid) {
+        if (blockState.getFluidState().isEmpty()) {
+            VoxelShape voxelshape = blockState.getCollisionShape(this, blockPos);
             double d0 = voxelshape.max(Direction.Axis.Y);
             if (d0 < 1.0) {
-                if (p_104693_) {
+                if (shapeDownSolid) {
                     this.spawnFluidParticle(
-                        (double)p_104690_.getX(),
-                        (double)(p_104690_.getX() + 1),
-                        (double)p_104690_.getZ(),
-                        (double)(p_104690_.getZ() + 1),
-                        (double)(p_104690_.getY() + 1) - 0.05,
-                        p_104692_
+                        (double)blockPos.getX(),
+                        (double)(blockPos.getX() + 1),
+                        (double)blockPos.getZ(),
+                        (double)(blockPos.getZ() + 1),
+                        (double)(blockPos.getY() + 1) - 0.05,
+                        particleData
                     );
                 }
-            } else if (!p_104691_.is(BlockTags.IMPERMEABLE)) {
+            } else if (!blockState.is(BlockTags.IMPERMEABLE)) {
                 double d1 = voxelshape.min(Direction.Axis.Y);
                 if (d1 > 0.0) {
-                    this.spawnParticle(p_104690_, p_104692_, voxelshape, (double)p_104690_.getY() + d1 - 0.05);
+                    this.spawnParticle(blockPos, particleData, voxelshape, (double)blockPos.getY() + d1 - 0.05);
                 } else {
-                    BlockPos blockpos = p_104690_.below();
+                    BlockPos blockpos = blockPos.below();
                     BlockState blockstate = this.getBlockState(blockpos);
                     VoxelShape voxelshape1 = blockstate.getCollisionShape(this, blockpos);
                     double d2 = voxelshape1.max(Direction.Axis.Y);
                     if (d2 < 1.0 && blockstate.getFluidState().isEmpty()) {
-                        this.spawnParticle(p_104690_, p_104692_, voxelshape, (double)p_104690_.getY() - 0.05);
+                        this.spawnParticle(blockPos, particleData, voxelshape, (double)blockPos.getY() - 0.05);
                     }
                 }
             }
         }
     }
 
-    private void spawnParticle(BlockPos p_104695_, ParticleOptions p_104696_, VoxelShape p_104697_, double p_104698_) {
+    private void spawnParticle(BlockPos pos, ParticleOptions particleData, VoxelShape voxelShape, double y) {
         this.spawnFluidParticle(
-            (double)p_104695_.getX() + p_104697_.min(Direction.Axis.X),
-            (double)p_104695_.getX() + p_104697_.max(Direction.Axis.X),
-            (double)p_104695_.getZ() + p_104697_.min(Direction.Axis.Z),
-            (double)p_104695_.getZ() + p_104697_.max(Direction.Axis.Z),
-            p_104698_,
-            p_104696_
+            (double)pos.getX() + voxelShape.min(Direction.Axis.X),
+            (double)pos.getX() + voxelShape.max(Direction.Axis.X),
+            (double)pos.getZ() + voxelShape.min(Direction.Axis.Z),
+            (double)pos.getZ() + voxelShape.max(Direction.Axis.Z),
+            y,
+            particleData
         );
     }
 
-    private void spawnFluidParticle(double p_104593_, double p_104594_, double p_104595_, double p_104596_, double p_104597_, ParticleOptions p_104598_) {
+    private void spawnFluidParticle(double xStart, double xEnd, double zStart, double zEnd, double y, ParticleOptions particleData) {
         this.addParticle(
-            p_104598_,
-            Mth.lerp(this.random.nextDouble(), p_104593_, p_104594_),
-            p_104597_,
-            Mth.lerp(this.random.nextDouble(), p_104595_, p_104596_),
+            particleData,
+            Mth.lerp(this.random.nextDouble(), xStart, xEnd),
+            y,
+            Mth.lerp(this.random.nextDouble(), zStart, zEnd),
             0.0,
             0.0,
             0.0
         );
     }
 
+    /**
+     * Adds some basic stats of the world to the given crash report.
+     */
     @Override
-    public CrashReportCategory fillReportDetails(CrashReport p_104729_) {
-        CrashReportCategory crashreportcategory = super.fillReportDetails(p_104729_);
+    public CrashReportCategory fillReportDetails(CrashReport report) {
+        CrashReportCategory crashreportcategory = super.fillReportDetails(report);
         crashreportcategory.setDetail("Server brand", () -> this.minecraft.player.connection.serverBrand());
         crashreportcategory.setDetail(
             "Server type", () -> this.minecraft.getSingleplayerServer() == null ? "Non-integrated multiplayer server" : "Integrated singleplayer server"
@@ -507,71 +519,71 @@ public class ClientLevel extends Level {
 
     @Override
     public void playSeededSound(
-        @Nullable Player p_263381_,
-        double p_263372_,
-        double p_263404_,
-        double p_263365_,
-        Holder<SoundEvent> p_263335_,
-        SoundSource p_263417_,
-        float p_263416_,
-        float p_263349_,
-        long p_263408_
+        @Nullable Player player,
+        double x,
+        double y,
+        double z,
+        Holder<SoundEvent> sound,
+        SoundSource category,
+        float volume,
+        float pitch,
+        long seed
     ) {
-        net.neoforged.neoforge.event.PlayLevelSoundEvent.AtPosition event = net.neoforged.neoforge.event.EventHooks.onPlaySoundAtPosition(this, p_263372_, p_263404_, p_263365_, p_263335_, p_263417_, p_263416_, p_263349_);
+        net.neoforged.neoforge.event.PlayLevelSoundEvent.AtPosition event = net.neoforged.neoforge.event.EventHooks.onPlaySoundAtPosition(this, x, y, z, sound, category, volume, pitch);
         if (event.isCanceled() || event.getSound() == null) return;
-        p_263335_ = event.getSound();
-        p_263417_ = event.getSource();
-        p_263416_ = event.getNewVolume();
-        p_263349_ = event.getNewPitch();
+        sound = event.getSound();
+        category = event.getSource();
+        volume = event.getNewVolume();
+        pitch = event.getNewPitch();
 
-        if (p_263381_ == this.minecraft.player) {
-            this.playSound(p_263372_, p_263404_, p_263365_, p_263335_.value(), p_263417_, p_263416_, p_263349_, false, p_263408_);
+        if (player == this.minecraft.player) {
+            this.playSound(x, y, z, sound.value(), category, volume, pitch, false, seed);
         }
     }
 
     @Override
     public void playSeededSound(
-        @Nullable Player p_263514_, Entity p_263536_, Holder<SoundEvent> p_263518_, SoundSource p_263487_, float p_263538_, float p_263524_, long p_263509_
+        @Nullable Player player, Entity entity, Holder<SoundEvent> sound, SoundSource category, float volume, float pitch, long seed
     ) {
-        net.neoforged.neoforge.event.PlayLevelSoundEvent.AtEntity event = net.neoforged.neoforge.event.EventHooks.onPlaySoundAtEntity(p_263536_, p_263518_, p_263487_, p_263538_, p_263524_);
+        net.neoforged.neoforge.event.PlayLevelSoundEvent.AtEntity event = net.neoforged.neoforge.event.EventHooks.onPlaySoundAtEntity(entity, sound, category, volume, pitch);
         if (event.isCanceled() || event.getSound() == null) return;
-        p_263518_ = event.getSound();
-        p_263487_ = event.getSource();
-        p_263538_ = event.getNewVolume();
-        p_263524_ = event.getNewPitch();
-        if (p_263514_ == this.minecraft.player) {
-            this.minecraft.getSoundManager().play(new EntityBoundSoundInstance(p_263518_.value(), p_263487_, p_263538_, p_263524_, p_263536_, p_263509_));
+        sound = event.getSound();
+        category = event.getSource();
+        volume = event.getNewVolume();
+        pitch = event.getNewPitch();
+        if (player == this.minecraft.player) {
+            this.minecraft.getSoundManager().play(new EntityBoundSoundInstance(sound.value(), category, volume, pitch, entity, seed));
         }
     }
 
     @Override
-    public void playLocalSound(Entity p_312749_, SoundEvent p_312635_, SoundSource p_312007_, float p_312298_, float p_312772_) {
-        this.minecraft.getSoundManager().play(new EntityBoundSoundInstance(p_312635_, p_312007_, p_312298_, p_312772_, p_312749_, this.random.nextLong()));
+    public void playLocalSound(Entity entity, SoundEvent sound, SoundSource category, float volume, float pitch) {
+        this.minecraft.getSoundManager().play(new EntityBoundSoundInstance(sound, category, volume, pitch, entity, this.random.nextLong()));
     }
 
     @Override
     public void playLocalSound(
-        double p_104600_, double p_104601_, double p_104602_, SoundEvent p_104603_, SoundSource p_104604_, float p_104605_, float p_104606_, boolean p_104607_
+        double x, double y, double z, SoundEvent sound, SoundSource category, float volume, float pitch, boolean distanceDelay
     ) {
-        this.playSound(p_104600_, p_104601_, p_104602_, p_104603_, p_104604_, p_104605_, p_104606_, p_104607_, this.random.nextLong());
+        this.playSound(x, y, z, sound, category, volume, pitch, distanceDelay, this.random.nextLong());
     }
 
     private void playSound(
-        double p_233603_,
-        double p_233604_,
-        double p_233605_,
-        SoundEvent p_233606_,
-        SoundSource p_233607_,
-        float p_233608_,
-        float p_233609_,
-        boolean p_233610_,
-        long p_233611_
+        double x,
+        double y,
+        double z,
+        SoundEvent soundEvent,
+        SoundSource source,
+        float volume,
+        float pitch,
+        boolean distanceDelay,
+        long seed
     ) {
-        double d0 = this.minecraft.gameRenderer.getMainCamera().getPosition().distanceToSqr(p_233603_, p_233604_, p_233605_);
+        double d0 = this.minecraft.gameRenderer.getMainCamera().getPosition().distanceToSqr(x, y, z);
         SimpleSoundInstance simplesoundinstance = new SimpleSoundInstance(
-            p_233606_, p_233607_, p_233608_, p_233609_, RandomSource.create(p_233611_), p_233603_, p_233604_, p_233605_
+            soundEvent, source, volume, pitch, RandomSource.create(seed), x, y, z
         );
-        if (p_233610_ && d0 > 100.0) {
+        if (distanceDelay && d0 > 100.0) {
             double d1 = Math.sqrt(d0) / 40.0;
             this.minecraft.getSoundManager().playDelayed(simplesoundinstance, (int)(d1 * 20.0));
         } else {
@@ -581,12 +593,12 @@ public class ClientLevel extends Level {
 
     @Override
     public void createFireworks(
-        double p_104585_, double p_104586_, double p_104587_, double p_104588_, double p_104589_, double p_104590_, List<FireworkExplosion> p_330281_
+        double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, List<FireworkExplosion> explosions
     ) {
-        if (p_330281_.isEmpty()) {
+        if (explosions.isEmpty()) {
             for (int i = 0; i < this.random.nextInt(3) + 2; i++) {
                 this.addParticle(
-                    ParticleTypes.POOF, p_104585_, p_104586_, p_104587_, this.random.nextGaussian() * 0.05, 0.005, this.random.nextGaussian() * 0.05
+                    ParticleTypes.POOF, x, y, z, this.random.nextGaussian() * 0.05, 0.005, this.random.nextGaussian() * 0.05
                 );
             }
         } else {
@@ -594,15 +606,15 @@ public class ClientLevel extends Level {
                 .particleEngine
                 .add(
                     new FireworkParticles.Starter(
-                        this, p_104585_, p_104586_, p_104587_, p_104588_, p_104589_, p_104590_, this.minecraft.particleEngine, p_330281_
+                        this, x, y, z, xSpeed, ySpeed, zSpeed, this.minecraft.particleEngine, explosions
                     )
                 );
         }
     }
 
     @Override
-    public void sendPacketToServer(Packet<?> p_104734_) {
-        this.connection.send(p_104734_);
+    public void sendPacketToServer(Packet<?> packet) {
+        this.connection.send(packet);
     }
 
     @Override
@@ -631,16 +643,16 @@ public class ClientLevel extends Level {
 
     @Nullable
     @Override
-    public MapItemSavedData getMapData(MapId p_323873_) {
-        return this.mapData.get(p_323873_);
+    public MapItemSavedData getMapData(MapId mapId) {
+        return this.mapData.get(mapId);
     }
 
-    public void overrideMapData(MapId p_323577_, MapItemSavedData p_259308_) {
-        this.mapData.put(p_323577_, p_259308_);
+    public void overrideMapData(MapId mapId, MapItemSavedData mapData) {
+        this.mapData.put(mapId, mapData);
     }
 
     @Override
-    public void setMapData(MapId p_324501_, MapItemSavedData p_171671_) {
+    public void setMapData(MapId mapId, MapItemSavedData mapData) {
     }
 
     @Override
@@ -653,88 +665,91 @@ public class ClientLevel extends Level {
         return this.connection.scoreboard();
     }
 
+    /**
+     * Flags are as in setBlockState
+     */
     @Override
-    public void sendBlockUpdated(BlockPos p_104685_, BlockState p_104686_, BlockState p_104687_, int p_104688_) {
-        this.levelRenderer.blockChanged(this, p_104685_, p_104686_, p_104687_, p_104688_);
+    public void sendBlockUpdated(BlockPos pos, BlockState oldState, BlockState newState, int flags) {
+        this.levelRenderer.blockChanged(this, pos, oldState, newState, flags);
     }
 
     @Override
-    public void setBlocksDirty(BlockPos p_104759_, BlockState p_104760_, BlockState p_104761_) {
-        this.levelRenderer.setBlockDirty(p_104759_, p_104760_, p_104761_);
+    public void setBlocksDirty(BlockPos blockPos, BlockState oldState, BlockState newState) {
+        this.levelRenderer.setBlockDirty(blockPos, oldState, newState);
     }
 
-    public void setSectionDirtyWithNeighbors(int p_104794_, int p_104795_, int p_104796_) {
-        this.levelRenderer.setSectionDirtyWithNeighbors(p_104794_, p_104795_, p_104796_);
-    }
-
-    @Override
-    public void destroyBlockProgress(int p_104634_, BlockPos p_104635_, int p_104636_) {
-        this.levelRenderer.destroyBlockProgress(p_104634_, p_104635_, p_104636_);
+    public void setSectionDirtyWithNeighbors(int sectionX, int sectionY, int sectionZ) {
+        this.levelRenderer.setSectionDirtyWithNeighbors(sectionX, sectionY, sectionZ);
     }
 
     @Override
-    public void globalLevelEvent(int p_104743_, BlockPos p_104744_, int p_104745_) {
-        this.levelRenderer.globalLevelEvent(p_104743_, p_104744_, p_104745_);
+    public void destroyBlockProgress(int breakerId, BlockPos pos, int progress) {
+        this.levelRenderer.destroyBlockProgress(breakerId, pos, progress);
     }
 
     @Override
-    public void levelEvent(@Nullable Player p_104654_, int p_104655_, BlockPos p_104656_, int p_104657_) {
+    public void globalLevelEvent(int id, BlockPos pos, int data) {
+        this.levelRenderer.globalLevelEvent(id, pos, data);
+    }
+
+    @Override
+    public void levelEvent(@Nullable Player player, int type, BlockPos pos, int data) {
         try {
-            this.levelRenderer.levelEvent(p_104655_, p_104656_, p_104657_);
+            this.levelRenderer.levelEvent(type, pos, data);
         } catch (Throwable throwable) {
             CrashReport crashreport = CrashReport.forThrowable(throwable, "Playing level event");
             CrashReportCategory crashreportcategory = crashreport.addCategory("Level event being played");
-            crashreportcategory.setDetail("Block coordinates", CrashReportCategory.formatLocation(this, p_104656_));
-            crashreportcategory.setDetail("Event source", p_104654_);
-            crashreportcategory.setDetail("Event type", p_104655_);
-            crashreportcategory.setDetail("Event data", p_104657_);
+            crashreportcategory.setDetail("Block coordinates", CrashReportCategory.formatLocation(this, pos));
+            crashreportcategory.setDetail("Event source", player);
+            crashreportcategory.setDetail("Event type", type);
+            crashreportcategory.setDetail("Event data", data);
             throw new ReportedException(crashreport);
         }
     }
 
     @Override
     public void addParticle(
-        ParticleOptions p_104706_, double p_104707_, double p_104708_, double p_104709_, double p_104710_, double p_104711_, double p_104712_
+        ParticleOptions particleData, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed
     ) {
-        this.levelRenderer.addParticle(p_104706_, p_104706_.getType().getOverrideLimiter(), p_104707_, p_104708_, p_104709_, p_104710_, p_104711_, p_104712_);
+        this.levelRenderer.addParticle(particleData, particleData.getType().getOverrideLimiter(), x, y, z, xSpeed, ySpeed, zSpeed);
     }
 
     @Override
     public void addParticle(
-        ParticleOptions p_104714_,
-        boolean p_104715_,
-        double p_104716_,
-        double p_104717_,
-        double p_104718_,
-        double p_104719_,
-        double p_104720_,
-        double p_104721_
+        ParticleOptions particleData,
+        boolean forceAlwaysRender,
+        double x,
+        double y,
+        double z,
+        double xSpeed,
+        double ySpeed,
+        double zSpeed
     ) {
         this.levelRenderer
-            .addParticle(p_104714_, p_104714_.getType().getOverrideLimiter() || p_104715_, p_104716_, p_104717_, p_104718_, p_104719_, p_104720_, p_104721_);
+            .addParticle(particleData, particleData.getType().getOverrideLimiter() || forceAlwaysRender, x, y, z, xSpeed, ySpeed, zSpeed);
     }
 
     @Override
     public void addAlwaysVisibleParticle(
-        ParticleOptions p_104766_, double p_104767_, double p_104768_, double p_104769_, double p_104770_, double p_104771_, double p_104772_
+        ParticleOptions particleData, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed
     ) {
-        this.levelRenderer.addParticle(p_104766_, false, true, p_104767_, p_104768_, p_104769_, p_104770_, p_104771_, p_104772_);
+        this.levelRenderer.addParticle(particleData, false, true, x, y, z, xSpeed, ySpeed, zSpeed);
     }
 
     @Override
     public void addAlwaysVisibleParticle(
-        ParticleOptions p_104774_,
-        boolean p_104775_,
-        double p_104776_,
-        double p_104777_,
-        double p_104778_,
-        double p_104779_,
-        double p_104780_,
-        double p_104781_
+        ParticleOptions particleData,
+        boolean ignoreRange,
+        double x,
+        double y,
+        double z,
+        double xSpeed,
+        double ySpeed,
+        double zSpeed
     ) {
         this.levelRenderer
             .addParticle(
-                p_104774_, p_104774_.getType().getOverrideLimiter() || p_104775_, true, p_104776_, p_104777_, p_104778_, p_104779_, p_104780_, p_104781_
+                particleData, particleData.getType().getOverrideLimiter() || ignoreRange, true, x, y, z, xSpeed, ySpeed, zSpeed
             );
     }
 
@@ -744,23 +759,23 @@ public class ClientLevel extends Level {
     }
 
     @Override
-    public Holder<Biome> getUncachedNoiseBiome(int p_205516_, int p_205517_, int p_205518_) {
+    public Holder<Biome> getUncachedNoiseBiome(int x, int y, int z) {
         return this.registryAccess().registryOrThrow(Registries.BIOME).getHolderOrThrow(Biomes.PLAINS);
     }
 
-    public float getSkyDarken(float p_104806_) {
-        float f = this.getTimeOfDay(p_104806_);
+    public float getSkyDarken(float partialTick) {
+        float f = this.getTimeOfDay(partialTick);
         float f1 = 1.0F - (Mth.cos(f * (float) (Math.PI * 2)) * 2.0F + 0.2F);
         f1 = Mth.clamp(f1, 0.0F, 1.0F);
         f1 = 1.0F - f1;
-        f1 *= 1.0F - this.getRainLevel(p_104806_) * 5.0F / 16.0F;
-        f1 *= 1.0F - this.getThunderLevel(p_104806_) * 5.0F / 16.0F;
+        f1 *= 1.0F - this.getRainLevel(partialTick) * 5.0F / 16.0F;
+        f1 *= 1.0F - this.getThunderLevel(partialTick) * 5.0F / 16.0F;
         return f1 * 0.8F + 0.2F;
     }
 
-    public Vec3 getSkyColor(Vec3 p_171661_, float p_171662_) {
-        float f = this.getTimeOfDay(p_171662_);
-        Vec3 vec3 = p_171661_.subtract(2.0, 2.0, 2.0).scale(0.25);
+    public Vec3 getSkyColor(Vec3 pos, float partialTick) {
+        float f = this.getTimeOfDay(partialTick);
+        Vec3 vec3 = pos.subtract(2.0, 2.0, 2.0).scale(0.25);
         BiomeManager biomemanager = this.getBiomeManager();
         Vec3 vec31 = CubicSampler.gaussianSampleVec3(
             vec3, (p_194161_, p_194162_, p_194163_) -> Vec3.fromRGB24(biomemanager.getNoiseBiomeAtQuart(p_194161_, p_194162_, p_194163_).value().getSkyColor())
@@ -770,7 +785,7 @@ public class ClientLevel extends Level {
         float f2 = (float)vec31.x * f1;
         float f3 = (float)vec31.y * f1;
         float f4 = (float)vec31.z * f1;
-        float f5 = this.getRainLevel(p_171662_);
+        float f5 = this.getRainLevel(partialTick);
         if (f5 > 0.0F) {
             float f6 = (f2 * 0.3F + f3 * 0.59F + f4 * 0.11F) * 0.6F;
             float f7 = 1.0F - f5 * 0.75F;
@@ -779,7 +794,7 @@ public class ClientLevel extends Level {
             f4 = f4 * f7 + f6 * (1.0F - f7);
         }
 
-        float f9 = this.getThunderLevel(p_171662_);
+        float f9 = this.getThunderLevel(partialTick);
         if (f9 > 0.0F) {
             float f10 = (f2 * 0.3F + f3 * 0.59F + f4 * 0.11F) * 0.2F;
             float f8 = 1.0F - f9 * 0.75F;
@@ -790,7 +805,7 @@ public class ClientLevel extends Level {
 
         int i = this.getSkyFlashTime();
         if (i > 0) {
-            float f11 = (float)i - p_171662_;
+            float f11 = (float)i - partialTick;
             if (f11 > 1.0F) {
                 f11 = 1.0F;
             }
@@ -804,14 +819,14 @@ public class ClientLevel extends Level {
         return new Vec3((double)f2, (double)f3, (double)f4);
     }
 
-    public Vec3 getCloudColor(float p_104809_) {
-        float f = this.getTimeOfDay(p_104809_);
+    public Vec3 getCloudColor(float partialTick) {
+        float f = this.getTimeOfDay(partialTick);
         float f1 = Mth.cos(f * (float) (Math.PI * 2)) * 2.0F + 0.5F;
         f1 = Mth.clamp(f1, 0.0F, 1.0F);
         float f2 = 1.0F;
         float f3 = 1.0F;
         float f4 = 1.0F;
-        float f5 = this.getRainLevel(p_104809_);
+        float f5 = this.getRainLevel(partialTick);
         if (f5 > 0.0F) {
             float f6 = (f2 * 0.3F + f3 * 0.59F + f4 * 0.11F) * 0.6F;
             float f7 = 1.0F - f5 * 0.95F;
@@ -823,7 +838,7 @@ public class ClientLevel extends Level {
         f2 *= f1 * 0.9F + 0.1F;
         f3 *= f1 * 0.9F + 0.1F;
         f4 *= f1 * 0.85F + 0.15F;
-        float f9 = this.getThunderLevel(p_104809_);
+        float f9 = this.getThunderLevel(partialTick);
         if (f9 > 0.0F) {
             float f10 = (f2 * 0.3F + f3 * 0.59F + f4 * 0.11F) * 0.2F;
             float f8 = 1.0F - f9 * 0.95F;
@@ -835,8 +850,8 @@ public class ClientLevel extends Level {
         return new Vec3((double)f2, (double)f3, (double)f4);
     }
 
-    public float getStarBrightness(float p_104812_) {
-        float f = this.getTimeOfDay(p_104812_);
+    public float getStarBrightness(float partialTick) {
+        float f = this.getTimeOfDay(partialTick);
         float f1 = 1.0F - (Mth.cos(f * (float) (Math.PI * 2)) * 2.0F + 0.25F);
         f1 = Mth.clamp(f1, 0.0F, 1.0F);
         return f1 * f1 * 0.5F;
@@ -847,17 +862,17 @@ public class ClientLevel extends Level {
     }
 
     @Override
-    public void setSkyFlashTime(int p_104783_) {
-        this.skyFlashTime = p_104783_;
+    public void setSkyFlashTime(int timeFlash) {
+        this.skyFlashTime = timeFlash;
     }
 
     @Override
-    public float getShade(Direction p_104703_, boolean p_104704_) {
+    public float getShade(Direction direction, boolean shade) {
         boolean flag = this.effects().constantAmbientLight();
-        if (!p_104704_) {
+        if (!shade) {
             return flag ? 0.9F : 1.0F;
         } else {
-            switch (p_104703_) {
+            switch (direction) {
                 case DOWN:
                     return flag ? 0.9F : 0.5F;
                 case UP:
@@ -875,28 +890,28 @@ public class ClientLevel extends Level {
     }
 
     @Override
-    public int getBlockTint(BlockPos p_104700_, ColorResolver p_104701_) {
-        BlockTintCache blocktintcache = this.tintCaches.get(p_104701_);
-        return blocktintcache.getColor(p_104700_);
+    public int getBlockTint(BlockPos blockPos, ColorResolver colorResolver) {
+        BlockTintCache blocktintcache = this.tintCaches.get(colorResolver);
+        return blocktintcache.getColor(blockPos);
     }
 
-    public int calculateBlockTint(BlockPos p_104763_, ColorResolver p_104764_) {
+    public int calculateBlockTint(BlockPos blockPos, ColorResolver colorResolver) {
         int i = Minecraft.getInstance().options.biomeBlendRadius().get();
         if (i == 0) {
-            return p_104764_.getColor(this.getBiome(p_104763_).value(), (double)p_104763_.getX(), (double)p_104763_.getZ());
+            return colorResolver.getColor(this.getBiome(blockPos).value(), (double)blockPos.getX(), (double)blockPos.getZ());
         } else {
             int j = (i * 2 + 1) * (i * 2 + 1);
             int k = 0;
             int l = 0;
             int i1 = 0;
             Cursor3D cursor3d = new Cursor3D(
-                p_104763_.getX() - i, p_104763_.getY(), p_104763_.getZ() - i, p_104763_.getX() + i, p_104763_.getY(), p_104763_.getZ() + i
+                blockPos.getX() - i, blockPos.getY(), blockPos.getZ() - i, blockPos.getX() + i, blockPos.getY(), blockPos.getZ() + i
             );
             BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
             while (cursor3d.advance()) {
                 blockpos$mutableblockpos.set(cursor3d.nextX(), cursor3d.nextY(), cursor3d.nextZ());
-                int j1 = p_104764_.getColor(
+                int j1 = colorResolver.getColor(
                     this.getBiome(blockpos$mutableblockpos).value(), (double)blockpos$mutableblockpos.getX(), (double)blockpos$mutableblockpos.getZ()
                 );
                 k += (j1 & 0xFF0000) >> 16;
@@ -908,8 +923,8 @@ public class ClientLevel extends Level {
         }
     }
 
-    public void setDefaultSpawnPos(BlockPos p_104753_, float p_104754_) {
-        this.levelData.setSpawn(p_104753_, p_104754_);
+    public void setDefaultSpawnPos(BlockPos spawnPos, float spawnAngle) {
+        this.levelData.setSpawn(spawnPos, spawnAngle);
     }
 
     @Override
@@ -922,15 +937,15 @@ public class ClientLevel extends Level {
     }
 
     @Override
-    public void gameEvent(Holder<GameEvent> p_316478_, Vec3 p_233640_, GameEvent.Context p_233641_) {
+    public void gameEvent(Holder<GameEvent> gameEvent, Vec3 pos, GameEvent.Context context) {
     }
 
     protected Map<MapId, MapItemSavedData> getAllMapData() {
         return ImmutableMap.copyOf(this.mapData);
     }
 
-    protected void addMapData(Map<MapId, MapItemSavedData> p_171673_) {
-        this.mapData.putAll(p_171673_);
+    protected void addMapData(Map<MapId, MapItemSavedData> map) {
+        this.mapData.putAll(map);
     }
 
     @Override
@@ -944,12 +959,12 @@ public class ClientLevel extends Level {
     }
 
     @Override
-    public void addDestroyBlockEffect(BlockPos p_171667_, BlockState p_171668_) {
-        this.minecraft.particleEngine.destroy(p_171667_, p_171668_);
+    public void addDestroyBlockEffect(BlockPos pos, BlockState state) {
+        this.minecraft.particleEngine.destroy(pos, state);
     }
 
-    public void setServerSimulationDistance(int p_194175_) {
-        this.serverSimulationDistance = p_194175_;
+    public void setServerSimulationDistance(int serverSimulationDistance) {
+        this.serverSimulationDistance = serverSimulationDistance;
     }
 
     public int getServerSimulationDistance() {
@@ -979,10 +994,10 @@ public class ClientLevel extends Level {
         private Difficulty difficulty;
         private boolean difficultyLocked;
 
-        public ClientLevelData(Difficulty p_104843_, boolean p_104844_, boolean p_104845_) {
-            this.difficulty = p_104843_;
-            this.hardcore = p_104844_;
-            this.isFlat = p_104845_;
+        public ClientLevelData(Difficulty difficulty, boolean hardcore, boolean isFlat) {
+            this.difficulty = difficulty;
+            this.hardcore = hardcore;
+            this.isFlat = isFlat;
             this.gameRules = new GameRules();
         }
 
@@ -1006,18 +1021,18 @@ public class ClientLevel extends Level {
             return this.dayTime;
         }
 
-        public void setGameTime(long p_104850_) {
-            this.gameTime = p_104850_;
+        public void setGameTime(long gameTime) {
+            this.gameTime = gameTime;
         }
 
-        public void setDayTime(long p_104864_) {
-            this.dayTime = p_104864_;
+        public void setDayTime(long dayTime) {
+            this.dayTime = dayTime;
         }
 
         @Override
-        public void setSpawn(BlockPos p_104854_, float p_104855_) {
-            this.spawnPos = p_104854_.immutable();
-            this.spawnAngle = p_104855_;
+        public void setSpawn(BlockPos spawnPoint, float angle) {
+            this.spawnPos = spawnPoint.immutable();
+            this.spawnAngle = angle;
         }
 
         @Override
@@ -1030,9 +1045,12 @@ public class ClientLevel extends Level {
             return this.raining;
         }
 
+        /**
+         * Sets whether it is raining or not.
+         */
         @Override
-        public void setRaining(boolean p_104866_) {
-            this.raining = p_104866_;
+        public void setRaining(boolean isRaining) {
+            this.raining = isRaining;
         }
 
         @Override
@@ -1056,21 +1074,21 @@ public class ClientLevel extends Level {
         }
 
         @Override
-        public void fillCrashReportCategory(CrashReportCategory p_171690_, LevelHeightAccessor p_171691_) {
-            WritableLevelData.super.fillCrashReportCategory(p_171690_, p_171691_);
+        public void fillCrashReportCategory(CrashReportCategory crashReportCategory, LevelHeightAccessor level) {
+            WritableLevelData.super.fillCrashReportCategory(crashReportCategory, level);
         }
 
-        public void setDifficulty(Difficulty p_104852_) {
-            net.neoforged.neoforge.common.CommonHooks.onDifficultyChange(p_104852_, this.difficulty);
-            this.difficulty = p_104852_;
+        public void setDifficulty(Difficulty difficulty) {
+            net.neoforged.neoforge.common.CommonHooks.onDifficultyChange(difficulty, this.difficulty);
+            this.difficulty = difficulty;
         }
 
-        public void setDifficultyLocked(boolean p_104859_) {
-            this.difficultyLocked = p_104859_;
+        public void setDifficultyLocked(boolean difficultyLocked) {
+            this.difficultyLocked = difficultyLocked;
         }
 
-        public double getHorizonHeight(LevelHeightAccessor p_171688_) {
-            return this.isFlat ? (double)p_171688_.getMinBuildHeight() : 63.0;
+        public double getHorizonHeight(LevelHeightAccessor level) {
+            return this.isFlat ? (double)level.getMinBuildHeight() : 63.0;
         }
 
         public float getClearColorScale() {

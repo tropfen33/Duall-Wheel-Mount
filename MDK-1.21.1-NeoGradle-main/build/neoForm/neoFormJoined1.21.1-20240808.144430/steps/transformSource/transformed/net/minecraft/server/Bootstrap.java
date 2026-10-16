@@ -31,6 +31,9 @@ import org.slf4j.Logger;
 
 public class Bootstrap {
     public static final PrintStream STDOUT = System.out;
+    /**
+     * Whether the blocks, items, etc have already been registered
+     */
     private static volatile boolean isBootstrapped;
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final AtomicLong bootstrapDuration = new AtomicLong(-1L);
@@ -61,23 +64,23 @@ public class Bootstrap {
         }
     }
 
-    private static <T> void checkTranslations(Iterable<T> p_135872_, Function<T, String> p_135873_, Set<String> p_135874_) {
+    private static <T> void checkTranslations(Iterable<T> objects, Function<T, String> objectToKeyFunction, Set<String> translationSet) {
         Language language = Language.getInstance();
-        p_135872_.forEach(p_135883_ -> {
-            String s = p_135873_.apply((T)p_135883_);
+        objects.forEach(p_135883_ -> {
+            String s = objectToKeyFunction.apply((T)p_135883_);
             if (!language.has(s)) {
-                p_135874_.add(s);
+                translationSet.add(s);
             }
         });
     }
 
-    private static void checkGameruleTranslations(final Set<String> p_135878_) {
+    private static void checkGameruleTranslations(final Set<String> translations) {
         final Language language = Language.getInstance();
         GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
             @Override
             public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> p_135897_, GameRules.Type<T> p_135898_) {
                 if (!language.has(p_135897_.getDescriptionId())) {
-                    p_135878_.add(p_135897_.getId());
+                    translations.add(p_135897_.getId());
                 }
             }
         });
@@ -95,15 +98,15 @@ public class Bootstrap {
         return set;
     }
 
-    public static void checkBootstrapCalled(Supplier<String> p_179913_) {
+    public static void checkBootstrapCalled(Supplier<String> callSite) {
         if (!isBootstrapped) {
-            throw createBootstrapException(p_179913_);
+            throw createBootstrapException(callSite);
         }
     }
 
-    private static RuntimeException createBootstrapException(Supplier<String> p_179917_) {
+    private static RuntimeException createBootstrapException(Supplier<String> callSite) {
         try {
-            String s = p_179917_.get();
+            String s = callSite.get();
             return new IllegalArgumentException("Not bootstrapped (called from " + s + ")");
         } catch (Exception exception) {
             RuntimeException runtimeexception = new IllegalArgumentException("Not bootstrapped (failed to resolve location)");
@@ -131,7 +134,7 @@ public class Bootstrap {
         }
     }
 
-    public static void realStdoutPrintln(String p_135876_) {
-        STDOUT.println(p_135876_);
+    public static void realStdoutPrintln(String message) {
+        STDOUT.println(message);
     }
 }

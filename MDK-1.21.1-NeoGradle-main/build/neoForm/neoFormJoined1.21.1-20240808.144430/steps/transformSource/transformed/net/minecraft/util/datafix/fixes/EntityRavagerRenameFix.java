@@ -10,12 +10,12 @@ public class EntityRavagerRenameFix extends SimplestEntityRenameFix {
         .put("minecraft:illager_beast_spawn_egg", "minecraft:ravager_spawn_egg")
         .build();
 
-    public EntityRavagerRenameFix(Schema p_15594_, boolean p_15595_) {
-        super("EntityRavagerRenameFix", p_15594_, p_15595_);
+    public EntityRavagerRenameFix(Schema outputSchema, boolean changesType) {
+        super("EntityRavagerRenameFix", outputSchema, changesType);
     }
 
     @Override
-    protected String rename(String p_15597_) {
-        return Objects.equals("minecraft:illager_beast", p_15597_) ? "minecraft:ravager" : p_15597_;
+    protected String rename(String name) {
+        return Objects.equals("minecraft:illager_beast", name) ? "minecraft:ravager" : name;
     }
 }

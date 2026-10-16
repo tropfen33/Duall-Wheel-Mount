@@ -49,27 +49,27 @@ public class PrimedTnt extends Entity implements TraceableEntity {
     private LivingEntity owner;
     private boolean usedPortal;
 
-    public PrimedTnt(EntityType<? extends PrimedTnt> p_32076_, Level p_32077_) {
-        super(p_32076_, p_32077_);
+    public PrimedTnt(EntityType<? extends PrimedTnt> entityType, Level level) {
+        super(entityType, level);
         this.blocksBuilding = true;
     }
 
-    public PrimedTnt(Level p_32079_, double p_32080_, double p_32081_, double p_32082_, @Nullable LivingEntity p_32083_) {
-        this(EntityType.TNT, p_32079_);
-        this.setPos(p_32080_, p_32081_, p_32082_);
-        double d0 = p_32079_.random.nextDouble() * (float) (Math.PI * 2);
+    public PrimedTnt(Level level, double x, double y, double z, @Nullable LivingEntity owner) {
+        this(EntityType.TNT, level);
+        this.setPos(x, y, z);
+        double d0 = level.random.nextDouble() * (float) (Math.PI * 2);
         this.setDeltaMovement(-Math.sin(d0) * 0.02, 0.2F, -Math.cos(d0) * 0.02);
         this.setFuse(80);
-        this.xo = p_32080_;
-        this.yo = p_32081_;
-        this.zo = p_32082_;
-        this.owner = p_32083_;
+        this.xo = x;
+        this.yo = y;
+        this.zo = z;
+        this.owner = owner;
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326113_) {
-        p_326113_.define(DATA_FUSE_ID, 80);
-        p_326113_.define(DATA_BLOCK_STATE_ID, Blocks.TNT.defaultBlockState());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_FUSE_ID, 80);
+        builder.define(DATA_BLOCK_STATE_ID, Blocks.TNT.defaultBlockState());
     }
 
     @Override
@@ -129,16 +129,19 @@ public class PrimedTnt extends Entity implements TraceableEntity {
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_32097_) {
-        p_32097_.putShort("fuse", (short)this.getFuse());
-        p_32097_.put("block_state", NbtUtils.writeBlockState(this.getBlockState()));
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        compound.putShort("fuse", (short)this.getFuse());
+        compound.put("block_state", NbtUtils.writeBlockState(this.getBlockState()));
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_32091_) {
-        this.setFuse(p_32091_.getShort("fuse"));
-        if (p_32091_.contains("block_state", 10)) {
-            this.setBlockState(NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), p_32091_.getCompound("block_state")));
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        this.setFuse(compound.getShort("fuse"));
+        if (compound.contains("block_state", 10)) {
+            this.setBlockState(NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), compound.getCompound("block_state")));
         }
     }
 
@@ -147,38 +150,41 @@ public class PrimedTnt extends Entity implements TraceableEntity {
         return this.owner;
     }
 
+    /**
+     * Prepares this entity in new dimension by copying NBT data from entity in old dimension
+     */
     @Override
-    public void restoreFrom(Entity p_306185_) {
-        super.restoreFrom(p_306185_);
-        if (p_306185_ instanceof PrimedTnt primedtnt) {
+    public void restoreFrom(Entity entity) {
+        super.restoreFrom(entity);
+        if (entity instanceof PrimedTnt primedtnt) {
             this.owner = primedtnt.owner;
         }
     }
 
-    public void setFuse(int p_32086_) {
-        this.entityData.set(DATA_FUSE_ID, p_32086_);
+    public void setFuse(int life) {
+        this.entityData.set(DATA_FUSE_ID, life);
     }
 
     public int getFuse() {
         return this.entityData.get(DATA_FUSE_ID);
     }
 
-    public void setBlockState(BlockState p_307211_) {
-        this.entityData.set(DATA_BLOCK_STATE_ID, p_307211_);
+    public void setBlockState(BlockState blockState) {
+        this.entityData.set(DATA_BLOCK_STATE_ID, blockState);
     }
 
     public BlockState getBlockState() {
         return this.entityData.get(DATA_BLOCK_STATE_ID);
     }
 
-    private void setUsedPortal(boolean p_353089_) {
-        this.usedPortal = p_353089_;
+    private void setUsedPortal(boolean usedPortal) {
+        this.usedPortal = usedPortal;
     }
 
     @Nullable
     @Override
-    public Entity changeDimension(DimensionTransition p_353097_) {
-        Entity entity = super.changeDimension(p_353097_);
+    public Entity changeDimension(DimensionTransition transition) {
+        Entity entity = super.changeDimension(transition);
         if (entity instanceof PrimedTnt primedtnt) {
             primedtnt.setUsedPortal(true);
         }

@@ -39,55 +39,55 @@ public class TextureUtil {
         }
     }
 
-    public static void releaseTextureId(int p_85282_) {
+    public static void releaseTextureId(int textureId) {
         RenderSystem.assertOnRenderThreadOrInit();
-        GlStateManager._deleteTexture(p_85282_);
+        GlStateManager._deleteTexture(textureId);
     }
 
-    public static void prepareImage(int p_85284_, int p_85285_, int p_85286_) {
-        prepareImage(NativeImage.InternalGlFormat.RGBA, p_85284_, 0, p_85285_, p_85286_);
+    public static void prepareImage(int textureId, int width, int height) {
+        prepareImage(NativeImage.InternalGlFormat.RGBA, textureId, 0, width, height);
     }
 
-    public static void prepareImage(NativeImage.InternalGlFormat p_85293_, int p_85294_, int p_85295_, int p_85296_) {
-        prepareImage(p_85293_, p_85294_, 0, p_85295_, p_85296_);
+    public static void prepareImage(NativeImage.InternalGlFormat pixelFormat, int textureId, int width, int height) {
+        prepareImage(pixelFormat, textureId, 0, width, height);
     }
 
-    public static void prepareImage(int p_85288_, int p_85289_, int p_85290_, int p_85291_) {
-        prepareImage(NativeImage.InternalGlFormat.RGBA, p_85288_, p_85289_, p_85290_, p_85291_);
+    public static void prepareImage(int textureId, int mipmapLevel, int width, int height) {
+        prepareImage(NativeImage.InternalGlFormat.RGBA, textureId, mipmapLevel, width, height);
     }
 
-    public static void prepareImage(NativeImage.InternalGlFormat p_85298_, int p_85299_, int p_85300_, int p_85301_, int p_85302_) {
+    public static void prepareImage(NativeImage.InternalGlFormat pixelFormat, int textureId, int mipmapLevel, int width, int height) {
         RenderSystem.assertOnRenderThreadOrInit();
-        bind(p_85299_);
-        if (p_85300_ >= 0) {
-            GlStateManager._texParameter(3553, 33085, p_85300_);
+        bind(textureId);
+        if (mipmapLevel >= 0) {
+            GlStateManager._texParameter(3553, 33085, mipmapLevel);
             GlStateManager._texParameter(3553, 33082, 0);
-            GlStateManager._texParameter(3553, 33083, p_85300_);
+            GlStateManager._texParameter(3553, 33083, mipmapLevel);
             GlStateManager._texParameter(3553, 34049, 0.0F);
         }
 
-        for (int i = 0; i <= p_85300_; i++) {
-            GlStateManager._texImage2D(3553, i, p_85298_.glFormat(), p_85301_ >> i, p_85302_ >> i, 0, 6408, 5121, null);
+        for (int i = 0; i <= mipmapLevel; i++) {
+            GlStateManager._texImage2D(3553, i, pixelFormat.glFormat(), width >> i, height >> i, 0, 6408, 5121, null);
         }
     }
 
-    private static void bind(int p_85310_) {
+    private static void bind(int textureId) {
         RenderSystem.assertOnRenderThreadOrInit();
-        GlStateManager._bindTexture(p_85310_);
+        GlStateManager._bindTexture(textureId);
     }
 
-    public static ByteBuffer readResource(InputStream p_85304_) throws IOException {
-        ReadableByteChannel readablebytechannel = Channels.newChannel(p_85304_);
+    public static ByteBuffer readResource(InputStream inputStream) throws IOException {
+        ReadableByteChannel readablebytechannel = Channels.newChannel(inputStream);
         return readablebytechannel instanceof SeekableByteChannel seekablebytechannel
             ? readResource(readablebytechannel, (int)seekablebytechannel.size() + 1)
             : readResource(readablebytechannel, 8192);
     }
 
-    private static ByteBuffer readResource(ReadableByteChannel p_273208_, int p_273297_) throws IOException {
-        ByteBuffer bytebuffer = MemoryUtil.memAlloc(p_273297_);
+    private static ByteBuffer readResource(ReadableByteChannel channel, int size) throws IOException {
+        ByteBuffer bytebuffer = MemoryUtil.memAlloc(size);
 
         try {
-            while (p_273208_.read(bytebuffer) != -1) {
+            while (channel.read(bytebuffer) != -1) {
                 if (!bytebuffer.hasRemaining()) {
                     bytebuffer = MemoryUtil.memRealloc(bytebuffer, bytebuffer.capacity() * 2);
                 }
@@ -100,27 +100,27 @@ public class TextureUtil {
         }
     }
 
-    public static void writeAsPNG(Path p_261923_, String p_262070_, int p_261655_, int p_261576_, int p_261966_, int p_261775_) {
-        writeAsPNG(p_261923_, p_262070_, p_261655_, p_261576_, p_261966_, p_261775_, null);
+    public static void writeAsPNG(Path outputDir, String textureName, int textureId, int amount, int width, int height) {
+        writeAsPNG(outputDir, textureName, textureId, amount, width, height, null);
     }
 
     public static void writeAsPNG(
-        Path p_285286_, String p_285408_, int p_285400_, int p_285244_, int p_285373_, int p_285206_, @Nullable IntUnaryOperator p_284988_
+        Path outputDir, String textureName, int textureId, int amount, int width, int height, @Nullable IntUnaryOperator function
     ) {
         RenderSystem.assertOnRenderThread();
-        bind(p_285400_);
+        bind(textureId);
 
-        for (int i = 0; i <= p_285244_; i++) {
-            int j = p_285373_ >> i;
-            int k = p_285206_ >> i;
+        for (int i = 0; i <= amount; i++) {
+            int j = width >> i;
+            int k = height >> i;
 
             try (NativeImage nativeimage = new NativeImage(j, k, false)) {
                 nativeimage.downloadTexture(i, false);
-                if (p_284988_ != null) {
-                    nativeimage.applyToAllPixels(p_284988_);
+                if (function != null) {
+                    nativeimage.applyToAllPixels(function);
                 }
 
-                Path path = p_285286_.resolve(p_285408_ + "_" + i + ".png");
+                Path path = outputDir.resolve(textureName + "_" + i + ".png");
                 nativeimage.writeToFile(path);
                 LOGGER.debug("Exported png to: {}", path.toAbsolutePath());
             } catch (IOException ioexception) {
@@ -129,8 +129,8 @@ public class TextureUtil {
         }
     }
 
-    public static Path getDebugTexturePath(Path p_262015_) {
-        return p_262015_.resolve("screenshots").resolve("debug");
+    public static Path getDebugTexturePath(Path basePath) {
+        return basePath.resolve("screenshots").resolve("debug");
     }
 
     public static Path getDebugTexturePath() {

@@ -14,16 +14,16 @@ import net.minecraft.world.level.Level;
 public class FireworkStarFadeRecipe extends CustomRecipe {
     private static final Ingredient STAR_INGREDIENT = Ingredient.of(Items.FIREWORK_STAR);
 
-    public FireworkStarFadeRecipe(CraftingBookCategory p_251846_) {
-        super(p_251846_);
+    public FireworkStarFadeRecipe(CraftingBookCategory category) {
+        super(category);
     }
 
-    public boolean matches(CraftingInput p_346021_, Level p_43874_) {
+    public boolean matches(CraftingInput input, Level level) {
         boolean flag = false;
         boolean flag1 = false;
 
-        for (int i = 0; i < p_346021_.size(); i++) {
-            ItemStack itemstack = p_346021_.getItem(i);
+        for (int i = 0; i < input.size(); i++) {
+            ItemStack itemstack = input.getItem(i);
             if (!itemstack.isEmpty()) {
                 if (itemstack.getItem() instanceof DyeItem) {
                     flag = true;
@@ -44,12 +44,12 @@ public class FireworkStarFadeRecipe extends CustomRecipe {
         return flag1 && flag;
     }
 
-    public ItemStack assemble(CraftingInput p_346017_, HolderLookup.Provider p_335705_) {
+    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
         IntList intlist = new IntArrayList();
         ItemStack itemstack = null;
 
-        for (int i = 0; i < p_346017_.size(); i++) {
-            ItemStack itemstack1 = p_346017_.getItem(i);
+        for (int i = 0; i < input.size(); i++) {
+            ItemStack itemstack1 = input.getItem(i);
             Item item = itemstack1.getItem();
             if (item instanceof DyeItem) {
                 intlist.add(((DyeItem)item).getDyeColor().getFireworkColor());
@@ -66,9 +66,12 @@ public class FireworkStarFadeRecipe extends CustomRecipe {
         }
     }
 
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
     @Override
-    public boolean canCraftInDimensions(int p_43863_, int p_43864_) {
-        return p_43863_ * p_43864_ >= 2;
+    public boolean canCraftInDimensions(int width, int height) {
+        return width * height >= 2;
     }
 
     @Override

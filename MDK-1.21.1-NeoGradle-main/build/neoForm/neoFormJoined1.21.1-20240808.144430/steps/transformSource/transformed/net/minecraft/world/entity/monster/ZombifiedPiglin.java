@@ -57,14 +57,14 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
     private static final UniformInt ALERT_INTERVAL = TimeUtil.rangeOfSeconds(4, 6);
     private int ticksUntilNextAlert;
 
-    public ZombifiedPiglin(EntityType<? extends ZombifiedPiglin> p_34427_, Level p_34428_) {
-        super(p_34427_, p_34428_);
+    public ZombifiedPiglin(EntityType<? extends ZombifiedPiglin> entityType, Level level) {
+        super(entityType, level);
         this.setPathfindingMalus(PathType.LAVA, 8.0F);
     }
 
     @Override
-    public void setPersistentAngerTarget(@Nullable UUID p_34444_) {
-        this.persistentAngerTarget = p_34444_;
+    public void setPersistentAngerTarget(@Nullable UUID target) {
+        this.persistentAngerTarget = target;
     }
 
     @Override
@@ -84,8 +84,8 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
     }
 
     @Override
-    public EntityDimensions getDefaultDimensions(Pose p_316887_) {
-        return this.isBaby() ? BABY_DIMENSIONS : super.getDefaultDimensions(p_316887_);
+    public EntityDimensions getDefaultDimensions(Pose pose) {
+        return this.isBaby() ? BABY_DIMENSIONS : super.getDefaultDimensions(pose);
     }
 
     @Override
@@ -155,18 +155,21 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
         this.playSound(SoundEvents.ZOMBIFIED_PIGLIN_ANGRY, this.getSoundVolume() * 2.0F, this.getVoicePitch() * 1.8F);
     }
 
+    /**
+     * Sets the active target the Task system uses for tracking
+     */
     @Override
-    public void setTarget(@Nullable LivingEntity p_34478_) {
-        if (this.getTarget() == null && p_34478_ != null) {
+    public void setTarget(@Nullable LivingEntity livingEntity) {
+        if (this.getTarget() == null && livingEntity != null) {
             this.playFirstAngerSoundIn = FIRST_ANGER_SOUND_DELAY.sample(this.random);
             this.ticksUntilNextAlert = ALERT_INTERVAL.sample(this.random);
         }
 
-        if (p_34478_ instanceof Player) {
-            this.setLastHurtByPlayer((Player)p_34478_);
+        if (livingEntity instanceof Player) {
+            this.setLastHurtByPlayer((Player)livingEntity);
         }
 
-        super.setTarget(p_34478_);
+        super.setTarget(livingEntity);
     }
 
     @Override
@@ -175,31 +178,34 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
     }
 
     public static boolean checkZombifiedPiglinSpawnRules(
-        EntityType<ZombifiedPiglin> p_219174_, LevelAccessor p_219175_, MobSpawnType p_219176_, BlockPos p_219177_, RandomSource p_219178_
+        EntityType<ZombifiedPiglin> zombifiedPiglin, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return p_219175_.getDifficulty() != Difficulty.PEACEFUL && !p_219175_.getBlockState(p_219177_.below()).is(Blocks.NETHER_WART_BLOCK);
+        return level.getDifficulty() != Difficulty.PEACEFUL && !level.getBlockState(pos.below()).is(Blocks.NETHER_WART_BLOCK);
     }
 
     @Override
-    public boolean checkSpawnObstruction(LevelReader p_34442_) {
-        return p_34442_.isUnobstructed(this) && !p_34442_.containsAnyLiquid(this.getBoundingBox());
+    public boolean checkSpawnObstruction(LevelReader level) {
+        return level.isUnobstructed(this) && !level.containsAnyLiquid(this.getBoundingBox());
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_34458_) {
-        super.addAdditionalSaveData(p_34458_);
-        this.addPersistentAngerSaveData(p_34458_);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        this.addPersistentAngerSaveData(compound);
+    }
+
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    @Override
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.readPersistentAngerSaveData(this.level(), compound);
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag p_34446_) {
-        super.readAdditionalSaveData(p_34446_);
-        this.readPersistentAngerSaveData(this.level(), p_34446_);
-    }
-
-    @Override
-    public void setRemainingPersistentAngerTime(int p_34448_) {
-        this.remainingPersistentAngerTime = p_34448_;
+    public void setRemainingPersistentAngerTime(int time) {
+        this.remainingPersistentAngerTime = time;
     }
 
     @Override
@@ -213,7 +219,7 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_34466_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.ZOMBIFIED_PIGLIN_HURT;
     }
 
@@ -223,7 +229,7 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
     }
 
     @Override
-    protected void populateDefaultEquipmentSlots(RandomSource p_219171_, DifficultyInstance p_219172_) {
+    protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
         this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.GOLDEN_SWORD));
     }
 
@@ -244,12 +250,12 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
     }
 
     @Override
-    public boolean isPreventingPlayerRest(Player p_34475_) {
-        return this.isAngryAt(p_34475_);
+    public boolean isPreventingPlayerRest(Player player) {
+        return this.isAngryAt(player);
     }
 
     @Override
-    public boolean wantsToPickUp(ItemStack p_182402_) {
-        return this.canHoldItem(p_182402_);
+    public boolean wantsToPickUp(ItemStack stack) {
+        return this.canHoldItem(stack);
     }
 }

@@ -185,38 +185,38 @@ public class StatsCounterFix extends DataFix {
         .build();
     private static final String NEW_CUSTOM_KEY = "minecraft:custom";
 
-    public StatsCounterFix(Schema p_16939_, boolean p_16940_) {
-        super(p_16939_, p_16940_);
+    public StatsCounterFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Nullable
-    private static StatsCounterFix.StatType unpackLegacyKey(String p_294417_) {
-        if (SKIP.contains(p_294417_)) {
+    private static StatsCounterFix.StatType unpackLegacyKey(String key) {
+        if (SKIP.contains(key)) {
             return null;
         } else {
-            String s = CUSTOM_MAP.get(p_294417_);
+            String s = CUSTOM_MAP.get(key);
             if (s != null) {
                 return new StatsCounterFix.StatType("minecraft:custom", s);
             } else {
-                int i = StringUtils.ordinalIndexOf(p_294417_, ".", 2);
+                int i = StringUtils.ordinalIndexOf(key, ".", 2);
                 if (i < 0) {
                     return null;
                 } else {
-                    String s1 = p_294417_.substring(0, i);
+                    String s1 = key.substring(0, i);
                     if ("stat.mineBlock".equals(s1)) {
-                        String s6 = upgradeBlock(p_294417_.substring(i + 1).replace('.', ':'));
+                        String s6 = upgradeBlock(key.substring(i + 1).replace('.', ':'));
                         return new StatsCounterFix.StatType("minecraft:mined", s6);
                     } else {
                         String s2 = ITEM_KEYS.get(s1);
                         if (s2 != null) {
-                            String s7 = p_294417_.substring(i + 1).replace('.', ':');
+                            String s7 = key.substring(i + 1).replace('.', ':');
                             String s8 = upgradeItem(s7);
                             String s9 = s8 == null ? s7 : s8;
                             return new StatsCounterFix.StatType(s2, s9);
                         } else {
                             String s3 = ENTITY_KEYS.get(s1);
                             if (s3 != null) {
-                                String s4 = p_294417_.substring(i + 1).replace('.', ':');
+                                String s4 = key.substring(i + 1).replace('.', ':');
                                 String s5 = ENTITIES.getOrDefault(s4, s4);
                                 return new StatsCounterFix.StatType(s3, s5);
                             } else {
@@ -297,12 +297,12 @@ public class StatsCounterFix extends DataFix {
     }
 
     @Nullable
-    private static String upgradeItem(String p_16949_) {
-        return ItemStackTheFlatteningFix.updateItem(p_16949_, 0);
+    private static String upgradeItem(String id) {
+        return ItemStackTheFlatteningFix.updateItem(id, 0);
     }
 
-    private static String upgradeBlock(String p_16951_) {
-        return BlockStateData.upgradeBlock(p_16951_);
+    private static String upgradeBlock(String id) {
+        return BlockStateData.upgradeBlock(id);
     }
 
     static record StatType(String type, String typeKey) {

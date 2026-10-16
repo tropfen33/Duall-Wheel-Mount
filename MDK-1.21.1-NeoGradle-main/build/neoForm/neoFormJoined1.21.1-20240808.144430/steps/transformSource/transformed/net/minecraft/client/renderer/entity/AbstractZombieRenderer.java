@@ -11,16 +11,19 @@ import net.neoforged.api.distmarker.OnlyIn;
 public abstract class AbstractZombieRenderer<T extends Zombie, M extends ZombieModel<T>> extends HumanoidMobRenderer<T, M> {
     private static final ResourceLocation ZOMBIE_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/zombie/zombie.png");
 
-    protected AbstractZombieRenderer(EntityRendererProvider.Context p_173910_, M p_173911_, M p_173912_, M p_173913_) {
-        super(p_173910_, p_173911_, 0.5F);
-        this.addLayer(new HumanoidArmorLayer<>(this, p_173912_, p_173913_, p_173910_.getModelManager()));
+    protected AbstractZombieRenderer(EntityRendererProvider.Context context, M model, M innerModel, M outerModel) {
+        super(context, model, 0.5F);
+        this.addLayer(new HumanoidArmorLayer<>(this, innerModel, outerModel, context.getModelManager()));
     }
 
-    public ResourceLocation getTextureLocation(Zombie p_113771_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Zombie entity) {
         return ZOMBIE_LOCATION;
     }
 
-    protected boolean isShaking(T p_113773_) {
-        return super.isShaking(p_113773_) || p_113773_.isUnderWaterConverting();
+    protected boolean isShaking(T entity) {
+        return super.isShaking(entity) || entity.isUnderWaterConverting();
     }
 }

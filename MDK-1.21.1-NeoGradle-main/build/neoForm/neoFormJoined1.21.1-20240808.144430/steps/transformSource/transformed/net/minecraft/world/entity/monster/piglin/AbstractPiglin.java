@@ -26,8 +26,8 @@ public abstract class AbstractPiglin extends Monster {
     protected static final int CONVERSION_TIME = 300;
     protected int timeInOverworld;
 
-    public AbstractPiglin(EntityType<? extends AbstractPiglin> p_34652_, Level p_34653_) {
-        super(p_34652_, p_34653_);
+    public AbstractPiglin(EntityType<? extends AbstractPiglin> entityType, Level level) {
+        super(entityType, level);
         this.setCanPickUpLoot(true);
         this.applyOpenDoorsAbility();
         this.setPathfindingMalus(PathType.DANGER_FIRE, 16.0F);
@@ -42,8 +42,8 @@ public abstract class AbstractPiglin extends Monster {
 
     protected abstract boolean canHunt();
 
-    public void setImmuneToZombification(boolean p_34671_) {
-        this.getEntityData().set(DATA_IMMUNE_TO_ZOMBIFICATION, p_34671_);
+    public void setImmuneToZombification(boolean immuneToZombification) {
+        this.getEntityData().set(DATA_IMMUNE_TO_ZOMBIFICATION, immuneToZombification);
     }
 
     protected boolean isImmuneToZombification() {
@@ -51,26 +51,29 @@ public abstract class AbstractPiglin extends Monster {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326274_) {
-        super.defineSynchedData(p_326274_);
-        p_326274_.define(DATA_IMMUNE_TO_ZOMBIFICATION, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_IMMUNE_TO_ZOMBIFICATION, false);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_34661_) {
-        super.addAdditionalSaveData(p_34661_);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
         if (this.isImmuneToZombification()) {
-            p_34661_.putBoolean("IsImmuneToZombification", true);
+            compound.putBoolean("IsImmuneToZombification", true);
         }
 
-        p_34661_.putInt("TimeInOverworld", this.timeInOverworld);
+        compound.putInt("TimeInOverworld", this.timeInOverworld);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_34659_) {
-        super.readAdditionalSaveData(p_34659_);
-        this.setImmuneToZombification(p_34659_.getBoolean("IsImmuneToZombification"));
-        this.timeInOverworld = p_34659_.getInt("TimeInOverworld");
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.setImmuneToZombification(compound.getBoolean("IsImmuneToZombification"));
+        this.timeInOverworld = compound.getInt("TimeInOverworld");
     }
 
     @Override
@@ -92,7 +95,7 @@ public abstract class AbstractPiglin extends Monster {
         return !this.level().dimensionType().piglinSafe() && !this.isImmuneToZombification() && !this.isNoAi();
     }
 
-    protected void finishConversion(ServerLevel p_34663_) {
+    protected void finishConversion(ServerLevel serverLevel) {
         ZombifiedPiglin zombifiedpiglin = this.convertTo(EntityType.ZOMBIFIED_PIGLIN, true);
         if (zombifiedpiglin != null) {
             zombifiedpiglin.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 200, 0));

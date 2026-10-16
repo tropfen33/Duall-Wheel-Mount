@@ -20,8 +20,8 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.Vec3;
 
 public class MagmaCube extends Slime {
-    public MagmaCube(EntityType<? extends MagmaCube> p_32968_, Level p_32969_) {
-        super(p_32968_, p_32969_);
+    public MagmaCube(EntityType<? extends MagmaCube> entityType, Level level) {
+        super(entityType, level);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -29,15 +29,15 @@ public class MagmaCube extends Slime {
     }
 
     public static boolean checkMagmaCubeSpawnRules(
-        EntityType<MagmaCube> p_219003_, LevelAccessor p_219004_, MobSpawnType p_219005_, BlockPos p_219006_, RandomSource p_219007_
+        EntityType<MagmaCube> magmaCube, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return p_219004_.getDifficulty() != Difficulty.PEACEFUL;
+        return level.getDifficulty() != Difficulty.PEACEFUL;
     }
 
     @Override
-    public void setSize(int p_32972_, boolean p_32973_) {
-        super.setSize(p_32972_, p_32973_);
-        this.getAttribute(Attributes.ARMOR).setBaseValue((double)(p_32972_ * 3));
+    public void setSize(int size, boolean resetHealth) {
+        super.setSize(size, resetHealth);
+        this.getAttribute(Attributes.ARMOR).setBaseValue((double)(size * 3));
     }
 
     @Override
@@ -76,8 +76,8 @@ public class MagmaCube extends Slime {
 
     @Override
     @Deprecated // FORGE: use jumpInFluid instead
-    protected void jumpInLiquid(TagKey<Fluid> p_204065_) {
-        this.jumpInLiquidInternal(() -> p_204065_ == FluidTags.LAVA, () -> super.jumpInLiquid(p_204065_));
+    protected void jumpInLiquid(TagKey<Fluid> fluidTag) {
+        this.jumpInLiquidInternal(() -> fluidTag == FluidTags.LAVA, () -> super.jumpInLiquid(fluidTag));
     }
 
     private void jumpInLiquidInternal(java.util.function.BooleanSupplier isLava, Runnable onSuper) {
@@ -106,7 +106,7 @@ public class MagmaCube extends Slime {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_32992_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return this.isTiny() ? SoundEvents.MAGMA_CUBE_HURT_SMALL : SoundEvents.MAGMA_CUBE_HURT;
     }
 

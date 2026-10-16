@@ -9,12 +9,12 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 
 public class TradeRebalanceEnchantmentTagsProvider extends TagsProvider<Enchantment> {
-    public TradeRebalanceEnchantmentTagsProvider(PackOutput p_345802_, CompletableFuture<HolderLookup.Provider> p_345863_) {
-        super(p_345802_, Registries.ENCHANTMENT, p_345863_);
+    public TradeRebalanceEnchantmentTagsProvider(PackOutput packOutput, CompletableFuture<HolderLookup.Provider> provider) {
+        super(packOutput, Registries.ENCHANTMENT, provider);
     }
 
     @Override
-    protected void addTags(HolderLookup.Provider p_345111_) {
+    protected void addTags(HolderLookup.Provider provider) {
         this.tag(EnchantmentTags.TRADES_DESERT_COMMON).add(Enchantments.FIRE_PROTECTION, Enchantments.THORNS, Enchantments.INFINITY);
         this.tag(EnchantmentTags.TRADES_JUNGLE_COMMON).add(Enchantments.FEATHER_FALLING, Enchantments.PROJECTILE_PROTECTION, Enchantments.POWER);
         this.tag(EnchantmentTags.TRADES_PLAINS_COMMON).add(Enchantments.PUNCH, Enchantments.SMITE, Enchantments.BANE_OF_ARTHROPODS);

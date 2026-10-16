@@ -13,20 +13,20 @@ public class FittingMultiLineTextWidget extends AbstractScrollWidget {
     private final Font font;
     private final MultiLineTextWidget multilineWidget;
 
-    public FittingMultiLineTextWidget(int p_289785_, int p_289777_, int p_289760_, int p_289801_, Component p_289788_, Font p_289781_) {
-        super(p_289785_, p_289777_, p_289760_, p_289801_, p_289788_);
-        this.font = p_289781_;
-        this.multilineWidget = new MultiLineTextWidget(p_289788_, p_289781_).setMaxWidth(this.getWidth() - this.totalInnerPadding());
+    public FittingMultiLineTextWidget(int x, int y, int width, int height, Component message, Font font) {
+        super(x, y, width, height, message);
+        this.font = font;
+        this.multilineWidget = new MultiLineTextWidget(message, font).setMaxWidth(this.getWidth() - this.totalInnerPadding());
     }
 
-    public FittingMultiLineTextWidget setColor(int p_289780_) {
-        this.multilineWidget.setColor(p_289780_);
+    public FittingMultiLineTextWidget setColor(int color) {
+        this.multilineWidget.setColor(color);
         return this;
     }
 
     @Override
-    public void setWidth(int p_289765_) {
-        super.setWidth(p_289765_);
+    public void setWidth(int width) {
+        super.setWidth(width);
         this.multilineWidget.setMaxWidth(this.getWidth() - this.totalInnerPadding());
     }
 
@@ -41,12 +41,12 @@ public class FittingMultiLineTextWidget extends AbstractScrollWidget {
     }
 
     @Override
-    protected void renderBackground(GuiGraphics p_289758_) {
+    protected void renderBackground(GuiGraphics guiGraphics) {
         if (this.scrollbarVisible()) {
-            super.renderBackground(p_289758_);
+            super.renderBackground(guiGraphics);
         } else if (this.isFocused()) {
             this.renderBorder(
-                p_289758_,
+                guiGraphics,
                 this.getX() - this.innerPadding(),
                 this.getY() - this.innerPadding(),
                 this.getWidth() + this.totalInnerPadding(),
@@ -56,16 +56,16 @@ public class FittingMultiLineTextWidget extends AbstractScrollWidget {
     }
 
     @Override
-    public void renderWidget(GuiGraphics p_289802_, int p_289778_, int p_289798_, float p_289804_) {
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.visible) {
             if (!this.scrollbarVisible()) {
-                this.renderBackground(p_289802_);
-                p_289802_.pose().pushPose();
-                p_289802_.pose().translate((float)this.getX(), (float)this.getY(), 0.0F);
-                this.multilineWidget.render(p_289802_, p_289778_, p_289798_, p_289804_);
-                p_289802_.pose().popPose();
+                this.renderBackground(guiGraphics);
+                guiGraphics.pose().pushPose();
+                guiGraphics.pose().translate((float)this.getX(), (float)this.getY(), 0.0F);
+                this.multilineWidget.render(guiGraphics, mouseX, mouseY, partialTick);
+                guiGraphics.pose().popPose();
             } else {
-                super.renderWidget(p_289802_, p_289778_, p_289798_, p_289804_);
+                super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
             }
         }
     }
@@ -75,15 +75,15 @@ public class FittingMultiLineTextWidget extends AbstractScrollWidget {
     }
 
     @Override
-    protected void renderContents(GuiGraphics p_289766_, int p_289790_, int p_289786_, float p_289767_) {
-        p_289766_.pose().pushPose();
-        p_289766_.pose().translate((float)(this.getX() + this.innerPadding()), (float)(this.getY() + this.innerPadding()), 0.0F);
-        this.multilineWidget.render(p_289766_, p_289790_, p_289786_, p_289767_);
-        p_289766_.pose().popPose();
+    protected void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate((float)(this.getX() + this.innerPadding()), (float)(this.getY() + this.innerPadding()), 0.0F);
+        this.multilineWidget.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.pose().popPose();
     }
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput p_289784_) {
-        p_289784_.add(NarratedElementType.TITLE, this.getMessage());
+    protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+        narrationElementOutput.add(NarratedElementType.TITLE, this.getMessage());
     }
 }

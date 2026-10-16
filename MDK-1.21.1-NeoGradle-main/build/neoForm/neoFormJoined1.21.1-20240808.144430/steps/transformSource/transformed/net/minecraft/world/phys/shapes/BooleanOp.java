@@ -18,5 +18,5 @@ public interface BooleanOp {
     BooleanOp OR = (p_82705_, p_82706_) -> p_82705_ || p_82706_;
     BooleanOp TRUE = (p_82699_, p_82700_) -> true;
 
-    boolean apply(boolean p_82702_, boolean p_82703_);
+    boolean apply(boolean primaryBool, boolean secondaryBool);
 }

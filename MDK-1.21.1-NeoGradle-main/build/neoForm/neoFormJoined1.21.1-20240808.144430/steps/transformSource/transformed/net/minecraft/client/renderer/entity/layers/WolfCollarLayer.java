@@ -16,26 +16,26 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class WolfCollarLayer extends RenderLayer<Wolf, WolfModel<Wolf>> {
     private static final ResourceLocation WOLF_COLLAR_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/wolf/wolf_collar.png");
 
-    public WolfCollarLayer(RenderLayerParent<Wolf, WolfModel<Wolf>> p_117707_) {
-        super(p_117707_);
+    public WolfCollarLayer(RenderLayerParent<Wolf, WolfModel<Wolf>> renderer) {
+        super(renderer);
     }
 
     public void render(
-        PoseStack p_117720_,
-        MultiBufferSource p_117721_,
-        int p_117722_,
-        Wolf p_117723_,
-        float p_117724_,
-        float p_117725_,
-        float p_117726_,
-        float p_117727_,
-        float p_117728_,
-        float p_117729_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        Wolf livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTicks,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
-        if (p_117723_.isTame() && !p_117723_.isInvisible()) {
-            int i = p_117723_.getCollarColor().getTextureDiffuseColor();
-            VertexConsumer vertexconsumer = p_117721_.getBuffer(RenderType.entityCutoutNoCull(WOLF_COLLAR_LOCATION));
-            this.getParentModel().renderToBuffer(p_117720_, vertexconsumer, p_117722_, OverlayTexture.NO_OVERLAY, i);
+        if (livingEntity.isTame() && !livingEntity.isInvisible()) {
+            int i = livingEntity.getCollarColor().getTextureDiffuseColor();
+            VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.entityCutoutNoCull(WOLF_COLLAR_LOCATION));
+            this.getParentModel().renderToBuffer(poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY, i);
         }
     }
 }

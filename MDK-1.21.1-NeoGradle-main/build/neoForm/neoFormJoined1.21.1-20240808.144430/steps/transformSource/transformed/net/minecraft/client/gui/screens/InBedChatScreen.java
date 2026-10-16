@@ -25,12 +25,20 @@ public class InBedChatScreen extends ChatScreen {
         this.addRenderableWidget(this.leaveBedButton);
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281659_, int p_283403_, int p_281737_, float p_282201_) {
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (!this.minecraft.getChatStatus().isChatAllowed(this.minecraft.isLocalServer())) {
-            this.leaveBedButton.render(p_281659_, p_283403_, p_281737_, p_282201_);
+            this.leaveBedButton.render(guiGraphics, mouseX, mouseY, partialTick);
         } else {
-            super.render(p_281659_, p_283403_, p_281737_, p_282201_);
+            super.render(guiGraphics, mouseX, mouseY, partialTick);
         }
     }
 
@@ -39,21 +47,29 @@ public class InBedChatScreen extends ChatScreen {
         this.sendWakeUp();
     }
 
+    /**
+     * Called when a character is typed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param codePoint the code point of the typed character.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean charTyped(char p_263331_, int p_263427_) {
-        return !this.minecraft.getChatStatus().isChatAllowed(this.minecraft.isLocalServer()) ? true : super.charTyped(p_263331_, p_263427_);
+    public boolean charTyped(char codePoint, int modifiers) {
+        return !this.minecraft.getChatStatus().isChatAllowed(this.minecraft.isLocalServer()) ? true : super.charTyped(codePoint, modifiers);
     }
 
     @Override
-    public boolean keyPressed(int p_96070_, int p_96071_, int p_96072_) {
-        if (p_96070_ == 256) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 256) {
             this.sendWakeUp();
         }
 
         if (!this.minecraft.getChatStatus().isChatAllowed(this.minecraft.isLocalServer())) {
             return true;
-        } else if (p_96070_ != 257 && p_96070_ != 335) {
-            return super.keyPressed(p_96070_, p_96071_, p_96072_);
+        } else if (keyCode != 257 && keyCode != 335) {
+            return super.keyPressed(keyCode, scanCode, modifiers);
         } else {
             this.handleChatInput(this.input.getValue(), true);
             this.input.setValue("");

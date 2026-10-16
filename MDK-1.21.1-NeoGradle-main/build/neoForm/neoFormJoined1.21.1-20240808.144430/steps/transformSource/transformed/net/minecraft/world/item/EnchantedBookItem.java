@@ -3,18 +3,24 @@ package net.minecraft.world.item;
 import net.minecraft.world.item.enchantment.EnchantmentInstance;
 
 public class EnchantedBookItem extends Item {
-    public EnchantedBookItem(Item.Properties p_41149_) {
-        super(p_41149_);
+    public EnchantedBookItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Checks isDamagable and if it cannot be stacked
+     */
     @Override
-    public boolean isEnchantable(ItemStack p_41168_) {
+    public boolean isEnchantable(ItemStack stack) {
         return false;
     }
 
-    public static ItemStack createForEnchantment(EnchantmentInstance p_41162_) {
+    /**
+     * Returns the ItemStack of an enchanted version of this item.
+     */
+    public static ItemStack createForEnchantment(EnchantmentInstance instance) {
         ItemStack itemstack = new ItemStack(Items.ENCHANTED_BOOK);
-        itemstack.enchant(p_41162_.enchantment, p_41162_.level);
+        itemstack.enchant(instance.enchantment, instance.level);
         return itemstack;
     }
 }

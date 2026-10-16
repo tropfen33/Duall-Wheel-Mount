@@ -93,8 +93,8 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
     private float relaxStateOneAmount;
     private float relaxStateOneAmountO;
 
-    public Cat(EntityType<? extends Cat> p_28114_, Level p_28115_) {
-        super(p_28114_, p_28115_);
+    public Cat(EntityType<? extends Cat> entityType, Level level) {
+        super(entityType, level);
         this.reassessTameGoals();
     }
 
@@ -126,20 +126,20 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
         return this.entityData.get(DATA_VARIANT_ID);
     }
 
-    public void setVariant(Holder<CatVariant> p_335581_) {
-        this.entityData.set(DATA_VARIANT_ID, p_335581_);
+    public void setVariant(Holder<CatVariant> variant) {
+        this.entityData.set(DATA_VARIANT_ID, variant);
     }
 
-    public void setLying(boolean p_28182_) {
-        this.entityData.set(IS_LYING, p_28182_);
+    public void setLying(boolean lying) {
+        this.entityData.set(IS_LYING, lying);
     }
 
     public boolean isLying() {
         return this.entityData.get(IS_LYING);
     }
 
-    void setRelaxStateOne(boolean p_28186_) {
-        this.entityData.set(RELAX_STATE_ONE, p_28186_);
+    void setRelaxStateOne(boolean relaxStateOne) {
+        this.entityData.set(RELAX_STATE_ONE, relaxStateOne);
     }
 
     boolean isRelaxStateOne() {
@@ -150,35 +150,38 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
         return DyeColor.byId(this.entityData.get(DATA_COLLAR_COLOR));
     }
 
-    private void setCollarColor(DyeColor p_28132_) {
-        this.entityData.set(DATA_COLLAR_COLOR, p_28132_.getId());
+    private void setCollarColor(DyeColor color) {
+        this.entityData.set(DATA_COLLAR_COLOR, color.getId());
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_325925_) {
-        super.defineSynchedData(p_325925_);
-        p_325925_.define(DATA_VARIANT_ID, BuiltInRegistries.CAT_VARIANT.getHolderOrThrow(DEFAULT_VARIANT));
-        p_325925_.define(IS_LYING, false);
-        p_325925_.define(RELAX_STATE_ONE, false);
-        p_325925_.define(DATA_COLLAR_COLOR, DyeColor.RED.getId());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_VARIANT_ID, BuiltInRegistries.CAT_VARIANT.getHolderOrThrow(DEFAULT_VARIANT));
+        builder.define(IS_LYING, false);
+        builder.define(RELAX_STATE_ONE, false);
+        builder.define(DATA_COLLAR_COLOR, DyeColor.RED.getId());
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_28156_) {
-        super.addAdditionalSaveData(p_28156_);
-        p_28156_.putString("variant", this.getVariant().unwrapKey().orElse(DEFAULT_VARIANT).location().toString());
-        p_28156_.putByte("CollarColor", (byte)this.getCollarColor().getId());
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putString("variant", this.getVariant().unwrapKey().orElse(DEFAULT_VARIANT).location().toString());
+        compound.putByte("CollarColor", (byte)this.getCollarColor().getId());
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_28142_) {
-        super.readAdditionalSaveData(p_28142_);
-        Optional.ofNullable(ResourceLocation.tryParse(p_28142_.getString("variant")))
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        Optional.ofNullable(ResourceLocation.tryParse(compound.getString("variant")))
             .map(p_335254_ -> ResourceKey.create(Registries.CAT_VARIANT, p_335254_))
             .flatMap(BuiltInRegistries.CAT_VARIANT::getHolder)
             .ifPresent(this::setVariant);
-        if (p_28142_.contains("CollarColor", 99)) {
-            this.setCollarColor(DyeColor.byId(p_28142_.getInt("CollarColor")));
+        if (compound.contains("CollarColor", 99)) {
+            this.setCollarColor(DyeColor.byId(compound.getInt("CollarColor")));
         }
     }
 
@@ -226,7 +229,7 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_28160_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.CAT_HURT;
     }
 
@@ -240,12 +243,12 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
     }
 
     @Override
-    protected void usePlayerItem(Player p_148866_, InteractionHand p_148867_, ItemStack p_148868_) {
-        if (this.isFood(p_148868_)) {
+    protected void usePlayerItem(Player player, InteractionHand hand, ItemStack stack) {
+        if (this.isFood(stack)) {
             this.playSound(SoundEvents.CAT_EAT, 1.0F, 1.0F);
         }
 
-        super.usePlayerItem(p_148866_, p_148867_, p_148868_);
+        super.usePlayerItem(player, hand, stack);
     }
 
     @Override
@@ -288,22 +291,22 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
         }
     }
 
-    public float getLieDownAmount(float p_28184_) {
-        return Mth.lerp(p_28184_, this.lieDownAmountO, this.lieDownAmount);
+    public float getLieDownAmount(float partialTicks) {
+        return Mth.lerp(partialTicks, this.lieDownAmountO, this.lieDownAmount);
     }
 
-    public float getLieDownAmountTail(float p_28188_) {
-        return Mth.lerp(p_28188_, this.lieDownAmountOTail, this.lieDownAmountTail);
+    public float getLieDownAmountTail(float partialTicks) {
+        return Mth.lerp(partialTicks, this.lieDownAmountOTail, this.lieDownAmountTail);
     }
 
-    public float getRelaxStateOneAmount(float p_28117_) {
-        return Mth.lerp(p_28117_, this.relaxStateOneAmountO, this.relaxStateOneAmount);
+    public float getRelaxStateOneAmount(float partialTicks) {
+        return Mth.lerp(partialTicks, this.relaxStateOneAmountO, this.relaxStateOneAmount);
     }
 
     @Nullable
-    public Cat getBreedOffspring(ServerLevel p_148870_, AgeableMob p_148871_) {
-        Cat cat = EntityType.CAT.create(p_148870_);
-        if (cat != null && p_148871_ instanceof Cat cat1) {
+    public Cat getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        Cat cat = EntityType.CAT.create(level);
+        if (cat != null && otherParent instanceof Cat cat1) {
             if (this.random.nextBoolean()) {
                 cat.setVariant(this.getVariant());
             } else {
@@ -324,43 +327,46 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
         return cat;
     }
 
+    /**
+     * Returns {@code true} if the mob is currently able to mate with the specified mob.
+     */
     @Override
-    public boolean canMate(Animal p_28127_) {
+    public boolean canMate(Animal otherAnimal) {
         if (!this.isTame()) {
             return false;
         } else {
-            return !(p_28127_ instanceof Cat cat) ? false : cat.isTame() && super.canMate(p_28127_);
+            return !(otherAnimal instanceof Cat cat) ? false : cat.isTame() && super.canMate(otherAnimal);
         }
     }
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_28134_, DifficultyInstance p_28135_, MobSpawnType p_28136_, @Nullable SpawnGroupData p_28137_) {
-        p_28137_ = super.finalizeSpawn(p_28134_, p_28135_, p_28136_, p_28137_);
-        boolean flag = p_28134_.getMoonBrightness() > 0.9F;
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        spawnGroupData = super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+        boolean flag = level.getMoonBrightness() > 0.9F;
         TagKey<CatVariant> tagkey = flag ? CatVariantTags.FULL_MOON_SPAWNS : CatVariantTags.DEFAULT_SPAWNS;
-        BuiltInRegistries.CAT_VARIANT.getRandomElementOf(tagkey, p_28134_.getRandom()).ifPresent(this::setVariant);
-        ServerLevel serverlevel = p_28134_.getLevel();
+        BuiltInRegistries.CAT_VARIANT.getRandomElementOf(tagkey, level.getRandom()).ifPresent(this::setVariant);
+        ServerLevel serverlevel = level.getLevel();
         if (serverlevel.structureManager().getStructureWithPieceAt(this.blockPosition(), StructureTags.CATS_SPAWN_AS_BLACK).isValid()) {
             this.setVariant(BuiltInRegistries.CAT_VARIANT.getHolderOrThrow(CatVariant.ALL_BLACK));
             this.setPersistenceRequired();
         }
 
-        return p_28137_;
+        return spawnGroupData;
     }
 
     @Override
-    public InteractionResult mobInteract(Player p_28153_, InteractionHand p_28154_) {
-        ItemStack itemstack = p_28153_.getItemInHand(p_28154_);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
         Item item = itemstack.getItem();
         if (this.isTame()) {
-            if (this.isOwnedBy(p_28153_)) {
+            if (this.isOwnedBy(player)) {
                 if (item instanceof DyeItem dyeitem) {
                     DyeColor dyecolor = dyeitem.getDyeColor();
                     if (dyecolor != this.getCollarColor()) {
                         if (!this.level().isClientSide()) {
                             this.setCollarColor(dyecolor);
-                            itemstack.consume(1, p_28153_);
+                            itemstack.consume(1, player);
                             this.setPersistenceRequired();
                         }
 
@@ -370,13 +376,13 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
                     if (!this.level().isClientSide()) {
                         FoodProperties foodproperties = itemstack.getFoodProperties(this);
                         this.heal(foodproperties != null ? (float)foodproperties.nutrition() : 1.0F);
-                        this.usePlayerItem(p_28153_, p_28154_, itemstack);
+                        this.usePlayerItem(player, hand, itemstack);
                     }
 
                     return InteractionResult.sidedSuccess(this.level().isClientSide());
                 }
 
-                InteractionResult interactionresult = super.mobInteract(p_28153_, p_28154_);
+                InteractionResult interactionresult = super.mobInteract(player, hand);
                 if (!interactionresult.consumesAction()) {
                     this.setOrderedToSit(!this.isOrderedToSit());
                     return InteractionResult.sidedSuccess(this.level().isClientSide());
@@ -386,15 +392,15 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
             }
         } else if (this.isFood(itemstack)) {
             if (!this.level().isClientSide()) {
-                this.usePlayerItem(p_28153_, p_28154_, itemstack);
-                this.tryToTame(p_28153_);
+                this.usePlayerItem(player, hand, itemstack);
+                this.tryToTame(player);
                 this.setPersistenceRequired();
             }
 
             return InteractionResult.sidedSuccess(this.level().isClientSide());
         }
 
-        InteractionResult interactionresult1 = super.mobInteract(p_28153_, p_28154_);
+        InteractionResult interactionresult1 = super.mobInteract(player, hand);
         if (interactionresult1.consumesAction()) {
             this.setPersistenceRequired();
         }
@@ -402,19 +408,22 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
         return interactionresult1;
     }
 
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on the animal type)
+     */
     @Override
-    public boolean isFood(ItemStack p_28177_) {
-        return p_28177_.is(ItemTags.CAT_FOOD);
+    public boolean isFood(ItemStack stack) {
+        return stack.is(ItemTags.CAT_FOOD);
     }
 
     @Override
-    public boolean removeWhenFarAway(double p_28174_) {
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return !this.isTame() && this.tickCount > 2400;
     }
 
     @Override
-    public void setTame(boolean p_325911_, boolean p_326459_) {
-        super.setTame(p_325911_, p_326459_);
+    public void setTame(boolean tame, boolean applyTamingSideEffects) {
+        super.setTame(tame, applyTamingSideEffects);
         this.reassessTameGoals();
     }
 
@@ -429,9 +438,9 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
         }
     }
 
-    private void tryToTame(Player p_333858_) {
-        if (this.random.nextInt(3) == 0 && !net.neoforged.neoforge.event.EventHooks.onAnimalTame(this, p_333858_)) {
-            this.tame(p_333858_);
+    private void tryToTame(Player player) {
+        if (this.random.nextInt(3) == 0 && !net.neoforged.neoforge.event.EventHooks.onAnimalTame(this, player)) {
+            this.tame(player);
             this.setOrderedToSit(true);
             this.level().broadcastEntityEvent(this, (byte)7);
         } else {
@@ -447,9 +456,9 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
     static class CatAvoidEntityGoal<T extends LivingEntity> extends AvoidEntityGoal<T> {
         private final Cat cat;
 
-        public CatAvoidEntityGoal(Cat p_28191_, Class<T> p_28192_, float p_28193_, double p_28194_, double p_28195_) {
-            super(p_28191_, p_28192_, p_28193_, p_28194_, p_28195_, EntitySelector.NO_CREATIVE_OR_SPECTATOR::test);
-            this.cat = p_28191_;
+        public CatAvoidEntityGoal(Cat cat, Class<T> entityClassToAvoid, float maxDist, double walkSpeedModifier, double sprintSpeedModifier) {
+            super(cat, entityClassToAvoid, maxDist, walkSpeedModifier, sprintSpeedModifier, EntitySelector.NO_CREATIVE_OR_SPECTATOR::test);
+            this.cat = cat;
         }
 
         @Override
@@ -471,8 +480,8 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
         private BlockPos goalPos;
         private int onBedTicks;
 
-        public CatRelaxOnOwnerGoal(Cat p_28203_) {
-            this.cat = p_28203_;
+        public CatRelaxOnOwnerGoal(Cat cat) {
+            this.cat = cat;
         }
 
         @Override
@@ -607,9 +616,9 @@ public class Cat extends TamableAnimal implements VariantHolder<Holder<CatVarian
         private Player selectedPlayer;
         private final Cat cat;
 
-        public CatTemptGoal(Cat p_28219_, double p_28220_, Predicate<ItemStack> p_335450_, boolean p_28222_) {
-            super(p_28219_, p_28220_, p_335450_, p_28222_);
-            this.cat = p_28219_;
+        public CatTemptGoal(Cat cat, double speedModifier, Predicate<ItemStack> items, boolean canScare) {
+            super(cat, speedModifier, items, canScare);
+            this.cat = cat;
         }
 
         @Override

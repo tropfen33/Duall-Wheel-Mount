@@ -29,23 +29,26 @@ public class SetFireworksFunction extends LootItemConditionalFunction {
     private final Optional<Integer> flightDuration;
 
     public SetFireworksFunction(
-        List<LootItemCondition> p_333807_, Optional<ListOperation.StandAlone<FireworkExplosion>> p_333866_, Optional<Integer> p_341606_
+        List<LootItemCondition> conditions, Optional<ListOperation.StandAlone<FireworkExplosion>> explosions, Optional<Integer> flightDuration
     ) {
-        super(p_333807_);
-        this.explosions = p_333866_;
-        this.flightDuration = p_341606_;
+        super(conditions);
+        this.explosions = explosions;
+        this.flightDuration = flightDuration;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    protected ItemStack run(ItemStack p_334053_, LootContext p_333744_) {
-        p_334053_.update(DataComponents.FIREWORKS, DEFAULT_VALUE, this::apply);
-        return p_334053_;
+    protected ItemStack run(ItemStack stack, LootContext context) {
+        stack.update(DataComponents.FIREWORKS, DEFAULT_VALUE, this::apply);
+        return stack;
     }
 
-    private Fireworks apply(Fireworks p_333768_) {
+    private Fireworks apply(Fireworks fireworks) {
         return new Fireworks(
-            this.flightDuration.orElseGet(p_333768_::flightDuration),
-            this.explosions.<List<FireworkExplosion>>map(p_341588_ -> p_341588_.apply(p_333768_.explosions())).orElse(p_333768_.explosions())
+            this.flightDuration.orElseGet(fireworks::flightDuration),
+            this.explosions.<List<FireworkExplosion>>map(p_341588_ -> p_341588_.apply(fireworks.explosions())).orElse(fireworks.explosions())
         );
     }
 

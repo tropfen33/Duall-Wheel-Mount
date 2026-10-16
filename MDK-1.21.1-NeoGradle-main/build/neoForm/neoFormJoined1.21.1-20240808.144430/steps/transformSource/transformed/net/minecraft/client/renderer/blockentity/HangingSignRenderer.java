@@ -42,13 +42,13 @@ public class HangingSignRenderer extends SignRenderer {
     private static final Vec3 TEXT_OFFSET = new Vec3(0.0, -0.32F, 0.073F);
     private final Map<WoodType, HangingSignRenderer.HangingSignModel> hangingSignModels;
 
-    public HangingSignRenderer(BlockEntityRendererProvider.Context p_248772_) {
-        super(p_248772_);
+    public HangingSignRenderer(BlockEntityRendererProvider.Context context) {
+        super(context);
         this.hangingSignModels = WoodType.values()
             .collect(
                 ImmutableMap.toImmutableMap(
                     p_249901_ -> (WoodType)p_249901_,
-                    p_251956_ -> new HangingSignRenderer.HangingSignModel(p_248772_.bakeLayer(ModelLayers.createHangingSignModelName(p_251956_)))
+                    p_251956_ -> new HangingSignRenderer.HangingSignModel(context.bakeLayer(ModelLayers.createHangingSignModelName(p_251956_)))
                 )
             );
     }
@@ -64,31 +64,31 @@ public class HangingSignRenderer extends SignRenderer {
     }
 
     @Override
-    public void render(SignBlockEntity p_249482_, float p_249273_, PoseStack p_250062_, MultiBufferSource p_250878_, int p_249035_, int p_252030_) {
-        BlockState blockstate = p_249482_.getBlockState();
+    public void render(SignBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        BlockState blockstate = blockEntity.getBlockState();
         SignBlock signblock = (SignBlock)blockstate.getBlock();
         WoodType woodtype = SignBlock.getWoodType(signblock);
         HangingSignRenderer.HangingSignModel hangingsignrenderer$hangingsignmodel = this.hangingSignModels.get(woodtype);
         hangingsignrenderer$hangingsignmodel.evaluateVisibleParts(blockstate);
-        this.renderSignWithText(p_249482_, p_250062_, p_250878_, p_249035_, p_252030_, blockstate, signblock, woodtype, hangingsignrenderer$hangingsignmodel);
+        this.renderSignWithText(blockEntity, poseStack, bufferSource, packedLight, packedOverlay, blockstate, signblock, woodtype, hangingsignrenderer$hangingsignmodel);
     }
 
     @Override
-    void translateSign(PoseStack p_277807_, float p_277917_, BlockState p_277638_) {
-        p_277807_.translate(0.5, 0.9375, 0.5);
-        p_277807_.mulPose(Axis.YP.rotationDegrees(p_277917_));
-        p_277807_.translate(0.0F, -0.3125F, 0.0F);
+    void translateSign(PoseStack poseStack, float yRot, BlockState state) {
+        poseStack.translate(0.5, 0.9375, 0.5);
+        poseStack.mulPose(Axis.YP.rotationDegrees(yRot));
+        poseStack.translate(0.0F, -0.3125F, 0.0F);
     }
 
     @Override
-    void renderSignModel(PoseStack p_251159_, int p_249874_, int p_249794_, Model p_248746_, VertexConsumer p_249165_) {
-        HangingSignRenderer.HangingSignModel hangingsignrenderer$hangingsignmodel = (HangingSignRenderer.HangingSignModel)p_248746_;
-        hangingsignrenderer$hangingsignmodel.root.render(p_251159_, p_249165_, p_249874_, p_249794_);
+    void renderSignModel(PoseStack poseStack, int packedLight, int packedOverlay, Model model, VertexConsumer vertexConsumer) {
+        HangingSignRenderer.HangingSignModel hangingsignrenderer$hangingsignmodel = (HangingSignRenderer.HangingSignModel)model;
+        hangingsignrenderer$hangingsignmodel.root.render(poseStack, vertexConsumer, packedLight, packedOverlay);
     }
 
     @Override
-    Material getSignMaterial(WoodType p_251791_) {
-        return Sheets.getHangingSignMaterial(p_251791_);
+    Material getSignMaterial(WoodType woodType) {
+        return Sheets.getHangingSignMaterial(woodType);
     }
 
     @Override
@@ -133,29 +133,29 @@ public class HangingSignRenderer extends SignRenderer {
         public final ModelPart vChains;
         public final ModelPart normalChains;
 
-        public HangingSignModel(ModelPart p_249124_) {
+        public HangingSignModel(ModelPart root) {
             super(RenderType::entityCutoutNoCull);
-            this.root = p_249124_;
-            this.plank = p_249124_.getChild("plank");
-            this.normalChains = p_249124_.getChild("normalChains");
-            this.vChains = p_249124_.getChild("vChains");
+            this.root = root;
+            this.plank = root.getChild("plank");
+            this.normalChains = root.getChild("normalChains");
+            this.vChains = root.getChild("vChains");
         }
 
-        public void evaluateVisibleParts(BlockState p_250268_) {
-            boolean flag = !(p_250268_.getBlock() instanceof CeilingHangingSignBlock);
+        public void evaluateVisibleParts(BlockState state) {
+            boolean flag = !(state.getBlock() instanceof CeilingHangingSignBlock);
             this.plank.visible = flag;
             this.vChains.visible = false;
             this.normalChains.visible = true;
             if (!flag) {
-                boolean flag1 = p_250268_.getValue(BlockStateProperties.ATTACHED);
+                boolean flag1 = state.getValue(BlockStateProperties.ATTACHED);
                 this.normalChains.visible = !flag1;
                 this.vChains.visible = flag1;
             }
         }
 
         @Override
-        public void renderToBuffer(PoseStack p_251590_, VertexConsumer p_249470_, int p_250912_, int p_251773_, int p_350547_) {
-            this.root.render(p_251590_, p_249470_, p_250912_, p_251773_, p_350547_);
+        public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
+            this.root.render(poseStack, buffer, packedLight, packedOverlay, color);
         }
     }
 }

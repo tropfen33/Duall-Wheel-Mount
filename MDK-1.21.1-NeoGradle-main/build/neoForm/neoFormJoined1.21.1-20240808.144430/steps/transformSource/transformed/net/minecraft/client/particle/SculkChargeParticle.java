@@ -10,18 +10,18 @@ public class SculkChargeParticle extends TextureSheetParticle {
     private final SpriteSet sprites;
 
     protected SculkChargeParticle(
-        ClientLevel p_233892_, double p_233893_, double p_233894_, double p_233895_, double p_233896_, double p_233897_, double p_233898_, SpriteSet p_233899_
+        ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, SpriteSet sprite
     ) {
-        super(p_233892_, p_233893_, p_233894_, p_233895_, p_233896_, p_233897_, p_233898_);
+        super(level, x, y, z, xSpeed, ySpeed, zSpeed);
         this.friction = 0.96F;
-        this.sprites = p_233899_;
+        this.sprites = sprite;
         this.scale(1.5F);
         this.hasPhysics = false;
-        this.setSpriteFromAge(p_233899_);
+        this.setSpriteFromAge(sprite);
     }
 
     @Override
-    public int getLightColor(float p_233902_) {
+    public int getLightColor(float partialTick) {
         return 240;
     }
 

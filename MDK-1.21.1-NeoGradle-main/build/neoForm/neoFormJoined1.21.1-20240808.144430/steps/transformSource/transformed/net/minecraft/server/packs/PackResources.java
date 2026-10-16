@@ -16,17 +16,17 @@ public interface PackResources extends AutoCloseable, net.neoforged.neoforge.com
     String PACK_META = "pack.mcmeta";
 
     @Nullable
-    IoSupplier<InputStream> getRootResource(String... p_252049_);
+    IoSupplier<InputStream> getRootResource(String... elements);
 
     @Nullable
-    IoSupplier<InputStream> getResource(PackType p_215339_, ResourceLocation p_249034_);
+    IoSupplier<InputStream> getResource(PackType packType, ResourceLocation location);
 
-    void listResources(PackType p_10289_, String p_251379_, String p_251932_, PackResources.ResourceOutput p_249347_);
+    void listResources(PackType packType, String namespace, String path, PackResources.ResourceOutput resourceOutput);
 
-    Set<String> getNamespaces(PackType p_10283_);
+    Set<String> getNamespaces(PackType type);
 
     @Nullable
-    <T> T getMetadataSection(MetadataSectionSerializer<T> p_10291_) throws IOException;
+    <T> T getMetadataSection(MetadataSectionSerializer<T> deserializer) throws IOException;
 
     PackLocationInfo location();
 

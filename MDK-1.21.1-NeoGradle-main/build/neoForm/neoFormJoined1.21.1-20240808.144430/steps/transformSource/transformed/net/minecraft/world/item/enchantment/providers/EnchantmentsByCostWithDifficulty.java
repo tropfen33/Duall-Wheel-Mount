@@ -28,12 +28,12 @@ public record EnchantmentsByCostWithDifficulty(HolderSet<Enchantment> enchantmen
     );
 
     @Override
-    public void enchant(ItemStack p_344777_, ItemEnchantments.Mutable p_344895_, RandomSource p_346012_, DifficultyInstance p_348635_) {
-        float f = p_348635_.getSpecialMultiplier();
-        int i = Mth.randomBetweenInclusive(p_346012_, this.minCost, this.minCost + (int)(f * (float)this.maxCostSpan));
+    public void enchant(ItemStack stack, ItemEnchantments.Mutable enchantments, RandomSource random, DifficultyInstance difficulty) {
+        float f = difficulty.getSpecialMultiplier();
+        int i = Mth.randomBetweenInclusive(random, this.minCost, this.minCost + (int)(f * (float)this.maxCostSpan));
 
-        for (EnchantmentInstance enchantmentinstance : EnchantmentHelper.selectEnchantment(p_346012_, p_344777_, i, this.enchantments.stream())) {
-            p_344895_.upgrade(enchantmentinstance.enchantment, enchantmentinstance.level);
+        for (EnchantmentInstance enchantmentinstance : EnchantmentHelper.selectEnchantment(random, stack, i, this.enchantments.stream())) {
+            enchantments.upgrade(enchantmentinstance.enchantment, enchantmentinstance.level);
         }
     }
 

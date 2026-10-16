@@ -8,32 +8,32 @@ import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeInput;
 
 public abstract class RecipeBookMenu<I extends RecipeInput, R extends Recipe<I>> extends AbstractContainerMenu {
-    public RecipeBookMenu(MenuType<?> p_40115_, int p_40116_) {
-        super(p_40115_, p_40116_);
+    public RecipeBookMenu(MenuType<?> menuType, int containerId) {
+        super(menuType, containerId);
     }
 
-    public void handlePlacement(boolean p_40119_, RecipeHolder<?> p_300860_, ServerPlayer p_40121_) {
-        RecipeHolder<R> recipeholder = (RecipeHolder<R>)p_300860_;
+    public void handlePlacement(boolean placeAll, RecipeHolder<?> recipe, ServerPlayer player) {
+        RecipeHolder<R> recipeholder = (RecipeHolder<R>)recipe;
         this.beginPlacingRecipe();
 
         try {
-            new ServerPlaceRecipe<>(this).recipeClicked(p_40121_, recipeholder, p_40119_);
+            new ServerPlaceRecipe<>(this).recipeClicked(player, recipeholder, placeAll);
         } finally {
-            this.finishPlacingRecipe((RecipeHolder<R>)p_300860_);
+            this.finishPlacingRecipe((RecipeHolder<R>)recipe);
         }
     }
 
     protected void beginPlacingRecipe() {
     }
 
-    protected void finishPlacingRecipe(RecipeHolder<R> p_345813_) {
+    protected void finishPlacingRecipe(RecipeHolder<R> recipe) {
     }
 
-    public abstract void fillCraftSlotsStackedContents(StackedContents p_40117_);
+    public abstract void fillCraftSlotsStackedContents(StackedContents itemHelper);
 
     public abstract void clearCraftingContent();
 
-    public abstract boolean recipeMatches(RecipeHolder<R> p_301144_);
+    public abstract boolean recipeMatches(RecipeHolder<R> recipe);
 
     public abstract int getResultSlotIndex();
 
@@ -49,5 +49,5 @@ public abstract class RecipeBookMenu<I extends RecipeInput, R extends Recipe<I>>
 
     public abstract RecipeBookType getRecipeBookType();
 
-    public abstract boolean shouldMoveToInventory(int p_150635_);
+    public abstract boolean shouldMoveToInventory(int slotIndex);
 }

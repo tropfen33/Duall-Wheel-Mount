@@ -17,43 +17,54 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 
 public class CompassItem extends Item {
-    public CompassItem(Item.Properties p_40718_) {
-        super(p_40718_);
+    public CompassItem(Item.Properties properties) {
+        super(properties);
     }
 
     @Nullable
-    public static GlobalPos getSpawnPosition(Level p_220020_) {
-        return p_220020_.dimensionType().natural() ? GlobalPos.of(p_220020_.dimension(), p_220020_.getSharedSpawnPos()) : null;
+    public static GlobalPos getSpawnPosition(Level level) {
+        return level.dimensionType().natural() ? GlobalPos.of(level.dimension(), level.getSharedSpawnPos()) : null;
     }
 
+    /**
+     * Returns {@code true} if this item has an enchantment glint. By default, this returns <code>stack.isItemEnchanted()</code>, but other items can override it (for instance, written books always return true).
+     *
+     * Note that if you override this method, you generally want to also call the super version (on {@link Item}) to get the glint for enchanted items. Of course, that is unnecessary if the overwritten version always returns true.
+     */
     @Override
-    public boolean isFoil(ItemStack p_40739_) {
-        return p_40739_.has(DataComponents.LODESTONE_TRACKER) || super.isFoil(p_40739_);
+    public boolean isFoil(ItemStack stack) {
+        return stack.has(DataComponents.LODESTONE_TRACKER) || super.isFoil(stack);
     }
 
+    /**
+     * Called each tick as long the item is in a player's inventory. Used by maps to check if it's in a player's hand and update its contents.
+     */
     @Override
-    public void inventoryTick(ItemStack p_40720_, Level p_40721_, Entity p_40722_, int p_40723_, boolean p_40724_) {
-        if (p_40721_ instanceof ServerLevel serverlevel) {
-            LodestoneTracker lodestonetracker = p_40720_.get(DataComponents.LODESTONE_TRACKER);
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int itemSlot, boolean isSelected) {
+        if (level instanceof ServerLevel serverlevel) {
+            LodestoneTracker lodestonetracker = stack.get(DataComponents.LODESTONE_TRACKER);
             if (lodestonetracker != null) {
                 LodestoneTracker lodestonetracker1 = lodestonetracker.tick(serverlevel);
                 if (lodestonetracker1 != lodestonetracker) {
-                    p_40720_.set(DataComponents.LODESTONE_TRACKER, lodestonetracker1);
+                    stack.set(DataComponents.LODESTONE_TRACKER, lodestonetracker1);
                 }
             }
         }
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_40726_) {
-        BlockPos blockpos = p_40726_.getClickedPos();
-        Level level = p_40726_.getLevel();
+    public InteractionResult useOn(UseOnContext context) {
+        BlockPos blockpos = context.getClickedPos();
+        Level level = context.getLevel();
         if (!level.getBlockState(blockpos).is(Blocks.LODESTONE)) {
-            return super.useOn(p_40726_);
+            return super.useOn(context);
         } else {
             level.playSound(null, blockpos, SoundEvents.LODESTONE_COMPASS_LOCK, SoundSource.PLAYERS, 1.0F, 1.0F);
-            Player player = p_40726_.getPlayer();
-            ItemStack itemstack = p_40726_.getItemInHand();
+            Player player = context.getPlayer();
+            ItemStack itemstack = context.getItemInHand();
             boolean flag = !player.hasInfiniteMaterials() && itemstack.getCount() == 1;
             LodestoneTracker lodestonetracker = new LodestoneTracker(Optional.of(GlobalPos.of(level.dimension(), blockpos)), true);
             if (flag) {
@@ -71,8 +82,11 @@ public class CompassItem extends Item {
         }
     }
 
+    /**
+     * Returns the unlocalized name of this item. This version accepts an ItemStack so different stacks can have different names based on their damage or NBT.
+     */
     @Override
-    public String getDescriptionId(ItemStack p_40741_) {
-        return p_40741_.has(DataComponents.LODESTONE_TRACKER) ? "item.minecraft.lodestone_compass" : super.getDescriptionId(p_40741_);
+    public String getDescriptionId(ItemStack stack) {
+        return stack.has(DataComponents.LODESTONE_TRACKER) ? "item.minecraft.lodestone_compass" : super.getDescriptionId(stack);
     }
 }

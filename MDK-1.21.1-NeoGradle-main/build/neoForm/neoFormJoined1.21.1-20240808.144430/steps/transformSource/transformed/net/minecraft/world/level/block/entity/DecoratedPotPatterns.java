@@ -62,42 +62,42 @@ public class DecoratedPotPatterns {
     );
 
     @Nullable
-    public static ResourceKey<DecoratedPotPattern> getPatternFromItem(Item p_273094_) {
-        return ITEM_TO_POT_TEXTURE.get(p_273094_);
+    public static ResourceKey<DecoratedPotPattern> getPatternFromItem(Item item) {
+        return ITEM_TO_POT_TEXTURE.get(item);
     }
 
-    private static ResourceKey<DecoratedPotPattern> create(String p_272919_) {
-        return ResourceKey.create(Registries.DECORATED_POT_PATTERN, ResourceLocation.withDefaultNamespace(p_272919_));
+    private static ResourceKey<DecoratedPotPattern> create(String name) {
+        return ResourceKey.create(Registries.DECORATED_POT_PATTERN, ResourceLocation.withDefaultNamespace(name));
     }
 
-    public static DecoratedPotPattern bootstrap(Registry<DecoratedPotPattern> p_273479_) {
-        register(p_273479_, ANGLER, "angler_pottery_pattern");
-        register(p_273479_, ARCHER, "archer_pottery_pattern");
-        register(p_273479_, ARMS_UP, "arms_up_pottery_pattern");
-        register(p_273479_, BLADE, "blade_pottery_pattern");
-        register(p_273479_, BREWER, "brewer_pottery_pattern");
-        register(p_273479_, BURN, "burn_pottery_pattern");
-        register(p_273479_, DANGER, "danger_pottery_pattern");
-        register(p_273479_, EXPLORER, "explorer_pottery_pattern");
-        register(p_273479_, FLOW, "flow_pottery_pattern");
-        register(p_273479_, FRIEND, "friend_pottery_pattern");
-        register(p_273479_, GUSTER, "guster_pottery_pattern");
-        register(p_273479_, HEART, "heart_pottery_pattern");
-        register(p_273479_, HEARTBREAK, "heartbreak_pottery_pattern");
-        register(p_273479_, HOWL, "howl_pottery_pattern");
-        register(p_273479_, MINER, "miner_pottery_pattern");
-        register(p_273479_, MOURNER, "mourner_pottery_pattern");
-        register(p_273479_, PLENTY, "plenty_pottery_pattern");
-        register(p_273479_, PRIZE, "prize_pottery_pattern");
-        register(p_273479_, SCRAPE, "scrape_pottery_pattern");
-        register(p_273479_, SHEAF, "sheaf_pottery_pattern");
-        register(p_273479_, SHELTER, "shelter_pottery_pattern");
-        register(p_273479_, SKULL, "skull_pottery_pattern");
-        register(p_273479_, SNORT, "snort_pottery_pattern");
-        return register(p_273479_, BLANK, "decorated_pot_side");
+    public static DecoratedPotPattern bootstrap(Registry<DecoratedPotPattern> registry) {
+        register(registry, ANGLER, "angler_pottery_pattern");
+        register(registry, ARCHER, "archer_pottery_pattern");
+        register(registry, ARMS_UP, "arms_up_pottery_pattern");
+        register(registry, BLADE, "blade_pottery_pattern");
+        register(registry, BREWER, "brewer_pottery_pattern");
+        register(registry, BURN, "burn_pottery_pattern");
+        register(registry, DANGER, "danger_pottery_pattern");
+        register(registry, EXPLORER, "explorer_pottery_pattern");
+        register(registry, FLOW, "flow_pottery_pattern");
+        register(registry, FRIEND, "friend_pottery_pattern");
+        register(registry, GUSTER, "guster_pottery_pattern");
+        register(registry, HEART, "heart_pottery_pattern");
+        register(registry, HEARTBREAK, "heartbreak_pottery_pattern");
+        register(registry, HOWL, "howl_pottery_pattern");
+        register(registry, MINER, "miner_pottery_pattern");
+        register(registry, MOURNER, "mourner_pottery_pattern");
+        register(registry, PLENTY, "plenty_pottery_pattern");
+        register(registry, PRIZE, "prize_pottery_pattern");
+        register(registry, SCRAPE, "scrape_pottery_pattern");
+        register(registry, SHEAF, "sheaf_pottery_pattern");
+        register(registry, SHELTER, "shelter_pottery_pattern");
+        register(registry, SKULL, "skull_pottery_pattern");
+        register(registry, SNORT, "snort_pottery_pattern");
+        return register(registry, BLANK, "decorated_pot_side");
     }
 
-    private static DecoratedPotPattern register(Registry<DecoratedPotPattern> p_347598_, ResourceKey<DecoratedPotPattern> p_347620_, String p_347616_) {
-        return Registry.register(p_347598_, p_347620_, new DecoratedPotPattern(ResourceLocation.withDefaultNamespace(p_347616_)));
+    private static DecoratedPotPattern register(Registry<DecoratedPotPattern> registry, ResourceKey<DecoratedPotPattern> key, String assetId) {
+        return Registry.register(registry, key, new DecoratedPotPattern(ResourceLocation.withDefaultNamespace(assetId)));
     }
 }

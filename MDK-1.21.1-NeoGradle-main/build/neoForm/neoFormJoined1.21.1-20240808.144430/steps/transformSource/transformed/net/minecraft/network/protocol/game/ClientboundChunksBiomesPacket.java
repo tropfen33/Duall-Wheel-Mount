@@ -21,12 +21,12 @@ public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.C
         this(p_275221_.readList(ClientboundChunksBiomesPacket.ChunkBiomeData::new));
     }
 
-    public static ClientboundChunksBiomesPacket forChunks(List<LevelChunk> p_275394_) {
-        return new ClientboundChunksBiomesPacket(p_275394_.stream().map(ClientboundChunksBiomesPacket.ChunkBiomeData::new).toList());
+    public static ClientboundChunksBiomesPacket forChunks(List<LevelChunk> chunks) {
+        return new ClientboundChunksBiomesPacket(chunks.stream().map(ClientboundChunksBiomesPacket.ChunkBiomeData::new).toList());
     }
 
-    private void write(FriendlyByteBuf p_275376_) {
-        p_275376_.writeCollection(this.chunkBiomeData, (p_275199_, p_275200_) -> p_275200_.write(p_275199_));
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeCollection(this.chunkBiomeData, (p_275199_, p_275200_) -> p_275200_.write(p_275199_));
     }
 
     @Override
@@ -34,8 +34,11 @@ public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.C
         return GamePacketTypes.CLIENTBOUND_CHUNKS_BIOMES;
     }
 
-    public void handle(ClientGamePacketListener p_275524_) {
-        p_275524_.handleChunksBiomes(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleChunksBiomes(this);
     }
 
     public static record ChunkBiomeData(ChunkPos pos, byte[] buffer) {
@@ -48,10 +51,10 @@ public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.C
             this(p_275255_.readChunkPos(), p_275255_.readByteArray(2097152));
         }
 
-        private static int calculateChunkSize(LevelChunk p_275324_) {
+        private static int calculateChunkSize(LevelChunk chunk) {
             int i = 0;
 
-            for (LevelChunkSection levelchunksection : p_275324_.getSections()) {
+            for (LevelChunkSection levelchunksection : chunk.getSections()) {
                 i += levelchunksection.getBiomes().getSerializedSize();
             }
 
@@ -68,15 +71,15 @@ public record ClientboundChunksBiomesPacket(List<ClientboundChunksBiomesPacket.C
             return bytebuf;
         }
 
-        public static void extractChunkData(FriendlyByteBuf p_275626_, LevelChunk p_275570_) {
-            for (LevelChunkSection levelchunksection : p_275570_.getSections()) {
-                levelchunksection.getBiomes().write(p_275626_);
+        public static void extractChunkData(FriendlyByteBuf buffer, LevelChunk chunk) {
+            for (LevelChunkSection levelchunksection : chunk.getSections()) {
+                levelchunksection.getBiomes().write(buffer);
             }
         }
 
-        public void write(FriendlyByteBuf p_275467_) {
-            p_275467_.writeChunkPos(this.pos);
-            p_275467_.writeByteArray(this.buffer);
+        public void write(FriendlyByteBuf buffer) {
+            buffer.writeChunkPos(this.pos);
+            buffer.writeByteArray(this.buffer);
         }
     }
 }

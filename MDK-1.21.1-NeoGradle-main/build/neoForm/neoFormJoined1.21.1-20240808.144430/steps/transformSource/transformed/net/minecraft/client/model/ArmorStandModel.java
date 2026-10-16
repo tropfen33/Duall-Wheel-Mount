@@ -27,12 +27,12 @@ public class ArmorStandModel extends ArmorStandArmorModel {
     private final ModelPart shoulderStick;
     private final ModelPart basePlate;
 
-    public ArmorStandModel(ModelPart p_170356_) {
-        super(p_170356_);
-        this.rightBodyStick = p_170356_.getChild("right_body_stick");
-        this.leftBodyStick = p_170356_.getChild("left_body_stick");
-        this.shoulderStick = p_170356_.getChild("shoulder_stick");
-        this.basePlate = p_170356_.getChild("base_plate");
+    public ArmorStandModel(ModelPart root) {
+        super(root);
+        this.rightBodyStick = root.getChild("right_body_stick");
+        this.leftBodyStick = root.getChild("left_body_stick");
+        this.shoulderStick = root.getChild("shoulder_stick");
+        this.basePlate = root.getChild("base_plate");
         this.hat.visible = false;
     }
 
@@ -66,27 +66,30 @@ public class ArmorStandModel extends ArmorStandArmorModel {
         return LayerDefinition.create(meshdefinition, 64, 64);
     }
 
-    public void prepareMobModel(ArmorStand p_102172_, float p_102173_, float p_102174_, float p_102175_) {
+    public void prepareMobModel(ArmorStand entity, float limbSwing, float limbSwingAmount, float partialTick) {
         this.basePlate.xRot = 0.0F;
-        this.basePlate.yRot = (float) (Math.PI / 180.0) * -Mth.rotLerp(p_102175_, p_102172_.yRotO, p_102172_.getYRot());
+        this.basePlate.yRot = (float) (Math.PI / 180.0) * -Mth.rotLerp(partialTick, entity.yRotO, entity.getYRot());
         this.basePlate.zRot = 0.0F;
     }
 
+    /**
+     * Sets this entity's model rotation angles
+     */
     @Override
-    public void setupAnim(ArmorStand p_102177_, float p_102178_, float p_102179_, float p_102180_, float p_102181_, float p_102182_) {
-        super.setupAnim(p_102177_, p_102178_, p_102179_, p_102180_, p_102181_, p_102182_);
-        this.leftArm.visible = p_102177_.isShowArms();
-        this.rightArm.visible = p_102177_.isShowArms();
-        this.basePlate.visible = !p_102177_.isNoBasePlate();
-        this.rightBodyStick.xRot = (float) (Math.PI / 180.0) * p_102177_.getBodyPose().getX();
-        this.rightBodyStick.yRot = (float) (Math.PI / 180.0) * p_102177_.getBodyPose().getY();
-        this.rightBodyStick.zRot = (float) (Math.PI / 180.0) * p_102177_.getBodyPose().getZ();
-        this.leftBodyStick.xRot = (float) (Math.PI / 180.0) * p_102177_.getBodyPose().getX();
-        this.leftBodyStick.yRot = (float) (Math.PI / 180.0) * p_102177_.getBodyPose().getY();
-        this.leftBodyStick.zRot = (float) (Math.PI / 180.0) * p_102177_.getBodyPose().getZ();
-        this.shoulderStick.xRot = (float) (Math.PI / 180.0) * p_102177_.getBodyPose().getX();
-        this.shoulderStick.yRot = (float) (Math.PI / 180.0) * p_102177_.getBodyPose().getY();
-        this.shoulderStick.zRot = (float) (Math.PI / 180.0) * p_102177_.getBodyPose().getZ();
+    public void setupAnim(ArmorStand entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+        this.leftArm.visible = entity.isShowArms();
+        this.rightArm.visible = entity.isShowArms();
+        this.basePlate.visible = !entity.isNoBasePlate();
+        this.rightBodyStick.xRot = (float) (Math.PI / 180.0) * entity.getBodyPose().getX();
+        this.rightBodyStick.yRot = (float) (Math.PI / 180.0) * entity.getBodyPose().getY();
+        this.rightBodyStick.zRot = (float) (Math.PI / 180.0) * entity.getBodyPose().getZ();
+        this.leftBodyStick.xRot = (float) (Math.PI / 180.0) * entity.getBodyPose().getX();
+        this.leftBodyStick.yRot = (float) (Math.PI / 180.0) * entity.getBodyPose().getY();
+        this.leftBodyStick.zRot = (float) (Math.PI / 180.0) * entity.getBodyPose().getZ();
+        this.shoulderStick.xRot = (float) (Math.PI / 180.0) * entity.getBodyPose().getX();
+        this.shoulderStick.yRot = (float) (Math.PI / 180.0) * entity.getBodyPose().getY();
+        this.shoulderStick.zRot = (float) (Math.PI / 180.0) * entity.getBodyPose().getZ();
     }
 
     @Override
@@ -95,11 +98,11 @@ public class ArmorStandModel extends ArmorStandArmorModel {
     }
 
     @Override
-    public void translateToHand(HumanoidArm p_102157_, PoseStack p_102158_) {
-        ModelPart modelpart = this.getArm(p_102157_);
+    public void translateToHand(HumanoidArm side, PoseStack poseStack) {
+        ModelPart modelpart = this.getArm(side);
         boolean flag = modelpart.visible;
         modelpart.visible = true;
-        super.translateToHand(p_102157_, p_102158_);
+        super.translateToHand(side, poseStack);
         modelpart.visible = flag;
     }
 }

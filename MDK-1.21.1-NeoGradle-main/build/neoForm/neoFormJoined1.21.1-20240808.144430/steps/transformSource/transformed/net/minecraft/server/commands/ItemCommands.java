@@ -67,8 +67,8 @@ public class ItemCommands {
         return SharedSuggestionProvider.suggestResource(reloadableserverregistries$holder.getKeys(Registries.ITEM_MODIFIER), p_335221_);
     };
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_214449_, CommandBuildContext p_214450_) {
-        p_214449_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
+        dispatcher.register(
             Commands.literal("item")
                 .requires(p_180256_ -> p_180256_.hasPermission(2))
                 .then(
@@ -82,7 +82,7 @@ public class ItemCommands {
                                                 .then(
                                                     Commands.literal("with")
                                                         .then(
-                                                            Commands.argument("item", ItemArgument.item(p_214450_))
+                                                            Commands.argument("item", ItemArgument.item(context))
                                                                 .executes(
                                                                     p_180383_ -> setBlockItem(
                                                                             p_180383_.getSource(),
@@ -125,7 +125,7 @@ public class ItemCommands {
                                                                                         )
                                                                                 )
                                                                                 .then(
-                                                                                    Commands.argument("modifier", ResourceOrIdArgument.lootModifier(p_214450_))
+                                                                                    Commands.argument("modifier", ResourceOrIdArgument.lootModifier(context))
                                                                                         .suggests(SUGGEST_MODIFIER)
                                                                                         .executes(
                                                                                             p_335226_ -> blockToBlock(
@@ -157,7 +157,7 @@ public class ItemCommands {
                                                                                         )
                                                                                 )
                                                                                 .then(
-                                                                                    Commands.argument("modifier", ResourceOrIdArgument.lootModifier(p_214450_))
+                                                                                    Commands.argument("modifier", ResourceOrIdArgument.lootModifier(context))
                                                                                         .suggests(SUGGEST_MODIFIER)
                                                                                         .executes(
                                                                                             p_335223_ -> entityToBlock(
@@ -186,7 +186,7 @@ public class ItemCommands {
                                                 .then(
                                                     Commands.literal("with")
                                                         .then(
-                                                            Commands.argument("item", ItemArgument.item(p_214450_))
+                                                            Commands.argument("item", ItemArgument.item(context))
                                                                 .executes(
                                                                     p_180371_ -> setEntityItem(
                                                                             p_180371_.getSource(),
@@ -229,7 +229,7 @@ public class ItemCommands {
                                                                                         )
                                                                                 )
                                                                                 .then(
-                                                                                    Commands.argument("modifier", ResourceOrIdArgument.lootModifier(p_214450_))
+                                                                                    Commands.argument("modifier", ResourceOrIdArgument.lootModifier(context))
                                                                                         .suggests(SUGGEST_MODIFIER)
                                                                                         .executes(
                                                                                             p_335224_ -> blockToEntities(
@@ -261,7 +261,7 @@ public class ItemCommands {
                                                                                         )
                                                                                 )
                                                                                 .then(
-                                                                                    Commands.argument("modifier", ResourceOrIdArgument.lootModifier(p_214450_))
+                                                                                    Commands.argument("modifier", ResourceOrIdArgument.lootModifier(context))
                                                                                         .suggests(SUGGEST_MODIFIER)
                                                                                         .executes(
                                                                                             p_335225_ -> entityToEntities(
@@ -291,7 +291,7 @@ public class ItemCommands {
                                         .then(
                                             Commands.argument("slot", SlotArgument.slot())
                                                 .then(
-                                                    Commands.argument("modifier", ResourceOrIdArgument.lootModifier(p_214450_))
+                                                    Commands.argument("modifier", ResourceOrIdArgument.lootModifier(context))
                                                         .suggests(SUGGEST_MODIFIER)
                                                         .executes(
                                                             p_335222_ -> modifyBlockItem(
@@ -312,7 +312,7 @@ public class ItemCommands {
                                         .then(
                                             Commands.argument("slot", SlotArgument.slot())
                                                 .then(
-                                                    Commands.argument("modifier", ResourceOrIdArgument.lootModifier(p_214450_))
+                                                    Commands.argument("modifier", ResourceOrIdArgument.lootModifier(context))
                                                         .suggests(SUGGEST_MODIFIER)
                                                         .executes(
                                                             p_335227_ -> modifyEntityItem(
@@ -330,30 +330,30 @@ public class ItemCommands {
         );
     }
 
-    private static int modifyBlockItem(CommandSourceStack p_180297_, BlockPos p_180298_, int p_180299_, Holder<LootItemFunction> p_335627_) throws CommandSyntaxException {
-        Container container = getContainer(p_180297_, p_180298_, ERROR_TARGET_NOT_A_CONTAINER);
-        if (p_180299_ >= 0 && p_180299_ < container.getContainerSize()) {
-            ItemStack itemstack = applyModifier(p_180297_, p_335627_, container.getItem(p_180299_));
-            container.setItem(p_180299_, itemstack);
-            p_180297_.sendSuccess(
+    private static int modifyBlockItem(CommandSourceStack source, BlockPos pos, int slot, Holder<LootItemFunction> modifier) throws CommandSyntaxException {
+        Container container = getContainer(source, pos, ERROR_TARGET_NOT_A_CONTAINER);
+        if (slot >= 0 && slot < container.getContainerSize()) {
+            ItemStack itemstack = applyModifier(source, modifier, container.getItem(slot));
+            container.setItem(slot, itemstack);
+            source.sendSuccess(
                 () -> Component.translatable(
-                        "commands.item.block.set.success", p_180298_.getX(), p_180298_.getY(), p_180298_.getZ(), itemstack.getDisplayName()
+                        "commands.item.block.set.success", pos.getX(), pos.getY(), pos.getZ(), itemstack.getDisplayName()
                     ),
                 true
             );
             return 1;
         } else {
-            throw ERROR_TARGET_INAPPLICABLE_SLOT.create(p_180299_);
+            throw ERROR_TARGET_INAPPLICABLE_SLOT.create(slot);
         }
     }
 
-    private static int modifyEntityItem(CommandSourceStack p_180337_, Collection<? extends Entity> p_180338_, int p_180339_, Holder<LootItemFunction> p_335904_) throws CommandSyntaxException {
-        Map<Entity, ItemStack> map = Maps.newHashMapWithExpectedSize(p_180338_.size());
+    private static int modifyEntityItem(CommandSourceStack source, Collection<? extends Entity> targets, int sourceSlot, Holder<LootItemFunction> modifer) throws CommandSyntaxException {
+        Map<Entity, ItemStack> map = Maps.newHashMapWithExpectedSize(targets.size());
 
-        for (Entity entity : p_180338_) {
-            SlotAccess slotaccess = entity.getSlot(p_180339_);
+        for (Entity entity : targets) {
+            SlotAccess slotaccess = entity.getSlot(sourceSlot);
             if (slotaccess != SlotAccess.NULL) {
-                ItemStack itemstack = applyModifier(p_180337_, p_335904_, slotaccess.get().copy());
+                ItemStack itemstack = applyModifier(source, modifer, slotaccess.get().copy());
                 if (slotaccess.set(itemstack)) {
                     map.put(entity, itemstack);
                     if (entity instanceof ServerPlayer) {
@@ -364,53 +364,53 @@ public class ItemCommands {
         }
 
         if (map.isEmpty()) {
-            throw ERROR_TARGET_NO_CHANGES.create(p_180339_);
+            throw ERROR_TARGET_NO_CHANGES.create(sourceSlot);
         } else {
             if (map.size() == 1) {
                 Entry<Entity, ItemStack> entry = map.entrySet().iterator().next();
-                p_180337_.sendSuccess(
+                source.sendSuccess(
                     () -> Component.translatable("commands.item.entity.set.success.single", entry.getKey().getDisplayName(), entry.getValue().getDisplayName()),
                     true
                 );
             } else {
-                p_180337_.sendSuccess(() -> Component.translatable("commands.item.entity.set.success.multiple", map.size()), true);
+                source.sendSuccess(() -> Component.translatable("commands.item.entity.set.success.multiple", map.size()), true);
             }
 
             return map.size();
         }
     }
 
-    private static int setBlockItem(CommandSourceStack p_180292_, BlockPos p_180293_, int p_180294_, ItemStack p_180295_) throws CommandSyntaxException {
-        Container container = getContainer(p_180292_, p_180293_, ERROR_TARGET_NOT_A_CONTAINER);
-        if (p_180294_ >= 0 && p_180294_ < container.getContainerSize()) {
-            container.setItem(p_180294_, p_180295_);
-            p_180292_.sendSuccess(
+    private static int setBlockItem(CommandSourceStack source, BlockPos pos, int slot, ItemStack item) throws CommandSyntaxException {
+        Container container = getContainer(source, pos, ERROR_TARGET_NOT_A_CONTAINER);
+        if (slot >= 0 && slot < container.getContainerSize()) {
+            container.setItem(slot, item);
+            source.sendSuccess(
                 () -> Component.translatable(
-                        "commands.item.block.set.success", p_180293_.getX(), p_180293_.getY(), p_180293_.getZ(), p_180295_.getDisplayName()
+                        "commands.item.block.set.success", pos.getX(), pos.getY(), pos.getZ(), item.getDisplayName()
                     ),
                 true
             );
             return 1;
         } else {
-            throw ERROR_TARGET_INAPPLICABLE_SLOT.create(p_180294_);
+            throw ERROR_TARGET_INAPPLICABLE_SLOT.create(slot);
         }
     }
 
-    static Container getContainer(CommandSourceStack p_180328_, BlockPos p_180329_, Dynamic3CommandExceptionType p_180330_) throws CommandSyntaxException {
-        BlockEntity blockentity = p_180328_.getLevel().getBlockEntity(p_180329_);
+    static Container getContainer(CommandSourceStack source, BlockPos pos, Dynamic3CommandExceptionType exception) throws CommandSyntaxException {
+        BlockEntity blockentity = source.getLevel().getBlockEntity(pos);
         if (!(blockentity instanceof Container)) {
-            throw p_180330_.create(p_180329_.getX(), p_180329_.getY(), p_180329_.getZ());
+            throw exception.create(pos.getX(), pos.getY(), pos.getZ());
         } else {
             return (Container)blockentity;
         }
     }
 
-    private static int setEntityItem(CommandSourceStack p_180332_, Collection<? extends Entity> p_180333_, int p_180334_, ItemStack p_180335_) throws CommandSyntaxException {
-        List<Entity> list = Lists.newArrayListWithCapacity(p_180333_.size());
+    private static int setEntityItem(CommandSourceStack source, Collection<? extends Entity> targets, int slot, ItemStack item) throws CommandSyntaxException {
+        List<Entity> list = Lists.newArrayListWithCapacity(targets.size());
 
-        for (Entity entity : p_180333_) {
-            SlotAccess slotaccess = entity.getSlot(p_180334_);
-            if (slotaccess != SlotAccess.NULL && slotaccess.set(p_180335_.copy())) {
+        for (Entity entity : targets) {
+            SlotAccess slotaccess = entity.getSlot(slot);
+            if (slotaccess != SlotAccess.NULL && slotaccess.set(item.copy())) {
                 list.add(entity);
                 if (entity instanceof ServerPlayer) {
                     ((ServerPlayer)entity).containerMenu.broadcastChanges();
@@ -419,99 +419,99 @@ public class ItemCommands {
         }
 
         if (list.isEmpty()) {
-            throw ERROR_TARGET_NO_CHANGES_KNOWN_ITEM.create(p_180335_.getDisplayName(), p_180334_);
+            throw ERROR_TARGET_NO_CHANGES_KNOWN_ITEM.create(item.getDisplayName(), slot);
         } else {
             if (list.size() == 1) {
-                p_180332_.sendSuccess(
-                    () -> Component.translatable("commands.item.entity.set.success.single", list.iterator().next().getDisplayName(), p_180335_.getDisplayName()),
+                source.sendSuccess(
+                    () -> Component.translatable("commands.item.entity.set.success.single", list.iterator().next().getDisplayName(), item.getDisplayName()),
                     true
                 );
             } else {
-                p_180332_.sendSuccess(() -> Component.translatable("commands.item.entity.set.success.multiple", list.size(), p_180335_.getDisplayName()), true);
+                source.sendSuccess(() -> Component.translatable("commands.item.entity.set.success.multiple", list.size(), item.getDisplayName()), true);
             }
 
             return list.size();
         }
     }
 
-    private static int blockToEntities(CommandSourceStack p_180315_, BlockPos p_180316_, int p_180317_, Collection<? extends Entity> p_180318_, int p_180319_) throws CommandSyntaxException {
-        return setEntityItem(p_180315_, p_180318_, p_180319_, getBlockItem(p_180315_, p_180316_, p_180317_));
+    private static int blockToEntities(CommandSourceStack source, BlockPos pos, int sourceSlot, Collection<? extends Entity> targets, int slot) throws CommandSyntaxException {
+        return setEntityItem(source, targets, slot, getBlockItem(source, pos, sourceSlot));
     }
 
     private static int blockToEntities(
-        CommandSourceStack p_180321_,
-        BlockPos p_180322_,
-        int p_180323_,
-        Collection<? extends Entity> p_180324_,
-        int p_180325_,
-        Holder<LootItemFunction> p_336168_
+        CommandSourceStack source,
+        BlockPos pos,
+        int sourceSlot,
+        Collection<? extends Entity> targets,
+        int slot,
+        Holder<LootItemFunction> modifier
     ) throws CommandSyntaxException {
-        return setEntityItem(p_180321_, p_180324_, p_180325_, applyModifier(p_180321_, p_336168_, getBlockItem(p_180321_, p_180322_, p_180323_)));
+        return setEntityItem(source, targets, slot, applyModifier(source, modifier, getBlockItem(source, pos, sourceSlot)));
     }
 
-    private static int blockToBlock(CommandSourceStack p_180302_, BlockPos p_180303_, int p_180304_, BlockPos p_180305_, int p_180306_) throws CommandSyntaxException {
-        return setBlockItem(p_180302_, p_180305_, p_180306_, getBlockItem(p_180302_, p_180303_, p_180304_));
+    private static int blockToBlock(CommandSourceStack source, BlockPos sourcePos, int sourceSlot, BlockPos pos, int slot) throws CommandSyntaxException {
+        return setBlockItem(source, pos, slot, getBlockItem(source, sourcePos, sourceSlot));
     }
 
     private static int blockToBlock(
-        CommandSourceStack p_180308_, BlockPos p_180309_, int p_180310_, BlockPos p_180311_, int p_180312_, Holder<LootItemFunction> p_335838_
+        CommandSourceStack source, BlockPos sourcePos, int sourceSlot, BlockPos pos, int slot, Holder<LootItemFunction> modifier
     ) throws CommandSyntaxException {
-        return setBlockItem(p_180308_, p_180311_, p_180312_, applyModifier(p_180308_, p_335838_, getBlockItem(p_180308_, p_180309_, p_180310_)));
+        return setBlockItem(source, pos, slot, applyModifier(source, modifier, getBlockItem(source, sourcePos, sourceSlot)));
     }
 
-    private static int entityToBlock(CommandSourceStack p_180258_, Entity p_180259_, int p_180260_, BlockPos p_180261_, int p_180262_) throws CommandSyntaxException {
-        return setBlockItem(p_180258_, p_180261_, p_180262_, getEntityItem(p_180259_, p_180260_));
+    private static int entityToBlock(CommandSourceStack source, Entity sourceEntity, int sourceSlot, BlockPos pos, int slot) throws CommandSyntaxException {
+        return setBlockItem(source, pos, slot, getEntityItem(sourceEntity, sourceSlot));
     }
 
     private static int entityToBlock(
-        CommandSourceStack p_180264_, Entity p_180265_, int p_180266_, BlockPos p_180267_, int p_180268_, Holder<LootItemFunction> p_335965_
+        CommandSourceStack source, Entity sourceEntity, int sourceSlot, BlockPos pos, int slot, Holder<LootItemFunction> modifier
     ) throws CommandSyntaxException {
-        return setBlockItem(p_180264_, p_180267_, p_180268_, applyModifier(p_180264_, p_335965_, getEntityItem(p_180265_, p_180266_)));
+        return setBlockItem(source, pos, slot, applyModifier(source, modifier, getEntityItem(sourceEntity, sourceSlot)));
     }
 
-    private static int entityToEntities(CommandSourceStack p_180271_, Entity p_180272_, int p_180273_, Collection<? extends Entity> p_180274_, int p_180275_) throws CommandSyntaxException {
-        return setEntityItem(p_180271_, p_180274_, p_180275_, getEntityItem(p_180272_, p_180273_));
+    private static int entityToEntities(CommandSourceStack source, Entity sourceEntity, int sourceSlot, Collection<? extends Entity> targets, int slot) throws CommandSyntaxException {
+        return setEntityItem(source, targets, slot, getEntityItem(sourceEntity, sourceSlot));
     }
 
     private static int entityToEntities(
-        CommandSourceStack p_180277_,
-        Entity p_180278_,
-        int p_180279_,
-        Collection<? extends Entity> p_180280_,
-        int p_180281_,
-        Holder<LootItemFunction> p_335469_
+        CommandSourceStack source,
+        Entity sourceEntity,
+        int sourceSlot,
+        Collection<? extends Entity> targets,
+        int slot,
+        Holder<LootItemFunction> modifier
     ) throws CommandSyntaxException {
-        return setEntityItem(p_180277_, p_180280_, p_180281_, applyModifier(p_180277_, p_335469_, getEntityItem(p_180278_, p_180279_)));
+        return setEntityItem(source, targets, slot, applyModifier(source, modifier, getEntityItem(sourceEntity, sourceSlot)));
     }
 
-    private static ItemStack applyModifier(CommandSourceStack p_180284_, Holder<LootItemFunction> p_335682_, ItemStack p_180286_) {
-        ServerLevel serverlevel = p_180284_.getLevel();
+    private static ItemStack applyModifier(CommandSourceStack source, Holder<LootItemFunction> modifier, ItemStack stack) {
+        ServerLevel serverlevel = source.getLevel();
         LootParams lootparams = new LootParams.Builder(serverlevel)
-            .withParameter(LootContextParams.ORIGIN, p_180284_.getPosition())
-            .withOptionalParameter(LootContextParams.THIS_ENTITY, p_180284_.getEntity())
+            .withParameter(LootContextParams.ORIGIN, source.getPosition())
+            .withOptionalParameter(LootContextParams.THIS_ENTITY, source.getEntity())
             .create(LootContextParamSets.COMMAND);
         LootContext lootcontext = new LootContext.Builder(lootparams).create(Optional.empty());
-        lootcontext.pushVisitedElement(LootContext.createVisitedEntry(p_335682_.value()));
-        ItemStack itemstack = p_335682_.value().apply(p_180286_, lootcontext);
+        lootcontext.pushVisitedElement(LootContext.createVisitedEntry(modifier.value()));
+        ItemStack itemstack = modifier.value().apply(stack, lootcontext);
         itemstack.limitSize(itemstack.getMaxStackSize());
         return itemstack;
     }
 
-    private static ItemStack getEntityItem(Entity p_180246_, int p_180247_) throws CommandSyntaxException {
-        SlotAccess slotaccess = p_180246_.getSlot(p_180247_);
+    private static ItemStack getEntityItem(Entity entity, int slot) throws CommandSyntaxException {
+        SlotAccess slotaccess = entity.getSlot(slot);
         if (slotaccess == SlotAccess.NULL) {
-            throw ERROR_SOURCE_INAPPLICABLE_SLOT.create(p_180247_);
+            throw ERROR_SOURCE_INAPPLICABLE_SLOT.create(slot);
         } else {
             return slotaccess.get().copy();
         }
     }
 
-    private static ItemStack getBlockItem(CommandSourceStack p_180288_, BlockPos p_180289_, int p_180290_) throws CommandSyntaxException {
-        Container container = getContainer(p_180288_, p_180289_, ERROR_SOURCE_NOT_A_CONTAINER);
-        if (p_180290_ >= 0 && p_180290_ < container.getContainerSize()) {
-            return container.getItem(p_180290_).copy();
+    private static ItemStack getBlockItem(CommandSourceStack source, BlockPos pos, int slot) throws CommandSyntaxException {
+        Container container = getContainer(source, pos, ERROR_SOURCE_NOT_A_CONTAINER);
+        if (slot >= 0 && slot < container.getContainerSize()) {
+            return container.getItem(slot).copy();
         } else {
-            throw ERROR_SOURCE_INAPPLICABLE_SLOT.create(p_180290_);
+            throw ERROR_SOURCE_INAPPLICABLE_SLOT.create(slot);
         }
     }
 }

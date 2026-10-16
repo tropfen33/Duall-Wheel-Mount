@@ -113,8 +113,8 @@ public class Warden extends Monster implements VibrationSystem {
     private VibrationSystem.Data vibrationData;
     AngerManagement angerManagement = new AngerManagement(this::canTargetEntity, Collections.emptyList());
 
-    public Warden(EntityType<? extends Monster> p_219350_, Level p_219351_) {
-        super(p_219350_, p_219351_);
+    public Warden(EntityType<? extends Monster> entityType, Level level) {
+        super(entityType, level);
         this.vibrationUser = new Warden.VibrationUser();
         this.vibrationData = new VibrationSystem.Data();
         this.dynamicGameEventListener = new DynamicGameEventListener<>(new VibrationSystem.Listener(this));
@@ -129,31 +129,34 @@ public class Warden extends Monster implements VibrationSystem {
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity p_352154_) {
-        return new ClientboundAddEntityPacket(this, p_352154_, this.hasPose(Pose.EMERGING) ? 1 : 0);
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
+        return new ClientboundAddEntityPacket(this, entity, this.hasPose(Pose.EMERGING) ? 1 : 0);
     }
 
     @Override
-    public void recreateFromPacket(ClientboundAddEntityPacket p_219420_) {
-        super.recreateFromPacket(p_219420_);
-        if (p_219420_.getData() == 1) {
+    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        if (packet.getData() == 1) {
             this.setPose(Pose.EMERGING);
         }
     }
 
     @Override
-    public boolean checkSpawnObstruction(LevelReader p_219398_) {
-        return super.checkSpawnObstruction(p_219398_) && p_219398_.noCollision(this, this.getType().getDimensions().makeBoundingBox(this.position()));
+    public boolean checkSpawnObstruction(LevelReader level) {
+        return super.checkSpawnObstruction(level) && level.noCollision(this, this.getType().getDimensions().makeBoundingBox(this.position()));
     }
 
     @Override
-    public float getWalkTargetValue(BlockPos p_219410_, LevelReader p_219411_) {
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
         return 0.0F;
     }
 
+    /**
+     * Returns whether this Entity is invulnerable to the given DamageSource.
+     */
     @Override
-    public boolean isInvulnerableTo(DamageSource p_219427_) {
-        return this.isDiggingOrEmerging() && !p_219427_.is(DamageTypeTags.BYPASSES_INVULNERABILITY) ? true : super.isInvulnerableTo(p_219427_);
+    public boolean isInvulnerableTo(DamageSource source) {
+        return this.isDiggingOrEmerging() && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) ? true : super.isInvulnerableTo(source);
     }
 
     boolean isDiggingOrEmerging() {
@@ -161,7 +164,7 @@ public class Warden extends Monster implements VibrationSystem {
     }
 
     @Override
-    protected boolean canRide(Entity p_219462_) {
+    protected boolean canRide(Entity vehicle) {
         return false;
     }
 
@@ -201,7 +204,7 @@ public class Warden extends Monster implements VibrationSystem {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_219440_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.WARDEN_HURT;
     }
 
@@ -211,22 +214,22 @@ public class Warden extends Monster implements VibrationSystem {
     }
 
     @Override
-    protected void playStepSound(BlockPos p_219431_, BlockState p_219432_) {
+    protected void playStepSound(BlockPos pos, BlockState state) {
         this.playSound(SoundEvents.WARDEN_STEP, 10.0F, 1.0F);
     }
 
     @Override
-    public boolean doHurtTarget(Entity p_219472_) {
+    public boolean doHurtTarget(Entity entity) {
         this.level().broadcastEntityEvent(this, (byte)4);
         this.playSound(SoundEvents.WARDEN_ATTACK_IMPACT, 10.0F, this.getVoicePitch());
         SonicBoom.setCooldown(this, 40);
-        return super.doHurtTarget(p_219472_);
+        return super.doHurtTarget(entity);
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326277_) {
-        super.defineSynchedData(p_326277_);
-        p_326277_.define(CLIENT_ANGER_LEVEL, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(CLIENT_ANGER_LEVEL, 0);
     }
 
     public int getClientAngerLevel() {
@@ -297,17 +300,20 @@ public class Warden extends Monster implements VibrationSystem {
         WardenAi.updateActivity(this);
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @Override
-    public void handleEntityEvent(byte p_219360_) {
-        if (p_219360_ == 4) {
+    public void handleEntityEvent(byte id) {
+        if (id == 4) {
             this.roarAnimationState.stop();
             this.attackAnimationState.start(this.tickCount);
-        } else if (p_219360_ == 61) {
+        } else if (id == 61) {
             this.tendrilAnimation = 10;
-        } else if (p_219360_ == 62) {
+        } else if (id == 62) {
             this.sonicBoomAnimationState.start(this.tickCount);
         } else {
-            super.handleEntityEvent(p_219360_);
+            super.handleEntityEvent(id);
         }
     }
 
@@ -316,16 +322,16 @@ public class Warden extends Monster implements VibrationSystem {
         return 40 - Mth.floor(Mth.clamp(f, 0.0F, 1.0F) * 30.0F);
     }
 
-    public float getTendrilAnimation(float p_219468_) {
-        return Mth.lerp(p_219468_, (float)this.tendrilAnimationO, (float)this.tendrilAnimation) / 10.0F;
+    public float getTendrilAnimation(float partialTick) {
+        return Mth.lerp(partialTick, (float)this.tendrilAnimationO, (float)this.tendrilAnimation) / 10.0F;
     }
 
-    public float getHeartAnimation(float p_219470_) {
-        return Mth.lerp(p_219470_, (float)this.heartAnimationO, (float)this.heartAnimation) / 10.0F;
+    public float getHeartAnimation(float partialTick) {
+        return Mth.lerp(partialTick, (float)this.heartAnimationO, (float)this.heartAnimation) / 10.0F;
     }
 
-    private void clientDiggingParticles(AnimationState p_219384_) {
-        if ((float)p_219384_.getAccumulatedTime() < 4500.0F) {
+    private void clientDiggingParticles(AnimationState animationState) {
+        if ((float)animationState.getAccumulatedTime() < 4500.0F) {
             RandomSource randomsource = this.getRandom();
             BlockState blockstate = this.getBlockStateOn();
             if (blockstate.getRenderShape() != RenderShape.INVISIBLE) {
@@ -340,8 +346,8 @@ public class Warden extends Monster implements VibrationSystem {
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_219422_) {
-        if (DATA_POSE.equals(p_219422_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        if (DATA_POSE.equals(key)) {
             switch (this.getPose()) {
                 case EMERGING:
                     this.emergeAnimationState.start(this.tickCount);
@@ -357,17 +363,17 @@ public class Warden extends Monster implements VibrationSystem {
             }
         }
 
-        super.onSyncedDataUpdated(p_219422_);
+        super.onSyncedDataUpdated(key);
     }
 
     @Override
-    public boolean ignoreExplosion(Explosion p_312317_) {
+    public boolean ignoreExplosion(Explosion explosion) {
         return this.isDiggingOrEmerging();
     }
 
     @Override
-    protected Brain<?> makeBrain(Dynamic<?> p_219406_) {
-        return WardenAi.makeBrain(this, p_219406_);
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return WardenAi.makeBrain(this, dynamic);
     }
 
     @Override
@@ -382,18 +388,18 @@ public class Warden extends Monster implements VibrationSystem {
     }
 
     @Override
-    public void updateDynamicGameEventListener(BiConsumer<DynamicGameEventListener<?>, ServerLevel> p_219413_) {
+    public void updateDynamicGameEventListener(BiConsumer<DynamicGameEventListener<?>, ServerLevel> listenerConsumer) {
         if (this.level() instanceof ServerLevel serverlevel) {
-            p_219413_.accept(this.dynamicGameEventListener, serverlevel);
+            listenerConsumer.accept(this.dynamicGameEventListener, serverlevel);
         }
     }
 
     @Contract("null->false")
-    public boolean canTargetEntity(@Nullable Entity p_219386_) {
-        if (p_219386_ instanceof LivingEntity livingentity
-            && this.level() == p_219386_.level()
-            && EntitySelector.NO_CREATIVE_OR_SPECTATOR.test(p_219386_)
-            && !this.isAlliedTo(p_219386_)
+    public boolean canTargetEntity(@Nullable Entity entity) {
+        if (entity instanceof LivingEntity livingentity
+            && this.level() == entity.level()
+            && EntitySelector.NO_CREATIVE_OR_SPECTATOR.test(entity)
+            && !this.isAlliedTo(entity)
             && livingentity.getType() != EntityType.ARMOR_STAND
             && livingentity.getType() != EntityType.WARDEN
             && !livingentity.isInvulnerable()
@@ -405,40 +411,43 @@ public class Warden extends Monster implements VibrationSystem {
         return false;
     }
 
-    public static void applyDarknessAround(ServerLevel p_219376_, Vec3 p_219377_, @Nullable Entity p_219378_, int p_219379_) {
+    public static void applyDarknessAround(ServerLevel level, Vec3 pos, @Nullable Entity source, int radius) {
         MobEffectInstance mobeffectinstance = new MobEffectInstance(MobEffects.DARKNESS, 260, 0, false, false);
-        MobEffectUtil.addEffectToPlayersAround(p_219376_, p_219378_, p_219377_, (double)p_219379_, mobeffectinstance, 200);
+        MobEffectUtil.addEffectToPlayersAround(level, source, pos, (double)radius, mobeffectinstance, 200);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_219434_) {
-        super.addAdditionalSaveData(p_219434_);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
         RegistryOps<Tag> registryops = this.registryAccess().createSerializationContext(NbtOps.INSTANCE);
         AngerManagement.codec(this::canTargetEntity)
             .encodeStart(registryops, this.angerManagement)
             .resultOrPartial(p_351916_ -> LOGGER.error("Failed to encode anger state for Warden: '{}'", p_351916_))
-            .ifPresent(p_219437_ -> p_219434_.put("anger", p_219437_));
+            .ifPresent(p_219437_ -> compound.put("anger", p_219437_));
         VibrationSystem.Data.CODEC
             .encodeStart(registryops, this.vibrationData)
             .resultOrPartial(p_351915_ -> LOGGER.error("Failed to encode vibration listener for Warden: '{}'", p_351915_))
-            .ifPresent(p_219418_ -> p_219434_.put("listener", p_219418_));
+            .ifPresent(p_219418_ -> compound.put("listener", p_219418_));
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_219415_) {
-        super.readAdditionalSaveData(p_219415_);
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
         RegistryOps<Tag> registryops = this.registryAccess().createSerializationContext(NbtOps.INSTANCE);
-        if (p_219415_.contains("anger")) {
+        if (compound.contains("anger")) {
             AngerManagement.codec(this::canTargetEntity)
-                .parse(registryops, p_219415_.get("anger"))
+                .parse(registryops, compound.get("anger"))
                 .resultOrPartial(p_351917_ -> LOGGER.error("Failed to parse anger state for Warden: '{}'", p_351917_))
                 .ifPresent(p_219394_ -> this.angerManagement = p_219394_);
             this.syncClientAngerLevel();
         }
 
-        if (p_219415_.contains("listener", 10)) {
+        if (compound.contains("listener", 10)) {
             VibrationSystem.Data.CODEC
-                .parse(registryops, p_219415_.getCompound("listener"))
+                .parse(registryops, compound.getCompound("listener"))
                 .resultOrPartial(p_351914_ -> LOGGER.error("Failed to parse vibration listener for Warden: '{}'", p_351914_))
                 .ifPresent(p_281093_ -> this.vibrationData = p_281093_);
         }
@@ -458,25 +467,25 @@ public class Warden extends Monster implements VibrationSystem {
         return this.angerManagement.getActiveAnger(this.getTarget());
     }
 
-    public void clearAnger(Entity p_219429_) {
-        this.angerManagement.clearAnger(p_219429_);
+    public void clearAnger(Entity entity) {
+        this.angerManagement.clearAnger(entity);
     }
 
-    public void increaseAngerAt(@Nullable Entity p_219442_) {
-        this.increaseAngerAt(p_219442_, 35, true);
+    public void increaseAngerAt(@Nullable Entity entity) {
+        this.increaseAngerAt(entity, 35, true);
     }
 
     @VisibleForTesting
-    public void increaseAngerAt(@Nullable Entity p_219388_, int p_219389_, boolean p_219390_) {
-        if (!this.isNoAi() && this.canTargetEntity(p_219388_)) {
+    public void increaseAngerAt(@Nullable Entity entity, int offset, boolean playListeningSound) {
+        if (!this.isNoAi() && this.canTargetEntity(entity)) {
             WardenAi.setDigCooldown(this);
             boolean flag = !(this.getTarget() instanceof Player);
-            int i = this.angerManagement.increaseAnger(p_219388_, p_219389_);
-            if (p_219388_ instanceof Player && flag && AngerLevel.byAnger(i).isAngry()) {
+            int i = this.angerManagement.increaseAnger(entity, offset);
+            if (entity instanceof Player && flag && AngerLevel.byAnger(i).isAngry()) {
                 this.getBrain().eraseMemory(MemoryModuleType.ATTACK_TARGET);
             }
 
-            if (p_219390_) {
+            if (playListeningSound) {
                 this.playListeningSound();
             }
         }
@@ -493,32 +502,35 @@ public class Warden extends Monster implements VibrationSystem {
     }
 
     @Override
-    public boolean removeWhenFarAway(double p_219457_) {
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return false;
     }
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_219400_, DifficultyInstance p_219401_, MobSpawnType p_219402_, @Nullable SpawnGroupData p_219403_) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
         this.getBrain().setMemoryWithExpiry(MemoryModuleType.DIG_COOLDOWN, Unit.INSTANCE, 1200L);
-        if (p_219402_ == MobSpawnType.TRIGGERED) {
+        if (spawnType == MobSpawnType.TRIGGERED) {
             this.setPose(Pose.EMERGING);
             this.getBrain().setMemoryWithExpiry(MemoryModuleType.IS_EMERGING, Unit.INSTANCE, (long)WardenAi.EMERGE_DURATION);
             this.playSound(SoundEvents.WARDEN_AGITATED, 5.0F, 1.0F);
         }
 
-        return super.finalizeSpawn(p_219400_, p_219401_, p_219402_, p_219403_);
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_219381_, float p_219382_) {
-        boolean flag = super.hurt(p_219381_, p_219382_);
+    public boolean hurt(DamageSource source, float amount) {
+        boolean flag = super.hurt(source, amount);
         if (!this.level().isClientSide && !this.isNoAi() && !this.isDiggingOrEmerging()) {
-            Entity entity = p_219381_.getEntity();
+            Entity entity = source.getEntity();
             this.increaseAngerAt(entity, AngerLevel.ANGRY.getMinimumAnger() + 20, false);
             if (this.brain.getMemory(MemoryModuleType.ATTACK_TARGET).isEmpty()
                 && entity instanceof LivingEntity livingentity
-                && (p_219381_.isDirect() || this.closerThan(livingentity, 5.0))) {
+                && (source.isDirect() || this.closerThan(livingentity, 5.0))) {
                 this.setAttackTarget(livingentity);
             }
         }
@@ -526,16 +538,16 @@ public class Warden extends Monster implements VibrationSystem {
         return flag;
     }
 
-    public void setAttackTarget(LivingEntity p_219460_) {
+    public void setAttackTarget(LivingEntity attackTarget) {
         this.getBrain().eraseMemory(MemoryModuleType.ROAR_TARGET);
-        this.getBrain().setMemory(MemoryModuleType.ATTACK_TARGET, p_219460_);
+        this.getBrain().setMemory(MemoryModuleType.ATTACK_TARGET, attackTarget);
         this.getBrain().eraseMemory(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
         SonicBoom.setCooldown(this, 200);
     }
 
     @Override
-    public EntityDimensions getDefaultDimensions(Pose p_316276_) {
-        EntityDimensions entitydimensions = super.getDefaultDimensions(p_316276_);
+    public EntityDimensions getDefaultDimensions(Pose pose) {
+        EntityDimensions entitydimensions = super.getDefaultDimensions(pose);
         return this.isDiggingOrEmerging() ? EntityDimensions.fixed(entitydimensions.width(), 1.0F) : entitydimensions;
     }
 
@@ -545,14 +557,14 @@ public class Warden extends Monster implements VibrationSystem {
     }
 
     @Override
-    protected void doPush(Entity p_219353_) {
+    protected void doPush(Entity entity) {
         if (!this.isNoAi() && !this.getBrain().hasMemoryValue(MemoryModuleType.TOUCH_COOLDOWN)) {
             this.getBrain().setMemoryWithExpiry(MemoryModuleType.TOUCH_COOLDOWN, Unit.INSTANCE, 20L);
-            this.increaseAngerAt(p_219353_);
-            WardenAi.setDisturbanceLocation(this, p_219353_.blockPosition());
+            this.increaseAngerAt(entity);
+            WardenAi.setDisturbanceLocation(this, entity.blockPosition());
         }
 
-        super.doPush(p_219353_);
+        super.doPush(entity);
     }
 
     @VisibleForTesting
@@ -561,8 +573,8 @@ public class Warden extends Monster implements VibrationSystem {
     }
 
     @Override
-    protected PathNavigation createNavigation(Level p_219396_) {
-        return new GroundPathNavigation(this, p_219396_) {
+    protected PathNavigation createNavigation(Level p_level) {
+        return new GroundPathNavigation(this, p_level) {
             @Override
             protected PathFinder createPathFinder(int p_219479_) {
                 this.nodeEvaluator = new WalkNodeEvaluator();

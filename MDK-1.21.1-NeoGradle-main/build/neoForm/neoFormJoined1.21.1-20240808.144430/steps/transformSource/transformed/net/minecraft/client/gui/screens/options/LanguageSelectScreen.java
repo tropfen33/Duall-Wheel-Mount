@@ -24,9 +24,9 @@ public class LanguageSelectScreen extends OptionsSubScreen {
     private LanguageSelectScreen.LanguageSelectionList languageSelectionList;
     final LanguageManager languageManager;
 
-    public LanguageSelectScreen(Screen p_345780_, Options p_344823_, LanguageManager p_344876_) {
-        super(p_345780_, p_344823_, Component.translatable("options.language.title"));
-        this.languageManager = p_344876_;
+    public LanguageSelectScreen(Screen lastScreen, Options options, LanguageManager languageManager) {
+        super(lastScreen, options, Component.translatable("options.language.title"));
+        this.languageManager = languageManager;
         this.layout.setFooterHeight(53);
     }
 
@@ -71,8 +71,8 @@ public class LanguageSelectScreen extends OptionsSubScreen {
 
     @OnlyIn(Dist.CLIENT)
     class LanguageSelectionList extends ObjectSelectionList<LanguageSelectScreen.LanguageSelectionList.Entry> {
-        public LanguageSelectionList(Minecraft p_345567_) {
-            super(p_345567_, LanguageSelectScreen.this.width, LanguageSelectScreen.this.height - 33 - 53, 33, 18);
+        public LanguageSelectionList(Minecraft minecraft) {
+            super(minecraft, LanguageSelectScreen.this.width, LanguageSelectScreen.this.height - 33 - 53, 33, 18);
             String s = LanguageSelectScreen.this.languageManager.getSelected();
             LanguageSelectScreen.this.languageManager
                 .getLanguages()
@@ -103,49 +103,67 @@ public class LanguageSelectScreen extends OptionsSubScreen {
             private final Component language;
             private long lastClickTime;
 
-            public Entry(String p_346435_, LanguageInfo p_345619_) {
-                this.code = p_346435_;
-                this.language = p_345619_.toComponent();
+            public Entry(String code, LanguageInfo languageInfo) {
+                this.code = code;
+                this.language = languageInfo.toComponent();
             }
 
             @Override
             public void render(
-                GuiGraphics p_345300_,
-                int p_345469_,
-                int p_345328_,
-                int p_345700_,
-                int p_345311_,
-                int p_345185_,
-                int p_344805_,
-                int p_345963_,
-                boolean p_345912_,
-                float p_346091_
+                GuiGraphics guiGraphics,
+                int index,
+                int top,
+                int left,
+                int width,
+                int height,
+                int mouseX,
+                int mouseY,
+                boolean hovering,
+                float partialTick
             ) {
-                p_345300_.drawCenteredString(
-                    LanguageSelectScreen.this.font, this.language, LanguageSelectionList.this.width / 2, p_345328_ + p_345185_ / 2 - 9 / 2, -1
+                guiGraphics.drawCenteredString(
+                    LanguageSelectScreen.this.font, this.language, LanguageSelectionList.this.width / 2, top + height / 2 - 9 / 2, -1
                 );
             }
 
+            /**
+             * Called when a keyboard key is pressed within the GUI element.
+             * <p>
+             * @return {@code true} if the event is consumed, {@code false} otherwise.
+             *
+             * @param keyCode   the key code of the pressed key.
+             * @param scanCode  the scan code of the pressed key.
+             * @param modifiers the keyboard modifiers.
+             */
             @Override
-            public boolean keyPressed(int p_346403_, int p_345881_, int p_345858_) {
-                if (CommonInputs.selected(p_346403_)) {
+            public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+                if (CommonInputs.selected(keyCode)) {
                     this.select();
                     LanguageSelectScreen.this.onDone();
                     return true;
                 } else {
-                    return super.keyPressed(p_346403_, p_345881_, p_345858_);
+                    return super.keyPressed(keyCode, scanCode, modifiers);
                 }
             }
 
+            /**
+             * Called when a mouse button is clicked within the GUI element.
+             * <p>
+             * @return {@code true} if the event is consumed, {@code false} otherwise.
+             *
+             * @param mouseX the X coordinate of the mouse.
+             * @param mouseY the Y coordinate of the mouse.
+             * @param button the button that was clicked.
+             */
             @Override
-            public boolean mouseClicked(double p_344965_, double p_345385_, int p_345080_) {
+            public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 this.select();
                 if (Util.getMillis() - this.lastClickTime < 250L) {
                     LanguageSelectScreen.this.onDone();
                 }
 
                 this.lastClickTime = Util.getMillis();
-                return super.mouseClicked(p_344965_, p_345385_, p_345080_);
+                return super.mouseClicked(mouseX, mouseY, button);
             }
 
             private void select() {

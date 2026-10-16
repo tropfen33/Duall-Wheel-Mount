@@ -26,7 +26,7 @@ public interface PlacementModifierType<P extends PlacementModifier> {
 
     MapCodec<P> codec();
 
-    private static <P extends PlacementModifier> PlacementModifierType<P> register(String p_191867_, MapCodec<P> p_338679_) {
-        return Registry.register(BuiltInRegistries.PLACEMENT_MODIFIER_TYPE, p_191867_, () -> p_338679_);
+    private static <P extends PlacementModifier> PlacementModifierType<P> register(String name, MapCodec<P> codec) {
+        return Registry.register(BuiltInRegistries.PLACEMENT_MODIFIER_TYPE, name, () -> codec);
     }
 }

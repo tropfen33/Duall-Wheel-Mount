@@ -23,28 +23,28 @@ public interface SpawnPlacementTypes {
             : false;
     SpawnPlacementType ON_GROUND = new SpawnPlacementType() {
         @Override
-        public boolean isSpawnPositionOk(LevelReader p_321666_, BlockPos p_321783_, @Nullable EntityType<?> p_321839_) {
-            if (p_321839_ != null && p_321666_.getWorldBorder().isWithinBounds(p_321783_)) {
-                BlockPos blockpos = p_321783_.above();
-                BlockPos blockpos1 = p_321783_.below();
-                BlockState blockstate = p_321666_.getBlockState(blockpos1);
-                return !blockstate.isValidSpawn(p_321666_, blockpos1, p_321839_)
+        public boolean isSpawnPositionOk(LevelReader level, BlockPos pos, @Nullable EntityType<?> entityType) {
+            if (entityType != null && level.getWorldBorder().isWithinBounds(pos)) {
+                BlockPos blockpos = pos.above();
+                BlockPos blockpos1 = pos.below();
+                BlockState blockstate = level.getBlockState(blockpos1);
+                return !blockstate.isValidSpawn(level, blockpos1, entityType)
                     ? false
-                    : this.isValidEmptySpawnBlock(p_321666_, p_321783_, p_321839_) && this.isValidEmptySpawnBlock(p_321666_, blockpos, p_321839_);
+                    : this.isValidEmptySpawnBlock(level, pos, entityType) && this.isValidEmptySpawnBlock(level, blockpos, entityType);
             } else {
                 return false;
             }
         }
 
-        private boolean isValidEmptySpawnBlock(LevelReader p_321512_, BlockPos p_321822_, EntityType<?> p_321785_) {
-            BlockState blockstate = p_321512_.getBlockState(p_321822_);
-            return NaturalSpawner.isValidEmptySpawnBlock(p_321512_, p_321822_, blockstate, blockstate.getFluidState(), p_321785_);
+        private boolean isValidEmptySpawnBlock(LevelReader level, BlockPos pos, EntityType<?> entityType) {
+            BlockState blockstate = level.getBlockState(pos);
+            return NaturalSpawner.isValidEmptySpawnBlock(level, pos, blockstate, blockstate.getFluidState(), entityType);
         }
 
         @Override
-        public BlockPos adjustSpawnPosition(LevelReader p_321527_, BlockPos p_321602_) {
-            BlockPos blockpos = p_321602_.below();
-            return p_321527_.getBlockState(blockpos).isPathfindable(PathComputationType.LAND) ? blockpos : p_321602_;
+        public BlockPos adjustSpawnPosition(LevelReader level, BlockPos pos) {
+            BlockPos blockpos = pos.below();
+            return level.getBlockState(blockpos).isPathfindable(PathComputationType.LAND) ? blockpos : pos;
         }
     };
 }

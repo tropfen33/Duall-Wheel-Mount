@@ -31,15 +31,15 @@ public class ClientRecipeBook extends RecipeBook {
     private Map<RecipeBookCategories, List<RecipeCollection>> collectionsByTab = ImmutableMap.of();
     private List<RecipeCollection> allCollections = ImmutableList.of();
 
-    public void setupCollections(Iterable<RecipeHolder<?>> p_266814_, RegistryAccess p_266878_) {
-        Map<RecipeBookCategories, List<List<RecipeHolder<?>>>> map = categorizeAndGroupRecipes(p_266814_);
+    public void setupCollections(Iterable<RecipeHolder<?>> recipes, RegistryAccess registryAccess) {
+        Map<RecipeBookCategories, List<List<RecipeHolder<?>>>> map = categorizeAndGroupRecipes(recipes);
         Map<RecipeBookCategories, List<RecipeCollection>> map1 = Maps.newHashMap();
         Builder<RecipeCollection> builder = ImmutableList.builder();
         map.forEach(
             (p_266602_, p_266603_) -> map1.put(
                     p_266602_,
                     p_266603_.stream()
-                        .map(p_266605_ -> new RecipeCollection(p_266878_, (List<RecipeHolder<?>>)p_266605_))
+                        .map(p_266605_ -> new RecipeCollection(registryAccess, (List<RecipeHolder<?>>)p_266605_))
                         .peek(builder::add)
                         .collect(ImmutableList.toImmutableList())
                 )
@@ -57,11 +57,11 @@ public class ClientRecipeBook extends RecipeBook {
         this.allCollections = builder.build();
     }
 
-    private static Map<RecipeBookCategories, List<List<RecipeHolder<?>>>> categorizeAndGroupRecipes(Iterable<RecipeHolder<?>> p_90643_) {
+    private static Map<RecipeBookCategories, List<List<RecipeHolder<?>>>> categorizeAndGroupRecipes(Iterable<RecipeHolder<?>> recipes) {
         Map<RecipeBookCategories, List<List<RecipeHolder<?>>>> map = Maps.newHashMap();
         Table<RecipeBookCategories, String, List<RecipeHolder<?>>> table = HashBasedTable.create();
 
-        for (RecipeHolder<?> recipeholder : p_90643_) {
+        for (RecipeHolder<?> recipeholder : recipes) {
             Recipe<?> recipe = recipeholder.value();
             if (!recipe.isSpecial() && !recipe.isIncomplete()) {
                 RecipeBookCategories recipebookcategories = getCategory(recipeholder);
@@ -84,8 +84,8 @@ public class ClientRecipeBook extends RecipeBook {
         return map;
     }
 
-    private static RecipeBookCategories getCategory(RecipeHolder<?> p_301136_) {
-        Recipe<?> recipe = p_301136_.value();
+    private static RecipeBookCategories getCategory(RecipeHolder<?> p_recipe) {
+        Recipe<?> recipe = p_recipe.value();
         if (recipe instanceof CraftingRecipe craftingrecipe) {
             return switch (craftingrecipe.category()) {
                 case BUILDING -> RecipeBookCategories.CRAFTING_BUILDING_BLOCKS;
@@ -125,12 +125,12 @@ public class ClientRecipeBook extends RecipeBook {
             } else if (recipetype == RecipeType.SMITHING) {
                 return RecipeBookCategories.SMITHING;
             } else {
-                RecipeBookCategories categories = net.neoforged.neoforge.client.RecipeBookManager.findCategories((RecipeType) recipetype, p_301136_);
+                RecipeBookCategories categories = net.neoforged.neoforge.client.RecipeBookManager.findCategories((RecipeType) recipetype, p_recipe);
                 if (categories != null) return categories;
                 LOGGER.warn(
                     "Unknown recipe category: {}/{}",
                     LogUtils.defer(() -> BuiltInRegistries.RECIPE_TYPE.getKey(recipe.getType())),
-                    LogUtils.defer(p_301136_::id)
+                    LogUtils.defer(p_recipe::id)
                 );
                 return RecipeBookCategories.UNKNOWN;
             }
@@ -141,7 +141,7 @@ public class ClientRecipeBook extends RecipeBook {
         return this.allCollections;
     }
 
-    public List<RecipeCollection> getCollection(RecipeBookCategories p_90624_) {
-        return this.collectionsByTab.getOrDefault(p_90624_, Collections.emptyList());
+    public List<RecipeCollection> getCollection(RecipeBookCategories categories) {
+        return this.collectionsByTab.getOrDefault(categories, Collections.emptyList());
     }
 }

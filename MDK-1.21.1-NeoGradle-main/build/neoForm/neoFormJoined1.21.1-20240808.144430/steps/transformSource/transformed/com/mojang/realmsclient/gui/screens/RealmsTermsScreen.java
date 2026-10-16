@@ -26,13 +26,18 @@ public class RealmsTermsScreen extends RealmsScreen {
     private static final Component TERMS_LINK_TEXT = CommonComponents.space()
         .append(Component.translatable("mco.terms.sentence.2").withStyle(Style.EMPTY.withUnderlined(true)));
     private final Screen lastScreen;
+    /**
+     * The screen to display when OK is clicked on the disconnect screen.
+     *
+     * Seems to be either null (integrated server) or an instance of either {@link MultiplayerScreen} (when connecting to a server) or {@link com.mojang.realmsclient.gui.screens.RealmsTermsScreen} (when connecting to MCO server)
+     */
     private final RealmsServer realmsServer;
     private boolean onLink;
 
-    public RealmsTermsScreen(Screen p_90033_, RealmsServer p_90035_) {
+    public RealmsTermsScreen(Screen lastScreen, RealmsServer realmsServer) {
         super(TITLE);
-        this.lastScreen = p_90033_;
-        this.realmsServer = p_90035_;
+        this.lastScreen = lastScreen;
+        this.realmsServer = realmsServer;
     }
 
     @Override
@@ -49,12 +54,12 @@ public class RealmsTermsScreen extends RealmsScreen {
     }
 
     @Override
-    public boolean keyPressed(int p_90041_, int p_90042_, int p_90043_) {
-        if (p_90041_ == 256) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 256) {
             this.minecraft.setScreen(this.lastScreen);
             return true;
         } else {
-            return super.keyPressed(p_90041_, p_90042_, p_90043_);
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
     }
 
@@ -69,14 +74,23 @@ public class RealmsTermsScreen extends RealmsScreen {
         }
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    public boolean mouseClicked(double p_90037_, double p_90038_, int p_90039_) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (this.onLink) {
             this.minecraft.keyboardHandler.setClipboard(CommonLinks.REALMS_TERMS.toString());
             Util.getPlatform().openUri(CommonLinks.REALMS_TERMS);
             return true;
         } else {
-            return super.mouseClicked(p_90037_, p_90038_, p_90039_);
+            return super.mouseClicked(mouseX, mouseY, button);
         }
     }
 
@@ -85,17 +99,25 @@ public class RealmsTermsScreen extends RealmsScreen {
         return CommonComponents.joinForNarration(super.getNarrationMessage(), TERMS_STATIC_TEXT).append(CommonComponents.SPACE).append(TERMS_LINK_TEXT);
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281619_, int p_283526_, int p_282002_, float p_282536_) {
-        super.render(p_281619_, p_283526_, p_282002_, p_282536_);
-        p_281619_.drawCenteredString(this.font, this.title, this.width / 2, 17, -1);
-        p_281619_.drawString(this.font, TERMS_STATIC_TEXT, this.width / 2 - 120, row(5), -1, false);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 17, -1);
+        guiGraphics.drawString(this.font, TERMS_STATIC_TEXT, this.width / 2 - 120, row(5), -1, false);
         int i = this.font.width(TERMS_STATIC_TEXT);
         int j = this.width / 2 - 121 + i;
         int k = row(5);
         int l = j + this.font.width(TERMS_LINK_TEXT) + 1;
         int i1 = k + 1 + 9;
-        this.onLink = j <= p_283526_ && p_283526_ <= l && k <= p_282002_ && p_282002_ <= i1;
-        p_281619_.drawString(this.font, TERMS_LINK_TEXT, this.width / 2 - 120 + i, row(5), this.onLink ? 7107012 : 3368635, false);
+        this.onLink = j <= mouseX && mouseX <= l && k <= mouseY && mouseY <= i1;
+        guiGraphics.drawString(this.font, TERMS_LINK_TEXT, this.width / 2 - 120 + i, row(5), this.onLink ? 7107012 : 3368635, false);
     }
 }

@@ -11,18 +11,18 @@ public class LevelVersion {
     private final DataVersion minecraftVersion;
     private final boolean snapshot;
 
-    private LevelVersion(int p_193023_, long p_193024_, String p_193025_, int p_193026_, String p_193027_, boolean p_193028_) {
-        this.levelDataVersion = p_193023_;
-        this.lastPlayed = p_193024_;
-        this.minecraftVersionName = p_193025_;
-        this.minecraftVersion = new DataVersion(p_193026_, p_193027_);
-        this.snapshot = p_193028_;
+    private LevelVersion(int levelDataVersion, long lastPlayed, String minecraftVersionName, int minecraftVersion, String series, boolean snapshot) {
+        this.levelDataVersion = levelDataVersion;
+        this.lastPlayed = lastPlayed;
+        this.minecraftVersionName = minecraftVersionName;
+        this.minecraftVersion = new DataVersion(minecraftVersion, series);
+        this.snapshot = snapshot;
     }
 
-    public static LevelVersion parse(Dynamic<?> p_78391_) {
-        int i = p_78391_.get("version").asInt(0);
-        long j = p_78391_.get("LastPlayed").asLong(0L);
-        OptionalDynamic<?> optionaldynamic = p_78391_.get("Version");
+    public static LevelVersion parse(Dynamic<?> nbt) {
+        int i = nbt.get("version").asInt(0);
+        long j = nbt.get("LastPlayed").asLong(0L);
+        OptionalDynamic<?> optionaldynamic = nbt.get("Version");
         return optionaldynamic.result().isPresent()
             ? new LevelVersion(
                 i,

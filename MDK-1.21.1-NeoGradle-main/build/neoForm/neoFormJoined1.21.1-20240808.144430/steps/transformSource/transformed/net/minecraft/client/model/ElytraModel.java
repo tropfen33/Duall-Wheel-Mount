@@ -19,9 +19,9 @@ public class ElytraModel<T extends LivingEntity> extends AgeableListModel<T> {
     private final ModelPart rightWing;
     private final ModelPart leftWing;
 
-    public ElytraModel(ModelPart p_170538_) {
-        this.leftWing = p_170538_.getChild("left_wing");
-        this.rightWing = p_170538_.getChild("right_wing");
+    public ElytraModel(ModelPart root) {
+        this.leftWing = root.getChild("left_wing");
+        this.rightWing = root.getChild("right_wing");
     }
 
     public static LayerDefinition createLayer() {
@@ -51,14 +51,17 @@ public class ElytraModel<T extends LivingEntity> extends AgeableListModel<T> {
         return ImmutableList.of(this.leftWing, this.rightWing);
     }
 
-    public void setupAnim(T p_102544_, float p_102545_, float p_102546_, float p_102547_, float p_102548_, float p_102549_) {
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         float f = (float) (Math.PI / 12);
         float f1 = (float) (-Math.PI / 12);
         float f2 = 0.0F;
         float f3 = 0.0F;
-        if (p_102544_.isFallFlying()) {
+        if (entity.isFallFlying()) {
             float f4 = 1.0F;
-            Vec3 vec3 = p_102544_.getDeltaMovement();
+            Vec3 vec3 = entity.getDeltaMovement();
             if (vec3.y < 0.0) {
                 Vec3 vec31 = vec3.normalize();
                 f4 = 1.0F - (float)Math.pow(-vec31.y, 1.5);
@@ -66,7 +69,7 @@ public class ElytraModel<T extends LivingEntity> extends AgeableListModel<T> {
 
             f = f4 * (float) (Math.PI / 9) + (1.0F - f4) * f;
             f1 = f4 * (float) (-Math.PI / 2) + (1.0F - f4) * f1;
-        } else if (p_102544_.isCrouching()) {
+        } else if (entity.isCrouching()) {
             f = (float) (Math.PI * 2.0 / 9.0);
             f1 = (float) (-Math.PI / 4);
             f2 = 3.0F;
@@ -74,7 +77,7 @@ public class ElytraModel<T extends LivingEntity> extends AgeableListModel<T> {
         }
 
         this.leftWing.y = f2;
-        if (p_102544_ instanceof AbstractClientPlayer abstractclientplayer) {
+        if (entity instanceof AbstractClientPlayer abstractclientplayer) {
             abstractclientplayer.elytraRotX = abstractclientplayer.elytraRotX + (f - abstractclientplayer.elytraRotX) * 0.1F;
             abstractclientplayer.elytraRotY = abstractclientplayer.elytraRotY + (f3 - abstractclientplayer.elytraRotY) * 0.1F;
             abstractclientplayer.elytraRotZ = abstractclientplayer.elytraRotZ + (f1 - abstractclientplayer.elytraRotZ) * 0.1F;

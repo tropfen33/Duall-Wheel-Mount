@@ -12,15 +12,15 @@ public interface EnchantmentValueEffect {
         .byNameCodec()
         .dispatch(EnchantmentValueEffect::codec, Function.identity());
 
-    static MapCodec<? extends EnchantmentValueEffect> bootstrap(Registry<MapCodec<? extends EnchantmentValueEffect>> p_345804_) {
-        Registry.register(p_345804_, "add", AddValue.CODEC);
-        Registry.register(p_345804_, "all_of", AllOf.ValueEffects.CODEC);
-        Registry.register(p_345804_, "multiply", MultiplyValue.CODEC);
-        Registry.register(p_345804_, "remove_binomial", RemoveBinomial.CODEC);
-        return Registry.register(p_345804_, "set", SetValue.CODEC);
+    static MapCodec<? extends EnchantmentValueEffect> bootstrap(Registry<MapCodec<? extends EnchantmentValueEffect>> registry) {
+        Registry.register(registry, "add", AddValue.CODEC);
+        Registry.register(registry, "all_of", AllOf.ValueEffects.CODEC);
+        Registry.register(registry, "multiply", MultiplyValue.CODEC);
+        Registry.register(registry, "remove_binomial", RemoveBinomial.CODEC);
+        return Registry.register(registry, "set", SetValue.CODEC);
     }
 
-    float process(int p_345946_, RandomSource p_345167_, float p_345777_);
+    float process(int enchantmentLevel, RandomSource random, float value);
 
     MapCodec<? extends EnchantmentValueEffect> codec();
 }

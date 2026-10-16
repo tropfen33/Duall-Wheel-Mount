@@ -12,7 +12,7 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
 
 public class InsideBrownianWalk {
-    public static BehaviorControl<PathfinderMob> create(float p_259775_) {
+    public static BehaviorControl<PathfinderMob> create(float speedModifier) {
         return BehaviorBuilder.create(
             p_258399_ -> p_258399_.group(p_258399_.absent(MemoryModuleType.WALK_TARGET))
                     .apply(
@@ -31,7 +31,7 @@ public class InsideBrownianWalk {
                                         .filter(p_23237_ -> p_258393_.loadedAndEntityCanStandOn(p_23237_, p_258394_))
                                         .filter(p_23227_ -> p_258393_.noCollision(p_258394_))
                                         .findFirst()
-                                        .ifPresent(p_258402_ -> p_258397_.set(new WalkTarget(p_258402_, p_259775_, 0)));
+                                        .ifPresent(p_258402_ -> p_258397_.set(new WalkTarget(p_258402_, speedModifier, 0)));
                                     return true;
                                 }
                             }

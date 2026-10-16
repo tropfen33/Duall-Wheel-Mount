@@ -22,14 +22,17 @@ public class DropExperienceBlock extends Block {
         return CODEC;
     }
 
-    public DropExperienceBlock(IntProvider p_221084_, BlockBehaviour.Properties p_221083_) {
-        super(p_221083_);
-        this.xpRange = p_221084_;
+    public DropExperienceBlock(IntProvider xpRange, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.xpRange = xpRange;
     }
 
+    /**
+     * Perform side-effects from block dropping, such as creating silverfish
+     */
     @Override
-    protected void spawnAfterBreak(BlockState p_221086_, ServerLevel p_221087_, BlockPos p_221088_, ItemStack p_221089_, boolean p_221090_) {
-        super.spawnAfterBreak(p_221086_, p_221087_, p_221088_, p_221089_, p_221090_);
+    protected void spawnAfterBreak(BlockState state, ServerLevel level, BlockPos pos, ItemStack stack, boolean dropExperience) {
+        super.spawnAfterBreak(state, level, pos, stack, dropExperience);
     }
 
     // Neo: Patch-in override for getExpDrop. Original vanilla logic passes this.xpRange to tryDropExperience.

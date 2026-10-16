@@ -6,8 +6,8 @@ public class JumpControl implements Control {
     private final Mob mob;
     protected boolean jump;
 
-    public JumpControl(Mob p_24900_) {
-        this.mob = p_24900_;
+    public JumpControl(Mob mob) {
+        this.mob = mob;
     }
 
     public void jump() {

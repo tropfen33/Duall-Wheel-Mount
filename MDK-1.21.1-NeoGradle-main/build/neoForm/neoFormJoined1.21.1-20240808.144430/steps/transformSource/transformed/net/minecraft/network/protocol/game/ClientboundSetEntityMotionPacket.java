@@ -17,33 +17,36 @@ public class ClientboundSetEntityMotionPacket implements Packet<ClientGamePacket
     private final int ya;
     private final int za;
 
-    public ClientboundSetEntityMotionPacket(Entity p_133185_) {
-        this(p_133185_.getId(), p_133185_.getDeltaMovement());
+    public ClientboundSetEntityMotionPacket(Entity entity) {
+        this(entity.getId(), entity.getDeltaMovement());
     }
 
-    public ClientboundSetEntityMotionPacket(int p_133182_, Vec3 p_133183_) {
-        this.id = p_133182_;
+    public ClientboundSetEntityMotionPacket(int id, Vec3 deltaMovement) {
+        this.id = id;
         double d0 = 3.9;
-        double d1 = Mth.clamp(p_133183_.x, -3.9, 3.9);
-        double d2 = Mth.clamp(p_133183_.y, -3.9, 3.9);
-        double d3 = Mth.clamp(p_133183_.z, -3.9, 3.9);
+        double d1 = Mth.clamp(deltaMovement.x, -3.9, 3.9);
+        double d2 = Mth.clamp(deltaMovement.y, -3.9, 3.9);
+        double d3 = Mth.clamp(deltaMovement.z, -3.9, 3.9);
         this.xa = (int)(d1 * 8000.0);
         this.ya = (int)(d2 * 8000.0);
         this.za = (int)(d3 * 8000.0);
     }
 
-    private ClientboundSetEntityMotionPacket(FriendlyByteBuf p_179294_) {
-        this.id = p_179294_.readVarInt();
-        this.xa = p_179294_.readShort();
-        this.ya = p_179294_.readShort();
-        this.za = p_179294_.readShort();
+    private ClientboundSetEntityMotionPacket(FriendlyByteBuf buffer) {
+        this.id = buffer.readVarInt();
+        this.xa = buffer.readShort();
+        this.ya = buffer.readShort();
+        this.za = buffer.readShort();
     }
 
-    private void write(FriendlyByteBuf p_133194_) {
-        p_133194_.writeVarInt(this.id);
-        p_133194_.writeShort(this.xa);
-        p_133194_.writeShort(this.ya);
-        p_133194_.writeShort(this.za);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.id);
+        buffer.writeShort(this.xa);
+        buffer.writeShort(this.ya);
+        buffer.writeShort(this.za);
     }
 
     @Override
@@ -51,8 +54,11 @@ public class ClientboundSetEntityMotionPacket implements Packet<ClientGamePacket
         return GamePacketTypes.CLIENTBOUND_SET_ENTITY_MOTION;
     }
 
-    public void handle(ClientGamePacketListener p_133191_) {
-        p_133191_.handleSetEntityMotion(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleSetEntityMotion(this);
     }
 
     public int getId() {

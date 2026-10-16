@@ -11,13 +11,13 @@ public class ServerResourcePackConfigurationTask implements ConfigurationTask {
     public static final ConfigurationTask.Type TYPE = new ConfigurationTask.Type("server_resource_pack");
     private final MinecraftServer.ServerResourcePackInfo info;
 
-    public ServerResourcePackConfigurationTask(MinecraftServer.ServerResourcePackInfo p_294895_) {
-        this.info = p_294895_;
+    public ServerResourcePackConfigurationTask(MinecraftServer.ServerResourcePackInfo info) {
+        this.info = info;
     }
 
     @Override
-    public void start(Consumer<Packet<?>> p_296328_) {
-        p_296328_.accept(
+    public void start(Consumer<Packet<?>> task) {
+        task.accept(
             new ClientboundResourcePackPushPacket(
                 this.info.id(), this.info.url(), this.info.hash(), this.info.isRequired(), Optional.ofNullable(this.info.prompt())
             )

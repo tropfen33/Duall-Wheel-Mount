@@ -18,15 +18,15 @@ public class TextureAtlasSprite {
     private final float v0;
     private final float v1;
 
-    protected TextureAtlasSprite(ResourceLocation p_250211_, SpriteContents p_248526_, int p_248950_, int p_249741_, int p_248672_, int p_248637_) {
-        this.atlasLocation = p_250211_;
-        this.contents = p_248526_;
-        this.x = p_248672_;
-        this.y = p_248637_;
-        this.u0 = (float)p_248672_ / (float)p_248950_;
-        this.u1 = (float)(p_248672_ + p_248526_.width()) / (float)p_248950_;
-        this.v0 = (float)p_248637_ / (float)p_249741_;
-        this.v1 = (float)(p_248637_ + p_248526_.height()) / (float)p_249741_;
+    protected TextureAtlasSprite(ResourceLocation atlasLocation, SpriteContents contents, int originX, int originY, int x, int y) {
+        this.atlasLocation = atlasLocation;
+        this.contents = contents;
+        this.x = x;
+        this.y = y;
+        this.u0 = (float)x / (float)originX;
+        this.u1 = (float)(x + contents.width()) / (float)originX;
+        this.v0 = (float)y / (float)originY;
+        this.v1 = (float)(y + contents.height()) / (float)originY;
     }
 
     public int getX() {
@@ -65,14 +65,14 @@ public class TextureAtlasSprite {
         } : null;
     }
 
-    public float getU(float p_294967_) {
+    public float getU(float u) {
         float f = this.u1 - this.u0;
-        return this.u0 + f * p_294967_;
+        return this.u0 + f * u;
     }
 
-    public float getUOffset(float p_174728_) {
+    public float getUOffset(float offset) {
         float f = this.u1 - this.u0;
-        return (p_174728_ - this.u0) / f;
+        return (offset - this.u0) / f;
     }
 
     public float getV0() {
@@ -83,14 +83,14 @@ public class TextureAtlasSprite {
         return this.v1;
     }
 
-    public float getV(float p_294167_) {
+    public float getV(float v) {
         float f = this.v1 - this.v0;
-        return this.v0 + f * p_294167_;
+        return this.v0 + f * v;
     }
 
-    public float getVOffset(float p_174742_) {
+    public float getVOffset(float offset) {
         float f = this.v1 - this.v0;
-        return (p_174742_ - this.v0) / f;
+        return (offset - this.v0) / f;
     }
 
     public ResourceLocation atlasLocation() {
@@ -116,8 +116,8 @@ public class TextureAtlasSprite {
         return 4.0F / this.atlasSize();
     }
 
-    public VertexConsumer wrap(VertexConsumer p_118382_) {
-        return new SpriteCoordinateExpander(p_118382_, this);
+    public VertexConsumer wrap(VertexConsumer consumer) {
+        return new SpriteCoordinateExpander(consumer, this);
     }
 
     @OnlyIn(Dist.CLIENT)

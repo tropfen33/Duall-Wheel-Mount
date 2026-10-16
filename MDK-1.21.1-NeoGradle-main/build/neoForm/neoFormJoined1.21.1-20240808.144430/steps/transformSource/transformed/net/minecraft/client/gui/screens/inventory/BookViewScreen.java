@@ -36,36 +36,45 @@ public class BookViewScreen extends Screen {
     protected static final int IMAGE_HEIGHT = 192;
     private BookViewScreen.BookAccess bookAccess;
     private int currentPage;
+    /**
+     * Holds a copy of the page text, split into page width lines
+     */
     private List<FormattedCharSequence> cachedPageComponents = Collections.emptyList();
     private int cachedPage = -1;
     private Component pageMsg = CommonComponents.EMPTY;
     private PageButton forwardButton;
     private PageButton backButton;
+    /**
+     * Determines if a sound is played when the page is turned
+     */
     private final boolean playTurnSound;
 
-    public BookViewScreen(BookViewScreen.BookAccess p_98264_) {
-        this(p_98264_, true);
+    public BookViewScreen(BookViewScreen.BookAccess bookAccess) {
+        this(bookAccess, true);
     }
 
     public BookViewScreen() {
         this(EMPTY_ACCESS, false);
     }
 
-    private BookViewScreen(BookViewScreen.BookAccess p_98266_, boolean p_98267_) {
+    private BookViewScreen(BookViewScreen.BookAccess bookAccess, boolean playTurnSound) {
         super(GameNarrator.NO_TITLE);
-        this.bookAccess = p_98266_;
-        this.playTurnSound = p_98267_;
+        this.bookAccess = bookAccess;
+        this.playTurnSound = playTurnSound;
     }
 
-    public void setBookAccess(BookViewScreen.BookAccess p_98289_) {
-        this.bookAccess = p_98289_;
-        this.currentPage = Mth.clamp(this.currentPage, 0, p_98289_.getPageCount());
+    public void setBookAccess(BookViewScreen.BookAccess bookAccess) {
+        this.bookAccess = bookAccess;
+        this.currentPage = Mth.clamp(this.currentPage, 0, bookAccess.getPageCount());
         this.updateButtonVisibility();
         this.cachedPage = -1;
     }
 
-    public boolean setPage(int p_98276_) {
-        int i = Mth.clamp(p_98276_, 0, this.bookAccess.getPageCount() - 1);
+    /**
+     * Moves the book to the specified page and returns true if it exists, {@code false} otherwise.
+     */
+    public boolean setPage(int pageNum) {
+        int i = Mth.clamp(pageNum, 0, this.bookAccess.getPageCount() - 1);
         if (i != this.currentPage) {
             this.currentPage = i;
             this.updateButtonVisibility();
@@ -76,8 +85,11 @@ public class BookViewScreen extends Screen {
         }
     }
 
-    protected boolean forcePage(int p_98295_) {
-        return this.setPage(p_98295_);
+    /**
+     * I'm not sure why this exists. The function it calls is public and does all the work.
+     */
+    protected boolean forcePage(int pageNum) {
+        return this.setPage(pageNum);
     }
 
     @Override
@@ -123,12 +135,21 @@ public class BookViewScreen extends Screen {
         this.backButton.visible = this.currentPage > 0;
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_98278_, int p_98279_, int p_98280_) {
-        if (super.keyPressed(p_98278_, p_98279_, p_98280_)) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (super.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
         } else {
-            switch (p_98278_) {
+            switch (keyCode) {
                 case 266:
                     this.backButton.onPress();
                     return true;
@@ -141,9 +162,17 @@ public class BookViewScreen extends Screen {
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281997_, int p_281262_, int p_283321_, float p_282251_) {
-        super.render(p_281997_, p_281262_, p_283321_, p_282251_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         int i = (this.width - 192) / 2;
         int j = 2;
         if (this.cachedPage != this.currentPage) {
@@ -154,41 +183,50 @@ public class BookViewScreen extends Screen {
 
         this.cachedPage = this.currentPage;
         int i1 = this.font.width(this.pageMsg);
-        p_281997_.drawString(this.font, this.pageMsg, i - i1 + 192 - 44, 18, 0, false);
+        guiGraphics.drawString(this.font, this.pageMsg, i - i1 + 192 - 44, 18, 0, false);
         int k = Math.min(128 / 9, this.cachedPageComponents.size());
 
         for (int l = 0; l < k; l++) {
             FormattedCharSequence formattedcharsequence = this.cachedPageComponents.get(l);
-            p_281997_.drawString(this.font, formattedcharsequence, i + 36, 32 + l * 9, 0, false);
+            guiGraphics.drawString(this.font, formattedcharsequence, i + 36, 32 + l * 9, 0, false);
         }
 
-        Style style = this.getClickedComponentStyleAt((double)p_281262_, (double)p_283321_);
+        Style style = this.getClickedComponentStyleAt((double)mouseX, (double)mouseY);
         if (style != null) {
-            p_281997_.renderComponentHoverEffect(this.font, style, p_281262_, p_283321_);
+            guiGraphics.renderComponentHoverEffect(this.font, style, mouseX, mouseY);
         }
     }
 
     @Override
-    public void renderBackground(GuiGraphics p_295678_, int p_296491_, int p_294260_, float p_294869_) {
-        this.renderTransparentBackground(p_295678_);
-        p_295678_.blit(BOOK_LOCATION, (this.width - 192) / 2, 2, 0, 0, 192, 192);
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.renderTransparentBackground(guiGraphics);
+        guiGraphics.blit(BOOK_LOCATION, (this.width - 192) / 2, 2, 0, 0, 192, 192);
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    public boolean mouseClicked(double p_98272_, double p_98273_, int p_98274_) {
-        if (p_98274_ == 0) {
-            Style style = this.getClickedComponentStyleAt(p_98272_, p_98273_);
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0) {
+            Style style = this.getClickedComponentStyleAt(mouseX, mouseY);
             if (style != null && this.handleComponentClicked(style)) {
                 return true;
             }
         }
 
-        return super.mouseClicked(p_98272_, p_98273_, p_98274_);
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @Override
-    public boolean handleComponentClicked(Style p_98293_) {
-        ClickEvent clickevent = p_98293_.getClickEvent();
+    public boolean handleComponentClicked(Style style) {
+        ClickEvent clickevent = style.getClickEvent();
         if (clickevent == null) {
             return false;
         } else if (clickevent.getAction() == ClickEvent.Action.CHANGE_PAGE) {
@@ -201,7 +239,7 @@ public class BookViewScreen extends Screen {
                 return false;
             }
         } else {
-            boolean flag = super.handleComponentClicked(p_98293_);
+            boolean flag = super.handleComponentClicked(style);
             if (flag && clickevent.getAction() == ClickEvent.Action.RUN_COMMAND) {
                 this.closeScreen();
             }
@@ -215,12 +253,12 @@ public class BookViewScreen extends Screen {
     }
 
     @Nullable
-    public Style getClickedComponentStyleAt(double p_98269_, double p_98270_) {
+    public Style getClickedComponentStyleAt(double mouseX, double mouseY) {
         if (this.cachedPageComponents.isEmpty()) {
             return null;
         } else {
-            int i = Mth.floor(p_98269_ - (double)((this.width - 192) / 2) - 36.0);
-            int j = Mth.floor(p_98270_ - 2.0 - 30.0);
+            int i = Mth.floor(mouseX - (double)((this.width - 192) / 2) - 36.0);
+            int j = Mth.floor(mouseY - 2.0 - 30.0);
             if (i >= 0 && j >= 0) {
                 int k = Math.min(128 / 9, this.cachedPageComponents.size());
                 if (i <= 114 && j < 9 * k + k) {
@@ -246,18 +284,18 @@ public class BookViewScreen extends Screen {
             return this.pages.size();
         }
 
-        public FormattedText getPage(int p_98311_) {
-            return p_98311_ >= 0 && p_98311_ < this.getPageCount() ? this.pages.get(p_98311_) : FormattedText.EMPTY;
+        public FormattedText getPage(int page) {
+            return page >= 0 && page < this.getPageCount() ? this.pages.get(page) : FormattedText.EMPTY;
         }
 
         @Nullable
-        public static BookViewScreen.BookAccess fromItem(ItemStack p_98309_) {
+        public static BookViewScreen.BookAccess fromItem(ItemStack stack) {
             boolean flag = Minecraft.getInstance().isTextFilteringEnabled();
-            WrittenBookContent writtenbookcontent = p_98309_.get(DataComponents.WRITTEN_BOOK_CONTENT);
+            WrittenBookContent writtenbookcontent = stack.get(DataComponents.WRITTEN_BOOK_CONTENT);
             if (writtenbookcontent != null) {
                 return new BookViewScreen.BookAccess(writtenbookcontent.getPages(flag));
             } else {
-                WritableBookContent writablebookcontent = p_98309_.get(DataComponents.WRITABLE_BOOK_CONTENT);
+                WritableBookContent writablebookcontent = stack.get(DataComponents.WRITABLE_BOOK_CONTENT);
                 return writablebookcontent != null ? new BookViewScreen.BookAccess(writablebookcontent.getPages(flag).<Component>map(Component::literal).toList()) : null;
             }
         }

@@ -15,8 +15,8 @@ public class MetricsRegistry {
     private MetricsRegistry() {
     }
 
-    public void add(ProfilerMeasured p_146073_) {
-        this.measuredInstances.put(p_146073_, null);
+    public void add(ProfilerMeasured key) {
+        this.measuredInstances.put(key, null);
     }
 
     public List<MetricSampler> getRegisteredSamplers() {
@@ -28,8 +28,8 @@ public class MetricsRegistry {
         return aggregateDuplicates(map);
     }
 
-    private static List<MetricSampler> aggregateDuplicates(Map<String, List<MetricSampler>> p_146077_) {
-        return p_146077_.entrySet().stream().map(p_146075_ -> {
+    private static List<MetricSampler> aggregateDuplicates(Map<String, List<MetricSampler>> samplers) {
+        return samplers.entrySet().stream().map(p_146075_ -> {
             String s = p_146075_.getKey();
             List<MetricSampler> list = p_146075_.getValue();
             return (MetricSampler)(list.size() > 1 ? new MetricsRegistry.AggregatedMetricSampler(s, list) : list.get(0));
@@ -39,41 +39,41 @@ public class MetricsRegistry {
     static class AggregatedMetricSampler extends MetricSampler {
         private final List<MetricSampler> delegates;
 
-        AggregatedMetricSampler(String p_146082_, List<MetricSampler> p_146083_) {
-            super(p_146082_, p_146083_.get(0).getCategory(), () -> averageValueFromDelegates(p_146083_), () -> beforeTick(p_146083_), thresholdTest(p_146083_));
-            this.delegates = p_146083_;
+        AggregatedMetricSampler(String name, List<MetricSampler> delegates) {
+            super(name, delegates.get(0).getCategory(), () -> averageValueFromDelegates(delegates), () -> beforeTick(delegates), thresholdTest(delegates));
+            this.delegates = delegates;
         }
 
-        private static MetricSampler.ThresholdTest thresholdTest(List<MetricSampler> p_146088_) {
-            return p_146091_ -> p_146088_.stream().anyMatch(p_146086_ -> p_146086_.thresholdTest != null ? p_146086_.thresholdTest.test(p_146091_) : false);
+        private static MetricSampler.ThresholdTest thresholdTest(List<MetricSampler> samplers) {
+            return p_146091_ -> samplers.stream().anyMatch(p_146086_ -> p_146086_.thresholdTest != null ? p_146086_.thresholdTest.test(p_146091_) : false);
         }
 
-        private static void beforeTick(List<MetricSampler> p_146093_) {
-            for (MetricSampler metricsampler : p_146093_) {
+        private static void beforeTick(List<MetricSampler> samplers) {
+            for (MetricSampler metricsampler : samplers) {
                 metricsampler.onStartTick();
             }
         }
 
-        private static double averageValueFromDelegates(List<MetricSampler> p_146095_) {
+        private static double averageValueFromDelegates(List<MetricSampler> samplers) {
             double d0 = 0.0;
 
-            for (MetricSampler metricsampler : p_146095_) {
+            for (MetricSampler metricsampler : samplers) {
                 d0 += metricsampler.getSampler().getAsDouble();
             }
 
-            return d0 / (double)p_146095_.size();
+            return d0 / (double)samplers.size();
         }
 
         @Override
-        public boolean equals(@Nullable Object p_146101_) {
-            if (this == p_146101_) {
+        public boolean equals(@Nullable Object other) {
+            if (this == other) {
                 return true;
-            } else if (p_146101_ == null || this.getClass() != p_146101_.getClass()) {
+            } else if (other == null || this.getClass() != other.getClass()) {
                 return false;
-            } else if (!super.equals(p_146101_)) {
+            } else if (!super.equals(other)) {
                 return false;
             } else {
-                MetricsRegistry.AggregatedMetricSampler metricsregistry$aggregatedmetricsampler = (MetricsRegistry.AggregatedMetricSampler)p_146101_;
+                MetricsRegistry.AggregatedMetricSampler metricsregistry$aggregatedmetricsampler = (MetricsRegistry.AggregatedMetricSampler)other;
                 return this.delegates.equals(metricsregistry$aggregatedmetricsampler.delegates);
             }
         }

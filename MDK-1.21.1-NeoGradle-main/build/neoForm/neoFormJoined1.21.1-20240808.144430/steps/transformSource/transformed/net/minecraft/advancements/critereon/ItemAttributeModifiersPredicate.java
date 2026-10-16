@@ -36,8 +36,8 @@ public record ItemAttributeModifiersPredicate(
         return DataComponents.ATTRIBUTE_MODIFIERS;
     }
 
-    public boolean matches(ItemStack p_341223_, ItemAttributeModifiers p_341374_) {
-        return !this.modifiers.isPresent() || this.modifiers.get().test(p_341374_.modifiers());
+    public boolean matches(ItemStack stack, ItemAttributeModifiers value) {
+        return !this.modifiers.isPresent() || this.modifiers.get().test(value.modifiers());
     }
 
     /**
@@ -70,17 +70,17 @@ public record ItemAttributeModifiersPredicate(
                     .apply(p_349786_, ItemAttributeModifiersPredicate.EntryPredicate::new)
         );
 
-        public boolean test(ItemAttributeModifiers.Entry p_341096_) {
-            if (this.attribute.isPresent() && !this.attribute.get().contains(p_341096_.attribute())) {
+        public boolean test(ItemAttributeModifiers.Entry entry) {
+            if (this.attribute.isPresent() && !this.attribute.get().contains(entry.attribute())) {
                 return false;
-            } else if (this.id.isPresent() && !this.id.get().equals(p_341096_.modifier().id())) {
+            } else if (this.id.isPresent() && !this.id.get().equals(entry.modifier().id())) {
                 return false;
-            } else if (!this.amount.matches(p_341096_.modifier().amount())) {
+            } else if (!this.amount.matches(entry.modifier().amount())) {
                 return false;
             } else {
-                return this.operation.isPresent() && this.operation.get() != p_341096_.modifier().operation()
+                return this.operation.isPresent() && this.operation.get() != entry.modifier().operation()
                     ? false
-                    : !this.slot.isPresent() || this.slot.get() == p_341096_.slot();
+                    : !this.slot.isPresent() || this.slot.get() == entry.slot();
             }
         }
     }

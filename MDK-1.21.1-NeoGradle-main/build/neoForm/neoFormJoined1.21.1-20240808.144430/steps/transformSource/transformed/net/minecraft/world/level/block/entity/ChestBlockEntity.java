@@ -56,12 +56,12 @@ public class ChestBlockEntity extends RandomizableContainerBlockEntity implement
     };
     private final ChestLidController chestLidController = new ChestLidController();
 
-    protected ChestBlockEntity(BlockEntityType<?> p_155327_, BlockPos p_155328_, BlockState p_155329_) {
-        super(p_155327_, p_155328_, p_155329_);
+    protected ChestBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState blockState) {
+        super(type, pos, blockState);
     }
 
-    public ChestBlockEntity(BlockPos p_155331_, BlockState p_155332_) {
-        this(BlockEntityType.CHEST, p_155331_, p_155332_);
+    public ChestBlockEntity(BlockPos pos, BlockState blockState) {
+        this(BlockEntityType.CHEST, pos, blockState);
     }
 
     @Override
@@ -75,63 +75,63 @@ public class ChestBlockEntity extends RandomizableContainerBlockEntity implement
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_155349_, HolderLookup.Provider p_324564_) {
-        super.loadAdditional(p_155349_, p_324564_);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
         this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
-        if (!this.tryLoadLootTable(p_155349_)) {
-            ContainerHelper.loadAllItems(p_155349_, this.items, p_324564_);
+        if (!this.tryLoadLootTable(tag)) {
+            ContainerHelper.loadAllItems(tag, this.items, registries);
         }
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_187489_, HolderLookup.Provider p_324448_) {
-        super.saveAdditional(p_187489_, p_324448_);
-        if (!this.trySaveLootTable(p_187489_)) {
-            ContainerHelper.saveAllItems(p_187489_, this.items, p_324448_);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        if (!this.trySaveLootTable(tag)) {
+            ContainerHelper.saveAllItems(tag, this.items, registries);
         }
     }
 
-    public static void lidAnimateTick(Level p_155344_, BlockPos p_155345_, BlockState p_155346_, ChestBlockEntity p_155347_) {
-        p_155347_.chestLidController.tickLid();
+    public static void lidAnimateTick(Level level, BlockPos pos, BlockState state, ChestBlockEntity blockEntity) {
+        blockEntity.chestLidController.tickLid();
     }
 
-    static void playSound(Level p_155339_, BlockPos p_155340_, BlockState p_155341_, SoundEvent p_155342_) {
-        ChestType chesttype = p_155341_.getValue(ChestBlock.TYPE);
+    static void playSound(Level level, BlockPos pos, BlockState state, SoundEvent sound) {
+        ChestType chesttype = state.getValue(ChestBlock.TYPE);
         if (chesttype != ChestType.LEFT) {
-            double d0 = (double)p_155340_.getX() + 0.5;
-            double d1 = (double)p_155340_.getY() + 0.5;
-            double d2 = (double)p_155340_.getZ() + 0.5;
+            double d0 = (double)pos.getX() + 0.5;
+            double d1 = (double)pos.getY() + 0.5;
+            double d2 = (double)pos.getZ() + 0.5;
             if (chesttype == ChestType.RIGHT) {
-                Direction direction = ChestBlock.getConnectedDirection(p_155341_);
+                Direction direction = ChestBlock.getConnectedDirection(state);
                 d0 += (double)direction.getStepX() * 0.5;
                 d2 += (double)direction.getStepZ() * 0.5;
             }
 
-            p_155339_.playSound(null, d0, d1, d2, p_155342_, SoundSource.BLOCKS, 0.5F, p_155339_.random.nextFloat() * 0.1F + 0.9F);
+            level.playSound(null, d0, d1, d2, sound, SoundSource.BLOCKS, 0.5F, level.random.nextFloat() * 0.1F + 0.9F);
         }
     }
 
     @Override
-    public boolean triggerEvent(int p_59114_, int p_59115_) {
-        if (p_59114_ == 1) {
-            this.chestLidController.shouldBeOpen(p_59115_ > 0);
+    public boolean triggerEvent(int id, int type) {
+        if (id == 1) {
+            this.chestLidController.shouldBeOpen(type > 0);
             return true;
         } else {
-            return super.triggerEvent(p_59114_, p_59115_);
+            return super.triggerEvent(id, type);
         }
     }
 
     @Override
-    public void startOpen(Player p_59120_) {
-        if (!this.remove && !p_59120_.isSpectator()) {
-            this.openersCounter.incrementOpeners(p_59120_, this.getLevel(), this.getBlockPos(), this.getBlockState());
+    public void startOpen(Player player) {
+        if (!this.remove && !player.isSpectator()) {
+            this.openersCounter.incrementOpeners(player, this.getLevel(), this.getBlockPos(), this.getBlockState());
         }
     }
 
     @Override
-    public void stopOpen(Player p_59118_) {
-        if (!this.remove && !p_59118_.isSpectator()) {
-            this.openersCounter.decrementOpeners(p_59118_, this.getLevel(), this.getBlockPos(), this.getBlockState());
+    public void stopOpen(Player player) {
+        if (!this.remove && !player.isSpectator()) {
+            this.openersCounter.decrementOpeners(player, this.getLevel(), this.getBlockPos(), this.getBlockState());
         }
     }
 
@@ -141,19 +141,19 @@ public class ChestBlockEntity extends RandomizableContainerBlockEntity implement
     }
 
     @Override
-    protected void setItems(NonNullList<ItemStack> p_59110_) {
-        this.items = p_59110_;
+    protected void setItems(NonNullList<ItemStack> items) {
+        this.items = items;
     }
 
     @Override
-    public float getOpenNess(float p_59080_) {
-        return this.chestLidController.getOpenness(p_59080_);
+    public float getOpenNess(float partialTicks) {
+        return this.chestLidController.getOpenness(partialTicks);
     }
 
-    public static int getOpenCount(BlockGetter p_59087_, BlockPos p_59088_) {
-        BlockState blockstate = p_59087_.getBlockState(p_59088_);
+    public static int getOpenCount(BlockGetter level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
         if (blockstate.hasBlockEntity()) {
-            BlockEntity blockentity = p_59087_.getBlockEntity(p_59088_);
+            BlockEntity blockentity = level.getBlockEntity(pos);
             if (blockentity instanceof ChestBlockEntity) {
                 return ((ChestBlockEntity)blockentity).openersCounter.getOpenerCount();
             }
@@ -162,15 +162,15 @@ public class ChestBlockEntity extends RandomizableContainerBlockEntity implement
         return 0;
     }
 
-    public static void swapContents(ChestBlockEntity p_59104_, ChestBlockEntity p_59105_) {
-        NonNullList<ItemStack> nonnulllist = p_59104_.getItems();
-        p_59104_.setItems(p_59105_.getItems());
-        p_59105_.setItems(nonnulllist);
+    public static void swapContents(ChestBlockEntity chest, ChestBlockEntity otherChest) {
+        NonNullList<ItemStack> nonnulllist = chest.getItems();
+        chest.setItems(otherChest.getItems());
+        otherChest.setItems(nonnulllist);
     }
 
     @Override
-    protected AbstractContainerMenu createMenu(int p_59082_, Inventory p_59083_) {
-        return ChestMenu.threeRows(p_59082_, p_59083_, this);
+    protected AbstractContainerMenu createMenu(int id, Inventory player) {
+        return ChestMenu.threeRows(id, player, this);
     }
 
     @Override
@@ -190,8 +190,8 @@ public class ChestBlockEntity extends RandomizableContainerBlockEntity implement
         }
     }
 
-    protected void signalOpenCount(Level p_155333_, BlockPos p_155334_, BlockState p_155335_, int p_155336_, int p_155337_) {
-        Block block = p_155335_.getBlock();
-        p_155333_.blockEvent(p_155334_, block, 1, p_155337_);
+    protected void signalOpenCount(Level level, BlockPos pos, BlockState state, int eventId, int eventParam) {
+        Block block = state.getBlock();
+        level.blockEvent(pos, block, 1, eventParam);
     }
 }

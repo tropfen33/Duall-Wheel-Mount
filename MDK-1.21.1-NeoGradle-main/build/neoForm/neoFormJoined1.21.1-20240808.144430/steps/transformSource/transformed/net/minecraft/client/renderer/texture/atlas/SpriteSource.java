@@ -14,19 +14,19 @@ import net.neoforged.api.distmarker.OnlyIn;
 public interface SpriteSource {
     FileToIdConverter TEXTURE_ID_CONVERTER = new FileToIdConverter("textures", ".png");
 
-    void run(ResourceManager p_261770_, SpriteSource.Output p_261757_);
+    void run(ResourceManager resourceManager, SpriteSource.Output output);
 
     SpriteSourceType type();
 
     @OnlyIn(Dist.CLIENT)
     public interface Output {
-        default void add(ResourceLocation p_261841_, Resource p_261651_) {
-            this.add(p_261841_, p_293684_ -> p_293684_.loadSprite(p_261841_, p_261651_));
+        default void add(ResourceLocation location, Resource resource) {
+            this.add(location, p_293684_ -> p_293684_.loadSprite(location, resource));
         }
 
-        void add(ResourceLocation p_261821_, SpriteSource.SpriteSupplier p_261760_);
+        void add(ResourceLocation location, SpriteSource.SpriteSupplier sprite);
 
-        void removeAll(Predicate<ResourceLocation> p_261532_);
+        void removeAll(Predicate<ResourceLocation> predicate);
     }
 
     @OnlyIn(Dist.CLIENT)

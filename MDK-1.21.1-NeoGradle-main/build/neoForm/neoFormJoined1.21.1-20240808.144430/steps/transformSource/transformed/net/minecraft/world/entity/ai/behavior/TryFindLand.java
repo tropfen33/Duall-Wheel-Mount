@@ -17,7 +17,7 @@ import org.apache.commons.lang3.mutable.MutableLong;
 public class TryFindLand {
     private static final int COOLDOWN_TICKS = 60;
 
-    public static BehaviorControl<PathfinderMob> create(int p_259889_, float p_259302_) {
+    public static BehaviorControl<PathfinderMob> create(int range, float speedModifier) {
         MutableLong mutablelong = new MutableLong(0L);
         return BehaviorBuilder.create(
             p_259851_ -> p_259851_.group(
@@ -38,7 +38,7 @@ public class TryFindLand {
                                     BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
                                     CollisionContext collisioncontext = CollisionContext.of(p_260019_);
 
-                                    for (BlockPos blockpos1 : BlockPos.withinManhattan(blockpos, p_259889_, p_259889_, p_259889_)) {
+                                    for (BlockPos blockpos1 : BlockPos.withinManhattan(blockpos, range, range, range)) {
                                         if (blockpos1.getX() != blockpos.getX() || blockpos1.getZ() != blockpos.getZ()) {
                                             BlockState blockstate = p_260032_.getBlockState(blockpos1);
                                             BlockState blockstate1 = p_260032_.getBlockState(blockpos$mutableblockpos.setWithOffset(blockpos1, Direction.DOWN));
@@ -48,7 +48,7 @@ public class TryFindLand {
                                                 && blockstate1.isFaceSturdy(p_260032_, blockpos$mutableblockpos, Direction.UP)) {
                                                 BlockPos blockpos2 = blockpos1.immutable();
                                                 p_259123_.set(new BlockPosTracker(blockpos2));
-                                                p_259882_.set(new WalkTarget(new BlockPosTracker(blockpos2), p_259302_, 1));
+                                                p_259882_.set(new WalkTarget(new BlockPosTracker(blockpos2), speedModifier, 1));
                                                 break;
                                             }
                                         }

@@ -50,8 +50,8 @@ public class VaultBlockEntity extends BlockEntity {
     private final VaultClientData clientData = new VaultClientData();
     private VaultConfig config = VaultConfig.DEFAULT;
 
-    public VaultBlockEntity(BlockPos p_324016_, BlockState p_324022_) {
-        super(BlockEntityType.VAULT, p_324016_, p_324022_);
+    public VaultBlockEntity(BlockPos pos, BlockState state) {
+        super(BlockEntityType.VAULT, pos, state);
     }
 
     @Nullable
@@ -61,36 +61,36 @@ public class VaultBlockEntity extends BlockEntity {
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider p_324118_) {
-        return Util.make(new CompoundTag(), p_330145_ -> p_330145_.put("shared_data", encode(VaultSharedData.CODEC, this.sharedData, p_324118_)));
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        return Util.make(new CompoundTag(), p_330145_ -> p_330145_.put("shared_data", encode(VaultSharedData.CODEC, this.sharedData, registries)));
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_323998_, HolderLookup.Provider p_324356_) {
-        super.saveAdditional(p_323998_, p_324356_);
-        p_323998_.put("config", encode(VaultConfig.CODEC, this.config, p_324356_));
-        p_323998_.put("shared_data", encode(VaultSharedData.CODEC, this.sharedData, p_324356_));
-        p_323998_.put("server_data", encode(VaultServerData.CODEC, this.serverData, p_324356_));
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        tag.put("config", encode(VaultConfig.CODEC, this.config, registries));
+        tag.put("shared_data", encode(VaultSharedData.CODEC, this.sharedData, registries));
+        tag.put("server_data", encode(VaultServerData.CODEC, this.serverData, registries));
     }
 
-    private static <T> Tag encode(Codec<T> p_324465_, T p_324338_, HolderLookup.Provider p_331118_) {
-        return p_324465_.encodeStart(p_331118_.createSerializationContext(NbtOps.INSTANCE), p_324338_).getOrThrow();
+    private static <T> Tag encode(Codec<T> codec, T value, HolderLookup.Provider levelRegistry) {
+        return codec.encodeStart(levelRegistry.createSerializationContext(NbtOps.INSTANCE), value).getOrThrow();
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_324011_, HolderLookup.Provider p_324430_) {
-        super.loadAdditional(p_324011_, p_324430_);
-        DynamicOps<Tag> dynamicops = p_324430_.createSerializationContext(NbtOps.INSTANCE);
-        if (p_324011_.contains("server_data")) {
-            VaultServerData.CODEC.parse(dynamicops, p_324011_.get("server_data")).resultOrPartial(LOGGER::error).ifPresent(this.serverData::set);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        DynamicOps<Tag> dynamicops = registries.createSerializationContext(NbtOps.INSTANCE);
+        if (tag.contains("server_data")) {
+            VaultServerData.CODEC.parse(dynamicops, tag.get("server_data")).resultOrPartial(LOGGER::error).ifPresent(this.serverData::set);
         }
 
-        if (p_324011_.contains("config")) {
-            VaultConfig.CODEC.parse(dynamicops, p_324011_.get("config")).resultOrPartial(LOGGER::error).ifPresent(p_324546_ -> this.config = p_324546_);
+        if (tag.contains("config")) {
+            VaultConfig.CODEC.parse(dynamicops, tag.get("config")).resultOrPartial(LOGGER::error).ifPresent(p_324546_ -> this.config = p_324546_);
         }
 
-        if (p_324011_.contains("shared_data")) {
-            VaultSharedData.CODEC.parse(dynamicops, p_324011_.get("shared_data")).resultOrPartial(LOGGER::error).ifPresent(this.sharedData::set);
+        if (tag.contains("shared_data")) {
+            VaultSharedData.CODEC.parse(dynamicops, tag.get("shared_data")).resultOrPartial(LOGGER::error).ifPresent(this.sharedData::set);
         }
     }
 
@@ -112,8 +112,8 @@ public class VaultBlockEntity extends BlockEntity {
     }
 
     @VisibleForTesting
-    public void setConfig(VaultConfig p_324010_) {
-        this.config = p_324010_;
+    public void setConfig(VaultConfig config) {
+        this.config = config;
     }
 
     public static final class Client {
@@ -123,87 +123,87 @@ public class VaultBlockEntity extends BlockEntity {
         private static final int ACTIVATION_PARTICLE_COUNT = 20;
         private static final int DEACTIVATION_PARTICLE_COUNT = 20;
 
-        public static void tick(Level p_324312_, BlockPos p_323810_, BlockState p_323862_, VaultClientData p_324314_, VaultSharedData p_323914_) {
-            p_324314_.updateDisplayItemSpin();
-            if (p_324312_.getGameTime() % 20L == 0L) {
-                emitConnectionParticlesForNearbyPlayers(p_324312_, p_323810_, p_323862_, p_323914_);
+        public static void tick(Level level, BlockPos pos, BlockState state, VaultClientData clientData, VaultSharedData sharedData) {
+            clientData.updateDisplayItemSpin();
+            if (level.getGameTime() % 20L == 0L) {
+                emitConnectionParticlesForNearbyPlayers(level, pos, state, sharedData);
             }
 
             emitIdleParticles(
-                p_324312_, p_323810_, p_323914_, p_323862_.getValue(VaultBlock.OMINOUS) ? ParticleTypes.SOUL_FIRE_FLAME : ParticleTypes.SMALL_FLAME
+                level, pos, sharedData, state.getValue(VaultBlock.OMINOUS) ? ParticleTypes.SOUL_FIRE_FLAME : ParticleTypes.SMALL_FLAME
             );
-            playIdleSounds(p_324312_, p_323810_, p_323914_);
+            playIdleSounds(level, pos, sharedData);
         }
 
         public static void emitActivationParticles(
-            Level p_323761_, BlockPos p_324150_, BlockState p_324527_, VaultSharedData p_324466_, ParticleOptions p_338551_
+            Level level, BlockPos pos, BlockState state, VaultSharedData sharedData, ParticleOptions particle
         ) {
-            emitConnectionParticlesForNearbyPlayers(p_323761_, p_324150_, p_324527_, p_324466_);
-            RandomSource randomsource = p_323761_.random;
+            emitConnectionParticlesForNearbyPlayers(level, pos, state, sharedData);
+            RandomSource randomsource = level.random;
 
             for (int i = 0; i < 20; i++) {
-                Vec3 vec3 = randomPosInsideCage(p_324150_, randomsource);
-                p_323761_.addParticle(ParticleTypes.SMOKE, vec3.x(), vec3.y(), vec3.z(), 0.0, 0.0, 0.0);
-                p_323761_.addParticle(p_338551_, vec3.x(), vec3.y(), vec3.z(), 0.0, 0.0, 0.0);
+                Vec3 vec3 = randomPosInsideCage(pos, randomsource);
+                level.addParticle(ParticleTypes.SMOKE, vec3.x(), vec3.y(), vec3.z(), 0.0, 0.0, 0.0);
+                level.addParticle(particle, vec3.x(), vec3.y(), vec3.z(), 0.0, 0.0, 0.0);
             }
         }
 
-        public static void emitDeactivationParticles(Level p_324419_, BlockPos p_324587_, ParticleOptions p_338582_) {
-            RandomSource randomsource = p_324419_.random;
+        public static void emitDeactivationParticles(Level level, BlockPos pos, ParticleOptions particle) {
+            RandomSource randomsource = level.random;
 
             for (int i = 0; i < 20; i++) {
-                Vec3 vec3 = randomPosCenterOfCage(p_324587_, randomsource);
+                Vec3 vec3 = randomPosCenterOfCage(pos, randomsource);
                 Vec3 vec31 = new Vec3(randomsource.nextGaussian() * 0.02, randomsource.nextGaussian() * 0.02, randomsource.nextGaussian() * 0.02);
-                p_324419_.addParticle(p_338582_, vec3.x(), vec3.y(), vec3.z(), vec31.x(), vec31.y(), vec31.z());
+                level.addParticle(particle, vec3.x(), vec3.y(), vec3.z(), vec31.x(), vec31.y(), vec31.z());
             }
         }
 
-        private static void emitIdleParticles(Level p_324004_, BlockPos p_324516_, VaultSharedData p_324173_, ParticleOptions p_338823_) {
-            RandomSource randomsource = p_324004_.getRandom();
+        private static void emitIdleParticles(Level level, BlockPos pos, VaultSharedData sharedData, ParticleOptions particle) {
+            RandomSource randomsource = level.getRandom();
             if (randomsource.nextFloat() <= 0.5F) {
-                Vec3 vec3 = randomPosInsideCage(p_324516_, randomsource);
-                p_324004_.addParticle(ParticleTypes.SMOKE, vec3.x(), vec3.y(), vec3.z(), 0.0, 0.0, 0.0);
-                if (shouldDisplayActiveEffects(p_324173_)) {
-                    p_324004_.addParticle(p_338823_, vec3.x(), vec3.y(), vec3.z(), 0.0, 0.0, 0.0);
+                Vec3 vec3 = randomPosInsideCage(pos, randomsource);
+                level.addParticle(ParticleTypes.SMOKE, vec3.x(), vec3.y(), vec3.z(), 0.0, 0.0, 0.0);
+                if (shouldDisplayActiveEffects(sharedData)) {
+                    level.addParticle(particle, vec3.x(), vec3.y(), vec3.z(), 0.0, 0.0, 0.0);
                 }
             }
         }
 
-        private static void emitConnectionParticlesForPlayer(Level p_323629_, Vec3 p_324592_, Player p_324428_) {
-            RandomSource randomsource = p_323629_.random;
-            Vec3 vec3 = p_324592_.vectorTo(p_324428_.position().add(0.0, (double)(p_324428_.getBbHeight() / 2.0F), 0.0));
+        private static void emitConnectionParticlesForPlayer(Level level, Vec3 pos, Player player) {
+            RandomSource randomsource = level.random;
+            Vec3 vec3 = pos.vectorTo(player.position().add(0.0, (double)(player.getBbHeight() / 2.0F), 0.0));
             int i = Mth.nextInt(randomsource, 2, 5);
 
             for (int j = 0; j < i; j++) {
                 Vec3 vec31 = vec3.offsetRandom(randomsource, 1.0F);
-                p_323629_.addParticle(ParticleTypes.VAULT_CONNECTION, p_324592_.x(), p_324592_.y(), p_324592_.z(), vec31.x(), vec31.y(), vec31.z());
+                level.addParticle(ParticleTypes.VAULT_CONNECTION, pos.x(), pos.y(), pos.z(), vec31.x(), vec31.y(), vec31.z());
             }
         }
 
-        private static void emitConnectionParticlesForNearbyPlayers(Level p_324593_, BlockPos p_324162_, BlockState p_324246_, VaultSharedData p_323584_) {
-            Set<UUID> set = p_323584_.getConnectedPlayers();
+        private static void emitConnectionParticlesForNearbyPlayers(Level level, BlockPos pos, BlockState state, VaultSharedData sharedData) {
+            Set<UUID> set = sharedData.getConnectedPlayers();
             if (!set.isEmpty()) {
-                Vec3 vec3 = keyholePos(p_324162_, p_324246_.getValue(VaultBlock.FACING));
+                Vec3 vec3 = keyholePos(pos, state.getValue(VaultBlock.FACING));
 
                 for (UUID uuid : set) {
-                    Player player = p_324593_.getPlayerByUUID(uuid);
-                    if (player != null && isWithinConnectionRange(p_324162_, p_323584_, player)) {
-                        emitConnectionParticlesForPlayer(p_324593_, vec3, player);
+                    Player player = level.getPlayerByUUID(uuid);
+                    if (player != null && isWithinConnectionRange(pos, sharedData, player)) {
+                        emitConnectionParticlesForPlayer(level, vec3, player);
                     }
                 }
             }
         }
 
-        private static boolean isWithinConnectionRange(BlockPos p_324081_, VaultSharedData p_323688_, Player p_324438_) {
-            return p_324438_.blockPosition().distSqr(p_324081_) <= Mth.square(p_323688_.connectedParticlesRange());
+        private static boolean isWithinConnectionRange(BlockPos pos, VaultSharedData sharedData, Player player) {
+            return player.blockPosition().distSqr(pos) <= Mth.square(sharedData.connectedParticlesRange());
         }
 
-        private static void playIdleSounds(Level p_323802_, BlockPos p_323510_, VaultSharedData p_324457_) {
-            if (shouldDisplayActiveEffects(p_324457_)) {
-                RandomSource randomsource = p_323802_.getRandom();
+        private static void playIdleSounds(Level level, BlockPos pos, VaultSharedData sharedData) {
+            if (shouldDisplayActiveEffects(sharedData)) {
+                RandomSource randomsource = level.getRandom();
                 if (randomsource.nextFloat() <= 0.02F) {
-                    p_323802_.playLocalSound(
-                        p_323510_,
+                    level.playLocalSound(
+                        pos,
                         SoundEvents.VAULT_AMBIENT,
                         SoundSource.BLOCKS,
                         randomsource.nextFloat() * 0.25F + 0.75F,
@@ -214,22 +214,22 @@ public class VaultBlockEntity extends BlockEntity {
             }
         }
 
-        public static boolean shouldDisplayActiveEffects(VaultSharedData p_323681_) {
-            return p_323681_.hasDisplayItem();
+        public static boolean shouldDisplayActiveEffects(VaultSharedData sharedData) {
+            return sharedData.hasDisplayItem();
         }
 
-        private static Vec3 randomPosCenterOfCage(BlockPos p_323493_, RandomSource p_324481_) {
-            return Vec3.atLowerCornerOf(p_323493_)
-                .add(Mth.nextDouble(p_324481_, 0.4, 0.6), Mth.nextDouble(p_324481_, 0.4, 0.6), Mth.nextDouble(p_324481_, 0.4, 0.6));
+        private static Vec3 randomPosCenterOfCage(BlockPos pos, RandomSource random) {
+            return Vec3.atLowerCornerOf(pos)
+                .add(Mth.nextDouble(random, 0.4, 0.6), Mth.nextDouble(random, 0.4, 0.6), Mth.nextDouble(random, 0.4, 0.6));
         }
 
-        private static Vec3 randomPosInsideCage(BlockPos p_324080_, RandomSource p_324532_) {
-            return Vec3.atLowerCornerOf(p_324080_)
-                .add(Mth.nextDouble(p_324532_, 0.1, 0.9), Mth.nextDouble(p_324532_, 0.25, 0.75), Mth.nextDouble(p_324532_, 0.1, 0.9));
+        private static Vec3 randomPosInsideCage(BlockPos pos, RandomSource random) {
+            return Vec3.atLowerCornerOf(pos)
+                .add(Mth.nextDouble(random, 0.1, 0.9), Mth.nextDouble(random, 0.25, 0.75), Mth.nextDouble(random, 0.1, 0.9));
         }
 
-        private static Vec3 keyholePos(BlockPos p_323572_, Direction p_324503_) {
-            return Vec3.atBottomCenterOf(p_323572_).add((double)p_324503_.getStepX() * 0.5, 1.75, (double)p_324503_.getStepZ() * 0.5);
+        private static Vec3 keyholePos(BlockPos pos, Direction facing) {
+            return Vec3.atBottomCenterOf(pos).add((double)facing.getStepX() * 0.5, 1.75, (double)facing.getStepZ() * 0.5);
         }
     }
 
@@ -239,133 +239,133 @@ public class VaultBlockEntity extends BlockEntity {
         private static final int INSERT_FAIL_SOUND_BUFFER_TICKS = 15;
 
         public static void tick(
-            ServerLevel p_323841_, BlockPos p_324265_, BlockState p_324343_, VaultConfig p_324129_, VaultServerData p_324579_, VaultSharedData p_324317_
+            ServerLevel level, BlockPos pos, BlockState state, VaultConfig config, VaultServerData serverData, VaultSharedData sharedData
         ) {
-            VaultState vaultstate = p_324343_.getValue(VaultBlock.STATE);
-            if (shouldCycleDisplayItem(p_323841_.getGameTime(), vaultstate)) {
-                cycleDisplayItemFromLootTable(p_323841_, vaultstate, p_324129_, p_324317_, p_324265_);
+            VaultState vaultstate = state.getValue(VaultBlock.STATE);
+            if (shouldCycleDisplayItem(level.getGameTime(), vaultstate)) {
+                cycleDisplayItemFromLootTable(level, vaultstate, config, sharedData, pos);
             }
 
-            BlockState blockstate = p_324343_;
-            if (p_323841_.getGameTime() >= p_324579_.stateUpdatingResumesAt()) {
-                blockstate = p_324343_.setValue(VaultBlock.STATE, vaultstate.tickAndGetNext(p_323841_, p_324265_, p_324129_, p_324579_, p_324317_));
-                if (!p_324343_.equals(blockstate)) {
-                    setVaultState(p_323841_, p_324265_, p_324343_, blockstate, p_324129_, p_324317_);
+            BlockState blockstate = state;
+            if (level.getGameTime() >= serverData.stateUpdatingResumesAt()) {
+                blockstate = state.setValue(VaultBlock.STATE, vaultstate.tickAndGetNext(level, pos, config, serverData, sharedData));
+                if (!state.equals(blockstate)) {
+                    setVaultState(level, pos, state, blockstate, config, sharedData);
                 }
             }
 
-            if (p_324579_.isDirty || p_324317_.isDirty) {
-                VaultBlockEntity.setChanged(p_323841_, p_324265_, p_324343_);
-                if (p_324317_.isDirty) {
-                    p_323841_.sendBlockUpdated(p_324265_, p_324343_, blockstate, 2);
+            if (serverData.isDirty || sharedData.isDirty) {
+                VaultBlockEntity.setChanged(level, pos, state);
+                if (sharedData.isDirty) {
+                    level.sendBlockUpdated(pos, state, blockstate, 2);
                 }
 
-                p_324579_.isDirty = false;
-                p_324317_.isDirty = false;
+                serverData.isDirty = false;
+                sharedData.isDirty = false;
             }
         }
 
         public static void tryInsertKey(
-            ServerLevel p_323533_,
-            BlockPos p_323777_,
-            BlockState p_324589_,
-            VaultConfig p_323660_,
-            VaultServerData p_323829_,
-            VaultSharedData p_324341_,
-            Player p_324373_,
-            ItemStack p_324551_
+            ServerLevel level,
+            BlockPos pos,
+            BlockState state,
+            VaultConfig config,
+            VaultServerData serverData,
+            VaultSharedData sharedData,
+            Player player,
+            ItemStack stack
         ) {
-            VaultState vaultstate = p_324589_.getValue(VaultBlock.STATE);
-            if (canEjectReward(p_323660_, vaultstate)) {
-                if (!isValidToInsert(p_323660_, p_324551_)) {
-                    playInsertFailSound(p_323533_, p_323829_, p_323777_, SoundEvents.VAULT_INSERT_ITEM_FAIL);
-                } else if (p_323829_.hasRewardedPlayer(p_324373_)) {
-                    playInsertFailSound(p_323533_, p_323829_, p_323777_, SoundEvents.VAULT_REJECT_REWARDED_PLAYER);
+            VaultState vaultstate = state.getValue(VaultBlock.STATE);
+            if (canEjectReward(config, vaultstate)) {
+                if (!isValidToInsert(config, stack)) {
+                    playInsertFailSound(level, serverData, pos, SoundEvents.VAULT_INSERT_ITEM_FAIL);
+                } else if (serverData.hasRewardedPlayer(player)) {
+                    playInsertFailSound(level, serverData, pos, SoundEvents.VAULT_REJECT_REWARDED_PLAYER);
                 } else {
-                    List<ItemStack> list = resolveItemsToEject(p_323533_, p_323660_, p_323777_, p_324373_);
+                    List<ItemStack> list = resolveItemsToEject(level, config, pos, player);
                     if (!list.isEmpty()) {
-                        p_324373_.awardStat(Stats.ITEM_USED.get(p_324551_.getItem()));
-                        p_324551_.consume(p_323660_.keyItem().getCount(), p_324373_);
-                        unlock(p_323533_, p_324589_, p_323777_, p_323660_, p_323829_, p_324341_, list);
-                        p_323829_.addToRewardedPlayers(p_324373_);
-                        p_324341_.updateConnectedPlayersWithinRange(p_323533_, p_323777_, p_323829_, p_323660_, p_323660_.deactivationRange());
+                        player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
+                        stack.consume(config.keyItem().getCount(), player);
+                        unlock(level, state, pos, config, serverData, sharedData, list);
+                        serverData.addToRewardedPlayers(player);
+                        sharedData.updateConnectedPlayersWithinRange(level, pos, serverData, config, config.deactivationRange());
                     }
                 }
             }
         }
 
         static void setVaultState(
-            ServerLevel p_324091_, BlockPos p_324620_, BlockState p_323759_, BlockState p_324027_, VaultConfig p_324140_, VaultSharedData p_323624_
+            ServerLevel level, BlockPos pos, BlockState oldState, BlockState newState, VaultConfig config, VaultSharedData sharedData
         ) {
-            VaultState vaultstate = p_323759_.getValue(VaultBlock.STATE);
-            VaultState vaultstate1 = p_324027_.getValue(VaultBlock.STATE);
-            p_324091_.setBlock(p_324620_, p_324027_, 3);
-            vaultstate.onTransition(p_324091_, p_324620_, vaultstate1, p_324140_, p_323624_, p_324027_.getValue(VaultBlock.OMINOUS));
+            VaultState vaultstate = oldState.getValue(VaultBlock.STATE);
+            VaultState vaultstate1 = newState.getValue(VaultBlock.STATE);
+            level.setBlock(pos, newState, 3);
+            vaultstate.onTransition(level, pos, vaultstate1, config, sharedData, newState.getValue(VaultBlock.OMINOUS));
         }
 
         static void cycleDisplayItemFromLootTable(
-            ServerLevel p_323551_, VaultState p_324221_, VaultConfig p_324332_, VaultSharedData p_323644_, BlockPos p_323602_
+            ServerLevel level, VaultState state, VaultConfig config, VaultSharedData sharedData, BlockPos pos
         ) {
-            if (!canEjectReward(p_324332_, p_324221_)) {
-                p_323644_.setDisplayItem(ItemStack.EMPTY);
+            if (!canEjectReward(config, state)) {
+                sharedData.setDisplayItem(ItemStack.EMPTY);
             } else {
                 ItemStack itemstack = getRandomDisplayItemFromLootTable(
-                    p_323551_, p_323602_, p_324332_.overrideLootTableToDisplay().orElse(p_324332_.lootTable())
+                    level, pos, config.overrideLootTableToDisplay().orElse(config.lootTable())
                 );
-                p_323644_.setDisplayItem(itemstack);
+                sharedData.setDisplayItem(itemstack);
             }
         }
 
-        private static ItemStack getRandomDisplayItemFromLootTable(ServerLevel p_323781_, BlockPos p_324109_, ResourceKey<LootTable> p_336119_) {
-            LootTable loottable = p_323781_.getServer().reloadableRegistries().getLootTable(p_336119_);
-            LootParams lootparams = new LootParams.Builder(p_323781_)
-                .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(p_324109_))
+        private static ItemStack getRandomDisplayItemFromLootTable(ServerLevel level, BlockPos pos, ResourceKey<LootTable> lootTable) {
+            LootTable loottable = level.getServer().reloadableRegistries().getLootTable(lootTable);
+            LootParams lootparams = new LootParams.Builder(level)
+                .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
                 .create(LootContextParamSets.VAULT);
-            List<ItemStack> list = loottable.getRandomItems(lootparams, p_323781_.getRandom());
-            return list.isEmpty() ? ItemStack.EMPTY : Util.getRandom(list, p_323781_.getRandom());
+            List<ItemStack> list = loottable.getRandomItems(lootparams, level.getRandom());
+            return list.isEmpty() ? ItemStack.EMPTY : Util.getRandom(list, level.getRandom());
         }
 
         private static void unlock(
-            ServerLevel p_323501_,
-            BlockState p_323758_,
-            BlockPos p_323773_,
-            VaultConfig p_324195_,
-            VaultServerData p_324600_,
-            VaultSharedData p_324277_,
-            List<ItemStack> p_324574_
+            ServerLevel level,
+            BlockState state,
+            BlockPos pos,
+            VaultConfig config,
+            VaultServerData serverData,
+            VaultSharedData sharedData,
+            List<ItemStack> itemsToEject
         ) {
-            p_324600_.setItemsToEject(p_324574_);
-            p_324277_.setDisplayItem(p_324600_.getNextItemToEject());
-            p_324600_.pauseStateUpdatingUntil(p_323501_.getGameTime() + 14L);
-            setVaultState(p_323501_, p_323773_, p_323758_, p_323758_.setValue(VaultBlock.STATE, VaultState.UNLOCKING), p_324195_, p_324277_);
+            serverData.setItemsToEject(itemsToEject);
+            sharedData.setDisplayItem(serverData.getNextItemToEject());
+            serverData.pauseStateUpdatingUntil(level.getGameTime() + 14L);
+            setVaultState(level, pos, state, state.setValue(VaultBlock.STATE, VaultState.UNLOCKING), config, sharedData);
         }
 
-        private static List<ItemStack> resolveItemsToEject(ServerLevel p_323877_, VaultConfig p_324041_, BlockPos p_324255_, Player p_324347_) {
-            LootTable loottable = p_323877_.getServer().reloadableRegistries().getLootTable(p_324041_.lootTable());
-            LootParams lootparams = new LootParams.Builder(p_323877_)
-                .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(p_324255_))
-                .withLuck(p_324347_.getLuck())
-                .withParameter(LootContextParams.THIS_ENTITY, p_324347_)
+        private static List<ItemStack> resolveItemsToEject(ServerLevel level, VaultConfig config, BlockPos pos, Player player) {
+            LootTable loottable = level.getServer().reloadableRegistries().getLootTable(config.lootTable());
+            LootParams lootparams = new LootParams.Builder(level)
+                .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
+                .withLuck(player.getLuck())
+                .withParameter(LootContextParams.THIS_ENTITY, player)
                 .create(LootContextParamSets.VAULT);
             return loottable.getRandomItems(lootparams);
         }
 
-        private static boolean canEjectReward(VaultConfig p_323595_, VaultState p_324160_) {
-            return p_323595_.lootTable() != BuiltInLootTables.EMPTY && !p_323595_.keyItem().isEmpty() && p_324160_ != VaultState.INACTIVE;
+        private static boolean canEjectReward(VaultConfig config, VaultState state) {
+            return config.lootTable() != BuiltInLootTables.EMPTY && !config.keyItem().isEmpty() && state != VaultState.INACTIVE;
         }
 
-        private static boolean isValidToInsert(VaultConfig p_323488_, ItemStack p_324101_) {
-            return ItemStack.isSameItemSameComponents(p_324101_, p_323488_.keyItem()) && p_324101_.getCount() >= p_323488_.keyItem().getCount();
+        private static boolean isValidToInsert(VaultConfig config, ItemStack stack) {
+            return ItemStack.isSameItemSameComponents(stack, config.keyItem()) && stack.getCount() >= config.keyItem().getCount();
         }
 
-        private static boolean shouldCycleDisplayItem(long p_323548_, VaultState p_323823_) {
-            return p_323548_ % 20L == 0L && p_323823_ == VaultState.ACTIVE;
+        private static boolean shouldCycleDisplayItem(long gameTime, VaultState state) {
+            return gameTime % 20L == 0L && state == VaultState.ACTIVE;
         }
 
-        private static void playInsertFailSound(ServerLevel p_324555_, VaultServerData p_324017_, BlockPos p_324186_, SoundEvent p_350407_) {
-            if (p_324555_.getGameTime() >= p_324017_.getLastInsertFailTimestamp() + 15L) {
-                p_324555_.playSound(null, p_324186_, p_350407_, SoundSource.BLOCKS);
-                p_324017_.setLastInsertFailTimestamp(p_324555_.getGameTime());
+        private static void playInsertFailSound(ServerLevel level, VaultServerData serverData, BlockPos pos, SoundEvent sound) {
+            if (level.getGameTime() >= serverData.getLastInsertFailTimestamp() + 15L) {
+                level.playSound(null, pos, sound, SoundSource.BLOCKS);
+                serverData.setLastInsertFailTimestamp(level.getGameTime());
             }
         }
     }

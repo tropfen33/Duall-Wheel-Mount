@@ -23,54 +23,54 @@ public class Vec2Argument implements ArgumentType<Coordinates> {
     public static final SimpleCommandExceptionType ERROR_NOT_COMPLETE = new SimpleCommandExceptionType(Component.translatable("argument.pos2d.incomplete"));
     private final boolean centerCorrect;
 
-    public Vec2Argument(boolean p_120821_) {
-        this.centerCorrect = p_120821_;
+    public Vec2Argument(boolean centerCorrect) {
+        this.centerCorrect = centerCorrect;
     }
 
     public static Vec2Argument vec2() {
         return new Vec2Argument(true);
     }
 
-    public static Vec2Argument vec2(boolean p_174955_) {
-        return new Vec2Argument(p_174955_);
+    public static Vec2Argument vec2(boolean centerCorrect) {
+        return new Vec2Argument(centerCorrect);
     }
 
-    public static Vec2 getVec2(CommandContext<CommandSourceStack> p_120826_, String p_120827_) {
-        Vec3 vec3 = p_120826_.getArgument(p_120827_, Coordinates.class).getPosition(p_120826_.getSource());
+    public static Vec2 getVec2(CommandContext<CommandSourceStack> context, String name) {
+        Vec3 vec3 = context.getArgument(name, Coordinates.class).getPosition(context.getSource());
         return new Vec2((float)vec3.x, (float)vec3.z);
     }
 
-    public Coordinates parse(StringReader p_120824_) throws CommandSyntaxException {
-        int i = p_120824_.getCursor();
-        if (!p_120824_.canRead()) {
-            throw ERROR_NOT_COMPLETE.createWithContext(p_120824_);
+    public Coordinates parse(StringReader reader) throws CommandSyntaxException {
+        int i = reader.getCursor();
+        if (!reader.canRead()) {
+            throw ERROR_NOT_COMPLETE.createWithContext(reader);
         } else {
-            WorldCoordinate worldcoordinate = WorldCoordinate.parseDouble(p_120824_, this.centerCorrect);
-            if (p_120824_.canRead() && p_120824_.peek() == ' ') {
-                p_120824_.skip();
-                WorldCoordinate worldcoordinate1 = WorldCoordinate.parseDouble(p_120824_, this.centerCorrect);
+            WorldCoordinate worldcoordinate = WorldCoordinate.parseDouble(reader, this.centerCorrect);
+            if (reader.canRead() && reader.peek() == ' ') {
+                reader.skip();
+                WorldCoordinate worldcoordinate1 = WorldCoordinate.parseDouble(reader, this.centerCorrect);
                 return new WorldCoordinates(worldcoordinate, new WorldCoordinate(true, 0.0), worldcoordinate1);
             } else {
-                p_120824_.setCursor(i);
-                throw ERROR_NOT_COMPLETE.createWithContext(p_120824_);
+                reader.setCursor(i);
+                throw ERROR_NOT_COMPLETE.createWithContext(reader);
             }
         }
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_120830_, SuggestionsBuilder p_120831_) {
-        if (!(p_120830_.getSource() instanceof SharedSuggestionProvider)) {
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
+        if (!(context.getSource() instanceof SharedSuggestionProvider)) {
             return Suggestions.empty();
         } else {
-            String s = p_120831_.getRemaining();
+            String s = builder.getRemaining();
             Collection<SharedSuggestionProvider.TextCoordinates> collection;
             if (!s.isEmpty() && s.charAt(0) == '^') {
                 collection = Collections.singleton(SharedSuggestionProvider.TextCoordinates.DEFAULT_LOCAL);
             } else {
-                collection = ((SharedSuggestionProvider)p_120830_.getSource()).getAbsoluteCoordinates();
+                collection = ((SharedSuggestionProvider)context.getSource()).getAbsoluteCoordinates();
             }
 
-            return SharedSuggestionProvider.suggest2DCoordinates(s, collection, p_120831_, Commands.createValidator(this::parse));
+            return SharedSuggestionProvider.suggest2DCoordinates(s, collection, builder, Commands.createValidator(this::parse));
         }
     }
 

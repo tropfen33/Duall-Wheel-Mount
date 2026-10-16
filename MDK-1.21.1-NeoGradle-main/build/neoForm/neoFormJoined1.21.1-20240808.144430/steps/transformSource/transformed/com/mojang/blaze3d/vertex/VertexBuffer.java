@@ -24,16 +24,16 @@ public class VertexBuffer implements AutoCloseable {
     private int indexCount;
     private VertexFormat.Mode mode;
 
-    public VertexBuffer(VertexBuffer.Usage p_286252_) {
-        this.usage = p_286252_;
+    public VertexBuffer(VertexBuffer.Usage usage) {
+        this.usage = usage;
         RenderSystem.assertOnRenderThread();
         this.vertexBufferId = GlStateManager._glGenBuffers();
         this.indexBufferId = GlStateManager._glGenBuffers();
         this.arrayObjectId = GlStateManager._glGenVertexArrays();
     }
 
-    public void upload(MeshData p_350419_) {
-        MeshData meshdata = p_350419_;
+    public void upload(MeshData meshData) {
+        MeshData meshdata = meshData;
 
         label40: {
             try {
@@ -42,14 +42,14 @@ public class VertexBuffer implements AutoCloseable {
                 }
 
                 RenderSystem.assertOnRenderThread();
-                MeshData.DrawState meshdata$drawstate = p_350419_.drawState();
-                this.format = this.uploadVertexBuffer(meshdata$drawstate, p_350419_.vertexBuffer());
-                this.sequentialIndices = this.uploadIndexBuffer(meshdata$drawstate, p_350419_.indexBuffer());
+                MeshData.DrawState meshdata$drawstate = meshData.drawState();
+                this.format = this.uploadVertexBuffer(meshdata$drawstate, meshData.vertexBuffer());
+                this.sequentialIndices = this.uploadIndexBuffer(meshdata$drawstate, meshData.indexBuffer());
                 this.indexCount = meshdata$drawstate.indexCount();
                 this.indexType = meshdata$drawstate.indexType();
                 this.mode = meshdata$drawstate.mode();
             } catch (Throwable throwable1) {
-                if (p_350419_ != null) {
+                if (meshData != null) {
                     try {
                         meshdata.close();
                     } catch (Throwable throwable) {
@@ -60,20 +60,20 @@ public class VertexBuffer implements AutoCloseable {
                 throw throwable1;
             }
 
-            if (p_350419_ != null) {
-                p_350419_.close();
+            if (meshData != null) {
+                meshData.close();
             }
 
             return;
         }
 
-        if (p_350419_ != null) {
-            p_350419_.close();
+        if (meshData != null) {
+            meshData.close();
         }
     }
 
-    public void uploadIndexBuffer(ByteBufferBuilder.Result p_350937_) {
-        ByteBufferBuilder.Result bytebufferbuilder$result = p_350937_;
+    public void uploadIndexBuffer(ByteBufferBuilder.Result result) {
+        ByteBufferBuilder.Result bytebufferbuilder$result = result;
 
         label40: {
             try {
@@ -83,10 +83,10 @@ public class VertexBuffer implements AutoCloseable {
 
                 RenderSystem.assertOnRenderThread();
                 GlStateManager._glBindBuffer(34963, this.indexBufferId);
-                RenderSystem.glBufferData(34963, p_350937_.byteBuffer(), this.usage.id);
+                RenderSystem.glBufferData(34963, result.byteBuffer(), this.usage.id);
                 this.sequentialIndices = null;
             } catch (Throwable throwable1) {
-                if (p_350937_ != null) {
+                if (result != null) {
                     try {
                         bytebufferbuilder$result.close();
                     } catch (Throwable throwable) {
@@ -97,51 +97,51 @@ public class VertexBuffer implements AutoCloseable {
                 throw throwable1;
             }
 
-            if (p_350937_ != null) {
-                p_350937_.close();
+            if (result != null) {
+                result.close();
             }
 
             return;
         }
 
-        if (p_350937_ != null) {
-            p_350937_.close();
+        if (result != null) {
+            result.close();
         }
     }
 
-    private VertexFormat uploadVertexBuffer(MeshData.DrawState p_350866_, @Nullable ByteBuffer p_231220_) {
+    private VertexFormat uploadVertexBuffer(MeshData.DrawState drawState, @Nullable ByteBuffer buffer) {
         boolean flag = false;
-        if (!p_350866_.format().equals(this.format)) {
+        if (!drawState.format().equals(this.format)) {
             if (this.format != null) {
                 this.format.clearBufferState();
             }
 
             GlStateManager._glBindBuffer(34962, this.vertexBufferId);
-            p_350866_.format().setupBufferState();
+            drawState.format().setupBufferState();
             flag = true;
         }
 
-        if (p_231220_ != null) {
+        if (buffer != null) {
             if (!flag) {
                 GlStateManager._glBindBuffer(34962, this.vertexBufferId);
             }
 
-            RenderSystem.glBufferData(34962, p_231220_, this.usage.id);
+            RenderSystem.glBufferData(34962, buffer, this.usage.id);
         }
 
-        return p_350866_.format();
+        return drawState.format();
     }
 
     @Nullable
-    private RenderSystem.AutoStorageIndexBuffer uploadIndexBuffer(MeshData.DrawState p_350538_, @Nullable ByteBuffer p_231225_) {
-        if (p_231225_ != null) {
+    private RenderSystem.AutoStorageIndexBuffer uploadIndexBuffer(MeshData.DrawState drawState, @Nullable ByteBuffer buffer) {
+        if (buffer != null) {
             GlStateManager._glBindBuffer(34963, this.indexBufferId);
-            RenderSystem.glBufferData(34963, p_231225_, this.usage.id);
+            RenderSystem.glBufferData(34963, buffer, this.usage.id);
             return null;
         } else {
-            RenderSystem.AutoStorageIndexBuffer rendersystem$autostorageindexbuffer = RenderSystem.getSequentialBuffer(p_350538_.mode());
-            if (rendersystem$autostorageindexbuffer != this.sequentialIndices || !rendersystem$autostorageindexbuffer.hasStorage(p_350538_.indexCount())) {
-                rendersystem$autostorageindexbuffer.bind(p_350538_.indexCount());
+            RenderSystem.AutoStorageIndexBuffer rendersystem$autostorageindexbuffer = RenderSystem.getSequentialBuffer(drawState.mode());
+            if (rendersystem$autostorageindexbuffer != this.sequentialIndices || !rendersystem$autostorageindexbuffer.hasStorage(drawState.indexCount())) {
+                rendersystem$autostorageindexbuffer.bind(drawState.indexCount());
             }
 
             return rendersystem$autostorageindexbuffer;
@@ -167,19 +167,19 @@ public class VertexBuffer implements AutoCloseable {
         return rendersystem$autostorageindexbuffer != null ? rendersystem$autostorageindexbuffer.type() : this.indexType;
     }
 
-    public void drawWithShader(Matrix4f p_254480_, Matrix4f p_254555_, ShaderInstance p_253993_) {
+    public void drawWithShader(Matrix4f modelViewMatrix, Matrix4f projectionMatrix, ShaderInstance shader) {
         if (!RenderSystem.isOnRenderThread()) {
-            RenderSystem.recordRenderCall(() -> this._drawWithShader(new Matrix4f(p_254480_), new Matrix4f(p_254555_), p_253993_));
+            RenderSystem.recordRenderCall(() -> this._drawWithShader(new Matrix4f(modelViewMatrix), new Matrix4f(projectionMatrix), shader));
         } else {
-            this._drawWithShader(p_254480_, p_254555_, p_253993_);
+            this._drawWithShader(modelViewMatrix, projectionMatrix, shader);
         }
     }
 
-    private void _drawWithShader(Matrix4f p_253705_, Matrix4f p_253737_, ShaderInstance p_166879_) {
-        p_166879_.setDefaultUniforms(this.mode, p_253705_, p_253737_, Minecraft.getInstance().getWindow());
-        p_166879_.apply();
+    private void _drawWithShader(Matrix4f modelViewMatrix, Matrix4f projectionMatrix, ShaderInstance shader) {
+        shader.setDefaultUniforms(this.mode, modelViewMatrix, projectionMatrix, Minecraft.getInstance().getWindow());
+        shader.apply();
         this.draw();
-        p_166879_.clear();
+        shader.clear();
     }
 
     @Override
@@ -215,8 +215,8 @@ public class VertexBuffer implements AutoCloseable {
 
         final int id;
 
-        private Usage(int p_286680_) {
-            this.id = p_286680_;
+        private Usage(int id) {
+            this.id = id;
         }
     }
 }

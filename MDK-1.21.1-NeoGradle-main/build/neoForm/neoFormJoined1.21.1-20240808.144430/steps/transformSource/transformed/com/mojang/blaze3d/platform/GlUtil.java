@@ -8,12 +8,12 @@ import org.lwjgl.system.MemoryUtil;
 
 @OnlyIn(Dist.CLIENT)
 public class GlUtil {
-    public static ByteBuffer allocateMemory(int p_166248_) {
-        return MemoryUtil.memAlloc(p_166248_);
+    public static ByteBuffer allocateMemory(int size) {
+        return MemoryUtil.memAlloc(size);
     }
 
-    public static void freeMemory(Buffer p_166252_) {
-        MemoryUtil.memFree(p_166252_);
+    public static void freeMemory(Buffer buffer) {
+        MemoryUtil.memFree(buffer);
     }
 
     public static String getVendor() {

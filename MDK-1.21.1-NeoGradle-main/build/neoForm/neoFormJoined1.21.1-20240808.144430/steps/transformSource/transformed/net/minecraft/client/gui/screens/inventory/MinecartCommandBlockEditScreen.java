@@ -10,8 +10,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class MinecartCommandBlockEditScreen extends AbstractCommandBlockEditScreen {
     private final BaseCommandBlock commandBlock;
 
-    public MinecartCommandBlockEditScreen(BaseCommandBlock p_99216_) {
-        this.commandBlock = p_99216_;
+    public MinecartCommandBlockEditScreen(BaseCommandBlock commandBlock) {
+        this.commandBlock = commandBlock;
     }
 
     @Override
@@ -31,13 +31,13 @@ public class MinecartCommandBlockEditScreen extends AbstractCommandBlockEditScre
     }
 
     @Override
-    protected void populateAndSendPacket(BaseCommandBlock p_99218_) {
-        if (p_99218_ instanceof MinecartCommandBlock.MinecartCommandBase minecartcommandblock$minecartcommandbase) {
+    protected void populateAndSendPacket(BaseCommandBlock commandBlock) {
+        if (commandBlock instanceof MinecartCommandBlock.MinecartCommandBase minecartcommandblock$minecartcommandbase) {
             this.minecraft
                 .getConnection()
                 .send(
                     new ServerboundSetCommandMinecartPacket(
-                        minecartcommandblock$minecartcommandbase.getMinecart().getId(), this.commandEdit.getValue(), p_99218_.isTrackOutput()
+                        minecartcommandblock$minecartcommandbase.getMinecart().getId(), this.commandEdit.getValue(), commandBlock.isTrackOutput()
                     )
                 );
         }

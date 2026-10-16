@@ -10,17 +10,26 @@ import net.minecraft.util.RandomSource;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
+/**
+ * The MusicManager class manages the playing of music in Minecraft.
+ */
 @OnlyIn(Dist.CLIENT)
 public class MusicManager {
+    /**
+     * The delay before starting to play the next song.
+     */
     private static final int STARTING_DELAY = 100;
     private final RandomSource random = RandomSource.create();
     private final Minecraft minecraft;
     @Nullable
     private SoundInstance currentMusic;
+    /**
+     * The delay until the next song starts.
+     */
     private int nextSongDelay = 100;
 
-    public MusicManager(Minecraft p_120182_) {
-        this.minecraft = p_120182_;
+    public MusicManager(Minecraft minecraft) {
+        this.minecraft = minecraft;
     }
 
     public void tick() {
@@ -51,8 +60,13 @@ public class MusicManager {
         }
     }
 
-    public void startPlaying(Music p_120185_) {
-        this.currentMusic = SimpleSoundInstance.forMusic(p_120185_.getEvent().value());
+    /**
+     * Starts playing the specified {@linkplain Music} selector.
+     *
+     * @param selector the {@linkplain Music} selector to play
+     */
+    public void startPlaying(Music selector) {
+        this.currentMusic = SimpleSoundInstance.forMusic(selector.getEvent().value());
         if (this.currentMusic.getSound() != SoundManager.EMPTY_SOUND) {
             this.minecraft.getSoundManager().play(this.currentMusic);
         }
@@ -60,8 +74,13 @@ public class MusicManager {
         this.nextSongDelay = Integer.MAX_VALUE;
     }
 
-    public void stopPlaying(Music p_278295_) {
-        if (this.isPlayingMusic(p_278295_)) {
+    /**
+     * Stops playing the specified {@linkplain Music} selector.
+     *
+     * @param music the {@linkplain Music} selector to stop playing
+     */
+    public void stopPlaying(Music music) {
+        if (this.isPlayingMusic(music)) {
             this.stopPlaying();
         }
     }
@@ -75,7 +94,12 @@ public class MusicManager {
         this.nextSongDelay += 100;
     }
 
-    public boolean isPlayingMusic(Music p_120188_) {
-        return this.currentMusic == null ? false : p_120188_.getEvent().value().getLocation().equals(this.currentMusic.getLocation());
+    /**
+     * {@return {@code true} if the {@linkplain Music} selector is currently playing, {@code false} otherwise}
+     *
+     * @param selector the {@linkplain Music} selector to check for
+     */
+    public boolean isPlayingMusic(Music selector) {
+        return this.currentMusic == null ? false : selector.getEvent().value().getLocation().equals(this.currentMusic.getLocation());
     }
 }

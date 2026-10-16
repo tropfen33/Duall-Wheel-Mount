@@ -31,27 +31,30 @@ public class SetBookCoverFunction extends LootItemConditionalFunction {
     private final Optional<Integer> generation;
 
     public SetBookCoverFunction(
-        List<LootItemCondition> p_333787_, Optional<Filterable<String>> p_333956_, Optional<String> p_334034_, Optional<Integer> p_333739_
+        List<LootItemCondition> conditons, Optional<Filterable<String>> title, Optional<String> author, Optional<Integer> generation
     ) {
-        super(p_333787_);
-        this.author = p_334034_;
-        this.title = p_333956_;
-        this.generation = p_333739_;
+        super(conditons);
+        this.author = author;
+        this.title = title;
+        this.generation = generation;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    protected ItemStack run(ItemStack p_334048_, LootContext p_334012_) {
-        p_334048_.update(DataComponents.WRITTEN_BOOK_CONTENT, WrittenBookContent.EMPTY, this::apply);
-        return p_334048_;
+    protected ItemStack run(ItemStack stack, LootContext context) {
+        stack.update(DataComponents.WRITTEN_BOOK_CONTENT, WrittenBookContent.EMPTY, this::apply);
+        return stack;
     }
 
-    private WrittenBookContent apply(WrittenBookContent p_333821_) {
+    private WrittenBookContent apply(WrittenBookContent writtenBookContent) {
         return new WrittenBookContent(
-            this.title.orElseGet(p_333821_::title),
-            this.author.orElseGet(p_333821_::author),
-            this.generation.orElseGet(p_333821_::generation),
-            p_333821_.pages(),
-            p_333821_.resolved()
+            this.title.orElseGet(writtenBookContent::title),
+            this.author.orElseGet(writtenBookContent::author),
+            this.generation.orElseGet(writtenBookContent::generation),
+            writtenBookContent.pages(),
+            writtenBookContent.resolved()
         );
     }
 

@@ -30,8 +30,8 @@ public class Blaze extends Monster {
     private int nextHeightOffsetChangeTick;
     private static final EntityDataAccessor<Byte> DATA_FLAGS_ID = SynchedEntityData.defineId(Blaze.class, EntityDataSerializers.BYTE);
 
-    public Blaze(EntityType<? extends Blaze> p_32219_, Level p_32220_) {
-        super(p_32219_, p_32220_);
+    public Blaze(EntityType<? extends Blaze> entityType, Level level) {
+        super(entityType, level);
         this.setPathfindingMalus(PathType.WATER, -1.0F);
         this.setPathfindingMalus(PathType.LAVA, 8.0F);
         this.setPathfindingMalus(PathType.DANGER_FIRE, 0.0F);
@@ -55,9 +55,9 @@ public class Blaze extends Monster {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326216_) {
-        super.defineSynchedData(p_326216_);
-        p_326216_.define(DATA_FLAGS_ID, (byte)0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_FLAGS_ID, (byte)0);
     }
 
     @Override
@@ -66,7 +66,7 @@ public class Blaze extends Monster {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_32235_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.BLAZE_HURT;
     }
 
@@ -141,9 +141,9 @@ public class Blaze extends Monster {
         return (this.entityData.get(DATA_FLAGS_ID) & 1) != 0;
     }
 
-    void setCharged(boolean p_32241_) {
+    void setCharged(boolean charged) {
         byte b0 = this.entityData.get(DATA_FLAGS_ID);
-        if (p_32241_) {
+        if (charged) {
             b0 = (byte)(b0 | 1);
         } else {
             b0 = (byte)(b0 & -2);
@@ -158,8 +158,8 @@ public class Blaze extends Monster {
         private int attackTime;
         private int lastSeen;
 
-        public BlazeAttackGoal(Blaze p_32247_) {
-            this.blaze = p_32247_;
+        public BlazeAttackGoal(Blaze blaze) {
+            this.blaze = blaze;
             this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
         }
 

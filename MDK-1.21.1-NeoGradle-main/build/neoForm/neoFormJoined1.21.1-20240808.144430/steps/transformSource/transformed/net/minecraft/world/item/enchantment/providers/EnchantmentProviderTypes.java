@@ -4,9 +4,9 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.Registry;
 
 public interface EnchantmentProviderTypes {
-    static MapCodec<? extends EnchantmentProvider> bootstrap(Registry<MapCodec<? extends EnchantmentProvider>> p_346162_) {
-        Registry.register(p_346162_, "by_cost", EnchantmentsByCost.CODEC);
-        Registry.register(p_346162_, "by_cost_with_difficulty", EnchantmentsByCostWithDifficulty.CODEC);
-        return Registry.register(p_346162_, "single", SingleEnchantment.CODEC);
+    static MapCodec<? extends EnchantmentProvider> bootstrap(Registry<MapCodec<? extends EnchantmentProvider>> registry) {
+        Registry.register(registry, "by_cost", EnchantmentsByCost.CODEC);
+        Registry.register(registry, "by_cost_with_difficulty", EnchantmentsByCostWithDifficulty.CODEC);
+        return Registry.register(registry, "single", SingleEnchantment.CODEC);
     }
 }

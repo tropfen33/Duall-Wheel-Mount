@@ -14,19 +14,22 @@ public class ClientboundRotateHeadPacket implements Packet<ClientGamePacketListe
     private final int entityId;
     private final byte yHeadRot;
 
-    public ClientboundRotateHeadPacket(Entity p_132967_, byte p_132968_) {
-        this.entityId = p_132967_.getId();
-        this.yHeadRot = p_132968_;
+    public ClientboundRotateHeadPacket(Entity entity, byte yHeadRot) {
+        this.entityId = entity.getId();
+        this.yHeadRot = yHeadRot;
     }
 
-    private ClientboundRotateHeadPacket(FriendlyByteBuf p_179193_) {
-        this.entityId = p_179193_.readVarInt();
-        this.yHeadRot = p_179193_.readByte();
+    private ClientboundRotateHeadPacket(FriendlyByteBuf buffer) {
+        this.entityId = buffer.readVarInt();
+        this.yHeadRot = buffer.readByte();
     }
 
-    private void write(FriendlyByteBuf p_132979_) {
-        p_132979_.writeVarInt(this.entityId);
-        p_132979_.writeByte(this.yHeadRot);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.entityId);
+        buffer.writeByte(this.yHeadRot);
     }
 
     @Override
@@ -34,12 +37,15 @@ public class ClientboundRotateHeadPacket implements Packet<ClientGamePacketListe
         return GamePacketTypes.CLIENTBOUND_ROTATE_HEAD;
     }
 
-    public void handle(ClientGamePacketListener p_132976_) {
-        p_132976_.handleRotateMob(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleRotateMob(this);
     }
 
-    public Entity getEntity(Level p_132970_) {
-        return p_132970_.getEntity(this.entityId);
+    public Entity getEntity(Level level) {
+        return level.getEntity(this.entityId);
     }
 
     public byte getYHeadRot() {

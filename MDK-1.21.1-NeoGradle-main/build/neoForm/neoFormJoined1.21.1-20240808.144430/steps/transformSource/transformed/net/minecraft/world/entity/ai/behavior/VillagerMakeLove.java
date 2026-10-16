@@ -30,97 +30,97 @@ public class VillagerMakeLove extends Behavior<Villager> {
         );
     }
 
-    protected boolean checkExtraStartConditions(ServerLevel p_24623_, Villager p_24624_) {
-        return this.isBreedingPossible(p_24624_);
+    protected boolean checkExtraStartConditions(ServerLevel level, Villager owner) {
+        return this.isBreedingPossible(owner);
     }
 
-    protected boolean canStillUse(ServerLevel p_24626_, Villager p_24627_, long p_24628_) {
-        return p_24628_ <= this.birthTimestamp && this.isBreedingPossible(p_24627_);
+    protected boolean canStillUse(ServerLevel level, Villager entity, long gameTime) {
+        return gameTime <= this.birthTimestamp && this.isBreedingPossible(entity);
     }
 
-    protected void start(ServerLevel p_24652_, Villager p_24653_, long p_24654_) {
-        AgeableMob ageablemob = p_24653_.getBrain().getMemory(MemoryModuleType.BREED_TARGET).get();
-        BehaviorUtils.lockGazeAndWalkToEachOther(p_24653_, ageablemob, 0.5F, 2);
-        p_24652_.broadcastEntityEvent(ageablemob, (byte)18);
-        p_24652_.broadcastEntityEvent(p_24653_, (byte)18);
-        int i = 275 + p_24653_.getRandom().nextInt(50);
-        this.birthTimestamp = p_24654_ + (long)i;
+    protected void start(ServerLevel level, Villager entity, long gameTime) {
+        AgeableMob ageablemob = entity.getBrain().getMemory(MemoryModuleType.BREED_TARGET).get();
+        BehaviorUtils.lockGazeAndWalkToEachOther(entity, ageablemob, 0.5F, 2);
+        level.broadcastEntityEvent(ageablemob, (byte)18);
+        level.broadcastEntityEvent(entity, (byte)18);
+        int i = 275 + entity.getRandom().nextInt(50);
+        this.birthTimestamp = gameTime + (long)i;
     }
 
-    protected void tick(ServerLevel p_24667_, Villager p_24668_, long p_24669_) {
-        Villager villager = (Villager)p_24668_.getBrain().getMemory(MemoryModuleType.BREED_TARGET).get();
-        if (!(p_24668_.distanceToSqr(villager) > 5.0)) {
-            BehaviorUtils.lockGazeAndWalkToEachOther(p_24668_, villager, 0.5F, 2);
-            if (p_24669_ >= this.birthTimestamp) {
-                p_24668_.eatAndDigestFood();
+    protected void tick(ServerLevel level, Villager owner, long gameTime) {
+        Villager villager = (Villager)owner.getBrain().getMemory(MemoryModuleType.BREED_TARGET).get();
+        if (!(owner.distanceToSqr(villager) > 5.0)) {
+            BehaviorUtils.lockGazeAndWalkToEachOther(owner, villager, 0.5F, 2);
+            if (gameTime >= this.birthTimestamp) {
+                owner.eatAndDigestFood();
                 villager.eatAndDigestFood();
-                this.tryToGiveBirth(p_24667_, p_24668_, villager);
-            } else if (p_24668_.getRandom().nextInt(35) == 0) {
-                p_24667_.broadcastEntityEvent(villager, (byte)12);
-                p_24667_.broadcastEntityEvent(p_24668_, (byte)12);
+                this.tryToGiveBirth(level, owner, villager);
+            } else if (owner.getRandom().nextInt(35) == 0) {
+                level.broadcastEntityEvent(villager, (byte)12);
+                level.broadcastEntityEvent(owner, (byte)12);
             }
         }
     }
 
-    private void tryToGiveBirth(ServerLevel p_24630_, Villager p_24631_, Villager p_24632_) {
-        Optional<BlockPos> optional = this.takeVacantBed(p_24630_, p_24631_);
+    private void tryToGiveBirth(ServerLevel level, Villager parent, Villager partner) {
+        Optional<BlockPos> optional = this.takeVacantBed(level, parent);
         if (optional.isEmpty()) {
-            p_24630_.broadcastEntityEvent(p_24632_, (byte)13);
-            p_24630_.broadcastEntityEvent(p_24631_, (byte)13);
+            level.broadcastEntityEvent(partner, (byte)13);
+            level.broadcastEntityEvent(parent, (byte)13);
         } else {
-            Optional<Villager> optional1 = this.breed(p_24630_, p_24631_, p_24632_);
+            Optional<Villager> optional1 = this.breed(level, parent, partner);
             if (optional1.isPresent()) {
-                this.giveBedToChild(p_24630_, optional1.get(), optional.get());
+                this.giveBedToChild(level, optional1.get(), optional.get());
             } else {
-                p_24630_.getPoiManager().release(optional.get());
-                DebugPackets.sendPoiTicketCountPacket(p_24630_, optional.get());
+                level.getPoiManager().release(optional.get());
+                DebugPackets.sendPoiTicketCountPacket(level, optional.get());
             }
         }
     }
 
-    protected void stop(ServerLevel p_24675_, Villager p_24676_, long p_24677_) {
-        p_24676_.getBrain().eraseMemory(MemoryModuleType.BREED_TARGET);
+    protected void stop(ServerLevel level, Villager entity, long gameTime) {
+        entity.getBrain().eraseMemory(MemoryModuleType.BREED_TARGET);
     }
 
-    private boolean isBreedingPossible(Villager p_24640_) {
-        Brain<Villager> brain = p_24640_.getBrain();
+    private boolean isBreedingPossible(Villager villager) {
+        Brain<Villager> brain = villager.getBrain();
         Optional<AgeableMob> optional = brain.getMemory(MemoryModuleType.BREED_TARGET).filter(p_348244_ -> p_348244_.getType() == EntityType.VILLAGER);
         return optional.isEmpty()
             ? false
-            : BehaviorUtils.targetIsValid(brain, MemoryModuleType.BREED_TARGET, EntityType.VILLAGER) && p_24640_.canBreed() && optional.get().canBreed();
+            : BehaviorUtils.targetIsValid(brain, MemoryModuleType.BREED_TARGET, EntityType.VILLAGER) && villager.canBreed() && optional.get().canBreed();
     }
 
-    private Optional<BlockPos> takeVacantBed(ServerLevel p_24649_, Villager p_24650_) {
-        return p_24649_.getPoiManager()
+    private Optional<BlockPos> takeVacantBed(ServerLevel level, Villager villager) {
+        return level.getPoiManager()
             .take(
-                p_217509_ -> p_217509_.is(PoiTypes.HOME), (p_217506_, p_217507_) -> this.canReach(p_24650_, p_217507_, p_217506_), p_24650_.blockPosition(), 48
+                p_217509_ -> p_217509_.is(PoiTypes.HOME), (p_217506_, p_217507_) -> this.canReach(villager, p_217507_, p_217506_), villager.blockPosition(), 48
             );
     }
 
-    private boolean canReach(Villager p_217501_, BlockPos p_217502_, Holder<PoiType> p_217503_) {
-        Path path = p_217501_.getNavigation().createPath(p_217502_, p_217503_.value().validRange());
+    private boolean canReach(Villager villager, BlockPos pos, Holder<PoiType> poiType) {
+        Path path = villager.getNavigation().createPath(pos, poiType.value().validRange());
         return path != null && path.canReach();
     }
 
-    private Optional<Villager> breed(ServerLevel p_24656_, Villager p_24657_, Villager p_24658_) {
-        Villager villager = p_24657_.getBreedOffspring(p_24656_, p_24658_);
+    private Optional<Villager> breed(ServerLevel level, Villager parent, Villager partner) {
+        Villager villager = parent.getBreedOffspring(level, partner);
         if (villager == null) {
             return Optional.empty();
         } else {
-            p_24657_.setAge(6000);
-            p_24658_.setAge(6000);
+            parent.setAge(6000);
+            partner.setAge(6000);
             villager.setAge(-24000);
-            villager.moveTo(p_24657_.getX(), p_24657_.getY(), p_24657_.getZ(), 0.0F, 0.0F);
-            p_24656_.addFreshEntityWithPassengers(villager);
+            villager.moveTo(parent.getX(), parent.getY(), parent.getZ(), 0.0F, 0.0F);
+            level.addFreshEntityWithPassengers(villager);
             // Neo: If villager is blocked from spawning (e.g., FinalizeSpawnEvent), then breed should be unsuccessful
             if (!villager.isAddedToLevel()) return Optional.empty();
-            p_24656_.broadcastEntityEvent(villager, (byte)12);
+            level.broadcastEntityEvent(villager, (byte)12);
             return Optional.of(villager);
         }
     }
 
-    private void giveBedToChild(ServerLevel p_24634_, Villager p_24635_, BlockPos p_24636_) {
-        GlobalPos globalpos = GlobalPos.of(p_24634_.dimension(), p_24636_);
-        p_24635_.getBrain().setMemory(MemoryModuleType.HOME, globalpos);
+    private void giveBedToChild(ServerLevel level, Villager villager, BlockPos pos) {
+        GlobalPos globalpos = GlobalPos.of(level.dimension(), pos);
+        villager.getBrain().setMemory(MemoryModuleType.HOME, globalpos);
     }
 }

@@ -21,43 +21,43 @@ public class SmithingTransformRecipeBuilder {
     private final Item result;
     private final Map<String, Criterion<?>> criteria = new LinkedHashMap<>();
 
-    public SmithingTransformRecipeBuilder(Ingredient p_266973_, Ingredient p_267047_, Ingredient p_267009_, RecipeCategory p_266694_, Item p_267183_) {
-        this.category = p_266694_;
-        this.template = p_266973_;
-        this.base = p_267047_;
-        this.addition = p_267009_;
-        this.result = p_267183_;
+    public SmithingTransformRecipeBuilder(Ingredient template, Ingredient base, Ingredient addition, RecipeCategory category, Item result) {
+        this.category = category;
+        this.template = template;
+        this.base = base;
+        this.addition = addition;
+        this.result = result;
     }
 
     public static SmithingTransformRecipeBuilder smithing(
-        Ingredient p_267071_, Ingredient p_266959_, Ingredient p_266803_, RecipeCategory p_266757_, Item p_267256_
+        Ingredient template, Ingredient base, Ingredient addition, RecipeCategory category, Item result
     ) {
-        return new SmithingTransformRecipeBuilder(p_267071_, p_266959_, p_266803_, p_266757_, p_267256_);
+        return new SmithingTransformRecipeBuilder(template, base, addition, category, result);
     }
 
-    public SmithingTransformRecipeBuilder unlocks(String p_266919_, Criterion<?> p_300923_) {
-        this.criteria.put(p_266919_, p_300923_);
+    public SmithingTransformRecipeBuilder unlocks(String key, Criterion<?> criterion) {
+        this.criteria.put(key, criterion);
         return this;
     }
 
-    public void save(RecipeOutput p_301163_, String p_300906_) {
-        this.save(p_301163_, ResourceLocation.parse(p_300906_));
+    public void save(RecipeOutput recipeOutput, String recipeId) {
+        this.save(recipeOutput, ResourceLocation.parse(recipeId));
     }
 
-    public void save(RecipeOutput p_301291_, ResourceLocation p_300873_) {
-        this.ensureValid(p_300873_);
-        Advancement.Builder advancement$builder = p_301291_.advancement()
-            .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(p_300873_))
-            .rewards(AdvancementRewards.Builder.recipe(p_300873_))
+    public void save(RecipeOutput recipeOutput, ResourceLocation recipeId) {
+        this.ensureValid(recipeId);
+        Advancement.Builder advancement$builder = recipeOutput.advancement()
+            .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(recipeId))
+            .rewards(AdvancementRewards.Builder.recipe(recipeId))
             .requirements(AdvancementRequirements.Strategy.OR);
         this.criteria.forEach(advancement$builder::addCriterion);
         SmithingTransformRecipe smithingtransformrecipe = new SmithingTransformRecipe(this.template, this.base, this.addition, new ItemStack(this.result));
-        p_301291_.accept(p_300873_, smithingtransformrecipe, advancement$builder.build(p_300873_.withPrefix("recipes/" + this.category.getFolderName() + "/")));
+        recipeOutput.accept(recipeId, smithingtransformrecipe, advancement$builder.build(recipeId.withPrefix("recipes/" + this.category.getFolderName() + "/")));
     }
 
-    private void ensureValid(ResourceLocation p_267259_) {
+    private void ensureValid(ResourceLocation location) {
         if (this.criteria.isEmpty()) {
-            throw new IllegalStateException("No way of obtaining recipe " + p_267259_);
+            throw new IllegalStateException("No way of obtaining recipe " + location);
         }
     }
 }

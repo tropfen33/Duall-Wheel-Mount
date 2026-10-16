@@ -20,9 +20,9 @@ public class FlatLayerInfo {
     private final Block block;
     private final int height;
 
-    public FlatLayerInfo(int p_70335_, Block p_70336_) {
-        this.height = p_70335_;
-        this.block = p_70336_;
+    public FlatLayerInfo(int height, Block block) {
+        this.height = height;
+        this.block = block;
     }
 
     public int getHeight() {

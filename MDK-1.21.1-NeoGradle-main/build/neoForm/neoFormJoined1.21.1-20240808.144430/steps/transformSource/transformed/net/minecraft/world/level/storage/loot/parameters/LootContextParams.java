@@ -9,6 +9,9 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
+/**
+ * Holds all known LootContextParams.
+ */
 public class LootContextParams {
     public static final LootContextParam<Entity> THIS_ENTITY = create("this_entity");
     public static final LootContextParam<Player> LAST_DAMAGE_PLAYER = create("last_damage_player");
@@ -23,7 +26,7 @@ public class LootContextParams {
     public static final LootContextParam<Integer> ENCHANTMENT_LEVEL = create("enchantment_level");
     public static final LootContextParam<Boolean> ENCHANTMENT_ACTIVE = create("enchantment_active");
 
-    private static <T> LootContextParam<T> create(String p_81467_) {
-        return new LootContextParam<>(ResourceLocation.withDefaultNamespace(p_81467_));
+    private static <T> LootContextParam<T> create(String id) {
+        return new LootContextParam<>(ResourceLocation.withDefaultNamespace(id));
     }
 }

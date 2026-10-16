@@ -16,13 +16,19 @@ public class ChickenRenderer extends MobRenderer<Chicken, ChickenModel<Chicken>>
         super(p_173952_, new ChickenModel<>(p_173952_.bakeLayer(ModelLayers.CHICKEN)), 0.3F);
     }
 
-    public ResourceLocation getTextureLocation(Chicken p_113998_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Chicken entity) {
         return CHICKEN_LOCATION;
     }
 
-    protected float getBob(Chicken p_114000_, float p_114001_) {
-        float f = Mth.lerp(p_114001_, p_114000_.oFlap, p_114000_.flap);
-        float f1 = Mth.lerp(p_114001_, p_114000_.oFlapSpeed, p_114000_.flapSpeed);
+    /**
+     * Defines what float the third param in setRotationAngles of ModelBase is
+     */
+    protected float getBob(Chicken livingBase, float partialTicks) {
+        float f = Mth.lerp(partialTicks, livingBase.oFlap, livingBase.flap);
+        float f1 = Mth.lerp(partialTicks, livingBase.oFlapSpeed, livingBase.flapSpeed);
         return (Mth.sin(f) + 1.0F) * f1;
     }
 }

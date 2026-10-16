@@ -18,9 +18,9 @@ public final class PerformanceMetricsEvent extends AggregatedTelemetryEvent {
     private final LongList usedMemorySamples = new LongArrayList();
 
     @Override
-    public void tick(TelemetryEventSender p_263321_) {
+    public void tick(TelemetryEventSender sender) {
         if (Minecraft.getInstance().telemetryOptInExtra()) {
-            super.tick(p_263321_);
+            super.tick(sender);
         }
     }
 
@@ -45,8 +45,8 @@ public final class PerformanceMetricsEvent extends AggregatedTelemetryEvent {
     }
 
     @Override
-    public void sendEvent(TelemetryEventSender p_261872_) {
-        p_261872_.send(TelemetryEventType.PERFORMANCE_METRICS, p_261568_ -> {
+    public void sendEvent(TelemetryEventSender sender) {
+        sender.send(TelemetryEventType.PERFORMANCE_METRICS, p_261568_ -> {
             p_261568_.put(TelemetryProperty.FRAME_RATE_SAMPLES, new LongArrayList(this.fpsSamples));
             p_261568_.put(TelemetryProperty.RENDER_TIME_SAMPLES, new LongArrayList(this.frameTimeSamples));
             p_261568_.put(TelemetryProperty.USED_MEMORY_SAMPLES, new LongArrayList(this.usedMemorySamples));
@@ -57,7 +57,7 @@ public final class PerformanceMetricsEvent extends AggregatedTelemetryEvent {
         this.resetValues();
     }
 
-    private static long toKilobytes(long p_261471_) {
-        return p_261471_ / 1000L;
+    private static long toKilobytes(long bytes) {
+        return bytes / 1000L;
     }
 }

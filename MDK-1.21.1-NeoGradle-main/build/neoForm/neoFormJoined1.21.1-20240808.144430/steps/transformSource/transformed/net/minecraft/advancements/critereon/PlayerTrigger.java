@@ -16,8 +16,8 @@ public class PlayerTrigger extends SimpleCriterionTrigger<PlayerTrigger.TriggerI
         return PlayerTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_222619_) {
-        this.trigger(p_222619_, p_222625_ -> true);
+    public void trigger(ServerPlayer player) {
+        this.trigger(player, p_222625_ -> true);
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player) implements SimpleCriterionTrigger.SimpleInstance {
@@ -26,17 +26,17 @@ public class PlayerTrigger extends SimpleCriterionTrigger<PlayerTrigger.TriggerI
                     .apply(p_337390_, PlayerTrigger.TriggerInstance::new)
         );
 
-        public static Criterion<PlayerTrigger.TriggerInstance> located(LocationPredicate.Builder p_301139_) {
+        public static Criterion<PlayerTrigger.TriggerInstance> located(LocationPredicate.Builder location) {
             return CriteriaTriggers.LOCATION
-                .createCriterion(new PlayerTrigger.TriggerInstance(Optional.of(EntityPredicate.wrap(EntityPredicate.Builder.entity().located(p_301139_)))));
+                .createCriterion(new PlayerTrigger.TriggerInstance(Optional.of(EntityPredicate.wrap(EntityPredicate.Builder.entity().located(location)))));
         }
 
-        public static Criterion<PlayerTrigger.TriggerInstance> located(EntityPredicate.Builder p_300962_) {
-            return CriteriaTriggers.LOCATION.createCriterion(new PlayerTrigger.TriggerInstance(Optional.of(EntityPredicate.wrap(p_300962_.build()))));
+        public static Criterion<PlayerTrigger.TriggerInstance> located(EntityPredicate.Builder entity) {
+            return CriteriaTriggers.LOCATION.createCriterion(new PlayerTrigger.TriggerInstance(Optional.of(EntityPredicate.wrap(entity.build()))));
         }
 
-        public static Criterion<PlayerTrigger.TriggerInstance> located(Optional<EntityPredicate> p_301141_) {
-            return CriteriaTriggers.LOCATION.createCriterion(new PlayerTrigger.TriggerInstance(EntityPredicate.wrap(p_301141_)));
+        public static Criterion<PlayerTrigger.TriggerInstance> located(Optional<EntityPredicate> entity) {
+            return CriteriaTriggers.LOCATION.createCriterion(new PlayerTrigger.TriggerInstance(EntityPredicate.wrap(entity)));
         }
 
         public static Criterion<PlayerTrigger.TriggerInstance> sleptInBed() {
@@ -55,11 +55,11 @@ public class PlayerTrigger extends SimpleCriterionTrigger<PlayerTrigger.TriggerI
             return CriteriaTriggers.TICK.createCriterion(new PlayerTrigger.TriggerInstance(Optional.empty()));
         }
 
-        public static Criterion<PlayerTrigger.TriggerInstance> walkOnBlockWithEquipment(Block p_222638_, Item p_222639_) {
+        public static Criterion<PlayerTrigger.TriggerInstance> walkOnBlockWithEquipment(Block block, Item equipment) {
             return located(
                 EntityPredicate.Builder.entity()
-                    .equipment(EntityEquipmentPredicate.Builder.equipment().feet(ItemPredicate.Builder.item().of(p_222639_)))
-                    .steppingOn(LocationPredicate.Builder.location().setBlock(BlockPredicate.Builder.block().of(p_222638_)))
+                    .equipment(EntityEquipmentPredicate.Builder.equipment().feet(ItemPredicate.Builder.item().of(equipment)))
+                    .steppingOn(LocationPredicate.Builder.location().setBlock(BlockPredicate.Builder.block().of(block)))
             );
         }
     }

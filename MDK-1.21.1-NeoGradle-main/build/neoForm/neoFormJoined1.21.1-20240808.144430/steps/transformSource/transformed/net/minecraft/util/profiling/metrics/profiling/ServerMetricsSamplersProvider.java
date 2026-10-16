@@ -27,9 +27,9 @@ public class ServerMetricsSamplersProvider implements MetricsSamplerProvider {
     private final Set<MetricSampler> samplers = new ObjectOpenHashSet<>();
     private final ProfilerSamplerAdapter samplerFactory = new ProfilerSamplerAdapter();
 
-    public ServerMetricsSamplersProvider(LongSupplier p_146180_, boolean p_146181_) {
-        this.samplers.add(tickTimeSampler(p_146180_));
-        if (p_146181_) {
+    public ServerMetricsSamplersProvider(LongSupplier timeSource, boolean dedicatedServer) {
+        this.samplers.add(tickTimeSampler(timeSource));
+        if (dedicatedServer) {
             this.samplers.addAll(runtimeIndependentSamplers());
         }
     }
@@ -60,16 +60,16 @@ public class ServerMetricsSamplersProvider implements MetricsSamplerProvider {
     }
 
     @Override
-    public Set<MetricSampler> samplers(Supplier<ProfileCollector> p_146191_) {
-        this.samplers.addAll(this.samplerFactory.newSamplersFoundInProfiler(p_146191_));
+    public Set<MetricSampler> samplers(Supplier<ProfileCollector> profiles) {
+        this.samplers.addAll(this.samplerFactory.newSamplersFoundInProfiler(profiles));
         return this.samplers;
     }
 
-    public static MetricSampler tickTimeSampler(final LongSupplier p_146189_) {
+    public static MetricSampler tickTimeSampler(final LongSupplier timeSource) {
         Stopwatch stopwatch = Stopwatch.createUnstarted(new Ticker() {
             @Override
             public long read() {
-                return p_146189_.getAsLong();
+                return timeSource.getAsLong();
             }
         });
         ToDoubleFunction<Stopwatch> todoublefunction = p_146187_ -> {
@@ -96,7 +96,7 @@ public class ServerMetricsSamplersProvider implements MetricsSamplerProvider {
         private double[] currentLoad = this.processor.getProcessorCpuLoadBetweenTicks(this.previousCpuLoadTick);
         private long lastPollMs;
 
-        public double loadForCpu(int p_146208_) {
+        public double loadForCpu(int index) {
             long i = System.currentTimeMillis();
             if (this.lastPollMs == 0L || this.lastPollMs + 501L < i) {
                 this.currentLoad = this.processor.getProcessorCpuLoadBetweenTicks(this.previousCpuLoadTick);
@@ -104,7 +104,7 @@ public class ServerMetricsSamplersProvider implements MetricsSamplerProvider {
                 this.lastPollMs = i;
             }
 
-            return this.currentLoad[p_146208_] * 100.0;
+            return this.currentLoad[index] * 100.0;
         }
     }
 }

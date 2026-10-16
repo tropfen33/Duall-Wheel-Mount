@@ -16,16 +16,16 @@ public record ReportEnvironment(String clientVersion, @Nullable ReportEnvironmen
         return create(null);
     }
 
-    public static ReportEnvironment thirdParty(String p_238999_) {
-        return create(new ReportEnvironment.Server.ThirdParty(p_238999_));
+    public static ReportEnvironment thirdParty(String ip) {
+        return create(new ReportEnvironment.Server.ThirdParty(ip));
     }
 
-    public static ReportEnvironment realm(RealmsServer p_239765_) {
-        return create(new ReportEnvironment.Server.Realm(p_239765_));
+    public static ReportEnvironment realm(RealmsServer realmsServer) {
+        return create(new ReportEnvironment.Server.Realm(realmsServer));
     }
 
-    public static ReportEnvironment create(@Nullable ReportEnvironment.Server p_239956_) {
-        return new ReportEnvironment(getClientVersion(), p_239956_);
+    public static ReportEnvironment create(@Nullable ReportEnvironment.Server server) {
+        return new ReportEnvironment(getClientVersion(), server);
     }
 
     public ClientInfo clientInfo() {

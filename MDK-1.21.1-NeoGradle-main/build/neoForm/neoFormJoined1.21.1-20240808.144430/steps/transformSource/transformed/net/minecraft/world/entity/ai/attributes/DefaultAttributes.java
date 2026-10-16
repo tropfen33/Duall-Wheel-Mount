@@ -173,13 +173,13 @@ public class DefaultAttributes {
         .put(EntityType.ZOMBIFIED_PIGLIN, ZombifiedPiglin.createAttributes().build())
         .build();
 
-    public static AttributeSupplier getSupplier(EntityType<? extends LivingEntity> p_22298_) {
-        AttributeSupplier supplier = net.neoforged.neoforge.common.CommonHooks.getAttributesView().get(p_22298_);
-        return supplier != null ? supplier : SUPPLIERS.get(p_22298_);
+    public static AttributeSupplier getSupplier(EntityType<? extends LivingEntity> livingEntity) {
+        AttributeSupplier supplier = net.neoforged.neoforge.common.CommonHooks.getAttributesView().get(livingEntity);
+        return supplier != null ? supplier : SUPPLIERS.get(livingEntity);
     }
 
-    public static boolean hasSupplier(EntityType<?> p_22302_) {
-        return SUPPLIERS.containsKey(p_22302_) || net.neoforged.neoforge.common.CommonHooks.getAttributesView().containsKey(p_22302_);
+    public static boolean hasSupplier(EntityType<?> entityType) {
+        return SUPPLIERS.containsKey(entityType) || net.neoforged.neoforge.common.CommonHooks.getAttributesView().containsKey(entityType);
     }
 
     public static void validate() {

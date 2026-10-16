@@ -17,11 +17,11 @@ public class NamespacedTypeRenameFix extends DataFix {
     private final TypeReference type;
     private final UnaryOperator<String> renamer;
 
-    public NamespacedTypeRenameFix(Schema p_277723_, String p_277766_, TypeReference p_277439_, UnaryOperator<String> p_278045_) {
-        super(p_277723_, false);
-        this.name = p_277766_;
-        this.type = p_277439_;
-        this.renamer = p_278045_;
+    public NamespacedTypeRenameFix(Schema outputSchema, String name, TypeReference type, UnaryOperator<String> renamer) {
+        super(outputSchema, false);
+        this.name = name;
+        this.type = type;
+        this.renamer = renamer;
     }
 
     @Override

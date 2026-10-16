@@ -23,7 +23,10 @@ public record ServerboundSetBeaconPacket(Optional<Holder<MobEffect>> primary, Op
         return GamePacketTypes.SERVERBOUND_SET_BEACON;
     }
 
-    public void handle(ServerGamePacketListener p_134483_) {
-        p_134483_.handleSetBeaconPacket(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleSetBeaconPacket(this);
     }
 }

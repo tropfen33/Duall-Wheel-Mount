@@ -60,9 +60,9 @@ public record ResolvableProfile(Optional<String> name, Optional<UUID> id, Proper
         }
     }
 
-    private static GameProfile createProfile(Optional<String> p_331092_, Optional<UUID> p_332678_, PropertyMap p_331544_) {
-        GameProfile gameprofile = new GameProfile(p_332678_.orElse(Util.NIL_UUID), p_331092_.orElse(""));
-        gameprofile.getProperties().putAll(p_331544_);
+    private static GameProfile createProfile(Optional<String> name, Optional<UUID> id, PropertyMap properties) {
+        GameProfile gameprofile = new GameProfile(id.orElse(Util.NIL_UUID), name.orElse(""));
+        gameprofile.getProperties().putAll(properties);
         return gameprofile;
     }
 

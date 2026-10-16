@@ -4,227 +4,323 @@ import net.minecraft.network.ConnectionProtocol;
 import net.minecraft.network.protocol.common.ClientCommonPacketListener;
 import net.minecraft.network.protocol.ping.ClientPongPacketListener;
 
+/**
+ * PacketListener for the client side of the PLAY protocol.
+ */
 public interface ClientGamePacketListener extends ClientPongPacketListener, ClientCommonPacketListener {
     @Override
     default ConnectionProtocol protocol() {
         return ConnectionProtocol.PLAY;
     }
 
-    void handleAddEntity(ClientboundAddEntityPacket p_131367_);
+    /**
+     * Spawns an instance of the objecttype indicated by the packet and sets its position and momentum
+     */
+    void handleAddEntity(ClientboundAddEntityPacket packet);
 
-    void handleAddExperienceOrb(ClientboundAddExperienceOrbPacket p_131368_);
+    /**
+     * Spawns an experience orb and sets its value (amount of XP)
+     */
+    void handleAddExperienceOrb(ClientboundAddExperienceOrbPacket packet);
+
+    /**
+     * May create a scoreboard objective, remove an objective from the scoreboard or update an objectives' displayname
+     */
+    void handleAddObjective(ClientboundSetObjectivePacket packet);
 
-    void handleAddObjective(ClientboundSetObjectivePacket p_131438_);
+    /**
+     * Renders a specified animation: Waking up a player, a living entity swinging its currently held item, being hurt or receiving a critical hit by normal or magical means
+     */
+    void handleAnimate(ClientboundAnimatePacket packet);
 
-    void handleAnimate(ClientboundAnimatePacket p_131372_);
+    void handleHurtAnimation(ClientboundHurtAnimationPacket packet);
 
-    void handleHurtAnimation(ClientboundHurtAnimationPacket p_265165_);
+    /**
+     * Updates the players statistics or achievements
+     */
+    void handleAwardStats(ClientboundAwardStatsPacket packet);
 
-    void handleAwardStats(ClientboundAwardStatsPacket p_131373_);
+    void handleAddOrRemoveRecipes(ClientboundRecipePacket packet);
 
-    void handleAddOrRemoveRecipes(ClientboundRecipePacket p_131417_);
+    /**
+     * Updates all registered IWorldAccess instances with destroyBlockInWorldPartially
+     */
+    void handleBlockDestruction(ClientboundBlockDestructionPacket packet);
 
-    void handleBlockDestruction(ClientboundBlockDestructionPacket p_131375_);
+    /**
+     * Creates a sign in the specified location if it didn't exist and opens the GUI to edit its text
+     */
+    void handleOpenSignEditor(ClientboundOpenSignEditorPacket packet);
 
-    void handleOpenSignEditor(ClientboundOpenSignEditorPacket p_131410_);
+    /**
+     * Updates the NBTTagCompound metadata of instances of the following entitytypes: Mob spawners, command blocks, beacons, skulls, flowerpot
+     */
+    void handleBlockEntityData(ClientboundBlockEntityDataPacket packet);
 
-    void handleBlockEntityData(ClientboundBlockEntityDataPacket p_131376_);
+    /**
+     * Triggers Block.onBlockEventReceived, which is implemented in BlockPistonBase for extension/retraction, BlockNote for setting the instrument (including audiovisual feedback) and in BlockContainer to set the number of players accessing a (Ender)Chest
+     */
+    void handleBlockEvent(ClientboundBlockEventPacket packet);
 
-    void handleBlockEvent(ClientboundBlockEventPacket p_131377_);
+    /**
+     * Updates the block and metadata and generates a blockupdate (and notify the clients)
+     */
+    void handleBlockUpdate(ClientboundBlockUpdatePacket packet);
 
-    void handleBlockUpdate(ClientboundBlockUpdatePacket p_131378_);
+    void handleSystemChat(ClientboundSystemChatPacket packet);
 
-    void handleSystemChat(ClientboundSystemChatPacket p_237543_);
+    void handlePlayerChat(ClientboundPlayerChatPacket packet);
 
-    void handlePlayerChat(ClientboundPlayerChatPacket p_237540_);
+    void handleDisguisedChat(ClientboundDisguisedChatPacket packet);
 
-    void handleDisguisedChat(ClientboundDisguisedChatPacket p_251057_);
+    void handleDeleteChat(ClientboundDeleteChatPacket packet);
 
-    void handleDeleteChat(ClientboundDeleteChatPacket p_241462_);
+    /**
+     * Received from the servers PlayerManager if between 1 and 64 blocks in a chunk are changed. If only one block requires an update, the server sends S23PacketBlockChange and if 64 or more blocks are changed, the server sends S21PacketChunkData
+     */
+    void handleChunkBlocksUpdate(ClientboundSectionBlocksUpdatePacket packet);
 
-    void handleChunkBlocksUpdate(ClientboundSectionBlocksUpdatePacket p_131423_);
+    /**
+     * Updates the worlds MapStorage with the specified MapData for the specified map-identifier and invokes a MapItemRenderer for it
+     */
+    void handleMapItemData(ClientboundMapItemDataPacket packet);
 
-    void handleMapItemData(ClientboundMapItemDataPacket p_131404_);
+    /**
+     * Resets the ItemStack held in hand and closes the window that is opened
+     */
+    void handleContainerClose(ClientboundContainerClosePacket packet);
 
-    void handleContainerClose(ClientboundContainerClosePacket p_131385_);
+    /**
+     * Handles the placement of a specified ItemStack in a specified container/inventory slot
+     */
+    void handleContainerContent(ClientboundContainerSetContentPacket packet);
 
-    void handleContainerContent(ClientboundContainerSetContentPacket p_131386_);
+    void handleHorseScreenOpen(ClientboundHorseScreenOpenPacket packet);
 
-    void handleHorseScreenOpen(ClientboundHorseScreenOpenPacket p_131397_);
+    /**
+     * Sets the progressbar of the opened window to the specified value
+     */
+    void handleContainerSetData(ClientboundContainerSetDataPacket packet);
 
-    void handleContainerSetData(ClientboundContainerSetDataPacket p_131387_);
+    /**
+     * Handles picking up an ItemStack or dropping one in your inventory or an open (non-creative) container
+     */
+    void handleContainerSetSlot(ClientboundContainerSetSlotPacket packet);
 
-    void handleContainerSetSlot(ClientboundContainerSetSlotPacket p_131388_);
+    /**
+     * Invokes the entities' handleUpdateHealth method which is implemented in LivingBase (hurt/death), MinecartMobSpawner (spawn delay), FireworkRocket & MinecartTNT (explosion), IronGolem (throwing,...), Witch (spawn particles), Zombie (villager transformation), Animal (breeding mode particles), Horse (breeding/smoke particles), Sheep (...), Tameable (...), Villager (particles for breeding mode, angry and happy), Wolf (...)
+     */
+    void handleEntityEvent(ClientboundEntityEventPacket packet);
 
-    void handleEntityEvent(ClientboundEntityEventPacket p_131393_);
+    void handleEntityLinkPacket(ClientboundSetEntityLinkPacket packet);
 
-    void handleEntityLinkPacket(ClientboundSetEntityLinkPacket p_131433_);
+    void handleSetEntityPassengersPacket(ClientboundSetPassengersPacket packet);
 
-    void handleSetEntityPassengersPacket(ClientboundSetPassengersPacket p_131439_);
+    /**
+     * Initiates a new explosion (sound, particles, drop spawn) for the affected blocks indicated by the packet.
+     */
+    void handleExplosion(ClientboundExplodePacket packet);
 
-    void handleExplosion(ClientboundExplodePacket p_131394_);
+    void handleGameEvent(ClientboundGameEventPacket packet);
 
-    void handleGameEvent(ClientboundGameEventPacket p_131396_);
+    void handleLevelChunkWithLight(ClientboundLevelChunkWithLightPacket packet);
 
-    void handleLevelChunkWithLight(ClientboundLevelChunkWithLightPacket p_195622_);
+    void handleChunksBiomes(ClientboundChunksBiomesPacket packet);
 
-    void handleChunksBiomes(ClientboundChunksBiomesPacket p_275451_);
+    void handleForgetLevelChunk(ClientboundForgetLevelChunkPacket packet);
 
-    void handleForgetLevelChunk(ClientboundForgetLevelChunkPacket p_131395_);
+    void handleLevelEvent(ClientboundLevelEventPacket packet);
 
-    void handleLevelEvent(ClientboundLevelEventPacket p_131400_);
+    /**
+     * Registers some server properties (gametype,hardcore-mode,terraintype,difficulty,player limit), creates a new WorldClient and sets the player initial dimension
+     */
+    void handleLogin(ClientboundLoginPacket packet);
 
-    void handleLogin(ClientboundLoginPacket p_131403_);
+    /**
+     * Updates the specified entity's position by the specified relative moment and absolute rotation. Note that subclassing of the packet allows for the specification of a subset of this data (e.g. only rel. position, abs. rotation or both).
+     */
+    void handleMoveEntity(ClientboundMoveEntityPacket packet);
 
-    void handleMoveEntity(ClientboundMoveEntityPacket p_131406_);
+    void handleMovePlayer(ClientboundPlayerPositionPacket packet);
 
-    void handleMovePlayer(ClientboundPlayerPositionPacket p_131416_);
+    /**
+     * Spawns a specified number of particles at the specified location with a randomized displacement according to specified bounds
+     */
+    void handleParticleEvent(ClientboundLevelParticlesPacket packet);
 
-    void handleParticleEvent(ClientboundLevelParticlesPacket p_131401_);
+    void handlePlayerAbilities(ClientboundPlayerAbilitiesPacket packet);
 
-    void handlePlayerAbilities(ClientboundPlayerAbilitiesPacket p_131412_);
+    void handlePlayerInfoRemove(ClientboundPlayerInfoRemovePacket packet);
 
-    void handlePlayerInfoRemove(ClientboundPlayerInfoRemovePacket p_252308_);
+    void handlePlayerInfoUpdate(ClientboundPlayerInfoUpdatePacket packet);
 
-    void handlePlayerInfoUpdate(ClientboundPlayerInfoUpdatePacket p_248573_);
+    void handleRemoveEntities(ClientboundRemoveEntitiesPacket packet);
 
-    void handleRemoveEntities(ClientboundRemoveEntitiesPacket p_182700_);
+    void handleRemoveMobEffect(ClientboundRemoveMobEffectPacket packet);
 
-    void handleRemoveMobEffect(ClientboundRemoveMobEffectPacket p_131419_);
+    void handleRespawn(ClientboundRespawnPacket packet);
 
-    void handleRespawn(ClientboundRespawnPacket p_131421_);
+    /**
+     * Updates the direction in which the specified entity is looking, normally this head rotation is independent of the rotation of the entity itself
+     */
+    void handleRotateMob(ClientboundRotateHeadPacket packet);
 
-    void handleRotateMob(ClientboundRotateHeadPacket p_131422_);
+    /**
+     * Updates which hotbar slot of the player is currently selected
+     */
+    void handleSetCarriedItem(ClientboundSetCarriedItemPacket packet);
 
-    void handleSetCarriedItem(ClientboundSetCarriedItemPacket p_131427_);
+    /**
+     * Removes or sets the ScoreObjective to be displayed at a particular scoreboard position (list, sidebar, below name)
+     */
+    void handleSetDisplayObjective(ClientboundSetDisplayObjectivePacket packet);
 
-    void handleSetDisplayObjective(ClientboundSetDisplayObjectivePacket p_131431_);
+    /**
+     * Invoked when the server registers new proximate objects in your watchlist or when objects in your watchlist have changed -> Registers any changes locally
+     */
+    void handleSetEntityData(ClientboundSetEntityDataPacket packet);
 
-    void handleSetEntityData(ClientboundSetEntityDataPacket p_131432_);
+    /**
+     * Sets the velocity of the specified entity to the specified value
+     */
+    void handleSetEntityMotion(ClientboundSetEntityMotionPacket packet);
 
-    void handleSetEntityMotion(ClientboundSetEntityMotionPacket p_131434_);
+    void handleSetEquipment(ClientboundSetEquipmentPacket packet);
 
-    void handleSetEquipment(ClientboundSetEquipmentPacket p_131435_);
+    void handleSetExperience(ClientboundSetExperiencePacket packet);
 
-    void handleSetExperience(ClientboundSetExperiencePacket p_131436_);
+    void handleSetHealth(ClientboundSetHealthPacket packet);
 
-    void handleSetHealth(ClientboundSetHealthPacket p_131437_);
+    /**
+     * Updates a team managed by the scoreboard: Create/Remove the team registration, Register/Remove the player-team-memberships, Set team displayname/prefix/suffix and/or whether friendly fire is enabled
+     */
+    void handleSetPlayerTeamPacket(ClientboundSetPlayerTeamPacket packet);
 
-    void handleSetPlayerTeamPacket(ClientboundSetPlayerTeamPacket p_131440_);
+    /**
+     * Either updates the score with a specified value or removes the score for an objective
+     */
+    void handleSetScore(ClientboundSetScorePacket packet);
 
-    void handleSetScore(ClientboundSetScorePacket p_131441_);
+    void handleResetScore(ClientboundResetScorePacket packet);
 
-    void handleResetScore(ClientboundResetScorePacket p_313913_);
+    void handleSetSpawn(ClientboundSetDefaultSpawnPositionPacket packet);
 
-    void handleSetSpawn(ClientboundSetDefaultSpawnPositionPacket p_131430_);
+    void handleSetTime(ClientboundSetTimePacket packet);
 
-    void handleSetTime(ClientboundSetTimePacket p_131442_);
+    void handleSoundEvent(ClientboundSoundPacket packet);
 
-    void handleSoundEvent(ClientboundSoundPacket p_131445_);
+    void handleSoundEntityEvent(ClientboundSoundEntityPacket packet);
 
-    void handleSoundEntityEvent(ClientboundSoundEntityPacket p_131444_);
+    void handleTakeItemEntity(ClientboundTakeItemEntityPacket packet);
 
-    void handleTakeItemEntity(ClientboundTakeItemEntityPacket p_131449_);
+    /**
+     * Updates an entity's position and rotation as specified by the packet
+     */
+    void handleTeleportEntity(ClientboundTeleportEntityPacket packet);
 
-    void handleTeleportEntity(ClientboundTeleportEntityPacket p_131450_);
+    void handleTickingState(ClientboundTickingStatePacket packet);
 
-    void handleTickingState(ClientboundTickingStatePacket p_309206_);
+    void handleTickingStep(ClientboundTickingStepPacket packet);
 
-    void handleTickingStep(ClientboundTickingStepPacket p_309008_);
+    /**
+     * Updates en entity's attributes and their respective modifiers, which are used for speed bonuses (player sprinting, animals fleeing, baby speed), weapon/tool attackDamage, hostiles followRange randomization, zombie maxHealth and knockback resistance as well as reinforcement spawning chance.
+     */
+    void handleUpdateAttributes(ClientboundUpdateAttributesPacket packet);
 
-    void handleUpdateAttributes(ClientboundUpdateAttributesPacket p_131452_);
+    void handleUpdateMobEffect(ClientboundUpdateMobEffectPacket packet);
 
-    void handleUpdateMobEffect(ClientboundUpdateMobEffectPacket p_131453_);
+    void handlePlayerCombatEnd(ClientboundPlayerCombatEndPacket packet);
 
-    void handlePlayerCombatEnd(ClientboundPlayerCombatEndPacket p_178546_);
+    void handlePlayerCombatEnter(ClientboundPlayerCombatEnterPacket packet);
 
-    void handlePlayerCombatEnter(ClientboundPlayerCombatEnterPacket p_178547_);
+    void handlePlayerCombatKill(ClientboundPlayerCombatKillPacket packet);
 
-    void handlePlayerCombatKill(ClientboundPlayerCombatKillPacket p_178548_);
+    void handleChangeDifficulty(ClientboundChangeDifficultyPacket packet);
 
-    void handleChangeDifficulty(ClientboundChangeDifficultyPacket p_131380_);
+    void handleSetCamera(ClientboundSetCameraPacket packet);
 
-    void handleSetCamera(ClientboundSetCameraPacket p_131426_);
+    void handleInitializeBorder(ClientboundInitializeBorderPacket packet);
 
-    void handleInitializeBorder(ClientboundInitializeBorderPacket p_178544_);
+    void handleSetBorderLerpSize(ClientboundSetBorderLerpSizePacket packet);
 
-    void handleSetBorderLerpSize(ClientboundSetBorderLerpSizePacket p_178552_);
+    void handleSetBorderSize(ClientboundSetBorderSizePacket packet);
 
-    void handleSetBorderSize(ClientboundSetBorderSizePacket p_178553_);
+    void handleSetBorderWarningDelay(ClientboundSetBorderWarningDelayPacket packet);
 
-    void handleSetBorderWarningDelay(ClientboundSetBorderWarningDelayPacket p_178554_);
+    void handleSetBorderWarningDistance(ClientboundSetBorderWarningDistancePacket packet);
 
-    void handleSetBorderWarningDistance(ClientboundSetBorderWarningDistancePacket p_178555_);
+    void handleSetBorderCenter(ClientboundSetBorderCenterPacket packet);
 
-    void handleSetBorderCenter(ClientboundSetBorderCenterPacket p_178551_);
+    void handleTabListCustomisation(ClientboundTabListPacket packet);
 
-    void handleTabListCustomisation(ClientboundTabListPacket p_131447_);
+    void handleBossUpdate(ClientboundBossEventPacket packet);
 
-    void handleBossUpdate(ClientboundBossEventPacket p_131379_);
+    void handleItemCooldown(ClientboundCooldownPacket packet);
 
-    void handleItemCooldown(ClientboundCooldownPacket p_131389_);
+    void handleMoveVehicle(ClientboundMoveVehiclePacket packet);
 
-    void handleMoveVehicle(ClientboundMoveVehiclePacket p_131407_);
+    void handleUpdateAdvancementsPacket(ClientboundUpdateAdvancementsPacket packet);
 
-    void handleUpdateAdvancementsPacket(ClientboundUpdateAdvancementsPacket p_131451_);
+    void handleSelectAdvancementsTab(ClientboundSelectAdvancementsTabPacket packet);
 
-    void handleSelectAdvancementsTab(ClientboundSelectAdvancementsTabPacket p_131424_);
+    void handlePlaceRecipe(ClientboundPlaceGhostRecipePacket packet);
 
-    void handlePlaceRecipe(ClientboundPlaceGhostRecipePacket p_131411_);
+    void handleCommands(ClientboundCommandsPacket packet);
 
-    void handleCommands(ClientboundCommandsPacket p_131383_);
+    void handleStopSoundEvent(ClientboundStopSoundPacket packet);
 
-    void handleStopSoundEvent(ClientboundStopSoundPacket p_131446_);
+    /**
+     * This method is only called for manual tab-completion (the {@link net.minecraft.commands.synchronization.SuggestionProviders#ASK_SERVER minecraft:ask_server} suggestion provider).
+     */
+    void handleCommandSuggestions(ClientboundCommandSuggestionsPacket packet);
 
-    void handleCommandSuggestions(ClientboundCommandSuggestionsPacket p_131382_);
+    void handleUpdateRecipes(ClientboundUpdateRecipesPacket packet);
 
-    void handleUpdateRecipes(ClientboundUpdateRecipesPacket p_131454_);
+    void handleLookAt(ClientboundPlayerLookAtPacket packet);
 
-    void handleLookAt(ClientboundPlayerLookAtPacket p_131415_);
+    void handleTagQueryPacket(ClientboundTagQueryPacket packet);
 
-    void handleTagQueryPacket(ClientboundTagQueryPacket p_131448_);
+    void handleLightUpdatePacket(ClientboundLightUpdatePacket packet);
 
-    void handleLightUpdatePacket(ClientboundLightUpdatePacket p_195623_);
+    void handleOpenBook(ClientboundOpenBookPacket packet);
 
-    void handleOpenBook(ClientboundOpenBookPacket p_131408_);
+    void handleOpenScreen(ClientboundOpenScreenPacket packet);
 
-    void handleOpenScreen(ClientboundOpenScreenPacket p_131409_);
+    void handleMerchantOffers(ClientboundMerchantOffersPacket packet);
 
-    void handleMerchantOffers(ClientboundMerchantOffersPacket p_131405_);
+    void handleSetChunkCacheRadius(ClientboundSetChunkCacheRadiusPacket packet);
 
-    void handleSetChunkCacheRadius(ClientboundSetChunkCacheRadiusPacket p_131429_);
+    void handleSetSimulationDistance(ClientboundSetSimulationDistancePacket packet);
 
-    void handleSetSimulationDistance(ClientboundSetSimulationDistancePacket p_195624_);
+    void handleSetChunkCacheCenter(ClientboundSetChunkCacheCenterPacket packet);
 
-    void handleSetChunkCacheCenter(ClientboundSetChunkCacheCenterPacket p_131428_);
+    void handleBlockChangedAck(ClientboundBlockChangedAckPacket packet);
 
-    void handleBlockChangedAck(ClientboundBlockChangedAckPacket p_237538_);
+    void setActionBarText(ClientboundSetActionBarTextPacket packet);
 
-    void setActionBarText(ClientboundSetActionBarTextPacket p_178550_);
+    void setSubtitleText(ClientboundSetSubtitleTextPacket packet);
 
-    void setSubtitleText(ClientboundSetSubtitleTextPacket p_178556_);
+    void setTitleText(ClientboundSetTitleTextPacket packet);
 
-    void setTitleText(ClientboundSetTitleTextPacket p_178557_);
+    void setTitlesAnimation(ClientboundSetTitlesAnimationPacket packet);
 
-    void setTitlesAnimation(ClientboundSetTitlesAnimationPacket p_178558_);
+    void handleTitlesClear(ClientboundClearTitlesPacket packet);
 
-    void handleTitlesClear(ClientboundClearTitlesPacket p_178543_);
+    void handleServerData(ClientboundServerDataPacket packet);
 
-    void handleServerData(ClientboundServerDataPacket p_237541_);
+    void handleCustomChatCompletions(ClientboundCustomChatCompletionsPacket packet);
 
-    void handleCustomChatCompletions(ClientboundCustomChatCompletionsPacket p_240770_);
+    void handleBundlePacket(ClientboundBundlePacket packet);
 
-    void handleBundlePacket(ClientboundBundlePacket p_265211_);
+    void handleDamageEvent(ClientboundDamageEventPacket packet);
 
-    void handleDamageEvent(ClientboundDamageEventPacket p_270900_);
+    void handleConfigurationStart(ClientboundStartConfigurationPacket packet);
 
-    void handleConfigurationStart(ClientboundStartConfigurationPacket p_294815_);
+    void handleChunkBatchStart(ClientboundChunkBatchStartPacket packet);
 
-    void handleChunkBatchStart(ClientboundChunkBatchStartPacket p_295789_);
+    void handleChunkBatchFinished(ClientboundChunkBatchFinishedPacket packet);
 
-    void handleChunkBatchFinished(ClientboundChunkBatchFinishedPacket p_295302_);
+    void handleDebugSample(ClientboundDebugSamplePacket packet);
 
-    void handleDebugSample(ClientboundDebugSamplePacket p_323534_);
-
-    void handleProjectilePowerPacket(ClientboundProjectilePowerPacket p_339666_);
+    void handleProjectilePowerPacket(ClientboundProjectilePowerPacket packet);
 }

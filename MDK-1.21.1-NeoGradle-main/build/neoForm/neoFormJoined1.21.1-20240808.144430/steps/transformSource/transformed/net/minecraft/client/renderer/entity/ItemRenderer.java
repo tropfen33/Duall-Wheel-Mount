@@ -67,11 +67,11 @@ public class ItemRenderer implements ResourceManagerReloadListener {
     private final ItemColors itemColors;
     private final BlockEntityWithoutLevelRenderer blockEntityRenderer;
 
-    public ItemRenderer(Minecraft p_266926_, TextureManager p_266774_, ModelManager p_266850_, ItemColors p_267016_, BlockEntityWithoutLevelRenderer p_267049_) {
-        this.minecraft = p_266926_;
-        this.textureManager = p_266774_;
-        this.itemModelShaper = new net.neoforged.neoforge.client.model.RegistryAwareItemModelShaper(p_266850_);
-        this.blockEntityRenderer = p_267049_;
+    public ItemRenderer(Minecraft minecraft, TextureManager textureManager, ModelManager modelManager, ItemColors itemColors, BlockEntityWithoutLevelRenderer blockEntityRenderer) {
+        this.minecraft = minecraft;
+        this.textureManager = textureManager;
+        this.itemModelShaper = new net.neoforged.neoforge.client.model.RegistryAwareItemModelShaper(modelManager);
+        this.blockEntityRenderer = blockEntityRenderer;
 
         for (Item item : BuiltInRegistries.ITEM) {
             if (!IGNORED.contains(item)) {
@@ -79,185 +79,185 @@ public class ItemRenderer implements ResourceManagerReloadListener {
             }
         }
 
-        this.itemColors = p_267016_;
+        this.itemColors = itemColors;
     }
 
     public ItemModelShaper getItemModelShaper() {
         return this.itemModelShaper;
     }
 
-    public void renderModelLists(BakedModel p_115190_, ItemStack p_115191_, int p_115192_, int p_115193_, PoseStack p_115194_, VertexConsumer p_115195_) {
+    public void renderModelLists(BakedModel model, ItemStack stack, int combinedLight, int combinedOverlay, PoseStack poseStack, VertexConsumer buffer) {
         RandomSource randomsource = RandomSource.create();
         long i = 42L;
 
         for (Direction direction : Direction.values()) {
             randomsource.setSeed(42L);
-            this.renderQuadList(p_115194_, p_115195_, p_115190_.getQuads(null, direction, randomsource), p_115191_, p_115192_, p_115193_);
+            this.renderQuadList(poseStack, buffer, model.getQuads(null, direction, randomsource), stack, combinedLight, combinedOverlay);
         }
 
         randomsource.setSeed(42L);
-        this.renderQuadList(p_115194_, p_115195_, p_115190_.getQuads(null, null, randomsource), p_115191_, p_115192_, p_115193_);
+        this.renderQuadList(poseStack, buffer, model.getQuads(null, null, randomsource), stack, combinedLight, combinedOverlay);
     }
 
     public void render(
-        ItemStack p_115144_,
-        ItemDisplayContext p_270188_,
-        boolean p_115146_,
-        PoseStack p_115147_,
-        MultiBufferSource p_115148_,
-        int p_115149_,
-        int p_115150_,
-        BakedModel p_115151_
+        ItemStack itemStack,
+        ItemDisplayContext displayContext,
+        boolean leftHand,
+        PoseStack poseStack,
+        MultiBufferSource bufferSource,
+        int combinedLight,
+        int combinedOverlay,
+        BakedModel p_model
     ) {
-        if (!p_115144_.isEmpty()) {
-            p_115147_.pushPose();
-            boolean flag = p_270188_ == ItemDisplayContext.GUI || p_270188_ == ItemDisplayContext.GROUND || p_270188_ == ItemDisplayContext.FIXED;
+        if (!itemStack.isEmpty()) {
+            poseStack.pushPose();
+            boolean flag = displayContext == ItemDisplayContext.GUI || displayContext == ItemDisplayContext.GROUND || displayContext == ItemDisplayContext.FIXED;
             if (flag) {
-                if (p_115144_.is(Items.TRIDENT)) {
-                    p_115151_ = this.itemModelShaper.getModelManager().getModel(TRIDENT_MODEL);
-                } else if (p_115144_.is(Items.SPYGLASS)) {
-                    p_115151_ = this.itemModelShaper.getModelManager().getModel(SPYGLASS_MODEL);
+                if (itemStack.is(Items.TRIDENT)) {
+                    p_model = this.itemModelShaper.getModelManager().getModel(TRIDENT_MODEL);
+                } else if (itemStack.is(Items.SPYGLASS)) {
+                    p_model = this.itemModelShaper.getModelManager().getModel(SPYGLASS_MODEL);
                 }
             }
 
-            p_115151_ = net.neoforged.neoforge.client.ClientHooks.handleCameraTransforms(p_115147_, p_115151_, p_270188_, p_115146_);
-            p_115147_.translate(-0.5F, -0.5F, -0.5F);
-            if (!p_115151_.isCustomRenderer() && (!p_115144_.is(Items.TRIDENT) || flag)) {
+            p_model = net.neoforged.neoforge.client.ClientHooks.handleCameraTransforms(poseStack, p_model, displayContext, leftHand);
+            poseStack.translate(-0.5F, -0.5F, -0.5F);
+            if (!p_model.isCustomRenderer() && (!itemStack.is(Items.TRIDENT) || flag)) {
                 boolean flag1;
-                if (p_270188_ != ItemDisplayContext.GUI && !p_270188_.firstPerson() && p_115144_.getItem() instanceof BlockItem blockitem) {
+                if (displayContext != ItemDisplayContext.GUI && !displayContext.firstPerson() && itemStack.getItem() instanceof BlockItem blockitem) {
                     Block block = blockitem.getBlock();
                     flag1 = !(block instanceof HalfTransparentBlock) && !(block instanceof StainedGlassPaneBlock);
                 } else {
                     flag1 = true;
                 }
 
-                for (var model : p_115151_.getRenderPasses(p_115144_, flag1)) {
-                for (var rendertype : model.getRenderTypes(p_115144_, flag1)) {
+                for (var model : p_model.getRenderPasses(itemStack, flag1)) {
+                for (var rendertype : model.getRenderTypes(itemStack, flag1)) {
                 VertexConsumer vertexconsumer;
-                if (hasAnimatedTexture(p_115144_) && p_115144_.hasFoil()) {
-                    PoseStack.Pose posestack$pose = p_115147_.last().copy();
-                    if (p_270188_ == ItemDisplayContext.GUI) {
+                if (hasAnimatedTexture(itemStack) && itemStack.hasFoil()) {
+                    PoseStack.Pose posestack$pose = poseStack.last().copy();
+                    if (displayContext == ItemDisplayContext.GUI) {
                         MatrixUtil.mulComponentWise(posestack$pose.pose(), 0.5F);
-                    } else if (p_270188_.firstPerson()) {
+                    } else if (displayContext.firstPerson()) {
                         MatrixUtil.mulComponentWise(posestack$pose.pose(), 0.75F);
                     }
 
-                    vertexconsumer = getCompassFoilBuffer(p_115148_, rendertype, posestack$pose);
+                    vertexconsumer = getCompassFoilBuffer(bufferSource, rendertype, posestack$pose);
                 } else if (flag1) {
-                    vertexconsumer = getFoilBufferDirect(p_115148_, rendertype, true, p_115144_.hasFoil());
+                    vertexconsumer = getFoilBufferDirect(bufferSource, rendertype, true, itemStack.hasFoil());
                 } else {
-                    vertexconsumer = getFoilBuffer(p_115148_, rendertype, true, p_115144_.hasFoil());
+                    vertexconsumer = getFoilBuffer(bufferSource, rendertype, true, itemStack.hasFoil());
                 }
 
-                this.renderModelLists(model, p_115144_, p_115149_, p_115150_, p_115147_, vertexconsumer);
+                this.renderModelLists(model, itemStack, combinedLight, combinedOverlay, poseStack, vertexconsumer);
                 }
                 }
             } else {
-                net.neoforged.neoforge.client.extensions.common.IClientItemExtensions.of(p_115144_).getCustomRenderer().renderByItem(p_115144_, p_270188_, p_115147_, p_115148_, p_115149_, p_115150_);
+                net.neoforged.neoforge.client.extensions.common.IClientItemExtensions.of(itemStack).getCustomRenderer().renderByItem(itemStack, displayContext, poseStack, bufferSource, combinedLight, combinedOverlay);
             }
 
-            p_115147_.popPose();
+            poseStack.popPose();
         }
     }
 
-    private static boolean hasAnimatedTexture(ItemStack p_286353_) {
-        return p_286353_.is(ItemTags.COMPASSES) || p_286353_.is(Items.CLOCK);
+    private static boolean hasAnimatedTexture(ItemStack stack) {
+        return stack.is(ItemTags.COMPASSES) || stack.is(Items.CLOCK);
     }
 
-    public static VertexConsumer getArmorFoilBuffer(MultiBufferSource p_115185_, RenderType p_115186_, boolean p_115187_) {
-        return p_115187_
-            ? VertexMultiConsumer.create(p_115185_.getBuffer(RenderType.armorEntityGlint()), p_115185_.getBuffer(p_115186_))
-            : p_115185_.getBuffer(p_115186_);
+    public static VertexConsumer getArmorFoilBuffer(MultiBufferSource bufferSource, RenderType renderType, boolean hasFoil) {
+        return hasFoil
+            ? VertexMultiConsumer.create(bufferSource.getBuffer(RenderType.armorEntityGlint()), bufferSource.getBuffer(renderType))
+            : bufferSource.getBuffer(renderType);
     }
 
-    public static VertexConsumer getCompassFoilBuffer(MultiBufferSource p_115181_, RenderType p_115182_, PoseStack.Pose p_115183_) {
+    public static VertexConsumer getCompassFoilBuffer(MultiBufferSource bufferSource, RenderType renderType, PoseStack.Pose pose) {
         return VertexMultiConsumer.create(
-            new SheetedDecalTextureGenerator(p_115181_.getBuffer(RenderType.glint()), p_115183_, 0.0078125F), p_115181_.getBuffer(p_115182_)
+            new SheetedDecalTextureGenerator(bufferSource.getBuffer(RenderType.glint()), pose, 0.0078125F), bufferSource.getBuffer(renderType)
         );
     }
 
-    public static VertexConsumer getFoilBuffer(MultiBufferSource p_115212_, RenderType p_115213_, boolean p_115214_, boolean p_115215_) {
-        if (p_115215_) {
-            return Minecraft.useShaderTransparency() && p_115213_ == Sheets.translucentItemSheet()
-                ? VertexMultiConsumer.create(p_115212_.getBuffer(RenderType.glintTranslucent()), p_115212_.getBuffer(p_115213_))
-                : VertexMultiConsumer.create(p_115212_.getBuffer(p_115214_ ? RenderType.glint() : RenderType.entityGlint()), p_115212_.getBuffer(p_115213_));
+    public static VertexConsumer getFoilBuffer(MultiBufferSource bufferSource, RenderType renderType, boolean isItem, boolean glint) {
+        if (glint) {
+            return Minecraft.useShaderTransparency() && renderType == Sheets.translucentItemSheet()
+                ? VertexMultiConsumer.create(bufferSource.getBuffer(RenderType.glintTranslucent()), bufferSource.getBuffer(renderType))
+                : VertexMultiConsumer.create(bufferSource.getBuffer(isItem ? RenderType.glint() : RenderType.entityGlint()), bufferSource.getBuffer(renderType));
         } else {
-            return p_115212_.getBuffer(p_115213_);
+            return bufferSource.getBuffer(renderType);
         }
     }
 
-    public static VertexConsumer getFoilBufferDirect(MultiBufferSource p_115223_, RenderType p_115224_, boolean p_115225_, boolean p_115226_) {
-        return p_115226_
-            ? VertexMultiConsumer.create(p_115223_.getBuffer(p_115225_ ? RenderType.glint() : RenderType.entityGlintDirect()), p_115223_.getBuffer(p_115224_))
-            : p_115223_.getBuffer(p_115224_);
+    public static VertexConsumer getFoilBufferDirect(MultiBufferSource bufferSource, RenderType renderType, boolean noEntity, boolean withGlint) {
+        return withGlint
+            ? VertexMultiConsumer.create(bufferSource.getBuffer(noEntity ? RenderType.glint() : RenderType.entityGlintDirect()), bufferSource.getBuffer(renderType))
+            : bufferSource.getBuffer(renderType);
     }
 
-    public void renderQuadList(PoseStack p_115163_, VertexConsumer p_115164_, List<BakedQuad> p_115165_, ItemStack p_115166_, int p_115167_, int p_115168_) {
-        boolean flag = !p_115166_.isEmpty();
-        PoseStack.Pose posestack$pose = p_115163_.last();
+    public void renderQuadList(PoseStack poseStack, VertexConsumer buffer, List<BakedQuad> quads, ItemStack itemStack, int combinedLight, int combinedOverlay) {
+        boolean flag = !itemStack.isEmpty();
+        PoseStack.Pose posestack$pose = poseStack.last();
 
-        for (BakedQuad bakedquad : p_115165_) {
+        for (BakedQuad bakedquad : quads) {
             int i = -1;
             if (flag && bakedquad.isTinted()) {
-                i = this.itemColors.getColor(p_115166_, bakedquad.getTintIndex());
+                i = this.itemColors.getColor(itemStack, bakedquad.getTintIndex());
             }
 
             float f = (float)FastColor.ARGB32.alpha(i) / 255.0F;
             float f1 = (float)FastColor.ARGB32.red(i) / 255.0F;
             float f2 = (float)FastColor.ARGB32.green(i) / 255.0F;
             float f3 = (float)FastColor.ARGB32.blue(i) / 255.0F;
-            p_115164_.putBulkData(posestack$pose, bakedquad, f1, f2, f3, f, p_115167_, p_115168_, true); // Neo: pass readExistingColor=true
+            buffer.putBulkData(posestack$pose, bakedquad, f1, f2, f3, f, combinedLight, combinedOverlay, true); // Neo: pass readExistingColor=true
         }
     }
 
-    public BakedModel getModel(ItemStack p_174265_, @Nullable Level p_174266_, @Nullable LivingEntity p_174267_, int p_174268_) {
+    public BakedModel getModel(ItemStack stack, @Nullable Level level, @Nullable LivingEntity entity, int seed) {
         BakedModel bakedmodel;
-        if (p_174265_.is(Items.TRIDENT)) {
+        if (stack.is(Items.TRIDENT)) {
             bakedmodel = this.itemModelShaper.getModelManager().getModel(TRIDENT_IN_HAND_MODEL);
-        } else if (p_174265_.is(Items.SPYGLASS)) {
+        } else if (stack.is(Items.SPYGLASS)) {
             bakedmodel = this.itemModelShaper.getModelManager().getModel(SPYGLASS_IN_HAND_MODEL);
         } else {
-            bakedmodel = this.itemModelShaper.getItemModel(p_174265_);
+            bakedmodel = this.itemModelShaper.getItemModel(stack);
         }
 
-        ClientLevel clientlevel = p_174266_ instanceof ClientLevel ? (ClientLevel)p_174266_ : null;
-        BakedModel bakedmodel1 = bakedmodel.getOverrides().resolve(bakedmodel, p_174265_, clientlevel, p_174267_, p_174268_);
+        ClientLevel clientlevel = level instanceof ClientLevel ? (ClientLevel)level : null;
+        BakedModel bakedmodel1 = bakedmodel.getOverrides().resolve(bakedmodel, stack, clientlevel, entity, seed);
         return bakedmodel1 == null ? this.itemModelShaper.getModelManager().getMissingModel() : bakedmodel1;
     }
 
     public void renderStatic(
-        ItemStack p_270761_,
-        ItemDisplayContext p_270648_,
-        int p_270410_,
-        int p_270894_,
-        PoseStack p_270430_,
-        MultiBufferSource p_270457_,
-        @Nullable Level p_270149_,
-        int p_270509_
+        ItemStack stack,
+        ItemDisplayContext displayContext,
+        int combinedLight,
+        int combinedOverlay,
+        PoseStack poseStack,
+        MultiBufferSource bufferSource,
+        @Nullable Level level,
+        int seed
     ) {
-        this.renderStatic(null, p_270761_, p_270648_, false, p_270430_, p_270457_, p_270149_, p_270410_, p_270894_, p_270509_);
+        this.renderStatic(null, stack, displayContext, false, poseStack, bufferSource, level, combinedLight, combinedOverlay, seed);
     }
 
     public void renderStatic(
-        @Nullable LivingEntity p_270101_,
-        ItemStack p_270637_,
-        ItemDisplayContext p_270437_,
-        boolean p_270434_,
-        PoseStack p_270230_,
-        MultiBufferSource p_270411_,
-        @Nullable Level p_270641_,
-        int p_270595_,
-        int p_270927_,
-        int p_270845_
+        @Nullable LivingEntity entity,
+        ItemStack itemStack,
+        ItemDisplayContext diplayContext,
+        boolean leftHand,
+        PoseStack poseStack,
+        MultiBufferSource bufferSource,
+        @Nullable Level level,
+        int combinedLight,
+        int combinedOverlay,
+        int seed
     ) {
-        if (!p_270637_.isEmpty()) {
-            BakedModel bakedmodel = this.getModel(p_270637_, p_270641_, p_270101_, p_270845_);
-            this.render(p_270637_, p_270437_, p_270434_, p_270230_, p_270411_, p_270595_, p_270927_, bakedmodel);
+        if (!itemStack.isEmpty()) {
+            BakedModel bakedmodel = this.getModel(itemStack, level, entity, seed);
+            this.render(itemStack, diplayContext, leftHand, poseStack, bufferSource, combinedLight, combinedOverlay, bakedmodel);
         }
     }
 
     @Override
-    public void onResourceManagerReload(ResourceManager p_115105_) {
+    public void onResourceManagerReload(ResourceManager resourceManager) {
         this.itemModelShaper.rebuildCache();
     }
 

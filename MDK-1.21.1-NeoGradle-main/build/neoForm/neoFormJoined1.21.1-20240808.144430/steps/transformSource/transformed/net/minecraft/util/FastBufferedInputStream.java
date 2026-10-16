@@ -10,13 +10,13 @@ public class FastBufferedInputStream extends InputStream {
     private int limit;
     private int position;
 
-    public FastBufferedInputStream(InputStream p_196566_) {
-        this(p_196566_, 8192);
+    public FastBufferedInputStream(InputStream in) {
+        this(in, 8192);
     }
 
-    public FastBufferedInputStream(InputStream p_196568_, int p_196569_) {
-        this.in = p_196568_;
-        this.buffer = new byte[p_196569_];
+    public FastBufferedInputStream(InputStream in, int bufferSize) {
+        this.in = in;
+        this.buffer = new byte[bufferSize];
     }
 
     @Override
@@ -32,11 +32,11 @@ public class FastBufferedInputStream extends InputStream {
     }
 
     @Override
-    public int read(byte[] p_196576_, int p_196577_, int p_196578_) throws IOException {
+    public int read(byte[] buffer, int offset, int length) throws IOException {
         int i = this.bytesInBuffer();
         if (i <= 0) {
-            if (p_196578_ >= this.buffer.length) {
-                return this.in.read(p_196576_, p_196577_, p_196578_);
+            if (length >= this.buffer.length) {
+                return this.in.read(buffer, offset, length);
             }
 
             this.fill();
@@ -46,30 +46,30 @@ public class FastBufferedInputStream extends InputStream {
             }
         }
 
-        if (p_196578_ > i) {
-            p_196578_ = i;
+        if (length > i) {
+            length = i;
         }
 
-        System.arraycopy(this.buffer, this.position, p_196576_, p_196577_, p_196578_);
-        this.position += p_196578_;
-        return p_196578_;
+        System.arraycopy(this.buffer, this.position, buffer, offset, length);
+        this.position += length;
+        return length;
     }
 
     @Override
-    public long skip(long p_196580_) throws IOException {
-        if (p_196580_ <= 0L) {
+    public long skip(long amount) throws IOException {
+        if (amount <= 0L) {
             return 0L;
         } else {
             long i = (long)this.bytesInBuffer();
             if (i <= 0L) {
-                return this.in.skip(p_196580_);
+                return this.in.skip(amount);
             } else {
-                if (p_196580_ > i) {
-                    p_196580_ = i;
+                if (amount > i) {
+                    amount = i;
                 }
 
-                this.position = (int)((long)this.position + p_196580_);
-                return p_196580_;
+                this.position = (int)((long)this.position + amount);
+                return amount;
             }
         }
     }

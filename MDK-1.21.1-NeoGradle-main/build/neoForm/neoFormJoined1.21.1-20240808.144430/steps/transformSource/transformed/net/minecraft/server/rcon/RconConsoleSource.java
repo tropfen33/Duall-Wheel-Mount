@@ -14,8 +14,8 @@ public class RconConsoleSource implements CommandSource {
     private final StringBuffer buffer = new StringBuffer();
     private final MinecraftServer server;
 
-    public RconConsoleSource(MinecraftServer p_11505_) {
-        this.server = p_11505_;
+    public RconConsoleSource(MinecraftServer server) {
+        this.server = server;
     }
 
     public void prepareForCommand() {
@@ -34,8 +34,8 @@ public class RconConsoleSource implements CommandSource {
     }
 
     @Override
-    public void sendSystemMessage(Component p_215653_) {
-        this.buffer.append(p_215653_.getString()).append("\n"); // FIX MC-7569 - RCON has no newlines in multiline output
+    public void sendSystemMessage(Component component) {
+        this.buffer.append(component.getString()).append("\n"); // FIX MC-7569 - RCON has no newlines in multiline output
     }
 
     @Override

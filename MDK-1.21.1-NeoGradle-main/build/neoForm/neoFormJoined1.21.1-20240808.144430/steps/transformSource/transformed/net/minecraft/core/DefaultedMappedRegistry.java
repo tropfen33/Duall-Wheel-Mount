@@ -12,31 +12,37 @@ public class DefaultedMappedRegistry<T> extends MappedRegistry<T> implements Def
     private final ResourceLocation defaultKey;
     private Holder.Reference<T> defaultValue;
 
-    public DefaultedMappedRegistry(String p_260196_, ResourceKey<? extends Registry<T>> p_259440_, Lifecycle p_260260_, boolean p_259808_) {
-        super(p_259440_, p_260260_, p_259808_);
-        this.defaultKey = ResourceLocation.parse(p_260196_);
+    public DefaultedMappedRegistry(String defaultKey, ResourceKey<? extends Registry<T>> key, Lifecycle registryLifecycle, boolean hasIntrusiveHolders) {
+        super(key, registryLifecycle, hasIntrusiveHolders);
+        this.defaultKey = ResourceLocation.parse(defaultKey);
     }
 
     @Override
-    public Holder.Reference<T> register(ResourceKey<T> p_321803_, T p_321739_, RegistrationInfo p_325995_) {
-        Holder.Reference<T> reference = super.register(p_321803_, p_321739_, p_325995_);
-        if (this.defaultKey.equals(p_321803_.location())) {
+    public Holder.Reference<T> register(ResourceKey<T> key, T value, RegistrationInfo registrationInfo) {
+        Holder.Reference<T> reference = super.register(key, value, registrationInfo);
+        if (this.defaultKey.equals(key.location())) {
             this.defaultValue = reference;
         }
 
         return reference;
     }
 
+    /**
+     * @return the integer ID used to identify the given object
+     */
     @Override
-    public int getId(@Nullable T p_260033_) {
-        int i = super.getId(p_260033_);
+    public int getId(@Nullable T value) {
+        int i = super.getId(value);
         return i == -1 ? super.getId(this.defaultValue.value()) : i;
     }
 
+    /**
+     * @return the name used to identify the given object within this registry or {@code null} if the object is not within this registry
+     */
     @Nonnull
     @Override
-    public ResourceLocation getKey(T p_259233_) {
-        ResourceLocation resourcelocation = super.getKey(p_259233_);
+    public ResourceLocation getKey(T value) {
+        ResourceLocation resourcelocation = super.getKey(value);
         return resourcelocation == null ? this.defaultKey : resourcelocation;
     }
 
@@ -48,14 +54,14 @@ public class DefaultedMappedRegistry<T> extends MappedRegistry<T> implements Def
 
     @Nonnull
     @Override
-    public T get(@Nullable ResourceLocation p_260004_) {
-        T t = super.get(p_260004_);
+    public T get(@Nullable ResourceLocation name) {
+        T t = super.get(name);
         return t == null ? this.defaultValue.value() : t;
     }
 
     @Override
-    public Optional<T> getOptional(@Nullable ResourceLocation p_260078_) {
-        return Optional.ofNullable(super.get(p_260078_));
+    public Optional<T> getOptional(@Nullable ResourceLocation name) {
+        return Optional.ofNullable(super.get(name));
     }
 
     @Override
@@ -65,14 +71,14 @@ public class DefaultedMappedRegistry<T> extends MappedRegistry<T> implements Def
 
     @Nonnull
     @Override
-    public T byId(int p_259534_) {
-        T t = super.byId(p_259534_);
+    public T byId(int id) {
+        T t = super.byId(id);
         return t == null ? this.defaultValue.value() : t;
     }
 
     @Override
-    public Optional<Holder.Reference<T>> getRandom(RandomSource p_260255_) {
-        return super.getRandom(p_260255_).or(() -> Optional.of(this.defaultValue));
+    public Optional<Holder.Reference<T>> getRandom(RandomSource random) {
+        return super.getRandom(random).or(() -> Optional.of(this.defaultValue));
     }
 
     @Override

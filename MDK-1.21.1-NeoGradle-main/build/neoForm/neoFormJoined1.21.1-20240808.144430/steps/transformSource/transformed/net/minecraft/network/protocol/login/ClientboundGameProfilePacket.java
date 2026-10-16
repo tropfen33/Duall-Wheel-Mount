@@ -22,8 +22,11 @@ public record ClientboundGameProfilePacket(GameProfile gameProfile, @Deprecated(
         return LoginPacketTypes.CLIENTBOUND_GAME_PROFILE;
     }
 
-    public void handle(ClientLoginPacketListener p_134773_) {
-        p_134773_.handleGameProfile(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientLoginPacketListener handler) {
+        handler.handleGameProfile(this);
     }
 
     @Override

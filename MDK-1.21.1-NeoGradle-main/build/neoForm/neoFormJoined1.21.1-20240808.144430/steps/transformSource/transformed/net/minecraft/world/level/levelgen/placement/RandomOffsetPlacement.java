@@ -20,28 +20,28 @@ public class RandomOffsetPlacement extends PlacementModifier {
     private final IntProvider xzSpread;
     private final IntProvider ySpread;
 
-    public static RandomOffsetPlacement of(IntProvider p_191880_, IntProvider p_191881_) {
-        return new RandomOffsetPlacement(p_191880_, p_191881_);
+    public static RandomOffsetPlacement of(IntProvider xzSpread, IntProvider ySpread) {
+        return new RandomOffsetPlacement(xzSpread, ySpread);
     }
 
-    public static RandomOffsetPlacement vertical(IntProvider p_191878_) {
-        return new RandomOffsetPlacement(ConstantInt.of(0), p_191878_);
+    public static RandomOffsetPlacement vertical(IntProvider ySpread) {
+        return new RandomOffsetPlacement(ConstantInt.of(0), ySpread);
     }
 
-    public static RandomOffsetPlacement horizontal(IntProvider p_191892_) {
-        return new RandomOffsetPlacement(p_191892_, ConstantInt.of(0));
+    public static RandomOffsetPlacement horizontal(IntProvider xzSpread) {
+        return new RandomOffsetPlacement(xzSpread, ConstantInt.of(0));
     }
 
-    private RandomOffsetPlacement(IntProvider p_191875_, IntProvider p_191876_) {
-        this.xzSpread = p_191875_;
-        this.ySpread = p_191876_;
+    private RandomOffsetPlacement(IntProvider xzSpread, IntProvider ySpread) {
+        this.xzSpread = xzSpread;
+        this.ySpread = ySpread;
     }
 
     @Override
-    public Stream<BlockPos> getPositions(PlacementContext p_226393_, RandomSource p_226394_, BlockPos p_226395_) {
-        int i = p_226395_.getX() + this.xzSpread.sample(p_226394_);
-        int j = p_226395_.getY() + this.ySpread.sample(p_226394_);
-        int k = p_226395_.getZ() + this.xzSpread.sample(p_226394_);
+    public Stream<BlockPos> getPositions(PlacementContext context, RandomSource random, BlockPos pos) {
+        int i = pos.getX() + this.xzSpread.sample(random);
+        int j = pos.getY() + this.ySpread.sample(random);
+        int k = pos.getZ() + this.xzSpread.sample(random);
         return Stream.of(new BlockPos(i, j, k));
     }
 

@@ -14,28 +14,28 @@ public record ServerboundCustomQueryAnswerPacket(int transactionId, @Nullable Cu
     );
     private static final int MAX_PAYLOAD_SIZE = 1048576;
 
-    private static ServerboundCustomQueryAnswerPacket read(FriendlyByteBuf p_295711_) {
-        int i = p_295711_.readVarInt();
-        return new ServerboundCustomQueryAnswerPacket(i, readPayload(i, p_295711_));
+    private static ServerboundCustomQueryAnswerPacket read(FriendlyByteBuf buffer) {
+        int i = buffer.readVarInt();
+        return new ServerboundCustomQueryAnswerPacket(i, readPayload(i, buffer));
     }
 
-    private static CustomQueryAnswerPayload readPayload(int p_296215_, FriendlyByteBuf p_295168_) {
-        return readUnknownPayload(p_295168_);
+    private static CustomQueryAnswerPayload readPayload(int transactionId, FriendlyByteBuf buffer) {
+        return readUnknownPayload(buffer);
     }
 
-    private static CustomQueryAnswerPayload readUnknownPayload(FriendlyByteBuf p_294928_) {
-        int i = p_294928_.readableBytes();
+    private static CustomQueryAnswerPayload readUnknownPayload(FriendlyByteBuf buffer) {
+        int i = buffer.readableBytes();
         if (i >= 0 && i <= 1048576) {
-            p_294928_.skipBytes(i);
+            buffer.skipBytes(i);
             return DiscardedQueryAnswerPayload.INSTANCE;
         } else {
             throw new IllegalArgumentException("Payload may not be larger than 1048576 bytes");
         }
     }
 
-    private void write(FriendlyByteBuf p_296127_) {
-        p_296127_.writeVarInt(this.transactionId);
-        p_296127_.writeNullable(this.payload, (p_295443_, p_295588_) -> p_295588_.write(p_295443_));
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.transactionId);
+        buffer.writeNullable(this.payload, (p_295443_, p_295588_) -> p_295588_.write(p_295443_));
     }
 
     @Override
@@ -43,7 +43,10 @@ public record ServerboundCustomQueryAnswerPacket(int transactionId, @Nullable Cu
         return LoginPacketTypes.SERVERBOUND_CUSTOM_QUERY_ANSWER;
     }
 
-    public void handle(ServerLoginPacketListener p_294750_) {
-        p_294750_.handleCustomQueryPacket(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ServerLoginPacketListener handler) {
+        handler.handleCustomQueryPacket(this);
     }
 }

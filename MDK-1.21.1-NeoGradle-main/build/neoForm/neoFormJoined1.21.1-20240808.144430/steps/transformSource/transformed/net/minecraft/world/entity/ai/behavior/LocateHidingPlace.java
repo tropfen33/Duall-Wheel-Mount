@@ -13,7 +13,7 @@ import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 
 public class LocateHidingPlace {
-    public static OneShot<LivingEntity> create(int p_259202_, float p_259881_, int p_259982_) {
+    public static OneShot<LivingEntity> create(int radius, float speedModifier, int closeEnoughDist) {
         return BehaviorBuilder.create(
             p_258505_ -> p_258505_.group(
                         p_258505_.absent(MemoryModuleType.WALK_TARGET),
@@ -32,10 +32,10 @@ public class LocateHidingPlace {
                                         p_217258_ -> p_217258_.is(PoiTypes.HOME),
                                         p_23425_ -> true,
                                         p_352738_.blockPosition(),
-                                        p_259982_ + 1,
+                                        closeEnoughDist + 1,
                                         PoiManager.Occupancy.ANY
                                     )
-                                    .filter(p_352725_ -> p_352725_.closerToCenterThan(p_352738_.position(), (double)p_259982_))
+                                    .filter(p_352725_ -> p_352725_.closerToCenterThan(p_352738_.position(), (double)closeEnoughDist))
                                     .or(
                                         () -> p_352737_.getPoiManager()
                                                 .getRandom(
@@ -43,7 +43,7 @@ public class LocateHidingPlace {
                                                     p_23421_ -> true,
                                                     PoiManager.Occupancy.ANY,
                                                     p_352738_.blockPosition(),
-                                                    p_259202_,
+                                                    radius,
                                                     p_352738_.getRandom()
                                                 )
                                     )
@@ -54,8 +54,8 @@ public class LocateHidingPlace {
                                         p_258489_.erase();
                                         p_258490_.erase();
                                         p_258486_.set(GlobalPos.of(p_352737_.dimension(), p_352753_));
-                                        if (!p_352753_.closerToCenterThan(p_352738_.position(), (double)p_259982_)) {
-                                            p_258484_.set(new WalkTarget(p_352753_, p_259881_, p_259982_));
+                                        if (!p_352753_.closerToCenterThan(p_352738_.position(), (double)closeEnoughDist)) {
+                                            p_258484_.set(new WalkTarget(p_352753_, speedModifier, closeEnoughDist));
                                         }
                                     });
                                 return true;

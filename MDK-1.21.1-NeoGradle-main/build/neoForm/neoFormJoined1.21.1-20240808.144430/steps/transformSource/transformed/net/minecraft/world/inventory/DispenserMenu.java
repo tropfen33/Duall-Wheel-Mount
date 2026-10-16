@@ -14,46 +14,52 @@ public class DispenserMenu extends AbstractContainerMenu {
     private static final int USE_ROW_SLOT_END = 45;
     private final Container dispenser;
 
-    public DispenserMenu(int p_39433_, Inventory p_39434_) {
-        this(p_39433_, p_39434_, new SimpleContainer(9));
+    public DispenserMenu(int containerId, Inventory playerInventory) {
+        this(containerId, playerInventory, new SimpleContainer(9));
     }
 
-    public DispenserMenu(int p_39436_, Inventory p_39437_, Container p_39438_) {
-        super(MenuType.GENERIC_3x3, p_39436_);
-        checkContainerSize(p_39438_, 9);
-        this.dispenser = p_39438_;
-        p_39438_.startOpen(p_39437_.player);
+    public DispenserMenu(int containerId, Inventory playerInventory, Container container) {
+        super(MenuType.GENERIC_3x3, containerId);
+        checkContainerSize(container, 9);
+        this.dispenser = container;
+        container.startOpen(playerInventory.player);
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                this.addSlot(new Slot(p_39438_, j + i * 3, 62 + j * 18, 17 + i * 18));
+                this.addSlot(new Slot(container, j + i * 3, 62 + j * 18, 17 + i * 18));
             }
         }
 
         for (int k = 0; k < 3; k++) {
             for (int i1 = 0; i1 < 9; i1++) {
-                this.addSlot(new Slot(p_39437_, i1 + k * 9 + 9, 8 + i1 * 18, 84 + k * 18));
+                this.addSlot(new Slot(playerInventory, i1 + k * 9 + 9, 8 + i1 * 18, 84 + k * 18));
             }
         }
 
         for (int l = 0; l < 9; l++) {
-            this.addSlot(new Slot(p_39437_, l, 8 + l * 18, 142));
+            this.addSlot(new Slot(playerInventory, l, 8 + l * 18, 142));
         }
     }
 
+    /**
+     * Determines whether supplied player can use this container
+     */
     @Override
-    public boolean stillValid(Player p_39440_) {
-        return this.dispenser.stillValid(p_39440_);
+    public boolean stillValid(Player player) {
+        return this.dispenser.stillValid(player);
     }
 
+    /**
+     * Handle when the stack in slot {@code index} is shift-clicked. Normally this moves the stack between the player inventory and the other inventory(s).
+     */
     @Override
-    public ItemStack quickMoveStack(Player p_39444_, int p_39445_) {
+    public ItemStack quickMoveStack(Player player, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(p_39445_);
+        Slot slot = this.slots.get(index);
         if (slot != null && slot.hasItem()) {
             ItemStack itemstack1 = slot.getItem();
             itemstack = itemstack1.copy();
-            if (p_39445_ < 9) {
+            if (index < 9) {
                 if (!this.moveItemStackTo(itemstack1, 9, 45, true)) {
                     return ItemStack.EMPTY;
                 }
@@ -71,15 +77,18 @@ public class DispenserMenu extends AbstractContainerMenu {
                 return ItemStack.EMPTY;
             }
 
-            slot.onTake(p_39444_, itemstack1);
+            slot.onTake(player, itemstack1);
         }
 
         return itemstack;
     }
 
+    /**
+     * Called when the container is closed.
+     */
     @Override
-    public void removed(Player p_39442_) {
-        super.removed(p_39442_);
-        this.dispenser.stopOpen(p_39442_);
+    public void removed(Player player) {
+        super.removed(player);
+        this.dispenser.stopOpen(player);
     }
 }

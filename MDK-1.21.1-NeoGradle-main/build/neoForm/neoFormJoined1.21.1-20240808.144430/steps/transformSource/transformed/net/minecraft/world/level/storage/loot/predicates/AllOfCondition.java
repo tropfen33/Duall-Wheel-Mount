@@ -9,12 +9,12 @@ public class AllOfCondition extends CompositeLootItemCondition {
     public static final MapCodec<AllOfCondition> CODEC = createCodec(AllOfCondition::new);
     public static final Codec<AllOfCondition> INLINE_CODEC = createInlineCodec(AllOfCondition::new);
 
-    AllOfCondition(List<LootItemCondition> p_299216_) {
-        super(p_299216_, Util.allOf(p_299216_));
+    AllOfCondition(List<LootItemCondition> conditions) {
+        super(conditions, Util.allOf(conditions));
     }
 
-    public static AllOfCondition allOf(List<LootItemCondition> p_298400_) {
-        return new AllOfCondition(List.copyOf(p_298400_));
+    public static AllOfCondition allOf(List<LootItemCondition> conditions) {
+        return new AllOfCondition(List.copyOf(conditions));
     }
 
     @Override
@@ -22,8 +22,8 @@ public class AllOfCondition extends CompositeLootItemCondition {
         return LootItemConditions.ALL_OF;
     }
 
-    public static AllOfCondition.Builder allOf(LootItemCondition.Builder... p_286873_) {
-        return new AllOfCondition.Builder(p_286873_);
+    public static AllOfCondition.Builder allOf(LootItemCondition.Builder... conditions) {
+        return new AllOfCondition.Builder(conditions);
     }
 
     public static class Builder extends CompositeLootItemCondition.Builder {

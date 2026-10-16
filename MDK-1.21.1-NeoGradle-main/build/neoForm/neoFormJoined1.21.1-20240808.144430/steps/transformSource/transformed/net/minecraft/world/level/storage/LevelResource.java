@@ -15,8 +15,8 @@ public class LevelResource {
     public static final LevelResource ROOT = new LevelResource(".");
     private final String id;
 
-    public LevelResource(String p_78186_) {
-        this.id = p_78186_;
+    public LevelResource(String id) {
+        this.id = id;
     }
 
     public String getId() {

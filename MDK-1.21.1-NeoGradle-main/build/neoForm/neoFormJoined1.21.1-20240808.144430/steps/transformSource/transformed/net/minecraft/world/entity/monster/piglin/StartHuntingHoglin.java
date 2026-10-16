@@ -38,7 +38,7 @@ public class StartHuntingHoglin {
         );
     }
 
-    private static boolean hasHuntedRecently(AbstractPiglin p_260138_) {
-        return p_260138_.getBrain().hasMemoryValue(MemoryModuleType.HUNTED_RECENTLY);
+    private static boolean hasHuntedRecently(AbstractPiglin piglin) {
+        return piglin.getBrain().hasMemoryValue(MemoryModuleType.HUNTED_RECENTLY);
     }
 }

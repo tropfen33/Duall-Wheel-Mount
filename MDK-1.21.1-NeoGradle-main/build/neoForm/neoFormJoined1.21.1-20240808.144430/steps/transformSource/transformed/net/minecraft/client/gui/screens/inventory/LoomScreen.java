@@ -61,9 +61,9 @@ public class LoomScreen extends AbstractContainerScreen<LoomMenu> {
     private boolean scrolling;
     private int startRow;
 
-    public LoomScreen(LoomMenu p_99075_, Inventory p_99076_, Component p_99077_) {
-        super(p_99075_, p_99076_, p_99077_);
-        p_99075_.registerUpdateListener(this::containerChanged);
+    public LoomScreen(LoomMenu menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title);
+        menu.registerUpdateListener(this::containerChanged);
         this.titleLabelY -= 2;
     }
 
@@ -73,10 +73,18 @@ public class LoomScreen extends AbstractContainerScreen<LoomMenu> {
         this.flag = this.minecraft.getEntityModels().bakeLayer(ModelLayers.BANNER).getChild("flag");
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283513_, int p_282700_, int p_282637_, float p_281433_) {
-        super.render(p_283513_, p_282700_, p_282637_, p_281433_);
-        this.renderTooltip(p_283513_, p_282700_, p_282637_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
     private int totalRowCount() {
@@ -84,43 +92,43 @@ public class LoomScreen extends AbstractContainerScreen<LoomMenu> {
     }
 
     @Override
-    protected void renderBg(GuiGraphics p_282870_, float p_281777_, int p_283331_, int p_283087_) {
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         int i = this.leftPos;
         int j = this.topPos;
-        p_282870_.blit(BG_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
+        guiGraphics.blit(BG_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
         Slot slot = this.menu.getBannerSlot();
         Slot slot1 = this.menu.getDyeSlot();
         Slot slot2 = this.menu.getPatternSlot();
         Slot slot3 = this.menu.getResultSlot();
         if (!slot.hasItem()) {
-            p_282870_.blitSprite(BANNER_SLOT_SPRITE, i + slot.x, j + slot.y, 16, 16);
+            guiGraphics.blitSprite(BANNER_SLOT_SPRITE, i + slot.x, j + slot.y, 16, 16);
         }
 
         if (!slot1.hasItem()) {
-            p_282870_.blitSprite(DYE_SLOT_SPRITE, i + slot1.x, j + slot1.y, 16, 16);
+            guiGraphics.blitSprite(DYE_SLOT_SPRITE, i + slot1.x, j + slot1.y, 16, 16);
         }
 
         if (!slot2.hasItem()) {
-            p_282870_.blitSprite(PATTERN_SLOT_SPRITE, i + slot2.x, j + slot2.y, 16, 16);
+            guiGraphics.blitSprite(PATTERN_SLOT_SPRITE, i + slot2.x, j + slot2.y, 16, 16);
         }
 
         int k = (int)(41.0F * this.scrollOffs);
         ResourceLocation resourcelocation = this.displayPatterns ? SCROLLER_SPRITE : SCROLLER_DISABLED_SPRITE;
-        p_282870_.blitSprite(resourcelocation, i + 119, j + 13 + k, 12, 15);
+        guiGraphics.blitSprite(resourcelocation, i + 119, j + 13 + k, 12, 15);
         Lighting.setupForFlatItems();
         if (this.resultBannerPatterns != null && !this.hasMaxPatterns) {
-            p_282870_.pose().pushPose();
-            p_282870_.pose().translate((float)(i + 139), (float)(j + 52), 0.0F);
-            p_282870_.pose().scale(24.0F, 24.0F, 1.0F);
-            p_282870_.pose().translate(0.5F, -0.5F, 0.5F);
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate((float)(i + 139), (float)(j + 52), 0.0F);
+            guiGraphics.pose().scale(24.0F, 24.0F, 1.0F);
+            guiGraphics.pose().translate(0.5F, -0.5F, 0.5F);
             float f = 0.6666667F;
-            p_282870_.pose().scale(0.6666667F, 0.6666667F, -0.6666667F);
+            guiGraphics.pose().scale(0.6666667F, 0.6666667F, -0.6666667F);
             this.flag.xRot = 0.0F;
             this.flag.y = -32.0F;
             DyeColor dyecolor = ((BannerItem)slot3.getItem().getItem()).getColor();
             BannerRenderer.renderPatterns(
-                p_282870_.pose(),
-                p_282870_.bufferSource(),
+                guiGraphics.pose(),
+                guiGraphics.bufferSource(),
                 15728880,
                 OverlayTexture.NO_OVERLAY,
                 this.flag,
@@ -129,10 +137,10 @@ public class LoomScreen extends AbstractContainerScreen<LoomMenu> {
                 dyecolor,
                 this.resultBannerPatterns
             );
-            p_282870_.pose().popPose();
-            p_282870_.flush();
+            guiGraphics.pose().popPose();
+            guiGraphics.flush();
         } else if (this.hasMaxPatterns) {
-            p_282870_.blitSprite(ERROR_SPRITE, i + slot3.x - 5, j + slot3.y - 5, 26, 26);
+            guiGraphics.blitSprite(ERROR_SPRITE, i + slot3.x - 5, j + slot3.y - 5, 26, 26);
         }
 
         if (this.displayPatterns) {
@@ -151,7 +159,7 @@ public class LoomScreen extends AbstractContainerScreen<LoomMenu> {
 
                     int l1 = j2 + i1 * 14;
                     int i2 = k2 + l * 14;
-                    boolean flag = p_283331_ >= l1 && p_283087_ >= i2 && p_283331_ < l1 + 14 && p_283087_ < i2 + 14;
+                    boolean flag = mouseX >= l1 && mouseY >= i2 && mouseX < l1 + 14 && mouseY < i2 + 14;
                     ResourceLocation resourcelocation1;
                     if (k1 == this.menu.getSelectedBannerPatternIndex()) {
                         resourcelocation1 = PATTERN_SELECTED_SPRITE;
@@ -161,8 +169,8 @@ public class LoomScreen extends AbstractContainerScreen<LoomMenu> {
                         resourcelocation1 = PATTERN_SPRITE;
                     }
 
-                    p_282870_.blitSprite(resourcelocation1, l1, i2, 14, 14);
-                    this.renderPattern(p_282870_, list.get(k1), l1, i2);
+                    guiGraphics.blitSprite(resourcelocation1, l1, i2, 14, 14);
+                    this.renderPattern(guiGraphics, list.get(k1), l1, i2);
                 }
             }
         }
@@ -170,10 +178,10 @@ public class LoomScreen extends AbstractContainerScreen<LoomMenu> {
         Lighting.setupFor3DItems();
     }
 
-    private void renderPattern(GuiGraphics p_282452_, Holder<BannerPattern> p_281940_, int p_281872_, int p_282995_) {
+    private void renderPattern(GuiGraphics guiGraphics, Holder<BannerPattern> patern, int x, int y) {
         PoseStack posestack = new PoseStack();
         posestack.pushPose();
-        posestack.translate((float)p_281872_ + 0.5F, (float)(p_282995_ + 16), 0.0F);
+        posestack.translate((float)x + 0.5F, (float)(y + 16), 0.0F);
         posestack.scale(6.0F, -6.0F, 1.0F);
         posestack.translate(0.5F, 0.5F, 0.0F);
         posestack.translate(0.5F, 0.5F, 0.5F);
@@ -181,10 +189,10 @@ public class LoomScreen extends AbstractContainerScreen<LoomMenu> {
         posestack.scale(0.6666667F, -0.6666667F, -0.6666667F);
         this.flag.xRot = 0.0F;
         this.flag.y = -32.0F;
-        BannerPatternLayers bannerpatternlayers = new BannerPatternLayers.Builder().add(p_281940_, DyeColor.WHITE).build();
+        BannerPatternLayers bannerpatternlayers = new BannerPatternLayers.Builder().add(patern, DyeColor.WHITE).build();
         BannerRenderer.renderPatterns(
             posestack,
-            p_282452_.bufferSource(),
+            guiGraphics.bufferSource(),
             15728880,
             OverlayTexture.NO_OVERLAY,
             this.flag,
@@ -194,11 +202,20 @@ public class LoomScreen extends AbstractContainerScreen<LoomMenu> {
             bannerpatternlayers
         );
         posestack.popPose();
-        p_282452_.flush();
+        guiGraphics.flush();
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    public boolean mouseClicked(double p_99083_, double p_99084_, int p_99085_) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         this.scrolling = false;
         if (this.displayPatterns) {
             int i = this.leftPos + 60;
@@ -206,8 +223,8 @@ public class LoomScreen extends AbstractContainerScreen<LoomMenu> {
 
             for (int k = 0; k < 4; k++) {
                 for (int l = 0; l < 4; l++) {
-                    double d0 = p_99083_ - (double)(i + l * 14);
-                    double d1 = p_99084_ - (double)(j + k * 14);
+                    double d0 = mouseX - (double)(i + l * 14);
+                    double d1 = mouseY - (double)(j + k * 14);
                     int i1 = k + this.startRow;
                     int j1 = i1 * 4 + l;
                     if (d0 >= 0.0 && d1 >= 0.0 && d0 < 14.0 && d1 < 14.0 && this.menu.clickMenuButton(this.minecraft.player, j1)) {
@@ -220,34 +237,45 @@ public class LoomScreen extends AbstractContainerScreen<LoomMenu> {
 
             i = this.leftPos + 119;
             j = this.topPos + 9;
-            if (p_99083_ >= (double)i && p_99083_ < (double)(i + 12) && p_99084_ >= (double)j && p_99084_ < (double)(j + 56)) {
+            if (mouseX >= (double)i && mouseX < (double)(i + 12) && mouseY >= (double)j && mouseY < (double)(j + 56)) {
                 this.scrolling = true;
             }
         }
 
-        return super.mouseClicked(p_99083_, p_99084_, p_99085_);
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
+    /**
+     * Called when the mouse is dragged within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that is being dragged.
+     * @param dragX  the X distance of the drag.
+     * @param dragY  the Y distance of the drag.
+     */
     @Override
-    public boolean mouseDragged(double p_99087_, double p_99088_, int p_99089_, double p_99090_, double p_99091_) {
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         int i = this.totalRowCount() - 4;
         if (this.scrolling && this.displayPatterns && i > 0) {
             int j = this.topPos + 13;
             int k = j + 56;
-            this.scrollOffs = ((float)p_99088_ - (float)j - 7.5F) / ((float)(k - j) - 15.0F);
+            this.scrollOffs = ((float)mouseY - (float)j - 7.5F) / ((float)(k - j) - 15.0F);
             this.scrollOffs = Mth.clamp(this.scrollOffs, 0.0F, 1.0F);
             this.startRow = Math.max((int)((double)(this.scrollOffs * (float)i) + 0.5), 0);
             return true;
         } else {
-            return super.mouseDragged(p_99087_, p_99088_, p_99089_, p_99090_, p_99091_);
+            return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
         }
     }
 
     @Override
-    public boolean mouseScrolled(double p_99079_, double p_99080_, double p_99081_, double p_295430_) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         int i = this.totalRowCount() - 4;
         if (this.displayPatterns && i > 0) {
-            float f = (float)p_295430_ / (float)i;
+            float f = (float)scrollY / (float)i;
             this.scrollOffs = Mth.clamp(this.scrollOffs - f, 0.0F, 1.0F);
             this.startRow = Math.max((int)(this.scrollOffs * (float)i + 0.5F), 0);
         }
@@ -256,11 +284,11 @@ public class LoomScreen extends AbstractContainerScreen<LoomMenu> {
     }
 
     @Override
-    protected boolean hasClickedOutside(double p_99093_, double p_99094_, int p_99095_, int p_99096_, int p_99097_) {
-        return p_99093_ < (double)p_99095_
-            || p_99094_ < (double)p_99096_
-            || p_99093_ >= (double)(p_99095_ + this.imageWidth)
-            || p_99094_ >= (double)(p_99096_ + this.imageHeight);
+    protected boolean hasClickedOutside(double mouseX, double mouseY, int guiLeft, int guiTop, int mouseButton) {
+        return mouseX < (double)guiLeft
+            || mouseY < (double)guiTop
+            || mouseX >= (double)(guiLeft + this.imageWidth)
+            || mouseY >= (double)(guiTop + this.imageHeight);
     }
 
     private void containerChanged() {

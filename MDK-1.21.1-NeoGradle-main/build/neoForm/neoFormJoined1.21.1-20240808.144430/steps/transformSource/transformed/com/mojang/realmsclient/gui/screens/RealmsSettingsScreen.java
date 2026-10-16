@@ -22,10 +22,10 @@ public class RealmsSettingsScreen extends RealmsScreen {
     private EditBox descEdit;
     private EditBox nameEdit;
 
-    public RealmsSettingsScreen(RealmsConfigureWorldScreen p_89829_, RealmsServer p_89830_) {
+    public RealmsSettingsScreen(RealmsConfigureWorldScreen configureWorldScreen, RealmsServer serverData) {
         super(Component.translatable("mco.configure.world.settings.title"));
-        this.configureWorldScreen = p_89829_;
-        this.serverData = p_89830_;
+        this.configureWorldScreen = configureWorldScreen;
+        this.serverData = serverData;
     }
 
     @Override
@@ -77,12 +77,20 @@ public class RealmsSettingsScreen extends RealmsScreen {
         this.minecraft.setScreen(this.configureWorldScreen);
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283580_, int p_281307_, int p_282074_, float p_282669_) {
-        super.render(p_283580_, p_281307_, p_282074_, p_282669_);
-        p_283580_.drawCenteredString(this.font, this.title, this.width / 2, 17, -1);
-        p_283580_.drawString(this.font, NAME_LABEL, this.width / 2 - 106, row(3), -1, false);
-        p_283580_.drawString(this.font, DESCRIPTION_LABEL, this.width / 2 - 106, row(7), -1, false);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 17, -1);
+        guiGraphics.drawString(this.font, NAME_LABEL, this.width / 2 - 106, row(3), -1, false);
+        guiGraphics.drawString(this.font, DESCRIPTION_LABEL, this.width / 2 - 106, row(7), -1, false);
     }
 
     public void save() {

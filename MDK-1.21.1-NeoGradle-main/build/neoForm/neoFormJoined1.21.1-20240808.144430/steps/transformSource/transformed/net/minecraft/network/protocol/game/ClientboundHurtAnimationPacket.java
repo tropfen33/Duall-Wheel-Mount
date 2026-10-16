@@ -19,9 +19,9 @@ public record ClientboundHurtAnimationPacket(int id, float yaw) implements Packe
         this(p_265181_.readVarInt(), p_265181_.readFloat());
     }
 
-    private void write(FriendlyByteBuf p_265156_) {
-        p_265156_.writeVarInt(this.id);
-        p_265156_.writeFloat(this.yaw);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.id);
+        buffer.writeFloat(this.yaw);
     }
 
     @Override
@@ -29,7 +29,10 @@ public record ClientboundHurtAnimationPacket(int id, float yaw) implements Packe
         return GamePacketTypes.CLIENTBOUND_HURT_ANIMATION;
     }
 
-    public void handle(ClientGamePacketListener p_265654_) {
-        p_265654_.handleHurtAnimation(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleHurtAnimation(this);
     }
 }

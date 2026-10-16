@@ -10,16 +10,16 @@ import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
 
 public class BastionBridgePools {
-    public static void bootstrap(BootstrapContext<StructureTemplatePool> p_321622_) {
-        HolderGetter<StructureProcessorList> holdergetter = p_321622_.lookup(Registries.PROCESSOR_LIST);
+    public static void bootstrap(BootstrapContext<StructureTemplatePool> context) {
+        HolderGetter<StructureProcessorList> holdergetter = context.lookup(Registries.PROCESSOR_LIST);
         Holder<StructureProcessorList> holder = holdergetter.getOrThrow(ProcessorLists.ENTRANCE_REPLACEMENT);
         Holder<StructureProcessorList> holder1 = holdergetter.getOrThrow(ProcessorLists.BASTION_GENERIC_DEGRADATION);
         Holder<StructureProcessorList> holder2 = holdergetter.getOrThrow(ProcessorLists.BRIDGE);
         Holder<StructureProcessorList> holder3 = holdergetter.getOrThrow(ProcessorLists.RAMPART_DEGRADATION);
-        HolderGetter<StructureTemplatePool> holdergetter1 = p_321622_.lookup(Registries.TEMPLATE_POOL);
+        HolderGetter<StructureTemplatePool> holdergetter1 = context.lookup(Registries.TEMPLATE_POOL);
         Holder<StructureTemplatePool> holder4 = holdergetter1.getOrThrow(Pools.EMPTY);
         Pools.register(
-            p_321622_,
+            context,
             "bastion/bridge/starting_pieces",
             new StructureTemplatePool(
                 holder4,
@@ -31,7 +31,7 @@ public class BastionBridgePools {
             )
         );
         Pools.register(
-            p_321622_,
+            context,
             "bastion/bridge/bridge_pieces",
             new StructureTemplatePool(
                 holder4,
@@ -40,7 +40,7 @@ public class BastionBridgePools {
             )
         );
         Pools.register(
-            p_321622_,
+            context,
             "bastion/bridge/legs",
             new StructureTemplatePool(
                 holder4,
@@ -52,7 +52,7 @@ public class BastionBridgePools {
             )
         );
         Pools.register(
-            p_321622_,
+            context,
             "bastion/bridge/walls",
             new StructureTemplatePool(
                 holder4,
@@ -64,7 +64,7 @@ public class BastionBridgePools {
             )
         );
         Pools.register(
-            p_321622_,
+            context,
             "bastion/bridge/ramparts",
             new StructureTemplatePool(
                 holder4,
@@ -76,7 +76,7 @@ public class BastionBridgePools {
             )
         );
         Pools.register(
-            p_321622_,
+            context,
             "bastion/bridge/rampart_plates",
             new StructureTemplatePool(
                 holder4,
@@ -85,7 +85,7 @@ public class BastionBridgePools {
             )
         );
         Pools.register(
-            p_321622_,
+            context,
             "bastion/bridge/connectors",
             new StructureTemplatePool(
                 holder4,

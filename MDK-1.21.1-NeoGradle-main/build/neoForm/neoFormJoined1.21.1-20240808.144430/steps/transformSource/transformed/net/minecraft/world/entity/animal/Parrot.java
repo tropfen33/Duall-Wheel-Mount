@@ -69,8 +69,8 @@ import net.minecraft.world.phys.Vec3;
 public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot.Variant>, FlyingAnimal {
     private static final EntityDataAccessor<Integer> DATA_VARIANT_ID = SynchedEntityData.defineId(Parrot.class, EntityDataSerializers.INT);
     private static final Predicate<Mob> NOT_PARROT_PREDICATE = new Predicate<Mob>() {
-        public boolean test(@Nullable Mob p_29453_) {
-            return p_29453_ != null && (Parrot.MOB_SOUND_MAP.containsKey(p_29453_.getType()) || p_29453_.getType().builtInRegistryHolder().getData(net.neoforged.neoforge.registries.datamaps.builtin.NeoForgeDataMaps.PARROT_IMITATIONS) != null);
+        public boolean test(@Nullable Mob mob) {
+            return mob != null && (Parrot.MOB_SOUND_MAP.containsKey(mob.getType()) || mob.getType().builtInRegistryHolder().getData(net.neoforged.neoforge.registries.datamaps.builtin.NeoForgeDataMaps.PARROT_IMITATIONS) != null);
         }
     };
     /** @deprecated Neo: use the {@link net.neoforged.neoforge.registries.datamaps.builtin.NeoForgeDataMaps#PARROT_IMITATIONS data map} instead */
@@ -123,8 +123,8 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
     @Nullable
     private BlockPos jukebox;
 
-    public Parrot(EntityType<? extends Parrot> p_29362_, Level p_29363_) {
-        super(p_29362_, p_29363_);
+    public Parrot(EntityType<? extends Parrot> entityType, Level level) {
+        super(entityType, level);
         this.moveControl = new FlyingMoveControl(this, 10, false);
         this.setPathfindingMalus(PathType.DANGER_FIRE, -1.0F);
         this.setPathfindingMalus(PathType.DAMAGE_FIRE, -1.0F);
@@ -133,13 +133,13 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_29389_, DifficultyInstance p_29390_, MobSpawnType p_29391_, @Nullable SpawnGroupData p_29392_) {
-        this.setVariant(Util.getRandom(Parrot.Variant.values(), p_29389_.getRandom()));
-        if (p_29392_ == null) {
-            p_29392_ = new AgeableMob.AgeableMobGroupData(false);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        this.setVariant(Util.getRandom(Parrot.Variant.values(), level.getRandom()));
+        if (spawnGroupData == null) {
+            spawnGroupData = new AgeableMob.AgeableMobGroupData(false);
         }
 
-        return super.finalizeSpawn(p_29389_, p_29390_, p_29391_, p_29392_);
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
     @Override
@@ -168,8 +168,8 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
     }
 
     @Override
-    protected PathNavigation createNavigation(Level p_29417_) {
-        FlyingPathNavigation flyingpathnavigation = new FlyingPathNavigation(this, p_29417_);
+    protected PathNavigation createNavigation(Level level) {
+        FlyingPathNavigation flyingpathnavigation = new FlyingPathNavigation(this, level);
         flyingpathnavigation.setCanOpenDoors(false);
         flyingpathnavigation.setCanFloat(true);
         flyingpathnavigation.setCanPassDoors(true);
@@ -191,10 +191,13 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
         this.calculateFlapping();
     }
 
+    /**
+     * Called when a record starts or stops playing. Used to make parrots start or stop partying.
+     */
     @Override
-    public void setRecordPlayingNearby(BlockPos p_29395_, boolean p_29396_) {
-        this.jukebox = p_29395_;
-        this.partyParrot = p_29396_;
+    public void setRecordPlayingNearby(BlockPos pos, boolean isPartying) {
+        this.jukebox = pos;
+        this.partyParrot = isPartying;
     }
 
     public boolean isPartyParrot() {
@@ -219,15 +222,15 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
         this.flap = this.flap + this.flapping * 2.0F;
     }
 
-    public static boolean imitateNearbyMobs(Level p_29383_, Entity p_29384_) {
-        if (p_29384_.isAlive() && !p_29384_.isSilent() && p_29383_.random.nextInt(2) == 0) {
-            List<Mob> list = p_29383_.getEntitiesOfClass(Mob.class, p_29384_.getBoundingBox().inflate(20.0), NOT_PARROT_PREDICATE);
+    public static boolean imitateNearbyMobs(Level level, Entity parrot) {
+        if (parrot.isAlive() && !parrot.isSilent() && level.random.nextInt(2) == 0) {
+            List<Mob> list = level.getEntitiesOfClass(Mob.class, parrot.getBoundingBox().inflate(20.0), NOT_PARROT_PREDICATE);
             if (!list.isEmpty()) {
-                Mob mob = list.get(p_29383_.random.nextInt(list.size()));
+                Mob mob = list.get(level.random.nextInt(list.size()));
                 if (!mob.isSilent()) {
                     SoundEvent soundevent = getImitatedSound(mob.getType());
-                    p_29383_.playSound(
-                        null, p_29384_.getX(), p_29384_.getY(), p_29384_.getZ(), soundevent, p_29384_.getSoundSource(), 0.7F, getPitch(p_29383_.random)
+                    level.playSound(
+                        null, parrot.getX(), parrot.getY(), parrot.getZ(), soundevent, parrot.getSoundSource(), 0.7F, getPitch(level.random)
                     );
                     return true;
                 }
@@ -240,10 +243,10 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
     }
 
     @Override
-    public InteractionResult mobInteract(Player p_29414_, InteractionHand p_29415_) {
-        ItemStack itemstack = p_29414_.getItemInHand(p_29415_);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
         if (!this.isTame() && itemstack.is(ItemTags.PARROT_FOOD)) {
-            itemstack.consume(1, p_29414_);
+            itemstack.consume(1, player);
             if (!this.isSilent()) {
                 this.level()
                     .playSound(
@@ -259,8 +262,8 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
             }
 
             if (!this.level().isClientSide) {
-                if (this.random.nextInt(10) == 0 && !net.neoforged.neoforge.event.EventHooks.onAnimalTame(this, p_29414_)) {
-                    this.tame(p_29414_);
+                if (this.random.nextInt(10) == 0 && !net.neoforged.neoforge.event.EventHooks.onAnimalTame(this, player)) {
+                    this.tame(player);
                     this.level().broadcastEntityEvent(this, (byte)7);
                 } else {
                     this.level().broadcastEntityEvent(this, (byte)6);
@@ -269,49 +272,55 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
 
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         } else if (!itemstack.is(ItemTags.PARROT_POISONOUS_FOOD)) {
-            if (!this.isFlying() && this.isTame() && this.isOwnedBy(p_29414_)) {
+            if (!this.isFlying() && this.isTame() && this.isOwnedBy(player)) {
                 if (!this.level().isClientSide) {
                     this.setOrderedToSit(!this.isOrderedToSit());
                 }
 
                 return InteractionResult.sidedSuccess(this.level().isClientSide);
             } else {
-                return super.mobInteract(p_29414_, p_29415_);
+                return super.mobInteract(player, hand);
             }
         } else {
-            itemstack.consume(1, p_29414_);
+            itemstack.consume(1, player);
             this.addEffect(new MobEffectInstance(MobEffects.POISON, 900));
-            if (p_29414_.isCreative() || !this.isInvulnerable()) {
-                this.hurt(this.damageSources().playerAttack(p_29414_), Float.MAX_VALUE);
+            if (player.isCreative() || !this.isInvulnerable()) {
+                this.hurt(this.damageSources().playerAttack(player), Float.MAX_VALUE);
             }
 
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
     }
 
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on the animal type)
+     */
     @Override
-    public boolean isFood(ItemStack p_29446_) {
+    public boolean isFood(ItemStack stack) {
         return false;
     }
 
     public static boolean checkParrotSpawnRules(
-        EntityType<Parrot> p_218242_, LevelAccessor p_218243_, MobSpawnType p_218244_, BlockPos p_218245_, RandomSource p_218246_
+        EntityType<Parrot> parrot, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return p_218243_.getBlockState(p_218245_.below()).is(BlockTags.PARROTS_SPAWNABLE_ON) && isBrightEnoughToSpawn(p_218243_, p_218245_);
+        return level.getBlockState(pos.below()).is(BlockTags.PARROTS_SPAWNABLE_ON) && isBrightEnoughToSpawn(level, pos);
     }
 
     @Override
-    protected void checkFallDamage(double p_29370_, boolean p_29371_, BlockState p_29372_, BlockPos p_29373_) {
+    protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
     }
 
+    /**
+     * Returns {@code true} if the mob is currently able to mate with the specified mob.
+     */
     @Override
-    public boolean canMate(Animal p_29381_) {
+    public boolean canMate(Animal otherAnimal) {
         return false;
     }
 
     @Nullable
     @Override
-    public AgeableMob getBreedOffspring(ServerLevel p_148993_, AgeableMob p_148994_) {
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
         return null;
     }
 
@@ -321,26 +330,26 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
         return getAmbient(this.level(), this.level().random);
     }
 
-    public static SoundEvent getAmbient(Level p_218239_, RandomSource p_218240_) {
-        if (p_218239_.getDifficulty() != Difficulty.PEACEFUL && p_218240_.nextInt(1000) == 0) {
+    public static SoundEvent getAmbient(Level level, RandomSource random) {
+        if (level.getDifficulty() != Difficulty.PEACEFUL && random.nextInt(1000) == 0) {
             final var entities = new java.util.HashSet<>(MOB_SOUND_MAP.keySet());
-            final var registry = p_218239_.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.ENTITY_TYPE);
+            final var registry = level.registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.ENTITY_TYPE);
             registry.getDataMap(net.neoforged.neoforge.registries.datamaps.builtin.NeoForgeDataMaps.PARROT_IMITATIONS).keySet().forEach(key -> entities.add(registry.get(key)));
             List<EntityType<?>> list = Lists.newArrayList(entities);
-            return getImitatedSound(list.get(p_218240_.nextInt(list.size())));
+            return getImitatedSound(list.get(random.nextInt(list.size())));
         } else {
             return SoundEvents.PARROT_AMBIENT;
         }
     }
 
-    private static SoundEvent getImitatedSound(EntityType<?> p_29409_) {
-        var imitation = p_29409_.builtInRegistryHolder().getData(net.neoforged.neoforge.registries.datamaps.builtin.NeoForgeDataMaps.PARROT_IMITATIONS);
+    private static SoundEvent getImitatedSound(EntityType<?> type) {
+        var imitation = type.builtInRegistryHolder().getData(net.neoforged.neoforge.registries.datamaps.builtin.NeoForgeDataMaps.PARROT_IMITATIONS);
         if (imitation != null) return imitation.sound();
         return SoundEvents.PARROT_AMBIENT;
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_29437_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.PARROT_HURT;
     }
 
@@ -350,7 +359,7 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
     }
 
     @Override
-    protected void playStepSound(BlockPos p_29419_, BlockState p_29420_) {
+    protected void playStepSound(BlockPos pos, BlockState block) {
         this.playSound(SoundEvents.PARROT_STEP, 0.15F, 1.0F);
     }
 
@@ -370,8 +379,8 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
         return getPitch(this.random);
     }
 
-    public static float getPitch(RandomSource p_218237_) {
-        return (p_218237_.nextFloat() - p_218237_.nextFloat()) * 0.2F + 1.0F;
+    public static float getPitch(RandomSource random) {
+        return (random.nextFloat() - random.nextFloat()) * 0.2F + 1.0F;
     }
 
     @Override
@@ -385,22 +394,25 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
     }
 
     @Override
-    protected void doPush(Entity p_29367_) {
-        if (!(p_29367_ instanceof Player)) {
-            super.doPush(p_29367_);
+    protected void doPush(Entity entity) {
+        if (!(entity instanceof Player)) {
+            super.doPush(entity);
         }
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_29378_, float p_29379_) {
-        if (this.isInvulnerableTo(p_29378_)) {
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isInvulnerableTo(source)) {
             return false;
         } else {
             if (!this.level().isClientSide) {
                 this.setOrderedToSit(false);
             }
 
-            return super.hurt(p_29378_, p_29379_);
+            return super.hurt(source, amount);
         }
     }
 
@@ -408,26 +420,29 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
         return Parrot.Variant.byId(this.entityData.get(DATA_VARIANT_ID));
     }
 
-    public void setVariant(Parrot.Variant p_262613_) {
-        this.entityData.set(DATA_VARIANT_ID, p_262613_.id);
+    public void setVariant(Parrot.Variant variant) {
+        this.entityData.set(DATA_VARIANT_ID, variant.id);
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326347_) {
-        super.defineSynchedData(p_326347_);
-        p_326347_.define(DATA_VARIANT_ID, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_VARIANT_ID, 0);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_29422_) {
-        super.addAdditionalSaveData(p_29422_);
-        p_29422_.putInt("Variant", this.getVariant().id);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("Variant", this.getVariant().id);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_29402_) {
-        super.readAdditionalSaveData(p_29402_);
-        this.setVariant(Parrot.Variant.byId(p_29402_.getInt("Variant")));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.setVariant(Parrot.Variant.byId(compound.getInt("Variant")));
     }
 
     @Override
@@ -506,17 +521,17 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
         final int id;
         private final String name;
 
-        private Variant(int p_262571_, String p_262693_) {
-            this.id = p_262571_;
-            this.name = p_262693_;
+        private Variant(int id, String name) {
+            this.id = id;
+            this.name = name;
         }
 
         public int getId() {
             return this.id;
         }
 
-        public static Parrot.Variant byId(int p_262643_) {
-            return BY_ID.apply(p_262643_);
+        public static Parrot.Variant byId(int id) {
+            return BY_ID.apply(id);
         }
 
         @Override

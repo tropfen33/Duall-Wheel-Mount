@@ -7,13 +7,13 @@ import com.mojang.serialization.Dynamic;
 import java.util.Optional;
 
 public class ZombieVillagerRebuildXpFix extends NamedEntityFix {
-    public ZombieVillagerRebuildXpFix(Schema p_17298_, boolean p_17299_) {
-        super(p_17298_, p_17299_, "Zombie Villager XP rebuild", References.ENTITY, "minecraft:zombie_villager");
+    public ZombieVillagerRebuildXpFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType, "Zombie Villager XP rebuild", References.ENTITY, "minecraft:zombie_villager");
     }
 
     @Override
-    protected Typed<?> fix(Typed<?> p_17301_) {
-        return p_17301_.update(DSL.remainderFinder(), p_337684_ -> {
+    protected Typed<?> fix(Typed<?> typed) {
+        return typed.update(DSL.remainderFinder(), p_337684_ -> {
             Optional<Number> optional = p_337684_.get("Xp").asNumber().result();
             if (optional.isEmpty()) {
                 int i = p_337684_.get("VillagerData").get("level").asInt(1);

@@ -5,9 +5,15 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 
 public interface WorldlyContainer extends Container {
-    int[] getSlotsForFace(Direction p_19238_);
+    int[] getSlotsForFace(Direction side);
 
-    boolean canPlaceItemThroughFace(int p_19235_, ItemStack p_19236_, @Nullable Direction p_19237_);
+    /**
+     * Returns {@code true} if automation can insert the given item in the given slot from the given side.
+     */
+    boolean canPlaceItemThroughFace(int index, ItemStack itemStack, @Nullable Direction direction);
 
-    boolean canTakeItemThroughFace(int p_19239_, ItemStack p_19240_, Direction p_19241_);
+    /**
+     * Returns {@code true} if automation can extract the given item in the given slot from the given side.
+     */
+    boolean canTakeItemThroughFace(int index, ItemStack stack, Direction direction);
 }

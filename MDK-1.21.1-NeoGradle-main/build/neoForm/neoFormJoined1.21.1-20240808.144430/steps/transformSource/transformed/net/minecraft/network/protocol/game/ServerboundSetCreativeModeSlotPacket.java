@@ -25,7 +25,10 @@ public record ServerboundSetCreativeModeSlotPacket(short slotNum, ItemStack item
         return GamePacketTypes.SERVERBOUND_SET_CREATIVE_MODE_SLOT;
     }
 
-    public void handle(ServerGamePacketListener p_134560_) {
-        p_134560_.handleSetCreativeModeSlot(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleSetCreativeModeSlot(this);
     }
 }

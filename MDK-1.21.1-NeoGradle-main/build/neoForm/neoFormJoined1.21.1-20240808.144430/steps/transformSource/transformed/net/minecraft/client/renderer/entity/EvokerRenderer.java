@@ -38,7 +38,10 @@ public class EvokerRenderer<T extends SpellcasterIllager> extends IllagerRendere
         );
     }
 
-    public ResourceLocation getTextureLocation(T p_114541_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(T entity) {
         return EVOKER_ILLAGER;
     }
 }

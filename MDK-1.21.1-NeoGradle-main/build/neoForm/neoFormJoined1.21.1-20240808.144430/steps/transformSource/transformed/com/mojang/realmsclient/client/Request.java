@@ -25,18 +25,18 @@ public abstract class Request<T extends Request<T>> {
     private static final String IS_SNAPSHOT_KEY = "Is-Prerelease";
     private static final String COOKIE_KEY = "Cookie";
 
-    public Request(String p_87310_, int p_87311_, int p_87312_) {
+    public Request(String url, int connectTimeout, int readTimeout) {
         try {
-            this.url = p_87310_;
+            this.url = url;
             Proxy proxy = RealmsClientConfig.getProxy();
             if (proxy != null) {
-                this.connection = (HttpURLConnection)new URL(p_87310_).openConnection(proxy);
+                this.connection = (HttpURLConnection)new URL(url).openConnection(proxy);
             } else {
-                this.connection = (HttpURLConnection)new URL(p_87310_).openConnection();
+                this.connection = (HttpURLConnection)new URL(url).openConnection();
             }
 
-            this.connection.setConnectTimeout(p_87311_);
-            this.connection.setReadTimeout(p_87312_);
+            this.connection.setConnectTimeout(connectTimeout);
+            this.connection.setReadTimeout(readTimeout);
         } catch (MalformedURLException malformedurlexception) {
             throw new RealmsHttpException(malformedurlexception.getMessage(), malformedurlexception);
         } catch (IOException ioexception) {
@@ -44,29 +44,29 @@ public abstract class Request<T extends Request<T>> {
         }
     }
 
-    public void cookie(String p_87323_, String p_87324_) {
-        cookie(this.connection, p_87323_, p_87324_);
+    public void cookie(String key, String value) {
+        cookie(this.connection, key, value);
     }
 
-    public static void cookie(HttpURLConnection p_87336_, String p_87337_, String p_87338_) {
-        String s = p_87336_.getRequestProperty("Cookie");
+    public static void cookie(HttpURLConnection connection, String key, String value) {
+        String s = connection.getRequestProperty("Cookie");
         if (s == null) {
-            p_87336_.setRequestProperty("Cookie", p_87337_ + "=" + p_87338_);
+            connection.setRequestProperty("Cookie", key + "=" + value);
         } else {
-            p_87336_.setRequestProperty("Cookie", s + ";" + p_87337_ + "=" + p_87338_);
+            connection.setRequestProperty("Cookie", s + ";" + key + "=" + value);
         }
     }
 
-    public void addSnapshotHeader(boolean p_305796_) {
-        this.connection.addRequestProperty("Is-Prerelease", String.valueOf(p_305796_));
+    public void addSnapshotHeader(boolean isSnapshot) {
+        this.connection.addRequestProperty("Is-Prerelease", String.valueOf(isSnapshot));
     }
 
     public int getRetryAfterHeader() {
         return getRetryAfterHeader(this.connection);
     }
 
-    public static int getRetryAfterHeader(HttpURLConnection p_87331_) {
-        String s = p_87331_.getHeaderField("Retry-After");
+    public static int getRetryAfterHeader(HttpURLConnection connection) {
+        String s = connection.getHeaderField("Retry-After");
 
         try {
             return Integer.valueOf(s);
@@ -101,11 +101,11 @@ public abstract class Request<T extends Request<T>> {
         }
     }
 
-    private String read(@Nullable InputStream p_87315_) throws IOException {
-        if (p_87315_ == null) {
+    private String read(@Nullable InputStream in) throws IOException {
+        if (in == null) {
             return "";
         } else {
-            InputStreamReader inputstreamreader = new InputStreamReader(p_87315_, StandardCharsets.UTF_8);
+            InputStreamReader inputstreamreader = new InputStreamReader(in, StandardCharsets.UTF_8);
             StringBuilder stringbuilder = new StringBuilder();
 
             for (int i = inputstreamreader.read(); i != -1; i = inputstreamreader.read()) {
@@ -159,41 +159,41 @@ public abstract class Request<T extends Request<T>> {
 
     protected abstract T doConnect();
 
-    public static Request<?> get(String p_87317_) {
-        return new Request.Get(p_87317_, 5000, 60000);
+    public static Request<?> get(String url) {
+        return new Request.Get(url, 5000, 60000);
     }
 
-    public static Request<?> get(String p_87319_, int p_87320_, int p_87321_) {
-        return new Request.Get(p_87319_, p_87320_, p_87321_);
+    public static Request<?> get(String url, int connectTimeout, int readTimeout) {
+        return new Request.Get(url, connectTimeout, readTimeout);
     }
 
-    public static Request<?> post(String p_87343_, String p_87344_) {
-        return new Request.Post(p_87343_, p_87344_, 5000, 60000);
+    public static Request<?> post(String url, String content) {
+        return new Request.Post(url, content, 5000, 60000);
     }
 
-    public static Request<?> post(String p_87326_, String p_87327_, int p_87328_, int p_87329_) {
-        return new Request.Post(p_87326_, p_87327_, p_87328_, p_87329_);
+    public static Request<?> post(String url, String content, int connectTimeout, int readTimeout) {
+        return new Request.Post(url, content, connectTimeout, readTimeout);
     }
 
-    public static Request<?> delete(String p_87341_) {
-        return new Request.Delete(p_87341_, 5000, 60000);
+    public static Request<?> delete(String url) {
+        return new Request.Delete(url, 5000, 60000);
     }
 
-    public static Request<?> put(String p_87354_, String p_87355_) {
-        return new Request.Put(p_87354_, p_87355_, 5000, 60000);
+    public static Request<?> put(String url, String content) {
+        return new Request.Put(url, content, 5000, 60000);
     }
 
-    public static Request<?> put(String p_87346_, String p_87347_, int p_87348_, int p_87349_) {
-        return new Request.Put(p_87346_, p_87347_, p_87348_, p_87349_);
+    public static Request<?> put(String url, String content, int connectTimeout, int readTimeout) {
+        return new Request.Put(url, content, connectTimeout, readTimeout);
     }
 
-    public String getHeader(String p_87352_) {
-        return getHeader(this.connection, p_87352_);
+    public String getHeader(String name) {
+        return getHeader(this.connection, name);
     }
 
-    public static String getHeader(HttpURLConnection p_87333_, String p_87334_) {
+    public static String getHeader(HttpURLConnection connection, String name) {
         try {
-            return p_87333_.getHeaderField(p_87334_);
+            return connection.getHeaderField(name);
         } catch (Exception exception) {
             return "";
         }
@@ -240,9 +240,9 @@ public abstract class Request<T extends Request<T>> {
     public static class Post extends Request<Request.Post> {
         private final String content;
 
-        public Post(String p_87372_, String p_87373_, int p_87374_, int p_87375_) {
-            super(p_87372_, p_87374_, p_87375_);
-            this.content = p_87373_;
+        public Post(String url, String content, int connectTimeout, int readTimeout) {
+            super(url, connectTimeout, readTimeout);
+            this.content = content;
         }
 
         public Request.Post doConnect() {
@@ -271,9 +271,9 @@ public abstract class Request<T extends Request<T>> {
     public static class Put extends Request<Request.Put> {
         private final String content;
 
-        public Put(String p_87380_, String p_87381_, int p_87382_, int p_87383_) {
-            super(p_87380_, p_87382_, p_87383_);
-            this.content = p_87381_;
+        public Put(String url, String content, int connectTimeout, int readTimeout) {
+            super(url, connectTimeout, readTimeout);
+            this.content = content;
         }
 
         public Request.Put doConnect() {

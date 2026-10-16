@@ -63,54 +63,57 @@ public class TropicalFish extends AbstractSchoolingFish implements VariantHolder
     );
     private boolean isSchool = true;
 
-    public TropicalFish(EntityType<? extends TropicalFish> p_30015_, Level p_30016_) {
-        super(p_30015_, p_30016_);
+    public TropicalFish(EntityType<? extends TropicalFish> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public static String getPredefinedName(int p_30031_) {
-        return "entity.minecraft.tropical_fish.predefined." + p_30031_;
+    public static String getPredefinedName(int variantId) {
+        return "entity.minecraft.tropical_fish.predefined." + variantId;
     }
 
-    static int packVariant(TropicalFish.Pattern p_262598_, DyeColor p_262618_, DyeColor p_262683_) {
-        return p_262598_.getPackedId() & 65535 | (p_262618_.getId() & 0xFF) << 16 | (p_262683_.getId() & 0xFF) << 24;
+    static int packVariant(TropicalFish.Pattern pattern, DyeColor baseColor, DyeColor patternColor) {
+        return pattern.getPackedId() & 65535 | (baseColor.getId() & 0xFF) << 16 | (patternColor.getId() & 0xFF) << 24;
     }
 
-    public static DyeColor getBaseColor(int p_30051_) {
-        return DyeColor.byId(p_30051_ >> 16 & 0xFF);
+    public static DyeColor getBaseColor(int variantId) {
+        return DyeColor.byId(variantId >> 16 & 0xFF);
     }
 
-    public static DyeColor getPatternColor(int p_30053_) {
-        return DyeColor.byId(p_30053_ >> 24 & 0xFF);
+    public static DyeColor getPatternColor(int variantId) {
+        return DyeColor.byId(variantId >> 24 & 0xFF);
     }
 
-    public static TropicalFish.Pattern getPattern(int p_262604_) {
-        return TropicalFish.Pattern.byId(p_262604_ & 65535);
-    }
-
-    @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326026_) {
-        super.defineSynchedData(p_326026_);
-        p_326026_.define(DATA_ID_TYPE_VARIANT, 0);
+    public static TropicalFish.Pattern getPattern(int variantId) {
+        return TropicalFish.Pattern.byId(variantId & 65535);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_30033_) {
-        super.addAdditionalSaveData(p_30033_);
-        p_30033_.putInt("Variant", this.getPackedVariant());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_ID_TYPE_VARIANT, 0);
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag p_30029_) {
-        super.readAdditionalSaveData(p_30029_);
-        this.setPackedVariant(p_30029_.getInt("Variant"));
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("Variant", this.getPackedVariant());
     }
 
-    private void setPackedVariant(int p_30057_) {
-        this.entityData.set(DATA_ID_TYPE_VARIANT, p_30057_);
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    @Override
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.setPackedVariant(compound.getInt("Variant"));
+    }
+
+    private void setPackedVariant(int packedVariant) {
+        this.entityData.set(DATA_ID_TYPE_VARIANT, packedVariant);
     }
 
     @Override
-    public boolean isMaxGroupSizeReached(int p_30035_) {
+    public boolean isMaxGroupSizeReached(int size) {
         return !this.isSchool;
     }
 
@@ -130,17 +133,17 @@ public class TropicalFish extends AbstractSchoolingFish implements VariantHolder
         return getPattern(this.getPackedVariant());
     }
 
-    public void setVariant(TropicalFish.Pattern p_262594_) {
+    public void setVariant(TropicalFish.Pattern variant) {
         int i = this.getPackedVariant();
         DyeColor dyecolor = getBaseColor(i);
         DyeColor dyecolor1 = getPatternColor(i);
-        this.setPackedVariant(packVariant(p_262594_, dyecolor, dyecolor1));
+        this.setPackedVariant(packVariant(variant, dyecolor, dyecolor1));
     }
 
     @Override
-    public void saveToBucketTag(ItemStack p_30049_) {
-        super.saveToBucketTag(p_30049_);
-        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, p_30049_, p_331150_ -> p_331150_.putInt("BucketVariantTag", this.getPackedVariant()));
+    public void saveToBucketTag(ItemStack stack) {
+        super.saveToBucketTag(stack);
+        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, p_331150_ -> p_331150_.putInt("BucketVariantTag", this.getPackedVariant()));
     }
 
     @Override
@@ -159,7 +162,7 @@ public class TropicalFish extends AbstractSchoolingFish implements VariantHolder
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_30039_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.TROPICAL_FISH_HURT;
     }
 
@@ -169,24 +172,24 @@ public class TropicalFish extends AbstractSchoolingFish implements VariantHolder
     }
 
     @Override
-    public void loadFromBucketTag(CompoundTag p_323573_) {
-        super.loadFromBucketTag(p_323573_);
-        if (p_323573_.contains("BucketVariantTag", 3)) {
-            this.setPackedVariant(p_323573_.getInt("BucketVariantTag"));
+    public void loadFromBucketTag(CompoundTag tag) {
+        super.loadFromBucketTag(tag);
+        if (tag.contains("BucketVariantTag", 3)) {
+            this.setPackedVariant(tag.getInt("BucketVariantTag"));
         }
     }
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_30023_, DifficultyInstance p_30024_, MobSpawnType p_30025_, @Nullable SpawnGroupData p_30026_) {
-        p_30026_ = super.finalizeSpawn(p_30023_, p_30024_, p_30025_, p_30026_);
-        RandomSource randomsource = p_30023_.getRandom();
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        spawnGroupData = super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+        RandomSource randomsource = level.getRandom();
         TropicalFish.Variant tropicalfish$variant;
-        if (p_30026_ instanceof TropicalFish.TropicalFishGroupData tropicalfish$tropicalfishgroupdata) {
+        if (spawnGroupData instanceof TropicalFish.TropicalFishGroupData tropicalfish$tropicalfishgroupdata) {
             tropicalfish$variant = tropicalfish$tropicalfishgroupdata.variant;
         } else if ((double)randomsource.nextFloat() < 0.9) {
             tropicalfish$variant = Util.getRandom(COMMON_VARIANTS, randomsource);
-            p_30026_ = new TropicalFish.TropicalFishGroupData(this, tropicalfish$variant);
+            spawnGroupData = new TropicalFish.TropicalFishGroupData(this, tropicalfish$variant);
         } else {
             this.isSchool = false;
             TropicalFish.Pattern[] atropicalfish$pattern = TropicalFish.Pattern.values();
@@ -198,17 +201,17 @@ public class TropicalFish extends AbstractSchoolingFish implements VariantHolder
         }
 
         this.setPackedVariant(tropicalfish$variant.getPackedId());
-        return p_30026_;
+        return spawnGroupData;
     }
 
     public static boolean checkTropicalFishSpawnRules(
-        EntityType<TropicalFish> p_218267_, LevelAccessor p_218268_, MobSpawnType p_218269_, BlockPos p_218270_, RandomSource p_218271_
+        EntityType<TropicalFish> tropicalFish, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return p_218268_.getFluidState(p_218270_.below()).is(FluidTags.WATER)
-            && p_218268_.getBlockState(p_218270_.above()).is(Blocks.WATER)
+        return level.getFluidState(pos.below()).is(FluidTags.WATER)
+            && level.getBlockState(pos.above()).is(Blocks.WATER)
             && (
-                p_218268_.getBiome(p_218270_).is(BiomeTags.ALLOWS_TROPICAL_FISH_SPAWNS_AT_ANY_HEIGHT)
-                    || WaterAnimal.checkSurfaceWaterAnimalSpawnRules(p_218267_, p_218268_, p_218269_, p_218270_, p_218271_)
+                level.getBiome(pos).is(BiomeTags.ALLOWS_TROPICAL_FISH_SPAWNS_AT_ANY_HEIGHT)
+                    || WaterAnimal.checkSurfaceWaterAnimalSpawnRules(tropicalFish, level, spawnType, pos, random)
             );
     }
 
@@ -218,8 +221,8 @@ public class TropicalFish extends AbstractSchoolingFish implements VariantHolder
 
         final int id;
 
-        private Base(int p_262648_) {
-            this.id = p_262648_;
+        private Base(int id) {
+            this.id = id;
         }
     }
 
@@ -244,15 +247,15 @@ public class TropicalFish extends AbstractSchoolingFish implements VariantHolder
         private final TropicalFish.Base base;
         private final int packedId;
 
-        private Pattern(String p_262625_, TropicalFish.Base p_262680_, int p_262584_) {
-            this.name = p_262625_;
-            this.base = p_262680_;
-            this.packedId = p_262680_.id | p_262584_ << 8;
+        private Pattern(String name, TropicalFish.Base base, int id) {
+            this.name = name;
+            this.base = base;
+            this.packedId = base.id | id << 8;
             this.displayName = Component.translatable("entity.minecraft.tropical_fish.type." + this.name);
         }
 
-        public static TropicalFish.Pattern byId(int p_262653_) {
-            return BY_ID.apply(p_262653_);
+        public static TropicalFish.Pattern byId(int packedId) {
+            return BY_ID.apply(packedId);
         }
 
         public TropicalFish.Base base() {
@@ -276,9 +279,9 @@ public class TropicalFish extends AbstractSchoolingFish implements VariantHolder
     static class TropicalFishGroupData extends AbstractSchoolingFish.SchoolSpawnGroupData {
         final TropicalFish.Variant variant;
 
-        TropicalFishGroupData(TropicalFish p_262626_, TropicalFish.Variant p_262579_) {
-            super(p_262626_);
-            this.variant = p_262579_;
+        TropicalFishGroupData(TropicalFish leader, TropicalFish.Variant variant) {
+            super(leader);
+            this.variant = variant;
         }
     }
 

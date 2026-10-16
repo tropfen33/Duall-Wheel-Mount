@@ -20,8 +20,8 @@ public abstract class RandomizableContainerBlockEntity extends BaseContainerBloc
     protected ResourceKey<LootTable> lootTable;
     protected long lootTableSeed = 0L;
 
-    protected RandomizableContainerBlockEntity(BlockEntityType<?> p_155629_, BlockPos p_155630_, BlockState p_155631_) {
-        super(p_155629_, p_155630_, p_155631_);
+    protected RandomizableContainerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState blockState) {
+        super(type, pos, blockState);
     }
 
     @Nullable
@@ -31,8 +31,8 @@ public abstract class RandomizableContainerBlockEntity extends BaseContainerBloc
     }
 
     @Override
-    public void setLootTable(@Nullable ResourceKey<LootTable> p_335597_) {
-        this.lootTable = p_335597_;
+    public void setLootTable(@Nullable ResourceKey<LootTable> lootTable) {
+        this.lootTable = lootTable;
     }
 
     @Override
@@ -41,8 +41,8 @@ public abstract class RandomizableContainerBlockEntity extends BaseContainerBloc
     }
 
     @Override
-    public void setLootTableSeed(long p_309615_) {
-        this.lootTableSeed = p_309615_;
+    public void setLootTableSeed(long seed) {
+        this.lootTableSeed = seed;
     }
 
     @Override
@@ -51,50 +51,62 @@ public abstract class RandomizableContainerBlockEntity extends BaseContainerBloc
         return super.isEmpty();
     }
 
+    /**
+     * Returns the stack in the given slot.
+     */
     @Override
-    public ItemStack getItem(int p_59611_) {
+    public ItemStack getItem(int index) {
         this.unpackLootTable(null);
-        return super.getItem(p_59611_);
+        return super.getItem(index);
+    }
+
+    /**
+     * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
+     */
+    @Override
+    public ItemStack removeItem(int index, int count) {
+        this.unpackLootTable(null);
+        return super.removeItem(index, count);
+    }
+
+    /**
+     * Removes a stack from the given slot and returns it.
+     */
+    @Override
+    public ItemStack removeItemNoUpdate(int index) {
+        this.unpackLootTable(null);
+        return super.removeItemNoUpdate(index);
+    }
+
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
+    @Override
+    public void setItem(int index, ItemStack stack) {
+        this.unpackLootTable(null);
+        super.setItem(index, stack);
     }
 
     @Override
-    public ItemStack removeItem(int p_59613_, int p_59614_) {
-        this.unpackLootTable(null);
-        return super.removeItem(p_59613_, p_59614_);
-    }
-
-    @Override
-    public ItemStack removeItemNoUpdate(int p_59630_) {
-        this.unpackLootTable(null);
-        return super.removeItemNoUpdate(p_59630_);
-    }
-
-    @Override
-    public void setItem(int p_59616_, ItemStack p_59617_) {
-        this.unpackLootTable(null);
-        super.setItem(p_59616_, p_59617_);
-    }
-
-    @Override
-    public boolean canOpen(Player p_59643_) {
-        return super.canOpen(p_59643_) && (this.lootTable == null || !p_59643_.isSpectator());
+    public boolean canOpen(Player player) {
+        return super.canOpen(player) && (this.lootTable == null || !player.isSpectator());
     }
 
     @Nullable
     @Override
-    public AbstractContainerMenu createMenu(int p_59637_, Inventory p_59638_, Player p_59639_) {
-        if (this.canOpen(p_59639_)) {
-            this.unpackLootTable(p_59638_.player);
-            return this.createMenu(p_59637_, p_59638_);
+    public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
+        if (this.canOpen(player)) {
+            this.unpackLootTable(playerInventory.player);
+            return this.createMenu(containerId, playerInventory);
         } else {
             return null;
         }
     }
 
     @Override
-    protected void applyImplicitComponents(BlockEntity.DataComponentInput p_338832_) {
-        super.applyImplicitComponents(p_338832_);
-        SeededContainerLoot seededcontainerloot = p_338832_.get(DataComponents.CONTAINER_LOOT);
+    protected void applyImplicitComponents(BlockEntity.DataComponentInput componentInput) {
+        super.applyImplicitComponents(componentInput);
+        SeededContainerLoot seededcontainerloot = componentInput.get(DataComponents.CONTAINER_LOOT);
         if (seededcontainerloot != null) {
             this.lootTable = seededcontainerloot.lootTable();
             this.lootTableSeed = seededcontainerloot.seed();
@@ -102,17 +114,17 @@ public abstract class RandomizableContainerBlockEntity extends BaseContainerBloc
     }
 
     @Override
-    protected void collectImplicitComponents(DataComponentMap.Builder p_338607_) {
-        super.collectImplicitComponents(p_338607_);
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
         if (this.lootTable != null) {
-            p_338607_.set(DataComponents.CONTAINER_LOOT, new SeededContainerLoot(this.lootTable, this.lootTableSeed));
+            components.set(DataComponents.CONTAINER_LOOT, new SeededContainerLoot(this.lootTable, this.lootTableSeed));
         }
     }
 
     @Override
-    public void removeComponentsFromTag(CompoundTag p_331200_) {
-        super.removeComponentsFromTag(p_331200_);
-        p_331200_.remove("LootTable");
-        p_331200_.remove("LootTableSeed");
+    public void removeComponentsFromTag(CompoundTag tag) {
+        super.removeComponentsFromTag(tag);
+        tag.remove("LootTable");
+        tag.remove("LootTableSeed");
     }
 }

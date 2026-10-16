@@ -21,39 +21,39 @@ public class ChatReportContextBuilder {
     final int leadingCount;
     private final List<ChatReportContextBuilder.Collector> activeCollectors = new ArrayList<>();
 
-    public ChatReportContextBuilder(int p_252198_) {
-        this.leadingCount = p_252198_;
+    public ChatReportContextBuilder(int leadingCount) {
+        this.leadingCount = leadingCount;
     }
 
-    public void collectAllContext(ChatLog p_249467_, IntCollection p_250295_, ChatReportContextBuilder.Handler p_251946_) {
-        IntSortedSet intsortedset = new IntRBTreeSet(p_250295_);
+    public void collectAllContext(ChatLog chatLog, IntCollection reportedMessages, ChatReportContextBuilder.Handler handler) {
+        IntSortedSet intsortedset = new IntRBTreeSet(reportedMessages);
 
-        for (int i = intsortedset.lastInt(); i >= p_249467_.start() && (this.isActive() || !intsortedset.isEmpty()); i--) {
-            LoggedChatEvent $$6 = p_249467_.lookup(i);
+        for (int i = intsortedset.lastInt(); i >= chatLog.start() && (this.isActive() || !intsortedset.isEmpty()); i--) {
+            LoggedChatEvent $$6 = chatLog.lookup(i);
             if ($$6 instanceof LoggedChatMessage.Player) {
                 LoggedChatMessage.Player loggedchatmessage$player = (LoggedChatMessage.Player)$$6;
                 boolean flag = this.acceptContext(loggedchatmessage$player.message());
                 if (intsortedset.remove(i)) {
                     this.trackContext(loggedchatmessage$player.message());
-                    p_251946_.accept(i, loggedchatmessage$player);
+                    handler.accept(i, loggedchatmessage$player);
                 } else if (flag) {
-                    p_251946_.accept(i, loggedchatmessage$player);
+                    handler.accept(i, loggedchatmessage$player);
                 }
             }
         }
     }
 
-    public void trackContext(PlayerChatMessage p_252057_) {
-        this.activeCollectors.add(new ChatReportContextBuilder.Collector(p_252057_));
+    public void trackContext(PlayerChatMessage lastChainMessage) {
+        this.activeCollectors.add(new ChatReportContextBuilder.Collector(lastChainMessage));
     }
 
-    public boolean acceptContext(PlayerChatMessage p_250059_) {
+    public boolean acceptContext(PlayerChatMessage lastChainMessage) {
         boolean flag = false;
         Iterator<ChatReportContextBuilder.Collector> iterator = this.activeCollectors.iterator();
 
         while (iterator.hasNext()) {
             ChatReportContextBuilder.Collector chatreportcontextbuilder$collector = iterator.next();
-            if (chatreportcontextbuilder$collector.accept(p_250059_)) {
+            if (chatreportcontextbuilder$collector.accept(lastChainMessage)) {
                 flag = true;
                 if (chatreportcontextbuilder$collector.isComplete()) {
                     iterator.remove();
@@ -75,20 +75,20 @@ public class ChatReportContextBuilder {
         private boolean collectingChain = true;
         private int count;
 
-        Collector(PlayerChatMessage p_249708_) {
-            this.lastSeenSignatures = new ObjectOpenHashSet<>(p_249708_.signedBody().lastSeen().entries());
-            this.lastChainMessage = p_249708_;
+        Collector(PlayerChatMessage lastChainMessage) {
+            this.lastSeenSignatures = new ObjectOpenHashSet<>(lastChainMessage.signedBody().lastSeen().entries());
+            this.lastChainMessage = lastChainMessage;
         }
 
-        boolean accept(PlayerChatMessage p_252313_) {
-            if (p_252313_.equals(this.lastChainMessage)) {
+        boolean accept(PlayerChatMessage message) {
+            if (message.equals(this.lastChainMessage)) {
                 return false;
             } else {
-                boolean flag = this.lastSeenSignatures.remove(p_252313_.signature());
-                if (this.collectingChain && this.lastChainMessage.sender().equals(p_252313_.sender())) {
-                    if (this.lastChainMessage.link().isDescendantOf(p_252313_.link())) {
+                boolean flag = this.lastSeenSignatures.remove(message.signature());
+                if (this.collectingChain && this.lastChainMessage.sender().equals(message.sender())) {
+                    if (this.lastChainMessage.link().isDescendantOf(message.link())) {
                         flag = true;
-                        this.lastChainMessage = p_252313_;
+                        this.lastChainMessage = message;
                     } else {
                         this.collectingChain = false;
                     }
@@ -109,6 +109,6 @@ public class ChatReportContextBuilder {
 
     @OnlyIn(Dist.CLIENT)
     public interface Handler {
-        void accept(int p_248905_, LoggedChatMessage.Player p_249564_);
+        void accept(int index, LoggedChatMessage.Player player);
     }
 }

@@ -11,7 +11,7 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.monster.warden.Warden;
 
 public class SetRoarTarget {
-    public static <E extends Warden> BehaviorControl<E> create(Function<E, Optional<? extends LivingEntity>> p_260275_) {
+    public static <E extends Warden> BehaviorControl<E> create(Function<E, Optional<? extends LivingEntity>> targetFinder) {
         return BehaviorBuilder.create(
             p_258921_ -> p_258921_.group(
                         p_258921_.absent(MemoryModuleType.ROAR_TARGET),
@@ -19,7 +19,7 @@ public class SetRoarTarget {
                         p_258921_.registered(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE)
                     )
                     .apply(p_258921_, (p_258929_, p_258930_, p_258931_) -> (p_258925_, p_258926_, p_258927_) -> {
-                            Optional<? extends LivingEntity> optional = p_260275_.apply(p_258926_);
+                            Optional<? extends LivingEntity> optional = targetFinder.apply(p_258926_);
                             if (optional.filter(p_258926_::canTargetEntity).isEmpty()) {
                                 return false;
                             } else {

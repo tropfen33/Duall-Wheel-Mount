@@ -6,6 +6,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.mojang.serialization.codecs.RecordCodecBuilder.Instance;
 import net.minecraft.world.level.storage.loot.LootContext;
 
+/**
+ * A {@link NumberProvider} that provides a constant value.
+ */
 public record ConstantValue(float value) implements NumberProvider {
     public static final MapCodec<ConstantValue> CODEC = RecordCodecBuilder.mapCodec(
         p_299242_ -> p_299242_.group(Codec.FLOAT.fieldOf("value").forGetter(ConstantValue::value)).apply(p_299242_, ConstantValue::new)
@@ -18,20 +21,20 @@ public record ConstantValue(float value) implements NumberProvider {
     }
 
     @Override
-    public float getFloat(LootContext p_165695_) {
+    public float getFloat(LootContext lootContext) {
         return this.value;
     }
 
-    public static ConstantValue exactly(float p_165693_) {
-        return new ConstantValue(p_165693_);
+    public static ConstantValue exactly(float value) {
+        return new ConstantValue(value);
     }
 
     @Override
-    public boolean equals(Object p_165697_) {
-        if (this == p_165697_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return p_165697_ != null && this.getClass() == p_165697_.getClass() ? Float.compare(((ConstantValue)p_165697_).value, this.value) == 0 : false;
+            return other != null && this.getClass() == other.getClass() ? Float.compare(((ConstantValue)other).value, this.value) == 0 : false;
         }
     }
 

@@ -38,17 +38,17 @@ public interface DataProvider {
     Comparator<String> KEY_COMPARATOR = Comparator.comparingInt(FIXED_ORDER_FIELDS).thenComparing(p_236077_ -> (String)p_236077_);
     Logger LOGGER = LogUtils.getLogger();
 
-    CompletableFuture<?> run(CachedOutput p_236071_);
+    CompletableFuture<?> run(CachedOutput output);
 
     String getName();
 
-    static <T> CompletableFuture<?> saveStable(CachedOutput p_298323_, HolderLookup.Provider p_323556_, Codec<T> p_299231_, T p_298793_, Path p_298236_) {
-        RegistryOps<JsonElement> registryops = p_323556_.createSerializationContext(JsonOps.INSTANCE);
-        JsonElement jsonelement = p_299231_.encodeStart(registryops, p_298793_).getOrThrow();
-        return saveStable(p_298323_, jsonelement, p_298236_);
+    static <T> CompletableFuture<?> saveStable(CachedOutput output, HolderLookup.Provider registries, Codec<T> codec, T value, Path path) {
+        RegistryOps<JsonElement> registryops = registries.createSerializationContext(JsonOps.INSTANCE);
+        JsonElement jsonelement = codec.encodeStart(registryops, value).getOrThrow();
+        return saveStable(output, jsonelement, path);
     }
 
-    static CompletableFuture<?> saveStable(CachedOutput p_253653_, JsonElement p_254542_, Path p_254467_) {
+    static CompletableFuture<?> saveStable(CachedOutput output, JsonElement json, Path path) {
         return CompletableFuture.runAsync(() -> {
             try {
                 ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream();
@@ -57,18 +57,18 @@ public interface DataProvider {
                 try (JsonWriter jsonwriter = new JsonWriter(new OutputStreamWriter(hashingoutputstream, StandardCharsets.UTF_8))) {
                     jsonwriter.setSerializeNulls(false);
                     jsonwriter.setIndent(" ".repeat(java.lang.Math.max(0, INDENT_WIDTH.get()))); // Neo: Allow changing the indent width without needing to mixin this lambda.
-                    GsonHelper.writeValue(jsonwriter, p_254542_, KEY_COMPARATOR);
+                    GsonHelper.writeValue(jsonwriter, json, KEY_COMPARATOR);
                 }
 
-                p_253653_.writeIfNeeded(p_254467_, bytearrayoutputstream.toByteArray(), hashingoutputstream.hash());
+                output.writeIfNeeded(path, bytearrayoutputstream.toByteArray(), hashingoutputstream.hash());
             } catch (IOException ioexception) {
-                LOGGER.error("Failed to save file to {}", p_254467_, ioexception);
+                LOGGER.error("Failed to save file to {}", path, ioexception);
             }
         }, Util.backgroundExecutor());
     }
 
     @FunctionalInterface
     public interface Factory<T extends DataProvider> {
-        T create(PackOutput p_253851_);
+        T create(PackOutput output);
     }
 }

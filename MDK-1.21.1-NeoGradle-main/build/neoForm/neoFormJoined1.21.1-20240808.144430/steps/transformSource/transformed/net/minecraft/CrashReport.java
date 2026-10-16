@@ -31,9 +31,9 @@ public class CrashReport {
     private StackTraceElement[] uncategorizedStackTrace = new StackTraceElement[0];
     private final SystemReport systemReport = new SystemReport();
 
-    public CrashReport(String p_127509_, Throwable p_127510_) {
-        this.title = p_127509_;
-        this.exception = p_127510_;
+    public CrashReport(String title, Throwable exception) {
+        this.title = title;
+        this.exception = exception;
     }
 
     public String getTitle() {
@@ -50,25 +50,28 @@ public class CrashReport {
         return stringbuilder.toString();
     }
 
-    public void getDetails(StringBuilder p_127520_) {
+    /**
+     * Gets the various sections of the crash report into the given StringBuilder
+     */
+    public void getDetails(StringBuilder builder) {
         if ((this.uncategorizedStackTrace == null || this.uncategorizedStackTrace.length <= 0) && !this.details.isEmpty()) {
             this.uncategorizedStackTrace = ArrayUtils.subarray(this.details.get(0).getStacktrace(), 0, 1);
         }
 
         if (this.uncategorizedStackTrace != null && this.uncategorizedStackTrace.length > 0) {
-            p_127520_.append("-- Head --\n");
-            p_127520_.append("Thread: ").append(Thread.currentThread().getName()).append("\n");
-            p_127520_.append("Stacktrace:");
-            p_127520_.append(net.neoforged.neoforge.logging.CrashReportExtender.generateEnhancedStackTrace(this.uncategorizedStackTrace));
+            builder.append("-- Head --\n");
+            builder.append("Thread: ").append(Thread.currentThread().getName()).append("\n");
+            builder.append("Stacktrace:");
+            builder.append(net.neoforged.neoforge.logging.CrashReportExtender.generateEnhancedStackTrace(this.uncategorizedStackTrace));
         }
 
         for (CrashReportCategory crashreportcategory : this.details) {
-            crashreportcategory.getDetails(p_127520_);
-            p_127520_.append("\n\n");
+            crashreportcategory.getDetails(builder);
+            builder.append("\n\n");
         }
 
         net.neoforged.neoforge.logging.CrashReportExtender.extendSystemReport(systemReport);
-        this.systemReport.appendToCrashReportString(p_127520_);
+        this.systemReport.appendToCrashReportString(builder);
     }
 
     public String getExceptionMessage() {
@@ -90,9 +93,9 @@ public class CrashReport {
         return net.neoforged.neoforge.logging.CrashReportExtender.generateEnhancedStackTrace(throwable);
     }
 
-    public String getFriendlyReport(ReportType p_350860_, List<String> p_350563_) {
+    public String getFriendlyReport(ReportType type, List<String> links) {
         StringBuilder stringbuilder = new StringBuilder();
-        p_350860_.appendHeader(stringbuilder, p_350563_);
+        type.appendHeader(stringbuilder, links);
         stringbuilder.append("Time: ");
         stringbuilder.append(DATE_TIME_FORMATTER.format(ZonedDateTime.now()));
         stringbuilder.append("\n");
@@ -111,8 +114,8 @@ public class CrashReport {
         return stringbuilder.toString();
     }
 
-    public String getFriendlyReport(ReportType p_351019_) {
-        return this.getFriendlyReport(p_351019_, List.of());
+    public String getFriendlyReport(ReportType type) {
+        return this.getFriendlyReport(type, List.of());
     }
 
     @Nullable
@@ -120,44 +123,50 @@ public class CrashReport {
         return this.saveFile;
     }
 
-    public boolean saveToFile(Path p_350440_, ReportType p_350597_, List<String> p_350675_) {
+    public boolean saveToFile(Path path, ReportType type, List<String> links) {
         if (this.saveFile != null) {
             return false;
         } else {
             try {
-                if (p_350440_.getParent() != null) {
-                    FileUtil.createDirectoriesSafe(p_350440_.getParent());
+                if (path.getParent() != null) {
+                    FileUtil.createDirectoriesSafe(path.getParent());
                 }
 
-                try (Writer writer = Files.newBufferedWriter(p_350440_, StandardCharsets.UTF_8)) {
-                    writer.write(this.getFriendlyReport(p_350597_, p_350675_));
+                try (Writer writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
+                    writer.write(this.getFriendlyReport(type, links));
                 }
 
-                this.saveFile = p_350440_;
+                this.saveFile = path;
                 return true;
             } catch (Throwable throwable1) {
-                LOGGER.error("Could not save crash report to {}", p_350440_, throwable1);
+                LOGGER.error("Could not save crash report to {}", path, throwable1);
                 return false;
             }
         }
     }
 
-    public boolean saveToFile(Path p_350691_, ReportType p_350920_) {
-        return this.saveToFile(p_350691_, p_350920_, List.of());
+    public boolean saveToFile(Path path, ReportType type) {
+        return this.saveToFile(path, type, List.of());
     }
 
     public SystemReport getSystemReport() {
         return this.systemReport;
     }
 
-    public CrashReportCategory addCategory(String p_127515_) {
-        return this.addCategory(p_127515_, 1);
+    /**
+     * Creates a CrashReportCategory
+     */
+    public CrashReportCategory addCategory(String name) {
+        return this.addCategory(name, 1);
     }
 
-    public CrashReportCategory addCategory(String p_127517_, int p_127518_) {
-        CrashReportCategory crashreportcategory = new CrashReportCategory(p_127517_);
+    /**
+     * Creates a CrashReportCategory for the given stack trace depth
+     */
+    public CrashReportCategory addCategory(String categoryName, int stacktraceLength) {
+        CrashReportCategory crashreportcategory = new CrashReportCategory(categoryName);
         if (this.trackingStackTrace) {
-            int i = crashreportcategory.fillInStackTrace(p_127518_);
+            int i = crashreportcategory.fillInStackTrace(stacktraceLength);
             StackTraceElement[] astacktraceelement = this.exception.getStackTrace();
             StackTraceElement stacktraceelement = null;
             StackTraceElement stacktraceelement1 = null;
@@ -186,16 +195,19 @@ public class CrashReport {
         return crashreportcategory;
     }
 
-    public static CrashReport forThrowable(Throwable p_127522_, String p_127523_) {
-        while (p_127522_ instanceof CompletionException && p_127522_.getCause() != null) {
-            p_127522_ = p_127522_.getCause();
+    /**
+     * Creates a crash report for the exception
+     */
+    public static CrashReport forThrowable(Throwable cause, String description) {
+        while (cause instanceof CompletionException && cause.getCause() != null) {
+            cause = cause.getCause();
         }
 
         CrashReport crashreport;
-        if (p_127522_ instanceof ReportedException reportedexception) {
+        if (cause instanceof ReportedException reportedexception) {
             crashreport = reportedexception.getReport();
         } else {
-            crashreport = new CrashReport(p_127523_, p_127522_);
+            crashreport = new CrashReport(description, cause);
         }
 
         return crashreport;

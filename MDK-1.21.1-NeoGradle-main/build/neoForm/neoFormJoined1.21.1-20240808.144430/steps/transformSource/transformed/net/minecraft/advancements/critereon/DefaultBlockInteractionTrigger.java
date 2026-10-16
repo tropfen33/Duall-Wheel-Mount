@@ -19,16 +19,16 @@ public class DefaultBlockInteractionTrigger extends SimpleCriterionTrigger<Defau
         return DefaultBlockInteractionTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_320398_, BlockPos p_320593_) {
-        ServerLevel serverlevel = p_320398_.serverLevel();
-        BlockState blockstate = serverlevel.getBlockState(p_320593_);
+    public void trigger(ServerPlayer player, BlockPos pos) {
+        ServerLevel serverlevel = player.serverLevel();
+        BlockState blockstate = serverlevel.getBlockState(pos);
         LootParams lootparams = new LootParams.Builder(serverlevel)
-            .withParameter(LootContextParams.ORIGIN, p_320593_.getCenter())
-            .withParameter(LootContextParams.THIS_ENTITY, p_320398_)
+            .withParameter(LootContextParams.ORIGIN, pos.getCenter())
+            .withParameter(LootContextParams.THIS_ENTITY, player)
             .withParameter(LootContextParams.BLOCK_STATE, blockstate)
             .create(LootContextParamSets.BLOCK_USE);
         LootContext lootcontext = new LootContext.Builder(lootparams).create(Optional.empty());
-        this.trigger(p_320398_, p_320795_ -> p_320795_.matches(lootcontext));
+        this.trigger(player, p_320795_ -> p_320795_.matches(lootcontext));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, Optional<ContextAwarePredicate> location)
@@ -41,14 +41,14 @@ public class DefaultBlockInteractionTrigger extends SimpleCriterionTrigger<Defau
                     .apply(p_337352_, DefaultBlockInteractionTrigger.TriggerInstance::new)
         );
 
-        public boolean matches(LootContext p_320120_) {
-            return this.location.isEmpty() || this.location.get().matches(p_320120_);
+        public boolean matches(LootContext context) {
+            return this.location.isEmpty() || this.location.get().matches(context);
         }
 
         @Override
-        public void validate(CriterionValidator p_320246_) {
-            SimpleCriterionTrigger.SimpleInstance.super.validate(p_320246_);
-            this.location.ifPresent(p_319986_ -> p_320246_.validate(p_319986_, LootContextParamSets.BLOCK_USE, ".location"));
+        public void validate(CriterionValidator validator) {
+            SimpleCriterionTrigger.SimpleInstance.super.validate(validator);
+            this.location.ifPresent(p_319986_ -> validator.validate(p_319986_, LootContextParamSets.BLOCK_USE, ".location"));
         }
     }
 }

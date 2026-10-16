@@ -35,22 +35,29 @@ public class SpikeFeature extends Feature<SpikeConfiguration> {
         .expireAfterWrite(5L, TimeUnit.MINUTES)
         .build(new SpikeFeature.SpikeCacheLoader());
 
-    public SpikeFeature(Codec<SpikeConfiguration> p_66852_) {
-        super(p_66852_);
+    public SpikeFeature(Codec<SpikeConfiguration> codec) {
+        super(codec);
     }
 
-    public static List<SpikeFeature.EndSpike> getSpikesForLevel(WorldGenLevel p_66859_) {
-        RandomSource randomsource = RandomSource.create(p_66859_.getSeed());
+    public static List<SpikeFeature.EndSpike> getSpikesForLevel(WorldGenLevel level) {
+        RandomSource randomsource = RandomSource.create(level.getSeed());
         long i = randomsource.nextLong() & 65535L;
         return SPIKE_CACHE.getUnchecked(i);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<SpikeConfiguration> p_160372_) {
-        SpikeConfiguration spikeconfiguration = p_160372_.config();
-        WorldGenLevel worldgenlevel = p_160372_.level();
-        RandomSource randomsource = p_160372_.random();
-        BlockPos blockpos = p_160372_.origin();
+    public boolean place(FeaturePlaceContext<SpikeConfiguration> context) {
+        SpikeConfiguration spikeconfiguration = context.config();
+        WorldGenLevel worldgenlevel = context.level();
+        RandomSource randomsource = context.random();
+        BlockPos blockpos = context.origin();
         List<SpikeFeature.EndSpike> list = spikeconfiguration.getSpikes();
         if (list.isEmpty()) {
             list = getSpikesForLevel(worldgenlevel);
@@ -65,22 +72,25 @@ public class SpikeFeature extends Feature<SpikeConfiguration> {
         return true;
     }
 
-    private void placeSpike(ServerLevelAccessor p_225247_, RandomSource p_225248_, SpikeConfiguration p_225249_, SpikeFeature.EndSpike p_225250_) {
-        int i = p_225250_.getRadius();
+    /**
+     * Places the End Spike in the world. Also generates the obsidian tower.
+     */
+    private void placeSpike(ServerLevelAccessor level, RandomSource random, SpikeConfiguration config, SpikeFeature.EndSpike spike) {
+        int i = spike.getRadius();
 
         for (BlockPos blockpos : BlockPos.betweenClosed(
-            new BlockPos(p_225250_.getCenterX() - i, p_225247_.getMinBuildHeight(), p_225250_.getCenterZ() - i),
-            new BlockPos(p_225250_.getCenterX() + i, p_225250_.getHeight() + 10, p_225250_.getCenterZ() + i)
+            new BlockPos(spike.getCenterX() - i, level.getMinBuildHeight(), spike.getCenterZ() - i),
+            new BlockPos(spike.getCenterX() + i, spike.getHeight() + 10, spike.getCenterZ() + i)
         )) {
-            if (blockpos.distToLowCornerSqr((double)p_225250_.getCenterX(), (double)blockpos.getY(), (double)p_225250_.getCenterZ()) <= (double)(i * i + 1)
-                && blockpos.getY() < p_225250_.getHeight()) {
-                this.setBlock(p_225247_, blockpos, Blocks.OBSIDIAN.defaultBlockState());
+            if (blockpos.distToLowCornerSqr((double)spike.getCenterX(), (double)blockpos.getY(), (double)spike.getCenterZ()) <= (double)(i * i + 1)
+                && blockpos.getY() < spike.getHeight()) {
+                this.setBlock(level, blockpos, Blocks.OBSIDIAN.defaultBlockState());
             } else if (blockpos.getY() > 65) {
-                this.setBlock(p_225247_, blockpos, Blocks.AIR.defaultBlockState());
+                this.setBlock(level, blockpos, Blocks.AIR.defaultBlockState());
             }
         }
 
-        if (p_225250_.isGuarded()) {
+        if (spike.isGuarded()) {
             int j1 = -2;
             int k1 = 2;
             int j = 3;
@@ -102,8 +112,8 @@ public class SpikeFeature extends Feature<SpikeConfiguration> {
                                 .setValue(IronBarsBlock.WEST, Boolean.valueOf(flag4 && k != -2))
                                 .setValue(IronBarsBlock.EAST, Boolean.valueOf(flag4 && k != 2));
                             this.setBlock(
-                                p_225247_,
-                                blockpos$mutableblockpos.set(p_225250_.getCenterX() + k, p_225250_.getHeight() + i1, p_225250_.getCenterZ() + l),
+                                level,
+                                blockpos$mutableblockpos.set(spike.getCenterX() + k, spike.getHeight() + i1, spike.getCenterZ() + l),
                                 blockstate
                             );
                         }
@@ -112,21 +122,21 @@ public class SpikeFeature extends Feature<SpikeConfiguration> {
             }
         }
 
-        EndCrystal endcrystal = EntityType.END_CRYSTAL.create(p_225247_.getLevel());
+        EndCrystal endcrystal = EntityType.END_CRYSTAL.create(level.getLevel());
         if (endcrystal != null) {
-            endcrystal.setBeamTarget(p_225249_.getCrystalBeamTarget());
-            endcrystal.setInvulnerable(p_225249_.isCrystalInvulnerable());
+            endcrystal.setBeamTarget(config.getCrystalBeamTarget());
+            endcrystal.setInvulnerable(config.isCrystalInvulnerable());
             endcrystal.moveTo(
-                (double)p_225250_.getCenterX() + 0.5,
-                (double)(p_225250_.getHeight() + 1),
-                (double)p_225250_.getCenterZ() + 0.5,
-                p_225248_.nextFloat() * 360.0F,
+                (double)spike.getCenterX() + 0.5,
+                (double)(spike.getHeight() + 1),
+                (double)spike.getCenterZ() + 0.5,
+                random.nextFloat() * 360.0F,
                 0.0F
             );
-            p_225247_.addFreshEntity(endcrystal);
+            level.addFreshEntity(endcrystal);
             BlockPos blockpos1 = endcrystal.blockPosition();
-            this.setBlock(p_225247_, blockpos1.below(), Blocks.BEDROCK.defaultBlockState());
-            this.setBlock(p_225247_, blockpos1, FireBlock.getState(p_225247_, blockpos1));
+            this.setBlock(level, blockpos1.below(), Blocks.BEDROCK.defaultBlockState());
+            this.setBlock(level, blockpos1, FireBlock.getState(level, blockpos1));
         }
     }
 
@@ -148,25 +158,25 @@ public class SpikeFeature extends Feature<SpikeConfiguration> {
         private final boolean guarded;
         private final AABB topBoundingBox;
 
-        public EndSpike(int p_66881_, int p_66882_, int p_66883_, int p_66884_, boolean p_66885_) {
-            this.centerX = p_66881_;
-            this.centerZ = p_66882_;
-            this.radius = p_66883_;
-            this.height = p_66884_;
-            this.guarded = p_66885_;
+        public EndSpike(int centerX, int centerZ, int radius, int height, boolean guarded) {
+            this.centerX = centerX;
+            this.centerZ = centerZ;
+            this.radius = radius;
+            this.height = height;
+            this.guarded = guarded;
             this.topBoundingBox = new AABB(
-                (double)(p_66881_ - p_66883_),
+                (double)(centerX - radius),
                 (double)DimensionType.MIN_Y,
-                (double)(p_66882_ - p_66883_),
-                (double)(p_66881_ + p_66883_),
+                (double)(centerZ - radius),
+                (double)(centerX + radius),
                 (double)DimensionType.MAX_Y,
-                (double)(p_66882_ + p_66883_)
+                (double)(centerZ + radius)
             );
         }
 
-        public boolean isCenterWithinChunk(BlockPos p_66892_) {
-            return SectionPos.blockToSectionCoord(p_66892_.getX()) == SectionPos.blockToSectionCoord(this.centerX)
-                && SectionPos.blockToSectionCoord(p_66892_.getZ()) == SectionPos.blockToSectionCoord(this.centerZ);
+        public boolean isCenterWithinChunk(BlockPos pos) {
+            return SectionPos.blockToSectionCoord(pos.getX()) == SectionPos.blockToSectionCoord(this.centerX)
+                && SectionPos.blockToSectionCoord(pos.getZ()) == SectionPos.blockToSectionCoord(this.centerZ);
         }
 
         public int getCenterX() {

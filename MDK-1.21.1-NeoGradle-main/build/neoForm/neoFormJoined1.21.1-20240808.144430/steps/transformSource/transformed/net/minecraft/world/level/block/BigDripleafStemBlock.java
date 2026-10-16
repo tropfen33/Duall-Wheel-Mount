@@ -37,14 +37,14 @@ public class BigDripleafStemBlock extends HorizontalDirectionalBlock implements 
         return CODEC;
     }
 
-    public BigDripleafStemBlock(BlockBehaviour.Properties p_152329_) {
-        super(p_152329_);
+    public BigDripleafStemBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(WATERLOGGED, Boolean.valueOf(false)).setValue(FACING, Direction.NORTH));
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_152360_, BlockGetter p_152361_, BlockPos p_152362_, CollisionContext p_152363_) {
-        switch ((Direction)p_152360_.getValue(FACING)) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        switch ((Direction)state.getValue(FACING)) {
             case SOUTH:
                 return SOUTH_SHAPE;
             case NORTH:
@@ -58,84 +58,89 @@ public class BigDripleafStemBlock extends HorizontalDirectionalBlock implements 
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_152376_) {
-        p_152376_.add(WATERLOGGED, FACING);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(WATERLOGGED, FACING);
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_152378_) {
-        return p_152378_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_152378_);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_152365_, LevelReader p_152366_, BlockPos p_152367_) {
-        BlockPos blockpos = p_152367_.below();
-        BlockState blockstate = p_152366_.getBlockState(blockpos);
-        BlockState blockstate1 = p_152366_.getBlockState(p_152367_.above());
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        BlockPos blockpos = pos.below();
+        BlockState blockstate = level.getBlockState(blockpos);
+        BlockState blockstate1 = level.getBlockState(pos.above());
         return (blockstate.is(this) || blockstate.is(BlockTags.BIG_DRIPLEAF_PLACEABLE)) && (blockstate1.is(this) || blockstate1.is(Blocks.BIG_DRIPLEAF));
     }
 
-    protected static boolean place(LevelAccessor p_152350_, BlockPos p_152351_, FluidState p_152352_, Direction p_152353_) {
+    protected static boolean place(LevelAccessor level, BlockPos pos, FluidState fluidState, Direction direction) {
         BlockState blockstate = Blocks.BIG_DRIPLEAF_STEM
             .defaultBlockState()
-            .setValue(WATERLOGGED, Boolean.valueOf(p_152352_.isSourceOfType(Fluids.WATER)))
-            .setValue(FACING, p_152353_);
-        return p_152350_.setBlock(p_152351_, blockstate, 3);
+            .setValue(WATERLOGGED, Boolean.valueOf(fluidState.isSourceOfType(Fluids.WATER)))
+            .setValue(FACING, direction);
+        return level.setBlock(pos, blockstate, 3);
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
     protected BlockState updateShape(
-        BlockState p_152369_, Direction p_152370_, BlockState p_152371_, LevelAccessor p_152372_, BlockPos p_152373_, BlockPos p_152374_
+        BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos
     ) {
-        if ((p_152370_ == Direction.DOWN || p_152370_ == Direction.UP) && !p_152369_.canSurvive(p_152372_, p_152373_)) {
-            p_152372_.scheduleTick(p_152373_, this, 1);
+        if ((direction == Direction.DOWN || direction == Direction.UP) && !state.canSurvive(level, pos)) {
+            level.scheduleTick(pos, this, 1);
         }
 
-        if (p_152369_.getValue(WATERLOGGED)) {
-            p_152372_.scheduleTick(p_152373_, Fluids.WATER, Fluids.WATER.getTickDelay(p_152372_));
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        return super.updateShape(p_152369_, p_152370_, p_152371_, p_152372_, p_152373_, p_152374_);
+        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
 
     @Override
-    protected void tick(BlockState p_220813_, ServerLevel p_220814_, BlockPos p_220815_, RandomSource p_220816_) {
-        if (!p_220813_.canSurvive(p_220814_, p_220815_)) {
-            p_220814_.destroyBlock(p_220815_, true);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!state.canSurvive(level, pos)) {
+            level.destroyBlock(pos, true);
         }
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader p_255683_, BlockPos p_256358_, BlockState p_256408_) {
-        Optional<BlockPos> optional = BlockUtil.getTopConnectedBlock(p_255683_, p_256358_, p_256408_.getBlock(), Direction.UP, Blocks.BIG_DRIPLEAF);
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+        Optional<BlockPos> optional = BlockUtil.getTopConnectedBlock(level, pos, state.getBlock(), Direction.UP, Blocks.BIG_DRIPLEAF);
         if (optional.isEmpty()) {
             return false;
         } else {
             BlockPos blockpos = optional.get().above();
-            BlockState blockstate = p_255683_.getBlockState(blockpos);
-            return BigDripleafBlock.canPlaceAt(p_255683_, blockpos, blockstate);
+            BlockState blockstate = level.getBlockState(blockpos);
+            return BigDripleafBlock.canPlaceAt(level, blockpos, blockstate);
         }
     }
 
     @Override
-    public boolean isBonemealSuccess(Level p_220808_, RandomSource p_220809_, BlockPos p_220810_, BlockState p_220811_) {
+    public boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel p_220803_, RandomSource p_220804_, BlockPos p_220805_, BlockState p_220806_) {
-        Optional<BlockPos> optional = BlockUtil.getTopConnectedBlock(p_220803_, p_220805_, p_220806_.getBlock(), Direction.UP, Blocks.BIG_DRIPLEAF);
+    public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
+        Optional<BlockPos> optional = BlockUtil.getTopConnectedBlock(level, pos, state.getBlock(), Direction.UP, Blocks.BIG_DRIPLEAF);
         if (!optional.isEmpty()) {
             BlockPos blockpos = optional.get();
             BlockPos blockpos1 = blockpos.above();
-            Direction direction = p_220806_.getValue(FACING);
-            place(p_220803_, blockpos, p_220803_.getFluidState(blockpos), direction);
-            BigDripleafBlock.place(p_220803_, blockpos1, p_220803_.getFluidState(blockpos1), direction);
+            Direction direction = state.getValue(FACING);
+            place(level, blockpos, level.getFluidState(blockpos), direction);
+            BigDripleafBlock.place(level, blockpos1, level.getFluidState(blockpos1), direction);
         }
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader p_304938_, BlockPos p_152337_, BlockState p_152338_) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         return new ItemStack(Blocks.BIG_DRIPLEAF);
     }
 }

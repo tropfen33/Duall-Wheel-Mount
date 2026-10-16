@@ -117,31 +117,34 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
         MemoryModuleType.NEAREST_REPELLENT
     );
 
-    public Piglin(EntityType<? extends AbstractPiglin> p_34683_, Level p_34684_) {
-        super(p_34683_, p_34684_);
+    public Piglin(EntityType<? extends AbstractPiglin> entityType, Level level) {
+        super(entityType, level);
         this.xpReward = 5;
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_34751_) {
-        super.addAdditionalSaveData(p_34751_);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
         if (this.isBaby()) {
-            p_34751_.putBoolean("IsBaby", true);
+            compound.putBoolean("IsBaby", true);
         }
 
         if (this.cannotHunt) {
-            p_34751_.putBoolean("CannotHunt", true);
+            compound.putBoolean("CannotHunt", true);
         }
 
-        this.writeInventoryToTag(p_34751_, this.registryAccess());
+        this.writeInventoryToTag(compound, this.registryAccess());
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_34725_) {
-        super.readAdditionalSaveData(p_34725_);
-        this.setBaby(p_34725_.getBoolean("IsBaby"));
-        this.setCannotHunt(p_34725_.getBoolean("CannotHunt"));
-        this.readInventoryFromTag(p_34725_, this.registryAccess());
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.setBaby(compound.getBoolean("IsBaby"));
+        this.setCannotHunt(compound.getBoolean("CannotHunt"));
+        this.readInventoryFromTag(compound, this.registryAccess());
     }
 
     @VisibleForDebug
@@ -151,9 +154,9 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
     }
 
     @Override
-    protected void dropCustomDeathLoot(ServerLevel p_348503_, DamageSource p_34697_, boolean p_34699_) {
-        super.dropCustomDeathLoot(p_348503_, p_34697_, p_34699_);
-        if (p_34697_.getEntity() instanceof Creeper creeper && creeper.canDropMobsSkull()) {
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
+        super.dropCustomDeathLoot(level, damageSource, recentlyHit);
+        if (damageSource.getEntity() instanceof Creeper creeper && creeper.canDropMobsSkull()) {
             ItemStack itemstack = new ItemStack(Items.PIGLIN_HEAD);
             creeper.increaseDroppedSkulls();
             this.spawnAtLocation(itemstack);
@@ -162,26 +165,26 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
         this.inventory.removeAllItems().forEach(this::spawnAtLocation);
     }
 
-    protected ItemStack addToInventory(ItemStack p_34779_) {
-        return this.inventory.addItem(p_34779_);
+    protected ItemStack addToInventory(ItemStack stack) {
+        return this.inventory.addItem(stack);
     }
 
-    protected boolean canAddToInventory(ItemStack p_34781_) {
-        return this.inventory.canAddItem(p_34781_);
-    }
-
-    @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326106_) {
-        super.defineSynchedData(p_326106_);
-        p_326106_.define(DATA_BABY_ID, false);
-        p_326106_.define(DATA_IS_CHARGING_CROSSBOW, false);
-        p_326106_.define(DATA_IS_DANCING, false);
+    protected boolean canAddToInventory(ItemStack stack) {
+        return this.inventory.canAddItem(stack);
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_34727_) {
-        super.onSyncedDataUpdated(p_34727_);
-        if (DATA_BABY_ID.equals(p_34727_)) {
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_BABY_ID, false);
+        builder.define(DATA_IS_CHARGING_CROSSBOW, false);
+        builder.define(DATA_IS_DANCING, false);
+    }
+
+    @Override
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (DATA_BABY_ID.equals(key)) {
             this.refreshDimensions();
         }
     }
@@ -191,16 +194,16 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
     }
 
     public static boolean checkPiglinSpawnRules(
-        EntityType<Piglin> p_219198_, LevelAccessor p_219199_, MobSpawnType p_219200_, BlockPos p_219201_, RandomSource p_219202_
+        EntityType<Piglin> piglin, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return !p_219199_.getBlockState(p_219201_.below()).is(Blocks.NETHER_WART_BLOCK);
+        return !level.getBlockState(pos.below()).is(Blocks.NETHER_WART_BLOCK);
     }
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_34717_, DifficultyInstance p_34718_, MobSpawnType p_34719_, @Nullable SpawnGroupData p_34720_) {
-        RandomSource randomsource = p_34717_.getRandom();
-        if (p_34719_ != MobSpawnType.STRUCTURE) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        RandomSource randomsource = level.getRandom();
+        if (spawnType != MobSpawnType.STRUCTURE) {
             if (randomsource.nextFloat() < 0.2F) {
                 this.setBaby(true);
             } else if (this.isAdult()) {
@@ -208,10 +211,10 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
             }
         }
 
-        PiglinAi.initMemories(this, p_34717_.getRandom());
-        this.populateDefaultEquipmentSlots(randomsource, p_34718_);
-        this.populateDefaultEquipmentEnchantments(p_34717_, randomsource, p_34718_);
-        return super.finalizeSpawn(p_34717_, p_34718_, p_34719_, p_34720_);
+        PiglinAi.initMemories(this, level.getRandom());
+        this.populateDefaultEquipmentSlots(randomsource, difficulty);
+        this.populateDefaultEquipmentEnchantments(level, randomsource, difficulty);
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
     @Override
@@ -220,23 +223,23 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
     }
 
     @Override
-    public boolean removeWhenFarAway(double p_34775_) {
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return !this.isPersistenceRequired();
     }
 
     @Override
-    protected void populateDefaultEquipmentSlots(RandomSource p_219189_, DifficultyInstance p_219190_) {
+    protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
         if (this.isAdult()) {
-            this.maybeWearArmor(EquipmentSlot.HEAD, new ItemStack(Items.GOLDEN_HELMET), p_219189_);
-            this.maybeWearArmor(EquipmentSlot.CHEST, new ItemStack(Items.GOLDEN_CHESTPLATE), p_219189_);
-            this.maybeWearArmor(EquipmentSlot.LEGS, new ItemStack(Items.GOLDEN_LEGGINGS), p_219189_);
-            this.maybeWearArmor(EquipmentSlot.FEET, new ItemStack(Items.GOLDEN_BOOTS), p_219189_);
+            this.maybeWearArmor(EquipmentSlot.HEAD, new ItemStack(Items.GOLDEN_HELMET), random);
+            this.maybeWearArmor(EquipmentSlot.CHEST, new ItemStack(Items.GOLDEN_CHESTPLATE), random);
+            this.maybeWearArmor(EquipmentSlot.LEGS, new ItemStack(Items.GOLDEN_LEGGINGS), random);
+            this.maybeWearArmor(EquipmentSlot.FEET, new ItemStack(Items.GOLDEN_BOOTS), random);
         }
     }
 
-    private void maybeWearArmor(EquipmentSlot p_219192_, ItemStack p_219193_, RandomSource p_219194_) {
-        if (p_219194_.nextFloat() < 0.1F) {
-            this.setItemSlot(p_219192_, p_219193_);
+    private void maybeWearArmor(EquipmentSlot slot, ItemStack stack, RandomSource random) {
+        if (random.nextFloat() < 0.1F) {
+            this.setItemSlot(slot, stack);
         }
     }
 
@@ -246,8 +249,8 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
     }
 
     @Override
-    protected Brain<?> makeBrain(Dynamic<?> p_34723_) {
-        return PiglinAi.makeBrain(this, this.brainProvider().makeBrain(p_34723_));
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return PiglinAi.makeBrain(this, this.brainProvider().makeBrain(dynamic));
     }
 
     @Override
@@ -256,30 +259,33 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
     }
 
     @Override
-    public InteractionResult mobInteract(Player p_34745_, InteractionHand p_34746_) {
-        InteractionResult interactionresult = super.mobInteract(p_34745_, p_34746_);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        InteractionResult interactionresult = super.mobInteract(player, hand);
         if (interactionresult.consumesAction()) {
             return interactionresult;
         } else if (!this.level().isClientSide) {
-            return PiglinAi.mobInteract(this, p_34745_, p_34746_);
+            return PiglinAi.mobInteract(this, player, hand);
         } else {
-            boolean flag = PiglinAi.canAdmire(this, p_34745_.getItemInHand(p_34746_)) && this.getArmPose() != PiglinArmPose.ADMIRING_ITEM;
+            boolean flag = PiglinAi.canAdmire(this, player.getItemInHand(hand)) && this.getArmPose() != PiglinArmPose.ADMIRING_ITEM;
             return flag ? InteractionResult.SUCCESS : InteractionResult.PASS;
         }
     }
 
     @Override
-    public EntityDimensions getDefaultDimensions(Pose p_316426_) {
-        return this.isBaby() ? BABY_DIMENSIONS : super.getDefaultDimensions(p_316426_);
+    public EntityDimensions getDefaultDimensions(Pose pose) {
+        return this.isBaby() ? BABY_DIMENSIONS : super.getDefaultDimensions(pose);
     }
 
+    /**
+     * Set whether this zombie is a child.
+     */
     @Override
-    public void setBaby(boolean p_34729_) {
-        this.getEntityData().set(DATA_BABY_ID, p_34729_);
+    public void setBaby(boolean childZombie) {
+        this.getEntityData().set(DATA_BABY_ID, childZombie);
         if (!this.level().isClientSide) {
             AttributeInstance attributeinstance = this.getAttribute(Attributes.MOVEMENT_SPEED);
             attributeinstance.removeModifier(SPEED_MODIFIER_BABY.id());
-            if (p_34729_) {
+            if (childZombie) {
                 attributeinstance.addTransientModifier(SPEED_MODIFIER_BABY);
             }
         }
@@ -290,8 +296,8 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
         return this.getEntityData().get(DATA_BABY_ID);
     }
 
-    private void setCannotHunt(boolean p_34792_) {
-        this.cannotHunt = p_34792_;
+    private void setCannotHunt(boolean cannotHunt) {
+        this.cannotHunt = cannotHunt;
     }
 
     @Override
@@ -314,10 +320,10 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
     }
 
     @Override
-    protected void finishConversion(ServerLevel p_34756_) {
+    protected void finishConversion(ServerLevel serverLevel) {
         PiglinAi.cancelAdmiring(this);
         this.inventory.removeAllItems().forEach(this::spawnAtLocation);
-        super.finishConversion(p_34756_);
+        super.finishConversion(serverLevel);
     }
 
     private ItemStack createSpawnWeapon() {
@@ -329,8 +335,8 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
     }
 
     @Override
-    public void setChargingCrossbow(boolean p_34753_) {
-        this.entityData.set(DATA_IS_CHARGING_CROSSBOW, p_34753_);
+    public void setChargingCrossbow(boolean isCharging) {
+        this.entityData.set(DATA_IS_CHARGING_CROSSBOW, isCharging);
     }
 
     @Override
@@ -357,93 +363,102 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
         return this.entityData.get(DATA_IS_DANCING);
     }
 
-    public void setDancing(boolean p_34790_) {
-        this.entityData.set(DATA_IS_DANCING, p_34790_);
+    public void setDancing(boolean dancing) {
+        this.entityData.set(DATA_IS_DANCING, dancing);
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_34694_, float p_34695_) {
-        boolean flag = super.hurt(p_34694_, p_34695_);
+    public boolean hurt(DamageSource source, float amount) {
+        boolean flag = super.hurt(source, amount);
         if (this.level().isClientSide) {
             return false;
         } else {
-            if (flag && p_34694_.getEntity() instanceof LivingEntity) {
-                PiglinAi.wasHurtBy(this, (LivingEntity)p_34694_.getEntity());
+            if (flag && source.getEntity() instanceof LivingEntity) {
+                PiglinAi.wasHurtBy(this, (LivingEntity)source.getEntity());
             }
 
             return flag;
         }
     }
 
+    /**
+     * Attack the specified entity using a ranged attack.
+     */
     @Override
-    public void performRangedAttack(LivingEntity p_34704_, float p_34705_) {
+    public void performRangedAttack(LivingEntity target, float distanceFactor) {
         this.performCrossbowAttack(this, 1.6F);
     }
 
     @Override
-    public boolean canFireProjectileWeapon(ProjectileWeaponItem p_34715_) {
-        return p_34715_ == Items.CROSSBOW;
+    public boolean canFireProjectileWeapon(ProjectileWeaponItem projectileWeapon) {
+        return projectileWeapon == Items.CROSSBOW;
     }
 
-    protected void holdInMainHand(ItemStack p_34784_) {
-        this.setItemSlotAndDropWhenKilled(EquipmentSlot.MAINHAND, p_34784_);
+    protected void holdInMainHand(ItemStack stack) {
+        this.setItemSlotAndDropWhenKilled(EquipmentSlot.MAINHAND, stack);
     }
 
-    protected void holdInOffHand(ItemStack p_34786_) {
-        if (p_34786_.isPiglinCurrency()) {
-            this.setItemSlot(EquipmentSlot.OFFHAND, p_34786_);
+    protected void holdInOffHand(ItemStack stack) {
+        if (stack.isPiglinCurrency()) {
+            this.setItemSlot(EquipmentSlot.OFFHAND, stack);
             this.setGuaranteedDrop(EquipmentSlot.OFFHAND);
         } else {
-            this.setItemSlotAndDropWhenKilled(EquipmentSlot.OFFHAND, p_34786_);
+            this.setItemSlotAndDropWhenKilled(EquipmentSlot.OFFHAND, stack);
         }
     }
 
     @Override
-    public boolean wantsToPickUp(ItemStack p_34777_) {
-        return net.neoforged.neoforge.event.EventHooks.canEntityGrief(this.level(), this) && this.canPickUpLoot() && PiglinAi.wantsToPickup(this, p_34777_);
+    public boolean wantsToPickUp(ItemStack stack) {
+        return net.neoforged.neoforge.event.EventHooks.canEntityGrief(this.level(), this) && this.canPickUpLoot() && PiglinAi.wantsToPickup(this, stack);
     }
 
-    protected boolean canReplaceCurrentItem(ItemStack p_34788_) {
-        EquipmentSlot equipmentslot = this.getEquipmentSlotForItem(p_34788_);
+    protected boolean canReplaceCurrentItem(ItemStack candidate) {
+        EquipmentSlot equipmentslot = this.getEquipmentSlotForItem(candidate);
         ItemStack itemstack = this.getItemBySlot(equipmentslot);
-        return this.canReplaceCurrentItem(p_34788_, itemstack);
+        return this.canReplaceCurrentItem(candidate, itemstack);
     }
 
     @Override
-    protected boolean canReplaceCurrentItem(ItemStack p_34712_, ItemStack p_34713_) {
-        if (EnchantmentHelper.has(p_34713_, EnchantmentEffectComponents.PREVENT_ARMOR_CHANGE)) {
+    protected boolean canReplaceCurrentItem(ItemStack candidate, ItemStack existing) {
+        if (EnchantmentHelper.has(existing, EnchantmentEffectComponents.PREVENT_ARMOR_CHANGE)) {
             return false;
         } else {
-            boolean flag = PiglinAi.isLovedItem(p_34712_) || p_34712_.is(Items.CROSSBOW);
-            boolean flag1 = PiglinAi.isLovedItem(p_34713_) || p_34713_.is(Items.CROSSBOW);
+            boolean flag = PiglinAi.isLovedItem(candidate) || candidate.is(Items.CROSSBOW);
+            boolean flag1 = PiglinAi.isLovedItem(existing) || existing.is(Items.CROSSBOW);
             if (flag && !flag1) {
                 return true;
             } else if (!flag && flag1) {
                 return false;
             } else {
-                return this.isAdult() && !p_34712_.is(Items.CROSSBOW) && p_34713_.is(Items.CROSSBOW) ? false : super.canReplaceCurrentItem(p_34712_, p_34713_);
+                return this.isAdult() && !candidate.is(Items.CROSSBOW) && existing.is(Items.CROSSBOW) ? false : super.canReplaceCurrentItem(candidate, existing);
             }
         }
     }
 
+    /**
+     * Tests if this entity should pick up a weapon or an armor piece. Entity drops current weapon or armor if the new one is better.
+     */
     @Override
-    protected void pickUpItem(ItemEntity p_34743_) {
-        this.onItemPickup(p_34743_);
-        PiglinAi.pickUpItem(this, p_34743_);
+    protected void pickUpItem(ItemEntity itemEntity) {
+        this.onItemPickup(itemEntity);
+        PiglinAi.pickUpItem(this, itemEntity);
     }
 
     @Override
-    public boolean startRiding(Entity p_34701_, boolean p_34702_) {
-        if (this.isBaby() && p_34701_.getType() == EntityType.HOGLIN) {
-            p_34701_ = this.getTopPassenger(p_34701_, 3);
+    public boolean startRiding(Entity entity, boolean force) {
+        if (this.isBaby() && entity.getType() == EntityType.HOGLIN) {
+            entity = this.getTopPassenger(entity, 3);
         }
 
-        return super.startRiding(p_34701_, p_34702_);
+        return super.startRiding(entity, force);
     }
 
-    private Entity getTopPassenger(Entity p_34731_, int p_34732_) {
-        List<Entity> list = p_34731_.getPassengers();
-        return p_34732_ != 1 && !list.isEmpty() ? this.getTopPassenger(list.get(0), p_34732_ - 1) : p_34731_;
+    private Entity getTopPassenger(Entity vehicle, int maxPosition) {
+        List<Entity> list = vehicle.getPassengers();
+        return maxPosition != 1 && !list.isEmpty() ? this.getTopPassenger(list.get(0), maxPosition - 1) : vehicle;
     }
 
     @Override
@@ -452,7 +467,7 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_34767_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.PIGLIN_HURT;
     }
 
@@ -462,7 +477,7 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
     }
 
     @Override
-    protected void playStepSound(BlockPos p_34748_, BlockState p_34749_) {
+    protected void playStepSound(BlockPos pos, BlockState block) {
         this.playSound(SoundEvents.PIGLIN_STEP, 0.15F, 1.0F);
     }
 

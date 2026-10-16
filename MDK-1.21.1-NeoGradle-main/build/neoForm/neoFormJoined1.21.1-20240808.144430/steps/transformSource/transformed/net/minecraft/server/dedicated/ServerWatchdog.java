@@ -27,9 +27,9 @@ public class ServerWatchdog implements Runnable {
     private final DedicatedServer server;
     private final long maxTickTimeNanos;
 
-    public ServerWatchdog(DedicatedServer p_139786_) {
-        this.server = p_139786_;
-        this.maxTickTimeNanos = p_139786_.getMaxTickLength() * TimeUtil.NANOSECONDS_PER_MILLISECOND;
+    public ServerWatchdog(DedicatedServer server) {
+        this.server = server;
+        this.maxTickTimeNanos = server.getMaxTickLength() * TimeUtil.NANOSECONDS_PER_MILLISECOND;
     }
 
     @Override

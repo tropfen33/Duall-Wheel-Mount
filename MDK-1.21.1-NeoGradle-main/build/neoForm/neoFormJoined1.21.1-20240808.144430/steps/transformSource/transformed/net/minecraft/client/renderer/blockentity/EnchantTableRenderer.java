@@ -17,21 +17,24 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class EnchantTableRenderer implements BlockEntityRenderer<EnchantingTableBlockEntity> {
+    /**
+     * The texture for the book above the enchantment table.
+     */
     public static final Material BOOK_LOCATION = new Material(
         TextureAtlas.LOCATION_BLOCKS, ResourceLocation.withDefaultNamespace("entity/enchanting_table_book")
     );
     private final BookModel bookModel;
 
-    public EnchantTableRenderer(BlockEntityRendererProvider.Context p_173619_) {
-        this.bookModel = new BookModel(p_173619_.bakeLayer(ModelLayers.BOOK));
+    public EnchantTableRenderer(BlockEntityRendererProvider.Context context) {
+        this.bookModel = new BookModel(context.bakeLayer(ModelLayers.BOOK));
     }
 
-    public void render(EnchantingTableBlockEntity p_341203_, float p_112419_, PoseStack p_112420_, MultiBufferSource p_112421_, int p_112422_, int p_112423_) {
-        p_112420_.pushPose();
-        p_112420_.translate(0.5F, 0.75F, 0.5F);
-        float f = (float)p_341203_.time + p_112419_;
-        p_112420_.translate(0.0F, 0.1F + Mth.sin(f * 0.1F) * 0.01F, 0.0F);
-        float f1 = p_341203_.rot - p_341203_.oRot;
+    public void render(EnchantingTableBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        poseStack.pushPose();
+        poseStack.translate(0.5F, 0.75F, 0.5F);
+        float f = (float)blockEntity.time + partialTick;
+        poseStack.translate(0.0F, 0.1F + Mth.sin(f * 0.1F) * 0.01F, 0.0F);
+        float f1 = blockEntity.rot - blockEntity.oRot;
 
         while (f1 >= (float) Math.PI) {
             f1 -= (float) (Math.PI * 2);
@@ -41,17 +44,17 @@ public class EnchantTableRenderer implements BlockEntityRenderer<EnchantingTable
             f1 += (float) (Math.PI * 2);
         }
 
-        float f2 = p_341203_.oRot + f1 * p_112419_;
-        p_112420_.mulPose(Axis.YP.rotation(-f2));
-        p_112420_.mulPose(Axis.ZP.rotationDegrees(80.0F));
-        float f3 = Mth.lerp(p_112419_, p_341203_.oFlip, p_341203_.flip);
+        float f2 = blockEntity.oRot + f1 * partialTick;
+        poseStack.mulPose(Axis.YP.rotation(-f2));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(80.0F));
+        float f3 = Mth.lerp(partialTick, blockEntity.oFlip, blockEntity.flip);
         float f4 = Mth.frac(f3 + 0.25F) * 1.6F - 0.3F;
         float f5 = Mth.frac(f3 + 0.75F) * 1.6F - 0.3F;
-        float f6 = Mth.lerp(p_112419_, p_341203_.oOpen, p_341203_.open);
+        float f6 = Mth.lerp(partialTick, blockEntity.oOpen, blockEntity.open);
         this.bookModel.setupAnim(f, Mth.clamp(f4, 0.0F, 1.0F), Mth.clamp(f5, 0.0F, 1.0F), f6);
-        VertexConsumer vertexconsumer = BOOK_LOCATION.buffer(p_112421_, RenderType::entitySolid);
-        this.bookModel.render(p_112420_, vertexconsumer, p_112422_, p_112423_, -1);
-        p_112420_.popPose();
+        VertexConsumer vertexconsumer = BOOK_LOCATION.buffer(bufferSource, RenderType::entitySolid);
+        this.bookModel.render(poseStack, vertexconsumer, packedLight, packedOverlay, -1);
+        poseStack.popPose();
     }
 
     @Override

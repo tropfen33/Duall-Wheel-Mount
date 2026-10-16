@@ -16,8 +16,8 @@ public class ChestedHorseModel<T extends AbstractChestedHorse> extends HorseMode
     private final ModelPart leftChest = this.body.getChild("left_chest");
     private final ModelPart rightChest = this.body.getChild("right_chest");
 
-    public ChestedHorseModel(ModelPart p_170482_) {
-        super(p_170482_);
+    public ChestedHorseModel(ModelPart root) {
+        super(root);
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -38,9 +38,12 @@ public class ChestedHorseModel<T extends AbstractChestedHorse> extends HorseMode
         return LayerDefinition.create(meshdefinition, 64, 64);
     }
 
-    public void setupAnim(T p_102366_, float p_102367_, float p_102368_, float p_102369_, float p_102370_, float p_102371_) {
-        super.setupAnim(p_102366_, p_102367_, p_102368_, p_102369_, p_102370_, p_102371_);
-        if (p_102366_.hasChest()) {
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+        if (entity.hasChest()) {
             this.leftChest.visible = true;
             this.rightChest.visible = true;
         } else {

@@ -15,14 +15,17 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import org.slf4j.Logger;
 
+/**
+ * LootItemFunction that tries to smelt any items using {@link RecipeType.SMELTING}.
+ */
 public class SmeltItemFunction extends LootItemConditionalFunction {
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final MapCodec<SmeltItemFunction> CODEC = RecordCodecBuilder.mapCodec(
         p_298746_ -> commonFields(p_298746_).apply(p_298746_, SmeltItemFunction::new)
     );
 
-    private SmeltItemFunction(List<LootItemCondition> p_299162_) {
-        super(p_299162_);
+    private SmeltItemFunction(List<LootItemCondition> conditions) {
+        super(conditions);
     }
 
     @Override
@@ -30,23 +33,26 @@ public class SmeltItemFunction extends LootItemConditionalFunction {
         return LootItemFunctions.FURNACE_SMELT;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_81268_, LootContext p_81269_) {
-        if (p_81268_.isEmpty()) {
-            return p_81268_;
+    public ItemStack run(ItemStack stack, LootContext context) {
+        if (stack.isEmpty()) {
+            return stack;
         } else {
-            Optional<RecipeHolder<SmeltingRecipe>> optional = p_81269_.getLevel()
+            Optional<RecipeHolder<SmeltingRecipe>> optional = context.getLevel()
                 .getRecipeManager()
-                .getRecipeFor(RecipeType.SMELTING, new SingleRecipeInput(p_81268_), p_81269_.getLevel());
+                .getRecipeFor(RecipeType.SMELTING, new SingleRecipeInput(stack), context.getLevel());
             if (optional.isPresent()) {
-                ItemStack itemstack = optional.get().value().getResultItem(p_81269_.getLevel().registryAccess());
+                ItemStack itemstack = optional.get().value().getResultItem(context.getLevel().registryAccess());
                 if (!itemstack.isEmpty()) {
-                    return itemstack.copyWithCount(p_81268_.getCount() * itemstack.getCount()); // Forge: Support smelting returning multiple
+                    return itemstack.copyWithCount(stack.getCount() * itemstack.getCount()); // Forge: Support smelting returning multiple
                 }
             }
 
-            LOGGER.warn("Couldn't smelt {} because there is no smelting recipe", p_81268_);
-            return p_81268_;
+            LOGGER.warn("Couldn't smelt {} because there is no smelting recipe", stack);
+            return stack;
         }
     }
 

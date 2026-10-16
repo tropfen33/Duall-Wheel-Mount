@@ -74,25 +74,25 @@ public class SnifferAi {
         return p_335270_ -> p_335270_.is(ItemTags.SNIFFER_FOOD);
     }
 
-    protected static Brain<?> makeBrain(Brain<Sniffer> p_273175_) {
-        initCoreActivity(p_273175_);
-        initIdleActivity(p_273175_);
-        initSniffingActivity(p_273175_);
-        initDigActivity(p_273175_);
-        p_273175_.setCoreActivities(Set.of(Activity.CORE));
-        p_273175_.setDefaultActivity(Activity.IDLE);
-        p_273175_.useDefaultActivity();
-        return p_273175_;
+    protected static Brain<?> makeBrain(Brain<Sniffer> brain) {
+        initCoreActivity(brain);
+        initIdleActivity(brain);
+        initSniffingActivity(brain);
+        initDigActivity(brain);
+        brain.setCoreActivities(Set.of(Activity.CORE));
+        brain.setDefaultActivity(Activity.IDLE);
+        brain.useDefaultActivity();
+        return brain;
     }
 
-    static Sniffer resetSniffing(Sniffer p_279301_) {
-        p_279301_.getBrain().eraseMemory(MemoryModuleType.SNIFFER_DIGGING);
-        p_279301_.getBrain().eraseMemory(MemoryModuleType.SNIFFER_SNIFFING_TARGET);
-        return p_279301_.transitionTo(Sniffer.State.IDLING);
+    static Sniffer resetSniffing(Sniffer sniffer) {
+        sniffer.getBrain().eraseMemory(MemoryModuleType.SNIFFER_DIGGING);
+        sniffer.getBrain().eraseMemory(MemoryModuleType.SNIFFER_SNIFFING_TARGET);
+        return sniffer.transitionTo(Sniffer.State.IDLING);
     }
 
-    private static void initCoreActivity(Brain<Sniffer> p_273185_) {
-        p_273185_.addActivity(Activity.CORE, 0, ImmutableList.of(new Swim(0.8F), new AnimalPanic<Sniffer>(2.0F) {
+    private static void initCoreActivity(Brain<Sniffer> brain) {
+        brain.addActivity(Activity.CORE, 0, ImmutableList.of(new Swim(0.8F), new AnimalPanic<Sniffer>(2.0F) {
             protected void start(ServerLevel p_326360_, Sniffer p_326298_, long p_326169_) {
                 SnifferAi.resetSniffing(p_326298_);
                 super.start(p_326360_, p_326298_, p_326169_);
@@ -100,8 +100,8 @@ public class SnifferAi {
         }, new MoveToTargetSink(500, 700), new CountDownCooldownTicks(MemoryModuleType.TEMPTATION_COOLDOWN_TICKS)));
     }
 
-    private static void initSniffingActivity(Brain<Sniffer> p_273183_) {
-        p_273183_.addActivityWithConditions(
+    private static void initSniffingActivity(Brain<Sniffer> brain) {
+        brain.addActivityWithConditions(
             Activity.SNIFF,
             ImmutableList.of(Pair.of(0, new SnifferAi.Searching())),
             Set.of(
@@ -112,8 +112,8 @@ public class SnifferAi {
         );
     }
 
-    private static void initDigActivity(Brain<Sniffer> p_273677_) {
-        p_273677_.addActivityWithConditions(
+    private static void initDigActivity(Brain<Sniffer> brain) {
+        brain.addActivityWithConditions(
             Activity.DIG,
             ImmutableList.of(Pair.of(0, new SnifferAi.Digging(160, 180)), Pair.of(0, new SnifferAi.FinishedDigging(40))),
             Set.of(
@@ -124,8 +124,8 @@ public class SnifferAi {
         );
     }
 
-    private static void initIdleActivity(Brain<Sniffer> p_273750_) {
-        p_273750_.addActivityWithConditions(
+    private static void initIdleActivity(Brain<Sniffer> brain) {
+        brain.addActivityWithConditions(
             Activity.IDLE,
             ImmutableList.of(
                 Pair.of(0, new AnimalMakeLove(EntityType.SNIFFER) {
@@ -162,12 +162,12 @@ public class SnifferAi {
         );
     }
 
-    static void updateActivity(Sniffer p_273301_) {
-        p_273301_.getBrain().setActiveActivityToFirstValid(ImmutableList.of(Activity.DIG, Activity.SNIFF, Activity.IDLE));
+    static void updateActivity(Sniffer sniffer) {
+        sniffer.getBrain().setActiveActivityToFirstValid(ImmutableList.of(Activity.DIG, Activity.SNIFF, Activity.IDLE));
     }
 
     static class Digging extends Behavior<Sniffer> {
-        Digging(int p_272666_, int p_273420_) {
+        Digging(int minDuration, int maxDuration) {
             super(
                 Map.of(
                     MemoryModuleType.IS_PANICKING,
@@ -179,54 +179,54 @@ public class SnifferAi {
                     MemoryModuleType.SNIFF_COOLDOWN,
                     MemoryStatus.VALUE_ABSENT
                 ),
-                p_272666_,
-                p_273420_
+                minDuration,
+                maxDuration
             );
         }
 
-        protected boolean checkExtraStartConditions(ServerLevel p_273442_, Sniffer p_273370_) {
-            return p_273370_.canSniff();
+        protected boolean checkExtraStartConditions(ServerLevel level, Sniffer owner) {
+            return owner.canSniff();
         }
 
-        protected boolean canStillUse(ServerLevel p_272686_, Sniffer p_273617_, long p_273124_) {
-            return p_273617_.getBrain().getMemory(MemoryModuleType.SNIFFER_DIGGING).isPresent() && p_273617_.canDig() && !p_273617_.isInLove();
+        protected boolean canStillUse(ServerLevel level, Sniffer entity, long gameTime) {
+            return entity.getBrain().getMemory(MemoryModuleType.SNIFFER_DIGGING).isPresent() && entity.canDig() && !entity.isInLove();
         }
 
-        protected void start(ServerLevel p_272951_, Sniffer p_272688_, long p_272979_) {
-            p_272688_.transitionTo(Sniffer.State.DIGGING);
+        protected void start(ServerLevel level, Sniffer entity, long gameTime) {
+            entity.transitionTo(Sniffer.State.DIGGING);
         }
 
-        protected void stop(ServerLevel p_273656_, Sniffer p_273063_, long p_272844_) {
-            boolean flag = this.timedOut(p_272844_);
+        protected void stop(ServerLevel level, Sniffer entity, long gameTime) {
+            boolean flag = this.timedOut(gameTime);
             if (flag) {
-                p_273063_.getBrain().setMemoryWithExpiry(MemoryModuleType.SNIFF_COOLDOWN, Unit.INSTANCE, 9600L);
+                entity.getBrain().setMemoryWithExpiry(MemoryModuleType.SNIFF_COOLDOWN, Unit.INSTANCE, 9600L);
             } else {
-                SnifferAi.resetSniffing(p_273063_);
+                SnifferAi.resetSniffing(entity);
             }
         }
     }
 
     static class FeelingHappy extends Behavior<Sniffer> {
-        FeelingHappy(int p_273286_, int p_272777_) {
-            super(Map.of(MemoryModuleType.SNIFFER_HAPPY, MemoryStatus.VALUE_PRESENT), p_273286_, p_272777_);
+        FeelingHappy(int minDuration, int maxDuration) {
+            super(Map.of(MemoryModuleType.SNIFFER_HAPPY, MemoryStatus.VALUE_PRESENT), minDuration, maxDuration);
         }
 
-        protected boolean canStillUse(ServerLevel p_272660_, Sniffer p_273250_, long p_273180_) {
+        protected boolean canStillUse(ServerLevel level, Sniffer entity, long gameTime) {
             return true;
         }
 
-        protected void start(ServerLevel p_273624_, Sniffer p_273470_, long p_273501_) {
-            p_273470_.transitionTo(Sniffer.State.FEELING_HAPPY);
+        protected void start(ServerLevel level, Sniffer entity, long gameTime) {
+            entity.transitionTo(Sniffer.State.FEELING_HAPPY);
         }
 
-        protected void stop(ServerLevel p_273216_, Sniffer p_273271_, long p_273738_) {
-            p_273271_.transitionTo(Sniffer.State.IDLING);
-            p_273271_.getBrain().eraseMemory(MemoryModuleType.SNIFFER_HAPPY);
+        protected void stop(ServerLevel level, Sniffer entity, long gameTime) {
+            entity.transitionTo(Sniffer.State.IDLING);
+            entity.getBrain().eraseMemory(MemoryModuleType.SNIFFER_HAPPY);
         }
     }
 
     static class FinishedDigging extends Behavior<Sniffer> {
-        FinishedDigging(int p_272941_) {
+        FinishedDigging(int duration) {
             super(
                 Map.of(
                     MemoryModuleType.IS_PANICKING,
@@ -238,33 +238,33 @@ public class SnifferAi {
                     MemoryModuleType.SNIFF_COOLDOWN,
                     MemoryStatus.VALUE_PRESENT
                 ),
-                p_272941_,
-                p_272941_
+                duration,
+                duration
             );
         }
 
-        protected boolean checkExtraStartConditions(ServerLevel p_273692_, Sniffer p_272856_) {
+        protected boolean checkExtraStartConditions(ServerLevel level, Sniffer owner) {
             return true;
         }
 
-        protected boolean canStillUse(ServerLevel p_273775_, Sniffer p_273131_, long p_273569_) {
-            return p_273131_.getBrain().getMemory(MemoryModuleType.SNIFFER_DIGGING).isPresent();
+        protected boolean canStillUse(ServerLevel level, Sniffer entity, long gameTime) {
+            return entity.getBrain().getMemory(MemoryModuleType.SNIFFER_DIGGING).isPresent();
         }
 
-        protected void start(ServerLevel p_272708_, Sniffer p_273502_, long p_272739_) {
-            p_273502_.transitionTo(Sniffer.State.RISING);
+        protected void start(ServerLevel level, Sniffer entity, long gameTime) {
+            entity.transitionTo(Sniffer.State.RISING);
         }
 
-        protected void stop(ServerLevel p_273210_, Sniffer p_273648_, long p_272804_) {
-            boolean flag = this.timedOut(p_272804_);
-            p_273648_.transitionTo(Sniffer.State.IDLING).onDiggingComplete(flag);
-            p_273648_.getBrain().eraseMemory(MemoryModuleType.SNIFFER_DIGGING);
-            p_273648_.getBrain().setMemory(MemoryModuleType.SNIFFER_HAPPY, true);
+        protected void stop(ServerLevel level, Sniffer entity, long gameTime) {
+            boolean flag = this.timedOut(gameTime);
+            entity.transitionTo(Sniffer.State.IDLING).onDiggingComplete(flag);
+            entity.getBrain().eraseMemory(MemoryModuleType.SNIFFER_DIGGING);
+            entity.getBrain().setMemory(MemoryModuleType.SNIFFER_HAPPY, true);
         }
     }
 
     static class Scenting extends Behavior<Sniffer> {
-        Scenting(int p_272680_, int p_273445_) {
+        Scenting(int minDuration, int maxDuration) {
             super(
                 Map.of(
                     MemoryModuleType.IS_PANICKING,
@@ -278,25 +278,25 @@ public class SnifferAi {
                     MemoryModuleType.BREED_TARGET,
                     MemoryStatus.VALUE_ABSENT
                 ),
-                p_272680_,
-                p_273445_
+                minDuration,
+                maxDuration
             );
         }
 
-        protected boolean checkExtraStartConditions(ServerLevel p_279176_, Sniffer p_279496_) {
-            return !p_279496_.isTempted();
+        protected boolean checkExtraStartConditions(ServerLevel level, Sniffer owner) {
+            return !owner.isTempted();
         }
 
-        protected boolean canStillUse(ServerLevel p_273482_, Sniffer p_273724_, long p_273191_) {
+        protected boolean canStillUse(ServerLevel level, Sniffer entity, long gameTime) {
             return true;
         }
 
-        protected void start(ServerLevel p_272795_, Sniffer p_272788_, long p_273611_) {
-            p_272788_.transitionTo(Sniffer.State.SCENTING);
+        protected void start(ServerLevel level, Sniffer entity, long gameTime) {
+            entity.transitionTo(Sniffer.State.SCENTING);
         }
 
-        protected void stop(ServerLevel p_272816_, Sniffer p_273426_, long p_272832_) {
-            p_273426_.transitionTo(Sniffer.State.IDLING);
+        protected void stop(ServerLevel level, Sniffer entity, long gameTime) {
+            entity.transitionTo(Sniffer.State.IDLING);
         }
     }
 
@@ -348,7 +348,7 @@ public class SnifferAi {
     }
 
     static class Sniffing extends Behavior<Sniffer> {
-        Sniffing(int p_272703_, int p_272735_) {
+        Sniffing(int minDuration, int maxDuration) {
             super(
                 Map.of(
                     MemoryModuleType.WALK_TARGET,
@@ -358,30 +358,30 @@ public class SnifferAi {
                     MemoryModuleType.SNIFF_COOLDOWN,
                     MemoryStatus.VALUE_ABSENT
                 ),
-                p_272703_,
-                p_272735_
+                minDuration,
+                maxDuration
             );
         }
 
-        protected boolean checkExtraStartConditions(ServerLevel p_272972_, Sniffer p_273676_) {
-            return !p_273676_.isBaby() && p_273676_.canSniff();
+        protected boolean checkExtraStartConditions(ServerLevel level, Sniffer owner) {
+            return !owner.isBaby() && owner.canSniff();
         }
 
-        protected boolean canStillUse(ServerLevel p_273156_, Sniffer p_273448_, long p_272841_) {
-            return p_273448_.canSniff();
+        protected boolean canStillUse(ServerLevel level, Sniffer entity, long gameTime) {
+            return entity.canSniff();
         }
 
-        protected void start(ServerLevel p_272950_, Sniffer p_272614_, long p_273573_) {
-            p_272614_.transitionTo(Sniffer.State.SNIFFING);
+        protected void start(ServerLevel level, Sniffer entity, long gameTime) {
+            entity.transitionTo(Sniffer.State.SNIFFING);
         }
 
-        protected void stop(ServerLevel p_272617_, Sniffer p_273181_, long p_272635_) {
-            boolean flag = this.timedOut(p_272635_);
-            p_273181_.transitionTo(Sniffer.State.IDLING);
+        protected void stop(ServerLevel level, Sniffer entity, long gameTime) {
+            boolean flag = this.timedOut(gameTime);
+            entity.transitionTo(Sniffer.State.IDLING);
             if (flag) {
-                p_273181_.calculateDigPosition().ifPresent(p_273341_ -> {
-                    p_273181_.getBrain().setMemory(MemoryModuleType.SNIFFER_SNIFFING_TARGET, p_273341_);
-                    p_273181_.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(p_273341_, 1.25F, 0));
+                entity.calculateDigPosition().ifPresent(p_273341_ -> {
+                    entity.getBrain().setMemory(MemoryModuleType.SNIFFER_SNIFFING_TARGET, p_273341_);
+                    entity.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(p_273341_, 1.25F, 0));
                 });
             }
         }

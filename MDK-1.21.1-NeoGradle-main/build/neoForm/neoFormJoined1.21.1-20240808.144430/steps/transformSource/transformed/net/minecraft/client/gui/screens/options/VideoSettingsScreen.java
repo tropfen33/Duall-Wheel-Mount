@@ -32,43 +32,43 @@ public class VideoSettingsScreen extends OptionsSubScreen {
     private final GpuWarnlistManager gpuWarnlistManager;
     private final int oldMipmaps;
 
-    private static OptionInstance<?>[] options(Options p_345645_) {
+    private static OptionInstance<?>[] options(Options options) {
         return new OptionInstance[]{
-            p_345645_.graphicsMode(),
-            p_345645_.renderDistance(),
-            p_345645_.prioritizeChunkUpdates(),
-            p_345645_.simulationDistance(),
-            p_345645_.ambientOcclusion(),
-            p_345645_.framerateLimit(),
-            p_345645_.enableVsync(),
-            p_345645_.bobView(),
-            p_345645_.guiScale(),
-            p_345645_.attackIndicator(),
-            p_345645_.gamma(),
-            p_345645_.cloudStatus(),
-            p_345645_.fullscreen(),
-            p_345645_.particles(),
-            p_345645_.mipmapLevels(),
-            p_345645_.entityShadows(),
-            p_345645_.screenEffectScale(),
-            p_345645_.entityDistanceScaling(),
-            p_345645_.fovEffectScale(),
-            p_345645_.showAutosaveIndicator(),
-            p_345645_.glintSpeed(),
-            p_345645_.glintStrength(),
-            p_345645_.menuBackgroundBlurriness()
+            options.graphicsMode(),
+            options.renderDistance(),
+            options.prioritizeChunkUpdates(),
+            options.simulationDistance(),
+            options.ambientOcclusion(),
+            options.framerateLimit(),
+            options.enableVsync(),
+            options.bobView(),
+            options.guiScale(),
+            options.attackIndicator(),
+            options.gamma(),
+            options.cloudStatus(),
+            options.fullscreen(),
+            options.particles(),
+            options.mipmapLevels(),
+            options.entityShadows(),
+            options.screenEffectScale(),
+            options.entityDistanceScaling(),
+            options.fovEffectScale(),
+            options.showAutosaveIndicator(),
+            options.glintSpeed(),
+            options.glintStrength(),
+            options.menuBackgroundBlurriness()
         };
     }
 
-    public VideoSettingsScreen(Screen p_345053_, Minecraft p_346149_, Options p_346198_) {
-        super(p_345053_, p_346198_, TITLE);
-        this.gpuWarnlistManager = p_346149_.getGpuWarnlistManager();
+    public VideoSettingsScreen(Screen lastScreen, Minecraft minecraft, Options options) {
+        super(lastScreen, options, TITLE);
+        this.gpuWarnlistManager = minecraft.getGpuWarnlistManager();
         this.gpuWarnlistManager.resetWarnings();
-        if (p_346198_.graphicsMode().get() == GraphicsStatus.FABULOUS) {
+        if (options.graphicsMode().get() == GraphicsStatus.FABULOUS) {
             this.gpuWarnlistManager.dismissWarning();
         }
 
-        this.oldMipmaps = p_346198_.mipmapLevels().get();
+        this.oldMipmaps = options.mipmapLevels().get();
     }
 
     @Override
@@ -135,9 +135,18 @@ public class VideoSettingsScreen extends OptionsSubScreen {
         super.removed();
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    public boolean mouseClicked(double p_345069_, double p_346434_, int p_344934_) {
-        if (super.mouseClicked(p_345069_, p_346434_, p_344934_)) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (super.mouseClicked(mouseX, mouseY, button)) {
             if (this.gpuWarnlistManager.isShowingWarning()) {
                 List<Component> list = Lists.newArrayList(WARNING_MESSAGE, CommonComponents.NEW_LINE);
                 String s = this.gpuWarnlistManager.getRendererWarnings();
@@ -181,13 +190,13 @@ public class VideoSettingsScreen extends OptionsSubScreen {
     }
 
     @Override
-    public boolean mouseScrolled(double p_344913_, double p_346159_, double p_345166_, double p_345130_) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (Screen.hasControlDown()) {
             OptionInstance<Integer> optioninstance = this.options.guiScale();
             if (optioninstance.values() instanceof OptionInstance.ClampingLazyMaxIntRange optioninstance$clampinglazymaxintrange) {
                 int k = optioninstance.get();
                 int i = k == 0 ? optioninstance$clampinglazymaxintrange.maxInclusive() + 1 : k;
-                int j = i + (int)Math.signum(p_345130_);
+                int j = i + (int)Math.signum(scrollY);
                 if (j != 0 && j <= optioninstance$clampinglazymaxintrange.maxInclusive() && j >= optioninstance$clampinglazymaxintrange.minInclusive()) {
                     CycleButton<Integer> cyclebutton = (CycleButton<Integer>)this.list.findOption(optioninstance);
                     if (cyclebutton != null) {
@@ -201,7 +210,7 @@ public class VideoSettingsScreen extends OptionsSubScreen {
 
             return false;
         } else {
-            return super.mouseScrolled(p_344913_, p_346159_, p_345166_, p_345130_);
+            return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
         }
     }
 }

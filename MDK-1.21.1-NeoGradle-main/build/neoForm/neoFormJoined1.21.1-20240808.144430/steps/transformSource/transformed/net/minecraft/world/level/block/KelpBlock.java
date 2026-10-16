@@ -32,8 +32,8 @@ public class KelpBlock extends GrowingPlantHeadBlock implements LiquidBlockConta
     }
 
     @Override
-    protected boolean canGrowInto(BlockState p_54321_) {
-        return p_54321_.is(Blocks.WATER);
+    protected boolean canGrowInto(BlockState state) {
+        return state.is(Blocks.WATER);
     }
 
     @Override
@@ -42,34 +42,34 @@ public class KelpBlock extends GrowingPlantHeadBlock implements LiquidBlockConta
     }
 
     @Override
-    protected boolean canAttachTo(BlockState p_153455_) {
-        return !p_153455_.is(Blocks.MAGMA_BLOCK);
+    protected boolean canAttachTo(BlockState state) {
+        return !state.is(Blocks.MAGMA_BLOCK);
     }
 
     @Override
-    public boolean canPlaceLiquid(@Nullable Player p_295152_, BlockGetter p_54304_, BlockPos p_54305_, BlockState p_54306_, Fluid p_54307_) {
+    public boolean canPlaceLiquid(@Nullable Player player, BlockGetter level, BlockPos pos, BlockState state, Fluid fluid) {
         return false;
     }
 
     @Override
-    public boolean placeLiquid(LevelAccessor p_54309_, BlockPos p_54310_, BlockState p_54311_, FluidState p_54312_) {
+    public boolean placeLiquid(LevelAccessor level, BlockPos pos, BlockState state, FluidState fluidState) {
         return false;
     }
 
     @Override
-    protected int getBlocksToGrowWhenBonemealed(RandomSource p_221366_) {
+    protected int getBlocksToGrowWhenBonemealed(RandomSource random) {
         return 1;
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_54302_) {
-        FluidState fluidstate = p_54302_.getLevel().getFluidState(p_54302_.getClickedPos());
-        return fluidstate.is(FluidTags.WATER) && fluidstate.getAmount() == 8 ? super.getStateForPlacement(p_54302_) : null;
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
+        return fluidstate.is(FluidTags.WATER) && fluidstate.getAmount() == 8 ? super.getStateForPlacement(context) : null;
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_54319_) {
+    protected FluidState getFluidState(BlockState state) {
         return Fluids.WATER.getSource(false);
     }
 }

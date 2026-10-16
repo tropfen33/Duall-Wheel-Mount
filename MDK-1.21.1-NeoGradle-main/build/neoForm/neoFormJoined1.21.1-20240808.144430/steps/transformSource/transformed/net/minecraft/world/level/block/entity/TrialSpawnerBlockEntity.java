@@ -24,34 +24,34 @@ public class TrialSpawnerBlockEntity extends BlockEntity implements Spawner, Tri
     private static final Logger LOGGER = LogUtils.getLogger();
     private TrialSpawner trialSpawner;
 
-    public TrialSpawnerBlockEntity(BlockPos p_312399_, BlockState p_312206_) {
-        super(BlockEntityType.TRIAL_SPAWNER, p_312399_, p_312206_);
+    public TrialSpawnerBlockEntity(BlockPos pos, BlockState state) {
+        super(BlockEntityType.TRIAL_SPAWNER, pos, state);
         PlayerDetector playerdetector = PlayerDetector.NO_CREATIVE_PLAYERS;
         PlayerDetector.EntitySelector playerdetector$entityselector = PlayerDetector.EntitySelector.SELECT_FROM_LEVEL;
         this.trialSpawner = new TrialSpawner(this, playerdetector, playerdetector$entityselector);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_338752_, HolderLookup.Provider p_338872_) {
-        super.loadAdditional(p_338752_, p_338872_);
-        if (p_338752_.contains("normal_config")) {
-            CompoundTag compoundtag = p_338752_.getCompound("normal_config").copy();
-            p_338752_.put("ominous_config", compoundtag.merge(p_338752_.getCompound("ominous_config")));
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.contains("normal_config")) {
+            CompoundTag compoundtag = tag.getCompound("normal_config").copy();
+            tag.put("ominous_config", compoundtag.merge(tag.getCompound("ominous_config")));
         }
 
-        this.trialSpawner.codec().parse(NbtOps.INSTANCE, p_338752_).resultOrPartial(LOGGER::error).ifPresent(p_311911_ -> this.trialSpawner = p_311911_);
+        this.trialSpawner.codec().parse(NbtOps.INSTANCE, tag).resultOrPartial(LOGGER::error).ifPresent(p_311911_ -> this.trialSpawner = p_311911_);
         if (this.level != null) {
             this.markUpdated();
         }
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_311806_, HolderLookup.Provider p_324342_) {
-        super.saveAdditional(p_311806_, p_324342_);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
         this.trialSpawner
             .codec()
             .encodeStart(NbtOps.INSTANCE, this.trialSpawner)
-            .ifSuccess(p_312175_ -> p_311806_.merge((CompoundTag)p_312175_))
+            .ifSuccess(p_312175_ -> tag.merge((CompoundTag)p_312175_))
             .ifError(p_338001_ -> LOGGER.warn("Failed to encode TrialSpawner {}", p_338001_.message()));
     }
 
@@ -60,7 +60,7 @@ public class TrialSpawnerBlockEntity extends BlockEntity implements Spawner, Tri
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider p_323524_) {
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         return this.trialSpawner.getData().getUpdateTag(this.getBlockState().getValue(TrialSpawnerBlock.STATE));
     }
 
@@ -70,8 +70,8 @@ public class TrialSpawnerBlockEntity extends BlockEntity implements Spawner, Tri
     }
 
     @Override
-    public void setEntityId(EntityType<?> p_311807_, RandomSource p_311976_) {
-        this.trialSpawner.getData().setEntityId(this.trialSpawner, p_311976_, p_311807_);
+    public void setEntityId(EntityType<?> entityType, RandomSource random) {
+        this.trialSpawner.getData().setEntityId(this.trialSpawner, random, entityType);
         this.setChanged();
     }
 
@@ -87,9 +87,9 @@ public class TrialSpawnerBlockEntity extends BlockEntity implements Spawner, Tri
     }
 
     @Override
-    public void setState(Level p_311786_, TrialSpawnerState p_312721_) {
+    public void setState(Level level, TrialSpawnerState state) {
         this.setChanged();
-        p_311786_.setBlockAndUpdate(this.worldPosition, this.getBlockState().setValue(BlockStateProperties.TRIAL_SPAWNER_STATE, p_312721_));
+        level.setBlockAndUpdate(this.worldPosition, this.getBlockState().setValue(BlockStateProperties.TRIAL_SPAWNER_STATE, state));
     }
 
     @Override

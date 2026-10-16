@@ -41,18 +41,18 @@ public class RecipeManager extends SimpleJsonResourceReloadListener {
     private Map<ResourceLocation, RecipeHolder<?>> byName = ImmutableMap.of();
     private boolean hasErrors;
 
-    public RecipeManager(HolderLookup.Provider p_324137_) {
+    public RecipeManager(HolderLookup.Provider registries) {
         super(GSON, Registries.elementsDirPath(Registries.RECIPE));
-        this.registries = p_324137_;
+        this.registries = registries;
     }
 
-    protected void apply(Map<ResourceLocation, JsonElement> p_44037_, ResourceManager p_44038_, ProfilerFiller p_44039_) {
+    protected void apply(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
         this.hasErrors = false;
         Builder<RecipeType<?>, RecipeHolder<?>> builder = ImmutableMultimap.builder();
         com.google.common.collect.ImmutableMap.Builder<ResourceLocation, RecipeHolder<?>> builder1 = ImmutableMap.builder();
         RegistryOps<JsonElement> registryops = this.makeConditionalOps(); // Neo: add condition context
 
-        for (Entry<ResourceLocation, JsonElement> entry : p_44037_.entrySet()) {
+        for (Entry<ResourceLocation, JsonElement> entry : object.entrySet()) {
             ResourceLocation resourcelocation = entry.getKey();
             if (resourcelocation.getPath().startsWith("_")) continue; //Forge: filter anything beginning with "_" as it's used for metadata.
 
@@ -80,68 +80,68 @@ public class RecipeManager extends SimpleJsonResourceReloadListener {
         return this.hasErrors;
     }
 
-    public <I extends RecipeInput, T extends Recipe<I>> Optional<RecipeHolder<T>> getRecipeFor(RecipeType<T> p_44016_, I p_345492_, Level p_44018_) {
-        return this.getRecipeFor(p_44016_, p_345492_, p_44018_, (RecipeHolder<T>)null);
+    public <I extends RecipeInput, T extends Recipe<I>> Optional<RecipeHolder<T>> getRecipeFor(RecipeType<T> recipeType, I input, Level level) {
+        return this.getRecipeFor(recipeType, input, level, (RecipeHolder<T>)null);
     }
 
     public <I extends RecipeInput, T extends Recipe<I>> Optional<RecipeHolder<T>> getRecipeFor(
-        RecipeType<T> p_345895_, I p_345268_, Level p_346336_, @Nullable ResourceLocation p_346260_
+        RecipeType<T> recipeType, I input, Level level, @Nullable ResourceLocation lastRecipe
     ) {
-        RecipeHolder<T> recipeholder = p_346260_ != null ? this.byKeyTyped(p_345895_, p_346260_) : null;
-        return this.getRecipeFor(p_345895_, p_345268_, p_346336_, recipeholder);
+        RecipeHolder<T> recipeholder = lastRecipe != null ? this.byKeyTyped(recipeType, lastRecipe) : null;
+        return this.getRecipeFor(recipeType, input, level, recipeholder);
     }
 
     public <I extends RecipeInput, T extends Recipe<I>> Optional<RecipeHolder<T>> getRecipeFor(
-        RecipeType<T> p_220249_, I p_345826_, Level p_220251_, @Nullable RecipeHolder<T> p_346407_
+        RecipeType<T> recipeType, I input, Level level, @Nullable RecipeHolder<T> lastRecipe
     ) {
-        if (p_345826_.isEmpty()) {
+        if (input.isEmpty()) {
             return Optional.empty();
         } else {
-            return p_346407_ != null && p_346407_.value().matches(p_345826_, p_220251_)
-                ? Optional.of(p_346407_)
-                : this.byType(p_220249_).stream().filter(p_344413_ -> p_344413_.value().matches(p_345826_, p_220251_)).findFirst();
+            return lastRecipe != null && lastRecipe.value().matches(input, level)
+                ? Optional.of(lastRecipe)
+                : this.byType(recipeType).stream().filter(p_344413_ -> p_344413_.value().matches(input, level)).findFirst();
         }
     }
 
-    public <I extends RecipeInput, T extends Recipe<I>> List<RecipeHolder<T>> getAllRecipesFor(RecipeType<T> p_44014_) {
-        return List.copyOf(this.byType(p_44014_));
+    public <I extends RecipeInput, T extends Recipe<I>> List<RecipeHolder<T>> getAllRecipesFor(RecipeType<T> recipeType) {
+        return List.copyOf(this.byType(recipeType));
     }
 
-    public <I extends RecipeInput, T extends Recipe<I>> List<RecipeHolder<T>> getRecipesFor(RecipeType<T> p_44057_, I p_346353_, Level p_44059_) {
-        return this.byType(p_44057_)
+    public <I extends RecipeInput, T extends Recipe<I>> List<RecipeHolder<T>> getRecipesFor(RecipeType<T> recipeType, I input, Level level) {
+        return this.byType(recipeType)
             .stream()
-            .filter(p_344410_ -> p_344410_.value().matches(p_346353_, p_44059_))
-            .sorted(Comparator.comparing(p_335290_ -> p_335290_.value().getResultItem(p_44059_.registryAccess()).getDescriptionId()))
+            .filter(p_344410_ -> p_344410_.value().matches(input, level))
+            .sorted(Comparator.comparing(p_335290_ -> p_335290_.value().getResultItem(level.registryAccess()).getDescriptionId()))
             .collect(Collectors.toList());
     }
 
-    private <I extends RecipeInput, T extends Recipe<I>> Collection<RecipeHolder<T>> byType(RecipeType<T> p_44055_) {
-        return (Collection<RecipeHolder<T>>)(Collection<?>)this.byType.get(p_44055_);
+    private <I extends RecipeInput, T extends Recipe<I>> Collection<RecipeHolder<T>> byType(RecipeType<T> type) {
+        return (Collection<RecipeHolder<T>>)(Collection<?>)this.byType.get(type);
     }
 
-    public <I extends RecipeInput, T extends Recipe<I>> NonNullList<ItemStack> getRemainingItemsFor(RecipeType<T> p_44070_, I p_345118_, Level p_44072_) {
-        Optional<RecipeHolder<T>> optional = this.getRecipeFor(p_44070_, p_345118_, p_44072_);
+    public <I extends RecipeInput, T extends Recipe<I>> NonNullList<ItemStack> getRemainingItemsFor(RecipeType<T> recipeType, I input, Level lvel) {
+        Optional<RecipeHolder<T>> optional = this.getRecipeFor(recipeType, input, lvel);
         if (optional.isPresent()) {
-            return optional.get().value().getRemainingItems(p_345118_);
+            return optional.get().value().getRemainingItems(input);
         } else {
-            NonNullList<ItemStack> nonnulllist = NonNullList.withSize(p_345118_.size(), ItemStack.EMPTY);
+            NonNullList<ItemStack> nonnulllist = NonNullList.withSize(input.size(), ItemStack.EMPTY);
 
             for (int i = 0; i < nonnulllist.size(); i++) {
-                nonnulllist.set(i, p_345118_.getItem(i));
+                nonnulllist.set(i, input.getItem(i));
             }
 
             return nonnulllist;
         }
     }
 
-    public Optional<RecipeHolder<?>> byKey(ResourceLocation p_44044_) {
-        return Optional.ofNullable(this.byName.get(p_44044_));
+    public Optional<RecipeHolder<?>> byKey(ResourceLocation recipeId) {
+        return Optional.ofNullable(this.byName.get(recipeId));
     }
 
     @Nullable
-    private <T extends Recipe<?>> RecipeHolder<T> byKeyTyped(RecipeType<T> p_341695_, ResourceLocation p_341666_) {
-        RecipeHolder<?> recipeholder = this.byName.get(p_341666_);
-        return (RecipeHolder<T>)(recipeholder != null && recipeholder.value().getType().equals(p_341695_) ? recipeholder : null);
+    private <T extends Recipe<?>> RecipeHolder<T> byKeyTyped(RecipeType<T> type, ResourceLocation name) {
+        RecipeHolder<?> recipeholder = this.byName.get(name);
+        return (RecipeHolder<T>)(recipeholder != null && recipeholder.value().getType().equals(type) ? recipeholder : null);
     }
 
     public Collection<RecipeHolder<?>> getOrderedRecipes() {
@@ -157,17 +157,17 @@ public class RecipeManager extends SimpleJsonResourceReloadListener {
     }
 
     @VisibleForTesting
-    protected static RecipeHolder<?> fromJson(ResourceLocation p_44046_, JsonObject p_44047_, HolderLookup.Provider p_323755_) {
-        Recipe<?> recipe = Recipe.CODEC.parse(p_323755_.createSerializationContext(JsonOps.INSTANCE), p_44047_).getOrThrow(JsonParseException::new);
-        return new RecipeHolder<>(p_44046_, recipe);
+    protected static RecipeHolder<?> fromJson(ResourceLocation recipeId, JsonObject json, HolderLookup.Provider registries) {
+        Recipe<?> recipe = Recipe.CODEC.parse(registries.createSerializationContext(JsonOps.INSTANCE), json).getOrThrow(JsonParseException::new);
+        return new RecipeHolder<>(recipeId, recipe);
     }
 
-    public void replaceRecipes(Iterable<RecipeHolder<?>> p_44025_) {
+    public void replaceRecipes(Iterable<RecipeHolder<?>> recipes) {
         this.hasErrors = false;
         Builder<RecipeType<?>, RecipeHolder<?>> builder = ImmutableMultimap.builder();
         com.google.common.collect.ImmutableMap.Builder<ResourceLocation, RecipeHolder<?>> builder1 = ImmutableMap.builder();
 
-        for (RecipeHolder<?> recipeholder : p_44025_) {
+        for (RecipeHolder<?> recipeholder : recipes) {
             RecipeType<?> recipetype = recipeholder.value().getType();
             builder.put(recipetype, recipeholder);
             builder1.put(recipeholder.id(), recipeholder);
@@ -177,7 +177,7 @@ public class RecipeManager extends SimpleJsonResourceReloadListener {
         this.byName = builder1.build();
     }
 
-    public static <I extends RecipeInput, T extends Recipe<I>> RecipeManager.CachedCheck<I, T> createCheck(final RecipeType<T> p_220268_) {
+    public static <I extends RecipeInput, T extends Recipe<I>> RecipeManager.CachedCheck<I, T> createCheck(final RecipeType<T> recipeType) {
         return new RecipeManager.CachedCheck<I, T>() {
             @Nullable
             private ResourceLocation lastRecipe;
@@ -185,7 +185,7 @@ public class RecipeManager extends SimpleJsonResourceReloadListener {
             @Override
             public Optional<RecipeHolder<T>> getRecipeFor(I p_344742_, Level p_220279_) {
                 RecipeManager recipemanager = p_220279_.getRecipeManager();
-                Optional<RecipeHolder<T>> optional = recipemanager.getRecipeFor(p_220268_, p_344742_, p_220279_, this.lastRecipe);
+                Optional<RecipeHolder<T>> optional = recipemanager.getRecipeFor(recipeType, p_344742_, p_220279_, this.lastRecipe);
                 if (optional.isPresent()) {
                     RecipeHolder<T> recipeholder = optional.get();
                     this.lastRecipe = recipeholder.id();
@@ -198,6 +198,6 @@ public class RecipeManager extends SimpleJsonResourceReloadListener {
     }
 
     public interface CachedCheck<I extends RecipeInput, T extends Recipe<I>> {
-        Optional<RecipeHolder<T>> getRecipeFor(I p_344938_, Level p_220281_);
+        Optional<RecipeHolder<T>> getRecipeFor(I input, Level level);
     }
 }

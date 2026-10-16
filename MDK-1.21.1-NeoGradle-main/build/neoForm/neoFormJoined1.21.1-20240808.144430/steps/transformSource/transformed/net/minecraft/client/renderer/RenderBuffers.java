@@ -16,8 +16,8 @@ public class RenderBuffers {
     private final MultiBufferSource.BufferSource crumblingBufferSource;
     private final OutlineBufferSource outlineBufferSource;
 
-    public RenderBuffers(int p_307464_) {
-        this.sectionBufferPool = SectionBufferBuilderPool.allocate(p_307464_);
+    public RenderBuffers(int bufferCount) {
+        this.sectionBufferPool = SectionBufferBuilderPool.allocate(bufferCount);
         SequencedMap<RenderType, ByteBufferBuilder> sequencedmap = Util.make(new Object2ObjectLinkedOpenHashMap<>(), p_349871_ -> {
             p_349871_.put(Sheets.solidBlockSheet(), this.fixedBufferPack.buffer(RenderType.solid()));
             p_349871_.put(Sheets.cutoutBlockSheet(), this.fixedBufferPack.buffer(RenderType.cutout()));
@@ -43,8 +43,8 @@ public class RenderBuffers {
         this.outlineBufferSource = new OutlineBufferSource(this.bufferSource);
     }
 
-    private static void put(Object2ObjectLinkedOpenHashMap<RenderType, ByteBufferBuilder> p_110102_, RenderType p_110103_) {
-        p_110102_.put(p_110103_, new ByteBufferBuilder(p_110103_.bufferSize()));
+    private static void put(Object2ObjectLinkedOpenHashMap<RenderType, ByteBufferBuilder> mapBuilders, RenderType renderType) {
+        mapBuilders.put(renderType, new ByteBufferBuilder(renderType.bufferSize()));
     }
 
     public SectionBufferBuilderPack fixedBufferPack() {

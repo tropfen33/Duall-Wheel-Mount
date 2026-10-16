@@ -11,10 +11,10 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class SuspendedParticle extends TextureSheetParticle {
-    protected SuspendedParticle(ClientLevel p_172403_, SpriteSet p_172404_, double p_172405_, double p_172406_, double p_172407_) {
-        super(p_172403_, p_172405_, p_172406_ - 0.125, p_172407_);
+    protected SuspendedParticle(ClientLevel level, SpriteSet sprites, double x, double y, double z) {
+        super(level, x, y - 0.125, z);
         this.setSize(0.01F, 0.01F);
-        this.pickSprite(p_172404_);
+        this.pickSprite(sprites);
         this.quadSize = this.quadSize * (this.random.nextFloat() * 0.6F + 0.2F);
         this.lifetime = (int)(16.0 / (Math.random() * 0.8 + 0.2));
         this.hasPhysics = false;
@@ -23,11 +23,11 @@ public class SuspendedParticle extends TextureSheetParticle {
     }
 
     SuspendedParticle(
-        ClientLevel p_172409_, SpriteSet p_172410_, double p_172411_, double p_172412_, double p_172413_, double p_172414_, double p_172415_, double p_172416_
+        ClientLevel level, SpriteSet sprites, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed
     ) {
-        super(p_172409_, p_172411_, p_172412_ - 0.125, p_172413_, p_172414_, p_172415_, p_172416_);
+        super(level, x, y - 0.125, z, xSpeed, ySpeed, zSpeed);
         this.setSize(0.01F, 0.01F);
-        this.pickSprite(p_172410_);
+        this.pickSprite(sprites);
         this.quadSize = this.quadSize * (this.random.nextFloat() * 0.6F + 0.6F);
         this.lifetime = (int)(16.0 / (Math.random() * 0.8 + 0.2));
         this.hasPhysics = false;
@@ -44,25 +44,25 @@ public class SuspendedParticle extends TextureSheetParticle {
     public static class CrimsonSporeProvider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprite;
 
-        public CrimsonSporeProvider(SpriteSet p_108042_) {
-            this.sprite = p_108042_;
+        public CrimsonSporeProvider(SpriteSet sprites) {
+            this.sprite = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_108053_,
-            ClientLevel p_108054_,
-            double p_108055_,
-            double p_108056_,
-            double p_108057_,
-            double p_108058_,
-            double p_108059_,
-            double p_108060_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            RandomSource randomsource = p_108054_.random;
+            RandomSource randomsource = level.random;
             double d0 = randomsource.nextGaussian() * 1.0E-6F;
             double d1 = randomsource.nextGaussian() * 1.0E-4F;
             double d2 = randomsource.nextGaussian() * 1.0E-6F;
-            SuspendedParticle suspendedparticle = new SuspendedParticle(p_108054_, this.sprite, p_108055_, p_108056_, p_108057_, d0, d1, d2);
+            SuspendedParticle suspendedparticle = new SuspendedParticle(level, this.sprite, x, y, z, d0, d1, d2);
             suspendedparticle.setColor(0.9F, 0.4F, 0.5F);
             return suspendedparticle;
         }
@@ -72,27 +72,27 @@ public class SuspendedParticle extends TextureSheetParticle {
     public static class SporeBlossomAirProvider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprite;
 
-        public SporeBlossomAirProvider(SpriteSet p_172419_) {
-            this.sprite = p_172419_;
+        public SporeBlossomAirProvider(SpriteSet sprites) {
+            this.sprite = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_172430_,
-            ClientLevel p_172431_,
-            double p_172432_,
-            double p_172433_,
-            double p_172434_,
-            double p_172435_,
-            double p_172436_,
-            double p_172437_
+            SimpleParticleType type,
+            ClientLevel p_level,
+            double p_x,
+            double p_y,
+            double p_z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            SuspendedParticle suspendedparticle = new SuspendedParticle(p_172431_, this.sprite, p_172432_, p_172433_, p_172434_, 0.0, -0.8F, 0.0) {
+            SuspendedParticle suspendedparticle = new SuspendedParticle(p_level, this.sprite, p_x, p_y, p_z, 0.0, -0.8F, 0.0) {
                 @Override
                 public Optional<ParticleGroup> getParticleGroup() {
                     return Optional.of(ParticleGroup.SPORE_BLOSSOM);
                 }
             };
-            suspendedparticle.lifetime = Mth.randomBetweenInclusive(p_172431_.random, 500, 1000);
+            suspendedparticle.lifetime = Mth.randomBetweenInclusive(p_level.random, 500, 1000);
             suspendedparticle.gravity = 0.01F;
             suspendedparticle.setColor(0.32F, 0.5F, 0.22F);
             return suspendedparticle;
@@ -103,21 +103,21 @@ public class SuspendedParticle extends TextureSheetParticle {
     public static class UnderwaterProvider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprite;
 
-        public UnderwaterProvider(SpriteSet p_108063_) {
-            this.sprite = p_108063_;
+        public UnderwaterProvider(SpriteSet sprites) {
+            this.sprite = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_108074_,
-            ClientLevel p_108075_,
-            double p_108076_,
-            double p_108077_,
-            double p_108078_,
-            double p_108079_,
-            double p_108080_,
-            double p_108081_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            SuspendedParticle suspendedparticle = new SuspendedParticle(p_108075_, this.sprite, p_108076_, p_108077_, p_108078_);
+            SuspendedParticle suspendedparticle = new SuspendedParticle(level, this.sprite, x, y, z);
             suspendedparticle.setColor(0.4F, 0.4F, 0.7F);
             return suspendedparticle;
         }
@@ -127,22 +127,22 @@ public class SuspendedParticle extends TextureSheetParticle {
     public static class WarpedSporeProvider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprite;
 
-        public WarpedSporeProvider(SpriteSet p_108084_) {
-            this.sprite = p_108084_;
+        public WarpedSporeProvider(SpriteSet sprites) {
+            this.sprite = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_108095_,
-            ClientLevel p_108096_,
-            double p_108097_,
-            double p_108098_,
-            double p_108099_,
-            double p_108100_,
-            double p_108101_,
-            double p_108102_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            double d0 = (double)p_108096_.random.nextFloat() * -1.9 * (double)p_108096_.random.nextFloat() * 0.1;
-            SuspendedParticle suspendedparticle = new SuspendedParticle(p_108096_, this.sprite, p_108097_, p_108098_, p_108099_, 0.0, d0, 0.0);
+            double d0 = (double)level.random.nextFloat() * -1.9 * (double)level.random.nextFloat() * 0.1;
+            SuspendedParticle suspendedparticle = new SuspendedParticle(level, this.sprite, x, y, z, 0.0, d0, 0.0);
             suspendedparticle.setColor(0.1F, 0.1F, 0.3F);
             suspendedparticle.setSize(0.001F, 0.001F);
             return suspendedparticle;

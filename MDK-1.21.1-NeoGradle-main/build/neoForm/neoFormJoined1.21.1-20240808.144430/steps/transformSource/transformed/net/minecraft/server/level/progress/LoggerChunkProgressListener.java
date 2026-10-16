@@ -16,16 +16,16 @@ public class LoggerChunkProgressListener implements ChunkProgressListener {
     private long startTime;
     private long nextTickTime = Long.MAX_VALUE;
 
-    private LoggerChunkProgressListener(int p_9629_) {
-        this.maxCount = p_9629_;
+    private LoggerChunkProgressListener(int maxCount) {
+        this.maxCount = maxCount;
     }
 
-    public static LoggerChunkProgressListener createFromGameruleRadius(int p_319913_) {
-        return p_319913_ > 0 ? create(p_319913_ + 1) : createCompleted();
+    public static LoggerChunkProgressListener createFromGameruleRadius(int radius) {
+        return radius > 0 ? create(radius + 1) : createCompleted();
     }
 
-    public static LoggerChunkProgressListener create(int p_320293_) {
-        int i = ChunkProgressListener.calculateDiameter(p_320293_);
+    public static LoggerChunkProgressListener create(int radius) {
+        int i = ChunkProgressListener.calculateDiameter(radius);
         return new LoggerChunkProgressListener(i * i);
     }
 
@@ -34,14 +34,14 @@ public class LoggerChunkProgressListener implements ChunkProgressListener {
     }
 
     @Override
-    public void updateSpawnPos(ChunkPos p_9631_) {
+    public void updateSpawnPos(ChunkPos center) {
         this.nextTickTime = Util.getMillis();
         this.startTime = this.nextTickTime;
     }
 
     @Override
-    public void onStatusChange(ChunkPos p_9633_, @Nullable ChunkStatus p_332174_) {
-        if (p_332174_ == ChunkStatus.FULL) {
+    public void onStatusChange(ChunkPos chunkPos, @Nullable ChunkStatus chunkStatus) {
+        if (chunkStatus == ChunkStatus.FULL) {
             this.count++;
         }
 

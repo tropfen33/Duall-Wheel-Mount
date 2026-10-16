@@ -21,18 +21,18 @@ public interface ProtocolInfo<T extends PacketListener> {
     BundlerInfo bundlerInfo();
 
     public interface Unbound<T extends PacketListener, B extends ByteBuf> {
-        ProtocolInfo<T> bind(Function<ByteBuf, B> p_319787_);
+        ProtocolInfo<T> bind(Function<ByteBuf, B> bufferFactory);
 
         ConnectionProtocol id();
 
         PacketFlow flow();
 
         @VisibleForDebug
-        void listPackets(ProtocolInfo.Unbound.PacketVisitor p_352215_);
+        void listPackets(ProtocolInfo.Unbound.PacketVisitor visitor);
 
         @FunctionalInterface
         public interface PacketVisitor {
-            void accept(PacketType<?> p_352070_, int p_352333_);
+            void accept(PacketType<?> packetType, int index);
         }
     }
 }

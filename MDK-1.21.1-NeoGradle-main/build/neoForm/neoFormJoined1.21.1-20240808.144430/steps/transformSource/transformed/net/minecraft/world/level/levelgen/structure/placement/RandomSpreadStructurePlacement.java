@@ -31,28 +31,28 @@ public class RandomSpreadStructurePlacement extends StructurePlacement {
     private final int separation;
     private final RandomSpreadType spreadType;
 
-    private static DataResult<RandomSpreadStructurePlacement> validate(RandomSpreadStructurePlacement p_286361_) {
-        return p_286361_.spacing <= p_286361_.separation ? DataResult.error(() -> "Spacing has to be larger than separation") : DataResult.success(p_286361_);
+    private static DataResult<RandomSpreadStructurePlacement> validate(RandomSpreadStructurePlacement placement) {
+        return placement.spacing <= placement.separation ? DataResult.error(() -> "Spacing has to be larger than separation") : DataResult.success(placement);
     }
 
     public RandomSpreadStructurePlacement(
-        Vec3i p_227000_,
-        StructurePlacement.FrequencyReductionMethod p_227001_,
-        float p_227002_,
-        int p_227003_,
-        Optional<StructurePlacement.ExclusionZone> p_227004_,
-        int p_227005_,
-        int p_227006_,
-        RandomSpreadType p_227007_
+        Vec3i locateOffset,
+        StructurePlacement.FrequencyReductionMethod frequencyReductionMethod,
+        float frequency,
+        int salt,
+        Optional<StructurePlacement.ExclusionZone> exclusionZone,
+        int spacing,
+        int separation,
+        RandomSpreadType spreadType
     ) {
-        super(p_227000_, p_227001_, p_227002_, p_227003_, p_227004_);
-        this.spacing = p_227005_;
-        this.separation = p_227006_;
-        this.spreadType = p_227007_;
+        super(locateOffset, frequencyReductionMethod, frequency, salt, exclusionZone);
+        this.spacing = spacing;
+        this.separation = separation;
+        this.spreadType = spreadType;
     }
 
-    public RandomSpreadStructurePlacement(int p_204980_, int p_204981_, RandomSpreadType p_204982_, int p_204983_) {
-        this(Vec3i.ZERO, StructurePlacement.FrequencyReductionMethod.DEFAULT, 1.0F, p_204983_, Optional.empty(), p_204980_, p_204981_, p_204982_);
+    public RandomSpreadStructurePlacement(int spacing, int separation, RandomSpreadType spreadType, int salt) {
+        this(Vec3i.ZERO, StructurePlacement.FrequencyReductionMethod.DEFAULT, 1.0F, salt, Optional.empty(), spacing, separation, spreadType);
     }
 
     public int spacing() {
@@ -67,11 +67,11 @@ public class RandomSpreadStructurePlacement extends StructurePlacement {
         return this.spreadType;
     }
 
-    public ChunkPos getPotentialStructureChunk(long p_227009_, int p_227010_, int p_227011_) {
-        int i = Math.floorDiv(p_227010_, this.spacing);
-        int j = Math.floorDiv(p_227011_, this.spacing);
+    public ChunkPos getPotentialStructureChunk(long seed, int regionX, int regionZ) {
+        int i = Math.floorDiv(regionX, this.spacing);
+        int j = Math.floorDiv(regionZ, this.spacing);
         WorldgenRandom worldgenrandom = new WorldgenRandom(new LegacyRandomSource(0L));
-        worldgenrandom.setLargeFeatureWithSalt(p_227009_, i, j, this.salt());
+        worldgenrandom.setLargeFeatureWithSalt(seed, i, j, this.salt());
         int k = this.spacing - this.separation;
         int l = this.spreadType.evaluate(worldgenrandom, k);
         int i1 = this.spreadType.evaluate(worldgenrandom, k);
@@ -79,9 +79,9 @@ public class RandomSpreadStructurePlacement extends StructurePlacement {
     }
 
     @Override
-    protected boolean isPlacementChunk(ChunkGeneratorStructureState p_256267_, int p_256050_, int p_255975_) {
-        ChunkPos chunkpos = this.getPotentialStructureChunk(p_256267_.getLevelSeed(), p_256050_, p_255975_);
-        return chunkpos.x == p_256050_ && chunkpos.z == p_255975_;
+    protected boolean isPlacementChunk(ChunkGeneratorStructureState structureState, int x, int z) {
+        ChunkPos chunkpos = this.getPotentialStructureChunk(structureState.getLevelSeed(), x, z);
+        return chunkpos.x == x && chunkpos.z == z;
     }
 
     @Override

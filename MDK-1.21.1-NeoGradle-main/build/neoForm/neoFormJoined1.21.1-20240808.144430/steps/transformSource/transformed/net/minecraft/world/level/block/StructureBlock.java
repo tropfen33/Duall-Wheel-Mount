@@ -28,57 +28,63 @@ public class StructureBlock extends BaseEntityBlock implements GameMasterBlock {
         return CODEC;
     }
 
-    public StructureBlock(BlockBehaviour.Properties p_57113_) {
-        super(p_57113_);
+    public StructureBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(MODE, StructureMode.LOAD));
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_154732_, BlockState p_154733_) {
-        return new StructureBlockEntity(p_154732_, p_154733_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new StructureBlockEntity(pos, state);
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_57128_, Level p_57129_, BlockPos p_57130_, Player p_57131_, BlockHitResult p_57133_) {
-        BlockEntity blockentity = p_57129_.getBlockEntity(p_57130_);
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        BlockEntity blockentity = level.getBlockEntity(pos);
         if (blockentity instanceof StructureBlockEntity) {
-            return ((StructureBlockEntity)blockentity).usedBy(p_57131_) ? InteractionResult.sidedSuccess(p_57129_.isClientSide) : InteractionResult.PASS;
+            return ((StructureBlockEntity)blockentity).usedBy(player) ? InteractionResult.sidedSuccess(level.isClientSide) : InteractionResult.PASS;
         } else {
             return InteractionResult.PASS;
         }
     }
 
+    /**
+     * Called by BlockItem after this block has been placed.
+     */
     @Override
-    public void setPlacedBy(Level p_57122_, BlockPos p_57123_, BlockState p_57124_, @Nullable LivingEntity p_57125_, ItemStack p_57126_) {
-        if (!p_57122_.isClientSide) {
-            if (p_57125_ != null) {
-                BlockEntity blockentity = p_57122_.getBlockEntity(p_57123_);
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        if (!level.isClientSide) {
+            if (placer != null) {
+                BlockEntity blockentity = level.getBlockEntity(pos);
                 if (blockentity instanceof StructureBlockEntity) {
-                    ((StructureBlockEntity)blockentity).createdBy(p_57125_);
+                    ((StructureBlockEntity)blockentity).createdBy(placer);
                 }
             }
         }
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_57144_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_57142_) {
-        p_57142_.add(MODE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(MODE);
     }
 
     @Override
-    protected void neighborChanged(BlockState p_57135_, Level p_57136_, BlockPos p_57137_, Block p_57138_, BlockPos p_57139_, boolean p_57140_) {
-        if (p_57136_ instanceof ServerLevel) {
-            if (p_57136_.getBlockEntity(p_57137_) instanceof StructureBlockEntity structureblockentity) {
-                boolean flag = p_57136_.hasNeighborSignal(p_57137_);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (level instanceof ServerLevel) {
+            if (level.getBlockEntity(pos) instanceof StructureBlockEntity structureblockentity) {
+                boolean flag = level.hasNeighborSignal(pos);
                 boolean flag1 = structureblockentity.isPowered();
                 if (flag && !flag1) {
                     structureblockentity.setPowered(true);
-                    this.trigger((ServerLevel)p_57136_, structureblockentity);
+                    this.trigger((ServerLevel)level, structureblockentity);
                 } else if (!flag && flag1) {
                     structureblockentity.setPowered(false);
                 }
@@ -86,16 +92,16 @@ public class StructureBlock extends BaseEntityBlock implements GameMasterBlock {
         }
     }
 
-    private void trigger(ServerLevel p_57115_, StructureBlockEntity p_57116_) {
-        switch (p_57116_.getMode()) {
+    private void trigger(ServerLevel level, StructureBlockEntity blockEntity) {
+        switch (blockEntity.getMode()) {
             case SAVE:
-                p_57116_.saveStructure(false);
+                blockEntity.saveStructure(false);
                 break;
             case LOAD:
-                p_57116_.placeStructure(p_57115_);
+                blockEntity.placeStructure(level);
                 break;
             case CORNER:
-                p_57116_.unloadStructure();
+                blockEntity.unloadStructure();
             case DATA:
         }
     }

@@ -5,19 +5,37 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 
+/**
+ * Contains all entity attributes defined and registered by the vanilla game.
+ */
 public class Attributes {
+    /**
+     * Handles the armor points for an entity. Each point represents half a chestplate of armor on the armor bar.
+     */
     public static final Holder<Attribute> ARMOR = register(
         "generic.armor", new RangedAttribute("attribute.name.generic.armor", 0.0, 0.0, 30.0).setSyncable(true)
     );
+    /**
+     * Handles the amount of damage mitigated by wearing armor.
+     */
     public static final Holder<Attribute> ARMOR_TOUGHNESS = register(
         "generic.armor_toughness", new RangedAttribute("attribute.name.generic.armor_toughness", 0.0, 0.0, 20.0).setSyncable(true)
     );
+    /**
+     * Handles the attack damage inflicted by entities. The value of this attribute represents half hearts.
+     */
     public static final Holder<Attribute> ATTACK_DAMAGE = register(
         "generic.attack_damage", new RangedAttribute("attribute.name.generic.attack_damage", 2.0, 0.0, 2048.0)
     );
+    /**
+     * Handles additional horizontal knockback when damaging another entity.
+     */
     public static final Holder<Attribute> ATTACK_KNOCKBACK = register(
         "generic.attack_knockback", new RangedAttribute("attribute.name.generic.attack_knockback", 0.0, 0.0, 5.0)
     );
+    /**
+     * Handles the cooldown rate when attacking with an item. The value represents the number of full strength attacks that can be performed per second.
+     */
     public static final Holder<Attribute> ATTACK_SPEED = register(
         "generic.attack_speed", new RangedAttribute("attribute.name.generic.attack_speed", 4.0, 0.0, 1024.0).setSyncable(true)
     );
@@ -41,28 +59,46 @@ public class Attributes {
         "generic.fall_damage_multiplier",
         new RangedAttribute("attribute.name.generic.fall_damage_multiplier", 1.0, 0.0, 100.0).setSyncable(true).setSentiment(Attribute.Sentiment.NEGATIVE)
     );
+    /**
+     * Handles the movement speed of flying entities such as parrots and bees.
+     */
     public static final Holder<Attribute> FLYING_SPEED = register(
         "generic.flying_speed", new RangedAttribute("attribute.name.generic.flying_speed", 0.4, 0.0, 1024.0).setSyncable(true)
     );
+    /**
+     * Handles the range in blocks that a mob will notice and track players and other potential targets.
+     */
     public static final Holder<Attribute> FOLLOW_RANGE = register(
         "generic.follow_range", new RangedAttribute("attribute.name.generic.follow_range", 32.0, 0.0, 2048.0)
     );
     public static final Holder<Attribute> GRAVITY = register(
         "generic.gravity", new RangedAttribute("attribute.name.generic.gravity", 0.08, -1.0, 1.0).setSyncable(true).setSentiment(Attribute.Sentiment.NEUTRAL)
     );
+    /**
+     * Handles the jump strength for horses.
+     */
     public static final Holder<Attribute> JUMP_STRENGTH = register(
         "generic.jump_strength", new RangedAttribute("attribute.name.generic.jump_strength", 0.42F, 0.0, 32.0).setSyncable(true)
     );
+    /**
+     * Handles the reduction of horizontal knockback when damaged by attacks or projectiles.
+     */
     public static final Holder<Attribute> KNOCKBACK_RESISTANCE = register(
         // Neo: Convert Knockback Resistance to percent-based for more appropriate display using IAttributeExtension.
         "generic.knockback_resistance", new net.neoforged.neoforge.common.PercentageAttribute("attribute.name.generic.knockback_resistance", 0.0, 0.0, 1.0)
     );
+    /**
+     * Handles luck when a player generates loot from a loot table. This can impact the quality of loot and influence bonus rolls.
+     */
     public static final Holder<Attribute> LUCK = register(
         "generic.luck", new RangedAttribute("attribute.name.generic.luck", 0.0, -1024.0, 1024.0).setSyncable(true)
     );
     public static final Holder<Attribute> MAX_ABSORPTION = register(
         "generic.max_absorption", new RangedAttribute("attribute.name.generic.max_absorption", 0.0, 0.0, 2048.0).setSyncable(true)
     );
+    /**
+     * Handles the maximum health of an entity.
+     */
     public static final Holder<Attribute> MAX_HEALTH = register(
         "generic.max_health", new RangedAttribute("attribute.name.generic.max_health", 20.0, 1.0, 1024.0).setSyncable(true)
     );
@@ -72,6 +108,9 @@ public class Attributes {
     public static final Holder<Attribute> MOVEMENT_EFFICIENCY = register(
         "generic.movement_efficiency", new RangedAttribute("attribute.name.generic.movement_efficiency", 0.0, 0.0, 1.0).setSyncable(true)
     );
+    /**
+     * Handles the movement speed of entities.
+     */
     public static final Holder<Attribute> MOVEMENT_SPEED = register(
         // Neo: Convert Movement Speed to percent-based for more appropriate display using IAttributeExtension. Use a scale factor of 1000 since movement speed has 0.001 units.
         "generic.movement_speed", new net.neoforged.neoforge.common.PercentageAttribute("attribute.name.generic.movement_speed", 0.7, 0.0, 1024.0, 1000).setSyncable(true)
@@ -88,6 +127,9 @@ public class Attributes {
     public static final Holder<Attribute> SNEAKING_SPEED = register(
         "player.sneaking_speed", new RangedAttribute("attribute.name.player.sneaking_speed", 0.3, 0.0, 1.0).setSyncable(true)
     );
+    /**
+     * Handles the chance for a zombie to summon reinforcements when attacked.
+     */
     public static final Holder<Attribute> SPAWN_REINFORCEMENTS_CHANCE = register(
         "zombie.spawn_reinforcements", new RangedAttribute("attribute.name.zombie.spawn_reinforcements", 0.0, 0.0, 1.0)
     );
@@ -104,11 +146,11 @@ public class Attributes {
         "generic.water_movement_efficiency", new RangedAttribute("attribute.name.generic.water_movement_efficiency", 0.0, 0.0, 1.0).setSyncable(true)
     );
 
-    private static Holder<Attribute> register(String p_22291_, Attribute p_22292_) {
-        return Registry.registerForHolder(BuiltInRegistries.ATTRIBUTE, ResourceLocation.withDefaultNamespace(p_22291_), p_22292_);
+    private static Holder<Attribute> register(String name, Attribute attribute) {
+        return Registry.registerForHolder(BuiltInRegistries.ATTRIBUTE, ResourceLocation.withDefaultNamespace(name), attribute);
     }
 
-    public static Holder<Attribute> bootstrap(Registry<Attribute> p_316718_) {
+    public static Holder<Attribute> bootstrap(Registry<Attribute> registry) {
         return MAX_HEALTH;
     }
 }

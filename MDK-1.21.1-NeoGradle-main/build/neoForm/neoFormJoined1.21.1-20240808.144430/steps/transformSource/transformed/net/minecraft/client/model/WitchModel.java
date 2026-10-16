@@ -16,8 +16,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class WitchModel<T extends Entity> extends VillagerModel<T> {
     private boolean holdingItem;
 
-    public WitchModel(ModelPart p_171055_) {
-        super(p_171055_);
+    public WitchModel(ModelPart root) {
+        super(root);
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -53,14 +53,17 @@ public class WitchModel<T extends Entity> extends VillagerModel<T> {
         return LayerDefinition.create(meshdefinition, 64, 128);
     }
 
+    /**
+     * Sets this entity's model rotation angles
+     */
     @Override
-    public void setupAnim(T p_104067_, float p_104068_, float p_104069_, float p_104070_, float p_104071_, float p_104072_) {
-        super.setupAnim(p_104067_, p_104068_, p_104069_, p_104070_, p_104071_, p_104072_);
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
         this.nose.setPos(0.0F, -2.0F, 0.0F);
-        float f = 0.01F * (float)(p_104067_.getId() % 10);
-        this.nose.xRot = Mth.sin((float)p_104067_.tickCount * f) * 4.5F * (float) (Math.PI / 180.0);
+        float f = 0.01F * (float)(entity.getId() % 10);
+        this.nose.xRot = Mth.sin((float)entity.tickCount * f) * 4.5F * (float) (Math.PI / 180.0);
         this.nose.yRot = 0.0F;
-        this.nose.zRot = Mth.cos((float)p_104067_.tickCount * f) * 2.5F * (float) (Math.PI / 180.0);
+        this.nose.zRot = Mth.cos((float)entity.tickCount * f) * 2.5F * (float) (Math.PI / 180.0);
         if (this.holdingItem) {
             this.nose.setPos(0.0F, 1.0F, -1.5F);
             this.nose.xRot = -0.9F;
@@ -71,7 +74,7 @@ public class WitchModel<T extends Entity> extends VillagerModel<T> {
         return this.nose;
     }
 
-    public void setHoldingItem(boolean p_104075_) {
-        this.holdingItem = p_104075_;
+    public void setHoldingItem(boolean holdingItem) {
+        this.holdingItem = holdingItem;
     }
 }

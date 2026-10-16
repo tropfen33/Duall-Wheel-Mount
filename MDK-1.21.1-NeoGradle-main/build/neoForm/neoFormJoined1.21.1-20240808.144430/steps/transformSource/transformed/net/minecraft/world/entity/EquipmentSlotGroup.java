@@ -28,18 +28,18 @@ public enum EquipmentSlotGroup implements StringRepresentable {
     private final String key;
     private final Predicate<EquipmentSlot> predicate;
 
-    private EquipmentSlotGroup(int p_331154_, String p_330415_, Predicate<EquipmentSlot> p_330269_) {
-        this.id = p_331154_;
-        this.key = p_330415_;
-        this.predicate = p_330269_;
+    private EquipmentSlotGroup(int id, String key, Predicate<EquipmentSlot> predicate) {
+        this.id = id;
+        this.key = key;
+        this.predicate = predicate;
     }
 
-    private EquipmentSlotGroup(int p_331473_, String p_330947_, EquipmentSlot p_331230_) {
-        this(p_331473_, p_330947_, p_330549_ -> p_330549_ == p_331230_);
+    private EquipmentSlotGroup(int id, String key, EquipmentSlot slot) {
+        this(id, key, p_330549_ -> p_330549_ == slot);
     }
 
-    public static EquipmentSlotGroup bySlot(EquipmentSlot p_339603_) {
-        return switch (p_339603_) {
+    public static EquipmentSlotGroup bySlot(EquipmentSlot slot) {
+        return switch (slot) {
             case MAINHAND -> MAINHAND;
             case OFFHAND -> OFFHAND;
             case FEET -> FEET;
@@ -55,7 +55,7 @@ public enum EquipmentSlotGroup implements StringRepresentable {
         return this.key;
     }
 
-    public boolean test(EquipmentSlot p_330499_) {
-        return this.predicate.test(p_330499_);
+    public boolean test(EquipmentSlot slot) {
+        return this.predicate.test(slot);
     }
 }

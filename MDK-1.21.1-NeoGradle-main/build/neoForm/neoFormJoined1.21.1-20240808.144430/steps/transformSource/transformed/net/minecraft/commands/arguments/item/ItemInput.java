@@ -28,28 +28,28 @@ public class ItemInput {
     private final Holder<Item> item;
     private final DataComponentPatch components;
 
-    public ItemInput(Holder<Item> p_235282_, DataComponentPatch p_345942_) {
-        this.item = p_235282_;
-        this.components = p_345942_;
+    public ItemInput(Holder<Item> item, DataComponentPatch components) {
+        this.item = item;
+        this.components = components;
     }
 
     public Item getItem() {
         return this.item.value();
     }
 
-    public ItemStack createItemStack(int p_120981_, boolean p_120982_) throws CommandSyntaxException {
-        ItemStack itemstack = new ItemStack(this.item, p_120981_);
+    public ItemStack createItemStack(int count, boolean allowOversizedStacks) throws CommandSyntaxException {
+        ItemStack itemstack = new ItemStack(this.item, count);
         itemstack.applyComponents(this.components);
-        if (p_120982_ && p_120981_ > itemstack.getMaxStackSize()) {
+        if (allowOversizedStacks && count > itemstack.getMaxStackSize()) {
             throw ERROR_STACK_TOO_BIG.create(this.getItemName(), itemstack.getMaxStackSize());
         } else {
             return itemstack;
         }
     }
 
-    public String serialize(HolderLookup.Provider p_330692_) {
+    public String serialize(HolderLookup.Provider levelRegistry) {
         StringBuilder stringbuilder = new StringBuilder(this.getItemName());
-        String s = this.serializeComponents(p_330692_);
+        String s = this.serializeComponents(levelRegistry);
         if (!s.isEmpty()) {
             stringbuilder.append('[');
             stringbuilder.append(s);
@@ -59,8 +59,8 @@ public class ItemInput {
         return stringbuilder.toString();
     }
 
-    private String serializeComponents(HolderLookup.Provider p_331015_) {
-        DynamicOps<Tag> dynamicops = p_331015_.createSerializationContext(NbtOps.INSTANCE);
+    private String serializeComponents(HolderLookup.Provider levelRegistries) {
+        DynamicOps<Tag> dynamicops = levelRegistries.createSerializationContext(NbtOps.INSTANCE);
         return this.components.entrySet().stream().flatMap(p_344174_ -> {
             DataComponentType<?> datacomponenttype = p_344174_.getKey();
             ResourceLocation resourcelocation = BuiltInRegistries.DATA_COMPONENT_TYPE.getKey(datacomponenttype);

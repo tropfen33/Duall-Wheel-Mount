@@ -53,22 +53,22 @@ public class OverlayRecipeComponent implements Renderable, GuiEventListener {
     float time;
     boolean isFurnaceMenu;
 
-    public void init(Minecraft p_100195_, RecipeCollection p_100196_, int p_100197_, int p_100198_, int p_100199_, int p_100200_, float p_100201_) {
-        this.minecraft = p_100195_;
-        this.collection = p_100196_;
-        if (p_100195_.player.containerMenu instanceof AbstractFurnaceMenu) {
+    public void init(Minecraft minecraft, RecipeCollection collection, int x, int y, int p_100199_, int p_100200_, float p_100201_) {
+        this.minecraft = minecraft;
+        this.collection = collection;
+        if (minecraft.player.containerMenu instanceof AbstractFurnaceMenu) {
             this.isFurnaceMenu = true;
         }
 
-        boolean flag = p_100195_.player.getRecipeBook().isFiltering((RecipeBookMenu<?, ?>)p_100195_.player.containerMenu);
-        List<RecipeHolder<?>> list = p_100196_.getDisplayRecipes(true);
-        List<RecipeHolder<?>> list1 = flag ? Collections.emptyList() : p_100196_.getDisplayRecipes(false);
+        boolean flag = minecraft.player.getRecipeBook().isFiltering((RecipeBookMenu<?, ?>)minecraft.player.containerMenu);
+        List<RecipeHolder<?>> list = collection.getDisplayRecipes(true);
+        List<RecipeHolder<?>> list1 = flag ? Collections.emptyList() : collection.getDisplayRecipes(false);
         int i = list.size();
         int j = i + list1.size();
         int k = j <= 16 ? 4 : 5;
         int l = (int)Math.ceil((double)((float)j / (float)k));
-        this.x = p_100197_;
-        this.y = p_100198_;
+        this.x = x;
+        this.y = y;
         float f = (float)(this.x + Math.min(j, k) * 25);
         float f1 = (float)(p_100199_ + 50);
         if (f > f1) {
@@ -114,13 +114,22 @@ public class OverlayRecipeComponent implements Renderable, GuiEventListener {
         return this.lastRecipeClicked;
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    public boolean mouseClicked(double p_100186_, double p_100187_, int p_100188_) {
-        if (p_100188_ != 0) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button != 0) {
             return false;
         } else {
             for (OverlayRecipeComponent.OverlayRecipeButton overlayrecipecomponent$overlayrecipebutton : this.recipeButtons) {
-                if (overlayrecipecomponent$overlayrecipebutton.mouseClicked(p_100186_, p_100187_, p_100188_)) {
+                if (overlayrecipecomponent$overlayrecipebutton.mouseClicked(mouseX, mouseY, button)) {
                     this.lastRecipeClicked = overlayrecipecomponent$overlayrecipebutton.recipe;
                     return true;
                 }
@@ -130,43 +139,64 @@ public class OverlayRecipeComponent implements Renderable, GuiEventListener {
         }
     }
 
+    /**
+     * Checks if the given mouse coordinates are over the GUI element.
+     * <p>
+     * @return {@code true} if the mouse is over the GUI element, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     */
     @Override
-    public boolean isMouseOver(double p_100208_, double p_100209_) {
+    public boolean isMouseOver(double mouseX, double mouseY) {
         return false;
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281618_, int p_282646_, int p_283687_, float p_283147_) {
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.isVisible) {
-            this.time += p_283147_;
+            this.time += partialTick;
             RenderSystem.enableBlend();
-            p_281618_.pose().pushPose();
-            p_281618_.pose().translate(0.0F, 0.0F, 1000.0F);
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(0.0F, 0.0F, 1000.0F);
             int i = this.recipeButtons.size() <= 16 ? 4 : 5;
             int j = Math.min(this.recipeButtons.size(), i);
             int k = Mth.ceil((float)this.recipeButtons.size() / (float)i);
             int l = 4;
-            p_281618_.blitSprite(OVERLAY_RECIPE_SPRITE, this.x, this.y, j * 25 + 8, k * 25 + 8);
+            guiGraphics.blitSprite(OVERLAY_RECIPE_SPRITE, this.x, this.y, j * 25 + 8, k * 25 + 8);
             RenderSystem.disableBlend();
 
             for (OverlayRecipeComponent.OverlayRecipeButton overlayrecipecomponent$overlayrecipebutton : this.recipeButtons) {
-                overlayrecipecomponent$overlayrecipebutton.render(p_281618_, p_282646_, p_283687_, p_283147_);
+                overlayrecipecomponent$overlayrecipebutton.render(guiGraphics, mouseX, mouseY, partialTick);
             }
 
-            p_281618_.pose().popPose();
+            guiGraphics.pose().popPose();
         }
     }
 
-    public void setVisible(boolean p_100205_) {
-        this.isVisible = p_100205_;
+    public void setVisible(boolean isVisible) {
+        this.isVisible = isVisible;
     }
 
     public boolean isVisible() {
         return this.isVisible;
     }
 
+    /**
+     * Sets the focus state of the GUI element.
+     *
+     * @param focused {@code true} to apply focus, {@code false} to remove focus
+     */
     @Override
-    public void setFocused(boolean p_265597_) {
+    public void setFocused(boolean focused) {
     }
 
     @Override
@@ -180,33 +210,33 @@ public class OverlayRecipeComponent implements Renderable, GuiEventListener {
         private final boolean isCraftable;
         protected final List<OverlayRecipeComponent.OverlayRecipeButton.Pos> ingredientPos = Lists.newArrayList();
 
-        public OverlayRecipeButton(int p_100232_, int p_100233_, RecipeHolder<?> p_301240_, boolean p_100235_) {
-            super(p_100232_, p_100233_, 200, 20, CommonComponents.EMPTY);
+        public OverlayRecipeButton(int x, int y, RecipeHolder<?> recipe, boolean isCraftable) {
+            super(x, y, 200, 20, CommonComponents.EMPTY);
             this.width = 24;
             this.height = 24;
-            this.recipe = p_301240_;
-            this.isCraftable = p_100235_;
-            this.calculateIngredientsPositions(p_301240_);
+            this.recipe = recipe;
+            this.isCraftable = isCraftable;
+            this.calculateIngredientsPositions(recipe);
         }
 
-        protected void calculateIngredientsPositions(RecipeHolder<?> p_301128_) {
-            this.placeRecipe(3, 3, -1, p_301128_, p_301128_.value().getIngredients().iterator(), 0);
+        protected void calculateIngredientsPositions(RecipeHolder<?> recipe) {
+            this.placeRecipe(3, 3, -1, recipe, recipe.value().getIngredients().iterator(), 0);
         }
 
         @Override
-        public void updateWidgetNarration(NarrationElementOutput p_259646_) {
-            this.defaultButtonNarrationText(p_259646_);
+        public void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+            this.defaultButtonNarrationText(narrationElementOutput);
         }
 
-        public void addItemToSlot(Ingredient p_344853_, int p_100241_, int p_100242_, int p_100243_, int p_100244_) {
-            ItemStack[] aitemstack = p_344853_.getItems();
+        public void addItemToSlot(Ingredient item, int slot, int maxAmount, int x, int y) {
+            ItemStack[] aitemstack = item.getItems();
             if (aitemstack.length != 0) {
-                this.ingredientPos.add(new OverlayRecipeComponent.OverlayRecipeButton.Pos(3 + p_100243_ * 7, 3 + p_100244_ * 7, aitemstack));
+                this.ingredientPos.add(new OverlayRecipeComponent.OverlayRecipeButton.Pos(3 + x * 7, 3 + y * 7, aitemstack));
             }
         }
 
         @Override
-        public void renderWidget(GuiGraphics p_283557_, int p_283483_, int p_282919_, float p_282165_) {
+        public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
             ResourceLocation resourcelocation;
             if (this.isCraftable) {
                 if (OverlayRecipeComponent.this.isFurnaceMenu) {
@@ -228,18 +258,18 @@ public class OverlayRecipeComponent implements Renderable, GuiEventListener {
                     : OverlayRecipeComponent.CRAFTING_OVERLAY_DISABLED_SPRITE;
             }
 
-            p_283557_.blitSprite(resourcelocation, this.getX(), this.getY(), this.width, this.height);
-            p_283557_.pose().pushPose();
-            p_283557_.pose().translate((double)(this.getX() + 2), (double)(this.getY() + 2), 150.0);
+            guiGraphics.blitSprite(resourcelocation, this.getX(), this.getY(), this.width, this.height);
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate((double)(this.getX() + 2), (double)(this.getY() + 2), 150.0);
 
             for (OverlayRecipeComponent.OverlayRecipeButton.Pos overlayrecipecomponent$overlayrecipebutton$pos : this.ingredientPos) {
-                p_283557_.pose().pushPose();
-                p_283557_.pose()
+                guiGraphics.pose().pushPose();
+                guiGraphics.pose()
                     .translate((double)overlayrecipecomponent$overlayrecipebutton$pos.x, (double)overlayrecipecomponent$overlayrecipebutton$pos.y, 0.0);
-                p_283557_.pose().scale(0.375F, 0.375F, 1.0F);
-                p_283557_.pose().translate(-8.0, -8.0, 0.0);
+                guiGraphics.pose().scale(0.375F, 0.375F, 1.0F);
+                guiGraphics.pose().translate(-8.0, -8.0, 0.0);
                 if (overlayrecipecomponent$overlayrecipebutton$pos.ingredients.length > 0) {
-                    p_283557_.renderItem(
+                    guiGraphics.renderItem(
                         overlayrecipecomponent$overlayrecipebutton$pos.ingredients[Mth.floor(OverlayRecipeComponent.this.time / 30.0F)
                             % overlayrecipecomponent$overlayrecipebutton$pos.ingredients.length],
                         0,
@@ -247,10 +277,10 @@ public class OverlayRecipeComponent implements Renderable, GuiEventListener {
                     );
                 }
 
-                p_283557_.pose().popPose();
+                guiGraphics.pose().popPose();
             }
 
-            p_283557_.pose().popPose();
+            guiGraphics.pose().popPose();
         }
 
         @OnlyIn(Dist.CLIENT)
@@ -259,10 +289,10 @@ public class OverlayRecipeComponent implements Renderable, GuiEventListener {
             public final int x;
             public final int y;
 
-            public Pos(int p_100256_, int p_100257_, ItemStack[] p_100258_) {
-                this.x = p_100256_;
-                this.y = p_100257_;
-                this.ingredients = p_100258_;
+            public Pos(int x, int y, ItemStack[] ingredients) {
+                this.x = x;
+                this.y = y;
+                this.ingredients = ingredients;
             }
         }
     }

@@ -9,23 +9,34 @@ public final class Graph {
     private Graph() {
     }
 
-    public static <T> boolean depthFirstSearch(Map<T, Set<T>> p_184557_, Set<T> p_184558_, Set<T> p_184559_, Consumer<T> p_184560_, T p_184561_) {
-        if (p_184558_.contains(p_184561_)) {
+    /**
+     * Detects if a cycle is present in the given graph, via a depth first search, and returns {@code true} if a cycle was found.
+     *
+     * @param nonCyclicalNodes       Nodes that are verified to have no cycles
+     *                               involving them.
+     * @param pathSet                The current collection of seen nodes. When
+     *                               invoked not recursively, this should be an empty
+     *                               set.
+     * @param onNonCyclicalNodeFound Invoked on each node as we prove that no cycles
+     *                               can be reached starting from this node.
+     */
+    public static <T> boolean depthFirstSearch(Map<T, Set<T>> graph, Set<T> nonCyclicalNodes, Set<T> pathSet, Consumer<T> onNonCyclicalNodeFound, T currentNode) {
+        if (nonCyclicalNodes.contains(currentNode)) {
             return false;
-        } else if (p_184559_.contains(p_184561_)) {
+        } else if (pathSet.contains(currentNode)) {
             return true;
         } else {
-            p_184559_.add(p_184561_);
+            pathSet.add(currentNode);
 
-            for (T t : p_184557_.getOrDefault(p_184561_, ImmutableSet.of())) {
-                if (depthFirstSearch(p_184557_, p_184558_, p_184559_, p_184560_, t)) {
+            for (T t : graph.getOrDefault(currentNode, ImmutableSet.of())) {
+                if (depthFirstSearch(graph, nonCyclicalNodes, pathSet, onNonCyclicalNodeFound, t)) {
                     return true;
                 }
             }
 
-            p_184559_.remove(p_184561_);
-            p_184558_.add(p_184561_);
-            p_184560_.accept(p_184561_);
+            pathSet.remove(currentNode);
+            nonCyclicalNodes.add(currentNode);
+            onNonCyclicalNodeFound.accept(currentNode);
             return false;
         }
     }

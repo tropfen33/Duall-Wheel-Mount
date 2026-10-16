@@ -39,8 +39,8 @@ import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 
 public class VanillaEntityLoot extends EntityLootSubProvider {
-    public VanillaEntityLoot(HolderLookup.Provider p_346214_) {
-        super(FeatureFlags.REGISTRY.allFlags(), p_346214_);
+    public VanillaEntityLoot(HolderLookup.Provider registries) {
+        super(FeatureFlags.REGISTRY.allFlags(), registries);
     }
 
     @Override

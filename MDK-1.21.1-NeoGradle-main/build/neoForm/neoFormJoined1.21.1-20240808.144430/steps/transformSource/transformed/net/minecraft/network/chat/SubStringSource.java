@@ -14,52 +14,52 @@ public class SubStringSource {
     private final List<Style> charStyles;
     private final Int2IntFunction reverseCharModifier;
 
-    private SubStringSource(String p_131232_, List<Style> p_131233_, Int2IntFunction p_131234_) {
-        this.plainText = p_131232_;
-        this.charStyles = ImmutableList.copyOf(p_131233_);
-        this.reverseCharModifier = p_131234_;
+    private SubStringSource(String plainText, List<Style> charStyles, Int2IntFunction reverseCharModifier) {
+        this.plainText = plainText;
+        this.charStyles = ImmutableList.copyOf(charStyles);
+        this.reverseCharModifier = reverseCharModifier;
     }
 
     public String getPlainText() {
         return this.plainText;
     }
 
-    public List<FormattedCharSequence> substring(int p_131237_, int p_131238_, boolean p_131239_) {
-        if (p_131238_ == 0) {
+    public List<FormattedCharSequence> substring(int fromIndex, int toIndex, boolean reversed) {
+        if (toIndex == 0) {
             return ImmutableList.of();
         } else {
             List<FormattedCharSequence> list = Lists.newArrayList();
-            Style style = this.charStyles.get(p_131237_);
-            int i = p_131237_;
+            Style style = this.charStyles.get(fromIndex);
+            int i = fromIndex;
 
-            for (int j = 1; j < p_131238_; j++) {
-                int k = p_131237_ + j;
+            for (int j = 1; j < toIndex; j++) {
+                int k = fromIndex + j;
                 Style style1 = this.charStyles.get(k);
                 if (!style1.equals(style)) {
                     String s = this.plainText.substring(i, k);
-                    list.add(p_131239_ ? FormattedCharSequence.backward(s, style, this.reverseCharModifier) : FormattedCharSequence.forward(s, style));
+                    list.add(reversed ? FormattedCharSequence.backward(s, style, this.reverseCharModifier) : FormattedCharSequence.forward(s, style));
                     style = style1;
                     i = k;
                 }
             }
 
-            if (i < p_131237_ + p_131238_) {
-                String s1 = this.plainText.substring(i, p_131237_ + p_131238_);
-                list.add(p_131239_ ? FormattedCharSequence.backward(s1, style, this.reverseCharModifier) : FormattedCharSequence.forward(s1, style));
+            if (i < fromIndex + toIndex) {
+                String s1 = this.plainText.substring(i, fromIndex + toIndex);
+                list.add(reversed ? FormattedCharSequence.backward(s1, style, this.reverseCharModifier) : FormattedCharSequence.forward(s1, style));
             }
 
-            return p_131239_ ? Lists.reverse(list) : list;
+            return reversed ? Lists.reverse(list) : list;
         }
     }
 
-    public static SubStringSource create(FormattedText p_178537_) {
-        return create(p_178537_, p_178527_ -> p_178527_, p_178529_ -> p_178529_);
+    public static SubStringSource create(FormattedText formattedText) {
+        return create(formattedText, p_178527_ -> p_178527_, p_178529_ -> p_178529_);
     }
 
-    public static SubStringSource create(FormattedText p_131252_, Int2IntFunction p_131253_, UnaryOperator<String> p_131254_) {
+    public static SubStringSource create(FormattedText formattedText, Int2IntFunction reverseCharModifier, UnaryOperator<String> textTransformer) {
         StringBuilder stringbuilder = new StringBuilder();
         List<Style> list = Lists.newArrayList();
-        p_131252_.visit((p_131249_, p_131250_) -> {
+        formattedText.visit((p_131249_, p_131250_) -> {
             StringDecomposer.iterateFormatted(p_131250_, p_131249_, (p_178533_, p_178534_, p_178535_) -> {
                 stringbuilder.appendCodePoint(p_178535_);
                 int i = Character.charCount(p_178535_);
@@ -72,6 +72,6 @@ public class SubStringSource {
             });
             return Optional.empty();
         }, Style.EMPTY);
-        return new SubStringSource(p_131254_.apply(stringbuilder.toString()), list, p_131253_);
+        return new SubStringSource(textTransformer.apply(stringbuilder.toString()), list, reverseCharModifier);
     }
 }

@@ -32,7 +32,10 @@ public record ClientboundSetScorePacket(String owner, String objectiveName, int 
         return GamePacketTypes.CLIENTBOUND_SET_SCORE;
     }
 
-    public void handle(ClientGamePacketListener p_133338_) {
-        p_133338_.handleSetScore(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleSetScore(this);
     }
 }

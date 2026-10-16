@@ -21,9 +21,9 @@ public class FishingRodHookedTrigger extends SimpleCriterionTrigger<FishingRodHo
         return FishingRodHookedTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_40417_, ItemStack p_40418_, FishingHook p_40419_, Collection<ItemStack> p_40420_) {
-        LootContext lootcontext = EntityPredicate.createContext(p_40417_, (Entity)(p_40419_.getHookedIn() != null ? p_40419_.getHookedIn() : p_40419_));
-        this.trigger(p_40417_, p_40425_ -> p_40425_.matches(p_40418_, lootcontext, p_40420_));
+    public void trigger(ServerPlayer player, ItemStack rod, FishingHook entity, Collection<ItemStack> stacks) {
+        LootContext lootcontext = EntityPredicate.createContext(player, (Entity)(entity.getHookedIn() != null ? entity.getHookedIn() : entity));
+        this.trigger(player, p_40425_ -> p_40425_.matches(rod, lootcontext, stacks));
     }
 
     public static record TriggerInstance(
@@ -40,26 +40,26 @@ public class FishingRodHookedTrigger extends SimpleCriterionTrigger<FishingRodHo
         );
 
         public static Criterion<FishingRodHookedTrigger.TriggerInstance> fishedItem(
-            Optional<ItemPredicate> p_298233_, Optional<EntityPredicate> p_298660_, Optional<ItemPredicate> p_298847_
+            Optional<ItemPredicate> rod, Optional<EntityPredicate> entity, Optional<ItemPredicate> item
         ) {
             return CriteriaTriggers.FISHING_ROD_HOOKED
-                .createCriterion(new FishingRodHookedTrigger.TriggerInstance(Optional.empty(), p_298233_, EntityPredicate.wrap(p_298660_), p_298847_));
+                .createCriterion(new FishingRodHookedTrigger.TriggerInstance(Optional.empty(), rod, EntityPredicate.wrap(entity), item));
         }
 
-        public boolean matches(ItemStack p_40444_, LootContext p_40445_, Collection<ItemStack> p_40446_) {
-            if (this.rod.isPresent() && !this.rod.get().test(p_40444_)) {
+        public boolean matches(ItemStack rod, LootContext context, Collection<ItemStack> stacks) {
+            if (this.rod.isPresent() && !this.rod.get().test(rod)) {
                 return false;
-            } else if (this.entity.isPresent() && !this.entity.get().matches(p_40445_)) {
+            } else if (this.entity.isPresent() && !this.entity.get().matches(context)) {
                 return false;
             } else {
                 if (this.item.isPresent()) {
                     boolean flag = false;
-                    Entity entity = p_40445_.getParamOrNull(LootContextParams.THIS_ENTITY);
+                    Entity entity = context.getParamOrNull(LootContextParams.THIS_ENTITY);
                     if (entity instanceof ItemEntity itementity && this.item.get().test(itementity.getItem())) {
                         flag = true;
                     }
 
-                    for (ItemStack itemstack : p_40446_) {
+                    for (ItemStack itemstack : stacks) {
                         if (this.item.get().test(itemstack)) {
                             flag = true;
                             break;
@@ -76,9 +76,9 @@ public class FishingRodHookedTrigger extends SimpleCriterionTrigger<FishingRodHo
         }
 
         @Override
-        public void validate(CriterionValidator p_312572_) {
-            SimpleCriterionTrigger.SimpleInstance.super.validate(p_312572_);
-            p_312572_.validateEntity(this.entity, ".entity");
+        public void validate(CriterionValidator validator) {
+            SimpleCriterionTrigger.SimpleInstance.super.validate(validator);
+            validator.validateEntity(this.entity, ".entity");
         }
     }
 }

@@ -17,8 +17,8 @@ import com.mojang.serialization.MapLike;
 import java.util.function.Function;
 
 public class ChunkRenamesFix extends DataFix {
-    public ChunkRenamesFix(Schema p_185100_) {
-        super(p_185100_, true);
+    public ChunkRenamesFix(Schema outputSchema) {
+        super(outputSchema, true);
     }
 
     @Override
@@ -42,26 +42,26 @@ public class ChunkRenamesFix extends DataFix {
         });
     }
 
-    private static Typed<?> renameField(Typed<?> p_185112_, String p_185113_, String p_185114_) {
-        return renameFieldHelper(p_185112_, p_185113_, p_185114_, p_185112_.getType().findFieldType(p_185113_))
-            .update(DSL.remainderFinder(), p_199439_ -> p_199439_.remove(p_185113_));
+    private static Typed<?> renameField(Typed<?> typed, String oldName, String newName) {
+        return renameFieldHelper(typed, oldName, newName, typed.getType().findFieldType(oldName))
+            .update(DSL.remainderFinder(), p_199439_ -> p_199439_.remove(oldName));
     }
 
-    private static <A> Typed<?> renameFieldHelper(Typed<?> p_185116_, String p_185117_, String p_185118_, Type<A> p_185119_) {
-        Type<Either<A, Unit>> type = DSL.optional(DSL.field(p_185117_, p_185119_));
-        Type<Either<A, Unit>> type1 = DSL.optional(DSL.field(p_185118_, p_185119_));
-        return p_185116_.update(type.finder(), type1, Function.identity());
+    private static <A> Typed<?> renameFieldHelper(Typed<?> typed, String oldName, String newName, Type<A> p_type) {
+        Type<Either<A, Unit>> type = DSL.optional(DSL.field(oldName, p_type));
+        Type<Either<A, Unit>> type1 = DSL.optional(DSL.field(newName, p_type));
+        return typed.update(type.finder(), type1, Function.identity());
     }
 
-    private static <A> Typed<Pair<String, A>> appendChunkName(Typed<A> p_185107_) {
-        return new Typed<>(DSL.named("chunk", p_185107_.getType()), p_185107_.getOps(), Pair.of("chunk", p_185107_.getValue()));
+    private static <A> Typed<Pair<String, A>> appendChunkName(Typed<A> typed) {
+        return new Typed<>(DSL.named("chunk", typed.getType()), typed.getOps(), Pair.of("chunk", typed.getValue()));
     }
 
-    private static <T> Dynamic<T> mergeRemainders(Typed<?> p_185109_, Dynamic<T> p_185110_) {
-        DynamicOps<T> dynamicops = p_185110_.getOps();
-        Dynamic<T> dynamic = p_185109_.get(DSL.remainderFinder()).convert(dynamicops);
-        DataResult<T> dataresult = dynamicops.getMap(p_185110_.getValue())
+    private static <T> Dynamic<T> mergeRemainders(Typed<?> typed, Dynamic<T> p_dynamic) {
+        DynamicOps<T> dynamicops = p_dynamic.getOps();
+        Dynamic<T> dynamic = typed.get(DSL.remainderFinder()).convert(dynamicops);
+        DataResult<T> dataresult = dynamicops.getMap(p_dynamic.getValue())
             .flatMap(p_199433_ -> dynamicops.mergeToMap(dynamic.getValue(), (MapLike<T>)p_199433_));
-        return dataresult.result().map(p_199436_ -> new Dynamic<>(dynamicops, (T)p_199436_)).orElse(p_185110_);
+        return dataresult.result().map(p_199436_ -> new Dynamic<>(dynamicops, (T)p_199436_)).orElse(p_dynamic);
     }
 }

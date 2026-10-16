@@ -9,8 +9,8 @@ public enum AttachFace implements StringRepresentable {
 
     private final String name;
 
-    private AttachFace(String p_61311_) {
-        this.name = p_61311_;
+    private AttachFace(String name) {
+        this.name = name;
     }
 
     @Override

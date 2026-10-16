@@ -11,25 +11,25 @@ public class VisibilitySet {
     private static final int FACINGS = Direction.values().length;
     private final BitSet data = new BitSet(FACINGS * FACINGS);
 
-    public void add(Set<Direction> p_112991_) {
-        for (Direction direction : p_112991_) {
-            for (Direction direction1 : p_112991_) {
+    public void add(Set<Direction> faces) {
+        for (Direction direction : faces) {
+            for (Direction direction1 : faces) {
                 this.set(direction, direction1, true);
             }
         }
     }
 
-    public void set(Direction p_112987_, Direction p_112988_, boolean p_112989_) {
-        this.data.set(p_112987_.ordinal() + p_112988_.ordinal() * FACINGS, p_112989_);
-        this.data.set(p_112988_.ordinal() + p_112987_.ordinal() * FACINGS, p_112989_);
+    public void set(Direction face, Direction otherFace, boolean visible) {
+        this.data.set(face.ordinal() + otherFace.ordinal() * FACINGS, visible);
+        this.data.set(otherFace.ordinal() + face.ordinal() * FACINGS, visible);
     }
 
-    public void setAll(boolean p_112993_) {
-        this.data.set(0, this.data.size(), p_112993_);
+    public void setAll(boolean visible) {
+        this.data.set(0, this.data.size(), visible);
     }
 
-    public boolean visibilityBetween(Direction p_112984_, Direction p_112985_) {
-        return this.data.get(p_112984_.ordinal() + p_112985_.ordinal() * FACINGS);
+    public boolean visibilityBetween(Direction face, Direction otherFace) {
+        return this.data.get(face.ordinal() + otherFace.ordinal() * FACINGS);
     }
 
     @Override

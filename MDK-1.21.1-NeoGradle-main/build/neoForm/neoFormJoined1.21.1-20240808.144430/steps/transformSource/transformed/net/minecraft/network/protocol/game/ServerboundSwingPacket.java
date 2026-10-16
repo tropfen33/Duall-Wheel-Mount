@@ -12,16 +12,19 @@ public class ServerboundSwingPacket implements Packet<ServerGamePacketListener> 
     );
     private final InteractionHand hand;
 
-    public ServerboundSwingPacket(InteractionHand p_134667_) {
-        this.hand = p_134667_;
+    public ServerboundSwingPacket(InteractionHand hand) {
+        this.hand = hand;
     }
 
-    private ServerboundSwingPacket(FriendlyByteBuf p_179792_) {
-        this.hand = p_179792_.readEnum(InteractionHand.class);
+    private ServerboundSwingPacket(FriendlyByteBuf buffer) {
+        this.hand = buffer.readEnum(InteractionHand.class);
     }
 
-    private void write(FriendlyByteBuf p_134676_) {
-        p_134676_.writeEnum(this.hand);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeEnum(this.hand);
     }
 
     @Override
@@ -29,8 +32,11 @@ public class ServerboundSwingPacket implements Packet<ServerGamePacketListener> 
         return GamePacketTypes.SERVERBOUND_SWING;
     }
 
-    public void handle(ServerGamePacketListener p_134673_) {
-        p_134673_.handleAnimate(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleAnimate(this);
     }
 
     public InteractionHand getHand() {

@@ -334,12 +334,12 @@ public class ItemIdFix extends DataFix {
         p_15953_.defaultReturnValue("minecraft:air");
     });
 
-    public ItemIdFix(Schema p_15940_, boolean p_15941_) {
-        super(p_15940_, p_15941_);
+    public ItemIdFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
-    public static String getItem(int p_15943_) {
-        return ITEM_NAMES.get(p_15943_);
+    public static String getItem(int id) {
+        return ITEM_NAMES.get(id);
     }
 
     @Override

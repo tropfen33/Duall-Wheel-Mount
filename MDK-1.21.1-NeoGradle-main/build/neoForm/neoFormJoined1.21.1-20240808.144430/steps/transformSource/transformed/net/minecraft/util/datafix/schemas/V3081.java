@@ -8,20 +8,20 @@ import java.util.function.Supplier;
 import net.minecraft.util.datafix.fixes.References;
 
 public class V3081 extends NamespacedSchema {
-    public V3081(int p_216784_, Schema p_216785_) {
-        super(p_216784_, p_216785_);
+    public V3081(int versionKey, Schema parent) {
+        super(versionKey, parent);
     }
 
     @Override
-    public Map<String, Supplier<TypeTemplate>> registerEntities(Schema p_216795_) {
-        Map<String, Supplier<TypeTemplate>> map = super.registerEntities(p_216795_);
-        p_216795_.register(
+    public Map<String, Supplier<TypeTemplate>> registerEntities(Schema schema) {
+        Map<String, Supplier<TypeTemplate>> map = super.registerEntities(schema);
+        schema.register(
             map,
             "minecraft:warden",
             () -> DSL.optionalFields(
                     "listener",
-                    DSL.optionalFields("event", DSL.optionalFields("game_event", References.GAME_EVENT_NAME.in(p_216795_))),
-                    V100.equipment(p_216795_)
+                    DSL.optionalFields("event", DSL.optionalFields("game_event", References.GAME_EVENT_NAME.in(schema))),
+                    V100.equipment(schema)
                 )
         );
         return map;

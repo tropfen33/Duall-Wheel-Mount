@@ -27,41 +27,41 @@ public class DesertPyramidPiece extends ScatteredFeaturePiece {
     private final List<BlockPos> potentialSuspiciousSandWorldPositions = new ArrayList<>();
     private BlockPos randomCollapsedRoofPos = BlockPos.ZERO;
 
-    public DesertPyramidPiece(RandomSource p_227399_, int p_227400_, int p_227401_) {
-        super(StructurePieceType.DESERT_PYRAMID_PIECE, p_227400_, 64, p_227401_, 21, 15, 21, getRandomHorizontalDirection(p_227399_));
+    public DesertPyramidPiece(RandomSource random, int x, int z) {
+        super(StructurePieceType.DESERT_PYRAMID_PIECE, x, 64, z, 21, 15, 21, getRandomHorizontalDirection(random));
     }
 
-    public DesertPyramidPiece(CompoundTag p_227403_) {
-        super(StructurePieceType.DESERT_PYRAMID_PIECE, p_227403_);
-        this.hasPlacedChest[0] = p_227403_.getBoolean("hasPlacedChest0");
-        this.hasPlacedChest[1] = p_227403_.getBoolean("hasPlacedChest1");
-        this.hasPlacedChest[2] = p_227403_.getBoolean("hasPlacedChest2");
-        this.hasPlacedChest[3] = p_227403_.getBoolean("hasPlacedChest3");
+    public DesertPyramidPiece(CompoundTag tag) {
+        super(StructurePieceType.DESERT_PYRAMID_PIECE, tag);
+        this.hasPlacedChest[0] = tag.getBoolean("hasPlacedChest0");
+        this.hasPlacedChest[1] = tag.getBoolean("hasPlacedChest1");
+        this.hasPlacedChest[2] = tag.getBoolean("hasPlacedChest2");
+        this.hasPlacedChest[3] = tag.getBoolean("hasPlacedChest3");
     }
 
     @Override
-    protected void addAdditionalSaveData(StructurePieceSerializationContext p_227413_, CompoundTag p_227414_) {
-        super.addAdditionalSaveData(p_227413_, p_227414_);
-        p_227414_.putBoolean("hasPlacedChest0", this.hasPlacedChest[0]);
-        p_227414_.putBoolean("hasPlacedChest1", this.hasPlacedChest[1]);
-        p_227414_.putBoolean("hasPlacedChest2", this.hasPlacedChest[2]);
-        p_227414_.putBoolean("hasPlacedChest3", this.hasPlacedChest[3]);
+    protected void addAdditionalSaveData(StructurePieceSerializationContext context, CompoundTag tag) {
+        super.addAdditionalSaveData(context, tag);
+        tag.putBoolean("hasPlacedChest0", this.hasPlacedChest[0]);
+        tag.putBoolean("hasPlacedChest1", this.hasPlacedChest[1]);
+        tag.putBoolean("hasPlacedChest2", this.hasPlacedChest[2]);
+        tag.putBoolean("hasPlacedChest3", this.hasPlacedChest[3]);
     }
 
     @Override
     public void postProcess(
-        WorldGenLevel p_227405_,
-        StructureManager p_227406_,
-        ChunkGenerator p_227407_,
-        RandomSource p_227408_,
-        BoundingBox p_227409_,
-        ChunkPos p_227410_,
-        BlockPos p_227411_
+        WorldGenLevel level,
+        StructureManager structureManager,
+        ChunkGenerator generator,
+        RandomSource random,
+        BoundingBox box,
+        ChunkPos chunkPos,
+        BlockPos pos
     ) {
-        if (this.updateHeightPositionToLowestGroundHeight(p_227405_, -p_227408_.nextInt(3))) {
+        if (this.updateHeightPositionToLowestGroundHeight(level, -random.nextInt(3))) {
             this.generateBox(
-                p_227405_,
-                p_227409_,
+                level,
+                box,
                 0,
                 -4,
                 0,
@@ -75,8 +75,8 @@ public class DesertPyramidPiece extends ScatteredFeaturePiece {
 
             for (int i = 1; i <= 9; i++) {
                 this.generateBox(
-                    p_227405_,
-                    p_227409_,
+                    level,
+                    box,
                     i,
                     i,
                     i,
@@ -88,8 +88,8 @@ public class DesertPyramidPiece extends ScatteredFeaturePiece {
                     false
                 );
                 this.generateBox(
-                    p_227405_,
-                    p_227409_,
+                    level,
+                    box,
                     i + 1,
                     i,
                     i + 1,
@@ -105,7 +105,7 @@ public class DesertPyramidPiece extends ScatteredFeaturePiece {
             for (int k1 = 0; k1 < this.width; k1++) {
                 for (int j = 0; j < this.depth; j++) {
                     int k = -5;
-                    this.fillColumnDown(p_227405_, Blocks.SANDSTONE.defaultBlockState(), k1, -5, j, p_227409_);
+                    this.fillColumnDown(level, Blocks.SANDSTONE.defaultBlockState(), k1, -5, j, box);
                 }
             }
 
@@ -113,18 +113,18 @@ public class DesertPyramidPiece extends ScatteredFeaturePiece {
             BlockState blockstate2 = Blocks.SANDSTONE_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.SOUTH);
             BlockState blockstate3 = Blocks.SANDSTONE_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.EAST);
             BlockState blockstate = Blocks.SANDSTONE_STAIRS.defaultBlockState().setValue(StairBlock.FACING, Direction.WEST);
-            this.generateBox(p_227405_, p_227409_, 0, 0, 0, 4, 9, 4, Blocks.SANDSTONE.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
-            this.generateBox(p_227405_, p_227409_, 1, 10, 1, 3, 10, 3, Blocks.SANDSTONE.defaultBlockState(), Blocks.SANDSTONE.defaultBlockState(), false);
-            this.placeBlock(p_227405_, blockstate1, 2, 10, 0, p_227409_);
-            this.placeBlock(p_227405_, blockstate2, 2, 10, 4, p_227409_);
-            this.placeBlock(p_227405_, blockstate3, 0, 10, 2, p_227409_);
-            this.placeBlock(p_227405_, blockstate, 4, 10, 2, p_227409_);
+            this.generateBox(level, box, 0, 0, 0, 4, 9, 4, Blocks.SANDSTONE.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
+            this.generateBox(level, box, 1, 10, 1, 3, 10, 3, Blocks.SANDSTONE.defaultBlockState(), Blocks.SANDSTONE.defaultBlockState(), false);
+            this.placeBlock(level, blockstate1, 2, 10, 0, box);
+            this.placeBlock(level, blockstate2, 2, 10, 4, box);
+            this.placeBlock(level, blockstate3, 0, 10, 2, box);
+            this.placeBlock(level, blockstate, 4, 10, 2, box);
             this.generateBox(
-                p_227405_, p_227409_, this.width - 5, 0, 0, this.width - 1, 9, 4, Blocks.SANDSTONE.defaultBlockState(), Blocks.AIR.defaultBlockState(), false
+                level, box, this.width - 5, 0, 0, this.width - 1, 9, 4, Blocks.SANDSTONE.defaultBlockState(), Blocks.AIR.defaultBlockState(), false
             );
             this.generateBox(
-                p_227405_,
-                p_227409_,
+                level,
+                box,
                 this.width - 4,
                 10,
                 1,
@@ -135,26 +135,26 @@ public class DesertPyramidPiece extends ScatteredFeaturePiece {
                 Blocks.SANDSTONE.defaultBlockState(),
                 false
             );
-            this.placeBlock(p_227405_, blockstate1, this.width - 3, 10, 0, p_227409_);
-            this.placeBlock(p_227405_, blockstate2, this.width - 3, 10, 4, p_227409_);
-            this.placeBlock(p_227405_, blockstate3, this.width - 5, 10, 2, p_227409_);
-            this.placeBlock(p_227405_, blockstate, this.width - 1, 10, 2, p_227409_);
-            this.generateBox(p_227405_, p_227409_, 8, 0, 0, 12, 4, 4, Blocks.SANDSTONE.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
-            this.generateBox(p_227405_, p_227409_, 9, 1, 0, 11, 3, 4, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
-            this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), 9, 1, 1, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), 9, 2, 1, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), 9, 3, 1, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), 10, 3, 1, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), 11, 3, 1, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), 11, 2, 1, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), 11, 1, 1, p_227409_);
-            this.generateBox(p_227405_, p_227409_, 4, 1, 1, 8, 3, 3, Blocks.SANDSTONE.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
-            this.generateBox(p_227405_, p_227409_, 4, 1, 2, 8, 2, 2, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
-            this.generateBox(p_227405_, p_227409_, 12, 1, 1, 16, 3, 3, Blocks.SANDSTONE.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
-            this.generateBox(p_227405_, p_227409_, 12, 1, 2, 16, 2, 2, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
+            this.placeBlock(level, blockstate1, this.width - 3, 10, 0, box);
+            this.placeBlock(level, blockstate2, this.width - 3, 10, 4, box);
+            this.placeBlock(level, blockstate3, this.width - 5, 10, 2, box);
+            this.placeBlock(level, blockstate, this.width - 1, 10, 2, box);
+            this.generateBox(level, box, 8, 0, 0, 12, 4, 4, Blocks.SANDSTONE.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
+            this.generateBox(level, box, 9, 1, 0, 11, 3, 4, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
+            this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), 9, 1, 1, box);
+            this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), 9, 2, 1, box);
+            this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), 9, 3, 1, box);
+            this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), 10, 3, 1, box);
+            this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), 11, 3, 1, box);
+            this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), 11, 2, 1, box);
+            this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), 11, 1, 1, box);
+            this.generateBox(level, box, 4, 1, 1, 8, 3, 3, Blocks.SANDSTONE.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
+            this.generateBox(level, box, 4, 1, 2, 8, 2, 2, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
+            this.generateBox(level, box, 12, 1, 1, 16, 3, 3, Blocks.SANDSTONE.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
+            this.generateBox(level, box, 12, 1, 2, 16, 2, 2, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
             this.generateBox(
-                p_227405_,
-                p_227409_,
+                level,
+                box,
                 5,
                 4,
                 5,
@@ -165,21 +165,21 @@ public class DesertPyramidPiece extends ScatteredFeaturePiece {
                 Blocks.SANDSTONE.defaultBlockState(),
                 false
             );
-            this.generateBox(p_227405_, p_227409_, 9, 4, 9, 11, 4, 11, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
-            this.generateBox(p_227405_, p_227409_, 8, 1, 8, 8, 3, 8, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false);
+            this.generateBox(level, box, 9, 4, 9, 11, 4, 11, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
+            this.generateBox(level, box, 8, 1, 8, 8, 3, 8, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false);
             this.generateBox(
-                p_227405_, p_227409_, 12, 1, 8, 12, 3, 8, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false
+                level, box, 12, 1, 8, 12, 3, 8, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false
             );
             this.generateBox(
-                p_227405_, p_227409_, 8, 1, 12, 8, 3, 12, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false
+                level, box, 8, 1, 12, 8, 3, 12, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false
             );
             this.generateBox(
-                p_227405_, p_227409_, 12, 1, 12, 12, 3, 12, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false
+                level, box, 12, 1, 12, 12, 3, 12, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false
             );
-            this.generateBox(p_227405_, p_227409_, 1, 1, 5, 4, 4, 11, Blocks.SANDSTONE.defaultBlockState(), Blocks.SANDSTONE.defaultBlockState(), false);
+            this.generateBox(level, box, 1, 1, 5, 4, 4, 11, Blocks.SANDSTONE.defaultBlockState(), Blocks.SANDSTONE.defaultBlockState(), false);
             this.generateBox(
-                p_227405_,
-                p_227409_,
+                level,
+                box,
                 this.width - 5,
                 1,
                 5,
@@ -190,10 +190,10 @@ public class DesertPyramidPiece extends ScatteredFeaturePiece {
                 Blocks.SANDSTONE.defaultBlockState(),
                 false
             );
-            this.generateBox(p_227405_, p_227409_, 6, 7, 9, 6, 7, 11, Blocks.SANDSTONE.defaultBlockState(), Blocks.SANDSTONE.defaultBlockState(), false);
+            this.generateBox(level, box, 6, 7, 9, 6, 7, 11, Blocks.SANDSTONE.defaultBlockState(), Blocks.SANDSTONE.defaultBlockState(), false);
             this.generateBox(
-                p_227405_,
-                p_227409_,
+                level,
+                box,
                 this.width - 7,
                 7,
                 9,
@@ -204,10 +204,10 @@ public class DesertPyramidPiece extends ScatteredFeaturePiece {
                 Blocks.SANDSTONE.defaultBlockState(),
                 false
             );
-            this.generateBox(p_227405_, p_227409_, 5, 5, 9, 5, 7, 11, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false);
+            this.generateBox(level, box, 5, 5, 9, 5, 7, 11, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false);
             this.generateBox(
-                p_227405_,
-                p_227409_,
+                level,
+                box,
                 this.width - 6,
                 5,
                 9,
@@ -218,24 +218,24 @@ public class DesertPyramidPiece extends ScatteredFeaturePiece {
                 Blocks.CUT_SANDSTONE.defaultBlockState(),
                 false
             );
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), 5, 5, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), 5, 6, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), 6, 6, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), this.width - 6, 5, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), this.width - 6, 6, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), this.width - 7, 6, 10, p_227409_);
-            this.generateBox(p_227405_, p_227409_, 2, 4, 4, 2, 6, 4, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), 5, 5, 10, box);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), 5, 6, 10, box);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), 6, 6, 10, box);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), this.width - 6, 5, 10, box);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), this.width - 6, 6, 10, box);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), this.width - 7, 6, 10, box);
+            this.generateBox(level, box, 2, 4, 4, 2, 6, 4, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
             this.generateBox(
-                p_227405_, p_227409_, this.width - 3, 4, 4, this.width - 3, 6, 4, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false
+                level, box, this.width - 3, 4, 4, this.width - 3, 6, 4, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false
             );
-            this.placeBlock(p_227405_, blockstate1, 2, 4, 5, p_227409_);
-            this.placeBlock(p_227405_, blockstate1, 2, 3, 4, p_227409_);
-            this.placeBlock(p_227405_, blockstate1, this.width - 3, 4, 5, p_227409_);
-            this.placeBlock(p_227405_, blockstate1, this.width - 3, 3, 4, p_227409_);
-            this.generateBox(p_227405_, p_227409_, 1, 1, 3, 2, 2, 3, Blocks.SANDSTONE.defaultBlockState(), Blocks.SANDSTONE.defaultBlockState(), false);
+            this.placeBlock(level, blockstate1, 2, 4, 5, box);
+            this.placeBlock(level, blockstate1, 2, 3, 4, box);
+            this.placeBlock(level, blockstate1, this.width - 3, 4, 5, box);
+            this.placeBlock(level, blockstate1, this.width - 3, 3, 4, box);
+            this.generateBox(level, box, 1, 1, 3, 2, 2, 3, Blocks.SANDSTONE.defaultBlockState(), Blocks.SANDSTONE.defaultBlockState(), false);
             this.generateBox(
-                p_227405_,
-                p_227409_,
+                level,
+                box,
                 this.width - 3,
                 1,
                 3,
@@ -246,16 +246,16 @@ public class DesertPyramidPiece extends ScatteredFeaturePiece {
                 Blocks.SANDSTONE.defaultBlockState(),
                 false
             );
-            this.placeBlock(p_227405_, Blocks.SANDSTONE.defaultBlockState(), 1, 1, 2, p_227409_);
-            this.placeBlock(p_227405_, Blocks.SANDSTONE.defaultBlockState(), this.width - 2, 1, 2, p_227409_);
-            this.placeBlock(p_227405_, Blocks.SANDSTONE_SLAB.defaultBlockState(), 1, 2, 2, p_227409_);
-            this.placeBlock(p_227405_, Blocks.SANDSTONE_SLAB.defaultBlockState(), this.width - 2, 2, 2, p_227409_);
-            this.placeBlock(p_227405_, blockstate, 2, 1, 2, p_227409_);
-            this.placeBlock(p_227405_, blockstate3, this.width - 3, 1, 2, p_227409_);
-            this.generateBox(p_227405_, p_227409_, 4, 3, 5, 4, 3, 17, Blocks.SANDSTONE.defaultBlockState(), Blocks.SANDSTONE.defaultBlockState(), false);
+            this.placeBlock(level, Blocks.SANDSTONE.defaultBlockState(), 1, 1, 2, box);
+            this.placeBlock(level, Blocks.SANDSTONE.defaultBlockState(), this.width - 2, 1, 2, box);
+            this.placeBlock(level, Blocks.SANDSTONE_SLAB.defaultBlockState(), 1, 2, 2, box);
+            this.placeBlock(level, Blocks.SANDSTONE_SLAB.defaultBlockState(), this.width - 2, 2, 2, box);
+            this.placeBlock(level, blockstate, 2, 1, 2, box);
+            this.placeBlock(level, blockstate3, this.width - 3, 1, 2, box);
+            this.generateBox(level, box, 4, 3, 5, 4, 3, 17, Blocks.SANDSTONE.defaultBlockState(), Blocks.SANDSTONE.defaultBlockState(), false);
             this.generateBox(
-                p_227405_,
-                p_227409_,
+                level,
+                box,
                 this.width - 5,
                 3,
                 5,
@@ -266,92 +266,92 @@ public class DesertPyramidPiece extends ScatteredFeaturePiece {
                 Blocks.SANDSTONE.defaultBlockState(),
                 false
             );
-            this.generateBox(p_227405_, p_227409_, 3, 1, 5, 4, 2, 16, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
+            this.generateBox(level, box, 3, 1, 5, 4, 2, 16, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
             this.generateBox(
-                p_227405_, p_227409_, this.width - 6, 1, 5, this.width - 5, 2, 16, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false
+                level, box, this.width - 6, 1, 5, this.width - 5, 2, 16, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false
             );
 
             for (int l = 5; l <= 17; l += 2) {
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), 4, 1, l, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CHISELED_SANDSTONE.defaultBlockState(), 4, 2, l, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), this.width - 5, 1, l, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CHISELED_SANDSTONE.defaultBlockState(), this.width - 5, 2, l, p_227409_);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), 4, 1, l, box);
+                this.placeBlock(level, Blocks.CHISELED_SANDSTONE.defaultBlockState(), 4, 2, l, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), this.width - 5, 1, l, box);
+                this.placeBlock(level, Blocks.CHISELED_SANDSTONE.defaultBlockState(), this.width - 5, 2, l, box);
             }
 
-            this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 10, 0, 7, p_227409_);
-            this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 10, 0, 8, p_227409_);
-            this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 9, 0, 9, p_227409_);
-            this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 11, 0, 9, p_227409_);
-            this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 8, 0, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 12, 0, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 7, 0, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 13, 0, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 9, 0, 11, p_227409_);
-            this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 11, 0, 11, p_227409_);
-            this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 10, 0, 12, p_227409_);
-            this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 10, 0, 13, p_227409_);
-            this.placeBlock(p_227405_, Blocks.BLUE_TERRACOTTA.defaultBlockState(), 10, 0, 10, p_227409_);
+            this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 10, 0, 7, box);
+            this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 10, 0, 8, box);
+            this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 9, 0, 9, box);
+            this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 11, 0, 9, box);
+            this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 8, 0, 10, box);
+            this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 12, 0, 10, box);
+            this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 7, 0, 10, box);
+            this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 13, 0, 10, box);
+            this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 9, 0, 11, box);
+            this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 11, 0, 11, box);
+            this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 10, 0, 12, box);
+            this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 10, 0, 13, box);
+            this.placeBlock(level, Blocks.BLUE_TERRACOTTA.defaultBlockState(), 10, 0, 10, box);
 
             for (int l1 = 0; l1 <= this.width - 1; l1 += this.width - 1) {
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 2, 1, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 2, 2, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 2, 3, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 3, 1, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 3, 2, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 3, 3, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 4, 1, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CHISELED_SANDSTONE.defaultBlockState(), l1, 4, 2, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 4, 3, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 5, 1, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 5, 2, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 5, 3, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 6, 1, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CHISELED_SANDSTONE.defaultBlockState(), l1, 6, 2, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 6, 3, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 7, 1, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 7, 2, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 7, 3, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 8, 1, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 8, 2, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 8, 3, p_227409_);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 2, 1, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 2, 2, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 2, 3, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 3, 1, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 3, 2, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 3, 3, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 4, 1, box);
+                this.placeBlock(level, Blocks.CHISELED_SANDSTONE.defaultBlockState(), l1, 4, 2, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 4, 3, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 5, 1, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 5, 2, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 5, 3, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 6, 1, box);
+                this.placeBlock(level, Blocks.CHISELED_SANDSTONE.defaultBlockState(), l1, 6, 2, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 6, 3, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 7, 1, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 7, 2, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), l1, 7, 3, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 8, 1, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 8, 2, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), l1, 8, 3, box);
             }
 
             for (int i2 = 2; i2 <= this.width - 3; i2 += this.width - 3 - 2) {
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 - 1, 2, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2, 2, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 + 1, 2, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 - 1, 3, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2, 3, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 + 1, 3, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2 - 1, 4, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CHISELED_SANDSTONE.defaultBlockState(), i2, 4, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2 + 1, 4, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 - 1, 5, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2, 5, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 + 1, 5, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2 - 1, 6, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CHISELED_SANDSTONE.defaultBlockState(), i2, 6, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2 + 1, 6, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2 - 1, 7, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2, 7, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2 + 1, 7, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 - 1, 8, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), i2, 8, 0, p_227409_);
-                this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 + 1, 8, 0, p_227409_);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 - 1, 2, 0, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2, 2, 0, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 + 1, 2, 0, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 - 1, 3, 0, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2, 3, 0, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 + 1, 3, 0, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2 - 1, 4, 0, box);
+                this.placeBlock(level, Blocks.CHISELED_SANDSTONE.defaultBlockState(), i2, 4, 0, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2 + 1, 4, 0, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 - 1, 5, 0, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2, 5, 0, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 + 1, 5, 0, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2 - 1, 6, 0, box);
+                this.placeBlock(level, Blocks.CHISELED_SANDSTONE.defaultBlockState(), i2, 6, 0, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2 + 1, 6, 0, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2 - 1, 7, 0, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2, 7, 0, box);
+                this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), i2 + 1, 7, 0, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 - 1, 8, 0, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), i2, 8, 0, box);
+                this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), i2 + 1, 8, 0, box);
             }
 
-            this.generateBox(p_227405_, p_227409_, 8, 4, 0, 12, 6, 0, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), 8, 6, 0, p_227409_);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), 12, 6, 0, p_227409_);
-            this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 9, 5, 0, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CHISELED_SANDSTONE.defaultBlockState(), 10, 5, 0, p_227409_);
-            this.placeBlock(p_227405_, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 11, 5, 0, p_227409_);
+            this.generateBox(level, box, 8, 4, 0, 12, 6, 0, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), 8, 6, 0, box);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), 12, 6, 0, box);
+            this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 9, 5, 0, box);
+            this.placeBlock(level, Blocks.CHISELED_SANDSTONE.defaultBlockState(), 10, 5, 0, box);
+            this.placeBlock(level, Blocks.ORANGE_TERRACOTTA.defaultBlockState(), 11, 5, 0, box);
             this.generateBox(
-                p_227405_, p_227409_, 8, -14, 8, 12, -11, 12, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false
+                level, box, 8, -14, 8, 12, -11, 12, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false
             );
             this.generateBox(
-                p_227405_,
-                p_227409_,
+                level,
+                box,
                 8,
                 -10,
                 8,
@@ -363,160 +363,160 @@ public class DesertPyramidPiece extends ScatteredFeaturePiece {
                 false
             );
             this.generateBox(
-                p_227405_, p_227409_, 8, -9, 8, 12, -9, 12, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false
+                level, box, 8, -9, 8, 12, -9, 12, Blocks.CUT_SANDSTONE.defaultBlockState(), Blocks.CUT_SANDSTONE.defaultBlockState(), false
             );
-            this.generateBox(p_227405_, p_227409_, 8, -8, 8, 12, -1, 12, Blocks.SANDSTONE.defaultBlockState(), Blocks.SANDSTONE.defaultBlockState(), false);
-            this.generateBox(p_227405_, p_227409_, 9, -11, 9, 11, -1, 11, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
-            this.placeBlock(p_227405_, Blocks.STONE_PRESSURE_PLATE.defaultBlockState(), 10, -11, 10, p_227409_);
-            this.generateBox(p_227405_, p_227409_, 9, -13, 9, 11, -13, 11, Blocks.TNT.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), 8, -11, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), 8, -10, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CHISELED_SANDSTONE.defaultBlockState(), 7, -10, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), 7, -11, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), 12, -11, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), 12, -10, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CHISELED_SANDSTONE.defaultBlockState(), 13, -10, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), 13, -11, 10, p_227409_);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), 10, -11, 8, p_227409_);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), 10, -10, 8, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CHISELED_SANDSTONE.defaultBlockState(), 10, -10, 7, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), 10, -11, 7, p_227409_);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), 10, -11, 12, p_227409_);
-            this.placeBlock(p_227405_, Blocks.AIR.defaultBlockState(), 10, -10, 12, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CHISELED_SANDSTONE.defaultBlockState(), 10, -10, 13, p_227409_);
-            this.placeBlock(p_227405_, Blocks.CUT_SANDSTONE.defaultBlockState(), 10, -11, 13, p_227409_);
+            this.generateBox(level, box, 8, -8, 8, 12, -1, 12, Blocks.SANDSTONE.defaultBlockState(), Blocks.SANDSTONE.defaultBlockState(), false);
+            this.generateBox(level, box, 9, -11, 9, 11, -1, 11, Blocks.AIR.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
+            this.placeBlock(level, Blocks.STONE_PRESSURE_PLATE.defaultBlockState(), 10, -11, 10, box);
+            this.generateBox(level, box, 9, -13, 9, 11, -13, 11, Blocks.TNT.defaultBlockState(), Blocks.AIR.defaultBlockState(), false);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), 8, -11, 10, box);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), 8, -10, 10, box);
+            this.placeBlock(level, Blocks.CHISELED_SANDSTONE.defaultBlockState(), 7, -10, 10, box);
+            this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), 7, -11, 10, box);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), 12, -11, 10, box);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), 12, -10, 10, box);
+            this.placeBlock(level, Blocks.CHISELED_SANDSTONE.defaultBlockState(), 13, -10, 10, box);
+            this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), 13, -11, 10, box);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), 10, -11, 8, box);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), 10, -10, 8, box);
+            this.placeBlock(level, Blocks.CHISELED_SANDSTONE.defaultBlockState(), 10, -10, 7, box);
+            this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), 10, -11, 7, box);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), 10, -11, 12, box);
+            this.placeBlock(level, Blocks.AIR.defaultBlockState(), 10, -10, 12, box);
+            this.placeBlock(level, Blocks.CHISELED_SANDSTONE.defaultBlockState(), 10, -10, 13, box);
+            this.placeBlock(level, Blocks.CUT_SANDSTONE.defaultBlockState(), 10, -11, 13, box);
 
             for (Direction direction : Direction.Plane.HORIZONTAL) {
                 if (!this.hasPlacedChest[direction.get2DDataValue()]) {
                     int i1 = direction.getStepX() * 2;
                     int j1 = direction.getStepZ() * 2;
                     this.hasPlacedChest[direction.get2DDataValue()] = this.createChest(
-                        p_227405_, p_227409_, p_227408_, 10 + i1, -11, 10 + j1, BuiltInLootTables.DESERT_PYRAMID
+                        level, box, random, 10 + i1, -11, 10 + j1, BuiltInLootTables.DESERT_PYRAMID
                     );
                 }
             }
 
-            this.addCellar(p_227405_, p_227409_);
+            this.addCellar(level, box);
         }
     }
 
-    private void addCellar(WorldGenLevel p_272769_, BoundingBox p_273155_) {
+    private void addCellar(WorldGenLevel level, BoundingBox box) {
         BlockPos blockpos = new BlockPos(16, -4, 13);
-        this.addCellarStairs(blockpos, p_272769_, p_273155_);
-        this.addCellarRoom(blockpos, p_272769_, p_273155_);
+        this.addCellarStairs(blockpos, level, box);
+        this.addCellarRoom(blockpos, level, box);
     }
 
-    private void addCellarStairs(BlockPos p_272997_, WorldGenLevel p_272699_, BoundingBox p_273559_) {
-        int i = p_272997_.getX();
-        int j = p_272997_.getY();
-        int k = p_272997_.getZ();
+    private void addCellarStairs(BlockPos pos, WorldGenLevel level, BoundingBox box) {
+        int i = pos.getX();
+        int j = pos.getY();
+        int k = pos.getZ();
         BlockState blockstate = Blocks.SANDSTONE_STAIRS.defaultBlockState();
-        this.placeBlock(p_272699_, blockstate.rotate(Rotation.COUNTERCLOCKWISE_90), 13, -1, 17, p_273559_);
-        this.placeBlock(p_272699_, blockstate.rotate(Rotation.COUNTERCLOCKWISE_90), 14, -2, 17, p_273559_);
-        this.placeBlock(p_272699_, blockstate.rotate(Rotation.COUNTERCLOCKWISE_90), 15, -3, 17, p_273559_);
+        this.placeBlock(level, blockstate.rotate(Rotation.COUNTERCLOCKWISE_90), 13, -1, 17, box);
+        this.placeBlock(level, blockstate.rotate(Rotation.COUNTERCLOCKWISE_90), 14, -2, 17, box);
+        this.placeBlock(level, blockstate.rotate(Rotation.COUNTERCLOCKWISE_90), 15, -3, 17, box);
         BlockState blockstate1 = Blocks.SAND.defaultBlockState();
         BlockState blockstate2 = Blocks.SANDSTONE.defaultBlockState();
-        boolean flag = p_272699_.getRandom().nextBoolean();
-        this.placeBlock(p_272699_, blockstate1, i - 4, j + 4, k + 4, p_273559_);
-        this.placeBlock(p_272699_, blockstate1, i - 3, j + 4, k + 4, p_273559_);
-        this.placeBlock(p_272699_, blockstate1, i - 2, j + 4, k + 4, p_273559_);
-        this.placeBlock(p_272699_, blockstate1, i - 1, j + 4, k + 4, p_273559_);
-        this.placeBlock(p_272699_, blockstate1, i, j + 4, k + 4, p_273559_);
-        this.placeBlock(p_272699_, blockstate1, i - 2, j + 3, k + 4, p_273559_);
-        this.placeBlock(p_272699_, flag ? blockstate1 : blockstate2, i - 1, j + 3, k + 4, p_273559_);
-        this.placeBlock(p_272699_, !flag ? blockstate1 : blockstate2, i, j + 3, k + 4, p_273559_);
-        this.placeBlock(p_272699_, blockstate1, i - 1, j + 2, k + 4, p_273559_);
-        this.placeBlock(p_272699_, blockstate2, i, j + 2, k + 4, p_273559_);
-        this.placeBlock(p_272699_, blockstate1, i, j + 1, k + 4, p_273559_);
+        boolean flag = level.getRandom().nextBoolean();
+        this.placeBlock(level, blockstate1, i - 4, j + 4, k + 4, box);
+        this.placeBlock(level, blockstate1, i - 3, j + 4, k + 4, box);
+        this.placeBlock(level, blockstate1, i - 2, j + 4, k + 4, box);
+        this.placeBlock(level, blockstate1, i - 1, j + 4, k + 4, box);
+        this.placeBlock(level, blockstate1, i, j + 4, k + 4, box);
+        this.placeBlock(level, blockstate1, i - 2, j + 3, k + 4, box);
+        this.placeBlock(level, flag ? blockstate1 : blockstate2, i - 1, j + 3, k + 4, box);
+        this.placeBlock(level, !flag ? blockstate1 : blockstate2, i, j + 3, k + 4, box);
+        this.placeBlock(level, blockstate1, i - 1, j + 2, k + 4, box);
+        this.placeBlock(level, blockstate2, i, j + 2, k + 4, box);
+        this.placeBlock(level, blockstate1, i, j + 1, k + 4, box);
     }
 
-    private void addCellarRoom(BlockPos p_272733_, WorldGenLevel p_273390_, BoundingBox p_273517_) {
-        int i = p_272733_.getX();
-        int j = p_272733_.getY();
-        int k = p_272733_.getZ();
+    private void addCellarRoom(BlockPos pos, WorldGenLevel level, BoundingBox box) {
+        int i = pos.getX();
+        int j = pos.getY();
+        int k = pos.getZ();
         BlockState blockstate = Blocks.CUT_SANDSTONE.defaultBlockState();
         BlockState blockstate1 = Blocks.CHISELED_SANDSTONE.defaultBlockState();
-        this.generateBox(p_273390_, p_273517_, i - 3, j + 1, k - 3, i - 3, j + 1, k + 2, blockstate, blockstate, true);
-        this.generateBox(p_273390_, p_273517_, i + 3, j + 1, k - 3, i + 3, j + 1, k + 2, blockstate, blockstate, true);
-        this.generateBox(p_273390_, p_273517_, i - 3, j + 1, k - 3, i + 3, j + 1, k - 2, blockstate, blockstate, true);
-        this.generateBox(p_273390_, p_273517_, i - 3, j + 1, k + 3, i + 3, j + 1, k + 3, blockstate, blockstate, true);
-        this.generateBox(p_273390_, p_273517_, i - 3, j + 2, k - 3, i - 3, j + 2, k + 2, blockstate1, blockstate1, true);
-        this.generateBox(p_273390_, p_273517_, i + 3, j + 2, k - 3, i + 3, j + 2, k + 2, blockstate1, blockstate1, true);
-        this.generateBox(p_273390_, p_273517_, i - 3, j + 2, k - 3, i + 3, j + 2, k - 2, blockstate1, blockstate1, true);
-        this.generateBox(p_273390_, p_273517_, i - 3, j + 2, k + 3, i + 3, j + 2, k + 3, blockstate1, blockstate1, true);
-        this.generateBox(p_273390_, p_273517_, i - 3, -1, k - 3, i - 3, -1, k + 2, blockstate, blockstate, true);
-        this.generateBox(p_273390_, p_273517_, i + 3, -1, k - 3, i + 3, -1, k + 2, blockstate, blockstate, true);
-        this.generateBox(p_273390_, p_273517_, i - 3, -1, k - 3, i + 3, -1, k - 2, blockstate, blockstate, true);
-        this.generateBox(p_273390_, p_273517_, i - 3, -1, k + 3, i + 3, -1, k + 3, blockstate, blockstate, true);
+        this.generateBox(level, box, i - 3, j + 1, k - 3, i - 3, j + 1, k + 2, blockstate, blockstate, true);
+        this.generateBox(level, box, i + 3, j + 1, k - 3, i + 3, j + 1, k + 2, blockstate, blockstate, true);
+        this.generateBox(level, box, i - 3, j + 1, k - 3, i + 3, j + 1, k - 2, blockstate, blockstate, true);
+        this.generateBox(level, box, i - 3, j + 1, k + 3, i + 3, j + 1, k + 3, blockstate, blockstate, true);
+        this.generateBox(level, box, i - 3, j + 2, k - 3, i - 3, j + 2, k + 2, blockstate1, blockstate1, true);
+        this.generateBox(level, box, i + 3, j + 2, k - 3, i + 3, j + 2, k + 2, blockstate1, blockstate1, true);
+        this.generateBox(level, box, i - 3, j + 2, k - 3, i + 3, j + 2, k - 2, blockstate1, blockstate1, true);
+        this.generateBox(level, box, i - 3, j + 2, k + 3, i + 3, j + 2, k + 3, blockstate1, blockstate1, true);
+        this.generateBox(level, box, i - 3, -1, k - 3, i - 3, -1, k + 2, blockstate, blockstate, true);
+        this.generateBox(level, box, i + 3, -1, k - 3, i + 3, -1, k + 2, blockstate, blockstate, true);
+        this.generateBox(level, box, i - 3, -1, k - 3, i + 3, -1, k - 2, blockstate, blockstate, true);
+        this.generateBox(level, box, i - 3, -1, k + 3, i + 3, -1, k + 3, blockstate, blockstate, true);
         this.placeSandBox(i - 2, j + 1, k - 2, i + 2, j + 3, k + 2);
-        this.placeCollapsedRoof(p_273390_, p_273517_, i - 2, j + 4, k - 2, i + 2, k + 2);
+        this.placeCollapsedRoof(level, box, i - 2, j + 4, k - 2, i + 2, k + 2);
         BlockState blockstate2 = Blocks.ORANGE_TERRACOTTA.defaultBlockState();
         BlockState blockstate3 = Blocks.BLUE_TERRACOTTA.defaultBlockState();
-        this.placeBlock(p_273390_, blockstate3, i, j, k, p_273517_);
-        this.placeBlock(p_273390_, blockstate2, i + 1, j, k - 1, p_273517_);
-        this.placeBlock(p_273390_, blockstate2, i + 1, j, k + 1, p_273517_);
-        this.placeBlock(p_273390_, blockstate2, i - 1, j, k - 1, p_273517_);
-        this.placeBlock(p_273390_, blockstate2, i - 1, j, k + 1, p_273517_);
-        this.placeBlock(p_273390_, blockstate2, i + 2, j, k, p_273517_);
-        this.placeBlock(p_273390_, blockstate2, i - 2, j, k, p_273517_);
-        this.placeBlock(p_273390_, blockstate2, i, j, k + 2, p_273517_);
-        this.placeBlock(p_273390_, blockstate2, i, j, k - 2, p_273517_);
-        this.placeBlock(p_273390_, blockstate2, i + 3, j, k, p_273517_);
+        this.placeBlock(level, blockstate3, i, j, k, box);
+        this.placeBlock(level, blockstate2, i + 1, j, k - 1, box);
+        this.placeBlock(level, blockstate2, i + 1, j, k + 1, box);
+        this.placeBlock(level, blockstate2, i - 1, j, k - 1, box);
+        this.placeBlock(level, blockstate2, i - 1, j, k + 1, box);
+        this.placeBlock(level, blockstate2, i + 2, j, k, box);
+        this.placeBlock(level, blockstate2, i - 2, j, k, box);
+        this.placeBlock(level, blockstate2, i, j, k + 2, box);
+        this.placeBlock(level, blockstate2, i, j, k - 2, box);
+        this.placeBlock(level, blockstate2, i + 3, j, k, box);
         this.placeSand(i + 3, j + 1, k);
         this.placeSand(i + 3, j + 2, k);
-        this.placeBlock(p_273390_, blockstate, i + 4, j + 1, k, p_273517_);
-        this.placeBlock(p_273390_, blockstate1, i + 4, j + 2, k, p_273517_);
-        this.placeBlock(p_273390_, blockstate2, i - 3, j, k, p_273517_);
+        this.placeBlock(level, blockstate, i + 4, j + 1, k, box);
+        this.placeBlock(level, blockstate1, i + 4, j + 2, k, box);
+        this.placeBlock(level, blockstate2, i - 3, j, k, box);
         this.placeSand(i - 3, j + 1, k);
         this.placeSand(i - 3, j + 2, k);
-        this.placeBlock(p_273390_, blockstate, i - 4, j + 1, k, p_273517_);
-        this.placeBlock(p_273390_, blockstate1, i - 4, j + 2, k, p_273517_);
-        this.placeBlock(p_273390_, blockstate2, i, j, k + 3, p_273517_);
+        this.placeBlock(level, blockstate, i - 4, j + 1, k, box);
+        this.placeBlock(level, blockstate1, i - 4, j + 2, k, box);
+        this.placeBlock(level, blockstate2, i, j, k + 3, box);
         this.placeSand(i, j + 1, k + 3);
         this.placeSand(i, j + 2, k + 3);
-        this.placeBlock(p_273390_, blockstate2, i, j, k - 3, p_273517_);
+        this.placeBlock(level, blockstate2, i, j, k - 3, box);
         this.placeSand(i, j + 1, k - 3);
         this.placeSand(i, j + 2, k - 3);
-        this.placeBlock(p_273390_, blockstate, i, j + 1, k - 4, p_273517_);
-        this.placeBlock(p_273390_, blockstate1, i, -2, k - 4, p_273517_);
+        this.placeBlock(level, blockstate, i, j + 1, k - 4, box);
+        this.placeBlock(level, blockstate1, i, -2, k - 4, box);
     }
 
-    private void placeSand(int p_279401_, int p_279451_, int p_279265_) {
-        BlockPos blockpos = this.getWorldPos(p_279401_, p_279451_, p_279265_);
+    private void placeSand(int x, int y, int z) {
+        BlockPos blockpos = this.getWorldPos(x, y, z);
         this.potentialSuspiciousSandWorldPositions.add(blockpos);
     }
 
-    private void placeSandBox(int p_279483_, int p_279321_, int p_279271_, int p_279471_, int p_279229_, int p_279111_) {
-        for (int i = p_279321_; i <= p_279229_; i++) {
-            for (int j = p_279483_; j <= p_279471_; j++) {
-                for (int k = p_279271_; k <= p_279111_; k++) {
+    private void placeSandBox(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        for (int i = minY; i <= maxY; i++) {
+            for (int j = minX; j <= maxX; j++) {
+                for (int k = minZ; k <= maxZ; k++) {
                     this.placeSand(j, i, k);
                 }
             }
         }
     }
 
-    private void placeCollapsedRoofPiece(WorldGenLevel p_272965_, int p_272618_, int p_273415_, int p_273110_, BoundingBox p_272645_) {
-        if (p_272965_.getRandom().nextFloat() < 0.33F) {
+    private void placeCollapsedRoofPiece(WorldGenLevel level, int x, int y, int z, BoundingBox box) {
+        if (level.getRandom().nextFloat() < 0.33F) {
             BlockState blockstate = Blocks.SANDSTONE.defaultBlockState();
-            this.placeBlock(p_272965_, blockstate, p_272618_, p_273415_, p_273110_, p_272645_);
+            this.placeBlock(level, blockstate, x, y, z, box);
         } else {
             BlockState blockstate1 = Blocks.SAND.defaultBlockState();
-            this.placeBlock(p_272965_, blockstate1, p_272618_, p_273415_, p_273110_, p_272645_);
+            this.placeBlock(level, blockstate1, x, y, z, box);
         }
     }
 
-    private void placeCollapsedRoof(WorldGenLevel p_273438_, BoundingBox p_273058_, int p_272638_, int p_272826_, int p_273026_, int p_272750_, int p_272639_) {
-        for (int i = p_272638_; i <= p_272750_; i++) {
-            for (int j = p_273026_; j <= p_272639_; j++) {
-                this.placeCollapsedRoofPiece(p_273438_, i, p_272826_, j, p_273058_);
+    private void placeCollapsedRoof(WorldGenLevel level, BoundingBox box, int minX, int y, int minZ, int maxX, int maxZ) {
+        for (int i = minX; i <= maxX; i++) {
+            for (int j = minZ; j <= maxZ; j++) {
+                this.placeCollapsedRoofPiece(level, i, y, j, box);
             }
         }
 
-        RandomSource randomsource = RandomSource.create(p_273438_.getSeed()).forkPositional().at(this.getWorldPos(p_272638_, p_272826_, p_273026_));
-        int l = randomsource.nextIntBetweenInclusive(p_272638_, p_272750_);
-        int k = randomsource.nextIntBetweenInclusive(p_273026_, p_272639_);
-        this.randomCollapsedRoofPos = new BlockPos(this.getWorldX(l, k), this.getWorldY(p_272826_), this.getWorldZ(l, k));
+        RandomSource randomsource = RandomSource.create(level.getSeed()).forkPositional().at(this.getWorldPos(minX, y, minZ));
+        int l = randomsource.nextIntBetweenInclusive(minX, maxX);
+        int k = randomsource.nextIntBetweenInclusive(minZ, maxZ);
+        this.randomCollapsedRoofPos = new BlockPos(this.getWorldX(l, k), this.getWorldY(y), this.getWorldZ(l, k));
     }
 
     public List<BlockPos> getPotentialSuspiciousSandWorldPositions() {

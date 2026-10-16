@@ -46,27 +46,27 @@ public class DebugRenderer {
     public final BreezeDebugRenderer breezeDebugRenderer;
     private boolean renderChunkborder;
 
-    public DebugRenderer(Minecraft p_113433_) {
-        this.waterDebugRenderer = new WaterDebugRenderer(p_113433_);
-        this.chunkBorderRenderer = new ChunkBorderRenderer(p_113433_);
-        this.heightMapRenderer = new HeightMapRenderer(p_113433_);
-        this.collisionBoxRenderer = new CollisionBoxRenderer(p_113433_);
-        this.supportBlockRenderer = new SupportBlockRenderer(p_113433_);
-        this.neighborsUpdateRenderer = new NeighborsUpdateRenderer(p_113433_);
-        this.structureRenderer = new StructureRenderer(p_113433_);
-        this.lightDebugRenderer = new LightDebugRenderer(p_113433_);
+    public DebugRenderer(Minecraft minecraft) {
+        this.waterDebugRenderer = new WaterDebugRenderer(minecraft);
+        this.chunkBorderRenderer = new ChunkBorderRenderer(minecraft);
+        this.heightMapRenderer = new HeightMapRenderer(minecraft);
+        this.collisionBoxRenderer = new CollisionBoxRenderer(minecraft);
+        this.supportBlockRenderer = new SupportBlockRenderer(minecraft);
+        this.neighborsUpdateRenderer = new NeighborsUpdateRenderer(minecraft);
+        this.structureRenderer = new StructureRenderer(minecraft);
+        this.lightDebugRenderer = new LightDebugRenderer(minecraft);
         this.worldGenAttemptRenderer = new WorldGenAttemptRenderer();
-        this.solidFaceRenderer = new SolidFaceRenderer(p_113433_);
-        this.chunkRenderer = new ChunkDebugRenderer(p_113433_);
-        this.brainDebugRenderer = new BrainDebugRenderer(p_113433_);
+        this.solidFaceRenderer = new SolidFaceRenderer(minecraft);
+        this.chunkRenderer = new ChunkDebugRenderer(minecraft);
+        this.brainDebugRenderer = new BrainDebugRenderer(minecraft);
         this.villageSectionsDebugRenderer = new VillageSectionsDebugRenderer();
-        this.beeDebugRenderer = new BeeDebugRenderer(p_113433_);
-        this.raidDebugRenderer = new RaidDebugRenderer(p_113433_);
-        this.goalSelectorRenderer = new GoalSelectorDebugRenderer(p_113433_);
+        this.beeDebugRenderer = new BeeDebugRenderer(minecraft);
+        this.raidDebugRenderer = new RaidDebugRenderer(minecraft);
+        this.goalSelectorRenderer = new GoalSelectorDebugRenderer(minecraft);
         this.gameTestDebugRenderer = new GameTestDebugRenderer();
-        this.gameEventListenerRenderer = new GameEventListenerRenderer(p_113433_);
-        this.skyLightSectionDebugRenderer = new LightSectionDebugRenderer(p_113433_, LightLayer.SKY);
-        this.breezeDebugRenderer = new BreezeDebugRenderer(p_113433_);
+        this.gameEventListenerRenderer = new GameEventListenerRenderer(minecraft);
+        this.skyLightSectionDebugRenderer = new LightSectionDebugRenderer(minecraft, LightLayer.SKY);
+        this.breezeDebugRenderer = new BreezeDebugRenderer(minecraft);
     }
 
     public void clear() {
@@ -98,25 +98,25 @@ public class DebugRenderer {
         return this.renderChunkborder;
     }
 
-    public void render(PoseStack p_113458_, MultiBufferSource.BufferSource p_113459_, double p_113460_, double p_113461_, double p_113462_) {
+    public void render(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, double camX, double camY, double camZ) {
         if (this.renderChunkborder && !Minecraft.getInstance().showOnlyReducedInfo()) {
-            this.chunkBorderRenderer.render(p_113458_, p_113459_, p_113460_, p_113461_, p_113462_);
+            this.chunkBorderRenderer.render(poseStack, bufferSource, camX, camY, camZ);
         }
 
-        this.gameTestDebugRenderer.render(p_113458_, p_113459_, p_113460_, p_113461_, p_113462_);
+        this.gameTestDebugRenderer.render(poseStack, bufferSource, camX, camY, camZ);
     }
 
-    public static Optional<Entity> getTargetedEntity(@Nullable Entity p_113449_, int p_113450_) {
-        if (p_113449_ == null) {
+    public static Optional<Entity> getTargetedEntity(@Nullable Entity entity, int distance) {
+        if (entity == null) {
             return Optional.empty();
         } else {
-            Vec3 vec3 = p_113449_.getEyePosition();
-            Vec3 vec31 = p_113449_.getViewVector(1.0F).scale((double)p_113450_);
+            Vec3 vec3 = entity.getEyePosition();
+            Vec3 vec31 = entity.getViewVector(1.0F).scale((double)distance);
             Vec3 vec32 = vec3.add(vec31);
-            AABB aabb = p_113449_.getBoundingBox().expandTowards(vec31).inflate(1.0);
-            int i = p_113450_ * p_113450_;
+            AABB aabb = entity.getBoundingBox().expandTowards(vec31).inflate(1.0);
+            int i = distance * distance;
             Predicate<Entity> predicate = p_113447_ -> !p_113447_.isSpectator() && p_113447_.isPickable();
-            EntityHitResult entityhitresult = ProjectileUtil.getEntityHitResult(p_113449_, vec3, vec32, aabb, predicate, (double)i);
+            EntityHitResult entityhitresult = ProjectileUtil.getEntityHitResult(entity, vec3, vec32, aabb, predicate, (double)i);
             if (entityhitresult == null) {
                 return Optional.empty();
             } else {
@@ -126,123 +126,123 @@ public class DebugRenderer {
     }
 
     public static void renderFilledUnitCube(
-        PoseStack p_308923_, MultiBufferSource p_309126_, BlockPos p_309015_, float p_308976_, float p_308978_, float p_309148_, float p_309159_
+        PoseStack poseStack, MultiBufferSource bufferSource, BlockPos pos, float red, float green, float blue, float alpha
     ) {
-        renderFilledBox(p_308923_, p_309126_, p_309015_, p_309015_.offset(1, 1, 1), p_308976_, p_308978_, p_309148_, p_309159_);
+        renderFilledBox(poseStack, bufferSource, pos, pos.offset(1, 1, 1), red, green, blue, alpha);
     }
 
     public static void renderFilledBox(
-        PoseStack p_270169_,
-        MultiBufferSource p_270417_,
-        BlockPos p_270790_,
-        BlockPos p_270610_,
-        float p_270515_,
-        float p_270494_,
-        float p_270869_,
-        float p_270844_
-    ) {
-        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        if (camera.isInitialized()) {
-            Vec3 vec3 = camera.getPosition().reverse();
-            AABB aabb = AABB.encapsulatingFullBlocks(p_270790_, p_270610_).move(vec3);
-            renderFilledBox(p_270169_, p_270417_, aabb, p_270515_, p_270494_, p_270869_, p_270844_);
-        }
-    }
-
-    public static void renderFilledBox(
-        PoseStack p_270877_,
-        MultiBufferSource p_270925_,
-        BlockPos p_270480_,
-        float p_270569_,
-        float p_270315_,
-        float p_270182_,
-        float p_270862_,
-        float p_270973_
+        PoseStack poseStack,
+        MultiBufferSource bufferSource,
+        BlockPos startPos,
+        BlockPos endPos,
+        float red,
+        float green,
+        float blue,
+        float alpha
     ) {
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
         if (camera.isInitialized()) {
             Vec3 vec3 = camera.getPosition().reverse();
-            AABB aabb = new AABB(p_270480_).move(vec3).inflate((double)p_270569_);
-            renderFilledBox(p_270877_, p_270925_, aabb, p_270315_, p_270182_, p_270862_, p_270973_);
+            AABB aabb = AABB.encapsulatingFullBlocks(startPos, endPos).move(vec3);
+            renderFilledBox(poseStack, bufferSource, aabb, red, green, blue, alpha);
         }
     }
 
     public static void renderFilledBox(
-        PoseStack p_271017_, MultiBufferSource p_270356_, AABB p_270833_, float p_270850_, float p_270249_, float p_270654_, float p_270476_
+        PoseStack poseStack,
+        MultiBufferSource bufferSource,
+        BlockPos pos,
+        float scale,
+        float red,
+        float green,
+        float blue,
+        float alpha
+    ) {
+        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+        if (camera.isInitialized()) {
+            Vec3 vec3 = camera.getPosition().reverse();
+            AABB aabb = new AABB(pos).move(vec3).inflate((double)scale);
+            renderFilledBox(poseStack, bufferSource, aabb, red, green, blue, alpha);
+        }
+    }
+
+    public static void renderFilledBox(
+        PoseStack poseStack, MultiBufferSource bufferSource, AABB boundingBox, float red, float green, float blue, float alpha
     ) {
         renderFilledBox(
-            p_271017_,
-            p_270356_,
-            p_270833_.minX,
-            p_270833_.minY,
-            p_270833_.minZ,
-            p_270833_.maxX,
-            p_270833_.maxY,
-            p_270833_.maxZ,
-            p_270850_,
-            p_270249_,
-            p_270654_,
-            p_270476_
+            poseStack,
+            bufferSource,
+            boundingBox.minX,
+            boundingBox.minY,
+            boundingBox.minZ,
+            boundingBox.maxX,
+            boundingBox.maxY,
+            boundingBox.maxZ,
+            red,
+            green,
+            blue,
+            alpha
         );
     }
 
     public static void renderFilledBox(
-        PoseStack p_270616_,
-        MultiBufferSource p_270769_,
-        double p_270653_,
-        double p_270967_,
-        double p_270556_,
-        double p_270724_,
-        double p_270427_,
-        double p_270138_,
-        float p_270391_,
-        float p_270093_,
-        float p_270312_,
-        float p_270567_
+        PoseStack poseStack,
+        MultiBufferSource bufferSource,
+        double minX,
+        double minY,
+        double minZ,
+        double maxX,
+        double maxY,
+        double maxZ,
+        float red,
+        float green,
+        float blue,
+        float alpha
     ) {
-        VertexConsumer vertexconsumer = p_270769_.getBuffer(RenderType.debugFilledBox());
+        VertexConsumer vertexconsumer = bufferSource.getBuffer(RenderType.debugFilledBox());
         LevelRenderer.addChainedFilledBoxVertices(
-            p_270616_, vertexconsumer, p_270653_, p_270967_, p_270556_, p_270724_, p_270427_, p_270138_, p_270391_, p_270093_, p_270312_, p_270567_
+            poseStack, vertexconsumer, minX, minY, minZ, maxX, maxY, maxZ, red, green, blue, alpha
         );
     }
 
     public static void renderFloatingText(
-        PoseStack p_270671_, MultiBufferSource p_271023_, String p_270521_, int p_270729_, int p_270562_, int p_270828_, int p_270164_
+        PoseStack poseStack, MultiBufferSource bufferSource, String text, int x, int y, int z, int color
     ) {
-        renderFloatingText(p_270671_, p_271023_, p_270521_, (double)p_270729_ + 0.5, (double)p_270562_ + 0.5, (double)p_270828_ + 0.5, p_270164_);
+        renderFloatingText(poseStack, bufferSource, text, (double)x + 0.5, (double)y + 0.5, (double)z + 0.5, color);
     }
 
     public static void renderFloatingText(
-        PoseStack p_270905_, MultiBufferSource p_270581_, String p_270305_, double p_270645_, double p_270746_, double p_270364_, int p_270977_
+        PoseStack poseStack, MultiBufferSource bufferSource, String text, double x, double y, double z, int color
     ) {
-        renderFloatingText(p_270905_, p_270581_, p_270305_, p_270645_, p_270746_, p_270364_, p_270977_, 0.02F);
+        renderFloatingText(poseStack, bufferSource, text, x, y, z, color, 0.02F);
     }
 
     public static void renderFloatingText(
-        PoseStack p_270216_,
-        MultiBufferSource p_270684_,
-        String p_270564_,
-        double p_270935_,
-        double p_270856_,
-        double p_270908_,
-        int p_270180_,
-        float p_270685_
+        PoseStack poseStack,
+        MultiBufferSource bufferSource,
+        String text,
+        double x,
+        double y,
+        double z,
+        int color,
+        float scale
     ) {
-        renderFloatingText(p_270216_, p_270684_, p_270564_, p_270935_, p_270856_, p_270908_, p_270180_, p_270685_, true, 0.0F, false);
+        renderFloatingText(poseStack, bufferSource, text, x, y, z, color, scale, true, 0.0F, false);
     }
 
     public static void renderFloatingText(
-        PoseStack p_270649_,
-        MultiBufferSource p_270695_,
-        String p_270703_,
-        double p_270942_,
-        double p_270292_,
-        double p_270885_,
-        int p_270956_,
-        float p_270657_,
+        PoseStack poseStack,
+        MultiBufferSource bufferSource,
+        String text,
+        double x,
+        double y,
+        double z,
+        int color,
+        float scale,
         boolean p_270731_,
         float p_270825_,
-        boolean p_270222_
+        boolean transparent
     ) {
         Minecraft minecraft = Minecraft.getInstance();
         Camera camera = minecraft.gameRenderer.getMainCamera();
@@ -251,31 +251,31 @@ public class DebugRenderer {
             double d0 = camera.getPosition().x;
             double d1 = camera.getPosition().y;
             double d2 = camera.getPosition().z;
-            p_270649_.pushPose();
-            p_270649_.translate((float)(p_270942_ - d0), (float)(p_270292_ - d1) + 0.07F, (float)(p_270885_ - d2));
-            p_270649_.mulPose(camera.rotation());
-            p_270649_.scale(p_270657_, -p_270657_, p_270657_);
-            float f = p_270731_ ? (float)(-font.width(p_270703_)) / 2.0F : 0.0F;
-            f -= p_270825_ / p_270657_;
+            poseStack.pushPose();
+            poseStack.translate((float)(x - d0), (float)(y - d1) + 0.07F, (float)(z - d2));
+            poseStack.mulPose(camera.rotation());
+            poseStack.scale(scale, -scale, scale);
+            float f = p_270731_ ? (float)(-font.width(text)) / 2.0F : 0.0F;
+            f -= p_270825_ / scale;
             font.drawInBatch(
-                p_270703_,
+                text,
                 f,
                 0.0F,
-                p_270956_,
+                color,
                 false,
-                p_270649_.last().pose(),
-                p_270695_,
-                p_270222_ ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL,
+                poseStack.last().pose(),
+                bufferSource,
+                transparent ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL,
                 0,
                 15728880
             );
-            p_270649_.popPose();
+            poseStack.popPose();
         }
     }
 
     @OnlyIn(Dist.CLIENT)
     public interface SimpleDebugRenderer {
-        void render(PoseStack p_113507_, MultiBufferSource p_113508_, double p_113509_, double p_113510_, double p_113511_);
+        void render(PoseStack poseStack, MultiBufferSource bufferSource, double camX, double camY, double camZ);
 
         default void clear() {
         }

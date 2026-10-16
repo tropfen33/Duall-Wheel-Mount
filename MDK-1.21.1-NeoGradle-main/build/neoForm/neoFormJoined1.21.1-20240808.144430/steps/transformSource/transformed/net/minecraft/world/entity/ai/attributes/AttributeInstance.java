@@ -20,6 +20,9 @@ public class AttributeInstance {
     private static final String BASE_FIELD = "base";
     private static final String MODIFIERS_FIELD = "modifiers";
     public static final String ID_FIELD = "id";
+    /**
+     * The Attribute this is an instance of
+     */
     private final Holder<Attribute> attribute;
     private final Map<AttributeModifier.Operation, Map<ResourceLocation, AttributeModifier>> modifiersByOperation = Maps.newEnumMap(
         AttributeModifier.Operation.class
@@ -31,10 +34,10 @@ public class AttributeInstance {
     private double cachedValue;
     private final Consumer<AttributeInstance> onDirty;
 
-    public AttributeInstance(Holder<Attribute> p_316357_, Consumer<AttributeInstance> p_22098_) {
-        this.attribute = p_316357_;
-        this.onDirty = p_22098_;
-        this.baseValue = p_316357_.value().getDefaultValue();
+    public AttributeInstance(Holder<Attribute> attribute, Consumer<AttributeInstance> onDirty) {
+        this.attribute = attribute;
+        this.onDirty = onDirty;
+        this.baseValue = attribute.value().getDefaultValue();
     }
 
     public Holder<Attribute> getAttribute() {
@@ -45,16 +48,16 @@ public class AttributeInstance {
         return this.baseValue;
     }
 
-    public void setBaseValue(double p_22101_) {
-        if (p_22101_ != this.baseValue) {
-            this.baseValue = p_22101_;
+    public void setBaseValue(double baseValue) {
+        if (baseValue != this.baseValue) {
+            this.baseValue = baseValue;
             this.setDirty();
         }
     }
 
     @VisibleForTesting
-    Map<ResourceLocation, AttributeModifier> getModifiers(AttributeModifier.Operation p_22105_) {
-        return this.modifiersByOperation.computeIfAbsent(p_22105_, p_332604_ -> new Object2ObjectOpenHashMap<>());
+    Map<ResourceLocation, AttributeModifier> getModifiers(AttributeModifier.Operation operation) {
+        return this.modifiersByOperation.computeIfAbsent(operation, p_332604_ -> new Object2ObjectOpenHashMap<>());
     }
 
     public Set<AttributeModifier> getModifiers() {
@@ -62,45 +65,45 @@ public class AttributeInstance {
     }
 
     @Nullable
-    public AttributeModifier getModifier(ResourceLocation p_351007_) {
-        return this.modifierById.get(p_351007_);
+    public AttributeModifier getModifier(ResourceLocation id) {
+        return this.modifierById.get(id);
     }
 
-    public boolean hasModifier(ResourceLocation p_350421_) {
-        return this.modifierById.get(p_350421_) != null;
+    public boolean hasModifier(ResourceLocation id) {
+        return this.modifierById.get(id) != null;
     }
 
-    private void addModifier(AttributeModifier p_22134_) {
-        AttributeModifier attributemodifier = this.modifierById.putIfAbsent(p_22134_.id(), p_22134_);
+    private void addModifier(AttributeModifier modifier) {
+        AttributeModifier attributemodifier = this.modifierById.putIfAbsent(modifier.id(), modifier);
         if (attributemodifier != null) {
             throw new IllegalArgumentException("Modifier is already applied on this attribute!");
         } else {
-            this.getModifiers(p_22134_.operation()).put(p_22134_.id(), p_22134_);
+            this.getModifiers(modifier.operation()).put(modifier.id(), modifier);
             this.setDirty();
         }
     }
 
-    public void addOrUpdateTransientModifier(AttributeModifier p_316482_) {
-        AttributeModifier attributemodifier = this.modifierById.put(p_316482_.id(), p_316482_);
-        if (p_316482_ != attributemodifier) {
-            this.getModifiers(p_316482_.operation()).put(p_316482_.id(), p_316482_);
+    public void addOrUpdateTransientModifier(AttributeModifier modifier) {
+        AttributeModifier attributemodifier = this.modifierById.put(modifier.id(), modifier);
+        if (modifier != attributemodifier) {
+            this.getModifiers(modifier.operation()).put(modifier.id(), modifier);
             this.setDirty();
         }
     }
 
-    public void addTransientModifier(AttributeModifier p_22119_) {
-        this.addModifier(p_22119_);
+    public void addTransientModifier(AttributeModifier modifier) {
+        this.addModifier(modifier);
     }
 
-    public void addOrReplacePermanentModifier(AttributeModifier p_353041_) {
-        this.removeModifier(p_353041_.id());
-        this.addModifier(p_353041_);
-        this.permanentModifiers.put(p_353041_.id(), p_353041_);
+    public void addOrReplacePermanentModifier(AttributeModifier modifier) {
+        this.removeModifier(modifier.id());
+        this.addModifier(modifier);
+        this.permanentModifiers.put(modifier.id(), modifier);
     }
 
-    public void addPermanentModifier(AttributeModifier p_22126_) {
-        this.addModifier(p_22126_);
-        this.permanentModifiers.put(p_22126_.id(), p_22126_);
+    public void addPermanentModifier(AttributeModifier modifier) {
+        this.addModifier(modifier);
+        this.permanentModifiers.put(modifier.id(), modifier);
     }
 
     protected void setDirty() {
@@ -108,17 +111,17 @@ public class AttributeInstance {
         this.onDirty.accept(this);
     }
 
-    public void removeModifier(AttributeModifier p_22131_) {
-        this.removeModifier(p_22131_.id());
+    public void removeModifier(AttributeModifier modifier) {
+        this.removeModifier(modifier.id());
     }
 
-    public boolean removeModifier(ResourceLocation p_350300_) {
-        AttributeModifier attributemodifier = this.modifierById.remove(p_350300_);
+    public boolean removeModifier(ResourceLocation id) {
+        AttributeModifier attributemodifier = this.modifierById.remove(id);
         if (attributemodifier == null) {
             return false;
         } else {
-            this.getModifiers(attributemodifier.operation()).remove(p_350300_);
-            this.permanentModifiers.remove(p_350300_);
+            this.getModifiers(attributemodifier.operation()).remove(id);
+            this.permanentModifiers.remove(id);
             this.setDirty();
             return true;
         }
@@ -159,18 +162,18 @@ public class AttributeInstance {
         return this.attribute.value().sanitizeValue(d1);
     }
 
-    private Collection<AttributeModifier> getModifiersOrEmpty(AttributeModifier.Operation p_22117_) {
-        return this.modifiersByOperation.getOrDefault(p_22117_, Map.of()).values();
+    private Collection<AttributeModifier> getModifiersOrEmpty(AttributeModifier.Operation operation) {
+        return this.modifiersByOperation.getOrDefault(operation, Map.of()).values();
     }
 
-    public void replaceFrom(AttributeInstance p_22103_) {
-        this.baseValue = p_22103_.baseValue;
+    public void replaceFrom(AttributeInstance instance) {
+        this.baseValue = instance.baseValue;
         this.modifierById.clear();
-        this.modifierById.putAll(p_22103_.modifierById);
+        this.modifierById.putAll(instance.modifierById);
         this.permanentModifiers.clear();
-        this.permanentModifiers.putAll(p_22103_.permanentModifiers);
+        this.permanentModifiers.putAll(instance.permanentModifiers);
         this.modifiersByOperation.clear();
-        p_22103_.modifiersByOperation
+        instance.modifiersByOperation
             .forEach((p_332605_, p_332606_) -> this.getModifiers(p_332605_).putAll((Map<? extends ResourceLocation, ? extends AttributeModifier>)p_332606_));
         this.setDirty();
     }
@@ -195,10 +198,10 @@ public class AttributeInstance {
         return compoundtag;
     }
 
-    public void load(CompoundTag p_22114_) {
-        this.baseValue = p_22114_.getDouble("base");
-        if (p_22114_.contains("modifiers", 9)) {
-            ListTag listtag = p_22114_.getList("modifiers", 10);
+    public void load(CompoundTag nbt) {
+        this.baseValue = nbt.getDouble("base");
+        if (nbt.contains("modifiers", 9)) {
+            ListTag listtag = nbt.getList("modifiers", 10);
 
             for (int i = 0; i < listtag.size(); i++) {
                 AttributeModifier attributemodifier = AttributeModifier.load(listtag.getCompound(i));

@@ -38,17 +38,17 @@ public record ItemWrittenBookPredicate(
         return DataComponents.WRITTEN_BOOK_CONTENT;
     }
 
-    public boolean matches(ItemStack p_340982_, WrittenBookContent p_341220_) {
-        if (this.author.isPresent() && !this.author.get().equals(p_341220_.author())) {
+    public boolean matches(ItemStack stack, WrittenBookContent value) {
+        if (this.author.isPresent() && !this.author.get().equals(value.author())) {
             return false;
-        } else if (this.title.isPresent() && !this.title.get().equals(p_341220_.title().raw())) {
+        } else if (this.title.isPresent() && !this.title.get().equals(value.title().raw())) {
             return false;
-        } else if (!this.generation.matches(p_341220_.generation())) {
+        } else if (!this.generation.matches(value.generation())) {
             return false;
         } else {
-            return this.resolved.isPresent() && this.resolved.get() != p_341220_.resolved()
+            return this.resolved.isPresent() && this.resolved.get() != value.resolved()
                 ? false
-                : !this.pages.isPresent() || this.pages.get().test(p_341220_.pages());
+                : !this.pages.isPresent() || this.pages.get().test(value.pages());
         }
     }
 
@@ -56,8 +56,8 @@ public record ItemWrittenBookPredicate(
         public static final Codec<ItemWrittenBookPredicate.PagePredicate> CODEC = ComponentSerialization.CODEC
             .xmap(ItemWrittenBookPredicate.PagePredicate::new, ItemWrittenBookPredicate.PagePredicate::contents);
 
-        public boolean test(Filterable<Component> p_340820_) {
-            return p_340820_.raw().equals(this.contents);
+        public boolean test(Filterable<Component> contents) {
+            return contents.raw().equals(this.contents);
         }
     }
 }

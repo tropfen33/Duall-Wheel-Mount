@@ -14,55 +14,55 @@ public class LayeredRegistryAccess<T> {
     private final List<RegistryAccess.Frozen> values;
     private final RegistryAccess.Frozen composite;
 
-    public LayeredRegistryAccess(List<T> p_251225_) {
-        this(p_251225_, Util.make(() -> {
-            RegistryAccess.Frozen[] aregistryaccess$frozen = new RegistryAccess.Frozen[p_251225_.size()];
+    public LayeredRegistryAccess(List<T> keys) {
+        this(keys, Util.make(() -> {
+            RegistryAccess.Frozen[] aregistryaccess$frozen = new RegistryAccess.Frozen[keys.size()];
             Arrays.fill(aregistryaccess$frozen, RegistryAccess.EMPTY);
             return Arrays.asList(aregistryaccess$frozen);
         }));
     }
 
-    private LayeredRegistryAccess(List<T> p_250473_, List<RegistryAccess.Frozen> p_249320_) {
-        this.keys = List.copyOf(p_250473_);
-        this.values = List.copyOf(p_249320_);
-        this.composite = new RegistryAccess.ImmutableRegistryAccess(collectRegistries(p_249320_.stream())).freeze();
+    private LayeredRegistryAccess(List<T> keys, List<RegistryAccess.Frozen> values) {
+        this.keys = List.copyOf(keys);
+        this.values = List.copyOf(values);
+        this.composite = new RegistryAccess.ImmutableRegistryAccess(collectRegistries(values.stream())).freeze();
     }
 
-    private int getLayerIndexOrThrow(T p_250144_) {
-        int i = this.keys.indexOf(p_250144_);
+    private int getLayerIndexOrThrow(T key) {
+        int i = this.keys.indexOf(key);
         if (i == -1) {
-            throw new IllegalStateException("Can't find " + p_250144_ + " inside " + this.keys);
+            throw new IllegalStateException("Can't find " + key + " inside " + this.keys);
         } else {
             return i;
         }
     }
 
-    public RegistryAccess.Frozen getLayer(T p_250826_) {
-        int i = this.getLayerIndexOrThrow(p_250826_);
+    public RegistryAccess.Frozen getLayer(T key) {
+        int i = this.getLayerIndexOrThrow(key);
         return this.values.get(i);
     }
 
-    public RegistryAccess.Frozen getAccessForLoading(T p_251335_) {
-        int i = this.getLayerIndexOrThrow(p_251335_);
+    public RegistryAccess.Frozen getAccessForLoading(T key) {
+        int i = this.getLayerIndexOrThrow(key);
         return this.getCompositeAccessForLayers(0, i);
     }
 
-    public RegistryAccess.Frozen getAccessFrom(T p_250766_) {
-        int i = this.getLayerIndexOrThrow(p_250766_);
+    public RegistryAccess.Frozen getAccessFrom(T key) {
+        int i = this.getLayerIndexOrThrow(key);
         return this.getCompositeAccessForLayers(i, this.values.size());
     }
 
-    private RegistryAccess.Frozen getCompositeAccessForLayers(int p_251526_, int p_251999_) {
-        return new RegistryAccess.ImmutableRegistryAccess(collectRegistries(this.values.subList(p_251526_, p_251999_).stream())).freeze();
+    private RegistryAccess.Frozen getCompositeAccessForLayers(int startIndex, int endIndex) {
+        return new RegistryAccess.ImmutableRegistryAccess(collectRegistries(this.values.subList(startIndex, endIndex).stream())).freeze();
     }
 
-    public LayeredRegistryAccess<T> replaceFrom(T p_252104_, RegistryAccess.Frozen... p_250492_) {
-        return this.replaceFrom(p_252104_, Arrays.asList(p_250492_));
+    public LayeredRegistryAccess<T> replaceFrom(T key, RegistryAccess.Frozen... values) {
+        return this.replaceFrom(key, Arrays.asList(values));
     }
 
-    public LayeredRegistryAccess<T> replaceFrom(T p_249539_, List<RegistryAccess.Frozen> p_250124_) {
-        int i = this.getLayerIndexOrThrow(p_249539_);
-        if (p_250124_.size() > this.values.size() - i) {
+    public LayeredRegistryAccess<T> replaceFrom(T key, List<RegistryAccess.Frozen> values) {
+        int i = this.getLayerIndexOrThrow(key);
+        if (values.size() > this.values.size() - i) {
             throw new IllegalStateException("Too many values to replace");
         } else {
             List<RegistryAccess.Frozen> list = new ArrayList<>();
@@ -71,7 +71,7 @@ public class LayeredRegistryAccess<T> {
                 list.add(this.values.get(j));
             }
 
-            list.addAll(p_250124_);
+            list.addAll(values);
 
             while (list.size() < this.values.size()) {
                 list.add(RegistryAccess.EMPTY);
@@ -85,9 +85,9 @@ public class LayeredRegistryAccess<T> {
         return this.composite;
     }
 
-    private static Map<ResourceKey<? extends Registry<?>>, Registry<?>> collectRegistries(Stream<? extends RegistryAccess> p_248595_) {
+    private static Map<ResourceKey<? extends Registry<?>>, Registry<?>> collectRegistries(Stream<? extends RegistryAccess> accesses) {
         Map<ResourceKey<? extends Registry<?>>, Registry<?>> map = new HashMap<>();
-        p_248595_.forEach(p_252003_ -> p_252003_.registries().forEach(p_339330_ -> {
+        accesses.forEach(p_252003_ -> p_252003_.registries().forEach(p_339330_ -> {
                 if (map.put(p_339330_.key(), p_339330_.value()) != null) {
                     throw new IllegalStateException("Duplicated registry " + p_339330_.key());
                 }

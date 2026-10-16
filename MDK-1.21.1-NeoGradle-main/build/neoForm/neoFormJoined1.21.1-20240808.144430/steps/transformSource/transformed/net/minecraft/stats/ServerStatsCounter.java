@@ -33,22 +33,25 @@ import net.minecraft.world.entity.player.Player;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 
+/**
+ * Server-side implementation of {@link net.minecraft.stats.StatsCounter}; handles counting, serialising, and de-serialising statistics, as well as sending them to connected clients via the {@linkplain net.minecraft.network.protocol.game.ClientboundAwardStatsPacket award stats packet}.
+ */
 public class ServerStatsCounter extends StatsCounter {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final MinecraftServer server;
     private final File file;
     private final Set<Stat<?>> dirty = Sets.newHashSet();
 
-    public ServerStatsCounter(MinecraftServer p_12816_, File p_12817_) {
-        this.server = p_12816_;
-        this.file = p_12817_;
-        if (p_12817_.isFile()) {
+    public ServerStatsCounter(MinecraftServer server, File file) {
+        this.server = server;
+        this.file = file;
+        if (file.isFile()) {
             try {
-                this.parseLocal(p_12816_.getFixerUpper(), FileUtils.readFileToString(p_12817_));
+                this.parseLocal(server.getFixerUpper(), FileUtils.readFileToString(file));
             } catch (IOException ioexception) {
-                LOGGER.error("Couldn't read statistics file {}", p_12817_, ioexception);
+                LOGGER.error("Couldn't read statistics file {}", file, ioexception);
             } catch (JsonParseException jsonparseexception) {
-                LOGGER.error("Couldn't parse statistics file {}", p_12817_, jsonparseexception);
+                LOGGER.error("Couldn't parse statistics file {}", file, jsonparseexception);
             }
         }
     }
@@ -62,9 +65,9 @@ public class ServerStatsCounter extends StatsCounter {
     }
 
     @Override
-    public void setValue(Player p_12827_, Stat<?> p_12828_, int p_12829_) {
-        super.setValue(p_12827_, p_12828_, p_12829_);
-        this.dirty.add(p_12828_);
+    public void setValue(Player player, Stat<?> stat, int value) {
+        super.setValue(player, stat, value);
+        this.dirty.add(stat);
     }
 
     private Set<Stat<?>> getDirty() {
@@ -73,14 +76,14 @@ public class ServerStatsCounter extends StatsCounter {
         return set;
     }
 
-    public void parseLocal(DataFixer p_12833_, String p_12834_) {
+    public void parseLocal(DataFixer fixerUpper, String json) {
         try {
-            try (JsonReader jsonreader = new JsonReader(new StringReader(p_12834_))) {
+            try (JsonReader jsonreader = new JsonReader(new StringReader(json))) {
                 jsonreader.setLenient(false);
                 JsonElement jsonelement = Streams.parse(jsonreader);
                 if (!jsonelement.isJsonNull()) {
                     CompoundTag compoundtag = fromJson(jsonelement.getAsJsonObject());
-                    compoundtag = DataFixTypes.STATS.updateToCurrentVersion(p_12833_, compoundtag, NbtUtils.getDataVersion(compoundtag, 1343));
+                    compoundtag = DataFixTypes.STATS.updateToCurrentVersion(fixerUpper, compoundtag, NbtUtils.getDataVersion(compoundtag, 1343));
                     if (!compoundtag.contains("stats", 10)) {
                         return;
                     }
@@ -121,14 +124,14 @@ public class ServerStatsCounter extends StatsCounter {
         }
     }
 
-    private <T> Optional<Stat<T>> getStat(StatType<T> p_12824_, String p_12825_) {
-        return Optional.ofNullable(ResourceLocation.tryParse(p_12825_)).flatMap(p_12824_.getRegistry()::getOptional).map(p_12824_::get);
+    private <T> Optional<Stat<T>> getStat(StatType<T> type, String location) {
+        return Optional.ofNullable(ResourceLocation.tryParse(location)).flatMap(type.getRegistry()::getOptional).map(type::get);
     }
 
-    private static CompoundTag fromJson(JsonObject p_12831_) {
+    private static CompoundTag fromJson(JsonObject json) {
         CompoundTag compoundtag = new CompoundTag();
 
-        for (Entry<String, JsonElement> entry : p_12831_.entrySet()) {
+        for (Entry<String, JsonElement> entry : json.entrySet()) {
             JsonElement jsonelement = entry.getValue();
             if (jsonelement.isJsonObject()) {
                 compoundtag.put(entry.getKey(), fromJson(jsonelement.getAsJsonObject()));
@@ -163,21 +166,21 @@ public class ServerStatsCounter extends StatsCounter {
         return jsonobject1.toString();
     }
 
-    private static <T> ResourceLocation getKey(Stat<T> p_12847_) {
-        return p_12847_.getType().getRegistry().getKey(p_12847_.getValue());
+    private static <T> ResourceLocation getKey(Stat<T> stat) {
+        return stat.getType().getRegistry().getKey(stat.getValue());
     }
 
     public void markAllDirty() {
         this.dirty.addAll(this.stats.keySet());
     }
 
-    public void sendStats(ServerPlayer p_12820_) {
+    public void sendStats(ServerPlayer player) {
         Object2IntMap<Stat<?>> object2intmap = new Object2IntOpenHashMap<>();
 
         for (Stat<?> stat : this.getDirty()) {
             object2intmap.put(stat, this.getValue(stat));
         }
 
-        p_12820_.connection.send(new ClientboundAwardStatsPacket(object2intmap));
+        player.connection.send(new ClientboundAwardStatsPacket(object2intmap));
     }
 }

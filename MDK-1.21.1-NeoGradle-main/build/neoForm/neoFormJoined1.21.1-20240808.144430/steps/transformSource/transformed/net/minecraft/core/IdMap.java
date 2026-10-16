@@ -5,24 +5,27 @@ import javax.annotation.Nullable;
 public interface IdMap<T> extends Iterable<T> {
     int DEFAULT = -1;
 
-    int getId(T p_122652_);
+    /**
+     * @return the integer ID used to identify the given object
+     */
+    int getId(T value);
 
     @Nullable
-    T byId(int p_122651_);
+    T byId(int id);
 
-    default T byIdOrThrow(int p_200958_) {
-        T t = this.byId(p_200958_);
+    default T byIdOrThrow(int id) {
+        T t = this.byId(id);
         if (t == null) {
-            throw new IllegalArgumentException("No value with id " + p_200958_);
+            throw new IllegalArgumentException("No value with id " + id);
         } else {
             return t;
         }
     }
 
-    default int getIdOrThrow(T p_320059_) {
-        int i = this.getId(p_320059_);
+    default int getIdOrThrow(T value) {
+        int i = this.getId(value);
         if (i == -1) {
-            throw new IllegalArgumentException("Can't find id for '" + p_320059_ + "' in map " + this);
+            throw new IllegalArgumentException("Can't find id for '" + value + "' in map " + this);
         } else {
             return i;
         }

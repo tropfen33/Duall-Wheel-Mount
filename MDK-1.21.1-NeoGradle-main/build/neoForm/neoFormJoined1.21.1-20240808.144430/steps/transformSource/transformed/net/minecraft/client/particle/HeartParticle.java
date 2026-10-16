@@ -8,8 +8,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class HeartParticle extends TextureSheetParticle {
-    protected HeartParticle(ClientLevel p_106847_, double p_106848_, double p_106849_, double p_106850_) {
-        super(p_106847_, p_106848_, p_106849_, p_106850_, 0.0, 0.0, 0.0);
+    protected HeartParticle(ClientLevel level, double x, double y, double z) {
+        super(level, x, y, z, 0.0, 0.0, 0.0);
         this.speedUpWhenYMotionIsBlocked = true;
         this.friction = 0.86F;
         this.xd *= 0.01F;
@@ -27,29 +27,29 @@ public class HeartParticle extends TextureSheetParticle {
     }
 
     @Override
-    public float getQuadSize(float p_106860_) {
-        return this.quadSize * Mth.clamp(((float)this.age + p_106860_) / (float)this.lifetime * 32.0F, 0.0F, 1.0F);
+    public float getQuadSize(float scaleFactor) {
+        return this.quadSize * Mth.clamp(((float)this.age + scaleFactor) / (float)this.lifetime * 32.0F, 0.0F, 1.0F);
     }
 
     @OnlyIn(Dist.CLIENT)
     public static class AngryVillagerProvider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprite;
 
-        public AngryVillagerProvider(SpriteSet p_106863_) {
-            this.sprite = p_106863_;
+        public AngryVillagerProvider(SpriteSet sprites) {
+            this.sprite = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_106874_,
-            ClientLevel p_106875_,
-            double p_106876_,
-            double p_106877_,
-            double p_106878_,
-            double p_106879_,
-            double p_106880_,
-            double p_106881_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            HeartParticle heartparticle = new HeartParticle(p_106875_, p_106876_, p_106877_ + 0.5, p_106878_);
+            HeartParticle heartparticle = new HeartParticle(level, x, y + 0.5, z);
             heartparticle.pickSprite(this.sprite);
             heartparticle.setColor(1.0F, 1.0F, 1.0F);
             return heartparticle;
@@ -60,21 +60,21 @@ public class HeartParticle extends TextureSheetParticle {
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprite;
 
-        public Provider(SpriteSet p_106884_) {
-            this.sprite = p_106884_;
+        public Provider(SpriteSet sprites) {
+            this.sprite = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_106895_,
-            ClientLevel p_106896_,
-            double p_106897_,
-            double p_106898_,
-            double p_106899_,
-            double p_106900_,
-            double p_106901_,
-            double p_106902_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            HeartParticle heartparticle = new HeartParticle(p_106896_, p_106897_, p_106898_, p_106899_);
+            HeartParticle heartparticle = new HeartParticle(level, x, y, z);
             heartparticle.pickSprite(this.sprite);
             return heartparticle;
         }

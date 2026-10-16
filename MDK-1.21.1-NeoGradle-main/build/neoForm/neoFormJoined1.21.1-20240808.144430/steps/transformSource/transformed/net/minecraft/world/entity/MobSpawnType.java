@@ -19,11 +19,11 @@ public enum MobSpawnType {
     PATROL,
     TRIAL_SPAWNER;
 
-    public static boolean isSpawner(MobSpawnType p_312682_) {
-        return p_312682_ == SPAWNER || p_312682_ == TRIAL_SPAWNER;
+    public static boolean isSpawner(MobSpawnType spawnType) {
+        return spawnType == SPAWNER || spawnType == TRIAL_SPAWNER;
     }
 
-    public static boolean ignoresLightRequirements(MobSpawnType p_311814_) {
-        return p_311814_ == TRIAL_SPAWNER;
+    public static boolean ignoresLightRequirements(MobSpawnType spawnType) {
+        return spawnType == TRIAL_SPAWNER;
     }
 }

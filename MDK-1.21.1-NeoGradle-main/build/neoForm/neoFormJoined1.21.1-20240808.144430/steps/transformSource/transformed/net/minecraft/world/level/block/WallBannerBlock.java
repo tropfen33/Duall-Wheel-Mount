@@ -44,8 +44,8 @@ public class WallBannerBlock extends AbstractBannerBlock {
         return CODEC;
     }
 
-    public WallBannerBlock(DyeColor p_57920_, BlockBehaviour.Properties p_57921_) {
-        super(p_57920_, p_57921_);
+    public WallBannerBlock(DyeColor color, BlockBehaviour.Properties properties) {
+        super(color, properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
@@ -55,28 +55,33 @@ public class WallBannerBlock extends AbstractBannerBlock {
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_57925_, LevelReader p_57926_, BlockPos p_57927_) {
-        return p_57926_.getBlockState(p_57927_.relative(p_57925_.getValue(FACING).getOpposite())).isSolid();
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        return level.getBlockState(pos.relative(state.getValue(FACING).getOpposite())).isSolid();
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_57935_, Direction p_57936_, BlockState p_57937_, LevelAccessor p_57938_, BlockPos p_57939_, BlockPos p_57940_) {
-        return p_57936_ == p_57935_.getValue(FACING).getOpposite() && !p_57935_.canSurvive(p_57938_, p_57939_)
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return facing == state.getValue(FACING).getOpposite() && !state.canSurvive(level, currentPos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_57935_, p_57936_, p_57937_, p_57938_, p_57939_, p_57940_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_57944_, BlockGetter p_57945_, BlockPos p_57946_, CollisionContext p_57947_) {
-        return SHAPES.get(p_57944_.getValue(FACING));
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SHAPES.get(state.getValue(FACING));
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_57923_) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState blockstate = this.defaultBlockState();
-        LevelReader levelreader = p_57923_.getLevel();
-        BlockPos blockpos = p_57923_.getClickedPos();
-        Direction[] adirection = p_57923_.getNearestLookingDirections();
+        LevelReader levelreader = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
+        Direction[] adirection = context.getNearestLookingDirections();
 
         for (Direction direction : adirection) {
             if (direction.getAxis().isHorizontal()) {
@@ -91,18 +96,24 @@ public class WallBannerBlock extends AbstractBannerBlock {
         return null;
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_57932_, Rotation p_57933_) {
-        return p_57932_.setValue(FACING, p_57933_.rotate(p_57932_.getValue(FACING)));
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState mirror(BlockState p_57929_, Mirror p_57930_) {
-        return p_57929_.rotate(p_57930_.getRotation(p_57929_.getValue(FACING)));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_57942_) {
-        p_57942_.add(FACING);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
     }
 }

@@ -18,14 +18,14 @@ class MatchingFluidsPredicate extends StateTestingPredicate {
                 .apply(p_259005_, MatchingFluidsPredicate::new)
     );
 
-    public MatchingFluidsPredicate(Vec3i p_204695_, HolderSet<Fluid> p_204696_) {
-        super(p_204695_);
-        this.fluids = p_204696_;
+    public MatchingFluidsPredicate(Vec3i offset, HolderSet<Fluid> fluids) {
+        super(offset);
+        this.fluids = fluids;
     }
 
     @Override
-    protected boolean test(BlockState p_190500_) {
-        return p_190500_.getFluidState().is(this.fluids);
+    protected boolean test(BlockState state) {
+        return state.getFluidState().is(this.fluids);
     }
 
     @Override

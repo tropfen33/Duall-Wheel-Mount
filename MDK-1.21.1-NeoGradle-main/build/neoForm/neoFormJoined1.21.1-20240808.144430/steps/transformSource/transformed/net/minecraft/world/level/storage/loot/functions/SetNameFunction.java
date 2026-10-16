@@ -25,6 +25,10 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import org.slf4j.Logger;
 
+/**
+ * LootItemFunction that sets a stack's name.
+ * The Component for the name is optionally resolved relative to a given {@link LootContext.EntityTarget} for entity-sensitive component data such as scoreboard scores.
+ */
 public class SetNameFunction extends LootItemConditionalFunction {
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final MapCodec<SetNameFunction> CODEC = RecordCodecBuilder.mapCodec(
@@ -43,12 +47,12 @@ public class SetNameFunction extends LootItemConditionalFunction {
     private final SetNameFunction.Target target;
 
     private SetNameFunction(
-        List<LootItemCondition> p_299241_, Optional<Component> p_298804_, Optional<LootContext.EntityTarget> p_298545_, SetNameFunction.Target p_338830_
+        List<LootItemCondition> conditions, Optional<Component> name, Optional<LootContext.EntityTarget> resolutionContext, SetNameFunction.Target target
     ) {
-        super(p_299241_);
-        this.name = p_298804_;
-        this.resolutionContext = p_298545_;
-        this.target = p_338830_;
+        super(conditions);
+        this.name = name;
+        this.resolutionContext = resolutionContext;
+        this.target = target;
     }
 
     @Override
@@ -61,9 +65,13 @@ public class SetNameFunction extends LootItemConditionalFunction {
         return this.resolutionContext.<Set<LootContextParam<?>>>map(p_298146_ -> Set.of(p_298146_.getParam())).orElse(Set.of());
     }
 
-    public static UnaryOperator<Component> createResolver(LootContext p_81140_, @Nullable LootContext.EntityTarget p_81141_) {
-        if (p_81141_ != null) {
-            Entity entity = p_81140_.getParamOrNull(p_81141_.getParam());
+    /**
+     * Create a UnaryOperator that resolves Components based on the given LootContext and EntityTarget.
+     * This will replace for example score components.
+     */
+    public static UnaryOperator<Component> createResolver(LootContext lootContext, @Nullable LootContext.EntityTarget resolutionContext) {
+        if (resolutionContext != null) {
+            Entity entity = lootContext.getParamOrNull(resolutionContext.getParam());
             if (entity != null) {
                 CommandSourceStack commandsourcestack = entity.createCommandSourceStack().withPermission(2);
                 return p_81147_ -> {
@@ -80,18 +88,21 @@ public class SetNameFunction extends LootItemConditionalFunction {
         return p_81152_ -> p_81152_;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_81137_, LootContext p_81138_) {
-        this.name.ifPresent(p_338163_ -> p_81137_.set(this.target.component(), createResolver(p_81138_, this.resolutionContext.orElse(null)).apply(p_338163_)));
-        return p_81137_;
+    public ItemStack run(ItemStack stack, LootContext context) {
+        this.name.ifPresent(p_338163_ -> stack.set(this.target.component(), createResolver(context, this.resolutionContext.orElse(null)).apply(p_338163_)));
+        return stack;
     }
 
-    public static LootItemConditionalFunction.Builder<?> setName(Component p_165460_, SetNameFunction.Target p_338546_) {
-        return simpleBuilder(p_338156_ -> new SetNameFunction(p_338156_, Optional.of(p_165460_), Optional.empty(), p_338546_));
+    public static LootItemConditionalFunction.Builder<?> setName(Component name, SetNameFunction.Target target) {
+        return simpleBuilder(p_338156_ -> new SetNameFunction(p_338156_, Optional.of(name), Optional.empty(), target));
     }
 
-    public static LootItemConditionalFunction.Builder<?> setName(Component p_165458_, SetNameFunction.Target p_338818_, LootContext.EntityTarget p_338518_) {
-        return simpleBuilder(p_338160_ -> new SetNameFunction(p_338160_, Optional.of(p_165458_), Optional.of(p_338518_), p_338818_));
+    public static LootItemConditionalFunction.Builder<?> setName(Component name, SetNameFunction.Target target, LootContext.EntityTarget resolutionContext) {
+        return simpleBuilder(p_338160_ -> new SetNameFunction(p_338160_, Optional.of(name), Optional.of(resolutionContext), target));
     }
 
     public static enum Target implements StringRepresentable {
@@ -101,8 +112,8 @@ public class SetNameFunction extends LootItemConditionalFunction {
         public static final Codec<SetNameFunction.Target> CODEC = StringRepresentable.fromEnum(SetNameFunction.Target::values);
         private final String name;
 
-        private Target(String p_338794_) {
-            this.name = p_338794_;
+        private Target(String name) {
+            this.name = name;
         }
 
         @Override

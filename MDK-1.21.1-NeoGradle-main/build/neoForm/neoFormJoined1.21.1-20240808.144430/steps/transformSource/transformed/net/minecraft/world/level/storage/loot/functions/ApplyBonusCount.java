@@ -24,6 +24,9 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
+/**
+ * LootItemFunction that modifies the stack's count based on an enchantment level on the {@linkplain LootContextParams#TOOL tool} using various formulas.
+ */
 public class ApplyBonusCount extends LootItemConditionalFunction {
     private static final Map<ResourceLocation, ApplyBonusCount.FormulaType> FORMULAS = Stream.of(
             ApplyBonusCount.BinomialWithBonusCount.TYPE, ApplyBonusCount.OreDrops.TYPE, ApplyBonusCount.UniformBonusCount.TYPE
@@ -55,10 +58,10 @@ public class ApplyBonusCount extends LootItemConditionalFunction {
     private final Holder<Enchantment> enchantment;
     private final ApplyBonusCount.Formula formula;
 
-    private ApplyBonusCount(List<LootItemCondition> p_298532_, Holder<Enchantment> p_298797_, ApplyBonusCount.Formula p_79905_) {
-        super(p_298532_);
-        this.enchantment = p_298797_;
-        this.formula = p_79905_;
+    private ApplyBonusCount(List<LootItemCondition> predicates, Holder<Enchantment> enchantment, ApplyBonusCount.Formula formula) {
+        super(predicates);
+        this.enchantment = enchantment;
+        this.formula = formula;
     }
 
     @Override
@@ -71,34 +74,40 @@ public class ApplyBonusCount extends LootItemConditionalFunction {
         return ImmutableSet.of(LootContextParams.TOOL);
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_79913_, LootContext p_79914_) {
-        ItemStack itemstack = p_79914_.getParamOrNull(LootContextParams.TOOL);
+    public ItemStack run(ItemStack stack, LootContext context) {
+        ItemStack itemstack = context.getParamOrNull(LootContextParams.TOOL);
         if (itemstack != null) {
             int i = EnchantmentHelper.getItemEnchantmentLevel(this.enchantment, itemstack);
-            int j = this.formula.calculateNewCount(p_79914_.getRandom(), p_79913_.getCount(), i);
-            p_79913_.setCount(j);
+            int j = this.formula.calculateNewCount(context.getRandom(), stack.getCount(), i);
+            stack.setCount(j);
         }
 
-        return p_79913_;
+        return stack;
     }
 
-    public static LootItemConditionalFunction.Builder<?> addBonusBinomialDistributionCount(Holder<Enchantment> p_345484_, float p_79919_, int p_79920_) {
-        return simpleBuilder(p_344680_ -> new ApplyBonusCount(p_344680_, p_345484_, new ApplyBonusCount.BinomialWithBonusCount(p_79920_, p_79919_)));
+    public static LootItemConditionalFunction.Builder<?> addBonusBinomialDistributionCount(Holder<Enchantment> enchantment, float probability, int extraRounds) {
+        return simpleBuilder(p_344680_ -> new ApplyBonusCount(p_344680_, enchantment, new ApplyBonusCount.BinomialWithBonusCount(extraRounds, probability)));
     }
 
-    public static LootItemConditionalFunction.Builder<?> addOreBonusCount(Holder<Enchantment> p_344867_) {
-        return simpleBuilder(p_344682_ -> new ApplyBonusCount(p_344682_, p_344867_, new ApplyBonusCount.OreDrops()));
+    public static LootItemConditionalFunction.Builder<?> addOreBonusCount(Holder<Enchantment> enchantment) {
+        return simpleBuilder(p_344682_ -> new ApplyBonusCount(p_344682_, enchantment, new ApplyBonusCount.OreDrops()));
     }
 
-    public static LootItemConditionalFunction.Builder<?> addUniformBonusCount(Holder<Enchantment> p_345095_) {
-        return simpleBuilder(p_344676_ -> new ApplyBonusCount(p_344676_, p_345095_, new ApplyBonusCount.UniformBonusCount(1)));
+    public static LootItemConditionalFunction.Builder<?> addUniformBonusCount(Holder<Enchantment> enchantment) {
+        return simpleBuilder(p_344676_ -> new ApplyBonusCount(p_344676_, enchantment, new ApplyBonusCount.UniformBonusCount(1)));
     }
 
-    public static LootItemConditionalFunction.Builder<?> addUniformBonusCount(Holder<Enchantment> p_344758_, int p_79923_) {
-        return simpleBuilder(p_344673_ -> new ApplyBonusCount(p_344673_, p_344758_, new ApplyBonusCount.UniformBonusCount(p_79923_)));
+    public static LootItemConditionalFunction.Builder<?> addUniformBonusCount(Holder<Enchantment> enchantment, int bonusMultiplier) {
+        return simpleBuilder(p_344673_ -> new ApplyBonusCount(p_344673_, enchantment, new ApplyBonusCount.UniformBonusCount(bonusMultiplier)));
     }
 
+    /**
+     * Applies a bonus based on a binomial distribution with {@code n = enchantmentLevel + extraRounds} and {@code p = probability}.
+     */
     static record BinomialWithBonusCount(int extraRounds, float probability) implements ApplyBonusCount.Formula {
         private static final Codec<ApplyBonusCount.BinomialWithBonusCount> CODEC = RecordCodecBuilder.create(
             p_298226_ -> p_298226_.group(
@@ -112,14 +121,14 @@ public class ApplyBonusCount extends LootItemConditionalFunction {
         );
 
         @Override
-        public int calculateNewCount(RandomSource p_230965_, int p_230966_, int p_230967_) {
-            for (int i = 0; i < p_230967_ + this.extraRounds; i++) {
-                if (p_230965_.nextFloat() < this.probability) {
-                    p_230966_++;
+        public int calculateNewCount(RandomSource random, int originalCount, int enchantmentLevel) {
+            for (int i = 0; i < enchantmentLevel + this.extraRounds; i++) {
+                if (random.nextFloat() < this.probability) {
+                    originalCount++;
                 }
             }
 
-            return p_230966_;
+            return originalCount;
         }
 
         @Override
@@ -129,7 +138,7 @@ public class ApplyBonusCount extends LootItemConditionalFunction {
     }
 
     interface Formula {
-        int calculateNewCount(RandomSource p_230968_, int p_230969_, int p_230970_);
+        int calculateNewCount(RandomSource random, int originalCount, int enchantmentLevel);
 
         ApplyBonusCount.FormulaType getType();
     }
@@ -137,21 +146,24 @@ public class ApplyBonusCount extends LootItemConditionalFunction {
     static record FormulaType(ResourceLocation id, Codec<? extends ApplyBonusCount.Formula> codec) {
     }
 
+    /**
+     * Applies a bonus count with a special formula used for fortune ore drops.
+     */
     static record OreDrops() implements ApplyBonusCount.Formula {
         public static final Codec<ApplyBonusCount.OreDrops> CODEC = Codec.unit(ApplyBonusCount.OreDrops::new);
         public static final ApplyBonusCount.FormulaType TYPE = new ApplyBonusCount.FormulaType(ResourceLocation.withDefaultNamespace("ore_drops"), CODEC);
 
         @Override
-        public int calculateNewCount(RandomSource p_230972_, int p_230973_, int p_230974_) {
-            if (p_230974_ > 0) {
-                int i = p_230972_.nextInt(p_230974_ + 2) - 1;
+        public int calculateNewCount(RandomSource random, int originalCount, int enchantmentLevel) {
+            if (enchantmentLevel > 0) {
+                int i = random.nextInt(enchantmentLevel + 2) - 1;
                 if (i < 0) {
                     i = 0;
                 }
 
-                return p_230973_ * (i + 1);
+                return originalCount * (i + 1);
             } else {
-                return p_230973_;
+                return originalCount;
             }
         }
 
@@ -161,6 +173,9 @@ public class ApplyBonusCount extends LootItemConditionalFunction {
         }
     }
 
+    /**
+     * Adds a bonus count based on the enchantment level scaled by a constant multiplier.
+     */
     static record UniformBonusCount(int bonusMultiplier) implements ApplyBonusCount.Formula {
         public static final Codec<ApplyBonusCount.UniformBonusCount> CODEC = RecordCodecBuilder.create(
             p_298501_ -> p_298501_.group(Codec.INT.fieldOf("bonusMultiplier").forGetter(ApplyBonusCount.UniformBonusCount::bonusMultiplier))
@@ -171,8 +186,8 @@ public class ApplyBonusCount extends LootItemConditionalFunction {
         );
 
         @Override
-        public int calculateNewCount(RandomSource p_230976_, int p_230977_, int p_230978_) {
-            return p_230977_ + p_230976_.nextInt(this.bonusMultiplier * p_230978_ + 1);
+        public int calculateNewCount(RandomSource random, int originalCount, int enchantmentLevel) {
+            return originalCount + random.nextInt(this.bonusMultiplier * enchantmentLevel + 1);
         }
 
         @Override

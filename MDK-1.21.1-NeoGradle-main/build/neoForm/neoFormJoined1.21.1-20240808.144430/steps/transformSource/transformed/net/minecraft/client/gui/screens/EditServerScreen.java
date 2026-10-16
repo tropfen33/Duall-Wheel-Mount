@@ -24,11 +24,11 @@ public class EditServerScreen extends Screen {
     private EditBox nameEdit;
     private final Screen lastScreen;
 
-    public EditServerScreen(Screen p_96017_, BooleanConsumer p_96018_, ServerData p_96019_) {
+    public EditServerScreen(Screen lastScreen, BooleanConsumer callback, ServerData serverData) {
         super(Component.translatable("addServer.title"));
-        this.lastScreen = p_96017_;
-        this.callback = p_96018_;
-        this.serverData = p_96019_;
+        this.lastScreen = lastScreen;
+        this.callback = callback;
+        this.serverData = serverData;
     }
 
     @Override
@@ -74,10 +74,10 @@ public class EditServerScreen extends Screen {
     }
 
     @Override
-    public void resize(Minecraft p_96026_, int p_96027_, int p_96028_) {
+    public void resize(Minecraft minecraft, int width, int height) {
         String s = this.ipEdit.getValue();
         String s1 = this.nameEdit.getValue();
-        this.init(p_96026_, p_96027_, p_96028_);
+        this.init(minecraft, width, height);
         this.ipEdit.setValue(s);
         this.nameEdit.setValue(s1);
     }
@@ -97,13 +97,21 @@ public class EditServerScreen extends Screen {
         this.addButton.active = ServerAddress.isValidAddress(this.ipEdit.getValue()) && !this.nameEdit.getValue().isEmpty();
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282351_, int p_96022_, int p_96023_, float p_96024_) {
-        super.render(p_282351_, p_96022_, p_96023_, p_96024_);
-        p_282351_.drawCenteredString(this.font, this.title, this.width / 2, 17, 16777215);
-        p_282351_.drawString(this.font, NAME_LABEL, this.width / 2 - 100 + 1, 53, 10526880);
-        p_282351_.drawString(this.font, IP_LABEL, this.width / 2 - 100 + 1, 94, 10526880);
-        this.nameEdit.render(p_282351_, p_96022_, p_96023_, p_96024_);
-        this.ipEdit.render(p_282351_, p_96022_, p_96023_, p_96024_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 17, 16777215);
+        guiGraphics.drawString(this.font, NAME_LABEL, this.width / 2 - 100 + 1, 53, 10526880);
+        guiGraphics.drawString(this.font, IP_LABEL, this.width / 2 - 100 + 1, 94, 10526880);
+        this.nameEdit.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.ipEdit.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 }

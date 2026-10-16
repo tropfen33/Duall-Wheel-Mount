@@ -23,16 +23,16 @@ public class WindCharge extends AbstractWindCharge {
     private static final float RADIUS = 1.2F;
     private int noDeflectTicks = 5;
 
-    public WindCharge(EntityType<? extends AbstractWindCharge> p_326226_, Level p_326464_) {
-        super(p_326226_, p_326464_);
+    public WindCharge(EntityType<? extends AbstractWindCharge> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public WindCharge(Player p_326044_, Level p_326101_, double p_326183_, double p_326157_, double p_325928_) {
-        super(EntityType.WIND_CHARGE, p_326101_, p_326044_, p_326183_, p_326157_, p_325928_);
+    public WindCharge(Player player, Level level, double x, double y, double z) {
+        super(EntityType.WIND_CHARGE, level, player, x, y, z);
     }
 
-    public WindCharge(Level p_326007_, double p_326331_, double p_326001_, double p_325990_, Vec3 p_347497_) {
-        super(EntityType.WIND_CHARGE, p_326331_, p_326001_, p_325990_, p_347497_, p_326007_);
+    public WindCharge(Level level, double x, double y, double z, Vec3 movement) {
+        super(EntityType.WIND_CHARGE, x, y, z, movement, level);
     }
 
     @Override
@@ -44,20 +44,20 @@ public class WindCharge extends AbstractWindCharge {
     }
 
     @Override
-    public boolean deflect(ProjectileDeflection p_350880_, @Nullable Entity p_350728_, @Nullable Entity p_350716_, boolean p_350553_) {
-        return this.noDeflectTicks > 0 ? false : super.deflect(p_350880_, p_350728_, p_350716_, p_350553_);
+    public boolean deflect(ProjectileDeflection deflection, @Nullable Entity entity, @Nullable Entity owner, boolean deflectedByPlayer) {
+        return this.noDeflectTicks > 0 ? false : super.deflect(deflection, entity, owner, deflectedByPlayer);
     }
 
     @Override
-    protected void explode(Vec3 p_352393_) {
+    protected void explode(Vec3 pos) {
         this.level()
             .explode(
                 this,
                 null,
                 EXPLOSION_DAMAGE_CALCULATOR,
-                p_352393_.x(),
-                p_352393_.y(),
-                p_352393_.z(),
+                pos.x(),
+                pos.y(),
+                pos.z(),
                 1.2F,
                 false,
                 Level.ExplosionInteraction.TRIGGER,

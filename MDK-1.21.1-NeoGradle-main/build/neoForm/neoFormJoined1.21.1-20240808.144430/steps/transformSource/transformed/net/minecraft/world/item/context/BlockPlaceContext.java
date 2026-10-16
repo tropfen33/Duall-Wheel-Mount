@@ -14,34 +14,34 @@ public class BlockPlaceContext extends UseOnContext {
     private final BlockPos relativePos;
     protected boolean replaceClicked = true;
 
-    public BlockPlaceContext(Player p_43631_, InteractionHand p_43632_, ItemStack p_43633_, BlockHitResult p_43634_) {
-        this(p_43631_.level(), p_43631_, p_43632_, p_43633_, p_43634_);
+    public BlockPlaceContext(Player player, InteractionHand hand, ItemStack itemStack, BlockHitResult hitResult) {
+        this(player.level(), player, hand, itemStack, hitResult);
     }
 
-    public BlockPlaceContext(UseOnContext p_43636_) {
-        this(p_43636_.getLevel(), p_43636_.getPlayer(), p_43636_.getHand(), p_43636_.getItemInHand(), p_43636_.getHitResult());
+    public BlockPlaceContext(UseOnContext context) {
+        this(context.getLevel(), context.getPlayer(), context.getHand(), context.getItemInHand(), context.getHitResult());
     }
 
-    public BlockPlaceContext(Level p_43638_, @Nullable Player p_43639_, InteractionHand p_43640_, ItemStack p_43641_, BlockHitResult p_43642_) {
-        super(p_43638_, p_43639_, p_43640_, p_43641_, p_43642_);
-        this.relativePos = p_43642_.getBlockPos().relative(p_43642_.getDirection());
-        this.replaceClicked = p_43638_.getBlockState(p_43642_.getBlockPos()).canBeReplaced(this);
+    public BlockPlaceContext(Level level, @Nullable Player player, InteractionHand hand, ItemStack itemStack, BlockHitResult hitResult) {
+        super(level, player, hand, itemStack, hitResult);
+        this.relativePos = hitResult.getBlockPos().relative(hitResult.getDirection());
+        this.replaceClicked = level.getBlockState(hitResult.getBlockPos()).canBeReplaced(this);
     }
 
-    public static BlockPlaceContext at(BlockPlaceContext p_43645_, BlockPos p_43646_, Direction p_43647_) {
+    public static BlockPlaceContext at(BlockPlaceContext context, BlockPos pos, Direction direction) {
         return new BlockPlaceContext(
-            p_43645_.getLevel(),
-            p_43645_.getPlayer(),
-            p_43645_.getHand(),
-            p_43645_.getItemInHand(),
+            context.getLevel(),
+            context.getPlayer(),
+            context.getHand(),
+            context.getItemInHand(),
             new BlockHitResult(
                 new Vec3(
-                    (double)p_43646_.getX() + 0.5 + (double)p_43647_.getStepX() * 0.5,
-                    (double)p_43646_.getY() + 0.5 + (double)p_43647_.getStepY() * 0.5,
-                    (double)p_43646_.getZ() + 0.5 + (double)p_43647_.getStepZ() * 0.5
+                    (double)pos.getX() + 0.5 + (double)direction.getStepX() * 0.5,
+                    (double)pos.getY() + 0.5 + (double)direction.getStepY() * 0.5,
+                    (double)pos.getZ() + 0.5 + (double)direction.getStepZ() * 0.5
                 ),
-                p_43647_,
-                p_43646_,
+                direction,
+                pos,
                 false
             )
         );

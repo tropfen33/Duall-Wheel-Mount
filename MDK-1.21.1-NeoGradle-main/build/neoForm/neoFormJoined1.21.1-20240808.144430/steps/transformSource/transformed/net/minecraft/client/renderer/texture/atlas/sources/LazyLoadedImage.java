@@ -17,10 +17,10 @@ public class LazyLoadedImage {
     private final AtomicReference<NativeImage> image = new AtomicReference<>();
     private final AtomicInteger referenceCount;
 
-    public LazyLoadedImage(ResourceLocation p_267104_, Resource p_266995_, int p_266778_) {
-        this.id = p_267104_;
-        this.resource = p_266995_;
-        this.referenceCount = new AtomicInteger(p_266778_);
+    public LazyLoadedImage(ResourceLocation id, Resource resource, int referenceCount) {
+        this.id = id;
+        this.resource = resource;
+        this.referenceCount = new AtomicInteger(referenceCount);
     }
 
     public NativeImage get() throws IOException {

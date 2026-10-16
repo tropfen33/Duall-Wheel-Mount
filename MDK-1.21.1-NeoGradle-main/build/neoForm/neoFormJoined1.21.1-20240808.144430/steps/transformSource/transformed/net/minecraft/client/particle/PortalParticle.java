@@ -11,14 +11,14 @@ public class PortalParticle extends TextureSheetParticle {
     private final double yStart;
     private final double zStart;
 
-    protected PortalParticle(ClientLevel p_107551_, double p_107552_, double p_107553_, double p_107554_, double p_107555_, double p_107556_, double p_107557_) {
-        super(p_107551_, p_107552_, p_107553_, p_107554_);
-        this.xd = p_107555_;
-        this.yd = p_107556_;
-        this.zd = p_107557_;
-        this.x = p_107552_;
-        this.y = p_107553_;
-        this.z = p_107554_;
+    protected PortalParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+        super(level, x, y, z);
+        this.xd = xSpeed;
+        this.yd = ySpeed;
+        this.zd = zSpeed;
+        this.x = x;
+        this.y = y;
+        this.z = z;
         this.xStart = this.x;
         this.yStart = this.y;
         this.zStart = this.z;
@@ -36,14 +36,14 @@ public class PortalParticle extends TextureSheetParticle {
     }
 
     @Override
-    public void move(double p_107560_, double p_107561_, double p_107562_) {
-        this.setBoundingBox(this.getBoundingBox().move(p_107560_, p_107561_, p_107562_));
+    public void move(double x, double y, double z) {
+        this.setBoundingBox(this.getBoundingBox().move(x, y, z));
         this.setLocationFromBoundingbox();
     }
 
     @Override
-    public float getQuadSize(float p_107567_) {
-        float f = ((float)this.age + p_107567_) / (float)this.lifetime;
+    public float getQuadSize(float scaleFactor) {
+        float f = ((float)this.age + scaleFactor) / (float)this.lifetime;
         f = 1.0F - f;
         f *= f;
         f = 1.0F - f;
@@ -51,8 +51,8 @@ public class PortalParticle extends TextureSheetParticle {
     }
 
     @Override
-    public int getLightColor(float p_107564_) {
-        int i = super.getLightColor(p_107564_);
+    public int getLightColor(float partialTick) {
+        int i = super.getLightColor(partialTick);
         float f = (float)this.age / (float)this.lifetime;
         f *= f;
         f *= f;
@@ -88,21 +88,21 @@ public class PortalParticle extends TextureSheetParticle {
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprite;
 
-        public Provider(SpriteSet p_107570_) {
-            this.sprite = p_107570_;
+        public Provider(SpriteSet sprite) {
+            this.sprite = sprite;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_107581_,
-            ClientLevel p_107582_,
-            double p_107583_,
-            double p_107584_,
-            double p_107585_,
-            double p_107586_,
-            double p_107587_,
-            double p_107588_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            PortalParticle portalparticle = new PortalParticle(p_107582_, p_107583_, p_107584_, p_107585_, p_107586_, p_107587_, p_107588_);
+            PortalParticle portalparticle = new PortalParticle(level, x, y, z, xSpeed, ySpeed, zSpeed);
             portalparticle.pickSprite(this.sprite);
             return portalparticle;
         }

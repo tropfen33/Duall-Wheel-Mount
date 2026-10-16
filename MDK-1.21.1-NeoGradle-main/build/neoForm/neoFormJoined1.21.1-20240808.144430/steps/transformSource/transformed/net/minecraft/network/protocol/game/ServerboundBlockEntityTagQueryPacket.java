@@ -13,19 +13,19 @@ public class ServerboundBlockEntityTagQueryPacket implements Packet<ServerGamePa
     private final int transactionId;
     private final BlockPos pos;
 
-    public ServerboundBlockEntityTagQueryPacket(int p_320516_, BlockPos p_320060_) {
-        this.transactionId = p_320516_;
-        this.pos = p_320060_;
+    public ServerboundBlockEntityTagQueryPacket(int transactionId, BlockPos pos) {
+        this.transactionId = transactionId;
+        this.pos = pos;
     }
 
-    private ServerboundBlockEntityTagQueryPacket(FriendlyByteBuf p_319948_) {
-        this.transactionId = p_319948_.readVarInt();
-        this.pos = p_319948_.readBlockPos();
+    private ServerboundBlockEntityTagQueryPacket(FriendlyByteBuf buffer) {
+        this.transactionId = buffer.readVarInt();
+        this.pos = buffer.readBlockPos();
     }
 
-    private void write(FriendlyByteBuf p_320108_) {
-        p_320108_.writeVarInt(this.transactionId);
-        p_320108_.writeBlockPos(this.pos);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.transactionId);
+        buffer.writeBlockPos(this.pos);
     }
 
     @Override
@@ -33,8 +33,11 @@ public class ServerboundBlockEntityTagQueryPacket implements Packet<ServerGamePa
         return GamePacketTypes.SERVERBOUND_BLOCK_ENTITY_TAG_QUERY;
     }
 
-    public void handle(ServerGamePacketListener p_320729_) {
-        p_320729_.handleBlockEntityTagQuery(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleBlockEntityTagQuery(this);
     }
 
     public int getTransactionId() {

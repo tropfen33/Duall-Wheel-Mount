@@ -41,9 +41,9 @@ public class ClientSuggestionProvider implements SharedSuggestionProvider {
     private CompletableFuture<Suggestions> pendingSuggestionsFuture;
     private final Set<String> customCompletionSuggestions = new HashSet<>();
 
-    public ClientSuggestionProvider(ClientPacketListener p_105165_, Minecraft p_105166_) {
-        this.connection = p_105165_;
-        this.minecraft = p_105166_;
+    public ClientSuggestionProvider(ClientPacketListener connection, Minecraft minecraft) {
+        this.connection = connection;
+        this.minecraft = minecraft;
     }
 
     @Override
@@ -91,42 +91,42 @@ public class ClientSuggestionProvider implements SharedSuggestionProvider {
     }
 
     @Override
-    public boolean hasPermission(int p_105178_) {
+    public boolean hasPermission(int level) {
         LocalPlayer localplayer = this.minecraft.player;
-        return localplayer != null ? localplayer.hasPermissions(p_105178_) : p_105178_ == 0;
+        return localplayer != null ? localplayer.hasPermissions(level) : level == 0;
     }
 
     @Override
     public CompletableFuture<Suggestions> suggestRegistryElements(
-        ResourceKey<? extends Registry<?>> p_212429_,
-        SharedSuggestionProvider.ElementSuggestionType p_212430_,
-        SuggestionsBuilder p_212431_,
-        CommandContext<?> p_212432_
+        ResourceKey<? extends Registry<?>> resourceKey,
+        SharedSuggestionProvider.ElementSuggestionType registryKey,
+        SuggestionsBuilder builder,
+        CommandContext<?> context
     ) {
-        return this.registryAccess().registry(p_212429_).map(p_212427_ -> {
-            this.suggestRegistryElements((Registry<?>)p_212427_, p_212430_, p_212431_);
-            return p_212431_.buildFuture();
-        }).orElseGet(() -> this.customSuggestion(p_212432_));
+        return this.registryAccess().registry(resourceKey).map(p_212427_ -> {
+            this.suggestRegistryElements((Registry<?>)p_212427_, registryKey, builder);
+            return builder.buildFuture();
+        }).orElseGet(() -> this.customSuggestion(context));
     }
 
     @Override
-    public CompletableFuture<Suggestions> customSuggestion(CommandContext<?> p_212423_) {
+    public CompletableFuture<Suggestions> customSuggestion(CommandContext<?> context) {
         if (this.pendingSuggestionsFuture != null) {
             this.pendingSuggestionsFuture.cancel(false);
         }
 
         this.pendingSuggestionsFuture = new CompletableFuture<>();
         int i = ++this.pendingSuggestionsId;
-        this.connection.send(new ServerboundCommandSuggestionPacket(i, p_212423_.getInput()));
+        this.connection.send(new ServerboundCommandSuggestionPacket(i, context.getInput()));
         return this.pendingSuggestionsFuture;
     }
 
-    private static String prettyPrint(double p_105168_) {
-        return String.format(Locale.ROOT, "%.2f", p_105168_);
+    private static String prettyPrint(double doubleValue) {
+        return String.format(Locale.ROOT, "%.2f", doubleValue);
     }
 
-    private static String prettyPrint(int p_105170_) {
-        return Integer.toString(p_105170_);
+    private static String prettyPrint(int intValue) {
+        return Integer.toString(intValue);
     }
 
     @Override
@@ -168,25 +168,25 @@ public class ClientSuggestionProvider implements SharedSuggestionProvider {
         return this.connection.enabledFeatures();
     }
 
-    public void completeCustomSuggestions(int p_105172_, Suggestions p_105173_) {
-        if (p_105172_ == this.pendingSuggestionsId) {
-            this.pendingSuggestionsFuture.complete(p_105173_);
+    public void completeCustomSuggestions(int transaction, Suggestions result) {
+        if (transaction == this.pendingSuggestionsId) {
+            this.pendingSuggestionsFuture.complete(result);
             this.pendingSuggestionsFuture = null;
             this.pendingSuggestionsId = -1;
         }
     }
 
-    public void modifyCustomCompletions(ClientboundCustomChatCompletionsPacket.Action p_240810_, List<String> p_240765_) {
-        switch (p_240810_) {
+    public void modifyCustomCompletions(ClientboundCustomChatCompletionsPacket.Action action, List<String> entries) {
+        switch (action) {
             case ADD:
-                this.customCompletionSuggestions.addAll(p_240765_);
+                this.customCompletionSuggestions.addAll(entries);
                 break;
             case REMOVE:
-                p_240765_.forEach(this.customCompletionSuggestions::remove);
+                entries.forEach(this.customCompletionSuggestions::remove);
                 break;
             case SET:
                 this.customCompletionSuggestions.clear();
-                this.customCompletionSuggestions.addAll(p_240765_);
+                this.customCompletionSuggestions.addAll(entries);
         }
     }
 }

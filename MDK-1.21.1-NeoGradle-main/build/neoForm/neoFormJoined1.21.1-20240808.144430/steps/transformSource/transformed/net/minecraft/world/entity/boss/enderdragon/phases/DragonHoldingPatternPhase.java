@@ -21,8 +21,8 @@ public class DragonHoldingPatternPhase extends AbstractDragonPhaseInstance {
     private Vec3 targetLocation;
     private boolean clockwise;
 
-    public DragonHoldingPatternPhase(EnderDragon p_31230_) {
-        super(p_31230_);
+    public DragonHoldingPatternPhase(EnderDragon dragon) {
+        super(dragon);
     }
 
     @Override
@@ -111,9 +111,9 @@ public class DragonHoldingPatternPhase extends AbstractDragonPhaseInstance {
         this.navigateToNextPathNode();
     }
 
-    private void strafePlayer(Player p_31237_) {
+    private void strafePlayer(Player player) {
         this.dragon.getPhaseManager().setPhase(EnderDragonPhase.STRAFE_PLAYER);
-        this.dragon.getPhaseManager().getPhase(EnderDragonPhase.STRAFE_PLAYER).setTarget(p_31237_);
+        this.dragon.getPhaseManager().getPhase(EnderDragonPhase.STRAFE_PLAYER).setTarget(player);
     }
 
     private void navigateToNextPathNode() {
@@ -133,9 +133,9 @@ public class DragonHoldingPatternPhase extends AbstractDragonPhaseInstance {
     }
 
     @Override
-    public void onCrystalDestroyed(EndCrystal p_31232_, BlockPos p_31233_, DamageSource p_31234_, @Nullable Player p_31235_) {
-        if (p_31235_ != null && this.dragon.canAttack(p_31235_)) {
-            this.strafePlayer(p_31235_);
+    public void onCrystalDestroyed(EndCrystal crystal, BlockPos pos, DamageSource dmgSrc, @Nullable Player plyr) {
+        if (plyr != null && this.dragon.canAttack(plyr)) {
+            this.strafePlayer(plyr);
         }
     }
 }

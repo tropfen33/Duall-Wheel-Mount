@@ -21,16 +21,19 @@ public class InactiveProfiler implements ProfileCollector {
     public void endTick() {
     }
 
+    /**
+     * Start section
+     */
     @Override
-    public void push(String p_18559_) {
+    public void push(String name) {
     }
 
     @Override
-    public void push(Supplier<String> p_18561_) {
+    public void push(Supplier<String> nameSupplier) {
     }
 
     @Override
-    public void markForCharting(MetricCategory p_145951_) {
+    public void markForCharting(MetricCategory category) {
     }
 
     @Override
@@ -38,19 +41,19 @@ public class InactiveProfiler implements ProfileCollector {
     }
 
     @Override
-    public void popPush(String p_18564_) {
+    public void popPush(String name) {
     }
 
     @Override
-    public void popPush(Supplier<String> p_18566_) {
+    public void popPush(Supplier<String> nameSupplier) {
     }
 
     @Override
-    public void incrementCounter(String p_185253_, int p_185254_) {
+    public void incrementCounter(String counterName, int increment) {
     }
 
     @Override
-    public void incrementCounter(Supplier<String> p_185256_, int p_185257_) {
+    public void incrementCounter(Supplier<String> counterNameSupplier, int increment) {
     }
 
     @Override
@@ -60,7 +63,7 @@ public class InactiveProfiler implements ProfileCollector {
 
     @Nullable
     @Override
-    public ActiveProfiler.PathEntry getEntry(String p_145953_) {
+    public ActiveProfiler.PathEntry getEntry(String entryId) {
         return null;
     }
 

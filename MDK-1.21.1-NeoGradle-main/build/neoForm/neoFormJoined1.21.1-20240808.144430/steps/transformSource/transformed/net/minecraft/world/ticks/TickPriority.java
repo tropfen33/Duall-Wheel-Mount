@@ -11,18 +11,18 @@ public enum TickPriority {
 
     private final int value;
 
-    private TickPriority(int p_193444_) {
-        this.value = p_193444_;
+    private TickPriority(int value) {
+        this.value = value;
     }
 
-    public static TickPriority byValue(int p_193447_) {
+    public static TickPriority byValue(int priority) {
         for (TickPriority tickpriority : values()) {
-            if (tickpriority.value == p_193447_) {
+            if (tickpriority.value == priority) {
                 return tickpriority;
             }
         }
 
-        return p_193447_ < EXTREMELY_HIGH.value ? EXTREMELY_HIGH : EXTREMELY_LOW;
+        return priority < EXTREMELY_HIGH.value ? EXTREMELY_HIGH : EXTREMELY_LOW;
     }
 
     public int getValue() {

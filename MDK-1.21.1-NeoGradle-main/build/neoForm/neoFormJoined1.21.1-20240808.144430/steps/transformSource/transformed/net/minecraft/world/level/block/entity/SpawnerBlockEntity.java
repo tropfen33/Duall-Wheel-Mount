@@ -37,28 +37,28 @@ public class SpawnerBlockEntity extends BlockEntity implements Spawner {
         }
     };
 
-    public SpawnerBlockEntity(BlockPos p_155752_, BlockState p_155753_) {
-        super(BlockEntityType.MOB_SPAWNER, p_155752_, p_155753_);
+    public SpawnerBlockEntity(BlockPos pos, BlockState blockState) {
+        super(BlockEntityType.MOB_SPAWNER, pos, blockState);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_338334_, HolderLookup.Provider p_338853_) {
-        super.loadAdditional(p_338334_, p_338853_);
-        this.spawner.load(this.level, this.worldPosition, p_338334_);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        this.spawner.load(this.level, this.worldPosition, tag);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_187521_, HolderLookup.Provider p_324509_) {
-        super.saveAdditional(p_187521_, p_324509_);
-        this.spawner.save(p_187521_);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        this.spawner.save(tag);
     }
 
-    public static void clientTick(Level p_155755_, BlockPos p_155756_, BlockState p_155757_, SpawnerBlockEntity p_155758_) {
-        p_155758_.spawner.clientTick(p_155755_, p_155756_);
+    public static void clientTick(Level level, BlockPos pos, BlockState state, SpawnerBlockEntity blockEntity) {
+        blockEntity.spawner.clientTick(level, pos);
     }
 
-    public static void serverTick(Level p_155762_, BlockPos p_155763_, BlockState p_155764_, SpawnerBlockEntity p_155765_) {
-        p_155765_.spawner.serverTick((ServerLevel)p_155762_, p_155763_);
+    public static void serverTick(Level level, BlockPos pos, BlockState state, SpawnerBlockEntity blockEntity) {
+        blockEntity.spawner.serverTick((ServerLevel)level, pos);
     }
 
     public ClientboundBlockEntityDataPacket getUpdatePacket() {
@@ -66,15 +66,15 @@ public class SpawnerBlockEntity extends BlockEntity implements Spawner {
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider p_324015_) {
-        CompoundTag compoundtag = this.saveCustomOnly(p_324015_);
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag compoundtag = this.saveCustomOnly(registries);
         compoundtag.remove("SpawnPotentials");
         return compoundtag;
     }
 
     @Override
-    public boolean triggerEvent(int p_59797_, int p_59798_) {
-        return this.spawner.onEventTriggered(this.level, p_59797_) ? true : super.triggerEvent(p_59797_, p_59798_);
+    public boolean triggerEvent(int id, int type) {
+        return this.spawner.onEventTriggered(this.level, id) ? true : super.triggerEvent(id, type);
     }
 
     @Override
@@ -83,8 +83,8 @@ public class SpawnerBlockEntity extends BlockEntity implements Spawner {
     }
 
     @Override
-    public void setEntityId(EntityType<?> p_254530_, RandomSource p_253719_) {
-        this.spawner.setEntityId(p_254530_, this.level, p_253719_, this.worldPosition);
+    public void setEntityId(EntityType<?> type, RandomSource random) {
+        this.spawner.setEntityId(type, this.level, random, this.worldPosition);
         this.setChanged();
     }
 

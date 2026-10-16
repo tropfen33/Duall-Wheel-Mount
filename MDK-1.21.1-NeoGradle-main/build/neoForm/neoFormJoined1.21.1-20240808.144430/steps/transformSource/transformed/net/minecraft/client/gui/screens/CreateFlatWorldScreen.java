@@ -32,24 +32,33 @@ public class CreateFlatWorldScreen extends Screen {
     protected final CreateWorldScreen parent;
     private final Consumer<FlatLevelGeneratorSettings> applySettings;
     FlatLevelGeneratorSettings generator;
+    /**
+     * The text used to identify the material for a layer
+     */
     private Component columnType;
+    /**
+     * The text used to identify the height of a layer
+     */
     private Component columnHeight;
     private CreateFlatWorldScreen.DetailsList list;
+    /**
+     * The remove layer button
+     */
     private Button deleteLayerButton;
 
-    public CreateFlatWorldScreen(CreateWorldScreen p_95822_, Consumer<FlatLevelGeneratorSettings> p_95823_, FlatLevelGeneratorSettings p_95824_) {
+    public CreateFlatWorldScreen(CreateWorldScreen parent, Consumer<FlatLevelGeneratorSettings> applySettings, FlatLevelGeneratorSettings generator) {
         super(Component.translatable("createWorld.customize.flat.title"));
-        this.parent = p_95822_;
-        this.applySettings = p_95823_;
-        this.generator = p_95824_;
+        this.parent = parent;
+        this.applySettings = applySettings;
+        this.generator = generator;
     }
 
     public FlatLevelGeneratorSettings settings() {
         return this.generator;
     }
 
-    public void setConfig(FlatLevelGeneratorSettings p_95826_) {
-        this.generator = p_95826_;
+    public void setConfig(FlatLevelGeneratorSettings generator) {
+        this.generator = generator;
     }
 
     @Override
@@ -100,13 +109,21 @@ public class CreateFlatWorldScreen extends Screen {
         this.minecraft.setScreen(this.parent);
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282393_, int p_95829_, int p_95830_, float p_95831_) {
-        super.render(p_282393_, p_95829_, p_95830_, p_95831_);
-        p_282393_.drawCenteredString(this.font, this.title, this.width / 2, 8, 16777215);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 8, 16777215);
         int i = this.width / 2 - 92 - 16;
-        p_282393_.drawString(this.font, this.columnType, i, 32, 16777215);
-        p_282393_.drawString(this.font, this.columnHeight, i + 2 + 213 - this.font.width(this.columnHeight), 32, 16777215);
+        guiGraphics.drawString(this.font, this.columnType, i, 32, 16777215);
+        guiGraphics.drawString(this.font, this.columnHeight, i + 2 + 213 - this.font.width(this.columnHeight), 32, 16777215);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -119,8 +136,8 @@ public class CreateFlatWorldScreen extends Screen {
             }
         }
 
-        public void setSelected(@Nullable CreateFlatWorldScreen.DetailsList.Entry p_95855_) {
-            super.setSelected(p_95855_);
+        public void setSelected(@Nullable CreateFlatWorldScreen.DetailsList.Entry entry) {
+            super.setSelected(entry);
             CreateFlatWorldScreen.this.updateButtonValidity();
         }
 
@@ -142,49 +159,49 @@ public class CreateFlatWorldScreen extends Screen {
         class Entry extends ObjectSelectionList.Entry<CreateFlatWorldScreen.DetailsList.Entry> {
             @Override
             public void render(
-                GuiGraphics p_281319_,
-                int p_281943_,
-                int p_283629_,
-                int p_283315_,
-                int p_282974_,
-                int p_281870_,
-                int p_283341_,
-                int p_281639_,
-                boolean p_282715_,
-                float p_281937_
+                GuiGraphics guiGraphics,
+                int index,
+                int top,
+                int left,
+                int width,
+                int height,
+                int mouseX,
+                int mouseY,
+                boolean hovering,
+                float partialTick
             ) {
                 FlatLayerInfo flatlayerinfo = CreateFlatWorldScreen.this.generator
                     .getLayersInfo()
-                    .get(CreateFlatWorldScreen.this.generator.getLayersInfo().size() - p_281943_ - 1);
+                    .get(CreateFlatWorldScreen.this.generator.getLayersInfo().size() - index - 1);
                 BlockState blockstate = flatlayerinfo.getBlockState();
                 ItemStack itemstack = this.getDisplayItem(blockstate);
-                this.blitSlot(p_281319_, p_283315_, p_283629_, itemstack);
-                p_281319_.drawString(CreateFlatWorldScreen.this.font, itemstack.getHoverName(), p_283315_ + 18 + 5, p_283629_ + 3, 16777215, false);
+                this.blitSlot(guiGraphics, left, top, itemstack);
+                guiGraphics.drawString(CreateFlatWorldScreen.this.font, itemstack.getHoverName(), left + 18 + 5, top + 3, 16777215, false);
                 Component component;
-                if (p_281943_ == 0) {
+                if (index == 0) {
                     component = Component.translatable("createWorld.customize.flat.layer.top", flatlayerinfo.getHeight());
-                } else if (p_281943_ == CreateFlatWorldScreen.this.generator.getLayersInfo().size() - 1) {
+                } else if (index == CreateFlatWorldScreen.this.generator.getLayersInfo().size() - 1) {
                     component = Component.translatable("createWorld.customize.flat.layer.bottom", flatlayerinfo.getHeight());
                 } else {
                     component = Component.translatable("createWorld.customize.flat.layer", flatlayerinfo.getHeight());
                 }
 
-                p_281319_.drawString(
+                guiGraphics.drawString(
                     CreateFlatWorldScreen.this.font,
                     component,
-                    p_283315_ + 2 + 213 - CreateFlatWorldScreen.this.font.width(component),
-                    p_283629_ + 3,
+                    left + 2 + 213 - CreateFlatWorldScreen.this.font.width(component),
+                    top + 3,
                     16777215,
                     false
                 );
             }
 
-            private ItemStack getDisplayItem(BlockState p_169294_) {
-                Item item = p_169294_.getBlock().asItem();
+            private ItemStack getDisplayItem(BlockState state) {
+                Item item = state.getBlock().asItem();
                 if (item == Items.AIR) {
-                    if (p_169294_.is(Blocks.WATER)) {
+                    if (state.is(Blocks.WATER)) {
                         item = Items.WATER_BUCKET;
-                    } else if (p_169294_.is(Blocks.LAVA)) {
+                    } else if (state.is(Blocks.LAVA)) {
                         item = Items.LAVA_BUCKET;
                     }
                 }
@@ -201,21 +218,30 @@ public class CreateFlatWorldScreen extends Screen {
                 return (Component)(!itemstack.isEmpty() ? Component.translatable("narrator.select", itemstack.getHoverName()) : CommonComponents.EMPTY);
             }
 
+            /**
+             * Called when a mouse button is clicked within the GUI element.
+             * <p>
+             * @return {@code true} if the event is consumed, {@code false} otherwise.
+             *
+             * @param mouseX the X coordinate of the mouse.
+             * @param mouseY the Y coordinate of the mouse.
+             * @param button the button that was clicked.
+             */
             @Override
-            public boolean mouseClicked(double p_95868_, double p_95869_, int p_95870_) {
+            public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 DetailsList.this.setSelected(this);
-                return super.mouseClicked(p_95868_, p_95869_, p_95870_);
+                return super.mouseClicked(mouseX, mouseY, button);
             }
 
-            private void blitSlot(GuiGraphics p_281733_, int p_282373_, int p_282844_, ItemStack p_281263_) {
-                this.blitSlotBg(p_281733_, p_282373_ + 1, p_282844_ + 1);
-                if (!p_281263_.isEmpty()) {
-                    p_281733_.renderFakeItem(p_281263_, p_282373_ + 2, p_282844_ + 2);
+            private void blitSlot(GuiGraphics guiGraphics, int x, int y, ItemStack stack) {
+                this.blitSlotBg(guiGraphics, x + 1, y + 1);
+                if (!stack.isEmpty()) {
+                    guiGraphics.renderFakeItem(stack, x + 2, y + 2);
                 }
             }
 
-            private void blitSlotBg(GuiGraphics p_282271_, int p_281324_, int p_283171_) {
-                p_282271_.blitSprite(CreateFlatWorldScreen.SLOT_SPRITE, p_281324_, p_283171_, 0, 18, 18);
+            private void blitSlotBg(GuiGraphics guiGraphics, int x, int y) {
+                guiGraphics.blitSprite(CreateFlatWorldScreen.SLOT_SPRITE, x, y, 0, 18, 18);
             }
         }
     }

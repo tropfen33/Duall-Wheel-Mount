@@ -24,8 +24,8 @@ public class ThreadingDetector {
     @Nullable
     private volatile ReportedException fullException;
 
-    public ThreadingDetector(String p_199415_) {
-        this.name = p_199415_;
+    public ThreadingDetector(String name) {
+        this.name = name;
     }
 
     public void checkAndLock() {
@@ -70,9 +70,9 @@ public class ThreadingDetector {
         }
     }
 
-    public static ReportedException makeThreadingException(String p_199418_, @Nullable Thread p_199419_) {
-        String s = Stream.of(Thread.currentThread(), p_199419_).filter(Objects::nonNull).map(ThreadingDetector::stackTrace).collect(Collectors.joining("\n"));
-        String s1 = "Accessing " + p_199418_ + " from multiple threads";
+    public static ReportedException makeThreadingException(String accessed, @Nullable Thread thread) {
+        String s = Stream.of(Thread.currentThread(), thread).filter(Objects::nonNull).map(ThreadingDetector::stackTrace).collect(Collectors.joining("\n"));
+        String s1 = "Accessing " + accessed + " from multiple threads";
         CrashReport crashreport = new CrashReport(s1, new IllegalStateException(s1));
         CrashReportCategory crashreportcategory = crashreport.addCategory("Thread dumps");
         crashreportcategory.setDetail("Thread dumps", s);
@@ -80,7 +80,7 @@ public class ThreadingDetector {
         return new ReportedException(crashreport);
     }
 
-    private static String stackTrace(Thread p_199421_) {
-        return p_199421_.getName() + ": \n\tat " + Arrays.stream(p_199421_.getStackTrace()).map(Object::toString).collect(Collectors.joining("\n\tat "));
+    private static String stackTrace(Thread thread) {
+        return thread.getName() + ": \n\tat " + Arrays.stream(thread.getStackTrace()).map(Object::toString).collect(Collectors.joining("\n\tat "));
     }
 }

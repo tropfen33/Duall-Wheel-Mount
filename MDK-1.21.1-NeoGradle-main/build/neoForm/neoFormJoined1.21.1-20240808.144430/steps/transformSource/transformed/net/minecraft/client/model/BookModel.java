@@ -27,15 +27,15 @@ public class BookModel extends Model {
     private final ModelPart flipPage1;
     private final ModelPart flipPage2;
 
-    public BookModel(ModelPart p_170475_) {
+    public BookModel(ModelPart root) {
         super(RenderType::entitySolid);
-        this.root = p_170475_;
-        this.leftLid = p_170475_.getChild("left_lid");
-        this.rightLid = p_170475_.getChild("right_lid");
-        this.leftPages = p_170475_.getChild("left_pages");
-        this.rightPages = p_170475_.getChild("right_pages");
-        this.flipPage1 = p_170475_.getChild("flip_page1");
-        this.flipPage2 = p_170475_.getChild("flip_page2");
+        this.root = root;
+        this.leftLid = root.getChild("left_lid");
+        this.rightLid = root.getChild("right_lid");
+        this.leftPages = root.getChild("left_pages");
+        this.rightPages = root.getChild("right_pages");
+        this.flipPage1 = root.getChild("flip_page1");
+        this.flipPage2 = root.getChild("flip_page2");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -61,22 +61,22 @@ public class BookModel extends Model {
     }
 
     @Override
-    public void renderToBuffer(PoseStack p_102298_, VertexConsumer p_102299_, int p_102300_, int p_102301_, int p_350575_) {
-        this.render(p_102298_, p_102299_, p_102300_, p_102301_, p_350575_);
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
+        this.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 
-    public void render(PoseStack p_102317_, VertexConsumer p_102318_, int p_102319_, int p_102320_, int p_350753_) {
-        this.root.render(p_102317_, p_102318_, p_102319_, p_102320_, p_350753_);
+    public void render(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
+        this.root.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 
-    public void setupAnim(float p_102293_, float p_102294_, float p_102295_, float p_102296_) {
-        float f = (Mth.sin(p_102293_ * 0.02F) * 0.1F + 1.25F) * p_102296_;
+    public void setupAnim(float time, float rightPageFlipAmount, float leftPageFlipAmount, float bookOpenAmount) {
+        float f = (Mth.sin(time * 0.02F) * 0.1F + 1.25F) * bookOpenAmount;
         this.leftLid.yRot = (float) Math.PI + f;
         this.rightLid.yRot = -f;
         this.leftPages.yRot = f;
         this.rightPages.yRot = -f;
-        this.flipPage1.yRot = f - f * 2.0F * p_102294_;
-        this.flipPage2.yRot = f - f * 2.0F * p_102295_;
+        this.flipPage1.yRot = f - f * 2.0F * rightPageFlipAmount;
+        this.flipPage2.yRot = f - f * 2.0F * leftPageFlipAmount;
         this.leftPages.x = Mth.sin(f);
         this.rightPages.x = Mth.sin(f);
         this.flipPage1.x = Mth.sin(f);

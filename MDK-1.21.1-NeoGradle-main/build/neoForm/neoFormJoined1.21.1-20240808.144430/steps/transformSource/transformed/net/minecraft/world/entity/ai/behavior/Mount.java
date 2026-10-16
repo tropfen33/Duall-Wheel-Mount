@@ -11,7 +11,7 @@ import net.minecraft.world.entity.ai.memory.WalkTarget;
 public class Mount {
     private static final int CLOSE_ENOUGH_TO_START_RIDING_DIST = 1;
 
-    public static BehaviorControl<LivingEntity> create(float p_259363_) {
+    public static BehaviorControl<LivingEntity> create(float speedModifier) {
         return BehaviorBuilder.create(
             p_259880_ -> p_259880_.group(
                         p_259880_.registered(MemoryModuleType.LOOK_TARGET),
@@ -27,7 +27,7 @@ public class Mount {
                                     p_260257_.startRiding(entity);
                                 } else {
                                     p_259095_.set(new EntityTracker(entity, true));
-                                    p_260097_.set(new WalkTarget(new EntityTracker(entity, false), p_259363_, 1));
+                                    p_260097_.set(new WalkTarget(new EntityTracker(entity, false), speedModifier, 1));
                                 }
 
                                 return true;

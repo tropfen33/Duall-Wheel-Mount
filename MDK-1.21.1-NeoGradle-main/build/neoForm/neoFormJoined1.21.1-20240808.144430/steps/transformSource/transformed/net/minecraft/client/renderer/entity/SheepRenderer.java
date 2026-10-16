@@ -17,7 +17,10 @@ public class SheepRenderer extends MobRenderer<Sheep, SheepModel<Sheep>> {
         this.addLayer(new SheepFurLayer(this, p_174366_.getModelSet()));
     }
 
-    public ResourceLocation getTextureLocation(Sheep p_115840_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Sheep entity) {
         return SHEEP_LOCATION;
     }
 }

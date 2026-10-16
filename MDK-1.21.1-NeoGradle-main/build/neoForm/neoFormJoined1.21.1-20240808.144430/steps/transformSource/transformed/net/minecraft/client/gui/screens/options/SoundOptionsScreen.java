@@ -13,12 +13,12 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class SoundOptionsScreen extends OptionsSubScreen {
     private static final Component TITLE = Component.translatable("options.sounds.title");
 
-    private static OptionInstance<?>[] buttonOptions(Options p_345044_) {
-        return new OptionInstance[]{p_345044_.showSubtitles(), p_345044_.directionalAudio()};
+    private static OptionInstance<?>[] buttonOptions(Options options) {
+        return new OptionInstance[]{options.showSubtitles(), options.directionalAudio()};
     }
 
-    public SoundOptionsScreen(Screen p_345995_, Options p_345465_) {
-        super(p_345995_, p_345465_, TITLE);
+    public SoundOptionsScreen(Screen lastScreen, Options options) {
+        super(lastScreen, options, TITLE);
     }
 
     @Override

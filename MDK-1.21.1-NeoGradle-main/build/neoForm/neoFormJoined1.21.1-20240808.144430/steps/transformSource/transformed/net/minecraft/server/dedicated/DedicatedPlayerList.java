@@ -12,9 +12,9 @@ import org.slf4j.Logger;
 public class DedicatedPlayerList extends PlayerList {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public DedicatedPlayerList(DedicatedServer p_203709_, LayeredRegistryAccess<RegistryLayer> p_251851_, PlayerDataStorage p_203711_) {
-        super(p_203709_, p_251851_, p_203711_, p_203709_.getProperties().maxPlayers);
-        DedicatedServerProperties dedicatedserverproperties = p_203709_.getProperties();
+    public DedicatedPlayerList(DedicatedServer server, LayeredRegistryAccess<RegistryLayer> registries, PlayerDataStorage playerIo) {
+        super(server, registries, playerIo, server.getProperties().maxPlayers);
+        DedicatedServerProperties dedicatedserverproperties = server.getProperties();
         this.setViewDistance(dedicatedserverproperties.viewDistance);
         this.setSimulationDistance(dedicatedserverproperties.simulationDistance);
         super.setUsingWhiteList(dedicatedserverproperties.whiteList.get());
@@ -31,20 +31,20 @@ public class DedicatedPlayerList extends PlayerList {
     }
 
     @Override
-    public void setUsingWhiteList(boolean p_139584_) {
-        super.setUsingWhiteList(p_139584_);
-        this.getServer().storeUsingWhiteList(p_139584_);
+    public void setUsingWhiteList(boolean whitelistEnabled) {
+        super.setUsingWhiteList(whitelistEnabled);
+        this.getServer().storeUsingWhiteList(whitelistEnabled);
     }
 
     @Override
-    public void op(GameProfile p_139582_) {
-        super.op(p_139582_);
+    public void op(GameProfile profile) {
+        super.op(profile);
         this.saveOps();
     }
 
     @Override
-    public void deop(GameProfile p_139587_) {
-        super.deop(p_139587_);
+    public void deop(GameProfile profile) {
+        super.deop(profile);
         this.saveOps();
     }
 
@@ -118,8 +118,8 @@ public class DedicatedPlayerList extends PlayerList {
     }
 
     @Override
-    public boolean isWhiteListed(GameProfile p_139590_) {
-        return !this.isUsingWhitelist() || this.isOp(p_139590_) || this.getWhiteList().isWhiteListed(p_139590_);
+    public boolean isWhiteListed(GameProfile profile) {
+        return !this.isUsingWhitelist() || this.isOp(profile) || this.getWhiteList().isWhiteListed(profile);
     }
 
     public DedicatedServer getServer() {
@@ -127,7 +127,7 @@ public class DedicatedPlayerList extends PlayerList {
     }
 
     @Override
-    public boolean canBypassPlayerLimit(GameProfile p_139592_) {
-        return this.getOps().canBypassPlayerLimit(p_139592_);
+    public boolean canBypassPlayerLimit(GameProfile profile) {
+        return this.getOps().canBypassPlayerLimit(profile);
     }
 }

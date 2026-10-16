@@ -14,10 +14,10 @@ public record ServerboundContainerSlotStateChangedPacket(int slotId, int contain
         this(p_307271_.readVarInt(), p_307271_.readVarInt(), p_307271_.readBoolean());
     }
 
-    private void write(FriendlyByteBuf p_307330_) {
-        p_307330_.writeVarInt(this.slotId);
-        p_307330_.writeVarInt(this.containerId);
-        p_307330_.writeBoolean(this.newState);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.slotId);
+        buffer.writeVarInt(this.containerId);
+        buffer.writeBoolean(this.newState);
     }
 
     @Override
@@ -25,7 +25,10 @@ public record ServerboundContainerSlotStateChangedPacket(int slotId, int contain
         return GamePacketTypes.SERVERBOUND_CONTAINER_SLOT_STATE_CHANGED;
     }
 
-    public void handle(ServerGamePacketListener p_307397_) {
-        p_307397_.handleContainerSlotStateChanged(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleContainerSlotStateChanged(this);
     }
 }

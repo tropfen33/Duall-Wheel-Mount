@@ -20,35 +20,38 @@ public class ClientboundPlayerPositionPacket implements Packet<ClientGamePacketL
     private final int id;
 
     public ClientboundPlayerPositionPacket(
-        double p_275438_, double p_275354_, double p_275276_, float p_275280_, float p_275203_, Set<RelativeMovement> p_275228_, int p_275614_
+        double x, double y, double z, float yRot, float xRot, Set<RelativeMovement> relativeArguments, int id
     ) {
-        this.x = p_275438_;
-        this.y = p_275354_;
-        this.z = p_275276_;
-        this.yRot = p_275280_;
-        this.xRot = p_275203_;
-        this.relativeArguments = p_275228_;
-        this.id = p_275614_;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.yRot = yRot;
+        this.xRot = xRot;
+        this.relativeArguments = relativeArguments;
+        this.id = id;
     }
 
-    private ClientboundPlayerPositionPacket(FriendlyByteBuf p_179158_) {
-        this.x = p_179158_.readDouble();
-        this.y = p_179158_.readDouble();
-        this.z = p_179158_.readDouble();
-        this.yRot = p_179158_.readFloat();
-        this.xRot = p_179158_.readFloat();
-        this.relativeArguments = RelativeMovement.unpack(p_179158_.readUnsignedByte());
-        this.id = p_179158_.readVarInt();
+    private ClientboundPlayerPositionPacket(FriendlyByteBuf buffer) {
+        this.x = buffer.readDouble();
+        this.y = buffer.readDouble();
+        this.z = buffer.readDouble();
+        this.yRot = buffer.readFloat();
+        this.xRot = buffer.readFloat();
+        this.relativeArguments = RelativeMovement.unpack(buffer.readUnsignedByte());
+        this.id = buffer.readVarInt();
     }
 
-    private void write(FriendlyByteBuf p_132820_) {
-        p_132820_.writeDouble(this.x);
-        p_132820_.writeDouble(this.y);
-        p_132820_.writeDouble(this.z);
-        p_132820_.writeFloat(this.yRot);
-        p_132820_.writeFloat(this.xRot);
-        p_132820_.writeByte(RelativeMovement.pack(this.relativeArguments));
-        p_132820_.writeVarInt(this.id);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeDouble(this.x);
+        buffer.writeDouble(this.y);
+        buffer.writeDouble(this.z);
+        buffer.writeFloat(this.yRot);
+        buffer.writeFloat(this.xRot);
+        buffer.writeByte(RelativeMovement.pack(this.relativeArguments));
+        buffer.writeVarInt(this.id);
     }
 
     @Override
@@ -56,8 +59,11 @@ public class ClientboundPlayerPositionPacket implements Packet<ClientGamePacketL
         return GamePacketTypes.CLIENTBOUND_PLAYER_POSITION;
     }
 
-    public void handle(ClientGamePacketListener p_132817_) {
-        p_132817_.handleMovePlayer(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleMovePlayer(this);
     }
 
     public double getX() {

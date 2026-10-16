@@ -9,7 +9,7 @@ public interface ProfileCollector extends ProfilerFiller {
     ProfileResults getResults();
 
     @Nullable
-    ActiveProfiler.PathEntry getEntry(String p_145955_);
+    ActiveProfiler.PathEntry getEntry(String entryId);
 
     Set<Pair<String, MetricCategory>> getChartedPaths();
 }

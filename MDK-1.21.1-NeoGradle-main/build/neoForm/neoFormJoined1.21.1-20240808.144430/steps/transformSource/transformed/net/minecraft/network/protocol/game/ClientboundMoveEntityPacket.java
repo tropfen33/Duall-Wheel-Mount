@@ -20,32 +20,35 @@ public abstract class ClientboundMoveEntityPacket implements Packet<ClientGamePa
     protected final boolean hasPos;
 
     protected ClientboundMoveEntityPacket(
-        int p_178988_,
-        short p_178989_,
-        short p_178990_,
-        short p_178991_,
-        byte p_178992_,
-        byte p_178993_,
-        boolean p_178994_,
-        boolean p_178995_,
-        boolean p_178996_
+        int entityId,
+        short xa,
+        short ya,
+        short za,
+        byte yRot,
+        byte xRot,
+        boolean onGround,
+        boolean hasRot,
+        boolean hasPos
     ) {
-        this.entityId = p_178988_;
-        this.xa = p_178989_;
-        this.ya = p_178990_;
-        this.za = p_178991_;
-        this.yRot = p_178992_;
-        this.xRot = p_178993_;
-        this.onGround = p_178994_;
-        this.hasRot = p_178995_;
-        this.hasPos = p_178996_;
+        this.entityId = entityId;
+        this.xa = xa;
+        this.ya = ya;
+        this.za = za;
+        this.yRot = yRot;
+        this.xRot = xRot;
+        this.onGround = onGround;
+        this.hasRot = hasRot;
+        this.hasPos = hasPos;
     }
 
     @Override
     public abstract PacketType<? extends ClientboundMoveEntityPacket> type();
 
-    public void handle(ClientGamePacketListener p_132528_) {
-        p_132528_.handleMoveEntity(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleMoveEntity(this);
     }
 
     @Override
@@ -54,8 +57,8 @@ public abstract class ClientboundMoveEntityPacket implements Packet<ClientGamePa
     }
 
     @Nullable
-    public Entity getEntity(Level p_132520_) {
-        return p_132520_.getEntity(this.entityId);
+    public Entity getEntity(Level level) {
+        return level.getEntity(this.entityId);
     }
 
     public short getXa() {
@@ -95,25 +98,28 @@ public abstract class ClientboundMoveEntityPacket implements Packet<ClientGamePa
             ClientboundMoveEntityPacket.Pos::write, ClientboundMoveEntityPacket.Pos::read
         );
 
-        public Pos(int p_132539_, short p_132540_, short p_132541_, short p_132542_, boolean p_132543_) {
-            super(p_132539_, p_132540_, p_132541_, p_132542_, (byte)0, (byte)0, p_132543_, false, true);
+        public Pos(int entityId, short xa, short ya, short za, boolean onGround) {
+            super(entityId, xa, ya, za, (byte)0, (byte)0, onGround, false, true);
         }
 
-        private static ClientboundMoveEntityPacket.Pos read(FriendlyByteBuf p_179001_) {
-            int i = p_179001_.readVarInt();
-            short short1 = p_179001_.readShort();
-            short short2 = p_179001_.readShort();
-            short short3 = p_179001_.readShort();
-            boolean flag = p_179001_.readBoolean();
+        private static ClientboundMoveEntityPacket.Pos read(FriendlyByteBuf buffer) {
+            int i = buffer.readVarInt();
+            short short1 = buffer.readShort();
+            short short2 = buffer.readShort();
+            short short3 = buffer.readShort();
+            boolean flag = buffer.readBoolean();
             return new ClientboundMoveEntityPacket.Pos(i, short1, short2, short3, flag);
         }
 
-        private void write(FriendlyByteBuf p_132549_) {
-            p_132549_.writeVarInt(this.entityId);
-            p_132549_.writeShort(this.xa);
-            p_132549_.writeShort(this.ya);
-            p_132549_.writeShort(this.za);
-            p_132549_.writeBoolean(this.onGround);
+        /**
+         * Writes the raw packet data to the data stream.
+         */
+        private void write(FriendlyByteBuf buffer) {
+            buffer.writeVarInt(this.entityId);
+            buffer.writeShort(this.xa);
+            buffer.writeShort(this.ya);
+            buffer.writeShort(this.za);
+            buffer.writeBoolean(this.onGround);
         }
 
         @Override
@@ -127,29 +133,32 @@ public abstract class ClientboundMoveEntityPacket implements Packet<ClientGamePa
             ClientboundMoveEntityPacket.PosRot::write, ClientboundMoveEntityPacket.PosRot::read
         );
 
-        public PosRot(int p_132552_, short p_132553_, short p_132554_, short p_132555_, byte p_132556_, byte p_132557_, boolean p_132558_) {
-            super(p_132552_, p_132553_, p_132554_, p_132555_, p_132556_, p_132557_, p_132558_, true, true);
+        public PosRot(int entityId, short xa, short ya, short za, byte yRot, byte xRot, boolean onGround) {
+            super(entityId, xa, ya, za, yRot, xRot, onGround, true, true);
         }
 
-        private static ClientboundMoveEntityPacket.PosRot read(FriendlyByteBuf p_179003_) {
-            int i = p_179003_.readVarInt();
-            short short1 = p_179003_.readShort();
-            short short2 = p_179003_.readShort();
-            short short3 = p_179003_.readShort();
-            byte b0 = p_179003_.readByte();
-            byte b1 = p_179003_.readByte();
-            boolean flag = p_179003_.readBoolean();
+        private static ClientboundMoveEntityPacket.PosRot read(FriendlyByteBuf buffer) {
+            int i = buffer.readVarInt();
+            short short1 = buffer.readShort();
+            short short2 = buffer.readShort();
+            short short3 = buffer.readShort();
+            byte b0 = buffer.readByte();
+            byte b1 = buffer.readByte();
+            boolean flag = buffer.readBoolean();
             return new ClientboundMoveEntityPacket.PosRot(i, short1, short2, short3, b0, b1, flag);
         }
 
-        private void write(FriendlyByteBuf p_132564_) {
-            p_132564_.writeVarInt(this.entityId);
-            p_132564_.writeShort(this.xa);
-            p_132564_.writeShort(this.ya);
-            p_132564_.writeShort(this.za);
-            p_132564_.writeByte(this.yRot);
-            p_132564_.writeByte(this.xRot);
-            p_132564_.writeBoolean(this.onGround);
+        /**
+         * Writes the raw packet data to the data stream.
+         */
+        private void write(FriendlyByteBuf buffer) {
+            buffer.writeVarInt(this.entityId);
+            buffer.writeShort(this.xa);
+            buffer.writeShort(this.ya);
+            buffer.writeShort(this.za);
+            buffer.writeByte(this.yRot);
+            buffer.writeByte(this.xRot);
+            buffer.writeBoolean(this.onGround);
         }
 
         @Override
@@ -163,23 +172,26 @@ public abstract class ClientboundMoveEntityPacket implements Packet<ClientGamePa
             ClientboundMoveEntityPacket.Rot::write, ClientboundMoveEntityPacket.Rot::read
         );
 
-        public Rot(int p_132567_, byte p_132568_, byte p_132569_, boolean p_132570_) {
-            super(p_132567_, (short)0, (short)0, (short)0, p_132568_, p_132569_, p_132570_, true, false);
+        public Rot(int entityId, byte yRot, byte xRot, boolean onGround) {
+            super(entityId, (short)0, (short)0, (short)0, yRot, xRot, onGround, true, false);
         }
 
-        private static ClientboundMoveEntityPacket.Rot read(FriendlyByteBuf p_179005_) {
-            int i = p_179005_.readVarInt();
-            byte b0 = p_179005_.readByte();
-            byte b1 = p_179005_.readByte();
-            boolean flag = p_179005_.readBoolean();
+        private static ClientboundMoveEntityPacket.Rot read(FriendlyByteBuf buffer) {
+            int i = buffer.readVarInt();
+            byte b0 = buffer.readByte();
+            byte b1 = buffer.readByte();
+            boolean flag = buffer.readBoolean();
             return new ClientboundMoveEntityPacket.Rot(i, b0, b1, flag);
         }
 
-        private void write(FriendlyByteBuf p_132576_) {
-            p_132576_.writeVarInt(this.entityId);
-            p_132576_.writeByte(this.yRot);
-            p_132576_.writeByte(this.xRot);
-            p_132576_.writeBoolean(this.onGround);
+        /**
+         * Writes the raw packet data to the data stream.
+         */
+        private void write(FriendlyByteBuf buffer) {
+            buffer.writeVarInt(this.entityId);
+            buffer.writeByte(this.yRot);
+            buffer.writeByte(this.xRot);
+            buffer.writeBoolean(this.onGround);
         }
 
         @Override

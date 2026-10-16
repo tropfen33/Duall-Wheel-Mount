@@ -22,14 +22,14 @@ public class VillagerModel<T extends Entity> extends HierarchicalModel<T> implem
     private final ModelPart leftLeg;
     protected final ModelPart nose;
 
-    public VillagerModel(ModelPart p_171051_) {
-        this.root = p_171051_;
-        this.head = p_171051_.getChild("head");
+    public VillagerModel(ModelPart root) {
+        this.root = root;
+        this.head = root.getChild("head");
         this.hat = this.head.getChild("hat");
         this.hatRim = this.hat.getChild("hat_rim");
         this.nose = this.head.getChild("nose");
-        this.rightLeg = p_171051_.getChild("right_leg");
-        this.leftLeg = p_171051_.getChild("left_leg");
+        this.rightLeg = root.getChild("right_leg");
+        this.leftLeg = root.getChild("left_leg");
     }
 
     public static MeshDefinition createBodyModel() {
@@ -81,24 +81,27 @@ public class VillagerModel<T extends Entity> extends HierarchicalModel<T> implem
         return this.root;
     }
 
+    /**
+     * Sets this entity's model rotation angles
+     */
     @Override
-    public void setupAnim(T p_104053_, float p_104054_, float p_104055_, float p_104056_, float p_104057_, float p_104058_) {
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         boolean flag = false;
-        if (p_104053_ instanceof AbstractVillager) {
-            flag = ((AbstractVillager)p_104053_).getUnhappyCounter() > 0;
+        if (entity instanceof AbstractVillager) {
+            flag = ((AbstractVillager)entity).getUnhappyCounter() > 0;
         }
 
-        this.head.yRot = p_104057_ * (float) (Math.PI / 180.0);
-        this.head.xRot = p_104058_ * (float) (Math.PI / 180.0);
+        this.head.yRot = netHeadYaw * (float) (Math.PI / 180.0);
+        this.head.xRot = headPitch * (float) (Math.PI / 180.0);
         if (flag) {
-            this.head.zRot = 0.3F * Mth.sin(0.45F * p_104056_);
+            this.head.zRot = 0.3F * Mth.sin(0.45F * ageInTicks);
             this.head.xRot = 0.4F;
         } else {
             this.head.zRot = 0.0F;
         }
 
-        this.rightLeg.xRot = Mth.cos(p_104054_ * 0.6662F) * 1.4F * p_104055_ * 0.5F;
-        this.leftLeg.xRot = Mth.cos(p_104054_ * 0.6662F + (float) Math.PI) * 1.4F * p_104055_ * 0.5F;
+        this.rightLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount * 0.5F;
+        this.leftLeg.xRot = Mth.cos(limbSwing * 0.6662F + (float) Math.PI) * 1.4F * limbSwingAmount * 0.5F;
         this.rightLeg.yRot = 0.0F;
         this.leftLeg.yRot = 0.0F;
     }
@@ -109,9 +112,9 @@ public class VillagerModel<T extends Entity> extends HierarchicalModel<T> implem
     }
 
     @Override
-    public void hatVisible(boolean p_104060_) {
-        this.head.visible = p_104060_;
-        this.hat.visible = p_104060_;
-        this.hatRim.visible = p_104060_;
+    public void hatVisible(boolean visible) {
+        this.head.visible = visible;
+        this.hat.visible = visible;
+        this.hatRim.visible = visible;
     }
 }

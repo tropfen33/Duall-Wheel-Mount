@@ -13,21 +13,30 @@ import net.minecraft.world.level.timers.TimerQueue;
 public interface ServerLevelData extends WritableLevelData {
     String getLevelName();
 
-    void setThundering(boolean p_78623_);
+    /**
+     * Sets whether it is thundering or not.
+     */
+    void setThundering(boolean thundering);
 
     int getRainTime();
 
-    void setRainTime(int p_78627_);
+    /**
+     * Sets the number of ticks until rain.
+     */
+    void setRainTime(int time);
 
-    void setThunderTime(int p_78626_);
+    /**
+     * Defines the number of ticks until next thunderbolt.
+     */
+    void setThunderTime(int time);
 
     int getThunderTime();
 
     @Override
-    default void fillCrashReportCategory(CrashReportCategory p_164976_, LevelHeightAccessor p_164977_) {
-        WritableLevelData.super.fillCrashReportCategory(p_164976_, p_164977_);
-        p_164976_.setDetail("Level name", this::getLevelName);
-        p_164976_.setDetail(
+    default void fillCrashReportCategory(CrashReportCategory crashReportCategory, LevelHeightAccessor level) {
+        WritableLevelData.super.fillCrashReportCategory(crashReportCategory, level);
+        crashReportCategory.setDetail("Level name", this::getLevelName);
+        crashReportCategory.setDetail(
             "Level game mode",
             () -> String.format(
                     Locale.ROOT,
@@ -38,7 +47,7 @@ public interface ServerLevelData extends WritableLevelData {
                     this.isAllowCommands()
                 )
         );
-        p_164976_.setDetail(
+        crashReportCategory.setDetail(
             "Level weather",
             () -> String.format(
                     Locale.ROOT,
@@ -53,40 +62,46 @@ public interface ServerLevelData extends WritableLevelData {
 
     int getClearWeatherTime();
 
-    void setClearWeatherTime(int p_78616_);
+    void setClearWeatherTime(int time);
 
     int getWanderingTraderSpawnDelay();
 
-    void setWanderingTraderSpawnDelay(int p_78628_);
+    void setWanderingTraderSpawnDelay(int delay);
 
     int getWanderingTraderSpawnChance();
 
-    void setWanderingTraderSpawnChance(int p_78629_);
+    void setWanderingTraderSpawnChance(int chance);
 
     @Nullable
     UUID getWanderingTraderId();
 
-    void setWanderingTraderId(UUID p_78620_);
+    void setWanderingTraderId(UUID id);
 
     GameType getGameType();
 
-    void setWorldBorder(WorldBorder.Settings p_78619_);
+    void setWorldBorder(WorldBorder.Settings serializer);
 
     WorldBorder.Settings getWorldBorder();
 
     boolean isInitialized();
 
-    void setInitialized(boolean p_78625_);
+    /**
+     * Sets the initialization status of the World.
+     */
+    void setInitialized(boolean initialized);
 
     boolean isAllowCommands();
 
-    void setGameType(GameType p_78618_);
+    void setGameType(GameType type);
 
     TimerQueue<MinecraftServer> getScheduledEvents();
 
-    void setGameTime(long p_78617_);
+    void setGameTime(long time);
 
-    void setDayTime(long p_78624_);
+    /**
+     * Set current world time
+     */
+    void setDayTime(long time);
 
     //Neo
     float getDayTimeFraction();

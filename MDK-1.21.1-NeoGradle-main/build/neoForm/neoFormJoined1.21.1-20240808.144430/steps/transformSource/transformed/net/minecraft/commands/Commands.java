@@ -148,39 +148,39 @@ public class Commands {
     public static final int LEVEL_OWNERS = 4;
     private final CommandDispatcher<CommandSourceStack> dispatcher = new CommandDispatcher<>();
 
-    public Commands(Commands.CommandSelection p_230943_, CommandBuildContext p_230944_) {
+    public Commands(Commands.CommandSelection selection, CommandBuildContext context) {
         AdvancementCommands.register(this.dispatcher);
-        AttributeCommand.register(this.dispatcher, p_230944_);
-        ExecuteCommand.register(this.dispatcher, p_230944_);
-        BossBarCommands.register(this.dispatcher, p_230944_);
-        ClearInventoryCommands.register(this.dispatcher, p_230944_);
-        CloneCommands.register(this.dispatcher, p_230944_);
-        DamageCommand.register(this.dispatcher, p_230944_);
+        AttributeCommand.register(this.dispatcher, context);
+        ExecuteCommand.register(this.dispatcher, context);
+        BossBarCommands.register(this.dispatcher, context);
+        ClearInventoryCommands.register(this.dispatcher, context);
+        CloneCommands.register(this.dispatcher, context);
+        DamageCommand.register(this.dispatcher, context);
         DataCommands.register(this.dispatcher);
         DataPackCommand.register(this.dispatcher);
         DebugCommand.register(this.dispatcher);
         DefaultGameModeCommands.register(this.dispatcher);
         DifficultyCommand.register(this.dispatcher);
-        EffectCommands.register(this.dispatcher, p_230944_);
+        EffectCommands.register(this.dispatcher, context);
         EmoteCommands.register(this.dispatcher);
-        EnchantCommand.register(this.dispatcher, p_230944_);
+        EnchantCommand.register(this.dispatcher, context);
         ExperienceCommand.register(this.dispatcher);
-        FillCommand.register(this.dispatcher, p_230944_);
-        FillBiomeCommand.register(this.dispatcher, p_230944_);
+        FillCommand.register(this.dispatcher, context);
+        FillBiomeCommand.register(this.dispatcher, context);
         ForceLoadCommand.register(this.dispatcher);
         FunctionCommand.register(this.dispatcher);
         GameModeCommand.register(this.dispatcher);
         GameRuleCommand.register(this.dispatcher);
-        GiveCommand.register(this.dispatcher, p_230944_);
+        GiveCommand.register(this.dispatcher, context);
         HelpCommand.register(this.dispatcher);
-        ItemCommands.register(this.dispatcher, p_230944_);
+        ItemCommands.register(this.dispatcher, context);
         KickCommand.register(this.dispatcher);
         KillCommand.register(this.dispatcher);
         ListPlayersCommand.register(this.dispatcher);
-        LocateCommand.register(this.dispatcher, p_230944_);
-        LootCommand.register(this.dispatcher, p_230944_);
+        LocateCommand.register(this.dispatcher, context);
+        LootCommand.register(this.dispatcher, context);
         MsgCommand.register(this.dispatcher);
-        ParticleCommand.register(this.dispatcher, p_230944_);
+        ParticleCommand.register(this.dispatcher, context);
         PlaceCommand.register(this.dispatcher);
         PlaySoundCommand.register(this.dispatcher);
         RandomCommand.register(this.dispatcher);
@@ -190,23 +190,23 @@ public class Commands {
         RideCommand.register(this.dispatcher);
         SayCommand.register(this.dispatcher);
         ScheduleCommand.register(this.dispatcher);
-        ScoreboardCommand.register(this.dispatcher, p_230944_);
-        SeedCommand.register(this.dispatcher, p_230943_ != Commands.CommandSelection.INTEGRATED);
-        SetBlockCommand.register(this.dispatcher, p_230944_);
+        ScoreboardCommand.register(this.dispatcher, context);
+        SeedCommand.register(this.dispatcher, selection != Commands.CommandSelection.INTEGRATED);
+        SetBlockCommand.register(this.dispatcher, context);
         SetSpawnCommand.register(this.dispatcher);
         SetWorldSpawnCommand.register(this.dispatcher);
         SpectateCommand.register(this.dispatcher);
         SpreadPlayersCommand.register(this.dispatcher);
         StopSoundCommand.register(this.dispatcher);
-        SummonCommand.register(this.dispatcher, p_230944_);
+        SummonCommand.register(this.dispatcher, context);
         TagCommand.register(this.dispatcher);
-        TeamCommand.register(this.dispatcher, p_230944_);
+        TeamCommand.register(this.dispatcher, context);
         TeamMsgCommand.register(this.dispatcher);
         TeleportCommand.register(this.dispatcher);
-        TellRawCommand.register(this.dispatcher, p_230944_);
+        TellRawCommand.register(this.dispatcher, context);
         TickCommand.register(this.dispatcher);
         TimeCommand.register(this.dispatcher);
-        TitleCommand.register(this.dispatcher, p_230944_);
+        TitleCommand.register(this.dispatcher, context);
         TriggerCommand.register(this.dispatcher);
         WeatherCommand.register(this.dispatcher);
         WorldBorderCommand.register(this.dispatcher);
@@ -216,18 +216,18 @@ public class Commands {
 
         if (net.neoforged.neoforge.gametest.GameTestHooks.isGametestEnabled()) {
             TestCommand.register(this.dispatcher);
-            RaidCommand.register(this.dispatcher, p_230944_);
+            RaidCommand.register(this.dispatcher, context);
             DebugPathCommand.register(this.dispatcher);
             DebugMobSpawningCommand.register(this.dispatcher);
             WardenSpawnTrackerCommand.register(this.dispatcher);
             SpawnArmorTrimsCommand.register(this.dispatcher);
             ServerPackCommand.register(this.dispatcher);
-            if (p_230943_.includeDedicated) {
+            if (selection.includeDedicated) {
                 DebugConfigCommand.register(this.dispatcher);
             }
         }
 
-        if (p_230943_.includeDedicated) {
+        if (selection.includeDedicated) {
             BanIpCommands.register(this.dispatcher);
             BanListCommands.register(this.dispatcher);
             BanPlayerCommands.register(this.dispatcher);
@@ -245,53 +245,53 @@ public class Commands {
             WhitelistCommand.register(this.dispatcher);
         }
 
-        if (p_230943_.includeIntegrated) {
+        if (selection.includeIntegrated) {
             PublishCommand.register(this.dispatcher);
         }
-        net.neoforged.neoforge.event.EventHooks.onCommandRegister(this.dispatcher, p_230943_, p_230944_);
+        net.neoforged.neoforge.event.EventHooks.onCommandRegister(this.dispatcher, selection, context);
 
         this.dispatcher.setConsumer(ExecutionCommandSource.resultConsumer());
     }
 
-    public static <S> ParseResults<S> mapSource(ParseResults<S> p_242928_, UnaryOperator<S> p_242890_) {
-        CommandContextBuilder<S> commandcontextbuilder = p_242928_.getContext();
-        CommandContextBuilder<S> commandcontextbuilder1 = commandcontextbuilder.withSource(p_242890_.apply(commandcontextbuilder.getSource()));
-        return new ParseResults<>(commandcontextbuilder1, p_242928_.getReader(), p_242928_.getExceptions());
+    public static <S> ParseResults<S> mapSource(ParseResults<S> parseResults, UnaryOperator<S> mapper) {
+        CommandContextBuilder<S> commandcontextbuilder = parseResults.getContext();
+        CommandContextBuilder<S> commandcontextbuilder1 = commandcontextbuilder.withSource(mapper.apply(commandcontextbuilder.getSource()));
+        return new ParseResults<>(commandcontextbuilder1, parseResults.getReader(), parseResults.getExceptions());
     }
 
-    public void performPrefixedCommand(CommandSourceStack p_230958_, String p_230959_) {
-        p_230959_ = p_230959_.startsWith("/") ? p_230959_.substring(1) : p_230959_;
-        this.performCommand(this.dispatcher.parse(p_230959_, p_230958_), p_230959_);
+    public void performPrefixedCommand(CommandSourceStack source, String command) {
+        command = command.startsWith("/") ? command.substring(1) : command;
+        this.performCommand(this.dispatcher.parse(command, source), command);
     }
 
-    public void performCommand(ParseResults<CommandSourceStack> p_242844_, String p_242841_) {
-        CommandSourceStack commandsourcestack = p_242844_.getContext().getSource();
-        net.neoforged.neoforge.event.CommandEvent event = new net.neoforged.neoforge.event.CommandEvent(p_242844_);
+    public void performCommand(ParseResults<CommandSourceStack> parseResults, String command) {
+        CommandSourceStack commandsourcestack = parseResults.getContext().getSource();
+        net.neoforged.neoforge.event.CommandEvent event = new net.neoforged.neoforge.event.CommandEvent(parseResults);
         if (net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(event).isCanceled()) {
             if (event.getException() != null) {
                 commandsourcestack.sendFailure(Component.literal(Util.describeError(event.getException())));
-                LOGGER.error("'/{}' threw an exception", p_242841_, event.getException());
+                LOGGER.error("'/{}' threw an exception", command, event.getException());
             }
             return;
         }
-        p_242844_ = event.getParseResults();
+        parseResults = event.getParseResults();
 
-        commandsourcestack.getServer().getProfiler().push(() -> "/" + p_242841_);
-        ContextChain<CommandSourceStack> contextchain = finishParsing(p_242844_, p_242841_, commandsourcestack);
+        commandsourcestack.getServer().getProfiler().push(() -> "/" + command);
+        ContextChain<CommandSourceStack> contextchain = finishParsing(parseResults, command, commandsourcestack);
 
         try {
             if (contextchain != null) {
                 executeCommandInContext(
                     commandsourcestack,
                     p_309417_ -> ExecutionContext.queueInitialCommandExecution(
-                            p_309417_, p_242841_, contextchain, commandsourcestack, CommandResultCallback.EMPTY
+                            p_309417_, command, contextchain, commandsourcestack, CommandResultCallback.EMPTY
                         )
                 );
             }
         } catch (Exception exception) {
             MutableComponent mutablecomponent = Component.literal(exception.getMessage() == null ? exception.getClass().getName() : exception.getMessage());
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.error("Command exception: /{}", p_242841_, exception);
+                LOGGER.error("Command exception: /{}", command, exception);
                 StackTraceElement[] astacktraceelement = exception.getStackTrace();
 
                 for (int i = 0; i < Math.min(astacktraceelement.length, 3); i++) {
@@ -310,7 +310,7 @@ public class Commands {
             );
             if (SharedConstants.IS_RUNNING_IN_IDE) {
                 commandsourcestack.sendFailure(Component.literal(Util.describeError(exception)));
-                LOGGER.error("'/{}' threw an exception", p_242841_, exception);
+                LOGGER.error("'/{}' threw an exception", command, exception);
             }
         } finally {
             commandsourcestack.getServer().getProfiler().pop();
@@ -318,18 +318,18 @@ public class Commands {
     }
 
     @Nullable
-    private static ContextChain<CommandSourceStack> finishParsing(ParseResults<CommandSourceStack> p_307220_, String p_307311_, CommandSourceStack p_307676_) {
+    private static ContextChain<CommandSourceStack> finishParsing(ParseResults<CommandSourceStack> parseResults, String command, CommandSourceStack source) {
         try {
-            validateParseResults(p_307220_);
-            return ContextChain.tryFlatten(p_307220_.getContext().build(p_307311_))
-                .orElseThrow(() -> CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownCommand().createWithContext(p_307220_.getReader()));
+            validateParseResults(parseResults);
+            return ContextChain.tryFlatten(parseResults.getContext().build(command))
+                .orElseThrow(() -> CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownCommand().createWithContext(parseResults.getReader()));
         } catch (CommandSyntaxException commandsyntaxexception) {
-            p_307676_.sendFailure(ComponentUtils.fromMessage(commandsyntaxexception.getRawMessage()));
+            source.sendFailure(ComponentUtils.fromMessage(commandsyntaxexception.getRawMessage()));
             if (commandsyntaxexception.getInput() != null && commandsyntaxexception.getCursor() >= 0) {
                 int i = Math.min(commandsyntaxexception.getInput().length(), commandsyntaxexception.getCursor());
                 MutableComponent mutablecomponent = Component.empty()
                     .withStyle(ChatFormatting.GRAY)
-                    .withStyle(p_82134_ -> p_82134_.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/" + p_307311_)));
+                    .withStyle(p_82134_ -> p_82134_.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/" + command)));
                 if (i > 10) {
                     mutablecomponent.append(CommonComponents.ELLIPSIS);
                 }
@@ -342,15 +342,15 @@ public class Commands {
                 }
 
                 mutablecomponent.append(Component.translatable("command.context.here").withStyle(ChatFormatting.RED, ChatFormatting.ITALIC));
-                p_307676_.sendFailure(mutablecomponent);
+                source.sendFailure(mutablecomponent);
             }
 
             return null;
         }
     }
 
-    public static void executeCommandInContext(CommandSourceStack p_306118_, Consumer<ExecutionContext<CommandSourceStack>> p_306332_) {
-        MinecraftServer minecraftserver = p_306118_.getServer();
+    public static void executeCommandInContext(CommandSourceStack source, Consumer<ExecutionContext<CommandSourceStack>> contextConsumer) {
+        MinecraftServer minecraftserver = source.getServer();
         ExecutionContext<CommandSourceStack> executioncontext = CURRENT_EXECUTION_CONTEXT.get();
         boolean flag = executioncontext == null;
         if (flag) {
@@ -359,33 +359,33 @@ public class Commands {
 
             try (ExecutionContext<CommandSourceStack> executioncontext1 = new ExecutionContext<>(i, j, minecraftserver.getProfiler())) {
                 CURRENT_EXECUTION_CONTEXT.set(executioncontext1);
-                p_306332_.accept(executioncontext1);
+                contextConsumer.accept(executioncontext1);
                 executioncontext1.runCommandQueue();
             } finally {
                 CURRENT_EXECUTION_CONTEXT.set(null);
             }
         } else {
-            p_306332_.accept(executioncontext);
+            contextConsumer.accept(executioncontext);
         }
     }
 
-    public void sendCommands(ServerPlayer p_82096_) {
+    public void sendCommands(ServerPlayer player) {
         Map<CommandNode<CommandSourceStack>, CommandNode<SharedSuggestionProvider>> map = Maps.newHashMap();
         RootCommandNode<SharedSuggestionProvider> rootcommandnode = new RootCommandNode<>();
         map.put(this.dispatcher.getRoot(), rootcommandnode);
         // FORGE: Use our own command node merging method to handle redirect nodes properly, see issue #7551
-        net.neoforged.neoforge.server.command.CommandHelper.mergeCommandNode(this.dispatcher.getRoot(), rootcommandnode, map, p_82096_.createCommandSourceStack(), ctx -> 0, suggest -> SuggestionProviders.safelySwap((com.mojang.brigadier.suggestion.SuggestionProvider<SharedSuggestionProvider>) (com.mojang.brigadier.suggestion.SuggestionProvider<?>) suggest));
-        p_82096_.connection.send(new ClientboundCommandsPacket(rootcommandnode));
+        net.neoforged.neoforge.server.command.CommandHelper.mergeCommandNode(this.dispatcher.getRoot(), rootcommandnode, map, player.createCommandSourceStack(), ctx -> 0, suggest -> SuggestionProviders.safelySwap((com.mojang.brigadier.suggestion.SuggestionProvider<SharedSuggestionProvider>) (com.mojang.brigadier.suggestion.SuggestionProvider<?>) suggest));
+        player.connection.send(new ClientboundCommandsPacket(rootcommandnode));
     }
 
     private void fillUsableCommands(
-        CommandNode<CommandSourceStack> p_82113_,
-        CommandNode<SharedSuggestionProvider> p_82114_,
-        CommandSourceStack p_82115_,
-        Map<CommandNode<CommandSourceStack>, CommandNode<SharedSuggestionProvider>> p_82116_
+        CommandNode<CommandSourceStack> rootCommandSource,
+        CommandNode<SharedSuggestionProvider> rootSuggestion,
+        CommandSourceStack source,
+        Map<CommandNode<CommandSourceStack>, CommandNode<SharedSuggestionProvider>> commandNodeToSuggestionNode
     ) {
-        for (CommandNode<CommandSourceStack> commandnode : p_82113_.getChildren()) {
-            if (commandnode.canUse(p_82115_)) {
+        for (CommandNode<CommandSourceStack> commandnode : rootCommandSource.getChildren()) {
+            if (commandnode.canUse(source)) {
                 ArgumentBuilder<SharedSuggestionProvider, ?> argumentbuilder = (ArgumentBuilder<SharedSuggestionProvider, ?>)(ArgumentBuilder<?, ?>)commandnode.createBuilder();
                 argumentbuilder.requires(p_82126_ -> true);
                 if (argumentbuilder.getCommand() != null) {
@@ -400,31 +400,37 @@ public class Commands {
                 }
 
                 if (argumentbuilder.getRedirect() != null) {
-                    argumentbuilder.redirect(p_82116_.get(argumentbuilder.getRedirect()));
+                    argumentbuilder.redirect(commandNodeToSuggestionNode.get(argumentbuilder.getRedirect()));
                 }
 
                 CommandNode<SharedSuggestionProvider> commandnode1 = argumentbuilder.build();
-                p_82116_.put(commandnode, commandnode1);
-                p_82114_.addChild(commandnode1);
+                commandNodeToSuggestionNode.put(commandnode, commandnode1);
+                rootSuggestion.addChild(commandnode1);
                 if (!commandnode.getChildren().isEmpty()) {
-                    this.fillUsableCommands(commandnode, commandnode1, p_82115_, p_82116_);
+                    this.fillUsableCommands(commandnode, commandnode1, source, commandNodeToSuggestionNode);
                 }
             }
         }
     }
 
-    public static LiteralArgumentBuilder<CommandSourceStack> literal(String p_82128_) {
-        return LiteralArgumentBuilder.literal(p_82128_);
+    /**
+     * Creates a new argument. Intended to be imported statically. The benefit of this over the brigadier {@link LiteralArgumentBuilder#literal} method is that it is typed to {@link CommandSource}.
+     */
+    public static LiteralArgumentBuilder<CommandSourceStack> literal(String name) {
+        return LiteralArgumentBuilder.literal(name);
     }
 
-    public static <T> RequiredArgumentBuilder<CommandSourceStack, T> argument(String p_82130_, ArgumentType<T> p_82131_) {
-        return RequiredArgumentBuilder.argument(p_82130_, p_82131_);
+    /**
+     * Creates a new argument. Intended to be imported statically. The benefit of this over the brigadier {@link RequiredArgumentBuilder#argument} method is that it is typed to {@link CommandSource}.
+     */
+    public static <T> RequiredArgumentBuilder<CommandSourceStack, T> argument(String name, ArgumentType<T> type) {
+        return RequiredArgumentBuilder.argument(name, type);
     }
 
-    public static Predicate<String> createValidator(Commands.ParseFunction p_82121_) {
+    public static Predicate<String> createValidator(Commands.ParseFunction parser) {
         return p_82124_ -> {
             try {
-                p_82121_.parse(new StringReader(p_82124_));
+                parser.parse(new StringReader(p_82124_));
                 return true;
             } catch (CommandSyntaxException commandsyntaxexception) {
                 return false;
@@ -436,36 +442,36 @@ public class Commands {
         return this.dispatcher;
     }
 
-    public static <S> void validateParseResults(ParseResults<S> p_306093_) throws CommandSyntaxException {
-        CommandSyntaxException commandsyntaxexception = getParseException(p_306093_);
+    public static <S> void validateParseResults(ParseResults<S> parseResults) throws CommandSyntaxException {
+        CommandSyntaxException commandsyntaxexception = getParseException(parseResults);
         if (commandsyntaxexception != null) {
             throw commandsyntaxexception;
         }
     }
 
     @Nullable
-    public static <S> CommandSyntaxException getParseException(ParseResults<S> p_82098_) {
-        if (!p_82098_.getReader().canRead()) {
+    public static <S> CommandSyntaxException getParseException(ParseResults<S> result) {
+        if (!result.getReader().canRead()) {
             return null;
-        } else if (p_82098_.getExceptions().size() == 1) {
-            return p_82098_.getExceptions().values().iterator().next();
+        } else if (result.getExceptions().size() == 1) {
+            return result.getExceptions().values().iterator().next();
         } else {
-            return p_82098_.getContext().getRange().isEmpty()
-                ? CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownCommand().createWithContext(p_82098_.getReader())
-                : CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownArgument().createWithContext(p_82098_.getReader());
+            return result.getContext().getRange().isEmpty()
+                ? CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownCommand().createWithContext(result.getReader())
+                : CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownArgument().createWithContext(result.getReader());
         }
     }
 
-    public static CommandBuildContext createValidationContext(final HolderLookup.Provider p_256243_) {
+    public static CommandBuildContext createValidationContext(final HolderLookup.Provider provider) {
         return new CommandBuildContext() {
             @Override
             public Stream<ResourceKey<? extends Registry<?>>> listRegistries() {
-                return p_256243_.listRegistries();
+                return provider.listRegistries();
             }
 
             @Override
             public <T> Optional<HolderLookup.RegistryLookup<T>> lookup(ResourceKey<? extends Registry<? extends T>> p_323467_) {
-                return p_256243_.lookup(p_323467_).map(this::createLookup);
+                return provider.lookup(p_323467_).map(this::createLookup);
             }
 
             private <T> HolderLookup.RegistryLookup.Delegate<T> createLookup(final HolderLookup.RegistryLookup<T> p_323830_) {
@@ -520,14 +526,14 @@ public class Commands {
         final boolean includeIntegrated;
         final boolean includeDedicated;
 
-        private CommandSelection(boolean p_82151_, boolean p_82152_) {
-            this.includeIntegrated = p_82151_;
-            this.includeDedicated = p_82152_;
+        private CommandSelection(boolean includeIntegrated, boolean includeDedicated) {
+            this.includeIntegrated = includeIntegrated;
+            this.includeDedicated = includeDedicated;
         }
     }
 
     @FunctionalInterface
     public interface ParseFunction {
-        void parse(StringReader p_82161_) throws CommandSyntaxException;
+        void parse(StringReader input) throws CommandSyntaxException;
     }
 }

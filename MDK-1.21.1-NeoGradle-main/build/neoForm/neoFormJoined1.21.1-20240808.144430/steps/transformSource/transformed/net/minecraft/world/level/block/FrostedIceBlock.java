@@ -28,63 +28,63 @@ public class FrostedIceBlock extends IceBlock {
         return CODEC;
     }
 
-    public FrostedIceBlock(BlockBehaviour.Properties p_53564_) {
-        super(p_53564_);
+    public FrostedIceBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(AGE, Integer.valueOf(0)));
     }
 
     @Override
-    public void onPlace(BlockState p_345576_, Level p_346049_, BlockPos p_346299_, BlockState p_346367_, boolean p_344840_) {
-        p_346049_.scheduleTick(p_346299_, this, Mth.nextInt(p_346049_.getRandom(), 60, 120));
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        level.scheduleTick(pos, this, Mth.nextInt(level.getRandom(), 60, 120));
     }
 
     @Override
-    protected void tick(BlockState p_221233_, ServerLevel p_221234_, BlockPos p_221235_, RandomSource p_221236_) {
-        if ((p_221236_.nextInt(3) == 0 || this.fewerNeigboursThan(p_221234_, p_221235_, 4))
-            && p_221234_.getMaxLocalRawBrightness(p_221235_) > 11 - p_221233_.getValue(AGE) - p_221233_.getLightBlock(p_221234_, p_221235_)
-            && this.slightlyMelt(p_221233_, p_221234_, p_221235_)) {
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if ((random.nextInt(3) == 0 || this.fewerNeigboursThan(level, pos, 4))
+            && level.getMaxLocalRawBrightness(pos) > 11 - state.getValue(AGE) - state.getLightBlock(level, pos)
+            && this.slightlyMelt(state, level, pos)) {
             BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
             for (Direction direction : Direction.values()) {
-                blockpos$mutableblockpos.setWithOffset(p_221235_, direction);
-                BlockState blockstate = p_221234_.getBlockState(blockpos$mutableblockpos);
-                if (blockstate.is(this) && !this.slightlyMelt(blockstate, p_221234_, blockpos$mutableblockpos)) {
-                    p_221234_.scheduleTick(blockpos$mutableblockpos, this, Mth.nextInt(p_221236_, 20, 40));
+                blockpos$mutableblockpos.setWithOffset(pos, direction);
+                BlockState blockstate = level.getBlockState(blockpos$mutableblockpos);
+                if (blockstate.is(this) && !this.slightlyMelt(blockstate, level, blockpos$mutableblockpos)) {
+                    level.scheduleTick(blockpos$mutableblockpos, this, Mth.nextInt(random, 20, 40));
                 }
             }
         } else {
-            p_221234_.scheduleTick(p_221235_, this, Mth.nextInt(p_221236_, 20, 40));
+            level.scheduleTick(pos, this, Mth.nextInt(random, 20, 40));
         }
     }
 
-    private boolean slightlyMelt(BlockState p_53593_, Level p_53594_, BlockPos p_53595_) {
-        int i = p_53593_.getValue(AGE);
+    private boolean slightlyMelt(BlockState state, Level level, BlockPos pos) {
+        int i = state.getValue(AGE);
         if (i < 3) {
-            p_53594_.setBlock(p_53595_, p_53593_.setValue(AGE, Integer.valueOf(i + 1)), 2);
+            level.setBlock(pos, state.setValue(AGE, Integer.valueOf(i + 1)), 2);
             return false;
         } else {
-            this.melt(p_53593_, p_53594_, p_53595_);
+            this.melt(state, level, pos);
             return true;
         }
     }
 
     @Override
-    protected void neighborChanged(BlockState p_53579_, Level p_53580_, BlockPos p_53581_, Block p_53582_, BlockPos p_53583_, boolean p_53584_) {
-        if (p_53582_.defaultBlockState().is(this) && this.fewerNeigboursThan(p_53580_, p_53581_, 2)) {
-            this.melt(p_53579_, p_53580_, p_53581_);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (block.defaultBlockState().is(this) && this.fewerNeigboursThan(level, pos, 2)) {
+            this.melt(state, level, pos);
         }
 
-        super.neighborChanged(p_53579_, p_53580_, p_53581_, p_53582_, p_53583_, p_53584_);
+        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
     }
 
-    private boolean fewerNeigboursThan(BlockGetter p_53566_, BlockPos p_53567_, int p_53568_) {
+    private boolean fewerNeigboursThan(BlockGetter level, BlockPos pos, int neighborsRequired) {
         int i = 0;
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
         for (Direction direction : Direction.values()) {
-            blockpos$mutableblockpos.setWithOffset(p_53567_, direction);
-            if (p_53566_.getBlockState(blockpos$mutableblockpos).is(this)) {
-                if (++i >= p_53568_) {
+            blockpos$mutableblockpos.setWithOffset(pos, direction);
+            if (level.getBlockState(blockpos$mutableblockpos).is(this)) {
+                if (++i >= neighborsRequired) {
                     return false;
                 }
             }
@@ -94,12 +94,12 @@ public class FrostedIceBlock extends IceBlock {
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_53586_) {
-        p_53586_.add(AGE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AGE);
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader p_304729_, BlockPos p_53571_, BlockState p_53572_) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         return ItemStack.EMPTY;
     }
 }

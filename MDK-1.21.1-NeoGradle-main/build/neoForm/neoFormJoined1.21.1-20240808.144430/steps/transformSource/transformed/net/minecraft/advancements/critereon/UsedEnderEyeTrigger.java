@@ -13,11 +13,11 @@ public class UsedEnderEyeTrigger extends SimpleCriterionTrigger<UsedEnderEyeTrig
         return UsedEnderEyeTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_73936_, BlockPos p_73937_) {
-        double d0 = p_73936_.getX() - (double)p_73937_.getX();
-        double d1 = p_73936_.getZ() - (double)p_73937_.getZ();
+    public void trigger(ServerPlayer player, BlockPos pos) {
+        double d0 = player.getX() - (double)pos.getX();
+        double d1 = player.getZ() - (double)pos.getZ();
         double d2 = d0 * d0 + d1 * d1;
-        this.trigger(p_73936_, p_73934_ -> p_73934_.matches(d2));
+        this.trigger(player, p_73934_ -> p_73934_.matches(d2));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, MinMaxBounds.Doubles distance)
@@ -32,8 +32,8 @@ public class UsedEnderEyeTrigger extends SimpleCriterionTrigger<UsedEnderEyeTrig
                     .apply(p_337402_, UsedEnderEyeTrigger.TriggerInstance::new)
         );
 
-        public boolean matches(double p_73952_) {
-            return this.distance.matchesSqr(p_73952_);
+        public boolean matches(double distanceSq) {
+            return this.distance.matchesSqr(distanceSq);
         }
     }
 }

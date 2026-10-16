@@ -25,10 +25,10 @@ public class RconClient extends GenericThread {
     private final String rconPassword;
     private final ServerInterface serverInterface;
 
-    RconClient(ServerInterface p_11587_, String p_11588_, Socket p_11589_) {
-        super("RCON Client " + p_11589_.getInetAddress());
-        this.serverInterface = p_11587_;
-        this.client = p_11589_;
+    RconClient(ServerInterface serverInterface, String rconPassword, Socket client) {
+        super("RCON Client " + client.getInetAddress());
+        this.serverInterface = serverInterface;
+        this.client = client;
 
         try {
             this.client.setSoTimeout(0);
@@ -36,7 +36,7 @@ public class RconClient extends GenericThread {
             this.running = false;
         }
 
-        this.rconPassword = p_11588_;
+        this.rconPassword = rconPassword;
     }
 
     @Override
@@ -105,13 +105,16 @@ public class RconClient extends GenericThread {
         }
     }
 
-    private void send(int p_11591_, int p_11592_, String p_11593_) throws IOException {
+    /**
+     * Sends the given response message to the client
+     */
+    private void send(int id, int type, String message) throws IOException {
         ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream(1248);
         DataOutputStream dataoutputstream = new DataOutputStream(bytearrayoutputstream);
-        byte[] abyte = p_11593_.getBytes(StandardCharsets.UTF_8);
+        byte[] abyte = message.getBytes(StandardCharsets.UTF_8);
         dataoutputstream.writeInt(Integer.reverseBytes(abyte.length + 10));
-        dataoutputstream.writeInt(Integer.reverseBytes(p_11591_));
-        dataoutputstream.writeInt(Integer.reverseBytes(p_11592_));
+        dataoutputstream.writeInt(Integer.reverseBytes(id));
+        dataoutputstream.writeInt(Integer.reverseBytes(type));
         dataoutputstream.write(abyte);
         dataoutputstream.write(0);
         dataoutputstream.write(0);
@@ -122,13 +125,16 @@ public class RconClient extends GenericThread {
         this.send(-1, 2, "");
     }
 
-    private void sendCmdResponse(int p_11595_, String p_11596_) throws IOException {
-        byte[] whole = p_11596_.getBytes(StandardCharsets.UTF_8);
+    /**
+     * Splits the response message into individual packets and sends each one
+     */
+    private void sendCmdResponse(int id, String message) throws IOException {
+        byte[] whole = message.getBytes(StandardCharsets.UTF_8);
         int i = whole.length;
         int start = 0;
         do {
             int j = 4096 <= i ? 4096 : i;
-            this.send(p_11595_, 0, new String(java.util.Arrays.copyOfRange(whole, start, j+start), StandardCharsets.UTF_8));
+            this.send(id, 0, new String(java.util.Arrays.copyOfRange(whole, start, j+start), StandardCharsets.UTF_8));
             i -= j;
             start += j;
         } while (0 != i);

@@ -27,48 +27,56 @@ public class BlastFurnaceBlock extends AbstractFurnaceBlock {
         return CODEC;
     }
 
-    public BlastFurnaceBlock(BlockBehaviour.Properties p_49773_) {
-        super(p_49773_);
+    public BlastFurnaceBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_152386_, BlockState p_152387_) {
-        return new BlastFurnaceBlockEntity(p_152386_, p_152387_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new BlastFurnaceBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_152382_, BlockState p_152383_, BlockEntityType<T> p_152384_) {
-        return createFurnaceTicker(p_152382_, p_152384_, BlockEntityType.BLAST_FURNACE);
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        return createFurnaceTicker(level, blockEntityType, BlockEntityType.BLAST_FURNACE);
     }
 
+    /**
+     * Called to open this furnace's container.
+     *
+     * @see #use
+     */
     @Override
-    protected void openContainer(Level p_49777_, BlockPos p_49778_, Player p_49779_) {
-        BlockEntity blockentity = p_49777_.getBlockEntity(p_49778_);
+    protected void openContainer(Level level, BlockPos pos, Player player) {
+        BlockEntity blockentity = level.getBlockEntity(pos);
         if (blockentity instanceof BlastFurnaceBlockEntity) {
-            p_49779_.openMenu((MenuProvider)blockentity);
-            p_49779_.awardStat(Stats.INTERACT_WITH_BLAST_FURNACE);
+            player.openMenu((MenuProvider)blockentity);
+            player.awardStat(Stats.INTERACT_WITH_BLAST_FURNACE);
         }
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_220818_, Level p_220819_, BlockPos p_220820_, RandomSource p_220821_) {
-        if (p_220818_.getValue(LIT)) {
-            double d0 = (double)p_220820_.getX() + 0.5;
-            double d1 = (double)p_220820_.getY();
-            double d2 = (double)p_220820_.getZ() + 0.5;
-            if (p_220821_.nextDouble() < 0.1) {
-                p_220819_.playLocalSound(d0, d1, d2, SoundEvents.BLASTFURNACE_FIRE_CRACKLE, SoundSource.BLOCKS, 1.0F, 1.0F, false);
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (state.getValue(LIT)) {
+            double d0 = (double)pos.getX() + 0.5;
+            double d1 = (double)pos.getY();
+            double d2 = (double)pos.getZ() + 0.5;
+            if (random.nextDouble() < 0.1) {
+                level.playLocalSound(d0, d1, d2, SoundEvents.BLASTFURNACE_FIRE_CRACKLE, SoundSource.BLOCKS, 1.0F, 1.0F, false);
             }
 
-            Direction direction = p_220818_.getValue(FACING);
+            Direction direction = state.getValue(FACING);
             Direction.Axis direction$axis = direction.getAxis();
             double d3 = 0.52;
-            double d4 = p_220821_.nextDouble() * 0.6 - 0.3;
+            double d4 = random.nextDouble() * 0.6 - 0.3;
             double d5 = direction$axis == Direction.Axis.X ? (double)direction.getStepX() * 0.52 : d4;
-            double d6 = p_220821_.nextDouble() * 9.0 / 16.0;
+            double d6 = random.nextDouble() * 9.0 / 16.0;
             double d7 = direction$axis == Direction.Axis.Z ? (double)direction.getStepZ() * 0.52 : d4;
-            p_220819_.addParticle(ParticleTypes.SMOKE, d0 + d5, d1 + d6, d2 + d7, 0.0, 0.0, 0.0);
+            level.addParticle(ParticleTypes.SMOKE, d0 + d5, d1 + d6, d2 + d7, 0.0, 0.0, 0.0);
         }
     }
 }

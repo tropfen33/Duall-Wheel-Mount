@@ -20,34 +20,34 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public interface BlockGetter extends LevelHeightAccessor, net.neoforged.neoforge.common.extensions.IBlockGetterExtension {
     @Nullable
-    BlockEntity getBlockEntity(BlockPos p_45570_);
+    BlockEntity getBlockEntity(BlockPos pos);
 
-    default <T extends BlockEntity> Optional<T> getBlockEntity(BlockPos p_151367_, BlockEntityType<T> p_151368_) {
-        BlockEntity blockentity = this.getBlockEntity(p_151367_);
-        return blockentity != null && blockentity.getType() == p_151368_ ? Optional.of((T)blockentity) : Optional.empty();
+    default <T extends BlockEntity> Optional<T> getBlockEntity(BlockPos pos, BlockEntityType<T> blockEntityType) {
+        BlockEntity blockentity = this.getBlockEntity(pos);
+        return blockentity != null && blockentity.getType() == blockEntityType ? Optional.of((T)blockentity) : Optional.empty();
     }
 
-    BlockState getBlockState(BlockPos p_45571_);
+    BlockState getBlockState(BlockPos pos);
 
-    FluidState getFluidState(BlockPos p_45569_);
+    FluidState getFluidState(BlockPos pos);
 
-    default int getLightEmission(BlockPos p_45572_) {
-        return this.getBlockState(p_45572_).getLightEmission(this, p_45572_);
+    default int getLightEmission(BlockPos pos) {
+        return this.getBlockState(pos).getLightEmission(this, pos);
     }
 
     default int getMaxLightLevel() {
         return 15;
     }
 
-    default Stream<BlockState> getBlockStates(AABB p_45557_) {
-        return BlockPos.betweenClosedStream(p_45557_).map(this::getBlockState);
+    default Stream<BlockState> getBlockStates(AABB area) {
+        return BlockPos.betweenClosedStream(area).map(this::getBlockState);
     }
 
-    default BlockHitResult isBlockInLine(ClipBlockStateContext p_151354_) {
+    default BlockHitResult isBlockInLine(ClipBlockStateContext context) {
         return traverseBlocks(
-            p_151354_.getFrom(),
-            p_151354_.getTo(),
-            p_151354_,
+            context.getFrom(),
+            context.getTo(),
+            context,
             (p_275154_, p_275155_) -> {
                 BlockState blockstate = this.getBlockState(p_275155_);
                 Vec3 vec3 = p_275154_.getFrom().subtract(p_275154_.getTo());
@@ -62,8 +62,12 @@ public interface BlockGetter extends LevelHeightAccessor, net.neoforged.neoforge
         );
     }
 
-    default BlockHitResult clip(ClipContext p_45548_) {
-        return traverseBlocks(p_45548_.getFrom(), p_45548_.getTo(), p_45548_, (p_151359_, p_151360_) -> {
+    /**
+     * Checks if there's block between {@code from} and {@code to} of context.
+     * This uses the collision shape of provided block.
+     */
+    default BlockHitResult clip(ClipContext context) {
+        return traverseBlocks(context.getFrom(), context.getTo(), context, (p_151359_, p_151360_) -> {
             BlockState blockstate = this.getBlockState(p_151360_);
             FluidState fluidstate = this.getFluidState(p_151360_);
             Vec3 vec3 = p_151359_.getFrom();
@@ -82,12 +86,12 @@ public interface BlockGetter extends LevelHeightAccessor, net.neoforged.neoforge
     }
 
     @Nullable
-    default BlockHitResult clipWithInteractionOverride(Vec3 p_45559_, Vec3 p_45560_, BlockPos p_45561_, VoxelShape p_45562_, BlockState p_45563_) {
-        BlockHitResult blockhitresult = p_45562_.clip(p_45559_, p_45560_, p_45561_);
+    default BlockHitResult clipWithInteractionOverride(Vec3 startVec, Vec3 endVec, BlockPos pos, VoxelShape shape, BlockState state) {
+        BlockHitResult blockhitresult = shape.clip(startVec, endVec, pos);
         if (blockhitresult != null) {
-            BlockHitResult blockhitresult1 = p_45563_.getInteractionShape(this, p_45561_).clip(p_45559_, p_45560_, p_45561_);
+            BlockHitResult blockhitresult1 = state.getInteractionShape(this, pos).clip(startVec, endVec, pos);
             if (blockhitresult1 != null
-                && blockhitresult1.getLocation().subtract(p_45559_).lengthSqr() < blockhitresult.getLocation().subtract(p_45559_).lengthSqr()) {
+                && blockhitresult1.getLocation().subtract(startVec).lengthSqr() < blockhitresult.getLocation().subtract(startVec).lengthSqr()) {
                 return blockhitresult.withDirection(blockhitresult1.getDirection());
             }
         }
@@ -95,37 +99,37 @@ public interface BlockGetter extends LevelHeightAccessor, net.neoforged.neoforge
         return blockhitresult;
     }
 
-    default double getBlockFloorHeight(VoxelShape p_45565_, Supplier<VoxelShape> p_45566_) {
-        if (!p_45565_.isEmpty()) {
-            return p_45565_.max(Direction.Axis.Y);
+    default double getBlockFloorHeight(VoxelShape shape, Supplier<VoxelShape> belowShapeSupplier) {
+        if (!shape.isEmpty()) {
+            return shape.max(Direction.Axis.Y);
         } else {
-            double d0 = p_45566_.get().max(Direction.Axis.Y);
+            double d0 = belowShapeSupplier.get().max(Direction.Axis.Y);
             return d0 >= 1.0 ? d0 - 1.0 : Double.NEGATIVE_INFINITY;
         }
     }
 
-    default double getBlockFloorHeight(BlockPos p_45574_) {
-        return this.getBlockFloorHeight(this.getBlockState(p_45574_).getCollisionShape(this, p_45574_), () -> {
-            BlockPos blockpos = p_45574_.below();
+    default double getBlockFloorHeight(BlockPos pos) {
+        return this.getBlockFloorHeight(this.getBlockState(pos).getCollisionShape(this, pos), () -> {
+            BlockPos blockpos = pos.below();
             return this.getBlockState(blockpos).getCollisionShape(this, blockpos);
         });
     }
 
-    static <T, C> T traverseBlocks(Vec3 p_151362_, Vec3 p_151363_, C p_151364_, BiFunction<C, BlockPos, T> p_151365_, Function<C, T> p_151366_) {
-        if (p_151362_.equals(p_151363_)) {
-            return p_151366_.apply(p_151364_);
+    static <T, C> T traverseBlocks(Vec3 from, Vec3 to, C context, BiFunction<C, BlockPos, T> tester, Function<C, T> onFail) {
+        if (from.equals(to)) {
+            return onFail.apply(context);
         } else {
-            double d0 = Mth.lerp(-1.0E-7, p_151363_.x, p_151362_.x);
-            double d1 = Mth.lerp(-1.0E-7, p_151363_.y, p_151362_.y);
-            double d2 = Mth.lerp(-1.0E-7, p_151363_.z, p_151362_.z);
-            double d3 = Mth.lerp(-1.0E-7, p_151362_.x, p_151363_.x);
-            double d4 = Mth.lerp(-1.0E-7, p_151362_.y, p_151363_.y);
-            double d5 = Mth.lerp(-1.0E-7, p_151362_.z, p_151363_.z);
+            double d0 = Mth.lerp(-1.0E-7, to.x, from.x);
+            double d1 = Mth.lerp(-1.0E-7, to.y, from.y);
+            double d2 = Mth.lerp(-1.0E-7, to.z, from.z);
+            double d3 = Mth.lerp(-1.0E-7, from.x, to.x);
+            double d4 = Mth.lerp(-1.0E-7, from.y, to.y);
+            double d5 = Mth.lerp(-1.0E-7, from.z, to.z);
             int i = Mth.floor(d3);
             int j = Mth.floor(d4);
             int k = Mth.floor(d5);
             BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos(i, j, k);
-            T t = p_151365_.apply(p_151364_, blockpos$mutableblockpos);
+            T t = tester.apply(context, blockpos$mutableblockpos);
             if (t != null) {
                 return t;
             } else {
@@ -159,13 +163,13 @@ public interface BlockGetter extends LevelHeightAccessor, net.neoforged.neoforge
                         d14 += d11;
                     }
 
-                    T t1 = p_151365_.apply(p_151364_, blockpos$mutableblockpos.set(i, j, k));
+                    T t1 = tester.apply(context, blockpos$mutableblockpos.set(i, j, k));
                     if (t1 != null) {
                         return t1;
                     }
                 }
 
-                return p_151366_.apply(p_151364_);
+                return onFail.apply(context);
             }
         }
     }

@@ -54,57 +54,57 @@ public interface DamageTypes {
     ResourceKey<DamageType> OUTSIDE_BORDER = ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.withDefaultNamespace("outside_border"));
     ResourceKey<DamageType> GENERIC_KILL = ResourceKey.create(Registries.DAMAGE_TYPE, ResourceLocation.withDefaultNamespace("generic_kill"));
 
-    static void bootstrap(BootstrapContext<DamageType> p_321708_) {
-        p_321708_.register(IN_FIRE, new DamageType("inFire", 0.1F, DamageEffects.BURNING));
-        p_321708_.register(CAMPFIRE, new DamageType("inFire", 0.1F, DamageEffects.BURNING));
-        p_321708_.register(LIGHTNING_BOLT, new DamageType("lightningBolt", 0.1F));
-        p_321708_.register(ON_FIRE, new DamageType("onFire", 0.0F, DamageEffects.BURNING));
-        p_321708_.register(LAVA, new DamageType("lava", 0.1F, DamageEffects.BURNING));
-        p_321708_.register(HOT_FLOOR, new DamageType("hotFloor", 0.1F, DamageEffects.BURNING));
-        p_321708_.register(IN_WALL, new DamageType("inWall", 0.0F));
-        p_321708_.register(CRAMMING, new DamageType("cramming", 0.0F));
-        p_321708_.register(DROWN, new DamageType("drown", 0.0F, DamageEffects.DROWNING));
-        p_321708_.register(STARVE, new DamageType("starve", 0.0F));
-        p_321708_.register(CACTUS, new DamageType("cactus", 0.1F));
-        p_321708_.register(
+    static void bootstrap(BootstrapContext<DamageType> context) {
+        context.register(IN_FIRE, new DamageType("inFire", 0.1F, DamageEffects.BURNING));
+        context.register(CAMPFIRE, new DamageType("inFire", 0.1F, DamageEffects.BURNING));
+        context.register(LIGHTNING_BOLT, new DamageType("lightningBolt", 0.1F));
+        context.register(ON_FIRE, new DamageType("onFire", 0.0F, DamageEffects.BURNING));
+        context.register(LAVA, new DamageType("lava", 0.1F, DamageEffects.BURNING));
+        context.register(HOT_FLOOR, new DamageType("hotFloor", 0.1F, DamageEffects.BURNING));
+        context.register(IN_WALL, new DamageType("inWall", 0.0F));
+        context.register(CRAMMING, new DamageType("cramming", 0.0F));
+        context.register(DROWN, new DamageType("drown", 0.0F, DamageEffects.DROWNING));
+        context.register(STARVE, new DamageType("starve", 0.0F));
+        context.register(CACTUS, new DamageType("cactus", 0.1F));
+        context.register(
             FALL, new DamageType("fall", DamageScaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER, 0.0F, DamageEffects.HURT, DeathMessageType.FALL_VARIANTS)
         );
-        p_321708_.register(FLY_INTO_WALL, new DamageType("flyIntoWall", 0.0F));
-        p_321708_.register(FELL_OUT_OF_WORLD, new DamageType("outOfWorld", 0.0F));
-        p_321708_.register(GENERIC, new DamageType("generic", 0.0F));
-        p_321708_.register(MAGIC, new DamageType("magic", 0.0F));
-        p_321708_.register(WITHER, new DamageType("wither", 0.0F));
-        p_321708_.register(DRAGON_BREATH, new DamageType("dragonBreath", 0.0F));
-        p_321708_.register(DRY_OUT, new DamageType("dryout", 0.1F));
-        p_321708_.register(SWEET_BERRY_BUSH, new DamageType("sweetBerryBush", 0.1F, DamageEffects.POKING));
-        p_321708_.register(FREEZE, new DamageType("freeze", 0.0F, DamageEffects.FREEZING));
-        p_321708_.register(STALAGMITE, new DamageType("stalagmite", 0.0F));
-        p_321708_.register(FALLING_BLOCK, new DamageType("fallingBlock", 0.1F));
-        p_321708_.register(FALLING_ANVIL, new DamageType("anvil", 0.1F));
-        p_321708_.register(FALLING_STALACTITE, new DamageType("fallingStalactite", 0.1F));
-        p_321708_.register(STING, new DamageType("sting", 0.1F));
-        p_321708_.register(MOB_ATTACK, new DamageType("mob", 0.1F));
-        p_321708_.register(MOB_ATTACK_NO_AGGRO, new DamageType("mob", 0.1F));
-        p_321708_.register(PLAYER_ATTACK, new DamageType("player", 0.1F));
-        p_321708_.register(ARROW, new DamageType("arrow", 0.1F));
-        p_321708_.register(TRIDENT, new DamageType("trident", 0.1F));
-        p_321708_.register(MOB_PROJECTILE, new DamageType("mob", 0.1F));
-        p_321708_.register(SPIT, new DamageType("mob", 0.1F));
-        p_321708_.register(FIREWORKS, new DamageType("fireworks", 0.1F));
-        p_321708_.register(UNATTRIBUTED_FIREBALL, new DamageType("onFire", 0.1F, DamageEffects.BURNING));
-        p_321708_.register(FIREBALL, new DamageType("fireball", 0.1F, DamageEffects.BURNING));
-        p_321708_.register(WITHER_SKULL, new DamageType("witherSkull", 0.1F));
-        p_321708_.register(THROWN, new DamageType("thrown", 0.1F));
-        p_321708_.register(INDIRECT_MAGIC, new DamageType("indirectMagic", 0.0F));
-        p_321708_.register(THORNS, new DamageType("thorns", 0.1F, DamageEffects.THORNS));
-        p_321708_.register(EXPLOSION, new DamageType("explosion", DamageScaling.ALWAYS, 0.1F));
-        p_321708_.register(PLAYER_EXPLOSION, new DamageType("explosion.player", DamageScaling.ALWAYS, 0.1F));
-        p_321708_.register(SONIC_BOOM, new DamageType("sonic_boom", DamageScaling.ALWAYS, 0.0F));
-        p_321708_.register(
+        context.register(FLY_INTO_WALL, new DamageType("flyIntoWall", 0.0F));
+        context.register(FELL_OUT_OF_WORLD, new DamageType("outOfWorld", 0.0F));
+        context.register(GENERIC, new DamageType("generic", 0.0F));
+        context.register(MAGIC, new DamageType("magic", 0.0F));
+        context.register(WITHER, new DamageType("wither", 0.0F));
+        context.register(DRAGON_BREATH, new DamageType("dragonBreath", 0.0F));
+        context.register(DRY_OUT, new DamageType("dryout", 0.1F));
+        context.register(SWEET_BERRY_BUSH, new DamageType("sweetBerryBush", 0.1F, DamageEffects.POKING));
+        context.register(FREEZE, new DamageType("freeze", 0.0F, DamageEffects.FREEZING));
+        context.register(STALAGMITE, new DamageType("stalagmite", 0.0F));
+        context.register(FALLING_BLOCK, new DamageType("fallingBlock", 0.1F));
+        context.register(FALLING_ANVIL, new DamageType("anvil", 0.1F));
+        context.register(FALLING_STALACTITE, new DamageType("fallingStalactite", 0.1F));
+        context.register(STING, new DamageType("sting", 0.1F));
+        context.register(MOB_ATTACK, new DamageType("mob", 0.1F));
+        context.register(MOB_ATTACK_NO_AGGRO, new DamageType("mob", 0.1F));
+        context.register(PLAYER_ATTACK, new DamageType("player", 0.1F));
+        context.register(ARROW, new DamageType("arrow", 0.1F));
+        context.register(TRIDENT, new DamageType("trident", 0.1F));
+        context.register(MOB_PROJECTILE, new DamageType("mob", 0.1F));
+        context.register(SPIT, new DamageType("mob", 0.1F));
+        context.register(FIREWORKS, new DamageType("fireworks", 0.1F));
+        context.register(UNATTRIBUTED_FIREBALL, new DamageType("onFire", 0.1F, DamageEffects.BURNING));
+        context.register(FIREBALL, new DamageType("fireball", 0.1F, DamageEffects.BURNING));
+        context.register(WITHER_SKULL, new DamageType("witherSkull", 0.1F));
+        context.register(THROWN, new DamageType("thrown", 0.1F));
+        context.register(INDIRECT_MAGIC, new DamageType("indirectMagic", 0.0F));
+        context.register(THORNS, new DamageType("thorns", 0.1F, DamageEffects.THORNS));
+        context.register(EXPLOSION, new DamageType("explosion", DamageScaling.ALWAYS, 0.1F));
+        context.register(PLAYER_EXPLOSION, new DamageType("explosion.player", DamageScaling.ALWAYS, 0.1F));
+        context.register(SONIC_BOOM, new DamageType("sonic_boom", DamageScaling.ALWAYS, 0.0F));
+        context.register(
             BAD_RESPAWN_POINT, new DamageType("badRespawnPoint", DamageScaling.ALWAYS, 0.1F, DamageEffects.HURT, DeathMessageType.INTENTIONAL_GAME_DESIGN)
         );
-        p_321708_.register(OUTSIDE_BORDER, new DamageType("outsideBorder", 0.0F));
-        p_321708_.register(GENERIC_KILL, new DamageType("genericKill", 0.0F));
-        p_321708_.register(WIND_CHARGE, new DamageType("mob", 0.1F));
+        context.register(OUTSIDE_BORDER, new DamageType("outsideBorder", 0.0F));
+        context.register(GENERIC_KILL, new DamageType("genericKill", 0.0F));
+        context.register(WIND_CHARGE, new DamageType("mob", 0.1F));
     }
 }

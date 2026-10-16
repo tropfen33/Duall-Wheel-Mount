@@ -13,16 +13,19 @@ public class ServerboundRecipeBookSeenRecipePacket implements Packet<ServerGameP
     );
     private final ResourceLocation recipe;
 
-    public ServerboundRecipeBookSeenRecipePacket(RecipeHolder<?> p_301152_) {
-        this.recipe = p_301152_.id();
+    public ServerboundRecipeBookSeenRecipePacket(RecipeHolder<?> recipe) {
+        this.recipe = recipe.id();
     }
 
-    private ServerboundRecipeBookSeenRecipePacket(FriendlyByteBuf p_179736_) {
-        this.recipe = p_179736_.readResourceLocation();
+    private ServerboundRecipeBookSeenRecipePacket(FriendlyByteBuf buffer) {
+        this.recipe = buffer.readResourceLocation();
     }
 
-    private void write(FriendlyByteBuf p_134392_) {
-        p_134392_.writeResourceLocation(this.recipe);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeResourceLocation(this.recipe);
     }
 
     @Override
@@ -30,8 +33,11 @@ public class ServerboundRecipeBookSeenRecipePacket implements Packet<ServerGameP
         return GamePacketTypes.SERVERBOUND_RECIPE_BOOK_SEEN_RECIPE;
     }
 
-    public void handle(ServerGamePacketListener p_134389_) {
-        p_134389_.handleRecipeBookSeenRecipePacket(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleRecipeBookSeenRecipePacket(this);
     }
 
     public ResourceLocation getRecipe() {

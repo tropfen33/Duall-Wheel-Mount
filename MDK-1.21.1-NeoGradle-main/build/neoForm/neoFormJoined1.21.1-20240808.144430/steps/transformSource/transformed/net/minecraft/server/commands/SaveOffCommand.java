@@ -11,8 +11,8 @@ import net.minecraft.server.level.ServerLevel;
 public class SaveOffCommand {
     private static final SimpleCommandExceptionType ERROR_ALREADY_OFF = new SimpleCommandExceptionType(Component.translatable("commands.save.alreadyOff"));
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_138285_) {
-        p_138285_.register(Commands.literal("save-off").requires(p_138289_ -> p_138289_.hasPermission(4)).executes(p_138287_ -> {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(Commands.literal("save-off").requires(p_138289_ -> p_138289_.hasPermission(4)).executes(p_138287_ -> {
             CommandSourceStack commandsourcestack = p_138287_.getSource();
             boolean flag = false;
 

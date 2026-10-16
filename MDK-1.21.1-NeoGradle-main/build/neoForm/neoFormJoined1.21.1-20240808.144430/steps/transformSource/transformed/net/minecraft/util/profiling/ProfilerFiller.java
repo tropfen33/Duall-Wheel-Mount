@@ -10,93 +10,96 @@ public interface ProfilerFiller {
 
     void endTick();
 
-    void push(String p_18581_);
+    /**
+     * Start section
+     */
+    void push(String name);
 
-    void push(Supplier<String> p_18582_);
+    void push(Supplier<String> nameSupplier);
 
     void pop();
 
-    void popPush(String p_18583_);
+    void popPush(String name);
 
-    void popPush(Supplier<String> p_18584_);
+    void popPush(Supplier<String> nameSupplier);
 
-    void markForCharting(MetricCategory p_145959_);
+    void markForCharting(MetricCategory category);
 
-    default void incrementCounter(String p_18585_) {
-        this.incrementCounter(p_18585_, 1);
+    default void incrementCounter(String entryId) {
+        this.incrementCounter(entryId, 1);
     }
 
-    void incrementCounter(String p_185258_, int p_185259_);
+    void incrementCounter(String counterName, int increment);
 
-    default void incrementCounter(Supplier<String> p_18586_) {
-        this.incrementCounter(p_18586_, 1);
+    default void incrementCounter(Supplier<String> entryIdSupplier) {
+        this.incrementCounter(entryIdSupplier, 1);
     }
 
-    void incrementCounter(Supplier<String> p_185260_, int p_185261_);
+    void incrementCounter(Supplier<String> counterNameSupplier, int increment);
 
-    static ProfilerFiller tee(final ProfilerFiller p_18579_, final ProfilerFiller p_18580_) {
-        if (p_18579_ == InactiveProfiler.INSTANCE) {
-            return p_18580_;
+    static ProfilerFiller tee(final ProfilerFiller first, final ProfilerFiller second) {
+        if (first == InactiveProfiler.INSTANCE) {
+            return second;
         } else {
-            return p_18580_ == InactiveProfiler.INSTANCE ? p_18579_ : new ProfilerFiller() {
+            return second == InactiveProfiler.INSTANCE ? first : new ProfilerFiller() {
                 @Override
                 public void startTick() {
-                    p_18579_.startTick();
-                    p_18580_.startTick();
+                    first.startTick();
+                    second.startTick();
                 }
 
                 @Override
                 public void endTick() {
-                    p_18579_.endTick();
-                    p_18580_.endTick();
+                    first.endTick();
+                    second.endTick();
                 }
 
                 @Override
                 public void push(String p_18594_) {
-                    p_18579_.push(p_18594_);
-                    p_18580_.push(p_18594_);
+                    first.push(p_18594_);
+                    second.push(p_18594_);
                 }
 
                 @Override
                 public void push(Supplier<String> p_18596_) {
-                    p_18579_.push(p_18596_);
-                    p_18580_.push(p_18596_);
+                    first.push(p_18596_);
+                    second.push(p_18596_);
                 }
 
                 @Override
                 public void markForCharting(MetricCategory p_145961_) {
-                    p_18579_.markForCharting(p_145961_);
-                    p_18580_.markForCharting(p_145961_);
+                    first.markForCharting(p_145961_);
+                    second.markForCharting(p_145961_);
                 }
 
                 @Override
                 public void pop() {
-                    p_18579_.pop();
-                    p_18580_.pop();
+                    first.pop();
+                    second.pop();
                 }
 
                 @Override
                 public void popPush(String p_18599_) {
-                    p_18579_.popPush(p_18599_);
-                    p_18580_.popPush(p_18599_);
+                    first.popPush(p_18599_);
+                    second.popPush(p_18599_);
                 }
 
                 @Override
                 public void popPush(Supplier<String> p_18601_) {
-                    p_18579_.popPush(p_18601_);
-                    p_18580_.popPush(p_18601_);
+                    first.popPush(p_18601_);
+                    second.popPush(p_18601_);
                 }
 
                 @Override
                 public void incrementCounter(String p_185263_, int p_185264_) {
-                    p_18579_.incrementCounter(p_185263_, p_185264_);
-                    p_18580_.incrementCounter(p_185263_, p_185264_);
+                    first.incrementCounter(p_185263_, p_185264_);
+                    second.incrementCounter(p_185263_, p_185264_);
                 }
 
                 @Override
                 public void incrementCounter(Supplier<String> p_185266_, int p_185267_) {
-                    p_18579_.incrementCounter(p_185266_, p_185267_);
-                    p_18580_.incrementCounter(p_185266_, p_185267_);
+                    first.incrementCounter(p_185266_, p_185267_);
+                    second.incrementCounter(p_185266_, p_185267_);
                 }
             };
         }

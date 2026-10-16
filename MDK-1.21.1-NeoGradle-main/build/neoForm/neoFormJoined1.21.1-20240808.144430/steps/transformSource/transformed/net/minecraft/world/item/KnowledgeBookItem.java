@@ -18,20 +18,23 @@ import org.slf4j.Logger;
 public class KnowledgeBookItem extends Item {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public KnowledgeBookItem(Item.Properties p_42822_) {
-        super(p_42822_);
+    public KnowledgeBookItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_42824_, Player p_42825_, InteractionHand p_42826_) {
-        ItemStack itemstack = p_42825_.getItemInHand(p_42826_);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
         List<ResourceLocation> list = itemstack.getOrDefault(DataComponents.RECIPES, List.of());
-        itemstack.consume(1, p_42825_);
+        itemstack.consume(1, player);
         if (list.isEmpty()) {
             return InteractionResultHolder.fail(itemstack);
         } else {
-            if (!p_42824_.isClientSide) {
-                RecipeManager recipemanager = p_42824_.getServer().getRecipeManager();
+            if (!level.isClientSide) {
+                RecipeManager recipemanager = level.getServer().getRecipeManager();
                 List<RecipeHolder<?>> list1 = new ArrayList<>(list.size());
 
                 for (ResourceLocation resourcelocation : list) {
@@ -44,11 +47,11 @@ public class KnowledgeBookItem extends Item {
                     list1.add(optional.get());
                 }
 
-                p_42825_.awardRecipes(list1);
-                p_42825_.awardStat(Stats.ITEM_USED.get(this));
+                player.awardRecipes(list1);
+                player.awardStat(Stats.ITEM_USED.get(this));
             }
 
-            return InteractionResultHolder.sidedSuccess(itemstack, p_42824_.isClientSide());
+            return InteractionResultHolder.sidedSuccess(itemstack, level.isClientSide());
         }
     }
 }

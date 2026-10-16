@@ -27,12 +27,12 @@ import net.minecraft.world.phys.Vec3;
 public class WitherSkull extends AbstractHurtingProjectile {
     private static final EntityDataAccessor<Boolean> DATA_DANGEROUS = SynchedEntityData.defineId(WitherSkull.class, EntityDataSerializers.BOOLEAN);
 
-    public WitherSkull(EntityType<? extends WitherSkull> p_37598_, Level p_37599_) {
-        super(p_37598_, p_37599_);
+    public WitherSkull(EntityType<? extends WitherSkull> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public WitherSkull(Level p_37609_, LivingEntity p_37610_, Vec3 p_347464_) {
-        super(EntityType.WITHER_SKULL, p_37610_, p_347464_, p_37609_);
+    public WitherSkull(Level level, LivingEntity owner, Vec3 movement) {
+        super(EntityType.WITHER_SKULL, owner, movement, level);
     }
 
     @Override
@@ -45,18 +45,24 @@ public class WitherSkull extends AbstractHurtingProjectile {
         return false;
     }
 
+    /**
+     * Explosion resistance of a block relative to this entity
+     */
     @Override
     public float getBlockExplosionResistance(
-        Explosion p_37619_, BlockGetter p_37620_, BlockPos p_37621_, BlockState p_37622_, FluidState p_37623_, float p_37624_
+        Explosion explosion, BlockGetter level, BlockPos pos, BlockState blockState, FluidState fluidState, float explosionPower
     ) {
-        return this.isDangerous() && p_37622_.canEntityDestroy(p_37620_, p_37621_, this) ? Math.min(0.8F, p_37624_) : p_37624_;
+        return this.isDangerous() && blockState.canEntityDestroy(level, pos, this) ? Math.min(0.8F, explosionPower) : explosionPower;
     }
 
+    /**
+     * Called when the arrow hits an entity
+     */
     @Override
-    protected void onHitEntity(EntityHitResult p_37626_) {
-        super.onHitEntity(p_37626_);
+    protected void onHitEntity(EntityHitResult result) {
+        super.onHitEntity(result);
         if (this.level() instanceof ServerLevel serverlevel) {
-            Entity entity = p_37626_.getEntity();
+            Entity entity = result.getEntity();
             boolean flag;
             if (this.getOwner() instanceof LivingEntity livingentity) {
                 DamageSource damagesource = this.damageSources().witherSkull(this, livingentity);
@@ -87,31 +93,40 @@ public class WitherSkull extends AbstractHurtingProjectile {
         }
     }
 
+    /**
+     * Called when this EntityFireball hits a block or entity.
+     */
     @Override
-    protected void onHit(HitResult p_37628_) {
-        super.onHit(p_37628_);
+    protected void onHit(HitResult result) {
+        super.onHit(result);
         if (!this.level().isClientSide) {
             this.level().explode(this, this.getX(), this.getY(), this.getZ(), 1.0F, false, Level.ExplosionInteraction.MOB);
             this.discard();
         }
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_37616_, float p_37617_) {
+    public boolean hurt(DamageSource source, float amount) {
         return false;
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_325939_) {
-        p_325939_.define(DATA_DANGEROUS, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_DANGEROUS, false);
     }
 
     public boolean isDangerous() {
         return this.entityData.get(DATA_DANGEROUS);
     }
 
-    public void setDangerous(boolean p_37630_) {
-        this.entityData.set(DATA_DANGEROUS, p_37630_);
+    /**
+     * Set whether this skull comes from an invulnerable (aura) wither boss.
+     */
+    public void setDangerous(boolean invulnerable) {
+        this.entityData.set(DATA_DANGEROUS, invulnerable);
     }
 
     @Override
@@ -120,14 +135,17 @@ public class WitherSkull extends AbstractHurtingProjectile {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_306205_) {
-        super.addAdditionalSaveData(p_306205_);
-        p_306205_.putBoolean("dangerous", this.isDangerous());
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putBoolean("dangerous", this.isDangerous());
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_305818_) {
-        super.readAdditionalSaveData(p_305818_);
-        this.setDangerous(p_305818_.getBoolean("dangerous"));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.setDangerous(compound.getBoolean("dangerous"));
     }
 }

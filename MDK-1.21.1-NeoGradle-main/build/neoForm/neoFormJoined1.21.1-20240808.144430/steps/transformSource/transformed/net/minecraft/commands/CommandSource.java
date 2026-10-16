@@ -3,6 +3,9 @@ package net.minecraft.commands;
 import net.minecraft.network.chat.Component;
 
 public interface CommandSource {
+    /**
+     * A {@code CommandSource} that ignores all messages.
+     */
     CommandSource NULL = new CommandSource() {
         @Override
         public void sendSystemMessage(Component p_230799_) {
@@ -24,7 +27,7 @@ public interface CommandSource {
         }
     };
 
-    void sendSystemMessage(Component p_230797_);
+    void sendSystemMessage(Component component);
 
     boolean acceptsSuccess();
 

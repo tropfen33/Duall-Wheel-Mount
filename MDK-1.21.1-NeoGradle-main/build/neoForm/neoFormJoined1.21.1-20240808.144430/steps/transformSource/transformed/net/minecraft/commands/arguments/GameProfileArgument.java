@@ -26,39 +26,39 @@ public class GameProfileArgument implements ArgumentType<GameProfileArgument.Res
     private static final Collection<String> EXAMPLES = Arrays.asList("Player", "0123", "dd12be42-52a9-4a91-a8a1-11c01849e498", "@e");
     public static final SimpleCommandExceptionType ERROR_UNKNOWN_PLAYER = new SimpleCommandExceptionType(Component.translatable("argument.player.unknown"));
 
-    public static Collection<GameProfile> getGameProfiles(CommandContext<CommandSourceStack> p_94591_, String p_94592_) throws CommandSyntaxException {
-        return p_94591_.getArgument(p_94592_, GameProfileArgument.Result.class).getNames(p_94591_.getSource());
+    public static Collection<GameProfile> getGameProfiles(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
+        return context.getArgument(name, GameProfileArgument.Result.class).getNames(context.getSource());
     }
 
     public static GameProfileArgument gameProfile() {
         return new GameProfileArgument();
     }
 
-    public <S> GameProfileArgument.Result parse(StringReader p_353130_, S p_353124_) throws CommandSyntaxException {
-        return parse(p_353130_, EntitySelectorParser.allowSelectors(p_353124_));
+    public <S> GameProfileArgument.Result parse(StringReader reader, S p_353124_) throws CommandSyntaxException {
+        return parse(reader, EntitySelectorParser.allowSelectors(p_353124_));
     }
 
-    public GameProfileArgument.Result parse(StringReader p_94586_) throws CommandSyntaxException {
-        return parse(p_94586_, true);
+    public GameProfileArgument.Result parse(StringReader reader) throws CommandSyntaxException {
+        return parse(reader, true);
     }
 
-    private static GameProfileArgument.Result parse(StringReader p_353133_, boolean p_353139_) throws CommandSyntaxException {
-        if (p_353133_.canRead() && p_353133_.peek() == '@') {
-            EntitySelectorParser entityselectorparser = new EntitySelectorParser(p_353133_, p_353139_);
+    private static GameProfileArgument.Result parse(StringReader reader, boolean allowSelectors) throws CommandSyntaxException {
+        if (reader.canRead() && reader.peek() == '@') {
+            EntitySelectorParser entityselectorparser = new EntitySelectorParser(reader, allowSelectors);
             EntitySelector entityselector = entityselectorparser.parse();
             if (entityselector.includesEntities()) {
-                throw EntityArgument.ERROR_ONLY_PLAYERS_ALLOWED.createWithContext(p_353133_);
+                throw EntityArgument.ERROR_ONLY_PLAYERS_ALLOWED.createWithContext(reader);
             } else {
                 return new GameProfileArgument.SelectorResult(entityselector);
             }
         } else {
-            int i = p_353133_.getCursor();
+            int i = reader.getCursor();
 
-            while (p_353133_.canRead() && p_353133_.peek() != ' ') {
-                p_353133_.skip();
+            while (reader.canRead() && reader.peek() != ' ') {
+                reader.skip();
             }
 
-            String s = p_353133_.getString().substring(i, p_353133_.getCursor());
+            String s = reader.getString().substring(i, reader.getCursor());
             return p_94595_ -> {
                 Optional<GameProfile> optional = p_94595_.getServer().getProfileCache().get(s);
                 return Collections.singleton(optional.orElseThrow(ERROR_UNKNOWN_PLAYER::create));
@@ -67,10 +67,10 @@ public class GameProfileArgument implements ArgumentType<GameProfileArgument.Res
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_94598_, SuggestionsBuilder p_94599_) {
-        if (p_94598_.getSource() instanceof SharedSuggestionProvider sharedsuggestionprovider) {
-            StringReader stringreader = new StringReader(p_94599_.getInput());
-            stringreader.setCursor(p_94599_.getStart());
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
+        if (context.getSource() instanceof SharedSuggestionProvider sharedsuggestionprovider) {
+            StringReader stringreader = new StringReader(builder.getInput());
+            stringreader.setCursor(builder.getStart());
             EntitySelectorParser entityselectorparser = new EntitySelectorParser(stringreader, EntitySelectorParser.allowSelectors(sharedsuggestionprovider));
 
             try {
@@ -79,7 +79,7 @@ public class GameProfileArgument implements ArgumentType<GameProfileArgument.Res
             }
 
             return entityselectorparser.fillSuggestions(
-                p_94599_, p_353116_ -> SharedSuggestionProvider.suggest(sharedsuggestionprovider.getOnlinePlayerNames(), p_353116_)
+                builder, p_353116_ -> SharedSuggestionProvider.suggest(sharedsuggestionprovider.getOnlinePlayerNames(), p_353116_)
             );
         } else {
             return Suggestions.empty();
@@ -93,19 +93,19 @@ public class GameProfileArgument implements ArgumentType<GameProfileArgument.Res
 
     @FunctionalInterface
     public interface Result {
-        Collection<GameProfile> getNames(CommandSourceStack p_94602_) throws CommandSyntaxException;
+        Collection<GameProfile> getNames(CommandSourceStack source) throws CommandSyntaxException;
     }
 
     public static class SelectorResult implements GameProfileArgument.Result {
         private final EntitySelector selector;
 
-        public SelectorResult(EntitySelector p_94605_) {
-            this.selector = p_94605_;
+        public SelectorResult(EntitySelector selector) {
+            this.selector = selector;
         }
 
         @Override
-        public Collection<GameProfile> getNames(CommandSourceStack p_94607_) throws CommandSyntaxException {
-            List<ServerPlayer> list = this.selector.findPlayers(p_94607_);
+        public Collection<GameProfile> getNames(CommandSourceStack source) throws CommandSyntaxException {
+            List<ServerPlayer> list = this.selector.findPlayers(source);
             if (list.isEmpty()) {
                 throw EntityArgument.NO_PLAYERS_FOUND.create();
             } else {

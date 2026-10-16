@@ -15,14 +15,14 @@ public class CreeperPowerLayer extends EnergySwirlLayer<Creeper, CreeperModel<Cr
     private static final ResourceLocation POWER_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/creeper/creeper_armor.png");
     private final CreeperModel<Creeper> model;
 
-    public CreeperPowerLayer(RenderLayerParent<Creeper, CreeperModel<Creeper>> p_174471_, EntityModelSet p_174472_) {
-        super(p_174471_);
-        this.model = new CreeperModel<>(p_174472_.bakeLayer(ModelLayers.CREEPER_ARMOR));
+    public CreeperPowerLayer(RenderLayerParent<Creeper, CreeperModel<Creeper>> renderer, EntityModelSet modelSet) {
+        super(renderer);
+        this.model = new CreeperModel<>(modelSet.bakeLayer(ModelLayers.CREEPER_ARMOR));
     }
 
     @Override
-    protected float xOffset(float p_116683_) {
-        return p_116683_ * 0.01F;
+    protected float xOffset(float tickCount) {
+        return tickCount * 0.01F;
     }
 
     @Override

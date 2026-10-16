@@ -3,13 +3,16 @@ package net.minecraft.util;
 import net.minecraft.network.chat.Component;
 
 public interface ProgressListener {
-    void progressStartNoAbort(Component p_14212_);
+    void progressStartNoAbort(Component component);
 
-    void progressStart(Component p_14213_);
+    void progressStart(Component header);
 
-    void progressStage(Component p_14214_);
+    void progressStage(Component stage);
 
-    void progressStagePercentage(int p_14211_);
+    /**
+     * Updates the progress bar on the loading screen to the specified amount.
+     */
+    void progressStagePercentage(int progress);
 
     void stop();
 }

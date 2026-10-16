@@ -69,19 +69,19 @@ public class TestCommand {
     private static final TestFinder.Builder<TestCommand.Runner> testFinder = new TestFinder.Builder<>(TestCommand.Runner::new);
 
     private static ArgumentBuilder<CommandSourceStack, ?> runWithRetryOptions(
-        ArgumentBuilder<CommandSourceStack, ?> p_320965_,
-        Function<CommandContext<CommandSourceStack>, TestCommand.Runner> p_320702_,
-        Function<ArgumentBuilder<CommandSourceStack, ?>, ArgumentBuilder<CommandSourceStack, ?>> p_320600_
+        ArgumentBuilder<CommandSourceStack, ?> argumentBuilder,
+        Function<CommandContext<CommandSourceStack>, TestCommand.Runner> runnerGetter,
+        Function<ArgumentBuilder<CommandSourceStack, ?>, ArgumentBuilder<CommandSourceStack, ?>> modifier
     ) {
-        return p_320965_.executes(p_319508_ -> p_320702_.apply(p_319508_).run())
+        return argumentBuilder.executes(p_319508_ -> runnerGetter.apply(p_319508_).run())
             .then(
                 Commands.argument("numberOfTimes", IntegerArgumentType.integer(0))
-                    .executes(p_319503_ -> p_320702_.apply(p_319503_).run(new RetryOptions(IntegerArgumentType.getInteger(p_319503_, "numberOfTimes"), false)))
+                    .executes(p_319503_ -> runnerGetter.apply(p_319503_).run(new RetryOptions(IntegerArgumentType.getInteger(p_319503_, "numberOfTimes"), false)))
                     .then(
-                        p_320600_.apply(
+                        modifier.apply(
                             Commands.argument("untilFailed", BoolArgumentType.bool())
                                 .executes(
-                                    p_319489_ -> p_320702_.apply(p_319489_)
+                                    p_319489_ -> runnerGetter.apply(p_319489_)
                                             .run(
                                                 new RetryOptions(
                                                     IntegerArgumentType.getInteger(p_319489_, "numberOfTimes"),
@@ -95,21 +95,21 @@ public class TestCommand {
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> runWithRetryOptions(
-        ArgumentBuilder<CommandSourceStack, ?> p_320397_, Function<CommandContext<CommandSourceStack>, TestCommand.Runner> p_320472_
+        ArgumentBuilder<CommandSourceStack, ?> argumentBuilder, Function<CommandContext<CommandSourceStack>, TestCommand.Runner> runnerGetter
     ) {
-        return runWithRetryOptions(p_320397_, p_320472_, p_319485_ -> p_319485_);
+        return runWithRetryOptions(argumentBuilder, runnerGetter, p_319485_ -> p_319485_);
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> runWithRetryOptionsAndBuildInfo(
-        ArgumentBuilder<CommandSourceStack, ?> p_320872_, Function<CommandContext<CommandSourceStack>, TestCommand.Runner> p_320896_
+        ArgumentBuilder<CommandSourceStack, ?> argumentBuilder, Function<CommandContext<CommandSourceStack>, TestCommand.Runner> runnerGetter
     ) {
         return runWithRetryOptions(
-            p_320872_,
-            p_320896_,
+            argumentBuilder,
+            runnerGetter,
             p_319482_ -> p_319482_.then(
                     Commands.argument("rotationSteps", IntegerArgumentType.integer())
                         .executes(
-                            p_319487_ -> p_320896_.apply(p_319487_)
+                            p_319487_ -> runnerGetter.apply(p_319487_)
                                     .run(
                                         new RetryOptions(
                                             IntegerArgumentType.getInteger(p_319487_, "numberOfTimes"), BoolArgumentType.getBool(p_319487_, "untilFailed")
@@ -120,7 +120,7 @@ public class TestCommand {
                         .then(
                             Commands.argument("testsPerRow", IntegerArgumentType.integer())
                                 .executes(
-                                    p_319484_ -> p_320896_.apply(p_319484_)
+                                    p_319484_ -> runnerGetter.apply(p_319484_)
                                             .run(
                                                 new RetryOptions(
                                                     IntegerArgumentType.getInteger(p_319484_, "numberOfTimes"),
@@ -135,7 +135,7 @@ public class TestCommand {
         );
     }
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_127947_) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         ArgumentBuilder<CommandSourceStack, ?> argumentbuilder = runWithRetryOptionsAndBuildInfo(
             Commands.argument("onlyRequiredTests", BoolArgumentType.bool()),
             p_319498_ -> testFinder.failedTests(p_319498_, BoolArgumentType.getBool(p_319498_, "onlyRequiredTests"))
@@ -144,7 +144,7 @@ public class TestCommand {
             Commands.argument("testClassName", TestClassNameArgument.testClassName()),
             p_319490_ -> testFinder.allTestsInClass(p_319490_, TestClassNameArgument.getTestClassName(p_319490_, "testClassName"))
         );
-        p_127947_.register(
+        dispatcher.register(
             Commands.literal("test")
                 .then(
                     Commands.literal("run")
@@ -285,53 +285,53 @@ public class TestCommand {
         );
     }
 
-    private static int resetGameTestInfo(GameTestInfo p_320507_) {
-        p_320507_.getLevel().getEntities(null, p_320507_.getStructureBounds()).stream().forEach(p_326748_ -> p_326748_.remove(Entity.RemovalReason.DISCARDED));
-        p_320507_.getStructureBlockEntity().placeStructure(p_320507_.getLevel());
-        StructureUtils.removeBarriers(p_320507_.getStructureBounds(), p_320507_.getLevel());
-        say(p_320507_.getLevel(), "Reset succeded for: " + p_320507_.getTestName(), ChatFormatting.GREEN);
+    private static int resetGameTestInfo(GameTestInfo gameTestInfo) {
+        gameTestInfo.getLevel().getEntities(null, gameTestInfo.getStructureBounds()).stream().forEach(p_326748_ -> p_326748_.remove(Entity.RemovalReason.DISCARDED));
+        gameTestInfo.getStructureBlockEntity().placeStructure(gameTestInfo.getLevel());
+        StructureUtils.removeBarriers(gameTestInfo.getStructureBounds(), gameTestInfo.getLevel());
+        say(gameTestInfo.getLevel(), "Reset succeded for: " + gameTestInfo.getTestName(), ChatFormatting.GREEN);
         return 1;
     }
 
-    static Stream<GameTestInfo> toGameTestInfos(CommandSourceStack p_320827_, RetryOptions p_320932_, StructureBlockPosFinder p_320543_) {
-        return p_320543_.findStructureBlockPos().map(p_319501_ -> createGameTestInfo(p_319501_, p_320827_.getLevel(), p_320932_)).flatMap(Optional::stream);
+    static Stream<GameTestInfo> toGameTestInfos(CommandSourceStack source, RetryOptions retryOptions, StructureBlockPosFinder structureBlockPosFinder) {
+        return structureBlockPosFinder.findStructureBlockPos().map(p_319501_ -> createGameTestInfo(p_319501_, source.getLevel(), retryOptions)).flatMap(Optional::stream);
     }
 
-    static Stream<GameTestInfo> toGameTestInfo(CommandSourceStack p_320465_, RetryOptions p_320183_, TestFunctionFinder p_320598_, int p_320854_) {
-        return p_320598_.findTestFunctions()
-            .filter(p_319496_ -> verifyStructureExists(p_320465_.getLevel(), p_319496_.structureName()))
-            .map(p_319513_ -> new GameTestInfo(p_319513_, StructureUtils.getRotationForRotationSteps(p_320854_), p_320465_.getLevel(), p_320183_));
+    static Stream<GameTestInfo> toGameTestInfo(CommandSourceStack source, RetryOptions retryOptions, TestFunctionFinder testFunctionFinder, int rotationSteps) {
+        return testFunctionFinder.findTestFunctions()
+            .filter(p_319496_ -> verifyStructureExists(source.getLevel(), p_319496_.structureName()))
+            .map(p_319513_ -> new GameTestInfo(p_319513_, StructureUtils.getRotationForRotationSteps(rotationSteps), source.getLevel(), retryOptions));
     }
 
-    private static Optional<GameTestInfo> createGameTestInfo(BlockPos p_320172_, ServerLevel p_320346_, RetryOptions p_320822_) {
-        StructureBlockEntity structureblockentity = (StructureBlockEntity)p_320346_.getBlockEntity(p_320172_);
+    private static Optional<GameTestInfo> createGameTestInfo(BlockPos pos, ServerLevel level, RetryOptions retryOptions) {
+        StructureBlockEntity structureblockentity = (StructureBlockEntity)level.getBlockEntity(pos);
         if (structureblockentity == null) {
-            say(p_320346_, "Structure block entity could not be found", ChatFormatting.RED);
+            say(level, "Structure block entity could not be found", ChatFormatting.RED);
             return Optional.empty();
         } else {
             String s = structureblockentity.getMetaData();
             Optional<TestFunction> optional = GameTestRegistry.findTestFunction(s);
             if (optional.isEmpty()) {
-                say(p_320346_, "Test function for test " + s + " could not be found", ChatFormatting.RED);
+                say(level, "Test function for test " + s + " could not be found", ChatFormatting.RED);
                 return Optional.empty();
             } else {
                 TestFunction testfunction = optional.get();
-                GameTestInfo gametestinfo = new GameTestInfo(testfunction, structureblockentity.getRotation(), p_320346_, p_320822_);
-                gametestinfo.setStructureBlockPos(p_320172_);
-                return !verifyStructureExists(p_320346_, gametestinfo.getStructureName()) ? Optional.empty() : Optional.of(gametestinfo);
+                GameTestInfo gametestinfo = new GameTestInfo(testfunction, structureblockentity.getRotation(), level, retryOptions);
+                gametestinfo.setStructureBlockPos(pos);
+                return !verifyStructureExists(level, gametestinfo.getStructureName()) ? Optional.empty() : Optional.of(gametestinfo);
             }
         }
     }
 
-    private static int createNewStructure(CommandSourceStack p_127968_, String p_127969_, int p_127970_, int p_127971_, int p_127972_) {
-        if (p_127970_ <= 48 && p_127971_ <= 48 && p_127972_ <= 48) {
-            ServerLevel serverlevel = p_127968_.getLevel();
-            BlockPos blockpos = createTestPositionAround(p_127968_).below();
+    private static int createNewStructure(CommandSourceStack source, String structureName, int x, int y, int z) {
+        if (x <= 48 && y <= 48 && z <= 48) {
+            ServerLevel serverlevel = source.getLevel();
+            BlockPos blockpos = createTestPositionAround(source).below();
             StructureUtils.createNewEmptyStructureBlock(
-                p_127969_.toLowerCase(), blockpos, new Vec3i(p_127970_, p_127971_, p_127972_), Rotation.NONE, serverlevel
+                structureName.toLowerCase(), blockpos, new Vec3i(x, y, z), Rotation.NONE, serverlevel
             );
             BlockPos blockpos1 = blockpos.above();
-            BlockPos blockpos2 = blockpos1.offset(p_127970_ - 1, 0, p_127972_ - 1);
+            BlockPos blockpos2 = blockpos1.offset(x - 1, 0, z - 1);
             BlockPos.betweenClosedStream(blockpos1, blockpos2)
                 .forEach(p_326747_ -> serverlevel.setBlockAndUpdate(p_326747_, Blocks.BEDROCK.defaultBlockState()));
             StructureUtils.addCommandBlockAndButtonToStartTest(blockpos, new BlockPos(1, 0, -1), Rotation.NONE, serverlevel);
@@ -341,17 +341,17 @@ public class TestCommand {
         }
     }
 
-    private static int showPos(CommandSourceStack p_127960_, String p_127961_) throws CommandSyntaxException {
-        BlockHitResult blockhitresult = (BlockHitResult)p_127960_.getPlayerOrException().pick(10.0, 1.0F, false);
+    private static int showPos(CommandSourceStack source, String variableName) throws CommandSyntaxException {
+        BlockHitResult blockhitresult = (BlockHitResult)source.getPlayerOrException().pick(10.0, 1.0F, false);
         BlockPos blockpos = blockhitresult.getBlockPos();
-        ServerLevel serverlevel = p_127960_.getLevel();
+        ServerLevel serverlevel = source.getLevel();
         Optional<BlockPos> optional = StructureUtils.findStructureBlockContainingPos(blockpos, 15, serverlevel);
         if (optional.isEmpty()) {
             optional = StructureUtils.findStructureBlockContainingPos(blockpos, 200, serverlevel);
         }
 
         if (optional.isEmpty()) {
-            p_127960_.sendFailure(Component.literal("Can't find a structure block that contains the targeted pos " + blockpos));
+            source.sendFailure(Component.literal("Can't find a structure block that contains the targeted pos " + blockpos));
             return 0;
         } else {
             StructureBlockEntity structureblockentity = (StructureBlockEntity)serverlevel.getBlockEntity(optional.get());
@@ -368,9 +368,9 @@ public class TestCommand {
                             .withBold(true)
                             .withColor(ChatFormatting.GREEN)
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("Click to copy to clipboard")))
-                            .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, "final BlockPos " + p_127961_ + " = new BlockPos(" + s + ");"))
+                            .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, "final BlockPos " + variableName + " = new BlockPos(" + s + ");"))
                     );
-                p_127960_.sendSuccess(() -> Component.literal("Position relative to " + s1 + ": ").append(component), false);
+                source.sendSuccess(() -> Component.literal("Position relative to " + s1 + ": ").append(component), false);
                 DebugPackets.sendGameTestAddMarker(serverlevel, new BlockPos(blockpos), s, -2147418368, 10000);
                 return 1;
             }
@@ -382,69 +382,69 @@ public class TestCommand {
         return 1;
     }
 
-    static int trackAndStartRunner(CommandSourceStack p_320627_, ServerLevel p_320564_, GameTestRunner p_320295_) {
-        p_320295_.addListener(new TestCommand.TestBatchSummaryDisplayer(p_320627_));
-        MultipleTestTracker multipletesttracker = new MultipleTestTracker(p_320295_.getTestInfos());
-        multipletesttracker.addListener(new TestCommand.TestSummaryDisplayer(p_320564_, multipletesttracker));
+    static int trackAndStartRunner(CommandSourceStack source, ServerLevel level, GameTestRunner runner) {
+        runner.addListener(new TestCommand.TestBatchSummaryDisplayer(source));
+        MultipleTestTracker multipletesttracker = new MultipleTestTracker(runner.getTestInfos());
+        multipletesttracker.addListener(new TestCommand.TestSummaryDisplayer(level, multipletesttracker));
         multipletesttracker.addFailureListener(p_127992_ -> GameTestRegistry.rememberFailedTest(p_127992_.getTestFunction()));
-        p_320295_.start();
+        runner.start();
         return 1;
     }
 
-    static int saveAndExportTestStructure(CommandSourceStack p_309558_, StructureBlockEntity p_309587_) {
-        String s = p_309587_.getStructureName();
-        if (!p_309587_.saveStructure(true)) {
-            say(p_309558_, "Failed to save structure " + s);
+    static int saveAndExportTestStructure(CommandSourceStack source, StructureBlockEntity structureBlockEntity) {
+        String s = structureBlockEntity.getStructureName();
+        if (!structureBlockEntity.saveStructure(true)) {
+            say(source, "Failed to save structure " + s);
         }
 
-        return exportTestStructure(p_309558_, s);
+        return exportTestStructure(source, s);
     }
 
-    private static int exportTestStructure(CommandSourceStack p_128011_, String p_128012_) {
+    private static int exportTestStructure(CommandSourceStack source, String structurePath) {
         Path path = Paths.get(StructureUtils.testStructuresDir);
-        ResourceLocation resourcelocation = ResourceLocation.parse(p_128012_);
-        Path path1 = p_128011_.getLevel().getStructureManager().createAndValidatePathToGeneratedStructure(resourcelocation, ".nbt");
+        ResourceLocation resourcelocation = ResourceLocation.parse(structurePath);
+        Path path1 = source.getLevel().getStructureManager().createAndValidatePathToGeneratedStructure(resourcelocation, ".nbt");
         Path path2 = NbtToSnbt.convertStructure(CachedOutput.NO_CACHE, path1, resourcelocation.getPath(), path);
         if (path2 == null) {
-            say(p_128011_, "Failed to export " + path1);
+            say(source, "Failed to export " + path1);
             return 1;
         } else {
             try {
                 FileUtil.createDirectoriesSafe(path2.getParent());
             } catch (IOException ioexception) {
-                say(p_128011_, "Could not create folder " + path2.getParent());
+                say(source, "Could not create folder " + path2.getParent());
                 LOGGER.error("Could not create export folder", (Throwable)ioexception);
                 return 1;
             }
 
-            say(p_128011_, "Exported " + p_128012_ + " to " + path2.toAbsolutePath());
+            say(source, "Exported " + structurePath + " to " + path2.toAbsolutePath());
             return 0;
         }
     }
 
-    private static boolean verifyStructureExists(ServerLevel p_309700_, String p_320698_) {
-        if (p_309700_.getStructureManager().get(ResourceLocation.parse(p_320698_)).isEmpty()) {
-            say(p_309700_, "Test structure " + p_320698_ + " could not be found", ChatFormatting.RED);
+    private static boolean verifyStructureExists(ServerLevel level, String structure) {
+        if (level.getStructureManager().get(ResourceLocation.parse(structure)).isEmpty()) {
+            say(level, "Test structure " + structure + " could not be found", ChatFormatting.RED);
             return false;
         } else {
             return true;
         }
     }
 
-    static BlockPos createTestPositionAround(CommandSourceStack p_308921_) {
-        BlockPos blockpos = BlockPos.containing(p_308921_.getPosition());
-        int i = p_308921_.getLevel().getHeightmapPos(Heightmap.Types.WORLD_SURFACE, blockpos).getY();
+    static BlockPos createTestPositionAround(CommandSourceStack source) {
+        BlockPos blockpos = BlockPos.containing(source.getPosition());
+        int i = source.getLevel().getHeightmapPos(Heightmap.Types.WORLD_SURFACE, blockpos).getY();
         return new BlockPos(blockpos.getX(), i + 1, blockpos.getZ() + 3);
     }
 
-    static void say(CommandSourceStack p_128004_, String p_128005_) {
-        p_128004_.sendSuccess(() -> Component.literal(p_128005_), false);
+    static void say(CommandSourceStack source, String message) {
+        source.sendSuccess(() -> Component.literal(message), false);
     }
 
-    private static int importTestStructure(CommandSourceStack p_128016_, String p_128017_) {
-        Path path = Paths.get(StructureUtils.testStructuresDir, p_128017_ + ".snbt");
-        ResourceLocation resourcelocation = ResourceLocation.withDefaultNamespace(p_128017_);
-        Path path1 = p_128016_.getLevel().getStructureManager().createAndValidatePathToGeneratedStructure(resourcelocation, ".nbt");
+    private static int importTestStructure(CommandSourceStack source, String structurePath) {
+        Path path = Paths.get(StructureUtils.testStructuresDir, structurePath + ".snbt");
+        ResourceLocation resourcelocation = ResourceLocation.withDefaultNamespace(structurePath);
+        Path path1 = source.getLevel().getStructureManager().createAndValidatePathToGeneratedStructure(resourcelocation, ".nbt");
 
         try {
             BufferedReader bufferedreader = Files.newBufferedReader(path);
@@ -455,24 +455,24 @@ public class TestCommand {
                 NbtIo.writeCompressed(NbtUtils.snbtToStructure(s), outputstream);
             }
 
-            p_128016_.getLevel().getStructureManager().remove(resourcelocation);
-            say(p_128016_, "Imported to " + path1.toAbsolutePath());
+            source.getLevel().getStructureManager().remove(resourcelocation);
+            say(source, "Imported to " + path1.toAbsolutePath());
             return 0;
         } catch (CommandSyntaxException | IOException ioexception) {
-            LOGGER.error("Failed to load structure {}", p_128017_, ioexception);
+            LOGGER.error("Failed to load structure {}", structurePath, ioexception);
             return 1;
         }
     }
 
-    static void say(ServerLevel p_127934_, String p_127935_, ChatFormatting p_127936_) {
-        p_127934_.getPlayers(p_127945_ -> true).forEach(p_313469_ -> p_313469_.sendSystemMessage(Component.literal(p_127935_).withStyle(p_127936_)));
+    static void say(ServerLevel serverLevel, String message, ChatFormatting formatting) {
+        serverLevel.getPlayers(p_127945_ -> true).forEach(p_313469_ -> p_313469_.sendSystemMessage(Component.literal(message).withStyle(formatting)));
     }
 
     public static class Runner {
         private final TestFinder<TestCommand.Runner> finder;
 
-        public Runner(TestFinder<TestCommand.Runner> p_320723_) {
-            this.finder = p_320723_;
+        public Runner(TestFinder<TestCommand.Runner> finder) {
+            this.finder = finder;
         }
 
         public int reset() {
@@ -485,12 +485,12 @@ public class TestCommand {
                 : 1;
         }
 
-        private <T> void logAndRun(Stream<T> p_320016_, ToIntFunction<T> p_319791_, Runnable p_320766_, Consumer<Integer> p_320345_) {
-            int i = p_320016_.mapToInt(p_319791_).sum();
+        private <T> void logAndRun(Stream<T> structureBlockPos, ToIntFunction<T> testCounter, Runnable onFail, Consumer<Integer> onSuccess) {
+            int i = structureBlockPos.mapToInt(testCounter).sum();
             if (i == 0) {
-                p_320766_.run();
+                onFail.run();
             } else {
-                p_320345_.accept(i);
+                onSuccess.accept(i);
             }
         }
 
@@ -584,14 +584,14 @@ public class TestCommand {
             return TestCommand.trackAndStartRunner(commandsourcestack, serverlevel, gametestrunner);
         }
 
-        public int run(RetryOptions p_320091_, int p_320456_, int p_320467_) {
+        public int run(RetryOptions retryOptions, int rotationSteps, int testsPerRow) {
             TestCommand.stopTests();
             CommandSourceStack commandsourcestack = this.finder.source();
             ServerLevel serverlevel = commandsourcestack.getLevel();
             BlockPos blockpos = TestCommand.createTestPositionAround(commandsourcestack);
             Collection<GameTestInfo> collection = Stream.concat(
-                    TestCommand.toGameTestInfos(commandsourcestack, p_320091_, this.finder),
-                    TestCommand.toGameTestInfo(commandsourcestack, p_320091_, this.finder, p_320456_)
+                    TestCommand.toGameTestInfos(commandsourcestack, retryOptions, this.finder),
+                    TestCommand.toGameTestInfo(commandsourcestack, retryOptions, this.finder, rotationSteps)
                 )
                 .toList();
             if (collection.isEmpty()) {
@@ -602,26 +602,26 @@ public class TestCommand {
                 GameTestRegistry.forgetFailedTests();
                 TestCommand.say(commandsourcestack, "Running " + collection.size() + " tests...");
                 GameTestRunner gametestrunner = GameTestRunner.Builder.fromInfo(collection, serverlevel)
-                    .newStructureSpawner(new StructureGridSpawner(blockpos, p_320467_, false))
+                    .newStructureSpawner(new StructureGridSpawner(blockpos, testsPerRow, false))
                     .build();
                 return TestCommand.trackAndStartRunner(commandsourcestack, serverlevel, gametestrunner);
             }
         }
 
-        public int run(int p_320306_, int p_320333_) {
-            return this.run(RetryOptions.noRetries(), p_320306_, p_320333_);
+        public int run(int rotationSteps, int testsPerRow) {
+            return this.run(RetryOptions.noRetries(), rotationSteps, testsPerRow);
         }
 
-        public int run(int p_319859_) {
-            return this.run(RetryOptions.noRetries(), p_319859_, 8);
+        public int run(int rotationSteps) {
+            return this.run(RetryOptions.noRetries(), rotationSteps, 8);
         }
 
-        public int run(RetryOptions p_320906_, int p_320419_) {
-            return this.run(p_320906_, p_320419_, 8);
+        public int run(RetryOptions retryOptions, int rotationSteps) {
+            return this.run(retryOptions, rotationSteps, 8);
         }
 
-        public int run(RetryOptions p_320034_) {
-            return this.run(p_320034_, 0, 8);
+        public int run(RetryOptions retryOptions) {
+            return this.run(retryOptions, 0, 8);
         }
 
         public int run() {
@@ -683,35 +683,35 @@ public class TestCommand {
 
     public static record TestSummaryDisplayer(ServerLevel level, MultipleTestTracker tracker) implements GameTestListener {
         @Override
-        public void testStructureLoaded(GameTestInfo p_128064_) {
+        public void testStructureLoaded(GameTestInfo testInfo) {
         }
 
         @Override
-        public void testPassed(GameTestInfo p_177797_, GameTestRunner p_320726_) {
+        public void testPassed(GameTestInfo test, GameTestRunner runner) {
             showTestSummaryIfAllDone(this.level, this.tracker);
         }
 
         @Override
-        public void testFailed(GameTestInfo p_128066_, GameTestRunner p_320567_) {
+        public void testFailed(GameTestInfo test, GameTestRunner runner) {
             showTestSummaryIfAllDone(this.level, this.tracker);
         }
 
         @Override
-        public void testAddedForRerun(GameTestInfo p_319856_, GameTestInfo p_320528_, GameTestRunner p_319832_) {
-            this.tracker.addTestToTrack(p_320528_);
+        public void testAddedForRerun(GameTestInfo oldTest, GameTestInfo newTest, GameTestRunner runner) {
+            this.tracker.addTestToTrack(newTest);
         }
 
-        private static void showTestSummaryIfAllDone(ServerLevel p_319899_, MultipleTestTracker p_320682_) {
-            if (p_320682_.isDone()) {
-                TestCommand.say(p_319899_, "GameTest done! " + p_320682_.getTotalCount() + " tests were run", ChatFormatting.WHITE);
-                if (p_320682_.hasFailedRequired()) {
-                    TestCommand.say(p_319899_, p_320682_.getFailedRequiredCount() + " required tests failed :(", ChatFormatting.RED);
+        private static void showTestSummaryIfAllDone(ServerLevel level, MultipleTestTracker tracker) {
+            if (tracker.isDone()) {
+                TestCommand.say(level, "GameTest done! " + tracker.getTotalCount() + " tests were run", ChatFormatting.WHITE);
+                if (tracker.hasFailedRequired()) {
+                    TestCommand.say(level, tracker.getFailedRequiredCount() + " required tests failed :(", ChatFormatting.RED);
                 } else {
-                    TestCommand.say(p_319899_, "All required tests passed :)", ChatFormatting.GREEN);
+                    TestCommand.say(level, "All required tests passed :)", ChatFormatting.GREEN);
                 }
 
-                if (p_320682_.hasFailedOptional()) {
-                    TestCommand.say(p_319899_, p_320682_.getFailedOptionalCount() + " optional tests failed", ChatFormatting.GRAY);
+                if (tracker.hasFailedOptional()) {
+                    TestCommand.say(level, tracker.getFailedOptionalCount() + " optional tests failed", ChatFormatting.GRAY);
                 }
             }
         }

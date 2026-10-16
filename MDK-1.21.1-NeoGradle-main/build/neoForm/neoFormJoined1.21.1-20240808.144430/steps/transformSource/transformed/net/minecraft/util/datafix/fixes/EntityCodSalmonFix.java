@@ -14,12 +14,12 @@ public class EntityCodSalmonFix extends SimplestEntityRenameFix {
         .put("minecraft:cod_mob_spawn_egg", "minecraft:cod_spawn_egg")
         .build();
 
-    public EntityCodSalmonFix(Schema p_15393_, boolean p_15394_) {
-        super("EntityCodSalmonFix", p_15393_, p_15394_);
+    public EntityCodSalmonFix(Schema outputSchema, boolean changesType) {
+        super("EntityCodSalmonFix", outputSchema, changesType);
     }
 
     @Override
-    protected String rename(String p_15396_) {
-        return RENAMED_IDS.getOrDefault(p_15396_, p_15396_);
+    protected String rename(String name) {
+        return RENAMED_IDS.getOrDefault(name, name);
     }
 }

@@ -10,8 +10,8 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class BlastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
-    public BlastFurnaceBlockEntity(BlockPos p_155225_, BlockState p_155226_) {
-        super(BlockEntityType.BLAST_FURNACE, p_155225_, p_155226_, RecipeType.BLASTING);
+    public BlastFurnaceBlockEntity(BlockPos pos, BlockState blockState) {
+        super(BlockEntityType.BLAST_FURNACE, pos, blockState, RecipeType.BLASTING);
     }
 
     @Override
@@ -20,12 +20,12 @@ public class BlastFurnaceBlockEntity extends AbstractFurnaceBlockEntity {
     }
 
     @Override
-    protected int getBurnDuration(ItemStack p_58852_) {
-        return super.getBurnDuration(p_58852_) / 2;
+    protected int getBurnDuration(ItemStack fuel) {
+        return super.getBurnDuration(fuel) / 2;
     }
 
     @Override
-    protected AbstractContainerMenu createMenu(int p_58849_, Inventory p_58850_) {
-        return new BlastFurnaceMenu(p_58849_, p_58850_, this, this.dataAccess);
+    protected AbstractContainerMenu createMenu(int id, Inventory player) {
+        return new BlastFurnaceMenu(id, player, this, this.dataAccess);
     }
 }

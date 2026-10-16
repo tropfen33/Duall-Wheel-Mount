@@ -6,20 +6,20 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 
 public interface PositionalRandomFactory {
-    default RandomSource at(BlockPos p_224543_) {
-        return this.at(p_224543_.getX(), p_224543_.getY(), p_224543_.getZ());
+    default RandomSource at(BlockPos pos) {
+        return this.at(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    default RandomSource fromHashOf(ResourceLocation p_224541_) {
-        return this.fromHashOf(p_224541_.toString());
+    default RandomSource fromHashOf(ResourceLocation name) {
+        return this.fromHashOf(name.toString());
     }
 
-    RandomSource fromHashOf(String p_224544_);
+    RandomSource fromHashOf(String name);
 
-    RandomSource fromSeed(long p_348480_);
+    RandomSource fromSeed(long seed);
 
-    RandomSource at(int p_224537_, int p_224538_, int p_224539_);
+    RandomSource at(int x, int y, int z);
 
     @VisibleForTesting
-    void parityConfigString(StringBuilder p_189317_);
+    void parityConfigString(StringBuilder builder);
 }

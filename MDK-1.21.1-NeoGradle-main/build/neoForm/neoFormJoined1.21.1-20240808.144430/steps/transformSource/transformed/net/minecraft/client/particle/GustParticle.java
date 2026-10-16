@@ -9,10 +9,10 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class GustParticle extends TextureSheetParticle {
     private final SpriteSet sprites;
 
-    protected GustParticle(ClientLevel p_312171_, double p_312015_, double p_312462_, double p_312867_, SpriteSet p_312279_) {
-        super(p_312171_, p_312015_, p_312462_, p_312867_);
-        this.sprites = p_312279_;
-        this.setSpriteFromAge(p_312279_);
+    protected GustParticle(ClientLevel level, double x, double y, double z, SpriteSet sprites) {
+        super(level, x, y, z);
+        this.sprites = sprites;
+        this.setSpriteFromAge(sprites);
         this.lifetime = 12 + this.random.nextInt(4);
         this.quadSize = 1.0F;
         this.setSize(1.0F, 1.0F);
@@ -24,7 +24,7 @@ public class GustParticle extends TextureSheetParticle {
     }
 
     @Override
-    public int getLightColor(float p_312697_) {
+    public int getLightColor(float partialTick) {
         return 15728880;
     }
 
@@ -41,21 +41,21 @@ public class GustParticle extends TextureSheetParticle {
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprites;
 
-        public Provider(SpriteSet p_312644_) {
-            this.sprites = p_312644_;
+        public Provider(SpriteSet sprites) {
+            this.sprites = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_311849_,
-            ClientLevel p_312008_,
-            double p_312498_,
-            double p_312520_,
-            double p_311822_,
-            double p_312595_,
-            double p_312181_,
-            double p_312468_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            return new GustParticle(p_312008_, p_312498_, p_312520_, p_311822_, this.sprites);
+            return new GustParticle(level, x, y, z, this.sprites);
         }
     }
 
@@ -63,21 +63,21 @@ public class GustParticle extends TextureSheetParticle {
     public static class SmallProvider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprites;
 
-        public SmallProvider(SpriteSet p_338457_) {
-            this.sprites = p_338457_;
+        public SmallProvider(SpriteSet sprites) {
+            this.sprites = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_338464_,
-            ClientLevel p_338628_,
-            double p_338495_,
-            double p_338874_,
-            double p_338214_,
-            double p_338609_,
-            double p_338492_,
-            double p_338605_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            Particle particle = new GustParticle(p_338628_, p_338495_, p_338874_, p_338214_, this.sprites);
+            Particle particle = new GustParticle(level, x, y, z, this.sprites);
             particle.scale(0.15F);
             return particle;
         }

@@ -20,8 +20,8 @@ public record ItemFireworkExplosionPredicate(ItemFireworkExplosionPredicate.Fire
         return DataComponents.FIREWORK_EXPLOSION;
     }
 
-    public boolean matches(ItemStack p_341180_, FireworkExplosion p_340885_) {
-        return this.predicate.test(p_340885_);
+    public boolean matches(ItemStack stack, FireworkExplosion value) {
+        return this.predicate.test(value);
     }
 
     public static record FireworkPredicate(Optional<FireworkExplosion.Shape> shape, Optional<Boolean> twinkle, Optional<Boolean> trail)
@@ -35,13 +35,13 @@ public record ItemFireworkExplosionPredicate(ItemFireworkExplosionPredicate.Fire
                     .apply(p_340949_, ItemFireworkExplosionPredicate.FireworkPredicate::new)
         );
 
-        public boolean test(FireworkExplosion p_340895_) {
-            if (this.shape.isPresent() && this.shape.get() != p_340895_.shape()) {
+        public boolean test(FireworkExplosion explosion) {
+            if (this.shape.isPresent() && this.shape.get() != explosion.shape()) {
                 return false;
             } else {
-                return this.twinkle.isPresent() && this.twinkle.get() != p_340895_.hasTwinkle()
+                return this.twinkle.isPresent() && this.twinkle.get() != explosion.hasTwinkle()
                     ? false
-                    : !this.trail.isPresent() || this.trail.get() == p_340895_.hasTrail();
+                    : !this.trail.isPresent() || this.trail.get() == explosion.hasTrail();
             }
         }
     }

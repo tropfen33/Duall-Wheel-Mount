@@ -10,14 +10,23 @@ import net.minecraft.util.RandomSource;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
+/**
+ * The WeighedSoundEvents class represents a collection of weighted sound events.
+ * It implements the Weighted interface to provide weighted selection of sounds.
+ */
 @OnlyIn(Dist.CLIENT)
 public class WeighedSoundEvents implements Weighted<Sound> {
     private final List<Weighted<Sound>> list = Lists.newArrayList();
     @Nullable
     private final Component subtitle;
 
-    public WeighedSoundEvents(ResourceLocation p_120446_, @Nullable String p_120447_) {
-        this.subtitle = p_120447_ == null ? null : Component.translatable(p_120447_);
+    /**
+     * @param location    The resource location of the sound events
+     * @param subtitleKey The key for the subtitle translation component, or null if
+     *                    no subtitle is provided
+     */
+    public WeighedSoundEvents(ResourceLocation location, @Nullable String subtitleKey) {
+        this.subtitle = subtitleKey == null ? null : Component.translatable(subtitleKey);
     }
 
     @Override
@@ -31,15 +40,24 @@ public class WeighedSoundEvents implements Weighted<Sound> {
         return i;
     }
 
-    public Sound getSound(RandomSource p_235265_) {
+    /**
+     * Retrieves a randomly selected sound from the sound events based on their weights.
+     * The selection is performed using the provided random source.
+     * <p>
+     * @return A randomly selected sound from the sound events
+     * The random source used for sound selection
+     *
+     * @param randomSource the random source used for sound selection
+     */
+    public Sound getSound(RandomSource randomSource) {
         int i = this.getWeight();
         if (!this.list.isEmpty() && i != 0) {
-            int j = p_235265_.nextInt(i);
+            int j = randomSource.nextInt(i);
 
             for (Weighted<Sound> weighted : this.list) {
                 j -= weighted.getWeight();
                 if (j < 0) {
-                    return weighted.getSound(p_235265_);
+                    return weighted.getSound(randomSource);
                 }
             }
 
@@ -49,8 +67,13 @@ public class WeighedSoundEvents implements Weighted<Sound> {
         }
     }
 
-    public void addSound(Weighted<Sound> p_120452_) {
-        this.list.add(p_120452_);
+    /**
+     * Adds a sound event to the collection.
+     *
+     * @param accessor The weighted accessor for the sound event to be added
+     */
+    public void addSound(Weighted<Sound> accessor) {
+        this.list.add(accessor);
     }
 
     @Nullable
@@ -58,10 +81,16 @@ public class WeighedSoundEvents implements Weighted<Sound> {
         return this.subtitle;
     }
 
+    /**
+     * Preloads the sound events into the sound engine if required.
+     * This method is called to preload the sounds associated with the sound events into the sound engine, ensuring they are ready for playback.
+     *
+     * @param engine The sound engine used for sound preloading
+     */
     @Override
-    public void preloadIfRequired(SoundEngine p_120450_) {
+    public void preloadIfRequired(SoundEngine engine) {
         for (Weighted<Sound> weighted : this.list) {
-            weighted.preloadIfRequired(p_120450_);
+            weighted.preloadIfRequired(engine);
         }
     }
 }

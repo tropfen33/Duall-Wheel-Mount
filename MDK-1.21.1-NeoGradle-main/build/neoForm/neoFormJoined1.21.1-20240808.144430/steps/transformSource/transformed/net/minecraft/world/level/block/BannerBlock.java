@@ -35,50 +35,61 @@ public class BannerBlock extends AbstractBannerBlock {
         return CODEC;
     }
 
-    public BannerBlock(DyeColor p_49012_, BlockBehaviour.Properties p_49013_) {
-        super(p_49012_, p_49013_);
+    public BannerBlock(DyeColor color, BlockBehaviour.Properties properties) {
+        super(color, properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(ROTATION, Integer.valueOf(0)));
-        BY_COLOR.put(p_49012_, this);
+        BY_COLOR.put(color, this);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_49019_, LevelReader p_49020_, BlockPos p_49021_) {
-        return p_49020_.getBlockState(p_49021_.below()).isSolid();
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        return level.getBlockState(pos.below()).isSolid();
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_49038_, BlockGetter p_49039_, BlockPos p_49040_, CollisionContext p_49041_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_49017_) {
-        return this.defaultBlockState().setValue(ROTATION, Integer.valueOf(RotationSegment.convertToSegment(p_49017_.getRotation() + 180.0F)));
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(ROTATION, Integer.valueOf(RotationSegment.convertToSegment(context.getRotation() + 180.0F)));
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_49029_, Direction p_49030_, BlockState p_49031_, LevelAccessor p_49032_, BlockPos p_49033_, BlockPos p_49034_) {
-        return p_49030_ == Direction.DOWN && !p_49029_.canSurvive(p_49032_, p_49033_)
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return facing == Direction.DOWN && !state.canSurvive(level, currentPos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_49029_, p_49030_, p_49031_, p_49032_, p_49033_, p_49034_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
+    }
+
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(ROTATION, Integer.valueOf(rotation.rotate(state.getValue(ROTATION), 16)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.setValue(ROTATION, Integer.valueOf(mirror.mirror(state.getValue(ROTATION), 16)));
     }
 
     @Override
-    protected BlockState rotate(BlockState p_49026_, Rotation p_49027_) {
-        return p_49026_.setValue(ROTATION, Integer.valueOf(p_49027_.rotate(p_49026_.getValue(ROTATION), 16)));
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(ROTATION);
     }
 
-    @Override
-    protected BlockState mirror(BlockState p_49023_, Mirror p_49024_) {
-        return p_49023_.setValue(ROTATION, Integer.valueOf(p_49024_.mirror(p_49023_.getValue(ROTATION), 16)));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_49036_) {
-        p_49036_.add(ROTATION);
-    }
-
-    public static Block byColor(DyeColor p_49015_) {
-        return BY_COLOR.getOrDefault(p_49015_, Blocks.WHITE_BANNER);
+    public static Block byColor(DyeColor color) {
+        return BY_COLOR.getOrDefault(color, Blocks.WHITE_BANNER);
     }
 }

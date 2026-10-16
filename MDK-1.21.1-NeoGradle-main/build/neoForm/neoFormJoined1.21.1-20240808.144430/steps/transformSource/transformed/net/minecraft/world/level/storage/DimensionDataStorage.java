@@ -30,59 +30,59 @@ public class DimensionDataStorage {
     private final HolderLookup.Provider registries;
     private final File dataFolder;
 
-    public DimensionDataStorage(File p_78149_, DataFixer p_78150_, HolderLookup.Provider p_324180_) {
-        this.fixerUpper = p_78150_;
-        this.dataFolder = p_78149_;
-        this.registries = p_324180_;
+    public DimensionDataStorage(File dataFolder, DataFixer fixerUpper, HolderLookup.Provider registries) {
+        this.fixerUpper = fixerUpper;
+        this.dataFolder = dataFolder;
+        this.registries = registries;
     }
 
-    private File getDataFile(String p_78157_) {
-        return new File(this.dataFolder, p_78157_ + ".dat");
+    private File getDataFile(String name) {
+        return new File(this.dataFolder, name + ".dat");
     }
 
-    public <T extends SavedData> T computeIfAbsent(SavedData.Factory<T> p_294124_, String p_164864_) {
-        T t = this.get(p_294124_, p_164864_);
+    public <T extends SavedData> T computeIfAbsent(SavedData.Factory<T> factory, String name) {
+        T t = this.get(factory, name);
         if (t != null) {
             return t;
         } else {
-            T t1 = (T)p_294124_.constructor().get();
-            this.set(p_164864_, t1);
+            T t1 = (T)factory.constructor().get();
+            this.set(name, t1);
             return t1;
         }
     }
 
     @Nullable
-    public <T extends SavedData> T get(SavedData.Factory<T> p_295091_, String p_164860_) {
-        SavedData saveddata = this.cache.get(p_164860_);
-        if (saveddata == null && !this.cache.containsKey(p_164860_)) {
-            saveddata = this.readSavedData(p_295091_.deserializer(), p_295091_.type(), p_164860_);
-            this.cache.put(p_164860_, saveddata);
+    public <T extends SavedData> T get(SavedData.Factory<T> factory, String name) {
+        SavedData saveddata = this.cache.get(name);
+        if (saveddata == null && !this.cache.containsKey(name)) {
+            saveddata = this.readSavedData(factory.deserializer(), factory.type(), name);
+            this.cache.put(name, saveddata);
         }
 
         return (T)saveddata;
     }
 
     @Nullable
-    private <T extends SavedData> T readSavedData(BiFunction<CompoundTag, HolderLookup.Provider, T> p_324609_, @Nullable DataFixTypes p_295832_, String p_164870_) {
+    private <T extends SavedData> T readSavedData(BiFunction<CompoundTag, HolderLookup.Provider, T> reader, @Nullable DataFixTypes dataFixType, String filename) {
         try {
-            File file1 = this.getDataFile(p_164870_);
+            File file1 = this.getDataFile(filename);
             if (file1.exists()) {
-                CompoundTag compoundtag = this.readTagFromDisk(p_164870_, p_295832_, SharedConstants.getCurrentVersion().getDataVersion().getVersion());
-                return p_324609_.apply(compoundtag.getCompound("data"), this.registries);
+                CompoundTag compoundtag = this.readTagFromDisk(filename, dataFixType, SharedConstants.getCurrentVersion().getDataVersion().getVersion());
+                return reader.apply(compoundtag.getCompound("data"), this.registries);
             }
         } catch (Exception exception) {
-            LOGGER.error("Error loading saved data: {}", p_164870_, exception);
+            LOGGER.error("Error loading saved data: {}", filename, exception);
         }
 
         return null;
     }
 
-    public void set(String p_164856_, SavedData p_164857_) {
-        this.cache.put(p_164856_, p_164857_);
+    public void set(String name, SavedData savedData) {
+        this.cache.put(name, savedData);
     }
 
-    public CompoundTag readTagFromDisk(String p_78159_, @Nullable DataFixTypes p_295038_, int p_78160_) throws IOException {
-        File file1 = this.getDataFile(p_78159_);
+    public CompoundTag readTagFromDisk(String filename, @Nullable DataFixTypes dataFixType, int version) throws IOException {
+        File file1 = this.getDataFile(filename);
 
         CompoundTag compoundtag1;
         try (
@@ -98,9 +98,9 @@ public class DimensionDataStorage {
                 }
             }
 
-            if (p_295038_ != null) {
+            if (dataFixType != null) {
                 int i = NbtUtils.getDataVersion(compoundtag, 1343);
-                compoundtag1 = p_295038_.update(this.fixerUpper, compoundtag, i, p_78160_);
+                compoundtag1 = dataFixType.update(this.fixerUpper, compoundtag, i, version);
             } else {
                 compoundtag1 = compoundtag;
             }
@@ -108,16 +108,16 @@ public class DimensionDataStorage {
 
         // Neo: delete any temporary files so that we don't inflate disk space unnecessarily.
         net.neoforged.neoforge.common.IOUtilities.withIOWorker(() -> {
-            net.neoforged.neoforge.common.IOUtilities.tryCleanupTempFiles(this.dataFolder.toPath(), p_78159_);
+            net.neoforged.neoforge.common.IOUtilities.tryCleanupTempFiles(this.dataFolder.toPath(), filename);
         });
 
         return compoundtag1;
     }
 
-    private boolean isGzip(PushbackInputStream p_78155_) throws IOException {
+    private boolean isGzip(PushbackInputStream inputStream) throws IOException {
         byte[] abyte = new byte[2];
         boolean flag = false;
-        int i = p_78155_.read(abyte, 0, 2);
+        int i = inputStream.read(abyte, 0, 2);
         if (i == 2) {
             int j = (abyte[1] & 255) << 8 | abyte[0] & 255;
             if (j == 35615) {
@@ -126,7 +126,7 @@ public class DimensionDataStorage {
         }
 
         if (i != 0) {
-            p_78155_.unread(abyte, 0, i);
+            inputStream.unread(abyte, 0, i);
         }
 
         return flag;

@@ -14,19 +14,19 @@ public class TrackingEmitter extends NoRenderParticle {
     private final int lifeTime;
     private final ParticleOptions particleType;
 
-    public TrackingEmitter(ClientLevel p_108390_, Entity p_108391_, ParticleOptions p_108392_) {
-        this(p_108390_, p_108391_, p_108392_, 3);
+    public TrackingEmitter(ClientLevel level, Entity entity, ParticleOptions particleType) {
+        this(level, entity, particleType, 3);
     }
 
-    public TrackingEmitter(ClientLevel p_108394_, Entity p_108395_, ParticleOptions p_108396_, int p_108397_) {
-        this(p_108394_, p_108395_, p_108396_, p_108397_, p_108395_.getDeltaMovement());
+    public TrackingEmitter(ClientLevel level, Entity entity, ParticleOptions particleType, int lifetime) {
+        this(level, entity, particleType, lifetime, entity.getDeltaMovement());
     }
 
-    private TrackingEmitter(ClientLevel p_108399_, Entity p_108400_, ParticleOptions p_108401_, int p_108402_, Vec3 p_108403_) {
-        super(p_108399_, p_108400_.getX(), p_108400_.getY(0.5), p_108400_.getZ(), p_108403_.x, p_108403_.y, p_108403_.z);
-        this.entity = p_108400_;
-        this.lifeTime = p_108402_;
-        this.particleType = p_108401_;
+    private TrackingEmitter(ClientLevel level, Entity entity, ParticleOptions particleType, int lifetime, Vec3 speedVector) {
+        super(level, entity.getX(), entity.getY(0.5), entity.getZ(), speedVector.x, speedVector.y, speedVector.z);
+        this.entity = entity;
+        this.lifeTime = lifetime;
+        this.particleType = particleType;
         this.tick();
     }
 

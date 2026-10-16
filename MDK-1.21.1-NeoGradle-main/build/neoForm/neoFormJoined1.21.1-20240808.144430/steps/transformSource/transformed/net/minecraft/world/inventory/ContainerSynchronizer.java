@@ -4,11 +4,11 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
 
 public interface ContainerSynchronizer {
-    void sendInitialData(AbstractContainerMenu p_150535_, NonNullList<ItemStack> p_150536_, ItemStack p_150537_, int[] p_150538_);
+    void sendInitialData(AbstractContainerMenu container, NonNullList<ItemStack> items, ItemStack carriedItem, int[] initialData);
 
-    void sendSlotChange(AbstractContainerMenu p_150530_, int p_150531_, ItemStack p_150532_);
+    void sendSlotChange(AbstractContainerMenu container, int slot, ItemStack itemStack);
 
-    void sendCarriedChange(AbstractContainerMenu p_150533_, ItemStack p_150534_);
+    void sendCarriedChange(AbstractContainerMenu containerMenu, ItemStack stack);
 
-    void sendDataChange(AbstractContainerMenu p_150527_, int p_150528_, int p_150529_);
+    void sendDataChange(AbstractContainerMenu container, int id, int value);
 }

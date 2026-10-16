@@ -20,16 +20,16 @@ public class JigsawRotationFix extends DataFix {
         .put("east", "east_up")
         .build();
 
-    public JigsawRotationFix(Schema p_16191_, boolean p_16192_) {
-        super(p_16191_, p_16192_);
+    public JigsawRotationFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
-    private static Dynamic<?> fix(Dynamic<?> p_16196_) {
-        Optional<String> optional = p_16196_.get("Name").asString().result();
-        return optional.equals(Optional.of("minecraft:jigsaw")) ? p_16196_.update("Properties", p_16198_ -> {
+    private static Dynamic<?> fix(Dynamic<?> dynamic) {
+        Optional<String> optional = dynamic.get("Name").asString().result();
+        return optional.equals(Optional.of("minecraft:jigsaw")) ? dynamic.update("Properties", p_16198_ -> {
             String s = p_16198_.get("facing").asString("north");
             return p_16198_.remove("facing").set("orientation", p_16198_.createString(RENAMES.getOrDefault(s, s)));
-        }) : p_16196_;
+        }) : dynamic;
     }
 
     @Override

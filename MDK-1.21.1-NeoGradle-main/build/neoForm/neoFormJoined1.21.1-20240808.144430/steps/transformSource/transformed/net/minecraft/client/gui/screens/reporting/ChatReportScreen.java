@@ -22,16 +22,16 @@ public class ChatReportScreen extends AbstractReportScreen<ChatReport.Builder> {
     private Button selectMessagesButton;
     private Button selectReasonButton;
 
-    private ChatReportScreen(Screen p_253839_, ReportingContext p_254386_, ChatReport.Builder p_299987_) {
-        super(TITLE, p_253839_, p_254386_, p_299987_);
+    private ChatReportScreen(Screen lastScreen, ReportingContext reportingContext, ChatReport.Builder reportBuilder) {
+        super(TITLE, lastScreen, reportingContext, reportBuilder);
     }
 
-    public ChatReportScreen(Screen p_239116_, ReportingContext p_239117_, UUID p_239118_) {
-        this(p_239116_, p_239117_, new ChatReport.Builder(p_239118_, p_239117_.sender().reportLimits()));
+    public ChatReportScreen(Screen lastScreen, ReportingContext reportingContext, UUID reportId) {
+        this(lastScreen, reportingContext, new ChatReport.Builder(reportId, reportingContext.sender().reportLimits()));
     }
 
-    public ChatReportScreen(Screen p_254505_, ReportingContext p_254531_, ChatReport p_299964_) {
-        this(p_254505_, p_254531_, new ChatReport.Builder(p_299964_, p_254531_.sender().reportLimits()));
+    public ChatReportScreen(Screen lastScreen, ReportingContext reportContext, ChatReport report) {
+        this(lastScreen, reportContext, new ChatReport.Builder(report, reportContext.sender().reportLimits()));
     }
 
     @Override
@@ -83,8 +83,17 @@ public class ChatReportScreen extends AbstractReportScreen<ChatReport.Builder> {
         super.onReportChanged();
     }
 
+    /**
+     * Called when a mouse button is released within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was released.
+     */
     @Override
-    public boolean mouseReleased(double p_239350_, double p_239351_, int p_239352_) {
-        return super.mouseReleased(p_239350_, p_239351_, p_239352_) ? true : this.commentBox.mouseReleased(p_239350_, p_239351_, p_239352_);
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        return super.mouseReleased(mouseX, mouseY, button) ? true : this.commentBox.mouseReleased(mouseX, mouseY, button);
     }
 }

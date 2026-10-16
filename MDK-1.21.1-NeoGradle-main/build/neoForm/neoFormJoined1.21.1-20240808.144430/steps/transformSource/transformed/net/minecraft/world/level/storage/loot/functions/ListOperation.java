@@ -18,12 +18,12 @@ import org.slf4j.Logger;
 public interface ListOperation {
     MapCodec<ListOperation> UNLIMITED_CODEC = codec(Integer.MAX_VALUE);
 
-    static MapCodec<ListOperation> codec(int p_336009_) {
+    static MapCodec<ListOperation> codec(int maxSize) {
         return ListOperation.Type.CODEC.<ListOperation>dispatchMap("mode", ListOperation::mode, p_338141_ -> p_338141_.mapCodec).validate(p_335630_ -> {
             if (p_335630_ instanceof ListOperation.ReplaceSection listoperation$replacesection && listoperation$replacesection.size().isPresent()) {
                 int i = listoperation$replacesection.size().get();
-                if (i > p_336009_) {
-                    return DataResult.error(() -> "Size value too large: " + i + ", max size is " + p_336009_);
+                if (i > maxSize) {
+                    return DataResult.error(() -> "Size value too large: " + i + ", max size is " + maxSize);
                 }
             }
 
@@ -33,11 +33,11 @@ public interface ListOperation {
 
     ListOperation.Type mode();
 
-    default <T> List<T> apply(List<T> p_341145_, List<T> p_341340_) {
-        return this.apply(p_341145_, p_341340_, Integer.MAX_VALUE);
+    default <T> List<T> apply(List<T> currentValue, List<T> operand) {
+        return this.apply(currentValue, operand, Integer.MAX_VALUE);
     }
 
-    <T> List<T> apply(List<T> p_333909_, List<T> p_333988_, int p_333885_);
+    <T> List<T> apply(List<T> currentValue, List<T> operand, int maxSize);
 
     public static class Append implements ListOperation {
         private static final Logger LOGGER = LogUtils.getLogger();
@@ -76,19 +76,19 @@ public interface ListOperation {
         }
 
         @Override
-        public <T> List<T> apply(List<T> p_333952_, List<T> p_333782_, int p_333792_) {
-            int i = p_333952_.size();
+        public <T> List<T> apply(List<T> currentValue, List<T> operand, int maxSize) {
+            int i = currentValue.size();
             if (this.offset > i) {
                 LOGGER.error("Cannot insert when offset is out of bounds");
-                return p_333952_;
-            } else if (i + p_333782_.size() > p_333792_) {
+                return currentValue;
+            } else if (i + operand.size() > maxSize) {
                 LOGGER.error("Contents overflow in section insertion");
-                return p_333952_;
+                return currentValue;
             } else {
                 Builder<T> builder = ImmutableList.builder();
-                builder.addAll(p_333952_.subList(0, this.offset));
-                builder.addAll(p_333782_);
-                builder.addAll(p_333952_.subList(this.offset, i));
+                builder.addAll(currentValue.subList(0, this.offset));
+                builder.addAll(operand);
+                builder.addAll(currentValue.subList(this.offset, i));
                 return builder.build();
             }
         }
@@ -132,24 +132,24 @@ public interface ListOperation {
         }
 
         @Override
-        public <T> List<T> apply(List<T> p_333868_, List<T> p_334045_, int p_334033_) {
-            int i = p_333868_.size();
+        public <T> List<T> apply(List<T> currentValue, List<T> operand, int maxSize) {
+            int i = currentValue.size();
             if (this.offset > i) {
                 LOGGER.error("Cannot replace when offset is out of bounds");
-                return p_333868_;
+                return currentValue;
             } else {
                 Builder<T> builder = ImmutableList.builder();
-                builder.addAll(p_333868_.subList(0, this.offset));
-                builder.addAll(p_334045_);
-                int j = this.offset + this.size.orElse(p_334045_.size());
+                builder.addAll(currentValue.subList(0, this.offset));
+                builder.addAll(operand);
+                int j = this.offset + this.size.orElse(operand.size());
                 if (j < i) {
-                    builder.addAll(p_333868_.subList(j, i));
+                    builder.addAll(currentValue.subList(j, i));
                 }
 
                 List<T> list = builder.build();
-                if (list.size() > p_334033_) {
+                if (list.size() > maxSize) {
                     LOGGER.error("Contents overflow in section replacement");
-                    return p_333868_;
+                    return currentValue;
                 } else {
                     return list;
                 }
@@ -158,18 +158,18 @@ public interface ListOperation {
     }
 
     public static record StandAlone<T>(List<T> value, ListOperation operation) {
-        public static <T> Codec<ListOperation.StandAlone<T>> codec(Codec<T> p_341683_, int p_341655_) {
+        public static <T> Codec<ListOperation.StandAlone<T>> codec(Codec<T> elementCodec, int maxSize) {
             return RecordCodecBuilder.create(
                 p_341682_ -> p_341682_.group(
-                            p_341683_.sizeLimitedListOf(p_341655_).fieldOf("values").forGetter(p_341601_ -> p_341601_.value),
-                            ListOperation.codec(p_341655_).forGetter(p_341647_ -> p_341647_.operation)
+                            elementCodec.sizeLimitedListOf(maxSize).fieldOf("values").forGetter(p_341601_ -> p_341601_.value),
+                            ListOperation.codec(maxSize).forGetter(p_341647_ -> p_341647_.operation)
                         )
                         .apply(p_341682_, ListOperation.StandAlone::new)
             );
         }
 
-        public List<T> apply(List<T> p_341623_) {
-            return this.operation.apply(p_341623_, this.value);
+        public List<T> apply(List<T> list) {
+            return this.operation.apply(list, this.value);
         }
     }
 
@@ -183,9 +183,9 @@ public interface ListOperation {
         private final String id;
         final MapCodec<? extends ListOperation> mapCodec;
 
-        private Type(String p_333913_, MapCodec<? extends ListOperation> p_333972_) {
-            this.id = p_333913_;
-            this.mapCodec = p_333972_;
+        private Type(String id, MapCodec<? extends ListOperation> mapCodec) {
+            this.id = id;
+            this.mapCodec = mapCodec;
         }
 
         public MapCodec<? extends ListOperation> mapCodec() {

@@ -24,41 +24,41 @@ public class PlayerItemInHandLayer<T extends Player, M extends EntityModel<T> & 
     private static final float X_ROT_MIN = (float) (-Math.PI / 6);
     private static final float X_ROT_MAX = (float) (Math.PI / 2);
 
-    public PlayerItemInHandLayer(RenderLayerParent<T, M> p_234866_, ItemInHandRenderer p_234867_) {
-        super(p_234866_, p_234867_);
-        this.itemInHandRenderer = p_234867_;
+    public PlayerItemInHandLayer(RenderLayerParent<T, M> renderer, ItemInHandRenderer itemInHandRenderer) {
+        super(renderer, itemInHandRenderer);
+        this.itemInHandRenderer = itemInHandRenderer;
     }
 
     @Override
     protected void renderArmWithItem(
-        LivingEntity p_270884_,
-        ItemStack p_270379_,
-        ItemDisplayContext p_270607_,
-        HumanoidArm p_270324_,
-        PoseStack p_270124_,
-        MultiBufferSource p_270414_,
-        int p_270295_
+        LivingEntity livingEntity,
+        ItemStack itemStack,
+        ItemDisplayContext displayContext,
+        HumanoidArm arm,
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight
     ) {
-        if (p_270379_.canPerformAction(net.neoforged.neoforge.common.ItemAbilities.SPYGLASS_SCOPE) && p_270884_.getUseItem() == p_270379_ && p_270884_.swingTime == 0) {
-            this.renderArmWithSpyglass(p_270884_, p_270379_, p_270324_, p_270124_, p_270414_, p_270295_);
+        if (itemStack.canPerformAction(net.neoforged.neoforge.common.ItemAbilities.SPYGLASS_SCOPE) && livingEntity.getUseItem() == itemStack && livingEntity.swingTime == 0) {
+            this.renderArmWithSpyglass(livingEntity, itemStack, arm, poseStack, buffer, packedLight);
         } else {
-            super.renderArmWithItem(p_270884_, p_270379_, p_270607_, p_270324_, p_270124_, p_270414_, p_270295_);
+            super.renderArmWithItem(livingEntity, itemStack, displayContext, arm, poseStack, buffer, packedLight);
         }
     }
 
     private void renderArmWithSpyglass(
-        LivingEntity p_174518_, ItemStack p_174519_, HumanoidArm p_174520_, PoseStack p_174521_, MultiBufferSource p_174522_, int p_174523_
+        LivingEntity entity, ItemStack stack, HumanoidArm arm, PoseStack poseStack, MultiBufferSource buffer, int combinedLight
     ) {
-        p_174521_.pushPose();
+        poseStack.pushPose();
         ModelPart modelpart = this.getParentModel().getHead();
         float f = modelpart.xRot;
         modelpart.xRot = Mth.clamp(modelpart.xRot, (float) (-Math.PI / 6), (float) (Math.PI / 2));
-        modelpart.translateAndRotate(p_174521_);
+        modelpart.translateAndRotate(poseStack);
         modelpart.xRot = f;
-        CustomHeadLayer.translateToHead(p_174521_, false);
-        boolean flag = p_174520_ == HumanoidArm.LEFT;
-        p_174521_.translate((flag ? -2.5F : 2.5F) / 16.0F, -0.0625F, 0.0F);
-        this.itemInHandRenderer.renderItem(p_174518_, p_174519_, ItemDisplayContext.HEAD, false, p_174521_, p_174522_, p_174523_);
-        p_174521_.popPose();
+        CustomHeadLayer.translateToHead(poseStack, false);
+        boolean flag = arm == HumanoidArm.LEFT;
+        poseStack.translate((flag ? -2.5F : 2.5F) / 16.0F, -0.0625F, 0.0F);
+        this.itemInHandRenderer.renderItem(entity, stack, ItemDisplayContext.HEAD, false, poseStack, buffer, combinedLight);
+        poseStack.popPose();
     }
 }

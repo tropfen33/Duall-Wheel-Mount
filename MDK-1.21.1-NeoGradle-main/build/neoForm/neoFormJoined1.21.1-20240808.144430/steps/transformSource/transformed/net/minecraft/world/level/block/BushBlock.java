@@ -12,40 +12,45 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 
 public abstract class BushBlock extends Block {
-    protected BushBlock(BlockBehaviour.Properties p_51021_) {
-        super(p_51021_);
+    protected BushBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
     protected abstract MapCodec<? extends BushBlock> codec();
 
-    protected boolean mayPlaceOn(BlockState p_51042_, BlockGetter p_51043_, BlockPos p_51044_) {
-        return p_51042_.is(BlockTags.DIRT) || p_51042_.getBlock() instanceof net.minecraft.world.level.block.FarmBlock;
+    protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.is(BlockTags.DIRT) || state.getBlock() instanceof net.minecraft.world.level.block.FarmBlock;
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_51032_, Direction p_51033_, BlockState p_51034_, LevelAccessor p_51035_, BlockPos p_51036_, BlockPos p_51037_) {
-        return !p_51032_.canSurvive(p_51035_, p_51036_)
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return !state.canSurvive(level, currentPos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_51032_, p_51033_, p_51034_, p_51035_, p_51036_, p_51037_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_51028_, LevelReader p_51029_, BlockPos p_51030_) {
-        BlockPos blockpos = p_51030_.below();
-        BlockState belowBlockState = p_51029_.getBlockState(blockpos);
-        net.neoforged.neoforge.common.util.TriState soilDecision = belowBlockState.canSustainPlant(p_51029_, blockpos, Direction.UP, p_51028_);
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        BlockPos blockpos = pos.below();
+        BlockState belowBlockState = level.getBlockState(blockpos);
+        net.neoforged.neoforge.common.util.TriState soilDecision = belowBlockState.canSustainPlant(level, blockpos, Direction.UP, state);
         if (!soilDecision.isDefault()) return soilDecision.isTrue();
-        return this.mayPlaceOn(belowBlockState, p_51029_, blockpos);
+        return this.mayPlaceOn(belowBlockState, level, blockpos);
     }
 
     @Override
-    protected boolean propagatesSkylightDown(BlockState p_51039_, BlockGetter p_51040_, BlockPos p_51041_) {
-        return p_51039_.getFluidState().isEmpty();
+    protected boolean propagatesSkylightDown(BlockState state, BlockGetter reader, BlockPos pos) {
+        return state.getFluidState().isEmpty();
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_51023_, PathComputationType p_51026_) {
-        return p_51026_ == PathComputationType.AIR && !this.hasCollision ? true : super.isPathfindable(p_51023_, p_51026_);
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
+        return pathComputationType == PathComputationType.AIR && !this.hasCollision ? true : super.isPathfindable(state, pathComputationType);
     }
 }

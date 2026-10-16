@@ -19,35 +19,35 @@ public class RealmsGenericErrorScreen extends RealmsScreen {
     private final RealmsGenericErrorScreen.ErrorMessage lines;
     private MultiLineLabel line2Split = MultiLineLabel.EMPTY;
 
-    public RealmsGenericErrorScreen(RealmsServiceException p_88669_, Screen p_88670_) {
+    public RealmsGenericErrorScreen(RealmsServiceException serviceException, Screen nextScreen) {
         super(GameNarrator.NO_TITLE);
-        this.nextScreen = p_88670_;
-        this.lines = errorMessage(p_88669_);
+        this.nextScreen = nextScreen;
+        this.lines = errorMessage(serviceException);
     }
 
-    public RealmsGenericErrorScreen(Component p_88672_, Screen p_88673_) {
+    public RealmsGenericErrorScreen(Component message, Screen nextScreen) {
         super(GameNarrator.NO_TITLE);
-        this.nextScreen = p_88673_;
-        this.lines = errorMessage(p_88672_);
+        this.nextScreen = nextScreen;
+        this.lines = errorMessage(message);
     }
 
-    public RealmsGenericErrorScreen(Component p_88675_, Component p_88676_, Screen p_88677_) {
+    public RealmsGenericErrorScreen(Component title, Component line2, Screen message) {
         super(GameNarrator.NO_TITLE);
-        this.nextScreen = p_88677_;
-        this.lines = errorMessage(p_88675_, p_88676_);
+        this.nextScreen = message;
+        this.lines = errorMessage(title, line2);
     }
 
-    private static RealmsGenericErrorScreen.ErrorMessage errorMessage(RealmsServiceException p_288965_) {
-        RealmsError realmserror = p_288965_.realmsError;
+    private static RealmsGenericErrorScreen.ErrorMessage errorMessage(RealmsServiceException exception) {
+        RealmsError realmserror = exception.realmsError;
         return errorMessage(Component.translatable("mco.errorMessage.realmsService.realmsError", realmserror.errorCode()), realmserror.errorMessage());
     }
 
-    private static RealmsGenericErrorScreen.ErrorMessage errorMessage(Component p_289003_) {
-        return errorMessage(Component.translatable("mco.errorMessage.generic"), p_289003_);
+    private static RealmsGenericErrorScreen.ErrorMessage errorMessage(Component message) {
+        return errorMessage(Component.translatable("mco.errorMessage.generic"), message);
     }
 
-    private static RealmsGenericErrorScreen.ErrorMessage errorMessage(Component p_289010_, Component p_289015_) {
-        return new RealmsGenericErrorScreen.ErrorMessage(p_289010_, p_289015_);
+    private static RealmsGenericErrorScreen.ErrorMessage errorMessage(Component title, Component message) {
+        return new RealmsGenericErrorScreen.ErrorMessage(title, message);
     }
 
     @Override
@@ -77,11 +77,19 @@ public class RealmsGenericErrorScreen extends RealmsScreen {
         return super.keyPressed(key, scanCode, modifiers);
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283497_, int p_88680_, int p_88681_, float p_88682_) {
-        super.render(p_283497_, p_88680_, p_88681_, p_88682_);
-        p_283497_.drawCenteredString(this.font, this.lines.title, this.width / 2, 80, -1);
-        this.line2Split.renderCentered(p_283497_, this.width / 2, 100, 9, -2142128);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.lines.title, this.width / 2, 80, -1);
+        this.line2Split.renderCentered(guiGraphics, this.width / 2, 100, 9, -2142128);
     }
 
     @OnlyIn(Dist.CLIENT)

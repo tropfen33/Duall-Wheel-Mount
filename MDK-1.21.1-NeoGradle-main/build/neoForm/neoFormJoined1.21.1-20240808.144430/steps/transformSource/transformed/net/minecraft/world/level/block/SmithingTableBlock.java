@@ -25,24 +25,24 @@ public class SmithingTableBlock extends CraftingTableBlock {
         return CODEC;
     }
 
-    public SmithingTableBlock(BlockBehaviour.Properties p_56420_) {
-        super(p_56420_);
+    public SmithingTableBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
-    protected MenuProvider getMenuProvider(BlockState p_56435_, Level p_56436_, BlockPos p_56437_) {
+    protected MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
         return new SimpleMenuProvider(
-            (p_277304_, p_277305_, p_277306_) -> new SmithingMenu(p_277304_, p_277305_, ContainerLevelAccess.create(p_56436_, p_56437_)), CONTAINER_TITLE
+            (p_277304_, p_277305_, p_277306_) -> new SmithingMenu(p_277304_, p_277305_, ContainerLevelAccess.create(level, pos)), CONTAINER_TITLE
         );
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_56428_, Level p_56429_, BlockPos p_56430_, Player p_56431_, BlockHitResult p_56433_) {
-        if (p_56429_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
-            p_56431_.openMenu(p_56428_.getMenuProvider(p_56429_, p_56430_));
-            p_56431_.awardStat(Stats.INTERACT_WITH_SMITHING_TABLE);
+            player.openMenu(state.getMenuProvider(level, pos));
+            player.awardStat(Stats.INTERACT_WITH_SMITHING_TABLE);
             return InteractionResult.CONSUME;
         }
     }

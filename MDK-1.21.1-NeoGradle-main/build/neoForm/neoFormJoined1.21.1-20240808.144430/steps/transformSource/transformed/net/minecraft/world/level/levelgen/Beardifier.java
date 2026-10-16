@@ -17,6 +17,9 @@ import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.pools.JigsawJunction;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 
+/**
+ * Modifies terrain noise to be flatter near structures such as villages.
+ */
 public class Beardifier implements DensityFunctions.BeardifierOrMarker {
     public static final int BEARD_KERNEL_RADIUS = 12;
     private static final int BEARD_KERNEL_SIZE = 24;
@@ -32,18 +35,18 @@ public class Beardifier implements DensityFunctions.BeardifierOrMarker {
     protected final ObjectListIterator<Beardifier.Rigid> pieceIterator;
     protected final ObjectListIterator<JigsawJunction> junctionIterator;
 
-    public static Beardifier forStructuresInChunk(StructureManager p_223938_, ChunkPos p_223939_) {
-        int i = p_223939_.getMinBlockX();
-        int j = p_223939_.getMinBlockZ();
+    public static Beardifier forStructuresInChunk(StructureManager structureManager, ChunkPos chunkPos) {
+        int i = chunkPos.getMinBlockX();
+        int j = chunkPos.getMinBlockZ();
         ObjectList<Beardifier.Rigid> objectlist = new ObjectArrayList<>(10);
         ObjectList<JigsawJunction> objectlist1 = new ObjectArrayList<>(32);
-        p_223938_.startsForStructure(p_223939_, p_223941_ -> p_223941_.terrainAdaptation() != TerrainAdjustment.NONE)
+        structureManager.startsForStructure(chunkPos, p_223941_ -> p_223941_.terrainAdaptation() != TerrainAdjustment.NONE)
             .forEach(
                 p_223936_ -> {
                     TerrainAdjustment terrainadjustment = p_223936_.getStructure().terrainAdaptation();
 
                     for (StructurePiece structurepiece : p_223936_.getPieces()) {
-                        if (structurepiece.isCloseToChunk(p_223939_, 12)) {
+                        if (structurepiece.isCloseToChunk(chunkPos, 12)) {
                             if (structurepiece instanceof net.neoforged.neoforge.common.world.PieceBeardifierModifier pieceBeardifierModifier) {
                                 if (pieceBeardifierModifier.getTerrainAdjustment() != TerrainAdjustment.NONE) {
                                     objectlist.add(new Beardifier.Rigid(pieceBeardifierModifier.getBeardifierBox(), pieceBeardifierModifier.getTerrainAdjustment(), pieceBeardifierModifier.getGroundLevelDelta()));
@@ -78,16 +81,16 @@ public class Beardifier implements DensityFunctions.BeardifierOrMarker {
     }
 
     @VisibleForTesting
-    public Beardifier(ObjectListIterator<Beardifier.Rigid> p_223917_, ObjectListIterator<JigsawJunction> p_223918_) {
-        this.pieceIterator = p_223917_;
-        this.junctionIterator = p_223918_;
+    public Beardifier(ObjectListIterator<Beardifier.Rigid> pieceIterator, ObjectListIterator<JigsawJunction> junctionIterator) {
+        this.pieceIterator = pieceIterator;
+        this.junctionIterator = junctionIterator;
     }
 
     @Override
-    public double compute(DensityFunction.FunctionContext p_208200_) {
-        int i = p_208200_.blockX();
-        int j = p_208200_.blockY();
-        int k = p_208200_.blockZ();
+    public double compute(DensityFunction.FunctionContext context) {
+        int i = context.blockX();
+        int j = context.blockY();
+        int k = context.blockZ();
         double d0 = 0.0;
 
         while (this.pieceIterator.hasNext()) {
@@ -138,18 +141,18 @@ public class Beardifier implements DensityFunctions.BeardifierOrMarker {
         return Double.POSITIVE_INFINITY;
     }
 
-    protected static double getBuryContribution(double p_340947_, double p_340921_, double p_341266_) {
-        double d0 = Mth.length(p_340947_, p_340921_, p_341266_);
+    protected static double getBuryContribution(double x, double y, double z) {
+        double d0 = Mth.length(x, y, z);
         return Mth.clampedMap(d0, 0.0, 6.0, 1.0, 0.0);
     }
 
-    protected static double getBeardContribution(int p_223926_, int p_223927_, int p_223928_, int p_223929_) {
-        int i = p_223926_ + 12;
-        int j = p_223927_ + 12;
-        int k = p_223928_ + 12;
+    protected static double getBeardContribution(int x, int y, int z, int height) {
+        int i = x + 12;
+        int j = y + 12;
+        int k = z + 12;
         if (isInKernelRange(i) && isInKernelRange(j) && isInKernelRange(k)) {
-            double d0 = (double)p_223929_ + 0.5;
-            double d1 = Mth.lengthSquared((double)p_223926_, d0, (double)p_223928_);
+            double d0 = (double)height + 0.5;
+            double d1 = Mth.lengthSquared((double)x, d0, (double)z);
             double d2 = -d0 * Mth.fastInvSqrt(d1 / 2.0) / 2.0;
             return d2 * (double)BEARD_KERNEL[k * 24 * 24 + i * 24 + j];
         } else {
@@ -157,16 +160,16 @@ public class Beardifier implements DensityFunctions.BeardifierOrMarker {
         }
     }
 
-    private static boolean isInKernelRange(int p_223920_) {
-        return p_223920_ >= 0 && p_223920_ < 24;
+    private static boolean isInKernelRange(int value) {
+        return value >= 0 && value < 24;
     }
 
-    private static double computeBeardContribution(int p_158092_, int p_158093_, int p_158094_) {
-        return computeBeardContribution(p_158092_, (double)p_158093_ + 0.5, p_158094_);
+    private static double computeBeardContribution(int x, int y, int z) {
+        return computeBeardContribution(x, (double)y + 0.5, z);
     }
 
-    private static double computeBeardContribution(int p_223922_, double p_223923_, int p_223924_) {
-        double d0 = Mth.lengthSquared((double)p_223922_, p_223923_, (double)p_223924_);
+    private static double computeBeardContribution(int x, double y, int z) {
+        double d0 = Mth.lengthSquared((double)x, y, (double)z);
         return Math.pow(Math.E, -d0 / 16.0);
     }
 

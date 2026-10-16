@@ -20,9 +20,9 @@ public class SecondaryPoiSensor extends Sensor<Villager> {
         super(40);
     }
 
-    protected void doTick(ServerLevel p_26754_, Villager p_26755_) {
-        ResourceKey<Level> resourcekey = p_26754_.dimension();
-        BlockPos blockpos = p_26755_.blockPosition();
+    protected void doTick(ServerLevel level, Villager entity) {
+        ResourceKey<Level> resourcekey = level.dimension();
+        BlockPos blockpos = entity.blockPosition();
         List<GlobalPos> list = Lists.newArrayList();
         int i = 4;
 
@@ -30,14 +30,14 @@ public class SecondaryPoiSensor extends Sensor<Villager> {
             for (int k = -2; k <= 2; k++) {
                 for (int l = -4; l <= 4; l++) {
                     BlockPos blockpos1 = blockpos.offset(j, k, l);
-                    if (p_26755_.getVillagerData().getProfession().secondaryPoi().contains(p_26754_.getBlockState(blockpos1).getBlock())) {
+                    if (entity.getVillagerData().getProfession().secondaryPoi().contains(level.getBlockState(blockpos1).getBlock())) {
                         list.add(GlobalPos.of(resourcekey, blockpos1));
                     }
                 }
             }
         }
 
-        Brain<?> brain = p_26755_.getBrain();
+        Brain<?> brain = entity.getBrain();
         if (!list.isEmpty()) {
             brain.setMemory(MemoryModuleType.SECONDARY_JOB_SITE, list);
         } else {

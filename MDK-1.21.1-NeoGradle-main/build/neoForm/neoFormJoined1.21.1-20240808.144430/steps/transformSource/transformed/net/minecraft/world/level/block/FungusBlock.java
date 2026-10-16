@@ -40,42 +40,42 @@ public class FungusBlock extends BushBlock implements BonemealableBlock {
         return CODEC;
     }
 
-    public FungusBlock(ResourceKey<ConfiguredFeature<?, ?>> p_259087_, Block p_260223_, BlockBehaviour.Properties p_259749_) {
-        super(p_259749_);
-        this.feature = p_259087_;
-        this.requiredBlock = p_260223_;
+    public FungusBlock(ResourceKey<ConfiguredFeature<?, ?>> feature, Block requiredBlock, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.feature = feature;
+        this.requiredBlock = requiredBlock;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_53618_, BlockGetter p_53619_, BlockPos p_53620_, CollisionContext p_53621_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    protected boolean mayPlaceOn(BlockState p_53623_, BlockGetter p_53624_, BlockPos p_53625_) {
-        return p_53623_.is(BlockTags.NYLIUM) || p_53623_.is(Blocks.MYCELIUM) || p_53623_.is(Blocks.SOUL_SOIL) || super.mayPlaceOn(p_53623_, p_53624_, p_53625_);
+    protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.is(BlockTags.NYLIUM) || state.is(Blocks.MYCELIUM) || state.is(Blocks.SOUL_SOIL) || super.mayPlaceOn(state, level, pos);
     }
 
-    private Optional<? extends Holder<ConfiguredFeature<?, ?>>> getFeature(LevelReader p_256589_) {
-        return p_256589_.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE).getHolder(this.feature);
+    private Optional<? extends Holder<ConfiguredFeature<?, ?>>> getFeature(LevelReader level) {
+        return level.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE).getHolder(this.feature);
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader p_256655_, BlockPos p_256553_, BlockState p_256213_) {
-        BlockState blockstate = p_256655_.getBlockState(p_256553_.below());
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+        BlockState blockstate = level.getBlockState(pos.below());
         return blockstate.is(this.requiredBlock);
     }
 
     @Override
-    public boolean isBonemealSuccess(Level p_221248_, RandomSource p_221249_, BlockPos p_221250_, BlockState p_221251_) {
-        return (double)p_221249_.nextFloat() < 0.4;
+    public boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state) {
+        return (double)random.nextFloat() < 0.4;
     }
 
     @Override
-    public void performBonemeal(ServerLevel p_221243_, RandomSource p_221244_, BlockPos p_221245_, BlockState p_221246_) {
+    public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
         // Neo: Fire the BlockGrowFeatureEvent and change the ifPresent call to use the event's result.
-        var event = net.neoforged.neoforge.event.EventHooks.fireBlockGrowFeature(p_221243_, p_221244_, p_221245_, this.getFeature(p_221243_).orElse(null));
+        var event = net.neoforged.neoforge.event.EventHooks.fireBlockGrowFeature(level, random, pos, this.getFeature(level).orElse(null));
         if (event.isCanceled()) return;
-        Optional.ofNullable(event.getFeature()).ifPresent(p_256352_ -> p_256352_.value().place(p_221243_, p_221243_.getChunkSource().getGenerator(), p_221244_, p_221245_));
+        Optional.ofNullable(event.getFeature()).ifPresent(p_256352_ -> p_256352_.value().place(level, level.getChunkSource().getGenerator(), random, pos));
     }
 }

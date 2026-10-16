@@ -25,10 +25,10 @@ public class RealmsBackupInfoScreen extends RealmsScreen {
     final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
     private RealmsBackupInfoScreen.BackupInfoList backupInfoList;
 
-    public RealmsBackupInfoScreen(Screen p_88048_, Backup p_88049_) {
+    public RealmsBackupInfoScreen(Screen lastScreen, Backup backup) {
         super(TITLE);
-        this.lastScreen = p_88048_;
-        this.backup = p_88049_;
+        this.lastScreen = lastScreen;
+        this.backup = backup;
     }
 
     @Override
@@ -53,26 +53,26 @@ public class RealmsBackupInfoScreen extends RealmsScreen {
         this.minecraft.setScreen(this.lastScreen);
     }
 
-    Component checkForSpecificMetadata(String p_88068_, String p_88069_) {
-        String s = p_88068_.toLowerCase(Locale.ROOT);
+    Component checkForSpecificMetadata(String key, String value) {
+        String s = key.toLowerCase(Locale.ROOT);
         if (s.contains("game") && s.contains("mode")) {
-            return this.gameModeMetadata(p_88069_);
+            return this.gameModeMetadata(value);
         } else {
-            return (Component)(s.contains("game") && s.contains("difficulty") ? this.gameDifficultyMetadata(p_88069_) : Component.literal(p_88069_));
+            return (Component)(s.contains("game") && s.contains("difficulty") ? this.gameDifficultyMetadata(value) : Component.literal(value));
         }
     }
 
-    private Component gameDifficultyMetadata(String p_88074_) {
+    private Component gameDifficultyMetadata(String value) {
         try {
-            return RealmsSlotOptionsScreen.DIFFICULTIES.get(Integer.parseInt(p_88074_)).getDisplayName();
+            return RealmsSlotOptionsScreen.DIFFICULTIES.get(Integer.parseInt(value)).getDisplayName();
         } catch (Exception exception) {
             return UNKNOWN;
         }
     }
 
-    private Component gameModeMetadata(String p_88076_) {
+    private Component gameModeMetadata(String value) {
         try {
-            return RealmsSlotOptionsScreen.GAME_MODES.get(Integer.parseInt(p_88076_)).getShortDisplayName();
+            return RealmsSlotOptionsScreen.GAME_MODES.get(Integer.parseInt(value)).getShortDisplayName();
         } catch (Exception exception) {
             return UNKNOWN;
         }
@@ -80,9 +80,9 @@ public class RealmsBackupInfoScreen extends RealmsScreen {
 
     @OnlyIn(Dist.CLIENT)
     class BackupInfoList extends ObjectSelectionList<RealmsBackupInfoScreen.BackupInfoListEntry> {
-        public BackupInfoList(Minecraft p_88082_) {
+        public BackupInfoList(Minecraft minecraft) {
             super(
-                p_88082_,
+                minecraft,
                 RealmsBackupInfoScreen.this.width,
                 RealmsBackupInfoScreen.this.layout.getContentHeight(),
                 RealmsBackupInfoScreen.this.layout.getHeaderHeight(),
@@ -112,32 +112,32 @@ public class RealmsBackupInfoScreen extends RealmsScreen {
         private final String key;
         private final String value;
 
-        public BackupInfoListEntry(String p_88091_, String p_88092_) {
-            this.key = p_88091_;
-            this.value = p_88092_;
+        public BackupInfoListEntry(String key, String value) {
+            this.key = key;
+            this.value = value;
         }
 
         @Override
         public void render(
-            GuiGraphics p_282911_,
-            int p_281482_,
-            int p_283643_,
-            int p_282795_,
-            int p_283291_,
-            int p_282540_,
-            int p_282181_,
-            int p_283535_,
-            boolean p_281916_,
-            float p_282116_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
-            p_282911_.drawString(RealmsBackupInfoScreen.this.font, this.translateKey(this.key), p_282795_, p_283643_, -6250336);
-            p_282911_.drawString(
-                RealmsBackupInfoScreen.this.font, RealmsBackupInfoScreen.this.checkForSpecificMetadata(this.key, this.value), p_282795_, p_283643_ + 12, -1
+            guiGraphics.drawString(RealmsBackupInfoScreen.this.font, this.translateKey(this.key), left, top, -6250336);
+            guiGraphics.drawString(
+                RealmsBackupInfoScreen.this.font, RealmsBackupInfoScreen.this.checkForSpecificMetadata(this.key, this.value), left, top + 12, -1
             );
         }
 
-        private Component translateKey(String p_287652_) {
-            return switch (p_287652_) {
+        private Component translateKey(String key) {
+            return switch (key) {
                 case "template_name" -> TEMPLATE_NAME;
                 case "game_difficulty" -> GAME_DIFFICULTY;
                 case "name" -> NAME;
@@ -152,8 +152,17 @@ public class RealmsBackupInfoScreen extends RealmsScreen {
             };
         }
 
+        /**
+         * Called when a mouse button is clicked within the GUI element.
+         * <p>
+         * @return {@code true} if the event is consumed, {@code false} otherwise.
+         *
+         * @param mouseX the X coordinate of the mouse.
+         * @param mouseY the Y coordinate of the mouse.
+         * @param button the button that was clicked.
+         */
         @Override
-        public boolean mouseClicked(double p_308886_, double p_309052_, int p_309158_) {
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
             return true;
         }
 

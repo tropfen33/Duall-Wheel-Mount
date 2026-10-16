@@ -21,26 +21,29 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.Property;
 
 public class DebugStickItem extends Item {
-    public DebugStickItem(Item.Properties p_40948_) {
-        super(p_40948_);
+    public DebugStickItem(Item.Properties properties) {
+        super(properties);
     }
 
     @Override
-    public boolean canAttackBlock(BlockState p_40962_, Level p_40963_, BlockPos p_40964_, Player p_40965_) {
-        if (!p_40963_.isClientSide) {
-            this.handleInteraction(p_40965_, p_40962_, p_40963_, p_40964_, false, p_40965_.getItemInHand(InteractionHand.MAIN_HAND));
+    public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
+        if (!level.isClientSide) {
+            this.handleInteraction(player, state, level, pos, false, player.getItemInHand(InteractionHand.MAIN_HAND));
         }
 
         return false;
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_40960_) {
-        Player player = p_40960_.getPlayer();
-        Level level = p_40960_.getLevel();
+    public InteractionResult useOn(UseOnContext context) {
+        Player player = context.getPlayer();
+        Level level = context.getLevel();
         if (!level.isClientSide && player != null) {
-            BlockPos blockpos = p_40960_.getClickedPos();
-            if (!this.handleInteraction(player, level.getBlockState(blockpos), level, blockpos, true, p_40960_.getItemInHand())) {
+            BlockPos blockpos = context.getClickedPos();
+            if (!this.handleInteraction(player, level.getBlockState(blockpos), level, blockpos, true, context.getItemInHand())) {
                 return InteractionResult.FAIL;
             }
         }
@@ -49,35 +52,35 @@ public class DebugStickItem extends Item {
     }
 
     private boolean handleInteraction(
-        Player p_150803_, BlockState p_150804_, LevelAccessor p_150805_, BlockPos p_150806_, boolean p_150807_, ItemStack p_150808_
+        Player player, BlockState stateClicked, LevelAccessor accessor, BlockPos pos, boolean shouldCycleState, ItemStack debugStack
     ) {
-        if (!p_150803_.canUseGameMasterBlocks()) {
+        if (!player.canUseGameMasterBlocks()) {
             return false;
         } else {
-            Holder<Block> holder = p_150804_.getBlockHolder();
+            Holder<Block> holder = stateClicked.getBlockHolder();
             StateDefinition<Block, BlockState> statedefinition = holder.value().getStateDefinition();
             Collection<Property<?>> collection = statedefinition.getProperties();
             if (collection.isEmpty()) {
-                message(p_150803_, Component.translatable(this.getDescriptionId() + ".empty", holder.getRegisteredName()));
+                message(player, Component.translatable(this.getDescriptionId() + ".empty", holder.getRegisteredName()));
                 return false;
             } else {
-                DebugStickState debugstickstate = p_150808_.get(DataComponents.DEBUG_STICK_STATE);
+                DebugStickState debugstickstate = debugStack.get(DataComponents.DEBUG_STICK_STATE);
                 if (debugstickstate == null) {
                     return false;
                 } else {
                     Property<?> property = debugstickstate.properties().get(holder);
-                    if (p_150807_) {
+                    if (shouldCycleState) {
                         if (property == null) {
                             property = collection.iterator().next();
                         }
 
-                        BlockState blockstate = cycleState(p_150804_, property, p_150803_.isSecondaryUseActive());
-                        p_150805_.setBlock(p_150806_, blockstate, 18);
-                        message(p_150803_, Component.translatable(this.getDescriptionId() + ".update", property.getName(), getNameHelper(blockstate, property)));
+                        BlockState blockstate = cycleState(stateClicked, property, player.isSecondaryUseActive());
+                        accessor.setBlock(pos, blockstate, 18);
+                        message(player, Component.translatable(this.getDescriptionId() + ".update", property.getName(), getNameHelper(blockstate, property)));
                     } else {
-                        property = getRelative(collection, property, p_150803_.isSecondaryUseActive());
-                        p_150808_.set(DataComponents.DEBUG_STICK_STATE, debugstickstate.withProperty(holder, property));
-                        message(p_150803_, Component.translatable(this.getDescriptionId() + ".select", property.getName(), getNameHelper(p_150804_, property)));
+                        property = getRelative(collection, property, player.isSecondaryUseActive());
+                        debugStack.set(DataComponents.DEBUG_STICK_STATE, debugstickstate.withProperty(holder, property));
+                        message(player, Component.translatable(this.getDescriptionId() + ".select", property.getName(), getNameHelper(stateClicked, property)));
                     }
 
                     return true;
@@ -86,19 +89,19 @@ public class DebugStickItem extends Item {
         }
     }
 
-    private static <T extends Comparable<T>> BlockState cycleState(BlockState p_40970_, Property<T> p_40971_, boolean p_40972_) {
-        return p_40970_.setValue(p_40971_, getRelative(p_40971_.getPossibleValues(), p_40970_.getValue(p_40971_), p_40972_));
+    private static <T extends Comparable<T>> BlockState cycleState(BlockState state, Property<T> property, boolean backwards) {
+        return state.setValue(property, getRelative(property.getPossibleValues(), state.getValue(property), backwards));
     }
 
-    private static <T> T getRelative(Iterable<T> p_40974_, @Nullable T p_40975_, boolean p_40976_) {
-        return p_40976_ ? Util.findPreviousInIterable(p_40974_, p_40975_) : Util.findNextInIterable(p_40974_, p_40975_);
+    private static <T> T getRelative(Iterable<T> allowedValues, @Nullable T currentValue, boolean backwards) {
+        return backwards ? Util.findPreviousInIterable(allowedValues, currentValue) : Util.findNextInIterable(allowedValues, currentValue);
     }
 
-    private static void message(Player p_40957_, Component p_40958_) {
-        ((ServerPlayer)p_40957_).sendSystemMessage(p_40958_, true);
+    private static void message(Player player, Component messageComponent) {
+        ((ServerPlayer)player).sendSystemMessage(messageComponent, true);
     }
 
-    private static <T extends Comparable<T>> String getNameHelper(BlockState p_40967_, Property<T> p_40968_) {
-        return p_40968_.getName(p_40967_.getValue(p_40968_));
+    private static <T extends Comparable<T>> String getNameHelper(BlockState state, Property<T> property) {
+        return property.getName(state.getValue(property));
     }
 }

@@ -15,19 +15,19 @@ public class StructureUpdater implements SnbtToNbt.Filter {
     private static final String PREFIX = PackType.SERVER_DATA.getDirectory() + "/minecraft/structure/";
 
     @Override
-    public CompoundTag apply(String p_126503_, CompoundTag p_126504_) {
-        return p_126503_.startsWith(PREFIX) ? update(p_126503_, p_126504_) : p_126504_;
+    public CompoundTag apply(String structureLocationPath, CompoundTag tag) {
+        return structureLocationPath.startsWith(PREFIX) ? update(structureLocationPath, tag) : tag;
     }
 
-    public static CompoundTag update(String p_176823_, CompoundTag p_176824_) {
+    public static CompoundTag update(String structureLocationPath, CompoundTag tag) {
         StructureTemplate structuretemplate = new StructureTemplate();
-        int i = NbtUtils.getDataVersion(p_176824_, 500);
+        int i = NbtUtils.getDataVersion(tag, 500);
         int j = 3937;
         if (i < 3937) {
-            LOGGER.warn("SNBT Too old, do not forget to update: {} < {}: {}", i, 3937, p_176823_);
+            LOGGER.warn("SNBT Too old, do not forget to update: {} < {}: {}", i, 3937, structureLocationPath);
         }
 
-        CompoundTag compoundtag = DataFixTypes.STRUCTURE.updateToCurrentVersion(DataFixers.getDataFixer(), p_176824_, i);
+        CompoundTag compoundtag = DataFixTypes.STRUCTURE.updateToCurrentVersion(DataFixers.getDataFixer(), tag, i);
         structuretemplate.load(BuiltInRegistries.BLOCK.asLookup(), compoundtag);
         return structuretemplate.save(new CompoundTag());
     }

@@ -20,19 +20,22 @@ public abstract class AbstractSoundInstance implements SoundInstance {
     protected double y;
     protected double z;
     protected boolean looping;
+    /**
+     * The number of ticks between repeating the sound
+     */
     protected int delay;
     protected SoundInstance.Attenuation attenuation = SoundInstance.Attenuation.LINEAR;
     protected boolean relative;
     protected RandomSource random;
 
-    protected AbstractSoundInstance(SoundEvent p_235072_, SoundSource p_235073_, RandomSource p_235074_) {
-        this(p_235072_.getLocation(), p_235073_, p_235074_);
+    protected AbstractSoundInstance(SoundEvent soundEvent, SoundSource source, RandomSource random) {
+        this(soundEvent.getLocation(), source, random);
     }
 
-    protected AbstractSoundInstance(ResourceLocation p_235068_, SoundSource p_235069_, RandomSource p_235070_) {
-        this.location = p_235068_;
-        this.source = p_235069_;
-        this.random = p_235070_;
+    protected AbstractSoundInstance(ResourceLocation location, SoundSource source, RandomSource random) {
+        this.location = location;
+        this.source = source;
+        this.random = random;
     }
 
     @Override
@@ -41,12 +44,12 @@ public abstract class AbstractSoundInstance implements SoundInstance {
     }
 
     @Override
-    public WeighedSoundEvents resolve(SoundManager p_119591_) {
+    public WeighedSoundEvents resolve(SoundManager handler) {
         if (this.location.equals(SoundManager.INTENTIONALLY_EMPTY_SOUND_LOCATION)) {
             this.sound = SoundManager.INTENTIONALLY_EMPTY_SOUND;
             return SoundManager.INTENTIONALLY_EMPTY_SOUND_EVENT;
         } else {
-            WeighedSoundEvents weighedsoundevents = p_119591_.getSoundEvent(this.location);
+            WeighedSoundEvents weighedsoundevents = handler.getSoundEvent(this.location);
             if (weighedsoundevents == null) {
                 this.sound = SoundManager.EMPTY_SOUND;
             } else {

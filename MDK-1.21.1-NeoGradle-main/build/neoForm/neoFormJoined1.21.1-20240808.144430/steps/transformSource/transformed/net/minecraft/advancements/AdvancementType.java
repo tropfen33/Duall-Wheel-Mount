@@ -17,10 +17,10 @@ public enum AdvancementType implements StringRepresentable {
     private final ChatFormatting chatColor;
     private final Component displayName;
 
-    private AdvancementType(String p_312210_, ChatFormatting p_312089_) {
-        this.name = p_312210_;
-        this.chatColor = p_312089_;
-        this.displayName = Component.translatable("advancements.toast." + p_312210_);
+    private AdvancementType(String name, ChatFormatting chatColor) {
+        this.name = name;
+        this.chatColor = chatColor;
+        this.displayName = Component.translatable("advancements.toast." + name);
     }
 
     public ChatFormatting getChatColor() {
@@ -36,7 +36,7 @@ public enum AdvancementType implements StringRepresentable {
         return this.name;
     }
 
-    public MutableComponent createAnnouncement(AdvancementHolder p_311791_, ServerPlayer p_312517_) {
-        return Component.translatable("chat.type.advancement." + this.name, p_312517_.getDisplayName(), Advancement.name(p_311791_));
+    public MutableComponent createAnnouncement(AdvancementHolder advancement, ServerPlayer player) {
+        return Component.translatable("chat.type.advancement." + this.name, player.getDisplayName(), Advancement.name(advancement));
     }
 }

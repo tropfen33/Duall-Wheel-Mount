@@ -17,20 +17,20 @@ public class MeshData implements AutoCloseable {
     private ByteBufferBuilder.Result indexBuffer;
     private final MeshData.DrawState drawState;
 
-    public MeshData(ByteBufferBuilder.Result p_350637_, MeshData.DrawState p_350712_) {
-        this.vertexBuffer = p_350637_;
-        this.drawState = p_350712_;
+    public MeshData(ByteBufferBuilder.Result vertexBuffer, MeshData.DrawState drawState) {
+        this.vertexBuffer = vertexBuffer;
+        this.drawState = drawState;
     }
 
-    private static Vector3f[] unpackQuadCentroids(ByteBuffer p_350488_, int p_350671_, VertexFormat p_350665_) {
-        int i = p_350665_.getOffset(VertexFormatElement.POSITION);
+    private static Vector3f[] unpackQuadCentroids(ByteBuffer byteBuffer, int vertexCount, VertexFormat format) {
+        int i = format.getOffset(VertexFormatElement.POSITION);
         if (i == -1) {
             throw new IllegalArgumentException("Cannot identify quad centers with no position element");
         } else {
-            FloatBuffer floatbuffer = p_350488_.asFloatBuffer();
-            int j = p_350665_.getVertexSize() / 4;
+            FloatBuffer floatbuffer = byteBuffer.asFloatBuffer();
+            int j = format.getVertexSize() / 4;
             int k = j * 4;
-            int l = p_350671_ / 4;
+            int l = vertexCount / 4;
             Vector3f[] avector3f = new Vector3f[l];
 
             for (int i1 = 0; i1 < l; i1++) {
@@ -63,13 +63,13 @@ public class MeshData implements AutoCloseable {
     }
 
     @Nullable
-    public MeshData.SortState sortQuads(ByteBufferBuilder p_350540_, VertexSorting p_350720_) {
+    public MeshData.SortState sortQuads(ByteBufferBuilder bufferBuilder, VertexSorting sorting) {
         if (this.drawState.mode() != VertexFormat.Mode.QUADS) {
             return null;
         } else {
             Vector3f[] avector3f = unpackQuadCentroids(this.vertexBuffer.byteBuffer(), this.drawState.vertexCount(), this.drawState.format());
             MeshData.SortState meshdata$sortstate = new MeshData.SortState(avector3f, this.drawState.indexType());
-            this.indexBuffer = meshdata$sortstate.buildSortedIndexBuffer(p_350540_, p_350720_);
+            this.indexBuffer = meshdata$sortstate.buildSortedIndexBuffer(bufferBuilder, sorting);
             return meshdata$sortstate;
         }
     }
@@ -89,9 +89,9 @@ public class MeshData implements AutoCloseable {
     @OnlyIn(Dist.CLIENT)
     public static record SortState(Vector3f[] centroids, VertexFormat.IndexType indexType) {
         @Nullable
-        public ByteBufferBuilder.Result buildSortedIndexBuffer(ByteBufferBuilder p_351024_, VertexSorting p_350537_) {
-            int[] aint = p_350537_.sort(this.centroids);
-            long i = p_351024_.reserve(aint.length * 6 * this.indexType.bytes);
+        public ByteBufferBuilder.Result buildSortedIndexBuffer(ByteBufferBuilder bufferBuilder, VertexSorting sorting) {
+            int[] aint = sorting.sort(this.centroids);
+            long i = bufferBuilder.reserve(aint.length * 6 * this.indexType.bytes);
             IntConsumer intconsumer = this.indexWriter(i, this.indexType);
 
             for (int j : aint) {
@@ -103,13 +103,13 @@ public class MeshData implements AutoCloseable {
                 intconsumer.accept(j * 4 + 0);
             }
 
-            return p_351024_.build();
+            return bufferBuilder.build();
         }
 
-        private IntConsumer indexWriter(long p_350877_, VertexFormat.IndexType p_350389_) {
-            MutableLong mutablelong = new MutableLong(p_350877_);
+        private IntConsumer indexWriter(long index, VertexFormat.IndexType type) {
+            MutableLong mutablelong = new MutableLong(index);
 
-            return switch (p_350389_) {
+            return switch (type) {
                 case SHORT -> p_350656_ -> MemoryUtil.memPutShort(mutablelong.getAndAdd(2L), (short)p_350656_);
                 case INT -> p_350913_ -> MemoryUtil.memPutInt(mutablelong.getAndAdd(4L), p_350913_);
             };

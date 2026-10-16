@@ -19,65 +19,68 @@ public abstract class VehicleEntity extends Entity {
     protected static final EntityDataAccessor<Integer> DATA_ID_HURTDIR = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.INT);
     protected static final EntityDataAccessor<Float> DATA_ID_DAMAGE = SynchedEntityData.defineId(VehicleEntity.class, EntityDataSerializers.FLOAT);
 
-    public VehicleEntity(EntityType<?> p_306130_, Level p_306167_) {
-        super(p_306130_, p_306167_);
+    public VehicleEntity(EntityType<?> entityType, Level level) {
+        super(entityType, level);
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_305898_, float p_305999_) {
+    public boolean hurt(DamageSource source, float amount) {
         if (this.level().isClientSide || this.isRemoved()) {
             return true;
-        } else if (this.isInvulnerableTo(p_305898_)) {
+        } else if (this.isInvulnerableTo(source)) {
             return false;
         } else {
             this.setHurtDir(-this.getHurtDir());
             this.setHurtTime(10);
             this.markHurt();
-            this.setDamage(this.getDamage() + p_305999_ * 10.0F);
-            this.gameEvent(GameEvent.ENTITY_DAMAGE, p_305898_.getEntity());
-            boolean flag = p_305898_.getEntity() instanceof Player && ((Player)p_305898_.getEntity()).getAbilities().instabuild;
-            if ((flag || !(this.getDamage() > 40.0F)) && !this.shouldSourceDestroy(p_305898_)) {
+            this.setDamage(this.getDamage() + amount * 10.0F);
+            this.gameEvent(GameEvent.ENTITY_DAMAGE, source.getEntity());
+            boolean flag = source.getEntity() instanceof Player && ((Player)source.getEntity()).getAbilities().instabuild;
+            if ((flag || !(this.getDamage() > 40.0F)) && !this.shouldSourceDestroy(source)) {
                 if (flag) {
                     this.discard();
                 }
             } else {
-                this.destroy(p_305898_);
+                this.destroy(source);
             }
 
             return true;
         }
     }
 
-    boolean shouldSourceDestroy(DamageSource p_312875_) {
+    boolean shouldSourceDestroy(DamageSource source) {
         return false;
     }
 
-    public void destroy(Item p_306235_) {
+    public void destroy(Item dropItem) {
         this.kill();
         if (this.level().getGameRules().getBoolean(GameRules.RULE_DOENTITYDROPS)) {
-            ItemStack itemstack = new ItemStack(p_306235_);
+            ItemStack itemstack = new ItemStack(dropItem);
             itemstack.set(DataComponents.CUSTOM_NAME, this.getCustomName());
             this.spawnAtLocation(itemstack);
         }
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326046_) {
-        p_326046_.define(DATA_ID_HURT, 0);
-        p_326046_.define(DATA_ID_HURTDIR, 1);
-        p_326046_.define(DATA_ID_DAMAGE, 0.0F);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_ID_HURT, 0);
+        builder.define(DATA_ID_HURTDIR, 1);
+        builder.define(DATA_ID_DAMAGE, 0.0F);
     }
 
-    public void setHurtTime(int p_306126_) {
-        this.entityData.set(DATA_ID_HURT, p_306126_);
+    public void setHurtTime(int hurtTime) {
+        this.entityData.set(DATA_ID_HURT, hurtTime);
     }
 
-    public void setHurtDir(int p_306138_) {
-        this.entityData.set(DATA_ID_HURTDIR, p_306138_);
+    public void setHurtDir(int hurtDir) {
+        this.entityData.set(DATA_ID_HURTDIR, hurtDir);
     }
 
-    public void setDamage(float p_306297_) {
-        this.entityData.set(DATA_ID_DAMAGE, p_306297_);
+    public void setDamage(float damage) {
+        this.entityData.set(DATA_ID_DAMAGE, damage);
     }
 
     public float getDamage() {
@@ -92,7 +95,7 @@ public abstract class VehicleEntity extends Entity {
         return this.entityData.get(DATA_ID_HURTDIR);
     }
 
-    protected void destroy(DamageSource p_306223_) {
+    protected void destroy(DamageSource source) {
         this.destroy(this.getDropItem());
     }
 

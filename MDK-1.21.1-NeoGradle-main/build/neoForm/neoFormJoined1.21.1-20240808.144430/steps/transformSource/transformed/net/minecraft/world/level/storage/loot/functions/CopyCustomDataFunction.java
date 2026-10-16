@@ -40,10 +40,10 @@ public class CopyCustomDataFunction extends LootItemConditionalFunction {
     private final NbtProvider source;
     private final List<CopyCustomDataFunction.CopyOperation> operations;
 
-    CopyCustomDataFunction(List<LootItemCondition> p_330826_, NbtProvider p_331866_, List<CopyCustomDataFunction.CopyOperation> p_332090_) {
-        super(p_330826_);
-        this.source = p_331866_;
-        this.operations = List.copyOf(p_332090_);
+    CopyCustomDataFunction(List<LootItemCondition> conditions, NbtProvider source, List<CopyCustomDataFunction.CopyOperation> operations) {
+        super(conditions);
+        this.source = source;
+        this.operations = List.copyOf(operations);
     }
 
     @Override
@@ -56,16 +56,19 @@ public class CopyCustomDataFunction extends LootItemConditionalFunction {
         return this.source.getReferencedContextParams();
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_330210_, LootContext p_330315_) {
-        Tag tag = this.source.get(p_330315_);
+    public ItemStack run(ItemStack stack, LootContext context) {
+        Tag tag = this.source.get(context);
         if (tag == null) {
-            return p_330210_;
+            return stack;
         } else {
             MutableObject<CompoundTag> mutableobject = new MutableObject<>();
             Supplier<Tag> supplier = () -> {
                 if (mutableobject.getValue() == null) {
-                    mutableobject.setValue(p_330210_.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag());
+                    mutableobject.setValue(stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag());
                 }
 
                 return mutableobject.getValue();
@@ -73,41 +76,41 @@ public class CopyCustomDataFunction extends LootItemConditionalFunction {
             this.operations.forEach(p_330417_ -> p_330417_.apply(supplier, tag));
             CompoundTag compoundtag = mutableobject.getValue();
             if (compoundtag != null) {
-                CustomData.set(DataComponents.CUSTOM_DATA, p_330210_, compoundtag);
+                CustomData.set(DataComponents.CUSTOM_DATA, stack, compoundtag);
             }
 
-            return p_330210_;
+            return stack;
         }
     }
 
     @Deprecated
-    public static CopyCustomDataFunction.Builder copyData(NbtProvider p_330285_) {
-        return new CopyCustomDataFunction.Builder(p_330285_);
+    public static CopyCustomDataFunction.Builder copyData(NbtProvider source) {
+        return new CopyCustomDataFunction.Builder(source);
     }
 
-    public static CopyCustomDataFunction.Builder copyData(LootContext.EntityTarget p_330616_) {
-        return new CopyCustomDataFunction.Builder(ContextNbtProvider.forContextEntity(p_330616_));
+    public static CopyCustomDataFunction.Builder copyData(LootContext.EntityTarget target) {
+        return new CopyCustomDataFunction.Builder(ContextNbtProvider.forContextEntity(target));
     }
 
     public static class Builder extends LootItemConditionalFunction.Builder<CopyCustomDataFunction.Builder> {
         private final NbtProvider source;
         private final List<CopyCustomDataFunction.CopyOperation> ops = Lists.newArrayList();
 
-        Builder(NbtProvider p_331441_) {
-            this.source = p_331441_;
+        Builder(NbtProvider source) {
+            this.source = source;
         }
 
-        public CopyCustomDataFunction.Builder copy(String p_331086_, String p_331216_, CopyCustomDataFunction.MergeStrategy p_331878_) {
+        public CopyCustomDataFunction.Builder copy(String sourceKey, String destinationKey, CopyCustomDataFunction.MergeStrategy mergeStrategy) {
             try {
-                this.ops.add(new CopyCustomDataFunction.CopyOperation(NbtPathArgument.NbtPath.of(p_331086_), NbtPathArgument.NbtPath.of(p_331216_), p_331878_));
+                this.ops.add(new CopyCustomDataFunction.CopyOperation(NbtPathArgument.NbtPath.of(sourceKey), NbtPathArgument.NbtPath.of(destinationKey), mergeStrategy));
                 return this;
             } catch (CommandSyntaxException commandsyntaxexception) {
                 throw new IllegalArgumentException(commandsyntaxexception);
             }
         }
 
-        public CopyCustomDataFunction.Builder copy(String p_331730_, String p_330347_) {
-            return this.copy(p_331730_, p_330347_, CopyCustomDataFunction.MergeStrategy.REPLACE);
+        public CopyCustomDataFunction.Builder copy(String sourceKey, String destinationKey) {
+            return this.copy(sourceKey, destinationKey, CopyCustomDataFunction.MergeStrategy.REPLACE);
         }
 
         protected CopyCustomDataFunction.Builder getThis() {
@@ -130,11 +133,11 @@ public class CopyCustomDataFunction extends LootItemConditionalFunction {
                     .apply(p_335333_, CopyCustomDataFunction.CopyOperation::new)
         );
 
-        public void apply(Supplier<Tag> p_330493_, Tag p_331306_) {
+        public void apply(Supplier<Tag> sourceTag, Tag tag) {
             try {
-                List<Tag> list = this.sourcePath.get(p_331306_);
+                List<Tag> list = this.sourcePath.get(tag);
                 if (!list.isEmpty()) {
-                    this.op.merge(p_330493_.get(), this.targetPath, list);
+                    this.op.merge(sourceTag.get(), this.targetPath, list);
                 }
             } catch (CommandSyntaxException commandsyntaxexception) {
             }
@@ -178,10 +181,10 @@ public class CopyCustomDataFunction extends LootItemConditionalFunction {
         public static final Codec<CopyCustomDataFunction.MergeStrategy> CODEC = StringRepresentable.fromEnum(CopyCustomDataFunction.MergeStrategy::values);
         private final String name;
 
-        public abstract void merge(Tag p_330558_, NbtPathArgument.NbtPath p_331810_, List<Tag> p_330953_) throws CommandSyntaxException;
+        public abstract void merge(Tag tag, NbtPathArgument.NbtPath path, List<Tag> currentData) throws CommandSyntaxException;
 
-        MergeStrategy(String p_331709_) {
-            this.name = p_331709_;
+        MergeStrategy(String name) {
+            this.name = name;
         }
 
         @Override

@@ -32,13 +32,13 @@ public class CarverConfiguration extends ProbabilityFeatureConfiguration {
     public final HolderSet<Block> replaceable;
 
     public CarverConfiguration(
-        float p_224832_, HeightProvider p_224833_, FloatProvider p_224834_, VerticalAnchor p_224835_, CarverDebugSettings p_224836_, HolderSet<Block> p_224837_
+        float probability, HeightProvider y, FloatProvider yScale, VerticalAnchor lavaLevel, CarverDebugSettings debugSettings, HolderSet<Block> replaceable
     ) {
-        super(p_224832_);
-        this.y = p_224833_;
-        this.yScale = p_224834_;
-        this.lavaLevel = p_224835_;
-        this.debugSettings = p_224836_;
-        this.replaceable = p_224837_;
+        super(probability);
+        this.y = y;
+        this.yScale = yScale;
+        this.lavaLevel = lavaLevel;
+        this.debugSettings = debugSettings;
+        this.replaceable = replaceable;
     }
 }

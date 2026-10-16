@@ -22,6 +22,16 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.util.GsonHelper;
 
+/**
+ * An immutable location of a resource, in terms of a path and namespace.
+ * <p>
+ * This is used as an identifier for a resource, usually for those housed in a {@link net.minecraft.core.Registry}, such as blocks and items.
+ * <p>
+ * {@code minecraft} is always taken as the default namespace for a resource location when none is explicitly stated. When using this for registering objects, this namespace <strong>should</strong> only be used for resources added by Minecraft itself.
+ * <p>
+ * Generally, and by the implementation of {@link #toString()}, the string representation of this class is expressed in the form {@code namespace:path}. The colon is also used as the default separator for parsing strings as a {@code ResourceLocation}.
+ * @see net.minecraft.resources.ResourceKey
+ */
 public final class ResourceLocation implements Comparable<ResourceLocation> {
     public static final Codec<ResourceLocation> CODEC = Codec.STRING
         .<ResourceLocation>comapFlatMap(ResourceLocation::read, ResourceLocation::toString)
@@ -35,79 +45,90 @@ public final class ResourceLocation implements Comparable<ResourceLocation> {
     private final String namespace;
     private final String path;
 
-    private ResourceLocation(String p_135811_, String p_135812_) {
-        assert isValidNamespace(p_135811_);
+    private ResourceLocation(String namespace, String path) {
+        assert isValidNamespace(namespace);
 
-        assert isValidPath(p_135812_);
+        assert isValidPath(path);
 
-        this.namespace = p_135811_;
-        this.path = p_135812_;
+        this.namespace = namespace;
+        this.path = path;
     }
 
-    private static ResourceLocation createUntrusted(String p_352179_, String p_352115_) {
-        return new ResourceLocation(assertValidNamespace(p_352179_, p_352115_), assertValidPath(p_352179_, p_352115_));
+    private static ResourceLocation createUntrusted(String namespace, String path) {
+        return new ResourceLocation(assertValidNamespace(namespace, path), assertValidPath(namespace, path));
     }
 
-    public static ResourceLocation fromNamespaceAndPath(String p_350583_, String p_350305_) {
-        return createUntrusted(p_350583_, p_350305_);
+    public static ResourceLocation fromNamespaceAndPath(String namespace, String path) {
+        return createUntrusted(namespace, path);
     }
 
-    public static ResourceLocation parse(String p_350801_) {
-        return bySeparator(p_350801_, ':');
+    public static ResourceLocation parse(String location) {
+        return bySeparator(location, ':');
     }
 
-    public static ResourceLocation withDefaultNamespace(String p_350998_) {
-        return new ResourceLocation("minecraft", assertValidPath("minecraft", p_350998_));
+    public static ResourceLocation withDefaultNamespace(String location) {
+        return new ResourceLocation("minecraft", assertValidPath("minecraft", location));
+    }
+
+    /**
+     * Attempts to parse the specified {@code location} as a {@code ResourceLocation} by splitting it into a
+     * namespace and path by a colon.
+     * <p>
+     * If no colon is present in the {@code location}, the namespace defaults to {@code minecraft}, taking the {@code location} as the path.
+     * @return the parsed resource location; otherwise {@code null} if there is a non {@code [a-z0-9_.-]} character in the decomposed namespace or a non {@code [a-z0-9/._-]} character in the decomposed path
+     * @see #of(String, char)
+     *
+     * @param location the location string to try to parse as a {@code
+     *                 ResourceLocation}
+     */
+    @Nullable
+    public static ResourceLocation tryParse(String location) {
+        return tryBySeparator(location, ':');
     }
 
     @Nullable
-    public static ResourceLocation tryParse(String p_135821_) {
-        return tryBySeparator(p_135821_, ':');
+    public static ResourceLocation tryBuild(String namespace, String path) {
+        return isValidNamespace(namespace) && isValidPath(path) ? new ResourceLocation(namespace, path) : null;
     }
 
-    @Nullable
-    public static ResourceLocation tryBuild(String p_214294_, String p_214295_) {
-        return isValidNamespace(p_214294_) && isValidPath(p_214295_) ? new ResourceLocation(p_214294_, p_214295_) : null;
-    }
-
-    public static ResourceLocation bySeparator(String p_135823_, char p_135824_) {
-        int i = p_135823_.indexOf(p_135824_);
+    public static ResourceLocation bySeparator(String location, char seperator) {
+        int i = location.indexOf(seperator);
         if (i >= 0) {
-            String s = p_135823_.substring(i + 1);
+            String s = location.substring(i + 1);
             if (i != 0) {
-                String s1 = p_135823_.substring(0, i);
+                String s1 = location.substring(0, i);
                 return createUntrusted(s1, s);
             } else {
                 return withDefaultNamespace(s);
             }
         } else {
-            return withDefaultNamespace(p_135823_);
+            return withDefaultNamespace(location);
         }
     }
 
     @Nullable
-    public static ResourceLocation tryBySeparator(String p_352469_, char p_352244_) {
-        int i = p_352469_.indexOf(p_352244_);
+    public static ResourceLocation tryBySeparator(String location, char seperator) {
+        int i = location.indexOf(seperator);
         if (i >= 0) {
-            String s = p_352469_.substring(i + 1);
+            String s = location.substring(i + 1);
             if (!isValidPath(s)) {
                 return null;
             } else if (i != 0) {
-                String s1 = p_352469_.substring(0, i);
+                String s1 = location.substring(0, i);
                 return isValidNamespace(s1) ? new ResourceLocation(s1, s) : null;
             } else {
                 return new ResourceLocation("minecraft", s);
             }
         } else {
-            return isValidPath(p_352469_) ? new ResourceLocation("minecraft", p_352469_) : null;
+            return isValidPath(location) ? new ResourceLocation("minecraft", location) : null;
         }
     }
 
-    public static DataResult<ResourceLocation> read(String p_135838_) {
+    public static DataResult<ResourceLocation> read(String location) {
         try {
-            return DataResult.success(parse(p_135838_));
+            return DataResult.success(parse(location));
         } catch (ResourceLocationException resourcelocationexception) {
-            return DataResult.error(() -> "Not a valid resource location: " + p_135838_ + " " + resourcelocationexception.getMessage());
+            return DataResult.error(() -> "Not a valid resource location: " + location + " " + resourcelocationexception.getMessage());
         }
     }
 
@@ -119,20 +140,20 @@ public final class ResourceLocation implements Comparable<ResourceLocation> {
         return this.namespace;
     }
 
-    public ResourceLocation withPath(String p_251088_) {
-        return new ResourceLocation(this.namespace, assertValidPath(this.namespace, p_251088_));
+    public ResourceLocation withPath(String path) {
+        return new ResourceLocation(this.namespace, assertValidPath(this.namespace, path));
     }
 
-    public ResourceLocation withPath(UnaryOperator<String> p_250342_) {
-        return this.withPath(p_250342_.apply(this.path));
+    public ResourceLocation withPath(UnaryOperator<String> pathOperator) {
+        return this.withPath(pathOperator.apply(this.path));
     }
 
-    public ResourceLocation withPrefix(String p_250620_) {
-        return this.withPath(p_250620_ + this.path);
+    public ResourceLocation withPrefix(String pathPrefix) {
+        return this.withPath(pathPrefix + this.path);
     }
 
-    public ResourceLocation withSuffix(String p_266769_) {
-        return this.withPath(this.path + p_266769_);
+    public ResourceLocation withSuffix(String pathSuffix) {
+        return this.withPath(this.path + pathSuffix);
     }
 
     @Override
@@ -141,11 +162,11 @@ public final class ResourceLocation implements Comparable<ResourceLocation> {
     }
 
     @Override
-    public boolean equals(Object p_135846_) {
-        if (this == p_135846_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return !(p_135846_ instanceof ResourceLocation resourcelocation)
+            return !(other instanceof ResourceLocation resourcelocation)
                 ? false
                 : this.namespace.equals(resourcelocation.namespace) && this.path.equals(resourcelocation.path);
         }
@@ -156,10 +177,10 @@ public final class ResourceLocation implements Comparable<ResourceLocation> {
         return 31 * this.namespace.hashCode() + this.path.hashCode();
     }
 
-    public int compareTo(ResourceLocation p_135826_) {
-        int i = this.path.compareTo(p_135826_.path);
+    public int compareTo(ResourceLocation other) {
+        int i = this.path.compareTo(other.path);
         if (i == 0) {
-            i = this.namespace.compareTo(p_135826_.namespace);
+            i = this.namespace.compareTo(other.namespace);
         }
 
         return i;
@@ -183,64 +204,67 @@ public final class ResourceLocation implements Comparable<ResourceLocation> {
         return this.namespace.equals("minecraft") ? this.path : this.toLanguageKey();
     }
 
-    public String toLanguageKey(String p_214297_) {
-        return p_214297_ + "." + this.toLanguageKey();
+    public String toLanguageKey(String type) {
+        return type + "." + this.toLanguageKey();
     }
 
-    public String toLanguageKey(String p_270871_, String p_270199_) {
-        return p_270871_ + "." + this.toLanguageKey() + "." + p_270199_;
+    public String toLanguageKey(String type, String key) {
+        return type + "." + this.toLanguageKey() + "." + key;
     }
 
-    private static String readGreedy(StringReader p_335690_) {
-        int i = p_335690_.getCursor();
+    private static String readGreedy(StringReader reader) {
+        int i = reader.getCursor();
 
-        while (p_335690_.canRead() && isAllowedInResourceLocation(p_335690_.peek())) {
-            p_335690_.skip();
+        while (reader.canRead() && isAllowedInResourceLocation(reader.peek())) {
+            reader.skip();
         }
 
-        return p_335690_.getString().substring(i, p_335690_.getCursor());
+        return reader.getString().substring(i, reader.getCursor());
     }
 
-    public static ResourceLocation read(StringReader p_135819_) throws CommandSyntaxException {
-        int i = p_135819_.getCursor();
-        String s = readGreedy(p_135819_);
+    public static ResourceLocation read(StringReader reader) throws CommandSyntaxException {
+        int i = reader.getCursor();
+        String s = readGreedy(reader);
 
         try {
             return parse(s);
         } catch (ResourceLocationException resourcelocationexception) {
-            p_135819_.setCursor(i);
-            throw ERROR_INVALID.createWithContext(p_135819_);
+            reader.setCursor(i);
+            throw ERROR_INVALID.createWithContext(reader);
         }
     }
 
-    public static ResourceLocation readNonEmpty(StringReader p_336027_) throws CommandSyntaxException {
-        int i = p_336027_.getCursor();
-        String s = readGreedy(p_336027_);
+    public static ResourceLocation readNonEmpty(StringReader reader) throws CommandSyntaxException {
+        int i = reader.getCursor();
+        String s = readGreedy(reader);
         if (s.isEmpty()) {
-            throw ERROR_INVALID.createWithContext(p_336027_);
+            throw ERROR_INVALID.createWithContext(reader);
         } else {
             try {
                 return parse(s);
             } catch (ResourceLocationException resourcelocationexception) {
-                p_336027_.setCursor(i);
-                throw ERROR_INVALID.createWithContext(p_336027_);
+                reader.setCursor(i);
+                throw ERROR_INVALID.createWithContext(reader);
             }
         }
     }
 
-    public static boolean isAllowedInResourceLocation(char p_135817_) {
-        return p_135817_ >= '0' && p_135817_ <= '9'
-            || p_135817_ >= 'a' && p_135817_ <= 'z'
-            || p_135817_ == '_'
-            || p_135817_ == ':'
-            || p_135817_ == '/'
-            || p_135817_ == '.'
-            || p_135817_ == '-';
+    public static boolean isAllowedInResourceLocation(char character) {
+        return character >= '0' && character <= '9'
+            || character >= 'a' && character <= 'z'
+            || character == '_'
+            || character == ':'
+            || character == '/'
+            || character == '.'
+            || character == '-';
     }
 
-    public static boolean isValidPath(String p_135842_) {
-        for (int i = 0; i < p_135842_.length(); i++) {
-            if (!validPathChar(p_135842_.charAt(i))) {
+    /**
+     * @return {@code true} if the specified {@code path} is valid: consists only of {@code [a-z0-9/._-]} characters
+     */
+    public static boolean isValidPath(String path) {
+        for (int i = 0; i < path.length(); i++) {
+            if (!validPathChar(path.charAt(i))) {
                 return false;
             }
         }
@@ -248,9 +272,12 @@ public final class ResourceLocation implements Comparable<ResourceLocation> {
         return true;
     }
 
-    public static boolean isValidNamespace(String p_135844_) {
-        for (int i = 0; i < p_135844_.length(); i++) {
-            if (!validNamespaceChar(p_135844_.charAt(i))) {
+    /**
+     * @return {@code true} if the specified {@code namespace} is valid: consists only of {@code [a-z0-9_.-]} characters
+     */
+    public static boolean isValidNamespace(String namespace) {
+        for (int i = 0; i < namespace.length(); i++) {
+            if (!validNamespaceChar(namespace.charAt(i))) {
                 return false;
             }
         }
@@ -258,42 +285,42 @@ public final class ResourceLocation implements Comparable<ResourceLocation> {
         return true;
     }
 
-    private static String assertValidNamespace(String p_250769_, String p_249616_) {
-        if (!isValidNamespace(p_250769_)) {
-            throw new ResourceLocationException("Non [a-z0-9_.-] character in namespace of location: " + p_250769_ + ":" + p_249616_);
+    private static String assertValidNamespace(String namespace, String path) {
+        if (!isValidNamespace(namespace)) {
+            throw new ResourceLocationException("Non [a-z0-9_.-] character in namespace of location: " + namespace + ":" + path);
         } else {
-            return p_250769_;
+            return namespace;
         }
     }
 
-    public static boolean validPathChar(char p_135829_) {
-        return p_135829_ == '_'
-            || p_135829_ == '-'
-            || p_135829_ >= 'a' && p_135829_ <= 'z'
-            || p_135829_ >= '0' && p_135829_ <= '9'
-            || p_135829_ == '/'
-            || p_135829_ == '.';
+    public static boolean validPathChar(char pathChar) {
+        return pathChar == '_'
+            || pathChar == '-'
+            || pathChar >= 'a' && pathChar <= 'z'
+            || pathChar >= '0' && pathChar <= '9'
+            || pathChar == '/'
+            || pathChar == '.';
     }
 
-    public static boolean validNamespaceChar(char p_135836_) {
-        return p_135836_ == '_' || p_135836_ == '-' || p_135836_ >= 'a' && p_135836_ <= 'z' || p_135836_ >= '0' && p_135836_ <= '9' || p_135836_ == '.';
+    public static boolean validNamespaceChar(char namespaceChar) {
+        return namespaceChar == '_' || namespaceChar == '-' || namespaceChar >= 'a' && namespaceChar <= 'z' || namespaceChar >= '0' && namespaceChar <= '9' || namespaceChar == '.';
     }
 
-    private static String assertValidPath(String p_251418_, String p_248828_) {
-        if (!isValidPath(p_248828_)) {
-            throw new ResourceLocationException("Non [a-z0-9/._-] character in path of location: " + p_251418_ + ":" + p_248828_);
+    private static String assertValidPath(String namespace, String path) {
+        if (!isValidPath(path)) {
+            throw new ResourceLocationException("Non [a-z0-9/._-] character in path of location: " + namespace + ":" + path);
         } else {
-            return p_248828_;
+            return path;
         }
     }
 
     public static class Serializer implements JsonDeserializer<ResourceLocation>, JsonSerializer<ResourceLocation> {
-        public ResourceLocation deserialize(JsonElement p_135851_, Type p_135852_, JsonDeserializationContext p_135853_) throws JsonParseException {
-            return ResourceLocation.parse(GsonHelper.convertToString(p_135851_, "location"));
+        public ResourceLocation deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            return ResourceLocation.parse(GsonHelper.convertToString(json, "location"));
         }
 
-        public JsonElement serialize(ResourceLocation p_135855_, Type p_135856_, JsonSerializationContext p_135857_) {
-            return new JsonPrimitive(p_135855_.toString());
+        public JsonElement serialize(ResourceLocation src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(src.toString());
         }
     }
 }

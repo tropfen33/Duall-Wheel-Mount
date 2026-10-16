@@ -19,6 +19,9 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class ArmorStandRenderer extends LivingEntityRenderer<ArmorStand, ArmorStandArmorModel> {
+    /**
+     * A constant instance of the armor stand texture, wrapped inside a ResourceLocation wrapper.
+     */
     public static final ResourceLocation DEFAULT_SKIN_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/armorstand/wood.png");
 
     public ArmorStandRenderer(EntityRendererProvider.Context p_173915_) {
@@ -36,34 +39,37 @@ public class ArmorStandRenderer extends LivingEntityRenderer<ArmorStand, ArmorSt
         this.addLayer(new CustomHeadLayer<>(this, p_173915_.getModelSet(), p_173915_.getItemInHandRenderer()));
     }
 
-    public ResourceLocation getTextureLocation(ArmorStand p_113798_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(ArmorStand entity) {
         return DEFAULT_SKIN_LOCATION;
     }
 
-    protected void setupRotations(ArmorStand p_113800_, PoseStack p_113801_, float p_113802_, float p_113803_, float p_113804_, float p_319811_) {
-        p_113801_.mulPose(Axis.YP.rotationDegrees(180.0F - p_113803_));
-        float f = (float)(p_113800_.level().getGameTime() - p_113800_.lastHit) + p_113804_;
+    protected void setupRotations(ArmorStand entity, PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale) {
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - yBodyRot));
+        float f = (float)(entity.level().getGameTime() - entity.lastHit) + partialTick;
         if (f < 5.0F) {
-            p_113801_.mulPose(Axis.YP.rotationDegrees(Mth.sin(f / 1.5F * (float) Math.PI) * 3.0F));
+            poseStack.mulPose(Axis.YP.rotationDegrees(Mth.sin(f / 1.5F * (float) Math.PI) * 3.0F));
         }
     }
 
-    protected boolean shouldShowName(ArmorStand p_113815_) {
-        double d0 = this.entityRenderDispatcher.distanceToSqr(p_113815_);
-        float f = p_113815_.isCrouching() ? 32.0F : 64.0F;
-        return d0 >= (double)(f * f) ? false : p_113815_.isCustomNameVisible();
+    protected boolean shouldShowName(ArmorStand entity) {
+        double d0 = this.entityRenderDispatcher.distanceToSqr(entity);
+        float f = entity.isCrouching() ? 32.0F : 64.0F;
+        return d0 >= (double)(f * f) ? false : entity.isCustomNameVisible();
     }
 
     @Nullable
-    protected RenderType getRenderType(ArmorStand p_113806_, boolean p_113807_, boolean p_113808_, boolean p_113809_) {
-        if (!p_113806_.isMarker()) {
-            return super.getRenderType(p_113806_, p_113807_, p_113808_, p_113809_);
+    protected RenderType getRenderType(ArmorStand livingEntity, boolean bodyVisible, boolean translucent, boolean glowing) {
+        if (!livingEntity.isMarker()) {
+            return super.getRenderType(livingEntity, bodyVisible, translucent, glowing);
         } else {
-            ResourceLocation resourcelocation = this.getTextureLocation(p_113806_);
-            if (p_113808_) {
+            ResourceLocation resourcelocation = this.getTextureLocation(livingEntity);
+            if (translucent) {
                 return RenderType.entityTranslucent(resourcelocation, false);
             } else {
-                return p_113807_ ? RenderType.entityCutoutNoCull(resourcelocation, false) : null;
+                return bodyVisible ? RenderType.entityCutoutNoCull(resourcelocation, false) : null;
             }
         }
     }

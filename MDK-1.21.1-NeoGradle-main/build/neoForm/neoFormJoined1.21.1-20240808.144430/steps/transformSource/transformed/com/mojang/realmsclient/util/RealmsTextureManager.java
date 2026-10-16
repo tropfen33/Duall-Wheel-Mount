@@ -23,38 +23,38 @@ public class RealmsTextureManager {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final ResourceLocation TEMPLATE_ICON_LOCATION = ResourceLocation.withDefaultNamespace("textures/gui/presets/isles.png");
 
-    public static ResourceLocation worldTemplate(String p_270945_, @Nullable String p_270612_) {
-        return p_270612_ == null ? TEMPLATE_ICON_LOCATION : getTexture(p_270945_, p_270612_);
+    public static ResourceLocation worldTemplate(String key, @Nullable String image) {
+        return image == null ? TEMPLATE_ICON_LOCATION : getTexture(key, image);
     }
 
-    private static ResourceLocation getTexture(String p_90197_, String p_90198_) {
-        RealmsTextureManager.RealmsTexture realmstexturemanager$realmstexture = TEXTURES.get(p_90197_);
-        if (realmstexturemanager$realmstexture != null && realmstexturemanager$realmstexture.image().equals(p_90198_)) {
+    private static ResourceLocation getTexture(String key, String image) {
+        RealmsTextureManager.RealmsTexture realmstexturemanager$realmstexture = TEXTURES.get(key);
+        if (realmstexturemanager$realmstexture != null && realmstexturemanager$realmstexture.image().equals(image)) {
             return realmstexturemanager$realmstexture.textureId;
         } else {
-            NativeImage nativeimage = loadImage(p_90198_);
+            NativeImage nativeimage = loadImage(image);
             if (nativeimage == null) {
                 ResourceLocation resourcelocation1 = MissingTextureAtlasSprite.getLocation();
-                TEXTURES.put(p_90197_, new RealmsTextureManager.RealmsTexture(p_90198_, resourcelocation1));
+                TEXTURES.put(key, new RealmsTextureManager.RealmsTexture(image, resourcelocation1));
                 return resourcelocation1;
             } else {
-                ResourceLocation resourcelocation = ResourceLocation.fromNamespaceAndPath("realms", "dynamic/" + p_90197_);
+                ResourceLocation resourcelocation = ResourceLocation.fromNamespaceAndPath("realms", "dynamic/" + key);
                 Minecraft.getInstance().getTextureManager().register(resourcelocation, new DynamicTexture(nativeimage));
-                TEXTURES.put(p_90197_, new RealmsTextureManager.RealmsTexture(p_90198_, resourcelocation));
+                TEXTURES.put(key, new RealmsTextureManager.RealmsTexture(image, resourcelocation));
                 return resourcelocation;
             }
         }
     }
 
     @Nullable
-    private static NativeImage loadImage(String p_270725_) {
-        byte[] abyte = Base64.getDecoder().decode(p_270725_);
+    private static NativeImage loadImage(String base64Image) {
+        byte[] abyte = Base64.getDecoder().decode(base64Image);
         ByteBuffer bytebuffer = MemoryUtil.memAlloc(abyte.length);
 
         try {
             return NativeImage.read(bytebuffer.put(abyte).flip());
         } catch (IOException ioexception) {
-            LOGGER.warn("Failed to load world image: {}", p_270725_, ioexception);
+            LOGGER.warn("Failed to load world image: {}", base64Image, ioexception);
         } finally {
             MemoryUtil.memFree(bytebuffer);
         }

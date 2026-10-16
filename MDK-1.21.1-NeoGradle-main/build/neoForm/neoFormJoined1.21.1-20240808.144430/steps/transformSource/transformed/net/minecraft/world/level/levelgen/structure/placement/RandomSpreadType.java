@@ -11,8 +11,8 @@ public enum RandomSpreadType implements StringRepresentable {
     public static final Codec<RandomSpreadType> CODEC = StringRepresentable.fromEnum(RandomSpreadType::values);
     private final String id;
 
-    private RandomSpreadType(String p_205022_) {
-        this.id = p_205022_;
+    private RandomSpreadType(String id) {
+        this.id = id;
     }
 
     @Override
@@ -20,10 +20,10 @@ public enum RandomSpreadType implements StringRepresentable {
         return this.id;
     }
 
-    public int evaluate(RandomSource p_227019_, int p_227020_) {
+    public int evaluate(RandomSource random, int bound) {
         return switch (this) {
-            case LINEAR -> p_227019_.nextInt(p_227020_);
-            case TRIANGULAR -> (p_227019_.nextInt(p_227020_) + p_227019_.nextInt(p_227020_)) / 2;
+            case LINEAR -> random.nextInt(bound);
+            case TRIANGULAR -> (random.nextInt(bound) + random.nextInt(bound)) / 2;
         };
     }
 }

@@ -35,14 +35,14 @@ public class SpriteContents implements Stitcher.Entry, AutoCloseable {
     final SpriteContents.AnimatedTexture animatedTexture;
     private final ResourceMetadata metadata;
 
-    public SpriteContents(ResourceLocation p_249787_, FrameSize p_251031_, NativeImage p_252131_, ResourceMetadata p_294742_) {
-        this.name = p_249787_;
-        this.width = p_251031_.width();
-        this.height = p_251031_.height();
-        this.metadata = p_294742_;
-        AnimationMetadataSection animationmetadatasection = p_294742_.getSection(AnimationMetadataSection.SERIALIZER).orElse(AnimationMetadataSection.EMPTY);
-        this.animatedTexture = this.createAnimatedTexture(p_251031_, p_252131_.getWidth(), p_252131_.getHeight(), animationmetadatasection);
-        this.originalImage = p_252131_;
+    public SpriteContents(ResourceLocation name, FrameSize frameSize, NativeImage originalImage, ResourceMetadata metadata) {
+        this.name = name;
+        this.width = frameSize.width();
+        this.height = frameSize.height();
+        this.metadata = metadata;
+        AnimationMetadataSection animationmetadatasection = metadata.getSection(AnimationMetadataSection.SERIALIZER).orElse(AnimationMetadataSection.EMPTY);
+        this.animatedTexture = this.createAnimatedTexture(frameSize, originalImage.getWidth(), originalImage.getHeight(), animationmetadatasection);
+        this.originalImage = originalImage;
         this.byMipLevel = new NativeImage[]{this.originalImage};
     }
 
@@ -50,9 +50,9 @@ public class SpriteContents implements Stitcher.Entry, AutoCloseable {
         return this.originalImage;
     }
 
-    public void increaseMipLevel(int p_248864_) {
+    public void increaseMipLevel(int mipLevel) {
         try {
-            this.byMipLevel = MipmapGenerator.generateMipLevels(this.byMipLevel, p_248864_);
+            this.byMipLevel = MipmapGenerator.generateMipLevels(this.byMipLevel, mipLevel);
         } catch (Throwable throwable) {
             CrashReport crashreport = CrashReport.forThrowable(throwable, "Generating mipmaps for frame");
             CrashReportCategory crashreportcategory = crashreport.addCategory("Sprite being mipmapped");
@@ -69,7 +69,7 @@ public class SpriteContents implements Stitcher.Entry, AutoCloseable {
             crashreportcategory1.setDetail("Sprite name", this.name);
             crashreportcategory1.setDetail("Sprite size", () -> this.width + " x " + this.height);
             crashreportcategory1.setDetail("Sprite frames", () -> this.getFrameCount() + " frames");
-            crashreportcategory1.setDetail("Mipmap levels", p_248864_);
+            crashreportcategory1.setDetail("Mipmap levels", mipLevel);
             throw new ReportedException(crashreport);
         }
     }
@@ -79,15 +79,15 @@ public class SpriteContents implements Stitcher.Entry, AutoCloseable {
     }
 
     @Nullable
-    private SpriteContents.AnimatedTexture createAnimatedTexture(FrameSize p_250817_, int p_249792_, int p_252353_, AnimationMetadataSection p_250947_) {
-        int i = p_249792_ / p_250817_.width();
-        int j = p_252353_ / p_250817_.height();
+    private SpriteContents.AnimatedTexture createAnimatedTexture(FrameSize frameSize, int width, int height, AnimationMetadataSection metadata) {
+        int i = width / frameSize.width();
+        int j = height / frameSize.height();
         int k = i * j;
         List<SpriteContents.FrameInfo> list = new ArrayList<>();
-        p_250947_.forEachFrame((p_251291_, p_251837_) -> list.add(new SpriteContents.FrameInfo(p_251291_, p_251837_)));
+        metadata.forEachFrame((p_251291_, p_251837_) -> list.add(new SpriteContents.FrameInfo(p_251291_, p_251837_)));
         if (list.isEmpty()) {
             for (int l = 0; l < k; l++) {
-                list.add(new SpriteContents.FrameInfo(l, p_250947_.getDefaultFrameTime()));
+                list.add(new SpriteContents.FrameInfo(l, metadata.getDefaultFrameTime()));
             }
         } else {
             int i1 = 0;
@@ -119,17 +119,17 @@ public class SpriteContents implements Stitcher.Entry, AutoCloseable {
             }
         }
 
-        return list.size() <= 1 ? null : new SpriteContents.AnimatedTexture(ImmutableList.copyOf(list), i, p_250947_.isInterpolatedFrames());
+        return list.size() <= 1 ? null : new SpriteContents.AnimatedTexture(ImmutableList.copyOf(list), i, metadata.isInterpolatedFrames());
     }
 
-    void upload(int p_248895_, int p_250245_, int p_250458_, int p_251337_, NativeImage[] p_248825_) {
+    void upload(int x, int y, int frameX, int frameY, NativeImage[] atlasData) {
         for (int i = 0; i < this.byMipLevel.length; i++) {
             // Forge: Skip uploading if the texture would be made invalid by mip level
             if ((this.width >> i) <= 0 || (this.height >> i) <= 0)
                 break;
 
-            p_248825_[i]
-                .upload(i, p_248895_ >> i, p_250245_ >> i, p_250458_ >> i, p_251337_ >> i, this.width >> i, this.height >> i, this.byMipLevel.length > 1, false);
+            atlasData[i]
+                .upload(i, x >> i, y >> i, frameX >> i, frameY >> i, this.width >> i, this.height >> i, this.byMipLevel.length > 1, false);
         }
     }
 
@@ -173,22 +173,22 @@ public class SpriteContents implements Stitcher.Entry, AutoCloseable {
         return "SpriteContents{name=" + this.name + ", frameCount=" + this.getFrameCount() + ", height=" + this.height + ", width=" + this.width + "}";
     }
 
-    public boolean isTransparent(int p_250374_, int p_250934_, int p_249573_) {
-        int i = p_250934_;
-        int j = p_249573_;
+    public boolean isTransparent(int frame, int x, int y) {
+        int i = x;
+        int j = y;
         if (this.animatedTexture != null) {
-            i = p_250934_ + this.animatedTexture.getFrameX(p_250374_) * this.width;
-            j = p_249573_ + this.animatedTexture.getFrameY(p_250374_) * this.height;
+            i = x + this.animatedTexture.getFrameX(frame) * this.width;
+            j = y + this.animatedTexture.getFrameY(frame) * this.height;
         }
 
         return (this.originalImage.getPixelRGBA(i, j) >> 24 & 0xFF) == 0;
     }
 
-    public void uploadFirstFrame(int p_252315_, int p_248634_) {
+    public void uploadFirstFrame(int x, int y) {
         if (this.animatedTexture != null) {
-            this.animatedTexture.uploadFirstFrame(p_252315_, p_248634_);
+            this.animatedTexture.uploadFirstFrame(x, y);
         } else {
-            this.upload(p_252315_, p_248634_, 0, 0, this.byMipLevel);
+            this.upload(x, y, 0, 0, this.byMipLevel);
         }
     }
 
@@ -198,32 +198,32 @@ public class SpriteContents implements Stitcher.Entry, AutoCloseable {
         private final int frameRowSize;
         private final boolean interpolateFrames;
 
-        AnimatedTexture(List<SpriteContents.FrameInfo> p_250968_, int p_251686_, boolean p_251832_) {
-            this.frames = p_250968_;
-            this.frameRowSize = p_251686_;
-            this.interpolateFrames = p_251832_;
+        AnimatedTexture(List<SpriteContents.FrameInfo> frames, int frameRowSize, boolean interpolateFrames) {
+            this.frames = frames;
+            this.frameRowSize = frameRowSize;
+            this.interpolateFrames = interpolateFrames;
         }
 
-        int getFrameX(int p_249475_) {
-            return p_249475_ % this.frameRowSize;
+        int getFrameX(int frameIndex) {
+            return frameIndex % this.frameRowSize;
         }
 
-        int getFrameY(int p_251327_) {
-            return p_251327_ / this.frameRowSize;
+        int getFrameY(int frameIndex) {
+            return frameIndex / this.frameRowSize;
         }
 
-        void uploadFrame(int p_250449_, int p_248877_, int p_249060_) {
-            int i = this.getFrameX(p_249060_) * SpriteContents.this.width;
-            int j = this.getFrameY(p_249060_) * SpriteContents.this.height;
-            SpriteContents.this.upload(p_250449_, p_248877_, i, j, SpriteContents.this.byMipLevel);
+        void uploadFrame(int x, int y, int frameIndex) {
+            int i = this.getFrameX(frameIndex) * SpriteContents.this.width;
+            int j = this.getFrameY(frameIndex) * SpriteContents.this.height;
+            SpriteContents.this.upload(x, y, i, j, SpriteContents.this.byMipLevel);
         }
 
         public SpriteTicker createTicker() {
             return SpriteContents.this.new Ticker(this, this.interpolateFrames ? SpriteContents.this.new InterpolationData() : null);
         }
 
-        public void uploadFirstFrame(int p_251807_, int p_248676_) {
-            this.uploadFrame(p_251807_, p_248676_, this.frames.get(0).index);
+        public void uploadFirstFrame(int x, int y) {
+            this.uploadFrame(x, y, this.frames.get(0).index);
         }
 
         public IntStream getUniqueFrames() {
@@ -236,9 +236,9 @@ public class SpriteContents implements Stitcher.Entry, AutoCloseable {
         final int index;
         final int time;
 
-        FrameInfo(int p_248909_, int p_250552_) {
-            this.index = p_248909_;
-            this.time = p_250552_;
+        FrameInfo(int index, int time) {
+            this.index = index;
+            this.time = time;
         }
     }
 
@@ -255,13 +255,13 @@ public class SpriteContents implements Stitcher.Entry, AutoCloseable {
             }
         }
 
-        void uploadInterpolatedFrame(int p_250513_, int p_251644_, SpriteContents.Ticker p_248626_) {
-            SpriteContents.AnimatedTexture spritecontents$animatedtexture = p_248626_.animationInfo;
+        void uploadInterpolatedFrame(int x, int y, SpriteContents.Ticker ticker) {
+            SpriteContents.AnimatedTexture spritecontents$animatedtexture = ticker.animationInfo;
             List<SpriteContents.FrameInfo> list = spritecontents$animatedtexture.frames;
-            SpriteContents.FrameInfo spritecontents$frameinfo = list.get(p_248626_.frame);
-            double d0 = 1.0 - (double)p_248626_.subFrame / (double)spritecontents$frameinfo.time;
+            SpriteContents.FrameInfo spritecontents$frameinfo = list.get(ticker.frame);
+            double d0 = 1.0 - (double)ticker.subFrame / (double)spritecontents$frameinfo.time;
             int i = spritecontents$frameinfo.index;
-            int j = list.get((p_248626_.frame + 1) % list.size()).index;
+            int j = list.get((ticker.frame + 1) % list.size()).index;
             if (i != j) {
                 for (int k = 0; k < this.activeFrame.length; k++) {
                     int l = SpriteContents.this.width >> k;
@@ -282,20 +282,20 @@ public class SpriteContents implements Stitcher.Entry, AutoCloseable {
                     }
                 }
 
-                SpriteContents.this.upload(p_250513_, p_251644_, 0, 0, this.activeFrame);
+                SpriteContents.this.upload(x, y, 0, 0, this.activeFrame);
             }
         }
 
-        private int getPixel(SpriteContents.AnimatedTexture p_251976_, int p_250761_, int p_250049_, int p_250004_, int p_251489_) {
-            return SpriteContents.this.byMipLevel[p_250049_]
+        private int getPixel(SpriteContents.AnimatedTexture animatedTexture, int frameIndex, int mipLevel, int x, int y) {
+            return SpriteContents.this.byMipLevel[mipLevel]
                 .getPixelRGBA(
-                    p_250004_ + (p_251976_.getFrameX(p_250761_) * SpriteContents.this.width >> p_250049_),
-                    p_251489_ + (p_251976_.getFrameY(p_250761_) * SpriteContents.this.height >> p_250049_)
+                    x + (animatedTexture.getFrameX(frameIndex) * SpriteContents.this.width >> mipLevel),
+                    y + (animatedTexture.getFrameY(frameIndex) * SpriteContents.this.height >> mipLevel)
                 );
         }
 
-        private int mix(double p_250974_, int p_252151_, int p_249832_) {
-            return (int)(p_250974_ * (double)p_252151_ + (1.0 - p_250974_) * (double)p_249832_);
+        private int mix(double delta, int color1, int color2) {
+            return (int)(delta * (double)color1 + (1.0 - delta) * (double)color2);
         }
 
         @Override
@@ -314,13 +314,13 @@ public class SpriteContents implements Stitcher.Entry, AutoCloseable {
         @Nullable
         private final SpriteContents.InterpolationData interpolationData;
 
-        Ticker(SpriteContents.AnimatedTexture p_249618_, @Nullable SpriteContents.InterpolationData p_251097_) {
-            this.animationInfo = p_249618_;
-            this.interpolationData = p_251097_;
+        Ticker(SpriteContents.AnimatedTexture animationInfo, @Nullable SpriteContents.InterpolationData interpolationData) {
+            this.animationInfo = animationInfo;
+            this.interpolationData = interpolationData;
         }
 
         @Override
-        public void tickAndUpload(int p_249105_, int p_249676_) {
+        public void tickAndUpload(int x, int y) {
             this.subFrame++;
             SpriteContents.FrameInfo spritecontents$frameinfo = this.animationInfo.frames.get(this.frame);
             if (this.subFrame >= spritecontents$frameinfo.time) {
@@ -329,13 +329,13 @@ public class SpriteContents implements Stitcher.Entry, AutoCloseable {
                 this.subFrame = 0;
                 int j = this.animationInfo.frames.get(this.frame).index;
                 if (i != j) {
-                    this.animationInfo.uploadFrame(p_249105_, p_249676_, j);
+                    this.animationInfo.uploadFrame(x, y, j);
                 }
             } else if (this.interpolationData != null) {
                 if (!RenderSystem.isOnRenderThread()) {
-                    RenderSystem.recordRenderCall(() -> this.interpolationData.uploadInterpolatedFrame(p_249105_, p_249676_, this));
+                    RenderSystem.recordRenderCall(() -> this.interpolationData.uploadInterpolatedFrame(x, y, this));
                 } else {
-                    this.interpolationData.uploadInterpolatedFrame(p_249105_, p_249676_, this);
+                    this.interpolationData.uploadInterpolatedFrame(x, y, this);
                 }
             }
         }

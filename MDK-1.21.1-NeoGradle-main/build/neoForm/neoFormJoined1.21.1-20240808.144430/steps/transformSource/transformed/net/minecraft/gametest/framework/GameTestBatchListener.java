@@ -1,7 +1,7 @@
 package net.minecraft.gametest.framework;
 
 public interface GameTestBatchListener {
-    void testBatchStarting(GameTestBatch p_320434_);
+    void testBatchStarting(GameTestBatch batch);
 
-    void testBatchFinished(GameTestBatch p_320230_);
+    void testBatchFinished(GameTestBatch batch);
 }

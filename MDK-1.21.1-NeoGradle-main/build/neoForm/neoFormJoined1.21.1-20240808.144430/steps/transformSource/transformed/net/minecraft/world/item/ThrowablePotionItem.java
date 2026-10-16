@@ -11,29 +11,32 @@ import net.minecraft.world.entity.projectile.ThrownPotion;
 import net.minecraft.world.level.Level;
 
 public class ThrowablePotionItem extends PotionItem implements ProjectileItem {
-    public ThrowablePotionItem(Item.Properties p_43301_) {
-        super(p_43301_);
+    public ThrowablePotionItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_43303_, Player p_43304_, InteractionHand p_43305_) {
-        ItemStack itemstack = p_43304_.getItemInHand(p_43305_);
-        if (!p_43303_.isClientSide) {
-            ThrownPotion thrownpotion = new ThrownPotion(p_43303_, p_43304_);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
+        if (!level.isClientSide) {
+            ThrownPotion thrownpotion = new ThrownPotion(level, player);
             thrownpotion.setItem(itemstack);
-            thrownpotion.shootFromRotation(p_43304_, p_43304_.getXRot(), p_43304_.getYRot(), -20.0F, 0.5F, 1.0F);
-            p_43303_.addFreshEntity(thrownpotion);
+            thrownpotion.shootFromRotation(player, player.getXRot(), player.getYRot(), -20.0F, 0.5F, 1.0F);
+            level.addFreshEntity(thrownpotion);
         }
 
-        p_43304_.awardStat(Stats.ITEM_USED.get(this));
-        itemstack.consume(1, p_43304_);
-        return InteractionResultHolder.sidedSuccess(itemstack, p_43303_.isClientSide());
+        player.awardStat(Stats.ITEM_USED.get(this));
+        itemstack.consume(1, player);
+        return InteractionResultHolder.sidedSuccess(itemstack, level.isClientSide());
     }
 
     @Override
-    public Projectile asProjectile(Level p_338465_, Position p_338661_, ItemStack p_338506_, Direction p_338517_) {
-        ThrownPotion thrownpotion = new ThrownPotion(p_338465_, p_338661_.x(), p_338661_.y(), p_338661_.z());
-        thrownpotion.setItem(p_338506_);
+    public Projectile asProjectile(Level level, Position pos, ItemStack stack, Direction direction) {
+        ThrownPotion thrownpotion = new ThrownPotion(level, pos.x(), pos.y(), pos.z());
+        thrownpotion.setItem(stack);
         return thrownpotion;
     }
 

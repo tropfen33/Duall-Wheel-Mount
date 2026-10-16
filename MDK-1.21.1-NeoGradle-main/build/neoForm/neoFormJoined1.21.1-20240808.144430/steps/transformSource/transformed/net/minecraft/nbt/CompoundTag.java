@@ -33,14 +33,14 @@ public class CompoundTag implements Tag {
     private static final int SELF_SIZE_IN_BYTES = 48;
     private static final int MAP_ENTRY_SIZE_IN_BYTES = 32;
     public static final TagType<CompoundTag> TYPE = new TagType.VariableSize<CompoundTag>() {
-        public CompoundTag load(DataInput p_128485_, NbtAccounter p_128487_) throws IOException {
-            p_128487_.pushDepth();
+        public CompoundTag load(DataInput input, NbtAccounter accounter) throws IOException {
+            accounter.pushDepth();
 
             CompoundTag compoundtag;
             try {
-                compoundtag = loadCompound(p_128485_, p_128487_);
+                compoundtag = loadCompound(input, accounter);
             } finally {
-                p_128487_.popDepth();
+                accounter.popDepth();
             }
 
             return compoundtag;
@@ -51,17 +51,17 @@ public class CompoundTag implements Tag {
             return p_302338_.readByte();
         }
 
-        private static CompoundTag loadCompound(DataInput p_302338_, NbtAccounter p_302362_) throws IOException {
-            p_302362_.accountBytes(48L);
+        private static CompoundTag loadCompound(DataInput input, NbtAccounter nbtAccounter) throws IOException {
+            nbtAccounter.accountBytes(48L);
             Map<String, Tag> map = Maps.newHashMap();
 
             byte b0;
-            while((b0 = readNamedTagType(p_302338_, p_302362_)) != 0) {
-                String s = p_302362_.readUTF(p_302338_.readUTF());
-                p_302362_.accountBytes(4); //Forge: 4 extra bytes for the object allocation.
-                Tag tag = CompoundTag.readNamedTagData(TagTypes.getType(b0), s, p_302338_, p_302362_);
+            while((b0 = readNamedTagType(input, nbtAccounter)) != 0) {
+                String s = nbtAccounter.readUTF(input.readUTF());
+                nbtAccounter.accountBytes(4); //Forge: 4 extra bytes for the object allocation.
+                Tag tag = CompoundTag.readNamedTagData(TagTypes.getType(b0), s, input, nbtAccounter);
                 if (map.put(s, tag) == null) {
-                    p_302362_.accountBytes(36L);
+                    nbtAccounter.accountBytes(36L);
                 }
             }
 
@@ -69,51 +69,51 @@ public class CompoundTag implements Tag {
         }
 
         @Override
-        public StreamTagVisitor.ValueResult parse(DataInput p_197446_, StreamTagVisitor p_197447_, NbtAccounter p_302322_) throws IOException {
-            p_302322_.pushDepth();
+        public StreamTagVisitor.ValueResult parse(DataInput input, StreamTagVisitor visitor, NbtAccounter accounter) throws IOException {
+            accounter.pushDepth();
 
             StreamTagVisitor.ValueResult streamtagvisitor$valueresult;
             try {
-                streamtagvisitor$valueresult = parseCompound(p_197446_, p_197447_, p_302322_);
+                streamtagvisitor$valueresult = parseCompound(input, visitor, accounter);
             } finally {
-                p_302322_.popDepth();
+                accounter.popDepth();
             }
 
             return streamtagvisitor$valueresult;
         }
 
-        private static StreamTagVisitor.ValueResult parseCompound(DataInput p_302325_, StreamTagVisitor p_302352_, NbtAccounter p_302355_) throws IOException {
-            p_302355_.accountBytes(48L);
+        private static StreamTagVisitor.ValueResult parseCompound(DataInput input, StreamTagVisitor visitor, NbtAccounter nbtAccounter) throws IOException {
+            nbtAccounter.accountBytes(48L);
 
             byte b0;
             label35:
-            while ((b0 = p_302325_.readByte()) != 0) {
+            while ((b0 = input.readByte()) != 0) {
                 TagType<?> tagtype = TagTypes.getType(b0);
-                switch (p_302352_.visitEntry(tagtype)) {
+                switch (visitor.visitEntry(tagtype)) {
                     case HALT:
                         return StreamTagVisitor.ValueResult.HALT;
                     case BREAK:
-                        StringTag.skipString(p_302325_);
-                        tagtype.skip(p_302325_, p_302355_);
+                        StringTag.skipString(input);
+                        tagtype.skip(input, nbtAccounter);
                         break label35;
                     case SKIP:
-                        StringTag.skipString(p_302325_);
-                        tagtype.skip(p_302325_, p_302355_);
+                        StringTag.skipString(input);
+                        tagtype.skip(input, nbtAccounter);
                         break;
                     default:
-                        String s = readString(p_302325_, p_302355_);
-                        switch (p_302352_.visitEntry(tagtype, s)) {
+                        String s = readString(input, nbtAccounter);
+                        switch (visitor.visitEntry(tagtype, s)) {
                             case HALT:
                                 return StreamTagVisitor.ValueResult.HALT;
                             case BREAK:
-                                tagtype.skip(p_302325_, p_302355_);
+                                tagtype.skip(input, nbtAccounter);
                                 break label35;
                             case SKIP:
-                                tagtype.skip(p_302325_, p_302355_);
+                                tagtype.skip(input, nbtAccounter);
                                 break;
                             default:
-                                p_302355_.accountBytes(36L);
-                                switch (tagtype.parse(p_302325_, p_302352_, p_302355_)) {
+                                nbtAccounter.accountBytes(36L);
+                                switch (tagtype.parse(input, visitor, nbtAccounter)) {
                                     case HALT:
                                         return StreamTagVisitor.ValueResult.HALT;
                                     case BREAK:
@@ -123,34 +123,34 @@ public class CompoundTag implements Tag {
             }
 
             if (b0 != 0) {
-                while ((b0 = p_302325_.readByte()) != 0) {
-                    StringTag.skipString(p_302325_);
-                    TagTypes.getType(b0).skip(p_302325_, p_302355_);
+                while ((b0 = input.readByte()) != 0) {
+                    StringTag.skipString(input);
+                    TagTypes.getType(b0).skip(input, nbtAccounter);
                 }
             }
 
-            return p_302352_.visitContainerEnd();
+            return visitor.visitContainerEnd();
         }
 
-        private static String readString(DataInput p_302484_, NbtAccounter p_302494_) throws IOException {
-            String s = p_302484_.readUTF();
-            p_302494_.accountBytes(28L);
-            p_302494_.accountBytes(2L, (long)s.length());
+        private static String readString(DataInput input, NbtAccounter accounter) throws IOException {
+            String s = input.readUTF();
+            accounter.accountBytes(28L);
+            accounter.accountBytes(2L, (long)s.length());
             return s;
         }
 
         @Override
-        public void skip(DataInput p_197444_, NbtAccounter p_302358_) throws IOException {
-            p_302358_.pushDepth();
+        public void skip(DataInput input, NbtAccounter accounter) throws IOException {
+            accounter.pushDepth();
 
             byte b0;
             try {
-                while ((b0 = p_197444_.readByte()) != 0) {
-                    StringTag.skipString(p_197444_);
-                    TagTypes.getType(b0).skip(p_197444_, p_302358_);
+                while ((b0 = input.readByte()) != 0) {
+                    StringTag.skipString(input);
+                    TagTypes.getType(b0).skip(input, accounter);
                 }
             } finally {
-                p_302358_.popDepth();
+                accounter.popDepth();
             }
         }
 
@@ -166,8 +166,8 @@ public class CompoundTag implements Tag {
     };
     private final Map<String, Tag> tags;
 
-    protected CompoundTag(Map<String, Tag> p_128333_) {
-        this.tags = p_128333_;
+    protected CompoundTag(Map<String, Tag> tags) {
+        this.tags = tags;
     }
 
     public CompoundTag() {
@@ -186,13 +186,13 @@ public class CompoundTag implements Tag {
     }
 
     @Override
-    public void write(DataOutput p_128341_) throws IOException {
+    public void write(DataOutput output) throws IOException {
         for (String s : this.tags.keySet()) {
             Tag tag = this.tags.get(s);
-            writeNamedTag(s, tag, p_128341_);
+            writeNamedTag(s, tag, output);
         }
 
-        p_128341_.writeByte(0);
+        output.writeByte(0);
     }
 
     @Override
@@ -227,107 +227,113 @@ public class CompoundTag implements Tag {
     }
 
     @Nullable
-    public Tag put(String p_128366_, Tag p_128367_) {
-        if (p_128367_ == null) throw new IllegalArgumentException("Invalid null NBT value with key " + p_128366_);
-        return this.tags.put(p_128366_, p_128367_);
+    public Tag put(String key, Tag value) {
+        if (value == null) throw new IllegalArgumentException("Invalid null NBT value with key " + key);
+        return this.tags.put(key, value);
     }
 
-    public void putByte(String p_128345_, byte p_128346_) {
-        this.tags.put(p_128345_, ByteTag.valueOf(p_128346_));
+    public void putByte(String key, byte value) {
+        this.tags.put(key, ByteTag.valueOf(value));
     }
 
-    public void putShort(String p_128377_, short p_128378_) {
-        this.tags.put(p_128377_, ShortTag.valueOf(p_128378_));
+    public void putShort(String key, short value) {
+        this.tags.put(key, ShortTag.valueOf(value));
     }
 
-    public void putInt(String p_128406_, int p_128407_) {
-        this.tags.put(p_128406_, IntTag.valueOf(p_128407_));
+    public void putInt(String key, int value) {
+        this.tags.put(key, IntTag.valueOf(value));
     }
 
-    public void putLong(String p_128357_, long p_128358_) {
-        this.tags.put(p_128357_, LongTag.valueOf(p_128358_));
+    public void putLong(String key, long value) {
+        this.tags.put(key, LongTag.valueOf(value));
     }
 
-    public void putUUID(String p_128363_, UUID p_128364_) {
-        this.tags.put(p_128363_, NbtUtils.createUUID(p_128364_));
+    public void putUUID(String key, UUID value) {
+        this.tags.put(key, NbtUtils.createUUID(value));
     }
 
-    public UUID getUUID(String p_128343_) {
-        return NbtUtils.loadUUID(this.get(p_128343_));
+    public UUID getUUID(String key) {
+        return NbtUtils.loadUUID(this.get(key));
     }
 
-    public boolean hasUUID(String p_128404_) {
-        Tag tag = this.get(p_128404_);
+    public boolean hasUUID(String key) {
+        Tag tag = this.get(key);
         return tag != null && tag.getType() == IntArrayTag.TYPE && ((IntArrayTag)tag).getAsIntArray().length == 4;
     }
 
-    public void putFloat(String p_128351_, float p_128352_) {
-        this.tags.put(p_128351_, FloatTag.valueOf(p_128352_));
+    public void putFloat(String key, float value) {
+        this.tags.put(key, FloatTag.valueOf(value));
     }
 
-    public void putDouble(String p_128348_, double p_128349_) {
-        this.tags.put(p_128348_, DoubleTag.valueOf(p_128349_));
+    public void putDouble(String key, double value) {
+        this.tags.put(key, DoubleTag.valueOf(value));
     }
 
-    public void putString(String p_128360_, String p_128361_) {
-        this.tags.put(p_128360_, StringTag.valueOf(p_128361_));
+    public void putString(String key, String value) {
+        this.tags.put(key, StringTag.valueOf(value));
     }
 
-    public void putByteArray(String p_128383_, byte[] p_128384_) {
-        this.tags.put(p_128383_, new ByteArrayTag(p_128384_));
+    public void putByteArray(String key, byte[] value) {
+        this.tags.put(key, new ByteArrayTag(value));
     }
 
-    public void putByteArray(String p_177854_, List<Byte> p_177855_) {
-        this.tags.put(p_177854_, new ByteArrayTag(p_177855_));
+    public void putByteArray(String key, List<Byte> value) {
+        this.tags.put(key, new ByteArrayTag(value));
     }
 
-    public void putIntArray(String p_128386_, int[] p_128387_) {
-        this.tags.put(p_128386_, new IntArrayTag(p_128387_));
+    public void putIntArray(String key, int[] value) {
+        this.tags.put(key, new IntArrayTag(value));
     }
 
-    public void putIntArray(String p_128409_, List<Integer> p_128410_) {
-        this.tags.put(p_128409_, new IntArrayTag(p_128410_));
+    public void putIntArray(String key, List<Integer> value) {
+        this.tags.put(key, new IntArrayTag(value));
     }
 
-    public void putLongArray(String p_128389_, long[] p_128390_) {
-        this.tags.put(p_128389_, new LongArrayTag(p_128390_));
+    public void putLongArray(String key, long[] value) {
+        this.tags.put(key, new LongArrayTag(value));
     }
 
-    public void putLongArray(String p_128429_, List<Long> p_128430_) {
-        this.tags.put(p_128429_, new LongArrayTag(p_128430_));
+    public void putLongArray(String key, List<Long> value) {
+        this.tags.put(key, new LongArrayTag(value));
     }
 
-    public void putBoolean(String p_128380_, boolean p_128381_) {
-        this.tags.put(p_128380_, ByteTag.valueOf(p_128381_));
+    public void putBoolean(String key, boolean value) {
+        this.tags.put(key, ByteTag.valueOf(value));
     }
 
     @Nullable
-    public Tag get(String p_128424_) {
-        return this.tags.get(p_128424_);
+    public Tag get(String key) {
+        return this.tags.get(key);
     }
 
-    public byte getTagType(String p_128436_) {
-        Tag tag = this.tags.get(p_128436_);
+    /**
+     * Gets the byte identifier of the tag of the specified {@code key}, or {@code 0} if no tag exists for the {@code key}.
+     */
+    public byte getTagType(String key) {
+        Tag tag = this.tags.get(key);
         return tag == null ? 0 : tag.getId();
     }
 
-    public boolean contains(String p_128442_) {
-        return this.tags.containsKey(p_128442_);
+    public boolean contains(String key) {
+        return this.tags.containsKey(key);
     }
 
-    public boolean contains(String p_128426_, int p_128427_) {
-        int i = this.getTagType(p_128426_);
-        if (i == p_128427_) {
+    /**
+     * Returns whether the tag of the specified {@code key} is a particular {@code tagType}. If the {@code tagType} is {@code 99}, all numeric tags will be checked against the type of the stored tag.
+     */
+    public boolean contains(String key, int tagType) {
+        int i = this.getTagType(key);
+        if (i == tagType) {
             return true;
         } else {
-            return p_128427_ != 99 ? false : i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 6;
+            return tagType != 99 ? false : i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 6;
         }
     }
 
-    public byte getByte(String p_128446_) {
+    public byte getByte(String key) {
         try {
-            if (this.contains(p_128446_, 99)) {
-                return ((NumericTag)this.tags.get(p_128446_)).getAsByte();
+            if (this.contains(key, 99)) {
+                return ((NumericTag)this.tags.get(key)).getAsByte();
             }
         } catch (ClassCastException classcastexception) {
         }
@@ -335,10 +341,10 @@ public class CompoundTag implements Tag {
         return 0;
     }
 
-    public short getShort(String p_128449_) {
+    public short getShort(String key) {
         try {
-            if (this.contains(p_128449_, 99)) {
-                return ((NumericTag)this.tags.get(p_128449_)).getAsShort();
+            if (this.contains(key, 99)) {
+                return ((NumericTag)this.tags.get(key)).getAsShort();
             }
         } catch (ClassCastException classcastexception) {
         }
@@ -346,10 +352,10 @@ public class CompoundTag implements Tag {
         return 0;
     }
 
-    public int getInt(String p_128452_) {
+    public int getInt(String key) {
         try {
-            if (this.contains(p_128452_, 99)) {
-                return ((NumericTag)this.tags.get(p_128452_)).getAsInt();
+            if (this.contains(key, 99)) {
+                return ((NumericTag)this.tags.get(key)).getAsInt();
             }
         } catch (ClassCastException classcastexception) {
         }
@@ -357,10 +363,10 @@ public class CompoundTag implements Tag {
         return 0;
     }
 
-    public long getLong(String p_128455_) {
+    public long getLong(String key) {
         try {
-            if (this.contains(p_128455_, 99)) {
-                return ((NumericTag)this.tags.get(p_128455_)).getAsLong();
+            if (this.contains(key, 99)) {
+                return ((NumericTag)this.tags.get(key)).getAsLong();
             }
         } catch (ClassCastException classcastexception) {
         }
@@ -368,10 +374,10 @@ public class CompoundTag implements Tag {
         return 0L;
     }
 
-    public float getFloat(String p_128458_) {
+    public float getFloat(String key) {
         try {
-            if (this.contains(p_128458_, 99)) {
-                return ((NumericTag)this.tags.get(p_128458_)).getAsFloat();
+            if (this.contains(key, 99)) {
+                return ((NumericTag)this.tags.get(key)).getAsFloat();
             }
         } catch (ClassCastException classcastexception) {
         }
@@ -379,10 +385,10 @@ public class CompoundTag implements Tag {
         return 0.0F;
     }
 
-    public double getDouble(String p_128460_) {
+    public double getDouble(String key) {
         try {
-            if (this.contains(p_128460_, 99)) {
-                return ((NumericTag)this.tags.get(p_128460_)).getAsDouble();
+            if (this.contains(key, 99)) {
+                return ((NumericTag)this.tags.get(key)).getAsDouble();
             }
         } catch (ClassCastException classcastexception) {
         }
@@ -390,10 +396,10 @@ public class CompoundTag implements Tag {
         return 0.0;
     }
 
-    public String getString(String p_128462_) {
+    public String getString(String key) {
         try {
-            if (this.contains(p_128462_, 8)) {
-                return this.tags.get(p_128462_).getAsString();
+            if (this.contains(key, 8)) {
+                return this.tags.get(key).getAsString();
             }
         } catch (ClassCastException classcastexception) {
         }
@@ -401,77 +407,77 @@ public class CompoundTag implements Tag {
         return "";
     }
 
-    public byte[] getByteArray(String p_128464_) {
+    public byte[] getByteArray(String key) {
         try {
-            if (this.contains(p_128464_, 7)) {
-                return ((ByteArrayTag)this.tags.get(p_128464_)).getAsByteArray();
+            if (this.contains(key, 7)) {
+                return ((ByteArrayTag)this.tags.get(key)).getAsByteArray();
             }
         } catch (ClassCastException classcastexception) {
-            throw new ReportedException(this.createReport(p_128464_, ByteArrayTag.TYPE, classcastexception));
+            throw new ReportedException(this.createReport(key, ByteArrayTag.TYPE, classcastexception));
         }
 
         return new byte[0];
     }
 
-    public int[] getIntArray(String p_128466_) {
+    public int[] getIntArray(String key) {
         try {
-            if (this.contains(p_128466_, 11)) {
-                return ((IntArrayTag)this.tags.get(p_128466_)).getAsIntArray();
+            if (this.contains(key, 11)) {
+                return ((IntArrayTag)this.tags.get(key)).getAsIntArray();
             }
         } catch (ClassCastException classcastexception) {
-            throw new ReportedException(this.createReport(p_128466_, IntArrayTag.TYPE, classcastexception));
+            throw new ReportedException(this.createReport(key, IntArrayTag.TYPE, classcastexception));
         }
 
         return new int[0];
     }
 
-    public long[] getLongArray(String p_128468_) {
+    public long[] getLongArray(String key) {
         try {
-            if (this.contains(p_128468_, 12)) {
-                return ((LongArrayTag)this.tags.get(p_128468_)).getAsLongArray();
+            if (this.contains(key, 12)) {
+                return ((LongArrayTag)this.tags.get(key)).getAsLongArray();
             }
         } catch (ClassCastException classcastexception) {
-            throw new ReportedException(this.createReport(p_128468_, LongArrayTag.TYPE, classcastexception));
+            throw new ReportedException(this.createReport(key, LongArrayTag.TYPE, classcastexception));
         }
 
         return new long[0];
     }
 
-    public CompoundTag getCompound(String p_128470_) {
+    public CompoundTag getCompound(String key) {
         try {
-            if (this.contains(p_128470_, 10)) {
-                return (CompoundTag)this.tags.get(p_128470_);
+            if (this.contains(key, 10)) {
+                return (CompoundTag)this.tags.get(key);
             }
         } catch (ClassCastException classcastexception) {
-            throw new ReportedException(this.createReport(p_128470_, TYPE, classcastexception));
+            throw new ReportedException(this.createReport(key, TYPE, classcastexception));
         }
 
         return new CompoundTag();
     }
 
-    public ListTag getList(String p_128438_, int p_128439_) {
+    public ListTag getList(String key, int tagType) {
         try {
-            if (this.getTagType(p_128438_) == 9) {
-                ListTag listtag = (ListTag)this.tags.get(p_128438_);
-                if (!listtag.isEmpty() && listtag.getElementType() != p_128439_) {
+            if (this.getTagType(key) == 9) {
+                ListTag listtag = (ListTag)this.tags.get(key);
+                if (!listtag.isEmpty() && listtag.getElementType() != tagType) {
                     return new ListTag();
                 }
 
                 return listtag;
             }
         } catch (ClassCastException classcastexception) {
-            throw new ReportedException(this.createReport(p_128438_, ListTag.TYPE, classcastexception));
+            throw new ReportedException(this.createReport(key, ListTag.TYPE, classcastexception));
         }
 
         return new ListTag();
     }
 
-    public boolean getBoolean(String p_128472_) {
-        return this.getByte(p_128472_) != 0;
+    public boolean getBoolean(String key) {
+        return this.getByte(key) != 0;
     }
 
-    public void remove(String p_128474_) {
-        this.tags.remove(p_128474_);
+    public void remove(String key) {
+        this.tags.remove(key);
     }
 
     @Override
@@ -483,12 +489,12 @@ public class CompoundTag implements Tag {
         return this.tags.isEmpty();
     }
 
-    private CrashReport createReport(String p_128373_, TagType<?> p_128374_, ClassCastException p_128375_) {
-        CrashReport crashreport = CrashReport.forThrowable(p_128375_, "Reading NBT data");
+    private CrashReport createReport(String tagName, TagType<?> type, ClassCastException exception) {
+        CrashReport crashreport = CrashReport.forThrowable(exception, "Reading NBT data");
         CrashReportCategory crashreportcategory = crashreport.addCategory("Corrupt NBT tag", 1);
-        crashreportcategory.setDetail("Tag type found", () -> this.tags.get(p_128373_).getType().getName());
-        crashreportcategory.setDetail("Tag type expected", p_128374_::getName);
-        crashreportcategory.setDetail("Tag name", p_128373_);
+        crashreportcategory.setDetail("Tag type found", () -> this.tags.get(tagName).getType().getName());
+        crashreportcategory.setDetail("Tag type expected", type::getName);
+        crashreportcategory.setDetail("Tag name", tagName);
         return crashreport;
     }
 
@@ -502,8 +508,8 @@ public class CompoundTag implements Tag {
     }
 
     @Override
-    public boolean equals(Object p_128444_) {
-        return this == p_128444_ ? true : p_128444_ instanceof CompoundTag && Objects.equals(this.tags, ((CompoundTag)p_128444_).tags);
+    public boolean equals(Object other) {
+        return this == other ? true : other instanceof CompoundTag && Objects.equals(this.tags, ((CompoundTag)other).tags);
     }
 
     @Override
@@ -511,29 +517,33 @@ public class CompoundTag implements Tag {
         return this.tags.hashCode();
     }
 
-    private static void writeNamedTag(String p_128369_, Tag p_128370_, DataOutput p_128371_) throws IOException {
-        p_128371_.writeByte(p_128370_.getId());
-        if (p_128370_.getId() != 0) {
-            p_128371_.writeUTF(p_128369_);
-            p_128370_.write(p_128371_);
+    private static void writeNamedTag(String name, Tag tag, DataOutput output) throws IOException {
+        output.writeByte(tag.getId());
+        if (tag.getId() != 0) {
+            output.writeUTF(name);
+            tag.write(output);
         }
     }
 
-    static Tag readNamedTagData(TagType<?> p_128414_, String p_128415_, DataInput p_128416_, NbtAccounter p_128418_) {
+    static Tag readNamedTagData(TagType<?> type, String name, DataInput input, NbtAccounter accounter) {
         try {
-            return p_128414_.load(p_128416_, p_128418_);
+            return type.load(input, accounter);
         } catch (IOException ioexception) {
             CrashReport crashreport = CrashReport.forThrowable(ioexception, "Loading NBT data");
             CrashReportCategory crashreportcategory = crashreport.addCategory("NBT Tag");
-            crashreportcategory.setDetail("Tag name", p_128415_);
-            crashreportcategory.setDetail("Tag type", p_128414_.getName());
+            crashreportcategory.setDetail("Tag name", name);
+            crashreportcategory.setDetail("Tag type", type.getName());
             throw new ReportedNbtException(crashreport);
         }
     }
 
-    public CompoundTag merge(CompoundTag p_128392_) {
-        for (String s : p_128392_.tags.keySet()) {
-            Tag tag = p_128392_.tags.get(s);
+    /**
+     * Copies all the tags of {@code other} into this tag, then returns itself.
+     * @see #copy()
+     */
+    public CompoundTag merge(CompoundTag other) {
+        for (String s : other.tags.keySet()) {
+            Tag tag = other.tags.get(s);
             if (tag.getId() == 10) {
                 if (this.contains(s, 10)) {
                     CompoundTag compoundtag = this.getCompound(s);
@@ -550,8 +560,8 @@ public class CompoundTag implements Tag {
     }
 
     @Override
-    public void accept(TagVisitor p_177857_) {
-        p_177857_.visitCompound(this);
+    public void accept(TagVisitor visitor) {
+        visitor.visitCompound(this);
     }
 
     protected Set<Entry<String, Tag>> entrySet() {
@@ -559,39 +569,39 @@ public class CompoundTag implements Tag {
     }
 
     @Override
-    public StreamTagVisitor.ValueResult accept(StreamTagVisitor p_197442_) {
+    public StreamTagVisitor.ValueResult accept(StreamTagVisitor visitor) {
         for (Entry<String, Tag> entry : this.tags.entrySet()) {
             Tag tag = entry.getValue();
             TagType<?> tagtype = tag.getType();
-            StreamTagVisitor.EntryResult streamtagvisitor$entryresult = p_197442_.visitEntry(tagtype);
+            StreamTagVisitor.EntryResult streamtagvisitor$entryresult = visitor.visitEntry(tagtype);
             switch (streamtagvisitor$entryresult) {
                 case HALT:
                     return StreamTagVisitor.ValueResult.HALT;
                 case BREAK:
-                    return p_197442_.visitContainerEnd();
+                    return visitor.visitContainerEnd();
                 case SKIP:
                     break;
                 default:
-                    streamtagvisitor$entryresult = p_197442_.visitEntry(tagtype, entry.getKey());
+                    streamtagvisitor$entryresult = visitor.visitEntry(tagtype, entry.getKey());
                     switch (streamtagvisitor$entryresult) {
                         case HALT:
                             return StreamTagVisitor.ValueResult.HALT;
                         case BREAK:
-                            return p_197442_.visitContainerEnd();
+                            return visitor.visitContainerEnd();
                         case SKIP:
                             break;
                         default:
-                            StreamTagVisitor.ValueResult streamtagvisitor$valueresult = tag.accept(p_197442_);
+                            StreamTagVisitor.ValueResult streamtagvisitor$valueresult = tag.accept(visitor);
                             switch (streamtagvisitor$valueresult) {
                                 case HALT:
                                     return StreamTagVisitor.ValueResult.HALT;
                                 case BREAK:
-                                    return p_197442_.visitContainerEnd();
+                                    return visitor.visitContainerEnd();
                             }
                     }
             }
         }
 
-        return p_197442_.visitContainerEnd();
+        return visitor.visitContainerEnd();
     }
 }

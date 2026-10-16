@@ -10,24 +10,24 @@ import net.minecraft.world.phys.Vec3;
 public class BreezeWindCharge extends AbstractWindCharge {
     private static final float RADIUS = 3.0F;
 
-    public BreezeWindCharge(EntityType<? extends AbstractWindCharge> p_326366_, Level p_325976_) {
-        super(p_326366_, p_325976_);
+    public BreezeWindCharge(EntityType<? extends AbstractWindCharge> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public BreezeWindCharge(Breeze p_326239_, Level p_326041_) {
-        super(EntityType.BREEZE_WIND_CHARGE, p_326041_, p_326239_, p_326239_.getX(), p_326239_.getSnoutYPosition(), p_326239_.getZ());
+    public BreezeWindCharge(Breeze breeze, Level level) {
+        super(EntityType.BREEZE_WIND_CHARGE, level, breeze, breeze.getX(), breeze.getSnoutYPosition(), breeze.getZ());
     }
 
     @Override
-    protected void explode(Vec3 p_352274_) {
+    protected void explode(Vec3 pos) {
         this.level()
             .explode(
                 this,
                 null,
                 EXPLOSION_DAMAGE_CALCULATOR,
-                p_352274_.x(),
-                p_352274_.y(),
-                p_352274_.z(),
+                pos.x(),
+                pos.y(),
+                pos.z(),
                 3.0F,
                 false,
                 Level.ExplosionInteraction.TRIGGER,

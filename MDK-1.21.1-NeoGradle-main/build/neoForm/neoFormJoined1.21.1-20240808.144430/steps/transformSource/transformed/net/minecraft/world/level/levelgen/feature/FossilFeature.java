@@ -18,17 +18,24 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import org.apache.commons.lang3.mutable.MutableInt;
 
 public class FossilFeature extends Feature<FossilFeatureConfiguration> {
-    public FossilFeature(Codec<FossilFeatureConfiguration> p_65851_) {
-        super(p_65851_);
+    public FossilFeature(Codec<FossilFeatureConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<FossilFeatureConfiguration> p_159789_) {
-        RandomSource randomsource = p_159789_.random();
-        WorldGenLevel worldgenlevel = p_159789_.level();
-        BlockPos blockpos = p_159789_.origin();
+    public boolean place(FeaturePlaceContext<FossilFeatureConfiguration> context) {
+        RandomSource randomsource = context.random();
+        WorldGenLevel worldgenlevel = context.level();
+        BlockPos blockpos = context.origin();
         Rotation rotation = Rotation.getRandom(randomsource);
-        FossilFeatureConfiguration fossilfeatureconfiguration = p_159789_.config();
+        FossilFeatureConfiguration fossilfeatureconfiguration = context.config();
         int i = randomsource.nextInt(fossilfeatureconfiguration.fossilStructures.size());
         StructureTemplateManager structuretemplatemanager = worldgenlevel.getLevel().getServer().getStructureManager();
         StructureTemplate structuretemplate = structuretemplatemanager.getOrCreate(fossilfeatureconfiguration.fossilStructures.get(i));
@@ -69,10 +76,10 @@ public class FossilFeature extends Feature<FossilFeatureConfiguration> {
         }
     }
 
-    private static int countEmptyCorners(WorldGenLevel p_159782_, BoundingBox p_159783_) {
+    private static int countEmptyCorners(WorldGenLevel level, BoundingBox boundingBox) {
         MutableInt mutableint = new MutableInt(0);
-        p_159783_.forAllCorners(p_284921_ -> {
-            BlockState blockstate = p_159782_.getBlockState(p_284921_);
+        boundingBox.forAllCorners(p_284921_ -> {
+            BlockState blockstate = level.getBlockState(p_284921_);
             if (blockstate.isAir() || blockstate.is(Blocks.LAVA) || blockstate.is(Blocks.WATER)) {
                 mutableint.add(1);
             }

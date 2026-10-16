@@ -9,8 +9,8 @@ public class SimpleStateProvider extends BlockStateProvider {
     public static final MapCodec<SimpleStateProvider> CODEC = BlockState.CODEC.fieldOf("state").xmap(SimpleStateProvider::new, p_68804_ -> p_68804_.state);
     private final BlockState state;
 
-    protected SimpleStateProvider(BlockState p_68801_) {
-        this.state = p_68801_;
+    protected SimpleStateProvider(BlockState state) {
+        this.state = state;
     }
 
     @Override
@@ -19,7 +19,7 @@ public class SimpleStateProvider extends BlockStateProvider {
     }
 
     @Override
-    public BlockState getState(RandomSource p_225963_, BlockPos p_225964_) {
+    public BlockState getState(RandomSource random, BlockPos pos) {
         return this.state;
     }
 }

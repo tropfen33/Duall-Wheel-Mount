@@ -37,15 +37,15 @@ public record CommonPlayerSpawnInfo(
         );
     }
 
-    public void write(RegistryFriendlyByteBuf p_321515_) {
-        DimensionType.STREAM_CODEC.encode(p_321515_, this.dimensionType);
-        p_321515_.writeResourceKey(this.dimension);
-        p_321515_.writeLong(this.seed);
-        p_321515_.writeByte(this.gameType.getId());
-        p_321515_.writeByte(GameType.getNullableId(this.previousGameType));
-        p_321515_.writeBoolean(this.isDebug);
-        p_321515_.writeBoolean(this.isFlat);
-        p_321515_.writeOptional(this.lastDeathLocation, FriendlyByteBuf::writeGlobalPos);
-        p_321515_.writeVarInt(this.portalCooldown);
+    public void write(RegistryFriendlyByteBuf buffer) {
+        DimensionType.STREAM_CODEC.encode(buffer, this.dimensionType);
+        buffer.writeResourceKey(this.dimension);
+        buffer.writeLong(this.seed);
+        buffer.writeByte(this.gameType.getId());
+        buffer.writeByte(GameType.getNullableId(this.previousGameType));
+        buffer.writeBoolean(this.isDebug);
+        buffer.writeBoolean(this.isFlat);
+        buffer.writeOptional(this.lastDeathLocation, FriendlyByteBuf::writeGlobalPos);
+        buffer.writeVarInt(this.portalCooldown);
     }
 }

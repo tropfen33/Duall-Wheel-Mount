@@ -14,16 +14,19 @@ public class ClientboundSelectAdvancementsTabPacket implements Packet<ClientGame
     @Nullable
     private final ResourceLocation tab;
 
-    public ClientboundSelectAdvancementsTabPacket(@Nullable ResourceLocation p_133006_) {
-        this.tab = p_133006_;
+    public ClientboundSelectAdvancementsTabPacket(@Nullable ResourceLocation tab) {
+        this.tab = tab;
     }
 
-    private ClientboundSelectAdvancementsTabPacket(FriendlyByteBuf p_179198_) {
-        this.tab = p_179198_.readNullable(FriendlyByteBuf::readResourceLocation);
+    private ClientboundSelectAdvancementsTabPacket(FriendlyByteBuf buffer) {
+        this.tab = buffer.readNullable(FriendlyByteBuf::readResourceLocation);
     }
 
-    private void write(FriendlyByteBuf p_133015_) {
-        p_133015_.writeNullable(this.tab, FriendlyByteBuf::writeResourceLocation);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeNullable(this.tab, FriendlyByteBuf::writeResourceLocation);
     }
 
     @Override
@@ -31,8 +34,11 @@ public class ClientboundSelectAdvancementsTabPacket implements Packet<ClientGame
         return GamePacketTypes.CLIENTBOUND_SELECT_ADVANCEMENTS_TAB;
     }
 
-    public void handle(ClientGamePacketListener p_133012_) {
-        p_133012_.handleSelectAdvancementsTab(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleSelectAdvancementsTab(this);
     }
 
     @Nullable

@@ -30,75 +30,78 @@ import org.joml.Quaternionf;
 public class BoatRenderer extends EntityRenderer<Boat> {
     private final Map<Boat.Type, Pair<ResourceLocation, ListModel<Boat>>> boatResources;
 
-    public BoatRenderer(EntityRendererProvider.Context p_234563_, boolean p_234564_) {
-        super(p_234563_);
+    public BoatRenderer(EntityRendererProvider.Context context, boolean chestBoat) {
+        super(context);
         this.shadowRadius = 0.8F;
         this.boatResources = Stream.of(Boat.Type.values())
             .collect(
                 ImmutableMap.toImmutableMap(
                     p_173938_ -> (Boat.Type)p_173938_,
-                    p_349901_ -> Pair.of(getTextureLocation(p_349901_, p_234564_), this.createBoatModel(p_234563_, p_349901_, p_234564_))
+                    p_349901_ -> Pair.of(getTextureLocation(p_349901_, chestBoat), this.createBoatModel(context, p_349901_, chestBoat))
                 )
             );
     }
 
-    private ListModel<Boat> createBoatModel(EntityRendererProvider.Context p_248834_, Boat.Type p_249317_, boolean p_250093_) {
-        ModelLayerLocation modellayerlocation = p_250093_ ? ModelLayers.createChestBoatModelName(p_249317_) : ModelLayers.createBoatModelName(p_249317_);
-        ModelPart modelpart = p_248834_.bakeLayer(modellayerlocation);
-        if (p_249317_.isRaft()) {
-            return (ListModel<Boat>)(p_250093_ ? new ChestRaftModel(modelpart) : new RaftModel(modelpart));
+    private ListModel<Boat> createBoatModel(EntityRendererProvider.Context context, Boat.Type type, boolean chestBoat) {
+        ModelLayerLocation modellayerlocation = chestBoat ? ModelLayers.createChestBoatModelName(type) : ModelLayers.createBoatModelName(type);
+        ModelPart modelpart = context.bakeLayer(modellayerlocation);
+        if (type.isRaft()) {
+            return (ListModel<Boat>)(chestBoat ? new ChestRaftModel(modelpart) : new RaftModel(modelpart));
         } else {
-            return (ListModel<Boat>)(p_250093_ ? new ChestBoatModel(modelpart) : new BoatModel(modelpart));
+            return (ListModel<Boat>)(chestBoat ? new ChestBoatModel(modelpart) : new BoatModel(modelpart));
         }
     }
 
-    private static ResourceLocation getTextureLocation(Boat.Type p_234566_, boolean p_234567_) {
-        return p_234567_
-            ? ResourceLocation.parse(p_234566_.getName()).withPrefix("textures/entity/chest_boat/").withSuffix(".png")
-            : ResourceLocation.parse(p_234566_.getName()).withPrefix("textures/entity/boat/").withSuffix(".png");
+    private static ResourceLocation getTextureLocation(Boat.Type type, boolean chestBoat) {
+        return chestBoat
+            ? ResourceLocation.parse(type.getName()).withPrefix("textures/entity/chest_boat/").withSuffix(".png")
+            : ResourceLocation.parse(type.getName()).withPrefix("textures/entity/boat/").withSuffix(".png");
     }
 
-    public void render(Boat p_113929_, float p_113930_, float p_113931_, PoseStack p_113932_, MultiBufferSource p_113933_, int p_113934_) {
-        p_113932_.pushPose();
-        p_113932_.translate(0.0F, 0.375F, 0.0F);
-        p_113932_.mulPose(Axis.YP.rotationDegrees(180.0F - p_113930_));
-        float f = (float)p_113929_.getHurtTime() - p_113931_;
-        float f1 = p_113929_.getDamage() - p_113931_;
+    public void render(Boat entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        poseStack.pushPose();
+        poseStack.translate(0.0F, 0.375F, 0.0F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - entityYaw));
+        float f = (float)entity.getHurtTime() - partialTicks;
+        float f1 = entity.getDamage() - partialTicks;
         if (f1 < 0.0F) {
             f1 = 0.0F;
         }
 
         if (f > 0.0F) {
-            p_113932_.mulPose(Axis.XP.rotationDegrees(Mth.sin(f) * f * f1 / 10.0F * (float)p_113929_.getHurtDir()));
+            poseStack.mulPose(Axis.XP.rotationDegrees(Mth.sin(f) * f * f1 / 10.0F * (float)entity.getHurtDir()));
         }
 
-        float f2 = p_113929_.getBubbleAngle(p_113931_);
+        float f2 = entity.getBubbleAngle(partialTicks);
         if (!Mth.equal(f2, 0.0F)) {
-            p_113932_.mulPose(new Quaternionf().setAngleAxis(p_113929_.getBubbleAngle(p_113931_) * (float) (Math.PI / 180.0), 1.0F, 0.0F, 1.0F));
+            poseStack.mulPose(new Quaternionf().setAngleAxis(entity.getBubbleAngle(partialTicks) * (float) (Math.PI / 180.0), 1.0F, 0.0F, 1.0F));
         }
 
-        Pair<ResourceLocation, ListModel<Boat>> pair = getModelWithLocation(p_113929_);
+        Pair<ResourceLocation, ListModel<Boat>> pair = getModelWithLocation(entity);
         ResourceLocation resourcelocation = pair.getFirst();
         ListModel<Boat> listmodel = pair.getSecond();
-        p_113932_.scale(-1.0F, -1.0F, 1.0F);
-        p_113932_.mulPose(Axis.YP.rotationDegrees(90.0F));
-        listmodel.setupAnim(p_113929_, p_113931_, 0.0F, -0.1F, 0.0F, 0.0F);
-        VertexConsumer vertexconsumer = p_113933_.getBuffer(listmodel.renderType(resourcelocation));
-        listmodel.renderToBuffer(p_113932_, vertexconsumer, p_113934_, OverlayTexture.NO_OVERLAY);
-        if (!p_113929_.isUnderWater()) {
-            VertexConsumer vertexconsumer1 = p_113933_.getBuffer(RenderType.waterMask());
+        poseStack.scale(-1.0F, -1.0F, 1.0F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+        listmodel.setupAnim(entity, partialTicks, 0.0F, -0.1F, 0.0F, 0.0F);
+        VertexConsumer vertexconsumer = buffer.getBuffer(listmodel.renderType(resourcelocation));
+        listmodel.renderToBuffer(poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY);
+        if (!entity.isUnderWater()) {
+            VertexConsumer vertexconsumer1 = buffer.getBuffer(RenderType.waterMask());
             if (listmodel instanceof WaterPatchModel waterpatchmodel) {
-                waterpatchmodel.waterPatch().render(p_113932_, vertexconsumer1, p_113934_, OverlayTexture.NO_OVERLAY);
+                waterpatchmodel.waterPatch().render(poseStack, vertexconsumer1, packedLight, OverlayTexture.NO_OVERLAY);
             }
         }
 
-        p_113932_.popPose();
-        super.render(p_113929_, p_113930_, p_113931_, p_113932_, p_113933_, p_113934_);
+        poseStack.popPose();
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 
+    /**
+     * Returns the location of an entity's texture.
+     */
     @Deprecated // forge: override getModelWithLocation to change the texture / model
-    public ResourceLocation getTextureLocation(Boat p_113927_) {
-        return getModelWithLocation(p_113927_).getFirst();
+    public ResourceLocation getTextureLocation(Boat entity) {
+        return getModelWithLocation(entity).getFirst();
     }
 
     public Pair<ResourceLocation, ListModel<Boat>> getModelWithLocation(Boat boat) {

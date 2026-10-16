@@ -9,18 +9,18 @@ public class FloatTag extends NumericTag {
     private static final int SELF_SIZE_IN_BYTES = 12;
     public static final FloatTag ZERO = new FloatTag(0.0F);
     public static final TagType<FloatTag> TYPE = new TagType.StaticSize<FloatTag>() {
-        public FloatTag load(DataInput p_128590_, NbtAccounter p_128592_) throws IOException {
-            return FloatTag.valueOf(readAccounted(p_128590_, p_128592_));
+        public FloatTag load(DataInput input, NbtAccounter accounter) throws IOException {
+            return FloatTag.valueOf(readAccounted(input, accounter));
         }
 
         @Override
-        public StreamTagVisitor.ValueResult parse(DataInput p_197470_, StreamTagVisitor p_197471_, NbtAccounter p_302329_) throws IOException {
-            return p_197471_.visit(readAccounted(p_197470_, p_302329_));
+        public StreamTagVisitor.ValueResult parse(DataInput input, StreamTagVisitor visitor, NbtAccounter accounter) throws IOException {
+            return visitor.visit(readAccounted(input, accounter));
         }
 
-        private static float readAccounted(DataInput p_302328_, NbtAccounter p_302359_) throws IOException {
-            p_302359_.accountBytes(12L);
-            return p_302328_.readFloat();
+        private static float readAccounted(DataInput input, NbtAccounter accounter) throws IOException {
+            accounter.accountBytes(12L);
+            return input.readFloat();
         }
 
         @Override
@@ -45,17 +45,17 @@ public class FloatTag extends NumericTag {
     };
     private final float data;
 
-    private FloatTag(float p_128564_) {
-        this.data = p_128564_;
+    private FloatTag(float data) {
+        this.data = data;
     }
 
-    public static FloatTag valueOf(float p_128567_) {
-        return p_128567_ == 0.0F ? ZERO : new FloatTag(p_128567_);
+    public static FloatTag valueOf(float data) {
+        return data == 0.0F ? ZERO : new FloatTag(data);
     }
 
     @Override
-    public void write(DataOutput p_128569_) throws IOException {
-        p_128569_.writeFloat(this.data);
+    public void write(DataOutput output) throws IOException {
+        output.writeFloat(this.data);
     }
 
     @Override
@@ -78,8 +78,8 @@ public class FloatTag extends NumericTag {
     }
 
     @Override
-    public boolean equals(Object p_128578_) {
-        return this == p_128578_ ? true : p_128578_ instanceof FloatTag && this.data == ((FloatTag)p_128578_).data;
+    public boolean equals(Object other) {
+        return this == other ? true : other instanceof FloatTag && this.data == ((FloatTag)other).data;
     }
 
     @Override
@@ -88,8 +88,8 @@ public class FloatTag extends NumericTag {
     }
 
     @Override
-    public void accept(TagVisitor p_177866_) {
-        p_177866_.visitFloat(this);
+    public void accept(TagVisitor visitor) {
+        visitor.visitFloat(this);
     }
 
     @Override
@@ -128,7 +128,7 @@ public class FloatTag extends NumericTag {
     }
 
     @Override
-    public StreamTagVisitor.ValueResult accept(StreamTagVisitor p_197468_) {
-        return p_197468_.visit(this.data);
+    public StreamTagVisitor.ValueResult accept(StreamTagVisitor visitor) {
+        return visitor.visit(this.data);
     }
 }

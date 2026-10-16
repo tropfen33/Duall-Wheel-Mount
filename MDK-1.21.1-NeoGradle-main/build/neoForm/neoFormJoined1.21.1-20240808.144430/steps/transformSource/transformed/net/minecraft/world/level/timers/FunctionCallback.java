@@ -10,12 +10,12 @@ import net.minecraft.server.ServerFunctionManager;
 public class FunctionCallback implements TimerCallback<MinecraftServer> {
     final ResourceLocation functionId;
 
-    public FunctionCallback(ResourceLocation p_82164_) {
-        this.functionId = p_82164_;
+    public FunctionCallback(ResourceLocation functionId) {
+        this.functionId = functionId;
     }
 
-    public void handle(MinecraftServer p_82172_, TimerQueue<MinecraftServer> p_82173_, long p_82174_) {
-        ServerFunctionManager serverfunctionmanager = p_82172_.getFunctions();
+    public void handle(MinecraftServer obj, TimerQueue<MinecraftServer> manager, long gameTime) {
+        ServerFunctionManager serverfunctionmanager = obj.getFunctions();
         serverfunctionmanager.get(this.functionId)
             .ifPresent(p_305770_ -> serverfunctionmanager.execute((CommandFunction<CommandSourceStack>)p_305770_, serverfunctionmanager.getGameLoopSender()));
     }

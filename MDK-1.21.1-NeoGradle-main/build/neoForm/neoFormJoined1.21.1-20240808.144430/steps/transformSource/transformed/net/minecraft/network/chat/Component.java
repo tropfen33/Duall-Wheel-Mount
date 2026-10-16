@@ -45,10 +45,13 @@ public interface Component extends Message, FormattedText {
         return FormattedText.super.getString();
     }
 
-    default String getString(int p_130669_) {
+    /**
+     * Get the plain text of this FormattedText, without any styling or formatting codes, limited to {@code maxLength} characters.
+     */
+    default String getString(int maxLength) {
         StringBuilder stringbuilder = new StringBuilder();
         this.visit(p_130673_ -> {
-            int i = p_130669_ - stringbuilder.length();
+            int i = maxLength - stringbuilder.length();
             if (i <= 0) {
                 return STOP_ITERATION;
             } else {
@@ -81,14 +84,14 @@ public interface Component extends Message, FormattedText {
     FormattedCharSequence getVisualOrderText();
 
     @Override
-    default <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> p_130679_, Style p_130680_) {
-        Style style = this.getStyle().applyTo(p_130680_);
-        Optional<T> optional = this.getContents().visit(p_130679_, style);
+    default <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> acceptor, Style p_style) {
+        Style style = this.getStyle().applyTo(p_style);
+        Optional<T> optional = this.getContents().visit(acceptor, style);
         if (optional.isPresent()) {
             return optional;
         } else {
             for (Component component : this.getSiblings()) {
-                Optional<T> optional1 = component.visit(p_130679_, style);
+                Optional<T> optional1 = component.visit(acceptor, style);
                 if (optional1.isPresent()) {
                     return optional1;
                 }
@@ -99,13 +102,13 @@ public interface Component extends Message, FormattedText {
     }
 
     @Override
-    default <T> Optional<T> visit(FormattedText.ContentConsumer<T> p_130677_) {
-        Optional<T> optional = this.getContents().visit(p_130677_);
+    default <T> Optional<T> visit(FormattedText.ContentConsumer<T> acceptor) {
+        Optional<T> optional = this.getContents().visit(acceptor);
         if (optional.isPresent()) {
             return optional;
         } else {
             for (Component component : this.getSiblings()) {
-                Optional<T> optional1 = component.visit(p_130677_);
+                Optional<T> optional1 = component.visit(acceptor);
                 if (optional1.isPresent()) {
                     return optional1;
                 }
@@ -119,7 +122,7 @@ public interface Component extends Message, FormattedText {
         return this.toFlatList(Style.EMPTY);
     }
 
-    default List<Component> toFlatList(Style p_178406_) {
+    default List<Component> toFlatList(Style style) {
         List<Component> list = Lists.newArrayList();
         this.visit((p_178403_, p_178404_) -> {
             if (!p_178404_.isEmpty()) {
@@ -127,97 +130,97 @@ public interface Component extends Message, FormattedText {
             }
 
             return Optional.empty();
-        }, p_178406_);
+        }, style);
         return list;
     }
 
-    default boolean contains(Component p_240571_) {
-        if (this.equals(p_240571_)) {
+    default boolean contains(Component other) {
+        if (this.equals(other)) {
             return true;
         } else {
             List<Component> list = this.toFlatList();
-            List<Component> list1 = p_240571_.toFlatList(this.getStyle());
+            List<Component> list1 = other.toFlatList(this.getStyle());
             return Collections.indexOfSubList(list, list1) != -1;
         }
     }
 
-    static Component nullToEmpty(@Nullable String p_130675_) {
-        return (Component)(p_130675_ != null ? literal(p_130675_) : CommonComponents.EMPTY);
+    static Component nullToEmpty(@Nullable String text) {
+        return (Component)(text != null ? literal(text) : CommonComponents.EMPTY);
     }
 
-    static MutableComponent literal(String p_237114_) {
-        return MutableComponent.create(PlainTextContents.create(p_237114_));
+    static MutableComponent literal(String text) {
+        return MutableComponent.create(PlainTextContents.create(text));
     }
 
-    static MutableComponent translatable(String p_237116_) {
-        return MutableComponent.create(new TranslatableContents(p_237116_, null, TranslatableContents.NO_ARGS));
+    static MutableComponent translatable(String key) {
+        return MutableComponent.create(new TranslatableContents(key, null, TranslatableContents.NO_ARGS));
     }
 
-    static MutableComponent translatable(String p_237111_, Object... p_237112_) {
-        return MutableComponent.create(new TranslatableContents(p_237111_, null, p_237112_));
+    static MutableComponent translatable(String key, Object... args) {
+        return MutableComponent.create(new TranslatableContents(key, null, args));
     }
 
-    static MutableComponent translatableEscape(String p_304683_, Object... p_304399_) {
-        for (int i = 0; i < p_304399_.length; i++) {
-            Object object = p_304399_[i];
+    static MutableComponent translatableEscape(String key, Object... args) {
+        for (int i = 0; i < args.length; i++) {
+            Object object = args[i];
             if (!TranslatableContents.isAllowedPrimitiveArgument(object) && !(object instanceof Component)) {
-                p_304399_[i] = String.valueOf(object);
+                args[i] = String.valueOf(object);
             }
         }
 
-        return translatable(p_304683_, p_304399_);
+        return translatable(key, args);
     }
 
-    static MutableComponent translatableWithFallback(String p_265747_, @Nullable String p_265287_) {
-        return MutableComponent.create(new TranslatableContents(p_265747_, p_265287_, TranslatableContents.NO_ARGS));
+    static MutableComponent translatableWithFallback(String key, @Nullable String fallback) {
+        return MutableComponent.create(new TranslatableContents(key, fallback, TranslatableContents.NO_ARGS));
     }
 
-    static MutableComponent translatableWithFallback(String p_265449_, @Nullable String p_265281_, Object... p_265785_) {
-        return MutableComponent.create(new TranslatableContents(p_265449_, p_265281_, p_265785_));
+    static MutableComponent translatableWithFallback(String key, @Nullable String fallback, Object... args) {
+        return MutableComponent.create(new TranslatableContents(key, fallback, args));
     }
 
     static MutableComponent empty() {
         return MutableComponent.create(PlainTextContents.EMPTY);
     }
 
-    static MutableComponent keybind(String p_237118_) {
-        return MutableComponent.create(new KeybindContents(p_237118_));
+    static MutableComponent keybind(String name) {
+        return MutableComponent.create(new KeybindContents(name));
     }
 
-    static MutableComponent nbt(String p_237106_, boolean p_237107_, Optional<Component> p_237108_, DataSource p_237109_) {
-        return MutableComponent.create(new NbtContents(p_237106_, p_237107_, p_237108_, p_237109_));
+    static MutableComponent nbt(String nbtPathPattern, boolean interpreting, Optional<Component> separator, DataSource dataSource) {
+        return MutableComponent.create(new NbtContents(nbtPathPattern, interpreting, separator, dataSource));
     }
 
-    static MutableComponent score(String p_237100_, String p_237101_) {
-        return MutableComponent.create(new ScoreContents(p_237100_, p_237101_));
+    static MutableComponent score(String name, String objective) {
+        return MutableComponent.create(new ScoreContents(name, objective));
     }
 
-    static MutableComponent selector(String p_237103_, Optional<Component> p_237104_) {
-        return MutableComponent.create(new SelectorContents(p_237103_, p_237104_));
+    static MutableComponent selector(String pattern, Optional<Component> separator) {
+        return MutableComponent.create(new SelectorContents(pattern, separator));
     }
 
-    static Component translationArg(Date p_304461_) {
-        return literal(p_304461_.toString());
+    static Component translationArg(Date date) {
+        return literal(date.toString());
     }
 
-    static Component translationArg(Message p_304620_) {
-        return (Component)(p_304620_ instanceof Component component ? component : literal(p_304620_.getString()));
+    static Component translationArg(Message message) {
+        return (Component)(message instanceof Component component ? component : literal(message.getString()));
     }
 
-    static Component translationArg(UUID p_304730_) {
-        return literal(p_304730_.toString());
+    static Component translationArg(UUID uuid) {
+        return literal(uuid.toString());
     }
 
-    static Component translationArg(ResourceLocation p_304849_) {
-        return literal(p_304849_.toString());
+    static Component translationArg(ResourceLocation location) {
+        return literal(location.toString());
     }
 
-    static Component translationArg(ChunkPos p_304675_) {
-        return literal(p_304675_.toString());
+    static Component translationArg(ChunkPos chunkPos) {
+        return literal(chunkPos.toString());
     }
 
-    static Component translationArg(URI p_352152_) {
-        return literal(p_352152_.toString());
+    static Component translationArg(URI uri) {
+        return literal(uri.toString());
     }
 
     public static class Serializer {
@@ -226,55 +229,55 @@ public interface Component extends Message, FormattedText {
         private Serializer() {
         }
 
-        static MutableComponent deserialize(JsonElement p_130720_, HolderLookup.Provider p_330752_) {
+        static MutableComponent deserialize(JsonElement json, HolderLookup.Provider provider) {
             return (MutableComponent)ComponentSerialization.CODEC
-                .parse(p_330752_.createSerializationContext(JsonOps.INSTANCE), p_130720_)
+                .parse(provider.createSerializationContext(JsonOps.INSTANCE), json)
                 .getOrThrow(JsonParseException::new);
         }
 
-        static JsonElement serialize(Component p_304983_, HolderLookup.Provider p_331501_) {
+        static JsonElement serialize(Component component, HolderLookup.Provider provider) {
             return ComponentSerialization.CODEC
-                .encodeStart(p_331501_.createSerializationContext(JsonOps.INSTANCE), p_304983_)
+                .encodeStart(provider.createSerializationContext(JsonOps.INSTANCE), component)
                 .getOrThrow(JsonParseException::new);
         }
 
-        public static String toJson(Component p_130704_, HolderLookup.Provider p_330782_) {
-            return GSON.toJson(serialize(p_130704_, p_330782_));
+        public static String toJson(Component component, HolderLookup.Provider registries) {
+            return GSON.toJson(serialize(component, registries));
         }
 
         @Nullable
-        public static MutableComponent fromJson(String p_130702_, HolderLookup.Provider p_331632_) {
-            JsonElement jsonelement = JsonParser.parseString(p_130702_);
-            return jsonelement == null ? null : deserialize(jsonelement, p_331632_);
+        public static MutableComponent fromJson(String json, HolderLookup.Provider registries) {
+            JsonElement jsonelement = JsonParser.parseString(json);
+            return jsonelement == null ? null : deserialize(jsonelement, registries);
         }
 
         @Nullable
-        public static MutableComponent fromJson(@Nullable JsonElement p_130692_, HolderLookup.Provider p_330725_) {
-            return p_130692_ == null ? null : deserialize(p_130692_, p_330725_);
+        public static MutableComponent fromJson(@Nullable JsonElement json, HolderLookup.Provider registries) {
+            return json == null ? null : deserialize(json, registries);
         }
 
         @Nullable
-        public static MutableComponent fromJsonLenient(String p_130715_, HolderLookup.Provider p_331029_) {
-            JsonReader jsonreader = new JsonReader(new StringReader(p_130715_));
+        public static MutableComponent fromJsonLenient(String json, HolderLookup.Provider registries) {
+            JsonReader jsonreader = new JsonReader(new StringReader(json));
             jsonreader.setLenient(true);
             JsonElement jsonelement = JsonParser.parseReader(jsonreader);
-            return jsonelement == null ? null : deserialize(jsonelement, p_331029_);
+            return jsonelement == null ? null : deserialize(jsonelement, registries);
         }
     }
 
     public static class SerializerAdapter implements JsonDeserializer<MutableComponent>, JsonSerializer<Component> {
         private final HolderLookup.Provider registries;
 
-        public SerializerAdapter(HolderLookup.Provider p_330454_) {
-            this.registries = p_330454_;
+        public SerializerAdapter(HolderLookup.Provider registries) {
+            this.registries = registries;
         }
 
-        public MutableComponent deserialize(JsonElement p_304644_, Type p_304861_, JsonDeserializationContext p_304563_) throws JsonParseException {
-            return Component.Serializer.deserialize(p_304644_, this.registries);
+        public MutableComponent deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            return Component.Serializer.deserialize(json, this.registries);
         }
 
-        public JsonElement serialize(Component p_304915_, Type p_304423_, JsonSerializationContext p_304514_) {
-            return Component.Serializer.serialize(p_304915_, this.registries);
+        public JsonElement serialize(Component src, Type typeOfSrc, JsonSerializationContext context) {
+            return Component.Serializer.serialize(src, this.registries);
         }
     }
 }

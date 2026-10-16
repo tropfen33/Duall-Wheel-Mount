@@ -9,28 +9,34 @@ public class BlockHitResult extends HitResult {
     private final boolean miss;
     private final boolean inside;
 
-    public static BlockHitResult miss(Vec3 p_82427_, Direction p_82428_, BlockPos p_82429_) {
-        return new BlockHitResult(true, p_82427_, p_82428_, p_82429_, false);
+    /**
+     * Creates a new BlockRayTraceResult marked as a miss.
+     */
+    public static BlockHitResult miss(Vec3 location, Direction direction, BlockPos pos) {
+        return new BlockHitResult(true, location, direction, pos, false);
     }
 
-    public BlockHitResult(Vec3 p_82415_, Direction p_82416_, BlockPos p_82417_, boolean p_82418_) {
-        this(false, p_82415_, p_82416_, p_82417_, p_82418_);
+    public BlockHitResult(Vec3 location, Direction direction, BlockPos blockPos, boolean inside) {
+        this(false, location, direction, blockPos, inside);
     }
 
-    private BlockHitResult(boolean p_82420_, Vec3 p_82421_, Direction p_82422_, BlockPos p_82423_, boolean p_82424_) {
-        super(p_82421_);
-        this.miss = p_82420_;
-        this.direction = p_82422_;
-        this.blockPos = p_82423_;
-        this.inside = p_82424_;
+    private BlockHitResult(boolean miss, Vec3 location, Direction direction, BlockPos blockPos, boolean inside) {
+        super(location);
+        this.miss = miss;
+        this.direction = direction;
+        this.blockPos = blockPos;
+        this.inside = inside;
     }
 
-    public BlockHitResult withDirection(Direction p_82433_) {
-        return new BlockHitResult(this.miss, this.location, p_82433_, this.blockPos, this.inside);
+    /**
+     * Creates a new BlockRayTraceResult, with the clicked face replaced with the given one
+     */
+    public BlockHitResult withDirection(Direction newFace) {
+        return new BlockHitResult(this.miss, this.location, newFace, this.blockPos, this.inside);
     }
 
-    public BlockHitResult withPosition(BlockPos p_82431_) {
-        return new BlockHitResult(this.miss, this.location, this.direction, p_82431_, this.inside);
+    public BlockHitResult withPosition(BlockPos pos) {
+        return new BlockHitResult(this.miss, this.location, this.direction, pos, this.inside);
     }
 
     public BlockPos getBlockPos() {

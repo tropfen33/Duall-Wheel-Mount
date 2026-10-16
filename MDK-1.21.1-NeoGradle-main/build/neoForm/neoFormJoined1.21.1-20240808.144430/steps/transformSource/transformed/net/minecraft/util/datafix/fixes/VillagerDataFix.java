@@ -8,14 +8,14 @@ import com.mojang.datafixers.schemas.Schema;
 import com.mojang.serialization.Dynamic;
 
 public class VillagerDataFix extends NamedEntityFix {
-    public VillagerDataFix(Schema p_17056_, String p_17057_) {
-        super(p_17056_, false, "Villager profession data fix (" + p_17057_ + ")", References.ENTITY, p_17057_);
+    public VillagerDataFix(Schema outputSchema, String entityName) {
+        super(outputSchema, false, "Villager profession data fix (" + entityName + ")", References.ENTITY, entityName);
     }
 
     @Override
-    protected Typed<?> fix(Typed<?> p_17062_) {
-        Dynamic<?> dynamic = p_17062_.get(DSL.remainderFinder());
-        return p_17062_.set(
+    protected Typed<?> fix(Typed<?> typed) {
+        Dynamic<?> dynamic = typed.get(DSL.remainderFinder());
+        return typed.set(
             DSL.remainderFinder(),
             dynamic.remove("Profession")
                 .remove("Career")
@@ -36,29 +36,29 @@ public class VillagerDataFix extends NamedEntityFix {
         );
     }
 
-    private static String upgradeData(int p_17059_, int p_17060_) {
-        if (p_17059_ == 0) {
-            if (p_17060_ == 2) {
+    private static String upgradeData(int profession, int career) {
+        if (profession == 0) {
+            if (career == 2) {
                 return "minecraft:fisherman";
-            } else if (p_17060_ == 3) {
+            } else if (career == 3) {
                 return "minecraft:shepherd";
             } else {
-                return p_17060_ == 4 ? "minecraft:fletcher" : "minecraft:farmer";
+                return career == 4 ? "minecraft:fletcher" : "minecraft:farmer";
             }
-        } else if (p_17059_ == 1) {
-            return p_17060_ == 2 ? "minecraft:cartographer" : "minecraft:librarian";
-        } else if (p_17059_ == 2) {
+        } else if (profession == 1) {
+            return career == 2 ? "minecraft:cartographer" : "minecraft:librarian";
+        } else if (profession == 2) {
             return "minecraft:cleric";
-        } else if (p_17059_ == 3) {
-            if (p_17060_ == 2) {
+        } else if (profession == 3) {
+            if (career == 2) {
                 return "minecraft:weaponsmith";
             } else {
-                return p_17060_ == 3 ? "minecraft:toolsmith" : "minecraft:armorer";
+                return career == 3 ? "minecraft:toolsmith" : "minecraft:armorer";
             }
-        } else if (p_17059_ == 4) {
-            return p_17060_ == 2 ? "minecraft:leatherworker" : "minecraft:butcher";
+        } else if (profession == 4) {
+            return career == 2 ? "minecraft:leatherworker" : "minecraft:butcher";
         } else {
-            return p_17059_ == 5 ? "minecraft:nitwit" : "minecraft:none";
+            return profession == 5 ? "minecraft:nitwit" : "minecraft:none";
         }
     }
 }

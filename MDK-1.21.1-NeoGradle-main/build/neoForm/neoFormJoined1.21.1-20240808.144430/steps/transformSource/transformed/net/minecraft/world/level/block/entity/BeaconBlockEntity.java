@@ -47,6 +47,9 @@ import net.minecraft.world.phys.AABB;
 
 public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Nameable {
     private static final int MAX_LEVELS = 4;
+    /**
+     * A list of effects that beacons can apply.
+     */
     public static final List<List<Holder<MobEffect>>> BEACON_EFFECTS = List.of(
         List.of(MobEffects.MOVEMENT_SPEED, MobEffects.DIG_SPEED),
         List.of(MobEffects.DAMAGE_RESISTANCE, MobEffects.JUMP),
@@ -62,14 +65,29 @@ public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Name
     private static final Component DEFAULT_NAME = Component.translatable("container.beacon");
     private static final String TAG_PRIMARY = "primary_effect";
     private static final String TAG_SECONDARY = "secondary_effect";
+    /**
+     * A list of beam segments for this beacon.
+     */
     List<BeaconBlockEntity.BeaconBeamSection> beamSections = Lists.newArrayList();
     private List<BeaconBlockEntity.BeaconBeamSection> checkingBeamSections = Lists.newArrayList();
+    /**
+     * The number of levels of this beacon's pyramid.
+     */
     int levels;
     private int lastCheckY;
+    /**
+     * The primary effect given by this beacon.
+     */
     @Nullable
     Holder<MobEffect> primaryPower;
+    /**
+     * The secondary effect given by this beacon.
+     */
     @Nullable
     Holder<MobEffect> secondaryPower;
+    /**
+     * The custom name for this beacon.
+     */
     @Nullable
     private Component name;
     private LockCode lockKey = LockCode.NO_LOCK;
@@ -109,39 +127,39 @@ public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Name
     };
 
     @Nullable
-    static Holder<MobEffect> filterEffect(@Nullable Holder<MobEffect> p_316372_) {
-        return VALID_EFFECTS.contains(p_316372_) ? p_316372_ : null;
+    static Holder<MobEffect> filterEffect(@Nullable Holder<MobEffect> effect) {
+        return VALID_EFFECTS.contains(effect) ? effect : null;
     }
 
-    public BeaconBlockEntity(BlockPos p_155088_, BlockState p_155089_) {
-        super(BlockEntityType.BEACON, p_155088_, p_155089_);
+    public BeaconBlockEntity(BlockPos pos, BlockState blockState) {
+        super(BlockEntityType.BEACON, pos, blockState);
     }
 
-    public static void tick(Level p_155108_, BlockPos p_155109_, BlockState p_155110_, BeaconBlockEntity p_155111_) {
-        int i = p_155109_.getX();
-        int j = p_155109_.getY();
-        int k = p_155109_.getZ();
+    public static void tick(Level level, BlockPos pos, BlockState state, BeaconBlockEntity blockEntity) {
+        int i = pos.getX();
+        int j = pos.getY();
+        int k = pos.getZ();
         BlockPos blockpos;
-        if (p_155111_.lastCheckY < j) {
-            blockpos = p_155109_;
-            p_155111_.checkingBeamSections = Lists.newArrayList();
-            p_155111_.lastCheckY = p_155109_.getY() - 1;
+        if (blockEntity.lastCheckY < j) {
+            blockpos = pos;
+            blockEntity.checkingBeamSections = Lists.newArrayList();
+            blockEntity.lastCheckY = pos.getY() - 1;
         } else {
-            blockpos = new BlockPos(i, p_155111_.lastCheckY + 1, k);
+            blockpos = new BlockPos(i, blockEntity.lastCheckY + 1, k);
         }
 
-        BeaconBlockEntity.BeaconBeamSection beaconblockentity$beaconbeamsection = p_155111_.checkingBeamSections.isEmpty()
+        BeaconBlockEntity.BeaconBeamSection beaconblockentity$beaconbeamsection = blockEntity.checkingBeamSections.isEmpty()
             ? null
-            : p_155111_.checkingBeamSections.get(p_155111_.checkingBeamSections.size() - 1);
-        int l = p_155108_.getHeight(Heightmap.Types.WORLD_SURFACE, i, k);
+            : blockEntity.checkingBeamSections.get(blockEntity.checkingBeamSections.size() - 1);
+        int l = level.getHeight(Heightmap.Types.WORLD_SURFACE, i, k);
 
         for (int i1 = 0; i1 < 10 && blockpos.getY() <= l; i1++) {
-            BlockState blockstate = p_155108_.getBlockState(blockpos);
-            Integer j1 = blockstate.getBeaconColorMultiplier(p_155108_, blockpos, p_155109_);
+            BlockState blockstate = level.getBlockState(blockpos);
+            Integer j1 = blockstate.getBeaconColorMultiplier(level, blockpos, pos);
             if (j1 != null) {
-                if (p_155111_.checkingBeamSections.size() <= 1) {
+                if (blockEntity.checkingBeamSections.size() <= 1) {
                     beaconblockentity$beaconbeamsection = new BeaconBlockEntity.BeaconBeamSection(j1);
-                    p_155111_.checkingBeamSections.add(beaconblockentity$beaconbeamsection);
+                    blockEntity.checkingBeamSections.add(beaconblockentity$beaconbeamsection);
                 } else if (beaconblockentity$beaconbeamsection != null) {
                     if (j1 == beaconblockentity$beaconbeamsection.color) {
                         beaconblockentity$beaconbeamsection.increaseHeight();
@@ -149,13 +167,13 @@ public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Name
                         beaconblockentity$beaconbeamsection = new BeaconBlockEntity.BeaconBeamSection(
                             FastColor.ARGB32.average(beaconblockentity$beaconbeamsection.color, j1)
                         );
-                        p_155111_.checkingBeamSections.add(beaconblockentity$beaconbeamsection);
+                        blockEntity.checkingBeamSections.add(beaconblockentity$beaconbeamsection);
                     }
                 }
             } else {
-                if (beaconblockentity$beaconbeamsection == null || blockstate.getLightBlock(p_155108_, blockpos) >= 15 && !blockstate.is(Blocks.BEDROCK)) {
-                    p_155111_.checkingBeamSections.clear();
-                    p_155111_.lastCheckY = l;
+                if (beaconblockentity$beaconbeamsection == null || blockstate.getLightBlock(level, blockpos) >= 15 && !blockstate.is(Blocks.BEDROCK)) {
+                    blockEntity.checkingBeamSections.clear();
+                    blockEntity.lastCheckY = l;
                     break;
                 }
 
@@ -163,56 +181,56 @@ public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Name
             }
 
             blockpos = blockpos.above();
-            p_155111_.lastCheckY++;
+            blockEntity.lastCheckY++;
         }
 
-        int k1 = p_155111_.levels;
-        if (p_155108_.getGameTime() % 80L == 0L) {
-            if (!p_155111_.beamSections.isEmpty()) {
-                p_155111_.levels = updateBase(p_155108_, i, j, k);
+        int k1 = blockEntity.levels;
+        if (level.getGameTime() % 80L == 0L) {
+            if (!blockEntity.beamSections.isEmpty()) {
+                blockEntity.levels = updateBase(level, i, j, k);
             }
 
-            if (p_155111_.levels > 0 && !p_155111_.beamSections.isEmpty()) {
-                applyEffects(p_155108_, p_155109_, p_155111_.levels, p_155111_.primaryPower, p_155111_.secondaryPower);
-                playSound(p_155108_, p_155109_, SoundEvents.BEACON_AMBIENT);
+            if (blockEntity.levels > 0 && !blockEntity.beamSections.isEmpty()) {
+                applyEffects(level, pos, blockEntity.levels, blockEntity.primaryPower, blockEntity.secondaryPower);
+                playSound(level, pos, SoundEvents.BEACON_AMBIENT);
             }
         }
 
-        if (p_155111_.lastCheckY >= l) {
-            p_155111_.lastCheckY = p_155108_.getMinBuildHeight() - 1;
+        if (blockEntity.lastCheckY >= l) {
+            blockEntity.lastCheckY = level.getMinBuildHeight() - 1;
             boolean flag = k1 > 0;
-            p_155111_.beamSections = p_155111_.checkingBeamSections;
-            if (!p_155108_.isClientSide) {
-                boolean flag1 = p_155111_.levels > 0;
+            blockEntity.beamSections = blockEntity.checkingBeamSections;
+            if (!level.isClientSide) {
+                boolean flag1 = blockEntity.levels > 0;
                 if (!flag && flag1) {
-                    playSound(p_155108_, p_155109_, SoundEvents.BEACON_ACTIVATE);
+                    playSound(level, pos, SoundEvents.BEACON_ACTIVATE);
 
-                    for (ServerPlayer serverplayer : p_155108_.getEntitiesOfClass(
+                    for (ServerPlayer serverplayer : level.getEntitiesOfClass(
                         ServerPlayer.class, new AABB((double)i, (double)j, (double)k, (double)i, (double)(j - 4), (double)k).inflate(10.0, 5.0, 10.0)
                     )) {
-                        CriteriaTriggers.CONSTRUCT_BEACON.trigger(serverplayer, p_155111_.levels);
+                        CriteriaTriggers.CONSTRUCT_BEACON.trigger(serverplayer, blockEntity.levels);
                     }
                 } else if (flag && !flag1) {
-                    playSound(p_155108_, p_155109_, SoundEvents.BEACON_DEACTIVATE);
+                    playSound(level, pos, SoundEvents.BEACON_DEACTIVATE);
                 }
             }
         }
     }
 
-    private static int updateBase(Level p_155093_, int p_155094_, int p_155095_, int p_155096_) {
+    private static int updateBase(Level level, int x, int y, int z) {
         int i = 0;
 
         for (int j = 1; j <= 4; i = j++) {
-            int k = p_155095_ - j;
-            if (k < p_155093_.getMinBuildHeight()) {
+            int k = y - j;
+            if (k < level.getMinBuildHeight()) {
                 break;
             }
 
             boolean flag = true;
 
-            for (int l = p_155094_ - j; l <= p_155094_ + j && flag; l++) {
-                for (int i1 = p_155096_ - j; i1 <= p_155096_ + j; i1++) {
-                    if (!p_155093_.getBlockState(new BlockPos(l, k, i1)).is(BlockTags.BEACON_BASE_BLOCKS)) {
+            for (int l = x - j; l <= x + j && flag; l++) {
+                for (int i1 = z - j; i1 <= z + j; i1++) {
+                    if (!level.getBlockState(new BlockPos(l, k, i1)).is(BlockTags.BEACON_BASE_BLOCKS)) {
                         flag = false;
                         break;
                     }
@@ -234,33 +252,33 @@ public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Name
     }
 
     private static void applyEffects(
-        Level p_155098_, BlockPos p_155099_, int p_155100_, @Nullable Holder<MobEffect> p_316599_, @Nullable Holder<MobEffect> p_316343_
+        Level level, BlockPos pos, int beaconLevel, @Nullable Holder<MobEffect> primaryEffect, @Nullable Holder<MobEffect> secondaryEffect
     ) {
-        if (!p_155098_.isClientSide && p_316599_ != null) {
-            double d0 = (double)(p_155100_ * 10 + 10);
+        if (!level.isClientSide && primaryEffect != null) {
+            double d0 = (double)(beaconLevel * 10 + 10);
             int i = 0;
-            if (p_155100_ >= 4 && Objects.equals(p_316599_, p_316343_)) {
+            if (beaconLevel >= 4 && Objects.equals(primaryEffect, secondaryEffect)) {
                 i = 1;
             }
 
-            int j = (9 + p_155100_ * 2) * 20;
-            AABB aabb = new AABB(p_155099_).inflate(d0).expandTowards(0.0, (double)p_155098_.getHeight(), 0.0);
-            List<Player> list = p_155098_.getEntitiesOfClass(Player.class, aabb);
+            int j = (9 + beaconLevel * 2) * 20;
+            AABB aabb = new AABB(pos).inflate(d0).expandTowards(0.0, (double)level.getHeight(), 0.0);
+            List<Player> list = level.getEntitiesOfClass(Player.class, aabb);
 
             for (Player player : list) {
-                player.addEffect(new MobEffectInstance(p_316599_, j, i, true, true));
+                player.addEffect(new MobEffectInstance(primaryEffect, j, i, true, true));
             }
 
-            if (p_155100_ >= 4 && !Objects.equals(p_316599_, p_316343_) && p_316343_ != null) {
+            if (beaconLevel >= 4 && !Objects.equals(primaryEffect, secondaryEffect) && secondaryEffect != null) {
                 for (Player player1 : list) {
-                    player1.addEffect(new MobEffectInstance(p_316343_, j, 0, true, true));
+                    player1.addEffect(new MobEffectInstance(secondaryEffect, j, 0, true, true));
                 }
             }
         }
     }
 
-    public static void playSound(Level p_155104_, BlockPos p_155105_, SoundEvent p_155106_) {
-        p_155104_.playSound(null, p_155105_, p_155106_, SoundSource.BLOCKS, 1.0F, 1.0F);
+    public static void playSound(Level level, BlockPos pos, SoundEvent sound) {
+        level.playSound(null, pos, sound, SoundSource.BLOCKS, 1.0F, 1.0F);
     }
 
     public List<BeaconBlockEntity.BeaconBeamSection> getBeamSections() {
@@ -272,20 +290,20 @@ public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Name
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider p_324570_) {
-        return this.saveCustomOnly(p_324570_);
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        return this.saveCustomOnly(registries);
     }
 
-    private static void storeEffect(CompoundTag p_298214_, String p_298983_, @Nullable Holder<MobEffect> p_316689_) {
-        if (p_316689_ != null) {
-            p_316689_.unwrapKey().ifPresent(p_316401_ -> p_298214_.putString(p_298983_, p_316401_.location().toString()));
+    private static void storeEffect(CompoundTag tag, String key, @Nullable Holder<MobEffect> effect) {
+        if (effect != null) {
+            effect.unwrapKey().ifPresent(p_316401_ -> tag.putString(key, p_316401_.location().toString()));
         }
     }
 
     @Nullable
-    private static Holder<MobEffect> loadEffect(CompoundTag p_298570_, String p_299310_) {
-        if (p_298570_.contains(p_299310_, 8)) {
-            ResourceLocation resourcelocation = ResourceLocation.tryParse(p_298570_.getString(p_299310_));
+    private static Holder<MobEffect> loadEffect(CompoundTag tag, String key) {
+        if (tag.contains(key, 8)) {
+            ResourceLocation resourcelocation = ResourceLocation.tryParse(tag.getString(key));
             return resourcelocation == null ? null : BuiltInRegistries.MOB_EFFECT.getHolder(resourcelocation).map(BeaconBlockEntity::filterEffect).orElse(null);
         } else {
             return null;
@@ -293,32 +311,35 @@ public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Name
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_338669_, HolderLookup.Provider p_338291_) {
-        super.loadAdditional(p_338669_, p_338291_);
-        this.primaryPower = loadEffect(p_338669_, "primary_effect");
-        this.secondaryPower = loadEffect(p_338669_, "secondary_effect");
-        if (p_338669_.contains("CustomName", 8)) {
-            this.name = parseCustomNameSafe(p_338669_.getString("CustomName"), p_338291_);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        this.primaryPower = loadEffect(tag, "primary_effect");
+        this.secondaryPower = loadEffect(tag, "secondary_effect");
+        if (tag.contains("CustomName", 8)) {
+            this.name = parseCustomNameSafe(tag.getString("CustomName"), registries);
         }
 
-        this.lockKey = LockCode.fromTag(p_338669_);
+        this.lockKey = LockCode.fromTag(tag);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_187463_, HolderLookup.Provider p_324268_) {
-        super.saveAdditional(p_187463_, p_324268_);
-        storeEffect(p_187463_, "primary_effect", this.primaryPower);
-        storeEffect(p_187463_, "secondary_effect", this.secondaryPower);
-        p_187463_.putInt("Levels", this.levels);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        storeEffect(tag, "primary_effect", this.primaryPower);
+        storeEffect(tag, "secondary_effect", this.secondaryPower);
+        tag.putInt("Levels", this.levels);
         if (this.name != null) {
-            p_187463_.putString("CustomName", Component.Serializer.toJson(this.name, p_324268_));
+            tag.putString("CustomName", Component.Serializer.toJson(this.name, registries));
         }
 
-        this.lockKey.addToTag(p_187463_);
+        this.lockKey.addToTag(tag);
     }
 
-    public void setCustomName(@Nullable Component p_58682_) {
-        this.name = p_58682_;
+    /**
+     * Sets the custom name for this beacon.
+     */
+    public void setCustomName(@Nullable Component name) {
+        this.name = name;
     }
 
     @Nullable
@@ -329,9 +350,9 @@ public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Name
 
     @Nullable
     @Override
-    public AbstractContainerMenu createMenu(int p_58696_, Inventory p_58697_, Player p_58698_) {
-        return BaseContainerBlockEntity.canUnlock(p_58698_, this.lockKey, this.getDisplayName())
-            ? new BeaconMenu(p_58696_, p_58697_, this.dataAccess, ContainerLevelAccess.create(this.level, this.getBlockPos()))
+    public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
+        return BaseContainerBlockEntity.canUnlock(player, this.lockKey, this.getDisplayName())
+            ? new BeaconMenu(containerId, playerInventory, this.dataAccess, ContainerLevelAccess.create(this.level, this.getBlockPos()))
             : null;
     }
 
@@ -346,39 +367,42 @@ public class BeaconBlockEntity extends BlockEntity implements MenuProvider, Name
     }
 
     @Override
-    protected void applyImplicitComponents(BlockEntity.DataComponentInput p_338364_) {
-        super.applyImplicitComponents(p_338364_);
-        this.name = p_338364_.get(DataComponents.CUSTOM_NAME);
-        this.lockKey = p_338364_.getOrDefault(DataComponents.LOCK, LockCode.NO_LOCK);
+    protected void applyImplicitComponents(BlockEntity.DataComponentInput componentInput) {
+        super.applyImplicitComponents(componentInput);
+        this.name = componentInput.get(DataComponents.CUSTOM_NAME);
+        this.lockKey = componentInput.getOrDefault(DataComponents.LOCK, LockCode.NO_LOCK);
     }
 
     @Override
-    protected void collectImplicitComponents(DataComponentMap.Builder p_338239_) {
-        super.collectImplicitComponents(p_338239_);
-        p_338239_.set(DataComponents.CUSTOM_NAME, this.name);
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        components.set(DataComponents.CUSTOM_NAME, this.name);
         if (!this.lockKey.equals(LockCode.NO_LOCK)) {
-            p_338239_.set(DataComponents.LOCK, this.lockKey);
+            components.set(DataComponents.LOCK, this.lockKey);
         }
     }
 
     @Override
-    public void removeComponentsFromTag(CompoundTag p_331401_) {
-        p_331401_.remove("CustomName");
-        p_331401_.remove("Lock");
+    public void removeComponentsFromTag(CompoundTag tag) {
+        tag.remove("CustomName");
+        tag.remove("Lock");
     }
 
     @Override
-    public void setLevel(Level p_155091_) {
-        super.setLevel(p_155091_);
-        this.lastCheckY = p_155091_.getMinBuildHeight() - 1;
+    public void setLevel(Level level) {
+        super.setLevel(level);
+        this.lastCheckY = level.getMinBuildHeight() - 1;
     }
 
     public static class BeaconBeamSection {
+        /**
+         * The colors of this section of a beacon beam, in RGB float format.
+         */
         final int color;
         private int height;
 
-        public BeaconBeamSection(int p_350966_) {
-            this.color = p_350966_;
+        public BeaconBeamSection(int color) {
+            this.color = color;
             this.height = 1;
         }
 

@@ -15,8 +15,8 @@ public record ClientboundCookieRequestPacket(ResourceLocation key) implements Pa
         this(p_320446_.readResourceLocation());
     }
 
-    private void write(FriendlyByteBuf p_320402_) {
-        p_320402_.writeResourceLocation(this.key);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeResourceLocation(this.key);
     }
 
     @Override
@@ -24,7 +24,10 @@ public record ClientboundCookieRequestPacket(ResourceLocation key) implements Pa
         return CookiePacketTypes.CLIENTBOUND_COOKIE_REQUEST;
     }
 
-    public void handle(ClientCookiePacketListener p_320203_) {
-        p_320203_.handleRequestCookie(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientCookiePacketListener handler) {
+        handler.handleRequestCookie(this);
     }
 }

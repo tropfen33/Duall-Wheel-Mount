@@ -72,19 +72,19 @@ public class GameTestServer extends MinecraftServer {
     private MultipleTestTracker testTracker;
 
     public static GameTestServer create(
-        Thread p_206607_, LevelStorageSource.LevelStorageAccess p_206608_, PackRepository p_206609_, Collection<TestFunction> p_206610_, BlockPos p_206611_
+        Thread serverThread, LevelStorageSource.LevelStorageAccess storageSource, PackRepository packRepository, Collection<TestFunction> testBatches, BlockPos spawnPos
     ) {
-        if (p_206610_.isEmpty()) {
+        if (testBatches.isEmpty()) {
             throw new IllegalArgumentException("No test functions were given!");
         } else {
-            p_206609_.reload();
+            packRepository.reload();
             WorldDataConfiguration worlddataconfiguration = new WorldDataConfiguration(
-                new DataPackConfig(new ArrayList<>(p_206609_.getAvailableIds()), List.of()), FeatureFlags.REGISTRY.allFlags()
+                new DataPackConfig(new ArrayList<>(packRepository.getAvailableIds()), List.of()), FeatureFlags.REGISTRY.allFlags()
             );
             LevelSettings levelsettings = new LevelSettings(
                 "Test Level", GameType.CREATIVE, false, Difficulty.NORMAL, true, TEST_GAME_RULES, worlddataconfiguration
             );
-            WorldLoader.PackConfig worldloader$packconfig = new WorldLoader.PackConfig(p_206609_, worlddataconfiguration, false, true);
+            WorldLoader.PackConfig worldloader$packconfig = new WorldLoader.PackConfig(packRepository, worlddataconfiguration, false, true);
             WorldLoader.InitConfig worldloader$initconfig = new WorldLoader.InitConfig(worldloader$packconfig, Commands.CommandSelection.DEDICATED, 4);
 
             try {
@@ -116,7 +116,7 @@ public class GameTestServer extends MinecraftServer {
                     .get();
                 stopwatch.stop();
                 LOGGER.debug("Finished resource loading after {} ms", stopwatch.elapsed(TimeUnit.MILLISECONDS));
-                return new GameTestServer(p_206607_, p_206608_, p_206609_, worldstem, p_206610_, p_206611_);
+                return new GameTestServer(serverThread, storageSource, packRepository, worldstem, testBatches, spawnPos);
             } catch (Exception exception) {
                 LOGGER.warn("Failed to load vanilla datapack, bit oops", (Throwable)exception);
                 System.exit(-1);
@@ -126,25 +126,25 @@ public class GameTestServer extends MinecraftServer {
     }
 
     private GameTestServer(
-        Thread p_206597_,
-        LevelStorageSource.LevelStorageAccess p_206598_,
-        PackRepository p_206599_,
-        WorldStem p_206600_,
-        Collection<TestFunction> p_206601_,
-        BlockPos p_206602_
+        Thread serverThread,
+        LevelStorageSource.LevelStorageAccess storageSource,
+        PackRepository packRepository,
+        WorldStem worldStem,
+        Collection<TestFunction> testBatches,
+        BlockPos spawnPos
     ) {
         super(
-            p_206597_,
-            p_206598_,
-            p_206599_,
-            p_206600_,
+            serverThread,
+            storageSource,
+            packRepository,
+            worldStem,
             Proxy.NO_PROXY,
             DataFixers.getDataFixer(),
             NO_SERVICES,
             LoggerChunkProgressListener::createFromGameruleRadius
         );
-        this.testFunctions = Lists.newArrayList(p_206601_);
-        this.spawnPos = p_206602_;
+        this.testFunctions = Lists.newArrayList(testBatches);
+        this.spawnPos = spawnPos;
     }
 
     @Override
@@ -163,9 +163,12 @@ public class GameTestServer extends MinecraftServer {
         return true;
     }
 
+    /**
+     * Main function called by run() every loop.
+     */
     @Override
-    public void tickServer(BooleanSupplier p_177619_) {
-        super.tickServer(p_177619_);
+    public void tickServer(BooleanSupplier hasTimeLeft) {
+        super.tickServer(hasTimeLeft);
         ServerLevel serverlevel = this.overworld();
         if (!this.haveTestsStarted()) {
             this.startTests(serverlevel);
@@ -212,9 +215,9 @@ public class GameTestServer extends MinecraftServer {
     }
 
     @Override
-    public SystemReport fillServerSystemReport(SystemReport p_177613_) {
-        p_177613_.setDetail("Type", "Game test server");
-        return p_177613_;
+    public SystemReport fillServerSystemReport(SystemReport report) {
+        report.setDetail("Type", "Game test server");
+        return report;
     }
 
     @Override
@@ -224,18 +227,21 @@ public class GameTestServer extends MinecraftServer {
         System.exit(this.testTracker.getFailedRequiredCount());
     }
 
+    /**
+     * Called on exit from the main run() loop.
+     */
     @Override
-    public void onServerCrash(CrashReport p_177623_) {
-        super.onServerCrash(p_177623_);
-        LOGGER.error("Game test server crashed\n{}", p_177623_.getFriendlyReport(ReportType.CRASH));
+    public void onServerCrash(CrashReport report) {
+        super.onServerCrash(report);
+        LOGGER.error("Game test server crashed\n{}", report.getFriendlyReport(ReportType.CRASH));
         System.exit(1);
     }
 
-    private void startTests(ServerLevel p_177625_) {
+    private void startTests(ServerLevel serverLevel) {
         BlockPos blockpos = new BlockPos(
-            p_177625_.random.nextIntBetweenInclusive(-14999992, 14999992), -59, p_177625_.random.nextIntBetweenInclusive(-14999992, 14999992)
+            serverLevel.random.nextIntBetweenInclusive(-14999992, 14999992), -59, serverLevel.random.nextIntBetweenInclusive(-14999992, 14999992)
         );
-        GameTestRunner gametestrunner = GameTestRunner.Builder.fromBatches(this.testBatches, p_177625_)
+        GameTestRunner gametestrunner = GameTestRunner.Builder.fromBatches(this.testBatches, serverLevel)
             .newStructureSpawner(new StructureGridSpawner(blockpos, 8, false))
             .build();
         Collection<GameTestInfo> collection = gametestrunner.getTestInfos();
@@ -301,7 +307,7 @@ public class GameTestServer extends MinecraftServer {
     }
 
     @Override
-    public boolean isSingleplayerOwner(GameProfile p_177617_) {
+    public boolean isSingleplayerOwner(GameProfile profile) {
         return false;
     }
 }

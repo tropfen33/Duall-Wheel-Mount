@@ -45,39 +45,39 @@ public record JukeboxPlayable(EitherHolder<JukeboxSong> song, boolean showInTool
     );
 
     @Override
-    public void addToTooltip(Item.TooltipContext p_350489_, Consumer<Component> p_350818_, TooltipFlag p_350358_) {
-        HolderLookup.Provider holderlookup$provider = p_350489_.registries();
+    public void addToTooltip(Item.TooltipContext context, Consumer<Component> tooltipAdder, TooltipFlag tooltipFlag) {
+        HolderLookup.Provider holderlookup$provider = context.registries();
         if (this.showInTooltip && holderlookup$provider != null) {
             this.song.unwrap(holderlookup$provider).ifPresent(p_350916_ -> {
                 MutableComponent mutablecomponent = p_350916_.value().description().copy();
                 ComponentUtils.mergeStyles(mutablecomponent, Style.EMPTY.withColor(ChatFormatting.GRAY));
-                p_350818_.accept(mutablecomponent);
+                tooltipAdder.accept(mutablecomponent);
             });
         }
     }
 
-    public JukeboxPlayable withTooltip(boolean p_350922_) {
-        return new JukeboxPlayable(this.song, p_350922_);
+    public JukeboxPlayable withTooltip(boolean showInTooltip) {
+        return new JukeboxPlayable(this.song, showInTooltip);
     }
 
-    public static ItemInteractionResult tryInsertIntoJukebox(Level p_350560_, BlockPos p_350567_, ItemStack p_350531_, Player p_350807_) {
-        JukeboxPlayable jukeboxplayable = p_350531_.get(DataComponents.JUKEBOX_PLAYABLE);
+    public static ItemInteractionResult tryInsertIntoJukebox(Level level, BlockPos pos, ItemStack stack, Player player) {
+        JukeboxPlayable jukeboxplayable = stack.get(DataComponents.JUKEBOX_PLAYABLE);
         if (jukeboxplayable == null) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         } else {
-            BlockState blockstate = p_350560_.getBlockState(p_350567_);
+            BlockState blockstate = level.getBlockState(pos);
             if (blockstate.is(Blocks.JUKEBOX) && !blockstate.getValue(JukeboxBlock.HAS_RECORD)) {
-                if (!p_350560_.isClientSide) {
-                    ItemStack itemstack = p_350531_.consumeAndReturn(1, p_350807_);
-                    if (p_350560_.getBlockEntity(p_350567_) instanceof JukeboxBlockEntity jukeboxblockentity) {
+                if (!level.isClientSide) {
+                    ItemStack itemstack = stack.consumeAndReturn(1, player);
+                    if (level.getBlockEntity(pos) instanceof JukeboxBlockEntity jukeboxblockentity) {
                         jukeboxblockentity.setTheItem(itemstack);
-                        p_350560_.gameEvent(GameEvent.BLOCK_CHANGE, p_350567_, GameEvent.Context.of(p_350807_, blockstate));
+                        level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, blockstate));
                     }
 
-                    p_350807_.awardStat(Stats.PLAY_RECORD);
+                    player.awardStat(Stats.PLAY_RECORD);
                 }
 
-                return ItemInteractionResult.sidedSuccess(p_350560_.isClientSide);
+                return ItemInteractionResult.sidedSuccess(level.isClientSide);
             } else {
                 return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
             }

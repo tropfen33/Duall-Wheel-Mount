@@ -4,13 +4,13 @@ import net.minecraft.network.protocol.cookie.ServerCookiePacketListener;
 import net.minecraft.network.protocol.game.ServerPacketListener;
 
 public interface ServerCommonPacketListener extends ServerCookiePacketListener, ServerPacketListener, net.neoforged.neoforge.common.extensions.IServerCommonPacketListenerExtension {
-    void handleKeepAlive(ServerboundKeepAlivePacket p_296457_);
+    void handleKeepAlive(ServerboundKeepAlivePacket packet);
 
-    void handlePong(ServerboundPongPacket p_294309_);
+    void handlePong(ServerboundPongPacket packet);
 
-    void handleCustomPayload(ServerboundCustomPayloadPacket p_295175_);
+    void handleCustomPayload(ServerboundCustomPayloadPacket packet);
 
-    void handleResourcePackResponse(ServerboundResourcePackPacket p_294545_);
+    void handleResourcePackResponse(ServerboundResourcePackPacket packet);
 
-    void handleClientInformation(ServerboundClientInformationPacket p_301982_);
+    void handleClientInformation(ServerboundClientInformationPacket packet);
 }

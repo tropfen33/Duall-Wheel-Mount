@@ -1,6 +1,8 @@
 {
   "pack": {
-    "description": "Aeronautics: Dual Mounts resources",
-    "pack_format": 34
+    "description": "Duall Wheel Mount resources",
+    "pack_format": 34,
+    "forge:resource_pack_format": 34,
+    "forge:data_pack_format": 48
   }
 }

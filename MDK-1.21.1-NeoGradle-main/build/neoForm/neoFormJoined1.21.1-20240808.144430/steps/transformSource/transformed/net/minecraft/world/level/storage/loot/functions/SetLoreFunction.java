@@ -18,6 +18,10 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
+/**
+ * LootItemFunction that sets a stack's lore tag, optionally replacing any previously present lore.
+ * The Components for the lore tag are optionally resolved relative to a given {@link LootContext.EntityTarget} for entity-sensitive component data such as scoreboard scores.
+ */
 public class SetLoreFunction extends LootItemConditionalFunction {
     public static final MapCodec<SetLoreFunction> CODEC = RecordCodecBuilder.mapCodec(
         p_338151_ -> commonFields(p_338151_)
@@ -34,11 +38,11 @@ public class SetLoreFunction extends LootItemConditionalFunction {
     private final ListOperation mode;
     private final Optional<LootContext.EntityTarget> resolutionContext;
 
-    public SetLoreFunction(List<LootItemCondition> p_81085_, List<Component> p_298633_, ListOperation p_335651_, Optional<LootContext.EntityTarget> p_298623_) {
-        super(p_81085_);
-        this.lore = List.copyOf(p_298633_);
-        this.mode = p_335651_;
-        this.resolutionContext = p_298623_;
+    public SetLoreFunction(List<LootItemCondition> conditions, List<Component> lore, ListOperation mode, Optional<LootContext.EntityTarget> resolutionContext) {
+        super(conditions);
+        this.lore = List.copyOf(lore);
+        this.mode = mode;
+        this.resolutionContext = resolutionContext;
     }
 
     @Override
@@ -51,19 +55,22 @@ public class SetLoreFunction extends LootItemConditionalFunction {
         return this.resolutionContext.<Set<LootContextParam<?>>>map(p_298664_ -> Set.of(p_298664_.getParam())).orElseGet(Set::of);
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_81089_, LootContext p_81090_) {
-        p_81089_.update(DataComponents.LORE, ItemLore.EMPTY, p_330190_ -> new ItemLore(this.updateLore(p_330190_, p_81090_)));
-        return p_81089_;
+    public ItemStack run(ItemStack stack, LootContext context) {
+        stack.update(DataComponents.LORE, ItemLore.EMPTY, p_330190_ -> new ItemLore(this.updateLore(p_330190_, context)));
+        return stack;
     }
 
-    private List<Component> updateLore(@Nullable ItemLore p_330567_, LootContext p_331214_) {
-        if (p_330567_ == null && this.lore.isEmpty()) {
+    private List<Component> updateLore(@Nullable ItemLore itemLore, LootContext context) {
+        if (itemLore == null && this.lore.isEmpty()) {
             return List.of();
         } else {
-            UnaryOperator<Component> unaryoperator = SetNameFunction.createResolver(p_331214_, this.resolutionContext.orElse(null));
+            UnaryOperator<Component> unaryoperator = SetNameFunction.createResolver(context, this.resolutionContext.orElse(null));
             List<Component> list = this.lore.stream().map(unaryoperator).toList();
-            return this.mode.apply(p_330567_.lines(), list, 256);
+            return this.mode.apply(itemLore.lines(), list, 256);
         }
     }
 
@@ -76,18 +83,18 @@ public class SetLoreFunction extends LootItemConditionalFunction {
         private final ImmutableList.Builder<Component> lore = ImmutableList.builder();
         private ListOperation mode = ListOperation.Append.INSTANCE;
 
-        public SetLoreFunction.Builder setMode(ListOperation p_335681_) {
-            this.mode = p_335681_;
+        public SetLoreFunction.Builder setMode(ListOperation mode) {
+            this.mode = mode;
             return this;
         }
 
-        public SetLoreFunction.Builder setResolutionContext(LootContext.EntityTarget p_165450_) {
-            this.resolutionContext = Optional.of(p_165450_);
+        public SetLoreFunction.Builder setResolutionContext(LootContext.EntityTarget resolutionContext) {
+            this.resolutionContext = Optional.of(resolutionContext);
             return this;
         }
 
-        public SetLoreFunction.Builder addLine(Component p_165452_) {
-            this.lore.add(p_165452_);
+        public SetLoreFunction.Builder addLine(Component line) {
+            this.lore.add(line);
             return this;
         }
 

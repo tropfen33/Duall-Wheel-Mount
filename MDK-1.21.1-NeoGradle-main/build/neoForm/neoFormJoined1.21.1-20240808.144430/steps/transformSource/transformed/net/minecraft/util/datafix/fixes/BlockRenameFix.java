@@ -18,9 +18,9 @@ import net.minecraft.util.datafix.schemas.NamespacedSchema;
 public abstract class BlockRenameFix extends DataFix {
     private final String name;
 
-    public BlockRenameFix(Schema p_14910_, String p_14911_) {
-        super(p_14910_, false);
-        this.name = p_14911_;
+    public BlockRenameFix(Schema outputSchema, String name) {
+        super(outputSchema, false);
+        this.name = name;
     }
 
     @Override
@@ -50,15 +50,15 @@ public abstract class BlockRenameFix extends DataFix {
         }
     }
 
-    private Dynamic<?> fixBlockState(Dynamic<?> p_316274_) {
-        Optional<String> optional = p_316274_.get("Name").asString().result();
-        return optional.isPresent() ? p_316274_.set("Name", p_316274_.createString(this.renameBlock(optional.get()))) : p_316274_;
+    private Dynamic<?> fixBlockState(Dynamic<?> dynamic) {
+        Optional<String> optional = dynamic.get("Name").asString().result();
+        return optional.isPresent() ? dynamic.set("Name", dynamic.createString(this.renameBlock(optional.get()))) : dynamic;
     }
 
-    private String fixFlatBlockState(String p_316551_) {
-        int i = p_316551_.indexOf(91);
-        int j = p_316551_.indexOf(123);
-        int k = p_316551_.length();
+    private String fixFlatBlockState(String name) {
+        int i = name.indexOf(91);
+        int j = name.indexOf(123);
+        int k = name.length();
         if (i > 0) {
             k = i;
         }
@@ -67,18 +67,18 @@ public abstract class BlockRenameFix extends DataFix {
             k = Math.min(k, j);
         }
 
-        String s = p_316551_.substring(0, k);
+        String s = name.substring(0, k);
         String s1 = this.renameBlock(s);
-        return s1 + p_316551_.substring(k);
+        return s1 + name.substring(k);
     }
 
-    protected abstract String renameBlock(String p_14924_);
+    protected abstract String renameBlock(String name);
 
-    public static DataFix create(Schema p_14915_, String p_14916_, final Function<String, String> p_14917_) {
-        return new BlockRenameFix(p_14915_, p_14916_) {
+    public static DataFix create(Schema p_outputSchema, String p_name, final Function<String, String> renamer) {
+        return new BlockRenameFix(p_outputSchema, p_name) {
             @Override
             protected String renameBlock(String p_316686_) {
-                return p_14917_.apply(p_316686_);
+                return renamer.apply(p_316686_);
             }
         };
     }

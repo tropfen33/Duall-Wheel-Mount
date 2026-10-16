@@ -15,10 +15,10 @@ public class RemapChunkStatusFix extends DataFix {
     private final String name;
     private final UnaryOperator<String> mapper;
 
-    public RemapChunkStatusFix(Schema p_281350_, String p_283581_, UnaryOperator<String> p_282501_) {
-        super(p_281350_, false);
-        this.name = p_283581_;
-        this.mapper = p_282501_;
+    public RemapChunkStatusFix(Schema outputSchema, String name, UnaryOperator<String> mapper) {
+        super(outputSchema, false);
+        this.name = name;
+        this.mapper = mapper;
     }
 
     @Override
@@ -34,8 +34,8 @@ public class RemapChunkStatusFix extends DataFix {
         );
     }
 
-    private <T> Dynamic<T> fixStatus(Dynamic<T> p_281410_) {
-        Optional<Dynamic<T>> optional = p_281410_.asString().result().map(NamespacedSchema::ensureNamespaced).map(this.mapper).map(p_281410_::createString);
-        return DataFixUtils.orElse(optional, p_281410_);
+    private <T> Dynamic<T> fixStatus(Dynamic<T> dynamic) {
+        Optional<Dynamic<T>> optional = dynamic.asString().result().map(NamespacedSchema::ensureNamespaced).map(this.mapper).map(dynamic::createString);
+        return DataFixUtils.orElse(optional, dynamic);
     }
 }

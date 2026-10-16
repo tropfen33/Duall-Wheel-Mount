@@ -23,33 +23,33 @@ public class ServerRecipeBook extends RecipeBook {
     public static final String RECIPE_BOOK_TAG = "recipeBook";
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public int addRecipes(Collection<RecipeHolder<?>> p_12792_, ServerPlayer p_12793_) {
+    public int addRecipes(Collection<RecipeHolder<?>> recipes, ServerPlayer player) {
         List<ResourceLocation> list = Lists.newArrayList();
         int i = 0;
 
-        for (RecipeHolder<?> recipeholder : p_12792_) {
+        for (RecipeHolder<?> recipeholder : recipes) {
             ResourceLocation resourcelocation = recipeholder.id();
             if (!this.known.contains(resourcelocation) && !recipeholder.value().isSpecial()) {
                 this.add(resourcelocation);
                 this.addHighlight(resourcelocation);
                 list.add(resourcelocation);
-                CriteriaTriggers.RECIPE_UNLOCKED.trigger(p_12793_, recipeholder);
+                CriteriaTriggers.RECIPE_UNLOCKED.trigger(player, recipeholder);
                 i++;
             }
         }
 
         if (list.size() > 0) {
-            this.sendRecipes(ClientboundRecipePacket.State.ADD, p_12793_, list);
+            this.sendRecipes(ClientboundRecipePacket.State.ADD, player, list);
         }
 
         return i;
     }
 
-    public int removeRecipes(Collection<RecipeHolder<?>> p_12807_, ServerPlayer p_12808_) {
+    public int removeRecipes(Collection<RecipeHolder<?>> recipes, ServerPlayer player) {
         List<ResourceLocation> list = Lists.newArrayList();
         int i = 0;
 
-        for (RecipeHolder<?> recipeholder : p_12807_) {
+        for (RecipeHolder<?> recipeholder : recipes) {
             ResourceLocation resourcelocation = recipeholder.id();
             if (this.known.contains(resourcelocation)) {
                 this.remove(resourcelocation);
@@ -58,12 +58,12 @@ public class ServerRecipeBook extends RecipeBook {
             }
         }
 
-        this.sendRecipes(ClientboundRecipePacket.State.REMOVE, p_12808_, list);
+        this.sendRecipes(ClientboundRecipePacket.State.REMOVE, player, list);
         return i;
     }
 
-    private void sendRecipes(ClientboundRecipePacket.State p_12802_, ServerPlayer p_12803_, List<ResourceLocation> p_12804_) {
-        p_12803_.connection.send(new ClientboundRecipePacket(p_12802_, p_12804_, Collections.emptyList(), this.getBookSettings()));
+    private void sendRecipes(ClientboundRecipePacket.State state, ServerPlayer player, List<ResourceLocation> recipes) {
+        player.connection.send(new ClientboundRecipePacket(state, recipes, Collections.emptyList(), this.getBookSettings()));
     }
 
     public CompoundTag toNbt() {
@@ -86,25 +86,25 @@ public class ServerRecipeBook extends RecipeBook {
         return compoundtag;
     }
 
-    public void fromNbt(CompoundTag p_12795_, RecipeManager p_12796_) {
-        this.setBookSettings(RecipeBookSettings.read(p_12795_));
-        ListTag listtag = p_12795_.getList("recipes", 8);
-        this.loadRecipes(listtag, this::add, p_12796_);
-        ListTag listtag1 = p_12795_.getList("toBeDisplayed", 8);
-        this.loadRecipes(listtag1, this::addHighlight, p_12796_);
+    public void fromNbt(CompoundTag tag, RecipeManager recipeManager) {
+        this.setBookSettings(RecipeBookSettings.read(tag));
+        ListTag listtag = tag.getList("recipes", 8);
+        this.loadRecipes(listtag, this::add, recipeManager);
+        ListTag listtag1 = tag.getList("toBeDisplayed", 8);
+        this.loadRecipes(listtag1, this::addHighlight, recipeManager);
     }
 
-    private void loadRecipes(ListTag p_12798_, Consumer<RecipeHolder<?>> p_12799_, RecipeManager p_12800_) {
-        for (int i = 0; i < p_12798_.size(); i++) {
-            String s = p_12798_.getString(i);
+    private void loadRecipes(ListTag tags, Consumer<RecipeHolder<?>> recipeConsumer, RecipeManager recipeManager) {
+        for (int i = 0; i < tags.size(); i++) {
+            String s = tags.getString(i);
 
             try {
                 ResourceLocation resourcelocation = ResourceLocation.parse(s);
-                Optional<RecipeHolder<?>> optional = p_12800_.byKey(resourcelocation);
+                Optional<RecipeHolder<?>> optional = recipeManager.byKey(resourcelocation);
                 if (optional.isEmpty()) {
                     LOGGER.error("Tried to load unrecognized recipe: {} removed now.", resourcelocation);
                 } else {
-                    p_12799_.accept(optional.get());
+                    recipeConsumer.accept(optional.get());
                 }
             } catch (ResourceLocationException resourcelocationexception) {
                 LOGGER.error("Tried to load improperly formatted recipe: {} removed now.", s);
@@ -112,7 +112,7 @@ public class ServerRecipeBook extends RecipeBook {
         }
     }
 
-    public void sendInitialRecipeBook(ServerPlayer p_12790_) {
-        p_12790_.connection.send(new ClientboundRecipePacket(ClientboundRecipePacket.State.INIT, this.known, this.highlight, this.getBookSettings()));
+    public void sendInitialRecipeBook(ServerPlayer player) {
+        player.connection.send(new ClientboundRecipePacket(ClientboundRecipePacket.State.INIT, this.known, this.highlight, this.getBookSettings()));
     }
 }

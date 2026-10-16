@@ -11,6 +11,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 
+/**
+ * An NbtProvider that provides NBT data from a named {@link CommandStorage}.
+ */
 public record StorageNbtProvider(ResourceLocation id) implements NbtProvider {
     public static final MapCodec<StorageNbtProvider> CODEC = RecordCodecBuilder.mapCodec(
         p_298341_ -> p_298341_.group(ResourceLocation.CODEC.fieldOf("source").forGetter(StorageNbtProvider::id)).apply(p_298341_, StorageNbtProvider::new)
@@ -23,8 +26,8 @@ public record StorageNbtProvider(ResourceLocation id) implements NbtProvider {
 
     @Nullable
     @Override
-    public Tag get(LootContext p_165636_) {
-        return p_165636_.getLevel().getServer().getCommandStorage().get(this.id);
+    public Tag get(LootContext lootContext) {
+        return lootContext.getLevel().getServer().getCommandStorage().get(this.id);
     }
 
     @Override

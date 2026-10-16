@@ -23,7 +23,7 @@ public record ItemContainerPredicate(Optional<CollectionPredicate<ItemStack, Ite
         return DataComponents.CONTAINER;
     }
 
-    public boolean matches(ItemStack p_340936_, ItemContainerContents p_340971_) {
-        return !this.items.isPresent() || this.items.get().test(p_340971_.nonEmptyItems());
+    public boolean matches(ItemStack stack, ItemContainerContents value) {
+        return !this.items.isPresent() || this.items.get().test(value.nonEmptyItems());
     }
 }

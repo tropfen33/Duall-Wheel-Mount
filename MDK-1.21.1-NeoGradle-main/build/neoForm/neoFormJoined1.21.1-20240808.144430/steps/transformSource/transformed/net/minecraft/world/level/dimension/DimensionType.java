@@ -123,8 +123,8 @@ public record DimensionType(
     }
 
     @Deprecated
-    public static DataResult<ResourceKey<Level>> parseLegacy(Dynamic<?> p_63912_) {
-        Optional<Number> optional = p_63912_.asNumber().result();
+    public static DataResult<ResourceKey<Level>> parseLegacy(Dynamic<?> dynamic) {
+        Optional<Number> optional = dynamic.asNumber().result();
         if (optional.isPresent()) {
             int i = optional.get().intValue();
             if (i == -1) {
@@ -140,24 +140,24 @@ public record DimensionType(
             }
         }
 
-        return Level.RESOURCE_KEY_CODEC.parse(p_63912_);
+        return Level.RESOURCE_KEY_CODEC.parse(dynamic);
     }
 
-    public static double getTeleportationScale(DimensionType p_63909_, DimensionType p_63910_) {
-        double d0 = p_63909_.coordinateScale();
-        double d1 = p_63910_.coordinateScale();
+    public static double getTeleportationScale(DimensionType firstType, DimensionType secondType) {
+        double d0 = firstType.coordinateScale();
+        double d1 = secondType.coordinateScale();
         return d0 / d1;
     }
 
-    public static Path getStorageFolder(ResourceKey<Level> p_196976_, Path p_196977_) {
-        if (p_196976_ == Level.OVERWORLD) {
-            return p_196977_;
-        } else if (p_196976_ == Level.END) {
-            return p_196977_.resolve("DIM1");
+    public static Path getStorageFolder(ResourceKey<Level> dimensionKey, Path levelFolder) {
+        if (dimensionKey == Level.OVERWORLD) {
+            return levelFolder;
+        } else if (dimensionKey == Level.END) {
+            return levelFolder.resolve("DIM1");
         } else {
-            return p_196976_ == Level.NETHER
-                ? p_196977_.resolve("DIM-1")
-                : p_196977_.resolve("dimensions").resolve(p_196976_.location().getNamespace()).resolve(p_196976_.location().getPath());
+            return dimensionKey == Level.NETHER
+                ? levelFolder.resolve("DIM-1")
+                : levelFolder.resolve("dimensions").resolve(dimensionKey.location().getNamespace()).resolve(dimensionKey.location().getPath());
         }
     }
 
@@ -165,14 +165,14 @@ public record DimensionType(
         return this.fixedTime.isPresent();
     }
 
-    public float timeOfDay(long p_63905_) {
-        double d0 = Mth.frac((double)this.fixedTime.orElse(p_63905_) / 24000.0 - 0.25);
+    public float timeOfDay(long dayTime) {
+        double d0 = Mth.frac((double)this.fixedTime.orElse(dayTime) / 24000.0 - 0.25);
         double d1 = 0.5 - Math.cos(d0 * Math.PI) / 2.0;
         return (float)(d0 * 2.0 + d1) / 3.0F;
     }
 
-    public int moonPhase(long p_63937_) {
-        return (int)(p_63937_ / 24000L % 8L + 8L) % 8;
+    public int moonPhase(long dayTime) {
+        return (int)(dayTime / 24000L % 8L + 8L) % 8;
     }
 
     public boolean piglinSafe() {

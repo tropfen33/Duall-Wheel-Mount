@@ -26,9 +26,9 @@ public class TeamArgument implements ArgumentType<String> {
         return new TeamArgument();
     }
 
-    public static PlayerTeam getTeam(CommandContext<CommandSourceStack> p_112092_, String p_112093_) throws CommandSyntaxException {
-        String s = p_112092_.getArgument(p_112093_, String.class);
-        Scoreboard scoreboard = p_112092_.getSource().getScoreboard();
+    public static PlayerTeam getTeam(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
+        String s = context.getArgument(name, String.class);
+        Scoreboard scoreboard = context.getSource().getScoreboard();
         PlayerTeam playerteam = scoreboard.getPlayerTeam(s);
         if (playerteam == null) {
             throw ERROR_TEAM_NOT_FOUND.create(s);
@@ -37,14 +37,14 @@ public class TeamArgument implements ArgumentType<String> {
         }
     }
 
-    public String parse(StringReader p_112090_) throws CommandSyntaxException {
-        return p_112090_.readUnquotedString();
+    public String parse(StringReader reader) throws CommandSyntaxException {
+        return reader.readUnquotedString();
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_112098_, SuggestionsBuilder p_112099_) {
-        return p_112098_.getSource() instanceof SharedSuggestionProvider
-            ? SharedSuggestionProvider.suggest(((SharedSuggestionProvider)p_112098_.getSource()).getAllTeams(), p_112099_)
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
+        return context.getSource() instanceof SharedSuggestionProvider
+            ? SharedSuggestionProvider.suggest(((SharedSuggestionProvider)context.getSource()).getAllTeams(), builder)
             : Suggestions.empty();
     }
 

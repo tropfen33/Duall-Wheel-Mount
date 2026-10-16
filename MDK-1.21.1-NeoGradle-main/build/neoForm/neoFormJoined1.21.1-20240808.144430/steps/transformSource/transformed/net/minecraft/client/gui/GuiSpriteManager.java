@@ -16,20 +16,23 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class GuiSpriteManager extends TextureAtlasHolder {
     private static final Set<MetadataSectionSerializer<?>> METADATA_SECTIONS = Set.of(AnimationMetadataSection.SERIALIZER, GuiMetadataSection.TYPE);
 
-    public GuiSpriteManager(TextureManager p_294434_) {
-        super(p_294434_, ResourceLocation.withDefaultNamespace("textures/atlas/gui.png"), ResourceLocation.withDefaultNamespace("gui"), METADATA_SECTIONS);
+    public GuiSpriteManager(TextureManager textureManager) {
+        super(textureManager, ResourceLocation.withDefaultNamespace("textures/atlas/gui.png"), ResourceLocation.withDefaultNamespace("gui"), METADATA_SECTIONS);
     }
 
+    /**
+     * Gets a sprite associated with the passed resource location.
+     */
     @Override
-    public TextureAtlasSprite getSprite(ResourceLocation p_296464_) {
-        return super.getSprite(p_296464_);
+    public TextureAtlasSprite getSprite(ResourceLocation location) {
+        return super.getSprite(location);
     }
 
-    public GuiSpriteScaling getSpriteScaling(TextureAtlasSprite p_294850_) {
-        return this.getMetadata(p_294850_).scaling();
+    public GuiSpriteScaling getSpriteScaling(TextureAtlasSprite sprite) {
+        return this.getMetadata(sprite).scaling();
     }
 
-    private GuiMetadataSection getMetadata(TextureAtlasSprite p_294333_) {
-        return p_294333_.contents().metadata().getSection(GuiMetadataSection.TYPE).orElse(GuiMetadataSection.DEFAULT);
+    private GuiMetadataSection getMetadata(TextureAtlasSprite sprite) {
+        return sprite.contents().metadata().getSection(GuiMetadataSection.TYPE).orElse(GuiMetadataSection.DEFAULT);
     }
 }

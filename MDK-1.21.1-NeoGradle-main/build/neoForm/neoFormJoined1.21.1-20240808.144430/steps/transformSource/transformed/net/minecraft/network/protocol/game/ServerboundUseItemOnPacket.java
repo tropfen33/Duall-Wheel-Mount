@@ -15,22 +15,25 @@ public class ServerboundUseItemOnPacket implements Packet<ServerGamePacketListen
     private final InteractionHand hand;
     private final int sequence;
 
-    public ServerboundUseItemOnPacket(InteractionHand p_238005_, BlockHitResult p_238006_, int p_238007_) {
-        this.hand = p_238005_;
-        this.blockHit = p_238006_;
-        this.sequence = p_238007_;
+    public ServerboundUseItemOnPacket(InteractionHand hand, BlockHitResult blockHit, int sequence) {
+        this.hand = hand;
+        this.blockHit = blockHit;
+        this.sequence = sequence;
     }
 
-    private ServerboundUseItemOnPacket(FriendlyByteBuf p_179796_) {
-        this.hand = p_179796_.readEnum(InteractionHand.class);
-        this.blockHit = p_179796_.readBlockHitResult();
-        this.sequence = p_179796_.readVarInt();
+    private ServerboundUseItemOnPacket(FriendlyByteBuf buffer) {
+        this.hand = buffer.readEnum(InteractionHand.class);
+        this.blockHit = buffer.readBlockHitResult();
+        this.sequence = buffer.readVarInt();
     }
 
-    private void write(FriendlyByteBuf p_134705_) {
-        p_134705_.writeEnum(this.hand);
-        p_134705_.writeBlockHitResult(this.blockHit);
-        p_134705_.writeVarInt(this.sequence);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeEnum(this.hand);
+        buffer.writeBlockHitResult(this.blockHit);
+        buffer.writeVarInt(this.sequence);
     }
 
     @Override
@@ -38,8 +41,11 @@ public class ServerboundUseItemOnPacket implements Packet<ServerGamePacketListen
         return GamePacketTypes.SERVERBOUND_USE_ITEM_ON;
     }
 
-    public void handle(ServerGamePacketListener p_134702_) {
-        p_134702_.handleUseItemOn(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleUseItemOn(this);
     }
 
     public InteractionHand getHand() {

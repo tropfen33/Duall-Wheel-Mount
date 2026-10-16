@@ -110,7 +110,7 @@ public interface ParticleRenderType {
     };
 
     @Nullable
-    BufferBuilder begin(Tesselator p_350949_, TextureManager p_107437_);
+    BufferBuilder begin(Tesselator tesselator, TextureManager textureManager);
 
     /** {@return whether this type renders before or after the translucent chunk layer} */
     default boolean isTranslucent() {

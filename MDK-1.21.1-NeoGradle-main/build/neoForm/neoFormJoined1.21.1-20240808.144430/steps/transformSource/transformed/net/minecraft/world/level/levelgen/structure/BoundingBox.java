@@ -18,6 +18,11 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.world.level.ChunkPos;
 import org.slf4j.Logger;
 
+/**
+ * A simple three-dimensional mutable integer bounding box.
+ * Note that this box is both mutable, and has an implementation of {@code hashCode()} and {@code equals()}.
+ * This can be used as {@code HashMap} keys for example, if the user can ensure the instances themselves are not modified.
+ */
 public class BoundingBox {
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final Codec<BoundingBox> CODEC = Codec.INT_STREAM
@@ -34,41 +39,41 @@ public class BoundingBox {
     private int maxY;
     private int maxZ;
 
-    public BoundingBox(BlockPos p_162364_) {
-        this(p_162364_.getX(), p_162364_.getY(), p_162364_.getZ(), p_162364_.getX(), p_162364_.getY(), p_162364_.getZ());
+    public BoundingBox(BlockPos pos) {
+        this(pos.getX(), pos.getY(), pos.getZ(), pos.getX(), pos.getY(), pos.getZ());
     }
 
-    public BoundingBox(int p_71001_, int p_71002_, int p_71003_, int p_71004_, int p_71005_, int p_71006_) {
-        this.minX = p_71001_;
-        this.minY = p_71002_;
-        this.minZ = p_71003_;
-        this.maxX = p_71004_;
-        this.maxY = p_71005_;
-        this.maxZ = p_71006_;
-        if (p_71004_ < p_71001_ || p_71005_ < p_71002_ || p_71006_ < p_71003_) {
+    public BoundingBox(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        this.minX = minX;
+        this.minY = minY;
+        this.minZ = minZ;
+        this.maxX = maxX;
+        this.maxY = maxY;
+        this.maxZ = maxZ;
+        if (maxX < minX || maxY < minY || maxZ < minZ) {
             String s = "Invalid bounding box data, inverted bounds for: " + this;
             if (SharedConstants.IS_RUNNING_IN_IDE) {
                 throw new IllegalStateException(s);
             }
 
             LOGGER.error(s);
-            this.minX = Math.min(p_71001_, p_71004_);
-            this.minY = Math.min(p_71002_, p_71005_);
-            this.minZ = Math.min(p_71003_, p_71006_);
-            this.maxX = Math.max(p_71001_, p_71004_);
-            this.maxY = Math.max(p_71002_, p_71005_);
-            this.maxZ = Math.max(p_71003_, p_71006_);
+            this.minX = Math.min(minX, maxX);
+            this.minY = Math.min(minY, maxY);
+            this.minZ = Math.min(minZ, maxZ);
+            this.maxX = Math.max(minX, maxX);
+            this.maxY = Math.max(minY, maxY);
+            this.maxZ = Math.max(minZ, maxZ);
         }
     }
 
-    public static BoundingBox fromCorners(Vec3i p_162376_, Vec3i p_162377_) {
+    public static BoundingBox fromCorners(Vec3i first, Vec3i second) {
         return new BoundingBox(
-            Math.min(p_162376_.getX(), p_162377_.getX()),
-            Math.min(p_162376_.getY(), p_162377_.getY()),
-            Math.min(p_162376_.getZ(), p_162377_.getZ()),
-            Math.max(p_162376_.getX(), p_162377_.getX()),
-            Math.max(p_162376_.getY(), p_162377_.getY()),
-            Math.max(p_162376_.getZ(), p_162377_.getZ())
+            Math.min(first.getX(), second.getX()),
+            Math.min(first.getY(), second.getY()),
+            Math.min(first.getZ(), second.getZ()),
+            Math.max(first.getX(), second.getX()),
+            Math.max(first.getY(), second.getY()),
+            Math.max(first.getZ(), second.getZ())
         );
     }
 
@@ -76,46 +81,49 @@ public class BoundingBox {
         return new BoundingBox(Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE);
     }
 
+    /**
+     * Create a bounding box with the specified dimensions and rotate it. Used to project a possible new component Bounding Box - to check if it would cut anything already spawned.
+     */
     public static BoundingBox orientBox(
-        int p_71032_, int p_71033_, int p_71034_, int p_71035_, int p_71036_, int p_71037_, int p_71038_, int p_71039_, int p_71040_, Direction p_71041_
+        int structureMinX, int structureMinY, int structureMinZ, int xMin, int yMin, int zMin, int xMax, int yMax, int zMax, Direction facing
     ) {
-        switch (p_71041_) {
+        switch (facing) {
             case SOUTH:
             default:
                 return new BoundingBox(
-                    p_71032_ + p_71035_,
-                    p_71033_ + p_71036_,
-                    p_71034_ + p_71037_,
-                    p_71032_ + p_71038_ - 1 + p_71035_,
-                    p_71033_ + p_71039_ - 1 + p_71036_,
-                    p_71034_ + p_71040_ - 1 + p_71037_
+                    structureMinX + xMin,
+                    structureMinY + yMin,
+                    structureMinZ + zMin,
+                    structureMinX + xMax - 1 + xMin,
+                    structureMinY + yMax - 1 + yMin,
+                    structureMinZ + zMax - 1 + zMin
                 );
             case NORTH:
                 return new BoundingBox(
-                    p_71032_ + p_71035_,
-                    p_71033_ + p_71036_,
-                    p_71034_ - p_71040_ + 1 + p_71037_,
-                    p_71032_ + p_71038_ - 1 + p_71035_,
-                    p_71033_ + p_71039_ - 1 + p_71036_,
-                    p_71034_ + p_71037_
+                    structureMinX + xMin,
+                    structureMinY + yMin,
+                    structureMinZ - zMax + 1 + zMin,
+                    structureMinX + xMax - 1 + xMin,
+                    structureMinY + yMax - 1 + yMin,
+                    structureMinZ + zMin
                 );
             case WEST:
                 return new BoundingBox(
-                    p_71032_ - p_71040_ + 1 + p_71037_,
-                    p_71033_ + p_71036_,
-                    p_71034_ + p_71035_,
-                    p_71032_ + p_71037_,
-                    p_71033_ + p_71039_ - 1 + p_71036_,
-                    p_71034_ + p_71038_ - 1 + p_71035_
+                    structureMinX - zMax + 1 + zMin,
+                    structureMinY + yMin,
+                    structureMinZ + xMin,
+                    structureMinX + zMin,
+                    structureMinY + yMax - 1 + yMin,
+                    structureMinZ + xMax - 1 + xMin
                 );
             case EAST:
                 return new BoundingBox(
-                    p_71032_ + p_71037_,
-                    p_71033_ + p_71036_,
-                    p_71034_ + p_71035_,
-                    p_71032_ + p_71040_ - 1 + p_71037_,
-                    p_71033_ + p_71039_ - 1 + p_71036_,
-                    p_71034_ + p_71038_ - 1 + p_71035_
+                    structureMinX + zMin,
+                    structureMinY + yMin,
+                    structureMinZ + xMin,
+                    structureMinX + zMax - 1 + zMin,
+                    structureMinY + yMax - 1 + yMin,
+                    structureMinZ + xMax - 1 + xMin
                 );
         }
     }
@@ -128,21 +136,27 @@ public class BoundingBox {
         return ChunkPos.rangeClosed(new ChunkPos(i, j), new ChunkPos(k, l));
     }
 
-    public boolean intersects(BoundingBox p_71050_) {
-        return this.maxX >= p_71050_.minX
-            && this.minX <= p_71050_.maxX
-            && this.maxZ >= p_71050_.minZ
-            && this.minZ <= p_71050_.maxZ
-            && this.maxY >= p_71050_.minY
-            && this.minY <= p_71050_.maxY;
+    /**
+     * @return {@code true} if {@code box} intersects this box.
+     */
+    public boolean intersects(BoundingBox box) {
+        return this.maxX >= box.minX
+            && this.minX <= box.maxX
+            && this.maxZ >= box.minZ
+            && this.minZ <= box.maxZ
+            && this.maxY >= box.minY
+            && this.minY <= box.maxY;
     }
 
-    public boolean intersects(int p_71020_, int p_71021_, int p_71022_, int p_71023_) {
-        return this.maxX >= p_71020_ && this.minX <= p_71022_ && this.maxZ >= p_71021_ && this.minZ <= p_71023_;
+    /**
+     * @return {@code true} if this bounding box intersects the horizontal x/z region described by the min and max parameters.
+     */
+    public boolean intersects(int minX, int minZ, int maxX, int maxZ) {
+        return this.maxX >= minX && this.minX <= maxX && this.maxZ >= minZ && this.minZ <= maxZ;
     }
 
-    public static Optional<BoundingBox> encapsulatingPositions(Iterable<BlockPos> p_162379_) {
-        Iterator<BlockPos> iterator = p_162379_.iterator();
+    public static Optional<BoundingBox> encapsulatingPositions(Iterable<BlockPos> positions) {
+        Iterator<BlockPos> iterator = positions.iterator();
         if (!iterator.hasNext()) {
             return Optional.empty();
         } else {
@@ -152,8 +166,8 @@ public class BoundingBox {
         }
     }
 
-    public static Optional<BoundingBox> encapsulatingBoxes(Iterable<BoundingBox> p_162389_) {
-        Iterator<BoundingBox> iterator = p_162389_.iterator();
+    public static Optional<BoundingBox> encapsulatingBoxes(Iterable<BoundingBox> boxes) {
+        Iterator<BoundingBox> iterator = boxes.iterator();
         if (!iterator.hasNext()) {
             return Optional.empty();
         } else {
@@ -166,76 +180,97 @@ public class BoundingBox {
         }
     }
 
+    /**
+     * Expands this box to be at least large enough to contain {@code box}.
+     */
     @Deprecated
-    public BoundingBox encapsulate(BoundingBox p_162387_) {
-        this.minX = Math.min(this.minX, p_162387_.minX);
-        this.minY = Math.min(this.minY, p_162387_.minY);
-        this.minZ = Math.min(this.minZ, p_162387_.minZ);
-        this.maxX = Math.max(this.maxX, p_162387_.maxX);
-        this.maxY = Math.max(this.maxY, p_162387_.maxY);
-        this.maxZ = Math.max(this.maxZ, p_162387_.maxZ);
+    public BoundingBox encapsulate(BoundingBox box) {
+        this.minX = Math.min(this.minX, box.minX);
+        this.minY = Math.min(this.minY, box.minY);
+        this.minZ = Math.min(this.minZ, box.minZ);
+        this.maxX = Math.max(this.maxX, box.maxX);
+        this.maxY = Math.max(this.maxY, box.maxY);
+        this.maxZ = Math.max(this.maxZ, box.maxZ);
         return this;
     }
 
+    /**
+     * Expands this box to be at least large enough to contain {@code pos}.
+     */
     @Deprecated
-    public BoundingBox encapsulate(BlockPos p_162372_) {
-        this.minX = Math.min(this.minX, p_162372_.getX());
-        this.minY = Math.min(this.minY, p_162372_.getY());
-        this.minZ = Math.min(this.minZ, p_162372_.getZ());
-        this.maxX = Math.max(this.maxX, p_162372_.getX());
-        this.maxY = Math.max(this.maxY, p_162372_.getY());
-        this.maxZ = Math.max(this.maxZ, p_162372_.getZ());
+    public BoundingBox encapsulate(BlockPos pos) {
+        this.minX = Math.min(this.minX, pos.getX());
+        this.minY = Math.min(this.minY, pos.getY());
+        this.minZ = Math.min(this.minZ, pos.getZ());
+        this.maxX = Math.max(this.maxX, pos.getX());
+        this.maxY = Math.max(this.maxY, pos.getY());
+        this.maxZ = Math.max(this.maxZ, pos.getZ());
         return this;
     }
 
+    /**
+     * Translates this box by the given coordinates, modifying the current box.
+     */
     @Deprecated
-    public BoundingBox move(int p_162368_, int p_162369_, int p_162370_) {
-        this.minX += p_162368_;
-        this.minY += p_162369_;
-        this.minZ += p_162370_;
-        this.maxX += p_162368_;
-        this.maxY += p_162369_;
-        this.maxZ += p_162370_;
+    public BoundingBox move(int x, int y, int z) {
+        this.minX += x;
+        this.minY += y;
+        this.minZ += z;
+        this.maxX += x;
+        this.maxY += y;
+        this.maxZ += z;
         return this;
     }
 
+    /**
+     * Translates this box by the given vector, modifying the current box.
+     */
     @Deprecated
-    public BoundingBox move(Vec3i p_162374_) {
-        return this.move(p_162374_.getX(), p_162374_.getY(), p_162374_.getZ());
+    public BoundingBox move(Vec3i vector) {
+        return this.move(vector.getX(), vector.getY(), vector.getZ());
     }
 
-    public BoundingBox moved(int p_71046_, int p_71047_, int p_71048_) {
+    /**
+     * @return A new bounding box equal to this box, translated by the given coordinates.
+     */
+    public BoundingBox moved(int x, int y, int z) {
         return new BoundingBox(
-            this.minX + p_71046_, this.minY + p_71047_, this.minZ + p_71048_, this.maxX + p_71046_, this.maxY + p_71047_, this.maxZ + p_71048_
+            this.minX + x, this.minY + y, this.minZ + z, this.maxX + x, this.maxY + y, this.maxZ + z
         );
     }
 
-    public BoundingBox inflatedBy(int p_191962_) {
-        return this.inflatedBy(p_191962_, p_191962_, p_191962_);
+    /**
+     * Expands this box by a fixed {@code value} in all directions.
+     */
+    public BoundingBox inflatedBy(int value) {
+        return this.inflatedBy(value, value, value);
     }
 
-    public BoundingBox inflatedBy(int p_341249_, int p_340933_, int p_341033_) {
+    public BoundingBox inflatedBy(int x, int y, int z) {
         return new BoundingBox(
-            this.minX() - p_341249_,
-            this.minY() - p_340933_,
-            this.minZ() - p_341033_,
-            this.maxX() + p_341249_,
-            this.maxY() + p_340933_,
-            this.maxZ() + p_341033_
+            this.minX() - x,
+            this.minY() - y,
+            this.minZ() - z,
+            this.maxX() + x,
+            this.maxY() + y,
+            this.maxZ() + z
         );
     }
 
-    public boolean isInside(Vec3i p_71052_) {
-        return this.isInside(p_71052_.getX(), p_71052_.getY(), p_71052_.getZ());
+    /**
+     * @return {@code true} if the bounding box contains the {@code vector}.
+     */
+    public boolean isInside(Vec3i vector) {
+        return this.isInside(vector.getX(), vector.getY(), vector.getZ());
     }
 
-    public boolean isInside(int p_261671_, int p_261537_, int p_261678_) {
-        return p_261671_ >= this.minX
-            && p_261671_ <= this.maxX
-            && p_261678_ >= this.minZ
-            && p_261678_ <= this.maxZ
-            && p_261537_ >= this.minY
-            && p_261537_ <= this.maxY;
+    public boolean isInside(int x, int y, int z) {
+        return x >= this.minX
+            && x <= this.maxX
+            && z >= this.minZ
+            && z <= this.maxZ
+            && y >= this.minY
+            && y <= this.maxY;
     }
 
     public Vec3i getLength() {
@@ -260,16 +295,16 @@ public class BoundingBox {
         );
     }
 
-    public void forAllCorners(Consumer<BlockPos> p_162381_) {
+    public void forAllCorners(Consumer<BlockPos> pos) {
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
-        p_162381_.accept(blockpos$mutableblockpos.set(this.maxX, this.maxY, this.maxZ));
-        p_162381_.accept(blockpos$mutableblockpos.set(this.minX, this.maxY, this.maxZ));
-        p_162381_.accept(blockpos$mutableblockpos.set(this.maxX, this.minY, this.maxZ));
-        p_162381_.accept(blockpos$mutableblockpos.set(this.minX, this.minY, this.maxZ));
-        p_162381_.accept(blockpos$mutableblockpos.set(this.maxX, this.maxY, this.minZ));
-        p_162381_.accept(blockpos$mutableblockpos.set(this.minX, this.maxY, this.minZ));
-        p_162381_.accept(blockpos$mutableblockpos.set(this.maxX, this.minY, this.minZ));
-        p_162381_.accept(blockpos$mutableblockpos.set(this.minX, this.minY, this.minZ));
+        pos.accept(blockpos$mutableblockpos.set(this.maxX, this.maxY, this.maxZ));
+        pos.accept(blockpos$mutableblockpos.set(this.minX, this.maxY, this.maxZ));
+        pos.accept(blockpos$mutableblockpos.set(this.maxX, this.minY, this.maxZ));
+        pos.accept(blockpos$mutableblockpos.set(this.minX, this.minY, this.maxZ));
+        pos.accept(blockpos$mutableblockpos.set(this.maxX, this.maxY, this.minZ));
+        pos.accept(blockpos$mutableblockpos.set(this.minX, this.maxY, this.minZ));
+        pos.accept(blockpos$mutableblockpos.set(this.maxX, this.minY, this.minZ));
+        pos.accept(blockpos$mutableblockpos.set(this.minX, this.minY, this.minZ));
     }
 
     @Override
@@ -285,11 +320,11 @@ public class BoundingBox {
     }
 
     @Override
-    public boolean equals(Object p_162393_) {
-        if (this == p_162393_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return !(p_162393_ instanceof BoundingBox boundingbox)
+            return !(other instanceof BoundingBox boundingbox)
                 ? false
                 : this.minX == boundingbox.minX
                     && this.minY == boundingbox.minY

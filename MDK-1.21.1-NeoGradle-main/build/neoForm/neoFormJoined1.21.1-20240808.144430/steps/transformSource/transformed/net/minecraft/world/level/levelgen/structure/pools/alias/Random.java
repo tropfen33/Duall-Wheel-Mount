@@ -22,8 +22,8 @@ record Random(ResourceKey<StructureTemplatePool> alias, SimpleWeightedRandomList
     );
 
     @Override
-    public void forEachResolved(RandomSource p_307661_, BiConsumer<ResourceKey<StructureTemplatePool>, ResourceKey<StructureTemplatePool>> p_307635_) {
-        this.targets.getRandom(p_307661_).ifPresent(p_338105_ -> p_307635_.accept(this.alias, p_338105_.data()));
+    public void forEachResolved(RandomSource random, BiConsumer<ResourceKey<StructureTemplatePool>, ResourceKey<StructureTemplatePool>> stucturePoolKey) {
+        this.targets.getRandom(random).ifPresent(p_338105_ -> stucturePoolKey.accept(this.alias, p_338105_.data()));
     }
 
     @Override

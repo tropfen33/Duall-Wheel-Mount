@@ -30,22 +30,22 @@ public record SummonEntityEffect(HolderSet<EntityType<?>> entityTypes, boolean j
     );
 
     @Override
-    public void apply(ServerLevel p_345900_, int p_346183_, EnchantedItemInUse p_345549_, Entity p_346414_, Vec3 p_346284_) {
-        BlockPos blockpos = BlockPos.containing(p_346284_);
+    public void apply(ServerLevel level, int enchantmentLevel, EnchantedItemInUse item, Entity p_entity, Vec3 origin) {
+        BlockPos blockpos = BlockPos.containing(origin);
         if (Level.isInSpawnableBounds(blockpos)) {
-            Optional<Holder<EntityType<?>>> optional = this.entityTypes().getRandomElement(p_345900_.getRandom());
+            Optional<Holder<EntityType<?>>> optional = this.entityTypes().getRandomElement(level.getRandom());
             if (!optional.isEmpty()) {
-                Entity entity = optional.get().value().spawn(p_345900_, blockpos, MobSpawnType.TRIGGERED);
+                Entity entity = optional.get().value().spawn(level, blockpos, MobSpawnType.TRIGGERED);
                 if (entity != null) {
-                    if (entity instanceof LightningBolt lightningbolt && p_345549_.owner() instanceof ServerPlayer serverplayer) {
+                    if (entity instanceof LightningBolt lightningbolt && item.owner() instanceof ServerPlayer serverplayer) {
                         lightningbolt.setCause(serverplayer);
                     }
 
-                    if (this.joinTeam && p_346414_.getTeam() != null) {
-                        p_345900_.getScoreboard().addPlayerToTeam(entity.getScoreboardName(), p_346414_.getTeam());
+                    if (this.joinTeam && p_entity.getTeam() != null) {
+                        level.getScoreboard().addPlayerToTeam(entity.getScoreboardName(), p_entity.getTeam());
                     }
 
-                    entity.moveTo(p_346284_.x, p_346284_.y, p_346284_.z, entity.getYRot(), entity.getXRot());
+                    entity.moveTo(origin.x, origin.y, origin.z, entity.getYRot(), entity.getXRot());
                 }
             }
         }

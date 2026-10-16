@@ -176,32 +176,32 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
         add(1.0F, Items.PUMPKIN_PIE);
     }
 
-    private static void add(float p_51921_, ItemLike p_51922_) {
-        COMPOSTABLES.put(p_51922_.asItem(), p_51921_);
+    private static void add(float chance, ItemLike item) {
+        COMPOSTABLES.put(item.asItem(), chance);
     }
 
-    public ComposterBlock(BlockBehaviour.Properties p_51919_) {
-        super(p_51919_);
+    public ComposterBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(LEVEL, Integer.valueOf(0)));
     }
 
-    public static void handleFill(Level p_51924_, BlockPos p_51925_, boolean p_51926_) {
-        BlockState blockstate = p_51924_.getBlockState(p_51925_);
-        p_51924_.playLocalSound(p_51925_, p_51926_ ? SoundEvents.COMPOSTER_FILL_SUCCESS : SoundEvents.COMPOSTER_FILL, SoundSource.BLOCKS, 1.0F, 1.0F, false);
-        double d0 = blockstate.getShape(p_51924_, p_51925_).max(Direction.Axis.Y, 0.5, 0.5) + 0.03125;
+    public static void handleFill(Level level, BlockPos pos, boolean success) {
+        BlockState blockstate = level.getBlockState(pos);
+        level.playLocalSound(pos, success ? SoundEvents.COMPOSTER_FILL_SUCCESS : SoundEvents.COMPOSTER_FILL, SoundSource.BLOCKS, 1.0F, 1.0F, false);
+        double d0 = blockstate.getShape(level, pos).max(Direction.Axis.Y, 0.5, 0.5) + 0.03125;
         double d1 = 0.13125F;
         double d2 = 0.7375F;
-        RandomSource randomsource = p_51924_.getRandom();
+        RandomSource randomsource = level.getRandom();
 
         for (int i = 0; i < 10; i++) {
             double d3 = randomsource.nextGaussian() * 0.02;
             double d4 = randomsource.nextGaussian() * 0.02;
             double d5 = randomsource.nextGaussian() * 0.02;
-            p_51924_.addParticle(
+            level.addParticle(
                 ParticleTypes.COMPOSTER,
-                (double)p_51925_.getX() + 0.13125F + 0.7375F * (double)randomsource.nextFloat(),
-                (double)p_51925_.getY() + d0 + (double)randomsource.nextFloat() * (1.0 - d0),
-                (double)p_51925_.getZ() + 0.13125F + 0.7375F * (double)randomsource.nextFloat(),
+                (double)pos.getX() + 0.13125F + 0.7375F * (double)randomsource.nextFloat(),
+                (double)pos.getY() + d0 + (double)randomsource.nextFloat() * (1.0 - d0),
+                (double)pos.getZ() + 0.13125F + 0.7375F * (double)randomsource.nextFloat(),
                 d3,
                 d4,
                 d5
@@ -210,27 +210,27 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_51973_, BlockGetter p_51974_, BlockPos p_51975_, CollisionContext p_51976_) {
-        return SHAPES[p_51973_.getValue(LEVEL)];
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SHAPES[state.getValue(LEVEL)];
     }
 
     @Override
-    protected VoxelShape getInteractionShape(BlockState p_51969_, BlockGetter p_51970_, BlockPos p_51971_) {
+    protected VoxelShape getInteractionShape(BlockState state, BlockGetter level, BlockPos pos) {
         return OUTER_SHAPE;
     }
 
     @Override
-    protected VoxelShape getCollisionShape(BlockState p_51990_, BlockGetter p_51991_, BlockPos p_51992_, CollisionContext p_51993_) {
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPES[0];
     }
 
     @Override
-    protected void onPlace(BlockState p_51978_, Level p_51979_, BlockPos p_51980_, BlockState p_51981_, boolean p_51982_) {
-        if (p_51978_.getValue(LEVEL) == 7) {
-            p_51979_.scheduleTick(p_51980_, p_51978_.getBlock(), 20);
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (state.getValue(LEVEL) == 7) {
+            level.scheduleTick(pos, state.getBlock(), 20);
         }
         // Neo: Invalidate composter capabilities when a composter is added
-        if (!p_51981_.is(this)) p_51979_.invalidateCapabilities(p_51980_);
+        if (!oldState.is(this)) level.invalidateCapabilities(pos);
     }
 
     @Override
@@ -242,77 +242,77 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
 
     @Override
     protected ItemInteractionResult useItemOn(
-        ItemStack p_316332_, BlockState p_316118_, Level p_316624_, BlockPos p_316660_, Player p_316715_, InteractionHand p_316472_, BlockHitResult p_316606_
+        ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult
     ) {
-        int i = p_316118_.getValue(LEVEL);
-        if (i < 8 && getValue(p_316332_) > 0) {
-            if (i < 7 && !p_316624_.isClientSide) {
-                BlockState blockstate = addItem(p_316715_, p_316118_, p_316624_, p_316660_, p_316332_);
-                p_316624_.levelEvent(1500, p_316660_, p_316118_ != blockstate ? 1 : 0);
-                p_316715_.awardStat(Stats.ITEM_USED.get(p_316332_.getItem()));
-                p_316332_.consume(1, p_316715_);
+        int i = state.getValue(LEVEL);
+        if (i < 8 && getValue(stack) > 0) {
+            if (i < 7 && !level.isClientSide) {
+                BlockState blockstate = addItem(player, state, level, pos, stack);
+                level.levelEvent(1500, pos, state != blockstate ? 1 : 0);
+                player.awardStat(Stats.ITEM_USED.get(stack.getItem()));
+                stack.consume(1, player);
             }
 
-            return ItemInteractionResult.sidedSuccess(p_316624_.isClientSide);
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
         } else {
-            return super.useItemOn(p_316332_, p_316118_, p_316624_, p_316660_, p_316715_, p_316472_, p_316606_);
+            return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
         }
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_316361_, Level p_316271_, BlockPos p_316647_, Player p_316633_, BlockHitResult p_316555_) {
-        int i = p_316361_.getValue(LEVEL);
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        int i = state.getValue(LEVEL);
         if (i == 8) {
-            extractProduce(p_316633_, p_316361_, p_316271_, p_316647_);
-            return InteractionResult.sidedSuccess(p_316271_.isClientSide);
+            extractProduce(player, state, level, pos);
+            return InteractionResult.sidedSuccess(level.isClientSide);
         } else {
             return InteractionResult.PASS;
         }
     }
 
-    public static BlockState insertItem(Entity p_270919_, BlockState p_270087_, ServerLevel p_270284_, ItemStack p_270253_, BlockPos p_270678_) {
-        int i = p_270087_.getValue(LEVEL);
-        if (i < 7 && getValue(p_270253_) > 0) {
-            BlockState blockstate = addItem(p_270919_, p_270087_, p_270284_, p_270678_, p_270253_);
-            p_270253_.shrink(1);
+    public static BlockState insertItem(Entity entity, BlockState state, ServerLevel level, ItemStack stack, BlockPos pos) {
+        int i = state.getValue(LEVEL);
+        if (i < 7 && getValue(stack) > 0) {
+            BlockState blockstate = addItem(entity, state, level, pos, stack);
+            stack.shrink(1);
             return blockstate;
         } else {
-            return p_270087_;
+            return state;
         }
     }
 
-    public static BlockState extractProduce(Entity p_270467_, BlockState p_51999_, Level p_52000_, BlockPos p_52001_) {
-        if (!p_52000_.isClientSide) {
-            Vec3 vec3 = Vec3.atLowerCornerWithOffset(p_52001_, 0.5, 1.01, 0.5).offsetRandom(p_52000_.random, 0.7F);
-            ItemEntity itementity = new ItemEntity(p_52000_, vec3.x(), vec3.y(), vec3.z(), new ItemStack(Items.BONE_MEAL));
+    public static BlockState extractProduce(Entity entity, BlockState state, Level level, BlockPos pos) {
+        if (!level.isClientSide) {
+            Vec3 vec3 = Vec3.atLowerCornerWithOffset(pos, 0.5, 1.01, 0.5).offsetRandom(level.random, 0.7F);
+            ItemEntity itementity = new ItemEntity(level, vec3.x(), vec3.y(), vec3.z(), new ItemStack(Items.BONE_MEAL));
             itementity.setDefaultPickUpDelay();
-            p_52000_.addFreshEntity(itementity);
+            level.addFreshEntity(itementity);
         }
 
-        BlockState blockstate = empty(p_270467_, p_51999_, p_52000_, p_52001_);
-        p_52000_.playSound(null, p_52001_, SoundEvents.COMPOSTER_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
+        BlockState blockstate = empty(entity, state, level, pos);
+        level.playSound(null, pos, SoundEvents.COMPOSTER_EMPTY, SoundSource.BLOCKS, 1.0F, 1.0F);
         return blockstate;
     }
 
-    static BlockState empty(@Nullable Entity p_270236_, BlockState p_270873_, LevelAccessor p_270963_, BlockPos p_270211_) {
-        BlockState blockstate = p_270873_.setValue(LEVEL, Integer.valueOf(0));
-        p_270963_.setBlock(p_270211_, blockstate, 3);
-        p_270963_.gameEvent(GameEvent.BLOCK_CHANGE, p_270211_, GameEvent.Context.of(p_270236_, blockstate));
+    static BlockState empty(@Nullable Entity entity, BlockState state, LevelAccessor level, BlockPos pos) {
+        BlockState blockstate = state.setValue(LEVEL, Integer.valueOf(0));
+        level.setBlock(pos, blockstate, 3);
+        level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(entity, blockstate));
         return blockstate;
     }
 
-    static BlockState addItem(@Nullable Entity p_270464_, BlockState p_270603_, LevelAccessor p_270151_, BlockPos p_270547_, ItemStack p_270354_) {
-        int i = p_270603_.getValue(LEVEL);
-        float f = getValue(p_270354_);
-        if ((i != 0 || !(f > 0.0F)) && !(p_270151_.getRandom().nextDouble() < (double)f)) {
-            return p_270603_;
+    static BlockState addItem(@Nullable Entity entity, BlockState state, LevelAccessor level, BlockPos pos, ItemStack stack) {
+        int i = state.getValue(LEVEL);
+        float f = getValue(stack);
+        if ((i != 0 || !(f > 0.0F)) && !(level.getRandom().nextDouble() < (double)f)) {
+            return state;
         } else {
             int j = i + 1;
-            BlockState blockstate = p_270603_.setValue(LEVEL, Integer.valueOf(j));
-            p_270151_.setBlock(p_270547_, blockstate, 3);
-            p_270151_.gameEvent(GameEvent.BLOCK_CHANGE, p_270547_, GameEvent.Context.of(p_270464_, blockstate));
+            BlockState blockstate = state.setValue(LEVEL, Integer.valueOf(j));
+            level.setBlock(pos, blockstate, 3);
+            level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(entity, blockstate));
             if (j == 7) {
-                p_270151_.scheduleTick(p_270547_, p_270603_.getBlock(), 20);
+                level.scheduleTick(pos, state.getBlock(), 20);
             }
 
             return blockstate;
@@ -320,40 +320,44 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
     }
 
     @Override
-    protected void tick(BlockState p_221015_, ServerLevel p_221016_, BlockPos p_221017_, RandomSource p_221018_) {
-        if (p_221015_.getValue(LEVEL) == 7) {
-            p_221016_.setBlock(p_221017_, p_221015_.cycle(LEVEL), 3);
-            p_221016_.playSound(null, p_221017_, SoundEvents.COMPOSTER_READY, SoundSource.BLOCKS, 1.0F, 1.0F);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (state.getValue(LEVEL) == 7) {
+            level.setBlock(pos, state.cycle(LEVEL), 3);
+            level.playSound(null, pos, SoundEvents.COMPOSTER_READY, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
     }
 
     @Override
-    protected boolean hasAnalogOutputSignal(BlockState p_51928_) {
+    protected boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
+    /**
+     * Returns the analog signal this block emits. This is the signal a comparator can read from it.
+     *
+     */
     @Override
-    protected int getAnalogOutputSignal(BlockState p_51945_, Level p_51946_, BlockPos p_51947_) {
-        return p_51945_.getValue(LEVEL);
+    protected int getAnalogOutputSignal(BlockState blockState, Level level, BlockPos pos) {
+        return blockState.getValue(LEVEL);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_51965_) {
-        p_51965_.add(LEVEL);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(LEVEL);
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_51940_, PathComputationType p_51943_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
     @Override
-    public WorldlyContainer getContainer(BlockState p_51956_, LevelAccessor p_51957_, BlockPos p_51958_) {
-        int i = p_51956_.getValue(LEVEL);
+    public WorldlyContainer getContainer(BlockState state, LevelAccessor level, BlockPos pos) {
+        int i = state.getValue(LEVEL);
         if (i == 8) {
-            return new ComposterBlock.OutputContainer(p_51956_, p_51957_, p_51958_, new ItemStack(Items.BONE_MEAL));
+            return new ComposterBlock.OutputContainer(state, level, pos, new ItemStack(Items.BONE_MEAL));
         } else {
-            return (WorldlyContainer)(i < 7 ? new ComposterBlock.InputContainer(p_51956_, p_51957_, p_51958_) : new ComposterBlock.EmptyContainer());
+            return (WorldlyContainer)(i < 7 ? new ComposterBlock.InputContainer(state, level, pos) : new ComposterBlock.EmptyContainer());
         }
     }
 
@@ -363,17 +367,23 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
         }
 
         @Override
-        public int[] getSlotsForFace(Direction p_52012_) {
+        public int[] getSlotsForFace(Direction side) {
             return new int[0];
         }
 
+        /**
+         * Returns {@code true} if automation can insert the given item in the given slot from the given side.
+         */
         @Override
-        public boolean canPlaceItemThroughFace(int p_52008_, ItemStack p_52009_, @Nullable Direction p_52010_) {
+        public boolean canPlaceItemThroughFace(int index, ItemStack itemStack, @Nullable Direction direction) {
             return false;
         }
 
+        /**
+         * Returns {@code true} if automation can extract the given item in the given slot from the given side.
+         */
         @Override
-        public boolean canTakeItemThroughFace(int p_52014_, ItemStack p_52015_, Direction p_52016_) {
+        public boolean canTakeItemThroughFace(int index, ItemStack stack, Direction direction) {
             return false;
         }
     }
@@ -384,11 +394,11 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
         private final BlockPos pos;
         private boolean changed;
 
-        public InputContainer(BlockState p_52022_, LevelAccessor p_52023_, BlockPos p_52024_) {
+        public InputContainer(BlockState state, LevelAccessor level, BlockPos pos) {
             super(1);
-            this.state = p_52022_;
-            this.level = p_52023_;
-            this.pos = p_52024_;
+            this.state = state;
+            this.level = level;
+            this.pos = pos;
         }
 
         @Override
@@ -397,17 +407,23 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
         }
 
         @Override
-        public int[] getSlotsForFace(Direction p_52032_) {
-            return p_52032_ == Direction.UP ? new int[]{0} : new int[0];
+        public int[] getSlotsForFace(Direction side) {
+            return side == Direction.UP ? new int[]{0} : new int[0];
         }
 
+        /**
+         * Returns {@code true} if automation can insert the given item in the given slot from the given side.
+         */
         @Override
-        public boolean canPlaceItemThroughFace(int p_52028_, ItemStack p_52029_, @Nullable Direction p_52030_) {
-            return !this.changed && p_52030_ == Direction.UP && getValue(p_52029_) > 0f;
+        public boolean canPlaceItemThroughFace(int index, ItemStack itemStack, @Nullable Direction direction) {
+            return !this.changed && direction == Direction.UP && getValue(itemStack) > 0f;
         }
 
+        /**
+         * Returns {@code true} if automation can extract the given item in the given slot from the given side.
+         */
         @Override
-        public boolean canTakeItemThroughFace(int p_52034_, ItemStack p_52035_, Direction p_52036_) {
+        public boolean canTakeItemThroughFace(int index, ItemStack stack, Direction direction) {
             return false;
         }
 
@@ -429,11 +445,11 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
         private final BlockPos pos;
         private boolean changed;
 
-        public OutputContainer(BlockState p_52042_, LevelAccessor p_52043_, BlockPos p_52044_, ItemStack p_52045_) {
-            super(p_52045_);
-            this.state = p_52042_;
-            this.level = p_52043_;
-            this.pos = p_52044_;
+        public OutputContainer(BlockState state, LevelAccessor level, BlockPos pos, ItemStack stack) {
+            super(stack);
+            this.state = state;
+            this.level = level;
+            this.pos = pos;
         }
 
         @Override
@@ -442,18 +458,24 @@ public class ComposterBlock extends Block implements WorldlyContainerHolder {
         }
 
         @Override
-        public int[] getSlotsForFace(Direction p_52053_) {
-            return p_52053_ == Direction.DOWN ? new int[]{0} : new int[0];
+        public int[] getSlotsForFace(Direction side) {
+            return side == Direction.DOWN ? new int[]{0} : new int[0];
         }
 
+        /**
+         * Returns {@code true} if automation can insert the given item in the given slot from the given side.
+         */
         @Override
-        public boolean canPlaceItemThroughFace(int p_52049_, ItemStack p_52050_, @Nullable Direction p_52051_) {
+        public boolean canPlaceItemThroughFace(int index, ItemStack itemStack, @Nullable Direction direction) {
             return false;
         }
 
+        /**
+         * Returns {@code true} if automation can extract the given item in the given slot from the given side.
+         */
         @Override
-        public boolean canTakeItemThroughFace(int p_52055_, ItemStack p_52056_, Direction p_52057_) {
-            return !this.changed && p_52057_ == Direction.DOWN && p_52056_.is(Items.BONE_MEAL);
+        public boolean canTakeItemThroughFace(int index, ItemStack stack, Direction direction) {
+            return !this.changed && direction == Direction.DOWN && stack.is(Items.BONE_MEAL);
         }
 
         @Override

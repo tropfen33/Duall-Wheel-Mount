@@ -13,5 +13,5 @@ public interface Condition {
     Condition TRUE = p_111932_ -> p_173506_ -> true;
     Condition FALSE = p_111928_ -> p_173504_ -> false;
 
-    Predicate<BlockState> getPredicate(StateDefinition<Block, BlockState> p_111933_);
+    Predicate<BlockState> getPredicate(StateDefinition<Block, BlockState> definition);
 }

@@ -1,5 +1,11 @@
 package net.minecraft.world.level.chunk;
 
 interface PaletteResize<T> {
-    int onResize(int p_63066_, T p_63067_);
+    /**
+     * Called when the underlying palette needs to resize itself to support additional objects.
+     * @return The new integer mapping for the object added.
+     *
+     * @param bits The new palette size, in bits.
+     */
+    int onResize(int bits, T objectAdded);
 }

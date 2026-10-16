@@ -19,41 +19,41 @@ public class StructureFeatureIndexSavedData extends SavedData {
         );
     }
 
-    private StructureFeatureIndexSavedData(LongSet p_163532_, LongSet p_163533_) {
-        this.all = p_163532_;
-        this.remaining = p_163533_;
+    private StructureFeatureIndexSavedData(LongSet all, LongSet remaining) {
+        this.all = all;
+        this.remaining = remaining;
     }
 
     public StructureFeatureIndexSavedData() {
         this(new LongOpenHashSet(), new LongOpenHashSet());
     }
 
-    public static StructureFeatureIndexSavedData load(CompoundTag p_163535_, HolderLookup.Provider p_323754_) {
-        return new StructureFeatureIndexSavedData(new LongOpenHashSet(p_163535_.getLongArray("All")), new LongOpenHashSet(p_163535_.getLongArray("Remaining")));
+    public static StructureFeatureIndexSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
+        return new StructureFeatureIndexSavedData(new LongOpenHashSet(tag.getLongArray("All")), new LongOpenHashSet(tag.getLongArray("Remaining")));
     }
 
     @Override
-    public CompoundTag save(CompoundTag p_73372_, HolderLookup.Provider p_323794_) {
-        p_73372_.putLongArray("All", this.all.toLongArray());
-        p_73372_.putLongArray("Remaining", this.remaining.toLongArray());
-        return p_73372_;
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        tag.putLongArray("All", this.all.toLongArray());
+        tag.putLongArray("Remaining", this.remaining.toLongArray());
+        return tag;
     }
 
-    public void addIndex(long p_73366_) {
-        this.all.add(p_73366_);
-        this.remaining.add(p_73366_);
+    public void addIndex(long index) {
+        this.all.add(index);
+        this.remaining.add(index);
     }
 
-    public boolean hasStartIndex(long p_73370_) {
-        return this.all.contains(p_73370_);
+    public boolean hasStartIndex(long index) {
+        return this.all.contains(index);
     }
 
-    public boolean hasUnhandledIndex(long p_73374_) {
-        return this.remaining.contains(p_73374_);
+    public boolean hasUnhandledIndex(long index) {
+        return this.remaining.contains(index);
     }
 
-    public void removeIndex(long p_73376_) {
-        this.remaining.remove(p_73376_);
+    public void removeIndex(long index) {
+        this.remaining.remove(index);
     }
 
     public LongSet getAll() {

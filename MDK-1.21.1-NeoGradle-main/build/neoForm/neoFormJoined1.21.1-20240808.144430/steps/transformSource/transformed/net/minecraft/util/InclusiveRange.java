@@ -19,20 +19,20 @@ public record InclusiveRange<T extends Comparable<T>>(T minInclusive, T maxInclu
         this(p_296125_, p_296125_);
     }
 
-    public static <T extends Comparable<T>> Codec<InclusiveRange<T>> codec(Codec<T> p_184573_) {
+    public static <T extends Comparable<T>> Codec<InclusiveRange<T>> codec(Codec<T> codec) {
         return ExtraCodecs.intervalCodec(
-            p_184573_, "min_inclusive", "max_inclusive", InclusiveRange::create, InclusiveRange::minInclusive, InclusiveRange::maxInclusive
+            codec, "min_inclusive", "max_inclusive", InclusiveRange::create, InclusiveRange::minInclusive, InclusiveRange::maxInclusive
         );
     }
 
-    public static <T extends Comparable<T>> Codec<InclusiveRange<T>> codec(Codec<T> p_184575_, T p_184576_, T p_184577_) {
-        return codec(p_184575_)
+    public static <T extends Comparable<T>> Codec<InclusiveRange<T>> codec(Codec<T> p_codec, T min, T max) {
+        return codec(p_codec)
             .validate(
                 p_274898_ -> {
-                    if (p_274898_.minInclusive().compareTo(p_184576_) < 0) {
+                    if (p_274898_.minInclusive().compareTo(min) < 0) {
                         return DataResult.error(
                             () -> "Range limit too low, expected at least "
-                                    + p_184576_
+                                    + min
                                     + " ["
                                     + p_274898_.minInclusive()
                                     + "-"
@@ -40,10 +40,10 @@ public record InclusiveRange<T extends Comparable<T>>(T minInclusive, T maxInclu
                                     + "]"
                         );
                     } else {
-                        return p_274898_.maxInclusive().compareTo(p_184577_) > 0
+                        return p_274898_.maxInclusive().compareTo(max) > 0
                             ? DataResult.error(
                                 () -> "Range limit too high, expected at most "
-                                        + p_184577_
+                                        + max
                                         + " ["
                                         + p_274898_.minInclusive()
                                         + "-"
@@ -56,18 +56,18 @@ public record InclusiveRange<T extends Comparable<T>>(T minInclusive, T maxInclu
             );
     }
 
-    public static <T extends Comparable<T>> DataResult<InclusiveRange<T>> create(T p_184581_, T p_184582_) {
-        return p_184581_.compareTo(p_184582_) <= 0
-            ? DataResult.success(new InclusiveRange<>(p_184581_, p_184582_))
+    public static <T extends Comparable<T>> DataResult<InclusiveRange<T>> create(T min, T max) {
+        return min.compareTo(max) <= 0
+            ? DataResult.success(new InclusiveRange<>(min, max))
             : DataResult.error(() -> "min_inclusive must be less than or equal to max_inclusive");
     }
 
-    public boolean isValueInRange(T p_184579_) {
-        return p_184579_.compareTo(this.minInclusive) >= 0 && p_184579_.compareTo(this.maxInclusive) <= 0;
+    public boolean isValueInRange(T value) {
+        return value.compareTo(this.minInclusive) >= 0 && value.compareTo(this.maxInclusive) <= 0;
     }
 
-    public boolean contains(InclusiveRange<T> p_184571_) {
-        return p_184571_.minInclusive().compareTo(this.minInclusive) >= 0 && p_184571_.maxInclusive.compareTo(this.maxInclusive) <= 0;
+    public boolean contains(InclusiveRange<T> value) {
+        return value.minInclusive().compareTo(this.minInclusive) >= 0 && value.maxInclusive.compareTo(this.maxInclusive) <= 0;
     }
 
     @Override

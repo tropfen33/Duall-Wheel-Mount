@@ -57,8 +57,8 @@ public class DataPackCommand {
         );
     };
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_136809_) {
-        p_136809_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("datapack")
                 .requires(p_136872_ -> p_136872_.hasPermission(2))
                 .then(
@@ -138,41 +138,61 @@ public class DataPackCommand {
         );
     }
 
-    private static int enablePack(CommandSourceStack p_136829_, Pack p_136830_, DataPackCommand.Inserter p_136831_) throws CommandSyntaxException {
-        PackRepository packrepository = p_136829_.getServer().getPackRepository();
+    /**
+     * Enables the given pack.
+     *
+     * @return The number of packs that are loaded after this operation.
+     */
+    private static int enablePack(CommandSourceStack source, Pack pack, DataPackCommand.Inserter priorityCallback) throws CommandSyntaxException {
+        PackRepository packrepository = source.getServer().getPackRepository();
         List<Pack> list = Lists.newArrayList(packrepository.getSelectedPacks());
-        p_136831_.apply(list, p_136830_);
-        p_136829_.sendSuccess(() -> Component.translatable("commands.datapack.modify.enable", p_136830_.getChatLink(true)), true);
-        ReloadCommand.reloadPacks(list.stream().map(Pack::getId).collect(Collectors.toList()), p_136829_);
+        priorityCallback.apply(list, pack);
+        source.sendSuccess(() -> Component.translatable("commands.datapack.modify.enable", pack.getChatLink(true)), true);
+        ReloadCommand.reloadPacks(list.stream().map(Pack::getId).collect(Collectors.toList()), source);
         return list.size();
     }
 
-    private static int disablePack(CommandSourceStack p_136826_, Pack p_136827_) {
-        PackRepository packrepository = p_136826_.getServer().getPackRepository();
+    /**
+     * Disables the given pack.
+     *
+     * @return The number of packs that are loaded after this operation.
+     */
+    private static int disablePack(CommandSourceStack source, Pack pack) {
+        PackRepository packrepository = source.getServer().getPackRepository();
         List<Pack> list = Lists.newArrayList(packrepository.getSelectedPacks());
-        list.remove(p_136827_);
-        p_136826_.sendSuccess(() -> Component.translatable("commands.datapack.modify.disable", p_136827_.getChatLink(true)), true);
-        ReloadCommand.reloadPacks(list.stream().map(Pack::getId).collect(Collectors.toList()), p_136826_);
+        list.remove(pack);
+        source.sendSuccess(() -> Component.translatable("commands.datapack.modify.disable", pack.getChatLink(true)), true);
+        ReloadCommand.reloadPacks(list.stream().map(Pack::getId).collect(Collectors.toList()), source);
         return list.size();
     }
 
-    private static int listPacks(CommandSourceStack p_136824_) {
-        return listEnabledPacks(p_136824_) + listAvailablePacks(p_136824_);
+    /**
+     * Sends a list of both enabled and available packs to the user.
+     *
+     * @return The total number of packs.
+     */
+    private static int listPacks(CommandSourceStack source) {
+        return listEnabledPacks(source) + listAvailablePacks(source);
     }
 
-    private static int listAvailablePacks(CommandSourceStack p_136855_) {
-        PackRepository packrepository = p_136855_.getServer().getPackRepository();
+    /**
+     * Sends a list of available packs to the user.
+     *
+     * @return The number of available packs.
+     */
+    private static int listAvailablePacks(CommandSourceStack source) {
+        PackRepository packrepository = source.getServer().getPackRepository();
         packrepository.reload();
         Collection<Pack> collection = packrepository.getSelectedPacks();
         Collection<Pack> collection1 = packrepository.getAvailablePacks();
-        FeatureFlagSet featureflagset = p_136855_.enabledFeatures();
+        FeatureFlagSet featureflagset = source.enabledFeatures();
         List<Pack> list = collection1.stream()
             .filter(p_248121_ -> !collection.contains(p_248121_) && p_248121_.getRequestedFeatures().isSubsetOf(featureflagset))
             .toList();
         if (list.isEmpty()) {
-            p_136855_.sendSuccess(() -> Component.translatable("commands.datapack.list.available.none"), false);
+            source.sendSuccess(() -> Component.translatable("commands.datapack.list.available.none"), false);
         } else {
-            p_136855_.sendSuccess(
+            source.sendSuccess(
                 () -> Component.translatable(
                         "commands.datapack.list.available.success", list.size(), ComponentUtils.formatList(list, p_136844_ -> p_136844_.getChatLink(false))
                     ),
@@ -183,14 +203,19 @@ public class DataPackCommand {
         return list.size();
     }
 
-    private static int listEnabledPacks(CommandSourceStack p_136866_) {
-        PackRepository packrepository = p_136866_.getServer().getPackRepository();
+    /**
+     * Sends a list of enabled packs to the user.
+     *
+     * @return The number of enabled packs.
+     */
+    private static int listEnabledPacks(CommandSourceStack source) {
+        PackRepository packrepository = source.getServer().getPackRepository();
         packrepository.reload();
         Collection<? extends Pack> collection = packrepository.getSelectedPacks().stream().filter(p -> !p.isHidden()).toList();
         if (collection.isEmpty()) {
-            p_136866_.sendSuccess(() -> Component.translatable("commands.datapack.list.enabled.none"), false);
+            source.sendSuccess(() -> Component.translatable("commands.datapack.list.enabled.none"), false);
         } else {
-            p_136866_.sendSuccess(
+            source.sendSuccess(
                 () -> Component.translatable(
                         "commands.datapack.list.enabled.success",
                         collection.size(),
@@ -203,22 +228,22 @@ public class DataPackCommand {
         return collection.size();
     }
 
-    private static Pack getPack(CommandContext<CommandSourceStack> p_136816_, String p_136817_, boolean p_136818_) throws CommandSyntaxException {
-        String s = StringArgumentType.getString(p_136816_, p_136817_);
-        PackRepository packrepository = p_136816_.getSource().getServer().getPackRepository();
+    private static Pack getPack(CommandContext<CommandSourceStack> context, String name, boolean enabling) throws CommandSyntaxException {
+        String s = StringArgumentType.getString(context, name);
+        PackRepository packrepository = context.getSource().getServer().getPackRepository();
         Pack pack = packrepository.getPack(s);
         if (pack == null) {
             throw ERROR_UNKNOWN_PACK.create(s);
         } else {
             boolean flag = packrepository.getSelectedPacks().contains(pack);
-            if (p_136818_ && flag) {
+            if (enabling && flag) {
                 throw ERROR_PACK_ALREADY_ENABLED.create(s);
-            } else if (!p_136818_ && !flag) {
+            } else if (!enabling && !flag) {
                 throw ERROR_PACK_ALREADY_DISABLED.create(s);
             } else {
-                FeatureFlagSet featureflagset = p_136816_.getSource().enabledFeatures();
+                FeatureFlagSet featureflagset = context.getSource().enabledFeatures();
                 FeatureFlagSet featureflagset1 = pack.getRequestedFeatures();
-                if (!p_136818_ && !featureflagset1.isEmpty() && pack.getPackSource() == PackSource.FEATURE) {
+                if (!enabling && !featureflagset1.isEmpty() && pack.getPackSource() == PackSource.FEATURE) {
                     throw ERROR_CANNOT_DISABLE_FEATURE.create(s);
                 } else if (!featureflagset1.isSubsetOf(featureflagset)) {
                     throw ERROR_PACK_FEATURES_NOT_ENABLED.create(s, FeatureFlags.printMissingFlags(featureflagset, featureflagset1));
@@ -230,6 +255,6 @@ public class DataPackCommand {
     }
 
     interface Inserter {
-        void apply(List<Pack> p_136884_, Pack p_136885_) throws CommandSyntaxException;
+        void apply(List<Pack> currentPacks, Pack pack) throws CommandSyntaxException;
     }
 }

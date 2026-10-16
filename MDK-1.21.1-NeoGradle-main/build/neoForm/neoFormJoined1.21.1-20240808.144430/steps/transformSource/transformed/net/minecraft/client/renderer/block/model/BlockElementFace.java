@@ -34,28 +34,28 @@ public record BlockElementFace(@Nullable Direction cullForDirection, int tintInd
     public static class Deserializer implements JsonDeserializer<BlockElementFace> {
         private static final int DEFAULT_TINT_INDEX = -1;
 
-        public BlockElementFace deserialize(JsonElement p_111365_, Type p_111366_, JsonDeserializationContext p_111367_) throws JsonParseException {
-            JsonObject jsonobject = p_111365_.getAsJsonObject();
+        public BlockElementFace deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonobject = json.getAsJsonObject();
             Direction direction = this.getCullFacing(jsonobject);
             int i = this.getTintIndex(jsonobject);
             String s = this.getTexture(jsonobject);
-            BlockFaceUV blockfaceuv = p_111367_.deserialize(jsonobject, BlockFaceUV.class);
+            BlockFaceUV blockfaceuv = context.deserialize(jsonobject, BlockFaceUV.class);
             if (jsonobject.has("forge_data")) throw new JsonParseException("forge_data should be replaced by neoforge_data"); // TODO 1.22: Remove
             var faceData = net.neoforged.neoforge.client.model.ExtraFaceData.read(jsonobject.get("neoforge_data"), null);
             return new BlockElementFace(direction, i, s, blockfaceuv, faceData, new org.apache.commons.lang3.mutable.MutableObject<>());
         }
 
-        protected int getTintIndex(JsonObject p_111369_) {
-            return GsonHelper.getAsInt(p_111369_, "tintindex", -1);
+        protected int getTintIndex(JsonObject json) {
+            return GsonHelper.getAsInt(json, "tintindex", -1);
         }
 
-        private String getTexture(JsonObject p_111371_) {
-            return GsonHelper.getAsString(p_111371_, "texture");
+        private String getTexture(JsonObject json) {
+            return GsonHelper.getAsString(json, "texture");
         }
 
         @Nullable
-        private Direction getCullFacing(JsonObject p_111373_) {
-            String s = GsonHelper.getAsString(p_111373_, "cullface", "");
+        private Direction getCullFacing(JsonObject json) {
+            String s = GsonHelper.getAsString(json, "cullface", "");
             return Direction.byName(s);
         }
     }

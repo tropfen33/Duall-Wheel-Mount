@@ -29,10 +29,10 @@ public class VaultSharedData {
     private double connectedParticlesRange = VaultConfig.DEFAULT.deactivationRange();
     boolean isDirty;
 
-    VaultSharedData(ItemStack p_324245_, Set<UUID> p_324007_, double p_324069_) {
-        this.displayItem = p_324245_;
-        this.connectedPlayers.addAll(p_324007_);
-        this.connectedParticlesRange = p_324069_;
+    VaultSharedData(ItemStack displayItem, Set<UUID> connectedPlayers, double connectedParticlesRange) {
+        this.displayItem = displayItem;
+        this.connectedPlayers.addAll(connectedPlayers);
+        this.connectedParticlesRange = connectedParticlesRange;
     }
 
     VaultSharedData() {
@@ -46,9 +46,9 @@ public class VaultSharedData {
         return !this.displayItem.isEmpty();
     }
 
-    public void setDisplayItem(ItemStack p_324243_) {
-        if (!ItemStack.matches(this.displayItem, p_324243_)) {
-            this.displayItem = p_324243_.copy();
+    public void setDisplayItem(ItemStack displayItem) {
+        if (!ItemStack.matches(this.displayItem, displayItem)) {
+            this.displayItem = displayItem.copy();
             this.markDirty();
         }
     }
@@ -65,11 +65,11 @@ public class VaultSharedData {
         return this.connectedParticlesRange;
     }
 
-    void updateConnectedPlayersWithinRange(ServerLevel p_324193_, BlockPos p_324358_, VaultServerData p_324348_, VaultConfig p_324058_, double p_324450_) {
-        Set<UUID> set = p_324058_.playerDetector()
-            .detect(p_324193_, p_324058_.entitySelector(), p_324358_, p_324450_, false)
+    void updateConnectedPlayersWithinRange(ServerLevel level, BlockPos pos, VaultServerData serverData, VaultConfig config, double deactivationRange) {
+        Set<UUID> set = config.playerDetector()
+            .detect(level, config.entitySelector(), pos, deactivationRange, false)
             .stream()
-            .filter(p_324308_ -> !p_324348_.getRewardedPlayers().contains(p_324308_))
+            .filter(p_324308_ -> !serverData.getRewardedPlayers().contains(p_324308_))
             .collect(Collectors.toSet());
         if (!this.connectedPlayers.equals(set)) {
             this.connectedPlayers = set;
@@ -81,9 +81,9 @@ public class VaultSharedData {
         this.isDirty = true;
     }
 
-    void set(VaultSharedData p_324621_) {
-        this.displayItem = p_324621_.displayItem;
-        this.connectedPlayers = p_324621_.connectedPlayers;
-        this.connectedParticlesRange = p_324621_.connectedParticlesRange;
+    void set(VaultSharedData other) {
+        this.displayItem = other.displayItem;
+        this.connectedPlayers = other.connectedPlayers;
+        this.connectedParticlesRange = other.connectedParticlesRange;
     }
 }

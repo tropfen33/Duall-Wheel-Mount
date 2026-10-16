@@ -51,35 +51,35 @@ public interface WeatheringCopper extends ChangeOverTimeBlock<WeatheringCopper.W
     @Deprecated
     Supplier<BiMap<Block, Block>> PREVIOUS_BY_BLOCK = Suppliers.memoize(() -> NEXT_BY_BLOCK.get().inverse());
 
-    static Optional<Block> getPrevious(Block p_154891_) {
-        return Optional.ofNullable(net.neoforged.neoforge.common.DataMapHooks.getPreviousOxidizedStage(p_154891_));
+    static Optional<Block> getPrevious(Block block) {
+        return Optional.ofNullable(net.neoforged.neoforge.common.DataMapHooks.getPreviousOxidizedStage(block));
     }
 
-    static Block getFirst(Block p_154898_) {
-        Block block = p_154898_;
+    static Block getFirst(Block p_block) {
+        Block block = p_block;
 
-        for (Block block1 = net.neoforged.neoforge.common.DataMapHooks.getPreviousOxidizedStage(p_154898_); block1 != null; block1 = net.neoforged.neoforge.common.DataMapHooks.getPreviousOxidizedStage(block1)) {
+        for (Block block1 = net.neoforged.neoforge.common.DataMapHooks.getPreviousOxidizedStage(p_block); block1 != null; block1 = net.neoforged.neoforge.common.DataMapHooks.getPreviousOxidizedStage(block1)) {
             block = block1;
         }
 
         return block;
     }
 
-    static Optional<BlockState> getPrevious(BlockState p_154900_) {
-        return getPrevious(p_154900_.getBlock()).map(p_154903_ -> p_154903_.withPropertiesOf(p_154900_));
+    static Optional<BlockState> getPrevious(BlockState state) {
+        return getPrevious(state.getBlock()).map(p_154903_ -> p_154903_.withPropertiesOf(state));
     }
 
-    static Optional<Block> getNext(Block p_154905_) {
-        return Optional.ofNullable(net.neoforged.neoforge.common.DataMapHooks.getNextOxidizedStage(p_154905_));
+    static Optional<Block> getNext(Block block) {
+        return Optional.ofNullable(net.neoforged.neoforge.common.DataMapHooks.getNextOxidizedStage(block));
     }
 
-    static BlockState getFirst(BlockState p_154907_) {
-        return getFirst(p_154907_.getBlock()).withPropertiesOf(p_154907_);
+    static BlockState getFirst(BlockState state) {
+        return getFirst(state.getBlock()).withPropertiesOf(state);
     }
 
     @Override
-    default Optional<BlockState> getNext(BlockState p_154893_) {
-        return getNext(p_154893_.getBlock()).map(p_154896_ -> p_154896_.withPropertiesOf(p_154893_));
+    default Optional<BlockState> getNext(BlockState state) {
+        return getNext(state.getBlock()).map(p_154896_ -> p_154896_.withPropertiesOf(state));
     }
 
     @Override
@@ -96,8 +96,8 @@ public interface WeatheringCopper extends ChangeOverTimeBlock<WeatheringCopper.W
         public static final Codec<WeatheringCopper.WeatherState> CODEC = StringRepresentable.fromEnum(WeatheringCopper.WeatherState::values);
         private final String name;
 
-        private WeatherState(String p_304569_) {
-            this.name = p_304569_;
+        private WeatherState(String name) {
+            this.name = name;
         }
 
         @Override

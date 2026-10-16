@@ -70,16 +70,16 @@ public class VanillaRegistries {
         .add(Registries.JUKEBOX_SONG, JukeboxSongs::bootstrap);
     public static final List<? extends net.minecraft.resources.ResourceKey<? extends net.minecraft.core.Registry<?>>> DATAPACK_REGISTRY_KEYS = BUILDER.getEntryKeys();
 
-    private static void validateThatAllBiomeFeaturesHaveBiomeFilter(HolderLookup.Provider p_256242_) {
-        validateThatAllBiomeFeaturesHaveBiomeFilter(p_256242_.lookupOrThrow(Registries.PLACED_FEATURE), p_256242_.lookupOrThrow(Registries.BIOME));
+    private static void validateThatAllBiomeFeaturesHaveBiomeFilter(HolderLookup.Provider provider) {
+        validateThatAllBiomeFeaturesHaveBiomeFilter(provider.lookupOrThrow(Registries.PLACED_FEATURE), provider.lookupOrThrow(Registries.BIOME));
     }
 
-    public static void validateThatAllBiomeFeaturesHaveBiomeFilter(HolderGetter<PlacedFeature> p_272963_, HolderLookup<Biome> p_273693_) {
-        p_273693_.listElements().forEach(p_256326_ -> {
+    public static void validateThatAllBiomeFeaturesHaveBiomeFilter(HolderGetter<PlacedFeature> features, HolderLookup<Biome> biomes) {
+        biomes.listElements().forEach(p_256326_ -> {
             ResourceLocation resourcelocation = p_256326_.key().location();
             List<HolderSet<PlacedFeature>> list = p_256326_.value().getGenerationSettings().features();
             list.stream().flatMap(HolderSet::stream).forEach(p_256657_ -> p_256657_.unwrap().ifLeft(p_339381_ -> {
-                    Holder.Reference<PlacedFeature> reference = p_272963_.getOrThrow((ResourceKey<PlacedFeature>)p_339381_);
+                    Holder.Reference<PlacedFeature> reference = features.getOrThrow((ResourceKey<PlacedFeature>)p_339381_);
                     if (!validatePlacedFeature(reference.value())) {
                         Util.logAndPauseIfInIde("Placed feature " + p_339381_.location() + " in biome " + resourcelocation + " is missing BiomeFilter.biome()");
                     }
@@ -91,8 +91,8 @@ public class VanillaRegistries {
         });
     }
 
-    private static boolean validatePlacedFeature(PlacedFeature p_255656_) {
-        return p_255656_.placement().contains(BiomeFilter.biome());
+    private static boolean validatePlacedFeature(PlacedFeature feature) {
+        return feature.placement().contains(BiomeFilter.biome());
     }
 
     public static HolderLookup.Provider createLookup() {

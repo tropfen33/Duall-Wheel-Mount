@@ -15,16 +15,16 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 
 public class Snowball extends ThrowableItemProjectile {
-    public Snowball(EntityType<? extends Snowball> p_37391_, Level p_37392_) {
-        super(p_37391_, p_37392_);
+    public Snowball(EntityType<? extends Snowball> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public Snowball(Level p_37399_, LivingEntity p_37400_) {
-        super(EntityType.SNOWBALL, p_37400_, p_37399_);
+    public Snowball(Level level, LivingEntity shooter) {
+        super(EntityType.SNOWBALL, shooter, level);
     }
 
-    public Snowball(Level p_37394_, double p_37395_, double p_37396_, double p_37397_) {
-        super(EntityType.SNOWBALL, p_37395_, p_37396_, p_37397_, p_37394_);
+    public Snowball(Level level, double x, double y, double z) {
+        super(EntityType.SNOWBALL, x, y, z, level);
     }
 
     @Override
@@ -39,9 +39,12 @@ public class Snowball extends ThrowableItemProjectile {
             : ParticleTypes.ITEM_SNOWBALL);
     }
 
+    /**
+     * Handles an entity event received from a {@link net.minecraft.network.protocol.game.ClientboundEntityEventPacket}.
+     */
     @Override
-    public void handleEntityEvent(byte p_37402_) {
-        if (p_37402_ == 3) {
+    public void handleEntityEvent(byte id) {
+        if (id == 3) {
             ParticleOptions particleoptions = this.getParticle();
 
             for (int i = 0; i < 8; i++) {
@@ -50,17 +53,23 @@ public class Snowball extends ThrowableItemProjectile {
         }
     }
 
+    /**
+     * Called when the arrow hits an entity
+     */
     @Override
-    protected void onHitEntity(EntityHitResult p_37404_) {
-        super.onHitEntity(p_37404_);
-        Entity entity = p_37404_.getEntity();
+    protected void onHitEntity(EntityHitResult result) {
+        super.onHitEntity(result);
+        Entity entity = result.getEntity();
         int i = entity instanceof Blaze ? 3 : 0;
         entity.hurt(this.damageSources().thrown(this, this.getOwner()), (float)i);
     }
 
+    /**
+     * Called when this EntityFireball hits a block or entity.
+     */
     @Override
-    protected void onHit(HitResult p_37406_) {
-        super.onHit(p_37406_);
+    protected void onHit(HitResult result) {
+        super.onHit(result);
         if (!this.level().isClientSide) {
             this.level().broadcastEntityEvent(this, (byte)3);
             this.discard();

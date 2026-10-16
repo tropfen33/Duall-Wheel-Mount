@@ -14,21 +14,31 @@ import javax.annotation.Nullable;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
+/**
+ * The ChannelAccess class provides access to channels for playing audio data using a given library and executor.
+ */
 @OnlyIn(Dist.CLIENT)
 public class ChannelAccess {
     private final Set<ChannelAccess.ChannelHandle> channels = Sets.newIdentityHashSet();
     final Library library;
     final Executor executor;
 
-    public ChannelAccess(Library p_120125_, Executor p_120126_) {
-        this.library = p_120125_;
-        this.executor = p_120126_;
+    public ChannelAccess(Library library, Executor executor) {
+        this.library = library;
+        this.executor = executor;
     }
 
-    public CompletableFuture<ChannelAccess.ChannelHandle> createHandle(Library.Pool p_120129_) {
+    /**
+     * Creates a new channel handle for the specified system mode and returns a CompletableFuture that completes with the handle when it is created.
+     * <p>
+     * @return a CompletableFuture that completes with the channel handle when it is created, or null if it cannot be created
+     *
+     * @param systemMode systemMode the system mode to create the channel handle for
+     */
+    public CompletableFuture<ChannelAccess.ChannelHandle> createHandle(Library.Pool systemMode) {
         CompletableFuture<ChannelAccess.ChannelHandle> completablefuture = new CompletableFuture<>();
         this.executor.execute(() -> {
-            Channel channel = this.library.acquireChannel(p_120129_);
+            Channel channel = this.library.acquireChannel(systemMode);
             if (channel != null) {
                 ChannelAccess.ChannelHandle channelaccess$channelhandle = new ChannelAccess.ChannelHandle(channel);
                 this.channels.add(channelaccess$channelhandle);
@@ -40,8 +50,11 @@ public class ChannelAccess {
         return completablefuture;
     }
 
-    public void executeOnChannels(Consumer<Stream<Channel>> p_120138_) {
-        this.executor.execute(() -> p_120138_.accept(this.channels.stream().map(p_174978_ -> p_174978_.channel).filter(Objects::nonNull)));
+    /**
+     * @param sourceStreamConsumer the consumer to execute on the stream of channels
+     */
+    public void executeOnChannels(Consumer<Stream<Channel>> sourceStreamConsumer) {
+        this.executor.execute(() -> sourceStreamConsumer.accept(this.channels.stream().map(p_174978_ -> p_174978_.channel).filter(Objects::nonNull)));
     }
 
     public void scheduleTick() {
@@ -64,6 +77,9 @@ public class ChannelAccess {
         this.channels.clear();
     }
 
+    /**
+     * Represents a handle to a channel.
+     */
     @OnlyIn(Dist.CLIENT)
     public class ChannelHandle {
         @Nullable
@@ -74,14 +90,14 @@ public class ChannelAccess {
             return this.stopped;
         }
 
-        public ChannelHandle(Channel p_120150_) {
-            this.channel = p_120150_;
+        public ChannelHandle(Channel channel) {
+            this.channel = channel;
         }
 
-        public void execute(Consumer<Channel> p_120155_) {
+        public void execute(Consumer<Channel> soundConsumer) {
             ChannelAccess.this.executor.execute(() -> {
                 if (this.channel != null) {
-                    p_120155_.accept(this.channel);
+                    soundConsumer.accept(this.channel);
                 }
             });
         }

@@ -19,28 +19,31 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.gameevent.GameEvent;
 
 public class FlintAndSteelItem extends Item {
-    public FlintAndSteelItem(Item.Properties p_41295_) {
-        super(p_41295_);
+    public FlintAndSteelItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_41297_) {
-        Player player = p_41297_.getPlayer();
-        Level level = p_41297_.getLevel();
-        BlockPos blockpos = p_41297_.getClickedPos();
+    public InteractionResult useOn(UseOnContext context) {
+        Player player = context.getPlayer();
+        Level level = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
         BlockState blockstate = level.getBlockState(blockpos);
-        BlockState blockstate2 = blockstate.getToolModifiedState(p_41297_, net.neoforged.neoforge.common.ItemAbilities.FIRESTARTER_LIGHT, false);
+        BlockState blockstate2 = blockstate.getToolModifiedState(context, net.neoforged.neoforge.common.ItemAbilities.FIRESTARTER_LIGHT, false);
         if (blockstate2 == null) {
-            BlockPos blockpos1 = blockpos.relative(p_41297_.getClickedFace());
-            if (BaseFireBlock.canBePlacedAt(level, blockpos1, p_41297_.getHorizontalDirection())) {
+            BlockPos blockpos1 = blockpos.relative(context.getClickedFace());
+            if (BaseFireBlock.canBePlacedAt(level, blockpos1, context.getHorizontalDirection())) {
                 level.playSound(player, blockpos1, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 1.0F, level.getRandom().nextFloat() * 0.4F + 0.8F);
                 BlockState blockstate1 = BaseFireBlock.getState(level, blockpos1);
                 level.setBlock(blockpos1, blockstate1, 11);
                 level.gameEvent(player, GameEvent.BLOCK_PLACE, blockpos);
-                ItemStack itemstack = p_41297_.getItemInHand();
+                ItemStack itemstack = context.getItemInHand();
                 if (player instanceof ServerPlayer) {
                     CriteriaTriggers.PLACED_BLOCK.trigger((ServerPlayer)player, blockpos1, itemstack);
-                    itemstack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(p_41297_.getHand()));
+                    itemstack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(context.getHand()));
                 }
 
                 return InteractionResult.sidedSuccess(level.isClientSide());
@@ -52,7 +55,7 @@ public class FlintAndSteelItem extends Item {
             level.setBlock(blockpos, blockstate2, 11);
             level.gameEvent(player, GameEvent.BLOCK_CHANGE, blockpos);
             if (player != null) {
-                p_41297_.getItemInHand().hurtAndBreak(1, player, LivingEntity.getSlotForHand(p_41297_.getHand()));
+                context.getItemInHand().hurtAndBreak(1, player, LivingEntity.getSlotForHand(context.getHand()));
             }
 
             return InteractionResult.sidedSuccess(level.isClientSide());

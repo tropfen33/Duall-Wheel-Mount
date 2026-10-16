@@ -24,14 +24,14 @@ public class AttributeMap {
     private final Set<AttributeInstance> attributesToUpdate = new ObjectOpenHashSet<>();
     private final AttributeSupplier supplier;
 
-    public AttributeMap(AttributeSupplier p_22144_) {
-        this.supplier = p_22144_;
+    public AttributeMap(AttributeSupplier supplier) {
+        this.supplier = supplier;
     }
 
-    private void onAttributeModified(AttributeInstance p_22158_) {
-        this.attributesToUpdate.add(p_22158_);
-        if (p_22158_.getAttribute().value().isClientSyncable()) {
-            this.attributesToSync.add(p_22158_);
+    private void onAttributeModified(AttributeInstance instance) {
+        this.attributesToUpdate.add(instance);
+        if (instance.getAttribute().value().isClientSyncable()) {
+            this.attributesToSync.add(instance);
         }
     }
 
@@ -48,36 +48,36 @@ public class AttributeMap {
     }
 
     @Nullable
-    public AttributeInstance getInstance(Holder<Attribute> p_250010_) {
-        return this.attributes.computeIfAbsent(p_250010_, p_315936_ -> this.supplier.createInstance(this::onAttributeModified, (Holder<Attribute>)p_315936_));
+    public AttributeInstance getInstance(Holder<Attribute> attribute) {
+        return this.attributes.computeIfAbsent(attribute, p_315936_ -> this.supplier.createInstance(this::onAttributeModified, (Holder<Attribute>)p_315936_));
     }
 
-    public boolean hasAttribute(Holder<Attribute> p_248893_) {
-        return this.attributes.get(p_248893_) != null || this.supplier.hasAttribute(p_248893_);
+    public boolean hasAttribute(Holder<Attribute> attribute) {
+        return this.attributes.get(attribute) != null || this.supplier.hasAttribute(attribute);
     }
 
-    public boolean hasModifier(Holder<Attribute> p_250299_, ResourceLocation p_350963_) {
-        AttributeInstance attributeinstance = this.attributes.get(p_250299_);
-        return attributeinstance != null ? attributeinstance.getModifier(p_350963_) != null : this.supplier.hasModifier(p_250299_, p_350963_);
+    public boolean hasModifier(Holder<Attribute> attribute, ResourceLocation id) {
+        AttributeInstance attributeinstance = this.attributes.get(attribute);
+        return attributeinstance != null ? attributeinstance.getModifier(id) != null : this.supplier.hasModifier(attribute, id);
     }
 
-    public double getValue(Holder<Attribute> p_316690_) {
-        AttributeInstance attributeinstance = this.attributes.get(p_316690_);
-        return attributeinstance != null ? attributeinstance.getValue() : this.supplier.getValue(p_316690_);
+    public double getValue(Holder<Attribute> attribute) {
+        AttributeInstance attributeinstance = this.attributes.get(attribute);
+        return attributeinstance != null ? attributeinstance.getValue() : this.supplier.getValue(attribute);
     }
 
-    public double getBaseValue(Holder<Attribute> p_316270_) {
-        AttributeInstance attributeinstance = this.attributes.get(p_316270_);
-        return attributeinstance != null ? attributeinstance.getBaseValue() : this.supplier.getBaseValue(p_316270_);
+    public double getBaseValue(Holder<Attribute> attribute) {
+        AttributeInstance attributeinstance = this.attributes.get(attribute);
+        return attributeinstance != null ? attributeinstance.getBaseValue() : this.supplier.getBaseValue(attribute);
     }
 
-    public double getModifierValue(Holder<Attribute> p_251534_, ResourceLocation p_350464_) {
-        AttributeInstance attributeinstance = this.attributes.get(p_251534_);
-        return attributeinstance != null ? attributeinstance.getModifier(p_350464_).amount() : this.supplier.getModifierValue(p_251534_, p_350464_);
+    public double getModifierValue(Holder<Attribute> attribute, ResourceLocation id) {
+        AttributeInstance attributeinstance = this.attributes.get(attribute);
+        return attributeinstance != null ? attributeinstance.getModifier(id).amount() : this.supplier.getModifierValue(attribute, id);
     }
 
-    public void addTransientAttributeModifiers(Multimap<Holder<Attribute>, AttributeModifier> p_345244_) {
-        p_345244_.forEach((p_351795_, p_351796_) -> {
+    public void addTransientAttributeModifiers(Multimap<Holder<Attribute>, AttributeModifier> modifiers) {
+        modifiers.forEach((p_351795_, p_351796_) -> {
             AttributeInstance attributeinstance = this.getInstance((Holder<Attribute>)p_351795_);
             if (attributeinstance != null) {
                 attributeinstance.removeModifier(p_351796_.id());
@@ -86,8 +86,8 @@ public class AttributeMap {
         });
     }
 
-    public void removeAttributeModifiers(Multimap<Holder<Attribute>, AttributeModifier> p_344776_) {
-        p_344776_.asMap().forEach((p_344297_, p_344298_) -> {
+    public void removeAttributeModifiers(Multimap<Holder<Attribute>, AttributeModifier> modifiers) {
+        modifiers.asMap().forEach((p_344297_, p_344298_) -> {
             AttributeInstance attributeinstance = this.attributes.get(p_344297_);
             if (attributeinstance != null) {
                 p_344298_.forEach(p_351794_ -> attributeinstance.removeModifier(p_351794_.id()));
@@ -95,8 +95,8 @@ public class AttributeMap {
         });
     }
 
-    public void assignAllValues(AttributeMap p_348501_) {
-        p_348501_.attributes.values().forEach(p_315934_ -> {
+    public void assignAllValues(AttributeMap map) {
+        map.attributes.values().forEach(p_315934_ -> {
             AttributeInstance attributeinstance = this.getInstance(p_315934_.getAttribute());
             if (attributeinstance != null) {
                 attributeinstance.replaceFrom(p_315934_);
@@ -104,8 +104,8 @@ public class AttributeMap {
         });
     }
 
-    public void assignBaseValues(AttributeMap p_22160_) {
-        p_22160_.attributes.values().forEach(p_348165_ -> {
+    public void assignBaseValues(AttributeMap map) {
+        map.attributes.values().forEach(p_348165_ -> {
             AttributeInstance attributeinstance = this.getInstance(p_348165_.getAttribute());
             if (attributeinstance != null) {
                 attributeinstance.setBaseValue(p_348165_.getBaseValue());
@@ -123,9 +123,9 @@ public class AttributeMap {
         return listtag;
     }
 
-    public void load(ListTag p_22169_) {
-        for (int i = 0; i < p_22169_.size(); i++) {
-            CompoundTag compoundtag = p_22169_.getCompound(i);
+    public void load(ListTag nbt) {
+        for (int i = 0; i < nbt.size(); i++) {
+            CompoundTag compoundtag = nbt.getCompound(i);
             String s = compoundtag.getString("id");
             ResourceLocation resourcelocation = ResourceLocation.tryParse(s);
             if (resourcelocation != null) {

@@ -19,8 +19,8 @@ public class BeeNestDestroyedTrigger extends SimpleCriterionTrigger<BeeNestDestr
         return BeeNestDestroyedTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_146652_, BlockState p_146653_, ItemStack p_146654_, int p_146655_) {
-        this.trigger(p_146652_, p_146660_ -> p_146660_.matches(p_146653_, p_146654_, p_146655_));
+    public void trigger(ServerPlayer player, BlockState state, ItemStack stack, int numBees) {
+        this.trigger(player, p_146660_ -> p_146660_.matches(state, stack, numBees));
     }
 
     public static record TriggerInstance(
@@ -39,21 +39,21 @@ public class BeeNestDestroyedTrigger extends SimpleCriterionTrigger<BeeNestDestr
         );
 
         public static Criterion<BeeNestDestroyedTrigger.TriggerInstance> destroyedBeeNest(
-            Block p_17513_, ItemPredicate.Builder p_17514_, MinMaxBounds.Ints p_17515_
+            Block block, ItemPredicate.Builder item, MinMaxBounds.Ints numBees
         ) {
             return CriteriaTriggers.BEE_NEST_DESTROYED
                 .createCriterion(
                     new BeeNestDestroyedTrigger.TriggerInstance(
-                        Optional.empty(), Optional.of(p_17513_.builtInRegistryHolder()), Optional.of(p_17514_.build()), p_17515_
+                        Optional.empty(), Optional.of(block.builtInRegistryHolder()), Optional.of(item.build()), numBees
                     )
                 );
         }
 
-        public boolean matches(BlockState p_146662_, ItemStack p_146663_, int p_146664_) {
-            if (this.block.isPresent() && !p_146662_.is(this.block.get())) {
+        public boolean matches(BlockState state, ItemStack stack, int numBees) {
+            if (this.block.isPresent() && !state.is(this.block.get())) {
                 return false;
             } else {
-                return this.item.isPresent() && !this.item.get().test(p_146663_) ? false : this.beesInside.matches(p_146664_);
+                return this.item.isPresent() && !this.item.get().test(stack) ? false : this.beesInside.matches(numBees);
             }
         }
     }

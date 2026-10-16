@@ -49,8 +49,8 @@ public class MiscOverworldPlacements {
     public static final ResourceKey<PlacedFeature> SPRING_LAVA_FROZEN = PlacementUtils.createKey("spring_lava_frozen");
     public static final ResourceKey<PlacedFeature> SPRING_WATER = PlacementUtils.createKey("spring_water");
 
-    public static void bootstrap(BootstrapContext<PlacedFeature> p_321482_) {
-        HolderGetter<ConfiguredFeature<?, ?>> holdergetter = p_321482_.lookup(Registries.CONFIGURED_FEATURE);
+    public static void bootstrap(BootstrapContext<PlacedFeature> context) {
+        HolderGetter<ConfiguredFeature<?, ?>> holdergetter = context.lookup(Registries.CONFIGURED_FEATURE);
         Holder<ConfiguredFeature<?, ?>> holder = holdergetter.getOrThrow(MiscOverworldFeatures.ICE_SPIKE);
         Holder<ConfiguredFeature<?, ?>> holder1 = holdergetter.getOrThrow(MiscOverworldFeatures.ICE_PATCH);
         Holder<ConfiguredFeature<?, ?>> holder2 = holdergetter.getOrThrow(MiscOverworldFeatures.FOREST_ROCK);
@@ -68,9 +68,9 @@ public class MiscOverworldPlacements {
         Holder<ConfiguredFeature<?, ?>> holder14 = holdergetter.getOrThrow(MiscOverworldFeatures.SPRING_LAVA_OVERWORLD);
         Holder<ConfiguredFeature<?, ?>> holder15 = holdergetter.getOrThrow(MiscOverworldFeatures.SPRING_LAVA_FROZEN);
         Holder<ConfiguredFeature<?, ?>> holder16 = holdergetter.getOrThrow(MiscOverworldFeatures.SPRING_WATER);
-        PlacementUtils.register(p_321482_, ICE_SPIKE, holder, CountPlacement.of(3), InSquarePlacement.spread(), PlacementUtils.HEIGHTMAP, BiomeFilter.biome());
+        PlacementUtils.register(context, ICE_SPIKE, holder, CountPlacement.of(3), InSquarePlacement.spread(), PlacementUtils.HEIGHTMAP, BiomeFilter.biome());
         PlacementUtils.register(
-            p_321482_,
+            context,
             ICE_PATCH,
             holder1,
             CountPlacement.of(2),
@@ -81,12 +81,12 @@ public class MiscOverworldPlacements {
             BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321482_, FOREST_ROCK, holder2, CountPlacement.of(2), InSquarePlacement.spread(), PlacementUtils.HEIGHTMAP, BiomeFilter.biome()
+            context, FOREST_ROCK, holder2, CountPlacement.of(2), InSquarePlacement.spread(), PlacementUtils.HEIGHTMAP, BiomeFilter.biome()
         );
-        PlacementUtils.register(p_321482_, ICEBERG_BLUE, holder4, RarityFilter.onAverageOnceEvery(200), InSquarePlacement.spread(), BiomeFilter.biome());
-        PlacementUtils.register(p_321482_, ICEBERG_PACKED, holder3, RarityFilter.onAverageOnceEvery(16), InSquarePlacement.spread(), BiomeFilter.biome());
+        PlacementUtils.register(context, ICEBERG_BLUE, holder4, RarityFilter.onAverageOnceEvery(200), InSquarePlacement.spread(), BiomeFilter.biome());
+        PlacementUtils.register(context, ICEBERG_PACKED, holder3, RarityFilter.onAverageOnceEvery(16), InSquarePlacement.spread(), BiomeFilter.biome());
         PlacementUtils.register(
-            p_321482_,
+            context,
             BLUE_ICE,
             holder5,
             CountPlacement.of(UniformInt.of(0, 19)),
@@ -95,7 +95,7 @@ public class MiscOverworldPlacements {
             BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321482_,
+            context,
             LAKE_LAVA_UNDERGROUND,
             holder6,
             RarityFilter.onAverageOnceEvery(9),
@@ -110,7 +110,7 @@ public class MiscOverworldPlacements {
             BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321482_,
+            context,
             LAKE_LAVA_SURFACE,
             holder6,
             RarityFilter.onAverageOnceEvery(200),
@@ -119,7 +119,7 @@ public class MiscOverworldPlacements {
             BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321482_,
+            context,
             DISK_CLAY,
             holder7,
             InSquarePlacement.spread(),
@@ -128,7 +128,7 @@ public class MiscOverworldPlacements {
             BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321482_,
+            context,
             DISK_GRAVEL,
             holder8,
             InSquarePlacement.spread(),
@@ -137,7 +137,7 @@ public class MiscOverworldPlacements {
             BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321482_,
+            context,
             DISK_SAND,
             holder9,
             CountPlacement.of(3),
@@ -147,7 +147,7 @@ public class MiscOverworldPlacements {
             BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321482_,
+            context,
             DISK_GRASS,
             holder10,
             CountPlacement.of(1),
@@ -157,13 +157,13 @@ public class MiscOverworldPlacements {
             BlockPredicateFilter.forPredicate(BlockPredicate.matchesBlocks(Blocks.MUD)),
             BiomeFilter.biome()
         );
-        PlacementUtils.register(p_321482_, FREEZE_TOP_LAYER, holder11, BiomeFilter.biome());
-        PlacementUtils.register(p_321482_, VOID_START_PLATFORM, holder12, BiomeFilter.biome());
+        PlacementUtils.register(context, FREEZE_TOP_LAYER, holder11, BiomeFilter.biome());
+        PlacementUtils.register(context, VOID_START_PLATFORM, holder12, BiomeFilter.biome());
         PlacementUtils.register(
-            p_321482_, DESERT_WELL, holder13, RarityFilter.onAverageOnceEvery(1000), InSquarePlacement.spread(), PlacementUtils.HEIGHTMAP, BiomeFilter.biome()
+            context, DESERT_WELL, holder13, RarityFilter.onAverageOnceEvery(1000), InSquarePlacement.spread(), PlacementUtils.HEIGHTMAP, BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321482_,
+            context,
             SPRING_LAVA,
             holder14,
             CountPlacement.of(20),
@@ -172,7 +172,7 @@ public class MiscOverworldPlacements {
             BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321482_,
+            context,
             SPRING_LAVA_FROZEN,
             holder15,
             CountPlacement.of(20),
@@ -181,7 +181,7 @@ public class MiscOverworldPlacements {
             BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321482_,
+            context,
             SPRING_WATER,
             holder16,
             CountPlacement.of(25),

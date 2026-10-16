@@ -55,7 +55,7 @@ public interface RecipeSerializer<T extends Recipe<?>> {
 
     StreamCodec<RegistryFriendlyByteBuf, T> streamCodec();
 
-    static <S extends RecipeSerializer<T>, T extends Recipe<?>> S register(String p_44099_, S p_44100_) {
-        return Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, p_44099_, p_44100_);
+    static <S extends RecipeSerializer<T>, T extends Recipe<?>> S register(String key, S recipeSerializer) {
+        return Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, key, recipeSerializer);
     }
 }

@@ -10,43 +10,43 @@ public class BaseAshSmokeParticle extends TextureSheetParticle {
     private final SpriteSet sprites;
 
     protected BaseAshSmokeParticle(
-        ClientLevel p_171904_,
-        double p_171905_,
-        double p_171906_,
-        double p_171907_,
-        float p_171908_,
-        float p_171909_,
-        float p_171910_,
-        double p_171911_,
-        double p_171912_,
-        double p_171913_,
-        float p_171914_,
-        SpriteSet p_171915_,
-        float p_171916_,
-        int p_171917_,
-        float p_171918_,
-        boolean p_171919_
+        ClientLevel level,
+        double x,
+        double y,
+        double z,
+        float xSeedMultiplier,
+        float ySpeedMultiplier,
+        float zSpeedMultiplier,
+        double xSpeed,
+        double ySpeed,
+        double zSpeed,
+        float quadSizeMultiplier,
+        SpriteSet sprites,
+        float rColMultiplier,
+        int lifetime,
+        float gravity,
+        boolean hasPhysics
     ) {
-        super(p_171904_, p_171905_, p_171906_, p_171907_, 0.0, 0.0, 0.0);
+        super(level, x, y, z, 0.0, 0.0, 0.0);
         this.friction = 0.96F;
-        this.gravity = p_171918_;
+        this.gravity = gravity;
         this.speedUpWhenYMotionIsBlocked = true;
-        this.sprites = p_171915_;
-        this.xd *= (double)p_171908_;
-        this.yd *= (double)p_171909_;
-        this.zd *= (double)p_171910_;
-        this.xd += p_171911_;
-        this.yd += p_171912_;
-        this.zd += p_171913_;
-        float f = p_171904_.random.nextFloat() * p_171916_;
+        this.sprites = sprites;
+        this.xd *= (double)xSeedMultiplier;
+        this.yd *= (double)ySpeedMultiplier;
+        this.zd *= (double)zSpeedMultiplier;
+        this.xd += xSpeed;
+        this.yd += ySpeed;
+        this.zd += zSpeed;
+        float f = level.random.nextFloat() * rColMultiplier;
         this.rCol = f;
         this.gCol = f;
         this.bCol = f;
-        this.quadSize *= 0.75F * p_171914_;
-        this.lifetime = (int)((double)p_171917_ / ((double)p_171904_.random.nextFloat() * 0.8 + 0.2) * (double)p_171914_);
+        this.quadSize *= 0.75F * quadSizeMultiplier;
+        this.lifetime = (int)((double)lifetime / ((double)level.random.nextFloat() * 0.8 + 0.2) * (double)quadSizeMultiplier);
         this.lifetime = Math.max(this.lifetime, 1);
-        this.setSpriteFromAge(p_171915_);
-        this.hasPhysics = p_171919_;
+        this.setSpriteFromAge(sprites);
+        this.hasPhysics = hasPhysics;
     }
 
     @Override
@@ -55,8 +55,8 @@ public class BaseAshSmokeParticle extends TextureSheetParticle {
     }
 
     @Override
-    public float getQuadSize(float p_105642_) {
-        return this.quadSize * Mth.clamp(((float)this.age + p_105642_) / (float)this.lifetime * 32.0F, 0.0F, 1.0F);
+    public float getQuadSize(float scaleFactor) {
+        return this.quadSize * Mth.clamp(((float)this.age + scaleFactor) / (float)this.lifetime * 32.0F, 0.0F, 1.0F);
     }
 
     @Override

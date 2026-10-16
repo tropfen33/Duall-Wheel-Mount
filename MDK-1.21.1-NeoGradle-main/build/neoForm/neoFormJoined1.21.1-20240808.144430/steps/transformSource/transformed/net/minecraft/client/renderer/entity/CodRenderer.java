@@ -18,17 +18,20 @@ public class CodRenderer extends MobRenderer<Cod, CodModel<Cod>> {
         super(p_173954_, new CodModel<>(p_173954_.bakeLayer(ModelLayers.COD)), 0.3F);
     }
 
-    public ResourceLocation getTextureLocation(Cod p_114015_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Cod entity) {
         return COD_LOCATION;
     }
 
-    protected void setupRotations(Cod p_320712_, PoseStack p_114010_, float p_114011_, float p_114012_, float p_114013_, float p_320770_) {
-        super.setupRotations(p_320712_, p_114010_, p_114011_, p_114012_, p_114013_, p_320770_);
-        float f = 4.3F * Mth.sin(0.6F * p_114011_);
-        p_114010_.mulPose(Axis.YP.rotationDegrees(f));
-        if (!p_320712_.isInWater()) {
-            p_114010_.translate(0.1F, 0.1F, -0.1F);
-            p_114010_.mulPose(Axis.ZP.rotationDegrees(90.0F));
+    protected void setupRotations(Cod entity, PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale) {
+        super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
+        float f = 4.3F * Mth.sin(0.6F * bob);
+        poseStack.mulPose(Axis.YP.rotationDegrees(f));
+        if (!entity.isInWater()) {
+            poseStack.translate(0.1F, 0.1F, -0.1F);
+            poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
         }
     }
 }

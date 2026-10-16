@@ -13,16 +13,16 @@ import java.util.stream.Stream;
 import net.minecraft.util.datafix.ComponentDataFixUtils;
 
 public class ItemWrittenBookPagesStrictJsonFix extends DataFix {
-    public ItemWrittenBookPagesStrictJsonFix(Schema p_16164_, boolean p_16165_) {
-        super(p_16164_, p_16165_);
+    public ItemWrittenBookPagesStrictJsonFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
-    public Dynamic<?> fixTag(Dynamic<?> p_16172_) {
-        return p_16172_.update(
+    public Dynamic<?> fixTag(Dynamic<?> tag) {
+        return tag.update(
             "pages",
             p_337643_ -> DataFixUtils.orElse(
-                    p_337643_.asStreamOpt().map(p_145441_ -> p_145441_.map(ComponentDataFixUtils::rewriteFromLenient)).map(p_16172_::createList).result(),
-                    p_16172_.emptyList()
+                    p_337643_.asStreamOpt().map(p_145441_ -> p_145441_.map(ComponentDataFixUtils::rewriteFromLenient)).map(tag::createList).result(),
+                    tag.emptyList()
                 )
         );
     }

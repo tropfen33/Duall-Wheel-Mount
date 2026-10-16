@@ -36,20 +36,20 @@ public record VertexFormatElement(int id, int index, VertexFormatElement.Type ty
     }
 
     public static VertexFormatElement register(
-        int p_350751_, int p_350658_, VertexFormatElement.Type p_350861_, VertexFormatElement.Usage p_350763_, int p_350519_
+        int id, int index, VertexFormatElement.Type type, VertexFormatElement.Usage usage, int count
     ) {
-        VertexFormatElement vertexformatelement = new VertexFormatElement(p_350751_, p_350658_, p_350861_, p_350763_, p_350519_);
-        if (BY_ID[p_350751_] != null) {
-            throw new IllegalArgumentException("Duplicate element registration for: " + p_350751_);
+        VertexFormatElement vertexformatelement = new VertexFormatElement(id, index, type, usage, count);
+        if (BY_ID[id] != null) {
+            throw new IllegalArgumentException("Duplicate element registration for: " + id);
         } else {
-            BY_ID[p_350751_] = vertexformatelement;
+            BY_ID[id] = vertexformatelement;
             ELEMENTS.add(vertexformatelement);
             return vertexformatelement;
         }
     }
 
-    private boolean supportsUsage(int p_86043_, VertexFormatElement.Usage p_86044_) {
-        return p_86043_ == 0 || p_86044_ == VertexFormatElement.Usage.UV;
+    private boolean supportsUsage(int index, VertexFormatElement.Usage usage) {
+        return index == 0 || usage == VertexFormatElement.Usage.UV;
     }
 
     @Override
@@ -65,17 +65,17 @@ public record VertexFormatElement(int id, int index, VertexFormatElement.Type ty
         return this.type.size() * this.count;
     }
 
-    public void setupBufferState(int p_166966_, long p_166967_, int p_166968_) {
-        this.usage.setupState.setupBufferState(this.count, this.type.glType(), p_166968_, p_166967_, p_166966_);
+    public void setupBufferState(int stateIndex, long offset, int stride) {
+        this.usage.setupState.setupBufferState(this.count, this.type.glType(), stride, offset, stateIndex);
     }
 
     @Nullable
-    public static VertexFormatElement byId(int p_350894_) {
-        return BY_ID[p_350894_];
+    public static VertexFormatElement byId(int id) {
+        return BY_ID[id];
     }
 
-    public static Stream<VertexFormatElement> elementsFromMask(int p_350349_) {
-        return ELEMENTS.stream().filter(p_350573_ -> p_350573_ != null && (p_350349_ & p_350573_.mask()) != 0);
+    public static Stream<VertexFormatElement> elementsFromMask(int mask) {
+        return ELEMENTS.stream().filter(p_350573_ -> p_350573_ != null && (mask & p_350573_.mask()) != 0);
     }
 
     public static int findNextId() {
@@ -101,10 +101,10 @@ public record VertexFormatElement(int id, int index, VertexFormatElement.Type ty
         private final String name;
         private final int glType;
 
-        private Type(int p_86071_, String p_86072_, int p_86073_) {
-            this.size = p_86071_;
-            this.name = p_86072_;
-            this.glType = p_86073_;
+        private Type(int size, String name, int glType) {
+            this.size = size;
+            this.name = name;
+            this.glType = glType;
         }
 
         public int size() {
@@ -159,9 +159,9 @@ public record VertexFormatElement(int id, int index, VertexFormatElement.Type ty
         private final String name;
         final VertexFormatElement.Usage.SetupState setupState;
 
-        private Usage(String p_166975_, VertexFormatElement.Usage.SetupState p_166976_) {
-            this.name = p_166975_;
-            this.setupState = p_166976_;
+        private Usage(String name, VertexFormatElement.Usage.SetupState setupState) {
+            this.name = name;
+            this.setupState = setupState;
         }
 
         @Override
@@ -172,7 +172,7 @@ public record VertexFormatElement(int id, int index, VertexFormatElement.Type ty
         @FunctionalInterface
         @OnlyIn(Dist.CLIENT)
         public interface SetupState {
-            void setupBufferState(int p_167053_, int p_167054_, int p_167055_, long p_167056_, int p_167057_);
+            void setupBufferState(int size, int type, int stride, long pointer, int index);
         }
 
         public static net.neoforged.fml.common.asm.enumextension.ExtensionInfo getExtensionInfo() {

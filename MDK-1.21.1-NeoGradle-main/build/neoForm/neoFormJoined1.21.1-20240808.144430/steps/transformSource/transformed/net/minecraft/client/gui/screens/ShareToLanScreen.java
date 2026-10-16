@@ -34,9 +34,9 @@ public class ShareToLanScreen extends Screen {
     @Nullable
     private EditBox portEdit;
 
-    public ShareToLanScreen(Screen p_96650_) {
+    public ShareToLanScreen(Screen lastScreen) {
         super(Component.translatable("lanServer.title"));
-        this.lastScreen = p_96650_;
+        this.lastScreen = lastScreen;
     }
 
     @Override
@@ -94,13 +94,13 @@ public class ShareToLanScreen extends Screen {
     }
 
     @Nullable
-    private Component tryParsePort(String p_259426_) {
-        if (p_259426_.isBlank()) {
+    private Component tryParsePort(String port) {
+        if (port.isBlank()) {
             this.port = HttpUtil.getAvailablePort();
             return null;
         } else {
             try {
-                this.port = Integer.parseInt(p_259426_);
+                this.port = Integer.parseInt(port);
                 if (this.port < 1024 || this.port > 65535) {
                     return INVALID_PORT;
                 } else {
@@ -113,11 +113,19 @@ public class ShareToLanScreen extends Screen {
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281738_, int p_96653_, int p_96654_, float p_96655_) {
-        super.render(p_281738_, p_96653_, p_96654_, p_96655_);
-        p_281738_.drawCenteredString(this.font, this.title, this.width / 2, 50, 16777215);
-        p_281738_.drawCenteredString(this.font, INFO_TEXT, this.width / 2, 82, 16777215);
-        p_281738_.drawCenteredString(this.font, PORT_INFO_TEXT, this.width / 2, 142, 16777215);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 50, 16777215);
+        guiGraphics.drawCenteredString(this.font, INFO_TEXT, this.width / 2, 82, 16777215);
+        guiGraphics.drawCenteredString(this.font, PORT_INFO_TEXT, this.width / 2, 142, 16777215);
     }
 }

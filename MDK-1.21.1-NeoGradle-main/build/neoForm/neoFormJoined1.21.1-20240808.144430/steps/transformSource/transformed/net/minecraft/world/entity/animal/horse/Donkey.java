@@ -11,8 +11,8 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.level.Level;
 
 public class Donkey extends AbstractChestedHorse {
-    public Donkey(EntityType<? extends Donkey> p_30672_, Level p_30673_) {
-        super(p_30672_, p_30673_);
+    public Donkey(EntityType<? extends Donkey> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
@@ -37,16 +37,19 @@ public class Donkey extends AbstractChestedHorse {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_30682_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.DONKEY_HURT;
     }
 
+    /**
+     * Returns {@code true} if the mob is currently able to mate with the specified mob.
+     */
     @Override
-    public boolean canMate(Animal p_30679_) {
-        if (p_30679_ == this) {
+    public boolean canMate(Animal otherAnimal) {
+        if (otherAnimal == this) {
             return false;
         } else {
-            return !(p_30679_ instanceof Donkey) && !(p_30679_ instanceof Horse) ? false : this.canParent() && ((AbstractHorse)p_30679_).canParent();
+            return !(otherAnimal instanceof Donkey) && !(otherAnimal instanceof Horse) ? false : this.canParent() && ((AbstractHorse)otherAnimal).canParent();
         }
     }
 
@@ -57,11 +60,11 @@ public class Donkey extends AbstractChestedHorse {
 
     @Nullable
     @Override
-    public AgeableMob getBreedOffspring(ServerLevel p_149530_, AgeableMob p_149531_) {
-        EntityType<? extends AbstractHorse> entitytype = p_149531_ instanceof Horse ? EntityType.MULE : EntityType.DONKEY;
-        AbstractHorse abstracthorse = entitytype.create(p_149530_);
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        EntityType<? extends AbstractHorse> entitytype = otherParent instanceof Horse ? EntityType.MULE : EntityType.DONKEY;
+        AbstractHorse abstracthorse = entitytype.create(level);
         if (abstracthorse != null) {
-            this.setOffspringAttributes(p_149531_, abstracthorse);
+            this.setOffspringAttributes(otherParent, abstracthorse);
         }
 
         return abstracthorse;

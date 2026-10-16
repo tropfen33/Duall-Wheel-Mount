@@ -6,25 +6,39 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.state.BlockState;
 
 public interface LevelWriter {
-    boolean setBlock(BlockPos p_46947_, BlockState p_46948_, int p_46949_, int p_46950_);
+    boolean setBlock(BlockPos pos, BlockState state, int flags, int recursionLeft);
 
-    default boolean setBlock(BlockPos p_46944_, BlockState p_46945_, int p_46946_) {
-        return this.setBlock(p_46944_, p_46945_, p_46946_, 512);
+    /**
+     * Sets a block state into this world.Flags are as follows:
+     * 1 will cause a block update.
+     * 2 will send the change to clients.
+     * 4 will prevent the block from being re-rendered.
+     * 8 will force any re-renders to run on the main thread instead
+     * 16 will prevent neighbor reactions (e.g. fences connecting, observers pulsing).
+     * 32 will prevent neighbor reactions from spawning drops.
+     * 64 will signify the block is being moved.
+     * Flags can be OR-ed
+     */
+    default boolean setBlock(BlockPos pos, BlockState newState, int flags) {
+        return this.setBlock(pos, newState, flags, 512);
     }
 
-    boolean removeBlock(BlockPos p_46951_, boolean p_46952_);
+    boolean removeBlock(BlockPos pos, boolean isMoving);
 
-    default boolean destroyBlock(BlockPos p_46962_, boolean p_46963_) {
-        return this.destroyBlock(p_46962_, p_46963_, null);
+    /**
+     * Sets a block to air, but also plays the sound and particles and can spawn drops
+     */
+    default boolean destroyBlock(BlockPos pos, boolean dropBlock) {
+        return this.destroyBlock(pos, dropBlock, null);
     }
 
-    default boolean destroyBlock(BlockPos p_46954_, boolean p_46955_, @Nullable Entity p_46956_) {
-        return this.destroyBlock(p_46954_, p_46955_, p_46956_, 512);
+    default boolean destroyBlock(BlockPos pos, boolean dropBlock, @Nullable Entity entity) {
+        return this.destroyBlock(pos, dropBlock, entity, 512);
     }
 
-    boolean destroyBlock(BlockPos p_46957_, boolean p_46958_, @Nullable Entity p_46959_, int p_46960_);
+    boolean destroyBlock(BlockPos pos, boolean dropBlock, @Nullable Entity entity, int recursionLeft);
 
-    default boolean addFreshEntity(Entity p_46964_) {
+    default boolean addFreshEntity(Entity entity) {
         return false;
     }
 }

@@ -32,19 +32,19 @@ public class DualNoiseProvider extends NoiseProvider {
     private final NormalNoise slowNoise;
 
     public DualNoiseProvider(
-        InclusiveRange<Integer> p_191396_,
-        NormalNoise.NoiseParameters p_191397_,
-        float p_191398_,
-        long p_191399_,
-        NormalNoise.NoiseParameters p_191400_,
-        float p_191401_,
-        List<BlockState> p_191402_
+        InclusiveRange<Integer> variety,
+        NormalNoise.NoiseParameters slowNoiseParameters,
+        float slowScale,
+        long seed,
+        NormalNoise.NoiseParameters parameters,
+        float scale,
+        List<BlockState> states
     ) {
-        super(p_191399_, p_191400_, p_191401_, p_191402_);
-        this.variety = p_191396_;
-        this.slowNoiseParameters = p_191397_;
-        this.slowScale = p_191398_;
-        this.slowNoise = NormalNoise.create(new WorldgenRandom(new LegacyRandomSource(p_191399_)), p_191397_);
+        super(seed, parameters, scale, states);
+        this.variety = variety;
+        this.slowNoiseParameters = slowNoiseParameters;
+        this.slowScale = slowScale;
+        this.slowNoise = NormalNoise.create(new WorldgenRandom(new LegacyRandomSource(seed)), slowNoiseParameters);
     }
 
     @Override
@@ -53,24 +53,24 @@ public class DualNoiseProvider extends NoiseProvider {
     }
 
     @Override
-    public BlockState getState(RandomSource p_225910_, BlockPos p_225911_) {
-        double d0 = this.getSlowNoiseValue(p_225911_);
+    public BlockState getState(RandomSource random, BlockPos pos) {
+        double d0 = this.getSlowNoiseValue(pos);
         int i = (int)Mth.clampedMap(d0, -1.0, 1.0, (double)this.variety.minInclusive().intValue(), (double)(this.variety.maxInclusive() + 1));
         List<BlockState> list = Lists.newArrayListWithCapacity(i);
 
         for (int j = 0; j < i; j++) {
-            list.add(this.getRandomState(this.states, this.getSlowNoiseValue(p_225911_.offset(j * 54545, 0, j * 34234))));
+            list.add(this.getRandomState(this.states, this.getSlowNoiseValue(pos.offset(j * 54545, 0, j * 34234))));
         }
 
-        return this.getRandomState(list, p_225911_, (double)this.scale);
+        return this.getRandomState(list, pos, (double)this.scale);
     }
 
-    protected double getSlowNoiseValue(BlockPos p_191407_) {
+    protected double getSlowNoiseValue(BlockPos pos) {
         return this.slowNoise
             .getValue(
-                (double)((float)p_191407_.getX() * this.slowScale),
-                (double)((float)p_191407_.getY() * this.slowScale),
-                (double)((float)p_191407_.getZ() * this.slowScale)
+                (double)((float)pos.getX() * this.slowScale),
+                (double)((float)pos.getY() * this.slowScale),
+                (double)((float)pos.getZ() * this.slowScale)
             );
     }
 }

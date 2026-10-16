@@ -11,8 +11,8 @@ import java.util.Map;
 import net.minecraft.nbt.NbtFormatException;
 
 public class WorldGenSettingsDisallowOldCustomWorldsFix extends DataFix {
-    public WorldGenSettingsDisallowOldCustomWorldsFix(Schema p_185157_) {
-        super(p_185157_, false);
+    public WorldGenSettingsDisallowOldCustomWorldsFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
     @Override

@@ -72,37 +72,37 @@ public class StructureTemplate {
         return this.size;
     }
 
-    public void setAuthor(String p_74613_) {
-        this.author = p_74613_;
+    public void setAuthor(String author) {
+        this.author = author;
     }
 
     public String getAuthor() {
         return this.author;
     }
 
-    public void fillFromWorld(Level p_163803_, BlockPos p_163804_, Vec3i p_163805_, boolean p_163806_, @Nullable Block p_163807_) {
-        if (p_163805_.getX() >= 1 && p_163805_.getY() >= 1 && p_163805_.getZ() >= 1) {
-            BlockPos blockpos = p_163804_.offset(p_163805_).offset(-1, -1, -1);
+    public void fillFromWorld(Level level, BlockPos pos, Vec3i size, boolean withEntities, @Nullable Block toIgnore) {
+        if (size.getX() >= 1 && size.getY() >= 1 && size.getZ() >= 1) {
+            BlockPos blockpos = pos.offset(size).offset(-1, -1, -1);
             List<StructureTemplate.StructureBlockInfo> list = Lists.newArrayList();
             List<StructureTemplate.StructureBlockInfo> list1 = Lists.newArrayList();
             List<StructureTemplate.StructureBlockInfo> list2 = Lists.newArrayList();
             BlockPos blockpos1 = new BlockPos(
-                Math.min(p_163804_.getX(), blockpos.getX()), Math.min(p_163804_.getY(), blockpos.getY()), Math.min(p_163804_.getZ(), blockpos.getZ())
+                Math.min(pos.getX(), blockpos.getX()), Math.min(pos.getY(), blockpos.getY()), Math.min(pos.getZ(), blockpos.getZ())
             );
             BlockPos blockpos2 = new BlockPos(
-                Math.max(p_163804_.getX(), blockpos.getX()), Math.max(p_163804_.getY(), blockpos.getY()), Math.max(p_163804_.getZ(), blockpos.getZ())
+                Math.max(pos.getX(), blockpos.getX()), Math.max(pos.getY(), blockpos.getY()), Math.max(pos.getZ(), blockpos.getZ())
             );
-            this.size = p_163805_;
+            this.size = size;
 
             for (BlockPos blockpos3 : BlockPos.betweenClosed(blockpos1, blockpos2)) {
                 BlockPos blockpos4 = blockpos3.subtract(blockpos1);
-                BlockState blockstate = p_163803_.getBlockState(blockpos3);
-                if (p_163807_ == null || !blockstate.is(p_163807_)) {
-                    BlockEntity blockentity = p_163803_.getBlockEntity(blockpos3);
+                BlockState blockstate = level.getBlockState(blockpos3);
+                if (toIgnore == null || !blockstate.is(toIgnore)) {
+                    BlockEntity blockentity = level.getBlockEntity(blockpos3);
                     StructureTemplate.StructureBlockInfo structuretemplate$structureblockinfo;
                     if (blockentity != null) {
                         structuretemplate$structureblockinfo = new StructureTemplate.StructureBlockInfo(
-                            blockpos4, blockstate, blockentity.saveWithId(p_163803_.registryAccess())
+                            blockpos4, blockstate, blockentity.saveWithId(level.registryAccess())
                         );
                     } else {
                         structuretemplate$structureblockinfo = new StructureTemplate.StructureBlockInfo(blockpos4, blockstate, null);
@@ -115,8 +115,8 @@ public class StructureTemplate {
             List<StructureTemplate.StructureBlockInfo> list3 = buildInfoList(list, list1, list2);
             this.palettes.clear();
             this.palettes.add(new StructureTemplate.Palette(list3));
-            if (p_163806_) {
-                this.fillEntityList(p_163803_, blockpos1, blockpos2);
+            if (withEntities) {
+                this.fillEntityList(level, blockpos1, blockpos2);
             } else {
                 this.entityInfoList.clear();
             }
@@ -124,53 +124,53 @@ public class StructureTemplate {
     }
 
     private static void addToLists(
-        StructureTemplate.StructureBlockInfo p_74574_,
-        List<StructureTemplate.StructureBlockInfo> p_74575_,
-        List<StructureTemplate.StructureBlockInfo> p_74576_,
-        List<StructureTemplate.StructureBlockInfo> p_74577_
+        StructureTemplate.StructureBlockInfo blockInfo,
+        List<StructureTemplate.StructureBlockInfo> normalBlocks,
+        List<StructureTemplate.StructureBlockInfo> blocksWithNbt,
+        List<StructureTemplate.StructureBlockInfo> blocksWithSpecialShape
     ) {
-        if (p_74574_.nbt != null) {
-            p_74576_.add(p_74574_);
-        } else if (!p_74574_.state.getBlock().hasDynamicShape() && p_74574_.state.isCollisionShapeFullBlock(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)) {
-            p_74575_.add(p_74574_);
+        if (blockInfo.nbt != null) {
+            blocksWithNbt.add(blockInfo);
+        } else if (!blockInfo.state.getBlock().hasDynamicShape() && blockInfo.state.isCollisionShapeFullBlock(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)) {
+            normalBlocks.add(blockInfo);
         } else {
-            p_74577_.add(p_74574_);
+            blocksWithSpecialShape.add(blockInfo);
         }
     }
 
     private static List<StructureTemplate.StructureBlockInfo> buildInfoList(
-        List<StructureTemplate.StructureBlockInfo> p_74615_,
-        List<StructureTemplate.StructureBlockInfo> p_74616_,
-        List<StructureTemplate.StructureBlockInfo> p_74617_
+        List<StructureTemplate.StructureBlockInfo> normalBlocks,
+        List<StructureTemplate.StructureBlockInfo> blocksWithNbt,
+        List<StructureTemplate.StructureBlockInfo> blocksWithSpecialShape
     ) {
         Comparator<StructureTemplate.StructureBlockInfo> comparator = Comparator.<StructureTemplate.StructureBlockInfo>comparingInt(
                 p_74641_ -> p_74641_.pos.getY()
             )
             .thenComparingInt(p_74637_ -> p_74637_.pos.getX())
             .thenComparingInt(p_74572_ -> p_74572_.pos.getZ());
-        p_74615_.sort(comparator);
-        p_74617_.sort(comparator);
-        p_74616_.sort(comparator);
+        normalBlocks.sort(comparator);
+        blocksWithSpecialShape.sort(comparator);
+        blocksWithNbt.sort(comparator);
         List<StructureTemplate.StructureBlockInfo> list = Lists.newArrayList();
-        list.addAll(p_74615_);
-        list.addAll(p_74617_);
-        list.addAll(p_74616_);
+        list.addAll(normalBlocks);
+        list.addAll(blocksWithSpecialShape);
+        list.addAll(blocksWithNbt);
         return list;
     }
 
-    private void fillEntityList(Level p_74501_, BlockPos p_74502_, BlockPos p_74503_) {
-        List<Entity> list = p_74501_.getEntitiesOfClass(
-            Entity.class, AABB.encapsulatingFullBlocks(p_74502_, p_74503_), p_74499_ -> !(p_74499_ instanceof Player)
+    private void fillEntityList(Level level, BlockPos startPos, BlockPos endPos) {
+        List<Entity> list = level.getEntitiesOfClass(
+            Entity.class, AABB.encapsulatingFullBlocks(startPos, endPos), p_74499_ -> !(p_74499_ instanceof Player)
         );
         this.entityInfoList.clear();
 
         for (Entity entity : list) {
-            Vec3 vec3 = new Vec3(entity.getX() - (double)p_74502_.getX(), entity.getY() - (double)p_74502_.getY(), entity.getZ() - (double)p_74502_.getZ());
+            Vec3 vec3 = new Vec3(entity.getX() - (double)startPos.getX(), entity.getY() - (double)startPos.getY(), entity.getZ() - (double)startPos.getZ());
             CompoundTag compoundtag = new CompoundTag();
             entity.save(compoundtag);
             BlockPos blockpos;
             if (entity instanceof Painting) {
-                blockpos = ((Painting)entity).getPos().subtract(p_74502_);
+                blockpos = ((Painting)entity).getPos().subtract(startPos);
             } else {
                 blockpos = BlockPos.containing(vec3);
             }
@@ -179,27 +179,27 @@ public class StructureTemplate {
         }
     }
 
-    public List<StructureTemplate.StructureBlockInfo> filterBlocks(BlockPos p_74604_, StructurePlaceSettings p_74605_, Block p_74606_) {
-        return this.filterBlocks(p_74604_, p_74605_, p_74606_, true);
+    public List<StructureTemplate.StructureBlockInfo> filterBlocks(BlockPos pos, StructurePlaceSettings settings, Block block) {
+        return this.filterBlocks(pos, settings, block, true);
     }
 
     public ObjectArrayList<StructureTemplate.StructureBlockInfo> filterBlocks(
-        BlockPos p_230336_, StructurePlaceSettings p_230337_, Block p_230338_, boolean p_230339_
+        BlockPos pos, StructurePlaceSettings settings, Block block, boolean relativePosition
     ) {
         ObjectArrayList<StructureTemplate.StructureBlockInfo> objectarraylist = new ObjectArrayList<>();
-        BoundingBox boundingbox = p_230337_.getBoundingBox();
+        BoundingBox boundingbox = settings.getBoundingBox();
         if (this.palettes.isEmpty()) {
             return objectarraylist;
         } else {
-            for (StructureTemplate.StructureBlockInfo structuretemplate$structureblockinfo : p_230337_.getRandomPalette(this.palettes, p_230336_)
-                .blocks(p_230338_)) {
-                BlockPos blockpos = p_230339_
-                    ? calculateRelativePosition(p_230337_, structuretemplate$structureblockinfo.pos).offset(p_230336_)
+            for (StructureTemplate.StructureBlockInfo structuretemplate$structureblockinfo : settings.getRandomPalette(this.palettes, pos)
+                .blocks(block)) {
+                BlockPos blockpos = relativePosition
+                    ? calculateRelativePosition(settings, structuretemplate$structureblockinfo.pos).offset(pos)
                     : structuretemplate$structureblockinfo.pos;
                 if (boundingbox == null || boundingbox.isInside(blockpos)) {
                     objectarraylist.add(
                         new StructureTemplate.StructureBlockInfo(
-                            blockpos, structuretemplate$structureblockinfo.state.rotate(p_230337_.getRotation()), structuretemplate$structureblockinfo.nbt
+                            blockpos, structuretemplate$structureblockinfo.state.rotate(settings.getRotation()), structuretemplate$structureblockinfo.nbt
                         )
                     );
                 }
@@ -209,14 +209,14 @@ public class StructureTemplate {
         }
     }
 
-    public BlockPos calculateConnectedPosition(StructurePlaceSettings p_74567_, BlockPos p_74568_, StructurePlaceSettings p_74569_, BlockPos p_74570_) {
-        BlockPos blockpos = calculateRelativePosition(p_74567_, p_74568_);
-        BlockPos blockpos1 = calculateRelativePosition(p_74569_, p_74570_);
+    public BlockPos calculateConnectedPosition(StructurePlaceSettings decorator, BlockPos start, StructurePlaceSettings settings, BlockPos end) {
+        BlockPos blockpos = calculateRelativePosition(decorator, start);
+        BlockPos blockpos1 = calculateRelativePosition(settings, end);
         return blockpos.subtract(blockpos1);
     }
 
-    public static BlockPos calculateRelativePosition(StructurePlaceSettings p_74564_, BlockPos p_74565_) {
-        return transform(p_74565_, p_74564_.getMirror(), p_74564_.getRotation(), p_74564_.getRotationPivot());
+    public static BlockPos calculateRelativePosition(StructurePlaceSettings decorator, BlockPos pos) {
+        return transform(pos, decorator.getMirror(), decorator.getRotation(), decorator.getRotationPivot());
     }
 
     public static Vec3 transformedVec3d(StructurePlaceSettings placementIn, Vec3 pos) {
@@ -224,19 +224,19 @@ public class StructureTemplate {
     }
 
     public boolean placeInWorld(
-        ServerLevelAccessor p_230329_, BlockPos p_230330_, BlockPos p_230331_, StructurePlaceSettings p_230332_, RandomSource p_230333_, int p_230334_
+        ServerLevelAccessor serverLevel, BlockPos offset, BlockPos pos, StructurePlaceSettings settings, RandomSource random, int flags
     ) {
         if (this.palettes.isEmpty()) {
             return false;
         } else {
-            List<StructureTemplate.StructureBlockInfo> list = p_230332_.getRandomPalette(this.palettes, p_230330_).blocks();
-            if ((!list.isEmpty() || !p_230332_.isIgnoreEntities() && !this.entityInfoList.isEmpty())
+            List<StructureTemplate.StructureBlockInfo> list = settings.getRandomPalette(this.palettes, offset).blocks();
+            if ((!list.isEmpty() || !settings.isIgnoreEntities() && !this.entityInfoList.isEmpty())
                 && this.size.getX() >= 1
                 && this.size.getY() >= 1
                 && this.size.getZ() >= 1) {
-                BoundingBox boundingbox = p_230332_.getBoundingBox();
-                List<BlockPos> list1 = Lists.newArrayListWithCapacity(p_230332_.shouldApplyWaterlogging() ? list.size() : 0);
-                List<BlockPos> list2 = Lists.newArrayListWithCapacity(p_230332_.shouldApplyWaterlogging() ? list.size() : 0);
+                BoundingBox boundingbox = settings.getBoundingBox();
+                List<BlockPos> list1 = Lists.newArrayListWithCapacity(settings.shouldApplyWaterlogging() ? list.size() : 0);
+                List<BlockPos> list2 = Lists.newArrayListWithCapacity(settings.shouldApplyWaterlogging() ? list.size() : 0);
                 List<Pair<BlockPos, CompoundTag>> list3 = Lists.newArrayListWithCapacity(list.size());
                 int i = Integer.MAX_VALUE;
                 int j = Integer.MAX_VALUE;
@@ -246,19 +246,19 @@ public class StructureTemplate {
                 int j1 = Integer.MIN_VALUE;
 
                 for (StructureTemplate.StructureBlockInfo structuretemplate$structureblockinfo : processBlockInfos(
-                    p_230329_, p_230330_, p_230331_, p_230332_, list, this
+                    serverLevel, offset, pos, settings, list, this
                 )) {
                     BlockPos blockpos = structuretemplate$structureblockinfo.pos;
                     if (boundingbox == null || boundingbox.isInside(blockpos)) {
-                        FluidState fluidstate = p_230332_.shouldApplyWaterlogging() ? p_230329_.getFluidState(blockpos) : null;
-                        BlockState blockstate = structuretemplate$structureblockinfo.state.mirror(p_230332_.getMirror()).rotate(p_230332_.getRotation());
+                        FluidState fluidstate = settings.shouldApplyWaterlogging() ? serverLevel.getFluidState(blockpos) : null;
+                        BlockState blockstate = structuretemplate$structureblockinfo.state.mirror(settings.getMirror()).rotate(settings.getRotation());
                         if (structuretemplate$structureblockinfo.nbt != null) {
-                            BlockEntity blockentity = p_230329_.getBlockEntity(blockpos);
+                            BlockEntity blockentity = serverLevel.getBlockEntity(blockpos);
                             Clearable.tryClear(blockentity);
-                            p_230329_.setBlock(blockpos, Blocks.BARRIER.defaultBlockState(), 20);
+                            serverLevel.setBlock(blockpos, Blocks.BARRIER.defaultBlockState(), 20);
                         }
 
-                        if (p_230329_.setBlock(blockpos, blockstate, p_230334_)) {
+                        if (serverLevel.setBlock(blockpos, blockstate, flags)) {
                             i = Math.min(i, blockpos.getX());
                             j = Math.min(j, blockpos.getY());
                             k = Math.min(k, blockpos.getZ());
@@ -267,13 +267,13 @@ public class StructureTemplate {
                             j1 = Math.max(j1, blockpos.getZ());
                             list3.add(Pair.of(blockpos, structuretemplate$structureblockinfo.nbt));
                             if (structuretemplate$structureblockinfo.nbt != null) {
-                                BlockEntity blockentity1 = p_230329_.getBlockEntity(blockpos);
+                                BlockEntity blockentity1 = serverLevel.getBlockEntity(blockpos);
                                 if (blockentity1 != null) {
                                     if (blockentity1 instanceof RandomizableContainer) {
-                                        structuretemplate$structureblockinfo.nbt.putLong("LootTableSeed", p_230333_.nextLong());
+                                        structuretemplate$structureblockinfo.nbt.putLong("LootTableSeed", random.nextLong());
                                     }
 
-                                    blockentity1.loadWithComponents(structuretemplate$structureblockinfo.nbt, p_230329_.registryAccess());
+                                    blockentity1.loadWithComponents(structuretemplate$structureblockinfo.nbt, serverLevel.registryAccess());
                                 }
                             }
 
@@ -281,7 +281,7 @@ public class StructureTemplate {
                                 if (blockstate.getFluidState().isSource()) {
                                     list2.add(blockpos);
                                 } else if (blockstate.getBlock() instanceof LiquidBlockContainer) {
-                                    ((LiquidBlockContainer)blockstate.getBlock()).placeLiquid(p_230329_, blockpos, blockstate, fluidstate);
+                                    ((LiquidBlockContainer)blockstate.getBlock()).placeLiquid(serverLevel, blockpos, blockstate, fluidstate);
                                     if (!fluidstate.isSource()) {
                                         list1.add(blockpos);
                                     }
@@ -300,21 +300,21 @@ public class StructureTemplate {
 
                     while (iterator.hasNext()) {
                         BlockPos blockpos3 = iterator.next();
-                        FluidState fluidstate2 = p_230329_.getFluidState(blockpos3);
+                        FluidState fluidstate2 = serverLevel.getFluidState(blockpos3);
 
                         for (int i2 = 0; i2 < adirection.length && !fluidstate2.isSource(); i2++) {
                             BlockPos blockpos1 = blockpos3.relative(adirection[i2]);
-                            FluidState fluidstate1 = p_230329_.getFluidState(blockpos1);
+                            FluidState fluidstate1 = serverLevel.getFluidState(blockpos1);
                             if (fluidstate1.isSource() && !list2.contains(blockpos1)) {
                                 fluidstate2 = fluidstate1;
                             }
                         }
 
                         if (fluidstate2.isSource()) {
-                            BlockState blockstate1 = p_230329_.getBlockState(blockpos3);
+                            BlockState blockstate1 = serverLevel.getBlockState(blockpos3);
                             Block block = blockstate1.getBlock();
                             if (block instanceof LiquidBlockContainer) {
-                                ((LiquidBlockContainer)block).placeLiquid(p_230329_, blockpos3, blockstate1, fluidstate2);
+                                ((LiquidBlockContainer)block).placeLiquid(serverLevel, blockpos3, blockstate1, fluidstate2);
                                 flag = true;
                                 iterator.remove();
                             }
@@ -323,7 +323,7 @@ public class StructureTemplate {
                 }
 
                 if (i <= l) {
-                    if (!p_230332_.getKnownShape()) {
+                    if (!settings.getKnownShape()) {
                         DiscreteVoxelShape discretevoxelshape = new BitSetDiscreteVoxelShape(l - i + 1, i1 - j + 1, j1 - k + 1);
                         int k1 = i;
                         int l1 = j;
@@ -334,23 +334,23 @@ public class StructureTemplate {
                             discretevoxelshape.fill(blockpos2.getX() - k1, blockpos2.getY() - l1, blockpos2.getZ() - j2);
                         }
 
-                        updateShapeAtEdge(p_230329_, p_230334_, discretevoxelshape, k1, l1, j2);
+                        updateShapeAtEdge(serverLevel, flags, discretevoxelshape, k1, l1, j2);
                     }
 
                     for (Pair<BlockPos, CompoundTag> pair : list3) {
                         BlockPos blockpos4 = pair.getFirst();
-                        if (!p_230332_.getKnownShape()) {
-                            BlockState blockstate2 = p_230329_.getBlockState(blockpos4);
-                            BlockState blockstate3 = Block.updateFromNeighbourShapes(blockstate2, p_230329_, blockpos4);
+                        if (!settings.getKnownShape()) {
+                            BlockState blockstate2 = serverLevel.getBlockState(blockpos4);
+                            BlockState blockstate3 = Block.updateFromNeighbourShapes(blockstate2, serverLevel, blockpos4);
                             if (blockstate2 != blockstate3) {
-                                p_230329_.setBlock(blockpos4, blockstate3, p_230334_ & -2 | 16);
+                                serverLevel.setBlock(blockpos4, blockstate3, flags & -2 | 16);
                             }
 
-                            p_230329_.blockUpdated(blockpos4, blockstate3.getBlock());
+                            serverLevel.blockUpdated(blockpos4, blockstate3.getBlock());
                         }
 
                         if (pair.getSecond() != null) {
-                            BlockEntity blockentity2 = p_230329_.getBlockEntity(blockpos4);
+                            BlockEntity blockentity2 = serverLevel.getBlockEntity(blockpos4);
                             if (blockentity2 != null) {
                                 blockentity2.setChanged();
                             }
@@ -358,8 +358,8 @@ public class StructureTemplate {
                     }
                 }
 
-                if (!p_230332_.isIgnoreEntities()) {
-                    this.addEntitiesToWorld(p_230329_, p_230330_, p_230332_);
+                if (!settings.isIgnoreEntities()) {
+                    this.addEntitiesToWorld(serverLevel, offset, settings);
                 }
 
                 return true;
@@ -369,29 +369,29 @@ public class StructureTemplate {
         }
     }
 
-    public static void updateShapeAtEdge(LevelAccessor p_333926_, int p_333789_, DiscreteVoxelShape p_333845_, BlockPos p_333731_) {
-        updateShapeAtEdge(p_333926_, p_333789_, p_333845_, p_333731_.getX(), p_333731_.getY(), p_333731_.getZ());
+    public static void updateShapeAtEdge(LevelAccessor level, int flags, DiscreteVoxelShape shape, BlockPos pos) {
+        updateShapeAtEdge(level, flags, shape, pos.getX(), pos.getY(), pos.getZ());
     }
 
-    public static void updateShapeAtEdge(LevelAccessor p_74511_, int p_74512_, DiscreteVoxelShape p_74513_, int p_74514_, int p_74515_, int p_74516_) {
+    public static void updateShapeAtEdge(LevelAccessor level, int flags, DiscreteVoxelShape shape, int x, int y, int z) {
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
         BlockPos.MutableBlockPos blockpos$mutableblockpos1 = new BlockPos.MutableBlockPos();
-        p_74513_.forAllFaces(
+        shape.forAllFaces(
             (p_333699_, p_333700_, p_333701_, p_333702_) -> {
-                blockpos$mutableblockpos.set(p_74514_ + p_333700_, p_74515_ + p_333701_, p_74516_ + p_333702_);
+                blockpos$mutableblockpos.set(x + p_333700_, y + p_333701_, z + p_333702_);
                 blockpos$mutableblockpos1.setWithOffset(blockpos$mutableblockpos, p_333699_);
-                BlockState blockstate = p_74511_.getBlockState(blockpos$mutableblockpos);
-                BlockState blockstate1 = p_74511_.getBlockState(blockpos$mutableblockpos1);
-                BlockState blockstate2 = blockstate.updateShape(p_333699_, blockstate1, p_74511_, blockpos$mutableblockpos, blockpos$mutableblockpos1);
+                BlockState blockstate = level.getBlockState(blockpos$mutableblockpos);
+                BlockState blockstate1 = level.getBlockState(blockpos$mutableblockpos1);
+                BlockState blockstate2 = blockstate.updateShape(p_333699_, blockstate1, level, blockpos$mutableblockpos, blockpos$mutableblockpos1);
                 if (blockstate != blockstate2) {
-                    p_74511_.setBlock(blockpos$mutableblockpos, blockstate2, p_74512_ & -2);
+                    level.setBlock(blockpos$mutableblockpos, blockstate2, flags & -2);
                 }
 
                 BlockState blockstate3 = blockstate1.updateShape(
-                    p_333699_.getOpposite(), blockstate2, p_74511_, blockpos$mutableblockpos1, blockpos$mutableblockpos
+                    p_333699_.getOpposite(), blockstate2, level, blockpos$mutableblockpos1, blockpos$mutableblockpos
                 );
                 if (blockstate1 != blockstate3) {
-                    p_74511_.setBlock(blockpos$mutableblockpos1, blockstate3, p_74512_ & -2);
+                    level.setBlock(blockpos$mutableblockpos1, blockstate3, flags & -2);
                 }
             }
         );
@@ -402,31 +402,31 @@ public class StructureTemplate {
      * @deprecated Forge: Use {@link #processBlockInfos(ServerLevelAccessor, BlockPos, BlockPos, StructurePlaceSettings, List, StructureTemplate)} instead.
      */
     @Deprecated
-        ServerLevelAccessor p_278297_,
-        BlockPos p_74519_,
-        BlockPos p_74520_,
-        StructurePlaceSettings p_74521_,
-        List<StructureTemplate.StructureBlockInfo> p_74522_
+        ServerLevelAccessor serverLevel,
+        BlockPos offset,
+        BlockPos pos,
+        StructurePlaceSettings settings,
+        List<StructureTemplate.StructureBlockInfo> blockInfos
     ) {
-        return processBlockInfos(p_278297_, p_74519_, p_74520_, p_74521_, p_74522_, null);
+        return processBlockInfos(serverLevel, offset, pos, settings, blockInfos, null);
     }
 
-    public static List<StructureTemplate.StructureBlockInfo> processBlockInfos(ServerLevelAccessor p_278297_, BlockPos p_74519_, BlockPos p_74520_, StructurePlaceSettings p_74521_, List<StructureTemplate.StructureBlockInfo> p_74522_, @Nullable StructureTemplate template) {
+    public static List<StructureTemplate.StructureBlockInfo> processBlockInfos(ServerLevelAccessor serverLevel, BlockPos offset, BlockPos pos, StructurePlaceSettings settings, List<StructureTemplate.StructureBlockInfo> blockInfos, @Nullable StructureTemplate template) {
         List<StructureTemplate.StructureBlockInfo> list = new ArrayList<>();
         List<StructureTemplate.StructureBlockInfo> list1 = new ArrayList<>();
 
-        for (StructureTemplate.StructureBlockInfo structuretemplate$structureblockinfo : p_74522_) {
-            BlockPos blockpos = calculateRelativePosition(p_74521_, structuretemplate$structureblockinfo.pos).offset(p_74519_);
+        for (StructureTemplate.StructureBlockInfo structuretemplate$structureblockinfo : blockInfos) {
+            BlockPos blockpos = calculateRelativePosition(settings, structuretemplate$structureblockinfo.pos).offset(offset);
             StructureTemplate.StructureBlockInfo structuretemplate$structureblockinfo1 = new StructureTemplate.StructureBlockInfo(
                 blockpos,
                 structuretemplate$structureblockinfo.state,
                 structuretemplate$structureblockinfo.nbt != null ? structuretemplate$structureblockinfo.nbt.copy() : null
             );
-            Iterator<StructureProcessor> iterator = p_74521_.getProcessors().iterator();
+            Iterator<StructureProcessor> iterator = settings.getProcessors().iterator();
 
             while (structuretemplate$structureblockinfo1 != null && iterator.hasNext()) {
                 structuretemplate$structureblockinfo1 = iterator.next()
-                    .process(p_278297_, p_74519_, p_74520_, structuretemplate$structureblockinfo, structuretemplate$structureblockinfo1, p_74521_, template);
+                    .process(serverLevel, offset, pos, structuretemplate$structureblockinfo, structuretemplate$structureblockinfo1, settings, template);
             }
 
             if (structuretemplate$structureblockinfo1 != null) {
@@ -435,8 +435,8 @@ public class StructureTemplate {
             }
         }
 
-        for (StructureProcessor structureprocessor : p_74521_.getProcessors()) {
-            list1 = structureprocessor.finalizeProcessing(p_278297_, p_74519_, p_74520_, list, list1, p_74521_);
+        for (StructureProcessor structureprocessor : settings.getProcessors()) {
+            list1 = structureprocessor.finalizeProcessing(serverLevel, offset, pos, list, list1, settings);
         }
 
         return list1;
@@ -485,16 +485,16 @@ public class StructureTemplate {
         }
     }
 
-    private static Optional<Entity> createEntityIgnoreException(ServerLevelAccessor p_74544_, CompoundTag p_74545_) {
+    private static Optional<Entity> createEntityIgnoreException(ServerLevelAccessor level, CompoundTag tag) {
         try {
-            return EntityType.create(p_74545_, p_74544_.getLevel());
+            return EntityType.create(tag, level.getLevel());
         } catch (Exception exception) {
             return Optional.empty();
         }
     }
 
-    public Vec3i getSize(Rotation p_163809_) {
-        switch (p_163809_) {
+    public Vec3i getSize(Rotation rotation) {
+        switch (rotation) {
             case COUNTERCLOCKWISE_90:
             case CLOCKWISE_90:
                 return new Vec3i(this.size.getZ(), this.size.getY(), this.size.getX());
@@ -503,12 +503,12 @@ public class StructureTemplate {
         }
     }
 
-    public static BlockPos transform(BlockPos p_74594_, Mirror p_74595_, Rotation p_74596_, BlockPos p_74597_) {
-        int i = p_74594_.getX();
-        int j = p_74594_.getY();
-        int k = p_74594_.getZ();
+    public static BlockPos transform(BlockPos targetPos, Mirror mirror, Rotation rotation, BlockPos offset) {
+        int i = targetPos.getX();
+        int j = targetPos.getY();
+        int k = targetPos.getZ();
         boolean flag = true;
-        switch (p_74595_) {
+        switch (mirror) {
             case LEFT_RIGHT:
                 k = -k;
                 break;
@@ -519,9 +519,9 @@ public class StructureTemplate {
                 flag = false;
         }
 
-        int l = p_74597_.getX();
-        int i1 = p_74597_.getZ();
-        switch (p_74596_) {
+        int l = offset.getX();
+        int i1 = offset.getZ();
+        switch (rotation) {
             case COUNTERCLOCKWISE_90:
                 return new BlockPos(l - i1 + k, j, l + i1 - i);
             case CLOCKWISE_90:
@@ -529,16 +529,16 @@ public class StructureTemplate {
             case CLOCKWISE_180:
                 return new BlockPos(l + l - i, j, i1 + i1 - k);
             default:
-                return flag ? new BlockPos(i, j, k) : p_74594_;
+                return flag ? new BlockPos(i, j, k) : targetPos;
         }
     }
 
-    public static Vec3 transform(Vec3 p_74579_, Mirror p_74580_, Rotation p_74581_, BlockPos p_74582_) {
-        double d0 = p_74579_.x;
-        double d1 = p_74579_.y;
-        double d2 = p_74579_.z;
+    public static Vec3 transform(Vec3 target, Mirror mirror, Rotation rotation, BlockPos centerOffset) {
+        double d0 = target.x;
+        double d1 = target.y;
+        double d2 = target.z;
         boolean flag = true;
-        switch (p_74580_) {
+        switch (mirror) {
             case LEFT_RIGHT:
                 d2 = 1.0 - d2;
                 break;
@@ -549,9 +549,9 @@ public class StructureTemplate {
                 flag = false;
         }
 
-        int i = p_74582_.getX();
-        int j = p_74582_.getZ();
-        switch (p_74581_) {
+        int i = centerOffset.getX();
+        int j = centerOffset.getZ();
+        switch (rotation) {
             case COUNTERCLOCKWISE_90:
                 return new Vec3((double)(i - j) + d2, d1, (double)(i + j + 1) - d0);
             case CLOCKWISE_90:
@@ -559,57 +559,57 @@ public class StructureTemplate {
             case CLOCKWISE_180:
                 return new Vec3((double)(i + i + 1) - d0, d1, (double)(j + j + 1) - d2);
             default:
-                return flag ? new Vec3(d0, d1, d2) : p_74579_;
+                return flag ? new Vec3(d0, d1, d2) : target;
         }
     }
 
-    public BlockPos getZeroPositionWithTransform(BlockPos p_74584_, Mirror p_74585_, Rotation p_74586_) {
-        return getZeroPositionWithTransform(p_74584_, p_74585_, p_74586_, this.getSize().getX(), this.getSize().getZ());
+    public BlockPos getZeroPositionWithTransform(BlockPos targetPos, Mirror mirror, Rotation rotation) {
+        return getZeroPositionWithTransform(targetPos, mirror, rotation, this.getSize().getX(), this.getSize().getZ());
     }
 
-    public static BlockPos getZeroPositionWithTransform(BlockPos p_74588_, Mirror p_74589_, Rotation p_74590_, int p_74591_, int p_74592_) {
-        p_74591_--;
-        p_74592_--;
-        int i = p_74589_ == Mirror.FRONT_BACK ? p_74591_ : 0;
-        int j = p_74589_ == Mirror.LEFT_RIGHT ? p_74592_ : 0;
-        BlockPos blockpos = p_74588_;
-        switch (p_74590_) {
+    public static BlockPos getZeroPositionWithTransform(BlockPos pos, Mirror mirror, Rotation rotation, int sizeX, int sizeZ) {
+        sizeX--;
+        sizeZ--;
+        int i = mirror == Mirror.FRONT_BACK ? sizeX : 0;
+        int j = mirror == Mirror.LEFT_RIGHT ? sizeZ : 0;
+        BlockPos blockpos = pos;
+        switch (rotation) {
             case COUNTERCLOCKWISE_90:
-                blockpos = p_74588_.offset(j, 0, p_74591_ - i);
+                blockpos = pos.offset(j, 0, sizeX - i);
                 break;
             case CLOCKWISE_90:
-                blockpos = p_74588_.offset(p_74592_ - j, 0, i);
+                blockpos = pos.offset(sizeZ - j, 0, i);
                 break;
             case CLOCKWISE_180:
-                blockpos = p_74588_.offset(p_74591_ - i, 0, p_74592_ - j);
+                blockpos = pos.offset(sizeX - i, 0, sizeZ - j);
                 break;
             case NONE:
-                blockpos = p_74588_.offset(i, 0, j);
+                blockpos = pos.offset(i, 0, j);
         }
 
         return blockpos;
     }
 
-    public BoundingBox getBoundingBox(StructurePlaceSettings p_74634_, BlockPos p_74635_) {
-        return this.getBoundingBox(p_74635_, p_74634_.getRotation(), p_74634_.getRotationPivot(), p_74634_.getMirror());
+    public BoundingBox getBoundingBox(StructurePlaceSettings settings, BlockPos startPos) {
+        return this.getBoundingBox(startPos, settings.getRotation(), settings.getRotationPivot(), settings.getMirror());
     }
 
-    public BoundingBox getBoundingBox(BlockPos p_74599_, Rotation p_74600_, BlockPos p_74601_, Mirror p_74602_) {
-        return getBoundingBox(p_74599_, p_74600_, p_74601_, p_74602_, this.size);
+    public BoundingBox getBoundingBox(BlockPos startPos, Rotation rotation, BlockPos pivotPos, Mirror mirror) {
+        return getBoundingBox(startPos, rotation, pivotPos, mirror, this.size);
     }
 
     @VisibleForTesting
-    protected static BoundingBox getBoundingBox(BlockPos p_163811_, Rotation p_163812_, BlockPos p_163813_, Mirror p_163814_, Vec3i p_163815_) {
-        Vec3i vec3i = p_163815_.offset(-1, -1, -1);
-        BlockPos blockpos = transform(BlockPos.ZERO, p_163814_, p_163812_, p_163813_);
-        BlockPos blockpos1 = transform(BlockPos.ZERO.offset(vec3i), p_163814_, p_163812_, p_163813_);
-        return BoundingBox.fromCorners(blockpos, blockpos1).move(p_163811_);
+    protected static BoundingBox getBoundingBox(BlockPos startPos, Rotation rotation, BlockPos pivotPos, Mirror mirror, Vec3i size) {
+        Vec3i vec3i = size.offset(-1, -1, -1);
+        BlockPos blockpos = transform(BlockPos.ZERO, mirror, rotation, pivotPos);
+        BlockPos blockpos1 = transform(BlockPos.ZERO.offset(vec3i), mirror, rotation, pivotPos);
+        return BoundingBox.fromCorners(blockpos, blockpos1).move(startPos);
     }
 
-    public CompoundTag save(CompoundTag p_74619_) {
+    public CompoundTag save(CompoundTag tag) {
         if (this.palettes.isEmpty()) {
-            p_74619_.put("blocks", new ListTag());
-            p_74619_.put("palette", new ListTag());
+            tag.put("blocks", new ListTag());
+            tag.put("palette", new ListTag());
         } else {
             List<StructureTemplate.SimplePalette> list = Lists.newArrayList();
             StructureTemplate.SimplePalette structuretemplate$simplepalette = new StructureTemplate.SimplePalette();
@@ -647,7 +647,7 @@ public class StructureTemplate {
                 }
             }
 
-            p_74619_.put("blocks", listtag1);
+            tag.put("blocks", listtag1);
             if (list.size() == 1) {
                 ListTag listtag2 = new ListTag();
 
@@ -655,7 +655,7 @@ public class StructureTemplate {
                     listtag2.add(NbtUtils.writeBlockState(blockstate));
                 }
 
-                p_74619_.put("palette", listtag2);
+                tag.put("palette", listtag2);
             } else {
                 ListTag listtag3 = new ListTag();
 
@@ -669,7 +669,7 @@ public class StructureTemplate {
                     listtag3.add(listtag4);
                 }
 
-                p_74619_.put("palettes", listtag3);
+                tag.put("palettes", listtag3);
             }
         }
 
@@ -698,28 +698,28 @@ public class StructureTemplate {
             listtag.add(compoundtag1);
         }
 
-        p_74619_.put("entities", listtag);
-        p_74619_.put("size", this.newIntegerList(this.size.getX(), this.size.getY(), this.size.getZ()));
-        return NbtUtils.addCurrentDataVersion(p_74619_);
+        tag.put("entities", listtag);
+        tag.put("size", this.newIntegerList(this.size.getX(), this.size.getY(), this.size.getZ()));
+        return NbtUtils.addCurrentDataVersion(tag);
     }
 
-    public void load(HolderGetter<Block> p_255773_, CompoundTag p_248574_) {
+    public void load(HolderGetter<Block> blockGetter, CompoundTag tag) {
         this.palettes.clear();
         this.entityInfoList.clear();
-        ListTag listtag = p_248574_.getList("size", 3);
+        ListTag listtag = tag.getList("size", 3);
         this.size = new Vec3i(listtag.getInt(0), listtag.getInt(1), listtag.getInt(2));
-        ListTag listtag1 = p_248574_.getList("blocks", 10);
-        if (p_248574_.contains("palettes", 9)) {
-            ListTag listtag2 = p_248574_.getList("palettes", 9);
+        ListTag listtag1 = tag.getList("blocks", 10);
+        if (tag.contains("palettes", 9)) {
+            ListTag listtag2 = tag.getList("palettes", 9);
 
             for (int i = 0; i < listtag2.size(); i++) {
-                this.loadPalette(p_255773_, listtag2.getList(i), listtag1);
+                this.loadPalette(blockGetter, listtag2.getList(i), listtag1);
             }
         } else {
-            this.loadPalette(p_255773_, p_248574_.getList("palette", 10), listtag1);
+            this.loadPalette(blockGetter, tag.getList("palette", 10), listtag1);
         }
 
-        ListTag listtag5 = p_248574_.getList("entities", 10);
+        ListTag listtag5 = tag.getList("entities", 10);
 
         for (int j = 0; j < listtag5.size(); j++) {
             CompoundTag compoundtag = listtag5.getCompound(j);
@@ -734,19 +734,19 @@ public class StructureTemplate {
         }
     }
 
-    private void loadPalette(HolderGetter<Block> p_256546_, ListTag p_251056_, ListTag p_251493_) {
+    private void loadPalette(HolderGetter<Block> blockGetter, ListTag paletteTag, ListTag blocksTag) {
         StructureTemplate.SimplePalette structuretemplate$simplepalette = new StructureTemplate.SimplePalette();
 
-        for (int i = 0; i < p_251056_.size(); i++) {
-            structuretemplate$simplepalette.addMapping(NbtUtils.readBlockState(p_256546_, p_251056_.getCompound(i)), i);
+        for (int i = 0; i < paletteTag.size(); i++) {
+            structuretemplate$simplepalette.addMapping(NbtUtils.readBlockState(blockGetter, paletteTag.getCompound(i)), i);
         }
 
         List<StructureTemplate.StructureBlockInfo> list2 = Lists.newArrayList();
         List<StructureTemplate.StructureBlockInfo> list = Lists.newArrayList();
         List<StructureTemplate.StructureBlockInfo> list1 = Lists.newArrayList();
 
-        for (int j = 0; j < p_251493_.size(); j++) {
-            CompoundTag compoundtag = p_251493_.getCompound(j);
+        for (int j = 0; j < blocksTag.size(); j++) {
+            CompoundTag compoundtag = blocksTag.getCompound(j);
             ListTag listtag = compoundtag.getList("pos", 3);
             BlockPos blockpos = new BlockPos(listtag.getInt(0), listtag.getInt(1), listtag.getInt(2));
             BlockState blockstate = structuretemplate$simplepalette.stateFor(compoundtag.getInt("state"));
@@ -767,20 +767,20 @@ public class StructureTemplate {
         this.palettes.add(new StructureTemplate.Palette(list3));
     }
 
-    private ListTag newIntegerList(int... p_74626_) {
+    private ListTag newIntegerList(int... values) {
         ListTag listtag = new ListTag();
 
-        for (int i : p_74626_) {
+        for (int i : values) {
             listtag.add(IntTag.valueOf(i));
         }
 
         return listtag;
     }
 
-    private ListTag newDoubleList(double... p_74624_) {
+    private ListTag newDoubleList(double... values) {
         ListTag listtag = new ListTag();
 
-        for (double d0 : p_74624_) {
+        for (double d0 : values) {
             listtag.add(DoubleTag.valueOf(d0));
         }
 
@@ -791,17 +791,17 @@ public class StructureTemplate {
         private final List<StructureTemplate.StructureBlockInfo> blocks;
         private final Map<Block, List<StructureTemplate.StructureBlockInfo>> cache = Maps.newConcurrentMap(); // Neo: Fixes MC-271899 - Make the global StructureTemplate's palette caches now thread safe for worldgen
 
-        Palette(List<StructureTemplate.StructureBlockInfo> p_74648_) {
-            this.blocks = p_74648_;
+        Palette(List<StructureTemplate.StructureBlockInfo> blocks) {
+            this.blocks = blocks;
         }
 
         public List<StructureTemplate.StructureBlockInfo> blocks() {
             return this.blocks;
         }
 
-        public List<StructureTemplate.StructureBlockInfo> blocks(Block p_74654_) {
+        public List<StructureTemplate.StructureBlockInfo> blocks(Block block) {
             return this.cache
-                .computeIfAbsent(p_74654_, p_74659_ -> this.blocks.stream().filter(p_163818_ -> p_163818_.state.is(p_74659_)).collect(Collectors.toList()));
+                .computeIfAbsent(block, p_74659_ -> this.blocks.stream().filter(p_163818_ -> p_163818_.state.is(p_74659_)).collect(Collectors.toList()));
         }
     }
 
@@ -810,19 +810,19 @@ public class StructureTemplate {
         private final IdMapper<BlockState> ids = new IdMapper<>(16);
         private int lastId;
 
-        public int idFor(BlockState p_74670_) {
-            int i = this.ids.getId(p_74670_);
+        public int idFor(BlockState state) {
+            int i = this.ids.getId(state);
             if (i == -1) {
                 i = this.lastId++;
-                this.ids.addMapping(p_74670_, i);
+                this.ids.addMapping(state, i);
             }
 
             return i;
         }
 
         @Nullable
-        public BlockState stateFor(int p_74668_) {
-            BlockState blockstate = this.ids.byId(p_74668_);
+        public BlockState stateFor(int id) {
+            BlockState blockstate = this.ids.byId(id);
             return blockstate == null ? DEFAULT_BLOCK_STATE : blockstate;
         }
 
@@ -831,8 +831,8 @@ public class StructureTemplate {
             return this.ids.iterator();
         }
 
-        public void addMapping(BlockState p_74672_, int p_74673_) {
-            this.ids.addMapping(p_74672_, p_74673_);
+        public void addMapping(BlockState state, int id) {
+            this.ids.addMapping(state, id);
         }
     }
 
@@ -848,10 +848,10 @@ public class StructureTemplate {
         public final BlockPos blockPos;
         public final CompoundTag nbt;
 
-        public StructureEntityInfo(Vec3 p_74687_, BlockPos p_74688_, CompoundTag p_74689_) {
-            this.pos = p_74687_;
-            this.blockPos = p_74688_;
-            this.nbt = p_74689_;
+        public StructureEntityInfo(Vec3 pos, BlockPos blockPos, CompoundTag nbt) {
+            this.pos = pos;
+            this.blockPos = blockPos;
+            this.nbt = nbt;
         }
     }
 }

@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 public interface Saddleable {
     boolean isSaddleable();
 
-    void equipSaddle(ItemStack p_352360_, @Nullable SoundSource p_21748_);
+    void equipSaddle(ItemStack stack, @Nullable SoundSource soundSource);
 
     default SoundEvent getSaddleSoundEvent() {
         return SoundEvents.HORSE_SADDLE;

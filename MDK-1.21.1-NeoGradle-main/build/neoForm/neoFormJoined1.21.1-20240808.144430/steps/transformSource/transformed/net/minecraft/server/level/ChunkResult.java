@@ -6,37 +6,37 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 public interface ChunkResult<T> {
-    static <T> ChunkResult<T> of(T p_330787_) {
-        return new ChunkResult.Success<>(p_330787_);
+    static <T> ChunkResult<T> of(T value) {
+        return new ChunkResult.Success<>(value);
     }
 
-    static <T> ChunkResult<T> error(String p_330756_) {
-        return error(() -> p_330756_);
+    static <T> ChunkResult<T> error(String p_error) {
+        return error(() -> p_error);
     }
 
-    static <T> ChunkResult<T> error(Supplier<String> p_331226_) {
-        return new ChunkResult.Fail<>(p_331226_);
+    static <T> ChunkResult<T> error(Supplier<String> errorSupplier) {
+        return new ChunkResult.Fail<>(errorSupplier);
     }
 
     boolean isSuccess();
 
     @Nullable
-    T orElse(@Nullable T p_332159_);
+    T orElse(@Nullable T value);
 
     @Nullable
-    static <R> R orElse(ChunkResult<? extends R> p_331283_, @Nullable R p_331474_) {
-        R r = (R)p_331283_.orElse(null);
-        return r != null ? r : p_331474_;
+    static <R> R orElse(ChunkResult<? extends R> chunkResult, @Nullable R orElse) {
+        R r = (R)chunkResult.orElse(null);
+        return r != null ? r : orElse;
     }
 
     @Nullable
     String getError();
 
-    ChunkResult<T> ifSuccess(Consumer<T> p_331126_);
+    ChunkResult<T> ifSuccess(Consumer<T> action);
 
-    <R> ChunkResult<R> map(Function<T, R> p_331664_);
+    <R> ChunkResult<R> map(Function<T, R> mappingFunction);
 
-    <E extends Throwable> T orElseThrow(Supplier<E> p_332112_) throws E;
+    <E extends Throwable> T orElseThrow(Supplier<E> exceptionSupplier) throws E;
 
     public static record Fail<T>(Supplier<String> error) implements ChunkResult<T> {
         @Override

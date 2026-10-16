@@ -16,42 +16,54 @@ public class ShieldItem extends Item implements Equipable {
     public static final int EFFECTIVE_BLOCK_DELAY = 5;
     public static final float MINIMUM_DURABILITY_DAMAGE = 3.0F;
 
-    public ShieldItem(Item.Properties p_43089_) {
-        super(p_43089_);
+    public ShieldItem(Item.Properties properties) {
+        super(properties);
         DispenserBlock.registerBehavior(this, ArmorItem.DISPENSE_ITEM_BEHAVIOR);
     }
 
+    /**
+     * Returns the unlocalized name of this item. This version accepts an ItemStack so different stacks can have different names based on their damage or NBT.
+     */
     @Override
-    public String getDescriptionId(ItemStack p_43109_) {
-        DyeColor dyecolor = p_43109_.get(DataComponents.BASE_COLOR);
-        return dyecolor != null ? this.getDescriptionId() + "." + dyecolor.getName() : super.getDescriptionId(p_43109_);
+    public String getDescriptionId(ItemStack stack) {
+        DyeColor dyecolor = stack.get(DataComponents.BASE_COLOR);
+        return dyecolor != null ? this.getDescriptionId() + "." + dyecolor.getName() : super.getDescriptionId(stack);
     }
 
     @Override
-    public void appendHoverText(ItemStack p_43094_, Item.TooltipContext p_339613_, List<Component> p_43096_, TooltipFlag p_43097_) {
-        BannerItem.appendHoverTextFromBannerBlockEntityTag(p_43094_, p_43096_);
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        BannerItem.appendHoverTextFromBannerBlockEntityTag(stack, tooltipComponents);
     }
 
+    /**
+     * Returns the action that specifies what animation to play when the item is being used.
+     */
     @Override
-    public UseAnim getUseAnimation(ItemStack p_43105_) {
+    public UseAnim getUseAnimation(ItemStack stack) {
         return UseAnim.BLOCK;
     }
 
     @Override
-    public int getUseDuration(ItemStack p_43107_, LivingEntity p_346168_) {
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
         return 72000;
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_43099_, Player p_43100_, InteractionHand p_43101_) {
-        ItemStack itemstack = p_43100_.getItemInHand(p_43101_);
-        p_43100_.startUsingItem(p_43101_);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
+        player.startUsingItem(hand);
         return InteractionResultHolder.consume(itemstack);
     }
 
+    /**
+     * Return whether this item is repairable in an anvil.
+     */
     @Override
-    public boolean isValidRepairItem(ItemStack p_43091_, ItemStack p_43092_) {
-        return p_43092_.is(ItemTags.PLANKS) || super.isValidRepairItem(p_43091_, p_43092_);
+    public boolean isValidRepairItem(ItemStack toRepair, ItemStack repair) {
+        return repair.is(ItemTags.PLANKS) || super.isValidRepairItem(toRepair, repair);
     }
 
     @Override

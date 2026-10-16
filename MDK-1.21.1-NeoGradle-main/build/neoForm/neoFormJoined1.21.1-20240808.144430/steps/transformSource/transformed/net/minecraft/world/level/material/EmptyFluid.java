@@ -19,17 +19,17 @@ public class EmptyFluid extends Fluid {
     }
 
     @Override
-    public boolean canBeReplacedWith(FluidState p_75930_, BlockGetter p_75931_, BlockPos p_75932_, Fluid p_75933_, Direction p_75934_) {
+    public boolean canBeReplacedWith(FluidState fluidState, BlockGetter blockReader, BlockPos pos, Fluid fluid, Direction direction) {
         return true;
     }
 
     @Override
-    public Vec3 getFlow(BlockGetter p_75918_, BlockPos p_75919_, FluidState p_75920_) {
+    public Vec3 getFlow(BlockGetter blockReader, BlockPos pos, FluidState fluidState) {
         return Vec3.ZERO;
     }
 
     @Override
-    public int getTickDelay(LevelReader p_75922_) {
+    public int getTickDelay(LevelReader level) {
         return 0;
     }
 
@@ -44,32 +44,32 @@ public class EmptyFluid extends Fluid {
     }
 
     @Override
-    public float getHeight(FluidState p_75926_, BlockGetter p_75927_, BlockPos p_75928_) {
+    public float getHeight(FluidState state, BlockGetter level, BlockPos pos) {
         return 0.0F;
     }
 
     @Override
-    public float getOwnHeight(FluidState p_75924_) {
+    public float getOwnHeight(FluidState state) {
         return 0.0F;
     }
 
     @Override
-    protected BlockState createLegacyBlock(FluidState p_75937_) {
+    protected BlockState createLegacyBlock(FluidState state) {
         return Blocks.AIR.defaultBlockState();
     }
 
     @Override
-    public boolean isSource(FluidState p_75944_) {
+    public boolean isSource(FluidState state) {
         return false;
     }
 
     @Override
-    public int getAmount(FluidState p_75946_) {
+    public int getAmount(FluidState state) {
         return 0;
     }
 
     @Override
-    public VoxelShape getShape(FluidState p_75939_, BlockGetter p_75940_, BlockPos p_75941_) {
+    public VoxelShape getShape(FluidState state, BlockGetter level, BlockPos pos) {
         return Shapes.empty();
     }
 }

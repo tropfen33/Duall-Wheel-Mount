@@ -14,34 +14,34 @@ import net.minecraft.world.level.validation.ForbiddenSymlinkInfo;
 public abstract class PackDetector<T> {
     private final DirectoryValidator validator;
 
-    protected PackDetector(DirectoryValidator p_295530_) {
-        this.validator = p_295530_;
+    protected PackDetector(DirectoryValidator validator) {
+        this.validator = validator;
     }
 
     @Nullable
-    public T detectPackResources(Path p_294493_, List<ForbiddenSymlinkInfo> p_295548_) throws IOException {
-        Path path = p_294493_;
+    public T detectPackResources(Path p_path, List<ForbiddenSymlinkInfo> forbiddenSymlinkInfos) throws IOException {
+        Path path = p_path;
 
         BasicFileAttributes basicfileattributes;
         try {
-            basicfileattributes = Files.readAttributes(p_294493_, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+            basicfileattributes = Files.readAttributes(p_path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
         } catch (NoSuchFileException nosuchfileexception) {
             return null;
         }
 
         if (basicfileattributes.isSymbolicLink()) {
-            this.validator.validateSymlink(p_294493_, p_295548_);
-            if (!p_295548_.isEmpty()) {
+            this.validator.validateSymlink(p_path, forbiddenSymlinkInfos);
+            if (!forbiddenSymlinkInfos.isEmpty()) {
                 return null;
             }
 
-            path = Files.readSymbolicLink(p_294493_);
+            path = Files.readSymbolicLink(p_path);
             basicfileattributes = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
         }
 
         if (basicfileattributes.isDirectory()) {
-            this.validator.validateKnownDirectory(path, p_295548_);
-            if (!p_295548_.isEmpty()) {
+            this.validator.validateKnownDirectory(path, forbiddenSymlinkInfos);
+            if (!forbiddenSymlinkInfos.isEmpty()) {
                 return null;
             } else {
                 return !Files.isRegularFile(path.resolve("pack.mcmeta")) ? null : this.createDirectoryPack(path);
@@ -52,8 +52,8 @@ public abstract class PackDetector<T> {
     }
 
     @Nullable
-    protected abstract T createZipPack(Path p_296057_) throws IOException;
+    protected abstract T createZipPack(Path path) throws IOException;
 
     @Nullable
-    protected abstract T createDirectoryPack(Path p_296184_) throws IOException;
+    protected abstract T createDirectoryPack(Path path) throws IOException;
 }

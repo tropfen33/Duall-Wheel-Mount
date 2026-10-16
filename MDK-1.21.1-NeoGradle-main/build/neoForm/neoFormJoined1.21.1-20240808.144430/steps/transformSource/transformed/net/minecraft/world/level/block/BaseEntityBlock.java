@@ -12,36 +12,42 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 
 public abstract class BaseEntityBlock extends Block implements EntityBlock {
-    protected BaseEntityBlock(BlockBehaviour.Properties p_49224_) {
-        super(p_49224_);
+    protected BaseEntityBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
     protected abstract MapCodec<? extends BaseEntityBlock> codec();
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_49232_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.INVISIBLE;
     }
 
+    /**
+     * Called on server when {@link net.minecraft.world.level.Level#blockEvent} is called. If server returns true, then also called on the client. On the Server, this may perform additional changes to the world, like pistons replacing the block with an extended base. On the client, the update may involve replacing block entities or effects such as sounds or particles
+     */
     @Override
-    protected boolean triggerEvent(BlockState p_49226_, Level p_49227_, BlockPos p_49228_, int p_49229_, int p_49230_) {
-        super.triggerEvent(p_49226_, p_49227_, p_49228_, p_49229_, p_49230_);
-        BlockEntity blockentity = p_49227_.getBlockEntity(p_49228_);
-        return blockentity == null ? false : blockentity.triggerEvent(p_49229_, p_49230_);
+    protected boolean triggerEvent(BlockState state, Level level, BlockPos pos, int id, int param) {
+        super.triggerEvent(state, level, pos, id, param);
+        BlockEntity blockentity = level.getBlockEntity(pos);
+        return blockentity == null ? false : blockentity.triggerEvent(id, param);
     }
 
     @Nullable
     @Override
-    protected MenuProvider getMenuProvider(BlockState p_49234_, Level p_49235_, BlockPos p_49236_) {
-        BlockEntity blockentity = p_49235_.getBlockEntity(p_49236_);
+    protected MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
+        BlockEntity blockentity = level.getBlockEntity(pos);
         return blockentity instanceof MenuProvider ? (MenuProvider)blockentity : null;
     }
 
     @Nullable
     protected static <E extends BlockEntity, A extends BlockEntity> BlockEntityTicker<A> createTickerHelper(
-        BlockEntityType<A> p_152133_, BlockEntityType<E> p_152134_, BlockEntityTicker<? super E> p_152135_
+        BlockEntityType<A> serverType, BlockEntityType<E> clientType, BlockEntityTicker<? super E> ticker
     ) {
-        return p_152134_ == p_152133_ ? (BlockEntityTicker<A>)p_152135_ : null;
+        return clientType == serverType ? (BlockEntityTicker<A>)ticker : null;
     }
 }

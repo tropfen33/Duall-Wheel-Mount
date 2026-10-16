@@ -70,8 +70,17 @@ public class Library {
         this.defaultDeviceName = getDefaultDeviceName();
     }
 
-    public void init(@Nullable String p_231085_, boolean p_231086_) {
-        this.currentDevice = openDeviceOrFallback(p_231085_);
+    /**
+     * Initializes the OpenAL device and context.
+     * @throws IllegalStateException if an error occurs during initialization.
+     *
+     * @param deviceSpecifier A string specifying the name of the audio device to use,
+     *                        or null to use the default device.
+     * @param enableHrtf      Whether to enable HRTF (head-related transfer function)
+     *                        for spatial audio.
+     */
+    public void init(@Nullable String deviceSpecifier, boolean enableHrtf) {
+        this.currentDevice = openDeviceOrFallback(deviceSpecifier);
         this.supportsDisconnections = false;
         ALCCapabilities alccapabilities = ALC.createCapabilities(this.currentDevice);
         if (OpenAlUtil.checkALCError(this.currentDevice, "Get capabilities")) {
@@ -79,7 +88,7 @@ public class Library {
         } else if (!alccapabilities.OpenALC11) {
             throw new IllegalStateException("OpenAL 1.1 not supported");
         } else {
-            this.setHrtf(alccapabilities.ALC_SOFT_HRTF && p_231086_);
+            this.setHrtf(alccapabilities.ALC_SOFT_HRTF && enableHrtf);
 
             try (MemoryStack memorystack = MemoryStack.stackPush()) {
                 IntBuffer intbuffer = memorystack.callocInt(3).put(6554).put(1).put(0).flip();
@@ -113,11 +122,16 @@ public class Library {
         }
     }
 
-    private void setHrtf(boolean p_242278_) {
+    /**
+     * Sets the HRTF (head-related transfer function) for spatial audio, if it is supported by the current device.
+     *
+     * @param enableHrtf Whether to enable HRTF.
+     */
+    private void setHrtf(boolean enableHrtf) {
         int i = ALC10.alcGetInteger(this.currentDevice, 6548);
         if (i > 0) {
             try (MemoryStack memorystack = MemoryStack.stackPush()) {
-                IntBuffer intbuffer = memorystack.callocInt(10).put(6546).put(p_242278_ ? 1 : 0).put(6550).put(0).put(0).flip();
+                IntBuffer intbuffer = memorystack.callocInt(10).put(6546).put(enableHrtf ? 1 : 0).put(6550).put(0).put(0).flip();
                 if (!SOFTHRTF.alcResetDeviceSOFT(this.currentDevice, intbuffer)) {
                     LOGGER.warn("Failed to reset device: {}", ALC10.alcGetString(this.currentDevice, ALC10.alcGetError(this.currentDevice)));
                 }
@@ -189,10 +203,18 @@ public class Library {
         }
     }
 
-    private static long openDeviceOrFallback(@Nullable String p_193473_) {
+    /**
+     * Opens the specified audio device, or the default device if the specifier is null.
+     * @return The handle of the opened device.
+     * @throws IllegalStateException if the device cannot be opened.
+     *
+     * @param deviceSpecifier The name of the audio device to open, or null to open
+     *                        the default device.
+     */
+    private static long openDeviceOrFallback(@Nullable String deviceSpecifier) {
         OptionalLong optionallong = OptionalLong.empty();
-        if (p_193473_ != null) {
-            optionallong = tryOpenDevice(p_193473_);
+        if (deviceSpecifier != null) {
+            optionallong = tryOpenDevice(deviceSpecifier);
         }
 
         if (optionallong.isEmpty()) {
@@ -210,8 +232,15 @@ public class Library {
         }
     }
 
-    private static OptionalLong tryOpenDevice(@Nullable String p_193476_) {
-        long i = ALC10.alcOpenDevice(p_193476_);
+    /**
+     * Attempts to open the specified audio device.
+     * @return an {@linkplain OptionalLong} containing the handle of the opened device if successful, or empty if the device could not be opened
+     *
+     * @param deviceSpecifier A string specifying the name of the audio device to open
+     *                        , or null to use the default device.
+     */
+    private static OptionalLong tryOpenDevice(@Nullable String deviceSpecifier) {
+        long i = ALC10.alcOpenDevice(deviceSpecifier);
         return i != 0L && !OpenAlUtil.checkALCError(i, "Open device") ? OptionalLong.of(i) : OptionalLong.empty();
     }
 
@@ -228,13 +257,22 @@ public class Library {
         return this.listener;
     }
 
+    /**
+     * Acquires a sound channel based on the given mode.
+     */
     @Nullable
-    public Channel acquireChannel(Library.Pool p_83698_) {
-        return (p_83698_ == Library.Pool.STREAMING ? this.streamingChannels : this.staticChannels).acquire();
+    public Channel acquireChannel(Library.Pool pool) {
+        return (pool == Library.Pool.STREAMING ? this.streamingChannels : this.staticChannels).acquire();
     }
 
-    public void releaseChannel(Channel p_83696_) {
-        if (!this.staticChannels.release(p_83696_) && !this.streamingChannels.release(p_83696_)) {
+    /**
+     * Releases a channel.
+     * @return whether the channel was successfully released
+     *
+     * @param channel The channel to release.
+     */
+    public void releaseChannel(Channel channel) {
+        if (!this.staticChannels.release(channel) && !this.streamingChannels.release(channel)) {
             throw new IllegalStateException("Tried to release unknown channel");
         }
     }
@@ -264,7 +302,7 @@ public class Library {
         @Nullable
         Channel acquire();
 
-        boolean release(Channel p_83712_);
+        boolean release(Channel channel);
 
         void cleanup();
 
@@ -278,8 +316,8 @@ public class Library {
         private final int limit;
         private final Set<Channel> activeChannels = Sets.newIdentityHashSet();
 
-        public CountingChannelPool(int p_83716_) {
-            this.limit = p_83716_;
+        public CountingChannelPool(int limit) {
+            this.limit = limit;
         }
 
         @Nullable
@@ -302,11 +340,11 @@ public class Library {
         }
 
         @Override
-        public boolean release(Channel p_83719_) {
-            if (!this.activeChannels.remove(p_83719_)) {
+        public boolean release(Channel channel) {
+            if (!this.activeChannels.remove(channel)) {
                 return false;
             } else {
-                p_83719_.destroy();
+                channel.destroy();
                 return true;
             }
         }

@@ -50,14 +50,14 @@ public class AddRealmPopupScreen extends RealmsScreen {
     private int carouselIndex;
     private int carouselTick;
 
-    public AddRealmPopupScreen(Screen p_344774_, boolean p_345980_) {
+    public AddRealmPopupScreen(Screen backgroundScreen, boolean trialAvailable) {
         super(POPUP_TEXT);
-        this.backgroundScreen = p_344774_;
-        this.trialAvailable = p_345980_;
+        this.backgroundScreen = backgroundScreen;
+        this.trialAvailable = trialAvailable;
     }
 
-    public static void updateCarouselImages(ResourceManager p_346428_) {
-        Collection<ResourceLocation> collection = p_346428_.listResources("textures/gui/images", p_345740_ -> p_345740_.getPath().endsWith(".png")).keySet();
+    public static void updateCarouselImages(ResourceManager resourceManager) {
+        Collection<ResourceLocation> collection = resourceManager.listResources("textures/gui/images", p_345740_ -> p_345740_.getPath().endsWith(".png")).keySet();
         carouselImages = collection.stream().filter(p_345782_ -> p_345782_.getNamespace().equals("realms")).toList();
     }
 
@@ -101,32 +101,40 @@ public class AddRealmPopupScreen extends RealmsScreen {
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_345725_, int p_345936_, int p_345896_, float p_345975_) {
-        super.render(p_345725_, p_345936_, p_345896_, p_345975_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         if (this.createTrialButton != null) {
-            renderDiamond(p_345725_, this.createTrialButton);
+            renderDiamond(guiGraphics, this.createTrialButton);
         }
     }
 
-    public static void renderDiamond(GuiGraphics p_344936_, Button p_345090_) {
+    public static void renderDiamond(GuiGraphics guiGraphics, Button button) {
         int i = 8;
-        p_344936_.pose().pushPose();
-        p_344936_.pose().translate(0.0F, 0.0F, 110.0F);
-        p_344936_.blitSprite(TRIAL_AVAILABLE_SPRITE, p_345090_.getX() + p_345090_.getWidth() - 8 - 4, p_345090_.getY() + p_345090_.getHeight() / 2 - 4, 8, 8);
-        p_344936_.pose().popPose();
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0.0F, 0.0F, 110.0F);
+        guiGraphics.blitSprite(TRIAL_AVAILABLE_SPRITE, button.getX() + button.getWidth() - 8 - 4, button.getY() + button.getHeight() / 2 - 4, 8, 8);
+        guiGraphics.pose().popPose();
     }
 
     @Override
-    public void renderBackground(GuiGraphics p_346027_, int p_345796_, int p_345649_, float p_345603_) {
-        this.backgroundScreen.render(p_346027_, -1, -1, p_345603_);
-        p_346027_.flush();
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.backgroundScreen.render(guiGraphics, -1, -1, partialTick);
+        guiGraphics.flush();
         RenderSystem.clear(256, Minecraft.ON_OSX);
         this.clearTooltipForNextRenderPass();
-        this.renderTransparentBackground(p_346027_);
-        p_346027_.blitSprite(BACKGROUND_SPRITE, this.left(), this.top(), 320, 172);
+        this.renderTransparentBackground(guiGraphics);
+        guiGraphics.blitSprite(BACKGROUND_SPRITE, this.left(), this.top(), 320, 172);
         if (!carouselImages.isEmpty()) {
-            p_346027_.blit(carouselImages.get(this.carouselIndex), this.left() + 10, this.top() + 10, 0, 0.0F, 0.0F, 195, 152, 195, 152);
+            guiGraphics.blit(carouselImages.get(this.carouselIndex), this.left() + 10, this.top() + 10, 0, 0.0F, 0.0F, 195, 152, 195, 152);
         }
     }
 

@@ -17,27 +17,27 @@ public enum IconSet {
 
     private final String[] path;
 
-    private IconSet(String... p_281663_) {
-        this.path = p_281663_;
+    private IconSet(String... path) {
+        this.path = path;
     }
 
-    public List<IoSupplier<InputStream>> getStandardIcons(PackResources p_281372_) throws IOException {
+    public List<IoSupplier<InputStream>> getStandardIcons(PackResources resources) throws IOException {
         return List.of(
-            this.getFile(p_281372_, "icon_16x16.png"),
-            this.getFile(p_281372_, "icon_32x32.png"),
-            this.getFile(p_281372_, "icon_48x48.png"),
-            this.getFile(p_281372_, "icon_128x128.png"),
-            this.getFile(p_281372_, "icon_256x256.png")
+            this.getFile(resources, "icon_16x16.png"),
+            this.getFile(resources, "icon_32x32.png"),
+            this.getFile(resources, "icon_48x48.png"),
+            this.getFile(resources, "icon_128x128.png"),
+            this.getFile(resources, "icon_256x256.png")
         );
     }
 
-    public IoSupplier<InputStream> getMacIcon(PackResources p_281289_) throws IOException {
-        return this.getFile(p_281289_, "minecraft.icns");
+    public IoSupplier<InputStream> getMacIcon(PackResources resources) throws IOException {
+        return this.getFile(resources, "minecraft.icns");
     }
 
-    private IoSupplier<InputStream> getFile(PackResources p_281570_, String p_281345_) throws IOException {
-        String[] astring = ArrayUtils.add(this.path, p_281345_);
-        IoSupplier<InputStream> iosupplier = p_281570_.getRootResource(astring);
+    private IoSupplier<InputStream> getFile(PackResources resources, String filename) throws IOException {
+        String[] astring = ArrayUtils.add(this.path, filename);
+        IoSupplier<InputStream> iosupplier = resources.getRootResource(astring);
         if (iosupplier == null) {
             throw new FileNotFoundException(String.join("/", astring));
         } else {

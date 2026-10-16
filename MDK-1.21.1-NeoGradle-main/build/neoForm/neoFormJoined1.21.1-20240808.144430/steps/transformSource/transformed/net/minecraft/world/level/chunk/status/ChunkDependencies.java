@@ -8,13 +8,13 @@ public final class ChunkDependencies {
     private final ImmutableList<ChunkStatus> dependencyByRadius;
     private final int[] radiusByDependency;
 
-    public ChunkDependencies(ImmutableList<ChunkStatus> p_347595_) {
-        this.dependencyByRadius = p_347595_;
-        int i = p_347595_.isEmpty() ? 0 : p_347595_.getFirst().getIndex() + 1;
+    public ChunkDependencies(ImmutableList<ChunkStatus> dependencyByRadius) {
+        this.dependencyByRadius = dependencyByRadius;
+        int i = dependencyByRadius.isEmpty() ? 0 : dependencyByRadius.getFirst().getIndex() + 1;
         this.radiusByDependency = new int[i];
 
-        for (int j = 0; j < p_347595_.size(); j++) {
-            ChunkStatus chunkstatus = p_347595_.get(j);
+        for (int j = 0; j < dependencyByRadius.size(); j++) {
+            ChunkStatus chunkstatus = dependencyByRadius.get(j);
             int k = chunkstatus.getIndex();
 
             for (int l = 0; l <= k; l++) {
@@ -32,11 +32,11 @@ public final class ChunkDependencies {
         return this.dependencyByRadius.size();
     }
 
-    public int getRadiusOf(ChunkStatus p_347685_) {
-        int i = p_347685_.getIndex();
+    public int getRadiusOf(ChunkStatus status) {
+        int i = status.getIndex();
         if (i >= this.radiusByDependency.length) {
             throw new IllegalArgumentException(
-                String.format(Locale.ROOT, "Requesting a ChunkStatus(%s) outside of dependency range(%s)", p_347685_, this.dependencyByRadius)
+                String.format(Locale.ROOT, "Requesting a ChunkStatus(%s) outside of dependency range(%s)", status, this.dependencyByRadius)
             );
         } else {
             return this.radiusByDependency[i];
@@ -47,8 +47,8 @@ public final class ChunkDependencies {
         return Math.max(0, this.dependencyByRadius.size() - 1);
     }
 
-    public ChunkStatus get(int p_347623_) {
-        return this.dependencyByRadius.get(p_347623_);
+    public ChunkStatus get(int radius) {
+        return this.dependencyByRadius.get(radius);
     }
 
     @Override

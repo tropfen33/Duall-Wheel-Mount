@@ -57,32 +57,32 @@ public record WorldDimensions(Map<ResourceKey<LevelStem>, LevelStem> dimensions)
         this(p_251356_.holders().collect(Collectors.toMap(Holder.Reference::key, Holder.Reference::value)));
     }
 
-    public static Stream<ResourceKey<LevelStem>> keysInOrder(Stream<ResourceKey<LevelStem>> p_251309_) {
-        return Stream.concat(BUILTIN_ORDER.stream(), p_251309_.filter(p_251885_ -> !BUILTIN_ORDER.contains(p_251885_)));
+    public static Stream<ResourceKey<LevelStem>> keysInOrder(Stream<ResourceKey<LevelStem>> stemKeys) {
+        return Stream.concat(BUILTIN_ORDER.stream(), stemKeys.filter(p_251885_ -> !BUILTIN_ORDER.contains(p_251885_)));
     }
 
-    public WorldDimensions replaceOverworldGenerator(RegistryAccess p_251390_, ChunkGenerator p_248755_) {
-        Registry<DimensionType> registry = p_251390_.registryOrThrow(Registries.DIMENSION_TYPE);
-        Map<ResourceKey<LevelStem>, LevelStem> map = withOverworld(registry, this.dimensions, p_248755_);
+    public WorldDimensions replaceOverworldGenerator(RegistryAccess registryAccess, ChunkGenerator chunkGenerator) {
+        Registry<DimensionType> registry = registryAccess.registryOrThrow(Registries.DIMENSION_TYPE);
+        Map<ResourceKey<LevelStem>, LevelStem> map = withOverworld(registry, this.dimensions, chunkGenerator);
         return new WorldDimensions(map);
     }
 
     public static Map<ResourceKey<LevelStem>, LevelStem> withOverworld(
-        Registry<DimensionType> p_248907_, Map<ResourceKey<LevelStem>, LevelStem> p_326250_, ChunkGenerator p_250220_
+        Registry<DimensionType> dimensionTypeRegistry, Map<ResourceKey<LevelStem>, LevelStem> stemMap, ChunkGenerator chunkGenerator
     ) {
-        LevelStem levelstem = p_326250_.get(LevelStem.OVERWORLD);
+        LevelStem levelstem = stemMap.get(LevelStem.OVERWORLD);
         Holder<DimensionType> holder = (Holder<DimensionType>)(levelstem == null
-            ? p_248907_.getHolderOrThrow(BuiltinDimensionTypes.OVERWORLD)
+            ? dimensionTypeRegistry.getHolderOrThrow(BuiltinDimensionTypes.OVERWORLD)
             : levelstem.type());
-        return withOverworld(p_326250_, holder, p_250220_);
+        return withOverworld(stemMap, holder, chunkGenerator);
     }
 
     public static Map<ResourceKey<LevelStem>, LevelStem> withOverworld(
-        Map<ResourceKey<LevelStem>, LevelStem> p_326287_, Holder<DimensionType> p_326403_, ChunkGenerator p_251737_
+        Map<ResourceKey<LevelStem>, LevelStem> stemMap, Holder<DimensionType> dimensionType, ChunkGenerator chunkGenerator
     ) {
         Builder<ResourceKey<LevelStem>, LevelStem> builder = ImmutableMap.builder();
-        builder.putAll(p_326287_);
-        builder.put(LevelStem.OVERWORLD, new LevelStem(p_326403_, p_251737_));
+        builder.putAll(stemMap);
+        builder.put(LevelStem.OVERWORLD, new LevelStem(dimensionType, chunkGenerator));
         return builder.buildKeepingLast();
     }
 
@@ -95,8 +95,8 @@ public record WorldDimensions(Map<ResourceKey<LevelStem>, LevelStem> dimensions)
         }
     }
 
-    public Optional<LevelStem> get(ResourceKey<LevelStem> p_250824_) {
-        return Optional.ofNullable(this.dimensions.get(p_250824_));
+    public Optional<LevelStem> get(ResourceKey<LevelStem> stemKey) {
+        return Optional.ofNullable(this.dimensions.get(stemKey));
     }
 
     public ImmutableSet<ResourceKey<Level>> levels() {
@@ -107,8 +107,8 @@ public record WorldDimensions(Map<ResourceKey<LevelStem>, LevelStem> dimensions)
         return this.overworld() instanceof DebugLevelSource;
     }
 
-    private static PrimaryLevelData.SpecialWorldProperty specialWorldProperty(Registry<LevelStem> p_251549_) {
-        return p_251549_.getOptional(LevelStem.OVERWORLD).map(p_251481_ -> {
+    private static PrimaryLevelData.SpecialWorldProperty specialWorldProperty(Registry<LevelStem> stemRegistry) {
+        return stemRegistry.getOptional(LevelStem.OVERWORLD).map(p_251481_ -> {
             ChunkGenerator chunkgenerator = p_251481_.generator();
             if (chunkgenerator instanceof DebugLevelSource) {
                 return PrimaryLevelData.SpecialWorldProperty.DEBUG;
@@ -118,26 +118,26 @@ public record WorldDimensions(Map<ResourceKey<LevelStem>, LevelStem> dimensions)
         }).orElse(PrimaryLevelData.SpecialWorldProperty.NONE);
     }
 
-    static Lifecycle checkStability(ResourceKey<LevelStem> p_250764_, LevelStem p_248865_) {
-        return isVanillaLike(p_250764_, p_248865_) ? Lifecycle.stable() : Lifecycle.experimental();
+    static Lifecycle checkStability(ResourceKey<LevelStem> key, LevelStem stem) {
+        return isVanillaLike(key, stem) ? Lifecycle.stable() : Lifecycle.experimental();
     }
 
-    private static boolean isVanillaLike(ResourceKey<LevelStem> p_250556_, LevelStem p_250034_) {
-        if (p_250556_ == LevelStem.OVERWORLD) {
-            return isStableOverworld(p_250034_);
-        } else if (p_250556_ == LevelStem.NETHER) {
-            return isStableNether(p_250034_);
+    private static boolean isVanillaLike(ResourceKey<LevelStem> key, LevelStem stem) {
+        if (key == LevelStem.OVERWORLD) {
+            return isStableOverworld(stem);
+        } else if (key == LevelStem.NETHER) {
+            return isStableNether(stem);
         } else {
-            return p_250556_ == LevelStem.END ? isStableEnd(p_250034_) : false;
+            return key == LevelStem.END ? isStableEnd(stem) : false;
         }
     }
 
-    private static boolean isStableOverworld(LevelStem p_250762_) {
-        Holder<DimensionType> holder = p_250762_.type();
+    private static boolean isStableOverworld(LevelStem levelStem) {
+        Holder<DimensionType> holder = levelStem.type();
         if (!holder.is(BuiltinDimensionTypes.OVERWORLD) && !holder.is(BuiltinDimensionTypes.OVERWORLD_CAVES)) {
             return false;
         } else {
-            if (p_250762_.generator().getBiomeSource() instanceof MultiNoiseBiomeSource multinoisebiomesource
+            if (levelStem.generator().getBiomeSource() instanceof MultiNoiseBiomeSource multinoisebiomesource
                 && !multinoisebiomesource.stable(MultiNoiseBiomeSourceParameterLists.OVERWORLD)) {
                 return false;
             }
@@ -146,23 +146,23 @@ public record WorldDimensions(Map<ResourceKey<LevelStem>, LevelStem> dimensions)
         }
     }
 
-    private static boolean isStableNether(LevelStem p_250497_) {
-        return p_250497_.type().is(BuiltinDimensionTypes.NETHER)
-            && p_250497_.generator() instanceof NoiseBasedChunkGenerator noisebasedchunkgenerator
+    private static boolean isStableNether(LevelStem levelStem) {
+        return levelStem.type().is(BuiltinDimensionTypes.NETHER)
+            && levelStem.generator() instanceof NoiseBasedChunkGenerator noisebasedchunkgenerator
             && noisebasedchunkgenerator.stable(NoiseGeneratorSettings.NETHER)
             && noisebasedchunkgenerator.getBiomeSource() instanceof MultiNoiseBiomeSource multinoisebiomesource
             && multinoisebiomesource.stable(MultiNoiseBiomeSourceParameterLists.NETHER);
     }
 
-    private static boolean isStableEnd(LevelStem p_250720_) {
-        return p_250720_.type().is(BuiltinDimensionTypes.END)
-            && p_250720_.generator() instanceof NoiseBasedChunkGenerator noisebasedchunkgenerator
+    private static boolean isStableEnd(LevelStem levelStem) {
+        return levelStem.type().is(BuiltinDimensionTypes.END)
+            && levelStem.generator() instanceof NoiseBasedChunkGenerator noisebasedchunkgenerator
             && noisebasedchunkgenerator.stable(NoiseGeneratorSettings.END)
             && noisebasedchunkgenerator.getBiomeSource() instanceof TheEndBiomeSource;
     }
 
-    public WorldDimensions.Complete bake(Registry<LevelStem> p_248787_) {
-        Stream<ResourceKey<LevelStem>> stream = Stream.concat(p_248787_.registryKeySet().stream(), this.dimensions.keySet().stream()).distinct();
+    public WorldDimensions.Complete bake(Registry<LevelStem> stemRegistry) {
+        Stream<ResourceKey<LevelStem>> stream = Stream.concat(stemRegistry.registryKeySet().stream(), this.dimensions.keySet().stream()).distinct();
 
         record Entry(ResourceKey<LevelStem> key, LevelStem value) {
             RegistrationInfo registrationInfo() {
@@ -173,7 +173,7 @@ public record WorldDimensions(Map<ResourceKey<LevelStem>, LevelStem> dimensions)
         List<Entry> list = new ArrayList<>();
         keysInOrder(stream)
             .forEach(
-                p_248571_ -> p_248787_.getOptional((ResourceKey<LevelStem>)p_248571_)
+                p_248571_ -> stemRegistry.getOptional((ResourceKey<LevelStem>)p_248571_)
                         .or(() -> Optional.ofNullable(this.dimensions.get(p_248571_)))
                         .ifPresent(p_250263_ -> list.add(new Entry(p_248571_, p_250263_)))
             );

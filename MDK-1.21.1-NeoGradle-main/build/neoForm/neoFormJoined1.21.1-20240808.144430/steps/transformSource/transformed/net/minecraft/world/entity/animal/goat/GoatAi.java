@@ -56,24 +56,24 @@ public class GoatAi {
     public static final float ADULT_RAM_KNOCKBACK_FORCE = 2.5F;
     public static final float BABY_RAM_KNOCKBACK_FORCE = 1.0F;
 
-    protected static void initMemories(Goat p_218765_, RandomSource p_218766_) {
-        p_218765_.getBrain().setMemory(MemoryModuleType.LONG_JUMP_COOLDOWN_TICKS, TIME_BETWEEN_LONG_JUMPS.sample(p_218766_));
-        p_218765_.getBrain().setMemory(MemoryModuleType.RAM_COOLDOWN_TICKS, TIME_BETWEEN_RAMS.sample(p_218766_));
+    protected static void initMemories(Goat goat, RandomSource random) {
+        goat.getBrain().setMemory(MemoryModuleType.LONG_JUMP_COOLDOWN_TICKS, TIME_BETWEEN_LONG_JUMPS.sample(random));
+        goat.getBrain().setMemory(MemoryModuleType.RAM_COOLDOWN_TICKS, TIME_BETWEEN_RAMS.sample(random));
     }
 
-    protected static Brain<?> makeBrain(Brain<Goat> p_149448_) {
-        initCoreActivity(p_149448_);
-        initIdleActivity(p_149448_);
-        initLongJumpActivity(p_149448_);
-        initRamActivity(p_149448_);
-        p_149448_.setCoreActivities(ImmutableSet.of(Activity.CORE));
-        p_149448_.setDefaultActivity(Activity.IDLE);
-        p_149448_.useDefaultActivity();
-        return p_149448_;
+    protected static Brain<?> makeBrain(Brain<Goat> brain) {
+        initCoreActivity(brain);
+        initIdleActivity(brain);
+        initLongJumpActivity(brain);
+        initRamActivity(brain);
+        brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
+        brain.setDefaultActivity(Activity.IDLE);
+        brain.useDefaultActivity();
+        return brain;
     }
 
-    private static void initCoreActivity(Brain<Goat> p_149454_) {
-        p_149454_.addActivity(
+    private static void initCoreActivity(Brain<Goat> brain) {
+        brain.addActivity(
             Activity.CORE,
             0,
             ImmutableList.of(
@@ -88,8 +88,8 @@ public class GoatAi {
         );
     }
 
-    private static void initIdleActivity(Brain<Goat> p_149458_) {
-        p_149458_.addActivityWithConditions(
+    private static void initIdleActivity(Brain<Goat> brain) {
+        brain.addActivityWithConditions(
             Activity.IDLE,
             ImmutableList.of(
                 Pair.of(0, SetEntityLookTargetSometimes.create(EntityType.PLAYER, 6.0F, UniformInt.of(30, 60))),
@@ -111,8 +111,8 @@ public class GoatAi {
         );
     }
 
-    private static void initLongJumpActivity(Brain<Goat> p_149462_) {
-        p_149462_.addActivityWithConditions(
+    private static void initLongJumpActivity(Brain<Goat> brain) {
+        brain.addActivityWithConditions(
             Activity.LONG_JUMP,
             ImmutableList.of(
                 Pair.of(0, new LongJumpMidJump(TIME_BETWEEN_LONG_JUMPS, SoundEvents.GOAT_STEP)),
@@ -136,8 +136,8 @@ public class GoatAi {
         );
     }
 
-    private static void initRamActivity(Brain<Goat> p_149466_) {
-        p_149466_.addActivityWithConditions(
+    private static void initRamActivity(Brain<Goat> brain) {
+        brain.addActivityWithConditions(
             Activity.RAM,
             ImmutableList.of(
                 Pair.of(
@@ -172,8 +172,8 @@ public class GoatAi {
         );
     }
 
-    public static void updateActivity(Goat p_149456_) {
-        p_149456_.getBrain().setActiveActivityToFirstValid(ImmutableList.of(Activity.RAM, Activity.LONG_JUMP, Activity.IDLE));
+    public static void updateActivity(Goat brain) {
+        brain.getBrain().setActiveActivityToFirstValid(ImmutableList.of(Activity.RAM, Activity.LONG_JUMP, Activity.IDLE));
     }
 
     public static Predicate<ItemStack> getTemptations() {

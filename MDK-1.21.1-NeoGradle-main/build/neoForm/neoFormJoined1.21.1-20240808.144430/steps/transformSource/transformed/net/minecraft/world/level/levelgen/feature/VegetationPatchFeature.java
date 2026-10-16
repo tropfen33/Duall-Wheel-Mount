@@ -14,72 +14,79 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.feature.configurations.VegetationPatchConfiguration;
 
 public class VegetationPatchFeature extends Feature<VegetationPatchConfiguration> {
-    public VegetationPatchFeature(Codec<VegetationPatchConfiguration> p_160588_) {
-        super(p_160588_);
+    public VegetationPatchFeature(Codec<VegetationPatchConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<VegetationPatchConfiguration> p_160612_) {
-        WorldGenLevel worldgenlevel = p_160612_.level();
-        VegetationPatchConfiguration vegetationpatchconfiguration = p_160612_.config();
-        RandomSource randomsource = p_160612_.random();
-        BlockPos blockpos = p_160612_.origin();
+    public boolean place(FeaturePlaceContext<VegetationPatchConfiguration> context) {
+        WorldGenLevel worldgenlevel = context.level();
+        VegetationPatchConfiguration vegetationpatchconfiguration = context.config();
+        RandomSource randomsource = context.random();
+        BlockPos blockpos = context.origin();
         Predicate<BlockState> predicate = p_204782_ -> p_204782_.is(vegetationpatchconfiguration.replaceable);
         int i = vegetationpatchconfiguration.xzRadius.sample(randomsource) + 1;
         int j = vegetationpatchconfiguration.xzRadius.sample(randomsource) + 1;
         Set<BlockPos> set = this.placeGroundPatch(worldgenlevel, vegetationpatchconfiguration, randomsource, blockpos, predicate, i, j);
-        this.distributeVegetation(p_160612_, worldgenlevel, vegetationpatchconfiguration, randomsource, set, i, j);
+        this.distributeVegetation(context, worldgenlevel, vegetationpatchconfiguration, randomsource, set, i, j);
         return !set.isEmpty();
     }
 
     protected Set<BlockPos> placeGroundPatch(
-        WorldGenLevel p_225311_,
-        VegetationPatchConfiguration p_225312_,
-        RandomSource p_225313_,
-        BlockPos p_225314_,
-        Predicate<BlockState> p_225315_,
-        int p_225316_,
-        int p_225317_
+        WorldGenLevel level,
+        VegetationPatchConfiguration config,
+        RandomSource random,
+        BlockPos pos,
+        Predicate<BlockState> state,
+        int xRadius,
+        int zRadius
     ) {
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = p_225314_.mutable();
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = pos.mutable();
         BlockPos.MutableBlockPos blockpos$mutableblockpos1 = blockpos$mutableblockpos.mutable();
-        Direction direction = p_225312_.surface.getDirection();
+        Direction direction = config.surface.getDirection();
         Direction direction1 = direction.getOpposite();
         Set<BlockPos> set = new HashSet<>();
 
-        for (int i = -p_225316_; i <= p_225316_; i++) {
-            boolean flag = i == -p_225316_ || i == p_225316_;
+        for (int i = -xRadius; i <= xRadius; i++) {
+            boolean flag = i == -xRadius || i == xRadius;
 
-            for (int j = -p_225317_; j <= p_225317_; j++) {
-                boolean flag1 = j == -p_225317_ || j == p_225317_;
+            for (int j = -zRadius; j <= zRadius; j++) {
+                boolean flag1 = j == -zRadius || j == zRadius;
                 boolean flag2 = flag || flag1;
                 boolean flag3 = flag && flag1;
                 boolean flag4 = flag2 && !flag3;
-                if (!flag3 && (!flag4 || p_225312_.extraEdgeColumnChance != 0.0F && !(p_225313_.nextFloat() > p_225312_.extraEdgeColumnChance))) {
-                    blockpos$mutableblockpos.setWithOffset(p_225314_, i, 0, j);
+                if (!flag3 && (!flag4 || config.extraEdgeColumnChance != 0.0F && !(random.nextFloat() > config.extraEdgeColumnChance))) {
+                    blockpos$mutableblockpos.setWithOffset(pos, i, 0, j);
 
                     for (int k = 0;
-                        p_225311_.isStateAtPosition(blockpos$mutableblockpos, BlockBehaviour.BlockStateBase::isAir) && k < p_225312_.verticalRange;
+                        level.isStateAtPosition(blockpos$mutableblockpos, BlockBehaviour.BlockStateBase::isAir) && k < config.verticalRange;
                         k++
                     ) {
                         blockpos$mutableblockpos.move(direction);
                     }
 
                     for (int i1 = 0;
-                        p_225311_.isStateAtPosition(blockpos$mutableblockpos, p_284926_ -> !p_284926_.isAir()) && i1 < p_225312_.verticalRange;
+                        level.isStateAtPosition(blockpos$mutableblockpos, p_284926_ -> !p_284926_.isAir()) && i1 < config.verticalRange;
                         i1++
                     ) {
                         blockpos$mutableblockpos.move(direction1);
                     }
 
-                    blockpos$mutableblockpos1.setWithOffset(blockpos$mutableblockpos, p_225312_.surface.getDirection());
-                    BlockState blockstate = p_225311_.getBlockState(blockpos$mutableblockpos1);
-                    if (p_225311_.isEmptyBlock(blockpos$mutableblockpos)
-                        && blockstate.isFaceSturdy(p_225311_, blockpos$mutableblockpos1, p_225312_.surface.getDirection().getOpposite())) {
-                        int l = p_225312_.depth.sample(p_225313_)
-                            + (p_225312_.extraBottomBlockChance > 0.0F && p_225313_.nextFloat() < p_225312_.extraBottomBlockChance ? 1 : 0);
+                    blockpos$mutableblockpos1.setWithOffset(blockpos$mutableblockpos, config.surface.getDirection());
+                    BlockState blockstate = level.getBlockState(blockpos$mutableblockpos1);
+                    if (level.isEmptyBlock(blockpos$mutableblockpos)
+                        && blockstate.isFaceSturdy(level, blockpos$mutableblockpos1, config.surface.getDirection().getOpposite())) {
+                        int l = config.depth.sample(random)
+                            + (config.extraBottomBlockChance > 0.0F && random.nextFloat() < config.extraBottomBlockChance ? 1 : 0);
                         BlockPos blockpos = blockpos$mutableblockpos1.immutable();
-                        boolean flag5 = this.placeGround(p_225311_, p_225312_, p_225315_, p_225313_, blockpos$mutableblockpos1, l);
+                        boolean flag5 = this.placeGround(level, config, state, random, blockpos$mutableblockpos1, l);
                         if (flag5) {
                             set.add(blockpos);
                         }
@@ -92,45 +99,45 @@ public class VegetationPatchFeature extends Feature<VegetationPatchConfiguration
     }
 
     protected void distributeVegetation(
-        FeaturePlaceContext<VegetationPatchConfiguration> p_225331_,
-        WorldGenLevel p_225332_,
-        VegetationPatchConfiguration p_225333_,
-        RandomSource p_225334_,
-        Set<BlockPos> p_225335_,
-        int p_225336_,
-        int p_225337_
+        FeaturePlaceContext<VegetationPatchConfiguration> context,
+        WorldGenLevel level,
+        VegetationPatchConfiguration config,
+        RandomSource random,
+        Set<BlockPos> possiblePositions,
+        int xRadius,
+        int zRadius
     ) {
-        for (BlockPos blockpos : p_225335_) {
-            if (p_225333_.vegetationChance > 0.0F && p_225334_.nextFloat() < p_225333_.vegetationChance) {
-                this.placeVegetation(p_225332_, p_225333_, p_225331_.chunkGenerator(), p_225334_, blockpos);
+        for (BlockPos blockpos : possiblePositions) {
+            if (config.vegetationChance > 0.0F && random.nextFloat() < config.vegetationChance) {
+                this.placeVegetation(level, config, context.chunkGenerator(), random, blockpos);
             }
         }
     }
 
     protected boolean placeVegetation(
-        WorldGenLevel p_225318_, VegetationPatchConfiguration p_225319_, ChunkGenerator p_225320_, RandomSource p_225321_, BlockPos p_225322_
+        WorldGenLevel level, VegetationPatchConfiguration config, ChunkGenerator chunkGenerator, RandomSource random, BlockPos pos
     ) {
-        return p_225319_.vegetationFeature.value().place(p_225318_, p_225320_, p_225321_, p_225322_.relative(p_225319_.surface.getDirection().getOpposite()));
+        return config.vegetationFeature.value().place(level, chunkGenerator, random, pos.relative(config.surface.getDirection().getOpposite()));
     }
 
     protected boolean placeGround(
-        WorldGenLevel p_225324_,
-        VegetationPatchConfiguration p_225325_,
-        Predicate<BlockState> p_225326_,
-        RandomSource p_225327_,
-        BlockPos.MutableBlockPos p_225328_,
-        int p_225329_
+        WorldGenLevel level,
+        VegetationPatchConfiguration config,
+        Predicate<BlockState> replaceableblocks,
+        RandomSource random,
+        BlockPos.MutableBlockPos mutablePos,
+        int maxDistance
     ) {
-        for (int i = 0; i < p_225329_; i++) {
-            BlockState blockstate = p_225325_.groundState.getState(p_225327_, p_225328_);
-            BlockState blockstate1 = p_225324_.getBlockState(p_225328_);
+        for (int i = 0; i < maxDistance; i++) {
+            BlockState blockstate = config.groundState.getState(random, mutablePos);
+            BlockState blockstate1 = level.getBlockState(mutablePos);
             if (!blockstate.is(blockstate1.getBlock())) {
-                if (!p_225326_.test(blockstate1)) {
+                if (!replaceableblocks.test(blockstate1)) {
                     return i != 0;
                 }
 
-                p_225324_.setBlock(p_225328_, blockstate, 2);
-                p_225328_.move(p_225325_.surface.getDirection());
+                level.setBlock(mutablePos, blockstate, 2);
+                mutablePos.move(config.surface.getDirection());
             }
         }
 

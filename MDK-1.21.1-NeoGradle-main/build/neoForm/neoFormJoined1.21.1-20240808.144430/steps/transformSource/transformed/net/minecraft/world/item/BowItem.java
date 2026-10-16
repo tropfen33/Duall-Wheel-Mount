@@ -18,26 +18,29 @@ public class BowItem extends ProjectileWeaponItem {
     public static final int MAX_DRAW_DURATION = 20;
     public static final int DEFAULT_RANGE = 15;
 
-    public BowItem(Item.Properties p_40660_) {
-        super(p_40660_);
+    public BowItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Called when the player stops using an Item (stops holding the right mouse button).
+     */
     @Override
-    public void releaseUsing(ItemStack p_40667_, Level p_40668_, LivingEntity p_40669_, int p_40670_) {
-        if (p_40669_ instanceof Player player) {
-            ItemStack itemstack = player.getProjectile(p_40667_);
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity entityLiving, int timeLeft) {
+        if (entityLiving instanceof Player player) {
+            ItemStack itemstack = player.getProjectile(stack);
             if (!itemstack.isEmpty()) {
-                int i = this.getUseDuration(p_40667_, p_40669_) - p_40670_;
-                i = net.neoforged.neoforge.event.EventHooks.onArrowLoose(p_40667_, p_40668_, player, i, !itemstack.isEmpty());
+                int i = this.getUseDuration(stack, entityLiving) - timeLeft;
+                i = net.neoforged.neoforge.event.EventHooks.onArrowLoose(stack, level, player, i, !itemstack.isEmpty());
                 if (i < 0) return;
                 float f = getPowerForTime(i);
                 if (!((double)f < 0.1)) {
-                    List<ItemStack> list = draw(p_40667_, itemstack, player);
-                    if (p_40668_ instanceof ServerLevel serverlevel && !list.isEmpty()) {
-                        this.shoot(serverlevel, player, player.getUsedItemHand(), p_40667_, list, f * 3.0F, 1.0F, f == 1.0F, null);
+                    List<ItemStack> list = draw(stack, itemstack, player);
+                    if (level instanceof ServerLevel serverlevel && !list.isEmpty()) {
+                        this.shoot(serverlevel, player, player.getUsedItemHand(), stack, list, f * 3.0F, 1.0F, f == 1.0F, null);
                     }
 
-                    p_40668_.playSound(
+                    level.playSound(
                         null,
                         player.getX(),
                         player.getY(),
@@ -45,7 +48,7 @@ public class BowItem extends ProjectileWeaponItem {
                         SoundEvents.ARROW_SHOOT,
                         SoundSource.PLAYERS,
                         1.0F,
-                        1.0F / (p_40668_.getRandom().nextFloat() * 0.4F + 1.2F) + f * 0.5F
+                        1.0F / (level.getRandom().nextFloat() * 0.4F + 1.2F) + f * 0.5F
                     );
                     player.awardStat(Stats.ITEM_USED.get(this));
                 }
@@ -55,13 +58,16 @@ public class BowItem extends ProjectileWeaponItem {
 
     @Override
     protected void shootProjectile(
-        LivingEntity p_331372_, Projectile p_332000_, int p_330631_, float p_331251_, float p_331199_, float p_330857_, @Nullable LivingEntity p_331572_
+        LivingEntity shooter, Projectile projectile, int index, float velocity, float inaccuracy, float angle, @Nullable LivingEntity target
     ) {
-        p_332000_.shootFromRotation(p_331372_, p_331372_.getXRot(), p_331372_.getYRot() + p_330857_, 0.0F, p_331251_, p_331199_);
+        projectile.shootFromRotation(shooter, shooter.getXRot(), shooter.getYRot() + angle, 0.0F, velocity, inaccuracy);
     }
 
-    public static float getPowerForTime(int p_40662_) {
-        float f = (float)p_40662_ / 20.0F;
+    /**
+     * Gets the velocity of the arrow entity from the bow's charge
+     */
+    public static float getPowerForTime(int charge) {
+        float f = (float)charge / 20.0F;
         f = (f * f + f * 2.0F) / 3.0F;
         if (f > 1.0F) {
             f = 1.0F;
@@ -71,27 +77,33 @@ public class BowItem extends ProjectileWeaponItem {
     }
 
     @Override
-    public int getUseDuration(ItemStack p_40680_, LivingEntity p_345962_) {
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
         return 72000;
     }
 
+    /**
+     * Returns the action that specifies what animation to play when the item is being used.
+     */
     @Override
-    public UseAnim getUseAnimation(ItemStack p_40678_) {
+    public UseAnim getUseAnimation(ItemStack stack) {
         return UseAnim.BOW;
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_40672_, Player p_40673_, InteractionHand p_40674_) {
-        ItemStack itemstack = p_40673_.getItemInHand(p_40674_);
-        boolean flag = !p_40673_.getProjectile(itemstack).isEmpty();
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
+        boolean flag = !player.getProjectile(itemstack).isEmpty();
 
-        InteractionResultHolder<ItemStack> ret = net.neoforged.neoforge.event.EventHooks.onArrowNock(itemstack, p_40672_, p_40673_, p_40674_, flag);
+        InteractionResultHolder<ItemStack> ret = net.neoforged.neoforge.event.EventHooks.onArrowNock(itemstack, level, player, hand, flag);
         if (ret != null) return ret;
 
-        if (!p_40673_.hasInfiniteMaterials() && !flag) {
+        if (!player.hasInfiniteMaterials() && !flag) {
             return InteractionResultHolder.fail(itemstack);
         } else {
-            p_40673_.startUsingItem(p_40674_);
+            player.startUsingItem(hand);
             return InteractionResultHolder.consume(itemstack);
         }
     }

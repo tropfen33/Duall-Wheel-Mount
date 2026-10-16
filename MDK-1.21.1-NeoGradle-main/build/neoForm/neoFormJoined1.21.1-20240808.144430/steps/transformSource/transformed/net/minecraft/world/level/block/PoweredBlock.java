@@ -15,17 +15,29 @@ public class PoweredBlock extends Block {
         return CODEC;
     }
 
-    public PoweredBlock(BlockBehaviour.Properties p_55206_) {
-        super(p_55206_);
+    public PoweredBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Returns whether this block is capable of emitting redstone signals.
+     *
+     */
     @Override
-    protected boolean isSignalSource(BlockState p_55213_) {
+    protected boolean isSignalSource(BlockState state) {
         return true;
     }
 
+    /**
+     * Returns the signal this block emits in the given direction.
+     *
+     * <p>
+     * NOTE: directions in redstone signal related methods are backwards, so this method
+     * checks for the signal emitted in the <i>opposite</i> direction of the one given.
+     *
+     */
     @Override
-    protected int getSignal(BlockState p_55208_, BlockGetter p_55209_, BlockPos p_55210_, Direction p_55211_) {
+    protected int getSignal(BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side) {
         return 15;
     }
 }

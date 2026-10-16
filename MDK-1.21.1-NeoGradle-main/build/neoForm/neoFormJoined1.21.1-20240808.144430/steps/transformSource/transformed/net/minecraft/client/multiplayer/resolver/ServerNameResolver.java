@@ -15,16 +15,16 @@ public class ServerNameResolver {
     private final AddressCheck addressCheck;
 
     @VisibleForTesting
-    ServerNameResolver(ServerAddressResolver p_171887_, ServerRedirectHandler p_171888_, AddressCheck p_171889_) {
-        this.resolver = p_171887_;
-        this.redirectHandler = p_171888_;
-        this.addressCheck = p_171889_;
+    ServerNameResolver(ServerAddressResolver resolver, ServerRedirectHandler redirectHandler, AddressCheck addressCheck) {
+        this.resolver = resolver;
+        this.redirectHandler = redirectHandler;
+        this.addressCheck = addressCheck;
     }
 
-    public Optional<ResolvedServerAddress> resolveAddress(ServerAddress p_171891_) {
-        Optional<ResolvedServerAddress> optional = this.resolver.resolve(p_171891_);
-        if ((!optional.isPresent() || this.addressCheck.isAllowed(optional.get())) && this.addressCheck.isAllowed(p_171891_)) {
-            Optional<ServerAddress> optional1 = this.redirectHandler.lookupRedirect(p_171891_);
+    public Optional<ResolvedServerAddress> resolveAddress(ServerAddress serverAddress) {
+        Optional<ResolvedServerAddress> optional = this.resolver.resolve(serverAddress);
+        if ((!optional.isPresent() || this.addressCheck.isAllowed(optional.get())) && this.addressCheck.isAllowed(serverAddress)) {
+            Optional<ServerAddress> optional1 = this.redirectHandler.lookupRedirect(serverAddress);
             if (optional1.isPresent()) {
                 optional = this.resolver.resolve(optional1.get()).filter(this.addressCheck::isAllowed);
             }

@@ -18,9 +18,9 @@ public class NetherForestVegetationConfig extends BlockPileConfiguration {
     public final int spreadWidth;
     public final int spreadHeight;
 
-    public NetherForestVegetationConfig(BlockStateProvider p_191263_, int p_191264_, int p_191265_) {
-        super(p_191263_);
-        this.spreadWidth = p_191264_;
-        this.spreadHeight = p_191265_;
+    public NetherForestVegetationConfig(BlockStateProvider stateProvider, int spreadWidth, int spreadHeight) {
+        super(stateProvider);
+        this.spreadWidth = spreadWidth;
+        this.spreadHeight = spreadHeight;
     }
 }

@@ -16,24 +16,27 @@ public abstract class SavedData {
     private static final Logger LOGGER = LogUtils.getLogger();
     private boolean dirty;
 
-    public abstract CompoundTag save(CompoundTag p_77763_, HolderLookup.Provider p_323640_);
+    public abstract CompoundTag save(CompoundTag tag, HolderLookup.Provider registries);
 
     public void setDirty() {
         this.setDirty(true);
     }
 
-    public void setDirty(boolean p_77761_) {
-        this.dirty = p_77761_;
+    /**
+     * Sets the dirty state of this {@code SavedData}, whether it needs saving to disk.
+     */
+    public void setDirty(boolean dirty) {
+        this.dirty = dirty;
     }
 
     public boolean isDirty() {
         return this.dirty;
     }
 
-    public void save(File p_77758_, HolderLookup.Provider p_324088_) {
+    public void save(File file, HolderLookup.Provider registries) {
         if (this.isDirty()) {
             CompoundTag compoundtag = new CompoundTag();
-            compoundtag.put("data", this.save(new CompoundTag(), p_324088_));
+            compoundtag.put("data", this.save(new CompoundTag(), registries));
             NbtUtils.addCurrentDataVersion(compoundtag);
 
             //copy the contents to handle mods that just append an existing Tag to the Compound
@@ -41,7 +44,7 @@ public abstract class SavedData {
 
             net.neoforged.neoforge.common.IOUtilities.withIOWorker(()->{
             try {
-                net.neoforged.neoforge.common.IOUtilities.writeNbtCompressed(copied, p_77758_.toPath());
+                net.neoforged.neoforge.common.IOUtilities.writeNbtCompressed(copied, file.toPath());
             } catch (IOException ioexception) {
                 LOGGER.error("Could not save data {}", this, ioexception);
             }

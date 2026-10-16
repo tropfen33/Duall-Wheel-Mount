@@ -19,68 +19,68 @@ public interface SlotAccess {
         }
     };
 
-    static SlotAccess of(final Supplier<ItemStack> p_340997_, final Consumer<ItemStack> p_341182_) {
+    static SlotAccess of(final Supplier<ItemStack> getter, final Consumer<ItemStack> setter) {
         return new SlotAccess() {
             @Override
             public ItemStack get() {
-                return p_340997_.get();
+                return getter.get();
             }
 
             @Override
             public boolean set(ItemStack p_147324_) {
-                p_341182_.accept(p_147324_);
+                setter.accept(p_147324_);
                 return true;
             }
         };
     }
 
-    static SlotAccess forContainer(final Container p_147296_, final int p_147297_, final Predicate<ItemStack> p_147298_) {
+    static SlotAccess forContainer(final Container inventory, final int slot, final Predicate<ItemStack> stackFilter) {
         return new SlotAccess() {
             @Override
             public ItemStack get() {
-                return p_147296_.getItem(p_147297_);
+                return inventory.getItem(slot);
             }
 
             @Override
             public boolean set(ItemStack p_147334_) {
-                if (!p_147298_.test(p_147334_)) {
+                if (!stackFilter.test(p_147334_)) {
                     return false;
                 } else {
-                    p_147296_.setItem(p_147297_, p_147334_);
+                    inventory.setItem(slot, p_147334_);
                     return true;
                 }
             }
         };
     }
 
-    static SlotAccess forContainer(Container p_147293_, int p_147294_) {
-        return forContainer(p_147293_, p_147294_, p_147310_ -> true);
+    static SlotAccess forContainer(Container inventory, int slot) {
+        return forContainer(inventory, slot, p_147310_ -> true);
     }
 
-    static SlotAccess forEquipmentSlot(final LivingEntity p_147303_, final EquipmentSlot p_147304_, final Predicate<ItemStack> p_147305_) {
+    static SlotAccess forEquipmentSlot(final LivingEntity entity, final EquipmentSlot slot, final Predicate<ItemStack> stackFilter) {
         return new SlotAccess() {
             @Override
             public ItemStack get() {
-                return p_147303_.getItemBySlot(p_147304_);
+                return entity.getItemBySlot(slot);
             }
 
             @Override
             public boolean set(ItemStack p_341038_) {
-                if (!p_147305_.test(p_341038_)) {
+                if (!stackFilter.test(p_341038_)) {
                     return false;
                 } else {
-                    p_147303_.setItemSlot(p_147304_, p_341038_);
+                    entity.setItemSlot(slot, p_341038_);
                     return true;
                 }
             }
         };
     }
 
-    static SlotAccess forEquipmentSlot(LivingEntity p_147300_, EquipmentSlot p_147301_) {
-        return forEquipmentSlot(p_147300_, p_147301_, p_147308_ -> true);
+    static SlotAccess forEquipmentSlot(LivingEntity entity, EquipmentSlot slot) {
+        return forEquipmentSlot(entity, slot, p_147308_ -> true);
     }
 
     ItemStack get();
 
-    boolean set(ItemStack p_147306_);
+    boolean set(ItemStack carried);
 }

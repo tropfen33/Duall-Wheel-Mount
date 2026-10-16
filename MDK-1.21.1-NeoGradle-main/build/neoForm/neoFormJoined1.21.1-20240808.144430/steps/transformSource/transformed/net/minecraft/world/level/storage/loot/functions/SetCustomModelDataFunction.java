@@ -22,9 +22,9 @@ public class SetCustomModelDataFunction extends LootItemConditionalFunction {
     );
     private final NumberProvider valueProvider;
 
-    public SetCustomModelDataFunction(List<LootItemCondition> p_340822_, NumberProvider p_340847_) {
-        super(p_340822_);
-        this.valueProvider = p_340847_;
+    public SetCustomModelDataFunction(List<LootItemCondition> conditions, NumberProvider valueProvider) {
+        super(conditions);
+        this.valueProvider = valueProvider;
     }
 
     @Override
@@ -37,9 +37,12 @@ public class SetCustomModelDataFunction extends LootItemConditionalFunction {
         return LootItemFunctions.SET_CUSTOM_MODEL_DATA;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_341195_, LootContext p_341335_) {
-        p_341195_.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(this.valueProvider.getInt(p_341335_)));
-        return p_341195_;
+    public ItemStack run(ItemStack stack, LootContext context) {
+        stack.set(DataComponents.CUSTOM_MODEL_DATA, new CustomModelData(this.valueProvider.getInt(context)));
+        return stack;
     }
 }

@@ -13,20 +13,20 @@ public class XoroshiroRandomSource implements RandomSource {
     private Xoroshiro128PlusPlus randomNumberGenerator;
     private final MarsagliaPolarGaussian gaussianSource = new MarsagliaPolarGaussian(this);
 
-    public XoroshiroRandomSource(long p_190102_) {
-        this.randomNumberGenerator = new Xoroshiro128PlusPlus(RandomSupport.upgradeSeedTo128bit(p_190102_));
+    public XoroshiroRandomSource(long seed) {
+        this.randomNumberGenerator = new Xoroshiro128PlusPlus(RandomSupport.upgradeSeedTo128bit(seed));
     }
 
-    public XoroshiroRandomSource(RandomSupport.Seed128bit p_289014_) {
-        this.randomNumberGenerator = new Xoroshiro128PlusPlus(p_289014_);
+    public XoroshiroRandomSource(RandomSupport.Seed128bit seed) {
+        this.randomNumberGenerator = new Xoroshiro128PlusPlus(seed);
     }
 
-    public XoroshiroRandomSource(long p_190104_, long p_190105_) {
-        this.randomNumberGenerator = new Xoroshiro128PlusPlus(p_190104_, p_190105_);
+    public XoroshiroRandomSource(long seedLo, long seedHi) {
+        this.randomNumberGenerator = new Xoroshiro128PlusPlus(seedLo, seedHi);
     }
 
-    private XoroshiroRandomSource(Xoroshiro128PlusPlus p_287656_) {
-        this.randomNumberGenerator = p_287656_;
+    private XoroshiroRandomSource(Xoroshiro128PlusPlus randomNumberGenerator) {
+        this.randomNumberGenerator = randomNumberGenerator;
     }
 
     @Override
@@ -40,8 +40,8 @@ public class XoroshiroRandomSource implements RandomSource {
     }
 
     @Override
-    public void setSeed(long p_190121_) {
-        this.randomNumberGenerator = new Xoroshiro128PlusPlus(RandomSupport.upgradeSeedTo128bit(p_190121_));
+    public void setSeed(long seed) {
+        this.randomNumberGenerator = new Xoroshiro128PlusPlus(RandomSupport.upgradeSeedTo128bit(seed));
         this.gaussianSource.reset();
     }
 
@@ -51,17 +51,17 @@ public class XoroshiroRandomSource implements RandomSource {
     }
 
     @Override
-    public int nextInt(int p_190118_) {
-        if (p_190118_ <= 0) {
+    public int nextInt(int bound) {
+        if (bound <= 0) {
             throw new IllegalArgumentException("Bound must be positive");
         } else {
             long i = Integer.toUnsignedLong(this.nextInt());
-            long j = i * (long)p_190118_;
+            long j = i * (long)bound;
             long k = j & 4294967295L;
-            if (k < (long)p_190118_) {
-                for (int l = Integer.remainderUnsigned(~p_190118_ + 1, p_190118_); k < (long)l; k = j & 4294967295L) {
+            if (k < (long)bound) {
+                for (int l = Integer.remainderUnsigned(~bound + 1, bound); k < (long)l; k = j & 4294967295L) {
                     i = Integer.toUnsignedLong(this.nextInt());
-                    j = i * (long)p_190118_;
+                    j = i * (long)bound;
                 }
             }
 
@@ -96,47 +96,47 @@ public class XoroshiroRandomSource implements RandomSource {
     }
 
     @Override
-    public void consumeCount(int p_190111_) {
-        for (int i = 0; i < p_190111_; i++) {
+    public void consumeCount(int count) {
+        for (int i = 0; i < count; i++) {
             this.randomNumberGenerator.nextLong();
         }
     }
 
-    private long nextBits(int p_190108_) {
-        return this.randomNumberGenerator.nextLong() >>> 64 - p_190108_;
+    private long nextBits(int bits) {
+        return this.randomNumberGenerator.nextLong() >>> 64 - bits;
     }
 
     public static class XoroshiroPositionalRandomFactory implements PositionalRandomFactory {
         private final long seedLo;
         private final long seedHi;
 
-        public XoroshiroPositionalRandomFactory(long p_190127_, long p_190128_) {
-            this.seedLo = p_190127_;
-            this.seedHi = p_190128_;
+        public XoroshiroPositionalRandomFactory(long seedLo, long seedHi) {
+            this.seedLo = seedLo;
+            this.seedHi = seedHi;
         }
 
         @Override
-        public RandomSource at(int p_224691_, int p_224692_, int p_224693_) {
-            long i = Mth.getSeed(p_224691_, p_224692_, p_224693_);
+        public RandomSource at(int x, int y, int z) {
+            long i = Mth.getSeed(x, y, z);
             long j = i ^ this.seedLo;
             return new XoroshiroRandomSource(j, this.seedHi);
         }
 
         @Override
-        public RandomSource fromHashOf(String p_224695_) {
-            RandomSupport.Seed128bit randomsupport$seed128bit = RandomSupport.seedFromHashOf(p_224695_);
+        public RandomSource fromHashOf(String name) {
+            RandomSupport.Seed128bit randomsupport$seed128bit = RandomSupport.seedFromHashOf(name);
             return new XoroshiroRandomSource(randomsupport$seed128bit.xor(this.seedLo, this.seedHi));
         }
 
         @Override
-        public RandomSource fromSeed(long p_348665_) {
-            return new XoroshiroRandomSource(p_348665_ ^ this.seedLo, p_348665_ ^ this.seedHi);
+        public RandomSource fromSeed(long seed) {
+            return new XoroshiroRandomSource(seed ^ this.seedLo, seed ^ this.seedHi);
         }
 
         @VisibleForTesting
         @Override
-        public void parityConfigString(StringBuilder p_190136_) {
-            p_190136_.append("seedLo: ").append(this.seedLo).append(", seedHi: ").append(this.seedHi);
+        public void parityConfigString(StringBuilder builder) {
+            builder.append("seedLo: ").append(this.seedLo).append(", seedHi: ").append(this.seedHi);
         }
     }
 }

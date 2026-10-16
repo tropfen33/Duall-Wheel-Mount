@@ -12,27 +12,33 @@ import net.minecraft.world.level.storage.loot.ValidationContext;
 import net.minecraft.world.level.storage.loot.predicates.ConditionUserBuilder;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
+/**
+ * Base class for loot pool entry containers. This class just stores a list of conditions that are checked before the entry generates loot.
+ */
 public abstract class LootPoolEntryContainer implements ComposableEntryContainer {
+    /**
+     * Conditions for the loot entry to be applied.
+     */
     protected final List<LootItemCondition> conditions;
     private final Predicate<LootContext> compositeCondition;
 
-    protected LootPoolEntryContainer(List<LootItemCondition> p_299002_) {
-        this.conditions = p_299002_;
-        this.compositeCondition = Util.allOf(p_299002_);
+    protected LootPoolEntryContainer(List<LootItemCondition> conditions) {
+        this.conditions = conditions;
+        this.compositeCondition = Util.allOf(conditions);
     }
 
-    protected static <T extends LootPoolEntryContainer> P1<Mu<T>, List<LootItemCondition>> commonFields(Instance<T> p_299092_) {
-        return p_299092_.group(LootItemCondition.DIRECT_CODEC.listOf().optionalFieldOf("conditions", List.of()).forGetter(p_298548_ -> p_298548_.conditions));
+    protected static <T extends LootPoolEntryContainer> P1<Mu<T>, List<LootItemCondition>> commonFields(Instance<T> instance) {
+        return instance.group(LootItemCondition.DIRECT_CODEC.listOf().optionalFieldOf("conditions", List.of()).forGetter(p_298548_ -> p_298548_.conditions));
     }
 
-    public void validate(ValidationContext p_79641_) {
+    public void validate(ValidationContext validationContext) {
         for (int i = 0; i < this.conditions.size(); i++) {
-            this.conditions.get(i).validate(p_79641_.forChild(".condition[" + i + "]"));
+            this.conditions.get(i).validate(validationContext.forChild(".condition[" + i + "]"));
         }
     }
 
-    protected final boolean canRun(LootContext p_79640_) {
-        return this.compositeCondition.test(p_79640_);
+    protected final boolean canRun(LootContext lootContext) {
+        return this.compositeCondition.test(lootContext);
     }
 
     public abstract LootPoolEntryType getType();
@@ -42,8 +48,8 @@ public abstract class LootPoolEntryContainer implements ComposableEntryContainer
 
         protected abstract T getThis();
 
-        public T when(LootItemCondition.Builder p_79646_) {
-            this.conditions.add(p_79646_.build());
+        public T when(LootItemCondition.Builder conditionBuilder) {
+            this.conditions.add(conditionBuilder.build());
             return this.getThis();
         }
 
@@ -55,16 +61,16 @@ public abstract class LootPoolEntryContainer implements ComposableEntryContainer
             return this.conditions.build();
         }
 
-        public AlternativesEntry.Builder otherwise(LootPoolEntryContainer.Builder<?> p_79644_) {
-            return new AlternativesEntry.Builder(this, p_79644_);
+        public AlternativesEntry.Builder otherwise(LootPoolEntryContainer.Builder<?> childBuilder) {
+            return new AlternativesEntry.Builder(this, childBuilder);
         }
 
-        public EntryGroup.Builder append(LootPoolEntryContainer.Builder<?> p_165148_) {
-            return new EntryGroup.Builder(this, p_165148_);
+        public EntryGroup.Builder append(LootPoolEntryContainer.Builder<?> childBuilder) {
+            return new EntryGroup.Builder(this, childBuilder);
         }
 
-        public SequentialEntry.Builder then(LootPoolEntryContainer.Builder<?> p_165149_) {
-            return new SequentialEntry.Builder(this, p_165149_);
+        public SequentialEntry.Builder then(LootPoolEntryContainer.Builder<?> childBuilder) {
+            return new SequentialEntry.Builder(this, childBuilder);
         }
 
         public abstract LootPoolEntryContainer build();

@@ -17,9 +17,9 @@ public class PlayerHurtEntityTrigger extends SimpleCriterionTrigger<PlayerHurtEn
         return PlayerHurtEntityTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_60113_, Entity p_60114_, DamageSource p_60115_, float p_60116_, float p_60117_, boolean p_60118_) {
-        LootContext lootcontext = EntityPredicate.createContext(p_60113_, p_60114_);
-        this.trigger(p_60113_, p_60126_ -> p_60126_.matches(p_60113_, lootcontext, p_60115_, p_60116_, p_60117_, p_60118_));
+    public void trigger(ServerPlayer player, Entity entity, DamageSource source, float amountDealt, float amountTaken, boolean blocked) {
+        LootContext lootcontext = EntityPredicate.createContext(player, entity);
+        this.trigger(player, p_60126_ -> p_60126_.matches(player, lootcontext, source, amountDealt, amountTaken, blocked));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, Optional<DamagePredicate> damage, Optional<ContextAwarePredicate> entity)
@@ -38,45 +38,45 @@ public class PlayerHurtEntityTrigger extends SimpleCriterionTrigger<PlayerHurtEn
                 .createCriterion(new PlayerHurtEntityTrigger.TriggerInstance(Optional.empty(), Optional.empty(), Optional.empty()));
         }
 
-        public static Criterion<PlayerHurtEntityTrigger.TriggerInstance> playerHurtEntityWithDamage(Optional<DamagePredicate> p_300880_) {
+        public static Criterion<PlayerHurtEntityTrigger.TriggerInstance> playerHurtEntityWithDamage(Optional<DamagePredicate> damage) {
             return CriteriaTriggers.PLAYER_HURT_ENTITY
-                .createCriterion(new PlayerHurtEntityTrigger.TriggerInstance(Optional.empty(), p_300880_, Optional.empty()));
+                .createCriterion(new PlayerHurtEntityTrigger.TriggerInstance(Optional.empty(), damage, Optional.empty()));
         }
 
-        public static Criterion<PlayerHurtEntityTrigger.TriggerInstance> playerHurtEntityWithDamage(DamagePredicate.Builder p_300924_) {
+        public static Criterion<PlayerHurtEntityTrigger.TriggerInstance> playerHurtEntityWithDamage(DamagePredicate.Builder damage) {
             return CriteriaTriggers.PLAYER_HURT_ENTITY
-                .createCriterion(new PlayerHurtEntityTrigger.TriggerInstance(Optional.empty(), Optional.of(p_300924_.build()), Optional.empty()));
+                .createCriterion(new PlayerHurtEntityTrigger.TriggerInstance(Optional.empty(), Optional.of(damage.build()), Optional.empty()));
         }
 
-        public static Criterion<PlayerHurtEntityTrigger.TriggerInstance> playerHurtEntity(Optional<EntityPredicate> p_298252_) {
+        public static Criterion<PlayerHurtEntityTrigger.TriggerInstance> playerHurtEntity(Optional<EntityPredicate> entity) {
             return CriteriaTriggers.PLAYER_HURT_ENTITY
-                .createCriterion(new PlayerHurtEntityTrigger.TriggerInstance(Optional.empty(), Optional.empty(), EntityPredicate.wrap(p_298252_)));
-        }
-
-        public static Criterion<PlayerHurtEntityTrigger.TriggerInstance> playerHurtEntity(
-            Optional<DamagePredicate> p_301287_, Optional<EntityPredicate> p_300951_
-        ) {
-            return CriteriaTriggers.PLAYER_HURT_ENTITY
-                .createCriterion(new PlayerHurtEntityTrigger.TriggerInstance(Optional.empty(), p_301287_, EntityPredicate.wrap(p_300951_)));
+                .createCriterion(new PlayerHurtEntityTrigger.TriggerInstance(Optional.empty(), Optional.empty(), EntityPredicate.wrap(entity)));
         }
 
         public static Criterion<PlayerHurtEntityTrigger.TriggerInstance> playerHurtEntity(
-            DamagePredicate.Builder p_301281_, Optional<EntityPredicate> p_298362_
+            Optional<DamagePredicate> damage, Optional<EntityPredicate> entity
         ) {
             return CriteriaTriggers.PLAYER_HURT_ENTITY
-                .createCriterion(new PlayerHurtEntityTrigger.TriggerInstance(Optional.empty(), Optional.of(p_301281_.build()), EntityPredicate.wrap(p_298362_)));
+                .createCriterion(new PlayerHurtEntityTrigger.TriggerInstance(Optional.empty(), damage, EntityPredicate.wrap(entity)));
         }
 
-        public boolean matches(ServerPlayer p_60143_, LootContext p_60144_, DamageSource p_60145_, float p_60146_, float p_60147_, boolean p_60148_) {
-            return this.damage.isPresent() && !this.damage.get().matches(p_60143_, p_60145_, p_60146_, p_60147_, p_60148_)
+        public static Criterion<PlayerHurtEntityTrigger.TriggerInstance> playerHurtEntity(
+            DamagePredicate.Builder damage, Optional<EntityPredicate> entity
+        ) {
+            return CriteriaTriggers.PLAYER_HURT_ENTITY
+                .createCriterion(new PlayerHurtEntityTrigger.TriggerInstance(Optional.empty(), Optional.of(damage.build()), EntityPredicate.wrap(entity)));
+        }
+
+        public boolean matches(ServerPlayer player, LootContext context, DamageSource damage, float dealt, float taken, boolean blocked) {
+            return this.damage.isPresent() && !this.damage.get().matches(player, damage, dealt, taken, blocked)
                 ? false
-                : !this.entity.isPresent() || this.entity.get().matches(p_60144_);
+                : !this.entity.isPresent() || this.entity.get().matches(context);
         }
 
         @Override
-        public void validate(CriterionValidator p_312140_) {
-            SimpleCriterionTrigger.SimpleInstance.super.validate(p_312140_);
-            p_312140_.validateEntity(this.entity, ".entity");
+        public void validate(CriterionValidator validator) {
+            SimpleCriterionTrigger.SimpleInstance.super.validate(validator);
+            validator.validateEntity(this.entity, ".entity");
         }
     }
 }

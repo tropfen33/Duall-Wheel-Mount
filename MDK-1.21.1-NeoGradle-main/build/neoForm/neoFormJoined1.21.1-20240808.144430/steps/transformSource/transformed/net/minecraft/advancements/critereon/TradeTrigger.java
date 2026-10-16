@@ -17,9 +17,9 @@ public class TradeTrigger extends SimpleCriterionTrigger<TradeTrigger.TriggerIns
         return TradeTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_70960_, AbstractVillager p_70961_, ItemStack p_70962_) {
-        LootContext lootcontext = EntityPredicate.createContext(p_70960_, p_70961_);
-        this.trigger(p_70960_, p_70970_ -> p_70970_.matches(lootcontext, p_70962_));
+    public void trigger(ServerPlayer player, AbstractVillager villager, ItemStack stack) {
+        LootContext lootcontext = EntityPredicate.createContext(player, villager);
+        this.trigger(player, p_70970_ -> p_70970_.matches(lootcontext, stack));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, Optional<ContextAwarePredicate> villager, Optional<ItemPredicate> item)
@@ -37,19 +37,19 @@ public class TradeTrigger extends SimpleCriterionTrigger<TradeTrigger.TriggerIns
             return CriteriaTriggers.TRADE.createCriterion(new TradeTrigger.TriggerInstance(Optional.empty(), Optional.empty(), Optional.empty()));
         }
 
-        public static Criterion<TradeTrigger.TriggerInstance> tradedWithVillager(EntityPredicate.Builder p_191437_) {
+        public static Criterion<TradeTrigger.TriggerInstance> tradedWithVillager(EntityPredicate.Builder villager) {
             return CriteriaTriggers.TRADE
-                .createCriterion(new TradeTrigger.TriggerInstance(Optional.of(EntityPredicate.wrap(p_191437_)), Optional.empty(), Optional.empty()));
+                .createCriterion(new TradeTrigger.TriggerInstance(Optional.of(EntityPredicate.wrap(villager)), Optional.empty(), Optional.empty()));
         }
 
-        public boolean matches(LootContext p_70985_, ItemStack p_70986_) {
-            return this.villager.isPresent() && !this.villager.get().matches(p_70985_) ? false : !this.item.isPresent() || this.item.get().test(p_70986_);
+        public boolean matches(LootContext context, ItemStack stack) {
+            return this.villager.isPresent() && !this.villager.get().matches(context) ? false : !this.item.isPresent() || this.item.get().test(stack);
         }
 
         @Override
-        public void validate(CriterionValidator p_312082_) {
-            SimpleCriterionTrigger.SimpleInstance.super.validate(p_312082_);
-            p_312082_.validateEntity(this.villager, ".villager");
+        public void validate(CriterionValidator validator) {
+            SimpleCriterionTrigger.SimpleInstance.super.validate(validator);
+            validator.validateEntity(this.villager, ".villager");
         }
     }
 }

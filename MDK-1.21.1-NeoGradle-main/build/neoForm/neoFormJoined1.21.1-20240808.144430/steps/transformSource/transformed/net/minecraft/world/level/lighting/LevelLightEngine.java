@@ -17,20 +17,20 @@ public class LevelLightEngine implements LightEventListener {
     @Nullable
     private final LightEngine<?, ?> skyEngine;
 
-    public LevelLightEngine(LightChunkGetter p_75805_, boolean p_75806_, boolean p_75807_) {
-        this.levelHeightAccessor = p_75805_.getLevel();
-        this.blockEngine = p_75806_ ? new BlockLightEngine(p_75805_) : null;
-        this.skyEngine = p_75807_ ? new SkyLightEngine(p_75805_) : null;
+    public LevelLightEngine(LightChunkGetter lightChunkGetter, boolean blockLight, boolean skyLight) {
+        this.levelHeightAccessor = lightChunkGetter.getLevel();
+        this.blockEngine = blockLight ? new BlockLightEngine(lightChunkGetter) : null;
+        this.skyEngine = skyLight ? new SkyLightEngine(lightChunkGetter) : null;
     }
 
     @Override
-    public void checkBlock(BlockPos p_75823_) {
+    public void checkBlock(BlockPos pos) {
         if (this.blockEngine != null) {
-            this.blockEngine.checkBlock(p_75823_);
+            this.blockEngine.checkBlock(pos);
         }
 
         if (this.skyEngine != null) {
-            this.skyEngine.checkBlock(p_75823_);
+            this.skyEngine.checkBlock(pos);
         }
     }
 
@@ -54,98 +54,98 @@ public class LevelLightEngine implements LightEventListener {
     }
 
     @Override
-    public void updateSectionStatus(SectionPos p_75827_, boolean p_75828_) {
+    public void updateSectionStatus(SectionPos pos, boolean isEmpty) {
         if (this.blockEngine != null) {
-            this.blockEngine.updateSectionStatus(p_75827_, p_75828_);
+            this.blockEngine.updateSectionStatus(pos, isEmpty);
         }
 
         if (this.skyEngine != null) {
-            this.skyEngine.updateSectionStatus(p_75827_, p_75828_);
+            this.skyEngine.updateSectionStatus(pos, isEmpty);
         }
     }
 
     @Override
-    public void setLightEnabled(ChunkPos p_285439_, boolean p_285012_) {
+    public void setLightEnabled(ChunkPos chunkPos, boolean lightEnabled) {
         if (this.blockEngine != null) {
-            this.blockEngine.setLightEnabled(p_285439_, p_285012_);
+            this.blockEngine.setLightEnabled(chunkPos, lightEnabled);
         }
 
         if (this.skyEngine != null) {
-            this.skyEngine.setLightEnabled(p_285439_, p_285012_);
+            this.skyEngine.setLightEnabled(chunkPos, lightEnabled);
         }
     }
 
     @Override
-    public void propagateLightSources(ChunkPos p_284998_) {
+    public void propagateLightSources(ChunkPos chunkPos) {
         if (this.blockEngine != null) {
-            this.blockEngine.propagateLightSources(p_284998_);
+            this.blockEngine.propagateLightSources(chunkPos);
         }
 
         if (this.skyEngine != null) {
-            this.skyEngine.propagateLightSources(p_284998_);
+            this.skyEngine.propagateLightSources(chunkPos);
         }
     }
 
-    public LayerLightEventListener getLayerListener(LightLayer p_75815_) {
-        if (p_75815_ == LightLayer.BLOCK) {
+    public LayerLightEventListener getLayerListener(LightLayer type) {
+        if (type == LightLayer.BLOCK) {
             return (LayerLightEventListener)(this.blockEngine == null ? LayerLightEventListener.DummyLightLayerEventListener.INSTANCE : this.blockEngine);
         } else {
             return (LayerLightEventListener)(this.skyEngine == null ? LayerLightEventListener.DummyLightLayerEventListener.INSTANCE : this.skyEngine);
         }
     }
 
-    public String getDebugData(LightLayer p_75817_, SectionPos p_75818_) {
-        if (p_75817_ == LightLayer.BLOCK) {
+    public String getDebugData(LightLayer lightLayer, SectionPos sectionPos) {
+        if (lightLayer == LightLayer.BLOCK) {
             if (this.blockEngine != null) {
-                return this.blockEngine.getDebugData(p_75818_.asLong());
+                return this.blockEngine.getDebugData(sectionPos.asLong());
             }
         } else if (this.skyEngine != null) {
-            return this.skyEngine.getDebugData(p_75818_.asLong());
+            return this.skyEngine.getDebugData(sectionPos.asLong());
         }
 
         return "n/a";
     }
 
-    public LayerLightSectionStorage.SectionType getDebugSectionType(LightLayer p_285008_, SectionPos p_285336_) {
-        if (p_285008_ == LightLayer.BLOCK) {
+    public LayerLightSectionStorage.SectionType getDebugSectionType(LightLayer lightLayer, SectionPos sectionPos) {
+        if (lightLayer == LightLayer.BLOCK) {
             if (this.blockEngine != null) {
-                return this.blockEngine.getDebugSectionType(p_285336_.asLong());
+                return this.blockEngine.getDebugSectionType(sectionPos.asLong());
             }
         } else if (this.skyEngine != null) {
-            return this.skyEngine.getDebugSectionType(p_285336_.asLong());
+            return this.skyEngine.getDebugSectionType(sectionPos.asLong());
         }
 
         return LayerLightSectionStorage.SectionType.EMPTY;
     }
 
-    public void queueSectionData(LightLayer p_285328_, SectionPos p_284962_, @Nullable DataLayer p_285035_) {
-        if (p_285328_ == LightLayer.BLOCK) {
+    public void queueSectionData(LightLayer lightLayer, SectionPos sectionPos, @Nullable DataLayer dataLayer) {
+        if (lightLayer == LightLayer.BLOCK) {
             if (this.blockEngine != null) {
-                this.blockEngine.queueSectionData(p_284962_.asLong(), p_285035_);
+                this.blockEngine.queueSectionData(sectionPos.asLong(), dataLayer);
             }
         } else if (this.skyEngine != null) {
-            this.skyEngine.queueSectionData(p_284962_.asLong(), p_285035_);
+            this.skyEngine.queueSectionData(sectionPos.asLong(), dataLayer);
         }
     }
 
-    public void retainData(ChunkPos p_75829_, boolean p_75830_) {
+    public void retainData(ChunkPos pos, boolean retain) {
         if (this.blockEngine != null) {
-            this.blockEngine.retainData(p_75829_, p_75830_);
+            this.blockEngine.retainData(pos, retain);
         }
 
         if (this.skyEngine != null) {
-            this.skyEngine.retainData(p_75829_, p_75830_);
+            this.skyEngine.retainData(pos, retain);
         }
     }
 
-    public int getRawBrightness(BlockPos p_75832_, int p_75833_) {
-        int i = this.skyEngine == null ? 0 : this.skyEngine.getLightValue(p_75832_) - p_75833_;
-        int j = this.blockEngine == null ? 0 : this.blockEngine.getLightValue(p_75832_);
+    public int getRawBrightness(BlockPos blockPos, int amount) {
+        int i = this.skyEngine == null ? 0 : this.skyEngine.getLightValue(blockPos) - amount;
+        int j = this.blockEngine == null ? 0 : this.blockEngine.getLightValue(blockPos);
         return Math.max(j, i);
     }
 
-    public boolean lightOnInSection(SectionPos p_285319_) {
-        long i = p_285319_.asLong();
+    public boolean lightOnInSection(SectionPos sectionPos) {
+        long i = sectionPos.asLong();
         return this.blockEngine == null
             || this.blockEngine.storage.lightOnInSection(i) && (this.skyEngine == null || this.skyEngine.storage.lightOnInSection(i));
     }

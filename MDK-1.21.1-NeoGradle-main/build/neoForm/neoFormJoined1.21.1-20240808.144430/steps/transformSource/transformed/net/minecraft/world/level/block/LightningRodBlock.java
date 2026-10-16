@@ -34,101 +34,129 @@ public class LightningRodBlock extends RodBlock implements SimpleWaterloggedBloc
         return CODEC;
     }
 
-    public LightningRodBlock(BlockBehaviour.Properties p_153709_) {
-        super(p_153709_);
+    public LightningRodBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(
             this.stateDefinition.any().setValue(FACING, Direction.UP).setValue(WATERLOGGED, Boolean.valueOf(false)).setValue(POWERED, Boolean.valueOf(false))
         );
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_153711_) {
-        FluidState fluidstate = p_153711_.getLevel().getFluidState(p_153711_.getClickedPos());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
         boolean flag = fluidstate.getType() == Fluids.WATER;
-        return this.defaultBlockState().setValue(FACING, p_153711_.getClickedFace()).setValue(WATERLOGGED, Boolean.valueOf(flag));
+        return this.defaultBlockState().setValue(FACING, context.getClickedFace()).setValue(WATERLOGGED, Boolean.valueOf(flag));
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
     protected BlockState updateShape(
-        BlockState p_153739_, Direction p_153740_, BlockState p_153741_, LevelAccessor p_153742_, BlockPos p_153743_, BlockPos p_153744_
+        BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos
     ) {
-        if (p_153739_.getValue(WATERLOGGED)) {
-            p_153742_.scheduleTick(p_153743_, Fluids.WATER, Fluids.WATER.getTickDelay(p_153742_));
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        return super.updateShape(p_153739_, p_153740_, p_153741_, p_153742_, p_153743_, p_153744_);
+        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_153759_) {
-        return p_153759_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_153759_);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+    }
+
+    /**
+     * Returns the signal this block emits in the given direction.
+     *
+     * <p>
+     * NOTE: directions in redstone signal related methods are backwards, so this method
+     * checks for the signal emitted in the <i>opposite</i> direction of the one given.
+     *
+     */
+    @Override
+    protected int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        return state.getValue(POWERED) ? 15 : 0;
+    }
+
+    /**
+     * Returns the direct signal this block emits in the given direction.
+     *
+     * <p>
+     * NOTE: directions in redstone signal related methods are backwards, so this method
+     * checks for the signal emitted in the <i>opposite</i> direction of the one given.
+     *
+     */
+    @Override
+    protected int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        return state.getValue(POWERED) && state.getValue(FACING) == direction ? 15 : 0;
+    }
+
+    public void onLightningStrike(BlockState state, Level level, BlockPos pos) {
+        level.setBlock(pos, state.setValue(POWERED, Boolean.valueOf(true)), 3);
+        this.updateNeighbours(state, level, pos);
+        level.scheduleTick(pos, this, 8);
+        level.levelEvent(3002, pos, state.getValue(FACING).getAxis().ordinal());
+    }
+
+    private void updateNeighbours(BlockState state, Level level, BlockPos pos) {
+        level.updateNeighborsAt(pos.relative(state.getValue(FACING).getOpposite()), this);
     }
 
     @Override
-    protected int getSignal(BlockState p_153723_, BlockGetter p_153724_, BlockPos p_153725_, Direction p_153726_) {
-        return p_153723_.getValue(POWERED) ? 15 : 0;
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        level.setBlock(pos, state.setValue(POWERED, Boolean.valueOf(false)), 3);
+        this.updateNeighbours(state, level, pos);
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    protected int getDirectSignal(BlockState p_153748_, BlockGetter p_153749_, BlockPos p_153750_, Direction p_153751_) {
-        return p_153748_.getValue(POWERED) && p_153748_.getValue(FACING) == p_153751_ ? 15 : 0;
-    }
-
-    public void onLightningStrike(BlockState p_153761_, Level p_153762_, BlockPos p_153763_) {
-        p_153762_.setBlock(p_153763_, p_153761_.setValue(POWERED, Boolean.valueOf(true)), 3);
-        this.updateNeighbours(p_153761_, p_153762_, p_153763_);
-        p_153762_.scheduleTick(p_153763_, this, 8);
-        p_153762_.levelEvent(3002, p_153763_, p_153761_.getValue(FACING).getAxis().ordinal());
-    }
-
-    private void updateNeighbours(BlockState p_153765_, Level p_153766_, BlockPos p_153767_) {
-        p_153766_.updateNeighborsAt(p_153767_.relative(p_153765_.getValue(FACING).getOpposite()), this);
-    }
-
-    @Override
-    protected void tick(BlockState p_221400_, ServerLevel p_221401_, BlockPos p_221402_, RandomSource p_221403_) {
-        p_221401_.setBlock(p_221402_, p_221400_.setValue(POWERED, Boolean.valueOf(false)), 3);
-        this.updateNeighbours(p_221400_, p_221401_, p_221402_);
-    }
-
-    @Override
-    public void animateTick(BlockState p_221405_, Level p_221406_, BlockPos p_221407_, RandomSource p_221408_) {
-        if (p_221406_.isThundering()
-            && (long)p_221406_.random.nextInt(200) <= p_221406_.getGameTime() % 200L
-            && p_221407_.getY() == p_221406_.getHeight(Heightmap.Types.WORLD_SURFACE, p_221407_.getX(), p_221407_.getZ()) - 1) {
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (level.isThundering()
+            && (long)level.random.nextInt(200) <= level.getGameTime() % 200L
+            && pos.getY() == level.getHeight(Heightmap.Types.WORLD_SURFACE, pos.getX(), pos.getZ()) - 1) {
             ParticleUtils.spawnParticlesAlongAxis(
-                p_221405_.getValue(FACING).getAxis(), p_221406_, p_221407_, 0.125, ParticleTypes.ELECTRIC_SPARK, UniformInt.of(1, 2)
+                state.getValue(FACING).getAxis(), level, pos, 0.125, ParticleTypes.ELECTRIC_SPARK, UniformInt.of(1, 2)
             );
         }
     }
 
     @Override
-    protected void onRemove(BlockState p_153728_, Level p_153729_, BlockPos p_153730_, BlockState p_153731_, boolean p_153732_) {
-        if (!p_153728_.is(p_153731_.getBlock())) {
-            if (p_153728_.getValue(POWERED)) {
-                this.updateNeighbours(p_153728_, p_153729_, p_153730_);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        if (!state.is(newState.getBlock())) {
+            if (state.getValue(POWERED)) {
+                this.updateNeighbours(state, level, pos);
             }
 
-            super.onRemove(p_153728_, p_153729_, p_153730_, p_153731_, p_153732_);
+            super.onRemove(state, level, pos, newState, movedByPiston);
         }
     }
 
     @Override
-    protected void onPlace(BlockState p_153753_, Level p_153754_, BlockPos p_153755_, BlockState p_153756_, boolean p_153757_) {
-        if (!p_153753_.is(p_153756_.getBlock())) {
-            if (p_153753_.getValue(POWERED) && !p_153754_.getBlockTicks().hasScheduledTick(p_153755_, this)) {
-                p_153754_.setBlock(p_153755_, p_153753_.setValue(POWERED, Boolean.valueOf(false)), 18);
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
+        if (!state.is(oldState.getBlock())) {
+            if (state.getValue(POWERED) && !level.getBlockTicks().hasScheduledTick(pos, this)) {
+                level.setBlock(pos, state.setValue(POWERED, Boolean.valueOf(false)), 18);
             }
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_153746_) {
-        p_153746_.add(FACING, POWERED, WATERLOGGED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, POWERED, WATERLOGGED);
     }
 
+    /**
+     * Returns whether this block is capable of emitting redstone signals.
+     *
+     */
     @Override
-    protected boolean isSignalSource(BlockState p_153769_) {
+    protected boolean isSignalSource(BlockState state) {
         return true;
     }
 }

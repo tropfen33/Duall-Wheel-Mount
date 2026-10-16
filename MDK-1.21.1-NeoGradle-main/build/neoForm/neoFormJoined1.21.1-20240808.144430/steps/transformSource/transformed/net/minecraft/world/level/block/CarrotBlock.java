@@ -28,8 +28,8 @@ public class CarrotBlock extends CropBlock {
         return CODEC;
     }
 
-    public CarrotBlock(BlockBehaviour.Properties p_51328_) {
-        super(p_51328_);
+    public CarrotBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
@@ -38,7 +38,7 @@ public class CarrotBlock extends CropBlock {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_51330_, BlockGetter p_51331_, BlockPos p_51332_, CollisionContext p_51333_) {
-        return SHAPE_BY_AGE[this.getAge(p_51330_)];
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SHAPE_BY_AGE[this.getAge(state)];
     }
 }

@@ -27,9 +27,9 @@ public class ResourceLocationArgument implements ArgumentType<ResourceLocation> 
         return new ResourceLocationArgument();
     }
 
-    public static AdvancementHolder getAdvancement(CommandContext<CommandSourceStack> p_106988_, String p_106989_) throws CommandSyntaxException {
-        ResourceLocation resourcelocation = getId(p_106988_, p_106989_);
-        AdvancementHolder advancementholder = p_106988_.getSource().getAdvancement(resourcelocation);
+    public static AdvancementHolder getAdvancement(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
+        ResourceLocation resourcelocation = getId(context, name);
+        AdvancementHolder advancementholder = context.getSource().getAdvancement(resourcelocation);
         if (advancementholder == null) {
             throw ERROR_UNKNOWN_ADVANCEMENT.create(resourcelocation);
         } else {
@@ -37,18 +37,18 @@ public class ResourceLocationArgument implements ArgumentType<ResourceLocation> 
         }
     }
 
-    public static RecipeHolder<?> getRecipe(CommandContext<CommandSourceStack> p_106995_, String p_106996_) throws CommandSyntaxException {
-        RecipeManager recipemanager = p_106995_.getSource().getRecipeManager();
-        ResourceLocation resourcelocation = getId(p_106995_, p_106996_);
+    public static RecipeHolder<?> getRecipe(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
+        RecipeManager recipemanager = context.getSource().getRecipeManager();
+        ResourceLocation resourcelocation = getId(context, name);
         return recipemanager.byKey(resourcelocation).orElseThrow(() -> ERROR_UNKNOWN_RECIPE.create(resourcelocation));
     }
 
-    public static ResourceLocation getId(CommandContext<CommandSourceStack> p_107012_, String p_107013_) {
-        return p_107012_.getArgument(p_107013_, ResourceLocation.class);
+    public static ResourceLocation getId(CommandContext<CommandSourceStack> context, String name) {
+        return context.getArgument(name, ResourceLocation.class);
     }
 
-    public ResourceLocation parse(StringReader p_106986_) throws CommandSyntaxException {
-        return ResourceLocation.read(p_106986_);
+    public ResourceLocation parse(StringReader reader) throws CommandSyntaxException {
+        return ResourceLocation.read(reader);
     }
 
     @Override

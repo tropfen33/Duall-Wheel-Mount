@@ -12,9 +12,9 @@ public class MoveTowardsRestrictionGoal extends Goal {
     private double wantedZ;
     private final double speedModifier;
 
-    public MoveTowardsRestrictionGoal(PathfinderMob p_25633_, double p_25634_) {
-        this.mob = p_25633_;
-        this.speedModifier = p_25634_;
+    public MoveTowardsRestrictionGoal(PathfinderMob mob, double speedModifier) {
+        this.mob = mob;
+        this.speedModifier = speedModifier;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
     }
 

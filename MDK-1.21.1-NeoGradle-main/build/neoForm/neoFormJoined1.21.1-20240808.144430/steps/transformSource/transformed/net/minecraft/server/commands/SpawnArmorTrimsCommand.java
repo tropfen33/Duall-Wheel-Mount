@@ -95,16 +95,16 @@ public class SpawnArmorTrimsCommand {
     private static final ToIntFunction<ResourceKey<TrimPattern>> TRIM_PATTERN_ORDER = Util.createIndexLookup(VANILLA_TRIM_PATTERNS);
     private static final ToIntFunction<ResourceKey<TrimMaterial>> TRIM_MATERIAL_ORDER = Util.createIndexLookup(VANILLA_TRIM_MATERIALS);
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_266758_) {
-        p_266758_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("spawn_armor_trims")
                 .requires(p_277270_ -> p_277270_.hasPermission(2))
                 .executes(p_267005_ -> spawnArmorTrims(p_267005_.getSource(), p_267005_.getSource().getPlayerOrException()))
         );
     }
 
-    private static int spawnArmorTrims(CommandSourceStack p_266993_, Player p_266983_) {
-        Level level = p_266983_.level();
+    private static int spawnArmorTrims(CommandSourceStack source, Player player) {
+        Level level = player.level();
         NonNullList<ArmorTrim> nonnulllist = NonNullList.create();
         Registry<TrimPattern> registry = level.registryAccess().registryOrThrow(Registries.TRIM_PATTERN);
         Registry<TrimMaterial> registry1 = level.registryAccess().registryOrThrow(Registries.TRIM_MATERIAL);
@@ -115,8 +115,8 @@ public class SpawnArmorTrimsCommand {
                         .sorted(Comparator.comparing(p_267239_ -> TRIM_MATERIAL_ORDER.applyAsInt(registry1.getResourceKey(p_267239_).orElse(null))))
                         .forEachOrdered(p_267162_ -> nonnulllist.add(new ArmorTrim(registry1.wrapAsHolder(p_267162_), registry.wrapAsHolder(p_266759_))))
             );
-        BlockPos blockpos = p_266983_.blockPosition().relative(p_266983_.getDirection(), 5);
-        Registry<ArmorMaterial> registry2 = p_266993_.registryAccess().registryOrThrow(Registries.ARMOR_MATERIAL);
+        BlockPos blockpos = player.blockPosition().relative(player.getDirection(), 5);
+        Registry<ArmorMaterial> registry2 = source.registryAccess().registryOrThrow(Registries.ARMOR_MATERIAL);
         int i = registry2.size() - 1;
         double d0 = 3.0;
         int j = 0;
@@ -166,7 +166,7 @@ public class SpawnArmorTrimsCommand {
             j++;
         }
 
-        p_266993_.sendSuccess(() -> Component.literal("Armorstands with trimmed armor spawned around you"), true);
+        source.sendSuccess(() -> Component.literal("Armorstands with trimmed armor spawned around you"), true);
         return 1;
     }
 }

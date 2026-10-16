@@ -18,9 +18,9 @@ public class DolphinModel<T extends Entity> extends HierarchicalModel<T> {
     private final ModelPart tail;
     private final ModelPart tailFin;
 
-    public DolphinModel(ModelPart p_170530_) {
-        this.root = p_170530_;
-        this.body = p_170530_.getChild("body");
+    public DolphinModel(ModelPart root) {
+        this.root = root;
+        this.body = root.getChild("body");
         this.tail = this.body.getChild("tail");
         this.tailFin = this.tail.getChild("tail_fin");
     }
@@ -68,14 +68,17 @@ public class DolphinModel<T extends Entity> extends HierarchicalModel<T> {
         return this.root;
     }
 
+    /**
+     * Sets this entity's model rotation angles
+     */
     @Override
-    public void setupAnim(T p_102475_, float p_102476_, float p_102477_, float p_102478_, float p_102479_, float p_102480_) {
-        this.body.xRot = p_102480_ * (float) (Math.PI / 180.0);
-        this.body.yRot = p_102479_ * (float) (Math.PI / 180.0);
-        if (p_102475_.getDeltaMovement().horizontalDistanceSqr() > 1.0E-7) {
-            this.body.xRot = this.body.xRot + (-0.05F - 0.05F * Mth.cos(p_102478_ * 0.3F));
-            this.tail.xRot = -0.1F * Mth.cos(p_102478_ * 0.3F);
-            this.tailFin.xRot = -0.2F * Mth.cos(p_102478_ * 0.3F);
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.body.xRot = headPitch * (float) (Math.PI / 180.0);
+        this.body.yRot = netHeadYaw * (float) (Math.PI / 180.0);
+        if (entity.getDeltaMovement().horizontalDistanceSqr() > 1.0E-7) {
+            this.body.xRot = this.body.xRot + (-0.05F - 0.05F * Mth.cos(ageInTicks * 0.3F));
+            this.tail.xRot = -0.1F * Mth.cos(ageInTicks * 0.3F);
+            this.tailFin.xRot = -0.2F * Mth.cos(ageInTicks * 0.3F);
         }
     }
 }

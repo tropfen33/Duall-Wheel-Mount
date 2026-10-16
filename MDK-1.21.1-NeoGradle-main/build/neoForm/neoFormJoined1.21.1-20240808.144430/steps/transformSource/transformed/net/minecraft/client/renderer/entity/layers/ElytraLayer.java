@@ -27,46 +27,46 @@ public class ElytraLayer<T extends LivingEntity, M extends EntityModel<T>> exten
     private static final ResourceLocation WINGS_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/elytra.png");
     private final ElytraModel<T> elytraModel;
 
-    public ElytraLayer(RenderLayerParent<T, M> p_174493_, EntityModelSet p_174494_) {
-        super(p_174493_);
-        this.elytraModel = new ElytraModel<>(p_174494_.bakeLayer(ModelLayers.ELYTRA));
+    public ElytraLayer(RenderLayerParent<T, M> renderer, EntityModelSet modelSet) {
+        super(renderer);
+        this.elytraModel = new ElytraModel<>(modelSet.bakeLayer(ModelLayers.ELYTRA));
     }
 
     public void render(
-        PoseStack p_116951_,
-        MultiBufferSource p_116952_,
-        int p_116953_,
-        T p_116954_,
-        float p_116955_,
-        float p_116956_,
-        float p_116957_,
-        float p_116958_,
-        float p_116959_,
-        float p_116960_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        T livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTicks,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
-        ItemStack itemstack = p_116954_.getItemBySlot(EquipmentSlot.CHEST);
-        if (shouldRender(itemstack, p_116954_)) {
+        ItemStack itemstack = livingEntity.getItemBySlot(EquipmentSlot.CHEST);
+        if (shouldRender(itemstack, livingEntity)) {
             ResourceLocation resourcelocation;
-            if (p_116954_ instanceof AbstractClientPlayer abstractclientplayer) {
+            if (livingEntity instanceof AbstractClientPlayer abstractclientplayer) {
                 PlayerSkin playerskin = abstractclientplayer.getSkin();
                 if (playerskin.elytraTexture() != null) {
                     resourcelocation = playerskin.elytraTexture();
                 } else if (playerskin.capeTexture() != null && abstractclientplayer.isModelPartShown(PlayerModelPart.CAPE)) {
                     resourcelocation = playerskin.capeTexture();
                 } else {
-                    resourcelocation = getElytraTexture(itemstack, p_116954_);
+                    resourcelocation = getElytraTexture(itemstack, livingEntity);
                 }
             } else {
-                resourcelocation = getElytraTexture(itemstack, p_116954_);
+                resourcelocation = getElytraTexture(itemstack, livingEntity);
             }
 
-            p_116951_.pushPose();
-            p_116951_.translate(0.0F, 0.0F, 0.125F);
+            poseStack.pushPose();
+            poseStack.translate(0.0F, 0.0F, 0.125F);
             this.getParentModel().copyPropertiesTo(this.elytraModel);
-            this.elytraModel.setupAnim(p_116954_, p_116955_, p_116956_, p_116958_, p_116959_, p_116960_);
-            VertexConsumer vertexconsumer = ItemRenderer.getArmorFoilBuffer(p_116952_, RenderType.armorCutoutNoCull(resourcelocation), itemstack.hasFoil());
-            this.elytraModel.renderToBuffer(p_116951_, vertexconsumer, p_116953_, OverlayTexture.NO_OVERLAY);
-            p_116951_.popPose();
+            this.elytraModel.setupAnim(livingEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+            VertexConsumer vertexconsumer = ItemRenderer.getArmorFoilBuffer(buffer, RenderType.armorCutoutNoCull(resourcelocation), itemstack.hasFoil());
+            this.elytraModel.renderToBuffer(poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY);
+            poseStack.popPose();
         }
     }
 

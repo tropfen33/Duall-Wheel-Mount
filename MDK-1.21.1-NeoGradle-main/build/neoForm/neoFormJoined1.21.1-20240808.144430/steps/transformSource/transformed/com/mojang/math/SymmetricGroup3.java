@@ -4,6 +4,9 @@ import java.util.Arrays;
 import net.minecraft.Util;
 import org.joml.Matrix3f;
 
+/**
+ * The symmetric group S3, also known as all the permutation orders of three elements.
+ */
 public enum SymmetricGroup3 {
     P123(0, 1, 2),
     P213(1, 0, 2),
@@ -30,20 +33,20 @@ public enum SymmetricGroup3 {
         }
     });
 
-    private SymmetricGroup3(int p_109176_, int p_109177_, int p_109178_) {
-        this.permutation = new int[]{p_109176_, p_109177_, p_109178_};
+    private SymmetricGroup3(int first, int second, int third) {
+        this.permutation = new int[]{first, second, third};
         this.transformation = new Matrix3f();
         this.transformation.set(this.permutation(0), 0, 1.0F);
         this.transformation.set(this.permutation(1), 1, 1.0F);
         this.transformation.set(this.permutation(2), 2, 1.0F);
     }
 
-    public SymmetricGroup3 compose(SymmetricGroup3 p_109183_) {
-        return cayleyTable[this.ordinal()][p_109183_.ordinal()];
+    public SymmetricGroup3 compose(SymmetricGroup3 other) {
+        return cayleyTable[this.ordinal()][other.ordinal()];
     }
 
-    public int permutation(int p_109181_) {
-        return this.permutation[p_109181_];
+    public int permutation(int element) {
+        return this.permutation[element];
     }
 
     public Matrix3f transformation() {

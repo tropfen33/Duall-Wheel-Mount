@@ -50,8 +50,8 @@ public class TagParser {
     public static final Codec<CompoundTag> LENIENT_CODEC = Codec.withAlternative(AS_CODEC, CompoundTag.CODEC);
     private final StringReader reader;
 
-    public static CompoundTag parseTag(String p_129360_) throws CommandSyntaxException {
-        return new TagParser(new StringReader(p_129360_)).readSingleStruct();
+    public static CompoundTag parseTag(String text) throws CommandSyntaxException {
+        return new TagParser(new StringReader(text)).readSingleStruct();
     }
 
     @VisibleForTesting
@@ -65,8 +65,8 @@ public class TagParser {
         }
     }
 
-    public TagParser(StringReader p_129350_) {
-        this.reader = p_129350_;
+    public TagParser(StringReader reader) {
+        this.reader = reader;
     }
 
     protected String readKey() throws CommandSyntaxException {
@@ -94,47 +94,47 @@ public class TagParser {
         }
     }
 
-    private Tag type(String p_129369_) {
+    private Tag type(String value) {
         try {
-            if (FLOAT_PATTERN.matcher(p_129369_).matches()) {
-                return FloatTag.valueOf(Float.parseFloat(p_129369_.substring(0, p_129369_.length() - 1)));
+            if (FLOAT_PATTERN.matcher(value).matches()) {
+                return FloatTag.valueOf(Float.parseFloat(value.substring(0, value.length() - 1)));
             }
 
-            if (BYTE_PATTERN.matcher(p_129369_).matches()) {
-                return ByteTag.valueOf(Byte.parseByte(p_129369_.substring(0, p_129369_.length() - 1)));
+            if (BYTE_PATTERN.matcher(value).matches()) {
+                return ByteTag.valueOf(Byte.parseByte(value.substring(0, value.length() - 1)));
             }
 
-            if (LONG_PATTERN.matcher(p_129369_).matches()) {
-                return LongTag.valueOf(Long.parseLong(p_129369_.substring(0, p_129369_.length() - 1)));
+            if (LONG_PATTERN.matcher(value).matches()) {
+                return LongTag.valueOf(Long.parseLong(value.substring(0, value.length() - 1)));
             }
 
-            if (SHORT_PATTERN.matcher(p_129369_).matches()) {
-                return ShortTag.valueOf(Short.parseShort(p_129369_.substring(0, p_129369_.length() - 1)));
+            if (SHORT_PATTERN.matcher(value).matches()) {
+                return ShortTag.valueOf(Short.parseShort(value.substring(0, value.length() - 1)));
             }
 
-            if (INT_PATTERN.matcher(p_129369_).matches()) {
-                return IntTag.valueOf(Integer.parseInt(p_129369_));
+            if (INT_PATTERN.matcher(value).matches()) {
+                return IntTag.valueOf(Integer.parseInt(value));
             }
 
-            if (DOUBLE_PATTERN.matcher(p_129369_).matches()) {
-                return DoubleTag.valueOf(Double.parseDouble(p_129369_.substring(0, p_129369_.length() - 1)));
+            if (DOUBLE_PATTERN.matcher(value).matches()) {
+                return DoubleTag.valueOf(Double.parseDouble(value.substring(0, value.length() - 1)));
             }
 
-            if (DOUBLE_PATTERN_NOSUFFIX.matcher(p_129369_).matches()) {
-                return DoubleTag.valueOf(Double.parseDouble(p_129369_));
+            if (DOUBLE_PATTERN_NOSUFFIX.matcher(value).matches()) {
+                return DoubleTag.valueOf(Double.parseDouble(value));
             }
 
-            if ("true".equalsIgnoreCase(p_129369_)) {
+            if ("true".equalsIgnoreCase(value)) {
                 return ByteTag.ONE;
             }
 
-            if ("false".equalsIgnoreCase(p_129369_)) {
+            if ("false".equalsIgnoreCase(value)) {
                 return ByteTag.ZERO;
             }
         } catch (NumberFormatException numberformatexception) {
         }
 
-        return StringTag.valueOf(p_129369_);
+        return StringTag.valueOf(value);
     }
 
     public Tag readValue() throws CommandSyntaxException {
@@ -240,21 +240,21 @@ public class TagParser {
         }
     }
 
-    private <T extends Number> List<T> readArray(TagType<?> p_129362_, TagType<?> p_129363_) throws CommandSyntaxException {
+    private <T extends Number> List<T> readArray(TagType<?> arrayType, TagType<?> elementType) throws CommandSyntaxException {
         List<T> list = Lists.newArrayList();
 
         while (this.reader.peek() != ']') {
             int i = this.reader.getCursor();
             Tag tag = this.readValue();
             TagType<?> tagtype = tag.getType();
-            if (tagtype != p_129363_) {
+            if (tagtype != elementType) {
                 this.reader.setCursor(i);
-                throw ERROR_INSERT_MIXED_ARRAY.createWithContext(this.reader, tagtype.getPrettyName(), p_129362_.getPrettyName());
+                throw ERROR_INSERT_MIXED_ARRAY.createWithContext(this.reader, tagtype.getPrettyName(), arrayType.getPrettyName());
             }
 
-            if (p_129363_ == ByteTag.TYPE) {
+            if (elementType == ByteTag.TYPE) {
                 list.add((T)(Byte)((NumericTag)tag).getAsByte());
-            } else if (p_129363_ == LongTag.TYPE) {
+            } else if (elementType == LongTag.TYPE) {
                 list.add((T)(Long)((NumericTag)tag).getAsLong());
             } else {
                 list.add((T)(Integer)((NumericTag)tag).getAsInt());
@@ -284,8 +284,8 @@ public class TagParser {
         }
     }
 
-    private void expect(char p_129353_) throws CommandSyntaxException {
+    private void expect(char expected) throws CommandSyntaxException {
         this.reader.skipWhitespace();
-        this.reader.expect(p_129353_);
+        this.reader.expect(expected);
     }
 }

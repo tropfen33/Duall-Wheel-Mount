@@ -23,29 +23,29 @@ public record BlockBox(BlockPos min, BlockPos max) implements Iterable<BlockPos>
         this.max = BlockPos.max(min, max);
     }
 
-    public static BlockBox of(BlockPos p_334061_) {
-        return new BlockBox(p_334061_, p_334061_);
+    public static BlockBox of(BlockPos pos) {
+        return new BlockBox(pos, pos);
     }
 
-    public static BlockBox of(BlockPos p_333833_, BlockPos p_333709_) {
-        return new BlockBox(p_333833_, p_333709_);
+    public static BlockBox of(BlockPos pos1, BlockPos pos2) {
+        return new BlockBox(pos1, pos2);
     }
 
-    public BlockBox include(BlockPos p_333934_) {
-        return new BlockBox(BlockPos.min(this.min, p_333934_), BlockPos.max(this.max, p_333934_));
+    public BlockBox include(BlockPos pos) {
+        return new BlockBox(BlockPos.min(this.min, pos), BlockPos.max(this.max, pos));
     }
 
     public boolean isBlock() {
         return this.min.equals(this.max);
     }
 
-    public boolean contains(BlockPos p_333773_) {
-        return p_333773_.getX() >= this.min.getX()
-            && p_333773_.getY() >= this.min.getY()
-            && p_333773_.getZ() >= this.min.getZ()
-            && p_333773_.getX() <= this.max.getX()
-            && p_333773_.getY() <= this.max.getY()
-            && p_333773_.getZ() <= this.max.getZ();
+    public boolean contains(BlockPos pos) {
+        return pos.getX() >= this.min.getX()
+            && pos.getY() >= this.min.getY()
+            && pos.getZ() >= this.min.getZ()
+            && pos.getX() <= this.max.getX()
+            && pos.getY() <= this.max.getY()
+            && pos.getZ() <= this.max.getZ();
     }
 
     public AABB aabb() {
@@ -69,21 +69,21 @@ public record BlockBox(BlockPos min, BlockPos max) implements Iterable<BlockPos>
         return this.max.getZ() - this.min.getZ() + 1;
     }
 
-    public BlockBox extend(Direction p_333798_, int p_333978_) {
-        if (p_333978_ == 0) {
+    public BlockBox extend(Direction direction, int amount) {
+        if (amount == 0) {
             return this;
         } else {
-            return p_333798_.getAxisDirection() == Direction.AxisDirection.POSITIVE
-                ? of(this.min, BlockPos.max(this.min, this.max.relative(p_333798_, p_333978_)))
-                : of(BlockPos.min(this.min.relative(p_333798_, p_333978_), this.max), this.max);
+            return direction.getAxisDirection() == Direction.AxisDirection.POSITIVE
+                ? of(this.min, BlockPos.max(this.min, this.max.relative(direction, amount)))
+                : of(BlockPos.min(this.min.relative(direction, amount), this.max), this.max);
         }
     }
 
-    public BlockBox move(Direction p_333771_, int p_333826_) {
-        return p_333826_ == 0 ? this : new BlockBox(this.min.relative(p_333771_, p_333826_), this.max.relative(p_333771_, p_333826_));
+    public BlockBox move(Direction direction, int amount) {
+        return amount == 0 ? this : new BlockBox(this.min.relative(direction, amount), this.max.relative(direction, amount));
     }
 
-    public BlockBox offset(Vec3i p_333730_) {
-        return new BlockBox(this.min.offset(p_333730_), this.max.offset(p_333730_));
+    public BlockBox offset(Vec3i vector) {
+        return new BlockBox(this.min.offset(vector), this.max.offset(vector));
     }
 }

@@ -16,37 +16,37 @@ public class DrownedOuterLayer<T extends Drowned> extends RenderLayer<T, Drowned
     private static final ResourceLocation DROWNED_OUTER_LAYER_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/zombie/drowned_outer_layer.png");
     private final DrownedModel<T> model;
 
-    public DrownedOuterLayer(RenderLayerParent<T, DrownedModel<T>> p_174490_, EntityModelSet p_174491_) {
-        super(p_174490_);
-        this.model = new DrownedModel<>(p_174491_.bakeLayer(ModelLayers.DROWNED_OUTER_LAYER));
+    public DrownedOuterLayer(RenderLayerParent<T, DrownedModel<T>> renderer, EntityModelSet modelSet) {
+        super(renderer);
+        this.model = new DrownedModel<>(modelSet.bakeLayer(ModelLayers.DROWNED_OUTER_LAYER));
     }
 
     public void render(
-        PoseStack p_116924_,
-        MultiBufferSource p_116925_,
-        int p_116926_,
-        T p_116927_,
-        float p_116928_,
-        float p_116929_,
-        float p_116930_,
-        float p_116931_,
-        float p_116932_,
-        float p_116933_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        T livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTicks,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
         coloredCutoutModelCopyLayerRender(
             this.getParentModel(),
             this.model,
             DROWNED_OUTER_LAYER_LOCATION,
-            p_116924_,
-            p_116925_,
-            p_116926_,
-            p_116927_,
-            p_116928_,
-            p_116929_,
-            p_116931_,
-            p_116932_,
-            p_116933_,
-            p_116930_,
+            poseStack,
+            buffer,
+            packedLight,
+            livingEntity,
+            limbSwing,
+            limbSwingAmount,
+            ageInTicks,
+            netHeadYaw,
+            headPitch,
+            partialTicks,
             -1
         );
     }

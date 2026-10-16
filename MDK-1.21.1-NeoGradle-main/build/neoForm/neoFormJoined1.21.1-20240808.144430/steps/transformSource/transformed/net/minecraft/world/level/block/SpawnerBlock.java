@@ -26,26 +26,29 @@ public class SpawnerBlock extends BaseEntityBlock {
         return CODEC;
     }
 
-    public SpawnerBlock(BlockBehaviour.Properties p_56781_) {
-        super(p_56781_);
+    public SpawnerBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_154687_, BlockState p_154688_) {
-        return new SpawnerBlockEntity(p_154687_, p_154688_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new SpawnerBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_154683_, BlockState p_154684_, BlockEntityType<T> p_154685_) {
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
         return createTickerHelper(
-            p_154685_, BlockEntityType.MOB_SPAWNER, p_154683_.isClientSide ? SpawnerBlockEntity::clientTick : SpawnerBlockEntity::serverTick
+            blockEntityType, BlockEntityType.MOB_SPAWNER, level.isClientSide ? SpawnerBlockEntity::clientTick : SpawnerBlockEntity::serverTick
         );
     }
 
+    /**
+     * Perform side-effects from block dropping, such as creating silverfish
+     */
     @Override
-    protected void spawnAfterBreak(BlockState p_222477_, ServerLevel p_222478_, BlockPos p_222479_, ItemStack p_222480_, boolean p_222481_) {
-        super.spawnAfterBreak(p_222477_, p_222478_, p_222479_, p_222480_, p_222481_);
+    protected void spawnAfterBreak(BlockState state, ServerLevel level, BlockPos pos, ItemStack stack, boolean dropExperience) {
+        super.spawnAfterBreak(state, level, pos, stack, dropExperience);
     }
 
     // Neo: Patch-in override for getExpDrop. Also fixes MC-273642 (Spawner XP drops bypass enchantments)
@@ -57,14 +60,17 @@ public class SpawnerBlock extends BaseEntityBlock {
         return 15 + level.getRandom().nextInt(15) + level.getRandom().nextInt(15);
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_56794_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
     @Override
-    public void appendHoverText(ItemStack p_255714_, Item.TooltipContext p_339639_, List<Component> p_255708_, TooltipFlag p_255667_) {
-        super.appendHoverText(p_255714_, p_339639_, p_255708_, p_255667_);
-        Spawner.appendHoverText(p_255714_, p_255708_, "SpawnData");
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        Spawner.appendHoverText(stack, tooltipComponents, "SpawnData");
     }
 }

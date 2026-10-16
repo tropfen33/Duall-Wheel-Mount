@@ -55,14 +55,14 @@ public class HopperBlock extends BaseEntityBlock {
         return CODEC;
     }
 
-    public HopperBlock(BlockBehaviour.Properties p_54039_) {
-        super(p_54039_);
+    public HopperBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.DOWN).setValue(ENABLED, Boolean.valueOf(true)));
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_54105_, BlockGetter p_54106_, BlockPos p_54107_, CollisionContext p_54108_) {
-        switch ((Direction)p_54105_.getValue(FACING)) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        switch ((Direction)state.getValue(FACING)) {
             case DOWN:
                 return DOWN_SHAPE;
             case NORTH:
@@ -79,8 +79,8 @@ public class HopperBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected VoxelShape getInteractionShape(BlockState p_54099_, BlockGetter p_54100_, BlockPos p_54101_) {
-        switch ((Direction)p_54099_.getValue(FACING)) {
+    protected VoxelShape getInteractionShape(BlockState state, BlockGetter level, BlockPos pos) {
+        switch ((Direction)state.getValue(FACING)) {
             case DOWN:
                 return DOWN_INTERACTION_SHAPE;
             case NORTH:
@@ -97,40 +97,40 @@ public class HopperBlock extends BaseEntityBlock {
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_54041_) {
-        Direction direction = p_54041_.getClickedFace().getOpposite();
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Direction direction = context.getClickedFace().getOpposite();
         return this.defaultBlockState()
             .setValue(FACING, direction.getAxis() == Direction.Axis.Y ? Direction.DOWN : direction)
             .setValue(ENABLED, Boolean.valueOf(true));
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_153382_, BlockState p_153383_) {
-        return new HopperBlockEntity(p_153382_, p_153383_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new HopperBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_153378_, BlockState p_153379_, BlockEntityType<T> p_153380_) {
-        return p_153378_.isClientSide ? null : createTickerHelper(p_153380_, BlockEntityType.HOPPER, HopperBlockEntity::pushItemsTick);
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        return level.isClientSide ? null : createTickerHelper(blockEntityType, BlockEntityType.HOPPER, HopperBlockEntity::pushItemsTick);
     }
 
     @Override
-    protected void onPlace(BlockState p_54110_, Level p_54111_, BlockPos p_54112_, BlockState p_54113_, boolean p_54114_) {
-        if (!p_54113_.is(p_54110_.getBlock())) {
-            this.checkPoweredState(p_54111_, p_54112_, p_54110_);
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!oldState.is(state.getBlock())) {
+            this.checkPoweredState(level, pos, state);
         }
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_54071_, Level p_54072_, BlockPos p_54073_, Player p_54074_, BlockHitResult p_54076_) {
-        if (p_54072_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
-            BlockEntity blockentity = p_54072_.getBlockEntity(p_54073_);
+            BlockEntity blockentity = level.getBlockEntity(pos);
             if (blockentity instanceof HopperBlockEntity) {
-                p_54074_.openMenu((HopperBlockEntity)blockentity);
-                p_54074_.awardStat(Stats.INSPECT_HOPPER);
+                player.openMenu((HopperBlockEntity)blockentity);
+                player.awardStat(Stats.INSPECT_HOPPER);
             }
 
             return InteractionResult.CONSUME;
@@ -138,63 +138,76 @@ public class HopperBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected void neighborChanged(BlockState p_54078_, Level p_54079_, BlockPos p_54080_, Block p_54081_, BlockPos p_54082_, boolean p_54083_) {
-        this.checkPoweredState(p_54079_, p_54080_, p_54078_);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        this.checkPoweredState(level, pos, state);
     }
 
-    private void checkPoweredState(Level p_275499_, BlockPos p_275298_, BlockState p_275611_) {
-        boolean flag = !p_275499_.hasNeighborSignal(p_275298_);
-        if (flag != p_275611_.getValue(ENABLED)) {
-            p_275499_.setBlock(p_275298_, p_275611_.setValue(ENABLED, Boolean.valueOf(flag)), 2);
+    private void checkPoweredState(Level level, BlockPos pos, BlockState state) {
+        boolean flag = !level.hasNeighborSignal(pos);
+        if (flag != state.getValue(ENABLED)) {
+            level.setBlock(pos, state.setValue(ENABLED, Boolean.valueOf(flag)), 2);
         }
     }
 
     @Override
-    protected void onRemove(BlockState p_54085_, Level p_54086_, BlockPos p_54087_, BlockState p_54088_, boolean p_54089_) {
-        Containers.dropContentsOnDestroy(p_54085_, p_54088_, p_54086_, p_54087_);
-        super.onRemove(p_54085_, p_54086_, p_54087_, p_54088_, p_54089_);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        Containers.dropContentsOnDestroy(state, newState, level, pos);
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_54103_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
     @Override
-    protected boolean hasAnalogOutputSignal(BlockState p_54055_) {
+    protected boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
+    /**
+     * Returns the analog signal this block emits. This is the signal a comparator can read from it.
+     *
+     */
     @Override
-    protected int getAnalogOutputSignal(BlockState p_54062_, Level p_54063_, BlockPos p_54064_) {
-        return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(p_54063_.getBlockEntity(p_54064_));
+    protected int getAnalogOutputSignal(BlockState blockState, Level level, BlockPos pos) {
+        return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(level.getBlockEntity(pos));
+    }
+
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState rotate(BlockState p_54094_, Rotation p_54095_) {
-        return p_54094_.setValue(FACING, p_54095_.rotate(p_54094_.getValue(FACING)));
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, ENABLED);
     }
 
     @Override
-    protected BlockState mirror(BlockState p_54091_, Mirror p_54092_) {
-        return p_54091_.rotate(p_54092_.getRotation(p_54091_.getValue(FACING)));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_54097_) {
-        p_54097_.add(FACING, ENABLED);
-    }
-
-    @Override
-    protected void entityInside(BlockState p_54066_, Level p_54067_, BlockPos p_54068_, Entity p_54069_) {
-        BlockEntity blockentity = p_54067_.getBlockEntity(p_54068_);
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        BlockEntity blockentity = level.getBlockEntity(pos);
         if (blockentity instanceof HopperBlockEntity) {
-            HopperBlockEntity.entityInside(p_54067_, p_54068_, p_54066_, p_54069_, (HopperBlockEntity)blockentity);
+            HopperBlockEntity.entityInside(level, pos, state, entity, (HopperBlockEntity)blockentity);
         }
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_54057_, PathComputationType p_54060_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

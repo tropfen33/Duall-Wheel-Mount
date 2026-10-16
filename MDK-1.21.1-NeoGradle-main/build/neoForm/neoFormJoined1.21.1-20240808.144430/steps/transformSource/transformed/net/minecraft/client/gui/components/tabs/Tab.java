@@ -11,7 +11,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 public interface Tab {
     Component getTabTitle();
 
-    void visitChildren(Consumer<AbstractWidget> p_268213_);
+    void visitChildren(Consumer<AbstractWidget> consumer);
 
-    void doLayout(ScreenRectangle p_268081_);
+    void doLayout(ScreenRectangle rectangle);
 }

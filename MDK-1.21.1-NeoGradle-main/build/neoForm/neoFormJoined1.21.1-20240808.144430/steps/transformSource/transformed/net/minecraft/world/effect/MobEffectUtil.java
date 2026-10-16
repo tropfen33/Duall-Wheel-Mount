@@ -13,52 +13,52 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 public final class MobEffectUtil {
-    public static Component formatDuration(MobEffectInstance p_268116_, float p_268280_, float p_314720_) {
-        if (p_268116_.isInfiniteDuration()) {
+    public static Component formatDuration(MobEffectInstance effect, float durationFactor, float ticksPerSecond) {
+        if (effect.isInfiniteDuration()) {
             return Component.translatable("effect.duration.infinite");
         } else {
-            int i = Mth.floor((float)p_268116_.getDuration() * p_268280_);
-            return Component.literal(StringUtil.formatTickDuration(i, p_314720_));
+            int i = Mth.floor((float)effect.getDuration() * durationFactor);
+            return Component.literal(StringUtil.formatTickDuration(i, ticksPerSecond));
         }
     }
 
-    public static boolean hasDigSpeed(LivingEntity p_19585_) {
-        return p_19585_.hasEffect(MobEffects.DIG_SPEED) || p_19585_.hasEffect(MobEffects.CONDUIT_POWER);
+    public static boolean hasDigSpeed(LivingEntity entity) {
+        return entity.hasEffect(MobEffects.DIG_SPEED) || entity.hasEffect(MobEffects.CONDUIT_POWER);
     }
 
-    public static int getDigSpeedAmplification(LivingEntity p_19587_) {
+    public static int getDigSpeedAmplification(LivingEntity entity) {
         int i = 0;
         int j = 0;
-        if (p_19587_.hasEffect(MobEffects.DIG_SPEED)) {
-            i = p_19587_.getEffect(MobEffects.DIG_SPEED).getAmplifier();
+        if (entity.hasEffect(MobEffects.DIG_SPEED)) {
+            i = entity.getEffect(MobEffects.DIG_SPEED).getAmplifier();
         }
 
-        if (p_19587_.hasEffect(MobEffects.CONDUIT_POWER)) {
-            j = p_19587_.getEffect(MobEffects.CONDUIT_POWER).getAmplifier();
+        if (entity.hasEffect(MobEffects.CONDUIT_POWER)) {
+            j = entity.getEffect(MobEffects.CONDUIT_POWER).getAmplifier();
         }
 
         return Math.max(i, j);
     }
 
-    public static boolean hasWaterBreathing(LivingEntity p_19589_) {
-        return p_19589_.hasEffect(MobEffects.WATER_BREATHING) || p_19589_.hasEffect(MobEffects.CONDUIT_POWER);
+    public static boolean hasWaterBreathing(LivingEntity entity) {
+        return entity.hasEffect(MobEffects.WATER_BREATHING) || entity.hasEffect(MobEffects.CONDUIT_POWER);
     }
 
     public static List<ServerPlayer> addEffectToPlayersAround(
-        ServerLevel p_216947_, @Nullable Entity p_216948_, Vec3 p_216949_, double p_216950_, MobEffectInstance p_216951_, int p_216952_
+        ServerLevel level, @Nullable Entity source, Vec3 pos, double radius, MobEffectInstance effect, int duration
     ) {
-        Holder<MobEffect> holder = p_216951_.getEffect();
-        List<ServerPlayer> list = p_216947_.getPlayers(
+        Holder<MobEffect> holder = effect.getEffect();
+        List<ServerPlayer> list = level.getPlayers(
             p_267925_ -> p_267925_.gameMode.isSurvival()
-                    && (p_216948_ == null || !p_216948_.isAlliedTo(p_267925_))
-                    && p_216949_.closerThan(p_267925_.position(), p_216950_)
+                    && (source == null || !source.isAlliedTo(p_267925_))
+                    && pos.closerThan(p_267925_.position(), radius)
                     && (
                         !p_267925_.hasEffect(holder)
-                            || p_267925_.getEffect(holder).getAmplifier() < p_216951_.getAmplifier()
-                            || p_267925_.getEffect(holder).endsWithin(p_216952_ - 1)
+                            || p_267925_.getEffect(holder).getAmplifier() < effect.getAmplifier()
+                            || p_267925_.getEffect(holder).endsWithin(duration - 1)
                     )
         );
-        list.forEach(p_238232_ -> p_238232_.addEffect(new MobEffectInstance(p_216951_), p_216948_));
+        list.forEach(p_238232_ -> p_238232_.addEffect(new MobEffectInstance(effect), source));
         return list;
     }
 }

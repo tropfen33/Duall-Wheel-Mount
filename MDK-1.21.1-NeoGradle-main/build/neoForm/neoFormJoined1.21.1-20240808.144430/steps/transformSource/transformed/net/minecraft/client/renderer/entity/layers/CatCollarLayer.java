@@ -16,39 +16,39 @@ public class CatCollarLayer extends RenderLayer<Cat, CatModel<Cat>> {
     private static final ResourceLocation CAT_COLLAR_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/cat/cat_collar.png");
     private final CatModel<Cat> catModel;
 
-    public CatCollarLayer(RenderLayerParent<Cat, CatModel<Cat>> p_174468_, EntityModelSet p_174469_) {
-        super(p_174468_);
-        this.catModel = new CatModel<>(p_174469_.bakeLayer(ModelLayers.CAT_COLLAR));
+    public CatCollarLayer(RenderLayerParent<Cat, CatModel<Cat>> renderer, EntityModelSet modelSet) {
+        super(renderer);
+        this.catModel = new CatModel<>(modelSet.bakeLayer(ModelLayers.CAT_COLLAR));
     }
 
     public void render(
-        PoseStack p_116666_,
-        MultiBufferSource p_116667_,
-        int p_116668_,
-        Cat p_116669_,
-        float p_116670_,
-        float p_116671_,
-        float p_116672_,
-        float p_116673_,
-        float p_116674_,
-        float p_116675_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        Cat livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTicks,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
-        if (p_116669_.isTame()) {
-            int i = p_116669_.getCollarColor().getTextureDiffuseColor();
+        if (livingEntity.isTame()) {
+            int i = livingEntity.getCollarColor().getTextureDiffuseColor();
             coloredCutoutModelCopyLayerRender(
                 this.getParentModel(),
                 this.catModel,
                 CAT_COLLAR_LOCATION,
-                p_116666_,
-                p_116667_,
-                p_116668_,
-                p_116669_,
-                p_116670_,
-                p_116671_,
-                p_116673_,
-                p_116674_,
-                p_116675_,
-                p_116672_,
+                poseStack,
+                buffer,
+                packedLight,
+                livingEntity,
+                limbSwing,
+                limbSwingAmount,
+                ageInTicks,
+                netHeadYaw,
+                headPitch,
+                partialTicks,
                 i
             );
         }

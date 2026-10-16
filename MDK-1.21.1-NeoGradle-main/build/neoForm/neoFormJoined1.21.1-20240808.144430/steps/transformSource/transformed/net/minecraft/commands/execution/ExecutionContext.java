@@ -29,34 +29,34 @@ public class ExecutionContext<T> implements AutoCloseable {
     private final List<CommandQueueEntry<T>> newTopCommands = new ObjectArrayList<>();
     private int currentFrameDepth;
 
-    public ExecutionContext(int p_306012_, int p_306180_, ProfilerFiller p_306142_) {
-        this.commandLimit = p_306012_;
-        this.forkLimit = p_306180_;
-        this.profiler = p_306142_;
-        this.commandQuota = p_306012_;
+    public ExecutionContext(int commandLimit, int forkLimit, ProfilerFiller profiler) {
+        this.commandLimit = commandLimit;
+        this.forkLimit = forkLimit;
+        this.profiler = profiler;
+        this.commandQuota = commandLimit;
     }
 
-    private static <T extends ExecutionCommandSource<T>> Frame createTopFrame(ExecutionContext<T> p_309594_, CommandResultCallback p_309689_) {
-        if (p_309594_.currentFrameDepth == 0) {
-            return new Frame(0, p_309689_, p_309594_.commandQueue::clear);
+    private static <T extends ExecutionCommandSource<T>> Frame createTopFrame(ExecutionContext<T> executionContext, CommandResultCallback returnValueConsumer) {
+        if (executionContext.currentFrameDepth == 0) {
+            return new Frame(0, returnValueConsumer, executionContext.commandQueue::clear);
         } else {
-            int i = p_309594_.currentFrameDepth + 1;
-            return new Frame(i, p_309689_, p_309594_.frameControlForDepth(i));
+            int i = executionContext.currentFrameDepth + 1;
+            return new Frame(i, returnValueConsumer, executionContext.frameControlForDepth(i));
         }
     }
 
     public static <T extends ExecutionCommandSource<T>> void queueInitialFunctionCall(
-        ExecutionContext<T> p_309686_, InstantiatedFunction<T> p_306145_, T p_309607_, CommandResultCallback p_309681_
+        ExecutionContext<T> executionContext, InstantiatedFunction<T> function, T source, CommandResultCallback returnValueConsumer
     ) {
-        p_309686_.queueNext(
-            new CommandQueueEntry<>(createTopFrame(p_309686_, p_309681_), new CallFunction<>(p_306145_, p_309607_.callback(), false).bind(p_309607_))
+        executionContext.queueNext(
+            new CommandQueueEntry<>(createTopFrame(executionContext, returnValueConsumer), new CallFunction<>(function, source.callback(), false).bind(source))
         );
     }
 
     public static <T extends ExecutionCommandSource<T>> void queueInitialCommandExecution(
-        ExecutionContext<T> p_306236_, String p_305860_, ContextChain<T> p_305784_, T p_306195_, CommandResultCallback p_309622_
+        ExecutionContext<T> executionContext, String commandInput, ContextChain<T> command, T source, CommandResultCallback returnValueConsumer
     ) {
-        p_306236_.queueNext(new CommandQueueEntry<>(createTopFrame(p_306236_, p_309622_), new BuildContexts.TopLevel<>(p_305860_, p_305784_, p_306195_)));
+        executionContext.queueNext(new CommandQueueEntry<>(createTopFrame(executionContext, returnValueConsumer), new BuildContexts.TopLevel<>(commandInput, command, source)));
     }
 
     private void handleQueueOverflow() {
@@ -65,24 +65,24 @@ public class ExecutionContext<T> implements AutoCloseable {
         this.commandQueue.clear();
     }
 
-    public void queueNext(CommandQueueEntry<T> p_305869_) {
+    public void queueNext(CommandQueueEntry<T> entry) {
         if (this.newTopCommands.size() + this.commandQueue.size() > 10000000) {
             this.handleQueueOverflow();
         }
 
         if (!this.queueOverflow) {
-            this.newTopCommands.add(p_305869_);
+            this.newTopCommands.add(entry);
         }
     }
 
-    public void discardAtDepthOrHigher(int p_306290_) {
-        while (!this.commandQueue.isEmpty() && this.commandQueue.peek().frame().depth() >= p_306290_) {
+    public void discardAtDepthOrHigher(int depth) {
+        while (!this.commandQueue.isEmpty() && this.commandQueue.peek().frame().depth() >= depth) {
             this.commandQueue.removeFirst();
         }
     }
 
-    public Frame.FrameControl frameControlForDepth(int p_309645_) {
-        return () -> this.discardAtDepthOrHigher(p_309645_);
+    public Frame.FrameControl frameControlForDepth(int depth) {
+        return () -> this.discardAtDepthOrHigher(depth);
     }
 
     public void runCommandQueue() {
@@ -120,8 +120,8 @@ public class ExecutionContext<T> implements AutoCloseable {
         this.newTopCommands.clear();
     }
 
-    public void tracer(@Nullable TraceCallbacks p_305950_) {
-        this.tracer = p_305950_;
+    public void tracer(@Nullable TraceCallbacks tracer) {
+        this.tracer = tracer;
     }
 
     @Nullable

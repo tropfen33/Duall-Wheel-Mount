@@ -4,25 +4,25 @@ import java.io.DataInput;
 import java.io.IOException;
 
 public interface TagType<T extends Tag> {
-    T load(DataInput p_129379_, NbtAccounter p_129381_) throws IOException;
+    T load(DataInput input, NbtAccounter accounter) throws IOException;
 
-    StreamTagVisitor.ValueResult parse(DataInput p_197578_, StreamTagVisitor p_197579_, NbtAccounter p_302376_) throws IOException;
+    StreamTagVisitor.ValueResult parse(DataInput input, StreamTagVisitor visitor, NbtAccounter accounter) throws IOException;
 
-    default void parseRoot(DataInput p_197581_, StreamTagVisitor p_197582_, NbtAccounter p_302373_) throws IOException {
-        switch (p_197582_.visitRootEntry(this)) {
+    default void parseRoot(DataInput input, StreamTagVisitor visitor, NbtAccounter nbtAccounter) throws IOException {
+        switch (visitor.visitRootEntry(this)) {
             case CONTINUE:
-                this.parse(p_197581_, p_197582_, p_302373_);
+                this.parse(input, visitor, nbtAccounter);
             case HALT:
             default:
                 break;
             case BREAK:
-                this.skip(p_197581_, p_302373_);
+                this.skip(input, nbtAccounter);
         }
     }
 
-    void skip(DataInput p_197576_, int p_197577_, NbtAccounter p_302319_) throws IOException;
+    void skip(DataInput input, int entries, NbtAccounter accounter) throws IOException;
 
-    void skip(DataInput p_197575_, NbtAccounter p_302391_) throws IOException;
+    void skip(DataInput input, NbtAccounter accounter) throws IOException;
 
     default boolean isValue() {
         return false;
@@ -32,10 +32,10 @@ public interface TagType<T extends Tag> {
 
     String getPrettyName();
 
-    static TagType<EndTag> createInvalid(final int p_129378_) {
+    static TagType<EndTag> createInvalid(final int id) {
         return new TagType<EndTag>() {
             private IOException createException() {
-                return new IOException("Invalid tag id: " + p_129378_);
+                return new IOException("Invalid tag id: " + id);
             }
 
             public EndTag load(DataInput p_129387_, NbtAccounter p_129389_) throws IOException {
@@ -59,12 +59,12 @@ public interface TagType<T extends Tag> {
 
             @Override
             public String getName() {
-                return "INVALID[" + p_129378_ + "]";
+                return "INVALID[" + id + "]";
             }
 
             @Override
             public String getPrettyName() {
-                return "UNKNOWN_" + p_129378_;
+                return "UNKNOWN_" + id;
             }
         };
     }

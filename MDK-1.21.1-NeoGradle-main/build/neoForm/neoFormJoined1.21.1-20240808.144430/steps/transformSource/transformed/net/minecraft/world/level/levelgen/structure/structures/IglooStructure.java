@@ -14,21 +14,21 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilde
 public class IglooStructure extends Structure {
     public static final MapCodec<IglooStructure> CODEC = simpleCodec(IglooStructure::new);
 
-    public IglooStructure(Structure.StructureSettings p_227593_) {
-        super(p_227593_);
+    public IglooStructure(Structure.StructureSettings settings) {
+        super(settings);
     }
 
     @Override
-    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext p_227595_) {
-        return onTopOfChunkCenter(p_227595_, Heightmap.Types.WORLD_SURFACE_WG, p_227598_ -> this.generatePieces(p_227598_, p_227595_));
+    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext context) {
+        return onTopOfChunkCenter(context, Heightmap.Types.WORLD_SURFACE_WG, p_227598_ -> this.generatePieces(p_227598_, context));
     }
 
-    private void generatePieces(StructurePiecesBuilder p_227600_, Structure.GenerationContext p_227601_) {
-        ChunkPos chunkpos = p_227601_.chunkPos();
-        WorldgenRandom worldgenrandom = p_227601_.random();
+    private void generatePieces(StructurePiecesBuilder builder, Structure.GenerationContext context) {
+        ChunkPos chunkpos = context.chunkPos();
+        WorldgenRandom worldgenrandom = context.random();
         BlockPos blockpos = new BlockPos(chunkpos.getMinBlockX(), 90, chunkpos.getMinBlockZ());
         Rotation rotation = Rotation.getRandom(worldgenrandom);
-        IglooPieces.addPieces(p_227601_.structureTemplateManager(), blockpos, rotation, p_227600_, worldgenrandom);
+        IglooPieces.addPieces(context.structureTemplateManager(), blockpos, rotation, builder, worldgenrandom);
     }
 
     @Override

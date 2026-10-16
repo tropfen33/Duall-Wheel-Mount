@@ -24,40 +24,40 @@ public class HolderSetCodec<E> implements Codec<HolderSet<E>> {
     private final Codec<net.neoforged.neoforge.registries.holdersets.ICustomHolderSet<E>> forgeDispatchCodec;
     private final Codec<Either<net.neoforged.neoforge.registries.holdersets.ICustomHolderSet<E>, Either<TagKey<E>, List<Holder<E>>>>> combinedCodec;
 
-    private static <E> Codec<List<Holder<E>>> homogenousList(Codec<Holder<E>> p_206668_, boolean p_206669_) {
-        Codec<List<Holder<E>>> codec = p_206668_.listOf().validate(ExtraCodecs.ensureHomogenous(Holder::kind));
-        return p_206669_
+    private static <E> Codec<List<Holder<E>>> homogenousList(Codec<Holder<E>> holderCodec, boolean disallowInline) {
+        Codec<List<Holder<E>>> codec = holderCodec.listOf().validate(ExtraCodecs.ensureHomogenous(Holder::kind));
+        return disallowInline
             ? codec
-            : Codec.either(codec, p_206668_)
+            : Codec.either(codec, holderCodec)
                 .xmap(
                     p_206664_ -> p_206664_.map(p_206694_ -> p_206694_, List::of),
                     p_206684_ -> p_206684_.size() == 1 ? Either.right(p_206684_.get(0)) : Either.left((List<Holder<E>>)p_206684_)
                 );
     }
 
-    public static <E> Codec<HolderSet<E>> create(ResourceKey<? extends Registry<E>> p_206686_, Codec<Holder<E>> p_206687_, boolean p_206688_) {
-        return new HolderSetCodec<>(p_206686_, p_206687_, p_206688_);
+    public static <E> Codec<HolderSet<E>> create(ResourceKey<? extends Registry<E>> registryKey, Codec<Holder<E>> holderCodec, boolean disallowInline) {
+        return new HolderSetCodec<>(registryKey, holderCodec, disallowInline);
     }
 
-    private HolderSetCodec(ResourceKey<? extends Registry<E>> p_206660_, Codec<Holder<E>> p_206661_, boolean p_206662_) {
-        this.registryKey = p_206660_;
-        this.elementCodec = p_206661_;
-        this.homogenousListCodec = homogenousList(p_206661_, p_206662_);
-        this.registryAwareCodec = Codec.either(TagKey.hashedCodec(p_206660_), this.homogenousListCodec);
+    private HolderSetCodec(ResourceKey<? extends Registry<E>> registryKey, Codec<Holder<E>> elementCodec, boolean disallowInline) {
+        this.registryKey = registryKey;
+        this.elementCodec = elementCodec;
+        this.homogenousListCodec = homogenousList(elementCodec, disallowInline);
+        this.registryAwareCodec = Codec.either(TagKey.hashedCodec(registryKey), this.homogenousListCodec);
         // FORGE: make registry-specific dispatch codec and make forge-or-vanilla either codec
         this.forgeDispatchCodec = net.neoforged.neoforge.registries.NeoForgeRegistries.HOLDER_SET_TYPES.byNameCodec()
-             .dispatch(net.neoforged.neoforge.registries.holdersets.ICustomHolderSet::type, type -> type.makeCodec(p_206660_, p_206661_, p_206662_));
+             .dispatch(net.neoforged.neoforge.registries.holdersets.ICustomHolderSet::type, type -> type.makeCodec(registryKey, elementCodec, disallowInline));
         this.combinedCodec = Codec.either(this.forgeDispatchCodec, this.registryAwareCodec);
     }
 
     @Override
-    public <T> DataResult<Pair<HolderSet<E>, T>> decode(DynamicOps<T> p_206696_, T p_206697_) {
-        if (p_206696_ instanceof RegistryOps<T> registryops) {
+    public <T> DataResult<Pair<HolderSet<E>, T>> decode(DynamicOps<T> ops, T input) {
+        if (ops instanceof RegistryOps<T> registryops) {
             Optional<HolderGetter<E>> optional = registryops.getter(this.registryKey);
             if (optional.isPresent()) {
                 HolderGetter<E> holdergetter = optional.get();
                 // Neo: use the wrapped codec to decode custom/tag/list instead of just tag/list
-                return this.combinedCodec.decode(p_206696_, p_206697_)
+                return this.combinedCodec.decode(ops, input)
                     .flatMap(
                         p_337522_ -> {
                             DataResult<HolderSet<E>> dataresult = p_337522_.getFirst()
@@ -74,35 +74,35 @@ public class HolderSetCodec<E> implements Codec<HolderSet<E>> {
             }
         }
 
-        return this.decodeWithoutRegistry(p_206696_, p_206697_);
+        return this.decodeWithoutRegistry(ops, input);
     }
 
-    private static <E> DataResult<HolderSet<E>> lookupTag(HolderGetter<E> p_332757_, TagKey<E> p_332743_) {
-        return p_332757_.get(p_332743_)
+    private static <E> DataResult<HolderSet<E>> lookupTag(HolderGetter<E> input, TagKey<E> tagKey) {
+        return input.get(tagKey)
             .<DataResult<HolderSet<E>>>map(DataResult::success)
-            .orElseGet(() -> DataResult.error(() -> "Missing tag: '" + p_332743_.location() + "' in '" + p_332743_.registry().location() + "'"));
+            .orElseGet(() -> DataResult.error(() -> "Missing tag: '" + tagKey.location() + "' in '" + tagKey.registry().location() + "'"));
     }
 
-    public <T> DataResult<T> encode(HolderSet<E> p_206674_, DynamicOps<T> p_206675_, T p_206676_) {
-        if (p_206675_ instanceof RegistryOps<T> registryops) {
+    public <T> DataResult<T> encode(HolderSet<E> input, DynamicOps<T> ops, T prefix) {
+        if (ops instanceof RegistryOps<T> registryops) {
             Optional<HolderOwner<E>> optional = registryops.owner(this.registryKey);
             if (optional.isPresent()) {
-                if (!p_206674_.canSerializeIn(optional.get())) {
-                    return DataResult.error(() -> "HolderSet " + p_206674_ + " is not valid in current registry set");
+                if (!input.canSerializeIn(optional.get())) {
+                    return DataResult.error(() -> "HolderSet " + input + " is not valid in current registry set");
                 }
 
                 // FORGE: use the dispatch codec to encode custom holdersets, otherwise fall back to vanilla tag/list
-                if (p_206674_ instanceof net.neoforged.neoforge.registries.holdersets.ICustomHolderSet<E> customHolderSet)
-                     return this.forgeDispatchCodec.encode(customHolderSet, p_206675_, p_206676_);
-                return this.registryAwareCodec.encode(p_206674_.unwrap().mapRight(List::copyOf), p_206675_, p_206676_);
+                if (input instanceof net.neoforged.neoforge.registries.holdersets.ICustomHolderSet<E> customHolderSet)
+                     return this.forgeDispatchCodec.encode(customHolderSet, ops, prefix);
+                return this.registryAwareCodec.encode(input.unwrap().mapRight(List::copyOf), ops, prefix);
             }
         }
 
-        return this.encodeWithoutRegistry(p_206674_, p_206675_, p_206676_);
+        return this.encodeWithoutRegistry(input, ops, prefix);
     }
 
-    private <T> DataResult<Pair<HolderSet<E>, T>> decodeWithoutRegistry(DynamicOps<T> p_206671_, T p_206672_) {
-        return this.elementCodec.listOf().decode(p_206671_, p_206672_).flatMap(p_206666_ -> {
+    private <T> DataResult<Pair<HolderSet<E>, T>> decodeWithoutRegistry(DynamicOps<T> ops, T input) {
+        return this.elementCodec.listOf().decode(ops, input).flatMap(p_206666_ -> {
             List<Holder.Direct<E>> list = new ArrayList<>();
 
             for (Holder<E> holder : p_206666_.getFirst()) {
@@ -117,7 +117,7 @@ public class HolderSetCodec<E> implements Codec<HolderSet<E>> {
         });
     }
 
-    private <T> DataResult<T> encodeWithoutRegistry(HolderSet<E> p_206690_, DynamicOps<T> p_206691_, T p_206692_) {
-        return this.homogenousListCodec.encode(p_206690_.stream().toList(), p_206691_, p_206692_);
+    private <T> DataResult<T> encodeWithoutRegistry(HolderSet<E> input, DynamicOps<T> ops, T prefix) {
+        return this.homogenousListCodec.encode(input.stream().toList(), ops, prefix);
     }
 }

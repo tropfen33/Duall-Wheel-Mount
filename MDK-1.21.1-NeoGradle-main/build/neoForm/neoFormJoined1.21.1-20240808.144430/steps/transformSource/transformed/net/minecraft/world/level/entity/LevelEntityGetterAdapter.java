@@ -10,21 +10,21 @@ public class LevelEntityGetterAdapter<T extends EntityAccess> implements LevelEn
     private final EntityLookup<T> visibleEntities;
     private final EntitySectionStorage<T> sectionStorage;
 
-    public LevelEntityGetterAdapter(EntityLookup<T> p_156943_, EntitySectionStorage<T> p_156944_) {
-        this.visibleEntities = p_156943_;
-        this.sectionStorage = p_156944_;
+    public LevelEntityGetterAdapter(EntityLookup<T> visibleEntities, EntitySectionStorage<T> sectionStorage) {
+        this.visibleEntities = visibleEntities;
+        this.sectionStorage = sectionStorage;
     }
 
     @Nullable
     @Override
-    public T get(int p_156947_) {
-        return this.visibleEntities.getEntity(p_156947_);
+    public T get(int id) {
+        return this.visibleEntities.getEntity(id);
     }
 
     @Nullable
     @Override
-    public T get(UUID p_156959_) {
-        return this.visibleEntities.getEntity(p_156959_);
+    public T get(UUID uuid) {
+        return this.visibleEntities.getEntity(uuid);
     }
 
     @Override
@@ -33,17 +33,17 @@ public class LevelEntityGetterAdapter<T extends EntityAccess> implements LevelEn
     }
 
     @Override
-    public <U extends T> void get(EntityTypeTest<T, U> p_261718_, AbortableIterationConsumer<U> p_262009_) {
-        this.visibleEntities.getEntities(p_261718_, p_262009_);
+    public <U extends T> void get(EntityTypeTest<T, U> test, AbortableIterationConsumer<U> consumer) {
+        this.visibleEntities.getEntities(test, consumer);
     }
 
     @Override
-    public void get(AABB p_156956_, Consumer<T> p_156957_) {
-        this.sectionStorage.getEntities(p_156956_, AbortableIterationConsumer.forConsumer(p_156957_));
+    public void get(AABB boundingBox, Consumer<T> consumer) {
+        this.sectionStorage.getEntities(boundingBox, AbortableIterationConsumer.forConsumer(consumer));
     }
 
     @Override
-    public <U extends T> void get(EntityTypeTest<T, U> p_261696_, AABB p_261693_, AbortableIterationConsumer<U> p_261719_) {
-        this.sectionStorage.getEntities(p_261696_, p_261693_, p_261719_);
+    public <U extends T> void get(EntityTypeTest<T, U> test, AABB bounds, AbortableIterationConsumer<U> consumer) {
+        this.sectionStorage.getEntities(test, bounds, consumer);
     }
 }

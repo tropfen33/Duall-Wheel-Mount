@@ -26,33 +26,33 @@ public interface RandomizableContainer extends Container {
     @Nullable
     ResourceKey<LootTable> getLootTable();
 
-    void setLootTable(@Nullable ResourceKey<LootTable> p_335578_);
+    void setLootTable(@Nullable ResourceKey<LootTable> lootTable);
 
-    default void setLootTable(ResourceKey<LootTable> p_335762_, long p_335967_) {
-        this.setLootTable(p_335762_);
-        this.setLootTableSeed(p_335967_);
+    default void setLootTable(ResourceKey<LootTable> lootTable, long seed) {
+        this.setLootTable(lootTable);
+        this.setLootTableSeed(seed);
     }
 
     long getLootTableSeed();
 
-    void setLootTableSeed(long p_309559_);
+    void setLootTableSeed(long seed);
 
     BlockPos getBlockPos();
 
     @Nullable
     Level getLevel();
 
-    static void setBlockEntityLootTable(BlockGetter p_309623_, RandomSource p_309643_, BlockPos p_309644_, ResourceKey<LootTable> p_335924_) {
-        if (p_309623_.getBlockEntity(p_309644_) instanceof RandomizableContainer randomizablecontainer) {
-            randomizablecontainer.setLootTable(p_335924_, p_309643_.nextLong());
+    static void setBlockEntityLootTable(BlockGetter level, RandomSource random, BlockPos ps, ResourceKey<LootTable> lootTable) {
+        if (level.getBlockEntity(ps) instanceof RandomizableContainer randomizablecontainer) {
+            randomizablecontainer.setLootTable(lootTable, random.nextLong());
         }
     }
 
-    default boolean tryLoadLootTable(CompoundTag p_309695_) {
-        if (p_309695_.contains("LootTable", 8)) {
-            this.setLootTable(ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.parse(p_309695_.getString("LootTable"))));
-            if (p_309695_.contains("LootTableSeed", 4)) {
-                this.setLootTableSeed(p_309695_.getLong("LootTableSeed"));
+    default boolean tryLoadLootTable(CompoundTag tag) {
+        if (tag.contains("LootTable", 8)) {
+            this.setLootTable(ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.parse(tag.getString("LootTable"))));
+            if (tag.contains("LootTableSeed", 4)) {
+                this.setLootTableSeed(tag.getLong("LootTableSeed"));
             } else {
                 this.setLootTableSeed(0L);
             }
@@ -63,36 +63,36 @@ public interface RandomizableContainer extends Container {
         }
     }
 
-    default boolean trySaveLootTable(CompoundTag p_309634_) {
+    default boolean trySaveLootTable(CompoundTag tag) {
         ResourceKey<LootTable> resourcekey = this.getLootTable();
         if (resourcekey == null) {
             return false;
         } else {
-            p_309634_.putString("LootTable", resourcekey.location().toString());
+            tag.putString("LootTable", resourcekey.location().toString());
             long i = this.getLootTableSeed();
             if (i != 0L) {
-                p_309634_.putLong("LootTableSeed", i);
+                tag.putLong("LootTableSeed", i);
             }
 
             return true;
         }
     }
 
-    default void unpackLootTable(@Nullable Player p_309628_) {
+    default void unpackLootTable(@Nullable Player player) {
         Level level = this.getLevel();
         BlockPos blockpos = this.getBlockPos();
         ResourceKey<LootTable> resourcekey = this.getLootTable();
         if (resourcekey != null && level != null && level.getServer() != null) {
             LootTable loottable = level.getServer().reloadableRegistries().getLootTable(resourcekey);
-            if (p_309628_ instanceof ServerPlayer) {
-                CriteriaTriggers.GENERATE_LOOT.trigger((ServerPlayer)p_309628_, resourcekey);
+            if (player instanceof ServerPlayer) {
+                CriteriaTriggers.GENERATE_LOOT.trigger((ServerPlayer)player, resourcekey);
             }
 
             this.setLootTable(null);
             LootParams.Builder lootparams$builder = new LootParams.Builder((ServerLevel)level)
                 .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(blockpos));
-            if (p_309628_ != null) {
-                lootparams$builder.withLuck(p_309628_.getLuck()).withParameter(LootContextParams.THIS_ENTITY, p_309628_);
+            if (player != null) {
+                lootparams$builder.withLuck(player.getLuck()).withParameter(LootContextParams.THIS_ENTITY, player);
             }
 
             loottable.fill(this, lootparams$builder.create(LootContextParamSets.CHEST), this.getLootTableSeed());

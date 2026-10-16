@@ -19,9 +19,9 @@ public class WindChargeModel extends HierarchicalModel<AbstractWindCharge> {
     private final ModelPart windCharge;
     private final ModelPart wind;
 
-    public WindChargeModel(ModelPart p_312471_) {
+    public WindChargeModel(ModelPart root) {
         super(RenderType::entityTranslucent);
-        this.bone = p_312471_.getChild("bone");
+        this.bone = root.getChild("bone");
         this.wind = this.bone.getChild("wind");
         this.windCharge = this.bone.getChild("wind_charge");
     }
@@ -47,9 +47,12 @@ public class WindChargeModel extends HierarchicalModel<AbstractWindCharge> {
         return LayerDefinition.create(meshdefinition, 64, 32);
     }
 
-    public void setupAnim(AbstractWindCharge p_326187_, float p_311922_, float p_312586_, float p_312400_, float p_312547_, float p_311844_) {
-        this.windCharge.yRot = -p_312400_ * 16.0F * (float) (Math.PI / 180.0);
-        this.wind.yRot = p_312400_ * 16.0F * (float) (Math.PI / 180.0);
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(AbstractWindCharge entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.windCharge.yRot = -ageInTicks * 16.0F * (float) (Math.PI / 180.0);
+        this.wind.yRot = ageInTicks * 16.0F * (float) (Math.PI / 180.0);
     }
 
     @Override

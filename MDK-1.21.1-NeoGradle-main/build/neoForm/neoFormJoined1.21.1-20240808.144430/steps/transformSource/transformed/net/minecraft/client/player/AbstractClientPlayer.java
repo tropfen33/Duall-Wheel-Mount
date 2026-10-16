@@ -27,9 +27,9 @@ public abstract class AbstractClientPlayer extends Player {
     public float elytraRotZ;
     public final ClientLevel clientLevel;
 
-    public AbstractClientPlayer(ClientLevel p_250460_, GameProfile p_249912_) {
-        super(p_250460_, p_250460_.getSharedSpawnPos(), p_250460_.getSharedSpawnAngle(), p_249912_);
-        this.clientLevel = p_250460_;
+    public AbstractClientPlayer(ClientLevel clientLevel, GameProfile gameProfile) {
+        super(clientLevel, clientLevel.getSharedSpawnPos(), clientLevel.getSharedSpawnAngle(), gameProfile);
+        this.clientLevel = clientLevel;
     }
 
     @Override
@@ -59,8 +59,8 @@ public abstract class AbstractClientPlayer extends Player {
         super.tick();
     }
 
-    public Vec3 getDeltaMovementLerped(float p_272943_) {
-        return this.deltaMovementOnPreviousTick.lerp(this.getDeltaMovement(), (double)p_272943_);
+    public Vec3 getDeltaMovementLerped(float patialTick) {
+        return this.deltaMovementOnPreviousTick.lerp(this.getDeltaMovement(), (double)patialTick);
     }
 
     public PlayerSkin getSkin() {

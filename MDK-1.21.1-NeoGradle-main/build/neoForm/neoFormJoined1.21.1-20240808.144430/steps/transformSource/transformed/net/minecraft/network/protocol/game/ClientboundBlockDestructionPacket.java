@@ -14,22 +14,25 @@ public class ClientboundBlockDestructionPacket implements Packet<ClientGamePacke
     private final BlockPos pos;
     private final int progress;
 
-    public ClientboundBlockDestructionPacket(int p_131676_, BlockPos p_131677_, int p_131678_) {
-        this.id = p_131676_;
-        this.pos = p_131677_;
-        this.progress = p_131678_;
+    public ClientboundBlockDestructionPacket(int id, BlockPos pos, int progress) {
+        this.id = id;
+        this.pos = pos;
+        this.progress = progress;
     }
 
-    private ClientboundBlockDestructionPacket(FriendlyByteBuf p_178606_) {
-        this.id = p_178606_.readVarInt();
-        this.pos = p_178606_.readBlockPos();
-        this.progress = p_178606_.readUnsignedByte();
+    private ClientboundBlockDestructionPacket(FriendlyByteBuf buffer) {
+        this.id = buffer.readVarInt();
+        this.pos = buffer.readBlockPos();
+        this.progress = buffer.readUnsignedByte();
     }
 
-    private void write(FriendlyByteBuf p_131687_) {
-        p_131687_.writeVarInt(this.id);
-        p_131687_.writeBlockPos(this.pos);
-        p_131687_.writeByte(this.progress);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.id);
+        buffer.writeBlockPos(this.pos);
+        buffer.writeByte(this.progress);
     }
 
     @Override
@@ -37,8 +40,11 @@ public class ClientboundBlockDestructionPacket implements Packet<ClientGamePacke
         return GamePacketTypes.CLIENTBOUND_BLOCK_DESTRUCTION;
     }
 
-    public void handle(ClientGamePacketListener p_131684_) {
-        p_131684_.handleBlockDestruction(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleBlockDestruction(this);
     }
 
     public int getId() {

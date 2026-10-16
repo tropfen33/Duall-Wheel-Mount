@@ -17,9 +17,9 @@ import org.apache.commons.lang3.StringUtils;
 public class NameReport extends Report {
     private final String reportedName;
 
-    NameReport(UUID p_299985_, Instant p_299857_, UUID p_299900_, String p_300040_) {
-        super(p_299985_, p_299857_, p_299900_);
-        this.reportedName = p_300040_;
+    NameReport(UUID reportId, Instant createdAt, UUID reportedProfileId, String reportedName) {
+        super(reportId, createdAt, reportedProfileId);
+        this.reportedName = reportedName;
     }
 
     public String getReportedName() {
@@ -34,18 +34,18 @@ public class NameReport extends Report {
     }
 
     @Override
-    public Screen createScreen(Screen p_299843_, ReportingContext p_299844_) {
-        return new NameReportScreen(p_299843_, p_299844_, this);
+    public Screen createScreen(Screen lastScreen, ReportingContext reportingContext) {
+        return new NameReportScreen(lastScreen, reportingContext, this);
     }
 
     @OnlyIn(Dist.CLIENT)
     public static class Builder extends Report.Builder<NameReport> {
-        public Builder(NameReport p_299841_, AbuseReportLimits p_299879_) {
-            super(p_299841_, p_299879_);
+        public Builder(NameReport report, AbuseReportLimits limits) {
+            super(report, limits);
         }
 
-        public Builder(UUID p_299951_, String p_299988_, AbuseReportLimits p_299993_) {
-            super(new NameReport(UUID.randomUUID(), Instant.now(), p_299951_, p_299988_), p_299993_);
+        public Builder(UUID reportedProfileId, String reportedName, AbuseReportLimits limits) {
+            super(new NameReport(UUID.randomUUID(), Instant.now(), reportedProfileId, reportedName), limits);
         }
 
         @Override
@@ -60,7 +60,7 @@ public class NameReport extends Report {
         }
 
         @Override
-        public Either<Report.Result, Report.CannotBuildReason> build(ReportingContext p_299891_) {
+        public Either<Report.Result, Report.CannotBuildReason> build(ReportingContext reportingContext) {
             Report.CannotBuildReason report$cannotbuildreason = this.checkBuildable();
             if (report$cannotbuildreason != null) {
                 return Either.right(report$cannotbuildreason);

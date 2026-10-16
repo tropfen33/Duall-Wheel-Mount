@@ -41,11 +41,11 @@ public class EnchantedCountIncreaseFunction extends LootItemConditionalFunction 
     private final NumberProvider value;
     private final int limit;
 
-    EnchantedCountIncreaseFunction(List<LootItemCondition> p_344944_, Holder<Enchantment> p_345194_, NumberProvider p_344806_, int p_345432_) {
-        super(p_344944_);
-        this.enchantment = p_345194_;
-        this.value = p_344806_;
-        this.limit = p_345432_;
+    EnchantedCountIncreaseFunction(List<LootItemCondition> conditions, Holder<Enchantment> enchantment, NumberProvider value, int limit) {
+        super(conditions);
+        this.enchantment = enchantment;
+        this.value = value;
+        this.limit = limit;
     }
 
     @Override
@@ -62,28 +62,31 @@ public class EnchantedCountIncreaseFunction extends LootItemConditionalFunction 
         return this.limit > 0;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_345285_, LootContext p_345560_) {
-        Entity entity = p_345560_.getParamOrNull(LootContextParams.ATTACKING_ENTITY);
+    public ItemStack run(ItemStack stack, LootContext context) {
+        Entity entity = context.getParamOrNull(LootContextParams.ATTACKING_ENTITY);
         if (entity instanceof LivingEntity livingentity) {
             int i = EnchantmentHelper.getEnchantmentLevel(this.enchantment, livingentity);
             if (i == 0) {
-                return p_345285_;
+                return stack;
             }
 
-            float f = (float)i * this.value.getFloat(p_345560_);
-            p_345285_.grow(Math.round(f));
+            float f = (float)i * this.value.getFloat(context);
+            stack.grow(Math.round(f));
             if (this.hasLimit()) {
-                p_345285_.limitSize(this.limit);
+                stack.limitSize(this.limit);
             }
         }
 
-        return p_345285_;
+        return stack;
     }
 
-    public static EnchantedCountIncreaseFunction.Builder lootingMultiplier(HolderLookup.Provider p_344982_, NumberProvider p_345939_) {
-        HolderLookup.RegistryLookup<Enchantment> registrylookup = p_344982_.lookupOrThrow(Registries.ENCHANTMENT);
-        return new EnchantedCountIncreaseFunction.Builder(registrylookup.getOrThrow(Enchantments.LOOTING), p_345939_);
+    public static EnchantedCountIncreaseFunction.Builder lootingMultiplier(HolderLookup.Provider registries, NumberProvider count) {
+        HolderLookup.RegistryLookup<Enchantment> registrylookup = registries.lookupOrThrow(Registries.ENCHANTMENT);
+        return new EnchantedCountIncreaseFunction.Builder(registrylookup.getOrThrow(Enchantments.LOOTING), count);
     }
 
     public static class Builder extends LootItemConditionalFunction.Builder<EnchantedCountIncreaseFunction.Builder> {
@@ -91,17 +94,17 @@ public class EnchantedCountIncreaseFunction extends LootItemConditionalFunction 
         private final NumberProvider count;
         private int limit = 0;
 
-        public Builder(Holder<Enchantment> p_345337_, NumberProvider p_345112_) {
-            this.enchantment = p_345337_;
-            this.count = p_345112_;
+        public Builder(Holder<Enchantment> enchantment, NumberProvider count) {
+            this.enchantment = enchantment;
+            this.count = count;
         }
 
         protected EnchantedCountIncreaseFunction.Builder getThis() {
             return this;
         }
 
-        public EnchantedCountIncreaseFunction.Builder setLimit(int p_344833_) {
-            this.limit = p_344833_;
+        public EnchantedCountIncreaseFunction.Builder setLimit(int limit) {
+            this.limit = limit;
             return this;
         }
 

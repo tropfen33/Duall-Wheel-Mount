@@ -34,13 +34,13 @@ public record ApplyMobEffect(
     );
 
     @Override
-    public void apply(ServerLevel p_345355_, int p_346112_, EnchantedItemInUse p_344766_, Entity p_345996_, Vec3 p_345315_) {
-        if (p_345996_ instanceof LivingEntity livingentity) {
+    public void apply(ServerLevel level, int enchantmentLevel, EnchantedItemInUse item, Entity entity, Vec3 origin) {
+        if (entity instanceof LivingEntity livingentity) {
             RandomSource randomsource = livingentity.getRandom();
             Optional<Holder<MobEffect>> optional = this.toApply.getRandomElement(randomsource);
             if (optional.isPresent()) {
-                int i = Math.round(Mth.randomBetween(randomsource, this.minDuration.calculate(p_346112_), this.maxDuration.calculate(p_346112_)) * 20.0F);
-                int j = Math.max(0, Math.round(Mth.randomBetween(randomsource, this.minAmplifier.calculate(p_346112_), this.maxAmplifier.calculate(p_346112_))));
+                int i = Math.round(Mth.randomBetween(randomsource, this.minDuration.calculate(enchantmentLevel), this.maxDuration.calculate(enchantmentLevel)) * 20.0F);
+                int j = Math.max(0, Math.round(Mth.randomBetween(randomsource, this.minAmplifier.calculate(enchantmentLevel), this.maxAmplifier.calculate(enchantmentLevel))));
                 livingentity.addEffect(new MobEffectInstance(optional.get(), i, j));
             }
         }

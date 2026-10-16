@@ -32,15 +32,15 @@ public class PathNavigationRegion implements BlockGetter, CollisionGetter {
     protected final Level level;
     private final Supplier<Holder<Biome>> plains;
 
-    public PathNavigationRegion(Level p_47164_, BlockPos p_47165_, BlockPos p_47166_) {
-        this.level = p_47164_;
-        this.plains = Suppliers.memoize(() -> p_47164_.registryAccess().registryOrThrow(Registries.BIOME).getHolderOrThrow(Biomes.PLAINS));
-        this.centerX = SectionPos.blockToSectionCoord(p_47165_.getX());
-        this.centerZ = SectionPos.blockToSectionCoord(p_47165_.getZ());
-        int i = SectionPos.blockToSectionCoord(p_47166_.getX());
-        int j = SectionPos.blockToSectionCoord(p_47166_.getZ());
+    public PathNavigationRegion(Level level, BlockPos centerPos, BlockPos offsetPos) {
+        this.level = level;
+        this.plains = Suppliers.memoize(() -> level.registryAccess().registryOrThrow(Registries.BIOME).getHolderOrThrow(Biomes.PLAINS));
+        this.centerX = SectionPos.blockToSectionCoord(centerPos.getX());
+        this.centerZ = SectionPos.blockToSectionCoord(centerPos.getZ());
+        int i = SectionPos.blockToSectionCoord(offsetPos.getX());
+        int j = SectionPos.blockToSectionCoord(offsetPos.getZ());
         this.chunks = new ChunkAccess[i - this.centerX + 1][j - this.centerZ + 1];
-        ChunkSource chunksource = p_47164_.getChunkSource();
+        ChunkSource chunksource = level.getChunkSource();
         this.allEmpty = true;
 
         for (int k = this.centerX; k <= i; k++) {
@@ -49,10 +49,10 @@ public class PathNavigationRegion implements BlockGetter, CollisionGetter {
             }
         }
 
-        for (int i1 = SectionPos.blockToSectionCoord(p_47165_.getX()); i1 <= SectionPos.blockToSectionCoord(p_47166_.getX()); i1++) {
-            for (int j1 = SectionPos.blockToSectionCoord(p_47165_.getZ()); j1 <= SectionPos.blockToSectionCoord(p_47166_.getZ()); j1++) {
+        for (int i1 = SectionPos.blockToSectionCoord(centerPos.getX()); i1 <= SectionPos.blockToSectionCoord(offsetPos.getX()); i1++) {
+            for (int j1 = SectionPos.blockToSectionCoord(centerPos.getZ()); j1 <= SectionPos.blockToSectionCoord(offsetPos.getZ()); j1++) {
                 ChunkAccess chunkaccess = this.chunks[i1 - this.centerX][j1 - this.centerZ];
-                if (chunkaccess != null && !chunkaccess.isYSpaceEmpty(p_47165_.getY(), p_47166_.getY())) {
+                if (chunkaccess != null && !chunkaccess.isYSpaceEmpty(centerPos.getY(), offsetPos.getY())) {
                     this.allEmpty = false;
                     return;
                 }
@@ -60,18 +60,18 @@ public class PathNavigationRegion implements BlockGetter, CollisionGetter {
         }
     }
 
-    private ChunkAccess getChunk(BlockPos p_47186_) {
-        return this.getChunk(SectionPos.blockToSectionCoord(p_47186_.getX()), SectionPos.blockToSectionCoord(p_47186_.getZ()));
+    private ChunkAccess getChunk(BlockPos pos) {
+        return this.getChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()));
     }
 
-    private ChunkAccess getChunk(int p_47168_, int p_47169_) {
-        int i = p_47168_ - this.centerX;
-        int j = p_47169_ - this.centerZ;
+    private ChunkAccess getChunk(int x, int z) {
+        int i = x - this.centerX;
+        int j = z - this.centerZ;
         if (i >= 0 && i < this.chunks.length && j >= 0 && j < this.chunks[i].length) {
             ChunkAccess chunkaccess = this.chunks[i][j];
-            return (ChunkAccess)(chunkaccess != null ? chunkaccess : new EmptyLevelChunk(this.level, new ChunkPos(p_47168_, p_47169_), this.plains.get()));
+            return (ChunkAccess)(chunkaccess != null ? chunkaccess : new EmptyLevelChunk(this.level, new ChunkPos(x, z), this.plains.get()));
         } else {
-            return new EmptyLevelChunk(this.level, new ChunkPos(p_47168_, p_47169_), this.plains.get());
+            return new EmptyLevelChunk(this.level, new ChunkPos(x, z), this.plains.get());
         }
     }
 
@@ -81,39 +81,39 @@ public class PathNavigationRegion implements BlockGetter, CollisionGetter {
     }
 
     @Override
-    public BlockGetter getChunkForCollisions(int p_47173_, int p_47174_) {
-        return this.getChunk(p_47173_, p_47174_);
+    public BlockGetter getChunkForCollisions(int chunkX, int chunkZ) {
+        return this.getChunk(chunkX, chunkZ);
     }
 
     @Override
-    public List<VoxelShape> getEntityCollisions(@Nullable Entity p_186557_, AABB p_186558_) {
+    public List<VoxelShape> getEntityCollisions(@Nullable Entity entity, AABB collisionBox) {
         return List.of();
     }
 
     @Nullable
     @Override
-    public BlockEntity getBlockEntity(BlockPos p_47180_) {
-        ChunkAccess chunkaccess = this.getChunk(p_47180_);
-        return chunkaccess.getBlockEntity(p_47180_);
+    public BlockEntity getBlockEntity(BlockPos pos) {
+        ChunkAccess chunkaccess = this.getChunk(pos);
+        return chunkaccess.getBlockEntity(pos);
     }
 
     @Override
-    public BlockState getBlockState(BlockPos p_47188_) {
-        if (this.isOutsideBuildHeight(p_47188_)) {
+    public BlockState getBlockState(BlockPos pos) {
+        if (this.isOutsideBuildHeight(pos)) {
             return Blocks.AIR.defaultBlockState();
         } else {
-            ChunkAccess chunkaccess = this.getChunk(p_47188_);
-            return chunkaccess.getBlockState(p_47188_);
+            ChunkAccess chunkaccess = this.getChunk(pos);
+            return chunkaccess.getBlockState(pos);
         }
     }
 
     @Override
-    public FluidState getFluidState(BlockPos p_47171_) {
-        if (this.isOutsideBuildHeight(p_47171_)) {
+    public FluidState getFluidState(BlockPos pos) {
+        if (this.isOutsideBuildHeight(pos)) {
             return Fluids.EMPTY.defaultFluidState();
         } else {
-            ChunkAccess chunkaccess = this.getChunk(p_47171_);
-            return chunkaccess.getFluidState(p_47171_);
+            ChunkAccess chunkaccess = this.getChunk(pos);
+            return chunkaccess.getFluidState(pos);
         }
     }
 

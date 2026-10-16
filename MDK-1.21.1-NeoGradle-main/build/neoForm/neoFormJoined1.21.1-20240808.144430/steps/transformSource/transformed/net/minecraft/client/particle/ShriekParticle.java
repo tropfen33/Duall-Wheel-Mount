@@ -14,10 +14,10 @@ public class ShriekParticle extends TextureSheetParticle {
     private static final float MAGICAL_X_ROT = 1.0472F;
     private int delay;
 
-    protected ShriekParticle(ClientLevel p_233976_, double p_233977_, double p_233978_, double p_233979_, int p_233980_) {
-        super(p_233976_, p_233977_, p_233978_, p_233979_, 0.0, 0.0, 0.0);
+    protected ShriekParticle(ClientLevel level, double x, double y, double z, int delay) {
+        super(level, x, y, z, 0.0, 0.0, 0.0);
         this.quadSize = 0.85F;
-        this.delay = p_233980_;
+        this.delay = delay;
         this.lifetime = 30;
         this.gravity = 0.0F;
         this.xd = 0.0;
@@ -26,24 +26,24 @@ public class ShriekParticle extends TextureSheetParticle {
     }
 
     @Override
-    public float getQuadSize(float p_234003_) {
-        return this.quadSize * Mth.clamp(((float)this.age + p_234003_) / (float)this.lifetime * 0.75F, 0.0F, 1.0F);
+    public float getQuadSize(float scaleFactor) {
+        return this.quadSize * Mth.clamp(((float)this.age + scaleFactor) / (float)this.lifetime * 0.75F, 0.0F, 1.0F);
     }
 
     @Override
-    public void render(VertexConsumer p_233985_, Camera p_233986_, float p_233987_) {
+    public void render(VertexConsumer buffer, Camera renderInfo, float partialTicks) {
         if (this.delay <= 0) {
-            this.alpha = 1.0F - Mth.clamp(((float)this.age + p_233987_) / (float)this.lifetime, 0.0F, 1.0F);
+            this.alpha = 1.0F - Mth.clamp(((float)this.age + partialTicks) / (float)this.lifetime, 0.0F, 1.0F);
             Quaternionf quaternionf = new Quaternionf();
             quaternionf.rotationX(-1.0472F);
-            this.renderRotatedQuad(p_233985_, p_233986_, quaternionf, p_233987_);
+            this.renderRotatedQuad(buffer, renderInfo, quaternionf, partialTicks);
             quaternionf.rotationYXZ((float) -Math.PI, 1.0472F, 0.0F);
-            this.renderRotatedQuad(p_233985_, p_233986_, quaternionf, p_233987_);
+            this.renderRotatedQuad(buffer, renderInfo, quaternionf, partialTicks);
         }
     }
 
     @Override
-    public int getLightColor(float p_233983_) {
+    public int getLightColor(float partialTick) {
         return 240;
     }
 
@@ -65,21 +65,21 @@ public class ShriekParticle extends TextureSheetParticle {
     public static class Provider implements ParticleProvider<ShriekParticleOption> {
         private final SpriteSet sprite;
 
-        public Provider(SpriteSet p_234008_) {
-            this.sprite = p_234008_;
+        public Provider(SpriteSet sprite) {
+            this.sprite = sprite;
         }
 
         public Particle createParticle(
-            ShriekParticleOption p_234019_,
-            ClientLevel p_234020_,
-            double p_234021_,
-            double p_234022_,
-            double p_234023_,
-            double p_234024_,
-            double p_234025_,
-            double p_234026_
+            ShriekParticleOption type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            ShriekParticle shriekparticle = new ShriekParticle(p_234020_, p_234021_, p_234022_, p_234023_, p_234019_.getDelay());
+            ShriekParticle shriekparticle = new ShriekParticle(level, x, y, z, type.getDelay());
             shriekparticle.pickSprite(this.sprite);
             shriekparticle.setAlpha(1.0F);
             return shriekparticle;

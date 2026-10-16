@@ -17,25 +17,28 @@ public class ClientboundHelloPacket implements Packet<ClientLoginPacketListener>
     private final byte[] challenge;
     private final boolean shouldAuthenticate;
 
-    public ClientboundHelloPacket(String p_134782_, byte[] p_134783_, byte[] p_134784_, boolean p_320681_) {
-        this.serverId = p_134782_;
-        this.publicKey = p_134783_;
-        this.challenge = p_134784_;
-        this.shouldAuthenticate = p_320681_;
+    public ClientboundHelloPacket(String serverId, byte[] publicKey, byte[] challenge, boolean shouldAuthenticate) {
+        this.serverId = serverId;
+        this.publicKey = publicKey;
+        this.challenge = challenge;
+        this.shouldAuthenticate = shouldAuthenticate;
     }
 
-    private ClientboundHelloPacket(FriendlyByteBuf p_179816_) {
-        this.serverId = p_179816_.readUtf(20);
-        this.publicKey = p_179816_.readByteArray();
-        this.challenge = p_179816_.readByteArray();
-        this.shouldAuthenticate = p_179816_.readBoolean();
+    private ClientboundHelloPacket(FriendlyByteBuf buffer) {
+        this.serverId = buffer.readUtf(20);
+        this.publicKey = buffer.readByteArray();
+        this.challenge = buffer.readByteArray();
+        this.shouldAuthenticate = buffer.readBoolean();
     }
 
-    private void write(FriendlyByteBuf p_134793_) {
-        p_134793_.writeUtf(this.serverId);
-        p_134793_.writeByteArray(this.publicKey);
-        p_134793_.writeByteArray(this.challenge);
-        p_134793_.writeBoolean(this.shouldAuthenticate);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeUtf(this.serverId);
+        buffer.writeByteArray(this.publicKey);
+        buffer.writeByteArray(this.challenge);
+        buffer.writeBoolean(this.shouldAuthenticate);
     }
 
     @Override
@@ -43,8 +46,11 @@ public class ClientboundHelloPacket implements Packet<ClientLoginPacketListener>
         return LoginPacketTypes.CLIENTBOUND_HELLO;
     }
 
-    public void handle(ClientLoginPacketListener p_134790_) {
-        p_134790_.handleHello(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientLoginPacketListener handler) {
+        handler.handleHello(this);
     }
 
     public String getServerId() {

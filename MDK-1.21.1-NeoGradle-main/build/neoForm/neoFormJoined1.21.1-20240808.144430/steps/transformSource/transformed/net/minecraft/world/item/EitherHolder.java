@@ -22,33 +22,33 @@ public record EitherHolder<T>(Optional<Holder<T>> holder, ResourceKey<T> key) {
         this(Optional.empty(), p_350883_);
     }
 
-    public static <T> Codec<EitherHolder<T>> codec(ResourceKey<Registry<T>> p_350627_, Codec<Holder<T>> p_350442_) {
+    public static <T> Codec<EitherHolder<T>> codec(ResourceKey<Registry<T>> registryKey, Codec<Holder<T>> codec) {
         return Codec.either(
-                p_350442_,
-                ResourceKey.codec(p_350627_).comapFlatMap(p_350331_ -> DataResult.error(() -> "Cannot parse as key without registry"), Function.identity())
+                codec,
+                ResourceKey.codec(registryKey).comapFlatMap(p_350331_ -> DataResult.error(() -> "Cannot parse as key without registry"), Function.identity())
             )
             .xmap(EitherHolder::fromEither, EitherHolder::asEither);
     }
 
     public static <T> StreamCodec<RegistryFriendlyByteBuf, EitherHolder<T>> streamCodec(
-        ResourceKey<Registry<T>> p_350628_, StreamCodec<RegistryFriendlyByteBuf, Holder<T>> p_350420_
+        ResourceKey<Registry<T>> registryKey, StreamCodec<RegistryFriendlyByteBuf, Holder<T>> streamCodec
     ) {
-        return StreamCodec.composite(ByteBufCodecs.either(p_350420_, ResourceKey.streamCodec(p_350628_)), EitherHolder::asEither, EitherHolder::fromEither);
+        return StreamCodec.composite(ByteBufCodecs.either(streamCodec, ResourceKey.streamCodec(registryKey)), EitherHolder::asEither, EitherHolder::fromEither);
     }
 
     public Either<Holder<T>, ResourceKey<T>> asEither() {
         return this.holder.<Either<Holder<T>, ResourceKey<T>>>map(Either::left).orElseGet(() -> Either.right(this.key));
     }
 
-    public static <T> EitherHolder<T> fromEither(Either<Holder<T>, ResourceKey<T>> p_350717_) {
-        return p_350717_.map(EitherHolder::new, EitherHolder::new);
+    public static <T> EitherHolder<T> fromEither(Either<Holder<T>, ResourceKey<T>> either) {
+        return either.map(EitherHolder::new, EitherHolder::new);
     }
 
-    public Optional<T> unwrap(Registry<T> p_350328_) {
-        return this.holder.map(Holder::value).or(() -> p_350328_.getOptional(this.key));
+    public Optional<T> unwrap(Registry<T> registry) {
+        return this.holder.map(Holder::value).or(() -> registry.getOptional(this.key));
     }
 
-    public Optional<Holder<T>> unwrap(HolderLookup.Provider p_350642_) {
-        return this.holder.or(() -> p_350642_.lookupOrThrow(this.key.registryKey()).get(this.key));
+    public Optional<Holder<T>> unwrap(HolderLookup.Provider registries) {
+        return this.holder.or(() -> registries.lookupOrThrow(this.key.registryKey()).get(this.key));
     }
 }

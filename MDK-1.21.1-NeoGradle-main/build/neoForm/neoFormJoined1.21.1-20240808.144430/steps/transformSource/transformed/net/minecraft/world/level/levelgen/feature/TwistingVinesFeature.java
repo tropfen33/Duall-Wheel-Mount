@@ -13,19 +13,26 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.configurations.TwistingVinesConfig;
 
 public class TwistingVinesFeature extends Feature<TwistingVinesConfig> {
-    public TwistingVinesFeature(Codec<TwistingVinesConfig> p_67292_) {
-        super(p_67292_);
+    public TwistingVinesFeature(Codec<TwistingVinesConfig> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<TwistingVinesConfig> p_160558_) {
-        WorldGenLevel worldgenlevel = p_160558_.level();
-        BlockPos blockpos = p_160558_.origin();
+    public boolean place(FeaturePlaceContext<TwistingVinesConfig> context) {
+        WorldGenLevel worldgenlevel = context.level();
+        BlockPos blockpos = context.origin();
         if (isInvalidPlacementLocation(worldgenlevel, blockpos)) {
             return false;
         } else {
-            RandomSource randomsource = p_160558_.random();
-            TwistingVinesConfig twistingvinesconfig = p_160558_.config();
+            RandomSource randomsource = context.random();
+            TwistingVinesConfig twistingvinesconfig = context.config();
             int i = twistingvinesconfig.spreadWidth();
             int j = twistingvinesconfig.spreadHeight();
             int k = twistingvinesconfig.maxHeight();
@@ -55,46 +62,46 @@ public class TwistingVinesFeature extends Feature<TwistingVinesConfig> {
         }
     }
 
-    private static boolean findFirstAirBlockAboveGround(LevelAccessor p_67294_, BlockPos.MutableBlockPos p_67295_) {
+    private static boolean findFirstAirBlockAboveGround(LevelAccessor level, BlockPos.MutableBlockPos pos) {
         do {
-            p_67295_.move(0, -1, 0);
-            if (p_67294_.isOutsideBuildHeight(p_67295_)) {
+            pos.move(0, -1, 0);
+            if (level.isOutsideBuildHeight(pos)) {
                 return false;
             }
-        } while (p_67294_.getBlockState(p_67295_).isAir());
+        } while (level.getBlockState(pos).isAir());
 
-        p_67295_.move(0, 1, 0);
+        pos.move(0, 1, 0);
         return true;
     }
 
     public static void placeWeepingVinesColumn(
-        LevelAccessor p_225301_, RandomSource p_225302_, BlockPos.MutableBlockPos p_225303_, int p_225304_, int p_225305_, int p_225306_
+        LevelAccessor level, RandomSource random, BlockPos.MutableBlockPos pos, int length, int minAge, int maxAge
     ) {
-        for (int i = 1; i <= p_225304_; i++) {
-            if (p_225301_.isEmptyBlock(p_225303_)) {
-                if (i == p_225304_ || !p_225301_.isEmptyBlock(p_225303_.above())) {
-                    p_225301_.setBlock(
-                        p_225303_,
+        for (int i = 1; i <= length; i++) {
+            if (level.isEmptyBlock(pos)) {
+                if (i == length || !level.isEmptyBlock(pos.above())) {
+                    level.setBlock(
+                        pos,
                         Blocks.TWISTING_VINES
                             .defaultBlockState()
-                            .setValue(GrowingPlantHeadBlock.AGE, Integer.valueOf(Mth.nextInt(p_225302_, p_225305_, p_225306_))),
+                            .setValue(GrowingPlantHeadBlock.AGE, Integer.valueOf(Mth.nextInt(random, minAge, maxAge))),
                         2
                     );
                     break;
                 }
 
-                p_225301_.setBlock(p_225303_, Blocks.TWISTING_VINES_PLANT.defaultBlockState(), 2);
+                level.setBlock(pos, Blocks.TWISTING_VINES_PLANT.defaultBlockState(), 2);
             }
 
-            p_225303_.move(Direction.UP);
+            pos.move(Direction.UP);
         }
     }
 
-    private static boolean isInvalidPlacementLocation(LevelAccessor p_67297_, BlockPos p_67298_) {
-        if (!p_67297_.isEmptyBlock(p_67298_)) {
+    private static boolean isInvalidPlacementLocation(LevelAccessor level, BlockPos pos) {
+        if (!level.isEmptyBlock(pos)) {
             return true;
         } else {
-            BlockState blockstate = p_67297_.getBlockState(p_67298_.below());
+            BlockState blockstate = level.getBlockState(pos.below());
             return !blockstate.is(Blocks.NETHERRACK) && !blockstate.is(Blocks.WARPED_NYLIUM) && !blockstate.is(Blocks.WARPED_WART_BLOCK);
         }
     }

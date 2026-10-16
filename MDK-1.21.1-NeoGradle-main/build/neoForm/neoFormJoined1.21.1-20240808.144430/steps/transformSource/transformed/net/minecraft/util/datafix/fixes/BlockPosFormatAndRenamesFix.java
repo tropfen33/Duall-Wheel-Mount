@@ -20,13 +20,13 @@ public class BlockPosFormatAndRenamesFix extends DataFix {
         "minecraft:witch", "minecraft:ravager", "minecraft:pillager", "minecraft:illusioner", "minecraft:evoker", "minecraft:vindicator"
     );
 
-    public BlockPosFormatAndRenamesFix(Schema p_326146_) {
-        super(p_326146_, false);
+    public BlockPosFormatAndRenamesFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
-    private Typed<?> fixFields(Typed<?> p_326273_, Map<String, String> p_326439_) {
-        return p_326273_.update(DSL.remainderFinder(), p_337600_ -> {
-            for (Entry<String, String> entry : p_326439_.entrySet()) {
+    private Typed<?> fixFields(Typed<?> data, Map<String, String> renames) {
+        return data.update(DSL.remainderFinder(), p_337600_ -> {
+            for (Entry<String, String> entry : renames.entrySet()) {
                 p_337600_ = p_337600_.renameAndFixField(entry.getKey(), entry.getValue(), ExtraDataFixUtils::fixBlockPos);
             }
 
@@ -34,8 +34,8 @@ public class BlockPosFormatAndRenamesFix extends DataFix {
         });
     }
 
-    private <T> Dynamic<T> fixMapSavedData(Dynamic<T> p_326466_) {
-        return p_326466_.update("frames", p_326158_ -> p_326158_.createList(p_326158_.asStream().map(p_337598_ -> {
+    private <T> Dynamic<T> fixMapSavedData(Dynamic<T> data) {
+        return data.update("frames", p_326158_ -> p_326158_.createList(p_326158_.asStream().map(p_337598_ -> {
                 p_337598_ = p_337598_.renameAndFixField("Pos", "pos", ExtraDataFixUtils::fixBlockPos);
                 p_337598_ = p_337598_.renameField("Rotation", "rotation");
                 return p_337598_.renameField("EntityId", "entity_id");
@@ -69,16 +69,16 @@ public class BlockPosFormatAndRenamesFix extends DataFix {
         return TypeRewriteRule.seq(list);
     }
 
-    private void addEntityRules(List<TypeRewriteRule> p_326170_) {
-        p_326170_.add(this.createEntityFixer(References.ENTITY, "minecraft:bee", Map.of("HivePos", "hive_pos", "FlowerPos", "flower_pos")));
-        p_326170_.add(this.createEntityFixer(References.ENTITY, "minecraft:end_crystal", Map.of("BeamTarget", "beam_target")));
-        p_326170_.add(this.createEntityFixer(References.ENTITY, "minecraft:wandering_trader", Map.of("WanderTarget", "wander_target")));
+    private void addEntityRules(List<TypeRewriteRule> output) {
+        output.add(this.createEntityFixer(References.ENTITY, "minecraft:bee", Map.of("HivePos", "hive_pos", "FlowerPos", "flower_pos")));
+        output.add(this.createEntityFixer(References.ENTITY, "minecraft:end_crystal", Map.of("BeamTarget", "beam_target")));
+        output.add(this.createEntityFixer(References.ENTITY, "minecraft:wandering_trader", Map.of("WanderTarget", "wander_target")));
 
         for (String s : PATROLLING_MOBS) {
-            p_326170_.add(this.createEntityFixer(References.ENTITY, s, Map.of("PatrolTarget", "patrol_target")));
+            output.add(this.createEntityFixer(References.ENTITY, s, Map.of("PatrolTarget", "patrol_target")));
         }
 
-        p_326170_.add(
+        output.add(
             this.fixTypeEverywhereTyped(
                 "BlockPos format in Leash for mobs",
                 this.getInputSchema().getType(References.ENTITY),
@@ -87,16 +87,16 @@ public class BlockPosFormatAndRenamesFix extends DataFix {
         );
     }
 
-    private void addBlockEntityRules(List<TypeRewriteRule> p_326031_) {
-        p_326031_.add(this.createEntityFixer(References.BLOCK_ENTITY, "minecraft:beehive", Map.of("FlowerPos", "flower_pos")));
-        p_326031_.add(this.createEntityFixer(References.BLOCK_ENTITY, "minecraft:end_gateway", Map.of("ExitPortal", "exit_portal")));
+    private void addBlockEntityRules(List<TypeRewriteRule> output) {
+        output.add(this.createEntityFixer(References.BLOCK_ENTITY, "minecraft:beehive", Map.of("FlowerPos", "flower_pos")));
+        output.add(this.createEntityFixer(References.BLOCK_ENTITY, "minecraft:end_gateway", Map.of("ExitPortal", "exit_portal")));
     }
 
-    private TypeRewriteRule createEntityFixer(TypeReference p_326126_, String p_326263_, Map<String, String> p_326382_) {
-        String s = "BlockPos format in " + p_326382_.keySet() + " for " + p_326263_ + " (" + p_326126_.typeName() + ")";
-        OpticFinder<?> opticfinder = DSL.namedChoice(p_326263_, this.getInputSchema().getChoiceType(p_326126_, p_326263_));
+    private TypeRewriteRule createEntityFixer(TypeReference reference, String entityId, Map<String, String> renames) {
+        String s = "BlockPos format in " + renames.keySet() + " for " + entityId + " (" + reference.typeName() + ")";
+        OpticFinder<?> opticfinder = DSL.namedChoice(entityId, this.getInputSchema().getChoiceType(reference, entityId));
         return this.fixTypeEverywhereTyped(
-            s, this.getInputSchema().getType(p_326126_), p_325999_ -> p_325999_.updateTyped(opticfinder, p_326318_ -> this.fixFields(p_326318_, p_326382_))
+            s, this.getInputSchema().getType(reference), p_325999_ -> p_325999_.updateTyped(opticfinder, p_326318_ -> this.fixFields(p_326318_, renames))
         );
     }
 }

@@ -46,25 +46,25 @@ public class ConduitBlockEntity extends BlockEntity {
     private UUID destroyTargetUUID;
     private long nextAmbientSoundActivation;
 
-    public ConduitBlockEntity(BlockPos p_155397_, BlockState p_155398_) {
-        super(BlockEntityType.CONDUIT, p_155397_, p_155398_);
+    public ConduitBlockEntity(BlockPos pos, BlockState blockState) {
+        super(BlockEntityType.CONDUIT, pos, blockState);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_338591_, HolderLookup.Provider p_338280_) {
-        super.loadAdditional(p_338591_, p_338280_);
-        if (p_338591_.hasUUID("Target")) {
-            this.destroyTargetUUID = p_338591_.getUUID("Target");
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.hasUUID("Target")) {
+            this.destroyTargetUUID = tag.getUUID("Target");
         } else {
             this.destroyTargetUUID = null;
         }
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_187495_, HolderLookup.Provider p_323702_) {
-        super.saveAdditional(p_187495_, p_323702_);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
         if (this.destroyTarget != null) {
-            p_187495_.putUUID("Target", this.destroyTarget.getUUID());
+            tag.putUUID("Target", this.destroyTarget.getUUID());
         }
     }
 
@@ -73,69 +73,69 @@ public class ConduitBlockEntity extends BlockEntity {
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider p_324390_) {
-        return this.saveCustomOnly(p_324390_);
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        return this.saveCustomOnly(registries);
     }
 
-    public static void clientTick(Level p_155404_, BlockPos p_155405_, BlockState p_155406_, ConduitBlockEntity p_155407_) {
-        p_155407_.tickCount++;
-        long i = p_155404_.getGameTime();
-        List<BlockPos> list = p_155407_.effectBlocks;
+    public static void clientTick(Level level, BlockPos pos, BlockState state, ConduitBlockEntity blockEntity) {
+        blockEntity.tickCount++;
+        long i = level.getGameTime();
+        List<BlockPos> list = blockEntity.effectBlocks;
         if (i % 40L == 0L) {
-            p_155407_.isActive = updateShape(p_155404_, p_155405_, list);
-            updateHunting(p_155407_, list);
+            blockEntity.isActive = updateShape(level, pos, list);
+            updateHunting(blockEntity, list);
         }
 
-        updateClientTarget(p_155404_, p_155405_, p_155407_);
-        animationTick(p_155404_, p_155405_, list, p_155407_.destroyTarget, p_155407_.tickCount);
-        if (p_155407_.isActive()) {
-            p_155407_.activeRotation++;
+        updateClientTarget(level, pos, blockEntity);
+        animationTick(level, pos, list, blockEntity.destroyTarget, blockEntity.tickCount);
+        if (blockEntity.isActive()) {
+            blockEntity.activeRotation++;
         }
     }
 
-    public static void serverTick(Level p_155439_, BlockPos p_155440_, BlockState p_155441_, ConduitBlockEntity p_155442_) {
-        p_155442_.tickCount++;
-        long i = p_155439_.getGameTime();
-        List<BlockPos> list = p_155442_.effectBlocks;
+    public static void serverTick(Level level, BlockPos pos, BlockState state, ConduitBlockEntity blockEntity) {
+        blockEntity.tickCount++;
+        long i = level.getGameTime();
+        List<BlockPos> list = blockEntity.effectBlocks;
         if (i % 40L == 0L) {
-            boolean flag = updateShape(p_155439_, p_155440_, list);
-            if (flag != p_155442_.isActive) {
+            boolean flag = updateShape(level, pos, list);
+            if (flag != blockEntity.isActive) {
                 SoundEvent soundevent = flag ? SoundEvents.CONDUIT_ACTIVATE : SoundEvents.CONDUIT_DEACTIVATE;
-                p_155439_.playSound(null, p_155440_, soundevent, SoundSource.BLOCKS, 1.0F, 1.0F);
+                level.playSound(null, pos, soundevent, SoundSource.BLOCKS, 1.0F, 1.0F);
             }
 
-            p_155442_.isActive = flag;
-            updateHunting(p_155442_, list);
+            blockEntity.isActive = flag;
+            updateHunting(blockEntity, list);
             if (flag) {
-                applyEffects(p_155439_, p_155440_, list);
-                updateDestroyTarget(p_155439_, p_155440_, p_155441_, list, p_155442_);
+                applyEffects(level, pos, list);
+                updateDestroyTarget(level, pos, state, list, blockEntity);
             }
         }
 
-        if (p_155442_.isActive()) {
+        if (blockEntity.isActive()) {
             if (i % 80L == 0L) {
-                p_155439_.playSound(null, p_155440_, SoundEvents.CONDUIT_AMBIENT, SoundSource.BLOCKS, 1.0F, 1.0F);
+                level.playSound(null, pos, SoundEvents.CONDUIT_AMBIENT, SoundSource.BLOCKS, 1.0F, 1.0F);
             }
 
-            if (i > p_155442_.nextAmbientSoundActivation) {
-                p_155442_.nextAmbientSoundActivation = i + 60L + (long)p_155439_.getRandom().nextInt(40);
-                p_155439_.playSound(null, p_155440_, SoundEvents.CONDUIT_AMBIENT_SHORT, SoundSource.BLOCKS, 1.0F, 1.0F);
+            if (i > blockEntity.nextAmbientSoundActivation) {
+                blockEntity.nextAmbientSoundActivation = i + 60L + (long)level.getRandom().nextInt(40);
+                level.playSound(null, pos, SoundEvents.CONDUIT_AMBIENT_SHORT, SoundSource.BLOCKS, 1.0F, 1.0F);
             }
         }
     }
 
-    private static void updateHunting(ConduitBlockEntity p_155429_, List<BlockPos> p_155430_) {
-        p_155429_.setHunting(p_155430_.size() >= 42);
+    private static void updateHunting(ConduitBlockEntity blockEntity, List<BlockPos> positions) {
+        blockEntity.setHunting(positions.size() >= 42);
     }
 
-    private static boolean updateShape(Level p_155415_, BlockPos p_155416_, List<BlockPos> p_155417_) {
-        p_155417_.clear();
+    private static boolean updateShape(Level level, BlockPos pos, List<BlockPos> positions) {
+        positions.clear();
 
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
                 for (int k = -1; k <= 1; k++) {
-                    BlockPos blockpos = p_155416_.offset(i, j, k);
-                    if (!p_155415_.isWaterAt(blockpos)) {
+                    BlockPos blockpos = pos.offset(i, j, k);
+                    if (!level.isWaterAt(blockpos)) {
                         return false;
                     }
                 }
@@ -149,126 +149,126 @@ public class ConduitBlockEntity extends BlockEntity {
                     int l = Math.abs(k1);
                     int i1 = Math.abs(l1);
                     if ((i2 > 1 || l > 1 || i1 > 1) && (j1 == 0 && (l == 2 || i1 == 2) || k1 == 0 && (i2 == 2 || i1 == 2) || l1 == 0 && (i2 == 2 || l == 2))) {
-                        BlockPos blockpos1 = p_155416_.offset(j1, k1, l1);
-                        BlockState blockstate = p_155415_.getBlockState(blockpos1);
+                        BlockPos blockpos1 = pos.offset(j1, k1, l1);
+                        BlockState blockstate = level.getBlockState(blockpos1);
 
-                        if (blockstate.isConduitFrame(p_155415_, blockpos1, p_155416_)) {
-                            p_155417_.add(blockpos1);
+                        if (blockstate.isConduitFrame(level, blockpos1, pos)) {
+                            positions.add(blockpos1);
                         }
                     }
                 }
             }
         }
 
-        return p_155417_.size() >= 16;
+        return positions.size() >= 16;
     }
 
-    private static void applyEffects(Level p_155444_, BlockPos p_155445_, List<BlockPos> p_155446_) {
-        int i = p_155446_.size();
+    private static void applyEffects(Level level, BlockPos pos, List<BlockPos> positions) {
+        int i = positions.size();
         int j = i / 7 * 16;
-        int k = p_155445_.getX();
-        int l = p_155445_.getY();
-        int i1 = p_155445_.getZ();
+        int k = pos.getX();
+        int l = pos.getY();
+        int i1 = pos.getZ();
         AABB aabb = new AABB((double)k, (double)l, (double)i1, (double)(k + 1), (double)(l + 1), (double)(i1 + 1))
             .inflate((double)j)
-            .expandTowards(0.0, (double)p_155444_.getHeight(), 0.0);
-        List<Player> list = p_155444_.getEntitiesOfClass(Player.class, aabb);
+            .expandTowards(0.0, (double)level.getHeight(), 0.0);
+        List<Player> list = level.getEntitiesOfClass(Player.class, aabb);
         if (!list.isEmpty()) {
             for (Player player : list) {
-                if (p_155445_.closerThan(player.blockPosition(), (double)j) && player.isInWaterOrRain()) {
+                if (pos.closerThan(player.blockPosition(), (double)j) && player.isInWaterOrRain()) {
                     player.addEffect(new MobEffectInstance(MobEffects.CONDUIT_POWER, 260, 0, true, true));
                 }
             }
         }
     }
 
-    private static void updateDestroyTarget(Level p_155409_, BlockPos p_155410_, BlockState p_155411_, List<BlockPos> p_155412_, ConduitBlockEntity p_155413_) {
-        LivingEntity livingentity = p_155413_.destroyTarget;
-        int i = p_155412_.size();
+    private static void updateDestroyTarget(Level level, BlockPos pos, BlockState state, List<BlockPos> positions, ConduitBlockEntity blockEntity) {
+        LivingEntity livingentity = blockEntity.destroyTarget;
+        int i = positions.size();
         if (i < 42) {
-            p_155413_.destroyTarget = null;
-        } else if (p_155413_.destroyTarget == null && p_155413_.destroyTargetUUID != null) {
-            p_155413_.destroyTarget = findDestroyTarget(p_155409_, p_155410_, p_155413_.destroyTargetUUID);
-            p_155413_.destroyTargetUUID = null;
-        } else if (p_155413_.destroyTarget == null) {
-            List<LivingEntity> list = p_155409_.getEntitiesOfClass(
-                LivingEntity.class, getDestroyRangeAABB(p_155410_), p_350210_ -> p_350210_ instanceof Enemy && p_350210_.isInWaterOrRain()
+            blockEntity.destroyTarget = null;
+        } else if (blockEntity.destroyTarget == null && blockEntity.destroyTargetUUID != null) {
+            blockEntity.destroyTarget = findDestroyTarget(level, pos, blockEntity.destroyTargetUUID);
+            blockEntity.destroyTargetUUID = null;
+        } else if (blockEntity.destroyTarget == null) {
+            List<LivingEntity> list = level.getEntitiesOfClass(
+                LivingEntity.class, getDestroyRangeAABB(pos), p_350210_ -> p_350210_ instanceof Enemy && p_350210_.isInWaterOrRain()
             );
             if (!list.isEmpty()) {
-                p_155413_.destroyTarget = list.get(p_155409_.random.nextInt(list.size()));
+                blockEntity.destroyTarget = list.get(level.random.nextInt(list.size()));
             }
-        } else if (!p_155413_.destroyTarget.isAlive() || !p_155410_.closerThan(p_155413_.destroyTarget.blockPosition(), 8.0)) {
-            p_155413_.destroyTarget = null;
+        } else if (!blockEntity.destroyTarget.isAlive() || !pos.closerThan(blockEntity.destroyTarget.blockPosition(), 8.0)) {
+            blockEntity.destroyTarget = null;
         }
 
-        if (p_155413_.destroyTarget != null) {
-            p_155409_.playSound(
+        if (blockEntity.destroyTarget != null) {
+            level.playSound(
                 null,
-                p_155413_.destroyTarget.getX(),
-                p_155413_.destroyTarget.getY(),
-                p_155413_.destroyTarget.getZ(),
+                blockEntity.destroyTarget.getX(),
+                blockEntity.destroyTarget.getY(),
+                blockEntity.destroyTarget.getZ(),
                 SoundEvents.CONDUIT_ATTACK_TARGET,
                 SoundSource.BLOCKS,
                 1.0F,
                 1.0F
             );
-            p_155413_.destroyTarget.hurt(p_155409_.damageSources().magic(), 4.0F);
+            blockEntity.destroyTarget.hurt(level.damageSources().magic(), 4.0F);
         }
 
-        if (livingentity != p_155413_.destroyTarget) {
-            p_155409_.sendBlockUpdated(p_155410_, p_155411_, p_155411_, 2);
+        if (livingentity != blockEntity.destroyTarget) {
+            level.sendBlockUpdated(pos, state, state, 2);
         }
     }
 
-    private static void updateClientTarget(Level p_155400_, BlockPos p_155401_, ConduitBlockEntity p_155402_) {
-        if (p_155402_.destroyTargetUUID == null) {
-            p_155402_.destroyTarget = null;
-        } else if (p_155402_.destroyTarget == null || !p_155402_.destroyTarget.getUUID().equals(p_155402_.destroyTargetUUID)) {
-            p_155402_.destroyTarget = findDestroyTarget(p_155400_, p_155401_, p_155402_.destroyTargetUUID);
-            if (p_155402_.destroyTarget == null) {
-                p_155402_.destroyTargetUUID = null;
+    private static void updateClientTarget(Level level, BlockPos pos, ConduitBlockEntity blockEntity) {
+        if (blockEntity.destroyTargetUUID == null) {
+            blockEntity.destroyTarget = null;
+        } else if (blockEntity.destroyTarget == null || !blockEntity.destroyTarget.getUUID().equals(blockEntity.destroyTargetUUID)) {
+            blockEntity.destroyTarget = findDestroyTarget(level, pos, blockEntity.destroyTargetUUID);
+            if (blockEntity.destroyTarget == null) {
+                blockEntity.destroyTargetUUID = null;
             }
         }
     }
 
-    private static AABB getDestroyRangeAABB(BlockPos p_155432_) {
-        int i = p_155432_.getX();
-        int j = p_155432_.getY();
-        int k = p_155432_.getZ();
+    private static AABB getDestroyRangeAABB(BlockPos pos) {
+        int i = pos.getX();
+        int j = pos.getY();
+        int k = pos.getZ();
         return new AABB((double)i, (double)j, (double)k, (double)(i + 1), (double)(j + 1), (double)(k + 1)).inflate(8.0);
     }
 
     @Nullable
-    private static LivingEntity findDestroyTarget(Level p_155425_, BlockPos p_155426_, UUID p_155427_) {
-        List<LivingEntity> list = p_155425_.getEntitiesOfClass(
-            LivingEntity.class, getDestroyRangeAABB(p_155426_), p_352880_ -> p_352880_.getUUID().equals(p_155427_)
+    private static LivingEntity findDestroyTarget(Level level, BlockPos pos, UUID targetId) {
+        List<LivingEntity> list = level.getEntitiesOfClass(
+            LivingEntity.class, getDestroyRangeAABB(pos), p_352880_ -> p_352880_.getUUID().equals(targetId)
         );
         return list.size() == 1 ? list.get(0) : null;
     }
 
-    private static void animationTick(Level p_155419_, BlockPos p_155420_, List<BlockPos> p_155421_, @Nullable Entity p_155422_, int p_155423_) {
-        RandomSource randomsource = p_155419_.random;
-        double d0 = (double)(Mth.sin((float)(p_155423_ + 35) * 0.1F) / 2.0F + 0.5F);
+    private static void animationTick(Level level, BlockPos pos, List<BlockPos> positions, @Nullable Entity entity, int tickCount) {
+        RandomSource randomsource = level.random;
+        double d0 = (double)(Mth.sin((float)(tickCount + 35) * 0.1F) / 2.0F + 0.5F);
         d0 = (d0 * d0 + d0) * 0.3F;
-        Vec3 vec3 = new Vec3((double)p_155420_.getX() + 0.5, (double)p_155420_.getY() + 1.5 + d0, (double)p_155420_.getZ() + 0.5);
+        Vec3 vec3 = new Vec3((double)pos.getX() + 0.5, (double)pos.getY() + 1.5 + d0, (double)pos.getZ() + 0.5);
 
-        for (BlockPos blockpos : p_155421_) {
+        for (BlockPos blockpos : positions) {
             if (randomsource.nextInt(50) == 0) {
-                BlockPos blockpos1 = blockpos.subtract(p_155420_);
+                BlockPos blockpos1 = blockpos.subtract(pos);
                 float f = -0.5F + randomsource.nextFloat() + (float)blockpos1.getX();
                 float f1 = -2.0F + randomsource.nextFloat() + (float)blockpos1.getY();
                 float f2 = -0.5F + randomsource.nextFloat() + (float)blockpos1.getZ();
-                p_155419_.addParticle(ParticleTypes.NAUTILUS, vec3.x, vec3.y, vec3.z, (double)f, (double)f1, (double)f2);
+                level.addParticle(ParticleTypes.NAUTILUS, vec3.x, vec3.y, vec3.z, (double)f, (double)f1, (double)f2);
             }
         }
 
-        if (p_155422_ != null) {
-            Vec3 vec31 = new Vec3(p_155422_.getX(), p_155422_.getEyeY(), p_155422_.getZ());
-            float f3 = (-0.5F + randomsource.nextFloat()) * (3.0F + p_155422_.getBbWidth());
-            float f4 = -1.0F + randomsource.nextFloat() * p_155422_.getBbHeight();
-            float f5 = (-0.5F + randomsource.nextFloat()) * (3.0F + p_155422_.getBbWidth());
+        if (entity != null) {
+            Vec3 vec31 = new Vec3(entity.getX(), entity.getEyeY(), entity.getZ());
+            float f3 = (-0.5F + randomsource.nextFloat()) * (3.0F + entity.getBbWidth());
+            float f4 = -1.0F + randomsource.nextFloat() * entity.getBbHeight();
+            float f5 = (-0.5F + randomsource.nextFloat()) * (3.0F + entity.getBbWidth());
             Vec3 vec32 = new Vec3((double)f3, (double)f4, (double)f5);
-            p_155419_.addParticle(ParticleTypes.NAUTILUS, vec31.x, vec31.y, vec31.z, vec32.x, vec32.y, vec32.z);
+            level.addParticle(ParticleTypes.NAUTILUS, vec31.x, vec31.y, vec31.z, vec32.x, vec32.y, vec32.z);
         }
     }
 
@@ -280,11 +280,11 @@ public class ConduitBlockEntity extends BlockEntity {
         return this.isHunting;
     }
 
-    private void setHunting(boolean p_59215_) {
-        this.isHunting = p_59215_;
+    private void setHunting(boolean isHunting) {
+        this.isHunting = isHunting;
     }
 
-    public float getActiveRotation(float p_59198_) {
-        return (this.activeRotation + p_59198_) * -0.0375F;
+    public float getActiveRotation(float partialTick) {
+        return (this.activeRotation + partialTick) * -0.0375F;
     }
 }

@@ -32,11 +32,11 @@ public class SpriteSourceList {
     private static final FileToIdConverter ATLAS_INFO_CONVERTER = new FileToIdConverter("atlases", ".json");
     private final List<SpriteSource> sources;
 
-    private SpriteSourceList(List<SpriteSource> p_295898_) {
-        this.sources = p_295898_;
+    private SpriteSourceList(List<SpriteSource> sources) {
+        this.sources = sources;
     }
 
-    public List<Function<SpriteResourceLoader, SpriteContents>> list(ResourceManager p_294111_) {
+    public List<Function<SpriteResourceLoader, SpriteContents>> list(ResourceManager resourceManager) {
         final Map<ResourceLocation, SpriteSource.SpriteSupplier> map = new HashMap<>();
         SpriteSource.Output spritesource$output = new SpriteSource.Output() {
             @Override
@@ -60,18 +60,18 @@ public class SpriteSourceList {
                 }
             }
         };
-        this.sources.forEach(p_295860_ -> p_295860_.run(p_294111_, spritesource$output));
+        this.sources.forEach(p_295860_ -> p_295860_.run(resourceManager, spritesource$output));
         Builder<Function<SpriteResourceLoader, SpriteContents>> builder = ImmutableList.builder();
         builder.add(p_295583_ -> MissingTextureAtlasSprite.create());
         builder.addAll(map.values());
         return builder.build();
     }
 
-    public static SpriteSourceList load(ResourceManager p_295606_, ResourceLocation p_295617_) {
-        ResourceLocation resourcelocation = ATLAS_INFO_CONVERTER.idToFile(p_295617_);
+    public static SpriteSourceList load(ResourceManager resourceManager, ResourceLocation sprite) {
+        ResourceLocation resourcelocation = ATLAS_INFO_CONVERTER.idToFile(sprite);
         List<SpriteSource> list = new ArrayList<>();
 
-        for (Resource resource : p_295606_.getResourceStack(resourcelocation)) {
+        for (Resource resource : resourceManager.getResourceStack(resourcelocation)) {
             try (BufferedReader bufferedreader = resource.openAsReader()) {
                 Dynamic<JsonElement> dynamic = new Dynamic<>(JsonOps.INSTANCE, JsonParser.parseReader(bufferedreader));
                 list.addAll(SpriteSources.FILE_CODEC.parse(dynamic).getOrThrow());

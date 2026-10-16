@@ -41,9 +41,9 @@ public class GLX {
             : GlStateManager._getString(7937) + " GL version " + GlStateManager._getString(7938) + ", " + GlStateManager._getString(7936);
     }
 
-    public static int _getRefreshRate(Window p_69342_) {
+    public static int _getRefreshRate(Window window) {
         RenderSystem.assertOnRenderThread();
-        long i = GLFW.glfwGetWindowMonitor(p_69342_.getWindow());
+        long i = GLFW.glfwGetWindowMonitor(window.getWindow());
         if (i == 0L) {
             i = GLFW.glfwGetPrimaryMonitor();
         }
@@ -79,18 +79,18 @@ public class GLX {
         }
     }
 
-    public static void _setGlfwErrorCallback(GLFWErrorCallbackI p_69353_) {
-        GLFWErrorCallback glfwerrorcallback = GLFW.glfwSetErrorCallback(p_69353_);
+    public static void _setGlfwErrorCallback(GLFWErrorCallbackI errorCallback) {
+        GLFWErrorCallback glfwerrorcallback = GLFW.glfwSetErrorCallback(errorCallback);
         if (glfwerrorcallback != null) {
             glfwerrorcallback.free();
         }
     }
 
-    public static boolean _shouldClose(Window p_69356_) {
-        return GLFW.glfwWindowShouldClose(p_69356_.getWindow());
+    public static boolean _shouldClose(Window window) {
+        return GLFW.glfwWindowShouldClose(window.getWindow());
     }
 
-    public static void _init(int p_69344_, boolean p_69345_) {
+    public static void _init(int debugVerbosity, boolean synchronous) {
         try {
             CentralProcessor centralprocessor = new SystemInfo().getHardware().getProcessor();
             cpuInfo = String.format(Locale.ROOT, "%dx %s", centralprocessor.getLogicalProcessorCount(), centralprocessor.getProcessorIdentifier().getName())
@@ -98,15 +98,15 @@ public class GLX {
         } catch (Throwable throwable) {
         }
 
-        GlDebug.enableDebugCallback(p_69344_, p_69345_);
+        GlDebug.enableDebugCallback(debugVerbosity, synchronous);
     }
 
     public static String _getCpuInfo() {
         return cpuInfo == null ? "<unknown>" : cpuInfo;
     }
 
-    public static void _renderCrosshair(int p_69348_, boolean p_69349_, boolean p_69350_, boolean p_69351_) {
-        if (p_69349_ || p_69350_ || p_69351_) {
+    public static void _renderCrosshair(int lineLength, boolean renderX, boolean renderY, boolean renderZ) {
+        if (renderX || renderY || renderZ) {
             RenderSystem.assertOnRenderThread();
             GlStateManager._depthMask(false);
             GlStateManager._disableCull();
@@ -114,37 +114,37 @@ public class GLX {
             Tesselator tesselator = RenderSystem.renderThreadTesselator();
             BufferBuilder bufferbuilder = tesselator.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR_NORMAL);
             RenderSystem.lineWidth(4.0F);
-            if (p_69349_) {
+            if (renderX) {
                 bufferbuilder.addVertex(0.0F, 0.0F, 0.0F).setColor(-16777216).setNormal(1.0F, 0.0F, 0.0F);
-                bufferbuilder.addVertex((float)p_69348_, 0.0F, 0.0F).setColor(-16777216).setNormal(1.0F, 0.0F, 0.0F);
+                bufferbuilder.addVertex((float)lineLength, 0.0F, 0.0F).setColor(-16777216).setNormal(1.0F, 0.0F, 0.0F);
             }
 
-            if (p_69350_) {
+            if (renderY) {
                 bufferbuilder.addVertex(0.0F, 0.0F, 0.0F).setColor(-16777216).setNormal(0.0F, 1.0F, 0.0F);
-                bufferbuilder.addVertex(0.0F, (float)p_69348_, 0.0F).setColor(-16777216).setNormal(0.0F, 1.0F, 0.0F);
+                bufferbuilder.addVertex(0.0F, (float)lineLength, 0.0F).setColor(-16777216).setNormal(0.0F, 1.0F, 0.0F);
             }
 
-            if (p_69351_) {
+            if (renderZ) {
                 bufferbuilder.addVertex(0.0F, 0.0F, 0.0F).setColor(-16777216).setNormal(0.0F, 0.0F, 1.0F);
-                bufferbuilder.addVertex(0.0F, 0.0F, (float)p_69348_).setColor(-16777216).setNormal(0.0F, 0.0F, 1.0F);
+                bufferbuilder.addVertex(0.0F, 0.0F, (float)lineLength).setColor(-16777216).setNormal(0.0F, 0.0F, 1.0F);
             }
 
             BufferUploader.drawWithShader(bufferbuilder.buildOrThrow());
             RenderSystem.lineWidth(2.0F);
             bufferbuilder = tesselator.begin(VertexFormat.Mode.LINES, DefaultVertexFormat.POSITION_COLOR_NORMAL);
-            if (p_69349_) {
+            if (renderX) {
                 bufferbuilder.addVertex(0.0F, 0.0F, 0.0F).setColor(-65536).setNormal(1.0F, 0.0F, 0.0F);
-                bufferbuilder.addVertex((float)p_69348_, 0.0F, 0.0F).setColor(-65536).setNormal(1.0F, 0.0F, 0.0F);
+                bufferbuilder.addVertex((float)lineLength, 0.0F, 0.0F).setColor(-65536).setNormal(1.0F, 0.0F, 0.0F);
             }
 
-            if (p_69350_) {
+            if (renderY) {
                 bufferbuilder.addVertex(0.0F, 0.0F, 0.0F).setColor(-16711936).setNormal(0.0F, 1.0F, 0.0F);
-                bufferbuilder.addVertex(0.0F, (float)p_69348_, 0.0F).setColor(-16711936).setNormal(0.0F, 1.0F, 0.0F);
+                bufferbuilder.addVertex(0.0F, (float)lineLength, 0.0F).setColor(-16711936).setNormal(0.0F, 1.0F, 0.0F);
             }
 
-            if (p_69351_) {
+            if (renderZ) {
                 bufferbuilder.addVertex(0.0F, 0.0F, 0.0F).setColor(-8421377).setNormal(0.0F, 0.0F, 1.0F);
-                bufferbuilder.addVertex(0.0F, 0.0F, (float)p_69348_).setColor(-8421377).setNormal(0.0F, 0.0F, 1.0F);
+                bufferbuilder.addVertex(0.0F, 0.0F, (float)lineLength).setColor(-8421377).setNormal(0.0F, 0.0F, 1.0F);
             }
 
             BufferUploader.drawWithShader(bufferbuilder.buildOrThrow());
@@ -154,12 +154,12 @@ public class GLX {
         }
     }
 
-    public static <T> T make(Supplier<T> p_69374_) {
-        return p_69374_.get();
+    public static <T> T make(Supplier<T> supplier) {
+        return supplier.get();
     }
 
-    public static <T> T make(T p_69371_, Consumer<T> p_69372_) {
-        p_69372_.accept(p_69371_);
-        return p_69371_;
+    public static <T> T make(T value, Consumer<T> consumer) {
+        consumer.accept(value);
+        return value;
     }
 }

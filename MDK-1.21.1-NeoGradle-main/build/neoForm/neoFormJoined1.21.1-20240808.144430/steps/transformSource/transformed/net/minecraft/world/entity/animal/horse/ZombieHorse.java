@@ -29,8 +29,8 @@ public class ZombieHorse extends AbstractHorse {
         .withAttachments(EntityAttachments.builder().attach(EntityAttachment.PASSENGER, 0.0F, EntityType.ZOMBIE_HORSE.getHeight() - 0.03125F, 0.0F))
         .scale(0.5F);
 
-    public ZombieHorse(EntityType<? extends ZombieHorse> p_30994_, Level p_30995_) {
-        super(p_30994_, p_30995_);
+    public ZombieHorse(EntityType<? extends ZombieHorse> entityType, Level level) {
+        super(entityType, level);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -38,16 +38,16 @@ public class ZombieHorse extends AbstractHorse {
     }
 
     public static boolean checkZombieHorseSpawnRules(
-        EntityType<? extends Animal> p_312450_, LevelAccessor p_312340_, MobSpawnType p_312031_, BlockPos p_311838_, RandomSource p_312514_
+        EntityType<? extends Animal> animal, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return !MobSpawnType.isSpawner(p_312031_)
-            ? Animal.checkAnimalSpawnRules(p_312450_, p_312340_, p_312031_, p_311838_, p_312514_)
-            : MobSpawnType.ignoresLightRequirements(p_312031_) || isBrightEnoughToSpawn(p_312340_, p_311838_);
+        return !MobSpawnType.isSpawner(spawnType)
+            ? Animal.checkAnimalSpawnRules(animal, level, spawnType, pos, random)
+            : MobSpawnType.ignoresLightRequirements(spawnType) || isBrightEnoughToSpawn(level, pos);
     }
 
     @Override
-    protected void randomizeAttributes(RandomSource p_218823_) {
-        this.getAttribute(Attributes.JUMP_STRENGTH).setBaseValue(generateJumpStrength(p_218823_::nextDouble));
+    protected void randomizeAttributes(RandomSource random) {
+        this.getAttribute(Attributes.JUMP_STRENGTH).setBaseValue(generateJumpStrength(random::nextDouble));
     }
 
     @Override
@@ -61,19 +61,19 @@ public class ZombieHorse extends AbstractHorse {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_31006_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.ZOMBIE_HORSE_HURT;
     }
 
     @Nullable
     @Override
-    public AgeableMob getBreedOffspring(ServerLevel p_149561_, AgeableMob p_149562_) {
-        return EntityType.ZOMBIE_HORSE.create(p_149561_);
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        return EntityType.ZOMBIE_HORSE.create(level);
     }
 
     @Override
-    public InteractionResult mobInteract(Player p_31001_, InteractionHand p_31002_) {
-        return !this.isTamed() ? InteractionResult.PASS : super.mobInteract(p_31001_, p_31002_);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        return !this.isTamed() ? InteractionResult.PASS : super.mobInteract(player, hand);
     }
 
     @Override
@@ -81,7 +81,7 @@ public class ZombieHorse extends AbstractHorse {
     }
 
     @Override
-    public EntityDimensions getDefaultDimensions(Pose p_316239_) {
-        return this.isBaby() ? BABY_DIMENSIONS : super.getDefaultDimensions(p_316239_);
+    public EntityDimensions getDefaultDimensions(Pose pose) {
+        return this.isBaby() ? BABY_DIMENSIONS : super.getDefaultDimensions(pose);
     }
 }

@@ -45,23 +45,23 @@ public class ServerPlayerGameMode {
     private int delayedTickStart;
     private int lastSentState = -1;
 
-    public ServerPlayerGameMode(ServerPlayer p_143472_) {
-        this.player = p_143472_;
-        this.level = p_143472_.serverLevel();
+    public ServerPlayerGameMode(ServerPlayer player) {
+        this.player = player;
+        this.level = player.serverLevel();
     }
 
-    public boolean changeGameModeForPlayer(GameType p_143474_) {
-        if (p_143474_ == this.gameModeForPlayer) {
+    public boolean changeGameModeForPlayer(GameType gameModeForPlayer) {
+        if (gameModeForPlayer == this.gameModeForPlayer) {
             return false;
         } else {
-            this.setGameModeForPlayer(p_143474_, this.previousGameModeForPlayer);
+            this.setGameModeForPlayer(gameModeForPlayer, this.previousGameModeForPlayer);
             this.player.onUpdateAbilities();
             this.player
                 .server
                 .getPlayerList()
                 .broadcastAll(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE, this.player));
             this.level.updateSleepingPlayerList();
-            if (p_143474_ == GameType.CREATIVE) {
+            if (gameModeForPlayer == GameType.CREATIVE) {
                 this.player.resetCurrentImpulseContext();
             }
 
@@ -69,12 +69,12 @@ public class ServerPlayerGameMode {
         }
     }
 
-    protected void setGameModeForPlayer(GameType p_9274_, @Nullable GameType p_9275_) {
-        this.previousGameModeForPlayer = p_9275_;
-        this.gameModeForPlayer = p_9274_;
+    protected void setGameModeForPlayer(GameType gameModeForPlayer, @Nullable GameType previousGameModeForPlayer) {
+        this.previousGameModeForPlayer = previousGameModeForPlayer;
+        this.gameModeForPlayer = gameModeForPlayer;
         // Neo: preserve flying state, removed on tick if Attribute or ability no longer applies
         boolean wasFlying = this.player.getAbilities().flying;
-        p_9274_.updatePlayerAbilities(this.player.getAbilities());
+        gameModeForPlayer.updatePlayerAbilities(this.player.getAbilities());
         this.player.getAbilities().flying = wasFlying || this.player.getAbilities().flying;
     }
 
@@ -120,53 +120,53 @@ public class ServerPlayerGameMode {
         }
     }
 
-    private float incrementDestroyProgress(BlockState p_9277_, BlockPos p_9278_, int p_9279_) {
-        int i = this.gameTicks - p_9279_;
-        float f = p_9277_.getDestroyProgress(this.player, this.player.level(), p_9278_) * (float)(i + 1);
+    private float incrementDestroyProgress(BlockState state, BlockPos pos, int startTick) {
+        int i = this.gameTicks - startTick;
+        float f = state.getDestroyProgress(this.player, this.player.level(), pos) * (float)(i + 1);
         int j = (int)(f * 10.0F);
         if (j != this.lastSentState) {
-            this.level.destroyBlockProgress(this.player.getId(), p_9278_, j);
+            this.level.destroyBlockProgress(this.player.getId(), pos, j);
             this.lastSentState = j;
         }
 
         return f;
     }
 
-    private void debugLogging(BlockPos p_215126_, boolean p_215127_, int p_215128_, String p_215129_) {
+    private void debugLogging(BlockPos pos, boolean terminate, int sequence, String message) {
     }
 
-    public void handleBlockBreakAction(BlockPos p_215120_, ServerboundPlayerActionPacket.Action p_215121_, Direction p_215122_, int p_215123_, int p_215124_) {
-        net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.LeftClickBlock event = net.neoforged.neoforge.common.CommonHooks.onLeftClickBlock(player, p_215120_, p_215122_, p_215121_);
+    public void handleBlockBreakAction(BlockPos pos, ServerboundPlayerActionPacket.Action action, Direction face, int maxBuildHeight, int sequence) {
+        net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.LeftClickBlock event = net.neoforged.neoforge.common.CommonHooks.onLeftClickBlock(player, pos, face, action);
         if (event.isCanceled()) {
             return;
         }
-        if (!this.player.canInteractWithBlock(p_215120_, 1.0)) {
-            this.debugLogging(p_215120_, false, p_215124_, "too far");
-        } else if (p_215120_.getY() >= p_215123_) {
-            this.player.connection.send(new ClientboundBlockUpdatePacket(p_215120_, this.level.getBlockState(p_215120_)));
-            this.debugLogging(p_215120_, false, p_215124_, "too high");
+        if (!this.player.canInteractWithBlock(pos, 1.0)) {
+            this.debugLogging(pos, false, sequence, "too far");
+        } else if (pos.getY() >= maxBuildHeight) {
+            this.player.connection.send(new ClientboundBlockUpdatePacket(pos, this.level.getBlockState(pos)));
+            this.debugLogging(pos, false, sequence, "too high");
         } else {
-            if (p_215121_ == ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK) {
-                if (!this.level.mayInteract(this.player, p_215120_)) {
-                    this.player.connection.send(new ClientboundBlockUpdatePacket(p_215120_, this.level.getBlockState(p_215120_)));
-                    this.debugLogging(p_215120_, false, p_215124_, "may not interact");
+            if (action == ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK) {
+                if (!this.level.mayInteract(this.player, pos)) {
+                    this.player.connection.send(new ClientboundBlockUpdatePacket(pos, this.level.getBlockState(pos)));
+                    this.debugLogging(pos, false, sequence, "may not interact");
                     return;
                 }
 
                 if (this.isCreative()) {
-                    this.destroyAndAck(p_215120_, p_215124_, "creative destroy");
+                    this.destroyAndAck(pos, sequence, "creative destroy");
                     return;
                 }
 
-                if (this.player.blockActionRestricted(this.level, p_215120_, this.gameModeForPlayer)) {
-                    this.player.connection.send(new ClientboundBlockUpdatePacket(p_215120_, this.level.getBlockState(p_215120_)));
-                    this.debugLogging(p_215120_, false, p_215124_, "block action restricted");
+                if (this.player.blockActionRestricted(this.level, pos, this.gameModeForPlayer)) {
+                    this.player.connection.send(new ClientboundBlockUpdatePacket(pos, this.level.getBlockState(pos)));
+                    this.debugLogging(pos, false, sequence, "block action restricted");
                     return;
                 }
 
                 this.destroyProgressStart = this.gameTicks;
                 float f = 1.0F;
-                BlockState blockstate = this.level.getBlockState(p_215120_);
+                BlockState blockstate = this.level.getBlockState(pos);
                 if (!blockstate.isAir()) {
                     EnchantmentHelper.onHitBlock(
                         this.level,
@@ -174,104 +174,107 @@ public class ServerPlayerGameMode {
                         this.player,
                         this.player,
                         EquipmentSlot.MAINHAND,
-                        Vec3.atCenterOf(p_215120_),
+                        Vec3.atCenterOf(pos),
                         blockstate,
                         p_348149_ -> this.player.onEquippedItemBroken(p_348149_, EquipmentSlot.MAINHAND)
                     );
                     if (event.getUseBlock() != net.neoforged.neoforge.common.util.TriState.FALSE)
-                    blockstate.attack(this.level, p_215120_, this.player);
-                    f = blockstate.getDestroyProgress(this.player, this.player.level(), p_215120_);
+                    blockstate.attack(this.level, pos, this.player);
+                    f = blockstate.getDestroyProgress(this.player, this.player.level(), pos);
                 }
 
                 if (!blockstate.isAir() && f >= 1.0F) {
-                    this.destroyAndAck(p_215120_, p_215124_, "insta mine");
+                    this.destroyAndAck(pos, sequence, "insta mine");
                 } else {
                     if (this.isDestroyingBlock) {
                         this.player.connection.send(new ClientboundBlockUpdatePacket(this.destroyPos, this.level.getBlockState(this.destroyPos)));
-                        this.debugLogging(p_215120_, false, p_215124_, "abort destroying since another started (client insta mine, server disagreed)");
+                        this.debugLogging(pos, false, sequence, "abort destroying since another started (client insta mine, server disagreed)");
                     }
 
                     this.isDestroyingBlock = true;
-                    this.destroyPos = p_215120_.immutable();
+                    this.destroyPos = pos.immutable();
                     int i = (int)(f * 10.0F);
-                    this.level.destroyBlockProgress(this.player.getId(), p_215120_, i);
-                    this.debugLogging(p_215120_, true, p_215124_, "actual start of destroying");
+                    this.level.destroyBlockProgress(this.player.getId(), pos, i);
+                    this.debugLogging(pos, true, sequence, "actual start of destroying");
                     this.lastSentState = i;
                 }
-            } else if (p_215121_ == ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK) {
-                if (p_215120_.equals(this.destroyPos)) {
+            } else if (action == ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK) {
+                if (pos.equals(this.destroyPos)) {
                     int j = this.gameTicks - this.destroyProgressStart;
-                    BlockState blockstate1 = this.level.getBlockState(p_215120_);
+                    BlockState blockstate1 = this.level.getBlockState(pos);
                     if (!blockstate1.isAir()) {
-                        float f1 = blockstate1.getDestroyProgress(this.player, this.player.level(), p_215120_) * (float)(j + 1);
+                        float f1 = blockstate1.getDestroyProgress(this.player, this.player.level(), pos) * (float)(j + 1);
                         if (f1 >= 0.7F) {
                             this.isDestroyingBlock = false;
-                            this.level.destroyBlockProgress(this.player.getId(), p_215120_, -1);
-                            this.destroyAndAck(p_215120_, p_215124_, "destroyed");
+                            this.level.destroyBlockProgress(this.player.getId(), pos, -1);
+                            this.destroyAndAck(pos, sequence, "destroyed");
                             return;
                         }
 
                         if (!this.hasDelayedDestroy) {
                             this.isDestroyingBlock = false;
                             this.hasDelayedDestroy = true;
-                            this.delayedDestroyPos = p_215120_;
+                            this.delayedDestroyPos = pos;
                             this.delayedTickStart = this.destroyProgressStart;
                         }
                     }
                 }
 
-                this.debugLogging(p_215120_, true, p_215124_, "stopped destroying");
-            } else if (p_215121_ == ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK) {
+                this.debugLogging(pos, true, sequence, "stopped destroying");
+            } else if (action == ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK) {
                 this.isDestroyingBlock = false;
-                if (!Objects.equals(this.destroyPos, p_215120_)) {
-                    LOGGER.warn("Mismatch in destroy block pos: {} {}", this.destroyPos, p_215120_);
+                if (!Objects.equals(this.destroyPos, pos)) {
+                    LOGGER.warn("Mismatch in destroy block pos: {} {}", this.destroyPos, pos);
                     this.level.destroyBlockProgress(this.player.getId(), this.destroyPos, -1);
-                    this.debugLogging(p_215120_, true, p_215124_, "aborted mismatched destroying");
+                    this.debugLogging(pos, true, sequence, "aborted mismatched destroying");
                 }
 
-                this.level.destroyBlockProgress(this.player.getId(), p_215120_, -1);
-                this.debugLogging(p_215120_, true, p_215124_, "aborted destroying");
+                this.level.destroyBlockProgress(this.player.getId(), pos, -1);
+                this.debugLogging(pos, true, sequence, "aborted destroying");
             }
         }
     }
 
-    public void destroyAndAck(BlockPos p_215117_, int p_215118_, String p_215119_) {
-        if (this.destroyBlock(p_215117_)) {
-            this.debugLogging(p_215117_, true, p_215118_, p_215119_);
+    public void destroyAndAck(BlockPos pos, int sequence, String message) {
+        if (this.destroyBlock(pos)) {
+            this.debugLogging(pos, true, sequence, message);
         } else {
-            this.player.connection.send(new ClientboundBlockUpdatePacket(p_215117_, this.level.getBlockState(p_215117_)));
-            this.debugLogging(p_215117_, false, p_215118_, p_215119_);
+            this.player.connection.send(new ClientboundBlockUpdatePacket(pos, this.level.getBlockState(pos)));
+            this.debugLogging(pos, false, sequence, message);
         }
     }
 
-    public boolean destroyBlock(BlockPos p_9281_) {
-        BlockState blockstate1 = this.level.getBlockState(p_9281_);
-        var event = net.neoforged.neoforge.common.CommonHooks.fireBlockBreak(level, gameModeForPlayer, player, p_9281_, blockstate1);
+    /**
+     * Attempts to harvest a block
+     */
+    public boolean destroyBlock(BlockPos pos) {
+        BlockState blockstate1 = this.level.getBlockState(pos);
+        var event = net.neoforged.neoforge.common.CommonHooks.fireBlockBreak(level, gameModeForPlayer, player, pos, blockstate1);
         if (event.isCanceled()) {
             return false;
         } else {
-            BlockEntity blockentity = this.level.getBlockEntity(p_9281_);
+            BlockEntity blockentity = this.level.getBlockEntity(pos);
             Block block = blockstate1.getBlock();
             if (block instanceof GameMasterBlock && !this.player.canUseGameMasterBlocks()) {
-                this.level.sendBlockUpdated(p_9281_, blockstate1, blockstate1, 3);
+                this.level.sendBlockUpdated(pos, blockstate1, blockstate1, 3);
                 return false;
-            } else if (this.player.blockActionRestricted(this.level, p_9281_, this.gameModeForPlayer)) {
+            } else if (this.player.blockActionRestricted(this.level, pos, this.gameModeForPlayer)) {
                 return false;
             } else {
-                BlockState blockstate = block.playerWillDestroy(this.level, p_9281_, blockstate1, this.player);
+                BlockState blockstate = block.playerWillDestroy(this.level, pos, blockstate1, this.player);
 
                 if (this.isCreative()) {
-                    removeBlock(p_9281_, blockstate, false);
+                    removeBlock(pos, blockstate, false);
                     return true;
                 } else {
                     ItemStack itemstack = this.player.getMainHandItem();
                     ItemStack itemstack1 = itemstack.copy();
-                    boolean flag1 = blockstate.canHarvestBlock(this.level, p_9281_, this.player); // previously player.hasCorrectToolForDrops(blockstate)
-                    itemstack.mineBlock(this.level, blockstate, p_9281_, this.player);
-                    boolean flag = removeBlock(p_9281_, blockstate, flag1);
+                    boolean flag1 = blockstate.canHarvestBlock(this.level, pos, this.player); // previously player.hasCorrectToolForDrops(blockstate)
+                    itemstack.mineBlock(this.level, blockstate, pos, this.player);
+                    boolean flag = removeBlock(pos, blockstate, flag1);
 
                     if (flag1 && flag) {
-                        block.playerDestroy(this.level, this.player, p_9281_, blockstate, blockentity, itemstack1);
+                        block.playerDestroy(this.level, this.player, pos, blockstate, blockentity, itemstack1);
                     }
 
                     // Neo: Fire the PlayerDestroyItemEvent if the tool was broken at any point during the break process
@@ -300,33 +303,33 @@ public class ServerPlayerGameMode {
         return removed;
     }
 
-    public InteractionResult useItem(ServerPlayer p_9262_, Level p_9263_, ItemStack p_9264_, InteractionHand p_9265_) {
+    public InteractionResult useItem(ServerPlayer player, Level level, ItemStack stack, InteractionHand hand) {
         if (this.gameModeForPlayer == GameType.SPECTATOR) {
             return InteractionResult.PASS;
-        } else if (p_9262_.getCooldowns().isOnCooldown(p_9264_.getItem())) {
+        } else if (player.getCooldowns().isOnCooldown(stack.getItem())) {
             return InteractionResult.PASS;
         } else {
-            InteractionResult cancelResult = net.neoforged.neoforge.common.CommonHooks.onItemRightClick(p_9262_, p_9265_);
+            InteractionResult cancelResult = net.neoforged.neoforge.common.CommonHooks.onItemRightClick(player, hand);
             if (cancelResult != null) return cancelResult;
-            int i = p_9264_.getCount();
-            int j = p_9264_.getDamageValue();
-            InteractionResultHolder<ItemStack> interactionresultholder = p_9264_.use(p_9263_, p_9262_, p_9265_);
+            int i = stack.getCount();
+            int j = stack.getDamageValue();
+            InteractionResultHolder<ItemStack> interactionresultholder = stack.use(level, player, hand);
             ItemStack itemstack = interactionresultholder.getObject();
-            if (itemstack == p_9264_ && itemstack.getCount() == i && itemstack.getUseDuration(p_9262_) <= 0 && itemstack.getDamageValue() == j) {
+            if (itemstack == stack && itemstack.getCount() == i && itemstack.getUseDuration(player) <= 0 && itemstack.getDamageValue() == j) {
                 return interactionresultholder.getResult();
-            } else if (interactionresultholder.getResult() == InteractionResult.FAIL && itemstack.getUseDuration(p_9262_) > 0 && !p_9262_.isUsingItem()) {
+            } else if (interactionresultholder.getResult() == InteractionResult.FAIL && itemstack.getUseDuration(player) > 0 && !player.isUsingItem()) {
                 return interactionresultholder.getResult();
             } else {
-                if (p_9264_ != itemstack) {
-                    p_9262_.setItemInHand(p_9265_, itemstack);
+                if (stack != itemstack) {
+                    player.setItemInHand(hand, itemstack);
                 }
 
                 if (itemstack.isEmpty()) {
-                    p_9262_.setItemInHand(p_9265_, ItemStack.EMPTY);
+                    player.setItemInHand(hand, ItemStack.EMPTY);
                 }
 
-                if (!p_9262_.isUsingItem()) {
-                    p_9262_.inventoryMenu.sendAllDataToRemote();
+                if (!player.isUsingItem()) {
+                    player.inventoryMenu.sendAllDataToRemote();
                 }
 
                 return interactionresultholder.getResult();
@@ -334,60 +337,60 @@ public class ServerPlayerGameMode {
         }
     }
 
-    public InteractionResult useItemOn(ServerPlayer p_9266_, Level p_9267_, ItemStack p_9268_, InteractionHand p_9269_, BlockHitResult p_9270_) {
-        BlockPos blockpos = p_9270_.getBlockPos();
-        BlockState blockstate = p_9267_.getBlockState(blockpos);
-        if (!blockstate.getBlock().isEnabled(p_9267_.enabledFeatures())) {
+    public InteractionResult useItemOn(ServerPlayer player, Level level, ItemStack stack, InteractionHand hand, BlockHitResult hitResult) {
+        BlockPos blockpos = hitResult.getBlockPos();
+        BlockState blockstate = level.getBlockState(blockpos);
+        if (!blockstate.getBlock().isEnabled(level.enabledFeatures())) {
             return InteractionResult.FAIL;
         }
-        net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock event = net.neoforged.neoforge.common.CommonHooks.onRightClickBlock(p_9266_, p_9269_, blockpos, p_9270_);
+        net.neoforged.neoforge.event.entity.player.PlayerInteractEvent.RightClickBlock event = net.neoforged.neoforge.common.CommonHooks.onRightClickBlock(player, hand, blockpos, hitResult);
         if (event.isCanceled()) return event.getCancellationResult();
         if (this.gameModeForPlayer == GameType.SPECTATOR) {
-            MenuProvider menuprovider = blockstate.getMenuProvider(p_9267_, blockpos);
+            MenuProvider menuprovider = blockstate.getMenuProvider(level, blockpos);
             if (menuprovider != null) {
-                p_9266_.openMenu(menuprovider);
+                player.openMenu(menuprovider);
                 return InteractionResult.SUCCESS;
             } else {
                 return InteractionResult.PASS;
             }
         } else {
-            UseOnContext useoncontext = new UseOnContext(p_9266_, p_9269_, p_9270_);
+            UseOnContext useoncontext = new UseOnContext(player, hand, hitResult);
             if (event.getUseItem() != net.neoforged.neoforge.common.util.TriState.FALSE) {
-                InteractionResult result = p_9268_.onItemUseFirst(useoncontext);
+                InteractionResult result = stack.onItemUseFirst(useoncontext);
                 if (result != InteractionResult.PASS) return result;
             }
-            boolean flag = !p_9266_.getMainHandItem().isEmpty() || !p_9266_.getOffhandItem().isEmpty();
-            boolean flag1 = (p_9266_.isSecondaryUseActive() && flag) && !(p_9266_.getMainHandItem().doesSneakBypassUse(p_9267_, blockpos, p_9266_) && p_9266_.getOffhandItem().doesSneakBypassUse(p_9267_, blockpos, p_9266_));
-            ItemStack itemstack = p_9268_.copy();
+            boolean flag = !player.getMainHandItem().isEmpty() || !player.getOffhandItem().isEmpty();
+            boolean flag1 = (player.isSecondaryUseActive() && flag) && !(player.getMainHandItem().doesSneakBypassUse(level, blockpos, player) && player.getOffhandItem().doesSneakBypassUse(level, blockpos, player));
+            ItemStack itemstack = stack.copy();
             if (event.getUseBlock().isTrue() || (event.getUseBlock().isDefault() && !flag1)) {
-                ItemInteractionResult iteminteractionresult = blockstate.useItemOn(p_9266_.getItemInHand(p_9269_), p_9267_, p_9266_, p_9269_, p_9270_);
+                ItemInteractionResult iteminteractionresult = blockstate.useItemOn(player.getItemInHand(hand), level, player, hand, hitResult);
                 if (iteminteractionresult.consumesAction()) {
-                    CriteriaTriggers.ITEM_USED_ON_BLOCK.trigger(p_9266_, blockpos, itemstack);
+                    CriteriaTriggers.ITEM_USED_ON_BLOCK.trigger(player, blockpos, itemstack);
                     return iteminteractionresult.result();
                 }
 
-                if (iteminteractionresult == ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION && p_9269_ == InteractionHand.MAIN_HAND) {
-                    InteractionResult interactionresult = blockstate.useWithoutItem(p_9267_, p_9266_, p_9270_);
+                if (iteminteractionresult == ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION && hand == InteractionHand.MAIN_HAND) {
+                    InteractionResult interactionresult = blockstate.useWithoutItem(level, player, hitResult);
                     if (interactionresult.consumesAction()) {
-                        CriteriaTriggers.DEFAULT_BLOCK_USE.trigger(p_9266_, blockpos);
+                        CriteriaTriggers.DEFAULT_BLOCK_USE.trigger(player, blockpos);
                         return interactionresult;
                     }
                 }
             }
 
-            if (event.getUseItem().isTrue() || (!p_9268_.isEmpty() && !p_9266_.getCooldowns().isOnCooldown(p_9268_.getItem()))) {
+            if (event.getUseItem().isTrue() || (!stack.isEmpty() && !player.getCooldowns().isOnCooldown(stack.getItem()))) {
                 if (event.getUseItem().isFalse()) return InteractionResult.PASS;
                 InteractionResult interactionresult1;
                 if (this.isCreative()) {
-                    int i = p_9268_.getCount();
-                    interactionresult1 = p_9268_.useOn(useoncontext);
-                    p_9268_.setCount(i);
+                    int i = stack.getCount();
+                    interactionresult1 = stack.useOn(useoncontext);
+                    stack.setCount(i);
                 } else {
-                    interactionresult1 = p_9268_.useOn(useoncontext);
+                    interactionresult1 = stack.useOn(useoncontext);
                 }
 
                 if (interactionresult1.consumesAction()) {
-                    CriteriaTriggers.ITEM_USED_ON_BLOCK.trigger(p_9266_, blockpos, itemstack);
+                    CriteriaTriggers.ITEM_USED_ON_BLOCK.trigger(player, blockpos, itemstack);
                 }
 
                 return interactionresult1;
@@ -397,7 +400,10 @@ public class ServerPlayerGameMode {
         }
     }
 
-    public void setLevel(ServerLevel p_9261_) {
-        this.level = p_9261_;
+    /**
+     * Sets the world instance.
+     */
+    public void setLevel(ServerLevel serverLevel) {
+        this.level = serverLevel;
     }
 }

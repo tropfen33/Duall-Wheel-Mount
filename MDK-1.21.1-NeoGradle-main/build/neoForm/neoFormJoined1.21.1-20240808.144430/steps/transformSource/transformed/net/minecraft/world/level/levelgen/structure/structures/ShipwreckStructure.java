@@ -20,31 +20,31 @@ public class ShipwreckStructure extends Structure {
     );
     public final boolean isBeached;
 
-    public ShipwreckStructure(Structure.StructureSettings p_229388_, boolean p_229389_) {
-        super(p_229388_);
-        this.isBeached = p_229389_;
+    public ShipwreckStructure(Structure.StructureSettings settings, boolean isBeached) {
+        super(settings);
+        this.isBeached = isBeached;
     }
 
     @Override
-    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext p_229391_) {
+    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext context) {
         Heightmap.Types heightmap$types = this.isBeached ? Heightmap.Types.WORLD_SURFACE_WG : Heightmap.Types.OCEAN_FLOOR_WG;
-        return onTopOfChunkCenter(p_229391_, heightmap$types, p_229394_ -> this.generatePieces(p_229394_, p_229391_));
+        return onTopOfChunkCenter(context, heightmap$types, p_229394_ -> this.generatePieces(p_229394_, context));
     }
 
-    private void generatePieces(StructurePiecesBuilder p_229396_, Structure.GenerationContext p_229397_) {
-        Rotation rotation = Rotation.getRandom(p_229397_.random());
-        BlockPos blockpos = new BlockPos(p_229397_.chunkPos().getMinBlockX(), 90, p_229397_.chunkPos().getMinBlockZ());
+    private void generatePieces(StructurePiecesBuilder builder, Structure.GenerationContext context) {
+        Rotation rotation = Rotation.getRandom(context.random());
+        BlockPos blockpos = new BlockPos(context.chunkPos().getMinBlockX(), 90, context.chunkPos().getMinBlockZ());
         ShipwreckPieces.ShipwreckPiece shipwreckpieces$shipwreckpiece = ShipwreckPieces.addRandomPiece(
-            p_229397_.structureTemplateManager(), blockpos, rotation, p_229396_, p_229397_.random(), this.isBeached
+            context.structureTemplateManager(), blockpos, rotation, builder, context.random(), this.isBeached
         );
         if (shipwreckpieces$shipwreckpiece.isTooBigToFitInWorldGenRegion()) {
             BoundingBox boundingbox = shipwreckpieces$shipwreckpiece.getBoundingBox();
             int i;
             if (this.isBeached) {
-                int j = Structure.getLowestY(p_229397_, boundingbox.minX(), boundingbox.getXSpan(), boundingbox.minZ(), boundingbox.getZSpan());
-                i = shipwreckpieces$shipwreckpiece.calculateBeachedPosition(j, p_229397_.random());
+                int j = Structure.getLowestY(context, boundingbox.minX(), boundingbox.getXSpan(), boundingbox.minZ(), boundingbox.getZSpan());
+                i = shipwreckpieces$shipwreckpiece.calculateBeachedPosition(j, context.random());
             } else {
-                i = Structure.getMeanFirstOccupiedHeight(p_229397_, boundingbox.minX(), boundingbox.getXSpan(), boundingbox.minZ(), boundingbox.getZSpan());
+                i = Structure.getMeanFirstOccupiedHeight(context, boundingbox.minX(), boundingbox.getXSpan(), boundingbox.minZ(), boundingbox.getZSpan());
             }
 
             shipwreckpieces$shipwreckpiece.adjustPositionHeight(i);

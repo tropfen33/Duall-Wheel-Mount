@@ -40,69 +40,72 @@ public class Interaction extends Entity implements Attackable, Targeting {
     @Nullable
     private Interaction.PlayerAction interaction;
 
-    public Interaction(EntityType<?> p_273319_, Level p_272713_) {
-        super(p_273319_, p_272713_);
+    public Interaction(EntityType<?> entityType, Level level) {
+        super(entityType, level);
         this.noPhysics = true;
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326193_) {
-        p_326193_.define(DATA_WIDTH_ID, 1.0F);
-        p_326193_.define(DATA_HEIGHT_ID, 1.0F);
-        p_326193_.define(DATA_RESPONSE_ID, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_WIDTH_ID, 1.0F);
+        builder.define(DATA_HEIGHT_ID, 1.0F);
+        builder.define(DATA_RESPONSE_ID, false);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_272702_) {
-        if (p_272702_.contains("width", 99)) {
-            this.setWidth(p_272702_.getFloat("width"));
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        if (compound.contains("width", 99)) {
+            this.setWidth(compound.getFloat("width"));
         }
 
-        if (p_272702_.contains("height", 99)) {
-            this.setHeight(p_272702_.getFloat("height"));
+        if (compound.contains("height", 99)) {
+            this.setHeight(compound.getFloat("height"));
         }
 
-        if (p_272702_.contains("attack")) {
+        if (compound.contains("attack")) {
             Interaction.PlayerAction.CODEC
-                .decode(NbtOps.INSTANCE, p_272702_.get("attack"))
+                .decode(NbtOps.INSTANCE, compound.get("attack"))
                 .resultOrPartial(Util.prefix("Interaction entity", LOGGER::error))
                 .ifPresent(p_273699_ -> this.attack = p_273699_.getFirst());
         } else {
             this.attack = null;
         }
 
-        if (p_272702_.contains("interaction")) {
+        if (compound.contains("interaction")) {
             Interaction.PlayerAction.CODEC
-                .decode(NbtOps.INSTANCE, p_272702_.get("interaction"))
+                .decode(NbtOps.INSTANCE, compound.get("interaction"))
                 .resultOrPartial(Util.prefix("Interaction entity", LOGGER::error))
                 .ifPresent(p_273686_ -> this.interaction = p_273686_.getFirst());
         } else {
             this.interaction = null;
         }
 
-        this.setResponse(p_272702_.getBoolean("response"));
+        this.setResponse(compound.getBoolean("response"));
         this.setBoundingBox(this.makeBoundingBox());
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_273772_) {
-        p_273772_.putFloat("width", this.getWidth());
-        p_273772_.putFloat("height", this.getHeight());
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        compound.putFloat("width", this.getWidth());
+        compound.putFloat("height", this.getHeight());
         if (this.attack != null) {
-            Interaction.PlayerAction.CODEC.encodeStart(NbtOps.INSTANCE, this.attack).ifSuccess(p_272806_ -> p_273772_.put("attack", p_272806_));
+            Interaction.PlayerAction.CODEC.encodeStart(NbtOps.INSTANCE, this.attack).ifSuccess(p_272806_ -> compound.put("attack", p_272806_));
         }
 
         if (this.interaction != null) {
-            Interaction.PlayerAction.CODEC.encodeStart(NbtOps.INSTANCE, this.interaction).ifSuccess(p_272925_ -> p_273772_.put("interaction", p_272925_));
+            Interaction.PlayerAction.CODEC.encodeStart(NbtOps.INSTANCE, this.interaction).ifSuccess(p_272925_ -> compound.put("interaction", p_272925_));
         }
 
-        p_273772_.putBoolean("response", this.getResponse());
+        compound.putBoolean("response", this.getResponse());
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_272722_) {
-        super.onSyncedDataUpdated(p_272722_);
-        if (DATA_HEIGHT_ID.equals(p_272722_) || DATA_WIDTH_ID.equals(p_272722_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (DATA_HEIGHT_ID.equals(key) || DATA_WIDTH_ID.equals(key)) {
             this.setBoundingBox(this.makeBoundingBox());
         }
     }
@@ -127,9 +130,12 @@ public class Interaction extends Entity implements Attackable, Targeting {
         return true;
     }
 
+    /**
+     * Called when a player attacks an entity. If this returns true the attack will not happen.
+     */
     @Override
-    public boolean skipAttackInteraction(Entity p_273553_) {
-        if (p_273553_ instanceof Player player) {
+    public boolean skipAttackInteraction(Entity entity) {
+        if (entity instanceof Player player) {
             this.attack = new Interaction.PlayerAction(player.getUUID(), this.level().getGameTime());
             if (player instanceof ServerPlayer serverplayer) {
                 CriteriaTriggers.PLAYER_HURT_ENTITY.trigger(serverplayer, this, player.damageSources().generic(), 1.0F, 1.0F, false);
@@ -142,11 +148,11 @@ public class Interaction extends Entity implements Attackable, Targeting {
     }
 
     @Override
-    public InteractionResult interact(Player p_273507_, InteractionHand p_273048_) {
+    public InteractionResult interact(Player player, InteractionHand hand) {
         if (this.level().isClientSide) {
             return this.getResponse() ? InteractionResult.SUCCESS : InteractionResult.CONSUME;
         } else {
-            this.interaction = new Interaction.PlayerAction(p_273507_.getUUID(), this.level().getGameTime());
+            this.interaction = new Interaction.PlayerAction(player.getUUID(), this.level().getGameTime());
             return InteractionResult.CONSUME;
         }
     }
@@ -167,24 +173,24 @@ public class Interaction extends Entity implements Attackable, Targeting {
         return this.interaction != null ? this.level().getPlayerByUUID(this.interaction.player()) : null;
     }
 
-    private void setWidth(float p_273385_) {
-        this.entityData.set(DATA_WIDTH_ID, p_273385_);
+    private void setWidth(float width) {
+        this.entityData.set(DATA_WIDTH_ID, width);
     }
 
     private float getWidth() {
         return this.entityData.get(DATA_WIDTH_ID);
     }
 
-    private void setHeight(float p_273733_) {
-        this.entityData.set(DATA_HEIGHT_ID, p_273733_);
+    private void setHeight(float height) {
+        this.entityData.set(DATA_HEIGHT_ID, height);
     }
 
     private float getHeight() {
         return this.entityData.get(DATA_HEIGHT_ID);
     }
 
-    private void setResponse(boolean p_273657_) {
-        this.entityData.set(DATA_RESPONSE_ID, p_273657_);
+    private void setResponse(boolean response) {
+        this.entityData.set(DATA_RESPONSE_ID, response);
     }
 
     private boolean getResponse() {
@@ -196,7 +202,7 @@ public class Interaction extends Entity implements Attackable, Targeting {
     }
 
     @Override
-    public EntityDimensions getDimensions(Pose p_273111_) {
+    public EntityDimensions getDimensions(Pose pose) {
         return this.getDimensions();
     }
 

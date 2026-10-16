@@ -17,25 +17,25 @@ public class ClientboundContainerSetSlotPacket implements Packet<ClientGamePacke
     private final int slot;
     private final ItemStack itemStack;
 
-    public ClientboundContainerSetSlotPacket(int p_131982_, int p_182713_, int p_131983_, ItemStack p_131984_) {
-        this.containerId = p_131982_;
-        this.stateId = p_182713_;
-        this.slot = p_131983_;
-        this.itemStack = p_131984_.copy();
+    public ClientboundContainerSetSlotPacket(int containerId, int stateId, int slot, ItemStack itemStack) {
+        this.containerId = containerId;
+        this.stateId = stateId;
+        this.slot = slot;
+        this.itemStack = itemStack.copy();
     }
 
-    private ClientboundContainerSetSlotPacket(RegistryFriendlyByteBuf p_320589_) {
-        this.containerId = p_320589_.readByte();
-        this.stateId = p_320589_.readVarInt();
-        this.slot = p_320589_.readShort();
-        this.itemStack = ItemStack.OPTIONAL_STREAM_CODEC.decode(p_320589_);
+    private ClientboundContainerSetSlotPacket(RegistryFriendlyByteBuf buffer) {
+        this.containerId = buffer.readByte();
+        this.stateId = buffer.readVarInt();
+        this.slot = buffer.readShort();
+        this.itemStack = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
     }
 
-    private void write(RegistryFriendlyByteBuf p_320916_) {
-        p_320916_.writeByte(this.containerId);
-        p_320916_.writeVarInt(this.stateId);
-        p_320916_.writeShort(this.slot);
-        ItemStack.OPTIONAL_STREAM_CODEC.encode(p_320916_, this.itemStack);
+    private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeByte(this.containerId);
+        buffer.writeVarInt(this.stateId);
+        buffer.writeShort(this.slot);
+        ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, this.itemStack);
     }
 
     @Override
@@ -43,8 +43,11 @@ public class ClientboundContainerSetSlotPacket implements Packet<ClientGamePacke
         return GamePacketTypes.CLIENTBOUND_CONTAINER_SET_SLOT;
     }
 
-    public void handle(ClientGamePacketListener p_131990_) {
-        p_131990_.handleContainerSetSlot(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleContainerSetSlot(this);
     }
 
     public int getContainerId() {

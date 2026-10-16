@@ -114,28 +114,28 @@ public class RegistryDataLoader {
         new RegistryDataLoader.RegistryData<>(Registries.JUKEBOX_SONG, JukeboxSong.DIRECT_CODEC)
     )); // Neo: Keep the list so custom registries can be added later
 
-    public static RegistryAccess.Frozen load(ResourceManager p_252046_, RegistryAccess p_249916_, List<RegistryDataLoader.RegistryData<?>> p_250344_) {
-        return load((p_321412_, p_321413_) -> p_321412_.loadFromResources(p_252046_, p_321413_), p_249916_, p_250344_);
+    public static RegistryAccess.Frozen load(ResourceManager resourceManager, RegistryAccess registryAccess, List<RegistryDataLoader.RegistryData<?>> registryData) {
+        return load((p_321412_, p_321413_) -> p_321412_.loadFromResources(resourceManager, p_321413_), registryAccess, registryData);
     }
 
     public static RegistryAccess.Frozen load(
-        Map<ResourceKey<? extends Registry<?>>, List<RegistrySynchronization.PackedRegistryEntry>> p_321642_,
-        ResourceProvider p_326068_,
-        RegistryAccess p_321850_,
-        List<RegistryDataLoader.RegistryData<?>> p_321716_
+        Map<ResourceKey<? extends Registry<?>>, List<RegistrySynchronization.PackedRegistryEntry>> elements,
+        ResourceProvider resourceProvider,
+        RegistryAccess registryAccess,
+        List<RegistryDataLoader.RegistryData<?>> registryData
     ) {
-        return load((p_325557_, p_325558_) -> p_325557_.loadFromNetwork(p_321642_, p_326068_, p_325558_), p_321850_, p_321716_);
+        return load((p_325557_, p_325558_) -> p_325557_.loadFromNetwork(elements, resourceProvider, p_325558_), registryAccess, registryData);
     }
 
     private static RegistryAccess.Frozen load(
-        RegistryDataLoader.LoadingFunction p_321713_, RegistryAccess p_321583_, List<RegistryDataLoader.RegistryData<?>> p_321856_
+        RegistryDataLoader.LoadingFunction loadingFunction, RegistryAccess registryAccess, List<RegistryDataLoader.RegistryData<?>> registryData
     ) {
         Map<ResourceKey<?>, Exception> map = new HashMap<>();
-        List<RegistryDataLoader.Loader<?>> list = p_321856_.stream()
+        List<RegistryDataLoader.Loader<?>> list = registryData.stream()
             .map(p_321410_ -> p_321410_.create(Lifecycle.stable(), map))
             .collect(Collectors.toUnmodifiableList());
-        RegistryOps.RegistryInfoLookup registryops$registryinfolookup = createContext(p_321583_, list);
-        list.forEach(p_321416_ -> p_321713_.apply((RegistryDataLoader.Loader<?>)p_321416_, registryops$registryinfolookup));
+        RegistryOps.RegistryInfoLookup registryops$registryinfolookup = createContext(registryAccess, list);
+        list.forEach(p_321416_ -> loadingFunction.apply((RegistryDataLoader.Loader<?>)p_321416_, registryops$registryinfolookup));
         list.forEach(p_344258_ -> {
             Registry<?> registry = p_344258_.registry();
 
@@ -157,10 +157,10 @@ public class RegistryDataLoader {
         }
     }
 
-    private static RegistryOps.RegistryInfoLookup createContext(RegistryAccess p_256568_, List<RegistryDataLoader.Loader<?>> p_255821_) {
+    private static RegistryOps.RegistryInfoLookup createContext(RegistryAccess registryAccess, List<RegistryDataLoader.Loader<?>> registryLoaders) {
         final Map<ResourceKey<? extends Registry<?>>, RegistryOps.RegistryInfo<?>> map = new HashMap<>();
-        p_256568_.registries().forEach(p_255505_ -> map.put(p_255505_.key(), createInfoForContextRegistry(p_255505_.value())));
-        p_255821_.forEach(p_344256_ -> map.put(p_344256_.registry.key(), createInfoForNewRegistry(p_344256_.registry)));
+        registryAccess.registries().forEach(p_255505_ -> map.put(p_255505_.key(), createInfoForContextRegistry(p_255505_.value())));
+        registryLoaders.forEach(p_344256_ -> map.put(p_344256_.registry.key(), createInfoForNewRegistry(p_344256_.registry)));
         return new RegistryOps.RegistryInfoLookup() {
             @Override
             public <T> Optional<RegistryOps.RegistryInfo<T>> lookup(ResourceKey<? extends Registry<? extends T>> p_256014_) {
@@ -169,18 +169,18 @@ public class RegistryDataLoader {
         };
     }
 
-    private static <T> RegistryOps.RegistryInfo<T> createInfoForNewRegistry(WritableRegistry<T> p_256020_) {
-        return new RegistryOps.RegistryInfo<>(p_256020_.asLookup(), p_256020_.createRegistrationLookup(), p_256020_.registryLifecycle());
+    private static <T> RegistryOps.RegistryInfo<T> createInfoForNewRegistry(WritableRegistry<T> registry) {
+        return new RegistryOps.RegistryInfo<>(registry.asLookup(), registry.createRegistrationLookup(), registry.registryLifecycle());
     }
 
-    private static <T> RegistryOps.RegistryInfo<T> createInfoForContextRegistry(Registry<T> p_256230_) {
-        return new RegistryOps.RegistryInfo<>(p_256230_.asLookup(), p_256230_.asTagAddingLookup(), p_256230_.registryLifecycle());
+    private static <T> RegistryOps.RegistryInfo<T> createInfoForContextRegistry(Registry<T> registry) {
+        return new RegistryOps.RegistryInfo<>(registry.asLookup(), registry.asTagAddingLookup(), registry.registryLifecycle());
     }
 
-    private static void logErrors(Map<ResourceKey<?>, Exception> p_252325_) {
+    private static void logErrors(Map<ResourceKey<?>, Exception> errors) {
         StringWriter stringwriter = new StringWriter();
         PrintWriter printwriter = new PrintWriter(stringwriter);
-        Map<ResourceLocation, Map<ResourceLocation, Exception>> map = p_252325_.entrySet()
+        Map<ResourceLocation, Map<ResourceLocation, Exception>> map = errors.entrySet()
             .stream()
             .collect(
                 Collectors.groupingBy(p_249353_ -> p_249353_.getKey().registry(), Collectors.toMap(p_251444_ -> p_251444_.getKey().location(), Entry::getValue))
@@ -197,47 +197,47 @@ public class RegistryDataLoader {
     }
 
     private static <E> void loadElementFromResource(
-        WritableRegistry<E> p_326195_,
-        Decoder<E> p_326476_,
-        RegistryOps<JsonElement> p_325932_,
-        ResourceKey<E> p_326054_,
-        Resource p_326141_,
-        RegistrationInfo p_326033_
+        WritableRegistry<E> registry,
+        Decoder<E> codec,
+        RegistryOps<JsonElement> ops,
+        ResourceKey<E> resourceKey,
+        Resource resource,
+        RegistrationInfo registrationInfo
     ) throws IOException {
-        Decoder<Optional<E>> decoder = net.neoforged.neoforge.common.conditions.ConditionalOps.createConditionalCodec(net.neoforged.neoforge.common.util.NeoForgeExtraCodecs.decodeOnly(p_326476_));
-        try (Reader reader = p_326141_.openAsReader()) {
+        Decoder<Optional<E>> decoder = net.neoforged.neoforge.common.conditions.ConditionalOps.createConditionalCodec(net.neoforged.neoforge.common.util.NeoForgeExtraCodecs.decodeOnly(codec));
+        try (Reader reader = resource.openAsReader()) {
             JsonElement jsonelement = JsonParser.parseReader(reader);
-            DataResult<Optional<E>> dataresult = decoder.parse(p_325932_, jsonelement);
+            DataResult<Optional<E>> dataresult = decoder.parse(ops, jsonelement);
             Optional<E> candidate = dataresult.getOrThrow();
             candidate.ifPresentOrElse(e -> {
-            p_326195_.register(p_326054_, e, p_326033_);
+            registry.register(resourceKey, e, registrationInfo);
             }, () -> {
-                LOGGER.debug("Skipping loading registry entry {} as its conditions were not met", p_326054_);
+                LOGGER.debug("Skipping loading registry entry {} as its conditions were not met", resourceKey);
             });
         }
     }
 
     static <E> void loadContentsFromManager(
-        ResourceManager p_321535_,
-        RegistryOps.RegistryInfoLookup p_321612_,
-        WritableRegistry<E> p_321557_,
-        Decoder<E> p_321820_,
-        Map<ResourceKey<?>, Exception> p_321649_
+        ResourceManager resourceManager,
+        RegistryOps.RegistryInfoLookup registryInfoLookup,
+        WritableRegistry<E> registry,
+        Decoder<E> codec,
+        Map<ResourceKey<?>, Exception> loadingErrors
     ) {
-        String s = Registries.elementsDirPath(p_321557_.key());
+        String s = Registries.elementsDirPath(registry.key());
         FileToIdConverter filetoidconverter = FileToIdConverter.json(s);
-        RegistryOps<JsonElement> registryops = new net.neoforged.neoforge.common.conditions.ConditionalOps<>(RegistryOps.create(JsonOps.INSTANCE, p_321612_), net.neoforged.neoforge.common.conditions.ICondition.IContext.TAGS_INVALID);
+        RegistryOps<JsonElement> registryops = new net.neoforged.neoforge.common.conditions.ConditionalOps<>(RegistryOps.create(JsonOps.INSTANCE, registryInfoLookup), net.neoforged.neoforge.common.conditions.ICondition.IContext.TAGS_INVALID);
 
-        for (Entry<ResourceLocation, Resource> entry : filetoidconverter.listMatchingResources(p_321535_).entrySet()) {
+        for (Entry<ResourceLocation, Resource> entry : filetoidconverter.listMatchingResources(resourceManager).entrySet()) {
             ResourceLocation resourcelocation = entry.getKey();
-            ResourceKey<E> resourcekey = ResourceKey.create(p_321557_.key(), filetoidconverter.fileToId(resourcelocation));
+            ResourceKey<E> resourcekey = ResourceKey.create(registry.key(), filetoidconverter.fileToId(resourcelocation));
             Resource resource = entry.getValue();
             RegistrationInfo registrationinfo = REGISTRATION_INFO_CACHE.apply(resource.knownPackInfo());
 
             try {
-                loadElementFromResource(p_321557_, p_321820_, registryops, resourcekey, resource, registrationinfo);
+                loadElementFromResource(registry, codec, registryops, resourcekey, resource, registrationinfo);
             } catch (Exception exception) {
-                p_321649_.put(
+                loadingErrors.put(
                     resourcekey,
                     new IllegalStateException(
                         String.format(Locale.ROOT, "Failed to parse %s from pack %s", resourcelocation, resource.sourcePackId()), exception
@@ -248,30 +248,30 @@ public class RegistryDataLoader {
     }
 
     static <E> void loadContentsFromNetwork(
-        Map<ResourceKey<? extends Registry<?>>, List<RegistrySynchronization.PackedRegistryEntry>> p_321633_,
-        ResourceProvider p_326020_,
-        RegistryOps.RegistryInfoLookup p_321801_,
-        WritableRegistry<E> p_321671_,
-        Decoder<E> p_321718_,
-        Map<ResourceKey<?>, Exception> p_321625_
+        Map<ResourceKey<? extends Registry<?>>, List<RegistrySynchronization.PackedRegistryEntry>> elements,
+        ResourceProvider resourceProvider,
+        RegistryOps.RegistryInfoLookup registryInfoLookup,
+        WritableRegistry<E> registry,
+        Decoder<E> codec,
+        Map<ResourceKey<?>, Exception> loadingErrors
     ) {
-        List<RegistrySynchronization.PackedRegistryEntry> list = p_321633_.get(p_321671_.key());
+        List<RegistrySynchronization.PackedRegistryEntry> list = elements.get(registry.key());
         if (list != null) {
-            RegistryOps<Tag> registryops = RegistryOps.create(NbtOps.INSTANCE, p_321801_);
-            RegistryOps<JsonElement> registryops1 = RegistryOps.create(JsonOps.INSTANCE, p_321801_);
-            String s = Registries.elementsDirPath(p_321671_.key());
+            RegistryOps<Tag> registryops = RegistryOps.create(NbtOps.INSTANCE, registryInfoLookup);
+            RegistryOps<JsonElement> registryops1 = RegistryOps.create(JsonOps.INSTANCE, registryInfoLookup);
+            String s = Registries.elementsDirPath(registry.key());
             FileToIdConverter filetoidconverter = FileToIdConverter.json(s);
 
             for (RegistrySynchronization.PackedRegistryEntry registrysynchronization$packedregistryentry : list) {
-                ResourceKey<E> resourcekey = ResourceKey.create(p_321671_.key(), registrysynchronization$packedregistryentry.id());
+                ResourceKey<E> resourcekey = ResourceKey.create(registry.key(), registrysynchronization$packedregistryentry.id());
                 Optional<Tag> optional = registrysynchronization$packedregistryentry.data();
                 if (optional.isPresent()) {
                     try {
-                        DataResult<E> dataresult = p_321718_.parse(registryops, optional.get());
+                        DataResult<E> dataresult = codec.parse(registryops, optional.get());
                         E e = dataresult.getOrThrow();
-                        p_321671_.register(resourcekey, e, NETWORK_REGISTRATION_INFO);
+                        registry.register(resourcekey, e, NETWORK_REGISTRATION_INFO);
                     } catch (Exception exception) {
-                        p_321625_.put(
+                        loadingErrors.put(
                             resourcekey,
                             new IllegalStateException(String.format(Locale.ROOT, "Failed to parse value %s from server", optional.get()), exception)
                         );
@@ -280,10 +280,10 @@ public class RegistryDataLoader {
                     ResourceLocation resourcelocation = filetoidconverter.idToFile(registrysynchronization$packedregistryentry.id());
 
                     try {
-                        Resource resource = p_326020_.getResourceOrThrow(resourcelocation);
-                        loadElementFromResource(p_321671_, p_321718_, registryops1, resourcekey, resource, NETWORK_REGISTRATION_INFO);
+                        Resource resource = resourceProvider.getResourceOrThrow(resourcelocation);
+                        loadElementFromResource(registry, codec, registryops1, resourcekey, resource, NETWORK_REGISTRATION_INFO);
                     } catch (Exception exception1) {
-                        p_321625_.put(resourcekey, new IllegalStateException("Failed to parse local data", exception1));
+                        loadingErrors.put(resourcekey, new IllegalStateException("Failed to parse local data", exception1));
                     }
                 }
             }
@@ -291,22 +291,22 @@ public class RegistryDataLoader {
     }
 
     static record Loader<T>(RegistryDataLoader.RegistryData<T> data, WritableRegistry<T> registry, Map<ResourceKey<?>, Exception> loadingErrors) {
-        public void loadFromResources(ResourceManager p_321702_, RegistryOps.RegistryInfoLookup p_321840_) {
-            RegistryDataLoader.loadContentsFromManager(p_321702_, p_321840_, this.registry, this.data.elementCodec, this.loadingErrors);
+        public void loadFromResources(ResourceManager resouceManager, RegistryOps.RegistryInfoLookup registryInfoLookup) {
+            RegistryDataLoader.loadContentsFromManager(resouceManager, registryInfoLookup, this.registry, this.data.elementCodec, this.loadingErrors);
         }
 
         public void loadFromNetwork(
-            Map<ResourceKey<? extends Registry<?>>, List<RegistrySynchronization.PackedRegistryEntry>> p_321562_,
-            ResourceProvider p_326419_,
-            RegistryOps.RegistryInfoLookup p_321617_
+            Map<ResourceKey<? extends Registry<?>>, List<RegistrySynchronization.PackedRegistryEntry>> elements,
+            ResourceProvider resourceProvider,
+            RegistryOps.RegistryInfoLookup registryInfoLookup
         ) {
-            RegistryDataLoader.loadContentsFromNetwork(p_321562_, p_326419_, p_321617_, this.registry, this.data.elementCodec, this.loadingErrors);
+            RegistryDataLoader.loadContentsFromNetwork(elements, resourceProvider, registryInfoLookup, this.registry, this.data.elementCodec, this.loadingErrors);
         }
     }
 
     @FunctionalInterface
     interface LoadingFunction {
-        void apply(RegistryDataLoader.Loader<?> p_321864_, RegistryOps.RegistryInfoLookup p_321656_);
+        void apply(RegistryDataLoader.Loader<?> loader, RegistryOps.RegistryInfoLookup registryInfoLookup);
     }
 
     public static record RegistryData<T>(ResourceKey<? extends Registry<T>> key, Codec<T> elementCodec, boolean requiredNonEmpty, java.util.function.Consumer<net.neoforged.neoforge.registries.RegistryBuilder<T>> registryBuilderConsumer) {
@@ -318,16 +318,16 @@ public class RegistryDataLoader {
             this(p_251360_, p_248976_, false);
         }
 
-        RegistryDataLoader.Loader<T> create(Lifecycle p_251662_, Map<ResourceKey<?>, Exception> p_251565_) {
+        RegistryDataLoader.Loader<T> create(Lifecycle registryLifecycle, Map<ResourceKey<?>, Exception> loadingErrors) {
             net.neoforged.neoforge.registries.RegistryBuilder<T> registryBuilder = new net.neoforged.neoforge.registries.RegistryBuilder<>(key);
             registryBuilderConsumer.accept(registryBuilder);
 
             WritableRegistry<T> writableregistry = (WritableRegistry<T>) registryBuilder.disableRegistrationCheck().create();
-            return new RegistryDataLoader.Loader<>(this, writableregistry, p_251565_);
+            return new RegistryDataLoader.Loader<>(this, writableregistry, loadingErrors);
         }
 
-        public void runWithArguments(BiConsumer<ResourceKey<? extends Registry<T>>, Codec<T>> p_312899_) {
-            p_312899_.accept(this.key, this.elementCodec);
+        public void runWithArguments(BiConsumer<ResourceKey<? extends Registry<T>>, Codec<T>> runner) {
+            runner.accept(this.key, this.elementCodec);
         }
     }
 }

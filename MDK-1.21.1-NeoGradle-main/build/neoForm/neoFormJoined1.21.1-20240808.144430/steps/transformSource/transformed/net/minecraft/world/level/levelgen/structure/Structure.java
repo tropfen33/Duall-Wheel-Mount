@@ -45,17 +45,17 @@ public abstract class Structure {
     /** Neo: Field accesses are redirected to {@link #getModifiedStructureSettings()} with a coremod. */
     private final Structure.StructureSettings settings;
 
-    public static <S extends Structure> RecordCodecBuilder<S, Structure.StructureSettings> settingsCodec(Instance<S> p_226568_) {
+    public static <S extends Structure> RecordCodecBuilder<S, Structure.StructureSettings> settingsCodec(Instance<S> instance) {
         return Structure.StructureSettings.CODEC.forGetter(p_226595_ -> p_226595_.modifiableStructureInfo().getOriginalStructureInfo().structureSettings()); // FORGE: Patch codec to ignore field redirect coremods.
     }
 
-    public static <S extends Structure> MapCodec<S> simpleCodec(Function<Structure.StructureSettings, S> p_226608_) {
-        return RecordCodecBuilder.mapCodec(p_226611_ -> p_226611_.group(settingsCodec(p_226611_)).apply(p_226611_, p_226608_));
+    public static <S extends Structure> MapCodec<S> simpleCodec(Function<Structure.StructureSettings, S> factory) {
+        return RecordCodecBuilder.mapCodec(p_226611_ -> p_226611_.group(settingsCodec(p_226611_)).apply(p_226611_, factory));
     }
 
-    protected Structure(Structure.StructureSettings p_226558_) {
-        this.settings = p_226558_;
-        this.modifiableStructureInfo = new net.neoforged.neoforge.common.world.ModifiableStructureInfo(new net.neoforged.neoforge.common.world.ModifiableStructureInfo.StructureInfo(p_226558_)); // FORGE: cache original structure info on construction so we can bypass our field read coremods where necessary
+    protected Structure(Structure.StructureSettings settings) {
+        this.settings = settings;
+        this.modifiableStructureInfo = new net.neoforged.neoforge.common.world.ModifiableStructureInfo(new net.neoforged.neoforge.common.world.ModifiableStructureInfo.StructureInfo(settings)); // FORGE: cache original structure info on construction so we can bypass our field read coremods where necessary
     }
 
     public HolderSet<Biome> biomes() {
@@ -74,29 +74,29 @@ public abstract class Structure {
         return this.settings.terrainAdaptation;
     }
 
-    public BoundingBox adjustBoundingBox(BoundingBox p_226570_) {
-        return this.terrainAdaptation() != TerrainAdjustment.NONE ? p_226570_.inflatedBy(12) : p_226570_;
+    public BoundingBox adjustBoundingBox(BoundingBox boundingBox) {
+        return this.terrainAdaptation() != TerrainAdjustment.NONE ? boundingBox.inflatedBy(12) : boundingBox;
     }
 
     public StructureStart generate(
-        RegistryAccess p_226597_,
-        ChunkGenerator p_226598_,
-        BiomeSource p_226599_,
-        RandomState p_226600_,
-        StructureTemplateManager p_226601_,
-        long p_226602_,
-        ChunkPos p_226603_,
-        int p_226604_,
-        LevelHeightAccessor p_226605_,
-        Predicate<Holder<Biome>> p_226606_
+        RegistryAccess registryAccess,
+        ChunkGenerator chunkGenerator,
+        BiomeSource biomeSource,
+        RandomState randomState,
+        StructureTemplateManager structureTemplateManager,
+        long seed,
+        ChunkPos chunkPos,
+        int references,
+        LevelHeightAccessor heightAccessor,
+        Predicate<Holder<Biome>> validBiome
     ) {
         Structure.GenerationContext structure$generationcontext = new Structure.GenerationContext(
-            p_226597_, p_226598_, p_226599_, p_226600_, p_226601_, p_226602_, p_226603_, p_226605_, p_226606_
+            registryAccess, chunkGenerator, biomeSource, randomState, structureTemplateManager, seed, chunkPos, heightAccessor, validBiome
         );
         Optional<Structure.GenerationStub> optional = this.findValidGenerationPoint(structure$generationcontext);
         if (optional.isPresent()) {
             StructurePiecesBuilder structurepiecesbuilder = optional.get().getPiecesBuilder();
-            StructureStart structurestart = new StructureStart(this, p_226603_, p_226604_, structurepiecesbuilder.build());
+            StructureStart structurestart = new StructureStart(this, chunkPos, references, structurepiecesbuilder.build());
             if (structurestart.isValid()) {
                 return structurestart;
             }
@@ -106,95 +106,95 @@ public abstract class Structure {
     }
 
     protected static Optional<Structure.GenerationStub> onTopOfChunkCenter(
-        Structure.GenerationContext p_226586_, Heightmap.Types p_226587_, Consumer<StructurePiecesBuilder> p_226588_
+        Structure.GenerationContext context, Heightmap.Types heightmapTypes, Consumer<StructurePiecesBuilder> generator
     ) {
-        ChunkPos chunkpos = p_226586_.chunkPos();
+        ChunkPos chunkpos = context.chunkPos();
         int i = chunkpos.getMiddleBlockX();
         int j = chunkpos.getMiddleBlockZ();
-        int k = p_226586_.chunkGenerator().getFirstOccupiedHeight(i, j, p_226587_, p_226586_.heightAccessor(), p_226586_.randomState());
-        return Optional.of(new Structure.GenerationStub(new BlockPos(i, k, j), p_226588_));
+        int k = context.chunkGenerator().getFirstOccupiedHeight(i, j, heightmapTypes, context.heightAccessor(), context.randomState());
+        return Optional.of(new Structure.GenerationStub(new BlockPos(i, k, j), generator));
     }
 
-    private static boolean isValidBiome(Structure.GenerationStub p_263042_, Structure.GenerationContext p_263005_) {
-        BlockPos blockpos = p_263042_.position();
-        return p_263005_.validBiome
+    private static boolean isValidBiome(Structure.GenerationStub stub, Structure.GenerationContext context) {
+        BlockPos blockpos = stub.position();
+        return context.validBiome
             .test(
-                p_263005_.chunkGenerator
+                context.chunkGenerator
                     .getBiomeSource()
                     .getNoiseBiome(
                         QuartPos.fromBlock(blockpos.getX()),
                         QuartPos.fromBlock(blockpos.getY()),
                         QuartPos.fromBlock(blockpos.getZ()),
-                        p_263005_.randomState.sampler()
+                        context.randomState.sampler()
                     )
             );
     }
 
     public void afterPlace(
-        WorldGenLevel p_226560_,
-        StructureManager p_226561_,
-        ChunkGenerator p_226562_,
-        RandomSource p_226563_,
-        BoundingBox p_226564_,
-        ChunkPos p_226565_,
-        PiecesContainer p_226566_
+        WorldGenLevel level,
+        StructureManager structureManager,
+        ChunkGenerator chunkGenerator,
+        RandomSource random,
+        BoundingBox boundingBox,
+        ChunkPos chunkPos,
+        PiecesContainer pieces
     ) {
     }
 
-    private static int[] getCornerHeights(Structure.GenerationContext p_226614_, int p_226615_, int p_226616_, int p_226617_, int p_226618_) {
-        ChunkGenerator chunkgenerator = p_226614_.chunkGenerator();
-        LevelHeightAccessor levelheightaccessor = p_226614_.heightAccessor();
-        RandomState randomstate = p_226614_.randomState();
+    private static int[] getCornerHeights(Structure.GenerationContext context, int minX, int maxX, int minZ, int maxZ) {
+        ChunkGenerator chunkgenerator = context.chunkGenerator();
+        LevelHeightAccessor levelheightaccessor = context.heightAccessor();
+        RandomState randomstate = context.randomState();
         return new int[]{
-            chunkgenerator.getFirstOccupiedHeight(p_226615_, p_226617_, Heightmap.Types.WORLD_SURFACE_WG, levelheightaccessor, randomstate),
-            chunkgenerator.getFirstOccupiedHeight(p_226615_, p_226617_ + p_226618_, Heightmap.Types.WORLD_SURFACE_WG, levelheightaccessor, randomstate),
-            chunkgenerator.getFirstOccupiedHeight(p_226615_ + p_226616_, p_226617_, Heightmap.Types.WORLD_SURFACE_WG, levelheightaccessor, randomstate),
+            chunkgenerator.getFirstOccupiedHeight(minX, minZ, Heightmap.Types.WORLD_SURFACE_WG, levelheightaccessor, randomstate),
+            chunkgenerator.getFirstOccupiedHeight(minX, minZ + maxZ, Heightmap.Types.WORLD_SURFACE_WG, levelheightaccessor, randomstate),
+            chunkgenerator.getFirstOccupiedHeight(minX + maxX, minZ, Heightmap.Types.WORLD_SURFACE_WG, levelheightaccessor, randomstate),
             chunkgenerator.getFirstOccupiedHeight(
-                p_226615_ + p_226616_, p_226617_ + p_226618_, Heightmap.Types.WORLD_SURFACE_WG, levelheightaccessor, randomstate
+                minX + maxX, minZ + maxZ, Heightmap.Types.WORLD_SURFACE_WG, levelheightaccessor, randomstate
             )
         };
     }
 
-    public static int getMeanFirstOccupiedHeight(Structure.GenerationContext p_341942_, int p_341930_, int p_341935_, int p_341884_, int p_341943_) {
-        int[] aint = getCornerHeights(p_341942_, p_341930_, p_341935_, p_341884_, p_341943_);
+    public static int getMeanFirstOccupiedHeight(Structure.GenerationContext context, int minX, int maxX, int minZ, int maxZ) {
+        int[] aint = getCornerHeights(context, minX, maxX, minZ, maxZ);
         return (aint[0] + aint[1] + aint[2] + aint[3]) / 4;
     }
 
-    protected static int getLowestY(Structure.GenerationContext p_226573_, int p_226574_, int p_226575_) {
-        ChunkPos chunkpos = p_226573_.chunkPos();
+    protected static int getLowestY(Structure.GenerationContext context, int maxX, int maxZ) {
+        ChunkPos chunkpos = context.chunkPos();
         int i = chunkpos.getMinBlockX();
         int j = chunkpos.getMinBlockZ();
-        return getLowestY(p_226573_, i, j, p_226574_, p_226575_);
+        return getLowestY(context, i, j, maxX, maxZ);
     }
 
-    protected static int getLowestY(Structure.GenerationContext p_226577_, int p_226578_, int p_226579_, int p_226580_, int p_226581_) {
-        int[] aint = getCornerHeights(p_226577_, p_226578_, p_226580_, p_226579_, p_226581_);
+    protected static int getLowestY(Structure.GenerationContext context, int minX, int minZ, int maxX, int maxZ) {
+        int[] aint = getCornerHeights(context, minX, maxX, minZ, maxZ);
         return Math.min(Math.min(aint[0], aint[1]), Math.min(aint[2], aint[3]));
     }
 
     @Deprecated
-    protected BlockPos getLowestYIn5by5BoxOffset7Blocks(Structure.GenerationContext p_226583_, Rotation p_226584_) {
+    protected BlockPos getLowestYIn5by5BoxOffset7Blocks(Structure.GenerationContext context, Rotation rotation) {
         int i = 5;
         int j = 5;
-        if (p_226584_ == Rotation.CLOCKWISE_90) {
+        if (rotation == Rotation.CLOCKWISE_90) {
             i = -5;
-        } else if (p_226584_ == Rotation.CLOCKWISE_180) {
+        } else if (rotation == Rotation.CLOCKWISE_180) {
             i = -5;
             j = -5;
-        } else if (p_226584_ == Rotation.COUNTERCLOCKWISE_90) {
+        } else if (rotation == Rotation.COUNTERCLOCKWISE_90) {
             j = -5;
         }
 
-        ChunkPos chunkpos = p_226583_.chunkPos();
+        ChunkPos chunkpos = context.chunkPos();
         int k = chunkpos.getBlockX(7);
         int l = chunkpos.getBlockZ(7);
-        return new BlockPos(k, getLowestY(p_226583_, k, l, i, j), l);
+        return new BlockPos(k, getLowestY(context, k, l, i, j), l);
     }
 
-    protected abstract Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext p_226571_);
+    protected abstract Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext context);
 
-    public Optional<Structure.GenerationStub> findValidGenerationPoint(Structure.GenerationContext p_263060_) {
-        return this.findGenerationPoint(p_263060_).filter(p_262911_ -> isValidBiome(p_262911_, p_263060_));
+    public Optional<Structure.GenerationStub> findValidGenerationPoint(Structure.GenerationContext context) {
+        return this.findGenerationPoint(context).filter(p_262911_ -> isValidBiome(p_262911_, context));
     }
 
     public abstract StructureType<?> type();
@@ -244,9 +244,9 @@ public abstract class Structure {
             this(p_226632_, p_226633_, p_226634_, p_226635_, p_226636_, makeRandom(p_226637_, p_226638_), p_226637_, p_226638_, p_226639_, p_226640_);
         }
 
-        private static WorldgenRandom makeRandom(long p_226654_, ChunkPos p_226655_) {
+        private static WorldgenRandom makeRandom(long seed, ChunkPos chunkPos) {
             WorldgenRandom worldgenrandom = new WorldgenRandom(new LegacyRandomSource(0L));
-            worldgenrandom.setLargeFeatureSeed(p_226654_, p_226655_.x, p_226655_.z);
+            worldgenrandom.setLargeFeatureSeed(seed, chunkPos.x, chunkPos.z);
             return worldgenrandom;
         }
     }
@@ -295,25 +295,25 @@ public abstract class Structure {
             private GenerationStep.Decoration step;
             private TerrainAdjustment terrainAdaption;
 
-            public Builder(HolderSet<Biome> p_352136_) {
+            public Builder(HolderSet<Biome> biomes) {
                 this.spawnOverrides = Structure.StructureSettings.DEFAULT.spawnOverrides;
                 this.step = Structure.StructureSettings.DEFAULT.step;
                 this.terrainAdaption = Structure.StructureSettings.DEFAULT.terrainAdaptation;
-                this.biomes = p_352136_;
+                this.biomes = biomes;
             }
 
-            public Structure.StructureSettings.Builder spawnOverrides(Map<MobCategory, StructureSpawnOverride> p_352057_) {
-                this.spawnOverrides = p_352057_;
+            public Structure.StructureSettings.Builder spawnOverrides(Map<MobCategory, StructureSpawnOverride> spawnOverrides) {
+                this.spawnOverrides = spawnOverrides;
                 return this;
             }
 
-            public Structure.StructureSettings.Builder generationStep(GenerationStep.Decoration p_352172_) {
-                this.step = p_352172_;
+            public Structure.StructureSettings.Builder generationStep(GenerationStep.Decoration generationStep) {
+                this.step = generationStep;
                 return this;
             }
 
-            public Structure.StructureSettings.Builder terrainAdapation(TerrainAdjustment p_352176_) {
-                this.terrainAdaption = p_352176_;
+            public Structure.StructureSettings.Builder terrainAdapation(TerrainAdjustment terrainAdaptation) {
+                this.terrainAdaption = terrainAdaptation;
                 return this;
             }
 

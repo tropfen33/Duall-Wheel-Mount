@@ -40,30 +40,35 @@ public class MouseHandler {
     private double lastHandleMovementTime = Double.MIN_VALUE;
     private boolean mouseGrabbed;
 
-    public MouseHandler(Minecraft p_91522_) {
-        this.minecraft = p_91522_;
+    public MouseHandler(Minecraft minecraft) {
+        this.minecraft = minecraft;
     }
 
-    private void onPress(long p_91531_, int p_91532_, int p_91533_, int p_91534_) {
-        if (p_91531_ == this.minecraft.getWindow().getWindow()) {
+    /**
+     * Will be called when a mouse button is pressed or released.
+     *
+     * @see GLFWMouseButtonCallbackI
+     */
+    private void onPress(long windowPointer, int button, int action, int modifiers) {
+        if (windowPointer == this.minecraft.getWindow().getWindow()) {
             if (this.minecraft.screen != null) {
                 this.minecraft.setLastInputType(InputType.MOUSE);
             }
 
-            boolean flag = p_91533_ == 1;
-            if (Minecraft.ON_OSX && p_91532_ == 0) {
+            boolean flag = action == 1;
+            if (Minecraft.ON_OSX && button == 0) {
                 if (flag) {
-                    if ((p_91534_ & 2) == 2) {
-                        p_91532_ = 1;
+                    if ((modifiers & 2) == 2) {
+                        button = 1;
                         this.fakeRightMouse++;
                     }
                 } else if (this.fakeRightMouse > 0) {
-                    p_91532_ = 1;
+                    button = 1;
                     this.fakeRightMouse--;
                 }
             }
 
-            int i = p_91532_;
+            int i = button;
             if (flag) {
                 if (this.minecraft.options.touchscreen().get() && this.clickDepth++ > 0) {
                     return;
@@ -79,7 +84,7 @@ public class MouseHandler {
                 this.activeButton = -1;
             }
 
-            if (net.neoforged.neoforge.client.ClientHooks.onMouseButtonPre(p_91532_, p_91533_, p_91534_)) return;
+            if (net.neoforged.neoforge.client.ClientHooks.onMouseButtonPre(button, action, modifiers)) return;
             boolean[] aboolean = new boolean[]{false};
             if (this.minecraft.getOverlay() == null) {
                 if (this.minecraft.screen == null) {
@@ -129,16 +134,21 @@ public class MouseHandler {
                     }
                 }
             }
-            net.neoforged.neoforge.client.ClientHooks.onMouseButtonPost(p_91532_, p_91533_, p_91534_);
+            net.neoforged.neoforge.client.ClientHooks.onMouseButtonPost(button, action, modifiers);
         }
     }
 
-    private void onScroll(long p_91527_, double p_91528_, double p_91529_) {
-        if (p_91527_ == Minecraft.getInstance().getWindow().getWindow()) {
+    /**
+     * Will be called when a scrolling device is used, such as a mouse wheel or scrolling area of a touchpad.
+     *
+     * @see GLFWScrollCallbackI
+     */
+    private void onScroll(long windowPointer, double xOffset, double yOffset) {
+        if (windowPointer == Minecraft.getInstance().getWindow().getWindow()) {
             boolean flag = this.minecraft.options.discreteMouseScroll().get();
             double d0 = this.minecraft.options.mouseWheelSensitivity().get();
-            double d1 = (flag ? Math.signum(p_91528_) : p_91528_) * d0;
-            double d2 = (flag ? Math.signum(p_91529_) : p_91529_) * d0;
+            double d1 = (flag ? Math.signum(xOffset) : xOffset) * d0;
+            double d2 = (flag ? Math.signum(yOffset) : yOffset) * d0;
             if (this.minecraft.getOverlay() == null) {
                 if (this.minecraft.screen != null) {
                     double d3 = this.xpos * (double)this.minecraft.getWindow().getGuiScaledWidth() / (double)this.minecraft.getWindow().getScreenWidth();
@@ -185,19 +195,19 @@ public class MouseHandler {
         }
     }
 
-    private void onDrop(long p_91540_, List<Path> p_91541_, int p_350707_) {
+    private void onDrop(long windowPointer, List<Path> files, int failedFiles) {
         if (this.minecraft.screen != null) {
-            this.minecraft.screen.onFilesDrop(p_91541_);
+            this.minecraft.screen.onFilesDrop(files);
         }
 
-        if (p_350707_ > 0) {
-            SystemToast.onFileDropFailure(this.minecraft, p_350707_);
+        if (failedFiles > 0) {
+            SystemToast.onFileDropFailure(this.minecraft, failedFiles);
         }
     }
 
-    public void setup(long p_91525_) {
+    public void setup(long windowPointer) {
         InputConstants.setupMouseCallbacks(
-            p_91525_,
+            windowPointer,
             (p_91591_, p_91592_, p_91593_) -> this.minecraft.execute(() -> this.onMove(p_91591_, p_91592_, p_91593_)),
             (p_91566_, p_91567_, p_91568_, p_91569_) -> this.minecraft.execute(() -> this.onPress(p_91566_, p_91567_, p_91568_, p_91569_)),
             (p_91576_, p_91577_, p_91578_) -> this.minecraft.execute(() -> this.onScroll(p_91576_, p_91577_, p_91578_)),
@@ -224,20 +234,27 @@ public class MouseHandler {
         );
     }
 
-    private void onMove(long p_91562_, double p_91563_, double p_91564_) {
-        if (p_91562_ == Minecraft.getInstance().getWindow().getWindow()) {
+    /**
+     * Will be called when the cursor is moved.
+     *
+     * <p>The callback function receives the cursor position, measured in screen coordinates but relative to the top-left corner of the window client area. On platforms that provide it, the full sub-pixel cursor position is passed on.</p>
+     *
+     * @see GLFWCursorPosCallbackI
+     */
+    private void onMove(long windowPointer, double xpos, double ypos) {
+        if (windowPointer == Minecraft.getInstance().getWindow().getWindow()) {
             if (this.ignoreFirstMove) {
-                this.xpos = p_91563_;
-                this.ypos = p_91564_;
+                this.xpos = xpos;
+                this.ypos = ypos;
                 this.ignoreFirstMove = false;
             } else {
                 if (this.minecraft.isWindowActive()) {
-                    this.accumulatedDX = this.accumulatedDX + (p_91563_ - this.xpos);
-                    this.accumulatedDY = this.accumulatedDY + (p_91564_ - this.ypos);
+                    this.accumulatedDX = this.accumulatedDX + (xpos - this.xpos);
+                    this.accumulatedDY = this.accumulatedDY + (ypos - this.ypos);
                 }
 
-                this.xpos = p_91563_;
-                this.ypos = p_91564_;
+                this.xpos = xpos;
+                this.ypos = ypos;
             }
         }
     }
@@ -278,7 +295,7 @@ public class MouseHandler {
         this.accumulatedDY = 0.0;
     }
 
-    private void turnPlayer(double p_316356_) {
+    private void turnPlayer(double movementTime) {
         var event = net.neoforged.neoforge.client.ClientHooks.getTurnPlayerValues(this.minecraft.options.sensitivity().get(), this.minecraft.options.smoothCamera);
         double d2 = event.getMouseSensitivity() * 0.6F + 0.2F;
         double d3 = d2 * d2 * d2;
@@ -286,8 +303,8 @@ public class MouseHandler {
         double d0;
         double d1;
         if (event.getCinematicCameraEnabled()) {
-            double d5 = this.smoothTurnX.getNewDeltaValue(this.accumulatedDX * d4, p_316356_ * d4);
-            double d6 = this.smoothTurnY.getNewDeltaValue(this.accumulatedDY * d4, p_316356_ * d4);
+            double d5 = this.smoothTurnX.getNewDeltaValue(this.accumulatedDX * d4, movementTime * d4);
+            double d6 = this.smoothTurnY.getNewDeltaValue(this.accumulatedDY * d4, movementTime * d4);
             d0 = d5;
             d1 = d6;
         } else if (this.minecraft.options.getCameraType().isFirstPerson() && this.minecraft.player.isScoping()) {

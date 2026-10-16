@@ -20,12 +20,12 @@ public class MapIndex extends SavedData {
         this.usedAuxIds.defaultReturnValue(-1);
     }
 
-    public static MapIndex load(CompoundTag p_164763_, HolderLookup.Provider p_323806_) {
+    public static MapIndex load(CompoundTag tag, HolderLookup.Provider registries) {
         MapIndex mapindex = new MapIndex();
 
-        for (String s : p_164763_.getAllKeys()) {
-            if (p_164763_.contains(s, 99)) {
-                mapindex.usedAuxIds.put(s, p_164763_.getInt(s));
+        for (String s : tag.getAllKeys()) {
+            if (tag.contains(s, 99)) {
+                mapindex.usedAuxIds.put(s, tag.getInt(s));
             }
         }
 
@@ -33,12 +33,12 @@ public class MapIndex extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag p_77884_, HolderLookup.Provider p_324049_) {
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         for (Entry<String> entry : this.usedAuxIds.object2IntEntrySet()) {
-            p_77884_.putInt(entry.getKey(), entry.getIntValue());
+            tag.putInt(entry.getKey(), entry.getIntValue());
         }
 
-        return p_77884_;
+        return tag;
     }
 
     public MapId getFreeAuxValueForMap() {

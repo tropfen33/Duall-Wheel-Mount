@@ -15,34 +15,37 @@ public class LecternMenu extends AbstractContainerMenu {
     private final Container lectern;
     private final ContainerData lecternData;
 
-    public LecternMenu(int p_39822_) {
-        this(p_39822_, new SimpleContainer(1), new SimpleContainerData(1));
+    public LecternMenu(int containerId) {
+        this(containerId, new SimpleContainer(1), new SimpleContainerData(1));
     }
 
-    public LecternMenu(int p_39824_, Container p_39825_, ContainerData p_39826_) {
-        super(MenuType.LECTERN, p_39824_);
-        checkContainerSize(p_39825_, 1);
-        checkContainerDataCount(p_39826_, 1);
-        this.lectern = p_39825_;
-        this.lecternData = p_39826_;
-        this.addSlot(new Slot(p_39825_, 0, 0, 0) {
+    public LecternMenu(int containerId, Container lectern, ContainerData lecternData) {
+        super(MenuType.LECTERN, containerId);
+        checkContainerSize(lectern, 1);
+        checkContainerDataCount(lecternData, 1);
+        this.lectern = lectern;
+        this.lecternData = lecternData;
+        this.addSlot(new Slot(lectern, 0, 0, 0) {
             @Override
             public void setChanged() {
                 super.setChanged();
                 LecternMenu.this.slotsChanged(this.container);
             }
         });
-        this.addDataSlots(p_39826_);
+        this.addDataSlots(lecternData);
     }
 
+    /**
+     * Handles the given Button-click on the server, currently only used by enchanting. Name is for legacy.
+     */
     @Override
-    public boolean clickMenuButton(Player p_39833_, int p_39834_) {
-        if (p_39834_ >= 100) {
-            int k = p_39834_ - 100;
+    public boolean clickMenuButton(Player player, int id) {
+        if (id >= 100) {
+            int k = id - 100;
             this.setData(0, k);
             return true;
         } else {
-            switch (p_39834_) {
+            switch (id) {
                 case 1:
                     int j = this.lecternData.get(0);
                     this.setData(0, j - 1);
@@ -52,14 +55,14 @@ public class LecternMenu extends AbstractContainerMenu {
                     this.setData(0, i + 1);
                     return true;
                 case 3:
-                    if (!p_39833_.mayBuild()) {
+                    if (!player.mayBuild()) {
                         return false;
                     }
 
                     ItemStack itemstack = this.lectern.removeItemNoUpdate(0);
                     this.lectern.setChanged();
-                    if (!p_39833_.getInventory().add(itemstack)) {
-                        p_39833_.drop(itemstack, false);
+                    if (!player.getInventory().add(itemstack)) {
+                        player.drop(itemstack, false);
                     }
 
                     return true;
@@ -69,20 +72,26 @@ public class LecternMenu extends AbstractContainerMenu {
         }
     }
 
+    /**
+     * Handle when the stack in slot {@code index} is shift-clicked. Normally this moves the stack between the player inventory and the other inventory(s).
+     */
     @Override
-    public ItemStack quickMoveStack(Player p_219987_, int p_219988_) {
+    public ItemStack quickMoveStack(Player player, int index) {
         return ItemStack.EMPTY;
     }
 
     @Override
-    public void setData(int p_39828_, int p_39829_) {
-        super.setData(p_39828_, p_39829_);
+    public void setData(int id, int data) {
+        super.setData(id, data);
         this.broadcastChanges();
     }
 
+    /**
+     * Determines whether supplied player can use this container
+     */
     @Override
-    public boolean stillValid(Player p_39831_) {
-        return this.lectern.stillValid(p_39831_);
+    public boolean stillValid(Player player) {
+        return this.lectern.stillValid(player);
     }
 
     public ItemStack getBook() {

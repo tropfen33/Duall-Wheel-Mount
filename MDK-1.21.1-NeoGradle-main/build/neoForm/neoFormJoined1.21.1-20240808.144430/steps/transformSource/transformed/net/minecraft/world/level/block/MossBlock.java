@@ -21,26 +21,26 @@ public class MossBlock extends Block implements BonemealableBlock {
         return CODEC;
     }
 
-    public MossBlock(BlockBehaviour.Properties p_153790_) {
-        super(p_153790_);
+    public MossBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader p_256507_, BlockPos p_256224_, BlockState p_256628_) {
-        return p_256507_.getBlockState(p_256224_.above()).isAir();
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+        return level.getBlockState(pos.above()).isAir();
     }
 
     @Override
-    public boolean isBonemealSuccess(Level p_221538_, RandomSource p_221539_, BlockPos p_221540_, BlockState p_221541_) {
+    public boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel p_221533_, RandomSource p_221534_, BlockPos p_221535_, BlockState p_221536_) {
-        p_221533_.registryAccess()
+    public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
+        level.registryAccess()
             .registry(Registries.CONFIGURED_FEATURE)
             .flatMap(p_258973_ -> p_258973_.getHolder(CaveFeatures.MOSS_PATCH_BONEMEAL))
-            .ifPresent(p_255669_ -> p_255669_.value().place(p_221533_, p_221533_.getChunkSource().getGenerator(), p_221534_, p_221535_.above()));
+            .ifPresent(p_255669_ -> p_255669_.value().place(level, level.getChunkSource().getGenerator(), random, pos.above()));
     }
 
     @Override

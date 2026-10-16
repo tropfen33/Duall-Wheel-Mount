@@ -12,32 +12,32 @@ import java.util.Objects;
 public class ListTag extends CollectionTag<Tag> {
     private static final int SELF_SIZE_IN_BYTES = 37;
     public static final TagType<ListTag> TYPE = new TagType.VariableSize<ListTag>() {
-        public ListTag load(DataInput p_128792_, NbtAccounter p_128794_) throws IOException {
-            p_128794_.pushDepth();
+        public ListTag load(DataInput input, NbtAccounter accounter) throws IOException {
+            accounter.pushDepth();
 
             ListTag listtag;
             try {
-                listtag = loadList(p_128792_, p_128794_);
+                listtag = loadList(input, accounter);
             } finally {
-                p_128794_.popDepth();
+                accounter.popDepth();
             }
 
             return listtag;
         }
 
-        private static ListTag loadList(DataInput p_302382_, NbtAccounter p_302349_) throws IOException {
-            p_302349_.accountBytes(37L);
-            byte b0 = p_302382_.readByte();
-            int i = p_302382_.readInt();
+        private static ListTag loadList(DataInput input, NbtAccounter accounter) throws IOException {
+            accounter.accountBytes(37L);
+            byte b0 = input.readByte();
+            int i = input.readInt();
             if (b0 == 0 && i > 0) {
                 throw new NbtFormatException("Missing type on ListTag");
             } else {
-                p_302349_.accountBytes(4L, (long)i);
+                accounter.accountBytes(4L, (long)i);
                 TagType<?> tagtype = TagTypes.getType(b0);
                 List<Tag> list = Lists.newArrayListWithCapacity(i);
 
                 for (int j = 0; j < i; j++) {
-                    list.add(tagtype.load(p_302382_, p_302349_));
+                    list.add(tagtype.load(input, accounter));
                 }
 
                 return new ListTag(list, b0);
@@ -45,47 +45,47 @@ public class ListTag extends CollectionTag<Tag> {
         }
 
         @Override
-        public StreamTagVisitor.ValueResult parse(DataInput p_197491_, StreamTagVisitor p_197492_, NbtAccounter p_302333_) throws IOException {
-            p_302333_.pushDepth();
+        public StreamTagVisitor.ValueResult parse(DataInput input, StreamTagVisitor visitor, NbtAccounter accounter) throws IOException {
+            accounter.pushDepth();
 
             StreamTagVisitor.ValueResult streamtagvisitor$valueresult;
             try {
-                streamtagvisitor$valueresult = parseList(p_197491_, p_197492_, p_302333_);
+                streamtagvisitor$valueresult = parseList(input, visitor, accounter);
             } finally {
-                p_302333_.popDepth();
+                accounter.popDepth();
             }
 
             return streamtagvisitor$valueresult;
         }
 
-        private static StreamTagVisitor.ValueResult parseList(DataInput p_302369_, StreamTagVisitor p_302372_, NbtAccounter p_302361_) throws IOException {
-            p_302361_.accountBytes(37L);
-            TagType<?> tagtype = TagTypes.getType(p_302369_.readByte());
-            int i = p_302369_.readInt();
-            switch (p_302372_.visitList(tagtype, i)) {
+        private static StreamTagVisitor.ValueResult parseList(DataInput input, StreamTagVisitor visitor, NbtAccounter accounter) throws IOException {
+            accounter.accountBytes(37L);
+            TagType<?> tagtype = TagTypes.getType(input.readByte());
+            int i = input.readInt();
+            switch (visitor.visitList(tagtype, i)) {
                 case HALT:
                     return StreamTagVisitor.ValueResult.HALT;
                 case BREAK:
-                    tagtype.skip(p_302369_, i, p_302361_);
-                    return p_302372_.visitContainerEnd();
+                    tagtype.skip(input, i, accounter);
+                    return visitor.visitContainerEnd();
                 default:
-                    p_302361_.accountBytes(4L, (long)i);
+                    accounter.accountBytes(4L, (long)i);
                     int j = 0;
 
                     while (true) {
                         label41: {
                             if (j < i) {
-                                switch (p_302372_.visitElement(tagtype, j)) {
+                                switch (visitor.visitElement(tagtype, j)) {
                                     case HALT:
                                         return StreamTagVisitor.ValueResult.HALT;
                                     case BREAK:
-                                        tagtype.skip(p_302369_, p_302361_);
+                                        tagtype.skip(input, accounter);
                                         break;
                                     case SKIP:
-                                        tagtype.skip(p_302369_, p_302361_);
+                                        tagtype.skip(input, accounter);
                                         break label41;
                                     default:
-                                        switch (tagtype.parse(p_302369_, p_302372_, p_302361_)) {
+                                        switch (tagtype.parse(input, visitor, accounter)) {
                                             case HALT:
                                                 return StreamTagVisitor.ValueResult.HALT;
                                             case BREAK:
@@ -98,10 +98,10 @@ public class ListTag extends CollectionTag<Tag> {
 
                             int k = i - 1 - j;
                             if (k > 0) {
-                                tagtype.skip(p_302369_, k, p_302361_);
+                                tagtype.skip(input, k, accounter);
                             }
 
-                            return p_302372_.visitContainerEnd();
+                            return visitor.visitContainerEnd();
                         }
 
                         j++;
@@ -110,15 +110,15 @@ public class ListTag extends CollectionTag<Tag> {
         }
 
         @Override
-        public void skip(DataInput p_302400_, NbtAccounter p_302390_) throws IOException {
-            p_302390_.pushDepth();
+        public void skip(DataInput input, NbtAccounter accounter) throws IOException {
+            accounter.pushDepth();
 
             try {
-                TagType<?> tagtype = TagTypes.getType(p_302400_.readByte());
-                int i = p_302400_.readInt();
-                tagtype.skip(p_302400_, i, p_302390_);
+                TagType<?> tagtype = TagTypes.getType(input.readByte());
+                int i = input.readInt();
+                tagtype.skip(input, i, accounter);
             } finally {
-                p_302390_.popDepth();
+                accounter.popDepth();
             }
         }
 
@@ -135,9 +135,9 @@ public class ListTag extends CollectionTag<Tag> {
     private final List<Tag> list;
     private byte type;
 
-    ListTag(List<Tag> p_128721_, byte p_128722_) {
-        this.list = p_128721_;
-        this.type = p_128722_;
+    ListTag(List<Tag> list, byte type) {
+        this.list = list;
+        this.type = type;
     }
 
     public ListTag() {
@@ -154,18 +154,18 @@ public class ListTag extends CollectionTag<Tag> {
     }
 
     @Override
-    public void write(DataOutput p_128734_) throws IOException {
+    public void write(DataOutput output) throws IOException {
         if (this.list.isEmpty()) {
             this.type = 0;
         } else {
             this.type = this.list.get(0).getId();
         }
 
-        p_128734_.writeByte(this.type);
-        p_128734_.writeInt(this.list.size());
+        output.writeByte(this.type);
+        output.writeInt(this.list.size());
 
         for (Tag tag : this.list) {
-            tag.write(p_128734_);
+            tag.write(output);
         }
     }
 
@@ -214,9 +214,9 @@ public class ListTag extends CollectionTag<Tag> {
         return this.list.isEmpty();
     }
 
-    public CompoundTag getCompound(int p_128729_) {
-        if (p_128729_ >= 0 && p_128729_ < this.list.size()) {
-            Tag tag = this.list.get(p_128729_);
+    public CompoundTag getCompound(int index) {
+        if (index >= 0 && index < this.list.size()) {
+            Tag tag = this.list.get(index);
             if (tag.getId() == 10) {
                 return (CompoundTag)tag;
             }
@@ -225,9 +225,9 @@ public class ListTag extends CollectionTag<Tag> {
         return new CompoundTag();
     }
 
-    public ListTag getList(int p_128745_) {
-        if (p_128745_ >= 0 && p_128745_ < this.list.size()) {
-            Tag tag = this.list.get(p_128745_);
+    public ListTag getList(int index) {
+        if (index >= 0 && index < this.list.size()) {
+            Tag tag = this.list.get(index);
             if (tag.getId() == 9) {
                 return (ListTag)tag;
             }
@@ -236,9 +236,9 @@ public class ListTag extends CollectionTag<Tag> {
         return new ListTag();
     }
 
-    public short getShort(int p_128758_) {
-        if (p_128758_ >= 0 && p_128758_ < this.list.size()) {
-            Tag tag = this.list.get(p_128758_);
+    public short getShort(int index) {
+        if (index >= 0 && index < this.list.size()) {
+            Tag tag = this.list.get(index);
             if (tag.getId() == 2) {
                 return ((ShortTag)tag).getAsShort();
             }
@@ -247,9 +247,9 @@ public class ListTag extends CollectionTag<Tag> {
         return 0;
     }
 
-    public int getInt(int p_128764_) {
-        if (p_128764_ >= 0 && p_128764_ < this.list.size()) {
-            Tag tag = this.list.get(p_128764_);
+    public int getInt(int index) {
+        if (index >= 0 && index < this.list.size()) {
+            Tag tag = this.list.get(index);
             if (tag.getId() == 3) {
                 return ((IntTag)tag).getAsInt();
             }
@@ -258,9 +258,9 @@ public class ListTag extends CollectionTag<Tag> {
         return 0;
     }
 
-    public int[] getIntArray(int p_128768_) {
-        if (p_128768_ >= 0 && p_128768_ < this.list.size()) {
-            Tag tag = this.list.get(p_128768_);
+    public int[] getIntArray(int index) {
+        if (index >= 0 && index < this.list.size()) {
+            Tag tag = this.list.get(index);
             if (tag.getId() == 11) {
                 return ((IntArrayTag)tag).getAsIntArray();
             }
@@ -269,9 +269,9 @@ public class ListTag extends CollectionTag<Tag> {
         return new int[0];
     }
 
-    public long[] getLongArray(int p_177992_) {
-        if (p_177992_ >= 0 && p_177992_ < this.list.size()) {
-            Tag tag = this.list.get(p_177992_);
+    public long[] getLongArray(int index) {
+        if (index >= 0 && index < this.list.size()) {
+            Tag tag = this.list.get(index);
             if (tag.getId() == 12) {
                 return ((LongArrayTag)tag).getAsLongArray();
             }
@@ -280,9 +280,9 @@ public class ListTag extends CollectionTag<Tag> {
         return new long[0];
     }
 
-    public double getDouble(int p_128773_) {
-        if (p_128773_ >= 0 && p_128773_ < this.list.size()) {
-            Tag tag = this.list.get(p_128773_);
+    public double getDouble(int index) {
+        if (index >= 0 && index < this.list.size()) {
+            Tag tag = this.list.get(index);
             if (tag.getId() == 6) {
                 return ((DoubleTag)tag).getAsDouble();
             }
@@ -291,9 +291,9 @@ public class ListTag extends CollectionTag<Tag> {
         return 0.0;
     }
 
-    public float getFloat(int p_128776_) {
-        if (p_128776_ >= 0 && p_128776_ < this.list.size()) {
-            Tag tag = this.list.get(p_128776_);
+    public float getFloat(int index) {
+        if (index >= 0 && index < this.list.size()) {
+            Tag tag = this.list.get(index);
             if (tag.getId() == 5) {
                 return ((FloatTag)tag).getAsFloat();
             }
@@ -302,9 +302,9 @@ public class ListTag extends CollectionTag<Tag> {
         return 0.0F;
     }
 
-    public String getString(int p_128779_) {
-        if (p_128779_ >= 0 && p_128779_ < this.list.size()) {
-            Tag tag = this.list.get(p_128779_);
+    public String getString(int index) {
+        if (index >= 0 && index < this.list.size()) {
+            Tag tag = this.list.get(index);
             return tag.getId() == 8 ? tag.getAsString() : tag.toString();
         } else {
             return "";
@@ -316,8 +316,8 @@ public class ListTag extends CollectionTag<Tag> {
         return this.list.size();
     }
 
-    public Tag get(int p_128781_) {
-        return this.list.get(p_128781_);
+    public Tag get(int index) {
+        return this.list.get(index);
     }
 
     @Override
@@ -338,9 +338,9 @@ public class ListTag extends CollectionTag<Tag> {
     }
 
     @Override
-    public boolean setTag(int p_128731_, Tag p_128732_) {
-        if (this.updateType(p_128732_)) {
-            this.list.set(p_128731_, p_128732_);
+    public boolean setTag(int index, Tag nbt) {
+        if (this.updateType(nbt)) {
+            this.list.set(index, nbt);
             return true;
         } else {
             return false;
@@ -348,23 +348,23 @@ public class ListTag extends CollectionTag<Tag> {
     }
 
     @Override
-    public boolean addTag(int p_128747_, Tag p_128748_) {
-        if (this.updateType(p_128748_)) {
-            this.list.add(p_128747_, p_128748_);
+    public boolean addTag(int index, Tag nbt) {
+        if (this.updateType(nbt)) {
+            this.list.add(index, nbt);
             return true;
         } else {
             return false;
         }
     }
 
-    private boolean updateType(Tag p_128739_) {
-        if (p_128739_.getId() == 0) {
+    private boolean updateType(Tag tag) {
+        if (tag.getId() == 0) {
             return false;
         } else if (this.type == 0) {
-            this.type = p_128739_.getId();
+            this.type = tag.getId();
             return true;
         } else {
-            return this.type == p_128739_.getId();
+            return this.type == tag.getId();
         }
     }
 
@@ -375,8 +375,8 @@ public class ListTag extends CollectionTag<Tag> {
     }
 
     @Override
-    public boolean equals(Object p_128766_) {
-        return this == p_128766_ ? true : p_128766_ instanceof ListTag && Objects.equals(this.list, ((ListTag)p_128766_).list);
+    public boolean equals(Object other) {
+        return this == other ? true : other instanceof ListTag && Objects.equals(this.list, ((ListTag)other).list);
     }
 
     @Override
@@ -385,8 +385,8 @@ public class ListTag extends CollectionTag<Tag> {
     }
 
     @Override
-    public void accept(TagVisitor p_177990_) {
-        p_177990_.visitList(this);
+    public void accept(TagVisitor visitor) {
+        visitor.visitList(this);
     }
 
     @Override
@@ -401,35 +401,35 @@ public class ListTag extends CollectionTag<Tag> {
     }
 
     @Override
-    public StreamTagVisitor.ValueResult accept(StreamTagVisitor p_197487_) {
-        switch (p_197487_.visitList(TagTypes.getType(this.type), this.list.size())) {
+    public StreamTagVisitor.ValueResult accept(StreamTagVisitor visitor) {
+        switch (visitor.visitList(TagTypes.getType(this.type), this.list.size())) {
             case HALT:
                 return StreamTagVisitor.ValueResult.HALT;
             case BREAK:
-                return p_197487_.visitContainerEnd();
+                return visitor.visitContainerEnd();
             default:
                 int i = 0;
 
                 while (i < this.list.size()) {
                     Tag tag = this.list.get(i);
-                    switch (p_197487_.visitElement(tag.getType(), i)) {
+                    switch (visitor.visitElement(tag.getType(), i)) {
                         case HALT:
                             return StreamTagVisitor.ValueResult.HALT;
                         case BREAK:
-                            return p_197487_.visitContainerEnd();
+                            return visitor.visitContainerEnd();
                         default:
-                            switch (tag.accept(p_197487_)) {
+                            switch (tag.accept(visitor)) {
                                 case HALT:
                                     return StreamTagVisitor.ValueResult.HALT;
                                 case BREAK:
-                                    return p_197487_.visitContainerEnd();
+                                    return visitor.visitContainerEnd();
                             }
                         case SKIP:
                             i++;
                     }
                 }
 
-                return p_197487_.visitContainerEnd();
+                return visitor.visitContainerEnd();
         }
     }
 }

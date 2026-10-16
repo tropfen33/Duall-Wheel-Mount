@@ -48,8 +48,8 @@ public class DebugCommand {
     static final SimpleCommandExceptionType NO_RECURSIVE_TRACES = new SimpleCommandExceptionType(Component.translatable("commands.debug.function.noRecursion"));
     static final SimpleCommandExceptionType NO_RETURN_RUN = new SimpleCommandExceptionType(Component.translatable("commands.debug.function.noReturnRun"));
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_136906_) {
-        p_136906_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("debug")
                 .requires(p_180073_ -> p_180073_.hasPermission(3))
                 .then(Commands.literal("start").executes(p_180069_ -> start(p_180069_.getSource())))
@@ -66,26 +66,26 @@ public class DebugCommand {
         );
     }
 
-    private static int start(CommandSourceStack p_136910_) throws CommandSyntaxException {
-        MinecraftServer minecraftserver = p_136910_.getServer();
+    private static int start(CommandSourceStack source) throws CommandSyntaxException {
+        MinecraftServer minecraftserver = source.getServer();
         if (minecraftserver.isTimeProfilerRunning()) {
             throw ERROR_ALREADY_RUNNING.create();
         } else {
             minecraftserver.startTimeProfiler();
-            p_136910_.sendSuccess(() -> Component.translatable("commands.debug.started"), true);
+            source.sendSuccess(() -> Component.translatable("commands.debug.started"), true);
             return 0;
         }
     }
 
-    private static int stop(CommandSourceStack p_136916_) throws CommandSyntaxException {
-        MinecraftServer minecraftserver = p_136916_.getServer();
+    private static int stop(CommandSourceStack source) throws CommandSyntaxException {
+        MinecraftServer minecraftserver = source.getServer();
         if (!minecraftserver.isTimeProfilerRunning()) {
             throw ERROR_NOT_RUNNING.create();
         } else {
             ProfileResults profileresults = minecraftserver.stopTimeProfiler();
             double d0 = (double)profileresults.getNanoDuration() / (double)TimeUtil.NANOSECONDS_PER_SECOND;
             double d1 = (double)profileresults.getTickDuration() / d0;
-            p_136916_.sendSuccess(
+            source.sendSuccess(
                 () -> Component.translatable(
                         "commands.debug.stopped",
                         String.format(Locale.ROOT, "%.2f", d0),
@@ -102,18 +102,18 @@ public class DebugCommand {
         extends CustomCommandExecutor.WithErrorHandling<CommandSourceStack>
         implements CustomCommandExecutor.CommandAdapter<CommandSourceStack> {
         public void runGuarded(
-            CommandSourceStack p_309716_, ContextChain<CommandSourceStack> p_306169_, ChainModifiers p_309697_, ExecutionControl<CommandSourceStack> p_306283_
+            CommandSourceStack source, ContextChain<CommandSourceStack> contextChain, ChainModifiers chainModifiers, ExecutionControl<CommandSourceStack> executionControl
         ) throws CommandSyntaxException {
-            if (p_309697_.isReturn()) {
+            if (chainModifiers.isReturn()) {
                 throw DebugCommand.NO_RETURN_RUN.create();
-            } else if (p_306283_.tracer() != null) {
+            } else if (executionControl.tracer() != null) {
                 throw DebugCommand.NO_RECURSIVE_TRACES.create();
             } else {
-                CommandContext<CommandSourceStack> commandcontext = p_306169_.getTopContext();
+                CommandContext<CommandSourceStack> commandcontext = contextChain.getTopContext();
                 Collection<CommandFunction<CommandSourceStack>> collection = FunctionArgument.getFunctions(commandcontext, "name");
-                MinecraftServer minecraftserver = p_309716_.getServer();
+                MinecraftServer minecraftserver = source.getServer();
                 String s = "debug-trace-" + Util.getFilenameFormattedDateTime() + ".txt";
-                CommandDispatcher<CommandSourceStack> commanddispatcher = p_309716_.getServer().getFunctions().getDispatcher();
+                CommandDispatcher<CommandSourceStack> commanddispatcher = source.getServer().getFunctions().getDispatcher();
                 int i = 0;
 
                 try {
@@ -121,13 +121,13 @@ public class DebugCommand {
                     Files.createDirectories(path);
                     final PrintWriter printwriter = new PrintWriter(Files.newBufferedWriter(path.resolve(s), StandardCharsets.UTF_8));
                     DebugCommand.Tracer debugcommand$tracer = new DebugCommand.Tracer(printwriter);
-                    p_306283_.tracer(debugcommand$tracer);
+                    executionControl.tracer(debugcommand$tracer);
 
                     for (final CommandFunction<CommandSourceStack> commandfunction : collection) {
                         try {
-                            CommandSourceStack commandsourcestack = p_309716_.withSource(debugcommand$tracer).withMaximumPermission(2);
+                            CommandSourceStack commandsourcestack = source.withSource(debugcommand$tracer).withMaximumPermission(2);
                             InstantiatedFunction<CommandSourceStack> instantiatedfunction = commandfunction.instantiate(null, commanddispatcher);
-                            p_306283_.queueNext((new CallFunction<CommandSourceStack>(instantiatedfunction, CommandResultCallback.EMPTY, false) {
+                            executionControl.queueNext((new CallFunction<CommandSourceStack>(instantiatedfunction, CommandResultCallback.EMPTY, false) {
                                 public void execute(CommandSourceStack p_309660_, ExecutionContext<CommandSourceStack> p_309654_, Frame p_309674_) {
                                     printwriter.println(commandfunction.id());
                                     super.execute(p_309660_, p_309654_, p_309674_);
@@ -135,26 +135,26 @@ public class DebugCommand {
                             }).bind(commandsourcestack));
                             i += instantiatedfunction.entries().size();
                         } catch (FunctionInstantiationException functioninstantiationexception) {
-                            p_309716_.sendFailure(functioninstantiationexception.messageComponent());
+                            source.sendFailure(functioninstantiationexception.messageComponent());
                         }
                     }
                 } catch (IOException | UncheckedIOException uncheckedioexception) {
                     DebugCommand.LOGGER.warn("Tracing failed", (Throwable)uncheckedioexception);
-                    p_309716_.sendFailure(Component.translatable("commands.debug.function.traceFailed"));
+                    source.sendFailure(Component.translatable("commands.debug.function.traceFailed"));
                 }
 
                 int j = i;
-                p_306283_.queueNext(
+                executionControl.queueNext(
                     (p_305943_, p_309635_) -> {
                         if (collection.size() == 1) {
-                            p_309716_.sendSuccess(
+                            source.sendSuccess(
                                 () -> Component.translatable(
                                         "commands.debug.function.success.single", j, Component.translationArg(collection.iterator().next().id()), s
                                     ),
                                 true
                             );
                         } else {
-                            p_309716_.sendSuccess(() -> Component.translatable("commands.debug.function.success.multiple", j, collection.size(), s), true);
+                            source.sendSuccess(() -> Component.translatable("commands.debug.function.success.multiple", j, collection.size(), s), true);
                         }
                     }
                 );
@@ -168,17 +168,17 @@ public class DebugCommand {
         private int lastIndent;
         private boolean waitingForResult;
 
-        Tracer(PrintWriter p_180079_) {
-            this.output = p_180079_;
+        Tracer(PrintWriter output) {
+            this.output = output;
         }
 
-        private void indentAndSave(int p_180082_) {
-            this.printIndent(p_180082_);
-            this.lastIndent = p_180082_;
+        private void indentAndSave(int indent) {
+            this.printIndent(indent);
+            this.lastIndent = indent;
         }
 
-        private void printIndent(int p_180098_) {
-            for (int i = 0; i < p_180098_ + 1; i++) {
+        private void printIndent(int indent) {
+            for (int i = 0; i < indent + 1; i++) {
                 this.output.write("    ");
             }
         }
@@ -191,53 +191,53 @@ public class DebugCommand {
         }
 
         @Override
-        public void onCommand(int p_180084_, String p_180085_) {
+        public void onCommand(int depth, String command) {
             this.newLine();
-            this.indentAndSave(p_180084_);
+            this.indentAndSave(depth);
             this.output.print("[C] ");
-            this.output.print(p_180085_);
+            this.output.print(command);
             this.waitingForResult = true;
         }
 
         @Override
-        public void onReturn(int p_180087_, String p_180088_, int p_180089_) {
+        public void onReturn(int depth, String command, int returnValue) {
             if (this.waitingForResult) {
                 this.output.print(" -> ");
-                this.output.println(p_180089_);
+                this.output.println(returnValue);
                 this.waitingForResult = false;
             } else {
-                this.indentAndSave(p_180087_);
+                this.indentAndSave(depth);
                 this.output.print("[R = ");
-                this.output.print(p_180089_);
+                this.output.print(returnValue);
                 this.output.print("] ");
-                this.output.println(p_180088_);
+                this.output.println(command);
             }
         }
 
         @Override
-        public void onCall(int p_180091_, ResourceLocation p_180092_, int p_180093_) {
+        public void onCall(int depth, ResourceLocation function, int commands) {
             this.newLine();
-            this.indentAndSave(p_180091_);
+            this.indentAndSave(depth);
             this.output.print("[F] ");
-            this.output.print(p_180092_);
+            this.output.print(function);
             this.output.print(" size=");
-            this.output.println(p_180093_);
+            this.output.println(commands);
         }
 
         @Override
-        public void onError(String p_180101_) {
+        public void onError(String errorMessage) {
             this.newLine();
             this.indentAndSave(this.lastIndent + 1);
             this.output.print("[E] ");
-            this.output.print(p_180101_);
+            this.output.print(errorMessage);
         }
 
         @Override
-        public void sendSystemMessage(Component p_214427_) {
+        public void sendSystemMessage(Component component) {
             this.newLine();
             this.printIndent(this.lastIndent + 1);
             this.output.print("[M] ");
-            this.output.println(p_214427_.getString());
+            this.output.println(component.getString());
         }
 
         @Override

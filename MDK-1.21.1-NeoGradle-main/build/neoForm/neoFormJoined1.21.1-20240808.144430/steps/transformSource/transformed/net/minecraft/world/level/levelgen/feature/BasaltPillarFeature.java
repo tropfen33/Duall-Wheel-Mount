@@ -11,15 +11,22 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 
 public class BasaltPillarFeature extends Feature<NoneFeatureConfiguration> {
-    public BasaltPillarFeature(Codec<NoneFeatureConfiguration> p_65190_) {
-        super(p_65190_);
+    public BasaltPillarFeature(Codec<NoneFeatureConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> p_159446_) {
-        BlockPos blockpos = p_159446_.origin();
-        WorldGenLevel worldgenlevel = p_159446_.level();
-        RandomSource randomsource = p_159446_.random();
+    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
+        BlockPos blockpos = context.origin();
+        WorldGenLevel worldgenlevel = context.level();
+        RandomSource randomsource = context.random();
         if (worldgenlevel.isEmptyBlock(blockpos) && !worldgenlevel.isEmptyBlock(blockpos.above())) {
             BlockPos.MutableBlockPos blockpos$mutableblockpos = blockpos.mutable();
             BlockPos.MutableBlockPos blockpos$mutableblockpos1 = blockpos.mutable();
@@ -80,15 +87,15 @@ public class BasaltPillarFeature extends Feature<NoneFeatureConfiguration> {
         }
     }
 
-    private void placeBaseHangOff(LevelAccessor p_224937_, RandomSource p_224938_, BlockPos p_224939_) {
-        if (p_224938_.nextBoolean()) {
-            p_224937_.setBlock(p_224939_, Blocks.BASALT.defaultBlockState(), 2);
+    private void placeBaseHangOff(LevelAccessor level, RandomSource random, BlockPos pos) {
+        if (random.nextBoolean()) {
+            level.setBlock(pos, Blocks.BASALT.defaultBlockState(), 2);
         }
     }
 
-    private boolean placeHangOff(LevelAccessor p_224941_, RandomSource p_224942_, BlockPos p_224943_) {
-        if (p_224942_.nextInt(10) != 0) {
-            p_224941_.setBlock(p_224943_, Blocks.BASALT.defaultBlockState(), 2);
+    private boolean placeHangOff(LevelAccessor level, RandomSource random, BlockPos pos) {
+        if (random.nextInt(10) != 0) {
+            level.setBlock(pos, Blocks.BASALT.defaultBlockState(), 2);
             return true;
         } else {
             return false;

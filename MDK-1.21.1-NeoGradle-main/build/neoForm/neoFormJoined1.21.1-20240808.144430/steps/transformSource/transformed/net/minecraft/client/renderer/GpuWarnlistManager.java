@@ -90,44 +90,47 @@ public class GpuWarnlistManager extends SimplePreparableReloadListener<GpuWarnli
         return stringbuilder.length() == 0 ? null : stringbuilder.toString();
     }
 
-    protected GpuWarnlistManager.Preparations prepare(ResourceManager p_109220_, ProfilerFiller p_109221_) {
+    /**
+     * Performs any reloading that can be done off-thread, such as file IO
+     */
+    protected GpuWarnlistManager.Preparations prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
         List<Pattern> list = Lists.newArrayList();
         List<Pattern> list1 = Lists.newArrayList();
         List<Pattern> list2 = Lists.newArrayList();
-        p_109221_.startTick();
-        JsonObject jsonobject = parseJson(p_109220_, p_109221_);
+        profiler.startTick();
+        JsonObject jsonobject = parseJson(resourceManager, profiler);
         if (jsonobject != null) {
-            p_109221_.push("compile_regex");
+            profiler.push("compile_regex");
             compilePatterns(jsonobject.getAsJsonArray("renderer"), list);
             compilePatterns(jsonobject.getAsJsonArray("version"), list1);
             compilePatterns(jsonobject.getAsJsonArray("vendor"), list2);
-            p_109221_.pop();
+            profiler.pop();
         }
 
-        p_109221_.endTick();
+        profiler.endTick();
         return new GpuWarnlistManager.Preparations(list, list1, list2);
     }
 
-    protected void apply(GpuWarnlistManager.Preparations p_109226_, ResourceManager p_109227_, ProfilerFiller p_109228_) {
-        this.warnings = p_109226_.apply();
+    protected void apply(GpuWarnlistManager.Preparations object, ResourceManager resourceManager, ProfilerFiller profiler) {
+        this.warnings = object.apply();
     }
 
-    private static void compilePatterns(JsonArray p_109223_, List<Pattern> p_109224_) {
-        p_109223_.forEach(p_109239_ -> p_109224_.add(Pattern.compile(p_109239_.getAsString(), 2)));
+    private static void compilePatterns(JsonArray jsonArray, List<Pattern> patterns) {
+        jsonArray.forEach(p_109239_ -> patterns.add(Pattern.compile(p_109239_.getAsString(), 2)));
     }
 
     @Nullable
-    private static JsonObject parseJson(ResourceManager p_109245_, ProfilerFiller p_109246_) {
-        p_109246_.push("parse_json");
+    private static JsonObject parseJson(ResourceManager resourceManager, ProfilerFiller profilerFiller) {
+        profilerFiller.push("parse_json");
         JsonObject jsonobject = null;
 
-        try (Reader reader = p_109245_.openAsReader(GPU_WARNLIST_LOCATION)) {
+        try (Reader reader = resourceManager.openAsReader(GPU_WARNLIST_LOCATION)) {
             jsonobject = JsonParser.parseReader(reader).getAsJsonObject();
         } catch (JsonSyntaxException | IOException ioexception) {
             LOGGER.warn("Failed to load GPU warnlist");
         }
 
-        p_109246_.pop();
+        profilerFiller.pop();
         return jsonobject;
     }
 
@@ -137,17 +140,17 @@ public class GpuWarnlistManager extends SimplePreparableReloadListener<GpuWarnli
         private final List<Pattern> versionPatterns;
         private final List<Pattern> vendorPatterns;
 
-        Preparations(List<Pattern> p_109261_, List<Pattern> p_109262_, List<Pattern> p_109263_) {
-            this.rendererPatterns = p_109261_;
-            this.versionPatterns = p_109262_;
-            this.vendorPatterns = p_109263_;
+        Preparations(List<Pattern> rendererPatterns, List<Pattern> versionPatterns, List<Pattern> vendorPatterns) {
+            this.rendererPatterns = rendererPatterns;
+            this.versionPatterns = versionPatterns;
+            this.vendorPatterns = vendorPatterns;
         }
 
-        private static String matchAny(List<Pattern> p_109273_, String p_109274_) {
+        private static String matchAny(List<Pattern> patterns, String string) {
             List<String> list = Lists.newArrayList();
 
-            for (Pattern pattern : p_109273_) {
-                Matcher matcher = pattern.matcher(p_109274_);
+            for (Pattern pattern : patterns) {
+                Matcher matcher = pattern.matcher(string);
 
                 while (matcher.find()) {
                     list.add(matcher.group());

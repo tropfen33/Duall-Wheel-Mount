@@ -37,39 +37,45 @@ public class ChorusFlowerBlock extends Block {
         return CODEC;
     }
 
-    public ChorusFlowerBlock(Block p_304388_, BlockBehaviour.Properties p_51652_) {
-        super(p_51652_);
-        this.plant = p_304388_;
+    public ChorusFlowerBlock(Block plant, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.plant = plant;
         this.registerDefaultState(this.stateDefinition.any().setValue(AGE, Integer.valueOf(0)));
     }
 
     @Override
-    protected void tick(BlockState p_220975_, ServerLevel p_220976_, BlockPos p_220977_, RandomSource p_220978_) {
-        if (!p_220975_.canSurvive(p_220976_, p_220977_)) {
-            p_220976_.destroyBlock(p_220977_, true);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!state.canSurvive(level, pos)) {
+            level.destroyBlock(pos, true);
         }
     }
 
+    /**
+     * Returns whether this block is of a type that needs random ticking. Called for ref-counting purposes by {@code ExtendedBlockStorage} in order to broadly cull a chunk from the random chunk update list for efficiency's sake.
+     */
     @Override
-    protected boolean isRandomlyTicking(BlockState p_51696_) {
-        return p_51696_.getValue(AGE) < 5;
+    protected boolean isRandomlyTicking(BlockState state) {
+        return state.getValue(AGE) < 5;
     }
 
     @Override
-    public VoxelShape getBlockSupportShape(BlockState p_294099_, BlockGetter p_294531_, BlockPos p_295431_) {
+    public VoxelShape getBlockSupportShape(BlockState state, BlockGetter level, BlockPos pos) {
         return BLOCK_SUPPORT_SHAPE;
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_220980_, ServerLevel p_220981_, BlockPos p_220982_, RandomSource p_220983_) {
-        BlockPos blockpos = p_220982_.above();
-        if (p_220981_.isEmptyBlock(blockpos) && blockpos.getY() < p_220981_.getMaxBuildHeight()) {
-            int i = p_220980_.getValue(AGE);
-            if (i < 5 && net.neoforged.neoforge.common.CommonHooks.canCropGrow(p_220981_, blockpos, p_220980_, true)) {
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        BlockPos blockpos = pos.above();
+        if (level.isEmptyBlock(blockpos) && blockpos.getY() < level.getMaxBuildHeight()) {
+            int i = state.getValue(AGE);
+            if (i < 5 && net.neoforged.neoforge.common.CommonHooks.canCropGrow(level, blockpos, state, true)) {
                 boolean flag = false;
                 boolean flag1 = false;
-                BlockState blockstate = p_220981_.getBlockState(p_220982_.below());
-                net.neoforged.neoforge.common.util.TriState soilDecision = blockstate.canSustainPlant(p_220981_, p_220982_.below(), Direction.UP, p_220980_);
+                BlockState blockstate = level.getBlockState(pos.below());
+                net.neoforged.neoforge.common.util.TriState soilDecision = blockstate.canSustainPlant(level, pos.below(), Direction.UP, state);
                 if (!soilDecision.isDefault()) flag = soilDecision.isTrue();
                 else
                 if (blockstate.is(Blocks.END_STONE)) {
@@ -78,9 +84,9 @@ public class ChorusFlowerBlock extends Block {
                     int j = 1;
 
                     for (int k = 0; k < 4; k++) {
-                        BlockState blockstate1 = p_220981_.getBlockState(p_220982_.below(j + 1));
+                        BlockState blockstate1 = level.getBlockState(pos.below(j + 1));
                         if (!blockstate1.is(this.plant)) {
-                            net.neoforged.neoforge.common.util.TriState soilDecision2 = blockstate1.canSustainPlant(p_220981_, p_220982_.below(j + 1), Direction.UP, p_220980_);
+                            net.neoforged.neoforge.common.util.TriState soilDecision2 = blockstate1.canSustainPlant(level, pos.below(j + 1), Direction.UP, state);
                             if (!soilDecision2.isDefault()) flag1 = soilDecision2.isTrue();
                             if (blockstate1.is(Blocks.END_STONE)) {
                                 flag1 = true;
@@ -91,18 +97,18 @@ public class ChorusFlowerBlock extends Block {
                         j++;
                     }
 
-                    if (j < 2 || j <= p_220983_.nextInt(flag1 ? 5 : 4)) {
+                    if (j < 2 || j <= random.nextInt(flag1 ? 5 : 4)) {
                         flag = true;
                     }
                 } else if (blockstate.isAir()) {
                     flag = true;
                 }
 
-                if (flag && allNeighborsEmpty(p_220981_, blockpos, null) && p_220981_.isEmptyBlock(p_220982_.above(2))) {
-                    p_220981_.setBlock(p_220982_, ChorusPlantBlock.getStateWithConnections(p_220981_, p_220982_, this.plant.defaultBlockState()), 2);
-                    this.placeGrownFlower(p_220981_, blockpos, i);
+                if (flag && allNeighborsEmpty(level, blockpos, null) && level.isEmptyBlock(pos.above(2))) {
+                    level.setBlock(pos, ChorusPlantBlock.getStateWithConnections(level, pos, this.plant.defaultBlockState()), 2);
+                    this.placeGrownFlower(level, blockpos, i);
                 } else if (i < 4) {
-                    int l = p_220983_.nextInt(4);
+                    int l = random.nextInt(4);
                     if (flag1) {
                         l++;
                     }
@@ -110,42 +116,42 @@ public class ChorusFlowerBlock extends Block {
                     boolean flag2 = false;
 
                     for (int i1 = 0; i1 < l; i1++) {
-                        Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(p_220983_);
-                        BlockPos blockpos1 = p_220982_.relative(direction);
-                        if (p_220981_.isEmptyBlock(blockpos1)
-                            && p_220981_.isEmptyBlock(blockpos1.below())
-                            && allNeighborsEmpty(p_220981_, blockpos1, direction.getOpposite())) {
-                            this.placeGrownFlower(p_220981_, blockpos1, i + 1);
+                        Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(random);
+                        BlockPos blockpos1 = pos.relative(direction);
+                        if (level.isEmptyBlock(blockpos1)
+                            && level.isEmptyBlock(blockpos1.below())
+                            && allNeighborsEmpty(level, blockpos1, direction.getOpposite())) {
+                            this.placeGrownFlower(level, blockpos1, i + 1);
                             flag2 = true;
                         }
                     }
 
                     if (flag2) {
-                        p_220981_.setBlock(p_220982_, ChorusPlantBlock.getStateWithConnections(p_220981_, p_220982_, this.plant.defaultBlockState()), 2);
+                        level.setBlock(pos, ChorusPlantBlock.getStateWithConnections(level, pos, this.plant.defaultBlockState()), 2);
                     } else {
-                        this.placeDeadFlower(p_220981_, p_220982_);
+                        this.placeDeadFlower(level, pos);
                     }
                 } else {
-                    this.placeDeadFlower(p_220981_, p_220982_);
+                    this.placeDeadFlower(level, pos);
                 }
-                net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(p_220981_, p_220982_, p_220980_);
+                net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(level, pos, state);
             }
         }
     }
 
-    private void placeGrownFlower(Level p_51662_, BlockPos p_51663_, int p_51664_) {
-        p_51662_.setBlock(p_51663_, this.defaultBlockState().setValue(AGE, Integer.valueOf(p_51664_)), 2);
-        p_51662_.levelEvent(1033, p_51663_, 0);
+    private void placeGrownFlower(Level level, BlockPos pos, int age) {
+        level.setBlock(pos, this.defaultBlockState().setValue(AGE, Integer.valueOf(age)), 2);
+        level.levelEvent(1033, pos, 0);
     }
 
-    private void placeDeadFlower(Level p_51659_, BlockPos p_51660_) {
-        p_51659_.setBlock(p_51660_, this.defaultBlockState().setValue(AGE, Integer.valueOf(5)), 2);
-        p_51659_.levelEvent(1034, p_51660_, 0);
+    private void placeDeadFlower(Level level, BlockPos pos) {
+        level.setBlock(pos, this.defaultBlockState().setValue(AGE, Integer.valueOf(5)), 2);
+        level.levelEvent(1034, pos, 0);
     }
 
-    private static boolean allNeighborsEmpty(LevelReader p_51698_, BlockPos p_51699_, @Nullable Direction p_51700_) {
+    private static boolean allNeighborsEmpty(LevelReader level, BlockPos pos, @Nullable Direction excludingSide) {
         for (Direction direction : Direction.Plane.HORIZONTAL) {
-            if (direction != p_51700_ && !p_51698_.isEmptyBlock(p_51699_.relative(direction))) {
+            if (direction != excludingSide && !level.isEmptyBlock(pos.relative(direction))) {
                 return false;
             }
         }
@@ -153,19 +159,24 @@ public class ChorusFlowerBlock extends Block {
         return true;
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_51687_, Direction p_51688_, BlockState p_51689_, LevelAccessor p_51690_, BlockPos p_51691_, BlockPos p_51692_) {
-        if (p_51688_ != Direction.UP && !p_51687_.canSurvive(p_51690_, p_51691_)) {
-            p_51690_.scheduleTick(p_51691_, this, 1);
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (facing != Direction.UP && !state.canSurvive(level, currentPos)) {
+            level.scheduleTick(currentPos, this, 1);
         }
 
-        return super.updateShape(p_51687_, p_51688_, p_51689_, p_51690_, p_51691_, p_51692_);
+        return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_51683_, LevelReader p_51684_, BlockPos p_51685_) {
-        BlockState blockstate = p_51684_.getBlockState(p_51685_.below());
-        net.neoforged.neoforge.common.util.TriState soilDecision = blockstate.canSustainPlant(p_51684_, p_51685_.below(), Direction.UP, p_51683_);
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos.below());
+        net.neoforged.neoforge.common.util.TriState soilDecision = blockstate.canSustainPlant(level, pos.below(), Direction.UP, state);
         if (!soilDecision.isDefault()) return soilDecision.isTrue();
         if (!blockstate.is(this.plant) && !blockstate.is(Blocks.END_STONE)) {
             if (!blockstate.isAir()) {
@@ -174,7 +185,7 @@ public class ChorusFlowerBlock extends Block {
                 boolean flag = false;
 
                 for (Direction direction : Direction.Plane.HORIZONTAL) {
-                    BlockState blockstate1 = p_51684_.getBlockState(p_51685_.relative(direction));
+                    BlockState blockstate1 = level.getBlockState(pos.relative(direction));
                     if (blockstate1.is(this.plant)) {
                         if (flag) {
                             return false;
@@ -194,69 +205,69 @@ public class ChorusFlowerBlock extends Block {
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_51694_) {
-        p_51694_.add(AGE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AGE);
     }
 
-    public static void generatePlant(LevelAccessor p_220963_, BlockPos p_220964_, RandomSource p_220965_, int p_220966_) {
-        p_220963_.setBlock(p_220964_, ChorusPlantBlock.getStateWithConnections(p_220963_, p_220964_, Blocks.CHORUS_PLANT.defaultBlockState()), 2);
-        growTreeRecursive(p_220963_, p_220964_, p_220965_, p_220964_, p_220966_, 0);
+    public static void generatePlant(LevelAccessor level, BlockPos pos, RandomSource random, int maxHorizontalDistance) {
+        level.setBlock(pos, ChorusPlantBlock.getStateWithConnections(level, pos, Blocks.CHORUS_PLANT.defaultBlockState()), 2);
+        growTreeRecursive(level, pos, random, pos, maxHorizontalDistance, 0);
     }
 
-    private static void growTreeRecursive(LevelAccessor p_220968_, BlockPos p_220969_, RandomSource p_220970_, BlockPos p_220971_, int p_220972_, int p_220973_) {
+    private static void growTreeRecursive(LevelAccessor level, BlockPos branchPos, RandomSource random, BlockPos originalBranchPos, int maxHorizontalDistance, int iterations) {
         Block block = Blocks.CHORUS_PLANT;
-        int i = p_220970_.nextInt(4) + 1;
-        if (p_220973_ == 0) {
+        int i = random.nextInt(4) + 1;
+        if (iterations == 0) {
             i++;
         }
 
         for (int j = 0; j < i; j++) {
-            BlockPos blockpos = p_220969_.above(j + 1);
-            if (!allNeighborsEmpty(p_220968_, blockpos, null)) {
+            BlockPos blockpos = branchPos.above(j + 1);
+            if (!allNeighborsEmpty(level, blockpos, null)) {
                 return;
             }
 
-            p_220968_.setBlock(blockpos, ChorusPlantBlock.getStateWithConnections(p_220968_, blockpos, block.defaultBlockState()), 2);
-            p_220968_.setBlock(blockpos.below(), ChorusPlantBlock.getStateWithConnections(p_220968_, blockpos.below(), block.defaultBlockState()), 2);
+            level.setBlock(blockpos, ChorusPlantBlock.getStateWithConnections(level, blockpos, block.defaultBlockState()), 2);
+            level.setBlock(blockpos.below(), ChorusPlantBlock.getStateWithConnections(level, blockpos.below(), block.defaultBlockState()), 2);
         }
 
         boolean flag = false;
-        if (p_220973_ < 4) {
-            int l = p_220970_.nextInt(4);
-            if (p_220973_ == 0) {
+        if (iterations < 4) {
+            int l = random.nextInt(4);
+            if (iterations == 0) {
                 l++;
             }
 
             for (int k = 0; k < l; k++) {
-                Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(p_220970_);
-                BlockPos blockpos1 = p_220969_.above(i).relative(direction);
-                if (Math.abs(blockpos1.getX() - p_220971_.getX()) < p_220972_
-                    && Math.abs(blockpos1.getZ() - p_220971_.getZ()) < p_220972_
-                    && p_220968_.isEmptyBlock(blockpos1)
-                    && p_220968_.isEmptyBlock(blockpos1.below())
-                    && allNeighborsEmpty(p_220968_, blockpos1, direction.getOpposite())) {
+                Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(random);
+                BlockPos blockpos1 = branchPos.above(i).relative(direction);
+                if (Math.abs(blockpos1.getX() - originalBranchPos.getX()) < maxHorizontalDistance
+                    && Math.abs(blockpos1.getZ() - originalBranchPos.getZ()) < maxHorizontalDistance
+                    && level.isEmptyBlock(blockpos1)
+                    && level.isEmptyBlock(blockpos1.below())
+                    && allNeighborsEmpty(level, blockpos1, direction.getOpposite())) {
                     flag = true;
-                    p_220968_.setBlock(blockpos1, ChorusPlantBlock.getStateWithConnections(p_220968_, blockpos1, block.defaultBlockState()), 2);
-                    p_220968_.setBlock(
+                    level.setBlock(blockpos1, ChorusPlantBlock.getStateWithConnections(level, blockpos1, block.defaultBlockState()), 2);
+                    level.setBlock(
                         blockpos1.relative(direction.getOpposite()),
-                        ChorusPlantBlock.getStateWithConnections(p_220968_, blockpos1.relative(direction.getOpposite()), block.defaultBlockState()),
+                        ChorusPlantBlock.getStateWithConnections(level, blockpos1.relative(direction.getOpposite()), block.defaultBlockState()),
                         2
                     );
-                    growTreeRecursive(p_220968_, blockpos1, p_220970_, p_220971_, p_220972_, p_220973_ + 1);
+                    growTreeRecursive(level, blockpos1, random, originalBranchPos, maxHorizontalDistance, iterations + 1);
                 }
             }
         }
 
         if (!flag) {
-            p_220968_.setBlock(p_220969_.above(i), Blocks.CHORUS_FLOWER.defaultBlockState().setValue(AGE, Integer.valueOf(5)), 2);
+            level.setBlock(branchPos.above(i), Blocks.CHORUS_FLOWER.defaultBlockState().setValue(AGE, Integer.valueOf(5)), 2);
         }
     }
 
     @Override
-    protected void onProjectileHit(Level p_51654_, BlockState p_51655_, BlockHitResult p_51656_, Projectile p_51657_) {
-        BlockPos blockpos = p_51656_.getBlockPos();
-        if (!p_51654_.isClientSide && p_51657_.mayInteract(p_51654_, blockpos) && p_51657_.mayBreak(p_51654_)) {
-            p_51654_.destroyBlock(blockpos, true, p_51657_);
+    protected void onProjectileHit(Level level, BlockState state, BlockHitResult hit, Projectile projectile) {
+        BlockPos blockpos = hit.getBlockPos();
+        if (!level.isClientSide && projectile.mayInteract(level, blockpos) && projectile.mayBreak(level)) {
+            level.destroyBlock(blockpos, true, projectile);
         }
     }
 }

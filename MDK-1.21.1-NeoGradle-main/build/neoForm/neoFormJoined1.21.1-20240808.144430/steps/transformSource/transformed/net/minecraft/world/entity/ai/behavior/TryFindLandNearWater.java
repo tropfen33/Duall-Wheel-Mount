@@ -14,7 +14,7 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import org.apache.commons.lang3.mutable.MutableLong;
 
 public class TryFindLandNearWater {
-    public static BehaviorControl<PathfinderMob> create(int p_259739_, float p_259118_) {
+    public static BehaviorControl<PathfinderMob> create(int range, float speedModifier) {
         MutableLong mutablelong = new MutableLong(0L);
         return BehaviorBuilder.create(
             p_260348_ -> p_260348_.group(
@@ -36,7 +36,7 @@ public class TryFindLandNearWater {
                                     BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
                                     label45:
-                                    for (BlockPos blockpos1 : BlockPos.withinManhattan(blockpos, p_259739_, p_259739_, p_259739_)) {
+                                    for (BlockPos blockpos1 : BlockPos.withinManhattan(blockpos, range, range, range)) {
                                         if ((blockpos1.getX() != blockpos.getX() || blockpos1.getZ() != blockpos.getZ())
                                             && p_259876_.getBlockState(blockpos1).getCollisionShape(p_259876_, blockpos1, collisioncontext).isEmpty()
                                             && !p_259876_.getBlockState(blockpos$mutableblockpos.setWithOffset(blockpos1, Direction.DOWN))
@@ -47,7 +47,7 @@ public class TryFindLandNearWater {
                                                 if (p_259876_.getBlockState(blockpos$mutableblockpos).isAir()
                                                     && p_259876_.getBlockState(blockpos$mutableblockpos.move(Direction.DOWN)).is(Blocks.WATER)) {
                                                     p_259367_.set(new BlockPosTracker(blockpos1));
-                                                    p_259100_.set(new WalkTarget(new BlockPosTracker(blockpos1), p_259118_, 0));
+                                                    p_259100_.set(new WalkTarget(new BlockPosTracker(blockpos1), speedModifier, 0));
                                                     break label45;
                                                 }
                                             }

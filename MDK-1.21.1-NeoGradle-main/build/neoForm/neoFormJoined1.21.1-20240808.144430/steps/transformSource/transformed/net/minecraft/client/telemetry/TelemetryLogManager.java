@@ -23,14 +23,14 @@ public class TelemetryLogManager implements AutoCloseable {
     @Nullable
     private CompletableFuture<Optional<TelemetryEventLog>> sessionLog;
 
-    private TelemetryLogManager(EventLogDirectory p_261728_) {
-        this.directory = p_261728_;
+    private TelemetryLogManager(EventLogDirectory directory) {
+        this.directory = directory;
     }
 
-    public static CompletableFuture<Optional<TelemetryLogManager>> open(Path p_262078_) {
+    public static CompletableFuture<Optional<TelemetryLogManager>> open(Path path) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                EventLogDirectory eventlogdirectory = EventLogDirectory.open(p_262078_, ".json");
+                EventLogDirectory eventlogdirectory = EventLogDirectory.open(path, ".json");
                 eventlogdirectory.listFiles().prune(LocalDate.now(), 7).compressAll();
                 return Optional.of(new TelemetryLogManager(eventlogdirectory));
             } catch (Exception exception) {

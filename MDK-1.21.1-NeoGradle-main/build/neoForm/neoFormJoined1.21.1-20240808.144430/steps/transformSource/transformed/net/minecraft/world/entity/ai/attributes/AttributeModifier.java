@@ -46,8 +46,8 @@ public record AttributeModifier(ResourceLocation id, double amount, AttributeMod
     }
 
     @Nullable
-    public static AttributeModifier load(CompoundTag p_22213_) {
-        DataResult<AttributeModifier> dataresult = CODEC.parse(NbtOps.INSTANCE, p_22213_);
+    public static AttributeModifier load(CompoundTag nbt) {
+        DataResult<AttributeModifier> dataresult = CODEC.parse(NbtOps.INSTANCE, nbt);
         if (dataresult.isSuccess()) {
             return dataresult.getOrThrow();
         } else {
@@ -56,8 +56,8 @@ public record AttributeModifier(ResourceLocation id, double amount, AttributeMod
         }
     }
 
-    public boolean is(ResourceLocation p_350471_) {
-        return p_350471_.equals(this.id);
+    public boolean is(ResourceLocation id) {
+        return id.equals(this.id);
     }
 
     public static enum Operation implements StringRepresentable {
@@ -73,9 +73,9 @@ public record AttributeModifier(ResourceLocation id, double amount, AttributeMod
         private final String name;
         private final int id;
 
-        private Operation(String p_298507_, int p_22234_) {
-            this.name = p_298507_;
-            this.id = p_22234_;
+        private Operation(String name, int value) {
+            this.name = name;
+            this.id = value;
         }
 
         public int id() {

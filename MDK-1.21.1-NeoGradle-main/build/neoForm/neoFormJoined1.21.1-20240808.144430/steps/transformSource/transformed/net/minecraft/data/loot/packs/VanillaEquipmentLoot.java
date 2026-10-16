@@ -27,13 +27,13 @@ import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 
 public record VanillaEquipmentLoot(HolderLookup.Provider registries) implements LootTableSubProvider {
     @Override
-    public void generate(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> p_338322_) {
+    public void generate(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> output) {
         HolderLookup.RegistryLookup<TrimPattern> registrylookup = this.registries.lookup(Registries.TRIM_PATTERN).orElseThrow();
         HolderLookup.RegistryLookup<TrimMaterial> registrylookup1 = this.registries.lookup(Registries.TRIM_MATERIAL).orElseThrow();
         HolderLookup.RegistryLookup<Enchantment> registrylookup2 = this.registries.lookupOrThrow(Registries.ENCHANTMENT);
         ArmorTrim armortrim = new ArmorTrim(registrylookup1.get(TrimMaterials.COPPER).orElseThrow(), registrylookup.get(TrimPatterns.FLOW).orElseThrow());
         ArmorTrim armortrim1 = new ArmorTrim(registrylookup1.get(TrimMaterials.COPPER).orElseThrow(), registrylookup.get(TrimPatterns.BOLT).orElseThrow());
-        p_338322_.accept(
+        output.accept(
             BuiltInLootTables.EQUIPMENT_TRIAL_CHAMBER,
             LootTable.lootTable()
                 .withPool(
@@ -57,7 +57,7 @@ public record VanillaEquipmentLoot(HolderLookup.Provider registries) implements 
                         )
                 )
         );
-        p_338322_.accept(
+        output.accept(
             BuiltInLootTables.EQUIPMENT_TRIAL_CHAMBER_MELEE,
             LootTable.lootTable()
                 .withPool(
@@ -86,7 +86,7 @@ public record VanillaEquipmentLoot(HolderLookup.Provider registries) implements 
                         .add(LootItem.lootTableItem(Items.DIAMOND_SWORD))
                 )
         );
-        p_338322_.accept(
+        output.accept(
             BuiltInLootTables.EQUIPMENT_TRIAL_CHAMBER_RANGED,
             LootTable.lootTable()
                 .withPool(
@@ -117,7 +117,7 @@ public record VanillaEquipmentLoot(HolderLookup.Provider registries) implements 
     }
 
     public static LootTable.Builder trialChamberEquipment(
-        Item p_345453_, Item p_345712_, ArmorTrim p_346117_, HolderLookup.RegistryLookup<Enchantment> p_345542_
+        Item helmet, Item chestplate, ArmorTrim trim, HolderLookup.RegistryLookup<Enchantment> enchantments
     ) {
         return LootTable.lootTable()
             .withPool(
@@ -125,13 +125,13 @@ public record VanillaEquipmentLoot(HolderLookup.Provider registries) implements 
                     .setRolls(ConstantValue.exactly(1.0F))
                     .when(LootItemRandomChanceCondition.randomChance(0.5F))
                     .add(
-                        LootItem.lootTableItem(p_345453_)
-                            .apply(SetComponentsFunction.setComponent(DataComponents.TRIM, p_346117_))
+                        LootItem.lootTableItem(helmet)
+                            .apply(SetComponentsFunction.setComponent(DataComponents.TRIM, trim))
                             .apply(
                                 new SetEnchantmentsFunction.Builder()
-                                    .withEnchantment(p_345542_.getOrThrow(Enchantments.PROTECTION), ConstantValue.exactly(4.0F))
-                                    .withEnchantment(p_345542_.getOrThrow(Enchantments.PROJECTILE_PROTECTION), ConstantValue.exactly(4.0F))
-                                    .withEnchantment(p_345542_.getOrThrow(Enchantments.FIRE_PROTECTION), ConstantValue.exactly(4.0F))
+                                    .withEnchantment(enchantments.getOrThrow(Enchantments.PROTECTION), ConstantValue.exactly(4.0F))
+                                    .withEnchantment(enchantments.getOrThrow(Enchantments.PROJECTILE_PROTECTION), ConstantValue.exactly(4.0F))
+                                    .withEnchantment(enchantments.getOrThrow(Enchantments.FIRE_PROTECTION), ConstantValue.exactly(4.0F))
                             )
                     )
             )
@@ -140,13 +140,13 @@ public record VanillaEquipmentLoot(HolderLookup.Provider registries) implements 
                     .setRolls(ConstantValue.exactly(1.0F))
                     .when(LootItemRandomChanceCondition.randomChance(0.5F))
                     .add(
-                        LootItem.lootTableItem(p_345712_)
-                            .apply(SetComponentsFunction.setComponent(DataComponents.TRIM, p_346117_))
+                        LootItem.lootTableItem(chestplate)
+                            .apply(SetComponentsFunction.setComponent(DataComponents.TRIM, trim))
                             .apply(
                                 new SetEnchantmentsFunction.Builder()
-                                    .withEnchantment(p_345542_.getOrThrow(Enchantments.PROTECTION), ConstantValue.exactly(4.0F))
-                                    .withEnchantment(p_345542_.getOrThrow(Enchantments.PROJECTILE_PROTECTION), ConstantValue.exactly(4.0F))
-                                    .withEnchantment(p_345542_.getOrThrow(Enchantments.FIRE_PROTECTION), ConstantValue.exactly(4.0F))
+                                    .withEnchantment(enchantments.getOrThrow(Enchantments.PROTECTION), ConstantValue.exactly(4.0F))
+                                    .withEnchantment(enchantments.getOrThrow(Enchantments.PROJECTILE_PROTECTION), ConstantValue.exactly(4.0F))
+                                    .withEnchantment(enchantments.getOrThrow(Enchantments.FIRE_PROTECTION), ConstantValue.exactly(4.0F))
                             )
                     )
             );

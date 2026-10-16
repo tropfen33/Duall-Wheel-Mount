@@ -7,18 +7,18 @@ import java.io.IOException;
 public class ShortTag extends NumericTag {
     private static final int SELF_SIZE_IN_BYTES = 10;
     public static final TagType<ShortTag> TYPE = new TagType.StaticSize<ShortTag>() {
-        public ShortTag load(DataInput p_129282_, NbtAccounter p_129284_) throws IOException {
-            return ShortTag.valueOf(readAccounted(p_129282_, p_129284_));
+        public ShortTag load(DataInput input, NbtAccounter accounter) throws IOException {
+            return ShortTag.valueOf(readAccounted(input, accounter));
         }
 
         @Override
-        public StreamTagVisitor.ValueResult parse(DataInput p_197517_, StreamTagVisitor p_197518_, NbtAccounter p_302385_) throws IOException {
-            return p_197518_.visit(readAccounted(p_197517_, p_302385_));
+        public StreamTagVisitor.ValueResult parse(DataInput input, StreamTagVisitor visitor, NbtAccounter accounter) throws IOException {
+            return visitor.visit(readAccounted(input, accounter));
         }
 
-        private static short readAccounted(DataInput p_302332_, NbtAccounter p_302335_) throws IOException {
-            p_302335_.accountBytes(10L);
-            return p_302332_.readShort();
+        private static short readAccounted(DataInput input, NbtAccounter accounter) throws IOException {
+            accounter.accountBytes(10L);
+            return input.readShort();
         }
 
         @Override
@@ -43,17 +43,17 @@ public class ShortTag extends NumericTag {
     };
     private final short data;
 
-    ShortTag(short p_129248_) {
-        this.data = p_129248_;
+    ShortTag(short data) {
+        this.data = data;
     }
 
-    public static ShortTag valueOf(short p_129259_) {
-        return p_129259_ >= -128 && p_129259_ <= 1024 ? ShortTag.Cache.cache[p_129259_ - -128] : new ShortTag(p_129259_);
+    public static ShortTag valueOf(short data) {
+        return data >= -128 && data <= 1024 ? ShortTag.Cache.cache[data - -128] : new ShortTag(data);
     }
 
     @Override
-    public void write(DataOutput p_129254_) throws IOException {
-        p_129254_.writeShort(this.data);
+    public void write(DataOutput output) throws IOException {
+        output.writeShort(this.data);
     }
 
     @Override
@@ -76,8 +76,8 @@ public class ShortTag extends NumericTag {
     }
 
     @Override
-    public boolean equals(Object p_129265_) {
-        return this == p_129265_ ? true : p_129265_ instanceof ShortTag && this.data == ((ShortTag)p_129265_).data;
+    public boolean equals(Object other) {
+        return this == other ? true : other instanceof ShortTag && this.data == ((ShortTag)other).data;
     }
 
     @Override
@@ -86,8 +86,8 @@ public class ShortTag extends NumericTag {
     }
 
     @Override
-    public void accept(TagVisitor p_178084_) {
-        p_178084_.visitShort(this);
+    public void accept(TagVisitor visitor) {
+        visitor.visitShort(this);
     }
 
     @Override
@@ -126,8 +126,8 @@ public class ShortTag extends NumericTag {
     }
 
     @Override
-    public StreamTagVisitor.ValueResult accept(StreamTagVisitor p_197515_) {
-        return p_197515_.visit(this.data);
+    public StreamTagVisitor.ValueResult accept(StreamTagVisitor visitor) {
+        return visitor.visit(this.data);
     }
 
     static class Cache {

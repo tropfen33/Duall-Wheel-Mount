@@ -40,13 +40,13 @@ public class ChunkGenerationEvent extends Event {
     @Label("Level")
     public final String level;
 
-    public ChunkGenerationEvent(ChunkPos p_195543_, ResourceKey<Level> p_195544_, String p_195545_) {
-        this.targetStatus = p_195545_;
-        this.level = p_195544_.toString();
-        this.chunkPosX = p_195543_.x;
-        this.chunkPosZ = p_195543_.z;
-        this.worldPosX = p_195543_.getMinBlockX();
-        this.worldPosZ = p_195543_.getMinBlockZ();
+    public ChunkGenerationEvent(ChunkPos chunkPos, ResourceKey<Level> level, String targetStatus) {
+        this.targetStatus = targetStatus;
+        this.level = level.toString();
+        this.chunkPosX = chunkPos.x;
+        this.chunkPosZ = chunkPos.z;
+        this.worldPosX = chunkPos.getMinBlockX();
+        this.worldPosZ = chunkPos.getMinBlockZ();
     }
 
     public static class Fields {

@@ -10,8 +10,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 public interface GlyphInfo {
     float getAdvance();
 
-    default float getAdvance(boolean p_83828_) {
-        return this.getAdvance() + (p_83828_ ? this.getBoldOffset() : 0.0F);
+    default float getAdvance(boolean bold) {
+        return this.getAdvance() + (bold ? this.getBoldOffset() : 0.0F);
     }
 
     default float getBoldOffset() {
@@ -22,7 +22,7 @@ public interface GlyphInfo {
         return 1.0F;
     }
 
-    BakedGlyph bake(Function<SheetGlyphInfo, BakedGlyph> p_231088_);
+    BakedGlyph bake(Function<SheetGlyphInfo, BakedGlyph> glyphProvider);
 
     @OnlyIn(Dist.CLIENT)
     public interface SpaceGlyphInfo extends GlyphInfo {

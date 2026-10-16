@@ -27,16 +27,16 @@ public enum ItemDisplayContext implements StringRepresentable, net.neoforged.fml
     private final java.util.function.Supplier<ItemDisplayContext> fallback;
 
     @net.neoforged.fml.common.asm.enumextension.ReservedConstructor
-    private ItemDisplayContext(int p_270624_, String p_270851_) {
-        this.name = p_270851_;
-        this.id = (byte)p_270624_;
+    private ItemDisplayContext(int id, String name) {
+        this.name = name;
+        this.id = (byte)id;
         this.isModded = false;
         this.fallback = () -> null;
     }
 
-    private ItemDisplayContext(int id, String name, @org.jetbrains.annotations.Nullable String fallbackName) {
-        this.id = (byte)id;
-        this.name = name;
+    private ItemDisplayContext(int p_id, String p_name, @org.jetbrains.annotations.Nullable String fallbackName) {
+        this.id = (byte)p_id;
+        this.name = p_name;
         this.isModded = true;
         this.fallback = fallbackName == null ? () -> null : com.google.common.base.Suppliers.memoize(() -> ItemDisplayContext.valueOf(fallbackName));
     }

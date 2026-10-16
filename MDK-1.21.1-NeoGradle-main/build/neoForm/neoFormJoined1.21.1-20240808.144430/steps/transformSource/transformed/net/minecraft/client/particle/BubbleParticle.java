@@ -9,13 +9,13 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class BubbleParticle extends TextureSheetParticle {
-    protected BubbleParticle(ClientLevel p_105773_, double p_105774_, double p_105775_, double p_105776_, double p_105777_, double p_105778_, double p_105779_) {
-        super(p_105773_, p_105774_, p_105775_, p_105776_);
+    protected BubbleParticle(ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
+        super(level, x, y, z);
         this.setSize(0.02F, 0.02F);
         this.quadSize = this.quadSize * (this.random.nextFloat() * 0.6F + 0.2F);
-        this.xd = p_105777_ * 0.2F + (Math.random() * 2.0 - 1.0) * 0.02F;
-        this.yd = p_105778_ * 0.2F + (Math.random() * 2.0 - 1.0) * 0.02F;
-        this.zd = p_105779_ * 0.2F + (Math.random() * 2.0 - 1.0) * 0.02F;
+        this.xd = xSpeed * 0.2F + (Math.random() * 2.0 - 1.0) * 0.02F;
+        this.yd = ySpeed * 0.2F + (Math.random() * 2.0 - 1.0) * 0.02F;
+        this.zd = zSpeed * 0.2F + (Math.random() * 2.0 - 1.0) * 0.02F;
         this.lifetime = (int)(8.0 / (Math.random() * 0.8 + 0.2));
     }
 
@@ -47,21 +47,21 @@ public class BubbleParticle extends TextureSheetParticle {
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprite;
 
-        public Provider(SpriteSet p_105793_) {
-            this.sprite = p_105793_;
+        public Provider(SpriteSet sprites) {
+            this.sprite = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_105804_,
-            ClientLevel p_105805_,
-            double p_105806_,
-            double p_105807_,
-            double p_105808_,
-            double p_105809_,
-            double p_105810_,
-            double p_105811_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            BubbleParticle bubbleparticle = new BubbleParticle(p_105805_, p_105806_, p_105807_, p_105808_, p_105809_, p_105810_, p_105811_);
+            BubbleParticle bubbleparticle = new BubbleParticle(level, x, y, z, xSpeed, ySpeed, zSpeed);
             bubbleparticle.pickSprite(this.sprite);
             return bubbleparticle;
         }

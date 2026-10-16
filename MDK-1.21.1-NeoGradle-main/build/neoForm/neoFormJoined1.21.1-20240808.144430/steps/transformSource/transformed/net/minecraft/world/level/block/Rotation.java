@@ -18,13 +18,13 @@ public enum Rotation implements StringRepresentable {
     private final String id;
     private final OctahedralGroup rotation;
 
-    private Rotation(String p_221988_, OctahedralGroup p_221989_) {
-        this.id = p_221988_;
-        this.rotation = p_221989_;
+    private Rotation(String id, OctahedralGroup rotation) {
+        this.id = id;
+        this.rotation = rotation;
     }
 
-    public Rotation getRotated(Rotation p_55953_) {
-        switch (p_55953_) {
+    public Rotation getRotated(Rotation rotation) {
+        switch (rotation) {
             case CLOCKWISE_180:
                 switch (this) {
                     case NONE:
@@ -67,42 +67,48 @@ public enum Rotation implements StringRepresentable {
         return this.rotation;
     }
 
-    public Direction rotate(Direction p_55955_) {
-        if (p_55955_.getAxis() == Direction.Axis.Y) {
-            return p_55955_;
+    public Direction rotate(Direction facing) {
+        if (facing.getAxis() == Direction.Axis.Y) {
+            return facing;
         } else {
             switch (this) {
                 case CLOCKWISE_90:
-                    return p_55955_.getClockWise();
+                    return facing.getClockWise();
                 case CLOCKWISE_180:
-                    return p_55955_.getOpposite();
+                    return facing.getOpposite();
                 case COUNTERCLOCKWISE_90:
-                    return p_55955_.getCounterClockWise();
+                    return facing.getCounterClockWise();
                 default:
-                    return p_55955_;
+                    return facing;
             }
         }
     }
 
-    public int rotate(int p_55950_, int p_55951_) {
+    public int rotate(int rotation, int positionCount) {
         switch (this) {
             case CLOCKWISE_90:
-                return (p_55950_ + p_55951_ / 4) % p_55951_;
+                return (rotation + positionCount / 4) % positionCount;
             case CLOCKWISE_180:
-                return (p_55950_ + p_55951_ / 2) % p_55951_;
+                return (rotation + positionCount / 2) % positionCount;
             case COUNTERCLOCKWISE_90:
-                return (p_55950_ + p_55951_ * 3 / 4) % p_55951_;
+                return (rotation + positionCount * 3 / 4) % positionCount;
             default:
-                return p_55950_;
+                return rotation;
         }
     }
 
-    public static Rotation getRandom(RandomSource p_221991_) {
-        return Util.getRandom(values(), p_221991_);
+    /**
+     * Chooses a random rotation.
+     */
+    public static Rotation getRandom(RandomSource random) {
+        return Util.getRandom(values(), random);
     }
 
-    public static List<Rotation> getShuffled(RandomSource p_221993_) {
-        return Util.shuffledCopy(values(), p_221993_);
+    /**
+     * Get a list of all rotations in random order.
+     */
+    public static List<Rotation> getShuffled(RandomSource random) {
+        return Util.shuffledCopy(values(), random);
     }
 
     @Override

@@ -10,7 +10,7 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.level.GameRules;
 
 public class StartCelebratingIfTargetDead {
-    public static BehaviorControl<LivingEntity> create(int p_259238_, BiPredicate<LivingEntity, LivingEntity> p_259102_) {
+    public static BehaviorControl<LivingEntity> create(int duration, BiPredicate<LivingEntity, LivingEntity> canDance) {
         return BehaviorBuilder.create(
             p_259600_ -> p_259600_.group(
                         p_259600_.present(MemoryModuleType.ATTACK_TARGET),
@@ -23,11 +23,11 @@ public class StartCelebratingIfTargetDead {
                             if (!livingentity.isDeadOrDying()) {
                                 return false;
                             } else {
-                                if (p_259102_.test(p_259611_, livingentity)) {
-                                    p_259141_.setWithExpiry(true, (long)p_259238_);
+                                if (canDance.test(p_259611_, livingentity)) {
+                                    p_259141_.setWithExpiry(true, (long)duration);
                                 }
 
-                                p_259031_.setWithExpiry(livingentity.blockPosition(), (long)p_259238_);
+                                p_259031_.setWithExpiry(livingentity.blockPosition(), (long)duration);
                                 if (livingentity.getType() != EntityType.PLAYER || p_259956_.getGameRules().getBoolean(GameRules.RULE_FORGIVE_DEAD_PLAYERS)) {
                                     p_259049_.erase();
                                     p_259067_.erase();

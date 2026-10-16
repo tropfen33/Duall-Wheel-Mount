@@ -14,6 +14,9 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
 
+/**
+ * LootItemCondition that checks the {@link LootContextParams.ORIGIN} position against a {@link LocationPredicate} after applying an offset to the origin position.
+ */
 public record LocationCheck(Optional<LocationPredicate> predicate, BlockPos offset) implements LootItemCondition {
     private static final MapCodec<BlockPos> OFFSET_CODEC = RecordCodecBuilder.mapCodec(
         p_338168_ -> p_338168_.group(
@@ -35,15 +38,15 @@ public record LocationCheck(Optional<LocationPredicate> predicate, BlockPos offs
         return LootItemConditions.LOCATION_CHECK;
     }
 
-    public boolean test(LootContext p_81731_) {
-        Vec3 vec3 = p_81731_.getParamOrNull(LootContextParams.ORIGIN);
+    public boolean test(LootContext context) {
+        Vec3 vec3 = context.getParamOrNull(LootContextParams.ORIGIN);
         return vec3 != null
             && (
                 this.predicate.isEmpty()
                     || this.predicate
                         .get()
                         .matches(
-                            p_81731_.getLevel(),
+                            context.getLevel(),
                             vec3.x() + (double)this.offset.getX(),
                             vec3.y() + (double)this.offset.getY(),
                             vec3.z() + (double)this.offset.getZ()
@@ -56,11 +59,11 @@ public record LocationCheck(Optional<LocationPredicate> predicate, BlockPos offs
         return Set.of(LootContextParams.ORIGIN);
     }
 
-    public static LootItemCondition.Builder checkLocation(LocationPredicate.Builder p_81726_) {
-        return () -> new LocationCheck(Optional.of(p_81726_.build()), BlockPos.ZERO);
+    public static LootItemCondition.Builder checkLocation(LocationPredicate.Builder locationPredicateBuilder) {
+        return () -> new LocationCheck(Optional.of(locationPredicateBuilder.build()), BlockPos.ZERO);
     }
 
-    public static LootItemCondition.Builder checkLocation(LocationPredicate.Builder p_81728_, BlockPos p_81729_) {
-        return () -> new LocationCheck(Optional.of(p_81728_.build()), p_81729_);
+    public static LootItemCondition.Builder checkLocation(LocationPredicate.Builder locationPredicateBuilder, BlockPos offset) {
+        return () -> new LocationCheck(Optional.of(locationPredicateBuilder.build()), offset);
     }
 }

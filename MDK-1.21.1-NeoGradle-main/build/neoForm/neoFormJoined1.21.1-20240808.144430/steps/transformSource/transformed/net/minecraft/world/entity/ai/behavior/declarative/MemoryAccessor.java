@@ -11,26 +11,26 @@ public final class MemoryAccessor<F extends K1, Value> {
     private final MemoryModuleType<Value> memoryType;
     private final App<F, Value> value;
 
-    public MemoryAccessor(Brain<?> p_259443_, MemoryModuleType<Value> p_259809_, App<F, Value> p_259295_) {
-        this.brain = p_259443_;
-        this.memoryType = p_259809_;
-        this.value = p_259295_;
+    public MemoryAccessor(Brain<?> brain, MemoryModuleType<Value> memoryType, App<F, Value> value) {
+        this.brain = brain;
+        this.memoryType = memoryType;
+        this.value = value;
     }
 
     public App<F, Value> value() {
         return this.value;
     }
 
-    public void set(Value p_259728_) {
-        this.brain.setMemory(this.memoryType, Optional.of(p_259728_));
+    public void set(Value value) {
+        this.brain.setMemory(this.memoryType, Optional.of(value));
     }
 
-    public void setOrErase(Optional<Value> p_259943_) {
-        this.brain.setMemory(this.memoryType, p_259943_);
+    public void setOrErase(Optional<Value> memory) {
+        this.brain.setMemory(this.memoryType, memory);
     }
 
-    public void setWithExpiry(Value p_259027_, long p_260310_) {
-        this.brain.setMemoryWithExpiry(this.memoryType, p_259027_, p_260310_);
+    public void setWithExpiry(Value memory, long expiry) {
+        this.brain.setMemoryWithExpiry(this.memoryType, memory, expiry);
     }
 
     public void erase() {

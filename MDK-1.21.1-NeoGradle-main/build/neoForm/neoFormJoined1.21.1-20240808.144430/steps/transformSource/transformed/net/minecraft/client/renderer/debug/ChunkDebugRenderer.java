@@ -31,18 +31,18 @@ public class ChunkDebugRenderer implements DebugRenderer.SimpleDebugRenderer {
     @Nullable
     private ChunkDebugRenderer.ChunkData data;
 
-    public ChunkDebugRenderer(Minecraft p_113368_) {
-        this.minecraft = p_113368_;
+    public ChunkDebugRenderer(Minecraft minecraft) {
+        this.minecraft = minecraft;
     }
 
     @Override
-    public void render(PoseStack p_113370_, MultiBufferSource p_113371_, double p_113372_, double p_113373_, double p_113374_) {
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, double camX, double camY, double camZ) {
         double d0 = (double)Util.getNanos();
         if (d0 - this.lastUpdateTime > 3.0E9) {
             this.lastUpdateTime = d0;
             IntegratedServer integratedserver = this.minecraft.getSingleplayerServer();
             if (integratedserver != null) {
-                this.data = new ChunkDebugRenderer.ChunkData(integratedserver, p_113372_, p_113374_);
+                this.data = new ChunkDebugRenderer.ChunkData(integratedserver, camX, camZ);
             } else {
                 this.data = null;
             }
@@ -64,8 +64,8 @@ public class ChunkDebugRenderer implements DebugRenderer.SimpleDebugRenderer {
 
                 for (String s1 : astring) {
                     DebugRenderer.renderFloatingText(
-                        p_113370_,
-                        p_113371_,
+                        poseStack,
+                        bufferSource,
                         s1,
                         (double)SectionPos.sectionToBlockCoord(chunkpos.x, 8),
                         d1 + (double)i,
@@ -87,11 +87,11 @@ public class ChunkDebugRenderer implements DebugRenderer.SimpleDebugRenderer {
         final Map<ChunkPos, String> clientData;
         final CompletableFuture<Map<ChunkPos, String>> serverData;
 
-        ChunkData(IntegratedServer p_113382_, double p_113383_, double p_113384_) {
+        ChunkData(IntegratedServer integratedServer, double x, double z) {
             ClientLevel clientlevel = ChunkDebugRenderer.this.minecraft.level;
             ResourceKey<Level> resourcekey = clientlevel.dimension();
-            int i = SectionPos.posToSectionCoord(p_113383_);
-            int j = SectionPos.posToSectionCoord(p_113384_);
+            int i = SectionPos.posToSectionCoord(x);
+            int j = SectionPos.posToSectionCoord(z);
             Builder<ChunkPos, String> builder = ImmutableMap.builder();
             ClientChunkCache clientchunkcache = clientlevel.getChunkSource();
 
@@ -113,8 +113,8 @@ public class ChunkDebugRenderer implements DebugRenderer.SimpleDebugRenderer {
             }
 
             this.clientData = builder.build();
-            this.serverData = p_113382_.submit(() -> {
-                ServerLevel serverlevel = p_113382_.getLevel(resourcekey);
+            this.serverData = integratedServer.submit(() -> {
+                ServerLevel serverlevel = integratedServer.getLevel(resourcekey);
                 if (serverlevel == null) {
                     return ImmutableMap.of();
                 } else {

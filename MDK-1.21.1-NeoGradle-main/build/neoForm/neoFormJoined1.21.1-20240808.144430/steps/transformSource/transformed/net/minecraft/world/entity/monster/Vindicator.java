@@ -49,8 +49,8 @@ public class Vindicator extends AbstractIllager {
     static final Predicate<Difficulty> DOOR_BREAKING_PREDICATE = p_34082_ -> p_34082_ == Difficulty.NORMAL || p_34082_ == Difficulty.HARD;
     boolean isJohnny;
 
-    public Vindicator(EntityType<? extends Vindicator> p_34074_, Level p_34075_) {
-        super(p_34074_, p_34075_);
+    public Vindicator(EntityType<? extends Vindicator> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
@@ -90,10 +90,10 @@ public class Vindicator extends AbstractIllager {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_34100_) {
-        super.addAdditionalSaveData(p_34100_);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
         if (this.isJohnny) {
-            p_34100_.putBoolean("Johnny", true);
+            compound.putBoolean("Johnny", true);
         }
     }
 
@@ -106,11 +106,14 @@ public class Vindicator extends AbstractIllager {
         }
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_34094_) {
-        super.readAdditionalSaveData(p_34094_);
-        if (p_34094_.contains("Johnny", 99)) {
-            this.isJohnny = p_34094_.getBoolean("Johnny");
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.contains("Johnny", 99)) {
+            this.isJohnny = compound.getBoolean("Johnny");
         }
     }
 
@@ -121,26 +124,26 @@ public class Vindicator extends AbstractIllager {
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_34088_, DifficultyInstance p_34089_, MobSpawnType p_34090_, @Nullable SpawnGroupData p_34091_) {
-        SpawnGroupData spawngroupdata = super.finalizeSpawn(p_34088_, p_34089_, p_34090_, p_34091_);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        SpawnGroupData spawngroupdata = super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
         ((GroundPathNavigation)this.getNavigation()).setCanOpenDoors(true);
-        RandomSource randomsource = p_34088_.getRandom();
-        this.populateDefaultEquipmentSlots(randomsource, p_34089_);
-        this.populateDefaultEquipmentEnchantments(p_34088_, randomsource, p_34089_);
+        RandomSource randomsource = level.getRandom();
+        this.populateDefaultEquipmentSlots(randomsource, difficulty);
+        this.populateDefaultEquipmentEnchantments(level, randomsource, difficulty);
         return spawngroupdata;
     }
 
     @Override
-    protected void populateDefaultEquipmentSlots(RandomSource p_219149_, DifficultyInstance p_219150_) {
+    protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
         if (this.getCurrentRaid() == null) {
             this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_AXE));
         }
     }
 
     @Override
-    public void setCustomName(@Nullable Component p_34096_) {
-        super.setCustomName(p_34096_);
-        if (!this.isJohnny && p_34096_ != null && p_34096_.getString().equals("Johnny")) {
+    public void setCustomName(@Nullable Component name) {
+        super.setCustomName(name);
+        if (!this.isJohnny && name != null && name.getString().equals("Johnny")) {
             this.isJohnny = true;
         }
     }
@@ -156,21 +159,21 @@ public class Vindicator extends AbstractIllager {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_34103_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.VINDICATOR_HURT;
     }
 
     @Override
-    public void applyRaidBuffs(ServerLevel p_348474_, int p_34079_, boolean p_34080_) {
+    public void applyRaidBuffs(ServerLevel level, int wave, boolean unused) {
         ItemStack itemstack = new ItemStack(Items.IRON_AXE);
         Raid raid = this.getCurrentRaid();
         boolean flag = this.random.nextFloat() <= raid.getEnchantOdds();
         if (flag) {
-            ResourceKey<EnchantmentProvider> resourcekey = p_34079_ > raid.getNumGroups(Difficulty.NORMAL)
+            ResourceKey<EnchantmentProvider> resourcekey = wave > raid.getNumGroups(Difficulty.NORMAL)
                 ? VanillaEnchantmentProviders.RAID_VINDICATOR_POST_WAVE_5
                 : VanillaEnchantmentProviders.RAID_VINDICATOR;
             EnchantmentHelper.enchantItemFromProvider(
-                itemstack, p_348474_.registryAccess(), resourcekey, p_348474_.getCurrentDifficultyAt(this.blockPosition()), this.random
+                itemstack, level.registryAccess(), resourcekey, level.getCurrentDifficultyAt(this.blockPosition()), this.random
             );
         }
 
@@ -203,8 +206,8 @@ public class Vindicator extends AbstractIllager {
     }
 
     static class VindicatorJohnnyAttackGoal extends NearestAttackableTargetGoal<LivingEntity> {
-        public VindicatorJohnnyAttackGoal(Vindicator p_34117_) {
-            super(p_34117_, LivingEntity.class, 0, true, true, LivingEntity::attackable);
+        public VindicatorJohnnyAttackGoal(Vindicator vindicator) {
+            super(vindicator, LivingEntity.class, 0, true, true, LivingEntity::attackable);
         }
 
         @Override

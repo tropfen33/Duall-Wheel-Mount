@@ -21,11 +21,11 @@ public class ShulkerModel<T extends Shulker> extends ListModel<T> {
     private final ModelPart lid;
     private final ModelPart head;
 
-    public ShulkerModel(ModelPart p_170922_) {
+    public ShulkerModel(ModelPart root) {
         super(RenderType::entityCutoutNoCullZOffset);
-        this.lid = p_170922_.getChild("lid");
-        this.base = p_170922_.getChild("base");
-        this.head = p_170922_.getChild("head");
+        this.lid = root.getChild("lid");
+        this.base = root.getChild("base");
+        this.head = root.getChild("head");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -43,24 +43,27 @@ public class ShulkerModel<T extends Shulker> extends ListModel<T> {
         return LayerDefinition.create(meshdefinition, 64, 64);
     }
 
-    public void setupAnim(T p_103735_, float p_103736_, float p_103737_, float p_103738_, float p_103739_, float p_103740_) {
-        float f = p_103738_ - (float)p_103735_.tickCount;
-        float f1 = (0.5F + p_103735_.getClientPeekAmount(f)) * (float) Math.PI;
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        float f = ageInTicks - (float)entity.tickCount;
+        float f1 = (0.5F + entity.getClientPeekAmount(f)) * (float) Math.PI;
         float f2 = -1.0F + Mth.sin(f1);
         float f3 = 0.0F;
         if (f1 > (float) Math.PI) {
-            f3 = Mth.sin(p_103738_ * 0.1F) * 0.7F;
+            f3 = Mth.sin(ageInTicks * 0.1F) * 0.7F;
         }
 
         this.lid.setPos(0.0F, 16.0F + Mth.sin(f1) * 8.0F + f3, 0.0F);
-        if (p_103735_.getClientPeekAmount(f) > 0.3F) {
+        if (entity.getClientPeekAmount(f) > 0.3F) {
             this.lid.yRot = f2 * f2 * f2 * f2 * (float) Math.PI * 0.125F;
         } else {
             this.lid.yRot = 0.0F;
         }
 
-        this.head.xRot = p_103740_ * (float) (Math.PI / 180.0);
-        this.head.yRot = (p_103735_.yHeadRot - 180.0F - p_103735_.yBodyRot) * (float) (Math.PI / 180.0);
+        this.head.xRot = headPitch * (float) (Math.PI / 180.0);
+        this.head.yRot = (entity.yHeadRot - 180.0F - entity.yBodyRot) * (float) (Math.PI / 180.0);
     }
 
     @Override

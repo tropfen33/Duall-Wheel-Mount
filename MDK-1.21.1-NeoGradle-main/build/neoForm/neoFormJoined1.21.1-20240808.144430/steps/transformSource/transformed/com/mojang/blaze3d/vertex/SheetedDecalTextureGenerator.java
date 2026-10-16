@@ -19,49 +19,49 @@ public class SheetedDecalTextureGenerator implements VertexConsumer {
     private float y;
     private float z;
 
-    public SheetedDecalTextureGenerator(VertexConsumer p_260211_, PoseStack.Pose p_324244_, float p_259312_) {
-        this.delegate = p_260211_;
-        this.cameraInversePose = new Matrix4f(p_324244_.pose()).invert();
-        this.normalInversePose = new Matrix3f(p_324244_.normal()).invert();
-        this.textureScale = p_259312_;
+    public SheetedDecalTextureGenerator(VertexConsumer delegate, PoseStack.Pose pose, float textureScale) {
+        this.delegate = delegate;
+        this.cameraInversePose = new Matrix4f(pose.pose()).invert();
+        this.normalInversePose = new Matrix3f(pose.normal()).invert();
+        this.textureScale = textureScale;
     }
 
     @Override
-    public VertexConsumer addVertex(float p_350285_, float p_350727_, float p_350832_) {
-        this.x = p_350285_;
-        this.y = p_350727_;
-        this.z = p_350832_;
-        this.delegate.addVertex(p_350285_, p_350727_, p_350832_);
+    public VertexConsumer addVertex(float x, float y, float z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.delegate.addVertex(x, y, z);
         return this;
     }
 
     @Override
-    public VertexConsumer setColor(int p_350431_, int p_350486_, int p_350631_, int p_350495_) {
+    public VertexConsumer setColor(int red, int green, int blue, int alpha) {
         this.delegate.setColor(-1);
         return this;
     }
 
     @Override
-    public VertexConsumer setUv(float p_351041_, float p_350355_) {
+    public VertexConsumer setUv(float u, float v) {
         return this;
     }
 
     @Override
-    public VertexConsumer setUv1(int p_350521_, int p_350750_) {
-        this.delegate.setUv1(p_350521_, p_350750_);
+    public VertexConsumer setUv1(int u, int v) {
+        this.delegate.setUv1(u, v);
         return this;
     }
 
     @Override
-    public VertexConsumer setUv2(int p_351012_, int p_350527_) {
-        this.delegate.setUv2(p_351012_, p_350527_);
+    public VertexConsumer setUv2(int u, int v) {
+        this.delegate.setUv2(u, v);
         return this;
     }
 
     @Override
-    public VertexConsumer setNormal(float p_350270_, float p_350794_, float p_350323_) {
-        this.delegate.setNormal(p_350270_, p_350794_, p_350323_);
-        Vector3f vector3f = this.normalInversePose.transform(p_350270_, p_350794_, p_350323_, this.normal);
+    public VertexConsumer setNormal(float normalX, float normalY, float normalZ) {
+        this.delegate.setNormal(normalX, normalY, normalZ);
+        Vector3f vector3f = this.normalInversePose.transform(normalX, normalY, normalZ, this.normal);
         Direction direction = Direction.getNearest(vector3f.x(), vector3f.y(), vector3f.z());
         Vector3f vector3f1 = this.cameraInversePose.transformPosition(this.x, this.y, this.z, this.worldPos);
         vector3f1.rotateY((float) Math.PI);

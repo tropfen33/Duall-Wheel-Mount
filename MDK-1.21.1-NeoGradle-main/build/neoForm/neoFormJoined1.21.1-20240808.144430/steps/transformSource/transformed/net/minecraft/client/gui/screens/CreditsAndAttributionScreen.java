@@ -20,9 +20,9 @@ public class CreditsAndAttributionScreen extends Screen {
     private final Screen lastScreen;
     private final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
 
-    public CreditsAndAttributionScreen(Screen p_276298_) {
+    public CreditsAndAttributionScreen(Screen lastScreen) {
         super(TITLE);
-        this.lastScreen = p_276298_;
+        this.lastScreen = lastScreen;
     }
 
     @Override

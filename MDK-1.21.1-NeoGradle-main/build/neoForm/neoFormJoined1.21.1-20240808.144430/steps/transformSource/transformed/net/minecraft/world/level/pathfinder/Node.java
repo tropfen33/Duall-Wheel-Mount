@@ -11,26 +11,41 @@ public class Node {
     public final int y;
     public final int z;
     private final int hash;
+    /**
+     * The index in the PathHeap. -1 if not assigned.
+     */
     public int heapIdx = -1;
+    /**
+     * The total cost of all path points up to this one. Corresponds to the A* g-score.
+     */
     public float g;
+    /**
+     * The estimated cost from this path point to the target. Corresponds to the A* h-score.
+     */
     public float h;
+    /**
+     * The total cost of the path containing this path point. Used as sort criteria in PathHeap. Corresponds to the A* f-score.
+     */
     public float f;
     @Nullable
     public Node cameFrom;
     public boolean closed;
     public float walkedDistance;
+    /**
+     * The additional cost of the path point. If negative, the path point will be sorted out by NodeProcessors.
+     */
     public float costMalus;
     public PathType type = PathType.BLOCKED;
 
-    public Node(int p_77285_, int p_77286_, int p_77287_) {
-        this.x = p_77285_;
-        this.y = p_77286_;
-        this.z = p_77287_;
-        this.hash = createHash(p_77285_, p_77286_, p_77287_);
+    public Node(int x, int y, int z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.hash = createHash(x, y, z);
     }
 
-    public Node cloneAndMove(int p_77290_, int p_77291_, int p_77292_) {
-        Node node = new Node(p_77290_, p_77291_, p_77292_);
+    public Node cloneAndMove(int x, int y, int z) {
+        Node node = new Node(x, y, z);
         node.heapIdx = this.heapIdx;
         node.g = this.g;
         node.h = this.h;
@@ -43,55 +58,61 @@ public class Node {
         return node;
     }
 
-    public static int createHash(int p_77296_, int p_77297_, int p_77298_) {
-        return p_77297_ & 0xFF | (p_77296_ & 32767) << 8 | (p_77298_ & 32767) << 24 | (p_77296_ < 0 ? Integer.MIN_VALUE : 0) | (p_77298_ < 0 ? 32768 : 0);
+    public static int createHash(int x, int y, int z) {
+        return y & 0xFF | (x & 32767) << 8 | (z & 32767) << 24 | (x < 0 ? Integer.MIN_VALUE : 0) | (z < 0 ? 32768 : 0);
     }
 
-    public float distanceTo(Node p_77294_) {
-        float f = (float)(p_77294_.x - this.x);
-        float f1 = (float)(p_77294_.y - this.y);
-        float f2 = (float)(p_77294_.z - this.z);
+    /**
+     * Returns the linear distance to another path point
+     */
+    public float distanceTo(Node point) {
+        float f = (float)(point.x - this.x);
+        float f1 = (float)(point.y - this.y);
+        float f2 = (float)(point.z - this.z);
         return Mth.sqrt(f * f + f1 * f1 + f2 * f2);
     }
 
-    public float distanceToXZ(Node p_230614_) {
-        float f = (float)(p_230614_.x - this.x);
-        float f1 = (float)(p_230614_.z - this.z);
+    public float distanceToXZ(Node point) {
+        float f = (float)(point.x - this.x);
+        float f1 = (float)(point.z - this.z);
         return Mth.sqrt(f * f + f1 * f1);
     }
 
-    public float distanceTo(BlockPos p_164698_) {
-        float f = (float)(p_164698_.getX() - this.x);
-        float f1 = (float)(p_164698_.getY() - this.y);
-        float f2 = (float)(p_164698_.getZ() - this.z);
+    public float distanceTo(BlockPos pos) {
+        float f = (float)(pos.getX() - this.x);
+        float f1 = (float)(pos.getY() - this.y);
+        float f2 = (float)(pos.getZ() - this.z);
         return Mth.sqrt(f * f + f1 * f1 + f2 * f2);
     }
 
-    public float distanceToSqr(Node p_77300_) {
-        float f = (float)(p_77300_.x - this.x);
-        float f1 = (float)(p_77300_.y - this.y);
-        float f2 = (float)(p_77300_.z - this.z);
+    /**
+     * Returns the squared distance to another path point
+     */
+    public float distanceToSqr(Node point) {
+        float f = (float)(point.x - this.x);
+        float f1 = (float)(point.y - this.y);
+        float f2 = (float)(point.z - this.z);
         return f * f + f1 * f1 + f2 * f2;
     }
 
-    public float distanceToSqr(BlockPos p_164703_) {
-        float f = (float)(p_164703_.getX() - this.x);
-        float f1 = (float)(p_164703_.getY() - this.y);
-        float f2 = (float)(p_164703_.getZ() - this.z);
+    public float distanceToSqr(BlockPos pos) {
+        float f = (float)(pos.getX() - this.x);
+        float f1 = (float)(pos.getY() - this.y);
+        float f2 = (float)(pos.getZ() - this.z);
         return f * f + f1 * f1 + f2 * f2;
     }
 
-    public float distanceManhattan(Node p_77305_) {
-        float f = (float)Math.abs(p_77305_.x - this.x);
-        float f1 = (float)Math.abs(p_77305_.y - this.y);
-        float f2 = (float)Math.abs(p_77305_.z - this.z);
+    public float distanceManhattan(Node point) {
+        float f = (float)Math.abs(point.x - this.x);
+        float f1 = (float)Math.abs(point.y - this.y);
+        float f2 = (float)Math.abs(point.z - this.z);
         return f + f1 + f2;
     }
 
-    public float distanceManhattan(BlockPos p_77307_) {
-        float f = (float)Math.abs(p_77307_.getX() - this.x);
-        float f1 = (float)Math.abs(p_77307_.getY() - this.y);
-        float f2 = (float)Math.abs(p_77307_.getZ() - this.z);
+    public float distanceManhattan(BlockPos pos) {
+        float f = (float)Math.abs(pos.getX() - this.x);
+        float f1 = (float)Math.abs(pos.getY() - this.y);
+        float f2 = (float)Math.abs(pos.getZ() - this.z);
         return f + f1 + f2;
     }
 
@@ -104,8 +125,8 @@ public class Node {
     }
 
     @Override
-    public boolean equals(Object p_77309_) {
-        return !(p_77309_ instanceof Node node) ? false : this.hash == node.hash && this.x == node.x && this.y == node.y && this.z == node.z;
+    public boolean equals(Object other) {
+        return !(other instanceof Node node) ? false : this.hash == node.hash && this.x == node.x && this.y == node.y && this.z == node.z;
     }
 
     @Override
@@ -122,28 +143,28 @@ public class Node {
         return "Node{x=" + this.x + ", y=" + this.y + ", z=" + this.z + "}";
     }
 
-    public void writeToStream(FriendlyByteBuf p_164700_) {
-        p_164700_.writeInt(this.x);
-        p_164700_.writeInt(this.y);
-        p_164700_.writeInt(this.z);
-        p_164700_.writeFloat(this.walkedDistance);
-        p_164700_.writeFloat(this.costMalus);
-        p_164700_.writeBoolean(this.closed);
-        p_164700_.writeEnum(this.type);
-        p_164700_.writeFloat(this.f);
+    public void writeToStream(FriendlyByteBuf buffer) {
+        buffer.writeInt(this.x);
+        buffer.writeInt(this.y);
+        buffer.writeInt(this.z);
+        buffer.writeFloat(this.walkedDistance);
+        buffer.writeFloat(this.costMalus);
+        buffer.writeBoolean(this.closed);
+        buffer.writeEnum(this.type);
+        buffer.writeFloat(this.f);
     }
 
-    public static Node createFromStream(FriendlyByteBuf p_77302_) {
-        Node node = new Node(p_77302_.readInt(), p_77302_.readInt(), p_77302_.readInt());
-        readContents(p_77302_, node);
+    public static Node createFromStream(FriendlyByteBuf buffer) {
+        Node node = new Node(buffer.readInt(), buffer.readInt(), buffer.readInt());
+        readContents(buffer, node);
         return node;
     }
 
-    protected static void readContents(FriendlyByteBuf p_262984_, Node p_263009_) {
-        p_263009_.walkedDistance = p_262984_.readFloat();
-        p_263009_.costMalus = p_262984_.readFloat();
-        p_263009_.closed = p_262984_.readBoolean();
-        p_263009_.type = p_262984_.readEnum(PathType.class);
-        p_263009_.f = p_262984_.readFloat();
+    protected static void readContents(FriendlyByteBuf buffer, Node node) {
+        node.walkedDistance = buffer.readFloat();
+        node.costMalus = buffer.readFloat();
+        node.closed = buffer.readBoolean();
+        node.type = buffer.readEnum(PathType.class);
+        node.f = buffer.readFloat();
     }
 }

@@ -37,9 +37,9 @@ public class Bat extends AmbientCreature {
     @Nullable
     private BlockPos targetPosition;
 
-    public Bat(EntityType<? extends Bat> p_27412_, Level p_27413_) {
-        super(p_27412_, p_27413_);
-        if (!p_27413_.isClientSide) {
+    public Bat(EntityType<? extends Bat> entityType, Level level) {
+        super(entityType, level);
+        if (!level.isClientSide) {
             this.setResting(true);
         }
     }
@@ -50,9 +50,9 @@ public class Bat extends AmbientCreature {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326297_) {
-        super.defineSynchedData(p_326297_);
-        p_326297_.define(DATA_ID_FLAGS, (byte)0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_ID_FLAGS, (byte)0);
     }
 
     @Override
@@ -72,7 +72,7 @@ public class Bat extends AmbientCreature {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_27451_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.BAT_HURT;
     }
 
@@ -87,7 +87,7 @@ public class Bat extends AmbientCreature {
     }
 
     @Override
-    protected void doPush(Entity p_27415_) {
+    protected void doPush(Entity entity) {
     }
 
     @Override
@@ -102,9 +102,9 @@ public class Bat extends AmbientCreature {
         return (this.entityData.get(DATA_ID_FLAGS) & 1) != 0;
     }
 
-    public void setResting(boolean p_27457_) {
+    public void setResting(boolean isResting) {
         byte b0 = this.entityData.get(DATA_ID_FLAGS);
-        if (p_27457_) {
+        if (isResting) {
             this.entityData.set(DATA_ID_FLAGS, (byte)(b0 | 1));
         } else {
             this.entityData.set(DATA_ID_FLAGS, (byte)(b0 & -2));
@@ -184,7 +184,7 @@ public class Bat extends AmbientCreature {
     }
 
     @Override
-    protected void checkFallDamage(double p_27419_, boolean p_27420_, BlockState p_27421_, BlockPos p_27422_) {
+    protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
     }
 
     @Override
@@ -192,46 +192,52 @@ public class Bat extends AmbientCreature {
         return true;
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_27424_, float p_27425_) {
-        if (this.isInvulnerableTo(p_27424_)) {
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isInvulnerableTo(source)) {
             return false;
         } else {
             if (!this.level().isClientSide && this.isResting()) {
                 this.setResting(false);
             }
 
-            return super.hurt(p_27424_, p_27425_);
+            return super.hurt(source, amount);
         }
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_27427_) {
-        super.readAdditionalSaveData(p_27427_);
-        this.entityData.set(DATA_ID_FLAGS, p_27427_.getByte("BatFlags"));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.entityData.set(DATA_ID_FLAGS, compound.getByte("BatFlags"));
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_27443_) {
-        super.addAdditionalSaveData(p_27443_);
-        p_27443_.putByte("BatFlags", this.entityData.get(DATA_ID_FLAGS));
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putByte("BatFlags", this.entityData.get(DATA_ID_FLAGS));
     }
 
     public static boolean checkBatSpawnRules(
-        EntityType<Bat> p_218099_, LevelAccessor p_218100_, MobSpawnType p_218101_, BlockPos p_218102_, RandomSource p_218103_
+        EntityType<Bat> bat, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        if (p_218102_.getY() >= p_218100_.getSeaLevel()) {
+        if (pos.getY() >= level.getSeaLevel()) {
             return false;
         } else {
-            int i = p_218100_.getMaxLocalRawBrightness(p_218102_);
+            int i = level.getMaxLocalRawBrightness(pos);
             int j = 4;
             if (isHalloween()) {
                 j = 7;
-            } else if (p_218103_.nextBoolean()) {
+            } else if (random.nextBoolean()) {
                 return false;
             }
 
-            return i > p_218103_.nextInt(j) ? false : checkMobSpawnRules(p_218099_, p_218100_, p_218101_, p_218102_, p_218103_);
+            return i > random.nextInt(j) ? false : checkMobSpawnRules(bat, level, spawnType, pos, random);
         }
     }
 

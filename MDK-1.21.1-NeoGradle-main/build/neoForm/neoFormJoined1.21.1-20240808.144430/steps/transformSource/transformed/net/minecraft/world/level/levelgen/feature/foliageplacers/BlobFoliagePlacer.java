@@ -15,13 +15,13 @@ public class BlobFoliagePlacer extends FoliagePlacer {
     public static final MapCodec<BlobFoliagePlacer> CODEC = RecordCodecBuilder.mapCodec(p_68427_ -> blobParts(p_68427_).apply(p_68427_, BlobFoliagePlacer::new));
     protected final int height;
 
-    protected static <P extends BlobFoliagePlacer> P3<Mu<P>, IntProvider, IntProvider, Integer> blobParts(Instance<P> p_68414_) {
-        return foliagePlacerParts(p_68414_).and(Codec.intRange(0, 16).fieldOf("height").forGetter(p_68412_ -> p_68412_.height));
+    protected static <P extends BlobFoliagePlacer> P3<Mu<P>, IntProvider, IntProvider, Integer> blobParts(Instance<P> instance) {
+        return foliagePlacerParts(instance).and(Codec.intRange(0, 16).fieldOf("height").forGetter(p_68412_ -> p_68412_.height));
     }
 
-    public BlobFoliagePlacer(IntProvider p_161356_, IntProvider p_161357_, int p_161358_) {
-        super(p_161356_, p_161357_);
-        this.height = p_161358_;
+    public BlobFoliagePlacer(IntProvider radius, IntProvider offset, int height) {
+        super(radius, offset);
+        this.height = height;
     }
 
     @Override
@@ -31,29 +31,33 @@ public class BlobFoliagePlacer extends FoliagePlacer {
 
     @Override
     protected void createFoliage(
-        LevelSimulatedReader p_273066_,
-        FoliagePlacer.FoliageSetter p_272716_,
-        RandomSource p_273178_,
-        TreeConfiguration p_272850_,
-        int p_273067_,
-        FoliagePlacer.FoliageAttachment p_273711_,
-        int p_273580_,
-        int p_273511_,
-        int p_273685_
+        LevelSimulatedReader level,
+        FoliagePlacer.FoliageSetter blockSetter,
+        RandomSource random,
+        TreeConfiguration config,
+        int maxFreeTreeHeight,
+        FoliagePlacer.FoliageAttachment attachment,
+        int foliageHeight,
+        int foliageRadius,
+        int offset
     ) {
-        for (int i = p_273685_; i >= p_273685_ - p_273580_; i--) {
-            int j = Math.max(p_273511_ + p_273711_.radiusOffset() - 1 - i / 2, 0);
-            this.placeLeavesRow(p_273066_, p_272716_, p_273178_, p_272850_, p_273711_.pos(), j, i, p_273711_.doubleTrunk());
+        for (int i = offset; i >= offset - foliageHeight; i--) {
+            int j = Math.max(foliageRadius + attachment.radiusOffset() - 1 - i / 2, 0);
+            this.placeLeavesRow(level, blockSetter, random, config, attachment.pos(), j, i, attachment.doubleTrunk());
         }
     }
 
     @Override
-    public int foliageHeight(RandomSource p_225516_, int p_225517_, TreeConfiguration p_225518_) {
+    public int foliageHeight(RandomSource random, int height, TreeConfiguration config) {
         return this.height;
     }
 
+    /**
+     * Skips certain positions based on the provided shape, such as rounding corners randomly.
+     * The coordinates are passed in as absolute value, and should be within [0, {@code range}].
+     */
     @Override
-    protected boolean shouldSkipLocation(RandomSource p_225509_, int p_225510_, int p_225511_, int p_225512_, int p_225513_, boolean p_225514_) {
-        return p_225510_ == p_225513_ && p_225512_ == p_225513_ && (p_225509_.nextInt(2) == 0 || p_225511_ == 0);
+    protected boolean shouldSkipLocation(RandomSource random, int localX, int localY, int localZ, int range, boolean large) {
+        return localX == range && localZ == range && (random.nextInt(2) == 0 || localY == 0);
     }
 }

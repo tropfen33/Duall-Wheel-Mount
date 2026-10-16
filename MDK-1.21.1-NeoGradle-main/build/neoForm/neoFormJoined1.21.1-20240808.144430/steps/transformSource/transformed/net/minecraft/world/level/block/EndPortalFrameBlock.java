@@ -36,49 +36,59 @@ public class EndPortalFrameBlock extends Block {
         return CODEC;
     }
 
-    public EndPortalFrameBlock(BlockBehaviour.Properties p_53050_) {
-        super(p_53050_);
+    public EndPortalFrameBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(HAS_EYE, Boolean.valueOf(false)));
     }
 
     @Override
-    protected boolean useShapeForLightOcclusion(BlockState p_53079_) {
+    protected boolean useShapeForLightOcclusion(BlockState state) {
         return true;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_53073_, BlockGetter p_53074_, BlockPos p_53075_, CollisionContext p_53076_) {
-        return p_53073_.getValue(HAS_EYE) ? FULL_SHAPE : BASE_SHAPE;
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return state.getValue(HAS_EYE) ? FULL_SHAPE : BASE_SHAPE;
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_53052_) {
-        return this.defaultBlockState().setValue(FACING, p_53052_.getHorizontalDirection().getOpposite()).setValue(HAS_EYE, Boolean.valueOf(false));
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite()).setValue(HAS_EYE, Boolean.valueOf(false));
     }
 
     @Override
-    protected boolean hasAnalogOutputSignal(BlockState p_53054_) {
+    protected boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
+    /**
+     * Returns the analog signal this block emits. This is the signal a comparator can read from it.
+     *
+     */
     @Override
-    protected int getAnalogOutputSignal(BlockState p_53061_, Level p_53062_, BlockPos p_53063_) {
-        return p_53061_.getValue(HAS_EYE) ? 15 : 0;
+    protected int getAnalogOutputSignal(BlockState blockState, Level level, BlockPos pos) {
+        return blockState.getValue(HAS_EYE) ? 15 : 0;
+    }
+
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState rotate(BlockState p_53068_, Rotation p_53069_) {
-        return p_53068_.setValue(FACING, p_53069_.rotate(p_53068_.getValue(FACING)));
-    }
-
-    @Override
-    protected BlockState mirror(BlockState p_53065_, Mirror p_53066_) {
-        return p_53065_.rotate(p_53066_.getRotation(p_53065_.getValue(FACING)));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_53071_) {
-        p_53071_.add(FACING, HAS_EYE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, HAS_EYE);
     }
 
     public static BlockPattern getOrCreatePortalShape() {
@@ -125,7 +135,7 @@ public class EndPortalFrameBlock extends Block {
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_53056_, PathComputationType p_53059_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

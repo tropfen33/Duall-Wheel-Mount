@@ -14,8 +14,8 @@ import com.mojang.serialization.Dynamic;
 import java.util.Optional;
 
 public class EmptyItemInHotbarFix extends DataFix {
-    public EmptyItemInHotbarFix(Schema p_331137_) {
-        super(p_331137_, false);
+    public EmptyItemInHotbarFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
     @Override

@@ -14,10 +14,10 @@ public record PoiAddedDebugPayload(BlockPos pos, String poiType, int freeTicketC
         this(p_294710_.readBlockPos(), p_294710_.readUtf(), p_294710_.readInt());
     }
 
-    private void write(FriendlyByteBuf p_295635_) {
-        p_295635_.writeBlockPos(this.pos);
-        p_295635_.writeUtf(this.poiType);
-        p_295635_.writeInt(this.freeTicketCount);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeBlockPos(this.pos);
+        buffer.writeUtf(this.poiType);
+        buffer.writeInt(this.freeTicketCount);
     }
 
     @Override

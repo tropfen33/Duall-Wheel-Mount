@@ -23,9 +23,9 @@ public class FunctionReference extends LootItemConditionalFunction {
     );
     private final ResourceKey<LootItemFunction> name;
 
-    private FunctionReference(List<LootItemCondition> p_298661_, ResourceKey<LootItemFunction> p_335440_) {
-        super(p_298661_);
-        this.name = p_335440_;
+    private FunctionReference(List<LootItemCondition> conditions, ResourceKey<LootItemFunction> name) {
+        super(conditions);
+        this.name = name;
     }
 
     @Override
@@ -33,48 +33,54 @@ public class FunctionReference extends LootItemConditionalFunction {
         return LootItemFunctions.REFERENCE;
     }
 
+    /**
+     * Validate that this object is used correctly according to the given ValidationContext.
+     */
     @Override
-    public void validate(ValidationContext p_279281_) {
-        if (!p_279281_.allowsReferences()) {
-            p_279281_.reportProblem("Uses reference to " + this.name.location() + ", but references are not allowed");
-        } else if (p_279281_.hasVisitedElement(this.name)) {
-            p_279281_.reportProblem("Function " + this.name.location() + " is recursively called");
+    public void validate(ValidationContext context) {
+        if (!context.allowsReferences()) {
+            context.reportProblem("Uses reference to " + this.name.location() + ", but references are not allowed");
+        } else if (context.hasVisitedElement(this.name)) {
+            context.reportProblem("Function " + this.name.location() + " is recursively called");
         } else {
-            super.validate(p_279281_);
-            p_279281_.resolver()
+            super.validate(context);
+            context.resolver()
                 .get(Registries.ITEM_MODIFIER, this.name)
                 .ifPresentOrElse(
-                    p_339571_ -> p_339571_.value().validate(p_279281_.enterElement(".{" + this.name.location() + "}", this.name)),
-                    () -> p_279281_.reportProblem("Unknown function table called " + this.name.location())
+                    p_339571_ -> p_339571_.value().validate(context.enterElement(".{" + this.name.location() + "}", this.name)),
+                    () -> context.reportProblem("Unknown function table called " + this.name.location())
                 );
         }
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    protected ItemStack run(ItemStack p_279458_, LootContext p_279370_) {
-        LootItemFunction lootitemfunction = p_279370_.getResolver().get(Registries.ITEM_MODIFIER, this.name).map(Holder::value).orElse(null);
+    protected ItemStack run(ItemStack stack, LootContext context) {
+        LootItemFunction lootitemfunction = context.getResolver().get(Registries.ITEM_MODIFIER, this.name).map(Holder::value).orElse(null);
         if (lootitemfunction == null) {
             LOGGER.warn("Unknown function: {}", this.name.location());
-            return p_279458_;
+            return stack;
         } else {
             LootContext.VisitedEntry<?> visitedentry = LootContext.createVisitedEntry(lootitemfunction);
-            if (p_279370_.pushVisitedElement(visitedentry)) {
+            if (context.pushVisitedElement(visitedentry)) {
                 ItemStack itemstack;
                 try {
-                    itemstack = lootitemfunction.apply(p_279458_, p_279370_);
+                    itemstack = lootitemfunction.apply(stack, context);
                 } finally {
-                    p_279370_.popVisitedElement(visitedentry);
+                    context.popVisitedElement(visitedentry);
                 }
 
                 return itemstack;
             } else {
                 LOGGER.warn("Detected infinite loop in loot tables");
-                return p_279458_;
+                return stack;
             }
         }
     }
 
-    public static LootItemConditionalFunction.Builder<?> functionReference(ResourceKey<LootItemFunction> p_335382_) {
-        return simpleBuilder(p_335336_ -> new FunctionReference(p_335336_, p_335382_));
+    public static LootItemConditionalFunction.Builder<?> functionReference(ResourceKey<LootItemFunction> key) {
+        return simpleBuilder(p_335336_ -> new FunctionReference(p_335336_, key));
     }
 }

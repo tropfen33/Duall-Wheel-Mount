@@ -14,11 +14,11 @@ public record WidgetSprites(ResourceLocation enabled, ResourceLocation disabled,
         this(p_296152_, p_296020_, p_296073_, p_296020_);
     }
 
-    public ResourceLocation get(boolean p_296269_, boolean p_295773_) {
-        if (p_296269_) {
-            return p_295773_ ? this.enabledFocused : this.enabled;
+    public ResourceLocation get(boolean enabled, boolean focused) {
+        if (enabled) {
+            return focused ? this.enabledFocused : this.enabled;
         } else {
-            return p_295773_ ? this.disabledFocused : this.disabled;
+            return focused ? this.disabledFocused : this.disabled;
         }
     }
 }

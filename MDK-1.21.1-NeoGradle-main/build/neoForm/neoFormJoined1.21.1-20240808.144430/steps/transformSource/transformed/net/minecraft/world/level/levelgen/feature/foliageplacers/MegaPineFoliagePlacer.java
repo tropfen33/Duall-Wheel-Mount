@@ -18,9 +18,9 @@ public class MegaPineFoliagePlacer extends FoliagePlacer {
     );
     private final IntProvider crownHeight;
 
-    public MegaPineFoliagePlacer(IntProvider p_161470_, IntProvider p_161471_, IntProvider p_161472_) {
-        super(p_161470_, p_161471_);
-        this.crownHeight = p_161472_;
+    public MegaPineFoliagePlacer(IntProvider radius, IntProvider offset, IntProvider crownHeight) {
+        super(radius, offset);
+        this.crownHeight = crownHeight;
     }
 
     @Override
@@ -30,22 +30,22 @@ public class MegaPineFoliagePlacer extends FoliagePlacer {
 
     @Override
     protected void createFoliage(
-        LevelSimulatedReader p_225678_,
-        FoliagePlacer.FoliageSetter p_273345_,
-        RandomSource p_225680_,
-        TreeConfiguration p_225681_,
-        int p_225682_,
-        FoliagePlacer.FoliageAttachment p_225683_,
-        int p_225684_,
-        int p_225685_,
-        int p_225686_
+        LevelSimulatedReader level,
+        FoliagePlacer.FoliageSetter blockSetter,
+        RandomSource random,
+        TreeConfiguration config,
+        int maxFreeTreeHeight,
+        FoliagePlacer.FoliageAttachment attachment,
+        int foliageHeight,
+        int foliageRadius,
+        int offset
     ) {
-        BlockPos blockpos = p_225683_.pos();
+        BlockPos blockpos = attachment.pos();
         int i = 0;
 
-        for (int j = blockpos.getY() - p_225684_ + p_225686_; j <= blockpos.getY() + p_225686_; j++) {
+        for (int j = blockpos.getY() - foliageHeight + offset; j <= blockpos.getY() + offset; j++) {
             int k = blockpos.getY() - j;
-            int l = p_225685_ + p_225683_.radiusOffset() + Mth.floor((float)k / (float)p_225684_ * 3.5F);
+            int l = foliageRadius + attachment.radiusOffset() + Mth.floor((float)k / (float)foliageHeight * 3.5F);
             int i1;
             if (k > 0 && l == i && (j & 1) == 0) {
                 i1 = l + 1;
@@ -53,18 +53,22 @@ public class MegaPineFoliagePlacer extends FoliagePlacer {
                 i1 = l;
             }
 
-            this.placeLeavesRow(p_225678_, p_273345_, p_225680_, p_225681_, new BlockPos(blockpos.getX(), j, blockpos.getZ()), i1, 0, p_225683_.doubleTrunk());
+            this.placeLeavesRow(level, blockSetter, random, config, new BlockPos(blockpos.getX(), j, blockpos.getZ()), i1, 0, attachment.doubleTrunk());
             i = l;
         }
     }
 
     @Override
-    public int foliageHeight(RandomSource p_225674_, int p_225675_, TreeConfiguration p_225676_) {
-        return this.crownHeight.sample(p_225674_);
+    public int foliageHeight(RandomSource random, int height, TreeConfiguration config) {
+        return this.crownHeight.sample(random);
     }
 
+    /**
+     * Skips certain positions based on the provided shape, such as rounding corners randomly.
+     * The coordinates are passed in as absolute value, and should be within [0, {@code range}].
+     */
     @Override
-    protected boolean shouldSkipLocation(RandomSource p_225667_, int p_225668_, int p_225669_, int p_225670_, int p_225671_, boolean p_225672_) {
-        return p_225668_ + p_225670_ >= 7 ? true : p_225668_ * p_225668_ + p_225670_ * p_225670_ > p_225671_ * p_225671_;
+    protected boolean shouldSkipLocation(RandomSource random, int localX, int localY, int localZ, int range, boolean large) {
+        return localX + localZ >= 7 ? true : localX * localX + localZ * localZ > range * range;
     }
 }

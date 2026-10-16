@@ -37,8 +37,8 @@ public class LeavesBlock extends Block implements SimpleWaterloggedBlock, net.ne
         return CODEC;
     }
 
-    public LeavesBlock(BlockBehaviour.Properties p_54422_) {
-        super(p_54422_);
+    public LeavesBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(
             this.stateDefinition
                 .any()
@@ -49,107 +49,118 @@ public class LeavesBlock extends Block implements SimpleWaterloggedBlock, net.ne
     }
 
     @Override
-    protected VoxelShape getBlockSupportShape(BlockState p_54456_, BlockGetter p_54457_, BlockPos p_54458_) {
+    protected VoxelShape getBlockSupportShape(BlockState state, BlockGetter reader, BlockPos pos) {
         return Shapes.empty();
     }
 
     @Override
-    protected boolean isRandomlyTicking(BlockState p_54449_) {
-        return p_54449_.getValue(DISTANCE) == 7 && !p_54449_.getValue(PERSISTENT);
+    protected boolean isRandomlyTicking(BlockState state) {
+        return state.getValue(DISTANCE) == 7 && !state.getValue(PERSISTENT);
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_221379_, ServerLevel p_221380_, BlockPos p_221381_, RandomSource p_221382_) {
-        if (this.decaying(p_221379_)) {
-            dropResources(p_221379_, p_221380_, p_221381_);
-            p_221380_.removeBlock(p_221381_, false);
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (this.decaying(state)) {
+            dropResources(state, level, pos);
+            level.removeBlock(pos, false);
         }
     }
 
-    protected boolean decaying(BlockState p_221386_) {
-        return !p_221386_.getValue(PERSISTENT) && p_221386_.getValue(DISTANCE) == 7;
+    protected boolean decaying(BlockState state) {
+        return !state.getValue(PERSISTENT) && state.getValue(DISTANCE) == 7;
     }
 
     @Override
-    protected void tick(BlockState p_221369_, ServerLevel p_221370_, BlockPos p_221371_, RandomSource p_221372_) {
-        p_221370_.setBlock(p_221371_, updateDistance(p_221369_, p_221370_, p_221371_), 3);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        level.setBlock(pos, updateDistance(state, level, pos), 3);
     }
 
     @Override
-    protected int getLightBlock(BlockState p_54460_, BlockGetter p_54461_, BlockPos p_54462_) {
+    protected int getLightBlock(BlockState state, BlockGetter level, BlockPos pos) {
         return 1;
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_54440_, Direction p_54441_, BlockState p_54442_, LevelAccessor p_54443_, BlockPos p_54444_, BlockPos p_54445_) {
-        if (p_54440_.getValue(WATERLOGGED)) {
-            p_54443_.scheduleTick(p_54444_, Fluids.WATER, Fluids.WATER.getTickDelay(p_54443_));
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        int i = getDistanceAt(p_54442_) + 1;
-        if (i != 1 || p_54440_.getValue(DISTANCE) != i) {
-            p_54443_.scheduleTick(p_54444_, this, 1);
+        int i = getDistanceAt(facingState) + 1;
+        if (i != 1 || state.getValue(DISTANCE) != i) {
+            level.scheduleTick(currentPos, this, 1);
         }
 
-        return p_54440_;
+        return state;
     }
 
-    private static BlockState updateDistance(BlockState p_54436_, LevelAccessor p_54437_, BlockPos p_54438_) {
+    private static BlockState updateDistance(BlockState state, LevelAccessor level, BlockPos pos) {
         int i = 7;
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
         for (Direction direction : Direction.values()) {
-            blockpos$mutableblockpos.setWithOffset(p_54438_, direction);
-            i = Math.min(i, getDistanceAt(p_54437_.getBlockState(blockpos$mutableblockpos)) + 1);
+            blockpos$mutableblockpos.setWithOffset(pos, direction);
+            i = Math.min(i, getDistanceAt(level.getBlockState(blockpos$mutableblockpos)) + 1);
             if (i == 1) {
                 break;
             }
         }
 
-        return p_54436_.setValue(DISTANCE, Integer.valueOf(i));
+        return state.setValue(DISTANCE, Integer.valueOf(i));
     }
 
-    private static int getDistanceAt(BlockState p_54464_) {
-        return getOptionalDistanceAt(p_54464_).orElse(7);
+    private static int getDistanceAt(BlockState neighbor) {
+        return getOptionalDistanceAt(neighbor).orElse(7);
     }
 
-    public static OptionalInt getOptionalDistanceAt(BlockState p_277868_) {
-        if (p_277868_.is(BlockTags.LOGS)) {
+    public static OptionalInt getOptionalDistanceAt(BlockState state) {
+        if (state.is(BlockTags.LOGS)) {
             return OptionalInt.of(0);
         } else {
-            return p_277868_.hasProperty(DISTANCE) ? OptionalInt.of(p_277868_.getValue(DISTANCE)) : OptionalInt.empty();
+            return state.hasProperty(DISTANCE) ? OptionalInt.of(state.getValue(DISTANCE)) : OptionalInt.empty();
         }
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_221384_) {
-        return p_221384_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_221384_);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_221374_, Level p_221375_, BlockPos p_221376_, RandomSource p_221377_) {
-        if (p_221375_.isRainingAt(p_221376_.above())) {
-            if (p_221377_.nextInt(15) == 1) {
-                BlockPos blockpos = p_221376_.below();
-                BlockState blockstate = p_221375_.getBlockState(blockpos);
-                if (!blockstate.canOcclude() || !blockstate.isFaceSturdy(p_221375_, blockpos, Direction.UP)) {
-                    ParticleUtils.spawnParticleBelow(p_221375_, p_221376_, p_221377_, ParticleTypes.DRIPPING_WATER);
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (level.isRainingAt(pos.above())) {
+            if (random.nextInt(15) == 1) {
+                BlockPos blockpos = pos.below();
+                BlockState blockstate = level.getBlockState(blockpos);
+                if (!blockstate.canOcclude() || !blockstate.isFaceSturdy(level, blockpos, Direction.UP)) {
+                    ParticleUtils.spawnParticleBelow(level, pos, random, ParticleTypes.DRIPPING_WATER);
                 }
             }
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_54447_) {
-        p_54447_.add(DISTANCE, PERSISTENT, WATERLOGGED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(DISTANCE, PERSISTENT, WATERLOGGED);
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_54424_) {
-        FluidState fluidstate = p_54424_.getLevel().getFluidState(p_54424_.getClickedPos());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
         BlockState blockstate = this.defaultBlockState()
             .setValue(PERSISTENT, Boolean.valueOf(true))
             .setValue(WATERLOGGED, Boolean.valueOf(fluidstate.getType() == Fluids.WATER));
-        return updateDistance(blockstate, p_54424_.getLevel(), p_54424_.getClickedPos());
+        return updateDistance(blockstate, context.getLevel(), context.getClickedPos());
     }
 }

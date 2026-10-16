@@ -10,34 +10,34 @@ import net.minecraft.world.entity.ai.memory.MemoryStatus;
 public class CountDownCooldownTicks extends Behavior<LivingEntity> {
     private final MemoryModuleType<Integer> cooldownTicks;
 
-    public CountDownCooldownTicks(MemoryModuleType<Integer> p_147462_) {
-        super(ImmutableMap.of(p_147462_, MemoryStatus.VALUE_PRESENT));
-        this.cooldownTicks = p_147462_;
+    public CountDownCooldownTicks(MemoryModuleType<Integer> cooldownTicks) {
+        super(ImmutableMap.of(cooldownTicks, MemoryStatus.VALUE_PRESENT));
+        this.cooldownTicks = cooldownTicks;
     }
 
-    private Optional<Integer> getCooldownTickMemory(LivingEntity p_147466_) {
-        return p_147466_.getBrain().getMemory(this.cooldownTicks);
+    private Optional<Integer> getCooldownTickMemory(LivingEntity entity) {
+        return entity.getBrain().getMemory(this.cooldownTicks);
     }
 
     @Override
-    protected boolean timedOut(long p_147464_) {
+    protected boolean timedOut(long gameTime) {
         return false;
     }
 
     @Override
-    protected boolean canStillUse(ServerLevel p_147468_, LivingEntity p_147469_, long p_147470_) {
-        Optional<Integer> optional = this.getCooldownTickMemory(p_147469_);
+    protected boolean canStillUse(ServerLevel level, LivingEntity entity, long gameTime) {
+        Optional<Integer> optional = this.getCooldownTickMemory(entity);
         return optional.isPresent() && optional.get() > 0;
     }
 
     @Override
-    protected void tick(ServerLevel p_147476_, LivingEntity p_147477_, long p_147478_) {
-        Optional<Integer> optional = this.getCooldownTickMemory(p_147477_);
-        p_147477_.getBrain().setMemory(this.cooldownTicks, optional.get() - 1);
+    protected void tick(ServerLevel level, LivingEntity owner, long gameTime) {
+        Optional<Integer> optional = this.getCooldownTickMemory(owner);
+        owner.getBrain().setMemory(this.cooldownTicks, optional.get() - 1);
     }
 
     @Override
-    protected void stop(ServerLevel p_147472_, LivingEntity p_147473_, long p_147474_) {
-        p_147473_.getBrain().eraseMemory(this.cooldownTicks);
+    protected void stop(ServerLevel level, LivingEntity entity, long gameTime) {
+        entity.getBrain().eraseMemory(this.cooldownTicks);
     }
 }

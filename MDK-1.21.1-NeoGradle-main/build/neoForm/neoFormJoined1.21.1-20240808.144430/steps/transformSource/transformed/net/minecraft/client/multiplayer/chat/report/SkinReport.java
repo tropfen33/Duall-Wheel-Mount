@@ -20,9 +20,9 @@ import org.apache.commons.lang3.StringUtils;
 public class SkinReport extends Report {
     final Supplier<PlayerSkin> skinGetter;
 
-    SkinReport(UUID p_299908_, Instant p_299882_, UUID p_299986_, Supplier<PlayerSkin> p_299871_) {
-        super(p_299908_, p_299882_, p_299986_);
-        this.skinGetter = p_299871_;
+    SkinReport(UUID reportId, Instant created, UUID reportedProfileId, Supplier<PlayerSkin> skinGetter) {
+        super(reportId, created, reportedProfileId);
+        this.skinGetter = skinGetter;
     }
 
     public Supplier<PlayerSkin> getSkinGetter() {
@@ -38,18 +38,18 @@ public class SkinReport extends Report {
     }
 
     @Override
-    public Screen createScreen(Screen p_299975_, ReportingContext p_299961_) {
-        return new SkinReportScreen(p_299975_, p_299961_, this);
+    public Screen createScreen(Screen lastScreen, ReportingContext reportingContext) {
+        return new SkinReportScreen(lastScreen, reportingContext, this);
     }
 
     @OnlyIn(Dist.CLIENT)
     public static class Builder extends Report.Builder<SkinReport> {
-        public Builder(SkinReport p_299828_, AbuseReportLimits p_299881_) {
-            super(p_299828_, p_299881_);
+        public Builder(SkinReport report, AbuseReportLimits limits) {
+            super(report, limits);
         }
 
-        public Builder(UUID p_299890_, Supplier<PlayerSkin> p_299967_, AbuseReportLimits p_300039_) {
-            super(new SkinReport(UUID.randomUUID(), Instant.now(), p_299890_, p_299967_), p_300039_);
+        public Builder(UUID reportedPlayerId, Supplier<PlayerSkin> skinGetter, AbuseReportLimits limits) {
+            super(new SkinReport(UUID.randomUUID(), Instant.now(), reportedPlayerId, skinGetter), limits);
         }
 
         @Override
@@ -70,7 +70,7 @@ public class SkinReport extends Report {
         }
 
         @Override
-        public Either<Report.Result, Report.CannotBuildReason> build(ReportingContext p_299847_) {
+        public Either<Report.Result, Report.CannotBuildReason> build(ReportingContext reportingContext) {
             Report.CannotBuildReason report$cannotbuildreason = this.checkBuildable();
             if (report$cannotbuildreason != null) {
                 return Either.right(report$cannotbuildreason);

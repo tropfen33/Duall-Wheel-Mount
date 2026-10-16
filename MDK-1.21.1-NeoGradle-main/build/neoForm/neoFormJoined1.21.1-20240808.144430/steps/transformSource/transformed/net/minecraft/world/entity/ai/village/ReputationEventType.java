@@ -7,11 +7,11 @@ public interface ReputationEventType {
     ReputationEventType VILLAGER_KILLED = register("villager_killed");
     ReputationEventType TRADE = register("trade");
 
-    static ReputationEventType register(final String p_26992_) {
+    static ReputationEventType register(final String key) {
         return new ReputationEventType() {
             @Override
             public String toString() {
-                return p_26992_;
+                return key;
             }
         };
     }

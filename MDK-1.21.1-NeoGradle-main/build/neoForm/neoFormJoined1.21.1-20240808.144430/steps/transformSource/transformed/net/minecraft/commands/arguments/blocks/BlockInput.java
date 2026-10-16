@@ -19,10 +19,10 @@ public class BlockInput implements Predicate<BlockInWorld> {
     @Nullable
     private final CompoundTag tag;
 
-    public BlockInput(BlockState p_114666_, Set<Property<?>> p_114667_, @Nullable CompoundTag p_114668_) {
-        this.state = p_114666_;
-        this.properties = p_114667_;
-        this.tag = p_114668_;
+    public BlockInput(BlockState state, Set<Property<?>> properties, @Nullable CompoundTag tag) {
+        this.state = state;
+        this.properties = properties;
+        this.tag = tag;
     }
 
     public BlockState getState() {
@@ -33,8 +33,8 @@ public class BlockInput implements Predicate<BlockInWorld> {
         return this.properties;
     }
 
-    public boolean test(BlockInWorld p_114675_) {
-        BlockState blockstate = p_114675_.getState();
+    public boolean test(BlockInWorld block) {
+        BlockState blockstate = block.getState();
         if (!blockstate.is(this.state.getBlock())) {
             return false;
         } else {
@@ -47,29 +47,29 @@ public class BlockInput implements Predicate<BlockInWorld> {
             if (this.tag == null) {
                 return true;
             } else {
-                BlockEntity blockentity = p_114675_.getEntity();
-                return blockentity != null && NbtUtils.compareNbt(this.tag, blockentity.saveWithFullMetadata(p_114675_.getLevel().registryAccess()), true);
+                BlockEntity blockentity = block.getEntity();
+                return blockentity != null && NbtUtils.compareNbt(this.tag, blockentity.saveWithFullMetadata(block.getLevel().registryAccess()), true);
             }
         }
     }
 
-    public boolean test(ServerLevel p_173524_, BlockPos p_173525_) {
-        return this.test(new BlockInWorld(p_173524_, p_173525_, false));
+    public boolean test(ServerLevel level, BlockPos pos) {
+        return this.test(new BlockInWorld(level, pos, false));
     }
 
-    public boolean place(ServerLevel p_114671_, BlockPos p_114672_, int p_114673_) {
-        BlockState blockstate = Block.updateFromNeighbourShapes(this.state, p_114671_, p_114672_);
+    public boolean place(ServerLevel level, BlockPos pos, int flags) {
+        BlockState blockstate = Block.updateFromNeighbourShapes(this.state, level, pos);
         if (blockstate.isAir()) {
             blockstate = this.state;
         }
 
-        if (!p_114671_.setBlock(p_114672_, blockstate, p_114673_)) {
+        if (!level.setBlock(pos, blockstate, flags)) {
             return false;
         } else {
             if (this.tag != null) {
-                BlockEntity blockentity = p_114671_.getBlockEntity(p_114672_);
+                BlockEntity blockentity = level.getBlockEntity(pos);
                 if (blockentity != null) {
-                    blockentity.loadWithComponents(this.tag, p_114671_.registryAccess());
+                    blockentity.loadWithComponents(this.tag, level.registryAccess());
                 }
             }
 

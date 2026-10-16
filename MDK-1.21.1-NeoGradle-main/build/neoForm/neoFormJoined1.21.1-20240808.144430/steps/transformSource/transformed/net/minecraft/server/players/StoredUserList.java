@@ -28,16 +28,19 @@ public abstract class StoredUserList<K, V extends StoredUserEntry<K>> {
     private final File file;
     private final Map<String, V> map = Maps.newHashMap();
 
-    public StoredUserList(File p_11380_) {
-        this.file = p_11380_;
+    public StoredUserList(File file) {
+        this.file = file;
     }
 
     public File getFile() {
         return this.file;
     }
 
-    public void add(V p_11382_) {
-        this.map.put(this.getKeyForUser(p_11382_.getUser()), p_11382_);
+    /**
+     * Adds an entry to the list
+     */
+    public void add(V entry) {
+        this.map.put(this.getKeyForUser(entry.getUser()), entry);
 
         try {
             this.save();
@@ -47,13 +50,13 @@ public abstract class StoredUserList<K, V extends StoredUserEntry<K>> {
     }
 
     @Nullable
-    public V get(K p_11389_) {
+    public V get(K obj) {
         this.removeExpired();
-        return this.map.get(this.getKeyForUser(p_11389_));
+        return this.map.get(this.getKeyForUser(obj));
     }
 
-    public void remove(K p_11394_) {
-        this.map.remove(this.getKeyForUser(p_11394_));
+    public void remove(K user) {
+        this.map.remove(this.getKeyForUser(user));
 
         try {
             this.save();
@@ -62,8 +65,8 @@ public abstract class StoredUserList<K, V extends StoredUserEntry<K>> {
         }
     }
 
-    public void remove(StoredUserEntry<K> p_11387_) {
-        this.remove(p_11387_.getUser());
+    public void remove(StoredUserEntry<K> entry) {
+        this.remove(entry.getUser());
     }
 
     public String[] getUserList() {
@@ -74,12 +77,15 @@ public abstract class StoredUserList<K, V extends StoredUserEntry<K>> {
         return this.map.size() < 1;
     }
 
-    protected String getKeyForUser(K p_11384_) {
-        return p_11384_.toString();
+    /**
+     * Gets the key value for the given object
+     */
+    protected String getKeyForUser(K obj) {
+        return obj.toString();
     }
 
-    protected boolean contains(K p_11397_) {
-        return this.map.containsKey(this.getKeyForUser(p_11397_));
+    protected boolean contains(K entry) {
+        return this.map.containsKey(this.getKeyForUser(entry));
     }
 
     private void removeExpired() {
@@ -96,7 +102,7 @@ public abstract class StoredUserList<K, V extends StoredUserEntry<K>> {
         }
     }
 
-    protected abstract StoredUserEntry<K> createEntry(JsonObject p_11383_);
+    protected abstract StoredUserEntry<K> createEntry(JsonObject entryData);
 
     public Collection<V> getEntries() {
         return this.map.values();

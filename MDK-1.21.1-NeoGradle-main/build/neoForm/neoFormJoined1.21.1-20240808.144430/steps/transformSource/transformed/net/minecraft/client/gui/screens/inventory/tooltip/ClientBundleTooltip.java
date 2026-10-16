@@ -19,8 +19,8 @@ public class ClientBundleTooltip implements ClientTooltipComponent {
     private static final int SLOT_SIZE_Y = 20;
     private final BundleContents contents;
 
-    public ClientBundleTooltip(BundleContents p_331917_) {
-        this.contents = p_331917_;
+    public ClientBundleTooltip(BundleContents contents) {
+        this.contents = contents;
     }
 
     @Override
@@ -29,7 +29,7 @@ public class ClientBundleTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public int getWidth(Font p_169901_) {
+    public int getWidth(Font font) {
         return this.backgroundWidth();
     }
 
@@ -42,38 +42,38 @@ public class ClientBundleTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public void renderImage(Font p_194042_, int p_194043_, int p_194044_, GuiGraphics p_282522_) {
+    public void renderImage(Font font, int x, int y, GuiGraphics guiGraphics) {
         int i = this.gridSizeX();
         int j = this.gridSizeY();
-        p_282522_.blitSprite(BACKGROUND_SPRITE, p_194043_, p_194044_, this.backgroundWidth(), this.backgroundHeight());
+        guiGraphics.blitSprite(BACKGROUND_SPRITE, x, y, this.backgroundWidth(), this.backgroundHeight());
         boolean flag = this.contents.weight().compareTo(Fraction.ONE) >= 0;
         int k = 0;
 
         for (int l = 0; l < j; l++) {
             for (int i1 = 0; i1 < i; i1++) {
-                int j1 = p_194043_ + i1 * 18 + 1;
-                int k1 = p_194044_ + l * 20 + 1;
-                this.renderSlot(j1, k1, k++, flag, p_282522_, p_194042_);
+                int j1 = x + i1 * 18 + 1;
+                int k1 = y + l * 20 + 1;
+                this.renderSlot(j1, k1, k++, flag, guiGraphics, font);
             }
         }
     }
 
-    private void renderSlot(int p_283180_, int p_282972_, int p_282547_, boolean p_283053_, GuiGraphics p_283625_, Font p_281863_) {
-        if (p_282547_ >= this.contents.size()) {
-            this.blit(p_283625_, p_283180_, p_282972_, p_283053_ ? ClientBundleTooltip.Texture.BLOCKED_SLOT : ClientBundleTooltip.Texture.SLOT);
+    private void renderSlot(int x, int y, int itemIndex, boolean isBundleFull, GuiGraphics guiGraphics, Font font) {
+        if (itemIndex >= this.contents.size()) {
+            this.blit(guiGraphics, x, y, isBundleFull ? ClientBundleTooltip.Texture.BLOCKED_SLOT : ClientBundleTooltip.Texture.SLOT);
         } else {
-            ItemStack itemstack = this.contents.getItemUnsafe(p_282547_);
-            this.blit(p_283625_, p_283180_, p_282972_, ClientBundleTooltip.Texture.SLOT);
-            p_283625_.renderItem(itemstack, p_283180_ + 1, p_282972_ + 1, p_282547_);
-            p_283625_.renderItemDecorations(p_281863_, itemstack, p_283180_ + 1, p_282972_ + 1);
-            if (p_282547_ == 0) {
-                AbstractContainerScreen.renderSlotHighlight(p_283625_, p_283180_ + 1, p_282972_ + 1, 0);
+            ItemStack itemstack = this.contents.getItemUnsafe(itemIndex);
+            this.blit(guiGraphics, x, y, ClientBundleTooltip.Texture.SLOT);
+            guiGraphics.renderItem(itemstack, x + 1, y + 1, itemIndex);
+            guiGraphics.renderItemDecorations(font, itemstack, x + 1, y + 1);
+            if (itemIndex == 0) {
+                AbstractContainerScreen.renderSlotHighlight(guiGraphics, x + 1, y + 1, 0);
             }
         }
     }
 
-    private void blit(GuiGraphics p_281273_, int p_282428_, int p_281897_, ClientBundleTooltip.Texture p_281917_) {
-        p_281273_.blitSprite(p_281917_.sprite, p_282428_, p_281897_, 0, p_281917_.w, p_281917_.h);
+    private void blit(GuiGraphics guiGraphics, int x, int y, ClientBundleTooltip.Texture texture) {
+        guiGraphics.blitSprite(texture.sprite, x, y, 0, texture.w, texture.h);
     }
 
     private int gridSizeX() {
@@ -93,10 +93,10 @@ public class ClientBundleTooltip implements ClientTooltipComponent {
         public final int w;
         public final int h;
 
-        private Texture(ResourceLocation p_295000_, int p_169928_, int p_169929_) {
-            this.sprite = p_295000_;
-            this.w = p_169928_;
-            this.h = p_169929_;
+        private Texture(ResourceLocation sprite, int w, int h) {
+            this.sprite = sprite;
+            this.w = w;
+            this.h = h;
         }
     }
 }

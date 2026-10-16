@@ -11,9 +11,9 @@ public class TextureMetadataSection {
     private final boolean blur;
     private final boolean clamp;
 
-    public TextureMetadataSection(boolean p_119113_, boolean p_119114_) {
-        this.blur = p_119113_;
-        this.clamp = p_119114_;
+    public TextureMetadataSection(boolean blur, boolean clamp) {
+        this.blur = blur;
+        this.clamp = clamp;
     }
 
     public boolean isBlur() {

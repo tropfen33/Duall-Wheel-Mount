@@ -22,9 +22,9 @@ public class Material {
     @Nullable
     private RenderType renderType;
 
-    public Material(ResourceLocation p_119191_, ResourceLocation p_119192_) {
-        this.atlasLocation = p_119191_;
-        this.texture = p_119192_;
+    public Material(ResourceLocation atlasLocation, ResourceLocation texture) {
+        this.atlasLocation = atlasLocation;
+        this.texture = texture;
     }
 
     public ResourceLocation atlasLocation() {
@@ -39,28 +39,28 @@ public class Material {
         return Minecraft.getInstance().getTextureAtlas(this.atlasLocation()).apply(this.texture());
     }
 
-    public RenderType renderType(Function<ResourceLocation, RenderType> p_119202_) {
+    public RenderType renderType(Function<ResourceLocation, RenderType> renderTypeGetter) {
         if (this.renderType == null) {
-            this.renderType = p_119202_.apply(this.atlasLocation);
+            this.renderType = renderTypeGetter.apply(this.atlasLocation);
         }
 
         return this.renderType;
     }
 
-    public VertexConsumer buffer(MultiBufferSource p_119195_, Function<ResourceLocation, RenderType> p_119196_) {
-        return this.sprite().wrap(p_119195_.getBuffer(this.renderType(p_119196_)));
+    public VertexConsumer buffer(MultiBufferSource buffer, Function<ResourceLocation, RenderType> renderTypeGetter) {
+        return this.sprite().wrap(buffer.getBuffer(this.renderType(renderTypeGetter)));
     }
 
-    public VertexConsumer buffer(MultiBufferSource p_119198_, Function<ResourceLocation, RenderType> p_119199_, boolean p_119200_) {
-        return this.sprite().wrap(ItemRenderer.getFoilBufferDirect(p_119198_, this.renderType(p_119199_), true, p_119200_));
+    public VertexConsumer buffer(MultiBufferSource buffer, Function<ResourceLocation, RenderType> renderTypeGetter, boolean withGlint) {
+        return this.sprite().wrap(ItemRenderer.getFoilBufferDirect(buffer, this.renderType(renderTypeGetter), true, withGlint));
     }
 
     @Override
-    public boolean equals(Object p_119206_) {
-        if (this == p_119206_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        } else if (p_119206_ != null && this.getClass() == p_119206_.getClass()) {
-            Material material = (Material)p_119206_;
+        } else if (other != null && this.getClass() == other.getClass()) {
+            Material material = (Material)other;
             return this.atlasLocation.equals(material.atlasLocation) && this.texture.equals(material.texture);
         } else {
             return false;

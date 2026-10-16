@@ -7,23 +7,23 @@ import javax.annotation.Nullable;
 public class Dictionary<S> {
     private final Map<Atom<?>, Rule<S, ?>> terms = new HashMap<>();
 
-    public <T> void put(Atom<T> p_335994_, Rule<S, T> p_336190_) {
-        Rule<S, ?> rule = this.terms.putIfAbsent(p_335994_, p_336190_);
+    public <T> void put(Atom<T> atom, Rule<S, T> p_rule) {
+        Rule<S, ?> rule = this.terms.putIfAbsent(atom, p_rule);
         if (rule != null) {
-            throw new IllegalArgumentException("Trying to override rule: " + p_335994_);
+            throw new IllegalArgumentException("Trying to override rule: " + atom);
         }
     }
 
-    public <T> void put(Atom<T> p_335571_, Term<S> p_336089_, Rule.RuleAction<S, T> p_336052_) {
-        this.put(p_335571_, Rule.fromTerm(p_336089_, p_336052_));
+    public <T> void put(Atom<T> atom, Term<S> term, Rule.RuleAction<S, T> ruleAction) {
+        this.put(atom, Rule.fromTerm(term, ruleAction));
     }
 
-    public <T> void put(Atom<T> p_336163_, Term<S> p_335447_, Rule.SimpleRuleAction<T> p_335981_) {
-        this.put(p_336163_, Rule.fromTerm(p_335447_, p_335981_));
+    public <T> void put(Atom<T> atom, Term<S> term, Rule.SimpleRuleAction<T> simpleRuleAction) {
+        this.put(atom, Rule.fromTerm(term, simpleRuleAction));
     }
 
     @Nullable
-    public <T> Rule<S, T> get(Atom<T> p_336153_) {
-        return (Rule<S, T>)this.terms.get(p_336153_);
+    public <T> Rule<S, T> get(Atom<T> atom) {
+        return (Rule<S, T>)this.terms.get(atom);
     }
 }

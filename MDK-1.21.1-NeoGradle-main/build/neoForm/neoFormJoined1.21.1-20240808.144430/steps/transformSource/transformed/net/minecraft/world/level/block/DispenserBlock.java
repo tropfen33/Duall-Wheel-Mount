@@ -45,6 +45,9 @@ public class DispenserBlock extends BaseEntityBlock {
     public static final DirectionProperty FACING = DirectionalBlock.FACING;
     public static final BooleanProperty TRIGGERED = BlockStateProperties.TRIGGERED;
     private static final DefaultDispenseItemBehavior DEFAULT_BEHAVIOR = new DefaultDispenseItemBehavior();
+    /**
+     * Registry for all dispense behaviors.
+     */
     public static final Map<Item, DispenseItemBehavior> DISPENSER_REGISTRY = Util.make(
         new Object2ObjectOpenHashMap<>(), p_340795_ -> p_340795_.defaultReturnValue(DEFAULT_BEHAVIOR)
     );
@@ -55,31 +58,31 @@ public class DispenserBlock extends BaseEntityBlock {
         return CODEC;
     }
 
-    public static void registerBehavior(ItemLike p_52673_, DispenseItemBehavior p_52674_) {
-        DISPENSER_REGISTRY.put(p_52673_.asItem(), p_52674_);
+    public static void registerBehavior(ItemLike item, DispenseItemBehavior behavior) {
+        DISPENSER_REGISTRY.put(item.asItem(), behavior);
     }
 
-    public static void registerProjectileBehavior(ItemLike p_338817_) {
-        DISPENSER_REGISTRY.put(p_338817_.asItem(), new ProjectileDispenseBehavior(p_338817_.asItem()));
+    public static void registerProjectileBehavior(ItemLike item) {
+        DISPENSER_REGISTRY.put(item.asItem(), new ProjectileDispenseBehavior(item.asItem()));
     }
 
-    public DispenserBlock(BlockBehaviour.Properties p_52664_) {
-        super(p_52664_);
+    public DispenserBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(TRIGGERED, Boolean.valueOf(false)));
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_52693_, Level p_52694_, BlockPos p_52695_, Player p_52696_, BlockHitResult p_52698_) {
-        if (p_52694_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
-            BlockEntity blockentity = p_52694_.getBlockEntity(p_52695_);
+            BlockEntity blockentity = level.getBlockEntity(pos);
             if (blockentity instanceof DispenserBlockEntity) {
-                p_52696_.openMenu((DispenserBlockEntity)blockentity);
+                player.openMenu((DispenserBlockEntity)blockentity);
                 if (blockentity instanceof DropperBlockEntity) {
-                    p_52696_.awardStat(Stats.INSPECT_DROPPER);
+                    player.awardStat(Stats.INSPECT_DROPPER);
                 } else {
-                    p_52696_.awardStat(Stats.INSPECT_DISPENSER);
+                    player.awardStat(Stats.INSPECT_DISPENSER);
                 }
             }
 
@@ -87,19 +90,19 @@ public class DispenserBlock extends BaseEntityBlock {
         }
     }
 
-    protected void dispenseFrom(ServerLevel p_52665_, BlockState p_302451_, BlockPos p_52666_) {
-        DispenserBlockEntity dispenserblockentity = p_52665_.getBlockEntity(p_52666_, BlockEntityType.DISPENSER).orElse(null);
+    protected void dispenseFrom(ServerLevel level, BlockState state, BlockPos pos) {
+        DispenserBlockEntity dispenserblockentity = level.getBlockEntity(pos, BlockEntityType.DISPENSER).orElse(null);
         if (dispenserblockentity == null) {
-            LOGGER.warn("Ignoring dispensing attempt for Dispenser without matching block entity at {}", p_52666_);
+            LOGGER.warn("Ignoring dispensing attempt for Dispenser without matching block entity at {}", pos);
         } else {
-            BlockSource blocksource = new BlockSource(p_52665_, p_52666_, p_302451_, dispenserblockentity);
-            int i = dispenserblockentity.getRandomSlot(p_52665_.random);
+            BlockSource blocksource = new BlockSource(level, pos, state, dispenserblockentity);
+            int i = dispenserblockentity.getRandomSlot(level.random);
             if (i < 0) {
-                p_52665_.levelEvent(1001, p_52666_, 0);
-                p_52665_.gameEvent(GameEvent.BLOCK_ACTIVATE, p_52666_, GameEvent.Context.of(dispenserblockentity.getBlockState()));
+                level.levelEvent(1001, pos, 0);
+                level.gameEvent(GameEvent.BLOCK_ACTIVATE, pos, GameEvent.Context.of(dispenserblockentity.getBlockState()));
             } else {
                 ItemStack itemstack = dispenserblockentity.getItem(i);
-                DispenseItemBehavior dispenseitembehavior = this.getDispenseMethod(p_52665_, itemstack);
+                DispenseItemBehavior dispenseitembehavior = this.getDispenseMethod(level, itemstack);
                 if (dispenseitembehavior != DispenseItemBehavior.NOOP) {
                     dispenserblockentity.setItem(i, dispenseitembehavior.dispense(blocksource, itemstack));
                 }
@@ -107,84 +110,97 @@ public class DispenserBlock extends BaseEntityBlock {
         }
     }
 
-    protected DispenseItemBehavior getDispenseMethod(Level p_341306_, ItemStack p_52667_) {
-        return (DispenseItemBehavior)(!p_52667_.isItemEnabled(p_341306_.enabledFeatures()) ? DEFAULT_BEHAVIOR : DISPENSER_REGISTRY.get(p_52667_.getItem()));
+    protected DispenseItemBehavior getDispenseMethod(Level level, ItemStack item) {
+        return (DispenseItemBehavior)(!item.isItemEnabled(level.enabledFeatures()) ? DEFAULT_BEHAVIOR : DISPENSER_REGISTRY.get(item.getItem()));
     }
 
     @Override
-    protected void neighborChanged(BlockState p_52700_, Level p_52701_, BlockPos p_52702_, Block p_52703_, BlockPos p_52704_, boolean p_52705_) {
-        boolean flag = p_52701_.hasNeighborSignal(p_52702_) || p_52701_.hasNeighborSignal(p_52702_.above());
-        boolean flag1 = p_52700_.getValue(TRIGGERED);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        boolean flag = level.hasNeighborSignal(pos) || level.hasNeighborSignal(pos.above());
+        boolean flag1 = state.getValue(TRIGGERED);
         if (flag && !flag1) {
-            p_52701_.scheduleTick(p_52702_, this, 4);
-            p_52701_.setBlock(p_52702_, p_52700_.setValue(TRIGGERED, Boolean.valueOf(true)), 2);
+            level.scheduleTick(pos, this, 4);
+            level.setBlock(pos, state.setValue(TRIGGERED, Boolean.valueOf(true)), 2);
         } else if (!flag && flag1) {
-            p_52701_.setBlock(p_52702_, p_52700_.setValue(TRIGGERED, Boolean.valueOf(false)), 2);
+            level.setBlock(pos, state.setValue(TRIGGERED, Boolean.valueOf(false)), 2);
         }
     }
 
     @Override
-    protected void tick(BlockState p_221075_, ServerLevel p_221076_, BlockPos p_221077_, RandomSource p_221078_) {
-        this.dispenseFrom(p_221076_, p_221075_, p_221077_);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        this.dispenseFrom(level, state, pos);
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_153162_, BlockState p_153163_) {
-        return new DispenserBlockEntity(p_153162_, p_153163_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new DispenserBlockEntity(pos, state);
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_52669_) {
-        return this.defaultBlockState().setValue(FACING, p_52669_.getNearestLookingDirection().getOpposite());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(FACING, context.getNearestLookingDirection().getOpposite());
     }
 
     @Override
-    protected void onRemove(BlockState p_52707_, Level p_52708_, BlockPos p_52709_, BlockState p_52710_, boolean p_52711_) {
-        Containers.dropContentsOnDestroy(p_52707_, p_52710_, p_52708_, p_52709_);
-        super.onRemove(p_52707_, p_52708_, p_52709_, p_52710_, p_52711_);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        Containers.dropContentsOnDestroy(state, newState, level, pos);
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 
-    public static Position getDispensePosition(BlockSource p_302440_) {
-        return getDispensePosition(p_302440_, 0.7, Vec3.ZERO);
+    public static Position getDispensePosition(BlockSource blockSource) {
+        return getDispensePosition(blockSource, 0.7, Vec3.ZERO);
     }
 
-    public static Position getDispensePosition(BlockSource p_338419_, double p_338633_, Vec3 p_338798_) {
-        Direction direction = p_338419_.state().getValue(FACING);
-        return p_338419_.center()
+    public static Position getDispensePosition(BlockSource blockSource, double multiplier, Vec3 offset) {
+        Direction direction = blockSource.state().getValue(FACING);
+        return blockSource.center()
             .add(
-                p_338633_ * (double)direction.getStepX() + p_338798_.x(),
-                p_338633_ * (double)direction.getStepY() + p_338798_.y(),
-                p_338633_ * (double)direction.getStepZ() + p_338798_.z()
+                multiplier * (double)direction.getStepX() + offset.x(),
+                multiplier * (double)direction.getStepY() + offset.y(),
+                multiplier * (double)direction.getStepZ() + offset.z()
             );
     }
 
     @Override
-    protected boolean hasAnalogOutputSignal(BlockState p_52682_) {
+    protected boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
+    /**
+     * Returns the analog signal this block emits. This is the signal a comparator can read from it.
+     *
+     */
     @Override
-    protected int getAnalogOutputSignal(BlockState p_52689_, Level p_52690_, BlockPos p_52691_) {
-        return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(p_52690_.getBlockEntity(p_52691_));
+    protected int getAnalogOutputSignal(BlockState blockState, Level level, BlockPos pos) {
+        return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(level.getBlockEntity(pos));
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_52725_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_52716_, Rotation p_52717_) {
-        return p_52716_.setValue(FACING, p_52717_.rotate(p_52716_.getValue(FACING)));
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState mirror(BlockState p_52713_, Mirror p_52714_) {
-        return p_52713_.rotate(p_52714_.getRotation(p_52713_.getValue(FACING)));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_52719_) {
-        p_52719_.add(FACING, TRIGGERED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, TRIGGERED);
     }
 }

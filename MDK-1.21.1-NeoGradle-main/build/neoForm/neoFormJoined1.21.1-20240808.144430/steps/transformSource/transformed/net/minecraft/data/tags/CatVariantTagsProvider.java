@@ -8,17 +8,22 @@ import net.minecraft.tags.CatVariantTags;
 import net.minecraft.world.entity.animal.CatVariant;
 
 public class CatVariantTagsProvider extends TagsProvider<CatVariant> {
-    /** @deprecated Forge: Use the {@linkplain #CatVariantTagsProvider(PackOutput, CompletableFuture, String, net.neoforged.neoforge.common.data.ExistingFileHelper) mod id variant} */
+    /**
+ * @deprecated Forge: Use the {@linkplain #CatVariantTagsProvider(PackOutput,
+ *             CompletableFuture, String,
+ *             net.neoforged.neoforge.common.data.ExistingFileHelper) mod id
+ *             variant}
+ */
     @Deprecated
-    public CatVariantTagsProvider(PackOutput p_256547_, CompletableFuture<HolderLookup.Provider> p_256090_) {
-        super(p_256547_, Registries.CAT_VARIANT, p_256090_);
+    public CatVariantTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider) {
+        super(output, Registries.CAT_VARIANT, provider);
     }
-    public CatVariantTagsProvider(PackOutput p_256547_, CompletableFuture<HolderLookup.Provider> p_256090_, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
-        super(p_256547_, Registries.CAT_VARIANT, p_256090_, modId, existingFileHelper);
+    public CatVariantTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
+        super(output, Registries.CAT_VARIANT, provider, modId, existingFileHelper);
     }
 
     @Override
-    protected void addTags(HolderLookup.Provider p_256078_) {
+    protected void addTags(HolderLookup.Provider provider) {
         this.tag(CatVariantTags.DEFAULT_SPAWNS)
             .add(
                 CatVariant.TABBY,

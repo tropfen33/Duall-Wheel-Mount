@@ -17,17 +17,17 @@ public class ServerStatusPacketListenerImpl implements ServerStatusPacketListene
     private final Connection connection;
     private boolean hasRequestedStatus;
 
-    public ServerStatusPacketListenerImpl(ServerStatus p_272864_, Connection p_273586_) {
-        this(p_272864_, p_273586_, null);
+    public ServerStatusPacketListenerImpl(ServerStatus status, Connection connection) {
+        this(status, connection, null);
     }
-    public ServerStatusPacketListenerImpl(ServerStatus p_272864_, Connection p_273586_, @org.jetbrains.annotations.Nullable String statusCache) {
-        this.status = p_272864_;
-        this.connection = p_273586_;
+    public ServerStatusPacketListenerImpl(ServerStatus status, Connection connection, @org.jetbrains.annotations.Nullable String statusCache) {
+        this.status = status;
+        this.connection = connection;
         this.statusCache = statusCache;
     }
 
     @Override
-    public void onDisconnect(DisconnectionDetails p_350895_) {
+    public void onDisconnect(DisconnectionDetails details) {
     }
 
     @Override
@@ -36,7 +36,7 @@ public class ServerStatusPacketListenerImpl implements ServerStatusPacketListene
     }
 
     @Override
-    public void handleStatusRequest(ServerboundStatusRequestPacket p_10095_) {
+    public void handleStatusRequest(ServerboundStatusRequestPacket packet) {
         if (this.hasRequestedStatus) {
             this.connection.disconnect(DISCONNECT_REASON);
         } else {
@@ -46,8 +46,8 @@ public class ServerStatusPacketListenerImpl implements ServerStatusPacketListene
     }
 
     @Override
-    public void handlePingRequest(ServerboundPingRequestPacket p_320923_) {
-        this.connection.send(new ClientboundPongResponsePacket(p_320923_.getTime()));
+    public void handlePingRequest(ServerboundPingRequestPacket packet) {
+        this.connection.send(new ClientboundPongResponsePacket(packet.getTime()));
         this.connection.disconnect(DISCONNECT_REASON);
     }
 }

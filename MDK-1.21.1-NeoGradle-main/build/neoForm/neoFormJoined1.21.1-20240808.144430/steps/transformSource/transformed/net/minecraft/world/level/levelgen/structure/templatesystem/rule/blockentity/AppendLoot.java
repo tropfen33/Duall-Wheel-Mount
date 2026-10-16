@@ -22,18 +22,18 @@ public class AppendLoot implements RuleBlockEntityModifier {
     );
     private final ResourceKey<LootTable> lootTable;
 
-    public AppendLoot(ResourceKey<LootTable> p_335426_) {
-        this.lootTable = p_335426_;
+    public AppendLoot(ResourceKey<LootTable> lootTable) {
+        this.lootTable = lootTable;
     }
 
     @Override
-    public CompoundTag apply(RandomSource p_277994_, @Nullable CompoundTag p_277854_) {
-        CompoundTag compoundtag = p_277854_ == null ? new CompoundTag() : p_277854_.copy();
+    public CompoundTag apply(RandomSource random, @Nullable CompoundTag tag) {
+        CompoundTag compoundtag = tag == null ? new CompoundTag() : tag.copy();
         ResourceKey.codec(Registries.LOOT_TABLE)
             .encodeStart(NbtOps.INSTANCE, this.lootTable)
             .resultOrPartial(LOGGER::error)
             .ifPresent(p_277353_ -> compoundtag.put("LootTable", p_277353_));
-        compoundtag.putLong("LootTableSeed", p_277994_.nextLong());
+        compoundtag.putLong("LootTableSeed", random.nextLong());
         return compoundtag;
     }
 

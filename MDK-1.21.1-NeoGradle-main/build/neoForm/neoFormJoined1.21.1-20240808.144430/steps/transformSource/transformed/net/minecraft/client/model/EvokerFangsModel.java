@@ -21,11 +21,11 @@ public class EvokerFangsModel<T extends Entity> extends HierarchicalModel<T> {
     private final ModelPart upperJaw;
     private final ModelPart lowerJaw;
 
-    public EvokerFangsModel(ModelPart p_170555_) {
-        this.root = p_170555_;
-        this.base = p_170555_.getChild("base");
-        this.upperJaw = p_170555_.getChild("upper_jaw");
-        this.lowerJaw = p_170555_.getChild("lower_jaw");
+    public EvokerFangsModel(ModelPart root) {
+        this.root = root;
+        this.base = root.getChild("base");
+        this.upperJaw = root.getChild("upper_jaw");
+        this.lowerJaw = root.getChild("lower_jaw");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -40,9 +40,12 @@ public class EvokerFangsModel<T extends Entity> extends HierarchicalModel<T> {
         return LayerDefinition.create(meshdefinition, 64, 32);
     }
 
+    /**
+     * Sets this entity's model rotation angles
+     */
     @Override
-    public void setupAnim(T p_102632_, float p_102633_, float p_102634_, float p_102635_, float p_102636_, float p_102637_) {
-        float f = p_102633_ * 2.0F;
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        float f = limbSwing * 2.0F;
         if (f > 1.0F) {
             f = 1.0F;
         }
@@ -50,7 +53,7 @@ public class EvokerFangsModel<T extends Entity> extends HierarchicalModel<T> {
         f = 1.0F - f * f * f;
         this.upperJaw.zRot = (float) Math.PI - f * 0.35F * (float) Math.PI;
         this.lowerJaw.zRot = (float) Math.PI + f * 0.35F * (float) Math.PI;
-        float f1 = (p_102633_ + Mth.sin(p_102633_ * 2.7F)) * 0.6F * 12.0F;
+        float f1 = (limbSwing + Mth.sin(limbSwing * 2.7F)) * 0.6F * 12.0F;
         this.upperJaw.y = 24.0F - f1;
         this.lowerJaw.y = this.upperJaw.y;
         this.base.y = this.upperJaw.y;

@@ -19,11 +19,14 @@ public class VexRenderer extends MobRenderer<Vex, VexModel> {
         this.addLayer(new ItemInHandLayer<>(this, p_174435_.getItemInHandRenderer()));
     }
 
-    protected int getBlockLightLevel(Vex p_116298_, BlockPos p_116299_) {
+    protected int getBlockLightLevel(Vex entity, BlockPos pos) {
         return 15;
     }
 
-    public ResourceLocation getTextureLocation(Vex p_116292_) {
-        return p_116292_.isCharging() ? VEX_CHARGING_LOCATION : VEX_LOCATION;
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Vex entity) {
+        return entity.isCharging() ? VEX_CHARGING_LOCATION : VEX_LOCATION;
     }
 }

@@ -35,34 +35,37 @@ public class SetFireworkExplosionFunction extends LootItemConditionalFunction {
     final Optional<Boolean> twinkle;
 
     public SetFireworkExplosionFunction(
-        List<LootItemCondition> p_333763_,
-        Optional<FireworkExplosion.Shape> p_333814_,
-        Optional<IntList> p_333974_,
-        Optional<IntList> p_333764_,
-        Optional<Boolean> p_333876_,
-        Optional<Boolean> p_334022_
+        List<LootItemCondition> conditions,
+        Optional<FireworkExplosion.Shape> shape,
+        Optional<IntList> colors,
+        Optional<IntList> fadeColors,
+        Optional<Boolean> trail,
+        Optional<Boolean> twinkle
     ) {
-        super(p_333763_);
-        this.shape = p_333814_;
-        this.colors = p_333974_;
-        this.fadeColors = p_333764_;
-        this.trail = p_333876_;
-        this.twinkle = p_334022_;
+        super(conditions);
+        this.shape = shape;
+        this.colors = colors;
+        this.fadeColors = fadeColors;
+        this.trail = trail;
+        this.twinkle = twinkle;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    protected ItemStack run(ItemStack p_334066_, LootContext p_333987_) {
-        p_334066_.update(DataComponents.FIREWORK_EXPLOSION, DEFAULT_VALUE, this::apply);
-        return p_334066_;
+    protected ItemStack run(ItemStack stack, LootContext context) {
+        stack.update(DataComponents.FIREWORK_EXPLOSION, DEFAULT_VALUE, this::apply);
+        return stack;
     }
 
-    private FireworkExplosion apply(FireworkExplosion p_333781_) {
+    private FireworkExplosion apply(FireworkExplosion fireworkExplosion) {
         return new FireworkExplosion(
-            this.shape.orElseGet(p_333781_::shape),
-            this.colors.orElseGet(p_333781_::colors),
-            this.fadeColors.orElseGet(p_333781_::fadeColors),
-            this.trail.orElseGet(p_333781_::hasTrail),
-            this.twinkle.orElseGet(p_333781_::hasTwinkle)
+            this.shape.orElseGet(fireworkExplosion::shape),
+            this.colors.orElseGet(fireworkExplosion::colors),
+            this.fadeColors.orElseGet(fireworkExplosion::fadeColors),
+            this.trail.orElseGet(fireworkExplosion::hasTrail),
+            this.twinkle.orElseGet(fireworkExplosion::hasTwinkle)
         );
     }
 

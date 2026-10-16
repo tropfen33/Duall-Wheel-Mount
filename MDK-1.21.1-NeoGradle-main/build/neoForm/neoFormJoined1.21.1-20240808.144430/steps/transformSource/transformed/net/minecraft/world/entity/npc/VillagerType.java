@@ -55,8 +55,8 @@ public final class VillagerType {
         p_35834_.put(Biomes.WINDSWEPT_FOREST, TAIGA);
     });
 
-    public VillagerType(String p_35830_) {
-        this.name = p_35830_;
+    public VillagerType(String name) {
+        this.name = name;
     }
 
     @Override
@@ -64,14 +64,14 @@ public final class VillagerType {
         return this.name;
     }
 
-    private static VillagerType register(String p_35832_) {
-        return Registry.register(BuiltInRegistries.VILLAGER_TYPE, ResourceLocation.withDefaultNamespace(p_35832_), new VillagerType(p_35832_));
+    private static VillagerType register(String key) {
+        return Registry.register(BuiltInRegistries.VILLAGER_TYPE, ResourceLocation.withDefaultNamespace(key), new VillagerType(key));
     }
 
-    public static VillagerType byBiome(Holder<Biome> p_204074_) {
-        var fromDataMap = p_204074_.getData(net.neoforged.neoforge.registries.datamaps.builtin.NeoForgeDataMaps.VILLAGER_TYPES);
+    public static VillagerType byBiome(Holder<Biome> biome) {
+        var fromDataMap = biome.getData(net.neoforged.neoforge.registries.datamaps.builtin.NeoForgeDataMaps.VILLAGER_TYPES);
         if (fromDataMap != null) return fromDataMap.type();
         // TODO - 1.22: remove fallback
-        return p_204074_.unwrapKey().map(BY_BIOME::get).orElse(PLAINS);
+        return biome.unwrapKey().map(BY_BIOME::get).orElse(PLAINS);
     }
 }

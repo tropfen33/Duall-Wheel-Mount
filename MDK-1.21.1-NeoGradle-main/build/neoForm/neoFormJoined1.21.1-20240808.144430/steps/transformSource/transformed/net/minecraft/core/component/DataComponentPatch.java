@@ -56,9 +56,9 @@ public final class DataComponentPatch {
             return reference2objectmap;
         });
     public static final StreamCodec<RegistryFriendlyByteBuf, DataComponentPatch> STREAM_CODEC = new StreamCodec<RegistryFriendlyByteBuf, DataComponentPatch>() {
-        public DataComponentPatch decode(RegistryFriendlyByteBuf p_331850_) {
-            int i = p_331850_.readVarInt();
-            int j = p_331850_.readVarInt();
+        public DataComponentPatch decode(RegistryFriendlyByteBuf buffer) {
+            int i = buffer.readVarInt();
+            int j = buffer.readVarInt();
             if (i == 0 && j == 0) {
                 return DataComponentPatch.EMPTY;
             } else {
@@ -66,13 +66,13 @@ public final class DataComponentPatch {
                 Reference2ObjectMap<DataComponentType<?>, Optional<?>> reference2objectmap = new Reference2ObjectArrayMap<>(Math.min(k, 65536));
 
                 for (int l = 0; l < i; l++) {
-                    DataComponentType<?> datacomponenttype = DataComponentType.STREAM_CODEC.decode(p_331850_);
-                    Object object = datacomponenttype.streamCodec().decode(p_331850_);
+                    DataComponentType<?> datacomponenttype = DataComponentType.STREAM_CODEC.decode(buffer);
+                    Object object = datacomponenttype.streamCodec().decode(buffer);
                     reference2objectmap.put(datacomponenttype, Optional.of(object));
                 }
 
                 for (int i1 = 0; i1 < j; i1++) {
-                    DataComponentType<?> datacomponenttype1 = DataComponentType.STREAM_CODEC.decode(p_331850_);
+                    DataComponentType<?> datacomponenttype1 = DataComponentType.STREAM_CODEC.decode(buffer);
                     reference2objectmap.put(datacomponenttype1, Optional.empty());
                 }
 
@@ -80,16 +80,16 @@ public final class DataComponentPatch {
             }
         }
 
-        public void encode(RegistryFriendlyByteBuf p_330636_, DataComponentPatch p_330346_) {
-            if (p_330346_.isEmpty()) {
-                p_330636_.writeVarInt(0);
-                p_330636_.writeVarInt(0);
+        public void encode(RegistryFriendlyByteBuf buffer, DataComponentPatch value) {
+            if (value.isEmpty()) {
+                buffer.writeVarInt(0);
+                buffer.writeVarInt(0);
             } else {
                 int i = 0;
                 int j = 0;
 
                 for (it.unimi.dsi.fastutil.objects.Reference2ObjectMap.Entry<DataComponentType<?>, Optional<?>> entry : Reference2ObjectMaps.fastIterable(
-                    p_330346_.map
+                    value.map
                 )) {
                     if (entry.getValue().isPresent()) {
                         i++;
@@ -98,40 +98,40 @@ public final class DataComponentPatch {
                     }
                 }
 
-                p_330636_.writeVarInt(i);
-                p_330636_.writeVarInt(j);
+                buffer.writeVarInt(i);
+                buffer.writeVarInt(j);
 
                 for (it.unimi.dsi.fastutil.objects.Reference2ObjectMap.Entry<DataComponentType<?>, Optional<?>> entry1 : Reference2ObjectMaps.fastIterable(
-                    p_330346_.map
+                    value.map
                 )) {
                     Optional<?> optional = entry1.getValue();
                     if (optional.isPresent()) {
                         DataComponentType<?> datacomponenttype = entry1.getKey();
-                        DataComponentType.STREAM_CODEC.encode(p_330636_, datacomponenttype);
-                        encodeComponent(p_330636_, datacomponenttype, optional.get());
+                        DataComponentType.STREAM_CODEC.encode(buffer, datacomponenttype);
+                        encodeComponent(buffer, datacomponenttype, optional.get());
                     }
                 }
 
                 for (it.unimi.dsi.fastutil.objects.Reference2ObjectMap.Entry<DataComponentType<?>, Optional<?>> entry2 : Reference2ObjectMaps.fastIterable(
-                    p_330346_.map
+                    value.map
                 )) {
                     if (entry2.getValue().isEmpty()) {
                         DataComponentType<?> datacomponenttype1 = entry2.getKey();
-                        DataComponentType.STREAM_CODEC.encode(p_330636_, datacomponenttype1);
+                        DataComponentType.STREAM_CODEC.encode(buffer, datacomponenttype1);
                     }
                 }
             }
         }
 
-        private static <T> void encodeComponent(RegistryFriendlyByteBuf p_331735_, DataComponentType<T> p_330633_, Object p_331089_) {
-            p_330633_.streamCodec().encode(p_331735_, (T)p_331089_);
+        private static <T> void encodeComponent(RegistryFriendlyByteBuf buffer, DataComponentType<T> component, Object value) {
+            component.streamCodec().encode(buffer, (T)value);
         }
     };
     private static final String REMOVED_PREFIX = "!";
     final Reference2ObjectMap<DataComponentType<?>, Optional<?>> map;
 
-    DataComponentPatch(Reference2ObjectMap<DataComponentType<?>, Optional<?>> p_331816_) {
-        this.map = p_331816_;
+    DataComponentPatch(Reference2ObjectMap<DataComponentType<?>, Optional<?>> map) {
+        this.map = map;
     }
 
     public static DataComponentPatch.Builder builder() {
@@ -139,8 +139,8 @@ public final class DataComponentPatch {
     }
 
     @Nullable
-    public <T> Optional<? extends T> get(DataComponentType<? extends T> p_331532_) {
-        return (Optional<? extends T>)this.map.get(p_331532_);
+    public <T> Optional<? extends T> get(DataComponentType<? extends T> component) {
+        return (Optional<? extends T>)this.map.get(component);
     }
 
     public Set<Entry<DataComponentType<?>, Optional<?>>> entrySet() {
@@ -151,12 +151,12 @@ public final class DataComponentPatch {
         return this.map.size();
     }
 
-    public DataComponentPatch forget(Predicate<DataComponentType<?>> p_338629_) {
+    public DataComponentPatch forget(Predicate<DataComponentType<?>> predicate) {
         if (this.isEmpty()) {
             return EMPTY;
         } else {
             Reference2ObjectMap<DataComponentType<?>, Optional<?>> reference2objectmap = new Reference2ObjectArrayMap<>(this.map);
-            reference2objectmap.keySet().removeIf(p_338629_);
+            reference2objectmap.keySet().removeIf(predicate);
             return reference2objectmap.isEmpty() ? EMPTY : new DataComponentPatch(reference2objectmap);
         }
     }
@@ -183,11 +183,11 @@ public final class DataComponentPatch {
     }
 
     @Override
-    public boolean equals(Object p_331686_) {
-        if (this == p_331686_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            if (p_331686_ instanceof DataComponentPatch datacomponentpatch && this.map.equals(datacomponentpatch.map)) {
+            if (other instanceof DataComponentPatch datacomponentpatch && this.map.equals(datacomponentpatch.map)) {
                 return true;
             }
 
@@ -205,12 +205,12 @@ public final class DataComponentPatch {
         return toString(this.map);
     }
 
-    static String toString(Reference2ObjectMap<DataComponentType<?>, Optional<?>> p_330935_) {
+    static String toString(Reference2ObjectMap<DataComponentType<?>, Optional<?>> map) {
         StringBuilder stringbuilder = new StringBuilder();
         stringbuilder.append('{');
         boolean flag = true;
 
-        for (Entry<DataComponentType<?>, Optional<?>> entry : Reference2ObjectMaps.fastIterable(p_330935_)) {
+        for (Entry<DataComponentType<?>, Optional<?>> entry : Reference2ObjectMaps.fastIterable(map)) {
             if (flag) {
                 flag = false;
             } else {
@@ -238,19 +238,19 @@ public final class DataComponentPatch {
         Builder() {
         }
 
-        public <T> DataComponentPatch.Builder set(DataComponentType<T> p_332004_, T p_331566_) {
-            net.neoforged.neoforge.common.CommonHooks.validateComponent(p_331566_);
-            this.map.put(p_332004_, Optional.of(p_331566_));
+        public <T> DataComponentPatch.Builder set(DataComponentType<T> component, T value) {
+            net.neoforged.neoforge.common.CommonHooks.validateComponent(value);
+            this.map.put(component, Optional.of(value));
             return this;
         }
 
-        public <T> DataComponentPatch.Builder remove(DataComponentType<T> p_330845_) {
-            this.map.put(p_330845_, Optional.empty());
+        public <T> DataComponentPatch.Builder remove(DataComponentType<T> component) {
+            this.map.put(component, Optional.empty());
             return this;
         }
 
-        public <T> DataComponentPatch.Builder set(TypedDataComponent<T> p_331321_) {
-            return this.set(p_331321_.type(), p_331321_.value());
+        public <T> DataComponentPatch.Builder set(TypedDataComponent<T> component) {
+            return this.set(component.type(), component.value());
         }
 
         public DataComponentPatch build() {

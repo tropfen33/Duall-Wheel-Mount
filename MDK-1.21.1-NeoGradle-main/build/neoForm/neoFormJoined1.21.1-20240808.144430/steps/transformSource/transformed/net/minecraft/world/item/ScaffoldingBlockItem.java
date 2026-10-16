@@ -14,25 +14,25 @@ import net.minecraft.world.level.block.ScaffoldingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class ScaffoldingBlockItem extends BlockItem {
-    public ScaffoldingBlockItem(Block p_43060_, Item.Properties p_43061_) {
-        super(p_43060_, p_43061_);
+    public ScaffoldingBlockItem(Block block, Item.Properties properties) {
+        super(block, properties);
     }
 
     @Nullable
     @Override
-    public BlockPlaceContext updatePlacementContext(BlockPlaceContext p_43063_) {
-        BlockPos blockpos = p_43063_.getClickedPos();
-        Level level = p_43063_.getLevel();
+    public BlockPlaceContext updatePlacementContext(BlockPlaceContext context) {
+        BlockPos blockpos = context.getClickedPos();
+        Level level = context.getLevel();
         BlockState blockstate = level.getBlockState(blockpos);
         Block block = this.getBlock();
         if (!blockstate.is(block)) {
-            return ScaffoldingBlock.getDistance(level, blockpos) == 7 ? null : p_43063_;
+            return ScaffoldingBlock.getDistance(level, blockpos) == 7 ? null : context;
         } else {
             Direction direction;
-            if (p_43063_.isSecondaryUseActive()) {
-                direction = p_43063_.isInside() ? p_43063_.getClickedFace().getOpposite() : p_43063_.getClickedFace();
+            if (context.isSecondaryUseActive()) {
+                direction = context.isInside() ? context.getClickedFace().getOpposite() : context.getClickedFace();
             } else {
-                direction = p_43063_.getClickedFace() == Direction.UP ? p_43063_.getHorizontalDirection() : Direction.UP;
+                direction = context.getClickedFace() == Direction.UP ? context.getHorizontalDirection() : Direction.UP;
             }
 
             int i = 0;
@@ -40,7 +40,7 @@ public class ScaffoldingBlockItem extends BlockItem {
 
             while (i < 7) {
                 if (!level.isClientSide && !level.isInWorldBounds(blockpos$mutableblockpos)) {
-                    Player player = p_43063_.getPlayer();
+                    Player player = context.getPlayer();
                     int j = level.getMaxBuildHeight();
                     if (player instanceof ServerPlayer && blockpos$mutableblockpos.getY() >= j) {
                         ((ServerPlayer)player).sendSystemMessage(Component.translatable("build.tooHigh", j - 1).withStyle(ChatFormatting.RED), true);
@@ -50,8 +50,8 @@ public class ScaffoldingBlockItem extends BlockItem {
 
                 blockstate = level.getBlockState(blockpos$mutableblockpos);
                 if (!blockstate.is(this.getBlock())) {
-                    if (blockstate.canBeReplaced(p_43063_)) {
-                        return BlockPlaceContext.at(p_43063_, blockpos$mutableblockpos, direction);
+                    if (blockstate.canBeReplaced(context)) {
+                        return BlockPlaceContext.at(context, blockpos$mutableblockpos, direction);
                     }
                     break;
                 }

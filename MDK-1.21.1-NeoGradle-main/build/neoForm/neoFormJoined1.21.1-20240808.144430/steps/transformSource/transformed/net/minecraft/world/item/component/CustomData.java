@@ -37,72 +37,72 @@ public final class CustomData {
     public static final StreamCodec<ByteBuf, CustomData> STREAM_CODEC = ByteBufCodecs.COMPOUND_TAG.map(CustomData::new, p_331280_ -> p_331280_.tag);
     private final CompoundTag tag;
 
-    private CustomData(CompoundTag p_331863_) {
-        this.tag = p_331863_;
+    private CustomData(CompoundTag tag) {
+        this.tag = tag;
     }
 
-    public static CustomData of(CompoundTag p_330724_) {
-        return new CustomData(p_330724_.copy());
+    public static CustomData of(CompoundTag tag) {
+        return new CustomData(tag.copy());
     }
 
-    public static Predicate<ItemStack> itemMatcher(DataComponentType<CustomData> p_332149_, CompoundTag p_330658_) {
+    public static Predicate<ItemStack> itemMatcher(DataComponentType<CustomData> componentType, CompoundTag tag) {
         return p_332154_ -> {
-            CustomData customdata = p_332154_.getOrDefault(p_332149_, EMPTY);
-            return customdata.matchedBy(p_330658_);
+            CustomData customdata = p_332154_.getOrDefault(componentType, EMPTY);
+            return customdata.matchedBy(tag);
         };
     }
 
-    public boolean matchedBy(CompoundTag p_330550_) {
-        return NbtUtils.compareNbt(p_330550_, this.tag, true);
+    public boolean matchedBy(CompoundTag tag) {
+        return NbtUtils.compareNbt(tag, this.tag, true);
     }
 
-    public static void update(DataComponentType<CustomData> p_331895_, ItemStack p_332185_, Consumer<CompoundTag> p_331274_) {
-        CustomData customdata = p_332185_.getOrDefault(p_331895_, EMPTY).update(p_331274_);
+    public static void update(DataComponentType<CustomData> componentType, ItemStack stack, Consumer<CompoundTag> updater) {
+        CustomData customdata = stack.getOrDefault(componentType, EMPTY).update(updater);
         if (customdata.tag.isEmpty()) {
-            p_332185_.remove(p_331895_);
+            stack.remove(componentType);
         } else {
-            p_332185_.set(p_331895_, customdata);
+            stack.set(componentType, customdata);
         }
     }
 
-    public static void set(DataComponentType<CustomData> p_330462_, ItemStack p_332015_, CompoundTag p_331019_) {
-        if (!p_331019_.isEmpty()) {
-            p_332015_.set(p_330462_, of(p_331019_));
+    public static void set(DataComponentType<CustomData> componentType, ItemStack stack, CompoundTag tag) {
+        if (!tag.isEmpty()) {
+            stack.set(componentType, of(tag));
         } else {
-            p_332015_.remove(p_330462_);
+            stack.remove(componentType);
         }
     }
 
-    public CustomData update(Consumer<CompoundTag> p_331451_) {
+    public CustomData update(Consumer<CompoundTag> updater) {
         CompoundTag compoundtag = this.tag.copy();
-        p_331451_.accept(compoundtag);
+        updater.accept(compoundtag);
         return new CustomData(compoundtag);
     }
 
-    public void loadInto(Entity p_331834_) {
-        CompoundTag compoundtag = p_331834_.saveWithoutId(new CompoundTag());
-        UUID uuid = p_331834_.getUUID();
+    public void loadInto(Entity entity) {
+        CompoundTag compoundtag = entity.saveWithoutId(new CompoundTag());
+        UUID uuid = entity.getUUID();
         compoundtag.merge(this.tag);
-        p_331834_.load(compoundtag);
-        p_331834_.setUUID(uuid);
+        entity.load(compoundtag);
+        entity.setUUID(uuid);
     }
 
-    public boolean loadInto(BlockEntity p_331657_, HolderLookup.Provider p_331528_) {
-        CompoundTag compoundtag = p_331657_.saveCustomOnly(p_331528_);
+    public boolean loadInto(BlockEntity blockEntity, HolderLookup.Provider levelRegistry) {
+        CompoundTag compoundtag = blockEntity.saveCustomOnly(levelRegistry);
         CompoundTag compoundtag1 = compoundtag.copy();
         compoundtag.merge(this.tag);
         if (!compoundtag.equals(compoundtag1)) {
             try {
-                p_331657_.loadCustomOnly(compoundtag, p_331528_);
-                p_331657_.setChanged();
+                blockEntity.loadCustomOnly(compoundtag, levelRegistry);
+                blockEntity.setChanged();
                 return true;
             } catch (Exception exception1) {
-                LOGGER.warn("Failed to apply custom data to block entity at {}", p_331657_.getBlockPos(), exception1);
+                LOGGER.warn("Failed to apply custom data to block entity at {}", blockEntity.getBlockPos(), exception1);
 
                 try {
-                    p_331657_.loadCustomOnly(compoundtag1, p_331528_);
+                    blockEntity.loadCustomOnly(compoundtag1, levelRegistry);
                 } catch (Exception exception) {
-                    LOGGER.warn("Failed to rollback block entity at {} after failure", p_331657_.getBlockPos(), exception);
+                    LOGGER.warn("Failed to rollback block entity at {} after failure", blockEntity.getBlockPos(), exception);
                 }
             }
         }
@@ -110,17 +110,17 @@ public final class CustomData {
         return false;
     }
 
-    public <T> DataResult<CustomData> update(DynamicOps<Tag> p_346001_, MapEncoder<T> p_331823_, T p_332045_) {
-        return p_331823_.encode(p_332045_, p_346001_, p_346001_.mapBuilder()).build(this.tag).map(p_330397_ -> new CustomData((CompoundTag)p_330397_));
+    public <T> DataResult<CustomData> update(DynamicOps<Tag> ops, MapEncoder<T> encoder, T value) {
+        return encoder.encode(value, ops, ops.mapBuilder()).build(this.tag).map(p_330397_ -> new CustomData((CompoundTag)p_330397_));
     }
 
-    public <T> DataResult<T> read(MapDecoder<T> p_330352_) {
-        return this.read(NbtOps.INSTANCE, p_330352_);
+    public <T> DataResult<T> read(MapDecoder<T> decoder) {
+        return this.read(NbtOps.INSTANCE, decoder);
     }
 
-    public <T> DataResult<T> read(DynamicOps<Tag> p_346230_, MapDecoder<T> p_344951_) {
-        MapLike<Tag> maplike = p_346230_.getMap(this.tag).getOrThrow();
-        return p_344951_.decode(p_346230_, maplike);
+    public <T> DataResult<T> read(DynamicOps<Tag> ops, MapDecoder<T> decoder) {
+        MapLike<Tag> maplike = ops.getMap(this.tag).getOrThrow();
+        return decoder.decode(ops, maplike);
     }
 
     public int size() {
@@ -135,16 +135,16 @@ public final class CustomData {
         return this.tag.copy();
     }
 
-    public boolean contains(String p_331843_) {
-        return this.tag.contains(p_331843_);
+    public boolean contains(String key) {
+        return this.tag.contains(key);
     }
 
     @Override
-    public boolean equals(Object p_331195_) {
-        if (p_331195_ == this) {
+    public boolean equals(Object other) {
+        if (other == this) {
             return true;
         } else {
-            return p_331195_ instanceof CustomData customdata ? this.tag.equals(customdata.tag) : false;
+            return other instanceof CustomData customdata ? this.tag.equals(customdata.tag) : false;
         }
     }
 

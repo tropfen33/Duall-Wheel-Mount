@@ -40,26 +40,26 @@ public class VegetationPatchConfiguration implements FeatureConfiguration {
     public final float extraEdgeColumnChance;
 
     public VegetationPatchConfiguration(
-        TagKey<Block> p_204856_,
-        BlockStateProvider p_204857_,
-        Holder<PlacedFeature> p_204858_,
-        CaveSurface p_204859_,
-        IntProvider p_204860_,
-        float p_204861_,
-        int p_204862_,
-        float p_204863_,
-        IntProvider p_204864_,
-        float p_204865_
+        TagKey<Block> replaceable,
+        BlockStateProvider groundState,
+        Holder<PlacedFeature> vegetationFeature,
+        CaveSurface surface,
+        IntProvider depth,
+        float extraBottomBlockChance,
+        int verticalRange,
+        float vegetationChance,
+        IntProvider xzRadius,
+        float extraEdgeColumnChance
     ) {
-        this.replaceable = p_204856_;
-        this.groundState = p_204857_;
-        this.vegetationFeature = p_204858_;
-        this.surface = p_204859_;
-        this.depth = p_204860_;
-        this.extraBottomBlockChance = p_204861_;
-        this.verticalRange = p_204862_;
-        this.vegetationChance = p_204863_;
-        this.xzRadius = p_204864_;
-        this.extraEdgeColumnChance = p_204865_;
+        this.replaceable = replaceable;
+        this.groundState = groundState;
+        this.vegetationFeature = vegetationFeature;
+        this.surface = surface;
+        this.depth = depth;
+        this.extraBottomBlockChance = extraBottomBlockChance;
+        this.verticalRange = verticalRange;
+        this.vegetationChance = vegetationChance;
+        this.xzRadius = xzRadius;
+        this.extraEdgeColumnChance = extraEdgeColumnChance;
     }
 }

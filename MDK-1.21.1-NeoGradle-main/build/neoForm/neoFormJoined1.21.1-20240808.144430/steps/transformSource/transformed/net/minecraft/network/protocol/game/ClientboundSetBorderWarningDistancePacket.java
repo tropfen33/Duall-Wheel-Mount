@@ -12,16 +12,16 @@ public class ClientboundSetBorderWarningDistancePacket implements Packet<ClientG
     );
     private final int warningBlocks;
 
-    public ClientboundSetBorderWarningDistancePacket(WorldBorder p_179267_) {
-        this.warningBlocks = p_179267_.getWarningBlocks();
+    public ClientboundSetBorderWarningDistancePacket(WorldBorder worldBorder) {
+        this.warningBlocks = worldBorder.getWarningBlocks();
     }
 
-    private ClientboundSetBorderWarningDistancePacket(FriendlyByteBuf p_179269_) {
-        this.warningBlocks = p_179269_.readVarInt();
+    private ClientboundSetBorderWarningDistancePacket(FriendlyByteBuf buffer) {
+        this.warningBlocks = buffer.readVarInt();
     }
 
-    private void write(FriendlyByteBuf p_179271_) {
-        p_179271_.writeVarInt(this.warningBlocks);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.warningBlocks);
     }
 
     @Override
@@ -29,8 +29,11 @@ public class ClientboundSetBorderWarningDistancePacket implements Packet<ClientG
         return GamePacketTypes.CLIENTBOUND_SET_BORDER_WARNING_DISTANCE;
     }
 
-    public void handle(ClientGamePacketListener p_179275_) {
-        p_179275_.handleSetBorderWarningDistance(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleSetBorderWarningDistance(this);
     }
 
     public int getWarningBlocks() {

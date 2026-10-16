@@ -14,13 +14,22 @@ import net.minecraft.world.level.block.state.predicate.BlockStatePredicate;
 public class EatBlockGoal extends Goal {
     private static final int EAT_ANIMATION_TICKS = 40;
     private static final Predicate<BlockState> IS_TALL_GRASS = BlockStatePredicate.forBlock(Blocks.SHORT_GRASS);
+    /**
+     * The entity owner of this AITask
+     */
     private final Mob mob;
+    /**
+     * The world the grass eater entity is eating from
+     */
     private final Level level;
+    /**
+     * Number of ticks since the entity started to eat grass
+     */
     private int eatAnimationTick;
 
-    public EatBlockGoal(Mob p_25207_) {
-        this.mob = p_25207_;
-        this.level = p_25207_.level();
+    public EatBlockGoal(Mob mob) {
+        this.mob = mob;
+        this.level = mob.level();
         this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK, Goal.Flag.JUMP));
     }
 

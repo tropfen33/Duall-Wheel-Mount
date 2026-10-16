@@ -12,9 +12,9 @@ public class WeightedRandomList<E extends WeightedEntry> {
     private final int totalWeight;
     private final ImmutableList<E> items;
 
-    WeightedRandomList(List<? extends E> p_146327_) {
-        this.items = ImmutableList.copyOf(p_146327_);
-        this.totalWeight = WeightedRandom.getTotalWeight(p_146327_);
+    WeightedRandomList(List<? extends E> items) {
+        this.items = ImmutableList.copyOf(items);
+        this.totalWeight = WeightedRandom.getTotalWeight(items);
     }
 
     public static <E extends WeightedEntry> WeightedRandomList<E> create() {
@@ -22,23 +22,23 @@ public class WeightedRandomList<E extends WeightedEntry> {
     }
 
     @SafeVarargs
-    public static <E extends WeightedEntry> WeightedRandomList<E> create(E... p_146331_) {
-        return new WeightedRandomList<>(ImmutableList.copyOf(p_146331_));
+    public static <E extends WeightedEntry> WeightedRandomList<E> create(E... items) {
+        return new WeightedRandomList<>(ImmutableList.copyOf(items));
     }
 
-    public static <E extends WeightedEntry> WeightedRandomList<E> create(List<E> p_146329_) {
-        return new WeightedRandomList<>(p_146329_);
+    public static <E extends WeightedEntry> WeightedRandomList<E> create(List<E> items) {
+        return new WeightedRandomList<>(items);
     }
 
     public boolean isEmpty() {
         return this.items.isEmpty();
     }
 
-    public Optional<E> getRandom(RandomSource p_216830_) {
+    public Optional<E> getRandom(RandomSource random) {
         if (this.totalWeight == 0) {
             return Optional.empty();
         } else {
-            int i = p_216830_.nextInt(this.totalWeight);
+            int i = random.nextInt(this.totalWeight);
             return WeightedRandom.getWeightedItem(this.items, i);
         }
     }
@@ -47,16 +47,16 @@ public class WeightedRandomList<E extends WeightedEntry> {
         return this.items;
     }
 
-    public static <E extends WeightedEntry> Codec<WeightedRandomList<E>> codec(Codec<E> p_146334_) {
-        return p_146334_.listOf().xmap(WeightedRandomList::create, WeightedRandomList::unwrap);
+    public static <E extends WeightedEntry> Codec<WeightedRandomList<E>> codec(Codec<E> elementCodec) {
+        return elementCodec.listOf().xmap(WeightedRandomList::create, WeightedRandomList::unwrap);
     }
 
     @Override
-    public boolean equals(@Nullable Object p_338205_) {
-        if (this == p_338205_) {
+    public boolean equals(@Nullable Object other) {
+        if (this == other) {
             return true;
-        } else if (p_338205_ != null && this.getClass() == p_338205_.getClass()) {
-            WeightedRandomList<?> weightedrandomlist = (WeightedRandomList<?>)p_338205_;
+        } else if (other != null && this.getClass() == other.getClass()) {
+            WeightedRandomList<?> weightedrandomlist = (WeightedRandomList<?>)other;
             return this.totalWeight == weightedrandomlist.totalWeight && Objects.equals(this.items, weightedrandomlist.items);
         } else {
             return false;

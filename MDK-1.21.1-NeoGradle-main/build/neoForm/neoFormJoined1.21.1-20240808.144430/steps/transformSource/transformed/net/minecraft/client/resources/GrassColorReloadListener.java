@@ -13,15 +13,18 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class GrassColorReloadListener extends SimplePreparableReloadListener<int[]> {
     private static final ResourceLocation LOCATION = ResourceLocation.withDefaultNamespace("textures/colormap/grass.png");
 
-    protected int[] prepare(ResourceManager p_118677_, ProfilerFiller p_118678_) {
+    /**
+     * Performs any reloading that can be done off-thread, such as file IO
+     */
+    protected int[] prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
         try {
-            return LegacyStuffWrapper.getPixels(p_118677_, LOCATION);
+            return LegacyStuffWrapper.getPixels(resourceManager, LOCATION);
         } catch (IOException ioexception) {
             throw new IllegalStateException("Failed to load grass color texture", ioexception);
         }
     }
 
-    protected void apply(int[] p_118684_, ResourceManager p_118685_, ProfilerFiller p_118686_) {
-        GrassColor.init(p_118684_);
+    protected void apply(int[] object, ResourceManager resourceManager, ProfilerFiller profiler) {
+        GrassColor.init(object);
     }
 }

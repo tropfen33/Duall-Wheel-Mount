@@ -28,14 +28,14 @@ public interface GameEventListenerRegistry {
 
     boolean isEmpty();
 
-    void register(GameEventListener p_249257_);
+    void register(GameEventListener listener);
 
-    void unregister(GameEventListener p_248758_);
+    void unregister(GameEventListener listener);
 
-    boolean visitInRangeListeners(Holder<GameEvent> p_316434_, Vec3 p_249144_, GameEvent.Context p_249328_, GameEventListenerRegistry.ListenerVisitor p_250123_);
+    boolean visitInRangeListeners(Holder<GameEvent> gameEvent, Vec3 pos, GameEvent.Context context, GameEventListenerRegistry.ListenerVisitor visitor);
 
     @FunctionalInterface
     public interface ListenerVisitor {
-        void visit(GameEventListener p_250787_, Vec3 p_251603_);
+        void visit(GameEventListener listener, Vec3 pos);
     }
 }

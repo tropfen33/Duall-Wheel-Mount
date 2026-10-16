@@ -23,92 +23,92 @@ public interface BlockPredicate extends BiPredicate<WorldGenLevel, BlockPos> {
 
     BlockPredicateType<?> type();
 
-    static BlockPredicate allOf(List<BlockPredicate> p_190413_) {
-        return new AllOfPredicate(p_190413_);
+    static BlockPredicate allOf(List<BlockPredicate> predicates) {
+        return new AllOfPredicate(predicates);
     }
 
-    static BlockPredicate allOf(BlockPredicate... p_190418_) {
-        return allOf(List.of(p_190418_));
+    static BlockPredicate allOf(BlockPredicate... predicates) {
+        return allOf(List.of(predicates));
     }
 
-    static BlockPredicate allOf(BlockPredicate p_190405_, BlockPredicate p_190406_) {
-        return allOf(List.of(p_190405_, p_190406_));
+    static BlockPredicate allOf(BlockPredicate predicate1, BlockPredicate predicate2) {
+        return allOf(List.of(predicate1, predicate2));
     }
 
-    static BlockPredicate anyOf(List<BlockPredicate> p_190426_) {
-        return new AnyOfPredicate(p_190426_);
+    static BlockPredicate anyOf(List<BlockPredicate> predicates) {
+        return new AnyOfPredicate(predicates);
     }
 
-    static BlockPredicate anyOf(BlockPredicate... p_190431_) {
-        return anyOf(List.of(p_190431_));
+    static BlockPredicate anyOf(BlockPredicate... predicates) {
+        return anyOf(List.of(predicates));
     }
 
-    static BlockPredicate anyOf(BlockPredicate p_190421_, BlockPredicate p_190422_) {
-        return anyOf(List.of(p_190421_, p_190422_));
+    static BlockPredicate anyOf(BlockPredicate predicate1, BlockPredicate predicate2) {
+        return anyOf(List.of(predicate1, predicate2));
     }
 
-    static BlockPredicate matchesBlocks(Vec3i p_224772_, List<Block> p_224773_) {
-        return new MatchingBlocksPredicate(p_224772_, HolderSet.direct(Block::builtInRegistryHolder, p_224773_));
+    static BlockPredicate matchesBlocks(Vec3i offset, List<Block> blocks) {
+        return new MatchingBlocksPredicate(offset, HolderSet.direct(Block::builtInRegistryHolder, blocks));
     }
 
-    static BlockPredicate matchesBlocks(List<Block> p_198312_) {
-        return matchesBlocks(Vec3i.ZERO, p_198312_);
+    static BlockPredicate matchesBlocks(List<Block> blocks) {
+        return matchesBlocks(Vec3i.ZERO, blocks);
     }
 
-    static BlockPredicate matchesBlocks(Vec3i p_224775_, Block... p_224776_) {
-        return matchesBlocks(p_224775_, List.of(p_224776_));
+    static BlockPredicate matchesBlocks(Vec3i offset, Block... blocks) {
+        return matchesBlocks(offset, List.of(blocks));
     }
 
-    static BlockPredicate matchesBlocks(Block... p_224781_) {
-        return matchesBlocks(Vec3i.ZERO, p_224781_);
+    static BlockPredicate matchesBlocks(Block... blocks) {
+        return matchesBlocks(Vec3i.ZERO, blocks);
     }
 
-    static BlockPredicate matchesTag(Vec3i p_224769_, TagKey<Block> p_224770_) {
-        return new MatchingBlockTagPredicate(p_224769_, p_224770_);
+    static BlockPredicate matchesTag(Vec3i offset, TagKey<Block> tag) {
+        return new MatchingBlockTagPredicate(offset, tag);
     }
 
-    static BlockPredicate matchesTag(TagKey<Block> p_204678_) {
-        return matchesTag(Vec3i.ZERO, p_204678_);
+    static BlockPredicate matchesTag(TagKey<Block> tag) {
+        return matchesTag(Vec3i.ZERO, tag);
     }
 
-    static BlockPredicate matchesFluids(Vec3i p_224785_, List<Fluid> p_224786_) {
-        return new MatchingFluidsPredicate(p_224785_, HolderSet.direct(Fluid::builtInRegistryHolder, p_224786_));
+    static BlockPredicate matchesFluids(Vec3i offset, List<Fluid> fluids) {
+        return new MatchingFluidsPredicate(offset, HolderSet.direct(Fluid::builtInRegistryHolder, fluids));
     }
 
-    static BlockPredicate matchesFluids(Vec3i p_224778_, Fluid... p_224779_) {
-        return matchesFluids(p_224778_, List.of(p_224779_));
+    static BlockPredicate matchesFluids(Vec3i offset, Fluid... fluids) {
+        return matchesFluids(offset, List.of(fluids));
     }
 
-    static BlockPredicate matchesFluids(Fluid... p_224783_) {
-        return matchesFluids(Vec3i.ZERO, p_224783_);
+    static BlockPredicate matchesFluids(Fluid... fluids) {
+        return matchesFluids(Vec3i.ZERO, fluids);
     }
 
-    static BlockPredicate not(BlockPredicate p_190403_) {
-        return new NotPredicate(p_190403_);
+    static BlockPredicate not(BlockPredicate predicate) {
+        return new NotPredicate(predicate);
     }
 
-    static BlockPredicate replaceable(Vec3i p_190411_) {
-        return new ReplaceablePredicate(p_190411_);
+    static BlockPredicate replaceable(Vec3i offset) {
+        return new ReplaceablePredicate(offset);
     }
 
     static BlockPredicate replaceable() {
         return replaceable(Vec3i.ZERO);
     }
 
-    static BlockPredicate wouldSurvive(BlockState p_190400_, Vec3i p_190401_) {
-        return new WouldSurvivePredicate(p_190401_, p_190400_);
+    static BlockPredicate wouldSurvive(BlockState state, Vec3i offset) {
+        return new WouldSurvivePredicate(offset, state);
     }
 
-    static BlockPredicate hasSturdyFace(Vec3i p_198309_, Direction p_198310_) {
-        return new HasSturdyFacePredicate(p_198309_, p_198310_);
+    static BlockPredicate hasSturdyFace(Vec3i offset, Direction direction) {
+        return new HasSturdyFacePredicate(offset, direction);
     }
 
-    static BlockPredicate hasSturdyFace(Direction p_198914_) {
-        return hasSturdyFace(Vec3i.ZERO, p_198914_);
+    static BlockPredicate hasSturdyFace(Direction direction) {
+        return hasSturdyFace(Vec3i.ZERO, direction);
     }
 
-    static BlockPredicate solid(Vec3i p_190424_) {
-        return new SolidPredicate(p_190424_);
+    static BlockPredicate solid(Vec3i offset) {
+        return new SolidPredicate(offset);
     }
 
     static BlockPredicate solid() {
@@ -119,20 +119,20 @@ public interface BlockPredicate extends BiPredicate<WorldGenLevel, BlockPos> {
         return noFluid(Vec3i.ZERO);
     }
 
-    static BlockPredicate noFluid(Vec3i p_249383_) {
-        return matchesFluids(p_249383_, Fluids.EMPTY);
+    static BlockPredicate noFluid(Vec3i offset) {
+        return matchesFluids(offset, Fluids.EMPTY);
     }
 
-    static BlockPredicate insideWorld(Vec3i p_190434_) {
-        return new InsideWorldBoundsPredicate(p_190434_);
+    static BlockPredicate insideWorld(Vec3i offset) {
+        return new InsideWorldBoundsPredicate(offset);
     }
 
     static BlockPredicate alwaysTrue() {
         return TrueBlockPredicate.INSTANCE;
     }
 
-    static BlockPredicate unobstructed(Vec3i p_345358_) {
-        return new UnobstructedPredicate(p_345358_);
+    static BlockPredicate unobstructed(Vec3i offset) {
+        return new UnobstructedPredicate(offset);
     }
 
     static BlockPredicate unobstructed() {

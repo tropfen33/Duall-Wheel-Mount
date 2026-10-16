@@ -12,17 +12,17 @@ import net.neoforged.api.distmarker.OnlyIn;
 public abstract class Model {
     protected final Function<ResourceLocation, RenderType> renderType;
 
-    public Model(Function<ResourceLocation, RenderType> p_103110_) {
-        this.renderType = p_103110_;
+    public Model(Function<ResourceLocation, RenderType> renderType) {
+        this.renderType = renderType;
     }
 
-    public final RenderType renderType(ResourceLocation p_103120_) {
-        return this.renderType.apply(p_103120_);
+    public final RenderType renderType(ResourceLocation location) {
+        return this.renderType.apply(location);
     }
 
-    public abstract void renderToBuffer(PoseStack p_103111_, VertexConsumer p_103112_, int p_103113_, int p_103114_, int p_350308_);
+    public abstract void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color);
 
-    public final void renderToBuffer(PoseStack p_350804_, VertexConsumer p_350976_, int p_350539_, int p_350374_) {
-        this.renderToBuffer(p_350804_, p_350976_, p_350539_, p_350374_, -1);
+    public final void renderToBuffer(PoseStack poseStack, VertexConsumer vertexConsumer, int packedLight, int packedOverlay) {
+        this.renderToBuffer(poseStack, vertexConsumer, packedLight, packedOverlay, -1);
     }
 }

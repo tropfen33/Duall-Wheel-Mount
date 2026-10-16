@@ -36,30 +36,38 @@ public class DaylightDetectorBlock extends BaseEntityBlock {
         return CODEC;
     }
 
-    public DaylightDetectorBlock(BlockBehaviour.Properties p_52382_) {
-        super(p_52382_);
+    public DaylightDetectorBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(POWER, Integer.valueOf(0)).setValue(INVERTED, Boolean.valueOf(false)));
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_52402_, BlockGetter p_52403_, BlockPos p_52404_, CollisionContext p_52405_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    protected boolean useShapeForLightOcclusion(BlockState p_52409_) {
+    protected boolean useShapeForLightOcclusion(BlockState state) {
         return true;
     }
 
+    /**
+     * Returns the signal this block emits in the given direction.
+     *
+     * <p>
+     * NOTE: directions in redstone signal related methods are backwards, so this method
+     * checks for the signal emitted in the <i>opposite</i> direction of the one given.
+     *
+     */
     @Override
-    protected int getSignal(BlockState p_52386_, BlockGetter p_52387_, BlockPos p_52388_, Direction p_52389_) {
-        return p_52386_.getValue(POWER);
+    protected int getSignal(BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side) {
+        return blockState.getValue(POWER);
     }
 
-    private static void updateSignalStrength(BlockState p_52411_, Level p_52412_, BlockPos p_52413_) {
-        int i = p_52412_.getBrightness(LightLayer.SKY, p_52413_) - p_52412_.getSkyDarken();
-        float f = p_52412_.getSunAngle(1.0F);
-        boolean flag = p_52411_.getValue(INVERTED);
+    private static void updateSignalStrength(BlockState state, Level level, BlockPos pos) {
+        int i = level.getBrightness(LightLayer.SKY, pos) - level.getSkyDarken();
+        float f = level.getSunAngle(1.0F);
+        boolean flag = state.getValue(INVERTED);
         if (flag) {
             i = 15 - i;
         } else if (i > 0) {
@@ -69,59 +77,66 @@ public class DaylightDetectorBlock extends BaseEntityBlock {
         }
 
         i = Mth.clamp(i, 0, 15);
-        if (p_52411_.getValue(POWER) != i) {
-            p_52412_.setBlock(p_52413_, p_52411_.setValue(POWER, Integer.valueOf(i)), 3);
+        if (state.getValue(POWER) != i) {
+            level.setBlock(pos, state.setValue(POWER, Integer.valueOf(i)), 3);
         }
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_52391_, Level p_52392_, BlockPos p_52393_, Player p_52394_, BlockHitResult p_52396_) {
-        if (p_52394_.mayBuild()) {
-            if (p_52392_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (player.mayBuild()) {
+            if (level.isClientSide) {
                 return InteractionResult.SUCCESS;
             } else {
-                BlockState blockstate = p_52391_.cycle(INVERTED);
-                p_52392_.setBlock(p_52393_, blockstate, 2);
-                p_52392_.gameEvent(GameEvent.BLOCK_CHANGE, p_52393_, GameEvent.Context.of(p_52394_, blockstate));
-                updateSignalStrength(blockstate, p_52392_, p_52393_);
+                BlockState blockstate = state.cycle(INVERTED);
+                level.setBlock(pos, blockstate, 2);
+                level.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(player, blockstate));
+                updateSignalStrength(blockstate, level, pos);
                 return InteractionResult.CONSUME;
             }
         } else {
-            return super.useWithoutItem(p_52391_, p_52392_, p_52393_, p_52394_, p_52396_);
+            return super.useWithoutItem(state, level, pos, player, hitResult);
         }
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_52400_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
+    /**
+     * Returns whether this block is capable of emitting redstone signals.
+     *
+     */
     @Override
-    protected boolean isSignalSource(BlockState p_52407_) {
+    protected boolean isSignalSource(BlockState state) {
         return true;
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_153118_, BlockState p_153119_) {
-        return new DaylightDetectorBlockEntity(p_153118_, p_153119_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new DaylightDetectorBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_153109_, BlockState p_153110_, BlockEntityType<T> p_153111_) {
-        return !p_153109_.isClientSide && p_153109_.dimensionType().hasSkyLight()
-            ? createTickerHelper(p_153111_, BlockEntityType.DAYLIGHT_DETECTOR, DaylightDetectorBlock::tickEntity)
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        return !level.isClientSide && level.dimensionType().hasSkyLight()
+            ? createTickerHelper(blockEntityType, BlockEntityType.DAYLIGHT_DETECTOR, DaylightDetectorBlock::tickEntity)
             : null;
     }
 
-    private static void tickEntity(Level p_153113_, BlockPos p_153114_, BlockState p_153115_, DaylightDetectorBlockEntity p_153116_) {
-        if (p_153113_.getGameTime() % 20L == 0L) {
-            updateSignalStrength(p_153115_, p_153113_, p_153114_);
+    private static void tickEntity(Level level, BlockPos pos, BlockState state, DaylightDetectorBlockEntity blockEntity) {
+        if (level.getGameTime() % 20L == 0L) {
+            updateSignalStrength(state, level, pos);
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_52398_) {
-        p_52398_.add(POWER, INVERTED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(POWER, INVERTED);
     }
 }

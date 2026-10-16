@@ -25,21 +25,24 @@ public class BannerBlockEntity extends BlockEntity implements Nameable {
     @Nullable
     private Component name;
     private DyeColor baseColor;
+    /**
+     * A list of all patterns stored on this banner.
+     */
     private BannerPatternLayers patterns = BannerPatternLayers.EMPTY;
 
-    public BannerBlockEntity(BlockPos p_155035_, BlockState p_155036_) {
-        super(BlockEntityType.BANNER, p_155035_, p_155036_);
-        this.baseColor = ((AbstractBannerBlock)p_155036_.getBlock()).getColor();
+    public BannerBlockEntity(BlockPos pos, BlockState blockState) {
+        super(BlockEntityType.BANNER, pos, blockState);
+        this.baseColor = ((AbstractBannerBlock)blockState.getBlock()).getColor();
     }
 
-    public BannerBlockEntity(BlockPos p_155038_, BlockState p_155039_, DyeColor p_155040_) {
-        this(p_155038_, p_155039_);
-        this.baseColor = p_155040_;
+    public BannerBlockEntity(BlockPos pos, BlockState blockState, DyeColor baseColor) {
+        this(pos, blockState);
+        this.baseColor = baseColor;
     }
 
-    public void fromItem(ItemStack p_58490_, DyeColor p_58491_) {
-        this.baseColor = p_58491_;
-        this.applyComponentsFromItemStack(p_58490_);
+    public void fromItem(ItemStack stack, DyeColor color) {
+        this.baseColor = color;
+        this.applyComponentsFromItemStack(stack);
     }
 
     @Override
@@ -54,27 +57,27 @@ public class BannerBlockEntity extends BlockEntity implements Nameable {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_187456_, HolderLookup.Provider p_324143_) {
-        super.saveAdditional(p_187456_, p_324143_);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
         if (!this.patterns.equals(BannerPatternLayers.EMPTY)) {
-            p_187456_.put("patterns", BannerPatternLayers.CODEC.encodeStart(p_324143_.createSerializationContext(NbtOps.INSTANCE), this.patterns).getOrThrow());
+            tag.put("patterns", BannerPatternLayers.CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), this.patterns).getOrThrow());
         }
 
         if (this.name != null) {
-            p_187456_.putString("CustomName", Component.Serializer.toJson(this.name, p_324143_));
+            tag.putString("CustomName", Component.Serializer.toJson(this.name, registries));
         }
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_338645_, HolderLookup.Provider p_338247_) {
-        super.loadAdditional(p_338645_, p_338247_);
-        if (p_338645_.contains("CustomName", 8)) {
-            this.name = parseCustomNameSafe(p_338645_.getString("CustomName"), p_338247_);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.contains("CustomName", 8)) {
+            this.name = parseCustomNameSafe(tag.getString("CustomName"), registries);
         }
 
-        if (p_338645_.contains("patterns")) {
+        if (tag.contains("patterns")) {
             BannerPatternLayers.CODEC
-                .parse(p_338247_.createSerializationContext(NbtOps.INSTANCE), p_338645_.get("patterns"))
+                .parse(registries.createSerializationContext(NbtOps.INSTANCE), tag.get("patterns"))
                 .resultOrPartial(p_331289_ -> LOGGER.error("Failed to parse banner patterns: '{}'", p_331289_))
                 .ifPresent(p_332632_ -> this.patterns = p_332632_);
         }
@@ -85,8 +88,8 @@ public class BannerBlockEntity extends BlockEntity implements Nameable {
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider p_324478_) {
-        return this.saveWithoutMetadata(p_324478_);
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        return this.saveWithoutMetadata(registries);
     }
 
     public BannerPatternLayers getPatterns() {
@@ -104,22 +107,22 @@ public class BannerBlockEntity extends BlockEntity implements Nameable {
     }
 
     @Override
-    protected void applyImplicitComponents(BlockEntity.DataComponentInput p_338244_) {
-        super.applyImplicitComponents(p_338244_);
-        this.patterns = p_338244_.getOrDefault(DataComponents.BANNER_PATTERNS, BannerPatternLayers.EMPTY);
-        this.name = p_338244_.get(DataComponents.CUSTOM_NAME);
+    protected void applyImplicitComponents(BlockEntity.DataComponentInput componentInput) {
+        super.applyImplicitComponents(componentInput);
+        this.patterns = componentInput.getOrDefault(DataComponents.BANNER_PATTERNS, BannerPatternLayers.EMPTY);
+        this.name = componentInput.get(DataComponents.CUSTOM_NAME);
     }
 
     @Override
-    protected void collectImplicitComponents(DataComponentMap.Builder p_338762_) {
-        super.collectImplicitComponents(p_338762_);
-        p_338762_.set(DataComponents.BANNER_PATTERNS, this.patterns);
-        p_338762_.set(DataComponents.CUSTOM_NAME, this.name);
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        components.set(DataComponents.BANNER_PATTERNS, this.patterns);
+        components.set(DataComponents.CUSTOM_NAME, this.name);
     }
 
     @Override
-    public void removeComponentsFromTag(CompoundTag p_331690_) {
-        p_331690_.remove("patterns");
-        p_331690_.remove("CustomName");
+    public void removeComponentsFromTag(CompoundTag tag) {
+        tag.remove("patterns");
+        tag.remove("CustomName");
     }
 }

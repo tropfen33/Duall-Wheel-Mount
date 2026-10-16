@@ -12,21 +12,29 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class ShulkerBoxScreen extends AbstractContainerScreen<ShulkerBoxMenu> {
     private static final ResourceLocation CONTAINER_TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/container/shulker_box.png");
 
-    public ShulkerBoxScreen(ShulkerBoxMenu p_99240_, Inventory p_99241_, Component p_99242_) {
-        super(p_99240_, p_99241_, p_99242_);
+    public ShulkerBoxScreen(ShulkerBoxMenu menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title);
         this.imageHeight++;
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281745_, int p_282145_, int p_282358_, float p_283566_) {
-        super.render(p_281745_, p_282145_, p_282358_, p_283566_);
-        this.renderTooltip(p_281745_, p_282145_, p_282358_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
     @Override
-    protected void renderBg(GuiGraphics p_281362_, float p_283080_, int p_281303_, int p_283275_) {
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
-        p_281362_.blit(CONTAINER_TEXTURE, i, j, 0, 0, this.imageWidth, this.imageHeight);
+        guiGraphics.blit(CONTAINER_TEXTURE, i, j, 0, 0, this.imageWidth, this.imageHeight);
     }
 }

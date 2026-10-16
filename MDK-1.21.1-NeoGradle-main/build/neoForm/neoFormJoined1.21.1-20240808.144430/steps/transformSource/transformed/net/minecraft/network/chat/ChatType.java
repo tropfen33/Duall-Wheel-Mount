@@ -38,45 +38,45 @@ public record ChatType(ChatTypeDecoration chat, ChatTypeDecoration narration) {
     public static final ResourceKey<ChatType> TEAM_MSG_COMMAND_OUTGOING = create("team_msg_command_outgoing");
     public static final ResourceKey<ChatType> EMOTE_COMMAND = create("emote_command");
 
-    private static ResourceKey<ChatType> create(String p_237024_) {
-        return ResourceKey.create(Registries.CHAT_TYPE, ResourceLocation.withDefaultNamespace(p_237024_));
+    private static ResourceKey<ChatType> create(String key) {
+        return ResourceKey.create(Registries.CHAT_TYPE, ResourceLocation.withDefaultNamespace(key));
     }
 
-    public static void bootstrap(BootstrapContext<ChatType> p_321866_) {
-        p_321866_.register(CHAT, new ChatType(DEFAULT_CHAT_DECORATION, ChatTypeDecoration.withSender("chat.type.text.narrate")));
-        p_321866_.register(
+    public static void bootstrap(BootstrapContext<ChatType> context) {
+        context.register(CHAT, new ChatType(DEFAULT_CHAT_DECORATION, ChatTypeDecoration.withSender("chat.type.text.narrate")));
+        context.register(
             SAY_COMMAND, new ChatType(ChatTypeDecoration.withSender("chat.type.announcement"), ChatTypeDecoration.withSender("chat.type.text.narrate"))
         );
-        p_321866_.register(
+        context.register(
             MSG_COMMAND_INCOMING,
             new ChatType(ChatTypeDecoration.incomingDirectMessage("commands.message.display.incoming"), ChatTypeDecoration.withSender("chat.type.text.narrate"))
         );
-        p_321866_.register(
+        context.register(
             MSG_COMMAND_OUTGOING,
             new ChatType(ChatTypeDecoration.outgoingDirectMessage("commands.message.display.outgoing"), ChatTypeDecoration.withSender("chat.type.text.narrate"))
         );
-        p_321866_.register(
+        context.register(
             TEAM_MSG_COMMAND_INCOMING,
             new ChatType(ChatTypeDecoration.teamMessage("chat.type.team.text"), ChatTypeDecoration.withSender("chat.type.text.narrate"))
         );
-        p_321866_.register(
+        context.register(
             TEAM_MSG_COMMAND_OUTGOING,
             new ChatType(ChatTypeDecoration.teamMessage("chat.type.team.sent"), ChatTypeDecoration.withSender("chat.type.text.narrate"))
         );
-        p_321866_.register(EMOTE_COMMAND, new ChatType(ChatTypeDecoration.withSender("chat.type.emote"), ChatTypeDecoration.withSender("chat.type.emote")));
+        context.register(EMOTE_COMMAND, new ChatType(ChatTypeDecoration.withSender("chat.type.emote"), ChatTypeDecoration.withSender("chat.type.emote")));
     }
 
-    public static ChatType.Bound bind(ResourceKey<ChatType> p_241279_, Entity p_241483_) {
-        return bind(p_241279_, p_241483_.level().registryAccess(), p_241483_.getDisplayName());
+    public static ChatType.Bound bind(ResourceKey<ChatType> chatTypeKey, Entity entity) {
+        return bind(chatTypeKey, entity.level().registryAccess(), entity.getDisplayName());
     }
 
-    public static ChatType.Bound bind(ResourceKey<ChatType> p_241345_, CommandSourceStack p_241466_) {
-        return bind(p_241345_, p_241466_.registryAccess(), p_241466_.getDisplayName());
+    public static ChatType.Bound bind(ResourceKey<ChatType> chatTypeKey, CommandSourceStack source) {
+        return bind(chatTypeKey, source.registryAccess(), source.getDisplayName());
     }
 
-    public static ChatType.Bound bind(ResourceKey<ChatType> p_241284_, RegistryAccess p_241373_, Component p_241455_) {
-        Registry<ChatType> registry = p_241373_.registryOrThrow(Registries.CHAT_TYPE);
-        return new ChatType.Bound(registry.getHolderOrThrow(p_241284_), p_241455_);
+    public static ChatType.Bound bind(ResourceKey<ChatType> chatTypeKey, RegistryAccess registryAccess, Component name) {
+        Registry<ChatType> registry = registryAccess.registryOrThrow(Registries.CHAT_TYPE);
+        return new ChatType.Bound(registry.getHolderOrThrow(chatTypeKey), name);
     }
 
     public static record Bound(Holder<ChatType> chatType, Component name, Optional<Component> targetName) {
@@ -94,16 +94,16 @@ public record ChatType(ChatTypeDecoration chat, ChatTypeDecoration narration) {
             this(p_321546_, p_241293_, Optional.empty());
         }
 
-        public Component decorate(Component p_241411_) {
-            return this.chatType.value().chat().decorate(p_241411_, this);
+        public Component decorate(Component content) {
+            return this.chatType.value().chat().decorate(content, this);
         }
 
-        public Component decorateNarration(Component p_241354_) {
-            return this.chatType.value().narration().decorate(p_241354_, this);
+        public Component decorateNarration(Component content) {
+            return this.chatType.value().narration().decorate(content, this);
         }
 
-        public ChatType.Bound withTargetName(Component p_241530_) {
-            return new ChatType.Bound(this.chatType, this.name, Optional.of(p_241530_));
+        public ChatType.Bound withTargetName(Component targetName) {
+            return new ChatType.Bound(this.chatType, this.name, Optional.of(targetName));
         }
     }
 }

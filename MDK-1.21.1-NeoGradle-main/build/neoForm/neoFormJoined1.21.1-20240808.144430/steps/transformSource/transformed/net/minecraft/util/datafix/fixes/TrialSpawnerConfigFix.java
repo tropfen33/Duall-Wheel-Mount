@@ -8,11 +8,11 @@ import java.util.Map;
 import java.util.Optional;
 
 public class TrialSpawnerConfigFix extends NamedEntityWriteReadFix {
-    public TrialSpawnerConfigFix(Schema p_338323_) {
-        super(p_338323_, true, "Trial Spawner config tag fixer", References.BLOCK_ENTITY, "minecraft:trial_spawner");
+    public TrialSpawnerConfigFix(Schema outputSchema) {
+        super(outputSchema, true, "Trial Spawner config tag fixer", References.BLOCK_ENTITY, "minecraft:trial_spawner");
     }
 
-    private static <T> Dynamic<T> moveToConfigTag(Dynamic<T> p_338221_) {
+    private static <T> Dynamic<T> moveToConfigTag(Dynamic<T> data) {
         List<String> list = List.of(
             "spawn_range",
             "total_mobs",
@@ -27,18 +27,18 @@ public class TrialSpawnerConfigFix extends NamedEntityWriteReadFix {
         Map<Dynamic<T>, Dynamic<T>> map = new HashMap<>(list.size());
 
         for (String s : list) {
-            Optional<Dynamic<T>> optional = p_338221_.get(s).get().result();
+            Optional<Dynamic<T>> optional = data.get(s).get().result();
             if (optional.isPresent()) {
-                map.put(p_338221_.createString(s), optional.get());
-                p_338221_ = p_338221_.remove(s);
+                map.put(data.createString(s), optional.get());
+                data = data.remove(s);
             }
         }
 
-        return map.isEmpty() ? p_338221_ : p_338221_.set("normal_config", p_338221_.createMap(map));
+        return map.isEmpty() ? data : data.set("normal_config", data.createMap(map));
     }
 
     @Override
-    protected <T> Dynamic<T> fix(Dynamic<T> p_338437_) {
-        return moveToConfigTag(p_338437_);
+    protected <T> Dynamic<T> fix(Dynamic<T> tag) {
+        return moveToConfigTag(tag);
     }
 }

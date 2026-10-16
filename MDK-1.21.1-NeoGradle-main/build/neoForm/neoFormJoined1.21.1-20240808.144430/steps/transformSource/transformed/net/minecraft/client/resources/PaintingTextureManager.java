@@ -11,12 +11,12 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class PaintingTextureManager extends TextureAtlasHolder {
     private static final ResourceLocation BACK_SPRITE_LOCATION = ResourceLocation.withDefaultNamespace("back");
 
-    public PaintingTextureManager(TextureManager p_118802_) {
-        super(p_118802_, ResourceLocation.withDefaultNamespace("textures/atlas/paintings.png"), ResourceLocation.withDefaultNamespace("paintings"));
+    public PaintingTextureManager(TextureManager textureManager) {
+        super(textureManager, ResourceLocation.withDefaultNamespace("textures/atlas/paintings.png"), ResourceLocation.withDefaultNamespace("paintings"));
     }
 
-    public TextureAtlasSprite get(PaintingVariant p_235034_) {
-        return this.getSprite(p_235034_.assetId());
+    public TextureAtlasSprite get(PaintingVariant paintingVariant) {
+        return this.getSprite(paintingVariant.assetId());
     }
 
     public TextureAtlasSprite getBackSprite() {

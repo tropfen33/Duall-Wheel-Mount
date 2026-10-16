@@ -23,7 +23,7 @@ public interface RepeatedDelayStrategy {
 
     long delayCyclesAfterFailure();
 
-    static RepeatedDelayStrategy exponentialBackoff(final int p_239256_) {
+    static RepeatedDelayStrategy exponentialBackoff(final int maxFailureDelay) {
         return new RepeatedDelayStrategy() {
             private static final Logger LOGGER = LogUtils.getLogger();
             private int failureCount;
@@ -37,7 +37,7 @@ public interface RepeatedDelayStrategy {
             @Override
             public long delayCyclesAfterFailure() {
                 this.failureCount++;
-                long i = Math.min(1L << this.failureCount, (long)p_239256_);
+                long i = Math.min(1L << this.failureCount, (long)maxFailureDelay);
                 LOGGER.debug("Skipping for {} extra cycles", i);
                 return i;
             }

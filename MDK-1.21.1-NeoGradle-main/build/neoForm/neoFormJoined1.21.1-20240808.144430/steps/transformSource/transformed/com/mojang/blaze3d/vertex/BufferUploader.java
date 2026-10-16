@@ -21,41 +21,41 @@ public class BufferUploader {
         lastImmediateBuffer = null;
     }
 
-    public static void drawWithShader(MeshData p_350434_) {
+    public static void drawWithShader(MeshData meshData) {
         if (!RenderSystem.isOnRenderThreadOrInit()) {
-            RenderSystem.recordRenderCall(() -> _drawWithShader(p_350434_));
+            RenderSystem.recordRenderCall(() -> _drawWithShader(meshData));
         } else {
-            _drawWithShader(p_350434_);
+            _drawWithShader(meshData);
         }
     }
 
-    private static void _drawWithShader(MeshData p_350373_) {
-        VertexBuffer vertexbuffer = upload(p_350373_);
+    private static void _drawWithShader(MeshData meshData) {
+        VertexBuffer vertexbuffer = upload(meshData);
         vertexbuffer.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
     }
 
-    public static void draw(MeshData p_350302_) {
-        VertexBuffer vertexbuffer = upload(p_350302_);
+    public static void draw(MeshData meshData) {
+        VertexBuffer vertexbuffer = upload(meshData);
         vertexbuffer.draw();
     }
 
-    private static VertexBuffer upload(MeshData p_350970_) {
+    private static VertexBuffer upload(MeshData meshData) {
         RenderSystem.assertOnRenderThread();
-        VertexBuffer vertexbuffer = bindImmediateBuffer(p_350970_.drawState().format());
-        vertexbuffer.upload(p_350970_);
+        VertexBuffer vertexbuffer = bindImmediateBuffer(meshData.drawState().format());
+        vertexbuffer.upload(meshData);
         return vertexbuffer;
     }
 
-    private static VertexBuffer bindImmediateBuffer(VertexFormat p_231207_) {
-        VertexBuffer vertexbuffer = p_231207_.getImmediateDrawVertexBuffer();
+    private static VertexBuffer bindImmediateBuffer(VertexFormat format) {
+        VertexBuffer vertexbuffer = format.getImmediateDrawVertexBuffer();
         bindImmediateBuffer(vertexbuffer);
         return vertexbuffer;
     }
 
-    private static void bindImmediateBuffer(VertexBuffer p_231205_) {
-        if (p_231205_ != lastImmediateBuffer) {
-            p_231205_.bind();
-            lastImmediateBuffer = p_231205_;
+    private static void bindImmediateBuffer(VertexBuffer buffer) {
+        if (buffer != lastImmediateBuffer) {
+            buffer.bind();
+            lastImmediateBuffer = buffer;
         }
     }
 }

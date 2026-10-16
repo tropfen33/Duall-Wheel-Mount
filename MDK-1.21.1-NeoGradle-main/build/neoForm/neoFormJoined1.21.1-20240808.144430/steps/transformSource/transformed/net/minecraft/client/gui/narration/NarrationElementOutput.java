@@ -7,19 +7,19 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface NarrationElementOutput {
-    default void add(NarratedElementType p_169147_, Component p_169148_) {
-        this.add(p_169147_, NarrationThunk.from(p_169148_.getString()));
+    default void add(NarratedElementType type, Component contents) {
+        this.add(type, NarrationThunk.from(contents.getString()));
     }
 
-    default void add(NarratedElementType p_169144_, String p_169145_) {
-        this.add(p_169144_, NarrationThunk.from(p_169145_));
+    default void add(NarratedElementType type, String contents) {
+        this.add(type, NarrationThunk.from(contents));
     }
 
-    default void add(NarratedElementType p_169150_, Component... p_169151_) {
-        this.add(p_169150_, NarrationThunk.from(ImmutableList.copyOf(p_169151_)));
+    default void add(NarratedElementType type, Component... contents) {
+        this.add(type, NarrationThunk.from(ImmutableList.copyOf(contents)));
     }
 
-    void add(NarratedElementType p_169141_, NarrationThunk<?> p_169142_);
+    void add(NarratedElementType type, NarrationThunk<?> contents);
 
     NarrationElementOutput nest();
 }

@@ -9,5 +9,5 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface PackDownloader {
-    void download(Map<UUID, DownloadQueue.DownloadRequest> p_314430_, Consumer<DownloadQueue.BatchResult> p_314486_);
+    void download(Map<UUID, DownloadQueue.DownloadRequest> packs, Consumer<DownloadQueue.BatchResult> resultConsumer);
 }

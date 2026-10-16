@@ -4,24 +4,24 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
 
 public class PistonMath {
-    public static AABB getMovementArea(AABB p_60329_, Direction p_60330_, double p_60331_) {
-        double d0 = p_60331_ * (double)p_60330_.getAxisDirection().getStep();
+    public static AABB getMovementArea(AABB bounds, Direction dir, double delta) {
+        double d0 = delta * (double)dir.getAxisDirection().getStep();
         double d1 = Math.min(d0, 0.0);
         double d2 = Math.max(d0, 0.0);
-        switch (p_60330_) {
+        switch (dir) {
             case WEST:
-                return new AABB(p_60329_.minX + d1, p_60329_.minY, p_60329_.minZ, p_60329_.minX + d2, p_60329_.maxY, p_60329_.maxZ);
+                return new AABB(bounds.minX + d1, bounds.minY, bounds.minZ, bounds.minX + d2, bounds.maxY, bounds.maxZ);
             case EAST:
-                return new AABB(p_60329_.maxX + d1, p_60329_.minY, p_60329_.minZ, p_60329_.maxX + d2, p_60329_.maxY, p_60329_.maxZ);
+                return new AABB(bounds.maxX + d1, bounds.minY, bounds.minZ, bounds.maxX + d2, bounds.maxY, bounds.maxZ);
             case DOWN:
-                return new AABB(p_60329_.minX, p_60329_.minY + d1, p_60329_.minZ, p_60329_.maxX, p_60329_.minY + d2, p_60329_.maxZ);
+                return new AABB(bounds.minX, bounds.minY + d1, bounds.minZ, bounds.maxX, bounds.minY + d2, bounds.maxZ);
             case UP:
             default:
-                return new AABB(p_60329_.minX, p_60329_.maxY + d1, p_60329_.minZ, p_60329_.maxX, p_60329_.maxY + d2, p_60329_.maxZ);
+                return new AABB(bounds.minX, bounds.maxY + d1, bounds.minZ, bounds.maxX, bounds.maxY + d2, bounds.maxZ);
             case NORTH:
-                return new AABB(p_60329_.minX, p_60329_.minY, p_60329_.minZ + d1, p_60329_.maxX, p_60329_.maxY, p_60329_.minZ + d2);
+                return new AABB(bounds.minX, bounds.minY, bounds.minZ + d1, bounds.maxX, bounds.maxY, bounds.minZ + d2);
             case SOUTH:
-                return new AABB(p_60329_.minX, p_60329_.minY, p_60329_.maxZ + d1, p_60329_.maxX, p_60329_.maxY, p_60329_.maxZ + d2);
+                return new AABB(bounds.minX, bounds.minY, bounds.maxZ + d1, bounds.maxX, bounds.maxY, bounds.maxZ + d2);
         }
     }
 }

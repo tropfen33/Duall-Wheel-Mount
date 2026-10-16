@@ -20,45 +20,45 @@ public class LootParams {
     private final float luck;
 
     public LootParams(
-        ServerLevel p_287766_, Map<LootContextParam<?>, Object> p_287705_, Map<ResourceLocation, LootParams.DynamicDrop> p_287642_, float p_287671_
+        ServerLevel level, Map<LootContextParam<?>, Object> params, Map<ResourceLocation, LootParams.DynamicDrop> dynamicDrops, float luck
     ) {
-        this.level = p_287766_;
-        this.params = p_287705_;
-        this.dynamicDrops = p_287642_;
-        this.luck = p_287671_;
+        this.level = level;
+        this.params = params;
+        this.dynamicDrops = dynamicDrops;
+        this.luck = luck;
     }
 
     public ServerLevel getLevel() {
         return this.level;
     }
 
-    public boolean hasParam(LootContextParam<?> p_287749_) {
-        return this.params.containsKey(p_287749_);
+    public boolean hasParam(LootContextParam<?> param) {
+        return this.params.containsKey(param);
     }
 
-    public <T> T getParameter(LootContextParam<T> p_287670_) {
-        T t = (T)this.params.get(p_287670_);
+    public <T> T getParameter(LootContextParam<T> param) {
+        T t = (T)this.params.get(param);
         if (t == null) {
-            throw new NoSuchElementException(p_287670_.getName().toString());
+            throw new NoSuchElementException(param.getName().toString());
         } else {
             return t;
         }
     }
 
     @Nullable
-    public <T> T getOptionalParameter(LootContextParam<T> p_287644_) {
-        return (T)this.params.get(p_287644_);
+    public <T> T getOptionalParameter(LootContextParam<T> param) {
+        return (T)this.params.get(param);
     }
 
     @Nullable
-    public <T> T getParamOrNull(LootContextParam<T> p_287769_) {
-        return (T)this.params.get(p_287769_);
+    public <T> T getParamOrNull(LootContextParam<T> param) {
+        return (T)this.params.get(param);
     }
 
-    public void addDynamicDrops(ResourceLocation p_287768_, Consumer<ItemStack> p_287711_) {
-        LootParams.DynamicDrop lootparams$dynamicdrop = this.dynamicDrops.get(p_287768_);
+    public void addDynamicDrops(ResourceLocation location, Consumer<ItemStack> consumer) {
+        LootParams.DynamicDrop lootparams$dynamicdrop = this.dynamicDrops.get(location);
         if (lootparams$dynamicdrop != null) {
-            lootparams$dynamicdrop.add(p_287711_);
+            lootparams$dynamicdrop.add(consumer);
         }
     }
 
@@ -72,45 +72,45 @@ public class LootParams {
         private final Map<ResourceLocation, LootParams.DynamicDrop> dynamicDrops = Maps.newHashMap();
         private float luck;
 
-        public Builder(ServerLevel p_287594_) {
-            this.level = p_287594_;
+        public Builder(ServerLevel level) {
+            this.level = level;
         }
 
         public ServerLevel getLevel() {
             return this.level;
         }
 
-        public <T> LootParams.Builder withParameter(LootContextParam<T> p_287706_, T p_287606_) {
-            this.params.put(p_287706_, p_287606_);
+        public <T> LootParams.Builder withParameter(LootContextParam<T> parameter, T value) {
+            this.params.put(parameter, value);
             return this;
         }
 
-        public <T> LootParams.Builder withOptionalParameter(LootContextParam<T> p_287680_, @Nullable T p_287630_) {
-            if (p_287630_ == null) {
-                this.params.remove(p_287680_);
+        public <T> LootParams.Builder withOptionalParameter(LootContextParam<T> parameter, @Nullable T value) {
+            if (value == null) {
+                this.params.remove(parameter);
             } else {
-                this.params.put(p_287680_, p_287630_);
+                this.params.put(parameter, value);
             }
 
             return this;
         }
 
-        public <T> T getParameter(LootContextParam<T> p_287646_) {
-            T t = (T)this.params.get(p_287646_);
+        public <T> T getParameter(LootContextParam<T> parameter) {
+            T t = (T)this.params.get(parameter);
             if (t == null) {
-                throw new NoSuchElementException(p_287646_.getName().toString());
+                throw new NoSuchElementException(parameter.getName().toString());
             } else {
                 return t;
             }
         }
 
         @Nullable
-        public <T> T getOptionalParameter(LootContextParam<T> p_287759_) {
-            return (T)this.params.get(p_287759_);
+        public <T> T getOptionalParameter(LootContextParam<T> parameter) {
+            return (T)this.params.get(parameter);
         }
 
-        public LootParams.Builder withDynamicDrop(ResourceLocation p_287734_, LootParams.DynamicDrop p_287724_) {
-            LootParams.DynamicDrop lootparams$dynamicdrop = this.dynamicDrops.put(p_287734_, p_287724_);
+        public LootParams.Builder withDynamicDrop(ResourceLocation name, LootParams.DynamicDrop dynamicDrop) {
+            LootParams.DynamicDrop lootparams$dynamicdrop = this.dynamicDrops.put(name, dynamicDrop);
             if (lootparams$dynamicdrop != null) {
                 throw new IllegalStateException("Duplicated dynamic drop '" + this.dynamicDrops + "'");
             } else {
@@ -118,17 +118,17 @@ public class LootParams {
             }
         }
 
-        public LootParams.Builder withLuck(float p_287703_) {
-            this.luck = p_287703_;
+        public LootParams.Builder withLuck(float luck) {
+            this.luck = luck;
             return this;
         }
 
-        public LootParams create(LootContextParamSet p_287701_) {
-            Set<LootContextParam<?>> set = Sets.difference(this.params.keySet(), p_287701_.getAllowed());
+        public LootParams create(LootContextParamSet params) {
+            Set<LootContextParam<?>> set = Sets.difference(this.params.keySet(), params.getAllowed());
             if (false && !set.isEmpty()) { // Forge: Allow mods to pass custom loot parameters (not part of the vanilla loot table) to the loot context.
                 throw new IllegalArgumentException("Parameters not allowed in this parameter set: " + set);
             } else {
-                Set<LootContextParam<?>> set1 = Sets.difference(p_287701_.getRequired(), this.params.keySet());
+                Set<LootContextParam<?>> set1 = Sets.difference(params.getRequired(), this.params.keySet());
                 if (!set1.isEmpty()) {
                     throw new IllegalArgumentException("Missing required parameters: " + set1);
                 } else {
@@ -140,6 +140,6 @@ public class LootParams {
 
     @FunctionalInterface
     public interface DynamicDrop {
-        void add(Consumer<ItemStack> p_287584_);
+        void add(Consumer<ItemStack> output);
     }
 }

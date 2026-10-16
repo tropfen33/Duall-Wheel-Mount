@@ -23,8 +23,8 @@ public class ElderGuardian extends Guardian {
     private static final int EFFECT_AMPLIFIER = 2;
     private static final int EFFECT_DISPLAY_LIMIT = 1200;
 
-    public ElderGuardian(EntityType<? extends ElderGuardian> p_32460_, Level p_32461_) {
-        super(p_32460_, p_32461_);
+    public ElderGuardian(EntityType<? extends ElderGuardian> entityType, Level level) {
+        super(entityType, level);
         this.setPersistenceRequired();
         if (this.randomStrollGoal != null) {
             this.randomStrollGoal.setInterval(400);
@@ -46,7 +46,7 @@ public class ElderGuardian extends Guardian {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_32468_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return this.isInWaterOrBubble() ? SoundEvents.ELDER_GUARDIAN_HURT : SoundEvents.ELDER_GUARDIAN_HURT_LAND;
     }
 

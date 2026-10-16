@@ -15,16 +15,16 @@ public record LastSeenMessages(List<MessageSignature> entries) {
     public static LastSeenMessages EMPTY = new LastSeenMessages(List.of());
     public static final int LAST_SEEN_MESSAGES_MAX_LENGTH = 20;
 
-    public void updateSignature(SignatureUpdater.Output p_251665_) throws SignatureException {
-        p_251665_.update(Ints.toByteArray(this.entries.size()));
+    public void updateSignature(SignatureUpdater.Output updaterOutput) throws SignatureException {
+        updaterOutput.update(Ints.toByteArray(this.entries.size()));
 
         for (MessageSignature messagesignature : this.entries) {
-            p_251665_.update(messagesignature.bytes());
+            updaterOutput.update(messagesignature.bytes());
         }
     }
 
-    public LastSeenMessages.Packed pack(MessageSignatureCache p_253961_) {
-        return new LastSeenMessages.Packed(this.entries.stream().map(p_253457_ -> p_253457_.pack(p_253961_)).toList());
+    public LastSeenMessages.Packed pack(MessageSignatureCache signatureCache) {
+        return new LastSeenMessages.Packed(this.entries.stream().map(p_253457_ -> p_253457_.pack(signatureCache)).toList());
     }
 
     public static record Packed(List<MessageSignature.Packed> entries) {
@@ -34,15 +34,15 @@ public record LastSeenMessages(List<MessageSignature> entries) {
             this(p_249757_.readCollection(FriendlyByteBuf.<List<MessageSignature.Packed>>limitValue(ArrayList::new, 20), MessageSignature.Packed::read));
         }
 
-        public void write(FriendlyByteBuf p_250725_) {
-            p_250725_.writeCollection(this.entries, MessageSignature.Packed::write);
+        public void write(FriendlyByteBuf buffer) {
+            buffer.writeCollection(this.entries, MessageSignature.Packed::write);
         }
 
-        public Optional<LastSeenMessages> unpack(MessageSignatureCache p_253745_) {
+        public Optional<LastSeenMessages> unpack(MessageSignatureCache signatureCache) {
             List<MessageSignature> list = new ArrayList<>(this.entries.size());
 
             for (MessageSignature.Packed messagesignature$packed : this.entries) {
-                Optional<MessageSignature> optional = messagesignature$packed.unpack(p_253745_);
+                Optional<MessageSignature> optional = messagesignature$packed.unpack(signatureCache);
                 if (optional.isEmpty()) {
                     return Optional.empty();
                 }
@@ -59,9 +59,9 @@ public record LastSeenMessages(List<MessageSignature> entries) {
             this(p_242184_.readVarInt(), p_242184_.readFixedBitSet(20));
         }
 
-        public void write(FriendlyByteBuf p_242221_) {
-            p_242221_.writeVarInt(this.offset);
-            p_242221_.writeFixedBitSet(this.acknowledged, 20);
+        public void write(FriendlyByteBuf buffer) {
+            buffer.writeVarInt(this.offset);
+            buffer.writeFixedBitSet(this.acknowledged, 20);
         }
     }
 }

@@ -30,6 +30,9 @@ public class MerchantScreen extends AbstractContainerScreen<MerchantMenu> {
     private static final ResourceLocation TRADE_ARROW_OUT_OF_STOCK_SPRITE = ResourceLocation.withDefaultNamespace("container/villager/trade_arrow_out_of_stock");
     private static final ResourceLocation TRADE_ARROW_SPRITE = ResourceLocation.withDefaultNamespace("container/villager/trade_arrow");
     private static final ResourceLocation DISCOUNT_STRIKETHRUOGH_SPRITE = ResourceLocation.withDefaultNamespace("container/villager/discount_strikethrough");
+    /**
+     * The GUI texture for the villager merchant GUI.
+     */
     private static final ResourceLocation VILLAGER_LOCATION = ResourceLocation.withDefaultNamespace("textures/gui/container/villager.png");
     private static final int TEXTURE_WIDTH = 512;
     private static final int TEXTURE_HEIGHT = 256;
@@ -51,13 +54,16 @@ public class MerchantScreen extends AbstractContainerScreen<MerchantMenu> {
     private static final int SCROLL_BAR_START_X = 94;
     private static final Component TRADES_LABEL = Component.translatable("merchant.trades");
     private static final Component DEPRECATED_TOOLTIP = Component.translatable("merchant.deprecated");
+    /**
+     * The integer value corresponding to the currently selected merchant recipe.
+     */
     private int shopItem;
     private final MerchantScreen.TradeOfferButton[] tradeOfferButtons = new MerchantScreen.TradeOfferButton[7];
     int scrollOff;
     private boolean isDragging;
 
-    public MerchantScreen(MerchantMenu p_99123_, Inventory p_99124_, Component p_99125_) {
-        super(p_99123_, p_99124_, p_99125_);
+    public MerchantScreen(MerchantMenu menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title);
         this.imageWidth = 276;
         this.inventoryLabelX = 107;
     }
@@ -87,27 +93,27 @@ public class MerchantScreen extends AbstractContainerScreen<MerchantMenu> {
     }
 
     @Override
-    protected void renderLabels(GuiGraphics p_283337_, int p_282009_, int p_283691_) {
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         int i = this.menu.getTraderLevel();
         if (i > 0 && i <= 5 && this.menu.showProgressBar()) {
             Component component = Component.translatable("merchant.title", this.title, Component.translatable("merchant.level." + i));
             int j = this.font.width(component);
             int k = 49 + this.imageWidth / 2 - j / 2;
-            p_283337_.drawString(this.font, component, k, 6, 4210752, false);
+            guiGraphics.drawString(this.font, component, k, 6, 4210752, false);
         } else {
-            p_283337_.drawString(this.font, this.title, 49 + this.imageWidth / 2 - this.font.width(this.title) / 2, 6, 4210752, false);
+            guiGraphics.drawString(this.font, this.title, 49 + this.imageWidth / 2 - this.font.width(this.title) / 2, 6, 4210752, false);
         }
 
-        p_283337_.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 4210752, false);
+        guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 4210752, false);
         int l = this.font.width(TRADES_LABEL);
-        p_283337_.drawString(this.font, TRADES_LABEL, 5 - l / 2 + 48, 6, 4210752, false);
+        guiGraphics.drawString(this.font, TRADES_LABEL, 5 - l / 2 + 48, 6, 4210752, false);
     }
 
     @Override
-    protected void renderBg(GuiGraphics p_283072_, float p_281275_, int p_282312_, int p_282984_) {
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
-        p_283072_.blit(VILLAGER_LOCATION, i, j, 0, 0.0F, 0.0F, this.imageWidth, this.imageHeight, 512, 256);
+        guiGraphics.blit(VILLAGER_LOCATION, i, j, 0, 0.0F, 0.0F, this.imageWidth, this.imageHeight, 512, 256);
         MerchantOffers merchantoffers = this.menu.getOffers();
         if (!merchantoffers.isEmpty()) {
             int k = this.shopItem;
@@ -117,33 +123,33 @@ public class MerchantScreen extends AbstractContainerScreen<MerchantMenu> {
 
             MerchantOffer merchantoffer = merchantoffers.get(k);
             if (merchantoffer.isOutOfStock()) {
-                p_283072_.blitSprite(OUT_OF_STOCK_SPRITE, this.leftPos + 83 + 99, this.topPos + 35, 0, 28, 21);
+                guiGraphics.blitSprite(OUT_OF_STOCK_SPRITE, this.leftPos + 83 + 99, this.topPos + 35, 0, 28, 21);
             }
         }
     }
 
-    private void renderProgressBar(GuiGraphics p_281426_, int p_283008_, int p_283085_, MerchantOffer p_282094_) {
+    private void renderProgressBar(GuiGraphics guiGraphics, int posX, int posY, MerchantOffer merchantOffer) {
         int i = this.menu.getTraderLevel();
         int j = this.menu.getTraderXp();
         if (i < 5) {
-            p_281426_.blitSprite(EXPERIENCE_BAR_BACKGROUND_SPRITE, p_283008_ + 136, p_283085_ + 16, 0, 102, 5);
+            guiGraphics.blitSprite(EXPERIENCE_BAR_BACKGROUND_SPRITE, posX + 136, posY + 16, 0, 102, 5);
             int k = VillagerData.getMinXpPerLevel(i);
             if (j >= k && VillagerData.canLevelUp(i)) {
                 int l = 102;
                 float f = 102.0F / (float)(VillagerData.getMaxXpPerLevel(i) - k);
                 int i1 = Math.min(Mth.floor(f * (float)(j - k)), 102);
-                p_281426_.blitSprite(EXPERIENCE_BAR_CURRENT_SPRITE, 102, 5, 0, 0, p_283008_ + 136, p_283085_ + 16, 0, i1, 5);
+                guiGraphics.blitSprite(EXPERIENCE_BAR_CURRENT_SPRITE, 102, 5, 0, 0, posX + 136, posY + 16, 0, i1, 5);
                 int j1 = this.menu.getFutureTraderXp();
                 if (j1 > 0) {
                     int k1 = Math.min(Mth.floor((float)j1 * f), 102 - i1);
-                    p_281426_.blitSprite(EXPERIENCE_BAR_RESULT_SPRITE, 102, 5, i1, 0, p_283008_ + 136 + i1, p_283085_ + 16, 0, k1, 5);
+                    guiGraphics.blitSprite(EXPERIENCE_BAR_RESULT_SPRITE, 102, 5, i1, 0, posX + 136 + i1, posY + 16, 0, k1, 5);
                 }
             }
         }
     }
 
-    private void renderScroller(GuiGraphics p_283030_, int p_283154_, int p_281664_, MerchantOffers p_282877_) {
-        int i = p_282877_.size() + 1 - 7;
+    private void renderScroller(GuiGraphics guiGraphics, int posX, int posY, MerchantOffers merchantOffers) {
+        int i = merchantOffers.size() + 1 - 7;
         if (i > 1) {
             int j = 139 - (27 + (i - 1) * 139 / i);
             int k = 1 + j / i + 139 / i;
@@ -153,22 +159,30 @@ public class MerchantScreen extends AbstractContainerScreen<MerchantMenu> {
                 i1 = 113;
             }
 
-            p_283030_.blitSprite(SCROLLER_SPRITE, p_283154_ + 94, p_281664_ + 18 + i1, 0, 6, 27);
+            guiGraphics.blitSprite(SCROLLER_SPRITE, posX + 94, posY + 18 + i1, 0, 6, 27);
         } else {
-            p_283030_.blitSprite(SCROLLER_DISABLED_SPRITE, p_283154_ + 94, p_281664_ + 18, 0, 6, 27);
+            guiGraphics.blitSprite(SCROLLER_DISABLED_SPRITE, posX + 94, posY + 18, 0, 6, 27);
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283487_, int p_281994_, int p_282099_, float p_281815_) {
-        super.render(p_283487_, p_281994_, p_282099_, p_281815_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         MerchantOffers merchantoffers = this.menu.getOffers();
         if (!merchantoffers.isEmpty()) {
             int i = (this.width - this.imageWidth) / 2;
             int j = (this.height - this.imageHeight) / 2;
             int k = j + 16 + 1;
             int l = i + 5 + 5;
-            this.renderScroller(p_283487_, i, j, merchantoffers);
+            this.renderScroller(guiGraphics, i, j, merchantoffers);
             int i1 = 0;
 
             for (MerchantOffer merchantoffer : merchantoffers) {
@@ -177,19 +191,19 @@ public class MerchantScreen extends AbstractContainerScreen<MerchantMenu> {
                     ItemStack itemstack1 = merchantoffer.getCostA();
                     ItemStack itemstack2 = merchantoffer.getCostB();
                     ItemStack itemstack3 = merchantoffer.getResult();
-                    p_283487_.pose().pushPose();
-                    p_283487_.pose().translate(0.0F, 0.0F, 100.0F);
+                    guiGraphics.pose().pushPose();
+                    guiGraphics.pose().translate(0.0F, 0.0F, 100.0F);
                     int j1 = k + 2;
-                    this.renderAndDecorateCostA(p_283487_, itemstack1, itemstack, l, j1);
+                    this.renderAndDecorateCostA(guiGraphics, itemstack1, itemstack, l, j1);
                     if (!itemstack2.isEmpty()) {
-                        p_283487_.renderFakeItem(itemstack2, i + 5 + 35, j1);
-                        p_283487_.renderItemDecorations(this.font, itemstack2, i + 5 + 35, j1);
+                        guiGraphics.renderFakeItem(itemstack2, i + 5 + 35, j1);
+                        guiGraphics.renderItemDecorations(this.font, itemstack2, i + 5 + 35, j1);
                     }
 
-                    this.renderButtonArrows(p_283487_, merchantoffer, i, j1);
-                    p_283487_.renderFakeItem(itemstack3, i + 5 + 68, j1);
-                    p_283487_.renderItemDecorations(this.font, itemstack3, i + 5 + 68, j1);
-                    p_283487_.pose().popPose();
+                    this.renderButtonArrows(guiGraphics, merchantoffer, i, j1);
+                    guiGraphics.renderFakeItem(itemstack3, i + 5 + 68, j1);
+                    guiGraphics.renderItemDecorations(this.font, itemstack3, i + 5 + 68, j1);
+                    guiGraphics.pose().popPose();
                     k += 20;
                     i1++;
                 } else {
@@ -200,16 +214,16 @@ public class MerchantScreen extends AbstractContainerScreen<MerchantMenu> {
             int k1 = this.shopItem;
             MerchantOffer merchantoffer1 = merchantoffers.get(k1);
             if (this.menu.showProgressBar()) {
-                this.renderProgressBar(p_283487_, i, j, merchantoffer1);
+                this.renderProgressBar(guiGraphics, i, j, merchantoffer1);
             }
 
-            if (merchantoffer1.isOutOfStock() && this.isHovering(186, 35, 22, 21, (double)p_281994_, (double)p_282099_) && this.menu.canRestock()) {
-                p_283487_.renderTooltip(this.font, DEPRECATED_TOOLTIP, p_281994_, p_282099_);
+            if (merchantoffer1.isOutOfStock() && this.isHovering(186, 35, 22, 21, (double)mouseX, (double)mouseY) && this.menu.canRestock()) {
+                guiGraphics.renderTooltip(this.font, DEPRECATED_TOOLTIP, mouseX, mouseY);
             }
 
             for (MerchantScreen.TradeOfferButton merchantscreen$tradeofferbutton : this.tradeOfferButtons) {
                 if (merchantscreen$tradeofferbutton.isHoveredOrFocused()) {
-                    merchantscreen$tradeofferbutton.renderToolTip(p_283487_, p_281994_, p_282099_);
+                    merchantscreen$tradeofferbutton.renderToolTip(guiGraphics, mouseX, mouseY);
                 }
 
                 merchantscreen$tradeofferbutton.visible = merchantscreen$tradeofferbutton.index < this.menu.getOffers().size();
@@ -218,91 +232,111 @@ public class MerchantScreen extends AbstractContainerScreen<MerchantMenu> {
             RenderSystem.enableDepthTest();
         }
 
-        this.renderTooltip(p_283487_, p_281994_, p_282099_);
+        this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
-    private void renderButtonArrows(GuiGraphics p_283020_, MerchantOffer p_281926_, int p_282752_, int p_282179_) {
+    private void renderButtonArrows(GuiGraphics guiGraphics, MerchantOffer merchantOffers, int posX, int posY) {
         RenderSystem.enableBlend();
-        if (p_281926_.isOutOfStock()) {
-            p_283020_.blitSprite(TRADE_ARROW_OUT_OF_STOCK_SPRITE, p_282752_ + 5 + 35 + 20, p_282179_ + 3, 0, 10, 9);
+        if (merchantOffers.isOutOfStock()) {
+            guiGraphics.blitSprite(TRADE_ARROW_OUT_OF_STOCK_SPRITE, posX + 5 + 35 + 20, posY + 3, 0, 10, 9);
         } else {
-            p_283020_.blitSprite(TRADE_ARROW_SPRITE, p_282752_ + 5 + 35 + 20, p_282179_ + 3, 0, 10, 9);
+            guiGraphics.blitSprite(TRADE_ARROW_SPRITE, posX + 5 + 35 + 20, posY + 3, 0, 10, 9);
         }
     }
 
-    private void renderAndDecorateCostA(GuiGraphics p_281357_, ItemStack p_283466_, ItemStack p_282046_, int p_282403_, int p_283601_) {
-        p_281357_.renderFakeItem(p_283466_, p_282403_, p_283601_);
-        if (p_282046_.getCount() == p_283466_.getCount()) {
-            p_281357_.renderItemDecorations(this.font, p_283466_, p_282403_, p_283601_);
+    private void renderAndDecorateCostA(GuiGraphics guiGraphics, ItemStack realCost, ItemStack baseCost, int x, int y) {
+        guiGraphics.renderFakeItem(realCost, x, y);
+        if (baseCost.getCount() == realCost.getCount()) {
+            guiGraphics.renderItemDecorations(this.font, realCost, x, y);
         } else {
-            p_281357_.renderItemDecorations(this.font, p_282046_, p_282403_, p_283601_, p_282046_.getCount() == 1 ? "1" : null);
+            guiGraphics.renderItemDecorations(this.font, baseCost, x, y, baseCost.getCount() == 1 ? "1" : null);
             // Forge: fixes Forge-8806, code for count rendering taken from GuiGraphics#renderGuiItemDecorations
-            p_281357_.pose().pushPose();
-            p_281357_.pose().translate(0.0F, 0.0F, 200.0F);
-            String count = p_283466_.getCount() == 1 ? "1" : String.valueOf(p_283466_.getCount());
-            font.drawInBatch(count, (float) (p_282403_ + 14) + 19 - 2 - font.width(count), (float)p_283601_ + 6 + 3, 0xFFFFFF, true, p_281357_.pose().last().pose(), p_281357_.bufferSource(), net.minecraft.client.gui.Font.DisplayMode.NORMAL, 0, 15728880, false);
-            p_281357_.pose().popPose();
-            p_281357_.pose().pushPose();
-            p_281357_.pose().translate(0.0F, 0.0F, 300.0F);
-            p_281357_.blitSprite(DISCOUNT_STRIKETHRUOGH_SPRITE, p_282403_ + 7, p_283601_ + 12, 0, 9, 2);
-            p_281357_.pose().popPose();
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(0.0F, 0.0F, 200.0F);
+            String count = realCost.getCount() == 1 ? "1" : String.valueOf(realCost.getCount());
+            font.drawInBatch(count, (float) (x + 14) + 19 - 2 - font.width(count), (float)y + 6 + 3, 0xFFFFFF, true, guiGraphics.pose().last().pose(), guiGraphics.bufferSource(), net.minecraft.client.gui.Font.DisplayMode.NORMAL, 0, 15728880, false);
+            guiGraphics.pose().popPose();
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(0.0F, 0.0F, 300.0F);
+            guiGraphics.blitSprite(DISCOUNT_STRIKETHRUOGH_SPRITE, x + 7, y + 12, 0, 9, 2);
+            guiGraphics.pose().popPose();
         }
     }
 
-    private boolean canScroll(int p_99141_) {
-        return p_99141_ > 7;
+    private boolean canScroll(int numOffers) {
+        return numOffers > 7;
     }
 
     @Override
-    public boolean mouseScrolled(double p_99127_, double p_99128_, double p_99129_, double p_295610_) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         int i = this.menu.getOffers().size();
         if (this.canScroll(i)) {
             int j = i - 7;
-            this.scrollOff = Mth.clamp((int)((double)this.scrollOff - p_295610_), 0, j);
+            this.scrollOff = Mth.clamp((int)((double)this.scrollOff - scrollY), 0, j);
         }
 
         return true;
     }
 
+    /**
+     * Called when the mouse is dragged within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that is being dragged.
+     * @param dragX  the X distance of the drag.
+     * @param dragY  the Y distance of the drag.
+     */
     @Override
-    public boolean mouseDragged(double p_99135_, double p_99136_, int p_99137_, double p_99138_, double p_99139_) {
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         int i = this.menu.getOffers().size();
         if (this.isDragging) {
             int j = this.topPos + 18;
             int k = j + 139;
             int l = i - 7;
-            float f = ((float)p_99136_ - (float)j - 13.5F) / ((float)(k - j) - 27.0F);
+            float f = ((float)mouseY - (float)j - 13.5F) / ((float)(k - j) - 27.0F);
             f = f * (float)l + 0.5F;
             this.scrollOff = Mth.clamp((int)f, 0, l);
             return true;
         } else {
-            return super.mouseDragged(p_99135_, p_99136_, p_99137_, p_99138_, p_99139_);
+            return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
         }
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    public boolean mouseClicked(double p_99131_, double p_99132_, int p_99133_) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         this.isDragging = false;
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
         if (this.canScroll(this.menu.getOffers().size())
-            && p_99131_ > (double)(i + 94)
-            && p_99131_ < (double)(i + 94 + 6)
-            && p_99132_ > (double)(j + 18)
-            && p_99132_ <= (double)(j + 18 + 139 + 1)) {
+            && mouseX > (double)(i + 94)
+            && mouseX < (double)(i + 94 + 6)
+            && mouseY > (double)(j + 18)
+            && mouseY <= (double)(j + 18 + 139 + 1)) {
             this.isDragging = true;
         }
 
-        return super.mouseClicked(p_99131_, p_99132_, p_99133_);
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     @OnlyIn(Dist.CLIENT)
     class TradeOfferButton extends Button {
         final int index;
 
-        public TradeOfferButton(int p_99205_, int p_99206_, int p_99207_, Button.OnPress p_99208_) {
-            super(p_99205_, p_99206_, 88, 20, CommonComponents.EMPTY, p_99208_, DEFAULT_NARRATION);
-            this.index = p_99207_;
+        public TradeOfferButton(int x, int y, int index, Button.OnPress onPress) {
+            super(x, y, 88, 20, CommonComponents.EMPTY, onPress, DEFAULT_NARRATION);
+            this.index = index;
             this.visible = false;
         }
 
@@ -310,19 +344,19 @@ public class MerchantScreen extends AbstractContainerScreen<MerchantMenu> {
             return this.index;
         }
 
-        public void renderToolTip(GuiGraphics p_281313_, int p_283342_, int p_283060_) {
+        public void renderToolTip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
             if (this.isHovered && MerchantScreen.this.menu.getOffers().size() > this.index + MerchantScreen.this.scrollOff) {
-                if (p_283342_ < this.getX() + 20) {
+                if (mouseX < this.getX() + 20) {
                     ItemStack itemstack = MerchantScreen.this.menu.getOffers().get(this.index + MerchantScreen.this.scrollOff).getCostA();
-                    p_281313_.renderTooltip(MerchantScreen.this.font, itemstack, p_283342_, p_283060_);
-                } else if (p_283342_ < this.getX() + 50 && p_283342_ > this.getX() + 30) {
+                    guiGraphics.renderTooltip(MerchantScreen.this.font, itemstack, mouseX, mouseY);
+                } else if (mouseX < this.getX() + 50 && mouseX > this.getX() + 30) {
                     ItemStack itemstack2 = MerchantScreen.this.menu.getOffers().get(this.index + MerchantScreen.this.scrollOff).getCostB();
                     if (!itemstack2.isEmpty()) {
-                        p_281313_.renderTooltip(MerchantScreen.this.font, itemstack2, p_283342_, p_283060_);
+                        guiGraphics.renderTooltip(MerchantScreen.this.font, itemstack2, mouseX, mouseY);
                     }
-                } else if (p_283342_ > this.getX() + 65) {
+                } else if (mouseX > this.getX() + 65) {
                     ItemStack itemstack1 = MerchantScreen.this.menu.getOffers().get(this.index + MerchantScreen.this.scrollOff).getResult();
-                    p_281313_.renderTooltip(MerchantScreen.this.font, itemstack1, p_283342_, p_283060_);
+                    guiGraphics.renderTooltip(MerchantScreen.this.font, itemstack1, mouseX, mouseY);
                 }
             }
         }

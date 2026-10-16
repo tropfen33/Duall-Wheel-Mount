@@ -15,11 +15,11 @@ public record Services(
 ) {
     private static final String USERID_CACHE_FILE = "usercache.json";
 
-    public static Services create(YggdrasilAuthenticationService p_214345_, File p_214346_) {
-        MinecraftSessionService minecraftsessionservice = p_214345_.createMinecraftSessionService();
-        GameProfileRepository gameprofilerepository = p_214345_.createProfileRepository();
-        GameProfileCache gameprofilecache = new GameProfileCache(gameprofilerepository, new File(p_214346_, "usercache.json"));
-        return new Services(minecraftsessionservice, p_214345_.getServicesKeySet(), gameprofilerepository, gameprofilecache);
+    public static Services create(YggdrasilAuthenticationService authenticationService, File profileRepository) {
+        MinecraftSessionService minecraftsessionservice = authenticationService.createMinecraftSessionService();
+        GameProfileRepository gameprofilerepository = authenticationService.createProfileRepository();
+        GameProfileCache gameprofilecache = new GameProfileCache(gameprofilerepository, new File(profileRepository, "usercache.json"));
+        return new Services(minecraftsessionservice, authenticationService.getServicesKeySet(), gameprofilerepository, gameprofilecache);
     }
 
     @Nullable

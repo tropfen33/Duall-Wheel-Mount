@@ -180,6 +180,9 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     protected int enchantmentSeed;
     protected final float defaultFlySpeed = 0.02F;
     private int lastLevelUpTime;
+    /**
+     * The player's unique game profile
+     */
     private final GameProfile gameProfile;
     private boolean reducedDebugInfo;
     private ItemStack lastItemInMainHand = ItemStack.EMPTY;
@@ -199,26 +202,26 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     @Nullable private Pose forcedPose;
     private long lastDayTimeTick = -1L; // Neo: Used to limit TIME_SINCE_REST increases when day length is non-standard. No need to persist, at most Phantoms will spawn one tick too early for each save/load cycle.
 
-    public Player(Level p_250508_, BlockPos p_250289_, float p_251702_, GameProfile p_252153_) {
-        super(EntityType.PLAYER, p_250508_);
-        this.setUUID(p_252153_.getId());
-        this.gameProfile = p_252153_;
-        this.inventoryMenu = new InventoryMenu(this.inventory, !p_250508_.isClientSide, this);
+    public Player(Level level, BlockPos pos, float yRot, GameProfile gameProfile) {
+        super(EntityType.PLAYER, level);
+        this.setUUID(gameProfile.getId());
+        this.gameProfile = gameProfile;
+        this.inventoryMenu = new InventoryMenu(this.inventory, !level.isClientSide, this);
         this.containerMenu = this.inventoryMenu;
-        this.moveTo((double)p_250289_.getX() + 0.5, (double)(p_250289_.getY() + 1), (double)p_250289_.getZ() + 0.5, p_251702_, 0.0F);
+        this.moveTo((double)pos.getX() + 0.5, (double)(pos.getY() + 1), (double)pos.getZ() + 0.5, yRot, 0.0F);
         this.rotOffs = 180.0F;
     }
 
-    public boolean blockActionRestricted(Level p_36188_, BlockPos p_36189_, GameType p_36190_) {
-        if (!p_36190_.isBlockPlacingRestricted()) {
+    public boolean blockActionRestricted(Level level, BlockPos pos, GameType gameMode) {
+        if (!gameMode.isBlockPlacingRestricted()) {
             return false;
-        } else if (p_36190_ == GameType.SPECTATOR) {
+        } else if (gameMode == GameType.SPECTATOR) {
             return true;
         } else if (this.mayBuild()) {
             return false;
         } else {
             ItemStack itemstack = this.getMainHandItem();
-            return itemstack.isEmpty() || !itemstack.canBreakBlockInAdventureMode(new BlockInWorld(p_36188_, p_36189_, false));
+            return itemstack.isEmpty() || !itemstack.canBreakBlockInAdventureMode(new BlockInWorld(level, pos, false));
         }
     }
 
@@ -239,14 +242,14 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326117_) {
-        super.defineSynchedData(p_326117_);
-        p_326117_.define(DATA_PLAYER_ABSORPTION_ID, 0.0F);
-        p_326117_.define(DATA_SCORE_ID, 0);
-        p_326117_.define(DATA_PLAYER_MODE_CUSTOMISATION, (byte)0);
-        p_326117_.define(DATA_PLAYER_MAIN_HAND, (byte)DEFAULT_MAIN_HAND.getId());
-        p_326117_.define(DATA_SHOULDER_LEFT, new CompoundTag());
-        p_326117_.define(DATA_SHOULDER_RIGHT, new CompoundTag());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_PLAYER_ABSORPTION_ID, 0.0F);
+        builder.define(DATA_SCORE_ID, 0);
+        builder.define(DATA_PLAYER_MODE_CUSTOMISATION, (byte)0);
+        builder.define(DATA_PLAYER_MAIN_HAND, (byte)DEFAULT_MAIN_HAND.getId());
+        builder.define(DATA_SHOULDER_LEFT, new CompoundTag());
+        builder.define(DATA_SHOULDER_RIGHT, new CompoundTag());
     }
 
     @Override
@@ -442,8 +445,8 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         }
     }
 
-    protected boolean canPlayerFitWithinBlocksAndEntitiesWhen(Pose p_294172_) {
-        return this.level().noCollision(this, this.getDimensions(p_294172_).makeBoundingBox(this.position()).deflate(1.0E-7));
+    protected boolean canPlayerFitWithinBlocksAndEntitiesWhen(Pose pose) {
+        return this.level().noCollision(this, this.getDimensions(pose).makeBoundingBox(this.position()).deflate(1.0E-7));
     }
 
     @Override
@@ -467,11 +470,11 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    public void playSound(SoundEvent p_36137_, float p_36138_, float p_36139_) {
-        this.level().playSound(this, this.getX(), this.getY(), this.getZ(), p_36137_, this.getSoundSource(), p_36138_, p_36139_);
+    public void playSound(SoundEvent sound, float volume, float pitch) {
+        this.level().playSound(this, this.getX(), this.getY(), this.getZ(), sound, this.getSoundSource(), volume, pitch);
     }
 
-    public void playNotifySound(SoundEvent p_36140_, SoundSource p_36141_, float p_36142_, float p_36143_) {
+    public void playNotifySound(SoundEvent sound, SoundSource source, float volume, float pitch) {
     }
 
     @Override
@@ -484,16 +487,19 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return 20;
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @Override
-    public void handleEntityEvent(byte p_36120_) {
-        if (p_36120_ == 9) {
+    public void handleEntityEvent(byte id) {
+        if (id == 9) {
             this.completeUsingItem();
-        } else if (p_36120_ == 23) {
+        } else if (id == 23) {
             this.reducedDebugInfo = false;
-        } else if (p_36120_ == 22) {
+        } else if (id == 22) {
             this.reducedDebugInfo = true;
         } else {
-            super.handleEntityEvent(p_36120_);
+            super.handleEntityEvent(id);
         }
     }
 
@@ -586,9 +592,9 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         }
     }
 
-    private void playShoulderEntityAmbientSound(@Nullable CompoundTag p_36368_) {
-        if (p_36368_ != null && (!p_36368_.contains("Silent") || !p_36368_.getBoolean("Silent")) && this.level().random.nextInt(200) == 0) {
-            String s = p_36368_.getString("id");
+    private void playShoulderEntityAmbientSound(@Nullable CompoundTag entityCompound) {
+        if (entityCompound != null && (!entityCompound.contains("Silent") || !entityCompound.getBoolean("Silent")) && this.level().random.nextInt(200) == 0) {
+            String s = entityCompound.getString("id");
             EntityType.byString(s)
                 .filter(p_36280_ -> p_36280_ == EntityType.PARROT)
                 .ifPresent(
@@ -611,27 +617,36 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         }
     }
 
-    private void touch(Entity p_36278_) {
-        p_36278_.playerTouch(this);
+    private void touch(Entity entity) {
+        entity.playerTouch(this);
     }
 
     public int getScore() {
         return this.entityData.get(DATA_SCORE_ID);
     }
 
-    public void setScore(int p_36398_) {
-        this.entityData.set(DATA_SCORE_ID, p_36398_);
+    /**
+     * Set player's score
+     */
+    public void setScore(int score) {
+        this.entityData.set(DATA_SCORE_ID, score);
     }
 
-    public void increaseScore(int p_36402_) {
+    /**
+     * Add to player's score
+     */
+    public void increaseScore(int score) {
         int i = this.getScore();
-        this.entityData.set(DATA_SCORE_ID, i + p_36402_);
+        this.entityData.set(DATA_SCORE_ID, i + score);
     }
 
-    public void startAutoSpinAttack(int p_204080_, float p_346316_, ItemStack p_345401_) {
-        this.autoSpinAttackTicks = p_204080_;
-        this.autoSpinAttackDmg = p_346316_;
-        this.autoSpinAttackItemStack = p_345401_;
+    /**
+     * Starts the attack used by the Riptide enchantment.
+     */
+    public void startAutoSpinAttack(int ticks, float damage, ItemStack itemStack) {
+        this.autoSpinAttackTicks = ticks;
+        this.autoSpinAttackDmg = damage;
+        this.autoSpinAttackItemStack = itemStack;
         if (!this.level().isClientSide) {
             this.removeEntitiesOnShoulder();
             this.setLivingEntityFlag(4, true);
@@ -644,16 +659,19 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return this.isAutoSpinAttack() && this.autoSpinAttackItemStack != null ? this.autoSpinAttackItemStack : super.getWeaponItem();
     }
 
+    /**
+     * Called when the mob's health reaches 0.
+     */
     @Override
-    public void die(DamageSource p_36152_) {
-        if (net.neoforged.neoforge.common.CommonHooks.onLivingDeath(this, p_36152_)) return;
-        super.die(p_36152_);
+    public void die(DamageSource cause) {
+        if (net.neoforged.neoforge.common.CommonHooks.onLivingDeath(this, cause)) return;
+        super.die(cause);
         this.reapplyPosition();
         if (!this.isSpectator() && this.level() instanceof ServerLevel serverlevel) {
-            this.dropAllDeathLoot(serverlevel, p_36152_);
+            this.dropAllDeathLoot(serverlevel, cause);
         }
 
-        if (p_36152_ != null) {
+        if (cause != null) {
             this.setDeltaMovement(
                 (double)(-Mth.cos((this.getHurtDir() + this.getYRot()) * (float) (Math.PI / 180.0)) * 0.1F),
                 0.1F,
@@ -690,8 +708,8 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_36310_) {
-        return p_36310_.type().effects().sound();
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return damageSource.type().effects().sound();
     }
 
     @Override
@@ -699,14 +717,20 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return SoundEvents.PLAYER_DEATH;
     }
 
+    /**
+     * Drops an item into the world.
+     */
     @Nullable
-    public ItemEntity drop(ItemStack p_36177_, boolean p_36178_) {
-        return net.neoforged.neoforge.common.CommonHooks.onPlayerTossEvent(this, p_36177_, p_36178_);
+    public ItemEntity drop(ItemStack itemStack, boolean includeThrowerName) {
+        return net.neoforged.neoforge.common.CommonHooks.onPlayerTossEvent(this, itemStack, includeThrowerName);
     }
 
+    /**
+     * Creates and drops the provided item. Depending on the dropAround, it will drop the item around the player, instead of dropping the item from where the player is pointing at. Likewise, if includeThrowerName is true, the dropped item entity will have the thrower set as the player.
+     */
     @Nullable
-    public ItemEntity drop(ItemStack p_36179_, boolean p_36180_, boolean p_36181_) {
-        if (p_36179_.isEmpty()) {
+    public ItemEntity drop(ItemStack droppedItem, boolean dropAround, boolean includeThrowerName) {
+        if (droppedItem.isEmpty()) {
             return null;
         } else {
             if (this.level().isClientSide) {
@@ -714,13 +738,13 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
             }
 
             double d0 = this.getEyeY() - 0.3F;
-            ItemEntity itementity = new ItemEntity(this.level(), this.getX(), d0, this.getZ(), p_36179_);
+            ItemEntity itementity = new ItemEntity(this.level(), this.getX(), d0, this.getZ(), droppedItem);
             itementity.setPickUpDelay(40);
-            if (p_36181_) {
+            if (includeThrowerName) {
                 itementity.setThrower(this);
             }
 
-            if (p_36180_) {
+            if (dropAround) {
                 float f = this.random.nextFloat() * 0.5F;
                 float f1 = this.random.nextFloat() * (float) (Math.PI * 2);
                 itementity.setDeltaMovement((double)(-Mth.sin(f1) * f), 0.2F, (double)(Mth.cos(f1) * f));
@@ -744,8 +768,8 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Deprecated //Use location sensitive version below
-    public float getDestroySpeed(BlockState p_36282_) {
-        return getDigSpeed(p_36282_, null);
+    public float getDestroySpeed(BlockState state) {
+        return getDigSpeed(state, null);
     }
 
     public float getDigSpeed(BlockState p_36282_, @Nullable BlockPos pos) {
@@ -781,115 +805,124 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Deprecated // Neo: use position sensitive version below
-    public boolean hasCorrectToolForDrops(BlockState p_36299_) {
-        return !p_36299_.requiresCorrectToolForDrops() || this.inventory.getSelected().isCorrectToolForDrops(p_36299_);
+    public boolean hasCorrectToolForDrops(BlockState state) {
+        return !state.requiresCorrectToolForDrops() || this.inventory.getSelected().isCorrectToolForDrops(state);
     }
 
-    public boolean hasCorrectToolForDrops(BlockState state, Level level, BlockPos pos) {
-        return net.neoforged.neoforge.event.EventHooks.doPlayerHarvestCheck(this, state, level, pos);
+    public boolean hasCorrectToolForDrops(BlockState p_state, Level level, BlockPos pos) {
+        return net.neoforged.neoforge.event.EventHooks.doPlayerHarvestCheck(this, p_state, level, pos);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_36215_) {
-        super.readAdditionalSaveData(p_36215_);
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
         this.setUUID(this.gameProfile.getId());
-        ListTag listtag = p_36215_.getList("Inventory", 10);
+        ListTag listtag = compound.getList("Inventory", 10);
         this.inventory.load(listtag);
-        this.inventory.selected = p_36215_.getInt("SelectedItemSlot");
-        this.sleepCounter = p_36215_.getShort("SleepTimer");
-        this.experienceProgress = p_36215_.getFloat("XpP");
-        this.experienceLevel = p_36215_.getInt("XpLevel");
-        this.totalExperience = p_36215_.getInt("XpTotal");
-        this.enchantmentSeed = p_36215_.getInt("XpSeed");
+        this.inventory.selected = compound.getInt("SelectedItemSlot");
+        this.sleepCounter = compound.getShort("SleepTimer");
+        this.experienceProgress = compound.getFloat("XpP");
+        this.experienceLevel = compound.getInt("XpLevel");
+        this.totalExperience = compound.getInt("XpTotal");
+        this.enchantmentSeed = compound.getInt("XpSeed");
         if (this.enchantmentSeed == 0) {
             this.enchantmentSeed = this.random.nextInt();
         }
 
-        this.setScore(p_36215_.getInt("Score"));
-        this.foodData.readAdditionalSaveData(p_36215_);
-        this.abilities.loadSaveData(p_36215_);
+        this.setScore(compound.getInt("Score"));
+        this.foodData.readAdditionalSaveData(compound);
+        this.abilities.loadSaveData(compound);
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double)this.abilities.getWalkingSpeed());
-        if (p_36215_.contains("EnderItems", 9)) {
-            this.enderChestInventory.fromTag(p_36215_.getList("EnderItems", 10), this.registryAccess());
+        if (compound.contains("EnderItems", 9)) {
+            this.enderChestInventory.fromTag(compound.getList("EnderItems", 10), this.registryAccess());
         }
 
-        if (p_36215_.contains("ShoulderEntityLeft", 10)) {
-            this.setShoulderEntityLeft(p_36215_.getCompound("ShoulderEntityLeft"));
+        if (compound.contains("ShoulderEntityLeft", 10)) {
+            this.setShoulderEntityLeft(compound.getCompound("ShoulderEntityLeft"));
         }
 
-        if (p_36215_.contains("ShoulderEntityRight", 10)) {
-            this.setShoulderEntityRight(p_36215_.getCompound("ShoulderEntityRight"));
+        if (compound.contains("ShoulderEntityRight", 10)) {
+            this.setShoulderEntityRight(compound.getCompound("ShoulderEntityRight"));
         }
 
-        if (p_36215_.contains("LastDeathLocation", 10)) {
-            this.setLastDeathLocation(GlobalPos.CODEC.parse(NbtOps.INSTANCE, p_36215_.get("LastDeathLocation")).resultOrPartial(LOGGER::error));
+        if (compound.contains("LastDeathLocation", 10)) {
+            this.setLastDeathLocation(GlobalPos.CODEC.parse(NbtOps.INSTANCE, compound.get("LastDeathLocation")).resultOrPartial(LOGGER::error));
         }
 
-        if (p_36215_.contains("current_explosion_impact_pos", 9)) {
+        if (compound.contains("current_explosion_impact_pos", 9)) {
             Vec3.CODEC
-                .parse(NbtOps.INSTANCE, p_36215_.get("current_explosion_impact_pos"))
+                .parse(NbtOps.INSTANCE, compound.get("current_explosion_impact_pos"))
                 .resultOrPartial(LOGGER::error)
                 .ifPresent(p_335272_ -> this.currentImpulseImpactPos = p_335272_);
         }
 
-        this.ignoreFallDamageFromCurrentImpulse = p_36215_.getBoolean("ignore_fall_damage_from_current_explosion");
-        this.currentImpulseContextResetGraceTime = p_36215_.getInt("current_impulse_context_reset_grace_time");
+        this.ignoreFallDamageFromCurrentImpulse = compound.getBoolean("ignore_fall_damage_from_current_explosion");
+        this.currentImpulseContextResetGraceTime = compound.getInt("current_impulse_context_reset_grace_time");
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_36265_) {
-        super.addAdditionalSaveData(p_36265_);
-        NbtUtils.addCurrentDataVersion(p_36265_);
-        p_36265_.put("Inventory", this.inventory.save(new ListTag()));
-        p_36265_.putInt("SelectedItemSlot", this.inventory.selected);
-        p_36265_.putShort("SleepTimer", (short)this.sleepCounter);
-        p_36265_.putFloat("XpP", this.experienceProgress);
-        p_36265_.putInt("XpLevel", this.experienceLevel);
-        p_36265_.putInt("XpTotal", this.totalExperience);
-        p_36265_.putInt("XpSeed", this.enchantmentSeed);
-        p_36265_.putInt("Score", this.getScore());
-        this.foodData.addAdditionalSaveData(p_36265_);
-        this.abilities.addSaveData(p_36265_);
-        p_36265_.put("EnderItems", this.enderChestInventory.createTag(this.registryAccess()));
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        NbtUtils.addCurrentDataVersion(compound);
+        compound.put("Inventory", this.inventory.save(new ListTag()));
+        compound.putInt("SelectedItemSlot", this.inventory.selected);
+        compound.putShort("SleepTimer", (short)this.sleepCounter);
+        compound.putFloat("XpP", this.experienceProgress);
+        compound.putInt("XpLevel", this.experienceLevel);
+        compound.putInt("XpTotal", this.totalExperience);
+        compound.putInt("XpSeed", this.enchantmentSeed);
+        compound.putInt("Score", this.getScore());
+        this.foodData.addAdditionalSaveData(compound);
+        this.abilities.addSaveData(compound);
+        compound.put("EnderItems", this.enderChestInventory.createTag(this.registryAccess()));
         if (!this.getShoulderEntityLeft().isEmpty()) {
-            p_36265_.put("ShoulderEntityLeft", this.getShoulderEntityLeft());
+            compound.put("ShoulderEntityLeft", this.getShoulderEntityLeft());
         }
 
         if (!this.getShoulderEntityRight().isEmpty()) {
-            p_36265_.put("ShoulderEntityRight", this.getShoulderEntityRight());
+            compound.put("ShoulderEntityRight", this.getShoulderEntityRight());
         }
 
         this.getLastDeathLocation()
             .flatMap(p_337878_ -> GlobalPos.CODEC.encodeStart(NbtOps.INSTANCE, p_337878_).resultOrPartial(LOGGER::error))
-            .ifPresent(p_219756_ -> p_36265_.put("LastDeathLocation", p_219756_));
+            .ifPresent(p_219756_ -> compound.put("LastDeathLocation", p_219756_));
         if (this.currentImpulseImpactPos != null) {
-            p_36265_.put("current_explosion_impact_pos", Vec3.CODEC.encodeStart(NbtOps.INSTANCE, this.currentImpulseImpactPos).getOrThrow());
+            compound.put("current_explosion_impact_pos", Vec3.CODEC.encodeStart(NbtOps.INSTANCE, this.currentImpulseImpactPos).getOrThrow());
         }
 
-        p_36265_.putBoolean("ignore_fall_damage_from_current_explosion", this.ignoreFallDamageFromCurrentImpulse);
-        p_36265_.putInt("current_impulse_context_reset_grace_time", this.currentImpulseContextResetGraceTime);
+        compound.putBoolean("ignore_fall_damage_from_current_explosion", this.ignoreFallDamageFromCurrentImpulse);
+        compound.putInt("current_impulse_context_reset_grace_time", this.currentImpulseContextResetGraceTime);
     }
 
+    /**
+     * Returns whether this Entity is invulnerable to the given DamageSource.
+     */
     @Override
-    public boolean isInvulnerableTo(DamageSource p_36249_) {
-        if (super.isInvulnerableTo(p_36249_)) {
+    public boolean isInvulnerableTo(DamageSource source) {
+        if (super.isInvulnerableTo(source)) {
             return true;
-        } else if (p_36249_.is(DamageTypeTags.IS_DROWNING)) {
+        } else if (source.is(DamageTypeTags.IS_DROWNING)) {
             return !this.level().getGameRules().getBoolean(GameRules.RULE_DROWNING_DAMAGE);
-        } else if (p_36249_.is(DamageTypeTags.IS_FALL)) {
+        } else if (source.is(DamageTypeTags.IS_FALL)) {
             return !this.level().getGameRules().getBoolean(GameRules.RULE_FALL_DAMAGE);
-        } else if (p_36249_.is(DamageTypeTags.IS_FIRE)) {
+        } else if (source.is(DamageTypeTags.IS_FIRE)) {
             return !this.level().getGameRules().getBoolean(GameRules.RULE_FIRE_DAMAGE);
         } else {
-            return p_36249_.is(DamageTypeTags.IS_FREEZING) ? !this.level().getGameRules().getBoolean(GameRules.RULE_FREEZE_DAMAGE) : false;
+            return source.is(DamageTypeTags.IS_FREEZING) ? !this.level().getGameRules().getBoolean(GameRules.RULE_FREEZE_DAMAGE) : false;
         }
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_36154_, float p_36155_) {
-        if (this.isInvulnerableTo(p_36154_)) {
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isInvulnerableTo(source)) {
             return false;
-        } else if (this.abilities.invulnerable && !p_36154_.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+        } else if (this.abilities.invulnerable && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return false;
         } else {
             this.noActionTime = 0;
@@ -900,31 +933,31 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
                     this.removeEntitiesOnShoulder();
                 }
 
-                p_36155_ = Math.max(0.0F, p_36154_.type().scaling().getScalingFunction().scaleDamage(p_36154_, this, p_36155_, this.level().getDifficulty()));
+                amount = Math.max(0.0F, source.type().scaling().getScalingFunction().scaleDamage(source, this, amount, this.level().getDifficulty()));
 
-                if (false && p_36154_.scalesWithDifficulty()) {
+                if (false && source.scalesWithDifficulty()) {
                     if (this.level().getDifficulty() == Difficulty.PEACEFUL) {
-                        p_36155_ = 0.0F;
+                        amount = 0.0F;
                     }
 
                     if (this.level().getDifficulty() == Difficulty.EASY) {
-                        p_36155_ = Math.min(p_36155_ / 2.0F + 1.0F, p_36155_);
+                        amount = Math.min(amount / 2.0F + 1.0F, amount);
                     }
 
                     if (this.level().getDifficulty() == Difficulty.HARD) {
-                        p_36155_ = p_36155_ * 3.0F / 2.0F;
+                        amount = amount * 3.0F / 2.0F;
                     }
                 }
 
-                return p_36155_ == 0.0F ? false : super.hurt(p_36154_, p_36155_);
+                return amount == 0.0F ? false : super.hurt(source, amount);
             }
         }
     }
 
     @Override
-    protected void blockUsingShield(LivingEntity p_36295_) {
-        super.blockUsingShield(p_36295_);
-        if (p_36295_.canDisableShield()) {
+    protected void blockUsingShield(LivingEntity entity) {
+        super.blockUsingShield(entity);
+        if (entity.canDisableShield()) {
             this.disableShield();
         }
     }
@@ -934,9 +967,9 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return !this.getAbilities().invulnerable && super.canBeSeenAsEnemy();
     }
 
-    public boolean canHarmPlayer(Player p_36169_) {
+    public boolean canHarmPlayer(Player other) {
         Team team = this.getTeam();
-        Team team1 = p_36169_.getTeam();
+        Team team1 = other.getTeam();
         if (team == null) {
             return true;
         } else {
@@ -945,24 +978,24 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    protected void hurtArmor(DamageSource p_36251_, float p_36252_) {
-        this.doHurtEquipment(p_36251_, p_36252_, new EquipmentSlot[]{EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD});
+    protected void hurtArmor(DamageSource damageSource, float damage) {
+        this.doHurtEquipment(damageSource, damage, new EquipmentSlot[]{EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD});
     }
 
     @Override
-    protected void hurtHelmet(DamageSource p_150103_, float p_150104_) {
-        this.doHurtEquipment(p_150103_, p_150104_, new EquipmentSlot[]{EquipmentSlot.HEAD});
+    protected void hurtHelmet(DamageSource damageSource, float damageAmount) {
+        this.doHurtEquipment(damageSource, damageAmount, new EquipmentSlot[]{EquipmentSlot.HEAD});
     }
 
     @Override
-    protected void hurtCurrentlyUsedShield(float p_36383_) {
+    protected void hurtCurrentlyUsedShield(float damage) {
         if (this.useItem.canPerformAction(net.neoforged.neoforge.common.ItemAbilities.SHIELD_BLOCK)) {
             if (!this.level().isClientSide) {
                 this.awardStat(Stats.ITEM_USED.get(this.useItem.getItem()));
             }
 
-            if (p_36383_ >= 3.0F) {
-                int i = 1 + Mth.floor(p_36383_);
+            if (damage >= 3.0F) {
+                int i = 1 + Mth.floor(damage);
                 InteractionHand interactionhand = this.getUsedItemHand();
                 if (this.level() instanceof ServerLevel serverlevel && !hasInfiniteMaterials()) {
                     this.useItem.hurtAndBreak(i, serverlevel, this, item -> {
@@ -985,11 +1018,14 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         }
     }
 
+    /**
+     * Deals damage to the entity. This will take the armor of the entity into consideration before damaging the health bar.
+     */
     @Override
-    protected void actuallyHurt(DamageSource p_36312_, float p_36313_) {
-        if (!this.isInvulnerableTo(p_36312_)) {
-            this.damageContainers.peek().setReduction(net.neoforged.neoforge.common.damagesource.DamageContainer.Reduction.ARMOR, this.damageContainers.peek().getNewDamage() - this.getDamageAfterArmorAbsorb(p_36312_, this.damageContainers.peek().getNewDamage()));
-            this.getDamageAfterMagicAbsorb(p_36312_, this.damageContainers.peek().getNewDamage());
+    protected void actuallyHurt(DamageSource damageSrc, float damageAmount) {
+        if (!this.isInvulnerableTo(damageSrc)) {
+            this.damageContainers.peek().setReduction(net.neoforged.neoforge.common.damagesource.DamageContainer.Reduction.ARMOR, this.damageContainers.peek().getNewDamage() - this.getDamageAfterArmorAbsorb(damageSrc, this.damageContainers.peek().getNewDamage()));
+            this.getDamageAfterMagicAbsorb(damageSrc, this.damageContainers.peek().getNewDamage());
             float damage = net.neoforged.neoforge.common.CommonHooks.onLivingDamagePre(this, this.damageContainers.peek());
             this.damageContainers.peek().setReduction(net.neoforged.neoforge.common.damagesource.DamageContainer.Reduction.ABSORPTION, Math.min(this.getAbsorptionAmount(), damage));
             float absorbed = Math.min(damage, this.damageContainers.peek().getReduction(net.neoforged.neoforge.common.damagesource.DamageContainer.Reduction.ABSORPTION));
@@ -1001,8 +1037,8 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
             }
 
             if (f1 != 0.0F) {
-                this.causeFoodExhaustion(p_36312_.getFoodExhaustion());
-                this.getCombatTracker().recordDamage(p_36312_, f1);
+                this.causeFoodExhaustion(damageSrc.getFoodExhaustion());
+                this.getCombatTracker().recordDamage(damageSrc, f1);
                 this.setHealth(this.getHealth() - f1);
                 if (f1 < 3.4028235E37F) {
                     this.awardStat(Stats.DAMAGE_TAKEN, Math.round(f1 * 10.0F));
@@ -1019,68 +1055,68 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return false;
     }
 
-    public void openTextEdit(SignBlockEntity p_36193_, boolean p_277837_) {
+    public void openTextEdit(SignBlockEntity signEntity, boolean isFrontText) {
     }
 
-    public void openMinecartCommandBlock(BaseCommandBlock p_36182_) {
+    public void openMinecartCommandBlock(BaseCommandBlock commandEntity) {
     }
 
-    public void openCommandBlock(CommandBlockEntity p_36191_) {
+    public void openCommandBlock(CommandBlockEntity commandBlockEntity) {
     }
 
-    public void openStructureBlock(StructureBlockEntity p_36194_) {
+    public void openStructureBlock(StructureBlockEntity structureEntity) {
     }
 
-    public void openJigsawBlock(JigsawBlockEntity p_36192_) {
+    public void openJigsawBlock(JigsawBlockEntity jigsawBlockEntity) {
     }
 
-    public void openHorseInventory(AbstractHorse p_36167_, Container p_36168_) {
+    public void openHorseInventory(AbstractHorse horse, Container inventory) {
     }
 
-    public OptionalInt openMenu(@Nullable MenuProvider p_36150_) {
+    public OptionalInt openMenu(@Nullable MenuProvider menu) {
         return OptionalInt.empty();
     }
 
-    public void sendMerchantOffers(int p_36121_, MerchantOffers p_36122_, int p_36123_, int p_36124_, boolean p_36125_, boolean p_36126_) {
+    public void sendMerchantOffers(int containerId, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
     }
 
-    public void openItemGui(ItemStack p_36174_, InteractionHand p_36175_) {
+    public void openItemGui(ItemStack stack, InteractionHand hand) {
     }
 
-    public InteractionResult interactOn(Entity p_36158_, InteractionHand p_36159_) {
+    public InteractionResult interactOn(Entity entityToInteractOn, InteractionHand hand) {
         if (this.isSpectator()) {
-            if (p_36158_ instanceof MenuProvider) {
-                this.openMenu((MenuProvider)p_36158_);
+            if (entityToInteractOn instanceof MenuProvider) {
+                this.openMenu((MenuProvider)entityToInteractOn);
             }
 
             return InteractionResult.PASS;
         } else {
-            InteractionResult cancelResult = net.neoforged.neoforge.common.CommonHooks.onInteractEntity(this, p_36158_, p_36159_);
+            InteractionResult cancelResult = net.neoforged.neoforge.common.CommonHooks.onInteractEntity(this, entityToInteractOn, hand);
             if (cancelResult != null) return cancelResult;
-            ItemStack itemstack = this.getItemInHand(p_36159_);
+            ItemStack itemstack = this.getItemInHand(hand);
             ItemStack itemstack1 = itemstack.copy();
-            InteractionResult interactionresult = p_36158_.interact(this, p_36159_);
+            InteractionResult interactionresult = entityToInteractOn.interact(this, hand);
             if (interactionresult.consumesAction()) {
-                if (this.abilities.instabuild && itemstack == this.getItemInHand(p_36159_) && itemstack.getCount() < itemstack1.getCount()) {
+                if (this.abilities.instabuild && itemstack == this.getItemInHand(hand) && itemstack.getCount() < itemstack1.getCount()) {
                     itemstack.setCount(itemstack1.getCount());
                 }
 
                 if (!this.abilities.instabuild && itemstack.isEmpty()) {
-                    net.neoforged.neoforge.event.EventHooks.onPlayerDestroyItem(this, itemstack1, p_36159_);
+                    net.neoforged.neoforge.event.EventHooks.onPlayerDestroyItem(this, itemstack1, hand);
                 }
                 return interactionresult;
             } else {
-                if (!itemstack.isEmpty() && p_36158_ instanceof LivingEntity) {
+                if (!itemstack.isEmpty() && entityToInteractOn instanceof LivingEntity) {
                     if (this.abilities.instabuild) {
                         itemstack = itemstack1;
                     }
 
-                    InteractionResult interactionresult1 = itemstack.interactLivingEntity(this, (LivingEntity)p_36158_, p_36159_);
+                    InteractionResult interactionresult1 = itemstack.interactLivingEntity(this, (LivingEntity)entityToInteractOn, hand);
                     if (interactionresult1.consumesAction()) {
-                        this.level().gameEvent(GameEvent.ENTITY_INTERACT, p_36158_.position(), GameEvent.Context.of(this));
+                        this.level().gameEvent(GameEvent.ENTITY_INTERACT, entityToInteractOn.position(), GameEvent.Context.of(this));
                         if (itemstack.isEmpty() && !this.abilities.instabuild) {
-                            net.neoforged.neoforge.event.EventHooks.onPlayerDestroyItem(this, itemstack1, p_36159_);
-                            this.setItemInHand(p_36159_, ItemStack.EMPTY);
+                            net.neoforged.neoforge.event.EventHooks.onPlayerDestroyItem(this, itemstack1, hand);
+                            this.setItemInHand(hand, ItemStack.EMPTY);
                         }
 
                         return interactionresult1;
@@ -1110,15 +1146,15 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
 
     @Override
     // Forge: Don't update this method to use IForgeEntity#getStepHeight() - https://github.com/MinecraftForge/MinecraftForge/issues/8922
-    protected Vec3 maybeBackOffFromEdge(Vec3 p_36201_, MoverType p_36202_) {
+    protected Vec3 maybeBackOffFromEdge(Vec3 vec, MoverType mover) {
         float f = this.maxUpStep();
         if (!this.abilities.flying
-            && !(p_36201_.y > 0.0)
-            && (p_36202_ == MoverType.SELF || p_36202_ == MoverType.PLAYER)
+            && !(vec.y > 0.0)
+            && (mover == MoverType.SELF || mover == MoverType.PLAYER)
             && this.isStayingOnGroundSurface()
             && this.isAboveGround(f)) {
-            double d0 = p_36201_.x;
-            double d1 = p_36201_.z;
+            double d0 = vec.x;
+            double d1 = vec.z;
             double d2 = 0.05;
             double d3 = Math.signum(d0) * 0.05;
 
@@ -1153,46 +1189,49 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
                 }
             }
 
-            return new Vec3(d0, p_36201_.y, d1);
+            return new Vec3(d0, vec.y, d1);
         } else {
-            return p_36201_;
+            return vec;
         }
     }
 
     // Forge: Don't update this method to use IForgeEntity#getStepHeight() - https://github.com/MinecraftForge/MinecraftForge/issues/9376
-    private boolean isAboveGround(float p_341626_) {
-        return this.onGround() || this.fallDistance < p_341626_ && !this.canFallAtLeast(0.0, 0.0, p_341626_ - this.fallDistance);
+    private boolean isAboveGround(float maxUpStep) {
+        return this.onGround() || this.fallDistance < maxUpStep && !this.canFallAtLeast(0.0, 0.0, maxUpStep - this.fallDistance);
     }
 
-    private boolean canFallAtLeast(double p_341664_, double p_341597_, float p_341613_) {
+    private boolean canFallAtLeast(double x, double z, float distance) {
         AABB aabb = this.getBoundingBox();
         return this.level()
             .noCollision(
                 this,
                 new AABB(
-                    aabb.minX + p_341664_,
-                    aabb.minY - (double)p_341613_ - 1.0E-5F,
-                    aabb.minZ + p_341597_,
-                    aabb.maxX + p_341664_,
+                    aabb.minX + x,
+                    aabb.minY - (double)distance - 1.0E-5F,
+                    aabb.minZ + z,
+                    aabb.maxX + x,
                     aabb.minY,
-                    aabb.maxZ + p_341597_
+                    aabb.maxZ + z
                 )
             );
     }
 
-    public void attack(Entity p_36347_) {
-        if (!net.neoforged.neoforge.common.CommonHooks.onPlayerAttackTarget(this, p_36347_)) return;
-        if (p_36347_.isAttackable()) {
-            if (!p_36347_.skipAttackInteraction(this)) {
+    /**
+     * Attacks for the player the targeted entity with the currently equipped item.  The equipped item has hitEntity called on it. Args: targetEntity
+     */
+    public void attack(Entity target) {
+        if (!net.neoforged.neoforge.common.CommonHooks.onPlayerAttackTarget(this, target)) return;
+        if (target.isAttackable()) {
+            if (!target.skipAttackInteraction(this)) {
                 float f = this.isAutoSpinAttack() ? this.autoSpinAttackDmg : (float)this.getAttributeValue(Attributes.ATTACK_DAMAGE);
                 ItemStack itemstack = this.getWeaponItem();
                 DamageSource damagesource = this.damageSources().playerAttack(this);
-                float f1 = this.getEnchantedDamage(p_36347_, f, damagesource) - f;
+                float f1 = this.getEnchantedDamage(target, f, damagesource) - f;
                 float f2 = this.getAttackStrengthScale(0.5F);
                 f *= 0.2F + f2 * f2 * 0.8F;
                 f1 *= f2;
-                if (p_36347_.getType().is(EntityTypeTags.REDIRECTABLE_PROJECTILE)
-                    && p_36347_ instanceof Projectile projectile
+                if (target.getType().is(EntityTypeTags.REDIRECTABLE_PROJECTILE)
+                    && target instanceof Projectile projectile
                     && projectile.deflect(ProjectileDeflection.AIM_DEFLECT, this, this, true)) {
                     this.level().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.PLAYER_ATTACK_NODAMAGE, this.getSoundSource());
                     return;
@@ -1209,7 +1248,7 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
                         flag = false;
                     }
 
-                    f += itemstack.getItem().getAttackDamageBonus(p_36347_, f, damagesource);
+                    f += itemstack.getItem().getAttackDamageBonus(target, f, damagesource);
                     boolean flag1 = flag4
                         && this.fallDistance > 0.0F
                         && !this.onGround()
@@ -1217,11 +1256,11 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
                         && !this.isInWater()
                         && !this.hasEffect(MobEffects.BLINDNESS)
                         && !this.isPassenger()
-                        && p_36347_ instanceof LivingEntity
+                        && target instanceof LivingEntity
                         && !this.isSprinting();
                     // Neo: Fire the critical hit event and override the critical hit status and damage multiplier based on the event.
                     // The boolean local above (flag1) is the vanilla critical hit result.
-                    var critEvent = net.neoforged.neoforge.common.CommonHooks.fireCriticalHit(this, p_36347_, flag1, flag1 ? 1.5F : 1.0F);
+                    var critEvent = net.neoforged.neoforge.common.CommonHooks.fireCriticalHit(this, target, flag1, flag1 ? 1.5F : 1.0F);
                     flag1 = critEvent.isCriticalHit();
                     if (flag1) {
                         f *= critEvent.getDamageMultiplier();
@@ -1239,27 +1278,27 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
                     }
 
                     // Neo: Fire the SweepAttackEvent and overwrite the value of flag2 (the local controlling if a sweep will occur).
-                    var sweepEvent = net.neoforged.neoforge.common.CommonHooks.fireSweepAttack(this, p_36347_, flag2);
+                    var sweepEvent = net.neoforged.neoforge.common.CommonHooks.fireSweepAttack(this, target, flag2);
                     flag2 = sweepEvent.isSweeping();
 
                     float f6 = 0.0F;
-                    if (p_36347_ instanceof LivingEntity livingentity) {
+                    if (target instanceof LivingEntity livingentity) {
                         f6 = livingentity.getHealth();
                     }
 
-                    Vec3 vec3 = p_36347_.getDeltaMovement();
-                    boolean flag3 = p_36347_.hurt(damagesource, f3);
+                    Vec3 vec3 = target.getDeltaMovement();
+                    boolean flag3 = target.hurt(damagesource, f3);
                     if (flag3) {
-                        float f4 = this.getKnockback(p_36347_, damagesource) + (flag ? 1.0F : 0.0F);
+                        float f4 = this.getKnockback(target, damagesource) + (flag ? 1.0F : 0.0F);
                         if (f4 > 0.0F) {
-                            if (p_36347_ instanceof LivingEntity livingentity1) {
+                            if (target instanceof LivingEntity livingentity1) {
                                 livingentity1.knockback(
                                     (double)(f4 * 0.5F),
                                     (double)Mth.sin(this.getYRot() * (float) (Math.PI / 180.0)),
                                     (double)(-Mth.cos(this.getYRot() * (float) (Math.PI / 180.0)))
                                 );
                             } else {
-                                p_36347_.push(
+                                target.push(
                                     (double)(-Mth.sin(this.getYRot() * (float) (Math.PI / 180.0)) * f4 * 0.5F),
                                     0.1,
                                     (double)(Mth.cos(this.getYRot() * (float) (Math.PI / 180.0)) * f4 * 0.5F)
@@ -1274,10 +1313,10 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
                             float f7 = 1.0F + (float)this.getAttributeValue(Attributes.SWEEPING_DAMAGE_RATIO) * f;
 
                             for (LivingEntity livingentity2 : this.level()
-                                .getEntitiesOfClass(LivingEntity.class, itemstack.getSweepHitBox(this, p_36347_))) { // Neo: Patch in item extension for custom sweep hit box
+                                .getEntitiesOfClass(LivingEntity.class, itemstack.getSweepHitBox(this, target))) { // Neo: Patch in item extension for custom sweep hit box
                                 double entityReachSq = Mth.square(this.entityInteractionRange()); // Use entity reach instead of constant 9.0. Vanilla uses bottom center-to-center checks here, so don't update this to use canReach, since it uses closest-corner checks.
                                 if (livingentity2 != this
-                                    && livingentity2 != p_36347_
+                                    && livingentity2 != target
                                     && !this.isAlliedTo(livingentity2)
                                     && (!(livingentity2 instanceof ArmorStand) || !((ArmorStand)livingentity2).isMarker())
                                     && this.distanceToSqr(livingentity2) < entityReachSq) {
@@ -1299,16 +1338,16 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
                             this.sweepAttack();
                         }
 
-                        if (p_36347_ instanceof ServerPlayer && p_36347_.hurtMarked) {
-                            ((ServerPlayer)p_36347_).connection.send(new ClientboundSetEntityMotionPacket(p_36347_));
-                            p_36347_.hurtMarked = false;
-                            p_36347_.setDeltaMovement(vec3);
+                        if (target instanceof ServerPlayer && target.hurtMarked) {
+                            ((ServerPlayer)target).connection.send(new ClientboundSetEntityMotionPacket(target));
+                            target.hurtMarked = false;
+                            target.setDeltaMovement(vec3);
                         }
 
                         if (flag1) {
                             this.level()
                                 .playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.PLAYER_ATTACK_CRIT, this.getSoundSource(), 1.0F, 1.0F);
-                            this.crit(p_36347_);
+                            this.crit(target);
                         }
 
                         if (!flag1 && !flag2) {
@@ -1322,13 +1361,13 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
                         }
 
                         if (f1 > 0.0F) {
-                            this.magicCrit(p_36347_);
+                            this.magicCrit(target);
                         }
 
-                        this.setLastHurtMob(p_36347_);
-                        Entity entity = p_36347_;
-                        if (p_36347_ instanceof net.neoforged.neoforge.entity.PartEntity) {
-                            entity = ((net.neoforged.neoforge.entity.PartEntity<?>) p_36347_).getParent();
+                        this.setLastHurtMob(target);
+                        Entity entity = target;
+                        if (target instanceof net.neoforged.neoforge.entity.PartEntity) {
+                            entity = ((net.neoforged.neoforge.entity.PartEntity<?>) target).getParent();
                         }
 
                         boolean flag5 = false;
@@ -1338,7 +1377,7 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
                                 flag5 = itemstack.hurtEnemy(livingentity3, this);
                             }
 
-                            EnchantmentHelper.doPostAttackEffects(serverlevel1, p_36347_, damagesource);
+                            EnchantmentHelper.doPostAttackEffects(serverlevel1, target, damagesource);
                         }
 
                         if (!this.level().isClientSide && !itemstack.isEmpty() && entity instanceof LivingEntity) {
@@ -1356,13 +1395,13 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
                             }
                         }
 
-                        if (p_36347_ instanceof LivingEntity) {
-                            float f8 = f6 - ((LivingEntity)p_36347_).getHealth();
+                        if (target instanceof LivingEntity) {
+                            float f8 = f6 - ((LivingEntity)target).getHealth();
                             this.awardStat(Stats.DAMAGE_DEALT, Math.round(f8 * 10.0F));
                             if (this.level() instanceof ServerLevel && f8 > 2.0F) {
                                 int i = (int)((double)f8 * 0.5);
                                 ((ServerLevel)this.level())
-                                    .sendParticles(ParticleTypes.DAMAGE_INDICATOR, p_36347_.getX(), p_36347_.getY(0.5), p_36347_.getZ(), i, 0.1, 0.0, 0.1, 0.2);
+                                    .sendParticles(ParticleTypes.DAMAGE_INDICATOR, target.getX(), target.getY(0.5), target.getZ(), i, 0.1, 0.0, 0.1, 0.2);
                             }
                         }
 
@@ -1377,13 +1416,13 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         }
     }
 
-    protected float getEnchantedDamage(Entity p_345248_, float p_345836_, DamageSource p_345745_) {
-        return p_345836_;
+    protected float getEnchantedDamage(Entity entity, float damage, DamageSource damageSource) {
+        return damage;
     }
 
     @Override
-    protected void doAutoAttackOnTouch(LivingEntity p_36355_) {
-        this.attack(p_36355_);
+    protected void doAutoAttackOnTouch(LivingEntity target) {
+        this.attack(target);
     }
 
     public void disableShield() {
@@ -1392,10 +1431,16 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         this.level().broadcastEntityEvent(this, (byte)30);
     }
 
-    public void crit(Entity p_36156_) {
+    /**
+     * Called when the entity is dealt a critical hit.
+     */
+    public void crit(Entity entityHit) {
     }
 
-    public void magicCrit(Entity p_36253_) {
+    /**
+     * Called when the entity hit is dealt extra melee damage due to an enchantment.
+     */
+    public void magicCrit(Entity entityHit) {
     }
 
     public void sweepAttack() {
@@ -1410,8 +1455,8 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    public void remove(Entity.RemovalReason p_150097_) {
-        super.remove(p_150097_);
+    public void remove(Entity.RemovalReason reason) {
+        super.remove(reason);
         this.inventoryMenu.removed(this);
         if (this.containerMenu != null && this.hasContainerOpen()) {
             this.doCloseContainer();
@@ -1439,27 +1484,27 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return this.abilities.instabuild;
     }
 
-    public void updateTutorialInventoryAction(ItemStack p_150098_, ItemStack p_150099_, ClickAction p_150100_) {
+    public void updateTutorialInventoryAction(ItemStack carried, ItemStack clicked, ClickAction action) {
     }
 
     public boolean hasContainerOpen() {
         return this.containerMenu != this.inventoryMenu;
     }
 
-    public Either<Player.BedSleepingProblem, Unit> startSleepInBed(BlockPos p_36203_) {
-        this.startSleeping(p_36203_);
+    public Either<Player.BedSleepingProblem, Unit> startSleepInBed(BlockPos bedPos) {
+        this.startSleeping(bedPos);
         this.sleepCounter = 0;
         return Either.right(Unit.INSTANCE);
     }
 
-    public void stopSleepInBed(boolean p_36226_, boolean p_36227_) {
-        net.neoforged.neoforge.event.EventHooks.onPlayerWakeup(this, p_36226_, p_36227_);
+    public void stopSleepInBed(boolean wakeImmediately, boolean updateLevelForSleepingPlayers) {
+        net.neoforged.neoforge.event.EventHooks.onPlayerWakeup(this, wakeImmediately, updateLevelForSleepingPlayers);
         super.stopSleeping();
-        if (this.level() instanceof ServerLevel && p_36227_) {
+        if (this.level() instanceof ServerLevel && updateLevelForSleepingPlayers) {
             ((ServerLevel)this.level()).updateSleepingPlayerList();
         }
 
-        this.sleepCounter = p_36226_ ? 0 : 100;
+        this.sleepCounter = wakeImmediately ? 0 : 100;
     }
 
     @Override
@@ -1475,38 +1520,44 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return this.sleepCounter;
     }
 
-    public void displayClientMessage(Component p_36216_, boolean p_36217_) {
+    public void displayClientMessage(Component chatComponent, boolean actionBar) {
     }
 
-    public void awardStat(ResourceLocation p_36221_) {
-        this.awardStat(Stats.CUSTOM.get(p_36221_));
+    public void awardStat(ResourceLocation statKey) {
+        this.awardStat(Stats.CUSTOM.get(statKey));
     }
 
-    public void awardStat(ResourceLocation p_36223_, int p_36224_) {
-        this.awardStat(Stats.CUSTOM.get(p_36223_), p_36224_);
+    public void awardStat(ResourceLocation stat, int increment) {
+        this.awardStat(Stats.CUSTOM.get(stat), increment);
     }
 
-    public void awardStat(Stat<?> p_36247_) {
-        this.awardStat(p_36247_, 1);
+    /**
+     * Add a stat once
+     */
+    public void awardStat(Stat<?> stat) {
+        this.awardStat(stat, 1);
     }
 
-    public void awardStat(Stat<?> p_36145_, int p_36146_) {
+    /**
+     * Adds a value to a statistic field.
+     */
+    public void awardStat(Stat<?> stat, int increment) {
     }
 
-    public void resetStat(Stat<?> p_36144_) {
+    public void resetStat(Stat<?> stat) {
     }
 
-    public int awardRecipes(Collection<RecipeHolder<?>> p_36213_) {
+    public int awardRecipes(Collection<RecipeHolder<?>> recipes) {
         return 0;
     }
 
-    public void triggerRecipeCrafted(RecipeHolder<?> p_301080_, List<ItemStack> p_283609_) {
+    public void triggerRecipeCrafted(RecipeHolder<?> recipe, List<ItemStack> items) {
     }
 
-    public void awardRecipesByKey(List<ResourceLocation> p_312922_) {
+    public void awardRecipesByKey(List<ResourceLocation> recipes) {
     }
 
-    public int resetRecipes(Collection<RecipeHolder<?>> p_36263_) {
+    public int resetRecipes(Collection<RecipeHolder<?>> recipes) {
         return 0;
     }
 
@@ -1522,7 +1573,7 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    public void travel(Vec3 p_36359_) {
+    public void travel(Vec3 travelVector) {
         if (this.isSwimming() && !this.isPassenger()) {
             double d0 = this.getLookAngle().y;
             double d1 = d0 < -0.2 ? 0.085 : 0.06;
@@ -1536,13 +1587,13 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
 
         if (this.abilities.flying && !this.isPassenger()) {
             double d2 = this.getDeltaMovement().y;
-            super.travel(p_36359_);
+            super.travel(travelVector);
             Vec3 vec31 = this.getDeltaMovement();
             this.setDeltaMovement(vec31.x, d2 * 0.6, vec31.z);
             this.resetFallDistance();
             this.setSharedFlag(7, false);
         } else {
-            super.travel(p_36359_);
+            super.travel(travelVector);
         }
     }
 
@@ -1555,8 +1606,8 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         }
     }
 
-    protected boolean freeAt(BlockPos p_36351_) {
-        return !this.level().getBlockState(p_36351_).isSuffocating(this.level(), p_36351_);
+    protected boolean freeAt(BlockPos pos) {
+        return !this.level().getBlockState(pos).isSuffocating(this.level(), pos);
     }
 
     @Override
@@ -1565,13 +1616,13 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    public boolean causeFallDamage(float p_150093_, float p_150094_, DamageSource p_150095_) {
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
         if (this.mayFly()) {
-            net.neoforged.neoforge.event.EventHooks.onPlayerFall(this, p_150093_, p_150093_);
+            net.neoforged.neoforge.event.EventHooks.onPlayerFall(this, fallDistance, fallDistance);
             return false;
         } else {
-            if (p_150093_ >= 2.0F) {
-                this.awardStat(Stats.FALL_ONE_CM, (int)Math.round((double)p_150093_ * 100.0));
+            if (fallDistance >= 2.0F) {
+                this.awardStat(Stats.FALL_ONE_CM, (int)Math.round((double)fallDistance * 100.0));
             }
 
             boolean flag;
@@ -1582,10 +1633,10 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
                     return false;
                 }
 
-                float f = Math.min(p_150093_, (float)(d0 - this.getY()));
-                flag = super.causeFallDamage(f, p_150094_, p_150095_);
+                float f = Math.min(fallDistance, (float)(d0 - this.getY()));
+                flag = super.causeFallDamage(f, multiplier, source);
             } else {
-                flag = super.causeFallDamage(p_150093_, p_150094_, p_150095_);
+                flag = super.causeFallDamage(fallDistance, multiplier, source);
             }
 
             if (flag) {
@@ -1625,21 +1676,21 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    protected void playStepSound(BlockPos p_282121_, BlockState p_282194_) {
+    protected void playStepSound(BlockPos pos, BlockState state) {
         if (this.isInWater()) {
             this.waterSwimSound();
-            this.playMuffledStepSound(p_282194_, p_282121_);
+            this.playMuffledStepSound(state, pos);
         } else {
-            BlockPos blockpos = this.getPrimaryStepSoundBlockPos(p_282121_);
-            if (!p_282121_.equals(blockpos)) {
+            BlockPos blockpos = this.getPrimaryStepSoundBlockPos(pos);
+            if (!pos.equals(blockpos)) {
                 BlockState blockstate = this.level().getBlockState(blockpos);
                 if (blockstate.is(BlockTags.COMBINATION_STEP_SOUND_BLOCKS)) {
-                    this.playCombinationStepSounds(blockstate, p_282194_, blockpos, p_282121_);
+                    this.playCombinationStepSounds(blockstate, state, blockpos, pos);
                 } else {
                     super.playStepSound(blockpos, blockstate);
                 }
             } else {
-                super.playStepSound(p_282121_, p_282194_);
+                super.playStepSound(pos, state);
             }
         }
     }
@@ -1650,28 +1701,28 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    public boolean killedEntity(ServerLevel p_219735_, LivingEntity p_219736_) {
-        this.awardStat(Stats.ENTITY_KILLED.get(p_219736_.getType()));
+    public boolean killedEntity(ServerLevel level, LivingEntity entity) {
+        this.awardStat(Stats.ENTITY_KILLED.get(entity.getType()));
         return true;
     }
 
     @Override
-    public void makeStuckInBlock(BlockState p_36196_, Vec3 p_36197_) {
+    public void makeStuckInBlock(BlockState state, Vec3 motionMultiplier) {
         if (!this.abilities.flying) {
-            super.makeStuckInBlock(p_36196_, p_36197_);
+            super.makeStuckInBlock(state, motionMultiplier);
         }
 
         this.tryResetCurrentImpulseContext();
     }
 
-    public void giveExperiencePoints(int p_36291_) {
-        net.neoforged.neoforge.event.entity.player.PlayerXpEvent.XpChange event = new net.neoforged.neoforge.event.entity.player.PlayerXpEvent.XpChange(this, p_36291_);
+    public void giveExperiencePoints(int xpPoints) {
+        net.neoforged.neoforge.event.entity.player.PlayerXpEvent.XpChange event = new net.neoforged.neoforge.event.entity.player.PlayerXpEvent.XpChange(this, xpPoints);
         if (net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(event).isCanceled()) return;
-        p_36291_ = event.getAmount();
+        xpPoints = event.getAmount();
 
-        this.increaseScore(p_36291_);
-        this.experienceProgress = this.experienceProgress + (float)p_36291_ / (float)this.getXpNeededForNextLevel();
-        this.totalExperience = Mth.clamp(this.totalExperience + p_36291_, 0, Integer.MAX_VALUE);
+        this.increaseScore(xpPoints);
+        this.experienceProgress = this.experienceProgress + (float)xpPoints / (float)this.getXpNeededForNextLevel();
+        this.totalExperience = Mth.clamp(this.totalExperience + xpPoints, 0, Integer.MAX_VALUE);
 
         while (this.experienceProgress < 0.0F) {
             float f = this.experienceProgress * (float)this.getXpNeededForNextLevel();
@@ -1695,8 +1746,8 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return this.enchantmentSeed;
     }
 
-    public void onEnchantmentPerformed(ItemStack p_36172_, int p_36173_) {
-        giveExperienceLevels(-p_36173_);
+    public void onEnchantmentPerformed(ItemStack enchantedItem, int levelCost) {
+        giveExperienceLevels(-levelCost);
         if (this.experienceLevel < 0) {
             this.experienceLevel = 0;
             this.experienceProgress = 0.0F;
@@ -1706,19 +1757,22 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         this.enchantmentSeed = this.random.nextInt();
     }
 
-    public void giveExperienceLevels(int p_36276_) {
-        net.neoforged.neoforge.event.entity.player.PlayerXpEvent.LevelChange event = new net.neoforged.neoforge.event.entity.player.PlayerXpEvent.LevelChange(this, p_36276_);
+    /**
+     * Add experience levels to this player.
+     */
+    public void giveExperienceLevels(int levels) {
+        net.neoforged.neoforge.event.entity.player.PlayerXpEvent.LevelChange event = new net.neoforged.neoforge.event.entity.player.PlayerXpEvent.LevelChange(this, levels);
         if (net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(event).isCanceled()) return;
-        p_36276_ = event.getLevels();
+        levels = event.getLevels();
 
-        this.experienceLevel += p_36276_;
+        this.experienceLevel += levels;
         if (this.experienceLevel < 0) {
             this.experienceLevel = 0;
             this.experienceProgress = 0.0F;
             this.totalExperience = 0;
         }
 
-        if (p_36276_ > 0 && this.experienceLevel % 5 == 0 && (float)this.lastLevelUpTime < (float)this.tickCount - 100.0F) {
+        if (levels > 0 && this.experienceLevel % 5 == 0 && (float)this.lastLevelUpTime < (float)this.tickCount - 100.0F) {
             float f = this.experienceLevel > 30 ? 1.0F : (float)this.experienceLevel / 30.0F;
             this.level().playSound(null, this.getX(), this.getY(), this.getZ(), SoundEvents.PLAYER_LEVELUP, this.getSoundSource(), f * 0.75F, 1.0F);
             this.lastLevelUpTime = this.tickCount;
@@ -1733,10 +1787,13 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         }
     }
 
-    public void causeFoodExhaustion(float p_36400_) {
+    /**
+     * Increases exhaustion level by the supplied amount.
+     */
+    public void causeFoodExhaustion(float exhaustion) {
         if (!this.abilities.invulnerable) {
             if (!this.level().isClientSide) {
-                this.foodData.addExhaustion(p_36400_);
+                this.foodData.addExhaustion(exhaustion);
             }
         }
     }
@@ -1749,8 +1806,8 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return this.foodData;
     }
 
-    public boolean canEat(boolean p_36392_) {
-        return this.abilities.invulnerable || p_36392_ || this.foodData.needsFood();
+    public boolean canEat(boolean canAlwaysEat) {
+        return this.abilities.invulnerable || canAlwaysEat || this.foodData.needsFood();
     }
 
     public boolean isHurt() {
@@ -1761,13 +1818,23 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return this.abilities.mayBuild;
     }
 
-    public boolean mayUseItemAt(BlockPos p_36205_, Direction p_36206_, ItemStack p_36207_) {
+    /**
+     * Returns whether this player can modify the block at a certain location with the given stack.
+     * <p>
+     * The position being queried is {@code pos.offset(facing.getOpposite())}.
+     *
+     * @return Whether this player may modify the queried location in the current world
+     * @see ItemStack#canPlaceOn(Block)
+     * @see ItemStack#canEditBlocks()
+     * @see PlayerCapabilities#allowEdit
+     */
+    public boolean mayUseItemAt(BlockPos pos, Direction facing, ItemStack stack) {
         if (this.abilities.mayBuild) {
             return true;
         } else {
-            BlockPos blockpos = p_36205_.relative(p_36206_.getOpposite());
+            BlockPos blockpos = pos.relative(facing.getOpposite());
             BlockInWorld blockinworld = new BlockInWorld(this.level(), blockpos, false);
-            return p_36207_.canPlaceOnBlockInAdventureMode(blockinworld);
+            return stack.canPlaceOnBlockInAdventureMode(blockinworld);
         }
     }
 
@@ -1809,35 +1876,35 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    public ItemStack getItemBySlot(EquipmentSlot p_36257_) {
-        if (p_36257_ == EquipmentSlot.MAINHAND) {
+    public ItemStack getItemBySlot(EquipmentSlot slot1) {
+        if (slot1 == EquipmentSlot.MAINHAND) {
             return this.inventory.getSelected();
-        } else if (p_36257_ == EquipmentSlot.OFFHAND) {
+        } else if (slot1 == EquipmentSlot.OFFHAND) {
             return this.inventory.offhand.get(0);
         } else {
-            return p_36257_.getType() == EquipmentSlot.Type.HUMANOID_ARMOR ? this.inventory.armor.get(p_36257_.getIndex()) : ItemStack.EMPTY;
+            return slot1.getType() == EquipmentSlot.Type.HUMANOID_ARMOR ? this.inventory.armor.get(slot1.getIndex()) : ItemStack.EMPTY;
         }
     }
 
     @Override
-    protected boolean doesEmitEquipEvent(EquipmentSlot p_219741_) {
-        return p_219741_.getType() == EquipmentSlot.Type.HUMANOID_ARMOR;
+    protected boolean doesEmitEquipEvent(EquipmentSlot slot) {
+        return slot.getType() == EquipmentSlot.Type.HUMANOID_ARMOR;
     }
 
     @Override
-    public void setItemSlot(EquipmentSlot p_36161_, ItemStack p_36162_) {
-        this.verifyEquippedItem(p_36162_);
-        if (p_36161_ == EquipmentSlot.MAINHAND) {
-            this.onEquipItem(p_36161_, this.inventory.items.set(this.inventory.selected, p_36162_), p_36162_);
-        } else if (p_36161_ == EquipmentSlot.OFFHAND) {
-            this.onEquipItem(p_36161_, this.inventory.offhand.set(0, p_36162_), p_36162_);
-        } else if (p_36161_.getType() == EquipmentSlot.Type.HUMANOID_ARMOR) {
-            this.onEquipItem(p_36161_, this.inventory.armor.set(p_36161_.getIndex(), p_36162_), p_36162_);
+    public void setItemSlot(EquipmentSlot slot, ItemStack stack) {
+        this.verifyEquippedItem(stack);
+        if (slot == EquipmentSlot.MAINHAND) {
+            this.onEquipItem(slot, this.inventory.items.set(this.inventory.selected, stack), stack);
+        } else if (slot == EquipmentSlot.OFFHAND) {
+            this.onEquipItem(slot, this.inventory.offhand.set(0, stack), stack);
+        } else if (slot.getType() == EquipmentSlot.Type.HUMANOID_ARMOR) {
+            this.onEquipItem(slot, this.inventory.armor.set(slot.getIndex(), stack), stack);
         }
     }
 
-    public boolean addItem(ItemStack p_36357_) {
-        return this.inventory.add(p_36357_);
+    public boolean addItem(ItemStack stack) {
+        return this.inventory.add(stack);
     }
 
     @Override
@@ -1851,19 +1918,19 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    public boolean canUseSlot(EquipmentSlot p_326160_) {
-        return p_326160_ != EquipmentSlot.BODY;
+    public boolean canUseSlot(EquipmentSlot slot) {
+        return slot != EquipmentSlot.BODY;
     }
 
-    public boolean setEntityOnShoulder(CompoundTag p_36361_) {
+    public boolean setEntityOnShoulder(CompoundTag entityCompound) {
         if (this.isPassenger() || !this.onGround() || this.isInWater() || this.isInPowderSnow) {
             return false;
         } else if (this.getShoulderEntityLeft().isEmpty()) {
-            this.setShoulderEntityLeft(p_36361_);
+            this.setShoulderEntityLeft(entityCompound);
             this.timeEntitySatOnShoulder = this.level().getGameTime();
             return true;
         } else if (this.getShoulderEntityRight().isEmpty()) {
-            this.setShoulderEntityRight(p_36361_);
+            this.setShoulderEntityRight(entityCompound);
             this.timeEntitySatOnShoulder = this.level().getGameTime();
             return true;
         } else {
@@ -1880,9 +1947,9 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         }
     }
 
-    private void respawnEntityOnShoulder(CompoundTag p_36371_) {
-        if (!this.level().isClientSide && !p_36371_.isEmpty()) {
-            EntityType.create(p_36371_, this.level()).ifPresent(p_352835_ -> {
+    private void respawnEntityOnShoulder(CompoundTag entityCompound) {
+        if (!this.level().isClientSide && !entityCompound.isEmpty()) {
+            EntityType.create(entityCompound, this.level()).ifPresent(p_352835_ -> {
                 if (p_352835_ instanceof TamableAnimal) {
                     ((TamableAnimal)p_352835_).setOwnerUUID(this.uuid);
                 }
@@ -1927,9 +1994,9 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return this.decorateDisplayNameComponent(mutablecomponent);
     }
 
-    private MutableComponent decorateDisplayNameComponent(MutableComponent p_36219_) {
+    private MutableComponent decorateDisplayNameComponent(MutableComponent displayName) {
         String s = this.getGameProfile().getName();
-        return p_36219_.withStyle(
+        return displayName.withStyle(
             p_352834_ -> p_352834_.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/tell " + s + " "))
                     .withHoverEvent(this.createHoverEvent())
                     .withInsertion(s)
@@ -1942,8 +2009,8 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    protected void internalSetAbsorptionAmount(float p_296426_) {
-        this.getEntityData().set(DATA_PLAYER_ABSORPTION_ID, p_296426_);
+    protected void internalSetAbsorptionAmount(float absorptionAmount) {
+        this.getEntityData().set(DATA_PLAYER_ABSORPTION_ID, absorptionAmount);
     }
 
     @Override
@@ -1951,13 +2018,13 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return this.getEntityData().get(DATA_PLAYER_ABSORPTION_ID);
     }
 
-    public boolean isModelPartShown(PlayerModelPart p_36171_) {
-        return (this.getEntityData().get(DATA_PLAYER_MODE_CUSTOMISATION) & p_36171_.getMask()) == p_36171_.getMask();
+    public boolean isModelPartShown(PlayerModelPart part) {
+        return (this.getEntityData().get(DATA_PLAYER_MODE_CUSTOMISATION) & part.getMask()) == part.getMask();
     }
 
     @Override
-    public SlotAccess getSlot(int p_150112_) {
-        if (p_150112_ == 499) {
+    public SlotAccess getSlot(int slot) {
+        if (slot == 499) {
             return new SlotAccess() {
                 @Override
                 public ItemStack get() {
@@ -1971,7 +2038,7 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
                 }
             };
         } else {
-            final int i = p_150112_ - 500;
+            final int i = slot - 500;
             if (i >= 0 && i < 4) {
                 return new SlotAccess() {
                     @Override
@@ -1986,13 +2053,13 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
                         return true;
                     }
                 };
-            } else if (p_150112_ >= 0 && p_150112_ < this.inventory.items.size()) {
-                return SlotAccess.forContainer(this.inventory, p_150112_);
+            } else if (slot >= 0 && slot < this.inventory.items.size()) {
+                return SlotAccess.forContainer(this.inventory, slot);
             } else {
-                int j = p_150112_ - 200;
+                int j = slot - 200;
                 return j >= 0 && j < this.enderChestInventory.getContainerSize()
                     ? SlotAccess.forContainer(this.enderChestInventory, j)
-                    : super.getSlot(p_150112_);
+                    : super.getSlot(slot);
             }
         }
     }
@@ -2001,13 +2068,13 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return this.reducedDebugInfo;
     }
 
-    public void setReducedDebugInfo(boolean p_36394_) {
-        this.reducedDebugInfo = p_36394_;
+    public void setReducedDebugInfo(boolean reducedDebugInfo) {
+        this.reducedDebugInfo = reducedDebugInfo;
     }
 
     @Override
-    public void setRemainingFireTicks(int p_36353_) {
-        super.setRemainingFireTicks(this.abilities.invulnerable ? Math.min(p_36353_, 1) : p_36353_);
+    public void setRemainingFireTicks(int ticks) {
+        super.setRemainingFireTicks(this.abilities.invulnerable ? Math.min(ticks, 1) : ticks);
     }
 
     @Override
@@ -2015,32 +2082,35 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return this.entityData.get(DATA_PLAYER_MAIN_HAND) == 0 ? HumanoidArm.LEFT : HumanoidArm.RIGHT;
     }
 
-    public void setMainArm(HumanoidArm p_36164_) {
-        this.entityData.set(DATA_PLAYER_MAIN_HAND, (byte)(p_36164_ == HumanoidArm.LEFT ? 0 : 1));
+    public void setMainArm(HumanoidArm hand) {
+        this.entityData.set(DATA_PLAYER_MAIN_HAND, (byte)(hand == HumanoidArm.LEFT ? 0 : 1));
     }
 
     public CompoundTag getShoulderEntityLeft() {
         return this.entityData.get(DATA_SHOULDER_LEFT);
     }
 
-    protected void setShoulderEntityLeft(CompoundTag p_36363_) {
-        this.entityData.set(DATA_SHOULDER_LEFT, p_36363_);
+    protected void setShoulderEntityLeft(CompoundTag entityCompound) {
+        this.entityData.set(DATA_SHOULDER_LEFT, entityCompound);
     }
 
     public CompoundTag getShoulderEntityRight() {
         return this.entityData.get(DATA_SHOULDER_RIGHT);
     }
 
-    protected void setShoulderEntityRight(CompoundTag p_36365_) {
-        this.entityData.set(DATA_SHOULDER_RIGHT, p_36365_);
+    protected void setShoulderEntityRight(CompoundTag entityCompound) {
+        this.entityData.set(DATA_SHOULDER_RIGHT, entityCompound);
     }
 
     public float getCurrentItemAttackStrengthDelay() {
         return (float)(1.0 / this.getAttributeValue(Attributes.ATTACK_SPEED) * 20.0);
     }
 
-    public float getAttackStrengthScale(float p_36404_) {
-        return Mth.clamp(((float)this.attackStrengthTicker + p_36404_) / this.getCurrentItemAttackStrengthDelay(), 0.0F, 1.0F);
+    /**
+     * Returns the percentage of attack power available based on the cooldown (zero to one).
+     */
+    public float getAttackStrengthScale(float adjustTicks) {
+        return Mth.clamp(((float)this.attackStrengthTicker + adjustTicks) / this.getCurrentItemAttackStrengthDelay(), 0.0F, 1.0F);
     }
 
     public void resetAttackStrengthTicker() {
@@ -2065,14 +2135,14 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    public boolean canTakeItem(ItemStack p_36315_) {
-        EquipmentSlot equipmentslot = this.getEquipmentSlotForItem(p_36315_);
+    public boolean canTakeItem(ItemStack itemstack) {
+        EquipmentSlot equipmentslot = this.getEquipmentSlotForItem(itemstack);
         return this.getItemBySlot(equipmentslot).isEmpty();
     }
 
     @Override
-    public EntityDimensions getDefaultDimensions(Pose p_36166_) {
-        return POSES.getOrDefault(p_36166_, STANDING_DIMENSIONS);
+    public EntityDimensions getDefaultDimensions(Pose pose) {
+        return POSES.getOrDefault(pose, STANDING_DIMENSIONS);
     }
 
     @Override
@@ -2080,43 +2150,46 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return ImmutableList.of(Pose.STANDING, Pose.CROUCHING, Pose.SWIMMING);
     }
 
+    /**
+     * Gets an item stack available to this entity to be loaded into the provided weapon, or an empty item stack if no such item stack is available.
+     */
     @Override
-    public ItemStack getProjectile(ItemStack p_36349_) {
-        if (!(p_36349_.getItem() instanceof ProjectileWeaponItem)) {
+    public ItemStack getProjectile(ItemStack shootable) {
+        if (!(shootable.getItem() instanceof ProjectileWeaponItem)) {
             return ItemStack.EMPTY;
         } else {
-            Predicate<ItemStack> predicate = ((ProjectileWeaponItem)p_36349_.getItem()).getSupportedHeldProjectiles(p_36349_);
+            Predicate<ItemStack> predicate = ((ProjectileWeaponItem)shootable.getItem()).getSupportedHeldProjectiles(shootable);
             ItemStack itemstack = ProjectileWeaponItem.getHeldProjectile(this, predicate);
             if (!itemstack.isEmpty()) {
-                return net.neoforged.neoforge.common.CommonHooks.getProjectile(this, p_36349_, itemstack);
+                return net.neoforged.neoforge.common.CommonHooks.getProjectile(this, shootable, itemstack);
             } else {
-                predicate = ((ProjectileWeaponItem)p_36349_.getItem()).getAllSupportedProjectiles(p_36349_);
+                predicate = ((ProjectileWeaponItem)shootable.getItem()).getAllSupportedProjectiles(shootable);
 
                 for (int i = 0; i < this.inventory.getContainerSize(); i++) {
                     ItemStack itemstack1 = this.inventory.getItem(i);
                     if (predicate.test(itemstack1)) {
-                        return net.neoforged.neoforge.common.CommonHooks.getProjectile(this, p_36349_, itemstack1);
+                        return net.neoforged.neoforge.common.CommonHooks.getProjectile(this, shootable, itemstack1);
                     }
                 }
 
-                return net.neoforged.neoforge.common.CommonHooks.getProjectile(this, p_36349_, this.abilities.instabuild ? ((ProjectileWeaponItem)p_36349_.getItem()).getDefaultCreativeAmmo(this, p_36349_) : ItemStack.EMPTY);
+                return net.neoforged.neoforge.common.CommonHooks.getProjectile(this, shootable, this.abilities.instabuild ? ((ProjectileWeaponItem)shootable.getItem()).getDefaultCreativeAmmo(this, shootable) : ItemStack.EMPTY);
             }
         }
     }
 
     @Override
-    public ItemStack eat(Level p_36185_, ItemStack p_36186_, FoodProperties p_347562_) {
-        this.getFoodData().eat(p_347562_);
-        this.awardStat(Stats.ITEM_USED.get(p_36186_.getItem()));
-        p_36185_.playSound(
-            null, this.getX(), this.getY(), this.getZ(), SoundEvents.PLAYER_BURP, SoundSource.PLAYERS, 0.5F, p_36185_.random.nextFloat() * 0.1F + 0.9F
+    public ItemStack eat(Level level, ItemStack food, FoodProperties foodProperties) {
+        this.getFoodData().eat(foodProperties);
+        this.awardStat(Stats.ITEM_USED.get(food.getItem()));
+        level.playSound(
+            null, this.getX(), this.getY(), this.getZ(), SoundEvents.PLAYER_BURP, SoundSource.PLAYERS, 0.5F, level.random.nextFloat() * 0.1F + 0.9F
         );
         if (this instanceof ServerPlayer) {
-            CriteriaTriggers.CONSUME_ITEM.trigger((ServerPlayer)this, p_36186_);
+            CriteriaTriggers.CONSUME_ITEM.trigger((ServerPlayer)this, food);
         }
 
-        ItemStack itemstack = super.eat(p_36185_, p_36186_, p_347562_);
-        Optional<ItemStack> optional = p_347562_.usingConvertsTo();
+        ItemStack itemstack = super.eat(level, food, foodProperties);
+        Optional<ItemStack> optional = foodProperties.usingConvertsTo();
         if (optional.isPresent() && !this.hasInfiniteMaterials()) {
             if (itemstack.isEmpty()) {
                 return optional.get().copy();
@@ -2134,12 +2207,12 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    public Vec3 getRopeHoldPosition(float p_36374_) {
+    public Vec3 getRopeHoldPosition(float partialTicks) {
         double d0 = 0.22 * (this.getMainArm() == HumanoidArm.RIGHT ? -1.0 : 1.0);
-        float f = Mth.lerp(p_36374_ * 0.5F, this.getXRot(), this.xRotO) * (float) (Math.PI / 180.0);
-        float f1 = Mth.lerp(p_36374_, this.yBodyRotO, this.yBodyRot) * (float) (Math.PI / 180.0);
+        float f = Mth.lerp(partialTicks * 0.5F, this.getXRot(), this.xRotO) * (float) (Math.PI / 180.0);
+        float f1 = Mth.lerp(partialTicks, this.yBodyRotO, this.yBodyRot) * (float) (Math.PI / 180.0);
         if (this.isFallFlying() || this.isAutoSpinAttack()) {
-            Vec3 vec31 = this.getViewVector(p_36374_);
+            Vec3 vec31 = this.getViewVector(partialTicks);
             Vec3 vec3 = this.getDeltaMovement();
             double d6 = vec3.horizontalDistanceSqr();
             double d3 = vec31.horizontalDistanceSqr();
@@ -2152,13 +2225,13 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
                 f2 = 0.0F;
             }
 
-            return this.getPosition(p_36374_).add(new Vec3(d0, -0.11, 0.85).zRot(-f2).xRot(-f).yRot(-f1));
+            return this.getPosition(partialTicks).add(new Vec3(d0, -0.11, 0.85).zRot(-f2).xRot(-f).yRot(-f1));
         } else if (this.isVisuallySwimming()) {
-            return this.getPosition(p_36374_).add(new Vec3(d0, 0.2, -0.15).xRot(-f).yRot(-f1));
+            return this.getPosition(partialTicks).add(new Vec3(d0, 0.2, -0.15).xRot(-f).yRot(-f1));
         } else {
             double d1 = this.getBoundingBox().getYsize() - 1.0;
             double d2 = this.isCrouching() ? -0.2 : 0.07;
-            return this.getPosition(p_36374_).add(new Vec3(d0, d1, d2).yRot(-f1));
+            return this.getPosition(partialTicks).add(new Vec3(d0, d1, d2).yRot(-f1));
         }
     }
 
@@ -2180,8 +2253,8 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return this.lastDeathLocation;
     }
 
-    public void setLastDeathLocation(Optional<GlobalPos> p_219750_) {
-        this.lastDeathLocation = p_219750_;
+    public void setLastDeathLocation(Optional<GlobalPos> lastDeathLocation) {
+        this.lastDeathLocation = lastDeathLocation;
     }
 
     @Override
@@ -2190,9 +2263,9 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
     }
 
     @Override
-    public void animateHurt(float p_265280_) {
-        super.animateHurt(p_265280_);
-        this.hurtDir = p_265280_;
+    public void animateHurt(float yaw) {
+        super.animateHurt(yaw);
+        this.hurtDir = yaw;
     }
 
     @Override
@@ -2217,23 +2290,23 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
         return this.getAttributeValue(Attributes.ENTITY_INTERACTION_RANGE);
     }
 
-    public boolean canInteractWithEntity(Entity p_320327_, double p_320632_) {
-        return p_320327_.isRemoved() ? false : this.canInteractWithEntity(p_320327_.getBoundingBox(), p_320632_);
+    public boolean canInteractWithEntity(Entity entity, double distance) {
+        return entity.isRemoved() ? false : this.canInteractWithEntity(entity.getBoundingBox(), distance);
     }
 
-    public boolean canInteractWithEntity(AABB p_320959_, double p_319981_) {
-        double d0 = this.entityInteractionRange() + p_319981_;
-        return p_320959_.distanceToSqr(this.getEyePosition()) < d0 * d0;
+    public boolean canInteractWithEntity(AABB boundingBox, double distance) {
+        double d0 = this.entityInteractionRange() + distance;
+        return boundingBox.distanceToSqr(this.getEyePosition()) < d0 * d0;
     }
 
-    public boolean canInteractWithBlock(BlockPos p_319804_, double p_320349_) {
-        double d0 = this.blockInteractionRange() + p_320349_;
-        return new AABB(p_319804_).distanceToSqr(this.getEyePosition()) < d0 * d0;
+    public boolean canInteractWithBlock(BlockPos pos, double distance) {
+        double d0 = this.blockInteractionRange() + distance;
+        return new AABB(pos).distanceToSqr(this.getEyePosition()) < d0 * d0;
     }
 
-    public void setIgnoreFallDamageFromCurrentImpulse(boolean p_352198_) {
-        this.ignoreFallDamageFromCurrentImpulse = p_352198_;
-        if (p_352198_) {
+    public void setIgnoreFallDamageFromCurrentImpulse(boolean ignoreFallDamageFromCurrentImpulse) {
+        this.ignoreFallDamageFromCurrentImpulse = ignoreFallDamageFromCurrentImpulse;
+        if (ignoreFallDamageFromCurrentImpulse) {
             this.currentImpulseContextResetGraceTime = 40;
         } else {
             this.currentImpulseContextResetGraceTime = 0;
@@ -2272,8 +2345,8 @@ public abstract class Player extends LivingEntity implements net.neoforged.neofo
             this.message = null;
         }
 
-        private BedSleepingProblem(Component p_36422_) {
-            this.message = p_36422_;
+        private BedSleepingProblem(Component message) {
+            this.message = message;
         }
 
         @Nullable

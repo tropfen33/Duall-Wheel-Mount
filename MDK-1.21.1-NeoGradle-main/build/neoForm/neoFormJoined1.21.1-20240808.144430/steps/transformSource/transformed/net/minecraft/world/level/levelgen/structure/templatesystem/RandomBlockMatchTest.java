@@ -20,14 +20,14 @@ public class RandomBlockMatchTest extends RuleTest {
     private final Block block;
     private final float probability;
 
-    public RandomBlockMatchTest(Block p_74263_, float p_74264_) {
-        this.block = p_74263_;
-        this.probability = p_74264_;
+    public RandomBlockMatchTest(Block block, float probability) {
+        this.block = block;
+        this.probability = probability;
     }
 
     @Override
-    public boolean test(BlockState p_230317_, RandomSource p_230318_) {
-        return p_230317_.is(this.block) && p_230318_.nextFloat() < this.probability;
+    public boolean test(BlockState state, RandomSource random) {
+        return state.is(this.block) && random.nextFloat() < this.probability;
     }
 
     @Override

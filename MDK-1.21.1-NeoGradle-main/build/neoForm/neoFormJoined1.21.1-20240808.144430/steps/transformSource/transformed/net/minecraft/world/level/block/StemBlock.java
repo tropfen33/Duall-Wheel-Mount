@@ -59,79 +59,82 @@ public class StemBlock extends BushBlock implements BonemealableBlock {
         return CODEC;
     }
 
-    public StemBlock(ResourceKey<Block> p_304976_, ResourceKey<Block> p_304671_, ResourceKey<Item> p_304942_, BlockBehaviour.Properties p_154730_) {
-        super(p_154730_);
-        this.fruit = p_304976_;
-        this.attachedStem = p_304671_;
-        this.seed = p_304942_;
+    public StemBlock(ResourceKey<Block> fruit, ResourceKey<Block> attachedStem, ResourceKey<Item> seed, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.fruit = fruit;
+        this.attachedStem = attachedStem;
+        this.seed = seed;
         this.registerDefaultState(this.stateDefinition.any().setValue(AGE, Integer.valueOf(0)));
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_57047_, BlockGetter p_57048_, BlockPos p_57049_, CollisionContext p_57050_) {
-        return SHAPE_BY_AGE[p_57047_.getValue(AGE)];
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SHAPE_BY_AGE[state.getValue(AGE)];
     }
 
     @Override
-    protected boolean mayPlaceOn(BlockState p_57053_, BlockGetter p_57054_, BlockPos p_57055_) {
-        return p_57053_.getBlock() instanceof net.minecraft.world.level.block.FarmBlock;
+    protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.getBlock() instanceof net.minecraft.world.level.block.FarmBlock;
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_222538_, ServerLevel p_222539_, BlockPos p_222540_, RandomSource p_222541_) {
-        if (!p_222539_.isAreaLoaded(p_222540_, 1)) return; // Forge: prevent loading unloaded chunks when checking neighbor's light
-        if (p_222539_.getRawBrightness(p_222540_, 0) >= 9) {
-            float f = CropBlock.getGrowthSpeed(p_222538_, p_222539_, p_222540_);
-            if (net.neoforged.neoforge.common.CommonHooks.canCropGrow(p_222539_, p_222540_, p_222538_, p_222541_.nextInt((int)(25.0F / f) + 1) == 0)) {
-                int i = p_222538_.getValue(AGE);
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!level.isAreaLoaded(pos, 1)) return; // Forge: prevent loading unloaded chunks when checking neighbor's light
+        if (level.getRawBrightness(pos, 0) >= 9) {
+            float f = CropBlock.getGrowthSpeed(state, level, pos);
+            if (net.neoforged.neoforge.common.CommonHooks.canCropGrow(level, pos, state, random.nextInt((int)(25.0F / f) + 1) == 0)) {
+                int i = state.getValue(AGE);
                 if (i < 7) {
-                    p_222539_.setBlock(p_222540_, p_222538_.setValue(AGE, Integer.valueOf(i + 1)), 2);
+                    level.setBlock(pos, state.setValue(AGE, Integer.valueOf(i + 1)), 2);
                 } else {
-                    Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(p_222541_);
-                    BlockPos blockpos = p_222540_.relative(direction);
-                    BlockState blockstate = p_222539_.getBlockState(blockpos.below());
-                    if (p_222539_.isEmptyBlock(blockpos) && (blockstate.getBlock() instanceof net.minecraft.world.level.block.FarmBlock || blockstate.is(BlockTags.DIRT))) {
-                        Registry<Block> registry = p_222539_.registryAccess().registryOrThrow(Registries.BLOCK);
+                    Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(random);
+                    BlockPos blockpos = pos.relative(direction);
+                    BlockState blockstate = level.getBlockState(blockpos.below());
+                    if (level.isEmptyBlock(blockpos) && (blockstate.getBlock() instanceof net.minecraft.world.level.block.FarmBlock || blockstate.is(BlockTags.DIRT))) {
+                        Registry<Block> registry = level.registryAccess().registryOrThrow(Registries.BLOCK);
                         Optional<Block> optional = registry.getOptional(this.fruit);
                         Optional<Block> optional1 = registry.getOptional(this.attachedStem);
                         if (optional.isPresent() && optional1.isPresent()) {
-                            p_222539_.setBlockAndUpdate(blockpos, optional.get().defaultBlockState());
-                            p_222539_.setBlockAndUpdate(p_222540_, optional1.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, direction));
+                            level.setBlockAndUpdate(blockpos, optional.get().defaultBlockState());
+                            level.setBlockAndUpdate(pos, optional1.get().defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, direction));
                         }
                     }
                 }
-                net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(p_222539_, p_222540_, p_222538_);
+                net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(level, pos, state);
             }
         }
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader p_304982_, BlockPos p_57027_, BlockState p_57028_) {
-        return new ItemStack(DataFixUtils.orElse(p_304982_.registryAccess().registryOrThrow(Registries.ITEM).getOptional(this.seed), this));
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
+        return new ItemStack(DataFixUtils.orElse(level.registryAccess().registryOrThrow(Registries.ITEM).getOptional(this.seed), this));
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader p_255699_, BlockPos p_57031_, BlockState p_57032_) {
-        return p_57032_.getValue(AGE) != 7;
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+        return state.getValue(AGE) != 7;
     }
 
     @Override
-    public boolean isBonemealSuccess(Level p_222533_, RandomSource p_222534_, BlockPos p_222535_, BlockState p_222536_) {
+    public boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel p_222528_, RandomSource p_222529_, BlockPos p_222530_, BlockState p_222531_) {
-        int i = Math.min(7, p_222531_.getValue(AGE) + Mth.nextInt(p_222528_.random, 2, 5));
-        BlockState blockstate = p_222531_.setValue(AGE, Integer.valueOf(i));
-        p_222528_.setBlock(p_222530_, blockstate, 2);
+    public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
+        int i = Math.min(7, state.getValue(AGE) + Mth.nextInt(level.random, 2, 5));
+        BlockState blockstate = state.setValue(AGE, Integer.valueOf(i));
+        level.setBlock(pos, blockstate, 2);
         if (i == 7) {
-            blockstate.randomTick(p_222528_, p_222530_, p_222528_.random);
+            blockstate.randomTick(level, pos, level.random);
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_57040_) {
-        p_57040_.add(AGE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AGE);
     }
 }

@@ -15,8 +15,8 @@ public record RaidsDebugPayload(List<BlockPos> raidCenters) implements CustomPac
         this(p_295468_.readList(BlockPos.STREAM_CODEC));
     }
 
-    private void write(FriendlyByteBuf p_294905_) {
-        p_294905_.writeCollection(this.raidCenters, BlockPos.STREAM_CODEC);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeCollection(this.raidCenters, BlockPos.STREAM_CODEC);
     }
 
     @Override

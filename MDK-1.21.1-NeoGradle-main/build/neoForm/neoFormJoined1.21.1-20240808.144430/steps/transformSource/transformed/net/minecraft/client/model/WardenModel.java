@@ -36,10 +36,10 @@ public class WardenModel<T extends Warden> extends HierarchicalModel<T> {
     private final List<ModelPart> bioluminescentLayerModelParts;
     private final List<ModelPart> pulsatingSpotsLayerModelParts;
 
-    public WardenModel(ModelPart p_233512_) {
+    public WardenModel(ModelPart root) {
         super(RenderType::entityCutoutNoCull);
-        this.root = p_233512_;
-        this.bone = p_233512_.getChild("bone");
+        this.root = root;
+        this.bone = root.getChild("bone");
         this.body = this.bone.getChild("body");
         this.head = this.body.getChild("head");
         this.rightLeg = this.bone.getChild("right_leg");
@@ -95,28 +95,31 @@ public class WardenModel<T extends Warden> extends HierarchicalModel<T> {
         return LayerDefinition.create(meshdefinition, 128, 128);
     }
 
-    public void setupAnim(T p_233531_, float p_233532_, float p_233533_, float p_233534_, float p_233535_, float p_233536_) {
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.root().getAllParts().forEach(ModelPart::resetPose);
-        float f = p_233534_ - (float)p_233531_.tickCount;
-        this.animateHeadLookTarget(p_233535_, p_233536_);
-        this.animateWalk(p_233532_, p_233533_);
-        this.animateIdlePose(p_233534_);
-        this.animateTendrils(p_233531_, p_233534_, f);
-        this.animate(p_233531_.attackAnimationState, WardenAnimation.WARDEN_ATTACK, p_233534_);
-        this.animate(p_233531_.sonicBoomAnimationState, WardenAnimation.WARDEN_SONIC_BOOM, p_233534_);
-        this.animate(p_233531_.diggingAnimationState, WardenAnimation.WARDEN_DIG, p_233534_);
-        this.animate(p_233531_.emergeAnimationState, WardenAnimation.WARDEN_EMERGE, p_233534_);
-        this.animate(p_233531_.roarAnimationState, WardenAnimation.WARDEN_ROAR, p_233534_);
-        this.animate(p_233531_.sniffAnimationState, WardenAnimation.WARDEN_SNIFF, p_233534_);
+        float f = ageInTicks - (float)entity.tickCount;
+        this.animateHeadLookTarget(netHeadYaw, headPitch);
+        this.animateWalk(limbSwing, limbSwingAmount);
+        this.animateIdlePose(ageInTicks);
+        this.animateTendrils(entity, ageInTicks, f);
+        this.animate(entity.attackAnimationState, WardenAnimation.WARDEN_ATTACK, ageInTicks);
+        this.animate(entity.sonicBoomAnimationState, WardenAnimation.WARDEN_SONIC_BOOM, ageInTicks);
+        this.animate(entity.diggingAnimationState, WardenAnimation.WARDEN_DIG, ageInTicks);
+        this.animate(entity.emergeAnimationState, WardenAnimation.WARDEN_EMERGE, ageInTicks);
+        this.animate(entity.roarAnimationState, WardenAnimation.WARDEN_ROAR, ageInTicks);
+        this.animate(entity.sniffAnimationState, WardenAnimation.WARDEN_SNIFF, ageInTicks);
     }
 
-    private void animateHeadLookTarget(float p_233517_, float p_233518_) {
-        this.head.xRot = p_233518_ * (float) (Math.PI / 180.0);
-        this.head.yRot = p_233517_ * (float) (Math.PI / 180.0);
+    private void animateHeadLookTarget(float yaw, float pitch) {
+        this.head.xRot = pitch * (float) (Math.PI / 180.0);
+        this.head.yRot = yaw * (float) (Math.PI / 180.0);
     }
 
-    private void animateIdlePose(float p_233515_) {
-        float f = p_233515_ * 0.1F;
+    private void animateIdlePose(float ageInTicks) {
+        float f = ageInTicks * 0.1F;
         float f1 = Mth.cos(f);
         float f2 = Mth.sin(f);
         this.head.zRot += 0.06F * f1;
@@ -125,9 +128,9 @@ public class WardenModel<T extends Warden> extends HierarchicalModel<T> {
         this.body.xRot += 0.025F * f1;
     }
 
-    private void animateWalk(float p_233539_, float p_233540_) {
-        float f = Math.min(0.5F, 3.0F * p_233540_);
-        float f1 = p_233539_ * 0.8662F;
+    private void animateWalk(float limbSwing, float limbSwingAmount) {
+        float f = Math.min(0.5F, 3.0F * limbSwingAmount);
+        float f1 = limbSwing * 0.8662F;
         float f2 = Mth.cos(f1);
         float f3 = Mth.sin(f1);
         float f4 = Math.min(0.35F, f);
@@ -155,8 +158,8 @@ public class WardenModel<T extends Warden> extends HierarchicalModel<T> {
         this.rightArm.y = -13.0F;
     }
 
-    private void animateTendrils(T p_233527_, float p_233528_, float p_233529_) {
-        float f = p_233527_.getTendrilAnimation(p_233529_) * (float)(Math.cos((double)p_233528_ * 2.25) * Math.PI * 0.1F);
+    private void animateTendrils(T entity, float ageInTicks, float partialTick) {
+        float f = entity.getTendrilAnimation(partialTick) * (float)(Math.cos((double)ageInTicks * 2.25) * Math.PI * 0.1F);
         this.leftTendril.xRot = f;
         this.rightTendril.xRot = -f;
     }

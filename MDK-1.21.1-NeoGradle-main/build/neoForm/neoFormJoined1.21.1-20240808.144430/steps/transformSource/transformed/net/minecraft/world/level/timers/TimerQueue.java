@@ -32,12 +32,12 @@ public class TimerQueue<T> {
         return Comparator.<TimerQueue.Event<T>>comparingLong(p_82272_ -> p_82272_.triggerTime).thenComparing(p_82269_ -> p_82269_.sequentialId);
     }
 
-    public TimerQueue(TimerCallbacks<T> p_82249_, Stream<? extends Dynamic<?>> p_82250_) {
-        this(p_82249_);
+    public TimerQueue(TimerCallbacks<T> callbacksRegistry, Stream<? extends Dynamic<?>> scheduledEventsDynamic) {
+        this(callbacksRegistry);
         this.queue.clear();
         this.events.clear();
         this.sequentialId = UnsignedLong.ZERO;
-        p_82250_.forEach(p_265027_ -> {
+        scheduledEventsDynamic.forEach(p_265027_ -> {
             Tag tag = p_265027_.convert(NbtOps.INSTANCE).getValue();
             if (tag instanceof CompoundTag compoundtag) {
                 this.loadEvent(compoundtag);
@@ -47,34 +47,34 @@ public class TimerQueue<T> {
         });
     }
 
-    public TimerQueue(TimerCallbacks<T> p_82247_) {
-        this.callbacksRegistry = p_82247_;
+    public TimerQueue(TimerCallbacks<T> callbacksRegistry) {
+        this.callbacksRegistry = callbacksRegistry;
     }
 
-    public void tick(T p_82257_, long p_82258_) {
+    public void tick(T obj, long gameTime) {
         while (true) {
             TimerQueue.Event<T> event = this.queue.peek();
-            if (event == null || event.triggerTime > p_82258_) {
+            if (event == null || event.triggerTime > gameTime) {
                 return;
             }
 
             this.queue.remove();
-            this.events.remove(event.id, p_82258_);
-            event.callback.handle(p_82257_, this, p_82258_);
+            this.events.remove(event.id, gameTime);
+            event.callback.handle(obj, this, gameTime);
         }
     }
 
-    public void schedule(String p_82262_, long p_82263_, TimerCallback<T> p_82264_) {
-        if (!this.events.contains(p_82262_, p_82263_)) {
+    public void schedule(String id, long triggerTime, TimerCallback<T> callback) {
+        if (!this.events.contains(id, triggerTime)) {
             this.sequentialId = this.sequentialId.plus(UnsignedLong.ONE);
-            TimerQueue.Event<T> event = new TimerQueue.Event<>(p_82263_, this.sequentialId, p_82262_, p_82264_);
-            this.events.put(p_82262_, p_82263_, event);
+            TimerQueue.Event<T> event = new TimerQueue.Event<>(triggerTime, this.sequentialId, id, callback);
+            this.events.put(id, triggerTime, event);
             this.queue.add(event);
         }
     }
 
-    public int remove(String p_82260_) {
-        Collection<TimerQueue.Event<T>> collection = this.events.row(p_82260_).values();
+    public int remove(String eventId) {
+        Collection<TimerQueue.Event<T>> collection = this.events.row(eventId).values();
         collection.forEach(this.queue::remove);
         int i = collection.size();
         collection.clear();
@@ -85,21 +85,21 @@ public class TimerQueue<T> {
         return Collections.unmodifiableSet(this.events.rowKeySet());
     }
 
-    private void loadEvent(CompoundTag p_82266_) {
-        CompoundTag compoundtag = p_82266_.getCompound("Callback");
+    private void loadEvent(CompoundTag tag) {
+        CompoundTag compoundtag = tag.getCompound("Callback");
         TimerCallback<T> timercallback = this.callbacksRegistry.deserialize(compoundtag);
         if (timercallback != null) {
-            String s = p_82266_.getString("Name");
-            long i = p_82266_.getLong("TriggerTime");
+            String s = tag.getString("Name");
+            long i = tag.getLong("TriggerTime");
             this.schedule(s, i, timercallback);
         }
     }
 
-    private CompoundTag storeEvent(TimerQueue.Event<T> p_82255_) {
+    private CompoundTag storeEvent(TimerQueue.Event<T> event) {
         CompoundTag compoundtag = new CompoundTag();
-        compoundtag.putString("Name", p_82255_.id);
-        compoundtag.putLong("TriggerTime", p_82255_.triggerTime);
-        compoundtag.put("Callback", this.callbacksRegistry.serialize(p_82255_.callback));
+        compoundtag.putString("Name", event.id);
+        compoundtag.putLong("TriggerTime", event.triggerTime);
+        compoundtag.put("Callback", this.callbacksRegistry.serialize(event.callback));
         return compoundtag;
     }
 
@@ -115,11 +115,11 @@ public class TimerQueue<T> {
         public final String id;
         public final TimerCallback<T> callback;
 
-        Event(long p_82278_, UnsignedLong p_82279_, String p_82280_, TimerCallback<T> p_82281_) {
-            this.triggerTime = p_82278_;
-            this.sequentialId = p_82279_;
-            this.id = p_82280_;
-            this.callback = p_82281_;
+        Event(long triggerTime, UnsignedLong sequentialId, String id, TimerCallback<T> callback) {
+            this.triggerTime = triggerTime;
+            this.sequentialId = sequentialId;
+            this.id = id;
+            this.callback = callback;
         }
     }
 }

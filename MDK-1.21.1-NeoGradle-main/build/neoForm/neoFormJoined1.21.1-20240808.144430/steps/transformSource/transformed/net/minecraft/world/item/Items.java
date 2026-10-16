@@ -2083,20 +2083,20 @@ public class Items {
     );
     public static final Item BREEZE_ROD = registerItem("breeze_rod", new Item(new Item.Properties()));
 
-    public static Item registerBlock(Block p_42806_) {
-        return registerBlock(new BlockItem(p_42806_, new Item.Properties()));
+    public static Item registerBlock(Block block) {
+        return registerBlock(new BlockItem(block, new Item.Properties()));
     }
 
-    public static Item registerBlock(Block p_332741_, UnaryOperator<Item.Properties> p_332641_) {
-        return registerBlock(new BlockItem(p_332741_, p_332641_.apply(new Item.Properties())));
+    public static Item registerBlock(Block block, UnaryOperator<Item.Properties> propertiesModifier) {
+        return registerBlock(new BlockItem(block, propertiesModifier.apply(new Item.Properties())));
     }
 
-    public static Item registerBlock(Block p_252092_, Block... p_248886_) {
-        BlockItem blockitem = new BlockItem(p_252092_, new Item.Properties()) {
+    public static Item registerBlock(Block p_block, Block... others) {
+        BlockItem blockitem = new BlockItem(p_block, new Item.Properties()) {
             @Override
             public void registerBlocks(java.util.Map<Block, Item> map, Item self) {
                 super.registerBlocks(map, self);
-                for (Block b : p_248886_) {
+                for (Block b : others) {
                     map.put(b, self);
                 }
             }
@@ -2106,7 +2106,7 @@ public class Items {
             @Override
             public void removeFromBlockToItemMap(java.util.Map<Block, Item> map, Item self) {
                 super.removeFromBlockToItemMap(map, self);
-                for (Block b : p_248886_) {
+                for (Block b : others) {
                     map.remove(b);
                 }
             }
@@ -2115,27 +2115,27 @@ public class Items {
         return registerBlock(blockitem);
     }
 
-    public static Item registerBlock(BlockItem p_42804_) {
-        return registerBlock(p_42804_.getBlock(), p_42804_);
+    public static Item registerBlock(BlockItem item) {
+        return registerBlock(item.getBlock(), item);
     }
 
-    public static Item registerBlock(Block p_42811_, Item p_42812_) {
-        return registerItem(BuiltInRegistries.BLOCK.getKey(p_42811_), p_42812_);
+    public static Item registerBlock(Block block, Item item) {
+        return registerItem(BuiltInRegistries.BLOCK.getKey(block), item);
     }
 
-    public static Item registerItem(String p_42814_, Item p_42815_) {
-        return registerItem(ResourceLocation.withDefaultNamespace(p_42814_), p_42815_);
+    public static Item registerItem(String key, Item item) {
+        return registerItem(ResourceLocation.withDefaultNamespace(key), item);
     }
 
-    public static Item registerItem(ResourceLocation p_42817_, Item p_42818_) {
-        return registerItem(ResourceKey.create(BuiltInRegistries.ITEM.key(), p_42817_), p_42818_);
+    public static Item registerItem(ResourceLocation key, Item item) {
+        return registerItem(ResourceKey.create(BuiltInRegistries.ITEM.key(), key), item);
     }
 
-    public static Item registerItem(ResourceKey<Item> p_281502_, Item p_283159_) {
-        if (p_283159_ instanceof BlockItem) {
-            ((BlockItem)p_283159_).registerBlocks(Item.BY_BLOCK, p_283159_);
+    public static Item registerItem(ResourceKey<Item> key, Item item) {
+        if (item instanceof BlockItem) {
+            ((BlockItem)item).registerBlocks(Item.BY_BLOCK, item);
         }
 
-        return Registry.register(BuiltInRegistries.ITEM, p_281502_, p_283159_);
+        return Registry.register(BuiltInRegistries.ITEM, key, item);
     }
 }

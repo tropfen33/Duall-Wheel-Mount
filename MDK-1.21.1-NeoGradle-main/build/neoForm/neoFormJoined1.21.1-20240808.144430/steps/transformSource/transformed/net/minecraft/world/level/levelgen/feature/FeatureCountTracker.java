@@ -25,24 +25,24 @@ public class FeatureCountTracker {
         .weakKeys()
         .expireAfterAccess(5L, TimeUnit.MINUTES)
         .build(new CacheLoader<ServerLevel, FeatureCountTracker.LevelData>() {
-            public FeatureCountTracker.LevelData load(ServerLevel p_190902_) {
+            public FeatureCountTracker.LevelData load(ServerLevel level) {
                 return new FeatureCountTracker.LevelData(Object2IntMaps.synchronize(new Object2IntOpenHashMap<>()), new MutableInt(0));
             }
         });
 
-    public static void chunkDecorated(ServerLevel p_190882_) {
+    public static void chunkDecorated(ServerLevel level) {
         try {
-            data.get(p_190882_).chunksWithFeatures().increment();
+            data.get(level).chunksWithFeatures().increment();
         } catch (Exception exception) {
             LOGGER.error("Failed to increment chunk count", (Throwable)exception);
         }
     }
 
-    public static void featurePlaced(ServerLevel p_190884_, ConfiguredFeature<?, ?> p_190885_, Optional<PlacedFeature> p_190886_) {
+    public static void featurePlaced(ServerLevel level, ConfiguredFeature<?, ?> feature, Optional<PlacedFeature> topFeature) {
         try {
-            data.get(p_190884_)
+            data.get(level)
                 .featureData()
-                .computeInt(new FeatureCountTracker.FeatureData(p_190885_, p_190886_), (p_190891_, p_190892_) -> p_190892_ == null ? 1 : p_190892_ + 1);
+                .computeInt(new FeatureCountTracker.FeatureData(feature, topFeature), (p_190891_, p_190892_) -> p_190892_ == null ? 1 : p_190892_ + 1);
         } catch (Exception exception) {
             LOGGER.error("Failed to increment feature count", (Throwable)exception);
         }

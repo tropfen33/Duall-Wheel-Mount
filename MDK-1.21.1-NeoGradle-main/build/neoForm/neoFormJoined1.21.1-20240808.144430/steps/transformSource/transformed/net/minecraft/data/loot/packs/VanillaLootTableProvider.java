@@ -9,9 +9,9 @@ import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 
 public class VanillaLootTableProvider {
-    public static LootTableProvider create(PackOutput p_250807_, CompletableFuture<HolderLookup.Provider> p_324422_) {
+    public static LootTableProvider create(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
         return new LootTableProvider(
-            p_250807_,
+            output,
             BuiltInLootTables.all(),
             List.of(
                 new LootTableProvider.SubProviderEntry(VanillaFishingLoot::new, LootContextParamSets.FISHING),
@@ -24,7 +24,7 @@ public class VanillaLootTableProvider {
                 new LootTableProvider.SubProviderEntry(VanillaArchaeologyLoot::new, LootContextParamSets.ARCHAEOLOGY),
                 new LootTableProvider.SubProviderEntry(VanillaShearingLoot::new, LootContextParamSets.SHEARING)
             ),
-            p_324422_
+            registries
         );
     }
 }

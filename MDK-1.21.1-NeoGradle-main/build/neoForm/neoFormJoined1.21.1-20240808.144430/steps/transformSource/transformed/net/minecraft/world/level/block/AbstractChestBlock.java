@@ -13,15 +13,15 @@ import net.minecraft.world.level.block.state.BlockState;
 public abstract class AbstractChestBlock<E extends BlockEntity> extends BaseEntityBlock {
     protected final Supplier<BlockEntityType<? extends E>> blockEntityType;
 
-    protected AbstractChestBlock(BlockBehaviour.Properties p_48677_, Supplier<BlockEntityType<? extends E>> p_48678_) {
-        super(p_48677_);
-        this.blockEntityType = p_48678_;
+    protected AbstractChestBlock(BlockBehaviour.Properties properties, Supplier<BlockEntityType<? extends E>> blockEntityType) {
+        super(properties);
+        this.blockEntityType = blockEntityType;
     }
 
     @Override
     protected abstract MapCodec<? extends AbstractChestBlock<E>> codec();
 
     public abstract DoubleBlockCombiner.NeighborCombineResult<? extends ChestBlockEntity> combine(
-        BlockState p_48679_, Level p_48680_, BlockPos p_48681_, boolean p_48682_
+        BlockState state, Level level, BlockPos pos, boolean override
     );
 }

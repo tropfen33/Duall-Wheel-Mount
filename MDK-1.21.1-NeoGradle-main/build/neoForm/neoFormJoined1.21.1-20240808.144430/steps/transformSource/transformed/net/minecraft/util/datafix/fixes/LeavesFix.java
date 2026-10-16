@@ -74,8 +74,8 @@ public class LeavesFix extends DataFix {
         "minecraft:stripped_spruce_log"
     );
 
-    public LeavesFix(Schema p_16205_, boolean p_16206_) {
-        super(p_16205_, p_16206_);
+    public LeavesFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -188,43 +188,43 @@ public class LeavesFix extends DataFix {
         }
     }
 
-    public static int getIndex(int p_16211_, int p_16212_, int p_16213_) {
-        return p_16212_ << 8 | p_16213_ << 4 | p_16211_;
+    public static int getIndex(int x, int y, int z) {
+        return y << 8 | z << 4 | x;
     }
 
-    private int getX(int p_16209_) {
-        return p_16209_ & 15;
+    private int getX(int index) {
+        return index & 15;
     }
 
-    private int getY(int p_16246_) {
-        return p_16246_ >> 8 & 0xFF;
+    private int getY(int index) {
+        return index >> 8 & 0xFF;
     }
 
-    private int getZ(int p_16248_) {
-        return p_16248_ >> 4 & 15;
+    private int getZ(int index) {
+        return index >> 4 & 15;
     }
 
-    public static int getSideMask(boolean p_16237_, boolean p_16238_, boolean p_16239_, boolean p_16240_) {
+    public static int getSideMask(boolean west, boolean east, boolean north, boolean south) {
         int i = 0;
-        if (p_16239_) {
-            if (p_16238_) {
+        if (north) {
+            if (east) {
                 i |= 2;
-            } else if (p_16237_) {
+            } else if (west) {
                 i |= 128;
             } else {
                 i |= 1;
             }
-        } else if (p_16240_) {
-            if (p_16237_) {
+        } else if (south) {
+            if (west) {
                 i |= 32;
-            } else if (p_16238_) {
+            } else if (east) {
                 i |= 8;
             } else {
                 i |= 16;
             }
-        } else if (p_16238_) {
+        } else if (east) {
             i |= 4;
-        } else if (p_16237_) {
+        } else if (west) {
             i |= 64;
         }
 
@@ -242,8 +242,8 @@ public class LeavesFix extends DataFix {
         @Nullable
         private Int2IntMap stateToIdMap;
 
-        public LeavesSection(Typed<?> p_16254_, Schema p_16255_) {
-            super(p_16254_, p_16255_);
+        public LeavesSection(Typed<?> data, Schema schema) {
+            super(data, schema);
         }
 
         @Override
@@ -270,37 +270,37 @@ public class LeavesFix extends DataFix {
             return this.leaveIds.isEmpty() && this.logIds.isEmpty();
         }
 
-        private Dynamic<?> makeLeafTag(Dynamic<?> p_16272_, String p_16273_, boolean p_16274_, int p_16275_) {
-            Dynamic<?> dynamic = p_16272_.emptyMap();
-            dynamic = dynamic.set("persistent", dynamic.createString(p_16274_ ? "true" : "false"));
-            dynamic = dynamic.set("distance", dynamic.createString(Integer.toString(p_16275_)));
-            Dynamic<?> dynamic1 = p_16272_.emptyMap();
+        private Dynamic<?> makeLeafTag(Dynamic<?> p_dynamic, String name, boolean persistent, int distance) {
+            Dynamic<?> dynamic = p_dynamic.emptyMap();
+            dynamic = dynamic.set("persistent", dynamic.createString(persistent ? "true" : "false"));
+            dynamic = dynamic.set("distance", dynamic.createString(Integer.toString(distance)));
+            Dynamic<?> dynamic1 = p_dynamic.emptyMap();
             dynamic1 = dynamic1.set("Properties", dynamic);
-            return dynamic1.set("Name", dynamic1.createString(p_16273_));
+            return dynamic1.set("Name", dynamic1.createString(name));
         }
 
-        public boolean isLog(int p_16258_) {
-            return this.logIds.contains(p_16258_);
+        public boolean isLog(int id) {
+            return this.logIds.contains(id);
         }
 
-        public boolean isLeaf(int p_16277_) {
-            return this.leaveIds.contains(p_16277_);
+        public boolean isLeaf(int id) {
+            return this.leaveIds.contains(id);
         }
 
-        int getDistance(int p_16279_) {
-            return this.isLog(p_16279_) ? 0 : Integer.parseInt(this.palette.get(p_16279_).get("Properties").get("distance").asString(""));
+        int getDistance(int index) {
+            return this.isLog(index) ? 0 : Integer.parseInt(this.palette.get(index).get("Properties").get("distance").asString(""));
         }
 
-        void setDistance(int p_16260_, int p_16261_, int p_16262_) {
-            Dynamic<?> dynamic = this.palette.get(p_16261_);
+        void setDistance(int index, int block, int distance) {
+            Dynamic<?> dynamic = this.palette.get(block);
             String s = dynamic.get("Name").asString("");
             boolean flag = Objects.equals(dynamic.get("Properties").get("persistent").asString(""), "true");
-            int i = this.getStateId(s, flag, p_16262_);
+            int i = this.getStateId(s, flag, distance);
             if (!this.stateToIdMap.containsKey(i)) {
                 int j = this.palette.size();
                 this.leaveIds.add(j);
                 this.stateToIdMap.put(i, j);
-                this.palette.add(this.makeLeafTag(dynamic, s, flag, p_16262_));
+                this.palette.add(this.makeLeafTag(dynamic, s, flag, distance));
             }
 
             int l = this.stateToIdMap.get(i);
@@ -314,7 +314,7 @@ public class LeavesFix extends DataFix {
                 this.storage = packedbitstorage;
             }
 
-            this.storage.set(p_16260_, l);
+            this.storage.set(index, l);
         }
     }
 
@@ -329,32 +329,32 @@ public class LeavesFix extends DataFix {
         @Nullable
         protected PackedBitStorage storage;
 
-        public Section(Typed<?> p_16286_, Schema p_16287_) {
-            if (!Objects.equals(p_16287_.getType(References.BLOCK_STATE), this.blockStateType)) {
+        public Section(Typed<?> data, Schema schema) {
+            if (!Objects.equals(schema.getType(References.BLOCK_STATE), this.blockStateType)) {
                 throw new IllegalStateException("Block state type is not what was expected.");
             } else {
-                Optional<List<Pair<String, Dynamic<?>>>> optional = p_16286_.getOptional(this.paletteFinder);
+                Optional<List<Pair<String, Dynamic<?>>>> optional = data.getOptional(this.paletteFinder);
                 this.palette = optional.<List>map(p_16297_ -> p_16297_.stream().map(Pair::getSecond).collect(Collectors.toList())).orElse(ImmutableList.of());
-                Dynamic<?> dynamic = p_16286_.get(DSL.remainderFinder());
+                Dynamic<?> dynamic = data.get(DSL.remainderFinder());
                 this.index = dynamic.get("Y").asInt(0);
                 this.readStorage(dynamic);
             }
         }
 
-        protected void readStorage(Dynamic<?> p_16291_) {
+        protected void readStorage(Dynamic<?> data) {
             if (this.skippable()) {
                 this.storage = null;
             } else {
-                long[] along = p_16291_.get("BlockStates").asLongStream().toArray();
+                long[] along = data.get("BlockStates").asLongStream().toArray();
                 int i = Math.max(4, DataFixUtils.ceillog2(this.palette.size()));
                 this.storage = new PackedBitStorage(i, 4096, along);
             }
         }
 
-        public Typed<?> write(Typed<?> p_16289_) {
+        public Typed<?> write(Typed<?> data) {
             return this.isSkippable()
-                ? p_16289_
-                : p_16289_.update(DSL.remainderFinder(), p_16305_ -> p_16305_.set("BlockStates", p_16305_.createLongList(Arrays.stream(this.storage.getRaw()))))
+                ? data
+                : data.update(DSL.remainderFinder(), p_16305_ -> p_16305_.set("BlockStates", p_16305_.createLongList(Arrays.stream(this.storage.getRaw()))))
                     .set(
                         this.paletteFinder,
                         this.palette.stream().<Pair<String,Dynamic<?>>>map(p_16300_ -> Pair.of(References.BLOCK_STATE.typeName(), p_16300_)).collect(Collectors.toList())
@@ -365,12 +365,12 @@ public class LeavesFix extends DataFix {
             return this.storage == null;
         }
 
-        public int getBlock(int p_16303_) {
-            return this.storage.get(p_16303_);
+        public int getBlock(int index) {
+            return this.storage.get(index);
         }
 
-        protected int getStateId(String p_16293_, boolean p_16294_, int p_16295_) {
-            return LeavesFix.LEAVES.get(p_16293_) << 5 | (p_16294_ ? 16 : 0) | p_16295_;
+        protected int getStateId(String name, boolean persistent, int distance) {
+            return LeavesFix.LEAVES.get(name) << 5 | (persistent ? 16 : 0) | distance;
         }
 
         int getIndex() {

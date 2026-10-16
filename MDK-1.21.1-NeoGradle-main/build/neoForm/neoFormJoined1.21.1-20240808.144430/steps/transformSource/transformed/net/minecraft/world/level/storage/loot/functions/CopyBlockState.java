@@ -22,6 +22,10 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
+/**
+ * LootItemFunction that copies a set of block state properties to the {@code "BlockStateTag"} NBT tag of the ItemStack.
+ * This tag is checked when the block is placed.
+ */
 public class CopyBlockState extends LootItemConditionalFunction {
     public static final MapCodec<CopyBlockState> CODEC = RecordCodecBuilder.mapCodec(
         p_344683_ -> commonFields(p_344683_)
@@ -36,17 +40,17 @@ public class CopyBlockState extends LootItemConditionalFunction {
     private final Holder<Block> block;
     private final Set<Property<?>> properties;
 
-    CopyBlockState(List<LootItemCondition> p_298625_, Holder<Block> p_298940_, Set<Property<?>> p_80052_) {
-        super(p_298625_);
-        this.block = p_298940_;
-        this.properties = p_80052_;
+    CopyBlockState(List<LootItemCondition> conditions, Holder<Block> block, Set<Property<?>> properties) {
+        super(conditions);
+        this.block = block;
+        this.properties = properties;
     }
 
-    private CopyBlockState(List<LootItemCondition> p_298279_, Holder<Block> p_299047_, List<String> p_298632_) {
+    private CopyBlockState(List<LootItemCondition> conditions, Holder<Block> block, List<String> properties) {
         this(
-            p_298279_,
-            p_299047_,
-            p_298632_.stream().map(p_299047_.value().getStateDefinition()::getProperty).filter(Objects::nonNull).collect(Collectors.toSet())
+            conditions,
+            block,
+            properties.stream().map(block.value().getStateDefinition()::getProperty).filter(Objects::nonNull).collect(Collectors.toSet())
         );
     }
 
@@ -60,11 +64,14 @@ public class CopyBlockState extends LootItemConditionalFunction {
         return ImmutableSet.of(LootContextParams.BLOCK_STATE);
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    protected ItemStack run(ItemStack p_80060_, LootContext p_80061_) {
-        BlockState blockstate = p_80061_.getParamOrNull(LootContextParams.BLOCK_STATE);
+    protected ItemStack run(ItemStack stack, LootContext context) {
+        BlockState blockstate = context.getParamOrNull(LootContextParams.BLOCK_STATE);
         if (blockstate != null) {
-            p_80060_.update(DataComponents.BLOCK_STATE, BlockItemStateProperties.EMPTY, p_330174_ -> {
+            stack.update(DataComponents.BLOCK_STATE, BlockItemStateProperties.EMPTY, p_330174_ -> {
                 for (Property<?> property : this.properties) {
                     if (blockstate.hasProperty(property)) {
                         p_330174_ = p_330174_.with(property, blockstate);
@@ -75,26 +82,26 @@ public class CopyBlockState extends LootItemConditionalFunction {
             });
         }
 
-        return p_80060_;
+        return stack;
     }
 
-    public static CopyBlockState.Builder copyState(Block p_80063_) {
-        return new CopyBlockState.Builder(p_80063_);
+    public static CopyBlockState.Builder copyState(Block block) {
+        return new CopyBlockState.Builder(block);
     }
 
     public static class Builder extends LootItemConditionalFunction.Builder<CopyBlockState.Builder> {
         private final Holder<Block> block;
         private final ImmutableSet.Builder<Property<?>> properties = ImmutableSet.builder();
 
-        Builder(Block p_80079_) {
-            this.block = p_80079_.builtInRegistryHolder();
+        Builder(Block block) {
+            this.block = block.builtInRegistryHolder();
         }
 
-        public CopyBlockState.Builder copy(Property<?> p_80085_) {
-            if (!this.block.value().getStateDefinition().getProperties().contains(p_80085_)) {
-                throw new IllegalStateException("Property " + p_80085_ + " is not present on block " + this.block);
+        public CopyBlockState.Builder copy(Property<?> property) {
+            if (!this.block.value().getStateDefinition().getProperties().contains(property)) {
+                throw new IllegalStateException("Property " + property + " is not present on block " + this.block);
             } else {
-                this.properties.add(p_80085_);
+                this.properties.add(property);
                 return this;
             }
         }

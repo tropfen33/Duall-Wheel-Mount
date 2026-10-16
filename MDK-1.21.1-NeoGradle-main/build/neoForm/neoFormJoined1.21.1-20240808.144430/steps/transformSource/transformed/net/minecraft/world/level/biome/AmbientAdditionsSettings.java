@@ -17,9 +17,9 @@ public class AmbientAdditionsSettings {
     private final Holder<SoundEvent> soundEvent;
     private final double tickChance;
 
-    public AmbientAdditionsSettings(Holder<SoundEvent> p_263329_, double p_263326_) {
-        this.soundEvent = p_263329_;
-        this.tickChance = p_263326_;
+    public AmbientAdditionsSettings(Holder<SoundEvent> soundEvent, double tickChance) {
+        this.soundEvent = soundEvent;
+        this.tickChance = tickChance;
     }
 
     public Holder<SoundEvent> getSoundEvent() {

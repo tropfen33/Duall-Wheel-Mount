@@ -75,17 +75,17 @@ public class DownloadedPackSource implements AutoCloseable {
     PackLoadFeedback packFeedback = LOG_ONLY_FEEDBACK;
     private int packIdSerialNumber;
 
-    public DownloadedPackSource(Minecraft p_314574_, Path p_314635_, GameConfig.UserData p_314528_) {
-        this.minecraft = p_314574_;
+    public DownloadedPackSource(Minecraft minecraft, Path directory, GameConfig.UserData userData) {
+        this.minecraft = minecraft;
 
         try {
-            this.downloadQueue = new DownloadQueue(p_314635_);
+            this.downloadQueue = new DownloadQueue(directory);
         } catch (IOException ioexception) {
-            throw new UncheckedIOException("Failed to open download queue in directory " + p_314635_, ioexception);
+            throw new UncheckedIOException("Failed to open download queue in directory " + directory, ioexception);
         }
 
-        Executor executor = p_314574_::tell;
-        this.manager = new ServerPackManager(this.createDownloader(this.downloadQueue, executor, p_314528_.user, p_314528_.proxy), new PackLoadFeedback() {
+        Executor executor = minecraft::tell;
+        this.manager = new ServerPackManager(this.createDownloader(this.downloadQueue, executor, userData.user, userData.proxy), new PackLoadFeedback() {
             @Override
             public void reportUpdate(UUID p_314952_, PackLoadFeedback.Update p_314938_) {
                 DownloadedPackSource.this.packFeedback.reportUpdate(p_314952_, p_314938_);
@@ -98,7 +98,7 @@ public class DownloadedPackSource implements AutoCloseable {
         }, this.createReloadConfig(), this.createUpdateScheduler(executor), ServerPackManager.PackPromptStatus.PENDING);
     }
 
-    HttpUtil.DownloadProgressListener createDownloadNotifier(final int p_314632_) {
+    HttpUtil.DownloadProgressListener createDownloadNotifier(final int packCount) {
         return new HttpUtil.DownloadProgressListener() {
             private final SystemToast.SystemToastId toastId = new SystemToast.SystemToastId();
             private Component title = Component.empty();
@@ -112,11 +112,11 @@ public class DownloadedPackSource implements AutoCloseable {
                 SystemToast.addOrUpdate(DownloadedPackSource.this.minecraft.getToasts(), this.toastId, this.title, this.message);
             }
 
-            private void updateProgress(long p_314935_) {
+            private void updateProgress(long progress) {
                 if (this.totalBytes.isPresent()) {
-                    this.message = Component.translatable("download.pack.progress.percent", p_314935_ * 100L / this.totalBytes.getAsLong());
+                    this.message = Component.translatable("download.pack.progress.percent", progress * 100L / this.totalBytes.getAsLong());
                 } else {
-                    this.message = Component.translatable("download.pack.progress.bytes", Unit.humanReadable(p_314935_));
+                    this.message = Component.translatable("download.pack.progress.bytes", Unit.humanReadable(progress));
                 }
 
                 this.updateToast();
@@ -125,36 +125,36 @@ public class DownloadedPackSource implements AutoCloseable {
             @Override
             public void requestStart() {
                 this.count++;
-                this.title = Component.translatable("download.pack.title", this.count, p_314632_);
+                this.title = Component.translatable("download.pack.title", this.count, packCount);
                 this.updateToast();
-                DownloadedPackSource.LOGGER.debug("Starting pack {}/{} download", this.count, p_314632_);
+                DownloadedPackSource.LOGGER.debug("Starting pack {}/{} download", this.count, packCount);
             }
 
             @Override
-            public void downloadStart(OptionalLong p_314989_) {
-                DownloadedPackSource.LOGGER.debug("File size = {} bytes", p_314989_);
-                this.totalBytes = p_314989_;
+            public void downloadStart(OptionalLong totalSize) {
+                DownloadedPackSource.LOGGER.debug("File size = {} bytes", totalSize);
+                this.totalBytes = totalSize;
                 this.updateProgress(0L);
             }
 
             @Override
-            public void downloadedBytes(long p_314926_) {
-                DownloadedPackSource.LOGGER.debug("Progress for pack {}: {} bytes", this.count, p_314926_);
-                this.updateProgress(p_314926_);
+            public void downloadedBytes(long progress) {
+                DownloadedPackSource.LOGGER.debug("Progress for pack {}: {} bytes", this.count, progress);
+                this.updateProgress(progress);
             }
 
             @Override
-            public void requestFinished(boolean p_314998_) {
-                if (!p_314998_) {
+            public void requestFinished(boolean success) {
+                if (!success) {
                     DownloadedPackSource.LOGGER.info("Pack {} failed to download", this.count);
                     this.failCount++;
                 } else {
                     DownloadedPackSource.LOGGER.debug("Download ended for pack {}", this.count);
                 }
 
-                if (this.count == p_314632_) {
+                if (this.count == packCount) {
                     if (this.failCount > 0) {
-                        this.title = Component.translatable("download.pack.failed", this.failCount, p_314632_);
+                        this.title = Component.translatable("download.pack.failed", this.failCount, packCount);
                         this.message = null;
                         this.updateToast();
                     } else {
@@ -165,7 +165,7 @@ public class DownloadedPackSource implements AutoCloseable {
         };
     }
 
-    private PackDownloader createDownloader(final DownloadQueue p_314570_, final Executor p_314421_, final User p_314576_, final Proxy p_314551_) {
+    private PackDownloader createDownloader(final DownloadQueue downloadQueue, final Executor executor, final User user, final Proxy proxy) {
         return new PackDownloader() {
             private static final int MAX_PACK_SIZE_BYTES = 262144000;
             private static final HashFunction CACHE_HASHING_FUNCTION = Hashing.sha1();
@@ -174,9 +174,9 @@ public class DownloadedPackSource implements AutoCloseable {
                 WorldVersion worldversion = SharedConstants.getCurrentVersion();
                 return Map.of(
                     "X-Minecraft-Username",
-                    p_314576_.getName(),
+                    user.getName(),
                     "X-Minecraft-UUID",
-                    UndashedUuid.toString(p_314576_.getProfileId()),
+                    UndashedUuid.toString(user.getProfileId()),
                     "X-Minecraft-Version",
                     worldversion.getName(),
                     "X-Minecraft-Version-ID",
@@ -190,22 +190,22 @@ public class DownloadedPackSource implements AutoCloseable {
 
             @Override
             public void download(Map<UUID, DownloadQueue.DownloadRequest> p_314939_, Consumer<DownloadQueue.BatchResult> p_314982_) {
-                p_314570_.downloadBatch(
+                downloadQueue.downloadBatch(
                         new DownloadQueue.BatchConfig(
                             CACHE_HASHING_FUNCTION,
                             262144000,
                             this.createDownloadHeaders(),
-                            p_314551_,
+                            proxy,
                             DownloadedPackSource.this.createDownloadNotifier(p_314939_.size())
                         ),
                         p_314939_
                     )
-                    .thenAcceptAsync(p_314982_, p_314421_);
+                    .thenAcceptAsync(p_314982_, executor);
             }
         };
     }
 
-    private Runnable createUpdateScheduler(final Executor p_314595_) {
+    private Runnable createUpdateScheduler(final Executor executor) {
         return new Runnable() {
             private boolean scheduledInMainExecutor;
             private boolean hasUpdates;
@@ -215,7 +215,7 @@ public class DownloadedPackSource implements AutoCloseable {
                 this.hasUpdates = true;
                 if (!this.scheduledInMainExecutor) {
                     this.scheduledInMainExecutor = true;
-                    p_314595_.execute(this::runAllUpdates);
+                    executor.execute(this::runAllUpdates);
                 }
             }
 
@@ -235,10 +235,10 @@ public class DownloadedPackSource implements AutoCloseable {
     }
 
     @Nullable
-    private List<Pack> loadRequestedPacks(List<PackReloadConfig.IdAndPath> p_314642_) {
-        List<Pack> list = new ArrayList<>(p_314642_.size());
+    private List<Pack> loadRequestedPacks(List<PackReloadConfig.IdAndPath> packs) {
+        List<Pack> list = new ArrayList<>(packs.size());
 
-        for (PackReloadConfig.IdAndPath packreloadconfig$idandpath : Lists.reverse(p_314642_)) {
+        for (PackReloadConfig.IdAndPath packreloadconfig$idandpath : Lists.reverse(packs)) {
             String s = String.format(Locale.ROOT, "server/%08X/%s", this.packIdSerialNumber++, packreloadconfig$idandpath.id());
             Path path = packreloadconfig$idandpath.path();
             PackLocationInfo packlocationinfo = new PackLocationInfo(s, SERVER_NAME, this.packType, Optional.empty());
@@ -260,17 +260,17 @@ public class DownloadedPackSource implements AutoCloseable {
         return p_314437_ -> this.packSource.loadPacks(p_314437_);
     }
 
-    private static RepositorySource configureSource(List<Pack> p_314416_) {
-        return p_314416_.isEmpty() ? EMPTY_SOURCE : p_314416_::forEach;
+    private static RepositorySource configureSource(List<Pack> packs) {
+        return packs.isEmpty() ? EMPTY_SOURCE : packs::forEach;
     }
 
-    private void startReload(PackReloadConfig.Callbacks p_314628_) {
-        this.pendingReload = p_314628_;
-        List<PackReloadConfig.IdAndPath> list = p_314628_.packsToLoad();
+    private void startReload(PackReloadConfig.Callbacks callbacks) {
+        this.pendingReload = callbacks;
+        List<PackReloadConfig.IdAndPath> list = callbacks.packsToLoad();
         List<Pack> list1 = this.loadRequestedPacks(list);
         if (list1 == null) {
-            p_314628_.onFailure(false);
-            List<PackReloadConfig.IdAndPath> list2 = p_314628_.packsToLoad();
+            callbacks.onFailure(false);
+            List<PackReloadConfig.IdAndPath> list2 = callbacks.packsToLoad();
             list1 = this.loadRequestedPacks(list2);
             if (list1 == null) {
                 LOGGER.warn("Double failure in loading server packs");
@@ -311,28 +311,28 @@ public class DownloadedPackSource implements AutoCloseable {
     }
 
     @Nullable
-    private static HashCode tryParseSha1Hash(@Nullable String p_314590_) {
-        return p_314590_ != null && SHA1.matcher(p_314590_).matches() ? HashCode.fromString(p_314590_.toLowerCase(Locale.ROOT)) : null;
+    private static HashCode tryParseSha1Hash(@Nullable String hash) {
+        return hash != null && SHA1.matcher(hash).matches() ? HashCode.fromString(hash.toLowerCase(Locale.ROOT)) : null;
     }
 
-    public void pushPack(UUID p_314526_, URL p_314648_, @Nullable String p_314530_) {
-        HashCode hashcode = tryParseSha1Hash(p_314530_);
-        this.manager.pushPack(p_314526_, p_314648_, hashcode);
+    public void pushPack(UUID uuid, URL url, @Nullable String hash) {
+        HashCode hashcode = tryParseSha1Hash(hash);
+        this.manager.pushPack(uuid, url, hashcode);
     }
 
-    public void pushLocalPack(UUID p_314510_, Path p_314417_) {
-        this.manager.pushLocalPack(p_314510_, p_314417_);
+    public void pushLocalPack(UUID uuid, Path path) {
+        this.manager.pushLocalPack(uuid, path);
     }
 
-    public void popPack(UUID p_314587_) {
-        this.manager.popPack(p_314587_);
+    public void popPack(UUID uuid) {
+        this.manager.popPack(uuid);
     }
 
     public void popAll() {
         this.manager.popAll();
     }
 
-    private static PackLoadFeedback createPackResponseSender(final Connection p_314519_) {
+    private static PackLoadFeedback createPackResponseSender(final Connection connection) {
         return new PackLoadFeedback() {
             @Override
             public void reportUpdate(UUID p_314956_, PackLoadFeedback.Update p_314990_) {
@@ -342,7 +342,7 @@ public class DownloadedPackSource implements AutoCloseable {
                     case ACCEPTED -> ServerboundResourcePackPacket.Action.ACCEPTED;
                     case DOWNLOADED -> ServerboundResourcePackPacket.Action.DOWNLOADED;
                 };
-                p_314519_.send(new ServerboundResourcePackPacket(p_314956_, serverboundresourcepackpacket$action));
+                connection.send(new ServerboundResourcePackPacket(p_314956_, serverboundresourcepackpacket$action));
             }
 
             @Override
@@ -356,15 +356,15 @@ public class DownloadedPackSource implements AutoCloseable {
                     case DISCARDED -> ServerboundResourcePackPacket.Action.DISCARDED;
                     case ACTIVATION_FAILED -> ServerboundResourcePackPacket.Action.FAILED_RELOAD;
                 };
-                p_314519_.send(new ServerboundResourcePackPacket(p_315010_, serverboundresourcepackpacket$action));
+                connection.send(new ServerboundResourcePackPacket(p_315010_, serverboundresourcepackpacket$action));
             }
         };
     }
 
-    public void configureForServerControl(Connection p_314502_, ServerPackManager.PackPromptStatus p_314463_) {
+    public void configureForServerControl(Connection connection, ServerPackManager.PackPromptStatus packPromptStatus) {
         this.packType = PackSource.SERVER;
-        this.packFeedback = createPackResponseSender(p_314502_);
-        switch (p_314463_) {
+        this.packFeedback = createPackResponseSender(connection);
+        switch (packPromptStatus) {
             case ALLOWED:
                 this.manager.allowServerPacks();
                 break;
@@ -390,7 +390,7 @@ public class DownloadedPackSource implements AutoCloseable {
         this.manager.rejectServerPacks();
     }
 
-    public CompletableFuture<Void> waitForPackFeedback(final UUID p_314539_) {
+    public CompletableFuture<Void> waitForPackFeedback(final UUID uuid) {
         final CompletableFuture<Void> completablefuture = new CompletableFuture<>();
         final PackLoadFeedback packloadfeedback = this.packFeedback;
         this.packFeedback = new PackLoadFeedback() {
@@ -401,7 +401,7 @@ public class DownloadedPackSource implements AutoCloseable {
 
             @Override
             public void reportFinalResult(UUID p_314964_, PackLoadFeedback.FinalResult p_314957_) {
-                if (p_314539_.equals(p_314964_)) {
+                if (uuid.equals(p_314964_)) {
                     DownloadedPackSource.this.packFeedback = packloadfeedback;
                     if (p_314957_ == PackLoadFeedback.FinalResult.APPLIED) {
                         completablefuture.complete(null);

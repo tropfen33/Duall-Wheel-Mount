@@ -14,39 +14,48 @@ import net.minecraft.world.level.storage.loot.ValidationContext;
 import net.minecraft.world.level.storage.loot.predicates.ConditionUserBuilder;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
+/**
+ * A LootItemFunction that only modifies the stacks if a list of {@linkplain LootItemCondition predicates} passes.
+ */
 public abstract class LootItemConditionalFunction implements LootItemFunction {
     protected final List<LootItemCondition> predicates;
     private final Predicate<LootContext> compositePredicates;
 
-    protected LootItemConditionalFunction(List<LootItemCondition> p_298706_) {
-        this.predicates = p_298706_;
-        this.compositePredicates = Util.allOf(p_298706_);
+    protected LootItemConditionalFunction(List<LootItemCondition> predicates) {
+        this.predicates = predicates;
+        this.compositePredicates = Util.allOf(predicates);
     }
 
     @Override
     public abstract LootItemFunctionType<? extends LootItemConditionalFunction> getType();
 
-    protected static <T extends LootItemConditionalFunction> P1<Mu<T>, List<LootItemCondition>> commonFields(Instance<T> p_298453_) {
-        return p_298453_.group(LootItemCondition.DIRECT_CODEC.listOf().optionalFieldOf("conditions", List.of()).forGetter(p_299114_ -> p_299114_.predicates));
+    protected static <T extends LootItemConditionalFunction> P1<Mu<T>, List<LootItemCondition>> commonFields(Instance<T> instance) {
+        return instance.group(LootItemCondition.DIRECT_CODEC.listOf().optionalFieldOf("conditions", List.of()).forGetter(p_299114_ -> p_299114_.predicates));
     }
 
-    public final ItemStack apply(ItemStack p_80689_, LootContext p_80690_) {
-        return this.compositePredicates.test(p_80690_) ? this.run(p_80689_, p_80690_) : p_80689_;
+    public final ItemStack apply(ItemStack stack, LootContext context) {
+        return this.compositePredicates.test(context) ? this.run(stack, context) : stack;
     }
 
-    protected abstract ItemStack run(ItemStack p_80679_, LootContext p_80680_);
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
+    protected abstract ItemStack run(ItemStack stack, LootContext context);
 
+    /**
+     * Validate that this object is used correctly according to the given ValidationContext.
+     */
     @Override
-    public void validate(ValidationContext p_80682_) {
-        LootItemFunction.super.validate(p_80682_);
+    public void validate(ValidationContext context) {
+        LootItemFunction.super.validate(context);
 
         for (int i = 0; i < this.predicates.size(); i++) {
-            this.predicates.get(i).validate(p_80682_.forChild(".conditions[" + i + "]"));
+            this.predicates.get(i).validate(context.forChild(".conditions[" + i + "]"));
         }
     }
 
-    public static LootItemConditionalFunction.Builder<?> simpleBuilder(Function<List<LootItemCondition>, LootItemFunction> p_80684_) {
-        return new LootItemConditionalFunction.DummyBuilder(p_80684_);
+    public static LootItemConditionalFunction.Builder<?> simpleBuilder(Function<List<LootItemCondition>, LootItemFunction> constructor) {
+        return new LootItemConditionalFunction.DummyBuilder(constructor);
     }
 
     public abstract static class Builder<T extends LootItemConditionalFunction.Builder<T>> implements LootItemFunction.Builder, ConditionUserBuilder<T> {
@@ -71,8 +80,8 @@ public abstract class LootItemConditionalFunction implements LootItemFunction {
     static final class DummyBuilder extends LootItemConditionalFunction.Builder<LootItemConditionalFunction.DummyBuilder> {
         private final Function<List<LootItemCondition>, LootItemFunction> constructor;
 
-        public DummyBuilder(Function<List<LootItemCondition>, LootItemFunction> p_80702_) {
-            this.constructor = p_80702_;
+        public DummyBuilder(Function<List<LootItemCondition>, LootItemFunction> constructor) {
+            this.constructor = constructor;
         }
 
         protected LootItemConditionalFunction.DummyBuilder getThis() {

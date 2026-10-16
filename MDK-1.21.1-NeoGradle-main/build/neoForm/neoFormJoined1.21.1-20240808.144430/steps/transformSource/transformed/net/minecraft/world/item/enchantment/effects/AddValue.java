@@ -12,8 +12,8 @@ public record AddValue(LevelBasedValue value) implements EnchantmentValueEffect 
     );
 
     @Override
-    public float process(int p_345014_, RandomSource p_345344_, float p_344931_) {
-        return p_344931_ + this.value.calculate(p_345014_);
+    public float process(int enchantmentLevel, RandomSource random, float value) {
+        return value + this.value.calculate(enchantmentLevel);
     }
 
     @Override

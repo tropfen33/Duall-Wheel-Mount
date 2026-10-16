@@ -10,7 +10,7 @@ public class TradeRebalanceRegistries {
     private static final RegistrySetBuilder BUILDER = new RegistrySetBuilder()
         .add(Registries.ENCHANTMENT_PROVIDER, TradeRebalanceEnchantmentProviders::bootstrap);
 
-    public static CompletableFuture<RegistrySetBuilder.PatchedRegistries> createLookup(CompletableFuture<HolderLookup.Provider> p_346273_) {
-        return RegistryPatchGenerator.createLookup(p_346273_, BUILDER);
+    public static CompletableFuture<RegistrySetBuilder.PatchedRegistries> createLookup(CompletableFuture<HolderLookup.Provider> provider) {
+        return RegistryPatchGenerator.createLookup(provider, BUILDER);
     }
 }

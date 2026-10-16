@@ -20,8 +20,8 @@ import net.minecraft.network.chat.Component;
 public class TestFunctionArgument implements ArgumentType<TestFunction> {
     private static final Collection<String> EXAMPLES = Arrays.asList("techtests.piston", "techtests");
 
-    public TestFunction parse(StringReader p_128090_) throws CommandSyntaxException {
-        String s = p_128090_.readUnquotedString();
+    public TestFunction parse(StringReader reader) throws CommandSyntaxException {
+        String s = reader.readUnquotedString();
         Optional<TestFunction> optional = GameTestRegistry.findTestFunction(s);
         if (optional.isPresent()) {
             return optional.get();
@@ -35,18 +35,18 @@ public class TestFunctionArgument implements ArgumentType<TestFunction> {
         return new TestFunctionArgument();
     }
 
-    public static TestFunction getTestFunction(CommandContext<CommandSourceStack> p_128092_, String p_128093_) {
-        return p_128092_.getArgument(p_128093_, TestFunction.class);
+    public static TestFunction getTestFunction(CommandContext<CommandSourceStack> context, String argument) {
+        return context.getArgument(argument, TestFunction.class);
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_128096_, SuggestionsBuilder p_128097_) {
-        return suggestTestFunction(p_128096_, p_128097_);
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
+        return suggestTestFunction(context, builder);
     }
 
-    public static <S> CompletableFuture<Suggestions> suggestTestFunction(CommandContext<S> p_319977_, SuggestionsBuilder p_319835_) {
+    public static <S> CompletableFuture<Suggestions> suggestTestFunction(CommandContext<S> context, SuggestionsBuilder builder) {
         Stream<String> stream = GameTestRegistry.getAllTestFunctions().stream().map(TestFunction::testName);
-        return SharedSuggestionProvider.suggest(stream, p_319835_);
+        return SharedSuggestionProvider.suggest(stream, builder);
     }
 
     @Override

@@ -86,17 +86,17 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
     });
     private static net.neoforged.neoforge.common.IMinecartCollisionHandler COLLISIONS = null;
 
-    protected AbstractMinecart(EntityType<?> p_38087_, Level p_38088_) {
-        super(p_38087_, p_38088_);
+    protected AbstractMinecart(EntityType<?> entityType, Level level) {
+        super(entityType, level);
         this.blocksBuilding = true;
     }
 
-    protected AbstractMinecart(EntityType<?> p_38090_, Level p_38091_, double p_38092_, double p_38093_, double p_38094_) {
-        this(p_38090_, p_38091_);
-        this.setPos(p_38092_, p_38093_, p_38094_);
-        this.xo = p_38092_;
-        this.yo = p_38093_;
-        this.zo = p_38094_;
+    protected AbstractMinecart(EntityType<?> entityType, Level level, double x, double y, double z) {
+        this(entityType, level);
+        this.setPos(x, y, z);
+        this.xo = x;
+        this.yo = y;
+        this.zo = z;
     }
 
     public net.neoforged.neoforge.common.IMinecartCollisionHandler getCollisionHandler() {
@@ -108,24 +108,24 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
     }
 
     public static AbstractMinecart createMinecart(
-        ServerLevel p_305794_,
-        double p_38121_,
-        double p_38122_,
-        double p_38123_,
-        AbstractMinecart.Type p_38124_,
-        ItemStack p_305892_,
-        @Nullable Player p_306203_
+        ServerLevel level,
+        double x,
+        double y,
+        double z,
+        AbstractMinecart.Type type,
+        ItemStack stack,
+        @Nullable Player player
     ) {
-        AbstractMinecart abstractminecart = (AbstractMinecart)(switch (p_38124_) {
-            case CHEST -> new MinecartChest(p_305794_, p_38121_, p_38122_, p_38123_);
-            case FURNACE -> new MinecartFurnace(p_305794_, p_38121_, p_38122_, p_38123_);
-            case TNT -> new MinecartTNT(p_305794_, p_38121_, p_38122_, p_38123_);
-            case SPAWNER -> new MinecartSpawner(p_305794_, p_38121_, p_38122_, p_38123_);
-            case HOPPER -> new MinecartHopper(p_305794_, p_38121_, p_38122_, p_38123_);
-            case COMMAND_BLOCK -> new MinecartCommandBlock(p_305794_, p_38121_, p_38122_, p_38123_);
-            default -> new Minecart(p_305794_, p_38121_, p_38122_, p_38123_);
+        AbstractMinecart abstractminecart = (AbstractMinecart)(switch (type) {
+            case CHEST -> new MinecartChest(level, x, y, z);
+            case FURNACE -> new MinecartFurnace(level, x, y, z);
+            case TNT -> new MinecartTNT(level, x, y, z);
+            case SPAWNER -> new MinecartSpawner(level, x, y, z);
+            case HOPPER -> new MinecartHopper(level, x, y, z);
+            case COMMAND_BLOCK -> new MinecartCommandBlock(level, x, y, z);
+            default -> new Minecart(level, x, y, z);
         });
-        EntityType.<AbstractMinecart>createDefaultStackConfig(p_305794_, p_305892_, p_306203_).accept(abstractminecart);
+        EntityType.<AbstractMinecart>createDefaultStackConfig(level, stack, player).accept(abstractminecart);
         return abstractminecart;
     }
 
@@ -135,16 +135,16 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326247_) {
-        super.defineSynchedData(p_326247_);
-        p_326247_.define(DATA_ID_DISPLAY_BLOCK, Block.getId(Blocks.AIR.defaultBlockState()));
-        p_326247_.define(DATA_ID_DISPLAY_OFFSET, 6);
-        p_326247_.define(DATA_ID_CUSTOM_DISPLAY, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_ID_DISPLAY_BLOCK, Block.getId(Blocks.AIR.defaultBlockState()));
+        builder.define(DATA_ID_DISPLAY_OFFSET, 6);
+        builder.define(DATA_ID_CUSTOM_DISPLAY, false);
     }
 
     @Override
-    public boolean canCollideWith(Entity p_38168_) {
-        return Boat.canVehicleCollide(this, p_38168_);
+    public boolean canCollideWith(Entity entity) {
+        return Boat.canVehicleCollide(this, entity);
     }
 
     @Override
@@ -153,29 +153,29 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
     }
 
     @Override
-    public Vec3 getRelativePortalPosition(Direction.Axis p_38132_, BlockUtil.FoundRectangle p_38133_) {
-        return LivingEntity.resetForwardDirectionOfRelativePortalPosition(super.getRelativePortalPosition(p_38132_, p_38133_));
+    public Vec3 getRelativePortalPosition(Direction.Axis axis, BlockUtil.FoundRectangle portal) {
+        return LivingEntity.resetForwardDirectionOfRelativePortalPosition(super.getRelativePortalPosition(axis, portal));
     }
 
     @Override
-    protected Vec3 getPassengerAttachmentPoint(Entity p_294753_, EntityDimensions p_295251_, float p_296054_) {
-        boolean flag = p_294753_ instanceof Villager || p_294753_ instanceof WanderingTrader;
-        return flag ? LOWERED_PASSENGER_ATTACHMENT : super.getPassengerAttachmentPoint(p_294753_, p_295251_, p_296054_);
+    protected Vec3 getPassengerAttachmentPoint(Entity entity, EntityDimensions dimensions, float partialTick) {
+        boolean flag = entity instanceof Villager || entity instanceof WanderingTrader;
+        return flag ? LOWERED_PASSENGER_ATTACHMENT : super.getPassengerAttachmentPoint(entity, dimensions, partialTick);
     }
 
     @Override
-    public Vec3 getDismountLocationForPassenger(LivingEntity p_38145_) {
+    public Vec3 getDismountLocationForPassenger(LivingEntity livingEntity) {
         Direction direction = this.getMotionDirection();
         if (direction.getAxis() == Direction.Axis.Y) {
-            return super.getDismountLocationForPassenger(p_38145_);
+            return super.getDismountLocationForPassenger(livingEntity);
         } else {
             int[][] aint = DismountHelper.offsetsForDirection(direction);
             BlockPos blockpos = this.blockPosition();
             BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
-            ImmutableList<Pose> immutablelist = p_38145_.getDismountPoses();
+            ImmutableList<Pose> immutablelist = livingEntity.getDismountPoses();
 
             for (Pose pose : immutablelist) {
-                EntityDimensions entitydimensions = p_38145_.getDimensions(pose);
+                EntityDimensions entitydimensions = livingEntity.getDimensions(pose);
                 float f = Math.min(entitydimensions.width(), 1.0F) / 2.0F;
 
                 for (int i : POSE_DISMOUNT_HEIGHTS.get(pose)) {
@@ -189,8 +189,8 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
                         if (DismountHelper.isBlockFloorValid(d0)) {
                             AABB aabb = new AABB((double)(-f), 0.0, (double)(-f), (double)f, (double)entitydimensions.height(), (double)f);
                             Vec3 vec3 = Vec3.upFromBottomCenterOf(blockpos$mutableblockpos, d0);
-                            if (DismountHelper.canDismountTo(this.level(), p_38145_, aabb.move(vec3))) {
-                                p_38145_.setPose(pose);
+                            if (DismountHelper.canDismountTo(this.level(), livingEntity, aabb.move(vec3))) {
+                                livingEntity.setPose(pose);
                                 return vec3;
                             }
                         }
@@ -202,18 +202,18 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
             blockpos$mutableblockpos.set((double)blockpos.getX(), d1, (double)blockpos.getZ());
 
             for (Pose pose1 : immutablelist) {
-                double d2 = (double)p_38145_.getDimensions(pose1).height();
+                double d2 = (double)livingEntity.getDimensions(pose1).height();
                 int j = Mth.ceil(d1 - (double)blockpos$mutableblockpos.getY() + d2);
                 double d3 = DismountHelper.findCeilingFrom(
                     blockpos$mutableblockpos, j, p_352844_ -> this.level().getBlockState(p_352844_).getCollisionShape(this.level(), p_352844_)
                 );
                 if (d1 + d2 <= d3) {
-                    p_38145_.setPose(pose1);
+                    livingEntity.setPose(pose1);
                     break;
                 }
             }
 
-            return super.getDismountLocationForPassenger(p_38145_);
+            return super.getDismountLocationForPassenger(livingEntity);
         }
     }
 
@@ -224,7 +224,7 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
     }
 
     @Override
-    public void animateHurt(float p_265349_) {
+    public void animateHurt(float yaw) {
         this.setHurtDir(-this.getHurtDir());
         this.setHurtTime(10);
         this.setDamage(this.getDamage() + this.getDamage() * 10.0F);
@@ -235,8 +235,8 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
         return !this.isRemoved();
     }
 
-    private static Pair<Vec3i, Vec3i> exits(RailShape p_38126_) {
-        return EXITS.get(p_38126_);
+    private static Pair<Vec3i, Vec3i> exits(RailShape shape) {
+        return EXITS.get(shape);
     }
 
     @Override
@@ -348,7 +348,10 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
         return (this.isInWater() ? 4.0 : 8.0) / 20.0;
     }
 
-    public void activateMinecart(int p_38111_, int p_38112_, int p_38113_, boolean p_38114_) {
+    /**
+     * Called every tick the minecart is on an activator rail.
+     */
+    public void activateMinecart(int x, int y, int z, boolean powered) {
     }
 
     protected void comeOffTrack() {
@@ -372,18 +375,18 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
         }
     }
 
-    protected void moveAlongTrack(BlockPos p_38156_, BlockState p_38157_) {
+    protected void moveAlongTrack(BlockPos pos, BlockState state) {
         this.resetFallDistance();
         double d0 = this.getX();
         double d1 = this.getY();
         double d2 = this.getZ();
         Vec3 vec3 = this.getPos(d0, d1, d2);
-        d1 = (double)p_38156_.getY();
+        d1 = (double)pos.getY();
         boolean flag = false;
         boolean flag1 = false;
-        BaseRailBlock baserailblock = (BaseRailBlock) p_38157_.getBlock();
+        BaseRailBlock baserailblock = (BaseRailBlock) state.getBlock();
         if (baserailblock instanceof PoweredRailBlock && !((PoweredRailBlock) baserailblock).isActivatorRail()) {
-            flag = p_38157_.getValue(PoweredRailBlock.POWERED);
+            flag = state.getValue(PoweredRailBlock.POWERED);
             flag1 = !flag;
         }
 
@@ -393,7 +396,7 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
         }
 
         Vec3 vec31 = this.getDeltaMovement();
-        RailShape railshape = ((BaseRailBlock)p_38157_.getBlock()).getRailDirection(p_38157_, this.level(), p_38156_, this);
+        RailShape railshape = ((BaseRailBlock)state.getBlock()).getRailDirection(state, this.level(), pos, this);
         switch (railshape) {
             case ASCENDING_EAST:
                 this.setDeltaMovement(vec31.add(-d3, 0.0, 0.0));
@@ -448,17 +451,17 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
             }
         }
 
-        double d23 = (double)p_38156_.getX() + 0.5 + (double)vec3i.getX() * 0.5;
-        double d10 = (double)p_38156_.getZ() + 0.5 + (double)vec3i.getZ() * 0.5;
-        double d12 = (double)p_38156_.getX() + 0.5 + (double)vec3i1.getX() * 0.5;
-        double d13 = (double)p_38156_.getZ() + 0.5 + (double)vec3i1.getZ() * 0.5;
+        double d23 = (double)pos.getX() + 0.5 + (double)vec3i.getX() * 0.5;
+        double d10 = (double)pos.getZ() + 0.5 + (double)vec3i.getZ() * 0.5;
+        double d12 = (double)pos.getX() + 0.5 + (double)vec3i1.getX() * 0.5;
+        double d13 = (double)pos.getZ() + 0.5 + (double)vec3i1.getZ() * 0.5;
         d4 = d12 - d23;
         d5 = d13 - d10;
         double d14;
         if (d4 == 0.0) {
-            d14 = d2 - (double)p_38156_.getZ();
+            d14 = d2 - (double)pos.getZ();
         } else if (d5 == 0.0) {
-            d14 = d0 - (double)p_38156_.getX();
+            d14 = d0 - (double)pos.getX();
         } else {
             double d15 = d0 - d23;
             double d16 = d2 - d10;
@@ -468,10 +471,10 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
         d0 = d23 + d4 * d14;
         d2 = d10 + d5 * d14;
         this.setPos(d0, d1, d2);
-        this.moveMinecartOnRail(p_38156_);
-        if (vec3i.getY() != 0 && Mth.floor(this.getX()) - p_38156_.getX() == vec3i.getX() && Mth.floor(this.getZ()) - p_38156_.getZ() == vec3i.getZ()) {
+        this.moveMinecartOnRail(pos);
+        if (vec3i.getY() != 0 && Mth.floor(this.getX()) - pos.getX() == vec3i.getX() && Mth.floor(this.getZ()) - pos.getZ() == vec3i.getZ()) {
             this.setPos(this.getX(), this.getY() + (double)vec3i.getY(), this.getZ());
-        } else if (vec3i1.getY() != 0 && Mth.floor(this.getX()) - p_38156_.getX() == vec3i1.getX() && Mth.floor(this.getZ()) - p_38156_.getZ() == vec3i1.getZ()
+        } else if (vec3i1.getY() != 0 && Mth.floor(this.getX()) - pos.getX() == vec3i1.getX() && Mth.floor(this.getZ()) - pos.getZ() == vec3i1.getZ()
             )
          {
             this.setPos(this.getX(), this.getY() + (double)vec3i1.getY(), this.getZ());
@@ -492,14 +495,14 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
 
         int j = Mth.floor(this.getX());
         int i = Mth.floor(this.getZ());
-        if (j != p_38156_.getX() || i != p_38156_.getZ()) {
+        if (j != pos.getX() || i != pos.getZ()) {
             Vec3 vec35 = this.getDeltaMovement();
             double d26 = vec35.horizontalDistance();
-            this.setDeltaMovement(d26 * (double)(j - p_38156_.getX()), vec35.y, d26 * (double)(i - p_38156_.getZ()));
+            this.setDeltaMovement(d26 * (double)(j - pos.getX()), vec35.y, d26 * (double)(i - pos.getZ()));
         }
 
         if (shouldDoRailFunctions())
-             baserailblock.onMinecartPass(p_38157_, level(), p_38156_, this);
+             baserailblock.onMinecartPass(state, level(), pos, this);
 
         if (flag && shouldDoRailFunctions()) {
             Vec3 vec36 = this.getDeltaMovement();
@@ -512,9 +515,9 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
                 double d20 = vec37.x;
                 double d21 = vec37.z;
                 if (railshape == RailShape.EAST_WEST) {
-                    if (this.isRedstoneConductor(p_38156_.west())) {
+                    if (this.isRedstoneConductor(pos.west())) {
                         d20 = 0.02;
-                    } else if (this.isRedstoneConductor(p_38156_.east())) {
+                    } else if (this.isRedstoneConductor(pos.east())) {
                         d20 = -0.02;
                     }
                 } else {
@@ -522,9 +525,9 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
                         return;
                     }
 
-                    if (this.isRedstoneConductor(p_38156_.north())) {
+                    if (this.isRedstoneConductor(pos.north())) {
                         d21 = 0.02;
-                    } else if (this.isRedstoneConductor(p_38156_.south())) {
+                    } else if (this.isRedstoneConductor(pos.south())) {
                         d21 = -0.02;
                     }
                 }
@@ -539,8 +542,8 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
         return this.onRails;
     }
 
-    private boolean isRedstoneConductor(BlockPos p_38130_) {
-        return this.level().getBlockState(p_38130_).isRedstoneConductor(this.level(), p_38130_);
+    private boolean isRedstoneConductor(BlockPos pos) {
+        return this.level().getBlockState(pos).isRedstoneConductor(this.level(), pos);
     }
 
     protected void applyNaturalSlowdown() {
@@ -555,10 +558,10 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
     }
 
     @Nullable
-    public Vec3 getPosOffs(double p_38097_, double p_38098_, double p_38099_, double p_38100_) {
-        int i = Mth.floor(p_38097_);
-        int j = Mth.floor(p_38098_);
-        int k = Mth.floor(p_38099_);
+    public Vec3 getPosOffs(double x, double y, double z, double offset) {
+        int i = Mth.floor(x);
+        int j = Mth.floor(y);
+        int k = Mth.floor(z);
         if (this.level().getBlockState(new BlockPos(i, j - 1, k)).is(BlockTags.RAILS)) {
             j--;
         }
@@ -566,9 +569,9 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
         BlockState blockstate = this.level().getBlockState(new BlockPos(i, j, k));
         if (BaseRailBlock.isRail(blockstate)) {
             RailShape railshape = ((BaseRailBlock)blockstate.getBlock()).getRailDirection(blockstate, this.level(), new BlockPos(i, j, k), this);
-            p_38098_ = (double)j;
+            y = (double)j;
             if (railshape.isAscending()) {
-                p_38098_ = (double)(j + 1);
+                y = (double)(j + 1);
             }
 
             Pair<Vec3i, Vec3i> pair = exits(railshape);
@@ -579,25 +582,25 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
             double d2 = Math.sqrt(d0 * d0 + d1 * d1);
             d0 /= d2;
             d1 /= d2;
-            p_38097_ += d0 * p_38100_;
-            p_38099_ += d1 * p_38100_;
-            if (vec3i.getY() != 0 && Mth.floor(p_38097_) - i == vec3i.getX() && Mth.floor(p_38099_) - k == vec3i.getZ()) {
-                p_38098_ += (double)vec3i.getY();
-            } else if (vec3i1.getY() != 0 && Mth.floor(p_38097_) - i == vec3i1.getX() && Mth.floor(p_38099_) - k == vec3i1.getZ()) {
-                p_38098_ += (double)vec3i1.getY();
+            x += d0 * offset;
+            z += d1 * offset;
+            if (vec3i.getY() != 0 && Mth.floor(x) - i == vec3i.getX() && Mth.floor(z) - k == vec3i.getZ()) {
+                y += (double)vec3i.getY();
+            } else if (vec3i1.getY() != 0 && Mth.floor(x) - i == vec3i1.getX() && Mth.floor(z) - k == vec3i1.getZ()) {
+                y += (double)vec3i1.getY();
             }
 
-            return this.getPos(p_38097_, p_38098_, p_38099_);
+            return this.getPos(x, y, z);
         } else {
             return null;
         }
     }
 
     @Nullable
-    public Vec3 getPos(double p_38180_, double p_38181_, double p_38182_) {
-        int i = Mth.floor(p_38180_);
-        int j = Mth.floor(p_38181_);
-        int k = Mth.floor(p_38182_);
+    public Vec3 getPos(double x, double y, double z) {
+        int i = Mth.floor(x);
+        int j = Mth.floor(y);
+        int k = Mth.floor(z);
         if (this.level().getBlockState(new BlockPos(i, j - 1, k)).is(BlockTags.RAILS)) {
             j--;
         }
@@ -619,25 +622,25 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
             double d8 = d5 - d2;
             double d9;
             if (d6 == 0.0) {
-                d9 = p_38182_ - (double)k;
+                d9 = z - (double)k;
             } else if (d8 == 0.0) {
-                d9 = p_38180_ - (double)i;
+                d9 = x - (double)i;
             } else {
-                double d10 = p_38180_ - d0;
-                double d11 = p_38182_ - d2;
+                double d10 = x - d0;
+                double d11 = z - d2;
                 d9 = (d10 * d6 + d11 * d8) * 2.0;
             }
 
-            p_38180_ = d0 + d6 * d9;
-            p_38181_ = d1 + d7 * d9;
-            p_38182_ = d2 + d8 * d9;
+            x = d0 + d6 * d9;
+            y = d1 + d7 * d9;
+            z = d2 + d8 * d9;
             if (d7 < 0.0) {
-                p_38181_++;
+                y++;
             } else if (d7 > 0.0) {
-                p_38181_ += 0.5;
+                y += 0.5;
             }
 
-            return new Vec3(p_38180_, p_38181_, p_38182_);
+            return new Vec3(x, y, z);
         } else {
             return null;
         }
@@ -649,34 +652,40 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
         return this.hasCustomDisplay() ? aabb.inflate((double)Math.abs(this.getDisplayOffset()) / 16.0) : aabb;
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_38137_) {
-        if (p_38137_.getBoolean("CustomDisplayTile")) {
-            this.setDisplayBlockState(NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), p_38137_.getCompound("DisplayState")));
-            this.setDisplayOffset(p_38137_.getInt("DisplayOffset"));
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        if (compound.getBoolean("CustomDisplayTile")) {
+            this.setDisplayBlockState(NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), compound.getCompound("DisplayState")));
+            this.setDisplayOffset(compound.getInt("DisplayOffset"));
         }
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_38151_) {
+    protected void addAdditionalSaveData(CompoundTag compound) {
         if (this.hasCustomDisplay()) {
-            p_38151_.putBoolean("CustomDisplayTile", true);
-            p_38151_.put("DisplayState", NbtUtils.writeBlockState(this.getDisplayBlockState()));
-            p_38151_.putInt("DisplayOffset", this.getDisplayOffset());
+            compound.putBoolean("CustomDisplayTile", true);
+            compound.put("DisplayState", NbtUtils.writeBlockState(this.getDisplayBlockState()));
+            compound.putInt("DisplayOffset", this.getDisplayOffset());
         }
     }
 
+    /**
+     * Applies a velocity to the entities, to push them away from each other.
+     */
     @Override
-    public void push(Entity p_38165_) {
+    public void push(Entity entity) {
         if (getCollisionHandler() != null) {
-            getCollisionHandler().onEntityCollision(this, p_38165_);
+            getCollisionHandler().onEntityCollision(this, entity);
             return;
         }
         if (!this.level().isClientSide) {
-            if (!p_38165_.noPhysics && !this.noPhysics) {
-                if (!this.hasPassenger(p_38165_)) {
-                    double d0 = p_38165_.getX() - this.getX();
-                    double d1 = p_38165_.getZ() - this.getZ();
+            if (!entity.noPhysics && !this.noPhysics) {
+                if (!this.hasPassenger(entity)) {
+                    double d0 = entity.getX() - this.getX();
+                    double d1 = entity.getZ() - this.getZ();
                     double d2 = d0 * d0 + d1 * d1;
                     if (d2 >= 1.0E-4F) {
                         d2 = Math.sqrt(d2);
@@ -693,9 +702,9 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
                         d1 *= 0.1F;
                         d0 *= 0.5;
                         d1 *= 0.5;
-                        if (p_38165_ instanceof AbstractMinecart) {
-                            double d4 = p_38165_.getX() - this.getX();
-                            double d5 = p_38165_.getZ() - this.getZ();
+                        if (entity instanceof AbstractMinecart) {
+                            double d4 = entity.getX() - this.getX();
+                            double d5 = entity.getZ() - this.getZ();
                             Vec3 vec3 = new Vec3(d4, 0.0, d5).normalize();
                             Vec3 vec31 = new Vec3(
                                     (double)Mth.cos(this.getYRot() * (float) (Math.PI / 180.0)),
@@ -709,26 +718,26 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
                             }
 
                             Vec3 vec32 = this.getDeltaMovement();
-                            Vec3 vec33 = p_38165_.getDeltaMovement();
-                            if (((AbstractMinecart)p_38165_).isPoweredCart() && !this.isPoweredCart()) {
+                            Vec3 vec33 = entity.getDeltaMovement();
+                            if (((AbstractMinecart)entity).isPoweredCart() && !this.isPoweredCart()) {
                                 this.setDeltaMovement(vec32.multiply(0.2, 1.0, 0.2));
                                 this.push(vec33.x - d0, 0.0, vec33.z - d1);
-                                p_38165_.setDeltaMovement(vec33.multiply(0.95, 1.0, 0.95));
-                            } else if (!((AbstractMinecart)p_38165_).isPoweredCart() && this.isPoweredCart()) {
-                                p_38165_.setDeltaMovement(vec33.multiply(0.2, 1.0, 0.2));
-                                p_38165_.push(vec32.x + d0, 0.0, vec32.z + d1);
+                                entity.setDeltaMovement(vec33.multiply(0.95, 1.0, 0.95));
+                            } else if (!((AbstractMinecart)entity).isPoweredCart() && this.isPoweredCart()) {
+                                entity.setDeltaMovement(vec33.multiply(0.2, 1.0, 0.2));
+                                entity.push(vec32.x + d0, 0.0, vec32.z + d1);
                                 this.setDeltaMovement(vec32.multiply(0.95, 1.0, 0.95));
                             } else {
                                 double d7 = (vec33.x + vec32.x) / 2.0;
                                 double d8 = (vec33.z + vec32.z) / 2.0;
                                 this.setDeltaMovement(vec32.multiply(0.2, 1.0, 0.2));
                                 this.push(d7 - d0, 0.0, d8 - d1);
-                                p_38165_.setDeltaMovement(vec33.multiply(0.2, 1.0, 0.2));
-                                p_38165_.push(d7 + d0, 0.0, d8 + d1);
+                                entity.setDeltaMovement(vec33.multiply(0.2, 1.0, 0.2));
+                                entity.push(d7 + d0, 0.0, d8 + d1);
                             }
                         } else {
                             this.push(-d0, 0.0, -d1);
-                            p_38165_.push(d0 / 4.0, 0.0, d1 / 4.0);
+                            entity.push(d0 / 4.0, 0.0, d1 / 4.0);
                         }
                     }
                 }
@@ -737,13 +746,13 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
     }
 
     @Override
-    public void lerpTo(double p_38102_, double p_38103_, double p_38104_, float p_38105_, float p_38106_, int p_38107_) {
-        this.lerpX = p_38102_;
-        this.lerpY = p_38103_;
-        this.lerpZ = p_38104_;
-        this.lerpYRot = (double)p_38105_;
-        this.lerpXRot = (double)p_38106_;
-        this.lerpSteps = p_38107_ + 2;
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+        this.lerpX = x;
+        this.lerpY = y;
+        this.lerpZ = z;
+        this.lerpYRot = (double)yRot;
+        this.lerpXRot = (double)xRot;
+        this.lerpSteps = steps + 2;
         this.setDeltaMovement(this.targetDeltaMovement);
     }
 
@@ -772,9 +781,12 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
         return this.lerpSteps > 0 ? (float)this.lerpYRot : this.getYRot();
     }
 
+    /**
+     * Updates the entity motion clientside, called by packets from the server
+     */
     @Override
-    public void lerpMotion(double p_38171_, double p_38172_, double p_38173_) {
-        this.targetDeltaMovement = new Vec3(p_38171_, p_38172_, p_38173_);
+    public void lerpMotion(double x, double y, double z) {
+        this.targetDeltaMovement = new Vec3(x, y, z);
         this.setDeltaMovement(this.targetDeltaMovement);
     }
 
@@ -796,13 +808,13 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
         return 6;
     }
 
-    public void setDisplayBlockState(BlockState p_38147_) {
-        this.getEntityData().set(DATA_ID_DISPLAY_BLOCK, Block.getId(p_38147_));
+    public void setDisplayBlockState(BlockState displayState) {
+        this.getEntityData().set(DATA_ID_DISPLAY_BLOCK, Block.getId(displayState));
         this.setCustomDisplay(true);
     }
 
-    public void setDisplayOffset(int p_38175_) {
-        this.getEntityData().set(DATA_ID_DISPLAY_OFFSET, p_38175_);
+    public void setDisplayOffset(int displayOffset) {
+        this.getEntityData().set(DATA_ID_DISPLAY_OFFSET, displayOffset);
         this.setCustomDisplay(true);
     }
 
@@ -810,8 +822,8 @@ public abstract class AbstractMinecart extends VehicleEntity implements net.neof
         return this.getEntityData().get(DATA_ID_CUSTOM_DISPLAY);
     }
 
-    public void setCustomDisplay(boolean p_38139_) {
-        this.getEntityData().set(DATA_ID_CUSTOM_DISPLAY, p_38139_);
+    public void setCustomDisplay(boolean customDisplay) {
+        this.getEntityData().set(DATA_ID_CUSTOM_DISPLAY, customDisplay);
     }
 
     // Neo: Controls whether a Minecrart is allowed on Rails or not

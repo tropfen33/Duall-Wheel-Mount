@@ -15,16 +15,16 @@ public class ClientboundUpdateTagsPacket implements Packet<ClientCommonPacketLis
     );
     private final Map<ResourceKey<? extends Registry<?>>, TagNetworkSerialization.NetworkPayload> tags;
 
-    public ClientboundUpdateTagsPacket(Map<ResourceKey<? extends Registry<?>>, TagNetworkSerialization.NetworkPayload> p_296316_) {
-        this.tags = p_296316_;
+    public ClientboundUpdateTagsPacket(Map<ResourceKey<? extends Registry<?>>, TagNetworkSerialization.NetworkPayload> tags) {
+        this.tags = tags;
     }
 
-    private ClientboundUpdateTagsPacket(FriendlyByteBuf p_296024_) {
-        this.tags = p_296024_.readMap(FriendlyByteBuf::readRegistryKey, TagNetworkSerialization.NetworkPayload::read);
+    private ClientboundUpdateTagsPacket(FriendlyByteBuf buffer) {
+        this.tags = buffer.readMap(FriendlyByteBuf::readRegistryKey, TagNetworkSerialization.NetworkPayload::read);
     }
 
-    private void write(FriendlyByteBuf p_295095_) {
-        p_295095_.writeMap(this.tags, FriendlyByteBuf::writeResourceKey, (p_294833_, p_294113_) -> p_294113_.write(p_294833_));
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeMap(this.tags, FriendlyByteBuf::writeResourceKey, (p_294833_, p_294113_) -> p_294113_.write(p_294833_));
     }
 
     @Override
@@ -32,8 +32,11 @@ public class ClientboundUpdateTagsPacket implements Packet<ClientCommonPacketLis
         return CommonPacketTypes.CLIENTBOUND_UPDATE_TAGS;
     }
 
-    public void handle(ClientCommonPacketListener p_296193_) {
-        p_296193_.handleUpdateTags(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientCommonPacketListener handler) {
+        handler.handleUpdateTags(this);
     }
 
     public Map<ResourceKey<? extends Registry<?>>, TagNetworkSerialization.NetworkPayload> getTags() {

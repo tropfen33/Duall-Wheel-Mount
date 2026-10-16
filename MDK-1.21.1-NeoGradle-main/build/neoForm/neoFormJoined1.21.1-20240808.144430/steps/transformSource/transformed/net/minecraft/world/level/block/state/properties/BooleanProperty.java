@@ -7,8 +7,8 @@ import java.util.Optional;
 public class BooleanProperty extends Property<Boolean> {
     private final ImmutableSet<Boolean> values = ImmutableSet.of(true, false);
 
-    protected BooleanProperty(String p_61459_) {
-        super(p_61459_, Boolean.class);
+    protected BooleanProperty(String name) {
+        super(name, Boolean.class);
     }
 
     @Override
@@ -16,25 +16,28 @@ public class BooleanProperty extends Property<Boolean> {
         return this.values;
     }
 
-    public static BooleanProperty create(String p_61466_) {
-        return new BooleanProperty(p_61466_);
+    public static BooleanProperty create(String name) {
+        return new BooleanProperty(name);
     }
 
     @Override
-    public Optional<Boolean> getValue(String p_61469_) {
-        return !"true".equals(p_61469_) && !"false".equals(p_61469_) ? Optional.empty() : Optional.of(Boolean.valueOf(p_61469_));
+    public Optional<Boolean> getValue(String value) {
+        return !"true".equals(value) && !"false".equals(value) ? Optional.empty() : Optional.of(Boolean.valueOf(value));
     }
 
-    public String getName(Boolean p_61462_) {
-        return p_61462_.toString();
+    /**
+     * @return the name for the given value.
+     */
+    public String getName(Boolean value) {
+        return value.toString();
     }
 
     @Override
-    public boolean equals(Object p_61471_) {
-        if (this == p_61471_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            if (p_61471_ instanceof BooleanProperty booleanproperty && super.equals(p_61471_)) {
+            if (other instanceof BooleanProperty booleanproperty && super.equals(other)) {
                 return this.values.equals(booleanproperty.values);
             }
 

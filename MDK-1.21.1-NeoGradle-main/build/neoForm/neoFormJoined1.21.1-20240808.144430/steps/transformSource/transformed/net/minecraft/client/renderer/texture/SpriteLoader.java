@@ -36,24 +36,24 @@ public class SpriteLoader {
     private final int minWidth;
     private final int minHeight;
 
-    public SpriteLoader(ResourceLocation p_276126_, int p_276121_, int p_276110_, int p_276114_) {
-        this.location = p_276126_;
-        this.maxSupportedTextureSize = p_276121_;
-        this.minWidth = p_276110_;
-        this.minHeight = p_276114_;
+    public SpriteLoader(ResourceLocation location, int maxSupportedTextureSize, int minWidth, int minHeight) {
+        this.location = location;
+        this.maxSupportedTextureSize = maxSupportedTextureSize;
+        this.minWidth = minWidth;
+        this.minHeight = minHeight;
     }
 
-    public static SpriteLoader create(TextureAtlas p_249085_) {
-        return new SpriteLoader(p_249085_.location(), p_249085_.maxSupportedTextureSize(), p_249085_.getWidth(), p_249085_.getHeight());
+    public static SpriteLoader create(TextureAtlas atlas) {
+        return new SpriteLoader(atlas.location(), atlas.maxSupportedTextureSize(), atlas.getWidth(), atlas.getHeight());
     }
 
-    public SpriteLoader.Preparations stitch(List<SpriteContents> p_262029_, int p_261919_, Executor p_261665_) {
+    public SpriteLoader.Preparations stitch(List<SpriteContents> contents, int mipLevel, Executor executor) {
         int i = this.maxSupportedTextureSize;
-        Stitcher<SpriteContents> stitcher = new Stitcher<>(i, i, p_261919_);
+        Stitcher<SpriteContents> stitcher = new Stitcher<>(i, i, mipLevel);
         int j = Integer.MAX_VALUE;
-        int k = 1 << p_261919_;
+        int k = 1 << mipLevel;
 
-        for (SpriteContents spritecontents : p_262029_) {
+        for (SpriteContents spritecontents : contents) {
             j = Math.min(j, Math.min(spritecontents.width(), spritecontents.height()));
             int l = Math.min(Integer.lowestOneBit(spritecontents.width()), Integer.lowestOneBit(spritecontents.height()));
             if (l < k) {
@@ -75,10 +75,10 @@ public class SpriteLoader {
         int k1 = Mth.log2(j1);
         int l1;
         if (false) { // Forge: Do not lower the mipmap level
-            LOGGER.warn("{}: dropping miplevel from {} to {}, because of minimum power of two: {}", this.location, p_261919_, k1, j1);
+            LOGGER.warn("{}: dropping miplevel from {} to {}, because of minimum power of two: {}", this.location, mipLevel, k1, j1);
             l1 = k1;
         } else {
-            l1 = p_261919_;
+            l1 = mipLevel;
         }
 
         try {
@@ -103,7 +103,7 @@ public class SpriteLoader {
         TextureAtlasSprite textureatlassprite = map.get(MissingTextureAtlasSprite.getLocation());
         CompletableFuture<Void> completablefuture;
         if (l1 > 0) {
-            completablefuture = CompletableFuture.runAsync(() -> map.values().forEach(p_251202_ -> p_251202_.contents().increaseMipLevel(l1)), p_261665_);
+            completablefuture = CompletableFuture.runAsync(() -> map.values().forEach(p_251202_ -> p_251202_.contents().increaseMipLevel(l1)), executor);
         } else {
             completablefuture = CompletableFuture.completedFuture(null);
         }
@@ -112,34 +112,34 @@ public class SpriteLoader {
     }
 
     public static CompletableFuture<List<SpriteContents>> runSpriteSuppliers(
-        SpriteResourceLoader p_294961_, List<Function<SpriteResourceLoader, SpriteContents>> p_261516_, Executor p_261791_
+        SpriteResourceLoader spriteResourceLoader, List<Function<SpriteResourceLoader, SpriteContents>> factories, Executor executor
     ) {
-        List<CompletableFuture<SpriteContents>> list = p_261516_.stream()
-            .map(p_293678_ -> CompletableFuture.supplyAsync(() -> (SpriteContents)p_293678_.apply(p_294961_), p_261791_))
+        List<CompletableFuture<SpriteContents>> list = factories.stream()
+            .map(p_293678_ -> CompletableFuture.supplyAsync(() -> (SpriteContents)p_293678_.apply(spriteResourceLoader), executor))
             .toList();
         return Util.sequence(list).thenApply(p_252234_ -> p_252234_.stream().filter(Objects::nonNull).toList());
     }
 
-    public CompletableFuture<SpriteLoader.Preparations> loadAndStitch(ResourceManager p_262108_, ResourceLocation p_261754_, int p_262104_, Executor p_261687_) {
-        return this.loadAndStitch(p_262108_, p_261754_, p_262104_, p_261687_, DEFAULT_METADATA_SECTIONS);
+    public CompletableFuture<SpriteLoader.Preparations> loadAndStitch(ResourceManager resouceManager, ResourceLocation location, int mipLevel, Executor executor) {
+        return this.loadAndStitch(resouceManager, location, mipLevel, executor, DEFAULT_METADATA_SECTIONS);
     }
 
     public CompletableFuture<SpriteLoader.Preparations> loadAndStitch(
-        ResourceManager p_295469_, ResourceLocation p_294925_, int p_294855_, Executor p_294720_, Collection<MetadataSectionSerializer<?>> p_294816_
+        ResourceManager resourceManager, ResourceLocation location, int mipLevel, Executor executor, Collection<MetadataSectionSerializer<?>> sectionSerializers
     ) {
-        SpriteResourceLoader spriteresourceloader = SpriteResourceLoader.create(p_294816_);
+        SpriteResourceLoader spriteresourceloader = SpriteResourceLoader.create(sectionSerializers);
         return CompletableFuture.<List<Function<SpriteResourceLoader, SpriteContents>>>supplyAsync(
-                () -> SpriteSourceList.load(p_295469_, p_294925_).list(p_295469_), p_294720_
+                () -> SpriteSourceList.load(resourceManager, location).list(resourceManager), executor
             )
-            .thenCompose(p_293671_ -> runSpriteSuppliers(spriteresourceloader, (List<Function<SpriteResourceLoader, SpriteContents>>)p_293671_, p_294720_))
-            .thenApply(p_261393_ -> this.stitch((List<SpriteContents>)p_261393_, p_294855_, p_294720_));
+            .thenCompose(p_293671_ -> runSpriteSuppliers(spriteresourceloader, (List<Function<SpriteResourceLoader, SpriteContents>>)p_293671_, executor))
+            .thenApply(p_261393_ -> this.stitch((List<SpriteContents>)p_261393_, mipLevel, executor));
     }
 
-    private Map<ResourceLocation, TextureAtlasSprite> getStitchedSprites(Stitcher<SpriteContents> p_276117_, int p_276111_, int p_276112_) {
+    private Map<ResourceLocation, TextureAtlasSprite> getStitchedSprites(Stitcher<SpriteContents> stitcher, int x, int y) {
         Map<ResourceLocation, TextureAtlasSprite> map = new HashMap<>();
-        p_276117_.gatherSprites(
+        stitcher.gatherSprites(
             (p_251421_, p_250533_, p_251913_) -> map.put(
-                    p_251421_.name(), new TextureAtlasSprite(this.location, p_251421_, p_276111_, p_276112_, p_250533_, p_251913_)
+                    p_251421_.name(), new TextureAtlasSprite(this.location, p_251421_, x, y, p_250533_, p_251913_)
                 )
         );
         return map;

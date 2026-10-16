@@ -158,58 +158,71 @@ public abstract class Feature<FC extends FeatureConfiguration> {
     public static final Feature<SculkPatchConfiguration> SCULK_PATCH = register("sculk_patch", new SculkPatchFeature(SculkPatchConfiguration.CODEC));
     private final MapCodec<ConfiguredFeature<FC, Feature<FC>>> configuredCodec;
 
-    private static <C extends FeatureConfiguration, F extends Feature<C>> F register(String p_65808_, F p_65809_) {
-        return Registry.register(BuiltInRegistries.FEATURE, p_65808_, p_65809_);
+    private static <C extends FeatureConfiguration, F extends Feature<C>> F register(String key, F value) {
+        return Registry.register(BuiltInRegistries.FEATURE, key, value);
     }
 
-    public Feature(Codec<FC> p_65786_) {
-        this.configuredCodec = p_65786_.fieldOf("config").xmap(p_65806_ -> new ConfiguredFeature<>(this, (FC)p_65806_), ConfiguredFeature::config);
+    public Feature(Codec<FC> codec) {
+        this.configuredCodec = codec.fieldOf("config").xmap(p_65806_ -> new ConfiguredFeature<>(this, (FC)p_65806_), ConfiguredFeature::config);
     }
 
     public MapCodec<ConfiguredFeature<FC, Feature<FC>>> configuredCodec() {
         return this.configuredCodec;
     }
 
-    protected void setBlock(LevelWriter p_65791_, BlockPos p_65792_, BlockState p_65793_) {
-        p_65791_.setBlock(p_65792_, p_65793_, 3);
+    protected void setBlock(LevelWriter level, BlockPos pos, BlockState state) {
+        level.setBlock(pos, state, 3);
     }
 
-    public static Predicate<BlockState> isReplaceable(TagKey<Block> p_204736_) {
-        return p_204739_ -> !p_204739_.is(p_204736_);
+    public static Predicate<BlockState> isReplaceable(TagKey<Block> blockTag) {
+        return p_204739_ -> !p_204739_.is(blockTag);
     }
 
-    protected void safeSetBlock(WorldGenLevel p_159743_, BlockPos p_159744_, BlockState p_159745_, Predicate<BlockState> p_159746_) {
-        if (p_159746_.test(p_159743_.getBlockState(p_159744_))) {
-            p_159743_.setBlock(p_159744_, p_159745_, 2);
+    protected void safeSetBlock(WorldGenLevel level, BlockPos pos, BlockState state, Predicate<BlockState> oldState) {
+        if (oldState.test(level.getBlockState(pos))) {
+            level.setBlock(pos, state, 2);
         }
     }
 
-    public abstract boolean place(FeaturePlaceContext<FC> p_159749_);
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
+    public abstract boolean place(FeaturePlaceContext<FC> context);
 
-    public boolean place(FC p_225029_, WorldGenLevel p_225030_, ChunkGenerator p_225031_, RandomSource p_225032_, BlockPos p_225033_) {
-        return p_225030_.ensureCanWrite(p_225033_)
-            ? this.place(new FeaturePlaceContext<>(Optional.empty(), p_225030_, p_225031_, p_225032_, p_225033_, p_225029_))
+    public boolean place(FC config, WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random, BlockPos origin) {
+        return level.ensureCanWrite(origin)
+            ? this.place(new FeaturePlaceContext<>(Optional.empty(), level, chunkGenerator, random, origin, config))
             : false;
     }
 
-    protected static boolean isStone(BlockState p_159748_) {
-        return p_159748_.is(BlockTags.BASE_STONE_OVERWORLD);
+    protected static boolean isStone(BlockState state) {
+        return state.is(BlockTags.BASE_STONE_OVERWORLD);
     }
 
-    public static boolean isDirt(BlockState p_159760_) {
-        return p_159760_.is(BlockTags.DIRT);
+    public static boolean isDirt(BlockState state) {
+        return state.is(BlockTags.DIRT);
     }
 
-    public static boolean isGrassOrDirt(LevelSimulatedReader p_65789_, BlockPos p_65790_) {
-        return p_65789_.isStateAtPosition(p_65790_, Feature::isDirt);
+    public static boolean isGrassOrDirt(LevelSimulatedReader level, BlockPos pos) {
+        return level.isStateAtPosition(pos, Feature::isDirt);
     }
 
-    public static boolean checkNeighbors(Function<BlockPos, BlockState> p_159754_, BlockPos p_159755_, Predicate<BlockState> p_159756_) {
+    /**
+     * @return {@code true} if any of the six adjacent blocks to the block at {@code pos} return {@code true} to the given filter.
+     *
+     * @param adjacentStateAccessor An accessor for the adjacent blocks. Essentially {
+     *                              @code level::getBlockState}.
+     */
+    public static boolean checkNeighbors(Function<BlockPos, BlockState> adjacentStateAccessor, BlockPos pos, Predicate<BlockState> filter) {
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
         for (Direction direction : Direction.values()) {
-            blockpos$mutableblockpos.setWithOffset(p_159755_, direction);
-            if (p_159756_.test(p_159754_.apply(blockpos$mutableblockpos))) {
+            blockpos$mutableblockpos.setWithOffset(pos, direction);
+            if (filter.test(adjacentStateAccessor.apply(blockpos$mutableblockpos))) {
                 return true;
             }
         }
@@ -217,20 +230,30 @@ public abstract class Feature<FC extends FeatureConfiguration> {
         return false;
     }
 
-    public static boolean isAdjacentToAir(Function<BlockPos, BlockState> p_159751_, BlockPos p_159752_) {
-        return checkNeighbors(p_159751_, p_159752_, BlockBehaviour.BlockStateBase::isAir);
+    /**
+     * @return {@code true} if any of the six adjacent blocks to the block at {@code pos} are air.
+     *
+     * @param adjacentStateAccessor An accessor for the adjacent blocks. Essentially {
+     *                              @code level::getBlockState}.
+     */
+    public static boolean isAdjacentToAir(Function<BlockPos, BlockState> adjacentStateAccessor, BlockPos pos) {
+        return checkNeighbors(adjacentStateAccessor, pos, BlockBehaviour.BlockStateBase::isAir);
     }
 
-    protected void markAboveForPostProcessing(WorldGenLevel p_159740_, BlockPos p_159741_) {
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = p_159741_.mutable();
+    /**
+     * If the above two blocks are not air, marks them for post-processing.
+     * This is used to prevent floating grass during the generation of features that carve blocks out of the terrain, after other plant-like blocks have generated (such as lake features).
+     */
+    protected void markAboveForPostProcessing(WorldGenLevel level, BlockPos basePos) {
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = basePos.mutable();
 
         for (int i = 0; i < 2; i++) {
             blockpos$mutableblockpos.move(Direction.UP);
-            if (p_159740_.getBlockState(blockpos$mutableblockpos).isAir()) {
+            if (level.getBlockState(blockpos$mutableblockpos).isAir()) {
                 return;
             }
 
-            p_159740_.getChunk(blockpos$mutableblockpos).markPosForPostprocessing(blockpos$mutableblockpos);
+            level.getChunk(blockpos$mutableblockpos).markPosForPostprocessing(blockpos$mutableblockpos);
         }
     }
 }

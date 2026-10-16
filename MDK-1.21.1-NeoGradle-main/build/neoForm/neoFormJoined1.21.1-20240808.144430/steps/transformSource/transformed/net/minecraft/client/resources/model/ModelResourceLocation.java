@@ -16,12 +16,12 @@ public record ModelResourceLocation(ResourceLocation id, String variant) {
         this.variant = variant;
     }
 
-    public static ModelResourceLocation vanilla(String p_251132_, String p_248987_) {
-        return new ModelResourceLocation(ResourceLocation.withDefaultNamespace(p_251132_), p_248987_);
+    public static ModelResourceLocation vanilla(String path, String variant) {
+        return new ModelResourceLocation(ResourceLocation.withDefaultNamespace(path), variant);
     }
 
-    public static ModelResourceLocation inventory(ResourceLocation p_352141_) {
-        return new ModelResourceLocation(p_352141_, "inventory");
+    public static ModelResourceLocation inventory(ResourceLocation id) {
+        return new ModelResourceLocation(id, "inventory");
     }
 
     /**
@@ -32,8 +32,8 @@ public record ModelResourceLocation(ResourceLocation id, String variant) {
         return new ModelResourceLocation(id, STANDALONE_VARIANT);
     }
 
-    private static String lowercaseVariant(String p_248567_) {
-        return p_248567_.toLowerCase(Locale.ROOT);
+    private static String lowercaseVariant(String variant) {
+        return variant.toLowerCase(Locale.ROOT);
     }
 
     public String getVariant() {

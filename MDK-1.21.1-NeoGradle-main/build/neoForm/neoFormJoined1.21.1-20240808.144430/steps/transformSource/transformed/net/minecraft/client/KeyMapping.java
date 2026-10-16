@@ -41,17 +41,17 @@ public class KeyMapping implements Comparable<KeyMapping>, net.neoforged.neoforg
     boolean isDown;
     private int clickCount;
 
-    public static void click(InputConstants.Key p_90836_) {
-        for (KeyMapping keymapping : MAP.getAll(p_90836_))
+    public static void click(InputConstants.Key key) {
+        for (KeyMapping keymapping : MAP.getAll(key))
         if (keymapping != null) {
             keymapping.clickCount++;
         }
     }
 
-    public static void set(InputConstants.Key p_90838_, boolean p_90839_) {
-        for (KeyMapping keymapping : MAP.getAll(p_90838_, !p_90839_))
+    public static void set(InputConstants.Key key, boolean held) {
+        for (KeyMapping keymapping : MAP.getAll(key, !held))
             if (keymapping != null) {
-                keymapping.setDown(p_90839_);
+                keymapping.setDown(held);
             }
     }
 
@@ -85,18 +85,18 @@ public class KeyMapping implements Comparable<KeyMapping>, net.neoforged.neoforg
         }
     }
 
-    public KeyMapping(String p_90821_, int p_90822_, String p_90823_) {
-        this(p_90821_, InputConstants.Type.KEYSYM, p_90822_, p_90823_);
+    public KeyMapping(String name, int keyCode, String category) {
+        this(name, InputConstants.Type.KEYSYM, keyCode, category);
     }
 
-    public KeyMapping(String p_90825_, InputConstants.Type p_90826_, int p_90827_, String p_90828_) {
-        this.name = p_90825_;
-        this.key = p_90826_.getOrCreate(p_90827_);
+    public KeyMapping(String name, InputConstants.Type type, int keyCode, String category) {
+        this.name = name;
+        this.key = type.getOrCreate(keyCode);
         this.defaultKey = this.key;
-        this.category = p_90828_;
-        ALL.put(p_90825_, this);
+        this.category = category;
+        ALL.put(name, this);
         MAP.put(this.key, this);
-        CATEGORIES.add(p_90828_);
+        CATEGORIES.add(category);
     }
 
     public boolean isDown() {
@@ -129,8 +129,11 @@ public class KeyMapping implements Comparable<KeyMapping>, net.neoforged.neoforg
         return this.defaultKey;
     }
 
-    public void setKey(InputConstants.Key p_90849_) {
-        this.key = p_90849_;
+    /**
+     * Binds a new KeyCode to this
+     */
+    public void setKey(InputConstants.Key key) {
+        this.key = key;
     }
 
     public int compareTo(KeyMapping p_90841_) {
@@ -143,18 +146,24 @@ public class KeyMapping implements Comparable<KeyMapping>, net.neoforged.neoforg
         return  tCat.compareTo(oCat);
     }
 
-    public static Supplier<Component> createNameSupplier(String p_90843_) {
-        KeyMapping keymapping = ALL.get(p_90843_);
-        return keymapping == null ? () -> Component.translatable(p_90843_) : keymapping::getTranslatedKeyMessage;
+    /**
+     * Returns a supplier which gets a keybind's current binding (eg, <code>key.forward</code> returns <samp>W</samp> by default), or the keybind's name if no such keybind exists (eg, <code>key.invalid</code> returns <samp>key.invalid</samp>)
+     */
+    public static Supplier<Component> createNameSupplier(String key) {
+        KeyMapping keymapping = ALL.get(key);
+        return keymapping == null ? () -> Component.translatable(key) : keymapping::getTranslatedKeyMessage;
     }
 
-    public boolean same(KeyMapping p_90851_) {
-        if (getKeyConflictContext().conflicts(p_90851_.getKeyConflictContext()) || p_90851_.getKeyConflictContext().conflicts(getKeyConflictContext())) {
+    /**
+     * Returns {@code true} if the supplied {@code KeyMapping} conflicts with this
+     */
+    public boolean same(KeyMapping binding) {
+        if (getKeyConflictContext().conflicts(binding.getKeyConflictContext()) || binding.getKeyConflictContext().conflicts(getKeyConflictContext())) {
             net.neoforged.neoforge.client.settings.KeyModifier keyModifier = getKeyModifier();
-            net.neoforged.neoforge.client.settings.KeyModifier otherKeyModifier = p_90851_.getKeyModifier();
-            if (keyModifier.matches(p_90851_.getKey()) || otherKeyModifier.matches(getKey())) {
+            net.neoforged.neoforge.client.settings.KeyModifier otherKeyModifier = binding.getKeyModifier();
+            if (keyModifier.matches(binding.getKey()) || otherKeyModifier.matches(getKey())) {
                 return true;
-            } else if (getKey().equals(p_90851_.getKey())) {
+            } else if (getKey().equals(binding.getKey())) {
                 // IN_GAME key contexts have a conflict when at least one modifier is NONE.
                 // For example: If you hold shift to crouch, you can still press E to open your inventory. This means that a Shift+E hotkey is in conflict with E.
                 // GUI and other key contexts do not have this limitation.
@@ -163,21 +172,24 @@ public class KeyMapping implements Comparable<KeyMapping>, net.neoforged.neoforg
                     (keyModifier == net.neoforged.neoforge.client.settings.KeyModifier.NONE || otherKeyModifier == net.neoforged.neoforge.client.settings.KeyModifier.NONE));
             }
         }
-        return this.key.equals(p_90851_.key);
+        return this.key.equals(binding.key);
     }
 
     public boolean isUnbound() {
         return this.key.equals(InputConstants.UNKNOWN);
     }
 
-    public boolean matches(int p_90833_, int p_90834_) {
-        return p_90833_ == InputConstants.UNKNOWN.getValue()
-            ? this.key.getType() == InputConstants.Type.SCANCODE && this.key.getValue() == p_90834_
-            : this.key.getType() == InputConstants.Type.KEYSYM && this.key.getValue() == p_90833_;
+    public boolean matches(int keysym, int scancode) {
+        return keysym == InputConstants.UNKNOWN.getValue()
+            ? this.key.getType() == InputConstants.Type.SCANCODE && this.key.getValue() == scancode
+            : this.key.getType() == InputConstants.Type.KEYSYM && this.key.getValue() == keysym;
     }
 
-    public boolean matchesMouse(int p_90831_) {
-        return this.key.getType() == InputConstants.Type.MOUSE && this.key.getValue() == p_90831_;
+    /**
+     * Returns {@code true} if the {@code KeyMapping} is set to a mouse key and the key matches.
+     */
+    public boolean matchesMouse(int key) {
+        return this.key.getType() == InputConstants.Type.MOUSE && this.key.getValue() == key;
     }
 
     public Component getTranslatedKeyMessage() {
@@ -194,8 +206,8 @@ public class KeyMapping implements Comparable<KeyMapping>, net.neoforged.neoforg
         return this.key.getName();
     }
 
-    public void setDown(boolean p_90846_) {
-        this.isDown = p_90846_;
+    public void setDown(boolean value) {
+        this.isDown = value;
     }
 
     // Neo: Injected Key Mapping controls

@@ -20,9 +20,9 @@ public class SetCustomDataFunction extends LootItemConditionalFunction {
     );
     private final CompoundTag tag;
 
-    private SetCustomDataFunction(List<LootItemCondition> p_330259_, CompoundTag p_330792_) {
-        super(p_330259_);
-        this.tag = p_330792_;
+    private SetCustomDataFunction(List<LootItemCondition> conditions, CompoundTag tag) {
+        super(conditions);
+        this.tag = tag;
     }
 
     @Override
@@ -30,14 +30,17 @@ public class SetCustomDataFunction extends LootItemConditionalFunction {
         return LootItemFunctions.SET_CUSTOM_DATA;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_330737_, LootContext p_331310_) {
-        CustomData.update(DataComponents.CUSTOM_DATA, p_330737_, p_331655_ -> p_331655_.merge(this.tag));
-        return p_330737_;
+    public ItemStack run(ItemStack stack, LootContext context) {
+        CustomData.update(DataComponents.CUSTOM_DATA, stack, p_331655_ -> p_331655_.merge(this.tag));
+        return stack;
     }
 
     @Deprecated
-    public static LootItemConditionalFunction.Builder<?> setCustomData(CompoundTag p_330248_) {
-        return simpleBuilder(p_330691_ -> new SetCustomDataFunction(p_330691_, p_330248_));
+    public static LootItemConditionalFunction.Builder<?> setCustomData(CompoundTag tag) {
+        return simpleBuilder(p_330691_ -> new SetCustomDataFunction(p_330691_, tag));
     }
 }

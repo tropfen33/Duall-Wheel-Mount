@@ -83,23 +83,23 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
     private final LevelChunkTicks<Block> blockTicks;
     private final LevelChunkTicks<Fluid> fluidTicks;
 
-    public LevelChunk(Level p_187945_, ChunkPos p_187946_) {
-        this(p_187945_, p_187946_, UpgradeData.EMPTY, new LevelChunkTicks<>(), new LevelChunkTicks<>(), 0L, null, null, null);
+    public LevelChunk(Level level, ChunkPos pos) {
+        this(level, pos, UpgradeData.EMPTY, new LevelChunkTicks<>(), new LevelChunkTicks<>(), 0L, null, null, null);
     }
 
     public LevelChunk(
-        Level p_196854_,
-        ChunkPos p_196855_,
-        UpgradeData p_196856_,
-        LevelChunkTicks<Block> p_196857_,
-        LevelChunkTicks<Fluid> p_196858_,
-        long p_196859_,
-        @Nullable LevelChunkSection[] p_196860_,
-        @Nullable LevelChunk.PostLoadProcessor p_196861_,
-        @Nullable BlendingData p_196862_
+        Level level,
+        ChunkPos pos,
+        UpgradeData data,
+        LevelChunkTicks<Block> blockTicks,
+        LevelChunkTicks<Fluid> fluidTicks,
+        long inhabitedTime,
+        @Nullable LevelChunkSection[] sections,
+        @Nullable LevelChunk.PostLoadProcessor postLoad,
+        @Nullable BlendingData blendingData
     ) {
-        super(p_196855_, p_196856_, p_196854_, p_196854_.registryAccess().registryOrThrow(Registries.BIOME), p_196859_, p_196860_, p_196862_);
-        this.level = p_196854_;
+        super(pos, data, level, level.registryAccess().registryOrThrow(Registries.BIOME), inhabitedTime, sections, blendingData);
+        this.level = level;
         this.gameEventListenerRegistrySections = new Int2ObjectOpenHashMap<>();
 
         for (Heightmap.Types heightmap$types : Heightmap.Types.values()) {
@@ -108,46 +108,46 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
             }
         }
 
-        this.postLoad = p_196861_;
-        this.blockTicks = p_196857_;
-        this.fluidTicks = p_196858_;
+        this.postLoad = postLoad;
+        this.blockTicks = blockTicks;
+        this.fluidTicks = fluidTicks;
     }
 
-    public LevelChunk(ServerLevel p_196850_, ProtoChunk p_196851_, @Nullable LevelChunk.PostLoadProcessor p_196852_) {
+    public LevelChunk(ServerLevel level, ProtoChunk chunk, @Nullable LevelChunk.PostLoadProcessor postLoad) {
         this(
-            p_196850_,
-            p_196851_.getPos(),
-            p_196851_.getUpgradeData(),
-            p_196851_.unpackBlockTicks(),
-            p_196851_.unpackFluidTicks(),
-            p_196851_.getInhabitedTime(),
-            p_196851_.getSections(),
-            p_196852_,
-            p_196851_.getBlendingData()
+            level,
+            chunk.getPos(),
+            chunk.getUpgradeData(),
+            chunk.unpackBlockTicks(),
+            chunk.unpackFluidTicks(),
+            chunk.getInhabitedTime(),
+            chunk.getSections(),
+            postLoad,
+            chunk.getBlendingData()
         );
 
-        for (BlockEntity blockentity : p_196851_.getBlockEntities().values()) {
+        for (BlockEntity blockentity : chunk.getBlockEntities().values()) {
             this.setBlockEntity(blockentity);
         }
 
-        this.pendingBlockEntities.putAll(p_196851_.getBlockEntityNbts());
+        this.pendingBlockEntities.putAll(chunk.getBlockEntityNbts());
 
-        for (int i = 0; i < p_196851_.getPostProcessing().length; i++) {
-            this.postProcessing[i] = p_196851_.getPostProcessing()[i];
+        for (int i = 0; i < chunk.getPostProcessing().length; i++) {
+            this.postProcessing[i] = chunk.getPostProcessing()[i];
         }
 
-        this.setAllStarts(p_196851_.getAllStarts());
-        this.setAllReferences(p_196851_.getAllReferences());
+        this.setAllStarts(chunk.getAllStarts());
+        this.setAllReferences(chunk.getAllReferences());
 
-        net.neoforged.neoforge.attachment.AttachmentInternals.copyChunkAttachmentsOnPromotion(p_196850_.registryAccess(), p_196851_.getAttachmentHolder(), this.getAttachmentHolder());
-        for (Entry<Heightmap.Types, Heightmap> entry : p_196851_.getHeightmaps()) {
+        net.neoforged.neoforge.attachment.AttachmentInternals.copyChunkAttachmentsOnPromotion(level.registryAccess(), chunk.getAttachmentHolder(), this.getAttachmentHolder());
+        for (Entry<Heightmap.Types, Heightmap> entry : chunk.getHeightmaps()) {
             if (ChunkStatus.FULL.heightmapsAfter().contains(entry.getKey())) {
                 this.setHeightmap(entry.getKey(), entry.getValue().getRawData());
             }
         }
 
-        this.skyLightSources = p_196851_.skyLightSources;
-        this.setLightCorrect(p_196851_.isLightCorrect());
+        this.skyLightSources = chunk.skyLightSources;
+        this.setLightCorrect(chunk.isLightCorrect());
         this.unsaved = true;
     }
 
@@ -167,18 +167,18 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
     }
 
     @Override
-    public GameEventListenerRegistry getListenerRegistry(int p_251193_) {
+    public GameEventListenerRegistry getListenerRegistry(int sectionY) {
         return this.level instanceof ServerLevel serverlevel
             ? this.gameEventListenerRegistrySections
-                .computeIfAbsent(p_251193_, p_281221_ -> new EuclideanGameEventListenerRegistry(serverlevel, p_251193_, this::removeGameEventListenerRegistry))
-            : super.getListenerRegistry(p_251193_);
+                .computeIfAbsent(sectionY, p_281221_ -> new EuclideanGameEventListenerRegistry(serverlevel, sectionY, this::removeGameEventListenerRegistry))
+            : super.getListenerRegistry(sectionY);
     }
 
     @Override
-    public BlockState getBlockState(BlockPos p_62923_) {
-        int i = p_62923_.getX();
-        int j = p_62923_.getY();
-        int k = p_62923_.getZ();
+    public BlockState getBlockState(BlockPos pos) {
+        int i = pos.getX();
+        int j = pos.getY();
+        int k = pos.getZ();
         if (this.level.isDebug()) {
             BlockState blockstate = null;
             if (j == 60) {
@@ -211,17 +211,17 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
     }
 
     @Override
-    public FluidState getFluidState(BlockPos p_62895_) {
-        return this.getFluidState(p_62895_.getX(), p_62895_.getY(), p_62895_.getZ());
+    public FluidState getFluidState(BlockPos pos) {
+        return this.getFluidState(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    public FluidState getFluidState(int p_62815_, int p_62816_, int p_62817_) {
+    public FluidState getFluidState(int x, int y, int z) {
         try {
-            int i = this.getSectionIndex(p_62816_);
+            int i = this.getSectionIndex(y);
             if (i >= 0 && i < this.sections.length) {
                 LevelChunkSection levelchunksection = this.sections[i];
                 if (!levelchunksection.hasOnlyAir()) {
-                    return levelchunksection.getFluidState(p_62815_ & 15, p_62816_ & 15, p_62817_ & 15);
+                    return levelchunksection.getFluidState(x & 15, y & 15, z & 15);
                 }
             }
 
@@ -229,74 +229,74 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
         } catch (Throwable throwable) {
             CrashReport crashreport = CrashReport.forThrowable(throwable, "Getting fluid state");
             CrashReportCategory crashreportcategory = crashreport.addCategory("Block being got");
-            crashreportcategory.setDetail("Location", () -> CrashReportCategory.formatLocation(this, p_62815_, p_62816_, p_62817_));
+            crashreportcategory.setDetail("Location", () -> CrashReportCategory.formatLocation(this, x, y, z));
             throw new ReportedException(crashreport);
         }
     }
 
     @Nullable
     @Override
-    public BlockState setBlockState(BlockPos p_62865_, BlockState p_62866_, boolean p_62867_) {
-        int i = p_62865_.getY();
+    public BlockState setBlockState(BlockPos pos, BlockState state, boolean isMoving) {
+        int i = pos.getY();
         LevelChunkSection levelchunksection = this.getSection(this.getSectionIndex(i));
         boolean flag = levelchunksection.hasOnlyAir();
-        if (flag && p_62866_.isAir()) {
+        if (flag && state.isAir()) {
             return null;
         } else {
-            int j = p_62865_.getX() & 15;
+            int j = pos.getX() & 15;
             int k = i & 15;
-            int l = p_62865_.getZ() & 15;
-            BlockState blockstate = levelchunksection.setBlockState(j, k, l, p_62866_);
-            if (blockstate == p_62866_) {
+            int l = pos.getZ() & 15;
+            BlockState blockstate = levelchunksection.setBlockState(j, k, l, state);
+            if (blockstate == state) {
                 return null;
             } else {
-                Block block = p_62866_.getBlock();
-                this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING).update(j, i, l, p_62866_);
-                this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES).update(j, i, l, p_62866_);
-                this.heightmaps.get(Heightmap.Types.OCEAN_FLOOR).update(j, i, l, p_62866_);
-                this.heightmaps.get(Heightmap.Types.WORLD_SURFACE).update(j, i, l, p_62866_);
+                Block block = state.getBlock();
+                this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING).update(j, i, l, state);
+                this.heightmaps.get(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES).update(j, i, l, state);
+                this.heightmaps.get(Heightmap.Types.OCEAN_FLOOR).update(j, i, l, state);
+                this.heightmaps.get(Heightmap.Types.WORLD_SURFACE).update(j, i, l, state);
                 boolean flag1 = levelchunksection.hasOnlyAir();
                 if (flag != flag1) {
-                    this.level.getChunkSource().getLightEngine().updateSectionStatus(p_62865_, flag1);
+                    this.level.getChunkSource().getLightEngine().updateSectionStatus(pos, flag1);
                 }
 
-                if (LightEngine.hasDifferentLightProperties(this, p_62865_, blockstate, p_62866_)) {
+                if (LightEngine.hasDifferentLightProperties(this, pos, blockstate, state)) {
                     ProfilerFiller profilerfiller = this.level.getProfiler();
                     profilerfiller.push("updateSkyLightSources");
                     this.skyLightSources.update(this, j, i, l);
                     profilerfiller.popPush("queueCheckLight");
-                    this.level.getChunkSource().getLightEngine().checkBlock(p_62865_);
+                    this.level.getChunkSource().getLightEngine().checkBlock(pos);
                     profilerfiller.pop();
                 }
 
                 boolean flag2 = blockstate.hasBlockEntity();
                 if (!this.level.isClientSide) {
-                    blockstate.onRemove(this.level, p_62865_, p_62866_, p_62867_);
+                    blockstate.onRemove(this.level, pos, state, isMoving);
                 } else if (!blockstate.is(block) && flag2) {
-                    this.removeBlockEntity(p_62865_);
+                    this.removeBlockEntity(pos);
                 }
 
                 if (!levelchunksection.getBlockState(j, k, l).is(block)) {
                     return null;
                 } else {
                     if (!this.level.isClientSide && !this.level.captureBlockSnapshots) {
-                        p_62866_.onPlace(this.level, p_62865_, blockstate, p_62867_);
+                        state.onPlace(this.level, pos, blockstate, isMoving);
                     }
 
-                    if (p_62866_.hasBlockEntity()) {
-                        BlockEntity blockentity = this.getBlockEntity(p_62865_, LevelChunk.EntityCreationType.CHECK);
-                        if (blockentity != null && !blockentity.isValidBlockState(p_62866_)) {
-                            this.removeBlockEntity(p_62865_);
+                    if (state.hasBlockEntity()) {
+                        BlockEntity blockentity = this.getBlockEntity(pos, LevelChunk.EntityCreationType.CHECK);
+                        if (blockentity != null && !blockentity.isValidBlockState(state)) {
+                            this.removeBlockEntity(pos);
                             blockentity = null;
                         }
 
                         if (blockentity == null) {
-                            blockentity = ((EntityBlock)block).newBlockEntity(p_62865_, p_62866_);
+                            blockentity = ((EntityBlock)block).newBlockEntity(pos, state);
                             if (blockentity != null) {
                                 this.addAndRegisterBlockEntity(blockentity);
                             }
                         } else {
-                            blockentity.setBlockState(p_62866_);
+                            blockentity.setBlockState(state);
                             this.updateBlockEntityTicker(blockentity);
                         }
                     }
@@ -310,32 +310,32 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
 
     @Deprecated
     @Override
-    public void addEntity(Entity p_62826_) {
+    public void addEntity(Entity entity) {
     }
 
     @Nullable
-    private BlockEntity createBlockEntity(BlockPos p_62935_) {
-        BlockState blockstate = this.getBlockState(p_62935_);
-        return !blockstate.hasBlockEntity() ? null : ((EntityBlock)blockstate.getBlock()).newBlockEntity(p_62935_, blockstate);
+    private BlockEntity createBlockEntity(BlockPos pos) {
+        BlockState blockstate = this.getBlockState(pos);
+        return !blockstate.hasBlockEntity() ? null : ((EntityBlock)blockstate.getBlock()).newBlockEntity(pos, blockstate);
     }
 
     @Nullable
     @Override
-    public BlockEntity getBlockEntity(BlockPos p_62912_) {
-        return this.getBlockEntity(p_62912_, LevelChunk.EntityCreationType.CHECK);
+    public BlockEntity getBlockEntity(BlockPos pos) {
+        return this.getBlockEntity(pos, LevelChunk.EntityCreationType.CHECK);
     }
 
     @Nullable
-    public BlockEntity getBlockEntity(BlockPos p_62868_, LevelChunk.EntityCreationType p_62869_) {
-        BlockEntity blockentity = this.blockEntities.get(p_62868_);
+    public BlockEntity getBlockEntity(BlockPos pos, LevelChunk.EntityCreationType creationType) {
+        BlockEntity blockentity = this.blockEntities.get(pos);
         if (blockentity != null && blockentity.isRemoved()) {
-            blockEntities.remove(p_62868_);
+            blockEntities.remove(pos);
             blockentity = null;
         }
         if (blockentity == null) {
-            CompoundTag compoundtag = this.pendingBlockEntities.remove(p_62868_);
+            CompoundTag compoundtag = this.pendingBlockEntities.remove(pos);
             if (compoundtag != null) {
-                BlockEntity blockentity1 = this.promotePendingBlockEntity(p_62868_, compoundtag);
+                BlockEntity blockentity1 = this.promotePendingBlockEntity(pos, compoundtag);
                 if (blockentity1 != null) {
                     return blockentity1;
                 }
@@ -343,8 +343,8 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
         }
 
         if (blockentity == null) {
-            if (p_62869_ == LevelChunk.EntityCreationType.IMMEDIATE) {
-                blockentity = this.createBlockEntity(p_62868_);
+            if (creationType == LevelChunk.EntityCreationType.IMMEDIATE) {
+                blockentity = this.createBlockEntity(pos);
                 if (blockentity != null) {
                     this.addAndRegisterBlockEntity(blockentity);
                 }
@@ -354,15 +354,15 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
         return blockentity;
     }
 
-    public void addAndRegisterBlockEntity(BlockEntity p_156391_) {
-        this.setBlockEntity(p_156391_);
+    public void addAndRegisterBlockEntity(BlockEntity blockEntity) {
+        this.setBlockEntity(blockEntity);
         if (this.isInLevel()) {
             if (this.level instanceof ServerLevel serverlevel) {
-                this.addGameEventListener(p_156391_, serverlevel);
+                this.addGameEventListener(blockEntity, serverlevel);
             }
 
-            this.updateBlockEntityTicker(p_156391_);
-            this.level.addFreshBlockEntities(java.util.List.of(p_156391_));
+            this.updateBlockEntityTicker(blockEntity);
+            this.level.addFreshBlockEntities(java.util.List.of(blockEntity));
         }
     }
 
@@ -370,41 +370,41 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
         return this.loaded || this.level.isClientSide();
     }
 
-    boolean isTicking(BlockPos p_156411_) {
-        if (!this.level.getWorldBorder().isWithinBounds(p_156411_)) {
+    boolean isTicking(BlockPos pos) {
+        if (!this.level.getWorldBorder().isWithinBounds(pos)) {
             return false;
         } else {
             return !(this.level instanceof ServerLevel serverlevel)
                 ? true
-                : this.getFullStatus().isOrAfter(FullChunkStatus.BLOCK_TICKING) && serverlevel.areEntitiesLoaded(ChunkPos.asLong(p_156411_));
+                : this.getFullStatus().isOrAfter(FullChunkStatus.BLOCK_TICKING) && serverlevel.areEntitiesLoaded(ChunkPos.asLong(pos));
         }
     }
 
     @Override
-    public void setBlockEntity(BlockEntity p_156374_) {
-        BlockPos blockpos = p_156374_.getBlockPos();
+    public void setBlockEntity(BlockEntity blockEntity) {
+        BlockPos blockpos = blockEntity.getBlockPos();
         BlockState blockstate = this.getBlockState(blockpos);
         if (!blockstate.hasBlockEntity()) {
-            LOGGER.warn("Trying to set block entity {} at position {}, but state {} does not allow it", p_156374_, blockpos, blockstate);
+            LOGGER.warn("Trying to set block entity {} at position {}, but state {} does not allow it", blockEntity, blockpos, blockstate);
         } else {
-            BlockState blockstate1 = p_156374_.getBlockState();
+            BlockState blockstate1 = blockEntity.getBlockState();
             if (blockstate != blockstate1) {
-                if (!p_156374_.getType().isValid(blockstate)) {
-                    LOGGER.warn("Trying to set block entity {} at position {}, but state {} does not allow it", p_156374_, blockpos, blockstate);
+                if (!blockEntity.getType().isValid(blockstate)) {
+                    LOGGER.warn("Trying to set block entity {} at position {}, but state {} does not allow it", blockEntity, blockpos, blockstate);
                     return;
                 }
 
                 if (blockstate.getBlock() != blockstate1.getBlock()) {
-                    LOGGER.warn("Block state mismatch on block entity {} in position {}, {} != {}, updating", p_156374_, blockpos, blockstate, blockstate1);
+                    LOGGER.warn("Block state mismatch on block entity {} in position {}, {} != {}, updating", blockEntity, blockpos, blockstate, blockstate1);
                 }
 
-                p_156374_.setBlockState(blockstate);
+                blockEntity.setBlockState(blockstate);
             }
 
-            p_156374_.setLevel(this.level);
-            p_156374_.clearRemoved();
-            BlockEntity blockentity = this.blockEntities.put(blockpos.immutable(), p_156374_);
-            if (blockentity != null && blockentity != p_156374_) {
+            blockEntity.setLevel(this.level);
+            blockEntity.clearRemoved();
+            BlockEntity blockentity = this.blockEntities.put(blockpos.immutable(), blockEntity);
+            if (blockentity != null && blockentity != blockEntity) {
                 blockentity.setRemoved();
                 auxLightManager.removeLightAt(blockpos);
             }
@@ -413,8 +413,8 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
 
     @Nullable
     @Override
-    public CompoundTag getBlockEntityNbtForSaving(BlockPos p_62932_, HolderLookup.Provider p_323699_) {
-        BlockEntity blockentity = this.getBlockEntity(p_62932_);
+    public CompoundTag getBlockEntityNbtForSaving(BlockPos pos, HolderLookup.Provider registries) {
+        BlockEntity blockentity = this.getBlockEntity(pos);
         if (blockentity != null && !blockentity.isRemoved()) {
             try {
             CompoundTag compoundtag1 = blockentity.saveWithFullMetadata(this.level.registryAccess());
@@ -425,7 +425,7 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
                 return null;
             }
         } else {
-            CompoundTag compoundtag = this.pendingBlockEntities.get(p_62932_);
+            CompoundTag compoundtag = this.pendingBlockEntities.get(pos);
             if (compoundtag != null) {
                 compoundtag = compoundtag.copy();
                 compoundtag.putBoolean("keepPacked", true);
@@ -436,40 +436,40 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
     }
 
     @Override
-    public void removeBlockEntity(BlockPos p_62919_) {
+    public void removeBlockEntity(BlockPos pos) {
         if (this.isInLevel()) {
-            BlockEntity blockentity = this.blockEntities.remove(p_62919_);
+            BlockEntity blockentity = this.blockEntities.remove(pos);
             if (blockentity != null) {
                 if (this.level instanceof ServerLevel serverlevel) {
                     this.removeGameEventListener(blockentity, serverlevel);
                 }
 
                 blockentity.setRemoved();
-                auxLightManager.removeLightAt(p_62919_);
+                auxLightManager.removeLightAt(pos);
             }
         }
 
-        this.removeBlockEntityTicker(p_62919_);
+        this.removeBlockEntityTicker(pos);
     }
 
-    private <T extends BlockEntity> void removeGameEventListener(T p_223413_, ServerLevel p_223414_) {
-        Block block = p_223413_.getBlockState().getBlock();
+    private <T extends BlockEntity> void removeGameEventListener(T blockEntity, ServerLevel level) {
+        Block block = blockEntity.getBlockState().getBlock();
         if (block instanceof EntityBlock) {
-            GameEventListener gameeventlistener = ((EntityBlock)block).getListener(p_223414_, p_223413_);
+            GameEventListener gameeventlistener = ((EntityBlock)block).getListener(level, blockEntity);
             if (gameeventlistener != null) {
-                int i = SectionPos.blockToSectionCoord(p_223413_.getBlockPos().getY());
+                int i = SectionPos.blockToSectionCoord(blockEntity.getBlockPos().getY());
                 GameEventListenerRegistry gameeventlistenerregistry = this.getListenerRegistry(i);
                 gameeventlistenerregistry.unregister(gameeventlistener);
             }
         }
     }
 
-    private void removeGameEventListenerRegistry(int p_283355_) {
-        this.gameEventListenerRegistrySections.remove(p_283355_);
+    private void removeGameEventListenerRegistry(int sectionY) {
+        this.gameEventListenerRegistrySections.remove(sectionY);
     }
 
-    private void removeBlockEntityTicker(BlockPos p_156413_) {
-        LevelChunk.RebindableTickingBlockEntityWrapper levelchunk$rebindabletickingblockentitywrapper = this.tickersInLevel.remove(p_156413_);
+    private void removeBlockEntityTicker(BlockPos pos) {
+        LevelChunk.RebindableTickingBlockEntityWrapper levelchunk$rebindabletickingblockentitywrapper = this.tickersInLevel.remove(pos);
         if (levelchunk$rebindabletickingblockentitywrapper != null) {
             levelchunk$rebindabletickingblockentitywrapper.rebind(NULL_TICKER);
         }
@@ -487,23 +487,23 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
     }
 
     public void replaceWithPacketData(
-        FriendlyByteBuf p_187972_, CompoundTag p_187973_, Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> p_187974_
+        FriendlyByteBuf buffer, CompoundTag tag, Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> outputTagConsumer
     ) {
         this.clearAllBlockEntities();
 
         for (LevelChunkSection levelchunksection : this.sections) {
-            levelchunksection.read(p_187972_);
+            levelchunksection.read(buffer);
         }
 
         for (Heightmap.Types heightmap$types : Heightmap.Types.values()) {
             String s = heightmap$types.getSerializationKey();
-            if (p_187973_.contains(s, 12)) {
-                this.setHeightmap(heightmap$types, p_187973_.getLongArray(s));
+            if (tag.contains(s, 12)) {
+                this.setHeightmap(heightmap$types, tag.getLongArray(s));
             }
         }
 
         this.initializeLightSources();
-        p_187974_.accept((p_338077_, p_338078_, p_338079_) -> {
+        outputTagConsumer.accept((p_338077_, p_338078_, p_338079_) -> {
             BlockEntity blockentity = this.getBlockEntity(p_338077_, LevelChunk.EntityCreationType.IMMEDIATE);
             if (blockentity != null && p_338079_ != null && blockentity.getType() == p_338078_) {
                 blockentity.handleUpdateTag(p_338079_, this.level.registryAccess());
@@ -511,14 +511,14 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
         });
     }
 
-    public void replaceBiomes(FriendlyByteBuf p_275574_) {
+    public void replaceBiomes(FriendlyByteBuf buffer) {
         for (LevelChunkSection levelchunksection : this.sections) {
-            levelchunksection.readBiomes(p_275574_);
+            levelchunksection.readBiomes(buffer);
         }
     }
 
-    public void setLoaded(boolean p_62914_) {
-        this.loaded = p_62914_;
+    public void setLoaded(boolean loaded) {
+        this.loaded = loaded;
     }
 
     public Level getLevel() {
@@ -561,43 +561,43 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
     }
 
     @Nullable
-    private BlockEntity promotePendingBlockEntity(BlockPos p_62871_, CompoundTag p_62872_) {
-        BlockState blockstate = this.getBlockState(p_62871_);
+    private BlockEntity promotePendingBlockEntity(BlockPos pos, CompoundTag tag) {
+        BlockState blockstate = this.getBlockState(pos);
         BlockEntity blockentity;
-        if ("DUMMY".equals(p_62872_.getString("id"))) {
+        if ("DUMMY".equals(tag.getString("id"))) {
             if (blockstate.hasBlockEntity()) {
-                blockentity = ((EntityBlock)blockstate.getBlock()).newBlockEntity(p_62871_, blockstate);
+                blockentity = ((EntityBlock)blockstate.getBlock()).newBlockEntity(pos, blockstate);
             } else {
                 blockentity = null;
-                LOGGER.warn("Tried to load a DUMMY block entity @ {} but found not block entity block {} at location", p_62871_, blockstate);
+                LOGGER.warn("Tried to load a DUMMY block entity @ {} but found not block entity block {} at location", pos, blockstate);
             }
         } else {
-            blockentity = BlockEntity.loadStatic(p_62871_, blockstate, p_62872_, this.level.registryAccess());
+            blockentity = BlockEntity.loadStatic(pos, blockstate, tag, this.level.registryAccess());
         }
 
         if (blockentity != null) {
             blockentity.setLevel(this.level);
             this.addAndRegisterBlockEntity(blockentity);
         } else {
-            LOGGER.warn("Tried to load a block entity for block {} but failed at location {}", blockstate, p_62871_);
+            LOGGER.warn("Tried to load a block entity for block {} but failed at location {}", blockstate, pos);
         }
 
         return blockentity;
     }
 
-    public void unpackTicks(long p_187986_) {
-        this.blockTicks.unpack(p_187986_);
-        this.fluidTicks.unpack(p_187986_);
+    public void unpackTicks(long pos) {
+        this.blockTicks.unpack(pos);
+        this.fluidTicks.unpack(pos);
     }
 
-    public void registerTickContainerInLevel(ServerLevel p_187959_) {
-        p_187959_.getBlockTicks().addContainer(this.chunkPos, this.blockTicks);
-        p_187959_.getFluidTicks().addContainer(this.chunkPos, this.fluidTicks);
+    public void registerTickContainerInLevel(ServerLevel level) {
+        level.getBlockTicks().addContainer(this.chunkPos, this.blockTicks);
+        level.getFluidTicks().addContainer(this.chunkPos, this.fluidTicks);
     }
 
-    public void unregisterTickContainerFromLevel(ServerLevel p_187980_) {
-        p_187980_.getBlockTicks().removeContainer(this.chunkPos);
-        p_187980_.getFluidTicks().removeContainer(this.chunkPos);
+    public void unregisterTickContainerFromLevel(ServerLevel level) {
+        level.getBlockTicks().removeContainer(this.chunkPos);
+        level.getFluidTicks().removeContainer(this.chunkPos);
     }
 
     @Override
@@ -609,8 +609,8 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
         return this.fullStatus == null ? FullChunkStatus.FULL : this.fullStatus.get();
     }
 
-    public void setFullStatus(Supplier<FullChunkStatus> p_62880_) {
-        this.fullStatus = p_62880_;
+    public void setFullStatus(Supplier<FullChunkStatus> fullStatus) {
+        this.fullStatus = fullStatus;
     }
 
     public void clearAllBlockEntities() {
@@ -632,27 +632,27 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
         });
     }
 
-    private <T extends BlockEntity> void addGameEventListener(T p_223416_, ServerLevel p_223417_) {
-        Block block = p_223416_.getBlockState().getBlock();
+    private <T extends BlockEntity> void addGameEventListener(T blockEntity, ServerLevel level) {
+        Block block = blockEntity.getBlockState().getBlock();
         if (block instanceof EntityBlock) {
-            GameEventListener gameeventlistener = ((EntityBlock)block).getListener(p_223417_, p_223416_);
+            GameEventListener gameeventlistener = ((EntityBlock)block).getListener(level, blockEntity);
             if (gameeventlistener != null) {
-                this.getListenerRegistry(SectionPos.blockToSectionCoord(p_223416_.getBlockPos().getY())).register(gameeventlistener);
+                this.getListenerRegistry(SectionPos.blockToSectionCoord(blockEntity.getBlockPos().getY())).register(gameeventlistener);
             }
         }
     }
 
-    private <T extends BlockEntity> void updateBlockEntityTicker(T p_156407_) {
-        BlockState blockstate = p_156407_.getBlockState();
-        BlockEntityTicker<T> blockentityticker = blockstate.getTicker(this.level, (BlockEntityType<T>)p_156407_.getType());
+    private <T extends BlockEntity> void updateBlockEntityTicker(T blockEntity) {
+        BlockState blockstate = blockEntity.getBlockState();
+        BlockEntityTicker<T> blockentityticker = blockstate.getTicker(this.level, (BlockEntityType<T>)blockEntity.getType());
         if (blockentityticker == null) {
-            this.removeBlockEntityTicker(p_156407_.getBlockPos());
+            this.removeBlockEntityTicker(blockEntity.getBlockPos());
         } else {
             this.tickersInLevel
                 .compute(
-                    p_156407_.getBlockPos(),
+                    blockEntity.getBlockPos(),
                     (p_187963_, p_187964_) -> {
-                        TickingBlockEntity tickingblockentity = this.createTicker(p_156407_, blockentityticker);
+                        TickingBlockEntity tickingblockentity = this.createTicker(blockEntity, blockentityticker);
                         if (p_187964_ != null) {
                             p_187964_.rebind(tickingblockentity);
                             return (LevelChunk.RebindableTickingBlockEntityWrapper)p_187964_;
@@ -670,8 +670,8 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
         }
     }
 
-    private <T extends BlockEntity> TickingBlockEntity createTicker(T p_156376_, BlockEntityTicker<T> p_156377_) {
-        return new LevelChunk.BoundTickingBlockEntity<>(p_156376_, p_156377_);
+    private <T extends BlockEntity> TickingBlockEntity createTicker(T blockEntity, BlockEntityTicker<T> ticker) {
+        return new LevelChunk.BoundTickingBlockEntity<>(blockEntity, ticker);
     }
 
     // Neo: Threadsafe lighting system for BlockEntities that change lighting based on dynamic data changing.
@@ -692,9 +692,9 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
         private final BlockEntityTicker<T> ticker;
         private boolean loggedInvalidBlockState;
 
-        BoundTickingBlockEntity(T p_156433_, BlockEntityTicker<T> p_156434_) {
-            this.blockEntity = p_156433_;
-            this.ticker = p_156434_;
+        BoundTickingBlockEntity(T blockEntity, BlockEntityTicker<T> ticker) {
+            this.blockEntity = blockEntity;
+            this.ticker = ticker;
         }
 
         @Override
@@ -769,18 +769,18 @@ public class LevelChunk extends ChunkAccess implements net.neoforged.neoforge.at
 
     @FunctionalInterface
     public interface PostLoadProcessor {
-        void run(LevelChunk p_196867_);
+        void run(LevelChunk chunk);
     }
 
     class RebindableTickingBlockEntityWrapper implements TickingBlockEntity {
         private TickingBlockEntity ticker;
 
-        RebindableTickingBlockEntityWrapper(TickingBlockEntity p_156447_) {
-            this.ticker = p_156447_;
+        RebindableTickingBlockEntityWrapper(TickingBlockEntity ticker) {
+            this.ticker = ticker;
         }
 
-        void rebind(TickingBlockEntity p_156450_) {
-            this.ticker = p_156450_;
+        void rebind(TickingBlockEntity ticker) {
+            this.ticker = ticker;
         }
 
         @Override

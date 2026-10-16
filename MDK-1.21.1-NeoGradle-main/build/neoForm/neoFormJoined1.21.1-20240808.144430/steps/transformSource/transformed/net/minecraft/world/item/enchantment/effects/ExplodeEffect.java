@@ -55,21 +55,21 @@ public record ExplodeEffect(
     );
 
     @Override
-    public void apply(ServerLevel p_346186_, int p_345966_, EnchantedItemInUse p_346324_, Entity p_345305_, Vec3 p_344916_) {
-        Vec3 vec3 = p_344916_.add(this.offset);
-        p_346186_.explode(
-            this.attributeToUser ? p_345305_ : null,
-            this.getDamageSource(p_345305_, vec3),
+    public void apply(ServerLevel level, int enchantmentLevel, EnchantedItemInUse item, Entity entity, Vec3 origin) {
+        Vec3 vec3 = origin.add(this.offset);
+        level.explode(
+            this.attributeToUser ? entity : null,
+            this.getDamageSource(entity, vec3),
             new SimpleExplosionDamageCalculator(
                 this.blockInteraction != Level.ExplosionInteraction.NONE,
                 this.damageType.isPresent(),
-                this.knockbackMultiplier.map(p_345018_ -> p_345018_.calculate(p_345966_)),
+                this.knockbackMultiplier.map(p_345018_ -> p_345018_.calculate(enchantmentLevel)),
                 this.immuneBlocks
             ),
             vec3.x(),
             vec3.y(),
             vec3.z(),
-            Math.max(this.radius.calculate(p_345966_), 0.0F),
+            Math.max(this.radius.calculate(enchantmentLevel), 0.0F),
             this.createFire,
             this.blockInteraction,
             this.smallParticle,
@@ -79,11 +79,11 @@ public record ExplodeEffect(
     }
 
     @Nullable
-    private DamageSource getDamageSource(Entity p_346246_, Vec3 p_345332_) {
+    private DamageSource getDamageSource(Entity entity, Vec3 pos) {
         if (this.damageType.isEmpty()) {
             return null;
         } else {
-            return this.attributeToUser ? new DamageSource(this.damageType.get(), p_346246_) : new DamageSource(this.damageType.get(), p_345332_);
+            return this.attributeToUser ? new DamageSource(this.damageType.get(), entity) : new DamageSource(this.damageType.get(), pos);
         }
     }
 

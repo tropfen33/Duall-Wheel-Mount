@@ -18,12 +18,12 @@ import net.minecraft.world.level.block.state.BlockState;
 public class MinecartHopper extends AbstractMinecartContainer implements Hopper {
     private boolean enabled = true;
 
-    public MinecartHopper(EntityType<? extends MinecartHopper> p_38584_, Level p_38585_) {
-        super(p_38584_, p_38585_);
+    public MinecartHopper(EntityType<? extends MinecartHopper> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public MinecartHopper(Level p_38587_, double p_38588_, double p_38589_, double p_38590_) {
-        super(EntityType.HOPPER_MINECART, p_38588_, p_38589_, p_38590_, p_38587_);
+    public MinecartHopper(Level level, double x, double y, double z) {
+        super(EntityType.HOPPER_MINECART, x, y, z, level);
     }
 
     @Override
@@ -46,9 +46,12 @@ public class MinecartHopper extends AbstractMinecartContainer implements Hopper 
         return 5;
     }
 
+    /**
+     * Called every tick the minecart is on an activator rail.
+     */
     @Override
-    public void activateMinecart(int p_38596_, int p_38597_, int p_38598_, boolean p_38599_) {
-        boolean flag = !p_38599_;
+    public void activateMinecart(int x, int y, int z, boolean receivingPower) {
+        boolean flag = !receivingPower;
         if (flag != this.isEnabled()) {
             this.setEnabled(flag);
         }
@@ -58,8 +61,11 @@ public class MinecartHopper extends AbstractMinecartContainer implements Hopper 
         return this.enabled;
     }
 
-    public void setEnabled(boolean p_38614_) {
-        this.enabled = p_38614_;
+    /**
+     * Set whether this hopper minecart is being blocked by an activator rail.
+     */
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     @Override
@@ -111,19 +117,22 @@ public class MinecartHopper extends AbstractMinecartContainer implements Hopper 
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_38608_) {
-        super.addAdditionalSaveData(p_38608_);
-        p_38608_.putBoolean("Enabled", this.enabled);
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putBoolean("Enabled", this.enabled);
+    }
+
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    @Override
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.enabled = compound.contains("Enabled") ? compound.getBoolean("Enabled") : true;
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_38606_) {
-        super.readAdditionalSaveData(p_38606_);
-        this.enabled = p_38606_.contains("Enabled") ? p_38606_.getBoolean("Enabled") : true;
-    }
-
-    @Override
-    public AbstractContainerMenu createMenu(int p_38601_, Inventory p_38602_) {
-        return new HopperMenu(p_38601_, p_38602_, this);
+    public AbstractContainerMenu createMenu(int id, Inventory playerInventory) {
+        return new HopperMenu(id, playerInventory, this);
     }
 }

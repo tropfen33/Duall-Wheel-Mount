@@ -38,13 +38,13 @@ public class CreateBuffetWorldScreen extends Screen {
     Holder<Biome> biome;
     private Button doneButton;
 
-    public CreateBuffetWorldScreen(Screen p_232732_, WorldCreationContext p_232733_, Consumer<Holder<Biome>> p_232734_) {
+    public CreateBuffetWorldScreen(Screen parent, WorldCreationContext context, Consumer<Holder<Biome>> applySettings) {
         super(Component.translatable("createWorld.customize.buffet.title"));
-        this.parent = p_232732_;
-        this.applySettings = p_232734_;
-        this.biomes = p_232733_.worldgenLoadContext().registryOrThrow(Registries.BIOME);
+        this.parent = parent;
+        this.applySettings = applySettings;
+        this.biomes = context.worldgenLoadContext().registryOrThrow(Registries.BIOME);
         Holder<Biome> holder = this.biomes.getHolder(Biomes.PLAINS).or(() -> this.biomes.holders().findAny()).orElseThrow();
-        this.biome = p_232733_.selectedDimensions().overworld().getBiomeSource().possibleBiomes().stream().findFirst().orElse(holder);
+        this.biome = context.selectedDimensions().overworld().getBiomeSource().possibleBiomes().stream().findFirst().orElse(holder);
     }
 
     @Override
@@ -92,10 +92,10 @@ public class CreateBuffetWorldScreen extends Screen {
                 .forEach(p_203138_ -> this.addEntry(p_203138_));
         }
 
-        public void setSelected(@Nullable CreateBuffetWorldScreen.BiomeList.Entry p_95785_) {
-            super.setSelected(p_95785_);
-            if (p_95785_ != null) {
-                CreateBuffetWorldScreen.this.biome = p_95785_.biome;
+        public void setSelected(@Nullable CreateBuffetWorldScreen.BiomeList.Entry entry) {
+            super.setSelected(entry);
+            if (entry != null) {
+                CreateBuffetWorldScreen.this.biome = entry.biome;
             }
 
             CreateBuffetWorldScreen.this.updateButtonValidity();
@@ -106,9 +106,9 @@ public class CreateBuffetWorldScreen extends Screen {
             final Holder.Reference<Biome> biome;
             final Component name;
 
-            public Entry(Holder.Reference<Biome> p_205392_) {
-                this.biome = p_205392_;
-                ResourceLocation resourcelocation = p_205392_.key().location();
+            public Entry(Holder.Reference<Biome> biome) {
+                this.biome = biome;
+                ResourceLocation resourcelocation = biome.key().location();
                 String s = resourcelocation.toLanguageKey("biome");
                 if (Language.getInstance().has(s)) {
                     this.name = Component.translatable(s);
@@ -124,24 +124,33 @@ public class CreateBuffetWorldScreen extends Screen {
 
             @Override
             public void render(
-                GuiGraphics p_281315_,
-                int p_282451_,
-                int p_283356_,
-                int p_283563_,
-                int p_282677_,
-                int p_283473_,
-                int p_283681_,
-                int p_281493_,
-                boolean p_281302_,
-                float p_283122_
+                GuiGraphics guiGraphics,
+                int index,
+                int top,
+                int left,
+                int width,
+                int height,
+                int mouseX,
+                int mouseY,
+                boolean hovering,
+                float partialTick
             ) {
-                p_281315_.drawString(CreateBuffetWorldScreen.this.font, this.name, p_283563_ + 5, p_283356_ + 2, 16777215);
+                guiGraphics.drawString(CreateBuffetWorldScreen.this.font, this.name, left + 5, top + 2, 16777215);
             }
 
+            /**
+             * Called when a mouse button is clicked within the GUI element.
+             * <p>
+             * @return {@code true} if the event is consumed, {@code false} otherwise.
+             *
+             * @param mouseX the X coordinate of the mouse.
+             * @param mouseY the Y coordinate of the mouse.
+             * @param button the button that was clicked.
+             */
             @Override
-            public boolean mouseClicked(double p_95798_, double p_95799_, int p_95800_) {
+            public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 BiomeList.this.setSelected(this);
-                return super.mouseClicked(p_95798_, p_95799_, p_95800_);
+                return super.mouseClicked(mouseX, mouseY, button);
             }
         }
     }

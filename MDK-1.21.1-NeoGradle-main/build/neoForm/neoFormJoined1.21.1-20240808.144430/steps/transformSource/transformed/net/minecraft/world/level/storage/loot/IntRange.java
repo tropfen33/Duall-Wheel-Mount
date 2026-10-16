@@ -18,6 +18,10 @@ import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.NumberProvider;
 import net.minecraft.world.level.storage.loot.providers.number.NumberProviders;
 
+/**
+ * A possibly unbounded range of integers based on {@link LootContext}. Minimum and maximum are given in the form of {@link NumberProvider}s.
+ * Minimum and maximum are both optional. If given, they are both inclusive.
+ */
 public class IntRange {
     private static final Codec<IntRange> RECORD_CODEC = RecordCodecBuilder.create(
         p_338119_ -> p_338119_.group(
@@ -51,53 +55,71 @@ public class IntRange {
         return builder.build();
     }
 
-    private IntRange(Optional<NumberProvider> p_299273_, Optional<NumberProvider> p_298799_) {
-        this(p_299273_.orElse(null), p_298799_.orElse(null));
+    private IntRange(Optional<NumberProvider> min, Optional<NumberProvider> max) {
+        this(min.orElse(null), max.orElse(null));
     }
 
-    private IntRange(@Nullable NumberProvider p_165006_, @Nullable NumberProvider p_165007_) {
-        this.min = p_165006_;
-        this.max = p_165007_;
-        if (p_165006_ == null) {
-            if (p_165007_ == null) {
+    private IntRange(@Nullable NumberProvider min, @Nullable NumberProvider max) {
+        this.min = min;
+        this.max = max;
+        if (min == null) {
+            if (max == null) {
                 this.limiter = (p_165050_, p_165051_) -> p_165051_;
                 this.predicate = (p_165043_, p_165044_) -> true;
             } else {
-                this.limiter = (p_165054_, p_165055_) -> Math.min(p_165007_.getInt(p_165054_), p_165055_);
-                this.predicate = (p_165047_, p_165048_) -> p_165048_ <= p_165007_.getInt(p_165047_);
+                this.limiter = (p_165054_, p_165055_) -> Math.min(max.getInt(p_165054_), p_165055_);
+                this.predicate = (p_165047_, p_165048_) -> p_165048_ <= max.getInt(p_165047_);
             }
-        } else if (p_165007_ == null) {
-            this.limiter = (p_165033_, p_165034_) -> Math.max(p_165006_.getInt(p_165033_), p_165034_);
-            this.predicate = (p_165019_, p_165020_) -> p_165020_ >= p_165006_.getInt(p_165019_);
+        } else if (max == null) {
+            this.limiter = (p_165033_, p_165034_) -> Math.max(min.getInt(p_165033_), p_165034_);
+            this.predicate = (p_165019_, p_165020_) -> p_165020_ >= min.getInt(p_165019_);
         } else {
-            this.limiter = (p_165038_, p_165039_) -> Mth.clamp(p_165039_, p_165006_.getInt(p_165038_), p_165007_.getInt(p_165038_));
-            this.predicate = (p_165024_, p_165025_) -> p_165025_ >= p_165006_.getInt(p_165024_) && p_165025_ <= p_165007_.getInt(p_165024_);
+            this.limiter = (p_165038_, p_165039_) -> Mth.clamp(p_165039_, min.getInt(p_165038_), max.getInt(p_165038_));
+            this.predicate = (p_165024_, p_165025_) -> p_165025_ >= min.getInt(p_165024_) && p_165025_ <= max.getInt(p_165024_);
         }
     }
 
-    public static IntRange exact(int p_165010_) {
-        ConstantValue constantvalue = ConstantValue.exactly((float)p_165010_);
+    /**
+     * Create an IntRange that contains only exactly the given value.
+     */
+    public static IntRange exact(int exactValue) {
+        ConstantValue constantvalue = ConstantValue.exactly((float)exactValue);
         return new IntRange(Optional.of(constantvalue), Optional.of(constantvalue));
     }
 
-    public static IntRange range(int p_165012_, int p_165013_) {
-        return new IntRange(Optional.of(ConstantValue.exactly((float)p_165012_)), Optional.of(ConstantValue.exactly((float)p_165013_)));
+    /**
+     * Create an IntRange that ranges from {@code min} to {@code max}, both inclusive.
+     */
+    public static IntRange range(int min, int max) {
+        return new IntRange(Optional.of(ConstantValue.exactly((float)min)), Optional.of(ConstantValue.exactly((float)max)));
     }
 
-    public static IntRange lowerBound(int p_165027_) {
-        return new IntRange(Optional.of(ConstantValue.exactly((float)p_165027_)), Optional.empty());
+    /**
+     * Create an IntRange with the given minimum (inclusive) and no upper bound.
+     */
+    public static IntRange lowerBound(int min) {
+        return new IntRange(Optional.of(ConstantValue.exactly((float)min)), Optional.empty());
     }
 
-    public static IntRange upperBound(int p_165041_) {
-        return new IntRange(Optional.empty(), Optional.of(ConstantValue.exactly((float)p_165041_)));
+    /**
+     * Create an IntRange with the given maximum (inclusive) and no lower bound.
+     */
+    public static IntRange upperBound(int max) {
+        return new IntRange(Optional.empty(), Optional.of(ConstantValue.exactly((float)max)));
     }
 
-    public int clamp(LootContext p_165015_, int p_165016_) {
-        return this.limiter.apply(p_165015_, p_165016_);
+    /**
+     * Clamp the given value so that it falls within this IntRange.
+     */
+    public int clamp(LootContext lootContext, int value) {
+        return this.limiter.apply(lootContext, value);
     }
 
-    public boolean test(LootContext p_165029_, int p_165030_) {
-        return this.predicate.test(p_165029_, p_165030_);
+    /**
+     * Check whether the given value falls within this IntRange.
+     */
+    public boolean test(LootContext lootContext, int value) {
+        return this.predicate.test(lootContext, value);
     }
 
     private OptionalInt unpackExact() {
@@ -110,11 +132,11 @@ public class IntRange {
 
     @FunctionalInterface
     interface IntChecker {
-        boolean test(LootContext p_165057_, int p_165058_);
+        boolean test(LootContext lootContext, int value);
     }
 
     @FunctionalInterface
     interface IntLimiter {
-        int apply(LootContext p_165060_, int p_165061_);
+        int apply(LootContext lootContext, int value);
     }
 }

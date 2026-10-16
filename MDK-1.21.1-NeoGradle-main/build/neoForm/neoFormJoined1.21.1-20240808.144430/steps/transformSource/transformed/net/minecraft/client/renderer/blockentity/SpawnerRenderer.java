@@ -16,46 +16,46 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class SpawnerRenderer implements BlockEntityRenderer<SpawnerBlockEntity> {
     private final EntityRenderDispatcher entityRenderer;
 
-    public SpawnerRenderer(BlockEntityRendererProvider.Context p_173673_) {
-        this.entityRenderer = p_173673_.getEntityRenderer();
+    public SpawnerRenderer(BlockEntityRendererProvider.Context context) {
+        this.entityRenderer = context.getEntityRenderer();
     }
 
-    public void render(SpawnerBlockEntity p_112563_, float p_112564_, PoseStack p_112565_, MultiBufferSource p_112566_, int p_112567_, int p_112568_) {
-        Level level = p_112563_.getLevel();
+    public void render(SpawnerBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        Level level = blockEntity.getLevel();
         if (level != null) {
-            BaseSpawner basespawner = p_112563_.getSpawner();
-            Entity entity = basespawner.getOrCreateDisplayEntity(level, p_112563_.getBlockPos());
+            BaseSpawner basespawner = blockEntity.getSpawner();
+            Entity entity = basespawner.getOrCreateDisplayEntity(level, blockEntity.getBlockPos());
             if (entity != null) {
-                renderEntityInSpawner(p_112564_, p_112565_, p_112566_, p_112567_, entity, this.entityRenderer, basespawner.getoSpin(), basespawner.getSpin());
+                renderEntityInSpawner(partialTick, poseStack, bufferSource, packedLight, entity, this.entityRenderer, basespawner.getoSpin(), basespawner.getSpin());
             }
         }
     }
 
     public static void renderEntityInSpawner(
-        float p_311943_,
-        PoseStack p_312805_,
-        MultiBufferSource p_312394_,
-        int p_311996_,
-        Entity p_312223_,
-        EntityRenderDispatcher p_312703_,
-        double p_312192_,
-        double p_312929_
+        float partialTick,
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        Entity entity,
+        EntityRenderDispatcher entityRenderer,
+        double oSpin,
+        double spin
     ) {
-        p_312805_.pushPose();
-        p_312805_.translate(0.5F, 0.0F, 0.5F);
+        poseStack.pushPose();
+        poseStack.translate(0.5F, 0.0F, 0.5F);
         float f = 0.53125F;
-        float f1 = Math.max(p_312223_.getBbWidth(), p_312223_.getBbHeight());
+        float f1 = Math.max(entity.getBbWidth(), entity.getBbHeight());
         if ((double)f1 > 1.0) {
             f /= f1;
         }
 
-        p_312805_.translate(0.0F, 0.4F, 0.0F);
-        p_312805_.mulPose(Axis.YP.rotationDegrees((float)Mth.lerp((double)p_311943_, p_312192_, p_312929_) * 10.0F));
-        p_312805_.translate(0.0F, -0.2F, 0.0F);
-        p_312805_.mulPose(Axis.XP.rotationDegrees(-30.0F));
-        p_312805_.scale(f, f, f);
-        p_312703_.render(p_312223_, 0.0, 0.0, 0.0, 0.0F, p_311943_, p_312805_, p_312394_, p_311996_);
-        p_312805_.popPose();
+        poseStack.translate(0.0F, 0.4F, 0.0F);
+        poseStack.mulPose(Axis.YP.rotationDegrees((float)Mth.lerp((double)partialTick, oSpin, spin) * 10.0F));
+        poseStack.translate(0.0F, -0.2F, 0.0F);
+        poseStack.mulPose(Axis.XP.rotationDegrees(-30.0F));
+        poseStack.scale(f, f, f);
+        entityRenderer.render(entity, 0.0, 0.0, 0.0, 0.0F, partialTick, poseStack, buffer, packedLight);
+        poseStack.popPose();
     }
 
     @Override

@@ -31,36 +31,36 @@ public class CommonComponents {
         return Component.literal(" ");
     }
 
-    public static MutableComponent days(long p_239423_) {
-        return Component.translatable("gui.days", p_239423_);
+    public static MutableComponent days(long days) {
+        return Component.translatable("gui.days", days);
     }
 
-    public static MutableComponent hours(long p_240042_) {
-        return Component.translatable("gui.hours", p_240042_);
+    public static MutableComponent hours(long hours) {
+        return Component.translatable("gui.hours", hours);
     }
 
-    public static MutableComponent minutes(long p_239878_) {
-        return Component.translatable("gui.minutes", p_239878_);
+    public static MutableComponent minutes(long minutes) {
+        return Component.translatable("gui.minutes", minutes);
     }
 
-    public static Component optionStatus(boolean p_130667_) {
-        return p_130667_ ? OPTION_ON : OPTION_OFF;
+    public static Component optionStatus(boolean isEnabled) {
+        return isEnabled ? OPTION_ON : OPTION_OFF;
     }
 
-    public static MutableComponent optionStatus(Component p_130664_, boolean p_130665_) {
-        return Component.translatable(p_130665_ ? "options.on.composed" : "options.off.composed", p_130664_);
+    public static MutableComponent optionStatus(Component message, boolean composed) {
+        return Component.translatable(composed ? "options.on.composed" : "options.off.composed", message);
     }
 
-    public static MutableComponent optionNameValue(Component p_178394_, Component p_178395_) {
-        return Component.translatable("options.generic_value", p_178394_, p_178395_);
+    public static MutableComponent optionNameValue(Component caption, Component valueMessage) {
+        return Component.translatable("options.generic_value", caption, valueMessage);
     }
 
-    public static MutableComponent joinForNarration(Component... p_267948_) {
+    public static MutableComponent joinForNarration(Component... components) {
         MutableComponent mutablecomponent = Component.empty();
 
-        for (int i = 0; i < p_267948_.length; i++) {
-            mutablecomponent.append(p_267948_[i]);
-            if (i != p_267948_.length - 1) {
+        for (int i = 0; i < components.length; i++) {
+            mutablecomponent.append(components[i]);
+            if (i != components.length - 1) {
                 mutablecomponent.append(NARRATION_SEPARATOR);
             }
         }
@@ -68,11 +68,11 @@ public class CommonComponents {
         return mutablecomponent;
     }
 
-    public static Component joinLines(Component... p_178397_) {
-        return joinLines(Arrays.asList(p_178397_));
+    public static Component joinLines(Component... lines) {
+        return joinLines(Arrays.asList(lines));
     }
 
-    public static Component joinLines(Collection<? extends Component> p_178392_) {
-        return ComponentUtils.formatList(p_178392_, NEW_LINE);
+    public static Component joinLines(Collection<? extends Component> lines) {
+        return ComponentUtils.formatList(lines, NEW_LINE);
     }
 }

@@ -12,33 +12,33 @@ public class SpacerElement implements LayoutElement {
     private final int width;
     private final int height;
 
-    public SpacerElement(int p_265229_, int p_265527_) {
-        this(0, 0, p_265229_, p_265527_);
+    public SpacerElement(int width, int height) {
+        this(0, 0, width, height);
     }
 
-    public SpacerElement(int p_265199_, int p_265495_, int p_265101_, int p_265469_) {
-        this.x = p_265199_;
-        this.y = p_265495_;
-        this.width = p_265101_;
-        this.height = p_265469_;
+    public SpacerElement(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
     }
 
-    public static SpacerElement width(int p_265056_) {
-        return new SpacerElement(p_265056_, 0);
+    public static SpacerElement width(int width) {
+        return new SpacerElement(width, 0);
     }
 
-    public static SpacerElement height(int p_265087_) {
-        return new SpacerElement(0, p_265087_);
-    }
-
-    @Override
-    public void setX(int p_265605_) {
-        this.x = p_265605_;
+    public static SpacerElement height(int height) {
+        return new SpacerElement(0, height);
     }
 
     @Override
-    public void setY(int p_265406_) {
-        this.y = p_265406_;
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    @Override
+    public void setY(int y) {
+        this.y = y;
     }
 
     @Override
@@ -62,6 +62,6 @@ public class SpacerElement implements LayoutElement {
     }
 
     @Override
-    public void visitWidgets(Consumer<AbstractWidget> p_265477_) {
+    public void visitWidgets(Consumer<AbstractWidget> consumer) {
     }
 }

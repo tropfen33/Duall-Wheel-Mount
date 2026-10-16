@@ -26,32 +26,32 @@ public class Checkbox extends AbstractButton {
     private final Checkbox.OnValueChange onValueChange;
     private final MultiLineTextWidget textWidget;
 
-    Checkbox(int p_93826_, int p_93827_, int p_352958_, Component p_93830_, Font p_309061_, boolean p_93831_, Checkbox.OnValueChange p_309172_) {
-        super(p_93826_, p_93827_, 0, 0, p_93830_);
-        this.width = this.getAdjustedWidth(p_352958_, p_93830_, p_309061_);
-        this.textWidget = new MultiLineTextWidget(p_93830_, p_309061_).setMaxWidth(this.width).setColor(14737632);
-        this.height = this.getAdjustedHeight(p_309061_);
-        this.selected = p_93831_;
-        this.onValueChange = p_309172_;
+    Checkbox(int x, int y, int maxWidth, Component message, Font font, boolean selected, Checkbox.OnValueChange onValueChange) {
+        super(x, y, 0, 0, message);
+        this.width = this.getAdjustedWidth(maxWidth, message, font);
+        this.textWidget = new MultiLineTextWidget(message, font).setMaxWidth(this.width).setColor(14737632);
+        this.height = this.getAdjustedHeight(font);
+        this.selected = selected;
+        this.onValueChange = onValueChange;
     }
 
-    private int getAdjustedWidth(int p_352963_, Component p_352934_, Font p_352953_) {
-        return Math.min(getDefaultWidth(p_352934_, p_352953_), p_352963_);
+    private int getAdjustedWidth(int maxWidth, Component message, Font font) {
+        return Math.min(getDefaultWidth(message, font), maxWidth);
     }
 
-    private int getAdjustedHeight(Font p_352942_) {
-        return Math.max(getBoxSize(p_352942_), this.textWidget.getHeight());
+    private int getAdjustedHeight(Font font) {
+        return Math.max(getBoxSize(font), this.textWidget.getHeight());
     }
 
-    static int getDefaultWidth(Component p_352957_, Font p_352937_) {
-        return getBoxSize(p_352937_) + 4 + p_352937_.width(p_352957_);
+    static int getDefaultWidth(Component message, Font font) {
+        return getBoxSize(font) + 4 + font.width(message);
     }
 
-    public static Checkbox.Builder builder(Component p_309029_, Font p_309027_) {
-        return new Checkbox.Builder(p_309029_, p_309027_);
+    public static Checkbox.Builder builder(Component message, Font font) {
+        return new Checkbox.Builder(message, font);
     }
 
-    public static int getBoxSize(Font p_309147_) {
+    public static int getBoxSize(Font font) {
         return 9 + 8;
     }
 
@@ -66,23 +66,23 @@ public class Checkbox extends AbstractButton {
     }
 
     @Override
-    public void updateWidgetNarration(NarrationElementOutput p_260253_) {
-        p_260253_.add(NarratedElementType.TITLE, this.createNarrationMessage());
+    public void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+        narrationElementOutput.add(NarratedElementType.TITLE, this.createNarrationMessage());
         if (this.active) {
             if (this.isFocused()) {
-                p_260253_.add(NarratedElementType.USAGE, Component.translatable("narration.checkbox.usage.focused"));
+                narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.checkbox.usage.focused"));
             } else {
-                p_260253_.add(NarratedElementType.USAGE, Component.translatable("narration.checkbox.usage.hovered"));
+                narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.checkbox.usage.hovered"));
             }
         }
     }
 
     @Override
-    public void renderWidget(GuiGraphics p_283124_, int p_282925_, int p_282705_, float p_282612_) {
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         Minecraft minecraft = Minecraft.getInstance();
         RenderSystem.enableDepthTest();
         Font font = minecraft.font;
-        p_283124_.setColor(1.0F, 1.0F, 1.0F, this.alpha);
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, this.alpha);
         RenderSystem.enableBlend();
         ResourceLocation resourcelocation;
         if (this.selected) {
@@ -92,11 +92,11 @@ public class Checkbox extends AbstractButton {
         }
 
         int i = getBoxSize(font);
-        p_283124_.blitSprite(resourcelocation, this.getX(), this.getY(), i, i);
+        guiGraphics.blitSprite(resourcelocation, this.getX(), this.getY(), i, i);
         int j = this.getX() + i + 4;
         int k = this.getY() + i / 2 - this.textWidget.getHeight() / 2;
         this.textWidget.setPosition(j, k);
-        this.textWidget.renderWidget(p_283124_, p_282925_, p_282705_, p_282612_);
+        this.textWidget.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -113,42 +113,42 @@ public class Checkbox extends AbstractButton {
         @Nullable
         private Tooltip tooltip = null;
 
-        Builder(Component p_308972_, Font p_309137_) {
-            this.message = p_308972_;
-            this.font = p_309137_;
-            this.maxWidth = Checkbox.getDefaultWidth(p_308972_, p_309137_);
+        Builder(Component message, Font font) {
+            this.message = message;
+            this.font = font;
+            this.maxWidth = Checkbox.getDefaultWidth(message, font);
         }
 
-        public Checkbox.Builder pos(int p_309178_, int p_309168_) {
-            this.x = p_309178_;
-            this.y = p_309168_;
+        public Checkbox.Builder pos(int x, int y) {
+            this.x = x;
+            this.y = y;
             return this;
         }
 
-        public Checkbox.Builder onValueChange(Checkbox.OnValueChange p_308967_) {
-            this.onValueChange = p_308967_;
+        public Checkbox.Builder onValueChange(Checkbox.OnValueChange onValueChange) {
+            this.onValueChange = onValueChange;
             return this;
         }
 
-        public Checkbox.Builder selected(boolean p_308945_) {
-            this.selected = p_308945_;
+        public Checkbox.Builder selected(boolean selected) {
+            this.selected = selected;
             this.option = null;
             return this;
         }
 
-        public Checkbox.Builder selected(OptionInstance<Boolean> p_309117_) {
-            this.option = p_309117_;
-            this.selected = p_309117_.get();
+        public Checkbox.Builder selected(OptionInstance<Boolean> option) {
+            this.option = option;
+            this.selected = option.get();
             return this;
         }
 
-        public Checkbox.Builder tooltip(Tooltip p_309197_) {
-            this.tooltip = p_309197_;
+        public Checkbox.Builder tooltip(Tooltip tooltip) {
+            this.tooltip = tooltip;
             return this;
         }
 
-        public Checkbox.Builder maxWidth(int p_352949_) {
-            this.maxWidth = p_352949_;
+        public Checkbox.Builder maxWidth(int maxWidth) {
+            this.maxWidth = maxWidth;
             return this;
         }
 
@@ -168,6 +168,6 @@ public class Checkbox extends AbstractButton {
         Checkbox.OnValueChange NOP = (p_309046_, p_309014_) -> {
         };
 
-        void onValueChange(Checkbox p_308872_, boolean p_309171_);
+        void onValueChange(Checkbox checkbox, boolean value);
     }
 }

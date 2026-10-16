@@ -48,68 +48,68 @@ public class SignText {
         this(emptyMessages(), emptyMessages(), DyeColor.BLACK, false);
     }
 
-    public SignText(Component[] p_277506_, Component[] p_277908_, DyeColor p_277883_, boolean p_278091_) {
-        this.messages = p_277506_;
-        this.filteredMessages = p_277908_;
-        this.color = p_277883_;
-        this.hasGlowingText = p_278091_;
+    public SignText(Component[] messages, Component[] filteredMessages, DyeColor color, boolean hasGlowingText) {
+        this.messages = messages;
+        this.filteredMessages = filteredMessages;
+        this.color = color;
+        this.hasGlowingText = hasGlowingText;
     }
 
     private static Component[] emptyMessages() {
         return new Component[]{CommonComponents.EMPTY, CommonComponents.EMPTY, CommonComponents.EMPTY, CommonComponents.EMPTY};
     }
 
-    private static SignText load(Component[] p_277661_, Optional<Component[]> p_277768_, DyeColor p_277345_, boolean p_278008_) {
-        return new SignText(p_277661_, p_277768_.orElse(Arrays.copyOf(p_277661_, p_277661_.length)), p_277345_, p_278008_);
+    private static SignText load(Component[] messages, Optional<Component[]> filteredMessages, DyeColor color, boolean hasGlowingText) {
+        return new SignText(messages, filteredMessages.orElse(Arrays.copyOf(messages, messages.length)), color, hasGlowingText);
     }
 
     public boolean hasGlowingText() {
         return this.hasGlowingText;
     }
 
-    public SignText setHasGlowingText(boolean p_277953_) {
-        return p_277953_ == this.hasGlowingText ? this : new SignText(this.messages, this.filteredMessages, this.color, p_277953_);
+    public SignText setHasGlowingText(boolean hasGlowingText) {
+        return hasGlowingText == this.hasGlowingText ? this : new SignText(this.messages, this.filteredMessages, this.color, hasGlowingText);
     }
 
     public DyeColor getColor() {
         return this.color;
     }
 
-    public SignText setColor(DyeColor p_277507_) {
-        return p_277507_ == this.getColor() ? this : new SignText(this.messages, this.filteredMessages, p_277507_, this.hasGlowingText);
+    public SignText setColor(DyeColor color) {
+        return color == this.getColor() ? this : new SignText(this.messages, this.filteredMessages, color, this.hasGlowingText);
     }
 
-    public Component getMessage(int p_277404_, boolean p_278108_) {
-        return this.getMessages(p_278108_)[p_277404_];
+    public Component getMessage(int index, boolean isFiltered) {
+        return this.getMessages(isFiltered)[index];
     }
 
-    public SignText setMessage(int p_277878_, Component p_277360_) {
-        return this.setMessage(p_277878_, p_277360_, p_277360_);
+    public SignText setMessage(int index, Component text) {
+        return this.setMessage(index, text, text);
     }
 
-    public SignText setMessage(int p_277690_, Component p_277852_, Component p_277564_) {
+    public SignText setMessage(int index, Component text, Component filteredText) {
         Component[] acomponent = Arrays.copyOf(this.messages, this.messages.length);
         Component[] acomponent1 = Arrays.copyOf(this.filteredMessages, this.filteredMessages.length);
-        acomponent[p_277690_] = p_277852_;
-        acomponent1[p_277690_] = p_277564_;
+        acomponent[index] = text;
+        acomponent1[index] = filteredText;
         return new SignText(acomponent, acomponent1, this.color, this.hasGlowingText);
     }
 
-    public boolean hasMessage(Player p_277764_) {
-        return Arrays.stream(this.getMessages(p_277764_.isTextFilteringEnabled())).anyMatch(p_277499_ -> !p_277499_.getString().isEmpty());
+    public boolean hasMessage(Player player) {
+        return Arrays.stream(this.getMessages(player.isTextFilteringEnabled())).anyMatch(p_277499_ -> !p_277499_.getString().isEmpty());
     }
 
-    public Component[] getMessages(boolean p_277992_) {
-        return p_277992_ ? this.filteredMessages : this.messages;
+    public Component[] getMessages(boolean isFiltered) {
+        return isFiltered ? this.filteredMessages : this.messages;
     }
 
-    public FormattedCharSequence[] getRenderMessages(boolean p_277336_, Function<Component, FormattedCharSequence> p_277538_) {
-        if (this.renderMessages == null || this.renderMessagedFiltered != p_277336_) {
-            this.renderMessagedFiltered = p_277336_;
+    public FormattedCharSequence[] getRenderMessages(boolean renderMessagesFiltered, Function<Component, FormattedCharSequence> formatter) {
+        if (this.renderMessages == null || this.renderMessagedFiltered != renderMessagesFiltered) {
+            this.renderMessagedFiltered = renderMessagesFiltered;
             this.renderMessages = new FormattedCharSequence[4];
 
             for (int i = 0; i < 4; i++) {
-                this.renderMessages[i] = p_277538_.apply(this.getMessage(i, p_277336_));
+                this.renderMessages[i] = formatter.apply(this.getMessage(i, renderMessagesFiltered));
             }
         }
 
@@ -126,8 +126,8 @@ public class SignText {
         return Optional.empty();
     }
 
-    public boolean hasAnyClickCommands(Player p_277865_) {
-        for (Component component : this.getMessages(p_277865_.isTextFilteringEnabled())) {
+    public boolean hasAnyClickCommands(Player player) {
+        for (Component component : this.getMessages(player.isTextFilteringEnabled())) {
             Style style = component.getStyle();
             ClickEvent clickevent = style.getClickEvent();
             if (clickevent != null && clickevent.getAction() == ClickEvent.Action.RUN_COMMAND) {

@@ -35,8 +35,8 @@ public final class MinecraftServerStatistics implements DynamicMBean {
         )
         .collect(Collectors.toMap(p_18332_ -> p_18332_.name, Function.identity()));
 
-    private MinecraftServerStatistics(MinecraftServer p_18320_) {
-        this.server = p_18320_;
+    private MinecraftServerStatistics(MinecraftServer server) {
+        this.server = server;
         MBeanAttributeInfo[] ambeanattributeinfo = this.attributeDescriptionByName
             .values()
             .stream()
@@ -47,10 +47,10 @@ public final class MinecraftServerStatistics implements DynamicMBean {
         );
     }
 
-    public static void registerJmxMonitoring(MinecraftServer p_18329_) {
+    public static void registerJmxMonitoring(MinecraftServer server) {
         try {
             ManagementFactory.getPlatformMBeanServer()
-                .registerMBean(new MinecraftServerStatistics(p_18329_), new ObjectName("net.minecraft.server:type=Server"));
+                .registerMBean(new MinecraftServerStatistics(server), new ObjectName("net.minecraft.server:type=Server"));
         } catch (InstanceAlreadyExistsException | MBeanRegistrationException | NotCompliantMBeanException | MalformedObjectNameException malformedobjectnameexception) {
             LOGGER.warn("Failed to initialise server as JMX bean", (Throwable)malformedobjectnameexception);
         }
@@ -66,18 +66,18 @@ public final class MinecraftServerStatistics implements DynamicMBean {
 
     @Nullable
     @Override
-    public Object getAttribute(String p_18334_) {
-        MinecraftServerStatistics.AttributeDescription minecraftserverstatistics$attributedescription = this.attributeDescriptionByName.get(p_18334_);
+    public Object getAttribute(String name) {
+        MinecraftServerStatistics.AttributeDescription minecraftserverstatistics$attributedescription = this.attributeDescriptionByName.get(name);
         return minecraftserverstatistics$attributedescription == null ? null : minecraftserverstatistics$attributedescription.getter.get();
     }
 
     @Override
-    public void setAttribute(Attribute p_18343_) {
+    public void setAttribute(Attribute attribute) {
     }
 
     @Override
-    public AttributeList getAttributes(String[] p_18336_) {
-        List<Attribute> list = Arrays.stream(p_18336_)
+    public AttributeList getAttributes(String[] attributes) {
+        List<Attribute> list = Arrays.stream(attributes)
             .map(this.attributeDescriptionByName::get)
             .filter(Objects::nonNull)
             .map(p_145925_ -> new Attribute(p_145925_.name, p_145925_.getter.get()))
@@ -86,13 +86,13 @@ public final class MinecraftServerStatistics implements DynamicMBean {
     }
 
     @Override
-    public AttributeList setAttributes(AttributeList p_18345_) {
+    public AttributeList setAttributes(AttributeList attributes) {
         return new AttributeList();
     }
 
     @Nullable
     @Override
-    public Object invoke(String p_18339_, Object[] p_18340_, String[] p_18341_) {
+    public Object invoke(String actionName, Object[] params, String[] signature) {
         return null;
     }
 
@@ -107,11 +107,11 @@ public final class MinecraftServerStatistics implements DynamicMBean {
         private final String description;
         private final Class<?> type;
 
-        AttributeDescription(String p_18351_, Supplier<Object> p_18352_, String p_18353_, Class<?> p_18354_) {
-            this.name = p_18351_;
-            this.getter = p_18352_;
-            this.description = p_18353_;
-            this.type = p_18354_;
+        AttributeDescription(String name, Supplier<Object> getter, String description, Class<?> type) {
+            this.name = name;
+            this.getter = getter;
+            this.description = description;
+            this.type = type;
         }
 
         private MBeanAttributeInfo asMBeanAttributeInfo() {

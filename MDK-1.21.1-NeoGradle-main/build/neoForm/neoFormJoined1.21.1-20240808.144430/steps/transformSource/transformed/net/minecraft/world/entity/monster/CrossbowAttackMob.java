@@ -9,19 +9,19 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 public interface CrossbowAttackMob extends RangedAttackMob {
-    void setChargingCrossbow(boolean p_32339_);
+    void setChargingCrossbow(boolean chargingCrossbow);
 
     @Nullable
     LivingEntity getTarget();
 
     void onCrossbowAttackPerformed();
 
-    default void performCrossbowAttack(LivingEntity p_32337_, float p_32338_) {
-        InteractionHand interactionhand = ProjectileUtil.getWeaponHoldingHand(p_32337_, item -> item instanceof CrossbowItem);
-        ItemStack itemstack = p_32337_.getItemInHand(interactionhand);
+    default void performCrossbowAttack(LivingEntity user, float velocity) {
+        InteractionHand interactionhand = ProjectileUtil.getWeaponHoldingHand(user, item -> item instanceof CrossbowItem);
+        ItemStack itemstack = user.getItemInHand(interactionhand);
         if (itemstack.getItem() instanceof CrossbowItem crossbowitem) {
             crossbowitem.performShooting(
-                p_32337_.level(), p_32337_, interactionhand, itemstack, p_32338_, (float)(14 - p_32337_.level().getDifficulty().getId() * 4), this.getTarget()
+                user.level(), user, interactionhand, itemstack, velocity, (float)(14 - user.level().getDifficulty().getId() * 4), this.getTarget()
             );
         }
 

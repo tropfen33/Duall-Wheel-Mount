@@ -21,40 +21,40 @@ public class RedstoneLampBlock extends Block {
         return CODEC;
     }
 
-    public RedstoneLampBlock(BlockBehaviour.Properties p_55657_) {
-        super(p_55657_);
+    public RedstoneLampBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.defaultBlockState().setValue(LIT, Boolean.valueOf(false)));
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_55659_) {
-        return this.defaultBlockState().setValue(LIT, Boolean.valueOf(p_55659_.getLevel().hasNeighborSignal(p_55659_.getClickedPos())));
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(LIT, Boolean.valueOf(context.getLevel().hasNeighborSignal(context.getClickedPos())));
     }
 
     @Override
-    protected void neighborChanged(BlockState p_55666_, Level p_55667_, BlockPos p_55668_, Block p_55669_, BlockPos p_55670_, boolean p_55671_) {
-        if (!p_55667_.isClientSide) {
-            boolean flag = p_55666_.getValue(LIT);
-            if (flag != p_55667_.hasNeighborSignal(p_55668_)) {
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!level.isClientSide) {
+            boolean flag = state.getValue(LIT);
+            if (flag != level.hasNeighborSignal(pos)) {
                 if (flag) {
-                    p_55667_.scheduleTick(p_55668_, this, 4);
+                    level.scheduleTick(pos, this, 4);
                 } else {
-                    p_55667_.setBlock(p_55668_, p_55666_.cycle(LIT), 2);
+                    level.setBlock(pos, state.cycle(LIT), 2);
                 }
             }
         }
     }
 
     @Override
-    protected void tick(BlockState p_221937_, ServerLevel p_221938_, BlockPos p_221939_, RandomSource p_221940_) {
-        if (p_221937_.getValue(LIT) && !p_221938_.hasNeighborSignal(p_221939_)) {
-            p_221938_.setBlock(p_221939_, p_221937_.cycle(LIT), 2);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (state.getValue(LIT) && !level.hasNeighborSignal(pos)) {
+            level.setBlock(pos, state.cycle(LIT), 2);
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_55673_) {
-        p_55673_.add(LIT);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(LIT);
     }
 }

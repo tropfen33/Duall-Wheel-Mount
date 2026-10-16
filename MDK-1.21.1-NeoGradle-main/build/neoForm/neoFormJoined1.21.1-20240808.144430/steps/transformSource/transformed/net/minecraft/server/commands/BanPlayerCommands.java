@@ -19,8 +19,8 @@ import net.minecraft.server.players.UserBanListEntry;
 public class BanPlayerCommands {
     private static final SimpleCommandExceptionType ERROR_ALREADY_BANNED = new SimpleCommandExceptionType(Component.translatable("commands.ban.failed"));
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_136559_) {
-        p_136559_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("ban")
                 .requires(p_136563_ -> p_136563_.hasPermission(3))
                 .then(
@@ -40,21 +40,21 @@ public class BanPlayerCommands {
         );
     }
 
-    private static int banPlayers(CommandSourceStack p_136565_, Collection<GameProfile> p_136566_, @Nullable Component p_136567_) throws CommandSyntaxException {
-        UserBanList userbanlist = p_136565_.getServer().getPlayerList().getBans();
+    private static int banPlayers(CommandSourceStack source, Collection<GameProfile> gameProfiles, @Nullable Component reason) throws CommandSyntaxException {
+        UserBanList userbanlist = source.getServer().getPlayerList().getBans();
         int i = 0;
 
-        for (GameProfile gameprofile : p_136566_) {
+        for (GameProfile gameprofile : gameProfiles) {
             if (!userbanlist.isBanned(gameprofile)) {
                 UserBanListEntry userbanlistentry = new UserBanListEntry(
-                    gameprofile, null, p_136565_.getTextName(), null, p_136567_ == null ? null : p_136567_.getString()
+                    gameprofile, null, source.getTextName(), null, reason == null ? null : reason.getString()
                 );
                 userbanlist.add(userbanlistentry);
                 i++;
-                p_136565_.sendSuccess(
+                source.sendSuccess(
                     () -> Component.translatable("commands.ban.success", Component.literal(gameprofile.getName()), userbanlistentry.getReason()), true
                 );
-                ServerPlayer serverplayer = p_136565_.getServer().getPlayerList().getPlayer(gameprofile.getId());
+                ServerPlayer serverplayer = source.getServer().getPlayerList().getPlayer(gameprofile.getId());
                 if (serverplayer != null) {
                     serverplayer.connection.disconnect(Component.translatable("multiplayer.disconnect.banned"));
                 }

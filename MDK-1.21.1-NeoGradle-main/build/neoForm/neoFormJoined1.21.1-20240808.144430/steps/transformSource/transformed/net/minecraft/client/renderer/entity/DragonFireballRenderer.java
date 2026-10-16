@@ -16,38 +16,41 @@ public class DragonFireballRenderer extends EntityRenderer<DragonFireball> {
     private static final ResourceLocation TEXTURE_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/enderdragon/dragon_fireball.png");
     private static final RenderType RENDER_TYPE = RenderType.entityCutoutNoCull(TEXTURE_LOCATION);
 
-    public DragonFireballRenderer(EntityRendererProvider.Context p_173962_) {
-        super(p_173962_);
+    public DragonFireballRenderer(EntityRendererProvider.Context context) {
+        super(context);
     }
 
-    protected int getBlockLightLevel(DragonFireball p_114087_, BlockPos p_114088_) {
+    protected int getBlockLightLevel(DragonFireball entity, BlockPos pos) {
         return 15;
     }
 
-    public void render(DragonFireball p_114080_, float p_114081_, float p_114082_, PoseStack p_114083_, MultiBufferSource p_114084_, int p_114085_) {
-        p_114083_.pushPose();
-        p_114083_.scale(2.0F, 2.0F, 2.0F);
-        p_114083_.mulPose(this.entityRenderDispatcher.cameraOrientation());
-        PoseStack.Pose posestack$pose = p_114083_.last();
-        VertexConsumer vertexconsumer = p_114084_.getBuffer(RENDER_TYPE);
-        vertex(vertexconsumer, posestack$pose, p_114085_, 0.0F, 0, 0, 1);
-        vertex(vertexconsumer, posestack$pose, p_114085_, 1.0F, 0, 1, 1);
-        vertex(vertexconsumer, posestack$pose, p_114085_, 1.0F, 1, 1, 0);
-        vertex(vertexconsumer, posestack$pose, p_114085_, 0.0F, 1, 0, 0);
-        p_114083_.popPose();
-        super.render(p_114080_, p_114081_, p_114082_, p_114083_, p_114084_, p_114085_);
+    public void render(DragonFireball entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        poseStack.pushPose();
+        poseStack.scale(2.0F, 2.0F, 2.0F);
+        poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
+        PoseStack.Pose posestack$pose = poseStack.last();
+        VertexConsumer vertexconsumer = buffer.getBuffer(RENDER_TYPE);
+        vertex(vertexconsumer, posestack$pose, packedLight, 0.0F, 0, 0, 1);
+        vertex(vertexconsumer, posestack$pose, packedLight, 1.0F, 0, 1, 1);
+        vertex(vertexconsumer, posestack$pose, packedLight, 1.0F, 1, 1, 0);
+        vertex(vertexconsumer, posestack$pose, packedLight, 0.0F, 1, 0, 0);
+        poseStack.popPose();
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 
-    private static void vertex(VertexConsumer p_254095_, PoseStack.Pose p_324420_, int p_253829_, float p_253995_, int p_254031_, int p_253641_, int p_254243_) {
-        p_254095_.addVertex(p_324420_, p_253995_ - 0.5F, (float)p_254031_ - 0.25F, 0.0F)
+    private static void vertex(VertexConsumer consumer, PoseStack.Pose pose, int packedLight, float x, int y, int u, int v) {
+        consumer.addVertex(pose, x - 0.5F, (float)y - 0.25F, 0.0F)
             .setColor(-1)
-            .setUv((float)p_253641_, (float)p_254243_)
+            .setUv((float)u, (float)v)
             .setOverlay(OverlayTexture.NO_OVERLAY)
-            .setLight(p_253829_)
-            .setNormal(p_324420_, 0.0F, 1.0F, 0.0F);
+            .setLight(packedLight)
+            .setNormal(pose, 0.0F, 1.0F, 0.0F);
     }
 
-    public ResourceLocation getTextureLocation(DragonFireball p_114078_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(DragonFireball entity) {
         return TEXTURE_LOCATION;
     }
 }

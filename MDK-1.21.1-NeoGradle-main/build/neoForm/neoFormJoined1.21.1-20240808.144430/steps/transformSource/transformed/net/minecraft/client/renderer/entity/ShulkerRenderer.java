@@ -32,21 +32,21 @@ public class ShulkerRenderer extends MobRenderer<Shulker, ShulkerModel<Shulker>>
         this.addLayer(new ShulkerHeadLayer(this));
     }
 
-    public Vec3 getRenderOffset(Shulker p_115904_, float p_115905_) {
-        return p_115904_.getRenderPosition(p_115905_).orElse(super.getRenderOffset(p_115904_, p_115905_)).scale((double)p_115904_.getScale());
+    public Vec3 getRenderOffset(Shulker entity, float partialTicks) {
+        return entity.getRenderPosition(partialTicks).orElse(super.getRenderOffset(entity, partialTicks)).scale((double)entity.getScale());
     }
 
-    public boolean shouldRender(Shulker p_115913_, Frustum p_115914_, double p_115915_, double p_115916_, double p_115917_) {
-        return super.shouldRender(p_115913_, p_115914_, p_115915_, p_115916_, p_115917_)
+    public boolean shouldRender(Shulker livingEntity, Frustum camera, double camX, double camY, double camZ) {
+        return super.shouldRender(livingEntity, camera, camX, camY, camZ)
             ? true
-            : p_115913_.getRenderPosition(0.0F)
+            : livingEntity.getRenderPosition(0.0F)
                 .filter(
                     p_174374_ -> {
-                        EntityType<?> entitytype = p_115913_.getType();
+                        EntityType<?> entitytype = livingEntity.getType();
                         float f = entitytype.getHeight() / 2.0F;
                         float f1 = entitytype.getWidth() / 2.0F;
-                        Vec3 vec3 = Vec3.atBottomCenterOf(p_115913_.blockPosition());
-                        return p_115914_.isVisible(
+                        Vec3 vec3 = Vec3.atBottomCenterOf(livingEntity.blockPosition());
+                        return camera.isVisible(
                             new AABB(p_174374_.x, p_174374_.y + (double)f, p_174374_.z, vec3.x, vec3.y + (double)f, vec3.z)
                                 .inflate((double)f1, (double)f, (double)f1)
                         );
@@ -55,16 +55,19 @@ public class ShulkerRenderer extends MobRenderer<Shulker, ShulkerModel<Shulker>>
                 .isPresent();
     }
 
-    public ResourceLocation getTextureLocation(Shulker p_115902_) {
-        return getTextureLocation(p_115902_.getColor());
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Shulker entity) {
+        return getTextureLocation(entity.getColor());
     }
 
-    public static ResourceLocation getTextureLocation(@Nullable DyeColor p_174376_) {
-        return p_174376_ == null ? DEFAULT_TEXTURE_LOCATION : TEXTURE_LOCATION[p_174376_.getId()];
+    public static ResourceLocation getTextureLocation(@Nullable DyeColor color) {
+        return color == null ? DEFAULT_TEXTURE_LOCATION : TEXTURE_LOCATION[color.getId()];
     }
 
-    protected void setupRotations(Shulker p_320913_, PoseStack p_115891_, float p_115892_, float p_115893_, float p_115894_, float p_319950_) {
-        super.setupRotations(p_320913_, p_115891_, p_115892_, p_115893_ + 180.0F, p_115894_, p_319950_);
-        p_115891_.rotateAround(p_320913_.getAttachFace().getOpposite().getRotation(), 0.0F, 0.5F, 0.0F);
+    protected void setupRotations(Shulker entity, PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale) {
+        super.setupRotations(entity, poseStack, bob, yBodyRot + 180.0F, partialTick, scale);
+        poseStack.rotateAround(entity.getAttachFace().getOpposite().getRotation(), 0.0F, 0.5F, 0.0F);
     }
 }

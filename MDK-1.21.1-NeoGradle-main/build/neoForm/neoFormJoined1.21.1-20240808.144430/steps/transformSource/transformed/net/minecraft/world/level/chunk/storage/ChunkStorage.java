@@ -29,39 +29,39 @@ public class ChunkStorage implements AutoCloseable {
     @Nullable
     private volatile LegacyStructureDataHandler legacyStructureHandler;
 
-    public ChunkStorage(RegionStorageInfo p_326130_, Path p_196912_, DataFixer p_196913_, boolean p_196914_) {
-        this.fixerUpper = p_196913_;
-        this.worker = new IOWorker(p_326130_, p_196912_, p_196914_);
+    public ChunkStorage(RegionStorageInfo info, Path folder, DataFixer fixerUpper, boolean sync) {
+        this.fixerUpper = fixerUpper;
+        this.worker = new IOWorker(info, folder, sync);
     }
 
-    public boolean isOldChunkAround(ChunkPos p_223452_, int p_223453_) {
-        return this.worker.isOldChunkAround(p_223452_, p_223453_);
+    public boolean isOldChunkAround(ChunkPos pos, int radius) {
+        return this.worker.isOldChunkAround(pos, radius);
     }
 
     public CompoundTag upgradeChunkTag(
-        ResourceKey<Level> p_188289_,
-        Supplier<DimensionDataStorage> p_188290_,
-        CompoundTag p_188291_,
-        Optional<ResourceKey<MapCodec<? extends ChunkGenerator>>> p_188292_
+        ResourceKey<Level> levelKey,
+        Supplier<DimensionDataStorage> storage,
+        CompoundTag chunkData,
+        Optional<ResourceKey<MapCodec<? extends ChunkGenerator>>> chunkGeneratorKey
     ) {
-        int i = getVersion(p_188291_);
+        int i = getVersion(chunkData);
         if (i == SharedConstants.getCurrentVersion().getDataVersion().getVersion()) {
-            return p_188291_;
+            return chunkData;
         } else {
             try {
                 if (i < 1493) {
-                    p_188291_ = DataFixTypes.CHUNK.update(this.fixerUpper, p_188291_, i, 1493);
-                    if (p_188291_.getCompound("Level").getBoolean("hasLegacyStructureData")) {
-                        LegacyStructureDataHandler legacystructuredatahandler = this.getLegacyStructureHandler(p_188289_, p_188290_);
-                        p_188291_ = legacystructuredatahandler.updateFromLegacy(p_188291_);
+                    chunkData = DataFixTypes.CHUNK.update(this.fixerUpper, chunkData, i, 1493);
+                    if (chunkData.getCompound("Level").getBoolean("hasLegacyStructureData")) {
+                        LegacyStructureDataHandler legacystructuredatahandler = this.getLegacyStructureHandler(levelKey, storage);
+                        chunkData = legacystructuredatahandler.updateFromLegacy(chunkData);
                     }
                 }
 
-                injectDatafixingContext(p_188291_, p_188289_, p_188292_);
-                p_188291_ = DataFixTypes.CHUNK.updateToCurrentVersion(this.fixerUpper, p_188291_, Math.max(1493, i));
-                removeDatafixingContext(p_188291_);
-                NbtUtils.addCurrentDataVersion(p_188291_);
-                return p_188291_;
+                injectDatafixingContext(chunkData, levelKey, chunkGeneratorKey);
+                chunkData = DataFixTypes.CHUNK.updateToCurrentVersion(this.fixerUpper, chunkData, Math.max(1493, i));
+                removeDatafixingContext(chunkData);
+                NbtUtils.addCurrentDataVersion(chunkData);
+                return chunkData;
             } catch (Exception exception) {
                 CrashReport crashreport = CrashReport.forThrowable(exception, "Updated chunk");
                 CrashReportCategory crashreportcategory = crashreport.addCategory("Updated chunk details");
@@ -71,13 +71,13 @@ public class ChunkStorage implements AutoCloseable {
         }
     }
 
-    private LegacyStructureDataHandler getLegacyStructureHandler(ResourceKey<Level> p_223449_, Supplier<DimensionDataStorage> p_223450_) {
+    private LegacyStructureDataHandler getLegacyStructureHandler(ResourceKey<Level> level, Supplier<DimensionDataStorage> storage) {
         LegacyStructureDataHandler legacystructuredatahandler = this.legacyStructureHandler;
         if (legacystructuredatahandler == null) {
             synchronized (this) {
                 legacystructuredatahandler = this.legacyStructureHandler;
                 if (legacystructuredatahandler == null) {
-                    this.legacyStructureHandler = legacystructuredatahandler = LegacyStructureDataHandler.getLegacyStructureHandler(p_223449_, p_223450_.get());
+                    this.legacyStructureHandler = legacystructuredatahandler = LegacyStructureDataHandler.getLegacyStructureHandler(level, storage.get());
                 }
             }
         }
@@ -86,34 +86,34 @@ public class ChunkStorage implements AutoCloseable {
     }
 
     public static void injectDatafixingContext(
-        CompoundTag p_196919_, ResourceKey<Level> p_196920_, Optional<ResourceKey<MapCodec<? extends ChunkGenerator>>> p_196921_
+        CompoundTag chunkData, ResourceKey<Level> levelKey, Optional<ResourceKey<MapCodec<? extends ChunkGenerator>>> chunkGeneratorKey
     ) {
         CompoundTag compoundtag = new CompoundTag();
-        compoundtag.putString("dimension", p_196920_.location().toString());
-        p_196921_.ifPresent(p_196917_ -> compoundtag.putString("generator", p_196917_.location().toString()));
-        p_196919_.put("__context", compoundtag);
+        compoundtag.putString("dimension", levelKey.location().toString());
+        chunkGeneratorKey.ifPresent(p_196917_ -> compoundtag.putString("generator", p_196917_.location().toString()));
+        chunkData.put("__context", compoundtag);
     }
 
-    private static void removeDatafixingContext(CompoundTag p_348632_) {
-        p_348632_.remove("__context");
+    private static void removeDatafixingContext(CompoundTag tag) {
+        tag.remove("__context");
     }
 
-    public static int getVersion(CompoundTag p_63506_) {
-        return NbtUtils.getDataVersion(p_63506_, -1);
+    public static int getVersion(CompoundTag chunkData) {
+        return NbtUtils.getDataVersion(chunkData, -1);
     }
 
-    public CompletableFuture<Optional<CompoundTag>> read(ChunkPos p_223455_) {
-        return this.worker.loadAsync(p_223455_);
+    public CompletableFuture<Optional<CompoundTag>> read(ChunkPos chunkPos) {
+        return this.worker.loadAsync(chunkPos);
     }
 
-    public CompletableFuture<Void> write(ChunkPos p_63503_, CompoundTag p_63504_) {
-        this.handleLegacyStructureIndex(p_63503_);
-        return this.worker.store(p_63503_, p_63504_);
+    public CompletableFuture<Void> write(ChunkPos chunkPos, CompoundTag data) {
+        this.handleLegacyStructureIndex(chunkPos);
+        return this.worker.store(chunkPos, data);
     }
 
-    protected void handleLegacyStructureIndex(ChunkPos p_321604_) {
+    protected void handleLegacyStructureIndex(ChunkPos chunkPos) {
         if (this.legacyStructureHandler != null) {
-            this.legacyStructureHandler.removeIndex(p_321604_.toLong());
+            this.legacyStructureHandler.removeIndex(chunkPos.toLong());
         }
     }
 

@@ -34,41 +34,41 @@ public class PlayerSkinWidget extends AbstractWidget {
     private float rotationX = -5.0F;
     private float rotationY = 30.0F;
 
-    public PlayerSkinWidget(int p_300014_, int p_299867_, EntityModelSet p_299948_, Supplier<PlayerSkin> p_299853_) {
-        super(0, 0, p_300014_, p_299867_, CommonComponents.EMPTY);
-        this.model = PlayerSkinWidget.Model.bake(p_299948_);
-        this.skin = p_299853_;
+    public PlayerSkinWidget(int width, int height, EntityModelSet model, Supplier<PlayerSkin> skin) {
+        super(0, 0, width, height, CommonComponents.EMPTY);
+        this.model = PlayerSkinWidget.Model.bake(model);
+        this.skin = skin;
     }
 
     @Override
-    protected void renderWidget(GuiGraphics p_299897_, int p_299826_, int p_300009_, float p_299921_) {
-        p_299897_.pose().pushPose();
-        p_299897_.pose().translate((float)this.getX() + (float)this.getWidth() / 2.0F, (float)(this.getY() + this.getHeight()), 100.0F);
+    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate((float)this.getX() + (float)this.getWidth() / 2.0F, (float)(this.getY() + this.getHeight()), 100.0F);
         float f = (float)this.getHeight() / 2.125F;
-        p_299897_.pose().scale(f, f, f);
-        p_299897_.pose().translate(0.0F, -0.0625F, 0.0F);
-        p_299897_.pose().rotateAround(Axis.XP.rotationDegrees(this.rotationX), 0.0F, -1.0625F, 0.0F);
-        p_299897_.pose().mulPose(Axis.YP.rotationDegrees(this.rotationY));
-        p_299897_.flush();
+        guiGraphics.pose().scale(f, f, f);
+        guiGraphics.pose().translate(0.0F, -0.0625F, 0.0F);
+        guiGraphics.pose().rotateAround(Axis.XP.rotationDegrees(this.rotationX), 0.0F, -1.0625F, 0.0F);
+        guiGraphics.pose().mulPose(Axis.YP.rotationDegrees(this.rotationY));
+        guiGraphics.flush();
         Lighting.setupForEntityInInventory(Axis.XP.rotationDegrees(this.rotationX));
-        this.model.render(p_299897_, this.skin.get());
-        p_299897_.flush();
+        this.model.render(guiGraphics, this.skin.get());
+        guiGraphics.flush();
         Lighting.setupFor3DItems();
-        p_299897_.pose().popPose();
+        guiGraphics.pose().popPose();
     }
 
     @Override
-    protected void onDrag(double p_299829_, double p_299876_, double p_300028_, double p_299872_) {
-        this.rotationX = Mth.clamp(this.rotationX - (float)p_299872_ * 2.5F, -50.0F, 50.0F);
-        this.rotationY += (float)p_300028_ * 2.5F;
+    protected void onDrag(double mouseX, double mouseY, double dragX, double dragY) {
+        this.rotationX = Mth.clamp(this.rotationX - (float)dragY * 2.5F, -50.0F, 50.0F);
+        this.rotationY += (float)dragX * 2.5F;
     }
 
     @Override
-    public void playDownSound(SoundManager p_299880_) {
+    public void playDownSound(SoundManager handler) {
     }
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput p_299955_) {
+    protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
     }
 
     @Override
@@ -76,30 +76,37 @@ public class PlayerSkinWidget extends AbstractWidget {
         return false;
     }
 
+    /**
+     * Retrieves the next focus path based on the given focus navigation event.
+     * <p>
+     * @return the next focus path as a ComponentPath, or {@code null} if there is no next focus path.
+     *
+     * @param event the focus navigation event.
+     */
     @Nullable
     @Override
-    public ComponentPath nextFocusPath(FocusNavigationEvent p_299934_) {
+    public ComponentPath nextFocusPath(FocusNavigationEvent event) {
         return null;
     }
 
     @OnlyIn(Dist.CLIENT)
     static record Model(PlayerModel<?> wideModel, PlayerModel<?> slimModel) {
-        public static PlayerSkinWidget.Model bake(EntityModelSet p_300003_) {
-            PlayerModel<?> playermodel = new PlayerModel(p_300003_.bakeLayer(ModelLayers.PLAYER), false);
-            PlayerModel<?> playermodel1 = new PlayerModel(p_300003_.bakeLayer(ModelLayers.PLAYER_SLIM), true);
+        public static PlayerSkinWidget.Model bake(EntityModelSet model) {
+            PlayerModel<?> playermodel = new PlayerModel(model.bakeLayer(ModelLayers.PLAYER), false);
+            PlayerModel<?> playermodel1 = new PlayerModel(model.bakeLayer(ModelLayers.PLAYER_SLIM), true);
             playermodel.young = false;
             playermodel1.young = false;
             return new PlayerSkinWidget.Model(playermodel, playermodel1);
         }
 
-        public void render(GuiGraphics p_300018_, PlayerSkin p_299991_) {
-            p_300018_.pose().pushPose();
-            p_300018_.pose().scale(1.0F, 1.0F, -1.0F);
-            p_300018_.pose().translate(0.0F, -1.5F, 0.0F);
-            PlayerModel<?> playermodel = p_299991_.model() == PlayerSkin.Model.SLIM ? this.slimModel : this.wideModel;
-            RenderType rendertype = playermodel.renderType(p_299991_.texture());
-            playermodel.renderToBuffer(p_300018_.pose(), p_300018_.bufferSource().getBuffer(rendertype), 15728880, OverlayTexture.NO_OVERLAY);
-            p_300018_.pose().popPose();
+        public void render(GuiGraphics guiGraphics, PlayerSkin skin) {
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().scale(1.0F, 1.0F, -1.0F);
+            guiGraphics.pose().translate(0.0F, -1.5F, 0.0F);
+            PlayerModel<?> playermodel = skin.model() == PlayerSkin.Model.SLIM ? this.slimModel : this.wideModel;
+            RenderType rendertype = playermodel.renderType(skin.texture());
+            playermodel.renderToBuffer(guiGraphics.pose(), guiGraphics.bufferSource().getBuffer(rendertype), 15728880, OverlayTexture.NO_OVERLAY);
+            guiGraphics.pose().popPose();
         }
     }
 }

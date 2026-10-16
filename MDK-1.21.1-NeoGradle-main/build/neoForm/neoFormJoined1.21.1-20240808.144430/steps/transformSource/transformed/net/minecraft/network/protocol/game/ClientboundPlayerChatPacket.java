@@ -39,14 +39,14 @@ public record ClientboundPlayerChatPacket(
         );
     }
 
-    private void write(RegistryFriendlyByteBuf p_321846_) {
-        p_321846_.writeUUID(this.sender);
-        p_321846_.writeVarInt(this.index);
-        p_321846_.writeNullable(this.signature, MessageSignature::write);
-        this.body.write(p_321846_);
-        FriendlyByteBuf.writeNullable(p_321846_, this.unsignedContent, ComponentSerialization.TRUSTED_STREAM_CODEC);
-        FilterMask.write(p_321846_, this.filterMask);
-        ChatType.Bound.STREAM_CODEC.encode(p_321846_, this.chatType);
+    private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeUUID(this.sender);
+        buffer.writeVarInt(this.index);
+        buffer.writeNullable(this.signature, MessageSignature::write);
+        this.body.write(buffer);
+        FriendlyByteBuf.writeNullable(buffer, this.unsignedContent, ComponentSerialization.TRUSTED_STREAM_CODEC);
+        FilterMask.write(buffer, this.filterMask);
+        ChatType.Bound.STREAM_CODEC.encode(buffer, this.chatType);
     }
 
     @Override
@@ -54,8 +54,11 @@ public record ClientboundPlayerChatPacket(
         return GamePacketTypes.CLIENTBOUND_PLAYER_CHAT;
     }
 
-    public void handle(ClientGamePacketListener p_237759_) {
-        p_237759_.handlePlayerChat(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handlePlayerChat(this);
     }
 
     @Override

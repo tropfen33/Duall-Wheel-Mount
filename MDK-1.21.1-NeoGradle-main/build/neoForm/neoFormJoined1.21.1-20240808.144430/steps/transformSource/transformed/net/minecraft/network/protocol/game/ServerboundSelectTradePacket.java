@@ -11,16 +11,19 @@ public class ServerboundSelectTradePacket implements Packet<ServerGamePacketList
     );
     private final int item;
 
-    public ServerboundSelectTradePacket(int p_134462_) {
-        this.item = p_134462_;
+    public ServerboundSelectTradePacket(int item) {
+        this.item = item;
     }
 
-    private ServerboundSelectTradePacket(FriendlyByteBuf p_179747_) {
-        this.item = p_179747_.readVarInt();
+    private ServerboundSelectTradePacket(FriendlyByteBuf buffer) {
+        this.item = buffer.readVarInt();
     }
 
-    private void write(FriendlyByteBuf p_134471_) {
-        p_134471_.writeVarInt(this.item);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.item);
     }
 
     @Override
@@ -28,8 +31,11 @@ public class ServerboundSelectTradePacket implements Packet<ServerGamePacketList
         return GamePacketTypes.SERVERBOUND_SELECT_TRADE;
     }
 
-    public void handle(ServerGamePacketListener p_134468_) {
-        p_134468_.handleSelectTrade(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleSelectTrade(this);
     }
 
     public int getItem() {

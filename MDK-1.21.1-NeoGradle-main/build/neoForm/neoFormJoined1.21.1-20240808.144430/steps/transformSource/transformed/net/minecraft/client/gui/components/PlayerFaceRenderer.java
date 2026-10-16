@@ -20,30 +20,30 @@ public class PlayerFaceRenderer {
     public static final int SKIN_TEX_WIDTH = 64;
     public static final int SKIN_TEX_HEIGHT = 64;
 
-    public static void draw(GuiGraphics p_296230_, PlayerSkin p_295435_, int p_294736_, int p_295624_, int p_295191_) {
-        draw(p_296230_, p_295435_.texture(), p_294736_, p_295624_, p_295191_);
+    public static void draw(GuiGraphics guiGraphics, PlayerSkin skin, int x, int y, int size) {
+        draw(guiGraphics, skin.texture(), x, y, size);
     }
 
-    public static void draw(GuiGraphics p_281827_, ResourceLocation p_281637_, int p_282126_, int p_281693_, int p_281565_) {
-        draw(p_281827_, p_281637_, p_282126_, p_281693_, p_281565_, true, false);
+    public static void draw(GuiGraphics guiGraphics, ResourceLocation atlasLocation, int x, int y, int size) {
+        draw(guiGraphics, atlasLocation, x, y, size, true, false);
     }
 
     public static void draw(
-        GuiGraphics p_283244_, ResourceLocation p_281495_, int p_282035_, int p_282441_, int p_281801_, boolean p_283149_, boolean p_283555_
+        GuiGraphics guiGraphics, ResourceLocation atlasLocation, int x, int y, int size, boolean p_drawHat, boolean upsideDown
     ) {
-        int i = 8 + (p_283555_ ? 8 : 0);
-        int j = 8 * (p_283555_ ? -1 : 1);
-        p_283244_.blit(p_281495_, p_282035_, p_282441_, p_281801_, p_281801_, 8.0F, (float)i, 8, j, 64, 64);
-        if (p_283149_) {
-            drawHat(p_283244_, p_281495_, p_282035_, p_282441_, p_281801_, p_283555_);
+        int i = 8 + (upsideDown ? 8 : 0);
+        int j = 8 * (upsideDown ? -1 : 1);
+        guiGraphics.blit(atlasLocation, x, y, size, size, 8.0F, (float)i, 8, j, 64, 64);
+        if (p_drawHat) {
+            drawHat(guiGraphics, atlasLocation, x, y, size, upsideDown);
         }
     }
 
-    private static void drawHat(GuiGraphics p_282228_, ResourceLocation p_282835_, int p_282585_, int p_282234_, int p_282576_, boolean p_281523_) {
-        int i = 8 + (p_281523_ ? 8 : 0);
-        int j = 8 * (p_281523_ ? -1 : 1);
+    private static void drawHat(GuiGraphics guiGraphics, ResourceLocation atlasLocation, int x, int y, int size, boolean upsideDown) {
+        int i = 8 + (upsideDown ? 8 : 0);
+        int j = 8 * (upsideDown ? -1 : 1);
         RenderSystem.enableBlend();
-        p_282228_.blit(p_282835_, p_282585_, p_282234_, p_282576_, p_282576_, 40.0F, (float)i, 8, j, 64, 64);
+        guiGraphics.blit(atlasLocation, x, y, size, size, 40.0F, (float)i, 8, j, 64, 64);
         RenderSystem.disableBlend();
     }
 }

@@ -15,21 +15,21 @@ public class ProtectedBlockProcessor extends StructureProcessor {
         .xmap(ProtectedBlockProcessor::new, p_205053_ -> p_205053_.cannotReplace)
         .fieldOf("value");
 
-    public ProtectedBlockProcessor(TagKey<Block> p_205051_) {
-        this.cannotReplace = p_205051_;
+    public ProtectedBlockProcessor(TagKey<Block> cannotReplace) {
+        this.cannotReplace = cannotReplace;
     }
 
     @Nullable
     @Override
     public StructureTemplate.StructureBlockInfo processBlock(
-        LevelReader p_163755_,
-        BlockPos p_163756_,
-        BlockPos p_163757_,
-        StructureTemplate.StructureBlockInfo p_163758_,
-        StructureTemplate.StructureBlockInfo p_163759_,
-        StructurePlaceSettings p_163760_
+        LevelReader level,
+        BlockPos offset,
+        BlockPos pos,
+        StructureTemplate.StructureBlockInfo blockInfo,
+        StructureTemplate.StructureBlockInfo relativeBlockInfo,
+        StructurePlaceSettings settings
     ) {
-        return Feature.isReplaceable(this.cannotReplace).test(p_163755_.getBlockState(p_163759_.pos())) ? p_163759_ : null;
+        return Feature.isReplaceable(this.cannotReplace).test(level.getBlockState(relativeBlockInfo.pos())) ? relativeBlockInfo : null;
     }
 
     @Override

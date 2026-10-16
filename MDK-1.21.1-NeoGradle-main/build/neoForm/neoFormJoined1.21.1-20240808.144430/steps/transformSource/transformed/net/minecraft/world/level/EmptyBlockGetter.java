@@ -13,17 +13,17 @@ public enum EmptyBlockGetter implements BlockGetter {
 
     @Nullable
     @Override
-    public BlockEntity getBlockEntity(BlockPos p_45867_) {
+    public BlockEntity getBlockEntity(BlockPos pos) {
         return null;
     }
 
     @Override
-    public BlockState getBlockState(BlockPos p_45869_) {
+    public BlockState getBlockState(BlockPos pos) {
         return Blocks.AIR.defaultBlockState();
     }
 
     @Override
-    public FluidState getFluidState(BlockPos p_45865_) {
+    public FluidState getFluidState(BlockPos pos) {
         return Fluids.EMPTY.defaultFluidState();
     }
 

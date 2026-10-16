@@ -11,16 +11,19 @@ public class ClientboundLoginCompressionPacket implements Packet<ClientLoginPack
     );
     private final int compressionThreshold;
 
-    public ClientboundLoginCompressionPacket(int p_134799_) {
-        this.compressionThreshold = p_134799_;
+    public ClientboundLoginCompressionPacket(int compressionThreshold) {
+        this.compressionThreshold = compressionThreshold;
     }
 
-    private ClientboundLoginCompressionPacket(FriendlyByteBuf p_179818_) {
-        this.compressionThreshold = p_179818_.readVarInt();
+    private ClientboundLoginCompressionPacket(FriendlyByteBuf buffer) {
+        this.compressionThreshold = buffer.readVarInt();
     }
 
-    private void write(FriendlyByteBuf p_134808_) {
-        p_134808_.writeVarInt(this.compressionThreshold);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.compressionThreshold);
     }
 
     @Override
@@ -28,8 +31,11 @@ public class ClientboundLoginCompressionPacket implements Packet<ClientLoginPack
         return LoginPacketTypes.CLIENTBOUND_LOGIN_COMPRESSION;
     }
 
-    public void handle(ClientLoginPacketListener p_134805_) {
-        p_134805_.handleCompression(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientLoginPacketListener handler) {
+        handler.handleCompression(this);
     }
 
     public int getCompressionThreshold() {

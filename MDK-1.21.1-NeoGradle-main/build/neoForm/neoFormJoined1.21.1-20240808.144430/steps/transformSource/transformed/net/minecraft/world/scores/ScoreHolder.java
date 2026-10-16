@@ -30,15 +30,15 @@ public interface ScoreHolder {
             : Component.literal(this.getScoreboardName());
     }
 
-    static ScoreHolder forNameOnly(final String p_313803_) {
-        if (p_313803_.equals("*")) {
+    static ScoreHolder forNameOnly(final String name) {
+        if (name.equals("*")) {
             return WILDCARD;
         } else {
-            final Component component = Component.literal(p_313803_);
+            final Component component = Component.literal(name);
             return new ScoreHolder() {
                 @Override
                 public String getScoreboardName() {
-                    return p_313803_;
+                    return name;
                 }
 
                 @Override
@@ -49,8 +49,8 @@ public interface ScoreHolder {
         }
     }
 
-    static ScoreHolder fromGameProfile(GameProfile p_313755_) {
-        final String s = p_313755_.getName();
+    static ScoreHolder fromGameProfile(GameProfile gameProfile) {
+        final String s = gameProfile.getName();
         return new ScoreHolder() {
             @Override
             public String getScoreboardName() {

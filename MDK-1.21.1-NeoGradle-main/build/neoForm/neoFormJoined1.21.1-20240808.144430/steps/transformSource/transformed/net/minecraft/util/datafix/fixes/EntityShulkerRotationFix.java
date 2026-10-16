@@ -7,22 +7,22 @@ import com.mojang.serialization.Dynamic;
 import java.util.List;
 
 public class EntityShulkerRotationFix extends NamedEntityFix {
-    public EntityShulkerRotationFix(Schema p_15680_) {
-        super(p_15680_, false, "EntityShulkerRotationFix", References.ENTITY, "minecraft:shulker");
+    public EntityShulkerRotationFix(Schema outputSchema) {
+        super(outputSchema, false, "EntityShulkerRotationFix", References.ENTITY, "minecraft:shulker");
     }
 
-    public Dynamic<?> fixTag(Dynamic<?> p_15684_) {
-        List<Double> list = p_15684_.get("Rotation").asList(p_15686_ -> p_15686_.asDouble(180.0));
+    public Dynamic<?> fixTag(Dynamic<?> tag) {
+        List<Double> list = tag.get("Rotation").asList(p_15686_ -> p_15686_.asDouble(180.0));
         if (!list.isEmpty()) {
             list.set(0, list.get(0) - 180.0);
-            return p_15684_.set("Rotation", p_15684_.createList(list.stream().map(p_15684_::createDouble)));
+            return tag.set("Rotation", tag.createList(list.stream().map(tag::createDouble)));
         } else {
-            return p_15684_;
+            return tag;
         }
     }
 
     @Override
-    protected Typed<?> fix(Typed<?> p_15682_) {
-        return p_15682_.update(DSL.remainderFinder(), this::fixTag);
+    protected Typed<?> fix(Typed<?> typed) {
+        return typed.update(DSL.remainderFinder(), this::fixTag);
     }
 }

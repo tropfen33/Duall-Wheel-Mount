@@ -52,9 +52,9 @@ public class RealmsPendingInvitesScreen extends RealmsScreen {
     private Button acceptButton;
     private Button rejectButton;
 
-    public RealmsPendingInvitesScreen(Screen p_279260_, Component p_279122_) {
-        super(p_279122_);
-        this.lastScreen = p_279260_;
+    public RealmsPendingInvitesScreen(Screen lastScreen, Component title) {
+        super(title);
+        this.lastScreen = lastScreen;
     }
 
     @Override
@@ -90,13 +90,13 @@ public class RealmsPendingInvitesScreen extends RealmsScreen {
         this.minecraft.setScreen(this.lastScreen);
     }
 
-    void handleInvitation(int p_294942_, boolean p_294885_) {
-        if (p_294942_ < this.pendingInvitationSelectionList.getItemCount()) {
-            String s = this.pendingInvitationSelectionList.children().get(p_294942_).pendingInvite.invitationId;
+    void handleInvitation(int index, boolean shouldAccept) {
+        if (index < this.pendingInvitationSelectionList.getItemCount()) {
+            String s = this.pendingInvitationSelectionList.children().get(index).pendingInvite.invitationId;
             CompletableFuture.<Boolean>supplyAsync(() -> {
                 try {
                     RealmsClient realmsclient = RealmsClient.create();
-                    if (p_294885_) {
+                    if (shouldAccept) {
                         realmsclient.acceptInvitation(s);
                     } else {
                         realmsclient.rejectInvitation(s);
@@ -109,9 +109,9 @@ public class RealmsPendingInvitesScreen extends RealmsScreen {
                 }
             }, Util.ioPool()).thenAcceptAsync(p_293575_ -> {
                 if (p_293575_) {
-                    this.pendingInvitationSelectionList.removeAtIndex(p_294942_);
+                    this.pendingInvitationSelectionList.removeAtIndex(index);
                     RealmsDataFetcher realmsdatafetcher = this.minecraft.realmsDataFetcher();
-                    if (p_294885_) {
+                    if (shouldAccept) {
                         realmsdatafetcher.serverListUpdateTask.reset();
                     }
 
@@ -121,17 +121,25 @@ public class RealmsPendingInvitesScreen extends RealmsScreen {
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282787_, int p_88900_, int p_88901_, float p_88902_) {
-        super.render(p_282787_, p_88900_, p_88901_, p_88902_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.toolTip = null;
-        p_282787_.drawCenteredString(this.font, this.title, this.width / 2, 12, -1);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 12, -1);
         if (this.toolTip != null) {
-            p_282787_.renderTooltip(this.font, this.toolTip, p_88900_, p_88901_);
+            guiGraphics.renderTooltip(this.font, this.toolTip, mouseX, mouseY);
         }
 
         if (this.pendingInvites.isDone() && this.pendingInvitationSelectionList.getItemCount() == 0) {
-            p_282787_.drawCenteredString(this.font, NO_PENDING_INVITES_TEXT, this.width / 2, this.height / 2 - 20, -1);
+            guiGraphics.drawCenteredString(this.font, NO_PENDING_INVITES_TEXT, this.width / 2, this.height / 2 - 20, -1);
         }
     }
 
@@ -140,8 +148,8 @@ public class RealmsPendingInvitesScreen extends RealmsScreen {
         this.rejectButton.visible = this.shouldAcceptAndRejectButtonBeVisible(this.selectedInvite);
     }
 
-    private boolean shouldAcceptAndRejectButtonBeVisible(int p_88963_) {
-        return p_88963_ != -1;
+    private boolean shouldAcceptAndRejectButtonBeVisible(int selectedInvite) {
+        return selectedInvite != -1;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -150,48 +158,57 @@ public class RealmsPendingInvitesScreen extends RealmsScreen {
         final PendingInvite pendingInvite;
         private final List<RowButton> rowButtons;
 
-        Entry(PendingInvite p_88996_) {
-            this.pendingInvite = p_88996_;
+        Entry(PendingInvite pendingInvite) {
+            this.pendingInvite = pendingInvite;
             this.rowButtons = Arrays.asList(new RealmsPendingInvitesScreen.Entry.AcceptRowButton(), new RealmsPendingInvitesScreen.Entry.RejectRowButton());
         }
 
         @Override
         public void render(
-            GuiGraphics p_281445_,
-            int p_281806_,
-            int p_283610_,
-            int p_282909_,
-            int p_281705_,
-            int p_281977_,
-            int p_282983_,
-            int p_281655_,
-            boolean p_282274_,
-            float p_282862_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
-            this.renderPendingInvitationItem(p_281445_, this.pendingInvite, p_282909_, p_283610_, p_282983_, p_281655_);
+            this.renderPendingInvitationItem(guiGraphics, this.pendingInvite, left, top, mouseX, mouseY);
         }
 
+        /**
+         * Called when a mouse button is clicked within the GUI element.
+         * <p>
+         * @return {@code true} if the event is consumed, {@code false} otherwise.
+         *
+         * @param mouseX the X coordinate of the mouse.
+         * @param mouseY the Y coordinate of the mouse.
+         * @param button the button that was clicked.
+         */
         @Override
-        public boolean mouseClicked(double p_88998_, double p_88999_, int p_89000_) {
-            RowButton.rowButtonMouseClicked(RealmsPendingInvitesScreen.this.pendingInvitationSelectionList, this, this.rowButtons, p_89000_, p_88998_, p_88999_);
-            return super.mouseClicked(p_88998_, p_88999_, p_89000_);
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            RowButton.rowButtonMouseClicked(RealmsPendingInvitesScreen.this.pendingInvitationSelectionList, this, this.rowButtons, button, mouseX, mouseY);
+            return super.mouseClicked(mouseX, mouseY, button);
         }
 
-        private void renderPendingInvitationItem(GuiGraphics p_281764_, PendingInvite p_282748_, int p_282810_, int p_282994_, int p_283639_, int p_283659_) {
-            p_281764_.drawString(RealmsPendingInvitesScreen.this.font, p_282748_.realmName, p_282810_ + 38, p_282994_ + 1, -1, false);
-            p_281764_.drawString(RealmsPendingInvitesScreen.this.font, p_282748_.realmOwnerName, p_282810_ + 38, p_282994_ + 12, 7105644, false);
-            p_281764_.drawString(
+        private void renderPendingInvitationItem(GuiGraphics guiGraphics, PendingInvite pendingInvite, int x, int y, int mouseX, int mouseY) {
+            guiGraphics.drawString(RealmsPendingInvitesScreen.this.font, pendingInvite.realmName, x + 38, y + 1, -1, false);
+            guiGraphics.drawString(RealmsPendingInvitesScreen.this.font, pendingInvite.realmOwnerName, x + 38, y + 12, 7105644, false);
+            guiGraphics.drawString(
                 RealmsPendingInvitesScreen.this.font,
-                RealmsUtil.convertToAgePresentationFromInstant(p_282748_.date),
-                p_282810_ + 38,
-                p_282994_ + 24,
+                RealmsUtil.convertToAgePresentationFromInstant(pendingInvite.date),
+                x + 38,
+                y + 24,
                 7105644,
                 false
             );
             RowButton.drawButtonsInRow(
-                p_281764_, this.rowButtons, RealmsPendingInvitesScreen.this.pendingInvitationSelectionList, p_282810_, p_282994_, p_283639_, p_283659_
+                guiGraphics, this.rowButtons, RealmsPendingInvitesScreen.this.pendingInvitationSelectionList, x, y, mouseX, mouseY
             );
-            RealmsUtil.renderPlayerFace(p_281764_, p_282810_, p_282994_, 32, p_282748_.realmOwnerUuid);
+            RealmsUtil.renderPlayerFace(guiGraphics, x, y, 32, pendingInvite.realmOwnerUuid);
         }
 
         @Override
@@ -255,8 +272,8 @@ public class RealmsPendingInvitesScreen extends RealmsScreen {
             super(RealmsPendingInvitesScreen.this.width, RealmsPendingInvitesScreen.this.height - 72, 32, 36);
         }
 
-        public void removeAtIndex(int p_89058_) {
-            this.remove(p_89058_);
+        public void removeAtIndex(int index) {
+            this.remove(index);
         }
 
         @Override
@@ -270,19 +287,19 @@ public class RealmsPendingInvitesScreen extends RealmsScreen {
         }
 
         @Override
-        public void selectItem(int p_89049_) {
-            super.selectItem(p_89049_);
-            this.selectInviteListItem(p_89049_);
+        public void selectItem(int index) {
+            super.selectItem(index);
+            this.selectInviteListItem(index);
         }
 
-        public void selectInviteListItem(int p_89061_) {
-            RealmsPendingInvitesScreen.this.selectedInvite = p_89061_;
+        public void selectInviteListItem(int index) {
+            RealmsPendingInvitesScreen.this.selectedInvite = index;
             RealmsPendingInvitesScreen.this.updateButtonStates();
         }
 
-        public void setSelected(@Nullable RealmsPendingInvitesScreen.Entry p_89053_) {
-            super.setSelected(p_89053_);
-            RealmsPendingInvitesScreen.this.selectedInvite = this.children().indexOf(p_89053_);
+        public void setSelected(@Nullable RealmsPendingInvitesScreen.Entry selected) {
+            super.setSelected(selected);
+            RealmsPendingInvitesScreen.this.selectedInvite = this.children().indexOf(selected);
             RealmsPendingInvitesScreen.this.updateButtonStates();
         }
     }

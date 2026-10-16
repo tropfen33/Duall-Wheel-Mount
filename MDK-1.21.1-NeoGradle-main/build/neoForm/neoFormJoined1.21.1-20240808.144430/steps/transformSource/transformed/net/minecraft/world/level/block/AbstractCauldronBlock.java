@@ -40,66 +40,66 @@ public abstract class AbstractCauldronBlock extends Block {
     @Override
     protected abstract MapCodec<? extends AbstractCauldronBlock> codec();
 
-    public AbstractCauldronBlock(BlockBehaviour.Properties p_151946_, CauldronInteraction.InteractionMap p_304473_) {
-        super(p_151946_);
-        this.interactions = p_304473_;
+    public AbstractCauldronBlock(BlockBehaviour.Properties properties, CauldronInteraction.InteractionMap interactions) {
+        super(properties);
+        this.interactions = interactions;
     }
 
-    protected double getContentHeight(BlockState p_151948_) {
+    protected double getContentHeight(BlockState state) {
         return 0.0;
     }
 
-    protected boolean isEntityInsideContent(BlockState p_151980_, BlockPos p_151981_, Entity p_151982_) {
-        return p_151982_.getY() < (double)p_151981_.getY() + this.getContentHeight(p_151980_)
-            && p_151982_.getBoundingBox().maxY > (double)p_151981_.getY() + 0.25;
+    protected boolean isEntityInsideContent(BlockState state, BlockPos pos, Entity entity) {
+        return entity.getY() < (double)pos.getY() + this.getContentHeight(state)
+            && entity.getBoundingBox().maxY > (double)pos.getY() + 0.25;
     }
 
     @Override
     protected ItemInteractionResult useItemOn(
-        ItemStack p_316791_, BlockState p_316287_, Level p_316530_, BlockPos p_316585_, Player p_316671_, InteractionHand p_316186_, BlockHitResult p_316294_
+        ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult
     ) {
-        CauldronInteraction cauldroninteraction = this.interactions.map().get(p_316791_.getItem());
-        return cauldroninteraction.interact(p_316287_, p_316530_, p_316585_, p_316671_, p_316186_, p_316791_);
+        CauldronInteraction cauldroninteraction = this.interactions.map().get(stack.getItem());
+        return cauldroninteraction.interact(state, level, pos, player, hand, stack);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_151964_, BlockGetter p_151965_, BlockPos p_151966_, CollisionContext p_151967_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    protected VoxelShape getInteractionShape(BlockState p_151955_, BlockGetter p_151956_, BlockPos p_151957_) {
+    protected VoxelShape getInteractionShape(BlockState state, BlockGetter level, BlockPos pos) {
         return INSIDE;
     }
 
     @Override
-    protected boolean hasAnalogOutputSignal(BlockState p_151986_) {
+    protected boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_151959_, PathComputationType p_151962_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
-    public abstract boolean isFull(BlockState p_151984_);
+    public abstract boolean isFull(BlockState state);
 
     @Override
-    protected void tick(BlockState p_220702_, ServerLevel p_220703_, BlockPos p_220704_, RandomSource p_220705_) {
-        BlockPos blockpos = PointedDripstoneBlock.findStalactiteTipAboveCauldron(p_220703_, p_220704_);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        BlockPos blockpos = PointedDripstoneBlock.findStalactiteTipAboveCauldron(level, pos);
         if (blockpos != null) {
-            Fluid fluid = PointedDripstoneBlock.getCauldronFillFluidType(p_220703_, blockpos);
+            Fluid fluid = PointedDripstoneBlock.getCauldronFillFluidType(level, blockpos);
             if (fluid != Fluids.EMPTY && this.canReceiveStalactiteDrip(fluid)) {
-                this.receiveStalactiteDrip(p_220702_, p_220703_, p_220704_, fluid);
+                this.receiveStalactiteDrip(state, level, pos, fluid);
             }
         }
     }
 
-    protected boolean canReceiveStalactiteDrip(Fluid p_151983_) {
+    protected boolean canReceiveStalactiteDrip(Fluid fluid) {
         return false;
     }
 
-    protected void receiveStalactiteDrip(BlockState p_151975_, Level p_151976_, BlockPos p_151977_, Fluid p_151978_) {
+    protected void receiveStalactiteDrip(BlockState state, Level level, BlockPos pos, Fluid fluid) {
     }
 
     @Override

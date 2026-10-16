@@ -9,35 +9,35 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.GameRules;
 
 public class GameRuleCommand {
-    public static void register(CommandDispatcher<CommandSourceStack> p_137745_) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         final LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = Commands.literal("gamerule")
             .requires(p_137750_ -> p_137750_.hasPermission(2));
         GameRules.visitGameRuleTypes(
             new GameRules.GameRuleTypeVisitor() {
                 @Override
-                public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> p_137764_, GameRules.Type<T> p_137765_) {
+                public <T extends GameRules.Value<T>> void visit(GameRules.Key<T> key, GameRules.Type<T> type) {
                     literalargumentbuilder.then(
-                        Commands.literal(p_137764_.getId())
-                            .executes(p_137771_ -> GameRuleCommand.queryRule(p_137771_.getSource(), p_137764_))
-                            .then(p_137765_.createArgument("value").executes(p_137768_ -> GameRuleCommand.setRule(p_137768_, p_137764_)))
+                        Commands.literal(key.getId())
+                            .executes(p_137771_ -> GameRuleCommand.queryRule(p_137771_.getSource(), key))
+                            .then(type.createArgument("value").executes(p_137768_ -> GameRuleCommand.setRule(p_137768_, key)))
                     );
                 }
             }
         );
-        p_137745_.register(literalargumentbuilder);
+        dispatcher.register(literalargumentbuilder);
     }
 
-    static <T extends GameRules.Value<T>> int setRule(CommandContext<CommandSourceStack> p_137755_, GameRules.Key<T> p_137756_) {
-        CommandSourceStack commandsourcestack = p_137755_.getSource();
-        T t = commandsourcestack.getServer().getGameRules().getRule(p_137756_);
-        t.setFromArgument(p_137755_, "value");
-        commandsourcestack.sendSuccess(() -> Component.translatable("commands.gamerule.set", p_137756_.getId(), t.toString()), true);
+    static <T extends GameRules.Value<T>> int setRule(CommandContext<CommandSourceStack> source, GameRules.Key<T> gameRule) {
+        CommandSourceStack commandsourcestack = source.getSource();
+        T t = commandsourcestack.getServer().getGameRules().getRule(gameRule);
+        t.setFromArgument(source, "value");
+        commandsourcestack.sendSuccess(() -> Component.translatable("commands.gamerule.set", gameRule.getId(), t.toString()), true);
         return t.getCommandResult();
     }
 
-    static <T extends GameRules.Value<T>> int queryRule(CommandSourceStack p_137758_, GameRules.Key<T> p_137759_) {
-        T t = p_137758_.getServer().getGameRules().getRule(p_137759_);
-        p_137758_.sendSuccess(() -> Component.translatable("commands.gamerule.query", p_137759_.getId(), t.toString()), false);
+    static <T extends GameRules.Value<T>> int queryRule(CommandSourceStack source, GameRules.Key<T> gameRule) {
+        T t = source.getServer().getGameRules().getRule(gameRule);
+        source.sendSuccess(() -> Component.translatable("commands.gamerule.query", gameRule.getId(), t.toString()), false);
         return t.getCommandResult();
     }
 }

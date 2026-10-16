@@ -14,13 +14,13 @@ public final class VirtualScreen implements AutoCloseable {
     private final Minecraft minecraft;
     private final ScreenManager screenManager;
 
-    public VirtualScreen(Minecraft p_110871_) {
-        this.minecraft = p_110871_;
+    public VirtualScreen(Minecraft minecraft) {
+        this.minecraft = minecraft;
         this.screenManager = new ScreenManager(Monitor::new);
     }
 
-    public Window newWindow(DisplayData p_110873_, @Nullable String p_110874_, String p_110875_) {
-        return new Window(this.minecraft, this.screenManager, p_110873_, p_110874_, p_110875_);
+    public Window newWindow(DisplayData screenSize, @Nullable String videoModeName, String title) {
+        return new Window(this.minecraft, this.screenManager, screenSize, videoModeName, title);
     }
 
     @Override

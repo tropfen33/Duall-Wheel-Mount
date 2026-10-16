@@ -16,29 +16,29 @@ public class RandomSequence {
     );
     private final XoroshiroRandomSource source;
 
-    public RandomSequence(XoroshiroRandomSource p_287597_) {
-        this.source = p_287597_;
+    public RandomSequence(XoroshiroRandomSource source) {
+        this.source = source;
     }
 
-    public RandomSequence(long p_287592_, ResourceLocation p_287762_) {
-        this(createSequence(p_287592_, Optional.of(p_287762_)));
+    public RandomSequence(long seed, ResourceLocation location) {
+        this(createSequence(seed, Optional.of(location)));
     }
 
-    public RandomSequence(long p_295115_, Optional<ResourceLocation> p_295306_) {
-        this(createSequence(p_295115_, p_295306_));
+    public RandomSequence(long seed, Optional<ResourceLocation> location) {
+        this(createSequence(seed, location));
     }
 
-    private static XoroshiroRandomSource createSequence(long p_289567_, Optional<ResourceLocation> p_294573_) {
-        RandomSupport.Seed128bit randomsupport$seed128bit = RandomSupport.upgradeSeedTo128bitUnmixed(p_289567_);
-        if (p_294573_.isPresent()) {
-            randomsupport$seed128bit = randomsupport$seed128bit.xor(seedForKey(p_294573_.get()));
+    private static XoroshiroRandomSource createSequence(long seed, Optional<ResourceLocation> location) {
+        RandomSupport.Seed128bit randomsupport$seed128bit = RandomSupport.upgradeSeedTo128bitUnmixed(seed);
+        if (location.isPresent()) {
+            randomsupport$seed128bit = randomsupport$seed128bit.xor(seedForKey(location.get()));
         }
 
         return new XoroshiroRandomSource(randomsupport$seed128bit.mixed());
     }
 
-    public static RandomSupport.Seed128bit seedForKey(ResourceLocation p_288989_) {
-        return RandomSupport.seedFromHashOf(p_288989_.toString());
+    public static RandomSupport.Seed128bit seedForKey(ResourceLocation key) {
+        return RandomSupport.seedFromHashOf(key.toString());
     }
 
     public RandomSource random() {

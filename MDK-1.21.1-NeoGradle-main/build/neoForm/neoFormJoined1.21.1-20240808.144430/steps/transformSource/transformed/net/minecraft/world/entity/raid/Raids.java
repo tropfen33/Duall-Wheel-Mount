@@ -30,18 +30,18 @@ public class Raids extends SavedData {
     private int nextAvailableID;
     private int tick;
 
-    public static SavedData.Factory<Raids> factory(ServerLevel p_295840_) {
-        return new SavedData.Factory<>(() -> new Raids(p_295840_), (p_294039_, p_324123_) -> load(p_295840_, p_294039_), DataFixTypes.SAVED_DATA_RAIDS);
+    public static SavedData.Factory<Raids> factory(ServerLevel level) {
+        return new SavedData.Factory<>(() -> new Raids(level), (p_294039_, p_324123_) -> load(level, p_294039_), DataFixTypes.SAVED_DATA_RAIDS);
     }
 
-    public Raids(ServerLevel p_37956_) {
-        this.level = p_37956_;
+    public Raids(ServerLevel level) {
+        this.level = level;
         this.nextAvailableID = 1;
         this.setDirty();
     }
 
-    public Raid get(int p_37959_) {
-        return this.raidMap.get(p_37959_);
+    public Raid get(int id) {
+        return this.raidMap.get(id);
     }
 
     public void tick() {
@@ -69,29 +69,29 @@ public class Raids extends SavedData {
         DebugPackets.sendRaids(this.level, this.raidMap.values());
     }
 
-    public static boolean canJoinRaid(Raider p_37966_, Raid p_37967_) {
-        return p_37966_ != null && p_37967_ != null && p_37967_.getLevel() != null
-            ? p_37966_.isAlive()
-                && p_37966_.canJoinRaid()
-                && p_37966_.getNoActionTime() <= 2400
-                && p_37966_.level().dimensionType() == p_37967_.getLevel().dimensionType()
+    public static boolean canJoinRaid(Raider raider, Raid raid) {
+        return raider != null && raid != null && raid.getLevel() != null
+            ? raider.isAlive()
+                && raider.canJoinRaid()
+                && raider.getNoActionTime() <= 2400
+                && raider.level().dimensionType() == raid.getLevel().dimensionType()
             : false;
     }
 
     @Nullable
-    public Raid createOrExtendRaid(ServerPlayer p_37964_, BlockPos p_338602_) {
-        if (p_37964_.isSpectator()) {
+    public Raid createOrExtendRaid(ServerPlayer player, BlockPos pos) {
+        if (player.isSpectator()) {
             return null;
         } else if (this.level.getGameRules().getBoolean(GameRules.RULE_DISABLE_RAIDS)) {
             return null;
         } else {
-            DimensionType dimensiontype = p_37964_.level().dimensionType();
+            DimensionType dimensiontype = player.level().dimensionType();
             if (!dimensiontype.hasRaids()) {
                 return null;
             } else {
                 List<PoiRecord> list = this.level
                     .getPoiManager()
-                    .getInRange(p_219845_ -> p_219845_.is(PoiTypeTags.VILLAGE), p_338602_, 64, PoiManager.Occupancy.IS_OCCUPIED)
+                    .getInRange(p_219845_ -> p_219845_.is(PoiTypeTags.VILLAGE), pos, 64, PoiManager.Occupancy.IS_OCCUPIED)
                     .toList();
                 int i = 0;
                 Vec3 vec3 = Vec3.ZERO;
@@ -107,16 +107,16 @@ public class Raids extends SavedData {
                     vec3 = vec3.scale(1.0 / (double)i);
                     blockpos1 = BlockPos.containing(vec3);
                 } else {
-                    blockpos1 = p_338602_;
+                    blockpos1 = pos;
                 }
 
-                Raid raid = this.getOrCreateRaid(p_37964_.serverLevel(), blockpos1);
+                Raid raid = this.getOrCreateRaid(player.serverLevel(), blockpos1);
                 if (!raid.isStarted() && !this.raidMap.containsKey(raid.getId())) {
                     this.raidMap.put(raid.getId(), raid);
                 }
 
                 if (!raid.isStarted() || raid.getRaidOmenLevel() < raid.getMaxRaidOmenLevel()) {
-                    raid.absorbRaidOmen(p_37964_);
+                    raid.absorbRaidOmen(player);
                 }
 
                 this.setDirty();
@@ -125,20 +125,20 @@ public class Raids extends SavedData {
         }
     }
 
-    private Raid getOrCreateRaid(ServerLevel p_37961_, BlockPos p_37962_) {
-        Raid raid = p_37961_.getRaidAt(p_37962_);
-        return raid != null ? raid : new Raid(this.getUniqueId(), p_37961_, p_37962_);
+    private Raid getOrCreateRaid(ServerLevel serverLevel, BlockPos pos) {
+        Raid raid = serverLevel.getRaidAt(pos);
+        return raid != null ? raid : new Raid(this.getUniqueId(), serverLevel, pos);
     }
 
-    public static Raids load(ServerLevel p_150236_, CompoundTag p_150237_) {
-        Raids raids = new Raids(p_150236_);
-        raids.nextAvailableID = p_150237_.getInt("NextAvailableID");
-        raids.tick = p_150237_.getInt("Tick");
-        ListTag listtag = p_150237_.getList("Raids", 10);
+    public static Raids load(ServerLevel level, CompoundTag tag) {
+        Raids raids = new Raids(level);
+        raids.nextAvailableID = tag.getInt("NextAvailableID");
+        raids.tick = tag.getInt("Tick");
+        ListTag listtag = tag.getList("Raids", 10);
 
         for (int i = 0; i < listtag.size(); i++) {
             CompoundTag compoundtag = listtag.getCompound(i);
-            Raid raid = new Raid(p_150236_, compoundtag);
+            Raid raid = new Raid(level, compoundtag);
             raids.raidMap.put(raid.getId(), raid);
         }
 
@@ -146,9 +146,9 @@ public class Raids extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag p_37976_, HolderLookup.Provider p_323890_) {
-        p_37976_.putInt("NextAvailableID", this.nextAvailableID);
-        p_37976_.putInt("Tick", this.tick);
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        tag.putInt("NextAvailableID", this.nextAvailableID);
+        tag.putInt("Tick", this.tick);
         ListTag listtag = new ListTag();
 
         for (Raid raid : this.raidMap.values()) {
@@ -157,12 +157,12 @@ public class Raids extends SavedData {
             listtag.add(compoundtag);
         }
 
-        p_37976_.put("Raids", listtag);
-        return p_37976_;
+        tag.put("Raids", listtag);
+        return tag;
     }
 
-    public static String getFileId(Holder<DimensionType> p_211597_) {
-        return p_211597_.is(BuiltinDimensionTypes.END) ? "raids_end" : "raids";
+    public static String getFileId(Holder<DimensionType> dimensionTypeHolder) {
+        return dimensionTypeHolder.is(BuiltinDimensionTypes.END) ? "raids_end" : "raids";
     }
 
     private int getUniqueId() {
@@ -170,12 +170,12 @@ public class Raids extends SavedData {
     }
 
     @Nullable
-    public Raid getNearbyRaid(BlockPos p_37971_, int p_37972_) {
+    public Raid getNearbyRaid(BlockPos pos, int distance) {
         Raid raid = null;
-        double d0 = (double)p_37972_;
+        double d0 = (double)distance;
 
         for (Raid raid1 : this.raidMap.values()) {
-            double d1 = raid1.getCenter().distSqr(p_37971_);
+            double d1 = raid1.getCenter().distSqr(pos);
             if (raid1.isActive() && d1 < d0) {
                 raid = raid1;
                 d0 = d1;

@@ -25,8 +25,8 @@ public class LevelFlatGeneratorInfoFix extends DataFix {
     private static final Splitter AMOUNT_SPLITTER = Splitter.on('*').limit(2);
     private static final Splitter BLOCK_SPLITTER = Splitter.on(':').limit(3);
 
-    public LevelFlatGeneratorInfoFix(Schema p_16344_, boolean p_16345_) {
-        super(p_16344_, p_16345_);
+    public LevelFlatGeneratorInfoFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -36,21 +36,21 @@ public class LevelFlatGeneratorInfoFix extends DataFix {
         );
     }
 
-    private Dynamic<?> fix(Dynamic<?> p_16353_) {
-        return p_16353_.get("generatorName").asString("").equalsIgnoreCase("flat")
-            ? p_16353_.update(
+    private Dynamic<?> fix(Dynamic<?> dynamic) {
+        return dynamic.get("generatorName").asString("").equalsIgnoreCase("flat")
+            ? dynamic.update(
                 "generatorOptions",
                 p_337644_ -> DataFixUtils.orElse(p_337644_.asString().map(this::fixString).map(p_337644_::createString).result(), p_337644_)
             )
-            : p_16353_;
+            : dynamic;
     }
 
     @VisibleForTesting
-    String fixString(String p_16355_) {
-        if (p_16355_.isEmpty()) {
+    String fixString(String string) {
+        if (string.isEmpty()) {
             return "minecraft:bedrock,2*minecraft:dirt,minecraft:grass_block;1;village";
         } else {
-            Iterator<String> iterator = SPLITTER.split(p_16355_).iterator();
+            Iterator<String> iterator = SPLITTER.split(string).iterator();
             String s = iterator.next();
             int i;
             String s1;

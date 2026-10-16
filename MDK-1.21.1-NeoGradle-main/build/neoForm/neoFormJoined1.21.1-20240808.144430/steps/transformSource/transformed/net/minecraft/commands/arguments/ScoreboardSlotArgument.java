@@ -28,23 +28,23 @@ public class ScoreboardSlotArgument implements ArgumentType<DisplaySlot> {
         return new ScoreboardSlotArgument();
     }
 
-    public static DisplaySlot getDisplaySlot(CommandContext<CommandSourceStack> p_109200_, String p_109201_) {
-        return p_109200_.getArgument(p_109201_, DisplaySlot.class);
+    public static DisplaySlot getDisplaySlot(CommandContext<CommandSourceStack> context, String slot) {
+        return context.getArgument(slot, DisplaySlot.class);
     }
 
-    public DisplaySlot parse(StringReader p_109198_) throws CommandSyntaxException {
-        String s = p_109198_.readUnquotedString();
+    public DisplaySlot parse(StringReader reader) throws CommandSyntaxException {
+        String s = reader.readUnquotedString();
         DisplaySlot displayslot = DisplaySlot.CODEC.byName(s);
         if (displayslot == null) {
-            throw ERROR_INVALID_VALUE.createWithContext(p_109198_, s);
+            throw ERROR_INVALID_VALUE.createWithContext(reader, s);
         } else {
             return displayslot;
         }
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_109206_, SuggestionsBuilder p_109207_) {
-        return SharedSuggestionProvider.suggest(Arrays.stream(DisplaySlot.values()).map(DisplaySlot::getSerializedName), p_109207_);
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
+        return SharedSuggestionProvider.suggest(Arrays.stream(DisplaySlot.values()).map(DisplaySlot::getSerializedName), builder);
     }
 
     @Override

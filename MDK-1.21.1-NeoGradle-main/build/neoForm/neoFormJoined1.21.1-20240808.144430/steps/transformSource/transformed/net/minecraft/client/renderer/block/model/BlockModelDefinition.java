@@ -32,23 +32,23 @@ public class BlockModelDefinition {
     private final Map<String, MultiVariant> variants = Maps.newLinkedHashMap();
     private MultiPart multiPart;
 
-    public static BlockModelDefinition fromStream(BlockModelDefinition.Context p_111541_, Reader p_111542_) {
-        return GsonHelper.fromJson(p_111541_.gson, p_111542_, BlockModelDefinition.class);
+    public static BlockModelDefinition fromStream(BlockModelDefinition.Context context, Reader reader) {
+        return GsonHelper.fromJson(context.gson, reader, BlockModelDefinition.class);
     }
 
-    public static BlockModelDefinition fromJsonElement(BlockModelDefinition.Context p_249700_, JsonElement p_250730_) {
-        return p_249700_.gson.fromJson(p_250730_, BlockModelDefinition.class);
+    public static BlockModelDefinition fromJsonElement(BlockModelDefinition.Context context, JsonElement json) {
+        return context.gson.fromJson(json, BlockModelDefinition.class);
     }
 
-    public BlockModelDefinition(Map<String, MultiVariant> p_111537_, MultiPart p_111538_) {
-        this.multiPart = p_111538_;
-        this.variants.putAll(p_111537_);
+    public BlockModelDefinition(Map<String, MultiVariant> variants, MultiPart multiPart) {
+        this.multiPart = multiPart;
+        this.variants.putAll(variants);
     }
 
-    public BlockModelDefinition(List<BlockModelDefinition> p_111535_) {
+    public BlockModelDefinition(List<BlockModelDefinition> modelDefinitions) {
         BlockModelDefinition blockmodeldefinition = null;
 
-        for (BlockModelDefinition blockmodeldefinition1 : p_111535_) {
+        for (BlockModelDefinition blockmodeldefinition1 : modelDefinitions) {
             if (blockmodeldefinition1.isMultiPart()) {
                 this.variants.clear();
                 blockmodeldefinition = blockmodeldefinition1;
@@ -63,13 +63,13 @@ public class BlockModelDefinition {
     }
 
     @VisibleForTesting
-    public boolean hasVariant(String p_173426_) {
-        return this.variants.get(p_173426_) != null;
+    public boolean hasVariant(String key) {
+        return this.variants.get(key) != null;
     }
 
     @VisibleForTesting
-    public MultiVariant getVariant(String p_173429_) {
-        MultiVariant multivariant = this.variants.get(p_173429_);
+    public MultiVariant getVariant(String key) {
+        MultiVariant multivariant = this.variants.get(key);
         if (multivariant == null) {
             throw new BlockModelDefinition.MissingVariantException();
         } else {
@@ -78,11 +78,11 @@ public class BlockModelDefinition {
     }
 
     @Override
-    public boolean equals(Object p_111546_) {
-        if (this == p_111546_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            if (p_111546_ instanceof BlockModelDefinition blockmodeldefinition && this.variants.equals(blockmodeldefinition.variants)) {
+            if (other instanceof BlockModelDefinition blockmodeldefinition && this.variants.equals(blockmodeldefinition.variants)) {
                 return this.isMultiPart() ? this.multiPart.equals(blockmodeldefinition.multiPart) : !blockmodeldefinition.isMultiPart();
             }
 
@@ -132,17 +132,17 @@ public class BlockModelDefinition {
             return this.definition;
         }
 
-        public void setDefinition(StateDefinition<Block, BlockState> p_111553_) {
-            this.definition = p_111553_;
+        public void setDefinition(StateDefinition<Block, BlockState> stateContainer) {
+            this.definition = stateContainer;
         }
     }
 
     @OnlyIn(Dist.CLIENT)
     public static class Deserializer implements JsonDeserializer<BlockModelDefinition> {
-        public BlockModelDefinition deserialize(JsonElement p_111559_, Type p_111560_, JsonDeserializationContext p_111561_) throws JsonParseException {
-            JsonObject jsonobject = p_111559_.getAsJsonObject();
-            Map<String, MultiVariant> map = this.getVariants(p_111561_, jsonobject);
-            MultiPart multipart = this.getMultiPart(p_111561_, jsonobject);
+        public BlockModelDefinition deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonobject = json.getAsJsonObject();
+            Map<String, MultiVariant> map = this.getVariants(context, jsonobject);
+            MultiPart multipart = this.getMultiPart(context, jsonobject);
             if (!map.isEmpty() || multipart != null && !multipart.getMultiVariants().isEmpty()) {
                 return new BlockModelDefinition(map, multipart);
             } else {
@@ -150,13 +150,13 @@ public class BlockModelDefinition {
             }
         }
 
-        protected Map<String, MultiVariant> getVariants(JsonDeserializationContext p_111556_, JsonObject p_111557_) {
+        protected Map<String, MultiVariant> getVariants(JsonDeserializationContext context, JsonObject json) {
             Map<String, MultiVariant> map = Maps.newHashMap();
-            if (p_111557_.has("variants")) {
-                JsonObject jsonobject = GsonHelper.getAsJsonObject(p_111557_, "variants");
+            if (json.has("variants")) {
+                JsonObject jsonobject = GsonHelper.getAsJsonObject(json, "variants");
 
                 for (Entry<String, JsonElement> entry : jsonobject.entrySet()) {
-                    map.put(entry.getKey(), p_111556_.deserialize(entry.getValue(), MultiVariant.class));
+                    map.put(entry.getKey(), context.deserialize(entry.getValue(), MultiVariant.class));
                 }
             }
 
@@ -164,12 +164,12 @@ public class BlockModelDefinition {
         }
 
         @Nullable
-        protected MultiPart getMultiPart(JsonDeserializationContext p_111563_, JsonObject p_111564_) {
-            if (!p_111564_.has("multipart")) {
+        protected MultiPart getMultiPart(JsonDeserializationContext context, JsonObject json) {
+            if (!json.has("multipart")) {
                 return null;
             } else {
-                JsonArray jsonarray = GsonHelper.getAsJsonArray(p_111564_, "multipart");
-                return p_111563_.deserialize(jsonarray, MultiPart.class);
+                JsonArray jsonarray = GsonHelper.getAsJsonArray(json, "multipart");
+                return context.deserialize(jsonarray, MultiPart.class);
             }
         }
     }

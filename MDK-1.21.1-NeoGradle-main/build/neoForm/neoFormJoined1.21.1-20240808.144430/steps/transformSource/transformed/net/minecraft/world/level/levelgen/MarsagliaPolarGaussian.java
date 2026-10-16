@@ -8,8 +8,8 @@ public class MarsagliaPolarGaussian {
     private double nextNextGaussian;
     private boolean haveNextNextGaussian;
 
-    public MarsagliaPolarGaussian(RandomSource p_224204_) {
-        this.randomSource = p_224204_;
+    public MarsagliaPolarGaussian(RandomSource randomSource) {
+        this.randomSource = randomSource;
     }
 
     public void reset() {

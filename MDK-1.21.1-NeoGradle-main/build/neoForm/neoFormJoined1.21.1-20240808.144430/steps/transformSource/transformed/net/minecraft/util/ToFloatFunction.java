@@ -6,16 +6,16 @@ import java.util.function.Function;
 public interface ToFloatFunction<C> {
     ToFloatFunction<Float> IDENTITY = createUnlimited(p_216474_ -> p_216474_);
 
-    float apply(C p_184786_);
+    float apply(C object);
 
     float minValue();
 
     float maxValue();
 
-    static ToFloatFunction<Float> createUnlimited(final Float2FloatFunction p_216476_) {
+    static ToFloatFunction<Float> createUnlimited(final Float2FloatFunction wrapped) {
         return new ToFloatFunction<Float>() {
             public float apply(Float p_216483_) {
-                return p_216476_.apply(p_216483_);
+                return wrapped.apply(p_216483_);
             }
 
             @Override
@@ -30,12 +30,12 @@ public interface ToFloatFunction<C> {
         };
     }
 
-    default <C2> ToFloatFunction<C2> comap(final Function<C2, C> p_216478_) {
+    default <C2> ToFloatFunction<C2> comap(final Function<C2, C> converter) {
         final ToFloatFunction<C> tofloatfunction = this;
         return new ToFloatFunction<C2>() {
             @Override
             public float apply(C2 p_216496_) {
-                return tofloatfunction.apply(p_216478_.apply(p_216496_));
+                return tofloatfunction.apply(converter.apply(p_216496_));
             }
 
             @Override

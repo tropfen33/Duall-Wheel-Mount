@@ -16,48 +16,48 @@ import net.minecraft.world.level.material.Fluids;
 public class EmptyLevelChunk extends LevelChunk {
     private final Holder<Biome> biome;
 
-    public EmptyLevelChunk(Level p_204422_, ChunkPos p_204423_, Holder<Biome> p_204424_) {
-        super(p_204422_, p_204423_);
-        this.biome = p_204424_;
+    public EmptyLevelChunk(Level level, ChunkPos pos, Holder<Biome> biome) {
+        super(level, pos);
+        this.biome = biome;
     }
 
     @Override
-    public BlockState getBlockState(BlockPos p_62625_) {
+    public BlockState getBlockState(BlockPos pos) {
         return Blocks.VOID_AIR.defaultBlockState();
     }
 
     @Nullable
     @Override
-    public BlockState setBlockState(BlockPos p_62605_, BlockState p_62606_, boolean p_62607_) {
+    public BlockState setBlockState(BlockPos pos, BlockState state, boolean isMoving) {
         return null;
     }
 
     @Override
-    public FluidState getFluidState(BlockPos p_62621_) {
+    public FluidState getFluidState(BlockPos pos) {
         return Fluids.EMPTY.defaultFluidState();
     }
 
     @Override
-    public int getLightEmission(BlockPos p_62628_) {
+    public int getLightEmission(BlockPos pos) {
         return 0;
     }
 
     @Nullable
     @Override
-    public BlockEntity getBlockEntity(BlockPos p_62609_, LevelChunk.EntityCreationType p_62610_) {
+    public BlockEntity getBlockEntity(BlockPos pos, LevelChunk.EntityCreationType creationType) {
         return null;
     }
 
     @Override
-    public void addAndRegisterBlockEntity(BlockEntity p_156346_) {
+    public void addAndRegisterBlockEntity(BlockEntity blockEntity) {
     }
 
     @Override
-    public void setBlockEntity(BlockEntity p_156344_) {
+    public void setBlockEntity(BlockEntity blockEntity) {
     }
 
     @Override
-    public void removeBlockEntity(BlockPos p_62623_) {
+    public void removeBlockEntity(BlockPos pos) {
     }
 
     @Override
@@ -66,12 +66,12 @@ public class EmptyLevelChunk extends LevelChunk {
     }
 
     @Override
-    public boolean isYSpaceEmpty(int p_62587_, int p_62588_) {
+    public boolean isYSpaceEmpty(int startY, int endY) {
         return true;
     }
 
     @Override
-    public boolean isSectionEmpty(int p_350288_) {
+    public boolean isSectionEmpty(int y) {
         return true;
     }
 
@@ -80,8 +80,12 @@ public class EmptyLevelChunk extends LevelChunk {
         return FullChunkStatus.FULL;
     }
 
+    /**
+     * Gets the biome at the given quart positions.
+     * Note that the coordinates passed into this method are 1/4 the scale of block coordinates.
+     */
     @Override
-    public Holder<Biome> getNoiseBiome(int p_204426_, int p_204427_, int p_204428_) {
+    public Holder<Biome> getNoiseBiome(int x, int y, int z) {
         return this.biome;
     }
 }

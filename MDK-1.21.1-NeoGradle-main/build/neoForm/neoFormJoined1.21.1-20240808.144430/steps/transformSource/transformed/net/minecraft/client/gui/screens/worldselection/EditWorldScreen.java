@@ -56,36 +56,36 @@ public class EditWorldScreen extends Screen {
     private final LevelStorageSource.LevelStorageAccess levelAccess;
     private final EditBox nameEdit;
 
-    public static EditWorldScreen create(Minecraft p_307412_, LevelStorageSource.LevelStorageAccess p_307335_, BooleanConsumer p_307249_) throws IOException {
-        LevelSummary levelsummary = p_307335_.getSummary(p_307335_.getDataTag());
-        return new EditWorldScreen(p_307412_, p_307335_, levelsummary.getLevelName(), p_307249_);
+    public static EditWorldScreen create(Minecraft minecraft, LevelStorageSource.LevelStorageAccess levelAccess, BooleanConsumer callback) throws IOException {
+        LevelSummary levelsummary = levelAccess.getSummary(levelAccess.getDataTag());
+        return new EditWorldScreen(minecraft, levelAccess, levelsummary.getLevelName(), callback);
     }
 
-    private EditWorldScreen(Minecraft p_307201_, LevelStorageSource.LevelStorageAccess p_101253_, String p_307193_, BooleanConsumer p_101252_) {
+    private EditWorldScreen(Minecraft minecraft, LevelStorageSource.LevelStorageAccess levelAccess, String levelName, BooleanConsumer callback) {
         super(Component.translatable("selectWorld.edit.title"));
-        this.callback = p_101252_;
-        this.levelAccess = p_101253_;
-        Font font = p_307201_.font;
+        this.callback = callback;
+        this.levelAccess = levelAccess;
+        Font font = minecraft.font;
         this.layout.addChild(new SpacerElement(200, 20));
         this.layout.addChild(new StringWidget(NAME_LABEL, font));
         this.nameEdit = this.layout.addChild(new EditBox(font, 200, 20, NAME_LABEL));
-        this.nameEdit.setValue(p_307193_);
+        this.nameEdit.setValue(levelName);
         LinearLayout linearlayout = LinearLayout.horizontal().spacing(4);
         Button button = linearlayout.addChild(Button.builder(SAVE_BUTTON, p_319375_ -> this.onRename(this.nameEdit.getValue())).width(98).build());
         linearlayout.addChild(Button.builder(CommonComponents.GUI_CANCEL, p_307073_ -> this.onClose()).width(98).build());
         this.nameEdit.setResponder(p_329751_ -> button.active = !StringUtil.isBlank(p_329751_));
         this.layout.addChild(Button.builder(RESET_ICON_BUTTON, p_307072_ -> {
-            p_101253_.getIconFile().ifPresent(p_182594_ -> FileUtils.deleteQuietly(p_182594_.toFile()));
+            levelAccess.getIconFile().ifPresent(p_182594_ -> FileUtils.deleteQuietly(p_182594_.toFile()));
             p_307072_.active = false;
-        }).width(200).build()).active = p_101253_.getIconFile().filter(p_182587_ -> Files.isRegularFile(p_182587_)).isPresent();
+        }).width(200).build()).active = levelAccess.getIconFile().filter(p_182587_ -> Files.isRegularFile(p_182587_)).isPresent();
         this.layout
-            .addChild(Button.builder(FOLDER_BUTTON, p_351667_ -> Util.getPlatform().openPath(p_101253_.getLevelPath(LevelResource.ROOT))).width(200).build());
+            .addChild(Button.builder(FOLDER_BUTTON, p_351667_ -> Util.getPlatform().openPath(levelAccess.getLevelPath(LevelResource.ROOT))).width(200).build());
         this.layout.addChild(Button.builder(BACKUP_BUTTON, p_307060_ -> {
-            boolean flag = makeBackupAndShowToast(p_101253_);
+            boolean flag = makeBackupAndShowToast(levelAccess);
             this.callback.accept(!flag);
         }).width(200).build());
         this.layout.addChild(Button.builder(BACKUP_FOLDER_BUTTON, p_351665_ -> {
-            LevelStorageSource levelstoragesource = p_307201_.getLevelSource();
+            LevelStorageSource levelstoragesource = minecraft.getLevelSource();
             Path path = levelstoragesource.getBackupPath();
 
             try {
@@ -99,12 +99,12 @@ public class EditWorldScreen extends Screen {
         this.layout
             .addChild(
                 Button.builder(
-                        OPTIMIZE_BUTTON, p_307058_ -> p_307201_.setScreen(new BackupConfirmScreen(() -> p_307201_.setScreen(this), (p_307053_, p_307054_) -> {
+                        OPTIMIZE_BUTTON, p_307058_ -> minecraft.setScreen(new BackupConfirmScreen(() -> minecraft.setScreen(this), (p_307053_, p_307054_) -> {
                                 if (p_307053_) {
-                                    makeBackupAndShowToast(p_101253_);
+                                    makeBackupAndShowToast(levelAccess);
                                 }
 
-                                p_307201_.setScreen(OptimizeWorldScreen.create(p_307201_, this.callback, p_307201_.getFixerUpper(), p_101253_, p_307054_));
+                                minecraft.setScreen(OptimizeWorldScreen.create(minecraft, this.callback, minecraft.getFixerUpper(), levelAccess, p_307054_));
                             }, OPTIMIZE_TITLE, OPTIMIIZE_DESCRIPTION, true))
                     )
                     .width(200)
@@ -138,9 +138,9 @@ public class EditWorldScreen extends Screen {
         this.callback.accept(false);
     }
 
-    private void onRename(String p_307678_) {
+    private void onRename(String saveName) {
         try {
-            this.levelAccess.renameLevel(p_307678_);
+            this.levelAccess.renameLevel(saveName);
         } catch (NbtException | ReportedNbtException | IOException ioexception) {
             LOGGER.error("Failed to access world '{}'", this.levelAccess.getLevelId(), ioexception);
             SystemToast.onWorldAccessFailure(this.minecraft, this.levelAccess.getLevelId());
@@ -149,12 +149,12 @@ public class EditWorldScreen extends Screen {
         this.callback.accept(true);
     }
 
-    public static boolean makeBackupAndShowToast(LevelStorageSource.LevelStorageAccess p_101259_) {
+    public static boolean makeBackupAndShowToast(LevelStorageSource.LevelStorageAccess levelAccess) {
         long i = 0L;
         IOException ioexception = null;
 
         try {
-            i = p_101259_.makeWorldBackup();
+            i = levelAccess.makeWorldBackup();
         } catch (IOException ioexception1) {
             ioexception = ioexception1;
         }
@@ -165,16 +165,24 @@ public class EditWorldScreen extends Screen {
             Minecraft.getInstance().getToasts().addToast(new SystemToast(SystemToast.SystemToastId.WORLD_BACKUP, component2, component3));
             return false;
         } else {
-            Component component = Component.translatable("selectWorld.edit.backupCreated", p_101259_.getLevelId());
+            Component component = Component.translatable("selectWorld.edit.backupCreated", levelAccess.getLevelId());
             Component component1 = Component.translatable("selectWorld.edit.backupSize", Mth.ceil((double)i / 1048576.0));
             Minecraft.getInstance().getToasts().addToast(new SystemToast(SystemToast.SystemToastId.WORLD_BACKUP, component, component1));
             return true;
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281742_, int p_101265_, int p_101266_, float p_101267_) {
-        super.render(p_281742_, p_101265_, p_101266_, p_101267_);
-        p_281742_.drawCenteredString(this.font, this.title, this.width / 2, 15, 16777215);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 15, 16777215);
     }
 }

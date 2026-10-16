@@ -33,16 +33,16 @@ public class TagLoader<T> {
     final Function<ResourceLocation, Optional<? extends T>> idToValue;
     private final String directory;
 
-    public TagLoader(Function<ResourceLocation, Optional<? extends T>> p_144493_, String p_144494_) {
-        this.idToValue = p_144493_;
-        this.directory = p_144494_;
+    public TagLoader(Function<ResourceLocation, Optional<? extends T>> idToValue, String directory) {
+        this.idToValue = idToValue;
+        this.directory = directory;
     }
 
-    public Map<ResourceLocation, List<TagLoader.EntryWithSource>> load(ResourceManager p_144496_) {
+    public Map<ResourceLocation, List<TagLoader.EntryWithSource>> load(ResourceManager resourceManager) {
         Map<ResourceLocation, List<TagLoader.EntryWithSource>> map = Maps.newHashMap();
         FileToIdConverter filetoidconverter = FileToIdConverter.json(this.directory);
 
-        for (Entry<ResourceLocation, List<Resource>> entry : filetoidconverter.listMatchingResourceStacks(p_144496_).entrySet()) {
+        for (Entry<ResourceLocation, List<Resource>> entry : filetoidconverter.listMatchingResourceStacks(resourceManager).entrySet()) {
             ResourceLocation resourcelocation = entry.getKey();
             ResourceLocation resourcelocation1 = filetoidconverter.fileToId(resourcelocation);
 
@@ -68,12 +68,12 @@ public class TagLoader<T> {
         return map;
     }
 
-    private Either<Collection<TagLoader.EntryWithSource>, Collection<T>> build(TagEntry.Lookup<T> p_215979_, List<TagLoader.EntryWithSource> p_215980_) {
+    private Either<Collection<TagLoader.EntryWithSource>, Collection<T>> build(TagEntry.Lookup<T> lookup, List<TagLoader.EntryWithSource> entries) {
         var builder = new java.util.LinkedHashSet<T>(); // Set must retain insertion order, some tag consumers rely on this being the case (see NeoForge#256)
         List<TagLoader.EntryWithSource> list = new ArrayList<>();
 
-        for (TagLoader.EntryWithSource tagloader$entrywithsource : p_215980_) {
-            if (!tagloader$entrywithsource.entry().build(p_215979_, tagloader$entrywithsource.remove() ? builder::remove : builder::add)) {
+        for (TagLoader.EntryWithSource tagloader$entrywithsource : entries) {
+            if (!tagloader$entrywithsource.entry().build(lookup, tagloader$entrywithsource.remove() ? builder::remove : builder::add)) {
                 list.add(tagloader$entrywithsource);
             }
         }
@@ -81,7 +81,7 @@ public class TagLoader<T> {
         return list.isEmpty() ? Either.right(List.copyOf(builder)) : Either.left(list);
     }
 
-    public Map<ResourceLocation, Collection<T>> build(Map<ResourceLocation, List<TagLoader.EntryWithSource>> p_203899_) {
+    public Map<ResourceLocation, Collection<T>> build(Map<ResourceLocation, List<TagLoader.EntryWithSource>> builders) {
         final Map<ResourceLocation, Collection<T>> map = Maps.newHashMap();
         TagEntry.Lookup<T> lookup = new TagEntry.Lookup<T>() {
             @Nullable
@@ -97,7 +97,7 @@ public class TagLoader<T> {
             }
         };
         DependencySorter<ResourceLocation, TagLoader.SortingEntry> dependencysorter = new DependencySorter<>();
-        p_203899_.forEach(
+        builders.forEach(
             (p_284685_, p_284686_) -> dependencysorter.addEntry(p_284685_, new TagLoader.SortingEntry((List<TagLoader.EntryWithSource>)p_284686_))
         );
         dependencysorter.orderByDependencies(
@@ -114,8 +114,8 @@ public class TagLoader<T> {
         return map;
     }
 
-    public Map<ResourceLocation, Collection<T>> loadAndBuild(ResourceManager p_203901_) {
-        return this.build(this.load(p_203901_));
+    public Map<ResourceLocation, Collection<T>> loadAndBuild(ResourceManager resourceManager) {
+        return this.build(this.load(resourceManager));
     }
 
     public static record EntryWithSource(TagEntry entry, String source, boolean remove) {
@@ -128,13 +128,13 @@ public class TagLoader<T> {
 
     static record SortingEntry(List<TagLoader.EntryWithSource> entries) implements DependencySorter.Entry<ResourceLocation> {
         @Override
-        public void visitRequiredDependencies(Consumer<ResourceLocation> p_285529_) {
-            this.entries.forEach(p_285236_ -> p_285236_.entry.visitRequiredDependencies(p_285529_));
+        public void visitRequiredDependencies(Consumer<ResourceLocation> visitor) {
+            this.entries.forEach(p_285236_ -> p_285236_.entry.visitRequiredDependencies(visitor));
         }
 
         @Override
-        public void visitOptionalDependencies(Consumer<ResourceLocation> p_285469_) {
-            this.entries.forEach(p_284943_ -> p_284943_.entry.visitOptionalDependencies(p_285469_));
+        public void visitOptionalDependencies(Consumer<ResourceLocation> visitor) {
+            this.entries.forEach(p_284943_ -> p_284943_.entry.visitOptionalDependencies(visitor));
         }
     }
 }

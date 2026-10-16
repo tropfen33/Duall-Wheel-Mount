@@ -15,7 +15,7 @@ public class Input {
     public boolean jumping;
     public boolean shiftKeyDown;
 
-    public void tick(boolean p_234115_, float p_234116_) {
+    public void tick(boolean isSneaking, float sneakingSpeedMultiplier) {
     }
 
     public Vec2 getMoveVector() {

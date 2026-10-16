@@ -54,22 +54,22 @@ public class FileUpload {
         .setConnectTimeout((int)TimeUnit.SECONDS.toMillis(15L))
         .build();
 
-    public FileUpload(File p_87071_, long p_87072_, int p_87073_, UploadInfo p_87074_, User p_87075_, String p_87076_, String p_325917_, UploadStatus p_87077_) {
-        this.file = p_87071_;
-        this.realmId = p_87072_;
-        this.slotId = p_87073_;
-        this.uploadInfo = p_87074_;
-        this.sessionId = p_87075_.getSessionId();
-        this.username = p_87075_.getName();
-        this.clientVersion = p_87076_;
-        this.worldVersion = p_325917_;
-        this.uploadStatus = p_87077_;
+    public FileUpload(File file, long realmId, int slotId, UploadInfo uploadInfo, User user, String clientVersiob, String worldVersion, UploadStatus uploadStatus) {
+        this.file = file;
+        this.realmId = realmId;
+        this.slotId = slotId;
+        this.uploadInfo = uploadInfo;
+        this.sessionId = user.getSessionId();
+        this.username = user.getName();
+        this.clientVersion = clientVersiob;
+        this.worldVersion = worldVersion;
+        this.uploadStatus = uploadStatus;
     }
 
-    public void upload(Consumer<UploadResult> p_87085_) {
+    public void upload(Consumer<UploadResult> resultConsumer) {
         if (this.uploadTask == null) {
             this.uploadTask = CompletableFuture.supplyAsync(() -> this.requestUpload(0));
-            this.uploadTask.thenAccept(p_87085_);
+            this.uploadTask.thenAccept(resultConsumer);
         }
     }
 
@@ -81,7 +81,10 @@ public class FileUpload {
         }
     }
 
-    private UploadResult requestUpload(int p_87080_) {
+    /**
+     * @param retries The number of times this upload has already been attempted
+     */
+    private UploadResult requestUpload(int retries) {
         UploadResult.Builder uploadresult$builder = new UploadResult.Builder();
         if (this.cancelled.get()) {
             return uploadresult$builder.build();
@@ -95,12 +98,12 @@ public class FileUpload {
                 this.setupRequest(httppost);
                 HttpResponse httpresponse = closeablehttpclient.execute(httppost);
                 long i = this.getRetryDelaySeconds(httpresponse);
-                if (!this.shouldRetry(i, p_87080_)) {
+                if (!this.shouldRetry(i, retries)) {
                     this.handleResponse(httpresponse, uploadresult$builder);
                     return uploadresult$builder.build();
                 }
 
-                uploadresult = this.retryUploadAfter(i, p_87080_);
+                uploadresult = this.retryUploadAfter(i, retries);
             } catch (Exception exception) {
                 if (!this.cancelled.get()) {
                     LOGGER.error("Caught exception while uploading: ", (Throwable)exception);
@@ -115,19 +118,19 @@ public class FileUpload {
         }
     }
 
-    private void cleanup(HttpPost p_87094_, @Nullable CloseableHttpClient p_87095_) {
-        p_87094_.releaseConnection();
-        if (p_87095_ != null) {
+    private void cleanup(HttpPost post, @Nullable CloseableHttpClient httpClient) {
+        post.releaseConnection();
+        if (httpClient != null) {
             try {
-                p_87095_.close();
+                httpClient.close();
             } catch (IOException ioexception) {
                 LOGGER.error("Failed to close Realms upload client");
             }
         }
     }
 
-    private void setupRequest(HttpPost p_87092_) throws FileNotFoundException {
-        p_87092_.setHeader(
+    private void setupRequest(HttpPost post) throws FileNotFoundException {
+        post.setHeader(
             "Cookie",
             "sid="
                 + this.sessionId
@@ -144,41 +147,41 @@ public class FileUpload {
             new FileInputStream(this.file), this.file.length(), this.uploadStatus
         );
         fileupload$custominputstreamentity.setContentType("application/octet-stream");
-        p_87092_.setEntity(fileupload$custominputstreamentity);
+        post.setEntity(fileupload$custominputstreamentity);
     }
 
-    private void handleResponse(HttpResponse p_87089_, UploadResult.Builder p_87090_) throws IOException {
-        int i = p_87089_.getStatusLine().getStatusCode();
+    private void handleResponse(HttpResponse response, UploadResult.Builder uploadResult) throws IOException {
+        int i = response.getStatusLine().getStatusCode();
         if (i == 401) {
-            LOGGER.debug("Realms server returned 401: {}", p_87089_.getFirstHeader("WWW-Authenticate"));
+            LOGGER.debug("Realms server returned 401: {}", response.getFirstHeader("WWW-Authenticate"));
         }
 
-        p_87090_.withStatusCode(i);
-        if (p_87089_.getEntity() != null) {
-            String s = EntityUtils.toString(p_87089_.getEntity(), "UTF-8");
+        uploadResult.withStatusCode(i);
+        if (response.getEntity() != null) {
+            String s = EntityUtils.toString(response.getEntity(), "UTF-8");
             if (s != null) {
                 try {
                     JsonParser jsonparser = new JsonParser();
                     JsonElement jsonelement = jsonparser.parse(s).getAsJsonObject().get("errorMsg");
                     Optional<String> optional = Optional.ofNullable(jsonelement).map(JsonElement::getAsString);
-                    p_87090_.withErrorMessage(optional.orElse(null));
+                    uploadResult.withErrorMessage(optional.orElse(null));
                 } catch (Exception exception) {
                 }
             }
         }
     }
 
-    private boolean shouldRetry(long p_87082_, int p_87083_) {
-        return p_87082_ > 0L && p_87083_ + 1 < 5;
+    private boolean shouldRetry(long retryDelaySeconds, int retries) {
+        return retryDelaySeconds > 0L && retries + 1 < 5;
     }
 
-    private UploadResult retryUploadAfter(long p_87098_, int p_87099_) throws InterruptedException {
-        Thread.sleep(Duration.ofSeconds(p_87098_).toMillis());
-        return this.requestUpload(p_87099_ + 1);
+    private UploadResult retryUploadAfter(long seconds, int retries) throws InterruptedException {
+        Thread.sleep(Duration.ofSeconds(seconds).toMillis());
+        return this.requestUpload(retries + 1);
     }
 
-    private long getRetryDelaySeconds(HttpResponse p_87087_) {
-        return Optional.ofNullable(p_87087_.getFirstHeader("Retry-After")).map(NameValuePair::getValue).map(Long::valueOf).orElse(0L);
+    private long getRetryDelaySeconds(HttpResponse httpResponse) {
+        return Optional.ofNullable(httpResponse.getFirstHeader("Retry-After")).map(NameValuePair::getValue).map(Long::valueOf).orElse(0L);
     }
 
     public boolean isFinished() {
@@ -191,16 +194,16 @@ public class FileUpload {
         private final InputStream content;
         private final UploadStatus uploadStatus;
 
-        public CustomInputStreamEntity(InputStream p_87105_, long p_87106_, UploadStatus p_87107_) {
-            super(p_87105_);
-            this.content = p_87105_;
-            this.length = p_87106_;
-            this.uploadStatus = p_87107_;
+        public CustomInputStreamEntity(InputStream content, long length, UploadStatus uploadStatus) {
+            super(content);
+            this.content = content;
+            this.length = length;
+            this.uploadStatus = uploadStatus;
         }
 
         @Override
-        public void writeTo(OutputStream p_87109_) throws IOException {
-            Args.notNull(p_87109_, "Output stream");
+        public void writeTo(OutputStream out) throws IOException {
+            Args.notNull(out, "Output stream");
             InputStream inputstream = this.content;
 
             try {
@@ -208,7 +211,7 @@ public class FileUpload {
                 int j;
                 if (this.length < 0L) {
                     while ((j = inputstream.read(abyte)) != -1) {
-                        p_87109_.write(abyte, 0, j);
+                        out.write(abyte, 0, j);
                         this.uploadStatus.bytesWritten += (long)j;
                     }
                 } else {
@@ -220,10 +223,10 @@ public class FileUpload {
                             break;
                         }
 
-                        p_87109_.write(abyte, 0, j);
+                        out.write(abyte, 0, j);
                         this.uploadStatus.bytesWritten += (long)j;
                         i -= (long)j;
-                        p_87109_.flush();
+                        out.flush();
                     }
                 }
             } finally {

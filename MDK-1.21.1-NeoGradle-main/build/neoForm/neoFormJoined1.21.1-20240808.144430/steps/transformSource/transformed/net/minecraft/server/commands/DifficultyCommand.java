@@ -16,27 +16,27 @@ public class DifficultyCommand {
         p_304204_ -> Component.translatableEscape("commands.difficulty.failure", p_304204_)
     );
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_136939_) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = Commands.literal("difficulty");
 
         for (Difficulty difficulty : Difficulty.values()) {
             literalargumentbuilder.then(Commands.literal(difficulty.getKey()).executes(p_136937_ -> setDifficulty(p_136937_.getSource(), difficulty)));
         }
 
-        p_136939_.register(literalargumentbuilder.requires(p_136943_ -> p_136943_.hasPermission(2)).executes(p_340656_ -> {
+        dispatcher.register(literalargumentbuilder.requires(p_136943_ -> p_136943_.hasPermission(2)).executes(p_340656_ -> {
             Difficulty difficulty1 = p_340656_.getSource().getLevel().getDifficulty();
             p_340656_.getSource().sendSuccess(() -> Component.translatable("commands.difficulty.query", difficulty1.getDisplayName()), false);
             return difficulty1.getId();
         }));
     }
 
-    public static int setDifficulty(CommandSourceStack p_136945_, Difficulty p_136946_) throws CommandSyntaxException {
-        MinecraftServer minecraftserver = p_136945_.getServer();
-        if (minecraftserver.getWorldData().getDifficulty() == p_136946_) {
-            throw ERROR_ALREADY_DIFFICULT.create(p_136946_.getKey());
+    public static int setDifficulty(CommandSourceStack source, Difficulty difficulty) throws CommandSyntaxException {
+        MinecraftServer minecraftserver = source.getServer();
+        if (minecraftserver.getWorldData().getDifficulty() == difficulty) {
+            throw ERROR_ALREADY_DIFFICULT.create(difficulty.getKey());
         } else {
-            minecraftserver.setDifficulty(p_136946_, true);
-            p_136945_.sendSuccess(() -> Component.translatable("commands.difficulty.success", p_136946_.getDisplayName()), true);
+            minecraftserver.setDifficulty(difficulty, true);
+            source.sendSuccess(() -> Component.translatable("commands.difficulty.success", difficulty.getDisplayName()), true);
             return 0;
         }
     }

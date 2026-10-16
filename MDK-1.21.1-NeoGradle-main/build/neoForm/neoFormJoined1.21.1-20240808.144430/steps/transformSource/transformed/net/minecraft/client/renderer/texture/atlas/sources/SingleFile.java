@@ -28,17 +28,17 @@ public class SingleFile implements SpriteSource {
     private final ResourceLocation resourceId;
     private final Optional<ResourceLocation> spriteId;
 
-    public SingleFile(ResourceLocation p_261658_, Optional<ResourceLocation> p_261712_) {
-        this.resourceId = p_261658_;
-        this.spriteId = p_261712_;
+    public SingleFile(ResourceLocation resourceId, Optional<ResourceLocation> spriteId) {
+        this.resourceId = resourceId;
+        this.spriteId = spriteId;
     }
 
     @Override
-    public void run(ResourceManager p_261920_, SpriteSource.Output p_261578_) {
+    public void run(ResourceManager resourceManager, SpriteSource.Output output) {
         ResourceLocation resourcelocation = TEXTURE_ID_CONVERTER.idToFile(this.resourceId);
-        Optional<Resource> optional = p_261920_.getResource(resourcelocation);
+        Optional<Resource> optional = resourceManager.getResource(resourcelocation);
         if (optional.isPresent()) {
-            p_261578_.add(this.spriteId.orElse(this.resourceId), optional.get());
+            output.add(this.spriteId.orElse(this.resourceId), optional.get());
         } else {
             LOGGER.warn("Missing sprite: {}", resourcelocation);
         }

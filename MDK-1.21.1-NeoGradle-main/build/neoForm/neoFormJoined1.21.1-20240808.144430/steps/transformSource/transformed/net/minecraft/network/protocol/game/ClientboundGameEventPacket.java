@@ -33,19 +33,22 @@ public class ClientboundGameEventPacket implements Packet<ClientGamePacketListen
     private final ClientboundGameEventPacket.Type event;
     private final float param;
 
-    public ClientboundGameEventPacket(ClientboundGameEventPacket.Type p_132170_, float p_132171_) {
-        this.event = p_132170_;
-        this.param = p_132171_;
+    public ClientboundGameEventPacket(ClientboundGameEventPacket.Type event, float param) {
+        this.event = event;
+        this.param = param;
     }
 
-    private ClientboundGameEventPacket(FriendlyByteBuf p_178865_) {
-        this.event = ClientboundGameEventPacket.Type.TYPES.get(p_178865_.readUnsignedByte());
-        this.param = p_178865_.readFloat();
+    private ClientboundGameEventPacket(FriendlyByteBuf buffer) {
+        this.event = ClientboundGameEventPacket.Type.TYPES.get(buffer.readUnsignedByte());
+        this.param = buffer.readFloat();
     }
 
-    private void write(FriendlyByteBuf p_132180_) {
-        p_132180_.writeByte(this.event.id);
-        p_132180_.writeFloat(this.param);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeByte(this.event.id);
+        buffer.writeFloat(this.param);
     }
 
     @Override
@@ -53,8 +56,11 @@ public class ClientboundGameEventPacket implements Packet<ClientGamePacketListen
         return GamePacketTypes.CLIENTBOUND_GAME_EVENT;
     }
 
-    public void handle(ClientGamePacketListener p_132177_) {
-        p_132177_.handleGameEvent(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleGameEvent(this);
     }
 
     public ClientboundGameEventPacket.Type getEvent() {
@@ -69,9 +75,9 @@ public class ClientboundGameEventPacket implements Packet<ClientGamePacketListen
         static final Int2ObjectMap<ClientboundGameEventPacket.Type> TYPES = new Int2ObjectOpenHashMap<>();
         final int id;
 
-        public Type(int p_132186_) {
-            this.id = p_132186_;
-            TYPES.put(p_132186_, this);
+        public Type(int id) {
+            this.id = id;
+            TYPES.put(id, this);
         }
     }
 }

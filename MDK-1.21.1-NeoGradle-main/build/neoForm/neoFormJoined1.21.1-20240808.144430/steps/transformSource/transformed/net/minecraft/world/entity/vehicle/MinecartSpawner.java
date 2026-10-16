@@ -25,14 +25,14 @@ public class MinecartSpawner extends AbstractMinecart {
     };
     private final Runnable ticker;
 
-    public MinecartSpawner(EntityType<? extends MinecartSpawner> p_38623_, Level p_38624_) {
-        super(p_38623_, p_38624_);
-        this.ticker = this.createTicker(p_38624_);
+    public MinecartSpawner(EntityType<? extends MinecartSpawner> entityType, Level level) {
+        super(entityType, level);
+        this.ticker = this.createTicker(level);
     }
 
-    public MinecartSpawner(Level p_38626_, double p_38627_, double p_38628_, double p_38629_) {
-        super(EntityType.SPAWNER_MINECART, p_38626_, p_38627_, p_38628_, p_38629_);
-        this.ticker = this.createTicker(p_38626_);
+    public MinecartSpawner(Level level, double x, double y, double z) {
+        super(EntityType.SPAWNER_MINECART, level, x, y, z);
+        this.ticker = this.createTicker(level);
     }
 
     @Override
@@ -40,10 +40,10 @@ public class MinecartSpawner extends AbstractMinecart {
         return Items.MINECART;
     }
 
-    private Runnable createTicker(Level p_150335_) {
-        return p_150335_ instanceof ServerLevel
-            ? () -> this.spawner.serverTick((ServerLevel)p_150335_, this.blockPosition())
-            : () -> this.spawner.clientTick(p_150335_, this.blockPosition());
+    private Runnable createTicker(Level level) {
+        return level instanceof ServerLevel
+            ? () -> this.spawner.serverTick((ServerLevel)level, this.blockPosition())
+            : () -> this.spawner.clientTick(level, this.blockPosition());
     }
 
     @Override
@@ -56,21 +56,27 @@ public class MinecartSpawner extends AbstractMinecart {
         return Blocks.SPAWNER.defaultBlockState();
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_38633_) {
-        super.readAdditionalSaveData(p_38633_);
-        this.spawner.load(this.level(), this.blockPosition(), p_38633_);
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.spawner.load(this.level(), this.blockPosition(), compound);
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_38635_) {
-        super.addAdditionalSaveData(p_38635_);
-        this.spawner.save(p_38635_);
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        this.spawner.save(compound);
     }
 
+    /**
+     * Handles an entity event received from a {@link net.minecraft.network.protocol.game.ClientboundEntityEventPacket}.
+     */
     @Override
-    public void handleEntityEvent(byte p_38631_) {
-        this.spawner.onEventTriggered(this.level(), p_38631_);
+    public void handleEntityEvent(byte id) {
+        this.spawner.onEventTriggered(this.level(), id);
     }
 
     @Override

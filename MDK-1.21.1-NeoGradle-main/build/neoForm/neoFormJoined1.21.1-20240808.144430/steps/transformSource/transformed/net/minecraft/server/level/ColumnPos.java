@@ -15,16 +15,16 @@ public record ColumnPos(int x, int z) {
         return asLong(this.x, this.z);
     }
 
-    public static long asLong(int p_143198_, int p_143199_) {
-        return (long)p_143198_ & 4294967295L | ((long)p_143199_ & 4294967295L) << 32;
+    public static long asLong(int x, int z) {
+        return (long)x & 4294967295L | ((long)z & 4294967295L) << 32;
     }
 
-    public static int getX(long p_214970_) {
-        return (int)(p_214970_ & 4294967295L);
+    public static int getX(long pos) {
+        return (int)(pos & 4294967295L);
     }
 
-    public static int getZ(long p_214972_) {
-        return (int)(p_214972_ >>> 32 & 4294967295L);
+    public static int getZ(long pos) {
+        return (int)(pos >>> 32 & 4294967295L);
     }
 
     @Override

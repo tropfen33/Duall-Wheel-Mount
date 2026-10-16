@@ -28,51 +28,51 @@ public class ClientboundLevelChunkPacketData {
     private final byte[] buffer;
     private final List<ClientboundLevelChunkPacketData.BlockEntityInfo> blockEntitiesData;
 
-    public ClientboundLevelChunkPacketData(LevelChunk p_195651_) {
+    public ClientboundLevelChunkPacketData(LevelChunk levelChunk) {
         this.heightmaps = new CompoundTag();
 
-        for (Entry<Heightmap.Types, Heightmap> entry : p_195651_.getHeightmaps()) {
+        for (Entry<Heightmap.Types, Heightmap> entry : levelChunk.getHeightmaps()) {
             if (entry.getKey().sendToClient()) {
                 this.heightmaps.put(entry.getKey().getSerializationKey(), new LongArrayTag(entry.getValue().getRawData()));
             }
         }
 
-        this.buffer = new byte[calculateChunkSize(p_195651_)];
-        extractChunkData(new FriendlyByteBuf(this.getWriteBuffer()), p_195651_);
+        this.buffer = new byte[calculateChunkSize(levelChunk)];
+        extractChunkData(new FriendlyByteBuf(this.getWriteBuffer()), levelChunk);
         this.blockEntitiesData = Lists.newArrayList();
 
-        for (Entry<BlockPos, BlockEntity> entry1 : p_195651_.getBlockEntities().entrySet()) {
+        for (Entry<BlockPos, BlockEntity> entry1 : levelChunk.getBlockEntities().entrySet()) {
             this.blockEntitiesData.add(ClientboundLevelChunkPacketData.BlockEntityInfo.create(entry1.getValue()));
         }
     }
 
-    public ClientboundLevelChunkPacketData(RegistryFriendlyByteBuf p_320343_, int p_195654_, int p_195655_) {
-        this.heightmaps = p_320343_.readNbt();
+    public ClientboundLevelChunkPacketData(RegistryFriendlyByteBuf buffer, int x, int z) {
+        this.heightmaps = buffer.readNbt();
         if (this.heightmaps == null) {
-            throw new RuntimeException("Can't read heightmap in packet for [" + p_195654_ + ", " + p_195655_ + "]");
+            throw new RuntimeException("Can't read heightmap in packet for [" + x + ", " + z + "]");
         } else {
-            int i = p_320343_.readVarInt();
+            int i = buffer.readVarInt();
             if (i > 2097152) {
                 throw new RuntimeException("Chunk Packet trying to allocate too much memory on read.");
             } else {
                 this.buffer = new byte[i];
-                p_320343_.readBytes(this.buffer);
-                this.blockEntitiesData = ClientboundLevelChunkPacketData.BlockEntityInfo.LIST_STREAM_CODEC.decode(p_320343_);
+                buffer.readBytes(this.buffer);
+                this.blockEntitiesData = ClientboundLevelChunkPacketData.BlockEntityInfo.LIST_STREAM_CODEC.decode(buffer);
             }
         }
     }
 
-    public void write(RegistryFriendlyByteBuf p_320863_) {
-        p_320863_.writeNbt(this.heightmaps);
-        p_320863_.writeVarInt(this.buffer.length);
-        p_320863_.writeBytes(this.buffer);
-        ClientboundLevelChunkPacketData.BlockEntityInfo.LIST_STREAM_CODEC.encode(p_320863_, this.blockEntitiesData);
+    public void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeNbt(this.heightmaps);
+        buffer.writeVarInt(this.buffer.length);
+        buffer.writeBytes(this.buffer);
+        ClientboundLevelChunkPacketData.BlockEntityInfo.LIST_STREAM_CODEC.encode(buffer, this.blockEntitiesData);
     }
 
-    private static int calculateChunkSize(LevelChunk p_195665_) {
+    private static int calculateChunkSize(LevelChunk chunk) {
         int i = 0;
 
-        for (LevelChunkSection levelchunksection : p_195665_.getSections()) {
+        for (LevelChunkSection levelchunksection : chunk.getSections()) {
             i += levelchunksection.getSerializedSize();
         }
 
@@ -85,26 +85,26 @@ public class ClientboundLevelChunkPacketData {
         return bytebuf;
     }
 
-    public static void extractChunkData(FriendlyByteBuf p_195669_, LevelChunk p_195670_) {
-        for (LevelChunkSection levelchunksection : p_195670_.getSections()) {
-            levelchunksection.write(p_195669_);
+    public static void extractChunkData(FriendlyByteBuf buffer, LevelChunk chunk) {
+        for (LevelChunkSection levelchunksection : chunk.getSections()) {
+            levelchunksection.write(buffer);
         }
     }
 
-    public Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> getBlockEntitiesTagsConsumer(int p_195658_, int p_195659_) {
-        return p_195663_ -> this.getBlockEntitiesTags(p_195663_, p_195658_, p_195659_);
+    public Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> getBlockEntitiesTagsConsumer(int chunkX, int chunkZ) {
+        return p_195663_ -> this.getBlockEntitiesTags(p_195663_, chunkX, chunkZ);
     }
 
-    private void getBlockEntitiesTags(ClientboundLevelChunkPacketData.BlockEntityTagOutput p_195675_, int p_195676_, int p_195677_) {
-        int i = 16 * p_195676_;
-        int j = 16 * p_195677_;
+    private void getBlockEntitiesTags(ClientboundLevelChunkPacketData.BlockEntityTagOutput output, int chunkX, int chunkZ) {
+        int i = 16 * chunkX;
+        int j = 16 * chunkZ;
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
         for (ClientboundLevelChunkPacketData.BlockEntityInfo clientboundlevelchunkpacketdata$blockentityinfo : this.blockEntitiesData) {
             int k = i + SectionPos.sectionRelative(clientboundlevelchunkpacketdata$blockentityinfo.packedXZ >> 4);
             int l = j + SectionPos.sectionRelative(clientboundlevelchunkpacketdata$blockentityinfo.packedXZ);
             blockpos$mutableblockpos.set(k, clientboundlevelchunkpacketdata$blockentityinfo.y, l);
-            p_195675_.accept(
+            output.accept(
                 blockpos$mutableblockpos, clientboundlevelchunkpacketdata$blockentityinfo.type, clientboundlevelchunkpacketdata$blockentityinfo.tag
             );
         }
@@ -131,37 +131,37 @@ public class ClientboundLevelChunkPacketData {
         @Nullable
         final CompoundTag tag;
 
-        private BlockEntityInfo(int p_195685_, int p_195686_, BlockEntityType<?> p_195687_, @Nullable CompoundTag p_195688_) {
-            this.packedXZ = p_195685_;
-            this.y = p_195686_;
-            this.type = p_195687_;
-            this.tag = p_195688_;
+        private BlockEntityInfo(int packedXZ, int y, BlockEntityType<?> type, @Nullable CompoundTag tag) {
+            this.packedXZ = packedXZ;
+            this.y = y;
+            this.type = type;
+            this.tag = tag;
         }
 
-        private BlockEntityInfo(RegistryFriendlyByteBuf p_319780_) {
-            this.packedXZ = p_319780_.readByte();
-            this.y = p_319780_.readShort();
-            this.type = ByteBufCodecs.registry(Registries.BLOCK_ENTITY_TYPE).decode(p_319780_);
-            this.tag = p_319780_.readNbt();
+        private BlockEntityInfo(RegistryFriendlyByteBuf buffer) {
+            this.packedXZ = buffer.readByte();
+            this.y = buffer.readShort();
+            this.type = ByteBufCodecs.registry(Registries.BLOCK_ENTITY_TYPE).decode(buffer);
+            this.tag = buffer.readNbt();
         }
 
-        private void write(RegistryFriendlyByteBuf p_320914_) {
-            p_320914_.writeByte(this.packedXZ);
-            p_320914_.writeShort(this.y);
-            ByteBufCodecs.registry(Registries.BLOCK_ENTITY_TYPE).encode(p_320914_, this.type);
-            p_320914_.writeNbt(this.tag);
+        private void write(RegistryFriendlyByteBuf buffer) {
+            buffer.writeByte(this.packedXZ);
+            buffer.writeShort(this.y);
+            ByteBufCodecs.registry(Registries.BLOCK_ENTITY_TYPE).encode(buffer, this.type);
+            buffer.writeNbt(this.tag);
         }
 
-        static ClientboundLevelChunkPacketData.BlockEntityInfo create(BlockEntity p_195692_) {
-            CompoundTag compoundtag = p_195692_.getUpdateTag(p_195692_.getLevel().registryAccess());
-            BlockPos blockpos = p_195692_.getBlockPos();
+        static ClientboundLevelChunkPacketData.BlockEntityInfo create(BlockEntity blockEntity) {
+            CompoundTag compoundtag = blockEntity.getUpdateTag(blockEntity.getLevel().registryAccess());
+            BlockPos blockpos = blockEntity.getBlockPos();
             int i = SectionPos.sectionRelative(blockpos.getX()) << 4 | SectionPos.sectionRelative(blockpos.getZ());
-            return new ClientboundLevelChunkPacketData.BlockEntityInfo(i, blockpos.getY(), p_195692_.getType(), compoundtag.isEmpty() ? null : compoundtag);
+            return new ClientboundLevelChunkPacketData.BlockEntityInfo(i, blockpos.getY(), blockEntity.getType(), compoundtag.isEmpty() ? null : compoundtag);
         }
     }
 
     @FunctionalInterface
     public interface BlockEntityTagOutput {
-        void accept(BlockPos p_195696_, BlockEntityType<?> p_195697_, @Nullable CompoundTag p_195698_);
+        void accept(BlockPos pos, BlockEntityType<?> type, @Nullable CompoundTag nbt);
     }
 }

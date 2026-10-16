@@ -35,8 +35,8 @@ public class TridentItem extends Item implements ProjectileItem {
     public static final float BASE_DAMAGE = 8.0F;
     public static final float SHOOT_POWER = 2.5F;
 
-    public TridentItem(Item.Properties p_43381_) {
-        super(p_43381_);
+    public TridentItem(Item.Properties properties) {
+        super(properties);
     }
 
     public static ItemAttributeModifiers createAttributes() {
@@ -55,43 +55,49 @@ public class TridentItem extends Item implements ProjectileItem {
     }
 
     @Override
-    public boolean canAttackBlock(BlockState p_43409_, Level p_43410_, BlockPos p_43411_, Player p_43412_) {
-        return !p_43412_.isCreative();
+    public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
+        return !player.isCreative();
     }
 
+    /**
+     * Returns the action that specifies what animation to play when the item is being used.
+     */
     @Override
-    public UseAnim getUseAnimation(ItemStack p_43417_) {
+    public UseAnim getUseAnimation(ItemStack stack) {
         return UseAnim.SPEAR;
     }
 
     @Override
-    public int getUseDuration(ItemStack p_43419_, LivingEntity p_345001_) {
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
         return 72000;
     }
 
+    /**
+     * Called when the player stops using an Item (stops holding the right mouse button).
+     */
     @Override
-    public void releaseUsing(ItemStack p_43394_, Level p_43395_, LivingEntity p_43396_, int p_43397_) {
-        if (p_43396_ instanceof Player player) {
-            int i = this.getUseDuration(p_43394_, p_43396_) - p_43397_;
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity entityLiving, int timeLeft) {
+        if (entityLiving instanceof Player player) {
+            int i = this.getUseDuration(stack, entityLiving) - timeLeft;
             if (i >= 10) {
-                float f = EnchantmentHelper.getTridentSpinAttackStrength(p_43394_, player);
+                float f = EnchantmentHelper.getTridentSpinAttackStrength(stack, player);
                 if (!(f > 0.0F) || player.isInWaterOrRain()) {
-                    if (!isTooDamagedToUse(p_43394_)) {
-                        Holder<SoundEvent> holder = EnchantmentHelper.pickHighestLevel(p_43394_, EnchantmentEffectComponents.TRIDENT_SOUND)
+                    if (!isTooDamagedToUse(stack)) {
+                        Holder<SoundEvent> holder = EnchantmentHelper.pickHighestLevel(stack, EnchantmentEffectComponents.TRIDENT_SOUND)
                             .orElse(SoundEvents.TRIDENT_THROW);
-                        if (!p_43395_.isClientSide) {
-                            p_43394_.hurtAndBreak(1, player, LivingEntity.getSlotForHand(p_43396_.getUsedItemHand()));
+                        if (!level.isClientSide) {
+                            stack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(entityLiving.getUsedItemHand()));
                             if (f == 0.0F) {
-                                ThrownTrident throwntrident = new ThrownTrident(p_43395_, player, p_43394_);
+                                ThrownTrident throwntrident = new ThrownTrident(level, player, stack);
                                 throwntrident.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 2.5F, 1.0F);
                                 if (player.hasInfiniteMaterials()) {
                                     throwntrident.pickup = AbstractArrow.Pickup.CREATIVE_ONLY;
                                 }
 
-                                p_43395_.addFreshEntity(throwntrident);
-                                p_43395_.playSound(null, throwntrident, holder.value(), SoundSource.PLAYERS, 1.0F, 1.0F);
+                                level.addFreshEntity(throwntrident);
+                                level.playSound(null, throwntrident, holder.value(), SoundSource.PLAYERS, 1.0F, 1.0F);
                                 if (!player.hasInfiniteMaterials()) {
-                                    player.getInventory().removeItem(p_43394_);
+                                    player.getInventory().removeItem(stack);
                                 }
                             }
                         }
@@ -108,13 +114,13 @@ public class TridentItem extends Item implements ProjectileItem {
                             f3 *= f / f5;
                             f4 *= f / f5;
                             player.push((double)f2, (double)f3, (double)f4);
-                            player.startAutoSpinAttack(20, 8.0F, p_43394_);
+                            player.startAutoSpinAttack(20, 8.0F, stack);
                             if (player.onGround()) {
                                 float f6 = 1.1999999F;
                                 player.move(MoverType.SELF, new Vec3(0.0, 1.1999999F, 0.0));
                             }
 
-                            p_43395_.playSound(null, player, holder.value(), SoundSource.PLAYERS, 1.0F, 1.0F);
+                            level.playSound(null, player, holder.value(), SoundSource.PLAYERS, 1.0F, 1.0F);
                         }
                     }
                 }
@@ -122,31 +128,37 @@ public class TridentItem extends Item implements ProjectileItem {
         }
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_43405_, Player p_43406_, InteractionHand p_43407_) {
-        ItemStack itemstack = p_43406_.getItemInHand(p_43407_);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
         if (isTooDamagedToUse(itemstack)) {
             return InteractionResultHolder.fail(itemstack);
-        } else if (EnchantmentHelper.getTridentSpinAttackStrength(itemstack, p_43406_) > 0.0F && !p_43406_.isInWaterOrRain()) {
+        } else if (EnchantmentHelper.getTridentSpinAttackStrength(itemstack, player) > 0.0F && !player.isInWaterOrRain()) {
             return InteractionResultHolder.fail(itemstack);
         } else {
-            p_43406_.startUsingItem(p_43407_);
+            player.startUsingItem(hand);
             return InteractionResultHolder.consume(itemstack);
         }
     }
 
-    private static boolean isTooDamagedToUse(ItemStack p_353073_) {
-        return p_353073_.getDamageValue() >= p_353073_.getMaxDamage() - 1;
+    private static boolean isTooDamagedToUse(ItemStack stack) {
+        return stack.getDamageValue() >= stack.getMaxDamage() - 1;
     }
 
+    /**
+     * Current implementations of this method in child classes do not use the entry argument beside ev. They just raise the damage on the stack.
+     */
     @Override
-    public boolean hurtEnemy(ItemStack p_43390_, LivingEntity p_43391_, LivingEntity p_43392_) {
+    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
         return true;
     }
 
     @Override
-    public void postHurtEnemy(ItemStack p_345950_, LivingEntity p_345617_, LivingEntity p_345537_) {
-        p_345950_.hurtAndBreak(1, p_345537_, EquipmentSlot.MAINHAND);
+    public void postHurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        stack.hurtAndBreak(1, attacker, EquipmentSlot.MAINHAND);
     }
 
     @Override
@@ -155,8 +167,8 @@ public class TridentItem extends Item implements ProjectileItem {
     }
 
     @Override
-    public Projectile asProjectile(Level p_338505_, Position p_338277_, ItemStack p_338353_, Direction p_338220_) {
-        ThrownTrident throwntrident = new ThrownTrident(p_338505_, p_338277_.x(), p_338277_.y(), p_338277_.z(), p_338353_.copyWithCount(1));
+    public Projectile asProjectile(Level level, Position pos, ItemStack stack, Direction direction) {
+        ThrownTrident throwntrident = new ThrownTrident(level, pos.x(), pos.y(), pos.z(), stack.copyWithCount(1));
         throwntrident.pickup = AbstractArrow.Pickup.ALLOWED;
         return throwntrident;
     }

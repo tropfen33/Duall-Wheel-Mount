@@ -15,15 +15,15 @@ public class BreakingItemParticle extends TextureSheetParticle {
     private final float vo;
 
     protected BreakingItemParticle(
-        ClientLevel p_105646_, double p_105647_, double p_105648_, double p_105649_, double p_105650_, double p_105651_, double p_105652_, ItemStack p_105653_
+        ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, ItemStack stack
     ) {
-        this(p_105646_, p_105647_, p_105648_, p_105649_, p_105653_);
+        this(level, x, y, z, stack);
         this.xd *= 0.1F;
         this.yd *= 0.1F;
         this.zd *= 0.1F;
-        this.xd += p_105650_;
-        this.yd += p_105651_;
-        this.zd += p_105652_;
+        this.xd += xSpeed;
+        this.yd += ySpeed;
+        this.zd += zSpeed;
     }
 
     @Override
@@ -31,10 +31,10 @@ public class BreakingItemParticle extends TextureSheetParticle {
         return ParticleRenderType.TERRAIN_SHEET;
     }
 
-    protected BreakingItemParticle(ClientLevel p_105665_, double p_105666_, double p_105667_, double p_105668_, ItemStack p_105669_) {
-        super(p_105665_, p_105666_, p_105667_, p_105668_, 0.0, 0.0, 0.0);
-        var model = Minecraft.getInstance().getItemRenderer().getModel(p_105669_, p_105665_, null, 0);
-        this.setSprite(model.getOverrides().resolve(model, p_105669_, p_105665_, null, 0).getParticleIcon(net.neoforged.neoforge.client.model.data.ModelData.EMPTY));
+    protected BreakingItemParticle(ClientLevel level, double x, double y, double z, ItemStack stack) {
+        super(level, x, y, z, 0.0, 0.0, 0.0);
+        var model = Minecraft.getInstance().getItemRenderer().getModel(stack, level, null, 0);
+        this.setSprite(model.getOverrides().resolve(model, stack, level, null, 0).getParticleIcon(net.neoforged.neoforge.client.model.data.ModelData.EMPTY));
         this.gravity = 1.0F;
         this.quadSize /= 2.0F;
         this.uo = this.random.nextFloat() * 3.0F;
@@ -80,48 +80,48 @@ public class BreakingItemParticle extends TextureSheetParticle {
     @OnlyIn(Dist.CLIENT)
     public static class Provider implements ParticleProvider<ItemParticleOption> {
         public Particle createParticle(
-            ItemParticleOption p_105677_,
-            ClientLevel p_105678_,
-            double p_105679_,
-            double p_105680_,
-            double p_105681_,
-            double p_105682_,
-            double p_105683_,
-            double p_105684_
+            ItemParticleOption type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            return new BreakingItemParticle(p_105678_, p_105679_, p_105680_, p_105681_, p_105682_, p_105683_, p_105684_, p_105677_.getItem());
+            return new BreakingItemParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, type.getItem());
         }
     }
 
     @OnlyIn(Dist.CLIENT)
     public static class SlimeProvider implements ParticleProvider<SimpleParticleType> {
         public Particle createParticle(
-            SimpleParticleType p_105705_,
-            ClientLevel p_105706_,
-            double p_105707_,
-            double p_105708_,
-            double p_105709_,
-            double p_105710_,
-            double p_105711_,
-            double p_105712_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            return new BreakingItemParticle(p_105706_, p_105707_, p_105708_, p_105709_, new ItemStack(Items.SLIME_BALL));
+            return new BreakingItemParticle(level, x, y, z, new ItemStack(Items.SLIME_BALL));
         }
     }
 
     @OnlyIn(Dist.CLIENT)
     public static class SnowballProvider implements ParticleProvider<SimpleParticleType> {
         public Particle createParticle(
-            SimpleParticleType p_105724_,
-            ClientLevel p_105725_,
-            double p_105726_,
-            double p_105727_,
-            double p_105728_,
-            double p_105729_,
-            double p_105730_,
-            double p_105731_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            return new BreakingItemParticle(p_105725_, p_105726_, p_105727_, p_105728_, new ItemStack(Items.SNOWBALL));
+            return new BreakingItemParticle(level, x, y, z, new ItemStack(Items.SNOWBALL));
         }
     }
 }

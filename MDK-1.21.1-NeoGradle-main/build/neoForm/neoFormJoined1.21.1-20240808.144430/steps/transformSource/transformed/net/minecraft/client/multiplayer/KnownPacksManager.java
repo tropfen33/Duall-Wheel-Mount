@@ -32,11 +32,11 @@ public class KnownPacksManager {
         this.knownPackToId = builder.build();
     }
 
-    public List<KnownPack> trySelectingPacks(List<KnownPack> p_326056_) {
-        List<KnownPack> list = new ArrayList<>(p_326056_.size());
-        List<String> list1 = new ArrayList<>(p_326056_.size());
+    public List<KnownPack> trySelectingPacks(List<KnownPack> packs) {
+        List<KnownPack> list = new ArrayList<>(packs.size());
+        List<String> list1 = new ArrayList<>(packs.size());
 
-        for (KnownPack knownpack : p_326056_) {
+        for (KnownPack knownpack : packs) {
             String s = this.knownPackToId.get(knownpack);
             if (s != null) {
                 list1.add(s);

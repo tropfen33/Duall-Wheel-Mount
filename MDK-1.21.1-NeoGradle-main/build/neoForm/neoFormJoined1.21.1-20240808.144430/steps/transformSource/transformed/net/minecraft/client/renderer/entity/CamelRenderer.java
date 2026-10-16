@@ -11,11 +11,14 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class CamelRenderer extends MobRenderer<Camel, CamelModel<Camel>> {
     private static final ResourceLocation CAMEL_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/camel/camel.png");
 
-    public CamelRenderer(EntityRendererProvider.Context p_251790_, ModelLayerLocation p_249929_) {
-        super(p_251790_, new CamelModel<>(p_251790_.bakeLayer(p_249929_)), 0.7F);
+    public CamelRenderer(EntityRendererProvider.Context context, ModelLayerLocation layerLocation) {
+        super(context, new CamelModel<>(context.bakeLayer(layerLocation)), 0.7F);
     }
 
-    public ResourceLocation getTextureLocation(Camel p_249584_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Camel entity) {
         return CAMEL_LOCATION;
     }
 }

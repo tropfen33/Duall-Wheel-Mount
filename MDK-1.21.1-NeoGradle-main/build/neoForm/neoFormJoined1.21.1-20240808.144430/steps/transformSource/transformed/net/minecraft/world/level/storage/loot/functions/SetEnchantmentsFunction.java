@@ -23,6 +23,9 @@ import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.level.storage.loot.providers.number.NumberProvider;
 import net.minecraft.world.level.storage.loot.providers.number.NumberProviders;
 
+/**
+ * LootItemFunction that sets a stack's enchantments. If {@code add} is set, will add to any already existing enchantment levels instead of replacing them (ignored for enchanted books).
+ */
 public class SetEnchantmentsFunction extends LootItemConditionalFunction {
     public static final MapCodec<SetEnchantmentsFunction> CODEC = RecordCodecBuilder.mapCodec(
         p_344693_ -> commonFields(p_344693_)
@@ -39,10 +42,10 @@ public class SetEnchantmentsFunction extends LootItemConditionalFunction {
     private final Map<Holder<Enchantment>, NumberProvider> enchantments;
     private final boolean add;
 
-    SetEnchantmentsFunction(List<LootItemCondition> p_299192_, Map<Holder<Enchantment>, NumberProvider> p_165338_, boolean p_165339_) {
-        super(p_299192_);
-        this.enchantments = Map.copyOf(p_165338_);
-        this.add = p_165339_;
+    SetEnchantmentsFunction(List<LootItemCondition> conditions, Map<Holder<Enchantment>, NumberProvider> enchantments, boolean add) {
+        super(conditions);
+        this.enchantments = Map.copyOf(enchantments);
+        this.add = add;
     }
 
     @Override
@@ -55,31 +58,34 @@ public class SetEnchantmentsFunction extends LootItemConditionalFunction {
         return this.enchantments.values().stream().flatMap(p_279081_ -> p_279081_.getReferencedContextParams().stream()).collect(ImmutableSet.toImmutableSet());
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_165346_, LootContext p_165347_) {
-        if (p_165346_.is(Items.BOOK)) {
-            p_165346_ = p_165346_.transmuteCopy(Items.ENCHANTED_BOOK);
-            p_165346_.set(DataComponents.STORED_ENCHANTMENTS, p_165346_.remove(DataComponents.ENCHANTMENTS));
+    public ItemStack run(ItemStack stack, LootContext context) {
+        if (stack.is(Items.BOOK)) {
+            stack = stack.transmuteCopy(Items.ENCHANTED_BOOK);
+            stack.set(DataComponents.STORED_ENCHANTMENTS, stack.remove(DataComponents.ENCHANTMENTS));
         }
 
         EnchantmentHelper.updateEnchantments(
-            p_165346_,
+            stack,
             p_344695_ -> {
                 if (this.add) {
                     this.enchantments
                         .forEach(
                             (p_344698_, p_344699_) -> p_344695_.set(
                                     (Holder<Enchantment>)p_344698_,
-                                    Mth.clamp(p_344695_.getLevel((Holder<Enchantment>)p_344698_) + p_344699_.getInt(p_165347_), 0, 255)
+                                    Mth.clamp(p_344695_.getLevel((Holder<Enchantment>)p_344698_) + p_344699_.getInt(context), 0, 255)
                                 )
                         );
                 } else {
                     this.enchantments
-                        .forEach((p_344702_, p_344703_) -> p_344695_.set((Holder<Enchantment>)p_344702_, Mth.clamp(p_344703_.getInt(p_165347_), 0, 255)));
+                        .forEach((p_344702_, p_344703_) -> p_344695_.set((Holder<Enchantment>)p_344702_, Mth.clamp(p_344703_.getInt(context), 0, 255)));
                 }
             }
         );
-        return p_165346_;
+        return stack;
     }
 
     public static class Builder extends LootItemConditionalFunction.Builder<SetEnchantmentsFunction.Builder> {
@@ -90,16 +96,16 @@ public class SetEnchantmentsFunction extends LootItemConditionalFunction {
             this(false);
         }
 
-        public Builder(boolean p_165372_) {
-            this.add = p_165372_;
+        public Builder(boolean add) {
+            this.add = add;
         }
 
         protected SetEnchantmentsFunction.Builder getThis() {
             return this;
         }
 
-        public SetEnchantmentsFunction.Builder withEnchantment(Holder<Enchantment> p_346114_, NumberProvider p_165376_) {
-            this.enchantments.put(p_346114_, p_165376_);
+        public SetEnchantmentsFunction.Builder withEnchantment(Holder<Enchantment> enchantment, NumberProvider level) {
+            this.enchantments.put(enchantment, level);
             return this;
         }
 

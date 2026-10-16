@@ -13,12 +13,12 @@ public enum Unit {
 
     private static final int BASE_UNIT = 1024;
 
-    public static Unit getLargest(long p_86941_) {
-        if (p_86941_ < 1024L) {
+    public static Unit getLargest(long bytes) {
+        if (bytes < 1024L) {
             return B;
         } else {
             try {
-                int i = (int)(Math.log((double)p_86941_) / Math.log(1024.0));
+                int i = (int)(Math.log((double)bytes) / Math.log(1024.0));
                 String s = String.valueOf("KMGTPE".charAt(i - 1));
                 return valueOf(s + "B");
             } catch (Exception exception) {
@@ -27,22 +27,22 @@ public enum Unit {
         }
     }
 
-    public static double convertTo(long p_86943_, Unit p_86944_) {
-        return p_86944_ == B ? (double)p_86943_ : (double)p_86943_ / Math.pow(1024.0, (double)p_86944_.ordinal());
+    public static double convertTo(long bytes, Unit unit) {
+        return unit == B ? (double)bytes : (double)bytes / Math.pow(1024.0, (double)unit.ordinal());
     }
 
-    public static String humanReadable(long p_86946_) {
+    public static String humanReadable(long bytes) {
         int i = 1024;
-        if (p_86946_ < 1024L) {
-            return p_86946_ + " B";
+        if (bytes < 1024L) {
+            return bytes + " B";
         } else {
-            int j = (int)(Math.log((double)p_86946_) / Math.log(1024.0));
+            int j = (int)(Math.log((double)bytes) / Math.log(1024.0));
             String s = "KMGTPE".charAt(j - 1) + "";
-            return String.format(Locale.ROOT, "%.1f %sB", (double)p_86946_ / Math.pow(1024.0, (double)j), s);
+            return String.format(Locale.ROOT, "%.1f %sB", (double)bytes / Math.pow(1024.0, (double)j), s);
         }
     }
 
-    public static String humanReadable(long p_86948_, Unit p_86949_) {
-        return String.format(Locale.ROOT, "%." + (p_86949_ == GB ? "1" : "0") + "f %s", convertTo(p_86948_, p_86949_), p_86949_.name());
+    public static String humanReadable(long bytes, Unit unit) {
+        return String.format(Locale.ROOT, "%." + (unit == GB ? "1" : "0") + "f %s", convertTo(bytes, unit), unit.name());
     }
 }

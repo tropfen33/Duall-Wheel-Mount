@@ -28,8 +28,8 @@ public class TrappedChestBlock extends ChestBlock {
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_154834_, BlockState p_154835_) {
-        return new TrappedChestBlockEntity(p_154834_, p_154835_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new TrappedChestBlockEntity(pos, state);
     }
 
     @Override
@@ -37,18 +37,38 @@ public class TrappedChestBlock extends ChestBlock {
         return Stats.CUSTOM.get(Stats.TRIGGER_TRAPPED_CHEST);
     }
 
+    /**
+     * Returns whether this block is capable of emitting redstone signals.
+     *
+     */
     @Override
-    protected boolean isSignalSource(BlockState p_57587_) {
+    protected boolean isSignalSource(BlockState state) {
         return true;
     }
 
+    /**
+     * Returns the signal this block emits in the given direction.
+     *
+     * <p>
+     * NOTE: directions in redstone signal related methods are backwards, so this method
+     * checks for the signal emitted in the <i>opposite</i> direction of the one given.
+     *
+     */
     @Override
-    protected int getSignal(BlockState p_57577_, BlockGetter p_57578_, BlockPos p_57579_, Direction p_57580_) {
-        return Mth.clamp(ChestBlockEntity.getOpenCount(p_57578_, p_57579_), 0, 15);
+    protected int getSignal(BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side) {
+        return Mth.clamp(ChestBlockEntity.getOpenCount(blockAccess, pos), 0, 15);
     }
 
+    /**
+     * Returns the direct signal this block emits in the given direction.
+     *
+     * <p>
+     * NOTE: directions in redstone signal related methods are backwards, so this method
+     * checks for the signal emitted in the <i>opposite</i> direction of the one given.
+     *
+     */
     @Override
-    protected int getDirectSignal(BlockState p_57582_, BlockGetter p_57583_, BlockPos p_57584_, Direction p_57585_) {
-        return p_57585_ == Direction.UP ? p_57582_.getSignal(p_57583_, p_57584_, p_57585_) : 0;
+    protected int getDirectSignal(BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side) {
+        return side == Direction.UP ? blockState.getSignal(blockAccess, pos, side) : 0;
     }
 }

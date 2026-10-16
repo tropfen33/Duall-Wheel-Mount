@@ -13,6 +13,9 @@ import net.neoforged.api.distmarker.OnlyIn;
 import org.lwjgl.openal.AL10;
 import org.slf4j.Logger;
 
+/**
+ * Represents an OpenAL audio channel.
+ */
 @OnlyIn(Dist.CLIENT)
 public class Channel {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -31,8 +34,8 @@ public class Channel {
         return OpenAlUtil.checkALError("Allocate new source") ? null : new Channel(aint[0]);
     }
 
-    private Channel(int p_83648_) {
-        this.source = p_83648_;
+    private Channel(int source) {
+        this.source = source;
     }
 
     public void destroy() {
@@ -90,56 +93,110 @@ public class Channel {
         return this.getState() == 4116;
     }
 
-    public void setSelfPosition(Vec3 p_83655_) {
-        AL10.alSourcefv(this.source, 4100, new float[]{(float)p_83655_.x, (float)p_83655_.y, (float)p_83655_.z});
+    /**
+     * Sets the position of the audio channel.
+     *
+     * @param source the position of the audio channel
+     */
+    public void setSelfPosition(Vec3 source) {
+        AL10.alSourcefv(this.source, 4100, new float[]{(float)source.x, (float)source.y, (float)source.z});
     }
 
-    public void setPitch(float p_83651_) {
-        AL10.alSourcef(this.source, 4099, p_83651_);
+    /**
+     * Sets the pitch of the audio channel.
+     *
+     * @param pitch the pitch of the audio channel
+     */
+    public void setPitch(float pitch) {
+        AL10.alSourcef(this.source, 4099, pitch);
     }
 
-    public void setLooping(boolean p_83664_) {
-        AL10.alSourcei(this.source, 4103, p_83664_ ? 1 : 0);
+    /**
+     * Sets whether the audio channel should loop.
+     *
+     * @param looping {@code true} if the audio channel should loop, {@code false}
+     *                otherwise
+     */
+    public void setLooping(boolean looping) {
+        AL10.alSourcei(this.source, 4103, looping ? 1 : 0);
     }
 
-    public void setVolume(float p_83667_) {
-        AL10.alSourcef(this.source, 4106, p_83667_);
+    /**
+     * Sets the volume of the audio channel.
+     *
+     * @param volume the volume of the audio channel
+     */
+    public void setVolume(float volume) {
+        AL10.alSourcef(this.source, 4106, volume);
     }
 
     public void disableAttenuation() {
         AL10.alSourcei(this.source, 53248, 0);
     }
 
-    public void linearAttenuation(float p_83674_) {
+    /**
+     * Sets linear attenuation for the audio channel.
+     *
+     * @param linearAttenuation the linear attenuation of the audio channel
+     */
+    public void linearAttenuation(float linearAttenuation) {
         AL10.alSourcei(this.source, 53248, 53251);
-        AL10.alSourcef(this.source, 4131, p_83674_);
+        AL10.alSourcef(this.source, 4131, linearAttenuation);
         AL10.alSourcef(this.source, 4129, 1.0F);
         AL10.alSourcef(this.source, 4128, 0.0F);
     }
 
-    public void setRelative(boolean p_83671_) {
-        AL10.alSourcei(this.source, 514, p_83671_ ? 1 : 0);
+    /**
+     * Sets whether the audio channel should be relative to the listener's position.
+     *
+     * @param relative {@code true} if the audio channel should be relative, {@code
+     *                 false} otherwise
+     */
+    public void setRelative(boolean relative) {
+        AL10.alSourcei(this.source, 514, relative ? 1 : 0);
     }
 
-    public void attachStaticBuffer(SoundBuffer p_83657_) {
-        p_83657_.getAlBuffer().ifPresent(p_83676_ -> AL10.alSourcei(this.source, 4105, p_83676_));
+    /**
+     * Attaches a static buffer to the audio channel.
+     *
+     * @param buffer the buffer to attach
+     */
+    public void attachStaticBuffer(SoundBuffer buffer) {
+        buffer.getAlBuffer().ifPresent(p_83676_ -> AL10.alSourcei(this.source, 4105, p_83676_));
     }
 
-    public void attachBufferStream(AudioStream p_83659_) {
-        this.stream = p_83659_;
-        AudioFormat audioformat = p_83659_.getFormat();
+    /**
+     * Attaches a buffer stream to the audio channel.
+     *
+     * @param stream the stream to attach
+     */
+    public void attachBufferStream(AudioStream stream) {
+        this.stream = stream;
+        AudioFormat audioformat = stream.getFormat();
         this.streamingBufferSize = calculateBufferSize(audioformat, 1);
         this.pumpBuffers(4);
     }
 
-    private static int calculateBufferSize(AudioFormat p_83661_, int p_83662_) {
-        return (int)((float)(p_83662_ * p_83661_.getSampleSizeInBits()) / 8.0F * (float)p_83661_.getChannels() * p_83661_.getSampleRate());
+    /**
+     * Calculates the buffer size for an audio stream.
+     * @return the buffer size
+     *
+     * @param format       the audio format of the stream
+     * @param sampleAmount the number of samples to buffer
+     */
+    private static int calculateBufferSize(AudioFormat format, int sampleAmount) {
+        return (int)((float)(sampleAmount * format.getSampleSizeInBits()) / 8.0F * (float)format.getChannels() * format.getSampleRate());
     }
 
-    private void pumpBuffers(int p_83653_) {
+    /**
+     * Reads and queues audio buffers from the stream.
+     *
+     * @param readCount the number of buffers to read and queue
+     */
+    private void pumpBuffers(int readCount) {
         if (this.stream != null) {
             try {
-                for (int i = 0; i < p_83653_; i++) {
+                for (int i = 0; i < readCount; i++) {
                     ByteBuffer bytebuffer = this.stream.read(this.streamingBufferSize);
                     if (bytebuffer != null) {
                         new SoundBuffer(bytebuffer, this.stream.getFormat())

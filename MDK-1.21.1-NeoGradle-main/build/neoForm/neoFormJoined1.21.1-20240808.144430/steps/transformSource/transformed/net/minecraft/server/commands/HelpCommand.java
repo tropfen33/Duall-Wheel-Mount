@@ -15,11 +15,11 @@ import net.minecraft.network.chat.Component;
 public class HelpCommand {
     private static final SimpleCommandExceptionType ERROR_FAILED = new SimpleCommandExceptionType(Component.translatable("commands.help.failed"));
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_137788_) {
-        p_137788_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("help")
                 .executes(p_288460_ -> {
-                    Map<CommandNode<CommandSourceStack>, String> map = p_137788_.getSmartUsage(p_137788_.getRoot(), p_288460_.getSource());
+                    Map<CommandNode<CommandSourceStack>, String> map = dispatcher.getSmartUsage(dispatcher.getRoot(), p_288460_.getSource());
 
                     for (String s : map.values()) {
                         p_288460_.getSource().sendSuccess(() -> Component.literal("/" + s), false);
@@ -31,13 +31,13 @@ public class HelpCommand {
                     Commands.argument("command", StringArgumentType.greedyString())
                         .executes(
                             p_288458_ -> {
-                                ParseResults<CommandSourceStack> parseresults = p_137788_.parse(
+                                ParseResults<CommandSourceStack> parseresults = dispatcher.parse(
                                     StringArgumentType.getString(p_288458_, "command"), p_288458_.getSource()
                                 );
                                 if (parseresults.getContext().getNodes().isEmpty()) {
                                     throw ERROR_FAILED.create();
                                 } else {
-                                    Map<CommandNode<CommandSourceStack>, String> map = p_137788_.getSmartUsage(
+                                    Map<CommandNode<CommandSourceStack>, String> map = dispatcher.getSmartUsage(
                                         Iterables.getLast(parseresults.getContext().getNodes()).getNode(), p_288458_.getSource()
                                     );
 

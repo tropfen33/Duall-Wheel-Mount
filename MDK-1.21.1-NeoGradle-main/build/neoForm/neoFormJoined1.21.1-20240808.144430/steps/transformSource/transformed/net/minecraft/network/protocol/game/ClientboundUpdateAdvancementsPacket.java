@@ -24,26 +24,26 @@ public class ClientboundUpdateAdvancementsPacket implements Packet<ClientGamePac
     private final Map<ResourceLocation, AdvancementProgress> progress;
 
     public ClientboundUpdateAdvancementsPacket(
-        boolean p_133560_, Collection<AdvancementHolder> p_133561_, Set<ResourceLocation> p_133562_, Map<ResourceLocation, AdvancementProgress> p_133563_
+        boolean reset, Collection<AdvancementHolder> added, Set<ResourceLocation> removed, Map<ResourceLocation, AdvancementProgress> progress
     ) {
-        this.reset = p_133560_;
-        this.added = List.copyOf(p_133561_);
-        this.removed = Set.copyOf(p_133562_);
-        this.progress = Map.copyOf(p_133563_);
+        this.reset = reset;
+        this.added = List.copyOf(added);
+        this.removed = Set.copyOf(removed);
+        this.progress = Map.copyOf(progress);
     }
 
-    private ClientboundUpdateAdvancementsPacket(RegistryFriendlyByteBuf p_320832_) {
-        this.reset = p_320832_.readBoolean();
-        this.added = AdvancementHolder.LIST_STREAM_CODEC.decode(p_320832_);
-        this.removed = p_320832_.readCollection(Sets::newLinkedHashSetWithExpectedSize, FriendlyByteBuf::readResourceLocation);
-        this.progress = p_320832_.readMap(FriendlyByteBuf::readResourceLocation, AdvancementProgress::fromNetwork);
+    private ClientboundUpdateAdvancementsPacket(RegistryFriendlyByteBuf buffer) {
+        this.reset = buffer.readBoolean();
+        this.added = AdvancementHolder.LIST_STREAM_CODEC.decode(buffer);
+        this.removed = buffer.readCollection(Sets::newLinkedHashSetWithExpectedSize, FriendlyByteBuf::readResourceLocation);
+        this.progress = buffer.readMap(FriendlyByteBuf::readResourceLocation, AdvancementProgress::fromNetwork);
     }
 
-    private void write(RegistryFriendlyByteBuf p_319915_) {
-        p_319915_.writeBoolean(this.reset);
-        AdvancementHolder.LIST_STREAM_CODEC.encode(p_319915_, this.added);
-        p_319915_.writeCollection(this.removed, FriendlyByteBuf::writeResourceLocation);
-        p_319915_.writeMap(this.progress, FriendlyByteBuf::writeResourceLocation, (p_179444_, p_179445_) -> p_179445_.serializeToNetwork(p_179444_));
+    private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeBoolean(this.reset);
+        AdvancementHolder.LIST_STREAM_CODEC.encode(buffer, this.added);
+        buffer.writeCollection(this.removed, FriendlyByteBuf::writeResourceLocation);
+        buffer.writeMap(this.progress, FriendlyByteBuf::writeResourceLocation, (p_179444_, p_179445_) -> p_179445_.serializeToNetwork(p_179444_));
     }
 
     @Override
@@ -51,8 +51,11 @@ public class ClientboundUpdateAdvancementsPacket implements Packet<ClientGamePac
         return GamePacketTypes.CLIENTBOUND_UPDATE_ADVANCEMENTS;
     }
 
-    public void handle(ClientGamePacketListener p_133569_) {
-        p_133569_.handleUpdateAdvancementsPacket(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleUpdateAdvancementsPacket(this);
     }
 
     public List<AdvancementHolder> getAdded() {

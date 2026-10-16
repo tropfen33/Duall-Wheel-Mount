@@ -39,37 +39,56 @@ public enum Direction implements StringRepresentable {
     public static final Codec<Direction> VERTICAL_CODEC = CODEC.validate(Direction::verifyVertical);
     public static final IntFunction<Direction> BY_ID = ByIdMap.continuous(Direction::get3DDataValue, values(), ByIdMap.OutOfBoundsStrategy.WRAP);
     public static final StreamCodec<ByteBuf, Direction> STREAM_CODEC = ByteBufCodecs.idMapper(BY_ID, Direction::get3DDataValue);
+    /**
+     * Ordering index for D-U-N-S-W-E
+     */
     private final int data3d;
+    /**
+     * Index of the opposite Direction in the VALUES array
+     */
     private final int oppositeIndex;
+    /**
+     * Ordering index for the HORIZONTALS field (S-W-N-E)
+     */
     private final int data2d;
     private final String name;
     private final Direction.Axis axis;
     private final Direction.AxisDirection axisDirection;
+    /**
+     * Normalized vector that points in the direction of this Direction
+     */
     private final Vec3i normal;
     private static final Direction[] VALUES = values();
     private static final Direction[] BY_3D_DATA = Arrays.stream(VALUES)
         .sorted(Comparator.comparingInt(p_235687_ -> p_235687_.data3d))
         .toArray(Direction[]::new);
+    /**
+     * All Facings with horizontal axis in order S-W-N-E
+     */
     private static final Direction[] BY_2D_DATA = Arrays.stream(VALUES)
         .filter(p_235685_ -> p_235685_.getAxis().isHorizontal())
         .sorted(Comparator.comparingInt(p_235683_ -> p_235683_.data2d))
         .toArray(Direction[]::new);
 
     private Direction(
-        int p_122356_, int p_122357_, int p_122358_, String p_122359_, Direction.AxisDirection p_122360_, Direction.Axis p_122361_, Vec3i p_122362_
+        int data3d, int oppositeIndex, int data2d, String name, Direction.AxisDirection axisDirection, Direction.Axis axis, Vec3i normal
     ) {
-        this.data3d = p_122356_;
-        this.data2d = p_122358_;
-        this.oppositeIndex = p_122357_;
-        this.name = p_122359_;
-        this.axis = p_122361_;
-        this.axisDirection = p_122360_;
-        this.normal = p_122362_;
+        this.data3d = data3d;
+        this.data2d = data2d;
+        this.oppositeIndex = oppositeIndex;
+        this.name = name;
+        this.axis = axis;
+        this.axisDirection = axisDirection;
+        this.normal = normal;
     }
 
-    public static Direction[] orderedByNearest(Entity p_122383_) {
-        float f = p_122383_.getViewXRot(1.0F) * (float) (Math.PI / 180.0);
-        float f1 = -p_122383_.getViewYRot(1.0F) * (float) (Math.PI / 180.0);
+    /**
+     * Gets the {@code Direction} values for the provided entity's
+     * looking direction. Dependent on yaw and pitch of entity looking.
+     */
+    public static Direction[] orderedByNearest(Entity entity) {
+        float f = entity.getViewXRot(1.0F) * (float) (Math.PI / 180.0);
+        float f1 = -entity.getViewYRot(1.0F) * (float) (Math.PI / 180.0);
         float f2 = Mth.sin(f);
         float f3 = Mth.cos(f);
         float f4 = Mth.sin(f1);
@@ -98,18 +117,18 @@ public enum Direction implements StringRepresentable {
         }
     }
 
-    private static Direction[] makeDirectionArray(Direction p_122399_, Direction p_122400_, Direction p_122401_) {
-        return new Direction[]{p_122399_, p_122400_, p_122401_, p_122401_.getOpposite(), p_122400_.getOpposite(), p_122399_.getOpposite()};
+    private static Direction[] makeDirectionArray(Direction first, Direction second, Direction third) {
+        return new Direction[]{first, second, third, third.getOpposite(), second.getOpposite(), first.getOpposite()};
     }
 
-    public static Direction rotate(Matrix4f p_254393_, Direction p_254252_) {
-        Vec3i vec3i = p_254252_.getNormal();
-        Vector4f vector4f = p_254393_.transform(new Vector4f((float)vec3i.getX(), (float)vec3i.getY(), (float)vec3i.getZ(), 0.0F));
+    public static Direction rotate(Matrix4f matrix, Direction direction) {
+        Vec3i vec3i = direction.getNormal();
+        Vector4f vector4f = matrix.transform(new Vector4f((float)vec3i.getX(), (float)vec3i.getY(), (float)vec3i.getZ(), 0.0F));
         return getNearest(vector4f.x(), vector4f.y(), vector4f.z());
     }
 
-    public static Collection<Direction> allShuffled(RandomSource p_235668_) {
-        return Util.shuffledCopy(values(), p_235668_);
+    public static Collection<Direction> allShuffled(RandomSource random) {
+        return Util.shuffledCopy(values(), random);
     }
 
     public static Stream<Direction> stream() {
@@ -139,11 +158,11 @@ public enum Direction implements StringRepresentable {
         return this.axisDirection;
     }
 
-    public static Direction getFacingAxis(Entity p_175358_, Direction.Axis p_175359_) {
-        return switch (p_175359_) {
-            case X -> EAST.isFacingAngle(p_175358_.getViewYRot(1.0F)) ? EAST : WEST;
-            case Y -> p_175358_.getViewXRot(1.0F) < 0.0F ? UP : DOWN;
-            case Z -> SOUTH.isFacingAngle(p_175358_.getViewYRot(1.0F)) ? SOUTH : NORTH;
+    public static Direction getFacingAxis(Entity entity, Direction.Axis axis) {
+        return switch (axis) {
+            case X -> EAST.isFacingAngle(entity.getViewYRot(1.0F)) ? EAST : WEST;
+            case Y -> entity.getViewXRot(1.0F) < 0.0F ? UP : DOWN;
+            case Z -> SOUTH.isFacingAngle(entity.getViewYRot(1.0F)) ? SOUTH : NORTH;
         };
     }
 
@@ -151,16 +170,16 @@ public enum Direction implements StringRepresentable {
         return from3DDataValue(this.oppositeIndex);
     }
 
-    public Direction getClockWise(Direction.Axis p_175363_) {
-        return switch (p_175363_) {
+    public Direction getClockWise(Direction.Axis axis) {
+        return switch (axis) {
             case X -> this != WEST && this != EAST ? this.getClockWiseX() : this;
             case Y -> this != UP && this != DOWN ? this.getClockWise() : this;
             case Z -> this != NORTH && this != SOUTH ? this.getClockWiseZ() : this;
         };
     }
 
-    public Direction getCounterClockWise(Direction.Axis p_175365_) {
-        return switch (p_175365_) {
+    public Direction getCounterClockWise(Direction.Axis axis) {
+        return switch (axis) {
             case X -> this != WEST && this != EAST ? this.getCounterClockWiseX() : this;
             case Y -> this != UP && this != DOWN ? this.getCounterClockWise() : this;
             case Z -> this != NORTH && this != SOUTH ? this.getCounterClockWiseZ() : this;
@@ -251,39 +270,50 @@ public enum Direction implements StringRepresentable {
         return this.axis;
     }
 
+    /**
+     * @return the Direction specified by the given name or null if no such Direction exists
+     */
     @Nullable
-    public static Direction byName(@Nullable String p_122403_) {
-        return CODEC.byName(p_122403_);
+    public static Direction byName(@Nullable String name) {
+        return CODEC.byName(name);
     }
 
-    public static Direction from3DDataValue(int p_122377_) {
-        return BY_3D_DATA[Mth.abs(p_122377_ % BY_3D_DATA.length)];
+    /**
+     * @return the {@code Direction} corresponding to the given index (0-5). Out of bounds values are wrapped around. The order is D-U-N-S-W-E.
+     * @see #get3DDataValue
+     */
+    public static Direction from3DDataValue(int index) {
+        return BY_3D_DATA[Mth.abs(index % BY_3D_DATA.length)];
     }
 
-    public static Direction from2DDataValue(int p_122408_) {
-        return BY_2D_DATA[Mth.abs(p_122408_ % BY_2D_DATA.length)];
+    /**
+     * @return the Direction corresponding to the given horizontal index (0-3). Out of bounds values are wrapped around. The order is S-W-N-E.
+     * @see #get2DDataValue
+     */
+    public static Direction from2DDataValue(int horizontalIndex) {
+        return BY_2D_DATA[Mth.abs(horizontalIndex % BY_2D_DATA.length)];
     }
 
     @Nullable
-    public static Direction fromDelta(int p_278323_, int p_278296_, int p_278347_) {
-        if (p_278323_ == 0) {
-            if (p_278296_ == 0) {
-                if (p_278347_ > 0) {
+    public static Direction fromDelta(int x, int y, int z) {
+        if (x == 0) {
+            if (y == 0) {
+                if (z > 0) {
                     return SOUTH;
                 }
 
-                if (p_278347_ < 0) {
+                if (z < 0) {
                     return NORTH;
                 }
-            } else if (p_278347_ == 0) {
-                if (p_278296_ > 0) {
+            } else if (z == 0) {
+                if (y > 0) {
                     return UP;
                 }
 
                 return DOWN;
             }
-        } else if (p_278296_ == 0 && p_278347_ == 0) {
-            if (p_278323_ > 0) {
+        } else if (y == 0 && z == 0) {
+            if (x > 0) {
                 return EAST;
             }
 
@@ -293,15 +323,18 @@ public enum Direction implements StringRepresentable {
         return null;
     }
 
-    public static Direction fromYRot(double p_122365_) {
-        return from2DDataValue(Mth.floor(p_122365_ / 90.0 + 0.5) & 3);
+    /**
+     * @return the Direction corresponding to the given angle in degrees (0-360). Out of bounds values are wrapped around. An angle of 0 is SOUTH, an angle of 90 would be WEST.
+     */
+    public static Direction fromYRot(double angle) {
+        return from2DDataValue(Mth.floor(angle / 90.0 + 0.5) & 3);
     }
 
-    public static Direction fromAxisAndDirection(Direction.Axis p_122388_, Direction.AxisDirection p_122389_) {
-        return switch (p_122388_) {
-            case X -> p_122389_ == Direction.AxisDirection.POSITIVE ? EAST : WEST;
-            case Y -> p_122389_ == Direction.AxisDirection.POSITIVE ? UP : DOWN;
-            case Z -> p_122389_ == Direction.AxisDirection.POSITIVE ? SOUTH : NORTH;
+    public static Direction fromAxisAndDirection(Direction.Axis axis, Direction.AxisDirection axisDirection) {
+        return switch (axis) {
+            case X -> axisDirection == Direction.AxisDirection.POSITIVE ? EAST : WEST;
+            case Y -> axisDirection == Direction.AxisDirection.POSITIVE ? UP : DOWN;
+            case Z -> axisDirection == Direction.AxisDirection.POSITIVE ? SOUTH : NORTH;
         };
     }
 
@@ -309,20 +342,20 @@ public enum Direction implements StringRepresentable {
         return (float)((this.data2d & 3) * 90);
     }
 
-    public static Direction getRandom(RandomSource p_235673_) {
-        return Util.getRandom(VALUES, p_235673_);
+    public static Direction getRandom(RandomSource random) {
+        return Util.getRandom(VALUES, random);
     }
 
-    public static Direction getNearest(double p_122367_, double p_122368_, double p_122369_) {
-        return getNearest((float)p_122367_, (float)p_122368_, (float)p_122369_);
+    public static Direction getNearest(double x, double y, double z) {
+        return getNearest((float)x, (float)y, (float)z);
     }
 
-    public static Direction getNearest(float p_122373_, float p_122374_, float p_122375_) {
+    public static Direction getNearest(float x, float y, float z) {
         Direction direction = NORTH;
         float f = Float.MIN_VALUE;
 
         for (Direction direction1 : VALUES) {
-            float f1 = p_122373_ * (float)direction1.normal.getX() + p_122374_ * (float)direction1.normal.getY() + p_122375_ * (float)direction1.normal.getZ();
+            float f1 = x * (float)direction1.normal.getX() + y * (float)direction1.normal.getY() + z * (float)direction1.normal.getZ();
             if (f1 > f) {
                 f = f1;
                 direction = direction1;
@@ -332,8 +365,8 @@ public enum Direction implements StringRepresentable {
         return direction;
     }
 
-    public static Direction getNearest(Vec3 p_333951_) {
-        return getNearest(p_333951_.x, p_333951_.y, p_333951_.z);
+    public static Direction getNearest(Vec3 ois) {
+        return getNearest(ois.x, ois.y, ois.z);
     }
 
     @Override
@@ -346,26 +379,26 @@ public enum Direction implements StringRepresentable {
         return this.name;
     }
 
-    private static DataResult<Direction> verifyVertical(Direction p_194529_) {
-        return p_194529_.getAxis().isVertical() ? DataResult.success(p_194529_) : DataResult.error(() -> "Expected a vertical direction");
+    private static DataResult<Direction> verifyVertical(Direction direction) {
+        return direction.getAxis().isVertical() ? DataResult.success(direction) : DataResult.error(() -> "Expected a vertical direction");
     }
 
-    public static Direction get(Direction.AxisDirection p_122391_, Direction.Axis p_122392_) {
+    public static Direction get(Direction.AxisDirection axisDirection, Direction.Axis axis) {
         for (Direction direction : VALUES) {
-            if (direction.getAxisDirection() == p_122391_ && direction.getAxis() == p_122392_) {
+            if (direction.getAxisDirection() == axisDirection && direction.getAxis() == axis) {
                 return direction;
             }
         }
 
-        throw new IllegalArgumentException("No such direction: " + p_122391_ + " " + p_122392_);
+        throw new IllegalArgumentException("No such direction: " + axisDirection + " " + axis);
     }
 
     public Vec3i getNormal() {
         return this.normal;
     }
 
-    public boolean isFacingAngle(float p_122371_) {
-        float f = p_122371_ * (float) (Math.PI / 180.0);
+    public boolean isFacingAngle(float degrees) {
+        float f = degrees * (float) (Math.PI / 180.0);
         float f1 = -Mth.sin(f);
         float f2 = Mth.cos(f);
         return (float)this.normal.getX() * f1 + (float)this.normal.getZ() * f2 > 0.0F;
@@ -410,13 +443,16 @@ public enum Direction implements StringRepresentable {
         public static final StringRepresentable.EnumCodec<Direction.Axis> CODEC = StringRepresentable.fromEnum(Direction.Axis::values);
         private final String name;
 
-        Axis(String p_122456_) {
-            this.name = p_122456_;
+        Axis(String name) {
+            this.name = name;
         }
 
+        /**
+         * @return the Axis specified by the given name or {@code null} if no such Axis exists
+         */
         @Nullable
-        public static Direction.Axis byName(String p_122474_) {
-            return CODEC.byName(p_122474_);
+        public static Direction.Axis byName(String name) {
+            return CODEC.byName(name);
         }
 
         public String getName() {
@@ -436,12 +472,12 @@ public enum Direction implements StringRepresentable {
             return this.name;
         }
 
-        public static Direction.Axis getRandom(RandomSource p_235689_) {
-            return Util.getRandom(VALUES, p_235689_);
+        public static Direction.Axis getRandom(RandomSource random) {
+            return Util.getRandom(VALUES, random);
         }
 
-        public boolean test(@Nullable Direction p_122472_) {
-            return p_122472_ != null && p_122472_.getAxis() == this;
+        public boolean test(@Nullable Direction direction) {
+            return direction != null && direction.getAxis() == this;
         }
 
         public Direction.Plane getPlane() {
@@ -456,9 +492,9 @@ public enum Direction implements StringRepresentable {
             return this.name;
         }
 
-        public abstract int choose(int p_122466_, int p_122467_, int p_122468_);
+        public abstract int choose(int x, int y, int z);
 
-        public abstract double choose(double p_122463_, double p_122464_, double p_122465_);
+        public abstract double choose(double x, double y, double z);
     }
 
     public static enum AxisDirection {
@@ -468,9 +504,9 @@ public enum Direction implements StringRepresentable {
         private final int step;
         private final String name;
 
-        private AxisDirection(int p_122538_, String p_122539_) {
-            this.step = p_122538_;
-            this.name = p_122539_;
+        private AxisDirection(int step, String name) {
+            this.step = step;
+            this.name = name;
         }
 
         public int getStep() {
@@ -498,21 +534,21 @@ public enum Direction implements StringRepresentable {
         private final Direction[] faces;
         private final Direction.Axis[] axis;
 
-        private Plane(Direction[] p_122555_, Direction.Axis[] p_122556_) {
-            this.faces = p_122555_;
-            this.axis = p_122556_;
+        private Plane(Direction[] faces, Direction.Axis[] axis) {
+            this.faces = faces;
+            this.axis = axis;
         }
 
-        public Direction getRandomDirection(RandomSource p_235691_) {
-            return Util.getRandom(this.faces, p_235691_);
+        public Direction getRandomDirection(RandomSource random) {
+            return Util.getRandom(this.faces, random);
         }
 
-        public Direction.Axis getRandomAxis(RandomSource p_235693_) {
-            return Util.getRandom(this.axis, p_235693_);
+        public Direction.Axis getRandomAxis(RandomSource random) {
+            return Util.getRandom(this.axis, random);
         }
 
-        public boolean test(@Nullable Direction p_122559_) {
-            return p_122559_ != null && p_122559_.getAxis().getPlane() == this;
+        public boolean test(@Nullable Direction direction) {
+            return direction != null && direction.getAxis().getPlane() == this;
         }
 
         @Override
@@ -524,8 +560,8 @@ public enum Direction implements StringRepresentable {
             return Arrays.stream(this.faces);
         }
 
-        public List<Direction> shuffledCopy(RandomSource p_235695_) {
-            return Util.shuffledCopy(this.faces, p_235695_);
+        public List<Direction> shuffledCopy(RandomSource random) {
+            return Util.shuffledCopy(this.faces, random);
         }
 
         public int length() {

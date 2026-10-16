@@ -20,9 +20,9 @@ public class TurtleModel<T extends Turtle> extends QuadrupedModel<T> {
     private static final String EGG_BELLY = "egg_belly";
     private final ModelPart eggBelly;
 
-    public TurtleModel(ModelPart p_171042_) {
-        super(p_171042_, true, 120.0F, 0.0F, 9.0F, 6.0F, 120);
-        this.eggBelly = p_171042_.getChild("egg_belly");
+    public TurtleModel(ModelPart root) {
+        super(root, true, 120.0F, 0.0F, 9.0F, 6.0F, 120);
+        this.eggBelly = root.getChild("egg_belly");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -66,46 +66,49 @@ public class TurtleModel<T extends Turtle> extends QuadrupedModel<T> {
         return Iterables.concat(super.bodyParts(), ImmutableList.of(this.eggBelly));
     }
 
-    public void setupAnim(T p_103994_, float p_103995_, float p_103996_, float p_103997_, float p_103998_, float p_103999_) {
-        super.setupAnim(p_103994_, p_103995_, p_103996_, p_103997_, p_103998_, p_103999_);
-        this.rightHindLeg.xRot = Mth.cos(p_103995_ * 0.6662F * 0.6F) * 0.5F * p_103996_;
-        this.leftHindLeg.xRot = Mth.cos(p_103995_ * 0.6662F * 0.6F + (float) Math.PI) * 0.5F * p_103996_;
-        this.rightFrontLeg.zRot = Mth.cos(p_103995_ * 0.6662F * 0.6F + (float) Math.PI) * 0.5F * p_103996_;
-        this.leftFrontLeg.zRot = Mth.cos(p_103995_ * 0.6662F * 0.6F) * 0.5F * p_103996_;
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+        this.rightHindLeg.xRot = Mth.cos(limbSwing * 0.6662F * 0.6F) * 0.5F * limbSwingAmount;
+        this.leftHindLeg.xRot = Mth.cos(limbSwing * 0.6662F * 0.6F + (float) Math.PI) * 0.5F * limbSwingAmount;
+        this.rightFrontLeg.zRot = Mth.cos(limbSwing * 0.6662F * 0.6F + (float) Math.PI) * 0.5F * limbSwingAmount;
+        this.leftFrontLeg.zRot = Mth.cos(limbSwing * 0.6662F * 0.6F) * 0.5F * limbSwingAmount;
         this.rightFrontLeg.xRot = 0.0F;
         this.leftFrontLeg.xRot = 0.0F;
         this.rightFrontLeg.yRot = 0.0F;
         this.leftFrontLeg.yRot = 0.0F;
         this.rightHindLeg.yRot = 0.0F;
         this.leftHindLeg.yRot = 0.0F;
-        if (!p_103994_.isInWater() && p_103994_.onGround()) {
-            float f = p_103994_.isLayingEgg() ? 4.0F : 1.0F;
-            float f1 = p_103994_.isLayingEgg() ? 2.0F : 1.0F;
+        if (!entity.isInWater() && entity.onGround()) {
+            float f = entity.isLayingEgg() ? 4.0F : 1.0F;
+            float f1 = entity.isLayingEgg() ? 2.0F : 1.0F;
             float f2 = 5.0F;
-            this.rightFrontLeg.yRot = Mth.cos(f * p_103995_ * 5.0F + (float) Math.PI) * 8.0F * p_103996_ * f1;
+            this.rightFrontLeg.yRot = Mth.cos(f * limbSwing * 5.0F + (float) Math.PI) * 8.0F * limbSwingAmount * f1;
             this.rightFrontLeg.zRot = 0.0F;
-            this.leftFrontLeg.yRot = Mth.cos(f * p_103995_ * 5.0F) * 8.0F * p_103996_ * f1;
+            this.leftFrontLeg.yRot = Mth.cos(f * limbSwing * 5.0F) * 8.0F * limbSwingAmount * f1;
             this.leftFrontLeg.zRot = 0.0F;
-            this.rightHindLeg.yRot = Mth.cos(p_103995_ * 5.0F + (float) Math.PI) * 3.0F * p_103996_;
+            this.rightHindLeg.yRot = Mth.cos(limbSwing * 5.0F + (float) Math.PI) * 3.0F * limbSwingAmount;
             this.rightHindLeg.xRot = 0.0F;
-            this.leftHindLeg.yRot = Mth.cos(p_103995_ * 5.0F) * 3.0F * p_103996_;
+            this.leftHindLeg.yRot = Mth.cos(limbSwing * 5.0F) * 3.0F * limbSwingAmount;
             this.leftHindLeg.xRot = 0.0F;
         }
 
-        this.eggBelly.visible = !this.young && p_103994_.hasEgg();
+        this.eggBelly.visible = !this.young && entity.hasEgg();
     }
 
     @Override
-    public void renderToBuffer(PoseStack p_104001_, VertexConsumer p_104002_, int p_104003_, int p_104004_, int p_351030_) {
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
         boolean flag = this.eggBelly.visible;
         if (flag) {
-            p_104001_.pushPose();
-            p_104001_.translate(0.0F, -0.08F, 0.0F);
+            poseStack.pushPose();
+            poseStack.translate(0.0F, -0.08F, 0.0F);
         }
 
-        super.renderToBuffer(p_104001_, p_104002_, p_104003_, p_104004_, p_351030_);
+        super.renderToBuffer(poseStack, buffer, packedLight, packedOverlay, color);
         if (flag) {
-            p_104001_.popPose();
+            poseStack.popPose();
         }
     }
 }

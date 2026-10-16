@@ -6,23 +6,23 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 
 public interface MetadataSectionType<T> extends MetadataSectionSerializer<T> {
-    JsonObject toJson(T p_249140_);
+    JsonObject toJson(T data);
 
-    static <T> MetadataSectionType<T> fromCodec(final String p_249716_, final Codec<T> p_249525_) {
+    static <T> MetadataSectionType<T> fromCodec(final String name, final Codec<T> codec) {
         return new MetadataSectionType<T>() {
             @Override
             public String getMetadataSectionName() {
-                return p_249716_;
+                return name;
             }
 
             @Override
             public T fromJson(JsonObject p_249450_) {
-                return p_249525_.parse(JsonOps.INSTANCE, p_249450_).getOrThrow(JsonParseException::new);
+                return codec.parse(JsonOps.INSTANCE, p_249450_).getOrThrow(JsonParseException::new);
             }
 
             @Override
             public JsonObject toJson(T p_250691_) {
-                return p_249525_.encodeStart(JsonOps.INSTANCE, p_250691_).getOrThrow(IllegalArgumentException::new).getAsJsonObject();
+                return codec.encodeStart(JsonOps.INSTANCE, p_250691_).getOrThrow(IllegalArgumentException::new).getAsJsonObject();
             }
         };
     }

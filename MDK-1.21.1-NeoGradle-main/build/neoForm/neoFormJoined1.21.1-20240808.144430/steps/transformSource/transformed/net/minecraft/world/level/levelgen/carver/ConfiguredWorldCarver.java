@@ -24,21 +24,21 @@ public record ConfiguredWorldCarver<WC extends CarverConfiguration>(WorldCarver<
     public static final Codec<Holder<ConfiguredWorldCarver<?>>> CODEC = RegistryFileCodec.create(Registries.CONFIGURED_CARVER, DIRECT_CODEC);
     public static final Codec<HolderSet<ConfiguredWorldCarver<?>>> LIST_CODEC = RegistryCodecs.homogeneousList(Registries.CONFIGURED_CARVER, DIRECT_CODEC);
 
-    public boolean isStartChunk(RandomSource p_224897_) {
-        return this.worldCarver.isStartChunk(this.config, p_224897_);
+    public boolean isStartChunk(RandomSource random) {
+        return this.worldCarver.isStartChunk(this.config, random);
     }
 
     public boolean carve(
-        CarvingContext p_224899_,
-        ChunkAccess p_224900_,
-        Function<BlockPos, Holder<Biome>> p_224901_,
-        RandomSource p_224902_,
-        Aquifer p_224903_,
-        ChunkPos p_224904_,
-        CarvingMask p_224905_
+        CarvingContext context,
+        ChunkAccess chunk,
+        Function<BlockPos, Holder<Biome>> biomeAccessor,
+        RandomSource random,
+        Aquifer aquifer,
+        ChunkPos chunkPos,
+        CarvingMask carvingMask
     ) {
-        return SharedConstants.debugVoidTerrain(p_224900_.getPos())
+        return SharedConstants.debugVoidTerrain(chunk.getPos())
             ? false
-            : this.worldCarver.carve(p_224899_, this.config, p_224900_, p_224901_, p_224902_, p_224903_, p_224904_, p_224905_);
+            : this.worldCarver.carve(context, this.config, chunk, biomeAccessor, random, aquifer, chunkPos, carvingMask);
     }
 }

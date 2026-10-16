@@ -7,6 +7,12 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 
+/**
+ * Registration for {@link LootNumberProviderType}.
+ *
+ * @see LootNumberProviderType
+ * @see NumberProvider
+ */
 public class NumberProviders {
     private static final Codec<NumberProvider> TYPED_CODEC = BuiltInRegistries.LOOT_NUMBER_PROVIDER_TYPE
         .byNameCodec()
@@ -25,9 +31,9 @@ public class NumberProviders {
     public static final LootNumberProviderType STORAGE = register("storage", StorageValue.CODEC);
     public static final LootNumberProviderType ENCHANTMENT_LEVEL = register("enchantment_level", EnchantmentLevelProvider.CODEC);
 
-    private static LootNumberProviderType register(String p_165739_, MapCodec<? extends NumberProvider> p_338305_) {
+    private static LootNumberProviderType register(String name, MapCodec<? extends NumberProvider> codec) {
         return Registry.register(
-            BuiltInRegistries.LOOT_NUMBER_PROVIDER_TYPE, ResourceLocation.withDefaultNamespace(p_165739_), new LootNumberProviderType(p_338305_)
+            BuiltInRegistries.LOOT_NUMBER_PROVIDER_TYPE, ResourceLocation.withDefaultNamespace(name), new LootNumberProviderType(codec)
         );
     }
 }

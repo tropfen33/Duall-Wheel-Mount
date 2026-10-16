@@ -14,15 +14,15 @@ public abstract class ItemStackComponentRemainderFix extends DataFix {
     private final String componentId;
     private final String newComponentId;
 
-    public ItemStackComponentRemainderFix(Schema p_332692_, String p_332700_, String p_332816_) {
-        this(p_332692_, p_332700_, p_332816_, p_332816_);
+    public ItemStackComponentRemainderFix(Schema outputSchema, String name, String componentId) {
+        this(outputSchema, name, componentId, componentId);
     }
 
-    public ItemStackComponentRemainderFix(Schema p_332750_, String p_332715_, String p_332770_, String p_332818_) {
-        super(p_332750_, false);
-        this.name = p_332715_;
-        this.componentId = p_332770_;
-        this.newComponentId = p_332818_;
+    public ItemStackComponentRemainderFix(Schema outputSchema, String name, String componentId, String newComponentId) {
+        super(outputSchema, false);
+        this.name = name;
+        this.componentId = componentId;
+        this.newComponentId = newComponentId;
     }
 
     @Override
@@ -41,5 +41,5 @@ public abstract class ItemStackComponentRemainderFix extends DataFix {
         );
     }
 
-    protected abstract <T> Dynamic<T> fixComponent(Dynamic<T> p_332735_);
+    protected abstract <T> Dynamic<T> fixComponent(Dynamic<T> tag);
 }

@@ -10,8 +10,8 @@ import net.minecraft.world.entity.raid.Raider;
 import net.minecraft.world.level.Level;
 
 public abstract class AbstractIllager extends Raider {
-    protected AbstractIllager(EntityType<? extends AbstractIllager> p_32105_, Level p_32106_) {
-        super(p_32105_, p_32106_);
+    protected AbstractIllager(EntityType<? extends AbstractIllager> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
@@ -24,16 +24,19 @@ public abstract class AbstractIllager extends Raider {
     }
 
     @Override
-    public boolean canAttack(LivingEntity p_186270_) {
-        return p_186270_ instanceof AbstractVillager && p_186270_.isBaby() ? false : super.canAttack(p_186270_);
+    public boolean canAttack(LivingEntity target) {
+        return target instanceof AbstractVillager && target.isBaby() ? false : super.canAttack(target);
     }
 
+    /**
+     * Returns whether this Entity is on the same team as the given Entity.
+     */
     @Override
-    public boolean isAlliedTo(Entity p_320563_) {
-        if (super.isAlliedTo(p_320563_)) {
+    public boolean isAlliedTo(Entity entity) {
+        if (super.isAlliedTo(entity)) {
             return true;
         } else {
-            return !p_320563_.getType().is(EntityTypeTags.ILLAGER_FRIENDS) ? false : this.getTeam() == null && p_320563_.getTeam() == null;
+            return !entity.getType().is(EntityTypeTags.ILLAGER_FRIENDS) ? false : this.getTeam() == null && entity.getTeam() == null;
         }
     }
 
@@ -49,8 +52,8 @@ public abstract class AbstractIllager extends Raider {
     }
 
     protected class RaiderOpenDoorGoal extends OpenDoorGoal {
-        public RaiderOpenDoorGoal(Raider p_32128_) {
-            super(p_32128_, false);
+        public RaiderOpenDoorGoal(Raider raider) {
+            super(raider, false);
         }
 
         @Override

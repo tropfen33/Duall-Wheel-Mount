@@ -15,14 +15,14 @@ public class WorldLoadTimesEvent {
     @Nullable
     private final Duration worldLoadDuration;
 
-    public WorldLoadTimesEvent(boolean p_262182_, @Nullable Duration p_261732_) {
-        this.worldLoadDuration = p_261732_;
-        this.newWorld = p_262182_;
+    public WorldLoadTimesEvent(boolean newWorld, @Nullable Duration wordLoadDuration) {
+        this.worldLoadDuration = wordLoadDuration;
+        this.newWorld = newWorld;
     }
 
-    public void send(TelemetryEventSender p_261879_) {
+    public void send(TelemetryEventSender sender) {
         if (this.worldLoadDuration != null) {
-            p_261879_.send(TelemetryEventType.WORLD_LOAD_TIMES, p_261740_ -> {
+            sender.send(TelemetryEventType.WORLD_LOAD_TIMES, p_261740_ -> {
                 p_261740_.put(TelemetryProperty.WORLD_LOAD_TIME_MS, (int)this.worldLoadDuration.toMillis());
                 p_261740_.put(TelemetryProperty.NEW_WORLD, this.newWorld);
             });

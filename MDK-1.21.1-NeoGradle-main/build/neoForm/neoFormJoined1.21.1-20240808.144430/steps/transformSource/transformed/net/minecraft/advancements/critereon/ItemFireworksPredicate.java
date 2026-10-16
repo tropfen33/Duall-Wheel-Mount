@@ -30,9 +30,9 @@ public record ItemFireworksPredicate(
         return DataComponents.FIREWORKS;
     }
 
-    public boolean matches(ItemStack p_341262_, Fireworks p_341415_) {
-        return this.explosions.isPresent() && !this.explosions.get().test(p_341415_.explosions())
+    public boolean matches(ItemStack stack, Fireworks value) {
+        return this.explosions.isPresent() && !this.explosions.get().test(value.explosions())
             ? false
-            : this.flightDuration.matches(p_341415_.flightDuration());
+            : this.flightDuration.matches(value.flightDuration());
     }
 }

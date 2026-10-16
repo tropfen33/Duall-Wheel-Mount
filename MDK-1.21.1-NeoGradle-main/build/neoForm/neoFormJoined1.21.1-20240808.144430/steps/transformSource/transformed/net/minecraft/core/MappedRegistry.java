@@ -84,14 +84,14 @@ public class MappedRegistry<T> extends net.neoforged.neoforge.registries.BaseMap
     };
     private final Object tagAdditionLock = new Object();
 
-    public MappedRegistry(ResourceKey<? extends Registry<T>> p_249899_, Lifecycle p_252249_) {
-        this(p_249899_, p_252249_, false);
+    public MappedRegistry(ResourceKey<? extends Registry<T>> key, Lifecycle registryLifecycle) {
+        this(key, registryLifecycle, false);
     }
 
-    public MappedRegistry(ResourceKey<? extends Registry<T>> p_252132_, Lifecycle p_249215_, boolean p_251014_) {
-        this.key = p_252132_;
-        this.registryLifecycle = p_249215_;
-        if (p_251014_) {
+    public MappedRegistry(ResourceKey<? extends Registry<T>> key, Lifecycle registryLifecycle, boolean hasIntrusiveHolders) {
+        this.key = key;
+        this.registryLifecycle = registryLifecycle;
+        if (hasIntrusiveHolders) {
             this.unregisteredIntrusiveHolders = new IdentityHashMap<>();
         }
     }
@@ -112,15 +112,15 @@ public class MappedRegistry<T> extends net.neoforged.neoforge.registries.BaseMap
         }
     }
 
-    private void validateWrite(ResourceKey<T> p_205922_) {
+    private void validateWrite(ResourceKey<T> key) {
         if (this.frozen) {
-            throw new IllegalStateException("Registry is already frozen (trying to add key " + p_205922_ + ")");
+            throw new IllegalStateException("Registry is already frozen (trying to add key " + key + ")");
         }
     }
 
     @Override
-    public Holder.Reference<T> register(ResourceKey<T> p_256252_, T p_256591_, RegistrationInfo p_326235_) {
-        return register(this.byId.size(), p_256252_, p_256591_, p_326235_);
+    public Holder.Reference<T> register(ResourceKey<T> key, T value, RegistrationInfo registrationInfo) {
+        return register(this.byId.size(), key, value, registrationInfo);
     }
 
     public Holder.Reference<T> register(int id, ResourceKey<T> p_256252_, T p_256591_, RegistrationInfo p_326235_) {
@@ -164,48 +164,54 @@ public class MappedRegistry<T> extends net.neoforged.neoforge.registries.BaseMap
         return reference;
     }
 
+    /**
+     * @return the name used to identify the given object within this registry or {@code null} if the object is not within this registry
+     */
     @Nullable
     @Override
-    public ResourceLocation getKey(T p_122746_) {
-        Holder.Reference<T> reference = this.byValue.get(p_122746_);
+    public ResourceLocation getKey(T value) {
+        Holder.Reference<T> reference = this.byValue.get(value);
         return reference != null ? reference.key().location() : null;
     }
 
     @Override
-    public Optional<ResourceKey<T>> getResourceKey(T p_122755_) {
-        return Optional.ofNullable(this.byValue.get(p_122755_)).map(Holder.Reference::key);
+    public Optional<ResourceKey<T>> getResourceKey(T value) {
+        return Optional.ofNullable(this.byValue.get(value)).map(Holder.Reference::key);
     }
 
+    /**
+     * @return the integer ID used to identify the given object
+     */
     @Override
-    public int getId(@Nullable T p_122706_) {
-        return this.toId.getInt(p_122706_);
-    }
-
-    @Nullable
-    @Override
-    public T get(@Nullable ResourceKey<T> p_122714_) {
-        return getValueFromNullable(this.byKey.get(resolve(p_122714_)));
+    public int getId(@Nullable T value) {
+        return this.toId.getInt(value);
     }
 
     @Nullable
     @Override
-    public T byId(int p_122684_) {
-        return p_122684_ >= 0 && p_122684_ < this.byId.size() ? this.byId.get(p_122684_).value() : null;
+    public T get(@Nullable ResourceKey<T> key) {
+        return getValueFromNullable(this.byKey.get(resolve(key)));
+    }
+
+    @Nullable
+    @Override
+    public T byId(int id) {
+        return id >= 0 && id < this.byId.size() ? this.byId.get(id).value() : null;
     }
 
     @Override
-    public Optional<Holder.Reference<T>> getHolder(int p_205907_) {
-        return p_205907_ >= 0 && p_205907_ < this.byId.size() ? Optional.ofNullable(this.byId.get(p_205907_)) : Optional.empty();
+    public Optional<Holder.Reference<T>> getHolder(int id) {
+        return id >= 0 && id < this.byId.size() ? Optional.ofNullable(this.byId.get(id)) : Optional.empty();
     }
 
     @Override
-    public Optional<Holder.Reference<T>> getHolder(ResourceLocation p_316743_) {
-        return Optional.ofNullable(this.byLocation.get(resolve(p_316743_)));
+    public Optional<Holder.Reference<T>> getHolder(ResourceLocation location) {
+        return Optional.ofNullable(this.byLocation.get(resolve(location)));
     }
 
     @Override
-    public Optional<Holder.Reference<T>> getHolder(ResourceKey<T> p_205905_) {
-        return Optional.ofNullable(this.byKey.get(resolve(p_205905_)));
+    public Optional<Holder.Reference<T>> getHolder(ResourceKey<T> key) {
+        return Optional.ofNullable(this.byKey.get(resolve(key)));
     }
 
     @Override
@@ -214,13 +220,13 @@ public class MappedRegistry<T> extends net.neoforged.neoforge.registries.BaseMap
     }
 
     @Override
-    public Holder<T> wrapAsHolder(T p_263356_) {
-        Holder.Reference<T> reference = this.byValue.get(p_263356_);
-        return (Holder<T>)(reference != null ? reference : Holder.direct(p_263356_));
+    public Holder<T> wrapAsHolder(T value) {
+        Holder.Reference<T> reference = this.byValue.get(value);
+        return (Holder<T>)(reference != null ? reference : Holder.direct(value));
     }
 
-    Holder.Reference<T> getOrCreateHolderOrThrow(ResourceKey<T> p_248831_) {
-        return this.byKey.computeIfAbsent(resolve(p_248831_), p_258169_ -> {
+    Holder.Reference<T> getOrCreateHolderOrThrow(ResourceKey<T> key) {
+        return this.byKey.computeIfAbsent(resolve(key), p_258169_ -> {
             if (this.unregisteredIntrusiveHolders != null) {
                 throw new IllegalStateException("This registry can't create new holders without value");
             } else {
@@ -236,8 +242,8 @@ public class MappedRegistry<T> extends net.neoforged.neoforge.registries.BaseMap
     }
 
     @Override
-    public Optional<RegistrationInfo> registrationInfo(ResourceKey<T> p_326067_) {
-        return Optional.ofNullable(this.registrationInfos.get(p_326067_));
+    public Optional<RegistrationInfo> registrationInfo(ResourceKey<T> key) {
+        return Optional.ofNullable(this.registrationInfos.get(key));
     }
 
     @Override
@@ -252,14 +258,14 @@ public class MappedRegistry<T> extends net.neoforged.neoforge.registries.BaseMap
 
     @Nullable
     @Override
-    public T get(@Nullable ResourceLocation p_122739_) {
-        Holder.Reference<T> reference = this.byLocation.get(p_122739_ != null ? resolve(p_122739_) : null);
+    public T get(@Nullable ResourceLocation name) {
+        Holder.Reference<T> reference = this.byLocation.get(name != null ? resolve(name) : null);
         return getValueFromNullable(reference);
     }
 
     @Nullable
-    private static <T> T getValueFromNullable(@Nullable Holder.Reference<T> p_205866_) {
-        return p_205866_ != null ? p_205866_.value() : null;
+    private static <T> T getValueFromNullable(@Nullable Holder.Reference<T> holder) {
+        return holder != null ? holder.value() : null;
     }
 
     @Override
@@ -288,19 +294,19 @@ public class MappedRegistry<T> extends net.neoforged.neoforge.registries.BaseMap
     }
 
     @Override
-    public HolderSet.Named<T> getOrCreateTag(TagKey<T> p_205895_) {
-        HolderSet.Named<T> named = this.tags.get(p_205895_);
+    public HolderSet.Named<T> getOrCreateTag(TagKey<T> key) {
+        HolderSet.Named<T> named = this.tags.get(key);
         if (named != null) {
             return named;
         } else {
             synchronized (this.tagAdditionLock) {
-                named = this.tags.get(p_205895_);
+                named = this.tags.get(key);
                 if (named != null) {
                     return named;
                 } else {
-                    named = this.createTag(p_205895_);
+                    named = this.createTag(key);
                     Map<TagKey<T>, HolderSet.Named<T>> map = new IdentityHashMap<>(this.tags);
-                    map.put(p_205895_, named);
+                    map.put(key, named);
                     this.tags = map;
                     return named;
                 }
@@ -308,8 +314,8 @@ public class MappedRegistry<T> extends net.neoforged.neoforge.registries.BaseMap
         }
     }
 
-    private HolderSet.Named<T> createTag(TagKey<T> p_211068_) {
-        return new HolderSet.Named<>(this.holderOwner(), p_211068_);
+    private HolderSet.Named<T> createTag(TagKey<T> key) {
+        return new HolderSet.Named<>(this.holderOwner(), key);
     }
 
     @Override
@@ -323,18 +329,18 @@ public class MappedRegistry<T> extends net.neoforged.neoforge.registries.BaseMap
     }
 
     @Override
-    public Optional<Holder.Reference<T>> getRandom(RandomSource p_235716_) {
-        return Util.getRandomSafe(this.byId, p_235716_);
+    public Optional<Holder.Reference<T>> getRandom(RandomSource random) {
+        return Util.getRandomSafe(this.byId, random);
     }
 
     @Override
-    public boolean containsKey(ResourceLocation p_122761_) {
-        return this.byLocation.containsKey(p_122761_);
+    public boolean containsKey(ResourceLocation name) {
+        return this.byLocation.containsKey(name);
     }
 
     @Override
-    public boolean containsKey(ResourceKey<T> p_175392_) {
-        return this.byKey.containsKey(p_175392_);
+    public boolean containsKey(ResourceKey<T> key) {
+        return this.byKey.containsKey(key);
     }
 
     /** @deprecated Forge: For internal use only. Use the Register events when registering values. */
@@ -375,25 +381,25 @@ public class MappedRegistry<T> extends net.neoforged.neoforge.registries.BaseMap
     }
 
     @Override
-    public Holder.Reference<T> createIntrusiveHolder(T p_205915_) {
+    public Holder.Reference<T> createIntrusiveHolder(T value) {
         if (this.unregisteredIntrusiveHolders == null) {
             throw new IllegalStateException("This registry can't create intrusive holders");
         } else {
             this.validateWrite();
-            return this.unregisteredIntrusiveHolders.computeIfAbsent(p_205915_, p_258166_ -> Holder.Reference.createIntrusive(this.asLookup(), (T)p_258166_));
+            return this.unregisteredIntrusiveHolders.computeIfAbsent(value, p_258166_ -> Holder.Reference.createIntrusive(this.asLookup(), (T)p_258166_));
         }
     }
 
     @Override
-    public Optional<HolderSet.Named<T>> getTag(TagKey<T> p_205909_) {
-        return Optional.ofNullable(this.tags.get(p_205909_));
+    public Optional<HolderSet.Named<T>> getTag(TagKey<T> key) {
+        return Optional.ofNullable(this.tags.get(key));
     }
 
     @Override
-    public void bindTags(Map<TagKey<T>, List<Holder<T>>> p_205875_) {
+    public void bindTags(Map<TagKey<T>, List<Holder<T>>> tagMap) {
         Map<Holder.Reference<T>, List<TagKey<T>>> map = new IdentityHashMap<>();
         this.byKey.values().forEach(p_211801_ -> map.put((Holder.Reference<T>)p_211801_, new ArrayList<>()));
-        p_205875_.forEach((p_339332_, p_339333_) -> {
+        tagMap.forEach((p_339332_, p_339333_) -> {
             for (Holder<T> holder : p_339333_) {
                 if (!holder.canSerializeIn(this.asLookup())) {
                     throw new IllegalStateException("Can't create named set " + p_339332_ + " containing value " + holder + " from outside registry " + this);
@@ -406,7 +412,7 @@ public class MappedRegistry<T> extends net.neoforged.neoforge.registries.BaseMap
                 map.get(reference).add((TagKey<T>)p_339332_);
             }
         });
-        Set<TagKey<T>> set = Sets.difference(this.tags.keySet(), p_205875_.keySet());
+        Set<TagKey<T>> set = Sets.difference(this.tags.keySet(), tagMap.keySet());
         if (!set.isEmpty()) {
             LOGGER.warn(
                 "Not all defined tags for registry {} are present in data pack: {}",
@@ -417,7 +423,7 @@ public class MappedRegistry<T> extends net.neoforged.neoforge.registries.BaseMap
 
         synchronized (this.tagAdditionLock) {
             Map<TagKey<T>, HolderSet.Named<T>> map1 = new IdentityHashMap<>(this.tags);
-            p_205875_.forEach((p_211797_, p_211798_) -> map1.computeIfAbsent((TagKey<T>)p_211797_, this::createTag).bind((List<Holder<T>>)p_211798_));
+            tagMap.forEach((p_211797_, p_211798_) -> map1.computeIfAbsent((TagKey<T>)p_211797_, this::createTag).bind((List<Holder<T>>)p_211798_));
             map.forEach(Holder.Reference::bindTags);
             this.tags = map1;
         }

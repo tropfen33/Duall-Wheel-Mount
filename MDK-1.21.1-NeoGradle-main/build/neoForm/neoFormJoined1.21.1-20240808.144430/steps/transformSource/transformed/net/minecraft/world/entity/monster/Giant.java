@@ -8,8 +8,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 
 public class Giant extends Monster {
-    public Giant(EntityType<? extends Giant> p_32788_, Level p_32789_) {
-        super(p_32788_, p_32789_);
+    public Giant(EntityType<? extends Giant> entityType, Level level) {
+        super(entityType, level);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -17,7 +17,7 @@ public class Giant extends Monster {
     }
 
     @Override
-    public float getWalkTargetValue(BlockPos p_32791_, LevelReader p_32792_) {
-        return p_32792_.getPathfindingCostFromLightLevels(p_32791_);
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
+        return level.getPathfindingCostFromLightLevels(pos);
     }
 }

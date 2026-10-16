@@ -127,21 +127,21 @@ public record ReportType(String header, List<String> nuggets) {
         }
     }
 
-    public void appendHeader(StringBuilder p_350666_, List<String> p_350633_) {
-        p_350666_.append("---- ");
-        p_350666_.append(this.header());
-        p_350666_.append(" ----\n");
-        net.neoforged.fml.CrashReportCallables.getHeaders().forEach(header -> p_350666_.append(header).append('\n'));
-        p_350666_.append("// ");
-        p_350666_.append(this.getErrorComment());
-        p_350666_.append('\n');
+    public void appendHeader(StringBuilder builder, List<String> links) {
+        builder.append("---- ");
+        builder.append(this.header());
+        builder.append(" ----\n");
+        net.neoforged.fml.CrashReportCallables.getHeaders().forEach(header -> builder.append(header).append('\n'));
+        builder.append("// ");
+        builder.append(this.getErrorComment());
+        builder.append('\n');
 
-        for (String s : p_350633_) {
-            p_350666_.append("// ");
-            p_350666_.append(s);
-            p_350666_.append('\n');
+        for (String s : links) {
+            builder.append("// ");
+            builder.append(s);
+            builder.append('\n');
         }
 
-        p_350666_.append('\n');
+        builder.append('\n');
     }
 }

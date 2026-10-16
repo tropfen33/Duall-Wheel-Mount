@@ -26,11 +26,11 @@ public class TemptGoal extends Goal {
     private final Predicate<ItemStack> items;
     private final boolean canScare;
 
-    public TemptGoal(PathfinderMob p_25939_, double p_25940_, Predicate<ItemStack> p_335901_, boolean p_25942_) {
-        this.mob = p_25939_;
-        this.speedModifier = p_25940_;
-        this.items = p_335901_;
-        this.canScare = p_25942_;
+    public TemptGoal(PathfinderMob mob, double speedModifier, Predicate<ItemStack> items, boolean canScare) {
+        this.mob = mob;
+        this.speedModifier = speedModifier;
+        this.items = items;
+        this.canScare = canScare;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
         this.targetingConditions = TEMP_TARGETING.copy().selector(this::shouldFollow);
     }
@@ -46,8 +46,8 @@ public class TemptGoal extends Goal {
         }
     }
 
-    private boolean shouldFollow(LivingEntity p_148139_) {
-        return this.items.test(p_148139_.getMainHandItem()) || this.items.test(p_148139_.getOffhandItem());
+    private boolean shouldFollow(LivingEntity entity) {
+        return this.items.test(entity.getMainHandItem()) || this.items.test(entity.getOffhandItem());
     }
 
     @Override

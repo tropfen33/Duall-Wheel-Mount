@@ -8,15 +8,22 @@ import net.minecraft.world.level.block.entity.TheEndGatewayBlockEntity;
 import net.minecraft.world.level.levelgen.feature.configurations.EndGatewayConfiguration;
 
 public class EndGatewayFeature extends Feature<EndGatewayConfiguration> {
-    public EndGatewayFeature(Codec<EndGatewayConfiguration> p_65682_) {
-        super(p_65682_);
+    public EndGatewayFeature(Codec<EndGatewayConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<EndGatewayConfiguration> p_159715_) {
-        BlockPos blockpos = p_159715_.origin();
-        WorldGenLevel worldgenlevel = p_159715_.level();
-        EndGatewayConfiguration endgatewayconfiguration = p_159715_.config();
+    public boolean place(FeaturePlaceContext<EndGatewayConfiguration> context) {
+        BlockPos blockpos = context.origin();
+        WorldGenLevel worldgenlevel = context.level();
+        EndGatewayConfiguration endgatewayconfiguration = context.config();
 
         for (BlockPos blockpos1 : BlockPos.betweenClosed(blockpos.offset(-1, -2, -1), blockpos.offset(1, 2, 1))) {
             boolean flag = blockpos1.getX() == blockpos.getX();

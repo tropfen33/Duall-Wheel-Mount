@@ -41,37 +41,39 @@ public class LiquidBlockRenderer {
         net.neoforged.neoforge.client.textures.FluidSpriteCache.reload();
     }
 
-    private static boolean isNeighborSameFluid(FluidState p_203186_, FluidState p_203187_) {
-        return p_203187_.getType().isSame(p_203186_.getType());
+    private static boolean isNeighborSameFluid(FluidState firstState, FluidState secondState) {
+        return secondState.getType().isSame(firstState.getType());
     }
 
     private static boolean isNeighborStateHidingOverlay(FluidState selfState, BlockState otherState, Direction neighborFace) {
         return otherState.shouldHideAdjacentFluidFace(neighborFace, selfState);
     }
 
-    private static boolean isFaceOccludedByState(BlockGetter p_110979_, Direction p_110980_, float p_110981_, BlockPos p_110982_, BlockState p_110983_) {
-        if (p_110983_.canOcclude()) {
-            VoxelShape voxelshape = Shapes.box(0.0, 0.0, 0.0, 1.0, (double)p_110981_, 1.0);
-            VoxelShape voxelshape1 = p_110983_.getOcclusionShape(p_110979_, p_110982_);
-            return Shapes.blockOccudes(voxelshape, voxelshape1, p_110980_);
+    private static boolean isFaceOccludedByState(BlockGetter level, Direction face, float height, BlockPos pos, BlockState state) {
+        if (state.canOcclude()) {
+            VoxelShape voxelshape = Shapes.box(0.0, 0.0, 0.0, 1.0, (double)height, 1.0);
+            VoxelShape voxelshape1 = state.getOcclusionShape(level, pos);
+            return Shapes.blockOccudes(voxelshape, voxelshape1, face);
         } else {
             return false;
         }
     }
 
-    private static boolean isFaceOccludedByNeighbor(BlockGetter p_203180_, BlockPos p_203181_, Direction p_203182_, float p_203183_, BlockState p_203184_) {
-        return isFaceOccludedByState(p_203180_, p_203182_, p_203183_, p_203181_.relative(p_203182_), p_203184_);
+    private static boolean isFaceOccludedByNeighbor(BlockGetter level, BlockPos pos, Direction side, float height, BlockState blockState) {
+        return isFaceOccludedByState(level, side, height, pos.relative(side), blockState);
     }
 
-    private static boolean isFaceOccludedBySelf(BlockGetter p_110960_, BlockPos p_110961_, BlockState p_110962_, Direction p_110963_) {
-        return isFaceOccludedByState(p_110960_, p_110963_.getOpposite(), 1.0F, p_110961_, p_110962_);
+    private static boolean isFaceOccludedBySelf(BlockGetter level, BlockPos pos, BlockState state, Direction face) {
+        return isFaceOccludedByState(level, face.getOpposite(), 1.0F, pos, state);
     }
 
-    /** @deprecated Neo: use overload that accepts BlockState */
+    /**
+ * @deprecated Neo: use overload that accepts BlockState
+ */
     public static boolean shouldRenderFace(
-        BlockAndTintGetter p_203167_, BlockPos p_203168_, FluidState p_203169_, BlockState p_203170_, Direction p_203171_, FluidState p_203172_
+        BlockAndTintGetter level, BlockPos pos, FluidState fluidState, BlockState blockState, Direction side, FluidState neighborFluid
     ) {
-        return !isFaceOccludedBySelf(p_203167_, p_203168_, p_203170_, p_203171_) && !isNeighborSameFluid(p_203169_, p_203172_);
+        return !isFaceOccludedBySelf(level, pos, blockState, side) && !isNeighborSameFluid(fluidState, neighborFluid);
     }
 
     public static boolean shouldRenderFace(
@@ -82,40 +84,40 @@ public class LiquidBlockRenderer {
 
 
 
-    public void tesselate(BlockAndTintGetter p_234370_, BlockPos p_234371_, VertexConsumer p_234372_, BlockState p_234373_, FluidState p_234374_) {
-        boolean flag = p_234374_.is(FluidTags.LAVA);
-        TextureAtlasSprite[] atextureatlassprite = net.neoforged.neoforge.client.textures.FluidSpriteCache.getFluidSprites(p_234370_, p_234371_, p_234374_);
-        int i = net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(p_234374_).getTintColor(p_234374_, p_234370_, p_234371_);
+    public void tesselate(BlockAndTintGetter level, BlockPos pos, VertexConsumer buffer, BlockState blockState, FluidState fluidState) {
+        boolean flag = fluidState.is(FluidTags.LAVA);
+        TextureAtlasSprite[] atextureatlassprite = net.neoforged.neoforge.client.textures.FluidSpriteCache.getFluidSprites(level, pos, fluidState);
+        int i = net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(fluidState).getTintColor(fluidState, level, pos);
         float alpha = (float)(i >> 24 & 255) / 255.0F;
         float f = (float)(i >> 16 & 0xFF) / 255.0F;
         float f1 = (float)(i >> 8 & 0xFF) / 255.0F;
         float f2 = (float)(i & 0xFF) / 255.0F;
-        BlockState blockstate = p_234370_.getBlockState(p_234371_.relative(Direction.DOWN));
+        BlockState blockstate = level.getBlockState(pos.relative(Direction.DOWN));
         FluidState fluidstate = blockstate.getFluidState();
-        BlockState blockstate1 = p_234370_.getBlockState(p_234371_.relative(Direction.UP));
+        BlockState blockstate1 = level.getBlockState(pos.relative(Direction.UP));
         FluidState fluidstate1 = blockstate1.getFluidState();
-        BlockState blockstate2 = p_234370_.getBlockState(p_234371_.relative(Direction.NORTH));
+        BlockState blockstate2 = level.getBlockState(pos.relative(Direction.NORTH));
         FluidState fluidstate2 = blockstate2.getFluidState();
-        BlockState blockstate3 = p_234370_.getBlockState(p_234371_.relative(Direction.SOUTH));
+        BlockState blockstate3 = level.getBlockState(pos.relative(Direction.SOUTH));
         FluidState fluidstate3 = blockstate3.getFluidState();
-        BlockState blockstate4 = p_234370_.getBlockState(p_234371_.relative(Direction.WEST));
+        BlockState blockstate4 = level.getBlockState(pos.relative(Direction.WEST));
         FluidState fluidstate4 = blockstate4.getFluidState();
-        BlockState blockstate5 = p_234370_.getBlockState(p_234371_.relative(Direction.EAST));
+        BlockState blockstate5 = level.getBlockState(pos.relative(Direction.EAST));
         FluidState fluidstate5 = blockstate5.getFluidState();
-        boolean flag1 = !isNeighborStateHidingOverlay(p_234374_, blockstate1, Direction.DOWN);
-        boolean flag2 = shouldRenderFace(p_234370_, p_234371_, p_234374_, p_234373_, Direction.DOWN, blockstate)
-            && !isFaceOccludedByNeighbor(p_234370_, p_234371_, Direction.DOWN, 0.8888889F, blockstate);
-        boolean flag3 = shouldRenderFace(p_234370_, p_234371_, p_234374_, p_234373_, Direction.NORTH, blockstate2);
-        boolean flag4 = shouldRenderFace(p_234370_, p_234371_, p_234374_, p_234373_, Direction.SOUTH, blockstate3);
-        boolean flag5 = shouldRenderFace(p_234370_, p_234371_, p_234374_, p_234373_, Direction.WEST, blockstate4);
-        boolean flag6 = shouldRenderFace(p_234370_, p_234371_, p_234374_, p_234373_, Direction.EAST, blockstate5);
+        boolean flag1 = !isNeighborStateHidingOverlay(fluidState, blockstate1, Direction.DOWN);
+        boolean flag2 = shouldRenderFace(level, pos, fluidState, blockState, Direction.DOWN, blockstate)
+            && !isFaceOccludedByNeighbor(level, pos, Direction.DOWN, 0.8888889F, blockstate);
+        boolean flag3 = shouldRenderFace(level, pos, fluidState, blockState, Direction.NORTH, blockstate2);
+        boolean flag4 = shouldRenderFace(level, pos, fluidState, blockState, Direction.SOUTH, blockstate3);
+        boolean flag5 = shouldRenderFace(level, pos, fluidState, blockState, Direction.WEST, blockstate4);
+        boolean flag6 = shouldRenderFace(level, pos, fluidState, blockState, Direction.EAST, blockstate5);
         if (flag1 || flag2 || flag6 || flag5 || flag3 || flag4) {
-            float f3 = p_234370_.getShade(Direction.DOWN, true);
-            float f4 = p_234370_.getShade(Direction.UP, true);
-            float f5 = p_234370_.getShade(Direction.NORTH, true);
-            float f6 = p_234370_.getShade(Direction.WEST, true);
-            Fluid fluid = p_234374_.getType();
-            float f11 = this.getHeight(p_234370_, fluid, p_234371_, p_234373_, p_234374_);
+            float f3 = level.getShade(Direction.DOWN, true);
+            float f4 = level.getShade(Direction.UP, true);
+            float f5 = level.getShade(Direction.NORTH, true);
+            float f6 = level.getShade(Direction.WEST, true);
+            Fluid fluid = fluidState.getType();
+            float f11 = this.getHeight(level, fluid, pos, blockState, fluidState);
             float f7;
             float f8;
             float f9;
@@ -126,27 +128,27 @@ public class LiquidBlockRenderer {
                 f9 = 1.0F;
                 f10 = 1.0F;
             } else {
-                float f12 = this.getHeight(p_234370_, fluid, p_234371_.north(), blockstate2, fluidstate2);
-                float f13 = this.getHeight(p_234370_, fluid, p_234371_.south(), blockstate3, fluidstate3);
-                float f14 = this.getHeight(p_234370_, fluid, p_234371_.east(), blockstate5, fluidstate5);
-                float f15 = this.getHeight(p_234370_, fluid, p_234371_.west(), blockstate4, fluidstate4);
-                f7 = this.calculateAverageHeight(p_234370_, fluid, f11, f12, f14, p_234371_.relative(Direction.NORTH).relative(Direction.EAST));
-                f8 = this.calculateAverageHeight(p_234370_, fluid, f11, f12, f15, p_234371_.relative(Direction.NORTH).relative(Direction.WEST));
-                f9 = this.calculateAverageHeight(p_234370_, fluid, f11, f13, f14, p_234371_.relative(Direction.SOUTH).relative(Direction.EAST));
-                f10 = this.calculateAverageHeight(p_234370_, fluid, f11, f13, f15, p_234371_.relative(Direction.SOUTH).relative(Direction.WEST));
+                float f12 = this.getHeight(level, fluid, pos.north(), blockstate2, fluidstate2);
+                float f13 = this.getHeight(level, fluid, pos.south(), blockstate3, fluidstate3);
+                float f14 = this.getHeight(level, fluid, pos.east(), blockstate5, fluidstate5);
+                float f15 = this.getHeight(level, fluid, pos.west(), blockstate4, fluidstate4);
+                f7 = this.calculateAverageHeight(level, fluid, f11, f12, f14, pos.relative(Direction.NORTH).relative(Direction.EAST));
+                f8 = this.calculateAverageHeight(level, fluid, f11, f12, f15, pos.relative(Direction.NORTH).relative(Direction.WEST));
+                f9 = this.calculateAverageHeight(level, fluid, f11, f13, f14, pos.relative(Direction.SOUTH).relative(Direction.EAST));
+                f10 = this.calculateAverageHeight(level, fluid, f11, f13, f15, pos.relative(Direction.SOUTH).relative(Direction.WEST));
             }
 
-            float f36 = (float)(p_234371_.getX() & 15);
-            float f37 = (float)(p_234371_.getY() & 15);
-            float f38 = (float)(p_234371_.getZ() & 15);
+            float f36 = (float)(pos.getX() & 15);
+            float f37 = (float)(pos.getY() & 15);
+            float f38 = (float)(pos.getZ() & 15);
             float f39 = 0.001F;
             float f16 = flag2 ? 0.001F : 0.0F;
-            if (flag1 && !isFaceOccludedByNeighbor(p_234370_, p_234371_, Direction.UP, Math.min(Math.min(f8, f10), Math.min(f9, f7)), blockstate1)) {
+            if (flag1 && !isFaceOccludedByNeighbor(level, pos, Direction.UP, Math.min(Math.min(f8, f10), Math.min(f9, f7)), blockstate1)) {
                 f8 -= 0.001F;
                 f10 -= 0.001F;
                 f9 -= 0.001F;
                 f7 -= 0.001F;
-                Vec3 vec3 = p_234374_.getFlow(p_234370_, p_234371_);
+                Vec3 vec3 = fluidState.getFlow(level, pos);
                 float f17;
                 float f18;
                 float f19;
@@ -192,19 +194,19 @@ public class LiquidBlockRenderer {
                 f22 = Mth.lerp(f55, f22, f54);
                 f23 = Mth.lerp(f55, f23, f54);
                 f24 = Mth.lerp(f55, f24, f54);
-                int l = this.getLightColor(p_234370_, p_234371_);
+                int l = this.getLightColor(level, pos);
                 float f57 = f4 * f;
                 float f29 = f4 * f1;
                 float f30 = f4 * f2;
-                this.vertex(p_234372_, f36 + 0.0F, f37 + f8, f38 + 0.0F, f57, f29, f30, alpha, f17, f21, l);
-                this.vertex(p_234372_, f36 + 0.0F, f37 + f10, f38 + 1.0F, f57, f29, f30, alpha, f18, f22, l);
-                this.vertex(p_234372_, f36 + 1.0F, f37 + f9, f38 + 1.0F, f57, f29, f30, alpha, f19, f23, l);
-                this.vertex(p_234372_, f36 + 1.0F, f37 + f7, f38 + 0.0F, f57, f29, f30, alpha, f20, f24, l);
-                if (p_234374_.shouldRenderBackwardUpFace(p_234370_, p_234371_.above())) {
-                    this.vertex(p_234372_, f36 + 0.0F, f37 + f8, f38 + 0.0F, f57, f29, f30, alpha, f17, f21, l);
-                    this.vertex(p_234372_, f36 + 1.0F, f37 + f7, f38 + 0.0F, f57, f29, f30, alpha, f20, f24, l);
-                    this.vertex(p_234372_, f36 + 1.0F, f37 + f9, f38 + 1.0F, f57, f29, f30, alpha, f19, f23, l);
-                    this.vertex(p_234372_, f36 + 0.0F, f37 + f10, f38 + 1.0F, f57, f29, f30, alpha, f18, f22, l);
+                this.vertex(buffer, f36 + 0.0F, f37 + f8, f38 + 0.0F, f57, f29, f30, alpha, f17, f21, l);
+                this.vertex(buffer, f36 + 0.0F, f37 + f10, f38 + 1.0F, f57, f29, f30, alpha, f18, f22, l);
+                this.vertex(buffer, f36 + 1.0F, f37 + f9, f38 + 1.0F, f57, f29, f30, alpha, f19, f23, l);
+                this.vertex(buffer, f36 + 1.0F, f37 + f7, f38 + 0.0F, f57, f29, f30, alpha, f20, f24, l);
+                if (fluidState.shouldRenderBackwardUpFace(level, pos.above())) {
+                    this.vertex(buffer, f36 + 0.0F, f37 + f8, f38 + 0.0F, f57, f29, f30, alpha, f17, f21, l);
+                    this.vertex(buffer, f36 + 1.0F, f37 + f7, f38 + 0.0F, f57, f29, f30, alpha, f20, f24, l);
+                    this.vertex(buffer, f36 + 1.0F, f37 + f9, f38 + 1.0F, f57, f29, f30, alpha, f19, f23, l);
+                    this.vertex(buffer, f36 + 0.0F, f37 + f10, f38 + 1.0F, f57, f29, f30, alpha, f18, f22, l);
                 }
             }
 
@@ -213,17 +215,17 @@ public class LiquidBlockRenderer {
                 float f41 = atextureatlassprite[0].getU1();
                 float f42 = atextureatlassprite[0].getV0();
                 float f43 = atextureatlassprite[0].getV1();
-                int k = this.getLightColor(p_234370_, p_234371_.below());
+                int k = this.getLightColor(level, pos.below());
                 float f46 = f3 * f;
                 float f48 = f3 * f1;
                 float f50 = f3 * f2;
-                this.vertex(p_234372_, f36, f37 + f16, f38 + 1.0F, f46, f48, f50, alpha, f40, f43, k);
-                this.vertex(p_234372_, f36, f37 + f16, f38, f46, f48, f50, alpha, f40, f42, k);
-                this.vertex(p_234372_, f36 + 1.0F, f37 + f16, f38, f46, f48, f50, alpha, f41, f42, k);
-                this.vertex(p_234372_, f36 + 1.0F, f37 + f16, f38 + 1.0F, f46, f48, f50, alpha, f41, f43, k);
+                this.vertex(buffer, f36, f37 + f16, f38 + 1.0F, f46, f48, f50, alpha, f40, f43, k);
+                this.vertex(buffer, f36, f37 + f16, f38, f46, f48, f50, alpha, f40, f42, k);
+                this.vertex(buffer, f36 + 1.0F, f37 + f16, f38, f46, f48, f50, alpha, f41, f42, k);
+                this.vertex(buffer, f36 + 1.0F, f37 + f16, f38 + 1.0F, f46, f48, f50, alpha, f41, f43, k);
             }
 
-            int j = this.getLightColor(p_234370_, p_234371_);
+            int j = this.getLightColor(level, pos);
 
             for (Direction direction : Direction.Plane.HORIZONTAL) {
                 float f44;
@@ -272,11 +274,11 @@ public class LiquidBlockRenderer {
                 }
 
                 if (flag7
-                    && !isFaceOccludedByNeighbor(p_234370_, p_234371_, direction, Math.max(f44, f45), p_234370_.getBlockState(p_234371_.relative(direction)))) {
-                    BlockPos blockpos = p_234371_.relative(direction);
+                    && !isFaceOccludedByNeighbor(level, pos, direction, Math.max(f44, f45), level.getBlockState(pos.relative(direction)))) {
+                    BlockPos blockpos = pos.relative(direction);
                     TextureAtlasSprite textureatlassprite2 = atextureatlassprite[1];
                     if (atextureatlassprite[2] != null) {
-                        if (p_234370_.getBlockState(blockpos).shouldDisplayFluidOverlay(p_234370_, blockpos, p_234374_)) {
+                        if (level.getBlockState(blockpos).shouldDisplayFluidOverlay(level, blockpos, fluidState)) {
                             textureatlassprite2 = atextureatlassprite[2];
                         }
                     }
@@ -290,26 +292,26 @@ public class LiquidBlockRenderer {
                     float f33 = f4 * f32 * f;
                     float f34 = f4 * f32 * f1;
                     float f35 = f4 * f32 * f2;
-                    this.vertex(p_234372_, f47, f37 + f44, f49, f33, f34, f35, alpha, f56, f59, j);
-                    this.vertex(p_234372_, f51, f37 + f45, f52, f33, f34, f35, alpha, f58, f60, j);
-                    this.vertex(p_234372_, f51, f37 + f16, f52, f33, f34, f35, alpha, f58, f31, j);
-                    this.vertex(p_234372_, f47, f37 + f16, f49, f33, f34, f35, alpha, f56, f31, j);
+                    this.vertex(buffer, f47, f37 + f44, f49, f33, f34, f35, alpha, f56, f59, j);
+                    this.vertex(buffer, f51, f37 + f45, f52, f33, f34, f35, alpha, f58, f60, j);
+                    this.vertex(buffer, f51, f37 + f16, f52, f33, f34, f35, alpha, f58, f31, j);
+                    this.vertex(buffer, f47, f37 + f16, f49, f33, f34, f35, alpha, f56, f31, j);
                     if (textureatlassprite2 != atextureatlassprite[2]) { // Neo: use custom fluid's overlay texture
-                        this.vertex(p_234372_, f47, f37 + f16, f49, f33, f34, f35, alpha, f56, f31, j);
-                        this.vertex(p_234372_, f51, f37 + f16, f52, f33, f34, f35, alpha, f58, f31, j);
-                        this.vertex(p_234372_, f51, f37 + f45, f52, f33, f34, f35, alpha, f58, f60, j);
-                        this.vertex(p_234372_, f47, f37 + f44, f49, f33, f34, f35, alpha, f56, f59, j);
+                        this.vertex(buffer, f47, f37 + f16, f49, f33, f34, f35, alpha, f56, f31, j);
+                        this.vertex(buffer, f51, f37 + f16, f52, f33, f34, f35, alpha, f58, f31, j);
+                        this.vertex(buffer, f51, f37 + f45, f52, f33, f34, f35, alpha, f58, f60, j);
+                        this.vertex(buffer, f47, f37 + f44, f49, f33, f34, f35, alpha, f56, f59, j);
                     }
                 }
             }
         }
     }
 
-    private float calculateAverageHeight(BlockAndTintGetter p_203150_, Fluid p_203151_, float p_203152_, float p_203153_, float p_203154_, BlockPos p_203155_) {
-        if (!(p_203154_ >= 1.0F) && !(p_203153_ >= 1.0F)) {
+    private float calculateAverageHeight(BlockAndTintGetter level, Fluid fluid, float currentHeight, float height1, float height2, BlockPos pos) {
+        if (!(height2 >= 1.0F) && !(height1 >= 1.0F)) {
             float[] afloat = new float[2];
-            if (p_203154_ > 0.0F || p_203153_ > 0.0F) {
-                float f = this.getHeight(p_203150_, p_203151_, p_203155_);
+            if (height2 > 0.0F || height1 > 0.0F) {
+                float f = this.getHeight(level, fluid, pos);
                 if (f >= 1.0F) {
                     return 1.0F;
                 }
@@ -317,28 +319,28 @@ public class LiquidBlockRenderer {
                 this.addWeightedHeight(afloat, f);
             }
 
-            this.addWeightedHeight(afloat, p_203152_);
-            this.addWeightedHeight(afloat, p_203154_);
-            this.addWeightedHeight(afloat, p_203153_);
+            this.addWeightedHeight(afloat, currentHeight);
+            this.addWeightedHeight(afloat, height2);
+            this.addWeightedHeight(afloat, height1);
             return afloat[0] / afloat[1];
         } else {
             return 1.0F;
         }
     }
 
-    private void addWeightedHeight(float[] p_203189_, float p_203190_) {
-        if (p_203190_ >= 0.8F) {
-            p_203189_[0] += p_203190_ * 10.0F;
-            p_203189_[1] += 10.0F;
-        } else if (p_203190_ >= 0.0F) {
-            p_203189_[0] += p_203190_;
-            p_203189_[1]++;
+    private void addWeightedHeight(float[] output, float height) {
+        if (height >= 0.8F) {
+            output[0] += height * 10.0F;
+            output[1] += 10.0F;
+        } else if (height >= 0.0F) {
+            output[0] += height;
+            output[1]++;
         }
     }
 
-    private float getHeight(BlockAndTintGetter p_203157_, Fluid p_203158_, BlockPos p_203159_) {
-        BlockState blockstate = p_203157_.getBlockState(p_203159_);
-        return this.getHeight(p_203157_, p_203158_, p_203159_, blockstate, blockstate.getFluidState());
+    private float getHeight(BlockAndTintGetter level, Fluid fluid, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
+        return this.getHeight(level, fluid, pos, blockstate, blockstate.getFluidState());
     }
 
     private void vertex(
@@ -361,37 +363,37 @@ public class LiquidBlockRenderer {
                 .setNormal(0.0F, 1.0F, 0.0F);
     }
 
-    private float getHeight(BlockAndTintGetter p_203161_, Fluid p_203162_, BlockPos p_203163_, BlockState p_203164_, FluidState p_203165_) {
-        if (p_203162_.isSame(p_203165_.getType())) {
-            BlockState blockstate = p_203161_.getBlockState(p_203163_.above());
-            return p_203162_.isSame(blockstate.getFluidState().getType()) ? 1.0F : p_203165_.getOwnHeight();
+    private float getHeight(BlockAndTintGetter level, Fluid fluid, BlockPos pos, BlockState blockState, FluidState fluidState) {
+        if (fluid.isSame(fluidState.getType())) {
+            BlockState blockstate = level.getBlockState(pos.above());
+            return fluid.isSame(blockstate.getFluidState().getType()) ? 1.0F : fluidState.getOwnHeight();
         } else {
-            return !p_203164_.isSolid() ? 0.0F : -1.0F;
+            return !blockState.isSolid() ? 0.0F : -1.0F;
         }
     }
 
     private void vertex(
-        VertexConsumer p_110985_,
-        float p_110989_,
-        float p_110990_,
-        float p_110991_,
-        float p_110992_,
-        float p_110993_,
-        float p_350595_,
-        float p_350459_,
-        float p_350437_,
-        int p_110994_
+        VertexConsumer buffer,
+        float x,
+        float y,
+        float z,
+        float red,
+        float green,
+        float blue,
+        float u,
+        float v,
+        int packedLight
     ) {
-        p_110985_.addVertex(p_110989_, p_110990_, p_110991_)
-            .setColor(p_110992_, p_110993_, p_350595_, 1.0F)
-            .setUv(p_350459_, p_350437_)
-            .setLight(p_110994_)
+        buffer.addVertex(x, y, z)
+            .setColor(red, green, blue, 1.0F)
+            .setUv(u, v)
+            .setLight(packedLight)
             .setNormal(0.0F, 1.0F, 0.0F);
     }
 
-    private int getLightColor(BlockAndTintGetter p_110946_, BlockPos p_110947_) {
-        int i = LevelRenderer.getLightColor(p_110946_, p_110947_);
-        int j = LevelRenderer.getLightColor(p_110946_, p_110947_.above());
+    private int getLightColor(BlockAndTintGetter level, BlockPos pos) {
+        int i = LevelRenderer.getLightColor(level, pos);
+        int j = LevelRenderer.getLightColor(level, pos.above());
         int k = i & 0xFF;
         int l = j & 0xFF;
         int i1 = i >> 16 & 0xFF;

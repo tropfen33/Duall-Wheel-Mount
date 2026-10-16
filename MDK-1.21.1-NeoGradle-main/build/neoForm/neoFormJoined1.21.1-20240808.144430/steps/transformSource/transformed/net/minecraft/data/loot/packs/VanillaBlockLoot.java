@@ -93,8 +93,8 @@ public class VanillaBlockLoot extends BlockLootSubProvider {
         .map(ItemLike::asItem)
         .collect(Collectors.toSet());
 
-    public VanillaBlockLoot(HolderLookup.Provider p_344962_) {
-        super(EXPLOSION_RESISTANT, FeatureFlags.REGISTRY.allFlags(), p_344962_);
+    public VanillaBlockLoot(HolderLookup.Provider registries) {
+        super(EXPLOSION_RESISTANT, FeatureFlags.REGISTRY.allFlags(), registries);
     }
 
     @Override
@@ -1473,7 +1473,7 @@ public class VanillaBlockLoot extends BlockLootSubProvider {
         this.add(Blocks.SUSPICIOUS_GRAVEL, noDrop());
     }
 
-    private LootTable.Builder createDecoratedPotTable(Block p_277929_) {
+    private LootTable.Builder createDecoratedPotTable(Block block) {
         return LootTable.lootTable()
             .withPool(
                 LootPool.lootPool()
@@ -1481,11 +1481,11 @@ public class VanillaBlockLoot extends BlockLootSubProvider {
                     .add(
                         DynamicLoot.dynamicEntry(DecoratedPotBlock.SHERDS_DYNAMIC_DROP_ID)
                             .when(
-                                LootItemBlockStatePropertyCondition.hasBlockStateProperties(p_277929_)
+                                LootItemBlockStatePropertyCondition.hasBlockStateProperties(block)
                                     .setProperties(StatePropertiesPredicate.Builder.properties().hasProperty(DecoratedPotBlock.CRACKED, true))
                             )
                             .otherwise(
-                                LootItem.lootTableItem(p_277929_)
+                                LootItem.lootTableItem(block)
                                     .apply(
                                         CopyComponentsFunction.copyComponents(CopyComponentsFunction.Source.BLOCK_ENTITY)
                                             .include(DataComponents.POT_DECORATIONS)

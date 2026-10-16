@@ -10,13 +10,16 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
+/**
+ * LootItemFunction that reduces a stack's count based on the {@linkplain LootContextParams#EXPLOSION_RADIUS explosion radius}.
+ */
 public class ApplyExplosionDecay extends LootItemConditionalFunction {
     public static final MapCodec<ApplyExplosionDecay> CODEC = RecordCodecBuilder.mapCodec(
         p_298525_ -> commonFields(p_298525_).apply(p_298525_, ApplyExplosionDecay::new)
     );
 
-    private ApplyExplosionDecay(List<LootItemCondition> p_298289_) {
-        super(p_298289_);
+    private ApplyExplosionDecay(List<LootItemCondition> conditions) {
+        super(conditions);
     }
 
     @Override
@@ -24,13 +27,16 @@ public class ApplyExplosionDecay extends LootItemConditionalFunction {
         return LootItemFunctions.EXPLOSION_DECAY;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_80034_, LootContext p_80035_) {
-        Float f = p_80035_.getParamOrNull(LootContextParams.EXPLOSION_RADIUS);
+    public ItemStack run(ItemStack stack, LootContext context) {
+        Float f = context.getParamOrNull(LootContextParams.EXPLOSION_RADIUS);
         if (f != null) {
-            RandomSource randomsource = p_80035_.getRandom();
+            RandomSource randomsource = context.getRandom();
             float f1 = 1.0F / f;
-            int i = p_80034_.getCount();
+            int i = stack.getCount();
             int j = 0;
 
             for (int k = 0; k < i; k++) {
@@ -39,10 +45,10 @@ public class ApplyExplosionDecay extends LootItemConditionalFunction {
                 }
             }
 
-            p_80034_.setCount(j);
+            stack.setCount(j);
         }
 
-        return p_80034_;
+        return stack;
     }
 
     public static LootItemConditionalFunction.Builder<?> explosionDecay() {

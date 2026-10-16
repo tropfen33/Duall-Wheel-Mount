@@ -27,9 +27,9 @@ public class LanServerDetection {
         private final InetAddress pingGroup;
         private final MulticastSocket socket;
 
-        public LanServerDetector(LanServerDetection.LanServerList p_120090_) throws IOException {
+        public LanServerDetector(LanServerDetection.LanServerList serverList) throws IOException {
             super("LanServerDetector #" + LanServerDetection.UNIQUE_THREAD_ID.incrementAndGet());
-            this.serverList = p_120090_;
+            this.serverList = serverList;
             this.setDaemon(true);
             this.setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(LanServerDetection.LOGGER));
             this.socket = new MulticastSocket(4445);
@@ -84,14 +84,14 @@ public class LanServerDetection {
             }
         }
 
-        public synchronized void addServer(String p_120097_, InetAddress p_120098_) {
-            String s = LanServerPinger.parseMotd(p_120097_);
-            String s1 = LanServerPinger.parseAddress(p_120097_);
+        public synchronized void addServer(String pingResponse, InetAddress ipAddress) {
+            String s = LanServerPinger.parseMotd(pingResponse);
+            String s1 = LanServerPinger.parseAddress(pingResponse);
             if (s1 != null) {
-                if (net.neoforged.neoforge.network.DualStackUtils.checkIPv6(p_120098_)) {
-                    s1 = "[" + com.google.common.net.InetAddresses.toAddrString(p_120098_) + "]:" + s1;
+                if (net.neoforged.neoforge.network.DualStackUtils.checkIPv6(ipAddress)) {
+                    s1 = "[" + com.google.common.net.InetAddresses.toAddrString(ipAddress) + "]:" + s1;
                 } else {
-                    s1 = p_120098_.getHostAddress() + ":" + s1;
+                    s1 = ipAddress.getHostAddress() + ":" + s1;
                 }
                 boolean flag = false;
 

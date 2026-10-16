@@ -7,10 +7,10 @@ import net.minecraft.network.chat.numbers.NumberFormat;
 public interface ScoreAccess {
     int get();
 
-    void set(int p_313946_);
+    void set(int value);
 
-    default int add(int p_313920_) {
-        int i = this.get() + p_313920_;
+    default int add(int increment) {
+        int i = this.get() + increment;
         this.set(i);
         return i;
     }
@@ -32,7 +32,7 @@ public interface ScoreAccess {
     @Nullable
     Component display();
 
-    void display(@Nullable Component p_313897_);
+    void display(@Nullable Component value);
 
-    void numberFormatOverride(@Nullable NumberFormat p_313696_);
+    void numberFormatOverride(@Nullable NumberFormat format);
 }

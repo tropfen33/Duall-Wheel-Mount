@@ -14,7 +14,7 @@ public interface Toast {
     Object NO_TOKEN = new Object();
     int SLOT_HEIGHT = 32;
 
-    Toast.Visibility render(GuiGraphics p_281969_, ToastComponent p_94897_, long p_94898_);
+    Toast.Visibility render(GuiGraphics guiGraphics, ToastComponent toastComponent, long timeSinceLastVisible);
 
     default Object getToken() {
         return NO_TOKEN;
@@ -39,12 +39,12 @@ public interface Toast {
 
         private final SoundEvent soundEvent;
 
-        private Visibility(SoundEvent p_94908_) {
-            this.soundEvent = p_94908_;
+        private Visibility(SoundEvent soundEvent) {
+            this.soundEvent = soundEvent;
         }
 
-        public void playSound(SoundManager p_94910_) {
-            p_94910_.play(SimpleSoundInstance.forUI(this.soundEvent, 1.0F, 1.0F));
+        public void playSound(SoundManager handler) {
+            handler.play(SimpleSoundInstance.forUI(this.soundEvent, 1.0F, 1.0F));
         }
     }
 }

@@ -16,6 +16,9 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
+/**
+ * LootItemFunction that sets the stack's name by copying it from somewhere else, such as the killing player.
+ */
 public class CopyNameFunction extends LootItemConditionalFunction {
     public static final MapCodec<CopyNameFunction> CODEC = RecordCodecBuilder.mapCodec(
         p_298065_ -> commonFields(p_298065_)
@@ -24,9 +27,9 @@ public class CopyNameFunction extends LootItemConditionalFunction {
     );
     private final CopyNameFunction.NameSource source;
 
-    private CopyNameFunction(List<LootItemCondition> p_298700_, CopyNameFunction.NameSource p_80178_) {
-        super(p_298700_);
-        this.source = p_80178_;
+    private CopyNameFunction(List<LootItemCondition> conditions, CopyNameFunction.NameSource source) {
+        super(conditions);
+        this.source = source;
     }
 
     @Override
@@ -39,17 +42,20 @@ public class CopyNameFunction extends LootItemConditionalFunction {
         return ImmutableSet.of(this.source.param);
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_80185_, LootContext p_80186_) {
-        if (p_80186_.getParamOrNull(this.source.param) instanceof Nameable nameable) {
-            p_80185_.set(DataComponents.CUSTOM_NAME, nameable.getCustomName());
+    public ItemStack run(ItemStack stack, LootContext context) {
+        if (context.getParamOrNull(this.source.param) instanceof Nameable nameable) {
+            stack.set(DataComponents.CUSTOM_NAME, nameable.getCustomName());
         }
 
-        return p_80185_;
+        return stack;
     }
 
-    public static LootItemConditionalFunction.Builder<?> copyName(CopyNameFunction.NameSource p_80188_) {
-        return simpleBuilder(p_298067_ -> new CopyNameFunction(p_298067_, p_80188_));
+    public static LootItemConditionalFunction.Builder<?> copyName(CopyNameFunction.NameSource source) {
+        return simpleBuilder(p_298067_ -> new CopyNameFunction(p_298067_, source));
     }
 
     public static enum NameSource implements StringRepresentable {
@@ -62,9 +68,9 @@ public class CopyNameFunction extends LootItemConditionalFunction {
         private final String name;
         final LootContextParam<?> param;
 
-        private NameSource(String p_80206_, LootContextParam<?> p_80207_) {
-            this.name = p_80206_;
-            this.param = p_80207_;
+        private NameSource(String name, LootContextParam<?> param) {
+            this.name = name;
+            this.param = param;
         }
 
         @Override

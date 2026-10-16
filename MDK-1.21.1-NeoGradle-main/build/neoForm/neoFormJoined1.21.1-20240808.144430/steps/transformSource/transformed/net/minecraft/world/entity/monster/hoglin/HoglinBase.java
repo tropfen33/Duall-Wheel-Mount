@@ -12,43 +12,43 @@ public interface HoglinBase {
 
     int getAttackAnimationRemainingTicks();
 
-    static boolean hurtAndThrowTarget(LivingEntity p_34643_, LivingEntity p_34644_) {
-        float f1 = (float)p_34643_.getAttributeValue(Attributes.ATTACK_DAMAGE);
+    static boolean hurtAndThrowTarget(LivingEntity hoglin, LivingEntity target) {
+        float f1 = (float)hoglin.getAttributeValue(Attributes.ATTACK_DAMAGE);
         float f;
-        if (!p_34643_.isBaby() && (int)f1 > 0) {
-            f = f1 / 2.0F + (float)p_34643_.level().random.nextInt((int)f1);
+        if (!hoglin.isBaby() && (int)f1 > 0) {
+            f = f1 / 2.0F + (float)hoglin.level().random.nextInt((int)f1);
         } else {
             f = f1;
         }
 
-        DamageSource damagesource = p_34643_.damageSources().mobAttack(p_34643_);
-        boolean flag = p_34644_.hurt(damagesource, f);
+        DamageSource damagesource = hoglin.damageSources().mobAttack(hoglin);
+        boolean flag = target.hurt(damagesource, f);
         if (flag) {
-            if (p_34643_.level() instanceof ServerLevel serverlevel) {
-                EnchantmentHelper.doPostAttackEffects(serverlevel, p_34644_, damagesource);
+            if (hoglin.level() instanceof ServerLevel serverlevel) {
+                EnchantmentHelper.doPostAttackEffects(serverlevel, target, damagesource);
             }
 
-            if (!p_34643_.isBaby()) {
-                throwTarget(p_34643_, p_34644_);
+            if (!hoglin.isBaby()) {
+                throwTarget(hoglin, target);
             }
         }
 
         return flag;
     }
 
-    static void throwTarget(LivingEntity p_34646_, LivingEntity p_34647_) {
-        double d0 = p_34646_.getAttributeValue(Attributes.ATTACK_KNOCKBACK);
-        double d1 = p_34647_.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE);
+    static void throwTarget(LivingEntity hoglin, LivingEntity target) {
+        double d0 = hoglin.getAttributeValue(Attributes.ATTACK_KNOCKBACK);
+        double d1 = target.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE);
         double d2 = d0 - d1;
         if (!(d2 <= 0.0)) {
-            double d3 = p_34647_.getX() - p_34646_.getX();
-            double d4 = p_34647_.getZ() - p_34646_.getZ();
-            float f = (float)(p_34646_.level().random.nextInt(21) - 10);
-            double d5 = d2 * (double)(p_34646_.level().random.nextFloat() * 0.5F + 0.2F);
+            double d3 = target.getX() - hoglin.getX();
+            double d4 = target.getZ() - hoglin.getZ();
+            float f = (float)(hoglin.level().random.nextInt(21) - 10);
+            double d5 = d2 * (double)(hoglin.level().random.nextFloat() * 0.5F + 0.2F);
             Vec3 vec3 = new Vec3(d3, 0.0, d4).normalize().scale(d5).yRot(f);
-            double d6 = d2 * (double)p_34646_.level().random.nextFloat() * 0.5;
-            p_34647_.push(vec3.x, d6, vec3.z);
-            p_34647_.hurtMarked = true;
+            double d6 = d2 * (double)hoglin.level().random.nextFloat() * 0.5;
+            target.push(vec3.x, d6, vec3.z);
+            target.hurtMarked = true;
         }
     }
 }

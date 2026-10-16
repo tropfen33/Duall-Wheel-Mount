@@ -7,9 +7,9 @@ public class DedicatedServerSettings {
     private final Path source;
     private DedicatedServerProperties properties;
 
-    public DedicatedServerSettings(Path p_180932_) {
-        this.source = p_180932_;
-        this.properties = DedicatedServerProperties.fromFile(p_180932_);
+    public DedicatedServerSettings(Path source) {
+        this.source = source;
+        this.properties = DedicatedServerProperties.fromFile(source);
     }
 
     public DedicatedServerProperties getProperties() {
@@ -20,8 +20,8 @@ public class DedicatedServerSettings {
         this.properties.store(this.source);
     }
 
-    public DedicatedServerSettings update(UnaryOperator<DedicatedServerProperties> p_139779_) {
-        (this.properties = p_139779_.apply(this.properties)).store(this.source);
+    public DedicatedServerSettings update(UnaryOperator<DedicatedServerProperties> propertiesOperator) {
+        (this.properties = propertiesOperator.apply(this.properties)).store(this.source);
         return this;
     }
 }

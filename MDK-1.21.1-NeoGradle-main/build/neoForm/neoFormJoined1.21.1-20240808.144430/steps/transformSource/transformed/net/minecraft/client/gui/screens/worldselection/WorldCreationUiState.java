@@ -49,19 +49,19 @@ public class WorldCreationUiState {
     private final List<WorldCreationUiState.WorldTypeEntry> altPresetList = new ArrayList<>();
     private GameRules gameRules = new GameRules();
 
-    public WorldCreationUiState(Path p_276024_, WorldCreationContext p_276050_, Optional<ResourceKey<WorldPreset>> p_276022_, OptionalLong p_276014_) {
-        this.savesFolder = p_276024_;
-        this.settings = p_276050_;
-        this.worldType = new WorldCreationUiState.WorldTypeEntry(findPreset(p_276050_, p_276022_).orElse(null));
+    public WorldCreationUiState(Path savesFolder, WorldCreationContext settings, Optional<ResourceKey<WorldPreset>> preset, OptionalLong seed) {
+        this.savesFolder = savesFolder;
+        this.settings = settings;
+        this.worldType = new WorldCreationUiState.WorldTypeEntry(findPreset(settings, preset).orElse(null));
         this.updatePresetLists();
-        this.seed = p_276014_.isPresent() ? Long.toString(p_276014_.getAsLong()) : "";
-        this.generateStructures = p_276050_.options().generateStructures();
-        this.bonusChest = p_276050_.options().generateBonusChest();
+        this.seed = seed.isPresent() ? Long.toString(seed.getAsLong()) : "";
+        this.generateStructures = settings.options().generateStructures();
+        this.bonusChest = settings.options().generateBonusChest();
         this.targetFolder = this.findResultFolder(this.name);
     }
 
-    public void addListener(Consumer<WorldCreationUiState> p_267938_) {
-        this.listeners.add(p_267938_);
+    public void addListener(Consumer<WorldCreationUiState> listener) {
+        this.listeners.add(listener);
     }
 
     public void onChanged() {
@@ -80,14 +80,14 @@ public class WorldCreationUiState {
         }
     }
 
-    public void setName(String p_268167_) {
-        this.name = p_268167_;
-        this.targetFolder = this.findResultFolder(p_268167_);
+    public void setName(String name) {
+        this.name = name;
+        this.targetFolder = this.findResultFolder(name);
         this.onChanged();
     }
 
-    private String findResultFolder(String p_276032_) {
-        String s = p_276032_.trim();
+    private String findResultFolder(String name) {
+        String s = name.trim();
 
         try {
             return FileUtil.findAvailableName(this.savesFolder, !s.isEmpty() ? s : DEFAULT_WORLD_NAME.getString(), "");
@@ -108,8 +108,8 @@ public class WorldCreationUiState {
         return this.targetFolder;
     }
 
-    public void setGameMode(WorldCreationUiState.SelectedGameMode p_268231_) {
-        this.gameMode = p_268231_;
+    public void setGameMode(WorldCreationUiState.SelectedGameMode gameMode) {
+        this.gameMode = gameMode;
         this.onChanged();
     }
 
@@ -117,8 +117,8 @@ public class WorldCreationUiState {
         return this.isDebug() ? WorldCreationUiState.SelectedGameMode.DEBUG : this.gameMode;
     }
 
-    public void setDifficulty(Difficulty p_268032_) {
-        this.difficulty = p_268032_;
+    public void setDifficulty(Difficulty difficulty) {
+        this.difficulty = difficulty;
         this.onChanged();
     }
 
@@ -130,8 +130,8 @@ public class WorldCreationUiState {
         return this.getGameMode() == WorldCreationUiState.SelectedGameMode.HARDCORE;
     }
 
-    public void setAllowCommands(boolean p_321586_) {
-        this.allowCommands = p_321586_;
+    public void setAllowCommands(boolean allowCommands) {
+        this.allowCommands = allowCommands;
         this.onChanged();
     }
 
@@ -145,8 +145,8 @@ public class WorldCreationUiState {
         }
     }
 
-    public void setSeed(String p_268100_) {
-        this.seed = p_268100_;
+    public void setSeed(String seed) {
+        this.seed = seed;
         this.settings = this.settings.withOptions(p_267957_ -> p_267957_.withSeed(WorldOptions.parseSeed(this.getSeed())));
         this.onChanged();
     }
@@ -155,8 +155,8 @@ public class WorldCreationUiState {
         return this.seed;
     }
 
-    public void setGenerateStructures(boolean p_268090_) {
-        this.generateStructures = p_268090_;
+    public void setGenerateStructures(boolean generateStructures) {
+        this.generateStructures = generateStructures;
         this.onChanged();
     }
 
@@ -164,8 +164,8 @@ public class WorldCreationUiState {
         return this.isDebug() ? false : this.generateStructures;
     }
 
-    public void setBonusChest(boolean p_268236_) {
-        this.bonusChest = p_268236_;
+    public void setBonusChest(boolean bonusChest) {
+        this.bonusChest = bonusChest;
         this.onChanged();
     }
 
@@ -173,8 +173,8 @@ public class WorldCreationUiState {
         return !this.isDebug() && !this.isHardcore() ? this.bonusChest : false;
     }
 
-    public void setSettings(WorldCreationContext p_268313_) {
-        this.settings = p_268313_;
+    public void setSettings(WorldCreationContext settings) {
+        this.settings = settings;
         this.updatePresetLists();
         this.onChanged();
     }
@@ -183,22 +183,22 @@ public class WorldCreationUiState {
         return this.settings;
     }
 
-    public void updateDimensions(WorldCreationContext.DimensionsUpdater p_268314_) {
-        this.settings = this.settings.withDimensions(p_268314_);
+    public void updateDimensions(WorldCreationContext.DimensionsUpdater dimensionsUpdater) {
+        this.settings = this.settings.withDimensions(dimensionsUpdater);
         this.onChanged();
     }
 
-    protected boolean tryUpdateDataConfiguration(WorldDataConfiguration p_268016_) {
+    protected boolean tryUpdateDataConfiguration(WorldDataConfiguration worldDataConfiguration) {
         WorldDataConfiguration worlddataconfiguration = this.settings.dataConfiguration();
-        if (worlddataconfiguration.dataPacks().getEnabled().equals(p_268016_.dataPacks().getEnabled())
-            && worlddataconfiguration.enabledFeatures().equals(p_268016_.enabledFeatures())) {
+        if (worlddataconfiguration.dataPacks().getEnabled().equals(worldDataConfiguration.dataPacks().getEnabled())
+            && worlddataconfiguration.enabledFeatures().equals(worldDataConfiguration.enabledFeatures())) {
             this.settings = new WorldCreationContext(
                 this.settings.options(),
                 this.settings.datapackDimensions(),
                 this.settings.selectedDimensions(),
                 this.settings.worldgenRegistries(),
                 this.settings.dataPackResources(),
-                p_268016_
+                worldDataConfiguration
             );
             return true;
         } else {
@@ -210,9 +210,9 @@ public class WorldCreationUiState {
         return this.settings.selectedDimensions().isDebug();
     }
 
-    public void setWorldType(WorldCreationUiState.WorldTypeEntry p_268117_) {
-        this.worldType = p_268117_;
-        Holder<WorldPreset> holder = p_268117_.preset();
+    public void setWorldType(WorldCreationUiState.WorldTypeEntry worldType) {
+        this.worldType = worldType;
+        Holder<WorldPreset> holder = worldType.preset();
         if (holder != null) {
             this.updateDimensions((p_268134_, p_268035_) -> holder.value().createWorldDimensions());
         }
@@ -253,20 +253,20 @@ public class WorldCreationUiState {
         }
     }
 
-    private static Optional<Holder<WorldPreset>> findPreset(WorldCreationContext p_268025_, Optional<ResourceKey<WorldPreset>> p_268184_) {
-        return p_268184_.flatMap(
-            p_267974_ -> p_268025_.worldgenLoadContext().registryOrThrow(Registries.WORLD_PRESET).getHolder((ResourceKey<WorldPreset>)p_267974_)
+    private static Optional<Holder<WorldPreset>> findPreset(WorldCreationContext context, Optional<ResourceKey<WorldPreset>> preset) {
+        return preset.flatMap(
+            p_267974_ -> context.worldgenLoadContext().registryOrThrow(Registries.WORLD_PRESET).getHolder((ResourceKey<WorldPreset>)p_267974_)
         );
     }
 
-    private static Optional<List<WorldCreationUiState.WorldTypeEntry>> getNonEmptyList(Registry<WorldPreset> p_268296_, TagKey<WorldPreset> p_268097_) {
-        return p_268296_.getTag(p_268097_)
+    private static Optional<List<WorldCreationUiState.WorldTypeEntry>> getNonEmptyList(Registry<WorldPreset> registry, TagKey<WorldPreset> key) {
+        return registry.getTag(key)
             .map(p_268149_ -> p_268149_.stream().map(WorldCreationUiState.WorldTypeEntry::new).toList())
             .filter(p_268066_ -> !p_268066_.isEmpty());
     }
 
-    public void setGameRules(GameRules p_268203_) {
-        this.gameRules = p_268203_;
+    public void setGameRules(GameRules gameRules) {
+        this.gameRules = gameRules;
         this.onChanged();
     }
 
@@ -285,10 +285,10 @@ public class WorldCreationUiState {
         public final Component displayName;
         private final Component info;
 
-        private SelectedGameMode(String p_268033_, GameType p_268252_) {
-            this.gameType = p_268252_;
-            this.displayName = Component.translatable("selectWorld.gameMode." + p_268033_);
-            this.info = Component.translatable("selectWorld.gameMode." + p_268033_ + ".info");
+        private SelectedGameMode(String id, GameType gameType) {
+            this.gameType = gameType;
+            this.displayName = Component.translatable("selectWorld.gameMode." + id);
+            this.info = Component.translatable("selectWorld.gameMode." + id + ".info");
         }
 
         public Component getInfo() {

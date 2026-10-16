@@ -47,59 +47,59 @@ public enum TrialSpawnerState implements StringRepresentable {
     private final TrialSpawnerState.ParticleEmission particleEmission;
     private final boolean isCapableOfSpawning;
 
-    private TrialSpawnerState(String p_312098_, int p_312873_, TrialSpawnerState.ParticleEmission p_312259_, double p_312005_, boolean p_312451_) {
-        this.name = p_312098_;
-        this.lightLevel = p_312873_;
-        this.particleEmission = p_312259_;
-        this.spinningMobSpeed = p_312005_;
-        this.isCapableOfSpawning = p_312451_;
+    private TrialSpawnerState(String name, int lightLevel, TrialSpawnerState.ParticleEmission particleEmission, double spinningMobSpeed, boolean isCapableOfSpawning) {
+        this.name = name;
+        this.lightLevel = lightLevel;
+        this.particleEmission = particleEmission;
+        this.spinningMobSpeed = spinningMobSpeed;
+        this.isCapableOfSpawning = isCapableOfSpawning;
     }
 
-    TrialSpawnerState tickAndGetNext(BlockPos p_312221_, TrialSpawner p_311912_, ServerLevel p_311974_) {
-        TrialSpawnerData trialspawnerdata = p_311912_.getData();
-        TrialSpawnerConfig trialspawnerconfig = p_311912_.getConfig();
+    TrialSpawnerState tickAndGetNext(BlockPos pos, TrialSpawner spawner, ServerLevel level) {
+        TrialSpawnerData trialspawnerdata = spawner.getData();
+        TrialSpawnerConfig trialspawnerconfig = spawner.getConfig();
 
         return switch (this) {
-            case INACTIVE -> trialspawnerdata.getOrCreateDisplayEntity(p_311912_, p_311974_, WAITING_FOR_PLAYERS) == null ? this : WAITING_FOR_PLAYERS;
+            case INACTIVE -> trialspawnerdata.getOrCreateDisplayEntity(spawner, level, WAITING_FOR_PLAYERS) == null ? this : WAITING_FOR_PLAYERS;
             case WAITING_FOR_PLAYERS -> {
-                if (!p_311912_.canSpawnInLevel(p_311974_)) {
+                if (!spawner.canSpawnInLevel(level)) {
                     trialspawnerdata.reset();
                     yield this;
-                } else if (!trialspawnerdata.hasMobToSpawn(p_311912_, p_311974_.random)) {
+                } else if (!trialspawnerdata.hasMobToSpawn(spawner, level.random)) {
                     yield INACTIVE;
                 } else {
-                    trialspawnerdata.tryDetectPlayers(p_311974_, p_312221_, p_311912_);
+                    trialspawnerdata.tryDetectPlayers(level, pos, spawner);
                     yield trialspawnerdata.detectedPlayers.isEmpty() ? this : ACTIVE;
                 }
             }
             case ACTIVE -> {
-                if (!p_311912_.canSpawnInLevel(p_311974_)) {
+                if (!spawner.canSpawnInLevel(level)) {
                     trialspawnerdata.reset();
                     yield WAITING_FOR_PLAYERS;
-                } else if (!trialspawnerdata.hasMobToSpawn(p_311912_, p_311974_.random)) {
+                } else if (!trialspawnerdata.hasMobToSpawn(spawner, level.random)) {
                     yield INACTIVE;
                 } else {
-                    int i = trialspawnerdata.countAdditionalPlayers(p_312221_);
-                    trialspawnerdata.tryDetectPlayers(p_311974_, p_312221_, p_311912_);
-                    if (p_311912_.isOminous()) {
-                        this.spawnOminousOminousItemSpawner(p_311974_, p_312221_, p_311912_);
+                    int i = trialspawnerdata.countAdditionalPlayers(pos);
+                    trialspawnerdata.tryDetectPlayers(level, pos, spawner);
+                    if (spawner.isOminous()) {
+                        this.spawnOminousOminousItemSpawner(level, pos, spawner);
                     }
 
                     if (trialspawnerdata.hasFinishedSpawningAllMobs(trialspawnerconfig, i)) {
                         if (trialspawnerdata.haveAllCurrentMobsDied()) {
-                            trialspawnerdata.cooldownEndsAt = p_311974_.getGameTime() + (long)p_311912_.getTargetCooldownLength();
+                            trialspawnerdata.cooldownEndsAt = level.getGameTime() + (long)spawner.getTargetCooldownLength();
                             trialspawnerdata.totalMobsSpawned = 0;
                             trialspawnerdata.nextMobSpawnsAt = 0L;
                             yield WAITING_FOR_REWARD_EJECTION;
                         }
-                    } else if (trialspawnerdata.isReadyToSpawnNextMob(p_311974_, trialspawnerconfig, i)) {
-                        p_311912_.spawnMob(p_311974_, p_312221_).ifPresent(p_340800_ -> {
+                    } else if (trialspawnerdata.isReadyToSpawnNextMob(level, trialspawnerconfig, i)) {
+                        spawner.spawnMob(level, pos).ifPresent(p_340800_ -> {
                             trialspawnerdata.currentMobs.add(p_340800_);
                             trialspawnerdata.totalMobsSpawned++;
-                            trialspawnerdata.nextMobSpawnsAt = p_311974_.getGameTime() + (long)trialspawnerconfig.ticksBetweenSpawn();
-                            trialspawnerconfig.spawnPotentialsDefinition().getRandom(p_311974_.getRandom()).ifPresent(p_338048_ -> {
+                            trialspawnerdata.nextMobSpawnsAt = level.getGameTime() + (long)trialspawnerconfig.ticksBetweenSpawn();
+                            trialspawnerconfig.spawnPotentialsDefinition().getRandom(level.getRandom()).ifPresent(p_338048_ -> {
                                 trialspawnerdata.nextSpawnData = Optional.of(p_338048_.data());
-                                p_311912_.markUpdated();
+                                spawner.markUpdated();
                             });
                         });
                     }
@@ -108,38 +108,38 @@ public enum TrialSpawnerState implements StringRepresentable {
                 }
             }
             case WAITING_FOR_REWARD_EJECTION -> {
-                if (trialspawnerdata.isReadyToOpenShutter(p_311974_, 40.0F, p_311912_.getTargetCooldownLength())) {
-                    p_311974_.playSound(null, p_312221_, SoundEvents.TRIAL_SPAWNER_OPEN_SHUTTER, SoundSource.BLOCKS);
+                if (trialspawnerdata.isReadyToOpenShutter(level, 40.0F, spawner.getTargetCooldownLength())) {
+                    level.playSound(null, pos, SoundEvents.TRIAL_SPAWNER_OPEN_SHUTTER, SoundSource.BLOCKS);
                     yield EJECTING_REWARD;
                 } else {
                     yield this;
                 }
             }
             case EJECTING_REWARD -> {
-                if (!trialspawnerdata.isReadyToEjectItems(p_311974_, (float)TIME_BETWEEN_EACH_EJECTION, p_311912_.getTargetCooldownLength())) {
+                if (!trialspawnerdata.isReadyToEjectItems(level, (float)TIME_BETWEEN_EACH_EJECTION, spawner.getTargetCooldownLength())) {
                     yield this;
                 } else if (trialspawnerdata.detectedPlayers.isEmpty()) {
-                    p_311974_.playSound(null, p_312221_, SoundEvents.TRIAL_SPAWNER_CLOSE_SHUTTER, SoundSource.BLOCKS);
+                    level.playSound(null, pos, SoundEvents.TRIAL_SPAWNER_CLOSE_SHUTTER, SoundSource.BLOCKS);
                     trialspawnerdata.ejectingLootTable = Optional.empty();
                     yield COOLDOWN;
                 } else {
                     if (trialspawnerdata.ejectingLootTable.isEmpty()) {
-                        trialspawnerdata.ejectingLootTable = trialspawnerconfig.lootTablesToEject().getRandomValue(p_311974_.getRandom());
+                        trialspawnerdata.ejectingLootTable = trialspawnerconfig.lootTablesToEject().getRandomValue(level.getRandom());
                     }
 
-                    trialspawnerdata.ejectingLootTable.ifPresent(p_335304_ -> p_311912_.ejectReward(p_311974_, p_312221_, (ResourceKey<LootTable>)p_335304_));
+                    trialspawnerdata.ejectingLootTable.ifPresent(p_335304_ -> spawner.ejectReward(level, pos, (ResourceKey<LootTable>)p_335304_));
                     trialspawnerdata.detectedPlayers.remove(trialspawnerdata.detectedPlayers.iterator().next());
                     yield this;
                 }
             }
             case COOLDOWN -> {
-                trialspawnerdata.tryDetectPlayers(p_311974_, p_312221_, p_311912_);
+                trialspawnerdata.tryDetectPlayers(level, pos, spawner);
                 if (!trialspawnerdata.detectedPlayers.isEmpty()) {
                     trialspawnerdata.totalMobsSpawned = 0;
                     trialspawnerdata.nextMobSpawnsAt = 0L;
                     yield ACTIVE;
-                } else if (trialspawnerdata.isCooldownFinished(p_311974_)) {
-                    p_311912_.removeOminous(p_311974_, p_312221_);
+                } else if (trialspawnerdata.isCooldownFinished(level)) {
+                    spawner.removeOminous(level, pos);
                     trialspawnerdata.reset();
                     yield WAITING_FOR_PLAYERS;
                 } else {
@@ -149,75 +149,75 @@ public enum TrialSpawnerState implements StringRepresentable {
         };
     }
 
-    private void spawnOminousOminousItemSpawner(ServerLevel p_338483_, BlockPos p_338824_, TrialSpawner p_338767_) {
-        TrialSpawnerData trialspawnerdata = p_338767_.getData();
-        TrialSpawnerConfig trialspawnerconfig = p_338767_.getConfig();
-        ItemStack itemstack = trialspawnerdata.getDispensingItems(p_338483_, trialspawnerconfig, p_338824_)
-            .getRandomValue(p_338483_.random)
+    private void spawnOminousOminousItemSpawner(ServerLevel level, BlockPos pos, TrialSpawner spawner) {
+        TrialSpawnerData trialspawnerdata = spawner.getData();
+        TrialSpawnerConfig trialspawnerconfig = spawner.getConfig();
+        ItemStack itemstack = trialspawnerdata.getDispensingItems(level, trialspawnerconfig, pos)
+            .getRandomValue(level.random)
             .orElse(ItemStack.EMPTY);
         if (!itemstack.isEmpty()) {
-            if (this.timeToSpawnItemSpawner(p_338483_, trialspawnerdata)) {
-                calculatePositionToSpawnSpawner(p_338483_, p_338824_, p_338767_, trialspawnerdata).ifPresent(p_338064_ -> {
-                    OminousItemSpawner ominousitemspawner = OminousItemSpawner.create(p_338483_, itemstack);
+            if (this.timeToSpawnItemSpawner(level, trialspawnerdata)) {
+                calculatePositionToSpawnSpawner(level, pos, spawner, trialspawnerdata).ifPresent(p_338064_ -> {
+                    OminousItemSpawner ominousitemspawner = OminousItemSpawner.create(level, itemstack);
                     ominousitemspawner.moveTo(p_338064_);
-                    p_338483_.addFreshEntity(ominousitemspawner);
-                    float f = (p_338483_.getRandom().nextFloat() - p_338483_.getRandom().nextFloat()) * 0.2F + 1.0F;
-                    p_338483_.playSound(null, BlockPos.containing(p_338064_), SoundEvents.TRIAL_SPAWNER_SPAWN_ITEM_BEGIN, SoundSource.BLOCKS, 1.0F, f);
-                    trialspawnerdata.cooldownEndsAt = p_338483_.getGameTime() + p_338767_.getOminousConfig().ticksBetweenItemSpawners();
+                    level.addFreshEntity(ominousitemspawner);
+                    float f = (level.getRandom().nextFloat() - level.getRandom().nextFloat()) * 0.2F + 1.0F;
+                    level.playSound(null, BlockPos.containing(p_338064_), SoundEvents.TRIAL_SPAWNER_SPAWN_ITEM_BEGIN, SoundSource.BLOCKS, 1.0F, f);
+                    trialspawnerdata.cooldownEndsAt = level.getGameTime() + spawner.getOminousConfig().ticksBetweenItemSpawners();
                 });
             }
         }
     }
 
-    private static Optional<Vec3> calculatePositionToSpawnSpawner(ServerLevel p_338436_, BlockPos p_338583_, TrialSpawner p_338226_, TrialSpawnerData p_338461_) {
-        List<Player> list = p_338461_.detectedPlayers
+    private static Optional<Vec3> calculatePositionToSpawnSpawner(ServerLevel level, BlockPos pos, TrialSpawner spawner, TrialSpawnerData spawnerData) {
+        List<Player> list = spawnerData.detectedPlayers
             .stream()
-            .map(p_338436_::getPlayerByUUID)
+            .map(level::getPlayerByUUID)
             .filter(Objects::nonNull)
             .filter(
                 p_350236_ -> !p_350236_.isCreative()
                         && !p_350236_.isSpectator()
                         && p_350236_.isAlive()
-                        && p_350236_.distanceToSqr(p_338583_.getCenter()) <= (double)Mth.square(p_338226_.getRequiredPlayerRange())
+                        && p_350236_.distanceToSqr(pos.getCenter()) <= (double)Mth.square(spawner.getRequiredPlayerRange())
             )
             .toList();
         if (list.isEmpty()) {
             return Optional.empty();
         } else {
-            Entity entity = selectEntityToSpawnItemAbove(list, p_338461_.currentMobs, p_338226_, p_338583_, p_338436_);
-            return entity == null ? Optional.empty() : calculatePositionAbove(entity, p_338436_);
+            Entity entity = selectEntityToSpawnItemAbove(list, spawnerData.currentMobs, spawner, pos, level);
+            return entity == null ? Optional.empty() : calculatePositionAbove(entity, level);
         }
     }
 
-    private static Optional<Vec3> calculatePositionAbove(Entity p_338791_, ServerLevel p_338807_) {
-        Vec3 vec3 = p_338791_.position();
-        Vec3 vec31 = vec3.relative(Direction.UP, (double)(p_338791_.getBbHeight() + 2.0F + (float)p_338807_.random.nextInt(4)));
-        BlockHitResult blockhitresult = p_338807_.clip(new ClipContext(vec3, vec31, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, CollisionContext.empty()));
+    private static Optional<Vec3> calculatePositionAbove(Entity entity, ServerLevel level) {
+        Vec3 vec3 = entity.position();
+        Vec3 vec31 = vec3.relative(Direction.UP, (double)(entity.getBbHeight() + 2.0F + (float)level.random.nextInt(4)));
+        BlockHitResult blockhitresult = level.clip(new ClipContext(vec3, vec31, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, CollisionContext.empty()));
         Vec3 vec32 = blockhitresult.getBlockPos().getCenter().relative(Direction.DOWN, 1.0);
         BlockPos blockpos = BlockPos.containing(vec32);
-        return !p_338807_.getBlockState(blockpos).getCollisionShape(p_338807_, blockpos).isEmpty() ? Optional.empty() : Optional.of(vec32);
+        return !level.getBlockState(blockpos).getCollisionShape(level, blockpos).isEmpty() ? Optional.empty() : Optional.of(vec32);
     }
 
     @Nullable
     private static Entity selectEntityToSpawnItemAbove(
-        List<Player> p_338467_, Set<UUID> p_338224_, TrialSpawner p_338687_, BlockPos p_338268_, ServerLevel p_338524_
+        List<Player> player, Set<UUID> currentMobs, TrialSpawner spawner, BlockPos pos, ServerLevel level
     ) {
-        Stream<Entity> stream = p_338224_.stream()
-            .map(p_338524_::getEntity)
+        Stream<Entity> stream = currentMobs.stream()
+            .map(level::getEntity)
             .filter(Objects::nonNull)
             .filter(
-                p_338051_ -> p_338051_.isAlive() && p_338051_.distanceToSqr(p_338268_.getCenter()) <= (double)Mth.square(p_338687_.getRequiredPlayerRange())
+                p_338051_ -> p_338051_.isAlive() && p_338051_.distanceToSqr(pos.getCenter()) <= (double)Mth.square(spawner.getRequiredPlayerRange())
             );
-        List<? extends Entity> list = p_338524_.random.nextBoolean() ? stream.toList() : p_338467_;
+        List<? extends Entity> list = level.random.nextBoolean() ? stream.toList() : player;
         if (list.isEmpty()) {
             return null;
         } else {
-            return list.size() == 1 ? list.getFirst() : Util.getRandom(list, p_338524_.random);
+            return list.size() == 1 ? list.getFirst() : Util.getRandom(list, level.random);
         }
     }
 
-    private boolean timeToSpawnItemSpawner(ServerLevel p_338741_, TrialSpawnerData p_338296_) {
-        return p_338741_.getGameTime() >= p_338296_.cooldownEndsAt;
+    private boolean timeToSpawnItemSpawner(ServerLevel level, TrialSpawnerData spawnerData) {
+        return level.getGameTime() >= spawnerData.cooldownEndsAt;
     }
 
     public int lightLevel() {
@@ -236,8 +236,8 @@ public enum TrialSpawnerState implements StringRepresentable {
         return this.isCapableOfSpawning;
     }
 
-    public void emitParticles(Level p_312507_, BlockPos p_312610_, boolean p_338615_) {
-        this.particleEmission.emit(p_312507_, p_312507_.getRandom(), p_312610_, p_338615_);
+    public void emitParticles(Level level, BlockPos pos, boolean isOminous) {
+        this.particleEmission.emit(level, level.getRandom(), pos, isOminous);
     }
 
     @Override
@@ -284,11 +284,11 @@ public enum TrialSpawnerState implements StringRepresentable {
             }
         };
 
-        private static void addParticle(SimpleParticleType p_312519_, Vec3 p_312023_, Level p_311937_) {
-            p_311937_.addParticle(p_312519_, p_312023_.x(), p_312023_.y(), p_312023_.z(), 0.0, 0.0, 0.0);
+        private static void addParticle(SimpleParticleType particleType, Vec3 pos, Level level) {
+            level.addParticle(particleType, pos.x(), pos.y(), pos.z(), 0.0, 0.0, 0.0);
         }
 
-        void emit(Level p_312730_, RandomSource p_312474_, BlockPos p_312127_, boolean p_338742_);
+        void emit(Level level, RandomSource random, BlockPos pos, boolean isOminous);
     }
 
     static class SpinningMob {

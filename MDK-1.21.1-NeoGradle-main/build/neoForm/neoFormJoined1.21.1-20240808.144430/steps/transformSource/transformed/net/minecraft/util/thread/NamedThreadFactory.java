@@ -11,17 +11,17 @@ public class NamedThreadFactory implements ThreadFactory {
     private final AtomicInteger threadNumber = new AtomicInteger(1);
     private final String namePrefix;
 
-    public NamedThreadFactory(String p_146346_) {
+    public NamedThreadFactory(String namePrefix) {
         SecurityManager securitymanager = System.getSecurityManager();
         this.group = securitymanager != null ? securitymanager.getThreadGroup() : Thread.currentThread().getThreadGroup();
-        this.namePrefix = p_146346_ + "-";
+        this.namePrefix = namePrefix + "-";
     }
 
     @Override
-    public Thread newThread(Runnable p_146352_) {
-        Thread thread = new Thread(this.group, p_146352_, this.namePrefix + this.threadNumber.getAndIncrement(), 0L);
+    public Thread newThread(Runnable task) {
+        Thread thread = new Thread(this.group, task, this.namePrefix + this.threadNumber.getAndIncrement(), 0L);
         thread.setUncaughtExceptionHandler((p_146349_, p_146350_) -> {
-            LOGGER.error("Caught exception in thread {} from {}", p_146349_, p_146352_);
+            LOGGER.error("Caught exception in thread {} from {}", p_146349_, task);
             LOGGER.error("", p_146350_);
         });
         if (thread.getPriority() != 5) {

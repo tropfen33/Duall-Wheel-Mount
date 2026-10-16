@@ -18,14 +18,14 @@ public class LightDebugRenderer implements DebugRenderer.SimpleDebugRenderer {
     private final Minecraft minecraft;
     private static final int MAX_RENDER_DIST = 10;
 
-    public LightDebugRenderer(Minecraft p_113585_) {
-        this.minecraft = p_113585_;
+    public LightDebugRenderer(Minecraft minecraft) {
+        this.minecraft = minecraft;
     }
 
     @Override
-    public void render(PoseStack p_113587_, MultiBufferSource p_113588_, double p_113589_, double p_113590_, double p_113591_) {
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, double camX, double camY, double camZ) {
         Level level = this.minecraft.level;
-        BlockPos blockpos = BlockPos.containing(p_113589_, p_113590_, p_113591_);
+        BlockPos blockpos = BlockPos.containing(camX, camY, camZ);
         LongSet longset = new LongOpenHashSet();
 
         for (BlockPos blockpos1 : BlockPos.betweenClosed(blockpos.offset(-10, -10, -10), blockpos.offset(10, 10, 10))) {
@@ -35,8 +35,8 @@ public class LightDebugRenderer implements DebugRenderer.SimpleDebugRenderer {
             long k = SectionPos.blockToSection(blockpos1.asLong());
             if (longset.add(k)) {
                 DebugRenderer.renderFloatingText(
-                    p_113587_,
-                    p_113588_,
+                    poseStack,
+                    bufferSource,
                     level.getChunkSource().getLightEngine().getDebugData(LightLayer.SKY, SectionPos.of(k)),
                     (double)SectionPos.sectionToBlockCoord(SectionPos.x(k), 8),
                     (double)SectionPos.sectionToBlockCoord(SectionPos.y(k), 8),
@@ -48,7 +48,7 @@ public class LightDebugRenderer implements DebugRenderer.SimpleDebugRenderer {
 
             if (i != 15) {
                 DebugRenderer.renderFloatingText(
-                    p_113587_, p_113588_, String.valueOf(i), (double)blockpos1.getX() + 0.5, (double)blockpos1.getY() + 0.25, (double)blockpos1.getZ() + 0.5, j
+                    poseStack, bufferSource, String.valueOf(i), (double)blockpos1.getX() + 0.5, (double)blockpos1.getY() + 0.25, (double)blockpos1.getZ() + 0.5, j
                 );
             }
         }

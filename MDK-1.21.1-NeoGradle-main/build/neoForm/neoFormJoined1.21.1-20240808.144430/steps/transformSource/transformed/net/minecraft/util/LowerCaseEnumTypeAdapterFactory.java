@@ -16,8 +16,8 @@ import javax.annotation.Nullable;
 public class LowerCaseEnumTypeAdapterFactory implements TypeAdapterFactory {
     @Nullable
     @Override
-    public <T> TypeAdapter<T> create(Gson p_13982_, TypeToken<T> p_13983_) {
-        Class<T> oclass = (Class<T>)p_13983_.getRawType();
+    public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
+        Class<T> oclass = (Class<T>)typeToken.getRawType();
         if (!oclass.isEnum()) {
             return null;
         } else {
@@ -29,29 +29,29 @@ public class LowerCaseEnumTypeAdapterFactory implements TypeAdapterFactory {
 
             return new TypeAdapter<T>() {
                 @Override
-                public void write(JsonWriter p_13992_, T p_13993_) throws IOException {
-                    if (p_13993_ == null) {
-                        p_13992_.nullValue();
+                public void write(JsonWriter writer, T value) throws IOException {
+                    if (value == null) {
+                        writer.nullValue();
                     } else {
-                        p_13992_.value(LowerCaseEnumTypeAdapterFactory.this.toLowercase(p_13993_));
+                        writer.value(LowerCaseEnumTypeAdapterFactory.this.toLowercase(value));
                     }
                 }
 
                 @Nullable
                 @Override
-                public T read(JsonReader p_13990_) throws IOException {
-                    if (p_13990_.peek() == JsonToken.NULL) {
-                        p_13990_.nextNull();
+                public T read(JsonReader reader) throws IOException {
+                    if (reader.peek() == JsonToken.NULL) {
+                        reader.nextNull();
                         return null;
                     } else {
-                        return map.get(p_13990_.nextString());
+                        return map.get(reader.nextString());
                     }
                 }
             };
         }
     }
 
-    String toLowercase(Object p_13980_) {
-        return p_13980_ instanceof Enum ? ((Enum)p_13980_).name().toLowerCase(Locale.ROOT) : p_13980_.toString().toLowerCase(Locale.ROOT);
+    String toLowercase(Object object) {
+        return object instanceof Enum ? ((Enum)object).name().toLowerCase(Locale.ROOT) : object.toString().toLowerCase(Locale.ROOT);
     }
 }

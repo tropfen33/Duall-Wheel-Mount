@@ -28,37 +28,37 @@ public final class BundleContents implements TooltipComponent {
     final List<ItemStack> items;
     final Fraction weight;
 
-    BundleContents(List<ItemStack> p_331277_, Fraction p_339622_) {
-        this.items = p_331277_;
-        this.weight = p_339622_;
+    BundleContents(List<ItemStack> items, Fraction weight) {
+        this.items = items;
+        this.weight = weight;
     }
 
-    public BundleContents(List<ItemStack> p_331417_) {
-        this(p_331417_, computeContentWeight(p_331417_));
+    public BundleContents(List<ItemStack> items) {
+        this(items, computeContentWeight(items));
     }
 
-    private static Fraction computeContentWeight(List<ItemStack> p_331148_) {
+    private static Fraction computeContentWeight(List<ItemStack> content) {
         Fraction fraction = Fraction.ZERO;
 
-        for (ItemStack itemstack : p_331148_) {
+        for (ItemStack itemstack : content) {
             fraction = fraction.add(getWeight(itemstack).multiplyBy(Fraction.getFraction(itemstack.getCount(), 1)));
         }
 
         return fraction;
     }
 
-    static Fraction getWeight(ItemStack p_332084_) {
-        BundleContents bundlecontents = p_332084_.get(DataComponents.BUNDLE_CONTENTS);
+    static Fraction getWeight(ItemStack stack) {
+        BundleContents bundlecontents = stack.get(DataComponents.BUNDLE_CONTENTS);
         if (bundlecontents != null) {
             return BUNDLE_IN_BUNDLE_WEIGHT.add(bundlecontents.weight());
         } else {
-            List<BeehiveBlockEntity.Occupant> list = p_332084_.getOrDefault(DataComponents.BEES, List.of());
-            return !list.isEmpty() ? Fraction.ONE : Fraction.getFraction(1, p_332084_.getMaxStackSize());
+            List<BeehiveBlockEntity.Occupant> list = stack.getOrDefault(DataComponents.BEES, List.of());
+            return !list.isEmpty() ? Fraction.ONE : Fraction.getFraction(1, stack.getMaxStackSize());
         }
     }
 
-    public ItemStack getItemUnsafe(int p_330802_) {
-        return this.items.get(p_330802_);
+    public ItemStack getItemUnsafe(int index) {
+        return this.items.get(index);
     }
 
     public Stream<ItemStack> itemCopyStream() {
@@ -86,11 +86,11 @@ public final class BundleContents implements TooltipComponent {
     }
 
     @Override
-    public boolean equals(Object p_331898_) {
-        if (this == p_331898_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return !(p_331898_ instanceof BundleContents bundlecontents)
+            return !(other instanceof BundleContents bundlecontents)
                 ? false
                 : this.weight.equals(bundlecontents.weight) && ItemStack.listMatches(this.items, bundlecontents.items);
         }
@@ -110,9 +110,9 @@ public final class BundleContents implements TooltipComponent {
         private final List<ItemStack> items;
         private Fraction weight;
 
-        public Mutable(BundleContents p_332039_) {
-            this.items = new ArrayList<>(p_332039_.items);
-            this.weight = p_332039_.weight;
+        public Mutable(BundleContents contents) {
+            this.items = new ArrayList<>(contents.items);
+            this.weight = contents.weight;
         }
 
         public BundleContents.Mutable clearItems() {
@@ -121,12 +121,12 @@ public final class BundleContents implements TooltipComponent {
             return this;
         }
 
-        private int findStackIndex(ItemStack p_331941_) {
-            if (!p_331941_.isStackable()) {
+        private int findStackIndex(ItemStack stack) {
+            if (!stack.isStackable()) {
                 return -1;
             } else {
                 for (int i = 0; i < this.items.size(); i++) {
-                    if (ItemStack.isSameItemSameComponents(this.items.get(i), p_331941_)) {
+                    if (ItemStack.isSameItemSameComponents(this.items.get(i), stack)) {
                         return i;
                     }
                 }
@@ -135,26 +135,26 @@ public final class BundleContents implements TooltipComponent {
             }
         }
 
-        private int getMaxAmountToAdd(ItemStack p_330527_) {
+        private int getMaxAmountToAdd(ItemStack stack) {
             Fraction fraction = Fraction.ONE.subtract(this.weight);
-            return Math.max(fraction.divideBy(BundleContents.getWeight(p_330527_)).intValue(), 0);
+            return Math.max(fraction.divideBy(BundleContents.getWeight(stack)).intValue(), 0);
         }
 
-        public int tryInsert(ItemStack p_331789_) {
-            if (!p_331789_.isEmpty() && p_331789_.canFitInsideContainerItems()) { // Neo: stack-aware placeability check
-                int i = Math.min(p_331789_.getCount(), this.getMaxAmountToAdd(p_331789_));
+        public int tryInsert(ItemStack stack) {
+            if (!stack.isEmpty() && stack.canFitInsideContainerItems()) { // Neo: stack-aware placeability check
+                int i = Math.min(stack.getCount(), this.getMaxAmountToAdd(stack));
                 if (i == 0) {
                     return 0;
                 } else {
-                    this.weight = this.weight.add(BundleContents.getWeight(p_331789_).multiplyBy(Fraction.getFraction(i, 1)));
-                    int j = this.findStackIndex(p_331789_);
+                    this.weight = this.weight.add(BundleContents.getWeight(stack).multiplyBy(Fraction.getFraction(i, 1)));
+                    int j = this.findStackIndex(stack);
                     if (j != -1) {
                         ItemStack itemstack = this.items.remove(j);
                         ItemStack itemstack1 = itemstack.copyWithCount(itemstack.getCount() + i);
-                        p_331789_.shrink(i);
+                        stack.shrink(i);
                         this.items.add(0, itemstack1);
                     } else {
-                        this.items.add(0, p_331789_.split(i));
+                        this.items.add(0, stack.split(i));
                     }
 
                     return i;
@@ -164,10 +164,10 @@ public final class BundleContents implements TooltipComponent {
             }
         }
 
-        public int tryTransfer(Slot p_330834_, Player p_331924_) {
-            ItemStack itemstack = p_330834_.getItem();
+        public int tryTransfer(Slot slot, Player player) {
+            ItemStack itemstack = slot.getItem();
             int i = this.getMaxAmountToAdd(itemstack);
-            return this.tryInsert(p_330834_.safeTake(itemstack.getCount(), i, p_331924_));
+            return this.tryInsert(slot.safeTake(itemstack.getCount(), i, player));
         }
 
         @Nullable

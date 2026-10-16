@@ -6,8 +6,8 @@ public enum PackType implements net.minecraft.util.StringRepresentable {
 
     private final String directory;
 
-    private PackType(String p_265479_) {
-        this.directory = p_265479_;
+    private PackType(String directory) {
+        this.directory = directory;
     }
 
     public String getDirectory() {

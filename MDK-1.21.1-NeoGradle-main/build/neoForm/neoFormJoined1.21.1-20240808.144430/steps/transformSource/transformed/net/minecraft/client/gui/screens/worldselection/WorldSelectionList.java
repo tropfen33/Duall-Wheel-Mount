@@ -92,21 +92,21 @@ public class WorldSelectionList extends ObjectSelectionList<WorldSelectionList.E
     private final WorldSelectionList.LoadingHeader loadingHeader;
 
     public WorldSelectionList(
-        SelectWorldScreen p_239540_,
-        Minecraft p_239541_,
-        int p_239542_,
-        int p_239543_,
-        int p_239544_,
-        int p_239545_,
-        String p_239547_,
-        @Nullable WorldSelectionList p_239548_
+        SelectWorldScreen screen,
+        Minecraft minecraft,
+        int width,
+        int height,
+        int y,
+        int itemHeight,
+        String filter,
+        @Nullable WorldSelectionList worlds
     ) {
-        super(p_239541_, p_239542_, p_239543_, p_239544_, p_239545_);
-        this.screen = p_239540_;
-        this.loadingHeader = new WorldSelectionList.LoadingHeader(p_239541_);
-        this.filter = p_239547_;
-        if (p_239548_ != null) {
-            this.pendingLevels = p_239548_.pendingLevels;
+        super(minecraft, width, height, y, itemHeight);
+        this.screen = screen;
+        this.loadingHeader = new WorldSelectionList.LoadingHeader(minecraft);
+        this.filter = filter;
+        if (worlds != null) {
+            this.pendingLevels = worlds.pendingLevels;
         } else {
             this.pendingLevels = this.loadLevels();
         }
@@ -133,9 +133,18 @@ public class WorldSelectionList extends ObjectSelectionList<WorldSelectionList.E
         this.pendingLevels = this.loadLevels();
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_289017_, int p_288966_, int p_289020_) {
-        if (CommonInputs.selected(p_289017_)) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (CommonInputs.selected(keyCode)) {
             Optional<WorldSelectionList.WorldListEntry> optional = this.getSelectedOpt();
             if (optional.isPresent()) {
                 if (optional.get().canJoin()) {
@@ -147,35 +156,35 @@ public class WorldSelectionList extends ObjectSelectionList<WorldSelectionList.E
             }
         }
 
-        return super.keyPressed(p_289017_, p_288966_, p_289020_);
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override
-    public void renderWidget(GuiGraphics p_313849_, int p_313762_, int p_313812_, float p_313854_) {
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         List<LevelSummary> list = this.pollLevelsIgnoreErrors();
         if (list != this.currentlyDisplayedLevels) {
             this.handleNewLevels(list);
         }
 
-        super.renderWidget(p_313849_, p_313762_, p_313812_, p_313854_);
+        super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
     }
 
-    private void handleNewLevels(@Nullable List<LevelSummary> p_239665_) {
-        if (p_239665_ == null) {
+    private void handleNewLevels(@Nullable List<LevelSummary> levels) {
+        if (levels == null) {
             this.fillLoadingLevels();
         } else {
-            this.fillLevels(this.filter, p_239665_);
+            this.fillLevels(this.filter, levels);
         }
 
-        this.currentlyDisplayedLevels = p_239665_;
+        this.currentlyDisplayedLevels = levels;
     }
 
-    public void updateFilter(String p_239901_) {
-        if (this.currentlyDisplayedLevels != null && !p_239901_.equals(this.filter)) {
-            this.fillLevels(p_239901_, this.currentlyDisplayedLevels);
+    public void updateFilter(String filter) {
+        if (this.currentlyDisplayedLevels != null && !filter.equals(this.filter)) {
+            this.fillLevels(filter, this.currentlyDisplayedLevels);
         }
 
-        this.filter = p_239901_;
+        this.filter = filter;
     }
 
     private CompletableFuture<List<LevelSummary>> loadLevels() {
@@ -199,12 +208,12 @@ public class WorldSelectionList extends ObjectSelectionList<WorldSelectionList.E
         }
     }
 
-    private void fillLevels(String p_233199_, List<LevelSummary> p_233200_) {
+    private void fillLevels(String filter, List<LevelSummary> levels) {
         this.clearEntries();
-        p_233199_ = p_233199_.toLowerCase(Locale.ROOT);
+        filter = filter.toLowerCase(Locale.ROOT);
 
-        for (LevelSummary levelsummary : p_233200_) {
-            if (this.filterAccepts(p_233199_, levelsummary)) {
+        for (LevelSummary levelsummary : levels) {
+            if (this.filterAccepts(filter, levelsummary)) {
                 this.addEntry(new WorldSelectionList.WorldListEntry(this, levelsummary));
             }
         }
@@ -212,8 +221,8 @@ public class WorldSelectionList extends ObjectSelectionList<WorldSelectionList.E
         this.notifyListUpdated();
     }
 
-    private boolean filterAccepts(String p_233196_, LevelSummary p_233197_) {
-        return p_233197_.getLevelName().toLowerCase(Locale.ROOT).contains(p_233196_) || p_233197_.getLevelId().toLowerCase(Locale.ROOT).contains(p_233196_);
+    private boolean filterAccepts(String filter, LevelSummary level) {
+        return level.getLevelName().toLowerCase(Locale.ROOT).contains(filter) || level.getLevelId().toLowerCase(Locale.ROOT).contains(filter);
     }
 
     private void fillLoadingLevels() {
@@ -227,8 +236,8 @@ public class WorldSelectionList extends ObjectSelectionList<WorldSelectionList.E
         this.screen.triggerImmediateNarration(true);
     }
 
-    private void handleLevelLoadFailure(Component p_233212_) {
-        this.minecraft.setScreen(new ErrorScreen(Component.translatable("selectWorld.unable_to_load"), p_233212_));
+    private void handleLevelLoadFailure(Component exceptionMessage) {
+        this.minecraft.setScreen(new ErrorScreen(Component.translatable("selectWorld.unable_to_load"), exceptionMessage));
     }
 
     @Override
@@ -236,11 +245,11 @@ public class WorldSelectionList extends ObjectSelectionList<WorldSelectionList.E
         return 270;
     }
 
-    public void setSelected(@Nullable WorldSelectionList.Entry p_233190_) {
-        super.setSelected(p_233190_);
+    public void setSelected(@Nullable WorldSelectionList.Entry selected) {
+        super.setSelected(selected);
         this.screen
             .updateButtonStatus(
-                p_233190_ instanceof WorldSelectionList.WorldListEntry worldselectionlist$worldlistentry ? worldselectionlist$worldlistentry.summary : null
+                selected instanceof WorldSelectionList.WorldListEntry worldselectionlist$worldlistentry ? worldselectionlist$worldlistentry.summary : null
             );
     }
 
@@ -256,11 +265,11 @@ public class WorldSelectionList extends ObjectSelectionList<WorldSelectionList.E
     }
 
     @Override
-    public void updateWidgetNarration(NarrationElementOutput p_313871_) {
+    public void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
         if (this.children().contains(this.loadingHeader)) {
-            this.loadingHeader.updateNarration(p_313871_);
+            this.loadingHeader.updateNarration(narrationElementOutput);
         } else {
-            super.updateWidgetNarration(p_313871_);
+            super.updateWidgetNarration(narrationElementOutput);
         }
     }
 
@@ -276,30 +285,30 @@ public class WorldSelectionList extends ObjectSelectionList<WorldSelectionList.E
         private static final Component LOADING_LABEL = Component.translatable("selectWorld.loading_list");
         private final Minecraft minecraft;
 
-        public LoadingHeader(Minecraft p_233222_) {
-            this.minecraft = p_233222_;
+        public LoadingHeader(Minecraft minecraft) {
+            this.minecraft = minecraft;
         }
 
         @Override
         public void render(
-            GuiGraphics p_282319_,
-            int p_283207_,
-            int p_281352_,
-            int p_283332_,
-            int p_282400_,
-            int p_282912_,
-            int p_282760_,
-            int p_281344_,
-            boolean p_283655_,
-            float p_283696_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
             int i = (this.minecraft.screen.width - this.minecraft.font.width(LOADING_LABEL)) / 2;
-            int j = p_281352_ + (p_282912_ - 9) / 2;
-            p_282319_.drawString(this.minecraft.font, LOADING_LABEL, i, j, 16777215, false);
+            int j = top + (height - 9) / 2;
+            guiGraphics.drawString(this.minecraft.font, LOADING_LABEL, i, j, 16777215, false);
             String s = LoadingDotsText.get(Util.getMillis());
             int k = (this.minecraft.screen.width - this.minecraft.font.width(s)) / 2;
             int l = j + 9;
-            p_282319_.drawString(this.minecraft.font, s, k, l, -8355712, false);
+            guiGraphics.drawString(this.minecraft.font, s, k, l, -8355712, false);
         }
 
         @Override
@@ -320,12 +329,12 @@ public class WorldSelectionList extends ObjectSelectionList<WorldSelectionList.E
         private Path iconFile;
         private long lastClickTime;
 
-        public WorldListEntry(WorldSelectionList p_101702_, LevelSummary p_101703_) {
-            this.minecraft = p_101702_.minecraft;
-            this.screen = p_101702_.getScreen();
-            this.summary = p_101703_;
-            this.icon = FaviconTexture.forWorld(this.minecraft.getTextureManager(), p_101703_.getLevelId());
-            this.iconFile = p_101703_.getIcon();
+        public WorldListEntry(WorldSelectionList worldSelectionList, LevelSummary summary) {
+            this.minecraft = worldSelectionList.minecraft;
+            this.screen = worldSelectionList.getScreen();
+            this.summary = summary;
+            this.icon = FaviconTexture.forWorld(this.minecraft.getTextureManager(), summary.getLevelId());
+            this.iconFile = summary.getIcon();
             this.validateIconFile();
             this.loadIcon();
         }
@@ -377,16 +386,16 @@ public class WorldSelectionList extends ObjectSelectionList<WorldSelectionList.E
 
         @Override
         public void render(
-            GuiGraphics p_281612_,
-            int p_281353_,
-            int p_283181_,
-            int p_282820_,
-            int p_282420_,
-            int p_281855_,
-            int p_283204_,
-            int p_283025_,
-            boolean p_283396_,
-            float p_282938_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
             String s = this.summary.getLevelName();
             String s1 = this.summary.getLevelId();
@@ -396,50 +405,50 @@ public class WorldSelectionList extends ObjectSelectionList<WorldSelectionList.E
             }
 
             if (StringUtils.isEmpty(s)) {
-                s = I18n.get("selectWorld.world") + " " + (p_281353_ + 1);
+                s = I18n.get("selectWorld.world") + " " + (index + 1);
             }
 
             Component component = this.summary.getInfo();
-            p_281612_.drawString(this.minecraft.font, s, p_282820_ + 32 + 3, p_283181_ + 1, 16777215, false);
-            p_281612_.drawString(this.minecraft.font, s1, p_282820_ + 32 + 3, p_283181_ + 9 + 3, -8355712, false);
-            p_281612_.drawString(this.minecraft.font, component, p_282820_ + 32 + 3, p_283181_ + 9 + 9 + 3, -8355712, false);
+            guiGraphics.drawString(this.minecraft.font, s, left + 32 + 3, top + 1, 16777215, false);
+            guiGraphics.drawString(this.minecraft.font, s1, left + 32 + 3, top + 9 + 3, -8355712, false);
+            guiGraphics.drawString(this.minecraft.font, component, left + 32 + 3, top + 9 + 9 + 3, -8355712, false);
             RenderSystem.enableBlend();
-            p_281612_.blit(this.icon.textureLocation(), p_282820_, p_283181_, 0.0F, 0.0F, 32, 32, 32, 32);
+            guiGraphics.blit(this.icon.textureLocation(), left, top, 0.0F, 0.0F, 32, 32, 32, 32);
             RenderSystem.disableBlend();
-            renderExperimentalWarning(p_281612_, p_283204_, p_283025_, p_283181_, p_282820_);
-            if (this.minecraft.options.touchscreen().get() || p_283396_) {
-                p_281612_.fill(p_282820_, p_283181_, p_282820_ + 32, p_283181_ + 32, -1601138544);
-                int j = p_283204_ - p_282820_;
+            renderExperimentalWarning(guiGraphics, mouseX, mouseY, top, left);
+            if (this.minecraft.options.touchscreen().get() || hovering) {
+                guiGraphics.fill(left, top, left + 32, top + 32, -1601138544);
+                int j = mouseX - left;
                 boolean flag = j < 32;
                 ResourceLocation resourcelocation = flag ? WorldSelectionList.JOIN_HIGHLIGHTED_SPRITE : WorldSelectionList.JOIN_SPRITE;
                 ResourceLocation resourcelocation1 = flag ? WorldSelectionList.WARNING_HIGHLIGHTED_SPRITE : WorldSelectionList.WARNING_SPRITE;
                 ResourceLocation resourcelocation2 = flag ? WorldSelectionList.ERROR_HIGHLIGHTED_SPRITE : WorldSelectionList.ERROR_SPRITE;
                 ResourceLocation resourcelocation3 = flag ? WorldSelectionList.MARKED_JOIN_HIGHLIGHTED_SPRITE : WorldSelectionList.MARKED_JOIN_SPRITE;
                 if (this.summary instanceof LevelSummary.SymlinkLevelSummary || this.summary instanceof LevelSummary.CorruptedLevelSummary) {
-                    p_281612_.blitSprite(resourcelocation2, p_282820_, p_283181_, 32, 32);
-                    p_281612_.blitSprite(resourcelocation3, p_282820_, p_283181_, 32, 32);
+                    guiGraphics.blitSprite(resourcelocation2, left, top, 32, 32);
+                    guiGraphics.blitSprite(resourcelocation3, left, top, 32, 32);
                     return;
                 }
 
                 if (this.summary.isLocked()) {
-                    p_281612_.blitSprite(resourcelocation2, p_282820_, p_283181_, 32, 32);
+                    guiGraphics.blitSprite(resourcelocation2, left, top, 32, 32);
                     if (flag) {
                         this.screen.setTooltipForNextRenderPass(this.minecraft.font.split(WorldSelectionList.WORLD_LOCKED_TOOLTIP, 175));
                     }
                 } else if (this.summary.requiresManualConversion()) {
-                    p_281612_.blitSprite(resourcelocation2, p_282820_, p_283181_, 32, 32);
+                    guiGraphics.blitSprite(resourcelocation2, left, top, 32, 32);
                     if (flag) {
                         this.screen.setTooltipForNextRenderPass(this.minecraft.font.split(WorldSelectionList.WORLD_REQUIRES_CONVERSION, 175));
                     }
                 } else if (!this.summary.isCompatible()) {
-                    p_281612_.blitSprite(resourcelocation2, p_282820_, p_283181_, 32, 32);
+                    guiGraphics.blitSprite(resourcelocation2, left, top, 32, 32);
                     if (flag) {
                         this.screen.setTooltipForNextRenderPass(this.minecraft.font.split(WorldSelectionList.INCOMPATIBLE_VERSION_TOOLTIP, 175));
                     }
                 } else if (this.summary.shouldBackup()) {
-                    p_281612_.blitSprite(resourcelocation3, p_282820_, p_283181_, 32, 32);
+                    guiGraphics.blitSprite(resourcelocation3, left, top, 32, 32);
                     if (this.summary.isDowngrade()) {
-                        p_281612_.blitSprite(resourcelocation2, p_282820_, p_283181_, 32, 32);
+                        guiGraphics.blitSprite(resourcelocation2, left, top, 32, 32);
                         if (flag) {
                             this.screen
                                 .setTooltipForNextRenderPass(
@@ -450,7 +459,7 @@ public class WorldSelectionList extends ObjectSelectionList<WorldSelectionList.E
                                 );
                         }
                     } else if (!SharedConstants.getCurrentVersion().isStable()) {
-                        p_281612_.blitSprite(resourcelocation1, p_282820_, p_283181_, 32, 32);
+                        guiGraphics.blitSprite(resourcelocation1, left, top, 32, 32);
                         if (flag) {
                             this.screen
                                 .setTooltipForNextRenderPass(
@@ -461,20 +470,29 @@ public class WorldSelectionList extends ObjectSelectionList<WorldSelectionList.E
                         }
                     }
                 } else {
-                    p_281612_.blitSprite(resourcelocation, p_282820_, p_283181_, 32, 32);
+                    guiGraphics.blitSprite(resourcelocation, left, top, 32, 32);
                 }
             }
         }
 
+        /**
+         * Called when a mouse button is clicked within the GUI element.
+         * <p>
+         * @return {@code true} if the event is consumed, {@code false} otherwise.
+         *
+         * @param mouseX the X coordinate of the mouse.
+         * @param mouseY the Y coordinate of the mouse.
+         * @param button the button that was clicked.
+         */
         @Override
-        public boolean mouseClicked(double p_101706_, double p_101707_, int p_101708_) {
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
             if (!this.summary.primaryActionActive()) {
                 return true;
             } else {
                 WorldSelectionList.this.setSelected((WorldSelectionList.Entry)this);
-                if (!(p_101706_ - (double)WorldSelectionList.this.getRowLeft() <= 32.0) && Util.getMillis() - this.lastClickTime >= 250L) {
+                if (!(mouseX - (double)WorldSelectionList.this.getRowLeft() <= 32.0) && Util.getMillis() - this.lastClickTime >= 250L) {
                     this.lastClickTime = Util.getMillis();
-                    return super.mouseClicked(p_101706_, p_101707_, p_101708_);
+                    return super.mouseClicked(mouseX, mouseY, button);
                 } else {
                     if (this.canJoin()) {
                         this.minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));

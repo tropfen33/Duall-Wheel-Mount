@@ -20,30 +20,30 @@ import net.minecraft.world.phys.AABB;
 
 public class ShearsDispenseItemBehavior extends OptionalDispenseItemBehavior {
     @Override
-    protected ItemStack execute(BlockSource p_302443_, ItemStack p_123581_) {
-        ServerLevel serverlevel = p_302443_.level();
+    protected ItemStack execute(BlockSource blockSource, ItemStack item) {
+        ServerLevel serverlevel = blockSource.level();
         if (!serverlevel.isClientSide()) {
-            BlockPos blockpos = p_302443_.pos().relative(p_302443_.state().getValue(DispenserBlock.FACING));
-            this.setSuccess(net.neoforged.neoforge.common.CommonHooks.tryDispenseShearsHarvestBlock(p_302443_, p_123581_, serverlevel, blockpos) || tryShearBeehive(serverlevel, blockpos) || tryShearLivingEntity(serverlevel, blockpos, p_123581_));
+            BlockPos blockpos = blockSource.pos().relative(blockSource.state().getValue(DispenserBlock.FACING));
+            this.setSuccess(net.neoforged.neoforge.common.CommonHooks.tryDispenseShearsHarvestBlock(blockSource, item, serverlevel, blockpos) || tryShearBeehive(serverlevel, blockpos) || tryShearLivingEntity(serverlevel, blockpos, item));
             if (this.isSuccess()) {
-                p_123581_.hurtAndBreak(1, serverlevel, null, p_348118_ -> {
+                item.hurtAndBreak(1, serverlevel, null, p_348118_ -> {
                 });
             }
         }
 
-        return p_123581_;
+        return item;
     }
 
-    private static boolean tryShearBeehive(ServerLevel p_123577_, BlockPos p_123578_) {
-        BlockState blockstate = p_123577_.getBlockState(p_123578_);
+    private static boolean tryShearBeehive(ServerLevel level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
         if (blockstate.is(BlockTags.BEEHIVES, p_202454_ -> p_202454_.hasProperty(BeehiveBlock.HONEY_LEVEL) && p_202454_.getBlock() instanceof BeehiveBlock)) {
             int i = blockstate.getValue(BeehiveBlock.HONEY_LEVEL);
             if (i >= 5) {
-                p_123577_.playSound(null, p_123578_, SoundEvents.BEEHIVE_SHEAR, SoundSource.BLOCKS, 1.0F, 1.0F);
-                BeehiveBlock.dropHoneycomb(p_123577_, p_123578_);
+                level.playSound(null, pos, SoundEvents.BEEHIVE_SHEAR, SoundSource.BLOCKS, 1.0F, 1.0F);
+                BeehiveBlock.dropHoneycomb(level, pos);
                 ((BeehiveBlock)blockstate.getBlock())
-                    .releaseBeesAndResetHoneyLevel(p_123577_, blockstate, p_123578_, null, BeehiveBlockEntity.BeeReleaseStatus.BEE_RELEASED);
-                p_123577_.gameEvent(null, GameEvent.SHEAR, p_123578_);
+                    .releaseBeesAndResetHoneyLevel(level, blockstate, pos, null, BeehiveBlockEntity.BeeReleaseStatus.BEE_RELEASED);
+                level.gameEvent(null, GameEvent.SHEAR, pos);
                 return true;
             }
         }
@@ -51,12 +51,12 @@ public class ShearsDispenseItemBehavior extends OptionalDispenseItemBehavior {
         return false;
     }
 
-    private static boolean tryShearLivingEntity(ServerLevel p_123583_, BlockPos p_123584_, ItemStack stack) {
-        for (LivingEntity livingentity : p_123583_.getEntitiesOfClass(LivingEntity.class, new AABB(p_123584_), EntitySelector.NO_SPECTATORS)) {
-            if (livingentity instanceof net.neoforged.neoforge.common.IShearable shearable && shearable.isShearable(null, stack, p_123583_, p_123584_)) {
-                shearable.onSheared(null, stack, p_123583_, p_123584_)
-                        .forEach(drop -> shearable.spawnShearedDrop(p_123583_, p_123584_, drop));
-                p_123583_.gameEvent(null, GameEvent.SHEAR, p_123584_);
+    private static boolean tryShearLivingEntity(ServerLevel level, BlockPos pos, ItemStack stack) {
+        for (LivingEntity livingentity : level.getEntitiesOfClass(LivingEntity.class, new AABB(pos), EntitySelector.NO_SPECTATORS)) {
+            if (livingentity instanceof net.neoforged.neoforge.common.IShearable shearable && shearable.isShearable(null, stack, level, pos)) {
+                shearable.onSheared(null, stack, level, pos)
+                        .forEach(drop -> shearable.spawnShearedDrop(level, pos, drop));
+                level.gameEvent(null, GameEvent.SHEAR, pos);
                 return true;
             }
         }

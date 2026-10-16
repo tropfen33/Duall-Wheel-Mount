@@ -2,11 +2,16 @@ package net.minecraft.world.level.storage.loot.parameters;
 
 import net.minecraft.resources.ResourceLocation;
 
+/**
+ * A parameter of a {@link LootContext}.
+ *
+ * @see LootContextParams
+ */
 public class LootContextParam<T> {
     private final ResourceLocation name;
 
-    public LootContextParam(ResourceLocation p_81283_) {
-        this.name = p_81283_;
+    public LootContextParam(ResourceLocation name) {
+        this.name = name;
     }
 
     public ResourceLocation getName() {

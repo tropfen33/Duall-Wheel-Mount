@@ -48,8 +48,8 @@ public class MangrovePropaguleBlock extends SaplingBlock implements SimpleWaterl
         return CODEC;
     }
 
-    public MangrovePropaguleBlock(TreeGrower p_304562_, BlockBehaviour.Properties p_221449_) {
-        super(p_304562_, p_221449_);
+    public MangrovePropaguleBlock(TreeGrower treeGrower, BlockBehaviour.Properties properties) {
+        super(treeGrower, properties);
         this.registerDefaultState(
             this.stateDefinition
                 .any()
@@ -61,109 +61,117 @@ public class MangrovePropaguleBlock extends SaplingBlock implements SimpleWaterl
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_221484_) {
-        p_221484_.add(STAGE).add(AGE).add(WATERLOGGED).add(HANGING);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(STAGE).add(AGE).add(WATERLOGGED).add(HANGING);
     }
 
     @Override
-    protected boolean mayPlaceOn(BlockState p_221496_, BlockGetter p_221497_, BlockPos p_221498_) {
-        return super.mayPlaceOn(p_221496_, p_221497_, p_221498_) || p_221496_.is(Blocks.CLAY);
+    protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
+        return super.mayPlaceOn(state, level, pos) || state.is(Blocks.CLAY);
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_221456_) {
-        FluidState fluidstate = p_221456_.getLevel().getFluidState(p_221456_.getClickedPos());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
         boolean flag = fluidstate.getType() == Fluids.WATER;
-        return super.getStateForPlacement(p_221456_).setValue(WATERLOGGED, Boolean.valueOf(flag)).setValue(AGE, Integer.valueOf(4));
+        return super.getStateForPlacement(context).setValue(WATERLOGGED, Boolean.valueOf(flag)).setValue(AGE, Integer.valueOf(4));
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_221468_, BlockGetter p_221469_, BlockPos p_221470_, CollisionContext p_221471_) {
-        Vec3 vec3 = p_221468_.getOffset(p_221469_, p_221470_);
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        Vec3 vec3 = state.getOffset(level, pos);
         VoxelShape voxelshape;
-        if (!p_221468_.getValue(HANGING)) {
+        if (!state.getValue(HANGING)) {
             voxelshape = SHAPE_PER_AGE[4];
         } else {
-            voxelshape = SHAPE_PER_AGE[p_221468_.getValue(AGE)];
+            voxelshape = SHAPE_PER_AGE[state.getValue(AGE)];
         }
 
         return voxelshape.move(vec3.x, vec3.y, vec3.z);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_221473_, LevelReader p_221474_, BlockPos p_221475_) {
-        if (isHanging(p_221473_)) {
-            net.neoforged.neoforge.common.util.TriState soilDecision = p_221474_.getBlockState(p_221475_.above()).canSustainPlant(p_221474_, p_221475_.above(), Direction.DOWN, p_221473_);
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        if (isHanging(state)) {
+            net.neoforged.neoforge.common.util.TriState soilDecision = level.getBlockState(pos.above()).canSustainPlant(level, pos.above(), Direction.DOWN, state);
             if (!soilDecision.isDefault()) return soilDecision.isTrue();
-            return p_221474_.getBlockState(p_221475_.above()).is(Blocks.MANGROVE_LEAVES);
+            return level.getBlockState(pos.above()).is(Blocks.MANGROVE_LEAVES);
         }
-        return super.canSurvive(p_221473_, p_221474_, p_221475_);
+        return super.canSurvive(state, level, pos);
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
     protected BlockState updateShape(
-        BlockState p_221477_, Direction p_221478_, BlockState p_221479_, LevelAccessor p_221480_, BlockPos p_221481_, BlockPos p_221482_
+        BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos
     ) {
-        if (p_221477_.getValue(WATERLOGGED)) {
-            p_221480_.scheduleTick(p_221481_, Fluids.WATER, Fluids.WATER.getTickDelay(p_221480_));
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        return p_221478_ == Direction.UP && !p_221477_.canSurvive(p_221480_, p_221481_)
+        return facing == Direction.UP && !state.canSurvive(level, currentPos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_221477_, p_221478_, p_221479_, p_221480_, p_221481_, p_221482_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_221494_) {
-        return p_221494_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_221494_);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_221488_, ServerLevel p_221489_, BlockPos p_221490_, RandomSource p_221491_) {
-        if (!isHanging(p_221488_)) {
-            if (p_221491_.nextInt(7) == 0) {
-                this.advanceTree(p_221489_, p_221490_, p_221488_, p_221491_);
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!isHanging(state)) {
+            if (random.nextInt(7) == 0) {
+                this.advanceTree(level, pos, state, random);
             }
         } else {
-            if (!isFullyGrown(p_221488_)) {
-                p_221489_.setBlock(p_221490_, p_221488_.cycle(AGE), 2);
+            if (!isFullyGrown(state)) {
+                level.setBlock(pos, state.cycle(AGE), 2);
             }
         }
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader p_256541_, BlockPos p_221459_, BlockState p_221460_) {
-        return !isHanging(p_221460_) || !isFullyGrown(p_221460_);
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+        return !isHanging(state) || !isFullyGrown(state);
     }
 
     @Override
-    public boolean isBonemealSuccess(Level p_221463_, RandomSource p_221464_, BlockPos p_221465_, BlockState p_221466_) {
-        return isHanging(p_221466_) ? !isFullyGrown(p_221466_) : super.isBonemealSuccess(p_221463_, p_221464_, p_221465_, p_221466_);
+    public boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state) {
+        return isHanging(state) ? !isFullyGrown(state) : super.isBonemealSuccess(level, random, pos, state);
     }
 
     @Override
-    public void performBonemeal(ServerLevel p_221451_, RandomSource p_221452_, BlockPos p_221453_, BlockState p_221454_) {
-        if (isHanging(p_221454_) && !isFullyGrown(p_221454_)) {
-            p_221451_.setBlock(p_221453_, p_221454_.cycle(AGE), 2);
+    public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
+        if (isHanging(state) && !isFullyGrown(state)) {
+            level.setBlock(pos, state.cycle(AGE), 2);
         } else {
-            super.performBonemeal(p_221451_, p_221452_, p_221453_, p_221454_);
+            super.performBonemeal(level, random, pos, state);
         }
     }
 
-    private static boolean isHanging(BlockState p_221500_) {
-        return p_221500_.getValue(HANGING);
+    private static boolean isHanging(BlockState state) {
+        return state.getValue(HANGING);
     }
 
-    private static boolean isFullyGrown(BlockState p_221502_) {
-        return p_221502_.getValue(AGE) == 4;
+    private static boolean isFullyGrown(BlockState state) {
+        return state.getValue(AGE) == 4;
     }
 
     public static BlockState createNewHangingPropagule() {
         return createNewHangingPropagule(0);
     }
 
-    public static BlockState createNewHangingPropagule(int p_221486_) {
-        return Blocks.MANGROVE_PROPAGULE.defaultBlockState().setValue(HANGING, Boolean.valueOf(true)).setValue(AGE, Integer.valueOf(p_221486_));
+    public static BlockState createNewHangingPropagule(int age) {
+        return Blocks.MANGROVE_PROPAGULE.defaultBlockState().setValue(HANGING, Boolean.valueOf(true)).setValue(AGE, Integer.valueOf(age));
     }
 }

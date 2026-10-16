@@ -19,7 +19,7 @@ public interface JvmProfiler {
         ? JfrProfiler.getInstance()
         : new JvmProfiler.NoOpProfiler());
 
-    boolean start(Environment p_185347_);
+    boolean start(Environment environment);
 
     Path stop();
 
@@ -27,21 +27,21 @@ public interface JvmProfiler {
 
     boolean isAvailable();
 
-    void onServerTick(float p_185342_);
+    void onServerTick(float currentAverageTickTime);
 
-    void onPacketReceived(ConnectionProtocol p_294356_, PacketType<?> p_320354_, SocketAddress p_185345_, int p_185343_);
+    void onPacketReceived(ConnectionProtocol protocol, PacketType<?> packetType, SocketAddress address, int size);
 
-    void onPacketSent(ConnectionProtocol p_295578_, PacketType<?> p_320775_, SocketAddress p_185353_, int p_185351_);
+    void onPacketSent(ConnectionProtocol protocol, PacketType<?> packetType, SocketAddress address, int size);
 
-    void onRegionFileRead(RegionStorageInfo p_325986_, ChunkPos p_326233_, RegionFileVersion p_325994_, int p_326396_);
+    void onRegionFileRead(RegionStorageInfo regionStorageInfo, ChunkPos chunkPos, RegionFileVersion version, int bytes);
 
-    void onRegionFileWrite(RegionStorageInfo p_326304_, ChunkPos p_326296_, RegionFileVersion p_326215_, int p_326501_);
+    void onRegionFileWrite(RegionStorageInfo regionStorageInfo, ChunkPos chunkPos, RegionFileVersion version, int bytes);
 
     @Nullable
     ProfiledDuration onWorldLoadedStarted();
 
     @Nullable
-    ProfiledDuration onChunkGenerate(ChunkPos p_185348_, ResourceKey<Level> p_185349_, String p_185350_);
+    ProfiledDuration onChunkGenerate(ChunkPos chunkPos, ResourceKey<Level> level, String name);
 
     public static class NoOpProfiler implements JvmProfiler {
         private static final Logger LOGGER = LogUtils.getLogger();

@@ -27,8 +27,8 @@ public record StorageValue(ResourceLocation storage, NbtPathArgument.NbtPath pat
         return NumberProviders.STORAGE;
     }
 
-    private Optional<NumericTag> getNumericTag(LootContext p_336045_) {
-        CompoundTag compoundtag = p_336045_.getLevel().getServer().getCommandStorage().get(this.storage);
+    private Optional<NumericTag> getNumericTag(LootContext context) {
+        CompoundTag compoundtag = context.getLevel().getServer().getCommandStorage().get(this.storage);
 
         try {
             List<Tag> list = this.path.get(compoundtag);
@@ -42,12 +42,12 @@ public record StorageValue(ResourceLocation storage, NbtPathArgument.NbtPath pat
     }
 
     @Override
-    public float getFloat(LootContext p_335884_) {
-        return this.getNumericTag(p_335884_).map(NumericTag::getAsFloat).orElse(0.0F);
+    public float getFloat(LootContext lootContext) {
+        return this.getNumericTag(lootContext).map(NumericTag::getAsFloat).orElse(0.0F);
     }
 
     @Override
-    public int getInt(LootContext p_335703_) {
-        return this.getNumericTag(p_335703_).map(NumericTag::getAsInt).orElse(0);
+    public int getInt(LootContext lootContext) {
+        return this.getNumericTag(lootContext).map(NumericTag::getAsInt).orElse(0);
     }
 }

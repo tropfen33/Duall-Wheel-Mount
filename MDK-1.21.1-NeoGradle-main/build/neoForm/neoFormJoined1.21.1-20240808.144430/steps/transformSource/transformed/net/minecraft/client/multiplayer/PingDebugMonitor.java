@@ -12,16 +12,16 @@ public class PingDebugMonitor {
     private final ClientPacketListener connection;
     private final LocalSampleLogger delayTimer;
 
-    public PingDebugMonitor(ClientPacketListener p_298598_, LocalSampleLogger p_323903_) {
-        this.connection = p_298598_;
-        this.delayTimer = p_323903_;
+    public PingDebugMonitor(ClientPacketListener connection, LocalSampleLogger delayTimer) {
+        this.connection = connection;
+        this.delayTimer = delayTimer;
     }
 
     public void tick() {
         this.connection.send(new ServerboundPingRequestPacket(Util.getMillis()));
     }
 
-    public void onPongReceived(ClientboundPongResponsePacket p_320694_) {
-        this.delayTimer.logSample(Util.getMillis() - p_320694_.time());
+    public void onPongReceived(ClientboundPongResponsePacket packet) {
+        this.delayTimer.logSample(Util.getMillis() - packet.time());
     }
 }

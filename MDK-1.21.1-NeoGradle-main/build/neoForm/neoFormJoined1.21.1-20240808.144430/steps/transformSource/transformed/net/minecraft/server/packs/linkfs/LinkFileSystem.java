@@ -25,21 +25,21 @@ public class LinkFileSystem extends FileSystem {
     private final FileSystemProvider provider = new LinkFSProvider();
     private final LinkFSPath root;
 
-    LinkFileSystem(String p_251238_, LinkFileSystem.DirectoryEntry p_248738_) {
-        this.store = new LinkFSFileStore(p_251238_);
-        this.root = buildPath(p_248738_, this, "", null);
+    LinkFileSystem(String name, LinkFileSystem.DirectoryEntry root) {
+        this.store = new LinkFSFileStore(name);
+        this.root = buildPath(root, this, "", null);
     }
 
-    private static LinkFSPath buildPath(LinkFileSystem.DirectoryEntry p_250914_, LinkFileSystem p_248904_, String p_248935_, @Nullable LinkFSPath p_250296_) {
+    private static LinkFSPath buildPath(LinkFileSystem.DirectoryEntry directory, LinkFileSystem fileSystem, String name, @Nullable LinkFSPath parent) {
         Object2ObjectOpenHashMap<String, LinkFSPath> object2objectopenhashmap = new Object2ObjectOpenHashMap<>();
-        LinkFSPath linkfspath = new LinkFSPath(p_248904_, p_248935_, p_250296_, new PathContents.DirectoryContents(object2objectopenhashmap));
-        p_250914_.files
+        LinkFSPath linkfspath = new LinkFSPath(fileSystem, name, parent, new PathContents.DirectoryContents(object2objectopenhashmap));
+        directory.files
             .forEach(
                 (p_249491_, p_250850_) -> object2objectopenhashmap.put(
-                        p_249491_, new LinkFSPath(p_248904_, p_249491_, linkfspath, new PathContents.FileContents(p_250850_))
+                        p_249491_, new LinkFSPath(fileSystem, p_249491_, linkfspath, new PathContents.FileContents(p_250850_))
                     )
             );
-        p_250914_.children.forEach((p_251592_, p_251728_) -> object2objectopenhashmap.put(p_251592_, buildPath(p_251728_, p_248904_, p_251592_, linkfspath)));
+        directory.children.forEach((p_251592_, p_251728_) -> object2objectopenhashmap.put(p_251592_, buildPath(p_251728_, fileSystem, p_251592_, linkfspath)));
         object2objectopenhashmap.trim();
         return linkfspath;
     }
@@ -84,10 +84,10 @@ public class LinkFileSystem extends FileSystem {
     }
 
     @Override
-    public Path getPath(String p_250018_, String... p_252159_) {
-        Stream<String> stream = Stream.of(p_250018_);
-        if (p_252159_.length > 0) {
-            stream = Stream.concat(stream, Stream.of(p_252159_));
+    public Path getPath(String first, String... more) {
+        Stream<String> stream = Stream.of(first);
+        if (more.length > 0) {
+            stream = Stream.concat(stream, Stream.of(more));
         }
 
         String s = stream.collect(Collectors.joining("/"));
@@ -125,7 +125,7 @@ public class LinkFileSystem extends FileSystem {
     }
 
     @Override
-    public PathMatcher getPathMatcher(String p_250757_) {
+    public PathMatcher getPathMatcher(String syntaxAndPattern) {
         throw new UnsupportedOperationException();
     }
 
@@ -154,28 +154,28 @@ public class LinkFileSystem extends FileSystem {
     public static class Builder {
         private final LinkFileSystem.DirectoryEntry root = new LinkFileSystem.DirectoryEntry();
 
-        public LinkFileSystem.Builder put(List<String> p_249758_, String p_251234_, Path p_248766_) {
+        public LinkFileSystem.Builder put(List<String> pathString, String fileName, Path filePath) {
             LinkFileSystem.DirectoryEntry linkfilesystem$directoryentry = this.root;
 
-            for (String s : p_249758_) {
+            for (String s : pathString) {
                 linkfilesystem$directoryentry = linkfilesystem$directoryentry.children.computeIfAbsent(s, p_249671_ -> new LinkFileSystem.DirectoryEntry());
             }
 
-            linkfilesystem$directoryentry.files.put(p_251234_, p_248766_);
+            linkfilesystem$directoryentry.files.put(fileName, filePath);
             return this;
         }
 
-        public LinkFileSystem.Builder put(List<String> p_250158_, Path p_250483_) {
-            if (p_250158_.isEmpty()) {
+        public LinkFileSystem.Builder put(List<String> pathString, Path filePath) {
+            if (pathString.isEmpty()) {
                 throw new IllegalArgumentException("Path can't be empty");
             } else {
-                int i = p_250158_.size() - 1;
-                return this.put(p_250158_.subList(0, i), p_250158_.get(i), p_250483_);
+                int i = pathString.size() - 1;
+                return this.put(pathString.subList(0, i), pathString.get(i), filePath);
             }
         }
 
-        public FileSystem build(String p_251975_) {
-            return new LinkFileSystem(p_251975_, this.root);
+        public FileSystem build(String name) {
+            return new LinkFileSystem(name, this.root);
         }
     }
 

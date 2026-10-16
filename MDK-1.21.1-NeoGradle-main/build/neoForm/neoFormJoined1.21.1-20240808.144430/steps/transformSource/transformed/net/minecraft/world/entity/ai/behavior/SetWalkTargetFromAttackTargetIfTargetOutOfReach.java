@@ -14,11 +14,11 @@ import net.minecraft.world.entity.ai.memory.WalkTarget;
 public class SetWalkTargetFromAttackTargetIfTargetOutOfReach {
     private static final int PROJECTILE_ATTACK_RANGE_BUFFER = 1;
 
-    public static BehaviorControl<Mob> create(float p_259228_) {
-        return create(p_147908_ -> p_259228_);
+    public static BehaviorControl<Mob> create(float speedModifier) {
+        return create(p_147908_ -> speedModifier);
     }
 
-    public static BehaviorControl<Mob> create(Function<LivingEntity, Float> p_259507_) {
+    public static BehaviorControl<Mob> create(Function<LivingEntity, Float> speedModifier) {
         return BehaviorBuilder.create(
             p_258687_ -> p_258687_.group(
                         p_258687_.registered(MemoryModuleType.WALK_TARGET),
@@ -33,7 +33,7 @@ public class SetWalkTargetFromAttackTargetIfTargetOutOfReach {
                                 p_258699_.erase();
                             } else {
                                 p_258700_.set(new EntityTracker(livingentity, true));
-                                p_258699_.set(new WalkTarget(new EntityTracker(livingentity, false), p_259507_.apply(p_258695_), 0));
+                                p_258699_.set(new WalkTarget(new EntityTracker(livingentity, false), speedModifier.apply(p_258695_), 0));
                             }
 
                             return true;

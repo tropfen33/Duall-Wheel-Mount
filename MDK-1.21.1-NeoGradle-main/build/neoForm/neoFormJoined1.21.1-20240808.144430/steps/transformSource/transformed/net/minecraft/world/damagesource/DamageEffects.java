@@ -22,8 +22,8 @@ public enum DamageEffects implements StringRepresentable, net.neoforged.fml.comm
     private final java.util.function.Supplier<SoundEvent> soundSupplier;
 
     @net.neoforged.fml.common.asm.enumextension.ReservedConstructor
-    private DamageEffects(String p_270875_, SoundEvent p_270383_) {
-        this(p_270875_, () -> p_270383_);
+    private DamageEffects(String id, SoundEvent sound) {
+        this(id, () -> sound);
     }
 
     /**

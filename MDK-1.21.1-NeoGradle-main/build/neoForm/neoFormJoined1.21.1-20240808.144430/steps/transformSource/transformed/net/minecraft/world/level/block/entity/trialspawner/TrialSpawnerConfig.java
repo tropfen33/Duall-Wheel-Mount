@@ -64,12 +64,12 @@ public record TrialSpawnerConfig(
                 .apply(p_338041_, TrialSpawnerConfig::new)
     );
 
-    public int calculateTargetTotalMobs(int p_312026_) {
-        return (int)Math.floor((double)(this.totalMobs + this.totalMobsAddedPerPlayer * (float)p_312026_));
+    public int calculateTargetTotalMobs(int players) {
+        return (int)Math.floor((double)(this.totalMobs + this.totalMobsAddedPerPlayer * (float)players));
     }
 
-    public int calculateTargetSimultaneousMobs(int p_312885_) {
-        return (int)Math.floor((double)(this.simultaneousMobs + this.simultaneousMobsAddedPerPlayer * (float)p_312885_));
+    public int calculateTargetSimultaneousMobs(int players) {
+        return (int)Math.floor((double)(this.simultaneousMobs + this.simultaneousMobsAddedPerPlayer * (float)players));
     }
 
     public long ticksBetweenItemSpawners() {

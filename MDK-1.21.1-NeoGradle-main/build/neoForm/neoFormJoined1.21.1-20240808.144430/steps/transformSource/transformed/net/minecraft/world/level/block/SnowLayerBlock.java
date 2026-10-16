@@ -44,16 +44,16 @@ public class SnowLayerBlock extends Block {
         return CODEC;
     }
 
-    public SnowLayerBlock(BlockBehaviour.Properties p_56585_) {
-        super(p_56585_);
+    public SnowLayerBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(LAYERS, Integer.valueOf(1)));
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_56592_, PathComputationType p_56595_) {
-        switch (p_56595_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
+        switch (pathComputationType) {
             case LAND:
-                return p_56592_.getValue(LAYERS) < 5;
+                return state.getValue(LAYERS) < 5;
             case WATER:
                 return false;
             case AIR:
@@ -64,87 +64,95 @@ public class SnowLayerBlock extends Block {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_56620_, BlockGetter p_56621_, BlockPos p_56622_, CollisionContext p_56623_) {
-        return SHAPE_BY_LAYER[p_56620_.getValue(LAYERS)];
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SHAPE_BY_LAYER[state.getValue(LAYERS)];
     }
 
     @Override
-    protected VoxelShape getCollisionShape(BlockState p_56625_, BlockGetter p_56626_, BlockPos p_56627_, CollisionContext p_56628_) {
-        return SHAPE_BY_LAYER[p_56625_.getValue(LAYERS) - 1];
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SHAPE_BY_LAYER[state.getValue(LAYERS) - 1];
     }
 
     @Override
-    protected VoxelShape getBlockSupportShape(BlockState p_56632_, BlockGetter p_56633_, BlockPos p_56634_) {
-        return SHAPE_BY_LAYER[p_56632_.getValue(LAYERS)];
+    protected VoxelShape getBlockSupportShape(BlockState state, BlockGetter reader, BlockPos pos) {
+        return SHAPE_BY_LAYER[state.getValue(LAYERS)];
     }
 
     @Override
-    protected VoxelShape getVisualShape(BlockState p_56597_, BlockGetter p_56598_, BlockPos p_56599_, CollisionContext p_56600_) {
-        return SHAPE_BY_LAYER[p_56597_.getValue(LAYERS)];
+    protected VoxelShape getVisualShape(BlockState state, BlockGetter reader, BlockPos pos, CollisionContext context) {
+        return SHAPE_BY_LAYER[state.getValue(LAYERS)];
     }
 
     @Override
-    protected boolean useShapeForLightOcclusion(BlockState p_56630_) {
+    protected boolean useShapeForLightOcclusion(BlockState state) {
         return true;
     }
 
     @Override
-    protected float getShadeBrightness(BlockState p_222453_, BlockGetter p_222454_, BlockPos p_222455_) {
-        return p_222453_.getValue(LAYERS) == 8 ? 0.2F : 1.0F;
+    protected float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.getValue(LAYERS) == 8 ? 0.2F : 1.0F;
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_56602_, LevelReader p_56603_, BlockPos p_56604_) {
-        BlockState blockstate = p_56603_.getBlockState(p_56604_.below());
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos.below());
         if (blockstate.is(BlockTags.SNOW_LAYER_CANNOT_SURVIVE_ON)) {
             return false;
         } else {
             return blockstate.is(BlockTags.SNOW_LAYER_CAN_SURVIVE_ON)
                 ? true
-                : Block.isFaceFull(blockstate.getCollisionShape(p_56603_, p_56604_.below()), Direction.UP)
+                : Block.isFaceFull(blockstate.getCollisionShape(level, pos.below()), Direction.UP)
                     || blockstate.is(this) && blockstate.getValue(LAYERS) == 8;
         }
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_56606_, Direction p_56607_, BlockState p_56608_, LevelAccessor p_56609_, BlockPos p_56610_, BlockPos p_56611_) {
-        return !p_56606_.canSurvive(p_56609_, p_56610_)
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return !state.canSurvive(level, currentPos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_56606_, p_56607_, p_56608_, p_56609_, p_56610_, p_56611_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_222448_, ServerLevel p_222449_, BlockPos p_222450_, RandomSource p_222451_) {
-        if (p_222449_.getBrightness(LightLayer.BLOCK, p_222450_) > 11) {
-            dropResources(p_222448_, p_222449_, p_222450_);
-            p_222449_.removeBlock(p_222450_, false);
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (level.getBrightness(LightLayer.BLOCK, pos) > 11) {
+            dropResources(state, level, pos);
+            level.removeBlock(pos, false);
         }
     }
 
     @Override
-    protected boolean canBeReplaced(BlockState p_56589_, BlockPlaceContext p_56590_) {
-        int i = p_56589_.getValue(LAYERS);
-        if (!p_56590_.getItemInHand().is(this.asItem()) || i >= 8) {
+    protected boolean canBeReplaced(BlockState state, BlockPlaceContext useContext) {
+        int i = state.getValue(LAYERS);
+        if (!useContext.getItemInHand().is(this.asItem()) || i >= 8) {
             return i == 1;
         } else {
-            return p_56590_.replacingClickedOnBlock() ? p_56590_.getClickedFace() == Direction.UP : true;
+            return useContext.replacingClickedOnBlock() ? useContext.getClickedFace() == Direction.UP : true;
         }
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_56587_) {
-        BlockState blockstate = p_56587_.getLevel().getBlockState(p_56587_.getClickedPos());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockState blockstate = context.getLevel().getBlockState(context.getClickedPos());
         if (blockstate.is(this)) {
             int i = blockstate.getValue(LAYERS);
             return blockstate.setValue(LAYERS, Integer.valueOf(Math.min(8, i + 1)));
         } else {
-            return super.getStateForPlacement(p_56587_);
+            return super.getStateForPlacement(context);
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_56613_) {
-        p_56613_.add(LAYERS);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(LAYERS);
     }
 }

@@ -17,38 +17,38 @@ public class ServerBossEvent extends BossEvent {
     private final Set<ServerPlayer> unmodifiablePlayers = Collections.unmodifiableSet(this.players);
     private boolean visible = true;
 
-    public ServerBossEvent(Component p_8300_, BossEvent.BossBarColor p_8301_, BossEvent.BossBarOverlay p_8302_) {
-        super(Mth.createInsecureUUID(), p_8300_, p_8301_, p_8302_);
+    public ServerBossEvent(Component name, BossEvent.BossBarColor color, BossEvent.BossBarOverlay overlay) {
+        super(Mth.createInsecureUUID(), name, color, overlay);
     }
 
     @Override
-    public void setProgress(float p_143223_) {
-        if (p_143223_ != this.progress) {
-            super.setProgress(p_143223_);
+    public void setProgress(float progress) {
+        if (progress != this.progress) {
+            super.setProgress(progress);
             this.broadcast(ClientboundBossEventPacket::createUpdateProgressPacket);
         }
     }
 
     @Override
-    public void setColor(BossEvent.BossBarColor p_8307_) {
-        if (p_8307_ != this.color) {
-            super.setColor(p_8307_);
+    public void setColor(BossEvent.BossBarColor color) {
+        if (color != this.color) {
+            super.setColor(color);
             this.broadcast(ClientboundBossEventPacket::createUpdateStylePacket);
         }
     }
 
     @Override
-    public void setOverlay(BossEvent.BossBarOverlay p_8309_) {
-        if (p_8309_ != this.overlay) {
-            super.setOverlay(p_8309_);
+    public void setOverlay(BossEvent.BossBarOverlay overlay) {
+        if (overlay != this.overlay) {
+            super.setOverlay(overlay);
             this.broadcast(ClientboundBossEventPacket::createUpdateStylePacket);
         }
     }
 
     @Override
-    public BossEvent setDarkenScreen(boolean p_8315_) {
-        if (p_8315_ != this.darkenScreen) {
-            super.setDarkenScreen(p_8315_);
+    public BossEvent setDarkenScreen(boolean darkenSky) {
+        if (darkenSky != this.darkenScreen) {
+            super.setDarkenScreen(darkenSky);
             this.broadcast(ClientboundBossEventPacket::createUpdatePropertiesPacket);
         }
 
@@ -56,9 +56,9 @@ public class ServerBossEvent extends BossEvent {
     }
 
     @Override
-    public BossEvent setPlayBossMusic(boolean p_8318_) {
-        if (p_8318_ != this.playBossMusic) {
-            super.setPlayBossMusic(p_8318_);
+    public BossEvent setPlayBossMusic(boolean playEndBossMusic) {
+        if (playEndBossMusic != this.playBossMusic) {
+            super.setPlayBossMusic(playEndBossMusic);
             this.broadcast(ClientboundBossEventPacket::createUpdatePropertiesPacket);
         }
 
@@ -66,9 +66,9 @@ public class ServerBossEvent extends BossEvent {
     }
 
     @Override
-    public BossEvent setCreateWorldFog(boolean p_8320_) {
-        if (p_8320_ != this.createWorldFog) {
-            super.setCreateWorldFog(p_8320_);
+    public BossEvent setCreateWorldFog(boolean createFog) {
+        if (createFog != this.createWorldFog) {
+            super.setCreateWorldFog(createFog);
             this.broadcast(ClientboundBossEventPacket::createUpdatePropertiesPacket);
         }
 
@@ -76,16 +76,16 @@ public class ServerBossEvent extends BossEvent {
     }
 
     @Override
-    public void setName(Component p_8311_) {
-        if (!Objects.equal(p_8311_, this.name)) {
-            super.setName(p_8311_);
+    public void setName(Component name) {
+        if (!Objects.equal(name, this.name)) {
+            super.setName(name);
             this.broadcast(ClientboundBossEventPacket::createUpdateNamePacket);
         }
     }
 
-    private void broadcast(Function<BossEvent, ClientboundBossEventPacket> p_143225_) {
+    private void broadcast(Function<BossEvent, ClientboundBossEventPacket> packetGetter) {
         if (this.visible) {
-            ClientboundBossEventPacket clientboundbosseventpacket = p_143225_.apply(this);
+            ClientboundBossEventPacket clientboundbosseventpacket = packetGetter.apply(this);
 
             for (ServerPlayer serverplayer : this.players) {
                 serverplayer.connection.send(clientboundbosseventpacket);
@@ -93,15 +93,21 @@ public class ServerBossEvent extends BossEvent {
         }
     }
 
-    public void addPlayer(ServerPlayer p_8305_) {
-        if (this.players.add(p_8305_) && this.visible) {
-            p_8305_.connection.send(ClientboundBossEventPacket.createAddPacket(this));
+    /**
+     * Makes the boss visible to the given player.
+     */
+    public void addPlayer(ServerPlayer player) {
+        if (this.players.add(player) && this.visible) {
+            player.connection.send(ClientboundBossEventPacket.createAddPacket(this));
         }
     }
 
-    public void removePlayer(ServerPlayer p_8316_) {
-        if (this.players.remove(p_8316_) && this.visible) {
-            p_8316_.connection.send(ClientboundBossEventPacket.createRemovePacket(this.getId()));
+    /**
+     * Makes the boss non-visible to the given player.
+     */
+    public void removePlayer(ServerPlayer player) {
+        if (this.players.remove(player) && this.visible) {
+            player.connection.send(ClientboundBossEventPacket.createRemovePacket(this.getId()));
         }
     }
 
@@ -117,13 +123,13 @@ public class ServerBossEvent extends BossEvent {
         return this.visible;
     }
 
-    public void setVisible(boolean p_8322_) {
-        if (p_8322_ != this.visible) {
-            this.visible = p_8322_;
+    public void setVisible(boolean visible) {
+        if (visible != this.visible) {
+            this.visible = visible;
 
             for (ServerPlayer serverplayer : this.players) {
                 serverplayer.connection
-                    .send(p_8322_ ? ClientboundBossEventPacket.createAddPacket(this) : ClientboundBossEventPacket.createRemovePacket(this.getId()));
+                    .send(visible ? ClientboundBossEventPacket.createAddPacket(this) : ClientboundBossEventPacket.createRemovePacket(this.getId()));
             }
         }
     }

@@ -18,17 +18,17 @@ public class NetherSproutsBlock extends BushBlock {
         return CODEC;
     }
 
-    public NetherSproutsBlock(BlockBehaviour.Properties p_54952_) {
-        super(p_54952_);
+    public NetherSproutsBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_54955_, BlockGetter p_54956_, BlockPos p_54957_, CollisionContext p_54958_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    protected boolean mayPlaceOn(BlockState p_54960_, BlockGetter p_54961_, BlockPos p_54962_) {
-        return p_54960_.is(BlockTags.NYLIUM) || p_54960_.is(Blocks.SOUL_SOIL) || super.mayPlaceOn(p_54960_, p_54961_, p_54962_);
+    protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.is(BlockTags.NYLIUM) || state.is(Blocks.SOUL_SOIL) || super.mayPlaceOn(state, level, pos);
     }
 }

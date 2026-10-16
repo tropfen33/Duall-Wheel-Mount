@@ -18,50 +18,50 @@ public class LeaveVineDecorator extends TreeDecorator {
         return TreeDecoratorType.LEAVE_VINE;
     }
 
-    public LeaveVineDecorator(float p_226031_) {
-        this.probability = p_226031_;
+    public LeaveVineDecorator(float probability) {
+        this.probability = probability;
     }
 
     @Override
-    public void place(TreeDecorator.Context p_226039_) {
-        RandomSource randomsource = p_226039_.random();
-        p_226039_.leaves().forEach(p_226035_ -> {
+    public void place(TreeDecorator.Context context) {
+        RandomSource randomsource = context.random();
+        context.leaves().forEach(p_226035_ -> {
             if (randomsource.nextFloat() < this.probability) {
                 BlockPos blockpos = p_226035_.west();
-                if (p_226039_.isAir(blockpos)) {
-                    addHangingVine(blockpos, VineBlock.EAST, p_226039_);
+                if (context.isAir(blockpos)) {
+                    addHangingVine(blockpos, VineBlock.EAST, context);
                 }
             }
 
             if (randomsource.nextFloat() < this.probability) {
                 BlockPos blockpos1 = p_226035_.east();
-                if (p_226039_.isAir(blockpos1)) {
-                    addHangingVine(blockpos1, VineBlock.WEST, p_226039_);
+                if (context.isAir(blockpos1)) {
+                    addHangingVine(blockpos1, VineBlock.WEST, context);
                 }
             }
 
             if (randomsource.nextFloat() < this.probability) {
                 BlockPos blockpos2 = p_226035_.north();
-                if (p_226039_.isAir(blockpos2)) {
-                    addHangingVine(blockpos2, VineBlock.SOUTH, p_226039_);
+                if (context.isAir(blockpos2)) {
+                    addHangingVine(blockpos2, VineBlock.SOUTH, context);
                 }
             }
 
             if (randomsource.nextFloat() < this.probability) {
                 BlockPos blockpos3 = p_226035_.south();
-                if (p_226039_.isAir(blockpos3)) {
-                    addHangingVine(blockpos3, VineBlock.NORTH, p_226039_);
+                if (context.isAir(blockpos3)) {
+                    addHangingVine(blockpos3, VineBlock.NORTH, context);
                 }
             }
         });
     }
 
-    private static void addHangingVine(BlockPos p_226041_, BooleanProperty p_226042_, TreeDecorator.Context p_226043_) {
-        p_226043_.placeVine(p_226041_, p_226042_);
+    private static void addHangingVine(BlockPos pos, BooleanProperty sideProperty, TreeDecorator.Context context) {
+        context.placeVine(pos, sideProperty);
         int i = 4;
 
-        for (BlockPos blockpos = p_226041_.below(); p_226043_.isAir(blockpos) && i > 0; i--) {
-            p_226043_.placeVine(blockpos, p_226042_);
+        for (BlockPos blockpos = pos.below(); context.isAir(blockpos) && i > 0; i--) {
+            context.placeVine(blockpos, sideProperty);
             blockpos = blockpos.below();
         }
     }

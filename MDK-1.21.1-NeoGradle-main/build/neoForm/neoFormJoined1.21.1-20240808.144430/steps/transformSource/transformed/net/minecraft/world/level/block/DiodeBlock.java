@@ -25,177 +25,214 @@ public abstract class DiodeBlock extends HorizontalDirectionalBlock {
     protected static final VoxelShape SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 2.0, 16.0);
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
 
-    protected DiodeBlock(BlockBehaviour.Properties p_52499_) {
-        super(p_52499_);
+    protected DiodeBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
     protected abstract MapCodec<? extends DiodeBlock> codec();
 
     @Override
-    protected VoxelShape getShape(BlockState p_52556_, BlockGetter p_52557_, BlockPos p_52558_, CollisionContext p_52559_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_52538_, LevelReader p_52539_, BlockPos p_52540_) {
-        BlockPos blockpos = p_52540_.below();
-        return this.canSurviveOn(p_52539_, blockpos, p_52539_.getBlockState(blockpos));
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        BlockPos blockpos = pos.below();
+        return this.canSurviveOn(level, blockpos, level.getBlockState(blockpos));
     }
 
-    protected boolean canSurviveOn(LevelReader p_301314_, BlockPos p_301010_, BlockState p_301320_) {
-        return p_301320_.isFaceSturdy(p_301314_, p_301010_, Direction.UP, SupportType.RIGID);
+    protected boolean canSurviveOn(LevelReader level, BlockPos pos, BlockState state) {
+        return state.isFaceSturdy(level, pos, Direction.UP, SupportType.RIGID);
     }
 
     @Override
-    protected void tick(BlockState p_221065_, ServerLevel p_221066_, BlockPos p_221067_, RandomSource p_221068_) {
-        if (!this.isLocked(p_221066_, p_221067_, p_221065_)) {
-            boolean flag = p_221065_.getValue(POWERED);
-            boolean flag1 = this.shouldTurnOn(p_221066_, p_221067_, p_221065_);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!this.isLocked(level, pos, state)) {
+            boolean flag = state.getValue(POWERED);
+            boolean flag1 = this.shouldTurnOn(level, pos, state);
             if (flag && !flag1) {
-                p_221066_.setBlock(p_221067_, p_221065_.setValue(POWERED, Boolean.valueOf(false)), 2);
+                level.setBlock(pos, state.setValue(POWERED, Boolean.valueOf(false)), 2);
             } else if (!flag) {
-                p_221066_.setBlock(p_221067_, p_221065_.setValue(POWERED, Boolean.valueOf(true)), 2);
+                level.setBlock(pos, state.setValue(POWERED, Boolean.valueOf(true)), 2);
                 if (!flag1) {
-                    p_221066_.scheduleTick(p_221067_, this, this.getDelay(p_221065_), TickPriority.VERY_HIGH);
+                    level.scheduleTick(pos, this, this.getDelay(state), TickPriority.VERY_HIGH);
                 }
             }
         }
     }
 
+    /**
+     * Returns the direct signal this block emits in the given direction.
+     *
+     * <p>
+     * NOTE: directions in redstone signal related methods are backwards, so this method
+     * checks for the signal emitted in the <i>opposite</i> direction of the one given.
+     *
+     */
     @Override
-    protected int getDirectSignal(BlockState p_52561_, BlockGetter p_52562_, BlockPos p_52563_, Direction p_52564_) {
-        return p_52561_.getSignal(p_52562_, p_52563_, p_52564_);
+    protected int getDirectSignal(BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side) {
+        return blockState.getSignal(blockAccess, pos, side);
     }
 
+    /**
+     * Returns the signal this block emits in the given direction.
+     *
+     * <p>
+     * NOTE: directions in redstone signal related methods are backwards, so this method
+     * checks for the signal emitted in the <i>opposite</i> direction of the one given.
+     *
+     */
     @Override
-    protected int getSignal(BlockState p_52520_, BlockGetter p_52521_, BlockPos p_52522_, Direction p_52523_) {
-        if (!p_52520_.getValue(POWERED)) {
+    protected int getSignal(BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side) {
+        if (!blockState.getValue(POWERED)) {
             return 0;
         } else {
-            return p_52520_.getValue(FACING) == p_52523_ ? this.getOutputSignal(p_52521_, p_52522_, p_52520_) : 0;
+            return blockState.getValue(FACING) == side ? this.getOutputSignal(blockAccess, pos, blockState) : 0;
         }
     }
 
     @Override
-    protected void neighborChanged(BlockState p_52525_, Level p_52526_, BlockPos p_52527_, Block p_52528_, BlockPos p_52529_, boolean p_52530_) {
-        if (p_52525_.canSurvive(p_52526_, p_52527_)) {
-            this.checkTickOnNeighbor(p_52526_, p_52527_, p_52525_);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (state.canSurvive(level, pos)) {
+            this.checkTickOnNeighbor(level, pos, state);
         } else {
-            BlockEntity blockentity = p_52525_.hasBlockEntity() ? p_52526_.getBlockEntity(p_52527_) : null;
-            dropResources(p_52525_, p_52526_, p_52527_, blockentity);
-            p_52526_.removeBlock(p_52527_, false);
+            BlockEntity blockentity = state.hasBlockEntity() ? level.getBlockEntity(pos) : null;
+            dropResources(state, level, pos, blockentity);
+            level.removeBlock(pos, false);
 
             for (Direction direction : Direction.values()) {
-                p_52526_.updateNeighborsAt(p_52527_.relative(direction), this);
+                level.updateNeighborsAt(pos.relative(direction), this);
             }
         }
     }
 
-    protected void checkTickOnNeighbor(Level p_52577_, BlockPos p_52578_, BlockState p_52579_) {
-        if (!this.isLocked(p_52577_, p_52578_, p_52579_)) {
-            boolean flag = p_52579_.getValue(POWERED);
-            boolean flag1 = this.shouldTurnOn(p_52577_, p_52578_, p_52579_);
-            if (flag != flag1 && !p_52577_.getBlockTicks().willTickThisTick(p_52578_, this)) {
+    /**
+     * Check the output signal of this diode and schedule a new block tick if it should change.
+     */
+    protected void checkTickOnNeighbor(Level level, BlockPos pos, BlockState state) {
+        if (!this.isLocked(level, pos, state)) {
+            boolean flag = state.getValue(POWERED);
+            boolean flag1 = this.shouldTurnOn(level, pos, state);
+            if (flag != flag1 && !level.getBlockTicks().willTickThisTick(pos, this)) {
                 TickPriority tickpriority = TickPriority.HIGH;
-                if (this.shouldPrioritize(p_52577_, p_52578_, p_52579_)) {
+                if (this.shouldPrioritize(level, pos, state)) {
                     tickpriority = TickPriority.EXTREMELY_HIGH;
                 } else if (flag) {
                     tickpriority = TickPriority.VERY_HIGH;
                 }
 
-                p_52577_.scheduleTick(p_52578_, this, this.getDelay(p_52579_), tickpriority);
+                level.scheduleTick(pos, this, this.getDelay(state), tickpriority);
             }
         }
     }
 
-    public boolean isLocked(LevelReader p_52511_, BlockPos p_52512_, BlockState p_52513_) {
+    /**
+     * Check if neighboring blocks are locking this diode.
+     */
+    public boolean isLocked(LevelReader level, BlockPos pos, BlockState state) {
         return false;
     }
 
-    protected boolean shouldTurnOn(Level p_52502_, BlockPos p_52503_, BlockState p_52504_) {
-        return this.getInputSignal(p_52502_, p_52503_, p_52504_) > 0;
+    protected boolean shouldTurnOn(Level level, BlockPos pos, BlockState state) {
+        return this.getInputSignal(level, pos, state) > 0;
     }
 
-    protected int getInputSignal(Level p_52544_, BlockPos p_52545_, BlockState p_52546_) {
-        Direction direction = p_52546_.getValue(FACING);
-        BlockPos blockpos = p_52545_.relative(direction);
-        int i = p_52544_.getSignal(blockpos, direction);
+    protected int getInputSignal(Level level, BlockPos pos, BlockState state) {
+        Direction direction = state.getValue(FACING);
+        BlockPos blockpos = pos.relative(direction);
+        int i = level.getSignal(blockpos, direction);
         if (i >= 15) {
             return i;
         } else {
-            BlockState blockstate = p_52544_.getBlockState(blockpos);
+            BlockState blockstate = level.getBlockState(blockpos);
             return Math.max(i, blockstate.is(Blocks.REDSTONE_WIRE) ? blockstate.getValue(RedStoneWireBlock.POWER) : 0);
         }
     }
 
-    protected int getAlternateSignal(SignalGetter p_277358_, BlockPos p_277763_, BlockState p_277604_) {
-        Direction direction = p_277604_.getValue(FACING);
+    protected int getAlternateSignal(SignalGetter level, BlockPos pos, BlockState state) {
+        Direction direction = state.getValue(FACING);
         Direction direction1 = direction.getClockWise();
         Direction direction2 = direction.getCounterClockWise();
         boolean flag = this.sideInputDiodesOnly();
         return Math.max(
-            p_277358_.getControlInputSignal(p_277763_.relative(direction1), direction1, flag),
-            p_277358_.getControlInputSignal(p_277763_.relative(direction2), direction2, flag)
+            level.getControlInputSignal(pos.relative(direction1), direction1, flag),
+            level.getControlInputSignal(pos.relative(direction2), direction2, flag)
         );
     }
 
+    /**
+     * Returns whether this block is capable of emitting redstone signals.
+     *
+     */
     @Override
-    protected boolean isSignalSource(BlockState p_52572_) {
+    protected boolean isSignalSource(BlockState state) {
         return true;
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_52501_) {
-        return this.defaultBlockState().setValue(FACING, p_52501_.getHorizontalDirection().getOpposite());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
+    /**
+     * Called by BlockItem after this block has been placed.
+     */
     @Override
-    public void setPlacedBy(Level p_52506_, BlockPos p_52507_, BlockState p_52508_, LivingEntity p_52509_, ItemStack p_52510_) {
-        if (this.shouldTurnOn(p_52506_, p_52507_, p_52508_)) {
-            p_52506_.scheduleTick(p_52507_, this, 1);
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
+        if (this.shouldTurnOn(level, pos, state)) {
+            level.scheduleTick(pos, this, 1);
         }
     }
 
     @Override
-    protected void onPlace(BlockState p_52566_, Level p_52567_, BlockPos p_52568_, BlockState p_52569_, boolean p_52570_) {
-        this.updateNeighborsInFront(p_52567_, p_52568_, p_52566_);
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        this.updateNeighborsInFront(level, pos, state);
     }
 
     @Override
-    protected void onRemove(BlockState p_52532_, Level p_52533_, BlockPos p_52534_, BlockState p_52535_, boolean p_52536_) {
-        if (!p_52536_ && !p_52532_.is(p_52535_.getBlock())) {
-            super.onRemove(p_52532_, p_52533_, p_52534_, p_52535_, p_52536_);
-            this.updateNeighborsInFront(p_52533_, p_52534_, p_52532_);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!isMoving && !state.is(newState.getBlock())) {
+            super.onRemove(state, level, pos, newState, isMoving);
+            this.updateNeighborsInFront(level, pos, state);
         }
     }
 
-    protected void updateNeighborsInFront(Level p_52581_, BlockPos p_52582_, BlockState p_52583_) {
-        Direction direction = p_52583_.getValue(FACING);
-        BlockPos blockpos = p_52582_.relative(direction.getOpposite());
-        if (net.neoforged.neoforge.event.EventHooks.onNeighborNotify(p_52581_, p_52582_, p_52581_.getBlockState(p_52582_), java.util.EnumSet.of(direction.getOpposite()), false).isCanceled())
+    protected void updateNeighborsInFront(Level level, BlockPos pos, BlockState state) {
+        Direction direction = state.getValue(FACING);
+        BlockPos blockpos = pos.relative(direction.getOpposite());
+        if (net.neoforged.neoforge.event.EventHooks.onNeighborNotify(level, pos, level.getBlockState(pos), java.util.EnumSet.of(direction.getOpposite()), false).isCanceled())
             return;
-        p_52581_.neighborChanged(blockpos, this, p_52582_);
-        p_52581_.updateNeighborsAtExceptFromFacing(blockpos, this, direction);
+        level.neighborChanged(blockpos, this, pos);
+        level.updateNeighborsAtExceptFromFacing(blockpos, this, direction);
     }
 
     protected boolean sideInputDiodesOnly() {
         return false;
     }
 
-    protected int getOutputSignal(BlockGetter p_52541_, BlockPos p_52542_, BlockState p_52543_) {
+    protected int getOutputSignal(BlockGetter level, BlockPos pos, BlockState state) {
         return 15;
     }
 
-    public static boolean isDiode(BlockState p_52587_) {
-        return p_52587_.getBlock() instanceof DiodeBlock;
+    public static boolean isDiode(BlockState state) {
+        return state.getBlock() instanceof DiodeBlock;
     }
 
-    public boolean shouldPrioritize(BlockGetter p_52574_, BlockPos p_52575_, BlockState p_52576_) {
-        Direction direction = p_52576_.getValue(FACING).getOpposite();
-        BlockState blockstate = p_52574_.getBlockState(p_52575_.relative(direction));
+    /**
+     * Check if this diode should have a higher tick priority than default.
+     *
+     * <p>
+     * Both repeaters and comparators use this method to increase their tick priorities
+     * when facing other diodes. This makes certain monostable circuits based on the repeater locking
+     * mechanic more reliable.
+     */
+    public boolean shouldPrioritize(BlockGetter level, BlockPos pos, BlockState state) {
+        Direction direction = state.getValue(FACING).getOpposite();
+        BlockState blockstate = level.getBlockState(pos.relative(direction));
         return isDiode(blockstate) && blockstate.getValue(FACING) != direction;
     }
 
-    protected abstract int getDelay(BlockState p_52584_);
+    protected abstract int getDelay(BlockState state);
 }

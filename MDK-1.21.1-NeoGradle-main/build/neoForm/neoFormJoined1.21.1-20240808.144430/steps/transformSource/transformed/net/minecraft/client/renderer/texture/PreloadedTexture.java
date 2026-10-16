@@ -15,19 +15,19 @@ public class PreloadedTexture extends SimpleTexture {
     @Nullable
     private CompletableFuture<SimpleTexture.TextureImage> future;
 
-    public PreloadedTexture(ResourceManager p_118102_, ResourceLocation p_118103_, Executor p_118104_) {
-        super(p_118103_);
-        this.future = CompletableFuture.supplyAsync(() -> SimpleTexture.TextureImage.load(p_118102_, p_118103_), p_118104_);
+    public PreloadedTexture(ResourceManager resourceManager, ResourceLocation location, Executor backgroundExecutor) {
+        super(location);
+        this.future = CompletableFuture.supplyAsync(() -> SimpleTexture.TextureImage.load(resourceManager, location), backgroundExecutor);
     }
 
     @Override
-    protected SimpleTexture.TextureImage getTextureImage(ResourceManager p_118126_) {
+    protected SimpleTexture.TextureImage getTextureImage(ResourceManager resourceManager) {
         if (this.future != null) {
             SimpleTexture.TextureImage simpletexture$textureimage = this.future.join();
             this.future = null;
             return simpletexture$textureimage;
         } else {
-            return SimpleTexture.TextureImage.load(p_118126_, this.location);
+            return SimpleTexture.TextureImage.load(resourceManager, this.location);
         }
     }
 
@@ -36,12 +36,12 @@ public class PreloadedTexture extends SimpleTexture {
     }
 
     @Override
-    public void reset(TextureManager p_118114_, ResourceManager p_118115_, ResourceLocation p_118116_, Executor p_118117_) {
-        this.future = CompletableFuture.supplyAsync(() -> SimpleTexture.TextureImage.load(p_118115_, this.location), Util.backgroundExecutor());
-        this.future.thenRunAsync(() -> p_118114_.register(this.location, this), executor(p_118117_));
+    public void reset(TextureManager textureManager, ResourceManager resourceManager, ResourceLocation resourceLocation, Executor p_executor) {
+        this.future = CompletableFuture.supplyAsync(() -> SimpleTexture.TextureImage.load(resourceManager, this.location), Util.backgroundExecutor());
+        this.future.thenRunAsync(() -> textureManager.register(this.location, this), executor(p_executor));
     }
 
-    private static Executor executor(Executor p_118121_) {
-        return p_118124_ -> p_118121_.execute(() -> RenderSystem.recordRenderCall(p_118124_::run));
+    private static Executor executor(Executor executor) {
+        return p_118124_ -> executor.execute(() -> RenderSystem.recordRenderCall(p_118124_::run));
     }
 }

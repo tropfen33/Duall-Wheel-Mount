@@ -42,23 +42,23 @@ public record VibrationInfo(
     }
 
     @Nullable
-    private static UUID getProjectileOwner(@Nullable Entity p_251531_) {
-        if (p_251531_ instanceof Projectile projectile && projectile.getOwner() != null) {
+    private static UUID getProjectileOwner(@Nullable Entity entity) {
+        if (entity instanceof Projectile projectile && projectile.getOwner() != null) {
             return projectile.getOwner().getUUID();
         }
 
         return null;
     }
 
-    public Optional<Entity> getEntity(ServerLevel p_249184_) {
-        return Optional.ofNullable(this.entity).or(() -> Optional.ofNullable(this.uuid).map(p_249184_::getEntity));
+    public Optional<Entity> getEntity(ServerLevel level) {
+        return Optional.ofNullable(this.entity).or(() -> Optional.ofNullable(this.uuid).map(level::getEntity));
     }
 
-    public Optional<Entity> getProjectileOwner(ServerLevel p_249217_) {
-        return this.getEntity(p_249217_)
+    public Optional<Entity> getProjectileOwner(ServerLevel level) {
+        return this.getEntity(level)
             .filter(p_249829_ -> p_249829_ instanceof Projectile)
             .map(p_249388_ -> (Projectile)p_249388_)
             .map(Projectile::getOwner)
-            .or(() -> Optional.ofNullable(this.projectileOwnerUuid).map(p_249217_::getEntity));
+            .or(() -> Optional.ofNullable(this.projectileOwnerUuid).map(level::getEntity));
     }
 }

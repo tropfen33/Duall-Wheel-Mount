@@ -17,17 +17,20 @@ public class AirBlock extends Block {
         return CODEC;
     }
 
-    public AirBlock(BlockBehaviour.Properties p_48756_) {
-        super(p_48756_);
+    public AirBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_48758_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.INVISIBLE;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_48760_, BlockGetter p_48761_, BlockPos p_48762_, CollisionContext p_48763_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return Shapes.empty();
     }
 }

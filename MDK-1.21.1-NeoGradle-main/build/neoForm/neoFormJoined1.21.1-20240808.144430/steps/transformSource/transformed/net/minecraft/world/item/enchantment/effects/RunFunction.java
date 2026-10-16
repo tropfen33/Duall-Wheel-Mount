@@ -23,18 +23,18 @@ public record RunFunction(ResourceLocation function) implements EnchantmentEntit
     );
 
     @Override
-    public void apply(ServerLevel p_346152_, int p_344788_, EnchantedItemInUse p_344801_, Entity p_346210_, Vec3 p_345413_) {
-        MinecraftServer minecraftserver = p_346152_.getServer();
+    public void apply(ServerLevel level, int enchantmentLevel, EnchantedItemInUse item, Entity entity, Vec3 origin) {
+        MinecraftServer minecraftserver = level.getServer();
         ServerFunctionManager serverfunctionmanager = minecraftserver.getFunctions();
         Optional<CommandFunction<CommandSourceStack>> optional = serverfunctionmanager.get(this.function);
         if (optional.isPresent()) {
             CommandSourceStack commandsourcestack = minecraftserver.createCommandSourceStack()
                 .withPermission(2)
                 .withSuppressedOutput()
-                .withEntity(p_346210_)
-                .withLevel(p_346152_)
-                .withPosition(p_345413_)
-                .withRotation(p_346210_.getRotationVector());
+                .withEntity(entity)
+                .withLevel(level)
+                .withPosition(origin)
+                .withRotation(entity.getRotationVector());
             serverfunctionmanager.execute(optional.get(), commandsourcestack);
         } else {
             LOGGER.error("Enchantment run_function effect failed for non-existent function {}", this.function);

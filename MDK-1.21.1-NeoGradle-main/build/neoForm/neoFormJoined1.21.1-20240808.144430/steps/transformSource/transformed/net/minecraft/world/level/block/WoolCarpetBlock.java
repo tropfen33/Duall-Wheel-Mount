@@ -23,9 +23,9 @@ public class WoolCarpetBlock extends CarpetBlock implements Equipable {
         return CODEC;
     }
 
-    public WoolCarpetBlock(DyeColor p_58291_, BlockBehaviour.Properties p_58292_) {
-        super(p_58292_);
-        this.color = p_58291_;
+    public WoolCarpetBlock(DyeColor color, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.color = color;
     }
 
     public DyeColor getColor() {

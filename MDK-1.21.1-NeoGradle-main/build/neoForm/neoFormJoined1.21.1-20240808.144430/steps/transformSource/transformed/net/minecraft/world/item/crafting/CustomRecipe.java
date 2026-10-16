@@ -6,8 +6,8 @@ import net.minecraft.world.item.ItemStack;
 public abstract class CustomRecipe implements CraftingRecipe {
     private final CraftingBookCategory category;
 
-    public CustomRecipe(CraftingBookCategory p_249010_) {
-        this.category = p_249010_;
+    public CustomRecipe(CraftingBookCategory category) {
+        this.category = category;
     }
 
     @Override
@@ -16,7 +16,7 @@ public abstract class CustomRecipe implements CraftingRecipe {
     }
 
     @Override
-    public ItemStack getResultItem(HolderLookup.Provider p_336187_) {
+    public ItemStack getResultItem(HolderLookup.Provider registries) {
         return ItemStack.EMPTY;
     }
 

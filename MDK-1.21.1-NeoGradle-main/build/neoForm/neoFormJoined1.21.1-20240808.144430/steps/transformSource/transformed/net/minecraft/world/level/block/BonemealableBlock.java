@@ -8,16 +8,16 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.state.BlockState;
 
 public interface BonemealableBlock {
-    boolean isValidBonemealTarget(LevelReader p_256559_, BlockPos p_50898_, BlockState p_50899_);
+    boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state);
 
-    boolean isBonemealSuccess(Level p_220878_, RandomSource p_220879_, BlockPos p_220880_, BlockState p_220881_);
+    boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state);
 
-    void performBonemeal(ServerLevel p_220874_, RandomSource p_220875_, BlockPos p_220876_, BlockState p_220877_);
+    void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state);
 
-    default BlockPos getParticlePos(BlockPos p_316301_) {
+    default BlockPos getParticlePos(BlockPos pos) {
         return switch (this.getType()) {
-            case NEIGHBOR_SPREADER -> p_316301_.above();
-            case GROWER -> p_316301_;
+            case NEIGHBOR_SPREADER -> pos.above();
+            case GROWER -> pos;
         };
     }
 

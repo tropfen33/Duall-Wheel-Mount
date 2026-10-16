@@ -28,23 +28,23 @@ public class RegistriesDatapackGenerator implements DataProvider {
     private final java.util.Map<ResourceKey<?>, java.util.List<net.neoforged.neoforge.common.conditions.ICondition>> conditions;
 
     @Deprecated
-    public RegistriesDatapackGenerator(PackOutput p_256643_, CompletableFuture<HolderLookup.Provider> p_255780_) {
-        this(p_256643_, p_255780_, null, java.util.Map.of());
+    public RegistriesDatapackGenerator(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
+        this(output, registries, null, java.util.Map.of());
     }
 
-    public RegistriesDatapackGenerator(PackOutput p_256643_, CompletableFuture<HolderLookup.Provider> p_255780_, @org.jetbrains.annotations.Nullable java.util.Set<String> modIds) {
-        this(p_256643_, p_255780_, modIds, java.util.Map.of());
+    public RegistriesDatapackGenerator(PackOutput output, CompletableFuture<HolderLookup.Provider> registries, @org.jetbrains.annotations.Nullable java.util.Set<String> modIds) {
+        this(output, registries, modIds, java.util.Map.of());
     }
 
-    public RegistriesDatapackGenerator(PackOutput p_256643_, CompletableFuture<HolderLookup.Provider> p_255780_, @org.jetbrains.annotations.Nullable java.util.Set<String> modIds, java.util.Map<ResourceKey<?>, java.util.List<net.neoforged.neoforge.common.conditions.ICondition>> conditions) {
+    public RegistriesDatapackGenerator(PackOutput output, CompletableFuture<HolderLookup.Provider> registries, @org.jetbrains.annotations.Nullable java.util.Set<String> modIds, java.util.Map<ResourceKey<?>, java.util.List<net.neoforged.neoforge.common.conditions.ICondition>> conditions) {
         this.namespacePredicate = modIds == null ? namespace -> true : modIds::contains;
-        this.registries = p_255780_;
-        this.output = p_256643_;
+        this.registries = registries;
+        this.output = output;
         this.conditions = conditions;
     }
 
     @Override
-    public CompletableFuture<?> run(CachedOutput p_255785_) {
+    public CompletableFuture<?> run(CachedOutput output) {
         return this.registries
             .thenCompose(
                 p_326736_ -> {
@@ -52,7 +52,7 @@ public class RegistriesDatapackGenerator implements DataProvider {
                     return CompletableFuture.allOf(
                         net.neoforged.neoforge.registries.DataPackRegistriesHooks.getDataPackRegistriesWithDimensions()
                             .flatMap(
-                                p_256552_ -> this.dumpRegistryCap(p_255785_, p_326736_, dynamicops, (RegistryDataLoader.RegistryData<?>)p_256552_).stream()
+                                p_256552_ -> this.dumpRegistryCap(output, p_326736_, dynamicops, (RegistryDataLoader.RegistryData<?>)p_256552_).stream()
                             )
                             .toArray(CompletableFuture[]::new)
                     );
@@ -61,11 +61,11 @@ public class RegistriesDatapackGenerator implements DataProvider {
     }
 
     private <T> Optional<CompletableFuture<?>> dumpRegistryCap(
-        CachedOutput p_256502_, HolderLookup.Provider p_256492_, DynamicOps<JsonElement> p_256000_, RegistryDataLoader.RegistryData<T> p_256449_
+        CachedOutput output, HolderLookup.Provider registries, DynamicOps<JsonElement> ops, RegistryDataLoader.RegistryData<T> registryData
     ) {
-        ResourceKey<? extends Registry<T>> resourcekey = p_256449_.key();
-        var conditionalCodec = net.neoforged.neoforge.common.conditions.ConditionalOps.createConditionalCodecWithConditions(p_256449_.elementCodec());
-        return p_256492_.lookup(resourcekey)
+        ResourceKey<? extends Registry<T>> resourcekey = registryData.key();
+        var conditionalCodec = net.neoforged.neoforge.common.conditions.ConditionalOps.createConditionalCodecWithConditions(registryData.elementCodec());
+        return registries.lookup(resourcekey)
             .map(
                 p_349921_ -> {
                     PackOutput.PathProvider packoutput$pathprovider = this.output.createRegistryElementsPathProvider(resourcekey);
@@ -75,8 +75,8 @@ public class RegistriesDatapackGenerator implements DataProvider {
                             .map(
                                 p_256105_ -> dumpValue(
                                         packoutput$pathprovider.json(p_256105_.key().location()),
-                                        p_256502_,
-                                        p_256000_,
+                                        output,
+                                        ops,
                                         conditionalCodec,
                                         Optional.of(new net.neoforged.neoforge.common.conditions.WithConditions<>(conditions.getOrDefault(p_256105_.key(), java.util.List.of()), p_256105_.value()))
                                     )

@@ -35,29 +35,32 @@ public class BlockItem extends Item {
     @Deprecated
     private final Block block;
 
-    public BlockItem(Block p_40565_, Item.Properties p_40566_) {
-        super(p_40566_);
-        this.block = p_40565_;
+    public BlockItem(Block block, Item.Properties properties) {
+        super(properties);
+        this.block = block;
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_40581_) {
-        InteractionResult interactionresult = this.place(new BlockPlaceContext(p_40581_));
-        if (!interactionresult.consumesAction() && p_40581_.getItemInHand().has(DataComponents.FOOD)) {
-            InteractionResult interactionresult1 = super.use(p_40581_.getLevel(), p_40581_.getPlayer(), p_40581_.getHand()).getResult();
+    public InteractionResult useOn(UseOnContext context) {
+        InteractionResult interactionresult = this.place(new BlockPlaceContext(context));
+        if (!interactionresult.consumesAction() && context.getItemInHand().has(DataComponents.FOOD)) {
+            InteractionResult interactionresult1 = super.use(context.getLevel(), context.getPlayer(), context.getHand()).getResult();
             return interactionresult1 == InteractionResult.CONSUME ? InteractionResult.CONSUME_PARTIAL : interactionresult1;
         } else {
             return interactionresult;
         }
     }
 
-    public InteractionResult place(BlockPlaceContext p_40577_) {
-        if (!this.getBlock().isEnabled(p_40577_.getLevel().enabledFeatures())) {
+    public InteractionResult place(BlockPlaceContext context) {
+        if (!this.getBlock().isEnabled(context.getLevel().enabledFeatures())) {
             return InteractionResult.FAIL;
-        } else if (!p_40577_.canPlace()) {
+        } else if (!context.canPlace()) {
             return InteractionResult.FAIL;
         } else {
-            BlockPlaceContext blockplacecontext = this.updatePlacementContext(p_40577_);
+            BlockPlaceContext blockplacecontext = this.updatePlacementContext(context);
             if (blockplacecontext == null) {
                 return InteractionResult.FAIL;
             } else {
@@ -82,11 +85,11 @@ public class BlockItem extends Item {
                         }
                     }
 
-                    SoundType soundtype = blockstate1.getSoundType(level, blockpos, p_40577_.getPlayer());
+                    SoundType soundtype = blockstate1.getSoundType(level, blockpos, context.getPlayer());
                     level.playSound(
                         player,
                         blockpos,
-                        this.getPlaceSound(blockstate1, level, blockpos, p_40577_.getPlayer()),
+                        this.getPlaceSound(blockstate1, level, blockpos, context.getPlayer()),
                         SoundSource.BLOCKS,
                         (soundtype.getVolume() + 1.0F) / 2.0F,
                         soundtype.getPitch() * 0.8F
@@ -100,78 +103,78 @@ public class BlockItem extends Item {
     }
 
     @Deprecated //Forge: Use more sensitive version {@link BlockItem#getPlaceSound(BlockState, IBlockReader, BlockPos, Entity) }
-    protected SoundEvent getPlaceSound(BlockState p_40588_) {
-        return p_40588_.getSoundType().getPlaceSound();
+    protected SoundEvent getPlaceSound(BlockState state) {
+        return state.getSoundType().getPlaceSound();
     }
 
     //Forge: Sensitive version of BlockItem#getPlaceSound
-    protected SoundEvent getPlaceSound(BlockState state, Level world, BlockPos pos, Player entity) {
-        return state.getSoundType(world, pos, entity).getPlaceSound();
+    protected SoundEvent getPlaceSound(BlockState p_state, Level world, BlockPos pos, Player entity) {
+        return p_state.getSoundType(world, pos, entity).getPlaceSound();
     }
 
     @Nullable
-    public BlockPlaceContext updatePlacementContext(BlockPlaceContext p_40609_) {
-        return p_40609_;
+    public BlockPlaceContext updatePlacementContext(BlockPlaceContext context) {
+        return context;
     }
 
-    private static void updateBlockEntityComponents(Level p_331559_, BlockPos p_331993_, ItemStack p_332021_) {
-        BlockEntity blockentity = p_331559_.getBlockEntity(p_331993_);
+    private static void updateBlockEntityComponents(Level level, BlockPos poa, ItemStack stack) {
+        BlockEntity blockentity = level.getBlockEntity(poa);
         if (blockentity != null) {
-            blockentity.applyComponentsFromItemStack(p_332021_);
+            blockentity.applyComponentsFromItemStack(stack);
             blockentity.setChanged();
         }
     }
 
-    protected boolean updateCustomBlockEntityTag(BlockPos p_40597_, Level p_40598_, @Nullable Player p_40599_, ItemStack p_40600_, BlockState p_40601_) {
-        return updateCustomBlockEntityTag(p_40598_, p_40599_, p_40597_, p_40600_);
+    protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, @Nullable Player player, ItemStack stack, BlockState state) {
+        return updateCustomBlockEntityTag(level, player, pos, stack);
     }
 
     @Nullable
-    protected BlockState getPlacementState(BlockPlaceContext p_40613_) {
-        BlockState blockstate = this.getBlock().getStateForPlacement(p_40613_);
-        return blockstate != null && this.canPlace(p_40613_, blockstate) ? blockstate : null;
+    protected BlockState getPlacementState(BlockPlaceContext context) {
+        BlockState blockstate = this.getBlock().getStateForPlacement(context);
+        return blockstate != null && this.canPlace(context, blockstate) ? blockstate : null;
     }
 
-    private BlockState updateBlockStateFromTag(BlockPos p_40603_, Level p_40604_, ItemStack p_40605_, BlockState p_40606_) {
-        BlockItemStateProperties blockitemstateproperties = p_40605_.getOrDefault(DataComponents.BLOCK_STATE, BlockItemStateProperties.EMPTY);
+    private BlockState updateBlockStateFromTag(BlockPos pos, Level level, ItemStack stack, BlockState state) {
+        BlockItemStateProperties blockitemstateproperties = stack.getOrDefault(DataComponents.BLOCK_STATE, BlockItemStateProperties.EMPTY);
         if (blockitemstateproperties.isEmpty()) {
-            return p_40606_;
+            return state;
         } else {
-            BlockState blockstate = blockitemstateproperties.apply(p_40606_);
-            if (blockstate != p_40606_) {
-                p_40604_.setBlock(p_40603_, blockstate, 2);
+            BlockState blockstate = blockitemstateproperties.apply(state);
+            if (blockstate != state) {
+                level.setBlock(pos, blockstate, 2);
             }
 
             return blockstate;
         }
     }
 
-    protected boolean canPlace(BlockPlaceContext p_40611_, BlockState p_40612_) {
-        Player player = p_40611_.getPlayer();
+    protected boolean canPlace(BlockPlaceContext context, BlockState state) {
+        Player player = context.getPlayer();
         CollisionContext collisioncontext = player == null ? CollisionContext.empty() : CollisionContext.of(player);
-        return (!this.mustSurvive() || p_40612_.canSurvive(p_40611_.getLevel(), p_40611_.getClickedPos()))
-            && p_40611_.getLevel().isUnobstructed(p_40612_, p_40611_.getClickedPos(), collisioncontext);
+        return (!this.mustSurvive() || state.canSurvive(context.getLevel(), context.getClickedPos()))
+            && context.getLevel().isUnobstructed(state, context.getClickedPos(), collisioncontext);
     }
 
     protected boolean mustSurvive() {
         return true;
     }
 
-    protected boolean placeBlock(BlockPlaceContext p_40578_, BlockState p_40579_) {
-        return p_40578_.getLevel().setBlock(p_40578_.getClickedPos(), p_40579_, 11);
+    protected boolean placeBlock(BlockPlaceContext context, BlockState state) {
+        return context.getLevel().setBlock(context.getClickedPos(), state, 11);
     }
 
-    public static boolean updateCustomBlockEntityTag(Level p_40583_, @Nullable Player p_40584_, BlockPos p_40585_, ItemStack p_40586_) {
-        MinecraftServer minecraftserver = p_40583_.getServer();
+    public static boolean updateCustomBlockEntityTag(Level level, @Nullable Player player, BlockPos pos, ItemStack stack) {
+        MinecraftServer minecraftserver = level.getServer();
         if (minecraftserver == null) {
             return false;
         } else {
-            CustomData customdata = p_40586_.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY);
+            CustomData customdata = stack.getOrDefault(DataComponents.BLOCK_ENTITY_DATA, CustomData.EMPTY);
             if (!customdata.isEmpty()) {
-                BlockEntity blockentity = p_40583_.getBlockEntity(p_40585_);
+                BlockEntity blockentity = level.getBlockEntity(pos);
                 if (blockentity != null) {
-                    if (p_40583_.isClientSide || !blockentity.onlyOpCanSetNbt() || p_40584_ != null && p_40584_.canUseGameMasterBlocks()) {
-                        return customdata.loadInto(blockentity, p_40583_.registryAccess());
+                    if (level.isClientSide || !blockentity.onlyOpCanSetNbt() || player != null && player.canUseGameMasterBlocks()) {
+                        return customdata.loadInto(blockentity, level.registryAccess());
                     }
 
                     return false;
@@ -188,17 +191,17 @@ public class BlockItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack p_40572_, Item.TooltipContext p_339655_, List<Component> p_40574_, TooltipFlag p_40575_) {
-        super.appendHoverText(p_40572_, p_339655_, p_40574_, p_40575_);
-        this.getBlock().appendHoverText(p_40572_, p_339655_, p_40574_, p_40575_);
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        this.getBlock().appendHoverText(stack, context, tooltipComponents, tooltipFlag);
     }
 
     public Block getBlock() {
         return this.block;
     }
 
-    public void registerBlocks(Map<Block, Item> p_40607_, Item p_40608_) {
-        p_40607_.put(this.getBlock(), p_40608_);
+    public void registerBlocks(Map<Block, Item> blockToItemMap, Item item) {
+        blockToItemMap.put(this.getBlock(), item);
     }
 
     /** @deprecated Neo: To be removed without replacement since registry replacement is not a feature anymore. */
@@ -213,20 +216,20 @@ public class BlockItem extends Item {
     }
 
     @Override
-    public void onDestroyed(ItemEntity p_150700_) {
-        ItemContainerContents itemcontainercontents = p_150700_.getItem().set(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+    public void onDestroyed(ItemEntity itemEntity) {
+        ItemContainerContents itemcontainercontents = itemEntity.getItem().set(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
         if (itemcontainercontents != null) {
-            ItemUtils.onContainerDestroyed(p_150700_, itemcontainercontents.nonEmptyItemsCopy());
+            ItemUtils.onContainerDestroyed(itemEntity, itemcontainercontents.nonEmptyItemsCopy());
         }
     }
 
-    public static void setBlockEntityData(ItemStack p_186339_, BlockEntityType<?> p_186340_, CompoundTag p_186341_) {
-        p_186341_.remove("id");
-        if (p_186341_.isEmpty()) {
-            p_186339_.remove(DataComponents.BLOCK_ENTITY_DATA);
+    public static void setBlockEntityData(ItemStack stack, BlockEntityType<?> blockEntityType, CompoundTag blockEntityData) {
+        blockEntityData.remove("id");
+        if (blockEntityData.isEmpty()) {
+            stack.remove(DataComponents.BLOCK_ENTITY_DATA);
         } else {
-            BlockEntity.addEntityType(p_186341_, p_186340_);
-            p_186339_.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(p_186341_));
+            BlockEntity.addEntityType(blockEntityData, blockEntityType);
+            stack.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(blockEntityData));
         }
     }
 

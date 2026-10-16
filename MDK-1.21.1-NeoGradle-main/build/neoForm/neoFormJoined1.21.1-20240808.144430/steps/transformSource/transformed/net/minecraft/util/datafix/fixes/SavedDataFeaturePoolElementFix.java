@@ -23,8 +23,8 @@ public class SavedDataFeaturePoolElementFix extends DataFix {
     );
     private static final Set<String> FEATURES = Sets.newHashSet("minecraft:tree", "minecraft:flower", "minecraft:block_pile", "minecraft:random_patch");
 
-    public SavedDataFeaturePoolElementFix(Schema p_145646_) {
-        super(p_145646_, false);
+    public SavedDataFeaturePoolElementFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
     @Override
@@ -37,16 +37,16 @@ public class SavedDataFeaturePoolElementFix extends DataFix {
         );
     }
 
-    private static <T> Dynamic<T> fixTag(Dynamic<T> p_145663_) {
-        return p_145663_.update("Children", SavedDataFeaturePoolElementFix::updateChildren);
+    private static <T> Dynamic<T> fixTag(Dynamic<T> tag) {
+        return tag.update("Children", SavedDataFeaturePoolElementFix::updateChildren);
     }
 
-    private static <T> Dynamic<T> updateChildren(Dynamic<T> p_145665_) {
-        return p_145665_.asStreamOpt().map(SavedDataFeaturePoolElementFix::updateChildren).map(p_145665_::createList).result().orElse(p_145665_);
+    private static <T> Dynamic<T> updateChildren(Dynamic<T> data) {
+        return data.asStreamOpt().map(SavedDataFeaturePoolElementFix::updateChildren).map(data::createList).result().orElse(data);
     }
 
-    private static Stream<? extends Dynamic<?>> updateChildren(Stream<? extends Dynamic<?>> p_145661_) {
-        return p_145661_.map(
+    private static Stream<? extends Dynamic<?>> updateChildren(Stream<? extends Dynamic<?>> children) {
+        return children.map(
             p_145667_ -> {
                 String s = p_145667_.get("id").asString("");
                 if (!PIECE_TYPE.contains(s)) {
@@ -61,22 +61,22 @@ public class SavedDataFeaturePoolElementFix extends DataFix {
         );
     }
 
-    private static <T> OptionalDynamic<T> get(Dynamic<T> p_145650_, String... p_145651_) {
-        if (p_145651_.length == 0) {
+    private static <T> OptionalDynamic<T> get(Dynamic<T> dynamic, String... path) {
+        if (path.length == 0) {
             throw new IllegalArgumentException("Missing path");
         } else {
-            OptionalDynamic<T> optionaldynamic = p_145650_.get(p_145651_[0]);
+            OptionalDynamic<T> optionaldynamic = dynamic.get(path[0]);
 
-            for (int i = 1; i < p_145651_.length; i++) {
-                String s = p_145651_[i];
+            for (int i = 1; i < path.length; i++) {
+                String s = path[i];
                 Matcher matcher = INDEX_PATTERN.matcher(s);
                 if (matcher.matches()) {
                     int j = Integer.parseInt(matcher.group(1));
                     List<? extends Dynamic<T>> list = optionaldynamic.asList(Function.identity());
                     if (j >= 0 && j < list.size()) {
-                        optionaldynamic = new OptionalDynamic<>(p_145650_.getOps(), DataResult.success((Dynamic<T>)list.get(j)));
+                        optionaldynamic = new OptionalDynamic<>(dynamic.getOps(), DataResult.success((Dynamic<T>)list.get(j)));
                     } else {
-                        optionaldynamic = new OptionalDynamic<>(p_145650_.getOps(), DataResult.error(() -> "Missing id:" + j));
+                        optionaldynamic = new OptionalDynamic<>(dynamic.getOps(), DataResult.error(() -> "Missing id:" + j));
                     }
                 } else {
                     optionaldynamic = optionaldynamic.get(s);
@@ -88,73 +88,73 @@ public class SavedDataFeaturePoolElementFix extends DataFix {
     }
 
     @VisibleForTesting
-    protected static Dynamic<?> fixFeature(Dynamic<?> p_145648_) {
+    protected static Dynamic<?> fixFeature(Dynamic<?> dynamic) {
         Optional<String> optional = getReplacement(
-            get(p_145648_, "type").asString(""),
-            get(p_145648_, "name").asString(""),
-            get(p_145648_, "config", "state_provider", "type").asString(""),
-            get(p_145648_, "config", "state_provider", "state", "Name").asString(""),
-            get(p_145648_, "config", "state_provider", "entries", "[0]", "data", "Name").asString(""),
-            get(p_145648_, "config", "foliage_placer", "type").asString(""),
-            get(p_145648_, "config", "leaves_provider", "state", "Name").asString("")
+            get(dynamic, "type").asString(""),
+            get(dynamic, "name").asString(""),
+            get(dynamic, "config", "state_provider", "type").asString(""),
+            get(dynamic, "config", "state_provider", "state", "Name").asString(""),
+            get(dynamic, "config", "state_provider", "entries", "[0]", "data", "Name").asString(""),
+            get(dynamic, "config", "foliage_placer", "type").asString(""),
+            get(dynamic, "config", "leaves_provider", "state", "Name").asString("")
         );
-        return optional.isPresent() ? p_145648_.createString(optional.get()) : p_145648_;
+        return optional.isPresent() ? dynamic.createString(optional.get()) : dynamic;
     }
 
     private static Optional<String> getReplacement(
-        String p_145653_, String p_145654_, String p_145655_, String p_145656_, String p_145657_, String p_145658_, String p_145659_
+        String type, String name, String stateProviderType, String state, String stateProviderName, String foliagePlacerType, String leavesState
     ) {
         String s;
-        if (!p_145653_.isEmpty()) {
-            s = p_145653_;
+        if (!type.isEmpty()) {
+            s = type;
         } else {
-            if (p_145654_.isEmpty()) {
+            if (name.isEmpty()) {
                 return Optional.empty();
             }
 
-            if ("minecraft:normal_tree".equals(p_145654_)) {
+            if ("minecraft:normal_tree".equals(name)) {
                 s = "minecraft:tree";
             } else {
-                s = p_145654_;
+                s = name;
             }
         }
 
         if (FEATURES.contains(s)) {
             if ("minecraft:random_patch".equals(s)) {
-                if ("minecraft:simple_state_provider".equals(p_145655_)) {
-                    if ("minecraft:sweet_berry_bush".equals(p_145656_)) {
+                if ("minecraft:simple_state_provider".equals(stateProviderType)) {
+                    if ("minecraft:sweet_berry_bush".equals(state)) {
                         return Optional.of("minecraft:patch_berry_bush");
                     }
 
-                    if ("minecraft:cactus".equals(p_145656_)) {
+                    if ("minecraft:cactus".equals(state)) {
                         return Optional.of("minecraft:patch_cactus");
                     }
-                } else if ("minecraft:weighted_state_provider".equals(p_145655_) && ("minecraft:grass".equals(p_145657_) || "minecraft:fern".equals(p_145657_))
+                } else if ("minecraft:weighted_state_provider".equals(stateProviderType) && ("minecraft:grass".equals(stateProviderName) || "minecraft:fern".equals(stateProviderName))
                     )
                  {
                     return Optional.of("minecraft:patch_taiga_grass");
                 }
             } else if ("minecraft:block_pile".equals(s)) {
-                if (!"minecraft:simple_state_provider".equals(p_145655_) && !"minecraft:rotated_block_provider".equals(p_145655_)) {
-                    if ("minecraft:weighted_state_provider".equals(p_145655_)) {
-                        if ("minecraft:packed_ice".equals(p_145657_) || "minecraft:blue_ice".equals(p_145657_)) {
+                if (!"minecraft:simple_state_provider".equals(stateProviderType) && !"minecraft:rotated_block_provider".equals(stateProviderType)) {
+                    if ("minecraft:weighted_state_provider".equals(stateProviderType)) {
+                        if ("minecraft:packed_ice".equals(stateProviderName) || "minecraft:blue_ice".equals(stateProviderName)) {
                             return Optional.of("minecraft:pile_ice");
                         }
 
-                        if ("minecraft:jack_o_lantern".equals(p_145657_) || "minecraft:pumpkin".equals(p_145657_)) {
+                        if ("minecraft:jack_o_lantern".equals(stateProviderName) || "minecraft:pumpkin".equals(stateProviderName)) {
                             return Optional.of("minecraft:pile_pumpkin");
                         }
                     }
                 } else {
-                    if ("minecraft:hay_block".equals(p_145656_)) {
+                    if ("minecraft:hay_block".equals(state)) {
                         return Optional.of("minecraft:pile_hay");
                     }
 
-                    if ("minecraft:melon".equals(p_145656_)) {
+                    if ("minecraft:melon".equals(state)) {
                         return Optional.of("minecraft:pile_melon");
                     }
 
-                    if ("minecraft:snow".equals(p_145656_)) {
+                    if ("minecraft:snow".equals(state)) {
                         return Optional.of("minecraft:pile_snow");
                     }
                 }
@@ -164,19 +164,19 @@ public class SavedDataFeaturePoolElementFix extends DataFix {
                 }
 
                 if ("minecraft:tree".equals(s)) {
-                    if ("minecraft:acacia_foliage_placer".equals(p_145658_)) {
+                    if ("minecraft:acacia_foliage_placer".equals(foliagePlacerType)) {
                         return Optional.of("minecraft:acacia");
                     }
 
-                    if ("minecraft:blob_foliage_placer".equals(p_145658_) && "minecraft:oak_leaves".equals(p_145659_)) {
+                    if ("minecraft:blob_foliage_placer".equals(foliagePlacerType) && "minecraft:oak_leaves".equals(leavesState)) {
                         return Optional.of("minecraft:oak");
                     }
 
-                    if ("minecraft:pine_foliage_placer".equals(p_145658_)) {
+                    if ("minecraft:pine_foliage_placer".equals(foliagePlacerType)) {
                         return Optional.of("minecraft:pine");
                     }
 
-                    if ("minecraft:spruce_foliage_placer".equals(p_145658_)) {
+                    if ("minecraft:spruce_foliage_placer".equals(foliagePlacerType)) {
                         return Optional.of("minecraft:spruce");
                     }
                 }

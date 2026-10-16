@@ -289,36 +289,36 @@ public class BuiltInRegistries {
     );
     public static final Registry<? extends Registry<?>> REGISTRY = WRITABLE_REGISTRY;
 
-    private static <T> Registry<T> registerSimple(ResourceKey<? extends Registry<T>> p_260095_, BuiltInRegistries.RegistryBootstrap<T> p_259057_) {
-        return internalRegister(p_260095_, new MappedRegistry<>(p_260095_, Lifecycle.stable(), false), p_259057_);
+    private static <T> Registry<T> registerSimple(ResourceKey<? extends Registry<T>> key, BuiltInRegistries.RegistryBootstrap<T> bootstrap) {
+        return internalRegister(key, new MappedRegistry<>(key, Lifecycle.stable(), false), bootstrap);
     }
 
     private static <T> Registry<T> registerSimpleWithIntrusiveHolders(
-        ResourceKey<? extends Registry<T>> p_298703_, BuiltInRegistries.RegistryBootstrap<T> p_298612_
+        ResourceKey<? extends Registry<T>> key, BuiltInRegistries.RegistryBootstrap<T> bootstrap
     ) {
-        return internalRegister(p_298703_, new MappedRegistry<>(p_298703_, Lifecycle.stable(), true), p_298612_);
+        return internalRegister(key, new MappedRegistry<>(key, Lifecycle.stable(), true), bootstrap);
     }
 
     private static <T> DefaultedRegistry<T> registerDefaulted(
-        ResourceKey<? extends Registry<T>> p_259887_, String p_259325_, BuiltInRegistries.RegistryBootstrap<T> p_259759_
+        ResourceKey<? extends Registry<T>> key, String defaultKey, BuiltInRegistries.RegistryBootstrap<T> bootstrap
     ) {
-        return internalRegister(p_259887_, new DefaultedMappedRegistry<>(p_259325_, p_259887_, Lifecycle.stable(), false), p_259759_);
+        return internalRegister(key, new DefaultedMappedRegistry<>(defaultKey, key, Lifecycle.stable(), false), bootstrap);
     }
 
     private static <T> DefaultedRegistry<T> registerDefaultedWithIntrusiveHolders(
-        ResourceKey<? extends Registry<T>> p_259296_, String p_259101_, BuiltInRegistries.RegistryBootstrap<T> p_259485_
+        ResourceKey<? extends Registry<T>> key, String defaultKey, BuiltInRegistries.RegistryBootstrap<T> bootstrap
     ) {
-        return internalRegister(p_259296_, new DefaultedMappedRegistry<>(p_259101_, p_259296_, Lifecycle.stable(), true), p_259485_);
+        return internalRegister(key, new DefaultedMappedRegistry<>(defaultKey, key, Lifecycle.stable(), true), bootstrap);
     }
 
     private static <T, R extends WritableRegistry<T>> R internalRegister(
-        ResourceKey<? extends Registry<T>> p_259230_, R p_260327_, BuiltInRegistries.RegistryBootstrap<T> p_259210_
+        ResourceKey<? extends Registry<T>> key, R registry, BuiltInRegistries.RegistryBootstrap<T> bootstrap
     ) {
-        Bootstrap.checkBootstrapCalled(() -> "registry " + p_259230_);
-        ResourceLocation resourcelocation = p_259230_.location();
-        LOADERS.put(resourcelocation, () -> p_259210_.run(p_260327_));
-        WRITABLE_REGISTRY.register((ResourceKey)p_259230_, p_260327_, RegistrationInfo.BUILT_IN);
-        return p_260327_;
+        Bootstrap.checkBootstrapCalled(() -> "registry " + key);
+        ResourceLocation resourcelocation = key.location();
+        LOADERS.put(resourcelocation, () -> bootstrap.run(registry));
+        WRITABLE_REGISTRY.register((ResourceKey)key, registry, RegistrationInfo.BUILT_IN);
+        return registry;
     }
 
     public static void bootStrap() {
@@ -343,10 +343,10 @@ public class BuiltInRegistries {
         }
     }
 
-    private static <T extends Registry<?>> void validate(Registry<T> p_260209_) {
-        p_260209_.forEach(p_339350_ -> {
+    private static <T extends Registry<?>> void validate(Registry<T> registry) {
+        registry.forEach(p_339350_ -> {
             if (p_339350_.keySet().isEmpty()) {
-                Util.logAndPauseIfInIde("Registry '" + p_260209_.getKey((T)p_339350_) + "' was empty after loading");
+                Util.logAndPauseIfInIde("Registry '" + registry.getKey((T)p_339350_) + "' was empty after loading");
             }
 
             if (p_339350_ instanceof DefaultedRegistry) {
@@ -362,6 +362,6 @@ public class BuiltInRegistries {
 
     @FunctionalInterface
     interface RegistryBootstrap<T> {
-        Object run(Registry<T> p_260128_);
+        Object run(Registry<T> registry);
     }
 }

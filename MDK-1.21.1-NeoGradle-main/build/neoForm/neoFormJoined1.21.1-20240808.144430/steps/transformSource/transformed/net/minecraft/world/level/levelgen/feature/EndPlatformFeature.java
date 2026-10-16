@@ -8,30 +8,37 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConfiguration;
 
 public class EndPlatformFeature extends Feature<NoneFeatureConfiguration> {
-    public EndPlatformFeature(Codec<NoneFeatureConfiguration> p_352966_) {
-        super(p_352966_);
+    public EndPlatformFeature(Codec<NoneFeatureConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> p_352935_) {
-        createEndPlatform(p_352935_.level(), p_352935_.origin(), false);
+    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
+        createEndPlatform(context.level(), context.origin(), false);
         return true;
     }
 
-    public static void createEndPlatform(ServerLevelAccessor p_352905_, BlockPos p_352961_, boolean p_352931_) {
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = p_352961_.mutable();
+    public static void createEndPlatform(ServerLevelAccessor level, BlockPos pos, boolean dropBlocks) {
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = pos.mutable();
 
         for (int i = -2; i <= 2; i++) {
             for (int j = -2; j <= 2; j++) {
                 for (int k = -1; k < 3; k++) {
-                    BlockPos blockpos = blockpos$mutableblockpos.set(p_352961_).move(j, k, i);
+                    BlockPos blockpos = blockpos$mutableblockpos.set(pos).move(j, k, i);
                     Block block = k == -1 ? Blocks.OBSIDIAN : Blocks.AIR;
-                    if (!p_352905_.getBlockState(blockpos).is(block)) {
-                        if (p_352931_) {
-                            p_352905_.destroyBlock(blockpos, true, null);
+                    if (!level.getBlockState(blockpos).is(block)) {
+                        if (dropBlocks) {
+                            level.destroyBlock(blockpos, true, null);
                         }
 
-                        p_352905_.setBlock(blockpos, block.defaultBlockState(), 3);
+                        level.setBlock(blockpos, block.defaultBlockState(), 3);
                     }
                 }
             }

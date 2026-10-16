@@ -12,8 +12,8 @@ public record MultiplyValue(LevelBasedValue factor) implements EnchantmentValueE
     );
 
     @Override
-    public float process(int p_345451_, RandomSource p_346156_, float p_345036_) {
-        return p_345036_ * this.factor.calculate(p_345451_);
+    public float process(int enchantmentLevel, RandomSource random, float value) {
+        return value * this.factor.calculate(enchantmentLevel);
     }
 
     @Override

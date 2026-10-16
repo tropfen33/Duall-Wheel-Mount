@@ -29,8 +29,8 @@ public abstract class PatrollingMonster extends Monster {
     private boolean patrolLeader;
     private boolean patrolling;
 
-    protected PatrollingMonster(EntityType<? extends PatrollingMonster> p_33046_, Level p_33047_) {
-        super(p_33046_, p_33047_);
+    protected PatrollingMonster(EntityType<? extends PatrollingMonster> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
@@ -40,22 +40,25 @@ public abstract class PatrollingMonster extends Monster {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_33063_) {
-        super.addAdditionalSaveData(p_33063_);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
         if (this.patrolTarget != null) {
-            p_33063_.put("patrol_target", NbtUtils.writeBlockPos(this.patrolTarget));
+            compound.put("patrol_target", NbtUtils.writeBlockPos(this.patrolTarget));
         }
 
-        p_33063_.putBoolean("PatrolLeader", this.patrolLeader);
-        p_33063_.putBoolean("Patrolling", this.patrolling);
+        compound.putBoolean("PatrolLeader", this.patrolLeader);
+        compound.putBoolean("Patrolling", this.patrolling);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_33055_) {
-        super.readAdditionalSaveData(p_33055_);
-        NbtUtils.readBlockPos(p_33055_, "patrol_target").ifPresent(p_326234_ -> this.patrolTarget = p_326234_);
-        this.patrolLeader = p_33055_.getBoolean("PatrolLeader");
-        this.patrolling = p_33055_.getBoolean("Patrolling");
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        NbtUtils.readBlockPos(compound, "patrol_target").ifPresent(p_326234_ -> this.patrolTarget = p_326234_);
+        this.patrolLeader = compound.getBoolean("PatrolLeader");
+        this.patrolling = compound.getBoolean("Patrolling");
     }
 
     public boolean canBeLeader() {
@@ -64,11 +67,11 @@ public abstract class PatrollingMonster extends Monster {
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_33049_, DifficultyInstance p_33050_, MobSpawnType p_33051_, @Nullable SpawnGroupData p_33052_) {
-        if (p_33051_ != MobSpawnType.PATROL
-            && p_33051_ != MobSpawnType.EVENT
-            && p_33051_ != MobSpawnType.STRUCTURE
-            && p_33049_.getRandom().nextFloat() < 0.06F
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        if (spawnType != MobSpawnType.PATROL
+            && spawnType != MobSpawnType.EVENT
+            && spawnType != MobSpawnType.STRUCTURE
+            && level.getRandom().nextFloat() < 0.06F
             && this.canBeLeader()) {
             this.patrolLeader = true;
         }
@@ -78,28 +81,28 @@ public abstract class PatrollingMonster extends Monster {
             this.setDropChance(EquipmentSlot.HEAD, 2.0F);
         }
 
-        if (p_33051_ == MobSpawnType.PATROL) {
+        if (spawnType == MobSpawnType.PATROL) {
             this.patrolling = true;
         }
 
-        return super.finalizeSpawn(p_33049_, p_33050_, p_33051_, p_33052_);
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
     public static boolean checkPatrollingMonsterSpawnRules(
-        EntityType<? extends PatrollingMonster> p_219026_, LevelAccessor p_219027_, MobSpawnType p_219028_, BlockPos p_219029_, RandomSource p_219030_
+        EntityType<? extends PatrollingMonster> patrollingMonster, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return p_219027_.getBrightness(LightLayer.BLOCK, p_219029_) > 8
+        return level.getBrightness(LightLayer.BLOCK, pos) > 8
             ? false
-            : checkAnyLightMonsterSpawnRules(p_219026_, p_219027_, p_219028_, p_219029_, p_219030_);
+            : checkAnyLightMonsterSpawnRules(patrollingMonster, level, spawnType, pos, random);
     }
 
     @Override
-    public boolean removeWhenFarAway(double p_33073_) {
-        return !this.patrolling || p_33073_ > 16384.0;
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return !this.patrolling || distanceToClosestPlayer > 16384.0;
     }
 
-    public void setPatrolTarget(BlockPos p_33071_) {
-        this.patrolTarget = p_33071_;
+    public void setPatrolTarget(BlockPos patrolTarget) {
+        this.patrolTarget = patrolTarget;
         this.patrolling = true;
     }
 
@@ -111,8 +114,8 @@ public abstract class PatrollingMonster extends Monster {
         return this.patrolTarget != null;
     }
 
-    public void setPatrolLeader(boolean p_33076_) {
-        this.patrolLeader = p_33076_;
+    public void setPatrolLeader(boolean patrolLeader) {
+        this.patrolLeader = patrolLeader;
         this.patrolling = true;
     }
 
@@ -133,8 +136,8 @@ public abstract class PatrollingMonster extends Monster {
         return this.patrolling;
     }
 
-    protected void setPatrolling(boolean p_33078_) {
-        this.patrolling = p_33078_;
+    protected void setPatrolling(boolean patrolling) {
+        this.patrolling = patrolling;
     }
 
     public static class LongDistancePatrolGoal<T extends PatrollingMonster> extends Goal {
@@ -144,10 +147,10 @@ public abstract class PatrollingMonster extends Monster {
         private final double leaderSpeedModifier;
         private long cooldownUntil;
 
-        public LongDistancePatrolGoal(T p_33084_, double p_33085_, double p_33086_) {
-            this.mob = p_33084_;
-            this.speedModifier = p_33085_;
-            this.leaderSpeedModifier = p_33086_;
+        public LongDistancePatrolGoal(T mob, double speedModifier, double leaderSpeedModifier) {
+            this.mob = mob;
+            this.speedModifier = speedModifier;
+            this.leaderSpeedModifier = leaderSpeedModifier;
             this.cooldownUntil = -1L;
             this.setFlags(EnumSet.of(Goal.Flag.MOVE));
         }

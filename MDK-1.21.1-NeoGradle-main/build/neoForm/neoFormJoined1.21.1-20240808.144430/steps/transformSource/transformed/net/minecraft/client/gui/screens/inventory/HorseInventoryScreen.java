@@ -17,46 +17,63 @@ public class HorseInventoryScreen extends AbstractContainerScreen<HorseInventory
     private static final ResourceLocation LLAMA_ARMOR_SLOT_SPRITE = ResourceLocation.withDefaultNamespace("container/horse/llama_armor_slot");
     private static final ResourceLocation ARMOR_SLOT_SPRITE = ResourceLocation.withDefaultNamespace("container/horse/armor_slot");
     private static final ResourceLocation HORSE_INVENTORY_LOCATION = ResourceLocation.withDefaultNamespace("textures/gui/container/horse.png");
+    /**
+     * The EntityHorse whose inventory is currently being accessed.
+     */
     private final AbstractHorse horse;
     private final int inventoryColumns;
+    /**
+     * The mouse x-position recorded during the last rendered frame.
+     */
     private float xMouse;
+    /**
+     * The mouse y-position recorded during the last rendered frame.
+     */
     private float yMouse;
 
-    public HorseInventoryScreen(HorseInventoryMenu p_98817_, Inventory p_98818_, AbstractHorse p_98819_, int p_352203_) {
-        super(p_98817_, p_98818_, p_98819_.getDisplayName());
-        this.horse = p_98819_;
-        this.inventoryColumns = p_352203_;
+    public HorseInventoryScreen(HorseInventoryMenu menu, Inventory inventory, AbstractHorse horse, int inventoryColumns) {
+        super(menu, inventory, horse.getDisplayName());
+        this.horse = horse;
+        this.inventoryColumns = inventoryColumns;
     }
 
     @Override
-    protected void renderBg(GuiGraphics p_282553_, float p_282998_, int p_282929_, int p_283133_) {
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
-        p_282553_.blit(HORSE_INVENTORY_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
+        guiGraphics.blit(HORSE_INVENTORY_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
         if (this.inventoryColumns > 0) {
-            p_282553_.blitSprite(CHEST_SLOTS_SPRITE, 90, 54, 0, 0, i + 79, j + 17, this.inventoryColumns * 18, 54);
+            guiGraphics.blitSprite(CHEST_SLOTS_SPRITE, 90, 54, 0, 0, i + 79, j + 17, this.inventoryColumns * 18, 54);
         }
 
         if (this.horse.isSaddleable()) {
-            p_282553_.blitSprite(SADDLE_SLOT_SPRITE, i + 7, j + 35 - 18, 18, 18);
+            guiGraphics.blitSprite(SADDLE_SLOT_SPRITE, i + 7, j + 35 - 18, 18, 18);
         }
 
         if (this.horse.canUseSlot(EquipmentSlot.BODY)) {
             if (this.horse instanceof Llama) {
-                p_282553_.blitSprite(LLAMA_ARMOR_SLOT_SPRITE, i + 7, j + 35, 18, 18);
+                guiGraphics.blitSprite(LLAMA_ARMOR_SLOT_SPRITE, i + 7, j + 35, 18, 18);
             } else {
-                p_282553_.blitSprite(ARMOR_SLOT_SPRITE, i + 7, j + 35, 18, 18);
+                guiGraphics.blitSprite(ARMOR_SLOT_SPRITE, i + 7, j + 35, 18, 18);
             }
         }
 
-        InventoryScreen.renderEntityInInventoryFollowsMouse(p_282553_, i + 26, j + 18, i + 78, j + 70, 17, 0.25F, this.xMouse, this.yMouse, this.horse);
+        InventoryScreen.renderEntityInInventoryFollowsMouse(guiGraphics, i + 26, j + 18, i + 78, j + 70, 17, 0.25F, this.xMouse, this.yMouse, this.horse);
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281697_, int p_282103_, int p_283529_, float p_283079_) {
-        this.xMouse = (float)p_282103_;
-        this.yMouse = (float)p_283529_;
-        super.render(p_281697_, p_282103_, p_283529_, p_283079_);
-        this.renderTooltip(p_281697_, p_282103_, p_283529_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.xMouse = (float)mouseX;
+        this.yMouse = (float)mouseY;
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 }

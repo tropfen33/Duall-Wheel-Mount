@@ -23,16 +23,16 @@ public class KilledByCrossbowTrigger extends SimpleCriterionTrigger<KilledByCros
         return KilledByCrossbowTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_46872_, Collection<Entity> p_46873_) {
+    public void trigger(ServerPlayer player, Collection<Entity> entities) {
         List<LootContext> list = Lists.newArrayList();
         Set<EntityType<?>> set = Sets.newHashSet();
 
-        for (Entity entity : p_46873_) {
+        for (Entity entity : entities) {
             set.add(entity.getType());
-            list.add(EntityPredicate.createContext(p_46872_, entity));
+            list.add(EntityPredicate.createContext(player, entity));
         }
 
-        this.trigger(p_46872_, p_46881_ -> p_46881_.matches(list, set.size()));
+        this.trigger(player, p_46881_ -> p_46881_.matches(list, set.size()));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, List<ContextAwarePredicate> victims, MinMaxBounds.Ints uniqueEntityTypes)
@@ -51,18 +51,18 @@ public class KilledByCrossbowTrigger extends SimpleCriterionTrigger<KilledByCros
                     .apply(p_337373_, KilledByCrossbowTrigger.TriggerInstance::new)
         );
 
-        public static Criterion<KilledByCrossbowTrigger.TriggerInstance> crossbowKilled(EntityPredicate.Builder... p_301077_) {
+        public static Criterion<KilledByCrossbowTrigger.TriggerInstance> crossbowKilled(EntityPredicate.Builder... victims) {
             return CriteriaTriggers.KILLED_BY_CROSSBOW
-                .createCriterion(new KilledByCrossbowTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(p_301077_), MinMaxBounds.Ints.ANY));
+                .createCriterion(new KilledByCrossbowTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(victims), MinMaxBounds.Ints.ANY));
         }
 
-        public static Criterion<KilledByCrossbowTrigger.TriggerInstance> crossbowKilled(MinMaxBounds.Ints p_301148_) {
-            return CriteriaTriggers.KILLED_BY_CROSSBOW.createCriterion(new KilledByCrossbowTrigger.TriggerInstance(Optional.empty(), List.of(), p_301148_));
+        public static Criterion<KilledByCrossbowTrigger.TriggerInstance> crossbowKilled(MinMaxBounds.Ints uniqueEntityTypes) {
+            return CriteriaTriggers.KILLED_BY_CROSSBOW.createCriterion(new KilledByCrossbowTrigger.TriggerInstance(Optional.empty(), List.of(), uniqueEntityTypes));
         }
 
-        public boolean matches(Collection<LootContext> p_46898_, int p_46899_) {
+        public boolean matches(Collection<LootContext> contexts, int bounds) {
             if (!this.victims.isEmpty()) {
-                List<LootContext> list = Lists.newArrayList(p_46898_);
+                List<LootContext> list = Lists.newArrayList(contexts);
 
                 for (ContextAwarePredicate contextawarepredicate : this.victims) {
                     boolean flag = false;
@@ -83,13 +83,13 @@ public class KilledByCrossbowTrigger extends SimpleCriterionTrigger<KilledByCros
                 }
             }
 
-            return this.uniqueEntityTypes.matches(p_46899_);
+            return this.uniqueEntityTypes.matches(bounds);
         }
 
         @Override
-        public void validate(CriterionValidator p_312236_) {
-            SimpleCriterionTrigger.SimpleInstance.super.validate(p_312236_);
-            p_312236_.validateEntities(this.victims, ".victims");
+        public void validate(CriterionValidator validator) {
+            SimpleCriterionTrigger.SimpleInstance.super.validate(validator);
+            validator.validateEntities(this.victims, ".victims");
         }
     }
 }

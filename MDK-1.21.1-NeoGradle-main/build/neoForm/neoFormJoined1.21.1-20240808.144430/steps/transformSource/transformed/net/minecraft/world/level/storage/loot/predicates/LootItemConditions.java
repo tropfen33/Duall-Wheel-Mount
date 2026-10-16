@@ -5,6 +5,11 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 
+/**
+ * Registry for {@link LootItemConditionType}.
+ *
+ * @see LootItemCondition
+ */
 public class LootItemConditions {
     public static final LootItemConditionType INVERTED = register("inverted", InvertedLootItemCondition.CODEC);
     public static final LootItemConditionType ANY_OF = register("any_of", AnyOfCondition.CODEC);
@@ -28,7 +33,7 @@ public class LootItemConditions {
     public static final LootItemConditionType VALUE_CHECK = register("value_check", ValueCheckCondition.CODEC);
     public static final LootItemConditionType ENCHANTMENT_ACTIVE_CHECK = register("enchantment_active_check", EnchantmentActiveCheck.CODEC);
 
-    private static LootItemConditionType register(String p_81832_, MapCodec<? extends LootItemCondition> p_338774_) {
-        return Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, ResourceLocation.withDefaultNamespace(p_81832_), new LootItemConditionType(p_338774_));
+    private static LootItemConditionType register(String name, MapCodec<? extends LootItemCondition> codec) {
+        return Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, ResourceLocation.withDefaultNamespace(name), new LootItemConditionType(codec));
     }
 }

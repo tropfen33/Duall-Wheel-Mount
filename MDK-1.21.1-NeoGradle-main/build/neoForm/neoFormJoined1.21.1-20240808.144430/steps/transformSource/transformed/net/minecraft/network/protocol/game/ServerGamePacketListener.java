@@ -4,105 +4,153 @@ import net.minecraft.network.ConnectionProtocol;
 import net.minecraft.network.protocol.common.ServerCommonPacketListener;
 import net.minecraft.network.protocol.ping.ServerPingPacketListener;
 
+/**
+ * PacketListener for the server side of the PLAY protocol.
+ */
 public interface ServerGamePacketListener extends ServerPingPacketListener, ServerCommonPacketListener, net.neoforged.neoforge.common.extensions.IServerGamePacketListenerExtension {
     @Override
     default ConnectionProtocol protocol() {
         return ConnectionProtocol.PLAY;
     }
 
-    void handleAnimate(ServerboundSwingPacket p_133781_);
+    void handleAnimate(ServerboundSwingPacket packet);
 
-    void handleChat(ServerboundChatPacket p_133743_);
+    /**
+     * Process chat messages (broadcast back to clients) and commands (executes)
+     */
+    void handleChat(ServerboundChatPacket packet);
 
-    void handleChatCommand(ServerboundChatCommandPacket p_237920_);
+    void handleChatCommand(ServerboundChatCommandPacket packet);
 
-    void handleSignedChatCommand(ServerboundChatCommandSignedPacket p_338819_);
+    void handleSignedChatCommand(ServerboundChatCommandSignedPacket packet);
 
-    void handleChatAck(ServerboundChatAckPacket p_242214_);
+    void handleChatAck(ServerboundChatAckPacket packet);
 
-    void handleClientCommand(ServerboundClientCommandPacket p_133744_);
+    /**
+     * Processes the client status updates: respawn attempt from player, opening statistics or achievements, or acquiring 'open inventory' achievement
+     */
+    void handleClientCommand(ServerboundClientCommandPacket packet);
 
-    void handleContainerButtonClick(ServerboundContainerButtonClickPacket p_133748_);
+    /**
+     * Enchants the item identified by the packet given some convoluted conditions (matching window, which should/shouldn't be in use?)
+     */
+    void handleContainerButtonClick(ServerboundContainerButtonClickPacket packet);
 
-    void handleContainerClick(ServerboundContainerClickPacket p_133749_);
+    /**
+     * Executes a container/inventory slot manipulation as indicated by the packet. Sends the serverside result if they didn't match the indicated result and prevents further manipulation by the player until he confirms that it has the same open container/inventory
+     */
+    void handleContainerClick(ServerboundContainerClickPacket packet);
 
-    void handlePlaceRecipe(ServerboundPlaceRecipePacket p_133762_);
+    void handlePlaceRecipe(ServerboundPlaceRecipePacket packet);
 
-    void handleContainerClose(ServerboundContainerClosePacket p_133750_);
+    /**
+     * Processes the client closing windows (container)
+     */
+    void handleContainerClose(ServerboundContainerClosePacket packet);
 
-    void handleInteract(ServerboundInteractPacket p_133754_);
+    /**
+     * Processes left and right clicks on entities
+     */
+    void handleInteract(ServerboundInteractPacket packet);
 
-    void handleMovePlayer(ServerboundMovePlayerPacket p_133758_);
+    /**
+     * Processes clients perspective on player positioning and/or orientation
+     */
+    void handleMovePlayer(ServerboundMovePlayerPacket packet);
 
-    void handlePlayerAbilities(ServerboundPlayerAbilitiesPacket p_133763_);
+    /**
+     * Processes a player starting/stopping flying
+     */
+    void handlePlayerAbilities(ServerboundPlayerAbilitiesPacket packet);
 
-    void handlePlayerAction(ServerboundPlayerActionPacket p_133764_);
+    /**
+     * Processes the player initiating/stopping digging on a particular spot, as well as a player dropping items
+     */
+    void handlePlayerAction(ServerboundPlayerActionPacket packet);
 
-    void handlePlayerCommand(ServerboundPlayerCommandPacket p_133765_);
+    /**
+     * Processes a range of action-types: sneaking, sprinting, waking from sleep, opening the inventory or setting jump height of the horse the player is riding
+     */
+    void handlePlayerCommand(ServerboundPlayerCommandPacket packet);
 
-    void handlePlayerInput(ServerboundPlayerInputPacket p_133766_);
+    /**
+     * Processes player movement input. Includes walking, strafing, jumping, and sneaking. Excludes riding and toggling flying/sprinting.
+     */
+    void handlePlayerInput(ServerboundPlayerInputPacket packet);
 
-    void handleSetCarriedItem(ServerboundSetCarriedItemPacket p_133774_);
+    /**
+     * Updates which quickbar slot is selected
+     */
+    void handleSetCarriedItem(ServerboundSetCarriedItemPacket packet);
 
-    void handleSetCreativeModeSlot(ServerboundSetCreativeModeSlotPacket p_133777_);
+    /**
+     * Update the server with an ItemStack in a slot.
+     */
+    void handleSetCreativeModeSlot(ServerboundSetCreativeModeSlotPacket packet);
 
-    void handleSignUpdate(ServerboundSignUpdatePacket p_133780_);
+    void handleSignUpdate(ServerboundSignUpdatePacket packet);
 
-    void handleUseItemOn(ServerboundUseItemOnPacket p_133783_);
+    void handleUseItemOn(ServerboundUseItemOnPacket packet);
 
-    void handleUseItem(ServerboundUseItemPacket p_133784_);
+    /**
+     * Called when a client is using an item while not pointing at a block, but simply using an item
+     */
+    void handleUseItem(ServerboundUseItemPacket packet);
 
-    void handleTeleportToEntityPacket(ServerboundTeleportToEntityPacket p_133782_);
+    void handleTeleportToEntityPacket(ServerboundTeleportToEntityPacket packet);
 
-    void handlePaddleBoat(ServerboundPaddleBoatPacket p_133760_);
+    void handlePaddleBoat(ServerboundPaddleBoatPacket packet);
 
-    void handleMoveVehicle(ServerboundMoveVehiclePacket p_133759_);
+    void handleMoveVehicle(ServerboundMoveVehiclePacket packet);
 
-    void handleAcceptTeleportPacket(ServerboundAcceptTeleportationPacket p_133740_);
+    void handleAcceptTeleportPacket(ServerboundAcceptTeleportationPacket packet);
 
-    void handleRecipeBookSeenRecipePacket(ServerboundRecipeBookSeenRecipePacket p_133768_);
+    void handleRecipeBookSeenRecipePacket(ServerboundRecipeBookSeenRecipePacket packet);
 
-    void handleRecipeBookChangeSettingsPacket(ServerboundRecipeBookChangeSettingsPacket p_133767_);
+    void handleRecipeBookChangeSettingsPacket(ServerboundRecipeBookChangeSettingsPacket packet);
 
-    void handleSeenAdvancements(ServerboundSeenAdvancementsPacket p_133771_);
+    void handleSeenAdvancements(ServerboundSeenAdvancementsPacket packet);
 
-    void handleCustomCommandSuggestions(ServerboundCommandSuggestionPacket p_133746_);
+    /**
+     * This method is only called for manual tab-completion (the {@link net.minecraft.commands.synchronization.SuggestionProviders#ASK_SERVER minecraft:ask_server} suggestion provider).
+     */
+    void handleCustomCommandSuggestions(ServerboundCommandSuggestionPacket packet);
 
-    void handleSetCommandBlock(ServerboundSetCommandBlockPacket p_133775_);
+    void handleSetCommandBlock(ServerboundSetCommandBlockPacket packet);
 
-    void handleSetCommandMinecart(ServerboundSetCommandMinecartPacket p_133776_);
+    void handleSetCommandMinecart(ServerboundSetCommandMinecartPacket packet);
 
-    void handlePickItem(ServerboundPickItemPacket p_133761_);
+    void handlePickItem(ServerboundPickItemPacket packet);
 
-    void handleRenameItem(ServerboundRenameItemPacket p_133769_);
+    void handleRenameItem(ServerboundRenameItemPacket packet);
 
-    void handleSetBeaconPacket(ServerboundSetBeaconPacket p_133773_);
+    void handleSetBeaconPacket(ServerboundSetBeaconPacket packet);
 
-    void handleSetStructureBlock(ServerboundSetStructureBlockPacket p_133779_);
+    void handleSetStructureBlock(ServerboundSetStructureBlockPacket packet);
 
-    void handleSelectTrade(ServerboundSelectTradePacket p_133772_);
+    void handleSelectTrade(ServerboundSelectTradePacket packet);
 
-    void handleEditBook(ServerboundEditBookPacket p_133752_);
+    void handleEditBook(ServerboundEditBookPacket packet);
 
-    void handleEntityTagQuery(ServerboundEntityTagQueryPacket p_320502_);
+    void handleEntityTagQuery(ServerboundEntityTagQueryPacket packet);
 
-    void handleContainerSlotStateChanged(ServerboundContainerSlotStateChangedPacket p_307234_);
+    void handleContainerSlotStateChanged(ServerboundContainerSlotStateChangedPacket packet);
 
-    void handleBlockEntityTagQuery(ServerboundBlockEntityTagQueryPacket p_320411_);
+    void handleBlockEntityTagQuery(ServerboundBlockEntityTagQueryPacket packet);
 
-    void handleSetJigsawBlock(ServerboundSetJigsawBlockPacket p_133778_);
+    void handleSetJigsawBlock(ServerboundSetJigsawBlockPacket packet);
 
-    void handleJigsawGenerate(ServerboundJigsawGeneratePacket p_133755_);
+    void handleJigsawGenerate(ServerboundJigsawGeneratePacket packet);
 
-    void handleChangeDifficulty(ServerboundChangeDifficultyPacket p_133742_);
+    void handleChangeDifficulty(ServerboundChangeDifficultyPacket packet);
 
-    void handleLockDifficulty(ServerboundLockDifficultyPacket p_133757_);
+    void handleLockDifficulty(ServerboundLockDifficultyPacket packet);
 
-    void handleChatSessionUpdate(ServerboundChatSessionUpdatePacket p_254226_);
+    void handleChatSessionUpdate(ServerboundChatSessionUpdatePacket packet);
 
-    void handleConfigurationAcknowledged(ServerboundConfigurationAcknowledgedPacket p_296161_);
+    void handleConfigurationAcknowledged(ServerboundConfigurationAcknowledgedPacket packet);
 
-    void handleChunkBatchReceived(ServerboundChunkBatchReceivedPacket p_294767_);
+    void handleChunkBatchReceived(ServerboundChunkBatchReceivedPacket packet);
 
-    void handleDebugSampleSubscription(ServerboundDebugSampleSubscriptionPacket p_323727_);
+    void handleDebugSampleSubscription(ServerboundDebugSampleSubscriptionPacket packet);
 }

@@ -20,29 +20,35 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class PlayerInfo {
+    /**
+     * The GameProfile for the player represented by this NetworkPlayerInfo instance
+     */
     private final GameProfile profile;
     private final Supplier<PlayerSkin> skinLookup;
     private GameType gameMode = GameType.DEFAULT_MODE;
     private int latency;
+    /**
+     * When this is non-null, it is displayed instead of the player's real name
+     */
     @Nullable
     private Component tabListDisplayName;
     @Nullable
     private RemoteChatSession chatSession;
     private SignedMessageValidator messageValidator;
 
-    public PlayerInfo(GameProfile p_253609_, boolean p_254409_) {
-        this.profile = p_253609_;
-        this.messageValidator = fallbackMessageValidator(p_254409_);
-        Supplier<Supplier<PlayerSkin>> supplier = Suppliers.memoize(() -> createSkinLookup(p_253609_));
+    public PlayerInfo(GameProfile profile, boolean enforeSecureChat) {
+        this.profile = profile;
+        this.messageValidator = fallbackMessageValidator(enforeSecureChat);
+        Supplier<Supplier<PlayerSkin>> supplier = Suppliers.memoize(() -> createSkinLookup(profile));
         this.skinLookup = () -> supplier.get().get();
     }
 
-    private static Supplier<PlayerSkin> createSkinLookup(GameProfile p_295736_) {
+    private static Supplier<PlayerSkin> createSkinLookup(GameProfile profile) {
         Minecraft minecraft = Minecraft.getInstance();
         SkinManager skinmanager = minecraft.getSkinManager();
-        CompletableFuture<PlayerSkin> completablefuture = skinmanager.getOrLoad(p_295736_);
-        boolean flag = !minecraft.isLocalPlayer(p_295736_.getId());
-        PlayerSkin playerskin = DefaultPlayerSkin.get(p_295736_);
+        CompletableFuture<PlayerSkin> completablefuture = skinmanager.getOrLoad(profile);
+        boolean flag = !minecraft.isLocalPlayer(profile.getId());
+        PlayerSkin playerskin = DefaultPlayerSkin.get(profile);
         return () -> {
             PlayerSkin playerskin1 = completablefuture.getNow(playerskin);
             return flag && !playerskin1.secure() ? playerskin : playerskin1;
@@ -66,35 +72,35 @@ public class PlayerInfo {
         return this.chatSession != null;
     }
 
-    protected void setChatSession(RemoteChatSession p_249599_) {
-        this.chatSession = p_249599_;
-        this.messageValidator = p_249599_.createMessageValidator(ProfilePublicKey.EXPIRY_GRACE_PERIOD);
+    protected void setChatSession(RemoteChatSession chatSession) {
+        this.chatSession = chatSession;
+        this.messageValidator = chatSession.createMessageValidator(ProfilePublicKey.EXPIRY_GRACE_PERIOD);
     }
 
-    protected void clearChatSession(boolean p_254536_) {
+    protected void clearChatSession(boolean enforcesSecureChat) {
         this.chatSession = null;
-        this.messageValidator = fallbackMessageValidator(p_254536_);
+        this.messageValidator = fallbackMessageValidator(enforcesSecureChat);
     }
 
-    private static SignedMessageValidator fallbackMessageValidator(boolean p_254311_) {
-        return p_254311_ ? SignedMessageValidator.REJECT_ALL : SignedMessageValidator.ACCEPT_UNSIGNED;
+    private static SignedMessageValidator fallbackMessageValidator(boolean enforeSecureChat) {
+        return enforeSecureChat ? SignedMessageValidator.REJECT_ALL : SignedMessageValidator.ACCEPT_UNSIGNED;
     }
 
     public GameType getGameMode() {
         return this.gameMode;
     }
 
-    protected void setGameMode(GameType p_105318_) {
-        net.neoforged.neoforge.client.ClientHooks.onClientChangeGameType(this, this.gameMode, p_105318_);
-        this.gameMode = p_105318_;
+    protected void setGameMode(GameType gameMode) {
+        net.neoforged.neoforge.client.ClientHooks.onClientChangeGameType(this, this.gameMode, gameMode);
+        this.gameMode = gameMode;
     }
 
     public int getLatency() {
         return this.latency;
     }
 
-    protected void setLatency(int p_105314_) {
-        this.latency = p_105314_;
+    protected void setLatency(int latency) {
+        this.latency = latency;
     }
 
     public PlayerSkin getSkin() {
@@ -106,8 +112,8 @@ public class PlayerInfo {
         return Minecraft.getInstance().level.getScoreboard().getPlayersTeam(this.getProfile().getName());
     }
 
-    public void setTabListDisplayName(@Nullable Component p_105324_) {
-        this.tabListDisplayName = p_105324_;
+    public void setTabListDisplayName(@Nullable Component displayName) {
+        this.tabListDisplayName = displayName;
     }
 
     @Nullable

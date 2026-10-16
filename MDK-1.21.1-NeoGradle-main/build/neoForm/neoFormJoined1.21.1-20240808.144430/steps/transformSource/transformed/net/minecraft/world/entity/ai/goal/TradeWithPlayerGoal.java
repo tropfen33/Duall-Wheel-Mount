@@ -7,8 +7,8 @@ import net.minecraft.world.entity.player.Player;
 public class TradeWithPlayerGoal extends Goal {
     private final AbstractVillager mob;
 
-    public TradeWithPlayerGoal(AbstractVillager p_25958_) {
-        this.mob = p_25958_;
+    public TradeWithPlayerGoal(AbstractVillager mob) {
+        this.mob = mob;
         this.setFlags(EnumSet.of(Goal.Flag.JUMP, Goal.Flag.MOVE));
     }
 

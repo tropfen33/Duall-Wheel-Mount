@@ -16,9 +16,9 @@ public class ColumnFeatureConfiguration implements FeatureConfiguration {
     private final IntProvider reach;
     private final IntProvider height;
 
-    public ColumnFeatureConfiguration(IntProvider p_160715_, IntProvider p_160716_) {
-        this.reach = p_160715_;
-        this.height = p_160716_;
+    public ColumnFeatureConfiguration(IntProvider reach, IntProvider height) {
+        this.reach = reach;
+        this.height = height;
     }
 
     public IntProvider reach() {

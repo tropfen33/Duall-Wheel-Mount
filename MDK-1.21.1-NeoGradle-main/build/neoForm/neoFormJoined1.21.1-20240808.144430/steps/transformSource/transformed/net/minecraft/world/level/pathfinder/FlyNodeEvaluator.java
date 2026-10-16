@@ -19,10 +19,10 @@ public class FlyNodeEvaluator extends WalkNodeEvaluator {
     private static final int MAX_START_NODE_CANDIDATES = 10;
 
     @Override
-    public void prepare(PathNavigationRegion p_77261_, Mob p_77262_) {
-        super.prepare(p_77261_, p_77262_);
+    public void prepare(PathNavigationRegion level, Mob mob) {
+        super.prepare(level, mob);
         this.pathTypeByPosCache.clear();
-        p_77262_.onPathfindingStart();
+        mob.onPathfindingStart();
     }
 
     @Override
@@ -62,110 +62,110 @@ public class FlyNodeEvaluator extends WalkNodeEvaluator {
     }
 
     @Override
-    protected boolean canStartAt(BlockPos p_262645_) {
-        PathType pathtype = this.getCachedPathType(p_262645_.getX(), p_262645_.getY(), p_262645_.getZ());
+    protected boolean canStartAt(BlockPos pos) {
+        PathType pathtype = this.getCachedPathType(pos.getX(), pos.getY(), pos.getZ());
         return this.mob.getPathfindingMalus(pathtype) >= 0.0F;
     }
 
     @Override
-    public Target getTarget(double p_326875_, double p_326936_, double p_326811_) {
-        return this.getTargetNodeAt(p_326875_, p_326936_, p_326811_);
+    public Target getTarget(double x, double y, double z) {
+        return this.getTargetNodeAt(x, y, z);
     }
 
     @Override
-    public int getNeighbors(Node[] p_77266_, Node p_77267_) {
+    public int getNeighbors(Node[] outputArray, Node p_node) {
         int i = 0;
-        Node node = this.findAcceptedNode(p_77267_.x, p_77267_.y, p_77267_.z + 1);
+        Node node = this.findAcceptedNode(p_node.x, p_node.y, p_node.z + 1);
         if (this.isOpen(node)) {
-            p_77266_[i++] = node;
+            outputArray[i++] = node;
         }
 
-        Node node1 = this.findAcceptedNode(p_77267_.x - 1, p_77267_.y, p_77267_.z);
+        Node node1 = this.findAcceptedNode(p_node.x - 1, p_node.y, p_node.z);
         if (this.isOpen(node1)) {
-            p_77266_[i++] = node1;
+            outputArray[i++] = node1;
         }
 
-        Node node2 = this.findAcceptedNode(p_77267_.x + 1, p_77267_.y, p_77267_.z);
+        Node node2 = this.findAcceptedNode(p_node.x + 1, p_node.y, p_node.z);
         if (this.isOpen(node2)) {
-            p_77266_[i++] = node2;
+            outputArray[i++] = node2;
         }
 
-        Node node3 = this.findAcceptedNode(p_77267_.x, p_77267_.y, p_77267_.z - 1);
+        Node node3 = this.findAcceptedNode(p_node.x, p_node.y, p_node.z - 1);
         if (this.isOpen(node3)) {
-            p_77266_[i++] = node3;
+            outputArray[i++] = node3;
         }
 
-        Node node4 = this.findAcceptedNode(p_77267_.x, p_77267_.y + 1, p_77267_.z);
+        Node node4 = this.findAcceptedNode(p_node.x, p_node.y + 1, p_node.z);
         if (this.isOpen(node4)) {
-            p_77266_[i++] = node4;
+            outputArray[i++] = node4;
         }
 
-        Node node5 = this.findAcceptedNode(p_77267_.x, p_77267_.y - 1, p_77267_.z);
+        Node node5 = this.findAcceptedNode(p_node.x, p_node.y - 1, p_node.z);
         if (this.isOpen(node5)) {
-            p_77266_[i++] = node5;
+            outputArray[i++] = node5;
         }
 
-        Node node6 = this.findAcceptedNode(p_77267_.x, p_77267_.y + 1, p_77267_.z + 1);
+        Node node6 = this.findAcceptedNode(p_node.x, p_node.y + 1, p_node.z + 1);
         if (this.isOpen(node6) && this.hasMalus(node) && this.hasMalus(node4)) {
-            p_77266_[i++] = node6;
+            outputArray[i++] = node6;
         }
 
-        Node node7 = this.findAcceptedNode(p_77267_.x - 1, p_77267_.y + 1, p_77267_.z);
+        Node node7 = this.findAcceptedNode(p_node.x - 1, p_node.y + 1, p_node.z);
         if (this.isOpen(node7) && this.hasMalus(node1) && this.hasMalus(node4)) {
-            p_77266_[i++] = node7;
+            outputArray[i++] = node7;
         }
 
-        Node node8 = this.findAcceptedNode(p_77267_.x + 1, p_77267_.y + 1, p_77267_.z);
+        Node node8 = this.findAcceptedNode(p_node.x + 1, p_node.y + 1, p_node.z);
         if (this.isOpen(node8) && this.hasMalus(node2) && this.hasMalus(node4)) {
-            p_77266_[i++] = node8;
+            outputArray[i++] = node8;
         }
 
-        Node node9 = this.findAcceptedNode(p_77267_.x, p_77267_.y + 1, p_77267_.z - 1);
+        Node node9 = this.findAcceptedNode(p_node.x, p_node.y + 1, p_node.z - 1);
         if (this.isOpen(node9) && this.hasMalus(node3) && this.hasMalus(node4)) {
-            p_77266_[i++] = node9;
+            outputArray[i++] = node9;
         }
 
-        Node node10 = this.findAcceptedNode(p_77267_.x, p_77267_.y - 1, p_77267_.z + 1);
+        Node node10 = this.findAcceptedNode(p_node.x, p_node.y - 1, p_node.z + 1);
         if (this.isOpen(node10) && this.hasMalus(node) && this.hasMalus(node5)) {
-            p_77266_[i++] = node10;
+            outputArray[i++] = node10;
         }
 
-        Node node11 = this.findAcceptedNode(p_77267_.x - 1, p_77267_.y - 1, p_77267_.z);
+        Node node11 = this.findAcceptedNode(p_node.x - 1, p_node.y - 1, p_node.z);
         if (this.isOpen(node11) && this.hasMalus(node1) && this.hasMalus(node5)) {
-            p_77266_[i++] = node11;
+            outputArray[i++] = node11;
         }
 
-        Node node12 = this.findAcceptedNode(p_77267_.x + 1, p_77267_.y - 1, p_77267_.z);
+        Node node12 = this.findAcceptedNode(p_node.x + 1, p_node.y - 1, p_node.z);
         if (this.isOpen(node12) && this.hasMalus(node2) && this.hasMalus(node5)) {
-            p_77266_[i++] = node12;
+            outputArray[i++] = node12;
         }
 
-        Node node13 = this.findAcceptedNode(p_77267_.x, p_77267_.y - 1, p_77267_.z - 1);
+        Node node13 = this.findAcceptedNode(p_node.x, p_node.y - 1, p_node.z - 1);
         if (this.isOpen(node13) && this.hasMalus(node3) && this.hasMalus(node5)) {
-            p_77266_[i++] = node13;
+            outputArray[i++] = node13;
         }
 
-        Node node14 = this.findAcceptedNode(p_77267_.x + 1, p_77267_.y, p_77267_.z - 1);
+        Node node14 = this.findAcceptedNode(p_node.x + 1, p_node.y, p_node.z - 1);
         if (this.isOpen(node14) && this.hasMalus(node3) && this.hasMalus(node2)) {
-            p_77266_[i++] = node14;
+            outputArray[i++] = node14;
         }
 
-        Node node15 = this.findAcceptedNode(p_77267_.x + 1, p_77267_.y, p_77267_.z + 1);
+        Node node15 = this.findAcceptedNode(p_node.x + 1, p_node.y, p_node.z + 1);
         if (this.isOpen(node15) && this.hasMalus(node) && this.hasMalus(node2)) {
-            p_77266_[i++] = node15;
+            outputArray[i++] = node15;
         }
 
-        Node node16 = this.findAcceptedNode(p_77267_.x - 1, p_77267_.y, p_77267_.z - 1);
+        Node node16 = this.findAcceptedNode(p_node.x - 1, p_node.y, p_node.z - 1);
         if (this.isOpen(node16) && this.hasMalus(node3) && this.hasMalus(node1)) {
-            p_77266_[i++] = node16;
+            outputArray[i++] = node16;
         }
 
-        Node node17 = this.findAcceptedNode(p_77267_.x - 1, p_77267_.y, p_77267_.z + 1);
+        Node node17 = this.findAcceptedNode(p_node.x - 1, p_node.y, p_node.z + 1);
         if (this.isOpen(node17) && this.hasMalus(node) && this.hasMalus(node1)) {
-            p_77266_[i++] = node17;
+            outputArray[i++] = node17;
         }
 
-        Node node18 = this.findAcceptedNode(p_77267_.x + 1, p_77267_.y + 1, p_77267_.z - 1);
+        Node node18 = this.findAcceptedNode(p_node.x + 1, p_node.y + 1, p_node.z - 1);
         if (this.isOpen(node18)
             && this.hasMalus(node14)
             && this.hasMalus(node3)
@@ -173,10 +173,10 @@ public class FlyNodeEvaluator extends WalkNodeEvaluator {
             && this.hasMalus(node4)
             && this.hasMalus(node9)
             && this.hasMalus(node8)) {
-            p_77266_[i++] = node18;
+            outputArray[i++] = node18;
         }
 
-        Node node19 = this.findAcceptedNode(p_77267_.x + 1, p_77267_.y + 1, p_77267_.z + 1);
+        Node node19 = this.findAcceptedNode(p_node.x + 1, p_node.y + 1, p_node.z + 1);
         if (this.isOpen(node19)
             && this.hasMalus(node15)
             && this.hasMalus(node)
@@ -184,10 +184,10 @@ public class FlyNodeEvaluator extends WalkNodeEvaluator {
             && this.hasMalus(node4)
             && this.hasMalus(node6)
             && this.hasMalus(node8)) {
-            p_77266_[i++] = node19;
+            outputArray[i++] = node19;
         }
 
-        Node node20 = this.findAcceptedNode(p_77267_.x - 1, p_77267_.y + 1, p_77267_.z - 1);
+        Node node20 = this.findAcceptedNode(p_node.x - 1, p_node.y + 1, p_node.z - 1);
         if (this.isOpen(node20)
             && this.hasMalus(node16)
             && this.hasMalus(node3)
@@ -195,10 +195,10 @@ public class FlyNodeEvaluator extends WalkNodeEvaluator {
             && this.hasMalus(node4)
             && this.hasMalus(node9)
             && this.hasMalus(node7)) {
-            p_77266_[i++] = node20;
+            outputArray[i++] = node20;
         }
 
-        Node node21 = this.findAcceptedNode(p_77267_.x - 1, p_77267_.y + 1, p_77267_.z + 1);
+        Node node21 = this.findAcceptedNode(p_node.x - 1, p_node.y + 1, p_node.z + 1);
         if (this.isOpen(node21)
             && this.hasMalus(node17)
             && this.hasMalus(node)
@@ -206,10 +206,10 @@ public class FlyNodeEvaluator extends WalkNodeEvaluator {
             && this.hasMalus(node4)
             && this.hasMalus(node6)
             && this.hasMalus(node7)) {
-            p_77266_[i++] = node21;
+            outputArray[i++] = node21;
         }
 
-        Node node22 = this.findAcceptedNode(p_77267_.x + 1, p_77267_.y - 1, p_77267_.z - 1);
+        Node node22 = this.findAcceptedNode(p_node.x + 1, p_node.y - 1, p_node.z - 1);
         if (this.isOpen(node22)
             && this.hasMalus(node14)
             && this.hasMalus(node3)
@@ -217,10 +217,10 @@ public class FlyNodeEvaluator extends WalkNodeEvaluator {
             && this.hasMalus(node5)
             && this.hasMalus(node13)
             && this.hasMalus(node12)) {
-            p_77266_[i++] = node22;
+            outputArray[i++] = node22;
         }
 
-        Node node23 = this.findAcceptedNode(p_77267_.x + 1, p_77267_.y - 1, p_77267_.z + 1);
+        Node node23 = this.findAcceptedNode(p_node.x + 1, p_node.y - 1, p_node.z + 1);
         if (this.isOpen(node23)
             && this.hasMalus(node15)
             && this.hasMalus(node)
@@ -228,10 +228,10 @@ public class FlyNodeEvaluator extends WalkNodeEvaluator {
             && this.hasMalus(node5)
             && this.hasMalus(node10)
             && this.hasMalus(node12)) {
-            p_77266_[i++] = node23;
+            outputArray[i++] = node23;
         }
 
-        Node node24 = this.findAcceptedNode(p_77267_.x - 1, p_77267_.y - 1, p_77267_.z - 1);
+        Node node24 = this.findAcceptedNode(p_node.x - 1, p_node.y - 1, p_node.z - 1);
         if (this.isOpen(node24)
             && this.hasMalus(node16)
             && this.hasMalus(node3)
@@ -239,10 +239,10 @@ public class FlyNodeEvaluator extends WalkNodeEvaluator {
             && this.hasMalus(node5)
             && this.hasMalus(node13)
             && this.hasMalus(node11)) {
-            p_77266_[i++] = node24;
+            outputArray[i++] = node24;
         }
 
-        Node node25 = this.findAcceptedNode(p_77267_.x - 1, p_77267_.y - 1, p_77267_.z + 1);
+        Node node25 = this.findAcceptedNode(p_node.x - 1, p_node.y - 1, p_node.z + 1);
         if (this.isOpen(node25)
             && this.hasMalus(node17)
             && this.hasMalus(node)
@@ -250,27 +250,27 @@ public class FlyNodeEvaluator extends WalkNodeEvaluator {
             && this.hasMalus(node5)
             && this.hasMalus(node10)
             && this.hasMalus(node11)) {
-            p_77266_[i++] = node25;
+            outputArray[i++] = node25;
         }
 
         return i;
     }
 
-    private boolean hasMalus(@Nullable Node p_77264_) {
-        return p_77264_ != null && p_77264_.costMalus >= 0.0F;
+    private boolean hasMalus(@Nullable Node node) {
+        return node != null && node.costMalus >= 0.0F;
     }
 
-    private boolean isOpen(@Nullable Node p_77270_) {
-        return p_77270_ != null && !p_77270_.closed;
+    private boolean isOpen(@Nullable Node node) {
+        return node != null && !node.closed;
     }
 
     @Nullable
-    protected Node findAcceptedNode(int p_262970_, int p_263018_, int p_262947_) {
+    protected Node findAcceptedNode(int x, int y, int z) {
         Node node = null;
-        PathType pathtype = this.getCachedPathType(p_262970_, p_263018_, p_262947_);
+        PathType pathtype = this.getCachedPathType(x, y, z);
         float f = this.mob.getPathfindingMalus(pathtype);
         if (f >= 0.0F) {
-            node = this.getNode(p_262970_, p_263018_, p_262947_);
+            node = this.getNode(x, y, z);
             node.type = pathtype;
             node.costMalus = Math.max(node.costMalus, f);
             if (pathtype == PathType.WALKABLE) {
@@ -282,20 +282,20 @@ public class FlyNodeEvaluator extends WalkNodeEvaluator {
     }
 
     @Override
-    protected PathType getCachedPathType(int p_326867_, int p_326833_, int p_326788_) {
+    protected PathType getCachedPathType(int x, int y, int z) {
         return this.pathTypeByPosCache
             .computeIfAbsent(
-                BlockPos.asLong(p_326867_, p_326833_, p_326788_),
-                p_330153_ -> this.getPathTypeOfMob(this.currentContext, p_326867_, p_326833_, p_326788_, this.mob)
+                BlockPos.asLong(x, y, z),
+                p_330153_ -> this.getPathTypeOfMob(this.currentContext, x, y, z, this.mob)
             );
     }
 
     @Override
-    public PathType getPathType(PathfindingContext p_331058_, int p_77246_, int p_77247_, int p_77248_) {
-        PathType pathtype = p_331058_.getPathTypeFromState(p_77246_, p_77247_, p_77248_);
-        if (pathtype == PathType.OPEN && p_77247_ >= p_331058_.level().getMinBuildHeight() + 1) {
-            BlockPos blockpos = new BlockPos(p_77246_, p_77247_ - 1, p_77248_);
-            PathType pathtype1 = p_331058_.getPathTypeFromState(blockpos.getX(), blockpos.getY(), blockpos.getZ());
+    public PathType getPathType(PathfindingContext context, int x, int y, int z) {
+        PathType pathtype = context.getPathTypeFromState(x, y, z);
+        if (pathtype == PathType.OPEN && y >= context.level().getMinBuildHeight() + 1) {
+            BlockPos blockpos = new BlockPos(x, y - 1, z);
+            PathType pathtype1 = context.getPathTypeFromState(blockpos.getX(), blockpos.getY(), blockpos.getZ());
             if (pathtype1 == PathType.DAMAGE_FIRE || pathtype1 == PathType.LAVA) {
                 pathtype = PathType.DAMAGE_FIRE;
             } else if (pathtype1 == PathType.DAMAGE_OTHER) {
@@ -303,7 +303,7 @@ public class FlyNodeEvaluator extends WalkNodeEvaluator {
             } else if (pathtype1 == PathType.COCOA) {
                 pathtype = PathType.COCOA;
             } else if (pathtype1 == PathType.FENCE) {
-                if (!blockpos.equals(p_331058_.mobPosition())) {
+                if (!blockpos.equals(context.mobPosition())) {
                     pathtype = PathType.FENCE;
                 }
             } else {
@@ -312,21 +312,21 @@ public class FlyNodeEvaluator extends WalkNodeEvaluator {
         }
 
         if (pathtype == PathType.WALKABLE || pathtype == PathType.OPEN) {
-            pathtype = checkNeighbourBlocks(p_331058_, p_77246_, p_77247_, p_77248_, pathtype);
+            pathtype = checkNeighbourBlocks(context, x, y, z, pathtype);
         }
 
         return pathtype;
     }
 
-    private Iterable<BlockPos> iteratePathfindingStartNodeCandidatePositions(Mob p_263108_) {
-        AABB aabb = p_263108_.getBoundingBox();
+    private Iterable<BlockPos> iteratePathfindingStartNodeCandidatePositions(Mob mob) {
+        AABB aabb = mob.getBoundingBox();
         boolean flag = aabb.getSize() < 1.0;
         if (!flag) {
             return List.of(
-                BlockPos.containing(aabb.minX, (double)p_263108_.getBlockY(), aabb.minZ),
-                BlockPos.containing(aabb.minX, (double)p_263108_.getBlockY(), aabb.maxZ),
-                BlockPos.containing(aabb.maxX, (double)p_263108_.getBlockY(), aabb.minZ),
-                BlockPos.containing(aabb.maxX, (double)p_263108_.getBlockY(), aabb.maxZ)
+                BlockPos.containing(aabb.minX, (double)mob.getBlockY(), aabb.minZ),
+                BlockPos.containing(aabb.minX, (double)mob.getBlockY(), aabb.maxZ),
+                BlockPos.containing(aabb.maxX, (double)mob.getBlockY(), aabb.minZ),
+                BlockPos.containing(aabb.maxX, (double)mob.getBlockY(), aabb.maxZ)
             );
         } else {
             double d0 = Math.max(0.0, 1.1F - aabb.getZsize());
@@ -334,7 +334,7 @@ public class FlyNodeEvaluator extends WalkNodeEvaluator {
             double d2 = Math.max(0.0, 1.1F - aabb.getYsize());
             AABB aabb1 = aabb.inflate(d1, d2, d0);
             return BlockPos.randomBetweenClosed(
-                p_263108_.getRandom(),
+                mob.getRandom(),
                 10,
                 Mth.floor(aabb1.minX),
                 Mth.floor(aabb1.minY),

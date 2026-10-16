@@ -1358,16 +1358,16 @@ public class VillagerTrades {
         )
         .build();
 
-    private static VillagerTrades.ItemListing commonBooks(int p_294584_) {
+    private static VillagerTrades.ItemListing commonBooks(int villagerXp) {
         return new VillagerTrades.TypeSpecificTrade(
             ImmutableMap.<VillagerType, VillagerTrades.ItemListing>builder()
-                .put(VillagerType.DESERT, new VillagerTrades.EnchantBookForEmeralds(p_294584_, EnchantmentTags.TRADES_DESERT_COMMON))
-                .put(VillagerType.JUNGLE, new VillagerTrades.EnchantBookForEmeralds(p_294584_, EnchantmentTags.TRADES_JUNGLE_COMMON))
-                .put(VillagerType.PLAINS, new VillagerTrades.EnchantBookForEmeralds(p_294584_, EnchantmentTags.TRADES_PLAINS_COMMON))
-                .put(VillagerType.SAVANNA, new VillagerTrades.EnchantBookForEmeralds(p_294584_, EnchantmentTags.TRADES_SAVANNA_COMMON))
-                .put(VillagerType.SNOW, new VillagerTrades.EnchantBookForEmeralds(p_294584_, EnchantmentTags.TRADES_SNOW_COMMON))
-                .put(VillagerType.SWAMP, new VillagerTrades.EnchantBookForEmeralds(p_294584_, EnchantmentTags.TRADES_SWAMP_COMMON))
-                .put(VillagerType.TAIGA, new VillagerTrades.EnchantBookForEmeralds(p_294584_, EnchantmentTags.TRADES_TAIGA_COMMON))
+                .put(VillagerType.DESERT, new VillagerTrades.EnchantBookForEmeralds(villagerXp, EnchantmentTags.TRADES_DESERT_COMMON))
+                .put(VillagerType.JUNGLE, new VillagerTrades.EnchantBookForEmeralds(villagerXp, EnchantmentTags.TRADES_JUNGLE_COMMON))
+                .put(VillagerType.PLAINS, new VillagerTrades.EnchantBookForEmeralds(villagerXp, EnchantmentTags.TRADES_PLAINS_COMMON))
+                .put(VillagerType.SAVANNA, new VillagerTrades.EnchantBookForEmeralds(villagerXp, EnchantmentTags.TRADES_SAVANNA_COMMON))
+                .put(VillagerType.SNOW, new VillagerTrades.EnchantBookForEmeralds(villagerXp, EnchantmentTags.TRADES_SNOW_COMMON))
+                .put(VillagerType.SWAMP, new VillagerTrades.EnchantBookForEmeralds(villagerXp, EnchantmentTags.TRADES_SWAMP_COMMON))
+                .put(VillagerType.TAIGA, new VillagerTrades.EnchantBookForEmeralds(villagerXp, EnchantmentTags.TRADES_TAIGA_COMMON))
                 .build()
         );
     }
@@ -1386,16 +1386,16 @@ public class VillagerTrades {
         );
     }
 
-    private static Int2ObjectMap<VillagerTrades.ItemListing[]> toIntMap(ImmutableMap<Integer, VillagerTrades.ItemListing[]> p_35631_) {
-        return new Int2ObjectOpenHashMap<>(p_35631_);
+    private static Int2ObjectMap<VillagerTrades.ItemListing[]> toIntMap(ImmutableMap<Integer, VillagerTrades.ItemListing[]> map) {
+        return new Int2ObjectOpenHashMap<>(map);
     }
 
-    private static ItemCost potionCost(Holder<Potion> p_331255_) {
-        return new ItemCost(Items.POTION).withComponents(p_330063_ -> p_330063_.expect(DataComponents.POTION_CONTENTS, new PotionContents(p_331255_)));
+    private static ItemCost potionCost(Holder<Potion> potion) {
+        return new ItemCost(Items.POTION).withComponents(p_330063_ -> p_330063_.expect(DataComponents.POTION_CONTENTS, new PotionContents(potion)));
     }
 
-    private static ItemStack potion(Holder<Potion> p_316745_) {
-        return PotionContents.createItemStack(Items.POTION, p_316745_);
+    private static ItemStack potion(Holder<Potion> potion) {
+        return PotionContents.createItemStack(Items.POTION, potion);
     }
 
     public static class DyedArmorForEmeralds implements VillagerTrades.ItemListing {
@@ -1404,30 +1404,30 @@ public class VillagerTrades {
         private final int maxUses;
         private final int villagerXp;
 
-        public DyedArmorForEmeralds(Item p_35639_, int p_35640_) {
-            this(p_35639_, p_35640_, 12, 1);
+        public DyedArmorForEmeralds(Item item, int value) {
+            this(item, value, 12, 1);
         }
 
-        public DyedArmorForEmeralds(Item p_35642_, int p_35643_, int p_35644_, int p_35645_) {
-            this.item = p_35642_;
-            this.value = p_35643_;
-            this.maxUses = p_35644_;
-            this.villagerXp = p_35645_;
+        public DyedArmorForEmeralds(Item item, int value, int maxUses, int villagerXp) {
+            this.item = item;
+            this.value = value;
+            this.maxUses = maxUses;
+            this.villagerXp = villagerXp;
         }
 
         @Override
-        public MerchantOffer getOffer(Entity p_219679_, RandomSource p_219680_) {
+        public MerchantOffer getOffer(Entity trader, RandomSource random) {
             ItemCost itemcost = new ItemCost(Items.EMERALD, this.value);
             ItemStack itemstack = new ItemStack(this.item);
             if (itemstack.is(ItemTags.DYEABLE)) {
                 List<DyeItem> list = Lists.newArrayList();
-                list.add(getRandomDye(p_219680_));
-                if (p_219680_.nextFloat() > 0.7F) {
-                    list.add(getRandomDye(p_219680_));
+                list.add(getRandomDye(random));
+                if (random.nextFloat() > 0.7F) {
+                    list.add(getRandomDye(random));
                 }
 
-                if (p_219680_.nextFloat() > 0.8F) {
-                    list.add(getRandomDye(p_219680_));
+                if (random.nextFloat() > 0.8F) {
+                    list.add(getRandomDye(random));
                 }
 
                 itemstack = DyedItemColor.applyDyes(itemstack, list);
@@ -1436,8 +1436,8 @@ public class VillagerTrades {
             return new MerchantOffer(itemcost, itemstack, this.maxUses, this.villagerXp, 0.2F);
         }
 
-        private static DyeItem getRandomDye(RandomSource p_219677_) {
-            return DyeItem.byColor(DyeColor.byId(p_219677_.nextInt(16)));
+        private static DyeItem getRandomDye(RandomSource random) {
+            return DyeItem.byColor(DyeColor.byId(random.nextInt(16)));
         }
     }
 
@@ -1448,24 +1448,24 @@ public class VillagerTrades {
         private final int emeraldAmount;
         private final float priceMultiplier;
 
-        public EmeraldForItems(ItemLike p_35657_, int p_35658_, int p_35659_, int p_35660_) {
-            this(p_35657_, p_35658_, p_35659_, p_35660_, 1);
+        public EmeraldForItems(ItemLike item, int cost, int maxUses, int villagerXp) {
+            this(item, cost, maxUses, villagerXp, 1);
         }
 
-        public EmeraldForItems(ItemLike p_295166_, int p_294790_, int p_294810_, int p_295575_, int p_294582_) {
-            this(new ItemCost(p_295166_.asItem(), p_294790_), p_294810_, p_295575_, p_294582_);
+        public EmeraldForItems(ItemLike item, int cost, int maxUses, int villagerXp, int emeraldAmount) {
+            this(new ItemCost(item.asItem(), cost), maxUses, villagerXp, emeraldAmount);
         }
 
-        public EmeraldForItems(ItemCost p_331989_, int p_294800_, int p_295111_, int p_294137_) {
-            this.itemStack = p_331989_;
-            this.maxUses = p_294800_;
-            this.villagerXp = p_295111_;
-            this.emeraldAmount = p_294137_;
+        public EmeraldForItems(ItemCost itemStack, int maxUses, int villagerXp, int emeraldAmount) {
+            this.itemStack = itemStack;
+            this.maxUses = maxUses;
+            this.villagerXp = villagerXp;
+            this.emeraldAmount = emeraldAmount;
             this.priceMultiplier = 0.05F;
         }
 
         @Override
-        public MerchantOffer getOffer(Entity p_219682_, RandomSource p_219683_) {
+        public MerchantOffer getOffer(Entity trader, RandomSource random) {
             return new MerchantOffer(this.itemStack, new ItemStack(Items.EMERALD, this.emeraldAmount), this.maxUses, this.villagerXp, this.priceMultiplier);
         }
     }
@@ -1476,21 +1476,21 @@ public class VillagerTrades {
         private final int maxUses;
         private final int villagerXp;
 
-        public EmeraldsForVillagerTypeItem(int p_35669_, int p_35670_, int p_35671_, Map<VillagerType, Item> p_35672_) {
+        public EmeraldsForVillagerTypeItem(int cost, int maxUses, int villagerXp, Map<VillagerType, Item> trades) {
             if (false) // Neo: disable this check so that mods can add custom villager types
-            BuiltInRegistries.VILLAGER_TYPE.stream().filter(p_35680_ -> !p_35672_.containsKey(p_35680_)).findAny().ifPresent(p_339515_ -> {
+            BuiltInRegistries.VILLAGER_TYPE.stream().filter(p_35680_ -> !trades.containsKey(p_35680_)).findAny().ifPresent(p_339515_ -> {
                 throw new IllegalStateException("Missing trade for villager type: " + BuiltInRegistries.VILLAGER_TYPE.getKey(p_339515_));
             });
-            this.trades = p_35672_;
-            this.cost = p_35669_;
-            this.maxUses = p_35670_;
-            this.villagerXp = p_35671_;
+            this.trades = trades;
+            this.cost = cost;
+            this.maxUses = maxUses;
+            this.villagerXp = villagerXp;
         }
 
         @Nullable
         @Override
-        public MerchantOffer getOffer(Entity p_219685_, RandomSource p_219686_) {
-            if (p_219685_ instanceof VillagerDataHolder villagerdataholder) {
+        public MerchantOffer getOffer(Entity trader, RandomSource random) {
+            if (trader instanceof VillagerDataHolder villagerdataholder) {
                 Item item = this.trades.get(villagerdataholder.getVillagerData().getType());
                 if (item == null) return null;  // Neo: add a check for unknown villager types
                 ItemCost itemcost = new ItemCost(item, this.cost);
@@ -1507,23 +1507,23 @@ public class VillagerTrades {
         private final int minLevel;
         private final int maxLevel;
 
-        public EnchantBookForEmeralds(int p_296300_, TagKey<Enchantment> p_345350_) {
-            this(p_296300_, 0, Integer.MAX_VALUE, p_345350_);
+        public EnchantBookForEmeralds(int villagerXp, TagKey<Enchantment> tradeableEnchantments) {
+            this(villagerXp, 0, Integer.MAX_VALUE, tradeableEnchantments);
         }
 
-        public EnchantBookForEmeralds(int p_296323_, int p_345122_, int p_346010_, TagKey<Enchantment> p_346031_) {
-            this.minLevel = p_345122_;
-            this.maxLevel = p_346010_;
-            this.villagerXp = p_296323_;
-            this.tradeableEnchantments = p_346031_;
+        public EnchantBookForEmeralds(int villagerXp, int minLevel, int maxLevel, TagKey<Enchantment> tradeableEnchantments) {
+            this.minLevel = minLevel;
+            this.maxLevel = maxLevel;
+            this.villagerXp = villagerXp;
+            this.tradeableEnchantments = tradeableEnchantments;
         }
 
         @Override
-        public MerchantOffer getOffer(Entity p_219688_, RandomSource p_219689_) {
-            Optional<Holder<Enchantment>> optional = p_219688_.level()
+        public MerchantOffer getOffer(Entity trader, RandomSource random) {
+            Optional<Holder<Enchantment>> optional = trader.level()
                 .registryAccess()
                 .registryOrThrow(Registries.ENCHANTMENT)
-                .getRandomElementOf(this.tradeableEnchantments, p_219689_);
+                .getRandomElementOf(this.tradeableEnchantments, random);
             int i;
             ItemStack itemstack;
             if (!optional.isEmpty()) {
@@ -1531,9 +1531,9 @@ public class VillagerTrades {
                 Enchantment enchantment = holder.value();
                 int j = Math.max(enchantment.getMinLevel(), this.minLevel);
                 int k = Math.min(enchantment.getMaxLevel(), this.maxLevel);
-                int l = Mth.nextInt(p_219689_, j, k);
+                int l = Mth.nextInt(random, j, k);
                 itemstack = EnchantedBookItem.createForEnchantment(new EnchantmentInstance(holder, l));
-                i = 2 + p_219689_.nextInt(5 + l * 10) + 3 * l;
+                i = 2 + random.nextInt(5 + l * 10) + 3 * l;
                 if (holder.is(EnchantmentTags.DOUBLE_TRADE_PRICE)) {
                     i *= 2;
                 }
@@ -1557,25 +1557,25 @@ public class VillagerTrades {
         private final int villagerXp;
         private final float priceMultiplier;
 
-        public EnchantedItemForEmeralds(Item p_35693_, int p_35694_, int p_35695_, int p_35696_) {
-            this(p_35693_, p_35694_, p_35695_, p_35696_, 0.05F);
+        public EnchantedItemForEmeralds(Item item, int baseEmeraldCost, int maxUses, int villagerXp) {
+            this(item, baseEmeraldCost, maxUses, villagerXp, 0.05F);
         }
 
-        public EnchantedItemForEmeralds(Item p_35698_, int p_35699_, int p_35700_, int p_35701_, float p_35702_) {
-            this.itemStack = new ItemStack(p_35698_);
-            this.baseEmeraldCost = p_35699_;
-            this.maxUses = p_35700_;
-            this.villagerXp = p_35701_;
-            this.priceMultiplier = p_35702_;
+        public EnchantedItemForEmeralds(Item item, int baseEmeraldCost, int maxUses, int villagerXp, float priceMultiplier) {
+            this.itemStack = new ItemStack(item);
+            this.baseEmeraldCost = baseEmeraldCost;
+            this.maxUses = maxUses;
+            this.villagerXp = villagerXp;
+            this.priceMultiplier = priceMultiplier;
         }
 
         @Override
-        public MerchantOffer getOffer(Entity p_219691_, RandomSource p_219692_) {
-            int i = 5 + p_219692_.nextInt(15);
-            RegistryAccess registryaccess = p_219691_.level().registryAccess();
+        public MerchantOffer getOffer(Entity trader, RandomSource random) {
+            int i = 5 + random.nextInt(15);
+            RegistryAccess registryaccess = trader.level().registryAccess();
             Optional<HolderSet.Named<Enchantment>> optional = registryaccess.registryOrThrow(Registries.ENCHANTMENT)
                 .getTag(EnchantmentTags.ON_TRADED_EQUIPMENT);
-            ItemStack itemstack = EnchantmentHelper.enchantItem(p_219692_, new ItemStack(this.itemStack.getItem()), i, registryaccess, optional);
+            ItemStack itemstack = EnchantmentHelper.enchantItem(random, new ItemStack(this.itemStack.getItem()), i, registryaccess, optional);
             int j = Math.min(this.baseEmeraldCost + i, 64);
             ItemCost itemcost = new ItemCost(Items.EMERALD, j);
             return new MerchantOffer(itemcost, itemstack, this.maxUses, this.villagerXp, this.priceMultiplier);
@@ -1592,7 +1592,7 @@ public class VillagerTrades {
 
     public interface ItemListing {
         @Nullable
-        MerchantOffer getOffer(Entity p_219693_, RandomSource p_219694_);
+        MerchantOffer getOffer(Entity trader, RandomSource random);
     }
 
     public static class ItemsAndEmeraldsToItems implements VillagerTrades.ItemListing {
@@ -1604,61 +1604,61 @@ public class VillagerTrades {
         private final float priceMultiplier;
         private final Optional<ResourceKey<EnchantmentProvider>> enchantmentProvider;
 
-        public ItemsAndEmeraldsToItems(ItemLike p_35717_, int p_35718_, int p_35719_, Item p_35720_, int p_35721_, int p_35722_, int p_35723_, float p_301975_) {
-            this(p_35717_, p_35718_, p_35719_, new ItemStack(p_35720_), p_35721_, p_35722_, p_35723_, p_301975_);
+        public ItemsAndEmeraldsToItems(ItemLike fromItem, int fromItemCount, int emeraldCost, Item toItem, int toItemCount, int maxUses, int villagerXp, float priceMultiplier) {
+            this(fromItem, fromItemCount, emeraldCost, new ItemStack(toItem), toItemCount, maxUses, villagerXp, priceMultiplier);
         }
 
         private ItemsAndEmeraldsToItems(
-            ItemLike p_35725_, int p_35726_, int p_35728_, ItemStack p_302012_, int p_35729_, int p_35730_, int p_302002_, float p_302039_
+            ItemLike fromItem, int fromItemCount, int emeraldCost, ItemStack toItem, int toItemCount, int maxUses, int villagerXp, float priceMultiplier
         ) {
-            this(new ItemCost(p_35725_, p_35726_), p_35728_, p_302012_.copyWithCount(p_35729_), p_35730_, p_302002_, p_302039_, Optional.empty());
+            this(new ItemCost(fromItem, fromItemCount), emeraldCost, toItem.copyWithCount(toItemCount), maxUses, villagerXp, priceMultiplier, Optional.empty());
         }
 
         ItemsAndEmeraldsToItems(
-            ItemLike p_345985_,
-            int p_320882_,
-            int p_320089_,
-            ItemLike p_345218_,
-            int p_320458_,
-            int p_345627_,
-            int p_345902_,
-            float p_319962_,
-            ResourceKey<EnchantmentProvider> p_345388_
+            ItemLike fromItem,
+            int fromItemAmount,
+            int emeraldCost,
+            ItemLike toItem,
+            int toItemCount,
+            int maxUses,
+            int villagerXp,
+            float priceMultiplier,
+            ResourceKey<EnchantmentProvider> enchantmentProvider
         ) {
-            this(new ItemCost(p_345985_, p_320882_), p_320089_, new ItemStack(p_345218_, p_320458_), p_345627_, p_345902_, p_319962_, Optional.of(p_345388_));
+            this(new ItemCost(fromItem, fromItemAmount), emeraldCost, new ItemStack(toItem, toItemCount), maxUses, villagerXp, priceMultiplier, Optional.of(enchantmentProvider));
         }
 
         public ItemsAndEmeraldsToItems(
-            ItemCost p_345481_,
-            int p_345494_,
-            ItemStack p_345223_,
-            int p_345894_,
-            int p_344894_,
-            float p_345457_,
-            Optional<ResourceKey<EnchantmentProvider>> p_346401_
+            ItemCost fromItem,
+            int emeraldCost,
+            ItemStack toItem,
+            int maxUses,
+            int villagerXp,
+            float priceMultiplier,
+            Optional<ResourceKey<EnchantmentProvider>> enchantmentProvider
         ) {
-            this.fromItem = p_345481_;
-            this.emeraldCost = p_345494_;
-            this.toItem = p_345223_;
-            this.maxUses = p_345894_;
-            this.villagerXp = p_344894_;
-            this.priceMultiplier = p_345457_;
-            this.enchantmentProvider = p_346401_;
+            this.fromItem = fromItem;
+            this.emeraldCost = emeraldCost;
+            this.toItem = toItem;
+            this.maxUses = maxUses;
+            this.villagerXp = villagerXp;
+            this.priceMultiplier = priceMultiplier;
+            this.enchantmentProvider = enchantmentProvider;
         }
 
         @Nullable
         @Override
-        public MerchantOffer getOffer(Entity p_219696_, RandomSource p_219697_) {
+        public MerchantOffer getOffer(Entity trader, RandomSource random) {
             ItemStack itemstack = this.toItem.copy();
-            Level level = p_219696_.level();
+            Level level = trader.level();
             this.enchantmentProvider
                 .ifPresent(
                     p_348335_ -> EnchantmentHelper.enchantItemFromProvider(
                             itemstack,
                             level.registryAccess(),
                             (ResourceKey<EnchantmentProvider>)p_348335_,
-                            level.getCurrentDifficultyAt(p_219696_.blockPosition()),
-                            p_219697_
+                            level.getCurrentDifficultyAt(trader.blockPosition()),
+                            random
                         )
                 );
             return new MerchantOffer(
@@ -1675,66 +1675,66 @@ public class VillagerTrades {
         private final float priceMultiplier;
         private final Optional<ResourceKey<EnchantmentProvider>> enchantmentProvider;
 
-        public ItemsForEmeralds(Block p_35765_, int p_35766_, int p_35767_, int p_35768_, int p_35769_) {
-            this(new ItemStack(p_35765_), p_35766_, p_35767_, p_35768_, p_35769_);
+        public ItemsForEmeralds(Block block, int emeraldCost, int numberOfItems, int maxUses, int villagerXp) {
+            this(new ItemStack(block), emeraldCost, numberOfItems, maxUses, villagerXp);
         }
 
-        public ItemsForEmeralds(Item p_35741_, int p_35742_, int p_35743_, int p_35744_) {
-            this(new ItemStack(p_35741_), p_35742_, p_35743_, 12, p_35744_);
+        public ItemsForEmeralds(Item item, int emeraldCost, int numberOfItems, int villagerXp) {
+            this(new ItemStack(item), emeraldCost, numberOfItems, 12, villagerXp);
         }
 
-        public ItemsForEmeralds(Item p_35746_, int p_35747_, int p_35748_, int p_35749_, int p_35750_) {
-            this(new ItemStack(p_35746_), p_35747_, p_35748_, p_35749_, p_35750_);
+        public ItemsForEmeralds(Item item, int emeraldCost, int numberOfItems, int maxUses, int villagerXp) {
+            this(new ItemStack(item), emeraldCost, numberOfItems, maxUses, villagerXp);
         }
 
-        public ItemsForEmeralds(ItemStack p_35752_, int p_35753_, int p_35754_, int p_35755_, int p_35756_) {
-            this(p_35752_, p_35753_, p_35754_, p_35755_, p_35756_, 0.05F);
+        public ItemsForEmeralds(ItemStack itemStack, int emeraldCost, int numberOfItems, int maxUses, int villagerXp) {
+            this(itemStack, emeraldCost, numberOfItems, maxUses, villagerXp, 0.05F);
         }
 
-        public ItemsForEmeralds(Item p_302016_, int p_302006_, int p_302008_, int p_302010_, int p_301989_, float p_302037_) {
-            this(new ItemStack(p_302016_), p_302006_, p_302008_, p_302010_, p_301989_, p_302037_);
-        }
-
-        public ItemsForEmeralds(
-            Item p_345085_, int p_346208_, int p_345650_, int p_345298_, int p_345652_, float p_346098_, ResourceKey<EnchantmentProvider> p_345759_
-        ) {
-            this(new ItemStack(p_345085_), p_346208_, p_345650_, p_345298_, p_345652_, p_346098_, Optional.of(p_345759_));
-        }
-
-        public ItemsForEmeralds(ItemStack p_35758_, int p_35759_, int p_35760_, int p_35761_, int p_35762_, float p_35763_) {
-            this(p_35758_, p_35759_, p_35760_, p_35761_, p_35762_, p_35763_, Optional.empty());
+        public ItemsForEmeralds(Item item, int emeraldCost, int numberOfItems, int maxUses, int villagerXp, float priceMultiplier) {
+            this(new ItemStack(item), emeraldCost, numberOfItems, maxUses, villagerXp, priceMultiplier);
         }
 
         public ItemsForEmeralds(
-            ItemStack p_344989_,
-            int p_345411_,
-            int p_345770_,
-            int p_344818_,
-            int p_345507_,
-            float p_344802_,
-            Optional<ResourceKey<EnchantmentProvider>> p_345806_
+            Item item, int emeraldCost, int numberOfItems, int maxUses, int villagerXp, float priceMultiplier, ResourceKey<EnchantmentProvider> enchantmentProvider
         ) {
-            this.itemStack = p_344989_;
-            this.emeraldCost = p_345411_;
-            this.itemStack.setCount(p_345770_);
-            this.maxUses = p_344818_;
-            this.villagerXp = p_345507_;
-            this.priceMultiplier = p_344802_;
-            this.enchantmentProvider = p_345806_;
+            this(new ItemStack(item), emeraldCost, numberOfItems, maxUses, villagerXp, priceMultiplier, Optional.of(enchantmentProvider));
+        }
+
+        public ItemsForEmeralds(ItemStack itemStack, int emeraldCost, int numberOfItems, int maxUses, int villagerXp, float priceMultiplier) {
+            this(itemStack, emeraldCost, numberOfItems, maxUses, villagerXp, priceMultiplier, Optional.empty());
+        }
+
+        public ItemsForEmeralds(
+            ItemStack itemStack,
+            int emeraldCost,
+            int numberOfItems,
+            int maxUses,
+            int villagerXp,
+            float priceMultiplier,
+            Optional<ResourceKey<EnchantmentProvider>> enchantmentProvider
+        ) {
+            this.itemStack = itemStack;
+            this.emeraldCost = emeraldCost;
+            this.itemStack.setCount(numberOfItems);
+            this.maxUses = maxUses;
+            this.villagerXp = villagerXp;
+            this.priceMultiplier = priceMultiplier;
+            this.enchantmentProvider = enchantmentProvider;
         }
 
         @Override
-        public MerchantOffer getOffer(Entity p_219699_, RandomSource p_219700_) {
+        public MerchantOffer getOffer(Entity trader, RandomSource random) {
             ItemStack itemstack = this.itemStack.copy();
-            Level level = p_219699_.level();
+            Level level = trader.level();
             this.enchantmentProvider
                 .ifPresent(
                     p_348340_ -> EnchantmentHelper.enchantItemFromProvider(
                             itemstack,
                             level.registryAccess(),
                             (ResourceKey<EnchantmentProvider>)p_348340_,
-                            level.getCurrentDifficultyAt(p_219699_.blockPosition()),
-                            p_219700_
+                            level.getCurrentDifficultyAt(trader.blockPosition()),
+                            random
                         )
                 );
             return new MerchantOffer(new ItemCost(Items.EMERALD, this.emeraldCost), itemstack, this.maxUses, this.villagerXp, this.priceMultiplier);
@@ -1746,19 +1746,19 @@ public class VillagerTrades {
         private final int xp;
         private final float priceMultiplier;
 
-        public SuspiciousStewForEmerald(Holder<MobEffect> p_316230_, int p_186314_, int p_186315_) {
-            this(new SuspiciousStewEffects(List.of(new SuspiciousStewEffects.Entry(p_316230_, p_186314_))), p_186315_, 0.05F);
+        public SuspiciousStewForEmerald(Holder<MobEffect> effect, int duration, int xp) {
+            this(new SuspiciousStewEffects(List.of(new SuspiciousStewEffects.Entry(effect, duration))), xp, 0.05F);
         }
 
-        public SuspiciousStewForEmerald(SuspiciousStewEffects p_330918_, int p_299043_, float p_298449_) {
-            this.effects = p_330918_;
-            this.xp = p_299043_;
-            this.priceMultiplier = p_298449_;
+        public SuspiciousStewForEmerald(SuspiciousStewEffects effects, int xp, float priceMultiplier) {
+            this.effects = effects;
+            this.xp = xp;
+            this.priceMultiplier = priceMultiplier;
         }
 
         @Nullable
         @Override
-        public MerchantOffer getOffer(Entity p_219702_, RandomSource p_219703_) {
+        public MerchantOffer getOffer(Entity trader, RandomSource random) {
             ItemStack itemstack = new ItemStack(Items.SUSPICIOUS_STEW, 1);
             itemstack.set(DataComponents.SUSPICIOUS_STEW_EFFECTS, this.effects);
             return new MerchantOffer(new ItemCost(Items.EMERALD), itemstack, 12, this.xp, this.priceMultiplier);
@@ -1766,6 +1766,9 @@ public class VillagerTrades {
     }
 
     public static class TippedArrowForItemsAndEmeralds implements VillagerTrades.ItemListing {
+        /**
+         * An ItemStack that can have potion effects written to it.
+         */
         private final ItemStack toItem;
         private final int toCount;
         private final int emeraldCost;
@@ -1775,25 +1778,25 @@ public class VillagerTrades {
         private final int fromCount;
         private final float priceMultiplier;
 
-        public TippedArrowForItemsAndEmeralds(Item p_35793_, int p_35794_, Item p_35795_, int p_35796_, int p_35797_, int p_35798_, int p_35799_) {
-            this.toItem = new ItemStack(p_35795_);
-            this.emeraldCost = p_35797_;
-            this.maxUses = p_35798_;
-            this.villagerXp = p_35799_;
-            this.fromItem = p_35793_;
-            this.fromCount = p_35794_;
-            this.toCount = p_35796_;
+        public TippedArrowForItemsAndEmeralds(Item fromItem, int fromCount, Item toItem, int toCount, int emeraldCost, int maxUses, int villagerXp) {
+            this.toItem = new ItemStack(toItem);
+            this.emeraldCost = emeraldCost;
+            this.maxUses = maxUses;
+            this.villagerXp = villagerXp;
+            this.fromItem = fromItem;
+            this.fromCount = fromCount;
+            this.toCount = toCount;
             this.priceMultiplier = 0.05F;
         }
 
         @Override
-        public MerchantOffer getOffer(Entity p_219705_, RandomSource p_219706_) {
+        public MerchantOffer getOffer(Entity trader, RandomSource random) {
             ItemCost itemcost = new ItemCost(Items.EMERALD, this.emeraldCost);
             List<Holder<Potion>> list = BuiltInRegistries.POTION
                 .holders()
-                .filter(p_340770_ -> !p_340770_.value().getEffects().isEmpty() && p_219705_.level().potionBrewing().isBrewablePotion(p_340770_))
+                .filter(p_340770_ -> !p_340770_.value().getEffects().isEmpty() && trader.level().potionBrewing().isBrewablePotion(p_340770_))
                 .collect(Collectors.toList());
-            Holder<Potion> holder = Util.getRandom(list, p_219706_);
+            Holder<Potion> holder = Util.getRandom(list, random);
             ItemStack itemstack = new ItemStack(this.toItem.getItem(), this.toCount);
             itemstack.set(DataComponents.POTION_CONTENTS, new PotionContents(holder));
             return new MerchantOffer(
@@ -1811,24 +1814,24 @@ public class VillagerTrades {
         private final int villagerXp;
 
         public TreasureMapForEmeralds(
-            int p_207767_, TagKey<Structure> p_207768_, String p_207769_, Holder<MapDecorationType> p_335969_, int p_207771_, int p_207772_
+            int emeraldCost, TagKey<Structure> destination, String displayName, Holder<MapDecorationType> destinationType, int maxUses, int villagerXp
         ) {
-            this.emeraldCost = p_207767_;
-            this.destination = p_207768_;
-            this.displayName = p_207769_;
-            this.destinationType = p_335969_;
-            this.maxUses = p_207771_;
-            this.villagerXp = p_207772_;
+            this.emeraldCost = emeraldCost;
+            this.destination = destination;
+            this.displayName = displayName;
+            this.destinationType = destinationType;
+            this.maxUses = maxUses;
+            this.villagerXp = villagerXp;
         }
 
         @Nullable
         @Override
-        public MerchantOffer getOffer(Entity p_219708_, RandomSource p_219709_) {
-            if (!(p_219708_.level() instanceof ServerLevel)) {
+        public MerchantOffer getOffer(Entity trader, RandomSource random) {
+            if (!(trader.level() instanceof ServerLevel)) {
                 return null;
             } else {
-                ServerLevel serverlevel = (ServerLevel)p_219708_.level();
-                BlockPos blockpos = serverlevel.findNearestMapStructure(this.destination, p_219708_.blockPosition(), 100, true);
+                ServerLevel serverlevel = (ServerLevel)trader.level();
+                BlockPos blockpos = serverlevel.findNearestMapStructure(this.destination, trader.blockPosition(), 100, true);
                 if (blockpos != null) {
                     ItemStack itemstack = MapItem.create(serverlevel, blockpos.getX(), blockpos.getZ(), (byte)2, true, true);
                     MapItem.renderBiomePreviewMap(serverlevel, itemstack);
@@ -1845,19 +1848,19 @@ public class VillagerTrades {
     }
 
     public static record TypeSpecificTrade(Map<VillagerType, VillagerTrades.ItemListing> trades) implements VillagerTrades.ItemListing {
-        public static VillagerTrades.TypeSpecificTrade oneTradeInBiomes(VillagerTrades.ItemListing p_302030_, VillagerType... p_301996_) {
+        public static VillagerTrades.TypeSpecificTrade oneTradeInBiomes(VillagerTrades.ItemListing listing, VillagerType... types) {
             return new VillagerTrades.TypeSpecificTrade(
-                Arrays.stream(p_301996_).collect(Collectors.toMap(p_301920_ -> (VillagerType)p_301920_, p_301922_ -> p_302030_))
+                Arrays.stream(types).collect(Collectors.toMap(p_301920_ -> (VillagerType)p_301920_, p_301922_ -> listing))
             );
         }
 
         @Nullable
         @Override
-        public MerchantOffer getOffer(Entity p_296480_, RandomSource p_295729_) {
-            if (p_296480_ instanceof VillagerDataHolder villagerdataholder) {
+        public MerchantOffer getOffer(Entity trader, RandomSource random) {
+            if (trader instanceof VillagerDataHolder villagerdataholder) {
                 VillagerType villagertype = villagerdataholder.getVillagerData().getType();
                 VillagerTrades.ItemListing villagertrades$itemlisting = this.trades.get(villagertype);
-                return villagertrades$itemlisting == null ? null : villagertrades$itemlisting.getOffer(p_296480_, p_295729_);
+                return villagertrades$itemlisting == null ? null : villagertrades$itemlisting.getOffer(trader, random);
             } else {
                 return null;
             }

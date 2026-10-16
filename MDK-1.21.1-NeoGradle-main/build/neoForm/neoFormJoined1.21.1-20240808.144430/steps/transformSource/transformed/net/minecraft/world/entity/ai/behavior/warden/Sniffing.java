@@ -15,7 +15,7 @@ public class Sniffing<E extends Warden> extends Behavior<E> {
     private static final double ANGER_FROM_SNIFFING_MAX_DISTANCE_XZ = 6.0;
     private static final double ANGER_FROM_SNIFFING_MAX_DISTANCE_Y = 20.0;
 
-    public Sniffing(int p_217647_) {
+    public Sniffing(int duration) {
         super(
             ImmutableMap.of(
                 MemoryModuleType.IS_SNIFFING,
@@ -33,31 +33,31 @@ public class Sniffing<E extends Warden> extends Behavior<E> {
                 MemoryModuleType.SNIFF_COOLDOWN,
                 MemoryStatus.REGISTERED
             ),
-            p_217647_
+            duration
         );
     }
 
-    protected boolean canStillUse(ServerLevel p_217653_, E p_217654_, long p_217655_) {
+    protected boolean canStillUse(ServerLevel level, E entity, long gameTime) {
         return true;
     }
 
-    protected void start(ServerLevel p_217664_, E p_217665_, long p_217666_) {
-        p_217665_.playSound(SoundEvents.WARDEN_SNIFF, 5.0F, 1.0F);
+    protected void start(ServerLevel level, E entity, long gameTime) {
+        entity.playSound(SoundEvents.WARDEN_SNIFF, 5.0F, 1.0F);
     }
 
-    protected void stop(ServerLevel p_217672_, E p_217673_, long p_217674_) {
-        if (p_217673_.hasPose(Pose.SNIFFING)) {
-            p_217673_.setPose(Pose.STANDING);
+    protected void stop(ServerLevel level, E entity, long gameTime) {
+        if (entity.hasPose(Pose.SNIFFING)) {
+            entity.setPose(Pose.STANDING);
         }
 
-        p_217673_.getBrain().eraseMemory(MemoryModuleType.IS_SNIFFING);
-        p_217673_.getBrain().getMemory(MemoryModuleType.NEAREST_ATTACKABLE).filter(p_217673_::canTargetEntity).ifPresent(p_352765_ -> {
-            if (p_217673_.closerThan(p_352765_, 6.0, 20.0)) {
-                p_217673_.increaseAngerAt(p_352765_);
+        entity.getBrain().eraseMemory(MemoryModuleType.IS_SNIFFING);
+        entity.getBrain().getMemory(MemoryModuleType.NEAREST_ATTACKABLE).filter(entity::canTargetEntity).ifPresent(p_352765_ -> {
+            if (entity.closerThan(p_352765_, 6.0, 20.0)) {
+                entity.increaseAngerAt(p_352765_);
             }
 
-            if (!p_217673_.getBrain().hasMemoryValue(MemoryModuleType.DISTURBANCE_LOCATION)) {
-                WardenAi.setDisturbanceLocation(p_217673_, p_352765_.blockPosition());
+            if (!entity.getBrain().hasMemoryValue(MemoryModuleType.DISTURBANCE_LOCATION)) {
+                WardenAi.setDisturbanceLocation(entity, p_352765_.blockPosition());
             }
         });
     }

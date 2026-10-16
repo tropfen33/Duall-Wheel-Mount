@@ -17,18 +17,18 @@ public class OutlineBufferSource implements MultiBufferSource {
     private int teamB = 255;
     private int teamA = 255;
 
-    public OutlineBufferSource(MultiBufferSource.BufferSource p_109927_) {
-        this.bufferSource = p_109927_;
+    public OutlineBufferSource(MultiBufferSource.BufferSource bufferSource) {
+        this.bufferSource = bufferSource;
     }
 
     @Override
-    public VertexConsumer getBuffer(RenderType p_109935_) {
-        if (p_109935_.isOutline()) {
-            VertexConsumer vertexconsumer2 = this.outlineBufferSource.getBuffer(p_109935_);
+    public VertexConsumer getBuffer(RenderType renderType) {
+        if (renderType.isOutline()) {
+            VertexConsumer vertexconsumer2 = this.outlineBufferSource.getBuffer(renderType);
             return new OutlineBufferSource.EntityOutlineGenerator(vertexconsumer2, this.teamR, this.teamG, this.teamB, this.teamA);
         } else {
-            VertexConsumer vertexconsumer = this.bufferSource.getBuffer(p_109935_);
-            Optional<RenderType> optional = p_109935_.outline();
+            VertexConsumer vertexconsumer = this.bufferSource.getBuffer(renderType);
+            Optional<RenderType> optional = renderType.outline();
             if (optional.isPresent()) {
                 VertexConsumer vertexconsumer1 = this.outlineBufferSource.getBuffer(optional.get());
                 OutlineBufferSource.EntityOutlineGenerator outlinebuffersource$entityoutlinegenerator = new OutlineBufferSource.EntityOutlineGenerator(
@@ -41,11 +41,11 @@ public class OutlineBufferSource implements MultiBufferSource {
         }
     }
 
-    public void setColor(int p_109930_, int p_109931_, int p_109932_, int p_109933_) {
-        this.teamR = p_109930_;
-        this.teamG = p_109931_;
-        this.teamB = p_109932_;
-        this.teamA = p_109933_;
+    public void setColor(int red, int green, int blue, int alpha) {
+        this.teamR = red;
+        this.teamG = green;
+        this.teamB = blue;
+        this.teamA = alpha;
     }
 
     public void endOutlineBatch() {
@@ -59,34 +59,34 @@ public class OutlineBufferSource implements MultiBufferSource {
         }
 
         @Override
-        public VertexConsumer addVertex(float p_350357_, float p_350369_, float p_350557_) {
-            this.delegate.addVertex(p_350357_, p_350369_, p_350557_).setColor(this.color);
+        public VertexConsumer addVertex(float x, float y, float z) {
+            this.delegate.addVertex(x, y, z).setColor(this.color);
             return this;
         }
 
         @Override
-        public VertexConsumer setColor(int p_350802_, int p_351011_, int p_350273_, int p_351040_) {
+        public VertexConsumer setColor(int red, int green, int blue, int alpha) {
             return this;
         }
 
         @Override
-        public VertexConsumer setUv(float p_350507_, float p_350470_) {
-            this.delegate.setUv(p_350507_, p_350470_);
+        public VertexConsumer setUv(float u, float v) {
+            this.delegate.setUv(u, v);
             return this;
         }
 
         @Override
-        public VertexConsumer setUv1(int p_350412_, int p_350568_) {
+        public VertexConsumer setUv1(int u, int v) {
             return this;
         }
 
         @Override
-        public VertexConsumer setUv2(int p_350636_, int p_351006_) {
+        public VertexConsumer setUv2(int u, int v) {
             return this;
         }
 
         @Override
-        public VertexConsumer setNormal(float p_350484_, float p_350765_, float p_350737_) {
+        public VertexConsumer setNormal(float normalX, float normalY, float normalZ) {
             return this;
         }
     }

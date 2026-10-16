@@ -105,15 +105,36 @@ public class LocalPlayer extends AbstractClientPlayer {
     private final ClientRecipeBook recipeBook;
     private final List<AmbientSoundHandler> ambientSoundHandlers = Lists.newArrayList();
     private int permissionLevel = 0;
+    /**
+     * The last X position which was transmitted to the server, used to determine when the X position changes and needs to be re-transmitted
+     */
     private double xLast;
+    /**
+     * The last Y position which was transmitted to the server, used to determine when the Y position changes and needs to be re-transmitted
+     */
     private double yLast1;
+    /**
+     * The last Z position which was transmitted to the server, used to determine when the Z position changes and needs to be re-transmitted
+     */
     private double zLast;
+    /**
+     * The last yaw value which was transmitted to the server, used to determine when the yaw changes and needs to be re-transmitted
+     */
     private float yRotLast;
+    /**
+     * The last pitch value which was transmitted to the server, used to determine when the pitch changes and needs to be re-transmitted
+     */
     private float xRotLast;
     private boolean lastOnGround;
     private boolean crouching;
     private boolean wasShiftKeyDown;
+    /**
+     * the last sprinting state sent to the server
+     */
     private boolean wasSprinting;
+    /**
+     * Reset to 0 every time position is sent to the server, used to send periodic updates every 20 ticks even when the player is not moving.
+     */
     private int positionReminder;
     private boolean flashOnSetHealth;
     public Input input;
@@ -139,43 +160,49 @@ public class LocalPlayer extends AbstractClientPlayer {
     private boolean doLimitedCrafting = false;
 
     public LocalPlayer(
-        Minecraft p_108621_,
-        ClientLevel p_108622_,
-        ClientPacketListener p_108623_,
-        StatsCounter p_108624_,
-        ClientRecipeBook p_108625_,
-        boolean p_108626_,
-        boolean p_108627_
+        Minecraft minecraft,
+        ClientLevel clientLevel,
+        ClientPacketListener connection,
+        StatsCounter stats,
+        ClientRecipeBook recipeBook,
+        boolean wasShiftKeyDown,
+        boolean wasSprinting
     ) {
-        super(p_108622_, p_108623_.getLocalGameProfile());
-        this.minecraft = p_108621_;
-        this.connection = p_108623_;
-        this.stats = p_108624_;
-        this.recipeBook = p_108625_;
-        this.wasShiftKeyDown = p_108626_;
-        this.wasSprinting = p_108627_;
-        this.ambientSoundHandlers.add(new UnderwaterAmbientSoundHandler(this, p_108621_.getSoundManager()));
+        super(clientLevel, connection.getLocalGameProfile());
+        this.minecraft = minecraft;
+        this.connection = connection;
+        this.stats = stats;
+        this.recipeBook = recipeBook;
+        this.wasShiftKeyDown = wasShiftKeyDown;
+        this.wasSprinting = wasSprinting;
+        this.ambientSoundHandlers.add(new UnderwaterAmbientSoundHandler(this, minecraft.getSoundManager()));
         this.ambientSoundHandlers.add(new BubbleColumnAmbientSoundHandler(this));
-        this.ambientSoundHandlers.add(new BiomeAmbientSoundsHandler(this, p_108621_.getSoundManager(), p_108622_.getBiomeManager()));
+        this.ambientSoundHandlers.add(new BiomeAmbientSoundsHandler(this, minecraft.getSoundManager(), clientLevel.getBiomeManager()));
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_108662_, float p_108663_) {
+    public boolean hurt(DamageSource source, float amount) {
         return false;
     }
 
+    /**
+     * Heal living entity (param: amount of half-hearts)
+     */
     @Override
-    public void heal(float p_108708_) {
+    public void heal(float healAmount) {
     }
 
     @Override
-    public boolean startRiding(Entity p_108667_, boolean p_108668_) {
-        if (!super.startRiding(p_108667_, p_108668_)) {
+    public boolean startRiding(Entity entity, boolean force) {
+        if (!super.startRiding(entity, force)) {
             return false;
         } else {
-            if (p_108667_ instanceof AbstractMinecart) {
-                this.minecraft.getSoundManager().play(new RidingMinecartSoundInstance(this, (AbstractMinecart)p_108667_, true));
-                this.minecraft.getSoundManager().play(new RidingMinecartSoundInstance(this, (AbstractMinecart)p_108667_, false));
+            if (entity instanceof AbstractMinecart) {
+                this.minecraft.getSoundManager().play(new RidingMinecartSoundInstance(this, (AbstractMinecart)entity, true));
+                this.minecraft.getSoundManager().play(new RidingMinecartSoundInstance(this, (AbstractMinecart)entity, false));
             }
 
             return true;
@@ -188,14 +215,20 @@ public class LocalPlayer extends AbstractClientPlayer {
         this.handsBusy = false;
     }
 
+    /**
+     * Gets the current pitch of the entity.
+     */
     @Override
-    public float getViewXRot(float p_108742_) {
+    public float getViewXRot(float partialTick) {
         return this.getXRot();
     }
 
+    /**
+     * Gets the current yaw of the entity
+     */
     @Override
-    public float getViewYRot(float p_108753_) {
-        return this.isPassenger() ? super.getViewYRot(p_108753_) : this.getYRot();
+    public float getViewYRot(float partialTick) {
+        return this.isPassenger() ? super.getViewYRot(partialTick) : this.getYRot();
     }
 
     @Override
@@ -293,20 +326,20 @@ public class LocalPlayer extends AbstractClientPlayer {
         }
     }
 
-    public boolean drop(boolean p_108701_) {
-        ServerboundPlayerActionPacket.Action serverboundplayeractionpacket$action = p_108701_
+    public boolean drop(boolean fullStack) {
+        ServerboundPlayerActionPacket.Action serverboundplayeractionpacket$action = fullStack
             ? ServerboundPlayerActionPacket.Action.DROP_ALL_ITEMS
             : ServerboundPlayerActionPacket.Action.DROP_ITEM;
-        if (isUsingItem() && getUsedItemHand() == InteractionHand.MAIN_HAND && (p_108701_ || getUseItem().getCount() == 1)) stopUsingItem(); // Forge: fix MC-231097 on the clientside
-        ItemStack itemstack = this.getInventory().removeFromSelected(p_108701_);
+        if (isUsingItem() && getUsedItemHand() == InteractionHand.MAIN_HAND && (fullStack || getUseItem().getCount() == 1)) stopUsingItem(); // Forge: fix MC-231097 on the clientside
+        ItemStack itemstack = this.getInventory().removeFromSelected(fullStack);
         this.connection.send(new ServerboundPlayerActionPacket(serverboundplayeractionpacket$action, BlockPos.ZERO, Direction.DOWN));
         return !itemstack.isEmpty();
     }
 
     @Override
-    public void swing(InteractionHand p_108660_) {
-        super.swing(p_108660_);
-        this.connection.send(new ServerboundSwingPacket(p_108660_));
+    public void swing(InteractionHand hand) {
+        super.swing(hand);
+        this.connection.send(new ServerboundSwingPacket(hand));
     }
 
     @Override
@@ -315,10 +348,13 @@ public class LocalPlayer extends AbstractClientPlayer {
         KeyMapping.resetToggleKeys();
     }
 
+    /**
+     * Deals damage to the entity. This will take the armor of the entity into consideration before damaging the health bar.
+     */
     @Override
-    protected void actuallyHurt(DamageSource p_108729_, float p_108730_) {
-        if (!this.isInvulnerableTo(p_108729_)) {
-            this.setHealth(this.getHealth() - p_108730_);
+    protected void actuallyHurt(DamageSource damageSrc, float damageAmount) {
+        if (!this.isInvulnerableTo(damageSrc)) {
+            this.setHealth(this.getHealth() - damageAmount);
         }
     }
 
@@ -333,23 +369,26 @@ public class LocalPlayer extends AbstractClientPlayer {
         this.minecraft.setScreen(null);
     }
 
-    public void hurtTo(float p_108761_) {
+    /**
+     * Updates health locally.
+     */
+    public void hurtTo(float health) {
         if (this.flashOnSetHealth) {
-            float f = this.getHealth() - p_108761_;
+            float f = this.getHealth() - health;
             if (f <= 0.0F) {
-                this.setHealth(p_108761_);
+                this.setHealth(health);
                 if (f < 0.0F) {
                     this.invulnerableTime = 10;
                 }
             } else {
                 this.lastHurt = f;
                 this.invulnerableTime = 20;
-                this.setHealth(p_108761_);
+                this.setHealth(health);
                 this.hurtDuration = 10;
                 this.hurtTime = this.hurtDuration;
             }
         } else {
-            this.setHealth(p_108761_);
+            this.setHealth(health);
             this.flashOnSetHealth = true;
         }
     }
@@ -393,10 +432,10 @@ public class LocalPlayer extends AbstractClientPlayer {
         return this.recipeBook;
     }
 
-    public void removeRecipeHighlight(RecipeHolder<?> p_300983_) {
-        if (this.recipeBook.willHighlight(p_300983_)) {
-            this.recipeBook.removeHighlight(p_300983_);
-            this.connection.send(new ServerboundRecipeBookSeenRecipePacket(p_300983_));
+    public void removeRecipeHighlight(RecipeHolder<?> recipe) {
+        if (this.recipeBook.willHighlight(recipe)) {
+            this.recipeBook.removeHighlight(recipe);
+            this.connection.send(new ServerboundRecipeBookSeenRecipePacket(recipe));
         }
     }
 
@@ -405,20 +444,20 @@ public class LocalPlayer extends AbstractClientPlayer {
         return this.permissionLevel;
     }
 
-    public void setPermissionLevel(int p_108649_) {
-        this.permissionLevel = p_108649_;
+    public void setPermissionLevel(int permissionLevel) {
+        this.permissionLevel = permissionLevel;
     }
 
     @Override
-    public void displayClientMessage(Component p_108696_, boolean p_108697_) {
-        this.minecraft.getChatListener().handleSystemMessage(p_108696_, p_108697_);
+    public void displayClientMessage(Component chatComponent, boolean actionBar) {
+        this.minecraft.getChatListener().handleSystemMessage(chatComponent, actionBar);
     }
 
-    private void moveTowardsClosestSpace(double p_108705_, double p_108706_) {
-        BlockPos blockpos = BlockPos.containing(p_108705_, this.getY(), p_108706_);
+    private void moveTowardsClosestSpace(double x, double z) {
+        BlockPos blockpos = BlockPos.containing(x, this.getY(), z);
         if (this.suffocatesAt(blockpos)) {
-            double d0 = p_108705_ - (double)blockpos.getX();
-            double d1 = p_108706_ - (double)blockpos.getZ();
+            double d0 = x - (double)blockpos.getX();
+            double d1 = z - (double)blockpos.getZ();
             Direction direction = null;
             double d2 = Double.MAX_VALUE;
             Direction[] adirection = new Direction[]{Direction.WEST, Direction.EAST, Direction.NORTH, Direction.SOUTH};
@@ -443,45 +482,51 @@ public class LocalPlayer extends AbstractClientPlayer {
         }
     }
 
-    private boolean suffocatesAt(BlockPos p_108747_) {
+    private boolean suffocatesAt(BlockPos pos) {
         AABB aabb = this.getBoundingBox();
         AABB aabb1 = new AABB(
-                (double)p_108747_.getX(), aabb.minY, (double)p_108747_.getZ(), (double)p_108747_.getX() + 1.0, aabb.maxY, (double)p_108747_.getZ() + 1.0
+                (double)pos.getX(), aabb.minY, (double)pos.getZ(), (double)pos.getX() + 1.0, aabb.maxY, (double)pos.getZ() + 1.0
             )
             .deflate(1.0E-7);
         return this.level().collidesWithSuffocatingBlock(this, aabb1);
     }
 
-    public void setExperienceValues(float p_108645_, int p_108646_, int p_108647_) {
-        this.experienceProgress = p_108645_;
-        this.totalExperience = p_108646_;
-        this.experienceLevel = p_108647_;
+    /**
+     * Sets the current XP, total XP, and level number.
+     */
+    public void setExperienceValues(float currentXP, int maxXP, int level) {
+        this.experienceProgress = currentXP;
+        this.totalExperience = maxXP;
+        this.experienceLevel = level;
     }
 
     @Override
-    public void sendSystemMessage(Component p_234129_) {
-        this.minecraft.gui.getChat().addMessage(p_234129_);
+    public void sendSystemMessage(Component component) {
+        this.minecraft.gui.getChat().addMessage(component);
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @Override
-    public void handleEntityEvent(byte p_108643_) {
-        if (p_108643_ >= 24 && p_108643_ <= 28) {
-            this.setPermissionLevel(p_108643_ - 24);
+    public void handleEntityEvent(byte id) {
+        if (id >= 24 && id <= 28) {
+            this.setPermissionLevel(id - 24);
         } else {
-            super.handleEntityEvent(p_108643_);
+            super.handleEntityEvent(id);
         }
     }
 
-    public void setShowDeathScreen(boolean p_108712_) {
-        this.showDeathScreen = p_108712_;
+    public void setShowDeathScreen(boolean show) {
+        this.showDeathScreen = show;
     }
 
     public boolean shouldShowDeathScreen() {
         return this.showDeathScreen;
     }
 
-    public void setDoLimitedCrafting(boolean p_302021_) {
-        this.doLimitedCrafting = p_302021_;
+    public void setDoLimitedCrafting(boolean doLimitedCrafting) {
+        this.doLimitedCrafting = doLimitedCrafting;
     }
 
     public boolean getDoLimitedCrafting() {
@@ -489,20 +534,20 @@ public class LocalPlayer extends AbstractClientPlayer {
     }
 
     @Override
-    public void playSound(SoundEvent p_108651_, float p_108652_, float p_108653_) {
-        net.minecraft.core.Holder<SoundEvent> holder = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.wrapAsHolder(p_108651_);
-        net.neoforged.neoforge.event.PlayLevelSoundEvent.AtEntity event = net.neoforged.neoforge.event.EventHooks.onPlaySoundAtEntity(this, holder, this.getSoundSource(), p_108652_, p_108653_);
+    public void playSound(SoundEvent sound, float volume, float pitch) {
+        net.minecraft.core.Holder<SoundEvent> holder = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.wrapAsHolder(sound);
+        net.neoforged.neoforge.event.PlayLevelSoundEvent.AtEntity event = net.neoforged.neoforge.event.EventHooks.onPlaySoundAtEntity(this, holder, this.getSoundSource(), volume, pitch);
         if (event.isCanceled() || event.getSound() == null) return;
-        p_108651_ = event.getSound().value();
+        sound = event.getSound().value();
         SoundSource source = event.getSource();
-        p_108652_ = event.getNewVolume();
-        p_108653_ = event.getNewPitch();
-        this.level().playLocalSound(this.getX(), this.getY(), this.getZ(), p_108651_, source, p_108652_, p_108653_, false);
+        volume = event.getNewVolume();
+        pitch = event.getNewPitch();
+        this.level().playLocalSound(this.getX(), this.getY(), this.getZ(), sound, source, volume, pitch, false);
     }
 
     @Override
-    public void playNotifySound(SoundEvent p_108655_, SoundSource p_108656_, float p_108657_, float p_108658_) {
-        this.level().playLocalSound(this.getX(), this.getY(), this.getZ(), p_108655_, p_108656_, p_108657_, p_108658_, false);
+    public void playNotifySound(SoundEvent sound, SoundSource source, float volume, float pitch) {
+        this.level().playLocalSound(this.getX(), this.getY(), this.getZ(), sound, source, volume, pitch, false);
     }
 
     @Override
@@ -511,12 +556,12 @@ public class LocalPlayer extends AbstractClientPlayer {
     }
 
     @Override
-    public void startUsingItem(InteractionHand p_108718_) {
-        ItemStack itemstack = this.getItemInHand(p_108718_);
+    public void startUsingItem(InteractionHand hand) {
+        ItemStack itemstack = this.getItemInHand(hand);
         if (!itemstack.isEmpty() && !this.isUsingItem()) {
-            super.startUsingItem(p_108718_);
+            super.startUsingItem(hand);
             this.startedUsingItem = true;
-            this.usingItemHand = p_108718_;
+            this.usingItemHand = hand;
         }
     }
 
@@ -537,9 +582,9 @@ public class LocalPlayer extends AbstractClientPlayer {
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_108699_) {
-        super.onSyncedDataUpdated(p_108699_);
-        if (DATA_LIVING_ENTITY_FLAGS.equals(p_108699_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (DATA_LIVING_ENTITY_FLAGS.equals(key)) {
             boolean flag = (this.entityData.get(DATA_LIVING_ENTITY_FLAGS) & 1) > 0;
             InteractionHand interactionhand = (this.entityData.get(DATA_LIVING_ENTITY_FLAGS) & 2) > 0 ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
             if (flag && !this.startedUsingItem) {
@@ -549,7 +594,7 @@ public class LocalPlayer extends AbstractClientPlayer {
             }
         }
 
-        if (DATA_SHARED_FLAGS_ID.equals(p_108699_) && this.isFallFlying() && !this.wasFallFlying) {
+        if (DATA_SHARED_FLAGS_ID.equals(key) && this.isFallFlying() && !this.wasFallFlying) {
             this.minecraft.getSoundManager().play(new ElytraOnPlayerSoundInstance(this));
         }
     }
@@ -573,49 +618,55 @@ public class LocalPlayer extends AbstractClientPlayer {
     }
 
     @Override
-    public void openTextEdit(SignBlockEntity p_277970_, boolean p_277980_) {
-        if (p_277970_ instanceof HangingSignBlockEntity hangingsignblockentity) {
-            this.minecraft.setScreen(new HangingSignEditScreen(hangingsignblockentity, p_277980_, this.minecraft.isTextFilteringEnabled()));
+    public void openTextEdit(SignBlockEntity signEntity, boolean isFrontText) {
+        if (signEntity instanceof HangingSignBlockEntity hangingsignblockentity) {
+            this.minecraft.setScreen(new HangingSignEditScreen(hangingsignblockentity, isFrontText, this.minecraft.isTextFilteringEnabled()));
         } else {
-            this.minecraft.setScreen(new SignEditScreen(p_277970_, p_277980_, this.minecraft.isTextFilteringEnabled()));
+            this.minecraft.setScreen(new SignEditScreen(signEntity, isFrontText, this.minecraft.isTextFilteringEnabled()));
         }
     }
 
     @Override
-    public void openMinecartCommandBlock(BaseCommandBlock p_108678_) {
-        this.minecraft.setScreen(new MinecartCommandBlockEditScreen(p_108678_));
+    public void openMinecartCommandBlock(BaseCommandBlock commandBlock) {
+        this.minecraft.setScreen(new MinecartCommandBlockEditScreen(commandBlock));
     }
 
     @Override
-    public void openCommandBlock(CommandBlockEntity p_108680_) {
-        this.minecraft.setScreen(new CommandBlockEditScreen(p_108680_));
+    public void openCommandBlock(CommandBlockEntity commandBlock) {
+        this.minecraft.setScreen(new CommandBlockEditScreen(commandBlock));
     }
 
     @Override
-    public void openStructureBlock(StructureBlockEntity p_108686_) {
-        this.minecraft.setScreen(new StructureBlockEditScreen(p_108686_));
+    public void openStructureBlock(StructureBlockEntity structure) {
+        this.minecraft.setScreen(new StructureBlockEditScreen(structure));
     }
 
     @Override
-    public void openJigsawBlock(JigsawBlockEntity p_108682_) {
-        this.minecraft.setScreen(new JigsawBlockEditScreen(p_108682_));
+    public void openJigsawBlock(JigsawBlockEntity jigsawBlockEntity) {
+        this.minecraft.setScreen(new JigsawBlockEditScreen(jigsawBlockEntity));
     }
 
     @Override
-    public void openItemGui(ItemStack p_108673_, InteractionHand p_108674_) {
-        if (p_108673_.is(Items.WRITABLE_BOOK)) {
-            this.minecraft.setScreen(new BookEditScreen(this, p_108673_, p_108674_));
+    public void openItemGui(ItemStack stack, InteractionHand hand) {
+        if (stack.is(Items.WRITABLE_BOOK)) {
+            this.minecraft.setScreen(new BookEditScreen(this, stack, hand));
         }
     }
 
+    /**
+     * Called when the entity is dealt a critical hit.
+     */
     @Override
-    public void crit(Entity p_108665_) {
-        this.minecraft.particleEngine.createTrackingEmitter(p_108665_, ParticleTypes.CRIT);
+    public void crit(Entity entityHit) {
+        this.minecraft.particleEngine.createTrackingEmitter(entityHit, ParticleTypes.CRIT);
     }
 
+    /**
+     * Called when the entity hit is dealt extra melee damage due to an enchantment.
+     */
     @Override
-    public void magicCrit(Entity p_108710_) {
-        this.minecraft.particleEngine.createTrackingEmitter(p_108710_, ParticleTypes.ENCHANTED_HIT);
+    public void magicCrit(Entity entityHit) {
+        this.minecraft.particleEngine.createTrackingEmitter(entityHit, ParticleTypes.ENCHANTED_HIT);
     }
 
     @Override
@@ -850,10 +901,10 @@ public class LocalPlayer extends AbstractClientPlayer {
         }
     }
 
-    private void handleConfusionTransitionEffect(boolean p_350372_) {
+    private void handleConfusionTransitionEffect(boolean useConfusion) {
         this.oSpinningEffectIntensity = this.spinningEffectIntensity;
         float f = 0.0F;
-        if (p_350372_ && this.portalProcess != null && this.portalProcess.isInsidePortalThisTick()) {
+        if (useConfusion && this.portalProcess != null && this.portalProcess.isInsidePortalThisTick()) {
             if (this.minecraft.screen != null
                 && !this.minecraft.screen.isPauseScreen()
                 && !(this.minecraft.screen instanceof DeathScreen)
@@ -899,20 +950,20 @@ public class LocalPlayer extends AbstractClientPlayer {
 
     @Nullable
     @Override
-    public MobEffectInstance removeEffectNoUpdate(Holder<MobEffect> p_316634_) {
-        if (p_316634_.is(MobEffects.CONFUSION)) {
+    public MobEffectInstance removeEffectNoUpdate(Holder<MobEffect> effect) {
+        if (effect.is(MobEffects.CONFUSION)) {
             this.oSpinningEffectIntensity = 0.0F;
             this.spinningEffectIntensity = 0.0F;
         }
 
-        return super.removeEffectNoUpdate(p_316634_);
+        return super.removeEffectNoUpdate(effect);
     }
 
     @Override
-    public void move(MoverType p_108670_, Vec3 p_108671_) {
+    public void move(MoverType type, Vec3 pos) {
         double d0 = this.getX();
         double d1 = this.getZ();
-        super.move(p_108670_, p_108671_);
+        super.move(type, pos);
         this.updateAutoJump((float)(this.getX() - d0), (float)(this.getZ() - d1));
     }
 
@@ -920,11 +971,11 @@ public class LocalPlayer extends AbstractClientPlayer {
         return this.autoJumpEnabled;
     }
 
-    protected void updateAutoJump(float p_108744_, float p_108745_) {
+    protected void updateAutoJump(float movementX, float movementZ) {
         if (this.canAutoJump()) {
             Vec3 vec3 = this.position();
-            Vec3 vec31 = vec3.add((double)p_108744_, 0.0, (double)p_108745_);
-            Vec3 vec32 = new Vec3((double)p_108744_, 0.0, (double)p_108745_);
+            Vec3 vec31 = vec3.add((double)movementX, 0.0, (double)movementZ);
+            Vec3 vec32 = new Vec3((double)movementX, 0.0, (double)movementZ);
             float f = this.getSpeed();
             float f1 = (float)vec32.lengthSqr();
             if (f1 <= 0.001F) {
@@ -1020,16 +1071,16 @@ public class LocalPlayer extends AbstractClientPlayer {
     }
 
     @Override
-    protected boolean isHorizontalCollisionMinor(Vec3 p_197411_) {
+    protected boolean isHorizontalCollisionMinor(Vec3 deltaMovement) {
         float f = this.getYRot() * (float) (Math.PI / 180.0);
         double d0 = (double)Mth.sin(f);
         double d1 = (double)Mth.cos(f);
         double d2 = (double)this.xxa * d1 - (double)this.zza * d0;
         double d3 = (double)this.zza * d1 + (double)this.xxa * d0;
         double d4 = Mth.square(d2) + Mth.square(d3);
-        double d5 = Mth.square(p_197411_.x) + Mth.square(p_197411_.z);
+        double d5 = Mth.square(deltaMovement.x) + Mth.square(deltaMovement.z);
         if (!(d4 < 1.0E-5F) && !(d5 < 1.0E-5F)) {
-            double d6 = d2 * p_197411_.x + d3 * p_197411_.z;
+            double d6 = d2 * deltaMovement.x + d3 * deltaMovement.z;
             double d7 = Math.acos(d6 / Math.sqrt(d4 * d5));
             return d7 < 0.13962634F;
         } else {
@@ -1062,8 +1113,8 @@ public class LocalPlayer extends AbstractClientPlayer {
             && !this.isFallFlying();
     }
 
-    private boolean vehicleCanSprint(Entity p_265184_) {
-        return p_265184_.canSprint() && p_265184_.isControlledByLocalInstance();
+    private boolean vehicleCanSprint(Entity vehicle) {
+        return vehicle.canSprint() && vehicle.isControlledByLocalInstance();
     }
 
     private boolean hasEnoughImpulseToStartSprinting() {
@@ -1091,8 +1142,8 @@ public class LocalPlayer extends AbstractClientPlayer {
         }
     }
 
-    public void onGameModeChanged(GameType p_287675_) {
-        if (p_287675_ == GameType.SPECTATOR) {
+    public void onGameModeChanged(GameType gameMode) {
+        if (gameMode == GameType.SPECTATOR) {
             this.setDeltaMovement(this.getDeltaMovement().with(Direction.Axis.Y, 0.0));
         }
     }
@@ -1124,21 +1175,21 @@ public class LocalPlayer extends AbstractClientPlayer {
     }
 
     @Override
-    public Vec3 getRopeHoldPosition(float p_108758_) {
+    public Vec3 getRopeHoldPosition(float partialTick) {
         if (this.minecraft.options.getCameraType().isFirstPerson()) {
-            float f = Mth.lerp(p_108758_ * 0.5F, this.getYRot(), this.yRotO) * (float) (Math.PI / 180.0);
-            float f1 = Mth.lerp(p_108758_ * 0.5F, this.getXRot(), this.xRotO) * (float) (Math.PI / 180.0);
+            float f = Mth.lerp(partialTick * 0.5F, this.getYRot(), this.yRotO) * (float) (Math.PI / 180.0);
+            float f1 = Mth.lerp(partialTick * 0.5F, this.getXRot(), this.xRotO) * (float) (Math.PI / 180.0);
             double d0 = this.getMainArm() == HumanoidArm.RIGHT ? -1.0 : 1.0;
             Vec3 vec3 = new Vec3(0.39 * d0, -0.6, 0.3);
-            return vec3.xRot(-f1).yRot(-f).add(this.getEyePosition(p_108758_));
+            return vec3.xRot(-f1).yRot(-f).add(this.getEyePosition(partialTick));
         } else {
-            return super.getRopeHoldPosition(p_108758_);
+            return super.getRopeHoldPosition(partialTick);
         }
     }
 
     @Override
-    public void updateTutorialInventoryAction(ItemStack p_172532_, ItemStack p_172533_, ClickAction p_172534_) {
-        this.minecraft.getTutorial().onInventoryAction(p_172532_, p_172533_, p_172534_);
+    public void updateTutorialInventoryAction(ItemStack carried, ItemStack clicked, ClickAction action) {
+        this.minecraft.getTutorial().onInventoryAction(carried, clicked, action);
     }
 
     @Override

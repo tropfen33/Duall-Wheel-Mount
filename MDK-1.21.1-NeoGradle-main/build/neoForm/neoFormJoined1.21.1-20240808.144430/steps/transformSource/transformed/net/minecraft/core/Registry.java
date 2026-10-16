@@ -47,49 +47,55 @@ public interface Registry<T> extends Keyable, IdMap<T>, net.neoforged.neoforge.r
         );
     }
 
-    private DataResult<Holder.Reference<T>> safeCastToReference(Holder<T> p_326365_) {
-        return p_326365_.getDelegate() instanceof Holder.Reference reference
+    private DataResult<Holder.Reference<T>> safeCastToReference(Holder<T> value) {
+        return value.getDelegate() instanceof Holder.Reference reference
             ? DataResult.success(reference)
-            : DataResult.error(() -> "Unregistered holder in " + this.key() + ": " + p_326365_);
+            : DataResult.error(() -> "Unregistered holder in " + this.key() + ": " + value);
     }
 
     @Override
-    default <U> Stream<U> keys(DynamicOps<U> p_123030_) {
-        return this.keySet().stream().map(p_235784_ -> p_123030_.createString(p_235784_.toString()));
+    default <U> Stream<U> keys(DynamicOps<U> ops) {
+        return this.keySet().stream().map(p_235784_ -> ops.createString(p_235784_.toString()));
     }
 
+    /**
+     * @return the name used to identify the given object within this registry or {@code null} if the object is not within this registry
+     */
     @Nullable
-    ResourceLocation getKey(T p_123006_);
+    ResourceLocation getKey(T value);
 
-    Optional<ResourceKey<T>> getResourceKey(T p_123008_);
+    Optional<ResourceKey<T>> getResourceKey(T value);
 
+    /**
+     * @return the integer ID used to identify the given object
+     */
     @Override
-    int getId(@Nullable T p_122977_);
+    int getId(@Nullable T value);
 
     @Nullable
-    T get(@Nullable ResourceKey<T> p_122980_);
+    T get(@Nullable ResourceKey<T> key);
 
     @Nullable
-    T get(@Nullable ResourceLocation p_123002_);
+    T get(@Nullable ResourceLocation name);
 
-    Optional<RegistrationInfo> registrationInfo(ResourceKey<T> p_326162_);
+    Optional<RegistrationInfo> registrationInfo(ResourceKey<T> key);
 
     Lifecycle registryLifecycle();
 
-    default Optional<T> getOptional(@Nullable ResourceLocation p_123007_) {
-        return Optional.ofNullable(this.get(p_123007_));
+    default Optional<T> getOptional(@Nullable ResourceLocation name) {
+        return Optional.ofNullable(this.get(name));
     }
 
-    default Optional<T> getOptional(@Nullable ResourceKey<T> p_123010_) {
-        return Optional.ofNullable(this.get(p_123010_));
+    default Optional<T> getOptional(@Nullable ResourceKey<T> registryKey) {
+        return Optional.ofNullable(this.get(registryKey));
     }
 
     Optional<Holder.Reference<T>> getAny();
 
-    default T getOrThrow(ResourceKey<T> p_123014_) {
-        T t = this.get(p_123014_);
+    default T getOrThrow(ResourceKey<T> key) {
+        T t = this.get(key);
         if (t == null) {
-            throw new IllegalStateException("Missing key in " + this.key() + ": " + p_123014_);
+            throw new IllegalStateException("Missing key in " + this.key() + ": " + key);
         } else {
             return t;
         }
@@ -101,66 +107,66 @@ public interface Registry<T> extends Keyable, IdMap<T>, net.neoforged.neoforge.r
 
     Set<ResourceKey<T>> registryKeySet();
 
-    Optional<Holder.Reference<T>> getRandom(RandomSource p_235781_);
+    Optional<Holder.Reference<T>> getRandom(RandomSource random);
 
     default Stream<T> stream() {
         return StreamSupport.stream(this.spliterator(), false);
     }
 
-    boolean containsKey(ResourceLocation p_123011_);
+    boolean containsKey(ResourceLocation name);
 
-    boolean containsKey(ResourceKey<T> p_175475_);
+    boolean containsKey(ResourceKey<T> key);
 
-    static <T> T register(Registry<? super T> p_122962_, String p_122963_, T p_122964_) {
-        return register(p_122962_, ResourceLocation.parse(p_122963_), p_122964_);
+    static <T> T register(Registry<? super T> registry, String name, T value) {
+        return register(registry, ResourceLocation.parse(name), value);
     }
 
-    static <V, T extends V> T register(Registry<V> p_122966_, ResourceLocation p_122967_, T p_122968_) {
-        return register(p_122966_, ResourceKey.create(p_122966_.key(), p_122967_), p_122968_);
+    static <V, T extends V> T register(Registry<V> registry, ResourceLocation name, T value) {
+        return register(registry, ResourceKey.create(registry.key(), name), value);
     }
 
-    static <V, T extends V> T register(Registry<V> p_194580_, ResourceKey<V> p_194581_, T p_194582_) {
-        ((WritableRegistry)p_194580_).register(p_194581_, (V)p_194582_, RegistrationInfo.BUILT_IN);
-        return p_194582_;
+    static <V, T extends V> T register(Registry<V> registry, ResourceKey<V> key, T value) {
+        ((WritableRegistry)registry).register(key, (V)value, RegistrationInfo.BUILT_IN);
+        return value;
     }
 
-    static <T> Holder.Reference<T> registerForHolder(Registry<T> p_263347_, ResourceKey<T> p_263355_, T p_263428_) {
-        return ((WritableRegistry)p_263347_).register(p_263355_, p_263428_, RegistrationInfo.BUILT_IN);
+    static <T> Holder.Reference<T> registerForHolder(Registry<T> registry, ResourceKey<T> key, T value) {
+        return ((WritableRegistry)registry).register(key, value, RegistrationInfo.BUILT_IN);
     }
 
-    static <T> Holder.Reference<T> registerForHolder(Registry<T> p_263351_, ResourceLocation p_263363_, T p_263423_) {
-        return registerForHolder(p_263351_, ResourceKey.create(p_263351_.key(), p_263363_), p_263423_);
+    static <T> Holder.Reference<T> registerForHolder(Registry<T> registry, ResourceLocation name, T value) {
+        return registerForHolder(registry, ResourceKey.create(registry.key(), name), value);
     }
 
     Registry<T> freeze();
 
-    Holder.Reference<T> createIntrusiveHolder(T p_206068_);
+    Holder.Reference<T> createIntrusiveHolder(T value);
 
-    Optional<Holder.Reference<T>> getHolder(int p_206051_);
+    Optional<Holder.Reference<T>> getHolder(int id);
 
-    Optional<Holder.Reference<T>> getHolder(ResourceLocation p_316492_);
+    Optional<Holder.Reference<T>> getHolder(ResourceLocation location);
 
-    Optional<Holder.Reference<T>> getHolder(ResourceKey<T> p_206050_);
+    Optional<Holder.Reference<T>> getHolder(ResourceKey<T> key);
 
-    Holder<T> wrapAsHolder(T p_263382_);
+    Holder<T> wrapAsHolder(T value);
 
-    default Holder.Reference<T> getHolderOrThrow(ResourceKey<T> p_249087_) {
-        return this.getHolder(p_249087_).orElseThrow(() -> new IllegalStateException("Missing key in " + this.key() + ": " + p_249087_));
+    default Holder.Reference<T> getHolderOrThrow(ResourceKey<T> key) {
+        return this.getHolder(key).orElseThrow(() -> new IllegalStateException("Missing key in " + this.key() + ": " + key));
     }
 
     Stream<Holder.Reference<T>> holders();
 
-    Optional<HolderSet.Named<T>> getTag(TagKey<T> p_206052_);
+    Optional<HolderSet.Named<T>> getTag(TagKey<T> key);
 
-    default Iterable<Holder<T>> getTagOrEmpty(TagKey<T> p_206059_) {
-        return DataFixUtils.orElse(this.getTag(p_206059_), List.of());
+    default Iterable<Holder<T>> getTagOrEmpty(TagKey<T> key) {
+        return DataFixUtils.orElse(this.getTag(key), List.of());
     }
 
-    default Optional<Holder<T>> getRandomElementOf(TagKey<T> p_320357_, RandomSource p_320935_) {
-        return this.getTag(p_320357_).flatMap(p_319421_ -> p_319421_.getRandomElement(p_320935_));
+    default Optional<Holder<T>> getRandomElementOf(TagKey<T> key, RandomSource random) {
+        return this.getTag(key).flatMap(p_319421_ -> p_319421_.getRandomElement(random));
     }
 
-    HolderSet.Named<T> getOrCreateTag(TagKey<T> p_206045_);
+    HolderSet.Named<T> getOrCreateTag(TagKey<T> key);
 
     Stream<Pair<TagKey<T>, HolderSet.Named<T>>> getTags();
 
@@ -168,17 +174,20 @@ public interface Registry<T> extends Keyable, IdMap<T>, net.neoforged.neoforge.r
 
     void resetTags();
 
-    void bindTags(Map<TagKey<T>, List<Holder<T>>> p_205997_);
+    void bindTags(Map<TagKey<T>, List<Holder<T>>> tagMap);
 
     default IdMap<Holder<T>> asHolderIdMap() {
         return new IdMap<Holder<T>>() {
-            public int getId(Holder<T> p_259992_) {
-                return Registry.this.getId(p_259992_.value());
+            /**
+             * @return the integer ID used to identify the given object
+             */
+            public int getId(Holder<T> value) {
+                return Registry.this.getId(value.value());
             }
 
             @Nullable
-            public Holder<T> byId(int p_259972_) {
-                return (Holder<T>)Registry.this.getHolder(p_259972_).orElse(null);
+            public Holder<T> byId(int id) {
+                return (Holder<T>)Registry.this.getHolder(id).orElse(null);
             }
 
             @Override

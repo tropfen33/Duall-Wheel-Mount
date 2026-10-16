@@ -49,55 +49,55 @@ public class BambooStalkBlock extends Block implements BonemealableBlock {
         return CODEC;
     }
 
-    public BambooStalkBlock(BlockBehaviour.Properties p_261753_) {
-        super(p_261753_);
+    public BambooStalkBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(
             this.stateDefinition.any().setValue(AGE, Integer.valueOf(0)).setValue(LEAVES, BambooLeaves.NONE).setValue(STAGE, Integer.valueOf(0))
         );
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_261641_) {
-        p_261641_.add(AGE, LEAVES, STAGE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AGE, LEAVES, STAGE);
     }
 
     @Override
-    protected boolean propagatesSkylightDown(BlockState p_261479_, BlockGetter p_261942_, BlockPos p_261844_) {
+    protected boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos) {
         return true;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_261515_, BlockGetter p_261586_, BlockPos p_261526_, CollisionContext p_261930_) {
-        VoxelShape voxelshape = p_261515_.getValue(LEAVES) == BambooLeaves.LARGE ? LARGE_SHAPE : SMALL_SHAPE;
-        Vec3 vec3 = p_261515_.getOffset(p_261586_, p_261526_);
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        VoxelShape voxelshape = state.getValue(LEAVES) == BambooLeaves.LARGE ? LARGE_SHAPE : SMALL_SHAPE;
+        Vec3 vec3 = state.getOffset(level, pos);
         return voxelshape.move(vec3.x, vec3.y, vec3.z);
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_262166_, PathComputationType p_261513_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
     @Override
-    protected VoxelShape getCollisionShape(BlockState p_261560_, BlockGetter p_261965_, BlockPos p_261950_, CollisionContext p_261571_) {
-        Vec3 vec3 = p_261560_.getOffset(p_261965_, p_261950_);
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        Vec3 vec3 = state.getOffset(level, pos);
         return COLLISION_SHAPE.move(vec3.x, vec3.y, vec3.z);
     }
 
     @Override
-    protected boolean isCollisionShapeFullBlock(BlockState p_262062_, BlockGetter p_261848_, BlockPos p_261466_) {
+    protected boolean isCollisionShapeFullBlock(BlockState state, BlockGetter level, BlockPos pos) {
         return false;
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_261764_) {
-        FluidState fluidstate = p_261764_.getLevel().getFluidState(p_261764_.getClickedPos());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
         if (!fluidstate.isEmpty()) {
             return null;
         } else {
-            BlockState blockstate = p_261764_.getLevel().getBlockState(p_261764_.getClickedPos().below());
-            net.neoforged.neoforge.common.util.TriState soilDecision = blockstate.canSustainPlant(p_261764_.getLevel(), p_261764_.getClickedPos().below(), net.minecraft.core.Direction.UP, this.defaultBlockState());
+            BlockState blockstate = context.getLevel().getBlockState(context.getClickedPos().below());
+            net.neoforged.neoforge.common.util.TriState soilDecision = blockstate.canSustainPlant(context.getLevel(), context.getClickedPos().below(), net.minecraft.core.Direction.UP, this.defaultBlockState());
             if (soilDecision.isDefault() ? blockstate.is(BlockTags.BAMBOO_PLANTABLE_ON) : soilDecision.isTrue()) {
                 if (blockstate.is(Blocks.BAMBOO_SAPLING)) {
                     return this.defaultBlockState().setValue(AGE, Integer.valueOf(0));
@@ -105,7 +105,7 @@ public class BambooStalkBlock extends Block implements BonemealableBlock {
                     int i = blockstate.getValue(AGE) > 0 ? 1 : 0;
                     return this.defaultBlockState().setValue(AGE, Integer.valueOf(i));
                 } else {
-                    BlockState blockstate1 = p_261764_.getLevel().getBlockState(p_261764_.getClickedPos().above());
+                    BlockState blockstate1 = context.getLevel().getBlockState(context.getClickedPos().above());
                     return blockstate1.is(Blocks.BAMBOO)
                         ? this.defaultBlockState().setValue(AGE, blockstate1.getValue(AGE))
                         : Blocks.BAMBOO_SAPLING.defaultBlockState();
@@ -117,127 +117,138 @@ public class BambooStalkBlock extends Block implements BonemealableBlock {
     }
 
     @Override
-    protected void tick(BlockState p_261612_, ServerLevel p_261527_, BlockPos p_261846_, RandomSource p_261638_) {
-        if (!p_261612_.canSurvive(p_261527_, p_261846_)) {
-            p_261527_.destroyBlock(p_261846_, true);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!state.canSurvive(level, pos)) {
+            level.destroyBlock(pos, true);
         }
     }
 
     @Override
-    protected boolean isRandomlyTicking(BlockState p_262083_) {
-        return p_262083_.getValue(STAGE) == 0;
+    protected boolean isRandomlyTicking(BlockState state) {
+        return state.getValue(STAGE) == 0;
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_261931_, ServerLevel p_261751_, BlockPos p_261616_, RandomSource p_261766_) {
-        if (p_261931_.getValue(STAGE) == 0) {
-            if (p_261751_.isEmptyBlock(p_261616_.above()) && p_261751_.getRawBrightness(p_261616_.above(), 0) >= 9) {
-                int i = this.getHeightBelowUpToMax(p_261751_, p_261616_) + 1;
-                if (i < 16 && net.neoforged.neoforge.common.CommonHooks.canCropGrow(p_261751_, p_261616_, p_261931_, p_261766_.nextInt(3) == 0)) {
-                    this.growBamboo(p_261931_, p_261751_, p_261616_, p_261766_, i);
-                    net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(p_261751_, p_261616_, p_261931_);
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (state.getValue(STAGE) == 0) {
+            if (level.isEmptyBlock(pos.above()) && level.getRawBrightness(pos.above(), 0) >= 9) {
+                int i = this.getHeightBelowUpToMax(level, pos) + 1;
+                if (i < 16 && net.neoforged.neoforge.common.CommonHooks.canCropGrow(level, pos, state, random.nextInt(3) == 0)) {
+                    this.growBamboo(state, level, pos, random, i);
+                    net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(level, pos, state);
                 }
             }
         }
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_261860_, LevelReader p_262154_, BlockPos p_261493_) {
-        net.neoforged.neoforge.common.util.TriState soilDecision = p_262154_.getBlockState(p_261493_.below()).canSustainPlant(p_262154_, p_261493_.below(), Direction.UP, p_261860_);
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        net.neoforged.neoforge.common.util.TriState soilDecision = level.getBlockState(pos.below()).canSustainPlant(level, pos.below(), Direction.UP, state);
         if (!soilDecision.isDefault()) return soilDecision.isTrue();
-        return p_262154_.getBlockState(p_261493_.below()).is(BlockTags.BAMBOO_PLANTABLE_ON);
+        return level.getBlockState(pos.below()).is(BlockTags.BAMBOO_PLANTABLE_ON);
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
     protected BlockState updateShape(
-        BlockState p_261476_, Direction p_261512_, BlockState p_262167_, LevelAccessor p_261956_, BlockPos p_261876_, BlockPos p_262140_
+        BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos
     ) {
-        if (!p_261476_.canSurvive(p_261956_, p_261876_)) {
-            p_261956_.scheduleTick(p_261876_, this, 1);
+        if (!state.canSurvive(level, pos)) {
+            level.scheduleTick(pos, this, 1);
         }
 
-        if (p_261512_ == Direction.UP && p_262167_.is(Blocks.BAMBOO) && p_262167_.getValue(AGE) > p_261476_.getValue(AGE)) {
-            p_261956_.setBlock(p_261876_, p_261476_.cycle(AGE), 2);
+        if (direction == Direction.UP && neighborState.is(Blocks.BAMBOO) && neighborState.getValue(AGE) > state.getValue(AGE)) {
+            level.setBlock(pos, state.cycle(AGE), 2);
         }
 
-        return super.updateShape(p_261476_, p_261512_, p_262167_, p_261956_, p_261876_, p_262140_);
+        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader p_262065_, BlockPos p_262033_, BlockState p_261700_) {
-        int i = this.getHeightAboveUpToMax(p_262065_, p_262033_);
-        int j = this.getHeightBelowUpToMax(p_262065_, p_262033_);
-        return i + j + 1 < 16 && p_262065_.getBlockState(p_262033_.above(i)).getValue(STAGE) != 1;
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+        int i = this.getHeightAboveUpToMax(level, pos);
+        int j = this.getHeightBelowUpToMax(level, pos);
+        return i + j + 1 < 16 && level.getBlockState(pos.above(i)).getValue(STAGE) != 1;
     }
 
     @Override
-    public boolean isBonemealSuccess(Level p_261870_, RandomSource p_261802_, BlockPos p_262123_, BlockState p_261972_) {
+    public boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel p_261845_, RandomSource p_262034_, BlockPos p_261955_, BlockState p_261685_) {
-        int i = this.getHeightAboveUpToMax(p_261845_, p_261955_);
-        int j = this.getHeightBelowUpToMax(p_261845_, p_261955_);
+    public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
+        int i = this.getHeightAboveUpToMax(level, pos);
+        int j = this.getHeightBelowUpToMax(level, pos);
         int k = i + j + 1;
-        int l = 1 + p_262034_.nextInt(2);
+        int l = 1 + random.nextInt(2);
 
         for (int i1 = 0; i1 < l; i1++) {
-            BlockPos blockpos = p_261955_.above(i);
-            BlockState blockstate = p_261845_.getBlockState(blockpos);
-            if (k >= 16 || blockstate.getValue(STAGE) == 1 || !p_261845_.isEmptyBlock(blockpos.above())) {
+            BlockPos blockpos = pos.above(i);
+            BlockState blockstate = level.getBlockState(blockpos);
+            if (k >= 16 || blockstate.getValue(STAGE) == 1 || !level.isEmptyBlock(blockpos.above())) {
                 return;
             }
 
-            this.growBamboo(blockstate, p_261845_, blockpos, p_262034_, k);
+            this.growBamboo(blockstate, level, blockpos, random, k);
             i++;
             k++;
         }
     }
 
+    /**
+     * Get the hardness of this Block relative to the ability of the given player
+     */
     @Override
-    protected float getDestroyProgress(BlockState p_261691_, Player p_262171_, BlockGetter p_261621_, BlockPos p_261500_) {
-        return p_262171_.getMainHandItem().canPerformAction(net.neoforged.neoforge.common.ItemAbilities.SWORD_DIG) ? 1.0F : super.getDestroyProgress(p_261691_, p_262171_, p_261621_, p_261500_);
+    protected float getDestroyProgress(BlockState state, Player player, BlockGetter level, BlockPos pos) {
+        return player.getMainHandItem().canPerformAction(net.neoforged.neoforge.common.ItemAbilities.SWORD_DIG) ? 1.0F : super.getDestroyProgress(state, player, level, pos);
     }
 
-    protected void growBamboo(BlockState p_261855_, Level p_262076_, BlockPos p_262109_, RandomSource p_261633_, int p_261759_) {
-        BlockState blockstate = p_262076_.getBlockState(p_262109_.below());
-        BlockPos blockpos = p_262109_.below(2);
-        BlockState blockstate1 = p_262076_.getBlockState(blockpos);
+    protected void growBamboo(BlockState state, Level level, BlockPos pos, RandomSource random, int age) {
+        BlockState blockstate = level.getBlockState(pos.below());
+        BlockPos blockpos = pos.below(2);
+        BlockState blockstate1 = level.getBlockState(blockpos);
         BambooLeaves bambooleaves = BambooLeaves.NONE;
-        if (p_261759_ >= 1) {
+        if (age >= 1) {
             if (!blockstate.is(Blocks.BAMBOO) || blockstate.getValue(LEAVES) == BambooLeaves.NONE) {
                 bambooleaves = BambooLeaves.SMALL;
             } else if (blockstate.is(Blocks.BAMBOO) && blockstate.getValue(LEAVES) != BambooLeaves.NONE) {
                 bambooleaves = BambooLeaves.LARGE;
                 if (blockstate1.is(Blocks.BAMBOO)) {
-                    p_262076_.setBlock(p_262109_.below(), blockstate.setValue(LEAVES, BambooLeaves.SMALL), 3);
-                    p_262076_.setBlock(blockpos, blockstate1.setValue(LEAVES, BambooLeaves.NONE), 3);
+                    level.setBlock(pos.below(), blockstate.setValue(LEAVES, BambooLeaves.SMALL), 3);
+                    level.setBlock(blockpos, blockstate1.setValue(LEAVES, BambooLeaves.NONE), 3);
                 }
             }
         }
 
-        int i = p_261855_.getValue(AGE) != 1 && !blockstate1.is(Blocks.BAMBOO) ? 0 : 1;
-        int j = (p_261759_ < 11 || !(p_261633_.nextFloat() < 0.25F)) && p_261759_ != 15 ? 0 : 1;
-        p_262076_.setBlock(
-            p_262109_.above(), this.defaultBlockState().setValue(AGE, Integer.valueOf(i)).setValue(LEAVES, bambooleaves).setValue(STAGE, Integer.valueOf(j)), 3
+        int i = state.getValue(AGE) != 1 && !blockstate1.is(Blocks.BAMBOO) ? 0 : 1;
+        int j = (age < 11 || !(random.nextFloat() < 0.25F)) && age != 15 ? 0 : 1;
+        level.setBlock(
+            pos.above(), this.defaultBlockState().setValue(AGE, Integer.valueOf(i)).setValue(LEAVES, bambooleaves).setValue(STAGE, Integer.valueOf(j)), 3
         );
     }
 
-    protected int getHeightAboveUpToMax(BlockGetter p_261541_, BlockPos p_261593_) {
+    protected int getHeightAboveUpToMax(BlockGetter level, BlockPos pos) {
         int i = 0;
 
-        while (i < 16 && p_261541_.getBlockState(p_261593_.above(i + 1)).is(Blocks.BAMBOO)) {
+        while (i < 16 && level.getBlockState(pos.above(i + 1)).is(Blocks.BAMBOO)) {
             i++;
         }
 
         return i;
     }
 
-    protected int getHeightBelowUpToMax(BlockGetter p_261927_, BlockPos p_261481_) {
+    protected int getHeightBelowUpToMax(BlockGetter level, BlockPos pos) {
         int i = 0;
 
-        while (i < 16 && p_261927_.getBlockState(p_261481_.below(i + 1)).is(Blocks.BAMBOO)) {
+        while (i < 16 && level.getBlockState(pos.below(i + 1)).is(Blocks.BAMBOO)) {
             i++;
         }
 

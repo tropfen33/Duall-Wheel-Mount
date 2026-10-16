@@ -50,11 +50,11 @@ public class SinglePoolElement extends StructurePoolElement {
     protected final Holder<StructureProcessorList> processors;
     protected final Optional<LiquidSettings> overrideLiquidSettings;
 
-    private static <T> DataResult<T> encodeTemplate(Either<ResourceLocation, StructureTemplate> p_210425_, DynamicOps<T> p_210426_, T p_210427_) {
-        Optional<ResourceLocation> optional = p_210425_.left();
+    private static <T> DataResult<T> encodeTemplate(Either<ResourceLocation, StructureTemplate> template, DynamicOps<T> ops, T values) {
+        Optional<ResourceLocation> optional = template.left();
         return optional.isEmpty()
             ? DataResult.error(() -> "Can not serialize a runtime pool element")
-            : ResourceLocation.CODEC.encode(optional.get(), p_210426_, p_210427_);
+            : ResourceLocation.CODEC.encode(optional.get(), ops, values);
     }
 
     protected static <E extends SinglePoolElement> RecordCodecBuilder<E, Holder<StructureProcessorList>> processorsCodec() {
@@ -70,33 +70,33 @@ public class SinglePoolElement extends StructurePoolElement {
     }
 
     protected SinglePoolElement(
-        Either<ResourceLocation, StructureTemplate> p_210415_,
-        Holder<StructureProcessorList> p_210416_,
-        StructureTemplatePool.Projection p_210417_,
-        Optional<LiquidSettings> p_352236_
+        Either<ResourceLocation, StructureTemplate> template,
+        Holder<StructureProcessorList> processors,
+        StructureTemplatePool.Projection projection,
+        Optional<LiquidSettings> overrideLiquidSettings
     ) {
-        super(p_210417_);
-        this.template = p_210415_;
-        this.processors = p_210416_;
-        this.overrideLiquidSettings = p_352236_;
+        super(projection);
+        this.template = template;
+        this.processors = processors;
+        this.overrideLiquidSettings = overrideLiquidSettings;
     }
 
     @Override
-    public Vec3i getSize(StructureTemplateManager p_227313_, Rotation p_227314_) {
-        StructureTemplate structuretemplate = this.getTemplate(p_227313_);
-        return structuretemplate.getSize(p_227314_);
+    public Vec3i getSize(StructureTemplateManager structureTemplateManager, Rotation rotation) {
+        StructureTemplate structuretemplate = this.getTemplate(structureTemplateManager);
+        return structuretemplate.getSize(rotation);
     }
 
-    private StructureTemplate getTemplate(StructureTemplateManager p_227300_) {
-        return this.template.map(p_227300_::getOrCreate, Function.identity());
+    private StructureTemplate getTemplate(StructureTemplateManager structureTemplateManager) {
+        return this.template.map(structureTemplateManager::getOrCreate, Function.identity());
     }
 
     public List<StructureTemplate.StructureBlockInfo> getDataMarkers(
-        StructureTemplateManager p_227325_, BlockPos p_227326_, Rotation p_227327_, boolean p_227328_
+        StructureTemplateManager structureTemplateManager, BlockPos pos, Rotation rotation, boolean relativePosition
     ) {
-        StructureTemplate structuretemplate = this.getTemplate(p_227325_);
+        StructureTemplate structuretemplate = this.getTemplate(structureTemplateManager);
         List<StructureTemplate.StructureBlockInfo> list = structuretemplate.filterBlocks(
-            p_227326_, new StructurePlaceSettings().setRotation(p_227327_), Blocks.STRUCTURE_BLOCK, p_227328_
+            pos, new StructurePlaceSettings().setRotation(rotation), Blocks.STRUCTURE_BLOCK, relativePosition
         );
         List<StructureTemplate.StructureBlockInfo> list1 = Lists.newArrayList();
 
@@ -115,20 +115,20 @@ public class SinglePoolElement extends StructurePoolElement {
 
     @Override
     public List<StructureTemplate.StructureBlockInfo> getShuffledJigsawBlocks(
-        StructureTemplateManager p_227320_, BlockPos p_227321_, Rotation p_227322_, RandomSource p_227323_
+        StructureTemplateManager structureTemplateManager, BlockPos pos, Rotation rotation, RandomSource random
     ) {
-        StructureTemplate structuretemplate = this.getTemplate(p_227320_);
+        StructureTemplate structuretemplate = this.getTemplate(structureTemplateManager);
         ObjectArrayList<StructureTemplate.StructureBlockInfo> objectarraylist = structuretemplate.filterBlocks(
-            p_227321_, new StructurePlaceSettings().setRotation(p_227322_), Blocks.JIGSAW, true
+            pos, new StructurePlaceSettings().setRotation(rotation), Blocks.JIGSAW, true
         );
-        Util.shuffle(objectarraylist, p_227323_);
+        Util.shuffle(objectarraylist, random);
         sortBySelectionPriority(objectarraylist);
         return objectarraylist;
     }
 
     @VisibleForTesting
-    static void sortBySelectionPriority(List<StructureTemplate.StructureBlockInfo> p_308881_) {
-        p_308881_.sort(
+    static void sortBySelectionPriority(List<StructureTemplate.StructureBlockInfo> structureBlockInfos) {
+        structureBlockInfos.sort(
             Comparator.<StructureTemplate.StructureBlockInfo>comparingInt(
                     p_308863_ -> Optionull.mapOrDefault(p_308863_.nbt(), p_308864_ -> p_308864_.getInt("selection_priority"), 0)
                 )
@@ -137,50 +137,50 @@ public class SinglePoolElement extends StructurePoolElement {
     }
 
     @Override
-    public BoundingBox getBoundingBox(StructureTemplateManager p_227316_, BlockPos p_227317_, Rotation p_227318_) {
-        StructureTemplate structuretemplate = this.getTemplate(p_227316_);
-        return structuretemplate.getBoundingBox(new StructurePlaceSettings().setRotation(p_227318_), p_227317_);
+    public BoundingBox getBoundingBox(StructureTemplateManager structureTemplateManager, BlockPos pos, Rotation rotation) {
+        StructureTemplate structuretemplate = this.getTemplate(structureTemplateManager);
+        return structuretemplate.getBoundingBox(new StructurePlaceSettings().setRotation(rotation), pos);
     }
 
     @Override
     public boolean place(
-        StructureTemplateManager p_227302_,
-        WorldGenLevel p_227303_,
-        StructureManager p_227304_,
-        ChunkGenerator p_227305_,
-        BlockPos p_227306_,
-        BlockPos p_227307_,
-        Rotation p_227308_,
-        BoundingBox p_227309_,
-        RandomSource p_227310_,
-        LiquidSettings p_352088_,
-        boolean p_227311_
+        StructureTemplateManager structureTemplateManager,
+        WorldGenLevel level,
+        StructureManager structureManager,
+        ChunkGenerator generator,
+        BlockPos offset,
+        BlockPos pos,
+        Rotation rotation,
+        BoundingBox box,
+        RandomSource random,
+        LiquidSettings liquidSettings,
+        boolean keepJigsaws
     ) {
-        StructureTemplate structuretemplate = this.getTemplate(p_227302_);
-        StructurePlaceSettings structureplacesettings = this.getSettings(p_227308_, p_227309_, p_352088_, p_227311_);
-        if (!structuretemplate.placeInWorld(p_227303_, p_227306_, p_227307_, structureplacesettings, p_227310_, 18)) {
+        StructureTemplate structuretemplate = this.getTemplate(structureTemplateManager);
+        StructurePlaceSettings structureplacesettings = this.getSettings(rotation, box, liquidSettings, keepJigsaws);
+        if (!structuretemplate.placeInWorld(level, offset, pos, structureplacesettings, random, 18)) {
             return false;
         } else {
             for (StructureTemplate.StructureBlockInfo structuretemplate$structureblockinfo : StructureTemplate.processBlockInfos(
-                p_227303_, p_227306_, p_227307_, structureplacesettings, this.getDataMarkers(p_227302_, p_227306_, p_227308_, false)
+                level, offset, pos, structureplacesettings, this.getDataMarkers(structureTemplateManager, offset, rotation, false)
             )) {
-                this.handleDataMarker(p_227303_, structuretemplate$structureblockinfo, p_227306_, p_227308_, p_227310_, p_227309_);
+                this.handleDataMarker(level, structuretemplate$structureblockinfo, offset, rotation, random, box);
             }
 
             return true;
         }
     }
 
-    protected StructurePlaceSettings getSettings(Rotation p_210421_, BoundingBox p_210422_, LiquidSettings p_352322_, boolean p_210423_) {
+    protected StructurePlaceSettings getSettings(Rotation rotation, BoundingBox boundingBox, LiquidSettings liquidSettings, boolean offset) {
         StructurePlaceSettings structureplacesettings = new StructurePlaceSettings();
-        structureplacesettings.setBoundingBox(p_210422_);
-        structureplacesettings.setRotation(p_210421_);
+        structureplacesettings.setBoundingBox(boundingBox);
+        structureplacesettings.setRotation(rotation);
         structureplacesettings.setKnownShape(true);
         structureplacesettings.setIgnoreEntities(false);
         structureplacesettings.addProcessor(BlockIgnoreProcessor.STRUCTURE_BLOCK);
         structureplacesettings.setFinalizeEntities(true);
-        structureplacesettings.setLiquidSettings(this.overrideLiquidSettings.orElse(p_352322_));
-        if (!p_210423_) {
+        structureplacesettings.setLiquidSettings(this.overrideLiquidSettings.orElse(liquidSettings));
+        if (!offset) {
             structureplacesettings.addProcessor(JigsawReplacementProcessor.INSTANCE);
         }
 

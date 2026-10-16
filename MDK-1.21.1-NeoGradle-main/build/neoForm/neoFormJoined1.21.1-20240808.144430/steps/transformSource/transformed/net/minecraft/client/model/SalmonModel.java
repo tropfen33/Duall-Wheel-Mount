@@ -18,9 +18,9 @@ public class SalmonModel<T extends Entity> extends HierarchicalModel<T> {
     private final ModelPart root;
     private final ModelPart bodyBack;
 
-    public SalmonModel(ModelPart p_170896_) {
-        this.root = p_170896_;
-        this.bodyBack = p_170896_.getChild("body_back");
+    public SalmonModel(ModelPart root) {
+        this.root = root;
+        this.bodyBack = root.getChild("body_back");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -63,15 +63,18 @@ public class SalmonModel<T extends Entity> extends HierarchicalModel<T> {
         return this.root;
     }
 
+    /**
+     * Sets this entity's model rotation angles
+     */
     @Override
-    public void setupAnim(T p_103640_, float p_103641_, float p_103642_, float p_103643_, float p_103644_, float p_103645_) {
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         float f = 1.0F;
         float f1 = 1.0F;
-        if (!p_103640_.isInWater()) {
+        if (!entity.isInWater()) {
             f = 1.3F;
             f1 = 1.7F;
         }
 
-        this.bodyBack.yRot = -f * 0.25F * Mth.sin(f1 * 0.6F * p_103643_);
+        this.bodyBack.yRot = -f * 0.25F * Mth.sin(f1 * 0.6F * ageInTicks);
     }
 }

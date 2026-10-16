@@ -18,9 +18,9 @@ public class ClickEvent {
     private final ClickEvent.Action action;
     private final String value;
 
-    public ClickEvent(ClickEvent.Action p_130620_, String p_130621_) {
-        this.action = p_130620_;
-        this.value = p_130621_;
+    public ClickEvent(ClickEvent.Action action, String value) {
+        this.action = action;
+        this.value = value;
     }
 
     public ClickEvent.Action getAction() {
@@ -32,11 +32,11 @@ public class ClickEvent {
     }
 
     @Override
-    public boolean equals(Object p_130625_) {
-        if (this == p_130625_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        } else if (p_130625_ != null && this.getClass() == p_130625_.getClass()) {
-            ClickEvent clickevent = (ClickEvent)p_130625_;
+        } else if (other != null && this.getClass() == other.getClass()) {
+            ClickEvent clickevent = (ClickEvent)other;
             return this.action == clickevent.action && this.value.equals(clickevent.value);
         } else {
             return false;
@@ -65,11 +65,14 @@ public class ClickEvent {
         public static final MapCodec<ClickEvent.Action> UNSAFE_CODEC = StringRepresentable.fromEnum(ClickEvent.Action::values).fieldOf("action");
         public static final MapCodec<ClickEvent.Action> CODEC = UNSAFE_CODEC.validate(ClickEvent.Action::filterForSerialization);
         private final boolean allowFromServer;
+        /**
+         * The canonical name used to refer to this action.
+         */
         private final String name;
 
-        private Action(String p_130642_, boolean p_130643_) {
-            this.name = p_130642_;
-            this.allowFromServer = p_130643_;
+        private Action(String name, boolean allowFromServer) {
+            this.name = name;
+            this.allowFromServer = allowFromServer;
         }
 
         public boolean isAllowedFromServer() {
@@ -81,10 +84,10 @@ public class ClickEvent {
             return this.name;
         }
 
-        public static DataResult<ClickEvent.Action> filterForSerialization(ClickEvent.Action p_304789_) {
-            return !p_304789_.isAllowedFromServer() && (net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer() == null || net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().isDedicatedServer()) // Neo: Allow open file commands to work on integrated servers. PR #915
-                ? DataResult.error(() -> "Action not allowed: " + p_304789_)
-                : DataResult.success(p_304789_, Lifecycle.stable());
+        public static DataResult<ClickEvent.Action> filterForSerialization(ClickEvent.Action action) {
+            return !action.isAllowedFromServer() && (net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer() == null || net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer().isDedicatedServer()) // Neo: Allow open file commands to work on integrated servers. PR #915
+                ? DataResult.error(() -> "Action not allowed: " + action)
+                : DataResult.success(action, Lifecycle.stable());
         }
     }
 }

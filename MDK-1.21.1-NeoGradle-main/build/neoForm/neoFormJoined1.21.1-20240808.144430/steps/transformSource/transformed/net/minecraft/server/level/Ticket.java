@@ -8,33 +8,33 @@ public final class Ticket<T> implements Comparable<Ticket<?>> {
     private final T key;
     private long createdTick;
 
-    protected Ticket(TicketType<T> p_9425_, int p_9426_, T p_9427_) {
-        this(p_9425_, p_9426_, p_9427_, false);
+    protected Ticket(TicketType<T> type, int ticketLevel, T key) {
+        this(type, ticketLevel, key, false);
     }
 
-    public Ticket(TicketType<T> p_9425_, int p_9426_, T p_9427_, boolean forceTicks) {
-        this.type = p_9425_;
-        this.ticketLevel = p_9426_;
-        this.key = p_9427_;
+    public Ticket(TicketType<T> type, int ticketLevel, T key, boolean forceTicks) {
+        this.type = type;
+        this.ticketLevel = ticketLevel;
+        this.key = key;
         this.forceTicks = forceTicks;
     }
 
-    public int compareTo(Ticket<?> p_9432_) {
-        int i = Integer.compare(this.ticketLevel, p_9432_.ticketLevel);
+    public int compareTo(Ticket<?> other) {
+        int i = Integer.compare(this.ticketLevel, other.ticketLevel);
         if (i != 0) {
             return i;
         } else {
-            int j = Integer.compare(System.identityHashCode(this.type), System.identityHashCode(p_9432_.type));
-            return j != 0 ? j : this.type.getComparator().compare(this.key, (T)p_9432_.key);
+            int j = Integer.compare(System.identityHashCode(this.type), System.identityHashCode(other.type));
+            return j != 0 ? j : this.type.getComparator().compare(this.key, (T)other.key);
         }
     }
 
     @Override
-    public boolean equals(Object p_9439_) {
-        if (this == p_9439_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return !(p_9439_ instanceof Ticket<?> ticket)
+            return !(other instanceof Ticket<?> ticket)
                 ? false
                 : this.ticketLevel == ticket.ticketLevel && Objects.equals(this.type, ticket.type) && Objects.equals(this.key, ticket.key) && this.forceTicks == ticket.forceTicks;
         }
@@ -58,13 +58,13 @@ public final class Ticket<T> implements Comparable<Ticket<?>> {
         return this.ticketLevel;
     }
 
-    protected void setCreatedTick(long p_9430_) {
-        this.createdTick = p_9430_;
+    protected void setCreatedTick(long timestamp) {
+        this.createdTick = timestamp;
     }
 
-    protected boolean timedOut(long p_9435_) {
+    protected boolean timedOut(long currentTime) {
         long i = this.type.timeout();
-        return i != 0L && p_9435_ - this.createdTick > i;
+        return i != 0L && currentTime - this.createdTick > i;
     }
 
     // Neo: Injected ability to force chunks to tick

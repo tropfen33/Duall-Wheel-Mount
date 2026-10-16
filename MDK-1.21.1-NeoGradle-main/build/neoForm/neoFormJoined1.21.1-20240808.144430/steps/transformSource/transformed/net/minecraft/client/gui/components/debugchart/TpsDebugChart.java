@@ -21,52 +21,52 @@ public class TpsDebugChart extends AbstractDebugChart {
     private static final int OTHER_COLOR = -10547572;
     private final Supplier<Float> msptSupplier;
 
-    public TpsDebugChart(Font p_299254_, SampleStorage p_324399_, Supplier<Float> p_309098_) {
-        super(p_299254_, p_324399_);
-        this.msptSupplier = p_309098_;
+    public TpsDebugChart(Font font, SampleStorage sampleStorage, Supplier<Float> msptSupplier) {
+        super(font, sampleStorage);
+        this.msptSupplier = msptSupplier;
     }
 
     @Override
-    protected void renderAdditionalLinesAndLabels(GuiGraphics p_298653_, int p_298791_, int p_298387_, int p_298869_) {
+    protected void renderAdditionalLinesAndLabels(GuiGraphics guiGraphics, int x, int width, int height) {
         float f = (float)TimeUtil.MILLISECONDS_PER_SECOND / this.msptSupplier.get();
-        this.drawStringWithShade(p_298653_, String.format("%.1f TPS", f), p_298791_ + 1, p_298869_ - 60 + 1);
+        this.drawStringWithShade(guiGraphics, String.format("%.1f TPS", f), x + 1, height - 60 + 1);
     }
 
     @Override
-    protected void drawAdditionalDimensions(GuiGraphics p_321511_, int p_321489_, int p_321791_, int p_321685_) {
-        long i = this.sampleStorage.get(p_321685_, TpsDebugDimensions.TICK_SERVER_METHOD.ordinal());
+    protected void drawAdditionalDimensions(GuiGraphics guiGraphics, int height, int x, int index) {
+        long i = this.sampleStorage.get(index, TpsDebugDimensions.TICK_SERVER_METHOD.ordinal());
         int j = this.getSampleHeight((double)i);
-        p_321511_.fill(RenderType.guiOverlay(), p_321791_, p_321489_ - j, p_321791_ + 1, p_321489_, -6745839);
-        long k = this.sampleStorage.get(p_321685_, TpsDebugDimensions.SCHEDULED_TASKS.ordinal());
+        guiGraphics.fill(RenderType.guiOverlay(), x, height - j, x + 1, height, -6745839);
+        long k = this.sampleStorage.get(index, TpsDebugDimensions.SCHEDULED_TASKS.ordinal());
         int l = this.getSampleHeight((double)k);
-        p_321511_.fill(RenderType.guiOverlay(), p_321791_, p_321489_ - j - l, p_321791_ + 1, p_321489_ - j, -4548257);
-        long i1 = this.sampleStorage.get(p_321685_) - this.sampleStorage.get(p_321685_, TpsDebugDimensions.IDLE.ordinal()) - i - k;
+        guiGraphics.fill(RenderType.guiOverlay(), x, height - j - l, x + 1, height - j, -4548257);
+        long i1 = this.sampleStorage.get(index) - this.sampleStorage.get(index, TpsDebugDimensions.IDLE.ordinal()) - i - k;
         int j1 = this.getSampleHeight((double)i1);
-        p_321511_.fill(RenderType.guiOverlay(), p_321791_, p_321489_ - j1 - l - j, p_321791_ + 1, p_321489_ - l - j, -10547572);
+        guiGraphics.fill(RenderType.guiOverlay(), x, height - j1 - l - j, x + 1, height - l - j, -10547572);
     }
 
     @Override
-    protected long getValueForAggregation(int p_321565_) {
-        return this.sampleStorage.get(p_321565_) - this.sampleStorage.get(p_321565_, TpsDebugDimensions.IDLE.ordinal());
+    protected long getValueForAggregation(int index) {
+        return this.sampleStorage.get(index) - this.sampleStorage.get(index, TpsDebugDimensions.IDLE.ordinal());
     }
 
     @Override
-    protected String toDisplayString(double p_298403_) {
-        return String.format(Locale.ROOT, "%d ms", (int)Math.round(toMilliseconds(p_298403_)));
+    protected String toDisplayString(double value) {
+        return String.format(Locale.ROOT, "%d ms", (int)Math.round(toMilliseconds(value)));
     }
 
     @Override
-    protected int getSampleHeight(double p_299161_) {
-        return (int)Math.round(toMilliseconds(p_299161_) * 60.0 / (double)this.msptSupplier.get().floatValue());
+    protected int getSampleHeight(double value) {
+        return (int)Math.round(toMilliseconds(value) * 60.0 / (double)this.msptSupplier.get().floatValue());
     }
 
     @Override
-    protected int getSampleColor(long p_299243_) {
+    protected int getSampleColor(long value) {
         float f = this.msptSupplier.get();
-        return this.getSampleColor(toMilliseconds((double)p_299243_), (double)f, -16711936, (double)f * 1.125, -256, (double)f * 1.25, -65536);
+        return this.getSampleColor(toMilliseconds((double)value), (double)f, -16711936, (double)f * 1.125, -256, (double)f * 1.25, -65536);
     }
 
-    private static double toMilliseconds(double p_298223_) {
-        return p_298223_ / 1000000.0;
+    private static double toMilliseconds(double value) {
+        return value / 1000000.0;
     }
 }

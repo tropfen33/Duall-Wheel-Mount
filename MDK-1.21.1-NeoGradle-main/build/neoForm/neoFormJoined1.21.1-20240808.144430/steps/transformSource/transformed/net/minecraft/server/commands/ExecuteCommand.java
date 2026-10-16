@@ -140,16 +140,16 @@ public class ExecuteCommand {
         return SharedSuggestionProvider.suggestResource(reloadableserverregistries$holder.getKeys(Registries.PREDICATE), p_335219_);
     };
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_214435_, CommandBuildContext p_214436_) {
-        LiteralCommandNode<CommandSourceStack> literalcommandnode = p_214435_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
+        LiteralCommandNode<CommandSourceStack> literalcommandnode = dispatcher.register(
             Commands.literal("execute").requires(p_137197_ -> p_137197_.hasPermission(2))
         );
-        p_214435_.register(
+        dispatcher.register(
             Commands.literal("execute")
                 .requires(p_137103_ -> p_137103_.hasPermission(2))
-                .then(Commands.literal("run").redirect(p_214435_.getRoot()))
-                .then(addConditionals(literalcommandnode, Commands.literal("if"), true, p_214436_))
-                .then(addConditionals(literalcommandnode, Commands.literal("unless"), false, p_214436_))
+                .then(Commands.literal("run").redirect(dispatcher.getRoot()))
+                .then(addConditionals(literalcommandnode, Commands.literal("if"), true, context))
+                .then(addConditionals(literalcommandnode, Commands.literal("unless"), false, context))
                 .then(Commands.literal("as").then(Commands.argument("targets", EntityArgument.entities()).fork(literalcommandnode, p_137299_ -> {
                     List<CommandSourceStack> list = Lists.newArrayList();
 
@@ -298,7 +298,7 @@ public class ExecuteCommand {
                 .then(
                     Commands.literal("summon")
                         .then(
-                            Commands.argument("entity", ResourceArgument.resource(p_214436_, Registries.ENTITY_TYPE))
+                            Commands.argument("entity", ResourceArgument.resource(context, Registries.ENTITY_TYPE))
                                 .suggests(SuggestionProviders.SUMMONABLE_ENTITIES)
                                 .redirect(
                                     literalcommandnode,
@@ -311,9 +311,9 @@ public class ExecuteCommand {
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> wrapStores(
-        LiteralCommandNode<CommandSourceStack> p_137094_, LiteralArgumentBuilder<CommandSourceStack> p_137095_, boolean p_137096_
+        LiteralCommandNode<CommandSourceStack> parent, LiteralArgumentBuilder<CommandSourceStack> literal, boolean storingResult
     ) {
-        p_137095_.then(
+        literal.then(
             Commands.literal("score")
                 .then(
                     Commands.argument("targets", ScoreHolderArgument.scoreHolders())
@@ -321,36 +321,36 @@ public class ExecuteCommand {
                         .then(
                             Commands.argument("objective", ObjectiveArgument.objective())
                                 .redirect(
-                                    p_137094_,
+                                    parent,
                                     p_137271_ -> storeValue(
                                             p_137271_.getSource(),
                                             ScoreHolderArgument.getNamesWithDefaultWildcard(p_137271_, "targets"),
                                             ObjectiveArgument.getObjective(p_137271_, "objective"),
-                                            p_137096_
+                                            storingResult
                                         )
                                 )
                         )
                 )
         );
-        p_137095_.then(
+        literal.then(
             Commands.literal("bossbar")
                 .then(
                     Commands.argument("id", ResourceLocationArgument.id())
                         .suggests(BossBarCommands.SUGGEST_BOSS_BAR)
                         .then(
                             Commands.literal("value")
-                                .redirect(p_137094_, p_137259_ -> storeValue(p_137259_.getSource(), BossBarCommands.getBossBar(p_137259_), true, p_137096_))
+                                .redirect(parent, p_137259_ -> storeValue(p_137259_.getSource(), BossBarCommands.getBossBar(p_137259_), true, storingResult))
                         )
                         .then(
                             Commands.literal("max")
-                                .redirect(p_137094_, p_137247_ -> storeValue(p_137247_.getSource(), BossBarCommands.getBossBar(p_137247_), false, p_137096_))
+                                .redirect(parent, p_137247_ -> storeValue(p_137247_.getSource(), BossBarCommands.getBossBar(p_137247_), false, storingResult))
                         )
                 )
         );
 
         for (DataCommands.DataProvider datacommands$dataprovider : DataCommands.TARGET_PROVIDERS) {
             datacommands$dataprovider.wrap(
-                p_137095_,
+                literal,
                 p_137101_ -> p_137101_.then(
                         Commands.argument("path", NbtPathArgument.nbtPath())
                             .then(
@@ -358,13 +358,13 @@ public class ExecuteCommand {
                                     .then(
                                         Commands.argument("scale", DoubleArgumentType.doubleArg())
                                             .redirect(
-                                                p_137094_,
+                                                parent,
                                                 p_180216_ -> storeData(
                                                         p_180216_.getSource(),
                                                         datacommands$dataprovider.access(p_180216_),
                                                         NbtPathArgument.getPath(p_180216_, "path"),
                                                         p_180219_ -> IntTag.valueOf((int)((double)p_180219_ * DoubleArgumentType.getDouble(p_180216_, "scale"))),
-                                                        p_137096_
+                                                        storingResult
                                                     )
                                             )
                                     )
@@ -374,7 +374,7 @@ public class ExecuteCommand {
                                     .then(
                                         Commands.argument("scale", DoubleArgumentType.doubleArg())
                                             .redirect(
-                                                p_137094_,
+                                                parent,
                                                 p_180209_ -> storeData(
                                                         p_180209_.getSource(),
                                                         datacommands$dataprovider.access(p_180209_),
@@ -382,7 +382,7 @@ public class ExecuteCommand {
                                                         p_180212_ -> FloatTag.valueOf(
                                                                 (float)((double)p_180212_ * DoubleArgumentType.getDouble(p_180209_, "scale"))
                                                             ),
-                                                        p_137096_
+                                                        storingResult
                                                     )
                                             )
                                     )
@@ -392,7 +392,7 @@ public class ExecuteCommand {
                                     .then(
                                         Commands.argument("scale", DoubleArgumentType.doubleArg())
                                             .redirect(
-                                                p_137094_,
+                                                parent,
                                                 p_180199_ -> storeData(
                                                         p_180199_.getSource(),
                                                         datacommands$dataprovider.access(p_180199_),
@@ -400,7 +400,7 @@ public class ExecuteCommand {
                                                         p_180202_ -> ShortTag.valueOf(
                                                                 (short)((int)((double)p_180202_ * DoubleArgumentType.getDouble(p_180199_, "scale")))
                                                             ),
-                                                        p_137096_
+                                                        storingResult
                                                     )
                                             )
                                     )
@@ -410,7 +410,7 @@ public class ExecuteCommand {
                                     .then(
                                         Commands.argument("scale", DoubleArgumentType.doubleArg())
                                             .redirect(
-                                                p_137094_,
+                                                parent,
                                                 p_180189_ -> storeData(
                                                         p_180189_.getSource(),
                                                         datacommands$dataprovider.access(p_180189_),
@@ -418,7 +418,7 @@ public class ExecuteCommand {
                                                         p_180192_ -> LongTag.valueOf(
                                                                 (long)((double)p_180192_ * DoubleArgumentType.getDouble(p_180189_, "scale"))
                                                             ),
-                                                        p_137096_
+                                                        storingResult
                                                     )
                                             )
                                     )
@@ -428,13 +428,13 @@ public class ExecuteCommand {
                                     .then(
                                         Commands.argument("scale", DoubleArgumentType.doubleArg())
                                             .redirect(
-                                                p_137094_,
+                                                parent,
                                                 p_180179_ -> storeData(
                                                         p_180179_.getSource(),
                                                         datacommands$dataprovider.access(p_180179_),
                                                         NbtPathArgument.getPath(p_180179_, "path"),
                                                         p_180182_ -> DoubleTag.valueOf((double)p_180182_ * DoubleArgumentType.getDouble(p_180179_, "scale")),
-                                                        p_137096_
+                                                        storingResult
                                                     )
                                             )
                                     )
@@ -444,7 +444,7 @@ public class ExecuteCommand {
                                     .then(
                                         Commands.argument("scale", DoubleArgumentType.doubleArg())
                                             .redirect(
-                                                p_137094_,
+                                                parent,
                                                 p_180156_ -> storeData(
                                                         p_180156_.getSource(),
                                                         datacommands$dataprovider.access(p_180156_),
@@ -452,7 +452,7 @@ public class ExecuteCommand {
                                                         p_180165_ -> ByteTag.valueOf(
                                                                 (byte)((int)((double)p_180165_ * DoubleArgumentType.getDouble(p_180156_, "scale")))
                                                             ),
-                                                        p_137096_
+                                                        storingResult
                                                     )
                                             )
                                     )
@@ -461,63 +461,63 @@ public class ExecuteCommand {
             );
         }
 
-        return p_137095_;
+        return literal;
     }
 
-    private static CommandSourceStack storeValue(CommandSourceStack p_137108_, Collection<ScoreHolder> p_137109_, Objective p_137110_, boolean p_137111_) {
-        Scoreboard scoreboard = p_137108_.getServer().getScoreboard();
-        return p_137108_.withCallback((p_137137_, p_137138_) -> {
-            for (ScoreHolder scoreholder : p_137109_) {
-                ScoreAccess scoreaccess = scoreboard.getOrCreatePlayerScore(scoreholder, p_137110_);
-                int i = p_137111_ ? p_137138_ : (p_137137_ ? 1 : 0);
+    private static CommandSourceStack storeValue(CommandSourceStack source, Collection<ScoreHolder> targets, Objective objective, boolean storingResult) {
+        Scoreboard scoreboard = source.getServer().getScoreboard();
+        return source.withCallback((p_137137_, p_137138_) -> {
+            for (ScoreHolder scoreholder : targets) {
+                ScoreAccess scoreaccess = scoreboard.getOrCreatePlayerScore(scoreholder, objective);
+                int i = storingResult ? p_137138_ : (p_137137_ ? 1 : 0);
                 scoreaccess.set(i);
             }
         }, CommandResultCallback::chain);
     }
 
-    private static CommandSourceStack storeValue(CommandSourceStack p_137113_, CustomBossEvent p_137114_, boolean p_137115_, boolean p_137116_) {
-        return p_137113_.withCallback((p_137186_, p_137187_) -> {
-            int i = p_137116_ ? p_137187_ : (p_137186_ ? 1 : 0);
-            if (p_137115_) {
-                p_137114_.setValue(i);
+    private static CommandSourceStack storeValue(CommandSourceStack source, CustomBossEvent bar, boolean storingValue, boolean storingResult) {
+        return source.withCallback((p_137186_, p_137187_) -> {
+            int i = storingResult ? p_137187_ : (p_137186_ ? 1 : 0);
+            if (storingValue) {
+                bar.setValue(i);
             } else {
-                p_137114_.setMax(i);
+                bar.setMax(i);
             }
         }, CommandResultCallback::chain);
     }
 
     private static CommandSourceStack storeData(
-        CommandSourceStack p_137118_, DataAccessor p_137119_, NbtPathArgument.NbtPath p_137120_, IntFunction<Tag> p_137121_, boolean p_137122_
+        CommandSourceStack source, DataAccessor accessor, NbtPathArgument.NbtPath path, IntFunction<Tag> tagConverter, boolean storingResult
     ) {
-        return p_137118_.withCallback((p_137154_, p_137155_) -> {
+        return source.withCallback((p_137154_, p_137155_) -> {
             try {
-                CompoundTag compoundtag = p_137119_.getData();
-                int i = p_137122_ ? p_137155_ : (p_137154_ ? 1 : 0);
-                p_137120_.set(compoundtag, p_137121_.apply(i));
-                p_137119_.setData(compoundtag);
+                CompoundTag compoundtag = accessor.getData();
+                int i = storingResult ? p_137155_ : (p_137154_ ? 1 : 0);
+                path.set(compoundtag, tagConverter.apply(i));
+                accessor.setData(compoundtag);
             } catch (CommandSyntaxException commandsyntaxexception) {
             }
         }, CommandResultCallback::chain);
     }
 
-    private static boolean isChunkLoaded(ServerLevel p_265261_, BlockPos p_265260_) {
-        ChunkPos chunkpos = new ChunkPos(p_265260_);
-        LevelChunk levelchunk = p_265261_.getChunkSource().getChunkNow(chunkpos.x, chunkpos.z);
-        return levelchunk == null ? false : levelchunk.getFullStatus() == FullChunkStatus.ENTITY_TICKING && p_265261_.areEntitiesLoaded(chunkpos.toLong());
+    private static boolean isChunkLoaded(ServerLevel level, BlockPos pos) {
+        ChunkPos chunkpos = new ChunkPos(pos);
+        LevelChunk levelchunk = level.getChunkSource().getChunkNow(chunkpos.x, chunkpos.z);
+        return levelchunk == null ? false : levelchunk.getFullStatus() == FullChunkStatus.ENTITY_TICKING && level.areEntitiesLoaded(chunkpos.toLong());
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> addConditionals(
-        CommandNode<CommandSourceStack> p_214438_, LiteralArgumentBuilder<CommandSourceStack> p_214439_, boolean p_214440_, CommandBuildContext p_214441_
+        CommandNode<CommandSourceStack> parent, LiteralArgumentBuilder<CommandSourceStack> literal, boolean isIf, CommandBuildContext context
     ) {
-        p_214439_.then(
+        literal.then(
                 Commands.literal("block")
                     .then(
                         Commands.argument("pos", BlockPosArgument.blockPos())
                             .then(
                                 addConditional(
-                                    p_214438_,
-                                    Commands.argument("block", BlockPredicateArgument.blockPredicate(p_214441_)),
-                                    p_214440_,
+                                    parent,
+                                    Commands.argument("block", BlockPredicateArgument.blockPredicate(context)),
+                                    isIf,
                                     p_137277_ -> BlockPredicateArgument.getBlockPredicate(p_137277_, "block")
                                             .test(
                                                 new BlockInWorld(p_137277_.getSource().getLevel(), BlockPosArgument.getLoadedBlockPos(p_137277_, "pos"), true)
@@ -532,9 +532,9 @@ public class ExecuteCommand {
                         Commands.argument("pos", BlockPosArgument.blockPos())
                             .then(
                                 addConditional(
-                                    p_214438_,
-                                    Commands.argument("biome", ResourceOrTagArgument.resourceOrTag(p_214441_, Registries.BIOME)),
-                                    p_214440_,
+                                    parent,
+                                    Commands.argument("biome", ResourceOrTagArgument.resourceOrTag(context, Registries.BIOME)),
+                                    isIf,
                                     p_313477_ -> ResourceOrTagArgument.getResourceOrTag(p_313477_, "biome", Registries.BIOME)
                                             .test(p_313477_.getSource().getLevel().getBiome(BlockPosArgument.getLoadedBlockPos(p_313477_, "pos")))
                                 )
@@ -545,9 +545,9 @@ public class ExecuteCommand {
                 Commands.literal("loaded")
                     .then(
                         addConditional(
-                            p_214438_,
+                            parent,
                             Commands.argument("pos", BlockPosArgument.blockPos()),
-                            p_214440_,
+                            isIf,
                             p_269757_ -> isChunkLoaded(p_269757_.getSource().getLevel(), BlockPosArgument.getBlockPos(p_269757_, "pos"))
                         )
                     )
@@ -556,9 +556,9 @@ public class ExecuteCommand {
                 Commands.literal("dimension")
                     .then(
                         addConditional(
-                            p_214438_,
+                            parent,
                             Commands.argument("dimension", DimensionArgument.dimension()),
-                            p_214440_,
+                            isIf,
                             p_264789_ -> DimensionArgument.getDimension(p_264789_, "dimension") == p_264789_.getSource().getLevel()
                         )
                     )
@@ -577,9 +577,9 @@ public class ExecuteCommand {
                                                     .suggests(ScoreHolderArgument.SUGGEST_SCORE_HOLDERS)
                                                     .then(
                                                         addConditional(
-                                                            p_214438_,
+                                                            parent,
                                                             Commands.argument("sourceObjective", ObjectiveArgument.objective()),
-                                                            p_214440_,
+                                                            isIf,
                                                             p_313481_ -> checkScore(p_313481_, (p_313485_, p_313486_) -> p_313485_ == p_313486_)
                                                         )
                                                     )
@@ -592,9 +592,9 @@ public class ExecuteCommand {
                                                     .suggests(ScoreHolderArgument.SUGGEST_SCORE_HOLDERS)
                                                     .then(
                                                         addConditional(
-                                                            p_214438_,
+                                                            parent,
                                                             Commands.argument("sourceObjective", ObjectiveArgument.objective()),
-                                                            p_214440_,
+                                                            isIf,
                                                             p_313476_ -> checkScore(p_313476_, (p_313478_, p_313479_) -> p_313478_ < p_313479_)
                                                         )
                                                     )
@@ -607,9 +607,9 @@ public class ExecuteCommand {
                                                     .suggests(ScoreHolderArgument.SUGGEST_SCORE_HOLDERS)
                                                     .then(
                                                         addConditional(
-                                                            p_214438_,
+                                                            parent,
                                                             Commands.argument("sourceObjective", ObjectiveArgument.objective()),
-                                                            p_214440_,
+                                                            isIf,
                                                             p_313482_ -> checkScore(p_313482_, (p_313473_, p_313474_) -> p_313473_ <= p_313474_)
                                                         )
                                                     )
@@ -622,9 +622,9 @@ public class ExecuteCommand {
                                                     .suggests(ScoreHolderArgument.SUGGEST_SCORE_HOLDERS)
                                                     .then(
                                                         addConditional(
-                                                            p_214438_,
+                                                            parent,
                                                             Commands.argument("sourceObjective", ObjectiveArgument.objective()),
-                                                            p_214440_,
+                                                            isIf,
                                                             p_313475_ -> checkScore(p_313475_, (p_313487_, p_313488_) -> p_313487_ > p_313488_)
                                                         )
                                                     )
@@ -637,9 +637,9 @@ public class ExecuteCommand {
                                                     .suggests(ScoreHolderArgument.SUGGEST_SCORE_HOLDERS)
                                                     .then(
                                                         addConditional(
-                                                            p_214438_,
+                                                            parent,
                                                             Commands.argument("sourceObjective", ObjectiveArgument.objective()),
-                                                            p_214440_,
+                                                            isIf,
                                                             p_313480_ -> checkScore(p_313480_, (p_313483_, p_313484_) -> p_313483_ >= p_313484_)
                                                         )
                                                     )
@@ -649,9 +649,9 @@ public class ExecuteCommand {
                                         Commands.literal("matches")
                                             .then(
                                                 addConditional(
-                                                    p_214438_,
+                                                    parent,
                                                     Commands.argument("range", RangeArgument.intRange()),
-                                                    p_214440_,
+                                                    isIf,
                                                     p_137216_ -> checkScore(p_137216_, RangeArgument.Ints.getRange(p_137216_, "range"))
                                                 )
                                             )
@@ -667,8 +667,8 @@ public class ExecuteCommand {
                                 Commands.argument("end", BlockPosArgument.blockPos())
                                     .then(
                                         Commands.argument("destination", BlockPosArgument.blockPos())
-                                            .then(addIfBlocksConditional(p_214438_, Commands.literal("all"), p_214440_, false))
-                                            .then(addIfBlocksConditional(p_214438_, Commands.literal("masked"), p_214440_, true))
+                                            .then(addIfBlocksConditional(parent, Commands.literal("all"), isIf, false))
+                                            .then(addIfBlocksConditional(parent, Commands.literal("masked"), isIf, true))
                                     )
                             )
                     )
@@ -677,17 +677,17 @@ public class ExecuteCommand {
                 Commands.literal("entity")
                     .then(
                         Commands.argument("entities", EntityArgument.entities())
-                            .fork(p_214438_, p_137232_ -> expect(p_137232_, p_214440_, !EntityArgument.getOptionalEntities(p_137232_, "entities").isEmpty()))
-                            .executes(createNumericConditionalHandler(p_214440_, p_137189_ -> EntityArgument.getOptionalEntities(p_137189_, "entities").size()))
+                            .fork(parent, p_137232_ -> expect(p_137232_, isIf, !EntityArgument.getOptionalEntities(p_137232_, "entities").isEmpty()))
+                            .executes(createNumericConditionalHandler(isIf, p_137189_ -> EntityArgument.getOptionalEntities(p_137189_, "entities").size()))
                     )
             )
             .then(
                 Commands.literal("predicate")
                     .then(
                         addConditional(
-                            p_214438_,
-                            Commands.argument("predicate", ResourceOrIdArgument.lootPredicate(p_214441_)).suggests(SUGGEST_PREDICATE),
-                            p_214440_,
+                            parent,
+                            Commands.argument("predicate", ResourceOrIdArgument.lootPredicate(context)).suggests(SUGGEST_PREDICATE),
+                            isIf,
                             p_335217_ -> checkCustomPredicate(p_335217_.getSource(), ResourceOrIdArgument.getLootPredicate(p_335217_, "predicate"))
                         )
                     )
@@ -697,7 +697,7 @@ public class ExecuteCommand {
                     .then(
                         Commands.argument("name", FunctionArgument.functions())
                             .suggests(FunctionCommand.SUGGEST_FUNCTION)
-                            .fork(p_214438_, new ExecuteCommand.ExecuteIfFunctionCustomModifier(p_214440_))
+                            .fork(parent, new ExecuteCommand.ExecuteIfFunctionCustomModifier(isIf))
                     )
             )
             .then(
@@ -709,12 +709,12 @@ public class ExecuteCommand {
                                     .then(
                                         Commands.argument("slots", SlotsArgument.slots())
                                             .then(
-                                                Commands.argument("item_predicate", ItemPredicateArgument.itemPredicate(p_214441_))
+                                                Commands.argument("item_predicate", ItemPredicateArgument.itemPredicate(context))
                                                     .fork(
-                                                        p_214438_,
+                                                        parent,
                                                         p_332574_ -> expect(
                                                                 p_332574_,
-                                                                p_214440_,
+                                                                isIf,
                                                                 countItems(
                                                                         EntityArgument.getEntities(p_332574_, "entities"),
                                                                         SlotsArgument.getSlots(p_332574_, "slots"),
@@ -725,7 +725,7 @@ public class ExecuteCommand {
                                                     )
                                                     .executes(
                                                         createNumericConditionalHandler(
-                                                            p_214440_,
+                                                            isIf,
                                                             p_332569_ -> countItems(
                                                                     EntityArgument.getEntities(p_332569_, "entities"),
                                                                     SlotsArgument.getSlots(p_332569_, "slots"),
@@ -744,12 +744,12 @@ public class ExecuteCommand {
                                     .then(
                                         Commands.argument("slots", SlotsArgument.slots())
                                             .then(
-                                                Commands.argument("item_predicate", ItemPredicateArgument.itemPredicate(p_214441_))
+                                                Commands.argument("item_predicate", ItemPredicateArgument.itemPredicate(context))
                                                     .fork(
-                                                        p_214438_,
+                                                        parent,
                                                         p_332571_ -> expect(
                                                                 p_332571_,
-                                                                p_214440_,
+                                                                isIf,
                                                                 countItems(
                                                                         p_332571_.getSource(),
                                                                         BlockPosArgument.getLoadedBlockPos(p_332571_, "pos"),
@@ -761,7 +761,7 @@ public class ExecuteCommand {
                                                     )
                                                     .executes(
                                                         createNumericConditionalHandler(
-                                                            p_214440_,
+                                                            isIf,
                                                             p_332572_ -> countItems(
                                                                     p_332572_.getSource(),
                                                                     BlockPosArgument.getLoadedBlockPos(p_332572_, "pos"),
@@ -777,22 +777,22 @@ public class ExecuteCommand {
             );
 
         for (DataCommands.DataProvider datacommands$dataprovider : DataCommands.SOURCE_PROVIDERS) {
-            p_214439_.then(
+            literal.then(
                 datacommands$dataprovider.wrap(
                     Commands.literal("data"),
                     p_137092_ -> p_137092_.then(
                             Commands.argument("path", NbtPathArgument.nbtPath())
                                 .fork(
-                                    p_214438_,
+                                    parent,
                                     p_180175_ -> expect(
                                             p_180175_,
-                                            p_214440_,
+                                            isIf,
                                             checkMatchingData(datacommands$dataprovider.access(p_180175_), NbtPathArgument.getPath(p_180175_, "path")) > 0
                                         )
                                 )
                                 .executes(
                                     createNumericConditionalHandler(
-                                        p_214440_,
+                                        isIf,
                                         p_180152_ -> checkMatchingData(datacommands$dataprovider.access(p_180152_), NbtPathArgument.getPath(p_180152_, "path"))
                                     )
                                 )
@@ -801,20 +801,20 @@ public class ExecuteCommand {
             );
         }
 
-        return p_214439_;
+        return literal;
     }
 
-    private static int countItems(Iterable<? extends Entity> p_332642_, SlotRange p_332729_, Predicate<ItemStack> p_332803_) {
+    private static int countItems(Iterable<? extends Entity> targets, SlotRange slotRange, Predicate<ItemStack> filter) {
         int i = 0;
 
-        for (Entity entity : p_332642_) {
-            IntList intlist = p_332729_.slots();
+        for (Entity entity : targets) {
+            IntList intlist = slotRange.slots();
 
             for (int j = 0; j < intlist.size(); j++) {
                 int k = intlist.getInt(j);
                 SlotAccess slotaccess = entity.getSlot(k);
                 ItemStack itemstack = slotaccess.get();
-                if (p_332803_.test(itemstack)) {
+                if (filter.test(itemstack)) {
                     i += itemstack.getCount();
                 }
             }
@@ -823,17 +823,17 @@ public class ExecuteCommand {
         return i;
     }
 
-    private static int countItems(CommandSourceStack p_332730_, BlockPos p_332679_, SlotRange p_332656_, Predicate<ItemStack> p_332801_) throws CommandSyntaxException {
+    private static int countItems(CommandSourceStack source, BlockPos pos, SlotRange slotRange, Predicate<ItemStack> filter) throws CommandSyntaxException {
         int i = 0;
-        Container container = ItemCommands.getContainer(p_332730_, p_332679_, ItemCommands.ERROR_SOURCE_NOT_A_CONTAINER);
+        Container container = ItemCommands.getContainer(source, pos, ItemCommands.ERROR_SOURCE_NOT_A_CONTAINER);
         int j = container.getContainerSize();
-        IntList intlist = p_332656_.slots();
+        IntList intlist = slotRange.slots();
 
         for (int k = 0; k < intlist.size(); k++) {
             int l = intlist.getInt(k);
             if (l >= 0 && l < j) {
                 ItemStack itemstack = container.getItem(l);
-                if (p_332801_.test(itemstack)) {
+                if (filter.test(itemstack)) {
                     i += itemstack.getCount();
                 }
             }
@@ -842,9 +842,9 @@ public class ExecuteCommand {
         return i;
     }
 
-    private static Command<CommandSourceStack> createNumericConditionalHandler(boolean p_137167_, ExecuteCommand.CommandNumericPredicate p_137168_) {
-        return p_137167_ ? p_288391_ -> {
-            int i = p_137168_.test(p_288391_);
+    private static Command<CommandSourceStack> createNumericConditionalHandler(boolean isIf, ExecuteCommand.CommandNumericPredicate predicate) {
+        return isIf ? p_288391_ -> {
+            int i = predicate.test(p_288391_);
             if (i > 0) {
                 p_288391_.getSource().sendSuccess(() -> Component.translatable("commands.execute.conditional.pass_count", i), false);
                 return i;
@@ -852,7 +852,7 @@ public class ExecuteCommand {
                 throw ERROR_CONDITIONAL_FAILED.create();
             }
         } : p_288393_ -> {
-            int i = p_137168_.test(p_288393_);
+            int i = predicate.test(p_288393_);
             if (i == 0) {
                 p_288393_.getSource().sendSuccess(() -> Component.translatable("commands.execute.conditional.pass"), false);
                 return 1;
@@ -862,52 +862,55 @@ public class ExecuteCommand {
         };
     }
 
-    private static int checkMatchingData(DataAccessor p_137146_, NbtPathArgument.NbtPath p_137147_) throws CommandSyntaxException {
-        return p_137147_.countMatching(p_137146_.getData());
+    private static int checkMatchingData(DataAccessor accessor, NbtPathArgument.NbtPath path) throws CommandSyntaxException {
+        return path.countMatching(accessor.getData());
     }
 
-    private static boolean checkScore(CommandContext<CommandSourceStack> p_137065_, ExecuteCommand.IntBiPredicate p_313900_) throws CommandSyntaxException {
-        ScoreHolder scoreholder = ScoreHolderArgument.getName(p_137065_, "target");
-        Objective objective = ObjectiveArgument.getObjective(p_137065_, "targetObjective");
-        ScoreHolder scoreholder1 = ScoreHolderArgument.getName(p_137065_, "source");
-        Objective objective1 = ObjectiveArgument.getObjective(p_137065_, "sourceObjective");
-        Scoreboard scoreboard = p_137065_.getSource().getServer().getScoreboard();
+    private static boolean checkScore(CommandContext<CommandSourceStack> source, ExecuteCommand.IntBiPredicate predicate) throws CommandSyntaxException {
+        ScoreHolder scoreholder = ScoreHolderArgument.getName(source, "target");
+        Objective objective = ObjectiveArgument.getObjective(source, "targetObjective");
+        ScoreHolder scoreholder1 = ScoreHolderArgument.getName(source, "source");
+        Objective objective1 = ObjectiveArgument.getObjective(source, "sourceObjective");
+        Scoreboard scoreboard = source.getSource().getServer().getScoreboard();
         ReadOnlyScoreInfo readonlyscoreinfo = scoreboard.getPlayerScoreInfo(scoreholder, objective);
         ReadOnlyScoreInfo readonlyscoreinfo1 = scoreboard.getPlayerScoreInfo(scoreholder1, objective1);
-        return readonlyscoreinfo != null && readonlyscoreinfo1 != null ? p_313900_.test(readonlyscoreinfo.value(), readonlyscoreinfo1.value()) : false;
+        return readonlyscoreinfo != null && readonlyscoreinfo1 != null ? predicate.test(readonlyscoreinfo.value(), readonlyscoreinfo1.value()) : false;
     }
 
-    private static boolean checkScore(CommandContext<CommandSourceStack> p_137059_, MinMaxBounds.Ints p_137060_) throws CommandSyntaxException {
-        ScoreHolder scoreholder = ScoreHolderArgument.getName(p_137059_, "target");
-        Objective objective = ObjectiveArgument.getObjective(p_137059_, "targetObjective");
-        Scoreboard scoreboard = p_137059_.getSource().getServer().getScoreboard();
+    private static boolean checkScore(CommandContext<CommandSourceStack> context, MinMaxBounds.Ints bounds) throws CommandSyntaxException {
+        ScoreHolder scoreholder = ScoreHolderArgument.getName(context, "target");
+        Objective objective = ObjectiveArgument.getObjective(context, "targetObjective");
+        Scoreboard scoreboard = context.getSource().getServer().getScoreboard();
         ReadOnlyScoreInfo readonlyscoreinfo = scoreboard.getPlayerScoreInfo(scoreholder, objective);
-        return readonlyscoreinfo == null ? false : p_137060_.matches(readonlyscoreinfo.value());
+        return readonlyscoreinfo == null ? false : bounds.matches(readonlyscoreinfo.value());
     }
 
-    private static boolean checkCustomPredicate(CommandSourceStack p_137105_, Holder<LootItemCondition> p_335673_) {
-        ServerLevel serverlevel = p_137105_.getLevel();
+    private static boolean checkCustomPredicate(CommandSourceStack source, Holder<LootItemCondition> condition) {
+        ServerLevel serverlevel = source.getLevel();
         LootParams lootparams = new LootParams.Builder(serverlevel)
-            .withParameter(LootContextParams.ORIGIN, p_137105_.getPosition())
-            .withOptionalParameter(LootContextParams.THIS_ENTITY, p_137105_.getEntity())
+            .withParameter(LootContextParams.ORIGIN, source.getPosition())
+            .withOptionalParameter(LootContextParams.THIS_ENTITY, source.getEntity())
             .create(LootContextParamSets.COMMAND);
         LootContext lootcontext = new LootContext.Builder(lootparams).create(Optional.empty());
-        lootcontext.pushVisitedElement(LootContext.createVisitedEntry(p_335673_.value()));
-        return p_335673_.value().test(lootcontext);
+        lootcontext.pushVisitedElement(LootContext.createVisitedEntry(condition.value()));
+        return condition.value().test(lootcontext);
     }
 
-    private static Collection<CommandSourceStack> expect(CommandContext<CommandSourceStack> p_137071_, boolean p_137072_, boolean p_137073_) {
-        return (Collection<CommandSourceStack>)(p_137073_ == p_137072_ ? Collections.singleton(p_137071_.getSource()) : Collections.emptyList());
+    /**
+     * If actual and expected match, returns a collection containing only the source player.
+     */
+    private static Collection<CommandSourceStack> expect(CommandContext<CommandSourceStack> context, boolean actual, boolean expected) {
+        return (Collection<CommandSourceStack>)(expected == actual ? Collections.singleton(context.getSource()) : Collections.emptyList());
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> addConditional(
-        CommandNode<CommandSourceStack> p_137075_,
-        ArgumentBuilder<CommandSourceStack, ?> p_137076_,
-        boolean p_137077_,
-        ExecuteCommand.CommandPredicate p_137078_
+        CommandNode<CommandSourceStack> commandNode,
+        ArgumentBuilder<CommandSourceStack, ?> builder,
+        boolean value,
+        ExecuteCommand.CommandPredicate test
     ) {
-        return p_137076_.fork(p_137075_, p_137214_ -> expect(p_137214_, p_137077_, p_137078_.test(p_137214_))).executes(p_288396_ -> {
-            if (p_137077_ == p_137078_.test(p_288396_)) {
+        return builder.fork(commandNode, p_137214_ -> expect(p_137214_, value, test.test(p_137214_))).executes(p_288396_ -> {
+            if (value == test.test(p_288396_)) {
                 p_288396_.getSource().sendSuccess(() -> Component.translatable("commands.execute.conditional.pass"), false);
                 return 1;
             } else {
@@ -917,45 +920,45 @@ public class ExecuteCommand {
     }
 
     private static ArgumentBuilder<CommandSourceStack, ?> addIfBlocksConditional(
-        CommandNode<CommandSourceStack> p_137080_, ArgumentBuilder<CommandSourceStack, ?> p_137081_, boolean p_137082_, boolean p_137083_
+        CommandNode<CommandSourceStack> commandNode, ArgumentBuilder<CommandSourceStack, ?> literal, boolean isIf, boolean isMasked
     ) {
-        return p_137081_.fork(p_137080_, p_137180_ -> expect(p_137180_, p_137082_, checkRegions(p_137180_, p_137083_).isPresent()))
-            .executes(p_137082_ ? p_137210_ -> checkIfRegions(p_137210_, p_137083_) : p_137165_ -> checkUnlessRegions(p_137165_, p_137083_));
+        return literal.fork(commandNode, p_137180_ -> expect(p_137180_, isIf, checkRegions(p_137180_, isMasked).isPresent()))
+            .executes(isIf ? p_137210_ -> checkIfRegions(p_137210_, isMasked) : p_137165_ -> checkUnlessRegions(p_137165_, isMasked));
     }
 
-    private static int checkIfRegions(CommandContext<CommandSourceStack> p_137068_, boolean p_137069_) throws CommandSyntaxException {
-        OptionalInt optionalint = checkRegions(p_137068_, p_137069_);
+    private static int checkIfRegions(CommandContext<CommandSourceStack> context, boolean isMasked) throws CommandSyntaxException {
+        OptionalInt optionalint = checkRegions(context, isMasked);
         if (optionalint.isPresent()) {
-            p_137068_.getSource().sendSuccess(() -> Component.translatable("commands.execute.conditional.pass_count", optionalint.getAsInt()), false);
+            context.getSource().sendSuccess(() -> Component.translatable("commands.execute.conditional.pass_count", optionalint.getAsInt()), false);
             return optionalint.getAsInt();
         } else {
             throw ERROR_CONDITIONAL_FAILED.create();
         }
     }
 
-    private static int checkUnlessRegions(CommandContext<CommandSourceStack> p_137194_, boolean p_137195_) throws CommandSyntaxException {
-        OptionalInt optionalint = checkRegions(p_137194_, p_137195_);
+    private static int checkUnlessRegions(CommandContext<CommandSourceStack> context, boolean isMasked) throws CommandSyntaxException {
+        OptionalInt optionalint = checkRegions(context, isMasked);
         if (optionalint.isPresent()) {
             throw ERROR_CONDITIONAL_FAILED_COUNT.create(optionalint.getAsInt());
         } else {
-            p_137194_.getSource().sendSuccess(() -> Component.translatable("commands.execute.conditional.pass"), false);
+            context.getSource().sendSuccess(() -> Component.translatable("commands.execute.conditional.pass"), false);
             return 1;
         }
     }
 
-    private static OptionalInt checkRegions(CommandContext<CommandSourceStack> p_137221_, boolean p_137222_) throws CommandSyntaxException {
+    private static OptionalInt checkRegions(CommandContext<CommandSourceStack> context, boolean isMasked) throws CommandSyntaxException {
         return checkRegions(
-            p_137221_.getSource().getLevel(),
-            BlockPosArgument.getLoadedBlockPos(p_137221_, "start"),
-            BlockPosArgument.getLoadedBlockPos(p_137221_, "end"),
-            BlockPosArgument.getLoadedBlockPos(p_137221_, "destination"),
-            p_137222_
+            context.getSource().getLevel(),
+            BlockPosArgument.getLoadedBlockPos(context, "start"),
+            BlockPosArgument.getLoadedBlockPos(context, "end"),
+            BlockPosArgument.getLoadedBlockPos(context, "destination"),
+            isMasked
         );
     }
 
-    private static OptionalInt checkRegions(ServerLevel p_137037_, BlockPos p_137038_, BlockPos p_137039_, BlockPos p_137040_, boolean p_137041_) throws CommandSyntaxException {
-        BoundingBox boundingbox = BoundingBox.fromCorners(p_137038_, p_137039_);
-        BoundingBox boundingbox1 = BoundingBox.fromCorners(p_137040_, p_137040_.offset(boundingbox.getLength()));
+    private static OptionalInt checkRegions(ServerLevel level, BlockPos begin, BlockPos end, BlockPos destination, boolean isMasked) throws CommandSyntaxException {
+        BoundingBox boundingbox = BoundingBox.fromCorners(begin, end);
+        BoundingBox boundingbox1 = BoundingBox.fromCorners(destination, destination.offset(boundingbox.getLength()));
         BlockPos blockpos = new BlockPos(
             boundingbox1.minX() - boundingbox.minX(), boundingbox1.minY() - boundingbox.minY(), boundingbox1.minZ() - boundingbox.minZ()
         );
@@ -963,7 +966,7 @@ public class ExecuteCommand {
         if (i > 32768) {
             throw ERROR_AREA_TOO_LARGE.create(32768, i);
         } else {
-            RegistryAccess registryaccess = p_137037_.registryAccess();
+            RegistryAccess registryaccess = level.registryAccess();
             int j = 0;
 
             for (int k = boundingbox.minZ(); k <= boundingbox.maxZ(); k++) {
@@ -971,14 +974,14 @@ public class ExecuteCommand {
                     for (int i1 = boundingbox.minX(); i1 <= boundingbox.maxX(); i1++) {
                         BlockPos blockpos1 = new BlockPos(i1, l, k);
                         BlockPos blockpos2 = blockpos1.offset(blockpos);
-                        BlockState blockstate = p_137037_.getBlockState(blockpos1);
-                        if (!p_137041_ || !blockstate.is(Blocks.AIR)) {
-                            if (blockstate != p_137037_.getBlockState(blockpos2)) {
+                        BlockState blockstate = level.getBlockState(blockpos1);
+                        if (!isMasked || !blockstate.is(Blocks.AIR)) {
+                            if (blockstate != level.getBlockState(blockpos2)) {
                                 return OptionalInt.empty();
                             }
 
-                            BlockEntity blockentity = p_137037_.getBlockEntity(blockpos1);
-                            BlockEntity blockentity1 = p_137037_.getBlockEntity(blockpos2);
+                            BlockEntity blockentity = level.getBlockEntity(blockpos1);
+                            BlockEntity blockentity1 = level.getBlockEntity(blockpos2);
                             if (blockentity != null) {
                                 if (blockentity1 == null) {
                                     return OptionalInt.empty();
@@ -1009,36 +1012,36 @@ public class ExecuteCommand {
         }
     }
 
-    private static RedirectModifier<CommandSourceStack> expandOneToOneEntityRelation(Function<Entity, Optional<Entity>> p_265114_) {
+    private static RedirectModifier<CommandSourceStack> expandOneToOneEntityRelation(Function<Entity, Optional<Entity>> relation) {
         return p_264786_ -> {
             CommandSourceStack commandsourcestack = p_264786_.getSource();
             Entity entity = commandsourcestack.getEntity();
             return entity == null
                 ? List.of()
-                : p_265114_.apply(entity)
+                : relation.apply(entity)
                     .filter(p_264783_ -> !p_264783_.isRemoved())
                     .map(p_264775_ -> List.of(commandsourcestack.withEntity(p_264775_)))
                     .orElse(List.of());
         };
     }
 
-    private static RedirectModifier<CommandSourceStack> expandOneToManyEntityRelation(Function<Entity, Stream<Entity>> p_265496_) {
+    private static RedirectModifier<CommandSourceStack> expandOneToManyEntityRelation(Function<Entity, Stream<Entity>> relation) {
         return p_264780_ -> {
             CommandSourceStack commandsourcestack = p_264780_.getSource();
             Entity entity = commandsourcestack.getEntity();
             return entity == null
                 ? List.of()
-                : p_265496_.apply(entity).filter(p_264784_ -> !p_264784_.isRemoved()).map(commandsourcestack::withEntity).toList();
+                : relation.apply(entity).filter(p_264784_ -> !p_264784_.isRemoved()).map(commandsourcestack::withEntity).toList();
         };
     }
 
     private static LiteralArgumentBuilder<CommandSourceStack> createRelationOperations(
-        CommandNode<CommandSourceStack> p_265189_, LiteralArgumentBuilder<CommandSourceStack> p_265783_
+        CommandNode<CommandSourceStack> node, LiteralArgumentBuilder<CommandSourceStack> argumentBuilder
     ) {
-        return p_265783_.then(
+        return argumentBuilder.then(
                 Commands.literal("owner")
                     .fork(
-                        p_265189_,
+                        node,
                         expandOneToOneEntityRelation(
                             p_269758_ -> p_269758_ instanceof OwnableEntity ownableentity ? Optional.ofNullable(ownableentity.getOwner()) : Optional.empty()
                         )
@@ -1047,7 +1050,7 @@ public class ExecuteCommand {
             .then(
                 Commands.literal("leasher")
                     .fork(
-                        p_265189_,
+                        node,
                         expandOneToOneEntityRelation(
                             p_353021_ -> p_353021_ instanceof Leashable leashable ? Optional.ofNullable(leashable.getLeashHolder()) : Optional.empty()
                         )
@@ -1056,7 +1059,7 @@ public class ExecuteCommand {
             .then(
                 Commands.literal("target")
                     .fork(
-                        p_265189_,
+                        node,
                         expandOneToOneEntityRelation(
                             p_272389_ -> p_272389_ instanceof Targeting targeting ? Optional.ofNullable(targeting.getTarget()) : Optional.empty()
                         )
@@ -1065,21 +1068,21 @@ public class ExecuteCommand {
             .then(
                 Commands.literal("attacker")
                     .fork(
-                        p_265189_,
+                        node,
                         expandOneToOneEntityRelation(
                             p_272388_ -> p_272388_ instanceof Attackable attackable ? Optional.ofNullable(attackable.getLastAttacker()) : Optional.empty()
                         )
                     )
             )
-            .then(Commands.literal("vehicle").fork(p_265189_, expandOneToOneEntityRelation(p_264776_ -> Optional.ofNullable(p_264776_.getVehicle()))))
+            .then(Commands.literal("vehicle").fork(node, expandOneToOneEntityRelation(p_264776_ -> Optional.ofNullable(p_264776_.getVehicle()))))
             .then(
                 Commands.literal("controller")
-                    .fork(p_265189_, expandOneToOneEntityRelation(p_274815_ -> Optional.ofNullable(p_274815_.getControllingPassenger())))
+                    .fork(node, expandOneToOneEntityRelation(p_274815_ -> Optional.ofNullable(p_274815_.getControllingPassenger())))
             )
             .then(
                 Commands.literal("origin")
                     .fork(
-                        p_265189_,
+                        node,
                         expandOneToOneEntityRelation(
                             p_266631_ -> p_266631_ instanceof TraceableEntity traceableentity
                                     ? Optional.ofNullable(traceableentity.getOwner())
@@ -1087,32 +1090,32 @@ public class ExecuteCommand {
                         )
                     )
             )
-            .then(Commands.literal("passengers").fork(p_265189_, expandOneToManyEntityRelation(p_264777_ -> p_264777_.getPassengers().stream())));
+            .then(Commands.literal("passengers").fork(node, expandOneToManyEntityRelation(p_264777_ -> p_264777_.getPassengers().stream())));
     }
 
-    private static CommandSourceStack spawnEntityAndRedirect(CommandSourceStack p_270320_, Holder.Reference<EntityType<?>> p_270344_) throws CommandSyntaxException {
-        Entity entity = SummonCommand.createEntity(p_270320_, p_270344_, p_270320_.getPosition(), new CompoundTag(), true);
-        return p_270320_.withEntity(entity);
+    private static CommandSourceStack spawnEntityAndRedirect(CommandSourceStack source, Holder.Reference<EntityType<?>> entityType) throws CommandSyntaxException {
+        Entity entity = SummonCommand.createEntity(source, entityType, source.getPosition(), new CompoundTag(), true);
+        return source.withEntity(entity);
     }
 
     public static <T extends ExecutionCommandSource<T>> void scheduleFunctionConditionsAndTest(
-        T p_309624_,
-        List<T> p_306057_,
-        Function<T, T> p_306045_,
-        IntPredicate p_306343_,
-        ContextChain<T> p_306308_,
-        @Nullable CompoundTag p_306076_,
-        ExecutionControl<T> p_306202_,
-        ExecuteCommand.CommandGetter<T, Collection<CommandFunction<T>>> p_305836_,
-        ChainModifiers p_309703_
+        T originalSource,
+        List<T> sources,
+        Function<T, T> sourceModifier,
+        IntPredicate successCheck,
+        ContextChain<T> contextChain,
+        @Nullable CompoundTag arguments,
+        ExecutionControl<T> executionControl,
+        ExecuteCommand.CommandGetter<T, Collection<CommandFunction<T>>> functions,
+        ChainModifiers chainModifiers
     ) {
-        List<T> list = new ArrayList<>(p_306057_.size());
+        List<T> list = new ArrayList<>(sources.size());
 
         Collection<CommandFunction<T>> collection;
         try {
-            collection = p_305836_.get(p_306308_.getTopContext().copyFor(p_309624_));
+            collection = functions.get(contextChain.getTopContext().copyFor(originalSource));
         } catch (CommandSyntaxException commandsyntaxexception) {
-            p_309624_.handleError(commandsyntaxexception, p_309703_.isForked(), p_306202_.tracer());
+            originalSource.handleError(commandsyntaxexception, chainModifiers.isForked(), executionControl.tracer());
             return;
         }
 
@@ -1123,23 +1126,23 @@ public class ExecuteCommand {
             try {
                 for (CommandFunction<T> commandfunction : collection) {
                     try {
-                        list1.add(commandfunction.instantiate(p_306076_, p_309624_.dispatcher()));
+                        list1.add(commandfunction.instantiate(arguments, originalSource.dispatcher()));
                     } catch (FunctionInstantiationException functioninstantiationexception) {
                         throw ERROR_FUNCTION_CONDITION_INSTANTATION_FAILURE.create(commandfunction.id(), functioninstantiationexception.messageComponent());
                     }
                 }
             } catch (CommandSyntaxException commandsyntaxexception1) {
-                p_309624_.handleError(commandsyntaxexception1, p_309703_.isForked(), p_306202_.tracer());
+                originalSource.handleError(commandsyntaxexception1, chainModifiers.isForked(), executionControl.tracer());
             }
 
-            for (T t1 : p_306057_) {
-                T t = (T)p_306045_.apply(t1.clearCallbacks());
+            for (T t1 : sources) {
+                T t = (T)sourceModifier.apply(t1.clearCallbacks());
                 CommandResultCallback commandresultcallback = (p_309685_, p_305691_) -> {
-                    if (p_306343_.test(p_305691_)) {
+                    if (successCheck.test(p_305691_)) {
                         list.add(t1);
                     }
                 };
-                p_306202_.queueNext(new IsolatedCall<>(p_309456_ -> {
+                executionControl.queueNext(new IsolatedCall<>(p_309456_ -> {
                     for (InstantiatedFunction<T> instantiatedfunction : list1) {
                         p_309456_.queueNext(new CallFunction<>(instantiatedfunction, p_309456_.currentFrame().returnValueConsumer(), true).bind(t));
                     }
@@ -1148,57 +1151,57 @@ public class ExecuteCommand {
                 }, commandresultcallback));
             }
 
-            ContextChain<T> contextchain = p_306308_.nextStage();
-            String s = p_306308_.getTopContext().getInput();
-            p_306202_.queueNext(new BuildContexts.Continuation<>(s, contextchain, p_309703_, p_309624_, list));
+            ContextChain<T> contextchain = contextChain.nextStage();
+            String s = contextChain.getTopContext().getInput();
+            executionControl.queueNext(new BuildContexts.Continuation<>(s, contextchain, chainModifiers, originalSource, list));
         }
     }
 
     @FunctionalInterface
     public interface CommandGetter<T, R> {
-        R get(CommandContext<T> p_306207_) throws CommandSyntaxException;
+        R get(CommandContext<T> context) throws CommandSyntaxException;
     }
 
     @FunctionalInterface
     interface CommandNumericPredicate {
-        int test(CommandContext<CommandSourceStack> p_137301_) throws CommandSyntaxException;
+        int test(CommandContext<CommandSourceStack> context) throws CommandSyntaxException;
     }
 
     @FunctionalInterface
     interface CommandPredicate {
-        boolean test(CommandContext<CommandSourceStack> p_137303_) throws CommandSyntaxException;
+        boolean test(CommandContext<CommandSourceStack> context) throws CommandSyntaxException;
     }
 
     static class ExecuteIfFunctionCustomModifier implements CustomModifierExecutor.ModifierAdapter<CommandSourceStack> {
         private final IntPredicate check;
 
-        ExecuteIfFunctionCustomModifier(boolean p_305979_) {
-            this.check = p_305979_ ? p_305777_ -> p_305777_ != 0 : p_306070_ -> p_306070_ == 0;
+        ExecuteIfFunctionCustomModifier(boolean invert) {
+            this.check = invert ? p_305777_ -> p_305777_ != 0 : p_306070_ -> p_306070_ == 0;
         }
 
         public void apply(
-            CommandSourceStack p_309582_,
-            List<CommandSourceStack> p_309642_,
-            ContextChain<CommandSourceStack> p_309682_,
-            ChainModifiers p_309694_,
-            ExecutionControl<CommandSourceStack> p_309646_
+            CommandSourceStack originalSource,
+            List<CommandSourceStack> soruces,
+            ContextChain<CommandSourceStack> contextChain,
+            ChainModifiers chainModifiers,
+            ExecutionControl<CommandSourceStack> executionControl
         ) {
             ExecuteCommand.scheduleFunctionConditionsAndTest(
-                p_309582_,
-                p_309642_,
+                originalSource,
+                soruces,
                 FunctionCommand::modifySenderForExecution,
                 this.check,
-                p_309682_,
+                contextChain,
                 null,
-                p_309646_,
+                executionControl,
                 p_305997_ -> FunctionArgument.getFunctions(p_305997_, "name"),
-                p_309694_
+                chainModifiers
             );
         }
     }
 
     @FunctionalInterface
     interface IntBiPredicate {
-        boolean test(int p_313938_, int p_313809_);
+        boolean test(int value1, int value2);
     }
 }

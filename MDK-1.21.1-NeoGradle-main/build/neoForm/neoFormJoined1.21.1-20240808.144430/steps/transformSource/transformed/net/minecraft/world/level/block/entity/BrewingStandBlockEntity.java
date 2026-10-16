@@ -33,6 +33,9 @@ public class BrewingStandBlockEntity extends BaseContainerBlockEntity implements
     public static final int DATA_BREW_TIME = 0;
     public static final int DATA_FUEL_USES = 1;
     public static final int NUM_DATA_VALUES = 2;
+    /**
+     * The items currently placed in the slots of the brewing stand.
+     */
     private NonNullList<ItemStack> items = NonNullList.withSize(5, ItemStack.EMPTY);
     int brewTime;
     private boolean[] lastPotionCount;
@@ -65,8 +68,8 @@ public class BrewingStandBlockEntity extends BaseContainerBlockEntity implements
         }
     };
 
-    public BrewingStandBlockEntity(BlockPos p_155283_, BlockState p_155284_) {
-        super(BlockEntityType.BREWING_STAND, p_155283_, p_155284_);
+    public BrewingStandBlockEntity(BlockPos pos, BlockState state) {
+        super(BlockEntityType.BREWING_STAND, pos, state);
     }
 
     @Override
@@ -85,43 +88,43 @@ public class BrewingStandBlockEntity extends BaseContainerBlockEntity implements
     }
 
     @Override
-    protected void setItems(NonNullList<ItemStack> p_332710_) {
-        this.items = p_332710_;
+    protected void setItems(NonNullList<ItemStack> items) {
+        this.items = items;
     }
 
-    public static void serverTick(Level p_155286_, BlockPos p_155287_, BlockState p_155288_, BrewingStandBlockEntity p_155289_) {
-        ItemStack itemstack = p_155289_.items.get(4);
-        if (p_155289_.fuel <= 0 && itemstack.is(Items.BLAZE_POWDER)) {
-            p_155289_.fuel = 20;
+    public static void serverTick(Level level, BlockPos pos, BlockState state, BrewingStandBlockEntity blockEntity) {
+        ItemStack itemstack = blockEntity.items.get(4);
+        if (blockEntity.fuel <= 0 && itemstack.is(Items.BLAZE_POWDER)) {
+            blockEntity.fuel = 20;
             itemstack.shrink(1);
-            setChanged(p_155286_, p_155287_, p_155288_);
+            setChanged(level, pos, state);
         }
 
-        boolean flag = isBrewable(p_155286_.potionBrewing(), p_155289_.items);
-        boolean flag1 = p_155289_.brewTime > 0;
-        ItemStack itemstack1 = p_155289_.items.get(3);
+        boolean flag = isBrewable(level.potionBrewing(), blockEntity.items);
+        boolean flag1 = blockEntity.brewTime > 0;
+        ItemStack itemstack1 = blockEntity.items.get(3);
         if (flag1) {
-            p_155289_.brewTime--;
-            boolean flag2 = p_155289_.brewTime == 0;
+            blockEntity.brewTime--;
+            boolean flag2 = blockEntity.brewTime == 0;
             if (flag2 && flag) {
-                doBrew(p_155286_, p_155287_, p_155289_.items);
-            } else if (!flag || !itemstack1.is(p_155289_.ingredient)) {
-                p_155289_.brewTime = 0;
+                doBrew(level, pos, blockEntity.items);
+            } else if (!flag || !itemstack1.is(blockEntity.ingredient)) {
+                blockEntity.brewTime = 0;
             }
 
-            setChanged(p_155286_, p_155287_, p_155288_);
-        } else if (flag && p_155289_.fuel > 0) {
-            p_155289_.fuel--;
-            p_155289_.brewTime = 400;
-            p_155289_.ingredient = itemstack1.getItem();
-            setChanged(p_155286_, p_155287_, p_155288_);
+            setChanged(level, pos, state);
+        } else if (flag && blockEntity.fuel > 0) {
+            blockEntity.fuel--;
+            blockEntity.brewTime = 400;
+            blockEntity.ingredient = itemstack1.getItem();
+            setChanged(level, pos, state);
         }
 
-        boolean[] aboolean = p_155289_.getPotionBits();
-        if (!Arrays.equals(aboolean, p_155289_.lastPotionCount)) {
-            p_155289_.lastPotionCount = aboolean;
-            BlockState blockstate = p_155288_;
-            if (!(p_155288_.getBlock() instanceof BrewingStandBlock)) {
+        boolean[] aboolean = blockEntity.getPotionBits();
+        if (!Arrays.equals(aboolean, blockEntity.lastPotionCount)) {
+            blockEntity.lastPotionCount = aboolean;
+            BlockState blockstate = state;
+            if (!(state.getBlock() instanceof BrewingStandBlock)) {
                 return;
             }
 
@@ -129,7 +132,7 @@ public class BrewingStandBlockEntity extends BaseContainerBlockEntity implements
                 blockstate = blockstate.setValue(BrewingStandBlock.HAS_BOTTLE[i], Boolean.valueOf(aboolean[i]));
             }
 
-            p_155286_.setBlock(p_155287_, blockstate, 2);
+            level.setBlock(pos, blockstate, 2);
         }
     }
 
@@ -145,16 +148,16 @@ public class BrewingStandBlockEntity extends BaseContainerBlockEntity implements
         return aboolean;
     }
 
-    private static boolean isBrewable(PotionBrewing p_341061_, NonNullList<ItemStack> p_155295_) {
-        ItemStack itemstack = p_155295_.get(3);
+    private static boolean isBrewable(PotionBrewing potionBrewing, NonNullList<ItemStack> items) {
+        ItemStack itemstack = items.get(3);
         if (itemstack.isEmpty()) {
             return false;
-        } else if (!p_341061_.isIngredient(itemstack)) {
+        } else if (!potionBrewing.isIngredient(itemstack)) {
             return false;
         } else {
             for (int i = 0; i < 3; i++) {
-                ItemStack itemstack1 = p_155295_.get(i);
-                if (!itemstack1.isEmpty() && p_341061_.hasMix(itemstack1, itemstack)) {
+                ItemStack itemstack1 = items.get(i);
+                if (!itemstack1.isEmpty() && potionBrewing.hasMix(itemstack1, itemstack)) {
                     return true;
                 }
             }
@@ -163,86 +166,95 @@ public class BrewingStandBlockEntity extends BaseContainerBlockEntity implements
         }
     }
 
-    private static void doBrew(Level p_155291_, BlockPos p_155292_, NonNullList<ItemStack> p_155293_) {
-        if (net.neoforged.neoforge.event.EventHooks.onPotionAttemptBrew(p_155293_)) return;
-        ItemStack itemstack = p_155293_.get(3);
-        PotionBrewing potionbrewing = p_155291_.potionBrewing();
+    private static void doBrew(Level level, BlockPos pos, NonNullList<ItemStack> items) {
+        if (net.neoforged.neoforge.event.EventHooks.onPotionAttemptBrew(items)) return;
+        ItemStack itemstack = items.get(3);
+        PotionBrewing potionbrewing = level.potionBrewing();
 
         for (int i = 0; i < 3; i++) {
-            p_155293_.set(i, potionbrewing.mix(itemstack, p_155293_.get(i)));
+            items.set(i, potionbrewing.mix(itemstack, items.get(i)));
         }
 
-        net.neoforged.neoforge.event.EventHooks.onPotionBrewed(p_155293_);
+        net.neoforged.neoforge.event.EventHooks.onPotionBrewed(items);
         if (itemstack.hasCraftingRemainingItem()) {
             ItemStack itemstack1 = itemstack.getCraftingRemainingItem();
             itemstack.shrink(1);
             if (itemstack.isEmpty()) {
                 itemstack = itemstack1;
             } else {
-                Containers.dropItemStack(p_155291_, (double)p_155292_.getX(), (double)p_155292_.getY(), (double)p_155292_.getZ(), itemstack1);
+                Containers.dropItemStack(level, (double)pos.getX(), (double)pos.getY(), (double)pos.getZ(), itemstack1);
             }
         }
         else itemstack.shrink(1);
 
-        p_155293_.set(3, itemstack);
-        p_155291_.levelEvent(1035, p_155292_, 0);
+        items.set(3, itemstack);
+        level.levelEvent(1035, pos, 0);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_338530_, HolderLookup.Provider p_338200_) {
-        super.loadAdditional(p_338530_, p_338200_);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
         this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
-        ContainerHelper.loadAllItems(p_338530_, this.items, p_338200_);
-        this.brewTime = p_338530_.getShort("BrewTime");
+        ContainerHelper.loadAllItems(tag, this.items, registries);
+        this.brewTime = tag.getShort("BrewTime");
         if (this.brewTime > 0) {
             this.ingredient = this.items.get(3).getItem();
         }
 
-        this.fuel = p_338530_.getByte("Fuel");
+        this.fuel = tag.getByte("Fuel");
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_187484_, HolderLookup.Provider p_324461_) {
-        super.saveAdditional(p_187484_, p_324461_);
-        p_187484_.putShort("BrewTime", (short)this.brewTime);
-        ContainerHelper.saveAllItems(p_187484_, this.items, p_324461_);
-        p_187484_.putByte("Fuel", (byte)this.fuel);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        tag.putShort("BrewTime", (short)this.brewTime);
+        ContainerHelper.saveAllItems(tag, this.items, registries);
+        tag.putByte("Fuel", (byte)this.fuel);
     }
 
+    /**
+     * Returns {@code true} if automation is allowed to insert the given stack (ignoring stack size) into the given slot. For guis use Slot.isItemValid
+     */
     @Override
-    public boolean canPlaceItem(int p_59017_, ItemStack p_59018_) {
+    public boolean canPlaceItem(int index, ItemStack stack) {
         PotionBrewing potionbrewing = this.level != null ? this.level.potionBrewing() : PotionBrewing.EMPTY;
-        if (p_59017_ == 3) {
-            return potionbrewing.isIngredient(p_59018_);
+        if (index == 3) {
+            return potionbrewing.isIngredient(stack);
         } else {
-            return p_59017_ == 4
-                ? p_59018_.is(Items.BLAZE_POWDER)
-                : (potionbrewing.isInput(p_59018_) || p_59018_.is(Items.GLASS_BOTTLE))
-                    && this.getItem(p_59017_).isEmpty();
+            return index == 4
+                ? stack.is(Items.BLAZE_POWDER)
+                : (potionbrewing.isInput(stack) || stack.is(Items.GLASS_BOTTLE))
+                    && this.getItem(index).isEmpty();
         }
     }
 
     @Override
-    public int[] getSlotsForFace(Direction p_59010_) {
-        if (p_59010_ == Direction.UP) {
+    public int[] getSlotsForFace(Direction side) {
+        if (side == Direction.UP) {
             return SLOTS_FOR_UP;
         } else {
-            return p_59010_ == Direction.DOWN ? SLOTS_FOR_DOWN : SLOTS_FOR_SIDES;
+            return side == Direction.DOWN ? SLOTS_FOR_DOWN : SLOTS_FOR_SIDES;
         }
     }
 
+    /**
+     * Returns {@code true} if automation can insert the given item in the given slot from the given side.
+     */
     @Override
-    public boolean canPlaceItemThroughFace(int p_58996_, ItemStack p_58997_, @Nullable Direction p_58998_) {
-        return this.canPlaceItem(p_58996_, p_58997_);
+    public boolean canPlaceItemThroughFace(int index, ItemStack itemStack, @Nullable Direction direction) {
+        return this.canPlaceItem(index, itemStack);
+    }
+
+    /**
+     * Returns {@code true} if automation can extract the given item in the given slot from the given side.
+     */
+    @Override
+    public boolean canTakeItemThroughFace(int index, ItemStack stack, Direction direction) {
+        return index == 3 ? stack.is(Items.GLASS_BOTTLE) : true;
     }
 
     @Override
-    public boolean canTakeItemThroughFace(int p_59020_, ItemStack p_59021_, Direction p_59022_) {
-        return p_59020_ == 3 ? p_59021_.is(Items.GLASS_BOTTLE) : true;
-    }
-
-    @Override
-    protected AbstractContainerMenu createMenu(int p_58990_, Inventory p_58991_) {
-        return new BrewingStandMenu(p_58990_, p_58991_, this, this.dataAccess);
+    protected AbstractContainerMenu createMenu(int id, Inventory player) {
+        return new BrewingStandMenu(id, player, this, this.dataAccess);
     }
 }

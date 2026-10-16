@@ -21,39 +21,39 @@ public final class ReportingContext {
     @Nullable
     private Report draftReport;
 
-    public ReportingContext(AbuseReportSender p_239187_, ReportEnvironment p_239188_, ChatLog p_239189_) {
-        this.sender = p_239187_;
-        this.environment = p_239188_;
-        this.chatLog = p_239189_;
+    public ReportingContext(AbuseReportSender sender, ReportEnvironment enviroment, ChatLog chatLog) {
+        this.sender = sender;
+        this.environment = enviroment;
+        this.chatLog = chatLog;
     }
 
-    public static ReportingContext create(ReportEnvironment p_239686_, UserApiService p_239687_) {
+    public static ReportingContext create(ReportEnvironment environment, UserApiService userApiService) {
         ChatLog chatlog = new ChatLog(1024);
-        AbuseReportSender abusereportsender = AbuseReportSender.create(p_239686_, p_239687_);
-        return new ReportingContext(abusereportsender, p_239686_, chatlog);
+        AbuseReportSender abusereportsender = AbuseReportSender.create(environment, userApiService);
+        return new ReportingContext(abusereportsender, environment, chatlog);
     }
 
-    public void draftReportHandled(Minecraft p_261771_, Screen p_261866_, Runnable p_262031_, boolean p_261540_) {
+    public void draftReportHandled(Minecraft minecraft, Screen screen, Runnable quitter, boolean quitToTitle) {
         if (this.draftReport != null) {
             Report report = this.draftReport.copy();
-            p_261771_.setScreen(
+            minecraft.setScreen(
                 new ConfirmScreen(
                     p_299807_ -> {
                         this.setReportDraft(null);
                         if (p_299807_) {
-                            p_261771_.setScreen(report.createScreen(p_261866_, this));
+                            minecraft.setScreen(report.createScreen(screen, this));
                         } else {
-                            p_262031_.run();
+                            quitter.run();
                         }
                     },
-                    Component.translatable(p_261540_ ? "gui.abuseReport.draft.quittotitle.title" : "gui.abuseReport.draft.title"),
-                    Component.translatable(p_261540_ ? "gui.abuseReport.draft.quittotitle.content" : "gui.abuseReport.draft.content"),
+                    Component.translatable(quitToTitle ? "gui.abuseReport.draft.quittotitle.title" : "gui.abuseReport.draft.title"),
+                    Component.translatable(quitToTitle ? "gui.abuseReport.draft.quittotitle.content" : "gui.abuseReport.draft.content"),
                     Component.translatable("gui.abuseReport.draft.edit"),
                     Component.translatable("gui.abuseReport.draft.discard")
                 )
             );
         } else {
-            p_262031_.run();
+            quitter.run();
         }
     }
 
@@ -65,19 +65,19 @@ public final class ReportingContext {
         return this.chatLog;
     }
 
-    public boolean matches(ReportEnvironment p_239734_) {
-        return Objects.equals(this.environment, p_239734_);
+    public boolean matches(ReportEnvironment environment) {
+        return Objects.equals(this.environment, environment);
     }
 
-    public void setReportDraft(@Nullable Report p_299889_) {
-        this.draftReport = p_299889_;
+    public void setReportDraft(@Nullable Report draftReport) {
+        this.draftReport = draftReport;
     }
 
     public boolean hasDraftReport() {
         return this.draftReport != null;
     }
 
-    public boolean hasDraftReportFor(UUID p_254340_) {
-        return this.hasDraftReport() && this.draftReport.isReportedPlayer(p_254340_);
+    public boolean hasDraftReportFor(UUID uuid) {
+        return this.hasDraftReport() && this.draftReport.isReportedPlayer(uuid);
     }
 }

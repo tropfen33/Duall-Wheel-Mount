@@ -24,12 +24,12 @@ public class MinecartTNT extends AbstractMinecart {
     private static final byte EVENT_PRIME = 10;
     private int fuse = -1;
 
-    public MinecartTNT(EntityType<? extends MinecartTNT> p_38649_, Level p_38650_) {
-        super(p_38649_, p_38650_);
+    public MinecartTNT(EntityType<? extends MinecartTNT> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public MinecartTNT(Level p_38652_, double p_38653_, double p_38654_, double p_38655_) {
-        super(EntityType.TNT_MINECART, p_38652_, p_38653_, p_38654_, p_38655_);
+    public MinecartTNT(Level level, double x, double y, double z) {
+        super(EntityType.TNT_MINECART, level, x, y, z);
     }
 
     @Override
@@ -60,20 +60,23 @@ public class MinecartTNT extends AbstractMinecart {
         }
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_38666_, float p_38667_) {
-        if (p_38666_.getDirectEntity() instanceof AbstractArrow abstractarrow && abstractarrow.isOnFire()) {
-            DamageSource damagesource = this.damageSources().explosion(this, p_38666_.getEntity());
+    public boolean hurt(DamageSource source, float amount) {
+        if (source.getDirectEntity() instanceof AbstractArrow abstractarrow && abstractarrow.isOnFire()) {
+            DamageSource damagesource = this.damageSources().explosion(this, source.getEntity());
             this.explode(damagesource, abstractarrow.getDeltaMovement().lengthSqr());
         }
 
-        return super.hurt(p_38666_, p_38667_);
+        return super.hurt(source, amount);
     }
 
     @Override
-    public void destroy(DamageSource p_38664_) {
+    public void destroy(DamageSource source) {
         double d0 = this.getDeltaMovement().horizontalDistanceSqr();
-        if (!damageSourceIgnitesTnt(p_38664_) && !(d0 >= 0.01F)) {
+        if (!damageSourceIgnitesTnt(source) && !(d0 >= 0.01F)) {
             this.destroy(this.getDropItem());
         } else {
             if (this.fuse < 0) {
@@ -88,13 +91,16 @@ public class MinecartTNT extends AbstractMinecart {
         return Items.TNT_MINECART;
     }
 
-    protected void explode(double p_38689_) {
-        this.explode(null, p_38689_);
+    /**
+     * Makes the minecart explode.
+     */
+    protected void explode(double radiusModifier) {
+        this.explode(null, radiusModifier);
     }
 
-    protected void explode(@Nullable DamageSource p_259539_, double p_260287_) {
+    protected void explode(@Nullable DamageSource damageSource, double radiusModifier) {
         if (!this.level().isClientSide) {
-            double d0 = Math.sqrt(p_260287_);
+            double d0 = Math.sqrt(radiusModifier);
             if (d0 > 5.0) {
                 d0 = 5.0;
             }
@@ -102,7 +108,7 @@ public class MinecartTNT extends AbstractMinecart {
             this.level()
                 .explode(
                     this,
-                    p_259539_,
+                    damageSource,
                     null,
                     this.getX(),
                     this.getY(),
@@ -116,28 +122,34 @@ public class MinecartTNT extends AbstractMinecart {
     }
 
     @Override
-    public boolean causeFallDamage(float p_150347_, float p_150348_, DamageSource p_150349_) {
-        if (p_150347_ >= 3.0F) {
-            float f = p_150347_ / 10.0F;
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
+        if (fallDistance >= 3.0F) {
+            float f = fallDistance / 10.0F;
             this.explode((double)(f * f));
         }
 
-        return super.causeFallDamage(p_150347_, p_150348_, p_150349_);
+        return super.causeFallDamage(fallDistance, multiplier, source);
     }
 
+    /**
+     * Called every tick the minecart is on an activator rail.
+     */
     @Override
-    public void activateMinecart(int p_38659_, int p_38660_, int p_38661_, boolean p_38662_) {
-        if (p_38662_ && this.fuse < 0) {
+    public void activateMinecart(int x, int y, int z, boolean receivingPower) {
+        if (receivingPower && this.fuse < 0) {
             this.primeFuse();
         }
     }
 
+    /**
+     * Handles an entity event received from a {@link net.minecraft.network.protocol.game.ClientboundEntityEventPacket}.
+     */
     @Override
-    public void handleEntityEvent(byte p_38657_) {
-        if (p_38657_ == 10) {
+    public void handleEntityEvent(byte id) {
+        if (id == 10) {
             this.primeFuse();
         } else {
-            super.handleEntityEvent(p_38657_);
+            super.handleEntityEvent(id);
         }
     }
 
@@ -159,42 +171,48 @@ public class MinecartTNT extends AbstractMinecart {
         return this.fuse > -1;
     }
 
+    /**
+     * Explosion resistance of a block relative to this entity
+     */
     @Override
     public float getBlockExplosionResistance(
-        Explosion p_38675_, BlockGetter p_38676_, BlockPos p_38677_, BlockState p_38678_, FluidState p_38679_, float p_38680_
+        Explosion explosion, BlockGetter level, BlockPos pos, BlockState blockState, FluidState fluidState, float explosionPower
     ) {
-        return !this.isPrimed() || !p_38678_.is(BlockTags.RAILS) && !p_38676_.getBlockState(p_38677_.above()).is(BlockTags.RAILS)
-            ? super.getBlockExplosionResistance(p_38675_, p_38676_, p_38677_, p_38678_, p_38679_, p_38680_)
+        return !this.isPrimed() || !blockState.is(BlockTags.RAILS) && !level.getBlockState(pos.above()).is(BlockTags.RAILS)
+            ? super.getBlockExplosionResistance(explosion, level, pos, blockState, fluidState, explosionPower)
             : 0.0F;
     }
 
     @Override
-    public boolean shouldBlockExplode(Explosion p_38669_, BlockGetter p_38670_, BlockPos p_38671_, BlockState p_38672_, float p_38673_) {
-        return !this.isPrimed() || !p_38672_.is(BlockTags.RAILS) && !p_38670_.getBlockState(p_38671_.above()).is(BlockTags.RAILS)
-            ? super.shouldBlockExplode(p_38669_, p_38670_, p_38671_, p_38672_, p_38673_)
+    public boolean shouldBlockExplode(Explosion explosion, BlockGetter level, BlockPos pos, BlockState blockState, float explosionPower) {
+        return !this.isPrimed() || !blockState.is(BlockTags.RAILS) && !level.getBlockState(pos.above()).is(BlockTags.RAILS)
+            ? super.shouldBlockExplode(explosion, level, pos, blockState, explosionPower)
             : false;
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_38682_) {
-        super.readAdditionalSaveData(p_38682_);
-        if (p_38682_.contains("TNTFuse", 99)) {
-            this.fuse = p_38682_.getInt("TNTFuse");
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.contains("TNTFuse", 99)) {
+            this.fuse = compound.getInt("TNTFuse");
         }
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_38687_) {
-        super.addAdditionalSaveData(p_38687_);
-        p_38687_.putInt("TNTFuse", this.fuse);
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("TNTFuse", this.fuse);
     }
 
     @Override
-    boolean shouldSourceDestroy(DamageSource p_312558_) {
-        return damageSourceIgnitesTnt(p_312558_);
+    boolean shouldSourceDestroy(DamageSource source) {
+        return damageSourceIgnitesTnt(source);
     }
 
-    private static boolean damageSourceIgnitesTnt(DamageSource p_312109_) {
-        return p_312109_.is(DamageTypeTags.IS_FIRE) || p_312109_.is(DamageTypeTags.IS_EXPLOSION);
+    private static boolean damageSourceIgnitesTnt(DamageSource source) {
+        return source.is(DamageTypeTags.IS_FIRE) || source.is(DamageTypeTags.IS_EXPLOSION);
     }
 }

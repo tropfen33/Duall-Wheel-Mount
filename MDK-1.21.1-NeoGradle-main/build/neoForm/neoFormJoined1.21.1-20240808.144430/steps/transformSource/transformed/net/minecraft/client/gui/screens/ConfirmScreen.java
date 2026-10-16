@@ -17,22 +17,28 @@ public class ConfirmScreen extends Screen {
     private static final int MARGIN = 20;
     private final Component message;
     private MultiLineLabel multilineMessage = MultiLineLabel.EMPTY;
+    /**
+     * The text shown for the first button in GuiYesNo
+     */
     protected Component yesButton;
+    /**
+     * The text shown for the second button in GuiYesNo
+     */
     protected Component noButton;
     private int delayTicker;
     protected final BooleanConsumer callback;
     private final List<Button> exitButtons = Lists.newArrayList();
 
-    public ConfirmScreen(BooleanConsumer p_95654_, Component p_95655_, Component p_95656_) {
-        this(p_95654_, p_95655_, p_95656_, CommonComponents.GUI_YES, CommonComponents.GUI_NO);
+    public ConfirmScreen(BooleanConsumer callback, Component title, Component message) {
+        this(callback, title, message, CommonComponents.GUI_YES, CommonComponents.GUI_NO);
     }
 
-    public ConfirmScreen(BooleanConsumer p_95658_, Component p_95659_, Component p_95660_, Component p_95661_, Component p_95662_) {
-        super(p_95659_);
-        this.callback = p_95658_;
-        this.message = p_95660_;
-        this.yesButton = p_95661_;
-        this.noButton = p_95662_;
+    public ConfirmScreen(BooleanConsumer callback, Component title, Component message, Component yesButton, Component noButton) {
+        super(title);
+        this.callback = callback;
+        this.message = message;
+        this.yesButton = yesButton;
+        this.noButton = noButton;
     }
 
     @Override
@@ -49,22 +55,30 @@ public class ConfirmScreen extends Screen {
         this.addButtons(i);
     }
 
-    protected void addButtons(int p_169252_) {
-        this.addExitButton(Button.builder(this.yesButton, p_169259_ -> this.callback.accept(true)).bounds(this.width / 2 - 155, p_169252_, 150, 20).build());
+    protected void addButtons(int y) {
+        this.addExitButton(Button.builder(this.yesButton, p_169259_ -> this.callback.accept(true)).bounds(this.width / 2 - 155, y, 150, 20).build());
         this.addExitButton(
-            Button.builder(this.noButton, p_169257_ -> this.callback.accept(false)).bounds(this.width / 2 - 155 + 160, p_169252_, 150, 20).build()
+            Button.builder(this.noButton, p_169257_ -> this.callback.accept(false)).bounds(this.width / 2 - 155 + 160, y, 150, 20).build()
         );
     }
 
-    protected void addExitButton(Button p_169254_) {
-        this.exitButtons.add(this.addRenderableWidget(p_169254_));
+    protected void addExitButton(Button exitButton) {
+        this.exitButtons.add(this.addRenderableWidget(exitButton));
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281588_, int p_283592_, int p_283446_, float p_282443_) {
-        super.render(p_281588_, p_283592_, p_283446_, p_282443_);
-        p_281588_.drawCenteredString(this.font, this.title, this.width / 2, this.titleTop(), 16777215);
-        this.multilineMessage.renderCentered(p_281588_, this.width / 2, this.messageTop());
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, this.titleTop(), 16777215);
+        this.multilineMessage.renderCentered(guiGraphics, this.width / 2, this.messageTop());
     }
 
     private int titleTop() {
@@ -80,8 +94,11 @@ public class ConfirmScreen extends Screen {
         return this.multilineMessage.getLineCount() * 9;
     }
 
-    public void setDelay(int p_95664_) {
-        this.delayTicker = p_95664_;
+    /**
+     * Sets the number of ticks to wait before enabling the buttons.
+     */
+    public void setDelay(int ticksUntilEnable) {
+        this.delayTicker = ticksUntilEnable;
 
         for (Button button : this.exitButtons) {
             button.active = false;
@@ -104,12 +121,12 @@ public class ConfirmScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int p_95666_, int p_95667_, int p_95668_) {
-        if (p_95666_ == 256) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 256) {
             this.callback.accept(false);
             return true;
         } else {
-            return super.keyPressed(p_95666_, p_95667_, p_95668_);
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
     }
 }

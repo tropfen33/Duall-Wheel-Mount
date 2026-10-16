@@ -47,18 +47,18 @@ public class LeverBlock extends FaceAttachedHorizontalDirectionalBlock {
         return CODEC;
     }
 
-    public LeverBlock(BlockBehaviour.Properties p_54633_) {
-        super(p_54633_);
+    public LeverBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(
             this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(POWERED, Boolean.valueOf(false)).setValue(FACE, AttachFace.WALL)
         );
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_54665_, BlockGetter p_54666_, BlockPos p_54667_, CollisionContext p_54668_) {
-        switch ((AttachFace)p_54665_.getValue(FACE)) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        switch ((AttachFace)state.getValue(FACE)) {
             case FLOOR:
-                switch (p_54665_.getValue(FACING).getAxis()) {
+                switch (state.getValue(FACING).getAxis()) {
                     case X:
                         return UP_AABB_X;
                     case Z:
@@ -66,7 +66,7 @@ public class LeverBlock extends FaceAttachedHorizontalDirectionalBlock {
                         return UP_AABB_Z;
                 }
             case WALL:
-                switch ((Direction)p_54665_.getValue(FACING)) {
+                switch ((Direction)state.getValue(FACING)) {
                     case EAST:
                         return EAST_AABB;
                     case WEST:
@@ -79,7 +79,7 @@ public class LeverBlock extends FaceAttachedHorizontalDirectionalBlock {
                 }
             case CEILING:
             default:
-                switch (p_54665_.getValue(FACING).getAxis()) {
+                switch (state.getValue(FACING).getAxis()) {
                     case X:
                         return DOWN_AABB_X;
                     case Z:
@@ -90,91 +90,114 @@ public class LeverBlock extends FaceAttachedHorizontalDirectionalBlock {
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_54640_, Level p_54641_, BlockPos p_54642_, Player p_54643_, BlockHitResult p_54645_) {
-        if (p_54641_.isClientSide) {
-            BlockState blockstate = p_54640_.cycle(POWERED);
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
+            BlockState blockstate = state.cycle(POWERED);
             if (blockstate.getValue(POWERED)) {
-                makeParticle(blockstate, p_54641_, p_54642_, 1.0F);
+                makeParticle(blockstate, level, pos, 1.0F);
             }
 
             return InteractionResult.SUCCESS;
         } else {
-            this.pull(p_54640_, p_54641_, p_54642_, null);
+            this.pull(state, level, pos, null);
             return InteractionResult.CONSUME;
         }
     }
 
     @Override
-    protected void onExplosionHit(BlockState p_312405_, Level p_312603_, BlockPos p_311795_, Explosion p_312090_, BiConsumer<ItemStack, BlockPos> p_312313_) {
-        if (p_312090_.canTriggerBlocks()) {
-            this.pull(p_312405_, p_312603_, p_311795_, null);
+    protected void onExplosionHit(BlockState state, Level level, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> dropConsumer) {
+        if (explosion.canTriggerBlocks()) {
+            this.pull(state, level, pos, null);
         }
 
-        super.onExplosionHit(p_312405_, p_312603_, p_311795_, p_312090_, p_312313_);
+        super.onExplosionHit(state, level, pos, explosion, dropConsumer);
     }
 
-    public void pull(BlockState p_54677_, Level p_54678_, BlockPos p_54679_, @Nullable Player p_344918_) {
-        p_54677_ = p_54677_.cycle(POWERED);
-        p_54678_.setBlock(p_54679_, p_54677_, 3);
-        this.updateNeighbours(p_54677_, p_54678_, p_54679_);
-        playSound(p_344918_, p_54678_, p_54679_, p_54677_);
-        p_54678_.gameEvent(p_344918_, p_54677_.getValue(POWERED) ? GameEvent.BLOCK_ACTIVATE : GameEvent.BLOCK_DEACTIVATE, p_54679_);
+    public void pull(BlockState state, Level level, BlockPos pos, @Nullable Player player) {
+        state = state.cycle(POWERED);
+        level.setBlock(pos, state, 3);
+        this.updateNeighbours(state, level, pos);
+        playSound(player, level, pos, state);
+        level.gameEvent(player, state.getValue(POWERED) ? GameEvent.BLOCK_ACTIVATE : GameEvent.BLOCK_DEACTIVATE, pos);
     }
 
-    protected static void playSound(@Nullable Player p_346119_, LevelAccessor p_346020_, BlockPos p_345585_, BlockState p_346002_) {
-        float f = p_346002_.getValue(POWERED) ? 0.6F : 0.5F;
-        p_346020_.playSound(p_346119_, p_345585_, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.3F, f);
+    protected static void playSound(@Nullable Player player, LevelAccessor level, BlockPos pos, BlockState state) {
+        float f = state.getValue(POWERED) ? 0.6F : 0.5F;
+        level.playSound(player, pos, SoundEvents.LEVER_CLICK, SoundSource.BLOCKS, 0.3F, f);
     }
 
-    private static void makeParticle(BlockState p_54658_, LevelAccessor p_54659_, BlockPos p_54660_, float p_54661_) {
-        Direction direction = p_54658_.getValue(FACING).getOpposite();
-        Direction direction1 = getConnectedDirection(p_54658_).getOpposite();
-        double d0 = (double)p_54660_.getX() + 0.5 + 0.1 * (double)direction.getStepX() + 0.2 * (double)direction1.getStepX();
-        double d1 = (double)p_54660_.getY() + 0.5 + 0.1 * (double)direction.getStepY() + 0.2 * (double)direction1.getStepY();
-        double d2 = (double)p_54660_.getZ() + 0.5 + 0.1 * (double)direction.getStepZ() + 0.2 * (double)direction1.getStepZ();
-        p_54659_.addParticle(new DustParticleOptions(DustParticleOptions.REDSTONE_PARTICLE_COLOR, p_54661_), d0, d1, d2, 0.0, 0.0, 0.0);
+    private static void makeParticle(BlockState state, LevelAccessor level, BlockPos pos, float alpha) {
+        Direction direction = state.getValue(FACING).getOpposite();
+        Direction direction1 = getConnectedDirection(state).getOpposite();
+        double d0 = (double)pos.getX() + 0.5 + 0.1 * (double)direction.getStepX() + 0.2 * (double)direction1.getStepX();
+        double d1 = (double)pos.getY() + 0.5 + 0.1 * (double)direction.getStepY() + 0.2 * (double)direction1.getStepY();
+        double d2 = (double)pos.getZ() + 0.5 + 0.1 * (double)direction.getStepZ() + 0.2 * (double)direction1.getStepZ();
+        level.addParticle(new DustParticleOptions(DustParticleOptions.REDSTONE_PARTICLE_COLOR, alpha), d0, d1, d2, 0.0, 0.0, 0.0);
+    }
+
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (state.getValue(POWERED) && random.nextFloat() < 0.25F) {
+            makeParticle(state, level, pos, 0.5F);
+        }
     }
 
     @Override
-    public void animateTick(BlockState p_221395_, Level p_221396_, BlockPos p_221397_, RandomSource p_221398_) {
-        if (p_221395_.getValue(POWERED) && p_221398_.nextFloat() < 0.25F) {
-            makeParticle(p_221395_, p_221396_, p_221397_, 0.5F);
-        }
-    }
-
-    @Override
-    protected void onRemove(BlockState p_54647_, Level p_54648_, BlockPos p_54649_, BlockState p_54650_, boolean p_54651_) {
-        if (!p_54651_ && !p_54647_.is(p_54650_.getBlock())) {
-            if (p_54647_.getValue(POWERED)) {
-                this.updateNeighbours(p_54647_, p_54648_, p_54649_);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!isMoving && !state.is(newState.getBlock())) {
+            if (state.getValue(POWERED)) {
+                this.updateNeighbours(state, level, pos);
             }
 
-            super.onRemove(p_54647_, p_54648_, p_54649_, p_54650_, p_54651_);
+            super.onRemove(state, level, pos, newState, isMoving);
         }
     }
 
+    /**
+     * Returns the signal this block emits in the given direction.
+     *
+     * <p>
+     * NOTE: directions in redstone signal related methods are backwards, so this method
+     * checks for the signal emitted in the <i>opposite</i> direction of the one given.
+     *
+     */
     @Override
-    protected int getSignal(BlockState p_54635_, BlockGetter p_54636_, BlockPos p_54637_, Direction p_54638_) {
-        return p_54635_.getValue(POWERED) ? 15 : 0;
+    protected int getSignal(BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side) {
+        return blockState.getValue(POWERED) ? 15 : 0;
     }
 
+    /**
+     * Returns the direct signal this block emits in the given direction.
+     *
+     * <p>
+     * NOTE: directions in redstone signal related methods are backwards, so this method
+     * checks for the signal emitted in the <i>opposite</i> direction of the one given.
+     *
+     */
     @Override
-    protected int getDirectSignal(BlockState p_54670_, BlockGetter p_54671_, BlockPos p_54672_, Direction p_54673_) {
-        return p_54670_.getValue(POWERED) && getConnectedDirection(p_54670_) == p_54673_ ? 15 : 0;
+    protected int getDirectSignal(BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side) {
+        return blockState.getValue(POWERED) && getConnectedDirection(blockState) == side ? 15 : 0;
     }
 
+    /**
+     * Returns whether this block is capable of emitting redstone signals.
+     *
+     */
     @Override
-    protected boolean isSignalSource(BlockState p_54675_) {
+    protected boolean isSignalSource(BlockState state) {
         return true;
     }
 
-    private void updateNeighbours(BlockState p_54681_, Level p_54682_, BlockPos p_54683_) {
-        p_54682_.updateNeighborsAt(p_54683_, this);
-        p_54682_.updateNeighborsAt(p_54683_.relative(getConnectedDirection(p_54681_).getOpposite()), this);
+    private void updateNeighbours(BlockState state, Level level, BlockPos pos) {
+        level.updateNeighborsAt(pos, this);
+        level.updateNeighborsAt(pos.relative(getConnectedDirection(state).getOpposite()), this);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_54663_) {
-        p_54663_.add(FACE, FACING, POWERED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACE, FACING, POWERED);
     }
 }

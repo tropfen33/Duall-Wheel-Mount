@@ -6,12 +6,12 @@ import javax.annotation.Nullable;
 import net.minecraft.network.chat.Component;
 
 public class IpBanListEntry extends BanListEntry<String> {
-    public IpBanListEntry(String p_11050_) {
-        this(p_11050_, null, null, null, null);
+    public IpBanListEntry(String ip) {
+        this(ip, null, null, null, null);
     }
 
-    public IpBanListEntry(String p_11052_, @Nullable Date p_11053_, @Nullable String p_11054_, @Nullable Date p_11055_, @Nullable String p_11056_) {
-        super(p_11052_, p_11053_, p_11054_, p_11055_, p_11056_);
+    public IpBanListEntry(String ip, @Nullable Date created, @Nullable String source, @Nullable Date expires, @Nullable String reason) {
+        super(ip, created, source, expires, reason);
     }
 
     @Override
@@ -19,19 +19,19 @@ public class IpBanListEntry extends BanListEntry<String> {
         return Component.literal(String.valueOf(this.getUser()));
     }
 
-    public IpBanListEntry(JsonObject p_11048_) {
-        super(createIpInfo(p_11048_), p_11048_);
+    public IpBanListEntry(JsonObject entryData) {
+        super(createIpInfo(entryData), entryData);
     }
 
-    private static String createIpInfo(JsonObject p_11060_) {
-        return p_11060_.has("ip") ? p_11060_.get("ip").getAsString() : null;
+    private static String createIpInfo(JsonObject json) {
+        return json.has("ip") ? json.get("ip").getAsString() : null;
     }
 
     @Override
-    protected void serialize(JsonObject p_11058_) {
+    protected void serialize(JsonObject data) {
         if (this.getUser() != null) {
-            p_11058_.addProperty("ip", this.getUser());
-            super.serialize(p_11058_);
+            data.addProperty("ip", this.getUser());
+            super.serialize(data);
         }
     }
 }

@@ -21,8 +21,8 @@ public class NullOps implements DynamicOps<Unit> {
     private NullOps() {
     }
 
-    public <U> U convertTo(DynamicOps<U> p_341193_, Unit p_340817_) {
-        return p_341193_.empty();
+    public <U> U convertTo(DynamicOps<U> ops, Unit unit) {
+        return ops.empty();
     }
 
     public Unit empty() {
@@ -37,132 +37,132 @@ public class NullOps implements DynamicOps<Unit> {
         return Unit.INSTANCE;
     }
 
-    public Unit createNumeric(Number p_341390_) {
+    public Unit createNumeric(Number value) {
         return Unit.INSTANCE;
     }
 
-    public Unit createByte(byte p_341017_) {
+    public Unit createByte(byte value) {
         return Unit.INSTANCE;
     }
 
-    public Unit createShort(short p_340945_) {
+    public Unit createShort(short value) {
         return Unit.INSTANCE;
     }
 
-    public Unit createInt(int p_341029_) {
+    public Unit createInt(int value) {
         return Unit.INSTANCE;
     }
 
-    public Unit createLong(long p_341019_) {
+    public Unit createLong(long value) {
         return Unit.INSTANCE;
     }
 
-    public Unit createFloat(float p_341123_) {
+    public Unit createFloat(float value) {
         return Unit.INSTANCE;
     }
 
-    public Unit createDouble(double p_341242_) {
+    public Unit createDouble(double value) {
         return Unit.INSTANCE;
     }
 
-    public Unit createBoolean(boolean p_341283_) {
+    public Unit createBoolean(boolean value) {
         return Unit.INSTANCE;
     }
 
-    public Unit createString(String p_341226_) {
+    public Unit createString(String value) {
         return Unit.INSTANCE;
     }
 
-    public DataResult<Number> getNumberValue(Unit p_340886_) {
+    public DataResult<Number> getNumberValue(Unit input) {
         return DataResult.error(() -> "Not a number");
     }
 
-    public DataResult<Boolean> getBooleanValue(Unit p_341106_) {
+    public DataResult<Boolean> getBooleanValue(Unit input) {
         return DataResult.error(() -> "Not a boolean");
     }
 
-    public DataResult<String> getStringValue(Unit p_341344_) {
+    public DataResult<String> getStringValue(Unit input) {
         return DataResult.error(() -> "Not a string");
     }
 
-    public DataResult<Unit> mergeToList(Unit p_340991_, Unit p_341154_) {
+    public DataResult<Unit> mergeToList(Unit list, Unit value) {
         return DataResult.success(Unit.INSTANCE);
     }
 
-    public DataResult<Unit> mergeToList(Unit p_340869_, List<Unit> p_340960_) {
+    public DataResult<Unit> mergeToList(Unit list, List<Unit> values) {
         return DataResult.success(Unit.INSTANCE);
     }
 
-    public DataResult<Unit> mergeToMap(Unit p_340850_, Unit p_341356_, Unit p_341172_) {
+    public DataResult<Unit> mergeToMap(Unit map, Unit key, Unit value) {
         return DataResult.success(Unit.INSTANCE);
     }
 
-    public DataResult<Unit> mergeToMap(Unit p_340821_, Map<Unit, Unit> p_341065_) {
+    public DataResult<Unit> mergeToMap(Unit map, Map<Unit, Unit> values) {
         return DataResult.success(Unit.INSTANCE);
     }
 
-    public DataResult<Unit> mergeToMap(Unit p_340862_, MapLike<Unit> p_341115_) {
+    public DataResult<Unit> mergeToMap(Unit map, MapLike<Unit> values) {
         return DataResult.success(Unit.INSTANCE);
     }
 
-    public DataResult<Stream<Pair<Unit, Unit>>> getMapValues(Unit p_341031_) {
+    public DataResult<Stream<Pair<Unit, Unit>>> getMapValues(Unit input) {
         return DataResult.error(() -> "Not a map");
     }
 
-    public DataResult<Consumer<BiConsumer<Unit, Unit>>> getMapEntries(Unit p_340815_) {
+    public DataResult<Consumer<BiConsumer<Unit, Unit>>> getMapEntries(Unit input) {
         return DataResult.error(() -> "Not a map");
     }
 
-    public DataResult<MapLike<Unit>> getMap(Unit p_341149_) {
+    public DataResult<MapLike<Unit>> getMap(Unit input) {
         return DataResult.error(() -> "Not a map");
     }
 
-    public DataResult<Stream<Unit>> getStream(Unit p_340835_) {
+    public DataResult<Stream<Unit>> getStream(Unit input) {
         return DataResult.error(() -> "Not a list");
     }
 
-    public DataResult<Consumer<Consumer<Unit>>> getList(Unit p_340931_) {
+    public DataResult<Consumer<Consumer<Unit>>> getList(Unit input) {
         return DataResult.error(() -> "Not a list");
     }
 
-    public DataResult<ByteBuffer> getByteBuffer(Unit p_341064_) {
+    public DataResult<ByteBuffer> getByteBuffer(Unit input) {
         return DataResult.error(() -> "Not a byte list");
     }
 
-    public DataResult<IntStream> getIntStream(Unit p_341012_) {
+    public DataResult<IntStream> getIntStream(Unit input) {
         return DataResult.error(() -> "Not an int list");
     }
 
-    public DataResult<LongStream> getLongStream(Unit p_341130_) {
+    public DataResult<LongStream> getLongStream(Unit input) {
         return DataResult.error(() -> "Not a long list");
     }
 
-    public Unit createMap(Stream<Pair<Unit, Unit>> p_341095_) {
+    public Unit createMap(Stream<Pair<Unit, Unit>> map) {
         return Unit.INSTANCE;
     }
 
-    public Unit createMap(Map<Unit, Unit> p_341189_) {
+    public Unit createMap(Map<Unit, Unit> map) {
         return Unit.INSTANCE;
     }
 
-    public Unit createList(Stream<Unit> p_341162_) {
+    public Unit createList(Stream<Unit> input) {
         return Unit.INSTANCE;
     }
 
-    public Unit createByteList(ByteBuffer p_340905_) {
+    public Unit createByteList(ByteBuffer input) {
         return Unit.INSTANCE;
     }
 
-    public Unit createIntList(IntStream p_341326_) {
+    public Unit createIntList(IntStream input) {
         return Unit.INSTANCE;
     }
 
-    public Unit createLongList(LongStream p_341025_) {
+    public Unit createLongList(LongStream input) {
         return Unit.INSTANCE;
     }
 
-    public Unit remove(Unit p_341250_, String p_340980_) {
-        return p_341250_;
+    public Unit remove(Unit input, String key) {
+        return input;
     }
 
     @Override
@@ -176,8 +176,8 @@ public class NullOps implements DynamicOps<Unit> {
     }
 
     static final class NullMapBuilder extends AbstractUniversalBuilder<Unit, Unit> {
-        public NullMapBuilder(DynamicOps<Unit> p_340884_) {
-            super(p_340884_);
+        public NullMapBuilder(DynamicOps<Unit> ops) {
+            super(ops);
         }
 
         protected Unit initBuilder() {

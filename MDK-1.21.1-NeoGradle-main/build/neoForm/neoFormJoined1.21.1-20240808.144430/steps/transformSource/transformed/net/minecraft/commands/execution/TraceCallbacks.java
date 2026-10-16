@@ -3,13 +3,13 @@ package net.minecraft.commands.execution;
 import net.minecraft.resources.ResourceLocation;
 
 public interface TraceCallbacks extends AutoCloseable {
-    void onCommand(int p_306090_, String p_306150_);
+    void onCommand(int depth, String command);
 
-    void onReturn(int p_305827_, String p_306254_, int p_306051_);
+    void onReturn(int depth, String command, int returnValue);
 
-    void onError(String p_306008_);
+    void onError(String errorMessage);
 
-    void onCall(int p_306072_, ResourceLocation p_306313_, int p_306250_);
+    void onCall(int depth, ResourceLocation function, int commands);
 
     @Override
     void close();

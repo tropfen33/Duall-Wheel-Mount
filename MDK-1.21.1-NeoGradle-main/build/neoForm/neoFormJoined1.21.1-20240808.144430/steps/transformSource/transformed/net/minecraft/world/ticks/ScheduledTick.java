@@ -20,15 +20,15 @@ public record ScheduledTick<T>(T type, BlockPos pos, long triggerTick, TickPrior
         return i != 0 ? i : Long.compare(p_193395_.subTickOrder, p_193396_.subTickOrder);
     };
     public static final Strategy<ScheduledTick<?>> UNIQUE_TICK_HASH = new Strategy<ScheduledTick<?>>() {
-        public int hashCode(ScheduledTick<?> p_193417_) {
-            return 31 * p_193417_.pos().hashCode() + p_193417_.type().hashCode();
+        public int hashCode(ScheduledTick<?> scheduledTick) {
+            return 31 * scheduledTick.pos().hashCode() + scheduledTick.type().hashCode();
         }
 
-        public boolean equals(@Nullable ScheduledTick<?> p_193419_, @Nullable ScheduledTick<?> p_193420_) {
-            if (p_193419_ == p_193420_) {
+        public boolean equals(@Nullable ScheduledTick<?> first, @Nullable ScheduledTick<?> second) {
+            if (first == second) {
                 return true;
             } else {
-                return p_193419_ != null && p_193420_ != null ? p_193419_.type() == p_193420_.type() && p_193419_.pos().equals(p_193420_.pos()) : false;
+                return first != null && second != null ? first.type() == second.type() && first.pos().equals(second.pos()) : false;
             }
         }
     };
@@ -46,7 +46,7 @@ public record ScheduledTick<T>(T type, BlockPos pos, long triggerTick, TickPrior
         this.subTickOrder = subTickOrder;
     }
 
-    public static <T> ScheduledTick<T> probe(T p_193398_, BlockPos p_193399_) {
-        return new ScheduledTick<>(p_193398_, p_193399_, 0L, TickPriority.NORMAL, 0L);
+    public static <T> ScheduledTick<T> probe(T type, BlockPos pos) {
+        return new ScheduledTick<>(type, pos, 0L, TickPriority.NORMAL, 0L);
     }
 }

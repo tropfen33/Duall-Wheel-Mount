@@ -13,97 +13,97 @@ import org.lwjgl.system.MemoryStack;
 
 @OnlyIn(Dist.CLIENT)
 public interface VertexConsumer extends net.neoforged.neoforge.client.extensions.IVertexConsumerExtension {
-    VertexConsumer addVertex(float p_350761_, float p_350704_, float p_350711_);
+    VertexConsumer addVertex(float x, float y, float z);
 
-    VertexConsumer setColor(int p_350535_, int p_350875_, int p_350886_, int p_350775_);
+    VertexConsumer setColor(int red, int green, int blue, int alpha);
 
-    VertexConsumer setUv(float p_350572_, float p_350917_);
+    VertexConsumer setUv(float u, float v);
 
-    VertexConsumer setUv1(int p_350815_, int p_350629_);
+    VertexConsumer setUv1(int u, int v);
 
-    VertexConsumer setUv2(int p_350859_, int p_351004_);
+    VertexConsumer setUv2(int u, int v);
 
-    VertexConsumer setNormal(float p_350429_, float p_350286_, float p_350836_);
+    VertexConsumer setNormal(float normalX, float normalY, float normalZ);
 
     default void addVertex(
-        float p_351049_,
-        float p_350528_,
-        float p_351018_,
-        int p_350427_,
-        float p_350508_,
-        float p_350864_,
-        int p_350846_,
-        int p_350731_,
-        float p_350784_,
-        float p_351051_,
-        float p_350759_
+        float x,
+        float y,
+        float z,
+        int color,
+        float u,
+        float v,
+        int packedOverlay,
+        int packedLight,
+        float normalX,
+        float normalY,
+        float normalZ
     ) {
-        this.addVertex(p_351049_, p_350528_, p_351018_);
-        this.setColor(p_350427_);
-        this.setUv(p_350508_, p_350864_);
-        this.setOverlay(p_350846_);
-        this.setLight(p_350731_);
-        this.setNormal(p_350784_, p_351051_, p_350759_);
+        this.addVertex(x, y, z);
+        this.setColor(color);
+        this.setUv(u, v);
+        this.setOverlay(packedOverlay);
+        this.setLight(packedLight);
+        this.setNormal(normalX, normalY, normalZ);
     }
 
-    default VertexConsumer setColor(float p_350350_, float p_350356_, float p_350623_, float p_350312_) {
-        return this.setColor((int)(p_350350_ * 255.0F), (int)(p_350356_ * 255.0F), (int)(p_350623_ * 255.0F), (int)(p_350312_ * 255.0F));
+    default VertexConsumer setColor(float red, float green, float blue, float alpha) {
+        return this.setColor((int)(red * 255.0F), (int)(green * 255.0F), (int)(blue * 255.0F), (int)(alpha * 255.0F));
     }
 
-    default VertexConsumer setColor(int p_350809_) {
+    default VertexConsumer setColor(int color) {
         return this.setColor(
-            FastColor.ARGB32.red(p_350809_), FastColor.ARGB32.green(p_350809_), FastColor.ARGB32.blue(p_350809_), FastColor.ARGB32.alpha(p_350809_)
+            FastColor.ARGB32.red(color), FastColor.ARGB32.green(color), FastColor.ARGB32.blue(color), FastColor.ARGB32.alpha(color)
         );
     }
 
-    default VertexConsumer setWhiteAlpha(int p_350979_) {
-        return this.setColor(FastColor.ARGB32.color(p_350979_, -1));
+    default VertexConsumer setWhiteAlpha(int alpha) {
+        return this.setColor(FastColor.ARGB32.color(alpha, -1));
     }
 
-    default VertexConsumer setLight(int p_350855_) {
-        return this.setUv2(p_350855_ & 65535, p_350855_ >> 16 & 65535);
+    default VertexConsumer setLight(int packedLight) {
+        return this.setUv2(packedLight & 65535, packedLight >> 16 & 65535);
     }
 
-    default VertexConsumer setOverlay(int p_350697_) {
-        return this.setUv1(p_350697_ & 65535, p_350697_ >> 16 & 65535);
+    default VertexConsumer setOverlay(int packedOverlay) {
+        return this.setUv1(packedOverlay & 65535, packedOverlay >> 16 & 65535);
     }
 
     default void putBulkData(
-        PoseStack.Pose p_85996_, BakedQuad p_85997_, float p_85999_, float p_86000_, float p_86001_, float p_331520_, int p_86003_, int p_331548_
+        PoseStack.Pose pose, BakedQuad quad, float red, float green, float blue, float alpha, int packedLight, int packedOverlay
     ) {
         this.putBulkData(
-            p_85996_,
-            p_85997_,
+            pose,
+            quad,
             new float[]{1.0F, 1.0F, 1.0F, 1.0F},
-            p_85999_,
-            p_86000_,
-            p_86001_,
-            p_331520_,
-            new int[]{p_86003_, p_86003_, p_86003_, p_86003_},
-            p_331548_,
+            red,
+            green,
+            blue,
+            alpha,
+            new int[]{packedLight, packedLight, packedLight, packedLight},
+            packedOverlay,
             false
         );
     }
 
     default void putBulkData(
-        PoseStack.Pose p_85988_,
-        BakedQuad p_85989_,
-        float[] p_331397_,
-        float p_85990_,
-        float p_85991_,
-        float p_85992_,
-        float p_331416_,
-        int[] p_331378_,
-        int p_85993_,
-        boolean p_331268_
+        PoseStack.Pose pose,
+        BakedQuad quad,
+        float[] brightness,
+        float red,
+        float green,
+        float blue,
+        float alpha,
+        int[] lightmap,
+        int packedOverlay,
+        boolean readAlpha
     ) {
-        int[] aint = p_85989_.getVertices();
-        Vec3i vec3i = p_85989_.getDirection().getNormal();
-        Matrix4f matrix4f = p_85988_.pose();
-        Vector3f vector3f = p_85988_.transformNormal((float)vec3i.getX(), (float)vec3i.getY(), (float)vec3i.getZ(), new Vector3f());
+        int[] aint = quad.getVertices();
+        Vec3i vec3i = quad.getDirection().getNormal();
+        Matrix4f matrix4f = pose.pose();
+        Vector3f vector3f = pose.transformNormal((float)vec3i.getX(), (float)vec3i.getY(), (float)vec3i.getZ(), new Vector3f());
         int i = 8;
         int j = aint.length / 8;
-        int k = (int)(p_331416_ * 255.0F);
+        int k = (int)(alpha * 255.0F);
 
         try (MemoryStack memorystack = MemoryStack.stackPush()) {
             ByteBuffer bytebuffer = memorystack.malloc(DefaultVertexFormat.BLOCK.getVertexSize());
@@ -118,51 +118,51 @@ public interface VertexConsumer extends net.neoforged.neoforge.client.extensions
                 float f3;
                 float f4;
                 float f5;
-                if (p_331268_) {
+                if (readAlpha) {
                     float f6 = (float)(bytebuffer.get(12) & 255);
                     float f7 = (float)(bytebuffer.get(13) & 255);
                     float f8 = (float)(bytebuffer.get(14) & 255);
-                    f3 = f6 * p_331397_[l] * p_85990_;
-                    f4 = f7 * p_331397_[l] * p_85991_;
-                    f5 = f8 * p_331397_[l] * p_85992_;
+                    f3 = f6 * brightness[l] * red;
+                    f4 = f7 * brightness[l] * green;
+                    f5 = f8 * brightness[l] * blue;
                 } else {
-                    f3 = p_331397_[l] * p_85990_ * 255.0F;
-                    f4 = p_331397_[l] * p_85991_ * 255.0F;
-                    f5 = p_331397_[l] * p_85992_ * 255.0F;
+                    f3 = brightness[l] * red * 255.0F;
+                    f4 = brightness[l] * green * 255.0F;
+                    f5 = brightness[l] * blue * 255.0F;
                 }
 
                 // Neo: also apply alpha that's coming from the baked quad
-                int vertexAlpha = p_331268_ ? (int)((p_331416_ * (float) (bytebuffer.get(15) & 255) / 255.0F) * 255) : k;
+                int vertexAlpha = readAlpha ? (int)((alpha * (float) (bytebuffer.get(15) & 255) / 255.0F) * 255) : k;
                 int i1 = FastColor.ARGB32.color(vertexAlpha, (int)f3, (int)f4, (int)f5);
-                int j1 = applyBakedLighting(p_331378_[l], bytebuffer);
+                int j1 = applyBakedLighting(lightmap[l], bytebuffer);
                 float f10 = bytebuffer.getFloat(16);
                 float f9 = bytebuffer.getFloat(20);
                 Vector3f vector3f1 = matrix4f.transformPosition(f, f1, f2, new Vector3f());
-                applyBakedNormals(vector3f, bytebuffer, p_85988_.normal());
-                this.addVertex(vector3f1.x(), vector3f1.y(), vector3f1.z(), i1, f10, f9, p_85993_, j1, vector3f.x(), vector3f.y(), vector3f.z());
+                applyBakedNormals(vector3f, bytebuffer, pose.normal());
+                this.addVertex(vector3f1.x(), vector3f1.y(), vector3f1.z(), i1, f10, f9, packedOverlay, j1, vector3f.x(), vector3f.y(), vector3f.z());
             }
         }
     }
 
-    default VertexConsumer addVertex(Vector3f p_350685_) {
-        return this.addVertex(p_350685_.x(), p_350685_.y(), p_350685_.z());
+    default VertexConsumer addVertex(Vector3f pos) {
+        return this.addVertex(pos.x(), pos.y(), pos.z());
     }
 
-    default VertexConsumer addVertex(PoseStack.Pose p_352288_, Vector3f p_352298_) {
-        return this.addVertex(p_352288_, p_352298_.x(), p_352298_.y(), p_352298_.z());
+    default VertexConsumer addVertex(PoseStack.Pose pose, Vector3f pos) {
+        return this.addVertex(pose, pos.x(), pos.y(), pos.z());
     }
 
-    default VertexConsumer addVertex(PoseStack.Pose p_350506_, float p_350934_, float p_350873_, float p_350981_) {
-        return this.addVertex(p_350506_.pose(), p_350934_, p_350873_, p_350981_);
+    default VertexConsumer addVertex(PoseStack.Pose pose, float x, float y, float z) {
+        return this.addVertex(pose.pose(), x, y, z);
     }
 
-    default VertexConsumer addVertex(Matrix4f p_350929_, float p_350884_, float p_350885_, float p_350942_) {
-        Vector3f vector3f = p_350929_.transformPosition(p_350884_, p_350885_, p_350942_, new Vector3f());
+    default VertexConsumer addVertex(Matrix4f pose, float x, float y, float z) {
+        Vector3f vector3f = pose.transformPosition(x, y, z, new Vector3f());
         return this.addVertex(vector3f.x(), vector3f.y(), vector3f.z());
     }
 
-    default VertexConsumer setNormal(PoseStack.Pose p_350592_, float p_350534_, float p_350411_, float p_350441_) {
-        Vector3f vector3f = p_350592_.transformNormal(p_350534_, p_350411_, p_350441_, new Vector3f());
+    default VertexConsumer setNormal(PoseStack.Pose pose, float normalX, float normalY, float normalZ) {
+        Vector3f vector3f = pose.transformNormal(normalX, normalY, normalZ, new Vector3f());
         return this.setNormal(vector3f.x(), vector3f.y(), vector3f.z());
     }
 }

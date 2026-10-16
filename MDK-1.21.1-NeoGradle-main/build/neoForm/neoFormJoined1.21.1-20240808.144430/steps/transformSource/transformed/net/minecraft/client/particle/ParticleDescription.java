@@ -15,16 +15,16 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class ParticleDescription {
     private final List<ResourceLocation> textures;
 
-    private ParticleDescription(List<ResourceLocation> p_107281_) {
-        this.textures = p_107281_;
+    private ParticleDescription(List<ResourceLocation> textures) {
+        this.textures = textures;
     }
 
     public List<ResourceLocation> getTextures() {
         return this.textures;
     }
 
-    public static ParticleDescription fromJson(JsonObject p_107286_) {
-        JsonArray jsonarray = GsonHelper.getAsJsonArray(p_107286_, "textures", null);
+    public static ParticleDescription fromJson(JsonObject json) {
+        JsonArray jsonarray = GsonHelper.getAsJsonArray(json, "textures", null);
         if (jsonarray == null) {
             return new ParticleDescription(List.of());
         } else {

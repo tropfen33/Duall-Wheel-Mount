@@ -9,18 +9,18 @@ public class DoubleTag extends NumericTag {
     private static final int SELF_SIZE_IN_BYTES = 16;
     public static final DoubleTag ZERO = new DoubleTag(0.0);
     public static final TagType<DoubleTag> TYPE = new TagType.StaticSize<DoubleTag>() {
-        public DoubleTag load(DataInput p_128524_, NbtAccounter p_128526_) throws IOException {
-            return DoubleTag.valueOf(readAccounted(p_128524_, p_128526_));
+        public DoubleTag load(DataInput input, NbtAccounter accounter) throws IOException {
+            return DoubleTag.valueOf(readAccounted(input, accounter));
         }
 
         @Override
-        public StreamTagVisitor.ValueResult parse(DataInput p_197454_, StreamTagVisitor p_197455_, NbtAccounter p_302353_) throws IOException {
-            return p_197455_.visit(readAccounted(p_197454_, p_302353_));
+        public StreamTagVisitor.ValueResult parse(DataInput input, StreamTagVisitor visitor, NbtAccounter accounter) throws IOException {
+            return visitor.visit(readAccounted(input, accounter));
         }
 
-        private static double readAccounted(DataInput p_302363_, NbtAccounter p_302397_) throws IOException {
-            p_302397_.accountBytes(16L);
-            return p_302363_.readDouble();
+        private static double readAccounted(DataInput input, NbtAccounter accounter) throws IOException {
+            accounter.accountBytes(16L);
+            return input.readDouble();
         }
 
         @Override
@@ -45,17 +45,17 @@ public class DoubleTag extends NumericTag {
     };
     private final double data;
 
-    private DoubleTag(double p_128498_) {
-        this.data = p_128498_;
+    private DoubleTag(double data) {
+        this.data = data;
     }
 
-    public static DoubleTag valueOf(double p_128501_) {
-        return p_128501_ == 0.0 ? ZERO : new DoubleTag(p_128501_);
+    public static DoubleTag valueOf(double data) {
+        return data == 0.0 ? ZERO : new DoubleTag(data);
     }
 
     @Override
-    public void write(DataOutput p_128503_) throws IOException {
-        p_128503_.writeDouble(this.data);
+    public void write(DataOutput output) throws IOException {
+        output.writeDouble(this.data);
     }
 
     @Override
@@ -78,8 +78,8 @@ public class DoubleTag extends NumericTag {
     }
 
     @Override
-    public boolean equals(Object p_128512_) {
-        return this == p_128512_ ? true : p_128512_ instanceof DoubleTag && this.data == ((DoubleTag)p_128512_).data;
+    public boolean equals(Object other) {
+        return this == other ? true : other instanceof DoubleTag && this.data == ((DoubleTag)other).data;
     }
 
     @Override
@@ -89,8 +89,8 @@ public class DoubleTag extends NumericTag {
     }
 
     @Override
-    public void accept(TagVisitor p_177860_) {
-        p_177860_.visitDouble(this);
+    public void accept(TagVisitor visitor) {
+        visitor.visitDouble(this);
     }
 
     @Override
@@ -129,7 +129,7 @@ public class DoubleTag extends NumericTag {
     }
 
     @Override
-    public StreamTagVisitor.ValueResult accept(StreamTagVisitor p_197452_) {
-        return p_197452_.visit(this.data);
+    public StreamTagVisitor.ValueResult accept(StreamTagVisitor visitor) {
+        return visitor.visit(this.data);
     }
 }

@@ -18,8 +18,8 @@ public class DebugSampleSubscriptionTracker {
     private final EnumMap<RemoteDebugSampleType, Map<ServerPlayer, DebugSampleSubscriptionTracker.SubscriptionStartedAt>> subscriptions;
     private final Queue<DebugSampleSubscriptionTracker.SubscriptionRequest> subscriptionRequestQueue = new LinkedList<>();
 
-    public DebugSampleSubscriptionTracker(PlayerList p_323956_) {
-        this.playerList = p_323956_;
+    public DebugSampleSubscriptionTracker(PlayerList playerList) {
+        this.playerList = playerList;
         this.subscriptions = new EnumMap<>(RemoteDebugSampleType.class);
 
         for (RemoteDebugSampleType remotedebugsampletype : RemoteDebugSampleType.values()) {
@@ -27,39 +27,39 @@ public class DebugSampleSubscriptionTracker {
         }
     }
 
-    public boolean shouldLogSamples(RemoteDebugSampleType p_324431_) {
-        return !this.subscriptions.get(p_324431_).isEmpty();
+    public boolean shouldLogSamples(RemoteDebugSampleType sampleType) {
+        return !this.subscriptions.get(sampleType).isEmpty();
     }
 
-    public void broadcast(ClientboundDebugSamplePacket p_324398_) {
-        for (ServerPlayer serverplayer : this.subscriptions.get(p_324398_.debugSampleType()).keySet()) {
-            serverplayer.connection.send(p_324398_);
+    public void broadcast(ClientboundDebugSamplePacket packet) {
+        for (ServerPlayer serverplayer : this.subscriptions.get(packet.debugSampleType()).keySet()) {
+            serverplayer.connection.send(packet);
         }
     }
 
-    public void subscribe(ServerPlayer p_324211_, RemoteDebugSampleType p_324355_) {
-        if (this.playerList.isOp(p_324211_.getGameProfile())) {
-            this.subscriptionRequestQueue.add(new DebugSampleSubscriptionTracker.SubscriptionRequest(p_324211_, p_324355_));
+    public void subscribe(ServerPlayer player, RemoteDebugSampleType sampleType) {
+        if (this.playerList.isOp(player.getGameProfile())) {
+            this.subscriptionRequestQueue.add(new DebugSampleSubscriptionTracker.SubscriptionRequest(player, sampleType));
         }
     }
 
-    public void tick(int p_323889_) {
+    public void tick(int tick) {
         long i = Util.getMillis();
-        this.handleSubscriptions(i, p_323889_);
-        this.handleUnsubscriptions(i, p_323889_);
+        this.handleSubscriptions(i, tick);
+        this.handleUnsubscriptions(i, tick);
     }
 
-    private void handleSubscriptions(long p_324350_, int p_323574_) {
+    private void handleSubscriptions(long millis, int tick) {
         for (DebugSampleSubscriptionTracker.SubscriptionRequest debugsamplesubscriptiontracker$subscriptionrequest : this.subscriptionRequestQueue) {
             this.subscriptions
                 .get(debugsamplesubscriptiontracker$subscriptionrequest.sampleType())
                 .put(
-                    debugsamplesubscriptiontracker$subscriptionrequest.player(), new DebugSampleSubscriptionTracker.SubscriptionStartedAt(p_324350_, p_323574_)
+                    debugsamplesubscriptiontracker$subscriptionrequest.player(), new DebugSampleSubscriptionTracker.SubscriptionStartedAt(millis, tick)
                 );
         }
     }
 
-    private void handleUnsubscriptions(long p_323971_, int p_324253_) {
+    private void handleUnsubscriptions(long millis, int tick) {
         for (Map<ServerPlayer, DebugSampleSubscriptionTracker.SubscriptionStartedAt> map : this.subscriptions.values()) {
             map.entrySet()
                 .removeIf(
@@ -67,8 +67,8 @@ public class DebugSampleSubscriptionTracker {
                         boolean flag = !this.playerList.isOp(p_323887_.getKey().getGameProfile());
                         DebugSampleSubscriptionTracker.SubscriptionStartedAt debugsamplesubscriptiontracker$subscriptionstartedat = p_323887_.getValue();
                         return flag
-                            || p_324253_ > debugsamplesubscriptiontracker$subscriptionstartedat.tick() + 200
-                                && p_323971_ > debugsamplesubscriptiontracker$subscriptionstartedat.millis() + 10000L;
+                            || tick > debugsamplesubscriptiontracker$subscriptionstartedat.tick() + 200
+                                && millis > debugsamplesubscriptiontracker$subscriptionstartedat.millis() + 10000L;
                     }
                 );
         }

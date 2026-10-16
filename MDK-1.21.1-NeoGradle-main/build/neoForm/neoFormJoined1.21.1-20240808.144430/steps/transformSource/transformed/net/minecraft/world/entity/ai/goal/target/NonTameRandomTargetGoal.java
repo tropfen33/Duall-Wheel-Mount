@@ -8,9 +8,9 @@ import net.minecraft.world.entity.TamableAnimal;
 public class NonTameRandomTargetGoal<T extends LivingEntity> extends NearestAttackableTargetGoal<T> {
     private final TamableAnimal tamableMob;
 
-    public NonTameRandomTargetGoal(TamableAnimal p_26097_, Class<T> p_26098_, boolean p_26099_, @Nullable Predicate<LivingEntity> p_26100_) {
-        super(p_26097_, p_26098_, 10, p_26099_, false, p_26100_);
-        this.tamableMob = p_26097_;
+    public NonTameRandomTargetGoal(TamableAnimal tamableMob, Class<T> targetType, boolean mustSee, @Nullable Predicate<LivingEntity> targetPredicate) {
+        super(tamableMob, targetType, 10, mustSee, false, targetPredicate);
+        this.tamableMob = tamableMob;
     }
 
     @Override

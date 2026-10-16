@@ -25,8 +25,8 @@ public class MoveControl implements Control {
     protected float strafeRight;
     protected MoveControl.Operation operation = MoveControl.Operation.WAIT;
 
-    public MoveControl(Mob p_24983_) {
-        this.mob = p_24983_;
+    public MoveControl(Mob mob) {
+        this.mob = mob;
     }
 
     public boolean hasWanted() {
@@ -37,20 +37,23 @@ public class MoveControl implements Control {
         return this.speedModifier;
     }
 
-    public void setWantedPosition(double p_24984_, double p_24985_, double p_24986_, double p_24987_) {
-        this.wantedX = p_24984_;
-        this.wantedY = p_24985_;
-        this.wantedZ = p_24986_;
-        this.speedModifier = p_24987_;
+    /**
+     * Sets the speed and location to move to
+     */
+    public void setWantedPosition(double x, double y, double z, double speed) {
+        this.wantedX = x;
+        this.wantedY = y;
+        this.wantedZ = z;
+        this.speedModifier = speed;
         if (this.operation != MoveControl.Operation.JUMPING) {
             this.operation = MoveControl.Operation.MOVE_TO;
         }
     }
 
-    public void strafe(float p_24989_, float p_24990_) {
+    public void strafe(float forward, float strafe) {
         this.operation = MoveControl.Operation.STRAFE;
-        this.strafeForwards = p_24989_;
-        this.strafeRight = p_24990_;
+        this.strafeForwards = forward;
+        this.strafeRight = strafe;
         this.speedModifier = 0.25;
     }
 
@@ -116,13 +119,16 @@ public class MoveControl implements Control {
         }
     }
 
-    private boolean isWalkable(float p_24997_, float p_24998_) {
+    /**
+     * @return true if the mob can walk successfully to a given X and Z
+     */
+    private boolean isWalkable(float relativeX, float relativeZ) {
         PathNavigation pathnavigation = this.mob.getNavigation();
         if (pathnavigation != null) {
             NodeEvaluator nodeevaluator = pathnavigation.getNodeEvaluator();
             if (nodeevaluator != null
                 && nodeevaluator.getPathType(
-                        this.mob, BlockPos.containing(this.mob.getX() + (double)p_24997_, (double)this.mob.getBlockY(), this.mob.getZ() + (double)p_24998_)
+                        this.mob, BlockPos.containing(this.mob.getX() + (double)relativeX, (double)this.mob.getBlockY(), this.mob.getZ() + (double)relativeZ)
                     )
                     != PathType.WALKABLE) {
                 return false;
@@ -132,17 +138,20 @@ public class MoveControl implements Control {
         return true;
     }
 
-    protected float rotlerp(float p_24992_, float p_24993_, float p_24994_) {
-        float f = Mth.wrapDegrees(p_24993_ - p_24992_);
-        if (f > p_24994_) {
-            f = p_24994_;
+    /**
+     * Attempt to rotate the first angle to become the second angle, but only allow overall direction change to at max be third parameter
+     */
+    protected float rotlerp(float sourceAngle, float targetAngle, float maximumChange) {
+        float f = Mth.wrapDegrees(targetAngle - sourceAngle);
+        if (f > maximumChange) {
+            f = maximumChange;
         }
 
-        if (f < -p_24994_) {
-            f = -p_24994_;
+        if (f < -maximumChange) {
+            f = -maximumChange;
         }
 
-        float f1 = p_24992_ + f;
+        float f1 = sourceAngle + f;
         if (f1 < 0.0F) {
             f1 += 360.0F;
         } else if (f1 > 360.0F) {

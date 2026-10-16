@@ -12,28 +12,28 @@ public abstract class ResourceLookupRule<C, V> implements Rule<StringReader, V>,
     private final Atom<ResourceLocation> idParser;
     protected final C context;
 
-    protected ResourceLookupRule(Atom<ResourceLocation> p_336007_, C p_335882_) {
-        this.idParser = p_336007_;
-        this.context = p_335882_;
+    protected ResourceLookupRule(Atom<ResourceLocation> idParser, C context) {
+        this.idParser = idParser;
+        this.context = context;
     }
 
     @Override
-    public Optional<V> parse(ParseState<StringReader> p_335941_) {
-        p_335941_.input().skipWhitespace();
-        int i = p_335941_.mark();
-        Optional<ResourceLocation> optional = p_335941_.parse(this.idParser);
+    public Optional<V> parse(ParseState<StringReader> parseState) {
+        parseState.input().skipWhitespace();
+        int i = parseState.mark();
+        Optional<ResourceLocation> optional = parseState.parse(this.idParser);
         if (optional.isPresent()) {
             try {
-                return Optional.of(this.validateElement(p_335941_.input(), optional.get()));
+                return Optional.of(this.validateElement(parseState.input(), optional.get()));
             } catch (Exception exception) {
-                p_335941_.errorCollector().store(i, this, exception);
+                parseState.errorCollector().store(i, this, exception);
                 return Optional.empty();
             }
         } else {
-            p_335941_.errorCollector().store(i, this, ResourceLocation.ERROR_INVALID.createWithContext(p_335941_.input()));
+            parseState.errorCollector().store(i, this, ResourceLocation.ERROR_INVALID.createWithContext(parseState.input()));
             return Optional.empty();
         }
     }
 
-    protected abstract V validateElement(ImmutableStringReader p_335698_, ResourceLocation p_335462_) throws Exception;
+    protected abstract V validateElement(ImmutableStringReader reader, ResourceLocation elementType) throws Exception;
 }

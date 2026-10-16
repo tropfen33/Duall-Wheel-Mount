@@ -41,26 +41,26 @@ public class VillagerProfessionLayer<T extends LivingEntity & VillagerDataHolder
     private final ResourceManager resourceManager;
     private final String path;
 
-    public VillagerProfessionLayer(RenderLayerParent<T, M> p_174550_, ResourceManager p_174551_, String p_174552_) {
-        super(p_174550_);
-        this.resourceManager = p_174551_;
-        this.path = p_174552_;
+    public VillagerProfessionLayer(RenderLayerParent<T, M> renderer, ResourceManager resourceManager, String path) {
+        super(renderer);
+        this.resourceManager = resourceManager;
+        this.path = path;
     }
 
     public void render(
-        PoseStack p_117646_,
-        MultiBufferSource p_117647_,
-        int p_117648_,
-        T p_117649_,
-        float p_117650_,
-        float p_117651_,
-        float p_117652_,
-        float p_117653_,
-        float p_117654_,
-        float p_117655_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        T livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTicks,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
-        if (!p_117649_.isInvisible()) {
-            VillagerData villagerdata = p_117649_.getVillagerData();
+        if (!livingEntity.isInvisible()) {
+            VillagerData villagerdata = livingEntity.getVillagerData();
             VillagerType villagertype = villagerdata.getType();
             VillagerProfession villagerprofession = villagerdata.getProfession();
             VillagerMetaDataSection.Hat villagermetadatasection$hat = this.getHatData(this.typeHatCache, "type", BuiltInRegistries.VILLAGER_TYPE, villagertype);
@@ -73,30 +73,30 @@ public class VillagerProfessionLayer<T extends LivingEntity & VillagerDataHolder
                     || villagermetadatasection$hat1 == VillagerMetaDataSection.Hat.PARTIAL && villagermetadatasection$hat != VillagerMetaDataSection.Hat.FULL
             );
             ResourceLocation resourcelocation = this.getResourceLocation("type", BuiltInRegistries.VILLAGER_TYPE.getKey(villagertype));
-            renderColoredCutoutModel(m, resourcelocation, p_117646_, p_117647_, p_117648_, p_117649_, -1);
+            renderColoredCutoutModel(m, resourcelocation, poseStack, buffer, packedLight, livingEntity, -1);
             m.hatVisible(true);
-            if (villagerprofession != VillagerProfession.NONE && !p_117649_.isBaby()) {
+            if (villagerprofession != VillagerProfession.NONE && !livingEntity.isBaby()) {
                 ResourceLocation resourcelocation1 = this.getResourceLocation("profession", BuiltInRegistries.VILLAGER_PROFESSION.getKey(villagerprofession));
-                renderColoredCutoutModel(m, resourcelocation1, p_117646_, p_117647_, p_117648_, p_117649_, -1);
+                renderColoredCutoutModel(m, resourcelocation1, poseStack, buffer, packedLight, livingEntity, -1);
                 if (villagerprofession != VillagerProfession.NITWIT) {
                     ResourceLocation resourcelocation2 = this.getResourceLocation(
                         "profession_level", LEVEL_LOCATIONS.get(Mth.clamp(villagerdata.getLevel(), 1, LEVEL_LOCATIONS.size()))
                     );
-                    renderColoredCutoutModel(m, resourcelocation2, p_117646_, p_117647_, p_117648_, p_117649_, -1);
+                    renderColoredCutoutModel(m, resourcelocation2, poseStack, buffer, packedLight, livingEntity, -1);
                 }
             }
         }
     }
 
-    private ResourceLocation getResourceLocation(String p_117669_, ResourceLocation p_117670_) {
-        return p_117670_.withPath(p_247944_ -> "textures/entity/" + this.path + "/" + p_117669_ + "/" + p_247944_ + ".png");
+    private ResourceLocation getResourceLocation(String folder, ResourceLocation location) {
+        return location.withPath(p_247944_ -> "textures/entity/" + this.path + "/" + folder + "/" + p_247944_ + ".png");
     }
 
     public <K> VillagerMetaDataSection.Hat getHatData(
-        Object2ObjectMap<K, VillagerMetaDataSection.Hat> p_117659_, String p_117660_, DefaultedRegistry<K> p_117661_, K p_117662_
+        Object2ObjectMap<K, VillagerMetaDataSection.Hat> cache, String folder, DefaultedRegistry<K> villagerTypeRegistry, K key
     ) {
-        return p_117659_.computeIfAbsent(
-            p_117662_, p_258159_ -> this.resourceManager.getResource(this.getResourceLocation(p_117660_, p_117661_.getKey(p_117662_))).flatMap(p_234875_ -> {
+        return cache.computeIfAbsent(
+            key, p_258159_ -> this.resourceManager.getResource(this.getResourceLocation(folder, villagerTypeRegistry.getKey(key))).flatMap(p_234875_ -> {
                     try {
                         return p_234875_.metadata().getSection(VillagerMetaDataSection.SERIALIZER).map(VillagerMetaDataSection::getHat);
                     } catch (IOException ioexception) {

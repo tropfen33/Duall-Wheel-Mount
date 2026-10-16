@@ -8,8 +8,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class BeeAggressiveSoundInstance extends BeeSoundInstance {
-    public BeeAggressiveSoundInstance(Bee p_119611_) {
-        super(p_119611_, SoundEvents.BEE_LOOP_AGGRESSIVE, SoundSource.NEUTRAL);
+    public BeeAggressiveSoundInstance(Bee bee) {
+        super(bee, SoundEvents.BEE_LOOP_AGGRESSIVE, SoundSource.NEUTRAL);
         this.delay = 0;
     }
 

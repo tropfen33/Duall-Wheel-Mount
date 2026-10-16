@@ -20,8 +20,8 @@ record Direct(ResourceKey<StructureTemplatePool> alias, ResourceKey<StructureTem
     );
 
     @Override
-    public void forEachResolved(RandomSource p_307630_, BiConsumer<ResourceKey<StructureTemplatePool>, ResourceKey<StructureTemplatePool>> p_307574_) {
-        p_307574_.accept(this.alias, this.target);
+    public void forEachResolved(RandomSource random, BiConsumer<ResourceKey<StructureTemplatePool>, ResourceKey<StructureTemplatePool>> stucturePoolKey) {
+        stucturePoolKey.accept(this.alias, this.target);
     }
 
     @Override

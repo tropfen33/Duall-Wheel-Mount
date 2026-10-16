@@ -55,19 +55,34 @@ public class ServerConnectionListener {
     public static final Supplier<EpollEventLoopGroup> SERVER_EPOLL_EVENT_GROUP = Suppliers.memoize(
         () -> new EpollEventLoopGroup(0, (new ThreadFactoryBuilder()).setNameFormat("Netty Epoll Server IO #%d").setDaemon(true).setThreadFactory(net.neoforged.fml.util.thread.SidedThreadGroups.SERVER).build())
     );
+    /**
+     * Reference to the MinecraftServer object.
+     */
     final MinecraftServer server;
+    /**
+     * True if this NetworkSystem has never had his endpoints terminated
+     */
     public volatile boolean running;
+    /**
+     * Contains all endpoints added to this NetworkSystem
+     */
     private final List<ChannelFuture> channels = Collections.synchronizedList(Lists.newArrayList());
+    /**
+     * A list containing all NetworkManager instances of all endpoints
+     */
     final List<Connection> connections = Collections.synchronizedList(Lists.newArrayList());
 
-    public ServerConnectionListener(MinecraftServer p_9707_) {
-        this.server = p_9707_;
+    public ServerConnectionListener(MinecraftServer server) {
+        this.server = server;
         this.running = true;
     }
 
-    public void startTcpServerListener(@Nullable InetAddress p_9712_, int p_9713_) throws IOException {
-        if (p_9712_ == null) p_9712_ = new java.net.InetSocketAddress(p_9713_).getAddress();
-        net.neoforged.neoforge.network.DualStackUtils.checkIPv6(p_9712_);
+    /**
+     * Adds a channel that listens on publicly accessible network ports
+     */
+    public void startTcpServerListener(@Nullable InetAddress address, int port) throws IOException {
+        if (address == null) address = new java.net.InetSocketAddress(port).getAddress();
+        net.neoforged.neoforge.network.DualStackUtils.checkIPv6(address);
         synchronized (this.channels) {
             Class<? extends ServerSocketChannel> oclass;
             EventLoopGroup eventloopgroup;
@@ -83,13 +98,13 @@ public class ServerConnectionListener {
 
             this.channels.add(new ServerBootstrap().channel(oclass).childHandler(new ChannelInitializer<Channel>() {
                 @Override
-                protected void initChannel(Channel p_9729_) {
+                protected void initChannel(Channel channel) {
                     try {
-                        p_9729_.config().setOption(ChannelOption.TCP_NODELAY, true);
+                        channel.config().setOption(ChannelOption.TCP_NODELAY, true);
                     } catch (ChannelException channelexception) {
                     }
 
-                    ChannelPipeline channelpipeline = p_9729_.pipeline().addLast("timeout", new ReadTimeoutHandler(READ_TIMEOUT));
+                    ChannelPipeline channelpipeline = channel.pipeline().addLast("timeout", new ReadTimeoutHandler(READ_TIMEOUT));
                     if (ServerConnectionListener.this.server.repliesToStatus()) {
                         channelpipeline.addLast("legacy_query", new LegacyQueryHandler(ServerConnectionListener.this.getServer()));
                     }
@@ -101,7 +116,7 @@ public class ServerConnectionListener {
                     connection.configurePacketHandler(channelpipeline);
                     connection.setListenerForServerboundHandshake(new ServerHandshakePacketListenerImpl(ServerConnectionListener.this.server, connection));
                 }
-            }).group(eventloopgroup).localAddress(p_9712_, p_9713_).bind().syncUninterruptibly());
+            }).group(eventloopgroup).localAddress(address, port).bind().syncUninterruptibly());
         }
     }
 
@@ -113,13 +128,13 @@ public class ServerConnectionListener {
                 .childHandler(
                     new ChannelInitializer<Channel>() {
                         @Override
-                        protected void initChannel(Channel p_9734_) {
+                        protected void initChannel(Channel channel) {
                             Connection connection = new Connection(PacketFlow.SERVERBOUND);
                             connection.setListenerForServerboundHandshake(
                                 new MemoryServerHandshakePacketListenerImpl(ServerConnectionListener.this.server, connection)
                             );
                             ServerConnectionListener.this.connections.add(connection);
-                            ChannelPipeline channelpipeline = p_9734_.pipeline();
+                            ChannelPipeline channelpipeline = channel.pipeline();
                             Connection.configureInMemoryPipeline(channelpipeline, PacketFlow.SERVERBOUND);
                             connection.configurePacketHandler(channelpipeline);
                         }
@@ -190,23 +205,23 @@ public class ServerConnectionListener {
         private final int jitter;
         private final List<ServerConnectionListener.LatencySimulator.DelayedMessage> queuedMessages = Lists.newArrayList();
 
-        public LatencySimulator(int p_143593_, int p_143594_) {
-            this.delay = p_143593_;
-            this.jitter = p_143594_;
+        public LatencySimulator(int delay, int jitter) {
+            this.delay = delay;
+            this.jitter = jitter;
         }
 
         @Override
-        public void channelRead(ChannelHandlerContext p_143601_, Object p_143602_) {
-            this.delayDownstream(p_143601_, p_143602_);
+        public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            this.delayDownstream(ctx, msg);
         }
 
-        private void delayDownstream(ChannelHandlerContext p_143596_, Object p_143597_) {
+        private void delayDownstream(ChannelHandlerContext ctx, Object msg) {
             int i = this.delay + (int)(Math.random() * (double)this.jitter);
-            this.queuedMessages.add(new ServerConnectionListener.LatencySimulator.DelayedMessage(p_143596_, p_143597_));
+            this.queuedMessages.add(new ServerConnectionListener.LatencySimulator.DelayedMessage(ctx, msg));
             TIMER.newTimeout(this::onTimeout, (long)i, TimeUnit.MILLISECONDS);
         }
 
-        private void onTimeout(Timeout p_143599_) {
+        private void onTimeout(Timeout timeout) {
             ServerConnectionListener.LatencySimulator.DelayedMessage serverconnectionlistener$latencysimulator$delayedmessage = this.queuedMessages.remove(0);
             serverconnectionlistener$latencysimulator$delayedmessage.ctx.fireChannelRead(serverconnectionlistener$latencysimulator$delayedmessage.msg);
         }
@@ -215,9 +230,9 @@ public class ServerConnectionListener {
             public final ChannelHandlerContext ctx;
             public final Object msg;
 
-            public DelayedMessage(ChannelHandlerContext p_143606_, Object p_143607_) {
-                this.ctx = p_143606_;
-                this.msg = p_143607_;
+            public DelayedMessage(ChannelHandlerContext ctx, Object msg) {
+                this.ctx = ctx;
+                this.msg = msg;
             }
         }
     }

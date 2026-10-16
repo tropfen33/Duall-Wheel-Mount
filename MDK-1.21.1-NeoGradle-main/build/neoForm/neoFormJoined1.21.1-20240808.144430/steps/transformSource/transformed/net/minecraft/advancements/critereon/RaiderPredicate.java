@@ -26,7 +26,7 @@ public record RaiderPredicate(boolean hasRaid, boolean isCaptain) implements Ent
     }
 
     @Override
-    public boolean matches(Entity p_338232_, ServerLevel p_338194_, @Nullable Vec3 p_338564_) {
-        return !(p_338232_ instanceof Raider raider) ? false : raider.hasRaid() == this.hasRaid && raider.isCaptain() == this.isCaptain;
+    public boolean matches(Entity entity, ServerLevel level, @Nullable Vec3 position) {
+        return !(entity instanceof Raider raider) ? false : raider.hasRaid() == this.hasRaid && raider.isCaptain() == this.isCaptain;
     }
 }

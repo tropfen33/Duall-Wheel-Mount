@@ -18,38 +18,38 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class AccessibilityOptionsScreen extends OptionsSubScreen {
     public static final Component TITLE = Component.translatable("options.accessibility.title");
 
-    private static OptionInstance<?>[] options(Options p_345629_) {
+    private static OptionInstance<?>[] options(Options options) {
         return new OptionInstance[]{
-            p_345629_.narrator(),
-            p_345629_.showSubtitles(),
-            p_345629_.highContrast(),
-            p_345629_.autoJump(),
-            p_345629_.menuBackgroundBlurriness(),
-            p_345629_.textBackgroundOpacity(),
-            p_345629_.backgroundForChatOnly(),
-            p_345629_.chatOpacity(),
-            p_345629_.chatLineSpacing(),
-            p_345629_.chatDelay(),
-            p_345629_.notificationDisplayTime(),
-            p_345629_.bobView(),
-            p_345629_.toggleCrouch(),
-            p_345629_.toggleSprint(),
-            p_345629_.screenEffectScale(),
-            p_345629_.fovEffectScale(),
-            p_345629_.darknessEffectScale(),
-            p_345629_.damageTiltStrength(),
-            p_345629_.glintSpeed(),
-            p_345629_.glintStrength(),
-            p_345629_.hideLightningFlash(),
-            p_345629_.darkMojangStudiosBackground(),
-            p_345629_.panoramaSpeed(),
-            p_345629_.hideSplashTexts(),
-            p_345629_.narratorHotkey()
+            options.narrator(),
+            options.showSubtitles(),
+            options.highContrast(),
+            options.autoJump(),
+            options.menuBackgroundBlurriness(),
+            options.textBackgroundOpacity(),
+            options.backgroundForChatOnly(),
+            options.chatOpacity(),
+            options.chatLineSpacing(),
+            options.chatDelay(),
+            options.notificationDisplayTime(),
+            options.bobView(),
+            options.toggleCrouch(),
+            options.toggleSprint(),
+            options.screenEffectScale(),
+            options.fovEffectScale(),
+            options.darknessEffectScale(),
+            options.damageTiltStrength(),
+            options.glintSpeed(),
+            options.glintStrength(),
+            options.hideLightningFlash(),
+            options.darkMojangStudiosBackground(),
+            options.panoramaSpeed(),
+            options.hideSplashTexts(),
+            options.narratorHotkey()
         };
     }
 
-    public AccessibilityOptionsScreen(Screen p_344941_, Options p_344986_) {
-        super(p_344941_, p_344986_, TITLE);
+    public AccessibilityOptionsScreen(Screen lastScreen, Options options) {
+        super(lastScreen, options, TITLE);
     }
 
     @Override

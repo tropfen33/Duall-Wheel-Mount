@@ -25,24 +25,27 @@ public class EndermanRenderer extends MobRenderer<EnderMan, EndermanModel<EnderM
         this.addLayer(new CarriedBlockLayer(this, p_173992_.getBlockRenderDispatcher()));
     }
 
-    public void render(EnderMan p_114339_, float p_114340_, float p_114341_, PoseStack p_114342_, MultiBufferSource p_114343_, int p_114344_) {
-        BlockState blockstate = p_114339_.getCarriedBlock();
+    public void render(EnderMan entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        BlockState blockstate = entity.getCarriedBlock();
         EndermanModel<EnderMan> endermanmodel = this.getModel();
         endermanmodel.carrying = blockstate != null;
-        endermanmodel.creepy = p_114339_.isCreepy();
-        super.render(p_114339_, p_114340_, p_114341_, p_114342_, p_114343_, p_114344_);
+        endermanmodel.creepy = entity.isCreepy();
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 
-    public Vec3 getRenderOffset(EnderMan p_114336_, float p_114337_) {
-        if (p_114336_.isCreepy()) {
-            double d0 = 0.02 * (double)p_114336_.getScale();
+    public Vec3 getRenderOffset(EnderMan entity, float partialTicks) {
+        if (entity.isCreepy()) {
+            double d0 = 0.02 * (double)entity.getScale();
             return new Vec3(this.random.nextGaussian() * d0, 0.0, this.random.nextGaussian() * d0);
         } else {
-            return super.getRenderOffset(p_114336_, p_114337_);
+            return super.getRenderOffset(entity, partialTicks);
         }
     }
 
-    public ResourceLocation getTextureLocation(EnderMan p_114334_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(EnderMan entity) {
         return ENDERMAN_LOCATION;
     }
 }

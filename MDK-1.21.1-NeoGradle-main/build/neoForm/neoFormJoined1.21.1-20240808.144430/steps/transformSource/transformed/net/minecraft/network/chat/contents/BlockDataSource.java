@@ -27,23 +27,23 @@ public record BlockDataSource(String posPattern, @Nullable Coordinates compiledP
     }
 
     @Nullable
-    private static Coordinates compilePos(String p_237318_) {
+    private static Coordinates compilePos(String posPattern) {
         try {
-            return BlockPosArgument.blockPos().parse(new StringReader(p_237318_));
+            return BlockPosArgument.blockPos().parse(new StringReader(posPattern));
         } catch (CommandSyntaxException commandsyntaxexception) {
             return null;
         }
     }
 
     @Override
-    public Stream<CompoundTag> getData(CommandSourceStack p_237323_) {
+    public Stream<CompoundTag> getData(CommandSourceStack source) {
         if (this.compiledPos != null) {
-            ServerLevel serverlevel = p_237323_.getLevel();
-            BlockPos blockpos = this.compiledPos.getBlockPos(p_237323_);
+            ServerLevel serverlevel = source.getLevel();
+            BlockPos blockpos = this.compiledPos.getBlockPos(source);
             if (serverlevel.isLoaded(blockpos)) {
                 BlockEntity blockentity = serverlevel.getBlockEntity(blockpos);
                 if (blockentity != null) {
-                    return Stream.of(blockentity.saveWithFullMetadata(p_237323_.registryAccess()));
+                    return Stream.of(blockentity.saveWithFullMetadata(source.registryAccess()));
                 }
             }
         }
@@ -62,11 +62,11 @@ public record BlockDataSource(String posPattern, @Nullable Coordinates compiledP
     }
 
     @Override
-    public boolean equals(Object p_237321_) {
-        if (this == p_237321_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            if (p_237321_ instanceof BlockDataSource blockdatasource && this.posPattern.equals(blockdatasource.posPattern)) {
+            if (other instanceof BlockDataSource blockdatasource && this.posPattern.equals(blockdatasource.posPattern)) {
                 return true;
             }
 

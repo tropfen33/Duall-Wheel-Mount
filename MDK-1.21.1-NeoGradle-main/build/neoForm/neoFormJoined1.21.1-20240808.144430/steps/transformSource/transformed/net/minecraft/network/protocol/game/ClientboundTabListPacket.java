@@ -21,7 +21,10 @@ public record ClientboundTabListPacket(Component header, Component footer) imple
         return GamePacketTypes.CLIENTBOUND_TAB_LIST;
     }
 
-    public void handle(ClientGamePacketListener p_133488_) {
-        p_133488_.handleTabListCustomisation(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleTabListCustomisation(this);
     }
 }

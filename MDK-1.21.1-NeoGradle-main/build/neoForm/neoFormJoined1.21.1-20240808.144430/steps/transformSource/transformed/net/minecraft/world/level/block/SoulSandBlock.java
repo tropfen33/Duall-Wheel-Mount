@@ -25,51 +25,56 @@ public class SoulSandBlock extends Block {
         return CODEC;
     }
 
-    public SoulSandBlock(BlockBehaviour.Properties p_56672_) {
-        super(p_56672_);
+    public SoulSandBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
-    protected VoxelShape getCollisionShape(BlockState p_56702_, BlockGetter p_56703_, BlockPos p_56704_, CollisionContext p_56705_) {
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    protected VoxelShape getBlockSupportShape(BlockState p_56707_, BlockGetter p_56708_, BlockPos p_56709_) {
+    protected VoxelShape getBlockSupportShape(BlockState state, BlockGetter reader, BlockPos pos) {
         return Shapes.block();
     }
 
     @Override
-    protected VoxelShape getVisualShape(BlockState p_56684_, BlockGetter p_56685_, BlockPos p_56686_, CollisionContext p_56687_) {
+    protected VoxelShape getVisualShape(BlockState state, BlockGetter reader, BlockPos pos, CollisionContext context) {
         return Shapes.block();
     }
 
     @Override
-    protected void tick(BlockState p_222457_, ServerLevel p_222458_, BlockPos p_222459_, RandomSource p_222460_) {
-        BubbleColumnBlock.updateColumn(p_222458_, p_222459_.above(), p_222457_);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        BubbleColumnBlock.updateColumn(level, pos.above(), state);
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_56689_, Direction p_56690_, BlockState p_56691_, LevelAccessor p_56692_, BlockPos p_56693_, BlockPos p_56694_) {
-        if (p_56690_ == Direction.UP && p_56691_.is(Blocks.WATER)) {
-            p_56692_.scheduleTick(p_56693_, this, 20);
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (facing == Direction.UP && facingState.is(Blocks.WATER)) {
+            level.scheduleTick(currentPos, this, 20);
         }
 
-        return super.updateShape(p_56689_, p_56690_, p_56691_, p_56692_, p_56693_, p_56694_);
+        return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected void onPlace(BlockState p_56696_, Level p_56697_, BlockPos p_56698_, BlockState p_56699_, boolean p_56700_) {
-        p_56697_.scheduleTick(p_56698_, this, 20);
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        level.scheduleTick(pos, this, 20);
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_56679_, PathComputationType p_56682_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
     @Override
-    protected float getShadeBrightness(BlockState p_222462_, BlockGetter p_222463_, BlockPos p_222464_) {
+    protected float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos) {
         return 0.2F;
     }
 }

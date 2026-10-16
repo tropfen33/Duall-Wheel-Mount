@@ -26,8 +26,8 @@ public class FindTreeTutorialStepInstance implements TutorialStepInstance {
     private TutorialToast toast;
     private int timeWaiting;
 
-    public FindTreeTutorialStepInstance(Tutorial p_120496_) {
-        this.tutorial = p_120496_;
+    public FindTreeTutorialStepInstance(Tutorial tutorial) {
+        this.tutorial = tutorial;
     }
 
     @Override
@@ -59,31 +59,37 @@ public class FindTreeTutorialStepInstance implements TutorialStepInstance {
         }
     }
 
+    /**
+     * Handles blocks and entities hovering
+     */
     @Override
-    public void onLookAt(ClientLevel p_120501_, HitResult p_120502_) {
-        if (p_120502_.getType() == HitResult.Type.BLOCK) {
-            BlockState blockstate = p_120501_.getBlockState(((BlockHitResult)p_120502_).getBlockPos());
+    public void onLookAt(ClientLevel level, HitResult result) {
+        if (result.getType() == HitResult.Type.BLOCK) {
+            BlockState blockstate = level.getBlockState(((BlockHitResult)result).getBlockPos());
             if (blockstate.is(BlockTags.COMPLETES_FIND_TREE_TUTORIAL)) {
                 this.tutorial.setStep(TutorialSteps.PUNCH_TREE);
             }
         }
     }
 
+    /**
+     * Called when the player pick up an ItemStack
+     */
     @Override
-    public void onGetItem(ItemStack p_120499_) {
-        if (p_120499_.is(ItemTags.COMPLETES_FIND_TREE_TUTORIAL)) {
+    public void onGetItem(ItemStack stack) {
+        if (stack.is(ItemTags.COMPLETES_FIND_TREE_TUTORIAL)) {
             this.tutorial.setStep(TutorialSteps.CRAFT_PLANKS);
         }
     }
 
-    private static boolean hasCollectedTreeItems(LocalPlayer p_235272_) {
-        return p_235272_.getInventory().hasAnyMatching(p_235270_ -> p_235270_.is(ItemTags.COMPLETES_FIND_TREE_TUTORIAL));
+    private static boolean hasCollectedTreeItems(LocalPlayer player) {
+        return player.getInventory().hasAnyMatching(p_235270_ -> p_235270_.is(ItemTags.COMPLETES_FIND_TREE_TUTORIAL));
     }
 
-    public static boolean hasPunchedTreesPreviously(LocalPlayer p_120504_) {
+    public static boolean hasPunchedTreesPreviously(LocalPlayer player) {
         for (Holder<Block> holder : BuiltInRegistries.BLOCK.getTagOrEmpty(BlockTags.COMPLETES_FIND_TREE_TUTORIAL)) {
             Block block = holder.value();
-            if (p_120504_.getStats().getValue(Stats.BLOCK_MINED.get(block)) > 0) {
+            if (player.getStats().getValue(Stats.BLOCK_MINED.get(block)) > 0) {
                 return true;
             }
         }

@@ -8,8 +8,8 @@ import com.mojang.datafixers.schemas.Schema;
 import com.mojang.serialization.Dynamic;
 
 public class RedstoneWireConnectionsFix extends DataFix {
-    public RedstoneWireConnectionsFix(Schema p_16749_) {
-        super(p_16749_, false);
+    public RedstoneWireConnectionsFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
     @Override
@@ -22,11 +22,11 @@ public class RedstoneWireConnectionsFix extends DataFix {
         );
     }
 
-    private <T> Dynamic<T> updateRedstoneConnections(Dynamic<T> p_16753_) {
-        boolean flag = p_16753_.get("Name").asString().result().filter("minecraft:redstone_wire"::equals).isPresent();
+    private <T> Dynamic<T> updateRedstoneConnections(Dynamic<T> dynamic) {
+        boolean flag = dynamic.get("Name").asString().result().filter("minecraft:redstone_wire"::equals).isPresent();
         return !flag
-            ? p_16753_
-            : p_16753_.update(
+            ? dynamic
+            : dynamic.update(
                 "Properties",
                 p_16760_ -> {
                     String s = p_16760_.get("east").asString("none");
@@ -47,7 +47,7 @@ public class RedstoneWireConnectionsFix extends DataFix {
             );
     }
 
-    private static boolean isConnected(String p_16755_) {
-        return !"none".equals(p_16755_);
+    private static boolean isConnected(String state) {
+        return !"none".equals(state);
     }
 }

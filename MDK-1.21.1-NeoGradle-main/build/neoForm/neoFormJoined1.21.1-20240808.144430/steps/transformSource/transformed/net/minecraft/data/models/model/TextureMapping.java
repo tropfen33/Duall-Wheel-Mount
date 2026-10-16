@@ -15,14 +15,14 @@ public class TextureMapping {
     private final Map<TextureSlot, ResourceLocation> slots = Maps.newHashMap();
     private final Set<TextureSlot> forcedSlots = Sets.newHashSet();
 
-    public TextureMapping put(TextureSlot p_125759_, ResourceLocation p_125760_) {
-        this.slots.put(p_125759_, p_125760_);
+    public TextureMapping put(TextureSlot textureSlot, ResourceLocation textureLocation) {
+        this.slots.put(textureSlot, textureLocation);
         return this;
     }
 
-    public TextureMapping putForced(TextureSlot p_176481_, ResourceLocation p_176482_) {
-        this.slots.put(p_176481_, p_176482_);
-        this.forcedSlots.add(p_176481_);
+    public TextureMapping putForced(TextureSlot textureSlot, ResourceLocation textureLocation) {
+        this.slots.put(textureSlot, textureLocation);
+        this.forcedSlots.add(textureSlot);
         return this;
     }
 
@@ -30,326 +30,326 @@ public class TextureMapping {
         return this.forcedSlots.stream();
     }
 
-    public TextureMapping copySlot(TextureSlot p_176478_, TextureSlot p_176479_) {
-        this.slots.put(p_176479_, this.slots.get(p_176478_));
+    public TextureMapping copySlot(TextureSlot sourceSlot, TextureSlot targetSlot) {
+        this.slots.put(targetSlot, this.slots.get(sourceSlot));
         return this;
     }
 
-    public TextureMapping copyForced(TextureSlot p_125774_, TextureSlot p_125775_) {
-        this.slots.put(p_125775_, this.slots.get(p_125774_));
-        this.forcedSlots.add(p_125775_);
+    public TextureMapping copyForced(TextureSlot sourceSlot, TextureSlot targetSlot) {
+        this.slots.put(targetSlot, this.slots.get(sourceSlot));
+        this.forcedSlots.add(targetSlot);
         return this;
     }
 
-    public ResourceLocation get(TextureSlot p_125757_) {
-        for (TextureSlot textureslot = p_125757_; textureslot != null; textureslot = textureslot.getParent()) {
+    public ResourceLocation get(TextureSlot textureSlot) {
+        for (TextureSlot textureslot = textureSlot; textureslot != null; textureslot = textureslot.getParent()) {
             ResourceLocation resourcelocation = this.slots.get(textureslot);
             if (resourcelocation != null) {
                 return resourcelocation;
             }
         }
 
-        throw new IllegalStateException("Can't find texture for slot " + p_125757_);
+        throw new IllegalStateException("Can't find texture for slot " + textureSlot);
     }
 
-    public TextureMapping copyAndUpdate(TextureSlot p_125786_, ResourceLocation p_125787_) {
+    public TextureMapping copyAndUpdate(TextureSlot textureSlot, ResourceLocation textureLocation) {
         TextureMapping texturemapping = new TextureMapping();
         texturemapping.slots.putAll(this.slots);
         texturemapping.forcedSlots.addAll(this.forcedSlots);
-        texturemapping.put(p_125786_, p_125787_);
+        texturemapping.put(textureSlot, textureLocation);
         return texturemapping;
     }
 
-    public static TextureMapping cube(Block p_125749_) {
-        ResourceLocation resourcelocation = getBlockTexture(p_125749_);
+    public static TextureMapping cube(Block block) {
+        ResourceLocation resourcelocation = getBlockTexture(block);
         return cube(resourcelocation);
     }
 
-    public static TextureMapping defaultTexture(Block p_125769_) {
-        ResourceLocation resourcelocation = getBlockTexture(p_125769_);
+    public static TextureMapping defaultTexture(Block block) {
+        ResourceLocation resourcelocation = getBlockTexture(block);
         return defaultTexture(resourcelocation);
     }
 
-    public static TextureMapping defaultTexture(ResourceLocation p_125762_) {
-        return new TextureMapping().put(TextureSlot.TEXTURE, p_125762_);
+    public static TextureMapping defaultTexture(ResourceLocation textureLocation) {
+        return new TextureMapping().put(TextureSlot.TEXTURE, textureLocation);
     }
 
-    public static TextureMapping cube(ResourceLocation p_125777_) {
-        return new TextureMapping().put(TextureSlot.ALL, p_125777_);
+    public static TextureMapping cube(ResourceLocation allTextureLocation) {
+        return new TextureMapping().put(TextureSlot.ALL, allTextureLocation);
     }
 
-    public static TextureMapping cross(Block p_125781_) {
-        return singleSlot(TextureSlot.CROSS, getBlockTexture(p_125781_));
+    public static TextureMapping cross(Block block) {
+        return singleSlot(TextureSlot.CROSS, getBlockTexture(block));
     }
 
-    public static TextureMapping cross(ResourceLocation p_125789_) {
-        return singleSlot(TextureSlot.CROSS, p_125789_);
+    public static TextureMapping cross(ResourceLocation crossTextureLocation) {
+        return singleSlot(TextureSlot.CROSS, crossTextureLocation);
     }
 
-    public static TextureMapping plant(Block p_125791_) {
-        return singleSlot(TextureSlot.PLANT, getBlockTexture(p_125791_));
+    public static TextureMapping plant(Block plantBlock) {
+        return singleSlot(TextureSlot.PLANT, getBlockTexture(plantBlock));
     }
 
-    public static TextureMapping plant(ResourceLocation p_125799_) {
-        return singleSlot(TextureSlot.PLANT, p_125799_);
+    public static TextureMapping plant(ResourceLocation plantTextureLocation) {
+        return singleSlot(TextureSlot.PLANT, plantTextureLocation);
     }
 
-    public static TextureMapping rail(Block p_125801_) {
-        return singleSlot(TextureSlot.RAIL, getBlockTexture(p_125801_));
+    public static TextureMapping rail(Block railBlock) {
+        return singleSlot(TextureSlot.RAIL, getBlockTexture(railBlock));
     }
 
-    public static TextureMapping rail(ResourceLocation p_125803_) {
-        return singleSlot(TextureSlot.RAIL, p_125803_);
+    public static TextureMapping rail(ResourceLocation railTextureLocation) {
+        return singleSlot(TextureSlot.RAIL, railTextureLocation);
     }
 
-    public static TextureMapping wool(Block p_125805_) {
-        return singleSlot(TextureSlot.WOOL, getBlockTexture(p_125805_));
+    public static TextureMapping wool(Block woolBlock) {
+        return singleSlot(TextureSlot.WOOL, getBlockTexture(woolBlock));
     }
 
-    public static TextureMapping flowerbed(Block p_272596_) {
-        return new TextureMapping().put(TextureSlot.FLOWERBED, getBlockTexture(p_272596_)).put(TextureSlot.STEM, getBlockTexture(p_272596_, "_stem"));
+    public static TextureMapping flowerbed(Block flowerbedBlock) {
+        return new TextureMapping().put(TextureSlot.FLOWERBED, getBlockTexture(flowerbedBlock)).put(TextureSlot.STEM, getBlockTexture(flowerbedBlock, "_stem"));
     }
 
-    public static TextureMapping wool(ResourceLocation p_176487_) {
-        return singleSlot(TextureSlot.WOOL, p_176487_);
+    public static TextureMapping wool(ResourceLocation woolTextureLocation) {
+        return singleSlot(TextureSlot.WOOL, woolTextureLocation);
     }
 
-    public static TextureMapping stem(Block p_125807_) {
-        return singleSlot(TextureSlot.STEM, getBlockTexture(p_125807_));
+    public static TextureMapping stem(Block stemBlock) {
+        return singleSlot(TextureSlot.STEM, getBlockTexture(stemBlock));
     }
 
-    public static TextureMapping attachedStem(Block p_125751_, Block p_125752_) {
-        return new TextureMapping().put(TextureSlot.STEM, getBlockTexture(p_125751_)).put(TextureSlot.UPPER_STEM, getBlockTexture(p_125752_));
+    public static TextureMapping attachedStem(Block unattachedStemBlock, Block attachedStemBlock) {
+        return new TextureMapping().put(TextureSlot.STEM, getBlockTexture(unattachedStemBlock)).put(TextureSlot.UPPER_STEM, getBlockTexture(attachedStemBlock));
     }
 
-    public static TextureMapping pattern(Block p_125811_) {
-        return singleSlot(TextureSlot.PATTERN, getBlockTexture(p_125811_));
+    public static TextureMapping pattern(Block patternBlock) {
+        return singleSlot(TextureSlot.PATTERN, getBlockTexture(patternBlock));
     }
 
-    public static TextureMapping fan(Block p_125815_) {
-        return singleSlot(TextureSlot.FAN, getBlockTexture(p_125815_));
+    public static TextureMapping fan(Block fanBlock) {
+        return singleSlot(TextureSlot.FAN, getBlockTexture(fanBlock));
     }
 
-    public static TextureMapping crop(ResourceLocation p_125809_) {
-        return singleSlot(TextureSlot.CROP, p_125809_);
+    public static TextureMapping crop(ResourceLocation cropTextureLocation) {
+        return singleSlot(TextureSlot.CROP, cropTextureLocation);
     }
 
-    public static TextureMapping pane(Block p_125771_, Block p_125772_) {
-        return new TextureMapping().put(TextureSlot.PANE, getBlockTexture(p_125771_)).put(TextureSlot.EDGE, getBlockTexture(p_125772_, "_top"));
+    public static TextureMapping pane(Block glassBlock, Block paneBlock) {
+        return new TextureMapping().put(TextureSlot.PANE, getBlockTexture(glassBlock)).put(TextureSlot.EDGE, getBlockTexture(paneBlock, "_top"));
     }
 
-    public static TextureMapping singleSlot(TextureSlot p_125796_, ResourceLocation p_125797_) {
-        return new TextureMapping().put(p_125796_, p_125797_);
+    public static TextureMapping singleSlot(TextureSlot textureSlot, ResourceLocation textureLocation) {
+        return new TextureMapping().put(textureSlot, textureLocation);
     }
 
-    public static TextureMapping column(Block p_125819_) {
-        return new TextureMapping().put(TextureSlot.SIDE, getBlockTexture(p_125819_, "_side")).put(TextureSlot.END, getBlockTexture(p_125819_, "_top"));
+    public static TextureMapping column(Block columnBlock) {
+        return new TextureMapping().put(TextureSlot.SIDE, getBlockTexture(columnBlock, "_side")).put(TextureSlot.END, getBlockTexture(columnBlock, "_top"));
     }
 
-    public static TextureMapping cubeTop(Block p_125823_) {
-        return new TextureMapping().put(TextureSlot.SIDE, getBlockTexture(p_125823_, "_side")).put(TextureSlot.TOP, getBlockTexture(p_125823_, "_top"));
+    public static TextureMapping cubeTop(Block block) {
+        return new TextureMapping().put(TextureSlot.SIDE, getBlockTexture(block, "_side")).put(TextureSlot.TOP, getBlockTexture(block, "_top"));
     }
 
-    public static TextureMapping pottedAzalea(Block p_278329_) {
+    public static TextureMapping pottedAzalea(Block azaleaBlock) {
         return new TextureMapping()
-            .put(TextureSlot.PLANT, getBlockTexture(p_278329_, "_plant"))
-            .put(TextureSlot.SIDE, getBlockTexture(p_278329_, "_side"))
-            .put(TextureSlot.TOP, getBlockTexture(p_278329_, "_top"));
+            .put(TextureSlot.PLANT, getBlockTexture(azaleaBlock, "_plant"))
+            .put(TextureSlot.SIDE, getBlockTexture(azaleaBlock, "_side"))
+            .put(TextureSlot.TOP, getBlockTexture(azaleaBlock, "_top"));
     }
 
-    public static TextureMapping logColumn(Block p_125825_) {
+    public static TextureMapping logColumn(Block logBlock) {
         return new TextureMapping()
-            .put(TextureSlot.SIDE, getBlockTexture(p_125825_))
-            .put(TextureSlot.END, getBlockTexture(p_125825_, "_top"))
-            .put(TextureSlot.PARTICLE, getBlockTexture(p_125825_));
+            .put(TextureSlot.SIDE, getBlockTexture(logBlock))
+            .put(TextureSlot.END, getBlockTexture(logBlock, "_top"))
+            .put(TextureSlot.PARTICLE, getBlockTexture(logBlock));
     }
 
-    public static TextureMapping column(ResourceLocation p_125764_, ResourceLocation p_125765_) {
-        return new TextureMapping().put(TextureSlot.SIDE, p_125764_).put(TextureSlot.END, p_125765_);
+    public static TextureMapping column(ResourceLocation sideTextureLocation, ResourceLocation endTextureLocation) {
+        return new TextureMapping().put(TextureSlot.SIDE, sideTextureLocation).put(TextureSlot.END, endTextureLocation);
     }
 
-    public static TextureMapping fence(Block p_250135_) {
+    public static TextureMapping fence(Block fenceBlock) {
         return new TextureMapping()
-            .put(TextureSlot.TEXTURE, getBlockTexture(p_250135_))
-            .put(TextureSlot.SIDE, getBlockTexture(p_250135_, "_side"))
-            .put(TextureSlot.TOP, getBlockTexture(p_250135_, "_top"));
+            .put(TextureSlot.TEXTURE, getBlockTexture(fenceBlock))
+            .put(TextureSlot.SIDE, getBlockTexture(fenceBlock, "_side"))
+            .put(TextureSlot.TOP, getBlockTexture(fenceBlock, "_top"));
     }
 
-    public static TextureMapping customParticle(Block p_250579_) {
-        return new TextureMapping().put(TextureSlot.TEXTURE, getBlockTexture(p_250579_)).put(TextureSlot.PARTICLE, getBlockTexture(p_250579_, "_particle"));
+    public static TextureMapping customParticle(Block block) {
+        return new TextureMapping().put(TextureSlot.TEXTURE, getBlockTexture(block)).put(TextureSlot.PARTICLE, getBlockTexture(block, "_particle"));
     }
 
-    public static TextureMapping cubeBottomTop(Block p_125827_) {
+    public static TextureMapping cubeBottomTop(Block block) {
         return new TextureMapping()
-            .put(TextureSlot.SIDE, getBlockTexture(p_125827_, "_side"))
-            .put(TextureSlot.TOP, getBlockTexture(p_125827_, "_top"))
-            .put(TextureSlot.BOTTOM, getBlockTexture(p_125827_, "_bottom"));
+            .put(TextureSlot.SIDE, getBlockTexture(block, "_side"))
+            .put(TextureSlot.TOP, getBlockTexture(block, "_top"))
+            .put(TextureSlot.BOTTOM, getBlockTexture(block, "_bottom"));
     }
 
-    public static TextureMapping cubeBottomTopWithWall(Block p_125829_) {
-        ResourceLocation resourcelocation = getBlockTexture(p_125829_);
+    public static TextureMapping cubeBottomTopWithWall(Block block) {
+        ResourceLocation resourcelocation = getBlockTexture(block);
         return new TextureMapping()
             .put(TextureSlot.WALL, resourcelocation)
             .put(TextureSlot.SIDE, resourcelocation)
-            .put(TextureSlot.TOP, getBlockTexture(p_125829_, "_top"))
-            .put(TextureSlot.BOTTOM, getBlockTexture(p_125829_, "_bottom"));
+            .put(TextureSlot.TOP, getBlockTexture(block, "_top"))
+            .put(TextureSlot.BOTTOM, getBlockTexture(block, "_bottom"));
     }
 
-    public static TextureMapping columnWithWall(Block p_125831_) {
-        ResourceLocation resourcelocation = getBlockTexture(p_125831_);
+    public static TextureMapping columnWithWall(Block columnBlock) {
+        ResourceLocation resourcelocation = getBlockTexture(columnBlock);
         return new TextureMapping()
             .put(TextureSlot.TEXTURE, resourcelocation)
             .put(TextureSlot.WALL, resourcelocation)
             .put(TextureSlot.SIDE, resourcelocation)
-            .put(TextureSlot.END, getBlockTexture(p_125831_, "_top"));
+            .put(TextureSlot.END, getBlockTexture(columnBlock, "_top"));
     }
 
-    public static TextureMapping door(ResourceLocation p_176484_, ResourceLocation p_176485_) {
-        return new TextureMapping().put(TextureSlot.TOP, p_176484_).put(TextureSlot.BOTTOM, p_176485_);
+    public static TextureMapping door(ResourceLocation topTextureLocation, ResourceLocation bottomTextureLocation) {
+        return new TextureMapping().put(TextureSlot.TOP, topTextureLocation).put(TextureSlot.BOTTOM, bottomTextureLocation);
     }
 
-    public static TextureMapping door(Block p_125833_) {
-        return new TextureMapping().put(TextureSlot.TOP, getBlockTexture(p_125833_, "_top")).put(TextureSlot.BOTTOM, getBlockTexture(p_125833_, "_bottom"));
+    public static TextureMapping door(Block doorBlock) {
+        return new TextureMapping().put(TextureSlot.TOP, getBlockTexture(doorBlock, "_top")).put(TextureSlot.BOTTOM, getBlockTexture(doorBlock, "_bottom"));
     }
 
-    public static TextureMapping particle(Block p_125835_) {
-        return new TextureMapping().put(TextureSlot.PARTICLE, getBlockTexture(p_125835_));
+    public static TextureMapping particle(Block particleBlock) {
+        return new TextureMapping().put(TextureSlot.PARTICLE, getBlockTexture(particleBlock));
     }
 
-    public static TextureMapping particle(ResourceLocation p_125813_) {
-        return new TextureMapping().put(TextureSlot.PARTICLE, p_125813_);
+    public static TextureMapping particle(ResourceLocation textureLocation) {
+        return new TextureMapping().put(TextureSlot.PARTICLE, textureLocation);
     }
 
-    public static TextureMapping fire0(Block p_125837_) {
-        return new TextureMapping().put(TextureSlot.FIRE, getBlockTexture(p_125837_, "_0"));
+    public static TextureMapping fire0(Block fireBlock) {
+        return new TextureMapping().put(TextureSlot.FIRE, getBlockTexture(fireBlock, "_0"));
     }
 
-    public static TextureMapping fire1(Block p_125839_) {
-        return new TextureMapping().put(TextureSlot.FIRE, getBlockTexture(p_125839_, "_1"));
+    public static TextureMapping fire1(Block fireBlock) {
+        return new TextureMapping().put(TextureSlot.FIRE, getBlockTexture(fireBlock, "_1"));
     }
 
-    public static TextureMapping lantern(Block p_125841_) {
-        return new TextureMapping().put(TextureSlot.LANTERN, getBlockTexture(p_125841_));
+    public static TextureMapping lantern(Block lanternBlock) {
+        return new TextureMapping().put(TextureSlot.LANTERN, getBlockTexture(lanternBlock));
     }
 
-    public static TextureMapping torch(Block p_125843_) {
-        return new TextureMapping().put(TextureSlot.TORCH, getBlockTexture(p_125843_));
+    public static TextureMapping torch(Block torchBlock) {
+        return new TextureMapping().put(TextureSlot.TORCH, getBlockTexture(torchBlock));
     }
 
-    public static TextureMapping torch(ResourceLocation p_125817_) {
-        return new TextureMapping().put(TextureSlot.TORCH, p_125817_);
+    public static TextureMapping torch(ResourceLocation torchTextureLocation) {
+        return new TextureMapping().put(TextureSlot.TORCH, torchTextureLocation);
     }
 
-    public static TextureMapping trialSpawner(Block p_312500_, String p_312068_, String p_312882_) {
+    public static TextureMapping trialSpawner(Block trialSpawnerBlock, String sideSuffix, String topSuffix) {
         return new TextureMapping()
-            .put(TextureSlot.SIDE, getBlockTexture(p_312500_, p_312068_))
-            .put(TextureSlot.TOP, getBlockTexture(p_312500_, p_312882_))
-            .put(TextureSlot.BOTTOM, getBlockTexture(p_312500_, "_bottom"));
+            .put(TextureSlot.SIDE, getBlockTexture(trialSpawnerBlock, sideSuffix))
+            .put(TextureSlot.TOP, getBlockTexture(trialSpawnerBlock, topSuffix))
+            .put(TextureSlot.BOTTOM, getBlockTexture(trialSpawnerBlock, "_bottom"));
     }
 
-    public static TextureMapping vault(Block p_323779_, String p_324087_, String p_324266_, String p_324048_, String p_324417_) {
+    public static TextureMapping vault(Block vaultBlock, String frontSuffix, String sideSuffix, String topSuffix, String bottomSuffix) {
         return new TextureMapping()
-            .put(TextureSlot.FRONT, getBlockTexture(p_323779_, p_324087_))
-            .put(TextureSlot.SIDE, getBlockTexture(p_323779_, p_324266_))
-            .put(TextureSlot.TOP, getBlockTexture(p_323779_, p_324048_))
-            .put(TextureSlot.BOTTOM, getBlockTexture(p_323779_, p_324417_));
+            .put(TextureSlot.FRONT, getBlockTexture(vaultBlock, frontSuffix))
+            .put(TextureSlot.SIDE, getBlockTexture(vaultBlock, sideSuffix))
+            .put(TextureSlot.TOP, getBlockTexture(vaultBlock, topSuffix))
+            .put(TextureSlot.BOTTOM, getBlockTexture(vaultBlock, bottomSuffix));
     }
 
-    public static TextureMapping particleFromItem(Item p_125744_) {
-        return new TextureMapping().put(TextureSlot.PARTICLE, getItemTexture(p_125744_));
+    public static TextureMapping particleFromItem(Item particleItem) {
+        return new TextureMapping().put(TextureSlot.PARTICLE, getItemTexture(particleItem));
     }
 
-    public static TextureMapping commandBlock(Block p_125845_) {
+    public static TextureMapping commandBlock(Block commandBlock) {
         return new TextureMapping()
-            .put(TextureSlot.SIDE, getBlockTexture(p_125845_, "_side"))
-            .put(TextureSlot.FRONT, getBlockTexture(p_125845_, "_front"))
-            .put(TextureSlot.BACK, getBlockTexture(p_125845_, "_back"));
+            .put(TextureSlot.SIDE, getBlockTexture(commandBlock, "_side"))
+            .put(TextureSlot.FRONT, getBlockTexture(commandBlock, "_front"))
+            .put(TextureSlot.BACK, getBlockTexture(commandBlock, "_back"));
     }
 
-    public static TextureMapping orientableCube(Block p_125847_) {
+    public static TextureMapping orientableCube(Block block) {
         return new TextureMapping()
-            .put(TextureSlot.SIDE, getBlockTexture(p_125847_, "_side"))
-            .put(TextureSlot.FRONT, getBlockTexture(p_125847_, "_front"))
-            .put(TextureSlot.TOP, getBlockTexture(p_125847_, "_top"))
-            .put(TextureSlot.BOTTOM, getBlockTexture(p_125847_, "_bottom"));
+            .put(TextureSlot.SIDE, getBlockTexture(block, "_side"))
+            .put(TextureSlot.FRONT, getBlockTexture(block, "_front"))
+            .put(TextureSlot.TOP, getBlockTexture(block, "_top"))
+            .put(TextureSlot.BOTTOM, getBlockTexture(block, "_bottom"));
     }
 
-    public static TextureMapping orientableCubeOnlyTop(Block p_125849_) {
+    public static TextureMapping orientableCubeOnlyTop(Block block) {
         return new TextureMapping()
-            .put(TextureSlot.SIDE, getBlockTexture(p_125849_, "_side"))
-            .put(TextureSlot.FRONT, getBlockTexture(p_125849_, "_front"))
-            .put(TextureSlot.TOP, getBlockTexture(p_125849_, "_top"));
+            .put(TextureSlot.SIDE, getBlockTexture(block, "_side"))
+            .put(TextureSlot.FRONT, getBlockTexture(block, "_front"))
+            .put(TextureSlot.TOP, getBlockTexture(block, "_top"));
     }
 
-    public static TextureMapping orientableCubeSameEnds(Block p_125851_) {
+    public static TextureMapping orientableCubeSameEnds(Block block) {
         return new TextureMapping()
-            .put(TextureSlot.SIDE, getBlockTexture(p_125851_, "_side"))
-            .put(TextureSlot.FRONT, getBlockTexture(p_125851_, "_front"))
-            .put(TextureSlot.END, getBlockTexture(p_125851_, "_end"));
+            .put(TextureSlot.SIDE, getBlockTexture(block, "_side"))
+            .put(TextureSlot.FRONT, getBlockTexture(block, "_front"))
+            .put(TextureSlot.END, getBlockTexture(block, "_end"));
     }
 
-    public static TextureMapping top(Block p_125853_) {
-        return new TextureMapping().put(TextureSlot.TOP, getBlockTexture(p_125853_, "_top"));
+    public static TextureMapping top(Block block) {
+        return new TextureMapping().put(TextureSlot.TOP, getBlockTexture(block, "_top"));
     }
 
-    public static TextureMapping craftingTable(Block p_125783_, Block p_125784_) {
+    public static TextureMapping craftingTable(Block craftingTableBlock, Block craftingTableMaterialBlock) {
         return new TextureMapping()
-            .put(TextureSlot.PARTICLE, getBlockTexture(p_125783_, "_front"))
-            .put(TextureSlot.DOWN, getBlockTexture(p_125784_))
-            .put(TextureSlot.UP, getBlockTexture(p_125783_, "_top"))
-            .put(TextureSlot.NORTH, getBlockTexture(p_125783_, "_front"))
-            .put(TextureSlot.EAST, getBlockTexture(p_125783_, "_side"))
-            .put(TextureSlot.SOUTH, getBlockTexture(p_125783_, "_side"))
-            .put(TextureSlot.WEST, getBlockTexture(p_125783_, "_front"));
+            .put(TextureSlot.PARTICLE, getBlockTexture(craftingTableBlock, "_front"))
+            .put(TextureSlot.DOWN, getBlockTexture(craftingTableMaterialBlock))
+            .put(TextureSlot.UP, getBlockTexture(craftingTableBlock, "_top"))
+            .put(TextureSlot.NORTH, getBlockTexture(craftingTableBlock, "_front"))
+            .put(TextureSlot.EAST, getBlockTexture(craftingTableBlock, "_side"))
+            .put(TextureSlot.SOUTH, getBlockTexture(craftingTableBlock, "_side"))
+            .put(TextureSlot.WEST, getBlockTexture(craftingTableBlock, "_front"));
     }
 
-    public static TextureMapping fletchingTable(Block p_125793_, Block p_125794_) {
+    public static TextureMapping fletchingTable(Block fletchingTableBlock, Block fletchingTableMaterialBlock) {
         return new TextureMapping()
-            .put(TextureSlot.PARTICLE, getBlockTexture(p_125793_, "_front"))
-            .put(TextureSlot.DOWN, getBlockTexture(p_125794_))
-            .put(TextureSlot.UP, getBlockTexture(p_125793_, "_top"))
-            .put(TextureSlot.NORTH, getBlockTexture(p_125793_, "_front"))
-            .put(TextureSlot.SOUTH, getBlockTexture(p_125793_, "_front"))
-            .put(TextureSlot.EAST, getBlockTexture(p_125793_, "_side"))
-            .put(TextureSlot.WEST, getBlockTexture(p_125793_, "_side"));
+            .put(TextureSlot.PARTICLE, getBlockTexture(fletchingTableBlock, "_front"))
+            .put(TextureSlot.DOWN, getBlockTexture(fletchingTableMaterialBlock))
+            .put(TextureSlot.UP, getBlockTexture(fletchingTableBlock, "_top"))
+            .put(TextureSlot.NORTH, getBlockTexture(fletchingTableBlock, "_front"))
+            .put(TextureSlot.SOUTH, getBlockTexture(fletchingTableBlock, "_front"))
+            .put(TextureSlot.EAST, getBlockTexture(fletchingTableBlock, "_side"))
+            .put(TextureSlot.WEST, getBlockTexture(fletchingTableBlock, "_side"));
     }
 
-    public static TextureMapping snifferEgg(String p_278314_) {
+    public static TextureMapping snifferEgg(String crackLevel) {
         return new TextureMapping()
-            .put(TextureSlot.PARTICLE, getBlockTexture(Blocks.SNIFFER_EGG, p_278314_ + "_north"))
-            .put(TextureSlot.BOTTOM, getBlockTexture(Blocks.SNIFFER_EGG, p_278314_ + "_bottom"))
-            .put(TextureSlot.TOP, getBlockTexture(Blocks.SNIFFER_EGG, p_278314_ + "_top"))
-            .put(TextureSlot.NORTH, getBlockTexture(Blocks.SNIFFER_EGG, p_278314_ + "_north"))
-            .put(TextureSlot.SOUTH, getBlockTexture(Blocks.SNIFFER_EGG, p_278314_ + "_south"))
-            .put(TextureSlot.EAST, getBlockTexture(Blocks.SNIFFER_EGG, p_278314_ + "_east"))
-            .put(TextureSlot.WEST, getBlockTexture(Blocks.SNIFFER_EGG, p_278314_ + "_west"));
+            .put(TextureSlot.PARTICLE, getBlockTexture(Blocks.SNIFFER_EGG, crackLevel + "_north"))
+            .put(TextureSlot.BOTTOM, getBlockTexture(Blocks.SNIFFER_EGG, crackLevel + "_bottom"))
+            .put(TextureSlot.TOP, getBlockTexture(Blocks.SNIFFER_EGG, crackLevel + "_top"))
+            .put(TextureSlot.NORTH, getBlockTexture(Blocks.SNIFFER_EGG, crackLevel + "_north"))
+            .put(TextureSlot.SOUTH, getBlockTexture(Blocks.SNIFFER_EGG, crackLevel + "_south"))
+            .put(TextureSlot.EAST, getBlockTexture(Blocks.SNIFFER_EGG, crackLevel + "_east"))
+            .put(TextureSlot.WEST, getBlockTexture(Blocks.SNIFFER_EGG, crackLevel + "_west"));
     }
 
-    public static TextureMapping campfire(Block p_125737_) {
-        return new TextureMapping().put(TextureSlot.LIT_LOG, getBlockTexture(p_125737_, "_log_lit")).put(TextureSlot.FIRE, getBlockTexture(p_125737_, "_fire"));
+    public static TextureMapping campfire(Block campfireBlock) {
+        return new TextureMapping().put(TextureSlot.LIT_LOG, getBlockTexture(campfireBlock, "_log_lit")).put(TextureSlot.FIRE, getBlockTexture(campfireBlock, "_fire"));
     }
 
-    public static TextureMapping candleCake(Block p_181477_, boolean p_181478_) {
+    public static TextureMapping candleCake(Block candleCakeBlock, boolean lit) {
         return new TextureMapping()
             .put(TextureSlot.PARTICLE, getBlockTexture(Blocks.CAKE, "_side"))
             .put(TextureSlot.BOTTOM, getBlockTexture(Blocks.CAKE, "_bottom"))
             .put(TextureSlot.TOP, getBlockTexture(Blocks.CAKE, "_top"))
             .put(TextureSlot.SIDE, getBlockTexture(Blocks.CAKE, "_side"))
-            .put(TextureSlot.CANDLE, getBlockTexture(p_181477_, p_181478_ ? "_lit" : ""));
+            .put(TextureSlot.CANDLE, getBlockTexture(candleCakeBlock, lit ? "_lit" : ""));
     }
 
-    public static TextureMapping cauldron(ResourceLocation p_176489_) {
+    public static TextureMapping cauldron(ResourceLocation cauldronContentTextureLocation) {
         return new TextureMapping()
             .put(TextureSlot.PARTICLE, getBlockTexture(Blocks.CAULDRON, "_side"))
             .put(TextureSlot.SIDE, getBlockTexture(Blocks.CAULDRON, "_side"))
             .put(TextureSlot.TOP, getBlockTexture(Blocks.CAULDRON, "_top"))
             .put(TextureSlot.BOTTOM, getBlockTexture(Blocks.CAULDRON, "_bottom"))
             .put(TextureSlot.INSIDE, getBlockTexture(Blocks.CAULDRON, "_inner"))
-            .put(TextureSlot.CONTENT, p_176489_);
+            .put(TextureSlot.CONTENT, cauldronContentTextureLocation);
     }
 
-    public static TextureMapping sculkShrieker(boolean p_236351_) {
-        String s = p_236351_ ? "_can_summon" : "";
+    public static TextureMapping sculkShrieker(boolean canSummon) {
+        String s = canSummon ? "_can_summon" : "";
         return new TextureMapping()
             .put(TextureSlot.PARTICLE, getBlockTexture(Blocks.SCULK_SHRIEKER, "_bottom"))
             .put(TextureSlot.SIDE, getBlockTexture(Blocks.SCULK_SHRIEKER, "_side"))
@@ -358,43 +358,43 @@ public class TextureMapping {
             .put(TextureSlot.BOTTOM, getBlockTexture(Blocks.SCULK_SHRIEKER, "_bottom"));
     }
 
-    public static TextureMapping layer0(Item p_125767_) {
-        return new TextureMapping().put(TextureSlot.LAYER0, getItemTexture(p_125767_));
+    public static TextureMapping layer0(Item layerZeroItem) {
+        return new TextureMapping().put(TextureSlot.LAYER0, getItemTexture(layerZeroItem));
     }
 
-    public static TextureMapping layer0(Block p_125739_) {
-        return new TextureMapping().put(TextureSlot.LAYER0, getBlockTexture(p_125739_));
+    public static TextureMapping layer0(Block layerZeroBlock) {
+        return new TextureMapping().put(TextureSlot.LAYER0, getBlockTexture(layerZeroBlock));
     }
 
-    public static TextureMapping layer0(ResourceLocation p_125821_) {
-        return new TextureMapping().put(TextureSlot.LAYER0, p_125821_);
+    public static TextureMapping layer0(ResourceLocation layerZeroTextureLocation) {
+        return new TextureMapping().put(TextureSlot.LAYER0, layerZeroTextureLocation);
     }
 
-    public static TextureMapping layered(ResourceLocation p_267142_, ResourceLocation p_266884_) {
-        return new TextureMapping().put(TextureSlot.LAYER0, p_267142_).put(TextureSlot.LAYER1, p_266884_);
+    public static TextureMapping layered(ResourceLocation layer0, ResourceLocation layer1) {
+        return new TextureMapping().put(TextureSlot.LAYER0, layer0).put(TextureSlot.LAYER1, layer1);
     }
 
-    public static TextureMapping layered(ResourceLocation p_268096_, ResourceLocation p_268084_, ResourceLocation p_268063_) {
-        return new TextureMapping().put(TextureSlot.LAYER0, p_268096_).put(TextureSlot.LAYER1, p_268084_).put(TextureSlot.LAYER2, p_268063_);
+    public static TextureMapping layered(ResourceLocation layer0, ResourceLocation layer1, ResourceLocation layer2) {
+        return new TextureMapping().put(TextureSlot.LAYER0, layer0).put(TextureSlot.LAYER1, layer1).put(TextureSlot.LAYER2, layer2);
     }
 
-    public static ResourceLocation getBlockTexture(Block p_125741_) {
-        ResourceLocation resourcelocation = BuiltInRegistries.BLOCK.getKey(p_125741_);
+    public static ResourceLocation getBlockTexture(Block block) {
+        ResourceLocation resourcelocation = BuiltInRegistries.BLOCK.getKey(block);
         return resourcelocation.withPrefix("block/");
     }
 
-    public static ResourceLocation getBlockTexture(Block p_125754_, String p_125755_) {
-        ResourceLocation resourcelocation = BuiltInRegistries.BLOCK.getKey(p_125754_);
-        return resourcelocation.withPath(p_248521_ -> "block/" + p_248521_ + p_125755_);
+    public static ResourceLocation getBlockTexture(Block block, String textureSuffix) {
+        ResourceLocation resourcelocation = BuiltInRegistries.BLOCK.getKey(block);
+        return resourcelocation.withPath(p_248521_ -> "block/" + p_248521_ + textureSuffix);
     }
 
-    public static ResourceLocation getItemTexture(Item p_125779_) {
-        ResourceLocation resourcelocation = BuiltInRegistries.ITEM.getKey(p_125779_);
+    public static ResourceLocation getItemTexture(Item item) {
+        ResourceLocation resourcelocation = BuiltInRegistries.ITEM.getKey(item);
         return resourcelocation.withPrefix("item/");
     }
 
-    public static ResourceLocation getItemTexture(Item p_125746_, String p_125747_) {
-        ResourceLocation resourcelocation = BuiltInRegistries.ITEM.getKey(p_125746_);
-        return resourcelocation.withPath(p_252192_ -> "item/" + p_252192_ + p_125747_);
+    public static ResourceLocation getItemTexture(Item item, String textureSuffix) {
+        ResourceLocation resourcelocation = BuiltInRegistries.ITEM.getKey(item);
+        return resourcelocation.withPath(p_252192_ -> "item/" + p_252192_ + textureSuffix);
     }
 }

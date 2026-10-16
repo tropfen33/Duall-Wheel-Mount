@@ -22,8 +22,8 @@ public class Backup extends ValueObject {
     public Map<String, String> metadata = Maps.newHashMap();
     public Map<String, String> changeList = Maps.newHashMap();
 
-    public static Backup parse(JsonElement p_87400_) {
-        JsonObject jsonobject = p_87400_.getAsJsonObject();
+    public static Backup parse(JsonElement json) {
+        JsonObject jsonobject = json.getAsJsonObject();
         Backup backup = new Backup();
 
         try {
@@ -50,7 +50,7 @@ public class Backup extends ValueObject {
         return this.uploadedVersion;
     }
 
-    public void setUploadedVersion(boolean p_87404_) {
-        this.uploadedVersion = p_87404_;
+    public void setUploadedVersion(boolean uploadedVersion) {
+        this.uploadedVersion = uploadedVersion;
     }
 }

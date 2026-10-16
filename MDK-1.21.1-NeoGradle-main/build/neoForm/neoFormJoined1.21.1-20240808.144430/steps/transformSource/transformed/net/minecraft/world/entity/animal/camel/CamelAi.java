@@ -62,24 +62,24 @@ public class CamelAi {
         MemoryModuleType.NEAREST_VISIBLE_ADULT
     );
 
-    protected static void initMemories(Camel p_249638_, RandomSource p_250704_) {
+    protected static void initMemories(Camel camel, RandomSource random) {
     }
 
     public static Brain.Provider<Camel> brainProvider() {
         return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);
     }
 
-    protected static Brain<?> makeBrain(Brain<Camel> p_249515_) {
-        initCoreActivity(p_249515_);
-        initIdleActivity(p_249515_);
-        p_249515_.setCoreActivities(ImmutableSet.of(Activity.CORE));
-        p_249515_.setDefaultActivity(Activity.IDLE);
-        p_249515_.useDefaultActivity();
-        return p_249515_;
+    protected static Brain<?> makeBrain(Brain<Camel> brain) {
+        initCoreActivity(brain);
+        initIdleActivity(brain);
+        brain.setCoreActivities(ImmutableSet.of(Activity.CORE));
+        brain.setDefaultActivity(Activity.IDLE);
+        brain.useDefaultActivity();
+        return brain;
     }
 
-    private static void initCoreActivity(Brain<Camel> p_249998_) {
-        p_249998_.addActivity(
+    private static void initCoreActivity(Brain<Camel> brain) {
+        brain.addActivity(
             Activity.CORE,
             0,
             ImmutableList.of(
@@ -93,8 +93,8 @@ public class CamelAi {
         );
     }
 
-    private static void initIdleActivity(Brain<Camel> p_252342_) {
-        p_252342_.addActivity(
+    private static void initIdleActivity(Brain<Camel> brain) {
+        brain.addActivity(
             Activity.IDLE,
             ImmutableList.of(
                 Pair.of(0, SetEntityLookTargetSometimes.create(EntityType.PLAYER, 6.0F, UniformInt.of(30, 60))),
@@ -125,8 +125,8 @@ public class CamelAi {
         );
     }
 
-    public static void updateActivity(Camel p_250703_) {
-        p_250703_.getBrain().setActiveActivityToFirstValid(ImmutableList.of(Activity.IDLE));
+    public static void updateActivity(Camel camel) {
+        camel.getBrain().setActiveActivityToFirstValid(ImmutableList.of(Activity.IDLE));
     }
 
     public static Predicate<ItemStack> getTemptations() {
@@ -147,25 +147,25 @@ public class CamelAi {
     public static class RandomSitting extends Behavior<Camel> {
         private final int minimalPoseTicks;
 
-        public RandomSitting(int p_251207_) {
+        public RandomSitting(int minimalPoseSeconds) {
             super(ImmutableMap.of());
-            this.minimalPoseTicks = p_251207_ * 20;
+            this.minimalPoseTicks = minimalPoseSeconds * 20;
         }
 
-        protected boolean checkExtraStartConditions(ServerLevel p_249520_, Camel p_250322_) {
-            return !p_250322_.isInWater()
-                && p_250322_.getPoseTime() >= (long)this.minimalPoseTicks
-                && !p_250322_.isLeashed()
-                && p_250322_.onGround()
-                && !p_250322_.hasControllingPassenger()
-                && p_250322_.canCamelChangePose();
+        protected boolean checkExtraStartConditions(ServerLevel level, Camel owner) {
+            return !owner.isInWater()
+                && owner.getPoseTime() >= (long)this.minimalPoseTicks
+                && !owner.isLeashed()
+                && owner.onGround()
+                && !owner.hasControllingPassenger()
+                && owner.canCamelChangePose();
         }
 
-        protected void start(ServerLevel p_250901_, Camel p_250345_, long p_248515_) {
-            if (p_250345_.isCamelSitting()) {
-                p_250345_.standUp();
-            } else if (!p_250345_.isPanicking()) {
-                p_250345_.sitDown();
+        protected void start(ServerLevel level, Camel entity, long gameTime) {
+            if (entity.isCamelSitting()) {
+                entity.standUp();
+            } else if (!entity.isPanicking()) {
+                entity.sitDown();
             }
         }
     }

@@ -8,42 +8,64 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.LevelSimulatedReader;
 import net.minecraft.world.level.block.state.BlockState;
 
+/**
+ * A representation of an integer valued interval, either bounded or unbounded.
+ * While the class itself does not imply any coordinate in particular, this is practically used to represent a column in the Y direction.
+ */
 public abstract class Column {
-    public static Column.Range around(int p_158165_, int p_158166_) {
-        return new Column.Range(p_158165_ - 1, p_158166_ + 1);
+    /**
+     * @return A column of the closed interval [floor, ceiling].
+     */
+    public static Column.Range around(int floor, int ceiling) {
+        return new Column.Range(floor - 1, ceiling + 1);
     }
 
-    public static Column.Range inside(int p_158189_, int p_158190_) {
-        return new Column.Range(p_158189_, p_158190_);
+    /**
+     * @return A column of the open interval (floor, ceiling).
+     */
+    public static Column.Range inside(int floor, int ceiling) {
+        return new Column.Range(floor, ceiling);
     }
 
-    public static Column below(int p_158163_) {
-        return new Column.Ray(p_158163_, false);
+    /**
+     * @return A column of the unbounded interval (-infinity, ceiling).
+     */
+    public static Column below(int ceiling) {
+        return new Column.Ray(ceiling, false);
     }
 
-    public static Column fromHighest(int p_158187_) {
-        return new Column.Ray(p_158187_ + 1, false);
+    /**
+     * @return A column of the unbounded interval (-infinity, ceiling].
+     */
+    public static Column fromHighest(int ceiling) {
+        return new Column.Ray(ceiling + 1, false);
     }
 
-    public static Column above(int p_158194_) {
-        return new Column.Ray(p_158194_, true);
+    /**
+     * @return A column of the unbounded interval (floor, infinity).
+     */
+    public static Column above(int floor) {
+        return new Column.Ray(floor, true);
     }
 
-    public static Column fromLowest(int p_158196_) {
-        return new Column.Ray(p_158196_ - 1, true);
+    /**
+     * @return A column of the unbounded interval [floor, infinity).
+     */
+    public static Column fromLowest(int floor) {
+        return new Column.Ray(floor - 1, true);
     }
 
     public static Column line() {
         return Column.Line.INSTANCE;
     }
 
-    public static Column create(OptionalInt p_158184_, OptionalInt p_158185_) {
-        if (p_158184_.isPresent() && p_158185_.isPresent()) {
-            return inside(p_158184_.getAsInt(), p_158185_.getAsInt());
-        } else if (p_158184_.isPresent()) {
-            return above(p_158184_.getAsInt());
+    public static Column create(OptionalInt floor, OptionalInt ceiling) {
+        if (floor.isPresent() && ceiling.isPresent()) {
+            return inside(floor.getAsInt(), ceiling.getAsInt());
+        } else if (floor.isPresent()) {
+            return above(floor.getAsInt());
         } else {
-            return p_158185_.isPresent() ? below(p_158185_.getAsInt()) : line();
+            return ceiling.isPresent() ? below(ceiling.getAsInt()) : line();
         }
     }
 
@@ -53,44 +75,52 @@ public abstract class Column {
 
     public abstract OptionalInt getHeight();
 
-    public Column withFloor(OptionalInt p_158182_) {
-        return create(p_158182_, this.getCeiling());
+    public Column withFloor(OptionalInt floor) {
+        return create(floor, this.getCeiling());
     }
 
-    public Column withCeiling(OptionalInt p_158192_) {
-        return create(this.getFloor(), p_158192_);
+    public Column withCeiling(OptionalInt ceiling) {
+        return create(this.getFloor(), ceiling);
     }
 
+    /**
+     * Scans for a column of states satisfying {@code columnPredicate}, up to a length of {@code maxDistance} from the origin, and ending with a state which satisfies {@code tipPredicate}.
+     * @return A column representing the tips found. The column will be bounded if a tip was reached in the given direction, unbounded otherwise.
+     */
     public static Optional<Column> scan(
-        LevelSimulatedReader p_158176_, BlockPos p_158177_, int p_158178_, Predicate<BlockState> p_158179_, Predicate<BlockState> p_158180_
+        LevelSimulatedReader level, BlockPos pos, int maxDistance, Predicate<BlockState> columnPredicate, Predicate<BlockState> tipPredicate
     ) {
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = p_158177_.mutable();
-        if (!p_158176_.isStateAtPosition(p_158177_, p_158179_)) {
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = pos.mutable();
+        if (!level.isStateAtPosition(pos, columnPredicate)) {
             return Optional.empty();
         } else {
-            int i = p_158177_.getY();
-            OptionalInt optionalint = scanDirection(p_158176_, p_158178_, p_158179_, p_158180_, blockpos$mutableblockpos, i, Direction.UP);
-            OptionalInt optionalint1 = scanDirection(p_158176_, p_158178_, p_158179_, p_158180_, blockpos$mutableblockpos, i, Direction.DOWN);
+            int i = pos.getY();
+            OptionalInt optionalint = scanDirection(level, maxDistance, columnPredicate, tipPredicate, blockpos$mutableblockpos, i, Direction.UP);
+            OptionalInt optionalint1 = scanDirection(level, maxDistance, columnPredicate, tipPredicate, blockpos$mutableblockpos, i, Direction.DOWN);
             return Optional.of(create(optionalint1, optionalint));
         }
     }
 
+    /**
+     * Scans for a sequence of states in a given {@code direction}, up to a length of {@code maxDistance} which satisfy {@code columnPredicate}, and ending with a state which satisfies {@code tipPredicate}.
+     * @return The y position of the tip, if found.
+     */
     private static OptionalInt scanDirection(
-        LevelSimulatedReader p_158168_,
-        int p_158169_,
-        Predicate<BlockState> p_158170_,
-        Predicate<BlockState> p_158171_,
-        BlockPos.MutableBlockPos p_158172_,
-        int p_158173_,
-        Direction p_158174_
+        LevelSimulatedReader level,
+        int maxDistance,
+        Predicate<BlockState> columnPredicate,
+        Predicate<BlockState> tipPredicate,
+        BlockPos.MutableBlockPos mutablePos,
+        int startY,
+        Direction direction
     ) {
-        p_158172_.setY(p_158173_);
+        mutablePos.setY(startY);
 
-        for (int i = 1; i < p_158169_ && p_158168_.isStateAtPosition(p_158172_, p_158170_); i++) {
-            p_158172_.move(p_158174_);
+        for (int i = 1; i < maxDistance && level.isStateAtPosition(mutablePos, columnPredicate); i++) {
+            mutablePos.move(direction);
         }
 
-        return p_158168_.isStateAtPosition(p_158172_, p_158171_) ? OptionalInt.of(p_158172_.getY()) : OptionalInt.empty();
+        return level.isStateAtPosition(mutablePos, tipPredicate) ? OptionalInt.of(mutablePos.getY()) : OptionalInt.empty();
     }
 
     public static final class Line extends Column {
@@ -124,9 +154,9 @@ public abstract class Column {
         private final int floor;
         private final int ceiling;
 
-        protected Range(int p_158207_, int p_158208_) {
-            this.floor = p_158207_;
-            this.ceiling = p_158208_;
+        protected Range(int floor, int ceiling) {
+            this.floor = floor;
+            this.ceiling = ceiling;
             if (this.height() < 0) {
                 throw new IllegalArgumentException("Column of negative height: " + this);
             }
@@ -169,9 +199,9 @@ public abstract class Column {
         private final int edge;
         private final boolean pointingUp;
 
-        public Ray(int p_158219_, boolean p_158220_) {
-            this.edge = p_158219_;
-            this.pointingUp = p_158220_;
+        public Ray(int edge, boolean pointingUp) {
+            this.edge = edge;
+            this.pointingUp = pointingUp;
         }
 
         @Override

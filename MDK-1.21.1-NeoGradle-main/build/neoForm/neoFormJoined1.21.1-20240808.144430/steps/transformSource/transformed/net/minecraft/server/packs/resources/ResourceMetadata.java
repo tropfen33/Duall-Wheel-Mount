@@ -21,9 +21,9 @@ public interface ResourceMetadata {
     };
     IoSupplier<ResourceMetadata> EMPTY_SUPPLIER = () -> EMPTY;
 
-    static ResourceMetadata fromJsonStream(InputStream p_215581_) throws IOException {
+    static ResourceMetadata fromJsonStream(InputStream stream) throws IOException {
         ResourceMetadata resourcemetadata;
-        try (BufferedReader bufferedreader = new BufferedReader(new InputStreamReader(p_215581_, StandardCharsets.UTF_8))) {
+        try (BufferedReader bufferedreader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
             final JsonObject jsonobject = GsonHelper.parse(bufferedreader);
             resourcemetadata = new ResourceMetadata() {
                 @Override
@@ -37,27 +37,27 @@ public interface ResourceMetadata {
         return resourcemetadata;
     }
 
-    <T> Optional<T> getSection(MetadataSectionSerializer<T> p_215579_);
+    <T> Optional<T> getSection(MetadataSectionSerializer<T> serializer);
 
-    default ResourceMetadata copySections(Collection<MetadataSectionSerializer<?>> p_295308_) {
+    default ResourceMetadata copySections(Collection<MetadataSectionSerializer<?>> serializers) {
         ResourceMetadata.Builder resourcemetadata$builder = new ResourceMetadata.Builder();
 
-        for (MetadataSectionSerializer<?> metadatasectionserializer : p_295308_) {
+        for (MetadataSectionSerializer<?> metadatasectionserializer : serializers) {
             this.copySection(resourcemetadata$builder, metadatasectionserializer);
         }
 
         return resourcemetadata$builder.build();
     }
 
-    private <T> void copySection(ResourceMetadata.Builder p_295962_, MetadataSectionSerializer<T> p_294347_) {
-        this.getSection(p_294347_).ifPresent(p_293816_ -> p_295962_.put(p_294347_, (T)p_293816_));
+    private <T> void copySection(ResourceMetadata.Builder builder, MetadataSectionSerializer<T> serializer) {
+        this.getSection(serializer).ifPresent(p_293816_ -> builder.put(serializer, (T)p_293816_));
     }
 
     public static class Builder {
         private final ImmutableMap.Builder<MetadataSectionSerializer<?>, Object> map = ImmutableMap.builder();
 
-        public <T> ResourceMetadata.Builder put(MetadataSectionSerializer<T> p_294292_, T p_294133_) {
-            this.map.put(p_294292_, p_294133_);
+        public <T> ResourceMetadata.Builder put(MetadataSectionSerializer<T> key, T value) {
+            this.map.put(key, value);
             return this;
         }
 

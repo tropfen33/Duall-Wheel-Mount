@@ -8,19 +8,19 @@ import net.minecraft.world.item.crafting.Recipe;
 public class SpecialRecipeBuilder {
     private final Function<CraftingBookCategory, Recipe<?>> factory;
 
-    public SpecialRecipeBuilder(Function<CraftingBookCategory, Recipe<?>> p_312708_) {
-        this.factory = p_312708_;
+    public SpecialRecipeBuilder(Function<CraftingBookCategory, Recipe<?>> factory) {
+        this.factory = factory;
     }
 
-    public static SpecialRecipeBuilder special(Function<CraftingBookCategory, Recipe<?>> p_312084_) {
-        return new SpecialRecipeBuilder(p_312084_);
+    public static SpecialRecipeBuilder special(Function<CraftingBookCategory, Recipe<?>> factory) {
+        return new SpecialRecipeBuilder(factory);
     }
 
-    public void save(RecipeOutput p_301307_, String p_126361_) {
-        this.save(p_301307_, ResourceLocation.parse(p_126361_));
+    public void save(RecipeOutput recipeOutput, String recipeId) {
+        this.save(recipeOutput, ResourceLocation.parse(recipeId));
     }
 
-    public void save(RecipeOutput p_301123_, ResourceLocation p_301214_) {
-        p_301123_.accept(p_301214_, this.factory.apply(CraftingBookCategory.MISC), null);
+    public void save(RecipeOutput recipeOutput, ResourceLocation recipeId) {
+        recipeOutput.accept(recipeId, this.factory.apply(CraftingBookCategory.MISC), null);
     }
 }

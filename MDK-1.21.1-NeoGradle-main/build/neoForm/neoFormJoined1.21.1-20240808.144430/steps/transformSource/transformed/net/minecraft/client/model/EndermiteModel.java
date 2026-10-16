@@ -19,17 +19,17 @@ public class EndermiteModel<T extends Entity> extends HierarchicalModel<T> {
     private final ModelPart root;
     private final ModelPart[] bodyParts;
 
-    public EndermiteModel(ModelPart p_170545_) {
-        this.root = p_170545_;
+    public EndermiteModel(ModelPart root) {
+        this.root = root;
         this.bodyParts = new ModelPart[4];
 
         for (int i = 0; i < 4; i++) {
-            this.bodyParts[i] = p_170545_.getChild(createSegmentName(i));
+            this.bodyParts[i] = root.getChild(createSegmentName(i));
         }
     }
 
-    private static String createSegmentName(int p_170548_) {
-        return "segment" + p_170548_;
+    private static String createSegmentName(int index) {
+        return "segment" + index;
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -65,11 +65,14 @@ public class EndermiteModel<T extends Entity> extends HierarchicalModel<T> {
         return this.root;
     }
 
+    /**
+     * Sets this entity's model rotation angles
+     */
     @Override
-    public void setupAnim(T p_102602_, float p_102603_, float p_102604_, float p_102605_, float p_102606_, float p_102607_) {
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         for (int i = 0; i < this.bodyParts.length; i++) {
-            this.bodyParts[i].yRot = Mth.cos(p_102605_ * 0.9F + (float)i * 0.15F * (float) Math.PI) * (float) Math.PI * 0.01F * (float)(1 + Math.abs(i - 2));
-            this.bodyParts[i].x = Mth.sin(p_102605_ * 0.9F + (float)i * 0.15F * (float) Math.PI) * (float) Math.PI * 0.1F * (float)Math.abs(i - 2);
+            this.bodyParts[i].yRot = Mth.cos(ageInTicks * 0.9F + (float)i * 0.15F * (float) Math.PI) * (float) Math.PI * 0.01F * (float)(1 + Math.abs(i - 2));
+            this.bodyParts[i].x = Mth.sin(ageInTicks * 0.9F + (float)i * 0.15F * (float) Math.PI) * (float) Math.PI * 0.1F * (float)Math.abs(i - 2);
         }
     }
 }

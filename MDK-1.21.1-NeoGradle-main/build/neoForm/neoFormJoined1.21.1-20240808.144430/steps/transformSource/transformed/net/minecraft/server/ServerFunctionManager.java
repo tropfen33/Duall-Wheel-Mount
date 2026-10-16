@@ -26,10 +26,10 @@ public class ServerFunctionManager {
     private boolean postReload;
     private ServerFunctionLibrary library;
 
-    public ServerFunctionManager(MinecraftServer p_136110_, ServerFunctionLibrary p_136111_) {
-        this.server = p_136110_;
-        this.library = p_136111_;
-        this.postReload(p_136111_);
+    public ServerFunctionManager(MinecraftServer server, ServerFunctionLibrary library) {
+        this.server = server;
+        this.library = library;
+        this.postReload(library);
     }
 
     public CommandDispatcher<CommandSourceStack> getDispatcher() {
@@ -48,40 +48,40 @@ public class ServerFunctionManager {
         }
     }
 
-    private void executeTagFunctions(Collection<CommandFunction<CommandSourceStack>> p_136116_, ResourceLocation p_136117_) {
-        this.server.getProfiler().push(p_136117_::toString);
+    private void executeTagFunctions(Collection<CommandFunction<CommandSourceStack>> functionObjects, ResourceLocation identifier) {
+        this.server.getProfiler().push(identifier::toString);
 
-        for (CommandFunction<CommandSourceStack> commandfunction : p_136116_) {
+        for (CommandFunction<CommandSourceStack> commandfunction : functionObjects) {
             this.execute(commandfunction, this.getGameLoopSender());
         }
 
         this.server.getProfiler().pop();
     }
 
-    public void execute(CommandFunction<CommandSourceStack> p_305881_, CommandSourceStack p_136114_) {
+    public void execute(CommandFunction<CommandSourceStack> function, CommandSourceStack source) {
         ProfilerFiller profilerfiller = this.server.getProfiler();
-        profilerfiller.push(() -> "function " + p_305881_.id());
+        profilerfiller.push(() -> "function " + function.id());
 
         try {
-            InstantiatedFunction<CommandSourceStack> instantiatedfunction = p_305881_.instantiate(null, this.getDispatcher());
+            InstantiatedFunction<CommandSourceStack> instantiatedfunction = function.instantiate(null, this.getDispatcher());
             Commands.executeCommandInContext(
-                p_136114_, p_309439_ -> ExecutionContext.queueInitialFunctionCall(p_309439_, instantiatedfunction, p_136114_, CommandResultCallback.EMPTY)
+                source, p_309439_ -> ExecutionContext.queueInitialFunctionCall(p_309439_, instantiatedfunction, source, CommandResultCallback.EMPTY)
             );
         } catch (FunctionInstantiationException functioninstantiationexception) {
         } catch (Exception exception) {
-            LOGGER.warn("Failed to execute function {}", p_305881_.id(), exception);
+            LOGGER.warn("Failed to execute function {}", function.id(), exception);
         } finally {
             profilerfiller.pop();
         }
     }
 
-    public void replaceLibrary(ServerFunctionLibrary p_136121_) {
-        this.library = p_136121_;
-        this.postReload(p_136121_);
+    public void replaceLibrary(ServerFunctionLibrary reloader) {
+        this.library = reloader;
+        this.postReload(reloader);
     }
 
-    private void postReload(ServerFunctionLibrary p_136126_) {
-        this.ticking = ImmutableList.copyOf(p_136126_.getTag(TICK_FUNCTION_TAG));
+    private void postReload(ServerFunctionLibrary reloader) {
+        this.ticking = ImmutableList.copyOf(reloader.getTag(TICK_FUNCTION_TAG));
         this.postReload = true;
     }
 
@@ -89,12 +89,12 @@ public class ServerFunctionManager {
         return this.server.createCommandSourceStack().withPermission(2).withSuppressedOutput();
     }
 
-    public Optional<CommandFunction<CommandSourceStack>> get(ResourceLocation p_136119_) {
-        return this.library.getFunction(p_136119_);
+    public Optional<CommandFunction<CommandSourceStack>> get(ResourceLocation functionIdentifier) {
+        return this.library.getFunction(functionIdentifier);
     }
 
-    public Collection<CommandFunction<CommandSourceStack>> getTag(ResourceLocation p_214332_) {
-        return this.library.getTag(p_214332_);
+    public Collection<CommandFunction<CommandSourceStack>> getTag(ResourceLocation functionTagIdentifier) {
+        return this.library.getTag(functionTagIdentifier);
     }
 
     public Iterable<ResourceLocation> getFunctionNames() {

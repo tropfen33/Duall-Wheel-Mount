@@ -35,17 +35,17 @@ public abstract class PipeBlock extends Block {
     }));
     protected final VoxelShape[] shapeByIndex;
 
-    public PipeBlock(float p_55159_, BlockBehaviour.Properties p_55160_) {
-        super(p_55160_);
-        this.shapeByIndex = this.makeShapes(p_55159_);
+    public PipeBlock(float apothem, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.shapeByIndex = this.makeShapes(apothem);
     }
 
     @Override
     protected abstract MapCodec<? extends PipeBlock> codec();
 
-    private VoxelShape[] makeShapes(float p_55162_) {
-        float f = 0.5F - p_55162_;
-        float f1 = 0.5F + p_55162_;
+    private VoxelShape[] makeShapes(float apothem) {
+        float f = 0.5F - apothem;
+        float f1 = 0.5F + apothem;
         VoxelShape voxelshape = Block.box(
             (double)(f * 16.0F), (double)(f * 16.0F), (double)(f * 16.0F), (double)(f1 * 16.0F), (double)(f1 * 16.0F), (double)(f1 * 16.0F)
         );
@@ -54,12 +54,12 @@ public abstract class PipeBlock extends Block {
         for (int i = 0; i < DIRECTIONS.length; i++) {
             Direction direction = DIRECTIONS[i];
             avoxelshape[i] = Shapes.box(
-                0.5 + Math.min((double)(-p_55162_), (double)direction.getStepX() * 0.5),
-                0.5 + Math.min((double)(-p_55162_), (double)direction.getStepY() * 0.5),
-                0.5 + Math.min((double)(-p_55162_), (double)direction.getStepZ() * 0.5),
-                0.5 + Math.max((double)p_55162_, (double)direction.getStepX() * 0.5),
-                0.5 + Math.max((double)p_55162_, (double)direction.getStepY() * 0.5),
-                0.5 + Math.max((double)p_55162_, (double)direction.getStepZ() * 0.5)
+                0.5 + Math.min((double)(-apothem), (double)direction.getStepX() * 0.5),
+                0.5 + Math.min((double)(-apothem), (double)direction.getStepY() * 0.5),
+                0.5 + Math.min((double)(-apothem), (double)direction.getStepZ() * 0.5),
+                0.5 + Math.max((double)apothem, (double)direction.getStepX() * 0.5),
+                0.5 + Math.max((double)apothem, (double)direction.getStepY() * 0.5),
+                0.5 + Math.max((double)apothem, (double)direction.getStepZ() * 0.5)
             );
         }
 
@@ -81,20 +81,20 @@ public abstract class PipeBlock extends Block {
     }
 
     @Override
-    protected boolean propagatesSkylightDown(BlockState p_55166_, BlockGetter p_55167_, BlockPos p_55168_) {
+    protected boolean propagatesSkylightDown(BlockState state, BlockGetter reader, BlockPos pos) {
         return false;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_55170_, BlockGetter p_55171_, BlockPos p_55172_, CollisionContext p_55173_) {
-        return this.shapeByIndex[this.getAABBIndex(p_55170_)];
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return this.shapeByIndex[this.getAABBIndex(state)];
     }
 
-    protected int getAABBIndex(BlockState p_55175_) {
+    protected int getAABBIndex(BlockState state) {
         int i = 0;
 
         for (int j = 0; j < DIRECTIONS.length; j++) {
-            if (p_55175_.getValue(PROPERTY_BY_DIRECTION.get(DIRECTIONS[j]))) {
+            if (state.getValue(PROPERTY_BY_DIRECTION.get(DIRECTIONS[j]))) {
                 i |= 1 << j;
             }
         }

@@ -1,5 +1,8 @@
 package net.minecraft.world;
 
 public interface ContainerListener {
-    void containerChanged(Container p_18983_);
+    /**
+     * Called by {@code InventoryBasic.onInventoryChanged()} on an array that is never filled.
+     */
+    void containerChanged(Container container);
 }

@@ -9,13 +9,13 @@ public class WaterAvoidingRandomStrollGoal extends RandomStrollGoal {
     public static final float PROBABILITY = 0.001F;
     protected final float probability;
 
-    public WaterAvoidingRandomStrollGoal(PathfinderMob p_25987_, double p_25988_) {
-        this(p_25987_, p_25988_, 0.001F);
+    public WaterAvoidingRandomStrollGoal(PathfinderMob mob, double speedModifier) {
+        this(mob, speedModifier, 0.001F);
     }
 
-    public WaterAvoidingRandomStrollGoal(PathfinderMob p_25990_, double p_25991_, float p_25992_) {
-        super(p_25990_, p_25991_);
-        this.probability = p_25992_;
+    public WaterAvoidingRandomStrollGoal(PathfinderMob mob, double speedModifier, float probability) {
+        super(mob, speedModifier);
+        this.probability = probability;
     }
 
     @Nullable

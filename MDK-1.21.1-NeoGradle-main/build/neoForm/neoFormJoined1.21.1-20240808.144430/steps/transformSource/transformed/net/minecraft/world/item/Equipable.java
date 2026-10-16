@@ -21,23 +21,23 @@ public interface Equipable {
         return SoundEvents.ARMOR_EQUIP_GENERIC;
     }
 
-    default InteractionResultHolder<ItemStack> swapWithEquipmentSlot(Item p_270453_, Level p_270395_, Player p_270300_, InteractionHand p_270262_) {
-        ItemStack itemstack = p_270300_.getItemInHand(p_270262_);
-        EquipmentSlot equipmentslot = p_270300_.getEquipmentSlotForItem(itemstack);
-        if (!p_270300_.canUseSlot(equipmentslot)) {
+    default InteractionResultHolder<ItemStack> swapWithEquipmentSlot(Item item, Level level, Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
+        EquipmentSlot equipmentslot = player.getEquipmentSlotForItem(itemstack);
+        if (!player.canUseSlot(equipmentslot)) {
             return InteractionResultHolder.pass(itemstack);
         } else {
-            ItemStack itemstack1 = p_270300_.getItemBySlot(equipmentslot);
-            if ((!EnchantmentHelper.has(itemstack1, EnchantmentEffectComponents.PREVENT_ARMOR_CHANGE) || p_270300_.isCreative())
+            ItemStack itemstack1 = player.getItemBySlot(equipmentslot);
+            if ((!EnchantmentHelper.has(itemstack1, EnchantmentEffectComponents.PREVENT_ARMOR_CHANGE) || player.isCreative())
                 && !ItemStack.matches(itemstack, itemstack1)) {
-                if (!p_270395_.isClientSide()) {
-                    p_270300_.awardStat(Stats.ITEM_USED.get(p_270453_));
+                if (!level.isClientSide()) {
+                    player.awardStat(Stats.ITEM_USED.get(item));
                 }
 
                 ItemStack itemstack2 = itemstack1.isEmpty() ? itemstack : itemstack1.copyAndClear();
-                ItemStack itemstack3 = p_270300_.isCreative() ? itemstack.copy() : itemstack.copyAndClear();
-                p_270300_.setItemSlot(equipmentslot, itemstack3);
-                return InteractionResultHolder.sidedSuccess(itemstack2, p_270395_.isClientSide());
+                ItemStack itemstack3 = player.isCreative() ? itemstack.copy() : itemstack.copyAndClear();
+                player.setItemSlot(equipmentslot, itemstack3);
+                return InteractionResultHolder.sidedSuccess(itemstack2, level.isClientSide());
             } else {
                 return InteractionResultHolder.fail(itemstack);
             }
@@ -45,12 +45,12 @@ public interface Equipable {
     }
 
     @Nullable
-    static Equipable get(ItemStack p_270317_) {
-        Item $$3 = p_270317_.getItem();
+    static Equipable get(ItemStack stack) {
+        Item $$3 = stack.getItem();
         if ($$3 instanceof Equipable) {
             return (Equipable)$$3;
         } else {
-            if (p_270317_.getItem() instanceof BlockItem blockitem) {
+            if (stack.getItem() instanceof BlockItem blockitem) {
                 Block block = blockitem.getBlock();
                 if (block instanceof Equipable) {
                     return (Equipable)block;

@@ -24,8 +24,8 @@ import org.slf4j.Logger;
 public class ParticleUnflatteningFix extends DataFix {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public ParticleUnflatteningFix(Schema p_340896_) {
-        super(p_340896_, true);
+    public ParticleUnflatteningFix(Schema outputSchema) {
+        super(outputSchema, true);
     }
 
     @Override
@@ -35,15 +35,15 @@ public class ParticleUnflatteningFix extends DataFix {
         return this.writeFixAndRead("ParticleUnflatteningFix", type, type1, this::fix);
     }
 
-    private <T> Dynamic<T> fix(Dynamic<T> p_341243_) {
-        Optional<String> optional = p_341243_.asString().result();
+    private <T> Dynamic<T> fix(Dynamic<T> tag) {
+        Optional<String> optional = tag.asString().result();
         if (optional.isEmpty()) {
-            return p_341243_;
+            return tag;
         } else {
             String s = optional.get();
             String[] astring = s.split(" ", 2);
             String s1 = NamespacedSchema.ensureNamespaced(astring[0]);
-            Dynamic<T> dynamic = p_341243_.createMap(Map.of(p_341243_.createString("type"), p_341243_.createString(s1)));
+            Dynamic<T> dynamic = tag.createMap(Map.of(tag.createString("type"), tag.createString(s1)));
 
             return switch (s1) {
                 case "minecraft:item" -> astring.length > 1 ? this.updateItem(dynamic, astring[1]) : dynamic;
@@ -60,52 +60,52 @@ public class ParticleUnflatteningFix extends DataFix {
         }
     }
 
-    private <T> Dynamic<T> updateItem(Dynamic<T> p_340826_, String p_340894_) {
-        int i = p_340894_.indexOf("{");
-        Dynamic<T> dynamic = p_340826_.createMap(Map.of(p_340826_.createString("Count"), p_340826_.createInt(1)));
+    private <T> Dynamic<T> updateItem(Dynamic<T> tag, String item) {
+        int i = item.indexOf("{");
+        Dynamic<T> dynamic = tag.createMap(Map.of(tag.createString("Count"), tag.createInt(1)));
         if (i == -1) {
-            dynamic = dynamic.set("id", p_340826_.createString(p_340894_));
+            dynamic = dynamic.set("id", tag.createString(item));
         } else {
-            dynamic = dynamic.set("id", p_340826_.createString(p_340894_.substring(0, i)));
-            CompoundTag compoundtag = parseTag(p_340894_.substring(i));
+            dynamic = dynamic.set("id", tag.createString(item.substring(0, i)));
+            CompoundTag compoundtag = parseTag(item.substring(i));
             if (compoundtag != null) {
-                dynamic = dynamic.set("tag", new Dynamic<>(NbtOps.INSTANCE, compoundtag).convert(p_340826_.getOps()));
+                dynamic = dynamic.set("tag", new Dynamic<>(NbtOps.INSTANCE, compoundtag).convert(tag.getOps()));
             }
         }
 
-        return p_340826_.set("item", dynamic);
+        return tag.set("item", dynamic);
     }
 
     @Nullable
-    private static CompoundTag parseTag(String p_341175_) {
+    private static CompoundTag parseTag(String tag) {
         try {
-            return TagParser.parseTag(p_341175_);
+            return TagParser.parseTag(tag);
         } catch (Exception exception) {
-            LOGGER.warn("Failed to parse tag: {}", p_341175_, exception);
+            LOGGER.warn("Failed to parse tag: {}", tag, exception);
             return null;
         }
     }
 
-    private <T> Dynamic<T> updateBlock(Dynamic<T> p_341247_, String p_341412_) {
-        int i = p_341412_.indexOf("[");
-        Dynamic<T> dynamic = p_341247_.emptyMap();
+    private <T> Dynamic<T> updateBlock(Dynamic<T> tag, String block) {
+        int i = block.indexOf("[");
+        Dynamic<T> dynamic = tag.emptyMap();
         if (i == -1) {
-            dynamic = dynamic.set("Name", p_341247_.createString(NamespacedSchema.ensureNamespaced(p_341412_)));
+            dynamic = dynamic.set("Name", tag.createString(NamespacedSchema.ensureNamespaced(block)));
         } else {
-            dynamic = dynamic.set("Name", p_341247_.createString(NamespacedSchema.ensureNamespaced(p_341412_.substring(0, i))));
-            Map<Dynamic<T>, Dynamic<T>> map = parseBlockProperties(p_341247_, p_341412_.substring(i));
+            dynamic = dynamic.set("Name", tag.createString(NamespacedSchema.ensureNamespaced(block.substring(0, i))));
+            Map<Dynamic<T>, Dynamic<T>> map = parseBlockProperties(tag, block.substring(i));
             if (!map.isEmpty()) {
-                dynamic = dynamic.set("Properties", p_341247_.createMap(map));
+                dynamic = dynamic.set("Properties", tag.createMap(map));
             }
         }
 
-        return p_341247_.set("block_state", dynamic);
+        return tag.set("block_state", dynamic);
     }
 
-    private static <T> Map<Dynamic<T>, Dynamic<T>> parseBlockProperties(Dynamic<T> p_341040_, String p_341381_) {
+    private static <T> Map<Dynamic<T>, Dynamic<T>> parseBlockProperties(Dynamic<T> tag, String properties) {
         try {
             Map<Dynamic<T>, Dynamic<T>> map = new HashMap<>();
-            StringReader stringreader = new StringReader(p_341381_);
+            StringReader stringreader = new StringReader(properties);
             stringreader.expect('[');
             stringreader.skipWhitespace();
 
@@ -117,7 +117,7 @@ public class ParticleUnflatteningFix extends DataFix {
                 stringreader.skipWhitespace();
                 String s1 = stringreader.readString();
                 stringreader.skipWhitespace();
-                map.put(p_341040_.createString(s), p_341040_.createString(s1));
+                map.put(tag.createString(s), tag.createString(s1));
                 if (stringreader.canRead()) {
                     if (stringreader.peek() != ',') {
                         break;
@@ -130,62 +130,62 @@ public class ParticleUnflatteningFix extends DataFix {
             stringreader.expect(']');
             return map;
         } catch (Exception exception) {
-            LOGGER.warn("Failed to parse block properties: {}", p_341381_, exception);
+            LOGGER.warn("Failed to parse block properties: {}", properties, exception);
             return Map.of();
         }
     }
 
-    private static <T> Dynamic<T> readVector(Dynamic<T> p_340849_, StringReader p_340969_) throws CommandSyntaxException {
-        float f = p_340969_.readFloat();
-        p_340969_.expect(' ');
-        float f1 = p_340969_.readFloat();
-        p_340969_.expect(' ');
-        float f2 = p_340969_.readFloat();
-        return p_340849_.createList(Stream.of(f, f1, f2).map(p_340849_::createFloat));
+    private static <T> Dynamic<T> readVector(Dynamic<T> tag, StringReader reader) throws CommandSyntaxException {
+        float f = reader.readFloat();
+        reader.expect(' ');
+        float f1 = reader.readFloat();
+        reader.expect(' ');
+        float f2 = reader.readFloat();
+        return tag.createList(Stream.of(f, f1, f2).map(tag::createFloat));
     }
 
-    private <T> Dynamic<T> updateDust(Dynamic<T> p_340805_, String p_340908_) {
+    private <T> Dynamic<T> updateDust(Dynamic<T> tag, String options) {
         try {
-            StringReader stringreader = new StringReader(p_340908_);
-            Dynamic<T> dynamic = readVector(p_340805_, stringreader);
+            StringReader stringreader = new StringReader(options);
+            Dynamic<T> dynamic = readVector(tag, stringreader);
             stringreader.expect(' ');
             float f = stringreader.readFloat();
-            return p_340805_.set("color", dynamic).set("scale", p_340805_.createFloat(f));
+            return tag.set("color", dynamic).set("scale", tag.createFloat(f));
         } catch (Exception exception) {
-            LOGGER.warn("Failed to parse particle options: {}", p_340908_, exception);
-            return p_340805_;
+            LOGGER.warn("Failed to parse particle options: {}", options, exception);
+            return tag;
         }
     }
 
-    private <T> Dynamic<T> updateDustTransition(Dynamic<T> p_341240_, String p_341296_) {
+    private <T> Dynamic<T> updateDustTransition(Dynamic<T> tag, String options) {
         try {
-            StringReader stringreader = new StringReader(p_341296_);
-            Dynamic<T> dynamic = readVector(p_341240_, stringreader);
+            StringReader stringreader = new StringReader(options);
+            Dynamic<T> dynamic = readVector(tag, stringreader);
             stringreader.expect(' ');
             float f = stringreader.readFloat();
             stringreader.expect(' ');
-            Dynamic<T> dynamic1 = readVector(p_341240_, stringreader);
-            return p_341240_.set("from_color", dynamic).set("to_color", dynamic1).set("scale", p_341240_.createFloat(f));
+            Dynamic<T> dynamic1 = readVector(tag, stringreader);
+            return tag.set("from_color", dynamic).set("to_color", dynamic1).set("scale", tag.createFloat(f));
         } catch (Exception exception) {
-            LOGGER.warn("Failed to parse particle options: {}", p_341296_, exception);
-            return p_341240_;
+            LOGGER.warn("Failed to parse particle options: {}", options, exception);
+            return tag;
         }
     }
 
-    private <T> Dynamic<T> updateSculkCharge(Dynamic<T> p_340987_, String p_340846_) {
+    private <T> Dynamic<T> updateSculkCharge(Dynamic<T> tag, String options) {
         try {
-            StringReader stringreader = new StringReader(p_340846_);
+            StringReader stringreader = new StringReader(options);
             float f = stringreader.readFloat();
-            return p_340987_.set("roll", p_340987_.createFloat(f));
+            return tag.set("roll", tag.createFloat(f));
         } catch (Exception exception) {
-            LOGGER.warn("Failed to parse particle options: {}", p_340846_, exception);
-            return p_340987_;
+            LOGGER.warn("Failed to parse particle options: {}", options, exception);
+            return tag;
         }
     }
 
-    private <T> Dynamic<T> updateVibration(Dynamic<T> p_340954_, String p_341325_) {
+    private <T> Dynamic<T> updateVibration(Dynamic<T> tag, String options) {
         try {
-            StringReader stringreader = new StringReader(p_341325_);
+            StringReader stringreader = new StringReader(options);
             float f = (float)stringreader.readDouble();
             stringreader.expect(' ');
             float f1 = (float)stringreader.readDouble();
@@ -193,25 +193,25 @@ public class ParticleUnflatteningFix extends DataFix {
             float f2 = (float)stringreader.readDouble();
             stringreader.expect(' ');
             int i = stringreader.readInt();
-            Dynamic<T> dynamic = (Dynamic<T>)p_340954_.createIntList(IntStream.of(Mth.floor(f), Mth.floor(f1), Mth.floor(f2)));
-            Dynamic<T> dynamic1 = p_340954_.createMap(
-                Map.of(p_340954_.createString("type"), p_340954_.createString("minecraft:block"), p_340954_.createString("pos"), dynamic)
+            Dynamic<T> dynamic = (Dynamic<T>)tag.createIntList(IntStream.of(Mth.floor(f), Mth.floor(f1), Mth.floor(f2)));
+            Dynamic<T> dynamic1 = tag.createMap(
+                Map.of(tag.createString("type"), tag.createString("minecraft:block"), tag.createString("pos"), dynamic)
             );
-            return p_340954_.set("destination", dynamic1).set("arrival_in_ticks", p_340954_.createInt(i));
+            return tag.set("destination", dynamic1).set("arrival_in_ticks", tag.createInt(i));
         } catch (Exception exception) {
-            LOGGER.warn("Failed to parse particle options: {}", p_341325_, exception);
-            return p_340954_;
+            LOGGER.warn("Failed to parse particle options: {}", options, exception);
+            return tag;
         }
     }
 
-    private <T> Dynamic<T> updateShriek(Dynamic<T> p_340938_, String p_341343_) {
+    private <T> Dynamic<T> updateShriek(Dynamic<T> tag, String options) {
         try {
-            StringReader stringreader = new StringReader(p_341343_);
+            StringReader stringreader = new StringReader(options);
             int i = stringreader.readInt();
-            return p_340938_.set("delay", p_340938_.createInt(i));
+            return tag.set("delay", tag.createInt(i));
         } catch (Exception exception) {
-            LOGGER.warn("Failed to parse particle options: {}", p_341343_, exception);
-            return p_340938_;
+            LOGGER.warn("Failed to parse particle options: {}", options, exception);
+            return tag;
         }
     }
 }

@@ -9,7 +9,7 @@ import net.minecraft.world.entity.ai.behavior.declarative.MemoryAccessor;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 
 public class StopAdmiringIfTiredOfTryingToReachItem {
-    public static BehaviorControl<LivingEntity> create(int p_259110_, int p_259200_) {
+    public static BehaviorControl<LivingEntity> create(int maxTimeToReachItem, int disableDuration) {
         return BehaviorBuilder.create(
             p_260320_ -> p_260320_.group(
                         p_260320_.present(MemoryModuleType.ADMIRING_ITEM),
@@ -26,10 +26,10 @@ public class StopAdmiringIfTiredOfTryingToReachItem {
                                     p_259388_.set(0);
                                 } else {
                                     int i = optional.get();
-                                    if (i > p_259110_) {
+                                    if (i > maxTimeToReachItem) {
                                         p_260184_.erase();
                                         p_259388_.erase();
-                                        p_259580_.setWithExpiry(true, (long)p_259200_);
+                                        p_259580_.setWithExpiry(true, (long)disableDuration);
                                     } else {
                                         p_259388_.set(i + 1);
                                     }

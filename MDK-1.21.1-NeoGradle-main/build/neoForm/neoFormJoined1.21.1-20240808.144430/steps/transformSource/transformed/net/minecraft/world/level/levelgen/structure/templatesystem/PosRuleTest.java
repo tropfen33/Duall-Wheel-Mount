@@ -10,7 +10,7 @@ public abstract class PosRuleTest {
         .byNameCodec()
         .dispatch("predicate_type", PosRuleTest::getType, PosRuleTestType::codec);
 
-    public abstract boolean test(BlockPos p_230305_, BlockPos p_230306_, BlockPos p_230307_, RandomSource p_230308_);
+    public abstract boolean test(BlockPos localPos, BlockPos relativePos, BlockPos structurePos, RandomSource random);
 
     protected abstract PosRuleTestType<?> getType();
 }

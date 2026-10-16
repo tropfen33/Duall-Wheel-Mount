@@ -10,30 +10,30 @@ import net.minecraft.world.level.chunk.DataLayer;
 import net.minecraft.world.level.chunk.LightChunkGetter;
 
 public class SkyLightSectionStorage extends LayerLightSectionStorage<SkyLightSectionStorage.SkyDataLayerStorageMap> {
-    protected SkyLightSectionStorage(LightChunkGetter p_75868_) {
+    protected SkyLightSectionStorage(LightChunkGetter chunkSource) {
         super(
             LightLayer.SKY,
-            p_75868_,
+            chunkSource,
             new SkyLightSectionStorage.SkyDataLayerStorageMap(new Long2ObjectOpenHashMap<>(), new Long2IntOpenHashMap(), Integer.MAX_VALUE)
         );
     }
 
     @Override
-    protected int getLightValue(long p_75880_) {
-        return this.getLightValue(p_75880_, false);
+    protected int getLightValue(long levelPos) {
+        return this.getLightValue(levelPos, false);
     }
 
-    protected int getLightValue(long p_164458_, boolean p_164459_) {
-        long i = SectionPos.blockToSection(p_164458_);
+    protected int getLightValue(long packedPos, boolean updateAll) {
+        long i = SectionPos.blockToSection(packedPos);
         int j = SectionPos.y(i);
-        SkyLightSectionStorage.SkyDataLayerStorageMap skylightsectionstorage$skydatalayerstoragemap = p_164459_
+        SkyLightSectionStorage.SkyDataLayerStorageMap skylightsectionstorage$skydatalayerstoragemap = updateAll
             ? this.updatingSectionData
             : this.visibleSectionData;
         int k = skylightsectionstorage$skydatalayerstoragemap.topSections.get(SectionPos.getZeroNode(i));
         if (k != skylightsectionstorage$skydatalayerstoragemap.currentLowestY && j < k) {
             DataLayer datalayer = this.getDataLayer(skylightsectionstorage$skydatalayerstoragemap, i);
             if (datalayer == null) {
-                for (p_164458_ = BlockPos.getFlatIndex(p_164458_);
+                for (packedPos = BlockPos.getFlatIndex(packedPos);
                     datalayer == null;
                     datalayer = this.getDataLayer(skylightsectionstorage$skydatalayerstoragemap, i)
                 ) {
@@ -46,24 +46,24 @@ public class SkyLightSectionStorage extends LayerLightSectionStorage<SkyLightSec
             }
 
             return datalayer.get(
-                SectionPos.sectionRelative(BlockPos.getX(p_164458_)),
-                SectionPos.sectionRelative(BlockPos.getY(p_164458_)),
-                SectionPos.sectionRelative(BlockPos.getZ(p_164458_))
+                SectionPos.sectionRelative(BlockPos.getX(packedPos)),
+                SectionPos.sectionRelative(BlockPos.getY(packedPos)),
+                SectionPos.sectionRelative(BlockPos.getZ(packedPos))
             );
         } else {
-            return p_164459_ && !this.lightOnInSection(i) ? 0 : 15;
+            return updateAll && !this.lightOnInSection(i) ? 0 : 15;
         }
     }
 
     @Override
-    protected void onNodeAdded(long p_75885_) {
-        int i = SectionPos.y(p_75885_);
+    protected void onNodeAdded(long sectionPos) {
+        int i = SectionPos.y(sectionPos);
         if (this.updatingSectionData.currentLowestY > i) {
             this.updatingSectionData.currentLowestY = i;
             this.updatingSectionData.topSections.defaultReturnValue(this.updatingSectionData.currentLowestY);
         }
 
-        long j = SectionPos.getZeroNode(p_75885_);
+        long j = SectionPos.getZeroNode(sectionPos);
         int k = this.updatingSectionData.topSections.get(j);
         if (k < i + 1) {
             this.updatingSectionData.topSections.put(j, i + 1);
@@ -71,12 +71,12 @@ public class SkyLightSectionStorage extends LayerLightSectionStorage<SkyLightSec
     }
 
     @Override
-    protected void onNodeRemoved(long p_75887_) {
-        long i = SectionPos.getZeroNode(p_75887_);
-        int j = SectionPos.y(p_75887_);
+    protected void onNodeRemoved(long sectionPos) {
+        long i = SectionPos.getZeroNode(sectionPos);
+        int j = SectionPos.y(sectionPos);
         if (this.updatingSectionData.topSections.get(i) == j + 1) {
             long k;
-            for (k = p_75887_; !this.storingLightForSection(k) && this.hasLightDataAtOrBelow(j); k = SectionPos.offset(k, Direction.DOWN)) {
+            for (k = sectionPos; !this.storingLightForSection(k) && this.hasLightDataAtOrBelow(j); k = SectionPos.offset(k, Direction.DOWN)) {
                 j--;
             }
 
@@ -89,14 +89,14 @@ public class SkyLightSectionStorage extends LayerLightSectionStorage<SkyLightSec
     }
 
     @Override
-    protected DataLayer createDataLayer(long p_75883_) {
-        DataLayer datalayer = this.queuedSections.get(p_75883_);
+    protected DataLayer createDataLayer(long sectionPos) {
+        DataLayer datalayer = this.queuedSections.get(sectionPos);
         if (datalayer != null) {
             return datalayer;
         } else {
-            int i = this.updatingSectionData.topSections.get(SectionPos.getZeroNode(p_75883_));
-            if (i != this.updatingSectionData.currentLowestY && SectionPos.y(p_75883_) < i) {
-                long j = SectionPos.offset(p_75883_, Direction.UP);
+            int i = this.updatingSectionData.topSections.get(SectionPos.getZeroNode(sectionPos));
+            if (i != this.updatingSectionData.currentLowestY && SectionPos.y(sectionPos) < i) {
+                long j = SectionPos.offset(sectionPos, Direction.UP);
 
                 DataLayer datalayer1;
                 while ((datalayer1 = this.getDataLayer(j, true)) == null) {
@@ -105,16 +105,16 @@ public class SkyLightSectionStorage extends LayerLightSectionStorage<SkyLightSec
 
                 return repeatFirstLayer(datalayer1);
             } else {
-                return this.lightOnInSection(p_75883_) ? new DataLayer(15) : new DataLayer();
+                return this.lightOnInSection(sectionPos) ? new DataLayer(15) : new DataLayer();
             }
         }
     }
 
-    private static DataLayer repeatFirstLayer(DataLayer p_182513_) {
-        if (p_182513_.isDefinitelyHomogenous()) {
-            return p_182513_.copy();
+    private static DataLayer repeatFirstLayer(DataLayer dataLayer) {
+        if (dataLayer.isDefinitelyHomogenous()) {
+            return dataLayer.copy();
         } else {
-            byte[] abyte = p_182513_.getData();
+            byte[] abyte = dataLayer.getData();
             byte[] abyte1 = new byte[2048];
 
             for (int i = 0; i < 16; i++) {
@@ -125,18 +125,18 @@ public class SkyLightSectionStorage extends LayerLightSectionStorage<SkyLightSec
         }
     }
 
-    protected boolean hasLightDataAtOrBelow(int p_278270_) {
-        return p_278270_ >= this.updatingSectionData.currentLowestY;
+    protected boolean hasLightDataAtOrBelow(int y) {
+        return y >= this.updatingSectionData.currentLowestY;
     }
 
-    protected boolean isAboveData(long p_75891_) {
-        long i = SectionPos.getZeroNode(p_75891_);
+    protected boolean isAboveData(long sectionPos) {
+        long i = SectionPos.getZeroNode(sectionPos);
         int j = this.updatingSectionData.topSections.get(i);
-        return j == this.updatingSectionData.currentLowestY || SectionPos.y(p_75891_) >= j;
+        return j == this.updatingSectionData.currentLowestY || SectionPos.y(sectionPos) >= j;
     }
 
-    protected int getTopSectionY(long p_285094_) {
-        return this.updatingSectionData.topSections.get(p_285094_);
+    protected int getTopSectionY(long sectionPos) {
+        return this.updatingSectionData.topSections.get(sectionPos);
     }
 
     protected int getBottomSectionY() {
@@ -147,11 +147,11 @@ public class SkyLightSectionStorage extends LayerLightSectionStorage<SkyLightSec
         int currentLowestY;
         final Long2IntOpenHashMap topSections;
 
-        public SkyDataLayerStorageMap(Long2ObjectOpenHashMap<DataLayer> p_75903_, Long2IntOpenHashMap p_75904_, int p_75905_) {
-            super(p_75903_);
-            this.topSections = p_75904_;
-            p_75904_.defaultReturnValue(p_75905_);
-            this.currentLowestY = p_75905_;
+        public SkyDataLayerStorageMap(Long2ObjectOpenHashMap<DataLayer> map, Long2IntOpenHashMap topSections, int currentLowestY) {
+            super(map);
+            this.topSections = topSections;
+            topSections.defaultReturnValue(currentLowestY);
+            this.currentLowestY = currentLowestY;
         }
 
         public SkyLightSectionStorage.SkyDataLayerStorageMap copy() {

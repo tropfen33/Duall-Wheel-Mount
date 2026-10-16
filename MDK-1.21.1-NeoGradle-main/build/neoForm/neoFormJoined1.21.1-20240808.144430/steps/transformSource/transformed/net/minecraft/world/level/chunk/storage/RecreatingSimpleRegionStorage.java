@@ -15,22 +15,22 @@ public class RecreatingSimpleRegionStorage extends SimpleRegionStorage {
     private final Path writeFolder;
 
     public RecreatingSimpleRegionStorage(
-        RegionStorageInfo p_326344_,
-        Path p_321669_,
-        RegionStorageInfo p_326265_,
-        Path p_321677_,
-        DataFixer p_321544_,
-        boolean p_321823_,
-        DataFixTypes p_321736_
+        RegionStorageInfo info,
+        Path folder,
+        RegionStorageInfo writeInfo,
+        Path writeFolder,
+        DataFixer fixerUpper,
+        boolean sync,
+        DataFixTypes dataFixType
     ) {
-        super(p_326344_, p_321669_, p_321544_, p_321823_, p_321736_);
-        this.writeFolder = p_321677_;
-        this.writeWorker = new IOWorker(p_326265_, p_321677_, p_321823_);
+        super(info, folder, fixerUpper, sync, dataFixType);
+        this.writeFolder = writeFolder;
+        this.writeWorker = new IOWorker(writeInfo, writeFolder, sync);
     }
 
     @Override
-    public CompletableFuture<Void> write(ChunkPos p_321592_, @Nullable CompoundTag p_321676_) {
-        return this.writeWorker.store(p_321592_, p_321676_);
+    public CompletableFuture<Void> write(ChunkPos chunkPos, @Nullable CompoundTag data) {
+        return this.writeWorker.store(chunkPos, data);
     }
 
     @Override

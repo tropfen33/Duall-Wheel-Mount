@@ -16,17 +16,17 @@ public class BlockParticleOption implements ParticleOptions {
     private final ParticleType<BlockParticleOption> type;
     private final BlockState state;
 
-    public static MapCodec<BlockParticleOption> codec(ParticleType<BlockParticleOption> p_123635_) {
-        return BLOCK_STATE_CODEC.xmap(p_123638_ -> new BlockParticleOption(p_123635_, p_123638_), p_123633_ -> p_123633_.state).fieldOf("block_state");
+    public static MapCodec<BlockParticleOption> codec(ParticleType<BlockParticleOption> particleType) {
+        return BLOCK_STATE_CODEC.xmap(p_123638_ -> new BlockParticleOption(particleType, p_123638_), p_123633_ -> p_123633_.state).fieldOf("block_state");
     }
 
-    public static StreamCodec<? super RegistryFriendlyByteBuf, BlockParticleOption> streamCodec(ParticleType<BlockParticleOption> p_320740_) {
-        return ByteBufCodecs.idMapper(Block.BLOCK_STATE_REGISTRY).map(p_319424_ -> new BlockParticleOption(p_320740_, p_319424_), p_319425_ -> p_319425_.state);
+    public static StreamCodec<? super RegistryFriendlyByteBuf, BlockParticleOption> streamCodec(ParticleType<BlockParticleOption> particleType) {
+        return ByteBufCodecs.idMapper(Block.BLOCK_STATE_REGISTRY).map(p_319424_ -> new BlockParticleOption(particleType, p_319424_), p_319425_ -> p_319425_.state);
     }
 
-    public BlockParticleOption(ParticleType<BlockParticleOption> p_123629_, BlockState p_123630_) {
-        this.type = p_123629_;
-        this.state = p_123630_;
+    public BlockParticleOption(ParticleType<BlockParticleOption> type, BlockState state) {
+        this.type = type;
+        this.state = state;
     }
 
     @Override

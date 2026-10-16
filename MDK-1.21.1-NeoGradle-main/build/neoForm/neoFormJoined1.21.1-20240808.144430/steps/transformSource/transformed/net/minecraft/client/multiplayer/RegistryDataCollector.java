@@ -23,35 +23,35 @@ public class RegistryDataCollector {
     @Nullable
     private TagCollector tagCollector;
 
-    public void appendContents(ResourceKey<? extends Registry<?>> p_321794_, List<RegistrySynchronization.PackedRegistryEntry> p_321772_) {
+    public void appendContents(ResourceKey<? extends Registry<?>> registryKey, List<RegistrySynchronization.PackedRegistryEntry> registryEntries) {
         if (this.contentsCollector == null) {
             this.contentsCollector = new RegistryDataCollector.ContentsCollector();
         }
 
-        this.contentsCollector.append(p_321794_, p_321772_);
+        this.contentsCollector.append(registryKey, registryEntries);
     }
 
-    public void appendTags(Map<ResourceKey<? extends Registry<?>>, TagNetworkSerialization.NetworkPayload> p_321771_) {
+    public void appendTags(Map<ResourceKey<? extends Registry<?>>, TagNetworkSerialization.NetworkPayload> tags) {
         if (this.tagCollector == null) {
             this.tagCollector = new TagCollector();
         }
 
-        p_321771_.forEach(this.tagCollector::append);
+        tags.forEach(this.tagCollector::append);
     }
 
-    public RegistryAccess.Frozen collectGameRegistries(ResourceProvider p_326319_, RegistryAccess p_321556_, boolean p_321683_) {
+    public RegistryAccess.Frozen collectGameRegistries(ResourceProvider resourceProvider, RegistryAccess registryAccess, boolean isMemoryConnection) {
         LayeredRegistryAccess<ClientRegistryLayer> layeredregistryaccess = ClientRegistryLayer.createRegistryAccess();
         RegistryAccess registryaccess;
         if (this.contentsCollector != null) {
             RegistryAccess.Frozen registryaccess$frozen = layeredregistryaccess.getAccessForLoading(ClientRegistryLayer.REMOTE);
-            RegistryAccess.Frozen registryaccess$frozen1 = this.contentsCollector.loadRegistries(p_326319_, registryaccess$frozen).freeze();
+            RegistryAccess.Frozen registryaccess$frozen1 = this.contentsCollector.loadRegistries(resourceProvider, registryaccess$frozen).freeze();
             registryaccess = layeredregistryaccess.replaceFrom(ClientRegistryLayer.REMOTE, registryaccess$frozen1).compositeAccess();
         } else {
-            registryaccess = p_321556_;
+            registryaccess = registryAccess;
         }
 
         if (this.tagCollector != null) {
-            this.tagCollector.updateTags(registryaccess, p_321683_);
+            this.tagCollector.updateTags(registryaccess, isMemoryConnection);
         }
 
         return registryaccess.freeze();
@@ -61,12 +61,12 @@ public class RegistryDataCollector {
     static class ContentsCollector {
         private final Map<ResourceKey<? extends Registry<?>>, List<RegistrySynchronization.PackedRegistryEntry>> elements = new HashMap<>();
 
-        public void append(ResourceKey<? extends Registry<?>> p_321577_, List<RegistrySynchronization.PackedRegistryEntry> p_321551_) {
-            this.elements.computeIfAbsent(p_321577_, p_321745_ -> new ArrayList<>()).addAll(p_321551_);
+        public void append(ResourceKey<? extends Registry<?>> registryKey, List<RegistrySynchronization.PackedRegistryEntry> entries) {
+            this.elements.computeIfAbsent(registryKey, p_321745_ -> new ArrayList<>()).addAll(entries);
         }
 
-        public RegistryAccess loadRegistries(ResourceProvider p_326039_, RegistryAccess p_321627_) {
-            return RegistryDataLoader.load(this.elements, p_326039_, p_321627_, RegistryDataLoader.SYNCHRONIZED_REGISTRIES);
+        public RegistryAccess loadRegistries(ResourceProvider resourceProvider, RegistryAccess registryAccess) {
+            return RegistryDataLoader.load(this.elements, resourceProvider, registryAccess, RegistryDataLoader.SYNCHRONIZED_REGISTRIES);
         }
     }
 }

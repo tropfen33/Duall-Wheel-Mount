@@ -8,10 +8,10 @@ public class FlyingMoveControl extends MoveControl {
     private final int maxTurn;
     private final boolean hoversInPlace;
 
-    public FlyingMoveControl(Mob p_24893_, int p_24894_, boolean p_24895_) {
-        super(p_24893_);
-        this.maxTurn = p_24894_;
-        this.hoversInPlace = p_24895_;
+    public FlyingMoveControl(Mob mob, int maxTurn, boolean hoversInPlace) {
+        super(mob);
+        this.maxTurn = maxTurn;
+        this.hoversInPlace = hoversInPlace;
     }
 
     @Override

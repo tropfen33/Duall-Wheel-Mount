@@ -38,12 +38,12 @@ public record ItemLore(List<Component> lines, List<Component> styledLines) imple
         }
     }
 
-    public ItemLore withLineAdded(Component p_330547_) {
-        return new ItemLore(Util.copyAndAdd(this.lines, p_330547_));
+    public ItemLore withLineAdded(Component lines) {
+        return new ItemLore(Util.copyAndAdd(this.lines, lines));
     }
 
     @Override
-    public void addToTooltip(Item.TooltipContext p_341353_, Consumer<Component> p_332116_, TooltipFlag p_330800_) {
-        this.styledLines.forEach(p_332116_);
+    public void addToTooltip(Item.TooltipContext context, Consumer<Component> tooltipAdder, TooltipFlag tooltipFlag) {
+        this.styledLines.forEach(tooltipAdder);
     }
 }

@@ -15,8 +15,8 @@ public class Eula {
     private final Path file;
     private final boolean agreed;
 
-    public Eula(Path p_135943_) {
-        this.file = p_135943_;
+    public Eula(Path file) {
+        this.file = file;
         this.agreed = SharedConstants.IS_RUNNING_IN_IDE || net.neoforged.neoforge.gametest.GameTestHooks.isGametestServer() || this.readFile(); // Forge: Automatically agree to EULA for gametest servers to aid CI
     }
 

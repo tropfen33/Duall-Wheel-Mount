@@ -11,12 +11,12 @@ public class CountConfiguration implements FeatureConfiguration {
         .codec();
     private final IntProvider count;
 
-    public CountConfiguration(int p_67572_) {
-        this.count = ConstantInt.of(p_67572_);
+    public CountConfiguration(int count) {
+        this.count = ConstantInt.of(count);
     }
 
-    public CountConfiguration(IntProvider p_160724_) {
-        this.count = p_160724_;
+    public CountConfiguration(IntProvider count) {
+        this.count = count;
     }
 
     public IntProvider count() {

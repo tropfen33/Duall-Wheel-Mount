@@ -13,19 +13,22 @@ public class ClientboundChangeDifficultyPacket implements Packet<ClientGamePacke
     private final Difficulty difficulty;
     private final boolean locked;
 
-    public ClientboundChangeDifficultyPacket(Difficulty p_131809_, boolean p_131810_) {
-        this.difficulty = p_131809_;
-        this.locked = p_131810_;
+    public ClientboundChangeDifficultyPacket(Difficulty difficulty, boolean locked) {
+        this.difficulty = difficulty;
+        this.locked = locked;
     }
 
-    private ClientboundChangeDifficultyPacket(FriendlyByteBuf p_178774_) {
-        this.difficulty = Difficulty.byId(p_178774_.readUnsignedByte());
-        this.locked = p_178774_.readBoolean();
+    private ClientboundChangeDifficultyPacket(FriendlyByteBuf buffer) {
+        this.difficulty = Difficulty.byId(buffer.readUnsignedByte());
+        this.locked = buffer.readBoolean();
     }
 
-    private void write(FriendlyByteBuf p_131819_) {
-        p_131819_.writeByte(this.difficulty.getId());
-        p_131819_.writeBoolean(this.locked);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeByte(this.difficulty.getId());
+        buffer.writeBoolean(this.locked);
     }
 
     @Override
@@ -33,8 +36,11 @@ public class ClientboundChangeDifficultyPacket implements Packet<ClientGamePacke
         return GamePacketTypes.CLIENTBOUND_CHANGE_DIFFICULTY;
     }
 
-    public void handle(ClientGamePacketListener p_131816_) {
-        p_131816_.handleChangeDifficulty(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleChangeDifficulty(this);
     }
 
     public boolean isLocked() {

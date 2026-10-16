@@ -10,16 +10,16 @@ import net.minecraft.world.item.component.WrittenBookContent;
 import net.minecraft.world.level.Level;
 
 public class BookCloningRecipe extends CustomRecipe {
-    public BookCloningRecipe(CraftingBookCategory p_251090_) {
-        super(p_251090_);
+    public BookCloningRecipe(CraftingBookCategory category) {
+        super(category);
     }
 
-    public boolean matches(CraftingInput p_345586_, Level p_43815_) {
+    public boolean matches(CraftingInput input, Level level) {
         int i = 0;
         ItemStack itemstack = ItemStack.EMPTY;
 
-        for (int j = 0; j < p_345586_.size(); j++) {
-            ItemStack itemstack1 = p_345586_.getItem(j);
+        for (int j = 0; j < input.size(); j++) {
+            ItemStack itemstack1 = input.getItem(j);
             if (!itemstack1.isEmpty()) {
                 if (itemstack1.is(Items.WRITTEN_BOOK)) {
                     if (!itemstack.isEmpty()) {
@@ -40,12 +40,12 @@ public class BookCloningRecipe extends CustomRecipe {
         return !itemstack.isEmpty() && i > 0;
     }
 
-    public ItemStack assemble(CraftingInput p_345803_, HolderLookup.Provider p_335702_) {
+    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
         int i = 0;
         ItemStack itemstack = ItemStack.EMPTY;
 
-        for (int j = 0; j < p_345803_.size(); j++) {
-            ItemStack itemstack1 = p_345803_.getItem(j);
+        for (int j = 0; j < input.size(); j++) {
+            ItemStack itemstack1 = input.getItem(j);
             if (!itemstack1.isEmpty()) {
                 if (itemstack1.is(Items.WRITTEN_BOOK)) {
                     if (!itemstack.isEmpty()) {
@@ -78,11 +78,11 @@ public class BookCloningRecipe extends CustomRecipe {
         }
     }
 
-    public NonNullList<ItemStack> getRemainingItems(CraftingInput p_344763_) {
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(p_344763_.size(), ItemStack.EMPTY);
+    public NonNullList<ItemStack> getRemainingItems(CraftingInput input) {
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(input.size(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); i++) {
-            ItemStack itemstack = p_344763_.getItem(i);
+            ItemStack itemstack = input.getItem(i);
             if (itemstack.hasCraftingRemainingItem()) {
                 nonnulllist.set(i, itemstack.getCraftingRemainingItem());
             } else if (itemstack.getItem() instanceof WrittenBookItem) {
@@ -99,8 +99,11 @@ public class BookCloningRecipe extends CustomRecipe {
         return RecipeSerializer.BOOK_CLONING;
     }
 
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
     @Override
-    public boolean canCraftInDimensions(int p_43804_, int p_43805_) {
-        return p_43804_ >= 3 && p_43805_ >= 3;
+    public boolean canCraftInDimensions(int width, int height) {
+        return width >= 3 && height >= 3;
     }
 }

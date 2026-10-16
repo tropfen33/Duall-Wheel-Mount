@@ -41,20 +41,20 @@ public class ItemProperties {
         );
     private static final Map<Item, Map<ResourceLocation, ItemPropertyFunction>> PROPERTIES = Maps.newHashMap();
 
-    private static ClampedItemPropertyFunction registerGeneric(ResourceLocation p_174582_, ClampedItemPropertyFunction p_174583_) {
-        return (ClampedItemPropertyFunction) registerGeneric(p_174582_, (ItemPropertyFunction) p_174583_);
+    private static ClampedItemPropertyFunction registerGeneric(ResourceLocation name, ClampedItemPropertyFunction property) {
+        return (ClampedItemPropertyFunction) registerGeneric(name, (ItemPropertyFunction) property);
     }
     public static ItemPropertyFunction registerGeneric(ResourceLocation p_174582_, ItemPropertyFunction p_174583_) {
         GENERIC_PROPERTIES.put(p_174582_, p_174583_);
         return p_174583_;
     }
 
-    private static void registerCustomModelData(ItemPropertyFunction p_174580_) {
-        GENERIC_PROPERTIES.put(ResourceLocation.withDefaultNamespace("custom_model_data"), p_174580_);
+    private static void registerCustomModelData(ItemPropertyFunction property) {
+        GENERIC_PROPERTIES.put(ResourceLocation.withDefaultNamespace("custom_model_data"), property);
     }
 
-    private static void register(Item p_174571_, ResourceLocation p_174572_, ClampedItemPropertyFunction p_174573_) {
-        register(p_174571_, p_174572_, (ItemPropertyFunction) p_174573_);
+    private static void register(Item item, ResourceLocation name, ClampedItemPropertyFunction property) {
+        register(item, name, (ItemPropertyFunction) property);
     }
 
     public static void register(Item p_174571_, ResourceLocation p_174572_, ItemPropertyFunction p_174573_) {
@@ -62,23 +62,23 @@ public class ItemProperties {
     }
 
     @Nullable
-    public static ItemPropertyFunction getProperty(ItemStack p_336078_, ResourceLocation p_117831_) {
-        if (p_336078_.getMaxDamage() > 0) {
-            if (DAMAGE.equals(p_117831_)) {
+    public static ItemPropertyFunction getProperty(ItemStack stack, ResourceLocation location) {
+        if (stack.getMaxDamage() > 0) {
+            if (DAMAGE.equals(location)) {
                 return PROPERTY_DAMAGE;
             }
 
-            if (DAMAGED.equals(p_117831_)) {
+            if (DAMAGED.equals(location)) {
                 return PROPERTY_DAMAGED;
             }
         }
 
-        ItemPropertyFunction itempropertyfunction = GENERIC_PROPERTIES.get(p_117831_);
+        ItemPropertyFunction itempropertyfunction = GENERIC_PROPERTIES.get(location);
         if (itempropertyfunction != null) {
             return itempropertyfunction;
         } else {
-            Map<ResourceLocation, ItemPropertyFunction> map = PROPERTIES.get(p_336078_.getItem());
-            return map == null ? null : map.get(p_117831_);
+            Map<ResourceLocation, ItemPropertyFunction> map = PROPERTIES.get(stack.getItem());
+            return map == null ? null : map.get(location);
         }
     }
 
@@ -131,35 +131,35 @@ public class ItemProperties {
             private long lastUpdateTick;
 
             @Override
-            public float unclampedCall(ItemStack p_174665_, @Nullable ClientLevel p_174666_, @Nullable LivingEntity p_174667_, int p_174668_) {
-                Entity entity = (Entity)(p_174667_ != null ? p_174667_ : p_174665_.getEntityRepresentation());
+            public float unclampedCall(ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity p_entity, int seed) {
+                Entity entity = (Entity)(p_entity != null ? p_entity : stack.getEntityRepresentation());
                 if (entity == null) {
                     return 0.0F;
                 } else {
-                    if (p_174666_ == null && entity.level() instanceof ClientLevel) {
-                        p_174666_ = (ClientLevel)entity.level();
+                    if (level == null && entity.level() instanceof ClientLevel) {
+                        level = (ClientLevel)entity.level();
                     }
 
-                    if (p_174666_ == null) {
+                    if (level == null) {
                         return 0.0F;
                     } else {
                         double d0;
-                        if (p_174666_.dimensionType().natural()) {
-                            d0 = (double)p_174666_.getTimeOfDay(1.0F);
+                        if (level.dimensionType().natural()) {
+                            d0 = (double)level.getTimeOfDay(1.0F);
                         } else {
                             d0 = Math.random();
                         }
 
-                        d0 = this.wobble(p_174666_, d0);
+                        d0 = this.wobble(level, d0);
                         return (float)d0;
                     }
                 }
             }
 
-            private double wobble(Level p_117904_, double p_117905_) {
-                if (p_117904_.getGameTime() != this.lastUpdateTick) {
-                    this.lastUpdateTick = p_117904_.getGameTime();
-                    double d0 = p_117905_ - this.rotation;
+            private double wobble(Level level, double rotation) {
+                if (level.getGameTime() != this.lastUpdateTick) {
+                    this.lastUpdateTick = level.getGameTime();
+                    double d0 = rotation - this.rotation;
                     d0 = Mth.positiveModulo(d0 + 0.5, 1.0) - 0.5;
                     this.rota += d0 * 0.1;
                     this.rota *= 0.9;

@@ -33,15 +33,15 @@ public class DefaultPlayerSkin {
         return DEFAULT_SKINS[6].texture();
     }
 
-    public static PlayerSkin get(UUID p_294401_) {
-        return DEFAULT_SKINS[Math.floorMod(p_294401_.hashCode(), DEFAULT_SKINS.length)];
+    public static PlayerSkin get(UUID uuid) {
+        return DEFAULT_SKINS[Math.floorMod(uuid.hashCode(), DEFAULT_SKINS.length)];
     }
 
-    public static PlayerSkin get(GameProfile p_296012_) {
-        return get(p_296012_.getId());
+    public static PlayerSkin get(GameProfile profile) {
+        return get(profile.getId());
     }
 
-    private static PlayerSkin create(String p_295448_, PlayerSkin.Model p_294197_) {
-        return new PlayerSkin(ResourceLocation.withDefaultNamespace(p_295448_), null, null, null, p_294197_, true);
+    private static PlayerSkin create(String path, PlayerSkin.Model skinModel) {
+        return new PlayerSkin(ResourceLocation.withDefaultNamespace(path), null, null, null, skinModel, true);
     }
 }

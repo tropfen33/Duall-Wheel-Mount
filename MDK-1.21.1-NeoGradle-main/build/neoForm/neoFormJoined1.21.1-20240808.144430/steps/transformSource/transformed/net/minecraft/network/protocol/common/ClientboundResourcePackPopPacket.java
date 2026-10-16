@@ -17,8 +17,8 @@ public record ClientboundResourcePackPopPacket(Optional<UUID> id) implements Pac
         this(p_314659_.readOptional(UUIDUtil.STREAM_CODEC));
     }
 
-    private void write(FriendlyByteBuf p_314564_) {
-        p_314564_.writeOptional(this.id, UUIDUtil.STREAM_CODEC);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeOptional(this.id, UUIDUtil.STREAM_CODEC);
     }
 
     @Override
@@ -26,7 +26,10 @@ public record ClientboundResourcePackPopPacket(Optional<UUID> id) implements Pac
         return CommonPacketTypes.CLIENTBOUND_RESOURCE_PACK_POP;
     }
 
-    public void handle(ClientCommonPacketListener p_314440_) {
-        p_314440_.handleResourcePackPop(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientCommonPacketListener handler) {
+        handler.handleResourcePackPop(this);
     }
 }

@@ -34,14 +34,14 @@ public class LadderBlock extends Block implements SimpleWaterloggedBlock {
         return CODEC;
     }
 
-    public LadderBlock(BlockBehaviour.Properties p_54345_) {
-        super(p_54345_);
+    public LadderBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(WATERLOGGED, Boolean.valueOf(false)));
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_54372_, BlockGetter p_54373_, BlockPos p_54374_, CollisionContext p_54375_) {
-        switch ((Direction)p_54372_.getValue(FACING)) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        switch ((Direction)state.getValue(FACING)) {
             case NORTH:
                 return NORTH_AABB;
             case SOUTH:
@@ -54,46 +54,51 @@ public class LadderBlock extends Block implements SimpleWaterloggedBlock {
         }
     }
 
-    private boolean canAttachTo(BlockGetter p_54349_, BlockPos p_54350_, Direction p_54351_) {
-        BlockState blockstate = p_54349_.getBlockState(p_54350_);
-        return blockstate.isFaceSturdy(p_54349_, p_54350_, p_54351_);
+    private boolean canAttachTo(BlockGetter blockReader, BlockPos pos, Direction direction) {
+        BlockState blockstate = blockReader.getBlockState(pos);
+        return blockstate.isFaceSturdy(blockReader, pos, direction);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_54353_, LevelReader p_54354_, BlockPos p_54355_) {
-        Direction direction = p_54353_.getValue(FACING);
-        return this.canAttachTo(p_54354_, p_54355_.relative(direction.getOpposite()), direction);
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        Direction direction = state.getValue(FACING);
+        return this.canAttachTo(level, pos.relative(direction.getOpposite()), direction);
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_54363_, Direction p_54364_, BlockState p_54365_, LevelAccessor p_54366_, BlockPos p_54367_, BlockPos p_54368_) {
-        if (p_54364_.getOpposite() == p_54363_.getValue(FACING) && !p_54363_.canSurvive(p_54366_, p_54367_)) {
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (facing.getOpposite() == state.getValue(FACING) && !state.canSurvive(level, currentPos)) {
             return Blocks.AIR.defaultBlockState();
         } else {
-            if (p_54363_.getValue(WATERLOGGED)) {
-                p_54366_.scheduleTick(p_54367_, Fluids.WATER, Fluids.WATER.getTickDelay(p_54366_));
+            if (state.getValue(WATERLOGGED)) {
+                level.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
             }
 
-            return super.updateShape(p_54363_, p_54364_, p_54365_, p_54366_, p_54367_, p_54368_);
+            return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
         }
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_54347_) {
-        if (!p_54347_.replacingClickedOnBlock()) {
-            BlockState blockstate = p_54347_.getLevel().getBlockState(p_54347_.getClickedPos().relative(p_54347_.getClickedFace().getOpposite()));
-            if (blockstate.is(this) && blockstate.getValue(FACING) == p_54347_.getClickedFace()) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        if (!context.replacingClickedOnBlock()) {
+            BlockState blockstate = context.getLevel().getBlockState(context.getClickedPos().relative(context.getClickedFace().getOpposite()));
+            if (blockstate.is(this) && blockstate.getValue(FACING) == context.getClickedFace()) {
                 return null;
             }
         }
 
         BlockState blockstate1 = this.defaultBlockState();
-        LevelReader levelreader = p_54347_.getLevel();
-        BlockPos blockpos = p_54347_.getClickedPos();
-        FluidState fluidstate = p_54347_.getLevel().getFluidState(p_54347_.getClickedPos());
+        LevelReader levelreader = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
 
-        for (Direction direction : p_54347_.getNearestLookingDirections()) {
+        for (Direction direction : context.getNearestLookingDirections()) {
             if (direction.getAxis().isHorizontal()) {
                 blockstate1 = blockstate1.setValue(FACING, direction.getOpposite());
                 if (blockstate1.canSurvive(levelreader, blockpos)) {
@@ -105,23 +110,29 @@ public class LadderBlock extends Block implements SimpleWaterloggedBlock {
         return null;
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_54360_, Rotation p_54361_) {
-        return p_54360_.setValue(FACING, p_54361_.rotate(p_54360_.getValue(FACING)));
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState mirror(BlockState p_54357_, Mirror p_54358_) {
-        return p_54357_.rotate(p_54358_.getRotation(p_54357_.getValue(FACING)));
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, WATERLOGGED);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_54370_) {
-        p_54370_.add(FACING, WATERLOGGED);
-    }
-
-    @Override
-    protected FluidState getFluidState(BlockState p_54377_) {
-        return p_54377_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_54377_);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 }

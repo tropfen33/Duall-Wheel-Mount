@@ -24,8 +24,8 @@ public class DragonStrafePlayerPhase extends AbstractDragonPhaseInstance {
     private LivingEntity attackTarget;
     private boolean holdingPatternClockwise;
 
-    public DragonStrafePlayerPhase(EnderDragon p_31357_) {
-        super(p_31357_);
+    public DragonStrafePlayerPhase(EnderDragon dragon) {
+        super(dragon);
     }
 
     @Override
@@ -157,8 +157,8 @@ public class DragonStrafePlayerPhase extends AbstractDragonPhaseInstance {
         this.attackTarget = null;
     }
 
-    public void setTarget(LivingEntity p_31359_) {
-        this.attackTarget = p_31359_;
+    public void setTarget(LivingEntity attackTarget) {
+        this.attackTarget = attackTarget;
         int i = this.dragon.findClosestNode();
         int j = this.dragon.findClosestNode(this.attackTarget.getX(), this.attackTarget.getY(), this.attackTarget.getZ());
         int k = this.attackTarget.getBlockX();

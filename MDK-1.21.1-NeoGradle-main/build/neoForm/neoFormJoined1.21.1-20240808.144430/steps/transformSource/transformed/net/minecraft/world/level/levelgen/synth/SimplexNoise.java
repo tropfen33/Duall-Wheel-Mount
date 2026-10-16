@@ -3,6 +3,9 @@ package net.minecraft.world.level.levelgen.synth;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 
+/**
+ * A generator for a single octave of Simplex noise.
+ */
 public class SimplexNoise {
     protected static final int[][] GRADIENT = new int[][]{
         {1, 1, 0},
@@ -25,15 +28,21 @@ public class SimplexNoise {
     private static final double SQRT_3 = Math.sqrt(3.0);
     private static final double F2 = 0.5 * (SQRT_3 - 1.0);
     private static final double G2 = (3.0 - SQRT_3) / 6.0;
+    /**
+     * A permutation array used in noise generation.
+     * This is populated with the values [0, 256) and shuffled. Despite the array declared as 512 length, only the first 256 values are used.
+     *
+     * @see #p(int)
+     */
     private final int[] p = new int[512];
     public final double xo;
     public final double yo;
     public final double zo;
 
-    public SimplexNoise(RandomSource p_230549_) {
-        this.xo = p_230549_.nextDouble() * 256.0;
-        this.yo = p_230549_.nextDouble() * 256.0;
-        this.zo = p_230549_.nextDouble() * 256.0;
+    public SimplexNoise(RandomSource random) {
+        this.xo = random.nextDouble() * 256.0;
+        this.yo = random.nextDouble() * 256.0;
+        this.zo = random.nextDouble() * 256.0;
         int i = 0;
 
         while (i < 256) {
@@ -41,43 +50,46 @@ public class SimplexNoise {
         }
 
         for (int l = 0; l < 256; l++) {
-            int j = p_230549_.nextInt(256 - l);
+            int j = random.nextInt(256 - l);
             int k = this.p[l];
             this.p[l] = this.p[j + l];
             this.p[j + l] = k;
         }
     }
 
-    private int p(int p_75472_) {
-        return this.p[p_75472_ & 0xFF];
+    private int p(int index) {
+        return this.p[index & 0xFF];
     }
 
-    protected static double dot(int[] p_75480_, double p_75481_, double p_75482_, double p_75483_) {
-        return (double)p_75480_[0] * p_75481_ + (double)p_75480_[1] * p_75482_ + (double)p_75480_[2] * p_75483_;
+    /**
+     * @return The dot product of the provided three-dimensional gradient vector and the vector (x, y, z)
+     */
+    protected static double dot(int[] gradient, double x, double y, double z) {
+        return (double)gradient[0] * x + (double)gradient[1] * y + (double)gradient[2] * z;
     }
 
-    private double getCornerNoise3D(int p_75474_, double p_75475_, double p_75476_, double p_75477_, double p_75478_) {
-        double d1 = p_75478_ - p_75475_ * p_75475_ - p_75476_ * p_75476_ - p_75477_ * p_75477_;
+    private double getCornerNoise3D(int gradientIndex, double x, double y, double z, double offset) {
+        double d1 = offset - x * x - y * y - z * z;
         double d0;
         if (d1 < 0.0) {
             d0 = 0.0;
         } else {
             d1 *= d1;
-            d0 = d1 * d1 * dot(GRADIENT[p_75474_], p_75475_, p_75476_, p_75477_);
+            d0 = d1 * d1 * dot(GRADIENT[gradientIndex], x, y, z);
         }
 
         return d0;
     }
 
-    public double getValue(double p_75465_, double p_75466_) {
-        double d0 = (p_75465_ + p_75466_) * F2;
-        int i = Mth.floor(p_75465_ + d0);
-        int j = Mth.floor(p_75466_ + d0);
+    public double getValue(double x, double y) {
+        double d0 = (x + y) * F2;
+        int i = Mth.floor(x + d0);
+        int j = Mth.floor(y + d0);
         double d1 = (double)(i + j) * G2;
         double d2 = (double)i - d1;
         double d3 = (double)j - d1;
-        double d4 = p_75465_ - d2;
-        double d5 = p_75466_ - d3;
+        double d4 = x - d2;
+        double d5 = y - d3;
         int k;
         int l;
         if (d4 > d5) {
@@ -103,20 +115,20 @@ public class SimplexNoise {
         return 70.0 * (d10 + d11 + d12);
     }
 
-    public double getValue(double p_75468_, double p_75469_, double p_75470_) {
+    public double getValue(double x, double y, double z) {
         double d0 = 0.3333333333333333;
-        double d1 = (p_75468_ + p_75469_ + p_75470_) * 0.3333333333333333;
-        int i = Mth.floor(p_75468_ + d1);
-        int j = Mth.floor(p_75469_ + d1);
-        int k = Mth.floor(p_75470_ + d1);
+        double d1 = (x + y + z) * 0.3333333333333333;
+        int i = Mth.floor(x + d1);
+        int j = Mth.floor(y + d1);
+        int k = Mth.floor(z + d1);
         double d2 = 0.16666666666666666;
         double d3 = (double)(i + j + k) * 0.16666666666666666;
         double d4 = (double)i - d3;
         double d5 = (double)j - d3;
         double d6 = (double)k - d3;
-        double d7 = p_75468_ - d4;
-        double d8 = p_75469_ - d5;
-        double d9 = p_75470_ - d6;
+        double d7 = x - d4;
+        double d8 = y - d5;
+        double d9 = z - d6;
         int l;
         int i1;
         int j1;

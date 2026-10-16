@@ -14,26 +14,29 @@ public class ServerboundPlayerCommandPacket implements Packet<ServerGamePacketLi
     private final ServerboundPlayerCommandPacket.Action action;
     private final int data;
 
-    public ServerboundPlayerCommandPacket(Entity p_134306_, ServerboundPlayerCommandPacket.Action p_134307_) {
-        this(p_134306_, p_134307_, 0);
+    public ServerboundPlayerCommandPacket(Entity entity, ServerboundPlayerCommandPacket.Action action) {
+        this(entity, action, 0);
     }
 
-    public ServerboundPlayerCommandPacket(Entity p_134309_, ServerboundPlayerCommandPacket.Action p_134310_, int p_134311_) {
-        this.id = p_134309_.getId();
-        this.action = p_134310_;
-        this.data = p_134311_;
+    public ServerboundPlayerCommandPacket(Entity entity, ServerboundPlayerCommandPacket.Action action, int data) {
+        this.id = entity.getId();
+        this.action = action;
+        this.data = data;
     }
 
-    private ServerboundPlayerCommandPacket(FriendlyByteBuf p_179714_) {
-        this.id = p_179714_.readVarInt();
-        this.action = p_179714_.readEnum(ServerboundPlayerCommandPacket.Action.class);
-        this.data = p_179714_.readVarInt();
+    private ServerboundPlayerCommandPacket(FriendlyByteBuf buffer) {
+        this.id = buffer.readVarInt();
+        this.action = buffer.readEnum(ServerboundPlayerCommandPacket.Action.class);
+        this.data = buffer.readVarInt();
     }
 
-    private void write(FriendlyByteBuf p_134319_) {
-        p_134319_.writeVarInt(this.id);
-        p_134319_.writeEnum(this.action);
-        p_134319_.writeVarInt(this.data);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.id);
+        buffer.writeEnum(this.action);
+        buffer.writeVarInt(this.data);
     }
 
     @Override
@@ -41,8 +44,11 @@ public class ServerboundPlayerCommandPacket implements Packet<ServerGamePacketLi
         return GamePacketTypes.SERVERBOUND_PLAYER_COMMAND;
     }
 
-    public void handle(ServerGamePacketListener p_134317_) {
-        p_134317_.handlePlayerCommand(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handlePlayerCommand(this);
     }
 
     public int getId() {

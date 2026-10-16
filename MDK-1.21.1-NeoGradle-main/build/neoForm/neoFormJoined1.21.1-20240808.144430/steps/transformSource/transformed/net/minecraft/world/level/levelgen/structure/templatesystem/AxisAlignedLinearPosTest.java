@@ -26,26 +26,26 @@ public class AxisAlignedLinearPosTest extends PosRuleTest {
     private final int maxDist;
     private final Direction.Axis axis;
 
-    public AxisAlignedLinearPosTest(float p_73970_, float p_73971_, int p_73972_, int p_73973_, Direction.Axis p_73974_) {
-        if (p_73972_ >= p_73973_) {
-            throw new IllegalArgumentException("Invalid range: [" + p_73972_ + "," + p_73973_ + "]");
+    public AxisAlignedLinearPosTest(float minChance, float maxChance, int minDist, int maxDist, Direction.Axis axis) {
+        if (minDist >= maxDist) {
+            throw new IllegalArgumentException("Invalid range: [" + minDist + "," + maxDist + "]");
         } else {
-            this.minChance = p_73970_;
-            this.maxChance = p_73971_;
-            this.minDist = p_73972_;
-            this.maxDist = p_73973_;
-            this.axis = p_73974_;
+            this.minChance = minChance;
+            this.maxChance = maxChance;
+            this.minDist = minDist;
+            this.maxDist = maxDist;
+            this.axis = axis;
         }
     }
 
     @Override
-    public boolean test(BlockPos p_230251_, BlockPos p_230252_, BlockPos p_230253_, RandomSource p_230254_) {
+    public boolean test(BlockPos localPos, BlockPos relativePos, BlockPos structurePos, RandomSource random) {
         Direction direction = Direction.get(Direction.AxisDirection.POSITIVE, this.axis);
-        float f = (float)Math.abs((p_230252_.getX() - p_230253_.getX()) * direction.getStepX());
-        float f1 = (float)Math.abs((p_230252_.getY() - p_230253_.getY()) * direction.getStepY());
-        float f2 = (float)Math.abs((p_230252_.getZ() - p_230253_.getZ()) * direction.getStepZ());
+        float f = (float)Math.abs((relativePos.getX() - structurePos.getX()) * direction.getStepX());
+        float f1 = (float)Math.abs((relativePos.getY() - structurePos.getY()) * direction.getStepY());
+        float f2 = (float)Math.abs((relativePos.getZ() - structurePos.getZ()) * direction.getStepZ());
         int i = (int)(f + f1 + f2);
-        float f3 = p_230254_.nextFloat();
+        float f3 = random.nextFloat();
         return f3 <= Mth.clampedLerp(this.minChance, this.maxChance, Mth.inverseLerp((float)i, (float)this.minDist, (float)this.maxDist));
     }
 

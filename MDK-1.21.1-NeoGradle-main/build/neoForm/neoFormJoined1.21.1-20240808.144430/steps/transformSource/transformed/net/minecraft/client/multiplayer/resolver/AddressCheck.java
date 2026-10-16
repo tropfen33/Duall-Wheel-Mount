@@ -11,9 +11,9 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface AddressCheck {
-    boolean isAllowed(ResolvedServerAddress p_171829_);
+    boolean isAllowed(ResolvedServerAddress resolvedServerAddress);
 
-    boolean isAllowed(ServerAddress p_171830_);
+    boolean isAllowed(ServerAddress serverAddress);
 
     static AddressCheck createFromService() {
         final ImmutableList<Predicate<String>> immutablelist = Streams.stream(ServiceLoader.load(BlockListSupplier.class, net.neoforged.fml.loading.FMLLoader.class.getClassLoader()))
@@ -22,15 +22,15 @@ public interface AddressCheck {
             .collect(ImmutableList.toImmutableList());
         return new AddressCheck() {
             @Override
-            public boolean isAllowed(ResolvedServerAddress p_171835_) {
-                String s = p_171835_.getHostName();
-                String s1 = p_171835_.getHostIp();
+            public boolean isAllowed(ResolvedServerAddress resolvedServerAddress) {
+                String s = resolvedServerAddress.getHostName();
+                String s1 = resolvedServerAddress.getHostIp();
                 return immutablelist.stream().noneMatch(p_171841_ -> p_171841_.test(s) || p_171841_.test(s1));
             }
 
             @Override
-            public boolean isAllowed(ServerAddress p_171837_) {
-                String s = p_171837_.getHost();
+            public boolean isAllowed(ServerAddress serverAddress) {
+                String s = serverAddress.getHost();
                 return immutablelist.stream().noneMatch(p_171844_ -> p_171844_.test(s));
             }
         };

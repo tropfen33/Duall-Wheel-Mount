@@ -26,15 +26,15 @@ public class EndCrystal extends Entity {
     private static final EntityDataAccessor<Boolean> DATA_SHOW_BOTTOM = SynchedEntityData.defineId(EndCrystal.class, EntityDataSerializers.BOOLEAN);
     public int time;
 
-    public EndCrystal(EntityType<? extends EndCrystal> p_31037_, Level p_31038_) {
-        super(p_31037_, p_31038_);
+    public EndCrystal(EntityType<? extends EndCrystal> entityType, Level level) {
+        super(entityType, level);
         this.blocksBuilding = true;
         this.time = this.random.nextInt(100000);
     }
 
-    public EndCrystal(Level p_31040_, double p_31041_, double p_31042_, double p_31043_) {
-        this(EntityType.END_CRYSTAL, p_31040_);
-        this.setPos(p_31041_, p_31042_, p_31043_);
+    public EndCrystal(Level level, double x, double y, double z) {
+        this(EntityType.END_CRYSTAL, level);
+        this.setPos(x, y, z);
     }
 
     @Override
@@ -43,9 +43,9 @@ public class EndCrystal extends Entity {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_325991_) {
-        p_325991_.define(DATA_BEAM_TARGET, Optional.empty());
-        p_325991_.define(DATA_SHOW_BOTTOM, true);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_BEAM_TARGET, Optional.empty());
+        builder.define(DATA_SHOW_BOTTOM, true);
     }
 
     @Override
@@ -62,19 +62,22 @@ public class EndCrystal extends Entity {
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_31062_) {
+    protected void addAdditionalSaveData(CompoundTag compound) {
         if (this.getBeamTarget() != null) {
-            p_31062_.put("beam_target", NbtUtils.writeBlockPos(this.getBeamTarget()));
+            compound.put("beam_target", NbtUtils.writeBlockPos(this.getBeamTarget()));
         }
 
-        p_31062_.putBoolean("ShowBottom", this.showsBottom());
+        compound.putBoolean("ShowBottom", this.showsBottom());
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_31055_) {
-        NbtUtils.readBlockPos(p_31055_, "beam_target").ifPresent(this::setBeamTarget);
-        if (p_31055_.contains("ShowBottom", 1)) {
-            this.setShowBottom(p_31055_.getBoolean("ShowBottom"));
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        NbtUtils.readBlockPos(compound, "beam_target").ifPresent(this::setBeamTarget);
+        if (compound.contains("ShowBottom", 1)) {
+            this.setShowBottom(compound.getBoolean("ShowBottom"));
         }
     }
 
@@ -83,21 +86,24 @@ public class EndCrystal extends Entity {
         return true;
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_31050_, float p_31051_) {
-        if (this.isInvulnerableTo(p_31050_)) {
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isInvulnerableTo(source)) {
             return false;
-        } else if (p_31050_.getEntity() instanceof EnderDragon) {
+        } else if (source.getEntity() instanceof EnderDragon) {
             return false;
         } else {
             if (!this.isRemoved() && !this.level().isClientSide) {
                 this.remove(Entity.RemovalReason.KILLED);
-                if (!p_31050_.is(DamageTypeTags.IS_EXPLOSION)) {
-                    DamageSource damagesource = p_31050_.getEntity() != null ? this.damageSources().explosion(this, p_31050_.getEntity()) : null;
+                if (!source.is(DamageTypeTags.IS_EXPLOSION)) {
+                    DamageSource damagesource = source.getEntity() != null ? this.damageSources().explosion(this, source.getEntity()) : null;
                     this.level().explode(this, damagesource, null, this.getX(), this.getY(), this.getZ(), 6.0F, false, Level.ExplosionInteraction.BLOCK);
                 }
 
-                this.onDestroyedBy(p_31050_);
+                this.onDestroyedBy(source);
             }
 
             return true;
@@ -110,17 +116,17 @@ public class EndCrystal extends Entity {
         super.kill();
     }
 
-    private void onDestroyedBy(DamageSource p_31048_) {
+    private void onDestroyedBy(DamageSource source) {
         if (this.level() instanceof ServerLevel) {
             EndDragonFight enddragonfight = ((ServerLevel)this.level()).getDragonFight();
             if (enddragonfight != null) {
-                enddragonfight.onCrystalDestroyed(this, p_31048_);
+                enddragonfight.onCrystalDestroyed(this, source);
             }
         }
     }
 
-    public void setBeamTarget(@Nullable BlockPos p_31053_) {
-        this.getEntityData().set(DATA_BEAM_TARGET, Optional.ofNullable(p_31053_));
+    public void setBeamTarget(@Nullable BlockPos beamTarget) {
+        this.getEntityData().set(DATA_BEAM_TARGET, Optional.ofNullable(beamTarget));
     }
 
     @Nullable
@@ -128,17 +134,20 @@ public class EndCrystal extends Entity {
         return this.getEntityData().get(DATA_BEAM_TARGET).orElse(null);
     }
 
-    public void setShowBottom(boolean p_31057_) {
-        this.getEntityData().set(DATA_SHOW_BOTTOM, p_31057_);
+    public void setShowBottom(boolean showBottom) {
+        this.getEntityData().set(DATA_SHOW_BOTTOM, showBottom);
     }
 
     public boolean showsBottom() {
         return this.getEntityData().get(DATA_SHOW_BOTTOM);
     }
 
+    /**
+     * Checks if the entity is in range to render.
+     */
     @Override
-    public boolean shouldRenderAtSqrDistance(double p_31046_) {
-        return super.shouldRenderAtSqrDistance(p_31046_) || this.getBeamTarget() != null;
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return super.shouldRenderAtSqrDistance(distance) || this.getBeamTarget() != null;
     }
 
     @Override

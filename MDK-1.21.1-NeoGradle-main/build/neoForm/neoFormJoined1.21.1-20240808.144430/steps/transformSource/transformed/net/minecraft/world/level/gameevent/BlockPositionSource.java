@@ -19,12 +19,12 @@ public class BlockPositionSource implements PositionSource {
     );
     private final BlockPos pos;
 
-    public BlockPositionSource(BlockPos p_157703_) {
-        this.pos = p_157703_;
+    public BlockPositionSource(BlockPos pos) {
+        this.pos = pos;
     }
 
     @Override
-    public Optional<Vec3> getPosition(Level p_157708_) {
+    public Optional<Vec3> getPosition(Level level) {
         return Optional.of(Vec3.atCenterOf(this.pos));
     }
 

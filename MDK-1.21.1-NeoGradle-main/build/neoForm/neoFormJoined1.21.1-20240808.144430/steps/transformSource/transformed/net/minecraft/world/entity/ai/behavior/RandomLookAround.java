@@ -16,24 +16,24 @@ public class RandomLookAround extends Behavior<Mob> {
     private final float minPitch;
     private final float pitchRange;
 
-    public RandomLookAround(IntProvider p_248963_, float p_251826_, float p_251456_, float p_249962_) {
+    public RandomLookAround(IntProvider interval, float maxYaw, float minPitch, float maxPitch) {
         super(ImmutableMap.of(MemoryModuleType.LOOK_TARGET, MemoryStatus.VALUE_ABSENT, MemoryModuleType.GAZE_COOLDOWN_TICKS, MemoryStatus.VALUE_ABSENT));
-        if (p_251456_ > p_249962_) {
-            throw new IllegalArgumentException("Minimum pitch is larger than maximum pitch! " + p_251456_ + " > " + p_249962_);
+        if (minPitch > maxPitch) {
+            throw new IllegalArgumentException("Minimum pitch is larger than maximum pitch! " + minPitch + " > " + maxPitch);
         } else {
-            this.interval = p_248963_;
-            this.maxYaw = p_251826_;
-            this.minPitch = p_251456_;
-            this.pitchRange = p_249962_ - p_251456_;
+            this.interval = interval;
+            this.maxYaw = maxYaw;
+            this.minPitch = minPitch;
+            this.pitchRange = maxPitch - minPitch;
         }
     }
 
-    protected void start(ServerLevel p_250941_, Mob p_248765_, long p_251801_) {
-        RandomSource randomsource = p_248765_.getRandom();
+    protected void start(ServerLevel level, Mob entity, long gameTime) {
+        RandomSource randomsource = entity.getRandom();
         float f = Mth.clamp(randomsource.nextFloat() * this.pitchRange + this.minPitch, -90.0F, 90.0F);
-        float f1 = Mth.wrapDegrees(p_248765_.getYRot() + 2.0F * randomsource.nextFloat() * this.maxYaw - this.maxYaw);
+        float f1 = Mth.wrapDegrees(entity.getYRot() + 2.0F * randomsource.nextFloat() * this.maxYaw - this.maxYaw);
         Vec3 vec3 = Vec3.directionFromRotation(f, f1);
-        p_248765_.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosTracker(p_248765_.getEyePosition().add(vec3)));
-        p_248765_.getBrain().setMemory(MemoryModuleType.GAZE_COOLDOWN_TICKS, this.interval.sample(randomsource));
+        entity.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosTracker(entity.getEyePosition().add(vec3)));
+        entity.getBrain().setMemory(MemoryModuleType.GAZE_COOLDOWN_TICKS, this.interval.sample(randomsource));
     }
 }

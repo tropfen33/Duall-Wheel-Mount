@@ -12,16 +12,16 @@ import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
 
 public class AncientCityStructurePools {
-    public static void bootstrap(BootstrapContext<StructureTemplatePool> p_321621_) {
-        HolderGetter<PlacedFeature> holdergetter = p_321621_.lookup(Registries.PLACED_FEATURE);
+    public static void bootstrap(BootstrapContext<StructureTemplatePool> context) {
+        HolderGetter<PlacedFeature> holdergetter = context.lookup(Registries.PLACED_FEATURE);
         Holder<PlacedFeature> holder = holdergetter.getOrThrow(CavePlacements.SCULK_PATCH_ANCIENT_CITY);
-        HolderGetter<StructureProcessorList> holdergetter1 = p_321621_.lookup(Registries.PROCESSOR_LIST);
+        HolderGetter<StructureProcessorList> holdergetter1 = context.lookup(Registries.PROCESSOR_LIST);
         Holder<StructureProcessorList> holder1 = holdergetter1.getOrThrow(ProcessorLists.ANCIENT_CITY_GENERIC_DEGRADATION);
         Holder<StructureProcessorList> holder2 = holdergetter1.getOrThrow(ProcessorLists.ANCIENT_CITY_WALLS_DEGRADATION);
-        HolderGetter<StructureTemplatePool> holdergetter2 = p_321621_.lookup(Registries.TEMPLATE_POOL);
+        HolderGetter<StructureTemplatePool> holdergetter2 = context.lookup(Registries.TEMPLATE_POOL);
         Holder<StructureTemplatePool> holder3 = holdergetter2.getOrThrow(Pools.EMPTY);
         Pools.register(
-            p_321621_,
+            context,
             "ancient_city/structures",
             new StructureTemplatePool(
                 holder3,
@@ -60,7 +60,7 @@ public class AncientCityStructurePools {
             )
         );
         Pools.register(
-            p_321621_,
+            context,
             "ancient_city/sculk",
             new StructureTemplatePool(
                 holder3,
@@ -69,7 +69,7 @@ public class AncientCityStructurePools {
             )
         );
         Pools.register(
-            p_321621_,
+            context,
             "ancient_city/walls",
             new StructureTemplatePool(
                 holder3,
@@ -95,7 +95,7 @@ public class AncientCityStructurePools {
             )
         );
         Pools.register(
-            p_321621_,
+            context,
             "ancient_city/walls/no_corners",
             new StructureTemplatePool(
                 holder3,
@@ -113,7 +113,7 @@ public class AncientCityStructurePools {
             )
         );
         Pools.register(
-            p_321621_,
+            context,
             "ancient_city/city_center/walls",
             new StructureTemplatePool(
                 holder3,
@@ -133,7 +133,7 @@ public class AncientCityStructurePools {
             )
         );
         Pools.register(
-            p_321621_,
+            context,
             "ancient_city/city/entrance",
             new StructureTemplatePool(
                 holder3,

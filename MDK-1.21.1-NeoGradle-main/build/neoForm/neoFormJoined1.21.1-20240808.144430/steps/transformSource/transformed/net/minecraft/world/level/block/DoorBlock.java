@@ -59,9 +59,9 @@ public class DoorBlock extends Block {
         return CODEC;
     }
 
-    public DoorBlock(BlockSetType p_272854_, BlockBehaviour.Properties p_273303_) {
-        super(p_273303_.sound(p_272854_.soundType()));
-        this.type = p_272854_;
+    public DoorBlock(BlockSetType type, BlockBehaviour.Properties properties) {
+        super(properties.sound(type.soundType()));
+        this.type = type;
         this.registerDefaultState(
             this.stateDefinition
                 .any()
@@ -78,10 +78,10 @@ public class DoorBlock extends Block {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_52807_, BlockGetter p_52808_, BlockPos p_52809_, CollisionContext p_52810_) {
-        Direction direction = p_52807_.getValue(FACING);
-        boolean flag = !p_52807_.getValue(OPEN);
-        boolean flag1 = p_52807_.getValue(HINGE) == DoorHingeSide.RIGHT;
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        Direction direction = state.getValue(FACING);
+        boolean flag = !state.getValue(OPEN);
+        boolean flag1 = state.getValue(HINGE) == DoorHingeSide.RIGHT;
 
         return switch (direction) {
             case SOUTH -> flag ? SOUTH_AABB : (flag1 ? EAST_AABB : WEST_AABB);
@@ -91,59 +91,64 @@ public class DoorBlock extends Block {
         };
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_52796_, Direction p_52797_, BlockState p_52798_, LevelAccessor p_52799_, BlockPos p_52800_, BlockPos p_52801_) {
-        DoubleBlockHalf doubleblockhalf = p_52796_.getValue(HALF);
-        if (p_52797_.getAxis() != Direction.Axis.Y || doubleblockhalf == DoubleBlockHalf.LOWER != (p_52797_ == Direction.UP)) {
-            return doubleblockhalf == DoubleBlockHalf.LOWER && p_52797_ == Direction.DOWN && !p_52796_.canSurvive(p_52799_, p_52800_)
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        DoubleBlockHalf doubleblockhalf = state.getValue(HALF);
+        if (facing.getAxis() != Direction.Axis.Y || doubleblockhalf == DoubleBlockHalf.LOWER != (facing == Direction.UP)) {
+            return doubleblockhalf == DoubleBlockHalf.LOWER && facing == Direction.DOWN && !state.canSurvive(level, currentPos)
                 ? Blocks.AIR.defaultBlockState()
-                : super.updateShape(p_52796_, p_52797_, p_52798_, p_52799_, p_52800_, p_52801_);
+                : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
         } else {
-            return p_52798_.getBlock() instanceof DoorBlock && p_52798_.getValue(HALF) != doubleblockhalf
-                ? p_52798_.setValue(HALF, doubleblockhalf)
+            return facingState.getBlock() instanceof DoorBlock && facingState.getValue(HALF) != doubleblockhalf
+                ? facingState.setValue(HALF, doubleblockhalf)
                 : Blocks.AIR.defaultBlockState();
         }
     }
 
     @Override
-    protected void onExplosionHit(BlockState p_312769_, Level p_312778_, BlockPos p_311900_, Explosion p_312544_, BiConsumer<ItemStack, BlockPos> p_312107_) {
-        if (p_312544_.canTriggerBlocks()
-            && p_312769_.getValue(HALF) == DoubleBlockHalf.LOWER
+    protected void onExplosionHit(BlockState state, Level level, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> dropConsumer) {
+        if (explosion.canTriggerBlocks()
+            && state.getValue(HALF) == DoubleBlockHalf.LOWER
             && this.type.canOpenByWindCharge()
-            && !p_312769_.getValue(POWERED)) {
-            this.setOpen(null, p_312778_, p_312769_, p_311900_, !this.isOpen(p_312769_));
+            && !state.getValue(POWERED)) {
+            this.setOpen(null, level, state, pos, !this.isOpen(state));
         }
 
-        super.onExplosionHit(p_312769_, p_312778_, p_311900_, p_312544_, p_312107_);
+        super.onExplosionHit(state, level, pos, explosion, dropConsumer);
     }
 
     @Override
-    public BlockState playerWillDestroy(Level p_52755_, BlockPos p_52756_, BlockState p_52757_, Player p_52758_) {
-        if (!p_52755_.isClientSide && (p_52758_.isCreative() || !p_52758_.hasCorrectToolForDrops(p_52757_, p_52755_, p_52756_))) {
-            DoublePlantBlock.preventDropFromBottomPart(p_52755_, p_52756_, p_52757_, p_52758_);
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide && (player.isCreative() || !player.hasCorrectToolForDrops(state, level, pos))) {
+            DoublePlantBlock.preventDropFromBottomPart(level, pos, state, player);
         }
 
-        return super.playerWillDestroy(p_52755_, p_52756_, p_52757_, p_52758_);
+        return super.playerWillDestroy(level, pos, state, player);
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_52764_, PathComputationType p_52767_) {
-        return switch (p_52767_) {
-            case LAND, AIR -> p_52764_.getValue(OPEN);
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
+        return switch (pathComputationType) {
+            case LAND, AIR -> state.getValue(OPEN);
             case WATER -> false;
         };
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_52739_) {
-        BlockPos blockpos = p_52739_.getClickedPos();
-        Level level = p_52739_.getLevel();
-        if (blockpos.getY() < level.getMaxBuildHeight() - 1 && level.getBlockState(blockpos.above()).canBeReplaced(p_52739_)) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockPos blockpos = context.getClickedPos();
+        Level level = context.getLevel();
+        if (blockpos.getY() < level.getMaxBuildHeight() - 1 && level.getBlockState(blockpos.above()).canBeReplaced(context)) {
             boolean flag = level.hasNeighborSignal(blockpos) || level.hasNeighborSignal(blockpos.above());
             return this.defaultBlockState()
-                .setValue(FACING, p_52739_.getHorizontalDirection())
-                .setValue(HINGE, this.getHinge(p_52739_))
+                .setValue(FACING, context.getHorizontalDirection())
+                .setValue(HINGE, this.getHinge(context))
                 .setValue(POWERED, Boolean.valueOf(flag))
                 .setValue(OPEN, Boolean.valueOf(flag))
                 .setValue(HALF, DoubleBlockHalf.LOWER);
@@ -152,15 +157,18 @@ public class DoorBlock extends Block {
         }
     }
 
+    /**
+     * Called by BlockItem after this block has been placed.
+     */
     @Override
-    public void setPlacedBy(Level p_52749_, BlockPos p_52750_, BlockState p_52751_, LivingEntity p_52752_, ItemStack p_52753_) {
-        p_52749_.setBlock(p_52750_.above(), p_52751_.setValue(HALF, DoubleBlockHalf.UPPER), 3);
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
+        level.setBlock(pos.above(), state.setValue(HALF, DoubleBlockHalf.UPPER), 3);
     }
 
-    private DoorHingeSide getHinge(BlockPlaceContext p_52805_) {
-        BlockGetter blockgetter = p_52805_.getLevel();
-        BlockPos blockpos = p_52805_.getClickedPos();
-        Direction direction = p_52805_.getHorizontalDirection();
+    private DoorHingeSide getHinge(BlockPlaceContext context) {
+        BlockGetter blockgetter = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
+        Direction direction = context.getHorizontalDirection();
         BlockPos blockpos1 = blockpos.above();
         Direction direction1 = direction.getCounterClockWise();
         BlockPos blockpos2 = blockpos.relative(direction1);
@@ -182,7 +190,7 @@ public class DoorBlock extends Block {
             if ((!flag1 || flag) && i >= 0) {
                 int j = direction.getStepX();
                 int k = direction.getStepZ();
-                Vec3 vec3 = p_52805_.getClickLocation();
+                Vec3 vec3 = context.getClickLocation();
                 double d0 = vec3.x - (double)blockpos.getX();
                 double d1 = vec3.z - (double)blockpos.getZ();
                 return (j >= 0 || !(d1 < 0.5)) && (j <= 0 || !(d1 > 0.5)) && (k >= 0 || !(d0 > 0.5)) && (k <= 0 || !(d0 < 0.5))
@@ -197,88 +205,97 @@ public class DoorBlock extends Block {
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_52769_, Level p_52770_, BlockPos p_52771_, Player p_52772_, BlockHitResult p_52774_) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
         if (!this.type.canOpenByHand()) {
             return InteractionResult.PASS;
         } else {
-            p_52769_ = p_52769_.cycle(OPEN);
-            p_52770_.setBlock(p_52771_, p_52769_, 10);
-            this.playSound(p_52772_, p_52770_, p_52771_, p_52769_.getValue(OPEN));
-            p_52770_.gameEvent(p_52772_, this.isOpen(p_52769_) ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, p_52771_);
-            return InteractionResult.sidedSuccess(p_52770_.isClientSide);
+            state = state.cycle(OPEN);
+            level.setBlock(pos, state, 10);
+            this.playSound(player, level, pos, state.getValue(OPEN));
+            level.gameEvent(player, this.isOpen(state) ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, pos);
+            return InteractionResult.sidedSuccess(level.isClientSide);
         }
     }
 
-    public boolean isOpen(BlockState p_52816_) {
-        return p_52816_.getValue(OPEN);
+    public boolean isOpen(BlockState state) {
+        return state.getValue(OPEN);
     }
 
-    public void setOpen(@Nullable Entity p_153166_, Level p_153167_, BlockState p_153168_, BlockPos p_153169_, boolean p_153170_) {
-        if (p_153168_.is(this) && p_153168_.getValue(OPEN) != p_153170_) {
-            p_153167_.setBlock(p_153169_, p_153168_.setValue(OPEN, Boolean.valueOf(p_153170_)), 10);
-            this.playSound(p_153166_, p_153167_, p_153169_, p_153170_);
-            p_153167_.gameEvent(p_153166_, p_153170_ ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, p_153169_);
+    public void setOpen(@Nullable Entity entity, Level level, BlockState state, BlockPos pos, boolean open) {
+        if (state.is(this) && state.getValue(OPEN) != open) {
+            level.setBlock(pos, state.setValue(OPEN, Boolean.valueOf(open)), 10);
+            this.playSound(entity, level, pos, open);
+            level.gameEvent(entity, open ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, pos);
         }
     }
 
     @Override
-    protected void neighborChanged(BlockState p_52776_, Level p_52777_, BlockPos p_52778_, Block p_52779_, BlockPos p_52780_, boolean p_52781_) {
-        boolean flag = p_52777_.hasNeighborSignal(p_52778_)
-            || p_52777_.hasNeighborSignal(p_52778_.relative(p_52776_.getValue(HALF) == DoubleBlockHalf.LOWER ? Direction.UP : Direction.DOWN));
-        if (!this.defaultBlockState().is(p_52779_) && flag != p_52776_.getValue(POWERED)) {
-            if (flag != p_52776_.getValue(OPEN)) {
-                this.playSound(null, p_52777_, p_52778_, flag);
-                p_52777_.gameEvent(null, flag ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, p_52778_);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        boolean flag = level.hasNeighborSignal(pos)
+            || level.hasNeighborSignal(pos.relative(state.getValue(HALF) == DoubleBlockHalf.LOWER ? Direction.UP : Direction.DOWN));
+        if (!this.defaultBlockState().is(block) && flag != state.getValue(POWERED)) {
+            if (flag != state.getValue(OPEN)) {
+                this.playSound(null, level, pos, flag);
+                level.gameEvent(null, flag ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, pos);
             }
 
-            p_52777_.setBlock(p_52778_, p_52776_.setValue(POWERED, Boolean.valueOf(flag)).setValue(OPEN, Boolean.valueOf(flag)), 2);
+            level.setBlock(pos, state.setValue(POWERED, Boolean.valueOf(flag)).setValue(OPEN, Boolean.valueOf(flag)), 2);
         }
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_52783_, LevelReader p_52784_, BlockPos p_52785_) {
-        BlockPos blockpos = p_52785_.below();
-        BlockState blockstate = p_52784_.getBlockState(blockpos);
-        return p_52783_.getValue(HALF) == DoubleBlockHalf.LOWER ? blockstate.isFaceSturdy(p_52784_, blockpos, Direction.UP) : blockstate.is(this);
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        BlockPos blockpos = pos.below();
+        BlockState blockstate = level.getBlockState(blockpos);
+        return state.getValue(HALF) == DoubleBlockHalf.LOWER ? blockstate.isFaceSturdy(level, blockpos, Direction.UP) : blockstate.is(this);
     }
 
-    private void playSound(@Nullable Entity p_251616_, Level p_249656_, BlockPos p_249439_, boolean p_251628_) {
-        p_249656_.playSound(
-            p_251616_,
-            p_249439_,
-            p_251628_ ? this.type.doorOpen() : this.type.doorClose(),
+    private void playSound(@Nullable Entity source, Level level, BlockPos pos, boolean isOpening) {
+        level.playSound(
+            source,
+            pos,
+            isOpening ? this.type.doorOpen() : this.type.doorClose(),
             SoundSource.BLOCKS,
             1.0F,
-            p_249656_.getRandom().nextFloat() * 0.1F + 0.9F
+            level.getRandom().nextFloat() * 0.1F + 0.9F
         );
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_52790_, Rotation p_52791_) {
-        return p_52790_.setValue(FACING, p_52791_.rotate(p_52790_.getValue(FACING)));
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return mirror == Mirror.NONE ? state : state.rotate(mirror.getRotation(state.getValue(FACING))).cycle(HINGE);
+    }
+
+    /**
+     * Return a random long to be passed to {@link net.minecraft.client.resources.model.BakedModel#getQuads}, used for random model rotations
+     */
+    @Override
+    protected long getSeed(BlockState state, BlockPos pos) {
+        return Mth.getSeed(pos.getX(), pos.below(state.getValue(HALF) == DoubleBlockHalf.LOWER ? 0 : 1).getY(), pos.getZ());
     }
 
     @Override
-    protected BlockState mirror(BlockState p_52787_, Mirror p_52788_) {
-        return p_52788_ == Mirror.NONE ? p_52787_ : p_52787_.rotate(p_52788_.getRotation(p_52787_.getValue(FACING))).cycle(HINGE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(HALF, FACING, OPEN, HINGE, POWERED);
     }
 
-    @Override
-    protected long getSeed(BlockState p_52793_, BlockPos p_52794_) {
-        return Mth.getSeed(p_52794_.getX(), p_52794_.below(p_52793_.getValue(HALF) == DoubleBlockHalf.LOWER ? 0 : 1).getY(), p_52794_.getZ());
+    public static boolean isWoodenDoor(Level level, BlockPos pos) {
+        return isWoodenDoor(level.getBlockState(pos));
     }
 
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_52803_) {
-        p_52803_.add(HALF, FACING, OPEN, HINGE, POWERED);
-    }
-
-    public static boolean isWoodenDoor(Level p_52746_, BlockPos p_52747_) {
-        return isWoodenDoor(p_52746_.getBlockState(p_52747_));
-    }
-
-    public static boolean isWoodenDoor(BlockState p_52818_) {
-        if (p_52818_.getBlock() instanceof DoorBlock doorblock && doorblock.type().canOpenByHand()) {
+    public static boolean isWoodenDoor(BlockState state) {
+        if (state.getBlock() instanceof DoorBlock doorblock && doorblock.type().canOpenByHand()) {
             return true;
         }
 

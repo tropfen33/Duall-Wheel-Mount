@@ -11,16 +11,16 @@ public class ClientboundClearTitlesPacket implements Packet<ClientGamePacketList
     );
     private final boolean resetTimes;
 
-    public ClientboundClearTitlesPacket(boolean p_178781_) {
-        this.resetTimes = p_178781_;
+    public ClientboundClearTitlesPacket(boolean resetTimes) {
+        this.resetTimes = resetTimes;
     }
 
-    private ClientboundClearTitlesPacket(FriendlyByteBuf p_178779_) {
-        this.resetTimes = p_178779_.readBoolean();
+    private ClientboundClearTitlesPacket(FriendlyByteBuf buffer) {
+        this.resetTimes = buffer.readBoolean();
     }
 
-    private void write(FriendlyByteBuf p_178783_) {
-        p_178783_.writeBoolean(this.resetTimes);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeBoolean(this.resetTimes);
     }
 
     @Override
@@ -28,8 +28,11 @@ public class ClientboundClearTitlesPacket implements Packet<ClientGamePacketList
         return GamePacketTypes.CLIENTBOUND_CLEAR_TITLES;
     }
 
-    public void handle(ClientGamePacketListener p_178787_) {
-        p_178787_.handleTitlesClear(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleTitlesClear(this);
     }
 
     public boolean shouldResetTimes() {

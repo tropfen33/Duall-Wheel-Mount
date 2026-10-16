@@ -9,29 +9,29 @@ import java.util.function.Supplier;
 import net.minecraft.util.datafix.fixes.References;
 
 public class V1022 extends Schema {
-    public V1022(int p_17365_, Schema p_17366_) {
-        super(p_17365_, p_17366_);
+    public V1022(int versionKey, Schema parent) {
+        super(versionKey, parent);
     }
 
     @Override
-    public void registerTypes(Schema p_17373_, Map<String, Supplier<TypeTemplate>> p_17374_, Map<String, Supplier<TypeTemplate>> p_17375_) {
-        super.registerTypes(p_17373_, p_17374_, p_17375_);
-        p_17373_.registerType(false, References.RECIPE, () -> DSL.constType(NamespacedSchema.namespacedString()));
-        p_17373_.registerType(
+    public void registerTypes(Schema schema, Map<String, Supplier<TypeTemplate>> entityTypes, Map<String, Supplier<TypeTemplate>> blockEntityTypes) {
+        super.registerTypes(schema, entityTypes, blockEntityTypes);
+        schema.registerType(false, References.RECIPE, () -> DSL.constType(NamespacedSchema.namespacedString()));
+        schema.registerType(
             false,
             References.PLAYER,
             () -> DSL.optionalFields(
-                    Pair.of("RootVehicle", DSL.optionalFields("Entity", References.ENTITY_TREE.in(p_17373_))),
-                    Pair.of("Inventory", DSL.list(References.ITEM_STACK.in(p_17373_))),
-                    Pair.of("EnderItems", DSL.list(References.ITEM_STACK.in(p_17373_))),
-                    Pair.of("ShoulderEntityLeft", References.ENTITY_TREE.in(p_17373_)),
-                    Pair.of("ShoulderEntityRight", References.ENTITY_TREE.in(p_17373_)),
+                    Pair.of("RootVehicle", DSL.optionalFields("Entity", References.ENTITY_TREE.in(schema))),
+                    Pair.of("Inventory", DSL.list(References.ITEM_STACK.in(schema))),
+                    Pair.of("EnderItems", DSL.list(References.ITEM_STACK.in(schema))),
+                    Pair.of("ShoulderEntityLeft", References.ENTITY_TREE.in(schema)),
+                    Pair.of("ShoulderEntityRight", References.ENTITY_TREE.in(schema)),
                     Pair.of(
                         "recipeBook",
-                        DSL.optionalFields("recipes", DSL.list(References.RECIPE.in(p_17373_)), "toBeDisplayed", DSL.list(References.RECIPE.in(p_17373_)))
+                        DSL.optionalFields("recipes", DSL.list(References.RECIPE.in(schema)), "toBeDisplayed", DSL.list(References.RECIPE.in(schema)))
                     )
                 )
         );
-        p_17373_.registerType(false, References.HOTBAR, () -> DSL.compoundList(DSL.list(References.ITEM_STACK.in(p_17373_))));
+        schema.registerType(false, References.HOTBAR, () -> DSL.compoundList(DSL.list(References.ITEM_STACK.in(schema))));
     }
 }

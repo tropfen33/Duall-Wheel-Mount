@@ -20,26 +20,26 @@ public class FrameLayout extends AbstractLayout {
         this(0, 0, 0, 0);
     }
 
-    public FrameLayout(int p_270073_, int p_270705_) {
-        this(0, 0, p_270073_, p_270705_);
+    public FrameLayout(int width, int height) {
+        this(0, 0, width, height);
     }
 
-    public FrameLayout(int p_265719_, int p_265042_, int p_265587_, int p_265682_) {
-        super(p_265719_, p_265042_, p_265587_, p_265682_);
-        this.setMinDimensions(p_265587_, p_265682_);
+    public FrameLayout(int x, int y, int width, int height) {
+        super(x, y, width, height);
+        this.setMinDimensions(width, height);
     }
 
-    public FrameLayout setMinDimensions(int p_265169_, int p_265616_) {
-        return this.setMinWidth(p_265169_).setMinHeight(p_265616_);
+    public FrameLayout setMinDimensions(int minWidth, int minHeight) {
+        return this.setMinWidth(minWidth).setMinHeight(minHeight);
     }
 
-    public FrameLayout setMinHeight(int p_265646_) {
-        this.minHeight = p_265646_;
+    public FrameLayout setMinHeight(int minHeight) {
+        this.minHeight = minHeight;
         return this;
     }
 
-    public FrameLayout setMinWidth(int p_265764_) {
-        this.minWidth = p_265764_;
+    public FrameLayout setMinWidth(int minWidth) {
+        this.minWidth = minWidth;
         return this;
     }
 
@@ -71,44 +71,44 @@ public class FrameLayout extends AbstractLayout {
         this.height = j;
     }
 
-    public <T extends LayoutElement> T addChild(T p_265071_) {
-        return this.addChild(p_265071_, this.newChildLayoutSettings());
+    public <T extends LayoutElement> T addChild(T child) {
+        return this.addChild(child, this.newChildLayoutSettings());
     }
 
-    public <T extends LayoutElement> T addChild(T p_265386_, LayoutSettings p_265532_) {
-        this.children.add(new FrameLayout.ChildContainer(p_265386_, p_265532_));
-        return p_265386_;
+    public <T extends LayoutElement> T addChild(T child, LayoutSettings layoutSettings) {
+        this.children.add(new FrameLayout.ChildContainer(child, layoutSettings));
+        return child;
     }
 
-    public <T extends LayoutElement> T addChild(T p_294629_, Consumer<LayoutSettings> p_294957_) {
-        return this.addChild(p_294629_, Util.make(this.newChildLayoutSettings(), p_294957_));
+    public <T extends LayoutElement> T addChild(T child, Consumer<LayoutSettings> layoutSettingsFactory) {
+        return this.addChild(child, Util.make(this.newChildLayoutSettings(), layoutSettingsFactory));
     }
 
     @Override
-    public void visitChildren(Consumer<LayoutElement> p_265070_) {
-        this.children.forEach(p_265653_ -> p_265070_.accept(p_265653_.child));
+    public void visitChildren(Consumer<LayoutElement> visitor) {
+        this.children.forEach(p_265653_ -> visitor.accept(p_265653_.child));
     }
 
-    public static void centerInRectangle(LayoutElement p_265197_, int p_265518_, int p_265334_, int p_265540_, int p_265632_) {
-        alignInRectangle(p_265197_, p_265518_, p_265334_, p_265540_, p_265632_, 0.5F, 0.5F);
+    public static void centerInRectangle(LayoutElement child, int x, int y, int width, int height) {
+        alignInRectangle(child, x, y, width, height, 0.5F, 0.5F);
     }
 
-    public static void centerInRectangle(LayoutElement p_268229_, ScreenRectangle p_268113_) {
-        centerInRectangle(p_268229_, p_268113_.position().x(), p_268113_.position().y(), p_268113_.width(), p_268113_.height());
+    public static void centerInRectangle(LayoutElement child, ScreenRectangle rectangle) {
+        centerInRectangle(child, rectangle.position().x(), rectangle.position().y(), rectangle.width(), rectangle.height());
     }
 
-    public static void alignInRectangle(LayoutElement p_275320_, ScreenRectangle p_275389_, float p_275607_, float p_275662_) {
-        alignInRectangle(p_275320_, p_275389_.left(), p_275389_.top(), p_275389_.width(), p_275389_.height(), p_275607_, p_275662_);
+    public static void alignInRectangle(LayoutElement child, ScreenRectangle rectangle, float deltaX, float deltaY) {
+        alignInRectangle(child, rectangle.left(), rectangle.top(), rectangle.width(), rectangle.height(), deltaX, deltaY);
     }
 
-    public static void alignInRectangle(LayoutElement p_265662_, int p_265497_, int p_265030_, int p_265535_, int p_265427_, float p_265271_, float p_265365_) {
-        alignInDimension(p_265497_, p_265535_, p_265662_.getWidth(), p_265662_::setX, p_265271_);
-        alignInDimension(p_265030_, p_265427_, p_265662_.getHeight(), p_265662_::setY, p_265365_);
+    public static void alignInRectangle(LayoutElement child, int x, int y, int width, int height, float deltaX, float deltaY) {
+        alignInDimension(x, width, child.getWidth(), child::setX, deltaX);
+        alignInDimension(y, height, child.getHeight(), child::setY, deltaY);
     }
 
-    public static void alignInDimension(int p_265164_, int p_265100_, int p_265351_, Consumer<Integer> p_265614_, float p_265428_) {
-        int i = (int)Mth.lerp(p_265428_, 0.0F, (float)(p_265100_ - p_265351_));
-        p_265614_.accept(p_265164_ + i);
+    public static void alignInDimension(int position, int rectangleLength, int childLength, Consumer<Integer> setter, float delta) {
+        int i = (int)Mth.lerp(delta, 0.0F, (float)(rectangleLength - childLength));
+        setter.accept(position + i);
     }
 
     @OnlyIn(Dist.CLIENT)

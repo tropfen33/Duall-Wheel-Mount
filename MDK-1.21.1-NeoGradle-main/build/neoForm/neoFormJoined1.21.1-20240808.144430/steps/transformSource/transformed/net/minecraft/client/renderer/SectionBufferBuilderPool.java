@@ -16,14 +16,14 @@ public class SectionBufferBuilderPool {
     private final Queue<SectionBufferBuilderPack> freeBuffers;
     private volatile int freeBufferCount;
 
-    private SectionBufferBuilderPool(List<SectionBufferBuilderPack> p_307506_) {
-        this.freeBuffers = Queues.newArrayDeque(p_307506_);
+    private SectionBufferBuilderPool(List<SectionBufferBuilderPack> freeBuffers) {
+        this.freeBuffers = Queues.newArrayDeque(freeBuffers);
         this.freeBufferCount = this.freeBuffers.size();
     }
 
-    public static SectionBufferBuilderPool allocate(int p_307250_) {
+    public static SectionBufferBuilderPool allocate(int bufferCount) {
         int i = Math.max(1, (int)((double)Runtime.getRuntime().maxMemory() * 0.3) / SectionBufferBuilderPack.TOTAL_BUFFERS_SIZE);
-        int j = Math.max(1, Math.min(p_307250_, i));
+        int j = Math.max(1, Math.min(bufferCount, i));
         List<SectionBufferBuilderPack> list = new ArrayList<>(j);
 
         try {
@@ -53,8 +53,8 @@ public class SectionBufferBuilderPool {
         }
     }
 
-    public void release(SectionBufferBuilderPack p_307626_) {
-        this.freeBuffers.add(p_307626_);
+    public void release(SectionBufferBuilderPack buffer) {
+        this.freeBuffers.add(buffer);
         this.freeBufferCount = this.freeBuffers.size();
     }
 

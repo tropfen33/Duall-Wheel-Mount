@@ -26,23 +26,23 @@ public record DamageSourcePredicate(
                 .apply(p_346965_, DamageSourcePredicate::new)
     );
 
-    public boolean matches(ServerPlayer p_25449_, DamageSource p_25450_) {
-        return this.matches(p_25449_.serverLevel(), p_25449_.position(), p_25450_);
+    public boolean matches(ServerPlayer player, DamageSource source) {
+        return this.matches(player.serverLevel(), player.position(), source);
     }
 
-    public boolean matches(ServerLevel p_25445_, Vec3 p_25446_, DamageSource p_25447_) {
+    public boolean matches(ServerLevel level, Vec3 position, DamageSource source) {
         for (TagPredicate<DamageType> tagpredicate : this.tags) {
-            if (!tagpredicate.matches(p_25447_.typeHolder())) {
+            if (!tagpredicate.matches(source.typeHolder())) {
                 return false;
             }
         }
 
-        if (this.directEntity.isPresent() && !this.directEntity.get().matches(p_25445_, p_25446_, p_25447_.getDirectEntity())) {
+        if (this.directEntity.isPresent() && !this.directEntity.get().matches(level, position, source.getDirectEntity())) {
             return false;
         } else {
-            return this.sourceEntity.isPresent() && !this.sourceEntity.get().matches(p_25445_, p_25446_, p_25447_.getEntity())
+            return this.sourceEntity.isPresent() && !this.sourceEntity.get().matches(level, position, source.getEntity())
                 ? false
-                : !this.isDirect.isPresent() || this.isDirect.get() == p_25447_.isDirect();
+                : !this.isDirect.isPresent() || this.isDirect.get() == source.isDirect();
         }
     }
 
@@ -56,23 +56,23 @@ public record DamageSourcePredicate(
             return new DamageSourcePredicate.Builder();
         }
 
-        public DamageSourcePredicate.Builder tag(TagPredicate<DamageType> p_270455_) {
-            this.tags.add(p_270455_);
+        public DamageSourcePredicate.Builder tag(TagPredicate<DamageType> tag) {
+            this.tags.add(tag);
             return this;
         }
 
-        public DamageSourcePredicate.Builder direct(EntityPredicate.Builder p_25473_) {
-            this.directEntity = Optional.of(p_25473_.build());
+        public DamageSourcePredicate.Builder direct(EntityPredicate.Builder directEntity) {
+            this.directEntity = Optional.of(directEntity.build());
             return this;
         }
 
-        public DamageSourcePredicate.Builder source(EntityPredicate.Builder p_148232_) {
-            this.sourceEntity = Optional.of(p_148232_.build());
+        public DamageSourcePredicate.Builder source(EntityPredicate.Builder sourceEntity) {
+            this.sourceEntity = Optional.of(sourceEntity.build());
             return this;
         }
 
-        public DamageSourcePredicate.Builder isDirect(boolean p_347549_) {
-            this.isDirect = Optional.of(p_347549_);
+        public DamageSourcePredicate.Builder isDirect(boolean isDirect) {
+            this.isDirect = Optional.of(isDirect);
             return this;
         }
 

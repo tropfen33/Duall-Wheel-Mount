@@ -33,7 +33,13 @@ public class MemoryModuleType<U> {
     public static final MemoryModuleType<GlobalPos> POTENTIAL_JOB_SITE = register("potential_job_site", GlobalPos.CODEC);
     public static final MemoryModuleType<GlobalPos> MEETING_POINT = register("meeting_point", GlobalPos.CODEC);
     public static final MemoryModuleType<List<GlobalPos>> SECONDARY_JOB_SITE = register("secondary_job_site");
+    /**
+     * Holds a list of nearby living entities inside the brain entity's bounding box expanded 16 blocks in all directions.
+     */
     public static final MemoryModuleType<List<LivingEntity>> NEAREST_LIVING_ENTITIES = register("mobs");
+    /**
+     * Holds a list of nearby living entities inside the brain entity's bounding box expanded 16 blocks in all directions which the brain entity can see.
+     */
     public static final MemoryModuleType<NearestVisibleLivingEntities> NEAREST_VISIBLE_LIVING_ENTITIES = register("visible_mobs");
     public static final MemoryModuleType<List<LivingEntity>> VISIBLE_VILLAGER_BABIES = register("visible_villager_babies");
     public static final MemoryModuleType<List<Player>> NEAREST_PLAYERS = register("nearest_players");
@@ -136,8 +142,8 @@ public class MemoryModuleType<U> {
     private final Optional<Codec<ExpirableValue<U>>> codec;
 
     @VisibleForTesting
-    public MemoryModuleType(Optional<Codec<U>> p_26386_) {
-        this.codec = p_26386_.map(ExpirableValue::codec);
+    public MemoryModuleType(Optional<Codec<U>> optionalCodec) {
+        this.codec = optionalCodec.map(ExpirableValue::codec);
     }
 
     @Override
@@ -149,15 +155,15 @@ public class MemoryModuleType<U> {
         return this.codec;
     }
 
-    private static <U> MemoryModuleType<U> register(String p_26391_, Codec<U> p_26392_) {
+    private static <U> MemoryModuleType<U> register(String identifier, Codec<U> codec) {
         return Registry.register(
-            BuiltInRegistries.MEMORY_MODULE_TYPE, ResourceLocation.withDefaultNamespace(p_26391_), new MemoryModuleType<>(Optional.of(p_26392_))
+            BuiltInRegistries.MEMORY_MODULE_TYPE, ResourceLocation.withDefaultNamespace(identifier), new MemoryModuleType<>(Optional.of(codec))
         );
     }
 
-    private static <U> MemoryModuleType<U> register(String p_26389_) {
+    private static <U> MemoryModuleType<U> register(String identifier) {
         return Registry.register(
-            BuiltInRegistries.MEMORY_MODULE_TYPE, ResourceLocation.withDefaultNamespace(p_26389_), new MemoryModuleType<>(Optional.empty())
+            BuiltInRegistries.MEMORY_MODULE_TYPE, ResourceLocation.withDefaultNamespace(identifier), new MemoryModuleType<>(Optional.empty())
         );
     }
 }

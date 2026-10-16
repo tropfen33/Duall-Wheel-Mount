@@ -12,21 +12,31 @@ public class ClientboundSetEntityLinkPacket implements Packet<ClientGamePacketLi
         ClientboundSetEntityLinkPacket::write, ClientboundSetEntityLinkPacket::new
     );
     private final int sourceId;
+    /**
+     * The entity that is holding the leash, or -1 to clear the holder.
+     */
     private final int destId;
 
-    public ClientboundSetEntityLinkPacket(Entity p_133164_, @Nullable Entity p_133165_) {
-        this.sourceId = p_133164_.getId();
-        this.destId = p_133165_ != null ? p_133165_.getId() : 0;
+    /**
+     * @param destination The entity to link to or {@code null} to break any existing
+     *                    link.
+     */
+    public ClientboundSetEntityLinkPacket(Entity source, @Nullable Entity destination) {
+        this.sourceId = source.getId();
+        this.destId = destination != null ? destination.getId() : 0;
     }
 
-    private ClientboundSetEntityLinkPacket(FriendlyByteBuf p_179292_) {
-        this.sourceId = p_179292_.readInt();
-        this.destId = p_179292_.readInt();
+    private ClientboundSetEntityLinkPacket(FriendlyByteBuf buffer) {
+        this.sourceId = buffer.readInt();
+        this.destId = buffer.readInt();
     }
 
-    private void write(FriendlyByteBuf p_133174_) {
-        p_133174_.writeInt(this.sourceId);
-        p_133174_.writeInt(this.destId);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeInt(this.sourceId);
+        buffer.writeInt(this.destId);
     }
 
     @Override
@@ -34,8 +44,11 @@ public class ClientboundSetEntityLinkPacket implements Packet<ClientGamePacketLi
         return GamePacketTypes.CLIENTBOUND_SET_ENTITY_LINK;
     }
 
-    public void handle(ClientGamePacketListener p_133171_) {
-        p_133171_.handleEntityLinkPacket(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleEntityLinkPacket(this);
     }
 
     public int getSourceId() {

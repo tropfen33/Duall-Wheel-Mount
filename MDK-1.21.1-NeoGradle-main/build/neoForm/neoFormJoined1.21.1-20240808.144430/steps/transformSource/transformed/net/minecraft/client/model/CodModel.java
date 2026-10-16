@@ -16,9 +16,9 @@ public class CodModel<T extends Entity> extends HierarchicalModel<T> {
     private final ModelPart root;
     private final ModelPart tailFin;
 
-    public CodModel(ModelPart p_170494_) {
-        this.root = p_170494_;
-        this.tailFin = p_170494_.getChild("tail_fin");
+    public CodModel(ModelPart root) {
+        this.root = root;
+        this.tailFin = root.getChild("tail_fin");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -58,13 +58,16 @@ public class CodModel<T extends Entity> extends HierarchicalModel<T> {
         return this.root;
     }
 
+    /**
+     * Sets this entity's model rotation angles
+     */
     @Override
-    public void setupAnim(T p_102409_, float p_102410_, float p_102411_, float p_102412_, float p_102413_, float p_102414_) {
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         float f = 1.0F;
-        if (!p_102409_.isInWater()) {
+        if (!entity.isInWater()) {
             f = 1.5F;
         }
 
-        this.tailFin.yRot = -f * 0.45F * Mth.sin(0.6F * p_102412_);
+        this.tailFin.yRot = -f * 0.45F * Mth.sin(0.6F * ageInTicks);
     }
 }

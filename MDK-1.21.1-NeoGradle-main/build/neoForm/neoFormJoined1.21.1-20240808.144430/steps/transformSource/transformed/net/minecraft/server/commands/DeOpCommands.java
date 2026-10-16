@@ -17,8 +17,8 @@ import net.minecraft.server.players.PlayerList;
 public class DeOpCommands {
     private static final SimpleCommandExceptionType ERROR_NOT_OP = new SimpleCommandExceptionType(Component.translatable("commands.deop.failed"));
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_136889_) {
-        p_136889_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("deop")
                 .requires(p_136896_ -> p_136896_.hasPermission(3))
                 .then(
@@ -33,22 +33,22 @@ public class DeOpCommands {
         );
     }
 
-    private static int deopPlayers(CommandSourceStack p_136898_, Collection<GameProfile> p_136899_) throws CommandSyntaxException {
-        PlayerList playerlist = p_136898_.getServer().getPlayerList();
+    private static int deopPlayers(CommandSourceStack source, Collection<GameProfile> players) throws CommandSyntaxException {
+        PlayerList playerlist = source.getServer().getPlayerList();
         int i = 0;
 
-        for (GameProfile gameprofile : p_136899_) {
+        for (GameProfile gameprofile : players) {
             if (playerlist.isOp(gameprofile)) {
                 playerlist.deop(gameprofile);
                 i++;
-                p_136898_.sendSuccess(() -> Component.translatable("commands.deop.success", p_136899_.iterator().next().getName()), true);
+                source.sendSuccess(() -> Component.translatable("commands.deop.success", players.iterator().next().getName()), true);
             }
         }
 
         if (i == 0) {
             throw ERROR_NOT_OP.create();
         } else {
-            p_136898_.getServer().kickUnlistedPlayers(p_136898_);
+            source.getServer().kickUnlistedPlayers(source);
             return i;
         }
     }

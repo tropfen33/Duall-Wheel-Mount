@@ -68,8 +68,8 @@ public record PlayerPredicate(
     );
 
     @Override
-    public boolean matches(Entity p_222484_, ServerLevel p_222485_, @Nullable Vec3 p_222486_) {
-        if (!(p_222484_ instanceof ServerPlayer serverplayer)) {
+    public boolean matches(Entity p_entity, ServerLevel level, @Nullable Vec3 position) {
+        if (!(p_entity instanceof ServerPlayer serverplayer)) {
             return false;
         } else if (!this.level.matches(serverplayer.experienceLevel)) {
             return false;
@@ -134,9 +134,9 @@ public record PlayerPredicate(
         public static final Codec<PlayerPredicate.AdvancementCriterionsPredicate> CODEC = ExtraCodecs.object2BooleanMap(Codec.STRING)
             .xmap(PlayerPredicate.AdvancementCriterionsPredicate::new, PlayerPredicate.AdvancementCriterionsPredicate::criterions);
 
-        public boolean test(AdvancementProgress p_62296_) {
+        public boolean test(AdvancementProgress progress) {
             for (Entry<String> entry : this.criterions.object2BooleanEntrySet()) {
-                CriterionProgress criterionprogress = p_62296_.getCriterion(entry.getKey());
+                CriterionProgress criterionprogress = progress.getCriterion(entry.getKey());
                 if (criterionprogress == null || criterionprogress.isDone() != entry.getBooleanValue()) {
                     return false;
                 }
@@ -150,8 +150,8 @@ public record PlayerPredicate(
         public static final Codec<PlayerPredicate.AdvancementDonePredicate> CODEC = Codec.BOOL
             .xmap(PlayerPredicate.AdvancementDonePredicate::new, PlayerPredicate.AdvancementDonePredicate::state);
 
-        public boolean test(AdvancementProgress p_62304_) {
-            return p_62304_.isDone() == this.state;
+        public boolean test(AdvancementProgress progress) {
+            return progress.isDone() == this.state;
         }
     }
 
@@ -182,38 +182,38 @@ public record PlayerPredicate(
             return new PlayerPredicate.Builder();
         }
 
-        public PlayerPredicate.Builder setLevel(MinMaxBounds.Ints p_156776_) {
-            this.level = p_156776_;
+        public PlayerPredicate.Builder setLevel(MinMaxBounds.Ints level) {
+            this.level = level;
             return this;
         }
 
-        public <T> PlayerPredicate.Builder addStat(StatType<T> p_299266_, Holder.Reference<T> p_299053_, MinMaxBounds.Ints p_156770_) {
-            this.stats.add(new PlayerPredicate.StatMatcher<>(p_299266_, p_299053_, p_156770_));
+        public <T> PlayerPredicate.Builder addStat(StatType<T> type, Holder.Reference<T> value, MinMaxBounds.Ints range) {
+            this.stats.add(new PlayerPredicate.StatMatcher<>(type, value, range));
             return this;
         }
 
-        public PlayerPredicate.Builder addRecipe(ResourceLocation p_156781_, boolean p_156782_) {
-            this.recipes.put(p_156781_, p_156782_);
+        public PlayerPredicate.Builder addRecipe(ResourceLocation recipe, boolean unlocked) {
+            this.recipes.put(recipe, unlocked);
             return this;
         }
 
-        public PlayerPredicate.Builder setGameType(GameTypePredicate p_350565_) {
-            this.gameType = p_350565_;
+        public PlayerPredicate.Builder setGameType(GameTypePredicate gameType) {
+            this.gameType = gameType;
             return this;
         }
 
-        public PlayerPredicate.Builder setLookingAt(EntityPredicate.Builder p_301131_) {
-            this.lookingAt = Optional.of(p_301131_.build());
+        public PlayerPredicate.Builder setLookingAt(EntityPredicate.Builder lookingAt) {
+            this.lookingAt = Optional.of(lookingAt.build());
             return this;
         }
 
-        public PlayerPredicate.Builder checkAdvancementDone(ResourceLocation p_156784_, boolean p_156785_) {
-            this.advancements.put(p_156784_, new PlayerPredicate.AdvancementDonePredicate(p_156785_));
+        public PlayerPredicate.Builder checkAdvancementDone(ResourceLocation advancement, boolean done) {
+            this.advancements.put(advancement, new PlayerPredicate.AdvancementDonePredicate(done));
             return this;
         }
 
-        public PlayerPredicate.Builder checkAdvancementCriterions(ResourceLocation p_156778_, Map<String, Boolean> p_156779_) {
-            this.advancements.put(p_156778_, new PlayerPredicate.AdvancementCriterionsPredicate(new Object2BooleanOpenHashMap<>(p_156779_)));
+        public PlayerPredicate.Builder checkAdvancementCriterions(ResourceLocation advancement, Map<String, Boolean> criterions) {
+            this.advancements.put(advancement, new PlayerPredicate.AdvancementCriterionsPredicate(new Object2BooleanOpenHashMap<>(criterions)));
             return this;
         }
 
@@ -231,10 +231,10 @@ public record PlayerPredicate(
             this(p_299207_, p_298208_, p_299102_, Suppliers.memoize(() -> p_299207_.get(p_298208_.value())));
         }
 
-        private static <T> MapCodec<PlayerPredicate.StatMatcher<T>> createTypedCodec(StatType<T> p_299086_) {
+        private static <T> MapCodec<PlayerPredicate.StatMatcher<T>> createTypedCodec(StatType<T> statType) {
             return RecordCodecBuilder.mapCodec(
                 p_337389_ -> p_337389_.group(
-                            p_299086_.getRegistry()
+                            statType.getRegistry()
                                 .holderByNameCodec()
                                 .fieldOf("stat")
                                 .forGetter(PlayerPredicate.StatMatcher::value),
@@ -242,12 +242,12 @@ public record PlayerPredicate(
                                 .optionalFieldOf("value", MinMaxBounds.Ints.ANY)
                                 .forGetter(PlayerPredicate.StatMatcher::range)
                         )
-                        .apply(p_337389_, (p_298946_, p_299298_) -> new PlayerPredicate.StatMatcher<>(p_299086_, p_298946_, p_299298_))
+                        .apply(p_337389_, (p_298946_, p_299298_) -> new PlayerPredicate.StatMatcher<>(statType, p_298946_, p_299298_))
             );
         }
 
-        public boolean matches(StatsCounter p_298568_) {
-            return this.range.matches(p_298568_.getValue(this.stat.get()));
+        public boolean matches(StatsCounter statsCounter) {
+            return this.range.matches(statsCounter.getValue(this.stat.get()));
         }
     }
 }

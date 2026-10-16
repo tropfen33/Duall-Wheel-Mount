@@ -18,7 +18,7 @@ public interface MemoryCondition<F extends K1, Value> {
     MemoryStatus condition();
 
     @Nullable
-    MemoryAccessor<F, Value> createAccessor(Brain<?> p_259936_, Optional<Value> p_259724_);
+    MemoryAccessor<F, Value> createAccessor(Brain<?> brain, Optional<Value> memory);
 
     public static record Absent<Value>(MemoryModuleType<Value> memory) implements MemoryCondition<Mu<Unit>, Value> {
         @Override

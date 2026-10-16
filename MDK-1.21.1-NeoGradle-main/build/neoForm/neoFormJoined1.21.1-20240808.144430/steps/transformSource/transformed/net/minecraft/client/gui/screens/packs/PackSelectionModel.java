@@ -27,15 +27,15 @@ public class PackSelectionModel {
     final Runnable onListChanged;
     private final Consumer<PackRepository> output;
 
-    public PackSelectionModel(Runnable p_99909_, Function<Pack, ResourceLocation> p_99910_, PackRepository p_99911_, Consumer<PackRepository> p_99912_) {
-        this.onListChanged = p_99909_;
-        this.iconGetter = p_99910_;
-        this.repository = p_99911_;
-        this.selected = Lists.newArrayList(p_99911_.getSelectedPacks().stream().filter(p -> !p.isHidden()).toList());
+    public PackSelectionModel(Runnable onListChanged, Function<Pack, ResourceLocation> iconGetter, PackRepository repository, Consumer<PackRepository> output) {
+        this.onListChanged = onListChanged;
+        this.iconGetter = iconGetter;
+        this.repository = repository;
+        this.selected = Lists.newArrayList(repository.getSelectedPacks().stream().filter(p -> !p.isHidden()).toList());
         Collections.reverse(this.selected);
-        this.unselected = Lists.newArrayList(p_99911_.getAvailablePacks().stream().filter(p -> !p.isHidden()).toList());
+        this.unselected = Lists.newArrayList(repository.getAvailablePacks().stream().filter(p -> !p.isHidden()).toList());
         this.unselected.removeAll(this.selected);
-        this.output = p_99912_;
+        this.output = output;
     }
 
     public Stream<PackSelectionModel.Entry> getUnselected() {
@@ -112,8 +112,8 @@ public class PackSelectionModel {
     abstract class EntryBase implements PackSelectionModel.Entry {
         private final Pack pack;
 
-        public EntryBase(Pack p_99936_) {
-            this.pack = p_99936_;
+        public EntryBase(Pack pack) {
+            this.pack = pack;
         }
 
         protected abstract List<Pack> getSelfList();
@@ -175,11 +175,11 @@ public class PackSelectionModel {
             }
         }
 
-        protected void move(int p_99939_) {
+        protected void move(int offset) {
             List<Pack> list = this.getSelfList();
             int i = list.indexOf(this.pack);
             list.remove(i);
-            list.add(i + p_99939_, this.pack);
+            list.add(i + offset, this.pack);
             PackSelectionModel.this.onListChanged.run();
         }
 

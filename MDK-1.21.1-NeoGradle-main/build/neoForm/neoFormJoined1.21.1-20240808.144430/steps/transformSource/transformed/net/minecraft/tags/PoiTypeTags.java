@@ -12,7 +12,7 @@ public class PoiTypeTags {
     private PoiTypeTags() {
     }
 
-    private static TagKey<PoiType> create(String p_215881_) {
-        return TagKey.create(Registries.POINT_OF_INTEREST_TYPE, ResourceLocation.withDefaultNamespace(p_215881_));
+    private static TagKey<PoiType> create(String name) {
+        return TagKey.create(Registries.POINT_OF_INTEREST_TYPE, ResourceLocation.withDefaultNamespace(name));
     }
 }

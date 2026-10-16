@@ -19,10 +19,10 @@ public record StructuresDebugPayload(ResourceKey<Level> dimension, BoundingBox m
         this(p_294983_.readResourceKey(Registries.DIMENSION), readBoundingBox(p_294983_), p_294983_.readList(StructuresDebugPayload.PieceInfo::new));
     }
 
-    private void write(FriendlyByteBuf p_295318_) {
-        p_295318_.writeResourceKey(this.dimension);
-        writeBoundingBox(p_295318_, this.mainBB);
-        p_295318_.writeCollection(this.pieces, (p_294583_, p_296047_) -> p_296047_.write(p_295318_));
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeResourceKey(this.dimension);
+        writeBoundingBox(buffer, this.mainBB);
+        buffer.writeCollection(this.pieces, (p_294583_, p_296047_) -> p_296047_.write(buffer));
     }
 
     @Override
@@ -30,17 +30,17 @@ public record StructuresDebugPayload(ResourceKey<Level> dimension, BoundingBox m
         return TYPE;
     }
 
-    static BoundingBox readBoundingBox(FriendlyByteBuf p_294387_) {
-        return new BoundingBox(p_294387_.readInt(), p_294387_.readInt(), p_294387_.readInt(), p_294387_.readInt(), p_294387_.readInt(), p_294387_.readInt());
+    static BoundingBox readBoundingBox(FriendlyByteBuf buffer) {
+        return new BoundingBox(buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt(), buffer.readInt());
     }
 
-    static void writeBoundingBox(FriendlyByteBuf p_296195_, BoundingBox p_294095_) {
-        p_296195_.writeInt(p_294095_.minX());
-        p_296195_.writeInt(p_294095_.minY());
-        p_296195_.writeInt(p_294095_.minZ());
-        p_296195_.writeInt(p_294095_.maxX());
-        p_296195_.writeInt(p_294095_.maxY());
-        p_296195_.writeInt(p_294095_.maxZ());
+    static void writeBoundingBox(FriendlyByteBuf buffer, BoundingBox boundingBox) {
+        buffer.writeInt(boundingBox.minX());
+        buffer.writeInt(boundingBox.minY());
+        buffer.writeInt(boundingBox.minZ());
+        buffer.writeInt(boundingBox.maxX());
+        buffer.writeInt(boundingBox.maxY());
+        buffer.writeInt(boundingBox.maxZ());
     }
 
     public static record PieceInfo(BoundingBox boundingBox, boolean isStart) {
@@ -48,9 +48,9 @@ public record StructuresDebugPayload(ResourceKey<Level> dimension, BoundingBox m
             this(StructuresDebugPayload.readBoundingBox(p_294562_), p_294562_.readBoolean());
         }
 
-        public void write(FriendlyByteBuf p_295794_) {
-            StructuresDebugPayload.writeBoundingBox(p_295794_, this.boundingBox);
-            p_295794_.writeBoolean(this.isStart);
+        public void write(FriendlyByteBuf buffer) {
+            StructuresDebugPayload.writeBoundingBox(buffer, this.boundingBox);
+            buffer.writeBoolean(this.isStart);
         }
     }
 }

@@ -19,10 +19,10 @@ public class ReplaceSphereConfiguration implements FeatureConfiguration {
     public final BlockState replaceState;
     private final IntProvider radius;
 
-    public ReplaceSphereConfiguration(BlockState p_161091_, BlockState p_161092_, IntProvider p_161093_) {
-        this.targetState = p_161091_;
-        this.replaceState = p_161092_;
-        this.radius = p_161093_;
+    public ReplaceSphereConfiguration(BlockState targetState, BlockState replaceState, IntProvider radius) {
+        this.targetState = targetState;
+        this.replaceState = replaceState;
+        this.radius = radius;
     }
 
     public IntProvider radius() {

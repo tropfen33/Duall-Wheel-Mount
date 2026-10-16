@@ -38,19 +38,19 @@ public record LootDataType<T>(ResourceKey<Registry<T>> registryKey, Codec<T> cod
         this(registryKey, codec, validator, defaultValue, net.neoforged.neoforge.common.conditions.ConditionalOps.createConditionalCodec(codec), idSetter);
     }
 
-    public void runValidation(ValidationContext p_279366_, ResourceKey<T> p_336149_, T p_279124_) {
-        this.validator.run(p_279366_, p_336149_, p_279124_);
+    public void runValidation(ValidationContext context, ResourceKey<T> key, T value) {
+        this.validator.run(context, key, value);
     }
 
-    public <V> Optional<T> deserialize(ResourceLocation p_279253_, DynamicOps<V> p_324006_, V p_324329_) {
-        var dataresult = this.conditionalCodec.parse(p_324006_, p_324329_);
-        dataresult.error().ifPresent(p_338121_ -> LOGGER.error("Couldn't parse element {}:{} - {}", this.registryKey, p_279253_, p_338121_.message()));
+    public <V> Optional<T> deserialize(ResourceLocation resourceLocation, DynamicOps<V> ops, V p_value) {
+        var dataresult = this.conditionalCodec.parse(ops, p_value);
+        dataresult.error().ifPresent(p_338121_ -> LOGGER.error("Couldn't parse element {}:{} - {}", this.registryKey, resourceLocation, p_338121_.message()));
         return dataresult.result().map(it -> {
-            it.ifPresent(val -> idSetter.accept(val, p_279253_));
+            it.ifPresent(val -> idSetter.accept(val, resourceLocation));
             T value = it.orElse(defaultValue);
-            if (value instanceof LootTable lootTable && p_324006_ instanceof net.minecraft.resources.RegistryOps<V> registryOps) {
+            if (value instanceof LootTable lootTable && ops instanceof net.minecraft.resources.RegistryOps<V> registryOps) {
                 var provider = net.neoforged.neoforge.common.CommonHooks.extractLookupProvider(registryOps);
-                value = (T) net.neoforged.neoforge.event.EventHooks.loadLootTable(provider, p_279253_, lootTable);
+                value = (T) net.neoforged.neoforge.event.EventHooks.loadLootTable(provider, resourceLocation, lootTable);
             }
             return value;
         });
@@ -76,6 +76,6 @@ public record LootDataType<T>(ResourceKey<Registry<T>> registryKey, Codec<T> cod
 
     @FunctionalInterface
     public interface Validator<T> {
-        void run(ValidationContext p_279419_, ResourceKey<T> p_335916_, T p_279326_);
+        void run(ValidationContext context, ResourceKey<T> key, T value);
     }
 }

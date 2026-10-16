@@ -28,15 +28,15 @@ public record EquipmentTable(ResourceKey<LootTable> lootTable, Map<EquipmentSlot
                 .apply(p_341275_, EquipmentTable::new)
     );
 
-    private static Map<EquipmentSlot, Float> createForAllSlots(float p_340946_) {
-        return createForAllSlots(List.of(EquipmentSlot.values()), p_340946_);
+    private static Map<EquipmentSlot, Float> createForAllSlots(float dropChance) {
+        return createForAllSlots(List.of(EquipmentSlot.values()), dropChance);
     }
 
-    private static Map<EquipmentSlot, Float> createForAllSlots(List<EquipmentSlot> p_340910_, float p_341369_) {
+    private static Map<EquipmentSlot, Float> createForAllSlots(List<EquipmentSlot> equipmentSlots, float dropChance) {
         Map<EquipmentSlot, Float> map = Maps.newHashMap();
 
-        for (EquipmentSlot equipmentslot : p_340910_) {
-            map.put(equipmentslot, p_341369_);
+        for (EquipmentSlot equipmentslot : equipmentSlots) {
+            map.put(equipmentslot, dropChance);
         }
 
         return map;

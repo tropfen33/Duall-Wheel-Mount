@@ -27,13 +27,13 @@ public class HugeFungusConfiguration implements FeatureConfiguration {
     public final boolean planted;
 
     public HugeFungusConfiguration(
-        BlockState p_285423_, BlockState p_285075_, BlockState p_285050_, BlockState p_285067_, BlockPredicate p_284983_, boolean p_285285_
+        BlockState validBaseState, BlockState stemState, BlockState hatState, BlockState decorState, BlockPredicate replaceableBlocks, boolean planted
     ) {
-        this.validBaseState = p_285423_;
-        this.stemState = p_285075_;
-        this.hatState = p_285050_;
-        this.decorState = p_285067_;
-        this.replaceableBlocks = p_284983_;
-        this.planted = p_285285_;
+        this.validBaseState = validBaseState;
+        this.stemState = stemState;
+        this.hatState = hatState;
+        this.decorState = decorState;
+        this.replaceableBlocks = replaceableBlocks;
+        this.planted = planted;
     }
 }

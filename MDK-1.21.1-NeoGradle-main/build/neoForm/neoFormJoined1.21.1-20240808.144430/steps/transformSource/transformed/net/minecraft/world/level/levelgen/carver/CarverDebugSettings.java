@@ -30,24 +30,24 @@ public class CarverDebugSettings {
     private final BlockState lavaState;
     private final BlockState barrierState;
 
-    public static CarverDebugSettings of(boolean p_159140_, BlockState p_159141_, BlockState p_159142_, BlockState p_159143_, BlockState p_159144_) {
-        return new CarverDebugSettings(p_159140_, p_159141_, p_159142_, p_159143_, p_159144_);
+    public static CarverDebugSettings of(boolean debugMode, BlockState airState, BlockState waterState, BlockState lavaState, BlockState barrierState) {
+        return new CarverDebugSettings(debugMode, airState, waterState, lavaState, barrierState);
     }
 
-    public static CarverDebugSettings of(BlockState p_159130_, BlockState p_159131_, BlockState p_159132_, BlockState p_159133_) {
-        return new CarverDebugSettings(false, p_159130_, p_159131_, p_159132_, p_159133_);
+    public static CarverDebugSettings of(BlockState airState, BlockState waterState, BlockState lavaState, BlockState barrierState) {
+        return new CarverDebugSettings(false, airState, waterState, lavaState, barrierState);
     }
 
-    public static CarverDebugSettings of(boolean p_159137_, BlockState p_159138_) {
-        return new CarverDebugSettings(p_159137_, p_159138_, DEFAULT.getWaterState(), DEFAULT.getLavaState(), DEFAULT.getBarrierState());
+    public static CarverDebugSettings of(boolean debugMode, BlockState airState) {
+        return new CarverDebugSettings(debugMode, airState, DEFAULT.getWaterState(), DEFAULT.getLavaState(), DEFAULT.getBarrierState());
     }
 
-    private CarverDebugSettings(boolean p_159123_, BlockState p_159124_, BlockState p_159125_, BlockState p_159126_, BlockState p_159127_) {
-        this.debugMode = p_159123_;
-        this.airState = p_159124_;
-        this.waterState = p_159125_;
-        this.lavaState = p_159126_;
-        this.barrierState = p_159127_;
+    private CarverDebugSettings(boolean debugMode, BlockState airState, BlockState waterState, BlockState lavaState, BlockState barrierState) {
+        this.debugMode = debugMode;
+        this.airState = airState;
+        this.waterState = waterState;
+        this.lavaState = lavaState;
+        this.barrierState = barrierState;
     }
 
     public boolean isDebugMode() {

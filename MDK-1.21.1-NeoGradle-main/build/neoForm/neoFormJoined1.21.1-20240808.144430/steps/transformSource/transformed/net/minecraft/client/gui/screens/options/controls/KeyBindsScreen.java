@@ -29,8 +29,8 @@ public class KeyBindsScreen extends OptionsSubScreen {
     private boolean isLastKeyHeldDown = false;
     private boolean isLastModifierHeldDown = false;
 
-    public KeyBindsScreen(Screen p_344996_, Options p_344771_) {
-        super(p_344996_, p_344771_, TITLE);
+    public KeyBindsScreen(Screen lastScreen, Options options) {
+        super(lastScreen, options, TITLE);
     }
 
     @Override
@@ -62,22 +62,40 @@ public class KeyBindsScreen extends OptionsSubScreen {
         this.keyBindsList.updateSize(this.width, this.layout);
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    public boolean mouseClicked(double p_346251_, double p_345041_, int p_345147_) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (this.selectedKey != null) {
-            this.options.setKey(this.selectedKey, InputConstants.Type.MOUSE.getOrCreate(p_345147_));
+            this.options.setKey(this.selectedKey, InputConstants.Type.MOUSE.getOrCreate(button));
             this.selectedKey = null;
             this.keyBindsList.resetMappingAndUpdateButtons();
             return true;
         } else {
-            return super.mouseClicked(p_346251_, p_345041_, p_345147_);
+            return super.mouseClicked(mouseX, mouseY, button);
         }
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_345810_, int p_345447_, int p_344981_) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (this.selectedKey != null) {
-            var key = InputConstants.getKey(p_345810_, p_345447_);
+            var key = InputConstants.getKey(keyCode, scanCode);
             if (lastPressedModifier == InputConstants.UNKNOWN && net.neoforged.neoforge.client.settings.KeyModifier.isKeyCodeModifier(key)) {
                 lastPressedModifier = key;
                 isLastModifierHeldDown = true;
@@ -87,7 +105,7 @@ public class KeyBindsScreen extends OptionsSubScreen {
             }
             return true;
         } else {
-            return super.keyPressed(p_345810_, p_345447_, p_344981_);
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
     }
 
@@ -142,9 +160,17 @@ public class KeyBindsScreen extends OptionsSubScreen {
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_346209_, int p_344846_, int p_346350_, float p_345601_) {
-        super.render(p_346209_, p_344846_, p_346350_, p_345601_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         boolean flag = false;
 
         for (KeyMapping keymapping : this.options.keyMappings) {

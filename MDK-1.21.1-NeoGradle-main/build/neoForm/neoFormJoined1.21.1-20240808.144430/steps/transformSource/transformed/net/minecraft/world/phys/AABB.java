@@ -18,93 +18,93 @@ public class AABB {
     public final double maxY;
     public final double maxZ;
 
-    public AABB(double p_82295_, double p_82296_, double p_82297_, double p_82298_, double p_82299_, double p_82300_) {
-        this.minX = Math.min(p_82295_, p_82298_);
-        this.minY = Math.min(p_82296_, p_82299_);
-        this.minZ = Math.min(p_82297_, p_82300_);
-        this.maxX = Math.max(p_82295_, p_82298_);
-        this.maxY = Math.max(p_82296_, p_82299_);
-        this.maxZ = Math.max(p_82297_, p_82300_);
+    public AABB(double x1, double y1, double z1, double x2, double y2, double z2) {
+        this.minX = Math.min(x1, x2);
+        this.minY = Math.min(y1, y2);
+        this.minZ = Math.min(z1, z2);
+        this.maxX = Math.max(x1, x2);
+        this.maxY = Math.max(y1, y2);
+        this.maxZ = Math.max(z1, z2);
     }
 
-    public AABB(BlockPos p_82305_) {
+    public AABB(BlockPos pos) {
         this(
-            (double)p_82305_.getX(),
-            (double)p_82305_.getY(),
-            (double)p_82305_.getZ(),
-            (double)(p_82305_.getX() + 1),
-            (double)(p_82305_.getY() + 1),
-            (double)(p_82305_.getZ() + 1)
+            (double)pos.getX(),
+            (double)pos.getY(),
+            (double)pos.getZ(),
+            (double)(pos.getX() + 1),
+            (double)(pos.getY() + 1),
+            (double)(pos.getZ() + 1)
         );
     }
 
-    public AABB(Vec3 p_82302_, Vec3 p_82303_) {
-        this(p_82302_.x, p_82302_.y, p_82302_.z, p_82303_.x, p_82303_.y, p_82303_.z);
+    public AABB(Vec3 start, Vec3 end) {
+        this(start.x, start.y, start.z, end.x, end.y, end.z);
     }
 
-    public static AABB of(BoundingBox p_82322_) {
+    public static AABB of(BoundingBox mutableBox) {
         return new AABB(
-            (double)p_82322_.minX(),
-            (double)p_82322_.minY(),
-            (double)p_82322_.minZ(),
-            (double)(p_82322_.maxX() + 1),
-            (double)(p_82322_.maxY() + 1),
-            (double)(p_82322_.maxZ() + 1)
+            (double)mutableBox.minX(),
+            (double)mutableBox.minY(),
+            (double)mutableBox.minZ(),
+            (double)(mutableBox.maxX() + 1),
+            (double)(mutableBox.maxY() + 1),
+            (double)(mutableBox.maxZ() + 1)
         );
     }
 
-    public static AABB unitCubeFromLowerCorner(Vec3 p_82334_) {
-        return new AABB(p_82334_.x, p_82334_.y, p_82334_.z, p_82334_.x + 1.0, p_82334_.y + 1.0, p_82334_.z + 1.0);
+    public static AABB unitCubeFromLowerCorner(Vec3 vector) {
+        return new AABB(vector.x, vector.y, vector.z, vector.x + 1.0, vector.y + 1.0, vector.z + 1.0);
     }
 
-    public static AABB encapsulatingFullBlocks(BlockPos p_309165_, BlockPos p_308877_) {
+    public static AABB encapsulatingFullBlocks(BlockPos startPos, BlockPos endPos) {
         return new AABB(
-            (double)Math.min(p_309165_.getX(), p_308877_.getX()),
-            (double)Math.min(p_309165_.getY(), p_308877_.getY()),
-            (double)Math.min(p_309165_.getZ(), p_308877_.getZ()),
-            (double)(Math.max(p_309165_.getX(), p_308877_.getX()) + 1),
-            (double)(Math.max(p_309165_.getY(), p_308877_.getY()) + 1),
-            (double)(Math.max(p_309165_.getZ(), p_308877_.getZ()) + 1)
+            (double)Math.min(startPos.getX(), endPos.getX()),
+            (double)Math.min(startPos.getY(), endPos.getY()),
+            (double)Math.min(startPos.getZ(), endPos.getZ()),
+            (double)(Math.max(startPos.getX(), endPos.getX()) + 1),
+            (double)(Math.max(startPos.getY(), endPos.getY()) + 1),
+            (double)(Math.max(startPos.getZ(), endPos.getZ()) + 1)
         );
     }
 
-    public AABB setMinX(double p_165881_) {
-        return new AABB(p_165881_, this.minY, this.minZ, this.maxX, this.maxY, this.maxZ);
+    public AABB setMinX(double minX) {
+        return new AABB(minX, this.minY, this.minZ, this.maxX, this.maxY, this.maxZ);
     }
 
-    public AABB setMinY(double p_165888_) {
-        return new AABB(this.minX, p_165888_, this.minZ, this.maxX, this.maxY, this.maxZ);
+    public AABB setMinY(double minY) {
+        return new AABB(this.minX, minY, this.minZ, this.maxX, this.maxY, this.maxZ);
     }
 
-    public AABB setMinZ(double p_165890_) {
-        return new AABB(this.minX, this.minY, p_165890_, this.maxX, this.maxY, this.maxZ);
+    public AABB setMinZ(double minZ) {
+        return new AABB(this.minX, this.minY, minZ, this.maxX, this.maxY, this.maxZ);
     }
 
-    public AABB setMaxX(double p_165892_) {
-        return new AABB(this.minX, this.minY, this.minZ, p_165892_, this.maxY, this.maxZ);
+    public AABB setMaxX(double maxX) {
+        return new AABB(this.minX, this.minY, this.minZ, maxX, this.maxY, this.maxZ);
     }
 
-    public AABB setMaxY(double p_165894_) {
-        return new AABB(this.minX, this.minY, this.minZ, this.maxX, p_165894_, this.maxZ);
+    public AABB setMaxY(double maxY) {
+        return new AABB(this.minX, this.minY, this.minZ, this.maxX, maxY, this.maxZ);
     }
 
-    public AABB setMaxZ(double p_165896_) {
-        return new AABB(this.minX, this.minY, this.minZ, this.maxX, this.maxY, p_165896_);
+    public AABB setMaxZ(double maxZ) {
+        return new AABB(this.minX, this.minY, this.minZ, this.maxX, this.maxY, maxZ);
     }
 
-    public double min(Direction.Axis p_82341_) {
-        return p_82341_.choose(this.minX, this.minY, this.minZ);
+    public double min(Direction.Axis axis) {
+        return axis.choose(this.minX, this.minY, this.minZ);
     }
 
-    public double max(Direction.Axis p_82375_) {
-        return p_82375_.choose(this.maxX, this.maxY, this.maxZ);
+    public double max(Direction.Axis axis) {
+        return axis.choose(this.maxX, this.maxY, this.maxZ);
     }
 
     @Override
-    public boolean equals(Object p_82398_) {
-        if (this == p_82398_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        } else if (!(p_82398_ instanceof AABB aabb)) {
+        } else if (!(other instanceof AABB aabb)) {
             return false;
         } else if (Double.compare(aabb.minX, this.minX) != 0) {
             return false;
@@ -135,148 +135,235 @@ public class AABB {
         return 31 * j + (int)(i ^ i >>> 32);
     }
 
-    public AABB contract(double p_82311_, double p_82312_, double p_82313_) {
+    /**
+     * Creates a new {@link AxisAlignedBB} that has been contracted by the given amount, with positive changes decreasing max values and negative changes increasing min values.
+     * <br/>
+     * If the amount to contract by is larger than the length of a side, then the side will wrap (still creating a valid AABB - see last sample).
+     *
+     * <h3>Samples:</h3>
+     * <table>
+     * <tr><th>Input</th><th>Result</th></tr>
+     * <tr><td><pre><code>new AxisAlignedBB(0, 0, 0, 4, 4, 4).contract(2, 2, 2)</code></pre></td><td><pre><samp>box[0.0, 0.0, 0.0 -> 2.0, 2.0, 2.0]</samp></pre></td></tr>
+     * <tr><td><pre><code>new AxisAlignedBB(0, 0, 0, 4, 4, 4).contract(-2, -2, -2)</code></pre></td><td><pre><samp>box[2.0, 2.0, 2.0 -> 4.0, 4.0, 4.0]</samp></pre></td></tr>
+     * <tr><td><pre><code>new AxisAlignedBB(5, 5, 5, 7, 7, 7).contract(0, 1, -1)</code></pre></td><td><pre><samp>box[5.0, 5.0, 6.0 -> 7.0, 6.0, 7.0]</samp></pre></td></tr>
+     * <tr><td><pre><code>new AxisAlignedBB(-2, -2, -2, 2, 2, 2).contract(4, -4, 0)</code></pre></td><td><pre><samp>box[-8.0, 2.0, -2.0 -> -2.0, 8.0, 2.0]</samp></pre></td></tr>
+     * </table>
+     *
+     * <h3>See Also:</h3>
+     * <ul>
+     * <li>{@link #expand(double, double, double)} - like this, except for expanding.</li>
+     * <li>{@link #grow(double, double, double)} and {@link #grow(double)} - expands in all directions.</li>
+     * <li>{@link #shrink(double)} - contracts in all directions (like {@link #grow(double)})</li>
+     * </ul>
+     *
+     * @return A new modified bounding box.
+     */
+    public AABB contract(double x, double y, double z) {
         double d0 = this.minX;
         double d1 = this.minY;
         double d2 = this.minZ;
         double d3 = this.maxX;
         double d4 = this.maxY;
         double d5 = this.maxZ;
-        if (p_82311_ < 0.0) {
-            d0 -= p_82311_;
-        } else if (p_82311_ > 0.0) {
-            d3 -= p_82311_;
+        if (x < 0.0) {
+            d0 -= x;
+        } else if (x > 0.0) {
+            d3 -= x;
         }
 
-        if (p_82312_ < 0.0) {
-            d1 -= p_82312_;
-        } else if (p_82312_ > 0.0) {
-            d4 -= p_82312_;
+        if (y < 0.0) {
+            d1 -= y;
+        } else if (y > 0.0) {
+            d4 -= y;
         }
 
-        if (p_82313_ < 0.0) {
-            d2 -= p_82313_;
-        } else if (p_82313_ > 0.0) {
-            d5 -= p_82313_;
+        if (z < 0.0) {
+            d2 -= z;
+        } else if (z > 0.0) {
+            d5 -= z;
         }
 
         return new AABB(d0, d1, d2, d3, d4, d5);
     }
 
-    public AABB expandTowards(Vec3 p_82370_) {
-        return this.expandTowards(p_82370_.x, p_82370_.y, p_82370_.z);
+    public AABB expandTowards(Vec3 vector) {
+        return this.expandTowards(vector.x, vector.y, vector.z);
     }
 
-    public AABB expandTowards(double p_82364_, double p_82365_, double p_82366_) {
+    /**
+     * Creates a new {@link AxisAlignedBB} that has been expanded by the given amount, with positive changes increasing max values and negative changes decreasing min values.
+     *
+     * <h3>Samples:</h3>
+     * <table>
+     * <tr><th>Input</th><th>Result</th></tr>
+     * <tr><td><pre><code>new AxisAlignedBB(0, 0, 0, 1, 1, 1).expand(2, 2, 2)</code></pre></td><td><pre><samp>box[0, 0, 0 -> 3, 3, 3]</samp></pre></td><td>
+     * <tr><td><pre><code>new AxisAlignedBB(0, 0, 0, 1, 1, 1).expand(-2, -2, -2)</code></pre></td><td><pre><samp>box[-2, -2, -2 -> 1, 1, 1]</samp></pre></td><td>
+     * <tr><td><pre><code>new AxisAlignedBB(5, 5, 5, 7, 7, 7).expand(0, 1, -1)</code></pre></td><td><pre><samp>box[5, 5, 4, 7, 8, 7]</samp></pre></td><td>
+     * </table>
+     *
+     * <h3>See Also:</h3>
+     * <ul>
+     * <li>{@link #contract(double, double, double)} - like this, except for shrinking.</li>
+     * <li>{@link #grow(double, double, double)} and {@link #grow(double)} - expands in all directions.</li>
+     * <li>{@link #shrink(double)} - contracts in all directions (like {@link #grow(double)})</li>
+     * </ul>
+     *
+     * @return A modified bounding box that will always be equal or greater in volume to this bounding box.
+     */
+    public AABB expandTowards(double x, double y, double z) {
         double d0 = this.minX;
         double d1 = this.minY;
         double d2 = this.minZ;
         double d3 = this.maxX;
         double d4 = this.maxY;
         double d5 = this.maxZ;
-        if (p_82364_ < 0.0) {
-            d0 += p_82364_;
-        } else if (p_82364_ > 0.0) {
-            d3 += p_82364_;
+        if (x < 0.0) {
+            d0 += x;
+        } else if (x > 0.0) {
+            d3 += x;
         }
 
-        if (p_82365_ < 0.0) {
-            d1 += p_82365_;
-        } else if (p_82365_ > 0.0) {
-            d4 += p_82365_;
+        if (y < 0.0) {
+            d1 += y;
+        } else if (y > 0.0) {
+            d4 += y;
         }
 
-        if (p_82366_ < 0.0) {
-            d2 += p_82366_;
-        } else if (p_82366_ > 0.0) {
-            d5 += p_82366_;
+        if (z < 0.0) {
+            d2 += z;
+        } else if (z > 0.0) {
+            d5 += z;
         }
 
         return new AABB(d0, d1, d2, d3, d4, d5);
     }
 
-    public AABB inflate(double p_82378_, double p_82379_, double p_82380_) {
-        double d0 = this.minX - p_82378_;
-        double d1 = this.minY - p_82379_;
-        double d2 = this.minZ - p_82380_;
-        double d3 = this.maxX + p_82378_;
-        double d4 = this.maxY + p_82379_;
-        double d5 = this.maxZ + p_82380_;
+    /**
+     * Creates a new {@link AxisAlignedBB} that has been contracted by the given amount in both directions. Negative values will shrink the AABB instead of expanding it.
+     * <br/>
+     * Side lengths will be increased by 2 times the value of the parameters, since both min and max are changed.
+     * <br/>
+     * If contracting and the amount to contract by is larger than the length of a side, then the side will wrap (still creating a valid AABB - see last ample).
+     *
+     * <h3>Samples:</h3>
+     * <table>
+     * <tr><th>Input</th><th>Result</th></tr>
+     * <tr><td><pre><code>new AxisAlignedBB(0, 0, 0, 1, 1, 1).grow(2, 2, 2)</code></pre></td><td><pre><samp>box[-2.0, -2.0, -2.0 -> 3.0, 3.0, 3.0]</samp></pre></td></tr>
+     * <tr><td><pre><code>new AxisAlignedBB(0, 0, 0, 6, 6, 6).grow(-2, -2, -2)</code></pre></td><td><pre><samp>box[2.0, 2.0, 2.0 -> 4.0, 4.0, 4.0]</samp></pre></td></tr>
+     * <tr><td><pre><code>new AxisAlignedBB(5, 5, 5, 7, 7, 7).grow(0, 1, -1)</code></pre></td><td><pre><samp>box[5.0, 4.0, 6.0 -> 7.0, 8.0, 6.0]</samp></pre></td></tr>
+     * <tr><td><pre><code>new AxisAlignedBB(1, 1, 1, 3, 3, 3).grow(-4, -2, -3)</code></pre></td><td><pre><samp>box[-1.0, 1.0, 0.0 -> 5.0, 3.0, 4.0]</samp></pre></td></tr>
+     * </table>
+     *
+     * <h3>See Also:</h3>
+     * <ul>
+     * <li>{@link #expand(double, double, double)} - expands in only one direction.</li>
+     * <li>{@link #contract(double, double, double)} - contracts in only one direction.</li>
+     * <lu>{@link #grow(double)} - version of this that expands in all directions from one parameter.</li>
+     * <li>{@link #shrink(double)} - contracts in all directions</li>
+     * </ul>
+     *
+     * @return A modified bounding box.
+     */
+    public AABB inflate(double x, double y, double z) {
+        double d0 = this.minX - x;
+        double d1 = this.minY - y;
+        double d2 = this.minZ - z;
+        double d3 = this.maxX + x;
+        double d4 = this.maxY + y;
+        double d5 = this.maxZ + z;
         return new AABB(d0, d1, d2, d3, d4, d5);
     }
 
-    public AABB inflate(double p_82401_) {
-        return this.inflate(p_82401_, p_82401_, p_82401_);
+    /**
+     * Creates a new {@link AxisAlignedBB} that is expanded by the given value in all directions. Equivalent to {@link #grow(double, double, double)} with the given value for all 3 params. Negative values will shrink the AABB.
+     * <br/>
+     * Side lengths will be increased by 2 times the value of the parameter, since both min and max are changed.
+     * <br/>
+     * If contracting and the amount to contract by is larger than the length of a side, then the side will wrap (still creating a valid AABB - see samples on {@link #grow(double, double, double)}).
+     *
+     * @return A modified AABB.
+     */
+    public AABB inflate(double value) {
+        return this.inflate(value, value, value);
     }
 
-    public AABB intersect(AABB p_82324_) {
-        double d0 = Math.max(this.minX, p_82324_.minX);
-        double d1 = Math.max(this.minY, p_82324_.minY);
-        double d2 = Math.max(this.minZ, p_82324_.minZ);
-        double d3 = Math.min(this.maxX, p_82324_.maxX);
-        double d4 = Math.min(this.maxY, p_82324_.maxY);
-        double d5 = Math.min(this.maxZ, p_82324_.maxZ);
+    public AABB intersect(AABB other) {
+        double d0 = Math.max(this.minX, other.minX);
+        double d1 = Math.max(this.minY, other.minY);
+        double d2 = Math.max(this.minZ, other.minZ);
+        double d3 = Math.min(this.maxX, other.maxX);
+        double d4 = Math.min(this.maxY, other.maxY);
+        double d5 = Math.min(this.maxZ, other.maxZ);
         return new AABB(d0, d1, d2, d3, d4, d5);
     }
 
-    public AABB minmax(AABB p_82368_) {
-        double d0 = Math.min(this.minX, p_82368_.minX);
-        double d1 = Math.min(this.minY, p_82368_.minY);
-        double d2 = Math.min(this.minZ, p_82368_.minZ);
-        double d3 = Math.max(this.maxX, p_82368_.maxX);
-        double d4 = Math.max(this.maxY, p_82368_.maxY);
-        double d5 = Math.max(this.maxZ, p_82368_.maxZ);
+    public AABB minmax(AABB other) {
+        double d0 = Math.min(this.minX, other.minX);
+        double d1 = Math.min(this.minY, other.minY);
+        double d2 = Math.min(this.minZ, other.minZ);
+        double d3 = Math.max(this.maxX, other.maxX);
+        double d4 = Math.max(this.maxY, other.maxY);
+        double d5 = Math.max(this.maxZ, other.maxZ);
         return new AABB(d0, d1, d2, d3, d4, d5);
     }
 
-    public AABB move(double p_82387_, double p_82388_, double p_82389_) {
-        return new AABB(this.minX + p_82387_, this.minY + p_82388_, this.minZ + p_82389_, this.maxX + p_82387_, this.maxY + p_82388_, this.maxZ + p_82389_);
+    /**
+     * Offsets the current bounding box by the specified amount.
+     */
+    public AABB move(double x, double y, double z) {
+        return new AABB(this.minX + x, this.minY + y, this.minZ + z, this.maxX + x, this.maxY + y, this.maxZ + z);
     }
 
-    public AABB move(BlockPos p_82339_) {
+    public AABB move(BlockPos pos) {
         return new AABB(
-            this.minX + (double)p_82339_.getX(),
-            this.minY + (double)p_82339_.getY(),
-            this.minZ + (double)p_82339_.getZ(),
-            this.maxX + (double)p_82339_.getX(),
-            this.maxY + (double)p_82339_.getY(),
-            this.maxZ + (double)p_82339_.getZ()
+            this.minX + (double)pos.getX(),
+            this.minY + (double)pos.getY(),
+            this.minZ + (double)pos.getZ(),
+            this.maxX + (double)pos.getX(),
+            this.maxY + (double)pos.getY(),
+            this.maxZ + (double)pos.getZ()
         );
     }
 
-    public AABB move(Vec3 p_82384_) {
-        return this.move(p_82384_.x, p_82384_.y, p_82384_.z);
+    public AABB move(Vec3 vec) {
+        return this.move(vec.x, vec.y, vec.z);
     }
 
-    public AABB move(Vector3f p_346297_) {
-        return this.move((double)p_346297_.x, (double)p_346297_.y, (double)p_346297_.z);
+    public AABB move(Vector3f vec) {
+        return this.move((double)vec.x, (double)vec.y, (double)vec.z);
     }
 
-    public boolean intersects(AABB p_82382_) {
-        return this.intersects(p_82382_.minX, p_82382_.minY, p_82382_.minZ, p_82382_.maxX, p_82382_.maxY, p_82382_.maxZ);
+    /**
+     * Checks if the bounding box intersects with another.
+     */
+    public boolean intersects(AABB other) {
+        return this.intersects(other.minX, other.minY, other.minZ, other.maxX, other.maxY, other.maxZ);
     }
 
-    public boolean intersects(double p_82315_, double p_82316_, double p_82317_, double p_82318_, double p_82319_, double p_82320_) {
-        return this.minX < p_82318_ && this.maxX > p_82315_ && this.minY < p_82319_ && this.maxY > p_82316_ && this.minZ < p_82320_ && this.maxZ > p_82317_;
+    public boolean intersects(double x1, double y1, double z1, double x2, double y2, double z2) {
+        return this.minX < x2 && this.maxX > x1 && this.minY < y2 && this.maxY > y1 && this.minZ < z2 && this.maxZ > z1;
     }
 
-    public boolean intersects(Vec3 p_82336_, Vec3 p_82337_) {
+    public boolean intersects(Vec3 min, Vec3 max) {
         return this.intersects(
-            Math.min(p_82336_.x, p_82337_.x),
-            Math.min(p_82336_.y, p_82337_.y),
-            Math.min(p_82336_.z, p_82337_.z),
-            Math.max(p_82336_.x, p_82337_.x),
-            Math.max(p_82336_.y, p_82337_.y),
-            Math.max(p_82336_.z, p_82337_.z)
+            Math.min(min.x, max.x),
+            Math.min(min.y, max.y),
+            Math.min(min.z, max.z),
+            Math.max(min.x, max.x),
+            Math.max(min.y, max.y),
+            Math.max(min.z, max.z)
         );
     }
 
-    public boolean contains(Vec3 p_82391_) {
-        return this.contains(p_82391_.x, p_82391_.y, p_82391_.z);
+    /**
+     * Returns if the supplied Vec3D is completely inside the bounding box
+     */
+    public boolean contains(Vec3 vec) {
+        return this.contains(vec.x, vec.y, vec.z);
     }
 
-    public boolean contains(double p_82394_, double p_82395_, double p_82396_) {
-        return p_82394_ >= this.minX && p_82394_ < this.maxX && p_82395_ >= this.minY && p_82395_ < this.maxY && p_82396_ >= this.minZ && p_82396_ < this.maxZ;
+    public boolean contains(double x, double y, double z) {
+        return x >= this.minX && x < this.maxX && y >= this.minY && y < this.maxY && z >= this.minZ && z < this.maxZ;
     }
 
     public double getSize() {
@@ -298,195 +385,204 @@ public class AABB {
         return this.maxZ - this.minZ;
     }
 
-    public AABB deflate(double p_165898_, double p_165899_, double p_165900_) {
-        return this.inflate(-p_165898_, -p_165899_, -p_165900_);
+    public AABB deflate(double x, double y, double z) {
+        return this.inflate(-x, -y, -z);
     }
 
-    public AABB deflate(double p_82407_) {
-        return this.inflate(-p_82407_);
+    /**
+     * Creates a new {@link AxisAlignedBB} that is expanded by the given value in all directions. Equivalent to {@link #grow(double)} with value set to the negative of the value provided here. Passing a negative value to this method values will grow the AABB.
+     * <br/>
+     * Side lengths will be decreased by 2 times the value of the parameter, since both min and max are changed.
+     * <br/>
+     * If contracting and the amount to contract by is larger than the length of a side, then the side will wrap (still creating a valid AABB - see samples on {@link #grow(double, double, double)}).
+     *
+     * @return A modified AABB.
+     */
+    public AABB deflate(double value) {
+        return this.inflate(-value);
     }
 
-    public Optional<Vec3> clip(Vec3 p_82372_, Vec3 p_82373_) {
+    public Optional<Vec3> clip(Vec3 from, Vec3 to) {
         double[] adouble = new double[]{1.0};
-        double d0 = p_82373_.x - p_82372_.x;
-        double d1 = p_82373_.y - p_82372_.y;
-        double d2 = p_82373_.z - p_82372_.z;
-        Direction direction = getDirection(this, p_82372_, adouble, null, d0, d1, d2);
+        double d0 = to.x - from.x;
+        double d1 = to.y - from.y;
+        double d2 = to.z - from.z;
+        Direction direction = getDirection(this, from, adouble, null, d0, d1, d2);
         if (direction == null) {
             return Optional.empty();
         } else {
             double d3 = adouble[0];
-            return Optional.of(p_82372_.add(d3 * d0, d3 * d1, d3 * d2));
+            return Optional.of(from.add(d3 * d0, d3 * d1, d3 * d2));
         }
     }
 
     @Nullable
-    public static BlockHitResult clip(Iterable<AABB> p_82343_, Vec3 p_82344_, Vec3 p_82345_, BlockPos p_82346_) {
+    public static BlockHitResult clip(Iterable<AABB> boxes, Vec3 start, Vec3 end, BlockPos pos) {
         double[] adouble = new double[]{1.0};
         Direction direction = null;
-        double d0 = p_82345_.x - p_82344_.x;
-        double d1 = p_82345_.y - p_82344_.y;
-        double d2 = p_82345_.z - p_82344_.z;
+        double d0 = end.x - start.x;
+        double d1 = end.y - start.y;
+        double d2 = end.z - start.z;
 
-        for (AABB aabb : p_82343_) {
-            direction = getDirection(aabb.move(p_82346_), p_82344_, adouble, direction, d0, d1, d2);
+        for (AABB aabb : boxes) {
+            direction = getDirection(aabb.move(pos), start, adouble, direction, d0, d1, d2);
         }
 
         if (direction == null) {
             return null;
         } else {
             double d3 = adouble[0];
-            return new BlockHitResult(p_82344_.add(d3 * d0, d3 * d1, d3 * d2), direction, p_82346_, false);
+            return new BlockHitResult(start.add(d3 * d0, d3 * d1, d3 * d2), direction, pos, false);
         }
     }
 
     @Nullable
     private static Direction getDirection(
-        AABB p_82326_, Vec3 p_82327_, double[] p_82328_, @Nullable Direction p_82329_, double p_82330_, double p_82331_, double p_82332_
+        AABB aabb, Vec3 start, double[] minDistance, @Nullable Direction facing, double deltaX, double deltaY, double deltaZ
     ) {
-        if (p_82330_ > 1.0E-7) {
-            p_82329_ = clipPoint(
-                p_82328_,
-                p_82329_,
-                p_82330_,
-                p_82331_,
-                p_82332_,
-                p_82326_.minX,
-                p_82326_.minY,
-                p_82326_.maxY,
-                p_82326_.minZ,
-                p_82326_.maxZ,
+        if (deltaX > 1.0E-7) {
+            facing = clipPoint(
+                minDistance,
+                facing,
+                deltaX,
+                deltaY,
+                deltaZ,
+                aabb.minX,
+                aabb.minY,
+                aabb.maxY,
+                aabb.minZ,
+                aabb.maxZ,
                 Direction.WEST,
-                p_82327_.x,
-                p_82327_.y,
-                p_82327_.z
+                start.x,
+                start.y,
+                start.z
             );
-        } else if (p_82330_ < -1.0E-7) {
-            p_82329_ = clipPoint(
-                p_82328_,
-                p_82329_,
-                p_82330_,
-                p_82331_,
-                p_82332_,
-                p_82326_.maxX,
-                p_82326_.minY,
-                p_82326_.maxY,
-                p_82326_.minZ,
-                p_82326_.maxZ,
+        } else if (deltaX < -1.0E-7) {
+            facing = clipPoint(
+                minDistance,
+                facing,
+                deltaX,
+                deltaY,
+                deltaZ,
+                aabb.maxX,
+                aabb.minY,
+                aabb.maxY,
+                aabb.minZ,
+                aabb.maxZ,
                 Direction.EAST,
-                p_82327_.x,
-                p_82327_.y,
-                p_82327_.z
+                start.x,
+                start.y,
+                start.z
             );
         }
 
-        if (p_82331_ > 1.0E-7) {
-            p_82329_ = clipPoint(
-                p_82328_,
-                p_82329_,
-                p_82331_,
-                p_82332_,
-                p_82330_,
-                p_82326_.minY,
-                p_82326_.minZ,
-                p_82326_.maxZ,
-                p_82326_.minX,
-                p_82326_.maxX,
+        if (deltaY > 1.0E-7) {
+            facing = clipPoint(
+                minDistance,
+                facing,
+                deltaY,
+                deltaZ,
+                deltaX,
+                aabb.minY,
+                aabb.minZ,
+                aabb.maxZ,
+                aabb.minX,
+                aabb.maxX,
                 Direction.DOWN,
-                p_82327_.y,
-                p_82327_.z,
-                p_82327_.x
+                start.y,
+                start.z,
+                start.x
             );
-        } else if (p_82331_ < -1.0E-7) {
-            p_82329_ = clipPoint(
-                p_82328_,
-                p_82329_,
-                p_82331_,
-                p_82332_,
-                p_82330_,
-                p_82326_.maxY,
-                p_82326_.minZ,
-                p_82326_.maxZ,
-                p_82326_.minX,
-                p_82326_.maxX,
+        } else if (deltaY < -1.0E-7) {
+            facing = clipPoint(
+                minDistance,
+                facing,
+                deltaY,
+                deltaZ,
+                deltaX,
+                aabb.maxY,
+                aabb.minZ,
+                aabb.maxZ,
+                aabb.minX,
+                aabb.maxX,
                 Direction.UP,
-                p_82327_.y,
-                p_82327_.z,
-                p_82327_.x
+                start.y,
+                start.z,
+                start.x
             );
         }
 
-        if (p_82332_ > 1.0E-7) {
-            p_82329_ = clipPoint(
-                p_82328_,
-                p_82329_,
-                p_82332_,
-                p_82330_,
-                p_82331_,
-                p_82326_.minZ,
-                p_82326_.minX,
-                p_82326_.maxX,
-                p_82326_.minY,
-                p_82326_.maxY,
+        if (deltaZ > 1.0E-7) {
+            facing = clipPoint(
+                minDistance,
+                facing,
+                deltaZ,
+                deltaX,
+                deltaY,
+                aabb.minZ,
+                aabb.minX,
+                aabb.maxX,
+                aabb.minY,
+                aabb.maxY,
                 Direction.NORTH,
-                p_82327_.z,
-                p_82327_.x,
-                p_82327_.y
+                start.z,
+                start.x,
+                start.y
             );
-        } else if (p_82332_ < -1.0E-7) {
-            p_82329_ = clipPoint(
-                p_82328_,
-                p_82329_,
-                p_82332_,
-                p_82330_,
-                p_82331_,
-                p_82326_.maxZ,
-                p_82326_.minX,
-                p_82326_.maxX,
-                p_82326_.minY,
-                p_82326_.maxY,
+        } else if (deltaZ < -1.0E-7) {
+            facing = clipPoint(
+                minDistance,
+                facing,
+                deltaZ,
+                deltaX,
+                deltaY,
+                aabb.maxZ,
+                aabb.minX,
+                aabb.maxX,
+                aabb.minY,
+                aabb.maxY,
                 Direction.SOUTH,
-                p_82327_.z,
-                p_82327_.x,
-                p_82327_.y
+                start.z,
+                start.x,
+                start.y
             );
         }
 
-        return p_82329_;
+        return facing;
     }
 
     @Nullable
     private static Direction clipPoint(
-        double[] p_82348_,
-        @Nullable Direction p_82349_,
-        double p_82350_,
-        double p_82351_,
-        double p_82352_,
-        double p_82353_,
-        double p_82354_,
-        double p_82355_,
-        double p_82356_,
-        double p_82357_,
-        Direction p_82358_,
-        double p_82359_,
-        double p_82360_,
-        double p_82361_
+        double[] minDistance,
+        @Nullable Direction prevDirection,
+        double distanceSide,
+        double distanceOtherA,
+        double distanceOtherB,
+        double minSide,
+        double minOtherA,
+        double maxOtherA,
+        double minOtherB,
+        double maxOtherB,
+        Direction hitSide,
+        double startSide,
+        double startOtherA,
+        double startOtherB
     ) {
-        double d0 = (p_82353_ - p_82359_) / p_82350_;
-        double d1 = p_82360_ + d0 * p_82351_;
-        double d2 = p_82361_ + d0 * p_82352_;
-        if (0.0 < d0 && d0 < p_82348_[0] && p_82354_ - 1.0E-7 < d1 && d1 < p_82355_ + 1.0E-7 && p_82356_ - 1.0E-7 < d2 && d2 < p_82357_ + 1.0E-7) {
-            p_82348_[0] = d0;
-            return p_82358_;
+        double d0 = (minSide - startSide) / distanceSide;
+        double d1 = startOtherA + d0 * distanceOtherA;
+        double d2 = startOtherB + d0 * distanceOtherB;
+        if (0.0 < d0 && d0 < minDistance[0] && minOtherA - 1.0E-7 < d1 && d1 < maxOtherA + 1.0E-7 && minOtherB - 1.0E-7 < d2 && d2 < maxOtherB + 1.0E-7) {
+            minDistance[0] = d0;
+            return hitSide;
         } else {
-            return p_82349_;
+            return prevDirection;
         }
     }
 
-    public double distanceToSqr(Vec3 p_273572_) {
-        double d0 = Math.max(Math.max(this.minX - p_273572_.x, p_273572_.x - this.maxX), 0.0);
-        double d1 = Math.max(Math.max(this.minY - p_273572_.y, p_273572_.y - this.maxY), 0.0);
-        double d2 = Math.max(Math.max(this.minZ - p_273572_.z, p_273572_.z - this.maxZ), 0.0);
+    public double distanceToSqr(Vec3 vec) {
+        double d0 = Math.max(Math.max(this.minX - vec.x, vec.x - this.maxX), 0.0);
+        double d1 = Math.max(Math.max(this.minY - vec.y, vec.y - this.maxY), 0.0);
+        double d2 = Math.max(Math.max(this.minZ - vec.z, vec.z - this.maxZ), 0.0);
         return Mth.lengthSquared(d0, d1, d2);
     }
 
@@ -520,14 +616,14 @@ public class AABB {
         return new Vec3(this.maxX, this.maxY, this.maxZ);
     }
 
-    public static AABB ofSize(Vec3 p_165883_, double p_165884_, double p_165885_, double p_165886_) {
+    public static AABB ofSize(Vec3 center, double xSize, double ySize, double zSize) {
         return new AABB(
-            p_165883_.x - p_165884_ / 2.0,
-            p_165883_.y - p_165885_ / 2.0,
-            p_165883_.z - p_165886_ / 2.0,
-            p_165883_.x + p_165884_ / 2.0,
-            p_165883_.y + p_165885_ / 2.0,
-            p_165883_.z + p_165886_ / 2.0
+            center.x - xSize / 2.0,
+            center.y - ySize / 2.0,
+            center.z - zSize / 2.0,
+            center.x + xSize / 2.0,
+            center.y + ySize / 2.0,
+            center.z + zSize / 2.0
         );
     }
 

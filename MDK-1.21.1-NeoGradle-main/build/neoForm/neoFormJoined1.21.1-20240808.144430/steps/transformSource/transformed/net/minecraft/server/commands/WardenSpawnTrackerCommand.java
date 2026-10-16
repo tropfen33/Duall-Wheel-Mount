@@ -12,8 +12,8 @@ import net.minecraft.world.entity.monster.warden.WardenSpawnTracker;
 import net.minecraft.world.entity.player.Player;
 
 public class WardenSpawnTrackerCommand {
-    public static void register(CommandDispatcher<CommandSourceStack> p_214774_) {
-        p_214774_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("warden_spawn_tracker")
                 .requires(p_214778_ -> p_214778_.hasPermission(2))
                 .then(
@@ -36,35 +36,35 @@ public class WardenSpawnTrackerCommand {
         );
     }
 
-    private static int setWarningLevel(CommandSourceStack p_214783_, Collection<? extends Player> p_214784_, int p_214785_) {
-        for (Player player : p_214784_) {
-            player.getWardenSpawnTracker().ifPresent(p_248188_ -> p_248188_.setWarningLevel(p_214785_));
+    private static int setWarningLevel(CommandSourceStack source, Collection<? extends Player> targets, int warningLevel) {
+        for (Player player : targets) {
+            player.getWardenSpawnTracker().ifPresent(p_248188_ -> p_248188_.setWarningLevel(warningLevel));
         }
 
-        if (p_214784_.size() == 1) {
-            p_214783_.sendSuccess(
-                () -> Component.translatable("commands.warden_spawn_tracker.set.success.single", p_214784_.iterator().next().getDisplayName()), true
+        if (targets.size() == 1) {
+            source.sendSuccess(
+                () -> Component.translatable("commands.warden_spawn_tracker.set.success.single", targets.iterator().next().getDisplayName()), true
             );
         } else {
-            p_214783_.sendSuccess(() -> Component.translatable("commands.warden_spawn_tracker.set.success.multiple", p_214784_.size()), true);
+            source.sendSuccess(() -> Component.translatable("commands.warden_spawn_tracker.set.success.multiple", targets.size()), true);
         }
 
-        return p_214784_.size();
+        return targets.size();
     }
 
-    private static int resetTracker(CommandSourceStack p_214780_, Collection<? extends Player> p_214781_) {
-        for (Player player : p_214781_) {
+    private static int resetTracker(CommandSourceStack source, Collection<? extends Player> targets) {
+        for (Player player : targets) {
             player.getWardenSpawnTracker().ifPresent(WardenSpawnTracker::reset);
         }
 
-        if (p_214781_.size() == 1) {
-            p_214780_.sendSuccess(
-                () -> Component.translatable("commands.warden_spawn_tracker.clear.success.single", p_214781_.iterator().next().getDisplayName()), true
+        if (targets.size() == 1) {
+            source.sendSuccess(
+                () -> Component.translatable("commands.warden_spawn_tracker.clear.success.single", targets.iterator().next().getDisplayName()), true
             );
         } else {
-            p_214780_.sendSuccess(() -> Component.translatable("commands.warden_spawn_tracker.clear.success.multiple", p_214781_.size()), true);
+            source.sendSuccess(() -> Component.translatable("commands.warden_spawn_tracker.clear.success.multiple", targets.size()), true);
         }
 
-        return p_214781_.size();
+        return targets.size();
     }
 }

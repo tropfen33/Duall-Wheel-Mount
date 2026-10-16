@@ -48,27 +48,27 @@ public abstract class AbstractVillager extends AgeableMob implements InventoryCa
     protected MerchantOffers offers;
     private final SimpleContainer inventory = new SimpleContainer(8);
 
-    public AbstractVillager(EntityType<? extends AbstractVillager> p_35267_, Level p_35268_) {
-        super(p_35267_, p_35268_);
+    public AbstractVillager(EntityType<? extends AbstractVillager> entityType, Level level) {
+        super(entityType, level);
         this.setPathfindingMalus(PathType.DANGER_FIRE, 16.0F);
         this.setPathfindingMalus(PathType.DAMAGE_FIRE, -1.0F);
     }
 
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_35282_, DifficultyInstance p_35283_, MobSpawnType p_35284_, @Nullable SpawnGroupData p_35285_) {
-        if (p_35285_ == null) {
-            p_35285_ = new AgeableMob.AgeableMobGroupData(false);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        if (spawnGroupData == null) {
+            spawnGroupData = new AgeableMob.AgeableMobGroupData(false);
         }
 
-        return super.finalizeSpawn(p_35282_, p_35283_, p_35284_, p_35285_);
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
     public int getUnhappyCounter() {
         return this.entityData.get(DATA_UNHAPPY_COUNTER);
     }
 
-    public void setUnhappyCounter(int p_35320_) {
-        this.entityData.set(DATA_UNHAPPY_COUNTER, p_35320_);
+    public void setUnhappyCounter(int unhappyCounter) {
+        this.entityData.set(DATA_UNHAPPY_COUNTER, unhappyCounter);
     }
 
     @Override
@@ -77,14 +77,14 @@ public abstract class AbstractVillager extends AgeableMob implements InventoryCa
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326433_) {
-        super.defineSynchedData(p_326433_);
-        p_326433_.define(DATA_UNHAPPY_COUNTER, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_UNHAPPY_COUNTER, 0);
     }
 
     @Override
-    public void setTradingPlayer(@Nullable Player p_35314_) {
-        this.tradingPlayer = p_35314_;
+    public void setTradingPlayer(@Nullable Player player) {
+        this.tradingPlayer = player;
     }
 
     @Nullable
@@ -112,36 +112,39 @@ public abstract class AbstractVillager extends AgeableMob implements InventoryCa
     }
 
     @Override
-    public void overrideOffers(@Nullable MerchantOffers p_35276_) {
+    public void overrideOffers(@Nullable MerchantOffers offers) {
     }
 
     @Override
-    public void overrideXp(int p_35322_) {
+    public void overrideXp(int xp) {
     }
 
     @Override
-    public void notifyTrade(MerchantOffer p_35274_) {
-        p_35274_.increaseUses();
+    public void notifyTrade(MerchantOffer offer) {
+        offer.increaseUses();
         this.ambientSoundTime = -this.getAmbientSoundInterval();
-        this.rewardTradeXp(p_35274_);
+        this.rewardTradeXp(offer);
         if (this.tradingPlayer instanceof ServerPlayer) {
-            CriteriaTriggers.TRADE.trigger((ServerPlayer)this.tradingPlayer, this, p_35274_.getResult());
+            CriteriaTriggers.TRADE.trigger((ServerPlayer)this.tradingPlayer, this, offer.getResult());
         }
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.player.TradeWithVillagerEvent(this.tradingPlayer, p_35274_, this));
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.player.TradeWithVillagerEvent(this.tradingPlayer, offer, this));
     }
 
-    protected abstract void rewardTradeXp(MerchantOffer p_35299_);
+    protected abstract void rewardTradeXp(MerchantOffer offer);
 
     @Override
     public boolean showProgressBar() {
         return true;
     }
 
+    /**
+     * Notifies the merchant of a possible merchant recipe being fulfilled or not. Usually, this is just a sound byte being played depending on whether the suggested {@link net.minecraft.world.item.ItemStack} is not empty.
+     */
     @Override
-    public void notifyTradeUpdated(ItemStack p_35316_) {
+    public void notifyTradeUpdated(ItemStack stack) {
         if (!this.level().isClientSide && this.ambientSoundTime > -this.getAmbientSoundInterval() + 20) {
             this.ambientSoundTime = -this.getAmbientSoundInterval();
-            this.makeSound(this.getTradeUpdatedSound(!p_35316_.isEmpty()));
+            this.makeSound(this.getTradeUpdatedSound(!stack.isEmpty()));
         }
     }
 
@@ -150,8 +153,8 @@ public abstract class AbstractVillager extends AgeableMob implements InventoryCa
         return SoundEvents.VILLAGER_YES;
     }
 
-    protected SoundEvent getTradeUpdatedSound(boolean p_35323_) {
-        return p_35323_ ? SoundEvents.VILLAGER_YES : SoundEvents.VILLAGER_NO;
+    protected SoundEvent getTradeUpdatedSound(boolean isYesSound) {
+        return isYesSound ? SoundEvents.VILLAGER_YES : SoundEvents.VILLAGER_NO;
     }
 
     public void playCelebrateSound() {
@@ -159,56 +162,62 @@ public abstract class AbstractVillager extends AgeableMob implements InventoryCa
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_35301_) {
-        super.addAdditionalSaveData(p_35301_);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
         if (!this.level().isClientSide) {
             MerchantOffers merchantoffers = this.getOffers();
             if (!merchantoffers.isEmpty()) {
-                p_35301_.put(
+                compound.put(
                     "Offers", MerchantOffers.CODEC.encodeStart(this.registryAccess().createSerializationContext(NbtOps.INSTANCE), merchantoffers).getOrThrow()
                 );
             }
         }
 
-        this.writeInventoryToTag(p_35301_, this.registryAccess());
+        this.writeInventoryToTag(compound, this.registryAccess());
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_35290_) {
-        super.readAdditionalSaveData(p_35290_);
-        if (p_35290_.contains("Offers")) {
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.contains("Offers")) {
             MerchantOffers.CODEC
-                .parse(this.registryAccess().createSerializationContext(NbtOps.INSTANCE), p_35290_.get("Offers"))
+                .parse(this.registryAccess().createSerializationContext(NbtOps.INSTANCE), compound.get("Offers"))
                 .resultOrPartial(Util.prefix("Failed to load offers: ", LOGGER::warn))
                 .ifPresent(p_323775_ -> this.offers = p_323775_);
         }
 
-        this.readInventoryFromTag(p_35290_, this.registryAccess());
+        this.readInventoryFromTag(compound, this.registryAccess());
     }
 
     @Nullable
     @Override
-    public Entity changeDimension(DimensionTransition p_350994_) {
+    public Entity changeDimension(DimensionTransition transition) {
         this.stopTrading();
-        return super.changeDimension(p_350994_);
+        return super.changeDimension(transition);
     }
 
     protected void stopTrading() {
         this.setTradingPlayer(null);
     }
 
+    /**
+     * Called when the mob's health reaches 0.
+     */
     @Override
-    public void die(DamageSource p_35270_) {
-        super.die(p_35270_);
+    public void die(DamageSource cause) {
+        super.die(cause);
         this.stopTrading();
     }
 
-    protected void addParticlesAroundSelf(ParticleOptions p_35288_) {
+    protected void addParticlesAroundSelf(ParticleOptions particleOption) {
         for (int i = 0; i < 5; i++) {
             double d0 = this.random.nextGaussian() * 0.02;
             double d1 = this.random.nextGaussian() * 0.02;
             double d2 = this.random.nextGaussian() * 0.02;
-            this.level().addParticle(p_35288_, this.getRandomX(1.0), this.getRandomY() + 1.0, this.getRandomZ(1.0), d0, d1, d2);
+            this.level().addParticle(particleOption, this.getRandomX(1.0), this.getRandomY() + 1.0, this.getRandomZ(1.0), d0, d1, d2);
         }
     }
 
@@ -223,31 +232,34 @@ public abstract class AbstractVillager extends AgeableMob implements InventoryCa
     }
 
     @Override
-    public SlotAccess getSlot(int p_149995_) {
-        int i = p_149995_ - 300;
-        return i >= 0 && i < this.inventory.getContainerSize() ? SlotAccess.forContainer(this.inventory, i) : super.getSlot(p_149995_);
+    public SlotAccess getSlot(int slot) {
+        int i = slot - 300;
+        return i >= 0 && i < this.inventory.getContainerSize() ? SlotAccess.forContainer(this.inventory, i) : super.getSlot(slot);
     }
 
     protected abstract void updateTrades();
 
-    protected void addOffersFromItemListings(MerchantOffers p_35278_, VillagerTrades.ItemListing[] p_35279_, int p_35280_) {
-        ArrayList<VillagerTrades.ItemListing> arraylist = Lists.newArrayList(p_35279_);
+    /**
+     * Adds limited numbers of trades to the given {@link net.minecraft.world.item.trading.MerchantOffers}.
+     */
+    protected void addOffersFromItemListings(MerchantOffers givenMerchantOffers, VillagerTrades.ItemListing[] newTrades, int maxNumbers) {
+        ArrayList<VillagerTrades.ItemListing> arraylist = Lists.newArrayList(newTrades);
         int i = 0;
 
-        while (i < p_35280_ && !arraylist.isEmpty()) {
+        while (i < maxNumbers && !arraylist.isEmpty()) {
             MerchantOffer merchantoffer = arraylist.remove(this.random.nextInt(arraylist.size())).getOffer(this, this.random);
             if (merchantoffer != null) {
-                p_35278_.add(merchantoffer);
+                givenMerchantOffers.add(merchantoffer);
                 i++;
             }
         }
     }
 
     @Override
-    public Vec3 getRopeHoldPosition(float p_35318_) {
-        float f = Mth.lerp(p_35318_, this.yBodyRotO, this.yBodyRot) * (float) (Math.PI / 180.0);
+    public Vec3 getRopeHoldPosition(float partialTicks) {
+        float f = Mth.lerp(partialTicks, this.yBodyRotO, this.yBodyRot) * (float) (Math.PI / 180.0);
         Vec3 vec3 = new Vec3(0.0, this.getBoundingBox().getYsize() - 1.0, 0.2);
-        return this.getPosition(p_35318_).add(vec3.yRot(-f));
+        return this.getPosition(partialTicks).add(vec3.yRot(-f));
     }
 
     @Override

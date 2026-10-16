@@ -10,7 +10,7 @@ public class PaintingVariantTags {
     private PaintingVariantTags() {
     }
 
-    private static TagKey<PaintingVariant> create(String p_215874_) {
-        return TagKey.create(Registries.PAINTING_VARIANT, ResourceLocation.withDefaultNamespace(p_215874_));
+    private static TagKey<PaintingVariant> create(String name) {
+        return TagKey.create(Registries.PAINTING_VARIANT, ResourceLocation.withDefaultNamespace(name));
     }
 }

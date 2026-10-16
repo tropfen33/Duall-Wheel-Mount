@@ -20,8 +20,8 @@ public class RangedBowAttackGoal<T extends net.minecraft.world.entity.Mob & Rang
     private boolean strafingBackwards;
     private int strafingTime = -1;
 
-    public <M extends Monster & RangedAttackMob> RangedBowAttackGoal(M p_25792_, double p_25793_, int p_25794_, float p_25795_) {
-        this((T) p_25792_, p_25793_, p_25794_, p_25795_);
+    public <M extends Monster & RangedAttackMob> RangedBowAttackGoal(M mob, double speedModifier, int attackIntervalMin, float attackRadius) {
+        this((T) mob, speedModifier, attackIntervalMin, attackRadius);
     }
 
     public RangedBowAttackGoal(T p_25792_, double p_25793_, int p_25794_, float p_25795_) {
@@ -32,8 +32,8 @@ public class RangedBowAttackGoal<T extends net.minecraft.world.entity.Mob & Rang
         this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
     }
 
-    public void setMinAttackInterval(int p_25798_) {
-        this.attackIntervalMin = p_25798_;
+    public void setMinAttackInterval(int attackCooldown) {
+        this.attackIntervalMin = attackCooldown;
     }
 
     @Override

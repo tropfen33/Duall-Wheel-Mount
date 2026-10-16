@@ -33,25 +33,25 @@ public record PlacedFeature(Holder<ConfiguredFeature<?, ?>> feature, List<Placem
         )
         .listOf();
 
-    public boolean place(WorldGenLevel p_226358_, ChunkGenerator p_226359_, RandomSource p_226360_, BlockPos p_226361_) {
-        return this.placeWithContext(new PlacementContext(p_226358_, p_226359_, Optional.empty()), p_226360_, p_226361_);
+    public boolean place(WorldGenLevel level, ChunkGenerator generator, RandomSource random, BlockPos pos) {
+        return this.placeWithContext(new PlacementContext(level, generator, Optional.empty()), random, pos);
     }
 
-    public boolean placeWithBiomeCheck(WorldGenLevel p_226378_, ChunkGenerator p_226379_, RandomSource p_226380_, BlockPos p_226381_) {
-        return this.placeWithContext(new PlacementContext(p_226378_, p_226379_, Optional.of(this)), p_226380_, p_226381_);
+    public boolean placeWithBiomeCheck(WorldGenLevel level, ChunkGenerator generator, RandomSource random, BlockPos pos) {
+        return this.placeWithContext(new PlacementContext(level, generator, Optional.of(this)), random, pos);
     }
 
-    private boolean placeWithContext(PlacementContext p_226369_, RandomSource p_226370_, BlockPos p_226371_) {
-        Stream<BlockPos> stream = Stream.of(p_226371_);
+    private boolean placeWithContext(PlacementContext context, RandomSource source, BlockPos pos) {
+        Stream<BlockPos> stream = Stream.of(pos);
 
         for (PlacementModifier placementmodifier : this.placement) {
-            stream = stream.flatMap(p_226376_ -> placementmodifier.getPositions(p_226369_, p_226370_, p_226376_));
+            stream = stream.flatMap(p_226376_ -> placementmodifier.getPositions(context, source, p_226376_));
         }
 
         ConfiguredFeature<?, ?> configuredfeature = this.feature.value();
         MutableBoolean mutableboolean = new MutableBoolean();
         stream.forEach(p_226367_ -> {
-            if (configuredfeature.place(p_226369_.getLevel(), p_226369_.generator(), p_226370_, p_226367_)) {
+            if (configuredfeature.place(context.getLevel(), context.generator(), source, p_226367_)) {
                 mutableboolean.setTrue();
             }
         });

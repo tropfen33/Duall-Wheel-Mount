@@ -2,5 +2,5 @@ package net.minecraft.network.codec;
 
 @FunctionalInterface
 public interface StreamDecoder<I, T> {
-    T decode(I p_320376_);
+    T decode(I buffer);
 }

@@ -46,45 +46,45 @@ public interface TradeRebalanceEnchantmentProviders {
     ResourceKey<EnchantmentProvider> TRADES_TAIGA_ARMORER_LEGGINGS_5 = VanillaEnchantmentProviders.create("trades/taiga_armorer_leggings_5");
     ResourceKey<EnchantmentProvider> TRADES_TAIGA_ARMORER_CHESTPLATE_5 = VanillaEnchantmentProviders.create("trades/taiga_armorer_chestplate_5");
 
-    static void bootstrap(BootstrapContext<EnchantmentProvider> p_345608_) {
-        HolderGetter<Enchantment> holdergetter = p_345608_.lookup(Registries.ENCHANTMENT);
-        p_345608_.register(TRADES_DESERT_ARMORER_BOOTS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.THORNS), ConstantInt.of(1)));
-        p_345608_.register(TRADES_DESERT_ARMORER_LEGGINGS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.THORNS), ConstantInt.of(1)));
-        p_345608_.register(TRADES_DESERT_ARMORER_CHESTPLATE_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.THORNS), ConstantInt.of(1)));
-        p_345608_.register(TRADES_DESERT_ARMORER_HELMET_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.THORNS), ConstantInt.of(1)));
-        p_345608_.register(TRADES_DESERT_ARMORER_LEGGINGS_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.THORNS), ConstantInt.of(1)));
-        p_345608_.register(TRADES_DESERT_ARMORER_CHESTPLATE_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.THORNS), ConstantInt.of(1)));
-        p_345608_.register(TRADES_PLAINS_ARMORER_BOOTS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.PROTECTION), ConstantInt.of(1)));
-        p_345608_.register(TRADES_PLAINS_ARMORER_LEGGINGS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.PROTECTION), ConstantInt.of(1)));
-        p_345608_.register(TRADES_PLAINS_ARMORER_CHESTPLATE_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.PROTECTION), ConstantInt.of(1)));
-        p_345608_.register(TRADES_PLAINS_ARMORER_HELMET_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.PROTECTION), ConstantInt.of(1)));
-        p_345608_.register(TRADES_PLAINS_ARMORER_BOOTS_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.PROTECTION), ConstantInt.of(1)));
-        p_345608_.register(TRADES_PLAINS_ARMORER_LEGGINGS_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.PROTECTION), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SAVANNA_ARMORER_BOOTS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BINDING_CURSE), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SAVANNA_ARMORER_LEGGINGS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BINDING_CURSE), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SAVANNA_ARMORER_CHESTPLATE_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BINDING_CURSE), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SAVANNA_ARMORER_HELMET_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BINDING_CURSE), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SAVANNA_ARMORER_CHESTPLATE_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BINDING_CURSE), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SAVANNA_ARMORER_HELMET_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BINDING_CURSE), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SNOW_ARMORER_BOOTS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.FROST_WALKER), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SNOW_ARMORER_HELMET_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.AQUA_AFFINITY), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SNOW_ARMORER_BOOTS_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.FROST_WALKER), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SNOW_ARMORER_HELMET_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.AQUA_AFFINITY), ConstantInt.of(1)));
-        p_345608_.register(TRADES_JUNGLE_ARMORER_BOOTS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.UNBREAKING), ConstantInt.of(1)));
-        p_345608_.register(TRADES_JUNGLE_ARMORER_LEGGINGS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.UNBREAKING), ConstantInt.of(1)));
-        p_345608_.register(TRADES_JUNGLE_ARMORER_CHESTPLATE_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.UNBREAKING), ConstantInt.of(1)));
-        p_345608_.register(TRADES_JUNGLE_ARMORER_HELMET_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.UNBREAKING), ConstantInt.of(1)));
-        p_345608_.register(TRADES_JUNGLE_ARMORER_BOOTS_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.FEATHER_FALLING), ConstantInt.of(1)));
-        p_345608_.register(
+    static void bootstrap(BootstrapContext<EnchantmentProvider> context) {
+        HolderGetter<Enchantment> holdergetter = context.lookup(Registries.ENCHANTMENT);
+        context.register(TRADES_DESERT_ARMORER_BOOTS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.THORNS), ConstantInt.of(1)));
+        context.register(TRADES_DESERT_ARMORER_LEGGINGS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.THORNS), ConstantInt.of(1)));
+        context.register(TRADES_DESERT_ARMORER_CHESTPLATE_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.THORNS), ConstantInt.of(1)));
+        context.register(TRADES_DESERT_ARMORER_HELMET_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.THORNS), ConstantInt.of(1)));
+        context.register(TRADES_DESERT_ARMORER_LEGGINGS_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.THORNS), ConstantInt.of(1)));
+        context.register(TRADES_DESERT_ARMORER_CHESTPLATE_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.THORNS), ConstantInt.of(1)));
+        context.register(TRADES_PLAINS_ARMORER_BOOTS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.PROTECTION), ConstantInt.of(1)));
+        context.register(TRADES_PLAINS_ARMORER_LEGGINGS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.PROTECTION), ConstantInt.of(1)));
+        context.register(TRADES_PLAINS_ARMORER_CHESTPLATE_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.PROTECTION), ConstantInt.of(1)));
+        context.register(TRADES_PLAINS_ARMORER_HELMET_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.PROTECTION), ConstantInt.of(1)));
+        context.register(TRADES_PLAINS_ARMORER_BOOTS_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.PROTECTION), ConstantInt.of(1)));
+        context.register(TRADES_PLAINS_ARMORER_LEGGINGS_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.PROTECTION), ConstantInt.of(1)));
+        context.register(TRADES_SAVANNA_ARMORER_BOOTS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BINDING_CURSE), ConstantInt.of(1)));
+        context.register(TRADES_SAVANNA_ARMORER_LEGGINGS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BINDING_CURSE), ConstantInt.of(1)));
+        context.register(TRADES_SAVANNA_ARMORER_CHESTPLATE_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BINDING_CURSE), ConstantInt.of(1)));
+        context.register(TRADES_SAVANNA_ARMORER_HELMET_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BINDING_CURSE), ConstantInt.of(1)));
+        context.register(TRADES_SAVANNA_ARMORER_CHESTPLATE_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BINDING_CURSE), ConstantInt.of(1)));
+        context.register(TRADES_SAVANNA_ARMORER_HELMET_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BINDING_CURSE), ConstantInt.of(1)));
+        context.register(TRADES_SNOW_ARMORER_BOOTS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.FROST_WALKER), ConstantInt.of(1)));
+        context.register(TRADES_SNOW_ARMORER_HELMET_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.AQUA_AFFINITY), ConstantInt.of(1)));
+        context.register(TRADES_SNOW_ARMORER_BOOTS_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.FROST_WALKER), ConstantInt.of(1)));
+        context.register(TRADES_SNOW_ARMORER_HELMET_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.AQUA_AFFINITY), ConstantInt.of(1)));
+        context.register(TRADES_JUNGLE_ARMORER_BOOTS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.UNBREAKING), ConstantInt.of(1)));
+        context.register(TRADES_JUNGLE_ARMORER_LEGGINGS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.UNBREAKING), ConstantInt.of(1)));
+        context.register(TRADES_JUNGLE_ARMORER_CHESTPLATE_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.UNBREAKING), ConstantInt.of(1)));
+        context.register(TRADES_JUNGLE_ARMORER_HELMET_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.UNBREAKING), ConstantInt.of(1)));
+        context.register(TRADES_JUNGLE_ARMORER_BOOTS_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.FEATHER_FALLING), ConstantInt.of(1)));
+        context.register(
             TRADES_JUNGLE_ARMORER_HELMET_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.PROJECTILE_PROTECTION), ConstantInt.of(1))
         );
-        p_345608_.register(TRADES_SWAMP_ARMORER_BOOTS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.MENDING), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SWAMP_ARMORER_LEGGINGS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.MENDING), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SWAMP_ARMORER_CHESTPLATE_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.MENDING), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SWAMP_ARMORER_HELMET_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.MENDING), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SWAMP_ARMORER_BOOTS_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.DEPTH_STRIDER), ConstantInt.of(1)));
-        p_345608_.register(TRADES_SWAMP_ARMORER_HELMET_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.RESPIRATION), ConstantInt.of(1)));
-        p_345608_.register(TRADES_TAIGA_ARMORER_LEGGINGS_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BLAST_PROTECTION), ConstantInt.of(1)));
-        p_345608_.register(TRADES_TAIGA_ARMORER_CHESTPLATE_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BLAST_PROTECTION), ConstantInt.of(1)));
+        context.register(TRADES_SWAMP_ARMORER_BOOTS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.MENDING), ConstantInt.of(1)));
+        context.register(TRADES_SWAMP_ARMORER_LEGGINGS_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.MENDING), ConstantInt.of(1)));
+        context.register(TRADES_SWAMP_ARMORER_CHESTPLATE_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.MENDING), ConstantInt.of(1)));
+        context.register(TRADES_SWAMP_ARMORER_HELMET_4, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.MENDING), ConstantInt.of(1)));
+        context.register(TRADES_SWAMP_ARMORER_BOOTS_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.DEPTH_STRIDER), ConstantInt.of(1)));
+        context.register(TRADES_SWAMP_ARMORER_HELMET_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.RESPIRATION), ConstantInt.of(1)));
+        context.register(TRADES_TAIGA_ARMORER_LEGGINGS_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BLAST_PROTECTION), ConstantInt.of(1)));
+        context.register(TRADES_TAIGA_ARMORER_CHESTPLATE_5, new SingleEnchantment(holdergetter.getOrThrow(Enchantments.BLAST_PROTECTION), ConstantInt.of(1)));
     }
 }

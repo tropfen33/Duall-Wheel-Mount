@@ -62,16 +62,16 @@ public class Armadillo extends Animal {
     private int scuteTime;
     private boolean peekReceivedClient = false;
 
-    public Armadillo(EntityType<? extends Animal> p_316162_, Level p_316793_) {
-        super(p_316162_, p_316793_);
+    public Armadillo(EntityType<? extends Animal> entityType, Level level) {
+        super(entityType, level);
         this.getNavigation().setCanFloat(true);
         this.scuteTime = this.pickNextScuteDropTime();
     }
 
     @Nullable
     @Override
-    public AgeableMob getBreedOffspring(ServerLevel p_316757_, AgeableMob p_316523_) {
-        return EntityType.ARMADILLO.create(p_316757_);
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        return EntityType.ARMADILLO.create(level);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -79,9 +79,9 @@ public class Armadillo extends Animal {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326186_) {
-        super.defineSynchedData(p_326186_);
-        p_326186_.define(ARMADILLO_STATE, Armadillo.ArmadilloState.IDLE);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(ARMADILLO_STATE, Armadillo.ArmadilloState.IDLE);
     }
 
     public boolean isScared() {
@@ -106,17 +106,17 @@ public class Armadillo extends Animal {
         DebugPackets.sendEntityBrain(this);
     }
 
-    public void switchToState(Armadillo.ArmadilloState p_316783_) {
-        this.entityData.set(ARMADILLO_STATE, p_316783_);
+    public void switchToState(Armadillo.ArmadilloState state) {
+        this.entityData.set(ARMADILLO_STATE, state);
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_316145_) {
-        if (ARMADILLO_STATE.equals(p_316145_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        if (ARMADILLO_STATE.equals(key)) {
             this.inStateTicks = 0L;
         }
 
-        super.onSyncedDataUpdated(p_316145_);
+        super.onSyncedDataUpdated(key);
     }
 
     @Override
@@ -125,8 +125,8 @@ public class Armadillo extends Animal {
     }
 
     @Override
-    protected Brain<?> makeBrain(Dynamic<?> p_316388_) {
-        return ArmadilloAi.makeBrain(this.brainProvider().makeBrain(p_316388_));
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return ArmadilloAi.makeBrain(this.brainProvider().makeBrain(dynamic));
     }
 
     @Override
@@ -204,35 +204,41 @@ public class Armadillo extends Animal {
         }
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @Override
-    public void handleEntityEvent(byte p_326098_) {
-        if (p_326098_ == 64 && this.level().isClientSide) {
+    public void handleEntityEvent(byte id) {
+        if (id == 64 && this.level().isClientSide) {
             this.peekReceivedClient = true;
             this.level().playLocalSound(this.getX(), this.getY(), this.getZ(), SoundEvents.ARMADILLO_PEEK, this.getSoundSource(), 1.0F, 1.0F, false);
         } else {
-            super.handleEntityEvent(p_326098_);
+            super.handleEntityEvent(id);
         }
     }
 
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on the animal type)
+     */
     @Override
-    public boolean isFood(ItemStack p_316181_) {
-        return p_316181_.is(ItemTags.ARMADILLO_FOOD);
+    public boolean isFood(ItemStack stack) {
+        return stack.is(ItemTags.ARMADILLO_FOOD);
     }
 
     public static boolean checkArmadilloSpawnRules(
-        EntityType<Armadillo> p_320958_, LevelAccessor p_320908_, MobSpawnType p_320788_, BlockPos p_320500_, RandomSource p_319883_
+        EntityType<Armadillo> entityType, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return p_320908_.getBlockState(p_320500_.below()).is(BlockTags.ARMADILLO_SPAWNABLE_ON) && isBrightEnoughToSpawn(p_320908_, p_320500_);
+        return level.getBlockState(pos.below()).is(BlockTags.ARMADILLO_SPAWNABLE_ON) && isBrightEnoughToSpawn(level, pos);
     }
 
-    public boolean isScaredBy(LivingEntity p_316281_) {
-        if (!this.getBoundingBox().inflate(7.0, 2.0, 7.0).intersects(p_316281_.getBoundingBox())) {
+    public boolean isScaredBy(LivingEntity entity) {
+        if (!this.getBoundingBox().inflate(7.0, 2.0, 7.0).intersects(entity.getBoundingBox())) {
             return false;
-        } else if (p_316281_.getType().is(EntityTypeTags.UNDEAD)) {
+        } else if (entity.getType().is(EntityTypeTags.UNDEAD)) {
             return true;
-        } else if (this.getLastHurtByMob() == p_316281_) {
+        } else if (this.getLastHurtByMob() == entity) {
             return true;
-        } else if (p_316281_ instanceof Player player) {
+        } else if (entity instanceof Player player) {
             return player.isSpectator() ? false : player.isSprinting() || player.isPassenger();
         } else {
             return false;
@@ -240,18 +246,21 @@ public class Armadillo extends Animal {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_316752_) {
-        super.addAdditionalSaveData(p_316752_);
-        p_316752_.putString("state", this.getState().getSerializedName());
-        p_316752_.putInt("scute_time", this.scuteTime);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putString("state", this.getState().getSerializedName());
+        compound.putInt("scute_time", this.scuteTime);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_316298_) {
-        super.readAdditionalSaveData(p_316298_);
-        this.switchToState(Armadillo.ArmadilloState.fromName(p_316298_.getString("state")));
-        if (p_316298_.contains("scute_time")) {
-            this.scuteTime = p_316298_.getInt("scute_time");
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.switchToState(Armadillo.ArmadilloState.fromName(compound.getString("state")));
+        if (compound.contains("scute_time")) {
+            this.scuteTime = compound.getInt("scute_time");
         }
     }
 
@@ -273,48 +282,54 @@ public class Armadillo extends Animal {
         }
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_321611_, float p_321629_) {
+    public boolean hurt(DamageSource source, float amount) {
         if (this.isScared()) {
-            p_321629_ = (p_321629_ - 1.0F) / 2.0F;
+            amount = (amount - 1.0F) / 2.0F;
         }
 
-        return super.hurt(p_321611_, p_321629_);
+        return super.hurt(source, amount);
     }
 
+    /**
+     * Deals damage to the entity. This will take the armor of the entity into consideration before damaging the health bar.
+     */
     @Override
-    protected void actuallyHurt(DamageSource p_316204_, float p_316801_) {
-        super.actuallyHurt(p_316204_, p_316801_);
+    protected void actuallyHurt(DamageSource damageSource, float damageAmount) {
+        super.actuallyHurt(damageSource, damageAmount);
         if (!this.isNoAi() && !this.isDeadOrDying()) {
-            if (p_316204_.getEntity() instanceof LivingEntity) {
+            if (damageSource.getEntity() instanceof LivingEntity) {
                 this.getBrain().setMemoryWithExpiry(MemoryModuleType.DANGER_DETECTED_RECENTLY, true, 80L);
                 if (this.canStayRolledUp()) {
                     this.rollUp();
                 }
-            } else if (p_316204_.is(DamageTypeTags.PANIC_ENVIRONMENTAL_CAUSES)) {
+            } else if (damageSource.is(DamageTypeTags.PANIC_ENVIRONMENTAL_CAUSES)) {
                 this.rollOut();
             }
         }
     }
 
     @Override
-    public InteractionResult mobInteract(Player p_316559_, InteractionHand p_316119_) {
-        ItemStack itemstack = p_316559_.getItemInHand(p_316119_);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
         if (itemstack.canPerformAction(net.neoforged.neoforge.common.ItemAbilities.BRUSH_BRUSH) && this.brushOffScute()) {
-            itemstack.hurtAndBreak(16, p_316559_, getSlotForHand(p_316119_));
+            itemstack.hurtAndBreak(16, player, getSlotForHand(hand));
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         } else {
-            return this.isScared() ? InteractionResult.FAIL : super.mobInteract(p_316559_, p_316119_);
+            return this.isScared() ? InteractionResult.FAIL : super.mobInteract(player, hand);
         }
     }
 
     @Override
-    public void ageUp(int p_326481_, boolean p_326340_) {
-        if (this.isBaby() && p_326340_) {
+    public void ageUp(int amount, boolean forced) {
+        if (this.isBaby() && forced) {
             this.makeSound(SoundEvents.ARMADILLO_EAT);
         }
 
-        super.ageUp(p_326481_, p_326340_);
+        super.ageUp(amount, forced);
     }
 
     public boolean brushOffScute() {
@@ -333,8 +348,8 @@ public class Armadillo extends Animal {
     }
 
     @Override
-    public void setInLove(@Nullable Player p_316200_) {
-        super.setInLove(p_316200_);
+    public void setInLove(@Nullable Player player) {
+        super.setInLove(player);
         this.makeSound(SoundEvents.ARMADILLO_EAT);
     }
 
@@ -344,7 +359,7 @@ public class Armadillo extends Animal {
     }
 
     @Override
-    public SoundEvent getEatingSound(ItemStack p_316292_) {
+    public SoundEvent getEatingSound(ItemStack stack) {
         return SoundEvents.ARMADILLO_EAT;
     }
 
@@ -359,12 +374,12 @@ public class Armadillo extends Animal {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_316220_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return this.isScared() ? SoundEvents.ARMADILLO_HURT_REDUCED : SoundEvents.ARMADILLO_HURT;
     }
 
     @Override
-    protected void playStepSound(BlockPos p_316146_, BlockState p_316719_) {
+    protected void playStepSound(BlockPos pos, BlockState state) {
         this.playSound(SoundEvents.ARMADILLO_STEP, 0.15F, 1.0F);
     }
 
@@ -421,15 +436,15 @@ public class Armadillo extends Animal {
         private final int animationDuration;
         private final int id;
 
-        ArmadilloState(String p_316309_, boolean p_326269_, int p_320184_, int p_326087_) {
-            this.name = p_316309_;
-            this.isThreatened = p_326269_;
-            this.animationDuration = p_320184_;
-            this.id = p_326087_;
+        ArmadilloState(String name, boolean isThreatened, int animationDuration, int id) {
+            this.name = name;
+            this.isThreatened = isThreatened;
+            this.animationDuration = animationDuration;
+            this.id = id;
         }
 
-        public static Armadillo.ArmadilloState fromName(String p_316203_) {
-            return CODEC.byName(p_316203_, IDLE);
+        public static Armadillo.ArmadilloState fromName(String name) {
+            return CODEC.byName(name, IDLE);
         }
 
         @Override
@@ -441,7 +456,7 @@ public class Armadillo extends Animal {
             return this.id;
         }
 
-        public abstract boolean shouldHideInShell(long p_326488_);
+        public abstract boolean shouldHideInShell(long inStateTicks);
 
         public boolean isThreatened() {
             return this.isThreatened;

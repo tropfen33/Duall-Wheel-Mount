@@ -27,41 +27,47 @@ public abstract class Sensor<E extends LivingEntity> {
     private final int scanRate;
     private long timeToTick;
 
-    public Sensor(int p_26800_) {
-        this.scanRate = p_26800_;
-        this.timeToTick = (long)RANDOM.nextInt(p_26800_);
+    public Sensor(int scanRate) {
+        this.scanRate = scanRate;
+        this.timeToTick = (long)RANDOM.nextInt(scanRate);
     }
 
     public Sensor() {
         this(20);
     }
 
-    public final void tick(ServerLevel p_26807_, E p_26808_) {
+    public final void tick(ServerLevel level, E entity) {
         if (--this.timeToTick <= 0L) {
             this.timeToTick = (long)this.scanRate;
-            this.doTick(p_26807_, p_26808_);
+            this.doTick(level, entity);
         }
     }
 
-    protected abstract void doTick(ServerLevel p_26801_, E p_26802_);
+    protected abstract void doTick(ServerLevel level, E entity);
 
     public abstract Set<MemoryModuleType<?>> requires();
 
-    public static boolean isEntityTargetable(LivingEntity p_26804_, LivingEntity p_26805_) {
-        return p_26804_.getBrain().isMemoryValue(MemoryModuleType.ATTACK_TARGET, p_26805_)
-            ? TARGET_CONDITIONS_IGNORE_INVISIBILITY_TESTING.test(p_26804_, p_26805_)
-            : TARGET_CONDITIONS.test(p_26804_, p_26805_);
+    /**
+     * @return if the entity is remembered as a target and then tests the condition
+     */
+    public static boolean isEntityTargetable(LivingEntity livingEntity, LivingEntity target) {
+        return livingEntity.getBrain().isMemoryValue(MemoryModuleType.ATTACK_TARGET, target)
+            ? TARGET_CONDITIONS_IGNORE_INVISIBILITY_TESTING.test(livingEntity, target)
+            : TARGET_CONDITIONS.test(livingEntity, target);
     }
 
-    public static boolean isEntityAttackable(LivingEntity p_148313_, LivingEntity p_148314_) {
-        return p_148313_.getBrain().isMemoryValue(MemoryModuleType.ATTACK_TARGET, p_148314_)
-            ? ATTACK_TARGET_CONDITIONS_IGNORE_INVISIBILITY_TESTING.test(p_148313_, p_148314_)
-            : ATTACK_TARGET_CONDITIONS.test(p_148313_, p_148314_);
+    /**
+     * @return if entity is remembered as an attack target and is valid to attack
+     */
+    public static boolean isEntityAttackable(LivingEntity attacker, LivingEntity target) {
+        return attacker.getBrain().isMemoryValue(MemoryModuleType.ATTACK_TARGET, target)
+            ? ATTACK_TARGET_CONDITIONS_IGNORE_INVISIBILITY_TESTING.test(attacker, target)
+            : ATTACK_TARGET_CONDITIONS.test(attacker, target);
     }
 
-    public static boolean isEntityAttackableIgnoringLineOfSight(LivingEntity p_182378_, LivingEntity p_182379_) {
-        return p_182378_.getBrain().isMemoryValue(MemoryModuleType.ATTACK_TARGET, p_182379_)
-            ? ATTACK_TARGET_CONDITIONS_IGNORE_INVISIBILITY_AND_LINE_OF_SIGHT.test(p_182378_, p_182379_)
-            : ATTACK_TARGET_CONDITIONS_IGNORE_LINE_OF_SIGHT.test(p_182378_, p_182379_);
+    public static boolean isEntityAttackableIgnoringLineOfSight(LivingEntity attacker, LivingEntity target) {
+        return attacker.getBrain().isMemoryValue(MemoryModuleType.ATTACK_TARGET, target)
+            ? ATTACK_TARGET_CONDITIONS_IGNORE_INVISIBILITY_AND_LINE_OF_SIGHT.test(attacker, target)
+            : ATTACK_TARGET_CONDITIONS_IGNORE_LINE_OF_SIGHT.test(attacker, target);
     }
 }

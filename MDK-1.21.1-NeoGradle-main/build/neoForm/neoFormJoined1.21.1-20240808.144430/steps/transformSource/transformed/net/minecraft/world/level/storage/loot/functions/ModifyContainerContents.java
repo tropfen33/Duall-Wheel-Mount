@@ -25,10 +25,10 @@ public class ModifyContainerContents extends LootItemConditionalFunction {
     private final ContainerComponentManipulator<?> component;
     private final LootItemFunction modifier;
 
-    public ModifyContainerContents(List<LootItemCondition> p_340981_, ContainerComponentManipulator<?> p_341205_, LootItemFunction p_341360_) {
-        super(p_340981_);
-        this.component = p_341205_;
-        this.modifier = p_341360_;
+    public ModifyContainerContents(List<LootItemCondition> conditions, ContainerComponentManipulator<?> components, LootItemFunction modifier) {
+        super(conditions);
+        this.component = components;
+        this.modifier = modifier;
     }
 
     @Override
@@ -36,19 +36,25 @@ public class ModifyContainerContents extends LootItemConditionalFunction {
         return LootItemFunctions.MODIFY_CONTENTS;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_341267_, LootContext p_341214_) {
-        if (p_341267_.isEmpty()) {
-            return p_341267_;
+    public ItemStack run(ItemStack stack, LootContext context) {
+        if (stack.isEmpty()) {
+            return stack;
         } else {
-            this.component.modifyItems(p_341267_, p_341413_ -> this.modifier.apply(p_341413_, p_341214_));
-            return p_341267_;
+            this.component.modifyItems(stack, p_341413_ -> this.modifier.apply(p_341413_, context));
+            return stack;
         }
     }
 
+    /**
+     * Validate that this object is used correctly according to the given ValidationContext.
+     */
     @Override
-    public void validate(ValidationContext p_341371_) {
-        super.validate(p_341371_);
-        this.modifier.validate(p_341371_.forChild(".modifier"));
+    public void validate(ValidationContext context) {
+        super.validate(context);
+        this.modifier.validate(context.forChild(".modifier"));
     }
 }

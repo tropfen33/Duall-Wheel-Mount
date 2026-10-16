@@ -247,10 +247,10 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
     @Nullable
     private BlockState inBlockState = null;
 
-    public Entity(EntityType<?> p_19870_, Level p_19871_) {
-        this.type = p_19870_;
-        this.level = p_19871_;
-        this.dimensions = p_19870_.getDimensions();
+    public Entity(EntityType<?> entityType, Level level) {
+        this.type = entityType;
+        this.level = level;
+        this.dimensions = entityType.getDimensions();
         this.position = Vec3.ZERO;
         this.blockPosition = BlockPos.ZERO;
         this.chunkPosition = ChunkPos.ZERO;
@@ -272,9 +272,9 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.EntityEvent.EntityConstructing(this));
     }
 
-    public boolean isColliding(BlockPos p_20040_, BlockState p_20041_) {
-        VoxelShape voxelshape = p_20041_.getCollisionShape(this.level(), p_20040_, CollisionContext.of(this));
-        VoxelShape voxelshape1 = voxelshape.move((double)p_20040_.getX(), (double)p_20040_.getY(), (double)p_20040_.getZ());
+    public boolean isColliding(BlockPos pos, BlockState state) {
+        VoxelShape voxelshape = state.getCollisionShape(this.level(), pos, CollisionContext.of(this));
+        VoxelShape voxelshape1 = voxelshape.move((double)pos.getX(), (double)pos.getY(), (double)pos.getZ());
         return Shapes.joinIsNotEmpty(voxelshape1, Shapes.create(this.getBoundingBox()), BooleanOp.AND);
     }
 
@@ -297,8 +297,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    public void syncPacketPositionCodec(double p_217007_, double p_217008_, double p_217009_) {
-        this.packetPositionCodec.setBase(new Vec3(p_217007_, p_217008_, p_217009_));
+    public void syncPacketPositionCodec(double x, double y, double z) {
+        this.packetPositionCodec.setBase(new Vec3(x, y, z));
     }
 
     public VecDeltaCodec getPositionCodec() {
@@ -314,20 +314,20 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.id;
     }
 
-    public void setId(int p_20235_) {
-        this.id = p_20235_;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public Set<String> getTags() {
         return this.tags;
     }
 
-    public boolean addTag(String p_20050_) {
-        return this.tags.size() >= 1024 ? false : this.tags.add(p_20050_);
+    public boolean addTag(String tag) {
+        return this.tags.size() >= 1024 ? false : this.tags.add(tag);
     }
 
-    public boolean removeTag(String p_20138_) {
-        return this.tags.remove(p_20138_);
+    public boolean removeTag(String tag) {
+        return this.tags.remove(tag);
     }
 
     public void kill() {
@@ -339,15 +339,15 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         this.remove(Entity.RemovalReason.DISCARDED);
     }
 
-    protected abstract void defineSynchedData(SynchedEntityData.Builder p_326003_);
+    protected abstract void defineSynchedData(SynchedEntityData.Builder builder);
 
     public SynchedEntityData getEntityData() {
         return this.entityData;
     }
 
     @Override
-    public boolean equals(Object p_20245_) {
-        return p_20245_ instanceof Entity ? ((Entity)p_20245_).id == this.id : false;
+    public boolean equals(Object object) {
+        return object instanceof Entity ? ((Entity)object).id == this.id : false;
     }
 
     @Override
@@ -355,47 +355,53 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.id;
     }
 
-    public void remove(Entity.RemovalReason p_146834_) {
-        this.setRemoved(p_146834_);
+    public void remove(Entity.RemovalReason reason) {
+        this.setRemoved(reason);
     }
 
     public void onClientRemoval() {
     }
 
-    public void setPose(Pose p_20125_) {
-        this.entityData.set(DATA_POSE, p_20125_);
+    public void setPose(Pose pose) {
+        this.entityData.set(DATA_POSE, pose);
     }
 
     public Pose getPose() {
         return this.entityData.get(DATA_POSE);
     }
 
-    public boolean hasPose(Pose p_217004_) {
-        return this.getPose() == p_217004_;
+    public boolean hasPose(Pose pose) {
+        return this.getPose() == pose;
     }
 
-    public boolean closerThan(Entity p_19951_, double p_19952_) {
-        return this.position().closerThan(p_19951_.position(), p_19952_);
+    public boolean closerThan(Entity entity, double distance) {
+        return this.position().closerThan(entity.position(), distance);
     }
 
-    public boolean closerThan(Entity p_216993_, double p_216994_, double p_216995_) {
-        double d0 = p_216993_.getX() - this.getX();
-        double d1 = p_216993_.getY() - this.getY();
-        double d2 = p_216993_.getZ() - this.getZ();
-        return Mth.lengthSquared(d0, d2) < Mth.square(p_216994_) && Mth.square(d1) < Mth.square(p_216995_);
+    public boolean closerThan(Entity entity, double horizontalDistance, double verticalDistance) {
+        double d0 = entity.getX() - this.getX();
+        double d1 = entity.getY() - this.getY();
+        double d2 = entity.getZ() - this.getZ();
+        return Mth.lengthSquared(d0, d2) < Mth.square(horizontalDistance) && Mth.square(d1) < Mth.square(verticalDistance);
     }
 
-    protected void setRot(float p_19916_, float p_19917_) {
-        this.setYRot(p_19916_ % 360.0F);
-        this.setXRot(p_19917_ % 360.0F);
+    /**
+     * Sets the rotation of the entity.
+     */
+    protected void setRot(float yRot, float xRot) {
+        this.setYRot(yRot % 360.0F);
+        this.setXRot(xRot % 360.0F);
     }
 
-    public final void setPos(Vec3 p_146885_) {
-        this.setPos(p_146885_.x(), p_146885_.y(), p_146885_.z());
+    public final void setPos(Vec3 pos) {
+        this.setPos(pos.x(), pos.y(), pos.z());
     }
 
-    public void setPos(double p_20210_, double p_20211_, double p_20212_) {
-        this.setPosRaw(p_20210_, p_20211_, p_20212_);
+    /**
+     * Sets the x,y,z of the entity from the given parameters. Also seems to set up a bounding box.
+     */
+    public void setPos(double x, double y, double z) {
+        this.setPosRaw(x, y, z);
         this.setBoundingBox(this.makeBoundingBox());
     }
 
@@ -407,9 +413,9 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         this.setPos(this.position.x, this.position.y, this.position.z);
     }
 
-    public void turn(double p_19885_, double p_19886_) {
-        float f = (float)p_19886_ * 0.15F;
-        float f1 = (float)p_19885_ * 0.15F;
+    public void turn(double yRot, double xRot) {
+        float f = (float)xRot * 0.15F;
+        float f1 = (float)yRot * 0.15F;
         this.setXRot(this.getXRot() + f);
         this.setYRot(this.getYRot() + f1);
         this.setXRot(Mth.clamp(this.getXRot(), -90.0F, 90.0F));
@@ -489,8 +495,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         this.level().getProfiler().pop();
     }
 
-    public void setSharedFlagOnFire(boolean p_146869_) {
-        this.setSharedFlag(0, p_146869_ || this.hasVisualFire);
+    public void setSharedFlagOnFire(boolean isOnFire) {
+        this.setSharedFlag(0, isOnFire || this.hasVisualFire);
     }
 
     public void checkBelowWorld() {
@@ -503,8 +509,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         this.portalCooldown = this.getDimensionChangingDelay();
     }
 
-    public void setPortalCooldown(int p_287760_) {
-        this.portalCooldown = p_287760_;
+    public void setPortalCooldown(int portalCooldown) {
+        this.portalCooldown = portalCooldown;
     }
 
     public int getPortalCooldown() {
@@ -530,18 +536,18 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    public final void igniteForSeconds(float p_345382_) {
-        this.igniteForTicks(Mth.floor(p_345382_ * 20.0F));
+    public final void igniteForSeconds(float seconds) {
+        this.igniteForTicks(Mth.floor(seconds * 20.0F));
     }
 
-    public void igniteForTicks(int p_320711_) {
-        if (this.remainingFireTicks < p_320711_) {
-            this.setRemainingFireTicks(p_320711_);
+    public void igniteForTicks(int ticks) {
+        if (this.remainingFireTicks < ticks) {
+            this.setRemainingFireTicks(ticks);
         }
     }
 
-    public void setRemainingFireTicks(int p_20269_) {
-        this.remainingFireTicks = p_20269_;
+    public void setRemainingFireTicks(int remainingFireTicks) {
+        this.remainingFireTicks = remainingFireTicks;
     }
 
     public int getRemainingFireTicks() {
@@ -556,37 +562,43 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         this.discard();
     }
 
-    public boolean isFree(double p_20230_, double p_20231_, double p_20232_) {
-        return this.isFree(this.getBoundingBox().move(p_20230_, p_20231_, p_20232_));
+    /**
+     * Checks if the offset position from the entity's current position has a collision with a block or a liquid.
+     */
+    public boolean isFree(double x, double y, double z) {
+        return this.isFree(this.getBoundingBox().move(x, y, z));
     }
 
-    private boolean isFree(AABB p_20132_) {
-        return this.level().noCollision(this, p_20132_) && !this.level().containsAnyLiquid(p_20132_);
+    /**
+     * Determines if the entity has no collision with a block or a liquid within the specified bounding box.
+     */
+    private boolean isFree(AABB box) {
+        return this.level().noCollision(this, box) && !this.level().containsAnyLiquid(box);
     }
 
-    public void setOnGround(boolean p_20181_) {
-        this.onGround = p_20181_;
-        this.checkSupportingBlock(p_20181_, null);
+    public void setOnGround(boolean onGround) {
+        this.onGround = onGround;
+        this.checkSupportingBlock(onGround, null);
     }
 
-    public void setOnGroundWithMovement(boolean p_289661_, Vec3 p_289653_) {
-        this.onGround = p_289661_;
-        this.checkSupportingBlock(p_289661_, p_289653_);
+    public void setOnGroundWithMovement(boolean onGround, Vec3 movement) {
+        this.onGround = onGround;
+        this.checkSupportingBlock(onGround, movement);
     }
 
-    public boolean isSupportedBy(BlockPos p_287613_) {
-        return this.mainSupportingBlockPos.isPresent() && this.mainSupportingBlockPos.get().equals(p_287613_);
+    public boolean isSupportedBy(BlockPos pos) {
+        return this.mainSupportingBlockPos.isPresent() && this.mainSupportingBlockPos.get().equals(pos);
     }
 
-    protected void checkSupportingBlock(boolean p_289694_, @Nullable Vec3 p_289680_) {
-        if (p_289694_) {
+    protected void checkSupportingBlock(boolean onGround, @Nullable Vec3 movement) {
+        if (onGround) {
             AABB aabb = this.getBoundingBox();
             AABB aabb1 = new AABB(aabb.minX, aabb.minY - 1.0E-6, aabb.minZ, aabb.maxX, aabb.minY, aabb.maxZ);
             Optional<BlockPos> optional = this.level.findSupportingBlock(this, aabb1);
             if (optional.isPresent() || this.onGroundNoBlocks) {
                 this.mainSupportingBlockPos = optional;
-            } else if (p_289680_ != null) {
-                AABB aabb2 = aabb1.move(-p_289680_.x, 0.0, -p_289680_.z);
+            } else if (movement != null) {
+                AABB aabb2 = aabb1.move(-movement.x, 0.0, -movement.z);
                 optional = this.level.findSupportingBlock(this, aabb2);
                 this.mainSupportingBlockPos = optional;
             }
@@ -604,27 +616,27 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.onGround;
     }
 
-    public void move(MoverType p_19973_, Vec3 p_19974_) {
+    public void move(MoverType type, Vec3 pos) {
         if (this.noPhysics) {
-            this.setPos(this.getX() + p_19974_.x, this.getY() + p_19974_.y, this.getZ() + p_19974_.z);
+            this.setPos(this.getX() + pos.x, this.getY() + pos.y, this.getZ() + pos.z);
         } else {
             this.wasOnFire = this.isOnFire();
-            if (p_19973_ == MoverType.PISTON) {
-                p_19974_ = this.limitPistonMovement(p_19974_);
-                if (p_19974_.equals(Vec3.ZERO)) {
+            if (type == MoverType.PISTON) {
+                pos = this.limitPistonMovement(pos);
+                if (pos.equals(Vec3.ZERO)) {
                     return;
                 }
             }
 
             this.level().getProfiler().push("move");
             if (this.stuckSpeedMultiplier.lengthSqr() > 1.0E-7) {
-                p_19974_ = p_19974_.multiply(this.stuckSpeedMultiplier);
+                pos = pos.multiply(this.stuckSpeedMultiplier);
                 this.stuckSpeedMultiplier = Vec3.ZERO;
                 this.setDeltaMovement(Vec3.ZERO);
             }
 
-            p_19974_ = this.maybeBackOffFromEdge(p_19974_, p_19973_);
-            Vec3 vec3 = this.collide(p_19974_);
+            pos = this.maybeBackOffFromEdge(pos, type);
+            Vec3 vec3 = this.collide(pos);
             double d0 = vec3.lengthSqr();
             if (d0 > 1.0E-7) {
                 if (this.fallDistance != 0.0F && d0 >= 1.0) {
@@ -642,11 +654,11 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
 
             this.level().getProfiler().pop();
             this.level().getProfiler().push("rest");
-            boolean flag4 = !Mth.equal(p_19974_.x, vec3.x);
-            boolean flag = !Mth.equal(p_19974_.z, vec3.z);
+            boolean flag4 = !Mth.equal(pos.x, vec3.x);
+            boolean flag = !Mth.equal(pos.z, vec3.z);
             this.horizontalCollision = flag4 || flag;
-            this.verticalCollision = p_19974_.y != vec3.y;
-            this.verticalCollisionBelow = this.verticalCollision && p_19974_.y < 0.0;
+            this.verticalCollision = pos.y != vec3.y;
+            this.verticalCollisionBelow = this.verticalCollision && pos.y < 0.0;
             if (this.horizontalCollision) {
                 this.minorHorizontalCollision = this.isHorizontalCollisionMinor(vec3);
             } else {
@@ -666,7 +678,7 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
                 }
 
                 Block block = blockstate.getBlock();
-                if (p_19974_.y != vec3.y) {
+                if (pos.y != vec3.y) {
                     block.updateEntityAfterFallOn(this.level(), this);
                 }
 
@@ -691,9 +703,9 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
                     this.moveDist = this.moveDist + (float)Math.sqrt(d1 * d1 + d2 * d2 + d3 * d3) * 0.6F;
                     if (this.moveDist > this.nextStep && !blockstate1.isAir()) {
                         boolean flag2 = blockpos1.equals(blockpos);
-                        boolean flag3 = this.vibrationAndSoundEffectsFromBlock(blockpos, blockstate, entity$movementemission.emitsSounds(), flag2, p_19974_);
+                        boolean flag3 = this.vibrationAndSoundEffectsFromBlock(blockpos, blockstate, entity$movementemission.emitsSounds(), flag2, pos);
                         if (!flag2) {
-                            flag3 |= this.vibrationAndSoundEffectsFromBlock(blockpos1, blockstate1, false, entity$movementemission.emitsEvents(), p_19974_);
+                            flag3 |= this.vibrationAndSoundEffectsFromBlock(blockpos1, blockstate1, false, entity$movementemission.emitsEvents(), pos);
                         }
 
                         if (flag3) {
@@ -737,22 +749,22 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    private boolean isStateClimbable(BlockState p_286733_) {
-        return p_286733_.is(BlockTags.CLIMBABLE) || p_286733_.is(Blocks.POWDER_SNOW);
+    private boolean isStateClimbable(BlockState state) {
+        return state.is(BlockTags.CLIMBABLE) || state.is(Blocks.POWDER_SNOW);
     }
 
-    private boolean vibrationAndSoundEffectsFromBlock(BlockPos p_286221_, BlockState p_286549_, boolean p_286708_, boolean p_286543_, Vec3 p_286448_) {
-        if (p_286549_.isAir()) {
+    private boolean vibrationAndSoundEffectsFromBlock(BlockPos pos, BlockState state, boolean playStepSound, boolean broadcastGameEvent, Vec3 entityPos) {
+        if (state.isAir()) {
             return false;
         } else {
-            boolean flag = this.isStateClimbable(p_286549_);
-            if ((this.onGround() || flag || this.isCrouching() && p_286448_.y == 0.0 || this.isOnRails()) && !this.isSwimming()) {
-                if (p_286708_) {
-                    this.walkingStepSound(p_286221_, p_286549_);
+            boolean flag = this.isStateClimbable(state);
+            if ((this.onGround() || flag || this.isCrouching() && entityPos.y == 0.0 || this.isOnRails()) && !this.isSwimming()) {
+                if (playStepSound) {
+                    this.walkingStepSound(pos, state);
                 }
 
-                if (p_286543_) {
-                    this.level().gameEvent(GameEvent.STEP, this.position(), GameEvent.Context.of(this, p_286549_));
+                if (broadcastGameEvent) {
+                    this.level().gameEvent(GameEvent.STEP, this.position(), GameEvent.Context.of(this, state));
                 }
 
                 return true;
@@ -762,7 +774,7 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    protected boolean isHorizontalCollisionMinor(Vec3 p_196625_) {
+    protected boolean isHorizontalCollisionMinor(Vec3 deltaMovement) {
         return false;
     }
 
@@ -811,20 +823,20 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.getOnPos(1.0E-5F);
     }
 
-    protected BlockPos getOnPos(float p_216987_) {
+    protected BlockPos getOnPos(float yOffset) {
         if (this.mainSupportingBlockPos.isPresent()) {
             BlockPos blockpos = this.mainSupportingBlockPos.get();
-            if (!(p_216987_ > 1.0E-5F)) {
+            if (!(yOffset > 1.0E-5F)) {
                 return blockpos;
             } else {
                 BlockState blockstate = this.level().getBlockState(blockpos);
-                return (!((double)p_216987_ <= 0.5) || !blockstate.collisionExtendsVertically(this.level(), blockpos, this))
-                    ? blockpos.atY(Mth.floor(this.position.y - (double)p_216987_))
+                return (!((double)yOffset <= 0.5) || !blockstate.collisionExtendsVertically(this.level(), blockpos, this))
+                    ? blockpos.atY(Mth.floor(this.position.y - (double)yOffset))
                     : blockpos;
             }
         } else {
             int i = Mth.floor(this.position.x);
-            int j = Mth.floor(this.position.y - (double)p_216987_);
+            int j = Mth.floor(this.position.y - (double)yOffset);
             int k = Mth.floor(this.position.z);
             return new BlockPos(i, j, k);
         }
@@ -846,13 +858,13 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    protected Vec3 maybeBackOffFromEdge(Vec3 p_20019_, MoverType p_20020_) {
-        return p_20019_;
+    protected Vec3 maybeBackOffFromEdge(Vec3 vec, MoverType mover) {
+        return vec;
     }
 
-    protected Vec3 limitPistonMovement(Vec3 p_20134_) {
-        if (p_20134_.lengthSqr() <= 1.0E-7) {
-            return p_20134_;
+    protected Vec3 limitPistonMovement(Vec3 pos) {
+        if (pos.lengthSqr() <= 1.0E-7) {
+            return pos;
         } else {
             long i = this.level().getGameTime();
             if (i != this.pistonDeltasGameTime) {
@@ -860,14 +872,14 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
                 this.pistonDeltasGameTime = i;
             }
 
-            if (p_20134_.x != 0.0) {
-                double d2 = this.applyPistonMovementRestriction(Direction.Axis.X, p_20134_.x);
+            if (pos.x != 0.0) {
+                double d2 = this.applyPistonMovementRestriction(Direction.Axis.X, pos.x);
                 return Math.abs(d2) <= 1.0E-5F ? Vec3.ZERO : new Vec3(d2, 0.0, 0.0);
-            } else if (p_20134_.y != 0.0) {
-                double d1 = this.applyPistonMovementRestriction(Direction.Axis.Y, p_20134_.y);
+            } else if (pos.y != 0.0) {
+                double d1 = this.applyPistonMovementRestriction(Direction.Axis.Y, pos.y);
                 return Math.abs(d1) <= 1.0E-5F ? Vec3.ZERO : new Vec3(0.0, d1, 0.0);
-            } else if (p_20134_.z != 0.0) {
-                double d0 = this.applyPistonMovementRestriction(Direction.Axis.Z, p_20134_.z);
+            } else if (pos.z != 0.0) {
+                double d0 = this.applyPistonMovementRestriction(Direction.Axis.Z, pos.z);
                 return Math.abs(d0) <= 1.0E-5F ? Vec3.ZERO : new Vec3(0.0, 0.0, d0);
             } else {
                 return Vec3.ZERO;
@@ -875,25 +887,28 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    private double applyPistonMovementRestriction(Direction.Axis p_20043_, double p_20044_) {
-        int i = p_20043_.ordinal();
-        double d0 = Mth.clamp(p_20044_ + this.pistonDeltas[i], -0.51, 0.51);
-        p_20044_ = d0 - this.pistonDeltas[i];
+    private double applyPistonMovementRestriction(Direction.Axis axis, double distance) {
+        int i = axis.ordinal();
+        double d0 = Mth.clamp(distance + this.pistonDeltas[i], -0.51, 0.51);
+        distance = d0 - this.pistonDeltas[i];
         this.pistonDeltas[i] = d0;
-        return p_20044_;
+        return distance;
     }
 
-    private Vec3 collide(Vec3 p_20273_) {
+    /**
+     * Given a motion vector, return an updated vector that takes into account restrictions such as collisions (from all directions) and step-up from stepHeight
+     */
+    private Vec3 collide(Vec3 vec) {
         AABB aabb = this.getBoundingBox();
-        List<VoxelShape> list = this.level().getEntityCollisions(this, aabb.expandTowards(p_20273_));
-        Vec3 vec3 = p_20273_.lengthSqr() == 0.0 ? p_20273_ : collideBoundingBox(this, p_20273_, aabb, this.level(), list);
-        boolean flag = p_20273_.x != vec3.x;
-        boolean flag1 = p_20273_.y != vec3.y;
-        boolean flag2 = p_20273_.z != vec3.z;
-        boolean flag3 = flag1 && p_20273_.y < 0.0;
+        List<VoxelShape> list = this.level().getEntityCollisions(this, aabb.expandTowards(vec));
+        Vec3 vec3 = vec.lengthSqr() == 0.0 ? vec : collideBoundingBox(this, vec, aabb, this.level(), list);
+        boolean flag = vec.x != vec3.x;
+        boolean flag1 = vec.y != vec3.y;
+        boolean flag2 = vec.z != vec3.z;
+        boolean flag3 = flag1 && vec.y < 0.0;
         if (this.maxUpStep() > 0.0F && (flag3 || this.onGround()) && (flag || flag2)) {
             AABB aabb1 = flag3 ? aabb.move(0.0, vec3.y, 0.0) : aabb;
-            AABB aabb2 = aabb1.expandTowards(p_20273_.x, (double)this.maxUpStep(), p_20273_.z);
+            AABB aabb2 = aabb1.expandTowards(vec.x, (double)this.maxUpStep(), vec.z);
             if (!flag3) {
                 aabb2 = aabb2.expandTowards(0.0, -1.0E-5F, 0.0);
             }
@@ -903,7 +918,7 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
             float[] afloat = collectCandidateStepUpHeights(aabb1, list1, this.maxUpStep(), f);
 
             for (float f1 : afloat) {
-                Vec3 vec31 = collideWithShapes(new Vec3(p_20273_.x, (double)f1, p_20273_.z), aabb1, list1);
+                Vec3 vec31 = collideWithShapes(new Vec3(vec.x, (double)f1, vec.z), aabb1, list1);
                 if (vec31.horizontalDistanceSqr() > vec3.horizontalDistanceSqr()) {
                     double d0 = aabb.minY - aabb1.minY;
                     return vec31.add(0.0, -d0, 0.0);
@@ -914,14 +929,14 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return vec3;
     }
 
-    private static float[] collectCandidateStepUpHeights(AABB p_345729_, List<VoxelShape> p_345260_, float p_346165_, float p_345968_) {
+    private static float[] collectCandidateStepUpHeights(AABB box, List<VoxelShape> colliders, float deltaY, float maxUpStep) {
         FloatSet floatset = new FloatArraySet(4);
 
-        for (VoxelShape voxelshape : p_345260_) {
+        for (VoxelShape voxelshape : colliders) {
             for (double d0 : voxelshape.getCoords(Direction.Axis.Y)) {
-                float f = (float)(d0 - p_345729_.minY);
-                if (!(f < 0.0F) && f != p_345968_) {
-                    if (f > p_346165_) {
+                float f = (float)(d0 - box.minY);
+                if (!(f < 0.0F) && f != maxUpStep) {
+                    if (f > deltaY) {
                         break;
                     }
 
@@ -935,58 +950,58 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return afloat;
     }
 
-    public static Vec3 collideBoundingBox(@Nullable Entity p_198895_, Vec3 p_198896_, AABB p_198897_, Level p_198898_, List<VoxelShape> p_198899_) {
-        List<VoxelShape> list = collectColliders(p_198895_, p_198898_, p_198899_, p_198897_.expandTowards(p_198896_));
-        return collideWithShapes(p_198896_, p_198897_, list);
+    public static Vec3 collideBoundingBox(@Nullable Entity entity, Vec3 vec, AABB collisionBox, Level level, List<VoxelShape> potentialHits) {
+        List<VoxelShape> list = collectColliders(entity, level, potentialHits, collisionBox.expandTowards(vec));
+        return collideWithShapes(vec, collisionBox, list);
     }
 
-    private static List<VoxelShape> collectColliders(@Nullable Entity p_344804_, Level p_345583_, List<VoxelShape> p_345198_, AABB p_345837_) {
-        Builder<VoxelShape> builder = ImmutableList.builderWithExpectedSize(p_345198_.size() + 1);
-        if (!p_345198_.isEmpty()) {
-            builder.addAll(p_345198_);
+    private static List<VoxelShape> collectColliders(@Nullable Entity entity, Level level, List<VoxelShape> collisions, AABB boundingBox) {
+        Builder<VoxelShape> builder = ImmutableList.builderWithExpectedSize(collisions.size() + 1);
+        if (!collisions.isEmpty()) {
+            builder.addAll(collisions);
         }
 
-        WorldBorder worldborder = p_345583_.getWorldBorder();
-        boolean flag = p_344804_ != null && worldborder.isInsideCloseToBorder(p_344804_, p_345837_);
+        WorldBorder worldborder = level.getWorldBorder();
+        boolean flag = entity != null && worldborder.isInsideCloseToBorder(entity, boundingBox);
         if (flag) {
             builder.add(worldborder.getCollisionShape());
         }
 
-        builder.addAll(p_345583_.getBlockCollisions(p_344804_, p_345837_));
+        builder.addAll(level.getBlockCollisions(entity, boundingBox));
         return builder.build();
     }
 
-    private static Vec3 collideWithShapes(Vec3 p_198901_, AABB p_198902_, List<VoxelShape> p_198903_) {
-        if (p_198903_.isEmpty()) {
-            return p_198901_;
+    private static Vec3 collideWithShapes(Vec3 deltaMovement, AABB entityBB, List<VoxelShape> shapes) {
+        if (shapes.isEmpty()) {
+            return deltaMovement;
         } else {
-            double d0 = p_198901_.x;
-            double d1 = p_198901_.y;
-            double d2 = p_198901_.z;
+            double d0 = deltaMovement.x;
+            double d1 = deltaMovement.y;
+            double d2 = deltaMovement.z;
             if (d1 != 0.0) {
-                d1 = Shapes.collide(Direction.Axis.Y, p_198902_, p_198903_, d1);
+                d1 = Shapes.collide(Direction.Axis.Y, entityBB, shapes, d1);
                 if (d1 != 0.0) {
-                    p_198902_ = p_198902_.move(0.0, d1, 0.0);
+                    entityBB = entityBB.move(0.0, d1, 0.0);
                 }
             }
 
             boolean flag = Math.abs(d0) < Math.abs(d2);
             if (flag && d2 != 0.0) {
-                d2 = Shapes.collide(Direction.Axis.Z, p_198902_, p_198903_, d2);
+                d2 = Shapes.collide(Direction.Axis.Z, entityBB, shapes, d2);
                 if (d2 != 0.0) {
-                    p_198902_ = p_198902_.move(0.0, 0.0, d2);
+                    entityBB = entityBB.move(0.0, 0.0, d2);
                 }
             }
 
             if (d0 != 0.0) {
-                d0 = Shapes.collide(Direction.Axis.X, p_198902_, p_198903_, d0);
+                d0 = Shapes.collide(Direction.Axis.X, entityBB, shapes, d0);
                 if (!flag && d0 != 0.0) {
-                    p_198902_ = p_198902_.move(d0, 0.0, 0.0);
+                    entityBB = entityBB.move(d0, 0.0, 0.0);
                 }
             }
 
             if (!flag && d2 != 0.0) {
-                d2 = Shapes.collide(Direction.Axis.Z, p_198902_, p_198903_, d2);
+                d2 = Shapes.collide(Direction.Axis.Z, entityBB, shapes, d2);
             }
 
             return new Vec3(d0, d1, d2);
@@ -1041,27 +1056,27 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    protected void onInsideBlock(BlockState p_20005_) {
+    protected void onInsideBlock(BlockState state) {
     }
 
-    public BlockPos adjustSpawnLocation(ServerLevel p_352356_, BlockPos p_352343_) {
-        BlockPos blockpos = p_352356_.getSharedSpawnPos();
+    public BlockPos adjustSpawnLocation(ServerLevel level, BlockPos pos) {
+        BlockPos blockpos = level.getSharedSpawnPos();
         Vec3 vec3 = blockpos.getCenter();
-        int i = p_352356_.getChunkAt(blockpos).getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, blockpos.getX(), blockpos.getZ()) + 1;
+        int i = level.getChunkAt(blockpos).getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, blockpos.getX(), blockpos.getZ()) + 1;
         return BlockPos.containing(vec3.x, (double)i, vec3.z);
     }
 
-    public void gameEvent(Holder<GameEvent> p_316133_, @Nullable Entity p_146854_) {
-        this.level().gameEvent(p_146854_, p_316133_, this.position);
+    public void gameEvent(Holder<GameEvent> gameEvent, @Nullable Entity entity) {
+        this.level().gameEvent(entity, gameEvent, this.position);
     }
 
-    public void gameEvent(Holder<GameEvent> p_316256_) {
-        this.gameEvent(p_316256_, this);
+    public void gameEvent(Holder<GameEvent> gameEvent) {
+        this.gameEvent(gameEvent, this);
     }
 
-    private void walkingStepSound(BlockPos p_281828_, BlockState p_282118_) {
-        this.playStepSound(p_281828_, p_282118_);
-        if (this.shouldPlayAmethystStepSound(p_282118_)) {
+    private void walkingStepSound(BlockPos pos, BlockState state) {
+        this.playStepSound(pos, state);
+        if (this.shouldPlayAmethystStepSound(state)) {
             this.playAmethystStepSound();
         }
     }
@@ -1074,30 +1089,30 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         this.playSwimSound(f1);
     }
 
-    protected BlockPos getPrimaryStepSoundBlockPos(BlockPos p_278049_) {
-        BlockPos blockpos = p_278049_.above();
+    protected BlockPos getPrimaryStepSoundBlockPos(BlockPos pos) {
+        BlockPos blockpos = pos.above();
         BlockState blockstate = this.level().getBlockState(blockpos);
-        return !blockstate.is(BlockTags.INSIDE_STEP_SOUND_BLOCKS) && !blockstate.is(BlockTags.COMBINATION_STEP_SOUND_BLOCKS) ? p_278049_ : blockpos;
+        return !blockstate.is(BlockTags.INSIDE_STEP_SOUND_BLOCKS) && !blockstate.is(BlockTags.COMBINATION_STEP_SOUND_BLOCKS) ? pos : blockpos;
     }
 
-    protected void playCombinationStepSounds(BlockState p_277472_, BlockState p_277630_, BlockPos primaryPos, BlockPos secondaryPos) {
-        SoundType soundtype = p_277472_.getSoundType(this.level, primaryPos, this);
+    protected void playCombinationStepSounds(BlockState primaryState, BlockState secondaryState, BlockPos primaryPos, BlockPos secondaryPos) {
+        SoundType soundtype = primaryState.getSoundType(this.level, primaryPos, this);
         this.playSound(soundtype.getStepSound(), soundtype.getVolume() * 0.15F, soundtype.getPitch());
-        this.playMuffledStepSound(p_277630_, secondaryPos);
+        this.playMuffledStepSound(secondaryState, secondaryPos);
     }
 
-    protected void playMuffledStepSound(BlockState p_283110_, BlockPos pos) {
-        SoundType soundtype = p_283110_.getSoundType(this.level, pos, this);
+    protected void playMuffledStepSound(BlockState state, BlockPos pos) {
+        SoundType soundtype = state.getSoundType(this.level, pos, this);
         this.playSound(soundtype.getStepSound(), soundtype.getVolume() * 0.05F, soundtype.getPitch() * 0.8F);
     }
 
-    protected void playStepSound(BlockPos p_20135_, BlockState p_20136_) {
-        SoundType soundtype = p_20136_.getSoundType(this.level, p_20135_, this);
+    protected void playStepSound(BlockPos pos, BlockState state) {
+        SoundType soundtype = state.getSoundType(this.level, pos, this);
         this.playSound(soundtype.getStepSound(), soundtype.getVolume() * 0.15F, soundtype.getPitch());
     }
 
-    private boolean shouldPlayAmethystStepSound(BlockState p_278069_) {
-        return p_278069_.is(BlockTags.CRYSTAL_SOUND_BLOCKS) && this.tickCount >= this.lastCrystalSoundPlayTick + 20;
+    private boolean shouldPlayAmethystStepSound(BlockState state) {
+        return state.is(BlockTags.CRYSTAL_SOUND_BLOCKS) && this.tickCount >= this.lastCrystalSoundPlayTick + 20;
     }
 
     private void playAmethystStepSound() {
@@ -1109,8 +1124,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         this.lastCrystalSoundPlayTick = this.tickCount;
     }
 
-    protected void playSwimSound(float p_20213_) {
-        this.playSound(this.getSwimSound(), p_20213_, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.4F);
+    protected void playSwimSound(float volume) {
+        this.playSound(this.getSwimSound(), volume, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.4F);
     }
 
     protected void onFlap() {
@@ -1120,15 +1135,15 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return false;
     }
 
-    public void playSound(SoundEvent p_19938_, float p_19939_, float p_19940_) {
+    public void playSound(SoundEvent sound, float volume, float pitch) {
         if (!this.isSilent()) {
-            this.level().playSound(null, this.getX(), this.getY(), this.getZ(), p_19938_, this.getSoundSource(), p_19939_, p_19940_);
+            this.level().playSound(null, this.getX(), this.getY(), this.getZ(), sound, this.getSoundSource(), volume, pitch);
         }
     }
 
-    public void playSound(SoundEvent p_216991_) {
+    public void playSound(SoundEvent sound) {
         if (!this.isSilent()) {
-            this.playSound(p_216991_, 1.0F, 1.0F);
+            this.playSound(sound, 1.0F, 1.0F);
         }
     }
 
@@ -1136,16 +1151,19 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.entityData.get(DATA_SILENT);
     }
 
-    public void setSilent(boolean p_20226_) {
-        this.entityData.set(DATA_SILENT, p_20226_);
+    /**
+     * When set to true the entity will not play sounds.
+     */
+    public void setSilent(boolean isSilent) {
+        this.entityData.set(DATA_SILENT, isSilent);
     }
 
     public boolean isNoGravity() {
         return this.entityData.get(DATA_NO_GRAVITY);
     }
 
-    public void setNoGravity(boolean p_20243_) {
-        this.entityData.set(DATA_NO_GRAVITY, p_20243_);
+    public void setNoGravity(boolean noGravity) {
+        this.entityData.set(DATA_NO_GRAVITY, noGravity);
     }
 
     protected double getDefaultGravity() {
@@ -1171,23 +1189,23 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return false;
     }
 
-    protected void checkFallDamage(double p_19911_, boolean p_19912_, BlockState p_19913_, BlockPos p_19914_) {
-        if (p_19912_) {
+    protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
+        if (onGround) {
             if (this.fallDistance > 0.0F) {
-                p_19913_.getBlock().fallOn(this.level(), p_19913_, p_19914_, this, this.fallDistance);
+                state.getBlock().fallOn(this.level(), state, pos, this, this.fallDistance);
                 this.level()
                     .gameEvent(
                         GameEvent.HIT_GROUND,
                         this.position,
                         GameEvent.Context.of(
-                            this, this.mainSupportingBlockPos.<BlockState>map(p_286200_ -> this.level().getBlockState(p_286200_)).orElse(p_19913_)
+                            this, this.mainSupportingBlockPos.<BlockState>map(p_286200_ -> this.level().getBlockState(p_286200_)).orElse(state)
                         )
                     );
             }
 
             this.resetFallDistance();
-        } else if (p_19911_ < 0.0) {
-            this.fallDistance -= (float)p_19911_;
+        } else if (y < 0.0) {
+            this.fallDistance -= (float)y;
         }
     }
 
@@ -1195,13 +1213,13 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.getType().fireImmune();
     }
 
-    public boolean causeFallDamage(float p_146828_, float p_146829_, DamageSource p_146830_) {
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
         if (this.type.is(EntityTypeTags.FALL_DAMAGE_IMMUNE)) {
             return false;
         } else {
             if (this.isVehicle()) {
                 for (Entity entity : this.getPassengers()) {
-                    entity.causeFallDamage(p_146828_, p_146829_, p_146830_);
+                    entity.causeFallDamage(fallDistance, multiplier, source);
                 }
             }
 
@@ -1366,29 +1384,29 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
     }
 
     @Deprecated // Forge: Use isEyeInFluidType instead
-    public boolean isEyeInFluid(TagKey<Fluid> p_204030_) {
-        if (p_204030_ == FluidTags.WATER) return this.isEyeInFluidType(net.neoforged.neoforge.common.NeoForgeMod.WATER_TYPE.value());
-        else if (p_204030_ == FluidTags.LAVA) return this.isEyeInFluidType(net.neoforged.neoforge.common.NeoForgeMod.LAVA_TYPE.value());
-        return this.fluidOnEyes.contains(p_204030_);
+    public boolean isEyeInFluid(TagKey<Fluid> fluidTag) {
+        if (fluidTag == FluidTags.WATER) return this.isEyeInFluidType(net.neoforged.neoforge.common.NeoForgeMod.WATER_TYPE.value());
+        else if (fluidTag == FluidTags.LAVA) return this.isEyeInFluidType(net.neoforged.neoforge.common.NeoForgeMod.LAVA_TYPE.value());
+        return this.fluidOnEyes.contains(fluidTag);
     }
 
     public boolean isInLava() {
         return !this.firstTick && this.forgeFluidTypeHeight.getDouble(net.neoforged.neoforge.common.NeoForgeMod.LAVA_TYPE.value()) > 0.0D;
     }
 
-    public void moveRelative(float p_19921_, Vec3 p_19922_) {
-        Vec3 vec3 = getInputVector(p_19922_, p_19921_, this.getYRot());
+    public void moveRelative(float amount, Vec3 relative) {
+        Vec3 vec3 = getInputVector(relative, amount, this.getYRot());
         this.setDeltaMovement(this.getDeltaMovement().add(vec3));
     }
 
-    private static Vec3 getInputVector(Vec3 p_20016_, float p_20017_, float p_20018_) {
-        double d0 = p_20016_.lengthSqr();
+    private static Vec3 getInputVector(Vec3 relative, float motionScaler, float facing) {
+        double d0 = relative.lengthSqr();
         if (d0 < 1.0E-7) {
             return Vec3.ZERO;
         } else {
-            Vec3 vec3 = (d0 > 1.0 ? p_20016_.normalize() : p_20016_).scale((double)p_20017_);
-            float f = Mth.sin(p_20018_ * (float) (Math.PI / 180.0));
-            float f1 = Mth.cos(p_20018_ * (float) (Math.PI / 180.0));
+            Vec3 vec3 = (d0 > 1.0 ? relative.normalize() : relative).scale((double)motionScaler);
+            float f = Mth.sin(facing * (float) (Math.PI / 180.0));
+            float f1 = Mth.cos(facing * (float) (Math.PI / 180.0));
             return new Vec3(vec3.x * (double)f1 - vec3.z * (double)f, vec3.y, vec3.z * (double)f1 + vec3.x * (double)f);
         }
     }
@@ -1400,47 +1418,53 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
             : 0.0F;
     }
 
-    public void absMoveTo(double p_19891_, double p_19892_, double p_19893_, float p_19894_, float p_19895_) {
-        this.absMoveTo(p_19891_, p_19892_, p_19893_);
-        this.absRotateTo(p_19894_, p_19895_);
+    /**
+     * Sets position and rotation, clamping and wrapping params to valid values. Used by network code.
+     */
+    public void absMoveTo(double x, double y, double z, float yRot, float xRot) {
+        this.absMoveTo(x, y, z);
+        this.absRotateTo(yRot, xRot);
     }
 
-    public void absRotateTo(float p_348662_, float p_348500_) {
-        this.setYRot(p_348662_ % 360.0F);
-        this.setXRot(Mth.clamp(p_348500_, -90.0F, 90.0F) % 360.0F);
+    public void absRotateTo(float yRot, float xRot) {
+        this.setYRot(yRot % 360.0F);
+        this.setXRot(Mth.clamp(xRot, -90.0F, 90.0F) % 360.0F);
         this.yRotO = this.getYRot();
         this.xRotO = this.getXRot();
     }
 
-    public void absMoveTo(double p_20249_, double p_20250_, double p_20251_) {
-        double d0 = Mth.clamp(p_20249_, -3.0E7, 3.0E7);
-        double d1 = Mth.clamp(p_20251_, -3.0E7, 3.0E7);
+    public void absMoveTo(double x, double y, double z) {
+        double d0 = Mth.clamp(x, -3.0E7, 3.0E7);
+        double d1 = Mth.clamp(z, -3.0E7, 3.0E7);
         this.xo = d0;
-        this.yo = p_20250_;
+        this.yo = y;
         this.zo = d1;
-        this.setPos(d0, p_20250_, d1);
+        this.setPos(d0, y, d1);
     }
 
-    public void moveTo(Vec3 p_20220_) {
-        this.moveTo(p_20220_.x, p_20220_.y, p_20220_.z);
+    public void moveTo(Vec3 vec) {
+        this.moveTo(vec.x, vec.y, vec.z);
     }
 
-    public void moveTo(double p_20105_, double p_20106_, double p_20107_) {
-        this.moveTo(p_20105_, p_20106_, p_20107_, this.getYRot(), this.getXRot());
+    public void moveTo(double x, double y, double z) {
+        this.moveTo(x, y, z, this.getYRot(), this.getXRot());
     }
 
-    public void moveTo(BlockPos p_20036_, float p_20037_, float p_20038_) {
-        this.moveTo(p_20036_.getBottomCenter(), p_20037_, p_20038_);
+    public void moveTo(BlockPos pos, float yRot, float xRot) {
+        this.moveTo(pos.getBottomCenter(), yRot, xRot);
     }
 
-    public void moveTo(Vec3 p_352318_, float p_352438_, float p_352125_) {
-        this.moveTo(p_352318_.x, p_352318_.y, p_352318_.z, p_352438_, p_352125_);
+    public void moveTo(Vec3 pos, float yRot, float xRot) {
+        this.moveTo(pos.x, pos.y, pos.z, yRot, xRot);
     }
 
-    public void moveTo(double p_20108_, double p_20109_, double p_20110_, float p_20111_, float p_20112_) {
-        this.setPosRaw(p_20108_, p_20109_, p_20110_);
-        this.setYRot(p_20111_);
-        this.setXRot(p_20112_);
+    /**
+     * Sets the location and rotation of the entity in the world.
+     */
+    public void moveTo(double x, double y, double z, float yRot, float xRot) {
+        this.setPosRaw(x, y, z);
+        this.setYRot(yRot);
+        this.setXRot(xRot);
         this.setOldPosAndRot();
         this.reapplyPosition();
     }
@@ -1459,39 +1483,54 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         this.xRotO = this.getXRot();
     }
 
-    public float distanceTo(Entity p_20271_) {
-        float f = (float)(this.getX() - p_20271_.getX());
-        float f1 = (float)(this.getY() - p_20271_.getY());
-        float f2 = (float)(this.getZ() - p_20271_.getZ());
+    /**
+     * Returns the distance to the entity.
+     */
+    public float distanceTo(Entity entity) {
+        float f = (float)(this.getX() - entity.getX());
+        float f1 = (float)(this.getY() - entity.getY());
+        float f2 = (float)(this.getZ() - entity.getZ());
         return Mth.sqrt(f * f + f1 * f1 + f2 * f2);
     }
 
-    public double distanceToSqr(double p_20276_, double p_20277_, double p_20278_) {
-        double d0 = this.getX() - p_20276_;
-        double d1 = this.getY() - p_20277_;
-        double d2 = this.getZ() - p_20278_;
+    /**
+     * Gets the squared distance to the position.
+     */
+    public double distanceToSqr(double x, double y, double z) {
+        double d0 = this.getX() - x;
+        double d1 = this.getY() - y;
+        double d2 = this.getZ() - z;
         return d0 * d0 + d1 * d1 + d2 * d2;
     }
 
-    public double distanceToSqr(Entity p_20281_) {
-        return this.distanceToSqr(p_20281_.position());
+    /**
+     * Returns the squared distance to the entity.
+     */
+    public double distanceToSqr(Entity entity) {
+        return this.distanceToSqr(entity.position());
     }
 
-    public double distanceToSqr(Vec3 p_20239_) {
-        double d0 = this.getX() - p_20239_.x;
-        double d1 = this.getY() - p_20239_.y;
-        double d2 = this.getZ() - p_20239_.z;
+    public double distanceToSqr(Vec3 vec) {
+        double d0 = this.getX() - vec.x;
+        double d1 = this.getY() - vec.y;
+        double d2 = this.getZ() - vec.z;
         return d0 * d0 + d1 * d1 + d2 * d2;
     }
 
-    public void playerTouch(Player p_20081_) {
+    /**
+     * Called by a player entity when they collide with an entity
+     */
+    public void playerTouch(Player player) {
     }
 
-    public void push(Entity p_20293_) {
-        if (!this.isPassengerOfSameVehicle(p_20293_)) {
-            if (!p_20293_.noPhysics && !this.noPhysics) {
-                double d0 = p_20293_.getX() - this.getX();
-                double d1 = p_20293_.getZ() - this.getZ();
+    /**
+     * Applies a velocity to the entities, to push them away from each other.
+     */
+    public void push(Entity entity) {
+        if (!this.isPassengerOfSameVehicle(entity)) {
+            if (!entity.noPhysics && !this.noPhysics) {
+                double d0 = entity.getX() - this.getX();
+                double d1 = entity.getZ() - this.getZ();
                 double d2 = Mth.absMax(d0, d1);
                 if (d2 >= 0.01F) {
                     d2 = Math.sqrt(d2);
@@ -1510,20 +1549,23 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
                         this.push(-d0, 0.0, -d1);
                     }
 
-                    if (!p_20293_.isVehicle() && p_20293_.isPushable()) {
-                        p_20293_.push(d0, 0.0, d1);
+                    if (!entity.isVehicle() && entity.isPushable()) {
+                        entity.push(d0, 0.0, d1);
                     }
                 }
             }
         }
     }
 
-    public void push(Vec3 p_347665_) {
-        this.push(p_347665_.x, p_347665_.y, p_347665_.z);
+    public void push(Vec3 vector) {
+        this.push(vector.x, vector.y, vector.z);
     }
 
-    public void push(double p_20286_, double p_20287_, double p_20288_) {
-        this.setDeltaMovement(this.getDeltaMovement().add(p_20286_, p_20287_, p_20288_));
+    /**
+     * Adds to the current velocity of the entity, and sets {@link #isAirBorne} to true.
+     */
+    public void push(double x, double y, double z) {
+        this.setDeltaMovement(this.getDeltaMovement().add(x, y, z));
         this.hasImpulse = true;
     }
 
@@ -1531,8 +1573,11 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         this.hurtMarked = true;
     }
 
-    public boolean hurt(DamageSource p_19946_, float p_19947_) {
-        if (this.isInvulnerableTo(p_19946_)) {
+    /**
+     * Called when the entity is attacked.
+     */
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isInvulnerableTo(source)) {
             return false;
         } else {
             this.markHurt();
@@ -1540,25 +1585,37 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    public final Vec3 getViewVector(float p_20253_) {
-        return this.calculateViewVector(this.getViewXRot(p_20253_), this.getViewYRot(p_20253_));
+    /**
+     * Gets the interpolated look vector.
+     */
+    public final Vec3 getViewVector(float partialTicks) {
+        return this.calculateViewVector(this.getViewXRot(partialTicks), this.getViewYRot(partialTicks));
     }
 
     public Direction getNearestViewDirection() {
         return Direction.getNearest(this.getViewVector(1.0F));
     }
 
-    public float getViewXRot(float p_20268_) {
-        return p_20268_ == 1.0F ? this.getXRot() : Mth.lerp(p_20268_, this.xRotO, this.getXRot());
+    /**
+     * Returns the current X rotation of the entity.
+     */
+    public float getViewXRot(float partialTicks) {
+        return partialTicks == 1.0F ? this.getXRot() : Mth.lerp(partialTicks, this.xRotO, this.getXRot());
     }
 
-    public float getViewYRot(float p_20279_) {
-        return p_20279_ == 1.0F ? this.getYRot() : Mth.lerp(p_20279_, this.yRotO, this.getYRot());
+    /**
+     * Returns the current Y rotation of the entity.
+     */
+    public float getViewYRot(float partialTick) {
+        return partialTick == 1.0F ? this.getYRot() : Mth.lerp(partialTick, this.yRotO, this.getYRot());
     }
 
-    public final Vec3 calculateViewVector(float p_20172_, float p_20173_) {
-        float f = p_20172_ * (float) (Math.PI / 180.0);
-        float f1 = -p_20173_ * (float) (Math.PI / 180.0);
+    /**
+     * Calculates the view vector using the X and Y rotation of an entity.
+     */
+    public final Vec3 calculateViewVector(float xRot, float yRot) {
+        float f = xRot * (float) (Math.PI / 180.0);
+        float f1 = -yRot * (float) (Math.PI / 180.0);
         float f2 = Mth.cos(f1);
         float f3 = Mth.sin(f1);
         float f4 = Mth.cos(f);
@@ -1566,41 +1623,41 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return new Vec3((double)(f3 * f4), (double)(-f5), (double)(f2 * f4));
     }
 
-    public final Vec3 getUpVector(float p_20290_) {
-        return this.calculateUpVector(this.getViewXRot(p_20290_), this.getViewYRot(p_20290_));
+    public final Vec3 getUpVector(float partialTicks) {
+        return this.calculateUpVector(this.getViewXRot(partialTicks), this.getViewYRot(partialTicks));
     }
 
-    protected final Vec3 calculateUpVector(float p_20215_, float p_20216_) {
-        return this.calculateViewVector(p_20215_ - 90.0F, p_20216_);
+    protected final Vec3 calculateUpVector(float xRot, float yRot) {
+        return this.calculateViewVector(xRot - 90.0F, yRot);
     }
 
     public final Vec3 getEyePosition() {
         return new Vec3(this.getX(), this.getEyeY(), this.getZ());
     }
 
-    public final Vec3 getEyePosition(float p_20300_) {
-        double d0 = Mth.lerp((double)p_20300_, this.xo, this.getX());
-        double d1 = Mth.lerp((double)p_20300_, this.yo, this.getY()) + (double)this.getEyeHeight();
-        double d2 = Mth.lerp((double)p_20300_, this.zo, this.getZ());
+    public final Vec3 getEyePosition(float partialTicks) {
+        double d0 = Mth.lerp((double)partialTicks, this.xo, this.getX());
+        double d1 = Mth.lerp((double)partialTicks, this.yo, this.getY()) + (double)this.getEyeHeight();
+        double d2 = Mth.lerp((double)partialTicks, this.zo, this.getZ());
         return new Vec3(d0, d1, d2);
     }
 
-    public Vec3 getLightProbePosition(float p_20309_) {
-        return this.getEyePosition(p_20309_);
+    public Vec3 getLightProbePosition(float partialTicks) {
+        return this.getEyePosition(partialTicks);
     }
 
-    public final Vec3 getPosition(float p_20319_) {
-        double d0 = Mth.lerp((double)p_20319_, this.xo, this.getX());
-        double d1 = Mth.lerp((double)p_20319_, this.yo, this.getY());
-        double d2 = Mth.lerp((double)p_20319_, this.zo, this.getZ());
+    public final Vec3 getPosition(float partialTicks) {
+        double d0 = Mth.lerp((double)partialTicks, this.xo, this.getX());
+        double d1 = Mth.lerp((double)partialTicks, this.yo, this.getY());
+        double d2 = Mth.lerp((double)partialTicks, this.zo, this.getZ());
         return new Vec3(d0, d1, d2);
     }
 
-    public HitResult pick(double p_19908_, float p_19909_, boolean p_19910_) {
-        Vec3 vec3 = this.getEyePosition(p_19909_);
-        Vec3 vec31 = this.getViewVector(p_19909_);
-        Vec3 vec32 = vec3.add(vec31.x * p_19908_, vec31.y * p_19908_, vec31.z * p_19908_);
-        return this.level().clip(new ClipContext(vec3, vec32, ClipContext.Block.OUTLINE, p_19910_ ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, this));
+    public HitResult pick(double hitDistance, float partialTicks, boolean hitFluids) {
+        Vec3 vec3 = this.getEyePosition(partialTicks);
+        Vec3 vec31 = this.getViewVector(partialTicks);
+        Vec3 vec32 = vec3.add(vec31.x * hitDistance, vec31.y * hitDistance, vec31.z * hitDistance);
+        return this.level().clip(new ClipContext(vec3, vec32, ClipContext.Block.OUTLINE, hitFluids ? ClipContext.Fluid.ANY : ClipContext.Fluid.NONE, this));
     }
 
     public boolean canBeHitByProjectile() {
@@ -1615,31 +1672,41 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return false;
     }
 
-    public void awardKillScore(Entity p_19953_, int p_19954_, DamageSource p_19955_) {
-        if (p_19953_ instanceof ServerPlayer) {
-            CriteriaTriggers.ENTITY_KILLED_PLAYER.trigger((ServerPlayer)p_19953_, this, p_19955_);
+    public void awardKillScore(Entity killed, int scoreValue, DamageSource source) {
+        if (killed instanceof ServerPlayer) {
+            CriteriaTriggers.ENTITY_KILLED_PLAYER.trigger((ServerPlayer)killed, this, source);
         }
     }
 
-    public boolean shouldRender(double p_20296_, double p_20297_, double p_20298_) {
-        double d0 = this.getX() - p_20296_;
-        double d1 = this.getY() - p_20297_;
-        double d2 = this.getZ() - p_20298_;
+    public boolean shouldRender(double x, double y, double z) {
+        double d0 = this.getX() - x;
+        double d1 = this.getY() - y;
+        double d2 = this.getZ() - z;
         double d3 = d0 * d0 + d1 * d1 + d2 * d2;
         return this.shouldRenderAtSqrDistance(d3);
     }
 
-    public boolean shouldRenderAtSqrDistance(double p_19883_) {
+    /**
+     * Checks if the entity is in range to render.
+     */
+    public boolean shouldRenderAtSqrDistance(double distance) {
         double d0 = this.getBoundingBox().getSize();
         if (Double.isNaN(d0)) {
             d0 = 1.0;
         }
 
         d0 *= 64.0 * viewScale;
-        return p_19883_ < d0 * d0;
+        return distance < d0 * d0;
     }
 
-    public boolean saveAsPassenger(CompoundTag p_20087_) {
+    /**
+     * Writes this entity to NBT, unless it has been removed. Also writes this entity's passengers, and the entity type ID (so the produced NBT is sufficient to recreate the entity).
+     *
+     * Generally, {@link #writeUnlessPassenger} or {@link #writeWithoutTypeId} should be used instead of this method.
+     *
+     * @return True if the entity was written (and the passed compound should be saved)" false if the entity was not written.
+     */
+    public boolean saveAsPassenger(CompoundTag compound) {
         if (this.removalReason != null && !this.removalReason.shouldSave()) {
             return false;
         } else {
@@ -1647,63 +1714,72 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
             if (s == null) {
                 return false;
             } else {
-                p_20087_.putString("id", s);
-                this.saveWithoutId(p_20087_);
+                compound.putString("id", s);
+                this.saveWithoutId(compound);
                 return true;
             }
         }
     }
 
-    public boolean save(CompoundTag p_20224_) {
-        return this.isPassenger() ? false : this.saveAsPassenger(p_20224_);
+    /**
+     * Writes this entity to NBT, unless it has been removed or it is a passenger. Also writes this entity's passengers, and the entity type ID (so the produced NBT is sufficient to recreate the entity).
+     * To always write the entity, use {@link #writeWithoutTypeId}.
+     *
+     * @return True if the entity was written (and the passed compound should be saved)" false if the entity was not written.
+     */
+    public boolean save(CompoundTag compound) {
+        return this.isPassenger() ? false : this.saveAsPassenger(compound);
     }
 
-    public CompoundTag saveWithoutId(CompoundTag p_20241_) {
+    /**
+     * Writes this entity, including passengers, to NBT, regardless as to whether it is removed or a passenger. Does <b>not</b> include the entity's type ID, so the NBT is insufficient to recreate the entity using {@link AnvilChunkLoader#readWorldEntity}. Use {@link #writeUnlessPassenger} for that purpose.
+     */
+    public CompoundTag saveWithoutId(CompoundTag compound) {
         try {
             if (this.vehicle != null) {
-                p_20241_.put("Pos", this.newDoubleList(this.vehicle.getX(), this.getY(), this.vehicle.getZ()));
+                compound.put("Pos", this.newDoubleList(this.vehicle.getX(), this.getY(), this.vehicle.getZ()));
             } else {
-                p_20241_.put("Pos", this.newDoubleList(this.getX(), this.getY(), this.getZ()));
+                compound.put("Pos", this.newDoubleList(this.getX(), this.getY(), this.getZ()));
             }
 
             Vec3 vec3 = this.getDeltaMovement();
-            p_20241_.put("Motion", this.newDoubleList(vec3.x, vec3.y, vec3.z));
-            p_20241_.put("Rotation", this.newFloatList(this.getYRot(), this.getXRot()));
-            p_20241_.putFloat("FallDistance", this.fallDistance);
-            p_20241_.putShort("Fire", (short)this.remainingFireTicks);
-            p_20241_.putShort("Air", (short)this.getAirSupply());
-            p_20241_.putBoolean("OnGround", this.onGround());
-            p_20241_.putBoolean("Invulnerable", this.invulnerable);
-            p_20241_.putInt("PortalCooldown", this.portalCooldown);
-            p_20241_.putUUID("UUID", this.getUUID());
+            compound.put("Motion", this.newDoubleList(vec3.x, vec3.y, vec3.z));
+            compound.put("Rotation", this.newFloatList(this.getYRot(), this.getXRot()));
+            compound.putFloat("FallDistance", this.fallDistance);
+            compound.putShort("Fire", (short)this.remainingFireTicks);
+            compound.putShort("Air", (short)this.getAirSupply());
+            compound.putBoolean("OnGround", this.onGround());
+            compound.putBoolean("Invulnerable", this.invulnerable);
+            compound.putInt("PortalCooldown", this.portalCooldown);
+            compound.putUUID("UUID", this.getUUID());
             Component component = this.getCustomName();
             if (component != null) {
-                p_20241_.putString("CustomName", Component.Serializer.toJson(component, this.registryAccess()));
+                compound.putString("CustomName", Component.Serializer.toJson(component, this.registryAccess()));
             }
 
             if (this.isCustomNameVisible()) {
-                p_20241_.putBoolean("CustomNameVisible", this.isCustomNameVisible());
+                compound.putBoolean("CustomNameVisible", this.isCustomNameVisible());
             }
 
             if (this.isSilent()) {
-                p_20241_.putBoolean("Silent", this.isSilent());
+                compound.putBoolean("Silent", this.isSilent());
             }
 
             if (this.isNoGravity()) {
-                p_20241_.putBoolean("NoGravity", this.isNoGravity());
+                compound.putBoolean("NoGravity", this.isNoGravity());
             }
 
             if (this.hasGlowingTag) {
-                p_20241_.putBoolean("Glowing", true);
+                compound.putBoolean("Glowing", true);
             }
 
             int i = this.getTicksFrozen();
             if (i > 0) {
-                p_20241_.putInt("TicksFrozen", this.getTicksFrozen());
+                compound.putInt("TicksFrozen", this.getTicksFrozen());
             }
 
             if (this.hasVisualFire) {
-                p_20241_.putBoolean("HasVisualFire", this.hasVisualFire);
+                compound.putBoolean("HasVisualFire", this.hasVisualFire);
             }
 
             if (!this.tags.isEmpty()) {
@@ -1713,14 +1789,14 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
                     listtag.add(StringTag.valueOf(s));
                 }
 
-                p_20241_.put("Tags", listtag);
+                compound.put("Tags", listtag);
             }
 
             CompoundTag attachments = serializeAttachments(registryAccess());
-            if (attachments != null) p_20241_.put(ATTACHMENTS_NBT_KEY, attachments);
-            if (persistentData != null) p_20241_.put("NeoForgeData", persistentData.copy());
+            if (attachments != null) compound.put(ATTACHMENTS_NBT_KEY, attachments);
+            if (persistentData != null) compound.put("NeoForgeData", persistentData.copy());
 
-            this.addAdditionalSaveData(p_20241_);
+            this.addAdditionalSaveData(compound);
             if (this.isVehicle()) {
                 ListTag listtag1 = new ListTag();
 
@@ -1732,11 +1808,11 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
                 }
 
                 if (!listtag1.isEmpty()) {
-                    p_20241_.put("Passengers", listtag1);
+                    compound.put("Passengers", listtag1);
                 }
             }
 
-            return p_20241_;
+            return compound;
         } catch (Throwable throwable) {
             CrashReport crashreport = CrashReport.forThrowable(throwable, "Saving entity NBT");
             CrashReportCategory crashreportcategory = crashreport.addCategory("Entity being saved");
@@ -1745,11 +1821,14 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    public void load(CompoundTag p_20259_) {
+    /**
+     * Reads the entity from NBT (calls an abstract helper method to read specialized data)
+     */
+    public void load(CompoundTag compound) {
         try {
-            ListTag listtag = p_20259_.getList("Pos", 6);
-            ListTag listtag1 = p_20259_.getList("Motion", 6);
-            ListTag listtag2 = p_20259_.getList("Rotation", 5);
+            ListTag listtag = compound.getList("Pos", 6);
+            ListTag listtag1 = compound.getList("Motion", 6);
+            ListTag listtag2 = compound.getList("Rotation", 5);
             double d0 = listtag1.getDouble(0);
             double d1 = listtag1.getDouble(1);
             double d2 = listtag1.getDouble(2);
@@ -1765,17 +1844,17 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
             this.setOldPosAndRot();
             this.setYHeadRot(this.getYRot());
             this.setYBodyRot(this.getYRot());
-            this.fallDistance = p_20259_.getFloat("FallDistance");
-            this.remainingFireTicks = p_20259_.getShort("Fire");
-            if (p_20259_.contains("Air")) {
-                this.setAirSupply(p_20259_.getShort("Air"));
+            this.fallDistance = compound.getFloat("FallDistance");
+            this.remainingFireTicks = compound.getShort("Fire");
+            if (compound.contains("Air")) {
+                this.setAirSupply(compound.getShort("Air"));
             }
 
-            this.onGround = p_20259_.getBoolean("OnGround");
-            this.invulnerable = p_20259_.getBoolean("Invulnerable");
-            this.portalCooldown = p_20259_.getInt("PortalCooldown");
-            if (p_20259_.hasUUID("UUID")) {
-                this.uuid = p_20259_.getUUID("UUID");
+            this.onGround = compound.getBoolean("OnGround");
+            this.invulnerable = compound.getBoolean("Invulnerable");
+            this.portalCooldown = compound.getInt("PortalCooldown");
+            if (compound.hasUUID("UUID")) {
+                this.uuid = compound.getUUID("UUID");
                 this.stringUUID = this.uuid.toString();
             }
 
@@ -1784,8 +1863,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
             } else if (Double.isFinite((double)this.getYRot()) && Double.isFinite((double)this.getXRot())) {
                 this.reapplyPosition();
                 this.setRot(this.getYRot(), this.getXRot());
-                if (p_20259_.contains("CustomName", 8)) {
-                    String s = p_20259_.getString("CustomName");
+                if (compound.contains("CustomName", 8)) {
+                    String s = compound.getString("CustomName");
 
                     try {
                         this.setCustomName(Component.Serializer.fromJson(s, this.registryAccess()));
@@ -1794,17 +1873,17 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
                     }
                 }
 
-                this.setCustomNameVisible(p_20259_.getBoolean("CustomNameVisible"));
-                this.setSilent(p_20259_.getBoolean("Silent"));
-                this.setNoGravity(p_20259_.getBoolean("NoGravity"));
-                this.setGlowingTag(p_20259_.getBoolean("Glowing"));
-                this.setTicksFrozen(p_20259_.getInt("TicksFrozen"));
-                this.hasVisualFire = p_20259_.getBoolean("HasVisualFire");
-                if (p_20259_.contains("NeoForgeData", 10)) persistentData = p_20259_.getCompound("NeoForgeData");
-                if (p_20259_.contains(ATTACHMENTS_NBT_KEY, net.minecraft.nbt.Tag.TAG_COMPOUND)) deserializeAttachments(registryAccess(), p_20259_.getCompound(ATTACHMENTS_NBT_KEY));
-                if (p_20259_.contains("Tags", 9)) {
+                this.setCustomNameVisible(compound.getBoolean("CustomNameVisible"));
+                this.setSilent(compound.getBoolean("Silent"));
+                this.setNoGravity(compound.getBoolean("NoGravity"));
+                this.setGlowingTag(compound.getBoolean("Glowing"));
+                this.setTicksFrozen(compound.getInt("TicksFrozen"));
+                this.hasVisualFire = compound.getBoolean("HasVisualFire");
+                if (compound.contains("NeoForgeData", 10)) persistentData = compound.getCompound("NeoForgeData");
+                if (compound.contains(ATTACHMENTS_NBT_KEY, net.minecraft.nbt.Tag.TAG_COMPOUND)) deserializeAttachments(registryAccess(), compound.getCompound(ATTACHMENTS_NBT_KEY));
+                if (compound.contains("Tags", 9)) {
                     this.tags.clear();
-                    ListTag listtag3 = p_20259_.getList("Tags", 8);
+                    ListTag listtag3 = compound.getList("Tags", 8);
                     int i = Math.min(listtag3.size(), 1024);
 
                     for (int j = 0; j < i; j++) {
@@ -1812,7 +1891,7 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
                     }
                 }
 
-                this.readAdditionalSaveData(p_20259_);
+                this.readAdditionalSaveData(compound);
                 if (this.repositionEntityAfterLoad()) {
                     this.reapplyPosition();
                 }
@@ -1838,24 +1917,33 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return entitytype.canSerialize() && resourcelocation != null ? resourcelocation.toString() : null;
     }
 
-    protected abstract void readAdditionalSaveData(CompoundTag p_20052_);
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    protected abstract void readAdditionalSaveData(CompoundTag compound);
 
-    protected abstract void addAdditionalSaveData(CompoundTag p_20139_);
+    protected abstract void addAdditionalSaveData(CompoundTag compound);
 
-    protected ListTag newDoubleList(double... p_20064_) {
+    /**
+     * creates a NBT list from the array of doubles passed to this function
+     */
+    protected ListTag newDoubleList(double... numbers) {
         ListTag listtag = new ListTag();
 
-        for (double d0 : p_20064_) {
+        for (double d0 : numbers) {
             listtag.add(DoubleTag.valueOf(d0));
         }
 
         return listtag;
     }
 
-    protected ListTag newFloatList(float... p_20066_) {
+    /**
+     * Returns a new NBTTagList filled with the specified floats
+     */
+    protected ListTag newFloatList(float... numbers) {
         ListTag listtag = new ListTag();
 
-        for (float f : p_20066_) {
+        for (float f : numbers) {
             listtag.add(FloatTag.valueOf(f));
         }
 
@@ -1863,28 +1951,31 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
     }
 
     @Nullable
-    public ItemEntity spawnAtLocation(ItemLike p_19999_) {
-        return this.spawnAtLocation(p_19999_, 0);
+    public ItemEntity spawnAtLocation(ItemLike item) {
+        return this.spawnAtLocation(item, 0);
     }
 
     @Nullable
-    public ItemEntity spawnAtLocation(ItemLike p_20001_, int p_20002_) {
-        return this.spawnAtLocation(new ItemStack(p_20001_), (float)p_20002_);
+    public ItemEntity spawnAtLocation(ItemLike item, int offsetY) {
+        return this.spawnAtLocation(new ItemStack(item), (float)offsetY);
     }
 
     @Nullable
-    public ItemEntity spawnAtLocation(ItemStack p_19984_) {
-        return this.spawnAtLocation(p_19984_, 0.0F);
+    public ItemEntity spawnAtLocation(ItemStack stack) {
+        return this.spawnAtLocation(stack, 0.0F);
     }
 
+    /**
+     * Drops an item at the position of the entity.
+     */
     @Nullable
-    public ItemEntity spawnAtLocation(ItemStack p_19985_, float p_19986_) {
-        if (p_19985_.isEmpty()) {
+    public ItemEntity spawnAtLocation(ItemStack stack, float offsetY) {
+        if (stack.isEmpty()) {
             return null;
         } else if (this.level().isClientSide) {
             return null;
         } else {
-            ItemEntity itementity = new ItemEntity(this.level(), this.getX(), this.getY() + (double)p_19986_, this.getZ(), p_19985_);
+            ItemEntity itementity = new ItemEntity(this.level(), this.getX(), this.getY() + (double)offsetY, this.getZ(), stack);
             itementity.setDefaultPickUpDelay();
             if (captureDrops() != null) captureDrops().add(itementity);
             else
@@ -1920,21 +2011,21 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    public InteractionResult interact(Player p_19978_, InteractionHand p_19979_) {
+    public InteractionResult interact(Player player, InteractionHand hand) {
         if (this.isAlive() && this instanceof Leashable leashable) {
-            if (leashable.getLeashHolder() == p_19978_) {
+            if (leashable.getLeashHolder() == player) {
                 if (!this.level().isClientSide()) {
-                    leashable.dropLeash(true, !p_19978_.hasInfiniteMaterials());
-                    this.gameEvent(GameEvent.ENTITY_INTERACT, p_19978_);
+                    leashable.dropLeash(true, !player.hasInfiniteMaterials());
+                    this.gameEvent(GameEvent.ENTITY_INTERACT, player);
                 }
 
                 return InteractionResult.sidedSuccess(this.level().isClientSide);
             }
 
-            ItemStack itemstack = p_19978_.getItemInHand(p_19979_);
+            ItemStack itemstack = player.getItemInHand(hand);
             if (itemstack.is(Items.LEAD) && leashable.canHaveALeashAttachedToIt()) {
                 if (!this.level().isClientSide()) {
-                    leashable.setLeashedTo(p_19978_, true);
+                    leashable.setLeashedTo(player, true);
                 }
 
                 itemstack.shrink(1);
@@ -1945,8 +2036,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return InteractionResult.PASS;
     }
 
-    public boolean canCollideWith(Entity p_20303_) {
-        return p_20303_.canBeCollidedWith() && !this.isPassengerOfSameVehicle(p_20303_);
+    public boolean canCollideWith(Entity entity) {
+        return entity.canBeCollidedWith() && !this.isPassengerOfSameVehicle(entity);
     }
 
     public boolean canBeCollidedWith() {
@@ -1965,68 +2056,71 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    public final void positionRider(Entity p_20312_) {
-        if (this.hasPassenger(p_20312_)) {
-            this.positionRider(p_20312_, Entity::setPos);
+    public final void positionRider(Entity passenger) {
+        if (this.hasPassenger(passenger)) {
+            this.positionRider(passenger, Entity::setPos);
         }
     }
 
-    protected void positionRider(Entity p_19957_, Entity.MoveFunction p_19958_) {
-        Vec3 vec3 = this.getPassengerRidingPosition(p_19957_);
-        Vec3 vec31 = p_19957_.getVehicleAttachmentPoint(this);
-        p_19958_.accept(p_19957_, vec3.x - vec31.x, vec3.y - vec31.y, vec3.z - vec31.z);
+    protected void positionRider(Entity passenger, Entity.MoveFunction callback) {
+        Vec3 vec3 = this.getPassengerRidingPosition(passenger);
+        Vec3 vec31 = passenger.getVehicleAttachmentPoint(this);
+        callback.accept(passenger, vec3.x - vec31.x, vec3.y - vec31.y, vec3.z - vec31.z);
     }
 
-    public void onPassengerTurned(Entity p_20320_) {
+    /**
+     * Applies this entity's orientation to another entity. Used to update passenger orientation.
+     */
+    public void onPassengerTurned(Entity entityToUpdate) {
     }
 
-    public Vec3 getVehicleAttachmentPoint(Entity p_316322_) {
+    public Vec3 getVehicleAttachmentPoint(Entity entity) {
         return this.getAttachments().get(EntityAttachment.VEHICLE, 0, this.yRot);
     }
 
-    public Vec3 getPassengerRidingPosition(Entity p_294938_) {
-        return this.position().add(this.getPassengerAttachmentPoint(p_294938_, this.dimensions, 1.0F));
+    public Vec3 getPassengerRidingPosition(Entity entity) {
+        return this.position().add(this.getPassengerAttachmentPoint(entity, this.dimensions, 1.0F));
     }
 
-    protected Vec3 getPassengerAttachmentPoint(Entity p_294756_, EntityDimensions p_295396_, float p_296362_) {
-        return getDefaultPassengerAttachmentPoint(this, p_294756_, p_295396_.attachments());
+    protected Vec3 getPassengerAttachmentPoint(Entity entity, EntityDimensions dimensions, float partialTick) {
+        return getDefaultPassengerAttachmentPoint(this, entity, dimensions.attachments());
     }
 
-    protected static Vec3 getDefaultPassengerAttachmentPoint(Entity p_316557_, Entity p_316799_, EntityAttachments p_316167_) {
-        int i = p_316557_.getPassengers().indexOf(p_316799_);
-        return p_316167_.getClamped(EntityAttachment.PASSENGER, i, p_316557_.yRot);
+    protected static Vec3 getDefaultPassengerAttachmentPoint(Entity vehicle, Entity passenger, EntityAttachments attachments) {
+        int i = vehicle.getPassengers().indexOf(passenger);
+        return attachments.getClamped(EntityAttachment.PASSENGER, i, vehicle.yRot);
     }
 
-    public boolean startRiding(Entity p_20330_) {
-        return this.startRiding(p_20330_, false);
+    public boolean startRiding(Entity vehicle) {
+        return this.startRiding(vehicle, false);
     }
 
     public boolean showVehicleHealth() {
         return this instanceof LivingEntity;
     }
 
-    public boolean startRiding(Entity p_19966_, boolean p_19967_) {
-        if (p_19966_ == this.vehicle) {
+    public boolean startRiding(Entity vehicle, boolean force) {
+        if (vehicle == this.vehicle) {
             return false;
-        } else if (!p_19966_.couldAcceptPassenger()) {
+        } else if (!vehicle.couldAcceptPassenger()) {
             return false;
         } else {
-            for (Entity entity = p_19966_; entity.vehicle != null; entity = entity.vehicle) {
+            for (Entity entity = vehicle; entity.vehicle != null; entity = entity.vehicle) {
                 if (entity.vehicle == this) {
                     return false;
                 }
             }
 
-        if (!net.neoforged.neoforge.event.EventHooks.canMountEntity(this, p_19966_, true)) return false;
-            if (p_19967_ || this.canRide(p_19966_) && p_19966_.canAddPassenger(this)) {
+        if (!net.neoforged.neoforge.event.EventHooks.canMountEntity(this, vehicle, true)) return false;
+            if (force || this.canRide(vehicle) && vehicle.canAddPassenger(this)) {
                 if (this.isPassenger()) {
                     this.stopRiding();
                 }
 
                 this.setPose(Pose.STANDING);
-                this.vehicle = p_19966_;
+                this.vehicle = vehicle;
                 this.vehicle.addPassenger(this);
-                p_19966_.getIndirectPassengersStream()
+                vehicle.getIndirectPassengersStream()
                     .filter(p_185984_ -> p_185984_ instanceof ServerPlayer)
                     .forEach(p_185982_ -> CriteriaTriggers.START_RIDING_TRIGGER.trigger((ServerPlayer)p_185982_));
                 return true;
@@ -2036,7 +2130,7 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    protected boolean canRide(Entity p_20339_) {
+    protected boolean canRide(Entity vehicle) {
         return !this.isShiftKeyDown() && this.boardingCooldown <= 0;
     }
 
@@ -2059,43 +2153,43 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         this.removeVehicle();
     }
 
-    protected void addPassenger(Entity p_20349_) {
-        if (p_20349_.getVehicle() != this) {
+    protected void addPassenger(Entity passenger) {
+        if (passenger.getVehicle() != this) {
             throw new IllegalStateException("Use x.startRiding(y), not y.addPassenger(x)");
         } else {
             if (this.passengers.isEmpty()) {
-                this.passengers = ImmutableList.of(p_20349_);
+                this.passengers = ImmutableList.of(passenger);
             } else {
                 List<Entity> list = Lists.newArrayList(this.passengers);
-                if (!this.level().isClientSide && p_20349_ instanceof Player && !(this.getFirstPassenger() instanceof Player)) {
-                    list.add(0, p_20349_);
+                if (!this.level().isClientSide && passenger instanceof Player && !(this.getFirstPassenger() instanceof Player)) {
+                    list.add(0, passenger);
                 } else {
-                    list.add(p_20349_);
+                    list.add(passenger);
                 }
 
                 this.passengers = ImmutableList.copyOf(list);
             }
 
-            this.gameEvent(GameEvent.ENTITY_MOUNT, p_20349_);
+            this.gameEvent(GameEvent.ENTITY_MOUNT, passenger);
         }
     }
 
-    protected void removePassenger(Entity p_20352_) {
-        if (p_20352_.getVehicle() == this) {
+    protected void removePassenger(Entity passenger) {
+        if (passenger.getVehicle() == this) {
             throw new IllegalStateException("Use x.stopRiding(y), not y.removePassenger(x)");
         } else {
-            if (this.passengers.size() == 1 && this.passengers.get(0) == p_20352_) {
+            if (this.passengers.size() == 1 && this.passengers.get(0) == passenger) {
                 this.passengers = ImmutableList.of();
             } else {
-                this.passengers = this.passengers.stream().filter(p_350857_ -> p_350857_ != p_20352_).collect(ImmutableList.toImmutableList());
+                this.passengers = this.passengers.stream().filter(p_350857_ -> p_350857_ != passenger).collect(ImmutableList.toImmutableList());
             }
 
-            p_20352_.boardingCooldown = 60;
-            this.gameEvent(GameEvent.ENTITY_DISMOUNT, p_20352_);
+            passenger.boardingCooldown = 60;
+            this.gameEvent(GameEvent.ENTITY_DISMOUNT, passenger);
         }
     }
 
-    protected boolean canAddPassenger(Entity p_20354_) {
+    protected boolean canAddPassenger(Entity passenger) {
         return this.passengers.isEmpty();
     }
 
@@ -2105,9 +2199,9 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return true;
     }
 
-    public void lerpTo(double p_19896_, double p_19897_, double p_19898_, float p_19899_, float p_19900_, int p_19901_) {
-        this.setPos(p_19896_, p_19897_, p_19898_);
-        this.setRot(p_19899_, p_19900_);
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+        this.setPos(x, y, z);
+        this.setRot(yRot, xRot);
     }
 
     public double lerpTargetX() {
@@ -2130,8 +2224,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.getYRot();
     }
 
-    public void lerpHeadTo(float p_19918_, int p_19919_) {
-        this.setYHeadRot(p_19918_);
+    public void lerpHeadTo(float yaw, int pitch) {
+        this.setYHeadRot(yaw);
     }
 
     public float getPickRadius() {
@@ -2142,11 +2236,11 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.calculateViewVector(this.getXRot(), this.getYRot());
     }
 
-    public Vec3 getHandHoldingItemAngle(Item p_204035_) {
+    public Vec3 getHandHoldingItemAngle(Item item) {
         if (!(this instanceof Player player)) {
             return Vec3.ZERO;
         } else {
-            boolean flag = player.getOffhandItem().is(p_204035_) && !player.getMainHandItem().is(p_204035_);
+            boolean flag = player.getOffhandItem().is(item) && !player.getMainHandItem().is(item);
             HumanoidArm humanoidarm = flag ? player.getMainArm().getOpposite() : player.getMainArm();
             return this.calculateViewVector(0.0F, this.getYRot() + (float)(humanoidarm == HumanoidArm.RIGHT ? 80 : -80)).scale(0.5);
         }
@@ -2160,15 +2254,15 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return Vec3.directionFromRotation(this.getRotationVector());
     }
 
-    public void setAsInsidePortal(Portal p_351060_, BlockPos p_350462_) {
+    public void setAsInsidePortal(Portal portal, BlockPos pos) {
         if (this.isOnPortalCooldown()) {
             this.setPortalCooldown();
         } else {
-            if (this.portalProcess != null && this.portalProcess.isSamePortal(p_351060_)) {
-                this.portalProcess.updateEntryPosition(p_350462_.immutable());
+            if (this.portalProcess != null && this.portalProcess.isSamePortal(portal)) {
+                this.portalProcess.updateEntryPosition(pos.immutable());
                 this.portalProcess.setAsInsidePortalThisTick(true);
             } else {
-                this.portalProcess = new PortalProcessor(p_351060_, p_350462_.immutable());
+                this.portalProcess = new PortalProcessor(portal, pos.immutable());
             }
         }
     }
@@ -2202,21 +2296,27 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return entity instanceof ServerPlayer ? entity.getDimensionChangingDelay() : 300;
     }
 
-    public void lerpMotion(double p_20306_, double p_20307_, double p_20308_) {
-        this.setDeltaMovement(p_20306_, p_20307_, p_20308_);
+    /**
+     * Updates the entity motion clientside, called by packets from the server
+     */
+    public void lerpMotion(double x, double y, double z) {
+        this.setDeltaMovement(x, y, z);
     }
 
-    public void handleDamageEvent(DamageSource p_270704_) {
+    public void handleDamageEvent(DamageSource damageSource) {
     }
 
-    public void handleEntityEvent(byte p_19882_) {
-        switch (p_19882_) {
+    /**
+     * Handles an entity event received from a {@link net.minecraft.network.protocol.game.ClientboundEntityEventPacket}.
+     */
+    public void handleEntityEvent(byte id) {
+        switch (id) {
             case 53:
                 HoneyBlock.showSlideParticles(this);
         }
     }
 
-    public void animateHurt(float p_265161_) {
+    public void animateHurt(float yaw) {
     }
 
     public boolean isOnFire() {
@@ -2240,8 +2340,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return !this.getType().is(EntityTypeTags.NON_CONTROLLING_RIDER);
     }
 
-    public void setShiftKeyDown(boolean p_20261_) {
-        this.setSharedFlag(1, p_20261_);
+    public void setShiftKeyDown(boolean keyDown) {
+        this.setSharedFlag(1, keyDown);
     }
 
     public boolean isShiftKeyDown() {
@@ -2272,8 +2372,11 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.getSharedFlag(3);
     }
 
-    public void setSprinting(boolean p_20274_) {
-        this.setSharedFlag(3, p_20274_);
+    /**
+     * Set sprinting switch for Entity.
+     */
+    public void setSprinting(boolean sprinting) {
+        this.setSharedFlag(3, sprinting);
     }
 
     public boolean isSwimming() {
@@ -2288,16 +2391,16 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.isVisuallySwimming() && !this.isInWater() && !this.isInFluidType((fluidType, height) -> this.canSwimInFluidType(fluidType));
     }
 
-    public void setSwimming(boolean p_20283_) {
-        this.setSharedFlag(4, p_20283_);
+    public void setSwimming(boolean swimming) {
+        this.setSharedFlag(4, swimming);
     }
 
     public final boolean hasGlowingTag() {
         return this.hasGlowingTag;
     }
 
-    public final void setGlowingTag(boolean p_146916_) {
-        this.hasGlowingTag = p_146916_;
+    public final void setGlowingTag(boolean hasGlowingTag) {
+        this.hasGlowingTag = hasGlowingTag;
         this.setSharedFlag(6, this.isCurrentlyGlowing());
     }
 
@@ -2309,12 +2412,17 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.getSharedFlag(5);
     }
 
-    public boolean isInvisibleTo(Player p_20178_) {
-        if (p_20178_.isSpectator()) {
+    /**
+     * Only used by renderer in EntityLivingBase subclasses.
+     * Determines if an entity is visible or not to a specific player, if the entity is normally invisible.
+     * For EntityLivingBase subclasses, returning false when invisible will render the entity semi-transparent.
+     */
+    public boolean isInvisibleTo(Player player) {
+        if (player.isSpectator()) {
             return false;
         } else {
             Team team = this.getTeam();
-            return team != null && p_20178_ != null && p_20178_.getTeam() == team && team.canSeeFriendlyInvisibles() ? false : this.isInvisible();
+            return team != null && player != null && player.getTeam() == team && team.canSeeFriendlyInvisibles() ? false : this.isInvisible();
         }
     }
 
@@ -2322,7 +2430,7 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return false;
     }
 
-    public void updateDynamicGameEventListener(BiConsumer<DynamicGameEventListener<?>, ServerLevel> p_216996_) {
+    public void updateDynamicGameEventListener(BiConsumer<DynamicGameEventListener<?>, ServerLevel> listenerConsumer) {
     }
 
     @Nullable
@@ -2330,28 +2438,40 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.level().getScoreboard().getPlayersTeam(this.getScoreboardName());
     }
 
-    public boolean isAlliedTo(Entity p_20355_) {
-        return this.isAlliedTo(p_20355_.getTeam());
+    /**
+     * Returns whether this Entity is on the same team as the given Entity.
+     */
+    public boolean isAlliedTo(Entity entity) {
+        return this.isAlliedTo(entity.getTeam());
     }
 
-    public boolean isAlliedTo(Team p_20032_) {
-        return this.getTeam() != null ? this.getTeam().isAlliedTo(p_20032_) : false;
+    /**
+     * Returns whether this Entity is on the given scoreboard team.
+     */
+    public boolean isAlliedTo(Team team) {
+        return this.getTeam() != null ? this.getTeam().isAlliedTo(team) : false;
     }
 
-    public void setInvisible(boolean p_20304_) {
-        this.setSharedFlag(5, p_20304_);
+    public void setInvisible(boolean invisible) {
+        this.setSharedFlag(5, invisible);
     }
 
-    protected boolean getSharedFlag(int p_20292_) {
-        return (this.entityData.get(DATA_SHARED_FLAGS_ID) & 1 << p_20292_) != 0;
+    /**
+     * Returns {@code true} if the flag is active for the entity. Known flags: 0: burning 1: sneaking 2: unused 3: sprinting 4: swimming 5: invisible 6: glowing 7: elytra flying
+     */
+    protected boolean getSharedFlag(int flag) {
+        return (this.entityData.get(DATA_SHARED_FLAGS_ID) & 1 << flag) != 0;
     }
 
-    protected void setSharedFlag(int p_20116_, boolean p_20117_) {
+    /**
+     * Enable or disable an entity flag, see {@link #getEntityFlag} to read the known flags.
+     */
+    protected void setSharedFlag(int flag, boolean set) {
         byte b0 = this.entityData.get(DATA_SHARED_FLAGS_ID);
-        if (p_20117_) {
-            this.entityData.set(DATA_SHARED_FLAGS_ID, (byte)(b0 | 1 << p_20116_));
+        if (set) {
+            this.entityData.set(DATA_SHARED_FLAGS_ID, (byte)(b0 | 1 << flag));
         } else {
-            this.entityData.set(DATA_SHARED_FLAGS_ID, (byte)(b0 & ~(1 << p_20116_)));
+            this.entityData.set(DATA_SHARED_FLAGS_ID, (byte)(b0 & ~(1 << flag)));
         }
     }
 
@@ -2363,16 +2483,16 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.entityData.get(DATA_AIR_SUPPLY_ID);
     }
 
-    public void setAirSupply(int p_20302_) {
-        this.entityData.set(DATA_AIR_SUPPLY_ID, p_20302_);
+    public void setAirSupply(int air) {
+        this.entityData.set(DATA_AIR_SUPPLY_ID, air);
     }
 
     public int getTicksFrozen() {
         return this.entityData.get(DATA_TICKS_FROZEN);
     }
 
-    public void setTicksFrozen(int p_146918_) {
-        this.entityData.set(DATA_TICKS_FROZEN, p_146918_);
+    public void setTicksFrozen(int ticksFrozen) {
+        this.entityData.set(DATA_TICKS_FROZEN, ticksFrozen);
     }
 
     public float getPercentFrozen() {
@@ -2388,19 +2508,19 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return 140;
     }
 
-    public void thunderHit(ServerLevel p_19927_, LightningBolt p_19928_) {
+    public void thunderHit(ServerLevel level, LightningBolt lightning) {
         this.setRemainingFireTicks(this.remainingFireTicks + 1);
         if (this.remainingFireTicks == 0) {
             this.igniteForSeconds(8.0F);
         }
 
-        this.hurt(this.damageSources().lightningBolt(), p_19928_.getDamage());
+        this.hurt(this.damageSources().lightningBolt(), lightning.getDamage());
     }
 
-    public void onAboveBubbleCol(boolean p_20313_) {
+    public void onAboveBubbleCol(boolean downwards) {
         Vec3 vec3 = this.getDeltaMovement();
         double d0;
-        if (p_20313_) {
+        if (downwards) {
             d0 = Math.max(-0.9, vec3.y - 0.03);
         } else {
             d0 = Math.min(1.8, vec3.y + 0.1);
@@ -2409,10 +2529,10 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         this.setDeltaMovement(vec3.x, d0, vec3.z);
     }
 
-    public void onInsideBubbleColumn(boolean p_20322_) {
+    public void onInsideBubbleColumn(boolean downwards) {
         Vec3 vec3 = this.getDeltaMovement();
         double d0;
-        if (p_20322_) {
+        if (downwards) {
             d0 = Math.max(-0.3, vec3.y - 0.03);
         } else {
             d0 = Math.min(0.7, vec3.y + 0.06);
@@ -2422,7 +2542,7 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         this.resetFallDistance();
     }
 
-    public boolean killedEntity(ServerLevel p_216988_, LivingEntity p_216989_) {
+    public boolean killedEntity(ServerLevel level, LivingEntity entity) {
         return true;
     }
 
@@ -2436,9 +2556,9 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         this.fallDistance = 0.0F;
     }
 
-    protected void moveTowardsClosestSpace(double p_20315_, double p_20316_, double p_20317_) {
-        BlockPos blockpos = BlockPos.containing(p_20315_, p_20316_, p_20317_);
-        Vec3 vec3 = new Vec3(p_20315_ - (double)blockpos.getX(), p_20316_ - (double)blockpos.getY(), p_20317_ - (double)blockpos.getZ());
+    protected void moveTowardsClosestSpace(double x, double y, double z) {
+        BlockPos blockpos = BlockPos.containing(x, y, z);
+        Vec3 vec3 = new Vec3(x - (double)blockpos.getX(), y - (double)blockpos.getY(), z - (double)blockpos.getZ());
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
         Direction direction = Direction.UP;
         double d0 = Double.MAX_VALUE;
@@ -2467,15 +2587,15 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    public void makeStuckInBlock(BlockState p_20006_, Vec3 p_20007_) {
+    public void makeStuckInBlock(BlockState state, Vec3 motionMultiplier) {
         this.resetFallDistance();
-        this.stuckSpeedMultiplier = p_20007_;
+        this.stuckSpeedMultiplier = motionMultiplier;
     }
 
-    private static Component removeAction(Component p_20141_) {
-        MutableComponent mutablecomponent = p_20141_.plainCopy().setStyle(p_20141_.getStyle().withClickEvent(null));
+    private static Component removeAction(Component name) {
+        MutableComponent mutablecomponent = name.plainCopy().setStyle(name.getStyle().withClickEvent(null));
 
-        for (Component component : p_20141_.getSiblings()) {
+        for (Component component : name.getSiblings()) {
             mutablecomponent.append(removeAction(component));
         }
 
@@ -2492,25 +2612,37 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.getType().getDescription(); // Forge: Use getter to allow overriding by mods
     }
 
-    public boolean is(Entity p_20356_) {
-        return this == p_20356_;
+    /**
+     * Returns {@code true} if Entity argument is equal to this Entity
+     */
+    public boolean is(Entity entity) {
+        return this == entity;
     }
 
     public float getYHeadRot() {
         return 0.0F;
     }
 
-    public void setYHeadRot(float p_20328_) {
+    /**
+     * Sets the head's Y rotation of the entity.
+     */
+    public void setYHeadRot(float yHeadRot) {
     }
 
-    public void setYBodyRot(float p_20338_) {
+    /**
+     * Set the body Y rotation of the entity.
+     */
+    public void setYBodyRot(float yBodyRot) {
     }
 
     public boolean isAttackable() {
         return true;
     }
 
-    public boolean skipAttackInteraction(Entity p_20357_) {
+    /**
+     * Called when a player attacks an entity. If this returns true the attack will not happen.
+     */
+    public boolean skipAttackInteraction(Entity entity) {
         return false;
     }
 
@@ -2543,45 +2675,57 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
             );
     }
 
-    public boolean isInvulnerableTo(DamageSource p_20122_) {
+    /**
+     * Returns whether this Entity is invulnerable to the given DamageSource.
+     */
+    public boolean isInvulnerableTo(DamageSource source) {
         boolean isVanillaInvulnerable = this.isRemoved()
-            || this.invulnerable && !p_20122_.is(DamageTypeTags.BYPASSES_INVULNERABILITY) && !p_20122_.isCreativePlayer()
-            || p_20122_.is(DamageTypeTags.IS_FIRE) && this.fireImmune()
-            || p_20122_.is(DamageTypeTags.IS_FALL) && this.getType().is(EntityTypeTags.FALL_DAMAGE_IMMUNE);
-        return net.neoforged.neoforge.common.CommonHooks.isEntityInvulnerableTo(this, p_20122_, isVanillaInvulnerable);
+            || this.invulnerable && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY) && !source.isCreativePlayer()
+            || source.is(DamageTypeTags.IS_FIRE) && this.fireImmune()
+            || source.is(DamageTypeTags.IS_FALL) && this.getType().is(EntityTypeTags.FALL_DAMAGE_IMMUNE);
+        return net.neoforged.neoforge.common.CommonHooks.isEntityInvulnerableTo(this, source, isVanillaInvulnerable);
     }
 
     public boolean isInvulnerable() {
         return this.invulnerable;
     }
 
-    public void setInvulnerable(boolean p_20332_) {
-        this.invulnerable = p_20332_;
+    /**
+     * Sets whether this Entity is invulnerable.
+     */
+    public void setInvulnerable(boolean isInvulnerable) {
+        this.invulnerable = isInvulnerable;
     }
 
-    public void copyPosition(Entity p_20360_) {
-        this.moveTo(p_20360_.getX(), p_20360_.getY(), p_20360_.getZ(), p_20360_.getYRot(), p_20360_.getXRot());
+    /**
+     * Sets this entity's location and angles to the location and angles of the passed in entity.
+     */
+    public void copyPosition(Entity entity) {
+        this.moveTo(entity.getX(), entity.getY(), entity.getZ(), entity.getYRot(), entity.getXRot());
     }
 
-    public void restoreFrom(Entity p_20362_) {
-        CompoundTag compoundtag = p_20362_.saveWithoutId(new CompoundTag());
+    /**
+     * Prepares this entity in new dimension by copying NBT data from entity in old dimension
+     */
+    public void restoreFrom(Entity entity) {
+        CompoundTag compoundtag = entity.saveWithoutId(new CompoundTag());
         compoundtag.remove("Dimension");
         this.load(compoundtag);
-        this.portalCooldown = p_20362_.portalCooldown;
-        this.portalProcess = p_20362_.portalProcess;
+        this.portalCooldown = entity.portalCooldown;
+        this.portalProcess = entity.portalProcess;
     }
 
     @Nullable
-    public Entity changeDimension(DimensionTransition p_350951_) {
-        if (!net.neoforged.neoforge.common.CommonHooks.onTravelToDimension(this, p_350951_.newLevel().dimension())) return null;
+    public Entity changeDimension(DimensionTransition transition) {
+        if (!net.neoforged.neoforge.common.CommonHooks.onTravelToDimension(this, transition.newLevel().dimension())) return null;
         if (this.level() instanceof ServerLevel serverlevel && !this.isRemoved()) {
-            ServerLevel serverlevel1 = p_350951_.newLevel();
+            ServerLevel serverlevel1 = transition.newLevel();
             List<Entity> list = this.getPassengers();
             this.unRide();
             List<Entity> list1 = new ArrayList<>();
 
             for (Entity entity : list) {
-                Entity entity1 = entity.changeDimension(p_350951_);
+                Entity entity1 = entity.changeDimension(transition);
                 if (entity1 != null) {
                     list1.add(entity1);
                 }
@@ -2595,8 +2739,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
                     this.removeAfterChangingDimensions();
                 }
 
-                entity2.moveTo(p_350951_.pos().x, p_350951_.pos().y, p_350951_.pos().z, p_350951_.yRot(), entity2.getXRot());
-                entity2.setDeltaMovement(p_350951_.speed());
+                entity2.moveTo(transition.pos().x, transition.pos().y, transition.pos().z, transition.yRot(), entity2.getXRot());
+                entity2.setDeltaMovement(transition.speed());
                 if (this != entity2) {
                     serverlevel1.addDuringTeleport(entity2);
                 }
@@ -2607,7 +2751,7 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
 
                 serverlevel.resetEmptyTime();
                 serverlevel1.resetEmptyTime();
-                p_350951_.postDimensionTransition().onTransition(entity2);
+                transition.postDimensionTransition().onTransition(entity2);
             }
 
             serverlevel.getProfiler().pop();
@@ -2617,9 +2761,9 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return null;
     }
 
-    public void placePortalTicket(BlockPos p_352083_) {
+    public void placePortalTicket(BlockPos pos) {
         if (this.level() instanceof ServerLevel serverlevel) {
-            serverlevel.getChunkSource().addRegionTicket(TicketType.PORTAL, new ChunkPos(p_352083_), 3, p_352083_);
+            serverlevel.getChunkSource().addRegionTicket(TicketType.PORTAL, new ChunkPos(pos), 3, pos);
         }
     }
 
@@ -2630,25 +2774,28 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    public Vec3 getRelativePortalPosition(Direction.Axis p_20045_, BlockUtil.FoundRectangle p_20046_) {
-        return PortalShape.getRelativePosition(p_20046_, p_20045_, this.position(), this.getDimensions(this.getPose()));
+    public Vec3 getRelativePortalPosition(Direction.Axis axis, BlockUtil.FoundRectangle portal) {
+        return PortalShape.getRelativePosition(portal, axis, this.position(), this.getDimensions(this.getPose()));
     }
 
-    public boolean canUsePortal(boolean p_352898_) {
-        return (p_352898_ || !this.isPassenger()) && this.isAlive();
+    public boolean canUsePortal(boolean allowPassengers) {
+        return (allowPassengers || !this.isPassenger()) && this.isAlive();
     }
 
-    public boolean canChangeDimensions(Level p_352904_, Level p_352909_) {
+    public boolean canChangeDimensions(Level oldLevel, Level newLevel) {
         return true;
     }
 
+    /**
+     * Explosion resistance of a block relative to this entity
+     */
     public float getBlockExplosionResistance(
-        Explosion p_19992_, BlockGetter p_19993_, BlockPos p_19994_, BlockState p_19995_, FluidState p_19996_, float p_19997_
+        Explosion explosion, BlockGetter level, BlockPos pos, BlockState blockState, FluidState fluidState, float explosionPower
     ) {
-        return p_19997_;
+        return explosionPower;
     }
 
-    public boolean shouldBlockExplode(Explosion p_19987_, BlockGetter p_19988_, BlockPos p_19989_, BlockState p_19990_, float p_19991_) {
+    public boolean shouldBlockExplode(Explosion explosion, BlockGetter level, BlockPos pos, BlockState blockState, float explosionPower) {
         return true;
     }
 
@@ -2660,26 +2807,26 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return false;
     }
 
-    public void fillCrashReportCategory(CrashReportCategory p_20051_) {
-        p_20051_.setDetail("Entity Type", () -> EntityType.getKey(this.getType()) + " (" + this.getClass().getCanonicalName() + ")");
-        p_20051_.setDetail("Entity ID", this.id);
-        p_20051_.setDetail("Entity Name", () -> this.getName().getString());
-        p_20051_.setDetail("Entity's Exact location", String.format(Locale.ROOT, "%.2f, %.2f, %.2f", this.getX(), this.getY(), this.getZ()));
-        p_20051_.setDetail(
+    public void fillCrashReportCategory(CrashReportCategory category) {
+        category.setDetail("Entity Type", () -> EntityType.getKey(this.getType()) + " (" + this.getClass().getCanonicalName() + ")");
+        category.setDetail("Entity ID", this.id);
+        category.setDetail("Entity Name", () -> this.getName().getString());
+        category.setDetail("Entity's Exact location", String.format(Locale.ROOT, "%.2f, %.2f, %.2f", this.getX(), this.getY(), this.getZ()));
+        category.setDetail(
             "Entity's Block location", CrashReportCategory.formatLocation(this.level(), Mth.floor(this.getX()), Mth.floor(this.getY()), Mth.floor(this.getZ()))
         );
         Vec3 vec3 = this.getDeltaMovement();
-        p_20051_.setDetail("Entity's Momentum", String.format(Locale.ROOT, "%.2f, %.2f, %.2f", vec3.x, vec3.y, vec3.z));
-        p_20051_.setDetail("Entity's Passengers", () -> this.getPassengers().toString());
-        p_20051_.setDetail("Entity's Vehicle", () -> String.valueOf(this.getVehicle()));
+        category.setDetail("Entity's Momentum", String.format(Locale.ROOT, "%.2f, %.2f, %.2f", vec3.x, vec3.y, vec3.z));
+        category.setDetail("Entity's Passengers", () -> this.getPassengers().toString());
+        category.setDetail("Entity's Vehicle", () -> String.valueOf(this.getVehicle()));
     }
 
     public boolean displayFireAnimation() {
         return this.isOnFire() && !this.isSpectator();
     }
 
-    public void setUUID(UUID p_20085_) {
-        this.uuid = p_20085_;
+    public void setUUID(UUID uniqueId) {
+        this.uuid = uniqueId;
         this.stringUUID = this.uuid.toString();
     }
 
@@ -2706,8 +2853,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return viewScale;
     }
 
-    public static void setViewScale(double p_20104_) {
-        viewScale = p_20104_;
+    public static void setViewScale(double renderDistWeight) {
+        viewScale = renderDistWeight;
     }
 
     @Override
@@ -2716,8 +2863,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
             .withStyle(p_185975_ -> p_185975_.withHoverEvent(this.createHoverEvent()).withInsertion(this.getStringUUID()));
     }
 
-    public void setCustomName(@Nullable Component p_20053_) {
-        this.entityData.set(DATA_CUSTOM_NAME, Optional.ofNullable(p_20053_));
+    public void setCustomName(@Nullable Component name) {
+        this.entityData.set(DATA_CUSTOM_NAME, Optional.ofNullable(name));
     }
 
     @Nullable
@@ -2731,8 +2878,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.entityData.get(DATA_CUSTOM_NAME).isPresent();
     }
 
-    public void setCustomNameVisible(boolean p_20341_) {
-        this.entityData.set(DATA_CUSTOM_NAME_VISIBLE, p_20341_);
+    public void setCustomNameVisible(boolean alwaysRenderNameTag) {
+        this.entityData.set(DATA_CUSTOM_NAME_VISIBLE, alwaysRenderNameTag);
     }
 
     public boolean isCustomNameVisible() {
@@ -2740,37 +2887,40 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
     }
 
     public boolean teleportTo(
-        ServerLevel p_265257_, double p_265407_, double p_265727_, double p_265410_, Set<RelativeMovement> p_265083_, float p_265573_, float p_265094_
+        ServerLevel level, double x, double y, double z, Set<RelativeMovement> relativeMovements, float yRot, float xRot
     ) {
-        float f = Mth.clamp(p_265094_, -90.0F, 90.0F);
-        if (p_265257_ == this.level()) {
-            this.moveTo(p_265407_, p_265727_, p_265410_, p_265573_, f);
+        float f = Mth.clamp(xRot, -90.0F, 90.0F);
+        if (level == this.level()) {
+            this.moveTo(x, y, z, yRot, f);
             this.teleportPassengers();
-            this.setYHeadRot(p_265573_);
+            this.setYHeadRot(yRot);
         } else {
             this.unRide();
-            Entity entity = this.getType().create(p_265257_);
+            Entity entity = this.getType().create(level);
             if (entity == null) {
                 return false;
             }
 
             entity.restoreFrom(this);
-            entity.moveTo(p_265407_, p_265727_, p_265410_, p_265573_, f);
-            entity.setYHeadRot(p_265573_);
+            entity.moveTo(x, y, z, yRot, f);
+            entity.setYHeadRot(yRot);
             this.setRemoved(Entity.RemovalReason.CHANGED_DIMENSION);
-            p_265257_.addDuringTeleport(entity);
+            level.addDuringTeleport(entity);
         }
 
         return true;
     }
 
-    public void dismountTo(double p_146825_, double p_146826_, double p_146827_) {
-        this.teleportTo(p_146825_, p_146826_, p_146827_);
+    public void dismountTo(double x, double y, double z) {
+        this.teleportTo(x, y, z);
     }
 
-    public void teleportTo(double p_19887_, double p_19888_, double p_19889_) {
+    /**
+     * Sets the position of the entity and updates the 'last' variables
+     */
+    public void teleportTo(double x, double y, double z) {
         if (this.level() instanceof ServerLevel) {
-            this.moveTo(p_19887_, p_19888_, p_19889_, this.getYRot(), this.getXRot());
+            this.moveTo(x, y, z, this.getYRot(), this.getXRot());
             this.teleportPassengers();
         }
     }
@@ -2783,8 +2933,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         });
     }
 
-    public void teleportRelative(double p_249341_, double p_252229_, double p_252038_) {
-        this.teleportTo(this.getX() + p_249341_, this.getY() + p_252229_, this.getZ() + p_252038_);
+    public void teleportRelative(double dx, double dy, double dz) {
+        this.teleportTo(this.getX() + dx, this.getY() + dy, this.getZ() + dz);
     }
 
     public boolean shouldShowName() {
@@ -2792,12 +2942,12 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
     }
 
     @Override
-    public void onSyncedDataUpdated(List<SynchedEntityData.DataValue<?>> p_270372_) {
+    public void onSyncedDataUpdated(List<SynchedEntityData.DataValue<?>> dataValues) {
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_20059_) {
-        if (DATA_POSE.equals(p_20059_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        if (DATA_POSE.equals(key)) {
             this.refreshDimensions();
         }
     }
@@ -2830,11 +2980,11 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    public boolean fudgePositionAfterSizeChange(EntityDimensions p_347526_) {
+    public boolean fudgePositionAfterSizeChange(EntityDimensions dimensions) {
         EntityDimensions entitydimensions = this.getDimensions(this.getPose());
-        Vec3 vec3 = this.position().add(0.0, (double)p_347526_.height() / 2.0, 0.0);
-        double d0 = (double)Math.max(0.0F, entitydimensions.width() - p_347526_.width()) + 1.0E-6;
-        double d1 = (double)Math.max(0.0F, entitydimensions.height() - p_347526_.height()) + 1.0E-6;
+        Vec3 vec3 = this.position().add(0.0, (double)dimensions.height() / 2.0, 0.0);
+        double d0 = (double)Math.max(0.0F, entitydimensions.width() - dimensions.width()) + 1.0E-6;
+        double d1 = (double)Math.max(0.0F, entitydimensions.height() - dimensions.height()) + 1.0E-6;
         VoxelShape voxelshape = Shapes.create(AABB.ofSize(vec3, d0, d1, d0));
         Optional<Vec3> optional = this.level
             .findFreePosition(this, voxelshape, vec3, (double)entitydimensions.width(), (double)entitydimensions.height(), (double)entitydimensions.width());
@@ -2842,12 +2992,12 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
             this.setPos(optional.get().add(0.0, (double)(-entitydimensions.height()) / 2.0, 0.0));
             return true;
         } else {
-            if (entitydimensions.width() > p_347526_.width() && entitydimensions.height() > p_347526_.height()) {
+            if (entitydimensions.width() > dimensions.width() && entitydimensions.height() > dimensions.height()) {
                 VoxelShape voxelshape1 = Shapes.create(AABB.ofSize(vec3, d0, 1.0E-6, d0));
                 Optional<Vec3> optional1 = this.level
-                    .findFreePosition(this, voxelshape1, vec3, (double)entitydimensions.width(), (double)p_347526_.height(), (double)entitydimensions.width());
+                    .findFreePosition(this, voxelshape1, vec3, (double)entitydimensions.width(), (double)dimensions.height(), (double)entitydimensions.width());
                 if (optional1.isPresent()) {
-                    this.setPos(optional1.get().add(0.0, (double)(-p_347526_.height()) / 2.0 + 1.0E-6, 0.0));
+                    this.setPos(optional1.get().add(0.0, (double)(-dimensions.height()) / 2.0 + 1.0E-6, 0.0));
                     return true;
                 }
             }
@@ -2868,7 +3018,7 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return new HoverEvent(HoverEvent.Action.SHOW_ENTITY, new HoverEvent.EntityTooltipInfo(this.getType(), this.getUUID(), this.getName()));
     }
 
-    public boolean broadcastToPlayer(ServerPlayer p_19937_) {
+    public boolean broadcastToPlayer(ServerPlayer player) {
         return true;
     }
 
@@ -2881,19 +3031,19 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.getBoundingBox();
     }
 
-    public final void setBoundingBox(AABB p_20012_) {
-        this.bb = p_20012_;
+    public final void setBoundingBox(AABB bb) {
+        this.bb = bb;
     }
 
-    public final float getEyeHeight(Pose p_20237_) {
-        return this.getDimensions(p_20237_).eyeHeight();
+    public final float getEyeHeight(Pose pose) {
+        return this.getDimensions(pose).eyeHeight();
     }
 
     public final float getEyeHeight() {
         return this.eyeHeight;
     }
 
-    public Vec3 getLeashOffset(float p_249286_) {
+    public Vec3 getLeashOffset(float partialTick) {
         return this.getLeashOffset();
     }
 
@@ -2901,12 +3051,12 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return new Vec3(0.0, (double)this.getEyeHeight(), (double)(this.getBbWidth() * 0.4F));
     }
 
-    public SlotAccess getSlot(int p_146919_) {
+    public SlotAccess getSlot(int slot) {
         return SlotAccess.NULL;
     }
 
     @Override
-    public void sendSystemMessage(Component p_216998_) {
+    public void sendSystemMessage(Component component) {
     }
 
     public Level getCommandSenderWorld() {
@@ -2918,23 +3068,35 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.level().getServer();
     }
 
-    public InteractionResult interactAt(Player p_19980_, Vec3 p_19981_, InteractionHand p_19982_) {
+    /**
+     * Applies the given player interaction to this Entity.
+     */
+    public InteractionResult interactAt(Player player, Vec3 vec, InteractionHand hand) {
         return InteractionResult.PASS;
     }
 
-    public boolean ignoreExplosion(Explosion p_312868_) {
+    public boolean ignoreExplosion(Explosion explosion) {
         return false;
     }
 
-    public void startSeenByPlayer(ServerPlayer p_20119_) {
+    /**
+     * Add the given player to the list of players tracking this entity. For instance, a player may track a boss in order to view its associated boss bar.
+     */
+    public void startSeenByPlayer(ServerPlayer serverPlayer) {
     }
 
-    public void stopSeenByPlayer(ServerPlayer p_20174_) {
+    /**
+     * Removes the given player from the list of players tracking this entity. See {@link Entity#addTrackingPlayer} for more information on tracking.
+     */
+    public void stopSeenByPlayer(ServerPlayer serverPlayer) {
     }
 
-    public float rotate(Rotation p_20004_) {
+    /**
+     * Transforms the entity's current yaw with the given Rotation and returns it. This does not have a side-effect.
+     */
+    public float rotate(Rotation transformRotation) {
         float f = Mth.wrapDegrees(this.getYRot());
-        switch (p_20004_) {
+        switch (transformRotation) {
             case CLOCKWISE_180:
                 return f + 180.0F;
             case COUNTERCLOCKWISE_90:
@@ -2946,9 +3108,12 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
     }
 
-    public float mirror(Mirror p_20003_) {
+    /**
+     * Transforms the entity's current yaw with the given Mirror and returns it. This does not have a side-effect.
+     */
+    public float mirror(Mirror transformMirror) {
         float f = Mth.wrapDegrees(this.getYRot());
-        switch (p_20003_) {
+        switch (transformMirror) {
             case FRONT_BACK:
                 return -f;
             case LEFT_RIGHT:
@@ -2962,7 +3127,7 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return false;
     }
 
-    public ProjectileDeflection deflection(Projectile p_319824_) {
+    public ProjectileDeflection deflection(Projectile projectile) {
         return this.getType().is(EntityTypeTags.DEFLECTS_PROJECTILES) ? ProjectileDeflection.REVERSE : ProjectileDeflection.NONE;
     }
 
@@ -2984,13 +3149,13 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.passengers.isEmpty() ? null : this.passengers.get(0);
     }
 
-    public boolean hasPassenger(Entity p_20364_) {
-        return this.passengers.contains(p_20364_);
+    public boolean hasPassenger(Entity entity) {
+        return this.passengers.contains(entity);
     }
 
-    public boolean hasPassenger(Predicate<Entity> p_146863_) {
+    public boolean hasPassenger(Predicate<Entity> predicate) {
         for (Entity entity : this.passengers) {
-            if (p_146863_.test(entity)) {
+            if (predicate.test(entity)) {
                 return true;
             }
         }
@@ -3034,15 +3199,15 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return entity;
     }
 
-    public boolean isPassengerOfSameVehicle(Entity p_20366_) {
-        return this.getRootVehicle() == p_20366_.getRootVehicle();
+    public boolean isPassengerOfSameVehicle(Entity entity) {
+        return this.getRootVehicle() == entity.getRootVehicle();
     }
 
-    public boolean hasIndirectPassenger(Entity p_20368_) {
-        if (!p_20368_.isPassenger()) {
+    public boolean hasIndirectPassenger(Entity p_entity) {
+        if (!p_entity.isPassenger()) {
             return false;
         } else {
-            Entity entity = p_20368_.getVehicle();
+            Entity entity = p_entity.getVehicle();
             return entity == this ? true : this.hasIndirectPassenger(entity);
         }
     }
@@ -3055,15 +3220,15 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return !this.level().isClientSide;
     }
 
-    protected static Vec3 getCollisionHorizontalEscapeVector(double p_19904_, double p_19905_, float p_19906_) {
-        double d0 = (p_19904_ + p_19905_ + 1.0E-5F) / 2.0;
-        float f = -Mth.sin(p_19906_ * (float) (Math.PI / 180.0));
-        float f1 = Mth.cos(p_19906_ * (float) (Math.PI / 180.0));
+    protected static Vec3 getCollisionHorizontalEscapeVector(double vehicleWidth, double passengerWidth, float yRot) {
+        double d0 = (vehicleWidth + passengerWidth + 1.0E-5F) / 2.0;
+        float f = -Mth.sin(yRot * (float) (Math.PI / 180.0));
+        float f1 = Mth.cos(yRot * (float) (Math.PI / 180.0));
         float f2 = Math.max(Math.abs(f), Math.abs(f1));
         return new Vec3((double)f * d0 / (double)f2, 0.0, (double)f1 * d0 / (double)f2);
     }
 
-    public Vec3 getDismountLocationForPassenger(LivingEntity p_20123_) {
+    public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
         return new Vec3(this.getX(), this.getBoundingBox().maxY, this.getZ());
     }
 
@@ -3107,8 +3272,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return 0;
     }
 
-    public boolean hasPermissions(int p_20311_) {
-        return this.getPermissionLevel() >= p_20311_;
+    public boolean hasPermissions(int level) {
+        return this.getPermissionLevel() >= level;
     }
 
     @Override
@@ -3126,11 +3291,11 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return true;
     }
 
-    public void lookAt(EntityAnchorArgument.Anchor p_20033_, Vec3 p_20034_) {
-        Vec3 vec3 = p_20033_.apply(this);
-        double d0 = p_20034_.x - vec3.x;
-        double d1 = p_20034_.y - vec3.y;
-        double d2 = p_20034_.z - vec3.z;
+    public void lookAt(EntityAnchorArgument.Anchor anchor, Vec3 target) {
+        Vec3 vec3 = anchor.apply(this);
+        double d0 = target.x - vec3.x;
+        double d1 = target.y - vec3.y;
+        double d2 = target.z - vec3.z;
         double d3 = Math.sqrt(d0 * d0 + d2 * d2);
         this.setXRot(Mth.wrapDegrees((float)(-(Mth.atan2(d1, d3) * 180.0F / (float)Math.PI))));
         this.setYRot(Mth.wrapDegrees((float)(Mth.atan2(d2, d0) * 180.0F / (float)Math.PI) - 90.0F));
@@ -3139,15 +3304,15 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         this.yRotO = this.getYRot();
     }
 
-    public float getPreciseBodyRotation(float p_352259_) {
-        return Mth.lerp(p_352259_, this.yRotO, this.yRot);
+    public float getPreciseBodyRotation(float partialTick) {
+        return Mth.lerp(partialTick, this.yRotO, this.yRot);
     }
 
     @Deprecated // Forge: Use no parameter version instead, only for vanilla Tags
-    public boolean updateFluidHeightAndDoFluidPushing(TagKey<Fluid> p_204032_, double p_204033_) {
+    public boolean updateFluidHeightAndDoFluidPushing(TagKey<Fluid> fluidTag, double motionScale) {
         this.updateFluidHeightAndDoFluidPushing();
-        if(p_204032_ == FluidTags.WATER) return this.isInFluidType(net.neoforged.neoforge.common.NeoForgeMod.WATER_TYPE.value());
-        else if (p_204032_ == FluidTags.LAVA) return this.isInFluidType(net.neoforged.neoforge.common.NeoForgeMod.LAVA_TYPE.value());
+        if(fluidTag == FluidTags.WATER) return this.isInFluidType(net.neoforged.neoforge.common.NeoForgeMod.WATER_TYPE.value());
+        else if (fluidTag == FluidTags.LAVA) return this.isInFluidType(net.neoforged.neoforge.common.NeoForgeMod.LAVA_TYPE.value());
         else return false;
     }
 
@@ -3242,10 +3407,10 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
     }
 
     @Deprecated // Forge: Use getFluidTypeHeight instead
-    public double getFluidHeight(TagKey<Fluid> p_204037_) {
-        if (p_204037_ == FluidTags.WATER) return getFluidTypeHeight(net.neoforged.neoforge.common.NeoForgeMod.WATER_TYPE.value());
-        else if (p_204037_ == FluidTags.LAVA) return getFluidTypeHeight(net.neoforged.neoforge.common.NeoForgeMod.LAVA_TYPE.value());
-        return this.fluidHeight.getDouble(p_204037_);
+    public double getFluidHeight(TagKey<Fluid> fluidTag) {
+        if (fluidTag == FluidTags.WATER) return getFluidTypeHeight(net.neoforged.neoforge.common.NeoForgeMod.WATER_TYPE.value());
+        else if (fluidTag == FluidTags.LAVA) return getFluidTypeHeight(net.neoforged.neoforge.common.NeoForgeMod.LAVA_TYPE.value());
+        return this.fluidHeight.getDouble(fluidTag);
     }
 
     public double getFluidJumpThreshold() {
@@ -3260,11 +3425,11 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.dimensions.height();
     }
 
-    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity p_352110_) {
-        return new ClientboundAddEntityPacket(this, p_352110_);
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
+        return new ClientboundAddEntityPacket(this, entity);
     }
 
-    public EntityDimensions getDimensions(Pose p_19975_) {
+    public EntityDimensions getDimensions(Pose pose) {
         return this.type.getDimensions();
     }
 
@@ -3301,16 +3466,16 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.deltaMovement;
     }
 
-    public void setDeltaMovement(Vec3 p_20257_) {
-        this.deltaMovement = p_20257_;
+    public void setDeltaMovement(Vec3 deltaMovement) {
+        this.deltaMovement = deltaMovement;
     }
 
-    public void addDeltaMovement(Vec3 p_250128_) {
-        this.setDeltaMovement(this.getDeltaMovement().add(p_250128_));
+    public void addDeltaMovement(Vec3 addend) {
+        this.setDeltaMovement(this.getDeltaMovement().add(addend));
     }
 
-    public void setDeltaMovement(double p_20335_, double p_20336_, double p_20337_) {
-        this.setDeltaMovement(new Vec3(p_20335_, p_20336_, p_20337_));
+    public void setDeltaMovement(double x, double y, double z) {
+        this.setDeltaMovement(new Vec3(x, y, z));
     }
 
     public final int getBlockX() {
@@ -3321,12 +3486,12 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.position.x;
     }
 
-    public double getX(double p_20166_) {
-        return this.position.x + (double)this.getBbWidth() * p_20166_;
+    public double getX(double scale) {
+        return this.position.x + (double)this.getBbWidth() * scale;
     }
 
-    public double getRandomX(double p_20209_) {
-        return this.getX((2.0 * this.random.nextDouble() - 1.0) * p_20209_);
+    public double getRandomX(double scale) {
+        return this.getX((2.0 * this.random.nextDouble() - 1.0) * scale);
     }
 
     public final int getBlockY() {
@@ -3337,8 +3502,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.position.y;
     }
 
-    public double getY(double p_20228_) {
-        return this.position.y + (double)this.getBbHeight() * p_20228_;
+    public double getY(double scale) {
+        return this.position.y + (double)this.getBbHeight() * scale;
     }
 
     public double getRandomY() {
@@ -3357,20 +3522,23 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.position.z;
     }
 
-    public double getZ(double p_20247_) {
-        return this.position.z + (double)this.getBbWidth() * p_20247_;
+    public double getZ(double scale) {
+        return this.position.z + (double)this.getBbWidth() * scale;
     }
 
-    public double getRandomZ(double p_20263_) {
-        return this.getZ((2.0 * this.random.nextDouble() - 1.0) * p_20263_);
+    public double getRandomZ(double scale) {
+        return this.getZ((2.0 * this.random.nextDouble() - 1.0) * scale);
     }
 
-    public final void setPosRaw(double p_20344_, double p_20345_, double p_20346_) {
-        if (this.position.x != p_20344_ || this.position.y != p_20345_ || this.position.z != p_20346_) {
-            this.position = new Vec3(p_20344_, p_20345_, p_20346_);
-            int i = Mth.floor(p_20344_);
-            int j = Mth.floor(p_20345_);
-            int k = Mth.floor(p_20346_);
+    /**
+     * Directly updates the {@link #posX}, {@link posY}, and {@link posZ} fields, without performing any collision checks, updating the bounding box position, or sending any packets. In general, this is not what you want and {@link #setPosition} is better, as that handles the bounding box.
+     */
+    public final void setPosRaw(double x, double y, double z) {
+        if (this.position.x != x || this.position.y != y || this.position.z != z) {
+            this.position = new Vec3(x, y, z);
+            int i = Mth.floor(x);
+            int j = Mth.floor(y);
+            int k = Mth.floor(z);
             if (i != this.blockPosition.getX() || j != this.blockPosition.getY() || k != this.blockPosition.getZ()) {
                 this.blockPosition = new BlockPos(i, j, k);
                 this.inBlockState = null;
@@ -3381,27 +3549,27 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
 
             this.levelCallback.onMove();
         }
-        if (this.isAddedToLevel() && !this.level.isClientSide && !this.isRemoved()) this.level.getChunk((int) Math.floor(p_20344_) >> 4, (int) Math.floor(p_20346_) >> 4); // Forge - ensure target chunk is loaded.
+        if (this.isAddedToLevel() && !this.level.isClientSide && !this.isRemoved()) this.level.getChunk((int) Math.floor(x) >> 4, (int) Math.floor(z) >> 4); // Forge - ensure target chunk is loaded.
     }
 
     public void checkDespawn() {
     }
 
-    public Vec3 getRopeHoldPosition(float p_20347_) {
-        return this.getPosition(p_20347_).add(0.0, (double)this.eyeHeight * 0.7, 0.0);
+    public Vec3 getRopeHoldPosition(float partialTicks) {
+        return this.getPosition(partialTicks).add(0.0, (double)this.eyeHeight * 0.7, 0.0);
     }
 
-    public void recreateFromPacket(ClientboundAddEntityPacket p_146866_) {
-        int i = p_146866_.getId();
-        double d0 = p_146866_.getX();
-        double d1 = p_146866_.getY();
-        double d2 = p_146866_.getZ();
+    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+        int i = packet.getId();
+        double d0 = packet.getX();
+        double d1 = packet.getY();
+        double d2 = packet.getZ();
         this.syncPacketPositionCodec(d0, d1, d2);
         this.moveTo(d0, d1, d2);
-        this.setXRot(p_146866_.getXRot());
-        this.setYRot(p_146866_.getYRot());
+        this.setXRot(packet.getXRot());
+        this.setYRot(packet.getYRot());
         this.setId(i);
-        this.setUUID(p_146866_.getUUID());
+        this.setUUID(packet.getUUID());
     }
 
     @Nullable
@@ -3409,8 +3577,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return null;
     }
 
-    public void setIsInPowderSnow(boolean p_146925_) {
-        this.isInPowderSnow = p_146925_;
+    public void setIsInPowderSnow(boolean isInPowderSnow) {
+        this.isInPowderSnow = isInPowderSnow;
     }
 
     public boolean canFreeze() {
@@ -3429,11 +3597,14 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.getYRot();
     }
 
-    public void setYRot(float p_146923_) {
-        if (!Float.isFinite(p_146923_)) {
-            Util.logAndPauseIfInIde("Invalid entity rotation: " + p_146923_ + ", discarding.");
+    /**
+     * Sets the rotation of this entity around the y-axis (the yaw) in degrees.
+     */
+    public void setYRot(float yRot) {
+        if (!Float.isFinite(yRot)) {
+            Util.logAndPauseIfInIde("Invalid entity rotation: " + yRot + ", discarding.");
         } else {
-            this.yRot = p_146923_;
+            this.yRot = yRot;
         }
     }
 
@@ -3441,11 +3612,14 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.xRot;
     }
 
-    public void setXRot(float p_146927_) {
-        if (!Float.isFinite(p_146927_)) {
-            Util.logAndPauseIfInIde("Invalid entity rotation: " + p_146927_ + ", discarding.");
+    /**
+     * Sets the rotation of this entity around the x-axis (the pitch) in degrees.
+     */
+    public void setXRot(float xRot) {
+        if (!Float.isFinite(xRot)) {
+            Util.logAndPauseIfInIde("Invalid entity rotation: " + xRot + ", discarding.");
         } else {
-            this.xRot = p_146927_;
+            this.xRot = xRot;
         }
     }
 
@@ -3457,7 +3631,7 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return 0.0F;
     }
 
-    public void onExplosionHit(@Nullable Entity p_326352_) {
+    public void onExplosionHit(@Nullable Entity entity) {
     }
 
     public final boolean isRemoved() {
@@ -3470,9 +3644,9 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
     }
 
     @Override
-    public final void setRemoved(Entity.RemovalReason p_146876_) {
+    public final void setRemoved(Entity.RemovalReason removalReason) {
         if (this.removalReason == null) {
-            this.removalReason = p_146876_;
+            this.removalReason = removalReason;
         }
 
         if (this.removalReason.shouldDestroy()) {
@@ -3480,7 +3654,7 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         }
 
         this.getPassengers().forEach(Entity::stopRiding);
-        this.levelCallback.onRemove(p_146876_);
+        this.levelCallback.onRemove(removalReason);
     }
 
     protected void unsetRemoved() {
@@ -3488,8 +3662,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
     }
 
     @Override
-    public void setLevelCallback(EntityInLevelCallback p_146849_) {
-        this.levelCallback = p_146849_;
+    public void setLevelCallback(EntityInLevelCallback levelCallback) {
+        this.levelCallback = levelCallback;
     }
 
     @Override
@@ -3506,7 +3680,7 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return false;
     }
 
-    public boolean mayInteract(Level p_146843_, BlockPos p_146844_) {
+    public boolean mayInteract(Level level, BlockPos pos) {
         return true;
     }
 
@@ -3641,8 +3815,8 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.level;
     }
 
-    protected void setLevel(Level p_285201_) {
-        this.level = p_285201_;
+    protected void setLevel(Level level) {
+        this.level = level;
     }
 
     public DamageSources damageSources() {
@@ -3653,13 +3827,13 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         return this.level().registryAccess();
     }
 
-    protected void lerpPositionAndRotationStep(int p_294824_, double p_296038_, double p_294518_, double p_294658_, double p_294681_, double p_295540_) {
-        double d0 = 1.0 / (double)p_294824_;
-        double d1 = Mth.lerp(d0, this.getX(), p_296038_);
-        double d2 = Mth.lerp(d0, this.getY(), p_294518_);
-        double d3 = Mth.lerp(d0, this.getZ(), p_294658_);
-        float f = (float)Mth.rotLerp(d0, (double)this.getYRot(), p_294681_);
-        float f1 = (float)Mth.lerp(d0, (double)this.getXRot(), p_295540_);
+    protected void lerpPositionAndRotationStep(int steps, double targetX, double targetY, double targetZ, double targetYRot, double targetXRot) {
+        double d0 = 1.0 / (double)steps;
+        double d1 = Mth.lerp(d0, this.getX(), targetX);
+        double d2 = Mth.lerp(d0, this.getY(), targetY);
+        double d3 = Mth.lerp(d0, this.getZ(), targetZ);
+        float f = (float)Mth.rotLerp(d0, (double)this.getYRot(), targetYRot);
+        float f1 = (float)Mth.lerp(d0, (double)this.getXRot(), targetXRot);
         this.setPos(d1, d2, d3);
         this.setRot(f, f1);
     }
@@ -3683,7 +3857,7 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
 
     @FunctionalInterface
     public interface MoveFunction {
-        void accept(Entity p_20373_, double p_20374_, double p_20375_, double p_20376_);
+        void accept(Entity entity, double x, double y, double z);
     }
 
     public static enum MovementEmission {
@@ -3695,9 +3869,9 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         final boolean sounds;
         final boolean events;
 
-        private MovementEmission(boolean p_146942_, boolean p_146943_) {
-            this.sounds = p_146942_;
-            this.events = p_146943_;
+        private MovementEmission(boolean sounds, boolean events) {
+            this.sounds = sounds;
+            this.events = events;
         }
 
         public boolean emitsAnything() {
@@ -3723,9 +3897,9 @@ public abstract class Entity extends net.neoforged.neoforge.attachment.Attachmen
         private final boolean destroy;
         private final boolean save;
 
-        private RemovalReason(boolean p_146963_, boolean p_146964_) {
-            this.destroy = p_146963_;
-            this.save = p_146964_;
+        private RemovalReason(boolean destroy, boolean save) {
+            this.destroy = destroy;
+            this.save = save;
         }
 
         public boolean shouldDestroy() {

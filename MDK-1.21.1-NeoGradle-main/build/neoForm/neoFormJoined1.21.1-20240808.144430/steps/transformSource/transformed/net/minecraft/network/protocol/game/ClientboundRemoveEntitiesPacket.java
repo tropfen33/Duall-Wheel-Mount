@@ -13,20 +13,20 @@ public class ClientboundRemoveEntitiesPacket implements Packet<ClientGamePacketL
     );
     private final IntList entityIds;
 
-    public ClientboundRemoveEntitiesPacket(IntList p_182719_) {
-        this.entityIds = new IntArrayList(p_182719_);
+    public ClientboundRemoveEntitiesPacket(IntList entityIds) {
+        this.entityIds = new IntArrayList(entityIds);
     }
 
-    public ClientboundRemoveEntitiesPacket(int... p_182723_) {
-        this.entityIds = new IntArrayList(p_182723_);
+    public ClientboundRemoveEntitiesPacket(int... entityIds) {
+        this.entityIds = new IntArrayList(entityIds);
     }
 
-    private ClientboundRemoveEntitiesPacket(FriendlyByteBuf p_182721_) {
-        this.entityIds = p_182721_.readIntIdList();
+    private ClientboundRemoveEntitiesPacket(FriendlyByteBuf buffer) {
+        this.entityIds = buffer.readIntIdList();
     }
 
-    private void write(FriendlyByteBuf p_182725_) {
-        p_182725_.writeIntIdList(this.entityIds);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeIntIdList(this.entityIds);
     }
 
     @Override
@@ -34,8 +34,11 @@ public class ClientboundRemoveEntitiesPacket implements Packet<ClientGamePacketL
         return GamePacketTypes.CLIENTBOUND_REMOVE_ENTITIES;
     }
 
-    public void handle(ClientGamePacketListener p_182729_) {
-        p_182729_.handleRemoveEntities(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleRemoveEntities(this);
     }
 
     public IntList getEntityIds() {

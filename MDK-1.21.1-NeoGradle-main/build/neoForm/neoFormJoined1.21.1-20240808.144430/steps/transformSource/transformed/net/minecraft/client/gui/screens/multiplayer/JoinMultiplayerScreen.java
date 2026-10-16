@@ -48,9 +48,9 @@ public class JoinMultiplayerScreen extends Screen {
     private LanServerDetection.LanServerDetector lanServerDetector;
     private boolean initedOnce;
 
-    public JoinMultiplayerScreen(Screen p_99688_) {
+    public JoinMultiplayerScreen(Screen lastScreen) {
         super(Component.translatable("multiplayer.title"));
-        this.lastScreen = p_99688_;
+        this.lastScreen = lastScreen;
     }
 
     @Override
@@ -159,9 +159,9 @@ public class JoinMultiplayerScreen extends Screen {
         this.minecraft.setScreen(new JoinMultiplayerScreen(this.lastScreen));
     }
 
-    private void deleteCallback(boolean p_99712_) {
+    private void deleteCallback(boolean confirmed) {
         ServerSelectionList.Entry serverselectionlist$entry = this.serverSelectionList.getSelected();
-        if (p_99712_ && serverselectionlist$entry instanceof ServerSelectionList.OnlineServerEntry) {
+        if (confirmed && serverselectionlist$entry instanceof ServerSelectionList.OnlineServerEntry) {
             this.servers.remove(((ServerSelectionList.OnlineServerEntry)serverselectionlist$entry).getServerData());
             this.servers.save();
             this.serverSelectionList.setSelected(null);
@@ -171,9 +171,9 @@ public class JoinMultiplayerScreen extends Screen {
         this.minecraft.setScreen(this);
     }
 
-    private void editServerCallback(boolean p_99717_) {
+    private void editServerCallback(boolean confirmed) {
         ServerSelectionList.Entry serverselectionlist$entry = this.serverSelectionList.getSelected();
-        if (p_99717_ && serverselectionlist$entry instanceof ServerSelectionList.OnlineServerEntry) {
+        if (confirmed && serverselectionlist$entry instanceof ServerSelectionList.OnlineServerEntry) {
             ServerData serverdata = ((ServerSelectionList.OnlineServerEntry)serverselectionlist$entry).getServerData();
             serverdata.name = this.editingServer.name;
             serverdata.ip = this.editingServer.ip;
@@ -185,8 +185,8 @@ public class JoinMultiplayerScreen extends Screen {
         this.minecraft.setScreen(this);
     }
 
-    private void addServerCallback(boolean p_99722_) {
-        if (p_99722_) {
+    private void addServerCallback(boolean confirmed) {
+        if (confirmed) {
             ServerData serverdata = this.servers.unhide(this.editingServer.ip);
             if (serverdata != null) {
                 serverdata.copyNameIconFrom(this.editingServer);
@@ -203,8 +203,8 @@ public class JoinMultiplayerScreen extends Screen {
         this.minecraft.setScreen(this);
     }
 
-    private void directJoinCallback(boolean p_99726_) {
-        if (p_99726_) {
+    private void directJoinCallback(boolean confirmed) {
+        if (confirmed) {
             ServerData serverdata = this.servers.get(this.editingServer.ip);
             if (serverdata == null) {
                 this.servers.add(this.editingServer, true);
@@ -218,29 +218,46 @@ public class JoinMultiplayerScreen extends Screen {
         }
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_99690_, int p_99691_, int p_99692_) {
-        if (super.keyPressed(p_99690_, p_99691_, p_99692_)) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (super.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
-        } else if (p_99690_ == 294) {
+        } else if (keyCode == 294) {
             this.refreshServerList();
             return true;
         } else if (this.serverSelectionList.getSelected() != null) {
-            if (CommonInputs.selected(p_99690_)) {
+            if (CommonInputs.selected(keyCode)) {
                 this.joinSelectedServer();
                 return true;
             } else {
-                return this.serverSelectionList.keyPressed(p_99690_, p_99691_, p_99692_);
+                return this.serverSelectionList.keyPressed(keyCode, scanCode, modifiers);
             }
         } else {
             return false;
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281617_, int p_281629_, int p_281983_, float p_283431_) {
-        super.render(p_281617_, p_281629_, p_281983_, p_283431_);
-        p_281617_.drawCenteredString(this.font, this.title, this.width / 2, 20, 16777215);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 20, 16777215);
     }
 
     public void joinSelectedServer() {
@@ -253,12 +270,12 @@ public class JoinMultiplayerScreen extends Screen {
         }
     }
 
-    private void join(ServerData p_99703_) {
-        ConnectScreen.startConnecting(this, this.minecraft, ServerAddress.parseString(p_99703_.ip), p_99703_, false, null);
+    private void join(ServerData server) {
+        ConnectScreen.startConnecting(this, this.minecraft, ServerAddress.parseString(server.ip), server, false, null);
     }
 
-    public void setSelected(ServerSelectionList.Entry p_99701_) {
-        this.serverSelectionList.setSelected(p_99701_);
+    public void setSelected(ServerSelectionList.Entry selected) {
+        this.serverSelectionList.setSelected(selected);
         this.onSelectedChange();
     }
 

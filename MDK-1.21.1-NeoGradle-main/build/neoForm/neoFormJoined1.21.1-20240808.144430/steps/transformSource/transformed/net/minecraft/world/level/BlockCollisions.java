@@ -30,28 +30,28 @@ public class BlockCollisions<T> extends AbstractIterator<T> {
     private final BiFunction<BlockPos.MutableBlockPos, VoxelShape, T> resultProvider;
 
     public BlockCollisions(
-        CollisionGetter p_286817_, @Nullable Entity p_286246_, AABB p_286624_, boolean p_286354_, BiFunction<BlockPos.MutableBlockPos, VoxelShape, T> p_286303_
+        CollisionGetter collisionGetter, @Nullable Entity entity, AABB box, boolean onlySuffocatingBlocks, BiFunction<BlockPos.MutableBlockPos, VoxelShape, T> resultProvider
     ) {
-        this.context = p_286246_ == null ? CollisionContext.empty() : CollisionContext.of(p_286246_);
+        this.context = entity == null ? CollisionContext.empty() : CollisionContext.of(entity);
         this.pos = new BlockPos.MutableBlockPos();
-        this.entityShape = Shapes.create(p_286624_);
-        this.collisionGetter = p_286817_;
-        this.box = p_286624_;
-        this.onlySuffocatingBlocks = p_286354_;
-        this.resultProvider = p_286303_;
-        int i = Mth.floor(p_286624_.minX - 1.0E-7) - 1;
-        int j = Mth.floor(p_286624_.maxX + 1.0E-7) + 1;
-        int k = Mth.floor(p_286624_.minY - 1.0E-7) - 1;
-        int l = Mth.floor(p_286624_.maxY + 1.0E-7) + 1;
-        int i1 = Mth.floor(p_286624_.minZ - 1.0E-7) - 1;
-        int j1 = Mth.floor(p_286624_.maxZ + 1.0E-7) + 1;
+        this.entityShape = Shapes.create(box);
+        this.collisionGetter = collisionGetter;
+        this.box = box;
+        this.onlySuffocatingBlocks = onlySuffocatingBlocks;
+        this.resultProvider = resultProvider;
+        int i = Mth.floor(box.minX - 1.0E-7) - 1;
+        int j = Mth.floor(box.maxX + 1.0E-7) + 1;
+        int k = Mth.floor(box.minY - 1.0E-7) - 1;
+        int l = Mth.floor(box.maxY + 1.0E-7) + 1;
+        int i1 = Mth.floor(box.minZ - 1.0E-7) - 1;
+        int j1 = Mth.floor(box.maxZ + 1.0E-7) + 1;
         this.cursor = new Cursor3D(i, k, i1, j, l, j1);
     }
 
     @Nullable
-    private BlockGetter getChunk(int p_186412_, int p_186413_) {
-        int i = SectionPos.blockToSectionCoord(p_186412_);
-        int j = SectionPos.blockToSectionCoord(p_186413_);
+    private BlockGetter getChunk(int x, int z) {
+        int i = SectionPos.blockToSectionCoord(x);
+        int j = SectionPos.blockToSectionCoord(z);
         long k = ChunkPos.asLong(i, j);
         if (this.cachedBlockGetter != null && this.cachedBlockGetterPos == k) {
             return this.cachedBlockGetter;

@@ -7,11 +7,15 @@ import java.util.function.Consumer;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
+/**
+ * A composite loot pool entry container that expands all its children in order.
+ * This container always succeeds.
+ */
 public class EntryGroup extends CompositeEntryBase {
     public static final MapCodec<EntryGroup> CODEC = createCodec(EntryGroup::new);
 
-    EntryGroup(List<LootPoolEntryContainer> p_298565_, List<LootItemCondition> p_298406_) {
-        super(p_298565_, p_298406_);
+    EntryGroup(List<LootPoolEntryContainer> children, List<LootItemCondition> conditions) {
+        super(children, conditions);
     }
 
     @Override
@@ -20,13 +24,13 @@ public class EntryGroup extends CompositeEntryBase {
     }
 
     @Override
-    protected ComposableEntryContainer compose(List<? extends ComposableEntryContainer> p_299019_) {
-        return switch (p_299019_.size()) {
+    protected ComposableEntryContainer compose(List<? extends ComposableEntryContainer> children) {
+        return switch (children.size()) {
             case 0 -> ALWAYS_TRUE;
-            case 1 -> (ComposableEntryContainer)p_299019_.get(0);
+            case 1 -> (ComposableEntryContainer)children.get(0);
             case 2 -> {
-                ComposableEntryContainer composableentrycontainer = p_299019_.get(0);
-                ComposableEntryContainer composableentrycontainer1 = p_299019_.get(1);
+                ComposableEntryContainer composableentrycontainer = children.get(0);
+                ComposableEntryContainer composableentrycontainer1 = children.get(1);
                 yield (p_79556_, p_79557_) -> {
                     composableentrycontainer.expand(p_79556_, p_79557_);
                     composableentrycontainer1.expand(p_79556_, p_79557_);
@@ -34,7 +38,7 @@ public class EntryGroup extends CompositeEntryBase {
                 };
             }
             default -> (p_298014_, p_298015_) -> {
-            for (ComposableEntryContainer composableentrycontainer2 : p_299019_) {
+            for (ComposableEntryContainer composableentrycontainer2 : children) {
                 composableentrycontainer2.expand(p_298014_, p_298015_);
             }
 
@@ -43,15 +47,15 @@ public class EntryGroup extends CompositeEntryBase {
         };
     }
 
-    public static EntryGroup.Builder list(LootPoolEntryContainer.Builder<?>... p_165138_) {
-        return new EntryGroup.Builder(p_165138_);
+    public static EntryGroup.Builder list(LootPoolEntryContainer.Builder<?>... children) {
+        return new EntryGroup.Builder(children);
     }
 
     public static class Builder extends LootPoolEntryContainer.Builder<EntryGroup.Builder> {
         private final ImmutableList.Builder<LootPoolEntryContainer> entries = ImmutableList.builder();
 
-        public Builder(LootPoolEntryContainer.Builder<?>... p_165141_) {
-            for (LootPoolEntryContainer.Builder<?> builder : p_165141_) {
+        public Builder(LootPoolEntryContainer.Builder<?>... children) {
+            for (LootPoolEntryContainer.Builder<?> builder : children) {
                 this.entries.add(builder.build());
             }
         }
@@ -61,8 +65,8 @@ public class EntryGroup extends CompositeEntryBase {
         }
 
         @Override
-        public EntryGroup.Builder append(LootPoolEntryContainer.Builder<?> p_165145_) {
-            this.entries.add(p_165145_.build());
+        public EntryGroup.Builder append(LootPoolEntryContainer.Builder<?> childBuilder) {
+            this.entries.add(childBuilder.build());
             return this;
         }
 

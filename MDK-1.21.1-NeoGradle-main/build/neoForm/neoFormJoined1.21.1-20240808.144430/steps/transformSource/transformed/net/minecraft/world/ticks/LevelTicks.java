@@ -45,24 +45,24 @@ public class LevelTicks<T> implements LevelTickAccess<T> {
         }
     };
 
-    public LevelTicks(LongPredicate p_193211_, Supplier<ProfilerFiller> p_193212_) {
-        this.tickCheck = p_193211_;
-        this.profiler = p_193212_;
+    public LevelTicks(LongPredicate tickCheck, Supplier<ProfilerFiller> profiler) {
+        this.tickCheck = tickCheck;
+        this.profiler = profiler;
     }
 
-    public void addContainer(ChunkPos p_193232_, LevelChunkTicks<T> p_193233_) {
-        long i = p_193232_.toLong();
-        this.allContainers.put(i, p_193233_);
-        ScheduledTick<T> scheduledtick = p_193233_.peek();
+    public void addContainer(ChunkPos chunkPos, LevelChunkTicks<T> chunkTicks) {
+        long i = chunkPos.toLong();
+        this.allContainers.put(i, chunkTicks);
+        ScheduledTick<T> scheduledtick = chunkTicks.peek();
         if (scheduledtick != null) {
             this.nextTickForContainer.put(i, scheduledtick.triggerTick());
         }
 
-        p_193233_.setOnTickAdded(this.chunkScheduleUpdater);
+        chunkTicks.setOnTickAdded(this.chunkScheduleUpdater);
     }
 
-    public void removeContainer(ChunkPos p_193230_) {
-        long i = p_193230_.toLong();
+    public void removeContainer(ChunkPos chunkPos) {
+        long i = chunkPos.toLong();
         LevelChunkTicks<T> levelchunkticks = this.allContainers.remove(i);
         this.nextTickForContainer.remove(i);
         if (levelchunkticks != null) {
@@ -71,43 +71,43 @@ public class LevelTicks<T> implements LevelTickAccess<T> {
     }
 
     @Override
-    public void schedule(ScheduledTick<T> p_193252_) {
-        long i = ChunkPos.asLong(p_193252_.pos());
+    public void schedule(ScheduledTick<T> tick) {
+        long i = ChunkPos.asLong(tick.pos());
         LevelChunkTicks<T> levelchunkticks = this.allContainers.get(i);
         if (levelchunkticks == null) {
-            Util.pauseInIde(new IllegalStateException("Trying to schedule tick in not loaded position " + p_193252_.pos()));
+            Util.pauseInIde(new IllegalStateException("Trying to schedule tick in not loaded position " + tick.pos()));
         } else {
-            levelchunkticks.schedule(p_193252_);
+            levelchunkticks.schedule(tick);
         }
     }
 
-    public void tick(long p_193226_, int p_193227_, BiConsumer<BlockPos, T> p_193228_) {
+    public void tick(long gameTime, int maxAllowedTicks, BiConsumer<BlockPos, T> ticker) {
         ProfilerFiller profilerfiller = this.profiler.get();
         profilerfiller.push("collect");
-        this.collectTicks(p_193226_, p_193227_, profilerfiller);
+        this.collectTicks(gameTime, maxAllowedTicks, profilerfiller);
         profilerfiller.popPush("run");
         profilerfiller.incrementCounter("ticksToRun", this.toRunThisTick.size());
-        this.runCollectedTicks(p_193228_);
+        this.runCollectedTicks(ticker);
         profilerfiller.popPush("cleanup");
         this.cleanupAfterTick();
         profilerfiller.pop();
     }
 
-    private void collectTicks(long p_193222_, int p_193223_, ProfilerFiller p_193224_) {
-        this.sortContainersToTick(p_193222_);
-        p_193224_.incrementCounter("containersToTick", this.containersToTick.size());
-        this.drainContainers(p_193222_, p_193223_);
+    private void collectTicks(long gameTime, int maxAllowedTicks, ProfilerFiller profiler) {
+        this.sortContainersToTick(gameTime);
+        profiler.incrementCounter("containersToTick", this.containersToTick.size());
+        this.drainContainers(gameTime, maxAllowedTicks);
         this.rescheduleLeftoverContainers();
     }
 
-    private void sortContainersToTick(long p_193217_) {
+    private void sortContainersToTick(long gameTime) {
         ObjectIterator<Entry> objectiterator = Long2LongMaps.fastIterator(this.nextTickForContainer);
 
         while (objectiterator.hasNext()) {
             Entry entry = objectiterator.next();
             long i = entry.getLongKey();
             long j = entry.getLongValue();
-            if (j <= p_193217_) {
+            if (j <= gameTime) {
                 LevelChunkTicks<T> levelchunkticks = this.allContainers.get(i);
                 if (levelchunkticks == null) {
                     objectiterator.remove();
@@ -115,7 +115,7 @@ public class LevelTicks<T> implements LevelTickAccess<T> {
                     ScheduledTick<T> scheduledtick = levelchunkticks.peek();
                     if (scheduledtick == null) {
                         objectiterator.remove();
-                    } else if (scheduledtick.triggerTick() > p_193217_) {
+                    } else if (scheduledtick.triggerTick() > gameTime) {
                         entry.setValue(scheduledtick.triggerTick());
                     } else if (this.tickCheck.test(i)) {
                         objectiterator.remove();
@@ -126,15 +126,15 @@ public class LevelTicks<T> implements LevelTickAccess<T> {
         }
     }
 
-    private void drainContainers(long p_193219_, int p_193220_) {
+    private void drainContainers(long gameTime, int maxAllowedTicks) {
         LevelChunkTicks<T> levelchunkticks;
-        while (this.canScheduleMoreTicks(p_193220_) && (levelchunkticks = this.containersToTick.poll()) != null) {
+        while (this.canScheduleMoreTicks(maxAllowedTicks) && (levelchunkticks = this.containersToTick.poll()) != null) {
             ScheduledTick<T> scheduledtick = levelchunkticks.poll();
             this.scheduleForThisTick(scheduledtick);
-            this.drainFromCurrentContainer(this.containersToTick, levelchunkticks, p_193219_, p_193220_);
+            this.drainFromCurrentContainer(this.containersToTick, levelchunkticks, gameTime, maxAllowedTicks);
             ScheduledTick<T> scheduledtick1 = levelchunkticks.peek();
             if (scheduledtick1 != null) {
-                if (scheduledtick1.triggerTick() <= p_193219_ && this.canScheduleMoreTicks(p_193220_)) {
+                if (scheduledtick1.triggerTick() <= gameTime && this.canScheduleMoreTicks(maxAllowedTicks)) {
                     this.containersToTick.add(levelchunkticks);
                 } else {
                     this.updateContainerScheduling(scheduledtick1);
@@ -149,38 +149,38 @@ public class LevelTicks<T> implements LevelTickAccess<T> {
         }
     }
 
-    private void updateContainerScheduling(ScheduledTick<T> p_193280_) {
-        this.nextTickForContainer.put(ChunkPos.asLong(p_193280_.pos()), p_193280_.triggerTick());
+    private void updateContainerScheduling(ScheduledTick<T> tick) {
+        this.nextTickForContainer.put(ChunkPos.asLong(tick.pos()), tick.triggerTick());
     }
 
-    private void drainFromCurrentContainer(Queue<LevelChunkTicks<T>> p_193268_, LevelChunkTicks<T> p_193269_, long p_193270_, int p_193271_) {
-        if (this.canScheduleMoreTicks(p_193271_)) {
-            LevelChunkTicks<T> levelchunkticks = p_193268_.peek();
+    private void drainFromCurrentContainer(Queue<LevelChunkTicks<T>> containersToTick, LevelChunkTicks<T> levelChunkTicks, long gameTime, int maxAllowedTicks) {
+        if (this.canScheduleMoreTicks(maxAllowedTicks)) {
+            LevelChunkTicks<T> levelchunkticks = containersToTick.peek();
             ScheduledTick<T> scheduledtick = levelchunkticks != null ? levelchunkticks.peek() : null;
 
-            while (this.canScheduleMoreTicks(p_193271_)) {
-                ScheduledTick<T> scheduledtick1 = p_193269_.peek();
+            while (this.canScheduleMoreTicks(maxAllowedTicks)) {
+                ScheduledTick<T> scheduledtick1 = levelChunkTicks.peek();
                 if (scheduledtick1 == null
-                    || scheduledtick1.triggerTick() > p_193270_
+                    || scheduledtick1.triggerTick() > gameTime
                     || scheduledtick != null && ScheduledTick.INTRA_TICK_DRAIN_ORDER.compare(scheduledtick1, scheduledtick) > 0) {
                     break;
                 }
 
-                p_193269_.poll();
+                levelChunkTicks.poll();
                 this.scheduleForThisTick(scheduledtick1);
             }
         }
     }
 
-    private void scheduleForThisTick(ScheduledTick<T> p_193286_) {
-        this.toRunThisTick.add(p_193286_);
+    private void scheduleForThisTick(ScheduledTick<T> tick) {
+        this.toRunThisTick.add(tick);
     }
 
-    private boolean canScheduleMoreTicks(int p_193215_) {
-        return this.toRunThisTick.size() < p_193215_;
+    private boolean canScheduleMoreTicks(int maxAllowedTicks) {
+        return this.toRunThisTick.size() < maxAllowedTicks;
     }
 
-    private void runCollectedTicks(BiConsumer<BlockPos, T> p_193273_) {
+    private void runCollectedTicks(BiConsumer<BlockPos, T> ticker) {
         while (!this.toRunThisTick.isEmpty()) {
             ScheduledTick<T> scheduledtick = this.toRunThisTick.poll();
             if (!this.toRunThisTickSet.isEmpty()) {
@@ -188,7 +188,7 @@ public class LevelTicks<T> implements LevelTickAccess<T> {
             }
 
             this.alreadyRunThisTick.add(scheduledtick);
-            p_193273_.accept(scheduledtick.pos(), scheduledtick.type());
+            ticker.accept(scheduledtick.pos(), scheduledtick.type());
         }
     }
 
@@ -200,15 +200,15 @@ public class LevelTicks<T> implements LevelTickAccess<T> {
     }
 
     @Override
-    public boolean hasScheduledTick(BlockPos p_193254_, T p_193255_) {
-        LevelChunkTicks<T> levelchunkticks = this.allContainers.get(ChunkPos.asLong(p_193254_));
-        return levelchunkticks != null && levelchunkticks.hasScheduledTick(p_193254_, p_193255_);
+    public boolean hasScheduledTick(BlockPos pos, T type) {
+        LevelChunkTicks<T> levelchunkticks = this.allContainers.get(ChunkPos.asLong(pos));
+        return levelchunkticks != null && levelchunkticks.hasScheduledTick(pos, type);
     }
 
     @Override
-    public boolean willTickThisTick(BlockPos p_193282_, T p_193283_) {
+    public boolean willTickThisTick(BlockPos pos, T type) {
         this.calculateTickSetIfNeeded();
-        return this.toRunThisTickSet.contains(ScheduledTick.probe(p_193283_, p_193282_));
+        return this.toRunThisTickSet.contains(ScheduledTick.probe(type, pos));
     }
 
     private void calculateTickSetIfNeeded() {
@@ -217,26 +217,26 @@ public class LevelTicks<T> implements LevelTickAccess<T> {
         }
     }
 
-    private void forContainersInArea(BoundingBox p_193237_, LevelTicks.PosAndContainerConsumer<T> p_193238_) {
-        int i = SectionPos.posToSectionCoord((double)p_193237_.minX());
-        int j = SectionPos.posToSectionCoord((double)p_193237_.minZ());
-        int k = SectionPos.posToSectionCoord((double)p_193237_.maxX());
-        int l = SectionPos.posToSectionCoord((double)p_193237_.maxZ());
+    private void forContainersInArea(BoundingBox area, LevelTicks.PosAndContainerConsumer<T> action) {
+        int i = SectionPos.posToSectionCoord((double)area.minX());
+        int j = SectionPos.posToSectionCoord((double)area.minZ());
+        int k = SectionPos.posToSectionCoord((double)area.maxX());
+        int l = SectionPos.posToSectionCoord((double)area.maxZ());
 
         for (int i1 = i; i1 <= k; i1++) {
             for (int j1 = j; j1 <= l; j1++) {
                 long k1 = ChunkPos.asLong(i1, j1);
                 LevelChunkTicks<T> levelchunkticks = this.allContainers.get(k1);
                 if (levelchunkticks != null) {
-                    p_193238_.accept(k1, levelchunkticks);
+                    action.accept(k1, levelchunkticks);
                 }
             }
         }
     }
 
-    public void clearArea(BoundingBox p_193235_) {
-        Predicate<ScheduledTick<T>> predicate = p_193241_ -> p_193235_.isInside(p_193241_.pos());
-        this.forContainersInArea(p_193235_, (p_193276_, p_193277_) -> {
+    public void clearArea(BoundingBox area) {
+        Predicate<ScheduledTick<T>> predicate = p_193241_ -> area.isInside(p_193241_.pos());
+        this.forContainersInArea(area, (p_193276_, p_193277_) -> {
             ScheduledTick<T> scheduledtick = p_193277_.peek();
             p_193277_.removeIf(predicate);
             ScheduledTick<T> scheduledtick1 = p_193277_.peek();
@@ -252,16 +252,16 @@ public class LevelTicks<T> implements LevelTickAccess<T> {
         this.toRunThisTick.removeIf(predicate);
     }
 
-    public void copyArea(BoundingBox p_193243_, Vec3i p_193244_) {
-        this.copyAreaFrom(this, p_193243_, p_193244_);
+    public void copyArea(BoundingBox area, Vec3i offset) {
+        this.copyAreaFrom(this, area, offset);
     }
 
-    public void copyAreaFrom(LevelTicks<T> p_265554_, BoundingBox p_265172_, Vec3i p_265318_) {
+    public void copyAreaFrom(LevelTicks<T> levelTicks, BoundingBox area, Vec3i offset) {
         List<ScheduledTick<T>> list = new ArrayList<>();
-        Predicate<ScheduledTick<T>> predicate = p_200922_ -> p_265172_.isInside(p_200922_.pos());
-        p_265554_.alreadyRunThisTick.stream().filter(predicate).forEach(list::add);
-        p_265554_.toRunThisTick.stream().filter(predicate).forEach(list::add);
-        p_265554_.forContainersInArea(p_265172_, (p_200931_, p_200932_) -> p_200932_.getAll().filter(predicate).forEach(list::add));
+        Predicate<ScheduledTick<T>> predicate = p_200922_ -> area.isInside(p_200922_.pos());
+        levelTicks.alreadyRunThisTick.stream().filter(predicate).forEach(list::add);
+        levelTicks.toRunThisTick.stream().filter(predicate).forEach(list::add);
+        levelTicks.forContainersInArea(area, (p_200931_, p_200932_) -> p_200932_.getAll().filter(predicate).forEach(list::add));
         LongSummaryStatistics longsummarystatistics = list.stream().mapToLong(ScheduledTick::subTickOrder).summaryStatistics();
         long i = longsummarystatistics.getMin();
         long j = longsummarystatistics.getMax();
@@ -269,7 +269,7 @@ public class LevelTicks<T> implements LevelTickAccess<T> {
             p_193260_ -> this.schedule(
                     new ScheduledTick<>(
                         p_193260_.type(),
-                        p_193260_.pos().offset(p_265318_),
+                        p_193260_.pos().offset(offset),
                         p_193260_.triggerTick(),
                         p_193260_.priority(),
                         p_193260_.subTickOrder() - i + j + 1L
@@ -285,6 +285,6 @@ public class LevelTicks<T> implements LevelTickAccess<T> {
 
     @FunctionalInterface
     interface PosAndContainerConsumer<T> {
-        void accept(long p_193289_, LevelChunkTicks<T> p_193290_);
+        void accept(long pos, LevelChunkTicks<T> container);
     }
 }

@@ -23,43 +23,49 @@ public class IceBlock extends HalfTransparentBlock {
         return CODEC;
     }
 
-    public IceBlock(BlockBehaviour.Properties p_54155_) {
-        super(p_54155_);
+    public IceBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     public static BlockState meltsInto() {
         return Blocks.WATER.defaultBlockState();
     }
 
+    /**
+     * Called after a player has successfully harvested this block. This method will only be called if the player has used the correct tool and drops should be spawned.
+     */
     @Override
-    public void playerDestroy(Level p_54157_, Player p_54158_, BlockPos p_54159_, BlockState p_54160_, @Nullable BlockEntity p_54161_, ItemStack p_54162_) {
-        super.playerDestroy(p_54157_, p_54158_, p_54159_, p_54160_, p_54161_, p_54162_);
-        if (!EnchantmentHelper.hasTag(p_54162_, EnchantmentTags.PREVENTS_ICE_MELTING)) {
-            if (p_54157_.dimensionType().ultraWarm()) {
-                p_54157_.removeBlock(p_54159_, false);
+    public void playerDestroy(Level level, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity te, ItemStack stack) {
+        super.playerDestroy(level, player, pos, state, te, stack);
+        if (!EnchantmentHelper.hasTag(stack, EnchantmentTags.PREVENTS_ICE_MELTING)) {
+            if (level.dimensionType().ultraWarm()) {
+                level.removeBlock(pos, false);
                 return;
             }
 
-            BlockState blockstate = p_54157_.getBlockState(p_54159_.below());
+            BlockState blockstate = level.getBlockState(pos.below());
             if (blockstate.blocksMotion() || blockstate.liquid()) {
-                p_54157_.setBlockAndUpdate(p_54159_, meltsInto());
+                level.setBlockAndUpdate(pos, meltsInto());
             }
         }
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_221355_, ServerLevel p_221356_, BlockPos p_221357_, RandomSource p_221358_) {
-        if (p_221356_.getBrightness(LightLayer.BLOCK, p_221357_) > 11 - p_221355_.getLightBlock(p_221356_, p_221357_)) {
-            this.melt(p_221355_, p_221356_, p_221357_);
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (level.getBrightness(LightLayer.BLOCK, pos) > 11 - state.getLightBlock(level, pos)) {
+            this.melt(state, level, pos);
         }
     }
 
-    protected void melt(BlockState p_54169_, Level p_54170_, BlockPos p_54171_) {
-        if (p_54170_.dimensionType().ultraWarm()) {
-            p_54170_.removeBlock(p_54171_, false);
+    protected void melt(BlockState state, Level level, BlockPos pos) {
+        if (level.dimensionType().ultraWarm()) {
+            level.removeBlock(pos, false);
         } else {
-            p_54170_.setBlockAndUpdate(p_54171_, meltsInto());
-            p_54170_.neighborChanged(p_54171_, meltsInto().getBlock(), p_54171_);
+            level.setBlockAndUpdate(pos, meltsInto());
+            level.neighborChanged(pos, meltsInto().getBlock(), pos);
         }
     }
 }

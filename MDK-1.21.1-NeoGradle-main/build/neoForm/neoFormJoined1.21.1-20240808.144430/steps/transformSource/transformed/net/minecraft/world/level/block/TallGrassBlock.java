@@ -22,30 +22,30 @@ public class TallGrassBlock extends BushBlock implements BonemealableBlock, net.
         return CODEC;
     }
 
-    public TallGrassBlock(BlockBehaviour.Properties p_57318_) {
-        super(p_57318_);
+    public TallGrassBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_57336_, BlockGetter p_57337_, BlockPos p_57338_, CollisionContext p_57339_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader p_255692_, BlockPos p_57326_, BlockState p_57327_) {
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public boolean isBonemealSuccess(Level p_222583_, RandomSource p_222584_, BlockPos p_222585_, BlockState p_222586_) {
+    public boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel p_222578_, RandomSource p_222579_, BlockPos p_222580_, BlockState p_222581_) {
-        DoublePlantBlock doubleplantblock = (DoublePlantBlock)(p_222581_.is(Blocks.FERN) ? Blocks.LARGE_FERN : Blocks.TALL_GRASS);
-        if (doubleplantblock.defaultBlockState().canSurvive(p_222578_, p_222580_) && p_222578_.isEmptyBlock(p_222580_.above())) {
-            DoublePlantBlock.placeAt(p_222578_, doubleplantblock.defaultBlockState(), p_222580_, 2);
+    public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
+        DoublePlantBlock doubleplantblock = (DoublePlantBlock)(state.is(Blocks.FERN) ? Blocks.LARGE_FERN : Blocks.TALL_GRASS);
+        if (doubleplantblock.defaultBlockState().canSurvive(level, pos) && level.isEmptyBlock(pos.above())) {
+            DoublePlantBlock.placeAt(level, doubleplantblock.defaultBlockState(), pos, 2);
         }
     }
 }

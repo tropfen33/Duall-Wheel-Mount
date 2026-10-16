@@ -26,7 +26,7 @@ public interface BuiltinStructureSets {
     ResourceKey<StructureSet> TRAIL_RUINS = register("trail_ruins");
     ResourceKey<StructureSet> TRIAL_CHAMBERS = register("trial_chambers");
 
-    private static ResourceKey<StructureSet> register(String p_209839_) {
-        return ResourceKey.create(Registries.STRUCTURE_SET, ResourceLocation.withDefaultNamespace(p_209839_));
+    private static ResourceKey<StructureSet> register(String name) {
+        return ResourceKey.create(Registries.STRUCTURE_SET, ResourceLocation.withDefaultNamespace(name));
     }
 }

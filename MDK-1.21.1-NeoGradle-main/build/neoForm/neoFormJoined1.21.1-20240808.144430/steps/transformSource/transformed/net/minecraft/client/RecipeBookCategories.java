@@ -44,8 +44,8 @@ public enum RecipeBookCategories implements net.neoforged.fml.common.asm.enumext
     private final java.util.function.Supplier<List<ItemStack>> itemIconsSupplier;
 
     @net.neoforged.fml.common.asm.enumextension.ReservedConstructor
-    private RecipeBookCategories(ItemStack... p_92267_) {
-        this.itemIcons = ImmutableList.copyOf(p_92267_);
+    private RecipeBookCategories(ItemStack... itemIcons) {
+        this.itemIcons = ImmutableList.copyOf(itemIcons);
         this.itemIconsSupplier = () -> this.itemIcons;
     }
 
@@ -54,13 +54,13 @@ public enum RecipeBookCategories implements net.neoforged.fml.common.asm.enumext
         this.itemIconsSupplier = net.neoforged.neoforge.common.util.Lazy.of(itemIconsSupplier);
     }
 
-    public static List<RecipeBookCategories> getCategories(RecipeBookType p_92270_) {
-        return switch (p_92270_) {
+    public static List<RecipeBookCategories> getCategories(RecipeBookType recipeBookType) {
+        return switch (recipeBookType) {
             case CRAFTING -> CRAFTING_CATEGORIES;
             case FURNACE -> FURNACE_CATEGORIES;
             case BLAST_FURNACE -> BLAST_FURNACE_CATEGORIES;
             case SMOKER -> SMOKER_CATEGORIES;
-            default -> net.neoforged.neoforge.client.RecipeBookManager.getCustomCategoriesOrEmpty(p_92270_);
+            default -> net.neoforged.neoforge.client.RecipeBookManager.getCustomCategoriesOrEmpty(recipeBookType);
         };
     }
 

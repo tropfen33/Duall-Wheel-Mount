@@ -26,27 +26,27 @@ public class TutorialToast implements Toast {
     private float progress;
     private final boolean progressable;
 
-    public TutorialToast(TutorialToast.Icons p_94958_, Component p_94959_, @Nullable Component p_94960_, boolean p_94961_) {
-        this.icon = p_94958_;
-        this.title = p_94959_;
-        this.message = p_94960_;
-        this.progressable = p_94961_;
+    public TutorialToast(TutorialToast.Icons icon, Component title, @Nullable Component message, boolean progressable) {
+        this.icon = icon;
+        this.title = title;
+        this.message = message;
+        this.progressable = progressable;
     }
 
     @Override
-    public Toast.Visibility render(GuiGraphics p_283197_, ToastComponent p_283009_, long p_281902_) {
-        p_283197_.blitSprite(BACKGROUND_SPRITE, 0, 0, this.width(), this.height());
-        this.icon.render(p_283197_, 6, 6);
+    public Toast.Visibility render(GuiGraphics guiGraphics, ToastComponent toastComponent, long timeSinceLastVisible) {
+        guiGraphics.blitSprite(BACKGROUND_SPRITE, 0, 0, this.width(), this.height());
+        this.icon.render(guiGraphics, 6, 6);
         if (this.message == null) {
-            p_283197_.drawString(p_283009_.getMinecraft().font, this.title, 30, 12, -11534256, false);
+            guiGraphics.drawString(toastComponent.getMinecraft().font, this.title, 30, 12, -11534256, false);
         } else {
-            p_283197_.drawString(p_283009_.getMinecraft().font, this.title, 30, 7, -11534256, false);
-            p_283197_.drawString(p_283009_.getMinecraft().font, this.message, 30, 18, -16777216, false);
+            guiGraphics.drawString(toastComponent.getMinecraft().font, this.title, 30, 7, -11534256, false);
+            guiGraphics.drawString(toastComponent.getMinecraft().font, this.message, 30, 18, -16777216, false);
         }
 
         if (this.progressable) {
-            p_283197_.fill(3, 28, 157, 29, -1);
-            float f = Mth.clampedLerp(this.lastProgress, this.progress, (float)(p_281902_ - this.lastProgressTime) / 100.0F);
+            guiGraphics.fill(3, 28, 157, 29, -1);
+            float f = Mth.clampedLerp(this.lastProgress, this.progress, (float)(timeSinceLastVisible - this.lastProgressTime) / 100.0F);
             int i;
             if (this.progress >= this.lastProgress) {
                 i = -16755456;
@@ -54,9 +54,9 @@ public class TutorialToast implements Toast {
                 i = -11206656;
             }
 
-            p_283197_.fill(3, 28, (int)(3.0F + 154.0F * f), 29, i);
+            guiGraphics.fill(3, 28, (int)(3.0F + 154.0F * f), 29, i);
             this.lastProgress = f;
-            this.lastProgressTime = p_281902_;
+            this.lastProgressTime = timeSinceLastVisible;
         }
 
         return this.visibility;
@@ -66,8 +66,8 @@ public class TutorialToast implements Toast {
         this.visibility = Toast.Visibility.HIDE;
     }
 
-    public void updateProgress(float p_94963_) {
-        this.progress = p_94963_;
+    public void updateProgress(float progress) {
+        this.progress = progress;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -82,13 +82,13 @@ public class TutorialToast implements Toast {
 
         private final ResourceLocation sprite;
 
-        private Icons(ResourceLocation p_295332_) {
-            this.sprite = p_295332_;
+        private Icons(ResourceLocation sprite) {
+            this.sprite = sprite;
         }
 
-        public void render(GuiGraphics p_282818_, int p_283064_, int p_282765_) {
+        public void render(GuiGraphics guiGraphics, int x, int y) {
             RenderSystem.enableBlend();
-            p_282818_.blitSprite(this.sprite, p_283064_, p_282765_, 20, 20);
+            guiGraphics.blitSprite(this.sprite, x, y, 20, 20);
         }
     }
 }

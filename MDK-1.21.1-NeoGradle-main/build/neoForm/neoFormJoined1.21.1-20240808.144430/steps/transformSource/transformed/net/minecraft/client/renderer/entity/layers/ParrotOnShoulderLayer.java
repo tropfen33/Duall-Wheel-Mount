@@ -21,52 +21,52 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class ParrotOnShoulderLayer<T extends Player> extends RenderLayer<T, PlayerModel<T>> {
     private final ParrotModel model;
 
-    public ParrotOnShoulderLayer(RenderLayerParent<T, PlayerModel<T>> p_174511_, EntityModelSet p_174512_) {
-        super(p_174511_);
-        this.model = new ParrotModel(p_174512_.bakeLayer(ModelLayers.PARROT));
+    public ParrotOnShoulderLayer(RenderLayerParent<T, PlayerModel<T>> renderer, EntityModelSet modelSet) {
+        super(renderer);
+        this.model = new ParrotModel(modelSet.bakeLayer(ModelLayers.PARROT));
     }
 
     public void render(
-        PoseStack p_117307_,
-        MultiBufferSource p_117308_,
-        int p_117309_,
-        T p_117310_,
-        float p_117311_,
-        float p_117312_,
-        float p_117313_,
-        float p_117314_,
-        float p_117315_,
-        float p_117316_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        T livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTicks,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
-        this.render(p_117307_, p_117308_, p_117309_, p_117310_, p_117311_, p_117312_, p_117315_, p_117316_, true);
-        this.render(p_117307_, p_117308_, p_117309_, p_117310_, p_117311_, p_117312_, p_117315_, p_117316_, false);
+        this.render(poseStack, buffer, packedLight, livingEntity, limbSwing, limbSwingAmount, netHeadYaw, headPitch, true);
+        this.render(poseStack, buffer, packedLight, livingEntity, limbSwing, limbSwingAmount, netHeadYaw, headPitch, false);
     }
 
     private void render(
-        PoseStack p_117318_,
-        MultiBufferSource p_117319_,
-        int p_117320_,
-        T p_117321_,
-        float p_117322_,
-        float p_117323_,
-        float p_117324_,
-        float p_117325_,
-        boolean p_117326_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        T livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float netHeadYaw,
+        float headPitch,
+        boolean leftShoulder
     ) {
-        CompoundTag compoundtag = p_117326_ ? p_117321_.getShoulderEntityLeft() : p_117321_.getShoulderEntityRight();
+        CompoundTag compoundtag = leftShoulder ? livingEntity.getShoulderEntityLeft() : livingEntity.getShoulderEntityRight();
         EntityType.byString(compoundtag.getString("id"))
             .filter(p_117294_ -> p_117294_ == EntityType.PARROT)
             .ifPresent(
                 p_262538_ -> {
-                    p_117318_.pushPose();
-                    p_117318_.translate(p_117326_ ? 0.4F : -0.4F, p_117321_.isCrouching() ? -1.3F : -1.5F, 0.0F);
+                    poseStack.pushPose();
+                    poseStack.translate(leftShoulder ? 0.4F : -0.4F, livingEntity.isCrouching() ? -1.3F : -1.5F, 0.0F);
                     Parrot.Variant parrot$variant = Parrot.Variant.byId(compoundtag.getInt("Variant"));
-                    VertexConsumer vertexconsumer = p_117319_.getBuffer(this.model.renderType(ParrotRenderer.getVariantTexture(parrot$variant)));
+                    VertexConsumer vertexconsumer = buffer.getBuffer(this.model.renderType(ParrotRenderer.getVariantTexture(parrot$variant)));
                     this.model
                         .renderOnShoulder(
-                            p_117318_, vertexconsumer, p_117320_, OverlayTexture.NO_OVERLAY, p_117322_, p_117323_, p_117324_, p_117325_, p_117321_.tickCount
+                            poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY, limbSwing, limbSwingAmount, netHeadYaw, headPitch, livingEntity.tickCount
                         );
-                    p_117318_.popPose();
+                    poseStack.popPose();
                 }
             );
     }

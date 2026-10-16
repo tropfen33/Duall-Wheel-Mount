@@ -9,11 +9,14 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class SpectralArrowRenderer extends ArrowRenderer<SpectralArrow> {
     public static final ResourceLocation SPECTRAL_ARROW_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/projectiles/spectral_arrow.png");
 
-    public SpectralArrowRenderer(EntityRendererProvider.Context p_174399_) {
-        super(p_174399_);
+    public SpectralArrowRenderer(EntityRendererProvider.Context context) {
+        super(context);
     }
 
-    public ResourceLocation getTextureLocation(SpectralArrow p_116001_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(SpectralArrow entity) {
         return SPECTRAL_ARROW_LOCATION;
     }
 }

@@ -17,9 +17,9 @@ public record ServerboundCookieResponsePacket(ResourceLocation key, @Nullable by
         this(p_320325_.readResourceLocation(), p_320325_.readNullable(ClientboundStoreCookiePacket.PAYLOAD_STREAM_CODEC));
     }
 
-    private void write(FriendlyByteBuf p_319829_) {
-        p_319829_.writeResourceLocation(this.key);
-        p_319829_.writeNullable(this.payload, ClientboundStoreCookiePacket.PAYLOAD_STREAM_CODEC);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeResourceLocation(this.key);
+        buffer.writeNullable(this.payload, ClientboundStoreCookiePacket.PAYLOAD_STREAM_CODEC);
     }
 
     @Override
@@ -27,7 +27,10 @@ public record ServerboundCookieResponsePacket(ResourceLocation key, @Nullable by
         return CookiePacketTypes.SERVERBOUND_COOKIE_RESPONSE;
     }
 
-    public void handle(ServerCookiePacketListener p_320233_) {
-        p_320233_.handleCookieResponse(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ServerCookiePacketListener handler) {
+        handler.handleCookieResponse(this);
     }
 }

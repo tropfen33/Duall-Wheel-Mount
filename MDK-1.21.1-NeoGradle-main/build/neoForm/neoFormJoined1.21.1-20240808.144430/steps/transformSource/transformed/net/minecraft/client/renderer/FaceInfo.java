@@ -54,16 +54,16 @@ public enum FaceInfo {
     });
     private final FaceInfo.VertexInfo[] infos;
 
-    public static FaceInfo fromFacing(Direction p_108985_) {
-        return BY_FACING[p_108985_.get3DDataValue()];
+    public static FaceInfo fromFacing(Direction facing) {
+        return BY_FACING[facing.get3DDataValue()];
     }
 
-    private FaceInfo(FaceInfo.VertexInfo... p_108981_) {
-        this.infos = p_108981_;
+    private FaceInfo(FaceInfo.VertexInfo... infos) {
+        this.infos = infos;
     }
 
-    public FaceInfo.VertexInfo getVertexInfo(int p_108983_) {
-        return this.infos[p_108983_];
+    public FaceInfo.VertexInfo getVertexInfo(int index) {
+        return this.infos[index];
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -82,10 +82,10 @@ public enum FaceInfo {
         public final int yFace;
         public final int zFace;
 
-        VertexInfo(int p_109002_, int p_109003_, int p_109004_) {
-            this.xFace = p_109002_;
-            this.yFace = p_109003_;
-            this.zFace = p_109004_;
+        VertexInfo(int xFace, int yFace, int zFace) {
+            this.xFace = xFace;
+            this.yFace = yFace;
+            this.zFace = zFace;
         }
     }
 }

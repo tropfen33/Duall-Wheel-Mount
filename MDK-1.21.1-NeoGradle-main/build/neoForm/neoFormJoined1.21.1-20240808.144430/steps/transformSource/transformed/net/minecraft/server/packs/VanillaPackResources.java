@@ -30,20 +30,20 @@ public class VanillaPackResources implements PackResources {
     private final Map<PackType, List<Path>> pathsForType;
 
     VanillaPackResources(
-        PackLocationInfo p_326444_, BuiltInMetadata p_249743_, Set<String> p_250468_, List<Path> p_248798_, Map<PackType, List<Path>> p_251106_
+        PackLocationInfo location, BuiltInMetadata metadata, Set<String> namespaces, List<Path> rootPaths, Map<PackType, List<Path>> pathsForType
     ) {
-        this.location = p_326444_;
-        this.metadata = p_249743_;
-        this.namespaces = p_250468_;
-        this.rootPaths = p_248798_;
-        this.pathsForType = p_251106_;
+        this.location = location;
+        this.metadata = metadata;
+        this.namespaces = namespaces;
+        this.rootPaths = rootPaths;
+        this.pathsForType = pathsForType;
     }
 
     @Nullable
     @Override
-    public IoSupplier<InputStream> getRootResource(String... p_250530_) {
-        FileUtil.validatePath(p_250530_);
-        List<String> list = List.of(p_250530_);
+    public IoSupplier<InputStream> getRootResource(String... elements) {
+        FileUtil.validatePath(elements);
+        List<String> list = List.of(elements);
 
         for (Path path : this.rootPaths) {
             Path path1 = FileUtil.resolvePath(path, list);
@@ -55,54 +55,54 @@ public class VanillaPackResources implements PackResources {
         return null;
     }
 
-    public void listRawPaths(PackType p_252103_, ResourceLocation p_250441_, Consumer<Path> p_251968_) {
-        FileUtil.decomposePath(p_250441_.getPath()).ifSuccess(p_248238_ -> {
-            String s = p_250441_.getNamespace();
+    public void listRawPaths(PackType packType, ResourceLocation packLocation, Consumer<Path> output) {
+        FileUtil.decomposePath(packLocation.getPath()).ifSuccess(p_248238_ -> {
+            String s = packLocation.getNamespace();
 
-            for (Path path : this.pathsForType.get(p_252103_)) {
+            for (Path path : this.pathsForType.get(packType)) {
                 Path path1 = path.resolve(s);
-                p_251968_.accept(FileUtil.resolvePath(path1, (List<String>)p_248238_));
+                output.accept(FileUtil.resolvePath(path1, (List<String>)p_248238_));
             }
-        }).ifError(p_337562_ -> LOGGER.error("Invalid path {}: {}", p_250441_, p_337562_.message()));
+        }).ifError(p_337562_ -> LOGGER.error("Invalid path {}: {}", packLocation, p_337562_.message()));
     }
 
     @Override
-    public void listResources(PackType p_248974_, String p_248703_, String p_250848_, PackResources.ResourceOutput p_249668_) {
-        FileUtil.decomposePath(p_250848_).ifSuccess(p_248228_ -> {
-            List<Path> list = this.pathsForType.get(p_248974_);
+    public void listResources(PackType packType, String namespace, String p_path, PackResources.ResourceOutput resourceOutput) {
+        FileUtil.decomposePath(p_path).ifSuccess(p_248228_ -> {
+            List<Path> list = this.pathsForType.get(packType);
             int i = list.size();
             if (i == 1) {
-                getResources(p_249668_, p_248703_, list.get(0), (List<String>)p_248228_);
+                getResources(resourceOutput, namespace, list.get(0), (List<String>)p_248228_);
             } else if (i > 1) {
                 Map<ResourceLocation, IoSupplier<InputStream>> map = new HashMap<>();
 
                 for (int j = 0; j < i - 1; j++) {
-                    getResources(map::putIfAbsent, p_248703_, list.get(j), (List<String>)p_248228_);
+                    getResources(map::putIfAbsent, namespace, list.get(j), (List<String>)p_248228_);
                 }
 
                 Path path = list.get(i - 1);
                 if (map.isEmpty()) {
-                    getResources(p_249668_, p_248703_, path, (List<String>)p_248228_);
+                    getResources(resourceOutput, namespace, path, (List<String>)p_248228_);
                 } else {
-                    getResources(map::putIfAbsent, p_248703_, path, (List<String>)p_248228_);
-                    map.forEach(p_249668_);
+                    getResources(map::putIfAbsent, namespace, path, (List<String>)p_248228_);
+                    map.forEach(resourceOutput);
                 }
             }
-        }).ifError(p_337564_ -> LOGGER.error("Invalid path {}: {}", p_250848_, p_337564_.message()));
+        }).ifError(p_337564_ -> LOGGER.error("Invalid path {}: {}", p_path, p_337564_.message()));
     }
 
-    private static void getResources(PackResources.ResourceOutput p_249662_, String p_251249_, Path p_251290_, List<String> p_250451_) {
-        Path path = p_251290_.resolve(p_251249_);
-        PathPackResources.listPath(p_251249_, path, p_250451_, p_249662_);
+    private static void getResources(PackResources.ResourceOutput resourceOutput, String namespace, Path root, List<String> paths) {
+        Path path = root.resolve(namespace);
+        PathPackResources.listPath(namespace, path, paths, resourceOutput);
     }
 
     @Nullable
     @Override
-    public IoSupplier<InputStream> getResource(PackType p_250512_, ResourceLocation p_251554_) {
-        return FileUtil.decomposePath(p_251554_.getPath()).mapOrElse(p_248224_ -> {
-            String s = p_251554_.getNamespace();
+    public IoSupplier<InputStream> getResource(PackType packType, ResourceLocation location) {
+        return FileUtil.decomposePath(location.getPath()).mapOrElse(p_248224_ -> {
+            String s = location.getNamespace();
 
-            for (Path path : this.pathsForType.get(p_250512_)) {
+            for (Path path : this.pathsForType.get(packType)) {
                 Path path1 = FileUtil.resolvePath(path.resolve(s), (List<String>)p_248224_);
                 if (Files.exists(path1) && PathPackResources.validatePath(path1)) {
                     return IoSupplier.create(path1);
@@ -111,33 +111,33 @@ public class VanillaPackResources implements PackResources {
 
             return null;
         }, p_337566_ -> {
-            LOGGER.error("Invalid path {}: {}", p_251554_, p_337566_.message());
+            LOGGER.error("Invalid path {}: {}", location, p_337566_.message());
             return null;
         });
     }
 
     @Override
-    public Set<String> getNamespaces(PackType p_10322_) {
+    public Set<String> getNamespaces(PackType type) {
         return this.namespaces;
     }
 
     @Nullable
     @Override
-    public <T> T getMetadataSection(MetadataSectionSerializer<T> p_10333_) {
+    public <T> T getMetadataSection(MetadataSectionSerializer<T> deserializer) {
         IoSupplier<InputStream> iosupplier = this.getRootResource("pack.mcmeta");
         if (iosupplier != null) {
             try (InputStream inputstream = iosupplier.get()) {
-                T t = AbstractPackResources.getMetadataFromStream(p_10333_, inputstream);
+                T t = AbstractPackResources.getMetadataFromStream(deserializer, inputstream);
                 if (t != null) {
                     return t;
                 }
 
-                return this.metadata.get(p_10333_);
+                return this.metadata.get(deserializer);
             } catch (IOException ioexception) {
             }
         }
 
-        return this.metadata.get(p_10333_);
+        return this.metadata.get(deserializer);
     }
 
     @Override

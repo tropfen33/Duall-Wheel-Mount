@@ -14,11 +14,11 @@ public abstract class BossEvent {
     protected boolean playBossMusic;
     protected boolean createWorldFog;
 
-    public BossEvent(UUID p_18849_, Component p_18850_, BossEvent.BossBarColor p_18851_, BossEvent.BossBarOverlay p_18852_) {
-        this.id = p_18849_;
-        this.name = p_18850_;
-        this.color = p_18851_;
-        this.overlay = p_18852_;
+    public BossEvent(UUID id, Component name, BossEvent.BossBarColor color, BossEvent.BossBarOverlay overlay) {
+        this.id = id;
+        this.name = name;
+        this.color = color;
+        this.overlay = overlay;
         this.progress = 1.0F;
     }
 
@@ -30,40 +30,40 @@ public abstract class BossEvent {
         return this.name;
     }
 
-    public void setName(Component p_18856_) {
-        this.name = p_18856_;
+    public void setName(Component name) {
+        this.name = name;
     }
 
     public float getProgress() {
         return this.progress;
     }
 
-    public void setProgress(float p_146639_) {
-        this.progress = p_146639_;
+    public void setProgress(float progress) {
+        this.progress = progress;
     }
 
     public BossEvent.BossBarColor getColor() {
         return this.color;
     }
 
-    public void setColor(BossEvent.BossBarColor p_18854_) {
-        this.color = p_18854_;
+    public void setColor(BossEvent.BossBarColor color) {
+        this.color = color;
     }
 
     public BossEvent.BossBarOverlay getOverlay() {
         return this.overlay;
     }
 
-    public void setOverlay(BossEvent.BossBarOverlay p_18855_) {
-        this.overlay = p_18855_;
+    public void setOverlay(BossEvent.BossBarOverlay overlay) {
+        this.overlay = overlay;
     }
 
     public boolean shouldDarkenScreen() {
         return this.darkenScreen;
     }
 
-    public BossEvent setDarkenScreen(boolean p_18857_) {
-        this.darkenScreen = p_18857_;
+    public BossEvent setDarkenScreen(boolean darkenSky) {
+        this.darkenScreen = darkenSky;
         return this;
     }
 
@@ -71,13 +71,13 @@ public abstract class BossEvent {
         return this.playBossMusic;
     }
 
-    public BossEvent setPlayBossMusic(boolean p_18858_) {
-        this.playBossMusic = p_18858_;
+    public BossEvent setPlayBossMusic(boolean playEndBossMusic) {
+        this.playBossMusic = playEndBossMusic;
         return this;
     }
 
-    public BossEvent setCreateWorldFog(boolean p_18859_) {
-        this.createWorldFog = p_18859_;
+    public BossEvent setCreateWorldFog(boolean createFog) {
+        this.createWorldFog = createFog;
         return this;
     }
 
@@ -97,9 +97,9 @@ public abstract class BossEvent {
         private final String name;
         private final ChatFormatting formatting;
 
-        private BossBarColor(String p_18881_, ChatFormatting p_18882_) {
-            this.name = p_18881_;
-            this.formatting = p_18882_;
+        private BossBarColor(String name, ChatFormatting formatting) {
+            this.name = name;
+            this.formatting = formatting;
         }
 
         public ChatFormatting getFormatting() {
@@ -110,9 +110,9 @@ public abstract class BossEvent {
             return this.name;
         }
 
-        public static BossEvent.BossBarColor byName(String p_18885_) {
+        public static BossEvent.BossBarColor byName(String name) {
             for (BossEvent.BossBarColor bossevent$bossbarcolor : values()) {
-                if (bossevent$bossbarcolor.name.equals(p_18885_)) {
+                if (bossevent$bossbarcolor.name.equals(name)) {
                     return bossevent$bossbarcolor;
                 }
             }
@@ -130,17 +130,17 @@ public abstract class BossEvent {
 
         private final String name;
 
-        private BossBarOverlay(String p_18901_) {
-            this.name = p_18901_;
+        private BossBarOverlay(String name) {
+            this.name = name;
         }
 
         public String getName() {
             return this.name;
         }
 
-        public static BossEvent.BossBarOverlay byName(String p_18904_) {
+        public static BossEvent.BossBarOverlay byName(String name) {
             for (BossEvent.BossBarOverlay bossevent$bossbaroverlay : values()) {
-                if (bossevent$bossbaroverlay.name.equals(p_18904_)) {
+                if (bossevent$bossbaroverlay.name.equals(name)) {
                     return bossevent$bossbaroverlay;
                 }
             }

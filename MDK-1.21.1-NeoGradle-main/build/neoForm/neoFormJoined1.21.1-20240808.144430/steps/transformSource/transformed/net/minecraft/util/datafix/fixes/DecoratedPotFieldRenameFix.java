@@ -8,8 +8,8 @@ import com.mojang.datafixers.types.Type;
 public class DecoratedPotFieldRenameFix extends DataFix {
     private static final String DECORATED_POT_ID = "minecraft:decorated_pot";
 
-    public DecoratedPotFieldRenameFix(Schema p_281527_) {
-        super(p_281527_, true);
+    public DecoratedPotFieldRenameFix(Schema outputSchema) {
+        super(outputSchema, true);
     }
 
     @Override

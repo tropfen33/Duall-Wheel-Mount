@@ -47,28 +47,28 @@ public class AmethystClusterBlock extends AmethystBlock implements SimpleWaterlo
         return CODEC;
     }
 
-    public AmethystClusterBlock(float p_304949_, float p_304728_, BlockBehaviour.Properties p_152017_) {
-        super(p_152017_);
+    public AmethystClusterBlock(float height, float aabbOffset, BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.defaultBlockState().setValue(WATERLOGGED, Boolean.valueOf(false)).setValue(FACING, Direction.UP));
-        this.upAabb = Block.box((double)p_304728_, 0.0, (double)p_304728_, (double)(16.0F - p_304728_), (double)p_304949_, (double)(16.0F - p_304728_));
+        this.upAabb = Block.box((double)aabbOffset, 0.0, (double)aabbOffset, (double)(16.0F - aabbOffset), (double)height, (double)(16.0F - aabbOffset));
         this.downAabb = Block.box(
-            (double)p_304728_, (double)(16.0F - p_304949_), (double)p_304728_, (double)(16.0F - p_304728_), 16.0, (double)(16.0F - p_304728_)
+            (double)aabbOffset, (double)(16.0F - height), (double)aabbOffset, (double)(16.0F - aabbOffset), 16.0, (double)(16.0F - aabbOffset)
         );
         this.northAabb = Block.box(
-            (double)p_304728_, (double)p_304728_, (double)(16.0F - p_304949_), (double)(16.0F - p_304728_), (double)(16.0F - p_304728_), 16.0
+            (double)aabbOffset, (double)aabbOffset, (double)(16.0F - height), (double)(16.0F - aabbOffset), (double)(16.0F - aabbOffset), 16.0
         );
-        this.southAabb = Block.box((double)p_304728_, (double)p_304728_, 0.0, (double)(16.0F - p_304728_), (double)(16.0F - p_304728_), (double)p_304949_);
-        this.eastAabb = Block.box(0.0, (double)p_304728_, (double)p_304728_, (double)p_304949_, (double)(16.0F - p_304728_), (double)(16.0F - p_304728_));
+        this.southAabb = Block.box((double)aabbOffset, (double)aabbOffset, 0.0, (double)(16.0F - aabbOffset), (double)(16.0F - aabbOffset), (double)height);
+        this.eastAabb = Block.box(0.0, (double)aabbOffset, (double)aabbOffset, (double)height, (double)(16.0F - aabbOffset), (double)(16.0F - aabbOffset));
         this.westAabb = Block.box(
-            (double)(16.0F - p_304949_), (double)p_304728_, (double)p_304728_, 16.0, (double)(16.0F - p_304728_), (double)(16.0F - p_304728_)
+            (double)(16.0F - height), (double)aabbOffset, (double)aabbOffset, 16.0, (double)(16.0F - aabbOffset), (double)(16.0F - aabbOffset)
         );
-        this.height = p_304949_;
-        this.aabbOffset = p_304728_;
+        this.height = height;
+        this.aabbOffset = aabbOffset;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_152021_, BlockGetter p_152022_, BlockPos p_152023_, CollisionContext p_152024_) {
-        Direction direction = p_152021_.getValue(FACING);
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        Direction direction = state.getValue(FACING);
         switch (direction) {
             case NORTH:
                 return this.northAabb;
@@ -87,52 +87,63 @@ public class AmethystClusterBlock extends AmethystBlock implements SimpleWaterlo
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_152026_, LevelReader p_152027_, BlockPos p_152028_) {
-        Direction direction = p_152026_.getValue(FACING);
-        BlockPos blockpos = p_152028_.relative(direction.getOpposite());
-        return p_152027_.getBlockState(blockpos).isFaceSturdy(p_152027_, blockpos, direction);
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        Direction direction = state.getValue(FACING);
+        BlockPos blockpos = pos.relative(direction.getOpposite());
+        return level.getBlockState(blockpos).isFaceSturdy(level, blockpos, direction);
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
     protected BlockState updateShape(
-        BlockState p_152036_, Direction p_152037_, BlockState p_152038_, LevelAccessor p_152039_, BlockPos p_152040_, BlockPos p_152041_
+        BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos
     ) {
-        if (p_152036_.getValue(WATERLOGGED)) {
-            p_152039_.scheduleTick(p_152040_, Fluids.WATER, Fluids.WATER.getTickDelay(p_152039_));
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        return p_152037_ == p_152036_.getValue(FACING).getOpposite() && !p_152036_.canSurvive(p_152039_, p_152040_)
+        return direction == state.getValue(FACING).getOpposite() && !state.canSurvive(level, pos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_152036_, p_152037_, p_152038_, p_152039_, p_152040_, p_152041_);
+            : super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_152019_) {
-        LevelAccessor levelaccessor = p_152019_.getLevel();
-        BlockPos blockpos = p_152019_.getClickedPos();
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        LevelAccessor levelaccessor = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
         return this.defaultBlockState()
             .setValue(WATERLOGGED, Boolean.valueOf(levelaccessor.getFluidState(blockpos).getType() == Fluids.WATER))
-            .setValue(FACING, p_152019_.getClickedFace());
+            .setValue(FACING, context.getClickedFace());
+    }
+
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState rotate(BlockState p_152033_, Rotation p_152034_) {
-        return p_152033_.setValue(FACING, p_152034_.rotate(p_152033_.getValue(FACING)));
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
     @Override
-    protected BlockState mirror(BlockState p_152030_, Mirror p_152031_) {
-        return p_152030_.rotate(p_152031_.getRotation(p_152030_.getValue(FACING)));
-    }
-
-    @Override
-    protected FluidState getFluidState(BlockState p_152045_) {
-        return p_152045_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_152045_);
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_152043_) {
-        p_152043_.add(WATERLOGGED, FACING);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(WATERLOGGED, FACING);
     }
 }

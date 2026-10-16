@@ -20,21 +20,28 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class ContainerObjectSelectionList<E extends ContainerObjectSelectionList.Entry<E>> extends AbstractSelectionList<E> {
-    public ContainerObjectSelectionList(Minecraft p_94010_, int p_94011_, int p_94012_, int p_94013_, int p_94014_) {
-        super(p_94010_, p_94011_, p_94012_, p_94013_, p_94014_);
+    public ContainerObjectSelectionList(Minecraft minecraft, int width, int height, int y, int itemHeight) {
+        super(minecraft, width, height, y, itemHeight);
     }
 
+    /**
+     * Retrieves the next focus path based on the given focus navigation event.
+     * <p>
+     * @return the next focus path as a ComponentPath, or {@code null} if there is no next focus path.
+     *
+     * @param event the focus navigation event.
+     */
     @Nullable
     @Override
-    public ComponentPath nextFocusPath(FocusNavigationEvent p_265385_) {
+    public ComponentPath nextFocusPath(FocusNavigationEvent event) {
         if (this.getItemCount() == 0) {
             return null;
-        } else if (!(p_265385_ instanceof FocusNavigationEvent.ArrowNavigation focusnavigationevent$arrownavigation)) {
-            return super.nextFocusPath(p_265385_);
+        } else if (!(event instanceof FocusNavigationEvent.ArrowNavigation focusnavigationevent$arrownavigation)) {
+            return super.nextFocusPath(event);
         } else {
             E e = this.getFocused();
             if (focusnavigationevent$arrownavigation.direction().getAxis() == ScreenAxis.HORIZONTAL && e != null) {
-                return ComponentPath.path(this, e.nextFocusPath(p_265385_));
+                return ComponentPath.path(this, e.nextFocusPath(event));
             } else {
                 int i = -1;
                 ScreenDirection screendirection = focusnavigationevent$arrownavigation.direction();
@@ -74,11 +81,16 @@ public abstract class ContainerObjectSelectionList<E extends ContainerObjectSele
         }
     }
 
+    /**
+     * Sets the focus state of the GUI element.
+     *
+     * @param focused the focused GUI element.
+     */
     @Override
-    public void setFocused(@Nullable GuiEventListener p_265559_) {
-        if (this.getFocused() != p_265559_) {
-            super.setFocused(p_265559_);
-            if (p_265559_ == null) {
+    public void setFocused(@Nullable GuiEventListener focused) {
+        if (this.getFocused() != focused) {
+            super.setFocused(focused);
+            if (focused == null) {
                 this.setSelected(null);
             }
         }
@@ -90,25 +102,25 @@ public abstract class ContainerObjectSelectionList<E extends ContainerObjectSele
     }
 
     @Override
-    protected boolean isSelectedItem(int p_94019_) {
+    protected boolean isSelectedItem(int index) {
         return false;
     }
 
     @Override
-    public void updateWidgetNarration(NarrationElementOutput p_313707_) {
+    public void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
         E e = this.getHovered();
         if (e != null) {
-            e.updateNarration(p_313707_.nest());
-            this.narrateListElementPosition(p_313707_, e);
+            e.updateNarration(narrationElementOutput.nest());
+            this.narrateListElementPosition(narrationElementOutput, e);
         } else {
             E e1 = this.getFocused();
             if (e1 != null) {
-                e1.updateNarration(p_313707_.nest());
-                this.narrateListElementPosition(p_313707_, e1);
+                e1.updateNarration(narrationElementOutput.nest());
+                this.narrateListElementPosition(narrationElementOutput, e1);
             }
         }
 
-        p_313707_.add(NarratedElementType.USAGE, Component.translatable("narration.component_list.usage"));
+        narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.component_list.usage"));
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -124,27 +136,46 @@ public abstract class ContainerObjectSelectionList<E extends ContainerObjectSele
             return this.dragging;
         }
 
+        /**
+         * Sets if the GUI element is dragging or not.
+         *
+         * @param dragging the dragging state of the GUI element.
+         */
         @Override
-        public void setDragging(boolean p_94028_) {
-            this.dragging = p_94028_;
+        public void setDragging(boolean dragging) {
+            this.dragging = dragging;
         }
 
+        /**
+         * Called when a mouse button is clicked within the GUI element.
+         * <p>
+         * @return {@code true} if the event is consumed, {@code false} otherwise.
+         *
+         * @param mouseX the X coordinate of the mouse.
+         * @param mouseY the Y coordinate of the mouse.
+         * @param button the button that was clicked.
+         */
         @Override
-        public boolean mouseClicked(double p_265453_, double p_265297_, int p_265697_) {
-            return ContainerEventHandler.super.mouseClicked(p_265453_, p_265297_, p_265697_);
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            return ContainerEventHandler.super.mouseClicked(mouseX, mouseY, button);
         }
 
+        /**
+         * Sets the focus state of the GUI element.
+         *
+         * @param listener the focused GUI element.
+         */
         @Override
-        public void setFocused(@Nullable GuiEventListener p_94024_) {
+        public void setFocused(@Nullable GuiEventListener listener) {
             if (this.focused != null) {
                 this.focused.setFocused(false);
             }
 
-            if (p_94024_ != null) {
-                p_94024_.setFocused(true);
+            if (listener != null) {
+                listener.setFocused(true);
             }
 
-            this.focused = p_94024_;
+            this.focused = listener;
         }
 
         @Nullable
@@ -154,19 +185,26 @@ public abstract class ContainerObjectSelectionList<E extends ContainerObjectSele
         }
 
         @Nullable
-        public ComponentPath focusPathAtIndex(FocusNavigationEvent p_265435_, int p_265432_) {
+        public ComponentPath focusPathAtIndex(FocusNavigationEvent event, int index) {
             if (this.children().isEmpty()) {
                 return null;
             } else {
-                ComponentPath componentpath = this.children().get(Math.min(p_265432_, this.children().size() - 1)).nextFocusPath(p_265435_);
+                ComponentPath componentpath = this.children().get(Math.min(index, this.children().size() - 1)).nextFocusPath(event);
                 return ComponentPath.path(this, componentpath);
             }
         }
 
+        /**
+         * Retrieves the next focus path based on the given focus navigation event.
+         * <p>
+         * @return the next focus path as a ComponentPath, or {@code null} if there is no next focus path.
+         *
+         * @param event the focus navigation event.
+         */
         @Nullable
         @Override
-        public ComponentPath nextFocusPath(FocusNavigationEvent p_265672_) {
-            if (p_265672_ instanceof FocusNavigationEvent.ArrowNavigation focusnavigationevent$arrownavigation) {
+        public ComponentPath nextFocusPath(FocusNavigationEvent event) {
+            if (event instanceof FocusNavigationEvent.ArrowNavigation focusnavigationevent$arrownavigation) {
                 int i = switch (focusnavigationevent$arrownavigation.direction()) {
                     case LEFT -> -1;
                     case RIGHT -> 1;
@@ -180,19 +218,19 @@ public abstract class ContainerObjectSelectionList<E extends ContainerObjectSele
 
                 for (int k = j; k >= 0 && k < this.children().size(); k += i) {
                     GuiEventListener guieventlistener = this.children().get(k);
-                    ComponentPath componentpath = guieventlistener.nextFocusPath(p_265672_);
+                    ComponentPath componentpath = guieventlistener.nextFocusPath(event);
                     if (componentpath != null) {
                         return ComponentPath.path(this, componentpath);
                     }
                 }
             }
 
-            return ContainerEventHandler.super.nextFocusPath(p_265672_);
+            return ContainerEventHandler.super.nextFocusPath(event);
         }
 
         public abstract List<? extends NarratableEntry> narratables();
 
-        void updateNarration(NarrationElementOutput p_168855_) {
+        void updateNarration(NarrationElementOutput narrationElementOutput) {
             List<? extends NarratableEntry> list = this.narratables();
             Screen.NarratableSearchResult screen$narratablesearchresult = Screen.findNarratableWidget(list, this.lastNarratable);
             if (screen$narratablesearchresult != null) {
@@ -201,16 +239,16 @@ public abstract class ContainerObjectSelectionList<E extends ContainerObjectSele
                 }
 
                 if (list.size() > 1) {
-                    p_168855_.add(
+                    narrationElementOutput.add(
                         NarratedElementType.POSITION,
                         Component.translatable("narrator.position.object_list", screen$narratablesearchresult.index + 1, list.size())
                     );
                     if (screen$narratablesearchresult.priority == NarratableEntry.NarrationPriority.FOCUSED) {
-                        p_168855_.add(NarratedElementType.USAGE, Component.translatable("narration.component_list.usage"));
+                        narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.component_list.usage"));
                     }
                 }
 
-                screen$narratablesearchresult.entry.updateNarration(p_168855_.nest());
+                screen$narratablesearchresult.entry.updateNarration(narrationElementOutput.nest());
             }
         }
     }

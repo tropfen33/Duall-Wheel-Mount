@@ -18,38 +18,41 @@ public class IdMapper<T> implements IdMap<T> {
         this(512);
     }
 
-    public IdMapper(int p_122658_) {
-        this.idToT = Lists.newArrayListWithExpectedSize(p_122658_);
-        this.tToId = new Reference2IntOpenHashMap<>(p_122658_);
+    public IdMapper(int expectedSize) {
+        this.idToT = Lists.newArrayListWithExpectedSize(expectedSize);
+        this.tToId = new Reference2IntOpenHashMap<>(expectedSize);
         this.tToId.defaultReturnValue(-1);
     }
 
-    public void addMapping(T p_122665_, int p_122666_) {
-        this.tToId.put(p_122665_, p_122666_);
+    public void addMapping(T key, int value) {
+        this.tToId.put(key, value);
 
-        while (this.idToT.size() <= p_122666_) {
+        while (this.idToT.size() <= value) {
             this.idToT.add(null);
         }
 
-        this.idToT.set(p_122666_, p_122665_);
-        if (this.nextId <= p_122666_) {
-            this.nextId = p_122666_ + 1;
+        this.idToT.set(value, key);
+        if (this.nextId <= value) {
+            this.nextId = value + 1;
         }
     }
 
-    public void add(T p_122668_) {
-        this.addMapping(p_122668_, this.nextId);
+    public void add(T key) {
+        this.addMapping(key, this.nextId);
     }
 
+    /**
+     * @return the integer ID used to identify the given object
+     */
     @Override
-    public int getId(T p_122663_) {
-        return this.tToId.getInt(p_122663_);
+    public int getId(T value) {
+        return this.tToId.getInt(value);
     }
 
     @Nullable
     @Override
-    public final T byId(int p_122661_) {
-        return p_122661_ >= 0 && p_122661_ < this.idToT.size() ? this.idToT.get(p_122661_) : null;
+    public final T byId(int id) {
+        return id >= 0 && id < this.idToT.size() ? this.idToT.get(id) : null;
     }
 
     @Override
@@ -57,8 +60,8 @@ public class IdMapper<T> implements IdMap<T> {
         return Iterators.filter(this.idToT.iterator(), Objects::nonNull);
     }
 
-    public boolean contains(int p_175381_) {
-        return this.byId(p_175381_) != null;
+    public boolean contains(int id) {
+        return this.byId(id) != null;
     }
 
     @Override

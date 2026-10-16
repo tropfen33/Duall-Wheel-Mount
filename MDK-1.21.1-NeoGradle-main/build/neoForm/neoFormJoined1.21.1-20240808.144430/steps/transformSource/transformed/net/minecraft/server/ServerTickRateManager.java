@@ -15,8 +15,8 @@ public class ServerTickRateManager extends TickRateManager {
     private boolean previousIsFrozen = false;
     private final MinecraftServer server;
 
-    public ServerTickRateManager(MinecraftServer p_309004_) {
-        this.server = p_309004_;
+    public ServerTickRateManager(MinecraftServer server) {
+        this.server = server;
     }
 
     public boolean isSprinting() {
@@ -24,8 +24,8 @@ public class ServerTickRateManager extends TickRateManager {
     }
 
     @Override
-    public void setFrozen(boolean p_309002_) {
-        super.setFrozen(p_309002_);
+    public void setFrozen(boolean frozen) {
+        super.setFrozen(frozen);
         this.updateStateToClients();
     }
 
@@ -37,11 +37,11 @@ public class ServerTickRateManager extends TickRateManager {
         this.server.getPlayerList().broadcastAll(ClientboundTickingStepPacket.from(this));
     }
 
-    public boolean stepGameIfPaused(int p_308975_) {
+    public boolean stepGameIfPaused(int ticks) {
         if (!this.isFrozen()) {
             return false;
         } else {
-            this.frozenTicksToRun = p_308975_;
+            this.frozenTicksToRun = ticks;
             this.updateStepTicks();
             return true;
         }
@@ -66,11 +66,11 @@ public class ServerTickRateManager extends TickRateManager {
         }
     }
 
-    public boolean requestGameToSprint(int p_308951_) {
+    public boolean requestGameToSprint(int sprintTime) {
         boolean flag = this.remainingSprintTicks > 0L;
         this.sprintTimeSpend = 0L;
-        this.scheduledCurrentSprintTicks = (long)p_308951_;
-        this.remainingSprintTicks = (long)p_308951_;
+        this.scheduledCurrentSprintTicks = (long)sprintTime;
+        this.remainingSprintTicks = (long)sprintTime;
         this.previousIsFrozen = this.isFrozen();
         this.setFrozen(false);
         return flag;
@@ -107,14 +107,14 @@ public class ServerTickRateManager extends TickRateManager {
     }
 
     @Override
-    public void setTickRate(float p_309003_) {
-        super.setTickRate(p_309003_);
+    public void setTickRate(float tickRate) {
+        super.setTickRate(tickRate);
         this.server.onTickRateChanged();
         this.updateStateToClients();
     }
 
-    public void updateJoiningPlayer(ServerPlayer p_309205_) {
-        p_309205_.connection.send(ClientboundTickingStatePacket.from(this));
-        p_309205_.connection.send(ClientboundTickingStepPacket.from(this));
+    public void updateJoiningPlayer(ServerPlayer player) {
+        player.connection.send(ClientboundTickingStatePacket.from(this));
+        player.connection.send(ClientboundTickingStepPacket.from(this));
     }
 }

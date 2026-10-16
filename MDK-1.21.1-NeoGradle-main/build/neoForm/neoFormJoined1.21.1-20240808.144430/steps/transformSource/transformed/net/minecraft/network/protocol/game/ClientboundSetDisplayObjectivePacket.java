@@ -16,23 +16,26 @@ public class ClientboundSetDisplayObjectivePacket implements Packet<ClientGamePa
     private final DisplaySlot slot;
     private final String objectiveName;
 
-    public ClientboundSetDisplayObjectivePacket(DisplaySlot p_294785_, @Nullable Objective p_133132_) {
-        this.slot = p_294785_;
-        if (p_133132_ == null) {
+    public ClientboundSetDisplayObjectivePacket(DisplaySlot slot, @Nullable Objective objective) {
+        this.slot = slot;
+        if (objective == null) {
             this.objectiveName = "";
         } else {
-            this.objectiveName = p_133132_.getName();
+            this.objectiveName = objective.getName();
         }
     }
 
-    private ClientboundSetDisplayObjectivePacket(FriendlyByteBuf p_179288_) {
-        this.slot = p_179288_.readById(DisplaySlot.BY_ID);
-        this.objectiveName = p_179288_.readUtf();
+    private ClientboundSetDisplayObjectivePacket(FriendlyByteBuf buffer) {
+        this.slot = buffer.readById(DisplaySlot.BY_ID);
+        this.objectiveName = buffer.readUtf();
     }
 
-    private void write(FriendlyByteBuf p_133141_) {
-        p_133141_.writeById(DisplaySlot::id, this.slot);
-        p_133141_.writeUtf(this.objectiveName);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeById(DisplaySlot::id, this.slot);
+        buffer.writeUtf(this.objectiveName);
     }
 
     @Override
@@ -40,8 +43,11 @@ public class ClientboundSetDisplayObjectivePacket implements Packet<ClientGamePa
         return GamePacketTypes.CLIENTBOUND_SET_DISPLAY_OBJECTIVE;
     }
 
-    public void handle(ClientGamePacketListener p_133138_) {
-        p_133138_.handleSetDisplayObjective(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleSetDisplayObjective(this);
     }
 
     public DisplaySlot getSlot() {

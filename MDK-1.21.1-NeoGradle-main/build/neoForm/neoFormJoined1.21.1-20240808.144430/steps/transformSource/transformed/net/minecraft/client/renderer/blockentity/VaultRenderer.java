@@ -19,24 +19,24 @@ public class VaultRenderer implements BlockEntityRenderer<VaultBlockEntity> {
     private final ItemRenderer itemRenderer;
     private final RandomSource random = RandomSource.create();
 
-    public VaultRenderer(BlockEntityRendererProvider.Context p_324525_) {
-        this.itemRenderer = p_324525_.getItemRenderer();
+    public VaultRenderer(BlockEntityRendererProvider.Context context) {
+        this.itemRenderer = context.getItemRenderer();
     }
 
-    public void render(VaultBlockEntity p_323921_, float p_324166_, PoseStack p_324316_, MultiBufferSource p_323716_, int p_324311_, int p_324178_) {
-        if (VaultBlockEntity.Client.shouldDisplayActiveEffects(p_323921_.getSharedData())) {
-            Level level = p_323921_.getLevel();
+    public void render(VaultBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        if (VaultBlockEntity.Client.shouldDisplayActiveEffects(blockEntity.getSharedData())) {
+            Level level = blockEntity.getLevel();
             if (level != null) {
-                ItemStack itemstack = p_323921_.getSharedData().getDisplayItem();
+                ItemStack itemstack = blockEntity.getSharedData().getDisplayItem();
                 if (!itemstack.isEmpty()) {
                     this.random.setSeed((long)ItemEntityRenderer.getSeedForItemStack(itemstack));
-                    VaultClientData vaultclientdata = p_323921_.getClientData();
+                    VaultClientData vaultclientdata = blockEntity.getClientData();
                     renderItemInside(
-                        p_324166_,
+                        partialTick,
                         level,
-                        p_324316_,
-                        p_323716_,
-                        p_324311_,
+                        poseStack,
+                        bufferSource,
+                        packedLight,
                         itemstack,
                         this.itemRenderer,
                         vaultclientdata.previousSpin(),
@@ -49,21 +49,21 @@ public class VaultRenderer implements BlockEntityRenderer<VaultBlockEntity> {
     }
 
     public static void renderItemInside(
-        float p_324463_,
-        Level p_323997_,
-        PoseStack p_323756_,
-        MultiBufferSource p_323535_,
-        int p_324189_,
-        ItemStack p_324326_,
-        ItemRenderer p_324590_,
-        float p_324476_,
-        float p_324237_,
-        RandomSource p_323851_
+        float partialTick,
+        Level level,
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        ItemStack item,
+        ItemRenderer itemRenderer,
+        float previousSpin,
+        float currentSpin,
+        RandomSource random
     ) {
-        p_323756_.pushPose();
-        p_323756_.translate(0.5F, 0.4F, 0.5F);
-        p_323756_.mulPose(Axis.YP.rotationDegrees(Mth.rotLerp(p_324463_, p_324476_, p_324237_)));
-        ItemEntityRenderer.renderMultipleFromCount(p_324590_, p_323756_, p_323535_, p_324189_, p_324326_, p_323851_, p_323997_);
-        p_323756_.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.5F, 0.4F, 0.5F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.rotLerp(partialTick, previousSpin, currentSpin)));
+        ItemEntityRenderer.renderMultipleFromCount(itemRenderer, poseStack, buffer, packedLight, item, random, level);
+        poseStack.popPose();
     }
 }

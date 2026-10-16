@@ -8,8 +8,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class RealmsServiceException extends Exception {
     public final RealmsError realmsError;
 
-    public RealmsServiceException(RealmsError p_87785_) {
-        this.realmsError = p_87785_;
+    public RealmsServiceException(RealmsError realmsError) {
+        this.realmsError = realmsError;
     }
 
     @Override

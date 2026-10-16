@@ -84,20 +84,20 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
     private net.minecraft.client.server.LanServerPinger dediLanPinger;
 
     public DedicatedServer(
-        Thread p_214789_,
-        LevelStorageSource.LevelStorageAccess p_214790_,
-        PackRepository p_214791_,
-        WorldStem p_214792_,
-        DedicatedServerSettings p_214793_,
-        DataFixer p_214794_,
-        Services p_214795_,
-        ChunkProgressListenerFactory p_214796_
+        Thread serverThread,
+        LevelStorageSource.LevelStorageAccess storageSource,
+        PackRepository packRepository,
+        WorldStem worldStem,
+        DedicatedServerSettings settings,
+        DataFixer fixerUpper,
+        Services services,
+        ChunkProgressListenerFactory progressListenerFactory
     ) {
-        super(p_214789_, p_214790_, p_214791_, p_214792_, Proxy.NO_PROXY, p_214794_, p_214795_, p_214796_);
-        this.settings = p_214793_;
+        super(serverThread, storageSource, packRepository, worldStem, Proxy.NO_PROXY, fixerUpper, services, progressListenerFactory);
+        this.settings = settings;
         this.rconConsoleSource = new RconConsoleSource(this);
-        this.textFilterClient = TextFilterClient.createFromConfig(p_214793_.getProperties().textFilteringConfig);
-        this.serverLinks = createServerLinks(p_214793_);
+        this.textFilterClient = TextFilterClient.createFromConfig(settings.getProperties().textFilteringConfig);
+        this.serverLinks = createServerLinks(settings);
     }
 
     @Override
@@ -263,17 +263,17 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
     }
 
     @Override
-    public SystemReport fillServerSystemReport(SystemReport p_142870_) {
-        p_142870_.setDetail("Is Modded", () -> this.getModdedStatus().fullDescription());
-        p_142870_.setDetail("Type", () -> "Dedicated Server (map_server.txt)");
-        return p_142870_;
+    public SystemReport fillServerSystemReport(SystemReport report) {
+        report.setDetail("Is Modded", () -> this.getModdedStatus().fullDescription());
+        report.setDetail("Type", () -> "Dedicated Server (map_server.txt)");
+        return report;
     }
 
     @Override
-    public void dumpServerProperties(Path p_142872_) throws IOException {
+    public void dumpServerProperties(Path path) throws IOException {
         DedicatedServerProperties dedicatedserverproperties = this.getProperties();
 
-        try (Writer writer = Files.newBufferedWriter(p_142872_)) {
+        try (Writer writer = Files.newBufferedWriter(path)) {
             writer.write(String.format(Locale.ROOT, "sync-chunk-writes=%s%n", dedicatedserverproperties.syncChunkWrites));
             writer.write(String.format(Locale.ROOT, "gamemode=%s%n", dedicatedserverproperties.gamemode));
             writer.write(String.format(Locale.ROOT, "spawn-monsters=%s%n", dedicatedserverproperties.spawnMonsters));
@@ -313,18 +313,18 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
     }
 
     @Override
-    public void tickChildren(BooleanSupplier p_139661_) {
-        super.tickChildren(p_139661_);
+    public void tickChildren(BooleanSupplier hasTimeLeft) {
+        super.tickChildren(hasTimeLeft);
         this.handleConsoleInputs();
     }
 
     @Override
-    public boolean isLevelEnabled(Level p_350654_) {
-        return p_350654_.dimension() == Level.NETHER ? this.getProperties().allowNether : true;
+    public boolean isLevelEnabled(Level level) {
+        return level.dimension() == Level.NETHER ? this.getProperties().allowNether : true;
     }
 
-    public void handleConsoleInput(String p_139646_, CommandSourceStack p_139647_) {
-        this.consoleInput.add(new ConsoleInput(p_139646_, p_139647_));
+    public void handleConsoleInput(String msg, CommandSourceStack source) {
+        this.consoleInput.add(new ConsoleInput(msg, source));
     }
 
     public void handleConsoleInputs() {
@@ -395,19 +395,19 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
     }
 
     @Override
-    public boolean isUnderSpawnProtection(ServerLevel p_139630_, BlockPos p_139631_, Player p_139632_) {
-        if (p_139630_.dimension() != Level.OVERWORLD) {
+    public boolean isUnderSpawnProtection(ServerLevel level, BlockPos pos, Player player) {
+        if (level.dimension() != Level.OVERWORLD) {
             return false;
         } else if (this.getPlayerList().getOps().isEmpty()) {
             return false;
-        } else if (this.getPlayerList().isOp(p_139632_.getGameProfile())) {
+        } else if (this.getPlayerList().isOp(player.getGameProfile())) {
             return false;
         } else if (this.getSpawnProtectionRadius() <= 0) {
             return false;
         } else {
-            BlockPos blockpos = p_139630_.getSharedSpawnPos();
-            int i = Mth.abs(p_139631_.getX() - blockpos.getX());
-            int j = Mth.abs(p_139631_.getZ() - blockpos.getZ());
+            BlockPos blockpos = level.getSharedSpawnPos();
+            int i = Mth.abs(pos.getX() - blockpos.getX());
+            int j = Mth.abs(pos.getZ() - blockpos.getZ());
             int k = Math.max(i, j);
             return k <= this.getSpawnProtectionRadius();
         }
@@ -434,9 +434,9 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
     }
 
     @Override
-    public void setPlayerIdleTimeout(int p_139676_) {
-        super.setPlayerIdleTimeout(p_139676_);
-        this.settings.update(p_349960_ -> p_349960_.playerIdleTimeout.update(this.registryAccess(), p_139676_));
+    public void setPlayerIdleTimeout(int idleTimeout) {
+        super.setPlayerIdleTimeout(idleTimeout);
+        this.settings.update(p_349960_ -> p_349960_.playerIdleTimeout.update(this.registryAccess(), idleTimeout));
     }
 
     @Override
@@ -550,15 +550,18 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
         return "";
     }
 
+    /**
+     * Handle a command received by an RCon instance
+     */
     @Override
-    public String runCommand(String p_139644_) {
+    public String runCommand(String command) {
         this.rconConsoleSource.prepareForCommand();
-        this.executeBlocking(() -> this.getCommands().performPrefixedCommand(this.rconConsoleSource.createCommandSourceStack(), p_139644_));
+        this.executeBlocking(() -> this.getCommands().performPrefixedCommand(this.rconConsoleSource.createCommandSourceStack(), command));
         return this.rconConsoleSource.getCommandResponse();
     }
 
-    public void storeUsingWhiteList(boolean p_139689_) {
-        this.settings.update(p_349962_ -> p_349962_.whiteList.update(this.registryAccess(), p_139689_));
+    public void storeUsingWhiteList(boolean isStoreUsingWhiteList) {
+        this.settings.update(p_349962_ -> p_349962_.whiteList.update(this.registryAccess(), isStoreUsingWhiteList));
     }
 
     @Override
@@ -574,13 +577,13 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
     }
 
     @Override
-    public boolean isSingleplayerOwner(GameProfile p_139642_) {
+    public boolean isSingleplayerOwner(GameProfile profile) {
         return false;
     }
 
     @Override
-    public int getScaledTrackingDistance(int p_139659_) {
-        return this.getProperties().entityBroadcastRangePercentage * p_139659_ / 100;
+    public int getScaledTrackingDistance(int trackingDistance) {
+        return this.getProperties().entityBroadcastRangePercentage * trackingDistance / 100;
     }
 
     @Override
@@ -594,8 +597,8 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
     }
 
     @Override
-    public TextFilter createTextFilterForPlayer(ServerPlayer p_139634_) {
-        return this.textFilterClient != null ? this.textFilterClient.createContext(p_139634_.getGameProfile()) : TextFilter.DUMMY;
+    public TextFilter createTextFilterForPlayer(ServerPlayer player) {
+        return this.textFilterClient != null ? this.textFilterClient.createContext(player.getGameProfile()) : TextFilter.DUMMY;
     }
 
     @Nullable
@@ -626,8 +629,8 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
     }
 
     @Override
-    public void subscribeToDebugSample(ServerPlayer p_324272_, RemoteDebugSampleType p_324213_) {
-        this.debugSampleSubscriptionTracker.subscribe(p_324272_, p_324213_);
+    public void subscribeToDebugSample(ServerPlayer player, RemoteDebugSampleType sampleType) {
+        this.debugSampleSubscriptionTracker.subscribe(player, sampleType);
     }
 
     @Override
@@ -640,14 +643,14 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface 
         return this.serverLinks;
     }
 
-    private static ServerLinks createServerLinks(DedicatedServerSettings p_352317_) {
-        Optional<URI> optional = parseBugReportLink(p_352317_.getProperties());
+    private static ServerLinks createServerLinks(DedicatedServerSettings settings) {
+        Optional<URI> optional = parseBugReportLink(settings.getProperties());
         return optional.<ServerLinks>map(p_351772_ -> new ServerLinks(List.of(ServerLinks.KnownLinkType.BUG_REPORT.create(p_351772_))))
             .orElse(ServerLinks.EMPTY);
     }
 
-    private static Optional<URI> parseBugReportLink(DedicatedServerProperties p_352150_) {
-        String s = p_352150_.bugReportLink;
+    private static Optional<URI> parseBugReportLink(DedicatedServerProperties properties) {
+        String s = properties.bugReportLink;
         if (s.isEmpty()) {
             return Optional.empty();
         } else {

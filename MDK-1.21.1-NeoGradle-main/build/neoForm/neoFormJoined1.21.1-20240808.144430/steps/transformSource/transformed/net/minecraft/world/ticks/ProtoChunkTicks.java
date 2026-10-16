@@ -16,20 +16,20 @@ public class ProtoChunkTicks<T> implements SerializableTickContainer<T>, TickCon
     private final Set<SavedTick<?>> ticksPerPosition = new ObjectOpenCustomHashSet<>(SavedTick.UNIQUE_TICK_HASH);
 
     @Override
-    public void schedule(ScheduledTick<T> p_193298_) {
-        SavedTick<T> savedtick = new SavedTick<>(p_193298_.type(), p_193298_.pos(), 0, p_193298_.priority());
+    public void schedule(ScheduledTick<T> tick) {
+        SavedTick<T> savedtick = new SavedTick<>(tick.type(), tick.pos(), 0, tick.priority());
         this.schedule(savedtick);
     }
 
-    private void schedule(SavedTick<T> p_193296_) {
-        if (this.ticksPerPosition.add(p_193296_)) {
-            this.ticks.add(p_193296_);
+    private void schedule(SavedTick<T> tick) {
+        if (this.ticksPerPosition.add(tick)) {
+            this.ticks.add(tick);
         }
     }
 
     @Override
-    public boolean hasScheduledTick(BlockPos p_193300_, T p_193301_) {
-        return this.ticksPerPosition.contains(SavedTick.probe(p_193301_, p_193300_));
+    public boolean hasScheduledTick(BlockPos pos, T type) {
+        return this.ticksPerPosition.contains(SavedTick.probe(type, pos));
     }
 
     @Override
@@ -38,11 +38,11 @@ public class ProtoChunkTicks<T> implements SerializableTickContainer<T>, TickCon
     }
 
     @Override
-    public Tag save(long p_193308_, Function<T, String> p_193309_) {
+    public Tag save(long gameTime, Function<T, String> idGetter) {
         ListTag listtag = new ListTag();
 
         for (SavedTick<T> savedtick : this.ticks) {
-            listtag.add(savedtick.save(p_193309_));
+            listtag.add(savedtick.save(idGetter));
         }
 
         return listtag;
@@ -52,9 +52,9 @@ public class ProtoChunkTicks<T> implements SerializableTickContainer<T>, TickCon
         return List.copyOf(this.ticks);
     }
 
-    public static <T> ProtoChunkTicks<T> load(ListTag p_193303_, Function<String, Optional<T>> p_193304_, ChunkPos p_193305_) {
+    public static <T> ProtoChunkTicks<T> load(ListTag tag, Function<String, Optional<T>> idParser, ChunkPos chunkPos) {
         ProtoChunkTicks<T> protochunkticks = new ProtoChunkTicks<>();
-        SavedTick.loadTickList(p_193303_, p_193304_, p_193305_, protochunkticks::schedule);
+        SavedTick.loadTickList(tag, idParser, chunkPos, protochunkticks::schedule);
         return protochunkticks;
     }
 }

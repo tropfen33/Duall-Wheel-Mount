@@ -47,7 +47,7 @@ public class EndTag implements Tag {
     }
 
     @Override
-    public void write(DataOutput p_128539_) throws IOException {
+    public void write(DataOutput output) throws IOException {
     }
 
     @Override
@@ -75,12 +75,12 @@ public class EndTag implements Tag {
     }
 
     @Override
-    public void accept(TagVisitor p_177863_) {
-        p_177863_.visitEnd(this);
+    public void accept(TagVisitor visitor) {
+        visitor.visitEnd(this);
     }
 
     @Override
-    public StreamTagVisitor.ValueResult accept(StreamTagVisitor p_197458_) {
-        return p_197458_.visitEnd();
+    public StreamTagVisitor.ValueResult accept(StreamTagVisitor visitor) {
+        return visitor.visitEnd();
     }
 }

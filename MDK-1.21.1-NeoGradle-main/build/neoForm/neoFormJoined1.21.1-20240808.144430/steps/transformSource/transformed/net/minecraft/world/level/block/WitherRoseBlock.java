@@ -32,36 +32,39 @@ public class WitherRoseBlock extends FlowerBlock {
         return CODEC;
     }
 
-    public WitherRoseBlock(Holder<MobEffect> p_316323_, float p_332767_, BlockBehaviour.Properties p_304869_) {
-        this(makeEffectList(p_316323_, p_332767_), p_304869_);
+    public WitherRoseBlock(Holder<MobEffect> effect, float seconds, BlockBehaviour.Properties properties) {
+        this(makeEffectList(effect, seconds), properties);
     }
 
-    public WitherRoseBlock(SuspiciousStewEffects p_330573_, BlockBehaviour.Properties p_58236_) {
-        super(p_330573_, p_58236_);
-    }
-
-    @Override
-    protected boolean mayPlaceOn(BlockState p_58248_, BlockGetter p_58249_, BlockPos p_58250_) {
-        return super.mayPlaceOn(p_58248_, p_58249_, p_58250_)
-            || p_58248_.is(Blocks.NETHERRACK)
-            || p_58248_.is(Blocks.SOUL_SAND)
-            || p_58248_.is(Blocks.SOUL_SOIL);
+    public WitherRoseBlock(SuspiciousStewEffects suspiciousStewEffects, BlockBehaviour.Properties properties) {
+        super(suspiciousStewEffects, properties);
     }
 
     @Override
-    public void animateTick(BlockState p_222687_, Level p_222688_, BlockPos p_222689_, RandomSource p_222690_) {
-        VoxelShape voxelshape = this.getShape(p_222687_, p_222688_, p_222689_, CollisionContext.empty());
+    protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
+        return super.mayPlaceOn(state, level, pos)
+            || state.is(Blocks.NETHERRACK)
+            || state.is(Blocks.SOUL_SAND)
+            || state.is(Blocks.SOUL_SOIL);
+    }
+
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
+    @Override
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        VoxelShape voxelshape = this.getShape(state, level, pos, CollisionContext.empty());
         Vec3 vec3 = voxelshape.bounds().getCenter();
-        double d0 = (double)p_222689_.getX() + vec3.x;
-        double d1 = (double)p_222689_.getZ() + vec3.z;
+        double d0 = (double)pos.getX() + vec3.x;
+        double d1 = (double)pos.getZ() + vec3.z;
 
         for (int i = 0; i < 3; i++) {
-            if (p_222690_.nextBoolean()) {
-                p_222688_.addParticle(
+            if (random.nextBoolean()) {
+                level.addParticle(
                     ParticleTypes.SMOKE,
-                    d0 + p_222690_.nextDouble() / 5.0,
-                    (double)p_222689_.getY() + (0.5 - p_222690_.nextDouble()),
-                    d1 + p_222690_.nextDouble() / 5.0,
+                    d0 + random.nextDouble() / 5.0,
+                    (double)pos.getY() + (0.5 - random.nextDouble()),
+                    d1 + random.nextDouble() / 5.0,
                     0.0,
                     0.0,
                     0.0
@@ -71,9 +74,9 @@ public class WitherRoseBlock extends FlowerBlock {
     }
 
     @Override
-    protected void entityInside(BlockState p_58238_, Level p_58239_, BlockPos p_58240_, Entity p_58241_) {
-        if (!p_58239_.isClientSide && p_58239_.getDifficulty() != Difficulty.PEACEFUL) {
-            if (p_58241_ instanceof LivingEntity livingentity && !livingentity.isInvulnerableTo(p_58239_.damageSources().wither())) {
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        if (!level.isClientSide && level.getDifficulty() != Difficulty.PEACEFUL) {
+            if (entity instanceof LivingEntity livingentity && !livingentity.isInvulnerableTo(level.damageSources().wither())) {
                 livingentity.addEffect(new MobEffectInstance(MobEffects.WITHER, 40));
             }
         }

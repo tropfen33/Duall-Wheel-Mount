@@ -14,8 +14,8 @@ public class ClientSideMerchant implements Merchant {
     private MerchantOffers offers = new MerchantOffers();
     private int xp;
 
-    public ClientSideMerchant(Player p_35344_) {
-        this.source = p_35344_;
+    public ClientSideMerchant(Player source) {
+        this.source = source;
     }
 
     @Override
@@ -24,7 +24,7 @@ public class ClientSideMerchant implements Merchant {
     }
 
     @Override
-    public void setTradingPlayer(@Nullable Player p_35356_) {
+    public void setTradingPlayer(@Nullable Player player) {
     }
 
     @Override
@@ -33,17 +33,20 @@ public class ClientSideMerchant implements Merchant {
     }
 
     @Override
-    public void overrideOffers(MerchantOffers p_35348_) {
-        this.offers = p_35348_;
+    public void overrideOffers(MerchantOffers offers) {
+        this.offers = offers;
     }
 
     @Override
-    public void notifyTrade(MerchantOffer p_35346_) {
-        p_35346_.increaseUses();
+    public void notifyTrade(MerchantOffer offer) {
+        offer.increaseUses();
     }
 
+    /**
+     * Notifies the merchant of a possible merchant recipe being fulfilled or not. Usually, this is just a sound byte being played depending on whether the suggested {@link net.minecraft.world.item.ItemStack} is not empty.
+     */
     @Override
-    public void notifyTradeUpdated(ItemStack p_35358_) {
+    public void notifyTradeUpdated(ItemStack stack) {
     }
 
     @Override
@@ -57,8 +60,8 @@ public class ClientSideMerchant implements Merchant {
     }
 
     @Override
-    public void overrideXp(int p_35360_) {
-        this.xp = p_35360_;
+    public void overrideXp(int xp) {
+        this.xp = xp;
     }
 
     @Override

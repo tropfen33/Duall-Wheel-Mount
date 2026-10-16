@@ -18,10 +18,10 @@ public class RenameEnchantmentsFix extends DataFix {
     final String name;
     final Map<String, String> renames;
 
-    public RenameEnchantmentsFix(Schema p_320301_, String p_320802_, Map<String, String> p_320622_) {
-        super(p_320301_, false);
-        this.name = p_320802_;
-        this.renames = p_320622_;
+    public RenameEnchantmentsFix(Schema outputSchema, String name, Map<String, String> renames) {
+        super(outputSchema, false);
+        this.name = name;
+        this.renames = renames;
     }
 
     @Override
@@ -33,14 +33,14 @@ public class RenameEnchantmentsFix extends DataFix {
         );
     }
 
-    private Dynamic<?> fixTag(Dynamic<?> p_320665_) {
-        p_320665_ = this.fixEnchantmentList(p_320665_, "Enchantments");
-        return this.fixEnchantmentList(p_320665_, "StoredEnchantments");
+    private Dynamic<?> fixTag(Dynamic<?> tag) {
+        tag = this.fixEnchantmentList(tag, "Enchantments");
+        return this.fixEnchantmentList(tag, "StoredEnchantments");
     }
 
-    private Dynamic<?> fixEnchantmentList(Dynamic<?> p_320427_, String p_319969_) {
-        return p_320427_.update(
-            p_319969_,
+    private Dynamic<?> fixEnchantmentList(Dynamic<?> tag, String key) {
+        return tag.update(
+            key,
             p_337664_ -> p_337664_.asStreamOpt()
                     .map(
                         p_320850_ -> p_320850_.map(

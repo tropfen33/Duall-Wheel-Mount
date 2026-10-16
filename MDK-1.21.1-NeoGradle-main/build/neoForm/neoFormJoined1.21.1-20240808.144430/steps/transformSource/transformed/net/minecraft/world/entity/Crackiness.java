@@ -9,28 +9,28 @@ public class Crackiness {
     private final float fractionMedium;
     private final float fractionHigh;
 
-    private Crackiness(float p_330512_, float p_330332_, float p_330467_) {
-        this.fractionLow = p_330512_;
-        this.fractionMedium = p_330332_;
-        this.fractionHigh = p_330467_;
+    private Crackiness(float fractionLow, float fractionMedium, float fractionHigh) {
+        this.fractionLow = fractionLow;
+        this.fractionMedium = fractionMedium;
+        this.fractionHigh = fractionHigh;
     }
 
-    public Crackiness.Level byFraction(float p_331959_) {
-        if (p_331959_ < this.fractionHigh) {
+    public Crackiness.Level byFraction(float fraction) {
+        if (fraction < this.fractionHigh) {
             return Crackiness.Level.HIGH;
-        } else if (p_331959_ < this.fractionMedium) {
+        } else if (fraction < this.fractionMedium) {
             return Crackiness.Level.MEDIUM;
         } else {
-            return p_331959_ < this.fractionLow ? Crackiness.Level.LOW : Crackiness.Level.NONE;
+            return fraction < this.fractionLow ? Crackiness.Level.LOW : Crackiness.Level.NONE;
         }
     }
 
-    public Crackiness.Level byDamage(ItemStack p_331331_) {
-        return !p_331331_.isDamageableItem() ? Crackiness.Level.NONE : this.byDamage(p_331331_.getDamageValue(), p_331331_.getMaxDamage());
+    public Crackiness.Level byDamage(ItemStack stack) {
+        return !stack.isDamageableItem() ? Crackiness.Level.NONE : this.byDamage(stack.getDamageValue(), stack.getMaxDamage());
     }
 
-    public Crackiness.Level byDamage(int p_330780_, int p_330215_) {
-        return this.byFraction((float)(p_330215_ - p_330780_) / (float)p_330215_);
+    public Crackiness.Level byDamage(int damage, int durability) {
+        return this.byFraction((float)(durability - damage) / (float)durability);
     }
 
     public static enum Level {

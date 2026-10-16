@@ -17,9 +17,9 @@ public class DirectoryLock implements AutoCloseable {
     private final FileLock lock;
     private static final ByteBuffer DUMMY;
 
-    public static DirectoryLock create(Path p_13641_) throws IOException {
-        Path path = p_13641_.resolve("session.lock");
-        FileUtil.createDirectoriesSafe(p_13641_);
+    public static DirectoryLock create(Path p_path) throws IOException {
+        Path path = p_path.resolve("session.lock");
+        FileUtil.createDirectoriesSafe(p_path);
         FileChannel filechannel = FileChannel.open(path, StandardOpenOption.CREATE, StandardOpenOption.WRITE);
 
         try {
@@ -42,9 +42,9 @@ public class DirectoryLock implements AutoCloseable {
         }
     }
 
-    private DirectoryLock(FileChannel p_13637_, FileLock p_13638_) {
-        this.lockFile = p_13637_;
-        this.lock = p_13638_;
+    private DirectoryLock(FileChannel lockFile, FileLock lock) {
+        this.lockFile = lockFile;
+        this.lock = lock;
     }
 
     @Override
@@ -64,8 +64,8 @@ public class DirectoryLock implements AutoCloseable {
         return this.lock.isValid();
     }
 
-    public static boolean isLocked(Path p_13643_) throws IOException {
-        Path path = p_13643_.resolve("session.lock");
+    public static boolean isLocked(Path p_path) throws IOException {
+        Path path = p_path.resolve("session.lock");
 
         try {
             boolean flag;
@@ -92,12 +92,12 @@ public class DirectoryLock implements AutoCloseable {
     }
 
     public static class LockException extends IOException {
-        private LockException(Path p_13646_, String p_13647_) {
-            super(p_13646_.toAbsolutePath() + ": " + p_13647_);
+        private LockException(Path path, String message) {
+            super(path.toAbsolutePath() + ": " + message);
         }
 
-        public static DirectoryLock.LockException alreadyLocked(Path p_13649_) {
-            return new DirectoryLock.LockException(p_13649_, "already locked (possibly by other Minecraft instance?)");
+        public static DirectoryLock.LockException alreadyLocked(Path path) {
+            return new DirectoryLock.LockException(path, "already locked (possibly by other Minecraft instance?)");
         }
     }
 }

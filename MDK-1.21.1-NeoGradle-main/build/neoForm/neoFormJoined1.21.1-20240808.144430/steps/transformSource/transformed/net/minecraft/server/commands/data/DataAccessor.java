@@ -7,13 +7,19 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 
 public interface DataAccessor {
-    void setData(CompoundTag p_139323_) throws CommandSyntaxException;
+    void setData(CompoundTag other) throws CommandSyntaxException;
 
     CompoundTag getData() throws CommandSyntaxException;
 
     Component getModifiedSuccess();
 
-    Component getPrintSuccess(Tag p_139324_);
+    /**
+     * Gets the message used as a result of querying the given NBT (both for /data get and /data get path)
+     */
+    Component getPrintSuccess(Tag nbt);
 
-    Component getPrintSuccess(NbtPathArgument.NbtPath p_139320_, double p_139321_, int p_139322_);
+    /**
+     * Gets the message used as a result of querying the given path with a scale.
+     */
+    Component getPrintSuccess(NbtPathArgument.NbtPath path, double scale, int value);
 }

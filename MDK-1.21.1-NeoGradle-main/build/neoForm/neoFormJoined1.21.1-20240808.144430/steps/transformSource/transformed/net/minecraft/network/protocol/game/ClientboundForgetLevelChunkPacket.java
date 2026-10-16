@@ -15,8 +15,11 @@ public record ClientboundForgetLevelChunkPacket(ChunkPos pos) implements Packet<
         this(p_178858_.readChunkPos());
     }
 
-    private void write(FriendlyByteBuf p_132151_) {
-        p_132151_.writeChunkPos(this.pos);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeChunkPos(this.pos);
     }
 
     @Override
@@ -24,7 +27,10 @@ public record ClientboundForgetLevelChunkPacket(ChunkPos pos) implements Packet<
         return GamePacketTypes.CLIENTBOUND_FORGET_LEVEL_CHUNK;
     }
 
-    public void handle(ClientGamePacketListener p_132148_) {
-        p_132148_.handleForgetLevelChunk(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleForgetLevelChunk(this);
     }
 }

@@ -15,26 +15,29 @@ public class FoodOnAStickItem<T extends Entity & ItemSteerable> extends Item {
     private final EntityType<T> canInteractWith;
     private final int consumeItemDamage;
 
-    public FoodOnAStickItem(Item.Properties p_41307_, EntityType<T> p_41308_, int p_41309_) {
-        super(p_41307_);
-        this.canInteractWith = p_41308_;
-        this.consumeItemDamage = p_41309_;
+    public FoodOnAStickItem(Item.Properties properties, EntityType<T> canInteractWith, int consumeItemDamage) {
+        super(properties);
+        this.canInteractWith = canInteractWith;
+        this.consumeItemDamage = consumeItemDamage;
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_41314_, Player p_41315_, InteractionHand p_41316_) {
-        ItemStack itemstack = p_41315_.getItemInHand(p_41316_);
-        if (p_41314_.isClientSide) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
+        if (level.isClientSide) {
             return InteractionResultHolder.pass(itemstack);
         } else {
-            Entity entity = p_41315_.getControlledVehicle();
-            if (p_41315_.isPassenger() && entity instanceof ItemSteerable itemsteerable && entity.getType() == this.canInteractWith && itemsteerable.boost()) {
-                EquipmentSlot equipmentslot = LivingEntity.getSlotForHand(p_41316_);
-                ItemStack itemstack1 = itemstack.hurtAndConvertOnBreak(this.consumeItemDamage, Items.FISHING_ROD, p_41315_, equipmentslot);
+            Entity entity = player.getControlledVehicle();
+            if (player.isPassenger() && entity instanceof ItemSteerable itemsteerable && entity.getType() == this.canInteractWith && itemsteerable.boost()) {
+                EquipmentSlot equipmentslot = LivingEntity.getSlotForHand(hand);
+                ItemStack itemstack1 = itemstack.hurtAndConvertOnBreak(this.consumeItemDamage, Items.FISHING_ROD, player, equipmentslot);
                 return InteractionResultHolder.success(itemstack1);
             }
 
-            p_41315_.awardStat(Stats.ITEM_USED.get(this));
+            player.awardStat(Stats.ITEM_USED.get(this));
             return InteractionResultHolder.pass(itemstack);
         }
     }

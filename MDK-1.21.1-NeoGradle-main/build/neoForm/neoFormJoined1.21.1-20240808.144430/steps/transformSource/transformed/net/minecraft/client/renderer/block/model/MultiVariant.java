@@ -27,8 +27,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class MultiVariant implements UnbakedModel {
     private final List<Variant> variants;
 
-    public MultiVariant(List<Variant> p_111847_) {
-        this.variants = p_111847_;
+    public MultiVariant(List<Variant> variants) {
+        this.variants = variants;
     }
 
     public List<Variant> getVariants() {
@@ -36,11 +36,11 @@ public class MultiVariant implements UnbakedModel {
     }
 
     @Override
-    public boolean equals(Object p_111862_) {
-        if (this == p_111862_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return p_111862_ instanceof MultiVariant multivariant ? this.variants.equals(multivariant.variants) : false;
+            return other instanceof MultiVariant multivariant ? this.variants.equals(multivariant.variants) : false;
         }
     }
 
@@ -55,20 +55,20 @@ public class MultiVariant implements UnbakedModel {
     }
 
     @Override
-    public void resolveParents(Function<ResourceLocation, UnbakedModel> p_249314_) {
-        this.getVariants().stream().map(Variant::getModelLocation).distinct().forEach(p_247934_ -> p_249314_.apply(p_247934_).resolveParents(p_249314_));
+    public void resolveParents(Function<ResourceLocation, UnbakedModel> resolver) {
+        this.getVariants().stream().map(Variant::getModelLocation).distinct().forEach(p_247934_ -> resolver.apply(p_247934_).resolveParents(resolver));
     }
 
     @Nullable
     @Override
-    public BakedModel bake(ModelBaker p_249016_, Function<Material, TextureAtlasSprite> p_111851_, ModelState p_111852_) {
+    public BakedModel bake(ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState state) {
         if (this.getVariants().isEmpty()) {
             return null;
         } else {
             WeightedBakedModel.Builder weightedbakedmodel$builder = new WeightedBakedModel.Builder();
 
             for (Variant variant : this.getVariants()) {
-                BakedModel bakedmodel = p_249016_.bake(variant.getModelLocation(), variant, p_111851_);
+                BakedModel bakedmodel = baker.bake(variant.getModelLocation(), variant, spriteGetter);
                 weightedbakedmodel$builder.add(bakedmodel, variant.getWeight());
             }
 
@@ -78,19 +78,19 @@ public class MultiVariant implements UnbakedModel {
 
     @OnlyIn(Dist.CLIENT)
     public static class Deserializer implements JsonDeserializer<MultiVariant> {
-        public MultiVariant deserialize(JsonElement p_111867_, Type p_111868_, JsonDeserializationContext p_111869_) throws JsonParseException {
+        public MultiVariant deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
             List<Variant> list = Lists.newArrayList();
-            if (p_111867_.isJsonArray()) {
-                JsonArray jsonarray = p_111867_.getAsJsonArray();
+            if (json.isJsonArray()) {
+                JsonArray jsonarray = json.getAsJsonArray();
                 if (jsonarray.size() == 0) {
                     throw new JsonParseException("Empty variant array");
                 }
 
                 for (JsonElement jsonelement : jsonarray) {
-                    list.add(p_111869_.deserialize(jsonelement, Variant.class));
+                    list.add(context.deserialize(jsonelement, Variant.class));
                 }
             } else {
-                list.add(p_111869_.deserialize(p_111867_, Variant.class));
+                list.add(context.deserialize(json, Variant.class));
             }
 
             return new MultiVariant(list);

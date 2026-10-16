@@ -17,9 +17,9 @@ public class KilledTrigger extends SimpleCriterionTrigger<KilledTrigger.TriggerI
         return KilledTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_48105_, Entity p_48106_, DamageSource p_48107_) {
-        LootContext lootcontext = EntityPredicate.createContext(p_48105_, p_48106_);
-        this.trigger(p_48105_, p_48112_ -> p_48112_.matches(p_48105_, lootcontext, p_48107_));
+    public void trigger(ServerPlayer player, Entity entity, DamageSource source) {
+        LootContext lootcontext = EntityPredicate.createContext(player, entity);
+        this.trigger(player, p_48112_ -> p_48112_.matches(player, lootcontext, source));
     }
 
     public static record TriggerInstance(
@@ -34,14 +34,14 @@ public class KilledTrigger extends SimpleCriterionTrigger<KilledTrigger.TriggerI
                     .apply(p_337374_, KilledTrigger.TriggerInstance::new)
         );
 
-        public static Criterion<KilledTrigger.TriggerInstance> playerKilledEntity(Optional<EntityPredicate> p_298999_) {
+        public static Criterion<KilledTrigger.TriggerInstance> playerKilledEntity(Optional<EntityPredicate> entityPredicate) {
             return CriteriaTriggers.PLAYER_KILLED_ENTITY
-                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(p_298999_), Optional.empty()));
+                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(entityPredicate), Optional.empty()));
         }
 
-        public static Criterion<KilledTrigger.TriggerInstance> playerKilledEntity(EntityPredicate.Builder p_48137_) {
+        public static Criterion<KilledTrigger.TriggerInstance> playerKilledEntity(EntityPredicate.Builder entityPredicate) {
             return CriteriaTriggers.PLAYER_KILLED_ENTITY
-                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), Optional.of(EntityPredicate.wrap(p_48137_)), Optional.empty()));
+                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), Optional.of(EntityPredicate.wrap(entityPredicate)), Optional.empty()));
         }
 
         public static Criterion<KilledTrigger.TriggerInstance> playerKilledEntity() {
@@ -50,26 +50,26 @@ public class KilledTrigger extends SimpleCriterionTrigger<KilledTrigger.TriggerI
         }
 
         public static Criterion<KilledTrigger.TriggerInstance> playerKilledEntity(
-            Optional<EntityPredicate> p_300920_, Optional<DamageSourcePredicate> p_300985_
+            Optional<EntityPredicate> entityPredicate, Optional<DamageSourcePredicate> killingBlow
         ) {
             return CriteriaTriggers.PLAYER_KILLED_ENTITY
-                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(p_300920_), p_300985_));
+                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(entityPredicate), killingBlow));
         }
 
-        public static Criterion<KilledTrigger.TriggerInstance> playerKilledEntity(EntityPredicate.Builder p_300879_, Optional<DamageSourcePredicate> p_298956_) {
+        public static Criterion<KilledTrigger.TriggerInstance> playerKilledEntity(EntityPredicate.Builder entityPredicate, Optional<DamageSourcePredicate> killingBlow) {
             return CriteriaTriggers.PLAYER_KILLED_ENTITY
-                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), Optional.of(EntityPredicate.wrap(p_300879_)), p_298956_));
+                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), Optional.of(EntityPredicate.wrap(entityPredicate)), killingBlow));
         }
 
-        public static Criterion<KilledTrigger.TriggerInstance> playerKilledEntity(Optional<EntityPredicate> p_299297_, DamageSourcePredicate.Builder p_301016_) {
+        public static Criterion<KilledTrigger.TriggerInstance> playerKilledEntity(Optional<EntityPredicate> entityPredicate, DamageSourcePredicate.Builder killingBlow) {
             return CriteriaTriggers.PLAYER_KILLED_ENTITY
-                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(p_299297_), Optional.of(p_301016_.build())));
+                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(entityPredicate), Optional.of(killingBlow.build())));
         }
 
-        public static Criterion<KilledTrigger.TriggerInstance> playerKilledEntity(EntityPredicate.Builder p_152106_, DamageSourcePredicate.Builder p_301319_) {
+        public static Criterion<KilledTrigger.TriggerInstance> playerKilledEntity(EntityPredicate.Builder entityPredicate, DamageSourcePredicate.Builder killingBlow) {
             return CriteriaTriggers.PLAYER_KILLED_ENTITY
                 .createCriterion(
-                    new KilledTrigger.TriggerInstance(Optional.empty(), Optional.of(EntityPredicate.wrap(p_152106_)), Optional.of(p_301319_.build()))
+                    new KilledTrigger.TriggerInstance(Optional.empty(), Optional.of(EntityPredicate.wrap(entityPredicate)), Optional.of(killingBlow.build()))
                 );
         }
 
@@ -78,14 +78,14 @@ public class KilledTrigger extends SimpleCriterionTrigger<KilledTrigger.TriggerI
                 .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), Optional.empty(), Optional.empty()));
         }
 
-        public static Criterion<KilledTrigger.TriggerInstance> entityKilledPlayer(Optional<EntityPredicate> p_298209_) {
+        public static Criterion<KilledTrigger.TriggerInstance> entityKilledPlayer(Optional<EntityPredicate> entityPredicate) {
             return CriteriaTriggers.ENTITY_KILLED_PLAYER
-                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(p_298209_), Optional.empty()));
+                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(entityPredicate), Optional.empty()));
         }
 
-        public static Criterion<KilledTrigger.TriggerInstance> entityKilledPlayer(EntityPredicate.Builder p_298389_) {
+        public static Criterion<KilledTrigger.TriggerInstance> entityKilledPlayer(EntityPredicate.Builder entityPredicate) {
             return CriteriaTriggers.ENTITY_KILLED_PLAYER
-                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), Optional.of(EntityPredicate.wrap(p_298389_)), Optional.empty()));
+                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), Optional.of(EntityPredicate.wrap(entityPredicate)), Optional.empty()));
         }
 
         public static Criterion<KilledTrigger.TriggerInstance> entityKilledPlayer() {
@@ -94,39 +94,39 @@ public class KilledTrigger extends SimpleCriterionTrigger<KilledTrigger.TriggerI
         }
 
         public static Criterion<KilledTrigger.TriggerInstance> entityKilledPlayer(
-            Optional<EntityPredicate> p_298878_, Optional<DamageSourcePredicate> p_300913_
+            Optional<EntityPredicate> entityPredicate, Optional<DamageSourcePredicate> killingBlow
         ) {
             return CriteriaTriggers.ENTITY_KILLED_PLAYER
-                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(p_298878_), p_300913_));
+                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(entityPredicate), killingBlow));
         }
 
-        public static Criterion<KilledTrigger.TriggerInstance> entityKilledPlayer(EntityPredicate.Builder p_152119_, Optional<DamageSourcePredicate> p_301181_) {
+        public static Criterion<KilledTrigger.TriggerInstance> entityKilledPlayer(EntityPredicate.Builder entityPredicate, Optional<DamageSourcePredicate> killingBlow) {
             return CriteriaTriggers.ENTITY_KILLED_PLAYER
-                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), Optional.of(EntityPredicate.wrap(p_152119_)), p_301181_));
+                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), Optional.of(EntityPredicate.wrap(entityPredicate)), killingBlow));
         }
 
-        public static Criterion<KilledTrigger.TriggerInstance> entityKilledPlayer(Optional<EntityPredicate> p_301135_, DamageSourcePredicate.Builder p_301143_) {
+        public static Criterion<KilledTrigger.TriggerInstance> entityKilledPlayer(Optional<EntityPredicate> entityPredicate, DamageSourcePredicate.Builder killingBlow) {
             return CriteriaTriggers.ENTITY_KILLED_PLAYER
-                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(p_301135_), Optional.of(p_301143_.build())));
+                .createCriterion(new KilledTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(entityPredicate), Optional.of(killingBlow.build())));
         }
 
-        public static Criterion<KilledTrigger.TriggerInstance> entityKilledPlayer(EntityPredicate.Builder p_301108_, DamageSourcePredicate.Builder p_298860_) {
+        public static Criterion<KilledTrigger.TriggerInstance> entityKilledPlayer(EntityPredicate.Builder entityPredicate, DamageSourcePredicate.Builder killingBlow) {
             return CriteriaTriggers.ENTITY_KILLED_PLAYER
                 .createCriterion(
-                    new KilledTrigger.TriggerInstance(Optional.empty(), Optional.of(EntityPredicate.wrap(p_301108_)), Optional.of(p_298860_.build()))
+                    new KilledTrigger.TriggerInstance(Optional.empty(), Optional.of(EntityPredicate.wrap(entityPredicate)), Optional.of(killingBlow.build()))
                 );
         }
 
-        public boolean matches(ServerPlayer p_48131_, LootContext p_48132_, DamageSource p_48133_) {
-            return this.killingBlow.isPresent() && !this.killingBlow.get().matches(p_48131_, p_48133_)
+        public boolean matches(ServerPlayer player, LootContext context, DamageSource source) {
+            return this.killingBlow.isPresent() && !this.killingBlow.get().matches(player, source)
                 ? false
-                : this.entityPredicate.isEmpty() || this.entityPredicate.get().matches(p_48132_);
+                : this.entityPredicate.isEmpty() || this.entityPredicate.get().matches(context);
         }
 
         @Override
-        public void validate(CriterionValidator p_311935_) {
-            SimpleCriterionTrigger.SimpleInstance.super.validate(p_311935_);
-            p_311935_.validateEntity(this.entityPredicate, ".entity");
+        public void validate(CriterionValidator validator) {
+            SimpleCriterionTrigger.SimpleInstance.super.validate(validator);
+            validator.validateEntity(this.entityPredicate, ".entity");
         }
     }
 }

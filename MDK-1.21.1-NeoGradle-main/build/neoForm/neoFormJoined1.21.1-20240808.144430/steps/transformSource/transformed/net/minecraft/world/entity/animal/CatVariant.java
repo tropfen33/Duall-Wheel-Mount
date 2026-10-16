@@ -23,25 +23,25 @@ public record CatVariant(ResourceLocation texture) {
     public static final ResourceKey<CatVariant> JELLIE = createKey("jellie");
     public static final ResourceKey<CatVariant> ALL_BLACK = createKey("all_black");
 
-    private static ResourceKey<CatVariant> createKey(String p_256044_) {
-        return ResourceKey.create(Registries.CAT_VARIANT, ResourceLocation.withDefaultNamespace(p_256044_));
+    private static ResourceKey<CatVariant> createKey(String name) {
+        return ResourceKey.create(Registries.CAT_VARIANT, ResourceLocation.withDefaultNamespace(name));
     }
 
-    public static CatVariant bootstrap(Registry<CatVariant> p_256435_) {
-        register(p_256435_, TABBY, "textures/entity/cat/tabby.png");
-        register(p_256435_, BLACK, "textures/entity/cat/black.png");
-        register(p_256435_, RED, "textures/entity/cat/red.png");
-        register(p_256435_, SIAMESE, "textures/entity/cat/siamese.png");
-        register(p_256435_, BRITISH_SHORTHAIR, "textures/entity/cat/british_shorthair.png");
-        register(p_256435_, CALICO, "textures/entity/cat/calico.png");
-        register(p_256435_, PERSIAN, "textures/entity/cat/persian.png");
-        register(p_256435_, RAGDOLL, "textures/entity/cat/ragdoll.png");
-        register(p_256435_, WHITE, "textures/entity/cat/white.png");
-        register(p_256435_, JELLIE, "textures/entity/cat/jellie.png");
-        return register(p_256435_, ALL_BLACK, "textures/entity/cat/all_black.png");
+    public static CatVariant bootstrap(Registry<CatVariant> registry) {
+        register(registry, TABBY, "textures/entity/cat/tabby.png");
+        register(registry, BLACK, "textures/entity/cat/black.png");
+        register(registry, RED, "textures/entity/cat/red.png");
+        register(registry, SIAMESE, "textures/entity/cat/siamese.png");
+        register(registry, BRITISH_SHORTHAIR, "textures/entity/cat/british_shorthair.png");
+        register(registry, CALICO, "textures/entity/cat/calico.png");
+        register(registry, PERSIAN, "textures/entity/cat/persian.png");
+        register(registry, RAGDOLL, "textures/entity/cat/ragdoll.png");
+        register(registry, WHITE, "textures/entity/cat/white.png");
+        register(registry, JELLIE, "textures/entity/cat/jellie.png");
+        return register(registry, ALL_BLACK, "textures/entity/cat/all_black.png");
     }
 
-    private static CatVariant register(Registry<CatVariant> p_255735_, ResourceKey<CatVariant> p_256159_, String p_256466_) {
-        return Registry.register(p_255735_, p_256159_, new CatVariant(ResourceLocation.withDefaultNamespace(p_256466_)));
+    private static CatVariant register(Registry<CatVariant> registry, ResourceKey<CatVariant> key, String texture) {
+        return Registry.register(registry, key, new CatVariant(ResourceLocation.withDefaultNamespace(texture)));
     }
 }

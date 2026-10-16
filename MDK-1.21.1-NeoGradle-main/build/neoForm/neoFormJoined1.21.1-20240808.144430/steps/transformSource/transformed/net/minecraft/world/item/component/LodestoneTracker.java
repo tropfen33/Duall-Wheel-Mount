@@ -24,13 +24,13 @@ public record LodestoneTracker(Optional<GlobalPos> target, boolean tracked) {
         GlobalPos.STREAM_CODEC.apply(ByteBufCodecs::optional), LodestoneTracker::target, ByteBufCodecs.BOOL, LodestoneTracker::tracked, LodestoneTracker::new
     );
 
-    public LodestoneTracker tick(ServerLevel p_332798_) {
+    public LodestoneTracker tick(ServerLevel level) {
         if (this.tracked && !this.target.isEmpty()) {
-            if (this.target.get().dimension() != p_332798_.dimension()) {
+            if (this.target.get().dimension() != level.dimension()) {
                 return this;
             } else {
                 BlockPos blockpos = this.target.get().pos();
-                return p_332798_.isInWorldBounds(blockpos) && p_332798_.getPoiManager().existsAtPosition(PoiTypes.LODESTONE, blockpos)
+                return level.isInWorldBounds(blockpos) && level.getPoiManager().existsAtPosition(PoiTypes.LODESTONE, blockpos)
                     ? this
                     : new LodestoneTracker(Optional.empty(), true);
             }

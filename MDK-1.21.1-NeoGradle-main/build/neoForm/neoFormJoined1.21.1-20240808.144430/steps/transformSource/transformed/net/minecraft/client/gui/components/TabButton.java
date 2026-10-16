@@ -31,52 +31,52 @@ public class TabButton extends AbstractWidget {
     private final TabManager tabManager;
     private final Tab tab;
 
-    public TabButton(TabManager p_275399_, Tab p_275391_, int p_275340_, int p_275364_) {
-        super(0, 0, p_275340_, p_275364_, p_275391_.getTabTitle());
-        this.tabManager = p_275399_;
-        this.tab = p_275391_;
+    public TabButton(TabManager tabManager, Tab tab, int width, int height) {
+        super(0, 0, width, height, tab.getTabTitle());
+        this.tabManager = tabManager;
+        this.tab = tab;
     }
 
     @Override
-    public void renderWidget(GuiGraphics p_283350_, int p_283437_, int p_281595_, float p_282117_) {
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         RenderSystem.enableBlend();
-        p_283350_.blitSprite(SPRITES.get(this.isSelected(), this.isHoveredOrFocused()), this.getX(), this.getY(), this.width, this.height);
+        guiGraphics.blitSprite(SPRITES.get(this.isSelected(), this.isHoveredOrFocused()), this.getX(), this.getY(), this.width, this.height);
         RenderSystem.disableBlend();
         Font font = Minecraft.getInstance().font;
         int i = this.active ? -1 : -6250336;
-        this.renderString(p_283350_, font, i);
+        this.renderString(guiGraphics, font, i);
         if (this.isSelected()) {
-            this.renderMenuBackground(p_283350_, this.getX() + 2, this.getY() + 2, this.getRight() - 2, this.getBottom());
-            this.renderFocusUnderline(p_283350_, font, i);
+            this.renderMenuBackground(guiGraphics, this.getX() + 2, this.getY() + 2, this.getRight() - 2, this.getBottom());
+            this.renderFocusUnderline(guiGraphics, font, i);
         }
     }
 
-    protected void renderMenuBackground(GuiGraphics p_334080_, int p_333889_, int p_333767_, int p_333724_, int p_333941_) {
-        Screen.renderMenuBackgroundTexture(p_334080_, Screen.MENU_BACKGROUND, p_333889_, p_333767_, 0.0F, 0.0F, p_333724_ - p_333889_, p_333941_ - p_333767_);
+    protected void renderMenuBackground(GuiGraphics guiGraphics, int minX, int minY, int maxX, int maxY) {
+        Screen.renderMenuBackgroundTexture(guiGraphics, Screen.MENU_BACKGROUND, minX, minY, 0.0F, 0.0F, maxX - minX, maxY - minY);
     }
 
-    public void renderString(GuiGraphics p_282917_, Font p_275208_, int p_275293_) {
+    public void renderString(GuiGraphics guiGraphics, Font font, int color) {
         int i = this.getX() + 1;
         int j = this.getY() + (this.isSelected() ? 0 : 3);
         int k = this.getX() + this.getWidth() - 1;
         int l = this.getY() + this.getHeight();
-        renderScrollingString(p_282917_, p_275208_, this.getMessage(), i, j, k, l, p_275293_);
+        renderScrollingString(guiGraphics, font, this.getMessage(), i, j, k, l, color);
     }
 
-    private void renderFocusUnderline(GuiGraphics p_282383_, Font p_275475_, int p_275367_) {
-        int i = Math.min(p_275475_.width(this.getMessage()), this.getWidth() - 4);
+    private void renderFocusUnderline(GuiGraphics guiGraphics, Font font, int color) {
+        int i = Math.min(font.width(this.getMessage()), this.getWidth() - 4);
         int j = this.getX() + (this.getWidth() - i) / 2;
         int k = this.getY() + this.getHeight() - 2;
-        p_282383_.fill(j, k, j + i, k + 1, p_275367_);
+        guiGraphics.fill(j, k, j + i, k + 1, color);
     }
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput p_275465_) {
-        p_275465_.add(NarratedElementType.TITLE, Component.translatable("gui.narrate.tab", this.tab.getTabTitle()));
+    protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+        narrationElementOutput.add(NarratedElementType.TITLE, Component.translatable("gui.narrate.tab", this.tab.getTabTitle()));
     }
 
     @Override
-    public void playDownSound(SoundManager p_276302_) {
+    public void playDownSound(SoundManager handler) {
     }
 
     public Tab tab() {

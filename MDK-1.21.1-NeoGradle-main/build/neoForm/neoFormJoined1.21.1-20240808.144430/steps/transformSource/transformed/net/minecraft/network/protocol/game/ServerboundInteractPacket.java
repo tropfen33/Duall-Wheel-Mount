@@ -34,36 +34,39 @@ public class ServerboundInteractPacket implements Packet<ServerGamePacketListene
         }
     };
 
-    private ServerboundInteractPacket(int p_179598_, boolean p_179599_, ServerboundInteractPacket.Action p_179600_) {
-        this.entityId = p_179598_;
-        this.action = p_179600_;
-        this.usingSecondaryAction = p_179599_;
+    private ServerboundInteractPacket(int entityId, boolean usingSecondaryAction, ServerboundInteractPacket.Action action) {
+        this.entityId = entityId;
+        this.action = action;
+        this.usingSecondaryAction = usingSecondaryAction;
     }
 
-    public static ServerboundInteractPacket createAttackPacket(Entity p_179606_, boolean p_179607_) {
-        return new ServerboundInteractPacket(p_179606_.getId(), p_179607_, ATTACK_ACTION);
+    public static ServerboundInteractPacket createAttackPacket(Entity entity, boolean usingSecondaryAction) {
+        return new ServerboundInteractPacket(entity.getId(), usingSecondaryAction, ATTACK_ACTION);
     }
 
-    public static ServerboundInteractPacket createInteractionPacket(Entity p_179609_, boolean p_179610_, InteractionHand p_179611_) {
-        return new ServerboundInteractPacket(p_179609_.getId(), p_179610_, new ServerboundInteractPacket.InteractionAction(p_179611_));
+    public static ServerboundInteractPacket createInteractionPacket(Entity entity, boolean usingSecondaryAction, InteractionHand hand) {
+        return new ServerboundInteractPacket(entity.getId(), usingSecondaryAction, new ServerboundInteractPacket.InteractionAction(hand));
     }
 
-    public static ServerboundInteractPacket createInteractionPacket(Entity p_179613_, boolean p_179614_, InteractionHand p_179615_, Vec3 p_179616_) {
-        return new ServerboundInteractPacket(p_179613_.getId(), p_179614_, new ServerboundInteractPacket.InteractionAtLocationAction(p_179615_, p_179616_));
+    public static ServerboundInteractPacket createInteractionPacket(Entity entity, boolean usingSecondaryAction, InteractionHand hand, Vec3 interactionLocation) {
+        return new ServerboundInteractPacket(entity.getId(), usingSecondaryAction, new ServerboundInteractPacket.InteractionAtLocationAction(hand, interactionLocation));
     }
 
-    private ServerboundInteractPacket(FriendlyByteBuf p_179602_) {
-        this.entityId = p_179602_.readVarInt();
-        ServerboundInteractPacket.ActionType serverboundinteractpacket$actiontype = p_179602_.readEnum(ServerboundInteractPacket.ActionType.class);
-        this.action = serverboundinteractpacket$actiontype.reader.apply(p_179602_);
-        this.usingSecondaryAction = p_179602_.readBoolean();
+    private ServerboundInteractPacket(FriendlyByteBuf buffer) {
+        this.entityId = buffer.readVarInt();
+        ServerboundInteractPacket.ActionType serverboundinteractpacket$actiontype = buffer.readEnum(ServerboundInteractPacket.ActionType.class);
+        this.action = serverboundinteractpacket$actiontype.reader.apply(buffer);
+        this.usingSecondaryAction = buffer.readBoolean();
     }
 
-    private void write(FriendlyByteBuf p_134058_) {
-        p_134058_.writeVarInt(this.entityId);
-        p_134058_.writeEnum(this.action.getType());
-        this.action.write(p_134058_);
-        p_134058_.writeBoolean(this.usingSecondaryAction);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.entityId);
+        buffer.writeEnum(this.action.getType());
+        this.action.write(buffer);
+        buffer.writeBoolean(this.usingSecondaryAction);
     }
 
     @Override
@@ -71,29 +74,32 @@ public class ServerboundInteractPacket implements Packet<ServerGamePacketListene
         return GamePacketTypes.SERVERBOUND_INTERACT;
     }
 
-    public void handle(ServerGamePacketListener p_134055_) {
-        p_134055_.handleInteract(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleInteract(this);
     }
 
     @Nullable
-    public Entity getTarget(ServerLevel p_179604_) {
-        return p_179604_.getEntityOrPart(this.entityId);
+    public Entity getTarget(ServerLevel level) {
+        return level.getEntityOrPart(this.entityId);
     }
 
     public boolean isUsingSecondaryAction() {
         return this.usingSecondaryAction;
     }
 
-    public void dispatch(ServerboundInteractPacket.Handler p_179618_) {
-        this.action.dispatch(p_179618_);
+    public void dispatch(ServerboundInteractPacket.Handler handler) {
+        this.action.dispatch(handler);
     }
 
     interface Action {
         ServerboundInteractPacket.ActionType getType();
 
-        void dispatch(ServerboundInteractPacket.Handler p_179626_);
+        void dispatch(ServerboundInteractPacket.Handler handler);
 
-        void write(FriendlyByteBuf p_179625_);
+        void write(FriendlyByteBuf buffer);
     }
 
     static enum ActionType {
@@ -103,15 +109,15 @@ public class ServerboundInteractPacket implements Packet<ServerGamePacketListene
 
         final Function<FriendlyByteBuf, ServerboundInteractPacket.Action> reader;
 
-        private ActionType(Function<FriendlyByteBuf, ServerboundInteractPacket.Action> p_179636_) {
-            this.reader = p_179636_;
+        private ActionType(Function<FriendlyByteBuf, ServerboundInteractPacket.Action> reader) {
+            this.reader = reader;
         }
     }
 
     public interface Handler {
-        void onInteraction(InteractionHand p_179643_);
+        void onInteraction(InteractionHand hand);
 
-        void onInteraction(InteractionHand p_179644_, Vec3 p_179645_);
+        void onInteraction(InteractionHand hand, Vec3 interactionLocation);
 
         void onAttack();
     }
@@ -119,12 +125,12 @@ public class ServerboundInteractPacket implements Packet<ServerGamePacketListene
     static class InteractionAction implements ServerboundInteractPacket.Action {
         private final InteractionHand hand;
 
-        InteractionAction(InteractionHand p_179648_) {
-            this.hand = p_179648_;
+        InteractionAction(InteractionHand hand) {
+            this.hand = hand;
         }
 
-        private InteractionAction(FriendlyByteBuf p_179650_) {
-            this.hand = p_179650_.readEnum(InteractionHand.class);
+        private InteractionAction(FriendlyByteBuf buffer) {
+            this.hand = buffer.readEnum(InteractionHand.class);
         }
 
         @Override
@@ -133,13 +139,13 @@ public class ServerboundInteractPacket implements Packet<ServerGamePacketListene
         }
 
         @Override
-        public void dispatch(ServerboundInteractPacket.Handler p_179655_) {
-            p_179655_.onInteraction(this.hand);
+        public void dispatch(ServerboundInteractPacket.Handler handler) {
+            handler.onInteraction(this.hand);
         }
 
         @Override
-        public void write(FriendlyByteBuf p_179653_) {
-            p_179653_.writeEnum(this.hand);
+        public void write(FriendlyByteBuf buffer) {
+            buffer.writeEnum(this.hand);
         }
     }
 
@@ -147,14 +153,14 @@ public class ServerboundInteractPacket implements Packet<ServerGamePacketListene
         private final InteractionHand hand;
         private final Vec3 location;
 
-        InteractionAtLocationAction(InteractionHand p_179659_, Vec3 p_179660_) {
-            this.hand = p_179659_;
-            this.location = p_179660_;
+        InteractionAtLocationAction(InteractionHand hand, Vec3 location) {
+            this.hand = hand;
+            this.location = location;
         }
 
-        private InteractionAtLocationAction(FriendlyByteBuf p_179662_) {
-            this.location = new Vec3((double)p_179662_.readFloat(), (double)p_179662_.readFloat(), (double)p_179662_.readFloat());
-            this.hand = p_179662_.readEnum(InteractionHand.class);
+        private InteractionAtLocationAction(FriendlyByteBuf buffer) {
+            this.location = new Vec3((double)buffer.readFloat(), (double)buffer.readFloat(), (double)buffer.readFloat());
+            this.hand = buffer.readEnum(InteractionHand.class);
         }
 
         @Override
@@ -163,16 +169,16 @@ public class ServerboundInteractPacket implements Packet<ServerGamePacketListene
         }
 
         @Override
-        public void dispatch(ServerboundInteractPacket.Handler p_179667_) {
-            p_179667_.onInteraction(this.hand, this.location);
+        public void dispatch(ServerboundInteractPacket.Handler handler) {
+            handler.onInteraction(this.hand, this.location);
         }
 
         @Override
-        public void write(FriendlyByteBuf p_179665_) {
-            p_179665_.writeFloat((float)this.location.x);
-            p_179665_.writeFloat((float)this.location.y);
-            p_179665_.writeFloat((float)this.location.z);
-            p_179665_.writeEnum(this.hand);
+        public void write(FriendlyByteBuf buffer) {
+            buffer.writeFloat((float)this.location.x);
+            buffer.writeFloat((float)this.location.y);
+            buffer.writeFloat((float)this.location.z);
+            buffer.writeEnum(this.hand);
         }
     }
 }

@@ -26,14 +26,14 @@ public class AdvancementProvider implements DataProvider {
     private final List<AdvancementSubProvider> subProviders;
     private final CompletableFuture<HolderLookup.Provider> registries;
 
-    public AdvancementProvider(PackOutput p_256529_, CompletableFuture<HolderLookup.Provider> p_255722_, List<AdvancementSubProvider> p_255883_) {
-        this.pathProvider = p_256529_.createRegistryElementsPathProvider(Registries.ADVANCEMENT);
-        this.subProviders = p_255883_;
-        this.registries = p_255722_;
+    public AdvancementProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> registries, List<AdvancementSubProvider> subProviders) {
+        this.pathProvider = output.createRegistryElementsPathProvider(Registries.ADVANCEMENT);
+        this.subProviders = subProviders;
+        this.registries = registries;
     }
 
     @Override
-    public CompletableFuture<?> run(CachedOutput p_254268_) {
+    public CompletableFuture<?> run(CachedOutput output) {
         return this.registries.thenCompose(p_323115_ -> {
             Set<ResourceLocation> set = new HashSet<>();
             List<CompletableFuture<?>> list = new ArrayList<>();
@@ -42,7 +42,7 @@ public class AdvancementProvider implements DataProvider {
                     throw new IllegalStateException("Duplicate advancement " + p_339356_.id());
                 } else {
                     Path path = this.pathProvider.json(p_339356_.id());
-                    list.add(DataProvider.saveStable(p_254268_, p_323115_, Advancement.CODEC, p_339356_.value(), path));// TODO: make conditional
+                    list.add(DataProvider.saveStable(output, p_323115_, Advancement.CODEC, p_339356_.value(), path));// TODO: make conditional
                 }
             };
 

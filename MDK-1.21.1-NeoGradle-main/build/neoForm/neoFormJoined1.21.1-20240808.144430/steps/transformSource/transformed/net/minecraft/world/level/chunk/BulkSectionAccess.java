@@ -16,22 +16,22 @@ public class BulkSectionAccess implements AutoCloseable {
     private LevelChunkSection lastSection;
     private long lastSectionKey;
 
-    public BulkSectionAccess(LevelAccessor p_156103_) {
-        this.level = p_156103_;
+    public BulkSectionAccess(LevelAccessor level) {
+        this.level = level;
     }
 
     @Nullable
-    public LevelChunkSection getSection(BlockPos p_156105_) {
-        int i = this.level.getSectionIndex(p_156105_.getY());
+    public LevelChunkSection getSection(BlockPos pos) {
+        int i = this.level.getSectionIndex(pos.getY());
         if (i >= 0 && i < this.level.getSectionsCount()) {
-            long j = SectionPos.asLong(p_156105_);
+            long j = SectionPos.asLong(pos);
             if (this.lastSection == null || this.lastSectionKey != j) {
                 this.lastSection = this.acquiredSections
                     .computeIfAbsent(
                         j,
                         p_156109_ -> {
                             ChunkAccess chunkaccess = this.level
-                                .getChunk(SectionPos.blockToSectionCoord(p_156105_.getX()), SectionPos.blockToSectionCoord(p_156105_.getZ()));
+                                .getChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()));
                             LevelChunkSection levelchunksection = chunkaccess.getSection(i);
                             levelchunksection.acquire();
                             return levelchunksection;
@@ -46,14 +46,14 @@ public class BulkSectionAccess implements AutoCloseable {
         }
     }
 
-    public BlockState getBlockState(BlockPos p_156111_) {
-        LevelChunkSection levelchunksection = this.getSection(p_156111_);
+    public BlockState getBlockState(BlockPos pos) {
+        LevelChunkSection levelchunksection = this.getSection(pos);
         if (levelchunksection == null) {
             return Blocks.AIR.defaultBlockState();
         } else {
-            int i = SectionPos.sectionRelative(p_156111_.getX());
-            int j = SectionPos.sectionRelative(p_156111_.getY());
-            int k = SectionPos.sectionRelative(p_156111_.getZ());
+            int i = SectionPos.sectionRelative(pos.getX());
+            int j = SectionPos.sectionRelative(pos.getY());
+            int k = SectionPos.sectionRelative(pos.getZ());
             return levelchunksection.getBlockState(i, j, k);
         }
     }

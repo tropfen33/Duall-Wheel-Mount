@@ -16,59 +16,59 @@ public record ScreenRectangle(ScreenPosition position, int width, int height) {
         return EMPTY;
     }
 
-    public static ScreenRectangle of(ScreenAxis p_265648_, int p_265317_, int p_265685_, int p_265218_, int p_265226_) {
-        return switch (p_265648_) {
-            case HORIZONTAL -> new ScreenRectangle(p_265317_, p_265685_, p_265218_, p_265226_);
-            case VERTICAL -> new ScreenRectangle(p_265685_, p_265317_, p_265226_, p_265218_);
+    public static ScreenRectangle of(ScreenAxis axis, int primaryPosition, int secondaryPosition, int primaryLength, int secondaryLength) {
+        return switch (axis) {
+            case HORIZONTAL -> new ScreenRectangle(primaryPosition, secondaryPosition, primaryLength, secondaryLength);
+            case VERTICAL -> new ScreenRectangle(secondaryPosition, primaryPosition, secondaryLength, primaryLength);
         };
     }
 
-    public ScreenRectangle step(ScreenDirection p_265714_) {
-        return new ScreenRectangle(this.position.step(p_265714_), this.width, this.height);
+    public ScreenRectangle step(ScreenDirection direction) {
+        return new ScreenRectangle(this.position.step(direction), this.width, this.height);
     }
 
-    public int getLength(ScreenAxis p_265463_) {
-        return switch (p_265463_) {
+    public int getLength(ScreenAxis axis) {
+        return switch (axis) {
             case HORIZONTAL -> this.width;
             case VERTICAL -> this.height;
         };
     }
 
-    public int getBoundInDirection(ScreenDirection p_265778_) {
-        ScreenAxis screenaxis = p_265778_.getAxis();
-        return p_265778_.isPositive() ? this.position.getCoordinate(screenaxis) + this.getLength(screenaxis) - 1 : this.position.getCoordinate(screenaxis);
+    public int getBoundInDirection(ScreenDirection direction) {
+        ScreenAxis screenaxis = direction.getAxis();
+        return direction.isPositive() ? this.position.getCoordinate(screenaxis) + this.getLength(screenaxis) - 1 : this.position.getCoordinate(screenaxis);
     }
 
-    public ScreenRectangle getBorder(ScreenDirection p_265704_) {
-        int i = this.getBoundInDirection(p_265704_);
-        ScreenAxis screenaxis = p_265704_.getAxis().orthogonal();
+    public ScreenRectangle getBorder(ScreenDirection direction) {
+        int i = this.getBoundInDirection(direction);
+        ScreenAxis screenaxis = direction.getAxis().orthogonal();
         int j = this.getBoundInDirection(screenaxis.getNegative());
         int k = this.getLength(screenaxis);
-        return of(p_265704_.getAxis(), i, j, 1, k).step(p_265704_);
+        return of(direction.getAxis(), i, j, 1, k).step(direction);
     }
 
-    public boolean overlaps(ScreenRectangle p_265652_) {
-        return this.overlapsInAxis(p_265652_, ScreenAxis.HORIZONTAL) && this.overlapsInAxis(p_265652_, ScreenAxis.VERTICAL);
+    public boolean overlaps(ScreenRectangle rectangle) {
+        return this.overlapsInAxis(rectangle, ScreenAxis.HORIZONTAL) && this.overlapsInAxis(rectangle, ScreenAxis.VERTICAL);
     }
 
-    public boolean overlapsInAxis(ScreenRectangle p_265306_, ScreenAxis p_265340_) {
-        int i = this.getBoundInDirection(p_265340_.getNegative());
-        int j = p_265306_.getBoundInDirection(p_265340_.getNegative());
-        int k = this.getBoundInDirection(p_265340_.getPositive());
-        int l = p_265306_.getBoundInDirection(p_265340_.getPositive());
+    public boolean overlapsInAxis(ScreenRectangle rectangle, ScreenAxis axis) {
+        int i = this.getBoundInDirection(axis.getNegative());
+        int j = rectangle.getBoundInDirection(axis.getNegative());
+        int k = this.getBoundInDirection(axis.getPositive());
+        int l = rectangle.getBoundInDirection(axis.getPositive());
         return Math.max(i, j) <= Math.min(k, l);
     }
 
-    public int getCenterInAxis(ScreenAxis p_265694_) {
-        return (this.getBoundInDirection(p_265694_.getPositive()) + this.getBoundInDirection(p_265694_.getNegative())) / 2;
+    public int getCenterInAxis(ScreenAxis axis) {
+        return (this.getBoundInDirection(axis.getPositive()) + this.getBoundInDirection(axis.getNegative())) / 2;
     }
 
     @Nullable
-    public ScreenRectangle intersection(ScreenRectangle p_276058_) {
-        int i = Math.max(this.left(), p_276058_.left());
-        int j = Math.max(this.top(), p_276058_.top());
-        int k = Math.min(this.right(), p_276058_.right());
-        int l = Math.min(this.bottom(), p_276058_.bottom());
+    public ScreenRectangle intersection(ScreenRectangle rectangle) {
+        int i = Math.max(this.left(), rectangle.left());
+        int j = Math.max(this.top(), rectangle.top());
+        int k = Math.min(this.right(), rectangle.right());
+        int l = Math.min(this.bottom(), rectangle.bottom());
         return i < k && j < l ? new ScreenRectangle(i, j, k - i, l - j) : null;
     }
 
@@ -88,7 +88,7 @@ public record ScreenRectangle(ScreenPosition position, int width, int height) {
         return this.position.x() + this.width;
     }
 
-    public boolean containsPoint(int p_332787_, int p_332731_) {
-        return p_332787_ >= this.left() && p_332787_ < this.right() && p_332731_ >= this.top() && p_332731_ < this.bottom();
+    public boolean containsPoint(int x, int y) {
+        return x >= this.left() && x < this.right() && y >= this.top() && y < this.bottom();
     }
 }

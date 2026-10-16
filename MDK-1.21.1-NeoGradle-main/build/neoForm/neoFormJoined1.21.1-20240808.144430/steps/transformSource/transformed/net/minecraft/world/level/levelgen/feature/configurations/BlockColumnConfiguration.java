@@ -21,12 +21,12 @@ public record BlockColumnConfiguration(List<BlockColumnConfiguration.Layer> laye
                 .apply(p_191222_, BlockColumnConfiguration::new)
     );
 
-    public static BlockColumnConfiguration.Layer layer(IntProvider p_191219_, BlockStateProvider p_191220_) {
-        return new BlockColumnConfiguration.Layer(p_191219_, p_191220_);
+    public static BlockColumnConfiguration.Layer layer(IntProvider height, BlockStateProvider state) {
+        return new BlockColumnConfiguration.Layer(height, state);
     }
 
-    public static BlockColumnConfiguration simple(IntProvider p_191225_, BlockStateProvider p_191226_) {
-        return new BlockColumnConfiguration(List.of(layer(p_191225_, p_191226_)), Direction.UP, BlockPredicate.ONLY_IN_AIR_PREDICATE, false);
+    public static BlockColumnConfiguration simple(IntProvider height, BlockStateProvider state) {
+        return new BlockColumnConfiguration(List.of(layer(height, state)), Direction.UP, BlockPredicate.ONLY_IN_AIR_PREDICATE, false);
     }
 
     public static record Layer(IntProvider height, BlockStateProvider state) {

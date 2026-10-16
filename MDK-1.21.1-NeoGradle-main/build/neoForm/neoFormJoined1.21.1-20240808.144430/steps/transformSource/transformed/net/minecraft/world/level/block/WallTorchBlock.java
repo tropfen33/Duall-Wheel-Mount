@@ -49,8 +49,8 @@ public class WallTorchBlock extends TorchBlock {
         return CODEC;
     }
 
-    public WallTorchBlock(SimpleParticleType p_304467_, BlockBehaviour.Properties p_58123_) {
-        super(p_304467_, p_58123_);
+    public WallTorchBlock(SimpleParticleType flameParticle, BlockBehaviour.Properties properties) {
+        super(flameParticle, properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
@@ -60,32 +60,32 @@ public class WallTorchBlock extends TorchBlock {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_58152_, BlockGetter p_58153_, BlockPos p_58154_, CollisionContext p_58155_) {
-        return getShape(p_58152_);
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return getShape(state);
     }
 
-    public static VoxelShape getShape(BlockState p_58157_) {
-        return AABBS.get(p_58157_.getValue(FACING));
+    public static VoxelShape getShape(BlockState state) {
+        return AABBS.get(state.getValue(FACING));
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_58133_, LevelReader p_58134_, BlockPos p_58135_) {
-        return canSurvive(p_58134_, p_58135_, p_58133_.getValue(FACING));
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        return canSurvive(level, pos, state.getValue(FACING));
     }
 
-    public static boolean canSurvive(LevelReader p_320074_, BlockPos p_320860_, Direction p_320326_) {
-        BlockPos blockpos = p_320860_.relative(p_320326_.getOpposite());
-        BlockState blockstate = p_320074_.getBlockState(blockpos);
-        return blockstate.isFaceSturdy(p_320074_, blockpos, p_320326_);
+    public static boolean canSurvive(LevelReader level, BlockPos pos, Direction facing) {
+        BlockPos blockpos = pos.relative(facing.getOpposite());
+        BlockState blockstate = level.getBlockState(blockpos);
+        return blockstate.isFaceSturdy(level, blockpos, facing);
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_58126_) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState blockstate = this.defaultBlockState();
-        LevelReader levelreader = p_58126_.getLevel();
-        BlockPos blockpos = p_58126_.getClickedPos();
-        Direction[] adirection = p_58126_.getNearestLookingDirections();
+        LevelReader levelreader = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
+        Direction[] adirection = context.getNearestLookingDirections();
 
         for (Direction direction : adirection) {
             if (direction.getAxis().isHorizontal()) {
@@ -100,40 +100,54 @@ public class WallTorchBlock extends TorchBlock {
         return null;
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_58143_, Direction p_58144_, BlockState p_58145_, LevelAccessor p_58146_, BlockPos p_58147_, BlockPos p_58148_) {
-        return p_58144_.getOpposite() == p_58143_.getValue(FACING) && !p_58143_.canSurvive(p_58146_, p_58147_) ? Blocks.AIR.defaultBlockState() : p_58143_;
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return facing.getOpposite() == state.getValue(FACING) && !state.canSurvive(level, currentPos) ? Blocks.AIR.defaultBlockState() : state;
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_222660_, Level p_222661_, BlockPos p_222662_, RandomSource p_222663_) {
-        Direction direction = p_222660_.getValue(FACING);
-        double d0 = (double)p_222662_.getX() + 0.5;
-        double d1 = (double)p_222662_.getY() + 0.7;
-        double d2 = (double)p_222662_.getZ() + 0.5;
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        Direction direction = state.getValue(FACING);
+        double d0 = (double)pos.getX() + 0.5;
+        double d1 = (double)pos.getY() + 0.7;
+        double d2 = (double)pos.getZ() + 0.5;
         double d3 = 0.22;
         double d4 = 0.27;
         Direction direction1 = direction.getOpposite();
-        p_222661_.addParticle(
+        level.addParticle(
             ParticleTypes.SMOKE, d0 + 0.27 * (double)direction1.getStepX(), d1 + 0.22, d2 + 0.27 * (double)direction1.getStepZ(), 0.0, 0.0, 0.0
         );
-        p_222661_.addParticle(
+        level.addParticle(
             this.flameParticle, d0 + 0.27 * (double)direction1.getStepX(), d1 + 0.22, d2 + 0.27 * (double)direction1.getStepZ(), 0.0, 0.0, 0.0
         );
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_58140_, Rotation p_58141_) {
-        return p_58140_.setValue(FACING, p_58141_.rotate(p_58140_.getValue(FACING)));
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState mirror(BlockState p_58137_, Mirror p_58138_) {
-        return p_58137_.rotate(p_58138_.getRotation(p_58137_.getValue(FACING)));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_58150_) {
-        p_58150_.add(FACING);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
     }
 }

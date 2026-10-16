@@ -60,77 +60,77 @@ public class Explosion {
     private final ObjectArrayList<BlockPos> toBlow = new ObjectArrayList<>();
     private final Map<Player, Vec3> hitPlayers = Maps.newHashMap();
 
-    public static DamageSource getDefaultDamageSource(Level p_312716_, @Nullable Entity p_312608_) {
-        return p_312716_.damageSources().explosion(p_312608_, getIndirectSourceEntityInternal(p_312608_));
+    public static DamageSource getDefaultDamageSource(Level level, @Nullable Entity source) {
+        return level.damageSources().explosion(source, getIndirectSourceEntityInternal(source));
     }
 
     public Explosion(
-        Level p_46051_,
-        @Nullable Entity p_46052_,
-        double p_46055_,
-        double p_46056_,
-        double p_46057_,
-        float p_46058_,
-        List<BlockPos> p_312600_,
-        Explosion.BlockInteraction p_46060_,
-        ParticleOptions p_312560_,
-        ParticleOptions p_312844_,
-        Holder<SoundEvent> p_320054_
+        Level level,
+        @Nullable Entity source,
+        double x,
+        double y,
+        double z,
+        float radius,
+        List<BlockPos> toBlow,
+        Explosion.BlockInteraction blockInteraction,
+        ParticleOptions smallExplosionParticles,
+        ParticleOptions largeExplosionParticles,
+        Holder<SoundEvent> explosionSound
     ) {
         this(
-            p_46051_,
-            p_46052_,
-            getDefaultDamageSource(p_46051_, p_46052_),
+            level,
+            source,
+            getDefaultDamageSource(level, source),
             null,
-            p_46055_,
-            p_46056_,
-            p_46057_,
-            p_46058_,
+            x,
+            y,
+            z,
+            radius,
             false,
-            p_46060_,
-            p_312560_,
-            p_312844_,
-            p_320054_
+            blockInteraction,
+            smallExplosionParticles,
+            largeExplosionParticles,
+            explosionSound
         );
-        this.toBlow.addAll(p_312600_);
+        this.toBlow.addAll(toBlow);
     }
 
     public Explosion(
-        Level p_46041_,
-        @Nullable Entity p_46042_,
-        double p_46043_,
-        double p_46044_,
-        double p_46045_,
-        float p_46046_,
-        boolean p_46047_,
-        Explosion.BlockInteraction p_46048_,
-        List<BlockPos> p_46049_
+        Level level,
+        @Nullable Entity source,
+        double x,
+        double y,
+        double z,
+        float radius,
+        boolean fire,
+        Explosion.BlockInteraction blockInteraction,
+        List<BlockPos> positions
     ) {
-        this(p_46041_, p_46042_, p_46043_, p_46044_, p_46045_, p_46046_, p_46047_, p_46048_);
-        this.toBlow.addAll(p_46049_);
+        this(level, source, x, y, z, radius, fire, blockInteraction);
+        this.toBlow.addAll(positions);
     }
 
     public Explosion(
-        Level p_46032_,
-        @Nullable Entity p_46033_,
-        double p_46034_,
-        double p_46035_,
-        double p_46036_,
-        float p_46037_,
-        boolean p_46038_,
-        Explosion.BlockInteraction p_46039_
+        Level level,
+        @Nullable Entity source,
+        double x,
+        double y,
+        double z,
+        float radius,
+        boolean fire,
+        Explosion.BlockInteraction blockInteraction
     ) {
         this(
-            p_46032_,
-            p_46033_,
-            getDefaultDamageSource(p_46032_, p_46033_),
+            level,
+            source,
+            getDefaultDamageSource(level, source),
             null,
-            p_46034_,
-            p_46035_,
-            p_46036_,
-            p_46037_,
-            p_46038_,
-            p_46039_,
+            x,
+            y,
+            z,
+            radius,
+            fire,
+            blockInteraction,
             ParticleTypes.EXPLOSION,
             ParticleTypes.EXPLOSION_EMITTER,
             SoundEvents.GENERIC_EXPLODE
@@ -138,41 +138,41 @@ public class Explosion {
     }
 
     public Explosion(
-        Level p_46024_,
-        @Nullable Entity p_46025_,
-        @Nullable DamageSource p_312268_,
-        @Nullable ExplosionDamageCalculator p_312205_,
-        double p_46026_,
-        double p_46027_,
-        double p_46028_,
-        float p_46029_,
-        boolean p_312333_,
-        Explosion.BlockInteraction p_312294_,
-        ParticleOptions p_312158_,
-        ParticleOptions p_311904_,
-        Holder<SoundEvent> p_320270_
+        Level level,
+        @Nullable Entity source,
+        @Nullable DamageSource damageSource,
+        @Nullable ExplosionDamageCalculator damageCalculator,
+        double x,
+        double y,
+        double z,
+        float radius,
+        boolean fire,
+        Explosion.BlockInteraction blockInteraction,
+        ParticleOptions smallExplosionParticles,
+        ParticleOptions largeExplosionParticles,
+        Holder<SoundEvent> explosionSound
     ) {
-        this.level = p_46024_;
-        this.source = p_46025_;
-        this.radius = p_46029_;
-        this.x = p_46026_;
-        this.y = p_46027_;
-        this.z = p_46028_;
-        this.fire = p_312333_;
-        this.blockInteraction = p_312294_;
-        this.damageSource = p_312268_ == null ? p_46024_.damageSources().explosion(this) : p_312268_;
-        this.damageCalculator = p_312205_ == null ? this.makeDamageCalculator(p_46025_) : p_312205_;
-        this.smallExplosionParticles = p_312158_;
-        this.largeExplosionParticles = p_311904_;
-        this.explosionSound = p_320270_;
+        this.level = level;
+        this.source = source;
+        this.radius = radius;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.fire = fire;
+        this.blockInteraction = blockInteraction;
+        this.damageSource = damageSource == null ? level.damageSources().explosion(this) : damageSource;
+        this.damageCalculator = damageCalculator == null ? this.makeDamageCalculator(source) : damageCalculator;
+        this.smallExplosionParticles = smallExplosionParticles;
+        this.largeExplosionParticles = largeExplosionParticles;
+        this.explosionSound = explosionSound;
     }
 
-    private ExplosionDamageCalculator makeDamageCalculator(@Nullable Entity p_46063_) {
-        return (ExplosionDamageCalculator)(p_46063_ == null ? EXPLOSION_DAMAGE_CALCULATOR : new EntityBasedExplosionDamageCalculator(p_46063_));
+    private ExplosionDamageCalculator makeDamageCalculator(@Nullable Entity entity) {
+        return (ExplosionDamageCalculator)(entity == null ? EXPLOSION_DAMAGE_CALCULATOR : new EntityBasedExplosionDamageCalculator(entity));
     }
 
-    public static float getSeenPercent(Vec3 p_46065_, Entity p_46066_) {
-        AABB aabb = p_46066_.getBoundingBox();
+    public static float getSeenPercent(Vec3 explosionVector, Entity entity) {
+        AABB aabb = entity.getBoundingBox();
         double d0 = 1.0 / ((aabb.maxX - aabb.minX) * 2.0 + 1.0);
         double d1 = 1.0 / ((aabb.maxY - aabb.minY) * 2.0 + 1.0);
         double d2 = 1.0 / ((aabb.maxZ - aabb.minZ) * 2.0 + 1.0);
@@ -189,7 +189,7 @@ public class Explosion {
                         double d9 = Mth.lerp(d6, aabb.minY, aabb.maxY);
                         double d10 = Mth.lerp(d7, aabb.minZ, aabb.maxZ);
                         Vec3 vec3 = new Vec3(d8 + d3, d9, d10 + d4);
-                        if (p_46066_.level().clip(new ClipContext(vec3, p_46065_, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p_46066_)).getType()
+                        if (entity.level().clip(new ClipContext(vec3, explosionVector, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity)).getType()
                             == HitResult.Type.MISS) {
                             i++;
                         }
@@ -316,7 +316,10 @@ public class Explosion {
         }
     }
 
-    public void finalizeExplosion(boolean p_46076_) {
+    /**
+     * Does the second part of the explosion (sound, particles, drop spawn)
+     */
+    public void finalizeExplosion(boolean spawnParticles) {
         if (this.level.isClientSide) {
             this.level
                 .playLocalSound(
@@ -332,7 +335,7 @@ public class Explosion {
         }
 
         boolean flag = this.interactsWithBlocks();
-        if (p_46076_) {
+        if (spawnParticles) {
             ParticleOptions particleoptions;
             if (!(this.radius < 2.0F) && flag) {
                 particleoptions = this.largeExplosionParticles;
@@ -372,19 +375,19 @@ public class Explosion {
         }
     }
 
-    private static void addOrAppendStack(List<Pair<ItemStack, BlockPos>> p_312455_, ItemStack p_312913_, BlockPos p_312738_) {
-        for (int i = 0; i < p_312455_.size(); i++) {
-            Pair<ItemStack, BlockPos> pair = p_312455_.get(i);
+    private static void addOrAppendStack(List<Pair<ItemStack, BlockPos>> drops, ItemStack stack, BlockPos pos) {
+        for (int i = 0; i < drops.size(); i++) {
+            Pair<ItemStack, BlockPos> pair = drops.get(i);
             ItemStack itemstack = pair.getFirst();
-            if (ItemEntity.areMergable(itemstack, p_312913_)) {
-                p_312455_.set(i, Pair.of(ItemEntity.merge(itemstack, p_312913_, 16), pair.getSecond()));
-                if (p_312913_.isEmpty()) {
+            if (ItemEntity.areMergable(itemstack, stack)) {
+                drops.set(i, Pair.of(ItemEntity.merge(itemstack, stack, 16), pair.getSecond()));
+                if (stack.isEmpty()) {
                     return;
                 }
             }
         }
 
-        p_312455_.add(Pair.of(p_312913_, p_312738_));
+        drops.add(Pair.of(stack, pos));
     }
 
     public boolean interactsWithBlocks() {
@@ -396,15 +399,15 @@ public class Explosion {
     }
 
     @Nullable
-    private static LivingEntity getIndirectSourceEntityInternal(@Nullable Entity p_312444_) {
-        if (p_312444_ == null) {
+    private static LivingEntity getIndirectSourceEntityInternal(@Nullable Entity source) {
+        if (source == null) {
             return null;
-        } else if (p_312444_ instanceof PrimedTnt primedtnt) {
+        } else if (source instanceof PrimedTnt primedtnt) {
             return primedtnt.getOwner();
-        } else if (p_312444_ instanceof LivingEntity) {
-            return (LivingEntity)p_312444_;
+        } else if (source instanceof LivingEntity) {
+            return (LivingEntity)source;
         } else {
-            if (p_312444_ instanceof Projectile projectile) {
+            if (source instanceof Projectile projectile) {
                 Entity entity = projectile.getOwner();
                 if (entity instanceof LivingEntity) {
                     return (LivingEntity)entity;

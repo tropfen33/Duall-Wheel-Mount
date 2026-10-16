@@ -13,13 +13,13 @@ public class Xoroshiro128PlusPlus {
             p_287687_ -> LongStream.of(p_287687_.seedLo, p_287687_.seedHi)
         );
 
-    public Xoroshiro128PlusPlus(RandomSupport.Seed128bit p_190095_) {
-        this(p_190095_.seedLo(), p_190095_.seedHi());
+    public Xoroshiro128PlusPlus(RandomSupport.Seed128bit seed) {
+        this(seed.seedLo(), seed.seedHi());
     }
 
-    public Xoroshiro128PlusPlus(long p_190092_, long p_190093_) {
-        this.seedLo = p_190092_;
-        this.seedHi = p_190093_;
+    public Xoroshiro128PlusPlus(long seedLo, long seedHi) {
+        this.seedLo = seedLo;
+        this.seedHi = seedHi;
         if ((this.seedLo | this.seedHi) == 0L) {
             this.seedLo = -7046029254386353131L;
             this.seedHi = 7640891576956012809L;

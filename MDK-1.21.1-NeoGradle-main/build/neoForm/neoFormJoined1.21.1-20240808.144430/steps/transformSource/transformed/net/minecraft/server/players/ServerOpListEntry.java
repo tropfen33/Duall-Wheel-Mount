@@ -9,16 +9,16 @@ public class ServerOpListEntry extends StoredUserEntry<GameProfile> {
     private final int level;
     private final boolean bypassesPlayerLimit;
 
-    public ServerOpListEntry(GameProfile p_11360_, int p_11361_, boolean p_11362_) {
-        super(p_11360_);
-        this.level = p_11361_;
-        this.bypassesPlayerLimit = p_11362_;
+    public ServerOpListEntry(GameProfile user, int level, boolean bypassesPlayerLimit) {
+        super(user);
+        this.level = level;
+        this.bypassesPlayerLimit = bypassesPlayerLimit;
     }
 
-    public ServerOpListEntry(JsonObject p_11358_) {
-        super(createGameProfile(p_11358_));
-        this.level = p_11358_.has("level") ? p_11358_.get("level").getAsInt() : 0;
-        this.bypassesPlayerLimit = p_11358_.has("bypassesPlayerLimit") && p_11358_.get("bypassesPlayerLimit").getAsBoolean();
+    public ServerOpListEntry(JsonObject entryData) {
+        super(createGameProfile(entryData));
+        this.level = entryData.has("level") ? entryData.get("level").getAsInt() : 0;
+        this.bypassesPlayerLimit = entryData.has("bypassesPlayerLimit") && entryData.get("bypassesPlayerLimit").getAsBoolean();
     }
 
     public int getLevel() {
@@ -30,19 +30,19 @@ public class ServerOpListEntry extends StoredUserEntry<GameProfile> {
     }
 
     @Override
-    protected void serialize(JsonObject p_11365_) {
+    protected void serialize(JsonObject data) {
         if (this.getUser() != null) {
-            p_11365_.addProperty("uuid", this.getUser().getId().toString());
-            p_11365_.addProperty("name", this.getUser().getName());
-            p_11365_.addProperty("level", this.level);
-            p_11365_.addProperty("bypassesPlayerLimit", this.bypassesPlayerLimit);
+            data.addProperty("uuid", this.getUser().getId().toString());
+            data.addProperty("name", this.getUser().getName());
+            data.addProperty("level", this.level);
+            data.addProperty("bypassesPlayerLimit", this.bypassesPlayerLimit);
         }
     }
 
     @Nullable
-    private static GameProfile createGameProfile(JsonObject p_11368_) {
-        if (p_11368_.has("uuid") && p_11368_.has("name")) {
-            String s = p_11368_.get("uuid").getAsString();
+    private static GameProfile createGameProfile(JsonObject profileData) {
+        if (profileData.has("uuid") && profileData.has("name")) {
+            String s = profileData.get("uuid").getAsString();
 
             UUID uuid;
             try {
@@ -51,7 +51,7 @@ public class ServerOpListEntry extends StoredUserEntry<GameProfile> {
                 return null;
             }
 
-            return new GameProfile(uuid, p_11368_.get("name").getAsString());
+            return new GameProfile(uuid, profileData.get("name").getAsString());
         } else {
             return null;
         }

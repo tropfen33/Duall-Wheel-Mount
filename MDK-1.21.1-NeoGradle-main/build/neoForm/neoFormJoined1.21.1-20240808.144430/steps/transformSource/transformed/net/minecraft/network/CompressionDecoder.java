@@ -9,6 +9,11 @@ import java.util.List;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
+/**
+ * Handles decompression of network traffic.
+ *
+ * @see Connection#setupCompression
+ */
 public class CompressionDecoder extends ByteToMessageDecoder {
     public static final int MAXIMUM_COMPRESSED_LENGTH = 2097152;
     public static final int MAXIMUM_UNCOMPRESSED_LENGTH = 8388608;
@@ -16,18 +21,18 @@ public class CompressionDecoder extends ByteToMessageDecoder {
     private int threshold;
     private boolean validateDecompressed;
 
-    public CompressionDecoder(int p_182675_, boolean p_182676_) {
-        this.threshold = p_182675_;
-        this.validateDecompressed = p_182676_;
+    public CompressionDecoder(int threshold, boolean validateDecompressed) {
+        this.threshold = threshold;
+        this.validateDecompressed = validateDecompressed;
         this.inflater = new Inflater();
     }
 
     @Override
-    protected void decode(ChannelHandlerContext p_129441_, ByteBuf p_129442_, List<Object> p_129443_) throws Exception {
-        if (p_129442_.readableBytes() != 0) {
-            int i = VarInt.read(p_129442_);
+    protected void decode(ChannelHandlerContext context, ByteBuf in, List<Object> out) throws Exception {
+        if (in.readableBytes() != 0) {
+            int i = VarInt.read(in);
             if (i == 0) {
-                p_129443_.add(p_129442_.readBytes(p_129442_.readableBytes()));
+                out.add(in.readBytes(in.readableBytes()));
             } else {
                 if (this.validateDecompressed) {
                     if (i < this.threshold) {
@@ -39,39 +44,39 @@ public class CompressionDecoder extends ByteToMessageDecoder {
                     }
                 }
 
-                this.setupInflaterInput(p_129442_);
-                ByteBuf bytebuf = this.inflate(p_129441_, i);
+                this.setupInflaterInput(in);
+                ByteBuf bytebuf = this.inflate(context, i);
                 this.inflater.reset();
-                p_129443_.add(bytebuf);
+                out.add(bytebuf);
             }
         }
     }
 
-    private void setupInflaterInput(ByteBuf p_296004_) {
+    private void setupInflaterInput(ByteBuf buffer) {
         ByteBuffer bytebuffer;
-        if (p_296004_.nioBufferCount() > 0) {
-            bytebuffer = p_296004_.nioBuffer();
-            p_296004_.skipBytes(p_296004_.readableBytes());
+        if (buffer.nioBufferCount() > 0) {
+            bytebuffer = buffer.nioBuffer();
+            buffer.skipBytes(buffer.readableBytes());
         } else {
-            bytebuffer = ByteBuffer.allocateDirect(p_296004_.readableBytes());
-            p_296004_.readBytes(bytebuffer);
+            bytebuffer = ByteBuffer.allocateDirect(buffer.readableBytes());
+            buffer.readBytes(bytebuffer);
             bytebuffer.flip();
         }
 
         this.inflater.setInput(bytebuffer);
     }
 
-    private ByteBuf inflate(ChannelHandlerContext p_295791_, int p_295281_) throws DataFormatException {
-        ByteBuf bytebuf = p_295791_.alloc().directBuffer(p_295281_);
+    private ByteBuf inflate(ChannelHandlerContext context, int size) throws DataFormatException {
+        ByteBuf bytebuf = context.alloc().directBuffer(size);
 
         try {
-            ByteBuffer bytebuffer = bytebuf.internalNioBuffer(0, p_295281_);
+            ByteBuffer bytebuffer = bytebuf.internalNioBuffer(0, size);
             int i = bytebuffer.position();
             this.inflater.inflate(bytebuffer);
             int j = bytebuffer.position() - i;
-            if (j != p_295281_) {
+            if (j != size) {
                 throw new DecoderException(
-                    "Badly compressed packet - actual length of uncompressed payload " + j + " is does not match declared size " + p_295281_
+                    "Badly compressed packet - actual length of uncompressed payload " + j + " is does not match declared size " + size
                 );
             } else {
                 bytebuf.writerIndex(bytebuf.writerIndex() + j);
@@ -83,8 +88,8 @@ public class CompressionDecoder extends ByteToMessageDecoder {
         }
     }
 
-    public void setThreshold(int p_182678_, boolean p_182679_) {
-        this.threshold = p_182678_;
-        this.validateDecompressed = p_182679_;
+    public void setThreshold(int threshold, boolean validateDecompressed) {
+        this.threshold = threshold;
+        this.validateDecompressed = validateDecompressed;
     }
 }

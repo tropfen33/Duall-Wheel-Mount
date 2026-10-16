@@ -20,8 +20,8 @@ public class CommandBlockEditScreen extends AbstractCommandBlockEditScreen {
     private boolean conditional;
     private boolean autoexec;
 
-    public CommandBlockEditScreen(CommandBlockEntity p_98382_) {
-        this.autoCommandBlock = p_98382_;
+    public CommandBlockEditScreen(CommandBlockEntity autoCommandBlock) {
+        this.autoCommandBlock = autoCommandBlock;
     }
 
     @Override
@@ -67,12 +67,12 @@ public class CommandBlockEditScreen extends AbstractCommandBlockEditScreen {
         this.enableControls(false);
     }
 
-    private void enableControls(boolean p_169730_) {
-        this.doneButton.active = p_169730_;
-        this.outputButton.active = p_169730_;
-        this.modeButton.active = p_169730_;
-        this.conditionalButton.active = p_169730_;
-        this.autoexecButton.active = p_169730_;
+    private void enableControls(boolean active) {
+        this.doneButton.active = active;
+        this.outputButton.active = active;
+        this.modeButton.active = active;
+        this.conditionalButton.active = active;
+        this.autoexecButton.active = active;
     }
 
     public void updateGui() {
@@ -91,21 +91,21 @@ public class CommandBlockEditScreen extends AbstractCommandBlockEditScreen {
     }
 
     @Override
-    public void resize(Minecraft p_98386_, int p_98387_, int p_98388_) {
-        super.resize(p_98386_, p_98387_, p_98388_);
+    public void resize(Minecraft minecraft, int width, int height) {
+        super.resize(minecraft, width, height);
         this.enableControls(true);
     }
 
     @Override
-    protected void populateAndSendPacket(BaseCommandBlock p_98384_) {
+    protected void populateAndSendPacket(BaseCommandBlock commandBlock) {
         this.minecraft
             .getConnection()
             .send(
                 new ServerboundSetCommandBlockPacket(
-                    BlockPos.containing(p_98384_.getPosition()),
+                    BlockPos.containing(commandBlock.getPosition()),
                     this.commandEdit.getValue(),
                     this.mode,
-                    p_98384_.isTrackOutput(),
+                    commandBlock.isTrackOutput(),
                     this.conditional,
                     this.autoexec
                 )

@@ -10,9 +10,9 @@ public final class SimpleMenuProvider implements MenuProvider {
     private final Component title;
     private final MenuConstructor menuConstructor;
 
-    public SimpleMenuProvider(MenuConstructor p_19202_, Component p_19203_) {
-        this.menuConstructor = p_19202_;
-        this.title = p_19203_;
+    public SimpleMenuProvider(MenuConstructor menuConstructor, Component title) {
+        this.menuConstructor = menuConstructor;
+        this.title = title;
     }
 
     @Override
@@ -21,7 +21,7 @@ public final class SimpleMenuProvider implements MenuProvider {
     }
 
     @Override
-    public AbstractContainerMenu createMenu(int p_19205_, Inventory p_19206_, Player p_19207_) {
-        return this.menuConstructor.createMenu(p_19205_, p_19206_, p_19207_);
+    public AbstractContainerMenu createMenu(int containerId, Inventory playerInventory, Player player) {
+        return this.menuConstructor.createMenu(containerId, playerInventory, player);
     }
 }

@@ -18,9 +18,9 @@ public class EffectsChangedTrigger extends SimpleCriterionTrigger<EffectsChanged
         return EffectsChangedTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_149263_, @Nullable Entity p_149264_) {
-        LootContext lootcontext = p_149264_ != null ? EntityPredicate.createContext(p_149263_, p_149264_) : null;
-        this.trigger(p_149263_, p_149268_ -> p_149268_.matches(p_149263_, lootcontext));
+    public void trigger(ServerPlayer player, @Nullable Entity source) {
+        LootContext lootcontext = source != null ? EntityPredicate.createContext(player, source) : null;
+        this.trigger(player, p_149268_ -> p_149268_.matches(player, lootcontext));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, Optional<MobEffectsPredicate> effects, Optional<ContextAwarePredicate> source)
@@ -34,28 +34,28 @@ public class EffectsChangedTrigger extends SimpleCriterionTrigger<EffectsChanged
                     .apply(p_337355_, EffectsChangedTrigger.TriggerInstance::new)
         );
 
-        public static Criterion<EffectsChangedTrigger.TriggerInstance> hasEffects(MobEffectsPredicate.Builder p_299317_) {
+        public static Criterion<EffectsChangedTrigger.TriggerInstance> hasEffects(MobEffectsPredicate.Builder effects) {
             return CriteriaTriggers.EFFECTS_CHANGED
-                .createCriterion(new EffectsChangedTrigger.TriggerInstance(Optional.empty(), p_299317_.build(), Optional.empty()));
+                .createCriterion(new EffectsChangedTrigger.TriggerInstance(Optional.empty(), effects.build(), Optional.empty()));
         }
 
-        public static Criterion<EffectsChangedTrigger.TriggerInstance> gotEffectsFrom(EntityPredicate.Builder p_300971_) {
+        public static Criterion<EffectsChangedTrigger.TriggerInstance> gotEffectsFrom(EntityPredicate.Builder source) {
             return CriteriaTriggers.EFFECTS_CHANGED
                 .createCriterion(
-                    new EffectsChangedTrigger.TriggerInstance(Optional.empty(), Optional.empty(), Optional.of(EntityPredicate.wrap(p_300971_.build())))
+                    new EffectsChangedTrigger.TriggerInstance(Optional.empty(), Optional.empty(), Optional.of(EntityPredicate.wrap(source.build())))
                 );
         }
 
-        public boolean matches(ServerPlayer p_149275_, @Nullable LootContext p_149276_) {
-            return this.effects.isPresent() && !this.effects.get().matches((LivingEntity)p_149275_)
+        public boolean matches(ServerPlayer player, @Nullable LootContext lootContext) {
+            return this.effects.isPresent() && !this.effects.get().matches((LivingEntity)player)
                 ? false
-                : !this.source.isPresent() || p_149276_ != null && this.source.get().matches(p_149276_);
+                : !this.source.isPresent() || lootContext != null && this.source.get().matches(lootContext);
         }
 
         @Override
-        public void validate(CriterionValidator p_312642_) {
-            SimpleCriterionTrigger.SimpleInstance.super.validate(p_312642_);
-            p_312642_.validateEntity(this.source, ".source");
+        public void validate(CriterionValidator validator) {
+            SimpleCriterionTrigger.SimpleInstance.super.validate(validator);
+            validator.validateEntity(this.source, ".source");
         }
     }
 }

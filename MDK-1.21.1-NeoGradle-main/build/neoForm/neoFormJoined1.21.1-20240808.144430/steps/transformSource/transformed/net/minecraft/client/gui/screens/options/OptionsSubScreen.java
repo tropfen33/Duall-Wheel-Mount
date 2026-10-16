@@ -22,10 +22,10 @@ public abstract class OptionsSubScreen extends Screen {
     protected OptionsList list;
     public final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
 
-    public OptionsSubScreen(Screen p_345104_, Options p_346116_, Component p_344987_) {
-        super(p_344987_);
-        this.lastScreen = p_345104_;
-        this.options = p_346116_;
+    public OptionsSubScreen(Screen lastScreen, Options options, Component title) {
+        super(title);
+        this.lastScreen = lastScreen;
+        this.options = options;
     }
 
     @Override

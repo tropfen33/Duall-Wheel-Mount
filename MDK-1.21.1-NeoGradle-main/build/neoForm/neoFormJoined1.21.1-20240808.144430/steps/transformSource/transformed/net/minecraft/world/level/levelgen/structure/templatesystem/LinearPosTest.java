@@ -23,21 +23,21 @@ public class LinearPosTest extends PosRuleTest {
     private final int minDist;
     private final int maxDist;
 
-    public LinearPosTest(float p_74154_, float p_74155_, int p_74156_, int p_74157_) {
-        if (p_74156_ >= p_74157_) {
-            throw new IllegalArgumentException("Invalid range: [" + p_74156_ + "," + p_74157_ + "]");
+    public LinearPosTest(float minChance, float maxChance, int minDist, int maxDist) {
+        if (minDist >= maxDist) {
+            throw new IllegalArgumentException("Invalid range: [" + minDist + "," + maxDist + "]");
         } else {
-            this.minChance = p_74154_;
-            this.maxChance = p_74155_;
-            this.minDist = p_74156_;
-            this.maxDist = p_74157_;
+            this.minChance = minChance;
+            this.maxChance = maxChance;
+            this.minDist = minDist;
+            this.maxDist = maxDist;
         }
     }
 
     @Override
-    public boolean test(BlockPos p_230296_, BlockPos p_230297_, BlockPos p_230298_, RandomSource p_230299_) {
-        int i = p_230297_.distManhattan(p_230298_);
-        float f = p_230299_.nextFloat();
+    public boolean test(BlockPos localPos, BlockPos relativePos, BlockPos structurePos, RandomSource random) {
+        int i = relativePos.distManhattan(structurePos);
+        float f = random.nextFloat();
         return f <= Mth.clampedLerp(this.minChance, this.maxChance, Mth.inverseLerp((float)i, (float)this.minDist, (float)this.maxDist));
     }
 

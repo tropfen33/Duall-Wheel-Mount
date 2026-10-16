@@ -9,17 +9,22 @@ import net.minecraft.world.level.block.entity.BannerPattern;
 import net.minecraft.world.level.block.entity.BannerPatterns;
 
 public class BannerPatternTagsProvider extends TagsProvider<BannerPattern> {
-    /** @deprecated Forge: Use the {@linkplain #BannerPatternTagsProvider(PackOutput, CompletableFuture, String, net.neoforged.neoforge.common.data.ExistingFileHelper) mod id variant} */
+    /**
+ * @deprecated Forge: Use the {@linkplain #BannerPatternTagsProvider(PackOutput,
+ *             CompletableFuture, String,
+ *             net.neoforged.neoforge.common.data.ExistingFileHelper) mod id
+ *             variant}
+ */
     @Deprecated
-    public BannerPatternTagsProvider(PackOutput p_256451_, CompletableFuture<HolderLookup.Provider> p_256420_) {
-        super(p_256451_, Registries.BANNER_PATTERN, p_256420_);
+    public BannerPatternTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider) {
+        super(output, Registries.BANNER_PATTERN, provider);
     }
-    public BannerPatternTagsProvider(PackOutput p_256451_, CompletableFuture<HolderLookup.Provider> p_256420_, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
-        super(p_256451_, Registries.BANNER_PATTERN, p_256420_, modId, existingFileHelper);
+    public BannerPatternTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
+        super(output, Registries.BANNER_PATTERN, provider, modId, existingFileHelper);
     }
 
     @Override
-    protected void addTags(HolderLookup.Provider p_255819_) {
+    protected void addTags(HolderLookup.Provider provider) {
         this.tag(BannerPatternTags.NO_ITEM_REQUIRED)
             .add(
                 BannerPatterns.SQUARE_BOTTOM_LEFT,

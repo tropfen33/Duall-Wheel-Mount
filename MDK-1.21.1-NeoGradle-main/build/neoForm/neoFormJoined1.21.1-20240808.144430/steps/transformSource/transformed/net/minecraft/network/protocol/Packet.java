@@ -9,7 +9,10 @@ import net.minecraft.network.codec.StreamMemberEncoder;
 public interface Packet<T extends PacketListener> {
     PacketType<? extends Packet<T>> type();
 
-    void handle(T p_131342_);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    void handle(T handler);
 
     default boolean isSkippable() {
         return false;
@@ -19,7 +22,7 @@ public interface Packet<T extends PacketListener> {
         return false;
     }
 
-    static <B extends ByteBuf, T extends Packet<?>> StreamCodec<B, T> codec(StreamMemberEncoder<B, T> p_319871_, StreamDecoder<B, T> p_319793_) {
-        return StreamCodec.ofMember(p_319871_, p_319793_);
+    static <B extends ByteBuf, T extends Packet<?>> StreamCodec<B, T> codec(StreamMemberEncoder<B, T> encoder, StreamDecoder<B, T> decoder) {
+        return StreamCodec.ofMember(encoder, decoder);
     }
 }

@@ -11,17 +11,17 @@ public class SoulParticle extends RisingParticle {
     protected boolean isGlowing;
 
     protected SoulParticle(
-        ClientLevel p_107717_, double p_107718_, double p_107719_, double p_107720_, double p_107721_, double p_107722_, double p_107723_, SpriteSet p_107724_
+        ClientLevel level, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed, SpriteSet sprites
     ) {
-        super(p_107717_, p_107718_, p_107719_, p_107720_, p_107721_, p_107722_, p_107723_);
-        this.sprites = p_107724_;
+        super(level, x, y, z, xSpeed, ySpeed, zSpeed);
+        this.sprites = sprites;
         this.scale(1.5F);
-        this.setSpriteFromAge(p_107724_);
+        this.setSpriteFromAge(sprites);
     }
 
     @Override
-    public int getLightColor(float p_234080_) {
-        return this.isGlowing ? 240 : super.getLightColor(p_234080_);
+    public int getLightColor(float partialTick) {
+        return this.isGlowing ? 240 : super.getLightColor(partialTick);
     }
 
     @Override
@@ -39,21 +39,21 @@ public class SoulParticle extends RisingParticle {
     public static class EmissiveProvider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprite;
 
-        public EmissiveProvider(SpriteSet p_234083_) {
-            this.sprite = p_234083_;
+        public EmissiveProvider(SpriteSet sprite) {
+            this.sprite = sprite;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_234094_,
-            ClientLevel p_234095_,
-            double p_234096_,
-            double p_234097_,
-            double p_234098_,
-            double p_234099_,
-            double p_234100_,
-            double p_234101_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            SoulParticle soulparticle = new SoulParticle(p_234095_, p_234096_, p_234097_, p_234098_, p_234099_, p_234100_, p_234101_, this.sprite);
+            SoulParticle soulparticle = new SoulParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, this.sprite);
             soulparticle.setAlpha(1.0F);
             soulparticle.isGlowing = true;
             return soulparticle;
@@ -64,21 +64,21 @@ public class SoulParticle extends RisingParticle {
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprite;
 
-        public Provider(SpriteSet p_107739_) {
-            this.sprite = p_107739_;
+        public Provider(SpriteSet sprites) {
+            this.sprite = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_107750_,
-            ClientLevel p_107751_,
-            double p_107752_,
-            double p_107753_,
-            double p_107754_,
-            double p_107755_,
-            double p_107756_,
-            double p_107757_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            SoulParticle soulparticle = new SoulParticle(p_107751_, p_107752_, p_107753_, p_107754_, p_107755_, p_107756_, p_107757_, this.sprite);
+            SoulParticle soulparticle = new SoulParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, this.sprite);
             soulparticle.setAlpha(1.0F);
             return soulparticle;
         }

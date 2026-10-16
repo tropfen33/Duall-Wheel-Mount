@@ -33,14 +33,14 @@ public class MoveThroughVillageGoal extends Goal {
     private final int distanceToPoi;
     private final BooleanSupplier canDealWithDoors;
 
-    public MoveThroughVillageGoal(PathfinderMob p_25582_, double p_25583_, boolean p_25584_, int p_25585_, BooleanSupplier p_25586_) {
-        this.mob = p_25582_;
-        this.speedModifier = p_25583_;
-        this.onlyAtNight = p_25584_;
-        this.distanceToPoi = p_25585_;
-        this.canDealWithDoors = p_25586_;
+    public MoveThroughVillageGoal(PathfinderMob mob, double speedModifier, boolean onlyAtNight, int distanceToPoi, BooleanSupplier canDealWithDoors) {
+        this.mob = mob;
+        this.speedModifier = speedModifier;
+        this.onlyAtNight = onlyAtNight;
+        this.distanceToPoi = distanceToPoi;
+        this.canDealWithDoors = canDealWithDoors;
         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-        if (!GoalUtils.hasGroundPathNavigation(p_25582_)) {
+        if (!GoalUtils.hasGroundPathNavigation(mob)) {
             throw new IllegalArgumentException("Unsupported mob for MoveThroughVillageGoal");
         }
     }
@@ -143,9 +143,9 @@ public class MoveThroughVillageGoal extends Goal {
         }
     }
 
-    private boolean hasNotVisited(BlockPos p_25593_) {
+    private boolean hasNotVisited(BlockPos pos) {
         for (BlockPos blockpos : this.visited) {
-            if (Objects.equals(p_25593_, blockpos)) {
+            if (Objects.equals(pos, blockpos)) {
                 return false;
             }
         }

@@ -15,11 +15,14 @@ public class SilverfishRenderer extends MobRenderer<Silverfish, SilverfishModel<
         super(p_174378_, new SilverfishModel<>(p_174378_.bakeLayer(ModelLayers.SILVERFISH)), 0.3F);
     }
 
-    protected float getFlipDegrees(Silverfish p_115927_) {
+    protected float getFlipDegrees(Silverfish livingEntity) {
         return 180.0F;
     }
 
-    public ResourceLocation getTextureLocation(Silverfish p_115929_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Silverfish entity) {
         return SILVERFISH_LOCATION;
     }
 }

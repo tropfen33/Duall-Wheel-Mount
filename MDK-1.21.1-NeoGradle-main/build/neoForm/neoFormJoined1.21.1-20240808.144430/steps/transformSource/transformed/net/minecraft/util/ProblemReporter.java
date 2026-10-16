@@ -10,9 +10,9 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 public interface ProblemReporter {
-    ProblemReporter forChild(String p_312211_);
+    ProblemReporter forChild(String name);
 
-    void report(String p_312410_);
+    void report(String message);
 
     public static class Collector implements ProblemReporter {
         private final Multimap<String, String> problems;
@@ -24,9 +24,9 @@ public interface ProblemReporter {
             this(HashMultimap.create(), () -> "");
         }
 
-        private Collector(Multimap<String, String> p_312167_, Supplier<String> p_312423_) {
-            this.problems = p_312167_;
-            this.path = p_312423_;
+        private Collector(Multimap<String, String> problems, Supplier<String> path) {
+            this.problems = problems;
+            this.path = path;
         }
 
         private String getPath() {
@@ -38,13 +38,13 @@ public interface ProblemReporter {
         }
 
         @Override
-        public ProblemReporter forChild(String p_312763_) {
-            return new ProblemReporter.Collector(this.problems, () -> this.getPath() + p_312763_);
+        public ProblemReporter forChild(String name) {
+            return new ProblemReporter.Collector(this.problems, () -> this.getPath() + name);
         }
 
         @Override
-        public void report(String p_312850_) {
-            this.problems.put(this.getPath(), p_312850_);
+        public void report(String message) {
+            this.problems.put(this.getPath(), message);
         }
 
         public Multimap<String, String> get() {

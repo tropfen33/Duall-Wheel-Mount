@@ -10,14 +10,14 @@ import java.util.Objects;
 import net.minecraft.Util;
 
 public class EntityHorseSplitFix extends EntityRenameFix {
-    public EntityHorseSplitFix(Schema p_15447_, boolean p_15448_) {
-        super("EntityHorseSplitFix", p_15447_, p_15448_);
+    public EntityHorseSplitFix(Schema outputSchema, boolean changesType) {
+        super("EntityHorseSplitFix", outputSchema, changesType);
     }
 
     @Override
-    protected Pair<String, Typed<?>> fix(String p_15451_, Typed<?> p_15452_) {
-        if (Objects.equals("EntityHorse", p_15451_)) {
-            Dynamic<?> dynamic = p_15452_.get(DSL.remainderFinder());
+    protected Pair<String, Typed<?>> fix(String entityName, Typed<?> typed) {
+        if (Objects.equals("EntityHorse", entityName)) {
+            Dynamic<?> dynamic = typed.get(DSL.remainderFinder());
             int i = dynamic.get("Type").asInt(0);
 
             String s = switch (i) {
@@ -28,9 +28,9 @@ public class EntityHorseSplitFix extends EntityRenameFix {
                 default -> "Horse";
             };
             Type<?> type = this.getOutputSchema().findChoiceType(References.ENTITY).types().get(s);
-            return Pair.of(s, Util.writeAndReadTypedOrThrow(p_15452_, type, p_341965_ -> p_341965_.remove("Type")));
+            return Pair.of(s, Util.writeAndReadTypedOrThrow(typed, type, p_341965_ -> p_341965_.remove("Type")));
         } else {
-            return Pair.of(p_15451_, p_15452_);
+            return Pair.of(entityName, typed);
         }
     }
 }

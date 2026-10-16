@@ -14,7 +14,7 @@ public interface EnchantmentProvider {
         .byNameCodec()
         .dispatch(EnchantmentProvider::codec, Function.identity());
 
-    void enchant(ItemStack p_345974_, ItemEnchantments.Mutable p_344824_, RandomSource p_346040_, DifficultyInstance p_348672_);
+    void enchant(ItemStack stack, ItemEnchantments.Mutable enchantments, RandomSource random, DifficultyInstance difficulty);
 
     MapCodec<? extends EnchantmentProvider> codec();
 }

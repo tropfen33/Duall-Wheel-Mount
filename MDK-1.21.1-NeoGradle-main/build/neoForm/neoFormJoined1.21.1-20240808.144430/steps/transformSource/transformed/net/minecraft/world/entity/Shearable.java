@@ -8,10 +8,13 @@ import net.minecraft.sounds.SoundSource;
 @Deprecated
 public interface Shearable extends net.neoforged.neoforge.common.IShearable {
     /**
-     * @deprecated Neo: Use {@link net.neoforged.neoforge.common.IShearable#onSheared(net.minecraft.world.entity.player.Player, net.minecraft.world.item.ItemStack, net.minecraft.world.level.Level, net.minecraft.core.BlockPos, int)} instead.
+     * @deprecated Neo: Use {@link net.neoforged.neoforge.common.IShearable#onSheared(
+     *             net.minecraft.world.entity.player.Player,
+     *             net.minecraft.world.item.ItemStack, net.minecraft.world.level.Level
+     *             , net.minecraft.core.BlockPos, int)} instead.
      */
     @Deprecated
-    void shear(SoundSource p_21749_);
+    void shear(SoundSource source);
 
     /**
      * @deprecated Neo: Use {@link net.neoforged.neoforge.common.IShearable#isShearable(net.minecraft.world.item.ItemStack, net.minecraft.world.level.Level, net.minecraft.core.BlockPos)} instead.

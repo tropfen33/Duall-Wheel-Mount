@@ -23,11 +23,11 @@ public class DataGenerator {
     private final boolean alwaysGenerate;
     private final Map<String, DataProvider> providersView = java.util.Collections.unmodifiableMap(this.providersToRun);
 
-    public DataGenerator(Path p_251724_, WorldVersion p_250554_, boolean p_251323_) {
-        this.rootOutputFolder = p_251724_;
+    public DataGenerator(Path rootOutputFolder, WorldVersion version, boolean alwaysGenerate) {
+        this.rootOutputFolder = rootOutputFolder;
         this.vanillaPackOutput = new PackOutput(this.rootOutputFolder);
-        this.version = p_250554_;
-        this.alwaysGenerate = p_251323_;
+        this.version = version;
+        this.alwaysGenerate = alwaysGenerate;
     }
 
     public void run() throws IOException {
@@ -51,18 +51,18 @@ public class DataGenerator {
         hashcache.purgeStaleAndWrite();
     }
 
-    public DataGenerator.PackGenerator getVanillaPack(boolean p_254422_) {
-        return new DataGenerator.PackGenerator(p_254422_, "vanilla", this.vanillaPackOutput);
+    public DataGenerator.PackGenerator getVanillaPack(boolean toRun) {
+        return new DataGenerator.PackGenerator(toRun, "vanilla", this.vanillaPackOutput);
     }
 
-    public DataGenerator.PackGenerator getBuiltinDatapack(boolean p_253826_, String p_254134_) {
-        Path path = this.vanillaPackOutput.getOutputFolder(PackOutput.Target.DATA_PACK).resolve("minecraft").resolve("datapacks").resolve(p_254134_);
-        return new DataGenerator.PackGenerator(p_253826_, p_254134_, new PackOutput(path));
+    public DataGenerator.PackGenerator getBuiltinDatapack(boolean toRun, String providerPrefix) {
+        Path path = this.vanillaPackOutput.getOutputFolder(PackOutput.Target.DATA_PACK).resolve("minecraft").resolve("datapacks").resolve(providerPrefix);
+        return new DataGenerator.PackGenerator(toRun, providerPrefix, new PackOutput(path));
     }
 
-    public PackGenerator getBuiltinDatapack(boolean run, String namespace, String path) {
-        var packPath = vanillaPackOutput.getOutputFolder(PackOutput.Target.DATA_PACK).resolve(namespace).resolve("datapacks").resolve(path);
-        return new PackGenerator(run, namespace + '_' + path, new PackOutput(packPath));
+    public PackGenerator getBuiltinDatapack(boolean toRun, String providerPrefix, String path) {
+        var packPath = vanillaPackOutput.getOutputFolder(PackOutput.Target.DATA_PACK).resolve(providerPrefix).resolve("datapacks").resolve(path);
+        return new PackGenerator(toRun, providerPrefix + '_' + path, new PackOutput(packPath));
     }
 
     public Map<String, DataProvider> getProvidersView() {
@@ -118,14 +118,14 @@ public class DataGenerator {
         private final String providerPrefix;
         private final PackOutput output;
 
-        PackGenerator(boolean p_253884_, String p_254544_, PackOutput p_254363_) {
-            this.toRun = p_253884_;
-            this.providerPrefix = p_254544_;
-            this.output = p_254363_;
+        PackGenerator(boolean toRun, String providerPrefix, PackOutput output) {
+            this.toRun = toRun;
+            this.providerPrefix = providerPrefix;
+            this.output = output;
         }
 
-        public <T extends DataProvider> T addProvider(DataProvider.Factory<T> p_254382_) {
-            T t = p_254382_.create(this.output);
+        public <T extends DataProvider> T addProvider(DataProvider.Factory<T> factory) {
+            T t = factory.create(this.output);
             String s = this.providerPrefix + "/" + t.getName();
             if (!DataGenerator.this.allProviderIds.add(s)) {
                 throw new IllegalStateException("Duplicate provider: " + s);

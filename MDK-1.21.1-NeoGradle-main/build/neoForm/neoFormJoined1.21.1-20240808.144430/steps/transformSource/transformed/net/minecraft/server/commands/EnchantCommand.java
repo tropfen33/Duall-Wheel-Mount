@@ -37,14 +37,14 @@ public class EnchantCommand {
     );
     private static final SimpleCommandExceptionType ERROR_NOTHING_HAPPENED = new SimpleCommandExceptionType(Component.translatable("commands.enchant.failed"));
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_251241_, CommandBuildContext p_251038_) {
-        p_251241_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
+        dispatcher.register(
             Commands.literal("enchant")
                 .requires(p_137013_ -> p_137013_.hasPermission(2))
                 .then(
                     Commands.argument("targets", EntityArgument.entities())
                         .then(
-                            Commands.argument("enchantment", ResourceArgument.resource(p_251038_, Registries.ENCHANTMENT))
+                            Commands.argument("enchantment", ResourceArgument.resource(context, Registries.ENCHANTMENT))
                                 .executes(
                                     p_248131_ -> enchant(
                                             p_248131_.getSource(),
@@ -69,29 +69,29 @@ public class EnchantCommand {
         );
     }
 
-    private static int enchant(CommandSourceStack p_249815_, Collection<? extends Entity> p_248848_, Holder<Enchantment> p_251252_, int p_249941_) throws CommandSyntaxException {
-        Enchantment enchantment = p_251252_.value();
-        if (p_249941_ > enchantment.getMaxLevel()) {
-            throw ERROR_LEVEL_TOO_HIGH.create(p_249941_, enchantment.getMaxLevel());
+    private static int enchant(CommandSourceStack source, Collection<? extends Entity> targets, Holder<Enchantment> p_enchantment, int level) throws CommandSyntaxException {
+        Enchantment enchantment = p_enchantment.value();
+        if (level > enchantment.getMaxLevel()) {
+            throw ERROR_LEVEL_TOO_HIGH.create(level, enchantment.getMaxLevel());
         } else {
             int i = 0;
 
-            for (Entity entity : p_248848_) {
+            for (Entity entity : targets) {
                 if (entity instanceof LivingEntity) {
                     LivingEntity livingentity = (LivingEntity)entity;
                     ItemStack itemstack = livingentity.getMainHandItem();
                     if (!itemstack.isEmpty()) {
-                        if (itemstack.supportsEnchantment(p_251252_) // Neo: Respect IItemExtension#supportsEnchantment
-                            && EnchantmentHelper.isEnchantmentCompatible(EnchantmentHelper.getEnchantmentsForCrafting(itemstack).keySet(), p_251252_)) {
-                            itemstack.enchant(p_251252_, p_249941_);
+                        if (itemstack.supportsEnchantment(p_enchantment) // Neo: Respect IItemExtension#supportsEnchantment
+                            && EnchantmentHelper.isEnchantmentCompatible(EnchantmentHelper.getEnchantmentsForCrafting(itemstack).keySet(), p_enchantment)) {
+                            itemstack.enchant(p_enchantment, level);
                             i++;
-                        } else if (p_248848_.size() == 1) {
+                        } else if (targets.size() == 1) {
                             throw ERROR_INCOMPATIBLE.create(itemstack.getItem().getName(itemstack).getString());
                         }
-                    } else if (p_248848_.size() == 1) {
+                    } else if (targets.size() == 1) {
                         throw ERROR_NO_ITEM.create(livingentity.getName().getString());
                     }
-                } else if (p_248848_.size() == 1) {
+                } else if (targets.size() == 1) {
                     throw ERROR_NOT_LIVING_ENTITY.create(entity.getName().getString());
                 }
             }
@@ -99,16 +99,16 @@ public class EnchantCommand {
             if (i == 0) {
                 throw ERROR_NOTHING_HAPPENED.create();
             } else {
-                if (p_248848_.size() == 1) {
-                    p_249815_.sendSuccess(
+                if (targets.size() == 1) {
+                    source.sendSuccess(
                         () -> Component.translatable(
-                                "commands.enchant.success.single", Enchantment.getFullname(p_251252_, p_249941_), p_248848_.iterator().next().getDisplayName()
+                                "commands.enchant.success.single", Enchantment.getFullname(p_enchantment, level), targets.iterator().next().getDisplayName()
                             ),
                         true
                     );
                 } else {
-                    p_249815_.sendSuccess(
-                        () -> Component.translatable("commands.enchant.success.multiple", Enchantment.getFullname(p_251252_, p_249941_), p_248848_.size()),
+                    source.sendSuccess(
+                        () -> Component.translatable("commands.enchant.success.multiple", Enchantment.getFullname(p_enchantment, level), targets.size()),
                         true
                     );
                 }

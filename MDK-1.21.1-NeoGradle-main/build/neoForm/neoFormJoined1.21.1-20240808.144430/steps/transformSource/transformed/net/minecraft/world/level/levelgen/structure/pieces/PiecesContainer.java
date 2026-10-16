@@ -34,9 +34,9 @@ public record PiecesContainer(List<StructurePiece> pieces) {
         return this.pieces.isEmpty();
     }
 
-    public boolean isInsidePiece(BlockPos p_192752_) {
+    public boolean isInsidePiece(BlockPos pos) {
         for (StructurePiece structurepiece : this.pieces) {
-            if (structurepiece.getBoundingBox().isInside(p_192752_)) {
+            if (structurepiece.getBoundingBox().isInside(pos)) {
                 return true;
             }
         }
@@ -44,21 +44,21 @@ public record PiecesContainer(List<StructurePiece> pieces) {
         return false;
     }
 
-    public Tag save(StructurePieceSerializationContext p_192750_) {
+    public Tag save(StructurePieceSerializationContext context) {
         ListTag listtag = new ListTag();
 
         for (StructurePiece structurepiece : this.pieces) {
-            listtag.add(structurepiece.createTag(p_192750_));
+            listtag.add(structurepiece.createTag(context));
         }
 
         return listtag;
     }
 
-    public static PiecesContainer load(ListTag p_192754_, StructurePieceSerializationContext p_192755_) {
+    public static PiecesContainer load(ListTag tag, StructurePieceSerializationContext context) {
         List<StructurePiece> list = Lists.newArrayList();
 
-        for (int i = 0; i < p_192754_.size(); i++) {
-            CompoundTag compoundtag = p_192754_.getCompound(i);
+        for (int i = 0; i < tag.size(); i++) {
+            CompoundTag compoundtag = tag.getCompound(i);
             String s = compoundtag.getString("id").toLowerCase(Locale.ROOT);
             ResourceLocation resourcelocation = ResourceLocation.parse(s);
             ResourceLocation resourcelocation1 = RENAMES.getOrDefault(resourcelocation, resourcelocation);
@@ -67,7 +67,7 @@ public record PiecesContainer(List<StructurePiece> pieces) {
                 LOGGER.error("Unknown structure piece id: {}", resourcelocation1);
             } else {
                 try {
-                    StructurePiece structurepiece = structurepiecetype.load(p_192755_, compoundtag);
+                    StructurePiece structurepiece = structurepiecetype.load(context, compoundtag);
                     list.add(structurepiece);
                 } catch (Exception exception) {
                     LOGGER.error("Exception loading structure piece with id {}", resourcelocation1, exception);

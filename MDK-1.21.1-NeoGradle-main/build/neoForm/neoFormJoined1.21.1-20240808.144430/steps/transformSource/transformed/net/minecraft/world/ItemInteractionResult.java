@@ -12,8 +12,8 @@ public enum ItemInteractionResult {
         return this.result().consumesAction();
     }
 
-    public static ItemInteractionResult sidedSuccess(boolean p_316407_) {
-        return p_316407_ ? SUCCESS : CONSUME;
+    public static ItemInteractionResult sidedSuccess(boolean clientSide) {
+        return clientSide ? SUCCESS : CONSUME;
     }
 
     public InteractionResult result() {

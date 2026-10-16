@@ -21,7 +21,10 @@ public class PigRenderer extends MobRenderer<Pig, PigModel<Pig>> {
         );
     }
 
-    public ResourceLocation getTextureLocation(Pig p_115697_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Pig entity) {
         return PIG_LOCATION;
     }
 }

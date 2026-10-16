@@ -8,16 +8,16 @@ import com.mojang.datafixers.types.Type;
 import com.mojang.serialization.Dynamic;
 
 public class BlockEntityJukeboxFix extends NamedEntityFix {
-    public BlockEntityJukeboxFix(Schema p_14842_, boolean p_14843_) {
-        super(p_14842_, p_14843_, "BlockEntityJukeboxFix", References.BLOCK_ENTITY, "minecraft:jukebox");
+    public BlockEntityJukeboxFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType, "BlockEntityJukeboxFix", References.BLOCK_ENTITY, "minecraft:jukebox");
     }
 
     @Override
-    protected Typed<?> fix(Typed<?> p_14846_) {
+    protected Typed<?> fix(Typed<?> typed) {
         Type<?> type = this.getInputSchema().getChoiceType(References.BLOCK_ENTITY, "minecraft:jukebox");
         Type<?> type1 = type.findFieldType("RecordItem");
         OpticFinder<?> opticfinder = DSL.fieldFinder("RecordItem", type1);
-        Dynamic<?> dynamic = p_14846_.get(DSL.remainderFinder());
+        Dynamic<?> dynamic = typed.get(DSL.remainderFinder());
         int i = dynamic.get("Record").asInt(0);
         if (i > 0) {
             dynamic.remove("Record");
@@ -26,7 +26,7 @@ public class BlockEntityJukeboxFix extends NamedEntityFix {
                 Dynamic<?> dynamic1 = dynamic.emptyMap();
                 dynamic1 = dynamic1.set("id", dynamic1.createString(s));
                 dynamic1 = dynamic1.set("Count", dynamic1.createByte((byte)1));
-                return p_14846_.set(
+                return typed.set(
                         opticfinder,
                         type1.readTyped(dynamic1).result().orElseThrow(() -> new IllegalStateException("Could not create record item stack.")).getFirst()
                     )
@@ -34,6 +34,6 @@ public class BlockEntityJukeboxFix extends NamedEntityFix {
             }
         }
 
-        return p_14846_;
+        return typed;
     }
 }

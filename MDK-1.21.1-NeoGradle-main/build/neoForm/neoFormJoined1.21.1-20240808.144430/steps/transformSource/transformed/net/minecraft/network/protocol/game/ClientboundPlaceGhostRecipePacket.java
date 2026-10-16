@@ -14,19 +14,22 @@ public class ClientboundPlaceGhostRecipePacket implements Packet<ClientGamePacke
     private final int containerId;
     private final ResourceLocation recipe;
 
-    public ClientboundPlaceGhostRecipePacket(int p_132647_, RecipeHolder<?> p_301206_) {
-        this.containerId = p_132647_;
-        this.recipe = p_301206_.id();
+    public ClientboundPlaceGhostRecipePacket(int containerId, RecipeHolder<?> recipe) {
+        this.containerId = containerId;
+        this.recipe = recipe.id();
     }
 
-    private ClientboundPlaceGhostRecipePacket(FriendlyByteBuf p_179027_) {
-        this.containerId = p_179027_.readByte();
-        this.recipe = p_179027_.readResourceLocation();
+    private ClientboundPlaceGhostRecipePacket(FriendlyByteBuf buffer) {
+        this.containerId = buffer.readByte();
+        this.recipe = buffer.readResourceLocation();
     }
 
-    private void write(FriendlyByteBuf p_132657_) {
-        p_132657_.writeByte(this.containerId);
-        p_132657_.writeResourceLocation(this.recipe);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf byteBuf) {
+        byteBuf.writeByte(this.containerId);
+        byteBuf.writeResourceLocation(this.recipe);
     }
 
     @Override
@@ -34,8 +37,11 @@ public class ClientboundPlaceGhostRecipePacket implements Packet<ClientGamePacke
         return GamePacketTypes.CLIENTBOUND_PLACE_GHOST_RECIPE;
     }
 
-    public void handle(ClientGamePacketListener p_132654_) {
-        p_132654_.handlePlaceRecipe(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handlePlaceRecipe(this);
     }
 
     public ResourceLocation getRecipe() {

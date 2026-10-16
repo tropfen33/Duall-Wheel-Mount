@@ -20,10 +20,10 @@ public class CheckerboardColumnBiomeSource extends BiomeSource {
     private final int bitShift;
     private final int size;
 
-    public CheckerboardColumnBiomeSource(HolderSet<Biome> p_204243_, int p_204244_) {
-        this.allowedBiomes = p_204243_;
-        this.bitShift = p_204244_ + 2;
-        this.size = p_204244_;
+    public CheckerboardColumnBiomeSource(HolderSet<Biome> allowedBiomes, int size) {
+        this.allowedBiomes = allowedBiomes;
+        this.bitShift = size + 2;
+        this.size = size;
     }
 
     @Override
@@ -37,7 +37,7 @@ public class CheckerboardColumnBiomeSource extends BiomeSource {
     }
 
     @Override
-    public Holder<Biome> getNoiseBiome(int p_204248_, int p_204249_, int p_204250_, Climate.Sampler p_204251_) {
-        return this.allowedBiomes.get(Math.floorMod((p_204248_ >> this.bitShift) + (p_204250_ >> this.bitShift), this.allowedBiomes.size()));
+    public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
+        return this.allowedBiomes.get(Math.floorMod((x >> this.bitShift) + (z >> this.bitShift), this.allowedBiomes.size()));
     }
 }

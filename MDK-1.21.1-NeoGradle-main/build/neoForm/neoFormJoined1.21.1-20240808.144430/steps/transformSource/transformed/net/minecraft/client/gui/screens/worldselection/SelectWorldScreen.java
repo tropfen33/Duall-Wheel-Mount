@@ -26,9 +26,9 @@ public class SelectWorldScreen extends Screen {
     protected EditBox searchBox;
     private WorldSelectionList list;
 
-    public SelectWorldScreen(Screen p_101338_) {
+    public SelectWorldScreen(Screen lastScreen) {
         super(Component.translatable("selectWorld.title"));
-        this.lastScreen = p_101338_;
+        this.lastScreen = lastScreen;
     }
 
     @Override
@@ -90,26 +90,34 @@ public class SelectWorldScreen extends Screen {
         this.minecraft.setScreen(this.lastScreen);
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282382_, int p_281534_, int p_281859_, float p_283289_) {
-        super.render(p_282382_, p_281534_, p_281859_, p_283289_);
-        this.searchBox.render(p_282382_, p_281534_, p_281859_, p_283289_);
-        p_282382_.drawCenteredString(this.font, this.title, this.width / 2, 8, 16777215);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.searchBox.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 8, 16777215);
     }
 
-    public void updateButtonStatus(@Nullable LevelSummary p_307245_) {
-        if (p_307245_ == null) {
+    public void updateButtonStatus(@Nullable LevelSummary levelSummary) {
+        if (levelSummary == null) {
             this.selectButton.setMessage(LevelSummary.PLAY_WORLD);
             this.selectButton.active = false;
             this.renameButton.active = false;
             this.copyButton.active = false;
             this.deleteButton.active = false;
         } else {
-            this.selectButton.setMessage(p_307245_.primaryActionMessage());
-            this.selectButton.active = p_307245_.primaryActionActive();
-            this.renameButton.active = p_307245_.canEdit();
-            this.copyButton.active = p_307245_.canRecreate();
-            this.deleteButton.active = p_307245_.canDelete();
+            this.selectButton.setMessage(levelSummary.primaryActionMessage());
+            this.selectButton.active = levelSummary.primaryActionActive();
+            this.renameButton.active = levelSummary.canEdit();
+            this.copyButton.active = levelSummary.canRecreate();
+            this.deleteButton.active = levelSummary.canDelete();
         }
     }
 

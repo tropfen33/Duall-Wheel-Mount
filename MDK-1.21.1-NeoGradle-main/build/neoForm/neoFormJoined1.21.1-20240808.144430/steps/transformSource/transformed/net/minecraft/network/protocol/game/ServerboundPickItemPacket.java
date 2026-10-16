@@ -11,16 +11,19 @@ public class ServerboundPickItemPacket implements Packet<ServerGamePacketListene
     );
     private final int slot;
 
-    public ServerboundPickItemPacket(int p_134225_) {
-        this.slot = p_134225_;
+    public ServerboundPickItemPacket(int slot) {
+        this.slot = slot;
     }
 
-    private ServerboundPickItemPacket(FriendlyByteBuf p_179704_) {
-        this.slot = p_179704_.readVarInt();
+    private ServerboundPickItemPacket(FriendlyByteBuf buffer) {
+        this.slot = buffer.readVarInt();
     }
 
-    private void write(FriendlyByteBuf p_134234_) {
-        p_134234_.writeVarInt(this.slot);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.slot);
     }
 
     @Override
@@ -28,8 +31,11 @@ public class ServerboundPickItemPacket implements Packet<ServerGamePacketListene
         return GamePacketTypes.SERVERBOUND_PICK_ITEM;
     }
 
-    public void handle(ServerGamePacketListener p_134231_) {
-        p_134231_.handlePickItem(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handlePickItem(this);
     }
 
     public int getSlot() {

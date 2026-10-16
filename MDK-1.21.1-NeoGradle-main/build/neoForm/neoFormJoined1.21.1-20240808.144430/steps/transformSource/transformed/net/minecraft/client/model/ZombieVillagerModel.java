@@ -15,8 +15,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class ZombieVillagerModel<T extends Zombie> extends HumanoidModel<T> implements VillagerHeadModel {
     private final ModelPart hatRim = this.hat.getChild("hat_rim");
 
-    public ZombieVillagerModel(ModelPart p_171092_) {
-        super(p_171092_);
+    public ZombieVillagerModel(ModelPart root) {
+        super(root);
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -59,38 +59,41 @@ public class ZombieVillagerModel<T extends Zombie> extends HumanoidModel<T> impl
         return LayerDefinition.create(meshdefinition, 64, 64);
     }
 
-    public static LayerDefinition createArmorLayer(CubeDeformation p_171094_) {
-        MeshDefinition meshdefinition = HumanoidModel.createMesh(p_171094_, 0.0F);
+    public static LayerDefinition createArmorLayer(CubeDeformation cubeDeformation) {
+        MeshDefinition meshdefinition = HumanoidModel.createMesh(cubeDeformation, 0.0F);
         PartDefinition partdefinition = meshdefinition.getRoot();
         partdefinition.addOrReplaceChild(
-            "head", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0F, -10.0F, -4.0F, 8.0F, 8.0F, 8.0F, p_171094_), PartPose.ZERO
+            "head", CubeListBuilder.create().texOffs(0, 0).addBox(-4.0F, -10.0F, -4.0F, 8.0F, 8.0F, 8.0F, cubeDeformation), PartPose.ZERO
         );
         partdefinition.addOrReplaceChild(
-            "body", CubeListBuilder.create().texOffs(16, 16).addBox(-4.0F, 0.0F, -2.0F, 8.0F, 12.0F, 4.0F, p_171094_.extend(0.1F)), PartPose.ZERO
+            "body", CubeListBuilder.create().texOffs(16, 16).addBox(-4.0F, 0.0F, -2.0F, 8.0F, 12.0F, 4.0F, cubeDeformation.extend(0.1F)), PartPose.ZERO
         );
         partdefinition.addOrReplaceChild(
             "right_leg",
-            CubeListBuilder.create().texOffs(0, 16).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 12.0F, 4.0F, p_171094_.extend(0.1F)),
+            CubeListBuilder.create().texOffs(0, 16).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 12.0F, 4.0F, cubeDeformation.extend(0.1F)),
             PartPose.offset(-2.0F, 12.0F, 0.0F)
         );
         partdefinition.addOrReplaceChild(
             "left_leg",
-            CubeListBuilder.create().texOffs(0, 16).mirror().addBox(-2.0F, 0.0F, -2.0F, 4.0F, 12.0F, 4.0F, p_171094_.extend(0.1F)),
+            CubeListBuilder.create().texOffs(0, 16).mirror().addBox(-2.0F, 0.0F, -2.0F, 4.0F, 12.0F, 4.0F, cubeDeformation.extend(0.1F)),
             PartPose.offset(2.0F, 12.0F, 0.0F)
         );
         partdefinition.getChild("hat").addOrReplaceChild("hat_rim", CubeListBuilder.create(), PartPose.ZERO);
         return LayerDefinition.create(meshdefinition, 64, 32);
     }
 
-    public void setupAnim(T p_104175_, float p_104176_, float p_104177_, float p_104178_, float p_104179_, float p_104180_) {
-        super.setupAnim(p_104175_, p_104176_, p_104177_, p_104178_, p_104179_, p_104180_);
-        AnimationUtils.animateZombieArms(this.leftArm, this.rightArm, p_104175_.isAggressive(), this.attackTime, p_104178_);
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+        AnimationUtils.animateZombieArms(this.leftArm, this.rightArm, entity.isAggressive(), this.attackTime, ageInTicks);
     }
 
     @Override
-    public void hatVisible(boolean p_104182_) {
-        this.head.visible = p_104182_;
-        this.hat.visible = p_104182_;
-        this.hatRim.visible = p_104182_;
+    public void hatVisible(boolean visible) {
+        this.head.visible = visible;
+        this.hat.visible = visible;
+        this.hatRim.visible = visible;
     }
 }

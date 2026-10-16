@@ -13,13 +13,13 @@ public class AppendStatic implements RuleBlockEntityModifier {
     );
     private final CompoundTag tag;
 
-    public AppendStatic(CompoundTag p_277900_) {
-        this.tag = p_277900_;
+    public AppendStatic(CompoundTag tag) {
+        this.tag = tag;
     }
 
     @Override
-    public CompoundTag apply(RandomSource p_277835_, @Nullable CompoundTag p_277892_) {
-        return p_277892_ == null ? this.tag.copy() : p_277892_.merge(this.tag);
+    public CompoundTag apply(RandomSource random, @Nullable CompoundTag tag) {
+        return tag == null ? this.tag.copy() : tag.merge(this.tag);
     }
 
     @Override

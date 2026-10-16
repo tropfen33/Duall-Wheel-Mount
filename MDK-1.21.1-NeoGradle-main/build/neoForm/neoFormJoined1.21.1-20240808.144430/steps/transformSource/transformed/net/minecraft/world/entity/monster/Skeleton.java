@@ -19,22 +19,22 @@ public class Skeleton extends AbstractSkeleton {
     private int inPowderSnowTime;
     private int conversionTime;
 
-    public Skeleton(EntityType<? extends Skeleton> p_33570_, Level p_33571_) {
-        super(p_33570_, p_33571_);
+    public Skeleton(EntityType<? extends Skeleton> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326378_) {
-        super.defineSynchedData(p_326378_);
-        p_326378_.define(DATA_STRAY_CONVERSION_ID, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_STRAY_CONVERSION_ID, false);
     }
 
     public boolean isFreezeConverting() {
         return this.getEntityData().get(DATA_STRAY_CONVERSION_ID);
     }
 
-    public void setFreezeConverting(boolean p_149843_) {
-        this.entityData.set(DATA_STRAY_CONVERSION_ID, p_149843_);
+    public void setFreezeConverting(boolean isFrozen) {
+        this.entityData.set(DATA_STRAY_CONVERSION_ID, isFrozen);
     }
 
     @Override
@@ -67,21 +67,24 @@ public class Skeleton extends AbstractSkeleton {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_149836_) {
-        super.addAdditionalSaveData(p_149836_);
-        p_149836_.putInt("StrayConversionTime", this.isFreezeConverting() ? this.conversionTime : -1);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("StrayConversionTime", this.isFreezeConverting() ? this.conversionTime : -1);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_149833_) {
-        super.readAdditionalSaveData(p_149833_);
-        if (p_149833_.contains("StrayConversionTime", 99) && p_149833_.getInt("StrayConversionTime") > -1) {
-            this.startFreezeConversion(p_149833_.getInt("StrayConversionTime"));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.contains("StrayConversionTime", 99) && compound.getInt("StrayConversionTime") > -1) {
+            this.startFreezeConversion(compound.getInt("StrayConversionTime"));
         }
     }
 
-    private void startFreezeConversion(int p_149831_) {
-        this.conversionTime = p_149831_;
+    private void startFreezeConversion(int conversionTime) {
+        this.conversionTime = conversionTime;
         this.setFreezeConverting(true);
     }
 
@@ -105,7 +108,7 @@ public class Skeleton extends AbstractSkeleton {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_33579_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.SKELETON_HURT;
     }
 
@@ -120,9 +123,9 @@ public class Skeleton extends AbstractSkeleton {
     }
 
     @Override
-    protected void dropCustomDeathLoot(ServerLevel p_348477_, DamageSource p_33574_, boolean p_33576_) {
-        super.dropCustomDeathLoot(p_348477_, p_33574_, p_33576_);
-        if (p_33574_.getEntity() instanceof Creeper creeper && creeper.canDropMobsSkull()) {
+    protected void dropCustomDeathLoot(ServerLevel level, DamageSource damageSource, boolean recentlyHit) {
+        super.dropCustomDeathLoot(level, damageSource, recentlyHit);
+        if (damageSource.getEntity() instanceof Creeper creeper && creeper.canDropMobsSkull()) {
             creeper.increaseDroppedSkulls();
             this.spawnAtLocation(Items.SKELETON_SKULL);
         }

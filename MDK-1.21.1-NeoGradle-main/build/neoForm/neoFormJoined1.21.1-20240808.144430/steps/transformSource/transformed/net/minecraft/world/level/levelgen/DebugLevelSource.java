@@ -35,6 +35,9 @@ public class DebugLevelSource extends ChunkGenerator {
         p_255576_ -> p_255576_.group(RegistryOps.retrieveElement(Biomes.PLAINS)).apply(p_255576_, p_255576_.stable(DebugLevelSource::new))
     );
     private static final int BLOCK_MARGIN = 2;
+    /**
+     * A list of all valid block states.
+     */
     private static List<BlockState> ALL_BLOCKS = StreamSupport.stream(BuiltInRegistries.BLOCK.spliterator(), false)
         .flatMap(p_208208_ -> p_208208_.getStateDefinition().getPossibleStates().stream())
         .collect(Collectors.toList());
@@ -45,8 +48,8 @@ public class DebugLevelSource extends ChunkGenerator {
     public static final int HEIGHT = 70;
     public static final int BARRIER_HEIGHT = 60;
 
-    public DebugLevelSource(Holder.Reference<Biome> p_255723_) {
-        super(new FixedBiomeSource(p_255723_));
+    public DebugLevelSource(Holder.Reference<Biome> biome) {
+        super(new FixedBiomeSource(biome));
     }
 
     @Override
@@ -55,13 +58,13 @@ public class DebugLevelSource extends ChunkGenerator {
     }
 
     @Override
-    public void buildSurface(WorldGenRegion p_223978_, StructureManager p_223979_, RandomState p_223980_, ChunkAccess p_223981_) {
+    public void buildSurface(WorldGenRegion level, StructureManager structureManager, RandomState random, ChunkAccess chunk) {
     }
 
     @Override
-    public void applyBiomeDecoration(WorldGenLevel p_223983_, ChunkAccess p_223984_, StructureManager p_223985_) {
+    public void applyBiomeDecoration(WorldGenLevel level, ChunkAccess chunk, StructureManager structureManager) {
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
-        ChunkPos chunkpos = p_223984_.getPos();
+        ChunkPos chunkpos = chunk.getPos();
         int i = chunkpos.x;
         int j = chunkpos.z;
 
@@ -69,20 +72,20 @@ public class DebugLevelSource extends ChunkGenerator {
             for (int l = 0; l < 16; l++) {
                 int i1 = SectionPos.sectionToBlockCoord(i, k);
                 int j1 = SectionPos.sectionToBlockCoord(j, l);
-                p_223983_.setBlock(blockpos$mutableblockpos.set(i1, 60, j1), BARRIER, 2);
+                level.setBlock(blockpos$mutableblockpos.set(i1, 60, j1), BARRIER, 2);
                 BlockState blockstate = getBlockStateFor(i1, j1);
-                p_223983_.setBlock(blockpos$mutableblockpos.set(i1, 70, j1), blockstate, 2);
+                level.setBlock(blockpos$mutableblockpos.set(i1, 70, j1), blockstate, 2);
             }
         }
     }
 
     @Override
-    public CompletableFuture<ChunkAccess> fillFromNoise(Blender p_223992_, RandomState p_223993_, StructureManager p_223994_, ChunkAccess p_223995_) {
-        return CompletableFuture.completedFuture(p_223995_);
+    public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState randomState, StructureManager structureManager, ChunkAccess chunk) {
+        return CompletableFuture.completedFuture(chunk);
     }
 
     @Override
-    public int getBaseHeight(int p_223964_, int p_223965_, Heightmap.Types p_223966_, LevelHeightAccessor p_223967_, RandomState p_223968_) {
+    public int getBaseHeight(int x, int z, Heightmap.Types type, LevelHeightAccessor level, RandomState random) {
         return 0;
     }
 
@@ -93,21 +96,21 @@ public class DebugLevelSource extends ChunkGenerator {
     }
 
     @Override
-    public NoiseColumn getBaseColumn(int p_223959_, int p_223960_, LevelHeightAccessor p_223961_, RandomState p_223962_) {
+    public NoiseColumn getBaseColumn(int x, int z, LevelHeightAccessor height, RandomState random) {
         return new NoiseColumn(0, new BlockState[0]);
     }
 
     @Override
-    public void addDebugScreenInfo(List<String> p_223987_, RandomState p_223988_, BlockPos p_223989_) {
+    public void addDebugScreenInfo(List<String> info, RandomState random, BlockPos pos) {
     }
 
-    public static BlockState getBlockStateFor(int p_64149_, int p_64150_) {
+    public static BlockState getBlockStateFor(int chunkX, int chunkZ) {
         BlockState blockstate = AIR;
-        if (p_64149_ > 0 && p_64150_ > 0 && p_64149_ % 2 != 0 && p_64150_ % 2 != 0) {
-            p_64149_ /= 2;
-            p_64150_ /= 2;
-            if (p_64149_ <= GRID_WIDTH && p_64150_ <= GRID_HEIGHT) {
-                int i = Mth.abs(p_64149_ * GRID_WIDTH + p_64150_);
+        if (chunkX > 0 && chunkZ > 0 && chunkX % 2 != 0 && chunkZ % 2 != 0) {
+            chunkX /= 2;
+            chunkZ /= 2;
+            if (chunkX <= GRID_WIDTH && chunkZ <= GRID_HEIGHT) {
+                int i = Mth.abs(chunkX * GRID_WIDTH + chunkZ);
                 if (i < ALL_BLOCKS.size()) {
                     blockstate = ALL_BLOCKS.get(i);
                 }
@@ -119,18 +122,18 @@ public class DebugLevelSource extends ChunkGenerator {
 
     @Override
     public void applyCarvers(
-        WorldGenRegion p_223970_,
-        long p_223971_,
-        RandomState p_223972_,
-        BiomeManager p_223973_,
-        StructureManager p_223974_,
-        ChunkAccess p_223975_,
-        GenerationStep.Carving p_223976_
+        WorldGenRegion level,
+        long seed,
+        RandomState random,
+        BiomeManager biomeManager,
+        StructureManager structureManager,
+        ChunkAccess chunk,
+        GenerationStep.Carving step
     ) {
     }
 
     @Override
-    public void spawnOriginalMobs(WorldGenRegion p_188511_) {
+    public void spawnOriginalMobs(WorldGenRegion level) {
     }
 
     @Override

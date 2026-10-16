@@ -14,8 +14,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class SlimeModel<T extends Entity> extends HierarchicalModel<T> {
     private final ModelPart root;
 
-    public SlimeModel(ModelPart p_170955_) {
-        this.root = p_170955_;
+    public SlimeModel(ModelPart root) {
+        this.root = root;
     }
 
     public static LayerDefinition createOuterBodyLayer() {
@@ -35,8 +35,11 @@ public class SlimeModel<T extends Entity> extends HierarchicalModel<T> {
         return LayerDefinition.create(meshdefinition, 64, 32);
     }
 
+    /**
+     * Sets this entity's model rotation angles
+     */
     @Override
-    public void setupAnim(T p_103831_, float p_103832_, float p_103833_, float p_103834_, float p_103835_, float p_103836_) {
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
     }
 
     @Override

@@ -22,12 +22,12 @@ import net.minecraft.world.phys.Vec3;
 public class ParticleCommand {
     private static final SimpleCommandExceptionType ERROR_FAILED = new SimpleCommandExceptionType(Component.translatable("commands.particle.failed"));
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_138123_, CommandBuildContext p_248587_) {
-        p_138123_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
+        dispatcher.register(
             Commands.literal("particle")
                 .requires(p_138127_ -> p_138127_.hasPermission(2))
                 .then(
-                    Commands.argument("name", ParticleArgument.particle(p_248587_))
+                    Commands.argument("name", ParticleArgument.particle(context))
                         .executes(
                             p_138148_ -> sendParticles(
                                     p_138148_.getSource(),
@@ -141,31 +141,31 @@ public class ParticleCommand {
     }
 
     private static int sendParticles(
-        CommandSourceStack p_138129_,
-        ParticleOptions p_138130_,
-        Vec3 p_138131_,
-        Vec3 p_138132_,
-        float p_138133_,
-        int p_138134_,
-        boolean p_138135_,
-        Collection<ServerPlayer> p_138136_
+        CommandSourceStack source,
+        ParticleOptions particleData,
+        Vec3 pos,
+        Vec3 delta,
+        float speed,
+        int count,
+        boolean force,
+        Collection<ServerPlayer> viewers
     ) throws CommandSyntaxException {
         int i = 0;
 
-        for (ServerPlayer serverplayer : p_138136_) {
-            if (p_138129_.getLevel()
+        for (ServerPlayer serverplayer : viewers) {
+            if (source.getLevel()
                 .sendParticles(
                     serverplayer,
-                    p_138130_,
-                    p_138135_,
-                    p_138131_.x,
-                    p_138131_.y,
-                    p_138131_.z,
-                    p_138134_,
-                    p_138132_.x,
-                    p_138132_.y,
-                    p_138132_.z,
-                    (double)p_138133_
+                    particleData,
+                    force,
+                    pos.x,
+                    pos.y,
+                    pos.z,
+                    count,
+                    delta.x,
+                    delta.y,
+                    delta.z,
+                    (double)speed
                 )) {
                 i++;
             }
@@ -174,8 +174,8 @@ public class ParticleCommand {
         if (i == 0) {
             throw ERROR_FAILED.create();
         } else {
-            p_138129_.sendSuccess(
-                () -> Component.translatable("commands.particle.success", BuiltInRegistries.PARTICLE_TYPE.getKey(p_138130_.getType()).toString()), true
+            source.sendSuccess(
+                () -> Component.translatable("commands.particle.success", BuiltInRegistries.PARTICLE_TYPE.getKey(particleData.getType()).toString()), true
             );
             return i;
         }

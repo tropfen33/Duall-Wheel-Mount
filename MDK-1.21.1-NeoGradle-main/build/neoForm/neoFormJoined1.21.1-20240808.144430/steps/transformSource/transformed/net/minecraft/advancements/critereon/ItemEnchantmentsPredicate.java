@@ -11,21 +11,21 @@ import net.minecraft.world.item.enchantment.ItemEnchantments;
 public abstract class ItemEnchantmentsPredicate implements SingleComponentItemPredicate<ItemEnchantments> {
     private final List<EnchantmentPredicate> enchantments;
 
-    protected ItemEnchantmentsPredicate(List<EnchantmentPredicate> p_333910_) {
-        this.enchantments = p_333910_;
+    protected ItemEnchantmentsPredicate(List<EnchantmentPredicate> enchantments) {
+        this.enchantments = enchantments;
     }
 
-    public static <T extends ItemEnchantmentsPredicate> Codec<T> codec(Function<List<EnchantmentPredicate>, T> p_333954_) {
-        return EnchantmentPredicate.CODEC.listOf().xmap(p_333954_, ItemEnchantmentsPredicate::enchantments);
+    public static <T extends ItemEnchantmentsPredicate> Codec<T> codec(Function<List<EnchantmentPredicate>, T> predicateFactory) {
+        return EnchantmentPredicate.CODEC.listOf().xmap(predicateFactory, ItemEnchantmentsPredicate::enchantments);
     }
 
     protected List<EnchantmentPredicate> enchantments() {
         return this.enchantments;
     }
 
-    public boolean matches(ItemStack p_333811_, ItemEnchantments p_334059_) {
+    public boolean matches(ItemStack stack, ItemEnchantments enchantments) {
         for (EnchantmentPredicate enchantmentpredicate : this.enchantments) {
-            if (!enchantmentpredicate.containedIn(p_334059_)) {
+            if (!enchantmentpredicate.containedIn(enchantments)) {
                 return false;
             }
         }
@@ -33,12 +33,12 @@ public abstract class ItemEnchantmentsPredicate implements SingleComponentItemPr
         return true;
     }
 
-    public static ItemEnchantmentsPredicate.Enchantments enchantments(List<EnchantmentPredicate> p_333715_) {
-        return new ItemEnchantmentsPredicate.Enchantments(p_333715_);
+    public static ItemEnchantmentsPredicate.Enchantments enchantments(List<EnchantmentPredicate> enchantments) {
+        return new ItemEnchantmentsPredicate.Enchantments(enchantments);
     }
 
-    public static ItemEnchantmentsPredicate.StoredEnchantments storedEnchantments(List<EnchantmentPredicate> p_333793_) {
-        return new ItemEnchantmentsPredicate.StoredEnchantments(p_333793_);
+    public static ItemEnchantmentsPredicate.StoredEnchantments storedEnchantments(List<EnchantmentPredicate> enchantments) {
+        return new ItemEnchantmentsPredicate.StoredEnchantments(enchantments);
     }
 
     public static class Enchantments extends ItemEnchantmentsPredicate {

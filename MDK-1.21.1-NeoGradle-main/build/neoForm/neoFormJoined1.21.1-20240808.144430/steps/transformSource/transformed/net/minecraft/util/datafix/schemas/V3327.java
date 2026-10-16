@@ -8,19 +8,19 @@ import java.util.function.Supplier;
 import net.minecraft.util.datafix.fixes.References;
 
 public class V3327 extends NamespacedSchema {
-    public V3327(int p_273350_, Schema p_273379_) {
-        super(p_273350_, p_273379_);
+    public V3327(int versionKey, Schema parent) {
+        super(versionKey, parent);
     }
 
     @Override
-    public Map<String, Supplier<TypeTemplate>> registerBlockEntities(Schema p_273248_) {
-        Map<String, Supplier<TypeTemplate>> map = super.registerBlockEntities(p_273248_);
-        p_273248_.register(
+    public Map<String, Supplier<TypeTemplate>> registerBlockEntities(Schema schema) {
+        Map<String, Supplier<TypeTemplate>> map = super.registerBlockEntities(schema);
+        schema.register(
             map,
             "minecraft:decorated_pot",
-            () -> DSL.optionalFields("shards", DSL.list(References.ITEM_NAME.in(p_273248_)), "item", References.ITEM_STACK.in(p_273248_))
+            () -> DSL.optionalFields("shards", DSL.list(References.ITEM_NAME.in(schema)), "item", References.ITEM_STACK.in(schema))
         );
-        p_273248_.register(map, "minecraft:suspicious_sand", () -> DSL.optionalFields("item", References.ITEM_STACK.in(p_273248_)));
+        schema.register(map, "minecraft:suspicious_sand", () -> DSL.optionalFields("item", References.ITEM_STACK.in(schema)));
         return map;
     }
 }

@@ -15,24 +15,30 @@ public class RemotePlayer extends AbstractClientPlayer {
     private Vec3 lerpDeltaMovement = Vec3.ZERO;
     private int lerpDeltaMovementSteps;
 
-    public RemotePlayer(ClientLevel p_252213_, GameProfile p_250471_) {
-        super(p_252213_, p_250471_);
+    public RemotePlayer(ClientLevel clientLevel, GameProfile gameProfile) {
+        super(clientLevel, gameProfile);
         this.noPhysics = true;
     }
 
+    /**
+     * Checks if the entity is in range to render.
+     */
     @Override
-    public boolean shouldRenderAtSqrDistance(double p_108770_) {
+    public boolean shouldRenderAtSqrDistance(double distance) {
         double d0 = this.getBoundingBox().getSize() * 10.0;
         if (Double.isNaN(d0)) {
             d0 = 1.0;
         }
 
         d0 *= 64.0 * getViewScale();
-        return p_108770_ < d0 * d0;
+        return distance < d0 * d0;
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_108772_, float p_108773_) {
+    public boolean hurt(DamageSource source, float amount) {
         return true;
     }
 
@@ -80,9 +86,12 @@ public class RemotePlayer extends AbstractClientPlayer {
         this.level().getProfiler().pop();
     }
 
+    /**
+     * Updates the entity motion clientside, called by packets from the server
+     */
     @Override
-    public void lerpMotion(double p_273090_, double p_272647_, double p_273555_) {
-        this.lerpDeltaMovement = new Vec3(p_273090_, p_272647_, p_273555_);
+    public void lerpMotion(double x, double y, double z) {
+        this.lerpDeltaMovement = new Vec3(x, y, z);
         this.lerpDeltaMovementSteps = this.getType().updateInterval() + 1;
     }
 
@@ -91,14 +100,14 @@ public class RemotePlayer extends AbstractClientPlayer {
     }
 
     @Override
-    public void sendSystemMessage(Component p_234163_) {
+    public void sendSystemMessage(Component component) {
         Minecraft minecraft = Minecraft.getInstance();
-        minecraft.gui.getChat().addMessage(p_234163_);
+        minecraft.gui.getChat().addMessage(component);
     }
 
     @Override
-    public void recreateFromPacket(ClientboundAddEntityPacket p_302238_) {
-        super.recreateFromPacket(p_302238_);
+    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
         this.setOldPosAndRot();
     }
 }

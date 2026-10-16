@@ -37,18 +37,18 @@ public class DetectedVersion implements WorldVersion {
         this.buildTime = new Date();
     }
 
-    private DetectedVersion(JsonObject p_132489_) {
-        this.id = GsonHelper.getAsString(p_132489_, "id");
-        this.name = GsonHelper.getAsString(p_132489_, "name");
-        this.stable = GsonHelper.getAsBoolean(p_132489_, "stable");
+    private DetectedVersion(JsonObject json) {
+        this.id = GsonHelper.getAsString(json, "id");
+        this.name = GsonHelper.getAsString(json, "name");
+        this.stable = GsonHelper.getAsBoolean(json, "stable");
         this.worldVersion = new DataVersion(
-            GsonHelper.getAsInt(p_132489_, "world_version"), GsonHelper.getAsString(p_132489_, "series_id", DataVersion.MAIN_SERIES)
+            GsonHelper.getAsInt(json, "world_version"), GsonHelper.getAsString(json, "series_id", DataVersion.MAIN_SERIES)
         );
-        this.protocolVersion = GsonHelper.getAsInt(p_132489_, "protocol_version");
-        JsonObject jsonobject = GsonHelper.getAsJsonObject(p_132489_, "pack_version");
+        this.protocolVersion = GsonHelper.getAsInt(json, "protocol_version");
+        JsonObject jsonobject = GsonHelper.getAsJsonObject(json, "pack_version");
         this.resourcePackVersion = GsonHelper.getAsInt(jsonobject, "resource");
         this.dataPackVersion = GsonHelper.getAsInt(jsonobject, "data");
-        this.buildTime = Date.from(ZonedDateTime.parse(GsonHelper.getAsString(p_132489_, "build_time")).toInstant());
+        this.buildTime = Date.from(ZonedDateTime.parse(GsonHelper.getAsString(json, "build_time")).toInstant());
     }
 
     public static WorldVersion tryDetectVersion() {
@@ -92,8 +92,8 @@ public class DetectedVersion implements WorldVersion {
     }
 
     @Override
-    public int getPackVersion(PackType p_265454_) {
-        return p_265454_ == PackType.SERVER_DATA ? this.dataPackVersion : this.resourcePackVersion;
+    public int getPackVersion(PackType packType) {
+        return packType == PackType.SERVER_DATA ? this.dataPackVersion : this.resourcePackVersion;
     }
 
     @Override

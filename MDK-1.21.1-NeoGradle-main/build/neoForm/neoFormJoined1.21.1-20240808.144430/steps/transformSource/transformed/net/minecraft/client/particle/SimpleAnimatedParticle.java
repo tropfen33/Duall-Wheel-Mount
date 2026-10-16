@@ -12,25 +12,28 @@ public class SimpleAnimatedParticle extends TextureSheetParticle {
     private float fadeB;
     private boolean hasFade;
 
-    protected SimpleAnimatedParticle(ClientLevel p_107647_, double p_107648_, double p_107649_, double p_107650_, SpriteSet p_107651_, float p_107652_) {
-        super(p_107647_, p_107648_, p_107649_, p_107650_);
+    protected SimpleAnimatedParticle(ClientLevel level, double x, double y, double z, SpriteSet sprites, float gravity) {
+        super(level, x, y, z);
         this.friction = 0.91F;
-        this.gravity = p_107652_;
-        this.sprites = p_107651_;
+        this.gravity = gravity;
+        this.sprites = sprites;
     }
 
-    public void setColor(int p_107658_) {
-        float f = (float)((p_107658_ & 0xFF0000) >> 16) / 255.0F;
-        float f1 = (float)((p_107658_ & 0xFF00) >> 8) / 255.0F;
-        float f2 = (float)((p_107658_ & 0xFF) >> 0) / 255.0F;
+    public void setColor(int color) {
+        float f = (float)((color & 0xFF0000) >> 16) / 255.0F;
+        float f1 = (float)((color & 0xFF00) >> 8) / 255.0F;
+        float f2 = (float)((color & 0xFF) >> 0) / 255.0F;
         float f3 = 1.0F;
         this.setColor(f * 1.0F, f1 * 1.0F, f2 * 1.0F);
     }
 
-    public void setFadeColor(int p_107660_) {
-        this.fadeR = (float)((p_107660_ & 0xFF0000) >> 16) / 255.0F;
-        this.fadeG = (float)((p_107660_ & 0xFF00) >> 8) / 255.0F;
-        this.fadeB = (float)((p_107660_ & 0xFF) >> 0) / 255.0F;
+    /**
+     * Sets a color for the particle to drift toward (20% closer each tick, never actually getting very close)
+     */
+    public void setFadeColor(int rgb) {
+        this.fadeR = (float)((rgb & 0xFF0000) >> 16) / 255.0F;
+        this.fadeG = (float)((rgb & 0xFF00) >> 8) / 255.0F;
+        this.fadeB = (float)((rgb & 0xFF) >> 0) / 255.0F;
         this.hasFade = true;
     }
 
@@ -54,7 +57,7 @@ public class SimpleAnimatedParticle extends TextureSheetParticle {
     }
 
     @Override
-    public int getLightColor(float p_107655_) {
+    public int getLightColor(float partialTick) {
         return 15728880;
     }
 }

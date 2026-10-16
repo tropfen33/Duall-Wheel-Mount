@@ -23,8 +23,8 @@ import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
 import net.minecraft.server.level.ServerPlayer;
 
 public class TitleCommand {
-    public static void register(CommandDispatcher<CommandSourceStack> p_139103_, CommandBuildContext p_324289_) {
-        p_139103_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
+        dispatcher.register(
             Commands.literal("title")
                 .requires(p_139107_ -> p_139107_.hasPermission(2))
                 .then(
@@ -38,7 +38,7 @@ public class TitleCommand {
                         .then(
                             Commands.literal("title")
                                 .then(
-                                    Commands.argument("title", ComponentArgument.textComponent(p_324289_))
+                                    Commands.argument("title", ComponentArgument.textComponent(context))
                                         .executes(
                                             p_139130_ -> showTitle(
                                                     p_139130_.getSource(),
@@ -53,7 +53,7 @@ public class TitleCommand {
                         .then(
                             Commands.literal("subtitle")
                                 .then(
-                                    Commands.argument("title", ComponentArgument.textComponent(p_324289_))
+                                    Commands.argument("title", ComponentArgument.textComponent(context))
                                         .executes(
                                             p_139128_ -> showTitle(
                                                     p_139128_.getSource(),
@@ -68,7 +68,7 @@ public class TitleCommand {
                         .then(
                             Commands.literal("actionbar")
                                 .then(
-                                    Commands.argument("title", ComponentArgument.textComponent(p_324289_))
+                                    Commands.argument("title", ComponentArgument.textComponent(context))
                                         .executes(
                                             p_139123_ -> showTitle(
                                                     p_139123_.getSource(),
@@ -105,69 +105,69 @@ public class TitleCommand {
         );
     }
 
-    private static int clearTitle(CommandSourceStack p_139109_, Collection<ServerPlayer> p_139110_) {
+    private static int clearTitle(CommandSourceStack source, Collection<ServerPlayer> targets) {
         ClientboundClearTitlesPacket clientboundcleartitlespacket = new ClientboundClearTitlesPacket(false);
 
-        for (ServerPlayer serverplayer : p_139110_) {
+        for (ServerPlayer serverplayer : targets) {
             serverplayer.connection.send(clientboundcleartitlespacket);
         }
 
-        if (p_139110_.size() == 1) {
-            p_139109_.sendSuccess(() -> Component.translatable("commands.title.cleared.single", p_139110_.iterator().next().getDisplayName()), true);
+        if (targets.size() == 1) {
+            source.sendSuccess(() -> Component.translatable("commands.title.cleared.single", targets.iterator().next().getDisplayName()), true);
         } else {
-            p_139109_.sendSuccess(() -> Component.translatable("commands.title.cleared.multiple", p_139110_.size()), true);
+            source.sendSuccess(() -> Component.translatable("commands.title.cleared.multiple", targets.size()), true);
         }
 
-        return p_139110_.size();
+        return targets.size();
     }
 
-    private static int resetTitle(CommandSourceStack p_139125_, Collection<ServerPlayer> p_139126_) {
+    private static int resetTitle(CommandSourceStack source, Collection<ServerPlayer> targets) {
         ClientboundClearTitlesPacket clientboundcleartitlespacket = new ClientboundClearTitlesPacket(true);
 
-        for (ServerPlayer serverplayer : p_139126_) {
+        for (ServerPlayer serverplayer : targets) {
             serverplayer.connection.send(clientboundcleartitlespacket);
         }
 
-        if (p_139126_.size() == 1) {
-            p_139125_.sendSuccess(() -> Component.translatable("commands.title.reset.single", p_139126_.iterator().next().getDisplayName()), true);
+        if (targets.size() == 1) {
+            source.sendSuccess(() -> Component.translatable("commands.title.reset.single", targets.iterator().next().getDisplayName()), true);
         } else {
-            p_139125_.sendSuccess(() -> Component.translatable("commands.title.reset.multiple", p_139126_.size()), true);
+            source.sendSuccess(() -> Component.translatable("commands.title.reset.multiple", targets.size()), true);
         }
 
-        return p_139126_.size();
+        return targets.size();
     }
 
     private static int showTitle(
-        CommandSourceStack p_142781_, Collection<ServerPlayer> p_142782_, Component p_142783_, String p_142784_, Function<Component, Packet<?>> p_142785_
+        CommandSourceStack source, Collection<ServerPlayer> targets, Component title, String titleType, Function<Component, Packet<?>> packetGetter
     ) throws CommandSyntaxException {
-        for (ServerPlayer serverplayer : p_142782_) {
-            serverplayer.connection.send(p_142785_.apply(ComponentUtils.updateForEntity(p_142781_, p_142783_, serverplayer, 0)));
+        for (ServerPlayer serverplayer : targets) {
+            serverplayer.connection.send(packetGetter.apply(ComponentUtils.updateForEntity(source, title, serverplayer, 0)));
         }
 
-        if (p_142782_.size() == 1) {
-            p_142781_.sendSuccess(
-                () -> Component.translatable("commands.title.show." + p_142784_ + ".single", p_142782_.iterator().next().getDisplayName()), true
+        if (targets.size() == 1) {
+            source.sendSuccess(
+                () -> Component.translatable("commands.title.show." + titleType + ".single", targets.iterator().next().getDisplayName()), true
             );
         } else {
-            p_142781_.sendSuccess(() -> Component.translatable("commands.title.show." + p_142784_ + ".multiple", p_142782_.size()), true);
+            source.sendSuccess(() -> Component.translatable("commands.title.show." + titleType + ".multiple", targets.size()), true);
         }
 
-        return p_142782_.size();
+        return targets.size();
     }
 
-    private static int setTimes(CommandSourceStack p_139112_, Collection<ServerPlayer> p_139113_, int p_139114_, int p_139115_, int p_139116_) {
-        ClientboundSetTitlesAnimationPacket clientboundsettitlesanimationpacket = new ClientboundSetTitlesAnimationPacket(p_139114_, p_139115_, p_139116_);
+    private static int setTimes(CommandSourceStack source, Collection<ServerPlayer> target, int fade, int stay, int fadeOut) {
+        ClientboundSetTitlesAnimationPacket clientboundsettitlesanimationpacket = new ClientboundSetTitlesAnimationPacket(fade, stay, fadeOut);
 
-        for (ServerPlayer serverplayer : p_139113_) {
+        for (ServerPlayer serverplayer : target) {
             serverplayer.connection.send(clientboundsettitlesanimationpacket);
         }
 
-        if (p_139113_.size() == 1) {
-            p_139112_.sendSuccess(() -> Component.translatable("commands.title.times.single", p_139113_.iterator().next().getDisplayName()), true);
+        if (target.size() == 1) {
+            source.sendSuccess(() -> Component.translatable("commands.title.times.single", target.iterator().next().getDisplayName()), true);
         } else {
-            p_139112_.sendSuccess(() -> Component.translatable("commands.title.times.multiple", p_139113_.size()), true);
+            source.sendSuccess(() -> Component.translatable("commands.title.times.multiple", target.size()), true);
         }
 
-        return p_139113_.size();
+        return target.size();
     }
 }

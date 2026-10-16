@@ -14,9 +14,9 @@ public class FollowParentGoal extends Goal {
     private final double speedModifier;
     private int timeToRecalcPath;
 
-    public FollowParentGoal(Animal p_25319_, double p_25320_) {
-        this.animal = p_25319_;
-        this.speedModifier = p_25320_;
+    public FollowParentGoal(Animal animal, double speedModifier) {
+        this.animal = animal;
+        this.speedModifier = speedModifier;
     }
 
     @Override

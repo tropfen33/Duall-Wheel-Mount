@@ -18,17 +18,17 @@ public class WebBlock extends Block implements net.neoforged.neoforge.common.ISh
         return CODEC;
     }
 
-    public WebBlock(BlockBehaviour.Properties p_58178_) {
-        super(p_58178_);
+    public WebBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
-    protected void entityInside(BlockState p_58180_, Level p_58181_, BlockPos p_58182_, Entity p_58183_) {
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
         Vec3 vec3 = new Vec3(0.25, 0.05F, 0.25);
-        if (p_58183_ instanceof LivingEntity livingentity && livingentity.hasEffect(MobEffects.WEAVING)) {
+        if (entity instanceof LivingEntity livingentity && livingentity.hasEffect(MobEffects.WEAVING)) {
             vec3 = new Vec3(0.5, 0.25, 0.5);
         }
 
-        p_58183_.makeStuckInBlock(p_58180_, vec3);
+        entity.makeStuckInBlock(state, vec3);
     }
 }

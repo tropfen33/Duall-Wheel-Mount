@@ -11,6 +11,9 @@ import net.minecraft.world.level.storage.loot.IntRange;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 
+/**
+ * A LootItemCondition that checks the {@linkplain ServerLevel#getDayTime day time} against an {@link IntRange} after applying an optional modulo division.
+ */
 public record TimeCheck(Optional<Long> period, IntRange value) implements LootItemCondition {
     public static final MapCodec<TimeCheck> CODEC = RecordCodecBuilder.mapCodec(
         p_338173_ -> p_338173_.group(
@@ -29,30 +32,30 @@ public record TimeCheck(Optional<Long> period, IntRange value) implements LootIt
         return this.value.getReferencedContextParams();
     }
 
-    public boolean test(LootContext p_82033_) {
-        ServerLevel serverlevel = p_82033_.getLevel();
+    public boolean test(LootContext context) {
+        ServerLevel serverlevel = context.getLevel();
         long i = serverlevel.getDayTime();
         if (this.period.isPresent()) {
             i %= this.period.get();
         }
 
-        return this.value.test(p_82033_, (int)i);
+        return this.value.test(context, (int)i);
     }
 
-    public static TimeCheck.Builder time(IntRange p_165510_) {
-        return new TimeCheck.Builder(p_165510_);
+    public static TimeCheck.Builder time(IntRange timeRange) {
+        return new TimeCheck.Builder(timeRange);
     }
 
     public static class Builder implements LootItemCondition.Builder {
         private Optional<Long> period = Optional.empty();
         private final IntRange value;
 
-        public Builder(IntRange p_165515_) {
-            this.value = p_165515_;
+        public Builder(IntRange timeRange) {
+            this.value = timeRange;
         }
 
-        public TimeCheck.Builder setPeriod(long p_165517_) {
-            this.period = Optional.of(p_165517_);
+        public TimeCheck.Builder setPeriod(long period) {
+            this.period = Optional.of(period);
             return this;
         }
 

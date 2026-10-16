@@ -17,16 +17,23 @@ import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvi
 public class LakeFeature extends Feature<LakeFeature.Configuration> {
     private static final BlockState AIR = Blocks.CAVE_AIR.defaultBlockState();
 
-    public LakeFeature(Codec<LakeFeature.Configuration> p_66259_) {
-        super(p_66259_);
+    public LakeFeature(Codec<LakeFeature.Configuration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<LakeFeature.Configuration> p_159958_) {
-        BlockPos blockpos = p_159958_.origin();
-        WorldGenLevel worldgenlevel = p_159958_.level();
-        RandomSource randomsource = p_159958_.random();
-        LakeFeature.Configuration lakefeature$configuration = p_159958_.config();
+    public boolean place(FeaturePlaceContext<LakeFeature.Configuration> context) {
+        BlockPos blockpos = context.origin();
+        WorldGenLevel worldgenlevel = context.level();
+        RandomSource randomsource = context.random();
+        LakeFeature.Configuration lakefeature$configuration = context.config();
         if (blockpos.getY() <= worldgenlevel.getMinBuildHeight() + 4) {
             return false;
         } else {
@@ -147,8 +154,8 @@ public class LakeFeature extends Feature<LakeFeature.Configuration> {
         }
     }
 
-    private boolean canReplaceBlock(BlockState p_190952_) {
-        return !p_190952_.is(BlockTags.FEATURES_CANNOT_REPLACE);
+    private boolean canReplaceBlock(BlockState state) {
+        return !state.is(BlockTags.FEATURES_CANNOT_REPLACE);
     }
 
     public static record Configuration(BlockStateProvider fluid, BlockStateProvider barrier) implements FeatureConfiguration {

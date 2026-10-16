@@ -18,16 +18,16 @@ public class AlertScreen extends Screen {
     private final Component okButton;
     private final boolean shouldCloseOnEsc;
 
-    public AlertScreen(Runnable p_95519_, Component p_95520_, Component p_95521_) {
-        this(p_95519_, p_95520_, p_95521_, CommonComponents.GUI_BACK, true);
+    public AlertScreen(Runnable callback, Component title, Component text) {
+        this(callback, title, text, CommonComponents.GUI_BACK, true);
     }
 
-    public AlertScreen(Runnable p_239327_, Component p_239328_, Component p_239329_, Component p_239330_, boolean p_239331_) {
-        super(p_239328_);
-        this.callback = p_239327_;
-        this.messageText = p_239329_;
-        this.okButton = p_239330_;
-        this.shouldCloseOnEsc = p_239331_;
+    public AlertScreen(Runnable callback, Component title, Component messageText, Component okButton, boolean shouldCloseOnEsc) {
+        super(title);
+        this.callback = callback;
+        this.messageText = messageText;
+        this.okButton = okButton;
+        this.shouldCloseOnEsc = shouldCloseOnEsc;
     }
 
     @Override
@@ -45,11 +45,19 @@ public class AlertScreen extends Screen {
         this.addRenderableWidget(Button.builder(this.okButton, p_95533_ -> this.callback.run()).bounds((this.width - 150) / 2, j, 150, 20).build());
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281989_, int p_281583_, int p_282152_, float p_282198_) {
-        super.render(p_281989_, p_281583_, p_282152_, p_282198_);
-        p_281989_.drawCenteredString(this.font, this.title, this.width / 2, 70, 16777215);
-        this.message.renderCentered(p_281989_, this.width / 2, 90);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 70, 16777215);
+        this.message.renderCentered(guiGraphics, this.width / 2, 90);
     }
 
     @Override

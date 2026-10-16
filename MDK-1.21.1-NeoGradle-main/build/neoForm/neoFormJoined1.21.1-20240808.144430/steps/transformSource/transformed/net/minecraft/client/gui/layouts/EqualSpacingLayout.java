@@ -15,13 +15,13 @@ public class EqualSpacingLayout extends AbstractLayout {
     private final List<EqualSpacingLayout.ChildContainer> children = new ArrayList<>();
     private final LayoutSettings defaultChildLayoutSettings = LayoutSettings.defaults();
 
-    public EqualSpacingLayout(int p_296391_, int p_295404_, EqualSpacingLayout.Orientation p_296096_) {
-        this(0, 0, p_296391_, p_295404_, p_296096_);
+    public EqualSpacingLayout(int width, int height, EqualSpacingLayout.Orientation orientation) {
+        this(0, 0, width, height, orientation);
     }
 
-    public EqualSpacingLayout(int p_294661_, int p_294554_, int p_295502_, int p_295293_, EqualSpacingLayout.Orientation p_294700_) {
-        super(p_294661_, p_294554_, p_295502_, p_295293_);
-        this.orientation = p_294700_;
+    public EqualSpacingLayout(int x, int y, int width, int height, EqualSpacingLayout.Orientation orientation) {
+        super(x, y, width, height);
+        this.orientation = orientation;
     }
 
     @Override
@@ -70,8 +70,8 @@ public class EqualSpacingLayout extends AbstractLayout {
     }
 
     @Override
-    public void visitChildren(Consumer<LayoutElement> p_295333_) {
-        this.children.forEach(p_296421_ -> p_295333_.accept(p_296421_.child));
+    public void visitChildren(Consumer<LayoutElement> visitor) {
+        this.children.forEach(p_296421_ -> visitor.accept(p_296421_.child));
     }
 
     public LayoutSettings newChildLayoutSettings() {
@@ -82,17 +82,17 @@ public class EqualSpacingLayout extends AbstractLayout {
         return this.defaultChildLayoutSettings;
     }
 
-    public <T extends LayoutElement> T addChild(T p_295559_) {
-        return this.addChild(p_295559_, this.newChildLayoutSettings());
+    public <T extends LayoutElement> T addChild(T child) {
+        return this.addChild(child, this.newChildLayoutSettings());
     }
 
-    public <T extends LayoutElement> T addChild(T p_295964_, LayoutSettings p_296374_) {
-        this.children.add(new EqualSpacingLayout.ChildContainer(p_295964_, p_296374_));
-        return p_295964_;
+    public <T extends LayoutElement> T addChild(T child, LayoutSettings layoutSettings) {
+        this.children.add(new EqualSpacingLayout.ChildContainer(child, layoutSettings));
+        return child;
     }
 
-    public <T extends LayoutElement> T addChild(T p_295467_, Consumer<LayoutSettings> p_295449_) {
-        return this.addChild(p_295467_, Util.make(this.newChildLayoutSettings(), p_295449_));
+    public <T extends LayoutElement> T addChild(T child, Consumer<LayoutSettings> layoutSettingsCreator) {
+        return this.addChild(child, Util.make(this.newChildLayoutSettings(), layoutSettingsCreator));
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -107,65 +107,65 @@ public class EqualSpacingLayout extends AbstractLayout {
         HORIZONTAL,
         VERTICAL;
 
-        int getPrimaryLength(LayoutElement p_295781_) {
+        int getPrimaryLength(LayoutElement element) {
             return switch (this) {
-                case HORIZONTAL -> p_295781_.getWidth();
-                case VERTICAL -> p_295781_.getHeight();
+                case HORIZONTAL -> element.getWidth();
+                case VERTICAL -> element.getHeight();
             };
         }
 
-        int getPrimaryLength(EqualSpacingLayout.ChildContainer p_295365_) {
+        int getPrimaryLength(EqualSpacingLayout.ChildContainer container) {
             return switch (this) {
-                case HORIZONTAL -> p_295365_.getWidth();
-                case VERTICAL -> p_295365_.getHeight();
+                case HORIZONTAL -> container.getWidth();
+                case VERTICAL -> container.getHeight();
             };
         }
 
-        int getSecondaryLength(LayoutElement p_294949_) {
+        int getSecondaryLength(LayoutElement element) {
             return switch (this) {
-                case HORIZONTAL -> p_294949_.getHeight();
-                case VERTICAL -> p_294949_.getWidth();
+                case HORIZONTAL -> element.getHeight();
+                case VERTICAL -> element.getWidth();
             };
         }
 
-        int getSecondaryLength(EqualSpacingLayout.ChildContainer p_295288_) {
+        int getSecondaryLength(EqualSpacingLayout.ChildContainer container) {
             return switch (this) {
-                case HORIZONTAL -> p_295288_.getHeight();
-                case VERTICAL -> p_295288_.getWidth();
+                case HORIZONTAL -> container.getHeight();
+                case VERTICAL -> container.getWidth();
             };
         }
 
-        void setPrimaryPosition(EqualSpacingLayout.ChildContainer p_295434_, int p_294763_) {
+        void setPrimaryPosition(EqualSpacingLayout.ChildContainer container, int position) {
             switch (this) {
                 case HORIZONTAL:
-                    p_295434_.setX(p_294763_, p_295434_.getWidth());
+                    container.setX(position, container.getWidth());
                     break;
                 case VERTICAL:
-                    p_295434_.setY(p_294763_, p_295434_.getHeight());
+                    container.setY(position, container.getHeight());
             }
         }
 
-        void setSecondaryPosition(EqualSpacingLayout.ChildContainer p_295472_, int p_295477_, int p_296148_) {
+        void setSecondaryPosition(EqualSpacingLayout.ChildContainer container, int position, int length) {
             switch (this) {
                 case HORIZONTAL:
-                    p_295472_.setY(p_295477_, p_296148_);
+                    container.setY(position, length);
                     break;
                 case VERTICAL:
-                    p_295472_.setX(p_295477_, p_296148_);
+                    container.setX(position, length);
             }
         }
 
-        int getPrimaryPosition(LayoutElement p_294749_) {
+        int getPrimaryPosition(LayoutElement element) {
             return switch (this) {
-                case HORIZONTAL -> p_294749_.getX();
-                case VERTICAL -> p_294749_.getY();
+                case HORIZONTAL -> element.getX();
+                case VERTICAL -> element.getY();
             };
         }
 
-        int getSecondaryPosition(LayoutElement p_295927_) {
+        int getSecondaryPosition(LayoutElement element) {
             return switch (this) {
-                case HORIZONTAL -> p_295927_.getY();
-                case VERTICAL -> p_295927_.getX();
+                case HORIZONTAL -> element.getY();
+                case VERTICAL -> element.getX();
             };
         }
     }

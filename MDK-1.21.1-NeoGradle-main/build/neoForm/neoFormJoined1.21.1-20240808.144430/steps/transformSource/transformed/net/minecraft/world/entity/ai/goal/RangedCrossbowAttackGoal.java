@@ -24,8 +24,8 @@ public class RangedCrossbowAttackGoal<T extends net.minecraft.world.entity.Mob &
     private int attackDelay;
     private int updatePathDelay;
 
-    public <M extends Monster & CrossbowAttackMob> RangedCrossbowAttackGoal(M p_25814_, double p_25815_, float p_25816_) {
-        this((T) p_25814_, p_25815_, p_25816_);
+    public <M extends Monster & CrossbowAttackMob> RangedCrossbowAttackGoal(M mob, double speedModifier, float attackRadius) {
+        this((T) mob, speedModifier, attackRadius);
     }
 
     public RangedCrossbowAttackGoal(T p_25814_, double p_25815_, float p_25816_) {

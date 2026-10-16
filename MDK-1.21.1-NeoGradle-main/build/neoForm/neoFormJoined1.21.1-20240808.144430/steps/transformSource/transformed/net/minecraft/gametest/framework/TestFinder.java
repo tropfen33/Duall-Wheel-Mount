@@ -23,11 +23,11 @@ public class TestFinder<T> implements StructureBlockPosFinder, TestFunctionFinde
         return this.structureBlockPosFinder.findStructureBlockPos();
     }
 
-    TestFinder(CommandSourceStack p_320004_, Function<TestFinder<T>, T> p_320489_, TestFunctionFinder p_320808_, StructureBlockPosFinder p_320448_) {
-        this.source = p_320004_;
-        this.contextProvider = p_320489_;
-        this.testFunctionFinder = p_320808_;
-        this.structureBlockPosFinder = p_320448_;
+    TestFinder(CommandSourceStack source, Function<TestFinder<T>, T> contextProvider, TestFunctionFinder testFunctionFinder, StructureBlockPosFinder structureBlockPosFinder) {
+        this.source = source;
+        this.contextProvider = contextProvider;
+        this.testFunctionFinder = testFunctionFinder;
+        this.structureBlockPosFinder = structureBlockPosFinder;
     }
 
     T get() {
@@ -48,30 +48,30 @@ public class TestFinder<T> implements StructureBlockPosFinder, TestFunctionFinde
         private final UnaryOperator<Supplier<Stream<TestFunction>>> testFunctionFinderWrapper;
         private final UnaryOperator<Supplier<Stream<BlockPos>>> structureBlockPosFinderWrapper;
 
-        public Builder(Function<TestFinder<T>, T> p_320939_) {
-            this.contextProvider = p_320939_;
+        public Builder(Function<TestFinder<T>, T> contextProvider) {
+            this.contextProvider = contextProvider;
             this.testFunctionFinderWrapper = p_329857_ -> p_329857_;
             this.structureBlockPosFinderWrapper = p_329858_ -> p_329858_;
         }
 
         private Builder(
-            Function<TestFinder<T>, T> p_331181_, UnaryOperator<Supplier<Stream<TestFunction>>> p_331301_, UnaryOperator<Supplier<Stream<BlockPos>>> p_331612_
+            Function<TestFinder<T>, T> contextProvider, UnaryOperator<Supplier<Stream<TestFunction>>> testFunctionFinderWrapper, UnaryOperator<Supplier<Stream<BlockPos>>> structureBlockPosFinderWrapper
         ) {
-            this.contextProvider = p_331181_;
-            this.testFunctionFinderWrapper = p_331301_;
-            this.structureBlockPosFinderWrapper = p_331612_;
+            this.contextProvider = contextProvider;
+            this.testFunctionFinderWrapper = testFunctionFinderWrapper;
+            this.structureBlockPosFinderWrapper = structureBlockPosFinderWrapper;
         }
 
-        public TestFinder.Builder<T> createMultipleCopies(int p_330482_) {
-            return new TestFinder.Builder<>(this.contextProvider, createCopies(p_330482_), createCopies(p_330482_));
+        public TestFinder.Builder<T> createMultipleCopies(int count) {
+            return new TestFinder.Builder<>(this.contextProvider, createCopies(count), createCopies(count));
         }
 
-        private static <Q> UnaryOperator<Supplier<Stream<Q>>> createCopies(int p_330804_) {
+        private static <Q> UnaryOperator<Supplier<Stream<Q>>> createCopies(int count) {
             return p_329860_ -> {
                 List<Q> list = new LinkedList<>();
                 List<Q> list1 = ((Stream)p_329860_.get()).toList();
 
-                for (int i = 0; i < p_330804_; i++) {
+                for (int i = 0; i < count; i++) {
                     list.addAll(list1);
                 }
 
@@ -79,26 +79,26 @@ public class TestFinder<T> implements StructureBlockPosFinder, TestFunctionFinde
             };
         }
 
-        private T build(CommandSourceStack p_330622_, TestFunctionFinder p_330437_, StructureBlockPosFinder p_331860_) {
+        private T build(CommandSourceStack source, TestFunctionFinder testFunctionFinder, StructureBlockPosFinder structureBlockPosFinder) {
             return new TestFinder<>(
-                    p_330622_,
+                    source,
                     this.contextProvider,
-                    this.testFunctionFinderWrapper.apply(p_330437_::findTestFunctions)::get,
-                    this.structureBlockPosFinderWrapper.apply(p_331860_::findStructureBlockPos)::get
+                    this.testFunctionFinderWrapper.apply(testFunctionFinder::findTestFunctions)::get,
+                    this.structureBlockPosFinderWrapper.apply(structureBlockPosFinder::findStructureBlockPos)::get
                 )
                 .get();
         }
 
-        public T radius(CommandContext<CommandSourceStack> p_320307_, int p_320811_) {
-            CommandSourceStack commandsourcestack = p_320307_.getSource();
+        public T radius(CommandContext<CommandSourceStack> context, int radius) {
+            CommandSourceStack commandsourcestack = context.getSource();
             BlockPos blockpos = BlockPos.containing(commandsourcestack.getPosition());
             return this.build(
-                commandsourcestack, TestFinder.NO_FUNCTIONS, () -> StructureUtils.findStructureBlocks(blockpos, p_320811_, commandsourcestack.getLevel())
+                commandsourcestack, TestFinder.NO_FUNCTIONS, () -> StructureUtils.findStructureBlocks(blockpos, radius, commandsourcestack.getLevel())
             );
         }
 
-        public T nearest(CommandContext<CommandSourceStack> p_320944_) {
-            CommandSourceStack commandsourcestack = p_320944_.getSource();
+        public T nearest(CommandContext<CommandSourceStack> context) {
+            CommandSourceStack commandsourcestack = context.getSource();
             BlockPos blockpos = BlockPos.containing(commandsourcestack.getPosition());
             return this.build(
                 commandsourcestack,
@@ -107,16 +107,16 @@ public class TestFinder<T> implements StructureBlockPosFinder, TestFunctionFinde
             );
         }
 
-        public T allNearby(CommandContext<CommandSourceStack> p_320216_) {
-            CommandSourceStack commandsourcestack = p_320216_.getSource();
+        public T allNearby(CommandContext<CommandSourceStack> context) {
+            CommandSourceStack commandsourcestack = context.getSource();
             BlockPos blockpos = BlockPos.containing(commandsourcestack.getPosition());
             return this.build(
                 commandsourcestack, TestFinder.NO_FUNCTIONS, () -> StructureUtils.findStructureBlocks(blockpos, 200, commandsourcestack.getLevel())
             );
         }
 
-        public T lookedAt(CommandContext<CommandSourceStack> p_320178_) {
-            CommandSourceStack commandsourcestack = p_320178_.getSource();
+        public T lookedAt(CommandContext<CommandSourceStack> context) {
+            CommandSourceStack commandsourcestack = context.getSource();
             return this.build(
                 commandsourcestack,
                 TestFinder.NO_FUNCTIONS,
@@ -126,46 +126,46 @@ public class TestFinder<T> implements StructureBlockPosFinder, TestFunctionFinde
             );
         }
 
-        public T allTests(CommandContext<CommandSourceStack> p_320902_) {
+        public T allTests(CommandContext<CommandSourceStack> context) {
             return this.build(
-                p_320902_.getSource(),
+                context.getSource(),
                 () -> GameTestRegistry.getAllTestFunctions().stream().filter(p_329855_ -> !p_329855_.manualOnly()),
                 TestFinder.NO_STRUCTURES
             );
         }
 
-        public T allTestsInClass(CommandContext<CommandSourceStack> p_320256_, String p_320231_) {
+        public T allTestsInClass(CommandContext<CommandSourceStack> context, String className) {
             return this.build(
-                p_320256_.getSource(),
-                () -> GameTestRegistry.getTestFunctionsForClassName(p_320231_).filter(p_329856_ -> !p_329856_.manualOnly()),
+                context.getSource(),
+                () -> GameTestRegistry.getTestFunctionsForClassName(className).filter(p_329856_ -> !p_329856_.manualOnly()),
                 TestFinder.NO_STRUCTURES
             );
         }
 
-        public T failedTests(CommandContext<CommandSourceStack> p_320960_, boolean p_320352_) {
+        public T failedTests(CommandContext<CommandSourceStack> context, boolean onlyRequired) {
             return this.build(
-                p_320960_.getSource(),
-                () -> GameTestRegistry.getLastFailedTests().filter(p_320430_ -> !p_320352_ || p_320430_.required()),
+                context.getSource(),
+                () -> GameTestRegistry.getLastFailedTests().filter(p_320430_ -> !onlyRequired || p_320430_.required()),
                 TestFinder.NO_STRUCTURES
             );
         }
 
-        public T byArgument(CommandContext<CommandSourceStack> p_320475_, String p_320707_) {
-            return this.build(p_320475_.getSource(), () -> Stream.of(TestFunctionArgument.getTestFunction(p_320475_, p_320707_)), TestFinder.NO_STRUCTURES);
+        public T byArgument(CommandContext<CommandSourceStack> context, String argumentName) {
+            return this.build(context.getSource(), () -> Stream.of(TestFunctionArgument.getTestFunction(context, argumentName)), TestFinder.NO_STRUCTURES);
         }
 
-        public T locateByName(CommandContext<CommandSourceStack> p_341208_, String p_341401_) {
-            CommandSourceStack commandsourcestack = p_341208_.getSource();
+        public T locateByName(CommandContext<CommandSourceStack> context, String name) {
+            CommandSourceStack commandsourcestack = context.getSource();
             BlockPos blockpos = BlockPos.containing(commandsourcestack.getPosition());
             return this.build(
                 commandsourcestack,
                 TestFinder.NO_FUNCTIONS,
-                () -> StructureUtils.findStructureByTestFunction(blockpos, 1024, commandsourcestack.getLevel(), p_341401_)
+                () -> StructureUtils.findStructureByTestFunction(blockpos, 1024, commandsourcestack.getLevel(), name)
             );
         }
 
-        public T failedTests(CommandContext<CommandSourceStack> p_320220_) {
-            return this.failedTests(p_320220_, false);
+        public T failedTests(CommandContext<CommandSourceStack> context) {
+            return this.failedTests(context, false);
         }
     }
 }

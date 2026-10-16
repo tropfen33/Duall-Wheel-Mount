@@ -185,24 +185,27 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
     @Nullable
     private final Item item;
     final PatchedDataComponentMap components;
+    /**
+     * The entity the item is attached to, like an Item Frame.
+     */
     @Nullable
     private Entity entityRepresentation;
 
-    private static DataResult<ItemStack> validateStrict(ItemStack p_340966_) {
-        DataResult<Unit> dataresult = validateComponents(p_340966_.getComponents());
+    private static DataResult<ItemStack> validateStrict(ItemStack stack) {
+        DataResult<Unit> dataresult = validateComponents(stack.getComponents());
         if (dataresult.isError()) {
-            return dataresult.map(p_340777_ -> p_340966_);
+            return dataresult.map(p_340777_ -> stack);
         } else {
-            return p_340966_.getCount() > p_340966_.getMaxStackSize()
-                ? DataResult.error(() -> "Item stack with stack size of " + p_340966_.getCount() + " was larger than maximum: " + p_340966_.getMaxStackSize())
-                : DataResult.success(p_340966_);
+            return stack.getCount() > stack.getMaxStackSize()
+                ? DataResult.error(() -> "Item stack with stack size of " + stack.getCount() + " was larger than maximum: " + stack.getMaxStackSize())
+                : DataResult.success(stack);
         }
     }
 
-    public static StreamCodec<RegistryFriendlyByteBuf, ItemStack> validatedStreamCodec(final StreamCodec<RegistryFriendlyByteBuf, ItemStack> p_340962_) {
+    public static StreamCodec<RegistryFriendlyByteBuf, ItemStack> validatedStreamCodec(final StreamCodec<RegistryFriendlyByteBuf, ItemStack> codec) {
         return new StreamCodec<RegistryFriendlyByteBuf, ItemStack>() {
             public ItemStack decode(RegistryFriendlyByteBuf p_341238_) {
-                ItemStack itemstack = p_340962_.decode(p_341238_);
+                ItemStack itemstack = codec.decode(p_341238_);
                 if (!itemstack.isEmpty()) {
                     RegistryOps<Unit> registryops = p_341238_.registryAccess().createSerializationContext(NullOps.INSTANCE);
                     ItemStack.CODEC.encodeStart(registryops, itemstack).getOrThrow(DecoderException::new);
@@ -212,7 +215,7 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
             }
 
             public void encode(RegistryFriendlyByteBuf p_341112_, ItemStack p_341358_) {
-                p_340962_.encode(p_341112_, p_341358_);
+                codec.encode(p_341112_, p_341358_);
             }
         };
     }
@@ -238,43 +241,43 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         return !this.isEmpty() ? this.components.isPatchEmpty() : true;
     }
 
-    public ItemStack(ItemLike p_41599_) {
-        this(p_41599_, 1);
+    public ItemStack(ItemLike item) {
+        this(item, 1);
     }
 
-    public ItemStack(Holder<Item> p_204116_) {
-        this(p_204116_.value(), 1);
+    public ItemStack(Holder<Item> tag) {
+        this(tag.value(), 1);
     }
 
-    public ItemStack(Holder<Item> p_312081_, int p_41605_, DataComponentPatch p_330362_) {
-        this(p_312081_.value(), p_41605_, PatchedDataComponentMap.fromPatch(p_312081_.value().components(), p_330362_));
+    public ItemStack(Holder<Item> tag, int count, DataComponentPatch components) {
+        this(tag.value(), count, PatchedDataComponentMap.fromPatch(tag.value().components(), components));
     }
 
-    public ItemStack(Holder<Item> p_220155_, int p_220156_) {
-        this(p_220155_.value(), p_220156_);
+    public ItemStack(Holder<Item> item, int count) {
+        this(item.value(), count);
     }
 
-    public ItemStack(ItemLike p_41601_, int p_41602_) {
-        this(p_41601_, p_41602_, new PatchedDataComponentMap(p_41601_.asItem().components()));
+    public ItemStack(ItemLike item, int count) {
+        this(item, count, new PatchedDataComponentMap(item.asItem().components()));
     }
 
-    private ItemStack(ItemLike p_330978_, int p_330639_, PatchedDataComponentMap p_330546_) {
-        this.item = p_330978_.asItem();
-        this.count = p_330639_;
-        this.components = p_330546_;
+    private ItemStack(ItemLike item, int count, PatchedDataComponentMap components) {
+        this.item = item.asItem();
+        this.count = count;
+        this.components = components;
         this.getItem().verifyComponentsAfterLoad(this);
     }
 
-    private ItemStack(@Nullable Void p_282703_) {
+    private ItemStack(@Nullable Void unused) {
         this.item = null;
         this.components = new PatchedDataComponentMap(DataComponentMap.EMPTY);
     }
 
-    public static DataResult<Unit> validateComponents(DataComponentMap p_341201_) {
-        if (p_341201_.has(DataComponents.MAX_DAMAGE) && p_341201_.getOrDefault(DataComponents.MAX_STACK_SIZE, 1) > 1) {
+    public static DataResult<Unit> validateComponents(DataComponentMap components) {
+        if (components.has(DataComponents.MAX_DAMAGE) && components.getOrDefault(DataComponents.MAX_STACK_SIZE, 1) > 1) {
             return DataResult.error(() -> "Item cannot be both damageable and stackable");
         } else {
-            ItemContainerContents itemcontainercontents = p_341201_.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+            ItemContainerContents itemcontainercontents = components.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
 
             for (ItemStack itemstack : itemcontainercontents.nonEmptyItems()) {
                 int i = itemstack.getCount();
@@ -288,25 +291,28 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         }
     }
 
-    public static Optional<ItemStack> parse(HolderLookup.Provider p_331096_, Tag p_330238_) {
-        return CODEC.parse(p_331096_.createSerializationContext(NbtOps.INSTANCE), p_330238_)
+    public static Optional<ItemStack> parse(HolderLookup.Provider lookupProvider, Tag tag) {
+        return CODEC.parse(lookupProvider.createSerializationContext(NbtOps.INSTANCE), tag)
             .resultOrPartial(p_330102_ -> LOGGER.error("Tried to load invalid item: '{}'", p_330102_));
     }
 
-    public static ItemStack parseOptional(HolderLookup.Provider p_330543_, CompoundTag p_330539_) {
-        return p_330539_.isEmpty() ? EMPTY : parse(p_330543_, p_330539_).orElse(EMPTY);
+    public static ItemStack parseOptional(HolderLookup.Provider lookupProvider, CompoundTag tag) {
+        return tag.isEmpty() ? EMPTY : parse(lookupProvider, tag).orElse(EMPTY);
     }
 
     public boolean isEmpty() {
         return this == EMPTY || this.item == Items.AIR || this.count <= 0;
     }
 
-    public boolean isItemEnabled(FeatureFlagSet p_250869_) {
-        return this.isEmpty() || this.getItem().isEnabled(p_250869_);
+    public boolean isItemEnabled(FeatureFlagSet enabledFlags) {
+        return this.isEmpty() || this.getItem().isEnabled(enabledFlags);
     }
 
-    public ItemStack split(int p_41621_) {
-        int i = Math.min(p_41621_, this.getCount());
+    /**
+     * Splits off a stack of the given amount of this stack and reduces this stack by the amount.
+     */
+    public ItemStack split(int amount) {
+        int i = Math.min(amount, this.getCount());
         ItemStack itemstack = this.copyWithCount(i);
         this.shrink(i);
         return itemstack;
@@ -330,35 +336,35 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         return this.getItem().builtInRegistryHolder();
     }
 
-    public boolean is(TagKey<Item> p_204118_) {
-        return this.getItem().builtInRegistryHolder().is(p_204118_);
+    public boolean is(TagKey<Item> tag) {
+        return this.getItem().builtInRegistryHolder().is(tag);
     }
 
-    public boolean is(Item p_150931_) {
-        return this.getItem() == p_150931_;
+    public boolean is(Item item) {
+        return this.getItem() == item;
     }
 
-    public boolean is(Predicate<Holder<Item>> p_220168_) {
-        return p_220168_.test(this.getItem().builtInRegistryHolder());
+    public boolean is(Predicate<Holder<Item>> item) {
+        return item.test(this.getItem().builtInRegistryHolder());
     }
 
-    public boolean is(Holder<Item> p_220166_) {
-        return is(p_220166_.value()); // Neo: Fix comparing for custom holders such as DeferredHolders
+    public boolean is(Holder<Item> item) {
+        return is(item.value()); // Neo: Fix comparing for custom holders such as DeferredHolders
     }
 
-    public boolean is(HolderSet<Item> p_298683_) {
-        return p_298683_.contains(this.getItemHolder());
+    public boolean is(HolderSet<Item> item) {
+        return item.contains(this.getItemHolder());
     }
 
     public Stream<TagKey<Item>> getTags() {
         return this.getItem().builtInRegistryHolder().tags();
     }
 
-    public InteractionResult useOn(UseOnContext p_41662_) {
-        var e = net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent(p_41662_, net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent.UsePhase.ITEM_AFTER_BLOCK));
+    public InteractionResult useOn(UseOnContext context) {
+        var e = net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent(context, net.neoforged.neoforge.event.entity.player.UseItemOnBlockEvent.UsePhase.ITEM_AFTER_BLOCK));
         if (e.isCanceled()) return e.getCancellationResult().result();
-        if (!p_41662_.getLevel().isClientSide) return net.neoforged.neoforge.common.CommonHooks.onPlaceItemIntoWorld(p_41662_);
-        return onItemUse(p_41662_, (c) -> getItem().useOn(p_41662_));
+        if (!context.getLevel().isClientSide) return net.neoforged.neoforge.common.CommonHooks.onPlaceItemIntoWorld(context);
+        return onItemUse(context, (c) -> getItem().useOn(context));
     }
 
     public InteractionResult onItemUseFirst(UseOnContext p_41662_) {
@@ -383,38 +389,44 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         }
     }
 
-    public float getDestroySpeed(BlockState p_41692_) {
-        return this.getItem().getDestroySpeed(this, p_41692_);
+    public float getDestroySpeed(BlockState state) {
+        return this.getItem().getDestroySpeed(this, state);
     }
 
-    public InteractionResultHolder<ItemStack> use(Level p_41683_, Player p_41684_, InteractionHand p_41685_) {
-        return this.getItem().use(p_41683_, p_41684_, p_41685_);
+    /**
+     * Called when the {@code ItemStack} is equipped and right-clicked. Replaces the {@code ItemStack} with the return value.
+     */
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
+        return this.getItem().use(level, player, usedHand);
     }
 
-    public ItemStack finishUsingItem(Level p_41672_, LivingEntity p_41673_) {
-        return this.getItem().finishUsingItem(this, p_41672_, p_41673_);
+    /**
+     * Called when the item in use count reach 0, e.g. item food eaten. Return the new ItemStack. Args : world, entity
+     */
+    public ItemStack finishUsingItem(Level level, LivingEntity livingEntity) {
+        return this.getItem().finishUsingItem(this, level, livingEntity);
     }
 
-    public Tag save(HolderLookup.Provider p_331900_, Tag p_330830_) {
+    public Tag save(HolderLookup.Provider levelRegistryAccess, Tag outputTag) {
         if (this.isEmpty()) {
             throw new IllegalStateException("Cannot encode empty ItemStack");
         } else {
             // Neo: Logs extra information about this ItemStack on error
-            return net.neoforged.neoforge.common.util.DataComponentUtil.wrapEncodingExceptions(this, CODEC, p_331900_, p_330830_);
+            return net.neoforged.neoforge.common.util.DataComponentUtil.wrapEncodingExceptions(this, CODEC, levelRegistryAccess, outputTag);
         }
     }
 
-    public Tag save(HolderLookup.Provider p_332160_) {
+    public Tag save(HolderLookup.Provider levelRegistryAccess) {
         if (this.isEmpty()) {
             throw new IllegalStateException("Cannot encode empty ItemStack");
         } else {
             // Neo: Logs extra information about this ItemStack on error
-            return net.neoforged.neoforge.common.util.DataComponentUtil.wrapEncodingExceptions(this, CODEC, p_332160_);
+            return net.neoforged.neoforge.common.util.DataComponentUtil.wrapEncodingExceptions(this, CODEC, levelRegistryAccess);
         }
     }
 
-    public Tag saveOptional(HolderLookup.Provider p_330895_) {
-        return (Tag)(this.isEmpty() ? new CompoundTag() : this.save(p_330895_, new CompoundTag()));
+    public Tag saveOptional(HolderLookup.Provider levelRegistryAccess) {
+        return (Tag)(this.isEmpty() ? new CompoundTag() : this.save(levelRegistryAccess, new CompoundTag()));
     }
 
     public int getMaxStackSize() {
@@ -437,16 +449,16 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         return this.getItem().getDamage(this);
     }
 
-    public void setDamageValue(int p_41722_) {
-        this.getItem().setDamage(this, p_41722_);
+    public void setDamageValue(int damage) {
+        this.getItem().setDamage(this, damage);
     }
 
     public int getMaxDamage() {
         return this.getItem().getMaxDamage(this);
     }
 
-    public void hurtAndBreak(int p_220158_, ServerLevel p_346256_, @Nullable ServerPlayer p_220160_, Consumer<Item> p_348596_) {
-        this.hurtAndBreak(p_220158_, p_346256_, (LivingEntity) p_220160_, p_348596_);
+    public void hurtAndBreak(int damage, ServerLevel level, @Nullable ServerPlayer player, Consumer<Item> onBreak) {
+        this.hurtAndBreak(damage, level, (LivingEntity) player, onBreak);
     }
 
     public void hurtAndBreak(int p_220158_, ServerLevel p_346256_, @Nullable LivingEntity p_220160_, Consumer<Item> p_348596_) {
@@ -475,21 +487,21 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         }
     }
 
-    public void hurtAndBreak(int p_41623_, LivingEntity p_41624_, EquipmentSlot p_319898_) {
-        if (p_41624_.level() instanceof ServerLevel serverlevel) {
+    public void hurtAndBreak(int amount, LivingEntity entity, EquipmentSlot slot) {
+        if (entity.level() instanceof ServerLevel serverlevel) {
             this.hurtAndBreak(
-                p_41623_,
+                amount,
                 serverlevel,
-                p_41624_,
-                p_348383_ -> p_41624_.onEquippedItemBroken(p_348383_, p_319898_)
+                entity,
+                p_348383_ -> entity.onEquippedItemBroken(p_348383_, slot)
             );
         }
     }
 
-    public ItemStack hurtAndConvertOnBreak(int p_352405_, ItemLike p_352337_, LivingEntity p_352175_, EquipmentSlot p_352058_) {
-        this.hurtAndBreak(p_352405_, p_352175_, p_352058_);
+    public ItemStack hurtAndConvertOnBreak(int amount, ItemLike item, LivingEntity entity, EquipmentSlot slot) {
+        this.hurtAndBreak(amount, entity, slot);
         if (this.isEmpty()) {
-            ItemStack itemstack = this.transmuteCopyIgnoreEmpty(p_352337_, 1);
+            ItemStack itemstack = this.transmuteCopyIgnoreEmpty(item, 1);
             if (itemstack.isDamageableItem()) {
                 itemstack.setDamageValue(0);
             }
@@ -512,41 +524,47 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         return this.getItem().getBarColor(this);
     }
 
-    public boolean overrideStackedOnOther(Slot p_150927_, ClickAction p_150928_, Player p_150929_) {
-        return this.getItem().overrideStackedOnOther(this, p_150927_, p_150928_, p_150929_);
+    public boolean overrideStackedOnOther(Slot slot, ClickAction action, Player player) {
+        return this.getItem().overrideStackedOnOther(this, slot, action, player);
     }
 
-    public boolean overrideOtherStackedOnMe(ItemStack p_150933_, Slot p_150934_, ClickAction p_150935_, Player p_150936_, SlotAccess p_150937_) {
-        return this.getItem().overrideOtherStackedOnMe(this, p_150933_, p_150934_, p_150935_, p_150936_, p_150937_);
+    public boolean overrideOtherStackedOnMe(ItemStack stack, Slot slot, ClickAction action, Player player, SlotAccess access) {
+        return this.getItem().overrideOtherStackedOnMe(this, stack, slot, action, player, access);
     }
 
-    public boolean hurtEnemy(LivingEntity p_41641_, Player p_41642_) {
+    public boolean hurtEnemy(LivingEntity target, Player attacker) {
         Item item = this.getItem();
-        if (item.hurtEnemy(this, p_41641_, p_41642_)) {
-            p_41642_.awardStat(Stats.ITEM_USED.get(item));
+        if (item.hurtEnemy(this, target, attacker)) {
+            attacker.awardStat(Stats.ITEM_USED.get(item));
             return true;
         } else {
             return false;
         }
     }
 
-    public void postHurtEnemy(LivingEntity p_346409_, Player p_345517_) {
-        this.getItem().postHurtEnemy(this, p_346409_, p_345517_);
+    public void postHurtEnemy(LivingEntity target, Player attacker) {
+        this.getItem().postHurtEnemy(this, target, attacker);
     }
 
-    public void mineBlock(Level p_41687_, BlockState p_41688_, BlockPos p_41689_, Player p_41690_) {
+    /**
+     * Called when a Block is destroyed using this ItemStack
+     */
+    public void mineBlock(Level level, BlockState state, BlockPos pos, Player player) {
         Item item = this.getItem();
-        if (item.mineBlock(this, p_41687_, p_41688_, p_41689_, p_41690_)) {
-            p_41690_.awardStat(Stats.ITEM_USED.get(item));
+        if (item.mineBlock(this, level, state, pos, player)) {
+            player.awardStat(Stats.ITEM_USED.get(item));
         }
     }
 
-    public boolean isCorrectToolForDrops(BlockState p_41736_) {
-        return this.getItem().isCorrectToolForDrops(this, p_41736_);
+    /**
+     * Check whether the given Block can be harvested using this ItemStack.
+     */
+    public boolean isCorrectToolForDrops(BlockState state) {
+        return this.getItem().isCorrectToolForDrops(this, state);
     }
 
-    public InteractionResult interactLivingEntity(Player p_41648_, LivingEntity p_41649_, InteractionHand p_41650_) {
-        return this.getItem().interactLivingEntity(this, p_41648_, p_41649_, p_41650_);
+    public InteractionResult interactLivingEntity(Player player, LivingEntity entity, InteractionHand usedHand) {
+        return this.getItem().interactLivingEntity(this, player, entity, usedHand);
     }
 
     public ItemStack copy() {
@@ -559,43 +577,46 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         }
     }
 
-    public ItemStack copyWithCount(int p_256354_) {
+    public ItemStack copyWithCount(int count) {
         if (this.isEmpty()) {
             return EMPTY;
         } else {
             ItemStack itemstack = this.copy();
-            itemstack.setCount(p_256354_);
+            itemstack.setCount(count);
             return itemstack;
         }
     }
 
-    public ItemStack transmuteCopy(ItemLike p_347550_) {
-        return this.transmuteCopy(p_347550_, this.getCount());
+    public ItemStack transmuteCopy(ItemLike item) {
+        return this.transmuteCopy(item, this.getCount());
     }
 
-    public ItemStack transmuteCopy(ItemLike p_323864_, int p_323647_) {
-        return this.isEmpty() ? EMPTY : this.transmuteCopyIgnoreEmpty(p_323864_, p_323647_);
+    public ItemStack transmuteCopy(ItemLike item, int count) {
+        return this.isEmpty() ? EMPTY : this.transmuteCopyIgnoreEmpty(item, count);
     }
 
-    private ItemStack transmuteCopyIgnoreEmpty(ItemLike p_323811_, int p_323856_) {
-        return new ItemStack(p_323811_.asItem().builtInRegistryHolder(), p_323856_, this.components.asPatch());
+    private ItemStack transmuteCopyIgnoreEmpty(ItemLike item, int count) {
+        return new ItemStack(item.asItem().builtInRegistryHolder(), count, this.components.asPatch());
     }
 
-    public static boolean matches(ItemStack p_41729_, ItemStack p_41730_) {
-        if (p_41729_ == p_41730_) {
+    /**
+     * Compares both {@code ItemStacks}, returns {@code true} if both {@code ItemStacks} are equal.
+     */
+    public static boolean matches(ItemStack stack, ItemStack other) {
+        if (stack == other) {
             return true;
         } else {
-            return p_41729_.getCount() != p_41730_.getCount() ? false : isSameItemSameComponents(p_41729_, p_41730_);
+            return stack.getCount() != other.getCount() ? false : isSameItemSameComponents(stack, other);
         }
     }
 
     @Deprecated
-    public static boolean listMatches(List<ItemStack> p_331725_, List<ItemStack> p_331113_) {
-        if (p_331725_.size() != p_331113_.size()) {
+    public static boolean listMatches(List<ItemStack> list, List<ItemStack> other) {
+        if (list.size() != other.size()) {
             return false;
         } else {
-            for (int i = 0; i < p_331725_.size(); i++) {
-                if (!matches(p_331725_.get(i), p_331113_.get(i))) {
+            for (int i = 0; i < list.size(); i++) {
+                if (!matches(list.get(i), other.get(i))) {
                     return false;
                 }
             }
@@ -604,37 +625,37 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         }
     }
 
-    public static boolean isSameItem(ItemStack p_287761_, ItemStack p_287676_) {
-        return p_287761_.is(p_287676_.getItem());
+    public static boolean isSameItem(ItemStack stack, ItemStack other) {
+        return stack.is(other.getItem());
     }
 
-    public static boolean isSameItemSameComponents(ItemStack p_150943_, ItemStack p_150944_) {
-        if (!p_150943_.is(p_150944_.getItem())) {
+    public static boolean isSameItemSameComponents(ItemStack stack, ItemStack other) {
+        if (!stack.is(other.getItem())) {
             return false;
         } else {
-            return p_150943_.isEmpty() && p_150944_.isEmpty() ? true : Objects.equals(p_150943_.components, p_150944_.components);
+            return stack.isEmpty() && other.isEmpty() ? true : Objects.equals(stack.components, other.components);
         }
     }
 
-    public static MapCodec<ItemStack> lenientOptionalFieldOf(String p_338501_) {
-        return CODEC.lenientOptionalFieldOf(p_338501_)
+    public static MapCodec<ItemStack> lenientOptionalFieldOf(String fieldName) {
+        return CODEC.lenientOptionalFieldOf(fieldName)
             .xmap(p_323389_ -> p_323389_.orElse(EMPTY), p_323388_ -> p_323388_.isEmpty() ? Optional.empty() : Optional.of(p_323388_));
     }
 
-    public static int hashItemAndComponents(@Nullable ItemStack p_331961_) {
-        if (p_331961_ != null) {
-            int i = 31 + p_331961_.getItem().hashCode();
-            return 31 * i + p_331961_.getComponents().hashCode();
+    public static int hashItemAndComponents(@Nullable ItemStack stack) {
+        if (stack != null) {
+            int i = 31 + stack.getItem().hashCode();
+            return 31 * i + stack.getComponents().hashCode();
         } else {
             return 0;
         }
     }
 
     @Deprecated
-    public static int hashStackList(List<ItemStack> p_332135_) {
+    public static int hashStackList(List<ItemStack> list) {
         int i = 0;
 
-        for (ItemStack itemstack : p_332135_) {
+        for (ItemStack itemstack : list) {
             i = i * 31 + hashItemAndComponents(itemstack);
         }
 
@@ -650,35 +671,41 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         return this.getCount() + " " + this.getItem();
     }
 
-    public void inventoryTick(Level p_41667_, Entity p_41668_, int p_41669_, boolean p_41670_) {
+    /**
+     * Called each tick as long the {@code ItemStack} in in player's inventory. Used to progress the pickup animation and update maps.
+     */
+    public void inventoryTick(Level level, Entity entity, int inventorySlot, boolean isCurrentItem) {
         if (this.popTime > 0) {
             this.popTime--;
         }
 
         if (this.getItem() != null) {
-            this.getItem().inventoryTick(this, p_41667_, p_41668_, p_41669_, p_41670_);
+            this.getItem().inventoryTick(this, level, entity, inventorySlot, isCurrentItem);
         }
     }
 
-    public void onCraftedBy(Level p_41679_, Player p_41680_, int p_41681_) {
-        p_41680_.awardStat(Stats.ITEM_CRAFTED.get(this.getItem()), p_41681_);
-        this.getItem().onCraftedBy(this, p_41679_, p_41680_);
+    public void onCraftedBy(Level level, Player player, int amount) {
+        player.awardStat(Stats.ITEM_CRAFTED.get(this.getItem()), amount);
+        this.getItem().onCraftedBy(this, level, player);
     }
 
-    public void onCraftedBySystem(Level p_307669_) {
-        this.getItem().onCraftedPostProcess(this, p_307669_);
+    public void onCraftedBySystem(Level level) {
+        this.getItem().onCraftedPostProcess(this, level);
     }
 
-    public int getUseDuration(LivingEntity p_345724_) {
-        return this.getItem().getUseDuration(this, p_345724_);
+    public int getUseDuration(LivingEntity entity) {
+        return this.getItem().getUseDuration(this, entity);
     }
 
     public UseAnim getUseAnimation() {
         return this.getItem().getUseAnimation(this);
     }
 
-    public void releaseUsing(Level p_41675_, LivingEntity p_41676_, int p_41677_) {
-        this.getItem().releaseUsing(this, p_41675_, p_41676_, p_41677_);
+    /**
+     * Called when the player releases the use item button.
+     */
+    public void releaseUsing(Level level, LivingEntity livingEntity, int timeLeft) {
+        this.getItem().releaseUsing(this, level, livingEntity, timeLeft);
     }
 
     public boolean useOnRelease() {
@@ -686,45 +713,45 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
     }
 
     @Nullable
-    public <T> T set(DataComponentType<? super T> p_331064_, @Nullable T p_330775_) {
-        return this.components.set(p_331064_, p_330775_);
+    public <T> T set(DataComponentType<? super T> component, @Nullable T value) {
+        return this.components.set(component, value);
     }
 
     @Nullable
-    public <T, U> T update(DataComponentType<T> p_331083_, T p_331443_, U p_331049_, BiFunction<T, U, T> p_331846_) {
-        return this.set(p_331083_, p_331846_.apply(this.getOrDefault(p_331083_, p_331443_), p_331049_));
+    public <T, U> T update(DataComponentType<T> component, T defaultValue, U updateValue, BiFunction<T, U, T> updater) {
+        return this.set(component, updater.apply(this.getOrDefault(component, defaultValue), updateValue));
     }
 
     @Nullable
-    public <T> T update(DataComponentType<T> p_330921_, T p_331257_, UnaryOperator<T> p_331701_) {
-        T t = this.getOrDefault(p_330921_, p_331257_);
-        return this.set(p_330921_, p_331701_.apply(t));
+    public <T> T update(DataComponentType<T> component, T defaultValue, UnaryOperator<T> updater) {
+        T t = this.getOrDefault(component, defaultValue);
+        return this.set(component, updater.apply(t));
     }
 
     @Nullable
-    public <T> T remove(DataComponentType<? extends T> p_332139_) {
-        return this.components.remove(p_332139_);
+    public <T> T remove(DataComponentType<? extends T> component) {
+        return this.components.remove(component);
     }
 
-    public void applyComponentsAndValidate(DataComponentPatch p_341407_) {
+    public void applyComponentsAndValidate(DataComponentPatch components) {
         DataComponentPatch datacomponentpatch = this.components.asPatch();
-        this.components.applyPatch(p_341407_);
+        this.components.applyPatch(components);
         Optional<Error<ItemStack>> optional = validateStrict(this).error();
         if (optional.isPresent()) {
-            LOGGER.error("Failed to apply component patch '{}' to item: '{}'", p_341407_, optional.get().message());
+            LOGGER.error("Failed to apply component patch '{}' to item: '{}'", components, optional.get().message());
             this.components.restorePatch(datacomponentpatch);
         } else {
             this.getItem().verifyComponentsAfterLoad(this);
         }
     }
 
-    public void applyComponents(DataComponentPatch p_332097_) {
-        this.components.applyPatch(p_332097_);
+    public void applyComponents(DataComponentPatch components) {
+        this.components.applyPatch(components);
         this.getItem().verifyComponentsAfterLoad(this);
     }
 
-    public void applyComponents(DataComponentMap p_330402_) {
-        this.components.setAll(p_330402_);
+    public void applyComponents(DataComponentMap components) {
+        this.components.setAll(components);
         this.getItem().verifyComponentsAfterLoad(this);
     }
 
@@ -739,16 +766,16 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
     }
 
     public <T extends TooltipProvider> void addToTooltip(
-        DataComponentType<T> p_331344_, Item.TooltipContext p_341231_, Consumer<Component> p_331885_, TooltipFlag p_331177_
+        DataComponentType<T> component, Item.TooltipContext context, Consumer<Component> tooltipAdder, TooltipFlag tooltipFlag
     ) {
-        T t = (T)this.get(p_331344_);
+        T t = (T)this.get(component);
         if (t != null) {
-            t.addToTooltip(p_341231_, p_331885_, p_331177_);
+            t.addToTooltip(context, tooltipAdder, tooltipFlag);
         }
     }
 
-    public List<Component> getTooltipLines(Item.TooltipContext p_339637_, @Nullable Player p_41652_, TooltipFlag p_41653_) {
-        if (!p_41653_.isCreative() && this.has(DataComponents.HIDE_TOOLTIP)) {
+    public List<Component> getTooltipLines(Item.TooltipContext tooltipContext, @Nullable Player player, TooltipFlag tooltipFlag) {
+        if (!tooltipFlag.isCreative() && this.has(DataComponents.HIDE_TOOLTIP)) {
             return List.of();
         } else {
             List<Component> list = Lists.newArrayList();
@@ -758,7 +785,7 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
             }
 
             list.add(mutablecomponent);
-            if (!p_41653_.isAdvanced() && !this.has(DataComponents.CUSTOM_NAME) && this.is(Items.FILLED_MAP)) {
+            if (!tooltipFlag.isAdvanced() && !this.has(DataComponents.CUSTOM_NAME) && this.is(Items.FILLED_MAP)) {
                 MapId mapid = this.get(DataComponents.MAP_ID);
                 if (mapid != null) {
                     list.add(MapItem.getTooltipForId(mapid));
@@ -767,19 +794,19 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
 
             Consumer<Component> consumer = list::add;
             if (!this.has(DataComponents.HIDE_ADDITIONAL_TOOLTIP)) {
-                this.getItem().appendHoverText(this, p_339637_, list, p_41653_);
+                this.getItem().appendHoverText(this, tooltipContext, list, tooltipFlag);
             }
 
-            this.addToTooltip(DataComponents.JUKEBOX_PLAYABLE, p_339637_, consumer, p_41653_);
-            this.addToTooltip(DataComponents.TRIM, p_339637_, consumer, p_41653_);
-            this.addToTooltip(DataComponents.STORED_ENCHANTMENTS, p_339637_, consumer, p_41653_);
-            this.addToTooltip(DataComponents.ENCHANTMENTS, p_339637_, consumer, p_41653_);
-            this.addToTooltip(DataComponents.DYED_COLOR, p_339637_, consumer, p_41653_);
-            this.addToTooltip(DataComponents.LORE, p_339637_, consumer, p_41653_);
+            this.addToTooltip(DataComponents.JUKEBOX_PLAYABLE, tooltipContext, consumer, tooltipFlag);
+            this.addToTooltip(DataComponents.TRIM, tooltipContext, consumer, tooltipFlag);
+            this.addToTooltip(DataComponents.STORED_ENCHANTMENTS, tooltipContext, consumer, tooltipFlag);
+            this.addToTooltip(DataComponents.ENCHANTMENTS, tooltipContext, consumer, tooltipFlag);
+            this.addToTooltip(DataComponents.DYED_COLOR, tooltipContext, consumer, tooltipFlag);
+            this.addToTooltip(DataComponents.LORE, tooltipContext, consumer, tooltipFlag);
             // Neo: Replace attribute tooltips with custom handling
             net.neoforged.neoforge.common.util.AttributeUtil.addAttributeTooltips(this, consumer,
-                    net.neoforged.neoforge.common.util.AttributeTooltipContext.of(p_41652_, p_339637_, p_41653_));
-            this.addToTooltip(DataComponents.UNBREAKABLE, p_339637_, consumer, p_41653_);
+                    net.neoforged.neoforge.common.util.AttributeTooltipContext.of(player, tooltipContext, tooltipFlag));
+            this.addToTooltip(DataComponents.UNBREAKABLE, tooltipContext, consumer, tooltipFlag);
             AdventureModePredicate adventuremodepredicate = this.get(DataComponents.CAN_BREAK);
             if (adventuremodepredicate != null && adventuremodepredicate.showInTooltip()) {
                 consumer.accept(CommonComponents.EMPTY);
@@ -794,7 +821,7 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
                 adventuremodepredicate1.addToTooltip(consumer);
             }
 
-            if (p_41653_.isAdvanced()) {
+            if (tooltipFlag.isAdvanced()) {
                 if (this.isDamaged()) {
                     list.add(Component.translatable("item.durability", this.getMaxDamage() - this.getDamageValue(), this.getMaxDamage()));
                 }
@@ -806,89 +833,90 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
                 }
             }
 
-            if (p_41652_ != null && !this.getItem().isEnabled(p_41652_.level().enabledFeatures())) {
+            if (player != null && !this.getItem().isEnabled(player.level().enabledFeatures())) {
                 list.add(DISABLED_ITEM_TOOLTIP);
             }
 
-            net.neoforged.neoforge.event.EventHooks.onItemTooltip(this, p_41652_, list, p_41653_, p_339637_);
+            net.neoforged.neoforge.event.EventHooks.onItemTooltip(this, player, list, tooltipFlag, tooltipContext);
             return list;
         }
     }
 
     /**
-     * @deprecated Neo: Use {@link net.neoforged.neoforge.client.util.TooltipUtil#addAttributeTooltips}
+     * @deprecated Neo: Use {@link net.neoforged.neoforge.client.util.TooltipUtil#
+     *             addAttributeTooltips}
      */
     @Deprecated
-    private void addAttributeTooltips(Consumer<Component> p_330796_, @Nullable Player p_330530_) {
+    private void addAttributeTooltips(Consumer<Component> tooltipAdder, @Nullable Player player) {
         ItemAttributeModifiers itemattributemodifiers = this.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
         if (itemattributemodifiers.showInTooltip()) {
             for (EquipmentSlotGroup equipmentslotgroup : EquipmentSlotGroup.values()) {
                 MutableBoolean mutableboolean = new MutableBoolean(true);
                 this.forEachModifier(equipmentslotgroup, (p_348379_, p_348380_) -> {
                     if (mutableboolean.isTrue()) {
-                        p_330796_.accept(CommonComponents.EMPTY);
-                        p_330796_.accept(Component.translatable("item.modifiers." + equipmentslotgroup.getSerializedName()).withStyle(ChatFormatting.GRAY));
+                        tooltipAdder.accept(CommonComponents.EMPTY);
+                        tooltipAdder.accept(Component.translatable("item.modifiers." + equipmentslotgroup.getSerializedName()).withStyle(ChatFormatting.GRAY));
                         mutableboolean.setFalse();
                     }
 
-                    this.addModifierTooltip(p_330796_, p_330530_, p_348379_, p_348380_);
+                    this.addModifierTooltip(tooltipAdder, player, p_348379_, p_348380_);
                 });
             }
         }
     }
 
-    private void addModifierTooltip(Consumer<Component> p_331062_, @Nullable Player p_330317_, Holder<Attribute> p_330626_, AttributeModifier p_331252_) {
-        double d0 = p_331252_.amount();
+    private void addModifierTooltip(Consumer<Component> tooltipAdder, @Nullable Player player, Holder<Attribute> attribute, AttributeModifier modifier) {
+        double d0 = modifier.amount();
         boolean flag = false;
-        if (p_330317_ != null) {
-            if (p_331252_.is(Item.BASE_ATTACK_DAMAGE_ID)) {
-                d0 += p_330317_.getAttributeBaseValue(Attributes.ATTACK_DAMAGE);
+        if (player != null) {
+            if (modifier.is(Item.BASE_ATTACK_DAMAGE_ID)) {
+                d0 += player.getAttributeBaseValue(Attributes.ATTACK_DAMAGE);
                 flag = true;
-            } else if (p_331252_.is(Item.BASE_ATTACK_SPEED_ID)) {
-                d0 += p_330317_.getAttributeBaseValue(Attributes.ATTACK_SPEED);
+            } else if (modifier.is(Item.BASE_ATTACK_SPEED_ID)) {
+                d0 += player.getAttributeBaseValue(Attributes.ATTACK_SPEED);
                 flag = true;
             }
         }
 
         double d1;
-        if (p_331252_.operation() == AttributeModifier.Operation.ADD_MULTIPLIED_BASE
-            || p_331252_.operation() == AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL) {
+        if (modifier.operation() == AttributeModifier.Operation.ADD_MULTIPLIED_BASE
+            || modifier.operation() == AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL) {
             d1 = d0 * 100.0;
-        } else if (p_330626_.is(Attributes.KNOCKBACK_RESISTANCE)) {
+        } else if (attribute.is(Attributes.KNOCKBACK_RESISTANCE)) {
             d1 = d0 * 10.0;
         } else {
             d1 = d0;
         }
 
         if (flag) {
-            p_331062_.accept(
+            tooltipAdder.accept(
                 CommonComponents.space()
                     .append(
                         Component.translatable(
-                            "attribute.modifier.equals." + p_331252_.operation().id(),
+                            "attribute.modifier.equals." + modifier.operation().id(),
                             ItemAttributeModifiers.ATTRIBUTE_MODIFIER_FORMAT.format(d1),
-                            Component.translatable(p_330626_.value().getDescriptionId())
+                            Component.translatable(attribute.value().getDescriptionId())
                         )
                     )
                     .withStyle(ChatFormatting.DARK_GREEN)
             );
         } else if (d0 > 0.0) {
-            p_331062_.accept(
+            tooltipAdder.accept(
                 Component.translatable(
-                        "attribute.modifier.plus." + p_331252_.operation().id(),
+                        "attribute.modifier.plus." + modifier.operation().id(),
                         ItemAttributeModifiers.ATTRIBUTE_MODIFIER_FORMAT.format(d1),
-                        Component.translatable(p_330626_.value().getDescriptionId())
+                        Component.translatable(attribute.value().getDescriptionId())
                     )
-                    .withStyle(p_330626_.value().getStyle(true))
+                    .withStyle(attribute.value().getStyle(true))
             );
         } else if (d0 < 0.0) {
-            p_331062_.accept(
+            tooltipAdder.accept(
                 Component.translatable(
-                        "attribute.modifier.take." + p_331252_.operation().id(),
+                        "attribute.modifier.take." + modifier.operation().id(),
                         ItemAttributeModifiers.ATTRIBUTE_MODIFIER_FORMAT.format(-d1),
-                        Component.translatable(p_330626_.value().getDescriptionId())
+                        Component.translatable(attribute.value().getDescriptionId())
                     )
-                    .withStyle(p_330626_.value().getStyle(false))
+                    .withStyle(attribute.value().getStyle(false))
             );
         }
     }
@@ -920,8 +948,8 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         }
     }
 
-    public void enchant(Holder<Enchantment> p_344751_, int p_41665_) {
-        EnchantmentHelper.updateEnchantments(this, p_344404_ -> p_344404_.upgrade(p_344751_, p_41665_));
+    public void enchant(Holder<Enchantment> enchantment, int level) {
+        EnchantmentHelper.updateEnchantments(this, p_344404_ -> p_344404_.upgrade(enchantment, level));
     }
 
     public boolean isEnchanted() {
@@ -947,9 +975,9 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         return this.entityRepresentation instanceof ItemFrame;
     }
 
-    public void setEntityRepresentation(@Nullable Entity p_41637_) {
+    public void setEntityRepresentation(@Nullable Entity entity) {
         if (!this.isEmpty()) {
-            this.entityRepresentation = p_41637_;
+            this.entityRepresentation = entity;
         }
     }
 
@@ -963,44 +991,44 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         return !this.isEmpty() ? this.entityRepresentation : null;
     }
 
-    public void forEachModifier(EquipmentSlotGroup p_348610_, BiConsumer<Holder<Attribute>, AttributeModifier> p_348516_) {
+    public void forEachModifier(EquipmentSlotGroup slotGroup, BiConsumer<Holder<Attribute>, AttributeModifier> action) {
         // Neo: Reflect real attribute modifiers when doing iteration
-        this.getAttributeModifiers().forEach(p_348610_, p_348516_);
+        this.getAttributeModifiers().forEach(slotGroup, action);
 
         if (false) {
         // Start disabled vanilla code
 
         ItemAttributeModifiers itemattributemodifiers = this.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
         if (!itemattributemodifiers.modifiers().isEmpty()) {
-            itemattributemodifiers.forEach(p_348610_, p_348516_);
+            itemattributemodifiers.forEach(slotGroup, action);
         } else {
-            this.getItem().getDefaultAttributeModifiers().forEach(p_348610_, p_348516_);
+            this.getItem().getDefaultAttributeModifiers().forEach(slotGroup, action);
         }
 
         // end disabled vanilla code
         }
 
-        EnchantmentHelper.forEachModifier(this, p_348610_, p_348516_);
+        EnchantmentHelper.forEachModifier(this, slotGroup, action);
     }
 
-    public void forEachModifier(EquipmentSlot p_332001_, BiConsumer<Holder<Attribute>, AttributeModifier> p_330882_) {
+    public void forEachModifier(EquipmentSlot equipmentSLot, BiConsumer<Holder<Attribute>, AttributeModifier> action) {
         // Neo: Reflect real attribute modifiers when doing iteration
-        this.getAttributeModifiers().forEach(p_332001_, p_330882_);
+        this.getAttributeModifiers().forEach(equipmentSLot, action);
 
         if (false) {
         // Start disabled vanilla code
 
         ItemAttributeModifiers itemattributemodifiers = this.getOrDefault(DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
         if (!itemattributemodifiers.modifiers().isEmpty()) {
-            itemattributemodifiers.forEach(p_332001_, p_330882_);
+            itemattributemodifiers.forEach(equipmentSLot, action);
         } else {
-            this.getItem().getDefaultAttributeModifiers().forEach(p_332001_, p_330882_);
+            this.getItem().getDefaultAttributeModifiers().forEach(equipmentSLot, action);
         }
 
         // end disabled vanilla code
         }
 
-        EnchantmentHelper.forEachModifier(this, p_332001_, p_330882_);
+        EnchantmentHelper.forEachModifier(this, equipmentSLot, action);
     }
 
     public Component getDisplayName() {
@@ -1018,66 +1046,75 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         return mutablecomponent1;
     }
 
-    public boolean canPlaceOnBlockInAdventureMode(BlockInWorld p_331419_) {
+    public boolean canPlaceOnBlockInAdventureMode(BlockInWorld block) {
         AdventureModePredicate adventuremodepredicate = this.get(DataComponents.CAN_PLACE_ON);
-        return adventuremodepredicate != null && adventuremodepredicate.test(p_331419_);
+        return adventuremodepredicate != null && adventuremodepredicate.test(block);
     }
 
-    public boolean canBreakBlockInAdventureMode(BlockInWorld p_331592_) {
+    public boolean canBreakBlockInAdventureMode(BlockInWorld block) {
         AdventureModePredicate adventuremodepredicate = this.get(DataComponents.CAN_BREAK);
-        return adventuremodepredicate != null && adventuremodepredicate.test(p_331592_);
+        return adventuremodepredicate != null && adventuremodepredicate.test(block);
     }
 
     public int getPopTime() {
         return this.popTime;
     }
 
-    public void setPopTime(int p_41755_) {
-        this.popTime = p_41755_;
+    public void setPopTime(int popTime) {
+        this.popTime = popTime;
     }
 
     public int getCount() {
         return this.isEmpty() ? 0 : this.count;
     }
 
-    public void setCount(int p_41765_) {
-        this.count = p_41765_;
+    public void setCount(int count) {
+        this.count = count;
     }
 
-    public void limitSize(int p_335437_) {
-        if (!this.isEmpty() && this.getCount() > p_335437_) {
-            this.setCount(p_335437_);
+    public void limitSize(int maxSize) {
+        if (!this.isEmpty() && this.getCount() > maxSize) {
+            this.setCount(maxSize);
         }
     }
 
-    public void grow(int p_41770_) {
-        this.setCount(this.getCount() + p_41770_);
+    public void grow(int increment) {
+        this.setCount(this.getCount() + increment);
     }
 
-    public void shrink(int p_41775_) {
-        this.grow(-p_41775_);
+    public void shrink(int decrement) {
+        this.grow(-decrement);
     }
 
-    public void consume(int p_326311_, @Nullable LivingEntity p_326200_) {
-        if (p_326200_ == null || !p_326200_.hasInfiniteMaterials()) {
-            this.shrink(p_326311_);
+    public void consume(int amount, @Nullable LivingEntity entity) {
+        if (entity == null || !entity.hasInfiniteMaterials()) {
+            this.shrink(amount);
         }
     }
 
-    public ItemStack consumeAndReturn(int p_347624_, @Nullable LivingEntity p_347710_) {
-        ItemStack itemstack = this.copyWithCount(p_347624_);
-        this.consume(p_347624_, p_347710_);
+    public ItemStack consumeAndReturn(int amount, @Nullable LivingEntity entity) {
+        ItemStack itemstack = this.copyWithCount(amount);
+        this.consume(amount, entity);
         return itemstack;
     }
 
-    public void onUseTick(Level p_41732_, LivingEntity p_41733_, int p_41734_) {
-        this.getItem().onUseTick(p_41732_, p_41733_, this, p_41734_);
+    /**
+     * Called as the stack is being used by an entity.
+     */
+    public void onUseTick(Level level, LivingEntity livingEntity, int count) {
+        this.getItem().onUseTick(level, livingEntity, this, count);
     }
 
-    /** @deprecated Forge: Use {@linkplain net.neoforged.neoforge.common.extensions.IItemStackExtension#onDestroyed(ItemEntity, net.minecraft.world.damagesource.DamageSource) damage source sensitive version} */
+    /**
+ * @deprecated Forge: Use {@linkplain
+ *             net.neoforged.neoforge.common.extensions.IItemStackExtension#
+ *             onDestroyed(ItemEntity,
+ *             net.minecraft.world.damagesource.DamageSource) damage source
+ *             sensitive version}
+ */
     @Deprecated
-    public void onDestroyed(ItemEntity p_150925_) {
-        this.getItem().onDestroyed(p_150925_);
+    public void onDestroyed(ItemEntity itemEntity) {
+        this.getItem().onDestroyed(itemEntity);
     }
 
     public SoundEvent getDrinkingSound() {
@@ -1092,8 +1129,8 @@ public final class ItemStack implements DataComponentHolder, net.neoforged.neofo
         return this.getItem().getBreakingSound();
     }
 
-    public boolean canBeHurtBy(DamageSource p_335431_) {
-        if (!getItem().canBeHurtBy(this, p_335431_)) return false;
-        return !this.has(DataComponents.FIRE_RESISTANT) || !p_335431_.is(DamageTypeTags.IS_FIRE);
+    public boolean canBeHurtBy(DamageSource damageSource) {
+        if (!getItem().canBeHurtBy(this, damageSource)) return false;
+        return !this.has(DataComponents.FIRE_RESISTANT) || !damageSource.is(DamageTypeTags.IS_FIRE);
     }
 }

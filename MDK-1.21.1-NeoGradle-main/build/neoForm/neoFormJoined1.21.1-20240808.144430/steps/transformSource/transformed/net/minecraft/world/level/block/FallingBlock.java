@@ -17,54 +17,62 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 
 public abstract class FallingBlock extends Block implements Fallable {
-    public FallingBlock(BlockBehaviour.Properties p_53205_) {
-        super(p_53205_);
+    public FallingBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
     protected abstract MapCodec<? extends FallingBlock> codec();
 
     @Override
-    protected void onPlace(BlockState p_53233_, Level p_53234_, BlockPos p_53235_, BlockState p_53236_, boolean p_53237_) {
-        p_53234_.scheduleTick(p_53235_, this, this.getDelayAfterPlace());
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        level.scheduleTick(pos, this, this.getDelayAfterPlace());
+    }
+
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
+    @Override
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        level.scheduleTick(currentPos, this, this.getDelayAfterPlace());
+        return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected BlockState updateShape(BlockState p_53226_, Direction p_53227_, BlockState p_53228_, LevelAccessor p_53229_, BlockPos p_53230_, BlockPos p_53231_) {
-        p_53229_.scheduleTick(p_53230_, this, this.getDelayAfterPlace());
-        return super.updateShape(p_53226_, p_53227_, p_53228_, p_53229_, p_53230_, p_53231_);
-    }
-
-    @Override
-    protected void tick(BlockState p_221124_, ServerLevel p_221125_, BlockPos p_221126_, RandomSource p_221127_) {
-        if (isFree(p_221125_.getBlockState(p_221126_.below())) && p_221126_.getY() >= p_221125_.getMinBuildHeight()) {
-            FallingBlockEntity fallingblockentity = FallingBlockEntity.fall(p_221125_, p_221126_, p_221124_);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (isFree(level.getBlockState(pos.below())) && pos.getY() >= level.getMinBuildHeight()) {
+            FallingBlockEntity fallingblockentity = FallingBlockEntity.fall(level, pos, state);
             this.falling(fallingblockentity);
         }
     }
 
-    protected void falling(FallingBlockEntity p_53206_) {
+    protected void falling(FallingBlockEntity entity) {
     }
 
     protected int getDelayAfterPlace() {
         return 2;
     }
 
-    public static boolean isFree(BlockState p_53242_) {
-        return p_53242_.isAir() || p_53242_.is(BlockTags.FIRE) || p_53242_.liquid() || p_53242_.canBeReplaced();
+    public static boolean isFree(BlockState state) {
+        return state.isAir() || state.is(BlockTags.FIRE) || state.liquid() || state.canBeReplaced();
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_221129_, Level p_221130_, BlockPos p_221131_, RandomSource p_221132_) {
-        if (p_221132_.nextInt(16) == 0) {
-            BlockPos blockpos = p_221131_.below();
-            if (isFree(p_221130_.getBlockState(blockpos))) {
-                ParticleUtils.spawnParticleBelow(p_221130_, p_221131_, p_221132_, new BlockParticleOption(ParticleTypes.FALLING_DUST, p_221129_));
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (random.nextInt(16) == 0) {
+            BlockPos blockpos = pos.below();
+            if (isFree(level.getBlockState(blockpos))) {
+                ParticleUtils.spawnParticleBelow(level, pos, random, new BlockParticleOption(ParticleTypes.FALLING_DUST, state));
             }
         }
     }
 
-    public int getDustColor(BlockState p_53238_, BlockGetter p_53239_, BlockPos p_53240_) {
+    public int getDustColor(BlockState state, BlockGetter level, BlockPos pos) {
         return -16777216;
     }
 }

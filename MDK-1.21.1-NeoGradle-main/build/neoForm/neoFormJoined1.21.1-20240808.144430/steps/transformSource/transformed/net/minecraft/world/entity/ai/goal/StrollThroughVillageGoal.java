@@ -19,9 +19,9 @@ public class StrollThroughVillageGoal extends Goal {
     @Nullable
     private BlockPos wantedPos;
 
-    public StrollThroughVillageGoal(PathfinderMob p_25907_, int p_25908_) {
-        this.mob = p_25907_;
-        this.interval = reducedTickDelay(p_25908_);
+    public StrollThroughVillageGoal(PathfinderMob mob, int interval) {
+        this.mob = mob;
+        this.interval = reducedTickDelay(interval);
         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
     }
 

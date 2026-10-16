@@ -10,13 +10,21 @@ import net.neoforged.api.distmarker.OnlyIn;
 public interface FloatSampleSource extends FiniteAudioStream {
     int EXPECTED_MAX_FRAME_SIZE = 8192;
 
-    boolean readChunk(FloatConsumer p_340937_) throws IOException;
+    boolean readChunk(FloatConsumer output) throws IOException;
 
+    /**
+     * Reads audio data from the stream and returns a byte buffer containing at most the specified number of bytes.
+     * The method reads audio frames from the stream and adds them to the output buffer until the buffer contains at least the specified number of bytes or the end fo the stream is reached.
+     * @return a byte buffer containing at most the specified number of bytes to read
+     * @throws IOException if an I/O error occurs while reading the audio data
+     *
+     * @param size the maximum number of bytes to read
+     */
     @Override
-    default ByteBuffer read(int p_341345_) throws IOException {
-        ChunkedSampleByteBuf chunkedsamplebytebuf = new ChunkedSampleByteBuf(p_341345_ + 8192);
+    default ByteBuffer read(int size) throws IOException {
+        ChunkedSampleByteBuf chunkedsamplebytebuf = new ChunkedSampleByteBuf(size + 8192);
 
-        while (this.readChunk(chunkedsamplebytebuf) && chunkedsamplebytebuf.size() < p_341345_) {
+        while (this.readChunk(chunkedsamplebytebuf) && chunkedsamplebytebuf.size() < size) {
         }
 
         return chunkedsamplebytebuf.get();

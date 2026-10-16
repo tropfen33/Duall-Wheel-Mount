@@ -53,8 +53,8 @@ public class SmithingScreen extends ItemCombinerScreen<SmithingMenu> {
     @Nullable
     private ArmorStand armorStandPreview;
 
-    public SmithingScreen(SmithingMenu p_99290_, Inventory p_99291_, Component p_99292_) {
-        super(p_99290_, p_99291_, p_99292_, ResourceLocation.withDefaultNamespace("textures/gui/container/smithing.png"));
+    public SmithingScreen(SmithingMenu menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title, ResourceLocation.withDefaultNamespace("textures/gui/container/smithing.png"));
         this.titleLabelX = 44;
         this.titleLabelY = 15;
     }
@@ -87,39 +87,50 @@ public class SmithingScreen extends ItemCombinerScreen<SmithingMenu> {
             : Optional.empty();
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281961_, int p_282410_, int p_283013_, float p_282408_) {
-        super.render(p_281961_, p_282410_, p_283013_, p_282408_);
-        this.renderOnboardingTooltips(p_281961_, p_282410_, p_283013_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderOnboardingTooltips(guiGraphics, mouseX, mouseY);
     }
 
     @Override
-    protected void renderBg(GuiGraphics p_283264_, float p_267158_, int p_267266_, int p_266722_) {
-        super.renderBg(p_283264_, p_267158_, p_267266_, p_266722_);
-        this.templateIcon.render(this.menu, p_283264_, p_267158_, this.leftPos, this.topPos);
-        this.baseIcon.render(this.menu, p_283264_, p_267158_, this.leftPos, this.topPos);
-        this.additionalIcon.render(this.menu, p_283264_, p_267158_, this.leftPos, this.topPos);
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
+        super.renderBg(guiGraphics, partialTick, mouseX, mouseY);
+        this.templateIcon.render(this.menu, guiGraphics, partialTick, this.leftPos, this.topPos);
+        this.baseIcon.render(this.menu, guiGraphics, partialTick, this.leftPos, this.topPos);
+        this.additionalIcon.render(this.menu, guiGraphics, partialTick, this.leftPos, this.topPos);
         InventoryScreen.renderEntityInInventory(
-            p_283264_, (float)(this.leftPos + 141), (float)(this.topPos + 75), 25.0F, ARMOR_STAND_TRANSLATION, ARMOR_STAND_ANGLE, null, this.armorStandPreview
+            guiGraphics, (float)(this.leftPos + 141), (float)(this.topPos + 75), 25.0F, ARMOR_STAND_TRANSLATION, ARMOR_STAND_ANGLE, null, this.armorStandPreview
         );
     }
 
+    /**
+     * Sends the contents of an inventory slot to the client-side Container. This doesn't have to match the actual contents of that slot.
+     */
     @Override
-    public void slotChanged(AbstractContainerMenu p_267217_, int p_266842_, ItemStack p_267208_) {
-        if (p_266842_ == 3) {
-            this.updateArmorStandPreview(p_267208_);
+    public void slotChanged(AbstractContainerMenu containerToSend, int slotInd, ItemStack stack) {
+        if (slotInd == 3) {
+            this.updateArmorStandPreview(stack);
         }
     }
 
-    private void updateArmorStandPreview(ItemStack p_268225_) {
+    private void updateArmorStandPreview(ItemStack stack) {
         if (this.armorStandPreview != null) {
             for (EquipmentSlot equipmentslot : EquipmentSlot.values()) {
                 this.armorStandPreview.setItemSlot(equipmentslot, ItemStack.EMPTY);
             }
 
-            if (!p_268225_.isEmpty()) {
-                ItemStack itemstack = p_268225_.copy();
-                if (p_268225_.getItem() instanceof ArmorItem armoritem) {
+            if (!stack.isEmpty()) {
+                ItemStack itemstack = stack.copy();
+                if (stack.getItem() instanceof ArmorItem armoritem) {
                     this.armorStandPreview.setItemSlot(armoritem.getEquipmentSlot(), itemstack);
                 } else {
                     this.armorStandPreview.setItemSlot(EquipmentSlot.OFFHAND, itemstack);
@@ -129,15 +140,15 @@ public class SmithingScreen extends ItemCombinerScreen<SmithingMenu> {
     }
 
     @Override
-    protected void renderErrorIcon(GuiGraphics p_281835_, int p_283389_, int p_282634_) {
+    protected void renderErrorIcon(GuiGraphics guiGraphics, int x, int y) {
         if (this.hasRecipeError()) {
-            p_281835_.blitSprite(ERROR_SPRITE, p_283389_ + 65, p_282634_ + 46, 28, 21);
+            guiGraphics.blitSprite(ERROR_SPRITE, x + 65, y + 46, 28, 21);
         }
     }
 
-    private void renderOnboardingTooltips(GuiGraphics p_281668_, int p_267192_, int p_266859_) {
+    private void renderOnboardingTooltips(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         Optional<Component> optional = Optional.empty();
-        if (this.hasRecipeError() && this.isHovering(65, 46, 28, 21, (double)p_267192_, (double)p_266859_)) {
+        if (this.hasRecipeError() && this.isHovering(65, 46, 28, 21, (double)mouseX, (double)mouseY)) {
             optional = Optional.of(ERROR_TOOLTIP);
         }
 
@@ -157,7 +168,7 @@ public class SmithingScreen extends ItemCombinerScreen<SmithingMenu> {
             }
         }
 
-        optional.ifPresent(p_280863_ -> p_281668_.renderTooltip(this.font, this.font.split(p_280863_, 115), p_267192_, p_266859_));
+        optional.ifPresent(p_280863_ -> guiGraphics.renderTooltip(this.font, this.font.split(p_280863_, 115), mouseX, mouseY));
     }
 
     private boolean hasRecipeError() {

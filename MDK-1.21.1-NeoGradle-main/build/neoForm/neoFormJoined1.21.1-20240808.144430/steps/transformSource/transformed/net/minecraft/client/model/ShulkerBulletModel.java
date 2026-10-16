@@ -16,9 +16,9 @@ public class ShulkerBulletModel<T extends Entity> extends HierarchicalModel<T> {
     private final ModelPart root;
     private final ModelPart main;
 
-    public ShulkerBulletModel(ModelPart p_170916_) {
-        this.root = p_170916_;
-        this.main = p_170916_.getChild("main");
+    public ShulkerBulletModel(ModelPart root) {
+        this.root = root;
+        this.main = root.getChild("main");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -43,9 +43,12 @@ public class ShulkerBulletModel<T extends Entity> extends HierarchicalModel<T> {
         return this.root;
     }
 
+    /**
+     * Sets this entity's model rotation angles
+     */
     @Override
-    public void setupAnim(T p_103716_, float p_103717_, float p_103718_, float p_103719_, float p_103720_, float p_103721_) {
-        this.main.yRot = p_103720_ * (float) (Math.PI / 180.0);
-        this.main.xRot = p_103721_ * (float) (Math.PI / 180.0);
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.main.yRot = netHeadYaw * (float) (Math.PI / 180.0);
+        this.main.xRot = headPitch * (float) (Math.PI / 180.0);
     }
 }

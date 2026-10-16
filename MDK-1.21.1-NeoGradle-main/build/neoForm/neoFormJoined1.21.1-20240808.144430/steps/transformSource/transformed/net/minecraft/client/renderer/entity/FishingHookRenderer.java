@@ -23,52 +23,52 @@ public class FishingHookRenderer extends EntityRenderer<FishingHook> {
     private static final RenderType RENDER_TYPE = RenderType.entityCutout(TEXTURE_LOCATION);
     private static final double VIEW_BOBBING_SCALE = 960.0;
 
-    public FishingHookRenderer(EntityRendererProvider.Context p_174117_) {
-        super(p_174117_);
+    public FishingHookRenderer(EntityRendererProvider.Context context) {
+        super(context);
     }
 
-    public void render(FishingHook p_114705_, float p_114706_, float p_114707_, PoseStack p_114708_, MultiBufferSource p_114709_, int p_114710_) {
-        Player player = p_114705_.getPlayerOwner();
+    public void render(FishingHook entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        Player player = entity.getPlayerOwner();
         if (player != null) {
-            p_114708_.pushPose();
-            p_114708_.pushPose();
-            p_114708_.scale(0.5F, 0.5F, 0.5F);
-            p_114708_.mulPose(this.entityRenderDispatcher.cameraOrientation());
-            PoseStack.Pose posestack$pose = p_114708_.last();
-            VertexConsumer vertexconsumer = p_114709_.getBuffer(RENDER_TYPE);
-            vertex(vertexconsumer, posestack$pose, p_114710_, 0.0F, 0, 0, 1);
-            vertex(vertexconsumer, posestack$pose, p_114710_, 1.0F, 0, 1, 1);
-            vertex(vertexconsumer, posestack$pose, p_114710_, 1.0F, 1, 1, 0);
-            vertex(vertexconsumer, posestack$pose, p_114710_, 0.0F, 1, 0, 0);
-            p_114708_.popPose();
-            float f = player.getAttackAnim(p_114707_);
+            poseStack.pushPose();
+            poseStack.pushPose();
+            poseStack.scale(0.5F, 0.5F, 0.5F);
+            poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
+            PoseStack.Pose posestack$pose = poseStack.last();
+            VertexConsumer vertexconsumer = buffer.getBuffer(RENDER_TYPE);
+            vertex(vertexconsumer, posestack$pose, packedLight, 0.0F, 0, 0, 1);
+            vertex(vertexconsumer, posestack$pose, packedLight, 1.0F, 0, 1, 1);
+            vertex(vertexconsumer, posestack$pose, packedLight, 1.0F, 1, 1, 0);
+            vertex(vertexconsumer, posestack$pose, packedLight, 0.0F, 1, 0, 0);
+            poseStack.popPose();
+            float f = player.getAttackAnim(partialTicks);
             float f1 = Mth.sin(Mth.sqrt(f) * (float) Math.PI);
-            Vec3 vec3 = this.getPlayerHandPos(player, f1, p_114707_);
-            Vec3 vec31 = p_114705_.getPosition(p_114707_).add(0.0, 0.25, 0.0);
+            Vec3 vec3 = this.getPlayerHandPos(player, f1, partialTicks);
+            Vec3 vec31 = entity.getPosition(partialTicks).add(0.0, 0.25, 0.0);
             float f2 = (float)(vec3.x - vec31.x);
             float f3 = (float)(vec3.y - vec31.y);
             float f4 = (float)(vec3.z - vec31.z);
-            VertexConsumer vertexconsumer1 = p_114709_.getBuffer(RenderType.lineStrip());
-            PoseStack.Pose posestack$pose1 = p_114708_.last();
+            VertexConsumer vertexconsumer1 = buffer.getBuffer(RenderType.lineStrip());
+            PoseStack.Pose posestack$pose1 = poseStack.last();
             int i = 16;
 
             for (int j = 0; j <= 16; j++) {
                 stringVertex(f2, f3, f4, vertexconsumer1, posestack$pose1, fraction(j, 16), fraction(j + 1, 16));
             }
 
-            p_114708_.popPose();
-            super.render(p_114705_, p_114706_, p_114707_, p_114708_, p_114709_, p_114710_);
+            poseStack.popPose();
+            super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
         }
     }
 
-    private Vec3 getPlayerHandPos(Player p_340935_, float p_340872_, float p_341261_) {
-        int i = p_340935_.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
-        ItemStack itemstack = p_340935_.getMainHandItem();
+    private Vec3 getPlayerHandPos(Player player, float p_340872_, float partialTick) {
+        int i = player.getMainArm() == HumanoidArm.RIGHT ? 1 : -1;
+        ItemStack itemstack = player.getMainHandItem();
         if (!itemstack.canPerformAction(net.neoforged.neoforge.common.ItemAbilities.FISHING_ROD_CAST)) {
             i = -i;
         }
 
-        if (this.entityRenderDispatcher.options.getCameraType().isFirstPerson() && p_340935_ == Minecraft.getInstance().player) {
+        if (this.entityRenderDispatcher.options.getCameraType().isFirstPerson() && player == Minecraft.getInstance().player) {
             double d4 = 960.0 / (double)this.entityRenderDispatcher.options.fov().get().intValue();
             Vec3 vec3 = this.entityRenderDispatcher
                 .camera
@@ -77,49 +77,52 @@ public class FishingHookRenderer extends EntityRenderer<FishingHook> {
                 .scale(d4)
                 .yRot(p_340872_ * 0.5F)
                 .xRot(-p_340872_ * 0.7F);
-            return p_340935_.getEyePosition(p_341261_).add(vec3);
+            return player.getEyePosition(partialTick).add(vec3);
         } else {
-            float f = Mth.lerp(p_341261_, p_340935_.yBodyRotO, p_340935_.yBodyRot) * (float) (Math.PI / 180.0);
+            float f = Mth.lerp(partialTick, player.yBodyRotO, player.yBodyRot) * (float) (Math.PI / 180.0);
             double d0 = (double)Mth.sin(f);
             double d1 = (double)Mth.cos(f);
-            float f1 = p_340935_.getScale();
+            float f1 = player.getScale();
             double d2 = (double)i * 0.35 * (double)f1;
             double d3 = 0.8 * (double)f1;
-            float f2 = p_340935_.isCrouching() ? -0.1875F : 0.0F;
-            return p_340935_.getEyePosition(p_341261_).add(-d1 * d2 - d0 * d3, (double)f2 - 0.45 * (double)f1, -d0 * d2 + d1 * d3);
+            float f2 = player.isCrouching() ? -0.1875F : 0.0F;
+            return player.getEyePosition(partialTick).add(-d1 * d2 - d0 * d3, (double)f2 - 0.45 * (double)f1, -d0 * d2 + d1 * d3);
         }
     }
 
-    private static float fraction(int p_114691_, int p_114692_) {
-        return (float)p_114691_ / (float)p_114692_;
+    private static float fraction(int numerator, int denominator) {
+        return (float)numerator / (float)denominator;
     }
 
-    private static void vertex(VertexConsumer p_254464_, PoseStack.Pose p_323724_, int p_254296_, float p_253632_, int p_254132_, int p_254171_, int p_254026_) {
-        p_254464_.addVertex(p_323724_, p_253632_ - 0.5F, (float)p_254132_ - 0.5F, 0.0F)
+    private static void vertex(VertexConsumer consumer, PoseStack.Pose pose, int packedLight, float x, int y, int u, int v) {
+        consumer.addVertex(pose, x - 0.5F, (float)y - 0.5F, 0.0F)
             .setColor(-1)
-            .setUv((float)p_254171_, (float)p_254026_)
+            .setUv((float)u, (float)v)
             .setOverlay(OverlayTexture.NO_OVERLAY)
-            .setLight(p_254296_)
-            .setNormal(p_323724_, 0.0F, 1.0F, 0.0F);
+            .setLight(packedLight)
+            .setNormal(pose, 0.0F, 1.0F, 0.0F);
     }
 
     private static void stringVertex(
-        float p_174119_, float p_174120_, float p_174121_, VertexConsumer p_174122_, PoseStack.Pose p_174123_, float p_174124_, float p_174125_
+        float x, float y, float z, VertexConsumer consumer, PoseStack.Pose pose, float stringFraction, float nextStringFraction
     ) {
-        float f = p_174119_ * p_174124_;
-        float f1 = p_174120_ * (p_174124_ * p_174124_ + p_174124_) * 0.5F + 0.25F;
-        float f2 = p_174121_ * p_174124_;
-        float f3 = p_174119_ * p_174125_ - f;
-        float f4 = p_174120_ * (p_174125_ * p_174125_ + p_174125_) * 0.5F + 0.25F - f1;
-        float f5 = p_174121_ * p_174125_ - f2;
+        float f = x * stringFraction;
+        float f1 = y * (stringFraction * stringFraction + stringFraction) * 0.5F + 0.25F;
+        float f2 = z * stringFraction;
+        float f3 = x * nextStringFraction - f;
+        float f4 = y * (nextStringFraction * nextStringFraction + nextStringFraction) * 0.5F + 0.25F - f1;
+        float f5 = z * nextStringFraction - f2;
         float f6 = Mth.sqrt(f3 * f3 + f4 * f4 + f5 * f5);
         f3 /= f6;
         f4 /= f6;
         f5 /= f6;
-        p_174122_.addVertex(p_174123_, f, f1, f2).setColor(-16777216).setNormal(p_174123_, f3, f4, f5);
+        consumer.addVertex(pose, f, f1, f2).setColor(-16777216).setNormal(pose, f3, f4, f5);
     }
 
-    public ResourceLocation getTextureLocation(FishingHook p_114703_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(FishingHook entity) {
         return TEXTURE_LOCATION;
     }
 }

@@ -6,5 +6,13 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface Renderable {
-    void render(GuiGraphics p_281245_, int p_253973_, int p_254325_, float p_254004_);
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
+    void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick);
 }

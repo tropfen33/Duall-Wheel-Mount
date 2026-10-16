@@ -27,8 +27,8 @@ public class VillagePlacements {
     public static final ResourceKey<PlacedFeature> PATCH_TAIGA_GRASS_VILLAGE = PlacementUtils.createKey("patch_taiga_grass");
     public static final ResourceKey<PlacedFeature> PATCH_BERRY_BUSH_VILLAGE = PlacementUtils.createKey("patch_berry_bush");
 
-    public static void bootstrap(BootstrapContext<PlacedFeature> p_321555_) {
-        HolderGetter<ConfiguredFeature<?, ?>> holdergetter = p_321555_.lookup(Registries.CONFIGURED_FEATURE);
+    public static void bootstrap(BootstrapContext<PlacedFeature> context) {
+        HolderGetter<ConfiguredFeature<?, ?>> holdergetter = context.lookup(Registries.CONFIGURED_FEATURE);
         Holder<ConfiguredFeature<?, ?>> holder = holdergetter.getOrThrow(PileFeatures.PILE_HAY);
         Holder<ConfiguredFeature<?, ?>> holder1 = holdergetter.getOrThrow(PileFeatures.PILE_MELON);
         Holder<ConfiguredFeature<?, ?>> holder2 = holdergetter.getOrThrow(PileFeatures.PILE_SNOW);
@@ -42,18 +42,18 @@ public class VillagePlacements {
         Holder<ConfiguredFeature<?, ?>> holder10 = holdergetter.getOrThrow(VegetationFeatures.FLOWER_PLAIN);
         Holder<ConfiguredFeature<?, ?>> holder11 = holdergetter.getOrThrow(VegetationFeatures.PATCH_TAIGA_GRASS);
         Holder<ConfiguredFeature<?, ?>> holder12 = holdergetter.getOrThrow(VegetationFeatures.PATCH_BERRY_BUSH);
-        PlacementUtils.register(p_321555_, PILE_HAY_VILLAGE, holder);
-        PlacementUtils.register(p_321555_, PILE_MELON_VILLAGE, holder1);
-        PlacementUtils.register(p_321555_, PILE_SNOW_VILLAGE, holder2);
-        PlacementUtils.register(p_321555_, PILE_ICE_VILLAGE, holder3);
-        PlacementUtils.register(p_321555_, PILE_PUMPKIN_VILLAGE, holder4);
-        PlacementUtils.register(p_321555_, OAK_VILLAGE, holder5, PlacementUtils.filteredByBlockSurvival(Blocks.OAK_SAPLING));
-        PlacementUtils.register(p_321555_, ACACIA_VILLAGE, holder6, PlacementUtils.filteredByBlockSurvival(Blocks.ACACIA_SAPLING));
-        PlacementUtils.register(p_321555_, SPRUCE_VILLAGE, holder7, PlacementUtils.filteredByBlockSurvival(Blocks.SPRUCE_SAPLING));
-        PlacementUtils.register(p_321555_, PINE_VILLAGE, holder8, PlacementUtils.filteredByBlockSurvival(Blocks.SPRUCE_SAPLING));
-        PlacementUtils.register(p_321555_, PATCH_CACTUS_VILLAGE, holder9);
-        PlacementUtils.register(p_321555_, FLOWER_PLAIN_VILLAGE, holder10);
-        PlacementUtils.register(p_321555_, PATCH_TAIGA_GRASS_VILLAGE, holder11);
-        PlacementUtils.register(p_321555_, PATCH_BERRY_BUSH_VILLAGE, holder12);
+        PlacementUtils.register(context, PILE_HAY_VILLAGE, holder);
+        PlacementUtils.register(context, PILE_MELON_VILLAGE, holder1);
+        PlacementUtils.register(context, PILE_SNOW_VILLAGE, holder2);
+        PlacementUtils.register(context, PILE_ICE_VILLAGE, holder3);
+        PlacementUtils.register(context, PILE_PUMPKIN_VILLAGE, holder4);
+        PlacementUtils.register(context, OAK_VILLAGE, holder5, PlacementUtils.filteredByBlockSurvival(Blocks.OAK_SAPLING));
+        PlacementUtils.register(context, ACACIA_VILLAGE, holder6, PlacementUtils.filteredByBlockSurvival(Blocks.ACACIA_SAPLING));
+        PlacementUtils.register(context, SPRUCE_VILLAGE, holder7, PlacementUtils.filteredByBlockSurvival(Blocks.SPRUCE_SAPLING));
+        PlacementUtils.register(context, PINE_VILLAGE, holder8, PlacementUtils.filteredByBlockSurvival(Blocks.SPRUCE_SAPLING));
+        PlacementUtils.register(context, PATCH_CACTUS_VILLAGE, holder9);
+        PlacementUtils.register(context, FLOWER_PLAIN_VILLAGE, holder10);
+        PlacementUtils.register(context, PATCH_TAIGA_GRASS_VILLAGE, holder11);
+        PlacementUtils.register(context, PATCH_BERRY_BUSH_VILLAGE, holder12);
     }
 }

@@ -8,7 +8,7 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 
 public class DummySensor extends Sensor<LivingEntity> {
     @Override
-    protected void doTick(ServerLevel p_26638_, LivingEntity p_26639_) {
+    protected void doTick(ServerLevel level, LivingEntity entity) {
     }
 
     @Override

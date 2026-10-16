@@ -12,8 +12,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class DispenserScreen extends AbstractContainerScreen<DispenserMenu> {
     private static final ResourceLocation CONTAINER_LOCATION = ResourceLocation.withDefaultNamespace("textures/gui/container/dispenser.png");
 
-    public DispenserScreen(DispenserMenu p_98685_, Inventory p_98686_, Component p_98687_) {
-        super(p_98685_, p_98686_, p_98687_);
+    public DispenserScreen(DispenserMenu menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title);
     }
 
     @Override
@@ -22,16 +22,24 @@ public class DispenserScreen extends AbstractContainerScreen<DispenserMenu> {
         this.titleLabelX = (this.imageWidth - this.font.width(this.title)) / 2;
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283282_, int p_282467_, int p_282129_, float p_281965_) {
-        super.render(p_283282_, p_282467_, p_282129_, p_281965_);
-        this.renderTooltip(p_283282_, p_282467_, p_282129_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
     @Override
-    protected void renderBg(GuiGraphics p_283137_, float p_282476_, int p_281600_, int p_283194_) {
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
-        p_283137_.blit(CONTAINER_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
+        guiGraphics.blit(CONTAINER_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
     }
 }

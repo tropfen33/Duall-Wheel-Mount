@@ -12,8 +12,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class PolarBearModel<T extends PolarBear> extends QuadrupedModel<T> {
-    public PolarBearModel(ModelPart p_170829_) {
-        super(p_170829_, true, 16.0F, 4.0F, 2.25F, 2.0F, 24);
+    public PolarBearModel(ModelPart root) {
+        super(root, true, 16.0F, 4.0F, 2.25F, 2.0F, 24);
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -52,10 +52,13 @@ public class PolarBearModel<T extends PolarBear> extends QuadrupedModel<T> {
         return LayerDefinition.create(meshdefinition, 128, 64);
     }
 
-    public void setupAnim(T p_103429_, float p_103430_, float p_103431_, float p_103432_, float p_103433_, float p_103434_) {
-        super.setupAnim(p_103429_, p_103430_, p_103431_, p_103432_, p_103433_, p_103434_);
-        float f = p_103432_ - (float)p_103429_.tickCount;
-        float f1 = p_103429_.getStandingAnimationScale(f);
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+        float f = ageInTicks - (float)entity.tickCount;
+        float f1 = entity.getStandingAnimationScale(f);
         f1 *= f1;
         float f2 = 1.0F - f1;
         this.body.xRot = (float) (Math.PI / 2) - f1 * (float) Math.PI * 0.35F;

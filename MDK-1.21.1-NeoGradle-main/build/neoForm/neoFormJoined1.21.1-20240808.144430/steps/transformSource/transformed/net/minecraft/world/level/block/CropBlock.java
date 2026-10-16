@@ -42,19 +42,19 @@ public class CropBlock extends BushBlock implements BonemealableBlock {
         return CODEC;
     }
 
-    public CropBlock(BlockBehaviour.Properties p_52247_) {
-        super(p_52247_);
+    public CropBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(this.getAgeProperty(), Integer.valueOf(0)));
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_52297_, BlockGetter p_52298_, BlockPos p_52299_, CollisionContext p_52300_) {
-        return SHAPE_BY_AGE[this.getAge(p_52297_)];
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SHAPE_BY_AGE[this.getAge(state)];
     }
 
     @Override
-    protected boolean mayPlaceOn(BlockState p_52302_, BlockGetter p_52303_, BlockPos p_52304_) {
-        return p_52302_.getBlock() instanceof net.minecraft.world.level.block.FarmBlock;
+    protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.getBlock() instanceof net.minecraft.world.level.block.FarmBlock;
     }
 
     protected IntegerProperty getAgeProperty() {
@@ -65,50 +65,53 @@ public class CropBlock extends BushBlock implements BonemealableBlock {
         return 7;
     }
 
-    public int getAge(BlockState p_52306_) {
-        return p_52306_.getValue(this.getAgeProperty());
+    public int getAge(BlockState state) {
+        return state.getValue(this.getAgeProperty());
     }
 
-    public BlockState getStateForAge(int p_52290_) {
-        return this.defaultBlockState().setValue(this.getAgeProperty(), Integer.valueOf(p_52290_));
+    public BlockState getStateForAge(int age) {
+        return this.defaultBlockState().setValue(this.getAgeProperty(), Integer.valueOf(age));
     }
 
-    public final boolean isMaxAge(BlockState p_52308_) {
-        return this.getAge(p_52308_) >= this.getMaxAge();
-    }
-
-    @Override
-    protected boolean isRandomlyTicking(BlockState p_52288_) {
-        return !this.isMaxAge(p_52288_);
+    public final boolean isMaxAge(BlockState state) {
+        return this.getAge(state) >= this.getMaxAge();
     }
 
     @Override
-    protected void randomTick(BlockState p_221050_, ServerLevel p_221051_, BlockPos p_221052_, RandomSource p_221053_) {
-        if (!p_221051_.isAreaLoaded(p_221052_, 1)) return; // Forge: prevent loading unloaded chunks when checking neighbor's light
-        if (p_221051_.getRawBrightness(p_221052_, 0) >= 9) {
-            int i = this.getAge(p_221050_);
+    protected boolean isRandomlyTicking(BlockState state) {
+        return !this.isMaxAge(state);
+    }
+
+    /**
+     * Performs a random tick on a block.
+     */
+    @Override
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!level.isAreaLoaded(pos, 1)) return; // Forge: prevent loading unloaded chunks when checking neighbor's light
+        if (level.getRawBrightness(pos, 0) >= 9) {
+            int i = this.getAge(state);
             if (i < this.getMaxAge()) {
-                float f = getGrowthSpeed(p_221050_, p_221051_, p_221052_);
-                if (net.neoforged.neoforge.common.CommonHooks.canCropGrow(p_221051_, p_221052_, p_221050_, p_221053_.nextInt((int)(25.0F / f) + 1) == 0)) {
-                    p_221051_.setBlock(p_221052_, this.getStateForAge(i + 1), 2);
-                    net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(p_221051_, p_221052_, p_221050_);
+                float f = getGrowthSpeed(state, level, pos);
+                if (net.neoforged.neoforge.common.CommonHooks.canCropGrow(level, pos, state, random.nextInt((int)(25.0F / f) + 1) == 0)) {
+                    level.setBlock(pos, this.getStateForAge(i + 1), 2);
+                    net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(level, pos, state);
                 }
             }
         }
     }
 
-    public void growCrops(Level p_52264_, BlockPos p_52265_, BlockState p_52266_) {
-        int i = this.getAge(p_52266_) + this.getBonemealAgeIncrease(p_52264_);
+    public void growCrops(Level level, BlockPos pos, BlockState state) {
+        int i = this.getAge(state) + this.getBonemealAgeIncrease(level);
         int j = this.getMaxAge();
         if (i > j) {
             i = j;
         }
 
-        p_52264_.setBlock(p_52265_, this.getStateForAge(i), 2);
+        level.setBlock(pos, this.getStateForAge(i), 2);
     }
 
-    protected int getBonemealAgeIncrease(Level p_52262_) {
-        return Mth.nextInt(p_52262_.random, 2, 5);
+    protected int getBonemealAgeIncrease(Level level) {
+        return Mth.nextInt(level.random, 2, 5);
     }
 
     protected static float getGrowthSpeed(BlockState blockState, BlockGetter p_52274_, BlockPos p_52275_) {
@@ -158,23 +161,23 @@ public class CropBlock extends BushBlock implements BonemealableBlock {
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_52282_, LevelReader p_52283_, BlockPos p_52284_) {
-        net.neoforged.neoforge.common.util.TriState soilDecision = p_52283_.getBlockState(p_52284_.below()).canSustainPlant(p_52283_, p_52284_.below(), net.minecraft.core.Direction.UP, p_52282_);
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        net.neoforged.neoforge.common.util.TriState soilDecision = level.getBlockState(pos.below()).canSustainPlant(level, pos.below(), net.minecraft.core.Direction.UP, state);
         if (!soilDecision.isDefault()) return soilDecision.isTrue();
-        return hasSufficientLight(p_52283_, p_52284_) && super.canSurvive(p_52282_, p_52283_, p_52284_);
+        return hasSufficientLight(level, pos) && super.canSurvive(state, level, pos);
     }
 
-    public static boolean hasSufficientLight(LevelReader p_294828_, BlockPos p_295989_) {
-        return p_294828_.getRawBrightness(p_295989_, 0) >= 8;
+    public static boolean hasSufficientLight(LevelReader level, BlockPos pos) {
+        return level.getRawBrightness(pos, 0) >= 8;
     }
 
     @Override
-    protected void entityInside(BlockState p_52277_, Level p_52278_, BlockPos p_52279_, Entity p_52280_) {
-        if (p_52280_ instanceof Ravager && net.neoforged.neoforge.event.EventHooks.canEntityGrief(p_52278_, p_52280_)) {
-            p_52278_.destroyBlock(p_52279_, true, p_52280_);
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        if (entity instanceof Ravager && net.neoforged.neoforge.event.EventHooks.canEntityGrief(level, entity)) {
+            level.destroyBlock(pos, true, entity);
         }
 
-        super.entityInside(p_52277_, p_52278_, p_52279_, p_52280_);
+        super.entityInside(state, level, pos, entity);
     }
 
     protected ItemLike getBaseSeedId() {
@@ -182,27 +185,27 @@ public class CropBlock extends BushBlock implements BonemealableBlock {
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader p_304482_, BlockPos p_52255_, BlockState p_52256_) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         return new ItemStack(this.getBaseSeedId());
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader p_255715_, BlockPos p_52259_, BlockState p_52260_) {
-        return !this.isMaxAge(p_52260_);
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+        return !this.isMaxAge(state);
     }
 
     @Override
-    public boolean isBonemealSuccess(Level p_221045_, RandomSource p_221046_, BlockPos p_221047_, BlockState p_221048_) {
+    public boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel p_221040_, RandomSource p_221041_, BlockPos p_221042_, BlockState p_221043_) {
-        this.growCrops(p_221040_, p_221042_, p_221043_);
+    public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
+        this.growCrops(level, pos, state);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_52286_) {
-        p_52286_.add(AGE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AGE);
     }
 }

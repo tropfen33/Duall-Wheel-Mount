@@ -11,9 +11,9 @@ public class DifficultyInstance {
     private final Difficulty base;
     private final float effectiveDifficulty;
 
-    public DifficultyInstance(Difficulty p_19044_, long p_19045_, long p_19046_, float p_19047_) {
-        this.base = p_19044_;
-        this.effectiveDifficulty = this.calculateDifficulty(p_19044_, p_19045_, p_19046_, p_19047_);
+    public DifficultyInstance(Difficulty base, long levelTime, long chunkInhabitedTime, float moonPhaseFactor) {
+        this.base = base;
+        this.effectiveDifficulty = this.calculateDifficulty(base, levelTime, chunkInhabitedTime, moonPhaseFactor);
     }
 
     public Difficulty getDifficulty() {
@@ -28,8 +28,8 @@ public class DifficultyInstance {
         return this.effectiveDifficulty >= (float)Difficulty.HARD.ordinal();
     }
 
-    public boolean isHarderThan(float p_19050_) {
-        return this.effectiveDifficulty > p_19050_;
+    public boolean isHarderThan(float difficulty) {
+        return this.effectiveDifficulty > difficulty;
     }
 
     public float getSpecialMultiplier() {
@@ -40,23 +40,23 @@ public class DifficultyInstance {
         }
     }
 
-    private float calculateDifficulty(Difficulty p_19052_, long p_19053_, long p_19054_, float p_19055_) {
-        if (p_19052_ == Difficulty.PEACEFUL) {
+    private float calculateDifficulty(Difficulty difficulty, long levelTime, long chunkInhabitedTime, float moonPhaseFactor) {
+        if (difficulty == Difficulty.PEACEFUL) {
             return 0.0F;
         } else {
-            boolean flag = p_19052_ == Difficulty.HARD;
+            boolean flag = difficulty == Difficulty.HARD;
             float f = 0.75F;
-            float f1 = Mth.clamp(((float)p_19053_ + -72000.0F) / 1440000.0F, 0.0F, 1.0F) * 0.25F;
+            float f1 = Mth.clamp(((float)levelTime + -72000.0F) / 1440000.0F, 0.0F, 1.0F) * 0.25F;
             f += f1;
             float f2 = 0.0F;
-            f2 += Mth.clamp((float)p_19054_ / 3600000.0F, 0.0F, 1.0F) * (flag ? 1.0F : 0.75F);
-            f2 += Mth.clamp(p_19055_ * 0.25F, 0.0F, f1);
-            if (p_19052_ == Difficulty.EASY) {
+            f2 += Mth.clamp((float)chunkInhabitedTime / 3600000.0F, 0.0F, 1.0F) * (flag ? 1.0F : 0.75F);
+            f2 += Mth.clamp(moonPhaseFactor * 0.25F, 0.0F, f1);
+            if (difficulty == Difficulty.EASY) {
                 f2 *= 0.5F;
             }
 
             f += f2;
-            return (float)p_19052_.getId() * f;
+            return (float)difficulty.getId() * f;
         }
     }
 }

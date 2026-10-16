@@ -18,10 +18,13 @@ public record ClientboundStatusResponsePacket(ServerStatus status, @org.jetbrain
         this(p_179834_.readJsonWithCodec(ServerStatus.CODEC));
     }
 
-    private void write(FriendlyByteBuf p_134899_) {
-        if (cachedStatus != null) p_134899_.writeUtf(cachedStatus);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        if (cachedStatus != null) buffer.writeUtf(cachedStatus);
         else
-        p_134899_.writeJsonWithCodec(ServerStatus.CODEC, this.status);
+        buffer.writeJsonWithCodec(ServerStatus.CODEC, this.status);
     }
 
     @Override
@@ -29,7 +32,10 @@ public record ClientboundStatusResponsePacket(ServerStatus status, @org.jetbrain
         return StatusPacketTypes.CLIENTBOUND_STATUS_RESPONSE;
     }
 
-    public void handle(ClientStatusPacketListener p_134896_) {
-        p_134896_.handleStatusResponse(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientStatusPacketListener handler) {
+        handler.handleStatusResponse(this);
     }
 }

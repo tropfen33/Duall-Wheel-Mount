@@ -11,14 +11,14 @@ import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.entity.item.ItemEntity;
 
 public class GoToWantedItem {
-    public static BehaviorControl<LivingEntity> create(float p_260027_, boolean p_259769_, int p_259671_) {
-        return create(p_23158_ -> true, p_260027_, p_259769_, p_259671_);
+    public static BehaviorControl<LivingEntity> create(float speedModifier, boolean hasTarget, int maxDistToWalk) {
+        return create(p_23158_ -> true, speedModifier, hasTarget, maxDistToWalk);
     }
 
-    public static <E extends LivingEntity> BehaviorControl<E> create(Predicate<E> p_259490_, float p_260346_, boolean p_259637_, int p_259054_) {
+    public static <E extends LivingEntity> BehaviorControl<E> create(Predicate<E> canWalkToItem, float speedModifier, boolean hasTarget, int maxDistToWalk) {
         return BehaviorBuilder.create(
             p_258371_ -> {
-                BehaviorBuilder<E, ? extends MemoryAccessor<? extends K1, WalkTarget>> behaviorbuilder = p_259637_
+                BehaviorBuilder<E, ? extends MemoryAccessor<? extends K1, WalkTarget>> behaviorbuilder = hasTarget
                     ? p_258371_.registered(MemoryModuleType.WALK_TARGET)
                     : p_258371_.absent(MemoryModuleType.WALK_TARGET);
                 return p_258371_.group(
@@ -32,10 +32,10 @@ public class GoToWantedItem {
                         (p_258387_, p_258388_, p_258389_, p_258390_) -> (p_258380_, p_258381_, p_258382_) -> {
                                 ItemEntity itementity = p_258371_.get(p_258389_);
                                 if (p_258371_.tryGet(p_258390_).isEmpty()
-                                    && p_259490_.test(p_258381_)
-                                    && itementity.closerThan(p_258381_, (double)p_259054_)
+                                    && canWalkToItem.test(p_258381_)
+                                    && itementity.closerThan(p_258381_, (double)maxDistToWalk)
                                     && p_258381_.level().getWorldBorder().isWithinBounds(itementity.blockPosition())) {
-                                    WalkTarget walktarget = new WalkTarget(new EntityTracker(itementity, false), p_260346_, 0);
+                                    WalkTarget walktarget = new WalkTarget(new EntityTracker(itementity, false), speedModifier, 0);
                                     p_258387_.set(new EntityTracker(itementity, true));
                                     p_258388_.set(walktarget);
                                     return true;

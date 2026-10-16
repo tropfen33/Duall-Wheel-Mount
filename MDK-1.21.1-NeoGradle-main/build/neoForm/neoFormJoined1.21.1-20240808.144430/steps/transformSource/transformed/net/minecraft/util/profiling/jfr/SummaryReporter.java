@@ -16,18 +16,18 @@ public class SummaryReporter {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final Runnable onDeregistration;
 
-    protected SummaryReporter(Runnable p_185398_) {
-        this.onDeregistration = p_185398_;
+    protected SummaryReporter(Runnable onDeregistration) {
+        this.onDeregistration = onDeregistration;
     }
 
-    public void recordingStopped(@Nullable Path p_185401_) {
-        if (p_185401_ != null) {
+    public void recordingStopped(@Nullable Path outputPath) {
+        if (outputPath != null) {
             this.onDeregistration.run();
-            infoWithFallback(() -> "Dumped flight recorder profiling to " + p_185401_);
+            infoWithFallback(() -> "Dumped flight recorder profiling to " + outputPath);
 
             JfrStatsResult jfrstatsresult;
             try {
-                jfrstatsresult = JfrStatsParser.parse(p_185401_);
+                jfrstatsresult = JfrStatsParser.parse(outputPath);
             } catch (Throwable throwable1) {
                 warnWithFallback(() -> "Failed to parse JFR recording", throwable1);
                 return;
@@ -35,7 +35,7 @@ public class SummaryReporter {
 
             try {
                 infoWithFallback(jfrstatsresult::asJson);
-                Path path = p_185401_.resolveSibling("jfr-report-" + StringUtils.substringBefore(p_185401_.getFileName().toString(), ".jfr") + ".json");
+                Path path = outputPath.resolveSibling("jfr-report-" + StringUtils.substringBefore(outputPath.getFileName().toString(), ".jfr") + ".json");
                 Files.writeString(path, jfrstatsresult.asJson(), StandardOpenOption.CREATE);
                 infoWithFallback(() -> "Dumped recording summary to " + path);
             } catch (Throwable throwable) {
@@ -44,20 +44,20 @@ public class SummaryReporter {
         }
     }
 
-    private static void infoWithFallback(Supplier<String> p_201933_) {
+    private static void infoWithFallback(Supplier<String> message) {
         if (LogUtils.isLoggerActive()) {
-            LOGGER.info(p_201933_.get());
+            LOGGER.info(message.get());
         } else {
-            Bootstrap.realStdoutPrintln(p_201933_.get());
+            Bootstrap.realStdoutPrintln(message.get());
         }
     }
 
-    private static void warnWithFallback(Supplier<String> p_201935_, Throwable p_201936_) {
+    private static void warnWithFallback(Supplier<String> message, Throwable throwable) {
         if (LogUtils.isLoggerActive()) {
-            LOGGER.warn(p_201935_.get(), p_201936_);
+            LOGGER.warn(message.get(), throwable);
         } else {
-            Bootstrap.realStdoutPrintln(p_201935_.get());
-            p_201936_.printStackTrace(Bootstrap.STDOUT);
+            Bootstrap.realStdoutPrintln(message.get());
+            throwable.printStackTrace(Bootstrap.STDOUT);
         }
     }
 }

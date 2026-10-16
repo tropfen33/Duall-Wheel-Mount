@@ -19,9 +19,9 @@ public class SnifferModel<T extends Sniffer> extends AgeableHierarchicalModel<T>
     private final ModelPart root;
     private final ModelPart head;
 
-    public SnifferModel(ModelPart p_272867_) {
+    public SnifferModel(ModelPart root) {
         super(0.5F, 24.0F);
-        this.root = p_272867_.getChild("root");
+        this.root = root.getChild("root");
         this.head = this.root.getChild("bone").getChild("body").getChild("head");
     }
 
@@ -102,21 +102,24 @@ public class SnifferModel<T extends Sniffer> extends AgeableHierarchicalModel<T>
         return LayerDefinition.create(meshdefinition, 192, 192);
     }
 
-    public void setupAnim(T p_273213_, float p_273252_, float p_273344_, float p_272633_, float p_272774_, float p_273206_) {
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.root().getAllParts().forEach(ModelPart::resetPose);
-        this.head.xRot = p_273206_ * (float) (Math.PI / 180.0);
-        this.head.yRot = p_272774_ * (float) (Math.PI / 180.0);
-        if (p_273213_.isSearching()) {
-            this.animateWalk(SnifferAnimation.SNIFFER_SNIFF_SEARCH, p_273252_, p_273344_, 9.0F, 100.0F);
+        this.head.xRot = headPitch * (float) (Math.PI / 180.0);
+        this.head.yRot = netHeadYaw * (float) (Math.PI / 180.0);
+        if (entity.isSearching()) {
+            this.animateWalk(SnifferAnimation.SNIFFER_SNIFF_SEARCH, limbSwing, limbSwingAmount, 9.0F, 100.0F);
         } else {
-            this.animateWalk(SnifferAnimation.SNIFFER_WALK, p_273252_, p_273344_, 9.0F, 100.0F);
+            this.animateWalk(SnifferAnimation.SNIFFER_WALK, limbSwing, limbSwingAmount, 9.0F, 100.0F);
         }
 
-        this.animate(p_273213_.diggingAnimationState, SnifferAnimation.SNIFFER_DIG, p_272633_);
-        this.animate(p_273213_.sniffingAnimationState, SnifferAnimation.SNIFFER_LONGSNIFF, p_272633_);
-        this.animate(p_273213_.risingAnimationState, SnifferAnimation.SNIFFER_STAND_UP, p_272633_);
-        this.animate(p_273213_.feelingHappyAnimationState, SnifferAnimation.SNIFFER_HAPPY, p_272633_);
-        this.animate(p_273213_.scentingAnimationState, SnifferAnimation.SNIFFER_SNIFFSNIFF, p_272633_);
+        this.animate(entity.diggingAnimationState, SnifferAnimation.SNIFFER_DIG, ageInTicks);
+        this.animate(entity.sniffingAnimationState, SnifferAnimation.SNIFFER_LONGSNIFF, ageInTicks);
+        this.animate(entity.risingAnimationState, SnifferAnimation.SNIFFER_STAND_UP, ageInTicks);
+        this.animate(entity.feelingHappyAnimationState, SnifferAnimation.SNIFFER_HAPPY, ageInTicks);
+        this.animate(entity.scentingAnimationState, SnifferAnimation.SNIFFER_SNIFFSNIFF, ageInTicks);
         if (this.young) {
             this.applyStatic(SnifferAnimation.BABY_TRANSFORM);
         }

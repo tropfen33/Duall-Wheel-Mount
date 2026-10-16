@@ -14,26 +14,26 @@ public interface ResolvedServerAddress {
 
     InetSocketAddress asInetSocketAddress();
 
-    static ResolvedServerAddress from(final InetSocketAddress p_171846_) {
+    static ResolvedServerAddress from(final InetSocketAddress inetSocketAddress) {
         return new ResolvedServerAddress() {
             @Override
             public String getHostName() {
-                return p_171846_.getAddress().getHostName();
+                return inetSocketAddress.getAddress().getHostName();
             }
 
             @Override
             public String getHostIp() {
-                return p_171846_.getAddress().getHostAddress();
+                return inetSocketAddress.getAddress().getHostAddress();
             }
 
             @Override
             public int getPort() {
-                return p_171846_.getPort();
+                return inetSocketAddress.getPort();
             }
 
             @Override
             public InetSocketAddress asInetSocketAddress() {
-                return p_171846_;
+                return inetSocketAddress;
             }
         };
     }

@@ -10,8 +10,8 @@ public class Sensing {
     private final IntSet seen = new IntOpenHashSet();
     private final IntSet unseen = new IntOpenHashSet();
 
-    public Sensing(Mob p_26788_) {
-        this.mob = p_26788_;
+    public Sensing(Mob mob) {
+        this.mob = mob;
     }
 
     public void tick() {
@@ -19,15 +19,18 @@ public class Sensing {
         this.unseen.clear();
     }
 
-    public boolean hasLineOfSight(Entity p_148307_) {
-        int i = p_148307_.getId();
+    /**
+     * Updates list of visible and not visible entities for the given entity
+     */
+    public boolean hasLineOfSight(Entity entity) {
+        int i = entity.getId();
         if (this.seen.contains(i)) {
             return true;
         } else if (this.unseen.contains(i)) {
             return false;
         } else {
             this.mob.level().getProfiler().push("hasLineOfSight");
-            boolean flag = this.mob.hasLineOfSight(p_148307_);
+            boolean flag = this.mob.hasLineOfSight(entity);
             this.mob.level().getProfiler().pop();
             if (flag) {
                 this.seen.add(i);

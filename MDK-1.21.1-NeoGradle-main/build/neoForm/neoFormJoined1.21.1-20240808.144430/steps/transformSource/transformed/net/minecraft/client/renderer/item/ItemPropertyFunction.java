@@ -10,5 +10,5 @@ import net.neoforged.api.distmarker.OnlyIn;
 @Deprecated
 @OnlyIn(Dist.CLIENT)
 public interface ItemPropertyFunction {
-    float call(ItemStack p_174676_, @Nullable ClientLevel p_174677_, @Nullable LivingEntity p_174678_, int p_174679_);
+    float call(ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity entity, int seed);
 }

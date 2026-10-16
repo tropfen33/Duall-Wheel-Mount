@@ -8,21 +8,21 @@ import java.util.function.Supplier;
 import net.minecraft.util.datafix.fixes.References;
 
 public class V3938 extends NamespacedSchema {
-    public V3938(int p_345954_, Schema p_345207_) {
-        super(p_345954_, p_345207_);
+    public V3938(int versionKey, Schema parent) {
+        super(versionKey, parent);
     }
 
-    protected static TypeTemplate abstractArrow(Schema p_344799_) {
+    protected static TypeTemplate abstractArrow(Schema schema) {
         return DSL.optionalFields(
-            "inBlockState", References.BLOCK_STATE.in(p_344799_), "item", References.ITEM_STACK.in(p_344799_), "weapon", References.ITEM_STACK.in(p_344799_)
+            "inBlockState", References.BLOCK_STATE.in(schema), "item", References.ITEM_STACK.in(schema), "weapon", References.ITEM_STACK.in(schema)
         );
     }
 
     @Override
-    public Map<String, Supplier<TypeTemplate>> registerEntities(Schema p_346323_) {
-        Map<String, Supplier<TypeTemplate>> map = super.registerEntities(p_346323_);
-        p_346323_.register(map, "minecraft:spectral_arrow", () -> abstractArrow(p_346323_));
-        p_346323_.register(map, "minecraft:arrow", () -> abstractArrow(p_346323_));
+    public Map<String, Supplier<TypeTemplate>> registerEntities(Schema schema) {
+        Map<String, Supplier<TypeTemplate>> map = super.registerEntities(schema);
+        schema.register(map, "minecraft:spectral_arrow", () -> abstractArrow(schema));
+        schema.register(map, "minecraft:arrow", () -> abstractArrow(schema));
         return map;
     }
 }

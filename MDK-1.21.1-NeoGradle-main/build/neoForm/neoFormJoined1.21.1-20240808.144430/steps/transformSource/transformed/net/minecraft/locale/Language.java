@@ -29,6 +29,9 @@ import org.slf4j.Logger;
 public abstract class Language {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = new Gson();
+    /**
+     * Pattern that matches numeric variable placeholders in a resource string, such as "%d", "%3$d", "%.2f"
+     */
     private static final Pattern UNSUPPORTED_FORMAT_PATTERN = Pattern.compile("%(\\d+\\$)?[\\d.]*[df]");
     public static final String DEFAULT = "en_us";
     private static volatile Language instance = loadDefault();
@@ -42,13 +45,13 @@ public abstract class Language {
         net.neoforged.neoforge.server.LanguageHook.captureLanguageMap(map, componentMap);
         return new Language() {
             @Override
-            public String getOrDefault(String p_128127_, String p_265421_) {
-                return map.getOrDefault(p_128127_, p_265421_);
+            public String getOrDefault(String key, String defaultValue) {
+                return map.getOrDefault(key, defaultValue);
             }
 
             @Override
-            public boolean has(String p_128135_) {
-                return map.containsKey(p_128135_);
+            public boolean has(String id) {
+                return map.containsKey(id);
             }
 
             @Override
@@ -57,8 +60,8 @@ public abstract class Language {
             }
 
             @Override
-            public FormattedCharSequence getVisualOrder(FormattedText p_128129_) {
-                return p_128132_ -> p_128129_.visit(
+            public FormattedCharSequence getVisualOrder(FormattedText text) {
+                return p_128132_ -> text.visit(
                             (p_177835_, p_177836_) -> StringDecomposer.iterateFormatted(p_177836_, p_177835_, p_128132_)
                                     ? Optional.empty()
                                     : FormattedText.STOP_ITERATION,
@@ -80,8 +83,8 @@ public abstract class Language {
     }
 
     @Deprecated
-    private static void parseTranslations(BiConsumer<String, String> p_282031_, String p_283638_) {
-        parseTranslations(p_282031_, (key, value) -> {}, p_283638_);
+    private static void parseTranslations(BiConsumer<String, String> output, String languagePath) {
+        parseTranslations(output, (key, value) -> {}, languagePath);
     }
 
     private static void parseTranslations(BiConsumer<String, String> p_282031_, BiConsumer<String, net.minecraft.network.chat.Component> componentConsumer, String p_283638_) {
@@ -92,12 +95,12 @@ public abstract class Language {
         }
     }
 
-    public static void loadFromJson(InputStream p_128109_, BiConsumer<String, String> p_128110_) {
-        loadFromJson(p_128109_, p_128110_, (key, value) -> {});
+    public static void loadFromJson(InputStream stream, BiConsumer<String, String> output) {
+        loadFromJson(stream, output, (key, value) -> {});
     }
 
-    public static void loadFromJson(InputStream p_128109_, BiConsumer<String, String> p_128110_, BiConsumer<String, net.minecraft.network.chat.Component> componentConsumer) {
-        JsonObject jsonobject = GSON.fromJson(new InputStreamReader(p_128109_, StandardCharsets.UTF_8), JsonObject.class);
+    public static void loadFromJson(InputStream stream, BiConsumer<String, String> output, BiConsumer<String, net.minecraft.network.chat.Component> componentConsumer) {
+        JsonObject jsonobject = GSON.fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), JsonObject.class);
 
         for (Entry<String, JsonElement> entry : jsonobject.entrySet()) {
             if (entry.getValue().isJsonArray()) {
@@ -105,14 +108,14 @@ public abstract class Language {
                     .parse(com.mojang.serialization.JsonOps.INSTANCE, entry.getValue())
                     .getOrThrow(msg -> new com.google.gson.JsonParseException("Error parsing translation for " + entry.getKey() + ": " + msg));
 
-                p_128110_.accept(entry.getKey(), component.getString());
+                output.accept(entry.getKey(), component.getString());
                 componentConsumer.accept(entry.getKey(), component);
 
                 continue;
             }
 
             String s = UNSUPPORTED_FORMAT_PATTERN.matcher(GsonHelper.convertToString(entry.getValue(), entry.getKey())).replaceAll("%$1s");
-            p_128110_.accept(entry.getKey(), s);
+            output.accept(entry.getKey(), s);
         }
     }
 
@@ -120,8 +123,8 @@ public abstract class Language {
         return instance;
     }
 
-    public static void inject(Language p_128115_) {
-        instance = p_128115_;
+    public static void inject(Language p_instance) {
+        instance = p_instance;
     }
 
     // Neo: All helpers methods below are injected by Neo to ease modder's usage of Language
@@ -131,19 +134,19 @@ public abstract class Language {
         return null;
     }
 
-    public String getOrDefault(String p_128111_) {
-        return this.getOrDefault(p_128111_, p_128111_);
+    public String getOrDefault(String id) {
+        return this.getOrDefault(id, id);
     }
 
-    public abstract String getOrDefault(String p_265702_, String p_265599_);
+    public abstract String getOrDefault(String key, String defaultValue);
 
-    public abstract boolean has(String p_128117_);
+    public abstract boolean has(String id);
 
     public abstract boolean isDefaultRightToLeft();
 
-    public abstract FormattedCharSequence getVisualOrder(FormattedText p_128116_);
+    public abstract FormattedCharSequence getVisualOrder(FormattedText text);
 
-    public List<FormattedCharSequence> getVisualOrder(List<FormattedText> p_128113_) {
-        return p_128113_.stream().map(this::getVisualOrder).collect(ImmutableList.toImmutableList());
+    public List<FormattedCharSequence> getVisualOrder(List<FormattedText> text) {
+        return text.stream().map(this::getVisualOrder).collect(ImmutableList.toImmutableList());
     }
 }

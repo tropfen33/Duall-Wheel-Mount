@@ -18,16 +18,16 @@ public class ShapedRecipe implements CraftingRecipe {
     final CraftingBookCategory category;
     final boolean showNotification;
 
-    public ShapedRecipe(String p_272759_, CraftingBookCategory p_273506_, ShapedRecipePattern p_312827_, ItemStack p_272852_, boolean p_312010_) {
-        this.group = p_272759_;
-        this.category = p_273506_;
-        this.pattern = p_312827_;
-        this.result = p_272852_;
-        this.showNotification = p_312010_;
+    public ShapedRecipe(String group, CraftingBookCategory category, ShapedRecipePattern pattern, ItemStack result, boolean showNotification) {
+        this.group = group;
+        this.category = category;
+        this.pattern = pattern;
+        this.result = result;
+        this.showNotification = showNotification;
     }
 
-    public ShapedRecipe(String p_250221_, CraftingBookCategory p_250716_, ShapedRecipePattern p_312814_, ItemStack p_248581_) {
-        this(p_250221_, p_250716_, p_312814_, p_248581_, true);
+    public ShapedRecipe(String group, CraftingBookCategory category, ShapedRecipePattern pattern, ItemStack result) {
+        this(group, category, pattern, result, true);
     }
 
     @Override
@@ -46,7 +46,7 @@ public class ShapedRecipe implements CraftingRecipe {
     }
 
     @Override
-    public ItemStack getResultItem(HolderLookup.Provider p_335668_) {
+    public ItemStack getResultItem(HolderLookup.Provider registries) {
         return this.result;
     }
 
@@ -60,17 +60,20 @@ public class ShapedRecipe implements CraftingRecipe {
         return this.showNotification;
     }
 
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
     @Override
-    public boolean canCraftInDimensions(int p_44161_, int p_44162_) {
-        return p_44161_ >= this.pattern.width() && p_44162_ >= this.pattern.height();
+    public boolean canCraftInDimensions(int width, int height) {
+        return width >= this.pattern.width() && height >= this.pattern.height();
     }
 
-    public boolean matches(CraftingInput p_345040_, Level p_44167_) {
-        return this.pattern.matches(p_345040_);
+    public boolean matches(CraftingInput input, Level level) {
+        return this.pattern.matches(input);
     }
 
-    public ItemStack assemble(CraftingInput p_345201_, HolderLookup.Provider p_335688_) {
-        return this.getResultItem(p_335688_).copy();
+    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
+        return this.getResultItem(registries).copy();
     }
 
     public int getWidth() {
@@ -112,21 +115,21 @@ public class ShapedRecipe implements CraftingRecipe {
             return STREAM_CODEC;
         }
 
-        private static ShapedRecipe fromNetwork(RegistryFriendlyByteBuf p_319998_) {
-            String s = p_319998_.readUtf();
-            CraftingBookCategory craftingbookcategory = p_319998_.readEnum(CraftingBookCategory.class);
-            ShapedRecipePattern shapedrecipepattern = ShapedRecipePattern.STREAM_CODEC.decode(p_319998_);
-            ItemStack itemstack = ItemStack.STREAM_CODEC.decode(p_319998_);
-            boolean flag = p_319998_.readBoolean();
+        private static ShapedRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
+            String s = buffer.readUtf();
+            CraftingBookCategory craftingbookcategory = buffer.readEnum(CraftingBookCategory.class);
+            ShapedRecipePattern shapedrecipepattern = ShapedRecipePattern.STREAM_CODEC.decode(buffer);
+            ItemStack itemstack = ItemStack.STREAM_CODEC.decode(buffer);
+            boolean flag = buffer.readBoolean();
             return new ShapedRecipe(s, craftingbookcategory, shapedrecipepattern, itemstack, flag);
         }
 
-        private static void toNetwork(RegistryFriendlyByteBuf p_320738_, ShapedRecipe p_320586_) {
-            p_320738_.writeUtf(p_320586_.group);
-            p_320738_.writeEnum(p_320586_.category);
-            ShapedRecipePattern.STREAM_CODEC.encode(p_320738_, p_320586_.pattern);
-            ItemStack.STREAM_CODEC.encode(p_320738_, p_320586_.result);
-            p_320738_.writeBoolean(p_320586_.showNotification);
+        private static void toNetwork(RegistryFriendlyByteBuf buffer, ShapedRecipe recipe) {
+            buffer.writeUtf(recipe.group);
+            buffer.writeEnum(recipe.category);
+            ShapedRecipePattern.STREAM_CODEC.encode(buffer, recipe.pattern);
+            ItemStack.STREAM_CODEC.encode(buffer, recipe.result);
+            buffer.writeBoolean(recipe.showNotification);
         }
     }
 }

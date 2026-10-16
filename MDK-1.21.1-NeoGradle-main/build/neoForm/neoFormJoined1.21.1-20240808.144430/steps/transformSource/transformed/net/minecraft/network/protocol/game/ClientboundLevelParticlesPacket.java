@@ -23,53 +23,53 @@ public class ClientboundLevelParticlesPacket implements Packet<ClientGamePacketL
     private final ParticleOptions particle;
 
     public <T extends ParticleOptions> ClientboundLevelParticlesPacket(
-        T p_132292_,
-        boolean p_132293_,
-        double p_132294_,
-        double p_132295_,
-        double p_132296_,
-        float p_132297_,
-        float p_132298_,
-        float p_132299_,
-        float p_132300_,
-        int p_132301_
+        T particle,
+        boolean overrideLimiter,
+        double x,
+        double y,
+        double z,
+        float xDist,
+        float yDist,
+        float zDist,
+        float maxSpeed,
+        int count
     ) {
-        this.particle = p_132292_;
-        this.overrideLimiter = p_132293_;
-        this.x = p_132294_;
-        this.y = p_132295_;
-        this.z = p_132296_;
-        this.xDist = p_132297_;
-        this.yDist = p_132298_;
-        this.zDist = p_132299_;
-        this.maxSpeed = p_132300_;
-        this.count = p_132301_;
+        this.particle = particle;
+        this.overrideLimiter = overrideLimiter;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.xDist = xDist;
+        this.yDist = yDist;
+        this.zDist = zDist;
+        this.maxSpeed = maxSpeed;
+        this.count = count;
     }
 
-    private ClientboundLevelParticlesPacket(RegistryFriendlyByteBuf p_320636_) {
-        this.overrideLimiter = p_320636_.readBoolean();
-        this.x = p_320636_.readDouble();
-        this.y = p_320636_.readDouble();
-        this.z = p_320636_.readDouble();
-        this.xDist = p_320636_.readFloat();
-        this.yDist = p_320636_.readFloat();
-        this.zDist = p_320636_.readFloat();
-        this.maxSpeed = p_320636_.readFloat();
-        this.count = p_320636_.readInt();
-        this.particle = ParticleTypes.STREAM_CODEC.decode(p_320636_);
+    private ClientboundLevelParticlesPacket(RegistryFriendlyByteBuf buffer) {
+        this.overrideLimiter = buffer.readBoolean();
+        this.x = buffer.readDouble();
+        this.y = buffer.readDouble();
+        this.z = buffer.readDouble();
+        this.xDist = buffer.readFloat();
+        this.yDist = buffer.readFloat();
+        this.zDist = buffer.readFloat();
+        this.maxSpeed = buffer.readFloat();
+        this.count = buffer.readInt();
+        this.particle = ParticleTypes.STREAM_CODEC.decode(buffer);
     }
 
-    private void write(RegistryFriendlyByteBuf p_320262_) {
-        p_320262_.writeBoolean(this.overrideLimiter);
-        p_320262_.writeDouble(this.x);
-        p_320262_.writeDouble(this.y);
-        p_320262_.writeDouble(this.z);
-        p_320262_.writeFloat(this.xDist);
-        p_320262_.writeFloat(this.yDist);
-        p_320262_.writeFloat(this.zDist);
-        p_320262_.writeFloat(this.maxSpeed);
-        p_320262_.writeInt(this.count);
-        ParticleTypes.STREAM_CODEC.encode(p_320262_, this.particle);
+    private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeBoolean(this.overrideLimiter);
+        buffer.writeDouble(this.x);
+        buffer.writeDouble(this.y);
+        buffer.writeDouble(this.z);
+        buffer.writeFloat(this.xDist);
+        buffer.writeFloat(this.yDist);
+        buffer.writeFloat(this.zDist);
+        buffer.writeFloat(this.maxSpeed);
+        buffer.writeInt(this.count);
+        ParticleTypes.STREAM_CODEC.encode(buffer, this.particle);
     }
 
     @Override
@@ -77,8 +77,11 @@ public class ClientboundLevelParticlesPacket implements Packet<ClientGamePacketL
         return GamePacketTypes.CLIENTBOUND_LEVEL_PARTICLES;
     }
 
-    public void handle(ClientGamePacketListener p_132310_) {
-        p_132310_.handleParticleEvent(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleParticleEvent(this);
     }
 
     public boolean isOverrideLimiter() {

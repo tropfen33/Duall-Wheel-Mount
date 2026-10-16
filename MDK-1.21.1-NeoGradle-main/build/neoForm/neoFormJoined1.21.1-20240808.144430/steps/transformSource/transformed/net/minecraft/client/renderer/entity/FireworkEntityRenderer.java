@@ -15,36 +15,39 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class FireworkEntityRenderer extends EntityRenderer<FireworkRocketEntity> {
     private final ItemRenderer itemRenderer;
 
-    public FireworkEntityRenderer(EntityRendererProvider.Context p_174114_) {
-        super(p_174114_);
-        this.itemRenderer = p_174114_.getItemRenderer();
+    public FireworkEntityRenderer(EntityRendererProvider.Context context) {
+        super(context);
+        this.itemRenderer = context.getItemRenderer();
     }
 
-    public void render(FireworkRocketEntity p_114656_, float p_114657_, float p_114658_, PoseStack p_114659_, MultiBufferSource p_114660_, int p_114661_) {
-        p_114659_.pushPose();
-        p_114659_.mulPose(this.entityRenderDispatcher.cameraOrientation());
-        if (p_114656_.isShotAtAngle()) {
-            p_114659_.mulPose(Axis.ZP.rotationDegrees(180.0F));
-            p_114659_.mulPose(Axis.YP.rotationDegrees(180.0F));
-            p_114659_.mulPose(Axis.XP.rotationDegrees(90.0F));
+    public void render(FireworkRocketEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        poseStack.pushPose();
+        poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
+        if (entity.isShotAtAngle()) {
+            poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
+            poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
+            poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
         }
 
         this.itemRenderer
             .renderStatic(
-                p_114656_.getItem(),
+                entity.getItem(),
                 ItemDisplayContext.GROUND,
-                p_114661_,
+                packedLight,
                 OverlayTexture.NO_OVERLAY,
-                p_114659_,
-                p_114660_,
-                p_114656_.level(),
-                p_114656_.getId()
+                poseStack,
+                buffer,
+                entity.level(),
+                entity.getId()
             );
-        p_114659_.popPose();
-        super.render(p_114656_, p_114657_, p_114658_, p_114659_, p_114660_, p_114661_);
+        poseStack.popPose();
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 
-    public ResourceLocation getTextureLocation(FireworkRocketEntity p_114654_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(FireworkRocketEntity entity) {
         return TextureAtlas.LOCATION_BLOCKS;
     }
 }

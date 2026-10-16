@@ -10,46 +10,46 @@ public class GameTestSequence {
     private final List<GameTestEvent> events = Lists.newArrayList();
     private long lastTick;
 
-    public GameTestSequence(GameTestInfo p_177542_) {
-        this.parent = p_177542_;
-        this.lastTick = p_177542_.getTick();
+    public GameTestSequence(GameTestInfo testInfo) {
+        this.parent = testInfo;
+        this.lastTick = testInfo.getTick();
     }
 
-    public GameTestSequence thenWaitUntil(Runnable p_177553_) {
-        this.events.add(GameTestEvent.create(p_177553_));
+    public GameTestSequence thenWaitUntil(Runnable task) {
+        this.events.add(GameTestEvent.create(task));
         return this;
     }
 
-    public GameTestSequence thenWaitUntil(long p_177550_, Runnable p_177551_) {
-        this.events.add(GameTestEvent.create(p_177550_, p_177551_));
+    public GameTestSequence thenWaitUntil(long expectedDelay, Runnable task) {
+        this.events.add(GameTestEvent.create(expectedDelay, task));
         return this;
     }
 
-    public GameTestSequence thenIdle(int p_177545_) {
-        return this.thenExecuteAfter(p_177545_, () -> {
+    public GameTestSequence thenIdle(int tick) {
+        return this.thenExecuteAfter(tick, () -> {
         });
     }
 
-    public GameTestSequence thenExecute(Runnable p_177563_) {
-        this.events.add(GameTestEvent.create(() -> this.executeWithoutFail(p_177563_)));
+    public GameTestSequence thenExecute(Runnable task) {
+        this.events.add(GameTestEvent.create(() -> this.executeWithoutFail(task)));
         return this;
     }
 
-    public GameTestSequence thenExecuteAfter(int p_177547_, Runnable p_177548_) {
+    public GameTestSequence thenExecuteAfter(int tick, Runnable task) {
         this.events.add(GameTestEvent.create(() -> {
-            if (this.parent.getTick() < this.lastTick + (long)p_177547_) {
+            if (this.parent.getTick() < this.lastTick + (long)tick) {
                 throw new GameTestAssertException("Test timed out before sequence completed");
             } else {
-                this.executeWithoutFail(p_177548_);
+                this.executeWithoutFail(task);
             }
         }));
         return this;
     }
 
-    public GameTestSequence thenExecuteFor(int p_177560_, Runnable p_177561_) {
+    public GameTestSequence thenExecuteFor(int tick, Runnable task) {
         this.events.add(GameTestEvent.create(() -> {
-            if (this.parent.getTick() < this.lastTick + (long)p_177560_) {
-                this.executeWithoutFail(p_177561_);
+            if (this.parent.getTick() < this.lastTick + (long)tick) {
+                this.executeWithoutFail(task);
                 throw new GameTestAssertException("Test timed out before sequence completed");
             }
         }));
@@ -60,8 +60,8 @@ public class GameTestSequence {
         this.events.add(GameTestEvent.create(this.parent::succeed));
     }
 
-    public void thenFail(Supplier<Exception> p_177555_) {
-        this.events.add(GameTestEvent.create(() -> this.parent.fail(p_177555_.get())));
+    public void thenFail(Supplier<Exception> exception) {
+        this.events.add(GameTestEvent.create(() -> this.parent.fail(exception.get())));
     }
 
     public GameTestSequence.Condition thenTrigger() {
@@ -70,44 +70,44 @@ public class GameTestSequence {
         return gametestsequence$condition;
     }
 
-    public void tickAndContinue(long p_127778_) {
+    public void tickAndContinue(long tick) {
         try {
-            this.tick(p_127778_);
+            this.tick(tick);
         } catch (GameTestAssertException gametestassertexception) {
         }
     }
 
-    public void tickAndFailIfNotComplete(long p_127780_) {
+    public void tickAndFailIfNotComplete(long ticks) {
         try {
-            this.tick(p_127780_);
-        } catch (GameTestAssertException gametestassertexception) {
-            this.parent.fail(gametestassertexception);
-        }
-    }
-
-    private void executeWithoutFail(Runnable p_177571_) {
-        try {
-            p_177571_.run();
+            this.tick(ticks);
         } catch (GameTestAssertException gametestassertexception) {
             this.parent.fail(gametestassertexception);
         }
     }
 
-    private void tick(long p_127782_) {
+    private void executeWithoutFail(Runnable task) {
+        try {
+            task.run();
+        } catch (GameTestAssertException gametestassertexception) {
+            this.parent.fail(gametestassertexception);
+        }
+    }
+
+    private void tick(long tick) {
         Iterator<GameTestEvent> iterator = this.events.iterator();
 
         while (iterator.hasNext()) {
             GameTestEvent gametestevent = iterator.next();
             gametestevent.assertion.run();
             iterator.remove();
-            long i = p_127782_ - this.lastTick;
+            long i = tick - this.lastTick;
             long j = this.lastTick;
-            this.lastTick = p_127782_;
+            this.lastTick = tick;
             if (gametestevent.expectedDelay != null && gametestevent.expectedDelay != i) {
                 this.parent
                     .fail(
                         new GameTestAssertException(
-                            "Succeeded in invalid tick: expected " + (j + gametestevent.expectedDelay) + ", but current tick is " + p_127782_
+                            "Succeeded in invalid tick: expected " + (j + gametestevent.expectedDelay) + ", but current tick is " + tick
                         )
                     );
                 break;
@@ -119,11 +119,11 @@ public class GameTestSequence {
         private static final long NOT_TRIGGERED = -1L;
         private long triggerTime = -1L;
 
-        void trigger(long p_177584_) {
+        void trigger(long triggerTime) {
             if (this.triggerTime != -1L) {
                 throw new IllegalStateException("Condition already triggered at " + this.triggerTime);
             } else {
-                this.triggerTime = p_177584_;
+                this.triggerTime = triggerTime;
             }
         }
 

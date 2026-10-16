@@ -13,19 +13,22 @@ public class ClientboundSetDefaultSpawnPositionPacket implements Packet<ClientGa
     private final BlockPos pos;
     private final float angle;
 
-    public ClientboundSetDefaultSpawnPositionPacket(BlockPos p_133115_, float p_133116_) {
-        this.pos = p_133115_;
-        this.angle = p_133116_;
+    public ClientboundSetDefaultSpawnPositionPacket(BlockPos pos, float angle) {
+        this.pos = pos;
+        this.angle = angle;
     }
 
-    private ClientboundSetDefaultSpawnPositionPacket(FriendlyByteBuf p_179286_) {
-        this.pos = p_179286_.readBlockPos();
-        this.angle = p_179286_.readFloat();
+    private ClientboundSetDefaultSpawnPositionPacket(FriendlyByteBuf buffer) {
+        this.pos = buffer.readBlockPos();
+        this.angle = buffer.readFloat();
     }
 
-    private void write(FriendlyByteBuf p_133125_) {
-        p_133125_.writeBlockPos(this.pos);
-        p_133125_.writeFloat(this.angle);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeBlockPos(this.pos);
+        buffer.writeFloat(this.angle);
     }
 
     @Override
@@ -33,8 +36,11 @@ public class ClientboundSetDefaultSpawnPositionPacket implements Packet<ClientGa
         return GamePacketTypes.CLIENTBOUND_SET_DEFAULT_SPAWN_POSITION;
     }
 
-    public void handle(ClientGamePacketListener p_133122_) {
-        p_133122_.handleSetSpawn(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleSetSpawn(this);
     }
 
     public BlockPos getPos() {

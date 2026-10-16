@@ -52,6 +52,9 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
     final MinecraftServer server;
     final Connection connection;
     private volatile ServerLoginPacketListenerImpl.State state = ServerLoginPacketListenerImpl.State.HELLO;
+    /**
+     * How long has player been trying to login into the server.
+     */
     private int tick;
     @Nullable
     String requestedUsername;
@@ -60,11 +63,11 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
     private final String serverId = "";
     private final boolean transferred;
 
-    public ServerLoginPacketListenerImpl(MinecraftServer p_10027_, Connection p_10028_, boolean p_320815_) {
-        this.server = p_10027_;
-        this.connection = p_10028_;
+    public ServerLoginPacketListenerImpl(MinecraftServer server, Connection connection, boolean transferred) {
+        this.server = server;
+        this.connection = connection;
         this.challenge = Ints.toByteArray(RandomSource.create().nextInt());
-        this.transferred = p_320815_;
+        this.transferred = transferred;
     }
 
     @Override
@@ -88,23 +91,23 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
         return this.connection.isConnected();
     }
 
-    public void disconnect(Component p_10054_) {
+    public void disconnect(Component reason) {
         try {
-            LOGGER.info("Disconnecting {}: {}", this.getUserName(), p_10054_.getString());
-            this.connection.send(new ClientboundLoginDisconnectPacket(p_10054_));
-            this.connection.disconnect(p_10054_);
+            LOGGER.info("Disconnecting {}: {}", this.getUserName(), reason.getString());
+            this.connection.send(new ClientboundLoginDisconnectPacket(reason));
+            this.connection.disconnect(reason);
         } catch (Exception exception) {
             LOGGER.error("Error whilst disconnecting player", (Throwable)exception);
         }
     }
 
-    private boolean isPlayerAlreadyInWorld(GameProfile p_294314_) {
-        return this.server.getPlayerList().getPlayer(p_294314_.getId()) != null;
+    private boolean isPlayerAlreadyInWorld(GameProfile profile) {
+        return this.server.getPlayerList().getPlayer(profile.getId()) != null;
     }
 
     @Override
-    public void onDisconnect(DisconnectionDetails p_350676_) {
-        LOGGER.info("{} lost connection: {}", this.getUserName(), p_350676_.reason().getString());
+    public void onDisconnect(DisconnectionDetails details) {
+        LOGGER.info("{} lost connection: {}", this.getUserName(), details.reason().getString());
     }
 
     public String getUserName() {
@@ -113,10 +116,10 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
     }
 
     @Override
-    public void handleHello(ServerboundHelloPacket p_10047_) {
+    public void handleHello(ServerboundHelloPacket packet) {
         Validate.validState(this.state == ServerLoginPacketListenerImpl.State.HELLO, "Unexpected hello packet");
-        Validate.validState(StringUtil.isValidPlayerName(p_10047_.name()), "Invalid characters in username");
-        this.requestedUsername = p_10047_.name();
+        Validate.validState(StringUtil.isValidPlayerName(packet.name()), "Invalid characters in username");
+        this.requestedUsername = packet.name();
         GameProfile gameprofile = this.server.getSingleplayerProfile();
         if (gameprofile != null && this.requestedUsername.equalsIgnoreCase(gameprofile.getName())) {
             this.startClientVerification(gameprofile);
@@ -130,14 +133,14 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
         }
     }
 
-    void startClientVerification(GameProfile p_295643_) {
-        this.authenticatedProfile = p_295643_;
+    void startClientVerification(GameProfile authenticatedProfile) {
+        this.authenticatedProfile = authenticatedProfile;
         this.state = ServerLoginPacketListenerImpl.State.VERIFYING;
     }
 
-    private void verifyLoginAndFinishConnectionSetup(GameProfile p_294502_) {
+    private void verifyLoginAndFinishConnectionSetup(GameProfile profile) {
         PlayerList playerlist = this.server.getPlayerList();
-        Component component = playerlist.canPlayerLogin(this.connection.getRemoteAddress(), p_294502_);
+        Component component = playerlist.canPlayerLogin(this.connection.getRemoteAddress(), profile);
         if (component != null) {
             this.disconnect(component);
         } else {
@@ -149,32 +152,32 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
                     );
             }
 
-            boolean flag = playerlist.disconnectAllPlayersWithProfile(p_294502_);
+            boolean flag = playerlist.disconnectAllPlayersWithProfile(profile);
             if (flag) {
                 this.state = ServerLoginPacketListenerImpl.State.WAITING_FOR_DUPE_DISCONNECT;
             } else {
-                this.finishLoginAndWaitForClient(p_294502_);
+                this.finishLoginAndWaitForClient(profile);
             }
         }
     }
 
-    private void finishLoginAndWaitForClient(GameProfile p_295520_) {
+    private void finishLoginAndWaitForClient(GameProfile profile) {
         this.state = ServerLoginPacketListenerImpl.State.PROTOCOL_SWITCHING;
-        this.connection.send(new ClientboundGameProfilePacket(p_295520_, true));
+        this.connection.send(new ClientboundGameProfilePacket(profile, true));
     }
 
     @Override
-    public void handleKey(ServerboundKeyPacket p_10049_) {
+    public void handleKey(ServerboundKeyPacket packet) {
         Validate.validState(this.state == ServerLoginPacketListenerImpl.State.KEY, "Unexpected key packet");
 
         final String s;
         try {
             PrivateKey privatekey = this.server.getKeyPair().getPrivate();
-            if (!p_10049_.isChallengeValid(this.challenge, privatekey)) {
+            if (!packet.isChallengeValid(this.challenge, privatekey)) {
                 throw new IllegalStateException("Protocol error");
             }
 
-            SecretKey secretkey = p_10049_.getSecretKey(privatekey);
+            SecretKey secretkey = packet.getSecretKey(privatekey);
             Cipher cipher = Crypt.getCipher(2, secretkey);
             Cipher cipher1 = Crypt.getCipher(1, secretkey);
             s = new BigInteger(Crypt.digestData("", this.server.getKeyPair().getPublic(), secretkey)).toString(16);
@@ -226,12 +229,12 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
     }
 
     @Override
-    public void handleCustomQueryPacket(ServerboundCustomQueryAnswerPacket p_295398_) {
+    public void handleCustomQueryPacket(ServerboundCustomQueryAnswerPacket packet) {
         this.disconnect(ServerCommonPacketListenerImpl.DISCONNECT_UNEXPECTED_QUERY);
     }
 
     @Override
-    public void handleLoginAcknowledgement(ServerboundLoginAcknowledgedPacket p_295661_) {
+    public void handleLoginAcknowledgement(ServerboundLoginAcknowledgedPacket packet) {
         Validate.validState(this.state == ServerLoginPacketListenerImpl.State.PROTOCOL_SWITCHING, "Unexpected login acknowledgement packet");
         this.connection.setupOutboundProtocol(ConfigurationProtocols.CLIENTBOUND);
         CommonListenerCookie commonlistenercookie = CommonListenerCookie.createInitial(Objects.requireNonNull(this.authenticatedProfile), this.transferred);
@@ -244,12 +247,12 @@ public class ServerLoginPacketListenerImpl implements ServerLoginPacketListener,
     }
 
     @Override
-    public void fillListenerSpecificCrashDetails(CrashReport p_350283_, CrashReportCategory p_314941_) {
-        p_314941_.setDetail("Login phase", () -> this.state.toString());
+    public void fillListenerSpecificCrashDetails(CrashReport crashReport, CrashReportCategory category) {
+        category.setDetail("Login phase", () -> this.state.toString());
     }
 
     @Override
-    public void handleCookieResponse(ServerboundCookieResponsePacket p_320866_) {
+    public void handleCookieResponse(ServerboundCookieResponsePacket packet) {
         this.disconnect(ServerCommonPacketListenerImpl.DISCONNECT_UNEXPECTED_QUERY);
     }
 

@@ -20,38 +20,47 @@ public abstract class AbstractButton extends AbstractWidget {
         ResourceLocation.withDefaultNamespace("widget/button_highlighted")
     );
 
-    public AbstractButton(int p_93365_, int p_93366_, int p_93367_, int p_93368_, Component p_93369_) {
-        super(p_93365_, p_93366_, p_93367_, p_93368_, p_93369_);
+    public AbstractButton(int x, int y, int width, int height, Component message) {
+        super(x, y, width, height, message);
     }
 
     public abstract void onPress();
 
     @Override
-    protected void renderWidget(GuiGraphics p_281670_, int p_282682_, int p_281714_, float p_282542_) {
+    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         Minecraft minecraft = Minecraft.getInstance();
-        p_281670_.setColor(1.0F, 1.0F, 1.0F, this.alpha);
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, this.alpha);
         RenderSystem.enableBlend();
         RenderSystem.enableDepthTest();
-        p_281670_.blitSprite(SPRITES.get(this.active, this.isHoveredOrFocused()), this.getX(), this.getY(), this.getWidth(), this.getHeight());
-        p_281670_.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        guiGraphics.blitSprite(SPRITES.get(this.active, this.isHoveredOrFocused()), this.getX(), this.getY(), this.getWidth(), this.getHeight());
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         int i = getFGColor();
-        this.renderString(p_281670_, minecraft.font, i | Mth.ceil(this.alpha * 255.0F) << 24);
+        this.renderString(guiGraphics, minecraft.font, i | Mth.ceil(this.alpha * 255.0F) << 24);
     }
 
-    public void renderString(GuiGraphics p_283366_, Font p_283054_, int p_281656_) {
-        this.renderScrollingString(p_283366_, p_283054_, 2, p_281656_);
+    public void renderString(GuiGraphics guiGraphics, Font font, int color) {
+        this.renderScrollingString(guiGraphics, font, 2, color);
     }
 
     @Override
-    public void onClick(double p_93371_, double p_93372_) {
+    public void onClick(double mouseX, double mouseY) {
         this.onPress();
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_93374_, int p_93375_, int p_93376_) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (!this.active || !this.visible) {
             return false;
-        } else if (CommonInputs.selected(p_93374_)) {
+        } else if (CommonInputs.selected(keyCode)) {
             this.playDownSound(Minecraft.getInstance().getSoundManager());
             this.onPress();
             return true;

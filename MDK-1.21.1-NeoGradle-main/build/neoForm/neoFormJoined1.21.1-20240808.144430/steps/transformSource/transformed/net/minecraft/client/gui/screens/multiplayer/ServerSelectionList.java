@@ -76,9 +76,9 @@ public class ServerSelectionList extends ObjectSelectionList<ServerSelectionList
     private final ServerSelectionList.Entry lanHeader = new ServerSelectionList.LANHeader();
     private final List<ServerSelectionList.NetworkServerEntry> networkServers = Lists.newArrayList();
 
-    public ServerSelectionList(JoinMultiplayerScreen p_99771_, Minecraft p_99772_, int p_99773_, int p_99774_, int p_99775_, int p_99776_) {
-        super(p_99772_, p_99773_, p_99774_, p_99775_, p_99776_);
-        this.screen = p_99771_;
+    public ServerSelectionList(JoinMultiplayerScreen screen, Minecraft minecraft, int width, int height, int y, int itemHeight) {
+        super(minecraft, width, height, y, itemHeight);
+        this.screen = screen;
     }
 
     private void refreshEntries() {
@@ -88,33 +88,42 @@ public class ServerSelectionList extends ObjectSelectionList<ServerSelectionList
         this.networkServers.forEach(p_169976_ -> this.addEntry(p_169976_));
     }
 
-    public void setSelected(@Nullable ServerSelectionList.Entry p_99790_) {
-        super.setSelected(p_99790_);
+    public void setSelected(@Nullable ServerSelectionList.Entry entry) {
+        super.setSelected(entry);
         this.screen.onSelectedChange();
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_99782_, int p_99783_, int p_99784_) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         ServerSelectionList.Entry serverselectionlist$entry = this.getSelected();
-        return serverselectionlist$entry != null && serverselectionlist$entry.keyPressed(p_99782_, p_99783_, p_99784_)
-            || super.keyPressed(p_99782_, p_99783_, p_99784_);
+        return serverselectionlist$entry != null && serverselectionlist$entry.keyPressed(keyCode, scanCode, modifiers)
+            || super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    public void updateOnlineServers(ServerList p_99798_) {
+    public void updateOnlineServers(ServerList servers) {
         this.onlineServers.clear();
 
-        for (int i = 0; i < p_99798_.size(); i++) {
-            this.onlineServers.add(new ServerSelectionList.OnlineServerEntry(this.screen, p_99798_.get(i)));
+        for (int i = 0; i < servers.size(); i++) {
+            this.onlineServers.add(new ServerSelectionList.OnlineServerEntry(this.screen, servers.get(i)));
         }
 
         this.refreshEntries();
     }
 
-    public void updateNetworkServers(List<LanServer> p_99800_) {
-        int i = p_99800_.size() - this.networkServers.size();
+    public void updateNetworkServers(List<LanServer> lanServers) {
+        int i = lanServers.size() - this.networkServers.size();
         this.networkServers.clear();
 
-        for (LanServer lanserver : p_99800_) {
+        for (LanServer lanserver : lanServers) {
             this.networkServers.add(new ServerSelectionList.NetworkServerEntry(this.screen, lanserver));
         }
 
@@ -194,43 +203,52 @@ public class ServerSelectionList extends ObjectSelectionList<ServerSelectionList
         protected final LanServer serverData;
         private long lastClickTime;
 
-        protected NetworkServerEntry(JoinMultiplayerScreen p_99836_, LanServer p_99837_) {
-            this.screen = p_99836_;
-            this.serverData = p_99837_;
+        protected NetworkServerEntry(JoinMultiplayerScreen screen, LanServer serverData) {
+            this.screen = screen;
+            this.serverData = serverData;
             this.minecraft = Minecraft.getInstance();
         }
 
         @Override
         public void render(
-            GuiGraphics p_282600_,
-            int p_282649_,
-            int p_283641_,
-            int p_282277_,
-            int p_283034_,
-            int p_281533_,
-            int p_282746_,
-            int p_281454_,
-            boolean p_283673_,
-            float p_282694_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
-            p_282600_.drawString(this.minecraft.font, LAN_SERVER_HEADER, p_282277_ + 32 + 3, p_283641_ + 1, 16777215, false);
-            p_282600_.drawString(this.minecraft.font, this.serverData.getMotd(), p_282277_ + 32 + 3, p_283641_ + 12, -8355712, false);
+            guiGraphics.drawString(this.minecraft.font, LAN_SERVER_HEADER, left + 32 + 3, top + 1, 16777215, false);
+            guiGraphics.drawString(this.minecraft.font, this.serverData.getMotd(), left + 32 + 3, top + 12, -8355712, false);
             if (this.minecraft.options.hideServerAddress) {
-                p_282600_.drawString(this.minecraft.font, HIDDEN_ADDRESS_TEXT, p_282277_ + 32 + 3, p_283641_ + 12 + 11, 3158064, false);
+                guiGraphics.drawString(this.minecraft.font, HIDDEN_ADDRESS_TEXT, left + 32 + 3, top + 12 + 11, 3158064, false);
             } else {
-                p_282600_.drawString(this.minecraft.font, this.serverData.getAddress(), p_282277_ + 32 + 3, p_283641_ + 12 + 11, 3158064, false);
+                guiGraphics.drawString(this.minecraft.font, this.serverData.getAddress(), left + 32 + 3, top + 12 + 11, 3158064, false);
             }
         }
 
+        /**
+         * Called when a mouse button is clicked within the GUI element.
+         * <p>
+         * @return {@code true} if the event is consumed, {@code false} otherwise.
+         *
+         * @param mouseX the X coordinate of the mouse.
+         * @param mouseY the Y coordinate of the mouse.
+         * @param button the button that was clicked.
+         */
         @Override
-        public boolean mouseClicked(double p_99840_, double p_99841_, int p_99842_) {
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
             this.screen.setSelected(this);
             if (Util.getMillis() - this.lastClickTime < 250L) {
                 this.screen.joinSelectedServer();
             }
 
             this.lastClickTime = Util.getMillis();
-            return super.mouseClicked(p_99840_, p_99841_, p_99842_);
+            return super.mouseClicked(mouseX, mouseY, button);
         }
 
         public LanServer getServerData() {
@@ -268,26 +286,26 @@ public class ServerSelectionList extends ObjectSelectionList<ServerSelectionList
         @Nullable
         private Component statusIconTooltip;
 
-        protected OnlineServerEntry(JoinMultiplayerScreen p_99864_, ServerData p_99865_) {
-            this.screen = p_99864_;
-            this.serverData = p_99865_;
+        protected OnlineServerEntry(JoinMultiplayerScreen screen, ServerData serverData) {
+            this.screen = screen;
+            this.serverData = serverData;
             this.minecraft = Minecraft.getInstance();
-            this.icon = FaviconTexture.forServer(this.minecraft.getTextureManager(), p_99865_.ip);
+            this.icon = FaviconTexture.forServer(this.minecraft.getTextureManager(), serverData.ip);
             this.refreshStatus();
         }
 
         @Override
         public void render(
-            GuiGraphics p_281406_,
-            int p_281506_,
-            int p_282921_,
-            int p_281363_,
-            int p_283596_,
-            int p_281630_,
-            int p_283567_,
-            int p_282864_,
-            boolean p_282999_,
-            float p_281423_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
             if (this.serverData.state() == ServerData.State.INITIAL) {
                 this.serverData.setState(ServerData.State.PINGING);
@@ -325,16 +343,16 @@ public class ServerSelectionList extends ObjectSelectionList<ServerSelectionList
                     );
             }
 
-            p_281406_.drawString(this.minecraft.font, this.serverData.name, p_281363_ + 32 + 3, p_282921_ + 1, 16777215, false);
-            List<FormattedCharSequence> list = this.minecraft.font.split(this.serverData.motd, p_283596_ - 32 - 2);
+            guiGraphics.drawString(this.minecraft.font, this.serverData.name, left + 32 + 3, top + 1, 16777215, false);
+            List<FormattedCharSequence> list = this.minecraft.font.split(this.serverData.motd, width - 32 - 2);
 
             for (int i = 0; i < Math.min(list.size(), 2); i++) {
-                p_281406_.drawString(this.minecraft.font, list.get(i), p_281363_ + 32 + 3, p_282921_ + 12 + 9 * i, -8355712, false);
+                guiGraphics.drawString(this.minecraft.font, list.get(i), left + 32 + 3, top + 12 + 9 * i, -8355712, false);
             }
 
-            this.drawIcon(p_281406_, p_281363_, p_282921_, this.icon.textureLocation());
+            this.drawIcon(guiGraphics, left, top, this.icon.textureLocation());
             if (this.serverData.state() == ServerData.State.PINGING) {
-                int j1 = (int)(Util.getMillis() / 100L + (long)(p_281506_ * 2) & 7L);
+                int j1 = (int)(Util.getMillis() / 100L + (long)(index * 2) & 7L);
                 if (j1 > 4) {
                     j1 = 8 - j1;
                 }
@@ -347,9 +365,9 @@ public class ServerSelectionList extends ObjectSelectionList<ServerSelectionList
                 };
             }
 
-            int k1 = p_281363_ + p_283596_ - 10 - 5;
+            int k1 = left + width - 10 - 5;
             if (this.statusIcon != null) {
-                p_281406_.blitSprite(this.statusIcon, k1, p_282921_, 10, 8);
+                guiGraphics.blitSprite(this.statusIcon, k1, top, 10, 8);
             }
 
             byte[] abyte = this.serverData.getIconBytes();
@@ -367,38 +385,38 @@ public class ServerSelectionList extends ObjectSelectionList<ServerSelectionList
                 : this.serverData.status);
             int j = this.minecraft.font.width(component);
             int k = k1 - j - 5;
-            p_281406_.drawString(this.minecraft.font, component, k, p_282921_ + 1, -8355712, false);
-            if (this.statusIconTooltip != null && p_283567_ >= k1 && p_283567_ <= k1 + 10 && p_282864_ >= p_282921_ && p_282864_ <= p_282921_ + 8) {
+            guiGraphics.drawString(this.minecraft.font, component, k, top + 1, -8355712, false);
+            if (this.statusIconTooltip != null && mouseX >= k1 && mouseX <= k1 + 10 && mouseY >= top && mouseY <= top + 8) {
                 this.screen.setTooltipForNextRenderPass(this.statusIconTooltip);
-            } else if (this.onlinePlayersTooltip != null && p_283567_ >= k && p_283567_ <= k + j && p_282864_ >= p_282921_ && p_282864_ <= p_282921_ - 1 + 9) {
+            } else if (this.onlinePlayersTooltip != null && mouseX >= k && mouseX <= k + j && mouseY >= top && mouseY <= top - 1 + 9) {
                 this.screen.setTooltipForNextRenderPass(Lists.transform(this.onlinePlayersTooltip, Component::getVisualOrderText));
             }
 
-            if (this.minecraft.options.touchscreen().get() || p_282999_) {
-                p_281406_.fill(p_281363_, p_282921_, p_281363_ + 32, p_282921_ + 32, -1601138544);
-                int l = p_283567_ - p_281363_;
-                int i1 = p_282864_ - p_282921_;
+            if (this.minecraft.options.touchscreen().get() || hovering) {
+                guiGraphics.fill(left, top, left + 32, top + 32, -1601138544);
+                int l = mouseX - left;
+                int i1 = mouseY - top;
                 if (this.canJoin()) {
                     if (l < 32 && l > 16) {
-                        p_281406_.blitSprite(ServerSelectionList.JOIN_HIGHLIGHTED_SPRITE, p_281363_, p_282921_, 32, 32);
+                        guiGraphics.blitSprite(ServerSelectionList.JOIN_HIGHLIGHTED_SPRITE, left, top, 32, 32);
                     } else {
-                        p_281406_.blitSprite(ServerSelectionList.JOIN_SPRITE, p_281363_, p_282921_, 32, 32);
+                        guiGraphics.blitSprite(ServerSelectionList.JOIN_SPRITE, left, top, 32, 32);
                     }
                 }
 
-                if (p_281506_ > 0) {
+                if (index > 0) {
                     if (l < 16 && i1 < 16) {
-                        p_281406_.blitSprite(ServerSelectionList.MOVE_UP_HIGHLIGHTED_SPRITE, p_281363_, p_282921_, 32, 32);
+                        guiGraphics.blitSprite(ServerSelectionList.MOVE_UP_HIGHLIGHTED_SPRITE, left, top, 32, 32);
                     } else {
-                        p_281406_.blitSprite(ServerSelectionList.MOVE_UP_SPRITE, p_281363_, p_282921_, 32, 32);
+                        guiGraphics.blitSprite(ServerSelectionList.MOVE_UP_SPRITE, left, top, 32, 32);
                     }
                 }
 
-                if (p_281506_ < this.screen.getServers().size() - 1) {
+                if (index < this.screen.getServers().size() - 1) {
                     if (l < 16 && i1 > 16) {
-                        p_281406_.blitSprite(ServerSelectionList.MOVE_DOWN_HIGHLIGHTED_SPRITE, p_281363_, p_282921_, 32, 32);
+                        guiGraphics.blitSprite(ServerSelectionList.MOVE_DOWN_HIGHLIGHTED_SPRITE, left, top, 32, 32);
                     } else {
-                        p_281406_.blitSprite(ServerSelectionList.MOVE_DOWN_SPRITE, p_281363_, p_282921_, 32, 32);
+                        guiGraphics.blitSprite(ServerSelectionList.MOVE_DOWN_SPRITE, left, top, 32, 32);
                     }
                 }
             }
@@ -443,9 +461,9 @@ public class ServerSelectionList extends ObjectSelectionList<ServerSelectionList
             this.screen.getServers().save();
         }
 
-        protected void drawIcon(GuiGraphics p_281338_, int p_283001_, int p_282834_, ResourceLocation p_282534_) {
+        protected void drawIcon(GuiGraphics guiGraphics, int x, int y, ResourceLocation icon) {
             RenderSystem.enableBlend();
-            p_281338_.blit(p_282534_, p_283001_, p_282834_, 0.0F, 0.0F, 32, 32, 32, 32);
+            guiGraphics.blit(icon, x, y, 0.0F, 0.0F, 32, 32, 32, 32);
             RenderSystem.disableBlend();
         }
 
@@ -453,12 +471,12 @@ public class ServerSelectionList extends ObjectSelectionList<ServerSelectionList
             return true;
         }
 
-        private boolean uploadServerIcon(@Nullable byte[] p_273176_) {
-            if (p_273176_ == null) {
+        private boolean uploadServerIcon(@Nullable byte[] iconBytes) {
+            if (iconBytes == null) {
                 this.icon.clear();
             } else {
                 try {
-                    this.icon.upload(NativeImage.read(p_273176_));
+                    this.icon.upload(NativeImage.read(iconBytes));
                 } catch (Throwable throwable) {
                     ServerSelectionList.LOGGER.error("Invalid icon for server {} ({})", this.serverData.name, this.serverData.ip, throwable);
                     return false;
@@ -468,8 +486,17 @@ public class ServerSelectionList extends ObjectSelectionList<ServerSelectionList
             return true;
         }
 
+        /**
+         * Called when a keyboard key is pressed within the GUI element.
+         * <p>
+         * @return {@code true} if the event is consumed, {@code false} otherwise.
+         *
+         * @param keyCode   the key code of the pressed key.
+         * @param scanCode  the scan code of the pressed key.
+         * @param modifiers the keyboard modifiers.
+         */
         @Override
-        public boolean keyPressed(int p_99875_, int p_99876_, int p_99877_) {
+        public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
             if (Screen.hasShiftDown()) {
                 ServerSelectionList serverselectionlist = this.screen.serverSelectionList;
                 int i = serverselectionlist.children().indexOf(this);
@@ -477,27 +504,36 @@ public class ServerSelectionList extends ObjectSelectionList<ServerSelectionList
                     return true;
                 }
 
-                if (p_99875_ == 264 && i < this.screen.getServers().size() - 1 || p_99875_ == 265 && i > 0) {
-                    this.swap(i, p_99875_ == 264 ? i + 1 : i - 1);
+                if (keyCode == 264 && i < this.screen.getServers().size() - 1 || keyCode == 265 && i > 0) {
+                    this.swap(i, keyCode == 264 ? i + 1 : i - 1);
                     return true;
                 }
             }
 
-            return super.keyPressed(p_99875_, p_99876_, p_99877_);
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
 
-        private void swap(int p_99872_, int p_99873_) {
-            this.screen.getServers().swap(p_99872_, p_99873_);
+        private void swap(int pos1, int pos2) {
+            this.screen.getServers().swap(pos1, pos2);
             this.screen.serverSelectionList.updateOnlineServers(this.screen.getServers());
-            ServerSelectionList.Entry serverselectionlist$entry = this.screen.serverSelectionList.children().get(p_99873_);
+            ServerSelectionList.Entry serverselectionlist$entry = this.screen.serverSelectionList.children().get(pos2);
             this.screen.serverSelectionList.setSelected(serverselectionlist$entry);
             ServerSelectionList.this.ensureVisible(serverselectionlist$entry);
         }
 
+        /**
+         * Called when a mouse button is clicked within the GUI element.
+         * <p>
+         * @return {@code true} if the event is consumed, {@code false} otherwise.
+         *
+         * @param mouseX the X coordinate of the mouse.
+         * @param mouseY the Y coordinate of the mouse.
+         * @param button the button that was clicked.
+         */
         @Override
-        public boolean mouseClicked(double p_99868_, double p_99869_, int p_99870_) {
-            double d0 = p_99868_ - (double)ServerSelectionList.this.getRowLeft();
-            double d1 = p_99869_ - (double)ServerSelectionList.this.getRowTop(ServerSelectionList.this.children().indexOf(this));
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            double d0 = mouseX - (double)ServerSelectionList.this.getRowLeft();
+            double d1 = mouseY - (double)ServerSelectionList.this.getRowTop(ServerSelectionList.this.children().indexOf(this));
             if (d0 <= 32.0) {
                 if (d0 < 32.0 && d0 > 16.0 && this.canJoin()) {
                     this.screen.setSelected(this);
@@ -523,7 +559,7 @@ public class ServerSelectionList extends ObjectSelectionList<ServerSelectionList
             }
 
             this.lastClickTime = Util.getMillis();
-            return super.mouseClicked(p_99868_, p_99869_, p_99870_);
+            return super.mouseClicked(mouseX, mouseY, button);
         }
 
         public ServerData getServerData() {

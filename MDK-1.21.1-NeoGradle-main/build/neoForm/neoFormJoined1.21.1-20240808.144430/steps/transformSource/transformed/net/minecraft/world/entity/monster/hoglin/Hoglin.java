@@ -85,8 +85,8 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
         MemoryModuleType.IS_PANICKING
     );
 
-    public Hoglin(EntityType<? extends Hoglin> p_34488_, Level p_34489_) {
-        super(p_34488_, p_34489_);
+    public Hoglin(EntityType<? extends Hoglin> entityType, Level level) {
+        super(entityType, level);
         this.xpReward = 5;
     }
 
@@ -105,33 +105,36 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
     }
 
     @Override
-    public boolean doHurtTarget(Entity p_34491_) {
-        if (!(p_34491_ instanceof LivingEntity)) {
+    public boolean doHurtTarget(Entity entity) {
+        if (!(entity instanceof LivingEntity)) {
             return false;
         } else {
             this.attackAnimationRemainingTicks = 10;
             this.level().broadcastEntityEvent(this, (byte)4);
             this.makeSound(SoundEvents.HOGLIN_ATTACK);
-            HoglinAi.onHitTarget(this, (LivingEntity)p_34491_);
-            return HoglinBase.hurtAndThrowTarget(this, (LivingEntity)p_34491_);
+            HoglinAi.onHitTarget(this, (LivingEntity)entity);
+            return HoglinBase.hurtAndThrowTarget(this, (LivingEntity)entity);
         }
     }
 
     @Override
-    protected void blockedByShield(LivingEntity p_34550_) {
+    protected void blockedByShield(LivingEntity entity) {
         if (this.isAdult()) {
-            HoglinBase.throwTarget(this, p_34550_);
+            HoglinBase.throwTarget(this, entity);
         }
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_34503_, float p_34504_) {
-        boolean flag = super.hurt(p_34503_, p_34504_);
+    public boolean hurt(DamageSource source, float amount) {
+        boolean flag = super.hurt(source, amount);
         if (this.level().isClientSide) {
             return false;
         } else {
-            if (flag && p_34503_.getEntity() instanceof LivingEntity) {
-                HoglinAi.wasHurtBy(this, (LivingEntity)p_34503_.getEntity());
+            if (flag && source.getEntity() instanceof LivingEntity) {
+                HoglinAi.wasHurtBy(this, (LivingEntity)source.getEntity());
             }
 
             return flag;
@@ -144,8 +147,8 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
     }
 
     @Override
-    protected Brain<?> makeBrain(Dynamic<?> p_34514_) {
-        return HoglinAi.makeBrain(this.brainProvider().makeBrain(p_34514_));
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return HoglinAi.makeBrain(this.brainProvider().makeBrain(dynamic));
     }
 
     @Override
@@ -191,38 +194,38 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
     }
 
     public static boolean checkHoglinSpawnRules(
-        EntityType<Hoglin> p_219182_, LevelAccessor p_219183_, MobSpawnType p_219184_, BlockPos p_219185_, RandomSource p_219186_
+        EntityType<Hoglin> hoglin, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return !p_219183_.getBlockState(p_219185_.below()).is(Blocks.NETHER_WART_BLOCK);
+        return !level.getBlockState(pos.below()).is(Blocks.NETHER_WART_BLOCK);
     }
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_34508_, DifficultyInstance p_34509_, MobSpawnType p_34510_, @Nullable SpawnGroupData p_34511_) {
-        if (p_34508_.getRandom().nextFloat() < 0.2F) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        if (level.getRandom().nextFloat() < 0.2F) {
             this.setBaby(true);
         }
 
-        return super.finalizeSpawn(p_34508_, p_34509_, p_34510_, p_34511_);
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
     @Override
-    public boolean removeWhenFarAway(double p_34559_) {
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return !this.isPersistenceRequired();
     }
 
     @Override
-    public float getWalkTargetValue(BlockPos p_34516_, LevelReader p_34517_) {
-        if (HoglinAi.isPosNearNearestRepellent(this, p_34516_)) {
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
+        if (HoglinAi.isPosNearNearestRepellent(this, pos)) {
             return -1.0F;
         } else {
-            return p_34517_.getBlockState(p_34516_.below()).is(Blocks.CRIMSON_NYLIUM) ? 10.0F : 0.0F;
+            return level.getBlockState(pos.below()).is(Blocks.CRIMSON_NYLIUM) ? 10.0F : 0.0F;
         }
     }
 
     @Override
-    public InteractionResult mobInteract(Player p_34523_, InteractionHand p_34524_) {
-        InteractionResult interactionresult = super.mobInteract(p_34523_, p_34524_);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        InteractionResult interactionresult = super.mobInteract(player, hand);
         if (interactionresult.consumesAction()) {
             this.setPersistenceRequired();
         }
@@ -230,13 +233,16 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
         return interactionresult;
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @Override
-    public void handleEntityEvent(byte p_34496_) {
-        if (p_34496_ == 4) {
+    public void handleEntityEvent(byte id) {
+        if (id == 4) {
             this.attackAnimationRemainingTicks = 10;
             this.makeSound(SoundEvents.HOGLIN_ATTACK);
         } else {
-            super.handleEntityEvent(p_34496_);
+            super.handleEntityEvent(id);
         }
     }
 
@@ -255,7 +261,7 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
         return this.xpReward;
     }
 
-    private void finishConversion(ServerLevel p_34532_) {
+    private void finishConversion(ServerLevel serverLevel) {
         Zoglin zoglin = this.convertTo(EntityType.ZOGLIN, true);
         if (zoglin != null) {
             zoglin.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 200, 0));
@@ -263,9 +269,12 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
         }
     }
 
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on the animal type)
+     */
     @Override
-    public boolean isFood(ItemStack p_34562_) {
-        return p_34562_.is(ItemTags.HOGLIN_FOOD);
+    public boolean isFood(ItemStack stack) {
+        return stack.is(ItemTags.HOGLIN_FOOD);
     }
 
     public boolean isAdult() {
@@ -273,34 +282,37 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326309_) {
-        super.defineSynchedData(p_326309_);
-        p_326309_.define(DATA_IMMUNE_TO_ZOMBIFICATION, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_IMMUNE_TO_ZOMBIFICATION, false);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_34529_) {
-        super.addAdditionalSaveData(p_34529_);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
         if (this.isImmuneToZombification()) {
-            p_34529_.putBoolean("IsImmuneToZombification", true);
+            compound.putBoolean("IsImmuneToZombification", true);
         }
 
-        p_34529_.putInt("TimeInOverworld", this.timeInOverworld);
+        compound.putInt("TimeInOverworld", this.timeInOverworld);
         if (this.cannotBeHunted) {
-            p_34529_.putBoolean("CannotBeHunted", true);
+            compound.putBoolean("CannotBeHunted", true);
         }
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_34519_) {
-        super.readAdditionalSaveData(p_34519_);
-        this.setImmuneToZombification(p_34519_.getBoolean("IsImmuneToZombification"));
-        this.timeInOverworld = p_34519_.getInt("TimeInOverworld");
-        this.setCannotBeHunted(p_34519_.getBoolean("CannotBeHunted"));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.setImmuneToZombification(compound.getBoolean("IsImmuneToZombification"));
+        this.timeInOverworld = compound.getInt("TimeInOverworld");
+        this.setCannotBeHunted(compound.getBoolean("CannotBeHunted"));
     }
 
-    public void setImmuneToZombification(boolean p_34565_) {
-        this.getEntityData().set(DATA_IMMUNE_TO_ZOMBIFICATION, p_34565_);
+    public void setImmuneToZombification(boolean immuneToZombification) {
+        this.getEntityData().set(DATA_IMMUNE_TO_ZOMBIFICATION, immuneToZombification);
     }
 
     private boolean isImmuneToZombification() {
@@ -311,8 +323,8 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
         return !this.level().dimensionType().piglinSafe() && !this.isImmuneToZombification() && !this.isNoAi();
     }
 
-    private void setCannotBeHunted(boolean p_34567_) {
-        this.cannotBeHunted = p_34567_;
+    private void setCannotBeHunted(boolean cannotBeHunted) {
+        this.cannotBeHunted = cannotBeHunted;
     }
 
     public boolean canBeHunted() {
@@ -321,8 +333,8 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
 
     @Nullable
     @Override
-    public AgeableMob getBreedOffspring(ServerLevel p_149900_, AgeableMob p_149901_) {
-        Hoglin hoglin = EntityType.HOGLIN.create(p_149900_);
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        Hoglin hoglin = EntityType.HOGLIN.create(level);
         if (hoglin != null) {
             hoglin.setPersistenceRequired();
         }
@@ -346,7 +358,7 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_34548_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.HOGLIN_HURT;
     }
 
@@ -366,7 +378,7 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
     }
 
     @Override
-    protected void playStepSound(BlockPos p_34526_, BlockState p_34527_) {
+    protected void playStepSound(BlockPos pos, BlockState block) {
         this.playSound(SoundEvents.HOGLIN_STEP, 0.15F, 1.0F);
     }
 

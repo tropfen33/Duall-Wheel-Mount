@@ -44,8 +44,8 @@ public class Evoker extends SpellcasterIllager {
     @Nullable
     private Sheep wololoTarget;
 
-    public Evoker(EntityType<? extends Evoker> p_32627_, Level p_32628_) {
-        super(p_32627_, p_32628_);
+    public Evoker(EntityType<? extends Evoker> entityType, Level level) {
+        super(entityType, level);
         this.xpReward = 10;
     }
 
@@ -72,13 +72,16 @@ public class Evoker extends SpellcasterIllager {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326426_) {
-        super.defineSynchedData(p_326426_);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_32642_) {
-        super.readAdditionalSaveData(p_32642_);
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
     }
 
     @Override
@@ -87,8 +90,8 @@ public class Evoker extends SpellcasterIllager {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_32646_) {
-        super.addAdditionalSaveData(p_32646_);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
     }
 
     @Override
@@ -96,16 +99,19 @@ public class Evoker extends SpellcasterIllager {
         super.customServerAiStep();
     }
 
+    /**
+     * Returns whether this Entity is on the same team as the given Entity.
+     */
     @Override
-    public boolean isAlliedTo(Entity p_32665_) {
-        if (p_32665_ == null) {
+    public boolean isAlliedTo(Entity entity) {
+        if (entity == null) {
             return false;
-        } else if (p_32665_ == this) {
+        } else if (entity == this) {
             return true;
-        } else if (super.isAlliedTo(p_32665_)) {
+        } else if (super.isAlliedTo(entity)) {
             return true;
         } else {
-            return p_32665_ instanceof Vex vex ? this.isAlliedTo(vex.getOwner()) : false;
+            return entity instanceof Vex vex ? this.isAlliedTo(vex.getOwner()) : false;
         }
     }
 
@@ -120,12 +126,12 @@ public class Evoker extends SpellcasterIllager {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_32654_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.EVOKER_HURT;
     }
 
-    void setWololoTarget(@Nullable Sheep p_32635_) {
-        this.wololoTarget = p_32635_;
+    void setWololoTarget(@Nullable Sheep wololoTarget) {
+        this.wololoTarget = wololoTarget;
     }
 
     @Nullable
@@ -139,7 +145,7 @@ public class Evoker extends SpellcasterIllager {
     }
 
     @Override
-    public void applyRaidBuffs(ServerLevel p_348515_, int p_32632_, boolean p_32633_) {
+    public void applyRaidBuffs(ServerLevel level, int wave, boolean unused) {
     }
 
     class EvokerAttackSpellGoal extends SpellcasterIllager.SpellcasterUseSpellGoal {
@@ -178,8 +184,8 @@ public class Evoker extends SpellcasterIllager {
             }
         }
 
-        private void createSpellEntity(double p_32673_, double p_32674_, double p_32675_, double p_32676_, float p_32677_, int p_32678_) {
-            BlockPos blockpos = BlockPos.containing(p_32673_, p_32676_, p_32674_);
+        private void createSpellEntity(double x, double z, double minY, double maxY, float yRot, int warmupDelay) {
+            BlockPos blockpos = BlockPos.containing(x, maxY, z);
             boolean flag = false;
             double d0 = 0.0;
 
@@ -200,13 +206,13 @@ public class Evoker extends SpellcasterIllager {
                 }
 
                 blockpos = blockpos.below();
-            } while (blockpos.getY() >= Mth.floor(p_32675_) - 1);
+            } while (blockpos.getY() >= Mth.floor(minY) - 1);
 
             if (flag) {
                 Evoker.this.level()
-                    .addFreshEntity(new EvokerFangs(Evoker.this.level(), p_32673_, (double)blockpos.getY() + d0, p_32674_, p_32677_, p_32678_, Evoker.this));
+                    .addFreshEntity(new EvokerFangs(Evoker.this.level(), x, (double)blockpos.getY() + d0, z, yRot, warmupDelay, Evoker.this));
                 Evoker.this.level()
-                    .gameEvent(GameEvent.ENTITY_PLACE, new Vec3(p_32673_, (double)blockpos.getY() + d0, p_32674_), GameEvent.Context.of(Evoker.this));
+                    .gameEvent(GameEvent.ENTITY_PLACE, new Vec3(x, (double)blockpos.getY() + d0, z), GameEvent.Context.of(Evoker.this));
             }
         }
 

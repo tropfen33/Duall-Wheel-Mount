@@ -49,15 +49,15 @@ public record ItemCost(Holder<Item> item, int count, DataComponentPredicate comp
         this(p_330702_, p_331182_, p_331873_, createStack(p_330702_, p_331182_, p_331873_));
     }
 
-    public ItemCost withComponents(UnaryOperator<DataComponentPredicate.Builder> p_331084_) {
-        return new ItemCost(this.item, this.count, p_331084_.apply(DataComponentPredicate.builder()).build());
+    public ItemCost withComponents(UnaryOperator<DataComponentPredicate.Builder> components) {
+        return new ItemCost(this.item, this.count, components.apply(DataComponentPredicate.builder()).build());
     }
 
-    private static ItemStack createStack(Holder<Item> p_331040_, int p_330313_, DataComponentPredicate p_331395_) {
-        return new ItemStack(p_331040_, p_330313_, p_331395_.asPatch());
+    private static ItemStack createStack(Holder<Item> item, int count, DataComponentPredicate componentPredicate) {
+        return new ItemStack(item, count, componentPredicate.asPatch());
     }
 
-    public boolean test(ItemStack p_330849_) {
-        return p_330849_.is(this.item) && this.components.test((DataComponentHolder)p_330849_);
+    public boolean test(ItemStack stack) {
+        return stack.is(this.item) && this.components.test((DataComponentHolder)stack);
     }
 }

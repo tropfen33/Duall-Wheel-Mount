@@ -10,7 +10,7 @@ public interface StrictQueue<T, F> {
     @Nullable
     F pop();
 
-    boolean push(T p_18770_);
+    boolean push(T value);
 
     boolean isEmpty();
 
@@ -20,10 +20,10 @@ public interface StrictQueue<T, F> {
         private final Queue<Runnable>[] queues;
         private final AtomicInteger size = new AtomicInteger();
 
-        public FixedPriorityQueue(int p_18773_) {
-            this.queues = new Queue[p_18773_];
+        public FixedPriorityQueue(int size) {
+            this.queues = new Queue[size];
 
-            for (int i = 0; i < p_18773_; i++) {
+            for (int i = 0; i < size; i++) {
                 this.queues[i] = Queues.newConcurrentLinkedQueue();
             }
         }
@@ -41,10 +41,10 @@ public interface StrictQueue<T, F> {
             return null;
         }
 
-        public boolean push(StrictQueue.IntRunnable p_18778_) {
-            int i = p_18778_.priority;
+        public boolean push(StrictQueue.IntRunnable value) {
+            int i = value.priority;
             if (i < this.queues.length && i >= 0) {
-                this.queues[i].add(p_18778_);
+                this.queues[i].add(value);
                 this.size.incrementAndGet();
                 return true;
             } else {
@@ -67,9 +67,9 @@ public interface StrictQueue<T, F> {
         final int priority;
         private final Runnable task;
 
-        public IntRunnable(int p_18786_, Runnable p_18787_) {
-            this.priority = p_18786_;
-            this.task = p_18787_;
+        public IntRunnable(int priority, Runnable task) {
+            this.priority = priority;
+            this.task = task;
         }
 
         @Override
@@ -85,8 +85,8 @@ public interface StrictQueue<T, F> {
     public static final class QueueStrictQueue<T> implements StrictQueue<T, T> {
         private final Queue<T> queue;
 
-        public QueueStrictQueue(Queue<T> p_18792_) {
-            this.queue = p_18792_;
+        public QueueStrictQueue(Queue<T> queue) {
+            this.queue = queue;
         }
 
         @Nullable
@@ -96,8 +96,8 @@ public interface StrictQueue<T, F> {
         }
 
         @Override
-        public boolean push(T p_18795_) {
-            return this.queue.add(p_18795_);
+        public boolean push(T value) {
+            return this.queue.add(value);
         }
 
         @Override

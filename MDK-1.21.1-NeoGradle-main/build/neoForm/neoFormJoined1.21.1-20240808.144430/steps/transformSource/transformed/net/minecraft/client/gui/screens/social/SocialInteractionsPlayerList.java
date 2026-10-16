@@ -31,50 +31,50 @@ public class SocialInteractionsPlayerList extends ContainerObjectSelectionList<P
     @Nullable
     private String filter;
 
-    public SocialInteractionsPlayerList(SocialInteractionsScreen p_100697_, Minecraft p_100698_, int p_100699_, int p_100700_, int p_100701_, int p_100702_) {
-        super(p_100698_, p_100699_, p_100700_, p_100701_, p_100702_);
-        this.socialInteractionsScreen = p_100697_;
+    public SocialInteractionsPlayerList(SocialInteractionsScreen socialInteractionsScreen, Minecraft minecraft, int width, int height, int y, int itemHeight) {
+        super(minecraft, width, height, y, itemHeight);
+        this.socialInteractionsScreen = socialInteractionsScreen;
     }
 
     @Override
-    protected void renderListBackground(GuiGraphics p_331377_) {
+    protected void renderListBackground(GuiGraphics guiGraphics) {
     }
 
     @Override
-    protected void renderListSeparators(GuiGraphics p_331767_) {
+    protected void renderListSeparators(GuiGraphics guiGraphics) {
     }
 
     @Override
-    protected void enableScissor(GuiGraphics p_281892_) {
-        p_281892_.enableScissor(this.getX(), this.getY() + 4, this.getRight(), this.getBottom());
+    protected void enableScissor(GuiGraphics guiGraphics) {
+        guiGraphics.enableScissor(this.getX(), this.getY() + 4, this.getRight(), this.getBottom());
     }
 
-    public void updatePlayerList(Collection<UUID> p_240798_, double p_240792_, boolean p_240829_) {
+    public void updatePlayerList(Collection<UUID> ids, double scrollAmount, boolean addChatLogPlayers) {
         Map<UUID, PlayerEntry> map = new HashMap<>();
-        this.addOnlinePlayers(p_240798_, map);
-        this.updatePlayersFromChatLog(map, p_240829_);
-        this.updateFiltersAndScroll(map.values(), p_240792_);
+        this.addOnlinePlayers(ids, map);
+        this.updatePlayersFromChatLog(map, addChatLogPlayers);
+        this.updateFiltersAndScroll(map.values(), scrollAmount);
     }
 
-    private void addOnlinePlayers(Collection<UUID> p_240813_, Map<UUID, PlayerEntry> p_240796_) {
+    private void addOnlinePlayers(Collection<UUID> ids, Map<UUID, PlayerEntry> playerMap) {
         ClientPacketListener clientpacketlistener = this.minecraft.player.connection;
 
-        for (UUID uuid : p_240813_) {
+        for (UUID uuid : ids) {
             PlayerInfo playerinfo = clientpacketlistener.getPlayerInfo(uuid);
             if (playerinfo != null) {
                 boolean flag = playerinfo.hasVerifiableChat();
-                p_240796_.put(
+                playerMap.put(
                     uuid, new PlayerEntry(this.minecraft, this.socialInteractionsScreen, uuid, playerinfo.getProfile().getName(), playerinfo::getSkin, flag)
                 );
             }
         }
     }
 
-    private void updatePlayersFromChatLog(Map<UUID, PlayerEntry> p_240780_, boolean p_240827_) {
+    private void updatePlayersFromChatLog(Map<UUID, PlayerEntry> playerMap, boolean addPlayers) {
         for (GameProfile gameprofile : collectProfilesFromChatLog(this.minecraft.getReportingContext().chatLog())) {
             PlayerEntry playerentry;
-            if (p_240827_) {
-                playerentry = p_240780_.computeIfAbsent(
+            if (addPlayers) {
+                playerentry = playerMap.computeIfAbsent(
                     gameprofile.getId(),
                     p_293608_ -> {
                         PlayerEntry playerentry1 = new PlayerEntry(
@@ -90,7 +90,7 @@ public class SocialInteractionsPlayerList extends ContainerObjectSelectionList<P
                     }
                 );
             } else {
-                playerentry = p_240780_.get(gameprofile.getId());
+                playerentry = playerMap.get(gameprofile.getId());
                 if (playerentry == null) {
                     continue;
                 }
@@ -100,11 +100,11 @@ public class SocialInteractionsPlayerList extends ContainerObjectSelectionList<P
         }
     }
 
-    private static Collection<GameProfile> collectProfilesFromChatLog(ChatLog p_250748_) {
+    private static Collection<GameProfile> collectProfilesFromChatLog(ChatLog chatLog) {
         Set<GameProfile> set = new ObjectLinkedOpenHashSet<>();
 
-        for (int i = p_250748_.end(); i >= p_250748_.start(); i--) {
-            LoggedChatEvent loggedchatevent = p_250748_.lookup(i);
+        for (int i = chatLog.end(); i >= chatLog.start(); i--) {
+            LoggedChatEvent loggedchatevent = chatLog.lookup(i);
             if (loggedchatevent instanceof LoggedChatMessage.Player) {
                 LoggedChatMessage.Player loggedchatmessage$player = (LoggedChatMessage.Player)loggedchatevent;
                 if (loggedchatmessage$player.message().hasSignature()) {
@@ -139,13 +139,13 @@ public class SocialInteractionsPlayerList extends ContainerObjectSelectionList<P
         }).thenComparing(PlayerEntry::getPlayerName, String::compareToIgnoreCase));
     }
 
-    private void updateFiltersAndScroll(Collection<PlayerEntry> p_240809_, double p_240830_) {
+    private void updateFiltersAndScroll(Collection<PlayerEntry> players, double scrollAmount) {
         this.players.clear();
-        this.players.addAll(p_240809_);
+        this.players.addAll(players);
         this.sortPlayerEntries();
         this.updateFilteredPlayers();
         this.replaceEntries(this.players);
-        this.setScrollAmount(p_240830_);
+        this.setScrollAmount(scrollAmount);
     }
 
     private void updateFilteredPlayers() {
@@ -155,16 +155,16 @@ public class SocialInteractionsPlayerList extends ContainerObjectSelectionList<P
         }
     }
 
-    public void setFilter(String p_100718_) {
-        this.filter = p_100718_;
+    public void setFilter(String filter) {
+        this.filter = filter;
     }
 
     public boolean isEmpty() {
         return this.players.isEmpty();
     }
 
-    public void addPlayer(PlayerInfo p_100715_, SocialInteractionsScreen.Page p_100716_) {
-        UUID uuid = p_100715_.getProfile().getId();
+    public void addPlayer(PlayerInfo playerInfo, SocialInteractionsScreen.Page page) {
+        UUID uuid = playerInfo.getProfile().getId();
 
         for (PlayerEntry playerentry : this.players) {
             if (playerentry.getPlayerId().equals(uuid)) {
@@ -173,20 +173,20 @@ public class SocialInteractionsPlayerList extends ContainerObjectSelectionList<P
             }
         }
 
-        if ((p_100716_ == SocialInteractionsScreen.Page.ALL || this.minecraft.getPlayerSocialManager().shouldHideMessageFrom(uuid))
-            && (Strings.isNullOrEmpty(this.filter) || p_100715_.getProfile().getName().toLowerCase(Locale.ROOT).contains(this.filter))) {
-            boolean flag = p_100715_.hasVerifiableChat();
+        if ((page == SocialInteractionsScreen.Page.ALL || this.minecraft.getPlayerSocialManager().shouldHideMessageFrom(uuid))
+            && (Strings.isNullOrEmpty(this.filter) || playerInfo.getProfile().getName().toLowerCase(Locale.ROOT).contains(this.filter))) {
+            boolean flag = playerInfo.hasVerifiableChat();
             PlayerEntry playerentry1 = new PlayerEntry(
-                this.minecraft, this.socialInteractionsScreen, p_100715_.getProfile().getId(), p_100715_.getProfile().getName(), p_100715_::getSkin, flag
+                this.minecraft, this.socialInteractionsScreen, playerInfo.getProfile().getId(), playerInfo.getProfile().getName(), playerInfo::getSkin, flag
             );
             this.addEntry(playerentry1);
             this.players.add(playerentry1);
         }
     }
 
-    public void removePlayer(UUID p_100723_) {
+    public void removePlayer(UUID id) {
         for (PlayerEntry playerentry : this.players) {
-            if (playerentry.getPlayerId().equals(p_100723_)) {
+            if (playerentry.getPlayerId().equals(id)) {
                 playerentry.setRemoved(true);
                 return;
             }

@@ -27,18 +27,18 @@ public record NoiseSettings(int minY, int height, int noiseSizeHorizontal, int n
     protected static final NoiseSettings CAVES_NOISE_SETTINGS = create(-64, 192, 1, 2);
     protected static final NoiseSettings FLOATING_ISLANDS_NOISE_SETTINGS = create(0, 256, 2, 1);
 
-    private static DataResult<NoiseSettings> guardY(NoiseSettings p_158721_) {
-        if (p_158721_.minY() + p_158721_.height() > DimensionType.MAX_Y + 1) {
+    private static DataResult<NoiseSettings> guardY(NoiseSettings settings) {
+        if (settings.minY() + settings.height() > DimensionType.MAX_Y + 1) {
             return DataResult.error(() -> "min_y + height cannot be higher than: " + (DimensionType.MAX_Y + 1));
-        } else if (p_158721_.height() % 16 != 0) {
+        } else if (settings.height() % 16 != 0) {
             return DataResult.error(() -> "height has to be a multiple of 16");
         } else {
-            return p_158721_.minY() % 16 != 0 ? DataResult.error(() -> "min_y has to be a multiple of 16") : DataResult.success(p_158721_);
+            return settings.minY() % 16 != 0 ? DataResult.error(() -> "min_y has to be a multiple of 16") : DataResult.success(settings);
         }
     }
 
-    public static NoiseSettings create(int p_224526_, int p_224527_, int p_224528_, int p_224529_) {
-        NoiseSettings noisesettings = new NoiseSettings(p_224526_, p_224527_, p_224528_, p_224529_);
+    public static NoiseSettings create(int minY, int height, int noiseSizeHorizontal, int noiseSizeVertical) {
+        NoiseSettings noisesettings = new NoiseSettings(minY, height, noiseSizeHorizontal, noiseSizeVertical);
         guardY(noisesettings).error().ifPresent(p_338093_ -> {
             throw new IllegalStateException(p_338093_.message());
         });
@@ -53,9 +53,9 @@ public record NoiseSettings(int minY, int height, int noiseSizeHorizontal, int n
         return QuartPos.toBlock(this.noiseSizeHorizontal());
     }
 
-    public NoiseSettings clampToHeightAccessor(LevelHeightAccessor p_224531_) {
-        int i = Math.max(this.minY, p_224531_.getMinBuildHeight());
-        int j = Math.min(this.minY + this.height, p_224531_.getMaxBuildHeight()) - i;
+    public NoiseSettings clampToHeightAccessor(LevelHeightAccessor heightAccessor) {
+        int i = Math.max(this.minY, heightAccessor.getMinBuildHeight());
+        int j = Math.min(this.minY + this.height, heightAccessor.getMaxBuildHeight()) - i;
         return new NoiseSettings(i, j, this.noiseSizeHorizontal, this.noiseSizeVertical);
     }
 }

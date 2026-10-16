@@ -18,18 +18,18 @@ public interface Instruments {
     ResourceKey<Instrument> YEARN_GOAT_HORN = create("yearn_goat_horn");
     ResourceKey<Instrument> DREAM_GOAT_HORN = create("dream_goat_horn");
 
-    private static ResourceKey<Instrument> create(String p_220151_) {
-        return ResourceKey.create(Registries.INSTRUMENT, ResourceLocation.withDefaultNamespace(p_220151_));
+    private static ResourceKey<Instrument> create(String name) {
+        return ResourceKey.create(Registries.INSTRUMENT, ResourceLocation.withDefaultNamespace(name));
     }
 
-    static Instrument bootstrap(Registry<Instrument> p_220149_) {
-        Registry.register(p_220149_, PONDER_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(0), 140, 256.0F));
-        Registry.register(p_220149_, SING_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(1), 140, 256.0F));
-        Registry.register(p_220149_, SEEK_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(2), 140, 256.0F));
-        Registry.register(p_220149_, FEEL_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(3), 140, 256.0F));
-        Registry.register(p_220149_, ADMIRE_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(4), 140, 256.0F));
-        Registry.register(p_220149_, CALL_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(5), 140, 256.0F));
-        Registry.register(p_220149_, YEARN_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(6), 140, 256.0F));
-        return Registry.register(p_220149_, DREAM_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(7), 140, 256.0F));
+    static Instrument bootstrap(Registry<Instrument> registry) {
+        Registry.register(registry, PONDER_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(0), 140, 256.0F));
+        Registry.register(registry, SING_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(1), 140, 256.0F));
+        Registry.register(registry, SEEK_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(2), 140, 256.0F));
+        Registry.register(registry, FEEL_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(3), 140, 256.0F));
+        Registry.register(registry, ADMIRE_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(4), 140, 256.0F));
+        Registry.register(registry, CALL_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(5), 140, 256.0F));
+        Registry.register(registry, YEARN_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(6), 140, 256.0F));
+        return Registry.register(registry, DREAM_GOAT_HORN, new Instrument(SoundEvents.GOAT_HORN_SOUND_VARIANTS.get(7), 140, 256.0F));
     }
 }

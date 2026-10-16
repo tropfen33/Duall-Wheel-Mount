@@ -23,45 +23,60 @@ public class Vec3 implements Position {
     public final double y;
     public final double z;
 
-    public static Vec3 fromRGB24(int p_82502_) {
-        double d0 = (double)(p_82502_ >> 16 & 0xFF) / 255.0;
-        double d1 = (double)(p_82502_ >> 8 & 0xFF) / 255.0;
-        double d2 = (double)(p_82502_ & 0xFF) / 255.0;
+    public static Vec3 fromRGB24(int packed) {
+        double d0 = (double)(packed >> 16 & 0xFF) / 255.0;
+        double d1 = (double)(packed >> 8 & 0xFF) / 255.0;
+        double d2 = (double)(packed & 0xFF) / 255.0;
         return new Vec3(d0, d1, d2);
     }
 
-    public static Vec3 atLowerCornerOf(Vec3i p_82529_) {
-        return new Vec3((double)p_82529_.getX(), (double)p_82529_.getY(), (double)p_82529_.getZ());
+    /**
+     * Copies the coordinates of an int vector exactly.
+     */
+    public static Vec3 atLowerCornerOf(Vec3i toCopy) {
+        return new Vec3((double)toCopy.getX(), (double)toCopy.getY(), (double)toCopy.getZ());
     }
 
-    public static Vec3 atLowerCornerWithOffset(Vec3i p_272866_, double p_273680_, double p_273668_, double p_273687_) {
-        return new Vec3((double)p_272866_.getX() + p_273680_, (double)p_272866_.getY() + p_273668_, (double)p_272866_.getZ() + p_273687_);
+    public static Vec3 atLowerCornerWithOffset(Vec3i toCopy, double offsetX, double offsetY, double offsetZ) {
+        return new Vec3((double)toCopy.getX() + offsetX, (double)toCopy.getY() + offsetY, (double)toCopy.getZ() + offsetZ);
     }
 
-    public static Vec3 atCenterOf(Vec3i p_82513_) {
-        return atLowerCornerWithOffset(p_82513_, 0.5, 0.5, 0.5);
+    /**
+     * Copies the coordinates of an Int vector and centers them.
+     */
+    public static Vec3 atCenterOf(Vec3i toCopy) {
+        return atLowerCornerWithOffset(toCopy, 0.5, 0.5, 0.5);
     }
 
-    public static Vec3 atBottomCenterOf(Vec3i p_82540_) {
-        return atLowerCornerWithOffset(p_82540_, 0.5, 0.0, 0.5);
+    /**
+     * Copies the coordinates of an int vector and centers them horizontally (x and z)
+     */
+    public static Vec3 atBottomCenterOf(Vec3i toCopy) {
+        return atLowerCornerWithOffset(toCopy, 0.5, 0.0, 0.5);
     }
 
-    public static Vec3 upFromBottomCenterOf(Vec3i p_82515_, double p_82516_) {
-        return atLowerCornerWithOffset(p_82515_, 0.5, p_82516_, 0.5);
+    /**
+     * Copies the coordinates of an int vector and centers them horizontally and applies a vertical offset.
+     */
+    public static Vec3 upFromBottomCenterOf(Vec3i toCopy, double verticalOffset) {
+        return atLowerCornerWithOffset(toCopy, 0.5, verticalOffset, 0.5);
     }
 
-    public Vec3(double p_82484_, double p_82485_, double p_82486_) {
-        this.x = p_82484_;
-        this.y = p_82485_;
-        this.z = p_82486_;
+    public Vec3(double x, double y, double z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
 
-    public Vec3(Vector3f p_253821_) {
-        this((double)p_253821_.x(), (double)p_253821_.y(), (double)p_253821_.z());
+    public Vec3(Vector3f vector) {
+        this((double)vector.x(), (double)vector.y(), (double)vector.z());
     }
 
-    public Vec3 vectorTo(Vec3 p_82506_) {
-        return new Vec3(p_82506_.x - this.x, p_82506_.y - this.y, p_82506_.z - this.z);
+    /**
+     * Returns a new vector with the result of the specified vector minus this.
+     */
+    public Vec3 vectorTo(Vec3 vec) {
+        return new Vec3(vec.x - this.x, vec.y - this.y, vec.z - this.z);
     }
 
     public Vec3 normalize() {
@@ -69,83 +84,98 @@ public class Vec3 implements Position {
         return d0 < 1.0E-4 ? ZERO : new Vec3(this.x / d0, this.y / d0, this.z / d0);
     }
 
-    public double dot(Vec3 p_82527_) {
-        return this.x * p_82527_.x + this.y * p_82527_.y + this.z * p_82527_.z;
+    public double dot(Vec3 vec) {
+        return this.x * vec.x + this.y * vec.y + this.z * vec.z;
     }
 
-    public Vec3 cross(Vec3 p_82538_) {
-        return new Vec3(this.y * p_82538_.z - this.z * p_82538_.y, this.z * p_82538_.x - this.x * p_82538_.z, this.x * p_82538_.y - this.y * p_82538_.x);
+    /**
+     * Returns a new vector with the result of this vector x the specified vector.
+     */
+    public Vec3 cross(Vec3 vec) {
+        return new Vec3(this.y * vec.z - this.z * vec.y, this.z * vec.x - this.x * vec.z, this.x * vec.y - this.y * vec.x);
     }
 
-    public Vec3 subtract(Vec3 p_82547_) {
-        return this.subtract(p_82547_.x, p_82547_.y, p_82547_.z);
+    public Vec3 subtract(Vec3 vec) {
+        return this.subtract(vec.x, vec.y, vec.z);
     }
 
-    public Vec3 subtract(double p_82493_, double p_82494_, double p_82495_) {
-        return this.add(-p_82493_, -p_82494_, -p_82495_);
+    public Vec3 subtract(double x, double y, double z) {
+        return this.add(-x, -y, -z);
     }
 
-    public Vec3 add(Vec3 p_82550_) {
-        return this.add(p_82550_.x, p_82550_.y, p_82550_.z);
+    public Vec3 add(Vec3 vec) {
+        return this.add(vec.x, vec.y, vec.z);
     }
 
-    public Vec3 add(double p_82521_, double p_82522_, double p_82523_) {
-        return new Vec3(this.x + p_82521_, this.y + p_82522_, this.z + p_82523_);
+    /**
+     * Adds the specified x,y,z vector components to this vector and returns the resulting vector. Does not change this vector.
+     */
+    public Vec3 add(double x, double y, double z) {
+        return new Vec3(this.x + x, this.y + y, this.z + z);
     }
 
-    public boolean closerThan(Position p_82510_, double p_82511_) {
-        return this.distanceToSqr(p_82510_.x(), p_82510_.y(), p_82510_.z()) < p_82511_ * p_82511_;
+    /**
+     * Checks if a position is within a certain distance of the coordinates.
+     */
+    public boolean closerThan(Position pos, double distance) {
+        return this.distanceToSqr(pos.x(), pos.y(), pos.z()) < distance * distance;
     }
 
-    public double distanceTo(Vec3 p_82555_) {
-        double d0 = p_82555_.x - this.x;
-        double d1 = p_82555_.y - this.y;
-        double d2 = p_82555_.z - this.z;
+    /**
+     * Euclidean distance between this and the specified vector, returned as double.
+     */
+    public double distanceTo(Vec3 vec) {
+        double d0 = vec.x - this.x;
+        double d1 = vec.y - this.y;
+        double d2 = vec.z - this.z;
         return Math.sqrt(d0 * d0 + d1 * d1 + d2 * d2);
     }
 
-    public double distanceToSqr(Vec3 p_82558_) {
-        double d0 = p_82558_.x - this.x;
-        double d1 = p_82558_.y - this.y;
-        double d2 = p_82558_.z - this.z;
+    /**
+     * The square of the Euclidean distance between this and the specified vector.
+     */
+    public double distanceToSqr(Vec3 vec) {
+        double d0 = vec.x - this.x;
+        double d1 = vec.y - this.y;
+        double d2 = vec.z - this.z;
         return d0 * d0 + d1 * d1 + d2 * d2;
     }
 
-    public double distanceToSqr(double p_82532_, double p_82533_, double p_82534_) {
-        double d0 = p_82532_ - this.x;
-        double d1 = p_82533_ - this.y;
-        double d2 = p_82534_ - this.z;
+    public double distanceToSqr(double x, double y, double z) {
+        double d0 = x - this.x;
+        double d1 = y - this.y;
+        double d2 = z - this.z;
         return d0 * d0 + d1 * d1 + d2 * d2;
     }
 
-    public boolean closerThan(Vec3 p_312866_, double p_312928_, double p_312788_) {
-        double d0 = p_312866_.x() - this.x;
-        double d1 = p_312866_.y() - this.y;
-        double d2 = p_312866_.z() - this.z;
-        return Mth.lengthSquared(d0, d2) < Mth.square(p_312928_) && Math.abs(d1) < p_312788_;
+    public boolean closerThan(Vec3 pos, double horizontalDistance, double verticalDistance) {
+        double d0 = pos.x() - this.x;
+        double d1 = pos.y() - this.y;
+        double d2 = pos.z() - this.z;
+        return Mth.lengthSquared(d0, d2) < Mth.square(horizontalDistance) && Math.abs(d1) < verticalDistance;
     }
 
-    public Vec3 scale(double p_82491_) {
-        return this.multiply(p_82491_, p_82491_, p_82491_);
+    public Vec3 scale(double factor) {
+        return this.multiply(factor, factor, factor);
     }
 
     public Vec3 reverse() {
         return this.scale(-1.0);
     }
 
-    public Vec3 multiply(Vec3 p_82560_) {
-        return this.multiply(p_82560_.x, p_82560_.y, p_82560_.z);
+    public Vec3 multiply(Vec3 vec) {
+        return this.multiply(vec.x, vec.y, vec.z);
     }
 
-    public Vec3 multiply(double p_82543_, double p_82544_, double p_82545_) {
-        return new Vec3(this.x * p_82543_, this.y * p_82544_, this.z * p_82545_);
+    public Vec3 multiply(double factorX, double factorY, double factorZ) {
+        return new Vec3(this.x * factorX, this.y * factorY, this.z * factorZ);
     }
 
-    public Vec3 offsetRandom(RandomSource p_272810_, float p_273473_) {
+    public Vec3 offsetRandom(RandomSource random, float factor) {
         return this.add(
-            (double)((p_272810_.nextFloat() - 0.5F) * p_273473_),
-            (double)((p_272810_.nextFloat() - 0.5F) * p_273473_),
-            (double)((p_272810_.nextFloat() - 0.5F) * p_273473_)
+            (double)((random.nextFloat() - 0.5F) * factor),
+            (double)((random.nextFloat() - 0.5F) * factor),
+            (double)((random.nextFloat() - 0.5F) * factor)
         );
     }
 
@@ -166,10 +196,10 @@ public class Vec3 implements Position {
     }
 
     @Override
-    public boolean equals(Object p_82552_) {
-        if (this == p_82552_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        } else if (!(p_82552_ instanceof Vec3 vec3)) {
+        } else if (!(other instanceof Vec3 vec3)) {
             return false;
         } else if (Double.compare(vec3.x, this.x) != 0) {
             return false;
@@ -193,70 +223,80 @@ public class Vec3 implements Position {
         return "(" + this.x + ", " + this.y + ", " + this.z + ")";
     }
 
-    public Vec3 lerp(Vec3 p_165922_, double p_165923_) {
-        return new Vec3(Mth.lerp(p_165923_, this.x, p_165922_.x), Mth.lerp(p_165923_, this.y, p_165922_.y), Mth.lerp(p_165923_, this.z, p_165922_.z));
+    /**
+     * Lerps between this vector and the given vector.
+     * @see net.minecraft.util.Mth#lerp(double, double, double)
+     */
+    public Vec3 lerp(Vec3 to, double delta) {
+        return new Vec3(Mth.lerp(delta, this.x, to.x), Mth.lerp(delta, this.y, to.y), Mth.lerp(delta, this.z, to.z));
     }
 
-    public Vec3 xRot(float p_82497_) {
-        float f = Mth.cos(p_82497_);
-        float f1 = Mth.sin(p_82497_);
+    public Vec3 xRot(float pitch) {
+        float f = Mth.cos(pitch);
+        float f1 = Mth.sin(pitch);
         double d0 = this.x;
         double d1 = this.y * (double)f + this.z * (double)f1;
         double d2 = this.z * (double)f - this.y * (double)f1;
         return new Vec3(d0, d1, d2);
     }
 
-    public Vec3 yRot(float p_82525_) {
-        float f = Mth.cos(p_82525_);
-        float f1 = Mth.sin(p_82525_);
+    public Vec3 yRot(float yaw) {
+        float f = Mth.cos(yaw);
+        float f1 = Mth.sin(yaw);
         double d0 = this.x * (double)f + this.z * (double)f1;
         double d1 = this.y;
         double d2 = this.z * (double)f - this.x * (double)f1;
         return new Vec3(d0, d1, d2);
     }
 
-    public Vec3 zRot(float p_82536_) {
-        float f = Mth.cos(p_82536_);
-        float f1 = Mth.sin(p_82536_);
+    public Vec3 zRot(float roll) {
+        float f = Mth.cos(roll);
+        float f1 = Mth.sin(roll);
         double d0 = this.x * (double)f + this.y * (double)f1;
         double d1 = this.y * (double)f - this.x * (double)f1;
         double d2 = this.z;
         return new Vec3(d0, d1, d2);
     }
 
-    public static Vec3 directionFromRotation(Vec2 p_82504_) {
-        return directionFromRotation(p_82504_.x, p_82504_.y);
+    /**
+     * Returns a {@link net.minecraft.world.phys.Vec3} from the given pitch and yaw degrees as {@link net.minecraft.world.phys.Vec2}.
+     */
+    public static Vec3 directionFromRotation(Vec2 vec) {
+        return directionFromRotation(vec.x, vec.y);
     }
 
-    public static Vec3 directionFromRotation(float p_82499_, float p_82500_) {
-        float f = Mth.cos(-p_82500_ * (float) (Math.PI / 180.0) - (float) Math.PI);
-        float f1 = Mth.sin(-p_82500_ * (float) (Math.PI / 180.0) - (float) Math.PI);
-        float f2 = -Mth.cos(-p_82499_ * (float) (Math.PI / 180.0));
-        float f3 = Mth.sin(-p_82499_ * (float) (Math.PI / 180.0));
+    /**
+     * Returns a {@link net.minecraft.world.phys.Vec3} from the given pitch and yaw degrees.
+     */
+    public static Vec3 directionFromRotation(float pitch, float yaw) {
+        float f = Mth.cos(-yaw * (float) (Math.PI / 180.0) - (float) Math.PI);
+        float f1 = Mth.sin(-yaw * (float) (Math.PI / 180.0) - (float) Math.PI);
+        float f2 = -Mth.cos(-pitch * (float) (Math.PI / 180.0));
+        float f3 = Mth.sin(-pitch * (float) (Math.PI / 180.0));
         return new Vec3((double)(f1 * f2), (double)f3, (double)(f * f2));
     }
 
-    public Vec3 align(EnumSet<Direction.Axis> p_82518_) {
-        double d0 = p_82518_.contains(Direction.Axis.X) ? (double)Mth.floor(this.x) : this.x;
-        double d1 = p_82518_.contains(Direction.Axis.Y) ? (double)Mth.floor(this.y) : this.y;
-        double d2 = p_82518_.contains(Direction.Axis.Z) ? (double)Mth.floor(this.z) : this.z;
+    public Vec3 align(EnumSet<Direction.Axis> axes) {
+        double d0 = axes.contains(Direction.Axis.X) ? (double)Mth.floor(this.x) : this.x;
+        double d1 = axes.contains(Direction.Axis.Y) ? (double)Mth.floor(this.y) : this.y;
+        double d2 = axes.contains(Direction.Axis.Z) ? (double)Mth.floor(this.z) : this.z;
         return new Vec3(d0, d1, d2);
     }
 
-    public double get(Direction.Axis p_82508_) {
-        return p_82508_.choose(this.x, this.y, this.z);
+    public double get(Direction.Axis axis) {
+        return axis.choose(this.x, this.y, this.z);
     }
 
-    public Vec3 with(Direction.Axis p_193104_, double p_193105_) {
-        double d0 = p_193104_ == Direction.Axis.X ? p_193105_ : this.x;
-        double d1 = p_193104_ == Direction.Axis.Y ? p_193105_ : this.y;
-        double d2 = p_193104_ == Direction.Axis.Z ? p_193105_ : this.z;
+    public Vec3 with(Direction.Axis axis, double length) {
+        double d0 = axis == Direction.Axis.X ? length : this.x;
+        double d1 = axis == Direction.Axis.Y ? length : this.y;
+        double d2 = axis == Direction.Axis.Z ? length : this.z;
         return new Vec3(d0, d1, d2);
     }
 
-    public Vec3 relative(Direction p_231076_, double p_231077_) {
-        Vec3i vec3i = p_231076_.getNormal();
-        return new Vec3(this.x + p_231077_ * (double)vec3i.getX(), this.y + p_231077_ * (double)vec3i.getY(), this.z + p_231077_ * (double)vec3i.getZ());
+    public Vec3 relative(Direction direction, double length) {
+        Vec3i vec3i = direction.getNormal();
+        return new Vec3(this.x + length * (double)vec3i.getX(), this.y + length * (double)vec3i.getY(), this.z + length * (double)vec3i.getZ());
     }
 
     @Override

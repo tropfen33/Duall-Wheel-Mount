@@ -45,26 +45,26 @@ public class BeaconScreen extends AbstractContainerScreen<BeaconMenu> {
     @Nullable
     Holder<MobEffect> secondary;
 
-    public BeaconScreen(final BeaconMenu p_97912_, Inventory p_97913_, Component p_97914_) {
-        super(p_97912_, p_97913_, p_97914_);
+    public BeaconScreen(final BeaconMenu menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title);
         this.imageWidth = 230;
         this.imageHeight = 219;
-        p_97912_.addSlotListener(new ContainerListener() {
+        menu.addSlotListener(new ContainerListener() {
             @Override
             public void slotChanged(AbstractContainerMenu p_97973_, int p_97974_, ItemStack p_97975_) {
             }
 
             @Override
             public void dataChanged(AbstractContainerMenu p_169628_, int p_169629_, int p_169630_) {
-                BeaconScreen.this.primary = p_97912_.getPrimaryEffect();
-                BeaconScreen.this.secondary = p_97912_.getSecondaryEffect();
+                BeaconScreen.this.primary = menu.getPrimaryEffect();
+                BeaconScreen.this.secondary = menu.getSecondaryEffect();
             }
         });
     }
 
-    private <T extends AbstractWidget & BeaconScreen.BeaconButton> void addBeaconButton(T p_169617_) {
-        this.addRenderableWidget(p_169617_);
-        this.beaconButtons.add(p_169617_);
+    private <T extends AbstractWidget & BeaconScreen.BeaconButton> void addBeaconButton(T beaconButton) {
+        this.addRenderableWidget(beaconButton);
+        this.beaconButtons.add(beaconButton);
     }
 
     @Override
@@ -121,41 +121,49 @@ public class BeaconScreen extends AbstractContainerScreen<BeaconMenu> {
     }
 
     @Override
-    protected void renderLabels(GuiGraphics p_283369_, int p_282699_, int p_281296_) {
-        p_283369_.drawCenteredString(this.font, PRIMARY_EFFECT_LABEL, 62, 10, 14737632);
-        p_283369_.drawCenteredString(this.font, SECONDARY_EFFECT_LABEL, 169, 10, 14737632);
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        guiGraphics.drawCenteredString(this.font, PRIMARY_EFFECT_LABEL, 62, 10, 14737632);
+        guiGraphics.drawCenteredString(this.font, SECONDARY_EFFECT_LABEL, 169, 10, 14737632);
     }
 
     @Override
-    protected void renderBg(GuiGraphics p_282454_, float p_282185_, int p_282362_, int p_282987_) {
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
         int i = (this.width - this.imageWidth) / 2;
         int j = (this.height - this.imageHeight) / 2;
-        p_282454_.blit(BEACON_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
-        p_282454_.pose().pushPose();
-        p_282454_.pose().translate(0.0F, 0.0F, 100.0F);
-        p_282454_.renderItem(new ItemStack(Items.NETHERITE_INGOT), i + 20, j + 109);
-        p_282454_.renderItem(new ItemStack(Items.EMERALD), i + 41, j + 109);
-        p_282454_.renderItem(new ItemStack(Items.DIAMOND), i + 41 + 22, j + 109);
-        p_282454_.renderItem(new ItemStack(Items.GOLD_INGOT), i + 42 + 44, j + 109);
-        p_282454_.renderItem(new ItemStack(Items.IRON_INGOT), i + 42 + 66, j + 109);
-        p_282454_.pose().popPose();
+        guiGraphics.blit(BEACON_LOCATION, i, j, 0, 0, this.imageWidth, this.imageHeight);
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0.0F, 0.0F, 100.0F);
+        guiGraphics.renderItem(new ItemStack(Items.NETHERITE_INGOT), i + 20, j + 109);
+        guiGraphics.renderItem(new ItemStack(Items.EMERALD), i + 41, j + 109);
+        guiGraphics.renderItem(new ItemStack(Items.DIAMOND), i + 41 + 22, j + 109);
+        guiGraphics.renderItem(new ItemStack(Items.GOLD_INGOT), i + 42 + 44, j + 109);
+        guiGraphics.renderItem(new ItemStack(Items.IRON_INGOT), i + 42 + 66, j + 109);
+        guiGraphics.pose().popPose();
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283062_, int p_282876_, int p_282015_, float p_281395_) {
-        super.render(p_283062_, p_282876_, p_282015_, p_281395_);
-        this.renderTooltip(p_283062_, p_282876_, p_282015_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
     @OnlyIn(Dist.CLIENT)
     interface BeaconButton {
-        void updateStatus(int p_169631_);
+        void updateStatus(int beaconTier);
     }
 
     @OnlyIn(Dist.CLIENT)
     class BeaconCancelButton extends BeaconScreen.BeaconSpriteScreenButton {
-        public BeaconCancelButton(int p_97982_, int p_97983_) {
-            super(p_97982_, p_97983_, BeaconScreen.CANCEL_SPRITE, CommonComponents.GUI_CANCEL);
+        public BeaconCancelButton(int x, int y) {
+            super(x, y, BeaconScreen.CANCEL_SPRITE, CommonComponents.GUI_CANCEL);
         }
 
         @Override
@@ -164,14 +172,14 @@ public class BeaconScreen extends AbstractContainerScreen<BeaconMenu> {
         }
 
         @Override
-        public void updateStatus(int p_169636_) {
+        public void updateStatus(int beaconTier) {
         }
     }
 
     @OnlyIn(Dist.CLIENT)
     class BeaconConfirmButton extends BeaconScreen.BeaconSpriteScreenButton {
-        public BeaconConfirmButton(int p_97992_, int p_97993_) {
-            super(p_97992_, p_97993_, BeaconScreen.CONFIRM_SPRITE, CommonComponents.GUI_DONE);
+        public BeaconConfirmButton(int x, int y) {
+            super(x, y, BeaconScreen.CONFIRM_SPRITE, CommonComponents.GUI_DONE);
         }
 
         @Override
@@ -183,7 +191,7 @@ public class BeaconScreen extends AbstractContainerScreen<BeaconMenu> {
         }
 
         @Override
-        public void updateStatus(int p_169638_) {
+        public void updateStatus(int beaconTier) {
             this.active = BeaconScreen.this.menu.hasPayment() && BeaconScreen.this.primary != null;
         }
     }
@@ -195,21 +203,21 @@ public class BeaconScreen extends AbstractContainerScreen<BeaconMenu> {
         private Holder<MobEffect> effect;
         private TextureAtlasSprite sprite;
 
-        public BeaconPowerButton(int p_169642_, int p_169643_, Holder<MobEffect> p_316476_, boolean p_169645_, int p_169646_) {
-            super(p_169642_, p_169643_);
-            this.isPrimary = p_169645_;
-            this.tier = p_169646_;
-            this.setEffect(p_316476_);
+        public BeaconPowerButton(int x, int y, Holder<MobEffect> effect, boolean isPrimary, int tier) {
+            super(x, y);
+            this.isPrimary = isPrimary;
+            this.tier = tier;
+            this.setEffect(effect);
         }
 
-        protected void setEffect(Holder<MobEffect> p_316331_) {
-            this.effect = p_316331_;
-            this.sprite = Minecraft.getInstance().getMobEffectTextures().get(p_316331_);
-            this.setTooltip(Tooltip.create(this.createEffectDescription(p_316331_), null));
+        protected void setEffect(Holder<MobEffect> effect) {
+            this.effect = effect;
+            this.sprite = Minecraft.getInstance().getMobEffectTextures().get(effect);
+            this.setTooltip(Tooltip.create(this.createEffectDescription(effect), null));
         }
 
-        protected MutableComponent createEffectDescription(Holder<MobEffect> p_316880_) {
-            return Component.translatable(p_316880_.value().getDescriptionId());
+        protected MutableComponent createEffectDescription(Holder<MobEffect> effect) {
+            return Component.translatable(effect.value().getDescriptionId());
         }
 
         @Override
@@ -226,13 +234,13 @@ public class BeaconScreen extends AbstractContainerScreen<BeaconMenu> {
         }
 
         @Override
-        protected void renderIcon(GuiGraphics p_282265_) {
-            p_282265_.blit(this.getX() + 2, this.getY() + 2, 0, 18, 18, this.sprite);
+        protected void renderIcon(GuiGraphics guiGraphics) {
+            guiGraphics.blit(this.getX() + 2, this.getY() + 2, 0, 18, 18, this.sprite);
         }
 
         @Override
-        public void updateStatus(int p_169648_) {
-            this.active = this.tier < p_169648_;
+        public void updateStatus(int beaconTier) {
+            this.active = this.tier < beaconTier;
             this.setSelected(this.effect.equals(this.isPrimary ? BeaconScreen.this.primary : BeaconScreen.this.secondary));
         }
 
@@ -246,16 +254,16 @@ public class BeaconScreen extends AbstractContainerScreen<BeaconMenu> {
     abstract static class BeaconScreenButton extends AbstractButton implements BeaconScreen.BeaconButton {
         private boolean selected;
 
-        protected BeaconScreenButton(int p_98022_, int p_98023_) {
-            super(p_98022_, p_98023_, 22, 22, CommonComponents.EMPTY);
+        protected BeaconScreenButton(int x, int y) {
+            super(x, y, 22, 22, CommonComponents.EMPTY);
         }
 
-        protected BeaconScreenButton(int p_169654_, int p_169655_, Component p_169656_) {
-            super(p_169654_, p_169655_, 22, 22, p_169656_);
+        protected BeaconScreenButton(int x, int y, Component message) {
+            super(x, y, 22, 22, message);
         }
 
         @Override
-        public void renderWidget(GuiGraphics p_281837_, int p_281780_, int p_283603_, float p_283562_) {
+        public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
             ResourceLocation resourcelocation;
             if (!this.active) {
                 resourcelocation = BeaconScreen.BUTTON_DISABLED_SPRITE;
@@ -267,23 +275,23 @@ public class BeaconScreen extends AbstractContainerScreen<BeaconMenu> {
                 resourcelocation = BeaconScreen.BUTTON_SPRITE;
             }
 
-            p_281837_.blitSprite(resourcelocation, this.getX(), this.getY(), this.width, this.height);
-            this.renderIcon(p_281837_);
+            guiGraphics.blitSprite(resourcelocation, this.getX(), this.getY(), this.width, this.height);
+            this.renderIcon(guiGraphics);
         }
 
-        protected abstract void renderIcon(GuiGraphics p_283292_);
+        protected abstract void renderIcon(GuiGraphics guiGraphics);
 
         public boolean isSelected() {
             return this.selected;
         }
 
-        public void setSelected(boolean p_98032_) {
-            this.selected = p_98032_;
+        public void setSelected(boolean selected) {
+            this.selected = selected;
         }
 
         @Override
-        public void updateWidgetNarration(NarrationElementOutput p_259705_) {
-            this.defaultButtonNarrationText(p_259705_);
+        public void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+            this.defaultButtonNarrationText(narrationElementOutput);
         }
     }
 
@@ -291,34 +299,34 @@ public class BeaconScreen extends AbstractContainerScreen<BeaconMenu> {
     abstract static class BeaconSpriteScreenButton extends BeaconScreen.BeaconScreenButton {
         private final ResourceLocation sprite;
 
-        protected BeaconSpriteScreenButton(int p_169663_, int p_169664_, ResourceLocation p_294501_, Component p_169667_) {
-            super(p_169663_, p_169664_, p_169667_);
-            this.sprite = p_294501_;
+        protected BeaconSpriteScreenButton(int x, int y, ResourceLocation sprite, Component message) {
+            super(x, y, message);
+            this.sprite = sprite;
         }
 
         @Override
-        protected void renderIcon(GuiGraphics p_283624_) {
-            p_283624_.blitSprite(this.sprite, this.getX() + 2, this.getY() + 2, 18, 18);
+        protected void renderIcon(GuiGraphics guiGraphics) {
+            guiGraphics.blitSprite(this.sprite, this.getX() + 2, this.getY() + 2, 18, 18);
         }
     }
 
     @OnlyIn(Dist.CLIENT)
     class BeaconUpgradePowerButton extends BeaconScreen.BeaconPowerButton {
-        public BeaconUpgradePowerButton(int p_169675_, int p_169676_, Holder<MobEffect> p_316593_) {
-            super(p_169675_, p_169676_, p_316593_, false, 3);
+        public BeaconUpgradePowerButton(int x, int y, Holder<MobEffect> effect) {
+            super(x, y, effect, false, 3);
         }
 
         @Override
-        protected MutableComponent createEffectDescription(Holder<MobEffect> p_316391_) {
-            return Component.translatable(p_316391_.value().getDescriptionId()).append(" II");
+        protected MutableComponent createEffectDescription(Holder<MobEffect> effect) {
+            return Component.translatable(effect.value().getDescriptionId()).append(" II");
         }
 
         @Override
-        public void updateStatus(int p_169679_) {
+        public void updateStatus(int beaconTier) {
             if (BeaconScreen.this.primary != null) {
                 this.visible = true;
                 this.setEffect(BeaconScreen.this.primary);
-                super.updateStatus(p_169679_);
+                super.updateStatus(beaconTier);
             } else {
                 this.visible = false;
             }

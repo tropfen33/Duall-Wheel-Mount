@@ -40,56 +40,56 @@ public class SnbtPrinterTagVisitor implements TagVisitor {
         this("    ", 0, Lists.newArrayList());
     }
 
-    public SnbtPrinterTagVisitor(String p_178107_, int p_178108_, List<String> p_178109_) {
-        this.indentation = p_178107_;
-        this.depth = p_178108_;
-        this.path = p_178109_;
+    public SnbtPrinterTagVisitor(String indentation, int depth, List<String> path) {
+        this.indentation = indentation;
+        this.depth = depth;
+        this.path = path;
     }
 
-    public String visit(Tag p_178142_) {
-        p_178142_.accept(this);
+    public String visit(Tag tag) {
+        tag.accept(this);
         return this.result;
     }
 
     @Override
-    public void visitString(StringTag p_178140_) {
-        this.result = StringTag.quoteAndEscape(p_178140_.getAsString());
+    public void visitString(StringTag tag) {
+        this.result = StringTag.quoteAndEscape(tag.getAsString());
     }
 
     @Override
-    public void visitByte(ByteTag p_178118_) {
-        this.result = p_178118_.getAsNumber() + "b";
+    public void visitByte(ByteTag tag) {
+        this.result = tag.getAsNumber() + "b";
     }
 
     @Override
-    public void visitShort(ShortTag p_178138_) {
-        this.result = p_178138_.getAsNumber() + "s";
+    public void visitShort(ShortTag tag) {
+        this.result = tag.getAsNumber() + "s";
     }
 
     @Override
-    public void visitInt(IntTag p_178130_) {
-        this.result = String.valueOf(p_178130_.getAsNumber());
+    public void visitInt(IntTag tag) {
+        this.result = String.valueOf(tag.getAsNumber());
     }
 
     @Override
-    public void visitLong(LongTag p_178136_) {
-        this.result = p_178136_.getAsNumber() + "L";
+    public void visitLong(LongTag tag) {
+        this.result = tag.getAsNumber() + "L";
     }
 
     @Override
-    public void visitFloat(FloatTag p_178126_) {
-        this.result = p_178126_.getAsFloat() + "f";
+    public void visitFloat(FloatTag tag) {
+        this.result = tag.getAsFloat() + "f";
     }
 
     @Override
-    public void visitDouble(DoubleTag p_178122_) {
-        this.result = p_178122_.getAsDouble() + "d";
+    public void visitDouble(DoubleTag tag) {
+        this.result = tag.getAsDouble() + "d";
     }
 
     @Override
-    public void visitByteArray(ByteArrayTag p_178116_) {
+    public void visitByteArray(ByteArrayTag tag) {
         StringBuilder stringbuilder = new StringBuilder("[").append("B").append(";");
-        byte[] abyte = p_178116_.getAsByteArray();
+        byte[] abyte = tag.getAsByteArray();
 
         for (int i = 0; i < abyte.length; i++) {
             stringbuilder.append(" ").append(abyte[i]).append("B");
@@ -103,9 +103,9 @@ public class SnbtPrinterTagVisitor implements TagVisitor {
     }
 
     @Override
-    public void visitIntArray(IntArrayTag p_178128_) {
+    public void visitIntArray(IntArrayTag tag) {
         StringBuilder stringbuilder = new StringBuilder("[").append("I").append(";");
-        int[] aint = p_178128_.getAsIntArray();
+        int[] aint = tag.getAsIntArray();
 
         for (int i = 0; i < aint.length; i++) {
             stringbuilder.append(" ").append(aint[i]);
@@ -119,10 +119,10 @@ public class SnbtPrinterTagVisitor implements TagVisitor {
     }
 
     @Override
-    public void visitLongArray(LongArrayTag p_178134_) {
+    public void visitLongArray(LongArrayTag tag) {
         String s = "L";
         StringBuilder stringbuilder = new StringBuilder("[").append("L").append(";");
-        long[] along = p_178134_.getAsLongArray();
+        long[] along = tag.getAsLongArray();
 
         for (int i = 0; i < along.length; i++) {
             stringbuilder.append(" ").append(along[i]).append("L");
@@ -136,8 +136,8 @@ public class SnbtPrinterTagVisitor implements TagVisitor {
     }
 
     @Override
-    public void visitList(ListTag p_178132_) {
-        if (p_178132_.isEmpty()) {
+    public void visitList(ListTag tag) {
+        if (tag.isEmpty()) {
             this.result = "[]";
         } else {
             StringBuilder stringbuilder = new StringBuilder("[");
@@ -147,10 +147,10 @@ public class SnbtPrinterTagVisitor implements TagVisitor {
                 stringbuilder.append("\n");
             }
 
-            for (int i = 0; i < p_178132_.size(); i++) {
+            for (int i = 0; i < tag.size(); i++) {
                 stringbuilder.append(Strings.repeat(s, this.depth + 1));
-                stringbuilder.append(new SnbtPrinterTagVisitor(s, this.depth + 1, this.path).visit(p_178132_.get(i)));
-                if (i != p_178132_.size() - 1) {
+                stringbuilder.append(new SnbtPrinterTagVisitor(s, this.depth + 1, this.path).visit(tag.get(i)));
+                if (i != tag.size() - 1) {
                     stringbuilder.append(ELEMENT_SEPARATOR).append(s.isEmpty() ? " " : "\n");
                 }
             }
@@ -166,8 +166,8 @@ public class SnbtPrinterTagVisitor implements TagVisitor {
     }
 
     @Override
-    public void visitCompound(CompoundTag p_178120_) {
-        if (p_178120_.isEmpty()) {
+    public void visitCompound(CompoundTag p_tag) {
+        if (p_tag.isEmpty()) {
             this.result = "{}";
         } else {
             StringBuilder stringbuilder = new StringBuilder("{");
@@ -177,12 +177,12 @@ public class SnbtPrinterTagVisitor implements TagVisitor {
                 stringbuilder.append("\n");
             }
 
-            Collection<String> collection = this.getKeys(p_178120_);
+            Collection<String> collection = this.getKeys(p_tag);
             Iterator<String> iterator = collection.iterator();
 
             while (iterator.hasNext()) {
                 String s1 = iterator.next();
-                Tag tag = p_178120_.get(s1);
+                Tag tag = p_tag.get(s1);
                 this.pushPath(s1);
                 stringbuilder.append(Strings.repeat(s, this.depth + 1))
                     .append(handleEscapePretty(s1))
@@ -209,12 +209,12 @@ public class SnbtPrinterTagVisitor implements TagVisitor {
         this.path.remove(this.path.size() - 1);
     }
 
-    private void pushPath(String p_178145_) {
-        this.path.add(p_178145_);
+    private void pushPath(String key) {
+        this.path.add(key);
     }
 
-    protected List<String> getKeys(CompoundTag p_178147_) {
-        Set<String> set = Sets.newHashSet(p_178147_.getAllKeys());
+    protected List<String> getKeys(CompoundTag tag) {
+        Set<String> set = Sets.newHashSet(tag.getAllKeys());
         List<String> list = Lists.newArrayList();
         List<String> list1 = KEY_ORDER.get(this.pathString());
         if (list1 != null) {
@@ -239,11 +239,11 @@ public class SnbtPrinterTagVisitor implements TagVisitor {
         return String.join(".", this.path);
     }
 
-    protected static String handleEscapePretty(String p_178112_) {
-        return SIMPLE_VALUE.matcher(p_178112_).matches() ? p_178112_ : StringTag.quoteAndEscape(p_178112_);
+    protected static String handleEscapePretty(String text) {
+        return SIMPLE_VALUE.matcher(text).matches() ? text : StringTag.quoteAndEscape(text);
     }
 
     @Override
-    public void visitEnd(EndTag p_178124_) {
+    public void visitEnd(EndTag tag) {
     }
 }

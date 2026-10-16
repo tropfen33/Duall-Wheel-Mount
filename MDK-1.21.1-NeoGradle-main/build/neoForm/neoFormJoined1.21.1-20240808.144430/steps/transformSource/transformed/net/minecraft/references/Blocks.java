@@ -13,7 +13,7 @@ public class Blocks {
     public static final ResourceKey<Block> MELON_STEM = createKey("melon_stem");
     public static final ResourceKey<Block> ATTACHED_MELON_STEM = createKey("attached_melon_stem");
 
-    private static ResourceKey<Block> createKey(String p_304947_) {
-        return ResourceKey.create(Registries.BLOCK, ResourceLocation.withDefaultNamespace(p_304947_));
+    private static ResourceKey<Block> createKey(String id) {
+        return ResourceKey.create(Registries.BLOCK, ResourceLocation.withDefaultNamespace(id));
     }
 }

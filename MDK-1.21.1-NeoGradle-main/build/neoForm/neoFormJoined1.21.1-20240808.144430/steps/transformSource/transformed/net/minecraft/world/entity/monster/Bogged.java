@@ -41,49 +41,52 @@ public class Bogged extends AbstractSkeleton implements Shearable {
         return AbstractSkeleton.createAttributes().add(Attributes.MAX_HEALTH, 16.0);
     }
 
-    public Bogged(EntityType<? extends Bogged> p_326920_, Level p_326946_) {
-        super(p_326920_, p_326946_);
+    public Bogged(EntityType<? extends Bogged> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_331269_) {
-        super.defineSynchedData(p_331269_);
-        p_331269_.define(DATA_SHEARED, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_SHEARED, false);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_331631_) {
-        super.addAdditionalSaveData(p_331631_);
-        p_331631_.putBoolean("sheared", this.isSheared());
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putBoolean("sheared", this.isSheared());
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_331225_) {
-        super.readAdditionalSaveData(p_331225_);
-        this.setSheared(p_331225_.getBoolean("sheared"));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.setSheared(compound.getBoolean("sheared"));
     }
 
     public boolean isSheared() {
         return this.entityData.get(DATA_SHEARED);
     }
 
-    public void setSheared(boolean p_330515_) {
-        this.entityData.set(DATA_SHEARED, p_330515_);
+    public void setSheared(boolean sheared) {
+        this.entityData.set(DATA_SHEARED, sheared);
     }
 
     @Override
-    protected InteractionResult mobInteract(Player p_330736_, InteractionHand p_331786_) {
-        ItemStack itemstack = p_330736_.getItemInHand(p_331786_);
+    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
         if (false && itemstack.is(Items.SHEARS) && this.readyForShearing()) { // Neo: Shear logic is handled by IShearable
             this.shear(SoundSource.PLAYERS);
-            this.gameEvent(GameEvent.SHEAR, p_330736_);
+            this.gameEvent(GameEvent.SHEAR, player);
             if (!this.level().isClientSide) {
-                itemstack.hurtAndBreak(1, p_330736_, getSlotForHand(p_331786_));
+                itemstack.hurtAndBreak(1, player, getSlotForHand(hand));
             }
 
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         } else {
-            return super.mobInteract(p_330736_, p_331786_);
+            return super.mobInteract(player, hand);
         }
     }
 
@@ -93,7 +96,7 @@ public class Bogged extends AbstractSkeleton implements Shearable {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_326909_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.BOGGED_HURT;
     }
 
@@ -108,8 +111,8 @@ public class Bogged extends AbstractSkeleton implements Shearable {
     }
 
     @Override
-    protected AbstractArrow getArrow(ItemStack p_326801_, float p_326846_, @Nullable ItemStack p_344869_) {
-        AbstractArrow abstractarrow = super.getArrow(p_326801_, p_326846_, p_344869_);
+    protected AbstractArrow getArrow(ItemStack p_arrow, float velocity, @Nullable ItemStack weapon) {
+        AbstractArrow abstractarrow = super.getArrow(p_arrow, velocity, weapon);
         if (abstractarrow instanceof Arrow arrow) {
             arrow.addEffect(new MobEffectInstance(MobEffects.POISON, 100));
         }
@@ -128,8 +131,8 @@ public class Bogged extends AbstractSkeleton implements Shearable {
     }
 
     @Override
-    public void shear(SoundSource p_331493_) {
-        this.level().playSound(null, this, SoundEvents.BOGGED_SHEAR, p_331493_, 1.0F, 1.0F);
+    public void shear(SoundSource source) {
+        this.level().playSound(null, this, SoundEvents.BOGGED_SHEAR, source, 1.0F, 1.0F);
         this.spawnShearedMushrooms();
         this.setSheared(true);
     }

@@ -8,17 +8,27 @@ import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.storage.loot.LootContextUser;
 import net.minecraft.world.level.storage.loot.ValidationContext;
 
+/**
+ * A LootContextParamSet defines a set of required and optional {@link LootContextParam}s.
+ * This is used to validate that conditions, functions and other {@link LootContextUser}s only use those parameters that are present for the given loot table.
+ *
+ * @see LootContextParamSets
+ * @see ValidationContext
+ */
 public class LootContextParamSet {
     private final Set<LootContextParam<?>> required;
     private final Set<LootContextParam<?>> all;
 
-    LootContextParamSet(Set<LootContextParam<?>> p_81388_, Set<LootContextParam<?>> p_81389_) {
-        this.required = ImmutableSet.copyOf(p_81388_);
-        this.all = ImmutableSet.copyOf(Sets.union(p_81388_, p_81389_));
+    LootContextParamSet(Set<LootContextParam<?>> required, Set<LootContextParam<?>> optional) {
+        this.required = ImmutableSet.copyOf(required);
+        this.all = ImmutableSet.copyOf(Sets.union(required, optional));
     }
 
-    public boolean isAllowed(LootContextParam<?> p_165476_) {
-        return this.all.contains(p_165476_);
+    /**
+     * Whether the given parameter is allowed in this set.
+     */
+    public boolean isAllowed(LootContextParam<?> param) {
+        return this.all.contains(param);
     }
 
     public Set<LootContextParam<?>> getRequired() {
@@ -36,15 +46,18 @@ public class LootContextParamSet {
             + "]";
     }
 
-    public void validateUser(ValidationContext p_81396_, LootContextUser p_81397_) {
-        this.validateUser(p_81396_.reporter(), p_81397_);
+    /**
+     * Validate that all parameters referenced by the given LootContextUser are present in this set.
+     */
+    public void validateUser(ValidationContext validationContext, LootContextUser lootContextUser) {
+        this.validateUser(validationContext.reporter(), lootContextUser);
     }
 
-    public void validateUser(ProblemReporter p_345868_, LootContextUser p_346074_) {
-        Set<LootContextParam<?>> set = p_346074_.getReferencedContextParams();
+    public void validateUser(ProblemReporter problemReporter, LootContextUser lootContextUser) {
+        Set<LootContextParam<?>> set = lootContextUser.getReferencedContextParams();
         Set<LootContextParam<?>> set1 = Sets.difference(set, this.all);
         if (!set1.isEmpty()) {
-            p_345868_.report("Parameters " + set1 + " are not provided in this context");
+            problemReporter.report("Parameters " + set1 + " are not provided in this context");
         }
     }
 
@@ -56,20 +69,20 @@ public class LootContextParamSet {
         private final Set<LootContextParam<?>> required = Sets.newIdentityHashSet();
         private final Set<LootContextParam<?>> optional = Sets.newIdentityHashSet();
 
-        public LootContextParamSet.Builder required(LootContextParam<?> p_81407_) {
-            if (this.optional.contains(p_81407_)) {
-                throw new IllegalArgumentException("Parameter " + p_81407_.getName() + " is already optional");
+        public LootContextParamSet.Builder required(LootContextParam<?> parameter) {
+            if (this.optional.contains(parameter)) {
+                throw new IllegalArgumentException("Parameter " + parameter.getName() + " is already optional");
             } else {
-                this.required.add(p_81407_);
+                this.required.add(parameter);
                 return this;
             }
         }
 
-        public LootContextParamSet.Builder optional(LootContextParam<?> p_81409_) {
-            if (this.required.contains(p_81409_)) {
-                throw new IllegalArgumentException("Parameter " + p_81409_.getName() + " is already required");
+        public LootContextParamSet.Builder optional(LootContextParam<?> parameter) {
+            if (this.required.contains(parameter)) {
+                throw new IllegalArgumentException("Parameter " + parameter.getName() + " is already required");
             } else {
-                this.optional.add(p_81409_);
+                this.optional.add(parameter);
                 return this;
             }
         }

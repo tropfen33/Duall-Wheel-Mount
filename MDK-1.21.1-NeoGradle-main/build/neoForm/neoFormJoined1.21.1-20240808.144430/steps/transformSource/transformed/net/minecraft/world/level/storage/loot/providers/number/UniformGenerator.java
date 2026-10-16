@@ -9,6 +9,10 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 
+/**
+ * Generates a random number which is uniformly distributed between a minimum and a maximum.
+ * Minimum and maximum are themselves NumberProviders.
+ */
 public record UniformGenerator(NumberProvider min, NumberProvider max) implements NumberProvider {
     public static final MapCodec<UniformGenerator> CODEC = RecordCodecBuilder.mapCodec(
         p_298748_ -> p_298748_.group(
@@ -23,18 +27,18 @@ public record UniformGenerator(NumberProvider min, NumberProvider max) implement
         return NumberProviders.UNIFORM;
     }
 
-    public static UniformGenerator between(float p_165781_, float p_165782_) {
-        return new UniformGenerator(ConstantValue.exactly(p_165781_), ConstantValue.exactly(p_165782_));
+    public static UniformGenerator between(float min, float max) {
+        return new UniformGenerator(ConstantValue.exactly(min), ConstantValue.exactly(max));
     }
 
     @Override
-    public int getInt(LootContext p_165784_) {
-        return Mth.nextInt(p_165784_.getRandom(), this.min.getInt(p_165784_), this.max.getInt(p_165784_));
+    public int getInt(LootContext lootContext) {
+        return Mth.nextInt(lootContext.getRandom(), this.min.getInt(lootContext), this.max.getInt(lootContext));
     }
 
     @Override
-    public float getFloat(LootContext p_165787_) {
-        return Mth.nextFloat(p_165787_.getRandom(), this.min.getFloat(p_165787_), this.max.getFloat(p_165787_));
+    public float getFloat(LootContext lootContext) {
+        return Mth.nextFloat(lootContext.getRandom(), this.min.getFloat(lootContext), this.max.getFloat(lootContext));
     }
 
     @Override

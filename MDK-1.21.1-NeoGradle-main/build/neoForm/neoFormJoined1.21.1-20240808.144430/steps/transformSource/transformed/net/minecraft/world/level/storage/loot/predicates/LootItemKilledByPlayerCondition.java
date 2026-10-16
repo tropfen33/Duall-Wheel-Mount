@@ -7,6 +7,11 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 
+/**
+ * A LootItemCondition that matches if the last damage to an entity was done by a player.
+ *
+ * @see LootContextParams#LAST_DAMAGE_PLAYER
+ */
 public class LootItemKilledByPlayerCondition implements LootItemCondition {
     private static final LootItemKilledByPlayerCondition INSTANCE = new LootItemKilledByPlayerCondition();
     public static final MapCodec<LootItemKilledByPlayerCondition> CODEC = MapCodec.unit(INSTANCE);
@@ -24,8 +29,8 @@ public class LootItemKilledByPlayerCondition implements LootItemCondition {
         return ImmutableSet.of(LootContextParams.LAST_DAMAGE_PLAYER);
     }
 
-    public boolean test(LootContext p_81899_) {
-        return p_81899_.hasParam(LootContextParams.LAST_DAMAGE_PLAYER);
+    public boolean test(LootContext context) {
+        return context.hasParam(LootContextParams.LAST_DAMAGE_PLAYER);
     }
 
     public static LootItemCondition.Builder killedByPlayer() {

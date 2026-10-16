@@ -26,18 +26,21 @@ public class DrownedRenderer extends AbstractZombieRenderer<Drowned, DrownedMode
         this.addLayer(new DrownedOuterLayer<>(this, p_173964_.getModelSet()));
     }
 
+    /**
+     * Returns the location of an entity's texture.
+     */
     @Override
-    public ResourceLocation getTextureLocation(Zombie p_114115_) {
+    public ResourceLocation getTextureLocation(Zombie entity) {
         return DROWNED_LOCATION;
     }
 
-    protected void setupRotations(Drowned p_114109_, PoseStack p_114110_, float p_114111_, float p_114112_, float p_114113_, float p_319953_) {
-        super.setupRotations(p_114109_, p_114110_, p_114111_, p_114112_, p_114113_, p_319953_);
-        float f = p_114109_.getSwimAmount(p_114113_);
+    protected void setupRotations(Drowned entity, PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale) {
+        super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
+        float f = entity.getSwimAmount(partialTick);
         if (f > 0.0F) {
-            float f1 = -10.0F - p_114109_.getXRot();
+            float f1 = -10.0F - entity.getXRot();
             float f2 = Mth.lerp(f, 0.0F, f1);
-            p_114110_.rotateAround(Axis.XP.rotationDegrees(f2), 0.0F, p_114109_.getBbHeight() / 2.0F / p_319953_, 0.0F);
+            poseStack.rotateAround(Axis.XP.rotationDegrees(f2), 0.0F, entity.getBbHeight() / 2.0F / scale, 0.0F);
         }
     }
 }

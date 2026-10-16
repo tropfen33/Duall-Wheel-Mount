@@ -8,8 +8,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class VillagerMetadataSectionSerializer implements MetadataSectionSerializer<VillagerMetaDataSection> {
-    public VillagerMetaDataSection fromJson(JsonObject p_119095_) {
-        return new VillagerMetaDataSection(VillagerMetaDataSection.Hat.getByName(GsonHelper.getAsString(p_119095_, "hat", "none")));
+    public VillagerMetaDataSection fromJson(JsonObject json) {
+        return new VillagerMetaDataSection(VillagerMetaDataSection.Hat.getByName(GsonHelper.getAsString(json, "hat", "none")));
     }
 
     @Override

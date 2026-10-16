@@ -11,27 +11,27 @@ public abstract class SinglePieceStructure extends Structure {
     private final int width;
     private final int depth;
 
-    protected SinglePieceStructure(SinglePieceStructure.PieceConstructor p_226537_, int p_226538_, int p_226539_, Structure.StructureSettings p_226540_) {
-        super(p_226540_);
-        this.constructor = p_226537_;
-        this.width = p_226538_;
-        this.depth = p_226539_;
+    protected SinglePieceStructure(SinglePieceStructure.PieceConstructor constructor, int width, int depth, Structure.StructureSettings settings) {
+        super(settings);
+        this.constructor = constructor;
+        this.width = width;
+        this.depth = depth;
     }
 
     @Override
-    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext p_226542_) {
-        return getLowestY(p_226542_, this.width, this.depth) < p_226542_.chunkGenerator().getSeaLevel()
+    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext context) {
+        return getLowestY(context, this.width, this.depth) < context.chunkGenerator().getSeaLevel()
             ? Optional.empty()
-            : onTopOfChunkCenter(p_226542_, Heightmap.Types.WORLD_SURFACE_WG, p_226545_ -> this.generatePieces(p_226545_, p_226542_));
+            : onTopOfChunkCenter(context, Heightmap.Types.WORLD_SURFACE_WG, p_226545_ -> this.generatePieces(p_226545_, context));
     }
 
-    private void generatePieces(StructurePiecesBuilder p_226547_, Structure.GenerationContext p_226548_) {
-        ChunkPos chunkpos = p_226548_.chunkPos();
-        p_226547_.addPiece(this.constructor.construct(p_226548_.random(), chunkpos.getMinBlockX(), chunkpos.getMinBlockZ()));
+    private void generatePieces(StructurePiecesBuilder builder, Structure.GenerationContext context) {
+        ChunkPos chunkpos = context.chunkPos();
+        builder.addPiece(this.constructor.construct(context.random(), chunkpos.getMinBlockX(), chunkpos.getMinBlockZ()));
     }
 
     @FunctionalInterface
     protected interface PieceConstructor {
-        StructurePiece construct(WorldgenRandom p_226550_, int p_226551_, int p_226552_);
+        StructurePiece construct(WorldgenRandom random, int minBlockX, int minBlockZ);
     }
 }

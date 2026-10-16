@@ -15,9 +15,9 @@ public class CherryParticle extends TextureSheetParticle {
     private final float particleRandom;
     private final float spinAcceleration;
 
-    protected CherryParticle(ClientLevel p_277612_, double p_278010_, double p_277614_, double p_277673_, SpriteSet p_277465_) {
-        super(p_277612_, p_278010_, p_277614_, p_277673_);
-        this.setSprite(p_277465_.get(this.random.nextInt(12), 12));
+    protected CherryParticle(ClientLevel level, double x, double y, double z, SpriteSet spriteSet) {
+        super(level, x, y, z);
+        this.setSprite(spriteSet.get(this.random.nextInt(12), 12));
         this.rotSpeed = (float)Math.toRadians(this.random.nextBoolean() ? -30.0 : 30.0);
         this.particleRandom = this.random.nextFloat();
         this.spinAcceleration = (float)Math.toRadians(this.random.nextBoolean() ? -5.0 : 5.0);

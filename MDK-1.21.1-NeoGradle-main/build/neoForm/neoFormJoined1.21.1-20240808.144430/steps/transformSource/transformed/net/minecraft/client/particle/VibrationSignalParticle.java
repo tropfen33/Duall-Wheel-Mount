@@ -20,36 +20,36 @@ public class VibrationSignalParticle extends TextureSheetParticle {
     private float pitch;
     private float pitchO;
 
-    protected VibrationSignalParticle(ClientLevel p_234105_, double p_234106_, double p_234107_, double p_234108_, PositionSource p_234109_, int p_234110_) {
-        super(p_234105_, p_234106_, p_234107_, p_234108_, 0.0, 0.0, 0.0);
+    protected VibrationSignalParticle(ClientLevel level, double x, double y, double z, PositionSource target, int lifetime) {
+        super(level, x, y, z, 0.0, 0.0, 0.0);
         this.quadSize = 0.3F;
-        this.target = p_234109_;
-        this.lifetime = p_234110_;
-        Optional<Vec3> optional = p_234109_.getPosition(p_234105_);
+        this.target = target;
+        this.lifetime = lifetime;
+        Optional<Vec3> optional = target.getPosition(level);
         if (optional.isPresent()) {
             Vec3 vec3 = optional.get();
-            double d0 = p_234106_ - vec3.x();
-            double d1 = p_234107_ - vec3.y();
-            double d2 = p_234108_ - vec3.z();
+            double d0 = x - vec3.x();
+            double d1 = y - vec3.y();
+            double d2 = z - vec3.z();
             this.rotO = this.rot = (float)Mth.atan2(d0, d2);
             this.pitchO = this.pitch = (float)Mth.atan2(d1, Math.sqrt(d0 * d0 + d2 * d2));
         }
     }
 
     @Override
-    public void render(VertexConsumer p_172475_, Camera p_172476_, float p_172477_) {
-        float f = Mth.sin(((float)this.age + p_172477_ - (float) (Math.PI * 2)) * 0.05F) * 2.0F;
-        float f1 = Mth.lerp(p_172477_, this.rotO, this.rot);
-        float f2 = Mth.lerp(p_172477_, this.pitchO, this.pitch) + (float) (Math.PI / 2);
+    public void render(VertexConsumer buffer, Camera renderInfo, float partialTicks) {
+        float f = Mth.sin(((float)this.age + partialTicks - (float) (Math.PI * 2)) * 0.05F) * 2.0F;
+        float f1 = Mth.lerp(partialTicks, this.rotO, this.rot);
+        float f2 = Mth.lerp(partialTicks, this.pitchO, this.pitch) + (float) (Math.PI / 2);
         Quaternionf quaternionf = new Quaternionf();
         quaternionf.rotationY(f1).rotateX(-f2).rotateY(f);
-        this.renderRotatedQuad(p_172475_, p_172476_, quaternionf, p_172477_);
+        this.renderRotatedQuad(buffer, renderInfo, quaternionf, partialTicks);
         quaternionf.rotationY((float) -Math.PI + f1).rotateX(f2).rotateY(f);
-        this.renderRotatedQuad(p_172475_, p_172476_, quaternionf, p_172477_);
+        this.renderRotatedQuad(buffer, renderInfo, quaternionf, partialTicks);
     }
 
     @Override
-    public int getLightColor(float p_172469_) {
+    public int getLightColor(float partialTick) {
         return 240;
     }
 
@@ -92,22 +92,22 @@ public class VibrationSignalParticle extends TextureSheetParticle {
     public static class Provider implements ParticleProvider<VibrationParticleOption> {
         private final SpriteSet sprite;
 
-        public Provider(SpriteSet p_172490_) {
-            this.sprite = p_172490_;
+        public Provider(SpriteSet sprites) {
+            this.sprite = sprites;
         }
 
         public Particle createParticle(
-            VibrationParticleOption p_172501_,
-            ClientLevel p_172502_,
-            double p_172503_,
-            double p_172504_,
-            double p_172505_,
-            double p_172506_,
-            double p_172507_,
-            double p_172508_
+            VibrationParticleOption type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
             VibrationSignalParticle vibrationsignalparticle = new VibrationSignalParticle(
-                p_172502_, p_172503_, p_172504_, p_172505_, p_172501_.getDestination(), p_172501_.getArrivalInTicks()
+                level, x, y, z, type.getDestination(), type.getArrivalInTicks()
             );
             vibrationsignalparticle.pickSprite(this.sprite);
             vibrationsignalparticle.setAlpha(1.0F);

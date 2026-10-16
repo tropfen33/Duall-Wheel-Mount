@@ -32,43 +32,43 @@ public class DesertPyramidStructure extends SinglePieceStructure {
 
     @Override
     public void afterPlace(
-        WorldGenLevel p_273644_,
-        StructureManager p_272615_,
-        ChunkGenerator p_273655_,
-        RandomSource p_272939_,
-        BoundingBox p_273179_,
-        ChunkPos p_273334_,
-        PiecesContainer p_273575_
+        WorldGenLevel level,
+        StructureManager structureManager,
+        ChunkGenerator chunkGenerator,
+        RandomSource random,
+        BoundingBox boundingBox,
+        ChunkPos chunkPos,
+        PiecesContainer pieces
     ) {
         Set<BlockPos> set = SortedArraySet.create(Vec3i::compareTo);
 
-        for (StructurePiece structurepiece : p_273575_.pieces()) {
+        for (StructurePiece structurepiece : pieces.pieces()) {
             if (structurepiece instanceof DesertPyramidPiece desertpyramidpiece) {
                 set.addAll(desertpyramidpiece.getPotentialSuspiciousSandWorldPositions());
-                placeSuspiciousSand(p_273179_, p_273644_, desertpyramidpiece.getRandomCollapsedRoofPos());
+                placeSuspiciousSand(boundingBox, level, desertpyramidpiece.getRandomCollapsedRoofPos());
             }
         }
 
         ObjectArrayList<BlockPos> objectarraylist = new ObjectArrayList<>(set.stream().toList());
-        RandomSource randomsource = RandomSource.create(p_273644_.getSeed()).forkPositional().at(p_273575_.calculateBoundingBox().getCenter());
+        RandomSource randomsource = RandomSource.create(level.getSeed()).forkPositional().at(pieces.calculateBoundingBox().getCenter());
         Util.shuffle(objectarraylist, randomsource);
         int i = Math.min(set.size(), randomsource.nextInt(5, 8));
 
         for (BlockPos blockpos : objectarraylist) {
             if (i > 0) {
                 i--;
-                placeSuspiciousSand(p_273179_, p_273644_, blockpos);
-            } else if (p_273179_.isInside(blockpos)) {
-                p_273644_.setBlock(blockpos, Blocks.SAND.defaultBlockState(), 2);
+                placeSuspiciousSand(boundingBox, level, blockpos);
+            } else if (boundingBox.isInside(blockpos)) {
+                level.setBlock(blockpos, Blocks.SAND.defaultBlockState(), 2);
             }
         }
     }
 
-    private static void placeSuspiciousSand(BoundingBox p_279472_, WorldGenLevel p_279193_, BlockPos p_279136_) {
-        if (p_279472_.isInside(p_279136_)) {
-            p_279193_.setBlock(p_279136_, Blocks.SUSPICIOUS_SAND.defaultBlockState(), 2);
-            p_279193_.getBlockEntity(p_279136_, BlockEntityType.BRUSHABLE_BLOCK)
-                .ifPresent(p_335309_ -> p_335309_.setLootTable(BuiltInLootTables.DESERT_PYRAMID_ARCHAEOLOGY, p_279136_.asLong()));
+    private static void placeSuspiciousSand(BoundingBox boundingBox, WorldGenLevel worldGenLevel, BlockPos pos) {
+        if (boundingBox.isInside(pos)) {
+            worldGenLevel.setBlock(pos, Blocks.SUSPICIOUS_SAND.defaultBlockState(), 2);
+            worldGenLevel.getBlockEntity(pos, BlockEntityType.BRUSHABLE_BLOCK)
+                .ifPresent(p_335309_ -> p_335309_.setLootTable(BuiltInLootTables.DESERT_PYRAMID_ARCHAEOLOGY, pos.asLong()));
         }
     }
 

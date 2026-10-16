@@ -57,14 +57,14 @@ public record PotionContents(Optional<Holder<Potion>> potion, Optional<Integer> 
         this(Optional.of(p_331208_), Optional.empty(), List.of());
     }
 
-    public static ItemStack createItemStack(Item p_330388_, Holder<Potion> p_331030_) {
-        ItemStack itemstack = new ItemStack(p_330388_);
-        itemstack.set(DataComponents.POTION_CONTENTS, new PotionContents(p_331030_));
+    public static ItemStack createItemStack(Item item, Holder<Potion> potion) {
+        ItemStack itemstack = new ItemStack(item);
+        itemstack.set(DataComponents.POTION_CONTENTS, new PotionContents(potion));
         return itemstack;
     }
 
-    public boolean is(Holder<Potion> p_331328_) {
-        return this.potion.isPresent() && this.potion.get().is(p_331328_) && this.customEffects.isEmpty();
+    public boolean is(Holder<Potion> potion) {
+        return this.potion.isPresent() && this.potion.get().is(potion) && this.customEffects.isEmpty();
     }
 
     public Iterable<MobEffectInstance> getAllEffects() {
@@ -77,45 +77,45 @@ public record PotionContents(Optional<Holder<Potion>> potion, Optional<Integer> 
         }
     }
 
-    public void forEachEffect(Consumer<MobEffectInstance> p_331190_) {
+    public void forEachEffect(Consumer<MobEffectInstance> action) {
         if (this.potion.isPresent()) {
             for (MobEffectInstance mobeffectinstance : this.potion.get().value().getEffects()) {
-                p_331190_.accept(new MobEffectInstance(mobeffectinstance));
+                action.accept(new MobEffectInstance(mobeffectinstance));
             }
         }
 
         for (MobEffectInstance mobeffectinstance1 : this.customEffects) {
-            p_331190_.accept(new MobEffectInstance(mobeffectinstance1));
+            action.accept(new MobEffectInstance(mobeffectinstance1));
         }
     }
 
-    public PotionContents withPotion(Holder<Potion> p_330288_) {
-        return new PotionContents(Optional.of(p_330288_), this.customColor, this.customEffects);
+    public PotionContents withPotion(Holder<Potion> potion) {
+        return new PotionContents(Optional.of(potion), this.customColor, this.customEffects);
     }
 
-    public PotionContents withEffectAdded(MobEffectInstance p_332083_) {
-        return new PotionContents(this.potion, this.customColor, Util.copyAndAdd(this.customEffects, p_332083_));
+    public PotionContents withEffectAdded(MobEffectInstance effect) {
+        return new PotionContents(this.potion, this.customColor, Util.copyAndAdd(this.customEffects, effect));
     }
 
     public int getColor() {
         return this.customColor.isPresent() ? this.customColor.get() : getColor(this.getAllEffects());
     }
 
-    public static int getColor(Holder<Potion> p_330619_) {
-        return getColor(p_330619_.value().getEffects());
+    public static int getColor(Holder<Potion> potion) {
+        return getColor(potion.value().getEffects());
     }
 
-    public static int getColor(Iterable<MobEffectInstance> p_331934_) {
-        return getColorOptional(p_331934_).orElse(-13083194);
+    public static int getColor(Iterable<MobEffectInstance> effects) {
+        return getColorOptional(effects).orElse(-13083194);
     }
 
-    public static OptionalInt getColorOptional(Iterable<MobEffectInstance> p_332699_) {
+    public static OptionalInt getColorOptional(Iterable<MobEffectInstance> effects) {
         int i = 0;
         int j = 0;
         int k = 0;
         int l = 0;
 
-        for (MobEffectInstance mobeffectinstance : p_332699_) {
+        for (MobEffectInstance mobeffectinstance : effects) {
             if (mobeffectinstance.isVisible()) {
                 int i1 = mobeffectinstance.getEffect().value().getColor();
                 int j1 = mobeffectinstance.getAmplifier() + 1;
@@ -137,15 +137,15 @@ public record PotionContents(Optional<Holder<Potion>> potion, Optional<Integer> 
         return Lists.transform(this.customEffects, MobEffectInstance::new);
     }
 
-    public void addPotionTooltip(Consumer<Component> p_331688_, float p_330466_, float p_332190_) {
-        addPotionTooltip(this.getAllEffects(), p_331688_, p_330466_, p_332190_);
+    public void addPotionTooltip(Consumer<Component> tooltipAdder, float durationFactor, float ticksPerSecond) {
+        addPotionTooltip(this.getAllEffects(), tooltipAdder, durationFactor, ticksPerSecond);
     }
 
-    public static void addPotionTooltip(Iterable<MobEffectInstance> p_331825_, Consumer<Component> p_331296_, float p_332038_, float p_332014_) {
+    public static void addPotionTooltip(Iterable<MobEffectInstance> effects, Consumer<Component> tooltipAdder, float durationFactor, float ticksPerSecond) {
         List<Pair<Holder<Attribute>, AttributeModifier>> list = Lists.newArrayList();
         boolean flag = true;
 
-        for (MobEffectInstance mobeffectinstance : p_331825_) {
+        for (MobEffectInstance mobeffectinstance : effects) {
             flag = false;
             MutableComponent mutablecomponent = Component.translatable(mobeffectinstance.getDescriptionId());
             Holder<MobEffect> holder = mobeffectinstance.getEffect();
@@ -158,23 +158,23 @@ public record PotionContents(Optional<Holder<Potion>> potion, Optional<Integer> 
 
             if (!mobeffectinstance.endsWithin(20)) {
                 mutablecomponent = Component.translatable(
-                    "potion.withDuration", mutablecomponent, MobEffectUtil.formatDuration(mobeffectinstance, p_332038_, p_332014_)
+                    "potion.withDuration", mutablecomponent, MobEffectUtil.formatDuration(mobeffectinstance, durationFactor, ticksPerSecond)
                 );
             }
 
-            p_331296_.accept(mutablecomponent.withStyle(holder.value().getCategory().getTooltipFormatting()));
+            tooltipAdder.accept(mutablecomponent.withStyle(holder.value().getCategory().getTooltipFormatting()));
         }
 
         if (flag) {
-            p_331296_.accept(NO_EFFECT);
+            tooltipAdder.accept(NO_EFFECT);
         }
 
         if (!list.isEmpty()) {
-            p_331296_.accept(CommonComponents.EMPTY);
-            p_331296_.accept(Component.translatable("potion.whenDrank").withStyle(ChatFormatting.DARK_PURPLE));
+            tooltipAdder.accept(CommonComponents.EMPTY);
+            tooltipAdder.accept(Component.translatable("potion.whenDrank").withStyle(ChatFormatting.DARK_PURPLE));
 
             // Neo: Override handling of potion attribute tooltips to support IAttributeExtension
-            net.neoforged.neoforge.common.util.AttributeUtil.addPotionTooltip(list, p_331296_);
+            net.neoforged.neoforge.common.util.AttributeUtil.addPotionTooltip(list, tooltipAdder);
             if (true) return;
 
             for (Pair<Holder<Attribute>, AttributeModifier> pair : list) {
@@ -189,7 +189,7 @@ public record PotionContents(Optional<Holder<Potion>> potion, Optional<Integer> 
                 }
 
                 if (d1 > 0.0) {
-                    p_331296_.accept(
+                    tooltipAdder.accept(
                         Component.translatable(
                                 "attribute.modifier.plus." + attributemodifier.operation().id(),
                                 ItemAttributeModifiers.ATTRIBUTE_MODIFIER_FORMAT.format(d0),
@@ -199,7 +199,7 @@ public record PotionContents(Optional<Holder<Potion>> potion, Optional<Integer> 
                     );
                 } else if (d1 < 0.0) {
                     d0 *= -1.0;
-                    p_331296_.accept(
+                    tooltipAdder.accept(
                         Component.translatable(
                                 "attribute.modifier.take." + attributemodifier.operation().id(),
                                 ItemAttributeModifiers.ATTRIBUTE_MODIFIER_FORMAT.format(d0),

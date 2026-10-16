@@ -21,9 +21,9 @@ public class RandomFeatureConfiguration implements FeatureConfiguration {
     public final List<WeightedPlacedFeature> features;
     public final Holder<PlacedFeature> defaultFeature;
 
-    public RandomFeatureConfiguration(List<WeightedPlacedFeature> p_204811_, Holder<PlacedFeature> p_204812_) {
-        this.features = p_204811_;
-        this.defaultFeature = p_204812_;
+    public RandomFeatureConfiguration(List<WeightedPlacedFeature> features, Holder<PlacedFeature> defaultFeature) {
+        this.features = features;
+        this.defaultFeature = defaultFeature;
     }
 
     @Override

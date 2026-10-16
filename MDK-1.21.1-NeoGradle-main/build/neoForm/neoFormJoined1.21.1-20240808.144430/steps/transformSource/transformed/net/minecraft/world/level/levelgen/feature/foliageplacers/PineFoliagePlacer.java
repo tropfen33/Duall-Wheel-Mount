@@ -16,9 +16,9 @@ public class PineFoliagePlacer extends FoliagePlacer {
     );
     private final IntProvider height;
 
-    public PineFoliagePlacer(IntProvider p_161486_, IntProvider p_161487_, IntProvider p_161488_) {
-        super(p_161486_, p_161487_);
-        this.height = p_161488_;
+    public PineFoliagePlacer(IntProvider radius, IntProvider offset, IntProvider height) {
+        super(radius, offset);
+        this.height = height;
     }
 
     @Override
@@ -28,40 +28,44 @@ public class PineFoliagePlacer extends FoliagePlacer {
 
     @Override
     protected void createFoliage(
-        LevelSimulatedReader p_225702_,
-        FoliagePlacer.FoliageSetter p_272791_,
-        RandomSource p_225704_,
-        TreeConfiguration p_225705_,
-        int p_225706_,
-        FoliagePlacer.FoliageAttachment p_225707_,
-        int p_225708_,
-        int p_225709_,
-        int p_225710_
+        LevelSimulatedReader level,
+        FoliagePlacer.FoliageSetter blockSetter,
+        RandomSource random,
+        TreeConfiguration config,
+        int maxFreeTreeHeight,
+        FoliagePlacer.FoliageAttachment attachment,
+        int foliageHeight,
+        int foliageRadius,
+        int offset
     ) {
         int i = 0;
 
-        for (int j = p_225710_; j >= p_225710_ - p_225708_; j--) {
-            this.placeLeavesRow(p_225702_, p_272791_, p_225704_, p_225705_, p_225707_.pos(), i, j, p_225707_.doubleTrunk());
-            if (i >= 1 && j == p_225710_ - p_225708_ + 1) {
+        for (int j = offset; j >= offset - foliageHeight; j--) {
+            this.placeLeavesRow(level, blockSetter, random, config, attachment.pos(), i, j, attachment.doubleTrunk());
+            if (i >= 1 && j == offset - foliageHeight + 1) {
                 i--;
-            } else if (i < p_225709_ + p_225707_.radiusOffset()) {
+            } else if (i < foliageRadius + attachment.radiusOffset()) {
                 i++;
             }
         }
     }
 
     @Override
-    public int foliageRadius(RandomSource p_225688_, int p_225689_) {
-        return super.foliageRadius(p_225688_, p_225689_) + p_225688_.nextInt(Math.max(p_225689_ + 1, 1));
+    public int foliageRadius(RandomSource random, int radius) {
+        return super.foliageRadius(random, radius) + random.nextInt(Math.max(radius + 1, 1));
     }
 
     @Override
-    public int foliageHeight(RandomSource p_225698_, int p_225699_, TreeConfiguration p_225700_) {
-        return this.height.sample(p_225698_);
+    public int foliageHeight(RandomSource random, int height, TreeConfiguration config) {
+        return this.height.sample(random);
     }
 
+    /**
+     * Skips certain positions based on the provided shape, such as rounding corners randomly.
+     * The coordinates are passed in as absolute value, and should be within [0, {@code range}].
+     */
     @Override
-    protected boolean shouldSkipLocation(RandomSource p_225691_, int p_225692_, int p_225693_, int p_225694_, int p_225695_, boolean p_225696_) {
-        return p_225692_ == p_225695_ && p_225694_ == p_225695_ && p_225695_ > 0;
+    protected boolean shouldSkipLocation(RandomSource random, int localX, int localY, int localZ, int range, boolean large) {
+        return localX == range && localZ == range && range > 0;
     }
 }

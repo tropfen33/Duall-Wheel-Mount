@@ -11,18 +11,18 @@ public class FrogAttackablesSensor extends NearestVisibleLivingEntitySensor {
     public static final float TARGET_DETECTION_DISTANCE = 10.0F;
 
     @Override
-    protected boolean isMatchingEntity(LivingEntity p_217810_, LivingEntity p_217811_) {
-        return !p_217810_.getBrain().hasMemoryValue(MemoryModuleType.HAS_HUNTING_COOLDOWN)
-                && Sensor.isEntityAttackable(p_217810_, p_217811_)
-                && Frog.canEat(p_217811_)
-                && !this.isUnreachableAttackTarget(p_217810_, p_217811_)
-            ? p_217811_.closerThan(p_217810_, 10.0)
+    protected boolean isMatchingEntity(LivingEntity attacker, LivingEntity target) {
+        return !attacker.getBrain().hasMemoryValue(MemoryModuleType.HAS_HUNTING_COOLDOWN)
+                && Sensor.isEntityAttackable(attacker, target)
+                && Frog.canEat(target)
+                && !this.isUnreachableAttackTarget(attacker, target)
+            ? target.closerThan(attacker, 10.0)
             : false;
     }
 
-    private boolean isUnreachableAttackTarget(LivingEntity p_238336_, LivingEntity p_238337_) {
-        List<UUID> list = p_238336_.getBrain().getMemory(MemoryModuleType.UNREACHABLE_TONGUE_TARGETS).orElseGet(ArrayList::new);
-        return list.contains(p_238337_.getUUID());
+    private boolean isUnreachableAttackTarget(LivingEntity attacker, LivingEntity target) {
+        List<UUID> list = attacker.getBrain().getMemory(MemoryModuleType.UNREACHABLE_TONGUE_TARGETS).orElseGet(ArrayList::new);
+        return list.contains(target.getUUID());
     }
 
     @Override

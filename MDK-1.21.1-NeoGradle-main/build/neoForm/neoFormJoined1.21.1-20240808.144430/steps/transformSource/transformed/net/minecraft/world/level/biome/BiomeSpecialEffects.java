@@ -45,31 +45,31 @@ public class BiomeSpecialEffects {
     private final Optional<Music> backgroundMusic;
 
     BiomeSpecialEffects(
-        int p_47941_,
-        int p_47942_,
-        int p_47943_,
-        int p_47944_,
-        Optional<Integer> p_47945_,
-        Optional<Integer> p_47946_,
-        BiomeSpecialEffects.GrassColorModifier p_47947_,
-        Optional<AmbientParticleSettings> p_47948_,
-        Optional<Holder<SoundEvent>> p_47949_,
-        Optional<AmbientMoodSettings> p_47950_,
-        Optional<AmbientAdditionsSettings> p_47951_,
-        Optional<Music> p_47952_
+        int fogColor,
+        int waterColor,
+        int waterFogColor,
+        int skyColor,
+        Optional<Integer> foliageColorOverride,
+        Optional<Integer> grassColorOverride,
+        BiomeSpecialEffects.GrassColorModifier grassColorModifier,
+        Optional<AmbientParticleSettings> ambientParticleSettings,
+        Optional<Holder<SoundEvent>> ambientLoopSoundEvent,
+        Optional<AmbientMoodSettings> ambientMoodSettings,
+        Optional<AmbientAdditionsSettings> ambientAdditionsSettings,
+        Optional<Music> backgroundMusic
     ) {
-        this.fogColor = p_47941_;
-        this.waterColor = p_47942_;
-        this.waterFogColor = p_47943_;
-        this.skyColor = p_47944_;
-        this.foliageColorOverride = p_47945_;
-        this.grassColorOverride = p_47946_;
-        this.grassColorModifier = p_47947_;
-        this.ambientParticleSettings = p_47948_;
-        this.ambientLoopSoundEvent = p_47949_;
-        this.ambientMoodSettings = p_47950_;
-        this.ambientAdditionsSettings = p_47951_;
-        this.backgroundMusic = p_47952_;
+        this.fogColor = fogColor;
+        this.waterColor = waterColor;
+        this.waterFogColor = waterFogColor;
+        this.skyColor = skyColor;
+        this.foliageColorOverride = foliageColorOverride;
+        this.grassColorOverride = grassColorOverride;
+        this.grassColorModifier = grassColorModifier;
+        this.ambientParticleSettings = ambientParticleSettings;
+        this.ambientLoopSoundEvent = ambientLoopSoundEvent;
+        this.ambientMoodSettings = ambientMoodSettings;
+        this.ambientAdditionsSettings = ambientAdditionsSettings;
+        this.backgroundMusic = backgroundMusic;
     }
 
     public int getFogColor() {
@@ -134,63 +134,63 @@ public class BiomeSpecialEffects {
         protected Optional<AmbientAdditionsSettings> ambientAdditionsSettings = Optional.empty();
         protected Optional<Music> backgroundMusic = Optional.empty();
 
-        public BiomeSpecialEffects.Builder fogColor(int p_48020_) {
-            this.fogColor = OptionalInt.of(p_48020_);
+        public BiomeSpecialEffects.Builder fogColor(int fogColor) {
+            this.fogColor = OptionalInt.of(fogColor);
             return this;
         }
 
-        public BiomeSpecialEffects.Builder waterColor(int p_48035_) {
-            this.waterColor = OptionalInt.of(p_48035_);
+        public BiomeSpecialEffects.Builder waterColor(int waterColor) {
+            this.waterColor = OptionalInt.of(waterColor);
             return this;
         }
 
-        public BiomeSpecialEffects.Builder waterFogColor(int p_48038_) {
-            this.waterFogColor = OptionalInt.of(p_48038_);
+        public BiomeSpecialEffects.Builder waterFogColor(int waterFogColor) {
+            this.waterFogColor = OptionalInt.of(waterFogColor);
             return this;
         }
 
-        public BiomeSpecialEffects.Builder skyColor(int p_48041_) {
-            this.skyColor = OptionalInt.of(p_48041_);
+        public BiomeSpecialEffects.Builder skyColor(int skyColor) {
+            this.skyColor = OptionalInt.of(skyColor);
             return this;
         }
 
-        public BiomeSpecialEffects.Builder foliageColorOverride(int p_48044_) {
-            this.foliageColorOverride = Optional.of(p_48044_);
+        public BiomeSpecialEffects.Builder foliageColorOverride(int foliageColorOverride) {
+            this.foliageColorOverride = Optional.of(foliageColorOverride);
             return this;
         }
 
-        public BiomeSpecialEffects.Builder grassColorOverride(int p_48046_) {
-            this.grassColorOverride = Optional.of(p_48046_);
+        public BiomeSpecialEffects.Builder grassColorOverride(int grassColorOverride) {
+            this.grassColorOverride = Optional.of(grassColorOverride);
             return this;
         }
 
-        public BiomeSpecialEffects.Builder grassColorModifier(BiomeSpecialEffects.GrassColorModifier p_48032_) {
-            this.grassColorModifier = p_48032_;
+        public BiomeSpecialEffects.Builder grassColorModifier(BiomeSpecialEffects.GrassColorModifier grassColorModifier) {
+            this.grassColorModifier = grassColorModifier;
             return this;
         }
 
-        public BiomeSpecialEffects.Builder ambientParticle(AmbientParticleSettings p_48030_) {
-            this.ambientParticle = Optional.of(p_48030_);
+        public BiomeSpecialEffects.Builder ambientParticle(AmbientParticleSettings ambientParticle) {
+            this.ambientParticle = Optional.of(ambientParticle);
             return this;
         }
 
-        public BiomeSpecialEffects.Builder ambientLoopSound(Holder<SoundEvent> p_263327_) {
-            this.ambientLoopSoundEvent = Optional.of(p_263327_);
+        public BiomeSpecialEffects.Builder ambientLoopSound(Holder<SoundEvent> ambientLoopSoundEvent) {
+            this.ambientLoopSoundEvent = Optional.of(ambientLoopSoundEvent);
             return this;
         }
 
-        public BiomeSpecialEffects.Builder ambientMoodSound(AmbientMoodSettings p_48028_) {
-            this.ambientMoodSettings = Optional.of(p_48028_);
+        public BiomeSpecialEffects.Builder ambientMoodSound(AmbientMoodSettings ambientMoodSettings) {
+            this.ambientMoodSettings = Optional.of(ambientMoodSettings);
             return this;
         }
 
-        public BiomeSpecialEffects.Builder ambientAdditionsSound(AmbientAdditionsSettings p_48026_) {
-            this.ambientAdditionsSettings = Optional.of(p_48026_);
+        public BiomeSpecialEffects.Builder ambientAdditionsSound(AmbientAdditionsSettings ambientAdditionsSettings) {
+            this.ambientAdditionsSettings = Optional.of(ambientAdditionsSettings);
             return this;
         }
 
-        public BiomeSpecialEffects.Builder backgroundMusic(@Nullable Music p_48022_) {
-            this.backgroundMusic = Optional.ofNullable(p_48022_);
+        public BiomeSpecialEffects.Builder backgroundMusic(@Nullable Music backgroundMusic) {
+            this.backgroundMusic = Optional.ofNullable(backgroundMusic);
             return this;
         }
 
@@ -239,18 +239,18 @@ public class BiomeSpecialEffects {
         private final ColorModifier delegate;
         public static final Codec<BiomeSpecialEffects.GrassColorModifier> CODEC = StringRepresentable.fromEnum(BiomeSpecialEffects.GrassColorModifier::values);
 
-        public int modifyColor(double p_48065_, double p_48066_, int p_48067_) {
-            return delegate.modifyGrassColor(p_48065_, p_48066_, p_48067_);
+        public int modifyColor(double x, double z, int grassColor) {
+            return delegate.modifyGrassColor(x, z, grassColor);
         }
 
         @net.neoforged.fml.common.asm.enumextension.ReservedConstructor
-        GrassColorModifier(String p_48058_) {
-            this.name = p_48058_;
+        GrassColorModifier(String name) {
+            this.name = name;
             this.delegate = null;
         }
 
-        GrassColorModifier(String name, ColorModifier delegate) {
-            this.name = name;
+        GrassColorModifier(String p_name, ColorModifier delegate) {
+            this.name = p_name;
             this.delegate = delegate;
         }
 

@@ -22,9 +22,9 @@ public abstract class AbstractSkullBlock extends BaseEntityBlock implements Equi
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
     private final SkullBlock.Type type;
 
-    public AbstractSkullBlock(SkullBlock.Type p_48745_, BlockBehaviour.Properties p_48746_) {
-        super(p_48746_);
-        this.type = p_48745_;
+    public AbstractSkullBlock(SkullBlock.Type type, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.type = type;
         this.registerDefaultState(this.stateDefinition.any().setValue(POWERED, Boolean.valueOf(false)));
     }
 
@@ -32,20 +32,20 @@ public abstract class AbstractSkullBlock extends BaseEntityBlock implements Equi
     protected abstract MapCodec<? extends AbstractSkullBlock> codec();
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_151996_, BlockState p_151997_) {
-        return new SkullBlockEntity(p_151996_, p_151997_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new SkullBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_151992_, BlockState p_151993_, BlockEntityType<T> p_151994_) {
-        if (p_151992_.isClientSide) {
-            boolean flag = p_151993_.is(Blocks.DRAGON_HEAD)
-                || p_151993_.is(Blocks.DRAGON_WALL_HEAD)
-                || p_151993_.is(Blocks.PIGLIN_HEAD)
-                || p_151993_.is(Blocks.PIGLIN_WALL_HEAD);
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        if (level.isClientSide) {
+            boolean flag = state.is(Blocks.DRAGON_HEAD)
+                || state.is(Blocks.DRAGON_WALL_HEAD)
+                || state.is(Blocks.PIGLIN_HEAD)
+                || state.is(Blocks.PIGLIN_WALL_HEAD);
             if (flag) {
-                return createTickerHelper(p_151994_, BlockEntityType.SKULL, SkullBlockEntity::animation);
+                return createTickerHelper(blockEntityType, BlockEntityType.SKULL, SkullBlockEntity::animation);
             }
         }
 
@@ -57,7 +57,7 @@ public abstract class AbstractSkullBlock extends BaseEntityBlock implements Equi
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_48750_, PathComputationType p_48753_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
@@ -67,21 +67,21 @@ public abstract class AbstractSkullBlock extends BaseEntityBlock implements Equi
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_300993_) {
-        p_300993_.add(POWERED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(POWERED);
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_300939_) {
-        return this.defaultBlockState().setValue(POWERED, Boolean.valueOf(p_300939_.getLevel().hasNeighborSignal(p_300939_.getClickedPos())));
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(POWERED, Boolean.valueOf(context.getLevel().hasNeighborSignal(context.getClickedPos())));
     }
 
     @Override
-    protected void neighborChanged(BlockState p_301179_, Level p_301325_, BlockPos p_301085_, Block p_301182_, BlockPos p_301255_, boolean p_300890_) {
-        if (!p_301325_.isClientSide) {
-            boolean flag = p_301325_.hasNeighborSignal(p_301085_);
-            if (flag != p_301179_.getValue(POWERED)) {
-                p_301325_.setBlock(p_301085_, p_301179_.setValue(POWERED, Boolean.valueOf(flag)), 2);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
+        if (!level.isClientSide) {
+            boolean flag = level.hasNeighborSignal(pos);
+            if (flag != state.getValue(POWERED)) {
+                level.setBlock(pos, state.setValue(POWERED, Boolean.valueOf(flag)), 2);
             }
         }
     }

@@ -185,19 +185,19 @@ public class ModelTemplates {
     public static final ModelTemplate VAULT = create("template_vault", TextureSlot.TOP, TextureSlot.BOTTOM, TextureSlot.SIDE, TextureSlot.FRONT);
     public static final ModelTemplate FLAT_HANDHELD_MACE_ITEM = createItem("handheld_mace", TextureSlot.LAYER0);
 
-    private static ModelTemplate create(TextureSlot... p_125727_) {
-        return new ModelTemplate(Optional.empty(), Optional.empty(), p_125727_);
+    private static ModelTemplate create(TextureSlot... requiredSlots) {
+        return new ModelTemplate(Optional.empty(), Optional.empty(), requiredSlots);
     }
 
-    private static ModelTemplate create(String p_125724_, TextureSlot... p_125725_) {
-        return new ModelTemplate(Optional.of(ResourceLocation.withDefaultNamespace("block/" + p_125724_)), Optional.empty(), p_125725_);
+    private static ModelTemplate create(String blockModelLocation, TextureSlot... requiredSlots) {
+        return new ModelTemplate(Optional.of(ResourceLocation.withDefaultNamespace("block/" + blockModelLocation)), Optional.empty(), requiredSlots);
     }
 
-    private static ModelTemplate createItem(String p_125731_, TextureSlot... p_125732_) {
-        return new ModelTemplate(Optional.of(ResourceLocation.withDefaultNamespace("item/" + p_125731_)), Optional.empty(), p_125732_);
+    private static ModelTemplate createItem(String itemModelLocation, TextureSlot... requiredSlots) {
+        return new ModelTemplate(Optional.of(ResourceLocation.withDefaultNamespace("item/" + itemModelLocation)), Optional.empty(), requiredSlots);
     }
 
-    private static ModelTemplate create(String p_125720_, String p_125721_, TextureSlot... p_125722_) {
-        return new ModelTemplate(Optional.of(ResourceLocation.withDefaultNamespace("block/" + p_125720_)), Optional.of(p_125721_), p_125722_);
+    private static ModelTemplate create(String blockModelLocation, String suffix, TextureSlot... requiredSlots) {
+        return new ModelTemplate(Optional.of(ResourceLocation.withDefaultNamespace("block/" + blockModelLocation)), Optional.of(suffix), requiredSlots);
     }
 }

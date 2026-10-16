@@ -54,13 +54,13 @@ public interface DataComponentType<T> {
         private StreamCodec<? super RegistryFriendlyByteBuf, T> streamCodec;
         private boolean cacheEncoding;
 
-        public DataComponentType.Builder<T> persistent(Codec<T> p_331936_) {
-            this.codec = p_331936_;
+        public DataComponentType.Builder<T> persistent(Codec<T> codec) {
+            this.codec = codec;
             return this;
         }
 
-        public DataComponentType.Builder<T> networkSynchronized(StreamCodec<? super RegistryFriendlyByteBuf, T> p_331364_) {
-            this.streamCodec = p_331364_;
+        public DataComponentType.Builder<T> networkSynchronized(StreamCodec<? super RegistryFriendlyByteBuf, T> streamCodec) {
+            this.streamCodec = streamCodec;
             return this;
         }
 
@@ -82,9 +82,9 @@ public interface DataComponentType<T> {
             private final Codec<T> codec;
             private final StreamCodec<? super RegistryFriendlyByteBuf, T> streamCodec;
 
-            SimpleType(@Nullable Codec<T> p_331492_, StreamCodec<? super RegistryFriendlyByteBuf, T> p_330863_) {
-                this.codec = p_331492_;
-                this.streamCodec = p_330863_;
+            SimpleType(@Nullable Codec<T> codec, StreamCodec<? super RegistryFriendlyByteBuf, T> streamCodec) {
+                this.codec = codec;
+                this.streamCodec = streamCodec;
             }
 
             @Nullable

@@ -10,9 +10,9 @@ public class UploadResult {
     @Nullable
     public final String errorMessage;
 
-    UploadResult(int p_90136_, String p_90137_) {
-        this.statusCode = p_90136_;
-        this.errorMessage = p_90137_;
+    UploadResult(int statusCode, String errorMessage) {
+        this.statusCode = statusCode;
+        this.errorMessage = errorMessage;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -20,13 +20,13 @@ public class UploadResult {
         private int statusCode = -1;
         private String errorMessage;
 
-        public UploadResult.Builder withStatusCode(int p_90147_) {
-            this.statusCode = p_90147_;
+        public UploadResult.Builder withStatusCode(int statusCode) {
+            this.statusCode = statusCode;
             return this;
         }
 
-        public UploadResult.Builder withErrorMessage(@Nullable String p_90149_) {
-            this.errorMessage = p_90149_;
+        public UploadResult.Builder withErrorMessage(@Nullable String errorMessage) {
+            this.errorMessage = errorMessage;
             return this;
         }
 

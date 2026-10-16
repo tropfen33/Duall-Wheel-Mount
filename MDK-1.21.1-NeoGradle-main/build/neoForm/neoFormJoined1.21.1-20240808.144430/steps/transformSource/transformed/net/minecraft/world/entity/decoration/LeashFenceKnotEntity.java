@@ -28,17 +28,17 @@ import net.minecraft.world.phys.Vec3;
 public class LeashFenceKnotEntity extends BlockAttachedEntity {
     public static final double OFFSET_Y = 0.375;
 
-    public LeashFenceKnotEntity(EntityType<? extends LeashFenceKnotEntity> p_31828_, Level p_31829_) {
-        super(p_31828_, p_31829_);
+    public LeashFenceKnotEntity(EntityType<? extends LeashFenceKnotEntity> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public LeashFenceKnotEntity(Level p_31831_, BlockPos p_31832_) {
-        super(EntityType.LEASH_KNOT, p_31831_, p_31832_);
-        this.setPos((double)p_31832_.getX(), (double)p_31832_.getY(), (double)p_31832_.getZ());
+    public LeashFenceKnotEntity(Level level, BlockPos pos) {
+        super(EntityType.LEASH_KNOT, level, pos);
+        this.setPos((double)pos.getX(), (double)pos.getY(), (double)pos.getZ());
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_344730_) {
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
     }
 
     @Override
@@ -49,37 +49,46 @@ public class LeashFenceKnotEntity extends BlockAttachedEntity {
         this.setBoundingBox(new AABB(this.getX() - d0, this.getY(), this.getZ() - d0, this.getX() + d0, this.getY() + d1, this.getZ() + d0));
     }
 
+    /**
+     * Checks if the entity is in range to render.
+     */
     @Override
-    public boolean shouldRenderAtSqrDistance(double p_31835_) {
-        return p_31835_ < 1024.0;
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return distance < 1024.0;
     }
 
+    /**
+     * Called when this entity is broken. Entity parameter may be null.
+     */
     @Override
-    public void dropItem(@Nullable Entity p_31837_) {
+    public void dropItem(@Nullable Entity brokenEntity) {
         this.playSound(SoundEvents.LEASH_KNOT_BREAK, 1.0F, 1.0F);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_31852_) {
+    public void addAdditionalSaveData(CompoundTag compound) {
+    }
+
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    @Override
+    public void readAdditionalSaveData(CompoundTag compound) {
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag p_31850_) {
-    }
-
-    @Override
-    public InteractionResult interact(Player p_31842_, InteractionHand p_31843_) {
+    public InteractionResult interact(Player player, InteractionHand hand) {
         if (this.level().isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
             boolean flag = false;
             List<Leashable> list = LeadItem.leashableInArea(this.level(), this.getPos(), p_353058_ -> {
                 Entity entity = p_353058_.getLeashHolder();
-                return entity == p_31842_ || entity == this;
+                return entity == player || entity == this;
             });
 
             for (Leashable leashable : list) {
-                if (leashable.getLeashHolder() == p_31842_) {
+                if (leashable.getLeashHolder() == player) {
                     leashable.setLeashedTo(this, true);
                     flag = true;
                 }
@@ -88,7 +97,7 @@ public class LeashFenceKnotEntity extends BlockAttachedEntity {
             boolean flag1 = false;
             if (!flag) {
                 this.discard();
-                if (p_31842_.getAbilities().instabuild) {
+                if (player.getAbilities().instabuild) {
                     for (Leashable leashable1 : list) {
                         if (leashable1.isLeashed() && leashable1.getLeashHolder() == this) {
                             leashable1.dropLeash(true, false);
@@ -99,7 +108,7 @@ public class LeashFenceKnotEntity extends BlockAttachedEntity {
             }
 
             if (flag || flag1) {
-                this.gameEvent(GameEvent.BLOCK_ATTACH, p_31842_);
+                this.gameEvent(GameEvent.BLOCK_ATTACH, player);
             }
 
             return InteractionResult.CONSUME;
@@ -111,21 +120,21 @@ public class LeashFenceKnotEntity extends BlockAttachedEntity {
         return this.level().getBlockState(this.pos).is(BlockTags.FENCES);
     }
 
-    public static LeashFenceKnotEntity getOrCreateKnot(Level p_31845_, BlockPos p_31846_) {
-        int i = p_31846_.getX();
-        int j = p_31846_.getY();
-        int k = p_31846_.getZ();
+    public static LeashFenceKnotEntity getOrCreateKnot(Level level, BlockPos pos) {
+        int i = pos.getX();
+        int j = pos.getY();
+        int k = pos.getZ();
 
-        for (LeashFenceKnotEntity leashfenceknotentity : p_31845_.getEntitiesOfClass(
+        for (LeashFenceKnotEntity leashfenceknotentity : level.getEntitiesOfClass(
             LeashFenceKnotEntity.class, new AABB((double)i - 1.0, (double)j - 1.0, (double)k - 1.0, (double)i + 1.0, (double)j + 1.0, (double)k + 1.0)
         )) {
-            if (leashfenceknotentity.getPos().equals(p_31846_)) {
+            if (leashfenceknotentity.getPos().equals(pos)) {
                 return leashfenceknotentity;
             }
         }
 
-        LeashFenceKnotEntity leashfenceknotentity1 = new LeashFenceKnotEntity(p_31845_, p_31846_);
-        p_31845_.addFreshEntity(leashfenceknotentity1);
+        LeashFenceKnotEntity leashfenceknotentity1 = new LeashFenceKnotEntity(level, pos);
+        level.addFreshEntity(leashfenceknotentity1);
         return leashfenceknotentity1;
     }
 
@@ -134,13 +143,13 @@ public class LeashFenceKnotEntity extends BlockAttachedEntity {
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity p_352402_) {
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
         return new ClientboundAddEntityPacket(this, 0, this.getPos());
     }
 
     @Override
-    public Vec3 getRopeHoldPosition(float p_31863_) {
-        return this.getPosition(p_31863_).add(0.0, 0.2, 0.0);
+    public Vec3 getRopeHoldPosition(float partialTicks) {
+        return this.getPosition(partialTicks).add(0.0, 0.2, 0.0);
     }
 
     @Override

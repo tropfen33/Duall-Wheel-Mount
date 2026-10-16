@@ -39,11 +39,11 @@ public class RealmsInviteScreen extends RealmsScreen {
     @Nullable
     private Component message;
 
-    public RealmsInviteScreen(RealmsConfigureWorldScreen p_88703_, Screen p_88704_, RealmsServer p_88705_) {
+    public RealmsInviteScreen(RealmsConfigureWorldScreen configureScreen, Screen lastScreen, RealmsServer serverData) {
         super(TITLE);
-        this.configureScreen = p_88703_;
-        this.lastScreen = p_88704_;
-        this.serverData = p_88705_;
+        this.configureScreen = configureScreen;
+        this.lastScreen = lastScreen;
+        this.serverData = serverData;
     }
 
     @Override
@@ -100,9 +100,9 @@ public class RealmsInviteScreen extends RealmsScreen {
         }
     }
 
-    private void showMessage(Component p_289685_) {
-        this.message = p_289685_;
-        this.minecraft.getNarrator().sayNow(p_289685_);
+    private void showMessage(Component message) {
+        this.message = message;
+        this.minecraft.getNarrator().sayNow(message);
     }
 
     @Override
@@ -110,11 +110,19 @@ public class RealmsInviteScreen extends RealmsScreen {
         this.minecraft.setScreen(this.lastScreen);
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282206_, int p_283415_, int p_282016_, float p_283011_) {
-        super.render(p_282206_, p_283415_, p_282016_, p_283011_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         if (this.message != null) {
-            p_282206_.drawCenteredString(this.font, this.message, this.width / 2, this.inviteButton.getY() + this.inviteButton.getHeight() + 8, -1);
+            guiGraphics.drawCenteredString(this.font, this.message, this.width / 2, this.inviteButton.getY() + this.inviteButton.getHeight() + 8, -1);
         }
     }
 }

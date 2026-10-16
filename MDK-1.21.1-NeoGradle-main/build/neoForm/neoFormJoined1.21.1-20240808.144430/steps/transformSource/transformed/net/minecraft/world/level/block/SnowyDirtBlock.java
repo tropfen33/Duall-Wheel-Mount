@@ -21,30 +21,35 @@ public class SnowyDirtBlock extends Block {
         return CODEC;
     }
 
-    public SnowyDirtBlock(BlockBehaviour.Properties p_56640_) {
-        super(p_56640_);
+    public SnowyDirtBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(SNOWY, Boolean.valueOf(false)));
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_56644_, Direction p_56645_, BlockState p_56646_, LevelAccessor p_56647_, BlockPos p_56648_, BlockPos p_56649_) {
-        return p_56645_ == Direction.UP
-            ? p_56644_.setValue(SNOWY, Boolean.valueOf(isSnowySetting(p_56646_)))
-            : super.updateShape(p_56644_, p_56645_, p_56646_, p_56647_, p_56648_, p_56649_);
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return facing == Direction.UP
+            ? state.setValue(SNOWY, Boolean.valueOf(isSnowySetting(facingState)))
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_56642_) {
-        BlockState blockstate = p_56642_.getLevel().getBlockState(p_56642_.getClickedPos().above());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockState blockstate = context.getLevel().getBlockState(context.getClickedPos().above());
         return this.defaultBlockState().setValue(SNOWY, Boolean.valueOf(isSnowySetting(blockstate)));
     }
 
-    private static boolean isSnowySetting(BlockState p_154649_) {
-        return p_154649_.is(BlockTags.SNOW);
+    private static boolean isSnowySetting(BlockState state) {
+        return state.is(BlockTags.SNOW);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_56651_) {
-        p_56651_.add(SNOWY);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(SNOWY);
     }
 }

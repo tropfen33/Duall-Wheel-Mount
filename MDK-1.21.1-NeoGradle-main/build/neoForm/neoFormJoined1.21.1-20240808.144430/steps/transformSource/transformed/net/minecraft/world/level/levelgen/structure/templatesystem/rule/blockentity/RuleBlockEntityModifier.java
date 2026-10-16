@@ -12,7 +12,7 @@ public interface RuleBlockEntityModifier {
         .dispatch(RuleBlockEntityModifier::getType, RuleBlockEntityModifierType::codec);
 
     @Nullable
-    CompoundTag apply(RandomSource p_277745_, @Nullable CompoundTag p_277965_);
+    CompoundTag apply(RandomSource random, @Nullable CompoundTag tag);
 
     RuleBlockEntityModifierType<?> getType();
 }

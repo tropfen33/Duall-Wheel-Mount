@@ -22,12 +22,12 @@ public class PackRepository {
     private Map<String, Pack> available = ImmutableMap.of();
     private List<Pack> selected = ImmutableList.of();
 
-    public PackRepository(RepositorySource... p_251886_) {
-        this.sources = new java.util.LinkedHashSet<>(List.of(p_251886_)); //Neo: This needs to be a mutable set, so that we can add to it later on.
+    public PackRepository(RepositorySource... sources) {
+        this.sources = new java.util.LinkedHashSet<>(List.of(sources)); //Neo: This needs to be a mutable set, so that we can add to it later on.
     }
 
-    public static String displayPackList(Collection<Pack> p_341622_) {
-        return p_341622_.stream()
+    public static String displayPackList(Collection<Pack> packs) {
+        return packs.stream()
             .map(p_341571_ -> p_341571_.getId() + (p_341571_.getCompatibility().isCompatible() ? "" : " (incompatible)"))
             .collect(Collectors.joining(", "));
     }
@@ -51,12 +51,12 @@ public class PackRepository {
         return ImmutableMap.copyOf(map);
     }
 
-    public void setSelected(Collection<String> p_10510_) {
-        this.selected = this.rebuildSelected(p_10510_);
+    public void setSelected(Collection<String> ids) {
+        this.selected = this.rebuildSelected(ids);
     }
 
-    public boolean addPack(String p_276042_) {
-        Pack pack = this.available.get(p_276042_);
+    public boolean addPack(String id) {
+        Pack pack = this.available.get(id);
         if (pack != null && !this.selected.contains(pack)) {
             List<Pack> list = Lists.newArrayList(this.selected);
             list.add(pack);
@@ -67,8 +67,8 @@ public class PackRepository {
         }
     }
 
-    public boolean removePack(String p_276065_) {
-        Pack pack = this.available.get(p_276065_);
+    public boolean removePack(String id) {
+        Pack pack = this.available.get(id);
         if (pack != null && this.selected.contains(pack)) {
             List<Pack> list = Lists.newArrayList(this.selected);
             list.remove(pack);
@@ -79,8 +79,8 @@ public class PackRepository {
         }
     }
 
-    public List<Pack> rebuildSelected(Collection<String> p_10518_) {
-        List<Pack> list = net.neoforged.neoforge.resource.ResourcePackLoader.expandAndRemoveRootChildren(this.getAvailablePacks(p_10518_), this.available.values());
+    public List<Pack> rebuildSelected(Collection<String> ids) {
+        List<Pack> list = net.neoforged.neoforge.resource.ResourcePackLoader.expandAndRemoveRootChildren(this.getAvailablePacks(ids), this.available.values());
 
         for (Pack pack : this.available.values()) {
             if (pack.isRequired() && !list.contains(pack)) {
@@ -92,8 +92,8 @@ public class PackRepository {
         return ImmutableList.copyOf(list);
     }
 
-    private Stream<Pack> getAvailablePacks(Collection<String> p_10521_) {
-        return p_10521_.stream().map(this.available::get).filter(Objects::nonNull);
+    private Stream<Pack> getAvailablePacks(Collection<String> ids) {
+        return ids.stream().map(this.available::get).filter(Objects::nonNull);
     }
 
     public Collection<String> getAvailableIds() {
@@ -117,16 +117,16 @@ public class PackRepository {
     }
 
     @Nullable
-    public Pack getPack(String p_10508_) {
-        return this.available.get(p_10508_);
+    public Pack getPack(String id) {
+        return this.available.get(id);
     }
 
     public synchronized void addPackFinder(RepositorySource packFinder) {
         this.sources.add(packFinder);
     }
 
-    public boolean isAvailable(String p_10516_) {
-        return this.available.containsKey(p_10516_);
+    public boolean isAvailable(String id) {
+        return this.available.containsKey(id);
     }
 
     public List<PackResources> openAllSelected() {

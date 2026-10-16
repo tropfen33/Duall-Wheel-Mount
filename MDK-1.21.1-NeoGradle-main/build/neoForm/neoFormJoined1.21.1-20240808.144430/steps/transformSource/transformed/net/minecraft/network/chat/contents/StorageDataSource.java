@@ -15,8 +15,8 @@ public record StorageDataSource(ResourceLocation id) implements DataSource {
     public static final DataSource.Type<StorageDataSource> TYPE = new DataSource.Type<>(SUB_CODEC, "storage");
 
     @Override
-    public Stream<CompoundTag> getData(CommandSourceStack p_237491_) {
-        CompoundTag compoundtag = p_237491_.getServer().getCommandStorage().get(this.id);
+    public Stream<CompoundTag> getData(CommandSourceStack source) {
+        CompoundTag compoundtag = source.getServer().getCommandStorage().get(this.id);
         return Stream.of(compoundtag);
     }
 

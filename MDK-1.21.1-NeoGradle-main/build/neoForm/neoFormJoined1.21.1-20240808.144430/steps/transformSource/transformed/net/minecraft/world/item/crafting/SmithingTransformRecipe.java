@@ -16,41 +16,41 @@ public class SmithingTransformRecipe implements SmithingRecipe {
     final Ingredient addition;
     final ItemStack result;
 
-    public SmithingTransformRecipe(Ingredient p_266750_, Ingredient p_266787_, Ingredient p_267292_, ItemStack p_267031_) {
-        this.template = p_266750_;
-        this.base = p_266787_;
-        this.addition = p_267292_;
-        this.result = p_267031_;
+    public SmithingTransformRecipe(Ingredient template, Ingredient base, Ingredient addition, ItemStack result) {
+        this.template = template;
+        this.base = base;
+        this.addition = addition;
+        this.result = result;
     }
 
-    public boolean matches(SmithingRecipeInput p_346359_, Level p_266781_) {
-        return this.template.test(p_346359_.template()) && this.base.test(p_346359_.base()) && this.addition.test(p_346359_.addition());
+    public boolean matches(SmithingRecipeInput input, Level level) {
+        return this.template.test(input.template()) && this.base.test(input.base()) && this.addition.test(input.addition());
     }
 
-    public ItemStack assemble(SmithingRecipeInput p_345093_, HolderLookup.Provider p_345488_) {
-        ItemStack itemstack = p_345093_.base().transmuteCopy(this.result.getItem(), this.result.getCount());
+    public ItemStack assemble(SmithingRecipeInput input, HolderLookup.Provider registries) {
+        ItemStack itemstack = input.base().transmuteCopy(this.result.getItem(), this.result.getCount());
         itemstack.applyComponents(this.result.getComponentsPatch());
         return itemstack;
     }
 
     @Override
-    public ItemStack getResultItem(HolderLookup.Provider p_335712_) {
+    public ItemStack getResultItem(HolderLookup.Provider registries) {
         return this.result;
     }
 
     @Override
-    public boolean isTemplateIngredient(ItemStack p_267113_) {
-        return this.template.test(p_267113_);
+    public boolean isTemplateIngredient(ItemStack stack) {
+        return this.template.test(stack);
     }
 
     @Override
-    public boolean isBaseIngredient(ItemStack p_267276_) {
-        return this.base.test(p_267276_);
+    public boolean isBaseIngredient(ItemStack stack) {
+        return this.base.test(stack);
     }
 
     @Override
-    public boolean isAdditionIngredient(ItemStack p_267260_) {
-        return this.addition.test(p_267260_);
+    public boolean isAdditionIngredient(ItemStack stack) {
+        return this.addition.test(stack);
     }
 
     @Override
@@ -87,19 +87,19 @@ public class SmithingTransformRecipe implements SmithingRecipe {
             return STREAM_CODEC;
         }
 
-        private static SmithingTransformRecipe fromNetwork(RegistryFriendlyByteBuf p_320375_) {
-            Ingredient ingredient = Ingredient.CONTENTS_STREAM_CODEC.decode(p_320375_);
-            Ingredient ingredient1 = Ingredient.CONTENTS_STREAM_CODEC.decode(p_320375_);
-            Ingredient ingredient2 = Ingredient.CONTENTS_STREAM_CODEC.decode(p_320375_);
-            ItemStack itemstack = ItemStack.STREAM_CODEC.decode(p_320375_);
+        private static SmithingTransformRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
+            Ingredient ingredient = Ingredient.CONTENTS_STREAM_CODEC.decode(buffer);
+            Ingredient ingredient1 = Ingredient.CONTENTS_STREAM_CODEC.decode(buffer);
+            Ingredient ingredient2 = Ingredient.CONTENTS_STREAM_CODEC.decode(buffer);
+            ItemStack itemstack = ItemStack.STREAM_CODEC.decode(buffer);
             return new SmithingTransformRecipe(ingredient, ingredient1, ingredient2, itemstack);
         }
 
-        private static void toNetwork(RegistryFriendlyByteBuf p_320743_, SmithingTransformRecipe p_319840_) {
-            Ingredient.CONTENTS_STREAM_CODEC.encode(p_320743_, p_319840_.template);
-            Ingredient.CONTENTS_STREAM_CODEC.encode(p_320743_, p_319840_.base);
-            Ingredient.CONTENTS_STREAM_CODEC.encode(p_320743_, p_319840_.addition);
-            ItemStack.STREAM_CODEC.encode(p_320743_, p_319840_.result);
+        private static void toNetwork(RegistryFriendlyByteBuf buffer, SmithingTransformRecipe recipe) {
+            Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, recipe.template);
+            Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, recipe.base);
+            Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, recipe.addition);
+            ItemStack.STREAM_CODEC.encode(buffer, recipe.result);
         }
     }
 }

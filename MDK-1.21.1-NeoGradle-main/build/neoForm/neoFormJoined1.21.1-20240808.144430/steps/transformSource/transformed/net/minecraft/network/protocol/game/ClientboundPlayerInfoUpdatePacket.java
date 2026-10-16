@@ -28,17 +28,17 @@ public class ClientboundPlayerInfoUpdatePacket implements Packet<ClientGamePacke
     private final EnumSet<ClientboundPlayerInfoUpdatePacket.Action> actions;
     private final List<ClientboundPlayerInfoUpdatePacket.Entry> entries;
 
-    public ClientboundPlayerInfoUpdatePacket(EnumSet<ClientboundPlayerInfoUpdatePacket.Action> p_251739_, Collection<ServerPlayer> p_251579_) {
-        this.actions = p_251739_;
-        this.entries = p_251579_.stream().map(ClientboundPlayerInfoUpdatePacket.Entry::new).toList();
+    public ClientboundPlayerInfoUpdatePacket(EnumSet<ClientboundPlayerInfoUpdatePacket.Action> actions, Collection<ServerPlayer> players) {
+        this.actions = actions;
+        this.entries = players.stream().map(ClientboundPlayerInfoUpdatePacket.Entry::new).toList();
     }
 
-    public ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action p_251648_, ServerPlayer p_252273_) {
-        this.actions = EnumSet.of(p_251648_);
-        this.entries = List.of(new ClientboundPlayerInfoUpdatePacket.Entry(p_252273_));
+    public ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action action, ServerPlayer player) {
+        this.actions = EnumSet.of(action);
+        this.entries = List.of(new ClientboundPlayerInfoUpdatePacket.Entry(player));
     }
 
-    public static ClientboundPlayerInfoUpdatePacket createPlayerInitializing(Collection<ServerPlayer> p_252314_) {
+    public static ClientboundPlayerInfoUpdatePacket createPlayerInitializing(Collection<ServerPlayer> players) {
         EnumSet<ClientboundPlayerInfoUpdatePacket.Action> enumset = EnumSet.of(
             ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER,
             ClientboundPlayerInfoUpdatePacket.Action.INITIALIZE_CHAT,
@@ -47,12 +47,12 @@ public class ClientboundPlayerInfoUpdatePacket implements Packet<ClientGamePacke
             ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY,
             ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME
         );
-        return new ClientboundPlayerInfoUpdatePacket(enumset, p_252314_);
+        return new ClientboundPlayerInfoUpdatePacket(enumset, players);
     }
 
-    private ClientboundPlayerInfoUpdatePacket(RegistryFriendlyByteBuf p_323822_) {
-        this.actions = p_323822_.readEnumSet(ClientboundPlayerInfoUpdatePacket.Action.class);
-        this.entries = p_323822_.readList(
+    private ClientboundPlayerInfoUpdatePacket(RegistryFriendlyByteBuf buffer) {
+        this.actions = buffer.readEnumSet(ClientboundPlayerInfoUpdatePacket.Action.class);
+        this.entries = buffer.readList(
             p_323148_ -> {
                 ClientboundPlayerInfoUpdatePacket.EntryBuilder clientboundplayerinfoupdatepacket$entrybuilder = new ClientboundPlayerInfoUpdatePacket.EntryBuilder(
                     p_323148_.readUUID()
@@ -67,9 +67,9 @@ public class ClientboundPlayerInfoUpdatePacket implements Packet<ClientGamePacke
         );
     }
 
-    private void write(RegistryFriendlyByteBuf p_323752_) {
-        p_323752_.writeEnumSet(this.actions, ClientboundPlayerInfoUpdatePacket.Action.class);
-        p_323752_.writeCollection(this.entries, (p_323146_, p_323147_) -> {
+    private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeEnumSet(this.actions, ClientboundPlayerInfoUpdatePacket.Action.class);
+        buffer.writeCollection(this.entries, (p_323146_, p_323147_) -> {
             p_323146_.writeUUID(p_323147_.profileId());
 
             for (ClientboundPlayerInfoUpdatePacket.Action clientboundplayerinfoupdatepacket$action : this.actions) {
@@ -83,8 +83,11 @@ public class ClientboundPlayerInfoUpdatePacket implements Packet<ClientGamePacke
         return GamePacketTypes.CLIENTBOUND_PLAYER_INFO_UPDATE;
     }
 
-    public void handle(ClientGamePacketListener p_249935_) {
-        p_249935_.handlePlayerInfoUpdate(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handlePlayerInfoUpdate(this);
     }
 
     public EnumSet<ClientboundPlayerInfoUpdatePacket.Action> actions() {
@@ -136,17 +139,17 @@ public class ClientboundPlayerInfoUpdatePacket implements Packet<ClientGamePacke
         final ClientboundPlayerInfoUpdatePacket.Action.Reader reader;
         final ClientboundPlayerInfoUpdatePacket.Action.Writer writer;
 
-        private Action(ClientboundPlayerInfoUpdatePacket.Action.Reader p_249392_, ClientboundPlayerInfoUpdatePacket.Action.Writer p_250487_) {
-            this.reader = p_249392_;
-            this.writer = p_250487_;
+        private Action(ClientboundPlayerInfoUpdatePacket.Action.Reader reader, ClientboundPlayerInfoUpdatePacket.Action.Writer writer) {
+            this.reader = reader;
+            this.writer = writer;
         }
 
         public interface Reader {
-            void read(ClientboundPlayerInfoUpdatePacket.EntryBuilder p_251859_, RegistryFriendlyByteBuf p_324148_);
+            void read(ClientboundPlayerInfoUpdatePacket.EntryBuilder entryBuilder, RegistryFriendlyByteBuf buffer);
         }
 
         public interface Writer {
-            void write(RegistryFriendlyByteBuf p_324483_, ClientboundPlayerInfoUpdatePacket.Entry p_249783_);
+            void write(RegistryFriendlyByteBuf buffer, ClientboundPlayerInfoUpdatePacket.Entry entry);
         }
     }
 
@@ -184,8 +187,8 @@ public class ClientboundPlayerInfoUpdatePacket implements Packet<ClientGamePacke
         @Nullable
         RemoteChatSession.Data chatSession;
 
-        EntryBuilder(UUID p_251670_) {
-            this.profileId = p_251670_;
+        EntryBuilder(UUID profileId) {
+            this.profileId = profileId;
         }
 
         ClientboundPlayerInfoUpdatePacket.Entry build() {

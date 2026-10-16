@@ -23,43 +23,43 @@ public class ItemTransform {
     public final Vector3f scale;
     public final Vector3f rightRotation;
 
-    public ItemTransform(Vector3f p_254427_, Vector3f p_254496_, Vector3f p_254022_) {
-        this(p_254427_, p_254496_, p_254022_, new Vector3f());
+    public ItemTransform(Vector3f rotation, Vector3f translation, Vector3f scale) {
+        this(rotation, translation, scale, new Vector3f());
     }
 
-    public ItemTransform(Vector3f p_254427_, Vector3f p_254496_, Vector3f p_254022_, Vector3f rightRotation) {
-        this.rotation = new Vector3f(p_254427_);
-        this.translation = new Vector3f(p_254496_);
-        this.scale = new Vector3f(p_254022_);
+    public ItemTransform(Vector3f rotation, Vector3f translation, Vector3f scale, Vector3f rightRotation) {
+        this.rotation = new Vector3f(rotation);
+        this.translation = new Vector3f(translation);
+        this.scale = new Vector3f(scale);
         this.rightRotation = new Vector3f(rightRotation);
     }
 
-    public void apply(boolean p_111764_, PoseStack p_111765_) {
+    public void apply(boolean leftHand, PoseStack poseStack) {
         if (this != NO_TRANSFORM) {
             float f = this.rotation.x();
             float f1 = this.rotation.y();
             float f2 = this.rotation.z();
-            if (p_111764_) {
+            if (leftHand) {
                 f1 = -f1;
                 f2 = -f2;
             }
 
-            int i = p_111764_ ? -1 : 1;
-            p_111765_.translate((float)i * this.translation.x(), this.translation.y(), this.translation.z());
-            p_111765_.mulPose(new Quaternionf().rotationXYZ(f * (float) (Math.PI / 180.0), f1 * (float) (Math.PI / 180.0), f2 * (float) (Math.PI / 180.0)));
-            p_111765_.scale(this.scale.x(), this.scale.y(), this.scale.z());
-            p_111765_.mulPose(net.neoforged.neoforge.common.util.TransformationHelper.quatFromXYZ(rightRotation.x(), rightRotation.y() * (p_111764_ ? -1 : 1), rightRotation.z() * (p_111764_ ? -1 : 1), true));
+            int i = leftHand ? -1 : 1;
+            poseStack.translate((float)i * this.translation.x(), this.translation.y(), this.translation.z());
+            poseStack.mulPose(new Quaternionf().rotationXYZ(f * (float) (Math.PI / 180.0), f1 * (float) (Math.PI / 180.0), f2 * (float) (Math.PI / 180.0)));
+            poseStack.scale(this.scale.x(), this.scale.y(), this.scale.z());
+            poseStack.mulPose(net.neoforged.neoforge.common.util.TransformationHelper.quatFromXYZ(rightRotation.x(), rightRotation.y() * (leftHand ? -1 : 1), rightRotation.z() * (leftHand ? -1 : 1), true));
         }
     }
 
     @Override
-    public boolean equals(Object p_111767_) {
-        if (this == p_111767_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        } else if (this.getClass() != p_111767_.getClass()) {
+        } else if (this.getClass() != other.getClass()) {
             return false;
         } else {
-            ItemTransform itemtransform = (ItemTransform)p_111767_;
+            ItemTransform itemtransform = (ItemTransform)other;
             return this.rotation.equals(itemtransform.rotation) && this.scale.equals(itemtransform.scale) && this.translation.equals(itemtransform.translation);
         }
     }
@@ -79,8 +79,8 @@ public class ItemTransform {
         public static final float MAX_TRANSLATION = 5.0F;
         public static final float MAX_SCALE = 4.0F;
 
-        public ItemTransform deserialize(JsonElement p_111775_, Type p_111776_, JsonDeserializationContext p_111777_) throws JsonParseException {
-            JsonObject jsonobject = p_111775_.getAsJsonObject();
+        public ItemTransform deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonobject = json.getAsJsonObject();
             Vector3f vector3f = this.getVector3f(jsonobject, "rotation", DEFAULT_ROTATION);
             Vector3f vector3f1 = this.getVector3f(jsonobject, "translation", DEFAULT_TRANSLATION);
             vector3f1.mul(0.0625F);
@@ -91,18 +91,18 @@ public class ItemTransform {
             return new ItemTransform(vector3f, vector3f1, vector3f2, rightRotation);
         }
 
-        private Vector3f getVector3f(JsonObject p_111779_, String p_111780_, Vector3f p_253777_) {
-            if (!p_111779_.has(p_111780_)) {
-                return p_253777_;
+        private Vector3f getVector3f(JsonObject json, String key, Vector3f fallback) {
+            if (!json.has(key)) {
+                return fallback;
             } else {
-                JsonArray jsonarray = GsonHelper.getAsJsonArray(p_111779_, p_111780_);
+                JsonArray jsonarray = GsonHelper.getAsJsonArray(json, key);
                 if (jsonarray.size() != 3) {
-                    throw new JsonParseException("Expected 3 " + p_111780_ + " values, found: " + jsonarray.size());
+                    throw new JsonParseException("Expected 3 " + key + " values, found: " + jsonarray.size());
                 } else {
                     float[] afloat = new float[3];
 
                     for (int i = 0; i < afloat.length; i++) {
-                        afloat[i] = GsonHelper.convertToFloat(jsonarray.get(i), p_111780_ + "[" + i + "]");
+                        afloat[i] = GsonHelper.convertToFloat(jsonarray.get(i), key + "[" + i + "]");
                     }
 
                     return new Vector3f(afloat[0], afloat[1], afloat[2]);

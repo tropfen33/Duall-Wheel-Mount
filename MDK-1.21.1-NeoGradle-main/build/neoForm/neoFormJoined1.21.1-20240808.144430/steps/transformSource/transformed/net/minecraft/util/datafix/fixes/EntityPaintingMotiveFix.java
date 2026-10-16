@@ -19,22 +19,22 @@ public class EntityPaintingMotiveFix extends NamedEntityFix {
         p_15532_.put("skullandroses", "skull_and_roses");
     });
 
-    public EntityPaintingMotiveFix(Schema p_15525_, boolean p_15526_) {
-        super(p_15525_, p_15526_, "EntityPaintingMotiveFix", References.ENTITY, "minecraft:painting");
+    public EntityPaintingMotiveFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType, "EntityPaintingMotiveFix", References.ENTITY, "minecraft:painting");
     }
 
-    public Dynamic<?> fixTag(Dynamic<?> p_15530_) {
-        Optional<String> optional = p_15530_.get("Motive").asString().result();
+    public Dynamic<?> fixTag(Dynamic<?> tag) {
+        Optional<String> optional = tag.get("Motive").asString().result();
         if (optional.isPresent()) {
             String s = optional.get().toLowerCase(Locale.ROOT);
-            return p_15530_.set("Motive", p_15530_.createString(NamespacedSchema.ensureNamespaced(MAP.getOrDefault(s, s))));
+            return tag.set("Motive", tag.createString(NamespacedSchema.ensureNamespaced(MAP.getOrDefault(s, s))));
         } else {
-            return p_15530_;
+            return tag;
         }
     }
 
     @Override
-    protected Typed<?> fix(Typed<?> p_15528_) {
-        return p_15528_.update(DSL.remainderFinder(), this::fixTag);
+    protected Typed<?> fix(Typed<?> typed) {
+        return typed.update(DSL.remainderFinder(), this::fixTag);
     }
 }

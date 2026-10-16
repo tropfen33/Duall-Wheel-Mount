@@ -37,20 +37,20 @@ public class ChorusPlantBlock extends PipeBlock {
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_51709_) {
-        return getStateWithConnections(p_51709_.getLevel(), p_51709_.getClickedPos(), this.defaultBlockState());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return getStateWithConnections(context.getLevel(), context.getClickedPos(), this.defaultBlockState());
     }
 
-    public static BlockState getStateWithConnections(BlockGetter p_51711_, BlockPos p_51712_, BlockState p_304771_) {
-        BlockState blockstate = p_51711_.getBlockState(p_51712_.below());
-        BlockState blockstate1 = p_51711_.getBlockState(p_51712_.above());
-        BlockState blockstate2 = p_51711_.getBlockState(p_51712_.north());
-        BlockState blockstate3 = p_51711_.getBlockState(p_51712_.east());
-        BlockState blockstate4 = p_51711_.getBlockState(p_51712_.south());
-        BlockState blockstate5 = p_51711_.getBlockState(p_51712_.west());
-        Block block = p_304771_.getBlock();
-        net.neoforged.neoforge.common.util.TriState soilDecision = blockstate.canSustainPlant(p_51711_, p_51712_.below(), Direction.UP, p_304771_);
-        return p_304771_.trySetValue(DOWN, Boolean.valueOf(blockstate.is(block) || blockstate.is(Blocks.CHORUS_FLOWER) || blockstate.is(Blocks.END_STONE) || soilDecision.isTrue()))
+    public static BlockState getStateWithConnections(BlockGetter level, BlockPos pos, BlockState state) {
+        BlockState blockstate = level.getBlockState(pos.below());
+        BlockState blockstate1 = level.getBlockState(pos.above());
+        BlockState blockstate2 = level.getBlockState(pos.north());
+        BlockState blockstate3 = level.getBlockState(pos.east());
+        BlockState blockstate4 = level.getBlockState(pos.south());
+        BlockState blockstate5 = level.getBlockState(pos.west());
+        Block block = state.getBlock();
+        net.neoforged.neoforge.common.util.TriState soilDecision = blockstate.canSustainPlant(level, pos.below(), Direction.UP, state);
+        return state.trySetValue(DOWN, Boolean.valueOf(blockstate.is(block) || blockstate.is(Blocks.CHORUS_FLOWER) || blockstate.is(Blocks.END_STONE) || soilDecision.isTrue()))
             .trySetValue(UP, Boolean.valueOf(blockstate1.is(block) || blockstate1.is(Blocks.CHORUS_FLOWER)))
             .trySetValue(NORTH, Boolean.valueOf(blockstate2.is(block) || blockstate2.is(Blocks.CHORUS_FLOWER)))
             .trySetValue(EAST, Boolean.valueOf(blockstate3.is(block) || blockstate3.is(Blocks.CHORUS_FLOWER)))
@@ -58,62 +58,67 @@ public class ChorusPlantBlock extends PipeBlock {
             .trySetValue(WEST, Boolean.valueOf(blockstate5.is(block) || blockstate5.is(Blocks.CHORUS_FLOWER)));
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_51728_, Direction p_51729_, BlockState p_51730_, LevelAccessor p_51731_, BlockPos p_51732_, BlockPos p_51733_) {
-        if (!p_51728_.canSurvive(p_51731_, p_51732_)) {
-            p_51731_.scheduleTick(p_51732_, this, 1);
-            return super.updateShape(p_51728_, p_51729_, p_51730_, p_51731_, p_51732_, p_51733_);
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (!state.canSurvive(level, currentPos)) {
+            level.scheduleTick(currentPos, this, 1);
+            return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
         } else {
-            boolean flag = p_51730_.is(this) || p_51730_.is(Blocks.CHORUS_FLOWER) || p_51729_ == Direction.DOWN && p_51730_.is(Blocks.END_STONE);
-            if (p_51729_ == Direction.DOWN) {
-                net.neoforged.neoforge.common.util.TriState soilDecision = p_51730_.canSustainPlant(p_51731_, p_51733_.relative(p_51729_), p_51729_.getOpposite(), p_51728_);
+            boolean flag = facingState.is(this) || facingState.is(Blocks.CHORUS_FLOWER) || facing == Direction.DOWN && facingState.is(Blocks.END_STONE);
+            if (facing == Direction.DOWN) {
+                net.neoforged.neoforge.common.util.TriState soilDecision = facingState.canSustainPlant(level, facingPos.relative(facing), facing.getOpposite(), state);
                 if (!soilDecision.isDefault()) {
                     flag = soilDecision.isTrue();
                 }
             }
-            return p_51728_.setValue(PROPERTY_BY_DIRECTION.get(p_51729_), Boolean.valueOf(flag));
+            return state.setValue(PROPERTY_BY_DIRECTION.get(facing), Boolean.valueOf(flag));
         }
     }
 
     @Override
-    protected void tick(BlockState p_220985_, ServerLevel p_220986_, BlockPos p_220987_, RandomSource p_220988_) {
-        if (!p_220985_.canSurvive(p_220986_, p_220987_)) {
-            p_220986_.destroyBlock(p_220987_, true);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!state.canSurvive(level, pos)) {
+            level.destroyBlock(pos, true);
         }
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_51724_, LevelReader p_51725_, BlockPos p_51726_) {
-        BlockState blockstate = p_51725_.getBlockState(p_51726_.below());
-        boolean flag = !p_51725_.getBlockState(p_51726_.above()).isAir() && !blockstate.isAir();
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos.below());
+        boolean flag = !level.getBlockState(pos.above()).isAir() && !blockstate.isAir();
 
         for (Direction direction : Direction.Plane.HORIZONTAL) {
-            BlockPos blockpos = p_51726_.relative(direction);
-            BlockState blockstate1 = p_51725_.getBlockState(blockpos);
+            BlockPos blockpos = pos.relative(direction);
+            BlockState blockstate1 = level.getBlockState(blockpos);
             if (blockstate1.is(this)) {
                 if (flag) {
                     return false;
                 }
 
-                BlockState blockstate2 = p_51725_.getBlockState(blockpos.below());
+                BlockState blockstate2 = level.getBlockState(blockpos.below());
                 if (blockstate2.is(this) || blockstate2.is(Blocks.END_STONE)) {
                     return true;
                 }
             }
         }
 
-        net.neoforged.neoforge.common.util.TriState soilDecision = blockstate.canSustainPlant(p_51725_, p_51726_.below(), Direction.UP, p_51724_);
+        net.neoforged.neoforge.common.util.TriState soilDecision = blockstate.canSustainPlant(level, pos.below(), Direction.UP, state);
         if (!soilDecision.isDefault()) return soilDecision.isTrue();
         return blockstate.is(this) || blockstate.is(Blocks.END_STONE);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_51735_) {
-        p_51735_.add(NORTH, EAST, SOUTH, WEST, UP, DOWN);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(NORTH, EAST, SOUTH, WEST, UP, DOWN);
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_51719_, PathComputationType p_51722_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

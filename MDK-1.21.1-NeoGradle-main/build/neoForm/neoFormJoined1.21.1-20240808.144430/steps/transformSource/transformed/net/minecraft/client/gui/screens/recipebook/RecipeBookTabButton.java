@@ -25,19 +25,19 @@ public class RecipeBookTabButton extends StateSwitchingButton {
     private static final float ANIMATION_TIME = 15.0F;
     private float animationTime;
 
-    public RecipeBookTabButton(RecipeBookCategories p_100448_) {
+    public RecipeBookTabButton(RecipeBookCategories category) {
         super(0, 0, 35, 27, false);
-        this.category = p_100448_;
+        this.category = category;
         this.initTextureValues(SPRITES);
     }
 
-    public void startAnimation(Minecraft p_100452_) {
-        ClientRecipeBook clientrecipebook = p_100452_.player.getRecipeBook();
+    public void startAnimation(Minecraft minecraft) {
+        ClientRecipeBook clientrecipebook = minecraft.player.getRecipeBook();
         List<RecipeCollection> list = clientrecipebook.getCollection(this.category);
-        if (p_100452_.player.containerMenu instanceof RecipeBookMenu) {
+        if (minecraft.player.containerMenu instanceof RecipeBookMenu) {
             for (RecipeCollection recipecollection : list) {
                 for (RecipeHolder<?> recipeholder : recipecollection.getRecipes(
-                    clientrecipebook.isFiltering((RecipeBookMenu<?, ?>)p_100452_.player.containerMenu)
+                    clientrecipebook.isFiltering((RecipeBookMenu<?, ?>)minecraft.player.containerMenu)
                 )) {
                     if (clientrecipebook.willHighlight(recipeholder)) {
                         this.animationTime = 15.0F;
@@ -49,14 +49,14 @@ public class RecipeBookTabButton extends StateSwitchingButton {
     }
 
     @Override
-    public void renderWidget(GuiGraphics p_283195_, int p_283508_, int p_281788_, float p_283269_) {
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.sprites != null) {
             if (this.animationTime > 0.0F) {
                 float f = 1.0F + 0.1F * (float)Math.sin((double)(this.animationTime / 15.0F * (float) Math.PI));
-                p_283195_.pose().pushPose();
-                p_283195_.pose().translate((float)(this.getX() + 8), (float)(this.getY() + 12), 0.0F);
-                p_283195_.pose().scale(1.0F, f, 1.0F);
-                p_283195_.pose().translate((float)(-(this.getX() + 8)), (float)(-(this.getY() + 12)), 0.0F);
+                guiGraphics.pose().pushPose();
+                guiGraphics.pose().translate((float)(this.getX() + 8), (float)(this.getY() + 12), 0.0F);
+                guiGraphics.pose().scale(1.0F, f, 1.0F);
+                guiGraphics.pose().translate((float)(-(this.getX() + 8)), (float)(-(this.getY() + 12)), 0.0F);
             }
 
             Minecraft minecraft = Minecraft.getInstance();
@@ -67,24 +67,24 @@ public class RecipeBookTabButton extends StateSwitchingButton {
                 i -= 2;
             }
 
-            p_283195_.blitSprite(resourcelocation, i, this.getY(), this.width, this.height);
+            guiGraphics.blitSprite(resourcelocation, i, this.getY(), this.width, this.height);
             RenderSystem.enableDepthTest();
-            this.renderIcon(p_283195_, minecraft.getItemRenderer());
+            this.renderIcon(guiGraphics, minecraft.getItemRenderer());
             if (this.animationTime > 0.0F) {
-                p_283195_.pose().popPose();
-                this.animationTime -= p_283269_;
+                guiGraphics.pose().popPose();
+                this.animationTime -= partialTick;
             }
         }
     }
 
-    private void renderIcon(GuiGraphics p_281802_, ItemRenderer p_282499_) {
+    private void renderIcon(GuiGraphics guiGraphics, ItemRenderer itemRenderer) {
         List<ItemStack> list = this.category.getIconItems();
         int i = this.isStateTriggered ? -2 : 0;
         if (list.size() == 1) {
-            p_281802_.renderFakeItem(list.get(0), this.getX() + 9 + i, this.getY() + 5);
+            guiGraphics.renderFakeItem(list.get(0), this.getX() + 9 + i, this.getY() + 5);
         } else if (list.size() == 2) {
-            p_281802_.renderFakeItem(list.get(0), this.getX() + 3 + i, this.getY() + 5);
-            p_281802_.renderFakeItem(list.get(1), this.getX() + 14 + i, this.getY() + 5);
+            guiGraphics.renderFakeItem(list.get(0), this.getX() + 3 + i, this.getY() + 5);
+            guiGraphics.renderFakeItem(list.get(1), this.getX() + 14 + i, this.getY() + 5);
         }
     }
 
@@ -92,8 +92,8 @@ public class RecipeBookTabButton extends StateSwitchingButton {
         return this.category;
     }
 
-    public boolean updateVisibility(ClientRecipeBook p_100450_) {
-        List<RecipeCollection> list = p_100450_.getCollection(this.category);
+    public boolean updateVisibility(ClientRecipeBook recipeBook) {
+        List<RecipeCollection> list = recipeBook.getCollection(this.category);
         this.visible = false;
         if (list != null) {
             for (RecipeCollection recipecollection : list) {

@@ -6,5 +6,5 @@ import net.minecraft.resources.ResourceLocation;
 public interface CustomQueryPayload {
     ResourceLocation id();
 
-    void write(FriendlyByteBuf p_295179_);
+    void write(FriendlyByteBuf buffer);
 }

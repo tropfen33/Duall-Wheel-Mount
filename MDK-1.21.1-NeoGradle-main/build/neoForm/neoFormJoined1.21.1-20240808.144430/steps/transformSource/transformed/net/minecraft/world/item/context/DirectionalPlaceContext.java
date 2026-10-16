@@ -11,9 +11,9 @@ import net.minecraft.world.phys.Vec3;
 public class DirectionalPlaceContext extends BlockPlaceContext {
     private final Direction direction;
 
-    public DirectionalPlaceContext(Level p_43650_, BlockPos p_43651_, Direction p_43652_, ItemStack p_43653_, Direction p_43654_) {
-        super(p_43650_, null, InteractionHand.MAIN_HAND, p_43653_, new BlockHitResult(Vec3.atBottomCenterOf(p_43651_), p_43654_, p_43651_, false));
-        this.direction = p_43652_;
+    public DirectionalPlaceContext(Level level, BlockPos pos, Direction direction, ItemStack itemStack, Direction face) {
+        super(level, null, InteractionHand.MAIN_HAND, itemStack, new BlockHitResult(Vec3.atBottomCenterOf(pos), face, pos, false));
+        this.direction = direction;
     }
 
     @Override

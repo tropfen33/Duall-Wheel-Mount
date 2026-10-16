@@ -29,31 +29,31 @@ public record EnchantmentAttributeEffect(ResourceLocation id, Holder<Attribute> 
                 .apply(p_350198_, EnchantmentAttributeEffect::new)
     );
 
-    private ResourceLocation idForSlot(StringRepresentable p_350940_) {
-        return this.id.withSuffix("/" + p_350940_.getSerializedName());
+    private ResourceLocation idForSlot(StringRepresentable slot) {
+        return this.id.withSuffix("/" + slot.getSerializedName());
     }
 
-    public AttributeModifier getModifier(int p_345225_, StringRepresentable p_350734_) {
-        return new AttributeModifier(this.idForSlot(p_350734_), (double)this.amount().calculate(p_345225_), this.operation());
+    public AttributeModifier getModifier(int enchantmentLevel, StringRepresentable slot) {
+        return new AttributeModifier(this.idForSlot(slot), (double)this.amount().calculate(enchantmentLevel), this.operation());
     }
 
     @Override
-    public void onChangedBlock(ServerLevel p_346176_, int p_345071_, EnchantedItemInUse p_345394_, Entity p_345539_, Vec3 p_346261_, boolean p_345801_) {
-        if (p_345801_ && p_345539_ instanceof LivingEntity livingentity) {
-            livingentity.getAttributes().addTransientAttributeModifiers(this.makeAttributeMap(p_345071_, p_345394_.inSlot()));
+    public void onChangedBlock(ServerLevel level, int enchantmentLevel, EnchantedItemInUse item, Entity entity, Vec3 pos, boolean applyTransientEffects) {
+        if (applyTransientEffects && entity instanceof LivingEntity livingentity) {
+            livingentity.getAttributes().addTransientAttributeModifiers(this.makeAttributeMap(enchantmentLevel, item.inSlot()));
         }
     }
 
     @Override
-    public void onDeactivated(EnchantedItemInUse p_346016_, Entity p_346371_, Vec3 p_345145_, int p_346185_) {
-        if (p_346371_ instanceof LivingEntity livingentity) {
-            livingentity.getAttributes().removeAttributeModifiers(this.makeAttributeMap(p_346185_, p_346016_.inSlot()));
+    public void onDeactivated(EnchantedItemInUse item, Entity entity, Vec3 pos, int enchantmentLevel) {
+        if (entity instanceof LivingEntity livingentity) {
+            livingentity.getAttributes().removeAttributeModifiers(this.makeAttributeMap(enchantmentLevel, item.inSlot()));
         }
     }
 
-    private HashMultimap<Holder<Attribute>, AttributeModifier> makeAttributeMap(int p_346033_, EquipmentSlot p_350290_) {
+    private HashMultimap<Holder<Attribute>, AttributeModifier> makeAttributeMap(int enchantmentLevel, EquipmentSlot slot) {
         HashMultimap<Holder<Attribute>, AttributeModifier> hashmultimap = HashMultimap.create();
-        hashmultimap.put(this.attribute, this.getModifier(p_346033_, p_350290_));
+        hashmultimap.put(this.attribute, this.getModifier(enchantmentLevel, slot));
         return hashmultimap;
     }
 

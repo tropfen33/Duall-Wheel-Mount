@@ -27,26 +27,26 @@ public class HorseMarkingLayer extends RenderLayer<Horse, HorseModel<Horse>> {
         p_349908_.put(Markings.BLACK_DOTS, ResourceLocation.withDefaultNamespace("textures/entity/horse/horse_markings_blackdots.png"));
     });
 
-    public HorseMarkingLayer(RenderLayerParent<Horse, HorseModel<Horse>> p_117045_) {
-        super(p_117045_);
+    public HorseMarkingLayer(RenderLayerParent<Horse, HorseModel<Horse>> renderer) {
+        super(renderer);
     }
 
     public void render(
-        PoseStack p_117058_,
-        MultiBufferSource p_117059_,
-        int p_117060_,
-        Horse p_117061_,
-        float p_117062_,
-        float p_117063_,
-        float p_117064_,
-        float p_117065_,
-        float p_117066_,
-        float p_117067_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        Horse livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTicks,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
-        ResourceLocation resourcelocation = LOCATION_BY_MARKINGS.get(p_117061_.getMarkings());
-        if (resourcelocation != null && !p_117061_.isInvisible()) {
-            VertexConsumer vertexconsumer = p_117059_.getBuffer(RenderType.entityTranslucent(resourcelocation));
-            this.getParentModel().renderToBuffer(p_117058_, vertexconsumer, p_117060_, LivingEntityRenderer.getOverlayCoords(p_117061_, 0.0F));
+        ResourceLocation resourcelocation = LOCATION_BY_MARKINGS.get(livingEntity.getMarkings());
+        if (resourcelocation != null && !livingEntity.isInvisible()) {
+            VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.entityTranslucent(resourcelocation));
+            this.getParentModel().renderToBuffer(poseStack, vertexconsumer, packedLight, LivingEntityRenderer.getOverlayCoords(livingEntity, 0.0F));
         }
     }
 }

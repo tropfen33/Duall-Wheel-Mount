@@ -114,12 +114,12 @@ public class DebugScreenOverlay {
     private final PingDebugChart pingChart;
     private final BandwidthDebugChart bandwidthChart;
 
-    public DebugScreenOverlay(Minecraft p_94039_) {
-        this.minecraft = p_94039_;
+    public DebugScreenOverlay(Minecraft minecraft) {
+        this.minecraft = minecraft;
         this.allocationRateCalculator = new DebugScreenOverlay.AllocationRateCalculator();
-        this.font = p_94039_.font;
+        this.font = minecraft.font;
         this.fpsChart = new FpsDebugChart(this.font, this.frameTimeLogger);
-        this.tpsChart = new TpsDebugChart(this.font, this.tickTimeLogger, () -> p_94039_.level.tickRateManager().millisecondsPerTick());
+        this.tpsChart = new TpsDebugChart(this.font, this.tickTimeLogger, () -> minecraft.level.tickRateManager().millisecondsPerTick());
         this.pingChart = new PingDebugChart(this.font, this.pingLogger);
         this.bandwidthChart = new BandwidthDebugChart(this.font, this.bandwidthLogger);
     }
@@ -129,40 +129,40 @@ public class DebugScreenOverlay {
         this.clientChunk = null;
     }
 
-    public void render(GuiGraphics p_281427_) {
+    public void render(GuiGraphics guiGraphics) {
         this.minecraft.getProfiler().push("debug");
         Entity entity = this.minecraft.getCameraEntity();
         this.block = entity.pick(20.0, 0.0F, false);
         this.liquid = entity.pick(20.0, 0.0F, true);
-        p_281427_.drawManaged(() -> {
+        guiGraphics.drawManaged(() -> {
             final List<String> gameInformation = this.collectGameInformationText();
             final List<String> systemInformation = this.collectSystemInformationText();
 
-            var event = new net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent.DebugText(minecraft.getWindow(), p_281427_, minecraft.getTimer(), gameInformation, systemInformation);
+            var event = new net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent.DebugText(minecraft.getWindow(), guiGraphics, minecraft.getTimer(), gameInformation, systemInformation);
             net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(event);
 
-            this.renderLines(p_281427_, gameInformation, true);
-            this.renderLines(p_281427_, systemInformation, false);
+            this.renderLines(guiGraphics, gameInformation, true);
+            this.renderLines(guiGraphics, systemInformation, false);
 
             if (this.renderFpsCharts) {
-                int i = p_281427_.guiWidth();
+                int i = guiGraphics.guiWidth();
                 int j = i / 2;
-                this.fpsChart.drawChart(p_281427_, 0, this.fpsChart.getWidth(j));
+                this.fpsChart.drawChart(guiGraphics, 0, this.fpsChart.getWidth(j));
                 if (this.tickTimeLogger.size() > 0) {
                     int k = this.tpsChart.getWidth(j);
-                    this.tpsChart.drawChart(p_281427_, i - k, k);
+                    this.tpsChart.drawChart(guiGraphics, i - k, k);
                 }
             }
 
             if (this.renderNetworkCharts) {
-                int l = p_281427_.guiWidth();
+                int l = guiGraphics.guiWidth();
                 int i1 = l / 2;
                 if (!this.minecraft.isLocalServer()) {
-                    this.bandwidthChart.drawChart(p_281427_, 0, this.bandwidthChart.getWidth(i1));
+                    this.bandwidthChart.drawChart(guiGraphics, 0, this.bandwidthChart.getWidth(i1));
                 }
 
                 int j1 = this.pingChart.getWidth(i1);
-                this.pingChart.drawChart(p_281427_, l - j1, j1);
+                this.pingChart.drawChart(guiGraphics, l - j1, j1);
             }
         });
         this.minecraft.getProfiler().pop();
@@ -190,9 +190,9 @@ public class DebugScreenOverlay {
         return list;
     }
 
-    protected void drawGameInformation(GuiGraphics p_281525_) {
+    protected void drawGameInformation(GuiGraphics guiGraphics) {
         List<String> list = this.collectGameInformationText();
-        this.renderLines(p_281525_, list, true);
+        this.renderLines(guiGraphics, list, true);
     }
 
     /**
@@ -204,31 +204,31 @@ public class DebugScreenOverlay {
         return list;
     }
 
-    protected void drawSystemInformation(GuiGraphics p_281261_) {
+    protected void drawSystemInformation(GuiGraphics guiGraphics) {
         List<String> list = this.collectSystemInformationText();
-        this.renderLines(p_281261_, list, false);
+        this.renderLines(guiGraphics, list, false);
     }
 
-    private void renderLines(GuiGraphics p_286519_, List<String> p_286665_, boolean p_286644_) {
+    private void renderLines(GuiGraphics guiGraphics, List<String> lines, boolean leftSide) {
         int i = 9;
 
-        for (int j = 0; j < p_286665_.size(); j++) {
-            String s = p_286665_.get(j);
+        for (int j = 0; j < lines.size(); j++) {
+            String s = lines.get(j);
             if (!Strings.isNullOrEmpty(s)) {
                 int k = this.font.width(s);
-                int l = p_286644_ ? 2 : p_286519_.guiWidth() - 2 - k;
+                int l = leftSide ? 2 : guiGraphics.guiWidth() - 2 - k;
                 int i1 = 2 + i * j;
-                p_286519_.fill(l - 1, i1 - 1, l + k + 1, i1 + i - 1, -1873784752);
+                guiGraphics.fill(l - 1, i1 - 1, l + k + 1, i1 + i - 1, -1873784752);
             }
         }
 
-        for (int j1 = 0; j1 < p_286665_.size(); j1++) {
-            String s1 = p_286665_.get(j1);
+        for (int j1 = 0; j1 < lines.size(); j1++) {
+            String s1 = lines.get(j1);
             if (!Strings.isNullOrEmpty(s1)) {
                 int k1 = this.font.width(s1);
-                int l1 = p_286644_ ? 2 : p_286519_.guiWidth() - 2 - k1;
+                int l1 = leftSide ? 2 : guiGraphics.guiWidth() - 2 - k1;
                 int i2 = 2 + i * j1;
-                p_286519_.drawString(this.font, s1, l1, i2, 14737632, false);
+                guiGraphics.drawString(this.font, s1, l1, i2, 14737632, false);
             }
         }
     }
@@ -463,8 +463,8 @@ public class DebugScreenOverlay {
         }
     }
 
-    private static String printBiome(Holder<Biome> p_205375_) {
-        return p_205375_.unwrap().map(p_205377_ -> p_205377_.location().toString(), p_339278_ -> "[unregistered " + p_339278_ + "]");
+    private static String printBiome(Holder<Biome> biomeHolder) {
+        return biomeHolder.unwrap().map(p_205377_ -> p_205377_.location().toString(), p_339278_ -> "[unregistered " + p_339278_ + "]");
     }
 
     @Nullable
@@ -584,9 +584,9 @@ public class DebugScreenOverlay {
         }
     }
 
-    private String getPropertyValueString(Entry<Property<?>, Comparable<?>> p_94072_) {
-        Property<?> property = p_94072_.getKey();
-        Comparable<?> comparable = p_94072_.getValue();
+    private String getPropertyValueString(Entry<Property<?>, Comparable<?>> entry) {
+        Property<?> property = entry.getKey();
+        Comparable<?> comparable = entry.getValue();
         String s = Util.getPropertyName(property, comparable);
         if (Boolean.TRUE.equals(comparable)) {
             s = ChatFormatting.GREEN + s;
@@ -597,8 +597,8 @@ public class DebugScreenOverlay {
         return property.getName() + ": " + s;
     }
 
-    private static long bytesToMegabytes(long p_94051_) {
-        return p_94051_ / 1024L / 1024L;
+    private static long bytesToMegabytes(long bytes) {
+        return bytes / 1024L / 1024L;
     }
 
     public boolean showDebugScreen() {
@@ -644,8 +644,8 @@ public class DebugScreenOverlay {
         }
     }
 
-    public void logFrameDuration(long p_299936_) {
-        this.frameTimeLogger.logSample(p_299936_);
+    public void logFrameDuration(long frameDuration) {
+        this.frameTimeLogger.logSample(frameDuration);
     }
 
     public LocalSampleLogger getTickTimeLogger() {
@@ -660,10 +660,10 @@ public class DebugScreenOverlay {
         return this.bandwidthLogger;
     }
 
-    public void logRemoteSample(long[] p_324375_, RemoteDebugSampleType p_324309_) {
-        LocalSampleLogger localsamplelogger = this.remoteSupportingLoggers.get(p_324309_);
+    public void logRemoteSample(long[] sample, RemoteDebugSampleType sampleType) {
+        LocalSampleLogger localsamplelogger = this.remoteSupportingLoggers.get(sampleType);
         if (localsamplelogger != null) {
-            localsamplelogger.logFullSample(p_324375_);
+            localsamplelogger.logFullSample(sample);
         }
     }
 
@@ -683,7 +683,7 @@ public class DebugScreenOverlay {
         private long lastGcCounts = -1L;
         private long lastRate = 0L;
 
-        long bytesAllocatedPerSecond(long p_232517_) {
+        long bytesAllocatedPerSecond(long heapUsage) {
             long i = System.currentTimeMillis();
             if (i - this.lastTime < 500L) {
                 return this.lastRate;
@@ -691,12 +691,12 @@ public class DebugScreenOverlay {
                 long j = gcCounts();
                 if (this.lastTime != 0L && j == this.lastGcCounts) {
                     double d0 = (double)TimeUnit.SECONDS.toMillis(1L) / (double)(i - this.lastTime);
-                    long k = p_232517_ - this.lastHeapUsage;
+                    long k = heapUsage - this.lastHeapUsage;
                     this.lastRate = Math.round((double)k * d0);
                 }
 
                 this.lastTime = i;
-                this.lastHeapUsage = p_232517_;
+                this.lastHeapUsage = heapUsage;
                 this.lastGcCounts = j;
                 return this.lastRate;
             }

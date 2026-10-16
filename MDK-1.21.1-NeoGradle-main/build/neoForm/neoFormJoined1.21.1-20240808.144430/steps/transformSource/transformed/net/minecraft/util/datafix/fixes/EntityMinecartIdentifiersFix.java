@@ -9,16 +9,16 @@ import com.mojang.serialization.Dynamic;
 import net.minecraft.Util;
 
 public class EntityMinecartIdentifiersFix extends EntityRenameFix {
-    public EntityMinecartIdentifiersFix(Schema p_15479_) {
-        super("EntityMinecartIdentifiersFix", p_15479_, true);
+    public EntityMinecartIdentifiersFix(Schema outputSchema) {
+        super("EntityMinecartIdentifiersFix", outputSchema, true);
     }
 
     @Override
-    protected Pair<String, Typed<?>> fix(String p_341981_, Typed<?> p_341975_) {
-        if (!p_341981_.equals("Minecart")) {
-            return Pair.of(p_341981_, p_341975_);
+    protected Pair<String, Typed<?>> fix(String entityName, Typed<?> typed) {
+        if (!entityName.equals("Minecart")) {
+            return Pair.of(entityName, typed);
         } else {
-            int i = p_341975_.getOrCreate(DSL.remainderFinder()).get("Type").asInt(0);
+            int i = typed.getOrCreate(DSL.remainderFinder()).get("Type").asInt(0);
 
             String s = switch (i) {
                 case 1 -> "MinecartChest";
@@ -26,7 +26,7 @@ public class EntityMinecartIdentifiersFix extends EntityRenameFix {
                 default -> "MinecartRideable";
             };
             Type<?> type = this.getOutputSchema().findChoiceType(References.ENTITY).types().get(s);
-            return Pair.of(s, Util.writeAndReadTypedOrThrow(p_341975_, type, p_341966_ -> p_341966_.remove("Type")));
+            return Pair.of(s, Util.writeAndReadTypedOrThrow(typed, type, p_341966_ -> p_341966_.remove("Type")));
         }
     }
 }

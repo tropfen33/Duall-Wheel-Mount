@@ -18,40 +18,43 @@ public class RotatedPillarBlock extends Block {
         return CODEC;
     }
 
-    public RotatedPillarBlock(BlockBehaviour.Properties p_55926_) {
-        super(p_55926_);
+    public RotatedPillarBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.defaultBlockState().setValue(AXIS, Direction.Axis.Y));
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_55930_, Rotation p_55931_) {
-        return rotatePillar(p_55930_, p_55931_);
+    protected BlockState rotate(BlockState state, Rotation rot) {
+        return rotatePillar(state, rot);
     }
 
-    public static BlockState rotatePillar(BlockState p_154377_, Rotation p_154378_) {
-        switch (p_154378_) {
+    public static BlockState rotatePillar(BlockState state, Rotation rotation) {
+        switch (rotation) {
             case COUNTERCLOCKWISE_90:
             case CLOCKWISE_90:
-                switch ((Direction.Axis)p_154377_.getValue(AXIS)) {
+                switch ((Direction.Axis)state.getValue(AXIS)) {
                     case X:
-                        return p_154377_.setValue(AXIS, Direction.Axis.Z);
+                        return state.setValue(AXIS, Direction.Axis.Z);
                     case Z:
-                        return p_154377_.setValue(AXIS, Direction.Axis.X);
+                        return state.setValue(AXIS, Direction.Axis.X);
                     default:
-                        return p_154377_;
+                        return state;
                 }
             default:
-                return p_154377_;
+                return state;
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_55933_) {
-        p_55933_.add(AXIS);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AXIS);
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_55928_) {
-        return this.defaultBlockState().setValue(AXIS, p_55928_.getClickedFace().getAxis());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(AXIS, context.getClickedFace().getAxis());
     }
 }

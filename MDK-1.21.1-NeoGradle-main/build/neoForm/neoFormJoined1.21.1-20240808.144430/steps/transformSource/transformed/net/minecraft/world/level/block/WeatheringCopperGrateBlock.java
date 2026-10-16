@@ -23,19 +23,22 @@ public class WeatheringCopperGrateBlock extends WaterloggedTransparentBlock impl
         return CODEC;
     }
 
-    public WeatheringCopperGrateBlock(WeatheringCopper.WeatherState p_309130_, BlockBehaviour.Properties p_309077_) {
-        super(p_309077_);
-        this.weatherState = p_309130_;
+    public WeatheringCopperGrateBlock(WeatheringCopper.WeatherState weatherState, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.weatherState = weatherState;
+    }
+
+    /**
+     * Performs a random tick on a block.
+     */
+    @Override
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        this.changeOverTime(state, level, pos, random);
     }
 
     @Override
-    protected void randomTick(BlockState p_309111_, ServerLevel p_309121_, BlockPos p_309090_, RandomSource p_308865_) {
-        this.changeOverTime(p_309111_, p_309121_, p_309090_, p_308865_);
-    }
-
-    @Override
-    protected boolean isRandomlyTicking(BlockState p_309102_) {
-        return WeatheringCopper.getNext(p_309102_.getBlock()).isPresent();
+    protected boolean isRandomlyTicking(BlockState state) {
+        return WeatheringCopper.getNext(state.getBlock()).isPresent();
     }
 
     public WeatheringCopper.WeatherState getAge() {

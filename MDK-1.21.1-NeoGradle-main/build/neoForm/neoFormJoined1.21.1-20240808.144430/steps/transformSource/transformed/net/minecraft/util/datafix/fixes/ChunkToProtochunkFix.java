@@ -17,8 +17,8 @@ import java.util.stream.Stream;
 public class ChunkToProtochunkFix extends DataFix {
     private static final int NUM_SECTIONS = 16;
 
-    public ChunkToProtochunkFix(Schema p_15285_, boolean p_15286_) {
-        super(p_15285_, p_15286_);
+    public ChunkToProtochunkFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -31,9 +31,9 @@ public class ChunkToProtochunkFix extends DataFix {
         );
     }
 
-    private static <T> Dynamic<T> fixChunkData(Dynamic<T> p_199856_) {
-        boolean flag = p_199856_.get("TerrainPopulated").asBoolean(false);
-        boolean flag1 = p_199856_.get("LightPopulated").asNumber().result().isEmpty() || p_199856_.get("LightPopulated").asBoolean(false);
+    private static <T> Dynamic<T> fixChunkData(Dynamic<T> chunkData) {
+        boolean flag = chunkData.get("TerrainPopulated").asBoolean(false);
+        boolean flag1 = chunkData.get("LightPopulated").asNumber().result().isEmpty() || chunkData.get("LightPopulated").asBoolean(false);
         String s;
         if (flag) {
             if (flag1) {
@@ -45,11 +45,11 @@ public class ChunkToProtochunkFix extends DataFix {
             s = "carved";
         }
 
-        return repackTicks(repackBiomes(p_199856_)).set("Status", p_199856_.createString(s)).set("hasLegacyStructureData", p_199856_.createBoolean(true));
+        return repackTicks(repackBiomes(chunkData)).set("Status", chunkData.createString(s)).set("hasLegacyStructureData", chunkData.createBoolean(true));
     }
 
-    private static <T> Dynamic<T> repackBiomes(Dynamic<T> p_199880_) {
-        return p_199880_.update("Biomes", p_337614_ -> DataFixUtils.orElse(p_337614_.asByteBufferOpt().result().map(p_199868_ -> {
+    private static <T> Dynamic<T> repackBiomes(Dynamic<T> dynamic) {
+        return dynamic.update("Biomes", p_337614_ -> DataFixUtils.orElse(p_337614_.asByteBufferOpt().result().map(p_199868_ -> {
                 int[] aint = new int[256];
 
                 for (int i = 0; i < aint.length; i++) {
@@ -58,13 +58,13 @@ public class ChunkToProtochunkFix extends DataFix {
                     }
                 }
 
-                return p_199880_.createIntList(Arrays.stream(aint));
+                return dynamic.createIntList(Arrays.stream(aint));
             }), p_337614_));
     }
 
-    private static <T> Dynamic<T> repackTicks(Dynamic<T> p_199882_) {
+    private static <T> Dynamic<T> repackTicks(Dynamic<T> dynamic) {
         return DataFixUtils.orElse(
-            p_199882_.get("TileTicks")
+            dynamic.get("TileTicks")
                 .asStreamOpt()
                 .result()
                 .map(
@@ -77,25 +77,25 @@ public class ChunkToProtochunkFix extends DataFix {
                             short short1 = packOffsetCoordinates(i, j, k);
                             list.get(j >> 4).add(short1);
                         });
-                        return p_199882_.remove("TileTicks")
+                        return dynamic.remove("TileTicks")
                             .set(
                                 "ToBeTicked",
-                                p_199882_.createList(
+                                dynamic.createList(
                                     list.stream()
                                         .map(
-                                            p_199865_ -> p_199882_.createList(
-                                                    p_199865_.intStream().mapToObj(p_199859_ -> p_199882_.createShort((short)p_199859_))
+                                            p_199865_ -> dynamic.createList(
+                                                    p_199865_.intStream().mapToObj(p_199859_ -> dynamic.createShort((short)p_199859_))
                                                 )
                                         )
                                 )
                             );
                     }
                 ),
-            p_199882_
+            dynamic
         );
     }
 
-    private static short packOffsetCoordinates(int p_15291_, int p_15292_, int p_15293_) {
-        return (short)(p_15291_ & 15 | (p_15292_ & 15) << 4 | (p_15293_ & 15) << 8);
+    private static short packOffsetCoordinates(int x, int y, int z) {
+        return (short)(x & 15 | (y & 15) << 4 | (z & 15) << 8);
     }
 }

@@ -2,19 +2,28 @@ package net.minecraft.world.entity.ai.attributes;
 
 import net.minecraft.util.Mth;
 
+/**
+ * Defines an entity {@linkplain net.minecraft.world.entity.ai.attributes.Attribute attribute} that is limited to a range of values.
+ */
 public class RangedAttribute extends Attribute {
+    /**
+     * The lowest possible value for the attribute.
+     */
     private final double minValue;
+    /**
+     * The highest possible value for the attribute.
+     */
     private final double maxValue;
 
-    public RangedAttribute(String p_22310_, double p_22311_, double p_22312_, double p_22313_) {
-        super(p_22310_, p_22311_);
-        this.minValue = p_22312_;
-        this.maxValue = p_22313_;
-        if (p_22312_ > p_22313_) {
+    public RangedAttribute(String descriptionId, double defaultValue, double min, double max) {
+        super(descriptionId, defaultValue);
+        this.minValue = min;
+        this.maxValue = max;
+        if (min > max) {
             throw new IllegalArgumentException("Minimum value cannot be bigger than maximum value!");
-        } else if (p_22311_ < p_22312_) {
+        } else if (defaultValue < min) {
             throw new IllegalArgumentException("Default value cannot be lower than minimum value!");
-        } else if (p_22311_ > p_22313_) {
+        } else if (defaultValue > max) {
             throw new IllegalArgumentException("Default value cannot be bigger than maximum value!");
         }
     }
@@ -27,8 +36,14 @@ public class RangedAttribute extends Attribute {
         return this.maxValue;
     }
 
+    /**
+     * Sanitizes the value of the attribute to fit within the expected parameter range of the attribute. In this case it will clamp the value between {@link minValue} and {@link maxValue}.
+     * @return The clamped attribute value.
+     *
+     * @param value The value of the attribute to sanitize.
+     */
     @Override
-    public double sanitizeValue(double p_22315_) {
-        return Double.isNaN(p_22315_) ? this.minValue : Mth.clamp(p_22315_, this.minValue, this.maxValue);
+    public double sanitizeValue(double value) {
+        return Double.isNaN(value) ? this.minValue : Mth.clamp(value, this.minValue, this.maxValue);
     }
 }

@@ -7,11 +7,11 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface Layout extends LayoutElement {
-    void visitChildren(Consumer<LayoutElement> p_270255_);
+    void visitChildren(Consumer<LayoutElement> visitor);
 
     @Override
-    default void visitWidgets(Consumer<AbstractWidget> p_270962_) {
-        this.visitChildren(p_270634_ -> p_270634_.visitWidgets(p_270962_));
+    default void visitWidgets(Consumer<AbstractWidget> consumer) {
+        this.visitChildren(p_270634_ -> p_270634_.visitWidgets(consumer));
     }
 
     default void arrangeElements() {

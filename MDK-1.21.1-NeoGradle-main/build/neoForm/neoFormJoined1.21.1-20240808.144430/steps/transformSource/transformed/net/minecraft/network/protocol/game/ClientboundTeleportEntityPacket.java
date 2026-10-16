@@ -19,35 +19,38 @@ public class ClientboundTeleportEntityPacket implements Packet<ClientGamePacketL
     private final byte xRot;
     private final boolean onGround;
 
-    public ClientboundTeleportEntityPacket(Entity p_133538_) {
-        this.id = p_133538_.getId();
-        Vec3 vec3 = p_133538_.trackingPosition();
+    public ClientboundTeleportEntityPacket(Entity entity) {
+        this.id = entity.getId();
+        Vec3 vec3 = entity.trackingPosition();
         this.x = vec3.x;
         this.y = vec3.y;
         this.z = vec3.z;
-        this.yRot = (byte)((int)(p_133538_.getYRot() * 256.0F / 360.0F));
-        this.xRot = (byte)((int)(p_133538_.getXRot() * 256.0F / 360.0F));
-        this.onGround = p_133538_.onGround();
+        this.yRot = (byte)((int)(entity.getYRot() * 256.0F / 360.0F));
+        this.xRot = (byte)((int)(entity.getXRot() * 256.0F / 360.0F));
+        this.onGround = entity.onGround();
     }
 
-    private ClientboundTeleportEntityPacket(FriendlyByteBuf p_179437_) {
-        this.id = p_179437_.readVarInt();
-        this.x = p_179437_.readDouble();
-        this.y = p_179437_.readDouble();
-        this.z = p_179437_.readDouble();
-        this.yRot = p_179437_.readByte();
-        this.xRot = p_179437_.readByte();
-        this.onGround = p_179437_.readBoolean();
+    private ClientboundTeleportEntityPacket(FriendlyByteBuf buffer) {
+        this.id = buffer.readVarInt();
+        this.x = buffer.readDouble();
+        this.y = buffer.readDouble();
+        this.z = buffer.readDouble();
+        this.yRot = buffer.readByte();
+        this.xRot = buffer.readByte();
+        this.onGround = buffer.readBoolean();
     }
 
-    private void write(FriendlyByteBuf p_133547_) {
-        p_133547_.writeVarInt(this.id);
-        p_133547_.writeDouble(this.x);
-        p_133547_.writeDouble(this.y);
-        p_133547_.writeDouble(this.z);
-        p_133547_.writeByte(this.yRot);
-        p_133547_.writeByte(this.xRot);
-        p_133547_.writeBoolean(this.onGround);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.id);
+        buffer.writeDouble(this.x);
+        buffer.writeDouble(this.y);
+        buffer.writeDouble(this.z);
+        buffer.writeByte(this.yRot);
+        buffer.writeByte(this.xRot);
+        buffer.writeBoolean(this.onGround);
     }
 
     @Override
@@ -55,8 +58,11 @@ public class ClientboundTeleportEntityPacket implements Packet<ClientGamePacketL
         return GamePacketTypes.CLIENTBOUND_TELEPORT_ENTITY;
     }
 
-    public void handle(ClientGamePacketListener p_133544_) {
-        p_133544_.handleTeleportEntity(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleTeleportEntity(this);
     }
 
     public int getId() {

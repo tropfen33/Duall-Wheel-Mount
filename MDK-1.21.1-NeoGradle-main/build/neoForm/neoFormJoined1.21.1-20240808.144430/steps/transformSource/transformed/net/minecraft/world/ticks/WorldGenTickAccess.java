@@ -6,22 +6,22 @@ import net.minecraft.core.BlockPos;
 public class WorldGenTickAccess<T> implements LevelTickAccess<T> {
     private final Function<BlockPos, TickContainerAccess<T>> containerGetter;
 
-    public WorldGenTickAccess(Function<BlockPos, TickContainerAccess<T>> p_193454_) {
-        this.containerGetter = p_193454_;
+    public WorldGenTickAccess(Function<BlockPos, TickContainerAccess<T>> containerGetter) {
+        this.containerGetter = containerGetter;
     }
 
     @Override
-    public boolean hasScheduledTick(BlockPos p_193459_, T p_193460_) {
-        return this.containerGetter.apply(p_193459_).hasScheduledTick(p_193459_, p_193460_);
+    public boolean hasScheduledTick(BlockPos pos, T type) {
+        return this.containerGetter.apply(pos).hasScheduledTick(pos, type);
     }
 
     @Override
-    public void schedule(ScheduledTick<T> p_193457_) {
-        this.containerGetter.apply(p_193457_.pos()).schedule(p_193457_);
+    public void schedule(ScheduledTick<T> tick) {
+        this.containerGetter.apply(tick.pos()).schedule(tick);
     }
 
     @Override
-    public boolean willTickThisTick(BlockPos p_193462_, T p_193463_) {
+    public boolean willTickThisTick(BlockPos pos, T type) {
         return false;
     }
 

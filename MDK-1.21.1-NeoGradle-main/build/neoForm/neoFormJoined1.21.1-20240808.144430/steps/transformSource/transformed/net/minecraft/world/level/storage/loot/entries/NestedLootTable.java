@@ -29,10 +29,10 @@ public class NestedLootTable extends LootPoolSingletonContainer {
     private final Either<ResourceKey<LootTable>, LootTable> contents;
 
     private NestedLootTable(
-        Either<ResourceKey<LootTable>, LootTable> p_330816_, int p_330486_, int p_331616_, List<LootItemCondition> p_330391_, List<LootItemFunction> p_332076_
+        Either<ResourceKey<LootTable>, LootTable> contents, int weight, int quality, List<LootItemCondition> conditions, List<LootItemFunction> functions
     ) {
-        super(p_330486_, p_331616_, p_330391_, p_332076_);
-        this.contents = p_330816_;
+        super(weight, quality, conditions, functions);
+        this.contents = contents;
     }
 
     @Override
@@ -40,54 +40,58 @@ public class NestedLootTable extends LootPoolSingletonContainer {
         return LootPoolEntries.LOOT_TABLE;
     }
 
+    /**
+     * Generate the loot stacks of this entry.
+     * Contrary to the method name this method does not always generate one stack, it can also generate zero or multiple stacks.
+     */
     @Override
-    public void createItemStack(Consumer<ItemStack> p_331038_, LootContext p_331648_) {
+    public void createItemStack(Consumer<ItemStack> stackConsumer, LootContext lootContext) {
         this.contents
             .map(
-                p_335324_ -> p_331648_.getResolver().get(Registries.LOOT_TABLE, (ResourceKey<LootTable>)p_335324_).map(Holder::value).orElse(LootTable.EMPTY),
+                p_335324_ -> lootContext.getResolver().get(Registries.LOOT_TABLE, (ResourceKey<LootTable>)p_335324_).map(Holder::value).orElse(LootTable.EMPTY),
                 p_330212_ -> (LootTable)p_330212_
             )
-            .getRandomItemsRaw(p_331648_, p_331038_);
+            .getRandomItemsRaw(lootContext, stackConsumer);
     }
 
     @Override
-    public void validate(ValidationContext p_330583_) {
+    public void validate(ValidationContext validationContext) {
         Optional<ResourceKey<LootTable>> optional = this.contents.left();
         if (optional.isPresent()) {
             ResourceKey<LootTable> resourcekey = optional.get();
-            if (!p_330583_.allowsReferences()) {
-                p_330583_.reportProblem("Uses reference to " + resourcekey.location() + ", but references are not allowed");
+            if (!validationContext.allowsReferences()) {
+                validationContext.reportProblem("Uses reference to " + resourcekey.location() + ", but references are not allowed");
                 return;
             }
 
-            if (p_330583_.hasVisitedElement(resourcekey)) {
-                p_330583_.reportProblem("Table " + resourcekey.location() + " is recursively called");
+            if (validationContext.hasVisitedElement(resourcekey)) {
+                validationContext.reportProblem("Table " + resourcekey.location() + " is recursively called");
                 return;
             }
         }
 
-        super.validate(p_330583_);
+        super.validate(validationContext);
         this.contents
             .ifLeft(
-                p_335332_ -> p_330583_.resolver()
+                p_335332_ -> validationContext.resolver()
                         .get(Registries.LOOT_TABLE, (ResourceKey<LootTable>)p_335332_)
                         .ifPresentOrElse(
-                            p_339565_ -> p_339565_.value().validate(p_330583_.enterElement("->{" + p_335332_.location() + "}", (ResourceKey<?>)p_335332_)),
-                            () -> p_330583_.reportProblem("Unknown loot table called " + p_335332_.location())
+                            p_339565_ -> p_339565_.value().validate(validationContext.enterElement("->{" + p_335332_.location() + "}", (ResourceKey<?>)p_335332_)),
+                            () -> validationContext.reportProblem("Unknown loot table called " + p_335332_.location())
                         )
             )
-            .ifRight(p_331183_ -> p_331183_.validate(p_330583_.forChild("->{inline}")));
+            .ifRight(p_331183_ -> p_331183_.validate(validationContext.forChild("->{inline}")));
     }
 
-    public static LootPoolSingletonContainer.Builder<?> lootTableReference(ResourceKey<LootTable> p_335392_) {
+    public static LootPoolSingletonContainer.Builder<?> lootTableReference(ResourceKey<LootTable> lootTable) {
         return simpleBuilder(
-            (p_331271_, p_331120_, p_331361_, p_331392_) -> new NestedLootTable(Either.left(p_335392_), p_331271_, p_331120_, p_331361_, p_331392_)
+            (p_331271_, p_331120_, p_331361_, p_331392_) -> new NestedLootTable(Either.left(lootTable), p_331271_, p_331120_, p_331361_, p_331392_)
         );
     }
 
-    public static LootPoolSingletonContainer.Builder<?> inlineLootTable(LootTable p_330235_) {
+    public static LootPoolSingletonContainer.Builder<?> inlineLootTable(LootTable lootTable) {
         return simpleBuilder(
-            (p_330488_, p_330473_, p_330668_, p_331391_) -> new NestedLootTable(Either.right(p_330235_), p_330488_, p_330473_, p_330668_, p_331391_)
+            (p_330488_, p_330473_, p_330668_, p_331391_) -> new NestedLootTable(Either.right(lootTable), p_330488_, p_330473_, p_330668_, p_331391_)
         );
     }
 }

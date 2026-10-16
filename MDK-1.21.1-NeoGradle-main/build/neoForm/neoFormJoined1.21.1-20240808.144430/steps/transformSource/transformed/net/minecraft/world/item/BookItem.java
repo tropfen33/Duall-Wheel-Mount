@@ -1,13 +1,16 @@
 package net.minecraft.world.item;
 
 public class BookItem extends Item {
-    public BookItem(Item.Properties p_40643_) {
-        super(p_40643_);
+    public BookItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Checks isDamagable and if it cannot be stacked
+     */
     @Override
-    public boolean isEnchantable(ItemStack p_40646_) {
-        return p_40646_.getCount() == 1;
+    public boolean isEnchantable(ItemStack stack) {
+        return stack.getCount() == 1;
     }
 
     @Override

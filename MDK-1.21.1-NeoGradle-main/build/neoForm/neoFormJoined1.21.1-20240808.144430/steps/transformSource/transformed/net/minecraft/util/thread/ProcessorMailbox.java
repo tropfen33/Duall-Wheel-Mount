@@ -24,14 +24,14 @@ public class ProcessorMailbox<T> implements ProfilerMeasured, ProcessorHandle<T>
     private final Executor dispatcher;
     private final String name;
 
-    public static ProcessorMailbox<Runnable> create(Executor p_18752_, String p_18753_) {
-        return new ProcessorMailbox<>(new StrictQueue.QueueStrictQueue<>(new ConcurrentLinkedQueue<>()), p_18752_, p_18753_);
+    public static ProcessorMailbox<Runnable> create(Executor dispatcher, String name) {
+        return new ProcessorMailbox<>(new StrictQueue.QueueStrictQueue<>(new ConcurrentLinkedQueue<>()), dispatcher, name);
     }
 
-    public ProcessorMailbox(StrictQueue<? super T, ? extends Runnable> p_18741_, Executor p_18742_, String p_18743_) {
-        this.dispatcher = p_18742_;
-        this.queue = p_18741_;
-        this.name = p_18743_;
+    public ProcessorMailbox(StrictQueue<? super T, ? extends Runnable> queue, Executor dispatcher, String name) {
+        this.dispatcher = dispatcher;
+        this.queue = queue;
+        this.name = name;
         MetricsRegistry.INSTANCE.add(this);
     }
 
@@ -104,8 +104,8 @@ public class ProcessorMailbox<T> implements ProfilerMeasured, ProcessorHandle<T>
     }
 
     @Override
-    public void tell(T p_18750_) {
-        this.queue.push(p_18750_);
+    public void tell(T task) {
+        this.queue.push(task);
         this.registerForExecution();
     }
 
@@ -123,10 +123,10 @@ public class ProcessorMailbox<T> implements ProfilerMeasured, ProcessorHandle<T>
         }
     }
 
-    private int pollUntil(Int2BooleanFunction p_18748_) {
+    private int pollUntil(Int2BooleanFunction continuePolling) {
         int i = 0;
 
-        while (p_18748_.get(i) && this.pollTask()) {
+        while (continuePolling.get(i) && this.pollTask()) {
             i++;
         }
 

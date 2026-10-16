@@ -57,8 +57,8 @@ public class PiglinBrute extends AbstractPiglin {
         MemoryModuleType.HOME
     );
 
-    public PiglinBrute(EntityType<? extends PiglinBrute> p_35048_, Level p_35049_) {
-        super(p_35048_, p_35049_);
+    public PiglinBrute(EntityType<? extends PiglinBrute> entityType, Level level) {
+        super(entityType, level);
         this.xpReward = 20;
     }
 
@@ -68,14 +68,14 @@ public class PiglinBrute extends AbstractPiglin {
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_35058_, DifficultyInstance p_35059_, MobSpawnType p_35060_, @Nullable SpawnGroupData p_35061_) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
         PiglinBruteAi.initMemories(this);
-        this.populateDefaultEquipmentSlots(p_35058_.getRandom(), p_35059_);
-        return super.finalizeSpawn(p_35058_, p_35059_, p_35060_, p_35061_);
+        this.populateDefaultEquipmentSlots(level.getRandom(), difficulty);
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
     @Override
-    protected void populateDefaultEquipmentSlots(RandomSource p_219209_, DifficultyInstance p_219210_) {
+    protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
         this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.GOLDEN_AXE));
     }
 
@@ -85,8 +85,8 @@ public class PiglinBrute extends AbstractPiglin {
     }
 
     @Override
-    protected Brain<?> makeBrain(Dynamic<?> p_35064_) {
-        return PiglinBruteAi.makeBrain(this, this.brainProvider().makeBrain(p_35064_));
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return PiglinBruteAi.makeBrain(this, this.brainProvider().makeBrain(dynamic));
     }
 
     @Override
@@ -100,8 +100,8 @@ public class PiglinBrute extends AbstractPiglin {
     }
 
     @Override
-    public boolean wantsToPickUp(ItemStack p_35078_) {
-        return p_35078_.is(Items.GOLDEN_AXE) ? super.wantsToPickUp(p_35078_) : false;
+    public boolean wantsToPickUp(ItemStack stack) {
+        return stack.is(Items.GOLDEN_AXE) ? super.wantsToPickUp(stack) : false;
     }
 
     @Override
@@ -119,14 +119,17 @@ public class PiglinBrute extends AbstractPiglin {
         return this.isAggressive() && this.isHoldingMeleeWeapon() ? PiglinArmPose.ATTACKING_WITH_MELEE_WEAPON : PiglinArmPose.DEFAULT;
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_35055_, float p_35056_) {
-        boolean flag = super.hurt(p_35055_, p_35056_);
+    public boolean hurt(DamageSource source, float amount) {
+        boolean flag = super.hurt(source, amount);
         if (this.level().isClientSide) {
             return false;
         } else {
-            if (flag && p_35055_.getEntity() instanceof LivingEntity) {
-                PiglinBruteAi.wasHurtBy(this, (LivingEntity)p_35055_.getEntity());
+            if (flag && source.getEntity() instanceof LivingEntity) {
+                PiglinBruteAi.wasHurtBy(this, (LivingEntity)source.getEntity());
             }
 
             return flag;
@@ -139,7 +142,7 @@ public class PiglinBrute extends AbstractPiglin {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_35072_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.PIGLIN_BRUTE_HURT;
     }
 
@@ -149,7 +152,7 @@ public class PiglinBrute extends AbstractPiglin {
     }
 
     @Override
-    protected void playStepSound(BlockPos p_35066_, BlockState p_35067_) {
+    protected void playStepSound(BlockPos pos, BlockState block) {
         this.playSound(SoundEvents.PIGLIN_BRUTE_STEP, 0.15F, 1.0F);
     }
 

@@ -5,14 +5,14 @@ import net.minecraft.world.entity.Entity;
 public abstract class HitResult {
     protected final Vec3 location;
 
-    protected HitResult(Vec3 p_82447_) {
-        this.location = p_82447_;
+    protected HitResult(Vec3 location) {
+        this.location = location;
     }
 
-    public double distanceTo(Entity p_82449_) {
-        double d0 = this.location.x - p_82449_.getX();
-        double d1 = this.location.y - p_82449_.getY();
-        double d2 = this.location.z - p_82449_.getZ();
+    public double distanceTo(Entity entity) {
+        double d0 = this.location.x - entity.getX();
+        double d1 = this.location.y - entity.getY();
+        double d2 = this.location.z - entity.getZ();
         return d0 * d0 + d1 * d1 + d2 * d2;
     }
 

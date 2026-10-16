@@ -8,9 +8,9 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class TextureMetadataSectionSerializer implements MetadataSectionSerializer<TextureMetadataSection> {
-    public TextureMetadataSection fromJson(JsonObject p_119122_) {
-        boolean flag = GsonHelper.getAsBoolean(p_119122_, "blur", false);
-        boolean flag1 = GsonHelper.getAsBoolean(p_119122_, "clamp", false);
+    public TextureMetadataSection fromJson(JsonObject json) {
+        boolean flag = GsonHelper.getAsBoolean(json, "blur", false);
+        boolean flag1 = GsonHelper.getAsBoolean(json, "clamp", false);
         return new TextureMetadataSection(flag, flag1);
     }
 

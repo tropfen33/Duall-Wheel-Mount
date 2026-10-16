@@ -125,197 +125,197 @@ public class V705 extends NamespacedSchema {
         .build();
     protected static final HookFunction ADD_NAMES = new HookFunction() {
         @Override
-        public <T> T apply(DynamicOps<T> p_18167_, T p_18168_) {
-            return V99.addNames(new Dynamic<>(p_18167_, p_18168_), V704.ITEM_TO_BLOCKENTITY, V705.ITEM_TO_ENTITY);
+        public <T> T apply(DynamicOps<T> ops, T value) {
+            return V99.addNames(new Dynamic<>(ops, value), V704.ITEM_TO_BLOCKENTITY, V705.ITEM_TO_ENTITY);
         }
     };
 
-    public V705(int p_18075_, Schema p_18076_) {
-        super(p_18075_, p_18076_);
+    public V705(int versionKey, Schema parent) {
+        super(versionKey, parent);
     }
 
-    protected static void registerMob(Schema p_18083_, Map<String, Supplier<TypeTemplate>> p_18084_, String p_18085_) {
-        p_18083_.register(p_18084_, p_18085_, () -> V100.equipment(p_18083_));
+    protected static void registerMob(Schema schema, Map<String, Supplier<TypeTemplate>> map, String name) {
+        schema.register(map, name, () -> V100.equipment(schema));
     }
 
-    protected static void registerThrowableProjectile(Schema p_18094_, Map<String, Supplier<TypeTemplate>> p_18095_, String p_18096_) {
-        p_18094_.register(p_18095_, p_18096_, () -> DSL.optionalFields("inTile", References.BLOCK_NAME.in(p_18094_)));
+    protected static void registerThrowableProjectile(Schema schema, Map<String, Supplier<TypeTemplate>> map, String name) {
+        schema.register(map, name, () -> DSL.optionalFields("inTile", References.BLOCK_NAME.in(schema)));
     }
 
     @Override
-    public Map<String, Supplier<TypeTemplate>> registerEntities(Schema p_18148_) {
+    public Map<String, Supplier<TypeTemplate>> registerEntities(Schema schema) {
         Map<String, Supplier<TypeTemplate>> map = Maps.newHashMap();
-        p_18148_.register(map, "minecraft:area_effect_cloud", p_340699_ -> DSL.optionalFields("Particle", References.PARTICLE.in(p_18148_)));
-        registerMob(p_18148_, map, "minecraft:armor_stand");
-        p_18148_.register(map, "minecraft:arrow", p_18158_ -> DSL.optionalFields("inTile", References.BLOCK_NAME.in(p_18148_)));
-        registerMob(p_18148_, map, "minecraft:bat");
-        registerMob(p_18148_, map, "minecraft:blaze");
-        p_18148_.registerSimple(map, "minecraft:boat");
-        registerMob(p_18148_, map, "minecraft:cave_spider");
-        p_18148_.register(
+        schema.register(map, "minecraft:area_effect_cloud", p_340699_ -> DSL.optionalFields("Particle", References.PARTICLE.in(schema)));
+        registerMob(schema, map, "minecraft:armor_stand");
+        schema.register(map, "minecraft:arrow", p_18158_ -> DSL.optionalFields("inTile", References.BLOCK_NAME.in(schema)));
+        registerMob(schema, map, "minecraft:bat");
+        registerMob(schema, map, "minecraft:blaze");
+        schema.registerSimple(map, "minecraft:boat");
+        registerMob(schema, map, "minecraft:cave_spider");
+        schema.register(
             map,
             "minecraft:chest_minecart",
-            p_18161_ -> DSL.optionalFields("DisplayTile", References.BLOCK_NAME.in(p_18148_), "Items", DSL.list(References.ITEM_STACK.in(p_18148_)))
+            p_18161_ -> DSL.optionalFields("DisplayTile", References.BLOCK_NAME.in(schema), "Items", DSL.list(References.ITEM_STACK.in(schema)))
         );
-        registerMob(p_18148_, map, "minecraft:chicken");
-        p_18148_.register(map, "minecraft:commandblock_minecart", p_18137_ -> DSL.optionalFields("DisplayTile", References.BLOCK_NAME.in(p_18148_)));
-        registerMob(p_18148_, map, "minecraft:cow");
-        registerMob(p_18148_, map, "minecraft:creeper");
-        p_18148_.register(
+        registerMob(schema, map, "minecraft:chicken");
+        schema.register(map, "minecraft:commandblock_minecart", p_18137_ -> DSL.optionalFields("DisplayTile", References.BLOCK_NAME.in(schema)));
+        registerMob(schema, map, "minecraft:cow");
+        registerMob(schema, map, "minecraft:creeper");
+        schema.register(
             map,
             "minecraft:donkey",
             p_18155_ -> DSL.optionalFields(
-                    "Items", DSL.list(References.ITEM_STACK.in(p_18148_)), "SaddleItem", References.ITEM_STACK.in(p_18148_), V100.equipment(p_18148_)
+                    "Items", DSL.list(References.ITEM_STACK.in(schema)), "SaddleItem", References.ITEM_STACK.in(schema), V100.equipment(schema)
                 )
         );
-        p_18148_.registerSimple(map, "minecraft:dragon_fireball");
-        registerThrowableProjectile(p_18148_, map, "minecraft:egg");
-        registerMob(p_18148_, map, "minecraft:elder_guardian");
-        p_18148_.registerSimple(map, "minecraft:ender_crystal");
-        registerMob(p_18148_, map, "minecraft:ender_dragon");
-        p_18148_.register(map, "minecraft:enderman", p_18146_ -> DSL.optionalFields("carried", References.BLOCK_NAME.in(p_18148_), V100.equipment(p_18148_)));
-        registerMob(p_18148_, map, "minecraft:endermite");
-        registerThrowableProjectile(p_18148_, map, "minecraft:ender_pearl");
-        p_18148_.registerSimple(map, "minecraft:eye_of_ender_signal");
-        p_18148_.register(
+        schema.registerSimple(map, "minecraft:dragon_fireball");
+        registerThrowableProjectile(schema, map, "minecraft:egg");
+        registerMob(schema, map, "minecraft:elder_guardian");
+        schema.registerSimple(map, "minecraft:ender_crystal");
+        registerMob(schema, map, "minecraft:ender_dragon");
+        schema.register(map, "minecraft:enderman", p_18146_ -> DSL.optionalFields("carried", References.BLOCK_NAME.in(schema), V100.equipment(schema)));
+        registerMob(schema, map, "minecraft:endermite");
+        registerThrowableProjectile(schema, map, "minecraft:ender_pearl");
+        schema.registerSimple(map, "minecraft:eye_of_ender_signal");
+        schema.register(
             map,
             "minecraft:falling_block",
-            p_18143_ -> DSL.optionalFields("Block", References.BLOCK_NAME.in(p_18148_), "TileEntityData", References.BLOCK_ENTITY.in(p_18148_))
+            p_18143_ -> DSL.optionalFields("Block", References.BLOCK_NAME.in(schema), "TileEntityData", References.BLOCK_ENTITY.in(schema))
         );
-        registerThrowableProjectile(p_18148_, map, "minecraft:fireball");
-        p_18148_.register(map, "minecraft:fireworks_rocket", p_18140_ -> DSL.optionalFields("FireworksItem", References.ITEM_STACK.in(p_18148_)));
-        p_18148_.register(map, "minecraft:furnace_minecart", p_18122_ -> DSL.optionalFields("DisplayTile", References.BLOCK_NAME.in(p_18148_)));
-        registerMob(p_18148_, map, "minecraft:ghast");
-        registerMob(p_18148_, map, "minecraft:giant");
-        registerMob(p_18148_, map, "minecraft:guardian");
-        p_18148_.register(
+        registerThrowableProjectile(schema, map, "minecraft:fireball");
+        schema.register(map, "minecraft:fireworks_rocket", p_18140_ -> DSL.optionalFields("FireworksItem", References.ITEM_STACK.in(schema)));
+        schema.register(map, "minecraft:furnace_minecart", p_18122_ -> DSL.optionalFields("DisplayTile", References.BLOCK_NAME.in(schema)));
+        registerMob(schema, map, "minecraft:ghast");
+        registerMob(schema, map, "minecraft:giant");
+        registerMob(schema, map, "minecraft:guardian");
+        schema.register(
             map,
             "minecraft:hopper_minecart",
-            p_18134_ -> DSL.optionalFields("DisplayTile", References.BLOCK_NAME.in(p_18148_), "Items", DSL.list(References.ITEM_STACK.in(p_18148_)))
+            p_18134_ -> DSL.optionalFields("DisplayTile", References.BLOCK_NAME.in(schema), "Items", DSL.list(References.ITEM_STACK.in(schema)))
         );
-        p_18148_.register(
+        schema.register(
             map,
             "minecraft:horse",
             p_18131_ -> DSL.optionalFields(
-                    "ArmorItem", References.ITEM_STACK.in(p_18148_), "SaddleItem", References.ITEM_STACK.in(p_18148_), V100.equipment(p_18148_)
+                    "ArmorItem", References.ITEM_STACK.in(schema), "SaddleItem", References.ITEM_STACK.in(schema), V100.equipment(schema)
                 )
         );
-        registerMob(p_18148_, map, "minecraft:husk");
-        p_18148_.register(map, "minecraft:item", p_18128_ -> DSL.optionalFields("Item", References.ITEM_STACK.in(p_18148_)));
-        p_18148_.register(map, "minecraft:item_frame", p_18125_ -> DSL.optionalFields("Item", References.ITEM_STACK.in(p_18148_)));
-        p_18148_.registerSimple(map, "minecraft:leash_knot");
-        registerMob(p_18148_, map, "minecraft:magma_cube");
-        p_18148_.register(map, "minecraft:minecart", p_18107_ -> DSL.optionalFields("DisplayTile", References.BLOCK_NAME.in(p_18148_)));
-        registerMob(p_18148_, map, "minecraft:mooshroom");
-        p_18148_.register(
+        registerMob(schema, map, "minecraft:husk");
+        schema.register(map, "minecraft:item", p_18128_ -> DSL.optionalFields("Item", References.ITEM_STACK.in(schema)));
+        schema.register(map, "minecraft:item_frame", p_18125_ -> DSL.optionalFields("Item", References.ITEM_STACK.in(schema)));
+        schema.registerSimple(map, "minecraft:leash_knot");
+        registerMob(schema, map, "minecraft:magma_cube");
+        schema.register(map, "minecraft:minecart", p_18107_ -> DSL.optionalFields("DisplayTile", References.BLOCK_NAME.in(schema)));
+        registerMob(schema, map, "minecraft:mooshroom");
+        schema.register(
             map,
             "minecraft:mule",
             p_18119_ -> DSL.optionalFields(
-                    "Items", DSL.list(References.ITEM_STACK.in(p_18148_)), "SaddleItem", References.ITEM_STACK.in(p_18148_), V100.equipment(p_18148_)
+                    "Items", DSL.list(References.ITEM_STACK.in(schema)), "SaddleItem", References.ITEM_STACK.in(schema), V100.equipment(schema)
                 )
         );
-        registerMob(p_18148_, map, "minecraft:ocelot");
-        p_18148_.registerSimple(map, "minecraft:painting");
-        p_18148_.registerSimple(map, "minecraft:parrot");
-        registerMob(p_18148_, map, "minecraft:pig");
-        registerMob(p_18148_, map, "minecraft:polar_bear");
-        p_18148_.register(
-            map, "minecraft:potion", p_18116_ -> DSL.optionalFields("Potion", References.ITEM_STACK.in(p_18148_), "inTile", References.BLOCK_NAME.in(p_18148_))
+        registerMob(schema, map, "minecraft:ocelot");
+        schema.registerSimple(map, "minecraft:painting");
+        schema.registerSimple(map, "minecraft:parrot");
+        registerMob(schema, map, "minecraft:pig");
+        registerMob(schema, map, "minecraft:polar_bear");
+        schema.register(
+            map, "minecraft:potion", p_18116_ -> DSL.optionalFields("Potion", References.ITEM_STACK.in(schema), "inTile", References.BLOCK_NAME.in(schema))
         );
-        registerMob(p_18148_, map, "minecraft:rabbit");
-        registerMob(p_18148_, map, "minecraft:sheep");
-        registerMob(p_18148_, map, "minecraft:shulker");
-        p_18148_.registerSimple(map, "minecraft:shulker_bullet");
-        registerMob(p_18148_, map, "minecraft:silverfish");
-        registerMob(p_18148_, map, "minecraft:skeleton");
-        p_18148_.register(
-            map, "minecraft:skeleton_horse", p_18113_ -> DSL.optionalFields("SaddleItem", References.ITEM_STACK.in(p_18148_), V100.equipment(p_18148_))
+        registerMob(schema, map, "minecraft:rabbit");
+        registerMob(schema, map, "minecraft:sheep");
+        registerMob(schema, map, "minecraft:shulker");
+        schema.registerSimple(map, "minecraft:shulker_bullet");
+        registerMob(schema, map, "minecraft:silverfish");
+        registerMob(schema, map, "minecraft:skeleton");
+        schema.register(
+            map, "minecraft:skeleton_horse", p_18113_ -> DSL.optionalFields("SaddleItem", References.ITEM_STACK.in(schema), V100.equipment(schema))
         );
-        registerMob(p_18148_, map, "minecraft:slime");
-        registerThrowableProjectile(p_18148_, map, "minecraft:small_fireball");
-        registerThrowableProjectile(p_18148_, map, "minecraft:snowball");
-        registerMob(p_18148_, map, "minecraft:snowman");
-        p_18148_.register(
+        registerMob(schema, map, "minecraft:slime");
+        registerThrowableProjectile(schema, map, "minecraft:small_fireball");
+        registerThrowableProjectile(schema, map, "minecraft:snowball");
+        registerMob(schema, map, "minecraft:snowman");
+        schema.register(
             map,
             "minecraft:spawner_minecart",
-            p_18110_ -> DSL.optionalFields("DisplayTile", References.BLOCK_NAME.in(p_18148_), References.UNTAGGED_SPAWNER.in(p_18148_))
+            p_18110_ -> DSL.optionalFields("DisplayTile", References.BLOCK_NAME.in(schema), References.UNTAGGED_SPAWNER.in(schema))
         );
-        p_18148_.register(map, "minecraft:spectral_arrow", p_18164_ -> DSL.optionalFields("inTile", References.BLOCK_NAME.in(p_18148_)));
-        registerMob(p_18148_, map, "minecraft:spider");
-        registerMob(p_18148_, map, "minecraft:squid");
-        registerMob(p_18148_, map, "minecraft:stray");
-        p_18148_.registerSimple(map, "minecraft:tnt");
-        p_18148_.register(map, "minecraft:tnt_minecart", p_18104_ -> DSL.optionalFields("DisplayTile", References.BLOCK_NAME.in(p_18148_)));
-        p_18148_.register(
+        schema.register(map, "minecraft:spectral_arrow", p_18164_ -> DSL.optionalFields("inTile", References.BLOCK_NAME.in(schema)));
+        registerMob(schema, map, "minecraft:spider");
+        registerMob(schema, map, "minecraft:squid");
+        registerMob(schema, map, "minecraft:stray");
+        schema.registerSimple(map, "minecraft:tnt");
+        schema.register(map, "minecraft:tnt_minecart", p_18104_ -> DSL.optionalFields("DisplayTile", References.BLOCK_NAME.in(schema)));
+        schema.register(
             map,
             "minecraft:villager",
             p_340695_ -> DSL.optionalFields(
                     "Inventory",
-                    DSL.list(References.ITEM_STACK.in(p_18148_)),
+                    DSL.list(References.ITEM_STACK.in(schema)),
                     "Offers",
-                    DSL.optionalFields("Recipes", DSL.list(References.VILLAGER_TRADE.in(p_18148_))),
-                    V100.equipment(p_18148_)
+                    DSL.optionalFields("Recipes", DSL.list(References.VILLAGER_TRADE.in(schema))),
+                    V100.equipment(schema)
                 )
         );
-        registerMob(p_18148_, map, "minecraft:villager_golem");
-        registerMob(p_18148_, map, "minecraft:witch");
-        registerMob(p_18148_, map, "minecraft:wither");
-        registerMob(p_18148_, map, "minecraft:wither_skeleton");
-        registerThrowableProjectile(p_18148_, map, "minecraft:wither_skull");
-        registerMob(p_18148_, map, "minecraft:wolf");
-        registerThrowableProjectile(p_18148_, map, "minecraft:xp_bottle");
-        p_18148_.registerSimple(map, "minecraft:xp_orb");
-        registerMob(p_18148_, map, "minecraft:zombie");
-        p_18148_.register(
-            map, "minecraft:zombie_horse", p_18092_ -> DSL.optionalFields("SaddleItem", References.ITEM_STACK.in(p_18148_), V100.equipment(p_18148_))
+        registerMob(schema, map, "minecraft:villager_golem");
+        registerMob(schema, map, "minecraft:witch");
+        registerMob(schema, map, "minecraft:wither");
+        registerMob(schema, map, "minecraft:wither_skeleton");
+        registerThrowableProjectile(schema, map, "minecraft:wither_skull");
+        registerMob(schema, map, "minecraft:wolf");
+        registerThrowableProjectile(schema, map, "minecraft:xp_bottle");
+        schema.registerSimple(map, "minecraft:xp_orb");
+        registerMob(schema, map, "minecraft:zombie");
+        schema.register(
+            map, "minecraft:zombie_horse", p_18092_ -> DSL.optionalFields("SaddleItem", References.ITEM_STACK.in(schema), V100.equipment(schema))
         );
-        registerMob(p_18148_, map, "minecraft:zombie_pigman");
-        p_18148_.register(
+        registerMob(schema, map, "minecraft:zombie_pigman");
+        schema.register(
             map,
             "minecraft:zombie_villager",
-            p_340697_ -> DSL.optionalFields("Offers", DSL.optionalFields("Recipes", DSL.list(References.VILLAGER_TRADE.in(p_18148_))), V100.equipment(p_18148_))
+            p_340697_ -> DSL.optionalFields("Offers", DSL.optionalFields("Recipes", DSL.list(References.VILLAGER_TRADE.in(schema))), V100.equipment(schema))
         );
-        p_18148_.registerSimple(map, "minecraft:evocation_fangs");
-        registerMob(p_18148_, map, "minecraft:evocation_illager");
-        p_18148_.registerSimple(map, "minecraft:illusion_illager");
-        p_18148_.register(
+        schema.registerSimple(map, "minecraft:evocation_fangs");
+        registerMob(schema, map, "minecraft:evocation_illager");
+        schema.registerSimple(map, "minecraft:illusion_illager");
+        schema.register(
             map,
             "minecraft:llama",
             p_18081_ -> DSL.optionalFields(
                     "Items",
-                    DSL.list(References.ITEM_STACK.in(p_18148_)),
+                    DSL.list(References.ITEM_STACK.in(schema)),
                     "SaddleItem",
-                    References.ITEM_STACK.in(p_18148_),
+                    References.ITEM_STACK.in(schema),
                     "DecorItem",
-                    References.ITEM_STACK.in(p_18148_),
-                    V100.equipment(p_18148_)
+                    References.ITEM_STACK.in(schema),
+                    V100.equipment(schema)
                 )
         );
-        p_18148_.registerSimple(map, "minecraft:llama_spit");
-        registerMob(p_18148_, map, "minecraft:vex");
-        registerMob(p_18148_, map, "minecraft:vindication_illager");
+        schema.registerSimple(map, "minecraft:llama_spit");
+        registerMob(schema, map, "minecraft:vex");
+        registerMob(schema, map, "minecraft:vindication_illager");
         return map;
     }
 
     @Override
-    public void registerTypes(Schema p_18150_, Map<String, Supplier<TypeTemplate>> p_18151_, Map<String, Supplier<TypeTemplate>> p_18152_) {
-        super.registerTypes(p_18150_, p_18151_, p_18152_);
-        p_18150_.registerType(true, References.ENTITY, () -> DSL.taggedChoiceLazy("id", namespacedString(), p_18151_));
-        p_18150_.registerType(
+    public void registerTypes(Schema schema, Map<String, Supplier<TypeTemplate>> entityTypes, Map<String, Supplier<TypeTemplate>> blockEntityTypes) {
+        super.registerTypes(schema, entityTypes, blockEntityTypes);
+        schema.registerType(true, References.ENTITY, () -> DSL.taggedChoiceLazy("id", namespacedString(), entityTypes));
+        schema.registerType(
             true,
             References.ITEM_STACK,
             () -> DSL.hook(
                     DSL.optionalFields(
                         "id",
-                        References.ITEM_NAME.in(p_18150_),
+                        References.ITEM_NAME.in(schema),
                         "tag",
                         DSL.optionalFields(
-                            Pair.of("EntityTag", References.ENTITY_TREE.in(p_18150_)),
-                            Pair.of("BlockEntityTag", References.BLOCK_ENTITY.in(p_18150_)),
-                            Pair.of("CanDestroy", DSL.list(References.BLOCK_NAME.in(p_18150_))),
-                            Pair.of("CanPlaceOn", DSL.list(References.BLOCK_NAME.in(p_18150_))),
-                            Pair.of("Items", DSL.list(References.ITEM_STACK.in(p_18150_))),
-                            Pair.of("ChargedProjectiles", DSL.list(References.ITEM_STACK.in(p_18150_)))
+                            Pair.of("EntityTag", References.ENTITY_TREE.in(schema)),
+                            Pair.of("BlockEntityTag", References.BLOCK_ENTITY.in(schema)),
+                            Pair.of("CanDestroy", DSL.list(References.BLOCK_NAME.in(schema))),
+                            Pair.of("CanPlaceOn", DSL.list(References.BLOCK_NAME.in(schema))),
+                            Pair.of("Items", DSL.list(References.ITEM_STACK.in(schema))),
+                            Pair.of("ChargedProjectiles", DSL.list(References.ITEM_STACK.in(schema)))
                         )
                     ),
                     ADD_NAMES,

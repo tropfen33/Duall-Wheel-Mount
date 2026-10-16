@@ -276,12 +276,12 @@ public class EntityBlockStateFix extends DataFix {
         p_15368_.put("minecraft:structure_block", 255);
     });
 
-    public EntityBlockStateFix(Schema p_15333_, boolean p_15334_) {
-        super(p_15333_, p_15334_);
+    public EntityBlockStateFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
-    public static int getBlockId(String p_15366_) {
-        Integer integer = MAP.get(p_15366_);
+    public static int getBlockId(String name) {
+        Integer integer = MAP.get(name);
         return integer == null ? 0 : integer;
     }
 
@@ -326,15 +326,15 @@ public class EntityBlockStateFix extends DataFix {
         );
     }
 
-    private Typed<?> updateFallingBlock(Typed<?> p_15336_) {
+    private Typed<?> updateFallingBlock(Typed<?> typed) {
         Type<Either<Pair<String, Either<Integer, String>>, Unit>> type = DSL.optional(
             DSL.field("Block", DSL.named(References.BLOCK_NAME.typeName(), DSL.or(DSL.intType(), NamespacedSchema.namespacedString())))
         );
         Type<Either<Pair<String, Dynamic<?>>, Unit>> type1 = DSL.optional(
             DSL.field("BlockState", DSL.named(References.BLOCK_STATE.typeName(), DSL.remainderType()))
         );
-        Dynamic<?> dynamic = p_15336_.get(DSL.remainderFinder());
-        return p_15336_.update(type.finder(), type1, p_15355_ -> {
+        Dynamic<?> dynamic = typed.get(DSL.remainderFinder());
+        return typed.update(type.finder(), type1, p_15355_ -> {
             int i = p_15355_.map(p_145262_ -> p_145262_.getSecond().map(p_145273_ -> (Integer)p_145273_, EntityBlockStateFix::getBlockId), p_337617_ -> {
                 Optional<Number> optional = dynamic.get("TileID").asNumber().result();
                 return optional.map(Number::intValue).orElseGet(() -> dynamic.get("Tile").asByte((byte)0) & 0xFF);
@@ -344,22 +344,22 @@ public class EntityBlockStateFix extends DataFix {
         }).set(DSL.remainderFinder(), dynamic.remove("Data").remove("TileID").remove("Tile"));
     }
 
-    private Typed<?> updateBlockToBlockState(Typed<?> p_15338_, String p_15339_, String p_15340_, String p_15341_) {
+    private Typed<?> updateBlockToBlockState(Typed<?> typed, String tileKey, String dataKey, String outputKey) {
         Type<Pair<String, Either<Integer, String>>> type = DSL.field(
-            p_15339_, DSL.named(References.BLOCK_NAME.typeName(), DSL.or(DSL.intType(), NamespacedSchema.namespacedString()))
+            tileKey, DSL.named(References.BLOCK_NAME.typeName(), DSL.or(DSL.intType(), NamespacedSchema.namespacedString()))
         );
-        Type<Pair<String, Dynamic<?>>> type1 = DSL.field(p_15341_, DSL.named(References.BLOCK_STATE.typeName(), DSL.remainderType()));
-        Dynamic<?> dynamic = p_15338_.getOrCreate(DSL.remainderFinder());
-        return p_15338_.update(type.finder(), type1, p_15362_ -> {
+        Type<Pair<String, Dynamic<?>>> type1 = DSL.field(outputKey, DSL.named(References.BLOCK_STATE.typeName(), DSL.remainderType()));
+        Dynamic<?> dynamic = typed.getOrCreate(DSL.remainderFinder());
+        return typed.update(type.finder(), type1, p_15362_ -> {
             int i = p_15362_.getSecond().map(p_145269_ -> (Integer)p_145269_, EntityBlockStateFix::getBlockId);
-            int j = dynamic.get(p_15340_).asInt(0) & 15;
+            int j = dynamic.get(dataKey).asInt(0) & 15;
             return Pair.of(References.BLOCK_STATE.typeName(), BlockStateData.getTag(i << 4 | j));
-        }).set(DSL.remainderFinder(), dynamic.remove(p_15340_));
+        }).set(DSL.remainderFinder(), dynamic.remove(dataKey));
     }
 
-    private Typed<?> updateEntity(Typed<?> p_15343_, String p_15344_, Function<Typed<?>, Typed<?>> p_15345_) {
-        Type<?> type = this.getInputSchema().getChoiceType(References.ENTITY, p_15344_);
-        Type<?> type1 = this.getOutputSchema().getChoiceType(References.ENTITY, p_15344_);
-        return p_15343_.updateTyped(DSL.namedChoice(p_15344_, type), type1, p_15345_);
+    private Typed<?> updateEntity(Typed<?> typed, String choiceName, Function<Typed<?>, Typed<?>> updater) {
+        Type<?> type = this.getInputSchema().getChoiceType(References.ENTITY, choiceName);
+        Type<?> type1 = this.getOutputSchema().getChoiceType(References.ENTITY, choiceName);
+        return typed.updateTyped(DSL.namedChoice(choiceName, type), type1, updater);
     }
 }

@@ -42,8 +42,8 @@ public class DamageSources {
     private final DamageSource outsideBorder;
     private final DamageSource genericKill;
 
-    public DamageSources(RegistryAccess p_270740_) {
-        this.damageTypes = p_270740_.registryOrThrow(Registries.DAMAGE_TYPE);
+    public DamageSources(RegistryAccess registry) {
+        this.damageTypes = registry.registryOrThrow(Registries.DAMAGE_TYPE);
         this.inFire = this.source(DamageTypes.IN_FIRE);
         this.campfire = this.source(DamageTypes.CAMPFIRE);
         this.lightningBolt = this.source(DamageTypes.LIGHTNING_BOLT);
@@ -70,16 +70,16 @@ public class DamageSources {
         this.genericKill = this.source(DamageTypes.GENERIC_KILL);
     }
 
-    public DamageSource source(ResourceKey<DamageType> p_270957_) {
-        return new DamageSource(this.damageTypes.getHolderOrThrow(p_270957_));
+    public DamageSource source(ResourceKey<DamageType> damageTypeKey) {
+        return new DamageSource(this.damageTypes.getHolderOrThrow(damageTypeKey));
     }
 
-    public DamageSource source(ResourceKey<DamageType> p_270142_, @Nullable Entity p_270696_) {
-        return new DamageSource(this.damageTypes.getHolderOrThrow(p_270142_), p_270696_);
+    public DamageSource source(ResourceKey<DamageType> damageTypeKey, @Nullable Entity entity) {
+        return new DamageSource(this.damageTypes.getHolderOrThrow(damageTypeKey), entity);
     }
 
-    public DamageSource source(ResourceKey<DamageType> p_270076_, @Nullable Entity p_270656_, @Nullable Entity p_270242_) {
-        return new DamageSource(this.damageTypes.getHolderOrThrow(p_270076_), p_270656_, p_270242_);
+    public DamageSource source(ResourceKey<DamageType> damageTypeKey, @Nullable Entity causingEntity, @Nullable Entity directEntity) {
+        return new DamageSource(this.damageTypes.getHolderOrThrow(damageTypeKey), causingEntity, directEntity);
     }
 
     public DamageSource inFire() {
@@ -170,92 +170,92 @@ public class DamageSources {
         return this.stalagmite;
     }
 
-    public DamageSource fallingBlock(Entity p_270643_) {
-        return this.source(DamageTypes.FALLING_BLOCK, p_270643_);
+    public DamageSource fallingBlock(Entity entity) {
+        return this.source(DamageTypes.FALLING_BLOCK, entity);
     }
 
-    public DamageSource anvil(Entity p_270112_) {
-        return this.source(DamageTypes.FALLING_ANVIL, p_270112_);
+    public DamageSource anvil(Entity entity) {
+        return this.source(DamageTypes.FALLING_ANVIL, entity);
     }
 
-    public DamageSource fallingStalactite(Entity p_270720_) {
-        return this.source(DamageTypes.FALLING_STALACTITE, p_270720_);
+    public DamageSource fallingStalactite(Entity entity) {
+        return this.source(DamageTypes.FALLING_STALACTITE, entity);
     }
 
-    public DamageSource sting(LivingEntity p_270689_) {
-        return this.source(DamageTypes.STING, p_270689_);
+    public DamageSource sting(LivingEntity entity) {
+        return this.source(DamageTypes.STING, entity);
     }
 
-    public DamageSource mobAttack(LivingEntity p_270357_) {
-        return this.source(DamageTypes.MOB_ATTACK, p_270357_);
+    public DamageSource mobAttack(LivingEntity mob) {
+        return this.source(DamageTypes.MOB_ATTACK, mob);
     }
 
-    public DamageSource noAggroMobAttack(LivingEntity p_270502_) {
-        return this.source(DamageTypes.MOB_ATTACK_NO_AGGRO, p_270502_);
+    public DamageSource noAggroMobAttack(LivingEntity mob) {
+        return this.source(DamageTypes.MOB_ATTACK_NO_AGGRO, mob);
     }
 
-    public DamageSource playerAttack(Player p_270723_) {
-        return this.source(DamageTypes.PLAYER_ATTACK, p_270723_);
+    public DamageSource playerAttack(Player player) {
+        return this.source(DamageTypes.PLAYER_ATTACK, player);
     }
 
-    public DamageSource arrow(AbstractArrow p_270570_, @Nullable Entity p_270857_) {
-        return this.source(DamageTypes.ARROW, p_270570_, p_270857_);
+    public DamageSource arrow(AbstractArrow arrow, @Nullable Entity shooter) {
+        return this.source(DamageTypes.ARROW, arrow, shooter);
     }
 
-    public DamageSource trident(Entity p_270146_, @Nullable Entity p_270358_) {
-        return this.source(DamageTypes.TRIDENT, p_270146_, p_270358_);
+    public DamageSource trident(Entity trident, @Nullable Entity thrower) {
+        return this.source(DamageTypes.TRIDENT, trident, thrower);
     }
 
-    public DamageSource mobProjectile(Entity p_270210_, @Nullable LivingEntity p_270757_) {
-        return this.source(DamageTypes.MOB_PROJECTILE, p_270210_, p_270757_);
+    public DamageSource mobProjectile(Entity projectile, @Nullable LivingEntity thrower) {
+        return this.source(DamageTypes.MOB_PROJECTILE, projectile, thrower);
     }
 
-    public DamageSource spit(Entity p_316508_, @Nullable LivingEntity p_316581_) {
-        return this.source(DamageTypes.SPIT, p_316508_, p_316581_);
+    public DamageSource spit(Entity spit, @Nullable LivingEntity thrower) {
+        return this.source(DamageTypes.SPIT, spit, thrower);
     }
 
-    public DamageSource windCharge(Entity p_316454_, @Nullable LivingEntity p_316891_) {
-        return this.source(DamageTypes.WIND_CHARGE, p_316454_, p_316891_);
+    public DamageSource windCharge(Entity windCharge, @Nullable LivingEntity thrower) {
+        return this.source(DamageTypes.WIND_CHARGE, windCharge, thrower);
     }
 
-    public DamageSource fireworks(FireworkRocketEntity p_270571_, @Nullable Entity p_270768_) {
-        return this.source(DamageTypes.FIREWORKS, p_270571_, p_270768_);
+    public DamageSource fireworks(FireworkRocketEntity firework, @Nullable Entity shooter) {
+        return this.source(DamageTypes.FIREWORKS, firework, shooter);
     }
 
-    public DamageSource fireball(Fireball p_270147_, @Nullable Entity p_270824_) {
-        return p_270824_ == null ? this.source(DamageTypes.UNATTRIBUTED_FIREBALL, p_270147_) : this.source(DamageTypes.FIREBALL, p_270147_, p_270824_);
+    public DamageSource fireball(Fireball fireball, @Nullable Entity thrower) {
+        return thrower == null ? this.source(DamageTypes.UNATTRIBUTED_FIREBALL, fireball) : this.source(DamageTypes.FIREBALL, fireball, thrower);
     }
 
-    public DamageSource witherSkull(WitherSkull p_270367_, Entity p_270887_) {
-        return this.source(DamageTypes.WITHER_SKULL, p_270367_, p_270887_);
+    public DamageSource witherSkull(WitherSkull witherSkull, Entity shooter) {
+        return this.source(DamageTypes.WITHER_SKULL, witherSkull, shooter);
     }
 
-    public DamageSource thrown(Entity p_270388_, @Nullable Entity p_270485_) {
-        return this.source(DamageTypes.THROWN, p_270388_, p_270485_);
+    public DamageSource thrown(Entity causingEntity, @Nullable Entity directEntity) {
+        return this.source(DamageTypes.THROWN, causingEntity, directEntity);
     }
 
-    public DamageSource indirectMagic(Entity p_270560_, @Nullable Entity p_270646_) {
-        return this.source(DamageTypes.INDIRECT_MAGIC, p_270560_, p_270646_);
+    public DamageSource indirectMagic(Entity causingEntity, @Nullable Entity directEntity) {
+        return this.source(DamageTypes.INDIRECT_MAGIC, causingEntity, directEntity);
     }
 
-    public DamageSource thorns(Entity p_270917_) {
-        return this.source(DamageTypes.THORNS, p_270917_);
+    public DamageSource thorns(Entity entity) {
+        return this.source(DamageTypes.THORNS, entity);
     }
 
-    public DamageSource explosion(@Nullable Explosion p_270369_) {
-        return p_270369_ != null ? this.explosion(p_270369_.getDirectSourceEntity(), p_270369_.getIndirectSourceEntity()) : this.explosion(null, null);
+    public DamageSource explosion(@Nullable Explosion explosion) {
+        return explosion != null ? this.explosion(explosion.getDirectSourceEntity(), explosion.getIndirectSourceEntity()) : this.explosion(null, null);
     }
 
-    public DamageSource explosion(@Nullable Entity p_271016_, @Nullable Entity p_270814_) {
-        return this.source(p_270814_ != null && p_271016_ != null ? DamageTypes.PLAYER_EXPLOSION : DamageTypes.EXPLOSION, p_271016_, p_270814_);
+    public DamageSource explosion(@Nullable Entity causingEntity, @Nullable Entity directEntity) {
+        return this.source(directEntity != null && causingEntity != null ? DamageTypes.PLAYER_EXPLOSION : DamageTypes.EXPLOSION, causingEntity, directEntity);
     }
 
-    public DamageSource sonicBoom(Entity p_270401_) {
-        return this.source(DamageTypes.SONIC_BOOM, p_270401_);
+    public DamageSource sonicBoom(Entity entity) {
+        return this.source(DamageTypes.SONIC_BOOM, entity);
     }
 
-    public DamageSource badRespawnPointExplosion(Vec3 p_270175_) {
-        return new DamageSource(this.damageTypes.getHolderOrThrow(DamageTypes.BAD_RESPAWN_POINT), p_270175_);
+    public DamageSource badRespawnPointExplosion(Vec3 position) {
+        return new DamageSource(this.damageTypes.getHolderOrThrow(DamageTypes.BAD_RESPAWN_POINT), position);
     }
 
     public DamageSource outOfBorder() {

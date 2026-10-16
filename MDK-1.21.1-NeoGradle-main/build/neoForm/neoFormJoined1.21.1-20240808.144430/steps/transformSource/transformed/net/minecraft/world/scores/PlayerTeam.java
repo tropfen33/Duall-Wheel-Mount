@@ -29,11 +29,11 @@ public class PlayerTeam extends Team {
     private Team.CollisionRule collisionRule = Team.CollisionRule.ALWAYS;
     private final Style displayNameStyle;
 
-    public PlayerTeam(Scoreboard p_83340_, String p_83341_) {
-        this.scoreboard = p_83340_;
-        this.name = p_83341_;
-        this.displayName = Component.literal(p_83341_);
-        this.displayNameStyle = Style.EMPTY.withInsertion(p_83341_).withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(p_83341_)));
+    public PlayerTeam(Scoreboard scoreboard, String name) {
+        this.scoreboard = scoreboard;
+        this.name = name;
+        this.displayName = Component.literal(name);
+        this.displayNameStyle = Style.EMPTY.withInsertion(name).withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(name)));
     }
 
     public Scoreboard getScoreboard() {
@@ -59,17 +59,20 @@ public class PlayerTeam extends Team {
         return mutablecomponent;
     }
 
-    public void setDisplayName(Component p_83354_) {
-        if (p_83354_ == null) {
+    /**
+     * Sets the display name for this team.
+     */
+    public void setDisplayName(Component name) {
+        if (name == null) {
             throw new IllegalArgumentException("Name cannot be null");
         } else {
-            this.displayName = p_83354_;
+            this.displayName = name;
             this.scoreboard.onTeamChanged(this);
         }
     }
 
-    public void setPlayerPrefix(@Nullable Component p_83361_) {
-        this.playerPrefix = p_83361_ == null ? CommonComponents.EMPTY : p_83361_;
+    public void setPlayerPrefix(@Nullable Component playerPrefix) {
+        this.playerPrefix = playerPrefix == null ? CommonComponents.EMPTY : playerPrefix;
         this.scoreboard.onTeamChanged(this);
     }
 
@@ -77,8 +80,8 @@ public class PlayerTeam extends Team {
         return this.playerPrefix;
     }
 
-    public void setPlayerSuffix(@Nullable Component p_83366_) {
-        this.playerSuffix = p_83366_ == null ? CommonComponents.EMPTY : p_83366_;
+    public void setPlayerSuffix(@Nullable Component playerSuffix) {
+        this.playerSuffix = playerSuffix == null ? CommonComponents.EMPTY : playerSuffix;
         this.scoreboard.onTeamChanged(this);
     }
 
@@ -92,8 +95,8 @@ public class PlayerTeam extends Team {
     }
 
     @Override
-    public MutableComponent getFormattedName(Component p_83369_) {
-        MutableComponent mutablecomponent = Component.empty().append(this.playerPrefix).append(p_83369_).append(this.playerSuffix);
+    public MutableComponent getFormattedName(Component formattedName) {
+        MutableComponent mutablecomponent = Component.empty().append(this.playerPrefix).append(formattedName).append(this.playerSuffix);
         ChatFormatting chatformatting = this.getColor();
         if (chatformatting != ChatFormatting.RESET) {
             mutablecomponent.withStyle(chatformatting);
@@ -102,8 +105,8 @@ public class PlayerTeam extends Team {
         return mutablecomponent;
     }
 
-    public static MutableComponent formatNameForTeam(@Nullable Team p_83349_, Component p_83350_) {
-        return p_83349_ == null ? p_83350_.copy() : p_83349_.getFormattedName(p_83350_);
+    public static MutableComponent formatNameForTeam(@Nullable Team playerTeam, Component playerName) {
+        return playerTeam == null ? playerName.copy() : playerTeam.getFormattedName(playerName);
     }
 
     @Override
@@ -111,8 +114,11 @@ public class PlayerTeam extends Team {
         return this.allowFriendlyFire;
     }
 
-    public void setAllowFriendlyFire(boolean p_83356_) {
-        this.allowFriendlyFire = p_83356_;
+    /**
+     * Sets whether friendly fire (PVP between members of the team) is allowed.
+     */
+    public void setAllowFriendlyFire(boolean friendlyFire) {
+        this.allowFriendlyFire = friendlyFire;
         this.scoreboard.onTeamChanged(this);
     }
 
@@ -121,8 +127,11 @@ public class PlayerTeam extends Team {
         return this.seeFriendlyInvisibles;
     }
 
-    public void setSeeFriendlyInvisibles(boolean p_83363_) {
-        this.seeFriendlyInvisibles = p_83363_;
+    /**
+     * Sets whether members of this team can see other members that are invisible.
+     */
+    public void setSeeFriendlyInvisibles(boolean friendlyInvisibles) {
+        this.seeFriendlyInvisibles = friendlyInvisibles;
         this.scoreboard.onTeamChanged(this);
     }
 
@@ -136,13 +145,19 @@ public class PlayerTeam extends Team {
         return this.deathMessageVisibility;
     }
 
-    public void setNameTagVisibility(Team.Visibility p_83347_) {
-        this.nameTagVisibility = p_83347_;
+    /**
+     * Sets the visibility flags for player name tags.
+     */
+    public void setNameTagVisibility(Team.Visibility visibility) {
+        this.nameTagVisibility = visibility;
         this.scoreboard.onTeamChanged(this);
     }
 
-    public void setDeathMessageVisibility(Team.Visibility p_83359_) {
-        this.deathMessageVisibility = p_83359_;
+    /**
+     * Sets the visibility flags for player death messages.
+     */
+    public void setDeathMessageVisibility(Team.Visibility visibility) {
+        this.deathMessageVisibility = visibility;
         this.scoreboard.onTeamChanged(this);
     }
 
@@ -151,8 +166,11 @@ public class PlayerTeam extends Team {
         return this.collisionRule;
     }
 
-    public void setCollisionRule(Team.CollisionRule p_83345_) {
-        this.collisionRule = p_83345_;
+    /**
+     * Sets the rule to be used for handling collisions with members of this team.
+     */
+    public void setCollisionRule(Team.CollisionRule rule) {
+        this.collisionRule = rule;
         this.scoreboard.onTeamChanged(this);
     }
 
@@ -169,13 +187,19 @@ public class PlayerTeam extends Team {
         return i;
     }
 
-    public void unpackOptions(int p_83343_) {
-        this.setAllowFriendlyFire((p_83343_ & 1) > 0);
-        this.setSeeFriendlyInvisibles((p_83343_ & 2) > 0);
+    /**
+     * Sets friendly fire and invisibles flags based off of the given bitmask.
+     */
+    public void unpackOptions(int flags) {
+        this.setAllowFriendlyFire((flags & 1) > 0);
+        this.setSeeFriendlyInvisibles((flags & 2) > 0);
     }
 
-    public void setColor(ChatFormatting p_83352_) {
-        this.color = p_83352_;
+    /**
+     * Sets the color for this team. The team color is used mainly for team kill objectives and team-specific setDisplay usage. It does _not_ affect all situations (for instance, the prefix is used for the glowing effect).
+     */
+    public void setColor(ChatFormatting color) {
+        this.color = color;
         this.scoreboard.onTeamChanged(this);
     }
 

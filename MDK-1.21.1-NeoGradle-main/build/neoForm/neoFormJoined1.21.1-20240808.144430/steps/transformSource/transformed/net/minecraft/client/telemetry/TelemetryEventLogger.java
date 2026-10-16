@@ -5,5 +5,5 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface TelemetryEventLogger {
-    void log(TelemetryEventInstance p_261961_);
+    void log(TelemetryEventInstance instance);
 }

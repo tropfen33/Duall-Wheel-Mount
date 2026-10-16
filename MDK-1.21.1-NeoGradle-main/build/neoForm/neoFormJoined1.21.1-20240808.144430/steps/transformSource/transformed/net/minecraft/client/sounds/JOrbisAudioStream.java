@@ -37,8 +37,8 @@ public class JOrbisAudioStream implements FloatSampleSource {
     private long samplesWritten;
     private long totalSamplesInStream = Long.MAX_VALUE;
 
-    public JOrbisAudioStream(InputStream p_341241_) throws IOException {
-        this.input = p_341241_;
+    public JOrbisAudioStream(InputStream input) throws IOException {
+        this.input = input;
         Comment comment = new Comment();
         Page page = this.readPage();
         if (page == null) {
@@ -66,8 +66,8 @@ public class JOrbisAudioStream implements FloatSampleSource {
         }
     }
 
-    private static boolean isError(int p_340842_) {
-        return p_340842_ < 0;
+    private static boolean isError(int value) {
+        return value < 0;
     }
 
     @Override
@@ -112,9 +112,9 @@ public class JOrbisAudioStream implements FloatSampleSource {
         }
     }
 
-    private Packet readIdentificationPacket(Page p_340874_) throws IOException {
-        this.streamState.init(p_340874_.serialno());
-        if (isError(this.streamState.pagein(p_340874_))) {
+    private Packet readIdentificationPacket(Page page) throws IOException {
+        this.streamState.init(page.serialno());
+        if (isError(this.streamState.pagein(page))) {
             throw new IOException("Failed to parse page");
         } else {
             int i = this.streamState.packetout(this.packet);
@@ -152,22 +152,22 @@ public class JOrbisAudioStream implements FloatSampleSource {
         }
     }
 
-    private long getSamplesToWrite(int p_341351_) {
-        long i = this.samplesWritten + (long)p_341351_;
+    private long getSamplesToWrite(int samples) {
+        long i = this.samplesWritten + (long)samples;
         long j;
         if (i > this.totalSamplesInStream) {
             j = this.totalSamplesInStream - this.samplesWritten;
             this.samplesWritten = this.totalSamplesInStream;
         } else {
             this.samplesWritten = i;
-            j = (long)p_341351_;
+            j = (long)samples;
         }
 
         return j;
     }
 
     @Override
-    public boolean readChunk(FloatConsumer p_341270_) throws IOException {
+    public boolean readChunk(FloatConsumer output) throws IOException {
         float[][][] afloat = new float[1][][];
         int[] aint = new int[this.info.channels];
         Packet packet = this.readPacket();
@@ -184,13 +184,13 @@ public class JOrbisAudioStream implements FloatSampleSource {
                 long j = this.getSamplesToWrite(i);
                 switch (this.info.channels) {
                     case 1:
-                        copyMono(afloat1[0], aint[0], j, p_341270_);
+                        copyMono(afloat1[0], aint[0], j, output);
                         break;
                     case 2:
-                        copyStereo(afloat1[0], aint[0], afloat1[1], aint[1], j, p_341270_);
+                        copyStereo(afloat1[0], aint[0], afloat1[1], aint[1], j, output);
                         break;
                     default:
-                        copyAnyChannels(afloat1, this.info.channels, aint, j, p_341270_);
+                        copyAnyChannels(afloat1, this.info.channels, aint, j, output);
                 }
 
                 this.dspState.synthesis_read(i);
@@ -200,26 +200,26 @@ public class JOrbisAudioStream implements FloatSampleSource {
         }
     }
 
-    private static void copyAnyChannels(float[][] p_340927_, int p_341332_, int[] p_341269_, long p_341072_, FloatConsumer p_341382_) {
-        for (int i = 0; (long)i < p_341072_; i++) {
-            for (int j = 0; j < p_341332_; j++) {
-                int k = p_341269_[j];
-                float f = p_340927_[j][k + i];
-                p_341382_.accept(f);
+    private static void copyAnyChannels(float[][] source, int channels, int[] startIndexes, long samplesToWrite, FloatConsumer output) {
+        for (int i = 0; (long)i < samplesToWrite; i++) {
+            for (int j = 0; j < channels; j++) {
+                int k = startIndexes[j];
+                float f = source[j][k + i];
+                output.accept(f);
             }
         }
     }
 
-    private static void copyMono(float[] p_340838_, int p_341058_, long p_341397_, FloatConsumer p_340852_) {
-        for (int i = p_341058_; (long)i < (long)p_341058_ + p_341397_; i++) {
-            p_340852_.accept(p_340838_[i]);
+    private static void copyMono(float[] source, int startIndex, long samplesToWrite, FloatConsumer output) {
+        for (int i = startIndex; (long)i < (long)startIndex + samplesToWrite; i++) {
+            output.accept(source[i]);
         }
     }
 
-    private static void copyStereo(float[] p_341142_, int p_341000_, float[] p_340922_, int p_341132_, long p_341389_, FloatConsumer p_341076_) {
-        for (int i = 0; (long)i < p_341389_; i++) {
-            p_341076_.accept(p_341142_[p_341000_ + i]);
-            p_341076_.accept(p_340922_[p_341132_ + i]);
+    private static void copyStereo(float[] leftSource, int leftStartIndex, float[] rightSource, int rightStartIndex, long samplesToWrite, FloatConsumer output) {
+        for (int i = 0; (long)i < samplesToWrite; i++) {
+            output.accept(leftSource[leftStartIndex + i]);
+            output.accept(rightSource[rightStartIndex + i]);
         }
     }
 

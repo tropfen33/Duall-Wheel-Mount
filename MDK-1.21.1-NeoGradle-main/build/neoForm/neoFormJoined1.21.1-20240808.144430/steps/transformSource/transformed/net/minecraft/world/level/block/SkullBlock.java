@@ -36,40 +36,46 @@ public class SkullBlock extends AbstractSkullBlock {
         return CODEC;
     }
 
-    public SkullBlock(SkullBlock.Type p_56318_, BlockBehaviour.Properties p_56319_) {
-        super(p_56318_, p_56319_);
+    public SkullBlock(SkullBlock.Type type, BlockBehaviour.Properties properties) {
+        super(type, properties);
         this.registerDefaultState(this.defaultBlockState().setValue(ROTATION, Integer.valueOf(0)));
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_56331_, BlockGetter p_56332_, BlockPos p_56333_, CollisionContext p_56334_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return this.getType() == SkullBlock.Types.PIGLIN ? PIGLIN_SHAPE : SHAPE;
     }
 
     @Override
-    protected VoxelShape getOcclusionShape(BlockState p_56336_, BlockGetter p_56337_, BlockPos p_56338_) {
+    protected VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
         return Shapes.empty();
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_56321_) {
-        return super.getStateForPlacement(p_56321_).setValue(ROTATION, Integer.valueOf(RotationSegment.convertToSegment(p_56321_.getRotation())));
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return super.getStateForPlacement(context).setValue(ROTATION, Integer.valueOf(RotationSegment.convertToSegment(context.getRotation())));
+    }
+
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(ROTATION, Integer.valueOf(rotation.rotate(state.getValue(ROTATION), ROTATIONS)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.setValue(ROTATION, Integer.valueOf(mirror.mirror(state.getValue(ROTATION), ROTATIONS)));
     }
 
     @Override
-    protected BlockState rotate(BlockState p_56326_, Rotation p_56327_) {
-        return p_56326_.setValue(ROTATION, Integer.valueOf(p_56327_.rotate(p_56326_.getValue(ROTATION), ROTATIONS)));
-    }
-
-    @Override
-    protected BlockState mirror(BlockState p_56323_, Mirror p_56324_) {
-        return p_56323_.setValue(ROTATION, Integer.valueOf(p_56324_.mirror(p_56323_.getValue(ROTATION), ROTATIONS)));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_56329_) {
-        super.createBlockStateDefinition(p_56329_);
-        p_56329_.add(ROTATION);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(ROTATION);
     }
 
     public interface Type extends StringRepresentable {
@@ -88,9 +94,9 @@ public class SkullBlock extends AbstractSkullBlock {
 
         private final String name;
 
-        private Types(String p_304496_) {
-            this.name = p_304496_;
-            TYPES.put(p_304496_, this);
+        private Types(String name) {
+            this.name = name;
+            TYPES.put(name, this);
         }
 
         @Override

@@ -27,22 +27,25 @@ public class HangingEntityItem extends Item {
     private static final Component TOOLTIP_RANDOM_VARIANT = Component.translatable("painting.random").withStyle(ChatFormatting.GRAY);
     private final EntityType<? extends HangingEntity> type;
 
-    public HangingEntityItem(EntityType<? extends HangingEntity> p_41324_, Item.Properties p_41325_) {
-        super(p_41325_);
-        this.type = p_41324_;
+    public HangingEntityItem(EntityType<? extends HangingEntity> type, Item.Properties properties) {
+        super(properties);
+        this.type = type;
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_41331_) {
-        BlockPos blockpos = p_41331_.getClickedPos();
-        Direction direction = p_41331_.getClickedFace();
+    public InteractionResult useOn(UseOnContext context) {
+        BlockPos blockpos = context.getClickedPos();
+        Direction direction = context.getClickedFace();
         BlockPos blockpos1 = blockpos.relative(direction);
-        Player player = p_41331_.getPlayer();
-        ItemStack itemstack = p_41331_.getItemInHand();
+        Player player = context.getPlayer();
+        ItemStack itemstack = context.getItemInHand();
         if (player != null && !this.mayPlace(player, direction, itemstack, blockpos1)) {
             return InteractionResult.FAIL;
         } else {
-            Level level = p_41331_.getLevel();
+            Level level = context.getLevel();
             HangingEntity hangingentity;
             if (this.type == EntityType.PAINTING) {
                 Optional<Painting> optional = Painting.create(level, blockpos1, direction);
@@ -81,28 +84,28 @@ public class HangingEntityItem extends Item {
         }
     }
 
-    protected boolean mayPlace(Player p_41326_, Direction p_41327_, ItemStack p_41328_, BlockPos p_41329_) {
-        return !p_41327_.getAxis().isVertical() && p_41326_.mayUseItemAt(p_41329_, p_41327_, p_41328_);
+    protected boolean mayPlace(Player player, Direction direction, ItemStack hangingEntityStack, BlockPos pos) {
+        return !direction.getAxis().isVertical() && player.mayUseItemAt(pos, direction, hangingEntityStack);
     }
 
     @Override
-    public void appendHoverText(ItemStack p_270235_, Item.TooltipContext p_339644_, List<Component> p_270630_, TooltipFlag p_270170_) {
-        super.appendHoverText(p_270235_, p_339644_, p_270630_, p_270170_);
-        HolderLookup.Provider holderlookup$provider = p_339644_.registries();
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        HolderLookup.Provider holderlookup$provider = context.registries();
         if (holderlookup$provider != null && this.type == EntityType.PAINTING) {
-            CustomData customdata = p_270235_.getOrDefault(DataComponents.ENTITY_DATA, CustomData.EMPTY);
+            CustomData customdata = stack.getOrDefault(DataComponents.ENTITY_DATA, CustomData.EMPTY);
             if (!customdata.isEmpty()) {
                 customdata.read(holderlookup$provider.createSerializationContext(NbtOps.INSTANCE), Painting.VARIANT_MAP_CODEC)
                     .result()
                     .ifPresentOrElse(p_344401_ -> {
                         p_344401_.unwrapKey().ifPresent(p_270217_ -> {
-                            p_270630_.add(Component.translatable(p_270217_.location().toLanguageKey("painting", "title")).withStyle(ChatFormatting.YELLOW));
-                            p_270630_.add(Component.translatable(p_270217_.location().toLanguageKey("painting", "author")).withStyle(ChatFormatting.GRAY));
+                            tooltipComponents.add(Component.translatable(p_270217_.location().toLanguageKey("painting", "title")).withStyle(ChatFormatting.YELLOW));
+                            tooltipComponents.add(Component.translatable(p_270217_.location().toLanguageKey("painting", "author")).withStyle(ChatFormatting.GRAY));
                         });
-                        p_270630_.add(Component.translatable("painting.dimensions", p_344401_.value().width(), p_344401_.value().height()));
-                    }, () -> p_270630_.add(TOOLTIP_RANDOM_VARIANT));
-            } else if (p_270170_.isCreative()) {
-                p_270630_.add(TOOLTIP_RANDOM_VARIANT);
+                        tooltipComponents.add(Component.translatable("painting.dimensions", p_344401_.value().width(), p_344401_.value().height()));
+                    }, () -> tooltipComponents.add(TOOLTIP_RANDOM_VARIANT));
+            } else if (tooltipFlag.isCreative()) {
+                tooltipComponents.add(TOOLTIP_RANDOM_VARIANT);
             }
         }
     }

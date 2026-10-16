@@ -14,7 +14,7 @@ public interface DragonPhaseInstance {
 
     void doServerTick();
 
-    void onCrystalDestroyed(EndCrystal p_31315_, BlockPos p_31316_, DamageSource p_31317_, @Nullable Player p_31318_);
+    void onCrystalDestroyed(EndCrystal crystal, BlockPos pos, DamageSource damageSource, @Nullable Player player);
 
     void begin();
 
@@ -29,5 +29,5 @@ public interface DragonPhaseInstance {
     @Nullable
     Vec3 getFlyTargetLocation();
 
-    float onHurt(DamageSource p_31313_, float p_31314_);
+    float onHurt(DamageSource damageSource, float amount);
 }

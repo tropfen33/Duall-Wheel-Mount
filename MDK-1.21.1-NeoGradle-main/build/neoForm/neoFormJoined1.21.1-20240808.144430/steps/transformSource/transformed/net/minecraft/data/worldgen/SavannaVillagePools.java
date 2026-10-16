@@ -17,20 +17,20 @@ public class SavannaVillagePools {
     private static final ResourceKey<StructureTemplatePool> TERMINATORS_KEY = Pools.createKey("village/savanna/terminators");
     private static final ResourceKey<StructureTemplatePool> ZOMBIE_TERMINATORS_KEY = Pools.createKey("village/savanna/zombie/terminators");
 
-    public static void bootstrap(BootstrapContext<StructureTemplatePool> p_321606_) {
-        HolderGetter<PlacedFeature> holdergetter = p_321606_.lookup(Registries.PLACED_FEATURE);
+    public static void bootstrap(BootstrapContext<StructureTemplatePool> context) {
+        HolderGetter<PlacedFeature> holdergetter = context.lookup(Registries.PLACED_FEATURE);
         Holder<PlacedFeature> holder = holdergetter.getOrThrow(VillagePlacements.ACACIA_VILLAGE);
         Holder<PlacedFeature> holder1 = holdergetter.getOrThrow(VillagePlacements.PILE_HAY_VILLAGE);
         Holder<PlacedFeature> holder2 = holdergetter.getOrThrow(VillagePlacements.PILE_MELON_VILLAGE);
-        HolderGetter<StructureProcessorList> holdergetter1 = p_321606_.lookup(Registries.PROCESSOR_LIST);
+        HolderGetter<StructureProcessorList> holdergetter1 = context.lookup(Registries.PROCESSOR_LIST);
         Holder<StructureProcessorList> holder3 = holdergetter1.getOrThrow(ProcessorLists.ZOMBIE_SAVANNA);
         Holder<StructureProcessorList> holder4 = holdergetter1.getOrThrow(ProcessorLists.STREET_SAVANNA);
         Holder<StructureProcessorList> holder5 = holdergetter1.getOrThrow(ProcessorLists.FARM_SAVANNA);
-        HolderGetter<StructureTemplatePool> holdergetter2 = p_321606_.lookup(Registries.TEMPLATE_POOL);
+        HolderGetter<StructureTemplatePool> holdergetter2 = context.lookup(Registries.TEMPLATE_POOL);
         Holder<StructureTemplatePool> holder6 = holdergetter2.getOrThrow(Pools.EMPTY);
         Holder<StructureTemplatePool> holder7 = holdergetter2.getOrThrow(TERMINATORS_KEY);
         Holder<StructureTemplatePool> holder8 = holdergetter2.getOrThrow(ZOMBIE_TERMINATORS_KEY);
-        p_321606_.register(
+        context.register(
             START,
             new StructureTemplatePool(
                 holder6,
@@ -48,7 +48,7 @@ public class SavannaVillagePools {
             )
         );
         Pools.register(
-            p_321606_,
+            context,
             "village/savanna/streets",
             new StructureTemplatePool(
                 holder7,
@@ -77,7 +77,7 @@ public class SavannaVillagePools {
             )
         );
         Pools.register(
-            p_321606_,
+            context,
             "village/savanna/zombie/streets",
             new StructureTemplatePool(
                 holder8,
@@ -106,7 +106,7 @@ public class SavannaVillagePools {
             )
         );
         Pools.register(
-            p_321606_,
+            context,
             "village/savanna/houses",
             new StructureTemplatePool(
                 holder7,
@@ -148,7 +148,7 @@ public class SavannaVillagePools {
             )
         );
         Pools.register(
-            p_321606_,
+            context,
             "village/savanna/zombie/houses",
             new StructureTemplatePool(
                 holder8,
@@ -189,7 +189,7 @@ public class SavannaVillagePools {
                 StructureTemplatePool.Projection.RIGID
             )
         );
-        p_321606_.register(
+        context.register(
             TERMINATORS_KEY,
             new StructureTemplatePool(
                 holder6,
@@ -203,7 +203,7 @@ public class SavannaVillagePools {
                 StructureTemplatePool.Projection.TERRAIN_MATCHING
             )
         );
-        p_321606_.register(
+        context.register(
             ZOMBIE_TERMINATORS_KEY,
             new StructureTemplatePool(
                 holder6,
@@ -218,12 +218,12 @@ public class SavannaVillagePools {
             )
         );
         Pools.register(
-            p_321606_,
+            context,
             "village/savanna/trees",
             new StructureTemplatePool(holder6, ImmutableList.of(Pair.of(StructurePoolElement.feature(holder), 1)), StructureTemplatePool.Projection.RIGID)
         );
         Pools.register(
-            p_321606_,
+            context,
             "village/savanna/decor",
             new StructureTemplatePool(
                 holder6,
@@ -238,7 +238,7 @@ public class SavannaVillagePools {
             )
         );
         Pools.register(
-            p_321606_,
+            context,
             "village/savanna/zombie/decor",
             new StructureTemplatePool(
                 holder6,
@@ -253,7 +253,7 @@ public class SavannaVillagePools {
             )
         );
         Pools.register(
-            p_321606_,
+            context,
             "village/savanna/villagers",
             new StructureTemplatePool(
                 holder6,
@@ -266,7 +266,7 @@ public class SavannaVillagePools {
             )
         );
         Pools.register(
-            p_321606_,
+            context,
             "village/savanna/zombie/villagers",
             new StructureTemplatePool(
                 holder6,

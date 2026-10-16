@@ -14,16 +14,16 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class BlockEntityRenderers {
     private static final Map<BlockEntityType<?>, BlockEntityRendererProvider<?>> PROVIDERS = new java.util.concurrent.ConcurrentHashMap<>();
 
-    public static <T extends BlockEntity> void register(BlockEntityType<? extends T> p_173591_, BlockEntityRendererProvider<T> p_173592_) {
-        PROVIDERS.put(p_173591_, p_173592_);
+    public static <T extends BlockEntity> void register(BlockEntityType<? extends T> type, BlockEntityRendererProvider<T> renderProvider) {
+        PROVIDERS.put(type, renderProvider);
     }
 
-    public static Map<BlockEntityType<?>, BlockEntityRenderer<?>> createEntityRenderers(BlockEntityRendererProvider.Context p_173599_) {
+    public static Map<BlockEntityType<?>, BlockEntityRenderer<?>> createEntityRenderers(BlockEntityRendererProvider.Context context) {
         Builder<BlockEntityType<?>, BlockEntityRenderer<?>> builder = ImmutableMap.builder();
         PROVIDERS.forEach(
             (p_339298_, p_339299_) -> {
                 try {
-                    builder.put((BlockEntityType<?>)p_339298_, p_339299_.create(p_173599_));
+                    builder.put((BlockEntityType<?>)p_339298_, p_339299_.create(context));
                 } catch (Exception exception) {
                     throw new IllegalStateException(
                         "Failed to create model for " + BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey((BlockEntityType<?>)p_339298_), exception

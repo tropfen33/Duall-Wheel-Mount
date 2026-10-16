@@ -32,22 +32,22 @@ public class KelpPlantBlock extends GrowingPlantBodyBlock implements LiquidBlock
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_54336_) {
+    protected FluidState getFluidState(BlockState state) {
         return Fluids.WATER.getSource(false);
     }
 
     @Override
-    protected boolean canAttachTo(BlockState p_153457_) {
-        return this.getHeadBlock().canAttachTo(p_153457_);
+    protected boolean canAttachTo(BlockState state) {
+        return this.getHeadBlock().canAttachTo(state);
     }
 
     @Override
-    public boolean canPlaceLiquid(@Nullable Player p_296032_, BlockGetter p_54325_, BlockPos p_54326_, BlockState p_54327_, Fluid p_54328_) {
+    public boolean canPlaceLiquid(@Nullable Player player, BlockGetter level, BlockPos pos, BlockState state, Fluid fluid) {
         return false;
     }
 
     @Override
-    public boolean placeLiquid(LevelAccessor p_54330_, BlockPos p_54331_, BlockState p_54332_, FluidState p_54333_) {
+    public boolean placeLiquid(LevelAccessor level, BlockPos pos, BlockState state, FluidState fluidState) {
         return false;
     }
 }

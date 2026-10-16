@@ -6,16 +6,16 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.network.FriendlyByteBuf;
 
 public interface ArgumentTypeInfo<A extends ArgumentType<?>, T extends ArgumentTypeInfo.Template<A>> {
-    void serializeToNetwork(T p_235375_, FriendlyByteBuf p_235376_);
+    void serializeToNetwork(T template, FriendlyByteBuf buffer);
 
-    T deserializeFromNetwork(FriendlyByteBuf p_235377_);
+    T deserializeFromNetwork(FriendlyByteBuf buffer);
 
-    void serializeToJson(T p_235373_, JsonObject p_235374_);
+    void serializeToJson(T template, JsonObject json);
 
-    T unpack(A p_235372_);
+    T unpack(A argument);
 
     public interface Template<A extends ArgumentType<?>> {
-        A instantiate(CommandBuildContext p_235378_);
+        A instantiate(CommandBuildContext context);
 
         ArgumentTypeInfo<A, ?> type();
     }

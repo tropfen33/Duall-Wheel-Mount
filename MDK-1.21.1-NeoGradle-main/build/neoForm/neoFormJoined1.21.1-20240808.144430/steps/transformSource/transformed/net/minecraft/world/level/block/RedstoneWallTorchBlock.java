@@ -29,8 +29,8 @@ public class RedstoneWallTorchBlock extends RedstoneTorchBlock {
         return CODEC;
     }
 
-    public RedstoneWallTorchBlock(BlockBehaviour.Properties p_55744_) {
-        super(p_55744_);
+    public RedstoneWallTorchBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, Boolean.valueOf(true)));
     }
 
@@ -40,62 +40,84 @@ public class RedstoneWallTorchBlock extends RedstoneTorchBlock {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_55781_, BlockGetter p_55782_, BlockPos p_55783_, CollisionContext p_55784_) {
-        return WallTorchBlock.getShape(p_55781_);
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return WallTorchBlock.getShape(state);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_55762_, LevelReader p_55763_, BlockPos p_55764_) {
-        return WallTorchBlock.canSurvive(p_55763_, p_55764_, p_55762_.getValue(FACING));
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        return WallTorchBlock.canSurvive(level, pos, state.getValue(FACING));
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_55772_, Direction p_55773_, BlockState p_55774_, LevelAccessor p_55775_, BlockPos p_55776_, BlockPos p_55777_) {
-        return p_55773_.getOpposite() == p_55772_.getValue(FACING) && !p_55772_.canSurvive(p_55775_, p_55776_) ? Blocks.AIR.defaultBlockState() : p_55772_;
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return facing.getOpposite() == state.getValue(FACING) && !state.canSurvive(level, currentPos) ? Blocks.AIR.defaultBlockState() : state;
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_55746_) {
-        BlockState blockstate = Blocks.WALL_TORCH.getStateForPlacement(p_55746_);
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockState blockstate = Blocks.WALL_TORCH.getStateForPlacement(context);
         return blockstate == null ? null : this.defaultBlockState().setValue(FACING, blockstate.getValue(FACING));
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_221959_, Level p_221960_, BlockPos p_221961_, RandomSource p_221962_) {
-        if (p_221959_.getValue(LIT)) {
-            Direction direction = p_221959_.getValue(FACING).getOpposite();
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (state.getValue(LIT)) {
+            Direction direction = state.getValue(FACING).getOpposite();
             double d0 = 0.27;
-            double d1 = (double)p_221961_.getX() + 0.5 + (p_221962_.nextDouble() - 0.5) * 0.2 + 0.27 * (double)direction.getStepX();
-            double d2 = (double)p_221961_.getY() + 0.7 + (p_221962_.nextDouble() - 0.5) * 0.2 + 0.22;
-            double d3 = (double)p_221961_.getZ() + 0.5 + (p_221962_.nextDouble() - 0.5) * 0.2 + 0.27 * (double)direction.getStepZ();
-            p_221960_.addParticle(DustParticleOptions.REDSTONE, d1, d2, d3, 0.0, 0.0, 0.0);
+            double d1 = (double)pos.getX() + 0.5 + (random.nextDouble() - 0.5) * 0.2 + 0.27 * (double)direction.getStepX();
+            double d2 = (double)pos.getY() + 0.7 + (random.nextDouble() - 0.5) * 0.2 + 0.22;
+            double d3 = (double)pos.getZ() + 0.5 + (random.nextDouble() - 0.5) * 0.2 + 0.27 * (double)direction.getStepZ();
+            level.addParticle(DustParticleOptions.REDSTONE, d1, d2, d3, 0.0, 0.0, 0.0);
         }
     }
 
     @Override
-    protected boolean hasNeighborSignal(Level p_55748_, BlockPos p_55749_, BlockState p_55750_) {
-        Direction direction = p_55750_.getValue(FACING).getOpposite();
-        return p_55748_.hasSignal(p_55749_.relative(direction), direction);
+    protected boolean hasNeighborSignal(Level level, BlockPos pos, BlockState state) {
+        Direction direction = state.getValue(FACING).getOpposite();
+        return level.hasSignal(pos.relative(direction), direction);
+    }
+
+    /**
+     * Returns the signal this block emits in the given direction.
+     *
+     * <p>
+     * NOTE: directions in redstone signal related methods are backwards, so this method
+     * checks for the signal emitted in the <i>opposite</i> direction of the one given.
+     *
+     */
+    @Override
+    protected int getSignal(BlockState blockState, BlockGetter blockAccess, BlockPos pos, Direction side) {
+        return blockState.getValue(LIT) && blockState.getValue(FACING) != side ? 15 : 0;
+    }
+
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected int getSignal(BlockState p_55752_, BlockGetter p_55753_, BlockPos p_55754_, Direction p_55755_) {
-        return p_55752_.getValue(LIT) && p_55752_.getValue(FACING) != p_55755_ ? 15 : 0;
-    }
-
-    @Override
-    protected BlockState rotate(BlockState p_55769_, Rotation p_55770_) {
-        return p_55769_.setValue(FACING, p_55770_.rotate(p_55769_.getValue(FACING)));
-    }
-
-    @Override
-    protected BlockState mirror(BlockState p_55766_, Mirror p_55767_) {
-        return p_55766_.rotate(p_55767_.getRotation(p_55766_.getValue(FACING)));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_55779_) {
-        p_55779_.add(FACING, LIT);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, LIT);
     }
 }

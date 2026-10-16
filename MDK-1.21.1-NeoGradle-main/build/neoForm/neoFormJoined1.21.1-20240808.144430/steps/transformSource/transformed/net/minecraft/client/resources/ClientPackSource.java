@@ -51,19 +51,19 @@ public class ClientPackSource extends BuiltInPackSource {
     @Nullable
     private final Path externalAssetDir;
 
-    public ClientPackSource(Path p_249324_, DirectoryValidator p_295556_) {
-        super(PackType.CLIENT_RESOURCES, createVanillaPackSource(p_249324_), PACKS_DIR, p_295556_);
-        this.externalAssetDir = this.findExplodedAssetPacks(p_249324_);
+    public ClientPackSource(Path assetIndex, DirectoryValidator validator) {
+        super(PackType.CLIENT_RESOURCES, createVanillaPackSource(assetIndex), PACKS_DIR, validator);
+        this.externalAssetDir = this.findExplodedAssetPacks(assetIndex);
     }
 
-    private static PackLocationInfo createBuiltInPackLocation(String p_326492_, Component p_326472_) {
-        return new PackLocationInfo(p_326492_, p_326472_, PackSource.BUILT_IN, Optional.of(KnownPack.vanilla(p_326492_)));
+    private static PackLocationInfo createBuiltInPackLocation(String id, Component title) {
+        return new PackLocationInfo(id, title, PackSource.BUILT_IN, Optional.of(KnownPack.vanilla(id)));
     }
 
     @Nullable
-    private Path findExplodedAssetPacks(Path p_251339_) {
-        if (SharedConstants.IS_RUNNING_IN_IDE && p_251339_.getFileSystem() == FileSystems.getDefault()) {
-            Path path = p_251339_.getParent().resolve("resourcepacks");
+    private Path findExplodedAssetPacks(Path assetIndex) {
+        if (SharedConstants.IS_RUNNING_IN_IDE && assetIndex.getFileSystem() == FileSystems.getDefault()) {
+            Path path = assetIndex.getParent().resolve("resourcepacks");
             if (Files.isDirectory(path)) {
                 return path;
             }
@@ -72,39 +72,39 @@ public class ClientPackSource extends BuiltInPackSource {
         return null;
     }
 
-    public static VanillaPackResources createVanillaPackSource(Path p_250749_) {
+    public static VanillaPackResources createVanillaPackSource(Path assetIndex) {
         VanillaPackResourcesBuilder vanillapackresourcesbuilder = new VanillaPackResourcesBuilder()
             .setMetadata(BUILT_IN_METADATA)
             .exposeNamespace("minecraft", "realms");
         return vanillapackresourcesbuilder.applyDevelopmentConfig()
             .pushJarResources()
-            .pushAssetPath(PackType.CLIENT_RESOURCES, p_250749_)
+            .pushAssetPath(PackType.CLIENT_RESOURCES, assetIndex)
             .build(VANILLA_PACK_INFO);
     }
 
     @Override
-    protected Component getPackTitle(String p_250421_) {
-        Component component = SPECIAL_PACK_NAMES.get(p_250421_);
-        return (Component)(component != null ? component : Component.literal(p_250421_));
+    protected Component getPackTitle(String id) {
+        Component component = SPECIAL_PACK_NAMES.get(id);
+        return (Component)(component != null ? component : Component.literal(id));
     }
 
     @Nullable
     @Override
-    protected Pack createVanillaPack(PackResources p_250048_) {
-        return Pack.readMetaAndCreate(VANILLA_PACK_INFO, fixedResources(p_250048_), PackType.CLIENT_RESOURCES, VANILLA_SELECTION_CONFIG);
+    protected Pack createVanillaPack(PackResources resources) {
+        return Pack.readMetaAndCreate(VANILLA_PACK_INFO, fixedResources(resources), PackType.CLIENT_RESOURCES, VANILLA_SELECTION_CONFIG);
     }
 
     @Nullable
     @Override
-    protected Pack createBuiltinPack(String p_250992_, Pack.ResourcesSupplier p_250814_, Component p_249835_) {
-        return Pack.readMetaAndCreate(createBuiltInPackLocation(p_250992_, p_249835_), p_250814_, PackType.CLIENT_RESOURCES, BUILT_IN_SELECTION_CONFIG);
+    protected Pack createBuiltinPack(String id, Pack.ResourcesSupplier resources, Component title) {
+        return Pack.readMetaAndCreate(createBuiltInPackLocation(id, title), resources, PackType.CLIENT_RESOURCES, BUILT_IN_SELECTION_CONFIG);
     }
 
     @Override
-    protected void populatePackList(BiConsumer<String, Function<String, Pack>> p_249851_) {
-        super.populatePackList(p_249851_);
+    protected void populatePackList(BiConsumer<String, Function<String, Pack>> populator) {
+        super.populatePackList(populator);
         if (this.externalAssetDir != null) {
-            this.discoverPacksInPath(this.externalAssetDir, p_249851_);
+            this.discoverPacksInPath(this.externalAssetDir, populator);
         }
     }
 }

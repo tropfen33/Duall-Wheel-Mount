@@ -20,9 +20,9 @@ public class SetInstrumentFunction extends LootItemConditionalFunction {
     );
     private final TagKey<Instrument> options;
 
-    private SetInstrumentFunction(List<LootItemCondition> p_298993_, TagKey<Instrument> p_231009_) {
-        super(p_298993_);
-        this.options = p_231009_;
+    private SetInstrumentFunction(List<LootItemCondition> conditions, TagKey<Instrument> options) {
+        super(conditions);
+        this.options = options;
     }
 
     @Override
@@ -30,13 +30,16 @@ public class SetInstrumentFunction extends LootItemConditionalFunction {
         return LootItemFunctions.SET_INSTRUMENT;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_231017_, LootContext p_231018_) {
-        InstrumentItem.setRandom(p_231017_, this.options, p_231018_.getRandom());
-        return p_231017_;
+    public ItemStack run(ItemStack stack, LootContext context) {
+        InstrumentItem.setRandom(stack, this.options, context.getRandom());
+        return stack;
     }
 
-    public static LootItemConditionalFunction.Builder<?> setInstrumentOptions(TagKey<Instrument> p_231012_) {
-        return simpleBuilder(p_298125_ -> new SetInstrumentFunction(p_298125_, p_231012_));
+    public static LootItemConditionalFunction.Builder<?> setInstrumentOptions(TagKey<Instrument> instrumentOptions) {
+        return simpleBuilder(p_298125_ -> new SetInstrumentFunction(p_298125_, instrumentOptions));
     }
 }

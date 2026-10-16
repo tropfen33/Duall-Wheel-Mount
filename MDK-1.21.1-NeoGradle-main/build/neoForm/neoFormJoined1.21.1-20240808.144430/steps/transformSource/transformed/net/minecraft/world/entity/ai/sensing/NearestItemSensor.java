@@ -21,14 +21,14 @@ public class NearestItemSensor extends Sensor<Mob> {
         return ImmutableSet.of(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM);
     }
 
-    protected void doTick(ServerLevel p_26697_, Mob p_26698_) {
-        Brain<?> brain = p_26698_.getBrain();
-        List<ItemEntity> list = p_26697_.getEntitiesOfClass(ItemEntity.class, p_26698_.getBoundingBox().inflate(32.0, 16.0, 32.0), p_26703_ -> true);
-        list.sort(Comparator.comparingDouble(p_26698_::distanceToSqr));
+    protected void doTick(ServerLevel level, Mob entity) {
+        Brain<?> brain = entity.getBrain();
+        List<ItemEntity> list = level.getEntitiesOfClass(ItemEntity.class, entity.getBoundingBox().inflate(32.0, 16.0, 32.0), p_26703_ -> true);
+        list.sort(Comparator.comparingDouble(entity::distanceToSqr));
         Optional<ItemEntity> optional = list.stream()
-            .filter(p_26706_ -> p_26698_.wantsToPickUp(p_26706_.getItem()))
-            .filter(p_26701_ -> p_26701_.closerThan(p_26698_, 32.0))
-            .filter(p_26698_::hasLineOfSight)
+            .filter(p_26706_ -> entity.wantsToPickUp(p_26706_.getItem()))
+            .filter(p_26701_ -> p_26701_.closerThan(entity, 32.0))
+            .filter(entity::hasLineOfSight)
             .findFirst();
         brain.setMemory(MemoryModuleType.NEAREST_VISIBLE_WANTED_ITEM, optional);
     }

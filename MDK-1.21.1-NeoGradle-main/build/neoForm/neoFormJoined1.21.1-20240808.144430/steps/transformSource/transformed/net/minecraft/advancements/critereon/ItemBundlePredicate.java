@@ -22,7 +22,7 @@ public record ItemBundlePredicate(Optional<CollectionPredicate<ItemStack, ItemPr
         return DataComponents.BUNDLE_CONTENTS;
     }
 
-    public boolean matches(ItemStack p_340876_, BundleContents p_341410_) {
-        return !this.items.isPresent() || this.items.get().test(p_341410_.items());
+    public boolean matches(ItemStack stack, BundleContents value) {
+        return !this.items.isPresent() || this.items.get().test(value.items());
     }
 }

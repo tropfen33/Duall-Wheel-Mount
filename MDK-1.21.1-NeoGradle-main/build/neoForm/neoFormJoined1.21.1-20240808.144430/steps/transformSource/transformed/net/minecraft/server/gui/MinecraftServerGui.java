@@ -41,14 +41,14 @@ public class MinecraftServerGui extends JComponent {
     private final Collection<Runnable> finalizers = Lists.newArrayList();
     final AtomicBoolean isClosing = new AtomicBoolean();
 
-    public static MinecraftServerGui showFrameFor(final DedicatedServer p_139922_) {
+    public static MinecraftServerGui showFrameFor(final DedicatedServer server) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception exception) {
         }
 
         final JFrame jframe = new JFrame("Minecraft server");
-        final MinecraftServerGui minecraftservergui = new MinecraftServerGui(p_139922_);
+        final MinecraftServerGui minecraftservergui = new MinecraftServerGui(server);
         jframe.setDefaultCloseOperation(2);
         jframe.add(minecraftservergui);
         jframe.pack();
@@ -56,10 +56,10 @@ public class MinecraftServerGui extends JComponent {
         jframe.setVisible(true);
         jframe.addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(WindowEvent p_139944_) {
+            public void windowClosing(WindowEvent event) {
                 if (!minecraftservergui.isClosing.getAndSet(true)) {
                     jframe.setTitle("Minecraft server - shutting down!");
-                    p_139922_.halt(true);
+                    server.halt(true);
                     minecraftservergui.runFinalizers();
                 }
             }
@@ -69,8 +69,8 @@ public class MinecraftServerGui extends JComponent {
         return minecraftservergui;
     }
 
-    private MinecraftServerGui(DedicatedServer p_139907_) {
-        this.server = p_139907_;
+    private MinecraftServerGui(DedicatedServer server) {
+        this.server = server;
         this.setPreferredSize(new Dimension(854, 480));
         this.setLayout(new BorderLayout());
 
@@ -82,8 +82,8 @@ public class MinecraftServerGui extends JComponent {
         }
     }
 
-    public void addFinalizer(Runnable p_139910_) {
-        this.finalizers.add(p_139910_);
+    public void addFinalizer(Runnable finalizer) {
+        this.finalizers.add(finalizer);
     }
 
     private JComponent buildInfoPanel() {
@@ -120,7 +120,7 @@ public class MinecraftServerGui extends JComponent {
         });
         jtextarea.addFocusListener(new FocusAdapter() {
             @Override
-            public void focusGained(FocusEvent p_139949_) {
+            public void focusGained(FocusEvent event) {
             }
         });
         jpanel.add(jscrollpane, "Center");
@@ -153,22 +153,22 @@ public class MinecraftServerGui extends JComponent {
         this.finalizers.forEach(Runnable::run);
     }
 
-    public void print(JTextArea p_139915_, JScrollPane p_139916_, String p_139917_) {
+    public void print(JTextArea textArea, JScrollPane scrollPane, String line) {
         try {
             latch.await();
         } catch (InterruptedException e){} //Prevent logging until after constructor has ended.
         if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(() -> this.print(p_139915_, p_139916_, p_139917_));
+            SwingUtilities.invokeLater(() -> this.print(textArea, scrollPane, line));
         } else {
-            Document document = p_139915_.getDocument();
-            JScrollBar jscrollbar = p_139916_.getVerticalScrollBar();
+            Document document = textArea.getDocument();
+            JScrollBar jscrollbar = scrollPane.getVerticalScrollBar();
             boolean flag = false;
-            if (p_139916_.getViewport().getView() == p_139915_) {
+            if (scrollPane.getViewport().getView() == textArea) {
                 flag = (double)jscrollbar.getValue() + jscrollbar.getSize().getHeight() + (double)(MONOSPACED.getSize() * 4) > (double)jscrollbar.getMaximum();
             }
 
             try {
-                document.insertString(document.getLength(), p_139917_, null);
+                document.insertString(document.getLength(), line, null);
             } catch (BadLocationException badlocationexception) {
             }
 

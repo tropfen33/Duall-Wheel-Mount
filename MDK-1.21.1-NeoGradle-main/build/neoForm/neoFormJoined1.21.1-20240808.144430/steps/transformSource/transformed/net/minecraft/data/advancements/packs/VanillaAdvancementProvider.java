@@ -7,10 +7,10 @@ import net.minecraft.data.PackOutput;
 import net.minecraft.data.advancements.AdvancementProvider;
 
 public class VanillaAdvancementProvider {
-    public static AdvancementProvider create(PackOutput p_255890_, CompletableFuture<HolderLookup.Provider> p_255777_) {
+    public static AdvancementProvider create(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
         return new AdvancementProvider(
-            p_255890_,
-            p_255777_,
+            output,
+            registries,
             List.of(
                 new VanillaTheEndAdvancements(),
                 new VanillaHusbandryAdvancements(),

@@ -21,12 +21,12 @@ public class WeightedPlacedFeature {
     public final Holder<PlacedFeature> feature;
     public final float chance;
 
-    public WeightedPlacedFeature(Holder<PlacedFeature> p_204786_, float p_204787_) {
-        this.feature = p_204786_;
-        this.chance = p_204787_;
+    public WeightedPlacedFeature(Holder<PlacedFeature> feature, float chance) {
+        this.feature = feature;
+        this.chance = chance;
     }
 
-    public boolean place(WorldGenLevel p_225368_, ChunkGenerator p_225369_, RandomSource p_225370_, BlockPos p_225371_) {
-        return this.feature.value().place(p_225368_, p_225369_, p_225370_, p_225371_);
+    public boolean place(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random, BlockPos pos) {
+        return this.feature.value().place(level, chunkGenerator, random, pos);
     }
 }

@@ -30,63 +30,69 @@ public class RedStoneOreBlock extends Block {
         return CODEC;
     }
 
-    public RedStoneOreBlock(BlockBehaviour.Properties p_55453_) {
-        super(p_55453_);
+    public RedStoneOreBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.defaultBlockState().setValue(LIT, Boolean.valueOf(false)));
     }
 
     @Override
-    protected void attack(BlockState p_55467_, Level p_55468_, BlockPos p_55469_, Player p_55470_) {
-        interact(p_55467_, p_55468_, p_55469_);
-        super.attack(p_55467_, p_55468_, p_55469_, p_55470_);
+    protected void attack(BlockState state, Level level, BlockPos pos, Player player) {
+        interact(state, level, pos);
+        super.attack(state, level, pos, player);
     }
 
     @Override
-    public void stepOn(Level p_154299_, BlockPos p_154300_, BlockState p_154301_, Entity p_154302_) {
-        if (!p_154302_.isSteppingCarefully()) {
-            interact(p_154301_, p_154299_, p_154300_);
+    public void stepOn(Level level, BlockPos pos, BlockState state, Entity entity) {
+        if (!entity.isSteppingCarefully()) {
+            interact(state, level, pos);
         }
 
-        super.stepOn(p_154299_, p_154300_, p_154301_, p_154302_);
+        super.stepOn(level, pos, state, entity);
     }
 
     @Override
     protected ItemInteractionResult useItemOn(
-        ItemStack p_316235_, BlockState p_316208_, Level p_316432_, BlockPos p_316592_, Player p_316564_, InteractionHand p_316389_, BlockHitResult p_316390_
+        ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult
     ) {
-        if (p_316432_.isClientSide) {
-            spawnParticles(p_316432_, p_316592_);
+        if (level.isClientSide) {
+            spawnParticles(level, pos);
         } else {
-            interact(p_316208_, p_316432_, p_316592_);
+            interact(state, level, pos);
         }
 
-        return p_316235_.getItem() instanceof BlockItem && new BlockPlaceContext(p_316564_, p_316389_, p_316235_, p_316390_).canPlace()
+        return stack.getItem() instanceof BlockItem && new BlockPlaceContext(player, hand, stack, hitResult).canPlace()
             ? ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION
             : ItemInteractionResult.SUCCESS;
     }
 
-    private static void interact(BlockState p_55493_, Level p_55494_, BlockPos p_55495_) {
-        spawnParticles(p_55494_, p_55495_);
-        if (!p_55493_.getValue(LIT)) {
-            p_55494_.setBlock(p_55495_, p_55493_.setValue(LIT, Boolean.valueOf(true)), 3);
+    private static void interact(BlockState state, Level level, BlockPos pos) {
+        spawnParticles(level, pos);
+        if (!state.getValue(LIT)) {
+            level.setBlock(pos, state.setValue(LIT, Boolean.valueOf(true)), 3);
         }
     }
 
     @Override
-    protected boolean isRandomlyTicking(BlockState p_55486_) {
-        return p_55486_.getValue(LIT);
+    protected boolean isRandomlyTicking(BlockState state) {
+        return state.getValue(LIT);
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_221918_, ServerLevel p_221919_, BlockPos p_221920_, RandomSource p_221921_) {
-        if (p_221918_.getValue(LIT)) {
-            p_221919_.setBlock(p_221920_, p_221918_.setValue(LIT, Boolean.valueOf(false)), 3);
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (state.getValue(LIT)) {
+            level.setBlock(pos, state.setValue(LIT, Boolean.valueOf(false)), 3);
         }
     }
 
+    /**
+     * Perform side-effects from block dropping, such as creating silverfish
+     */
     @Override
-    protected void spawnAfterBreak(BlockState p_221907_, ServerLevel p_221908_, BlockPos p_221909_, ItemStack p_221910_, boolean p_221911_) {
-        super.spawnAfterBreak(p_221907_, p_221908_, p_221909_, p_221910_, p_221911_);
+    protected void spawnAfterBreak(BlockState state, ServerLevel level, BlockPos pos, ItemStack stack, boolean dropExperience) {
+        super.spawnAfterBreak(state, level, pos, stack, dropExperience);
     }
 
     // Neo: Patch-in override for getExpDrop. Original vanilla logic passes UniformInt.of(1, 5) to tryDropExperience.
@@ -97,33 +103,36 @@ public class RedStoneOreBlock extends Block {
         return UniformInt.of(1, 5).sample(level.getRandom());
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_221913_, Level p_221914_, BlockPos p_221915_, RandomSource p_221916_) {
-        if (p_221913_.getValue(LIT)) {
-            spawnParticles(p_221914_, p_221915_);
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (state.getValue(LIT)) {
+            spawnParticles(level, pos);
         }
     }
 
-    private static void spawnParticles(Level p_55455_, BlockPos p_55456_) {
+    private static void spawnParticles(Level level, BlockPos pos) {
         double d0 = 0.5625;
-        RandomSource randomsource = p_55455_.random;
+        RandomSource randomsource = level.random;
 
         for (Direction direction : Direction.values()) {
-            BlockPos blockpos = p_55456_.relative(direction);
-            if (!p_55455_.getBlockState(blockpos).isSolidRender(p_55455_, blockpos)) {
+            BlockPos blockpos = pos.relative(direction);
+            if (!level.getBlockState(blockpos).isSolidRender(level, blockpos)) {
                 Direction.Axis direction$axis = direction.getAxis();
                 double d1 = direction$axis == Direction.Axis.X ? 0.5 + 0.5625 * (double)direction.getStepX() : (double)randomsource.nextFloat();
                 double d2 = direction$axis == Direction.Axis.Y ? 0.5 + 0.5625 * (double)direction.getStepY() : (double)randomsource.nextFloat();
                 double d3 = direction$axis == Direction.Axis.Z ? 0.5 + 0.5625 * (double)direction.getStepZ() : (double)randomsource.nextFloat();
-                p_55455_.addParticle(
-                    DustParticleOptions.REDSTONE, (double)p_55456_.getX() + d1, (double)p_55456_.getY() + d2, (double)p_55456_.getZ() + d3, 0.0, 0.0, 0.0
+                level.addParticle(
+                    DustParticleOptions.REDSTONE, (double)pos.getX() + d1, (double)pos.getY() + d2, (double)pos.getZ() + d3, 0.0, 0.0, 0.0
                 );
             }
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_55484_) {
-        p_55484_.add(LIT);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(LIT);
     }
 }

@@ -16,9 +16,9 @@ public enum ParticleStatus implements OptionEnum {
     private final int id;
     private final String key;
 
-    private ParticleStatus(int p_92193_, String p_92194_) {
-        this.id = p_92193_;
-        this.key = p_92194_;
+    private ParticleStatus(int id, String key) {
+        this.id = id;
+        this.key = key;
     }
 
     @Override
@@ -31,7 +31,7 @@ public enum ParticleStatus implements OptionEnum {
         return this.id;
     }
 
-    public static ParticleStatus byId(int p_92197_) {
-        return BY_ID.apply(p_92197_);
+    public static ParticleStatus byId(int id) {
+        return BY_ID.apply(id);
     }
 }

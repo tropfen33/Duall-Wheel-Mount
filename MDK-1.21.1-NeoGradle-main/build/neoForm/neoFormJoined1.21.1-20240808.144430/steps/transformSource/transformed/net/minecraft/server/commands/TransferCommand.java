@@ -20,8 +20,8 @@ public class TransferCommand {
         Component.translatable("commands.transfer.error.no_players")
     );
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_321596_) {
-        p_321596_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("transfer")
                 .requires(p_321781_ -> p_321781_.hasPermission(3))
                 .then(
@@ -60,23 +60,23 @@ public class TransferCommand {
         );
     }
 
-    private static int transfer(CommandSourceStack p_321844_, String p_321828_, int p_321760_, Collection<ServerPlayer> p_321481_) throws CommandSyntaxException {
-        if (p_321481_.isEmpty()) {
+    private static int transfer(CommandSourceStack source, String hostname, int port, Collection<ServerPlayer> players) throws CommandSyntaxException {
+        if (players.isEmpty()) {
             throw ERROR_NO_PLAYERS.create();
         } else {
-            for (ServerPlayer serverplayer : p_321481_) {
-                serverplayer.connection.send(new ClientboundTransferPacket(p_321828_, p_321760_));
+            for (ServerPlayer serverplayer : players) {
+                serverplayer.connection.send(new ClientboundTransferPacket(hostname, port));
             }
 
-            if (p_321481_.size() == 1) {
-                p_321844_.sendSuccess(
-                    () -> Component.translatable("commands.transfer.success.single", p_321481_.iterator().next().getDisplayName(), p_321828_, p_321760_), true
+            if (players.size() == 1) {
+                source.sendSuccess(
+                    () -> Component.translatable("commands.transfer.success.single", players.iterator().next().getDisplayName(), hostname, port), true
                 );
             } else {
-                p_321844_.sendSuccess(() -> Component.translatable("commands.transfer.success.multiple", p_321481_.size(), p_321828_, p_321760_), true);
+                source.sendSuccess(() -> Component.translatable("commands.transfer.success.multiple", players.size(), hostname, port), true);
             }
 
-            return p_321481_.size();
+            return players.size();
         }
     }
 }

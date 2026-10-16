@@ -51,14 +51,14 @@ public class AdvancementsScreen extends Screen implements ClientAdvancements.Lis
     private boolean isScrolling;
     private static int tabPage, maxPages;
 
-    public AdvancementsScreen(ClientAdvancements p_97340_) {
-        this(p_97340_, null);
+    public AdvancementsScreen(ClientAdvancements advancements) {
+        this(advancements, null);
     }
 
-    public AdvancementsScreen(ClientAdvancements p_331393_, @Nullable Screen p_331693_) {
+    public AdvancementsScreen(ClientAdvancements advancements, @Nullable Screen lastScreen) {
         super(TITLE);
-        this.advancements = p_331393_;
-        this.lastScreen = p_331693_;
+        this.advancements = advancements;
+        this.lastScreen = lastScreen;
     }
 
     @Override
@@ -110,59 +110,96 @@ public class AdvancementsScreen extends Screen implements ClientAdvancements.Lis
         }
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    public boolean mouseClicked(double p_97343_, double p_97344_, int p_97345_) {
-        if (p_97345_ == 0) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0) {
             int i = (this.width - 252) / 2;
             int j = (this.height - 140) / 2;
 
             for (AdvancementTab advancementtab : this.tabs.values()) {
-                if (advancementtab.getPage() == tabPage && advancementtab.isMouseOver(i, j, p_97343_, p_97344_)) {
+                if (advancementtab.getPage() == tabPage && advancementtab.isMouseOver(i, j, mouseX, mouseY)) {
                     this.advancements.setSelectedTab(advancementtab.getRootNode().holder(), true);
                     break;
                 }
             }
         }
 
-        return super.mouseClicked(p_97343_, p_97344_, p_97345_);
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_97353_, int p_97354_, int p_97355_) {
-        if (this.minecraft.options.keyAdvancements.matches(p_97353_, p_97354_)) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (this.minecraft.options.keyAdvancements.matches(keyCode, scanCode)) {
             this.minecraft.setScreen(null);
             this.minecraft.mouseHandler.grabMouse();
             return true;
         } else {
-            return super.keyPressed(p_97353_, p_97354_, p_97355_);
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282589_, int p_282255_, int p_283354_, float p_283123_) {
-        super.render(p_282589_, p_282255_, p_283354_, p_283123_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         int i = (this.width - 252) / 2;
         int j = (this.height - 140) / 2;
         if (maxPages != 0) {
             net.minecraft.network.chat.Component page = Component.literal(String.format("%d / %d", tabPage + 1, maxPages + 1));
             int width = this.font.width(page);
-            p_282589_.drawString(this.font, page.getVisualOrderText(), i + (252 / 2) - (width / 2), j - 44, -1);
+            guiGraphics.drawString(this.font, page.getVisualOrderText(), i + (252 / 2) - (width / 2), j - 44, -1);
         }
-        this.renderInside(p_282589_, p_282255_, p_283354_, i, j);
-        this.renderWindow(p_282589_, i, j);
-        this.renderTooltips(p_282589_, p_282255_, p_283354_, i, j);
+        this.renderInside(guiGraphics, mouseX, mouseY, i, j);
+        this.renderWindow(guiGraphics, i, j);
+        this.renderTooltips(guiGraphics, mouseX, mouseY, i, j);
     }
 
+    /**
+     * Called when the mouse is dragged within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that is being dragged.
+     * @param dragX  the X distance of the drag.
+     * @param dragY  the Y distance of the drag.
+     */
     @Override
-    public boolean mouseDragged(double p_97347_, double p_97348_, int p_97349_, double p_97350_, double p_97351_) {
-        if (p_97349_ != 0) {
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (button != 0) {
             this.isScrolling = false;
             return false;
         } else {
             if (!this.isScrolling) {
                 this.isScrolling = true;
             } else if (this.selectedTab != null) {
-                this.selectedTab.scroll(p_97350_, p_97351_);
+                this.selectedTab.scroll(dragX, dragY);
             }
 
             return true;
@@ -170,99 +207,99 @@ public class AdvancementsScreen extends Screen implements ClientAdvancements.Lis
     }
 
     @Override
-    public boolean mouseScrolled(double p_295690_, double p_295286_, double p_295339_, double p_296270_) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (this.selectedTab != null) {
-            this.selectedTab.scroll(p_295339_ * 16.0, p_296270_ * 16.0);
+            this.selectedTab.scroll(scrollX * 16.0, scrollY * 16.0);
             return true;
         } else {
             return false;
         }
     }
 
-    private void renderInside(GuiGraphics p_282012_, int p_97375_, int p_97376_, int p_97377_, int p_97378_) {
+    private void renderInside(GuiGraphics guiGraphics, int mouseX, int mouseY, int offsetX, int offsetY) {
         AdvancementTab advancementtab = this.selectedTab;
         if (advancementtab == null) {
-            p_282012_.fill(p_97377_ + 9, p_97378_ + 18, p_97377_ + 9 + 234, p_97378_ + 18 + 113, -16777216);
-            int i = p_97377_ + 9 + 117;
-            p_282012_.drawCenteredString(this.font, NO_ADVANCEMENTS_LABEL, i, p_97378_ + 18 + 56 - 9 / 2, -1);
-            p_282012_.drawCenteredString(this.font, VERY_SAD_LABEL, i, p_97378_ + 18 + 113 - 9, -1);
+            guiGraphics.fill(offsetX + 9, offsetY + 18, offsetX + 9 + 234, offsetY + 18 + 113, -16777216);
+            int i = offsetX + 9 + 117;
+            guiGraphics.drawCenteredString(this.font, NO_ADVANCEMENTS_LABEL, i, offsetY + 18 + 56 - 9 / 2, -1);
+            guiGraphics.drawCenteredString(this.font, VERY_SAD_LABEL, i, offsetY + 18 + 113 - 9, -1);
         } else {
-            advancementtab.drawContents(p_282012_, p_97377_ + 9, p_97378_ + 18);
+            advancementtab.drawContents(guiGraphics, offsetX + 9, offsetY + 18);
         }
     }
 
-    public void renderWindow(GuiGraphics p_283395_, int p_281890_, int p_282532_) {
+    public void renderWindow(GuiGraphics guiGraphics, int offsetX, int offsetY) {
         RenderSystem.enableBlend();
-        p_283395_.blit(WINDOW_LOCATION, p_281890_, p_282532_, 0, 0, 252, 140);
+        guiGraphics.blit(WINDOW_LOCATION, offsetX, offsetY, 0, 0, 252, 140);
         if (this.tabs.size() > 1) {
             for (AdvancementTab advancementtab : this.tabs.values()) {
                 if (advancementtab.getPage() == tabPage)
-                advancementtab.drawTab(p_283395_, p_281890_, p_282532_, advancementtab == this.selectedTab);
+                advancementtab.drawTab(guiGraphics, offsetX, offsetY, advancementtab == this.selectedTab);
             }
 
             for (AdvancementTab advancementtab1 : this.tabs.values()) {
                 if (advancementtab1.getPage() == tabPage)
-                advancementtab1.drawIcon(p_283395_, p_281890_, p_282532_);
+                advancementtab1.drawIcon(guiGraphics, offsetX, offsetY);
             }
         }
 
-        p_283395_.drawString(this.font, this.selectedTab != null ? this.selectedTab.getTitle() : TITLE, p_281890_ + 8, p_282532_ + 6, 4210752, false);
+        guiGraphics.drawString(this.font, this.selectedTab != null ? this.selectedTab.getTitle() : TITLE, offsetX + 8, offsetY + 6, 4210752, false);
     }
 
-    private void renderTooltips(GuiGraphics p_282784_, int p_283556_, int p_282458_, int p_281519_, int p_283371_) {
+    private void renderTooltips(GuiGraphics guiGraphics, int mouseX, int mouseY, int offsetX, int offsetY) {
         if (this.selectedTab != null) {
-            p_282784_.pose().pushPose();
-            p_282784_.pose().translate((float)(p_281519_ + 9), (float)(p_283371_ + 18), 400.0F);
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate((float)(offsetX + 9), (float)(offsetY + 18), 400.0F);
             RenderSystem.enableDepthTest();
-            this.selectedTab.drawTooltips(p_282784_, p_283556_ - p_281519_ - 9, p_282458_ - p_283371_ - 18, p_281519_, p_283371_);
+            this.selectedTab.drawTooltips(guiGraphics, mouseX - offsetX - 9, mouseY - offsetY - 18, offsetX, offsetY);
             RenderSystem.disableDepthTest();
-            p_282784_.pose().popPose();
+            guiGraphics.pose().popPose();
         }
 
         if (this.tabs.size() > 1) {
             for (AdvancementTab advancementtab : this.tabs.values()) {
-                if (advancementtab.getPage() == tabPage && advancementtab.isMouseOver(p_281519_, p_283371_, (double)p_283556_, (double)p_282458_)) {
-                    p_282784_.renderTooltip(this.font, advancementtab.getTitle(), p_283556_, p_282458_);
+                if (advancementtab.getPage() == tabPage && advancementtab.isMouseOver(offsetX, offsetY, (double)mouseX, (double)mouseY)) {
+                    guiGraphics.renderTooltip(this.font, advancementtab.getTitle(), mouseX, mouseY);
                 }
             }
         }
     }
 
     @Override
-    public void onAddAdvancementRoot(AdvancementNode p_301276_) {
-        AdvancementTab advancementtab = AdvancementTab.create(this.minecraft, this, this.tabs.size(), p_301276_);
+    public void onAddAdvancementRoot(AdvancementNode advancement) {
+        AdvancementTab advancementtab = AdvancementTab.create(this.minecraft, this, this.tabs.size(), advancement);
         if (advancementtab != null) {
-            this.tabs.put(p_301276_.holder(), advancementtab);
+            this.tabs.put(advancement.holder(), advancementtab);
         }
     }
 
     @Override
-    public void onRemoveAdvancementRoot(AdvancementNode p_301028_) {
+    public void onRemoveAdvancementRoot(AdvancementNode advancement) {
     }
 
     @Override
-    public void onAddAdvancementTask(AdvancementNode p_301205_) {
-        AdvancementTab advancementtab = this.getTab(p_301205_);
+    public void onAddAdvancementTask(AdvancementNode advancement) {
+        AdvancementTab advancementtab = this.getTab(advancement);
         if (advancementtab != null) {
-            advancementtab.addAdvancement(p_301205_);
+            advancementtab.addAdvancement(advancement);
         }
     }
 
     @Override
-    public void onRemoveAdvancementTask(AdvancementNode p_301004_) {
+    public void onRemoveAdvancementTask(AdvancementNode advancement) {
     }
 
     @Override
-    public void onUpdateAdvancementProgress(AdvancementNode p_301161_, AdvancementProgress p_97369_) {
-        AdvancementWidget advancementwidget = this.getAdvancementWidget(p_301161_);
+    public void onUpdateAdvancementProgress(AdvancementNode advancement, AdvancementProgress advancementProgress) {
+        AdvancementWidget advancementwidget = this.getAdvancementWidget(advancement);
         if (advancementwidget != null) {
-            advancementwidget.setProgress(p_97369_);
+            advancementwidget.setProgress(advancementProgress);
         }
     }
 
     @Override
-    public void onSelectedTabChanged(@Nullable AdvancementHolder p_301084_) {
-        this.selectedTab = this.tabs.get(p_301084_);
+    public void onSelectedTabChanged(@Nullable AdvancementHolder advancement) {
+        this.selectedTab = this.tabs.get(advancement);
     }
 
     @Override
@@ -272,14 +309,14 @@ public class AdvancementsScreen extends Screen implements ClientAdvancements.Lis
     }
 
     @Nullable
-    public AdvancementWidget getAdvancementWidget(AdvancementNode p_300894_) {
-        AdvancementTab advancementtab = this.getTab(p_300894_);
-        return advancementtab == null ? null : advancementtab.getWidget(p_300894_.holder());
+    public AdvancementWidget getAdvancementWidget(AdvancementNode advancement) {
+        AdvancementTab advancementtab = this.getTab(advancement);
+        return advancementtab == null ? null : advancementtab.getWidget(advancement.holder());
     }
 
     @Nullable
-    private AdvancementTab getTab(AdvancementNode p_301151_) {
-        AdvancementNode advancementnode = p_301151_.root();
+    private AdvancementTab getTab(AdvancementNode advancement) {
+        AdvancementNode advancementnode = advancement.root();
         return this.tabs.get(advancementnode.holder());
     }
 }

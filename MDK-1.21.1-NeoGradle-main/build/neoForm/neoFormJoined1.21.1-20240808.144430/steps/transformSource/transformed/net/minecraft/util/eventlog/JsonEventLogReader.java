@@ -13,8 +13,8 @@ import java.io.Reader;
 import javax.annotation.Nullable;
 
 public interface JsonEventLogReader<T> extends Closeable {
-    static <T> JsonEventLogReader<T> create(final Codec<T> p_261600_, Reader p_261836_) {
-        final JsonReader jsonreader = new JsonReader(p_261836_);
+    static <T> JsonEventLogReader<T> create(final Codec<T> codec, Reader reader) {
+        final JsonReader jsonreader = new JsonReader(reader);
         jsonreader.setLenient(true);
         return new JsonEventLogReader<T>() {
             @Nullable
@@ -25,7 +25,7 @@ public interface JsonEventLogReader<T> extends Closeable {
                         return null;
                     } else {
                         JsonElement jsonelement = JsonParser.parseReader(jsonreader);
-                        return p_261600_.parse(JsonOps.INSTANCE, jsonelement).getOrThrow(IOException::new);
+                        return codec.parse(JsonOps.INSTANCE, jsonelement).getOrThrow(IOException::new);
                     }
                 } catch (JsonParseException jsonparseexception) {
                     throw new IOException(jsonparseexception);

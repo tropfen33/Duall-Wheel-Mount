@@ -36,67 +36,76 @@ public class StonecutterBlock extends Block {
         return CODEC;
     }
 
-    public StonecutterBlock(BlockBehaviour.Properties p_57068_) {
-        super(p_57068_);
+    public StonecutterBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_57070_) {
-        return this.defaultBlockState().setValue(FACING, p_57070_.getHorizontalDirection().getOpposite());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_57083_, Level p_57084_, BlockPos p_57085_, Player p_57086_, BlockHitResult p_57088_) {
-        if (p_57084_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
-            p_57086_.openMenu(p_57083_.getMenuProvider(p_57084_, p_57085_));
-            p_57086_.awardStat(Stats.INTERACT_WITH_STONECUTTER);
+            player.openMenu(state.getMenuProvider(level, pos));
+            player.awardStat(Stats.INTERACT_WITH_STONECUTTER);
             return InteractionResult.CONSUME;
         }
     }
 
     @Nullable
     @Override
-    protected MenuProvider getMenuProvider(BlockState p_57105_, Level p_57106_, BlockPos p_57107_) {
+    protected MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
         return new SimpleMenuProvider(
-            (p_57074_, p_57075_, p_57076_) -> new StonecutterMenu(p_57074_, p_57075_, ContainerLevelAccess.create(p_57106_, p_57107_)), CONTAINER_TITLE
+            (p_57074_, p_57075_, p_57076_) -> new StonecutterMenu(p_57074_, p_57075_, ContainerLevelAccess.create(level, pos)), CONTAINER_TITLE
         );
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_57100_, BlockGetter p_57101_, BlockPos p_57102_, CollisionContext p_57103_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    protected boolean useShapeForLightOcclusion(BlockState p_57109_) {
+    protected boolean useShapeForLightOcclusion(BlockState state) {
         return true;
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_57098_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_57093_, Rotation p_57094_) {
-        return p_57093_.setValue(FACING, p_57094_.rotate(p_57093_.getValue(FACING)));
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState mirror(BlockState p_57090_, Mirror p_57091_) {
-        return p_57090_.rotate(p_57091_.getRotation(p_57090_.getValue(FACING)));
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_57096_) {
-        p_57096_.add(FACING);
-    }
-
-    @Override
-    protected boolean isPathfindable(BlockState p_57078_, PathComputationType p_57081_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

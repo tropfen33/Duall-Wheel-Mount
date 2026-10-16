@@ -69,21 +69,21 @@ public class MapColor {
     public final int col;
     public final int id;
 
-    private MapColor(int p_285303_, int p_284979_) {
-        if (p_285303_ >= 0 && p_285303_ <= 63) {
-            this.id = p_285303_;
-            this.col = p_284979_;
-            MATERIAL_COLORS[p_285303_] = this;
+    private MapColor(int id, int col) {
+        if (id >= 0 && id <= 63) {
+            this.id = id;
+            this.col = col;
+            MATERIAL_COLORS[id] = this;
         } else {
             throw new IndexOutOfBoundsException("Map colour ID must be between 0 and 63 (inclusive)");
         }
     }
 
-    public int calculateRGBColor(MapColor.Brightness p_285401_) {
+    public int calculateRGBColor(MapColor.Brightness brightness) {
         if (this == NONE) {
             return 0;
         } else {
-            int i = p_285401_.modifier;
+            int i = brightness.modifier;
             int j = (this.col >> 16 & 0xFF) * i / 255;
             int k = (this.col >> 8 & 0xFF) * i / 255;
             int l = (this.col & 0xFF) * i / 255;
@@ -91,23 +91,23 @@ public class MapColor {
         }
     }
 
-    public static MapColor byId(int p_285273_) {
-        Preconditions.checkPositionIndex(p_285273_, MATERIAL_COLORS.length, "material id");
-        return byIdUnsafe(p_285273_);
+    public static MapColor byId(int id) {
+        Preconditions.checkPositionIndex(id, MATERIAL_COLORS.length, "material id");
+        return byIdUnsafe(id);
     }
 
-    private static MapColor byIdUnsafe(int p_285180_) {
-        MapColor mapcolor = MATERIAL_COLORS[p_285180_];
+    private static MapColor byIdUnsafe(int id) {
+        MapColor mapcolor = MATERIAL_COLORS[id];
         return mapcolor != null ? mapcolor : NONE;
     }
 
-    public static int getColorFromPackedId(int p_285190_) {
-        int i = p_285190_ & 0xFF;
+    public static int getColorFromPackedId(int packedId) {
+        int i = packedId & 0xFF;
         return byIdUnsafe(i >> 2).calculateRGBColor(MapColor.Brightness.byIdUnsafe(i & 3));
     }
 
-    public byte getPackedId(MapColor.Brightness p_285070_) {
-        return (byte)(this.id << 2 | p_285070_.id & 3);
+    public byte getPackedId(MapColor.Brightness brightness) {
+        return (byte)(this.id << 2 | brightness.id & 3);
     }
 
     public static enum Brightness {
@@ -120,18 +120,18 @@ public class MapColor {
         public final int id;
         public final int modifier;
 
-        private Brightness(int p_284956_, int p_285069_) {
-            this.id = p_284956_;
-            this.modifier = p_285069_;
+        private Brightness(int id, int modifier) {
+            this.id = id;
+            this.modifier = modifier;
         }
 
-        public static MapColor.Brightness byId(int p_284960_) {
-            Preconditions.checkPositionIndex(p_284960_, VALUES.length, "brightness id");
-            return byIdUnsafe(p_284960_);
+        public static MapColor.Brightness byId(int id) {
+            Preconditions.checkPositionIndex(id, VALUES.length, "brightness id");
+            return byIdUnsafe(id);
         }
 
-        static MapColor.Brightness byIdUnsafe(int p_285089_) {
-            return VALUES[p_285089_];
+        static MapColor.Brightness byIdUnsafe(int id) {
+            return VALUES[id];
         }
     }
 }

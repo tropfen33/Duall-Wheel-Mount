@@ -25,12 +25,15 @@ public record ServerboundChatPacket(String message, Instant timeStamp, long salt
         );
     }
 
-    private void write(FriendlyByteBuf p_133839_) {
-        p_133839_.writeUtf(this.message, 256);
-        p_133839_.writeInstant(this.timeStamp);
-        p_133839_.writeLong(this.salt);
-        p_133839_.writeNullable(this.signature, MessageSignature::write);
-        this.lastSeenMessages.write(p_133839_);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeUtf(this.message, 256);
+        buffer.writeInstant(this.timeStamp);
+        buffer.writeLong(this.salt);
+        buffer.writeNullable(this.signature, MessageSignature::write);
+        this.lastSeenMessages.write(buffer);
     }
 
     @Override
@@ -38,7 +41,10 @@ public record ServerboundChatPacket(String message, Instant timeStamp, long salt
         return GamePacketTypes.SERVERBOUND_CHAT;
     }
 
-    public void handle(ServerGamePacketListener p_133836_) {
-        p_133836_.handleChat(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleChat(this);
     }
 }

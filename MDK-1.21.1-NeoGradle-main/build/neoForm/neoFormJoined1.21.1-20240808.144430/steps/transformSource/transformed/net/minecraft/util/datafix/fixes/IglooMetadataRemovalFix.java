@@ -10,8 +10,8 @@ import com.mojang.serialization.Dynamic;
 import java.util.stream.Stream;
 
 public class IglooMetadataRemovalFix extends DataFix {
-    public IglooMetadataRemovalFix(Schema p_15902_, boolean p_15903_) {
-        super(p_15902_, p_15903_);
+    public IglooMetadataRemovalFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -22,22 +22,22 @@ public class IglooMetadataRemovalFix extends DataFix {
         );
     }
 
-    private static <T> Dynamic<T> fixTag(Dynamic<T> p_15905_) {
-        boolean flag = p_15905_.get("Children").asStreamOpt().map(p_15911_ -> p_15911_.allMatch(IglooMetadataRemovalFix::isIglooPiece)).result().orElse(false);
+    private static <T> Dynamic<T> fixTag(Dynamic<T> tag) {
+        boolean flag = tag.get("Children").asStreamOpt().map(p_15911_ -> p_15911_.allMatch(IglooMetadataRemovalFix::isIglooPiece)).result().orElse(false);
         return flag
-            ? p_15905_.set("id", p_15905_.createString("Igloo")).remove("Children")
-            : p_15905_.update("Children", IglooMetadataRemovalFix::removeIglooPieces);
+            ? tag.set("id", tag.createString("Igloo")).remove("Children")
+            : tag.update("Children", IglooMetadataRemovalFix::removeIglooPieces);
     }
 
-    private static <T> Dynamic<T> removeIglooPieces(Dynamic<T> p_15909_) {
-        return p_15909_.asStreamOpt()
+    private static <T> Dynamic<T> removeIglooPieces(Dynamic<T> dynamic) {
+        return dynamic.asStreamOpt()
             .map(p_15907_ -> p_15907_.filter(p_145382_ -> !isIglooPiece((Dynamic<?>)p_145382_)))
-            .map(p_15909_::createList)
+            .map(dynamic::createList)
             .result()
-            .orElse(p_15909_);
+            .orElse(dynamic);
     }
 
-    private static boolean isIglooPiece(Dynamic<?> p_15913_) {
-        return p_15913_.get("id").asString("").equals("Iglu");
+    private static boolean isIglooPiece(Dynamic<?> dynamic) {
+        return dynamic.get("id").asString("").equals("Iglu");
     }
 }

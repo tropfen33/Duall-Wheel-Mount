@@ -14,7 +14,7 @@ public interface SoundInstance {
     ResourceLocation getLocation();
 
     @Nullable
-    WeighedSoundEvents resolve(SoundManager p_119841_);
+    WeighedSoundEvents resolve(SoundManager manager);
 
     Sound getSound();
 

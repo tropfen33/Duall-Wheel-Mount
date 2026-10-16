@@ -10,19 +10,19 @@ import net.minecraft.world.phys.Vec3;
 public class BreezeUtil {
     private static final double MAX_LINE_OF_SIGHT_TEST_RANGE = 50.0;
 
-    public static Vec3 randomPointBehindTarget(LivingEntity p_316886_, RandomSource p_316867_) {
+    public static Vec3 randomPointBehindTarget(LivingEntity target, RandomSource random) {
         int i = 90;
-        float f = p_316886_.yHeadRot + 180.0F + (float)p_316867_.nextGaussian() * 90.0F / 2.0F;
-        float f1 = Mth.lerp(p_316867_.nextFloat(), 4.0F, 8.0F);
+        float f = target.yHeadRot + 180.0F + (float)random.nextGaussian() * 90.0F / 2.0F;
+        float f1 = Mth.lerp(random.nextFloat(), 4.0F, 8.0F);
         Vec3 vec3 = Vec3.directionFromRotation(0.0F, f).scale((double)f1);
-        return p_316886_.position().add(vec3);
+        return target.position().add(vec3);
     }
 
-    public static boolean hasLineOfSight(Breeze p_316785_, Vec3 p_316249_) {
-        Vec3 vec3 = new Vec3(p_316785_.getX(), p_316785_.getY(), p_316785_.getZ());
-        return p_316249_.distanceTo(vec3) > 50.0
+    public static boolean hasLineOfSight(Breeze breeze, Vec3 pos) {
+        Vec3 vec3 = new Vec3(breeze.getX(), breeze.getY(), breeze.getZ());
+        return pos.distanceTo(vec3) > 50.0
             ? false
-            : p_316785_.level().clip(new ClipContext(vec3, p_316249_, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, p_316785_)).getType()
+            : breeze.level().clip(new ClipContext(vec3, pos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, breeze)).getType()
                 == HitResult.Type.MISS;
     }
 }

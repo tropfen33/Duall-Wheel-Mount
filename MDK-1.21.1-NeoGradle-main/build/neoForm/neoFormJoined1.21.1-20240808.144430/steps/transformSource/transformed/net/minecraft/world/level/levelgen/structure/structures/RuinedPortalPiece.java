@@ -59,118 +59,118 @@ public class RuinedPortalPiece extends TemplateStructurePiece {
     private final RuinedPortalPiece.Properties properties;
 
     public RuinedPortalPiece(
-        StructureTemplateManager p_229105_,
-        BlockPos p_229106_,
-        RuinedPortalPiece.VerticalPlacement p_229107_,
-        RuinedPortalPiece.Properties p_229108_,
-        ResourceLocation p_229109_,
-        StructureTemplate p_229110_,
-        Rotation p_229111_,
-        Mirror p_229112_,
-        BlockPos p_229113_
+        StructureTemplateManager structureTemplateManager,
+        BlockPos templatePosition,
+        RuinedPortalPiece.VerticalPlacement verticalPlacement,
+        RuinedPortalPiece.Properties properties,
+        ResourceLocation location,
+        StructureTemplate template,
+        Rotation rotation,
+        Mirror mirror,
+        BlockPos pivotPos
     ) {
         super(
             StructurePieceType.RUINED_PORTAL,
             0,
-            p_229105_,
-            p_229109_,
-            p_229109_.toString(),
-            makeSettings(p_229112_, p_229111_, p_229107_, p_229113_, p_229108_),
-            p_229106_
+            structureTemplateManager,
+            location,
+            location.toString(),
+            makeSettings(mirror, rotation, verticalPlacement, pivotPos, properties),
+            templatePosition
         );
-        this.verticalPlacement = p_229107_;
-        this.properties = p_229108_;
+        this.verticalPlacement = verticalPlacement;
+        this.properties = properties;
     }
 
-    public RuinedPortalPiece(StructureTemplateManager p_229115_, CompoundTag p_229116_) {
-        super(StructurePieceType.RUINED_PORTAL, p_229116_, p_229115_, p_229188_ -> makeSettings(p_229115_, p_229116_, p_229188_));
-        this.verticalPlacement = RuinedPortalPiece.VerticalPlacement.byName(p_229116_.getString("VerticalPlacement"));
-        this.properties = RuinedPortalPiece.Properties.CODEC.parse(new Dynamic<>(NbtOps.INSTANCE, p_229116_.get("Properties"))).getPartialOrThrow();
+    public RuinedPortalPiece(StructureTemplateManager structureTemplateManager, CompoundTag tag) {
+        super(StructurePieceType.RUINED_PORTAL, tag, structureTemplateManager, p_229188_ -> makeSettings(structureTemplateManager, tag, p_229188_));
+        this.verticalPlacement = RuinedPortalPiece.VerticalPlacement.byName(tag.getString("VerticalPlacement"));
+        this.properties = RuinedPortalPiece.Properties.CODEC.parse(new Dynamic<>(NbtOps.INSTANCE, tag.get("Properties"))).getPartialOrThrow();
     }
 
     @Override
-    protected void addAdditionalSaveData(StructurePieceSerializationContext p_229158_, CompoundTag p_229159_) {
-        super.addAdditionalSaveData(p_229158_, p_229159_);
-        p_229159_.putString("Rotation", this.placeSettings.getRotation().name());
-        p_229159_.putString("Mirror", this.placeSettings.getMirror().name());
-        p_229159_.putString("VerticalPlacement", this.verticalPlacement.getName());
+    protected void addAdditionalSaveData(StructurePieceSerializationContext context, CompoundTag tag) {
+        super.addAdditionalSaveData(context, tag);
+        tag.putString("Rotation", this.placeSettings.getRotation().name());
+        tag.putString("Mirror", this.placeSettings.getMirror().name());
+        tag.putString("VerticalPlacement", this.verticalPlacement.getName());
         RuinedPortalPiece.Properties.CODEC
             .encodeStart(NbtOps.INSTANCE, this.properties)
             .resultOrPartial(LOGGER::error)
-            .ifPresent(p_229177_ -> p_229159_.put("Properties", p_229177_));
+            .ifPresent(p_229177_ -> tag.put("Properties", p_229177_));
     }
 
-    private static StructurePlaceSettings makeSettings(StructureTemplateManager p_229166_, CompoundTag p_229167_, ResourceLocation p_229168_) {
-        StructureTemplate structuretemplate = p_229166_.getOrCreate(p_229168_);
+    private static StructurePlaceSettings makeSettings(StructureTemplateManager structureTemplateManager, CompoundTag tag, ResourceLocation location) {
+        StructureTemplate structuretemplate = structureTemplateManager.getOrCreate(location);
         BlockPos blockpos = new BlockPos(structuretemplate.getSize().getX() / 2, 0, structuretemplate.getSize().getZ() / 2);
         return makeSettings(
-            Mirror.valueOf(p_229167_.getString("Mirror")),
-            Rotation.valueOf(p_229167_.getString("Rotation")),
-            RuinedPortalPiece.VerticalPlacement.byName(p_229167_.getString("VerticalPlacement")),
+            Mirror.valueOf(tag.getString("Mirror")),
+            Rotation.valueOf(tag.getString("Rotation")),
+            RuinedPortalPiece.VerticalPlacement.byName(tag.getString("VerticalPlacement")),
             blockpos,
-            RuinedPortalPiece.Properties.CODEC.parse(new Dynamic<>(NbtOps.INSTANCE, p_229167_.get("Properties"))).getPartialOrThrow()
+            RuinedPortalPiece.Properties.CODEC.parse(new Dynamic<>(NbtOps.INSTANCE, tag.get("Properties"))).getPartialOrThrow()
         );
     }
 
     private static StructurePlaceSettings makeSettings(
-        Mirror p_229152_, Rotation p_229153_, RuinedPortalPiece.VerticalPlacement p_229154_, BlockPos p_229155_, RuinedPortalPiece.Properties p_229156_
+        Mirror mirror, Rotation rotation, RuinedPortalPiece.VerticalPlacement verticalPlacement, BlockPos pos, RuinedPortalPiece.Properties properties
     ) {
-        BlockIgnoreProcessor blockignoreprocessor = p_229156_.airPocket ? BlockIgnoreProcessor.STRUCTURE_BLOCK : BlockIgnoreProcessor.STRUCTURE_AND_AIR;
+        BlockIgnoreProcessor blockignoreprocessor = properties.airPocket ? BlockIgnoreProcessor.STRUCTURE_BLOCK : BlockIgnoreProcessor.STRUCTURE_AND_AIR;
         List<ProcessorRule> list = Lists.newArrayList();
         list.add(getBlockReplaceRule(Blocks.GOLD_BLOCK, 0.3F, Blocks.AIR));
-        list.add(getLavaProcessorRule(p_229154_, p_229156_));
-        if (!p_229156_.cold) {
+        list.add(getLavaProcessorRule(verticalPlacement, properties));
+        if (!properties.cold) {
             list.add(getBlockReplaceRule(Blocks.NETHERRACK, 0.07F, Blocks.MAGMA_BLOCK));
         }
 
         StructurePlaceSettings structureplacesettings = new StructurePlaceSettings()
-            .setRotation(p_229153_)
-            .setMirror(p_229152_)
-            .setRotationPivot(p_229155_)
+            .setRotation(rotation)
+            .setMirror(mirror)
+            .setRotationPivot(pos)
             .addProcessor(blockignoreprocessor)
             .addProcessor(new RuleProcessor(list))
-            .addProcessor(new BlockAgeProcessor(p_229156_.mossiness))
+            .addProcessor(new BlockAgeProcessor(properties.mossiness))
             .addProcessor(new ProtectedBlockProcessor(BlockTags.FEATURES_CANNOT_REPLACE))
             .addProcessor(new LavaSubmergedBlockProcessor());
-        if (p_229156_.replaceWithBlackstone) {
+        if (properties.replaceWithBlackstone) {
             structureplacesettings.addProcessor(BlackstoneReplaceProcessor.INSTANCE);
         }
 
         return structureplacesettings;
     }
 
-    private static ProcessorRule getLavaProcessorRule(RuinedPortalPiece.VerticalPlacement p_229163_, RuinedPortalPiece.Properties p_229164_) {
-        if (p_229163_ == RuinedPortalPiece.VerticalPlacement.ON_OCEAN_FLOOR) {
+    private static ProcessorRule getLavaProcessorRule(RuinedPortalPiece.VerticalPlacement verticalPlacement, RuinedPortalPiece.Properties properties) {
+        if (verticalPlacement == RuinedPortalPiece.VerticalPlacement.ON_OCEAN_FLOOR) {
             return getBlockReplaceRule(Blocks.LAVA, Blocks.MAGMA_BLOCK);
         } else {
-            return p_229164_.cold ? getBlockReplaceRule(Blocks.LAVA, Blocks.NETHERRACK) : getBlockReplaceRule(Blocks.LAVA, 0.2F, Blocks.MAGMA_BLOCK);
+            return properties.cold ? getBlockReplaceRule(Blocks.LAVA, Blocks.NETHERRACK) : getBlockReplaceRule(Blocks.LAVA, 0.2F, Blocks.MAGMA_BLOCK);
         }
     }
 
     @Override
     public void postProcess(
-        WorldGenLevel p_229137_,
-        StructureManager p_229138_,
-        ChunkGenerator p_229139_,
-        RandomSource p_229140_,
-        BoundingBox p_229141_,
-        ChunkPos p_229142_,
-        BlockPos p_229143_
+        WorldGenLevel level,
+        StructureManager structureManager,
+        ChunkGenerator generator,
+        RandomSource random,
+        BoundingBox box,
+        ChunkPos chunkPos,
+        BlockPos pos
     ) {
         BoundingBox boundingbox = this.template.getBoundingBox(this.placeSettings, this.templatePosition);
-        if (p_229141_.isInside(boundingbox.getCenter())) {
-            p_229141_.encapsulate(boundingbox);
-            super.postProcess(p_229137_, p_229138_, p_229139_, p_229140_, p_229141_, p_229142_, p_229143_);
-            this.spreadNetherrack(p_229140_, p_229137_);
-            this.addNetherrackDripColumnsBelowPortal(p_229140_, p_229137_);
+        if (box.isInside(boundingbox.getCenter())) {
+            box.encapsulate(boundingbox);
+            super.postProcess(level, structureManager, generator, random, box, chunkPos, pos);
+            this.spreadNetherrack(random, level);
+            this.addNetherrackDripColumnsBelowPortal(random, level);
             if (this.properties.vines || this.properties.overgrown) {
                 BlockPos.betweenClosedStream(this.getBoundingBox()).forEach(p_229127_ -> {
                     if (this.properties.vines) {
-                        this.maybeAddVines(p_229140_, p_229137_, p_229127_);
+                        this.maybeAddVines(random, level, p_229127_);
                     }
 
                     if (this.properties.overgrown) {
-                        this.maybeAddLeavesAbove(p_229140_, p_229137_, p_229127_);
+                        this.maybeAddLeavesAbove(random, level, p_229127_);
                     }
                 });
             }
@@ -178,54 +178,54 @@ public class RuinedPortalPiece extends TemplateStructurePiece {
     }
 
     @Override
-    protected void handleDataMarker(String p_229170_, BlockPos p_229171_, ServerLevelAccessor p_229172_, RandomSource p_229173_, BoundingBox p_229174_) {
+    protected void handleDataMarker(String name, BlockPos pos, ServerLevelAccessor level, RandomSource random, BoundingBox box) {
     }
 
-    private void maybeAddVines(RandomSource p_229121_, LevelAccessor p_229122_, BlockPos p_229123_) {
-        BlockState blockstate = p_229122_.getBlockState(p_229123_);
+    private void maybeAddVines(RandomSource random, LevelAccessor level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
         if (!blockstate.isAir() && !blockstate.is(Blocks.VINE)) {
-            Direction direction = getRandomHorizontalDirection(p_229121_);
-            BlockPos blockpos = p_229123_.relative(direction);
-            BlockState blockstate1 = p_229122_.getBlockState(blockpos);
+            Direction direction = getRandomHorizontalDirection(random);
+            BlockPos blockpos = pos.relative(direction);
+            BlockState blockstate1 = level.getBlockState(blockpos);
             if (blockstate1.isAir()) {
-                if (Block.isFaceFull(blockstate.getCollisionShape(p_229122_, p_229123_), direction)) {
+                if (Block.isFaceFull(blockstate.getCollisionShape(level, pos), direction)) {
                     BooleanProperty booleanproperty = VineBlock.getPropertyForFace(direction.getOpposite());
-                    p_229122_.setBlock(blockpos, Blocks.VINE.defaultBlockState().setValue(booleanproperty, Boolean.valueOf(true)), 3);
+                    level.setBlock(blockpos, Blocks.VINE.defaultBlockState().setValue(booleanproperty, Boolean.valueOf(true)), 3);
                 }
             }
         }
     }
 
-    private void maybeAddLeavesAbove(RandomSource p_229182_, LevelAccessor p_229183_, BlockPos p_229184_) {
-        if (p_229182_.nextFloat() < 0.5F && p_229183_.getBlockState(p_229184_).is(Blocks.NETHERRACK) && p_229183_.getBlockState(p_229184_.above()).isAir()) {
-            p_229183_.setBlock(p_229184_.above(), Blocks.JUNGLE_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, Boolean.valueOf(true)), 3);
+    private void maybeAddLeavesAbove(RandomSource random, LevelAccessor level, BlockPos pos) {
+        if (random.nextFloat() < 0.5F && level.getBlockState(pos).is(Blocks.NETHERRACK) && level.getBlockState(pos.above()).isAir()) {
+            level.setBlock(pos.above(), Blocks.JUNGLE_LEAVES.defaultBlockState().setValue(LeavesBlock.PERSISTENT, Boolean.valueOf(true)), 3);
         }
     }
 
-    private void addNetherrackDripColumnsBelowPortal(RandomSource p_229118_, LevelAccessor p_229119_) {
+    private void addNetherrackDripColumnsBelowPortal(RandomSource random, LevelAccessor level) {
         for (int i = this.boundingBox.minX() + 1; i < this.boundingBox.maxX(); i++) {
             for (int j = this.boundingBox.minZ() + 1; j < this.boundingBox.maxZ(); j++) {
                 BlockPos blockpos = new BlockPos(i, this.boundingBox.minY(), j);
-                if (p_229119_.getBlockState(blockpos).is(Blocks.NETHERRACK)) {
-                    this.addNetherrackDripColumn(p_229118_, p_229119_, blockpos.below());
+                if (level.getBlockState(blockpos).is(Blocks.NETHERRACK)) {
+                    this.addNetherrackDripColumn(random, level, blockpos.below());
                 }
             }
         }
     }
 
-    private void addNetherrackDripColumn(RandomSource p_229190_, LevelAccessor p_229191_, BlockPos p_229192_) {
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = p_229192_.mutable();
-        this.placeNetherrackOrMagma(p_229190_, p_229191_, blockpos$mutableblockpos);
+    private void addNetherrackDripColumn(RandomSource random, LevelAccessor level, BlockPos pos) {
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = pos.mutable();
+        this.placeNetherrackOrMagma(random, level, blockpos$mutableblockpos);
         int i = 8;
 
-        while (i > 0 && p_229190_.nextFloat() < 0.5F) {
+        while (i > 0 && random.nextFloat() < 0.5F) {
             blockpos$mutableblockpos.move(Direction.DOWN);
             i--;
-            this.placeNetherrackOrMagma(p_229190_, p_229191_, blockpos$mutableblockpos);
+            this.placeNetherrackOrMagma(random, level, blockpos$mutableblockpos);
         }
     }
 
-    private void spreadNetherrack(RandomSource p_229179_, LevelAccessor p_229180_) {
+    private void spreadNetherrack(RandomSource random, LevelAccessor level) {
         boolean flag = this.verticalPlacement == RuinedPortalPiece.VerticalPlacement.ON_LAND_SURFACE
             || this.verticalPlacement == RuinedPortalPiece.VerticalPlacement.ON_OCEAN_FLOOR;
         BlockPos blockpos = this.boundingBox.getCenter();
@@ -234,7 +234,7 @@ public class RuinedPortalPiece extends TemplateStructurePiece {
         float[] afloat = new float[]{1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 1.0F, 0.9F, 0.9F, 0.8F, 0.7F, 0.6F, 0.4F, 0.2F};
         int k = afloat.length;
         int l = (this.boundingBox.getXSpan() + this.boundingBox.getZSpan()) / 2;
-        int i1 = p_229179_.nextInt(Math.max(1, 8 - l / 2));
+        int i1 = random.nextInt(Math.max(1, 8 - l / 2));
         int j1 = 3;
         BlockPos.MutableBlockPos blockpos$mutableblockpos = BlockPos.ZERO.mutable();
 
@@ -244,17 +244,17 @@ public class RuinedPortalPiece extends TemplateStructurePiece {
                 int j2 = Math.max(0, i2 + i1);
                 if (j2 < k) {
                     float f = afloat[j2];
-                    if (p_229179_.nextDouble() < (double)f) {
-                        int k2 = getSurfaceY(p_229180_, k1, l1, this.verticalPlacement);
+                    if (random.nextDouble() < (double)f) {
+                        int k2 = getSurfaceY(level, k1, l1, this.verticalPlacement);
                         int l2 = flag ? k2 : Math.min(this.boundingBox.minY(), k2);
                         blockpos$mutableblockpos.set(k1, l2, l1);
-                        if (Math.abs(l2 - this.boundingBox.minY()) <= 3 && this.canBlockBeReplacedByNetherrackOrMagma(p_229180_, blockpos$mutableblockpos)) {
-                            this.placeNetherrackOrMagma(p_229179_, p_229180_, blockpos$mutableblockpos);
+                        if (Math.abs(l2 - this.boundingBox.minY()) <= 3 && this.canBlockBeReplacedByNetherrackOrMagma(level, blockpos$mutableblockpos)) {
+                            this.placeNetherrackOrMagma(random, level, blockpos$mutableblockpos);
                             if (this.properties.overgrown) {
-                                this.maybeAddLeavesAbove(p_229179_, p_229180_, blockpos$mutableblockpos);
+                                this.maybeAddLeavesAbove(random, level, blockpos$mutableblockpos);
                             }
 
-                            this.addNetherrackDripColumn(p_229179_, p_229180_, blockpos$mutableblockpos.below());
+                            this.addNetherrackDripColumn(random, level, blockpos$mutableblockpos.below());
                         }
                     }
                 }
@@ -262,36 +262,36 @@ public class RuinedPortalPiece extends TemplateStructurePiece {
         }
     }
 
-    private boolean canBlockBeReplacedByNetherrackOrMagma(LevelAccessor p_229134_, BlockPos p_229135_) {
-        BlockState blockstate = p_229134_.getBlockState(p_229135_);
+    private boolean canBlockBeReplacedByNetherrackOrMagma(LevelAccessor level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
         return !blockstate.is(Blocks.AIR)
             && !blockstate.is(Blocks.OBSIDIAN)
             && !blockstate.is(BlockTags.FEATURES_CANNOT_REPLACE)
             && (this.verticalPlacement == RuinedPortalPiece.VerticalPlacement.IN_NETHER || !blockstate.is(Blocks.LAVA));
     }
 
-    private void placeNetherrackOrMagma(RandomSource p_229194_, LevelAccessor p_229195_, BlockPos p_229196_) {
-        if (!this.properties.cold && p_229194_.nextFloat() < 0.07F) {
-            p_229195_.setBlock(p_229196_, Blocks.MAGMA_BLOCK.defaultBlockState(), 3);
+    private void placeNetherrackOrMagma(RandomSource random, LevelAccessor level, BlockPos pos) {
+        if (!this.properties.cold && random.nextFloat() < 0.07F) {
+            level.setBlock(pos, Blocks.MAGMA_BLOCK.defaultBlockState(), 3);
         } else {
-            p_229195_.setBlock(p_229196_, Blocks.NETHERRACK.defaultBlockState(), 3);
+            level.setBlock(pos, Blocks.NETHERRACK.defaultBlockState(), 3);
         }
     }
 
-    private static int getSurfaceY(LevelAccessor p_229129_, int p_229130_, int p_229131_, RuinedPortalPiece.VerticalPlacement p_229132_) {
-        return p_229129_.getHeight(getHeightMapType(p_229132_), p_229130_, p_229131_) - 1;
+    private static int getSurfaceY(LevelAccessor level, int x, int z, RuinedPortalPiece.VerticalPlacement verticalPlacement) {
+        return level.getHeight(getHeightMapType(verticalPlacement), x, z) - 1;
     }
 
-    public static Heightmap.Types getHeightMapType(RuinedPortalPiece.VerticalPlacement p_229161_) {
-        return p_229161_ == RuinedPortalPiece.VerticalPlacement.ON_OCEAN_FLOOR ? Heightmap.Types.OCEAN_FLOOR_WG : Heightmap.Types.WORLD_SURFACE_WG;
+    public static Heightmap.Types getHeightMapType(RuinedPortalPiece.VerticalPlacement verticalPlacement) {
+        return verticalPlacement == RuinedPortalPiece.VerticalPlacement.ON_OCEAN_FLOOR ? Heightmap.Types.OCEAN_FLOOR_WG : Heightmap.Types.WORLD_SURFACE_WG;
     }
 
-    private static ProcessorRule getBlockReplaceRule(Block p_229145_, float p_229146_, Block p_229147_) {
-        return new ProcessorRule(new RandomBlockMatchTest(p_229145_, p_229146_), AlwaysTrueTest.INSTANCE, p_229147_.defaultBlockState());
+    private static ProcessorRule getBlockReplaceRule(Block block, float probability, Block replaceBlock) {
+        return new ProcessorRule(new RandomBlockMatchTest(block, probability), AlwaysTrueTest.INSTANCE, replaceBlock.defaultBlockState());
     }
 
-    private static ProcessorRule getBlockReplaceRule(Block p_229149_, Block p_229150_) {
-        return new ProcessorRule(new BlockMatchTest(p_229149_), AlwaysTrueTest.INSTANCE, p_229150_.defaultBlockState());
+    private static ProcessorRule getBlockReplaceRule(Block block, Block replaceBlock) {
+        return new ProcessorRule(new BlockMatchTest(block), AlwaysTrueTest.INSTANCE, replaceBlock.defaultBlockState());
     }
 
     public static class Properties {
@@ -316,13 +316,13 @@ public class RuinedPortalPiece extends TemplateStructurePiece {
         public Properties() {
         }
 
-        public Properties(boolean p_229207_, float p_229208_, boolean p_229209_, boolean p_229210_, boolean p_229211_, boolean p_229212_) {
-            this.cold = p_229207_;
-            this.mossiness = p_229208_;
-            this.airPocket = p_229209_;
-            this.overgrown = p_229210_;
-            this.vines = p_229211_;
-            this.replaceWithBlackstone = p_229212_;
+        public Properties(boolean cold, float mossiness, boolean airPocket, boolean overgrown, boolean vines, boolean replaceWithBlackstone) {
+            this.cold = cold;
+            this.mossiness = mossiness;
+            this.airPocket = airPocket;
+            this.overgrown = overgrown;
+            this.vines = vines;
+            this.replaceWithBlackstone = replaceWithBlackstone;
         }
     }
 
@@ -339,16 +339,16 @@ public class RuinedPortalPiece extends TemplateStructurePiece {
         );
         private final String name;
 
-        private VerticalPlacement(String p_229240_) {
-            this.name = p_229240_;
+        private VerticalPlacement(String name) {
+            this.name = name;
         }
 
         public String getName() {
             return this.name;
         }
 
-        public static RuinedPortalPiece.VerticalPlacement byName(String p_229243_) {
-            return CODEC.byName(p_229243_);
+        public static RuinedPortalPiece.VerticalPlacement byName(String name) {
+            return CODEC.byName(name);
         }
 
         @Override

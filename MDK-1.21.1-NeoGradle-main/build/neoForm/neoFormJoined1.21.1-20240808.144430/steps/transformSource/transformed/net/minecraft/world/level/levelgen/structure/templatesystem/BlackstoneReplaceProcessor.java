@@ -47,18 +47,18 @@ public class BlackstoneReplaceProcessor extends StructureProcessor {
 
     @Override
     public StructureTemplate.StructureBlockInfo processBlock(
-        LevelReader p_74000_,
-        BlockPos p_74001_,
-        BlockPos p_74002_,
-        StructureTemplate.StructureBlockInfo p_74003_,
-        StructureTemplate.StructureBlockInfo p_74004_,
-        StructurePlaceSettings p_74005_
+        LevelReader level,
+        BlockPos offset,
+        BlockPos pos,
+        StructureTemplate.StructureBlockInfo blockInfo,
+        StructureTemplate.StructureBlockInfo relativeBlockInfo,
+        StructurePlaceSettings settings
     ) {
-        Block block = this.replacements.get(p_74004_.state().getBlock());
+        Block block = this.replacements.get(relativeBlockInfo.state().getBlock());
         if (block == null) {
-            return p_74004_;
+            return relativeBlockInfo;
         } else {
-            BlockState blockstate = p_74004_.state();
+            BlockState blockstate = relativeBlockInfo.state();
             BlockState blockstate1 = block.defaultBlockState();
             if (blockstate.hasProperty(StairBlock.FACING)) {
                 blockstate1 = blockstate1.setValue(StairBlock.FACING, blockstate.getValue(StairBlock.FACING));
@@ -72,7 +72,7 @@ public class BlackstoneReplaceProcessor extends StructureProcessor {
                 blockstate1 = blockstate1.setValue(SlabBlock.TYPE, blockstate.getValue(SlabBlock.TYPE));
             }
 
-            return new StructureTemplate.StructureBlockInfo(p_74004_.pos(), blockstate1, p_74004_.nbt());
+            return new StructureTemplate.StructureBlockInfo(relativeBlockInfo.pos(), blockstate1, relativeBlockInfo.nbt());
         }
     }
 

@@ -94,15 +94,15 @@ public class Stats {
     public static final ResourceLocation TARGET_HIT = makeCustomStat("target_hit", StatFormatter.DEFAULT);
     public static final ResourceLocation INTERACT_WITH_SMITHING_TABLE = makeCustomStat("interact_with_smithing_table", StatFormatter.DEFAULT);
 
-    private static ResourceLocation makeCustomStat(String p_13008_, StatFormatter p_13009_) {
-        ResourceLocation resourcelocation = ResourceLocation.withDefaultNamespace(p_13008_);
-        Registry.register(BuiltInRegistries.CUSTOM_STAT, p_13008_, resourcelocation);
-        CUSTOM.get(resourcelocation, p_13009_);
+    private static ResourceLocation makeCustomStat(String key, StatFormatter formatter) {
+        ResourceLocation resourcelocation = ResourceLocation.withDefaultNamespace(key);
+        Registry.register(BuiltInRegistries.CUSTOM_STAT, key, resourcelocation);
+        CUSTOM.get(resourcelocation, formatter);
         return resourcelocation;
     }
 
-    private static <T> StatType<T> makeRegistryStatType(String p_13011_, Registry<T> p_13012_) {
-        Component component = Component.translatable("stat_type.minecraft." + p_13011_);
-        return Registry.register(BuiltInRegistries.STAT_TYPE, p_13011_, new StatType<>(p_13012_, component));
+    private static <T> StatType<T> makeRegistryStatType(String key, Registry<T> registry) {
+        Component component = Component.translatable("stat_type.minecraft." + key);
+        return Registry.register(BuiltInRegistries.STAT_TYPE, key, new StatType<>(registry, component));
     }
 }

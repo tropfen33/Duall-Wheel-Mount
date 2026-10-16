@@ -4,9 +4,9 @@ public class Keyframe {
     private final int timeStamp;
     private final float value;
 
-    public Keyframe(int p_38008_, float p_38009_) {
-        this.timeStamp = p_38008_;
-        this.value = p_38009_;
+    public Keyframe(int timestamp, float value) {
+        this.timeStamp = timestamp;
+        this.value = value;
     }
 
     public int getTimeStamp() {

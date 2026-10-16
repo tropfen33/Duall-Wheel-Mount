@@ -32,47 +32,47 @@ public class PoiSection {
     private final Runnable setDirty;
     private boolean isValid;
 
-    public static Codec<PoiSection> codec(Runnable p_27296_) {
+    public static Codec<PoiSection> codec(Runnable executable) {
         return RecordCodecBuilder.<PoiSection>create(
                 p_337825_ -> p_337825_.group(
-                            RecordCodecBuilder.point(p_27296_),
+                            RecordCodecBuilder.point(executable),
                             Codec.BOOL.lenientOptionalFieldOf("Valid", Boolean.valueOf(false)).forGetter(p_148681_ -> p_148681_.isValid),
-                            PoiRecord.codec(p_27296_).listOf().fieldOf("Records").forGetter(p_148675_ -> ImmutableList.copyOf(p_148675_.records.values()))
+                            PoiRecord.codec(executable).listOf().fieldOf("Records").forGetter(p_148675_ -> ImmutableList.copyOf(p_148675_.records.values()))
                         )
                         .apply(p_337825_, PoiSection::new)
             )
-            .orElseGet(Util.prefix("Failed to read POI section: ", LOGGER::error), () -> new PoiSection(p_27296_, false, ImmutableList.of()));
+            .orElseGet(Util.prefix("Failed to read POI section: ", LOGGER::error), () -> new PoiSection(executable, false, ImmutableList.of()));
     }
 
-    public PoiSection(Runnable p_27267_) {
-        this(p_27267_, true, ImmutableList.of());
+    public PoiSection(Runnable setDirty) {
+        this(setDirty, true, ImmutableList.of());
     }
 
-    private PoiSection(Runnable p_27269_, boolean p_27270_, List<PoiRecord> p_27271_) {
-        this.setDirty = p_27269_;
-        this.isValid = p_27270_;
-        p_27271_.forEach(this::add);
+    private PoiSection(Runnable setDirty, boolean isValid, List<PoiRecord> records) {
+        this.setDirty = setDirty;
+        this.isValid = isValid;
+        records.forEach(this::add);
     }
 
-    public Stream<PoiRecord> getRecords(Predicate<Holder<PoiType>> p_27305_, PoiManager.Occupancy p_27306_) {
+    public Stream<PoiRecord> getRecords(Predicate<Holder<PoiType>> typePredicate, PoiManager.Occupancy status) {
         return this.byType
             .entrySet()
             .stream()
-            .filter(p_27309_ -> p_27305_.test(p_27309_.getKey()))
+            .filter(p_27309_ -> typePredicate.test(p_27309_.getKey()))
             .flatMap(p_27301_ -> p_27301_.getValue().stream())
-            .filter(p_27306_.getTest());
+            .filter(status.getTest());
     }
 
-    public void add(BlockPos p_218022_, Holder<PoiType> p_218023_) {
-        if (this.add(new PoiRecord(p_218022_, p_218023_, this.setDirty))) {
-            LOGGER.debug("Added POI of type {} @ {}", p_218023_.getRegisteredName(), p_218022_);
+    public void add(BlockPos pos, Holder<PoiType> type) {
+        if (this.add(new PoiRecord(pos, type, this.setDirty))) {
+            LOGGER.debug("Added POI of type {} @ {}", type.getRegisteredName(), pos);
             this.setDirty.run();
         }
     }
 
-    private boolean add(PoiRecord p_27274_) {
-        BlockPos blockpos = p_27274_.getPos();
-        Holder<PoiType> holder = p_27274_.getPoiType();
+    private boolean add(PoiRecord record) {
+        BlockPos blockpos = record.getPos();
+        Holder<PoiType> holder = record.getPoiType();
         short short1 = SectionPos.sectionRelativePos(blockpos);
         PoiRecord poirecord = this.records.get(short1);
         if (poirecord != null) {
@@ -83,15 +83,15 @@ public class PoiSection {
             Util.logAndPauseIfInIde("POI data mismatch: already registered at " + blockpos);
         }
 
-        this.records.put(short1, p_27274_);
-        this.byType.computeIfAbsent(holder, p_218029_ -> Sets.newHashSet()).add(p_27274_);
+        this.records.put(short1, record);
+        this.byType.computeIfAbsent(holder, p_218029_ -> Sets.newHashSet()).add(record);
         return true;
     }
 
-    public void remove(BlockPos p_27280_) {
-        PoiRecord poirecord = this.records.remove(SectionPos.sectionRelativePos(p_27280_));
+    public void remove(BlockPos pos) {
+        PoiRecord poirecord = this.records.remove(SectionPos.sectionRelativePos(pos));
         if (poirecord == null) {
-            LOGGER.error("POI data mismatch: never registered at {}", p_27280_);
+            LOGGER.error("POI data mismatch: never registered at {}", pos);
         } else {
             this.byType.get(poirecord.getPoiType()).remove(poirecord);
             LOGGER.debug("Removed POI of type {} @ {}", LogUtils.defer(poirecord::getPoiType), LogUtils.defer(poirecord::getPos));
@@ -101,14 +101,14 @@ public class PoiSection {
 
     @Deprecated
     @VisibleForDebug
-    public int getFreeTickets(BlockPos p_148683_) {
-        return this.getPoiRecord(p_148683_).map(PoiRecord::getFreeTickets).orElse(0);
+    public int getFreeTickets(BlockPos pos) {
+        return this.getPoiRecord(pos).map(PoiRecord::getFreeTickets).orElse(0);
     }
 
-    public boolean release(BlockPos p_27318_) {
-        PoiRecord poirecord = this.records.get(SectionPos.sectionRelativePos(p_27318_));
+    public boolean release(BlockPos pos) {
+        PoiRecord poirecord = this.records.get(SectionPos.sectionRelativePos(pos));
         if (poirecord == null) {
-            throw (IllegalStateException)Util.pauseInIde(new IllegalStateException("POI never registered at " + p_27318_));
+            throw (IllegalStateException)Util.pauseInIde(new IllegalStateException("POI never registered at " + pos));
         } else {
             boolean flag = poirecord.releaseTicket();
             this.setDirty.run();
@@ -116,23 +116,23 @@ public class PoiSection {
         }
     }
 
-    public boolean exists(BlockPos p_27289_, Predicate<Holder<PoiType>> p_27290_) {
-        return this.getType(p_27289_).filter(p_27290_).isPresent();
+    public boolean exists(BlockPos pos, Predicate<Holder<PoiType>> typePredicate) {
+        return this.getType(pos).filter(typePredicate).isPresent();
     }
 
-    public Optional<Holder<PoiType>> getType(BlockPos p_27320_) {
-        return this.getPoiRecord(p_27320_).map(PoiRecord::getPoiType);
+    public Optional<Holder<PoiType>> getType(BlockPos pos) {
+        return this.getPoiRecord(pos).map(PoiRecord::getPoiType);
     }
 
-    private Optional<PoiRecord> getPoiRecord(BlockPos p_148685_) {
-        return Optional.ofNullable(this.records.get(SectionPos.sectionRelativePos(p_148685_)));
+    private Optional<PoiRecord> getPoiRecord(BlockPos pos) {
+        return Optional.ofNullable(this.records.get(SectionPos.sectionRelativePos(pos)));
     }
 
-    public void refresh(Consumer<BiConsumer<BlockPos, Holder<PoiType>>> p_27303_) {
+    public void refresh(Consumer<BiConsumer<BlockPos, Holder<PoiType>>> posToTypeConsumer) {
         if (!this.isValid) {
             Short2ObjectMap<PoiRecord> short2objectmap = new Short2ObjectOpenHashMap<>(this.records);
             this.clear();
-            p_27303_.accept((p_218032_, p_218033_) -> {
+            posToTypeConsumer.accept((p_218032_, p_218033_) -> {
                 short short1 = SectionPos.sectionRelativePos(p_218032_);
                 PoiRecord poirecord = short2objectmap.computeIfAbsent(short1, p_218027_ -> new PoiRecord(p_218032_, p_218033_, this.setDirty));
                 this.add(poirecord);

@@ -24,10 +24,10 @@ public class FilteredFunction extends LootItemConditionalFunction {
     private final ItemPredicate filter;
     private final LootItemFunction modifier;
 
-    public FilteredFunction(List<LootItemCondition> p_341370_, ItemPredicate p_341210_, LootItemFunction p_340816_) {
-        super(p_341370_);
-        this.filter = p_341210_;
-        this.modifier = p_340816_;
+    public FilteredFunction(List<LootItemCondition> conditions, ItemPredicate filter, LootItemFunction modifier) {
+        super(conditions);
+        this.filter = filter;
+        this.modifier = modifier;
     }
 
     @Override
@@ -35,14 +35,20 @@ public class FilteredFunction extends LootItemConditionalFunction {
         return LootItemFunctions.FILTERED;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_340845_, LootContext p_341349_) {
-        return this.filter.test(p_340845_) ? this.modifier.apply(p_340845_, p_341349_) : p_340845_;
+    public ItemStack run(ItemStack stack, LootContext context) {
+        return this.filter.test(stack) ? this.modifier.apply(stack, context) : stack;
     }
 
+    /**
+     * Validate that this object is used correctly according to the given ValidationContext.
+     */
     @Override
-    public void validate(ValidationContext p_341254_) {
-        super.validate(p_341254_);
-        this.modifier.validate(p_341254_.forChild(".modifier"));
+    public void validate(ValidationContext context) {
+        super.validate(context);
+        this.modifier.validate(context.forChild(".modifier"));
     }
 }

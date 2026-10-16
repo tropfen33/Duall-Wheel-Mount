@@ -14,14 +14,14 @@ import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 public class RegistryPatchGenerator {
     public static CompletableFuture<RegistrySetBuilder.PatchedRegistries> createLookup(
-        CompletableFuture<HolderLookup.Provider> p_309204_, RegistrySetBuilder p_309174_
+        CompletableFuture<HolderLookup.Provider> lookup, RegistrySetBuilder registrySetBuilder
     ) {
-        return p_309204_.thenApply(
+        return lookup.thenApply(
             p_311522_ -> {
                 RegistryAccess.Frozen registryaccess$frozen = RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
                 Cloner.Factory cloner$factory = new Cloner.Factory();
                 net.neoforged.neoforge.registries.DataPackRegistriesHooks.getDataPackRegistriesWithDimensions().forEach(p_311524_ -> p_311524_.runWithArguments(cloner$factory::addCodec));
-                RegistrySetBuilder.PatchedRegistries registrysetbuilder$patchedregistries = p_309174_.buildPatch(
+                RegistrySetBuilder.PatchedRegistries registrysetbuilder$patchedregistries = registrySetBuilder.buildPatch(
                     registryaccess$frozen, p_311522_, cloner$factory
                 );
                 HolderLookup.Provider holderlookup$provider = registrysetbuilder$patchedregistries.full();

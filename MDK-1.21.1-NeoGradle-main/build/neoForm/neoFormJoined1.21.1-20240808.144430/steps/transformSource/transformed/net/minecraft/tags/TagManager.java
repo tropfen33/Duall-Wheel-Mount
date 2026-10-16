@@ -20,8 +20,8 @@ public class TagManager implements PreparableReloadListener {
     private final RegistryAccess registryAccess;
     private List<TagManager.LoadResult<?>> results = List.of();
 
-    public TagManager(RegistryAccess p_144572_) {
-        this.registryAccess = p_144572_;
+    public TagManager(RegistryAccess registryAccess) {
+        this.registryAccess = registryAccess;
     }
 
     public List<TagManager.LoadResult<?>> getResult() {
@@ -30,29 +30,29 @@ public class TagManager implements PreparableReloadListener {
 
     @Override
     public CompletableFuture<Void> reload(
-        PreparableReloadListener.PreparationBarrier p_13482_,
-        ResourceManager p_13483_,
-        ProfilerFiller p_13484_,
-        ProfilerFiller p_13485_,
-        Executor p_13486_,
-        Executor p_13487_
+        PreparableReloadListener.PreparationBarrier stage,
+        ResourceManager resourceManager,
+        ProfilerFiller preparationsProfiler,
+        ProfilerFiller reloadProfiler,
+        Executor backgroundExecutor,
+        Executor gameExecutor
     ) {
         List<? extends CompletableFuture<? extends TagManager.LoadResult<?>>> list = this.registryAccess
             .registries()
-            .map(p_203927_ -> this.createLoader(p_13483_, p_13486_, (RegistryAccess.RegistryEntry<?>)p_203927_))
+            .map(p_203927_ -> this.createLoader(resourceManager, backgroundExecutor, (RegistryAccess.RegistryEntry<?>)p_203927_))
             .toList();
         return CompletableFuture.allOf(list.toArray(CompletableFuture[]::new))
-            .thenCompose(p_13482_::wait)
-            .thenAcceptAsync(p_203917_ -> this.results = list.stream().map(CompletableFuture::join).collect(Collectors.toUnmodifiableList()), p_13487_);
+            .thenCompose(stage::wait)
+            .thenAcceptAsync(p_203917_ -> this.results = list.stream().map(CompletableFuture::join).collect(Collectors.toUnmodifiableList()), gameExecutor);
     }
 
     private <T> CompletableFuture<TagManager.LoadResult<T>> createLoader(
-        ResourceManager p_203908_, Executor p_203909_, RegistryAccess.RegistryEntry<T> p_203910_
+        ResourceManager resourceManager, Executor backgroundExecutor, RegistryAccess.RegistryEntry<T> entry
     ) {
-        ResourceKey<? extends Registry<T>> resourcekey = p_203910_.key();
-        Registry<T> registry = p_203910_.value();
+        ResourceKey<? extends Registry<T>> resourcekey = entry.key();
+        Registry<T> registry = entry.value();
         TagLoader<Holder<T>> tagloader = new TagLoader<>(registry::getHolder, Registries.tagsDirPath(resourcekey));
-        return CompletableFuture.supplyAsync(() -> new TagManager.LoadResult<>(resourcekey, tagloader.loadAndBuild(p_203908_)), p_203909_);
+        return CompletableFuture.supplyAsync(() -> new TagManager.LoadResult<>(resourcekey, tagloader.loadAndBuild(resourceManager)), backgroundExecutor);
     }
 
     public static record LoadResult<T>(ResourceKey<? extends Registry<T>> key, Map<ResourceLocation, Collection<Holder<T>>> tags) {

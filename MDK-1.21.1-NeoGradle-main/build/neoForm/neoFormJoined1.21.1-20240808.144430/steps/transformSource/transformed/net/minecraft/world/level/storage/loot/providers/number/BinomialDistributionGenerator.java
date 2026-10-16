@@ -9,6 +9,9 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 
+/**
+ * A number provider which generates a random number based on a binomial distribution.
+ */
 public record BinomialDistributionGenerator(NumberProvider n, NumberProvider p) implements NumberProvider {
     public static final MapCodec<BinomialDistributionGenerator> CODEC = RecordCodecBuilder.mapCodec(
         p_299136_ -> p_299136_.group(
@@ -24,10 +27,10 @@ public record BinomialDistributionGenerator(NumberProvider n, NumberProvider p) 
     }
 
     @Override
-    public int getInt(LootContext p_165663_) {
-        int i = this.n.getInt(p_165663_);
-        float f = this.p.getFloat(p_165663_);
-        RandomSource randomsource = p_165663_.getRandom();
+    public int getInt(LootContext lootContext) {
+        int i = this.n.getInt(lootContext);
+        float f = this.p.getFloat(lootContext);
+        RandomSource randomsource = lootContext.getRandom();
         int j = 0;
 
         for (int k = 0; k < i; k++) {
@@ -40,12 +43,12 @@ public record BinomialDistributionGenerator(NumberProvider n, NumberProvider p) 
     }
 
     @Override
-    public float getFloat(LootContext p_165666_) {
-        return (float)this.getInt(p_165666_);
+    public float getFloat(LootContext lootContext) {
+        return (float)this.getInt(lootContext);
     }
 
-    public static BinomialDistributionGenerator binomial(int p_165660_, float p_165661_) {
-        return new BinomialDistributionGenerator(ConstantValue.exactly((float)p_165660_), ConstantValue.exactly(p_165661_));
+    public static BinomialDistributionGenerator binomial(int n, float p) {
+        return new BinomialDistributionGenerator(ConstantValue.exactly((float)n), ConstantValue.exactly(p));
     }
 
     @Override

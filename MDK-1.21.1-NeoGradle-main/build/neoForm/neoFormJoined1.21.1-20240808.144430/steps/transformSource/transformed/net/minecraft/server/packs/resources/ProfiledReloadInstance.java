@@ -18,13 +18,13 @@ public class ProfiledReloadInstance extends SimpleReloadInstance<ProfiledReloadI
     private final Stopwatch total = Stopwatch.createUnstarted();
 
     public ProfiledReloadInstance(
-        ResourceManager p_10649_, List<PreparableReloadListener> p_10650_, Executor p_10651_, Executor p_10652_, CompletableFuture<Unit> p_10653_
+        ResourceManager resourceManager, List<PreparableReloadListener> listeners, Executor backgroundExecutor, Executor gameExecutor, CompletableFuture<Unit> alsoWaitedFor
     ) {
         super(
-            p_10651_,
-            p_10652_,
-            p_10649_,
-            p_10650_,
+            backgroundExecutor,
+            gameExecutor,
+            resourceManager,
+            listeners,
             (p_10668_, p_10669_, p_10670_, p_10671_, p_10672_) -> {
                 AtomicLong atomiclong = new AtomicLong();
                 AtomicLong atomiclong1 = new AtomicLong();
@@ -48,21 +48,21 @@ public class ProfiledReloadInstance extends SimpleReloadInstance<ProfiledReloadI
                             p_10670_.getName(), activeprofiler.getResults(), activeprofiler1.getResults(), atomiclong, atomiclong1
                         );
                     },
-                    p_10652_
+                    gameExecutor
                 );
             },
-            p_10653_
+            alsoWaitedFor
         );
         this.total.start();
-        this.allDone = this.allDone.thenApplyAsync(this::finish, p_10652_);
+        this.allDone = this.allDone.thenApplyAsync(this::finish, gameExecutor);
     }
 
-    private List<ProfiledReloadInstance.State> finish(List<ProfiledReloadInstance.State> p_215484_) {
+    private List<ProfiledReloadInstance.State> finish(List<ProfiledReloadInstance.State> datapoints) {
         this.total.stop();
         long i = 0L;
         LOGGER.info("Resource reload finished after {} ms", this.total.elapsed(TimeUnit.MILLISECONDS));
 
-        for (ProfiledReloadInstance.State profiledreloadinstance$state : p_215484_) {
+        for (ProfiledReloadInstance.State profiledreloadinstance$state : datapoints) {
             ProfileResults profileresults = profiledreloadinstance$state.preparationResult;
             ProfileResults profileresults1 = profiledreloadinstance$state.reloadResult;
             long j = TimeUnit.NANOSECONDS.toMillis(profiledreloadinstance$state.preparationNanos.get());
@@ -74,7 +74,7 @@ public class ProfiledReloadInstance extends SimpleReloadInstance<ProfiledReloadI
         }
 
         LOGGER.info("Total blocking time: {} ms", i);
-        return p_215484_;
+        return datapoints;
     }
 
     public static class State {
@@ -84,12 +84,12 @@ public class ProfiledReloadInstance extends SimpleReloadInstance<ProfiledReloadI
         final AtomicLong preparationNanos;
         final AtomicLong reloadNanos;
 
-        State(String p_10692_, ProfileResults p_10693_, ProfileResults p_10694_, AtomicLong p_10695_, AtomicLong p_10696_) {
-            this.name = p_10692_;
-            this.preparationResult = p_10693_;
-            this.reloadResult = p_10694_;
-            this.preparationNanos = p_10695_;
-            this.reloadNanos = p_10696_;
+        State(String name, ProfileResults preperationResult, ProfileResults reloadResult, AtomicLong preperationNanos, AtomicLong reloadNanos) {
+            this.name = name;
+            this.preparationResult = preperationResult;
+            this.reloadResult = reloadResult;
+            this.preparationNanos = preperationNanos;
+            this.reloadNanos = reloadNanos;
         }
     }
 }

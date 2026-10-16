@@ -7,6 +7,9 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class BakedQuad {
+    /**
+     * Joined 4 vertex records, each stores packed data according to the VertexFormat of the quad. Vanilla minecraft uses DefaultVertexFormats.BLOCK, Forge uses (usually) ITEM, use BakedQuad.getFormat() to get the correct format.
+     */
     protected final int[] vertices;
     protected final int tintIndex;
     protected final Direction direction;
@@ -14,16 +17,16 @@ public class BakedQuad {
     private final boolean shade;
     private final boolean hasAmbientOcclusion;
 
-    public BakedQuad(int[] p_111298_, int p_111299_, Direction p_111300_, TextureAtlasSprite p_111301_, boolean p_111302_) {
-        this(p_111298_, p_111299_, p_111300_, p_111301_, p_111302_, true);
+    public BakedQuad(int[] vertices, int tintIndex, Direction direction, TextureAtlasSprite sprite, boolean shade) {
+        this(vertices, tintIndex, direction, sprite, shade, true);
     }
 
-    public BakedQuad(int[] p_111298_, int p_111299_, Direction p_111300_, TextureAtlasSprite p_111301_, boolean p_111302_, boolean hasAmbientOcclusion) {
-        this.vertices = p_111298_;
-        this.tintIndex = p_111299_;
-        this.direction = p_111300_;
-        this.sprite = p_111301_;
-        this.shade = p_111302_;
+    public BakedQuad(int[] vertices, int tintIndex, Direction direction, TextureAtlasSprite sprite, boolean shade, boolean hasAmbientOcclusion) {
+        this.vertices = vertices;
+        this.tintIndex = tintIndex;
+        this.direction = direction;
+        this.sprite = sprite;
+        this.shade = shade;
         this.hasAmbientOcclusion = hasAmbientOcclusion;
     }
 

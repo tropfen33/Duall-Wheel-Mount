@@ -42,28 +42,28 @@ public class DripstoneClusterConfiguration implements FeatureConfiguration {
     public final int maxDistanceFromCenterAffectingHeightBias;
 
     public DripstoneClusterConfiguration(
-        int p_160772_,
-        IntProvider p_160773_,
-        IntProvider p_160774_,
-        int p_160775_,
-        int p_160776_,
-        IntProvider p_160777_,
-        FloatProvider p_160778_,
-        FloatProvider p_160779_,
-        float p_160780_,
-        int p_160781_,
-        int p_160782_
+        int floorToCeilingSearchRange,
+        IntProvider height,
+        IntProvider radius,
+        int maxStalagmiteStalactiteHeightDiff,
+        int heightDeviation,
+        IntProvider dripstoneBlockLayerThickness,
+        FloatProvider density,
+        FloatProvider wetness,
+        float chanceOfDripstoneColumnAtMaxDistanceFromCenter,
+        int maxDistanceFromEdgeAffectingChanceOfDripstoneColumn,
+        int maxDistanceFromCenterAffectingHeightBias
     ) {
-        this.floorToCeilingSearchRange = p_160772_;
-        this.height = p_160773_;
-        this.radius = p_160774_;
-        this.maxStalagmiteStalactiteHeightDiff = p_160775_;
-        this.heightDeviation = p_160776_;
-        this.dripstoneBlockLayerThickness = p_160777_;
-        this.density = p_160778_;
-        this.wetness = p_160779_;
-        this.chanceOfDripstoneColumnAtMaxDistanceFromCenter = p_160780_;
-        this.maxDistanceFromEdgeAffectingChanceOfDripstoneColumn = p_160781_;
-        this.maxDistanceFromCenterAffectingHeightBias = p_160782_;
+        this.floorToCeilingSearchRange = floorToCeilingSearchRange;
+        this.height = height;
+        this.radius = radius;
+        this.maxStalagmiteStalactiteHeightDiff = maxStalagmiteStalactiteHeightDiff;
+        this.heightDeviation = heightDeviation;
+        this.dripstoneBlockLayerThickness = dripstoneBlockLayerThickness;
+        this.density = density;
+        this.wetness = wetness;
+        this.chanceOfDripstoneColumnAtMaxDistanceFromCenter = chanceOfDripstoneColumnAtMaxDistanceFromCenter;
+        this.maxDistanceFromEdgeAffectingChanceOfDripstoneColumn = maxDistanceFromEdgeAffectingChanceOfDripstoneColumn;
+        this.maxDistanceFromCenterAffectingHeightBias = maxDistanceFromCenterAffectingHeightBias;
     }
 }

@@ -75,28 +75,36 @@ public class GameModeSwitcherScreen extends Screen {
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281834_, int p_283223_, int p_282178_, float p_281339_) {
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (!this.checkToClose()) {
-            p_281834_.pose().pushPose();
+            guiGraphics.pose().pushPose();
             RenderSystem.enableBlend();
             int i = this.width / 2 - 62;
             int j = this.height / 2 - 31 - 27;
-            p_281834_.blit(GAMEMODE_SWITCHER_LOCATION, i, j, 0.0F, 0.0F, 125, 75, 128, 128);
-            p_281834_.pose().popPose();
-            super.render(p_281834_, p_283223_, p_282178_, p_281339_);
-            p_281834_.drawCenteredString(this.font, this.currentlyHovered.getName(), this.width / 2, this.height / 2 - 31 - 20, -1);
-            p_281834_.drawCenteredString(this.font, SELECT_KEY, this.width / 2, this.height / 2 + 5, 16777215);
+            guiGraphics.blit(GAMEMODE_SWITCHER_LOCATION, i, j, 0.0F, 0.0F, 125, 75, 128, 128);
+            guiGraphics.pose().popPose();
+            super.render(guiGraphics, mouseX, mouseY, partialTick);
+            guiGraphics.drawCenteredString(this.font, this.currentlyHovered.getName(), this.width / 2, this.height / 2 - 31 - 20, -1);
+            guiGraphics.drawCenteredString(this.font, SELECT_KEY, this.width / 2, this.height / 2 + 5, 16777215);
             if (!this.setFirstMousePos) {
-                this.firstMouseX = p_283223_;
-                this.firstMouseY = p_282178_;
+                this.firstMouseX = mouseX;
+                this.firstMouseY = mouseY;
                 this.setFirstMousePos = true;
             }
 
-            boolean flag = this.firstMouseX == p_283223_ && this.firstMouseY == p_282178_;
+            boolean flag = this.firstMouseX == mouseX && this.firstMouseY == mouseY;
 
             for (GameModeSwitcherScreen.GameModeSlot gamemodeswitcherscreen$gamemodeslot : this.slots) {
-                gamemodeswitcherscreen$gamemodeslot.render(p_281834_, p_283223_, p_282178_, p_281339_);
+                gamemodeswitcherscreen$gamemodeslot.render(guiGraphics, mouseX, mouseY, partialTick);
                 gamemodeswitcherscreen$gamemodeslot.setSelected(this.currentlyHovered == gamemodeswitcherscreen$gamemodeslot.icon);
                 if (!flag && gamemodeswitcherscreen$gamemodeslot.isHoveredOrFocused()) {
                     this.currentlyHovered = gamemodeswitcherscreen$gamemodeslot.icon;
@@ -106,20 +114,20 @@ public class GameModeSwitcherScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(GuiGraphics p_294233_, int p_295829_, int p_296393_, float p_294567_) {
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
     }
 
     private void switchToHoveredGameMode() {
         switchToHoveredGameMode(this.minecraft, this.currentlyHovered);
     }
 
-    private static void switchToHoveredGameMode(Minecraft p_281340_, GameModeSwitcherScreen.GameModeIcon p_281358_) {
-        if (p_281340_.gameMode != null && p_281340_.player != null) {
+    private static void switchToHoveredGameMode(Minecraft minecraft, GameModeSwitcherScreen.GameModeIcon gameModeIcon) {
+        if (minecraft.gameMode != null && minecraft.player != null) {
             GameModeSwitcherScreen.GameModeIcon gamemodeswitcherscreen$gamemodeicon = GameModeSwitcherScreen.GameModeIcon.getFromGameType(
-                p_281340_.gameMode.getPlayerMode()
+                minecraft.gameMode.getPlayerMode()
             );
-            if (p_281340_.player.hasPermissions(2) && p_281358_ != gamemodeswitcherscreen$gamemodeicon) {
-                p_281340_.player.connection.sendUnsignedCommand(p_281358_.getCommand());
+            if (minecraft.player.hasPermissions(2) && gameModeIcon != gamemodeswitcherscreen$gamemodeicon) {
+                minecraft.player.connection.sendUnsignedCommand(gameModeIcon.getCommand());
             }
         }
     }
@@ -134,14 +142,23 @@ public class GameModeSwitcherScreen extends Screen {
         }
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_97553_, int p_97554_, int p_97555_) {
-        if (p_97553_ == 293) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 293) {
             this.setFirstMousePos = false;
             this.currentlyHovered = this.currentlyHovered.getNext();
             return true;
         } else {
-            return super.keyPressed(p_97553_, p_97554_, p_97555_);
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
     }
 
@@ -164,14 +181,14 @@ public class GameModeSwitcherScreen extends Screen {
         final String command;
         final ItemStack renderStack;
 
-        private GameModeIcon(Component p_97594_, String p_97595_, ItemStack p_97596_) {
-            this.name = p_97594_;
-            this.command = p_97595_;
-            this.renderStack = p_97596_;
+        private GameModeIcon(Component name, String command, ItemStack renderStack) {
+            this.name = name;
+            this.command = command;
+            this.renderStack = renderStack;
         }
 
-        void drawIcon(GuiGraphics p_282609_, int p_283301_, int p_281692_) {
-            p_282609_.renderItem(this.renderStack, p_283301_, p_281692_);
+        void drawIcon(GuiGraphics guiGraphics, int x, int y) {
+            guiGraphics.renderItem(this.renderStack, x, y);
         }
 
         Component getName() {
@@ -191,8 +208,8 @@ public class GameModeSwitcherScreen extends Screen {
             };
         }
 
-        static GameModeSwitcherScreen.GameModeIcon getFromGameType(GameType p_283307_) {
-            return switch (p_283307_) {
+        static GameModeSwitcherScreen.GameModeIcon getFromGameType(GameType gameType) {
+            return switch (gameType) {
                 case SPECTATOR -> SPECTATOR;
                 case SURVIVAL -> SURVIVAL;
                 case CREATIVE -> CREATIVE;
@@ -206,23 +223,23 @@ public class GameModeSwitcherScreen extends Screen {
         final GameModeSwitcherScreen.GameModeIcon icon;
         private boolean isSelected;
 
-        public GameModeSlot(GameModeSwitcherScreen.GameModeIcon p_97627_, int p_97628_, int p_97629_) {
-            super(p_97628_, p_97629_, 26, 26, p_97627_.getName());
-            this.icon = p_97627_;
+        public GameModeSlot(GameModeSwitcherScreen.GameModeIcon icon, int x, int y) {
+            super(x, y, 26, 26, icon.getName());
+            this.icon = icon;
         }
 
         @Override
-        public void renderWidget(GuiGraphics p_281380_, int p_283094_, int p_283558_, float p_282631_) {
-            this.drawSlot(p_281380_);
-            this.icon.drawIcon(p_281380_, this.getX() + 5, this.getY() + 5);
+        public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+            this.drawSlot(guiGraphics);
+            this.icon.drawIcon(guiGraphics, this.getX() + 5, this.getY() + 5);
             if (this.isSelected) {
-                this.drawSelection(p_281380_);
+                this.drawSelection(guiGraphics);
             }
         }
 
         @Override
-        public void updateWidgetNarration(NarrationElementOutput p_259120_) {
-            this.defaultButtonNarrationText(p_259120_);
+        public void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+            this.defaultButtonNarrationText(narrationElementOutput);
         }
 
         @Override
@@ -230,16 +247,16 @@ public class GameModeSwitcherScreen extends Screen {
             return super.isHoveredOrFocused() || this.isSelected;
         }
 
-        public void setSelected(boolean p_97644_) {
-            this.isSelected = p_97644_;
+        public void setSelected(boolean isSelected) {
+            this.isSelected = isSelected;
         }
 
-        private void drawSlot(GuiGraphics p_281786_) {
-            p_281786_.blitSprite(GameModeSwitcherScreen.SLOT_SPRITE, this.getX(), this.getY(), 26, 26);
+        private void drawSlot(GuiGraphics guiGraphics) {
+            guiGraphics.blitSprite(GameModeSwitcherScreen.SLOT_SPRITE, this.getX(), this.getY(), 26, 26);
         }
 
-        private void drawSelection(GuiGraphics p_281820_) {
-            p_281820_.blitSprite(GameModeSwitcherScreen.SELECTION_SPRITE, this.getX(), this.getY(), 26, 26);
+        private void drawSelection(GuiGraphics guiGraphics) {
+            guiGraphics.blitSprite(GameModeSwitcherScreen.SELECTION_SPRITE, this.getX(), this.getY(), 26, 26);
         }
     }
 }

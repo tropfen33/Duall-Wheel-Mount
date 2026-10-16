@@ -28,15 +28,18 @@ public class SplashManager extends SimplePreparableReloadListener<List<String>> 
     private final List<String> splashes = Lists.newArrayList();
     private final User user;
 
-    public SplashManager(User p_118866_) {
-        this.user = p_118866_;
+    public SplashManager(User user) {
+        this.user = user;
     }
 
-    protected List<String> prepare(ResourceManager p_118869_, ProfilerFiller p_118870_) {
+    /**
+     * Performs any reloading that can be done off-thread, such as file IO
+     */
+    protected List<String> prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
         try {
             var splashes = Minecraft.getInstance().getResourceManager().getResourceOrThrow(SPLASHES_LOCATION);
             if (splashes.sourcePackId().equals("vanilla"))
-                return net.neoforged.neoforge.client.resources.NeoForgeSplashHooks.loadSplashes(p_118869_);
+                return net.neoforged.neoforge.client.resources.NeoForgeSplashHooks.loadSplashes(resourceManager);
 
             List list;
             try (BufferedReader bufferedreader = splashes.openAsReader()) {
@@ -49,9 +52,9 @@ public class SplashManager extends SimplePreparableReloadListener<List<String>> 
         }
     }
 
-    protected void apply(List<String> p_118878_, ResourceManager p_118879_, ProfilerFiller p_118880_) {
+    protected void apply(List<String> object, ResourceManager resourceManager, ProfilerFiller profiler) {
         this.splashes.clear();
-        this.splashes.addAll(p_118878_);
+        this.splashes.addAll(object);
     }
 
     @Nullable

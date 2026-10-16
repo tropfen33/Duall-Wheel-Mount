@@ -4,11 +4,14 @@ import net.minecraft.network.ConnectionProtocol;
 import net.minecraft.network.protocol.game.ServerPacketListener;
 import net.minecraft.network.protocol.ping.ServerPingPacketListener;
 
+/**
+ * PacketListener for the server side of the STATUS protocol.
+ */
 public interface ServerStatusPacketListener extends ServerPacketListener, ServerPingPacketListener {
     @Override
     default ConnectionProtocol protocol() {
         return ConnectionProtocol.STATUS;
     }
 
-    void handleStatusRequest(ServerboundStatusRequestPacket p_134987_);
+    void handleStatusRequest(ServerboundStatusRequestPacket packet);
 }

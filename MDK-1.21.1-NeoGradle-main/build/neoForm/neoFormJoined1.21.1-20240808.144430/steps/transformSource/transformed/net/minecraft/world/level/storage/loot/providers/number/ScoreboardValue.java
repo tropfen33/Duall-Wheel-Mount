@@ -15,6 +15,10 @@ import net.minecraft.world.scores.ReadOnlyScoreInfo;
 import net.minecraft.world.scores.ScoreHolder;
 import net.minecraft.world.scores.Scoreboard;
 
+/**
+ * Provides a number by reading the score of a scoreboard member whose name is provided by a {@link ScoreboardNameProvider}.
+ * Additionally a scale can be provided, which will be multiplied with the score.
+ */
 public record ScoreboardValue(ScoreboardNameProvider target, String score, float scale) implements NumberProvider {
     public static final MapCodec<ScoreboardValue> CODEC = RecordCodecBuilder.mapCodec(
         p_298582_ -> p_298582_.group(
@@ -35,21 +39,21 @@ public record ScoreboardValue(ScoreboardNameProvider target, String score, float
         return this.target.getReferencedContextParams();
     }
 
-    public static ScoreboardValue fromScoreboard(LootContext.EntityTarget p_165750_, String p_165751_) {
-        return fromScoreboard(p_165750_, p_165751_, 1.0F);
+    public static ScoreboardValue fromScoreboard(LootContext.EntityTarget entityTarget, String score) {
+        return fromScoreboard(entityTarget, score, 1.0F);
     }
 
-    public static ScoreboardValue fromScoreboard(LootContext.EntityTarget p_165753_, String p_165754_, float p_165755_) {
-        return new ScoreboardValue(ContextScoreboardNameProvider.forTarget(p_165753_), p_165754_, p_165755_);
+    public static ScoreboardValue fromScoreboard(LootContext.EntityTarget entityTarget, String score, float scale) {
+        return new ScoreboardValue(ContextScoreboardNameProvider.forTarget(entityTarget), score, scale);
     }
 
     @Override
-    public float getFloat(LootContext p_165758_) {
-        ScoreHolder scoreholder = this.target.getScoreHolder(p_165758_);
+    public float getFloat(LootContext lootContext) {
+        ScoreHolder scoreholder = this.target.getScoreHolder(lootContext);
         if (scoreholder == null) {
             return 0.0F;
         } else {
-            Scoreboard scoreboard = p_165758_.getLevel().getScoreboard();
+            Scoreboard scoreboard = lootContext.getLevel().getScoreboard();
             Objective objective = scoreboard.getObjective(this.score);
             if (objective == null) {
                 return 0.0F;

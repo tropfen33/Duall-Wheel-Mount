@@ -13,29 +13,29 @@ import net.minecraft.world.level.levelgen.Heightmap;
 
 public class PlayerRespawnLogic {
     @Nullable
-    protected static BlockPos getOverworldRespawnPos(ServerLevel p_183929_, int p_183930_, int p_183931_) {
-        boolean flag = p_183929_.dimensionType().hasCeiling();
-        LevelChunk levelchunk = p_183929_.getChunk(SectionPos.blockToSectionCoord(p_183930_), SectionPos.blockToSectionCoord(p_183931_));
+    protected static BlockPos getOverworldRespawnPos(ServerLevel level, int x, int z) {
+        boolean flag = level.dimensionType().hasCeiling();
+        LevelChunk levelchunk = level.getChunk(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z));
         int i = flag
-            ? p_183929_.getChunkSource().getGenerator().getSpawnHeight(p_183929_)
-            : levelchunk.getHeight(Heightmap.Types.MOTION_BLOCKING, p_183930_ & 15, p_183931_ & 15);
-        if (i < p_183929_.getMinBuildHeight()) {
+            ? level.getChunkSource().getGenerator().getSpawnHeight(level)
+            : levelchunk.getHeight(Heightmap.Types.MOTION_BLOCKING, x & 15, z & 15);
+        if (i < level.getMinBuildHeight()) {
             return null;
         } else {
-            int j = levelchunk.getHeight(Heightmap.Types.WORLD_SURFACE, p_183930_ & 15, p_183931_ & 15);
-            if (j <= i && j > levelchunk.getHeight(Heightmap.Types.OCEAN_FLOOR, p_183930_ & 15, p_183931_ & 15)) {
+            int j = levelchunk.getHeight(Heightmap.Types.WORLD_SURFACE, x & 15, z & 15);
+            if (j <= i && j > levelchunk.getHeight(Heightmap.Types.OCEAN_FLOOR, x & 15, z & 15)) {
                 return null;
             } else {
                 BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
-                for (int k = i + 1; k >= p_183929_.getMinBuildHeight(); k--) {
-                    blockpos$mutableblockpos.set(p_183930_, k, p_183931_);
-                    BlockState blockstate = p_183929_.getBlockState(blockpos$mutableblockpos);
+                for (int k = i + 1; k >= level.getMinBuildHeight(); k--) {
+                    blockpos$mutableblockpos.set(x, k, z);
+                    BlockState blockstate = level.getBlockState(blockpos$mutableblockpos);
                     if (!blockstate.getFluidState().isEmpty()) {
                         break;
                     }
 
-                    if (Block.isFaceFull(blockstate.getCollisionShape(p_183929_, blockpos$mutableblockpos), Direction.UP)) {
+                    if (Block.isFaceFull(blockstate.getCollisionShape(level, blockpos$mutableblockpos), Direction.UP)) {
                         return blockpos$mutableblockpos.above().immutable();
                     }
                 }
@@ -46,13 +46,13 @@ public class PlayerRespawnLogic {
     }
 
     @Nullable
-    public static BlockPos getSpawnPosInChunk(ServerLevel p_183933_, ChunkPos p_183934_) {
-        if (SharedConstants.debugVoidTerrain(p_183934_)) {
+    public static BlockPos getSpawnPosInChunk(ServerLevel level, ChunkPos chunkPos) {
+        if (SharedConstants.debugVoidTerrain(chunkPos)) {
             return null;
         } else {
-            for (int i = p_183934_.getMinBlockX(); i <= p_183934_.getMaxBlockX(); i++) {
-                for (int j = p_183934_.getMinBlockZ(); j <= p_183934_.getMaxBlockZ(); j++) {
-                    BlockPos blockpos = getOverworldRespawnPos(p_183933_, i, j);
+            for (int i = chunkPos.getMinBlockX(); i <= chunkPos.getMaxBlockX(); i++) {
+                for (int j = chunkPos.getMinBlockZ(); j <= chunkPos.getMaxBlockZ(); j++) {
+                    BlockPos blockpos = getOverworldRespawnPos(level, i, j);
                     if (blockpos != null) {
                         return blockpos;
                     }

@@ -52,7 +52,7 @@ public record TrimMaterial(
         Registries.TRIM_MATERIAL, DIRECT_STREAM_CODEC
     );
 
-    public static TrimMaterial create(String p_268108_, Item p_268361_, float p_268202_, Component p_268273_, Map<Holder<ArmorMaterial>, String> p_267977_) {
-        return new TrimMaterial(p_268108_, BuiltInRegistries.ITEM.wrapAsHolder(p_268361_), p_268202_, p_267977_, p_268273_);
+    public static TrimMaterial create(String assetName, Item ingredient, float itemModelIndex, Component description, Map<Holder<ArmorMaterial>, String> overrideArmorMaterials) {
+        return new TrimMaterial(assetName, BuiltInRegistries.ITEM.wrapAsHolder(ingredient), itemModelIndex, overrideArmorMaterials, description);
     }
 }

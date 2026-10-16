@@ -8,27 +8,27 @@ import net.minecraft.world.level.block.state.BlockState;
 public class ComparatorBlockEntity extends BlockEntity {
     private int output;
 
-    public ComparatorBlockEntity(BlockPos p_155386_, BlockState p_155387_) {
-        super(BlockEntityType.COMPARATOR, p_155386_, p_155387_);
+    public ComparatorBlockEntity(BlockPos pos, BlockState blockState) {
+        super(BlockEntityType.COMPARATOR, pos, blockState);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_187493_, HolderLookup.Provider p_323979_) {
-        super.saveAdditional(p_187493_, p_323979_);
-        p_187493_.putInt("OutputSignal", this.output);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        tag.putInt("OutputSignal", this.output);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_338778_, HolderLookup.Provider p_338355_) {
-        super.loadAdditional(p_338778_, p_338355_);
-        this.output = p_338778_.getInt("OutputSignal");
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        this.output = tag.getInt("OutputSignal");
     }
 
     public int getOutputSignal() {
         return this.output;
     }
 
-    public void setOutputSignal(int p_59176_) {
-        this.output = p_59176_;
+    public void setOutputSignal(int output) {
+        this.output = output;
     }
 }

@@ -8,41 +8,41 @@ import net.minecraft.network.FriendlyByteBuf;
 public class GlobalPalette<T> implements Palette<T> {
     private final IdMap<T> registry;
 
-    public GlobalPalette(IdMap<T> p_187897_) {
-        this.registry = p_187897_;
+    public GlobalPalette(IdMap<T> registry) {
+        this.registry = registry;
     }
 
-    public static <A> Palette<A> create(int p_187899_, IdMap<A> p_187900_, PaletteResize<A> p_187901_, List<A> p_187902_) {
-        return new GlobalPalette<>(p_187900_);
+    public static <A> Palette<A> create(int bits, IdMap<A> registry, PaletteResize<A> resizeHandler, List<A> values) {
+        return new GlobalPalette<>(registry);
     }
 
     @Override
-    public int idFor(T p_62648_) {
-        int i = this.registry.getId(p_62648_);
+    public int idFor(T state) {
+        int i = this.registry.getId(state);
         return i == -1 ? 0 : i;
     }
 
     @Override
-    public boolean maybeHas(Predicate<T> p_62650_) {
+    public boolean maybeHas(Predicate<T> filter) {
         return true;
     }
 
     @Override
-    public T valueFor(int p_62646_) {
-        T t = this.registry.byId(p_62646_);
+    public T valueFor(int id) {
+        T t = this.registry.byId(id);
         if (t == null) {
-            throw new MissingPaletteEntryException(p_62646_);
+            throw new MissingPaletteEntryException(id);
         } else {
             return t;
         }
     }
 
     @Override
-    public void read(FriendlyByteBuf p_62654_) {
+    public void read(FriendlyByteBuf buffer) {
     }
 
     @Override
-    public void write(FriendlyByteBuf p_62656_) {
+    public void write(FriendlyByteBuf buffer) {
     }
 
     @Override

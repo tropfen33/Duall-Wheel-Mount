@@ -15,9 +15,14 @@ public abstract class AbstractContainerEventHandler implements ContainerEventHan
         return this.isDragging;
     }
 
+    /**
+     * Sets if the GUI element is dragging or not.
+     *
+     * @param dragging the dragging state of the GUI element.
+     */
     @Override
-    public final void setDragging(boolean p_94681_) {
-        this.isDragging = p_94681_;
+    public final void setDragging(boolean dragging) {
+        this.isDragging = dragging;
     }
 
     @Nullable
@@ -26,16 +31,21 @@ public abstract class AbstractContainerEventHandler implements ContainerEventHan
         return this.focused;
     }
 
+    /**
+     * Sets the focus state of the GUI element.
+     *
+     * @param listener the focused GUI element.
+     */
     @Override
-    public void setFocused(@Nullable GuiEventListener p_94677_) {
+    public void setFocused(@Nullable GuiEventListener listener) {
         if (this.focused != null) {
             this.focused.setFocused(false);
         }
 
-        if (p_94677_ != null) {
-            p_94677_.setFocused(true);
+        if (listener != null) {
+            listener.setFocused(true);
         }
 
-        this.focused = p_94677_;
+        this.focused = listener;
     }
 }

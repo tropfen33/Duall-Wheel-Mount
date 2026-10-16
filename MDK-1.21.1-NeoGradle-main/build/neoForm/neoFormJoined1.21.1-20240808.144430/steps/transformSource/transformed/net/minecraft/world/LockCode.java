@@ -11,22 +11,22 @@ public record LockCode(String key) {
     public static final Codec<LockCode> CODEC = Codec.STRING.xmap(LockCode::new, LockCode::key);
     public static final String TAG_LOCK = "Lock";
 
-    public boolean unlocksWith(ItemStack p_19108_) {
+    public boolean unlocksWith(ItemStack stack) {
         if (this.key.isEmpty()) {
             return true;
         } else {
-            Component component = p_19108_.get(DataComponents.CUSTOM_NAME);
+            Component component = stack.get(DataComponents.CUSTOM_NAME);
             return component != null && this.key.equals(component.getString());
         }
     }
 
-    public void addToTag(CompoundTag p_19110_) {
+    public void addToTag(CompoundTag nbt) {
         if (!this.key.isEmpty()) {
-            p_19110_.putString("Lock", this.key);
+            nbt.putString("Lock", this.key);
         }
     }
 
-    public static LockCode fromTag(CompoundTag p_19112_) {
-        return p_19112_.contains("Lock", 8) ? new LockCode(p_19112_.getString("Lock")) : NO_LOCK;
+    public static LockCode fromTag(CompoundTag nbt) {
+        return nbt.contains("Lock", 8) ? new LockCode(nbt.getString("Lock")) : NO_LOCK;
     }
 }

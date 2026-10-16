@@ -78,12 +78,12 @@ public final class Ingredient implements Predicate<ItemStack> {
     public static final Codec<List<Ingredient>> LIST_CODEC = MAP_CODEC_NONEMPTY.codec().listOf();
     public static final Codec<List<Ingredient>> LIST_CODEC_NONEMPTY = LIST_CODEC.validate(list -> list.isEmpty() ? DataResult.error(() -> "Item array cannot be empty, at least one item must be defined") : DataResult.success(list));
 
-    private Ingredient(Stream<? extends Ingredient.Value> p_43907_) {
-        this.values = p_43907_.toArray(Ingredient.Value[]::new);
+    private Ingredient(Stream<? extends Ingredient.Value> values) {
+        this.values = values.toArray(Ingredient.Value[]::new);
     }
 
-    private Ingredient(Ingredient.Value[] p_301044_) {
-        this.values = p_301044_;
+    private Ingredient(Ingredient.Value[] values) {
+        this.values = values;
     }
 
     public Ingredient(net.neoforged.neoforge.common.crafting.ICustomIngredient customIngredient) {
@@ -104,16 +104,16 @@ public final class Ingredient implements Predicate<ItemStack> {
         return this.itemStacks;
     }
 
-    public boolean test(@Nullable ItemStack p_43914_) {
-        if (p_43914_ == null) {
+    public boolean test(@Nullable ItemStack stack) {
+        if (stack == null) {
             return false;
         } else if (this.customIngredient != null) {
-            return this.customIngredient.test(p_43914_);
+            return this.customIngredient.test(stack);
         } else if (this.isEmpty()) {
-            return p_43914_.isEmpty();
+            return stack.isEmpty();
         } else {
             for (ItemStack itemstack : this.getItems()) {
-                if (itemstack.is(p_43914_.getItem())) {
+                if (itemstack.is(stack.getItem())) {
                     return true;
                 }
             }
@@ -162,8 +162,8 @@ public final class Ingredient implements Predicate<ItemStack> {
     }
 
     @Override
-    public boolean equals(Object p_301003_) {
-        return p_301003_ instanceof Ingredient ingredient ? java.util.Objects.equals(this.customIngredient, ingredient.customIngredient) && Arrays.equals((Object[])this.values, (Object[])ingredient.values) : false;
+    public boolean equals(Object other) {
+        return other instanceof Ingredient ingredient ? java.util.Objects.equals(this.customIngredient, ingredient.customIngredient) && Arrays.equals((Object[])this.values, (Object[])ingredient.values) : false;
     }
 
     @Override
@@ -198,8 +198,8 @@ public final class Ingredient implements Predicate<ItemStack> {
         return this.customIngredient != null;
     }
 
-    public static Ingredient fromValues(Stream<? extends Ingredient.Value> p_43939_) {
-        Ingredient ingredient = new Ingredient(p_43939_);
+    public static Ingredient fromValues(Stream<? extends Ingredient.Value> stream) {
+        Ingredient ingredient = new Ingredient(stream);
         return ingredient.isEmpty() ? EMPTY : ingredient;
     }
 
@@ -207,27 +207,27 @@ public final class Ingredient implements Predicate<ItemStack> {
         return EMPTY;
     }
 
-    public static Ingredient of(ItemLike... p_43930_) {
-        return of(Arrays.stream(p_43930_).map(ItemStack::new));
+    public static Ingredient of(ItemLike... items) {
+        return of(Arrays.stream(items).map(ItemStack::new));
     }
 
-    public static Ingredient of(ItemStack... p_43928_) {
-        return of(Arrays.stream(p_43928_));
+    public static Ingredient of(ItemStack... stacks) {
+        return of(Arrays.stream(stacks));
     }
 
-    public static Ingredient of(Stream<ItemStack> p_43922_) {
-        return fromValues(p_43922_.filter(p_43944_ -> !p_43944_.isEmpty()).map(Ingredient.ItemValue::new));
+    public static Ingredient of(Stream<ItemStack> stacks) {
+        return fromValues(stacks.filter(p_43944_ -> !p_43944_.isEmpty()).map(Ingredient.ItemValue::new));
     }
 
-    public static Ingredient of(TagKey<Item> p_204133_) {
-        return fromValues(Stream.of(new Ingredient.TagValue(p_204133_)));
+    public static Ingredient of(TagKey<Item> tag) {
+        return fromValues(Stream.of(new Ingredient.TagValue(tag)));
     }
 
     @Deprecated // Neo: We take over the codec creation entirely to support custom ingredients - see CraftingHelper
-    private static Codec<Ingredient> codec(boolean p_301074_) {
+    private static Codec<Ingredient> codec(boolean allowEmpty) {
         Codec<Ingredient.Value[]> codec = Codec.list(Ingredient.Value.CODEC)
             .comapFlatMap(
-                p_300810_ -> !p_301074_ && p_300810_.size() < 1
+                p_300810_ -> !allowEmpty && p_300810_.size() < 1
                         ? DataResult.error(() -> "Item array cannot be empty, at least one item must be defined")
                         : DataResult.success(p_300810_.toArray(new Ingredient.Value[0])),
                 List::of
@@ -239,7 +239,7 @@ public final class Ingredient implements Predicate<ItemStack> {
                     if (p_300808_.values.length == 1) {
                         return DataResult.success(Either.right(p_300808_.values[0]));
                     } else {
-                        return p_300808_.values.length == 0 && !p_301074_
+                        return p_300808_.values.length == 0 && !allowEmpty
                             ? DataResult.error(() -> "Item array cannot be empty, at least one item must be defined")
                             : DataResult.success(Either.left(p_300808_.values));
                     }
@@ -255,8 +255,8 @@ public final class Ingredient implements Predicate<ItemStack> {
         static final Codec<Ingredient.ItemValue> CODEC = MAP_CODEC.codec();
 
         @Override
-        public boolean equals(Object p_301316_) {
-            return !(p_301316_ instanceof Ingredient.ItemValue ingredient$itemvalue)
+        public boolean equals(Object other) {
+            return !(other instanceof Ingredient.ItemValue ingredient$itemvalue)
                 ? false
                 : ingredient$itemvalue.item.getItem().equals(this.item.getItem()) && ingredient$itemvalue.item.getCount() == this.item.getCount();
         }
@@ -281,8 +281,8 @@ public final class Ingredient implements Predicate<ItemStack> {
         static final Codec<Ingredient.TagValue> CODEC = MAP_CODEC.codec();
 
         @Override
-        public boolean equals(Object p_301162_) {
-            return p_301162_ instanceof Ingredient.TagValue ingredient$tagvalue ? ingredient$tagvalue.tag.location().equals(this.tag.location()) : false;
+        public boolean equals(Object other) {
+            return other instanceof Ingredient.TagValue ingredient$tagvalue ? ingredient$tagvalue.tag.location().equals(this.tag.location()) : false;
         }
 
         @Override

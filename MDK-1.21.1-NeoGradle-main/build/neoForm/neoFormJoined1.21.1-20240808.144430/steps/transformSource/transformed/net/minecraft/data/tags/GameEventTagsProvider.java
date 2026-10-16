@@ -55,18 +55,23 @@ public class GameEventTagsProvider extends TagsProvider<GameEvent> {
         GameEvent.UNEQUIP.key()
     );
 
-    /** @deprecated Neo: Use the {@linkplain #GameEventTagsProvider(PackOutput, CompletableFuture, String, net.neoforged.neoforge.common.data.ExistingFileHelper) mod id variant} */
+    /**
+ * @deprecated Neo: Use the {@linkplain #GameEventTagsProvider(PackOutput,
+ *             CompletableFuture, String,
+ *             net.neoforged.neoforge.common.data.ExistingFileHelper) mod id
+ *             variant}
+ */
     @Deprecated
-    public GameEventTagsProvider(PackOutput p_256060_, CompletableFuture<HolderLookup.Provider> p_255621_) {
-        this(p_256060_, p_255621_, "vanilla", null);
+    public GameEventTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider) {
+        this(output, provider, "vanilla", null);
     }
 
-    public GameEventTagsProvider(PackOutput p_256060_, CompletableFuture<HolderLookup.Provider> p_255621_, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
-        super(p_256060_, Registries.GAME_EVENT, p_255621_, modId, existingFileHelper);
+    public GameEventTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
+        super(output, Registries.GAME_EVENT, provider, modId, existingFileHelper);
     }
 
     @Override
-    protected void addTags(HolderLookup.Provider p_255981_) {
+    protected void addTags(HolderLookup.Provider provider) {
         this.tag(GameEventTags.VIBRATIONS).addAll(VIBRATIONS_EXCEPT_FLAP).addAll(VibrationSystem.RESONANCE_EVENTS).add(GameEvent.FLAP.key());
         this.tag(GameEventTags.SHRIEKER_CAN_LISTEN).add(GameEvent.SCULK_SENSOR_TENDRILS_CLICKING.key());
         this.tag(GameEventTags.WARDEN_CAN_LISTEN)

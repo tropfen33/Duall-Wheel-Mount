@@ -33,33 +33,33 @@ public class SoundEvent {
     private final float range;
     private final boolean newSystem;
 
-    private static SoundEvent create(ResourceLocation p_263406_, Optional<Float> p_263346_) {
-        return p_263346_.<SoundEvent>map(p_263360_ -> createFixedRangeEvent(p_263406_, p_263360_)).orElseGet(() -> createVariableRangeEvent(p_263406_));
+    private static SoundEvent create(ResourceLocation location, Optional<Float> range) {
+        return range.<SoundEvent>map(p_263360_ -> createFixedRangeEvent(location, p_263360_)).orElseGet(() -> createVariableRangeEvent(location));
     }
 
-    public static SoundEvent createVariableRangeEvent(ResourceLocation p_262973_) {
-        return new SoundEvent(p_262973_, 16.0F, false);
+    public static SoundEvent createVariableRangeEvent(ResourceLocation location) {
+        return new SoundEvent(location, 16.0F, false);
     }
 
-    public static SoundEvent createFixedRangeEvent(ResourceLocation p_263003_, float p_263029_) {
-        return new SoundEvent(p_263003_, p_263029_, true);
+    public static SoundEvent createFixedRangeEvent(ResourceLocation location, float range) {
+        return new SoundEvent(location, range, true);
     }
 
-    private SoundEvent(ResourceLocation p_215665_, float p_215666_, boolean p_215667_) {
-        this.location = p_215665_;
-        this.range = p_215666_;
-        this.newSystem = p_215667_;
+    private SoundEvent(ResourceLocation location, float range, boolean newSystem) {
+        this.location = location;
+        this.range = range;
+        this.newSystem = newSystem;
     }
 
     public ResourceLocation getLocation() {
         return this.location;
     }
 
-    public float getRange(float p_215669_) {
+    public float getRange(float volume) {
         if (this.newSystem) {
             return this.range;
         } else {
-            return p_215669_ > 1.0F ? 16.0F * p_215669_ : 16.0F;
+            return volume > 1.0F ? 16.0F * volume : 16.0F;
         }
     }
 

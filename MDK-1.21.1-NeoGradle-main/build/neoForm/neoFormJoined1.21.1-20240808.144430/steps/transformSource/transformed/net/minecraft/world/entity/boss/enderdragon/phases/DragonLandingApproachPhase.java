@@ -19,8 +19,8 @@ public class DragonLandingApproachPhase extends AbstractDragonPhaseInstance {
     @Nullable
     private Vec3 targetLocation;
 
-    public DragonLandingApproachPhase(EnderDragon p_31258_) {
-        super(p_31258_);
+    public DragonLandingApproachPhase(EnderDragon dragon) {
+        super(dragon);
     }
 
     @Override

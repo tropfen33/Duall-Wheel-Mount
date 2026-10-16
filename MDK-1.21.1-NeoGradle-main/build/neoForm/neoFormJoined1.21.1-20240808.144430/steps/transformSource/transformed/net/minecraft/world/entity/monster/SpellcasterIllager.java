@@ -22,26 +22,29 @@ public abstract class SpellcasterIllager extends AbstractIllager {
     protected int spellCastingTickCount;
     private SpellcasterIllager.IllagerSpell currentSpell = SpellcasterIllager.IllagerSpell.NONE;
 
-    protected SpellcasterIllager(EntityType<? extends SpellcasterIllager> p_33724_, Level p_33725_) {
-        super(p_33724_, p_33725_);
+    protected SpellcasterIllager(EntityType<? extends SpellcasterIllager> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326038_) {
-        super.defineSynchedData(p_326038_);
-        p_326038_.define(DATA_SPELL_CASTING_ID, (byte)0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_SPELL_CASTING_ID, (byte)0);
+    }
+
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    @Override
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.spellCastingTickCount = compound.getInt("SpellTicks");
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag p_33732_) {
-        super.readAdditionalSaveData(p_33732_);
-        this.spellCastingTickCount = p_33732_.getInt("SpellTicks");
-    }
-
-    @Override
-    public void addAdditionalSaveData(CompoundTag p_33734_) {
-        super.addAdditionalSaveData(p_33734_);
-        p_33734_.putInt("SpellTicks", this.spellCastingTickCount);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("SpellTicks", this.spellCastingTickCount);
     }
 
     @Override
@@ -57,9 +60,9 @@ public abstract class SpellcasterIllager extends AbstractIllager {
         return this.level().isClientSide ? this.entityData.get(DATA_SPELL_CASTING_ID) > 0 : this.spellCastingTickCount > 0;
     }
 
-    public void setIsCastingSpell(SpellcasterIllager.IllagerSpell p_33728_) {
-        this.currentSpell = p_33728_;
-        this.entityData.set(DATA_SPELL_CASTING_ID, (byte)p_33728_.id);
+    public void setIsCastingSpell(SpellcasterIllager.IllagerSpell currentSpell) {
+        this.currentSpell = currentSpell;
+        this.entityData.set(DATA_SPELL_CASTING_ID, (byte)currentSpell.id);
     }
 
     protected SpellcasterIllager.IllagerSpell getCurrentSpell() {
@@ -130,13 +133,13 @@ public abstract class SpellcasterIllager extends AbstractIllager {
         final int id;
         final double[] spellColor;
 
-        private IllagerSpell(int p_33754_, double p_33755_, double p_33756_, double p_33757_) {
-            this.id = p_33754_;
-            this.spellColor = new double[]{p_33755_, p_33756_, p_33757_};
+        private IllagerSpell(int id, double red, double green, double blue) {
+            this.id = id;
+            this.spellColor = new double[]{red, green, blue};
         }
 
-        public static SpellcasterIllager.IllagerSpell byId(int p_33759_) {
-            return BY_ID.apply(p_33759_);
+        public static SpellcasterIllager.IllagerSpell byId(int id) {
+            return BY_ID.apply(id);
         }
     }
 

@@ -34,8 +34,8 @@ public class ChunkStatus {
     private final ChunkType chunkType;
     private final EnumSet<Heightmap.Types> heightmapsAfter;
 
-    private static ChunkStatus register(String p_330494_, @Nullable ChunkStatus p_331829_, EnumSet<Heightmap.Types> p_330717_, ChunkType p_331982_) {
-        return Registry.register(BuiltInRegistries.CHUNK_STATUS, p_330494_, new ChunkStatus(p_331829_, p_330717_, p_331982_));
+    private static ChunkStatus register(String name, @Nullable ChunkStatus parent, EnumSet<Heightmap.Types> heightmapsAfter, ChunkType chunkType) {
+        return Registry.register(BuiltInRegistries.CHUNK_STATUS, name, new ChunkStatus(parent, heightmapsAfter, chunkType));
     }
 
     public static List<ChunkStatus> getStatusList() {
@@ -52,11 +52,11 @@ public class ChunkStatus {
     }
 
     @VisibleForTesting
-    protected ChunkStatus(@Nullable ChunkStatus p_330316_, EnumSet<Heightmap.Types> p_331442_, ChunkType p_331412_) {
-        this.parent = p_330316_ == null ? this : p_330316_;
-        this.chunkType = p_331412_;
-        this.heightmapsAfter = p_331442_;
-        this.index = p_330316_ == null ? 0 : p_330316_.getIndex() + 1;
+    protected ChunkStatus(@Nullable ChunkStatus parent, EnumSet<Heightmap.Types> heightmapsAfter, ChunkType chunkType) {
+        this.parent = parent == null ? this : parent;
+        this.chunkType = chunkType;
+        this.heightmapsAfter = heightmapsAfter;
+        this.index = parent == null ? 0 : parent.getIndex() + 1;
         EnumSet<Heightmap.Types> chunkSaveHeightmaps = EnumSet.copyOf(this.heightmapsAfter);
         if (this.chunkType != ChunkType.LEVELCHUNK) {
             chunkSaveHeightmaps.add(Heightmap.Types.WORLD_SURFACE_WG);
@@ -77,32 +77,32 @@ public class ChunkStatus {
         return this.chunkType;
     }
 
-    public static ChunkStatus byName(String p_330923_) {
-        return BuiltInRegistries.CHUNK_STATUS.get(ResourceLocation.tryParse(p_330923_));
+    public static ChunkStatus byName(String name) {
+        return BuiltInRegistries.CHUNK_STATUS.get(ResourceLocation.tryParse(name));
     }
 
     public EnumSet<Heightmap.Types> heightmapsAfter() {
         return this.heightmapsAfter;
     }
 
-    public boolean isOrAfter(ChunkStatus p_330216_) {
-        return this.getIndex() >= p_330216_.getIndex();
+    public boolean isOrAfter(ChunkStatus chunkStatus) {
+        return this.getIndex() >= chunkStatus.getIndex();
     }
 
-    public boolean isAfter(ChunkStatus p_347553_) {
-        return this.getIndex() > p_347553_.getIndex();
+    public boolean isAfter(ChunkStatus chunkStatus) {
+        return this.getIndex() > chunkStatus.getIndex();
     }
 
-    public boolean isOrBefore(ChunkStatus p_347528_) {
-        return this.getIndex() <= p_347528_.getIndex();
+    public boolean isOrBefore(ChunkStatus chunkStatus) {
+        return this.getIndex() <= chunkStatus.getIndex();
     }
 
-    public boolean isBefore(ChunkStatus p_347551_) {
-        return this.getIndex() < p_347551_.getIndex();
+    public boolean isBefore(ChunkStatus chunkStatus) {
+        return this.getIndex() < chunkStatus.getIndex();
     }
 
-    public static ChunkStatus max(ChunkStatus p_347651_, ChunkStatus p_347554_) {
-        return p_347651_.isAfter(p_347554_) ? p_347651_ : p_347554_;
+    public static ChunkStatus max(ChunkStatus first, ChunkStatus second) {
+        return first.isAfter(second) ? first : second;
     }
 
     @Override

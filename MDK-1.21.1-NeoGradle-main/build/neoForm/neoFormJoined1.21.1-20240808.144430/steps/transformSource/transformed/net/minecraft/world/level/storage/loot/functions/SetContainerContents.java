@@ -17,6 +17,10 @@ import net.minecraft.world.level.storage.loot.entries.LootPoolEntry;
 import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
+/**
+ * LootItemFunction that sets the contents of a container such as a chest by setting the {@code BlocKEntityTag} of the stacks.
+ * The contents are based on a list of loot pools.
+ */
 public class SetContainerContents extends LootItemConditionalFunction {
     public static final MapCodec<SetContainerContents> CODEC = RecordCodecBuilder.mapCodec(
         p_340801_ -> commonFields(p_340801_)
@@ -31,10 +35,10 @@ public class SetContainerContents extends LootItemConditionalFunction {
     private final ContainerComponentManipulator<?> component;
     private final List<LootPoolEntryContainer> entries;
 
-    SetContainerContents(List<LootItemCondition> p_193035_, ContainerComponentManipulator<?> p_340836_, List<LootPoolEntryContainer> p_298300_) {
-        super(p_193035_);
-        this.component = p_340836_;
-        this.entries = List.copyOf(p_298300_);
+    SetContainerContents(List<LootItemCondition> conditions, ContainerComponentManipulator<?> component, List<LootPoolEntryContainer> entries) {
+        super(conditions);
+        this.component = component;
+        this.entries = List.copyOf(entries);
     }
 
     @Override
@@ -42,50 +46,56 @@ public class SetContainerContents extends LootItemConditionalFunction {
         return LootItemFunctions.SET_CONTENTS;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_80911_, LootContext p_80912_) {
-        if (p_80911_.isEmpty()) {
-            return p_80911_;
+    public ItemStack run(ItemStack stack, LootContext context) {
+        if (stack.isEmpty()) {
+            return stack;
         } else {
             Stream.Builder<ItemStack> builder = Stream.builder();
             this.entries
                 .forEach(
                     p_80916_ -> p_80916_.expand(
-                            p_80912_, p_287573_ -> p_287573_.createItemStack(LootTable.createStackSplitter(p_80912_.getLevel(), builder::add), p_80912_)
+                            context, p_287573_ -> p_287573_.createItemStack(LootTable.createStackSplitter(context.getLevel(), builder::add), context)
                         )
                 );
-            this.component.setContents(p_80911_, builder.build());
-            return p_80911_;
+            this.component.setContents(stack, builder.build());
+            return stack;
         }
     }
 
+    /**
+     * Validate that this object is used correctly according to the given ValidationContext.
+     */
     @Override
-    public void validate(ValidationContext p_80918_) {
-        super.validate(p_80918_);
+    public void validate(ValidationContext context) {
+        super.validate(context);
 
         for (int i = 0; i < this.entries.size(); i++) {
-            this.entries.get(i).validate(p_80918_.forChild(".entry[" + i + "]"));
+            this.entries.get(i).validate(context.forChild(".entry[" + i + "]"));
         }
     }
 
-    public static SetContainerContents.Builder setContents(ContainerComponentManipulator<?> p_341284_) {
-        return new SetContainerContents.Builder(p_341284_);
+    public static SetContainerContents.Builder setContents(ContainerComponentManipulator<?> component) {
+        return new SetContainerContents.Builder(component);
     }
 
     public static class Builder extends LootItemConditionalFunction.Builder<SetContainerContents.Builder> {
         private final ImmutableList.Builder<LootPoolEntryContainer> entries = ImmutableList.builder();
         private final ContainerComponentManipulator<?> component;
 
-        public Builder(ContainerComponentManipulator<?> p_341204_) {
-            this.component = p_341204_;
+        public Builder(ContainerComponentManipulator<?> component) {
+            this.component = component;
         }
 
         protected SetContainerContents.Builder getThis() {
             return this;
         }
 
-        public SetContainerContents.Builder withEntry(LootPoolEntryContainer.Builder<?> p_80931_) {
-            this.entries.add(p_80931_.build());
+        public SetContainerContents.Builder withEntry(LootPoolEntryContainer.Builder<?> lootEntryBuilder) {
+            this.entries.add(lootEntryBuilder.build());
             return this;
         }
 

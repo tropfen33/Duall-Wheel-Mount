@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class OverreachingTickFix extends DataFix {
-    public OverreachingTickFix(Schema p_207654_) {
-        super(p_207654_, false);
+    public OverreachingTickFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
     @Override
@@ -34,21 +34,21 @@ public class OverreachingTickFix extends DataFix {
     }
 
     private static Dynamic<?> extractOverreachingTicks(
-        Dynamic<?> p_207663_, int p_207664_, int p_207665_, Optional<? extends Dynamic<?>> p_207666_, String p_207667_
+        Dynamic<?> tag, int x, int z, Optional<? extends Dynamic<?>> ticks, String id
     ) {
-        if (p_207666_.isPresent()) {
-            List<? extends Dynamic<?>> list = p_207666_.get().asStream().filter(p_207658_ -> {
+        if (ticks.isPresent()) {
+            List<? extends Dynamic<?>> list = ticks.get().asStream().filter(p_207658_ -> {
                 int i = p_207658_.get("x").asInt(0);
                 int j = p_207658_.get("z").asInt(0);
-                int k = Math.abs(p_207664_ - (i >> 4));
-                int l = Math.abs(p_207665_ - (j >> 4));
+                int k = Math.abs(x - (i >> 4));
+                int l = Math.abs(z - (j >> 4));
                 return (k != 0 || l != 0) && k <= 1 && l <= 1;
             }).toList();
             if (!list.isEmpty()) {
-                p_207663_ = p_207663_.set("UpgradeData", p_207663_.get("UpgradeData").orElseEmptyMap().set(p_207667_, p_207663_.createList(list.stream())));
+                tag = tag.set("UpgradeData", tag.get("UpgradeData").orElseEmptyMap().set(id, tag.createList(list.stream())));
             }
         }
 
-        return p_207663_;
+        return tag;
     }
 }

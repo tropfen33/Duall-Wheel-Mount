@@ -46,66 +46,66 @@ public class SkullBlockRenderer implements BlockEntityRenderer<SkullBlockEntity>
         p_349877_.put(SkullBlock.Types.PLAYER, DefaultPlayerSkin.getDefaultTexture());
     });
 
-    public static Map<SkullBlock.Type, SkullModelBase> createSkullRenderers(EntityModelSet p_173662_) {
+    public static Map<SkullBlock.Type, SkullModelBase> createSkullRenderers(EntityModelSet entityModelSet) {
         Builder<SkullBlock.Type, SkullModelBase> builder = ImmutableMap.builder();
-        builder.put(SkullBlock.Types.SKELETON, new SkullModel(p_173662_.bakeLayer(ModelLayers.SKELETON_SKULL)));
-        builder.put(SkullBlock.Types.WITHER_SKELETON, new SkullModel(p_173662_.bakeLayer(ModelLayers.WITHER_SKELETON_SKULL)));
-        builder.put(SkullBlock.Types.PLAYER, new SkullModel(p_173662_.bakeLayer(ModelLayers.PLAYER_HEAD)));
-        builder.put(SkullBlock.Types.ZOMBIE, new SkullModel(p_173662_.bakeLayer(ModelLayers.ZOMBIE_HEAD)));
-        builder.put(SkullBlock.Types.CREEPER, new SkullModel(p_173662_.bakeLayer(ModelLayers.CREEPER_HEAD)));
-        builder.put(SkullBlock.Types.DRAGON, new DragonHeadModel(p_173662_.bakeLayer(ModelLayers.DRAGON_SKULL)));
-        builder.put(SkullBlock.Types.PIGLIN, new PiglinHeadModel(p_173662_.bakeLayer(ModelLayers.PIGLIN_HEAD)));
-        net.neoforged.fml.ModLoader.postEvent(new net.neoforged.neoforge.client.event.EntityRenderersEvent.CreateSkullModels(builder, p_173662_));
+        builder.put(SkullBlock.Types.SKELETON, new SkullModel(entityModelSet.bakeLayer(ModelLayers.SKELETON_SKULL)));
+        builder.put(SkullBlock.Types.WITHER_SKELETON, new SkullModel(entityModelSet.bakeLayer(ModelLayers.WITHER_SKELETON_SKULL)));
+        builder.put(SkullBlock.Types.PLAYER, new SkullModel(entityModelSet.bakeLayer(ModelLayers.PLAYER_HEAD)));
+        builder.put(SkullBlock.Types.ZOMBIE, new SkullModel(entityModelSet.bakeLayer(ModelLayers.ZOMBIE_HEAD)));
+        builder.put(SkullBlock.Types.CREEPER, new SkullModel(entityModelSet.bakeLayer(ModelLayers.CREEPER_HEAD)));
+        builder.put(SkullBlock.Types.DRAGON, new DragonHeadModel(entityModelSet.bakeLayer(ModelLayers.DRAGON_SKULL)));
+        builder.put(SkullBlock.Types.PIGLIN, new PiglinHeadModel(entityModelSet.bakeLayer(ModelLayers.PIGLIN_HEAD)));
+        net.neoforged.fml.ModLoader.postEvent(new net.neoforged.neoforge.client.event.EntityRenderersEvent.CreateSkullModels(builder, entityModelSet));
         return builder.build();
     }
 
-    public SkullBlockRenderer(BlockEntityRendererProvider.Context p_173660_) {
-        this.modelByType = createSkullRenderers(p_173660_.getModelSet());
+    public SkullBlockRenderer(BlockEntityRendererProvider.Context context) {
+        this.modelByType = createSkullRenderers(context.getModelSet());
     }
 
-    public void render(SkullBlockEntity p_112534_, float p_112535_, PoseStack p_112536_, MultiBufferSource p_112537_, int p_112538_, int p_112539_) {
-        float f = p_112534_.getAnimation(p_112535_);
-        BlockState blockstate = p_112534_.getBlockState();
+    public void render(SkullBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        float f = blockEntity.getAnimation(partialTick);
+        BlockState blockstate = blockEntity.getBlockState();
         boolean flag = blockstate.getBlock() instanceof WallSkullBlock;
         Direction direction = flag ? blockstate.getValue(WallSkullBlock.FACING) : null;
         int i = flag ? RotationSegment.convertToSegment(direction.getOpposite()) : blockstate.getValue(SkullBlock.ROTATION);
         float f1 = RotationSegment.convertToDegrees(i);
         SkullBlock.Type skullblock$type = ((AbstractSkullBlock)blockstate.getBlock()).getType();
         SkullModelBase skullmodelbase = this.modelByType.get(skullblock$type);
-        RenderType rendertype = getRenderType(skullblock$type, p_112534_.getOwnerProfile());
-        renderSkull(direction, f1, f, p_112536_, p_112537_, p_112538_, skullmodelbase, rendertype);
+        RenderType rendertype = getRenderType(skullblock$type, blockEntity.getOwnerProfile());
+        renderSkull(direction, f1, f, poseStack, bufferSource, packedLight, skullmodelbase, rendertype);
     }
 
     public static void renderSkull(
-        @Nullable Direction p_173664_,
-        float p_173665_,
-        float p_173666_,
-        PoseStack p_173667_,
-        MultiBufferSource p_173668_,
-        int p_173669_,
-        SkullModelBase p_173670_,
-        RenderType p_173671_
+        @Nullable Direction direction,
+        float yRot,
+        float mouthAnimation,
+        PoseStack poseStack,
+        MultiBufferSource bufferSource,
+        int packedLight,
+        SkullModelBase model,
+        RenderType renderType
     ) {
-        p_173667_.pushPose();
-        if (p_173664_ == null) {
-            p_173667_.translate(0.5F, 0.0F, 0.5F);
+        poseStack.pushPose();
+        if (direction == null) {
+            poseStack.translate(0.5F, 0.0F, 0.5F);
         } else {
             float f = 0.25F;
-            p_173667_.translate(0.5F - (float)p_173664_.getStepX() * 0.25F, 0.25F, 0.5F - (float)p_173664_.getStepZ() * 0.25F);
+            poseStack.translate(0.5F - (float)direction.getStepX() * 0.25F, 0.25F, 0.5F - (float)direction.getStepZ() * 0.25F);
         }
 
-        p_173667_.scale(-1.0F, -1.0F, 1.0F);
-        VertexConsumer vertexconsumer = p_173668_.getBuffer(p_173671_);
-        p_173670_.setupAnim(p_173666_, p_173665_, 0.0F);
-        p_173670_.renderToBuffer(p_173667_, vertexconsumer, p_173669_, OverlayTexture.NO_OVERLAY);
-        p_173667_.popPose();
+        poseStack.scale(-1.0F, -1.0F, 1.0F);
+        VertexConsumer vertexconsumer = bufferSource.getBuffer(renderType);
+        model.setupAnim(mouthAnimation, yRot, 0.0F);
+        model.renderToBuffer(poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY);
+        poseStack.popPose();
     }
 
-    public static RenderType getRenderType(SkullBlock.Type p_112524_, @Nullable ResolvableProfile p_332722_) {
-        ResourceLocation resourcelocation = SKIN_BY_TYPE.get(p_112524_);
-        if (p_112524_ == SkullBlock.Types.PLAYER && p_332722_ != null) {
+    public static RenderType getRenderType(SkullBlock.Type type, @Nullable ResolvableProfile profile) {
+        ResourceLocation resourcelocation = SKIN_BY_TYPE.get(type);
+        if (type == SkullBlock.Types.PLAYER && profile != null) {
             SkinManager skinmanager = Minecraft.getInstance().getSkinManager();
-            return RenderType.entityTranslucent(skinmanager.getInsecureSkin(p_332722_.gameProfile()).texture());
+            return RenderType.entityTranslucent(skinmanager.getInsecureSkin(profile.gameProfile()).texture());
         } else {
             return RenderType.entityCutoutNoCullZOffset(resourcelocation);
         }

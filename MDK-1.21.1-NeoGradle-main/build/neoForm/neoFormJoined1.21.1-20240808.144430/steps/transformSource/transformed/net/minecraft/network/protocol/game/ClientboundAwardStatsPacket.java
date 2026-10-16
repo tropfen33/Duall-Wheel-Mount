@@ -22,7 +22,10 @@ public record ClientboundAwardStatsPacket(Object2IntMap<Stat<?>> stats) implemen
         return GamePacketTypes.CLIENTBOUND_AWARD_STATS;
     }
 
-    public void handle(ClientGamePacketListener p_131642_) {
-        p_131642_.handleAwardStats(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleAwardStats(this);
     }
 }

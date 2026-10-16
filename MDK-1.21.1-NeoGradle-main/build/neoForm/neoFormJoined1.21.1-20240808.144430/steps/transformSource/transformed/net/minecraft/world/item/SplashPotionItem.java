@@ -8,22 +8,25 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 public class SplashPotionItem extends ThrowablePotionItem {
-    public SplashPotionItem(Item.Properties p_43241_) {
-        super(p_43241_);
+    public SplashPotionItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_43243_, Player p_43244_, InteractionHand p_43245_) {
-        p_43243_.playSound(
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        level.playSound(
             null,
-            p_43244_.getX(),
-            p_43244_.getY(),
-            p_43244_.getZ(),
+            player.getX(),
+            player.getY(),
+            player.getZ(),
             SoundEvents.SPLASH_POTION_THROW,
             SoundSource.PLAYERS,
             0.5F,
-            0.4F / (p_43243_.getRandom().nextFloat() * 0.4F + 0.8F)
+            0.4F / (level.getRandom().nextFloat() * 0.4F + 0.8F)
         );
-        return super.use(p_43243_, p_43244_, p_43245_);
+        return super.use(level, player, hand);
     }
 }

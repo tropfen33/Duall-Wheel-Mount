@@ -25,12 +25,12 @@ public class UnsupportedGraphicsWarningScreen extends Screen {
     private int buttonWidth;
 
     protected UnsupportedGraphicsWarningScreen(
-        Component p_344923_, List<Component> p_344787_, ImmutableList<UnsupportedGraphicsWarningScreen.ButtonOption> p_346327_
+        Component title, List<Component> message, ImmutableList<UnsupportedGraphicsWarningScreen.ButtonOption> buttonOptions
     ) {
-        super(p_344923_);
-        this.message = p_344787_;
-        this.narrationMessage = CommonComponents.joinForNarration(p_344923_, ComponentUtils.formatList(p_344787_, CommonComponents.EMPTY));
-        this.buttonOptions = p_346327_;
+        super(title);
+        this.message = message;
+        this.narrationMessage = CommonComponents.joinForNarration(title, ComponentUtils.formatList(message, CommonComponents.EMPTY));
+        this.buttonOptions = buttonOptions;
     }
 
     @Override
@@ -62,11 +62,19 @@ public class UnsupportedGraphicsWarningScreen extends Screen {
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_345032_, int p_345965_, int p_345120_, float p_346047_) {
-        super.render(p_345032_, p_345965_, p_345120_, p_346047_);
-        p_345032_.drawCenteredString(this.font, this.title, this.width / 2, this.contentTop - 9 * 2, -1);
-        this.messageLines.renderCentered(p_345032_, this.width / 2, this.contentTop);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, this.contentTop - 9 * 2, -1);
+        this.messageLines.renderCentered(guiGraphics, this.width / 2, this.contentTop);
     }
 
     @Override
@@ -79,9 +87,9 @@ public class UnsupportedGraphicsWarningScreen extends Screen {
         final Component message;
         final Button.OnPress onPress;
 
-        public ButtonOption(Component p_346062_, Button.OnPress p_345795_) {
-            this.message = p_346062_;
-            this.onPress = p_345795_;
+        public ButtonOption(Component message, Button.OnPress onPress) {
+            this.message = message;
+            this.onPress = onPress;
         }
     }
 }

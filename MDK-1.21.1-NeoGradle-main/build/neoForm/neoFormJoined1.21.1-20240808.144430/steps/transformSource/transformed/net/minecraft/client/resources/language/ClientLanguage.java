@@ -26,60 +26,60 @@ public class ClientLanguage extends Language {
     private final boolean defaultRightToLeft;
 
     @Deprecated
-    private ClientLanguage(Map<String, String> p_118914_, boolean p_118915_) {
-        this(p_118914_, p_118915_, Map.of());
+    private ClientLanguage(Map<String, String> storage, boolean defaultRightToLeft) {
+        this(storage, defaultRightToLeft, Map.of());
     }
 
-    private ClientLanguage(Map<String, String> p_118914_, boolean p_118915_, Map<String, net.minecraft.network.chat.Component> componentStorage) {
-        this.storage = p_118914_;
-        this.defaultRightToLeft = p_118915_;
+    private ClientLanguage(Map<String, String> storage, boolean defaultRightToLeft, Map<String, net.minecraft.network.chat.Component> componentStorage) {
+        this.storage = storage;
+        this.defaultRightToLeft = defaultRightToLeft;
         this.componentStorage = componentStorage;
     }
 
-    public static ClientLanguage loadFrom(ResourceManager p_265765_, List<String> p_265743_, boolean p_265470_) {
+    public static ClientLanguage loadFrom(ResourceManager resourceManager, List<String> filenames, boolean defaultRightToLeft) {
         Map<String, String> map = Maps.newHashMap();
         Map<String, net.minecraft.network.chat.Component> componentMap = Maps.newHashMap();
 
-        for (String s : p_265743_) {
+        for (String s : filenames) {
             String s1 = String.format(Locale.ROOT, "lang/%s.json", s);
             map.putAll(net.neoforged.fml.i18n.I18nManager.loadTranslations(s));
 
-            for (String s2 : p_265765_.getNamespaces()) {
+            for (String s2 : resourceManager.getNamespaces()) {
                 try {
                     ResourceLocation resourcelocation = ResourceLocation.fromNamespaceAndPath(s2, s1);
-                    appendFrom(s, p_265765_.getResourceStack(resourcelocation), map, componentMap);
+                    appendFrom(s, resourceManager.getResourceStack(resourcelocation), map, componentMap);
                 } catch (Exception exception) {
                     LOGGER.warn("Skipped language file: {}:{} ({})", s2, s1, exception.toString());
                 }
             }
         }
 
-        return new ClientLanguage(ImmutableMap.copyOf(map), p_265470_, ImmutableMap.copyOf(componentMap));
+        return new ClientLanguage(ImmutableMap.copyOf(map), defaultRightToLeft, ImmutableMap.copyOf(componentMap));
     }
 
     @Deprecated
-    private static void appendFrom(String p_235036_, List<Resource> p_235037_, Map<String, String> p_235038_) {
-        appendFrom(p_235036_, p_235037_, p_235038_, new java.util.HashMap<>());
+    private static void appendFrom(String languageName, List<Resource> resources, Map<String, String> destinationMap) {
+        appendFrom(languageName, resources, destinationMap, new java.util.HashMap<>());
     }
 
-    private static void appendFrom(String p_235036_, List<Resource> p_235037_, Map<String, String> p_235038_, Map<String, net.minecraft.network.chat.Component> componentMap) {
-        for (Resource resource : p_235037_) {
+    private static void appendFrom(String languageName, List<Resource> resources, Map<String, String> destinationMap, Map<String, net.minecraft.network.chat.Component> componentMap) {
+        for (Resource resource : resources) {
             try (InputStream inputstream = resource.open()) {
-                Language.loadFromJson(inputstream, p_235038_::put, componentMap::put);
+                Language.loadFromJson(inputstream, destinationMap::put, componentMap::put);
             } catch (IOException ioexception) {
-                LOGGER.warn("Failed to load translations for {} from pack {}", p_235036_, resource.sourcePackId(), ioexception);
+                LOGGER.warn("Failed to load translations for {} from pack {}", languageName, resource.sourcePackId(), ioexception);
             }
         }
     }
 
     @Override
-    public String getOrDefault(String p_118920_, String p_265273_) {
-        return this.storage.getOrDefault(p_118920_, p_265273_);
+    public String getOrDefault(String key, String defaultValue) {
+        return this.storage.getOrDefault(key, defaultValue);
     }
 
     @Override
-    public boolean has(String p_118928_) {
-        return this.storage.containsKey(p_118928_);
+    public boolean has(String id) {
+        return this.storage.containsKey(id);
     }
 
     @Override
@@ -88,8 +88,8 @@ public class ClientLanguage extends Language {
     }
 
     @Override
-    public FormattedCharSequence getVisualOrder(FormattedText p_118925_) {
-        return FormattedBidiReorder.reorder(p_118925_, this.defaultRightToLeft);
+    public FormattedCharSequence getVisualOrder(FormattedText text) {
+        return FormattedBidiReorder.reorder(text, this.defaultRightToLeft);
     }
 
     @Override

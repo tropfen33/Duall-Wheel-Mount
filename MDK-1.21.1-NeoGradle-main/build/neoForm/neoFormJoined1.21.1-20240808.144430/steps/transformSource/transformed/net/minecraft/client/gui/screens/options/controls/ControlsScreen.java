@@ -14,12 +14,12 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class ControlsScreen extends OptionsSubScreen {
     private static final Component TITLE = Component.translatable("controls.title");
 
-    private static OptionInstance<?>[] options(Options p_346138_) {
-        return new OptionInstance[]{p_346138_.toggleCrouch(), p_346138_.toggleSprint(), p_346138_.autoJump(), p_346138_.operatorItemsTab()};
+    private static OptionInstance<?>[] options(Options options) {
+        return new OptionInstance[]{options.toggleCrouch(), options.toggleSprint(), options.autoJump(), options.operatorItemsTab()};
     }
 
-    public ControlsScreen(Screen p_345870_, Options p_345150_) {
-        super(p_345870_, p_345150_, TITLE);
+    public ControlsScreen(Screen lastScreen, Options options) {
+        super(lastScreen, options, TITLE);
     }
 
     @Override

@@ -47,30 +47,30 @@ public class NetherFeatures {
     public static final ResourceKey<ConfiguredFeature<?, ?>> PATCH_FIRE = FeatureUtils.createKey("patch_fire");
     public static final ResourceKey<ConfiguredFeature<?, ?>> PATCH_SOUL_FIRE = FeatureUtils.createKey("patch_soul_fire");
 
-    public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> p_321831_) {
+    public static void bootstrap(BootstrapContext<ConfiguredFeature<?, ?>> context) {
         FeatureUtils.register(
-            p_321831_,
+            context,
             DELTA,
             Feature.DELTA_FEATURE,
             new DeltaFeatureConfiguration(Blocks.LAVA.defaultBlockState(), Blocks.MAGMA_BLOCK.defaultBlockState(), UniformInt.of(3, 7), UniformInt.of(0, 2))
         );
-        FeatureUtils.register(p_321831_, SMALL_BASALT_COLUMNS, Feature.BASALT_COLUMNS, new ColumnFeatureConfiguration(ConstantInt.of(1), UniformInt.of(1, 4)));
+        FeatureUtils.register(context, SMALL_BASALT_COLUMNS, Feature.BASALT_COLUMNS, new ColumnFeatureConfiguration(ConstantInt.of(1), UniformInt.of(1, 4)));
         FeatureUtils.register(
-            p_321831_, LARGE_BASALT_COLUMNS, Feature.BASALT_COLUMNS, new ColumnFeatureConfiguration(UniformInt.of(2, 3), UniformInt.of(5, 10))
+            context, LARGE_BASALT_COLUMNS, Feature.BASALT_COLUMNS, new ColumnFeatureConfiguration(UniformInt.of(2, 3), UniformInt.of(5, 10))
         );
         FeatureUtils.register(
-            p_321831_,
+            context,
             BASALT_BLOBS,
             Feature.REPLACE_BLOBS,
             new ReplaceSphereConfiguration(Blocks.NETHERRACK.defaultBlockState(), Blocks.BASALT.defaultBlockState(), UniformInt.of(3, 7))
         );
         FeatureUtils.register(
-            p_321831_,
+            context,
             BLACKSTONE_BLOBS,
             Feature.REPLACE_BLOBS,
             new ReplaceSphereConfiguration(Blocks.NETHERRACK.defaultBlockState(), Blocks.BLACKSTONE.defaultBlockState(), UniformInt.of(3, 7))
         );
-        FeatureUtils.register(p_321831_, GLOWSTONE_EXTRA, Feature.GLOWSTONE_BLOB);
+        FeatureUtils.register(context, GLOWSTONE_EXTRA, Feature.GLOWSTONE_BLOB);
         WeightedStateProvider weightedstateprovider = new WeightedStateProvider(
             SimpleWeightedRandomList.<BlockState>builder()
                 .add(Blocks.CRIMSON_ROOTS.defaultBlockState(), 87)
@@ -78,10 +78,10 @@ public class NetherFeatures {
                 .add(Blocks.WARPED_FUNGUS.defaultBlockState(), 1)
         );
         FeatureUtils.register(
-            p_321831_, CRIMSON_FOREST_VEGETATION, Feature.NETHER_FOREST_VEGETATION, new NetherForestVegetationConfig(weightedstateprovider, 8, 4)
+            context, CRIMSON_FOREST_VEGETATION, Feature.NETHER_FOREST_VEGETATION, new NetherForestVegetationConfig(weightedstateprovider, 8, 4)
         );
         FeatureUtils.register(
-            p_321831_, CRIMSON_FOREST_VEGETATION_BONEMEAL, Feature.NETHER_FOREST_VEGETATION, new NetherForestVegetationConfig(weightedstateprovider, 3, 1)
+            context, CRIMSON_FOREST_VEGETATION_BONEMEAL, Feature.NETHER_FOREST_VEGETATION, new NetherForestVegetationConfig(weightedstateprovider, 3, 1)
         );
         WeightedStateProvider weightedstateprovider1 = new WeightedStateProvider(
             SimpleWeightedRandomList.<BlockState>builder()
@@ -91,35 +91,35 @@ public class NetherFeatures {
                 .add(Blocks.CRIMSON_FUNGUS.defaultBlockState(), 1)
         );
         FeatureUtils.register(
-            p_321831_, WARPED_FOREST_VEGETION, Feature.NETHER_FOREST_VEGETATION, new NetherForestVegetationConfig(weightedstateprovider1, 8, 4)
+            context, WARPED_FOREST_VEGETION, Feature.NETHER_FOREST_VEGETATION, new NetherForestVegetationConfig(weightedstateprovider1, 8, 4)
         );
         FeatureUtils.register(
-            p_321831_, WARPED_FOREST_VEGETATION_BONEMEAL, Feature.NETHER_FOREST_VEGETATION, new NetherForestVegetationConfig(weightedstateprovider1, 3, 1)
+            context, WARPED_FOREST_VEGETATION_BONEMEAL, Feature.NETHER_FOREST_VEGETATION, new NetherForestVegetationConfig(weightedstateprovider1, 3, 1)
         );
         FeatureUtils.register(
-            p_321831_,
+            context,
             NETHER_SPROUTS,
             Feature.NETHER_FOREST_VEGETATION,
             new NetherForestVegetationConfig(BlockStateProvider.simple(Blocks.NETHER_SPROUTS), 8, 4)
         );
         FeatureUtils.register(
-            p_321831_,
+            context,
             NETHER_SPROUTS_BONEMEAL,
             Feature.NETHER_FOREST_VEGETATION,
             new NetherForestVegetationConfig(BlockStateProvider.simple(Blocks.NETHER_SPROUTS), 3, 1)
         );
-        FeatureUtils.register(p_321831_, TWISTING_VINES, Feature.TWISTING_VINES, new TwistingVinesConfig(8, 4, 8));
-        FeatureUtils.register(p_321831_, TWISTING_VINES_BONEMEAL, Feature.TWISTING_VINES, new TwistingVinesConfig(3, 1, 2));
-        FeatureUtils.register(p_321831_, WEEPING_VINES, Feature.WEEPING_VINES);
+        FeatureUtils.register(context, TWISTING_VINES, Feature.TWISTING_VINES, new TwistingVinesConfig(8, 4, 8));
+        FeatureUtils.register(context, TWISTING_VINES_BONEMEAL, Feature.TWISTING_VINES, new TwistingVinesConfig(3, 1, 2));
+        FeatureUtils.register(context, WEEPING_VINES, Feature.WEEPING_VINES);
         FeatureUtils.register(
-            p_321831_,
+            context,
             PATCH_CRIMSON_ROOTS,
             Feature.RANDOM_PATCH,
             FeatureUtils.simplePatchConfiguration(Feature.SIMPLE_BLOCK, new SimpleBlockConfiguration(BlockStateProvider.simple(Blocks.CRIMSON_ROOTS)))
         );
-        FeatureUtils.register(p_321831_, BASALT_PILLAR, Feature.BASALT_PILLAR);
+        FeatureUtils.register(context, BASALT_PILLAR, Feature.BASALT_PILLAR);
         FeatureUtils.register(
-            p_321831_,
+            context,
             SPRING_LAVA_NETHER,
             Feature.SPRING,
             new SpringConfiguration(
@@ -131,19 +131,19 @@ public class NetherFeatures {
             )
         );
         FeatureUtils.register(
-            p_321831_,
+            context,
             SPRING_NETHER_CLOSED,
             Feature.SPRING,
             new SpringConfiguration(Fluids.LAVA.defaultFluidState(), false, 5, 0, HolderSet.direct(Block::builtInRegistryHolder, Blocks.NETHERRACK))
         );
         FeatureUtils.register(
-            p_321831_,
+            context,
             SPRING_NETHER_OPEN,
             Feature.SPRING,
             new SpringConfiguration(Fluids.LAVA.defaultFluidState(), false, 4, 1, HolderSet.direct(Block::builtInRegistryHolder, Blocks.NETHERRACK))
         );
         FeatureUtils.register(
-            p_321831_,
+            context,
             PATCH_FIRE,
             Feature.RANDOM_PATCH,
             FeatureUtils.simplePatchConfiguration(
@@ -151,7 +151,7 @@ public class NetherFeatures {
             )
         );
         FeatureUtils.register(
-            p_321831_,
+            context,
             PATCH_SOUL_FIRE,
             Feature.RANDOM_PATCH,
             FeatureUtils.simplePatchConfiguration(

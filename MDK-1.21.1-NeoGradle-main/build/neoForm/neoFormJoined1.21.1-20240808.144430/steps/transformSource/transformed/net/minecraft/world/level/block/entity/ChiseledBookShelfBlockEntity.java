@@ -27,13 +27,13 @@ public class ChiseledBookShelfBlockEntity extends BlockEntity implements Contain
     private final NonNullList<ItemStack> items = NonNullList.withSize(6, ItemStack.EMPTY);
     private int lastInteractedSlot = -1;
 
-    public ChiseledBookShelfBlockEntity(BlockPos p_249541_, BlockState p_251752_) {
-        super(BlockEntityType.CHISELED_BOOKSHELF, p_249541_, p_251752_);
+    public ChiseledBookShelfBlockEntity(BlockPos pos, BlockState state) {
+        super(BlockEntityType.CHISELED_BOOKSHELF, pos, state);
     }
 
-    private void updateState(int p_261806_) {
-        if (p_261806_ >= 0 && p_261806_ < 6) {
-            this.lastInteractedSlot = p_261806_;
+    private void updateState(int slot) {
+        if (slot >= 0 && slot < 6) {
+            this.lastInteractedSlot = slot;
             BlockState blockstate = this.getBlockState();
 
             for (int i = 0; i < ChiseledBookShelfBlock.SLOT_OCCUPIED_PROPERTIES.size(); i++) {
@@ -45,23 +45,23 @@ public class ChiseledBookShelfBlockEntity extends BlockEntity implements Contain
             Objects.requireNonNull(this.level).setBlock(this.worldPosition, blockstate, 3);
             this.level.gameEvent(GameEvent.BLOCK_CHANGE, this.worldPosition, GameEvent.Context.of(blockstate));
         } else {
-            LOGGER.error("Expected slot 0-5, got {}", p_261806_);
+            LOGGER.error("Expected slot 0-5, got {}", slot);
         }
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_338883_, HolderLookup.Provider p_338454_) {
-        super.loadAdditional(p_338883_, p_338454_);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
         this.items.clear();
-        ContainerHelper.loadAllItems(p_338883_, this.items, p_338454_);
-        this.lastInteractedSlot = p_338883_.getInt("last_interacted_slot");
+        ContainerHelper.loadAllItems(tag, this.items, registries);
+        this.lastInteractedSlot = tag.getInt("last_interacted_slot");
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_251872_, HolderLookup.Provider p_323649_) {
-        super.saveAdditional(p_251872_, p_323649_);
-        ContainerHelper.saveAllItems(p_251872_, this.items, true, p_323649_);
-        p_251872_.putInt("last_interacted_slot", this.lastInteractedSlot);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        ContainerHelper.saveAllItems(tag, this.items, true, registries);
+        tag.putInt("last_interacted_slot", this.lastInteractedSlot);
     }
 
     public int count() {
@@ -83,44 +83,63 @@ public class ChiseledBookShelfBlockEntity extends BlockEntity implements Contain
         return this.items.stream().allMatch(ItemStack::isEmpty);
     }
 
+    /**
+     * Returns the stack in the given slot.
+     */
     @Override
-    public ItemStack getItem(int p_256203_) {
-        return this.items.get(p_256203_);
+    public ItemStack getItem(int slot) {
+        return this.items.get(slot);
     }
 
+    /**
+     * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
+     */
     @Override
-    public ItemStack removeItem(int p_255828_, int p_255673_) {
-        ItemStack itemstack = Objects.requireNonNullElse(this.items.get(p_255828_), ItemStack.EMPTY);
-        this.items.set(p_255828_, ItemStack.EMPTY);
+    public ItemStack removeItem(int slot, int amount) {
+        ItemStack itemstack = Objects.requireNonNullElse(this.items.get(slot), ItemStack.EMPTY);
+        this.items.set(slot, ItemStack.EMPTY);
         if (!itemstack.isEmpty()) {
-            this.updateState(p_255828_);
+            this.updateState(slot);
         }
 
         return itemstack;
     }
 
+    /**
+     * Removes a stack from the given slot and returns it.
+     */
     @Override
-    public ItemStack removeItemNoUpdate(int p_255874_) {
-        return this.removeItem(p_255874_, 1);
+    public ItemStack removeItemNoUpdate(int slot) {
+        return this.removeItem(slot, 1);
     }
 
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
     @Override
-    public void setItem(int p_256610_, ItemStack p_255789_) {
-        if (p_255789_.is(ItemTags.BOOKSHELF_BOOKS)) {
-            this.items.set(p_256610_, p_255789_);
-            this.updateState(p_256610_);
-        } else if (p_255789_.isEmpty()) {
-            this.removeItem(p_256610_, 1);
+    public void setItem(int slot, ItemStack stack) {
+        if (stack.is(ItemTags.BOOKSHELF_BOOKS)) {
+            this.items.set(slot, stack);
+            this.updateState(slot);
+        } else if (stack.isEmpty()) {
+            this.removeItem(slot, 1);
         }
     }
 
+    /**
+     * {@return {@code true} if the given stack can be extracted into the target inventory}
+     *
+     * @param target the container into which the item should be extracted
+     * @param slot   the slot from which to extract the item
+     * @param stack  the item to extract
+     */
     @Override
-    public boolean canTakeItem(Container p_282172_, int p_281387_, ItemStack p_283257_) {
-        return p_282172_.hasAnyMatching(
+    public boolean canTakeItem(Container target, int slot, ItemStack stack) {
+        return target.hasAnyMatching(
             p_335300_ -> p_335300_.isEmpty()
                     ? true
-                    : ItemStack.isSameItemSameComponents(p_283257_, p_335300_)
-                        && p_335300_.getCount() + p_283257_.getCount() <= p_282172_.getMaxStackSize(p_335300_)
+                    : ItemStack.isSameItemSameComponents(stack, p_335300_)
+                        && p_335300_.getCount() + stack.getCount() <= target.getMaxStackSize(p_335300_)
         );
     }
 
@@ -129,14 +148,20 @@ public class ChiseledBookShelfBlockEntity extends BlockEntity implements Contain
         return 1;
     }
 
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
     @Override
-    public boolean stillValid(Player p_256481_) {
-        return Container.stillValidBlockEntity(this, p_256481_);
+    public boolean stillValid(Player player) {
+        return Container.stillValidBlockEntity(this, player);
     }
 
+    /**
+     * Returns {@code true} if automation is allowed to insert the given stack (ignoring stack size) into the given slot. For guis use Slot.isItemValid
+     */
     @Override
-    public boolean canPlaceItem(int p_256567_, ItemStack p_255922_) {
-        return p_255922_.is(ItemTags.BOOKSHELF_BOOKS) && this.getItem(p_256567_).isEmpty() && p_255922_.getCount() == this.getMaxStackSize();
+    public boolean canPlaceItem(int slot, ItemStack stack) {
+        return stack.is(ItemTags.BOOKSHELF_BOOKS) && this.getItem(slot).isEmpty() && stack.getCount() == this.getMaxStackSize();
     }
 
     public int getLastInteractedSlot() {
@@ -144,19 +169,19 @@ public class ChiseledBookShelfBlockEntity extends BlockEntity implements Contain
     }
 
     @Override
-    protected void applyImplicitComponents(BlockEntity.DataComponentInput p_338565_) {
-        super.applyImplicitComponents(p_338565_);
-        p_338565_.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).copyInto(this.items);
+    protected void applyImplicitComponents(BlockEntity.DataComponentInput componentInput) {
+        super.applyImplicitComponents(componentInput);
+        componentInput.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).copyInto(this.items);
     }
 
     @Override
-    protected void collectImplicitComponents(DataComponentMap.Builder p_338540_) {
-        super.collectImplicitComponents(p_338540_);
-        p_338540_.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(this.items));
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        components.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(this.items));
     }
 
     @Override
-    public void removeComponentsFromTag(CompoundTag p_332725_) {
-        p_332725_.remove("Items");
+    public void removeComponentsFromTag(CompoundTag tag) {
+        tag.remove("Items");
     }
 }

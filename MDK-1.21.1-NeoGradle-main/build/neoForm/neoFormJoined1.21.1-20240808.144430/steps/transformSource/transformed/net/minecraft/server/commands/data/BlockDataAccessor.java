@@ -43,15 +43,15 @@ public class BlockDataAccessor implements DataAccessor {
     private final BlockEntity entity;
     private final BlockPos pos;
 
-    public BlockDataAccessor(BlockEntity p_139297_, BlockPos p_139298_) {
-        this.entity = p_139297_;
-        this.pos = p_139298_;
+    public BlockDataAccessor(BlockEntity entity, BlockPos pos) {
+        this.entity = entity;
+        this.pos = pos;
     }
 
     @Override
-    public void setData(CompoundTag p_139307_) {
+    public void setData(CompoundTag other) {
         BlockState blockstate = this.entity.getLevel().getBlockState(this.pos);
-        this.entity.loadWithComponents(p_139307_, this.entity.getLevel().registryAccess());
+        this.entity.loadWithComponents(other, this.entity.getLevel().registryAccess());
         this.entity.setChanged();
         this.entity.getLevel().sendBlockUpdated(this.pos, blockstate, blockstate, 3);
     }
@@ -66,21 +66,27 @@ public class BlockDataAccessor implements DataAccessor {
         return Component.translatable("commands.data.block.modified", this.pos.getX(), this.pos.getY(), this.pos.getZ());
     }
 
+    /**
+     * Gets the message used as a result of querying the given NBT (both for /data get and /data get path)
+     */
     @Override
-    public Component getPrintSuccess(Tag p_139309_) {
-        return Component.translatable("commands.data.block.query", this.pos.getX(), this.pos.getY(), this.pos.getZ(), NbtUtils.toPrettyComponent(p_139309_));
+    public Component getPrintSuccess(Tag nbt) {
+        return Component.translatable("commands.data.block.query", this.pos.getX(), this.pos.getY(), this.pos.getZ(), NbtUtils.toPrettyComponent(nbt));
     }
 
+    /**
+     * Gets the message used as a result of querying the given path with a scale.
+     */
     @Override
-    public Component getPrintSuccess(NbtPathArgument.NbtPath p_139301_, double p_139302_, int p_139303_) {
+    public Component getPrintSuccess(NbtPathArgument.NbtPath path, double scale, int value) {
         return Component.translatable(
             "commands.data.block.get",
-            p_139301_.asString(),
+            path.asString(),
             this.pos.getX(),
             this.pos.getY(),
             this.pos.getZ(),
-            String.format(Locale.ROOT, "%.2f", p_139302_),
-            p_139303_
+            String.format(Locale.ROOT, "%.2f", scale),
+            value
         );
     }
 }

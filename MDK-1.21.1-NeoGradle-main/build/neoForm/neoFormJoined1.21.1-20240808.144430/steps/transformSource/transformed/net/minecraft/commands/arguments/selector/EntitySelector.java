@@ -55,33 +55,33 @@ public class EntitySelector {
     private final boolean usesSelector;
 
     public EntitySelector(
-        int p_121125_,
-        boolean p_121126_,
-        boolean p_121127_,
-        List<Predicate<Entity>> p_352913_,
-        MinMaxBounds.Doubles p_121129_,
-        Function<Vec3, Vec3> p_121130_,
-        @Nullable AABB p_121131_,
-        BiConsumer<Vec3, List<? extends Entity>> p_121132_,
-        boolean p_121133_,
-        @Nullable String p_121134_,
-        @Nullable UUID p_121135_,
-        @Nullable EntityType<?> p_121136_,
-        boolean p_121137_
+        int maxResults,
+        boolean includesEntities,
+        boolean worldLimited,
+        List<Predicate<Entity>> contextFreePredicates,
+        MinMaxBounds.Doubles range,
+        Function<Vec3, Vec3> position,
+        @Nullable AABB aabb,
+        BiConsumer<Vec3, List<? extends Entity>> order,
+        boolean currentEntity,
+        @Nullable String playerName,
+        @Nullable UUID entityUUID,
+        @Nullable EntityType<?> type,
+        boolean usesSelector
     ) {
-        this.maxResults = p_121125_;
-        this.includesEntities = p_121126_;
-        this.worldLimited = p_121127_;
-        this.contextFreePredicates = p_352913_;
-        this.range = p_121129_;
-        this.position = p_121130_;
-        this.aabb = p_121131_;
-        this.order = p_121132_;
-        this.currentEntity = p_121133_;
-        this.playerName = p_121134_;
-        this.entityUUID = p_121135_;
-        this.type = (EntityTypeTest<Entity, ?>)(p_121136_ == null ? ANY_TYPE : p_121136_);
-        this.usesSelector = p_121137_;
+        this.maxResults = maxResults;
+        this.includesEntities = includesEntities;
+        this.worldLimited = worldLimited;
+        this.contextFreePredicates = contextFreePredicates;
+        this.range = range;
+        this.position = position;
+        this.aabb = aabb;
+        this.order = order;
+        this.currentEntity = currentEntity;
+        this.playerName = playerName;
+        this.entityUUID = entityUUID;
+        this.type = (EntityTypeTest<Entity, ?>)(type == null ? ANY_TYPE : type);
+        this.usesSelector = usesSelector;
     }
 
     public int getMaxResults() {
@@ -104,15 +104,15 @@ public class EntitySelector {
         return this.usesSelector;
     }
 
-    private void checkPermissions(CommandSourceStack p_121169_) throws CommandSyntaxException {
-        if (this.usesSelector && !net.neoforged.neoforge.common.CommonHooks.canUseEntitySelectors(p_121169_)) {
+    private void checkPermissions(CommandSourceStack source) throws CommandSyntaxException {
+        if (this.usesSelector && !net.neoforged.neoforge.common.CommonHooks.canUseEntitySelectors(source)) {
             throw EntityArgument.ERROR_SELECTORS_NOT_ALLOWED.create();
         }
     }
 
-    public Entity findSingleEntity(CommandSourceStack p_121140_) throws CommandSyntaxException {
-        this.checkPermissions(p_121140_);
-        List<? extends Entity> list = this.findEntities(p_121140_);
+    public Entity findSingleEntity(CommandSourceStack source) throws CommandSyntaxException {
+        this.checkPermissions(source);
+        List<? extends Entity> list = this.findEntities(source);
         if (list.isEmpty()) {
             throw EntityArgument.NO_ENTITIES_FOUND.create();
         } else if (list.size() > 1) {
@@ -122,18 +122,18 @@ public class EntitySelector {
         }
     }
 
-    public List<? extends Entity> findEntities(CommandSourceStack p_121161_) throws CommandSyntaxException {
-        this.checkPermissions(p_121161_);
+    public List<? extends Entity> findEntities(CommandSourceStack source) throws CommandSyntaxException {
+        this.checkPermissions(source);
         if (!this.includesEntities) {
-            return this.findPlayers(p_121161_);
+            return this.findPlayers(source);
         } else if (this.playerName != null) {
-            ServerPlayer serverplayer = p_121161_.getServer().getPlayerList().getPlayerByName(this.playerName);
+            ServerPlayer serverplayer = source.getServer().getPlayerList().getPlayerByName(this.playerName);
             return serverplayer == null ? List.of() : List.of(serverplayer);
         } else if (this.entityUUID != null) {
-            for (ServerLevel serverlevel1 : p_121161_.getServer().getAllLevels()) {
+            for (ServerLevel serverlevel1 : source.getServer().getAllLevels()) {
                 Entity entity = serverlevel1.getEntity(this.entityUUID);
                 if (entity != null) {
-                    if (entity.getType().isEnabled(p_121161_.enabledFeatures())) {
+                    if (entity.getType().isEnabled(source.enabledFeatures())) {
                         return List.of(entity);
                     }
                     break;
@@ -142,18 +142,18 @@ public class EntitySelector {
 
             return List.of();
         } else {
-            Vec3 vec3 = this.position.apply(p_121161_.getPosition());
+            Vec3 vec3 = this.position.apply(source.getPosition());
             AABB aabb = this.getAbsoluteAabb(vec3);
             if (this.currentEntity) {
                 Predicate<Entity> predicate1 = this.getPredicate(vec3, aabb, null);
-                return p_121161_.getEntity() != null && predicate1.test(p_121161_.getEntity()) ? List.of(p_121161_.getEntity()) : List.of();
+                return source.getEntity() != null && predicate1.test(source.getEntity()) ? List.of(source.getEntity()) : List.of();
             } else {
-                Predicate<Entity> predicate = this.getPredicate(vec3, aabb, p_121161_.enabledFeatures());
+                Predicate<Entity> predicate = this.getPredicate(vec3, aabb, source.enabledFeatures());
                 List<Entity> list = new ObjectArrayList<>();
                 if (this.isWorldLimited()) {
-                    this.addEntities(list, p_121161_.getLevel(), aabb, predicate);
+                    this.addEntities(list, source.getLevel(), aabb, predicate);
                 } else {
-                    for (ServerLevel serverlevel : p_121161_.getServer().getAllLevels()) {
+                    for (ServerLevel serverlevel : source.getServer().getAllLevels()) {
                         this.addEntities(list, serverlevel, aabb, predicate);
                     }
                 }
@@ -163,13 +163,13 @@ public class EntitySelector {
         }
     }
 
-    private void addEntities(List<Entity> p_121155_, ServerLevel p_121156_, @Nullable AABB p_352947_, Predicate<Entity> p_121158_) {
+    private void addEntities(List<Entity> entities, ServerLevel level, @Nullable AABB box, Predicate<Entity> predicate) {
         int i = this.getResultLimit();
-        if (p_121155_.size() < i) {
-            if (p_352947_ != null) {
-                p_121156_.getEntities(this.type, p_352947_, p_121158_, p_121155_, i);
+        if (entities.size() < i) {
+            if (box != null) {
+                level.getEntities(this.type, box, predicate, entities, i);
             } else {
-                p_121156_.getEntities(this.type, p_121158_, p_121155_, i);
+                level.getEntities(this.type, predicate, entities, i);
             }
         }
     }
@@ -178,9 +178,9 @@ public class EntitySelector {
         return this.order == ORDER_ARBITRARY ? this.maxResults : Integer.MAX_VALUE;
     }
 
-    public ServerPlayer findSinglePlayer(CommandSourceStack p_121164_) throws CommandSyntaxException {
-        this.checkPermissions(p_121164_);
-        List<ServerPlayer> list = this.findPlayers(p_121164_);
+    public ServerPlayer findSinglePlayer(CommandSourceStack source) throws CommandSyntaxException {
+        this.checkPermissions(source);
+        List<ServerPlayer> list = this.findPlayers(source);
         if (list.size() != 1) {
             throw EntityArgument.NO_PLAYERS_FOUND.create();
         } else {
@@ -188,20 +188,20 @@ public class EntitySelector {
         }
     }
 
-    public List<ServerPlayer> findPlayers(CommandSourceStack p_121167_) throws CommandSyntaxException {
-        this.checkPermissions(p_121167_);
+    public List<ServerPlayer> findPlayers(CommandSourceStack source) throws CommandSyntaxException {
+        this.checkPermissions(source);
         if (this.playerName != null) {
-            ServerPlayer serverplayer2 = p_121167_.getServer().getPlayerList().getPlayerByName(this.playerName);
+            ServerPlayer serverplayer2 = source.getServer().getPlayerList().getPlayerByName(this.playerName);
             return serverplayer2 == null ? List.of() : List.of(serverplayer2);
         } else if (this.entityUUID != null) {
-            ServerPlayer serverplayer1 = p_121167_.getServer().getPlayerList().getPlayer(this.entityUUID);
+            ServerPlayer serverplayer1 = source.getServer().getPlayerList().getPlayer(this.entityUUID);
             return serverplayer1 == null ? List.of() : List.of(serverplayer1);
         } else {
-            Vec3 vec3 = this.position.apply(p_121167_.getPosition());
+            Vec3 vec3 = this.position.apply(source.getPosition());
             AABB aabb = this.getAbsoluteAabb(vec3);
             Predicate<Entity> predicate = this.getPredicate(vec3, aabb, null);
             if (this.currentEntity) {
-                if (p_121167_.getEntity() instanceof ServerPlayer serverplayer3 && predicate.test(serverplayer3)) {
+                if (source.getEntity() instanceof ServerPlayer serverplayer3 && predicate.test(serverplayer3)) {
                     return List.of(serverplayer3);
                 }
 
@@ -210,11 +210,11 @@ public class EntitySelector {
                 int i = this.getResultLimit();
                 List<ServerPlayer> list;
                 if (this.isWorldLimited()) {
-                    list = p_121167_.getLevel().getPlayers(predicate, i);
+                    list = source.getLevel().getPlayers(predicate, i);
                 } else {
                     list = new ObjectArrayList<>();
 
-                    for (ServerPlayer serverplayer : p_121167_.getServer().getPlayerList().getPlayers()) {
+                    for (ServerPlayer serverplayer : source.getServer().getPlayerList().getPlayers()) {
                         if (predicate.test(serverplayer)) {
                             list.add(serverplayer);
                             if (list.size() >= i) {
@@ -230,13 +230,13 @@ public class EntitySelector {
     }
 
     @Nullable
-    private AABB getAbsoluteAabb(Vec3 p_352924_) {
-        return this.aabb != null ? this.aabb.move(p_352924_) : null;
+    private AABB getAbsoluteAabb(Vec3 pos) {
+        return this.aabb != null ? this.aabb.move(pos) : null;
     }
 
-    private Predicate<Entity> getPredicate(Vec3 p_121145_, @Nullable AABB p_352908_, @Nullable FeatureFlagSet p_352911_) {
-        boolean flag = p_352911_ != null;
-        boolean flag1 = p_352908_ != null;
+    private Predicate<Entity> getPredicate(Vec3 pos, @Nullable AABB box, @Nullable FeatureFlagSet enabledFeatures) {
+        boolean flag = enabledFeatures != null;
+        boolean flag1 = box != null;
         boolean flag2 = !this.range.isAny();
         int i = (flag ? 1 : 0) + (flag1 ? 1 : 0) + (flag2 ? 1 : 0);
         List<Predicate<Entity>> list;
@@ -246,15 +246,15 @@ public class EntitySelector {
             List<Predicate<Entity>> list1 = new ObjectArrayList<>(this.contextFreePredicates.size() + i);
             list1.addAll(this.contextFreePredicates);
             if (flag) {
-                list1.add(p_352684_ -> p_352684_.getType().isEnabled(p_352911_));
+                list1.add(p_352684_ -> p_352684_.getType().isEnabled(enabledFeatures));
             }
 
             if (flag1) {
-                list1.add(p_121143_ -> p_352908_.intersects(p_121143_.getBoundingBox()));
+                list1.add(p_121143_ -> box.intersects(p_121143_.getBoundingBox()));
             }
 
             if (flag2) {
-                list1.add(p_121148_ -> this.range.matchesSqr(p_121148_.distanceToSqr(p_121145_)));
+                list1.add(p_121148_ -> this.range.matchesSqr(p_121148_.distanceToSqr(pos)));
             }
 
             list = list1;
@@ -263,15 +263,15 @@ public class EntitySelector {
         return Util.allOf(list);
     }
 
-    private <T extends Entity> List<T> sortAndLimit(Vec3 p_121150_, List<T> p_121151_) {
-        if (p_121151_.size() > 1) {
-            this.order.accept(p_121150_, p_121151_);
+    private <T extends Entity> List<T> sortAndLimit(Vec3 pos, List<T> entities) {
+        if (entities.size() > 1) {
+            this.order.accept(pos, entities);
         }
 
-        return p_121151_.subList(0, Math.min(this.maxResults, p_121151_.size()));
+        return entities.subList(0, Math.min(this.maxResults, entities.size()));
     }
 
-    public static Component joinNames(List<? extends Entity> p_175104_) {
-        return ComponentUtils.formatList(p_175104_, Entity::getDisplayName);
+    public static Component joinNames(List<? extends Entity> names) {
+        return ComponentUtils.formatList(names, Entity::getDisplayName);
     }
 }

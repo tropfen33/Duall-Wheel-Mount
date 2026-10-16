@@ -37,10 +37,10 @@ public class ConfirmExperimentalFeaturesScreen extends Screen {
     final Collection<Pack> enabledPacks;
     private final GridLayout layout = new GridLayout().columnSpacing(10).rowSpacing(20);
 
-    public ConfirmExperimentalFeaturesScreen(Collection<Pack> p_252011_, BooleanConsumer p_250152_) {
+    public ConfirmExperimentalFeaturesScreen(Collection<Pack> enabledPacks, BooleanConsumer callback) {
         super(TITLE);
-        this.enabledPacks = p_252011_;
-        this.callback = p_250152_;
+        this.enabledPacks = enabledPacks;
+        this.callback = callback;
     }
 
     @Override
@@ -123,12 +123,12 @@ public class ConfirmExperimentalFeaturesScreen extends Screen {
 
         @OnlyIn(Dist.CLIENT)
         class PackList extends ObjectSelectionList<ConfirmExperimentalFeaturesScreen.DetailsScreen.PackListEntry> {
-            public PackList(Minecraft p_249776_, Collection<Pack> p_251183_) {
+            public PackList(Minecraft minecraft, Collection<Pack> enabledPacks) {
                 super(
-                    p_249776_, DetailsScreen.this.width, DetailsScreen.this.layout.getContentHeight(), DetailsScreen.this.layout.getHeaderHeight(), (9 + 2) * 3
+                    minecraft, DetailsScreen.this.width, DetailsScreen.this.layout.getContentHeight(), DetailsScreen.this.layout.getHeaderHeight(), (9 + 2) * 3
                 );
 
-                for (Pack pack : p_251183_) {
+                for (Pack pack : enabledPacks) {
                     String s = FeatureFlags.printMissingFlags(FeatureFlags.VANILLA_SET, pack.getRequestedFeatures());
                     if (!s.isEmpty()) {
                         Component component = ComponentUtils.mergeStyles(pack.getTitle().copy(), Style.EMPTY.withBold(true));
@@ -154,27 +154,27 @@ public class ConfirmExperimentalFeaturesScreen extends Screen {
             private final Component message;
             private final MultiLineLabel splitMessage;
 
-            PackListEntry(Component p_250724_, Component p_248883_, MultiLineLabel p_250949_) {
-                this.packId = p_250724_;
-                this.message = p_248883_;
-                this.splitMessage = p_250949_;
+            PackListEntry(Component packId, Component message, MultiLineLabel splitMessage) {
+                this.packId = packId;
+                this.message = message;
+                this.splitMessage = splitMessage;
             }
 
             @Override
             public void render(
-                GuiGraphics p_282199_,
-                int p_282727_,
-                int p_283089_,
-                int p_283116_,
-                int p_281268_,
-                int p_283038_,
-                int p_283070_,
-                int p_282448_,
-                boolean p_281417_,
-                float p_283226_
+                GuiGraphics guiGraphics,
+                int index,
+                int top,
+                int left,
+                int width,
+                int height,
+                int mouseX,
+                int mouseY,
+                boolean hovering,
+                float partialTick
             ) {
-                p_282199_.drawString(DetailsScreen.this.minecraft.font, this.packId, p_283116_, p_283089_, -1);
-                this.splitMessage.renderLeftAligned(p_282199_, p_283116_, p_283089_ + 12, 9, -1);
+                guiGraphics.drawString(DetailsScreen.this.minecraft.font, this.packId, left, top, -1);
+                this.splitMessage.renderLeftAligned(guiGraphics, left, top + 12, 9, -1);
             }
 
             @Override

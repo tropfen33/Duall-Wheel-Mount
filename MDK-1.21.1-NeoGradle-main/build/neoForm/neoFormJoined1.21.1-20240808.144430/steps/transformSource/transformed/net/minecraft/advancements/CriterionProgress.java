@@ -11,8 +11,8 @@ public class CriterionProgress {
     public CriterionProgress() {
     }
 
-    public CriterionProgress(Instant p_301149_) {
-        this.obtained = p_301149_;
+    public CriterionProgress(Instant obtained) {
+        this.obtained = obtained;
     }
 
     public boolean isDone() {
@@ -37,13 +37,13 @@ public class CriterionProgress {
         return "CriterionProgress{obtained=" + (this.obtained == null ? "false" : this.obtained) + "}";
     }
 
-    public void serializeToNetwork(FriendlyByteBuf p_12915_) {
-        p_12915_.writeNullable(this.obtained, FriendlyByteBuf::writeInstant);
+    public void serializeToNetwork(FriendlyByteBuf buffer) {
+        buffer.writeNullable(this.obtained, FriendlyByteBuf::writeInstant);
     }
 
-    public static CriterionProgress fromNetwork(FriendlyByteBuf p_12918_) {
+    public static CriterionProgress fromNetwork(FriendlyByteBuf buffer) {
         CriterionProgress criterionprogress = new CriterionProgress();
-        criterionprogress.obtained = p_12918_.readNullable(FriendlyByteBuf::readInstant);
+        criterionprogress.obtained = buffer.readNullable(FriendlyByteBuf::readInstant);
         return criterionprogress;
     }
 }

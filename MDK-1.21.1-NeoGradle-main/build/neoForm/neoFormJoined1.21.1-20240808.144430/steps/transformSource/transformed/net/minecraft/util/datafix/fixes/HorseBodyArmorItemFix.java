@@ -9,18 +9,18 @@ public class HorseBodyArmorItemFix extends NamedEntityWriteReadFix {
     private final String previousBodyArmorTag;
     private final boolean clearArmorItems;
 
-    public HorseBodyArmorItemFix(Schema p_323857_, String p_324552_, String p_324464_, boolean p_342009_) {
-        super(p_323857_, true, "Horse armor fix for " + p_324552_, References.ENTITY, p_324552_);
-        this.previousBodyArmorTag = p_324464_;
-        this.clearArmorItems = p_342009_;
+    public HorseBodyArmorItemFix(Schema outputSchema, String entityName, String previousBodyArmorTag, boolean clearArmorItems) {
+        super(outputSchema, true, "Horse armor fix for " + entityName, References.ENTITY, entityName);
+        this.previousBodyArmorTag = previousBodyArmorTag;
+        this.clearArmorItems = clearArmorItems;
     }
 
     @Override
-    protected <T> Dynamic<T> fix(Dynamic<T> p_324321_) {
-        Optional<? extends Dynamic<?>> optional = p_324321_.get(this.previousBodyArmorTag).result();
+    protected <T> Dynamic<T> fix(Dynamic<T> tag) {
+        Optional<? extends Dynamic<?>> optional = tag.get(this.previousBodyArmorTag).result();
         if (optional.isPresent()) {
             Dynamic<?> dynamic = (Dynamic<?>)optional.get();
-            Dynamic<T> dynamic1 = p_324321_.remove(this.previousBodyArmorTag);
+            Dynamic<T> dynamic1 = tag.remove(this.previousBodyArmorTag);
             if (this.clearArmorItems) {
                 dynamic1 = dynamic1.update(
                     "ArmorItems",
@@ -37,9 +37,9 @@ public class HorseBodyArmorItemFix extends NamedEntityWriteReadFix {
             }
 
             dynamic1 = dynamic1.set("body_armor_item", dynamic);
-            return dynamic1.set("body_armor_drop_chance", p_324321_.createFloat(2.0F));
+            return dynamic1.set("body_armor_drop_chance", tag.createFloat(2.0F));
         } else {
-            return p_324321_;
+            return tag;
         }
     }
 }

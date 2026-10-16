@@ -20,14 +20,14 @@ public record OverlayMetadataSection(List<OverlayMetadataSection.OverlayEntry> o
     // logic on different modloaders, or when running on neo vs in vanilla, without having to invert the main pack and overlays
     public static final MetadataSectionType<OverlayMetadataSection> NEOFORGE_TYPE = MetadataSectionType.fromCodec("neoforge:overlays", CODEC);
 
-    private static DataResult<String> validateOverlayDir(String p_296447_) {
-        return !DIR_VALIDATOR.matcher(p_296447_).matches()
-            ? DataResult.error(() -> p_296447_ + " is not accepted directory name")
-            : DataResult.success(p_296447_);
+    private static DataResult<String> validateOverlayDir(String directoryName) {
+        return !DIR_VALIDATOR.matcher(directoryName).matches()
+            ? DataResult.error(() -> directoryName + " is not accepted directory name")
+            : DataResult.success(directoryName);
     }
 
-    public List<String> overlaysForVersion(int p_296262_) {
-        return this.overlays.stream().filter(p_296207_ -> p_296207_.isApplicable(p_296262_)).map(OverlayMetadataSection.OverlayEntry::overlay).toList();
+    public List<String> overlaysForVersion(int version) {
+        return this.overlays.stream().filter(p_296207_ -> p_296207_.isApplicable(version)).map(OverlayMetadataSection.OverlayEntry::overlay).toList();
     }
 
     public static record OverlayEntry(InclusiveRange<Integer> format, String overlay) {
@@ -42,8 +42,8 @@ public record OverlayMetadataSection(List<OverlayMetadataSection.OverlayEntry> o
                     .apply(p_337556_, OverlayMetadataSection.OverlayEntry::new)
         );
 
-        public boolean isApplicable(int p_295083_) {
-            return this.format.isValueInRange(p_295083_);
+        public boolean isApplicable(int version) {
+            return this.format.isValueInRange(version);
         }
     }
 }

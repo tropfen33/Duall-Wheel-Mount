@@ -15,34 +15,48 @@ public class Slot {
     public final int x;
     public final int y;
 
-    public Slot(Container p_40223_, int p_40224_, int p_40225_, int p_40226_) {
-        this.container = p_40223_;
-        this.slot = p_40224_;
-        this.x = p_40225_;
-        this.y = p_40226_;
+    public Slot(Container container, int slot, int x, int y) {
+        this.container = container;
+        this.slot = slot;
+        this.x = x;
+        this.y = y;
     }
 
-    public void onQuickCraft(ItemStack p_40235_, ItemStack p_40236_) {
-        int i = p_40236_.getCount() - p_40235_.getCount();
+    /**
+     * if par2 has more items than par1, onCrafting(item,countIncrease) is called
+     */
+    public void onQuickCraft(ItemStack oldStack, ItemStack newStack) {
+        int i = newStack.getCount() - oldStack.getCount();
         if (i > 0) {
-            this.onQuickCraft(p_40236_, i);
+            this.onQuickCraft(newStack, i);
         }
     }
 
-    protected void onQuickCraft(ItemStack p_40232_, int p_40233_) {
+    /**
+     * Typically increases an internal count, then calls {@code onCrafting(item)}.
+     *
+     * @param stack the output - ie, iron ingots, and pickaxes, not ore and wood.
+     */
+    protected void onQuickCraft(ItemStack stack, int amount) {
     }
 
-    protected void onSwapCraft(int p_40237_) {
+    protected void onSwapCraft(int numItemsCrafted) {
     }
 
-    protected void checkTakeAchievements(ItemStack p_40239_) {
+    /**
+     * @param stack the output - ie, iron ingots, and pickaxes, not ore and wood.
+     */
+    protected void checkTakeAchievements(ItemStack stack) {
     }
 
-    public void onTake(Player p_150645_, ItemStack p_150646_) {
+    public void onTake(Player player, ItemStack stack) {
         this.setChanged();
     }
 
-    public boolean mayPlace(ItemStack p_40231_) {
+    /**
+     * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+     */
+    public boolean mayPlace(ItemStack stack) {
         return true;
     }
 
@@ -54,16 +68,19 @@ public class Slot {
         return !this.getItem().isEmpty();
     }
 
-    public void setByPlayer(ItemStack p_270152_) {
-        this.setByPlayer(p_270152_, this.getItem());
+    public void setByPlayer(ItemStack stack) {
+        this.setByPlayer(stack, this.getItem());
     }
 
-    public void setByPlayer(ItemStack p_299990_, ItemStack p_299965_) {
-        this.set(p_299990_);
+    public void setByPlayer(ItemStack newStack, ItemStack oldStack) {
+        this.set(newStack);
     }
 
-    public void set(ItemStack p_40240_) {
-        this.container.setItem(this.slot, p_40240_);
+    /**
+     * Helper method to put a stack in the slot.
+     */
+    public void set(ItemStack stack) {
+        this.container.setItem(this.slot, stack);
         this.setChanged();
     }
 
@@ -75,8 +92,8 @@ public class Slot {
         return this.container.getMaxStackSize();
     }
 
-    public int getMaxStackSize(ItemStack p_40238_) {
-        return Math.min(this.getMaxStackSize(), p_40238_.getMaxStackSize());
+    public int getMaxStackSize(ItemStack stack) {
+        return Math.min(this.getMaxStackSize(), stack.getMaxStackSize());
     }
 
     @Nullable
@@ -84,11 +101,17 @@ public class Slot {
         return backgroundPair;
     }
 
-    public ItemStack remove(int p_40227_) {
-        return this.container.removeItem(this.slot, p_40227_);
+    /**
+     * Decrease the size of the stack in slot (first int arg) by the amount of the second int arg. Returns the new stack.
+     */
+    public ItemStack remove(int amount) {
+        return this.container.removeItem(this.slot, amount);
     }
 
-    public boolean mayPickup(Player p_40228_) {
+    /**
+     * Return whether this slot's stack can be taken from this slot.
+     */
+    public boolean mayPickup(Player player) {
         return true;
     }
 
@@ -128,14 +151,14 @@ public class Slot {
          return this;
     }
 
-    public Optional<ItemStack> tryRemove(int p_150642_, int p_150643_, Player p_150644_) {
-        if (!this.mayPickup(p_150644_)) {
+    public Optional<ItemStack> tryRemove(int count, int decrement, Player player) {
+        if (!this.mayPickup(player)) {
             return Optional.empty();
-        } else if (!this.allowModification(p_150644_) && p_150643_ < this.getItem().getCount()) {
+        } else if (!this.allowModification(player) && decrement < this.getItem().getCount()) {
             return Optional.empty();
         } else {
-            p_150642_ = Math.min(p_150642_, p_150643_);
-            ItemStack itemstack = this.remove(p_150642_);
+            count = Math.min(count, decrement);
+            ItemStack itemstack = this.remove(count);
             if (itemstack.isEmpty()) {
                 return Optional.empty();
             } else {
@@ -148,36 +171,36 @@ public class Slot {
         }
     }
 
-    public ItemStack safeTake(int p_150648_, int p_150649_, Player p_150650_) {
-        Optional<ItemStack> optional = this.tryRemove(p_150648_, p_150649_, p_150650_);
-        optional.ifPresent(p_150655_ -> this.onTake(p_150650_, p_150655_));
+    public ItemStack safeTake(int count, int decrement, Player player) {
+        Optional<ItemStack> optional = this.tryRemove(count, decrement, player);
+        optional.ifPresent(p_150655_ -> this.onTake(player, p_150655_));
         return optional.orElse(ItemStack.EMPTY);
     }
 
-    public ItemStack safeInsert(ItemStack p_150660_) {
-        return this.safeInsert(p_150660_, p_150660_.getCount());
+    public ItemStack safeInsert(ItemStack stack) {
+        return this.safeInsert(stack, stack.getCount());
     }
 
-    public ItemStack safeInsert(ItemStack p_150657_, int p_150658_) {
-        if (!p_150657_.isEmpty() && this.mayPlace(p_150657_)) {
+    public ItemStack safeInsert(ItemStack stack, int increment) {
+        if (!stack.isEmpty() && this.mayPlace(stack)) {
             ItemStack itemstack = this.getItem();
-            int i = Math.min(Math.min(p_150658_, p_150657_.getCount()), this.getMaxStackSize(p_150657_) - itemstack.getCount());
+            int i = Math.min(Math.min(increment, stack.getCount()), this.getMaxStackSize(stack) - itemstack.getCount());
             if (itemstack.isEmpty()) {
-                this.setByPlayer(p_150657_.split(i));
-            } else if (ItemStack.isSameItemSameComponents(itemstack, p_150657_)) {
-                p_150657_.shrink(i);
+                this.setByPlayer(stack.split(i));
+            } else if (ItemStack.isSameItemSameComponents(itemstack, stack)) {
+                stack.shrink(i);
                 itemstack.grow(i);
                 this.setByPlayer(itemstack);
             }
 
-            return p_150657_;
+            return stack;
         } else {
-            return p_150657_;
+            return stack;
         }
     }
 
-    public boolean allowModification(Player p_150652_) {
-        return this.mayPickup(p_150652_) && this.mayPlace(this.getItem());
+    public boolean allowModification(Player player) {
+        return this.mayPickup(player) && this.mayPlace(this.getItem());
     }
 
     public int getContainerSlot() {

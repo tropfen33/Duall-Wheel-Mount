@@ -29,9 +29,9 @@ public class ObjectiveArgument implements ArgumentType<String> {
         return new ObjectiveArgument();
     }
 
-    public static Objective getObjective(CommandContext<CommandSourceStack> p_101961_, String p_101962_) throws CommandSyntaxException {
-        String s = p_101961_.getArgument(p_101962_, String.class);
-        Scoreboard scoreboard = p_101961_.getSource().getScoreboard();
+    public static Objective getObjective(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
+        String s = context.getArgument(name, String.class);
+        Scoreboard scoreboard = context.getSource().getScoreboard();
         Objective objective = scoreboard.getObjective(s);
         if (objective == null) {
             throw ERROR_OBJECTIVE_NOT_FOUND.create(s);
@@ -40,8 +40,8 @@ public class ObjectiveArgument implements ArgumentType<String> {
         }
     }
 
-    public static Objective getWritableObjective(CommandContext<CommandSourceStack> p_101966_, String p_101967_) throws CommandSyntaxException {
-        Objective objective = getObjective(p_101966_, p_101967_);
+    public static Objective getWritableObjective(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
+        Objective objective = getObjective(context, name);
         if (objective.getCriteria().isReadOnly()) {
             throw ERROR_OBJECTIVE_READ_ONLY.create(objective.getName());
         } else {
@@ -49,17 +49,17 @@ public class ObjectiveArgument implements ArgumentType<String> {
         }
     }
 
-    public String parse(StringReader p_101959_) throws CommandSyntaxException {
-        return p_101959_.readUnquotedString();
+    public String parse(StringReader reader) throws CommandSyntaxException {
+        return reader.readUnquotedString();
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_101974_, SuggestionsBuilder p_101975_) {
-        S s = p_101974_.getSource();
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
+        S s = context.getSource();
         if (s instanceof CommandSourceStack commandsourcestack) {
-            return SharedSuggestionProvider.suggest(commandsourcestack.getScoreboard().getObjectiveNames(), p_101975_);
+            return SharedSuggestionProvider.suggest(commandsourcestack.getScoreboard().getObjectiveNames(), builder);
         } else {
-            return s instanceof SharedSuggestionProvider sharedsuggestionprovider ? sharedsuggestionprovider.customSuggestion(p_101974_) : Suggestions.empty();
+            return s instanceof SharedSuggestionProvider sharedsuggestionprovider ? sharedsuggestionprovider.customSuggestion(context) : Suggestions.empty();
         }
     }
 

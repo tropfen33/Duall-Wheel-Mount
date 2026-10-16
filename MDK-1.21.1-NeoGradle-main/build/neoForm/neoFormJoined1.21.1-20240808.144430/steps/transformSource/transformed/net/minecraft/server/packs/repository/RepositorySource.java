@@ -4,5 +4,5 @@ import java.util.function.Consumer;
 
 @FunctionalInterface
 public interface RepositorySource {
-    void loadPacks(Consumer<Pack> p_10542_);
+    void loadPacks(Consumer<Pack> onLoad);
 }

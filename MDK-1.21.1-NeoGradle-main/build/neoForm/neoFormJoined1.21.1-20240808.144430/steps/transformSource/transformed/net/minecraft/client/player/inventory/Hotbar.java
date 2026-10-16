@@ -33,32 +33,32 @@ public class Hotbar {
     private static final Dynamic<?> EMPTY_STACK = new Dynamic<>(DEFAULT_OPS, ItemStack.OPTIONAL_CODEC.encodeStart(DEFAULT_OPS, ItemStack.EMPTY).getOrThrow());
     private List<Dynamic<?>> items;
 
-    private Hotbar(List<Dynamic<?>> p_324385_) {
-        this.items = p_324385_;
+    private Hotbar(List<Dynamic<?>> items) {
+        this.items = items;
     }
 
     public Hotbar() {
         this(Collections.nCopies(SIZE, EMPTY_STACK));
     }
 
-    public List<ItemStack> load(HolderLookup.Provider p_323741_) {
+    public List<ItemStack> load(HolderLookup.Provider registries) {
         return this.items
             .stream()
             .map(
                 p_337421_ -> ItemStack.OPTIONAL_CODEC
-                        .parse(RegistryOps.injectRegistryContext((Dynamic<?>)p_337421_, p_323741_))
+                        .parse(RegistryOps.injectRegistryContext((Dynamic<?>)p_337421_, registries))
                         .resultOrPartial(p_323502_ -> LOGGER.warn("Could not parse hotbar item: {}", p_323502_))
                         .orElse(ItemStack.EMPTY)
             )
             .toList();
     }
 
-    public void storeFrom(Inventory p_324559_, RegistryAccess p_324514_) {
-        RegistryOps<Tag> registryops = p_324514_.createSerializationContext(DEFAULT_OPS);
+    public void storeFrom(Inventory inventory, RegistryAccess registryAccess) {
+        RegistryOps<Tag> registryops = registryAccess.createSerializationContext(DEFAULT_OPS);
         Builder<Dynamic<?>> builder = ImmutableList.builderWithExpectedSize(SIZE);
 
         for (int i = 0; i < SIZE; i++) {
-            ItemStack itemstack = p_324559_.getItem(i);
+            ItemStack itemstack = inventory.getItem(i);
             Optional<Dynamic<?>> optional = ItemStack.OPTIONAL_CODEC
                 .encodeStart(registryops, itemstack)
                 .resultOrPartial(p_323853_ -> LOGGER.warn("Could not encode hotbar item: {}", p_323853_))
@@ -79,7 +79,7 @@ public class Hotbar {
         return true;
     }
 
-    private static boolean isEmpty(Dynamic<?> p_324499_) {
-        return EMPTY_STACK.equals(p_324499_);
+    private static boolean isEmpty(Dynamic<?> dynamic) {
+        return EMPTY_STACK.equals(dynamic);
     }
 }

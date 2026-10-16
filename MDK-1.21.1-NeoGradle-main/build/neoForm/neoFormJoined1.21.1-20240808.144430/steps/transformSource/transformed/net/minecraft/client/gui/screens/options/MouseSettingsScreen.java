@@ -14,14 +14,14 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class MouseSettingsScreen extends OptionsSubScreen {
     private static final Component TITLE = Component.translatable("options.mouse_settings.title");
 
-    private static OptionInstance<?>[] options(Options p_345546_) {
+    private static OptionInstance<?>[] options(Options options) {
         return new OptionInstance[]{
-            p_345546_.sensitivity(), p_345546_.invertYMouse(), p_345546_.mouseWheelSensitivity(), p_345546_.discreteMouseScroll(), p_345546_.touchscreen()
+            options.sensitivity(), options.invertYMouse(), options.mouseWheelSensitivity(), options.discreteMouseScroll(), options.touchscreen()
         };
     }
 
-    public MouseSettingsScreen(Screen p_344816_, Options p_346286_) {
-        super(p_344816_, p_346286_, TITLE);
+    public MouseSettingsScreen(Screen lastScreen, Options options) {
+        super(lastScreen, options, TITLE);
     }
 
     @Override

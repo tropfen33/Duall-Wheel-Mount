@@ -18,12 +18,12 @@ public abstract class SingleItemRecipe implements Recipe<SingleRecipeInput> {
     private final RecipeSerializer<?> serializer;
     protected final String group;
 
-    public SingleItemRecipe(RecipeType<?> p_44416_, RecipeSerializer<?> p_44417_, String p_44419_, Ingredient p_44420_, ItemStack p_44421_) {
-        this.type = p_44416_;
-        this.serializer = p_44417_;
-        this.group = p_44419_;
-        this.ingredient = p_44420_;
-        this.result = p_44421_;
+    public SingleItemRecipe(RecipeType<?> type, RecipeSerializer<?> serializer, String group, Ingredient ingredient, ItemStack result) {
+        this.type = type;
+        this.serializer = serializer;
+        this.group = group;
+        this.ingredient = ingredient;
+        this.result = result;
     }
 
     @Override
@@ -42,7 +42,7 @@ public abstract class SingleItemRecipe implements Recipe<SingleRecipeInput> {
     }
 
     @Override
-    public ItemStack getResultItem(HolderLookup.Provider p_336121_) {
+    public ItemStack getResultItem(HolderLookup.Provider registries) {
         return this.result;
     }
 
@@ -53,17 +53,20 @@ public abstract class SingleItemRecipe implements Recipe<SingleRecipeInput> {
         return nonnulllist;
     }
 
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
     @Override
-    public boolean canCraftInDimensions(int p_44424_, int p_44425_) {
+    public boolean canCraftInDimensions(int width, int height) {
         return true;
     }
 
-    public ItemStack assemble(SingleRecipeInput p_345857_, HolderLookup.Provider p_335463_) {
+    public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {
         return this.result.copy();
     }
 
     public interface Factory<T extends SingleItemRecipe> {
-        T create(String p_311769_, Ingredient p_312083_, ItemStack p_312063_);
+        T create(String group, Ingredient ingredient, ItemStack result);
     }
 
     public static class Serializer<T extends SingleItemRecipe> implements RecipeSerializer<T> {
@@ -71,15 +74,15 @@ public abstract class SingleItemRecipe implements Recipe<SingleRecipeInput> {
         private final MapCodec<T> codec;
         private final StreamCodec<RegistryFriendlyByteBuf, T> streamCodec;
 
-        protected Serializer(SingleItemRecipe.Factory<T> p_312589_) {
-            this.factory = p_312589_;
+        protected Serializer(SingleItemRecipe.Factory<T> factory) {
+            this.factory = factory;
             this.codec = RecordCodecBuilder.mapCodec(
                 p_340781_ -> p_340781_.group(
                             Codec.STRING.optionalFieldOf("group", "").forGetter(p_300947_ -> p_300947_.group),
                             Ingredient.CODEC_NONEMPTY.fieldOf("ingredient").forGetter(p_301068_ -> p_301068_.ingredient),
                             ItemStack.STRICT_CODEC.fieldOf("result").forGetter(p_302316_ -> p_302316_.result)
                         )
-                        .apply(p_340781_, p_312589_::create)
+                        .apply(p_340781_, factory::create)
             );
             this.streamCodec = StreamCodec.composite(
                 ByteBufCodecs.STRING_UTF8,
@@ -88,7 +91,7 @@ public abstract class SingleItemRecipe implements Recipe<SingleRecipeInput> {
                 p_319738_ -> p_319738_.ingredient,
                 ItemStack.STREAM_CODEC,
                 p_319736_ -> p_319736_.result,
-                p_312589_::create
+                factory::create
             );
         }
 

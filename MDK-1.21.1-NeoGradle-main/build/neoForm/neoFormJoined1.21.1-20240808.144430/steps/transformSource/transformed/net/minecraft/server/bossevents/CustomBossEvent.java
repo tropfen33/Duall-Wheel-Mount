@@ -25,9 +25,9 @@ public class CustomBossEvent extends ServerBossEvent {
     private int value;
     private int max = 100;
 
-    public CustomBossEvent(ResourceLocation p_136261_, Component p_136262_) {
-        super(p_136262_, BossEvent.BossBarColor.WHITE, BossEvent.BossBarOverlay.PROGRESS);
-        this.id = p_136261_;
+    public CustomBossEvent(ResourceLocation id, Component name) {
+        super(name, BossEvent.BossBarColor.WHITE, BossEvent.BossBarOverlay.PROGRESS);
+        this.id = id;
         this.setProgress(0.0F);
     }
 
@@ -35,20 +35,26 @@ public class CustomBossEvent extends ServerBossEvent {
         return this.id;
     }
 
+    /**
+     * Makes the boss visible to the given player.
+     */
     @Override
-    public void addPlayer(ServerPlayer p_136267_) {
-        super.addPlayer(p_136267_);
-        this.players.add(p_136267_.getUUID());
+    public void addPlayer(ServerPlayer player) {
+        super.addPlayer(player);
+        this.players.add(player.getUUID());
     }
 
-    public void addOfflinePlayer(UUID p_136271_) {
-        this.players.add(p_136271_);
+    public void addOfflinePlayer(UUID player) {
+        this.players.add(player);
     }
 
+    /**
+     * Makes the boss non-visible to the given player.
+     */
     @Override
-    public void removePlayer(ServerPlayer p_136281_) {
-        super.removePlayer(p_136281_);
-        this.players.remove(p_136281_.getUUID());
+    public void removePlayer(ServerPlayer player) {
+        super.removePlayer(player);
+        this.players.remove(player.getUUID());
     }
 
     @Override
@@ -65,14 +71,14 @@ public class CustomBossEvent extends ServerBossEvent {
         return this.max;
     }
 
-    public void setValue(int p_136265_) {
-        this.value = p_136265_;
-        this.setProgress(Mth.clamp((float)p_136265_ / (float)this.max, 0.0F, 1.0F));
+    public void setValue(int value) {
+        this.value = value;
+        this.setProgress(Mth.clamp((float)value / (float)this.max, 0.0F, 1.0F));
     }
 
-    public void setMax(int p_136279_) {
-        this.max = p_136279_;
-        this.setProgress(Mth.clamp((float)this.value / (float)p_136279_, 0.0F, 1.0F));
+    public void setMax(int max) {
+        this.max = max;
+        this.setProgress(Mth.clamp((float)this.value / (float)max, 0.0F, 1.0F));
     }
 
     public final Component getDisplayName() {
@@ -84,14 +90,14 @@ public class CustomBossEvent extends ServerBossEvent {
             );
     }
 
-    public boolean setPlayers(Collection<ServerPlayer> p_136269_) {
+    public boolean setPlayers(Collection<ServerPlayer> serverPlayerList) {
         Set<UUID> set = Sets.newHashSet();
         Set<ServerPlayer> set1 = Sets.newHashSet();
 
         for (UUID uuid : this.players) {
             boolean flag = false;
 
-            for (ServerPlayer serverplayer : p_136269_) {
+            for (ServerPlayer serverplayer : serverPlayerList) {
                 if (serverplayer.getUUID().equals(uuid)) {
                     flag = true;
                     break;
@@ -103,7 +109,7 @@ public class CustomBossEvent extends ServerBossEvent {
             }
         }
 
-        for (ServerPlayer serverplayer1 : p_136269_) {
+        for (ServerPlayer serverplayer1 : serverPlayerList) {
             boolean flag1 = false;
 
             for (UUID uuid2 : this.players) {
@@ -136,9 +142,9 @@ public class CustomBossEvent extends ServerBossEvent {
         return !set.isEmpty() || !set1.isEmpty();
     }
 
-    public CompoundTag save(HolderLookup.Provider p_330839_) {
+    public CompoundTag save(HolderLookup.Provider levelRegistry) {
         CompoundTag compoundtag = new CompoundTag();
-        compoundtag.putString("Name", Component.Serializer.toJson(this.name, p_330839_));
+        compoundtag.putString("Name", Component.Serializer.toJson(this.name, levelRegistry));
         compoundtag.putBoolean("Visible", this.isVisible());
         compoundtag.putInt("Value", this.value);
         compoundtag.putInt("Max", this.max);
@@ -157,31 +163,31 @@ public class CustomBossEvent extends ServerBossEvent {
         return compoundtag;
     }
 
-    public static CustomBossEvent load(CompoundTag p_136273_, ResourceLocation p_136274_, HolderLookup.Provider p_331359_) {
-        CustomBossEvent custombossevent = new CustomBossEvent(p_136274_, Component.Serializer.fromJson(p_136273_.getString("Name"), p_331359_));
-        custombossevent.setVisible(p_136273_.getBoolean("Visible"));
-        custombossevent.setValue(p_136273_.getInt("Value"));
-        custombossevent.setMax(p_136273_.getInt("Max"));
-        custombossevent.setColor(BossEvent.BossBarColor.byName(p_136273_.getString("Color")));
-        custombossevent.setOverlay(BossEvent.BossBarOverlay.byName(p_136273_.getString("Overlay")));
-        custombossevent.setDarkenScreen(p_136273_.getBoolean("DarkenScreen"));
-        custombossevent.setPlayBossMusic(p_136273_.getBoolean("PlayBossMusic"));
-        custombossevent.setCreateWorldFog(p_136273_.getBoolean("CreateWorldFog"));
+    public static CustomBossEvent load(CompoundTag p_tag, ResourceLocation id, HolderLookup.Provider levelRegistry) {
+        CustomBossEvent custombossevent = new CustomBossEvent(id, Component.Serializer.fromJson(p_tag.getString("Name"), levelRegistry));
+        custombossevent.setVisible(p_tag.getBoolean("Visible"));
+        custombossevent.setValue(p_tag.getInt("Value"));
+        custombossevent.setMax(p_tag.getInt("Max"));
+        custombossevent.setColor(BossEvent.BossBarColor.byName(p_tag.getString("Color")));
+        custombossevent.setOverlay(BossEvent.BossBarOverlay.byName(p_tag.getString("Overlay")));
+        custombossevent.setDarkenScreen(p_tag.getBoolean("DarkenScreen"));
+        custombossevent.setPlayBossMusic(p_tag.getBoolean("PlayBossMusic"));
+        custombossevent.setCreateWorldFog(p_tag.getBoolean("CreateWorldFog"));
 
-        for (Tag tag : p_136273_.getList("Players", 11)) {
+        for (Tag tag : p_tag.getList("Players", 11)) {
             custombossevent.addOfflinePlayer(NbtUtils.loadUUID(tag));
         }
 
         return custombossevent;
     }
 
-    public void onPlayerConnect(ServerPlayer p_136284_) {
-        if (this.players.contains(p_136284_.getUUID())) {
-            this.addPlayer(p_136284_);
+    public void onPlayerConnect(ServerPlayer player) {
+        if (this.players.contains(player.getUUID())) {
+            this.addPlayer(player);
         }
     }
 
-    public void onPlayerDisconnect(ServerPlayer p_136287_) {
-        super.removePlayer(p_136287_);
+    public void onPlayerDisconnect(ServerPlayer player) {
+        super.removePlayer(player);
     }
 }

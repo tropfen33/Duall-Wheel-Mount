@@ -24,7 +24,7 @@ import net.minecraft.util.parsing.packrat.commands.StringReaderTerms;
 import net.minecraft.util.parsing.packrat.commands.TagParseRule;
 
 public class ComponentPredicateParser {
-    public static <T, C, P> Grammar<List<T>> createGrammar(ComponentPredicateParser.Context<T, C, P> p_335727_) {
+    public static <T, C, P> Grammar<List<T>> createGrammar(ComponentPredicateParser.Context<T, C, P> context) {
         Atom<List<T>> atom = Atom.of("top");
         Atom<Optional<T>> atom1 = Atom.of("type");
         Atom<Unit> atom2 = Atom.of("any_type");
@@ -65,11 +65,11 @@ public class ComponentPredicateParser {
             p_335800_ -> Optional.ofNullable(p_335800_.getAny(atom3, atom4))
         );
         dictionary.put(atom2, StringReaderTerms.character('*'), p_335962_ -> Unit.INSTANCE);
-        dictionary.put(atom3, new ComponentPredicateParser.ElementLookupRule<>(atom12, p_335727_));
-        dictionary.put(atom4, new ComponentPredicateParser.TagLookupRule<>(atom12, p_335727_));
+        dictionary.put(atom3, new ComponentPredicateParser.ElementLookupRule<>(atom12, context));
+        dictionary.put(atom4, new ComponentPredicateParser.TagLookupRule<>(atom12, context));
         dictionary.put(
             atom5, Term.sequence(Term.named(atom6), Term.optional(Term.sequence(StringReaderTerms.character(','), Term.named(atom5)))), p_336093_ -> {
-                T t = p_335727_.anyOf(p_336093_.getOrThrow(atom6));
+                T t = context.anyOf(p_336093_.getOrThrow(atom6));
                 return Optional.ofNullable(p_336093_.get(atom5)).map(p_335806_ -> Util.copyAndAdd(t, (List<T>)p_335806_)).orElse(List.of(t));
             }
         );
@@ -84,7 +84,7 @@ public class ComponentPredicateParser {
             Term.alternative(Term.named(atom9), Term.sequence(StringReaderTerms.character('!'), Term.named(atom8))),
             p_335647_ -> p_335647_.getAnyOrThrow(atom9, atom8)
         );
-        dictionary.put(atom8, Term.named(atom9), p_335793_ -> p_335727_.negate(p_335793_.getOrThrow(atom9)));
+        dictionary.put(atom8, Term.named(atom9), p_335793_ -> context.negate(p_335793_.getOrThrow(atom9)));
         dictionary.put(
             atom9,
             Term.alternative(
@@ -98,12 +98,12 @@ public class ComponentPredicateParser {
                 try {
                     if (p != null) {
                         Tag tag1 = p_336062_.getOrThrow(atom13);
-                        return Optional.of(p_335727_.createPredicateTest(p_335570_.input(), p, tag1));
+                        return Optional.of(context.createPredicateTest(p_335570_.input(), p, tag1));
                     } else {
                         C c = p_336062_.getOrThrow(atom10);
                         Tag tag = p_336062_.get(atom13);
                         return Optional.of(
-                            tag != null ? p_335727_.createComponentTest(p_335570_.input(), c, tag) : p_335727_.createComponentTest(p_335570_.input(), c)
+                            tag != null ? context.createComponentTest(p_335570_.input(), c, tag) : context.createComponentTest(p_335570_.input(), c)
                         );
                     }
                 } catch (CommandSyntaxException commandsyntaxexception) {
@@ -112,21 +112,21 @@ public class ComponentPredicateParser {
                 }
             }
         );
-        dictionary.put(atom10, new ComponentPredicateParser.ComponentLookupRule<>(atom12, p_335727_));
-        dictionary.put(atom11, new ComponentPredicateParser.PredicateLookupRule<>(atom12, p_335727_));
+        dictionary.put(atom10, new ComponentPredicateParser.ComponentLookupRule<>(atom12, context));
+        dictionary.put(atom11, new ComponentPredicateParser.PredicateLookupRule<>(atom12, context));
         dictionary.put(atom13, TagParseRule.INSTANCE);
         dictionary.put(atom12, ResourceLocationParseRule.INSTANCE);
         return new Grammar<>(dictionary, atom);
     }
 
     static class ComponentLookupRule<T, C, P> extends ResourceLookupRule<ComponentPredicateParser.Context<T, C, P>, C> {
-        ComponentLookupRule(Atom<ResourceLocation> p_335669_, ComponentPredicateParser.Context<T, C, P> p_335692_) {
-            super(p_335669_, p_335692_);
+        ComponentLookupRule(Atom<ResourceLocation> idParser, ComponentPredicateParser.Context<T, C, P> context) {
+            super(idParser, context);
         }
 
         @Override
-        protected C validateElement(ImmutableStringReader p_335604_, ResourceLocation p_335964_) throws Exception {
-            return this.context.lookupComponentType(p_335604_, p_335964_);
+        protected C validateElement(ImmutableStringReader reader, ResourceLocation elementType) throws Exception {
+            return this.context.lookupComponentType(reader, elementType);
         }
 
         @Override
@@ -136,41 +136,41 @@ public class ComponentPredicateParser {
     }
 
     public interface Context<T, C, P> {
-        T forElementType(ImmutableStringReader p_335757_, ResourceLocation p_336070_) throws CommandSyntaxException;
+        T forElementType(ImmutableStringReader reader, ResourceLocation elementType) throws CommandSyntaxException;
 
         Stream<ResourceLocation> listElementTypes();
 
-        T forTagType(ImmutableStringReader p_335809_, ResourceLocation p_335925_) throws CommandSyntaxException;
+        T forTagType(ImmutableStringReader reader, ResourceLocation tagType) throws CommandSyntaxException;
 
         Stream<ResourceLocation> listTagTypes();
 
-        C lookupComponentType(ImmutableStringReader p_335515_, ResourceLocation p_335733_) throws CommandSyntaxException;
+        C lookupComponentType(ImmutableStringReader reader, ResourceLocation componentType) throws CommandSyntaxException;
 
         Stream<ResourceLocation> listComponentTypes();
 
-        T createComponentTest(ImmutableStringReader p_336142_, C p_336094_, Tag p_336057_) throws CommandSyntaxException;
+        T createComponentTest(ImmutableStringReader reader, C context, Tag value) throws CommandSyntaxException;
 
-        T createComponentTest(ImmutableStringReader p_335521_, C p_335579_);
+        T createComponentTest(ImmutableStringReader reader, C context);
 
-        P lookupPredicateType(ImmutableStringReader p_336079_, ResourceLocation p_335954_) throws CommandSyntaxException;
+        P lookupPredicateType(ImmutableStringReader reader, ResourceLocation predicateType) throws CommandSyntaxException;
 
         Stream<ResourceLocation> listPredicateTypes();
 
-        T createPredicateTest(ImmutableStringReader p_335898_, P p_335609_, Tag p_335661_) throws CommandSyntaxException;
+        T createPredicateTest(ImmutableStringReader reader, P predicate, Tag value) throws CommandSyntaxException;
 
-        T negate(T p_335446_);
+        T negate(T value);
 
-        T anyOf(List<T> p_336010_);
+        T anyOf(List<T> values);
     }
 
     static class ElementLookupRule<T, C, P> extends ResourceLookupRule<ComponentPredicateParser.Context<T, C, P>, T> {
-        ElementLookupRule(Atom<ResourceLocation> p_335457_, ComponentPredicateParser.Context<T, C, P> p_335797_) {
-            super(p_335457_, p_335797_);
+        ElementLookupRule(Atom<ResourceLocation> idParser, ComponentPredicateParser.Context<T, C, P> context) {
+            super(idParser, context);
         }
 
         @Override
-        protected T validateElement(ImmutableStringReader p_335629_, ResourceLocation p_335530_) throws Exception {
-            return this.context.forElementType(p_335629_, p_335530_);
+        protected T validateElement(ImmutableStringReader reader, ResourceLocation elementType) throws Exception {
+            return this.context.forElementType(reader, elementType);
         }
 
         @Override
@@ -180,13 +180,13 @@ public class ComponentPredicateParser {
     }
 
     static class PredicateLookupRule<T, C, P> extends ResourceLookupRule<ComponentPredicateParser.Context<T, C, P>, P> {
-        PredicateLookupRule(Atom<ResourceLocation> p_335495_, ComponentPredicateParser.Context<T, C, P> p_335572_) {
-            super(p_335495_, p_335572_);
+        PredicateLookupRule(Atom<ResourceLocation> idParser, ComponentPredicateParser.Context<T, C, P> context) {
+            super(idParser, context);
         }
 
         @Override
-        protected P validateElement(ImmutableStringReader p_336035_, ResourceLocation p_335697_) throws Exception {
-            return this.context.lookupPredicateType(p_336035_, p_335697_);
+        protected P validateElement(ImmutableStringReader reader, ResourceLocation elementType) throws Exception {
+            return this.context.lookupPredicateType(reader, elementType);
         }
 
         @Override
@@ -196,13 +196,13 @@ public class ComponentPredicateParser {
     }
 
     static class TagLookupRule<T, C, P> extends ResourceLookupRule<ComponentPredicateParser.Context<T, C, P>, T> {
-        TagLookupRule(Atom<ResourceLocation> p_335960_, ComponentPredicateParser.Context<T, C, P> p_335934_) {
-            super(p_335960_, p_335934_);
+        TagLookupRule(Atom<ResourceLocation> idParser, ComponentPredicateParser.Context<T, C, P> context) {
+            super(idParser, context);
         }
 
         @Override
-        protected T validateElement(ImmutableStringReader p_335858_, ResourceLocation p_335888_) throws Exception {
-            return this.context.forTagType(p_335858_, p_335888_);
+        protected T validateElement(ImmutableStringReader reader, ResourceLocation elementType) throws Exception {
+            return this.context.forTagType(reader, elementType);
         }
 
         @Override

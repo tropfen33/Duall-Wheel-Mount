@@ -50,26 +50,26 @@ public class LootTable {
     private final List<LootItemFunction> functions;
     private final BiFunction<ItemStack, LootContext, ItemStack> compositeFunction;
 
-    LootTable(LootContextParamSet p_287716_, Optional<ResourceLocation> p_299055_, List<LootPool> p_298390_, List<LootItemFunction> p_298775_) {
-        this.paramSet = p_287716_;
-        this.randomSequence = p_299055_;
-        this.pools = Lists.newArrayList(p_298390_);
-        this.functions = p_298775_;
-        this.compositeFunction = LootItemFunctions.compose(p_298775_);
+    LootTable(LootContextParamSet paramSet, Optional<ResourceLocation> randomSequence, List<LootPool> pools, List<LootItemFunction> functions) {
+        this.paramSet = paramSet;
+        this.randomSequence = randomSequence;
+        this.pools = Lists.newArrayList(pools);
+        this.functions = functions;
+        this.compositeFunction = LootItemFunctions.compose(functions);
     }
 
-    public static Consumer<ItemStack> createStackSplitter(ServerLevel p_287765_, Consumer<ItemStack> p_251308_) {
+    public static Consumer<ItemStack> createStackSplitter(ServerLevel level, Consumer<ItemStack> output) {
         return p_287570_ -> {
-            if (p_287570_.isItemEnabled(p_287765_.enabledFeatures())) {
+            if (p_287570_.isItemEnabled(level.enabledFeatures())) {
                 if (p_287570_.getCount() < p_287570_.getMaxStackSize()) {
-                    p_251308_.accept(p_287570_);
+                    output.accept(p_287570_);
                 } else {
                     int i = p_287570_.getCount();
 
                     while (i > 0) {
                         ItemStack itemstack = p_287570_.copyWithCount(Math.min(p_287570_.getMaxStackSize(), i));
                         i -= itemstack.getCount();
-                        p_251308_.accept(itemstack);
+                        output.accept(itemstack);
                     }
                 }
             }
@@ -77,54 +77,63 @@ public class LootTable {
     }
 
     @Deprecated // Use a non-'Raw' version of 'getRandomItems', so that the Forge Global Loot Modifiers will be applied
-    public void getRandomItemsRaw(LootParams p_287669_, Consumer<ItemStack> p_287781_) {
-        this.getRandomItemsRaw(new LootContext.Builder(p_287669_).create(this.randomSequence), p_287781_);
+    public void getRandomItemsRaw(LootParams params, Consumer<ItemStack> output) {
+        this.getRandomItemsRaw(new LootContext.Builder(params).create(this.randomSequence), output);
     }
 
+    /**
+     * Generate items to the given Consumer, ignoring maximum stack size.
+     */
     @Deprecated // Use a non-'Raw' version of 'getRandomItems', so that the Forge Global Loot Modifiers will be applied
-    public void getRandomItemsRaw(LootContext p_79132_, Consumer<ItemStack> p_79133_) {
+    public void getRandomItemsRaw(LootContext context, Consumer<ItemStack> output) {
         LootContext.VisitedEntry<?> visitedentry = LootContext.createVisitedEntry(this);
-        if (p_79132_.pushVisitedElement(visitedentry)) {
-            Consumer<ItemStack> consumer = LootItemFunction.decorate(this.compositeFunction, p_79133_, p_79132_);
+        if (context.pushVisitedElement(visitedentry)) {
+            Consumer<ItemStack> consumer = LootItemFunction.decorate(this.compositeFunction, output, context);
 
             for (LootPool lootpool : this.pools) {
-                lootpool.addRandomItems(consumer, p_79132_);
+                lootpool.addRandomItems(consumer, context);
             }
 
-            p_79132_.popVisitedElement(visitedentry);
+            context.popVisitedElement(visitedentry);
         } else {
             LOGGER.warn("Detected infinite loop in loot tables");
         }
     }
 
-    public void getRandomItems(LootParams p_287748_, long p_287729_, Consumer<ItemStack> p_287583_) {
-        this.getRandomItems((new LootContext.Builder(p_287748_)).withOptionalRandomSeed(p_287729_).create(this.randomSequence)).forEach(p_287583_);
+    public void getRandomItems(LootParams params, long seed, Consumer<ItemStack> output) {
+        this.getRandomItems((new LootContext.Builder(params)).withOptionalRandomSeed(seed).create(this.randomSequence)).forEach(output);
     }
 
-    public void getRandomItems(LootParams p_287704_, Consumer<ItemStack> p_287617_) {
-        this.getRandomItems(p_287704_).forEach(p_287617_);
+    public void getRandomItems(LootParams params, Consumer<ItemStack> output) {
+        this.getRandomItems(params).forEach(output);
     }
 
-    public void getRandomItems(LootContext p_79149_, Consumer<ItemStack> p_79150_) {
-        this.getRandomItems(p_79149_).forEach(p_79150_);
+    /**
+     * Generate random items to the given Consumer, ensuring they do not exceed their maximum stack size.
+     */
+    public void getRandomItems(LootContext contextData, Consumer<ItemStack> output) {
+        this.getRandomItems(contextData).forEach(output);
     }
 
-    public ObjectArrayList<ItemStack> getRandomItems(LootParams p_347545_, RandomSource p_347680_) {
-        return this.getRandomItems(new LootContext.Builder(p_347545_).withOptionalRandomSource(p_347680_).create(this.randomSequence));
+    public ObjectArrayList<ItemStack> getRandomItems(LootParams params, RandomSource random) {
+        return this.getRandomItems(new LootContext.Builder(params).withOptionalRandomSource(random).create(this.randomSequence));
     }
 
-    public ObjectArrayList<ItemStack> getRandomItems(LootParams p_287574_, long p_287773_) {
-        return this.getRandomItems(new LootContext.Builder(p_287574_).withOptionalRandomSeed(p_287773_).create(this.randomSequence));
+    public ObjectArrayList<ItemStack> getRandomItems(LootParams params, long seed) {
+        return this.getRandomItems(new LootContext.Builder(params).withOptionalRandomSeed(seed).create(this.randomSequence));
     }
 
-    public ObjectArrayList<ItemStack> getRandomItems(LootParams p_287616_) {
-        return this.getRandomItems(new LootContext.Builder(p_287616_).create(this.randomSequence));
+    public ObjectArrayList<ItemStack> getRandomItems(LootParams params) {
+        return this.getRandomItems(new LootContext.Builder(params).create(this.randomSequence));
     }
 
-    private ObjectArrayList<ItemStack> getRandomItems(LootContext p_230923_) {
+    /**
+     * Generate random items to a List.
+     */
+    private ObjectArrayList<ItemStack> getRandomItems(LootContext context) {
         ObjectArrayList<ItemStack> objectarraylist = new ObjectArrayList<>();
-        this.getRandomItemsRaw(p_230923_, createStackSplitter(p_230923_.getLevel(), objectarraylist::add));
-        objectarraylist = net.neoforged.neoforge.common.CommonHooks.modifyLoot(this.getLootTableId(), objectarraylist, p_230923_);
+        this.getRandomItemsRaw(context, createStackSplitter(context.getLevel(), objectarraylist::add));
+        objectarraylist = net.neoforged.neoforge.common.CommonHooks.modifyLoot(this.getLootTableId(), objectarraylist, context);
         return objectarraylist;
     }
 
@@ -132,21 +141,24 @@ public class LootTable {
         return this.paramSet;
     }
 
-    public void validate(ValidationContext p_79137_) {
+    /**
+     * Validate this LootTable using the given ValidationContext.
+     */
+    public void validate(ValidationContext validator) {
         for (int i = 0; i < this.pools.size(); i++) {
-            this.pools.get(i).validate(p_79137_.forChild(".pools[" + i + "]"));
+            this.pools.get(i).validate(validator.forChild(".pools[" + i + "]"));
         }
 
         for (int j = 0; j < this.functions.size(); j++) {
-            this.functions.get(j).validate(p_79137_.forChild(".functions[" + j + "]"));
+            this.functions.get(j).validate(validator.forChild(".functions[" + j + "]"));
         }
     }
 
-    public void fill(Container p_287662_, LootParams p_287743_, long p_287585_) {
-        LootContext lootcontext = new LootContext.Builder(p_287743_).withOptionalRandomSeed(p_287585_).create(this.randomSequence);
+    public void fill(Container container, LootParams params, long seed) {
+        LootContext lootcontext = new LootContext.Builder(params).withOptionalRandomSeed(seed).create(this.randomSequence);
         ObjectArrayList<ItemStack> objectarraylist = this.getRandomItems(lootcontext);
         RandomSource randomsource = lootcontext.getRandom();
-        List<Integer> list = this.getAvailableSlots(p_287662_, randomsource);
+        List<Integer> list = this.getAvailableSlots(container, randomsource);
         this.shuffleAndSplitItems(objectarraylist, list.size(), randomsource);
 
         for (ItemStack itemstack : objectarraylist) {
@@ -156,16 +168,19 @@ public class LootTable {
             }
 
             if (itemstack.isEmpty()) {
-                p_287662_.setItem(list.remove(list.size() - 1), ItemStack.EMPTY);
+                container.setItem(list.remove(list.size() - 1), ItemStack.EMPTY);
             } else {
-                p_287662_.setItem(list.remove(list.size() - 1), itemstack);
+                container.setItem(list.remove(list.size() - 1), itemstack);
             }
         }
     }
 
-    private void shuffleAndSplitItems(ObjectArrayList<ItemStack> p_230925_, int p_230926_, RandomSource p_230927_) {
+    /**
+     * Shuffles items by changing their order and splitting stacks
+     */
+    private void shuffleAndSplitItems(ObjectArrayList<ItemStack> stacks, int emptySlotsCount, RandomSource random) {
         List<ItemStack> list = Lists.newArrayList();
-        Iterator<ItemStack> iterator = p_230925_.iterator();
+        Iterator<ItemStack> iterator = stacks.iterator();
 
         while (iterator.hasNext()) {
             ItemStack itemstack = iterator.next();
@@ -177,37 +192,37 @@ public class LootTable {
             }
         }
 
-        while (p_230926_ - p_230925_.size() - list.size() > 0 && !list.isEmpty()) {
-            ItemStack itemstack2 = list.remove(Mth.nextInt(p_230927_, 0, list.size() - 1));
-            int i = Mth.nextInt(p_230927_, 1, itemstack2.getCount() / 2);
+        while (emptySlotsCount - stacks.size() - list.size() > 0 && !list.isEmpty()) {
+            ItemStack itemstack2 = list.remove(Mth.nextInt(random, 0, list.size() - 1));
+            int i = Mth.nextInt(random, 1, itemstack2.getCount() / 2);
             ItemStack itemstack1 = itemstack2.split(i);
-            if (itemstack2.getCount() > 1 && p_230927_.nextBoolean()) {
+            if (itemstack2.getCount() > 1 && random.nextBoolean()) {
                 list.add(itemstack2);
             } else {
-                p_230925_.add(itemstack2);
+                stacks.add(itemstack2);
             }
 
-            if (itemstack1.getCount() > 1 && p_230927_.nextBoolean()) {
+            if (itemstack1.getCount() > 1 && random.nextBoolean()) {
                 list.add(itemstack1);
             } else {
-                p_230925_.add(itemstack1);
+                stacks.add(itemstack1);
             }
         }
 
-        p_230925_.addAll(list);
-        Util.shuffle(p_230925_, p_230927_);
+        stacks.addAll(list);
+        Util.shuffle(stacks, random);
     }
 
-    private List<Integer> getAvailableSlots(Container p_230920_, RandomSource p_230921_) {
+    private List<Integer> getAvailableSlots(Container inventory, RandomSource random) {
         ObjectArrayList<Integer> objectarraylist = new ObjectArrayList<>();
 
-        for (int i = 0; i < p_230920_.getContainerSize(); i++) {
-            if (p_230920_.getItem(i).isEmpty()) {
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            if (inventory.getItem(i).isEmpty()) {
                 objectarraylist.add(i);
             }
         }
 
-        Util.shuffle(objectarraylist, p_230921_);
+        Util.shuffle(objectarraylist, random);
         return objectarraylist;
     }
 
@@ -277,23 +292,23 @@ public class LootTable {
         private LootContextParamSet paramSet = LootTable.DEFAULT_PARAM_SET;
         private Optional<ResourceLocation> randomSequence = Optional.empty();
 
-        public LootTable.Builder withPool(LootPool.Builder p_79162_) {
-            this.pools.add(p_79162_.build());
+        public LootTable.Builder withPool(LootPool.Builder lootPool) {
+            this.pools.add(lootPool.build());
             return this;
         }
 
-        public LootTable.Builder setParamSet(LootContextParamSet p_79166_) {
-            this.paramSet = p_79166_;
+        public LootTable.Builder setParamSet(LootContextParamSet parameterSet) {
+            this.paramSet = parameterSet;
             return this;
         }
 
-        public LootTable.Builder setRandomSequence(ResourceLocation p_287667_) {
-            this.randomSequence = Optional.of(p_287667_);
+        public LootTable.Builder setRandomSequence(ResourceLocation randomSequence) {
+            this.randomSequence = Optional.of(randomSequence);
             return this;
         }
 
-        public LootTable.Builder apply(LootItemFunction.Builder p_79164_) {
-            this.functions.add(p_79164_.build());
+        public LootTable.Builder apply(LootItemFunction.Builder functionBuilder) {
+            this.functions.add(functionBuilder.build());
             return this;
         }
 

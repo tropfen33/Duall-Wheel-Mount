@@ -38,49 +38,52 @@ public class Scoreboard {
     private final Object2ObjectMap<String, PlayerTeam> teamsByName = new Object2ObjectOpenHashMap<>();
     private final Object2ObjectMap<String, PlayerTeam> teamsByPlayer = new Object2ObjectOpenHashMap<>();
 
+    /**
+     * Returns a ScoreObjective for the objective name
+     */
     @Nullable
-    public Objective getObjective(@Nullable String p_83478_) {
-        return this.objectivesByName.get(p_83478_);
+    public Objective getObjective(@Nullable String name) {
+        return this.objectivesByName.get(name);
     }
 
     public Objective addObjective(
-        String p_83437_,
-        ObjectiveCriteria p_83438_,
-        Component p_83439_,
-        ObjectiveCriteria.RenderType p_83440_,
-        boolean p_313815_,
-        @Nullable NumberFormat p_313909_
+        String name,
+        ObjectiveCriteria criteria,
+        Component displayName,
+        ObjectiveCriteria.RenderType renderType,
+        boolean displayAutoUpdate,
+        @Nullable NumberFormat numberFormat
     ) {
-        if (this.objectivesByName.containsKey(p_83437_)) {
-            throw new IllegalArgumentException("An objective with the name '" + p_83437_ + "' already exists!");
+        if (this.objectivesByName.containsKey(name)) {
+            throw new IllegalArgumentException("An objective with the name '" + name + "' already exists!");
         } else {
-            Objective objective = new Objective(this, p_83437_, p_83438_, p_83439_, p_83440_, p_313815_, p_313909_);
-            this.objectivesByCriteria.computeIfAbsent(p_83438_, p_314722_ -> Lists.newArrayList()).add(objective);
-            this.objectivesByName.put(p_83437_, objective);
+            Objective objective = new Objective(this, name, criteria, displayName, renderType, displayAutoUpdate, numberFormat);
+            this.objectivesByCriteria.computeIfAbsent(criteria, p_314722_ -> Lists.newArrayList()).add(objective);
+            this.objectivesByName.put(name, objective);
             this.onObjectiveAdded(objective);
             return objective;
         }
     }
 
-    public final void forAllObjectives(ObjectiveCriteria p_83428_, ScoreHolder p_313805_, Consumer<ScoreAccess> p_83430_) {
+    public final void forAllObjectives(ObjectiveCriteria criteria, ScoreHolder scoreHolder, Consumer<ScoreAccess> action) {
         this.objectivesByCriteria
-            .getOrDefault(p_83428_, Collections.emptyList())
-            .forEach(p_313676_ -> p_83430_.accept(this.getOrCreatePlayerScore(p_313805_, p_313676_, true)));
+            .getOrDefault(criteria, Collections.emptyList())
+            .forEach(p_313676_ -> action.accept(this.getOrCreatePlayerScore(scoreHolder, p_313676_, true)));
     }
 
-    private PlayerScores getOrCreatePlayerInfo(String p_313892_) {
-        return this.playerScores.computeIfAbsent(p_313892_, p_313683_ -> new PlayerScores());
+    private PlayerScores getOrCreatePlayerInfo(String username) {
+        return this.playerScores.computeIfAbsent(username, p_313683_ -> new PlayerScores());
     }
 
-    public ScoreAccess getOrCreatePlayerScore(ScoreHolder p_313714_, Objective p_313948_) {
-        return this.getOrCreatePlayerScore(p_313714_, p_313948_, false);
+    public ScoreAccess getOrCreatePlayerScore(ScoreHolder scoreHolder, Objective objective) {
+        return this.getOrCreatePlayerScore(scoreHolder, objective, false);
     }
 
-    public ScoreAccess getOrCreatePlayerScore(final ScoreHolder p_313717_, final Objective p_83473_, boolean p_313939_) {
-        final boolean flag = p_313939_ || !p_83473_.getCriteria().isReadOnly();
-        PlayerScores playerscores = this.getOrCreatePlayerInfo(p_313717_.getScoreboardName());
+    public ScoreAccess getOrCreatePlayerScore(final ScoreHolder scoreHolder, final Objective objective, boolean readOnly) {
+        final boolean flag = readOnly || !objective.getCriteria().isReadOnly();
+        PlayerScores playerscores = this.getOrCreatePlayerInfo(scoreHolder.getScoreboardName());
         final MutableBoolean mutableboolean = new MutableBoolean();
-        final Score score = playerscores.getOrCreate(p_83473_, p_313682_ -> mutableboolean.setTrue());
+        final Score score = playerscores.getOrCreate(objective, p_313682_ -> mutableboolean.setTrue());
         return new ScoreAccess() {
             @Override
             public int get() {
@@ -88,21 +91,21 @@ public class Scoreboard {
             }
 
             @Override
-            public void set(int p_313831_) {
+            public void set(int value) {
                 if (!flag) {
                     throw new IllegalStateException("Cannot modify read-only score");
                 } else {
                     boolean flag1 = mutableboolean.isTrue();
-                    if (p_83473_.displayAutoUpdate()) {
-                        Component component = p_313717_.getDisplayName();
+                    if (objective.displayAutoUpdate()) {
+                        Component component = scoreHolder.getDisplayName();
                         if (component != null && !component.equals(score.display())) {
                             score.display(component);
                             flag1 = true;
                         }
                     }
 
-                    if (p_313831_ != score.value()) {
-                        score.value(p_313831_);
+                    if (value != score.value()) {
+                        score.value(value);
                         flag1 = true;
                     }
 
@@ -119,16 +122,16 @@ public class Scoreboard {
             }
 
             @Override
-            public void display(@Nullable Component p_313826_) {
-                if (mutableboolean.isTrue() || !Objects.equals(p_313826_, score.display())) {
-                    score.display(p_313826_);
+            public void display(@Nullable Component value) {
+                if (mutableboolean.isTrue() || !Objects.equals(value, score.display())) {
+                    score.display(value);
                     this.sendScoreToPlayers();
                 }
             }
 
             @Override
-            public void numberFormatOverride(@Nullable NumberFormat p_313875_) {
-                score.numberFormat(p_313875_);
+            public void numberFormatOverride(@Nullable NumberFormat format) {
+                score.numberFormat(format);
                 this.sendScoreToPlayers();
             }
 
@@ -147,32 +150,32 @@ public class Scoreboard {
                 this.setLocked(true);
             }
 
-            private void setLocked(boolean p_313822_) {
-                score.setLocked(p_313822_);
+            private void setLocked(boolean locked) {
+                score.setLocked(locked);
                 if (mutableboolean.isTrue()) {
                     this.sendScoreToPlayers();
                 }
 
-                Scoreboard.this.onScoreLockChanged(p_313717_, p_83473_);
+                Scoreboard.this.onScoreLockChanged(scoreHolder, objective);
             }
 
             private void sendScoreToPlayers() {
-                Scoreboard.this.onScoreChanged(p_313717_, p_83473_, score);
+                Scoreboard.this.onScoreChanged(scoreHolder, objective, score);
                 mutableboolean.setFalse();
             }
         };
     }
 
     @Nullable
-    public ReadOnlyScoreInfo getPlayerScoreInfo(ScoreHolder p_313711_, Objective p_313813_) {
-        PlayerScores playerscores = this.playerScores.get(p_313711_.getScoreboardName());
-        return playerscores != null ? playerscores.get(p_313813_) : null;
+    public ReadOnlyScoreInfo getPlayerScoreInfo(ScoreHolder scoreHolder, Objective objective) {
+        PlayerScores playerscores = this.playerScores.get(scoreHolder.getScoreboardName());
+        return playerscores != null ? playerscores.get(objective) : null;
     }
 
-    public Collection<PlayerScoreEntry> listPlayerScores(Objective p_313802_) {
+    public Collection<PlayerScoreEntry> listPlayerScores(Objective objective) {
         List<PlayerScoreEntry> list = new ArrayList<>();
         this.playerScores.forEach((p_313669_, p_313670_) -> {
-            Score score = p_313670_.get(p_313802_);
+            Score score = p_313670_.get(objective);
             if (score != null) {
                 list.add(new PlayerScoreEntry(p_313669_, score.value(), score.display(), score.numberFormat()));
             }
@@ -192,116 +195,125 @@ public class Scoreboard {
         return this.playerScores.keySet().stream().map(ScoreHolder::forNameOnly).toList();
     }
 
-    public void resetAllPlayerScores(ScoreHolder p_313823_) {
-        PlayerScores playerscores = this.playerScores.remove(p_313823_.getScoreboardName());
+    public void resetAllPlayerScores(ScoreHolder scoreHolder) {
+        PlayerScores playerscores = this.playerScores.remove(scoreHolder.getScoreboardName());
         if (playerscores != null) {
-            this.onPlayerRemoved(p_313823_);
+            this.onPlayerRemoved(scoreHolder);
         }
     }
 
-    public void resetSinglePlayerScore(ScoreHolder p_313783_, Objective p_313928_) {
-        PlayerScores playerscores = this.playerScores.get(p_313783_.getScoreboardName());
+    public void resetSinglePlayerScore(ScoreHolder scoreHolder, Objective objective) {
+        PlayerScores playerscores = this.playerScores.get(scoreHolder.getScoreboardName());
         if (playerscores != null) {
-            boolean flag = playerscores.remove(p_313928_);
+            boolean flag = playerscores.remove(objective);
             if (!playerscores.hasScores()) {
-                PlayerScores playerscores1 = this.playerScores.remove(p_313783_.getScoreboardName());
+                PlayerScores playerscores1 = this.playerScores.remove(scoreHolder.getScoreboardName());
                 if (playerscores1 != null) {
-                    this.onPlayerRemoved(p_313783_);
+                    this.onPlayerRemoved(scoreHolder);
                 }
             } else if (flag) {
-                this.onPlayerScoreRemoved(p_313783_, p_313928_);
+                this.onPlayerScoreRemoved(scoreHolder, objective);
             }
         }
     }
 
-    public Object2IntMap<Objective> listPlayerScores(ScoreHolder p_313893_) {
-        PlayerScores playerscores = this.playerScores.get(p_313893_.getScoreboardName());
+    public Object2IntMap<Objective> listPlayerScores(ScoreHolder scoreHolder) {
+        PlayerScores playerscores = this.playerScores.get(scoreHolder.getScoreboardName());
         return playerscores != null ? playerscores.listScores() : Object2IntMaps.emptyMap();
     }
 
-    public void removeObjective(Objective p_83503_) {
-        this.objectivesByName.remove(p_83503_.getName());
+    public void removeObjective(Objective objective) {
+        this.objectivesByName.remove(objective.getName());
 
         for (DisplaySlot displayslot : DisplaySlot.values()) {
-            if (this.getDisplayObjective(displayslot) == p_83503_) {
+            if (this.getDisplayObjective(displayslot) == objective) {
                 this.setDisplayObjective(displayslot, null);
             }
         }
 
-        List<Objective> list = this.objectivesByCriteria.get(p_83503_.getCriteria());
+        List<Objective> list = this.objectivesByCriteria.get(objective.getCriteria());
         if (list != null) {
-            list.remove(p_83503_);
+            list.remove(objective);
         }
 
         for (PlayerScores playerscores : this.playerScores.values()) {
-            playerscores.remove(p_83503_);
+            playerscores.remove(objective);
         }
 
-        this.onObjectiveRemoved(p_83503_);
+        this.onObjectiveRemoved(objective);
     }
 
-    public void setDisplayObjective(DisplaySlot p_296205_, @Nullable Objective p_83419_) {
-        this.displayObjectives.put(p_296205_, p_83419_);
-    }
-
-    @Nullable
-    public Objective getDisplayObjective(DisplaySlot p_295165_) {
-        return this.displayObjectives.get(p_295165_);
+    public void setDisplayObjective(DisplaySlot slot, @Nullable Objective objective) {
+        this.displayObjectives.put(slot, objective);
     }
 
     @Nullable
-    public PlayerTeam getPlayerTeam(String p_83490_) {
-        return this.teamsByName.get(p_83490_);
+    public Objective getDisplayObjective(DisplaySlot slot) {
+        return this.displayObjectives.get(slot);
     }
 
-    public PlayerTeam addPlayerTeam(String p_83493_) {
-        PlayerTeam playerteam = this.getPlayerTeam(p_83493_);
+    /**
+     * Retrieve the ScorePlayerTeam instance identified by the passed team name
+     */
+    @Nullable
+    public PlayerTeam getPlayerTeam(String teamName) {
+        return this.teamsByName.get(teamName);
+    }
+
+    public PlayerTeam addPlayerTeam(String name) {
+        PlayerTeam playerteam = this.getPlayerTeam(name);
         if (playerteam != null) {
-            LOGGER.warn("Requested creation of existing team '{}'", p_83493_);
+            LOGGER.warn("Requested creation of existing team '{}'", name);
             return playerteam;
         } else {
-            playerteam = new PlayerTeam(this, p_83493_);
-            this.teamsByName.put(p_83493_, playerteam);
+            playerteam = new PlayerTeam(this, name);
+            this.teamsByName.put(name, playerteam);
             this.onTeamAdded(playerteam);
             return playerteam;
         }
     }
 
-    public void removePlayerTeam(PlayerTeam p_83476_) {
-        this.teamsByName.remove(p_83476_.getName());
+    /**
+     * Removes the team from the scoreboard, updates all player memberships and broadcasts the deletion to all players
+     */
+    public void removePlayerTeam(PlayerTeam playerTeam) {
+        this.teamsByName.remove(playerTeam.getName());
 
-        for (String s : p_83476_.getPlayers()) {
+        for (String s : playerTeam.getPlayers()) {
             this.teamsByPlayer.remove(s);
         }
 
-        this.onTeamRemoved(p_83476_);
+        this.onTeamRemoved(playerTeam);
     }
 
-    public boolean addPlayerToTeam(String p_83434_, PlayerTeam p_83435_) {
-        if (this.getPlayersTeam(p_83434_) != null) {
-            this.removePlayerFromTeam(p_83434_);
+    public boolean addPlayerToTeam(String playerName, PlayerTeam team) {
+        if (this.getPlayersTeam(playerName) != null) {
+            this.removePlayerFromTeam(playerName);
         }
 
-        this.teamsByPlayer.put(p_83434_, p_83435_);
-        return p_83435_.getPlayers().add(p_83434_);
+        this.teamsByPlayer.put(playerName, team);
+        return team.getPlayers().add(playerName);
     }
 
-    public boolean removePlayerFromTeam(String p_83496_) {
-        PlayerTeam playerteam = this.getPlayersTeam(p_83496_);
+    public boolean removePlayerFromTeam(String playerName) {
+        PlayerTeam playerteam = this.getPlayersTeam(playerName);
         if (playerteam != null) {
-            this.removePlayerFromTeam(p_83496_, playerteam);
+            this.removePlayerFromTeam(playerName, playerteam);
             return true;
         } else {
             return false;
         }
     }
 
-    public void removePlayerFromTeam(String p_83464_, PlayerTeam p_83465_) {
-        if (this.getPlayersTeam(p_83464_) != p_83465_) {
-            throw new IllegalStateException("Player is either on another team or not on any team. Cannot remove from team '" + p_83465_.getName() + "'.");
+    /**
+     * Removes the given username from the given ScorePlayerTeam. If the player is not on the team then an IllegalStateException is thrown.
+     */
+    public void removePlayerFromTeam(String username, PlayerTeam playerTeam) {
+        if (this.getPlayersTeam(username) != playerTeam) {
+            throw new IllegalStateException("Player is either on another team or not on any team. Cannot remove from team '" + playerTeam.getName() + "'.");
         } else {
-            this.teamsByPlayer.remove(p_83464_);
-            p_83465_.getPlayers().remove(p_83464_);
+            this.teamsByPlayer.remove(username);
+            playerTeam.getPlayers().remove(username);
         }
     }
 
@@ -313,52 +325,55 @@ public class Scoreboard {
         return this.teamsByName.values();
     }
 
+    /**
+     * Gets the ScorePlayerTeam object for the given username.
+     */
     @Nullable
-    public PlayerTeam getPlayersTeam(String p_83501_) {
-        return this.teamsByPlayer.get(p_83501_);
+    public PlayerTeam getPlayersTeam(String username) {
+        return this.teamsByPlayer.get(username);
     }
 
-    public void onObjectiveAdded(Objective p_83422_) {
+    public void onObjectiveAdded(Objective objective) {
     }
 
-    public void onObjectiveChanged(Objective p_83455_) {
+    public void onObjectiveChanged(Objective objective) {
     }
 
-    public void onObjectiveRemoved(Objective p_83467_) {
+    public void onObjectiveRemoved(Objective objective) {
     }
 
-    protected void onScoreChanged(ScoreHolder p_313729_, Objective p_313930_, Score p_83424_) {
+    protected void onScoreChanged(ScoreHolder scoreHolder, Objective objective, Score score) {
     }
 
-    protected void onScoreLockChanged(ScoreHolder p_313727_, Objective p_313708_) {
+    protected void onScoreLockChanged(ScoreHolder scoreHolder, Objective objective) {
     }
 
-    public void onPlayerRemoved(ScoreHolder p_313917_) {
+    public void onPlayerRemoved(ScoreHolder scoreHolder) {
     }
 
-    public void onPlayerScoreRemoved(ScoreHolder p_313899_, Objective p_83433_) {
+    public void onPlayerScoreRemoved(ScoreHolder scoreHolder, Objective objective) {
     }
 
-    public void onTeamAdded(PlayerTeam p_83423_) {
+    public void onTeamAdded(PlayerTeam playerTeam) {
     }
 
-    public void onTeamChanged(PlayerTeam p_83456_) {
+    public void onTeamChanged(PlayerTeam playerTeam) {
     }
 
-    public void onTeamRemoved(PlayerTeam p_83468_) {
+    public void onTeamRemoved(PlayerTeam playerTeam) {
     }
 
-    public void entityRemoved(Entity p_83421_) {
-        if (!(p_83421_ instanceof Player) && !p_83421_.isAlive()) {
-            this.resetAllPlayerScores(p_83421_);
-            this.removePlayerFromTeam(p_83421_.getScoreboardName());
+    public void entityRemoved(Entity entity) {
+        if (!(entity instanceof Player) && !entity.isAlive()) {
+            this.resetAllPlayerScores(entity);
+            this.removePlayerFromTeam(entity.getScoreboardName());
         }
     }
 
-    protected ListTag savePlayerScores(HolderLookup.Provider p_331535_) {
+    protected ListTag savePlayerScores(HolderLookup.Provider levelRegistry) {
         ListTag listtag = new ListTag();
         this.playerScores.forEach((p_330203_, p_330204_) -> p_330204_.listRawScores().forEach((p_330199_, p_330200_) -> {
-                CompoundTag compoundtag = p_330200_.write(p_331535_);
+                CompoundTag compoundtag = p_330200_.write(levelRegistry);
                 compoundtag.putString("Name", p_330203_);
                 compoundtag.putString("Objective", p_330199_.getName());
                 listtag.add(compoundtag);
@@ -366,10 +381,10 @@ public class Scoreboard {
         return listtag;
     }
 
-    protected void loadPlayerScores(ListTag p_83446_, HolderLookup.Provider p_330625_) {
-        for (int i = 0; i < p_83446_.size(); i++) {
-            CompoundTag compoundtag = p_83446_.getCompound(i);
-            Score score = Score.read(compoundtag, p_330625_);
+    protected void loadPlayerScores(ListTag tag, HolderLookup.Provider levelRegistry) {
+        for (int i = 0; i < tag.size(); i++) {
+            CompoundTag compoundtag = tag.getCompound(i);
+            Score score = Score.read(compoundtag, levelRegistry);
             String s = compoundtag.getString("Name");
             String s1 = compoundtag.getString("Objective");
             Objective objective = this.getObjective(s1);

@@ -16,8 +16,8 @@ public class FixedBiomeSource extends BiomeSource implements BiomeManager.NoiseB
     public static final MapCodec<FixedBiomeSource> CODEC = Biome.CODEC.fieldOf("biome").xmap(FixedBiomeSource::new, p_204259_ -> p_204259_.biome).stable();
     private final Holder<Biome> biome;
 
-    public FixedBiomeSource(Holder<Biome> p_204257_) {
-        this.biome = p_204257_;
+    public FixedBiomeSource(Holder<Biome> biome) {
+        this.biome = biome;
     }
 
     @Override
@@ -31,34 +31,38 @@ public class FixedBiomeSource extends BiomeSource implements BiomeManager.NoiseB
     }
 
     @Override
-    public Holder<Biome> getNoiseBiome(int p_204265_, int p_204266_, int p_204267_, Climate.Sampler p_204268_) {
+    public Holder<Biome> getNoiseBiome(int x, int y, int z, Climate.Sampler sampler) {
         return this.biome;
     }
 
+    /**
+     * Gets the biome at the given quart positions.
+     * Note that the coordinates passed into this method are 1/4 the scale of block coordinates.
+     */
     @Override
-    public Holder<Biome> getNoiseBiome(int p_204261_, int p_204262_, int p_204263_) {
+    public Holder<Biome> getNoiseBiome(int x, int y, int z) {
         return this.biome;
     }
 
     @Nullable
     @Override
     public Pair<BlockPos, Holder<Biome>> findBiomeHorizontal(
-        int p_220640_,
-        int p_220641_,
-        int p_220642_,
-        int p_220643_,
-        int p_220644_,
-        Predicate<Holder<Biome>> p_220645_,
-        RandomSource p_220646_,
-        boolean p_220647_,
-        Climate.Sampler p_220648_
+        int x,
+        int y,
+        int z,
+        int radius,
+        int increment,
+        Predicate<Holder<Biome>> biomePredicate,
+        RandomSource random,
+        boolean findClosest,
+        Climate.Sampler sampler
     ) {
-        if (p_220645_.test(this.biome)) {
-            return p_220647_
-                ? Pair.of(new BlockPos(p_220640_, p_220641_, p_220642_), this.biome)
+        if (biomePredicate.test(this.biome)) {
+            return findClosest
+                ? Pair.of(new BlockPos(x, y, z), this.biome)
                 : Pair.of(
                     new BlockPos(
-                        p_220640_ - p_220643_ + p_220646_.nextInt(p_220643_ * 2 + 1), p_220641_, p_220642_ - p_220643_ + p_220646_.nextInt(p_220643_ * 2 + 1)
+                        x - radius + random.nextInt(radius * 2 + 1), y, z - radius + random.nextInt(radius * 2 + 1)
                     ),
                     this.biome
                 );
@@ -70,13 +74,13 @@ public class FixedBiomeSource extends BiomeSource implements BiomeManager.NoiseB
     @Nullable
     @Override
     public Pair<BlockPos, Holder<Biome>> findClosestBiome3d(
-        BlockPos p_220650_, int p_220651_, int p_220652_, int p_220653_, Predicate<Holder<Biome>> p_220654_, Climate.Sampler p_220655_, LevelReader p_220656_
+        BlockPos pos, int radius, int horizontalStep, int verticalStep, Predicate<Holder<Biome>> biomePredicate, Climate.Sampler sampler, LevelReader level
     ) {
-        return p_220654_.test(this.biome) ? Pair.of(p_220650_, this.biome) : null;
+        return biomePredicate.test(this.biome) ? Pair.of(pos, this.biome) : null;
     }
 
     @Override
-    public Set<Holder<Biome>> getBiomesWithin(int p_187038_, int p_187039_, int p_187040_, int p_187041_, Climate.Sampler p_187042_) {
+    public Set<Holder<Biome>> getBiomesWithin(int x, int y, int z, int radius, Climate.Sampler sampler) {
         return Sets.newHashSet(Set.of(this.biome));
     }
 }

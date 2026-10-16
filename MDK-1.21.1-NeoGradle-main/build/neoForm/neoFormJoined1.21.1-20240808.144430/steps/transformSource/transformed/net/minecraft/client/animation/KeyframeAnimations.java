@@ -12,11 +12,11 @@ import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
 public class KeyframeAnimations {
-    public static void animate(HierarchicalModel<?> p_232320_, AnimationDefinition p_232321_, long p_232322_, float p_232323_, Vector3f p_253861_) {
-        float f = getElapsedSeconds(p_232321_, p_232322_);
+    public static void animate(HierarchicalModel<?> model, AnimationDefinition animationDefinition, long accumulatedTime, float scale, Vector3f animationVecCache) {
+        float f = getElapsedSeconds(animationDefinition, accumulatedTime);
 
-        for (Entry<String, List<AnimationChannel>> entry : p_232321_.boneAnimations().entrySet()) {
-            Optional<ModelPart> optional = p_232320_.getAnyDescendantWithName(entry.getKey());
+        for (Entry<String, List<AnimationChannel>> entry : animationDefinition.boneAnimations().entrySet()) {
+            Optional<ModelPart> optional = model.getAnyDescendantWithName(entry.getKey());
             List<AnimationChannel> list = entry.getValue();
             optional.ifPresent(p_232330_ -> list.forEach(p_288241_ -> {
                     Keyframe[] akeyframe = p_288241_.keyframes();
@@ -32,26 +32,26 @@ public class KeyframeAnimations {
                         f2 = 0.0F;
                     }
 
-                    keyframe1.interpolation().apply(p_253861_, f2, akeyframe, i, j, p_232323_);
-                    p_288241_.target().apply(p_232330_, p_253861_);
+                    keyframe1.interpolation().apply(animationVecCache, f2, akeyframe, i, j, scale);
+                    p_288241_.target().apply(p_232330_, animationVecCache);
                 }));
         }
     }
 
-    private static float getElapsedSeconds(AnimationDefinition p_232317_, long p_232318_) {
-        float f = (float)p_232318_ / 1000.0F;
-        return p_232317_.looping() ? f % p_232317_.lengthInSeconds() : f;
+    private static float getElapsedSeconds(AnimationDefinition animationDefinition, long accumulatedTime) {
+        float f = (float)accumulatedTime / 1000.0F;
+        return animationDefinition.looping() ? f % animationDefinition.lengthInSeconds() : f;
     }
 
-    public static Vector3f posVec(float p_253691_, float p_254046_, float p_254461_) {
-        return new Vector3f(p_253691_, -p_254046_, p_254461_);
+    public static Vector3f posVec(float x, float y, float z) {
+        return new Vector3f(x, -y, z);
     }
 
-    public static Vector3f degreeVec(float p_254402_, float p_253917_, float p_254397_) {
-        return new Vector3f(p_254402_ * (float) (Math.PI / 180.0), p_253917_ * (float) (Math.PI / 180.0), p_254397_ * (float) (Math.PI / 180.0));
+    public static Vector3f degreeVec(float xDegrees, float yDegrees, float zDegrees) {
+        return new Vector3f(xDegrees * (float) (Math.PI / 180.0), yDegrees * (float) (Math.PI / 180.0), zDegrees * (float) (Math.PI / 180.0));
     }
 
-    public static Vector3f scaleVec(double p_253806_, double p_253647_, double p_254396_) {
-        return new Vector3f((float)(p_253806_ - 1.0), (float)(p_253647_ - 1.0), (float)(p_254396_ - 1.0));
+    public static Vector3f scaleVec(double xScale, double yScale, double zScale) {
+        return new Vector3f((float)(xScale - 1.0), (float)(yScale - 1.0), (float)(zScale - 1.0));
     }
 }

@@ -18,6 +18,9 @@ import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.ValidationContext;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
+/**
+ * LootItemFunction that sets the LootTable and optionally the loot table seed on the stack's {@code BlockEntityTag}. The effect of this is that containers such as chests will receive the given LootTable when placed.
+ */
 public class SetContainerLootTable extends LootItemConditionalFunction {
     public static final MapCodec<SetContainerLootTable> CODEC = RecordCodecBuilder.mapCodec(
         p_338147_ -> commonFields(p_338147_)
@@ -34,11 +37,11 @@ public class SetContainerLootTable extends LootItemConditionalFunction {
     private final long seed;
     private final Holder<BlockEntityType<?>> type;
 
-    private SetContainerLootTable(List<LootItemCondition> p_298290_, ResourceKey<LootTable> p_335525_, long p_193047_, Holder<BlockEntityType<?>> p_298416_) {
-        super(p_298290_);
-        this.name = p_335525_;
-        this.seed = p_193047_;
-        this.type = p_298416_;
+    private SetContainerLootTable(List<LootItemCondition> conditions, ResourceKey<LootTable> name, long seed, Holder<BlockEntityType<?>> type) {
+        super(conditions);
+        this.name = name;
+        this.seed = seed;
+        this.type = type;
     }
 
     @Override
@@ -46,33 +49,39 @@ public class SetContainerLootTable extends LootItemConditionalFunction {
         return LootItemFunctions.SET_LOOT_TABLE;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_80967_, LootContext p_80968_) {
-        if (p_80967_.isEmpty()) {
-            return p_80967_;
+    public ItemStack run(ItemStack stack, LootContext context) {
+        if (stack.isEmpty()) {
+            return stack;
         } else {
-            p_80967_.set(DataComponents.CONTAINER_LOOT, new SeededContainerLoot(this.name, this.seed));
-            return p_80967_;
+            stack.set(DataComponents.CONTAINER_LOOT, new SeededContainerLoot(this.name, this.seed));
+            return stack;
         }
     }
 
+    /**
+     * Validate that this object is used correctly according to the given ValidationContext.
+     */
     @Override
-    public void validate(ValidationContext p_80970_) {
-        super.validate(p_80970_);
-        if (!p_80970_.allowsReferences()) {
-            p_80970_.reportProblem("Uses reference to " + this.name.location() + ", but references are not allowed");
+    public void validate(ValidationContext context) {
+        super.validate(context);
+        if (!context.allowsReferences()) {
+            context.reportProblem("Uses reference to " + this.name.location() + ", but references are not allowed");
         } else {
-            if (p_80970_.resolver().get(Registries.LOOT_TABLE, this.name).isEmpty()) {
-                p_80970_.reportProblem("Missing loot table used for container: " + this.name.location());
+            if (context.resolver().get(Registries.LOOT_TABLE, this.name).isEmpty()) {
+                context.reportProblem("Missing loot table used for container: " + this.name.location());
             }
         }
     }
 
-    public static LootItemConditionalFunction.Builder<?> withLootTable(BlockEntityType<?> p_193050_, ResourceKey<LootTable> p_335933_) {
-        return simpleBuilder(p_335345_ -> new SetContainerLootTable(p_335345_, p_335933_, 0L, p_193050_.builtInRegistryHolder()));
+    public static LootItemConditionalFunction.Builder<?> withLootTable(BlockEntityType<?> type, ResourceKey<LootTable> toolTable) {
+        return simpleBuilder(p_335345_ -> new SetContainerLootTable(p_335345_, toolTable, 0L, type.builtInRegistryHolder()));
     }
 
-    public static LootItemConditionalFunction.Builder<?> withLootTable(BlockEntityType<?> p_193053_, ResourceKey<LootTable> p_335427_, long p_193055_) {
-        return simpleBuilder(p_335351_ -> new SetContainerLootTable(p_335351_, p_335427_, p_193055_, p_193053_.builtInRegistryHolder()));
+    public static LootItemConditionalFunction.Builder<?> withLootTable(BlockEntityType<?> type, ResourceKey<LootTable> lootTable, long seed) {
+        return simpleBuilder(p_335351_ -> new SetContainerLootTable(p_335351_, lootTable, seed, type.builtInRegistryHolder()));
     }
 }

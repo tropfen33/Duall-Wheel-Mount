@@ -16,17 +16,28 @@ import net.minecraft.server.packs.resources.ResourceProvider;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
+/**
+ * The {@linkplain SoundBufferLibrary} class provides a cache containing instances of {@linkplain SoundBuffer} and {@linkplain AudioStream} for use in Minecraft sound handling.
+ */
 @OnlyIn(Dist.CLIENT)
 public class SoundBufferLibrary {
+    /**
+     * The {@linkplain ResourceProvider} used for loading sound resources.
+     */
     private final ResourceProvider resourceManager;
     private final Map<ResourceLocation, CompletableFuture<SoundBuffer>> cache = Maps.newHashMap();
 
-    public SoundBufferLibrary(ResourceProvider p_248900_) {
-        this.resourceManager = p_248900_;
+    public SoundBufferLibrary(ResourceProvider resourceManager) {
+        this.resourceManager = resourceManager;
     }
 
-    public CompletableFuture<SoundBuffer> getCompleteBuffer(ResourceLocation p_120203_) {
-        return this.cache.computeIfAbsent(p_120203_, p_340614_ -> CompletableFuture.supplyAsync(() -> {
+    /**
+     * {@return Returns a {@linkplain CompletableFuture} containing the complete {@linkplain SoundBuffer}. The {@linkplain SoundBuffer} is loaded asynchronously and cached.}
+     *
+     * @param soundID the {@linkplain ResourceLocation} of the sound
+     */
+    public CompletableFuture<SoundBuffer> getCompleteBuffer(ResourceLocation soundID) {
+        return this.cache.computeIfAbsent(soundID, p_340614_ -> CompletableFuture.supplyAsync(() -> {
                 try {
                     SoundBuffer soundbuffer;
                     try (
@@ -44,11 +55,18 @@ public class SoundBufferLibrary {
             }, Util.nonCriticalIoPool()));
     }
 
-    public CompletableFuture<AudioStream> getStream(ResourceLocation p_120205_, boolean p_120206_) {
+    /**
+     * {@return Returns a {@linkplain CompletableFuture} containing the {@linkplain AudioStream}. The {@linkplain AudioStream} is loaded asynchronously.}
+     *
+     * @param resourceLocation the {@linkplain ResourceLocation} of the sound
+     * @param isWrapper        whether the {@linkplain AudioStream} should be a {@
+     *                         linkplain LoopingAudioStream}
+     */
+    public CompletableFuture<AudioStream> getStream(ResourceLocation resourceLocation, boolean isWrapper) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                InputStream inputstream = this.resourceManager.open(p_120205_);
-                return (AudioStream)(p_120206_ ? new LoopingAudioStream(JOrbisAudioStream::new, inputstream) : new JOrbisAudioStream(inputstream));
+                InputStream inputstream = this.resourceManager.open(resourceLocation);
+                return (AudioStream)(isWrapper ? new LoopingAudioStream(JOrbisAudioStream::new, inputstream) : new JOrbisAudioStream(inputstream));
             } catch (IOException ioexception) {
                 throw new CompletionException(ioexception);
             }
@@ -60,7 +78,14 @@ public class SoundBufferLibrary {
         this.cache.clear();
     }
 
-    public CompletableFuture<?> preload(Collection<Sound> p_120199_) {
-        return CompletableFuture.allOf(p_120199_.stream().map(p_120197_ -> this.getCompleteBuffer(p_120197_.getPath())).toArray(CompletableFuture[]::new));
+    /**
+     * Preloads the {@linkplain SoundBuffer} objects for the specified collection of sounds.
+     * <p>
+     * @return a {@linkplain CompletableFuture} representing the completion of the preload operation
+     *
+     * @param sounds the collection of sounds to preload
+     */
+    public CompletableFuture<?> preload(Collection<Sound> sounds) {
+        return CompletableFuture.allOf(sounds.stream().map(p_120197_ -> this.getCompleteBuffer(p_120197_.getPath())).toArray(CompletableFuture[]::new));
     }
 }

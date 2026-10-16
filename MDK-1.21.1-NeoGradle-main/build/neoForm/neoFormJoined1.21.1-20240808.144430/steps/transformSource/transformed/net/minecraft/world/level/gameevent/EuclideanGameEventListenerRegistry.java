@@ -21,10 +21,10 @@ public class EuclideanGameEventListenerRegistry implements GameEventListenerRegi
     private final int sectionY;
     private final EuclideanGameEventListenerRegistry.OnEmptyAction onEmptyAction;
 
-    public EuclideanGameEventListenerRegistry(ServerLevel p_281505_, int p_283450_, EuclideanGameEventListenerRegistry.OnEmptyAction p_282325_) {
-        this.level = p_281505_;
-        this.sectionY = p_283450_;
-        this.onEmptyAction = p_282325_;
+    public EuclideanGameEventListenerRegistry(ServerLevel level, int sectionY, EuclideanGameEventListenerRegistry.OnEmptyAction onEmptyAction) {
+        this.level = level;
+        this.sectionY = sectionY;
+        this.onEmptyAction = onEmptyAction;
     }
 
     @Override
@@ -33,22 +33,22 @@ public class EuclideanGameEventListenerRegistry implements GameEventListenerRegi
     }
 
     @Override
-    public void register(GameEventListener p_248767_) {
+    public void register(GameEventListener listener) {
         if (this.processing) {
-            this.listenersToAdd.add(p_248767_);
+            this.listenersToAdd.add(listener);
         } else {
-            this.listeners.add(p_248767_);
+            this.listeners.add(listener);
         }
 
-        DebugPackets.sendGameEventListenerInfo(this.level, p_248767_);
+        DebugPackets.sendGameEventListenerInfo(this.level, listener);
     }
 
     @Override
-    public void unregister(GameEventListener p_250006_) {
+    public void unregister(GameEventListener listener) {
         if (this.processing) {
-            this.listenersToRemove.add(p_250006_);
+            this.listenersToRemove.add(listener);
         } else {
-            this.listeners.remove(p_250006_);
+            this.listeners.remove(listener);
         }
 
         if (this.listeners.isEmpty()) {
@@ -58,7 +58,7 @@ public class EuclideanGameEventListenerRegistry implements GameEventListenerRegi
 
     @Override
     public boolean visitInRangeListeners(
-        Holder<GameEvent> p_316862_, Vec3 p_251445_, GameEvent.Context p_252317_, GameEventListenerRegistry.ListenerVisitor p_251422_
+        Holder<GameEvent> gameEvent, Vec3 pos, GameEvent.Context context, GameEventListenerRegistry.ListenerVisitor visitor
     ) {
         this.processing = true;
         boolean flag = false;
@@ -71,9 +71,9 @@ public class EuclideanGameEventListenerRegistry implements GameEventListenerRegi
                 if (this.listenersToRemove.remove(gameeventlistener)) {
                     iterator.remove();
                 } else {
-                    Optional<Vec3> optional = getPostableListenerPosition(this.level, p_251445_, gameeventlistener);
+                    Optional<Vec3> optional = getPostableListenerPosition(this.level, pos, gameeventlistener);
                     if (optional.isPresent()) {
-                        p_251422_.visit(gameeventlistener, optional.get());
+                        visitor.visit(gameeventlistener, optional.get());
                         flag = true;
                     }
                 }
@@ -95,19 +95,19 @@ public class EuclideanGameEventListenerRegistry implements GameEventListenerRegi
         return flag;
     }
 
-    private static Optional<Vec3> getPostableListenerPosition(ServerLevel p_249585_, Vec3 p_251333_, GameEventListener p_251051_) {
-        Optional<Vec3> optional = p_251051_.getListenerSource().getPosition(p_249585_);
+    private static Optional<Vec3> getPostableListenerPosition(ServerLevel level, Vec3 pos, GameEventListener listener) {
+        Optional<Vec3> optional = listener.getListenerSource().getPosition(level);
         if (optional.isEmpty()) {
             return Optional.empty();
         } else {
-            double d0 = BlockPos.containing(optional.get()).distSqr(BlockPos.containing(p_251333_));
-            int i = p_251051_.getListenerRadius() * p_251051_.getListenerRadius();
+            double d0 = BlockPos.containing(optional.get()).distSqr(BlockPos.containing(pos));
+            int i = listener.getListenerRadius() * listener.getListenerRadius();
             return d0 > (double)i ? Optional.empty() : optional;
         }
     }
 
     @FunctionalInterface
     public interface OnEmptyAction {
-        void apply(int p_282867_);
+        void apply(int sectionY);
     }
 }

@@ -13,12 +13,12 @@ public class HalfTransparentBlock extends Block {
         return CODEC;
     }
 
-    public HalfTransparentBlock(BlockBehaviour.Properties p_53970_) {
-        super(p_53970_);
+    public HalfTransparentBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
-    protected boolean skipRendering(BlockState p_53972_, BlockState p_53973_, Direction p_53974_) {
-        return p_53973_.is(this) ? true : super.skipRendering(p_53972_, p_53973_, p_53974_);
+    protected boolean skipRendering(BlockState state, BlockState adjacentBlockState, Direction side) {
+        return adjacentBlockState.is(this) ? true : super.skipRendering(state, adjacentBlockState, side);
     }
 }

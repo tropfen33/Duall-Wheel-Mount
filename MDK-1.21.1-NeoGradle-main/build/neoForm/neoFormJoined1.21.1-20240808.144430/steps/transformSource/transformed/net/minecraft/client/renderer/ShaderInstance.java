@@ -95,8 +95,8 @@ public class ShaderInstance implements Shader, AutoCloseable {
     public final Uniform CHUNK_OFFSET;
 
     @Deprecated // FORGE: Use the ResourceLocation variant below
-    public ShaderInstance(ResourceProvider p_173336_, String p_173337_, VertexFormat p_173338_) throws IOException {
-        this(p_173336_, ResourceLocation.parse(p_173337_), p_173338_);
+    public ShaderInstance(ResourceProvider resourceProvider, String name, VertexFormat vertexFormat) throws IOException {
+        this(resourceProvider, ResourceLocation.parse(name), vertexFormat);
     }
     public ShaderInstance(ResourceProvider p_173336_, ResourceLocation shaderLocation, VertexFormat p_173338_) throws IOException {
         this.name = shaderLocation.getNamespace().equals("minecraft") ? shaderLocation.getPath() : shaderLocation.toString();
@@ -177,18 +177,18 @@ public class ShaderInstance implements Shader, AutoCloseable {
         this.CHUNK_OFFSET = this.getUniform("ChunkOffset");
     }
 
-    private static Program getOrCreate(final ResourceProvider p_173341_, Program.Type p_173342_, String p_173343_) throws IOException {
-        Program program1 = p_173342_.getPrograms().get(p_173343_);
+    private static Program getOrCreate(final ResourceProvider resourceProvider, Program.Type programType, String name) throws IOException {
+        Program program1 = programType.getPrograms().get(name);
         Program program;
         if (program1 == null) {
-            ResourceLocation loc = ResourceLocation.parse(p_173343_);
-            String s = "shaders/core/" + loc.getPath() + p_173342_.getExtension();
+            ResourceLocation loc = ResourceLocation.parse(name);
+            String s = "shaders/core/" + loc.getPath() + programType.getExtension();
             ResourceLocation resourcelocation = ResourceLocation.fromNamespaceAndPath(loc.getNamespace(), s);
-            Resource resource = p_173341_.getResourceOrThrow(resourcelocation);
+            Resource resource = resourceProvider.getResourceOrThrow(resourcelocation);
 
             try (InputStream inputstream = resource.open()) {
                 final String s1 = FileUtil.getFullResourcePath(s);
-                program = Program.compileShader(p_173342_, p_173343_, inputstream, resource.sourcePackId(), new GlslPreprocessor() {
+                program = Program.compileShader(programType, name, inputstream, resource.sourcePackId(), new GlslPreprocessor() {
                     private final Set<String> importedPaths = Sets.newHashSet();
 
                     @Override
@@ -201,7 +201,7 @@ public class ShaderInstance implements Shader, AutoCloseable {
 
                             try {
                                 String s2;
-                                try (Reader reader = p_173341_.openAsReader(resourcelocation)) {
+                                try (Reader reader = resourceProvider.openAsReader(resourcelocation)) {
                                     s2 = IOUtils.toString(reader);
                                 }
 
@@ -294,13 +294,13 @@ public class ShaderInstance implements Shader, AutoCloseable {
     }
 
     @Nullable
-    public Uniform getUniform(String p_173349_) {
+    public Uniform getUniform(String name) {
         RenderSystem.assertOnRenderThread();
-        return this.uniformMap.get(p_173349_);
+        return this.uniformMap.get(name);
     }
 
-    public AbstractUniform safeGetUniform(String p_173357_) {
-        Uniform uniform = this.getUniform(p_173357_);
+    public AbstractUniform safeGetUniform(String name) {
+        Uniform uniform = this.getUniform(name);
         return (AbstractUniform)(uniform == null ? DUMMY_UNIFORM : uniform);
     }
 
@@ -338,8 +338,8 @@ public class ShaderInstance implements Shader, AutoCloseable {
         }
     }
 
-    private void parseSamplerNode(JsonElement p_173345_) {
-        JsonObject jsonobject = GsonHelper.convertToJsonObject(p_173345_, "sampler");
+    private void parseSamplerNode(JsonElement json) {
+        JsonObject jsonobject = GsonHelper.convertToJsonObject(json, "sampler");
         String s = GsonHelper.getAsString(jsonobject, "name");
         if (!GsonHelper.isStringValue(jsonobject, "file")) {
             this.samplerMap.put(s, null);
@@ -349,13 +349,13 @@ public class ShaderInstance implements Shader, AutoCloseable {
         }
     }
 
-    public void setSampler(String p_173351_, Object p_173352_) {
-        this.samplerMap.put(p_173351_, p_173352_);
+    public void setSampler(String name, Object textureId) {
+        this.samplerMap.put(name, textureId);
         this.markDirty();
     }
 
-    private void parseUniformNode(JsonElement p_173355_) throws ChainedJsonException {
-        JsonObject jsonobject = GsonHelper.convertToJsonObject(p_173355_, "uniform");
+    private void parseUniformNode(JsonElement json) throws ChainedJsonException {
+        JsonObject jsonobject = GsonHelper.convertToJsonObject(json, "uniform");
         String s = GsonHelper.getAsString(jsonobject, "name");
         int i = Uniform.getTypeFromString(GsonHelper.getAsString(jsonobject, "type"));
         int j = GsonHelper.getAsInt(jsonobject, "count");
@@ -428,18 +428,18 @@ public class ShaderInstance implements Shader, AutoCloseable {
         return this.programId;
     }
 
-    public void setDefaultUniforms(VertexFormat.Mode p_350497_, Matrix4f p_351053_, Matrix4f p_350556_, Window p_350876_) {
+    public void setDefaultUniforms(VertexFormat.Mode mode, Matrix4f frustumMatrix, Matrix4f projectionMatrix, Window window) {
         for (int i = 0; i < 12; i++) {
             int j = RenderSystem.getShaderTexture(i);
             this.setSampler("Sampler" + i, j);
         }
 
         if (this.MODEL_VIEW_MATRIX != null) {
-            this.MODEL_VIEW_MATRIX.set(p_351053_);
+            this.MODEL_VIEW_MATRIX.set(frustumMatrix);
         }
 
         if (this.PROJECTION_MATRIX != null) {
-            this.PROJECTION_MATRIX.set(p_350556_);
+            this.PROJECTION_MATRIX.set(projectionMatrix);
         }
 
         if (this.COLOR_MODULATOR != null) {
@@ -475,10 +475,10 @@ public class ShaderInstance implements Shader, AutoCloseable {
         }
 
         if (this.SCREEN_SIZE != null) {
-            this.SCREEN_SIZE.set((float)p_350876_.getWidth(), (float)p_350876_.getHeight());
+            this.SCREEN_SIZE.set((float)window.getWidth(), (float)window.getHeight());
         }
 
-        if (this.LINE_WIDTH != null && (p_350497_ == VertexFormat.Mode.LINES || p_350497_ == VertexFormat.Mode.LINE_STRIP)) {
+        if (this.LINE_WIDTH != null && (mode == VertexFormat.Mode.LINES || mode == VertexFormat.Mode.LINE_STRIP)) {
             this.LINE_WIDTH.set(RenderSystem.getShaderLineWidth());
         }
 

@@ -23,8 +23,8 @@ public class BitStorageAlignFix extends DataFix {
     private static final int HEIGHTMAP_BITS = 9;
     private static final int HEIGHTMAP_SIZE = 256;
 
-    public BitStorageAlignFix(Schema p_14736_) {
-        super(p_14736_, false);
+    public BitStorageAlignFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
     @Override
@@ -47,8 +47,8 @@ public class BitStorageAlignFix extends DataFix {
         );
     }
 
-    private Typed<?> updateHeightmaps(Typed<?> p_14763_) {
-        return p_14763_.update(
+    private Typed<?> updateHeightmaps(Typed<?> data) {
+        return data.update(
             DSL.remainderFinder(),
             p_14765_ -> p_14765_.update(
                     "Heightmaps",
@@ -60,14 +60,14 @@ public class BitStorageAlignFix extends DataFix {
     }
 
     private static Typed<?> updateSections(
-        OpticFinder<?> p_14751_, OpticFinder<?> p_14752_, OpticFinder<List<Pair<String, Dynamic<?>>>> p_14753_, Typed<?> p_14754_
+        OpticFinder<?> sections, OpticFinder<?> p_14752_, OpticFinder<List<Pair<String, Dynamic<?>>>> palette, Typed<?> data
     ) {
-        return p_14754_.updateTyped(
-            p_14751_,
+        return data.updateTyped(
+            sections,
             p_14758_ -> p_14758_.updateTyped(
                     p_14752_,
                     p_145103_ -> {
-                        int i = p_145103_.getOptional(p_14753_).map(p_145115_ -> Math.max(4, DataFixUtils.ceillog2(p_145115_.size()))).orElse(0);
+                        int i = p_145103_.getOptional(palette).map(p_145115_ -> Math.max(4, DataFixUtils.ceillog2(p_145115_.size()))).orElse(0);
                         return i != 0 && !Mth.isPowerOfTwo(i)
                             ? p_145103_.update(
                                 DSL.remainderFinder(),
@@ -79,36 +79,36 @@ public class BitStorageAlignFix extends DataFix {
         );
     }
 
-    private static Dynamic<?> updateBitStorage(Dynamic<?> p_14777_, Dynamic<?> p_14778_, int p_14779_, int p_14780_) {
-        long[] along = p_14778_.asLongStream().toArray();
-        long[] along1 = addPadding(p_14779_, p_14780_, along);
-        return p_14777_.createLongList(LongStream.of(along1));
+    private static Dynamic<?> updateBitStorage(Dynamic<?> output, Dynamic<?> data, int numBits, int bitWidth) {
+        long[] along = data.asLongStream().toArray();
+        long[] along1 = addPadding(numBits, bitWidth, along);
+        return output.createLongList(LongStream.of(along1));
     }
 
-    public static long[] addPadding(int p_14738_, int p_14739_, long[] p_14740_) {
-        int i = p_14740_.length;
+    public static long[] addPadding(int numBits, int bitWidth, long[] inputData) {
+        int i = inputData.length;
         if (i == 0) {
-            return p_14740_;
+            return inputData;
         } else {
-            long j = (1L << p_14739_) - 1L;
-            int k = 64 / p_14739_;
-            int l = (p_14738_ + k - 1) / k;
+            long j = (1L << bitWidth) - 1L;
+            int k = 64 / bitWidth;
+            int l = (numBits + k - 1) / k;
             long[] along = new long[l];
             int i1 = 0;
             int j1 = 0;
             long k1 = 0L;
             int l1 = 0;
-            long i2 = p_14740_[0];
-            long j2 = i > 1 ? p_14740_[1] : 0L;
+            long i2 = inputData[0];
+            long j2 = i > 1 ? inputData[1] : 0L;
 
-            for (int k2 = 0; k2 < p_14738_; k2++) {
-                int l2 = k2 * p_14739_;
+            for (int k2 = 0; k2 < numBits; k2++) {
+                int l2 = k2 * bitWidth;
                 int i3 = l2 >> 6;
-                int j3 = (k2 + 1) * p_14739_ - 1 >> 6;
+                int j3 = (k2 + 1) * bitWidth - 1 >> 6;
                 int k3 = l2 ^ i3 << 6;
                 if (i3 != l1) {
                     i2 = j2;
-                    j2 = i3 + 1 < i ? p_14740_[i3 + 1] : 0L;
+                    j2 = i3 + 1 < i ? inputData[i3 + 1] : 0L;
                     l1 = i3;
                 }
 
@@ -120,11 +120,11 @@ public class BitStorageAlignFix extends DataFix {
                     l3 = (i2 >>> k3 | j2 << i4) & j;
                 }
 
-                int j4 = j1 + p_14739_;
+                int j4 = j1 + bitWidth;
                 if (j4 >= 64) {
                     along[i1++] = k1;
                     k1 = l3;
-                    j1 = p_14739_;
+                    j1 = bitWidth;
                 } else {
                     k1 |= l3 << j1;
                     j1 = j4;

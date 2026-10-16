@@ -10,10 +10,10 @@ public class ItemCombinerMenuSlotDefinition {
     private final List<ItemCombinerMenuSlotDefinition.SlotDefinition> slots;
     private final ItemCombinerMenuSlotDefinition.SlotDefinition resultSlot;
 
-    ItemCombinerMenuSlotDefinition(List<ItemCombinerMenuSlotDefinition.SlotDefinition> p_266947_, ItemCombinerMenuSlotDefinition.SlotDefinition p_266715_) {
-        if (!p_266947_.isEmpty() && !p_266715_.equals(ItemCombinerMenuSlotDefinition.SlotDefinition.EMPTY)) {
-            this.slots = p_266947_;
-            this.resultSlot = p_266715_;
+    ItemCombinerMenuSlotDefinition(List<ItemCombinerMenuSlotDefinition.SlotDefinition> slots, ItemCombinerMenuSlotDefinition.SlotDefinition resultSlot) {
+        if (!slots.isEmpty() && !resultSlot.equals(ItemCombinerMenuSlotDefinition.SlotDefinition.EMPTY)) {
+            this.slots = slots;
+            this.resultSlot = resultSlot;
         } else {
             throw new IllegalArgumentException("Need to define both inputSlots and resultSlot");
         }
@@ -23,12 +23,12 @@ public class ItemCombinerMenuSlotDefinition {
         return new ItemCombinerMenuSlotDefinition.Builder();
     }
 
-    public boolean hasSlot(int p_267185_) {
-        return this.slots.size() >= p_267185_;
+    public boolean hasSlot(int slot) {
+        return this.slots.size() >= slot;
     }
 
-    public ItemCombinerMenuSlotDefinition.SlotDefinition getSlot(int p_266907_) {
-        return this.slots.get(p_266907_);
+    public ItemCombinerMenuSlotDefinition.SlotDefinition getSlot(int slot) {
+        return this.slots.get(slot);
     }
 
     public ItemCombinerMenuSlotDefinition.SlotDefinition getResultSlot() {
@@ -55,13 +55,13 @@ public class ItemCombinerMenuSlotDefinition {
         private final List<ItemCombinerMenuSlotDefinition.SlotDefinition> slots = new ArrayList<>();
         private ItemCombinerMenuSlotDefinition.SlotDefinition resultSlot = ItemCombinerMenuSlotDefinition.SlotDefinition.EMPTY;
 
-        public ItemCombinerMenuSlotDefinition.Builder withSlot(int p_267315_, int p_267028_, int p_266815_, Predicate<ItemStack> p_267120_) {
-            this.slots.add(new ItemCombinerMenuSlotDefinition.SlotDefinition(p_267315_, p_267028_, p_266815_, p_267120_));
+        public ItemCombinerMenuSlotDefinition.Builder withSlot(int slotIndex, int x, int y, Predicate<ItemStack> mayPlace) {
+            this.slots.add(new ItemCombinerMenuSlotDefinition.SlotDefinition(slotIndex, x, y, mayPlace));
             return this;
         }
 
-        public ItemCombinerMenuSlotDefinition.Builder withResultSlot(int p_267180_, int p_267130_, int p_266910_) {
-            this.resultSlot = new ItemCombinerMenuSlotDefinition.SlotDefinition(p_267180_, p_267130_, p_266910_, p_266825_ -> false);
+        public ItemCombinerMenuSlotDefinition.Builder withResultSlot(int slotIndex, int x, int y) {
+            this.resultSlot = new ItemCombinerMenuSlotDefinition.SlotDefinition(slotIndex, x, y, p_266825_ -> false);
             return this;
         }
 

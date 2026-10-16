@@ -21,23 +21,23 @@ public class GravityProcessor extends StructureProcessor {
     private final Heightmap.Types heightmap;
     private final int offset;
 
-    public GravityProcessor(Heightmap.Types p_74105_, int p_74106_) {
-        this.heightmap = p_74105_;
-        this.offset = p_74106_;
+    public GravityProcessor(Heightmap.Types heightmap, int offset) {
+        this.heightmap = heightmap;
+        this.offset = offset;
     }
 
     @Nullable
     @Override
     public StructureTemplate.StructureBlockInfo processBlock(
-        LevelReader p_74109_,
-        BlockPos p_74110_,
-        BlockPos p_74111_,
-        StructureTemplate.StructureBlockInfo p_74112_,
-        StructureTemplate.StructureBlockInfo p_74113_,
-        StructurePlaceSettings p_74114_
+        LevelReader level,
+        BlockPos offset,
+        BlockPos pos,
+        StructureTemplate.StructureBlockInfo blockInfo,
+        StructureTemplate.StructureBlockInfo relativeBlockInfo,
+        StructurePlaceSettings settings
     ) {
         Heightmap.Types heightmap$types;
-        if (p_74109_ instanceof ServerLevel) {
+        if (level instanceof ServerLevel) {
             if (this.heightmap == Heightmap.Types.WORLD_SURFACE_WG) {
                 heightmap$types = Heightmap.Types.WORLD_SURFACE;
             } else if (this.heightmap == Heightmap.Types.OCEAN_FLOOR_WG) {
@@ -49,10 +49,10 @@ public class GravityProcessor extends StructureProcessor {
             heightmap$types = this.heightmap;
         }
 
-        BlockPos blockpos = p_74113_.pos();
-        int i = p_74109_.getHeight(heightmap$types, blockpos.getX(), blockpos.getZ()) + this.offset;
-        int j = p_74112_.pos().getY();
-        return new StructureTemplate.StructureBlockInfo(new BlockPos(blockpos.getX(), i + j, blockpos.getZ()), p_74113_.state(), p_74113_.nbt());
+        BlockPos blockpos = relativeBlockInfo.pos();
+        int i = level.getHeight(heightmap$types, blockpos.getX(), blockpos.getZ()) + this.offset;
+        int j = blockInfo.pos().getY();
+        return new StructureTemplate.StructureBlockInfo(new BlockPos(blockpos.getX(), i + j, blockpos.getZ()), relativeBlockInfo.state(), relativeBlockInfo.nbt());
     }
 
     @Override

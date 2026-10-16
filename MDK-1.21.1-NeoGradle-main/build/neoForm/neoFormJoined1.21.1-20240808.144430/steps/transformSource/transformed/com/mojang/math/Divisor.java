@@ -11,11 +11,11 @@ public class Divisor implements IntIterator {
     private int returnedParts;
     private int remainder;
 
-    public Divisor(int p_254018_, int p_254504_) {
-        this.denominator = p_254504_;
-        if (p_254504_ > 0) {
-            this.quotient = p_254018_ / p_254504_;
-            this.mod = p_254018_ % p_254504_;
+    public Divisor(int numerator, int denominator) {
+        this.denominator = denominator;
+        if (denominator > 0) {
+            this.quotient = numerator / denominator;
+            this.mod = numerator % denominator;
         } else {
             this.quotient = 0;
             this.mod = 0;
@@ -45,7 +45,7 @@ public class Divisor implements IntIterator {
     }
 
     @VisibleForTesting
-    public static Iterable<Integer> asIterable(int p_254381_, int p_254129_) {
-        return () -> new Divisor(p_254381_, p_254129_);
+    public static Iterable<Integer> asIterable(int numerator, int denominator) {
+        return () -> new Divisor(numerator, denominator);
     }
 }

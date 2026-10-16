@@ -21,13 +21,13 @@ public class BlockTintCache {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ToIntFunction<BlockPos> source;
 
-    public BlockTintCache(ToIntFunction<BlockPos> p_193811_) {
-        this.source = p_193811_;
+    public BlockTintCache(ToIntFunction<BlockPos> source) {
+        this.source = source;
     }
 
-    public int getColor(BlockPos p_193813_) {
-        int i = SectionPos.blockToSectionCoord(p_193813_.getX());
-        int j = SectionPos.blockToSectionCoord(p_193813_.getZ());
+    public int getColor(BlockPos pos) {
+        int i = SectionPos.blockToSectionCoord(pos.getX());
+        int j = SectionPos.blockToSectionCoord(pos.getZ());
         BlockTintCache.LatestCacheInfo blocktintcache$latestcacheinfo = this.latestChunkOnThread.get();
         if (blocktintcache$latestcacheinfo.x != i
             || blocktintcache$latestcacheinfo.z != j
@@ -38,27 +38,27 @@ public class BlockTintCache {
             blocktintcache$latestcacheinfo.cache = this.findOrCreateChunkCache(i, j);
         }
 
-        int[] aint = blocktintcache$latestcacheinfo.cache.getLayer(p_193813_.getY());
-        int k = p_193813_.getX() & 15;
-        int l = p_193813_.getZ() & 15;
+        int[] aint = blocktintcache$latestcacheinfo.cache.getLayer(pos.getY());
+        int k = pos.getX() & 15;
+        int l = pos.getZ() & 15;
         int i1 = l << 4 | k;
         int j1 = aint[i1];
         if (j1 != -1) {
             return j1;
         } else {
-            int k1 = this.source.applyAsInt(p_193813_);
+            int k1 = this.source.applyAsInt(pos);
             aint[i1] = k1;
             return k1;
         }
     }
 
-    public void invalidateForChunk(int p_92656_, int p_92657_) {
+    public void invalidateForChunk(int chunkX, int chunkZ) {
         try {
             this.lock.writeLock().lock();
 
             for (int i = -1; i <= 1; i++) {
                 for (int j = -1; j <= 1; j++) {
-                    long k = ChunkPos.asLong(p_92656_ + i, p_92657_ + j);
+                    long k = ChunkPos.asLong(chunkX + i, chunkZ + j);
                     BlockTintCache.CacheData blocktintcache$cachedata = this.cache.remove(k);
                     if (blocktintcache$cachedata != null) {
                         blocktintcache$cachedata.invalidate();
@@ -80,8 +80,8 @@ public class BlockTintCache {
         }
     }
 
-    private BlockTintCache.CacheData findOrCreateChunkCache(int p_193815_, int p_193816_) {
-        long i = ChunkPos.asLong(p_193815_, p_193816_);
+    private BlockTintCache.CacheData findOrCreateChunkCache(int chunkX, int chunkZ) {
+        long i = ChunkPos.asLong(chunkX, chunkZ);
         this.lock.readLock().lock();
 
         try {
@@ -126,11 +126,11 @@ public class BlockTintCache {
         private static final int BLOCKS_PER_LAYER = Mth.square(16);
         private volatile boolean invalidated;
 
-        public int[] getLayer(int p_193824_) {
+        public int[] getLayer(int height) {
             this.lock.readLock().lock();
 
             try {
-                int[] aint = this.cache.get(p_193824_);
+                int[] aint = this.cache.get(height);
                 if (aint != null) {
                     return aint;
                 }
@@ -142,7 +142,7 @@ public class BlockTintCache {
 
             int[] aint1;
             try {
-                aint1 = this.cache.computeIfAbsent(p_193824_, p_193826_ -> this.allocateLayer());
+                aint1 = this.cache.computeIfAbsent(height, p_193826_ -> this.allocateLayer());
             } finally {
                 this.lock.writeLock().unlock();
             }

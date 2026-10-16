@@ -1,29 +1,29 @@
 package net.minecraft.nbt;
 
 public interface TagVisitor {
-    void visitString(StringTag p_178228_);
+    void visitString(StringTag tag);
 
-    void visitByte(ByteTag p_178217_);
+    void visitByte(ByteTag tag);
 
-    void visitShort(ShortTag p_178227_);
+    void visitShort(ShortTag tag);
 
-    void visitInt(IntTag p_178223_);
+    void visitInt(IntTag tag);
 
-    void visitLong(LongTag p_178226_);
+    void visitLong(LongTag tag);
 
-    void visitFloat(FloatTag p_178221_);
+    void visitFloat(FloatTag tag);
 
-    void visitDouble(DoubleTag p_178219_);
+    void visitDouble(DoubleTag tag);
 
-    void visitByteArray(ByteArrayTag p_178216_);
+    void visitByteArray(ByteArrayTag tag);
 
-    void visitIntArray(IntArrayTag p_178222_);
+    void visitIntArray(IntArrayTag tag);
 
-    void visitLongArray(LongArrayTag p_178225_);
+    void visitLongArray(LongArrayTag tag);
 
-    void visitList(ListTag p_178224_);
+    void visitList(ListTag tag);
 
-    void visitCompound(CompoundTag p_178218_);
+    void visitCompound(CompoundTag tag);
 
-    void visitEnd(EndTag p_178220_);
+    void visitEnd(EndTag tag);
 }

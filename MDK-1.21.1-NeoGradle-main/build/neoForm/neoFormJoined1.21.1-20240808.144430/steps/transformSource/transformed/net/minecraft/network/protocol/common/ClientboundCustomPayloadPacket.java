@@ -78,7 +78,10 @@ public record ClientboundCustomPayloadPacket(CustomPacketPayload payload) implem
         return CommonPacketTypes.CLIENTBOUND_CUSTOM_PAYLOAD;
     }
 
-    public void handle(ClientCommonPacketListener p_295761_) {
-        p_295761_.handleCustomPayload(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientCommonPacketListener handler) {
+        handler.handleCustomPayload(this);
     }
 }

@@ -22,14 +22,14 @@ public class WorldLoader {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public static <D, R> CompletableFuture<R> load(
-        WorldLoader.InitConfig p_214363_,
-        WorldLoader.WorldDataSupplier<D> p_214364_,
-        WorldLoader.ResultFactory<D, R> p_214365_,
-        Executor p_214366_,
-        Executor p_214367_
+        WorldLoader.InitConfig initConfig,
+        WorldLoader.WorldDataSupplier<D> worldDataSupplier,
+        WorldLoader.ResultFactory<D, R> resultFactory,
+        Executor backgroundExecutor,
+        Executor gameExecutor
     ) {
         try {
-            Pair<WorldDataConfiguration, CloseableResourceManager> pair = p_214363_.packConfig.createResourceManager();
+            Pair<WorldDataConfiguration, CloseableResourceManager> pair = initConfig.packConfig.createResourceManager();
             CloseableResourceManager closeableresourcemanager = pair.getSecond();
             LayeredRegistryAccess<RegistryLayer> layeredregistryaccess = RegistryLayer.createRegistryAccess();
             LayeredRegistryAccess<RegistryLayer> layeredregistryaccess1 = loadAndReplaceLayer(
@@ -40,7 +40,7 @@ public class WorldLoader {
                 closeableresourcemanager, registryaccess$frozen, RegistryDataLoader.DIMENSION_REGISTRIES
             );
             WorldDataConfiguration worlddataconfiguration = pair.getFirst();
-            WorldLoader.DataLoadOutput<D> dataloadoutput = p_214364_.get(
+            WorldLoader.DataLoadOutput<D> dataloadoutput = worldDataSupplier.get(
                 new WorldLoader.DataLoadContext(closeableresourcemanager, worlddataconfiguration, registryaccess$frozen, registryaccess$frozen1)
             );
             LayeredRegistryAccess<RegistryLayer> layeredregistryaccess2 = layeredregistryaccess1.replaceFrom(
@@ -50,10 +50,10 @@ public class WorldLoader {
                     closeableresourcemanager,
                     layeredregistryaccess2,
                     worlddataconfiguration.enabledFeatures(),
-                    p_214363_.commandSelection(),
-                    p_214363_.functionCompilationLevel(),
-                    p_214366_,
-                    p_214367_
+                    initConfig.commandSelection(),
+                    initConfig.functionCompilationLevel(),
+                    backgroundExecutor,
+                    gameExecutor
                 )
                 .whenComplete((p_214370_, p_214371_) -> {
                     if (p_214371_ != null) {
@@ -62,25 +62,25 @@ public class WorldLoader {
                 })
                 .thenApplyAsync(p_335216_ -> {
                     p_335216_.updateRegistryTags();
-                    return p_214365_.create(closeableresourcemanager, p_335216_, layeredregistryaccess2, dataloadoutput.cookie);
-                }, p_214367_);
+                    return resultFactory.create(closeableresourcemanager, p_335216_, layeredregistryaccess2, dataloadoutput.cookie);
+                }, gameExecutor);
         } catch (Exception exception) {
             return CompletableFuture.failedFuture(exception);
         }
     }
 
     private static RegistryAccess.Frozen loadLayer(
-        ResourceManager p_251529_, LayeredRegistryAccess<RegistryLayer> p_250737_, RegistryLayer p_250790_, List<RegistryDataLoader.RegistryData<?>> p_249516_
+        ResourceManager resourceManager, LayeredRegistryAccess<RegistryLayer> registryAccess, RegistryLayer registryLayer, List<RegistryDataLoader.RegistryData<?>> registryData
     ) {
-        RegistryAccess.Frozen registryaccess$frozen = p_250737_.getAccessForLoading(p_250790_);
-        return RegistryDataLoader.load(p_251529_, registryaccess$frozen, p_249516_);
+        RegistryAccess.Frozen registryaccess$frozen = registryAccess.getAccessForLoading(registryLayer);
+        return RegistryDataLoader.load(resourceManager, registryaccess$frozen, registryData);
     }
 
     private static LayeredRegistryAccess<RegistryLayer> loadAndReplaceLayer(
-        ResourceManager p_249913_, LayeredRegistryAccess<RegistryLayer> p_252077_, RegistryLayer p_250346_, List<RegistryDataLoader.RegistryData<?>> p_250589_
+        ResourceManager resourceManager, LayeredRegistryAccess<RegistryLayer> registryAccess, RegistryLayer registryLayer, List<RegistryDataLoader.RegistryData<?>> registryData
     ) {
-        RegistryAccess.Frozen registryaccess$frozen = loadLayer(p_249913_, p_252077_, p_250346_, p_250589_);
-        return p_252077_.replaceFrom(p_250346_, registryaccess$frozen);
+        RegistryAccess.Frozen registryaccess$frozen = loadLayer(resourceManager, registryAccess, registryLayer, registryData);
+        return registryAccess.replaceFrom(registryLayer, registryaccess$frozen);
     }
 
     public static record DataLoadContext(
@@ -107,11 +107,11 @@ public class WorldLoader {
 
     @FunctionalInterface
     public interface ResultFactory<D, R> {
-        R create(CloseableResourceManager p_214408_, ReloadableServerResources p_214409_, LayeredRegistryAccess<RegistryLayer> p_248844_, D p_214411_);
+        R create(CloseableResourceManager manager, ReloadableServerResources resources, LayeredRegistryAccess<RegistryLayer> registryAccess, D cookie);
     }
 
     @FunctionalInterface
     public interface WorldDataSupplier<D> {
-        WorldLoader.DataLoadOutput<D> get(WorldLoader.DataLoadContext p_251042_);
+        WorldLoader.DataLoadOutput<D> get(WorldLoader.DataLoadContext context);
     }
 }

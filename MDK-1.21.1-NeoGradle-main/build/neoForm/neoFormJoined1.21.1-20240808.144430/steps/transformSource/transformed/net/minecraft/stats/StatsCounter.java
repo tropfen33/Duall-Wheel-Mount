@@ -5,6 +5,13 @@ import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.world.entity.player.Player;
 
+/**
+ * Manages counting a set of {@link net.minecraft.stats.Stat} objects, stored by a map of statistics to their count.
+ * <p>
+ * This base {@code StatsCounter} is only used client-side for keeping track of and reading counts sent from the server.
+ *
+ * @see net.minecraft.stats.ServerStatsCounter
+ */
 public class StatsCounter {
     protected final Object2IntMap<Stat<?>> stats = Object2IntMaps.synchronize(new Object2IntOpenHashMap<>());
 
@@ -12,21 +19,21 @@ public class StatsCounter {
         this.stats.defaultReturnValue(0);
     }
 
-    public void increment(Player p_13024_, Stat<?> p_13025_, int p_13026_) {
-        int i = (int)Math.min((long)this.getValue(p_13025_) + (long)p_13026_, 2147483647L);
-        this.setValue(p_13024_, p_13025_, i);
+    public void increment(Player player, Stat<?> stat, int amount) {
+        int i = (int)Math.min((long)this.getValue(stat) + (long)amount, 2147483647L);
+        this.setValue(player, stat, i);
     }
 
-    public void setValue(Player p_13020_, Stat<?> p_13021_, int p_13022_) {
-        net.neoforged.neoforge.event.StatAwardEvent event = net.neoforged.neoforge.event.EventHooks.onStatAward(p_13020_, p_13021_,p_13022_);
+    public void setValue(Player player, Stat<?> stat, int value) {
+        net.neoforged.neoforge.event.StatAwardEvent event = net.neoforged.neoforge.event.EventHooks.onStatAward(player, stat,value);
         if (!event.isCanceled()) this.stats.put(event.getStat(), event.getValue());
     }
 
-    public <T> int getValue(StatType<T> p_13018_, T p_13019_) {
-        return p_13018_.contains(p_13019_) ? this.getValue(p_13018_.get(p_13019_)) : 0;
+    public <T> int getValue(StatType<T> type, T value) {
+        return type.contains(value) ? this.getValue(type.get(value)) : 0;
     }
 
-    public int getValue(Stat<?> p_13016_) {
-        return this.stats.getInt(p_13016_);
+    public int getValue(Stat<?> stat) {
+        return this.stats.getInt(stat);
     }
 }

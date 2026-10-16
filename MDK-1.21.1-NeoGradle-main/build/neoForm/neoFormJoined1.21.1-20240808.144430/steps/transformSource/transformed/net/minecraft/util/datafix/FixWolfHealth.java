@@ -13,13 +13,13 @@ public class FixWolfHealth extends NamedEntityFix {
     private static final String WOLF_ID = "minecraft:wolf";
     private static final String WOLF_HEALTH = "minecraft:generic.max_health";
 
-    public FixWolfHealth(Schema p_326043_) {
-        super(p_326043_, false, "FixWolfHealth", References.ENTITY, "minecraft:wolf");
+    public FixWolfHealth(Schema outputSchema) {
+        super(outputSchema, false, "FixWolfHealth", References.ENTITY, "minecraft:wolf");
     }
 
     @Override
-    protected Typed<?> fix(Typed<?> p_326404_) {
-        return p_326404_.update(
+    protected Typed<?> fix(Typed<?> typed) {
+        return typed.update(
             DSL.remainderFinder(),
             p_326176_ -> {
                 MutableBoolean mutableboolean = new MutableBoolean(false);

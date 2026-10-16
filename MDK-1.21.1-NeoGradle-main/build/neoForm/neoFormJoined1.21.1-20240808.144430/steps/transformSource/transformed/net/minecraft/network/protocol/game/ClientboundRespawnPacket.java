@@ -17,9 +17,9 @@ public record ClientboundRespawnPacket(CommonPlayerSpawnInfo commonPlayerSpawnIn
         this(new CommonPlayerSpawnInfo(p_321588_), p_321588_.readByte());
     }
 
-    private void write(RegistryFriendlyByteBuf p_321615_) {
-        this.commonPlayerSpawnInfo.write(p_321615_);
-        p_321615_.writeByte(this.dataToKeep);
+    private void write(RegistryFriendlyByteBuf buffer) {
+        this.commonPlayerSpawnInfo.write(buffer);
+        buffer.writeByte(this.dataToKeep);
     }
 
     @Override
@@ -27,11 +27,14 @@ public record ClientboundRespawnPacket(CommonPlayerSpawnInfo commonPlayerSpawnIn
         return GamePacketTypes.CLIENTBOUND_RESPAWN;
     }
 
-    public void handle(ClientGamePacketListener p_132951_) {
-        p_132951_.handleRespawn(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleRespawn(this);
     }
 
-    public boolean shouldKeep(byte p_263573_) {
-        return (this.dataToKeep & p_263573_) != 0;
+    public boolean shouldKeep(byte data) {
+        return (this.dataToKeep & data) != 0;
     }
 }

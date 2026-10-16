@@ -17,15 +17,15 @@ public class MinecartSoundInstance extends AbstractTickableSoundInstance {
     private final AbstractMinecart minecart;
     private float pitch = 0.0F;
 
-    public MinecartSoundInstance(AbstractMinecart p_119696_) {
+    public MinecartSoundInstance(AbstractMinecart minecart) {
         super(SoundEvents.MINECART_RIDING, SoundSource.NEUTRAL, SoundInstance.createUnseededRandom());
-        this.minecart = p_119696_;
+        this.minecart = minecart;
         this.looping = true;
         this.delay = 0;
         this.volume = 0.0F;
-        this.x = (double)((float)p_119696_.getX());
-        this.y = (double)((float)p_119696_.getY());
-        this.z = (double)((float)p_119696_.getZ());
+        this.x = (double)((float)minecart.getX());
+        this.y = (double)((float)minecart.getY());
+        this.z = (double)((float)minecart.getZ());
     }
 
     @Override

@@ -18,7 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 
 public class StopSoundCommand {
-    public static void register(CommandDispatcher<CommandSourceStack> p_138795_) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         RequiredArgumentBuilder<CommandSourceStack, EntitySelector> requiredargumentbuilder = Commands.argument("targets", EntityArgument.players())
             .executes(p_138809_ -> stopSound(p_138809_.getSource(), EntityArgument.getPlayers(p_138809_, "targets"), null, null))
             .then(
@@ -56,32 +56,32 @@ public class StopSoundCommand {
             );
         }
 
-        p_138795_.register(Commands.literal("stopsound").requires(p_138799_ -> p_138799_.hasPermission(2)).then(requiredargumentbuilder));
+        dispatcher.register(Commands.literal("stopsound").requires(p_138799_ -> p_138799_.hasPermission(2)).then(requiredargumentbuilder));
     }
 
     private static int stopSound(
-        CommandSourceStack p_138801_, Collection<ServerPlayer> p_138802_, @Nullable SoundSource p_138803_, @Nullable ResourceLocation p_138804_
+        CommandSourceStack source, Collection<ServerPlayer> targets, @Nullable SoundSource category, @Nullable ResourceLocation sound
     ) {
-        ClientboundStopSoundPacket clientboundstopsoundpacket = new ClientboundStopSoundPacket(p_138804_, p_138803_);
+        ClientboundStopSoundPacket clientboundstopsoundpacket = new ClientboundStopSoundPacket(sound, category);
 
-        for (ServerPlayer serverplayer : p_138802_) {
+        for (ServerPlayer serverplayer : targets) {
             serverplayer.connection.send(clientboundstopsoundpacket);
         }
 
-        if (p_138803_ != null) {
-            if (p_138804_ != null) {
-                p_138801_.sendSuccess(
-                    () -> Component.translatable("commands.stopsound.success.source.sound", Component.translationArg(p_138804_), p_138803_.getName()), true
+        if (category != null) {
+            if (sound != null) {
+                source.sendSuccess(
+                    () -> Component.translatable("commands.stopsound.success.source.sound", Component.translationArg(sound), category.getName()), true
                 );
             } else {
-                p_138801_.sendSuccess(() -> Component.translatable("commands.stopsound.success.source.any", p_138803_.getName()), true);
+                source.sendSuccess(() -> Component.translatable("commands.stopsound.success.source.any", category.getName()), true);
             }
-        } else if (p_138804_ != null) {
-            p_138801_.sendSuccess(() -> Component.translatable("commands.stopsound.success.sourceless.sound", Component.translationArg(p_138804_)), true);
+        } else if (sound != null) {
+            source.sendSuccess(() -> Component.translatable("commands.stopsound.success.sourceless.sound", Component.translationArg(sound)), true);
         } else {
-            p_138801_.sendSuccess(() -> Component.translatable("commands.stopsound.success.sourceless.any"), true);
+            source.sendSuccess(() -> Component.translatable("commands.stopsound.success.sourceless.any"), true);
         }
 
-        return p_138802_.size();
+        return targets.size();
     }
 }

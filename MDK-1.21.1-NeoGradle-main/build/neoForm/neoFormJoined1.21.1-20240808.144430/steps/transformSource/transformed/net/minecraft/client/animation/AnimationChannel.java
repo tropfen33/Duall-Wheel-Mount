@@ -10,7 +10,7 @@ import org.joml.Vector3f;
 public record AnimationChannel(AnimationChannel.Target target, Keyframe... keyframes) {
     @OnlyIn(Dist.CLIENT)
     public interface Interpolation {
-        Vector3f apply(Vector3f p_253818_, float p_232224_, Keyframe[] p_232225_, int p_232226_, int p_232227_, float p_232228_);
+        Vector3f apply(Vector3f animationVecCache, float keyframeDelta, Keyframe[] keyframes, int currentKeyframeIdx, int nextKeyframeIdx, float scale);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -36,7 +36,7 @@ public record AnimationChannel(AnimationChannel.Target target, Keyframe... keyfr
 
     @OnlyIn(Dist.CLIENT)
     public interface Target {
-        void apply(ModelPart p_232248_, Vector3f p_253771_);
+        void apply(ModelPart modelPart, Vector3f animationVector);
     }
 
     @OnlyIn(Dist.CLIENT)

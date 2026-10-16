@@ -28,19 +28,19 @@ public class ClampedInt extends IntProvider {
     private final int minInclusive;
     private final int maxInclusive;
 
-    public static ClampedInt of(IntProvider p_146396_, int p_146397_, int p_146398_) {
-        return new ClampedInt(p_146396_, p_146397_, p_146398_);
+    public static ClampedInt of(IntProvider source, int minInclusive, int maxInclusive) {
+        return new ClampedInt(source, minInclusive, maxInclusive);
     }
 
-    public ClampedInt(IntProvider p_146389_, int p_146390_, int p_146391_) {
-        this.source = p_146389_;
-        this.minInclusive = p_146390_;
-        this.maxInclusive = p_146391_;
+    public ClampedInt(IntProvider source, int minInclusive, int maxInclusive) {
+        this.source = source;
+        this.minInclusive = minInclusive;
+        this.maxInclusive = maxInclusive;
     }
 
     @Override
-    public int sample(RandomSource p_216834_) {
-        return Mth.clamp(this.source.sample(p_216834_), this.minInclusive, this.maxInclusive);
+    public int sample(RandomSource random) {
+        return Mth.clamp(this.source.sample(random), this.minInclusive, this.maxInclusive);
     }
 
     @Override

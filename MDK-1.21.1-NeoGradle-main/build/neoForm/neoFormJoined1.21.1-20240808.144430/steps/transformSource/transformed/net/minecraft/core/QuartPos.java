@@ -1,5 +1,9 @@
 package net.minecraft.core;
 
+/**
+ * Used to convert between chunk positions (referred to here as sections, from {@link net.minecraft.world.level.chunk.LevelChunkSection}), block positions, and quart positions.
+ * The latter is used to query biomes from a noise biome source.
+ */
 public final class QuartPos {
     public static final int BITS = 2;
     public static final int SIZE = 4;
@@ -9,23 +13,23 @@ public final class QuartPos {
     private QuartPos() {
     }
 
-    public static int fromBlock(int p_175401_) {
-        return p_175401_ >> 2;
+    public static int fromBlock(int value) {
+        return value >> 2;
     }
 
-    public static int quartLocal(int p_198377_) {
-        return p_198377_ & 3;
+    public static int quartLocal(int value) {
+        return value & 3;
     }
 
-    public static int toBlock(int p_175403_) {
-        return p_175403_ << 2;
+    public static int toBlock(int value) {
+        return value << 2;
     }
 
-    public static int fromSection(int p_175405_) {
-        return p_175405_ << 2;
+    public static int fromSection(int value) {
+        return value << 2;
     }
 
-    public static int toSection(int p_175407_) {
-        return p_175407_ >> 2;
+    public static int toSection(int value) {
+        return value >> 2;
     }
 }

@@ -7,15 +7,15 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Dynamic;
 
 public abstract class SimpleEntityRenameFix extends EntityRenameFix {
-    public SimpleEntityRenameFix(String p_16901_, Schema p_16902_, boolean p_16903_) {
-        super(p_16901_, p_16902_, p_16903_);
+    public SimpleEntityRenameFix(String name, Schema outputSchema, boolean changesType) {
+        super(name, outputSchema, changesType);
     }
 
     @Override
-    protected Pair<String, Typed<?>> fix(String p_16905_, Typed<?> p_16906_) {
-        Pair<String, Dynamic<?>> pair = this.getNewNameAndTag(p_16905_, p_16906_.getOrCreate(DSL.remainderFinder()));
-        return Pair.of(pair.getFirst(), p_16906_.set(DSL.remainderFinder(), pair.getSecond()));
+    protected Pair<String, Typed<?>> fix(String entityName, Typed<?> typed) {
+        Pair<String, Dynamic<?>> pair = this.getNewNameAndTag(entityName, typed.getOrCreate(DSL.remainderFinder()));
+        return Pair.of(pair.getFirst(), typed.set(DSL.remainderFinder(), pair.getSecond()));
     }
 
-    protected abstract Pair<String, Dynamic<?>> getNewNameAndTag(String p_16907_, Dynamic<?> p_16908_);
+    protected abstract Pair<String, Dynamic<?>> getNewNameAndTag(String name, Dynamic<?> tag);
 }

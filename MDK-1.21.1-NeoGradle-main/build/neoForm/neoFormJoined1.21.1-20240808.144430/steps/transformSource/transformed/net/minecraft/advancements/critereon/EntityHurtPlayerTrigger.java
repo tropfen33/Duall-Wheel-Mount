@@ -15,8 +15,8 @@ public class EntityHurtPlayerTrigger extends SimpleCriterionTrigger<EntityHurtPl
         return EntityHurtPlayerTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_35175_, DamageSource p_35176_, float p_35177_, float p_35178_, boolean p_35179_) {
-        this.trigger(p_35175_, p_35186_ -> p_35186_.matches(p_35175_, p_35176_, p_35177_, p_35178_, p_35179_));
+    public void trigger(ServerPlayer player, DamageSource source, float dealtDamage, float takenDamage, boolean blocked) {
+        this.trigger(player, p_35186_ -> p_35186_.matches(player, source, dealtDamage, takenDamage, blocked));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, Optional<DamagePredicate> damage)
@@ -33,17 +33,17 @@ public class EntityHurtPlayerTrigger extends SimpleCriterionTrigger<EntityHurtPl
             return CriteriaTriggers.ENTITY_HURT_PLAYER.createCriterion(new EntityHurtPlayerTrigger.TriggerInstance(Optional.empty(), Optional.empty()));
         }
 
-        public static Criterion<EntityHurtPlayerTrigger.TriggerInstance> entityHurtPlayer(DamagePredicate p_300967_) {
-            return CriteriaTriggers.ENTITY_HURT_PLAYER.createCriterion(new EntityHurtPlayerTrigger.TriggerInstance(Optional.empty(), Optional.of(p_300967_)));
+        public static Criterion<EntityHurtPlayerTrigger.TriggerInstance> entityHurtPlayer(DamagePredicate damage) {
+            return CriteriaTriggers.ENTITY_HURT_PLAYER.createCriterion(new EntityHurtPlayerTrigger.TriggerInstance(Optional.empty(), Optional.of(damage)));
         }
 
-        public static Criterion<EntityHurtPlayerTrigger.TriggerInstance> entityHurtPlayer(DamagePredicate.Builder p_301174_) {
+        public static Criterion<EntityHurtPlayerTrigger.TriggerInstance> entityHurtPlayer(DamagePredicate.Builder damage) {
             return CriteriaTriggers.ENTITY_HURT_PLAYER
-                .createCriterion(new EntityHurtPlayerTrigger.TriggerInstance(Optional.empty(), Optional.of(p_301174_.build())));
+                .createCriterion(new EntityHurtPlayerTrigger.TriggerInstance(Optional.empty(), Optional.of(damage.build())));
         }
 
-        public boolean matches(ServerPlayer p_35201_, DamageSource p_35202_, float p_35203_, float p_35204_, boolean p_35205_) {
-            return !this.damage.isPresent() || this.damage.get().matches(p_35201_, p_35202_, p_35203_, p_35204_, p_35205_);
+        public boolean matches(ServerPlayer player, DamageSource source, float dealtDamage, float takenDamage, boolean blocked) {
+            return !this.damage.isPresent() || this.damage.get().matches(player, source, dealtDamage, takenDamage, blocked);
         }
     }
 }

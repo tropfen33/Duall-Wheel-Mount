@@ -11,8 +11,8 @@ import com.mojang.serialization.Dynamic;
 import java.util.Objects;
 
 public class ChunkStatusFix extends DataFix {
-    public ChunkStatusFix(Schema p_15247_, boolean p_15248_) {
-        super(p_15247_, p_15248_);
+    public ChunkStatusFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override

@@ -40,7 +40,7 @@ public interface BuiltinStructures {
     ResourceKey<Structure> TRAIL_RUINS = createKey("trail_ruins");
     ResourceKey<Structure> TRIAL_CHAMBERS = createKey("trial_chambers");
 
-    private static ResourceKey<Structure> createKey(String p_209873_) {
-        return ResourceKey.create(Registries.STRUCTURE, ResourceLocation.withDefaultNamespace(p_209873_));
+    private static ResourceKey<Structure> createKey(String name) {
+        return ResourceKey.create(Registries.STRUCTURE, ResourceLocation.withDefaultNamespace(name));
     }
 }

@@ -13,12 +13,12 @@ public class AnimalArmorItem extends ArmorItem {
     private final ResourceLocation overlayTextureLocation;
     private final AnimalArmorItem.BodyType bodyType;
 
-    public AnimalArmorItem(Holder<ArmorMaterial> p_323836_, AnimalArmorItem.BodyType p_324315_, boolean p_331679_, Item.Properties p_316341_) {
-        super(p_323836_, ArmorItem.Type.BODY, p_316341_);
-        this.bodyType = p_324315_;
-        ResourceLocation resourcelocation = p_324315_.textureLocator.apply(p_323836_.unwrapKey().orElseThrow().location());
+    public AnimalArmorItem(Holder<ArmorMaterial> armorMaterial, AnimalArmorItem.BodyType bodyType, boolean hasOverlay, Item.Properties properties) {
+        super(armorMaterial, ArmorItem.Type.BODY, properties);
+        this.bodyType = bodyType;
+        ResourceLocation resourcelocation = bodyType.textureLocator.apply(armorMaterial.unwrapKey().orElseThrow().location());
         this.textureLocation = resourcelocation.withSuffix(".png");
-        if (p_331679_) {
+        if (hasOverlay) {
             this.overlayTextureLocation = resourcelocation.withSuffix("_overlay.png");
         } else {
             this.overlayTextureLocation = null;
@@ -43,8 +43,11 @@ public class AnimalArmorItem extends ArmorItem {
         return this.bodyType.breakingSound;
     }
 
+    /**
+     * Checks isDamagable and if it cannot be stacked
+     */
     @Override
-    public boolean isEnchantable(ItemStack p_341697_) {
+    public boolean isEnchantable(ItemStack stack) {
         return false;
     }
 
@@ -55,9 +58,9 @@ public class AnimalArmorItem extends ArmorItem {
         final Function<ResourceLocation, ResourceLocation> textureLocator;
         final SoundEvent breakingSound;
 
-        private BodyType(Function<ResourceLocation, ResourceLocation> p_324258_, SoundEvent p_331429_) {
-            this.textureLocator = p_324258_;
-            this.breakingSound = p_331429_;
+        private BodyType(Function<ResourceLocation, ResourceLocation> textureLocator, SoundEvent breakingSound) {
+            this.textureLocator = textureLocator;
+            this.breakingSound = breakingSound;
         }
     }
 }

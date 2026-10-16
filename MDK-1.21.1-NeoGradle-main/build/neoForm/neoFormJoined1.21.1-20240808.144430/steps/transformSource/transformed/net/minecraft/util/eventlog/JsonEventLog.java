@@ -21,18 +21,18 @@ public class JsonEventLog<T> implements Closeable {
     final FileChannel channel;
     private final AtomicInteger referenceCount = new AtomicInteger(1);
 
-    public JsonEventLog(Codec<T> p_261608_, FileChannel p_262072_) {
-        this.codec = p_261608_;
-        this.channel = p_262072_;
+    public JsonEventLog(Codec<T> codec, FileChannel channel) {
+        this.codec = codec;
+        this.channel = channel;
     }
 
-    public static <T> JsonEventLog<T> open(Codec<T> p_261795_, Path p_261489_) throws IOException {
-        FileChannel filechannel = FileChannel.open(p_261489_, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
-        return new JsonEventLog<>(p_261795_, filechannel);
+    public static <T> JsonEventLog<T> open(Codec<T> codec, Path path) throws IOException {
+        FileChannel filechannel = FileChannel.open(path, StandardOpenOption.WRITE, StandardOpenOption.READ, StandardOpenOption.CREATE);
+        return new JsonEventLog<>(codec, filechannel);
     }
 
-    public void write(T p_261929_) throws IOException {
-        JsonElement jsonelement = this.codec.encodeStart(JsonOps.INSTANCE, p_261929_).getOrThrow(IOException::new);
+    public void write(T data) throws IOException {
+        JsonElement jsonelement = this.codec.encodeStart(JsonOps.INSTANCE, data).getOrThrow(IOException::new);
         this.channel.position(this.channel.size());
         Writer writer = Channels.newWriter(this.channel, StandardCharsets.UTF_8);
         GSON.toJson(jsonelement, GSON.newJsonWriter(writer));

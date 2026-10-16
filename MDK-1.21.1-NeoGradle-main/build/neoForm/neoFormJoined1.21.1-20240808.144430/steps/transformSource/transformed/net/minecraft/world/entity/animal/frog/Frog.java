@@ -104,8 +104,8 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
     public final AnimationState tongueAnimationState = new AnimationState();
     public final AnimationState swimIdleAnimationState = new AnimationState();
 
-    public Frog(EntityType<? extends Animal> p_218470_, Level p_218471_) {
-        super(p_218470_, p_218471_);
+    public Frog(EntityType<? extends Animal> entityType, Level level) {
+        super(entityType, level);
         this.lookControl = new Frog.FrogLookControl(this);
         this.setPathfindingMalus(PathType.WATER, 4.0F);
         this.setPathfindingMalus(PathType.TRAPDOOR, -1.0F);
@@ -118,8 +118,8 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
     }
 
     @Override
-    protected Brain<?> makeBrain(Dynamic<?> p_218494_) {
-        return FrogAi.makeBrain(this.brainProvider().makeBrain(p_218494_));
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return FrogAi.makeBrain(this.brainProvider().makeBrain(dynamic));
     }
 
     @Override
@@ -128,10 +128,10 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326194_) {
-        super.defineSynchedData(p_326194_);
-        p_326194_.define(DATA_VARIANT_ID, BuiltInRegistries.FROG_VARIANT.getHolderOrThrow(DEFAULT_VARIANT));
-        p_326194_.define(DATA_TONGUE_TARGET_ID, OptionalInt.empty());
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_VARIANT_ID, BuiltInRegistries.FROG_VARIANT.getHolderOrThrow(DEFAULT_VARIANT));
+        builder.define(DATA_TONGUE_TARGET_ID, OptionalInt.empty());
     }
 
     public void eraseTongueTarget() {
@@ -142,8 +142,8 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
         return this.entityData.get(DATA_TONGUE_TARGET_ID).stream().mapToObj(this.level()::getEntity).filter(Objects::nonNull).findFirst();
     }
 
-    public void setTongueTarget(Entity p_218482_) {
-        this.entityData.set(DATA_TONGUE_TARGET_ID, OptionalInt.of(p_218482_.getId()));
+    public void setTongueTarget(Entity tongueTarget) {
+        this.entityData.set(DATA_TONGUE_TARGET_ID, OptionalInt.of(tongueTarget.getId()));
     }
 
     @Override
@@ -160,20 +160,23 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
         return this.entityData.get(DATA_VARIANT_ID);
     }
 
-    public void setVariant(Holder<FrogVariant> p_336047_) {
-        this.entityData.set(DATA_VARIANT_ID, p_336047_);
+    public void setVariant(Holder<FrogVariant> variant) {
+        this.entityData.set(DATA_VARIANT_ID, variant);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_218508_) {
-        super.addAdditionalSaveData(p_218508_);
-        p_218508_.putString("variant", this.getVariant().unwrapKey().orElse(DEFAULT_VARIANT).location().toString());
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putString("variant", this.getVariant().unwrapKey().orElse(DEFAULT_VARIANT).location().toString());
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_218496_) {
-        super.readAdditionalSaveData(p_218496_);
-        Optional.ofNullable(ResourceLocation.tryParse(p_218496_.getString("variant")))
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        Optional.ofNullable(ResourceLocation.tryParse(compound.getString("variant")))
             .map(p_335980_ -> ResourceKey.create(Registries.FROG_VARIANT, p_335980_))
             .flatMap(BuiltInRegistries.FROG_VARIANT::getHolder)
             .ifPresent(this::setVariant);
@@ -200,8 +203,8 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_218498_) {
-        if (DATA_POSE.equals(p_218498_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        if (DATA_POSE.equals(key)) {
             Pose pose = this.getPose();
             if (pose == Pose.LONG_JUMPING) {
                 this.jumpAnimationState.start(this.tickCount);
@@ -222,16 +225,16 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
             }
         }
 
-        super.onSyncedDataUpdated(p_218498_);
+        super.onSyncedDataUpdated(key);
     }
 
     @Override
-    protected void updateWalkAnimation(float p_268239_) {
+    protected void updateWalkAnimation(float partialTick) {
         float f;
         if (this.jumpAnimationState.isStarted()) {
             f = 0.0F;
         } else {
-            f = Math.min(p_268239_ * 25.0F, 1.0F);
+            f = Math.min(partialTick * 25.0F, 1.0F);
         }
 
         this.walkAnimation.update(f, 0.4F);
@@ -239,10 +242,10 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
 
     @Nullable
     @Override
-    public AgeableMob getBreedOffspring(ServerLevel p_218476_, AgeableMob p_218477_) {
-        Frog frog = EntityType.FROG.create(p_218476_);
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        Frog frog = EntityType.FROG.create(level);
         if (frog != null) {
-            FrogAi.initMemories(frog, p_218476_.getRandom());
+            FrogAi.initMemories(frog, level.getRandom());
         }
 
         return frog;
@@ -253,19 +256,22 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
         return false;
     }
 
+    /**
+     * Set whether this mob is a child.
+     */
     @Override
-    public void setBaby(boolean p_218500_) {
+    public void setBaby(boolean baby) {
     }
 
     @Override
-    public void spawnChildFromBreeding(ServerLevel p_218479_, Animal p_218480_) {
-        this.finalizeSpawnChildFromBreeding(p_218479_, p_218480_, null);
+    public void spawnChildFromBreeding(ServerLevel level, Animal mate) {
+        this.finalizeSpawnChildFromBreeding(level, mate, null);
         this.getBrain().setMemory(MemoryModuleType.IS_PREGNANT, Unit.INSTANCE);
     }
 
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_218488_, DifficultyInstance p_218489_, MobSpawnType p_218490_, @Nullable SpawnGroupData p_218491_) {
-        Holder<Biome> holder = p_218488_.getBiome(this.blockPosition());
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        Holder<Biome> holder = level.getBiome(this.blockPosition());
         if (holder.is(BiomeTags.SPAWNS_COLD_VARIANT_FROGS)) {
             this.setVariant(BuiltInRegistries.FROG_VARIANT.getHolderOrThrow(FrogVariant.COLD));
         } else if (holder.is(BiomeTags.SPAWNS_WARM_VARIANT_FROGS)) {
@@ -274,8 +280,8 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
             this.setVariant(BuiltInRegistries.FROG_VARIANT.getHolderOrThrow(DEFAULT_VARIANT));
         }
 
-        FrogAi.initMemories(this, p_218488_.getRandom());
-        return super.finalizeSpawn(p_218488_, p_218489_, p_218490_, p_218491_);
+        FrogAi.initMemories(this, level.getRandom());
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -294,7 +300,7 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
 
     @Nullable
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_218510_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.FROG_HURT;
     }
 
@@ -305,7 +311,7 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
     }
 
     @Override
-    protected void playStepSound(BlockPos p_218505_, BlockState p_218506_) {
+    protected void playStepSound(BlockPos pos, BlockState state) {
         this.playSound(SoundEvents.FROG_STEP, 0.15F, 1.0F);
     }
 
@@ -321,32 +327,32 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
     }
 
     @Override
-    protected int calculateFallDamage(float p_218519_, float p_218520_) {
-        return super.calculateFallDamage(p_218519_, p_218520_) - 5;
+    protected int calculateFallDamage(float fallDistance, float damageMultiplier) {
+        return super.calculateFallDamage(fallDistance, damageMultiplier) - 5;
     }
 
     @Override
-    public void travel(Vec3 p_218530_) {
+    public void travel(Vec3 travelVector) {
         if (this.isControlledByLocalInstance() && this.isInWater()) {
-            this.moveRelative(this.getSpeed(), p_218530_);
+            this.moveRelative(this.getSpeed(), travelVector);
             this.move(MoverType.SELF, this.getDeltaMovement());
             this.setDeltaMovement(this.getDeltaMovement().scale(0.9));
         } else {
-            super.travel(p_218530_);
+            super.travel(travelVector);
         }
     }
 
-    public static boolean canEat(LivingEntity p_218533_) {
-        if (p_218533_ instanceof Slime slime && slime.getSize() != 1) {
+    public static boolean canEat(LivingEntity entity) {
+        if (entity instanceof Slime slime && slime.getSize() != 1) {
             return false;
         }
 
-        return p_218533_.getType().is(EntityTypeTags.FROG_FOOD);
+        return entity.getType().is(EntityTypeTags.FROG_FOOD);
     }
 
     @Override
-    protected PathNavigation createNavigation(Level p_218486_) {
-        return new Frog.FrogPathNavigation(this, p_218486_);
+    protected PathNavigation createNavigation(Level level) {
+        return new Frog.FrogPathNavigation(this, level);
     }
 
     @Nullable
@@ -355,20 +361,23 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
         return this.getTargetFromBrain();
     }
 
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on the animal type)
+     */
     @Override
-    public boolean isFood(ItemStack p_218535_) {
-        return p_218535_.is(ItemTags.FROG_FOOD);
+    public boolean isFood(ItemStack stack) {
+        return stack.is(ItemTags.FROG_FOOD);
     }
 
     public static boolean checkFrogSpawnRules(
-        EntityType<? extends Animal> p_218512_, LevelAccessor p_218513_, MobSpawnType p_218514_, BlockPos p_218515_, RandomSource p_218516_
+        EntityType<? extends Animal> animal, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return p_218513_.getBlockState(p_218515_.below()).is(BlockTags.FROGS_SPAWNABLE_ON) && isBrightEnoughToSpawn(p_218513_, p_218515_);
+        return level.getBlockState(pos.below()).is(BlockTags.FROGS_SPAWNABLE_ON) && isBrightEnoughToSpawn(level, pos);
     }
 
     class FrogLookControl extends LookControl {
-        FrogLookControl(Mob p_218544_) {
-            super(p_218544_);
+        FrogLookControl(Mob mob) {
+            super(mob);
         }
 
         @Override
@@ -404,20 +413,20 @@ public class Frog extends Animal implements VariantHolder<Holder<FrogVariant>> {
     }
 
     static class FrogPathNavigation extends AmphibiousPathNavigation {
-        FrogPathNavigation(Frog p_218556_, Level p_218557_) {
-            super(p_218556_, p_218557_);
+        FrogPathNavigation(Frog mob, Level level) {
+            super(mob, level);
         }
 
         @Override
-        public boolean canCutCorner(PathType p_326951_) {
-            return p_326951_ != PathType.WATER_BORDER && super.canCutCorner(p_326951_);
+        public boolean canCutCorner(PathType pathType) {
+            return pathType != PathType.WATER_BORDER && super.canCutCorner(pathType);
         }
 
         @Override
-        protected PathFinder createPathFinder(int p_218559_) {
+        protected PathFinder createPathFinder(int maxVisitedNodes) {
             this.nodeEvaluator = new Frog.FrogNodeEvaluator(true);
             this.nodeEvaluator.setCanPassDoors(true);
-            return new PathFinder(this.nodeEvaluator, p_218559_);
+            return new PathFinder(this.nodeEvaluator, maxVisitedNodes);
         }
     }
 }

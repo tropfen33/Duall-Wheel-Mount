@@ -41,42 +41,45 @@ import org.slf4j.Logger;
 public class ServerStatusPinger {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Component CANT_CONNECT_MESSAGE = Component.translatable("multiplayer.status.cannot_connect").withColor(-65536);
+    /**
+     * A list of NetworkManagers that have pending pings
+     */
     private final List<Connection> connections = Collections.synchronizedList(Lists.newArrayList());
 
-    public void pingServer(final ServerData p_105460_, final Runnable p_105461_, final Runnable p_316316_) throws UnknownHostException {
-        final ServerAddress serveraddress = ServerAddress.parseString(p_105460_.ip);
+    public void pingServer(final ServerData serverData, final Runnable serverListUpdater, final Runnable stateUpdater) throws UnknownHostException {
+        final ServerAddress serveraddress = ServerAddress.parseString(serverData.ip);
         Optional<InetSocketAddress> optional = ServerNameResolver.DEFAULT.resolveAddress(serveraddress).map(ResolvedServerAddress::asInetSocketAddress);
         if (optional.isEmpty()) {
-            this.onPingFailed(ConnectScreen.UNKNOWN_HOST_MESSAGE, p_105460_);
+            this.onPingFailed(ConnectScreen.UNKNOWN_HOST_MESSAGE, serverData);
         } else {
             final InetSocketAddress inetsocketaddress = optional.get();
             final Connection connection = Connection.connectToServer(inetsocketaddress, false, null);
             this.connections.add(connection);
-            p_105460_.motd = Component.translatable("multiplayer.status.pinging");
-            p_105460_.playerList = Collections.emptyList();
+            serverData.motd = Component.translatable("multiplayer.status.pinging");
+            serverData.playerList = Collections.emptyList();
             ClientStatusPacketListener clientstatuspacketlistener = new ClientStatusPacketListener() {
                 private boolean success;
                 private boolean receivedPing;
                 private long pingStart;
 
                 @Override
-                public void handleStatusResponse(ClientboundStatusResponsePacket p_105489_) {
+                public void handleStatusResponse(ClientboundStatusResponsePacket packet) {
                     if (this.receivedPing) {
                         connection.disconnect(Component.translatable("multiplayer.status.unrequested"));
                     } else {
                         this.receivedPing = true;
-                        ServerStatus serverstatus = p_105489_.status();
-                        p_105460_.motd = serverstatus.description();
+                        ServerStatus serverstatus = packet.status();
+                        serverData.motd = serverstatus.description();
                         serverstatus.version().ifPresentOrElse(p_273307_ -> {
-                            p_105460_.version = Component.literal(p_273307_.name());
-                            p_105460_.protocol = p_273307_.protocol();
+                            serverData.version = Component.literal(p_273307_.name());
+                            serverData.protocol = p_273307_.protocol();
                         }, () -> {
-                            p_105460_.version = Component.translatable("multiplayer.status.old");
-                            p_105460_.protocol = 0;
+                            serverData.version = Component.translatable("multiplayer.status.old");
+                            serverData.protocol = 0;
                         });
                         serverstatus.players().ifPresentOrElse(p_273230_ -> {
-                            p_105460_.status = ServerStatusPinger.formatPlayerCount(p_273230_.online(), p_273230_.max());
-                            p_105460_.players = p_273230_;
+                            serverData.status = ServerStatusPinger.formatPlayerCount(p_273230_.online(), p_273230_.max());
+                            serverData.players = p_273230_;
                             if (!p_273230_.sample().isEmpty()) {
                                 List<Component> list = new ArrayList<>(p_273230_.sample().size());
 
@@ -88,15 +91,15 @@ public class ServerStatusPinger {
                                     list.add(Component.translatable("multiplayer.status.and_more", p_273230_.online() - p_273230_.sample().size()));
                                 }
 
-                                p_105460_.playerList = list;
+                                serverData.playerList = list;
                             } else {
-                                p_105460_.playerList = List.of();
+                                serverData.playerList = List.of();
                             }
-                        }, () -> p_105460_.status = Component.translatable("multiplayer.status.unknown").withStyle(ChatFormatting.DARK_GRAY));
+                        }, () -> serverData.status = Component.translatable("multiplayer.status.unknown").withStyle(ChatFormatting.DARK_GRAY));
                         serverstatus.favicon().ifPresent(p_302312_ -> {
-                            if (!Arrays.equals(p_302312_.iconBytes(), p_105460_.getIconBytes())) {
-                                p_105460_.setIconBytes(ServerData.validateIcon(p_302312_.iconBytes()));
-                                p_105461_.run();
+                            if (!Arrays.equals(p_302312_.iconBytes(), serverData.getIconBytes())) {
+                                serverData.setIconBytes(ServerData.validateIcon(p_302312_.iconBytes()));
+                                serverListUpdater.run();
                             }
                         });
                         this.pingStart = Util.getMillis();
@@ -106,19 +109,19 @@ public class ServerStatusPinger {
                 }
 
                 @Override
-                public void handlePongResponse(ClientboundPongResponsePacket p_320841_) {
+                public void handlePongResponse(ClientboundPongResponsePacket packet) {
                     long i = this.pingStart;
                     long j = Util.getMillis();
-                    p_105460_.ping = j - i;
+                    serverData.ping = j - i;
                     connection.disconnect(Component.translatable("multiplayer.status.finished"));
-                    p_316316_.run();
+                    stateUpdater.run();
                 }
 
                 @Override
-                public void onDisconnect(DisconnectionDetails p_350468_) {
+                public void onDisconnect(DisconnectionDetails details) {
                     if (!this.success) {
-                        ServerStatusPinger.this.onPingFailed(p_350468_.reason(), p_105460_);
-                        ServerStatusPinger.this.pingLegacyServer(inetsocketaddress, serveraddress, p_105460_);
+                        ServerStatusPinger.this.onPingFailed(details.reason(), serverData);
+                        ServerStatusPinger.this.pingLegacyServer(inetsocketaddress, serveraddress, serverData);
                     }
                 }
 
@@ -137,35 +140,35 @@ public class ServerStatusPinger {
         }
     }
 
-    void onPingFailed(Component p_171815_, ServerData p_171816_) {
-        LOGGER.error("Can't ping {}: {}", p_171816_.ip, p_171815_.getString());
-        p_171816_.motd = CANT_CONNECT_MESSAGE;
-        p_171816_.status = CommonComponents.EMPTY;
+    void onPingFailed(Component reason, ServerData serverData) {
+        LOGGER.error("Can't ping {}: {}", serverData.ip, reason.getString());
+        serverData.motd = CANT_CONNECT_MESSAGE;
+        serverData.status = CommonComponents.EMPTY;
     }
 
-    void pingLegacyServer(InetSocketAddress p_171812_, final ServerAddress p_295436_, final ServerData p_171813_) {
+    void pingLegacyServer(InetSocketAddress resolvedServerAddress, final ServerAddress serverAddress, final ServerData serverData) {
         new Bootstrap().group(Connection.NETWORK_WORKER_GROUP.get()).handler(new ChannelInitializer<Channel>() {
             @Override
-            protected void initChannel(Channel p_105498_) {
+            protected void initChannel(Channel channel) {
                 try {
-                    p_105498_.config().setOption(ChannelOption.TCP_NODELAY, true);
+                    channel.config().setOption(ChannelOption.TCP_NODELAY, true);
                 } catch (ChannelException channelexception) {
                 }
 
-                p_105498_.pipeline().addLast(new LegacyServerPinger(p_295436_, (p_315832_, p_315833_, p_315834_, p_315835_, p_315836_) -> {
-                    p_171813_.setState(ServerData.State.INCOMPATIBLE);
-                    p_171813_.version = Component.literal(p_315833_);
-                    p_171813_.motd = Component.literal(p_315834_);
-                    p_171813_.status = ServerStatusPinger.formatPlayerCount(p_315835_, p_315836_);
-                    p_171813_.players = new ServerStatus.Players(p_315836_, p_315835_, List.of());
+                channel.pipeline().addLast(new LegacyServerPinger(serverAddress, (p_315832_, p_315833_, p_315834_, p_315835_, p_315836_) -> {
+                    serverData.setState(ServerData.State.INCOMPATIBLE);
+                    serverData.version = Component.literal(p_315833_);
+                    serverData.motd = Component.literal(p_315834_);
+                    serverData.status = ServerStatusPinger.formatPlayerCount(p_315835_, p_315836_);
+                    serverData.players = new ServerStatus.Players(p_315836_, p_315835_, List.of());
                 }));
             }
-        }).channel(NioSocketChannel.class).connect(p_171812_.getAddress(), p_171812_.getPort());
+        }).channel(NioSocketChannel.class).connect(resolvedServerAddress.getAddress(), resolvedServerAddress.getPort());
     }
 
-    public static Component formatPlayerCount(int p_105467_, int p_105468_) {
-        Component component = Component.literal(Integer.toString(p_105467_)).withStyle(ChatFormatting.GRAY);
-        Component component1 = Component.literal(Integer.toString(p_105468_)).withStyle(ChatFormatting.GRAY);
+    public static Component formatPlayerCount(int players, int capacity) {
+        Component component = Component.literal(Integer.toString(players)).withStyle(ChatFormatting.GRAY);
+        Component component1 = Component.literal(Integer.toString(capacity)).withStyle(ChatFormatting.GRAY);
         return Component.translatable("multiplayer.status.player_count", component, component1).withStyle(ChatFormatting.DARK_GRAY);
     }
 

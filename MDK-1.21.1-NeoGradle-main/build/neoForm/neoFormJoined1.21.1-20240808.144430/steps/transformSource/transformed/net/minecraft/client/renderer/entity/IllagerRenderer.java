@@ -9,13 +9,13 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class IllagerRenderer<T extends AbstractIllager> extends MobRenderer<T, IllagerModel<T>> {
-    protected IllagerRenderer(EntityRendererProvider.Context p_174182_, IllagerModel<T> p_174183_, float p_174184_) {
-        super(p_174182_, p_174183_, p_174184_);
-        this.addLayer(new CustomHeadLayer<>(this, p_174182_.getModelSet(), p_174182_.getItemInHandRenderer()));
+    protected IllagerRenderer(EntityRendererProvider.Context context, IllagerModel<T> model, float shadowRadius) {
+        super(context, model, shadowRadius);
+        this.addLayer(new CustomHeadLayer<>(this, context.getModelSet(), context.getItemInHandRenderer()));
     }
 
-    protected void scale(T p_114919_, PoseStack p_114920_, float p_114921_) {
+    protected void scale(T livingEntity, PoseStack poseStack, float partialTickTime) {
         float f = 0.9375F;
-        p_114920_.scale(0.9375F, 0.9375F, 0.9375F);
+        poseStack.scale(0.9375F, 0.9375F, 0.9375F);
     }
 }

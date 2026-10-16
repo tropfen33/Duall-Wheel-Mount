@@ -10,15 +10,15 @@ public abstract class ShoulderRidingEntity extends TamableAnimal {
     private static final int RIDE_COOLDOWN = 100;
     private int rideCooldownCounter;
 
-    protected ShoulderRidingEntity(EntityType<? extends ShoulderRidingEntity> p_29893_, Level p_29894_) {
-        super(p_29893_, p_29894_);
+    protected ShoulderRidingEntity(EntityType<? extends ShoulderRidingEntity> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public boolean setEntityOnShoulder(ServerPlayer p_29896_) {
+    public boolean setEntityOnShoulder(ServerPlayer player) {
         CompoundTag compoundtag = new CompoundTag();
         compoundtag.putString("id", this.getEncodeId());
         this.saveWithoutId(compoundtag);
-        if (p_29896_.setEntityOnShoulder(compoundtag)) {
+        if (player.setEntityOnShoulder(compoundtag)) {
             this.discard();
             return true;
         } else {

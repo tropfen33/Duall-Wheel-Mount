@@ -24,23 +24,23 @@ public class LevelChunkSection {
     private final PalettedContainer<BlockState> states;
     private PalettedContainerRO<Holder<Biome>> biomes;
 
-    public LevelChunkSection(PalettedContainer<BlockState> p_282846_, PalettedContainerRO<Holder<Biome>> p_281695_) {
-        this.states = p_282846_;
-        this.biomes = p_281695_;
+    public LevelChunkSection(PalettedContainer<BlockState> states, PalettedContainerRO<Holder<Biome>> biomes) {
+        this.states = states;
+        this.biomes = biomes;
         this.recalcBlockCounts();
     }
 
-    public LevelChunkSection(Registry<Biome> p_282873_) {
+    public LevelChunkSection(Registry<Biome> biomeRegistry) {
         this.states = new PalettedContainer<>(Block.BLOCK_STATE_REGISTRY, Blocks.AIR.defaultBlockState(), PalettedContainer.Strategy.SECTION_STATES);
-        this.biomes = new PalettedContainer<>(p_282873_.asHolderIdMap(), p_282873_.getHolderOrThrow(Biomes.PLAINS), PalettedContainer.Strategy.SECTION_BIOMES);
+        this.biomes = new PalettedContainer<>(biomeRegistry.asHolderIdMap(), biomeRegistry.getHolderOrThrow(Biomes.PLAINS), PalettedContainer.Strategy.SECTION_BIOMES);
     }
 
-    public BlockState getBlockState(int p_62983_, int p_62984_, int p_62985_) {
-        return this.states.get(p_62983_, p_62984_, p_62985_);
+    public BlockState getBlockState(int x, int y, int z) {
+        return this.states.get(x, y, z);
     }
 
-    public FluidState getFluidState(int p_63008_, int p_63009_, int p_63010_) {
-        return this.states.get(p_63008_, p_63009_, p_63010_).getFluidState();
+    public FluidState getFluidState(int x, int y, int z) {
+        return this.states.get(x, y, z).getFluidState();
     }
 
     public void acquire() {
@@ -51,20 +51,20 @@ public class LevelChunkSection {
         this.states.release();
     }
 
-    public BlockState setBlockState(int p_62987_, int p_62988_, int p_62989_, BlockState p_62990_) {
-        return this.setBlockState(p_62987_, p_62988_, p_62989_, p_62990_, true);
+    public BlockState setBlockState(int x, int y, int z, BlockState state) {
+        return this.setBlockState(x, y, z, state, true);
     }
 
-    public BlockState setBlockState(int p_62992_, int p_62993_, int p_62994_, BlockState p_62995_, boolean p_62996_) {
+    public BlockState setBlockState(int x, int y, int z, BlockState state, boolean useLocks) {
         BlockState blockstate;
-        if (p_62996_) {
-            blockstate = this.states.getAndSet(p_62992_, p_62993_, p_62994_, p_62995_);
+        if (useLocks) {
+            blockstate = this.states.getAndSet(x, y, z, state);
         } else {
-            blockstate = this.states.getAndSetUnchecked(p_62992_, p_62993_, p_62994_, p_62995_);
+            blockstate = this.states.getAndSetUnchecked(x, y, z, state);
         }
 
         FluidState fluidstate = blockstate.getFluidState();
-        FluidState fluidstate1 = p_62995_.getFluidState();
+        FluidState fluidstate1 = state.getFluidState();
         if (!blockstate.isEmpty()) { // Neo: Fix MC-232360 for modded blocks (Makes modded isAir blocks not be replaced with Blocks.AIR in all-air chunk sections)
             this.nonEmptyBlockCount--;
             if (blockstate.isRandomlyTicking()) {
@@ -76,9 +76,9 @@ public class LevelChunkSection {
             this.tickingFluidCount--;
         }
 
-        if (!p_62995_.isEmpty()) { // Neo: Fix MC-232360 for modded blocks (Makes modded isAir blocks not be replaced with Blocks.AIR in all-air chunk sections)
+        if (!state.isEmpty()) { // Neo: Fix MC-232360 for modded blocks (Makes modded isAir blocks not be replaced with Blocks.AIR in all-air chunk sections)
             this.nonEmptyBlockCount++;
-            if (p_62995_.isRandomlyTicking()) {
+            if (state.isRandomlyTicking()) {
                 this.tickingBlockCount++;
             }
         }
@@ -145,46 +145,49 @@ public class LevelChunkSection {
         return this.biomes;
     }
 
-    public void read(FriendlyByteBuf p_63005_) {
-        this.nonEmptyBlockCount = p_63005_.readShort();
-        this.states.read(p_63005_);
+    public void read(FriendlyByteBuf buffer) {
+        this.nonEmptyBlockCount = buffer.readShort();
+        this.states.read(buffer);
         PalettedContainer<Holder<Biome>> palettedcontainer = this.biomes.recreate();
-        palettedcontainer.read(p_63005_);
+        palettedcontainer.read(buffer);
         this.biomes = palettedcontainer;
     }
 
-    public void readBiomes(FriendlyByteBuf p_275669_) {
+    public void readBiomes(FriendlyByteBuf buffer) {
         PalettedContainer<Holder<Biome>> palettedcontainer = this.biomes.recreate();
-        palettedcontainer.read(p_275669_);
+        palettedcontainer.read(buffer);
         this.biomes = palettedcontainer;
     }
 
-    public void write(FriendlyByteBuf p_63012_) {
-        p_63012_.writeShort(this.nonEmptyBlockCount);
-        this.states.write(p_63012_);
-        this.biomes.write(p_63012_);
+    public void write(FriendlyByteBuf buffer) {
+        buffer.writeShort(this.nonEmptyBlockCount);
+        this.states.write(buffer);
+        this.biomes.write(buffer);
     }
 
     public int getSerializedSize() {
         return 2 + this.states.getSerializedSize() + this.biomes.getSerializedSize();
     }
 
-    public boolean maybeHas(Predicate<BlockState> p_63003_) {
-        return this.states.maybeHas(p_63003_);
+    /**
+     * @return {@code true} if this section has any states matching the given predicate. As the internal representation uses a {@link net.minecraft.world.level.chunk.Palette}, this is more efficient than looping through every position in the section, or indeed the chunk.
+     */
+    public boolean maybeHas(Predicate<BlockState> predicate) {
+        return this.states.maybeHas(predicate);
     }
 
-    public Holder<Biome> getNoiseBiome(int p_204434_, int p_204435_, int p_204436_) {
-        return this.biomes.get(p_204434_, p_204435_, p_204436_);
+    public Holder<Biome> getNoiseBiome(int x, int y, int z) {
+        return this.biomes.get(x, y, z);
     }
 
-    public void fillBiomesFromNoise(BiomeResolver p_282075_, Climate.Sampler p_283084_, int p_282310_, int p_281510_, int p_283057_) {
+    public void fillBiomesFromNoise(BiomeResolver biomeResolver, Climate.Sampler climateSampler, int x, int y, int z) {
         PalettedContainer<Holder<Biome>> palettedcontainer = this.biomes.recreate();
         int i = 4;
 
         for (int j = 0; j < 4; j++) {
             for (int k = 0; k < 4; k++) {
                 for (int l = 0; l < 4; l++) {
-                    palettedcontainer.getAndSetUnchecked(j, k, l, p_282075_.getNoiseBiome(p_282310_ + j, p_281510_ + k, p_283057_ + l, p_283084_));
+                    palettedcontainer.getAndSetUnchecked(j, k, l, biomeResolver.getNoiseBiome(x + j, y + k, z + l, climateSampler));
                 }
             }
         }

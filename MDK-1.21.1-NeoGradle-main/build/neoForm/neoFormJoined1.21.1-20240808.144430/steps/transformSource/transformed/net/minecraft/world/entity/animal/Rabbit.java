@@ -85,8 +85,8 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
     private int jumpDelayTicks;
     int moreCarrotTicks;
 
-    public Rabbit(EntityType<? extends Rabbit> p_29656_, Level p_29657_) {
-        super(p_29656_, p_29657_);
+    public Rabbit(EntityType<? extends Rabbit> entityType, Level level) {
+        super(entityType, level);
         this.jumpControl = new Rabbit.RabbitJumpControl(this);
         this.moveControl = new Rabbit.RabbitMoveControl(this);
         this.setSpeedModifier(0.0);
@@ -145,19 +145,19 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
         }
     }
 
-    public float getJumpCompletion(float p_29736_) {
-        return this.jumpDuration == 0 ? 0.0F : ((float)this.jumpTicks + p_29736_) / (float)this.jumpDuration;
+    public float getJumpCompletion(float partialTick) {
+        return this.jumpDuration == 0 ? 0.0F : ((float)this.jumpTicks + partialTick) / (float)this.jumpDuration;
     }
 
-    public void setSpeedModifier(double p_29726_) {
-        this.getNavigation().setSpeedModifier(p_29726_);
-        this.moveControl.setWantedPosition(this.moveControl.getWantedX(), this.moveControl.getWantedY(), this.moveControl.getWantedZ(), p_29726_);
+    public void setSpeedModifier(double speedModifier) {
+        this.getNavigation().setSpeedModifier(speedModifier);
+        this.moveControl.setWantedPosition(this.moveControl.getWantedX(), this.moveControl.getWantedY(), this.moveControl.getWantedZ(), speedModifier);
     }
 
     @Override
-    public void setJumping(boolean p_29732_) {
-        super.setJumping(p_29732_);
-        if (p_29732_) {
+    public void setJumping(boolean jumping) {
+        super.setJumping(jumping);
+        if (jumping) {
             this.playSound(this.getJumpSound(), this.getSoundVolume(), ((this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F) * 0.8F);
         }
     }
@@ -169,9 +169,9 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326475_) {
-        super.defineSynchedData(p_326475_);
-        p_326475_.define(DATA_TYPE_ID, Rabbit.Variant.BROWN.id);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_TYPE_ID, Rabbit.Variant.BROWN.id);
     }
 
     @Override
@@ -228,8 +228,8 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
         return false;
     }
 
-    private void facePoint(double p_29687_, double p_29688_) {
-        this.setYRot((float)(Mth.atan2(p_29688_ - this.getZ(), p_29687_ - this.getX()) * 180.0F / (float)Math.PI) - 90.0F);
+    private void facePoint(double x, double z) {
+        this.setYRot((float)(Mth.atan2(z - this.getZ(), x - this.getX()) * 180.0F / (float)Math.PI) - 90.0F);
     }
 
     private void enableJumpControl() {
@@ -270,17 +270,20 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_29697_) {
-        super.addAdditionalSaveData(p_29697_);
-        p_29697_.putInt("RabbitType", this.getVariant().id);
-        p_29697_.putInt("MoreCarrotTicks", this.moreCarrotTicks);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("RabbitType", this.getVariant().id);
+        compound.putInt("MoreCarrotTicks", this.moreCarrotTicks);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_29684_) {
-        super.readAdditionalSaveData(p_29684_);
-        this.setVariant(Rabbit.Variant.byId(p_29684_.getInt("RabbitType")));
-        this.moreCarrotTicks = p_29684_.getInt("MoreCarrotTicks");
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.setVariant(Rabbit.Variant.byId(compound.getInt("RabbitType")));
+        this.moreCarrotTicks = compound.getInt("MoreCarrotTicks");
     }
 
     protected SoundEvent getJumpSound() {
@@ -293,7 +296,7 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_29715_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.RABBIT_HURT;
     }
 
@@ -315,14 +318,14 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
     }
 
     @Nullable
-    public Rabbit getBreedOffspring(ServerLevel p_149035_, AgeableMob p_149036_) {
-        Rabbit rabbit = EntityType.RABBIT.create(p_149035_);
+    public Rabbit getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        Rabbit rabbit = EntityType.RABBIT.create(level);
         if (rabbit != null) {
             Rabbit.Variant rabbit$variant;
-            rabbit$variant = getRandomRabbitVariant(p_149035_, this.blockPosition());
+            rabbit$variant = getRandomRabbitVariant(level, this.blockPosition());
             label16:
             if (this.random.nextInt(20) != 0) {
-                if (p_149036_ instanceof Rabbit rabbit1 && this.random.nextBoolean()) {
+                if (otherParent instanceof Rabbit rabbit1 && this.random.nextBoolean()) {
                     rabbit$variant = rabbit1.getVariant();
                     break label16;
                 }
@@ -336,17 +339,20 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
         return rabbit;
     }
 
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on the animal type)
+     */
     @Override
-    public boolean isFood(ItemStack p_29729_) {
-        return p_29729_.is(ItemTags.RABBIT_FOOD);
+    public boolean isFood(ItemStack stack) {
+        return stack.is(ItemTags.RABBIT_FOOD);
     }
 
     public Rabbit.Variant getVariant() {
         return Rabbit.Variant.byId(this.entityData.get(DATA_TYPE_ID));
     }
 
-    public void setVariant(Rabbit.Variant p_262578_) {
-        if (p_262578_ == Rabbit.Variant.EVIL) {
+    public void setVariant(Rabbit.Variant variant) {
+        if (variant == Rabbit.Variant.EVIL) {
             this.getAttribute(Attributes.ARMOR).setBaseValue(8.0);
             this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.4, true));
             this.targetSelector.addGoal(1, new HurtByTargetGoal(this).setAlertOthers());
@@ -361,26 +367,26 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
             this.getAttribute(Attributes.ATTACK_DAMAGE).removeModifier(EVIL_ATTACK_POWER_MODIFIER);
         }
 
-        this.entityData.set(DATA_TYPE_ID, p_262578_.id);
+        this.entityData.set(DATA_TYPE_ID, variant.id);
     }
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_29678_, DifficultyInstance p_29679_, MobSpawnType p_29680_, @Nullable SpawnGroupData p_29681_) {
-        Rabbit.Variant rabbit$variant = getRandomRabbitVariant(p_29678_, this.blockPosition());
-        if (p_29681_ instanceof Rabbit.RabbitGroupData) {
-            rabbit$variant = ((Rabbit.RabbitGroupData)p_29681_).variant;
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        Rabbit.Variant rabbit$variant = getRandomRabbitVariant(level, this.blockPosition());
+        if (spawnGroupData instanceof Rabbit.RabbitGroupData) {
+            rabbit$variant = ((Rabbit.RabbitGroupData)spawnGroupData).variant;
         } else {
-            p_29681_ = new Rabbit.RabbitGroupData(rabbit$variant);
+            spawnGroupData = new Rabbit.RabbitGroupData(rabbit$variant);
         }
 
         this.setVariant(rabbit$variant);
-        return super.finalizeSpawn(p_29678_, p_29679_, p_29680_, p_29681_);
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
-    private static Rabbit.Variant getRandomRabbitVariant(LevelAccessor p_262699_, BlockPos p_262700_) {
-        Holder<Biome> holder = p_262699_.getBiome(p_262700_);
-        int i = p_262699_.getRandom().nextInt(100);
+    private static Rabbit.Variant getRandomRabbitVariant(LevelAccessor level, BlockPos pos) {
+        Holder<Biome> holder = level.getBiome(pos);
+        int i = level.getRandom().nextInt(100);
         if (holder.is(BiomeTags.SPAWNS_WHITE_RABBITS)) {
             return i < 80 ? Rabbit.Variant.WHITE : Rabbit.Variant.WHITE_SPLOTCHED;
         } else if (holder.is(BiomeTags.SPAWNS_GOLD_RABBITS)) {
@@ -391,23 +397,26 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
     }
 
     public static boolean checkRabbitSpawnRules(
-        EntityType<Rabbit> p_218256_, LevelAccessor p_218257_, MobSpawnType p_218258_, BlockPos p_218259_, RandomSource p_218260_
+        EntityType<Rabbit> rabbit, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return p_218257_.getBlockState(p_218259_.below()).is(BlockTags.RABBITS_SPAWNABLE_ON) && isBrightEnoughToSpawn(p_218257_, p_218259_);
+        return level.getBlockState(pos.below()).is(BlockTags.RABBITS_SPAWNABLE_ON) && isBrightEnoughToSpawn(level, pos);
     }
 
     boolean wantsMoreFood() {
         return this.moreCarrotTicks <= 0;
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @Override
-    public void handleEntityEvent(byte p_29663_) {
-        if (p_29663_ == 1) {
+    public void handleEntityEvent(byte id) {
+        if (id == 1) {
             this.spawnSprintParticle();
             this.jumpDuration = 10;
             this.jumpTicks = 0;
         } else {
-            super.handleEntityEvent(p_29663_);
+            super.handleEntityEvent(id);
         }
     }
 
@@ -419,9 +428,9 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
     static class RabbitAvoidEntityGoal<T extends LivingEntity> extends AvoidEntityGoal<T> {
         private final Rabbit rabbit;
 
-        public RabbitAvoidEntityGoal(Rabbit p_29743_, Class<T> p_29744_, float p_29745_, double p_29746_, double p_29747_) {
-            super(p_29743_, p_29744_, p_29745_, p_29746_, p_29747_);
-            this.rabbit = p_29743_;
+        public RabbitAvoidEntityGoal(Rabbit rabbit, Class<T> entityClassToAvoid, float maxDist, double walkSpeedModifier, double sprintSpeedModifier) {
+            super(rabbit, entityClassToAvoid, maxDist, walkSpeedModifier, sprintSpeedModifier);
+            this.rabbit = rabbit;
         }
 
         @Override
@@ -433,9 +442,9 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
     public static class RabbitGroupData extends AgeableMob.AgeableMobGroupData {
         public final Rabbit.Variant variant;
 
-        public RabbitGroupData(Rabbit.Variant p_262662_) {
+        public RabbitGroupData(Rabbit.Variant variant) {
             super(1.0F);
-            this.variant = p_262662_;
+            this.variant = variant;
         }
     }
 
@@ -443,9 +452,9 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
         private final Rabbit rabbit;
         private boolean canJump;
 
-        public RabbitJumpControl(Rabbit p_186229_) {
-            super(p_186229_);
-            this.rabbit = p_186229_;
+        public RabbitJumpControl(Rabbit rabbit) {
+            super(rabbit);
+            this.rabbit = rabbit;
         }
 
         public boolean wantJump() {
@@ -456,8 +465,8 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
             return this.canJump;
         }
 
-        public void setCanJump(boolean p_29759_) {
-            this.canJump = p_29759_;
+        public void setCanJump(boolean canJump) {
+            this.canJump = canJump;
         }
 
         @Override
@@ -473,9 +482,9 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
         private final Rabbit rabbit;
         private double nextJumpSpeed;
 
-        public RabbitMoveControl(Rabbit p_29766_) {
-            super(p_29766_);
-            this.rabbit = p_29766_;
+        public RabbitMoveControl(Rabbit rabbit) {
+            super(rabbit);
+            this.rabbit = rabbit;
         }
 
         @Override
@@ -489,15 +498,18 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
             super.tick();
         }
 
+        /**
+         * Sets the speed and location to move to
+         */
         @Override
-        public void setWantedPosition(double p_29769_, double p_29770_, double p_29771_, double p_29772_) {
+        public void setWantedPosition(double x, double y, double z, double speed) {
             if (this.rabbit.isInWater()) {
-                p_29772_ = 1.5;
+                speed = 1.5;
             }
 
-            super.setWantedPosition(p_29769_, p_29770_, p_29771_, p_29772_);
-            if (p_29772_ > 0.0) {
-                this.nextJumpSpeed = p_29772_;
+            super.setWantedPosition(x, y, z, speed);
+            if (speed > 0.0) {
+                this.nextJumpSpeed = speed;
             }
         }
     }
@@ -505,9 +517,9 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
     static class RabbitPanicGoal extends PanicGoal {
         private final Rabbit rabbit;
 
-        public RabbitPanicGoal(Rabbit p_29775_, double p_29776_) {
-            super(p_29775_, p_29776_);
-            this.rabbit = p_29775_;
+        public RabbitPanicGoal(Rabbit rabbit, double speedModifier) {
+            super(rabbit, speedModifier);
+            this.rabbit = rabbit;
         }
 
         @Override
@@ -522,9 +534,9 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
         private boolean wantsToRaid;
         private boolean canRaid;
 
-        public RaidGardenGoal(Rabbit p_29782_) {
-            super(p_29782_, 0.7F, 16);
-            this.rabbit = p_29782_;
+        public RaidGardenGoal(Rabbit rabbit) {
+            super(rabbit, 0.7F, 16);
+            this.rabbit = rabbit;
         }
 
         @Override
@@ -582,11 +594,14 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
             }
         }
 
+        /**
+         * Return {@code true} to set given position as destination
+         */
         @Override
-        protected boolean isValidTarget(LevelReader p_29785_, BlockPos p_29786_) {
-            BlockState blockstate = p_29785_.getBlockState(p_29786_);
+        protected boolean isValidTarget(LevelReader level, BlockPos pos) {
+            BlockState blockstate = level.getBlockState(pos);
             if (blockstate.getBlock() instanceof net.minecraft.world.level.block.FarmBlock && this.wantsToRaid && !this.canRaid) {
-                blockstate = p_29785_.getBlockState(p_29786_.above());
+                blockstate = level.getBlockState(pos.above());
                 if (blockstate.getBlock() instanceof CarrotBlock && ((CarrotBlock)blockstate.getBlock()).isMaxAge(blockstate)) {
                     this.canRaid = true;
                     return true;
@@ -611,9 +626,9 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
         final int id;
         private final String name;
 
-        private Variant(int p_262657_, String p_262679_) {
-            this.id = p_262657_;
-            this.name = p_262679_;
+        private Variant(int id, String name) {
+            this.id = id;
+            this.name = name;
         }
 
         @Override
@@ -625,8 +640,8 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
             return this.id;
         }
 
-        public static Rabbit.Variant byId(int p_262665_) {
-            return BY_ID.apply(p_262665_);
+        public static Rabbit.Variant byId(int id) {
+            return BY_ID.apply(id);
         }
     }
 }

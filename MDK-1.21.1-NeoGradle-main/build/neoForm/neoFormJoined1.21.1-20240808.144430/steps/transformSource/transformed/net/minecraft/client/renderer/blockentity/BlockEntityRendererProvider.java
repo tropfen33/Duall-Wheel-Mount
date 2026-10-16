@@ -14,7 +14,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 @FunctionalInterface
 @OnlyIn(Dist.CLIENT)
 public interface BlockEntityRendererProvider<T extends BlockEntity> {
-    BlockEntityRenderer<T> create(BlockEntityRendererProvider.Context p_173571_);
+    BlockEntityRenderer<T> create(BlockEntityRendererProvider.Context context);
 
     @OnlyIn(Dist.CLIENT)
     public static class Context {
@@ -26,19 +26,19 @@ public interface BlockEntityRendererProvider<T extends BlockEntity> {
         private final Font font;
 
         public Context(
-            BlockEntityRenderDispatcher p_234440_,
-            BlockRenderDispatcher p_234441_,
-            ItemRenderer p_234442_,
-            EntityRenderDispatcher p_234443_,
-            EntityModelSet p_234444_,
-            Font p_234445_
+            BlockEntityRenderDispatcher blockEntityRenderDispatcher,
+            BlockRenderDispatcher blockRenderDispatcher,
+            ItemRenderer itemRenderer,
+            EntityRenderDispatcher entityRenderer,
+            EntityModelSet modelSet,
+            Font font
         ) {
-            this.blockEntityRenderDispatcher = p_234440_;
-            this.blockRenderDispatcher = p_234441_;
-            this.itemRenderer = p_234442_;
-            this.entityRenderer = p_234443_;
-            this.modelSet = p_234444_;
-            this.font = p_234445_;
+            this.blockEntityRenderDispatcher = blockEntityRenderDispatcher;
+            this.blockRenderDispatcher = blockRenderDispatcher;
+            this.itemRenderer = itemRenderer;
+            this.entityRenderer = entityRenderer;
+            this.modelSet = modelSet;
+            this.font = font;
         }
 
         public BlockEntityRenderDispatcher getBlockEntityRenderDispatcher() {
@@ -61,8 +61,8 @@ public interface BlockEntityRendererProvider<T extends BlockEntity> {
             return this.modelSet;
         }
 
-        public ModelPart bakeLayer(ModelLayerLocation p_173583_) {
-            return this.modelSet.bakeLayer(p_173583_);
+        public ModelPart bakeLayer(ModelLayerLocation layerLocation) {
+            return this.modelSet.bakeLayer(layerLocation);
         }
 
         public Font getFont() {

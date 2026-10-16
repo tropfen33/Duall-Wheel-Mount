@@ -17,30 +17,30 @@ public class ClientboundContainerSetContentPacket implements Packet<ClientGamePa
     private final List<ItemStack> items;
     private final ItemStack carriedItem;
 
-    public ClientboundContainerSetContentPacket(int p_182704_, int p_182705_, NonNullList<ItemStack> p_182706_, ItemStack p_182707_) {
-        this.containerId = p_182704_;
-        this.stateId = p_182705_;
-        this.items = NonNullList.withSize(p_182706_.size(), ItemStack.EMPTY);
+    public ClientboundContainerSetContentPacket(int containerId, int stateId, NonNullList<ItemStack> items, ItemStack carriedItem) {
+        this.containerId = containerId;
+        this.stateId = stateId;
+        this.items = NonNullList.withSize(items.size(), ItemStack.EMPTY);
 
-        for (int i = 0; i < p_182706_.size(); i++) {
-            this.items.set(i, p_182706_.get(i).copy());
+        for (int i = 0; i < items.size(); i++) {
+            this.items.set(i, items.get(i).copy());
         }
 
-        this.carriedItem = p_182707_.copy();
+        this.carriedItem = carriedItem.copy();
     }
 
-    private ClientboundContainerSetContentPacket(RegistryFriendlyByteBuf p_319794_) {
-        this.containerId = p_319794_.readUnsignedByte();
-        this.stateId = p_319794_.readVarInt();
-        this.items = ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode(p_319794_);
-        this.carriedItem = ItemStack.OPTIONAL_STREAM_CODEC.decode(p_319794_);
+    private ClientboundContainerSetContentPacket(RegistryFriendlyByteBuf buffer) {
+        this.containerId = buffer.readUnsignedByte();
+        this.stateId = buffer.readVarInt();
+        this.items = ItemStack.OPTIONAL_LIST_STREAM_CODEC.decode(buffer);
+        this.carriedItem = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
     }
 
-    private void write(RegistryFriendlyByteBuf p_320758_) {
-        p_320758_.writeByte(this.containerId);
-        p_320758_.writeVarInt(this.stateId);
-        ItemStack.OPTIONAL_LIST_STREAM_CODEC.encode(p_320758_, this.items);
-        ItemStack.OPTIONAL_STREAM_CODEC.encode(p_320758_, this.carriedItem);
+    private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeByte(this.containerId);
+        buffer.writeVarInt(this.stateId);
+        ItemStack.OPTIONAL_LIST_STREAM_CODEC.encode(buffer, this.items);
+        ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, this.carriedItem);
     }
 
     @Override
@@ -48,8 +48,11 @@ public class ClientboundContainerSetContentPacket implements Packet<ClientGamePa
         return GamePacketTypes.CLIENTBOUND_CONTAINER_SET_CONTENT;
     }
 
-    public void handle(ClientGamePacketListener p_131953_) {
-        p_131953_.handleContainerContent(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleContainerContent(this);
     }
 
     public int getContainerId() {

@@ -11,16 +11,16 @@ public class ServerboundPingRequestPacket implements Packet<ServerPingPacketList
     );
     private final long time;
 
-    public ServerboundPingRequestPacket(long p_320277_) {
-        this.time = p_320277_;
+    public ServerboundPingRequestPacket(long time) {
+        this.time = time;
     }
 
-    private ServerboundPingRequestPacket(ByteBuf p_352359_) {
-        this.time = p_352359_.readLong();
+    private ServerboundPingRequestPacket(ByteBuf buffer) {
+        this.time = buffer.readLong();
     }
 
-    private void write(ByteBuf p_352457_) {
-        p_352457_.writeLong(this.time);
+    private void write(ByteBuf buffer) {
+        buffer.writeLong(this.time);
     }
 
     @Override
@@ -28,8 +28,11 @@ public class ServerboundPingRequestPacket implements Packet<ServerPingPacketList
         return PingPacketTypes.SERVERBOUND_PING_REQUEST;
     }
 
-    public void handle(ServerPingPacketListener p_320053_) {
-        p_320053_.handlePingRequest(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ServerPingPacketListener handler) {
+        handler.handlePingRequest(this);
     }
 
     public long getTime() {

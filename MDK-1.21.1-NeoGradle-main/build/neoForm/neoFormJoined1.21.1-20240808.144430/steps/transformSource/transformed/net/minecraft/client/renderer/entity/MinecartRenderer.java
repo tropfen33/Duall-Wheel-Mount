@@ -24,31 +24,31 @@ public class MinecartRenderer<T extends AbstractMinecart> extends EntityRenderer
     protected final EntityModel<T> model;
     private final BlockRenderDispatcher blockRenderer;
 
-    public MinecartRenderer(EntityRendererProvider.Context p_174300_, ModelLayerLocation p_174301_) {
-        super(p_174300_);
+    public MinecartRenderer(EntityRendererProvider.Context context, ModelLayerLocation layer) {
+        super(context);
         this.shadowRadius = 0.7F;
-        this.model = new MinecartModel<>(p_174300_.bakeLayer(p_174301_));
-        this.blockRenderer = p_174300_.getBlockRenderDispatcher();
+        this.model = new MinecartModel<>(context.bakeLayer(layer));
+        this.blockRenderer = context.getBlockRenderDispatcher();
     }
 
-    public void render(T p_115418_, float p_115419_, float p_115420_, PoseStack p_115421_, MultiBufferSource p_115422_, int p_115423_) {
-        super.render(p_115418_, p_115419_, p_115420_, p_115421_, p_115422_, p_115423_);
-        p_115421_.pushPose();
-        long i = (long)p_115418_.getId() * 493286711L;
+    public void render(T entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+        poseStack.pushPose();
+        long i = (long)entity.getId() * 493286711L;
         i = i * i * 4392167121L + i * 98761L;
         float f = (((float)(i >> 16 & 7L) + 0.5F) / 8.0F - 0.5F) * 0.004F;
         float f1 = (((float)(i >> 20 & 7L) + 0.5F) / 8.0F - 0.5F) * 0.004F;
         float f2 = (((float)(i >> 24 & 7L) + 0.5F) / 8.0F - 0.5F) * 0.004F;
-        p_115421_.translate(f, f1, f2);
-        double d0 = Mth.lerp((double)p_115420_, p_115418_.xOld, p_115418_.getX());
-        double d1 = Mth.lerp((double)p_115420_, p_115418_.yOld, p_115418_.getY());
-        double d2 = Mth.lerp((double)p_115420_, p_115418_.zOld, p_115418_.getZ());
+        poseStack.translate(f, f1, f2);
+        double d0 = Mth.lerp((double)partialTicks, entity.xOld, entity.getX());
+        double d1 = Mth.lerp((double)partialTicks, entity.yOld, entity.getY());
+        double d2 = Mth.lerp((double)partialTicks, entity.zOld, entity.getZ());
         double d3 = 0.3F;
-        Vec3 vec3 = p_115418_.getPos(d0, d1, d2);
-        float f3 = Mth.lerp(p_115420_, p_115418_.xRotO, p_115418_.getXRot());
+        Vec3 vec3 = entity.getPos(d0, d1, d2);
+        float f3 = Mth.lerp(partialTicks, entity.xRotO, entity.getXRot());
         if (vec3 != null) {
-            Vec3 vec31 = p_115418_.getPosOffs(d0, d1, d2, 0.3F);
-            Vec3 vec32 = p_115418_.getPosOffs(d0, d1, d2, -0.3F);
+            Vec3 vec31 = entity.getPosOffs(d0, d1, d2, 0.3F);
+            Vec3 vec32 = entity.getPosOffs(d0, d1, d2, -0.3F);
             if (vec31 == null) {
                 vec31 = vec3;
             }
@@ -57,52 +57,55 @@ public class MinecartRenderer<T extends AbstractMinecart> extends EntityRenderer
                 vec32 = vec3;
             }
 
-            p_115421_.translate(vec3.x - d0, (vec31.y + vec32.y) / 2.0 - d1, vec3.z - d2);
+            poseStack.translate(vec3.x - d0, (vec31.y + vec32.y) / 2.0 - d1, vec3.z - d2);
             Vec3 vec33 = vec32.add(-vec31.x, -vec31.y, -vec31.z);
             if (vec33.length() != 0.0) {
                 vec33 = vec33.normalize();
-                p_115419_ = (float)(Math.atan2(vec33.z, vec33.x) * 180.0 / Math.PI);
+                entityYaw = (float)(Math.atan2(vec33.z, vec33.x) * 180.0 / Math.PI);
                 f3 = (float)(Math.atan(vec33.y) * 73.0);
             }
         }
 
-        p_115421_.translate(0.0F, 0.375F, 0.0F);
-        p_115421_.mulPose(Axis.YP.rotationDegrees(180.0F - p_115419_));
-        p_115421_.mulPose(Axis.ZP.rotationDegrees(-f3));
-        float f5 = (float)p_115418_.getHurtTime() - p_115420_;
-        float f6 = p_115418_.getDamage() - p_115420_;
+        poseStack.translate(0.0F, 0.375F, 0.0F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - entityYaw));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(-f3));
+        float f5 = (float)entity.getHurtTime() - partialTicks;
+        float f6 = entity.getDamage() - partialTicks;
         if (f6 < 0.0F) {
             f6 = 0.0F;
         }
 
         if (f5 > 0.0F) {
-            p_115421_.mulPose(Axis.XP.rotationDegrees(Mth.sin(f5) * f5 * f6 / 10.0F * (float)p_115418_.getHurtDir()));
+            poseStack.mulPose(Axis.XP.rotationDegrees(Mth.sin(f5) * f5 * f6 / 10.0F * (float)entity.getHurtDir()));
         }
 
-        int j = p_115418_.getDisplayOffset();
-        BlockState blockstate = p_115418_.getDisplayBlockState();
+        int j = entity.getDisplayOffset();
+        BlockState blockstate = entity.getDisplayBlockState();
         if (blockstate.getRenderShape() != RenderShape.INVISIBLE) {
-            p_115421_.pushPose();
+            poseStack.pushPose();
             float f4 = 0.75F;
-            p_115421_.scale(0.75F, 0.75F, 0.75F);
-            p_115421_.translate(-0.5F, (float)(j - 8) / 16.0F, 0.5F);
-            p_115421_.mulPose(Axis.YP.rotationDegrees(90.0F));
-            this.renderMinecartContents(p_115418_, p_115420_, blockstate, p_115421_, p_115422_, p_115423_);
-            p_115421_.popPose();
+            poseStack.scale(0.75F, 0.75F, 0.75F);
+            poseStack.translate(-0.5F, (float)(j - 8) / 16.0F, 0.5F);
+            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F));
+            this.renderMinecartContents(entity, partialTicks, blockstate, poseStack, buffer, packedLight);
+            poseStack.popPose();
         }
 
-        p_115421_.scale(-1.0F, -1.0F, 1.0F);
-        this.model.setupAnim(p_115418_, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
-        VertexConsumer vertexconsumer = p_115422_.getBuffer(this.model.renderType(this.getTextureLocation(p_115418_)));
-        this.model.renderToBuffer(p_115421_, vertexconsumer, p_115423_, OverlayTexture.NO_OVERLAY);
-        p_115421_.popPose();
+        poseStack.scale(-1.0F, -1.0F, 1.0F);
+        this.model.setupAnim(entity, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F);
+        VertexConsumer vertexconsumer = buffer.getBuffer(this.model.renderType(this.getTextureLocation(entity)));
+        this.model.renderToBuffer(poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY);
+        poseStack.popPose();
     }
 
-    public ResourceLocation getTextureLocation(T p_115416_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(T entity) {
         return MINECART_LOCATION;
     }
 
-    protected void renderMinecartContents(T p_115424_, float p_115425_, BlockState p_115426_, PoseStack p_115427_, MultiBufferSource p_115428_, int p_115429_) {
-        this.blockRenderer.renderSingleBlock(p_115426_, p_115427_, p_115428_, p_115429_, OverlayTexture.NO_OVERLAY);
+    protected void renderMinecartContents(T entity, float partialTicks, BlockState state, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        this.blockRenderer.renderSingleBlock(state, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
     }
 }

@@ -19,7 +19,7 @@ public interface Tier {
 
     Ingredient getRepairIngredient();
 
-    default Tool createToolProperties(TagKey<Block> p_335416_) {
-        return new Tool(List.of(Tool.Rule.deniesDrops(this.getIncorrectBlocksForDrops()), Tool.Rule.minesAndDrops(p_335416_, this.getSpeed())), 1.0F, 1);
+    default Tool createToolProperties(TagKey<Block> block) {
+        return new Tool(List.of(Tool.Rule.deniesDrops(this.getIncorrectBlocksForDrops()), Tool.Rule.minesAndDrops(block, this.getSpeed())), 1.0F, 1);
     }
 }

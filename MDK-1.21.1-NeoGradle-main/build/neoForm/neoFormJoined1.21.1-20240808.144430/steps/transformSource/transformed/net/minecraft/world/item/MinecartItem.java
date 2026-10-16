@@ -73,21 +73,24 @@ public class MinecartItem extends Item {
     };
     final AbstractMinecart.Type type;
 
-    public MinecartItem(AbstractMinecart.Type p_42938_, Item.Properties p_42939_) {
-        super(p_42939_);
-        this.type = p_42938_;
+    public MinecartItem(AbstractMinecart.Type type, Item.Properties properties) {
+        super(properties);
+        this.type = type;
         DispenserBlock.registerBehavior(this, DISPENSE_ITEM_BEHAVIOR);
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_42943_) {
-        Level level = p_42943_.getLevel();
-        BlockPos blockpos = p_42943_.getClickedPos();
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
         BlockState blockstate = level.getBlockState(blockpos);
         if (!blockstate.is(BlockTags.RAILS)) {
             return InteractionResult.FAIL;
         } else {
-            ItemStack itemstack = p_42943_.getItemInHand();
+            ItemStack itemstack = context.getItemInHand();
             if (level instanceof ServerLevel serverlevel) {
                 RailShape railshape = blockstate.getBlock() instanceof BaseRailBlock
                     ? ((BaseRailBlock)blockstate.getBlock()).getRailDirection(blockstate, level, blockpos, null)
@@ -104,10 +107,10 @@ public class MinecartItem extends Item {
                     (double)blockpos.getZ() + 0.5,
                     this.type,
                     itemstack,
-                    p_42943_.getPlayer()
+                    context.getPlayer()
                 );
                 serverlevel.addFreshEntity(abstractminecart);
-                serverlevel.gameEvent(GameEvent.ENTITY_PLACE, blockpos, GameEvent.Context.of(p_42943_.getPlayer(), serverlevel.getBlockState(blockpos.below())));
+                serverlevel.gameEvent(GameEvent.ENTITY_PLACE, blockpos, GameEvent.Context.of(context.getPlayer(), serverlevel.getBlockState(blockpos.below())));
             }
 
             itemstack.shrink(1);

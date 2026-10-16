@@ -11,17 +11,17 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BannerPatternLayers;
 
 public class BannerDuplicateRecipe extends CustomRecipe {
-    public BannerDuplicateRecipe(CraftingBookCategory p_250373_) {
-        super(p_250373_);
+    public BannerDuplicateRecipe(CraftingBookCategory category) {
+        super(category);
     }
 
-    public boolean matches(CraftingInput p_346043_, Level p_43786_) {
+    public boolean matches(CraftingInput input, Level level) {
         DyeColor dyecolor = null;
         ItemStack itemstack = null;
         ItemStack itemstack1 = null;
 
-        for (int i = 0; i < p_346043_.size(); i++) {
-            ItemStack itemstack2 = p_346043_.getItem(i);
+        for (int i = 0; i < input.size(); i++) {
+            ItemStack itemstack2 = input.getItem(i);
             if (!itemstack2.isEmpty()) {
                 Item item = itemstack2.getItem();
                 if (!(item instanceof BannerItem)) {
@@ -59,9 +59,9 @@ public class BannerDuplicateRecipe extends CustomRecipe {
         return itemstack != null && itemstack1 != null;
     }
 
-    public ItemStack assemble(CraftingInput p_346069_, HolderLookup.Provider p_335574_) {
-        for (int i = 0; i < p_346069_.size(); i++) {
-            ItemStack itemstack = p_346069_.getItem(i);
+    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
+        for (int i = 0; i < input.size(); i++) {
+            ItemStack itemstack = input.getItem(i);
             if (!itemstack.isEmpty()) {
                 int j = itemstack.getOrDefault(DataComponents.BANNER_PATTERNS, BannerPatternLayers.EMPTY).layers().size();
                 if (j > 0 && j <= 6) {
@@ -73,11 +73,11 @@ public class BannerDuplicateRecipe extends CustomRecipe {
         return ItemStack.EMPTY;
     }
 
-    public NonNullList<ItemStack> getRemainingItems(CraftingInput p_345377_) {
-        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(p_345377_.size(), ItemStack.EMPTY);
+    public NonNullList<ItemStack> getRemainingItems(CraftingInput input) {
+        NonNullList<ItemStack> nonnulllist = NonNullList.withSize(input.size(), ItemStack.EMPTY);
 
         for (int i = 0; i < nonnulllist.size(); i++) {
-            ItemStack itemstack = p_345377_.getItem(i);
+            ItemStack itemstack = input.getItem(i);
             if (!itemstack.isEmpty()) {
                 if (itemstack.hasCraftingRemainingItem()) {
                     nonnulllist.set(i, itemstack.getCraftingRemainingItem());
@@ -95,8 +95,11 @@ public class BannerDuplicateRecipe extends CustomRecipe {
         return RecipeSerializer.BANNER_DUPLICATE;
     }
 
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
     @Override
-    public boolean canCraftInDimensions(int p_43775_, int p_43776_) {
-        return p_43775_ * p_43776_ >= 2;
+    public boolean canCraftInDimensions(int width, int height) {
+        return width * height >= 2;
     }
 }

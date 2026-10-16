@@ -20,23 +20,29 @@ public class WolfRenderer extends MobRenderer<Wolf, WolfModel<Wolf>> {
         this.addLayer(new WolfCollarLayer(this));
     }
 
-    protected float getBob(Wolf p_116528_, float p_116529_) {
-        return p_116528_.getTailAngle();
+    /**
+     * Defines what float the third param in setRotationAngles of ModelBase is
+     */
+    protected float getBob(Wolf livingBase, float partialTicks) {
+        return livingBase.getTailAngle();
     }
 
-    public void render(Wolf p_116531_, float p_116532_, float p_116533_, PoseStack p_116534_, MultiBufferSource p_116535_, int p_116536_) {
-        if (p_116531_.isWet()) {
-            float f = p_116531_.getWetShade(p_116533_);
+    public void render(Wolf entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        if (entity.isWet()) {
+            float f = entity.getWetShade(partialTicks);
             this.model.setColor(FastColor.ARGB32.colorFromFloat(1.0F, f, f, f));
         }
 
-        super.render(p_116531_, p_116532_, p_116533_, p_116534_, p_116535_, p_116536_);
-        if (p_116531_.isWet()) {
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+        if (entity.isWet()) {
             this.model.setColor(-1);
         }
     }
 
-    public ResourceLocation getTextureLocation(Wolf p_116526_) {
-        return p_116526_.getTexture();
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Wolf entity) {
+        return entity.getTexture();
     }
 }

@@ -16,7 +16,7 @@ public abstract class HeightProvider {
         p_161976_ -> p_161976_.getType() == HeightProviderType.CONSTANT ? Either.left(((ConstantHeight)p_161976_).getValue()) : Either.right(p_161976_)
     );
 
-    public abstract int sample(RandomSource p_226302_, WorldGenerationContext p_226303_);
+    public abstract int sample(RandomSource random, WorldGenerationContext context);
 
     public abstract HeightProviderType<?> getType();
 }

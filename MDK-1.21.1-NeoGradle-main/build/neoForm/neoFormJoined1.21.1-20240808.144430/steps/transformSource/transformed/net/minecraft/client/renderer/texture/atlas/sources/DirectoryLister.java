@@ -26,17 +26,17 @@ public class DirectoryLister implements SpriteSource {
     private final String sourcePath;
     private final String idPrefix;
 
-    public DirectoryLister(String p_261886_, String p_261776_) {
-        this.sourcePath = p_261886_;
-        this.idPrefix = p_261776_;
+    public DirectoryLister(String sourcePath, String idPrefix) {
+        this.sourcePath = sourcePath;
+        this.idPrefix = idPrefix;
     }
 
     @Override
-    public void run(ResourceManager p_261582_, SpriteSource.Output p_261898_) {
+    public void run(ResourceManager resourceManager, SpriteSource.Output output) {
         FileToIdConverter filetoidconverter = new FileToIdConverter("textures/" + this.sourcePath, ".png");
-        filetoidconverter.listMatchingResources(p_261582_).forEach((p_261906_, p_261635_) -> {
+        filetoidconverter.listMatchingResources(resourceManager).forEach((p_261906_, p_261635_) -> {
             ResourceLocation resourcelocation = filetoidconverter.fileToId(p_261906_).withPrefix(this.idPrefix);
-            p_261898_.add(resourcelocation, p_261635_);
+            output.add(resourcelocation, p_261635_);
         });
     }
 

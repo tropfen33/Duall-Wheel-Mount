@@ -11,17 +11,22 @@ import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterList;
 
 public class BiomeTagsProvider extends TagsProvider<Biome> {
-    /** @deprecated Forge: Use the {@linkplain #BiomeTagsProvider(PackOutput, CompletableFuture, String, net.neoforged.neoforge.common.data.ExistingFileHelper) mod id variant} */
+    /**
+ * @deprecated Forge: Use the {@linkplain #BiomeTagsProvider(PackOutput,
+ *             CompletableFuture, String,
+ *             net.neoforged.neoforge.common.data.ExistingFileHelper) mod id
+ *             variant}
+ */
     @Deprecated
-    public BiomeTagsProvider(PackOutput p_255800_, CompletableFuture<HolderLookup.Provider> p_256205_) {
-        super(p_255800_, Registries.BIOME, p_256205_);
+    public BiomeTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider) {
+        super(output, Registries.BIOME, provider);
     }
-    public BiomeTagsProvider(PackOutput p_255800_, CompletableFuture<HolderLookup.Provider> p_256205_, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
-        super(p_255800_, Registries.BIOME, p_256205_, modId, existingFileHelper);
+    public BiomeTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
+        super(output, Registries.BIOME, provider, modId, existingFileHelper);
     }
 
     @Override
-    protected void addTags(HolderLookup.Provider p_256485_) {
+    protected void addTags(HolderLookup.Provider provider) {
         this.tag(BiomeTags.IS_DEEP_OCEAN).add(Biomes.DEEP_FROZEN_OCEAN).add(Biomes.DEEP_COLD_OCEAN).add(Biomes.DEEP_OCEAN).add(Biomes.DEEP_LUKEWARM_OCEAN);
         this.tag(BiomeTags.IS_OCEAN)
             .addTag(BiomeTags.IS_DEEP_OCEAN)

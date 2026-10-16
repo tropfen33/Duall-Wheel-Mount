@@ -11,12 +11,12 @@ import net.neoforged.api.distmarker.OnlyIn;
 public abstract class ColorableAgeableListModel<E extends Entity> extends AgeableListModel<E> {
     private int color = -1;
 
-    public void setColor(int p_350756_) {
-        this.color = p_350756_;
+    public void setColor(int color) {
+        this.color = color;
     }
 
     @Override
-    public void renderToBuffer(PoseStack p_102424_, VertexConsumer p_102425_, int p_102426_, int p_102427_, int p_350354_) {
-        super.renderToBuffer(p_102424_, p_102425_, p_102426_, p_102427_, FastColor.ARGB32.multiply(p_350354_, this.color));
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
+        super.renderToBuffer(poseStack, buffer, packedLight, packedOverlay, FastColor.ARGB32.multiply(color, this.color));
     }
 }

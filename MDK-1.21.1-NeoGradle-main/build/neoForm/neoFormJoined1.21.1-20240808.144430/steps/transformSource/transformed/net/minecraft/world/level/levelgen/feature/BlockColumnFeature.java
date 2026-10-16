@@ -7,15 +7,22 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.levelgen.feature.configurations.BlockColumnConfiguration;
 
 public class BlockColumnFeature extends Feature<BlockColumnConfiguration> {
-    public BlockColumnFeature(Codec<BlockColumnConfiguration> p_190789_) {
-        super(p_190789_);
+    public BlockColumnFeature(Codec<BlockColumnConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<BlockColumnConfiguration> p_190791_) {
-        WorldGenLevel worldgenlevel = p_190791_.level();
-        BlockColumnConfiguration blockcolumnconfiguration = p_190791_.config();
-        RandomSource randomsource = p_190791_.random();
+    public boolean place(FeaturePlaceContext<BlockColumnConfiguration> context) {
+        WorldGenLevel worldgenlevel = context.level();
+        BlockColumnConfiguration blockcolumnconfiguration = context.config();
+        RandomSource randomsource = context.random();
         int i = blockcolumnconfiguration.layers().size();
         int[] aint = new int[i];
         int j = 0;
@@ -28,7 +35,7 @@ public class BlockColumnFeature extends Feature<BlockColumnConfiguration> {
         if (j == 0) {
             return false;
         } else {
-            BlockPos.MutableBlockPos blockpos$mutableblockpos1 = p_190791_.origin().mutable();
+            BlockPos.MutableBlockPos blockpos$mutableblockpos1 = context.origin().mutable();
             BlockPos.MutableBlockPos blockpos$mutableblockpos = blockpos$mutableblockpos1.mutable().move(blockcolumnconfiguration.direction());
 
             for (int l = 0; l < j; l++) {
@@ -58,17 +65,17 @@ public class BlockColumnFeature extends Feature<BlockColumnConfiguration> {
         }
     }
 
-    private static void truncate(int[] p_190793_, int p_190794_, int p_190795_, boolean p_190796_) {
-        int i = p_190794_ - p_190795_;
-        int j = p_190796_ ? 1 : -1;
-        int k = p_190796_ ? 0 : p_190793_.length - 1;
-        int l = p_190796_ ? p_190793_.length : -1;
+    private static void truncate(int[] layerHeights, int totalHeight, int currentHeight, boolean prioritizeTip) {
+        int i = totalHeight - currentHeight;
+        int j = prioritizeTip ? 1 : -1;
+        int k = prioritizeTip ? 0 : layerHeights.length - 1;
+        int l = prioritizeTip ? layerHeights.length : -1;
 
         for (int i1 = k; i1 != l && i > 0; i1 += j) {
-            int j1 = p_190793_[i1];
+            int j1 = layerHeights[i1];
             int k1 = Math.min(j1, i);
             i -= k1;
-            p_190793_[i1] -= k1;
+            layerHeights[i1] -= k1;
         }
     }
 }

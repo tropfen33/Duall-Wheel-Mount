@@ -10,16 +10,23 @@ import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguratio
 public class ScatteredOreFeature extends Feature<OreConfiguration> {
     private static final int MAX_DIST_FROM_ORIGIN = 7;
 
-    ScatteredOreFeature(Codec<OreConfiguration> p_160304_) {
-        super(p_160304_);
+    ScatteredOreFeature(Codec<OreConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<OreConfiguration> p_160306_) {
-        WorldGenLevel worldgenlevel = p_160306_.level();
-        RandomSource randomsource = p_160306_.random();
-        OreConfiguration oreconfiguration = p_160306_.config();
-        BlockPos blockpos = p_160306_.origin();
+    public boolean place(FeaturePlaceContext<OreConfiguration> context) {
+        WorldGenLevel worldgenlevel = context.level();
+        RandomSource randomsource = context.random();
+        OreConfiguration oreconfiguration = context.config();
+        BlockPos blockpos = context.origin();
         int i = randomsource.nextInt(oreconfiguration.size + 1);
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
@@ -40,14 +47,14 @@ public class ScatteredOreFeature extends Feature<OreConfiguration> {
         return true;
     }
 
-    private void offsetTargetPos(BlockPos.MutableBlockPos p_225232_, RandomSource p_225233_, BlockPos p_225234_, int p_225235_) {
-        int i = this.getRandomPlacementInOneAxisRelativeToOrigin(p_225233_, p_225235_);
-        int j = this.getRandomPlacementInOneAxisRelativeToOrigin(p_225233_, p_225235_);
-        int k = this.getRandomPlacementInOneAxisRelativeToOrigin(p_225233_, p_225235_);
-        p_225232_.setWithOffset(p_225234_, i, j, k);
+    private void offsetTargetPos(BlockPos.MutableBlockPos mutablePos, RandomSource random, BlockPos pos, int magnitude) {
+        int i = this.getRandomPlacementInOneAxisRelativeToOrigin(random, magnitude);
+        int j = this.getRandomPlacementInOneAxisRelativeToOrigin(random, magnitude);
+        int k = this.getRandomPlacementInOneAxisRelativeToOrigin(random, magnitude);
+        mutablePos.setWithOffset(pos, i, j, k);
     }
 
-    private int getRandomPlacementInOneAxisRelativeToOrigin(RandomSource p_225229_, int p_225230_) {
-        return Math.round((p_225229_.nextFloat() - p_225229_.nextFloat()) * (float)p_225230_);
+    private int getRandomPlacementInOneAxisRelativeToOrigin(RandomSource random, int magnitude) {
+        return Math.round((random.nextFloat() - random.nextFloat()) * (float)magnitude);
     }
 }

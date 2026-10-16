@@ -9,15 +9,15 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.Entity;
 
 public interface ComponentContents {
-    default <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> p_237130_, Style p_237131_) {
+    default <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> styledContentConsumer, Style style) {
         return Optional.empty();
     }
 
-    default <T> Optional<T> visit(FormattedText.ContentConsumer<T> p_237129_) {
+    default <T> Optional<T> visit(FormattedText.ContentConsumer<T> contentConsumer) {
         return Optional.empty();
     }
 
-    default MutableComponent resolve(@Nullable CommandSourceStack p_237126_, @Nullable Entity p_237127_, int p_237128_) throws CommandSyntaxException {
+    default MutableComponent resolve(@Nullable CommandSourceStack nbtPathPattern, @Nullable Entity entity, int recursionDepth) throws CommandSyntaxException {
         return MutableComponent.create(this);
     }
 

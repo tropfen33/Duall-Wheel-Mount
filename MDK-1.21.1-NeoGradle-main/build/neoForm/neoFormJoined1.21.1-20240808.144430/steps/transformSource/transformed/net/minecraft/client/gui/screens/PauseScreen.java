@@ -52,9 +52,9 @@ public class PauseScreen extends Screen {
     @Nullable
     private Button disconnectButton;
 
-    public PauseScreen(boolean p_96308_) {
-        super(p_96308_ ? GAME : PAUSED);
-        this.showPauseMenu = p_96308_;
+    public PauseScreen(boolean showPauseMenu) {
+        super(showPauseMenu ? GAME : PAUSED);
+        this.showPauseMenu = showPauseMenu;
     }
 
     public boolean showsPauseMenu() {
@@ -108,13 +108,13 @@ public class PauseScreen extends Screen {
         gridlayout.visitWidgets(this::addRenderableWidget);
     }
 
-    static void addFeedbackButtons(Screen p_350532_, GridLayout.RowHelper p_351050_) {
-        p_351050_.addChild(
+    static void addFeedbackButtons(Screen lastScreen, GridLayout.RowHelper rowHelper) {
+        rowHelper.addChild(
             openLinkButton(
-                p_350532_, SEND_FEEDBACK, SharedConstants.getCurrentVersion().isStable() ? CommonLinks.RELEASE_FEEDBACK : CommonLinks.SNAPSHOT_FEEDBACK
+                lastScreen, SEND_FEEDBACK, SharedConstants.getCurrentVersion().isStable() ? CommonLinks.RELEASE_FEEDBACK : CommonLinks.SNAPSHOT_FEEDBACK
             )
         );
-        p_351050_.addChild(openLinkButton(p_350532_, REPORT_BUGS, CommonLinks.SNAPSHOT_BUGS_FEEDBACK)).active = !SharedConstants.getCurrentVersion()
+        rowHelper.addChild(openLinkButton(lastScreen, REPORT_BUGS, CommonLinks.SNAPSHOT_BUGS_FEEDBACK)).active = !SharedConstants.getCurrentVersion()
             .getDataVersion()
             .isSideSeries();
     }
@@ -144,29 +144,37 @@ public class PauseScreen extends Screen {
         super.tick();
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281899_, int p_281431_, int p_283183_, float p_281435_) {
-        super.render(p_281899_, p_281431_, p_283183_, p_281435_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         if (this.showPauseMenu && this.minecraft != null && this.minecraft.getReportingContext().hasDraftReport() && this.disconnectButton != null) {
-            p_281899_.blitSprite(
+            guiGraphics.blitSprite(
                 DRAFT_REPORT_SPRITE, this.disconnectButton.getX() + this.disconnectButton.getWidth() - 17, this.disconnectButton.getY() + 3, 15, 15
             );
         }
     }
 
     @Override
-    public void renderBackground(GuiGraphics p_295883_, int p_294974_, int p_295209_, float p_295290_) {
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.showPauseMenu) {
-            super.renderBackground(p_295883_, p_294974_, p_295209_, p_295290_);
+            super.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
         }
     }
 
-    private Button openScreenButton(Component p_262567_, Supplier<Screen> p_262581_) {
-        return Button.builder(p_262567_, p_280817_ -> this.minecraft.setScreen(p_262581_.get())).width(98).build();
+    private Button openScreenButton(Component message, Supplier<Screen> screenSupplier) {
+        return Button.builder(message, p_280817_ -> this.minecraft.setScreen(screenSupplier.get())).width(98).build();
     }
 
-    private static Button openLinkButton(Screen p_350313_, Component p_262593_, URI p_352111_) {
-        return Button.builder(p_262593_, ConfirmLinkScreen.confirmLink(p_350313_, p_352111_)).width(98).build();
+    private static Button openLinkButton(Screen lastScreen, Component buttonText, URI uri) {
+        return Button.builder(buttonText, ConfirmLinkScreen.confirmLink(lastScreen, uri)).width(98).build();
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -175,9 +183,9 @@ public class PauseScreen extends Screen {
         public final Screen parent;
         private final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
 
-        protected FeedbackSubScreen(Screen p_350989_) {
+        protected FeedbackSubScreen(Screen parent) {
             super(TITLE);
-            this.parent = p_350989_;
+            this.parent = parent;
         }
 
         @Override

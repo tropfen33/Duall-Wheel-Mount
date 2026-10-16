@@ -21,18 +21,18 @@ public record PlayerSkin(
 
         private final String id;
 
-        private Model(String p_294556_) {
-            this.id = p_294556_;
+        private Model(String id) {
+            this.id = id;
         }
 
-        public static PlayerSkin.Model byName(@Nullable String p_295156_) {
-            if (p_295156_ == null) {
+        public static PlayerSkin.Model byName(@Nullable String name) {
+            if (name == null) {
                 return WIDE;
             } else {
                 byte b0 = -1;
-                switch (p_295156_.hashCode()) {
+                switch (name.hashCode()) {
                     case 3533117:
-                        if (p_295156_.equals("slim")) {
+                        if (name.equals("slim")) {
                             b0 = 0;
                         }
                     default:

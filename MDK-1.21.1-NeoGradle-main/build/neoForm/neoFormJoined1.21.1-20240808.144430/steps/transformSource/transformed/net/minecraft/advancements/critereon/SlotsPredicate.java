@@ -13,9 +13,9 @@ public record SlotsPredicate(Map<SlotRange, ItemPredicate> slots) {
     public static final Codec<SlotsPredicate> CODEC = Codec.unboundedMap(SlotRanges.CODEC, ItemPredicate.CODEC)
         .xmap(SlotsPredicate::new, SlotsPredicate::slots);
 
-    public boolean matches(Entity p_332796_) {
+    public boolean matches(Entity entity) {
         for (Entry<SlotRange, ItemPredicate> entry : this.slots.entrySet()) {
-            if (!matchSlots(p_332796_, entry.getValue(), entry.getKey().slots())) {
+            if (!matchSlots(entity, entry.getValue(), entry.getKey().slots())) {
                 return false;
             }
         }
@@ -23,11 +23,11 @@ public record SlotsPredicate(Map<SlotRange, ItemPredicate> slots) {
         return true;
     }
 
-    private static boolean matchSlots(Entity p_332687_, ItemPredicate p_332814_, IntList p_332676_) {
-        for (int i = 0; i < p_332676_.size(); i++) {
-            int j = p_332676_.getInt(i);
-            SlotAccess slotaccess = p_332687_.getSlot(j);
-            if (p_332814_.test(slotaccess.get())) {
+    private static boolean matchSlots(Entity entity, ItemPredicate predicate, IntList slots) {
+        for (int i = 0; i < slots.size(); i++) {
+            int j = slots.getInt(i);
+            SlotAccess slotaccess = entity.getSlot(j);
+            if (predicate.test(slotaccess.get())) {
                 return true;
             }
         }

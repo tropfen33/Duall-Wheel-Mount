@@ -17,13 +17,13 @@ public class SquidModel<T extends Entity> extends HierarchicalModel<T> {
     private final ModelPart[] tentacles = new ModelPart[8];
     private final ModelPart root;
 
-    public SquidModel(ModelPart p_170989_) {
-        this.root = p_170989_;
-        Arrays.setAll(this.tentacles, p_170995_ -> p_170989_.getChild(createTentacleName(p_170995_)));
+    public SquidModel(ModelPart root) {
+        this.root = root;
+        Arrays.setAll(this.tentacles, p_170995_ -> root.getChild(createTentacleName(p_170995_)));
     }
 
-    private static String createTentacleName(int p_170992_) {
-        return "tentacle" + p_170992_;
+    private static String createTentacleName(int index) {
+        return "tentacle" + index;
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -50,10 +50,13 @@ public class SquidModel<T extends Entity> extends HierarchicalModel<T> {
         return LayerDefinition.create(meshdefinition, 64, 32);
     }
 
+    /**
+     * Sets this entity's model rotation angles
+     */
     @Override
-    public void setupAnim(T p_103878_, float p_103879_, float p_103880_, float p_103881_, float p_103882_, float p_103883_) {
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         for (ModelPart modelpart : this.tentacles) {
-            modelpart.xRot = p_103881_;
+            modelpart.xRot = ageInTicks;
         }
     }
 

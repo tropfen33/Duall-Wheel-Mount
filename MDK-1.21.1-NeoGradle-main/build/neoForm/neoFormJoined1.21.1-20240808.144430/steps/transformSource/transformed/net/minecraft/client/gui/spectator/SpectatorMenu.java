@@ -48,18 +48,18 @@ public class SpectatorMenu {
     private int selectedSlot = -1;
     int page;
 
-    public SpectatorMenu(SpectatorMenuListener p_101785_) {
+    public SpectatorMenu(SpectatorMenuListener listener) {
         this.category = new RootSpectatorMenuCategory();
-        this.listener = p_101785_;
+        this.listener = listener;
     }
 
-    public SpectatorMenuItem getItem(int p_101788_) {
-        int i = p_101788_ + this.page * 6;
-        if (this.page > 0 && p_101788_ == 0) {
+    public SpectatorMenuItem getItem(int index) {
+        int i = index + this.page * 6;
+        if (this.page > 0 && index == 0) {
             return SCROLL_LEFT;
-        } else if (p_101788_ == 7) {
+        } else if (index == 7) {
             return i < this.category.getItems().size() ? SCROLL_RIGHT_ENABLED : SCROLL_RIGHT_DISABLED;
-        } else if (p_101788_ == 8) {
+        } else if (index == 8) {
             return CLOSE_ITEM;
         } else {
             return i >= 0 && i < this.category.getItems().size() ? MoreObjects.firstNonNull(this.category.getItems().get(i), EMPTY_SLOT) : EMPTY_SLOT;
@@ -84,13 +84,13 @@ public class SpectatorMenu {
         return this.category;
     }
 
-    public void selectSlot(int p_101798_) {
-        SpectatorMenuItem spectatormenuitem = this.getItem(p_101798_);
+    public void selectSlot(int slot) {
+        SpectatorMenuItem spectatormenuitem = this.getItem(slot);
         if (spectatormenuitem != EMPTY_SLOT) {
-            if (this.selectedSlot == p_101798_ && spectatormenuitem.isEnabled()) {
+            if (this.selectedSlot == slot && spectatormenuitem.isEnabled()) {
                 spectatormenuitem.selectItem(this);
             } else {
-                this.selectedSlot = p_101798_;
+                this.selectedSlot = slot;
             }
         }
     }
@@ -103,8 +103,8 @@ public class SpectatorMenu {
         return this.selectedSlot;
     }
 
-    public void selectCategory(SpectatorMenuCategory p_101795_) {
-        this.category = p_101795_;
+    public void selectCategory(SpectatorMenuCategory category) {
+        this.category = category;
         this.selectedSlot = -1;
         this.page = 0;
     }
@@ -116,8 +116,8 @@ public class SpectatorMenu {
     @OnlyIn(Dist.CLIENT)
     static class CloseSpectatorItem implements SpectatorMenuItem {
         @Override
-        public void selectItem(SpectatorMenu p_101823_) {
-            p_101823_.exit();
+        public void selectItem(SpectatorMenu menu) {
+            menu.exit();
         }
 
         @Override
@@ -126,8 +126,8 @@ public class SpectatorMenu {
         }
 
         @Override
-        public void renderIcon(GuiGraphics p_283113_, float p_282295_, int p_282511_) {
-            p_283113_.blitSprite(SpectatorMenu.CLOSE_SPRITE, 0, 0, 16, 16);
+        public void renderIcon(GuiGraphics guiGraphics, float shadeColor, int alpha) {
+            guiGraphics.blitSprite(SpectatorMenu.CLOSE_SPRITE, 0, 0, 16, 16);
         }
 
         @Override
@@ -141,14 +141,14 @@ public class SpectatorMenu {
         private final int direction;
         private final boolean enabled;
 
-        public ScrollMenuItem(int p_101829_, boolean p_101830_) {
-            this.direction = p_101829_;
-            this.enabled = p_101830_;
+        public ScrollMenuItem(int direction, boolean enabled) {
+            this.direction = direction;
+            this.enabled = enabled;
         }
 
         @Override
-        public void selectItem(SpectatorMenu p_101836_) {
-            p_101836_.page = p_101836_.page + this.direction;
+        public void selectItem(SpectatorMenu menu) {
+            menu.page = menu.page + this.direction;
         }
 
         @Override
@@ -157,11 +157,11 @@ public class SpectatorMenu {
         }
 
         @Override
-        public void renderIcon(GuiGraphics p_281376_, float p_282065_, int p_282653_) {
+        public void renderIcon(GuiGraphics guiGraphics, float shadeColor, int alpha) {
             if (this.direction < 0) {
-                p_281376_.blitSprite(SpectatorMenu.SCROLL_LEFT_SPRITE, 0, 0, 16, 16);
+                guiGraphics.blitSprite(SpectatorMenu.SCROLL_LEFT_SPRITE, 0, 0, 16, 16);
             } else {
-                p_281376_.blitSprite(SpectatorMenu.SCROLL_RIGHT_SPRITE, 0, 0, 16, 16);
+                guiGraphics.blitSprite(SpectatorMenu.SCROLL_RIGHT_SPRITE, 0, 0, 16, 16);
             }
         }
 

@@ -12,20 +12,20 @@ public enum PackCompatibility {
     private final Component description;
     private final Component confirmation;
 
-    private PackCompatibility(String p_10488_) {
-        this.description = Component.translatable("pack.incompatible." + p_10488_).withStyle(ChatFormatting.GRAY);
-        this.confirmation = Component.translatable("pack.incompatible.confirm." + p_10488_);
+    private PackCompatibility(String type) {
+        this.description = Component.translatable("pack.incompatible." + type).withStyle(ChatFormatting.GRAY);
+        this.confirmation = Component.translatable("pack.incompatible.confirm." + type);
     }
 
     public boolean isCompatible() {
         return this == COMPATIBLE;
     }
 
-    public static PackCompatibility forVersion(InclusiveRange<Integer> p_294404_, int p_294597_) {
-        if (p_294404_.maxInclusive() < p_294597_) {
+    public static PackCompatibility forVersion(InclusiveRange<Integer> range, int version) {
+        if (range.maxInclusive() < version) {
             return TOO_OLD;
         } else {
-            return p_294597_ < p_294404_.minInclusive() ? TOO_NEW : COMPATIBLE;
+            return version < range.minInclusive() ? TOO_NEW : COMPATIBLE;
         }
     }
 

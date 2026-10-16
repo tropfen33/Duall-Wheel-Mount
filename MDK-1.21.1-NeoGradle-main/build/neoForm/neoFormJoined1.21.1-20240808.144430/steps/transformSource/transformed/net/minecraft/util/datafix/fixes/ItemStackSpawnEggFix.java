@@ -70,9 +70,9 @@ public class ItemStackSpawnEggFix extends DataFix {
         p_261434_.put("minecraft:zombie_villager", "minecraft:zombie_villager_spawn_egg");
     });
 
-    public ItemStackSpawnEggFix(Schema p_262024_, boolean p_262020_, String p_261847_) {
-        super(p_262024_, p_262020_);
-        this.itemType = p_261847_;
+    public ItemStackSpawnEggFix(Schema outputSchema, boolean changesType, String itemType) {
+        super(outputSchema, changesType);
+        this.itemType = itemType;
     }
 
     @Override

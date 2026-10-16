@@ -48,13 +48,13 @@ public record WorldCreationContext(
         );
     }
 
-    public WorldCreationContext withSettings(WorldOptions p_249492_, WorldDimensions p_250298_) {
-        return new WorldCreationContext(p_249492_, this.datapackDimensions, p_250298_, this.worldgenRegistries, this.dataPackResources, this.dataConfiguration);
+    public WorldCreationContext withSettings(WorldOptions options, WorldDimensions selectedDimensions) {
+        return new WorldCreationContext(options, this.datapackDimensions, selectedDimensions, this.worldgenRegistries, this.dataPackResources, this.dataConfiguration);
     }
 
-    public WorldCreationContext withOptions(WorldCreationContext.OptionsModifier p_252288_) {
+    public WorldCreationContext withOptions(WorldCreationContext.OptionsModifier optionsModifier) {
         return new WorldCreationContext(
-            p_252288_.apply(this.options),
+            optionsModifier.apply(this.options),
             this.datapackDimensions,
             this.selectedDimensions,
             this.worldgenRegistries,
@@ -63,11 +63,11 @@ public record WorldCreationContext(
         );
     }
 
-    public WorldCreationContext withDimensions(WorldCreationContext.DimensionsUpdater p_250676_) {
+    public WorldCreationContext withDimensions(WorldCreationContext.DimensionsUpdater dimensionsUpdater) {
         return new WorldCreationContext(
             this.options,
             this.datapackDimensions,
-            p_250676_.apply(this.worldgenLoadContext(), this.selectedDimensions),
+            dimensionsUpdater.apply(this.worldgenLoadContext(), this.selectedDimensions),
             this.worldgenRegistries,
             this.dataPackResources,
             this.dataConfiguration

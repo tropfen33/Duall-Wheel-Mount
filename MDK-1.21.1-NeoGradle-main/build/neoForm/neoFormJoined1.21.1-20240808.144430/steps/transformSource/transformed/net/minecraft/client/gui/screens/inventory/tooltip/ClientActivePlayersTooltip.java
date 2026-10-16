@@ -16,8 +16,8 @@ public class ClientActivePlayersTooltip implements ClientTooltipComponent {
     private static final int PADDING = 2;
     private final List<ProfileResult> activePlayers;
 
-    public ClientActivePlayersTooltip(ClientActivePlayersTooltip.ActivePlayersTooltip p_350898_) {
-        this.activePlayers = p_350898_.profiles();
+    public ClientActivePlayersTooltip(ClientActivePlayersTooltip.ActivePlayersTooltip tooltip) {
+        this.activePlayers = tooltip.profiles();
     }
 
     @Override
@@ -26,11 +26,11 @@ public class ClientActivePlayersTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public int getWidth(Font p_351017_) {
+    public int getWidth(Font font) {
         int i = 0;
 
         for (ProfileResult profileresult : this.activePlayers) {
-            int j = p_351017_.width(profileresult.profile().getName());
+            int j = font.width(profileresult.profile().getName());
             if (j > i) {
                 i = j;
             }
@@ -40,12 +40,12 @@ public class ClientActivePlayersTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public void renderImage(Font p_350808_, int p_350702_, int p_350999_, GuiGraphics p_350342_) {
+    public void renderImage(Font font, int x, int y, GuiGraphics guiGraphics) {
         for (int i = 0; i < this.activePlayers.size(); i++) {
             ProfileResult profileresult = this.activePlayers.get(i);
-            int j = p_350999_ + 2 + i * 12;
-            PlayerFaceRenderer.draw(p_350342_, Minecraft.getInstance().getSkinManager().getInsecureSkin(profileresult.profile()), p_350702_ + 2, j, 10);
-            p_350342_.drawString(p_350808_, profileresult.profile().getName(), p_350702_ + 10 + 4, j + 2, -1);
+            int j = y + 2 + i * 12;
+            PlayerFaceRenderer.draw(guiGraphics, Minecraft.getInstance().getSkinManager().getInsecureSkin(profileresult.profile()), x + 2, j, 10);
+            guiGraphics.drawString(font, profileresult.profile().getName(), x + 10 + 4, j + 2, -1);
         }
     }
 

@@ -60,56 +60,56 @@ public class FlatLevelGeneratorSettings {
     private boolean addLakes;
     private final List<Holder<PlacedFeature>> lakes;
 
-    private static DataResult<FlatLevelGeneratorSettings> validateHeight(FlatLevelGeneratorSettings p_161906_) {
-        int i = p_161906_.layersInfo.stream().mapToInt(FlatLayerInfo::getHeight).sum();
+    private static DataResult<FlatLevelGeneratorSettings> validateHeight(FlatLevelGeneratorSettings flatSettings) {
+        int i = flatSettings.layersInfo.stream().mapToInt(FlatLayerInfo::getHeight).sum();
         return i > DimensionType.Y_SIZE
-            ? DataResult.error(() -> "Sum of layer heights is > " + DimensionType.Y_SIZE, p_161906_)
-            : DataResult.success(p_161906_);
+            ? DataResult.error(() -> "Sum of layer heights is > " + DimensionType.Y_SIZE, flatSettings)
+            : DataResult.success(flatSettings);
     }
 
     private FlatLevelGeneratorSettings(
-        Optional<HolderSet<StructureSet>> p_256456_,
-        List<FlatLayerInfo> p_255826_,
-        boolean p_255740_,
-        boolean p_255726_,
-        Optional<Holder<Biome>> p_256292_,
-        Holder.Reference<Biome> p_255964_,
-        Holder<PlacedFeature> p_256419_,
-        Holder<PlacedFeature> p_255710_
+        Optional<HolderSet<StructureSet>> structureOverrides,
+        List<FlatLayerInfo> layersInfo,
+        boolean addLakes,
+        boolean decoration,
+        Optional<Holder<Biome>> biome,
+        Holder.Reference<Biome> defaultBiome,
+        Holder<PlacedFeature> lavaUnderground,
+        Holder<PlacedFeature> lavaSurface
     ) {
-        this(p_256456_, getBiome(p_256292_, p_255964_), List.of(p_256419_, p_255710_));
-        if (p_255740_) {
+        this(structureOverrides, getBiome(biome, defaultBiome), List.of(lavaUnderground, lavaSurface));
+        if (addLakes) {
             this.setAddLakes();
         }
 
-        if (p_255726_) {
+        if (decoration) {
             this.setDecoration();
         }
 
-        this.layersInfo.addAll(p_255826_);
+        this.layersInfo.addAll(layersInfo);
         this.updateLayers();
     }
 
-    private static Holder<Biome> getBiome(Optional<? extends Holder<Biome>> p_256142_, Holder<Biome> p_256475_) {
-        if (p_256142_.isEmpty()) {
+    private static Holder<Biome> getBiome(Optional<? extends Holder<Biome>> biome, Holder<Biome> defaultBiome) {
+        if (biome.isEmpty()) {
             LOGGER.error("Unknown biome, defaulting to plains");
-            return p_256475_;
+            return defaultBiome;
         } else {
-            return (Holder<Biome>)p_256142_.get();
+            return (Holder<Biome>)biome.get();
         }
     }
 
-    public FlatLevelGeneratorSettings(Optional<HolderSet<StructureSet>> p_256029_, Holder<Biome> p_256190_, List<Holder<PlacedFeature>> p_255960_) {
-        this.structureOverrides = p_256029_;
-        this.biome = p_256190_;
+    public FlatLevelGeneratorSettings(Optional<HolderSet<StructureSet>> structureOverrides, Holder<Biome> biome, List<Holder<PlacedFeature>> lakes) {
+        this.structureOverrides = structureOverrides;
+        this.biome = biome;
         this.layers = Lists.newArrayList();
-        this.lakes = p_255960_;
+        this.lakes = lakes;
     }
 
-    public FlatLevelGeneratorSettings withBiomeAndLayers(List<FlatLayerInfo> p_256587_, Optional<HolderSet<StructureSet>> p_256500_, Holder<Biome> p_256598_) {
-        FlatLevelGeneratorSettings flatlevelgeneratorsettings = new FlatLevelGeneratorSettings(p_256500_, p_256598_, this.lakes);
+    public FlatLevelGeneratorSettings withBiomeAndLayers(List<FlatLayerInfo> layerInfos, Optional<HolderSet<StructureSet>> structureSets, Holder<Biome> biome) {
+        FlatLevelGeneratorSettings flatlevelgeneratorsettings = new FlatLevelGeneratorSettings(structureSets, biome, this.lakes);
 
-        for (FlatLayerInfo flatlayerinfo : p_256587_) {
+        for (FlatLayerInfo flatlayerinfo : layerInfos) {
             flatlevelgeneratorsettings.layersInfo.add(new FlatLayerInfo(flatlayerinfo.getHeight(), flatlayerinfo.getBlockState().getBlock()));
             flatlevelgeneratorsettings.updateLayers();
         }
@@ -133,9 +133,9 @@ public class FlatLevelGeneratorSettings {
         this.addLakes = true;
     }
 
-    public BiomeGenerationSettings adjustGenerationSettings(Holder<Biome> p_226295_) {
-        if (!p_226295_.equals(this.biome)) {
-            return p_226295_.value().getGenerationSettings();
+    public BiomeGenerationSettings adjustGenerationSettings(Holder<Biome> biome) {
+        if (!biome.equals(this.biome)) {
+            return biome.value().getGenerationSettings();
         } else {
             BiomeGenerationSettings biomegenerationsettings = this.getBiome().value().getGenerationSettings();
             BiomeGenerationSettings.PlainBuilder biomegenerationsettings$plainbuilder = new BiomeGenerationSettings.PlainBuilder();
@@ -145,7 +145,7 @@ public class FlatLevelGeneratorSettings {
                 }
             }
 
-            boolean flag = (!this.voidGen || p_226295_.is(Biomes.THE_VOID)) && this.decoration;
+            boolean flag = (!this.voidGen || biome.is(Biomes.THE_VOID)) && this.decoration;
             if (flag) {
                 List<HolderSet<PlacedFeature>> list = biomegenerationsettings.features();
 
@@ -206,13 +206,13 @@ public class FlatLevelGeneratorSettings {
     }
 
     public static FlatLevelGeneratorSettings getDefault(
-        HolderGetter<Biome> p_256175_, HolderGetter<StructureSet> p_256081_, HolderGetter<PlacedFeature> p_256484_
+        HolderGetter<Biome> biomes, HolderGetter<StructureSet> structureSetGetter, HolderGetter<PlacedFeature> placedFeatureGetter
     ) {
         HolderSet<StructureSet> holderset = HolderSet.direct(
-            p_256081_.getOrThrow(BuiltinStructureSets.STRONGHOLDS), p_256081_.getOrThrow(BuiltinStructureSets.VILLAGES)
+            structureSetGetter.getOrThrow(BuiltinStructureSets.STRONGHOLDS), structureSetGetter.getOrThrow(BuiltinStructureSets.VILLAGES)
         );
         FlatLevelGeneratorSettings flatlevelgeneratorsettings = new FlatLevelGeneratorSettings(
-            Optional.of(holderset), getDefaultBiome(p_256175_), createLakesList(p_256484_)
+            Optional.of(holderset), getDefaultBiome(biomes), createLakesList(placedFeatureGetter)
         );
         flatlevelgeneratorsettings.getLayersInfo().add(new FlatLayerInfo(1, Blocks.BEDROCK));
         flatlevelgeneratorsettings.getLayersInfo().add(new FlatLayerInfo(2, Blocks.DIRT));
@@ -221,11 +221,11 @@ public class FlatLevelGeneratorSettings {
         return flatlevelgeneratorsettings;
     }
 
-    public static Holder<Biome> getDefaultBiome(HolderGetter<Biome> p_256645_) {
-        return p_256645_.getOrThrow(Biomes.PLAINS);
+    public static Holder<Biome> getDefaultBiome(HolderGetter<Biome> biomes) {
+        return biomes.getOrThrow(Biomes.PLAINS);
     }
 
-    public static List<Holder<PlacedFeature>> createLakesList(HolderGetter<PlacedFeature> p_256282_) {
-        return List.of(p_256282_.getOrThrow(MiscOverworldPlacements.LAKE_LAVA_UNDERGROUND), p_256282_.getOrThrow(MiscOverworldPlacements.LAKE_LAVA_SURFACE));
+    public static List<Holder<PlacedFeature>> createLakesList(HolderGetter<PlacedFeature> placedFeatureGetter) {
+        return List.of(placedFeatureGetter.getOrThrow(MiscOverworldPlacements.LAKE_LAVA_UNDERGROUND), placedFeatureGetter.getOrThrow(MiscOverworldPlacements.LAKE_LAVA_SURFACE));
     }
 }

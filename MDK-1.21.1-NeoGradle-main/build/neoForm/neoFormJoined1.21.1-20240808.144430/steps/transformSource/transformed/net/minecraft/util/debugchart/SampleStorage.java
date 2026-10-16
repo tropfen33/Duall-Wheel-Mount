@@ -5,9 +5,9 @@ public interface SampleStorage {
 
     int size();
 
-    long get(int p_323594_);
+    long get(int index);
 
-    long get(int p_324468_, int p_324624_);
+    long get(int index, int dimension);
 
     void reset();
 }

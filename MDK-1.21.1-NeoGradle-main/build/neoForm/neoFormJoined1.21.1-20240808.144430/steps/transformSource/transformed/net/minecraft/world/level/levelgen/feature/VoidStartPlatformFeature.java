@@ -13,22 +13,32 @@ public class VoidStartPlatformFeature extends Feature<NoneFeatureConfiguration> 
     private static final int PLATFORM_RADIUS = 16;
     private static final int PLATFORM_RADIUS_CHUNKS = 1;
 
-    public VoidStartPlatformFeature(Codec<NoneFeatureConfiguration> p_67354_) {
-        super(p_67354_);
+    public VoidStartPlatformFeature(Codec<NoneFeatureConfiguration> codec) {
+        super(codec);
     }
 
-    private static int checkerboardDistance(int p_67356_, int p_67357_, int p_67358_, int p_67359_) {
-        return Math.max(Math.abs(p_67356_ - p_67358_), Math.abs(p_67357_ - p_67359_));
+    /**
+     * Returns the Manhattan distance between the two points.
+     */
+    private static int checkerboardDistance(int firstX, int firstZ, int secondX, int secondZ) {
+        return Math.max(Math.abs(firstX - secondX), Math.abs(firstZ - secondZ));
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> p_160633_) {
-        WorldGenLevel worldgenlevel = p_160633_.level();
-        ChunkPos chunkpos = new ChunkPos(p_160633_.origin());
+    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
+        WorldGenLevel worldgenlevel = context.level();
+        ChunkPos chunkpos = new ChunkPos(context.origin());
         if (checkerboardDistance(chunkpos.x, chunkpos.z, PLATFORM_ORIGIN_CHUNK.x, PLATFORM_ORIGIN_CHUNK.z) > 1) {
             return true;
         } else {
-            BlockPos blockpos = PLATFORM_OFFSET.atY(p_160633_.origin().getY() + PLATFORM_OFFSET.getY());
+            BlockPos blockpos = PLATFORM_OFFSET.atY(context.origin().getY() + PLATFORM_OFFSET.getY());
             BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
             for (int i = chunkpos.getMinBlockZ(); i <= chunkpos.getMaxBlockZ(); i++) {

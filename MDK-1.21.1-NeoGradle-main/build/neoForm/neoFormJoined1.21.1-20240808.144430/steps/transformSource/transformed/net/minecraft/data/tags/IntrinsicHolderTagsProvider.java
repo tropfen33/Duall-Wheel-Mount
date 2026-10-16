@@ -15,78 +15,78 @@ public abstract class IntrinsicHolderTagsProvider<T> extends TagsProvider<T> {
 
     @Deprecated
     public IntrinsicHolderTagsProvider(
-        PackOutput p_256164_,
-        ResourceKey<? extends Registry<T>> p_256155_,
-        CompletableFuture<HolderLookup.Provider> p_256488_,
-        Function<T, ResourceKey<T>> p_256168_
+        PackOutput output,
+        ResourceKey<? extends Registry<T>> registryKey,
+        CompletableFuture<HolderLookup.Provider> lookupProvider,
+        Function<T, ResourceKey<T>> keyExtractor
     ) {
-        this(p_256164_, p_256155_, p_256488_, p_256168_, "vanilla", null);
+        this(output, registryKey, lookupProvider, keyExtractor, "vanilla", null);
     }
 
     @Deprecated
     public IntrinsicHolderTagsProvider(
-        PackOutput p_275304_,
-        ResourceKey<? extends Registry<T>> p_275709_,
-        CompletableFuture<HolderLookup.Provider> p_275227_,
-        CompletableFuture<TagsProvider.TagLookup<T>> p_275311_,
-        Function<T, ResourceKey<T>> p_275566_
+        PackOutput output,
+        ResourceKey<? extends Registry<T>> registryKey,
+        CompletableFuture<HolderLookup.Provider> lookupProvider,
+        CompletableFuture<TagsProvider.TagLookup<T>> parentProvider,
+        Function<T, ResourceKey<T>> keyExtractor
     ) {
-        this(p_275304_, p_275709_, p_275227_, p_275311_, p_275566_, "vanilla", null);
+        this(output, registryKey, lookupProvider, parentProvider, keyExtractor, "vanilla", null);
     }
 
     public IntrinsicHolderTagsProvider(
-        PackOutput p_256164_,
-        ResourceKey<? extends Registry<T>> p_256155_,
-        CompletableFuture<HolderLookup.Provider> p_256488_,
-        Function<T, ResourceKey<T>> p_256168_,
+        PackOutput output,
+        ResourceKey<? extends Registry<T>> registryKey,
+        CompletableFuture<HolderLookup.Provider> lookupProvider,
+        Function<T, ResourceKey<T>> keyExtractor,
         String modId,
         @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper
     ) {
-        super(p_256164_, p_256155_, p_256488_, modId, existingFileHelper);
-        this.keyExtractor = p_256168_;
+        super(output, registryKey, lookupProvider, modId, existingFileHelper);
+        this.keyExtractor = keyExtractor;
     }
 
     public IntrinsicHolderTagsProvider(
-        PackOutput p_275304_,
-        ResourceKey<? extends Registry<T>> p_275709_,
-        CompletableFuture<HolderLookup.Provider> p_275227_,
-        CompletableFuture<TagsProvider.TagLookup<T>> p_275311_,
-        Function<T, ResourceKey<T>> p_275566_,
+        PackOutput output,
+        ResourceKey<? extends Registry<T>> registryKey,
+        CompletableFuture<HolderLookup.Provider> lookupProvider,
+        CompletableFuture<TagsProvider.TagLookup<T>> parentProvider,
+        Function<T, ResourceKey<T>> keyExtractor,
         String modId,
         @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper
     ) {
-        super(p_275304_, p_275709_, p_275227_, p_275311_, modId, existingFileHelper);
-        this.keyExtractor = p_275566_;
+        super(output, registryKey, lookupProvider, parentProvider, modId, existingFileHelper);
+        this.keyExtractor = keyExtractor;
     }
 
 
 
-    protected IntrinsicHolderTagsProvider.IntrinsicTagAppender<T> tag(TagKey<T> p_255730_) {
-        TagBuilder tagbuilder = this.getOrCreateRawBuilder(p_255730_);
+    protected IntrinsicHolderTagsProvider.IntrinsicTagAppender<T> tag(TagKey<T> tag) {
+        TagBuilder tagbuilder = this.getOrCreateRawBuilder(tag);
         return new IntrinsicHolderTagsProvider.IntrinsicTagAppender<>(tagbuilder, this.keyExtractor, this.modId);
     }
 
     public static class IntrinsicTagAppender<T> extends TagsProvider.TagAppender<T> implements net.neoforged.neoforge.common.extensions.IIntrinsicHolderTagAppenderExtension<T> {
         private final Function<T, ResourceKey<T>> keyExtractor;
 
-        IntrinsicTagAppender(TagBuilder p_256108_, Function<T, ResourceKey<T>> p_256433_, String modId) {
-            super(p_256108_, modId);
-            this.keyExtractor = p_256433_;
+        IntrinsicTagAppender(TagBuilder builder, Function<T, ResourceKey<T>> keyExtractor, String modId) {
+            super(builder, modId);
+            this.keyExtractor = keyExtractor;
         }
 
-        public IntrinsicHolderTagsProvider.IntrinsicTagAppender<T> addTag(TagKey<T> p_256311_) {
-            super.addTag(p_256311_);
+        public IntrinsicHolderTagsProvider.IntrinsicTagAppender<T> addTag(TagKey<T> tag) {
+            super.addTag(tag);
             return this;
         }
 
-        public final IntrinsicHolderTagsProvider.IntrinsicTagAppender<T> add(T p_256557_) {
-            this.add(this.keyExtractor.apply(p_256557_));
+        public final IntrinsicHolderTagsProvider.IntrinsicTagAppender<T> add(T value) {
+            this.add(this.keyExtractor.apply(value));
             return this;
         }
 
         @SafeVarargs
-        public final IntrinsicHolderTagsProvider.IntrinsicTagAppender<T> add(T... p_255868_) {
-            Stream.<T>of(p_255868_).map(this.keyExtractor).forEach(this::add);
+        public final IntrinsicHolderTagsProvider.IntrinsicTagAppender<T> add(T... values) {
+            Stream.<T>of(values).map(this.keyExtractor).forEach(this::add);
             return this;
         }
 

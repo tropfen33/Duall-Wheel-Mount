@@ -27,100 +27,103 @@ public class ItemEntityRenderer extends EntityRenderer<ItemEntity> {
     private final ItemRenderer itemRenderer;
     private final RandomSource random = RandomSource.create();
 
-    public ItemEntityRenderer(EntityRendererProvider.Context p_174198_) {
-        super(p_174198_);
-        this.itemRenderer = p_174198_.getItemRenderer();
+    public ItemEntityRenderer(EntityRendererProvider.Context context) {
+        super(context);
+        this.itemRenderer = context.getItemRenderer();
         this.shadowRadius = 0.15F;
         this.shadowStrength = 0.75F;
     }
 
-    public ResourceLocation getTextureLocation(ItemEntity p_115034_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(ItemEntity entity) {
         return TextureAtlas.LOCATION_BLOCKS;
     }
 
-    public void render(ItemEntity p_115036_, float p_115037_, float p_115038_, PoseStack p_115039_, MultiBufferSource p_115040_, int p_115041_) {
-        p_115039_.pushPose();
-        ItemStack itemstack = p_115036_.getItem();
+    public void render(ItemEntity entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        poseStack.pushPose();
+        ItemStack itemstack = entity.getItem();
         this.random.setSeed((long)getSeedForItemStack(itemstack));
-        BakedModel bakedmodel = this.itemRenderer.getModel(itemstack, p_115036_.level(), null, p_115036_.getId());
+        BakedModel bakedmodel = this.itemRenderer.getModel(itemstack, entity.level(), null, entity.getId());
         boolean flag = bakedmodel.isGui3d();
         float f = 0.25F;
         boolean shouldBob = net.neoforged.neoforge.client.extensions.common.IClientItemExtensions.of(itemstack).shouldBobAsEntity(itemstack);
-        float f1 = shouldBob ? Mth.sin(((float)p_115036_.getAge() + p_115038_) / 10.0F + p_115036_.bobOffs) * 0.1F + 0.1F : 0;
+        float f1 = shouldBob ? Mth.sin(((float)entity.getAge() + partialTicks) / 10.0F + entity.bobOffs) * 0.1F + 0.1F : 0;
         float f2 = bakedmodel.getTransforms().getTransform(ItemDisplayContext.GROUND).scale.y();
-        p_115039_.translate(0.0F, f1 + 0.25F * f2, 0.0F);
-        float f3 = p_115036_.getSpin(p_115038_);
-        p_115039_.mulPose(Axis.YP.rotation(f3));
-        renderMultipleFromCount(this.itemRenderer, p_115039_, p_115040_, p_115041_, itemstack, bakedmodel, flag, this.random);
-        p_115039_.popPose();
-        super.render(p_115036_, p_115037_, p_115038_, p_115039_, p_115040_, p_115041_);
+        poseStack.translate(0.0F, f1 + 0.25F * f2, 0.0F);
+        float f3 = entity.getSpin(partialTicks);
+        poseStack.mulPose(Axis.YP.rotation(f3));
+        renderMultipleFromCount(this.itemRenderer, poseStack, buffer, packedLight, itemstack, bakedmodel, flag, this.random);
+        poseStack.popPose();
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 
-    public static int getSeedForItemStack(ItemStack p_324105_) {
-        return p_324105_.isEmpty() ? 187 : Item.getId(p_324105_.getItem()) + p_324105_.getDamageValue();
+    public static int getSeedForItemStack(ItemStack stack) {
+        return stack.isEmpty() ? 187 : Item.getId(stack.getItem()) + stack.getDamageValue();
     }
 
     @VisibleForTesting
-    static int getRenderedAmount(int p_324603_) {
-        if (p_324603_ <= 1) {
+    static int getRenderedAmount(int count) {
+        if (count <= 1) {
             return 1;
-        } else if (p_324603_ <= 16) {
+        } else if (count <= 16) {
             return 2;
-        } else if (p_324603_ <= 32) {
+        } else if (count <= 32) {
             return 3;
         } else {
-            return p_324603_ <= 48 ? 4 : 5;
+            return count <= 48 ? 4 : 5;
         }
     }
 
     public static void renderMultipleFromCount(
-        ItemRenderer p_323875_, PoseStack p_323763_, MultiBufferSource p_324606_, int p_323603_, ItemStack p_323969_, RandomSource p_324507_, Level p_323902_
+        ItemRenderer itemRenderer, PoseStack poseStack, MultiBufferSource buffer, int packedLight, ItemStack item, RandomSource random, Level level
     ) {
-        BakedModel bakedmodel = p_323875_.getModel(p_323969_, p_323902_, null, 0);
-        renderMultipleFromCount(p_323875_, p_323763_, p_324606_, p_323603_, p_323969_, bakedmodel, bakedmodel.isGui3d(), p_324507_);
+        BakedModel bakedmodel = itemRenderer.getModel(item, level, null, 0);
+        renderMultipleFromCount(itemRenderer, poseStack, buffer, packedLight, item, bakedmodel, bakedmodel.isGui3d(), random);
     }
 
     public static void renderMultipleFromCount(
-        ItemRenderer p_324541_,
-        PoseStack p_323733_,
-        MultiBufferSource p_324107_,
-        int p_323740_,
-        ItemStack p_323718_,
-        BakedModel p_324183_,
-        boolean p_324462_,
-        RandomSource p_324565_
+        ItemRenderer itemRenderer,
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        ItemStack item,
+        BakedModel model,
+        boolean isGui3d,
+        RandomSource random
     ) {
-        int i = getRenderedAmount(p_323718_.getCount());
-        float f = p_324183_.getTransforms().ground.scale.x();
-        float f1 = p_324183_.getTransforms().ground.scale.y();
-        float f2 = p_324183_.getTransforms().ground.scale.z();
-        if (!p_324462_) {
+        int i = getRenderedAmount(item.getCount());
+        float f = model.getTransforms().ground.scale.x();
+        float f1 = model.getTransforms().ground.scale.y();
+        float f2 = model.getTransforms().ground.scale.z();
+        if (!isGui3d) {
             float f3 = -0.0F * (float)(i - 1) * 0.5F * f;
             float f4 = -0.0F * (float)(i - 1) * 0.5F * f1;
             float f5 = -0.09375F * (float)(i - 1) * 0.5F * f2;
-            p_323733_.translate(f3, f4, f5);
+            poseStack.translate(f3, f4, f5);
         }
 
-        boolean shouldSpread = net.neoforged.neoforge.client.extensions.common.IClientItemExtensions.of(p_323718_).shouldSpreadAsEntity(p_323718_);
+        boolean shouldSpread = net.neoforged.neoforge.client.extensions.common.IClientItemExtensions.of(item).shouldSpreadAsEntity(item);
         for (int j = 0; j < i; j++) {
-            p_323733_.pushPose();
+            poseStack.pushPose();
             if (j > 0 && shouldSpread) {
-                if (p_324462_) {
-                    float f7 = (p_324565_.nextFloat() * 2.0F - 1.0F) * 0.15F;
-                    float f9 = (p_324565_.nextFloat() * 2.0F - 1.0F) * 0.15F;
-                    float f6 = (p_324565_.nextFloat() * 2.0F - 1.0F) * 0.15F;
-                    p_323733_.translate(f7, f9, f6);
+                if (isGui3d) {
+                    float f7 = (random.nextFloat() * 2.0F - 1.0F) * 0.15F;
+                    float f9 = (random.nextFloat() * 2.0F - 1.0F) * 0.15F;
+                    float f6 = (random.nextFloat() * 2.0F - 1.0F) * 0.15F;
+                    poseStack.translate(f7, f9, f6);
                 } else {
-                    float f8 = (p_324565_.nextFloat() * 2.0F - 1.0F) * 0.15F * 0.5F;
-                    float f10 = (p_324565_.nextFloat() * 2.0F - 1.0F) * 0.15F * 0.5F;
-                    p_323733_.translate(f8, f10, 0.0F);
+                    float f8 = (random.nextFloat() * 2.0F - 1.0F) * 0.15F * 0.5F;
+                    float f10 = (random.nextFloat() * 2.0F - 1.0F) * 0.15F * 0.5F;
+                    poseStack.translate(f8, f10, 0.0F);
                 }
             }
 
-            p_324541_.render(p_323718_, ItemDisplayContext.GROUND, false, p_323733_, p_324107_, p_323740_, OverlayTexture.NO_OVERLAY, p_324183_);
-            p_323733_.popPose();
-            if (!p_324462_) {
-                p_323733_.translate(0.0F * f, 0.0F * f1, 0.09375F * f2);
+            itemRenderer.render(item, ItemDisplayContext.GROUND, false, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY, model);
+            poseStack.popPose();
+            if (!isGui3d) {
+                poseStack.translate(0.0F * f, 0.0F * f1, 0.09375F * f2);
             }
         }
     }

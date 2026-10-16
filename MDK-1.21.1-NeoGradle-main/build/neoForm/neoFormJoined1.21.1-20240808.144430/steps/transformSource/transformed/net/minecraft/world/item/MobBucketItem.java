@@ -28,37 +28,37 @@ public class MobBucketItem extends BucketItem {
     private final EntityType<?> type;
     private final SoundEvent emptySound;
 
-    public MobBucketItem(EntityType<?> p_151137_, Fluid p_151138_, SoundEvent p_151139_, Item.Properties p_151140_) {
-        super(p_151138_, p_151140_);
-        this.type = p_151137_;
-        this.emptySound = p_151139_;
+    public MobBucketItem(EntityType<?> type, Fluid content, SoundEvent emptySound, Item.Properties properties) {
+        super(content, properties);
+        this.type = type;
+        this.emptySound = emptySound;
     }
 
     @Override
-    public void checkExtraContent(@Nullable Player p_151146_, Level p_151147_, ItemStack p_151148_, BlockPos p_151149_) {
-        if (p_151147_ instanceof ServerLevel) {
-            this.spawn((ServerLevel)p_151147_, p_151148_, p_151149_);
-            p_151147_.gameEvent(p_151146_, GameEvent.ENTITY_PLACE, p_151149_);
+    public void checkExtraContent(@Nullable Player player, Level level, ItemStack containerStack, BlockPos pos) {
+        if (level instanceof ServerLevel) {
+            this.spawn((ServerLevel)level, containerStack, pos);
+            level.gameEvent(player, GameEvent.ENTITY_PLACE, pos);
         }
     }
 
     @Override
-    protected void playEmptySound(@Nullable Player p_151151_, LevelAccessor p_151152_, BlockPos p_151153_) {
-        p_151152_.playSound(p_151151_, p_151153_, this.emptySound, SoundSource.NEUTRAL, 1.0F, 1.0F);
+    protected void playEmptySound(@Nullable Player player, LevelAccessor level, BlockPos pos) {
+        level.playSound(player, pos, this.emptySound, SoundSource.NEUTRAL, 1.0F, 1.0F);
     }
 
-    private void spawn(ServerLevel p_151142_, ItemStack p_151143_, BlockPos p_151144_) {
-        if (this.type.spawn(p_151142_, p_151143_, null, p_151144_, MobSpawnType.BUCKET, true, false) instanceof Bucketable bucketable) {
-            CustomData customdata = p_151143_.getOrDefault(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY);
+    private void spawn(ServerLevel serverLevel, ItemStack bucketedMobStack, BlockPos pos) {
+        if (this.type.spawn(serverLevel, bucketedMobStack, null, pos, MobSpawnType.BUCKET, true, false) instanceof Bucketable bucketable) {
+            CustomData customdata = bucketedMobStack.getOrDefault(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY);
             bucketable.loadFromBucketTag(customdata.copyTag());
             bucketable.setFromBucket(true);
         }
     }
 
     @Override
-    public void appendHoverText(ItemStack p_151155_, Item.TooltipContext p_339675_, List<Component> p_151157_, TooltipFlag p_151158_) {
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
         if (this.type == EntityType.TROPICAL_FISH) {
-            CustomData customdata = p_151155_.getOrDefault(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY);
+            CustomData customdata = stack.getOrDefault(DataComponents.BUCKET_ENTITY_DATA, CustomData.EMPTY);
             if (customdata.isEmpty()) {
                 return;
             }
@@ -71,18 +71,18 @@ public class MobBucketItem extends BucketItem {
                 String s1 = "color.minecraft." + tropicalfish$variant.patternColor();
                 int i = TropicalFish.COMMON_VARIANTS.indexOf(tropicalfish$variant);
                 if (i != -1) {
-                    p_151157_.add(Component.translatable(TropicalFish.getPredefinedName(i)).withStyle(achatformatting));
+                    tooltipComponents.add(Component.translatable(TropicalFish.getPredefinedName(i)).withStyle(achatformatting));
                     return;
                 }
 
-                p_151157_.add(tropicalfish$variant.pattern().displayName().plainCopy().withStyle(achatformatting));
+                tooltipComponents.add(tropicalfish$variant.pattern().displayName().plainCopy().withStyle(achatformatting));
                 MutableComponent mutablecomponent = Component.translatable(s);
                 if (!s.equals(s1)) {
                     mutablecomponent.append(", ").append(Component.translatable(s1));
                 }
 
                 mutablecomponent.withStyle(achatformatting);
-                p_151157_.add(mutablecomponent);
+                tooltipComponents.add(mutablecomponent);
             }
         }
     }

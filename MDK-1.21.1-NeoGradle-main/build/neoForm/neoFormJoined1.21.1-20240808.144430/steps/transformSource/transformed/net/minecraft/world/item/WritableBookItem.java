@@ -7,15 +7,18 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
 public class WritableBookItem extends Item {
-    public WritableBookItem(Item.Properties p_43445_) {
-        super(p_43445_);
+    public WritableBookItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_43449_, Player p_43450_, InteractionHand p_43451_) {
-        ItemStack itemstack = p_43450_.getItemInHand(p_43451_);
-        p_43450_.openItemGui(itemstack, p_43451_);
-        p_43450_.awardStat(Stats.ITEM_USED.get(this));
-        return InteractionResultHolder.sidedSuccess(itemstack, p_43449_.isClientSide());
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
+        player.openItemGui(itemstack, hand);
+        player.awardStat(Stats.ITEM_USED.get(this));
+        return InteractionResultHolder.sidedSuccess(itemstack, level.isClientSide());
     }
 }

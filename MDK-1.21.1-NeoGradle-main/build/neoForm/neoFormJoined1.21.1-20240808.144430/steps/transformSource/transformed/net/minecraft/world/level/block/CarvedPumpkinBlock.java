@@ -42,80 +42,80 @@ public class CarvedPumpkinBlock extends HorizontalDirectionalBlock {
         return CODEC;
     }
 
-    public CarvedPumpkinBlock(BlockBehaviour.Properties p_51375_) {
-        super(p_51375_);
+    public CarvedPumpkinBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     @Override
-    protected void onPlace(BlockState p_51387_, Level p_51388_, BlockPos p_51389_, BlockState p_51390_, boolean p_51391_) {
-        if (!p_51390_.is(p_51387_.getBlock())) {
-            this.trySpawnGolem(p_51388_, p_51389_);
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!oldState.is(state.getBlock())) {
+            this.trySpawnGolem(level, pos);
         }
     }
 
-    public boolean canSpawnGolem(LevelReader p_51382_, BlockPos p_51383_) {
-        return this.getOrCreateSnowGolemBase().find(p_51382_, p_51383_) != null || this.getOrCreateIronGolemBase().find(p_51382_, p_51383_) != null;
+    public boolean canSpawnGolem(LevelReader level, BlockPos pos) {
+        return this.getOrCreateSnowGolemBase().find(level, pos) != null || this.getOrCreateIronGolemBase().find(level, pos) != null;
     }
 
-    private void trySpawnGolem(Level p_51379_, BlockPos p_51380_) {
-        BlockPattern.BlockPatternMatch blockpattern$blockpatternmatch = this.getOrCreateSnowGolemFull().find(p_51379_, p_51380_);
+    private void trySpawnGolem(Level level, BlockPos pos) {
+        BlockPattern.BlockPatternMatch blockpattern$blockpatternmatch = this.getOrCreateSnowGolemFull().find(level, pos);
         if (blockpattern$blockpatternmatch != null) {
-            SnowGolem snowgolem = EntityType.SNOW_GOLEM.create(p_51379_);
+            SnowGolem snowgolem = EntityType.SNOW_GOLEM.create(level);
             if (snowgolem != null) {
-                spawnGolemInWorld(p_51379_, blockpattern$blockpatternmatch, snowgolem, blockpattern$blockpatternmatch.getBlock(0, 2, 0).getPos());
+                spawnGolemInWorld(level, blockpattern$blockpatternmatch, snowgolem, blockpattern$blockpatternmatch.getBlock(0, 2, 0).getPos());
             }
         } else {
-            BlockPattern.BlockPatternMatch blockpattern$blockpatternmatch1 = this.getOrCreateIronGolemFull().find(p_51379_, p_51380_);
+            BlockPattern.BlockPatternMatch blockpattern$blockpatternmatch1 = this.getOrCreateIronGolemFull().find(level, pos);
             if (blockpattern$blockpatternmatch1 != null) {
-                IronGolem irongolem = EntityType.IRON_GOLEM.create(p_51379_);
+                IronGolem irongolem = EntityType.IRON_GOLEM.create(level);
                 if (irongolem != null) {
                     irongolem.setPlayerCreated(true);
-                    spawnGolemInWorld(p_51379_, blockpattern$blockpatternmatch1, irongolem, blockpattern$blockpatternmatch1.getBlock(1, 2, 0).getPos());
+                    spawnGolemInWorld(level, blockpattern$blockpatternmatch1, irongolem, blockpattern$blockpatternmatch1.getBlock(1, 2, 0).getPos());
                 }
             }
         }
     }
 
-    private static void spawnGolemInWorld(Level p_249110_, BlockPattern.BlockPatternMatch p_251293_, Entity p_251251_, BlockPos p_251189_) {
-        clearPatternBlocks(p_249110_, p_251293_);
-        p_251251_.moveTo((double)p_251189_.getX() + 0.5, (double)p_251189_.getY() + 0.05, (double)p_251189_.getZ() + 0.5, 0.0F, 0.0F);
-        p_249110_.addFreshEntity(p_251251_);
+    private static void spawnGolemInWorld(Level level, BlockPattern.BlockPatternMatch patternMatch, Entity golem, BlockPos pos) {
+        clearPatternBlocks(level, patternMatch);
+        golem.moveTo((double)pos.getX() + 0.5, (double)pos.getY() + 0.05, (double)pos.getZ() + 0.5, 0.0F, 0.0F);
+        level.addFreshEntity(golem);
 
-        for (ServerPlayer serverplayer : p_249110_.getEntitiesOfClass(ServerPlayer.class, p_251251_.getBoundingBox().inflate(5.0))) {
-            CriteriaTriggers.SUMMONED_ENTITY.trigger(serverplayer, p_251251_);
+        for (ServerPlayer serverplayer : level.getEntitiesOfClass(ServerPlayer.class, golem.getBoundingBox().inflate(5.0))) {
+            CriteriaTriggers.SUMMONED_ENTITY.trigger(serverplayer, golem);
         }
 
-        updatePatternBlocks(p_249110_, p_251293_);
+        updatePatternBlocks(level, patternMatch);
     }
 
-    public static void clearPatternBlocks(Level p_249604_, BlockPattern.BlockPatternMatch p_251190_) {
-        for (int i = 0; i < p_251190_.getWidth(); i++) {
-            for (int j = 0; j < p_251190_.getHeight(); j++) {
-                BlockInWorld blockinworld = p_251190_.getBlock(i, j, 0);
-                p_249604_.setBlock(blockinworld.getPos(), Blocks.AIR.defaultBlockState(), 2);
-                p_249604_.levelEvent(2001, blockinworld.getPos(), Block.getId(blockinworld.getState()));
+    public static void clearPatternBlocks(Level level, BlockPattern.BlockPatternMatch patternMatch) {
+        for (int i = 0; i < patternMatch.getWidth(); i++) {
+            for (int j = 0; j < patternMatch.getHeight(); j++) {
+                BlockInWorld blockinworld = patternMatch.getBlock(i, j, 0);
+                level.setBlock(blockinworld.getPos(), Blocks.AIR.defaultBlockState(), 2);
+                level.levelEvent(2001, blockinworld.getPos(), Block.getId(blockinworld.getState()));
             }
         }
     }
 
-    public static void updatePatternBlocks(Level p_248711_, BlockPattern.BlockPatternMatch p_251935_) {
-        for (int i = 0; i < p_251935_.getWidth(); i++) {
-            for (int j = 0; j < p_251935_.getHeight(); j++) {
-                BlockInWorld blockinworld = p_251935_.getBlock(i, j, 0);
-                p_248711_.blockUpdated(blockinworld.getPos(), Blocks.AIR);
+    public static void updatePatternBlocks(Level level, BlockPattern.BlockPatternMatch patternMatch) {
+        for (int i = 0; i < patternMatch.getWidth(); i++) {
+            for (int j = 0; j < patternMatch.getHeight(); j++) {
+                BlockInWorld blockinworld = patternMatch.getBlock(i, j, 0);
+                level.blockUpdated(blockinworld.getPos(), Blocks.AIR);
             }
         }
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_51377_) {
-        return this.defaultBlockState().setValue(FACING, p_51377_.getHorizontalDirection().getOpposite());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_51385_) {
-        p_51385_.add(FACING);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
     }
 
     private BlockPattern getOrCreateSnowGolemBase() {

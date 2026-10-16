@@ -42,199 +42,199 @@ public final class DensityFunctions {
                     : Either.right(p_224051_)
         );
 
-    public static MapCodec<? extends DensityFunction> bootstrap(Registry<MapCodec<? extends DensityFunction>> p_208343_) {
-        register(p_208343_, "blend_alpha", DensityFunctions.BlendAlpha.CODEC);
-        register(p_208343_, "blend_offset", DensityFunctions.BlendOffset.CODEC);
-        register(p_208343_, "beardifier", DensityFunctions.BeardifierMarker.CODEC);
-        register(p_208343_, "old_blended_noise", BlendedNoise.CODEC);
+    public static MapCodec<? extends DensityFunction> bootstrap(Registry<MapCodec<? extends DensityFunction>> registry) {
+        register(registry, "blend_alpha", DensityFunctions.BlendAlpha.CODEC);
+        register(registry, "blend_offset", DensityFunctions.BlendOffset.CODEC);
+        register(registry, "beardifier", DensityFunctions.BeardifierMarker.CODEC);
+        register(registry, "old_blended_noise", BlendedNoise.CODEC);
 
         for (DensityFunctions.Marker.Type densityfunctions$marker$type : DensityFunctions.Marker.Type.values()) {
-            register(p_208343_, densityfunctions$marker$type.getSerializedName(), densityfunctions$marker$type.codec);
+            register(registry, densityfunctions$marker$type.getSerializedName(), densityfunctions$marker$type.codec);
         }
 
-        register(p_208343_, "noise", DensityFunctions.Noise.CODEC);
-        register(p_208343_, "end_islands", DensityFunctions.EndIslandDensityFunction.CODEC);
-        register(p_208343_, "weird_scaled_sampler", DensityFunctions.WeirdScaledSampler.CODEC);
-        register(p_208343_, "shifted_noise", DensityFunctions.ShiftedNoise.CODEC);
-        register(p_208343_, "range_choice", DensityFunctions.RangeChoice.CODEC);
-        register(p_208343_, "shift_a", DensityFunctions.ShiftA.CODEC);
-        register(p_208343_, "shift_b", DensityFunctions.ShiftB.CODEC);
-        register(p_208343_, "shift", DensityFunctions.Shift.CODEC);
-        register(p_208343_, "blend_density", DensityFunctions.BlendDensity.CODEC);
-        register(p_208343_, "clamp", DensityFunctions.Clamp.CODEC);
+        register(registry, "noise", DensityFunctions.Noise.CODEC);
+        register(registry, "end_islands", DensityFunctions.EndIslandDensityFunction.CODEC);
+        register(registry, "weird_scaled_sampler", DensityFunctions.WeirdScaledSampler.CODEC);
+        register(registry, "shifted_noise", DensityFunctions.ShiftedNoise.CODEC);
+        register(registry, "range_choice", DensityFunctions.RangeChoice.CODEC);
+        register(registry, "shift_a", DensityFunctions.ShiftA.CODEC);
+        register(registry, "shift_b", DensityFunctions.ShiftB.CODEC);
+        register(registry, "shift", DensityFunctions.Shift.CODEC);
+        register(registry, "blend_density", DensityFunctions.BlendDensity.CODEC);
+        register(registry, "clamp", DensityFunctions.Clamp.CODEC);
 
         for (DensityFunctions.Mapped.Type densityfunctions$mapped$type : DensityFunctions.Mapped.Type.values()) {
-            register(p_208343_, densityfunctions$mapped$type.getSerializedName(), densityfunctions$mapped$type.codec);
+            register(registry, densityfunctions$mapped$type.getSerializedName(), densityfunctions$mapped$type.codec);
         }
 
         for (DensityFunctions.TwoArgumentSimpleFunction.Type densityfunctions$twoargumentsimplefunction$type : DensityFunctions.TwoArgumentSimpleFunction.Type.values()) {
-            register(p_208343_, densityfunctions$twoargumentsimplefunction$type.getSerializedName(), densityfunctions$twoargumentsimplefunction$type.codec);
+            register(registry, densityfunctions$twoargumentsimplefunction$type.getSerializedName(), densityfunctions$twoargumentsimplefunction$type.codec);
         }
 
-        register(p_208343_, "spline", DensityFunctions.Spline.CODEC);
-        register(p_208343_, "constant", DensityFunctions.Constant.CODEC);
-        return register(p_208343_, "y_clamped_gradient", DensityFunctions.YClampedGradient.CODEC);
+        register(registry, "spline", DensityFunctions.Spline.CODEC);
+        register(registry, "constant", DensityFunctions.Constant.CODEC);
+        return register(registry, "y_clamped_gradient", DensityFunctions.YClampedGradient.CODEC);
     }
 
     private static MapCodec<? extends DensityFunction> register(
-        Registry<MapCodec<? extends DensityFunction>> p_224035_, String p_224036_, KeyDispatchDataCodec<? extends DensityFunction> p_224037_
+        Registry<MapCodec<? extends DensityFunction>> registry, String name, KeyDispatchDataCodec<? extends DensityFunction> codec
     ) {
-        return Registry.register(p_224035_, p_224036_, p_224037_.codec());
+        return Registry.register(registry, name, codec.codec());
     }
 
-    static <A, O> KeyDispatchDataCodec<O> singleArgumentCodec(Codec<A> p_224025_, Function<A, O> p_224026_, Function<O, A> p_224027_) {
-        return KeyDispatchDataCodec.of(p_224025_.fieldOf("argument").xmap(p_224026_, p_224027_));
+    static <A, O> KeyDispatchDataCodec<O> singleArgumentCodec(Codec<A> codec, Function<A, O> fromFunction, Function<O, A> toFunction) {
+        return KeyDispatchDataCodec.of(codec.fieldOf("argument").xmap(fromFunction, toFunction));
     }
 
-    static <O> KeyDispatchDataCodec<O> singleFunctionArgumentCodec(Function<DensityFunction, O> p_224043_, Function<O, DensityFunction> p_224044_) {
-        return singleArgumentCodec(DensityFunction.HOLDER_HELPER_CODEC, p_224043_, p_224044_);
+    static <O> KeyDispatchDataCodec<O> singleFunctionArgumentCodec(Function<DensityFunction, O> fromFunction, Function<O, DensityFunction> toFunction) {
+        return singleArgumentCodec(DensityFunction.HOLDER_HELPER_CODEC, fromFunction, toFunction);
     }
 
     static <O> KeyDispatchDataCodec<O> doubleFunctionArgumentCodec(
-        BiFunction<DensityFunction, DensityFunction, O> p_224039_, Function<O, DensityFunction> p_224040_, Function<O, DensityFunction> p_224041_
+        BiFunction<DensityFunction, DensityFunction, O> fromFunction, Function<O, DensityFunction> primary, Function<O, DensityFunction> secondary
     ) {
         return KeyDispatchDataCodec.of(
             RecordCodecBuilder.mapCodec(
                 p_224049_ -> p_224049_.group(
-                            DensityFunction.HOLDER_HELPER_CODEC.fieldOf("argument1").forGetter(p_224040_),
-                            DensityFunction.HOLDER_HELPER_CODEC.fieldOf("argument2").forGetter(p_224041_)
+                            DensityFunction.HOLDER_HELPER_CODEC.fieldOf("argument1").forGetter(primary),
+                            DensityFunction.HOLDER_HELPER_CODEC.fieldOf("argument2").forGetter(secondary)
                         )
-                        .apply(p_224049_, p_224039_)
+                        .apply(p_224049_, fromFunction)
             )
         );
     }
 
-    static <O> KeyDispatchDataCodec<O> makeCodec(MapCodec<O> p_224029_) {
-        return KeyDispatchDataCodec.of(p_224029_);
+    static <O> KeyDispatchDataCodec<O> makeCodec(MapCodec<O> mapCodec) {
+        return KeyDispatchDataCodec.of(mapCodec);
     }
 
     private DensityFunctions() {
     }
 
-    public static DensityFunction interpolated(DensityFunction p_208282_) {
-        return new DensityFunctions.Marker(DensityFunctions.Marker.Type.Interpolated, p_208282_);
+    public static DensityFunction interpolated(DensityFunction wrapped) {
+        return new DensityFunctions.Marker(DensityFunctions.Marker.Type.Interpolated, wrapped);
     }
 
-    public static DensityFunction flatCache(DensityFunction p_208362_) {
-        return new DensityFunctions.Marker(DensityFunctions.Marker.Type.FlatCache, p_208362_);
+    public static DensityFunction flatCache(DensityFunction wrapped) {
+        return new DensityFunctions.Marker(DensityFunctions.Marker.Type.FlatCache, wrapped);
     }
 
-    public static DensityFunction cache2d(DensityFunction p_208374_) {
-        return new DensityFunctions.Marker(DensityFunctions.Marker.Type.Cache2D, p_208374_);
+    public static DensityFunction cache2d(DensityFunction wrapped) {
+        return new DensityFunctions.Marker(DensityFunctions.Marker.Type.Cache2D, wrapped);
     }
 
-    public static DensityFunction cacheOnce(DensityFunction p_208381_) {
-        return new DensityFunctions.Marker(DensityFunctions.Marker.Type.CacheOnce, p_208381_);
+    public static DensityFunction cacheOnce(DensityFunction wrapped) {
+        return new DensityFunctions.Marker(DensityFunctions.Marker.Type.CacheOnce, wrapped);
     }
 
-    public static DensityFunction cacheAllInCell(DensityFunction p_208388_) {
-        return new DensityFunctions.Marker(DensityFunctions.Marker.Type.CacheAllInCell, p_208388_);
+    public static DensityFunction cacheAllInCell(DensityFunction wrapped) {
+        return new DensityFunctions.Marker(DensityFunctions.Marker.Type.CacheAllInCell, wrapped);
     }
 
     public static DensityFunction mappedNoise(
-        Holder<NormalNoise.NoiseParameters> p_208337_, @Deprecated double p_208338_, double p_208339_, double p_208340_, double p_208341_
+        Holder<NormalNoise.NoiseParameters> noiseData, @Deprecated double xzScale, double yScale, double fromY, double toY
     ) {
-        return mapFromUnitTo(new DensityFunctions.Noise(new DensityFunction.NoiseHolder(p_208337_), p_208338_, p_208339_), p_208340_, p_208341_);
+        return mapFromUnitTo(new DensityFunctions.Noise(new DensityFunction.NoiseHolder(noiseData), xzScale, yScale), fromY, toY);
     }
 
-    public static DensityFunction mappedNoise(Holder<NormalNoise.NoiseParameters> p_208332_, double p_208333_, double p_208334_, double p_208335_) {
-        return mappedNoise(p_208332_, 1.0, p_208333_, p_208334_, p_208335_);
+    public static DensityFunction mappedNoise(Holder<NormalNoise.NoiseParameters> noiseData, double yScale, double fromY, double toY) {
+        return mappedNoise(noiseData, 1.0, yScale, fromY, toY);
     }
 
-    public static DensityFunction mappedNoise(Holder<NormalNoise.NoiseParameters> p_208328_, double p_208329_, double p_208330_) {
-        return mappedNoise(p_208328_, 1.0, 1.0, p_208329_, p_208330_);
+    public static DensityFunction mappedNoise(Holder<NormalNoise.NoiseParameters> noiseData, double fromY, double toY) {
+        return mappedNoise(noiseData, 1.0, 1.0, fromY, toY);
     }
 
     public static DensityFunction shiftedNoise2d(
-        DensityFunction p_208297_, DensityFunction p_208298_, double p_208299_, Holder<NormalNoise.NoiseParameters> p_208300_
+        DensityFunction shiftX, DensityFunction shiftZ, double xzScale, Holder<NormalNoise.NoiseParameters> noiseData
     ) {
-        return new DensityFunctions.ShiftedNoise(p_208297_, zero(), p_208298_, p_208299_, 0.0, new DensityFunction.NoiseHolder(p_208300_));
+        return new DensityFunctions.ShiftedNoise(shiftX, zero(), shiftZ, xzScale, 0.0, new DensityFunction.NoiseHolder(noiseData));
     }
 
-    public static DensityFunction noise(Holder<NormalNoise.NoiseParameters> p_208323_) {
-        return noise(p_208323_, 1.0, 1.0);
+    public static DensityFunction noise(Holder<NormalNoise.NoiseParameters> noiseData) {
+        return noise(noiseData, 1.0, 1.0);
     }
 
-    public static DensityFunction noise(Holder<NormalNoise.NoiseParameters> p_208369_, double p_208370_, double p_208371_) {
-        return new DensityFunctions.Noise(new DensityFunction.NoiseHolder(p_208369_), p_208370_, p_208371_);
+    public static DensityFunction noise(Holder<NormalNoise.NoiseParameters> noiseData, double xzScale, double yScale) {
+        return new DensityFunctions.Noise(new DensityFunction.NoiseHolder(noiseData), xzScale, yScale);
     }
 
-    public static DensityFunction noise(Holder<NormalNoise.NoiseParameters> p_208325_, double p_208326_) {
-        return noise(p_208325_, 1.0, p_208326_);
+    public static DensityFunction noise(Holder<NormalNoise.NoiseParameters> noiseData, double yScale) {
+        return noise(noiseData, 1.0, yScale);
     }
 
     public static DensityFunction rangeChoice(
-        DensityFunction p_208288_, double p_208289_, double p_208290_, DensityFunction p_208291_, DensityFunction p_208292_
+        DensityFunction input, double minInclusive, double maxExclusive, DensityFunction whenInRange, DensityFunction whenOutOfRange
     ) {
-        return new DensityFunctions.RangeChoice(p_208288_, p_208289_, p_208290_, p_208291_, p_208292_);
+        return new DensityFunctions.RangeChoice(input, minInclusive, maxExclusive, whenInRange, whenOutOfRange);
     }
 
-    public static DensityFunction shiftA(Holder<NormalNoise.NoiseParameters> p_208367_) {
-        return new DensityFunctions.ShiftA(new DensityFunction.NoiseHolder(p_208367_));
+    public static DensityFunction shiftA(Holder<NormalNoise.NoiseParameters> noiseData) {
+        return new DensityFunctions.ShiftA(new DensityFunction.NoiseHolder(noiseData));
     }
 
-    public static DensityFunction shiftB(Holder<NormalNoise.NoiseParameters> p_208379_) {
-        return new DensityFunctions.ShiftB(new DensityFunction.NoiseHolder(p_208379_));
+    public static DensityFunction shiftB(Holder<NormalNoise.NoiseParameters> noiseData) {
+        return new DensityFunctions.ShiftB(new DensityFunction.NoiseHolder(noiseData));
     }
 
-    public static DensityFunction shift(Holder<NormalNoise.NoiseParameters> p_208386_) {
-        return new DensityFunctions.Shift(new DensityFunction.NoiseHolder(p_208386_));
+    public static DensityFunction shift(Holder<NormalNoise.NoiseParameters> noiseData) {
+        return new DensityFunctions.Shift(new DensityFunction.NoiseHolder(noiseData));
     }
 
-    public static DensityFunction blendDensity(DensityFunction p_208390_) {
-        return new DensityFunctions.BlendDensity(p_208390_);
+    public static DensityFunction blendDensity(DensityFunction input) {
+        return new DensityFunctions.BlendDensity(input);
     }
 
-    public static DensityFunction endIslands(long p_208272_) {
-        return new DensityFunctions.EndIslandDensityFunction(p_208272_);
+    public static DensityFunction endIslands(long seed) {
+        return new DensityFunctions.EndIslandDensityFunction(seed);
     }
 
     public static DensityFunction weirdScaledSampler(
-        DensityFunction p_208316_, Holder<NormalNoise.NoiseParameters> p_208317_, DensityFunctions.WeirdScaledSampler.RarityValueMapper p_208318_
+        DensityFunction input, Holder<NormalNoise.NoiseParameters> noiseData, DensityFunctions.WeirdScaledSampler.RarityValueMapper rarityValueMapper
     ) {
-        return new DensityFunctions.WeirdScaledSampler(p_208316_, new DensityFunction.NoiseHolder(p_208317_), p_208318_);
+        return new DensityFunctions.WeirdScaledSampler(input, new DensityFunction.NoiseHolder(noiseData), rarityValueMapper);
     }
 
-    public static DensityFunction add(DensityFunction p_208294_, DensityFunction p_208295_) {
-        return DensityFunctions.TwoArgumentSimpleFunction.create(DensityFunctions.TwoArgumentSimpleFunction.Type.ADD, p_208294_, p_208295_);
+    public static DensityFunction add(DensityFunction argument1, DensityFunction argument2) {
+        return DensityFunctions.TwoArgumentSimpleFunction.create(DensityFunctions.TwoArgumentSimpleFunction.Type.ADD, argument1, argument2);
     }
 
-    public static DensityFunction mul(DensityFunction p_208364_, DensityFunction p_208365_) {
-        return DensityFunctions.TwoArgumentSimpleFunction.create(DensityFunctions.TwoArgumentSimpleFunction.Type.MUL, p_208364_, p_208365_);
+    public static DensityFunction mul(DensityFunction argument1, DensityFunction argument2) {
+        return DensityFunctions.TwoArgumentSimpleFunction.create(DensityFunctions.TwoArgumentSimpleFunction.Type.MUL, argument1, argument2);
     }
 
-    public static DensityFunction min(DensityFunction p_208376_, DensityFunction p_208377_) {
-        return DensityFunctions.TwoArgumentSimpleFunction.create(DensityFunctions.TwoArgumentSimpleFunction.Type.MIN, p_208376_, p_208377_);
+    public static DensityFunction min(DensityFunction argument1, DensityFunction argument2) {
+        return DensityFunctions.TwoArgumentSimpleFunction.create(DensityFunctions.TwoArgumentSimpleFunction.Type.MIN, argument1, argument2);
     }
 
-    public static DensityFunction max(DensityFunction p_208383_, DensityFunction p_208384_) {
-        return DensityFunctions.TwoArgumentSimpleFunction.create(DensityFunctions.TwoArgumentSimpleFunction.Type.MAX, p_208383_, p_208384_);
+    public static DensityFunction max(DensityFunction argument1, DensityFunction argument2) {
+        return DensityFunctions.TwoArgumentSimpleFunction.create(DensityFunctions.TwoArgumentSimpleFunction.Type.MAX, argument1, argument2);
     }
 
-    public static DensityFunction spline(CubicSpline<DensityFunctions.Spline.Point, DensityFunctions.Spline.Coordinate> p_224021_) {
-        return new DensityFunctions.Spline(p_224021_);
+    public static DensityFunction spline(CubicSpline<DensityFunctions.Spline.Point, DensityFunctions.Spline.Coordinate> spline) {
+        return new DensityFunctions.Spline(spline);
     }
 
     public static DensityFunction zero() {
         return DensityFunctions.Constant.ZERO;
     }
 
-    public static DensityFunction constant(double p_208265_) {
-        return new DensityFunctions.Constant(p_208265_);
+    public static DensityFunction constant(double value) {
+        return new DensityFunctions.Constant(value);
     }
 
-    public static DensityFunction yClampedGradient(int p_208267_, int p_208268_, double p_208269_, double p_208270_) {
-        return new DensityFunctions.YClampedGradient(p_208267_, p_208268_, p_208269_, p_208270_);
+    public static DensityFunction yClampedGradient(int fromY, int toY, double fromValue, double toValue) {
+        return new DensityFunctions.YClampedGradient(fromY, toY, fromValue, toValue);
     }
 
-    public static DensityFunction map(DensityFunction p_208313_, DensityFunctions.Mapped.Type p_208314_) {
-        return DensityFunctions.Mapped.create(p_208314_, p_208313_);
+    public static DensityFunction map(DensityFunction input, DensityFunctions.Mapped.Type type) {
+        return DensityFunctions.Mapped.create(type, input);
     }
 
-    private static DensityFunction mapFromUnitTo(DensityFunction p_208284_, double p_208285_, double p_208286_) {
-        double d0 = (p_208285_ + p_208286_) * 0.5;
-        double d1 = (p_208286_ - p_208285_) * 0.5;
-        return add(constant(d0), mul(constant(d1), p_208284_));
+    private static DensityFunction mapFromUnitTo(DensityFunction densityFunction, double fromY, double toY) {
+        double d0 = (fromY + toY) * 0.5;
+        double d1 = (toY - fromY) * 0.5;
+        return add(constant(d0), mul(constant(d1), densityFunction));
     }
 
     public static DensityFunction blendAlpha() {
@@ -245,18 +245,18 @@ public final class DensityFunctions {
         return DensityFunctions.BlendOffset.INSTANCE;
     }
 
-    public static DensityFunction lerp(DensityFunction p_208302_, DensityFunction p_208303_, DensityFunction p_208304_) {
-        if (p_208303_ instanceof DensityFunctions.Constant densityfunctions$constant) {
-            return lerp(p_208302_, densityfunctions$constant.value, p_208304_);
+    public static DensityFunction lerp(DensityFunction deltaFunction, DensityFunction minFunction, DensityFunction maxFunction) {
+        if (minFunction instanceof DensityFunctions.Constant densityfunctions$constant) {
+            return lerp(deltaFunction, densityfunctions$constant.value, maxFunction);
         } else {
-            DensityFunction densityfunction = cacheOnce(p_208302_);
+            DensityFunction densityfunction = cacheOnce(deltaFunction);
             DensityFunction densityfunction1 = add(mul(densityfunction, constant(-1.0)), constant(1.0));
-            return add(mul(p_208303_, densityfunction1), mul(p_208304_, densityfunction));
+            return add(mul(minFunction, densityfunction1), mul(maxFunction, densityfunction));
         }
     }
 
-    public static DensityFunction lerp(DensityFunction p_224031_, double p_224032_, DensityFunction p_224033_) {
-        return add(mul(p_224031_, add(p_224033_, constant(-p_224032_))), constant(p_224032_));
+    public static DensityFunction lerp(DensityFunction deltaFunction, double min, DensityFunction maxFunction) {
+        return add(mul(deltaFunction, add(maxFunction, constant(-min))), constant(min));
     }
 
     static record Ap2(
@@ -456,13 +456,13 @@ public final class DensityFunctions {
         public static final KeyDispatchDataCodec<DensityFunctions.Clamp> CODEC = DensityFunctions.makeCodec(DATA_CODEC);
 
         @Override
-        public double transform(double p_208595_) {
-            return Mth.clamp(p_208595_, this.minValue, this.maxValue);
+        public double transform(double value) {
+            return Mth.clamp(value, this.minValue, this.maxValue);
         }
 
         @Override
-        public DensityFunction mapAll(DensityFunction.Visitor p_208599_) {
-            return new DensityFunctions.Clamp(this.input.mapAll(p_208599_), this.minValue, this.maxValue);
+        public DensityFunction mapAll(DensityFunction.Visitor visitor) {
+            return new DensityFunctions.Clamp(this.input.mapAll(visitor), this.minValue, this.maxValue);
         }
 
         @Override
@@ -510,25 +510,25 @@ public final class DensityFunctions {
         private static final float ISLAND_THRESHOLD = -0.9F;
         private final SimplexNoise islandNoise;
 
-        public EndIslandDensityFunction(long p_208630_) {
-            RandomSource randomsource = new LegacyRandomSource(p_208630_);
+        public EndIslandDensityFunction(long seed) {
+            RandomSource randomsource = new LegacyRandomSource(seed);
             randomsource.consumeCount(17292);
             this.islandNoise = new SimplexNoise(randomsource);
         }
 
-        private static float getHeightValue(SimplexNoise p_224063_, int p_224064_, int p_224065_) {
-            int i = p_224064_ / 2;
-            int j = p_224065_ / 2;
-            int k = p_224064_ % 2;
-            int l = p_224065_ % 2;
-            float f = 100.0F - Mth.sqrt((float)(p_224064_ * p_224064_ + p_224065_ * p_224065_)) * 8.0F;
+        private static float getHeightValue(SimplexNoise noise, int x, int z) {
+            int i = x / 2;
+            int j = z / 2;
+            int k = x % 2;
+            int l = z % 2;
+            float f = 100.0F - Mth.sqrt((float)(x * x + z * z)) * 8.0F;
             f = Mth.clamp(f, -100.0F, 80.0F);
 
             for (int i1 = -12; i1 <= 12; i1++) {
                 for (int j1 = -12; j1 <= 12; j1++) {
                     long k1 = (long)(i + i1);
                     long l1 = (long)(j + j1);
-                    if (k1 * k1 + l1 * l1 > 4096L && p_224063_.getValue((double)k1, (double)l1) < -0.9F) {
+                    if (k1 * k1 + l1 * l1 > 4096L && noise.getValue((double)k1, (double)l1) < -0.9F) {
                         float f1 = (Mth.abs((float)k1) * 3439.0F + Mth.abs((float)l1) * 147.0F) % 13.0F + 9.0F;
                         float f2 = (float)(k - i1 * 2);
                         float f3 = (float)(l - j1 * 2);
@@ -543,8 +543,8 @@ public final class DensityFunctions {
         }
 
         @Override
-        public double compute(DensityFunction.FunctionContext p_208633_) {
-            return ((double)getHeightValue(this.islandNoise, p_208633_.blockX() / 8, p_208633_.blockZ() / 8) - 8.0) / 128.0;
+        public double compute(DensityFunction.FunctionContext context) {
+            return ((double)getHeightValue(this.islandNoise, context.blockX() / 8, context.blockZ() / 8) - 8.0) / 128.0;
         }
 
         @Override
@@ -598,36 +598,36 @@ public final class DensityFunctions {
 
     protected static record Mapped(DensityFunctions.Mapped.Type type, DensityFunction input, double minValue, double maxValue)
         implements DensityFunctions.PureTransformer {
-        public static DensityFunctions.Mapped create(DensityFunctions.Mapped.Type p_208672_, DensityFunction p_208673_) {
-            double d0 = p_208673_.minValue();
-            double d1 = transform(p_208672_, d0);
-            double d2 = transform(p_208672_, p_208673_.maxValue());
-            return p_208672_ != DensityFunctions.Mapped.Type.ABS && p_208672_ != DensityFunctions.Mapped.Type.SQUARE
-                ? new DensityFunctions.Mapped(p_208672_, p_208673_, d1, d2)
-                : new DensityFunctions.Mapped(p_208672_, p_208673_, Math.max(0.0, d0), Math.max(d1, d2));
+        public static DensityFunctions.Mapped create(DensityFunctions.Mapped.Type type, DensityFunction input) {
+            double d0 = input.minValue();
+            double d1 = transform(type, d0);
+            double d2 = transform(type, input.maxValue());
+            return type != DensityFunctions.Mapped.Type.ABS && type != DensityFunctions.Mapped.Type.SQUARE
+                ? new DensityFunctions.Mapped(type, input, d1, d2)
+                : new DensityFunctions.Mapped(type, input, Math.max(0.0, d0), Math.max(d1, d2));
         }
 
-        private static double transform(DensityFunctions.Mapped.Type p_208669_, double p_208670_) {
-            return switch (p_208669_) {
-                case ABS -> Math.abs(p_208670_);
-                case SQUARE -> p_208670_ * p_208670_;
-                case CUBE -> p_208670_ * p_208670_ * p_208670_;
-                case HALF_NEGATIVE -> p_208670_ > 0.0 ? p_208670_ : p_208670_ * 0.5;
-                case QUARTER_NEGATIVE -> p_208670_ > 0.0 ? p_208670_ : p_208670_ * 0.25;
+        private static double transform(DensityFunctions.Mapped.Type type, double value) {
+            return switch (type) {
+                case ABS -> Math.abs(value);
+                case SQUARE -> value * value;
+                case CUBE -> value * value * value;
+                case HALF_NEGATIVE -> value > 0.0 ? value : value * 0.5;
+                case QUARTER_NEGATIVE -> value > 0.0 ? value : value * 0.25;
                 case SQUEEZE -> {
-                    double d0 = Mth.clamp(p_208670_, -1.0, 1.0);
+                    double d0 = Mth.clamp(value, -1.0, 1.0);
                     yield d0 / 2.0 - d0 * d0 * d0 / 24.0;
                 }
             };
         }
 
         @Override
-        public double transform(double p_208665_) {
-            return transform(this.type, p_208665_);
+        public double transform(double value) {
+            return transform(this.type, value);
         }
 
-        public DensityFunctions.Mapped mapAll(DensityFunction.Visitor p_208677_) {
-            return create(this.type, this.input.mapAll(p_208677_));
+        public DensityFunctions.Mapped mapAll(DensityFunction.Visitor visitor) {
+            return create(this.type, this.input.mapAll(visitor));
         }
 
         @Override
@@ -648,8 +648,8 @@ public final class DensityFunctions {
                 p_208700_ -> DensityFunctions.Mapped.create(this, p_208700_), DensityFunctions.Mapped::input
             );
 
-            private Type(String p_208697_) {
-                this.name = p_208697_;
+            private Type(String name) {
+                this.name = name;
             }
 
             @Override
@@ -661,13 +661,13 @@ public final class DensityFunctions {
 
     protected static record Marker(DensityFunctions.Marker.Type type, DensityFunction wrapped) implements DensityFunctions.MarkerOrMarked {
         @Override
-        public double compute(DensityFunction.FunctionContext p_208712_) {
-            return this.wrapped.compute(p_208712_);
+        public double compute(DensityFunction.FunctionContext context) {
+            return this.wrapped.compute(context);
         }
 
         @Override
-        public void fillArray(double[] p_208716_, DensityFunction.ContextProvider p_208717_) {
-            this.wrapped.fillArray(p_208716_, p_208717_);
+        public void fillArray(double[] array, DensityFunction.ContextProvider contextProvider) {
+            this.wrapped.fillArray(array, contextProvider);
         }
 
         @Override
@@ -692,8 +692,8 @@ public final class DensityFunctions {
                 p_208740_ -> new DensityFunctions.Marker(this, p_208740_), DensityFunctions.MarkerOrMarked::wrapped
             );
 
-            private Type(String p_208737_) {
-                this.name = p_208737_;
+            private Type(String name) {
+                this.name = name;
             }
 
             @Override
@@ -786,19 +786,19 @@ public final class DensityFunctions {
         public static final KeyDispatchDataCodec<DensityFunctions.Noise> CODEC = DensityFunctions.makeCodec(DATA_CODEC);
 
         @Override
-        public double compute(DensityFunction.FunctionContext p_208800_) {
+        public double compute(DensityFunction.FunctionContext context) {
             return this.noise
-                .getValue((double)p_208800_.blockX() * this.xzScale, (double)p_208800_.blockY() * this.yScale, (double)p_208800_.blockZ() * this.xzScale);
+                .getValue((double)context.blockX() * this.xzScale, (double)context.blockY() * this.yScale, (double)context.blockZ() * this.xzScale);
         }
 
         @Override
-        public void fillArray(double[] p_224079_, DensityFunction.ContextProvider p_224080_) {
-            p_224080_.fillAllDirectly(p_224079_, this);
+        public void fillArray(double[] array, DensityFunction.ContextProvider contextProvider) {
+            contextProvider.fillAllDirectly(array, this);
         }
 
         @Override
-        public DensityFunction mapAll(DensityFunction.Visitor p_224077_) {
-            return p_224077_.apply(new DensityFunctions.Noise(p_224077_.visitNoise(this.noise), this.xzScale, this.yScale));
+        public DensityFunction mapAll(DensityFunction.Visitor visitor) {
+            return visitor.apply(new DensityFunctions.Noise(visitor.visitNoise(this.noise), this.xzScale, this.yScale));
         }
 
         @Override
@@ -821,20 +821,20 @@ public final class DensityFunctions {
         DensityFunction input();
 
         @Override
-        default double compute(DensityFunction.FunctionContext p_208817_) {
-            return this.transform(this.input().compute(p_208817_));
+        default double compute(DensityFunction.FunctionContext context) {
+            return this.transform(this.input().compute(context));
         }
 
         @Override
-        default void fillArray(double[] p_208819_, DensityFunction.ContextProvider p_208820_) {
-            this.input().fillArray(p_208819_, p_208820_);
+        default void fillArray(double[] array, DensityFunction.ContextProvider contextProvider) {
+            this.input().fillArray(array, contextProvider);
 
-            for (int i = 0; i < p_208819_.length; i++) {
-                p_208819_[i] = this.transform(p_208819_[i]);
+            for (int i = 0; i < array.length; i++) {
+                array[i] = this.transform(array[i]);
             }
         }
 
-        double transform(double p_208815_);
+        double transform(double value);
     }
 
     static record RangeChoice(DensityFunction input, double minInclusive, double maxExclusive, DensityFunction whenInRange, DensityFunction whenOutOfRange)
@@ -852,34 +852,34 @@ public final class DensityFunctions {
         public static final KeyDispatchDataCodec<DensityFunctions.RangeChoice> CODEC = DensityFunctions.makeCodec(DATA_CODEC);
 
         @Override
-        public double compute(DensityFunction.FunctionContext p_208839_) {
-            double d0 = this.input.compute(p_208839_);
-            return d0 >= this.minInclusive && d0 < this.maxExclusive ? this.whenInRange.compute(p_208839_) : this.whenOutOfRange.compute(p_208839_);
+        public double compute(DensityFunction.FunctionContext context) {
+            double d0 = this.input.compute(context);
+            return d0 >= this.minInclusive && d0 < this.maxExclusive ? this.whenInRange.compute(context) : this.whenOutOfRange.compute(context);
         }
 
         @Override
-        public void fillArray(double[] p_208843_, DensityFunction.ContextProvider p_208844_) {
-            this.input.fillArray(p_208843_, p_208844_);
+        public void fillArray(double[] array, DensityFunction.ContextProvider contextProvider) {
+            this.input.fillArray(array, contextProvider);
 
-            for (int i = 0; i < p_208843_.length; i++) {
-                double d0 = p_208843_[i];
+            for (int i = 0; i < array.length; i++) {
+                double d0 = array[i];
                 if (d0 >= this.minInclusive && d0 < this.maxExclusive) {
-                    p_208843_[i] = this.whenInRange.compute(p_208844_.forIndex(i));
+                    array[i] = this.whenInRange.compute(contextProvider.forIndex(i));
                 } else {
-                    p_208843_[i] = this.whenOutOfRange.compute(p_208844_.forIndex(i));
+                    array[i] = this.whenOutOfRange.compute(contextProvider.forIndex(i));
                 }
             }
         }
 
         @Override
-        public DensityFunction mapAll(DensityFunction.Visitor p_208841_) {
-            return p_208841_.apply(
+        public DensityFunction mapAll(DensityFunction.Visitor visitor) {
+            return visitor.apply(
                 new DensityFunctions.RangeChoice(
-                    this.input.mapAll(p_208841_),
+                    this.input.mapAll(visitor),
                     this.minInclusive,
                     this.maxExclusive,
-                    this.whenInRange.mapAll(p_208841_),
-                    this.whenOutOfRange.mapAll(p_208841_)
+                    this.whenInRange.mapAll(visitor),
+                    this.whenOutOfRange.mapAll(visitor)
                 )
             );
         }
@@ -976,13 +976,13 @@ public final class DensityFunctions {
             return this.offsetNoise().maxValue() * 4.0;
         }
 
-        default double compute(double p_208918_, double p_208919_, double p_208920_) {
-            return this.offsetNoise().getValue(p_208918_ * 0.25, p_208919_ * 0.25, p_208920_ * 0.25) * 4.0;
+        default double compute(double x, double y, double z) {
+            return this.offsetNoise().getValue(x * 0.25, y * 0.25, z * 0.25) * 4.0;
         }
 
         @Override
-        default void fillArray(double[] p_224103_, DensityFunction.ContextProvider p_224104_) {
-            p_224104_.fillAllDirectly(p_224103_, this);
+        default void fillArray(double[] array, DensityFunction.ContextProvider contextProvider) {
+            contextProvider.fillAllDirectly(array, this);
         }
     }
 
@@ -1003,28 +1003,28 @@ public final class DensityFunctions {
         public static final KeyDispatchDataCodec<DensityFunctions.ShiftedNoise> CODEC = DensityFunctions.makeCodec(DATA_CODEC);
 
         @Override
-        public double compute(DensityFunction.FunctionContext p_208945_) {
-            double d0 = (double)p_208945_.blockX() * this.xzScale + this.shiftX.compute(p_208945_);
-            double d1 = (double)p_208945_.blockY() * this.yScale + this.shiftY.compute(p_208945_);
-            double d2 = (double)p_208945_.blockZ() * this.xzScale + this.shiftZ.compute(p_208945_);
+        public double compute(DensityFunction.FunctionContext context) {
+            double d0 = (double)context.blockX() * this.xzScale + this.shiftX.compute(context);
+            double d1 = (double)context.blockY() * this.yScale + this.shiftY.compute(context);
+            double d2 = (double)context.blockZ() * this.xzScale + this.shiftZ.compute(context);
             return this.noise.getValue(d0, d1, d2);
         }
 
         @Override
-        public void fillArray(double[] p_208956_, DensityFunction.ContextProvider p_208957_) {
-            p_208957_.fillAllDirectly(p_208956_, this);
+        public void fillArray(double[] array, DensityFunction.ContextProvider contextProvider) {
+            contextProvider.fillAllDirectly(array, this);
         }
 
         @Override
-        public DensityFunction mapAll(DensityFunction.Visitor p_208947_) {
-            return p_208947_.apply(
+        public DensityFunction mapAll(DensityFunction.Visitor visitor) {
+            return visitor.apply(
                 new DensityFunctions.ShiftedNoise(
-                    this.shiftX.mapAll(p_208947_),
-                    this.shiftY.mapAll(p_208947_),
-                    this.shiftZ.mapAll(p_208947_),
+                    this.shiftX.mapAll(visitor),
+                    this.shiftY.mapAll(visitor),
+                    this.shiftZ.mapAll(visitor),
                     this.xzScale,
                     this.yScale,
-                    p_208947_.visitNoise(this.noise)
+                    visitor.visitNoise(this.noise)
                 )
             );
         }
@@ -1054,8 +1054,8 @@ public final class DensityFunctions {
         public static final KeyDispatchDataCodec<DensityFunctions.Spline> CODEC = DensityFunctions.makeCodec(DATA_CODEC);
 
         @Override
-        public double compute(DensityFunction.FunctionContext p_211715_) {
-            return (double)this.spline.apply(new DensityFunctions.Spline.Point(p_211715_));
+        public double compute(DensityFunction.FunctionContext context) {
+            return (double)this.spline.apply(new DensityFunctions.Spline.Point(context));
         }
 
         @Override
@@ -1069,13 +1069,13 @@ public final class DensityFunctions {
         }
 
         @Override
-        public void fillArray(double[] p_211722_, DensityFunction.ContextProvider p_211723_) {
-            p_211723_.fillAllDirectly(p_211722_, this);
+        public void fillArray(double[] array, DensityFunction.ContextProvider contextProvider) {
+            contextProvider.fillAllDirectly(array, this);
         }
 
         @Override
-        public DensityFunction mapAll(DensityFunction.Visitor p_211717_) {
-            return p_211717_.apply(new DensityFunctions.Spline(this.spline.mapAll(p_224119_ -> p_224119_.mapAll(p_211717_))));
+        public DensityFunction mapAll(DensityFunction.Visitor visitor) {
+            return visitor.apply(new DensityFunctions.Spline(this.spline.mapAll(p_224119_ -> p_224119_.mapAll(visitor))));
         }
 
         @Override
@@ -1112,8 +1112,8 @@ public final class DensityFunctions {
                 return "Coordinate[" + this.function + "]";
             }
 
-            public float apply(DensityFunctions.Spline.Point p_224130_) {
-                return (float)this.function.value().compute(p_224130_.context());
+            public float apply(DensityFunctions.Spline.Point object) {
+                return (float)this.function.value().compute(object.context());
             }
 
             @Override
@@ -1126,8 +1126,8 @@ public final class DensityFunctions {
                 return this.function.isBound() ? (float)this.function.value().maxValue() : Float.POSITIVE_INFINITY;
             }
 
-            public DensityFunctions.Spline.Coordinate mapAll(DensityFunction.Visitor p_224128_) {
-                return new DensityFunctions.Spline.Coordinate(new Holder.Direct<>(this.function.value().mapAll(p_224128_)));
+            public DensityFunctions.Spline.Coordinate mapAll(DensityFunction.Visitor visitor) {
+                return new DensityFunctions.Spline.Coordinate(new Holder.Direct<>(this.function.value().mapAll(visitor)));
             }
         }
 
@@ -1139,71 +1139,71 @@ public final class DensityFunctions {
         DensityFunction input();
 
         @Override
-        default double compute(DensityFunction.FunctionContext p_209065_) {
-            return this.transform(p_209065_, this.input().compute(p_209065_));
+        default double compute(DensityFunction.FunctionContext context) {
+            return this.transform(context, this.input().compute(context));
         }
 
         @Override
-        default void fillArray(double[] p_209069_, DensityFunction.ContextProvider p_209070_) {
-            this.input().fillArray(p_209069_, p_209070_);
+        default void fillArray(double[] array, DensityFunction.ContextProvider contextProvider) {
+            this.input().fillArray(array, contextProvider);
 
-            for (int i = 0; i < p_209069_.length; i++) {
-                p_209069_[i] = this.transform(p_209070_.forIndex(i), p_209069_[i]);
+            for (int i = 0; i < array.length; i++) {
+                array[i] = this.transform(contextProvider.forIndex(i), array[i]);
             }
         }
 
-        double transform(DensityFunction.FunctionContext p_209066_, double p_209067_);
+        double transform(DensityFunction.FunctionContext context, double value);
     }
 
     interface TwoArgumentSimpleFunction extends DensityFunction {
         Logger LOGGER = LogUtils.getLogger();
 
         static DensityFunctions.TwoArgumentSimpleFunction create(
-            DensityFunctions.TwoArgumentSimpleFunction.Type p_209074_, DensityFunction p_209075_, DensityFunction p_209076_
+            DensityFunctions.TwoArgumentSimpleFunction.Type type, DensityFunction argument1, DensityFunction argument2
         ) {
-            double d0 = p_209075_.minValue();
-            double d1 = p_209076_.minValue();
-            double d2 = p_209075_.maxValue();
-            double d3 = p_209076_.maxValue();
-            if (p_209074_ == DensityFunctions.TwoArgumentSimpleFunction.Type.MIN || p_209074_ == DensityFunctions.TwoArgumentSimpleFunction.Type.MAX) {
+            double d0 = argument1.minValue();
+            double d1 = argument2.minValue();
+            double d2 = argument1.maxValue();
+            double d3 = argument2.maxValue();
+            if (type == DensityFunctions.TwoArgumentSimpleFunction.Type.MIN || type == DensityFunctions.TwoArgumentSimpleFunction.Type.MAX) {
                 boolean flag = d0 >= d3;
                 boolean flag1 = d1 >= d2;
                 if (flag || flag1) {
-                    LOGGER.warn("Creating a " + p_209074_ + " function between two non-overlapping inputs: " + p_209075_ + " and " + p_209076_);
+                    LOGGER.warn("Creating a " + type + " function between two non-overlapping inputs: " + argument1 + " and " + argument2);
                 }
             }
-            double d5 = switch (p_209074_) {
+            double d5 = switch (type) {
                 case ADD -> d0 + d1;
                 case MUL -> d0 > 0.0 && d1 > 0.0 ? d0 * d1 : (d2 < 0.0 && d3 < 0.0 ? d2 * d3 : Math.min(d0 * d3, d2 * d1));
                 case MIN -> Math.min(d0, d1);
                 case MAX -> Math.max(d0, d1);
             };
 
-            double d4 = switch (p_209074_) {
+            double d4 = switch (type) {
                 case ADD -> d2 + d3;
                 case MUL -> d0 > 0.0 && d1 > 0.0 ? d2 * d3 : (d2 < 0.0 && d3 < 0.0 ? d0 * d1 : Math.max(d0 * d1, d2 * d3));
                 case MIN -> Math.min(d2, d3);
                 case MAX -> Math.max(d2, d3);
             };
-            if (p_209074_ == DensityFunctions.TwoArgumentSimpleFunction.Type.MUL || p_209074_ == DensityFunctions.TwoArgumentSimpleFunction.Type.ADD) {
-                if (p_209075_ instanceof DensityFunctions.Constant densityfunctions$constant1) {
+            if (type == DensityFunctions.TwoArgumentSimpleFunction.Type.MUL || type == DensityFunctions.TwoArgumentSimpleFunction.Type.ADD) {
+                if (argument1 instanceof DensityFunctions.Constant densityfunctions$constant1) {
                     return new DensityFunctions.MulOrAdd(
-                        p_209074_ == DensityFunctions.TwoArgumentSimpleFunction.Type.ADD
+                        type == DensityFunctions.TwoArgumentSimpleFunction.Type.ADD
                             ? DensityFunctions.MulOrAdd.Type.ADD
                             : DensityFunctions.MulOrAdd.Type.MUL,
-                        p_209076_,
+                        argument2,
                         d5,
                         d4,
                         densityfunctions$constant1.value
                     );
                 }
 
-                if (p_209076_ instanceof DensityFunctions.Constant densityfunctions$constant) {
+                if (argument2 instanceof DensityFunctions.Constant densityfunctions$constant) {
                     return new DensityFunctions.MulOrAdd(
-                        p_209074_ == DensityFunctions.TwoArgumentSimpleFunction.Type.ADD
+                        type == DensityFunctions.TwoArgumentSimpleFunction.Type.ADD
                             ? DensityFunctions.MulOrAdd.Type.ADD
                             : DensityFunctions.MulOrAdd.Type.MUL,
-                        p_209075_,
+                        argument1,
                         d5,
                         d4,
                         densityfunctions$constant.value
@@ -1211,7 +1211,7 @@ public final class DensityFunctions {
                 }
             }
 
-            return new DensityFunctions.Ap2(p_209074_, p_209075_, p_209076_, d5, d4);
+            return new DensityFunctions.Ap2(type, argument1, argument2, d5, d4);
         }
 
         DensityFunctions.TwoArgumentSimpleFunction.Type type();
@@ -1238,8 +1238,8 @@ public final class DensityFunctions {
             );
             private final String name;
 
-            private Type(String p_209089_) {
-                this.name = p_209089_;
+            private Type(String name) {
+                this.name = name;
             }
 
             @Override
@@ -1265,15 +1265,15 @@ public final class DensityFunctions {
         public static final KeyDispatchDataCodec<DensityFunctions.WeirdScaledSampler> CODEC = DensityFunctions.makeCodec(DATA_CODEC);
 
         @Override
-        public double transform(DensityFunction.FunctionContext p_208440_, double p_208441_) {
-            double d0 = this.rarityValueMapper.mapper.get(p_208441_);
-            return d0 * Math.abs(this.noise.getValue((double)p_208440_.blockX() / d0, (double)p_208440_.blockY() / d0, (double)p_208440_.blockZ() / d0));
+        public double transform(DensityFunction.FunctionContext context, double value) {
+            double d0 = this.rarityValueMapper.mapper.get(value);
+            return d0 * Math.abs(this.noise.getValue((double)context.blockX() / d0, (double)context.blockY() / d0, (double)context.blockZ() / d0));
         }
 
         @Override
-        public DensityFunction mapAll(DensityFunction.Visitor p_208443_) {
-            return p_208443_.apply(
-                new DensityFunctions.WeirdScaledSampler(this.input.mapAll(p_208443_), p_208443_.visitNoise(this.noise), this.rarityValueMapper)
+        public DensityFunction mapAll(DensityFunction.Visitor visitor) {
+            return visitor.apply(
+                new DensityFunctions.WeirdScaledSampler(this.input.mapAll(visitor), visitor.visitNoise(this.noise), this.rarityValueMapper)
             );
         }
 
@@ -1303,10 +1303,10 @@ public final class DensityFunctions {
             final Double2DoubleFunction mapper;
             final double maxRarity;
 
-            private RarityValueMapper(String p_208470_, Double2DoubleFunction p_208471_, double p_208472_) {
-                this.name = p_208470_;
-                this.mapper = p_208471_;
-                this.maxRarity = p_208472_;
+            private RarityValueMapper(String name, Double2DoubleFunction mapper, double maxRarity) {
+                this.name = name;
+                this.mapper = mapper;
+                this.maxRarity = maxRarity;
             }
 
             @Override
@@ -1329,8 +1329,8 @@ public final class DensityFunctions {
         public static final KeyDispatchDataCodec<DensityFunctions.YClampedGradient> CODEC = DensityFunctions.makeCodec(DATA_CODEC);
 
         @Override
-        public double compute(DensityFunction.FunctionContext p_208496_) {
-            return Mth.clampedMap((double)p_208496_.blockY(), (double)this.fromY, (double)this.toY, this.fromValue, this.toValue);
+        public double compute(DensityFunction.FunctionContext context) {
+            return Mth.clampedMap((double)context.blockY(), (double)this.fromY, (double)this.toY, this.fromValue, this.toValue);
         }
 
         @Override

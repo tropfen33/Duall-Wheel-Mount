@@ -11,6 +11,9 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.ValidationContext;
 import org.slf4j.Logger;
 
+/**
+ * A LootItemCondition that refers to another LootItemCondition by its ID.
+ */
 public record ConditionReference(ResourceKey<LootItemCondition> name) implements LootItemCondition {
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final MapCodec<ConditionReference> CODEC = RecordCodecBuilder.mapCodec(
@@ -23,36 +26,39 @@ public record ConditionReference(ResourceKey<LootItemCondition> name) implements
         return LootItemConditions.REFERENCE;
     }
 
+    /**
+     * Validate that this object is used correctly according to the given ValidationContext.
+     */
     @Override
-    public void validate(ValidationContext p_81560_) {
-        if (!p_81560_.allowsReferences()) {
-            p_81560_.reportProblem("Uses reference to " + this.name.location() + ", but references are not allowed");
-        } else if (p_81560_.hasVisitedElement(this.name)) {
-            p_81560_.reportProblem("Condition " + this.name.location() + " is recursively called");
+    public void validate(ValidationContext context) {
+        if (!context.allowsReferences()) {
+            context.reportProblem("Uses reference to " + this.name.location() + ", but references are not allowed");
+        } else if (context.hasVisitedElement(this.name)) {
+            context.reportProblem("Condition " + this.name.location() + " is recursively called");
         } else {
-            LootItemCondition.super.validate(p_81560_);
-            p_81560_.resolver()
+            LootItemCondition.super.validate(context);
+            context.resolver()
                 .get(Registries.PREDICATE, this.name)
                 .ifPresentOrElse(
-                    p_339583_ -> p_339583_.value().validate(p_81560_.enterElement(".{" + this.name.location() + "}", this.name)),
-                    () -> p_81560_.reportProblem("Unknown condition table called " + this.name.location())
+                    p_339583_ -> p_339583_.value().validate(context.enterElement(".{" + this.name.location() + "}", this.name)),
+                    () -> context.reportProblem("Unknown condition table called " + this.name.location())
                 );
         }
     }
 
-    public boolean test(LootContext p_81558_) {
-        LootItemCondition lootitemcondition = p_81558_.getResolver().get(Registries.PREDICATE, this.name).map(Holder.Reference::value).orElse(null);
+    public boolean test(LootContext context) {
+        LootItemCondition lootitemcondition = context.getResolver().get(Registries.PREDICATE, this.name).map(Holder.Reference::value).orElse(null);
         if (lootitemcondition == null) {
             LOGGER.warn("Tried using unknown condition table called {}", this.name.location());
             return false;
         } else {
             LootContext.VisitedEntry<?> visitedentry = LootContext.createVisitedEntry(lootitemcondition);
-            if (p_81558_.pushVisitedElement(visitedentry)) {
+            if (context.pushVisitedElement(visitedentry)) {
                 boolean flag;
                 try {
-                    flag = lootitemcondition.test(p_81558_);
+                    flag = lootitemcondition.test(context);
                 } finally {
-                    p_81558_.popVisitedElement(visitedentry);
+                    context.popVisitedElement(visitedentry);
                 }
 
                 return flag;
@@ -63,7 +69,7 @@ public record ConditionReference(ResourceKey<LootItemCondition> name) implements
         }
     }
 
-    public static LootItemCondition.Builder conditionReference(ResourceKey<LootItemCondition> p_335879_) {
-        return () -> new ConditionReference(p_335879_);
+    public static LootItemCondition.Builder conditionReference(ResourceKey<LootItemCondition> name) {
+        return () -> new ConditionReference(name);
     }
 }

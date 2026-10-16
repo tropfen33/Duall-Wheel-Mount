@@ -24,28 +24,28 @@ public class MetricSampler {
     private double currentValue;
 
     protected MetricSampler(
-        String p_145996_, MetricCategory p_145997_, DoubleSupplier p_145998_, @Nullable Runnable p_145999_, @Nullable MetricSampler.ThresholdTest p_146000_
+        String name, MetricCategory category, DoubleSupplier sampler, @Nullable Runnable beforeTick, @Nullable MetricSampler.ThresholdTest thresholdTest
     ) {
-        this.name = p_145996_;
-        this.category = p_145997_;
-        this.beforeTick = p_145999_;
-        this.sampler = p_145998_;
-        this.thresholdTest = p_146000_;
+        this.name = name;
+        this.category = category;
+        this.beforeTick = beforeTick;
+        this.sampler = sampler;
+        this.thresholdTest = thresholdTest;
         this.values = ByteBufAllocator.DEFAULT.buffer();
         this.ticks = ByteBufAllocator.DEFAULT.buffer();
         this.isRunning = true;
     }
 
-    public static MetricSampler create(String p_146010_, MetricCategory p_146011_, DoubleSupplier p_146012_) {
-        return new MetricSampler(p_146010_, p_146011_, p_146012_, null, null);
+    public static MetricSampler create(String name, MetricCategory category, DoubleSupplier sampler) {
+        return new MetricSampler(name, category, sampler, null, null);
     }
 
-    public static <T> MetricSampler create(String p_146005_, MetricCategory p_146006_, T p_146007_, ToDoubleFunction<T> p_146008_) {
-        return builder(p_146005_, p_146006_, p_146008_, p_146007_).build();
+    public static <T> MetricSampler create(String name, MetricCategory category, T context, ToDoubleFunction<T> sampler) {
+        return builder(name, category, sampler, context).build();
     }
 
-    public static <T> MetricSampler.MetricSamplerBuilder<T> builder(String p_146014_, MetricCategory p_146015_, ToDoubleFunction<T> p_146016_, T p_146017_) {
-        return new MetricSampler.MetricSamplerBuilder<>(p_146014_, p_146015_, p_146016_, p_146017_);
+    public static <T> MetricSampler.MetricSamplerBuilder<T> builder(String name, MetricCategory category, ToDoubleFunction<T> sampler, T context) {
+        return new MetricSampler.MetricSamplerBuilder<>(name, category, sampler, context);
     }
 
     public void onStartTick() {
@@ -58,11 +58,11 @@ public class MetricSampler {
         }
     }
 
-    public void onEndTick(int p_146003_) {
+    public void onEndTick(int tickTime) {
         this.verifyRunning();
         this.currentValue = this.sampler.getAsDouble();
         this.values.writeDouble(this.currentValue);
-        this.ticks.writeInt(p_146003_);
+        this.ticks.writeInt(tickTime);
     }
 
     public void onFinished() {
@@ -113,11 +113,11 @@ public class MetricSampler {
     }
 
     @Override
-    public boolean equals(Object p_146023_) {
-        if (this == p_146023_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        } else if (p_146023_ != null && this.getClass() == p_146023_.getClass()) {
-            MetricSampler metricsampler = (MetricSampler)p_146023_;
+        } else if (other != null && this.getClass() == other.getClass()) {
+            MetricSampler metricsampler = (MetricSampler)other;
             return this.name.equals(metricsampler.name) && this.category.equals(metricsampler.category);
         } else {
             return false;
@@ -139,20 +139,20 @@ public class MetricSampler {
         @Nullable
         private MetricSampler.ThresholdTest thresholdTest;
 
-        public MetricSamplerBuilder(String p_146035_, MetricCategory p_146036_, ToDoubleFunction<T> p_146037_, T p_146038_) {
-            this.name = p_146035_;
-            this.category = p_146036_;
-            this.sampler = () -> p_146037_.applyAsDouble(p_146038_);
-            this.context = p_146038_;
+        public MetricSamplerBuilder(String name, MetricCategory category, ToDoubleFunction<T> sampler, T context) {
+            this.name = name;
+            this.category = category;
+            this.sampler = () -> sampler.applyAsDouble(context);
+            this.context = context;
         }
 
-        public MetricSampler.MetricSamplerBuilder<T> withBeforeTick(Consumer<T> p_146043_) {
-            this.beforeTick = () -> p_146043_.accept(this.context);
+        public MetricSampler.MetricSamplerBuilder<T> withBeforeTick(Consumer<T> beforeTick) {
+            this.beforeTick = () -> beforeTick.accept(this.context);
             return this;
         }
 
-        public MetricSampler.MetricSamplerBuilder<T> withThresholdAlert(MetricSampler.ThresholdTest p_146041_) {
-            this.thresholdTest = p_146041_;
+        public MetricSampler.MetricSamplerBuilder<T> withThresholdAlert(MetricSampler.ThresholdTest thresholdTest) {
+            this.thresholdTest = thresholdTest;
             return this;
         }
 
@@ -166,14 +166,14 @@ public class MetricSampler {
         private final int firstTick;
         private final int lastTick;
 
-        public SamplerResult(int p_146053_, int p_146054_, Int2DoubleMap p_146055_) {
-            this.firstTick = p_146053_;
-            this.lastTick = p_146054_;
-            this.recording = p_146055_;
+        public SamplerResult(int firstTick, int lastTick, Int2DoubleMap recording) {
+            this.firstTick = firstTick;
+            this.lastTick = lastTick;
+            this.recording = recording;
         }
 
-        public double valueAtTick(int p_146058_) {
-            return this.recording.get(p_146058_);
+        public double valueAtTick(int tick) {
+            return this.recording.get(tick);
         }
 
         public int getFirstTick() {
@@ -186,27 +186,27 @@ public class MetricSampler {
     }
 
     public interface ThresholdTest {
-        boolean test(double p_146060_);
+        boolean test(double value);
     }
 
     public static class ValueIncreasedByPercentage implements MetricSampler.ThresholdTest {
         private final float percentageIncreaseThreshold;
         private double previousValue = Double.MIN_VALUE;
 
-        public ValueIncreasedByPercentage(float p_146064_) {
-            this.percentageIncreaseThreshold = p_146064_;
+        public ValueIncreasedByPercentage(float percentageIncreaseThreshold) {
+            this.percentageIncreaseThreshold = percentageIncreaseThreshold;
         }
 
         @Override
-        public boolean test(double p_146066_) {
+        public boolean test(double value) {
             boolean flag;
-            if (this.previousValue != Double.MIN_VALUE && !(p_146066_ <= this.previousValue)) {
-                flag = (p_146066_ - this.previousValue) / this.previousValue >= (double)this.percentageIncreaseThreshold;
+            if (this.previousValue != Double.MIN_VALUE && !(value <= this.previousValue)) {
+                flag = (value - this.previousValue) / this.previousValue >= (double)this.percentageIncreaseThreshold;
             } else {
                 flag = false;
             }
 
-            this.previousValue = p_146066_;
+            this.previousValue = value;
             return flag;
         }
     }

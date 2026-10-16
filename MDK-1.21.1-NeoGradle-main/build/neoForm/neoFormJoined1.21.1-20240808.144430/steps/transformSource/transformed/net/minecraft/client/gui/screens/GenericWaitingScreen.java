@@ -24,20 +24,20 @@ public class GenericWaitingScreen extends Screen {
     private Button button;
     private int disableButtonTicks;
 
-    public static GenericWaitingScreen createWaiting(Component p_240310_, Component p_240311_, Runnable p_240312_) {
-        return new GenericWaitingScreen(p_240310_, null, p_240311_, p_240312_, 0);
+    public static GenericWaitingScreen createWaiting(Component title, Component buttonLabel, Runnable buttonCallback) {
+        return new GenericWaitingScreen(title, null, buttonLabel, buttonCallback, 0);
     }
 
-    public static GenericWaitingScreen createCompleted(Component p_240291_, Component p_240292_, Component p_240293_, Runnable p_240294_) {
-        return new GenericWaitingScreen(p_240291_, p_240292_, p_240293_, p_240294_, 20);
+    public static GenericWaitingScreen createCompleted(Component title, Component messageText, Component buttonLabel, Runnable buttonCallback) {
+        return new GenericWaitingScreen(title, messageText, buttonLabel, buttonCallback, 20);
     }
 
-    protected GenericWaitingScreen(Component p_240300_, @Nullable Component p_240301_, Component p_240302_, Runnable p_240303_, int p_240304_) {
-        super(p_240300_);
-        this.messageText = p_240301_;
-        this.buttonLabel = p_240302_;
-        this.buttonCallback = p_240303_;
-        this.disableButtonTicks = p_240304_;
+    protected GenericWaitingScreen(Component title, @Nullable Component messageText, Component buttonLabel, Runnable buttonCallback, int disableButtonTicks) {
+        super(title);
+        this.messageText = messageText;
+        this.buttonLabel = buttonLabel;
+        this.buttonCallback = buttonCallback;
+        this.disableButtonTicks = disableButtonTicks;
     }
 
     @Override
@@ -66,15 +66,23 @@ public class GenericWaitingScreen extends Screen {
         this.button.active = this.disableButtonTicks == 0;
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283537_, int p_239719_, int p_239720_, float p_239721_) {
-        super.render(p_283537_, p_239719_, p_239720_, p_239721_);
-        p_283537_.drawCenteredString(this.font, this.title, this.width / 2, 80, 16777215);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 80, 16777215);
         if (this.message == null) {
             String s = LoadingDotsText.get(Util.getMillis());
-            p_283537_.drawCenteredString(this.font, s, this.width / 2, 120, 10526880);
+            guiGraphics.drawCenteredString(this.font, s, this.width / 2, 120, 10526880);
         } else {
-            this.message.renderCentered(p_283537_, this.width / 2, 120);
+            this.message.renderCentered(guiGraphics, this.width / 2, 120);
         }
     }
 

@@ -21,8 +21,8 @@ public class JUnitLikeTestReporter implements TestReporter {
     private final Stopwatch stopwatch;
     private final File destination;
 
-    public JUnitLikeTestReporter(File p_177664_) throws ParserConfigurationException {
-        this.destination = p_177664_;
+    public JUnitLikeTestReporter(File destination) throws ParserConfigurationException {
+        this.destination = destination;
         this.document = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         this.testSuite = this.document.createElement("testsuite");
         Element element = this.document.createElement("testsuite");
@@ -32,29 +32,29 @@ public class JUnitLikeTestReporter implements TestReporter {
         this.stopwatch = Stopwatch.createStarted();
     }
 
-    private Element createTestCase(GameTestInfo p_177671_, String p_177672_) {
+    private Element createTestCase(GameTestInfo testInfo, String name) {
         Element element = this.document.createElement("testcase");
-        element.setAttribute("name", p_177672_);
-        element.setAttribute("classname", p_177671_.getStructureName());
-        element.setAttribute("time", String.valueOf((double)p_177671_.getRunTime() / 1000.0));
+        element.setAttribute("name", name);
+        element.setAttribute("classname", testInfo.getStructureName());
+        element.setAttribute("time", String.valueOf((double)testInfo.getRunTime() / 1000.0));
         this.testSuite.appendChild(element);
         return element;
     }
 
     @Override
-    public void onTestFailed(GameTestInfo p_177669_) {
-        String s = p_177669_.getTestName();
-        String s1 = p_177669_.getError().getMessage();
-        Element element = this.document.createElement(p_177669_.isRequired() ? "failure" : "skipped");
-        element.setAttribute("message", "(" + p_177669_.getStructureBlockPos().toShortString() + ") " + s1);
-        Element element1 = this.createTestCase(p_177669_, s);
+    public void onTestFailed(GameTestInfo testInfo) {
+        String s = testInfo.getTestName();
+        String s1 = testInfo.getError().getMessage();
+        Element element = this.document.createElement(testInfo.isRequired() ? "failure" : "skipped");
+        element.setAttribute("message", "(" + testInfo.getStructureBlockPos().toShortString() + ") " + s1);
+        Element element1 = this.createTestCase(testInfo, s);
         element1.appendChild(element);
     }
 
     @Override
-    public void onTestSuccess(GameTestInfo p_177674_) {
-        String s = p_177674_.getTestName();
-        this.createTestCase(p_177674_, s);
+    public void onTestSuccess(GameTestInfo testInfo) {
+        String s = testInfo.getTestName();
+        this.createTestCase(testInfo, s);
     }
 
     @Override
@@ -69,11 +69,11 @@ public class JUnitLikeTestReporter implements TestReporter {
         }
     }
 
-    public void save(File p_177667_) throws TransformerException {
+    public void save(File destination) throws TransformerException {
         TransformerFactory transformerfactory = TransformerFactory.newInstance();
         Transformer transformer = transformerfactory.newTransformer();
         DOMSource domsource = new DOMSource(this.document);
-        StreamResult streamresult = new StreamResult(p_177667_);
+        StreamResult streamresult = new StreamResult(destination);
         transformer.transform(domsource, streamresult);
     }
 }

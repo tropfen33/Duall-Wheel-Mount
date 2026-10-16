@@ -12,20 +12,20 @@ public class ClientboundPlayerCombatEndPacket implements Packet<ClientGamePacket
     );
     private final int duration;
 
-    public ClientboundPlayerCombatEndPacket(CombatTracker p_179040_) {
-        this(p_179040_.getCombatDuration());
+    public ClientboundPlayerCombatEndPacket(CombatTracker combatTracker) {
+        this(combatTracker.getCombatDuration());
     }
 
-    public ClientboundPlayerCombatEndPacket(int p_289544_) {
-        this.duration = p_289544_;
+    public ClientboundPlayerCombatEndPacket(int duration) {
+        this.duration = duration;
     }
 
-    private ClientboundPlayerCombatEndPacket(FriendlyByteBuf p_179042_) {
-        this.duration = p_179042_.readVarInt();
+    private ClientboundPlayerCombatEndPacket(FriendlyByteBuf buffer) {
+        this.duration = buffer.readVarInt();
     }
 
-    private void write(FriendlyByteBuf p_179044_) {
-        p_179044_.writeVarInt(this.duration);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.duration);
     }
 
     @Override
@@ -33,7 +33,10 @@ public class ClientboundPlayerCombatEndPacket implements Packet<ClientGamePacket
         return GamePacketTypes.CLIENTBOUND_PLAYER_COMBAT_END;
     }
 
-    public void handle(ClientGamePacketListener p_179048_) {
-        p_179048_.handlePlayerCombatEnd(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handlePlayerCombatEnd(this);
     }
 }

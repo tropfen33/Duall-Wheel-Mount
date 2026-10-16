@@ -21,8 +21,8 @@ public record ArmorMaterial(
 ) {
     public static final Codec<Holder<ArmorMaterial>> CODEC = BuiltInRegistries.ARMOR_MATERIAL.holderByNameCodec();
 
-    public int getDefense(ArmorItem.Type p_324094_) {
-        return this.defense.getOrDefault(p_324094_, 0);
+    public int getDefense(ArmorItem.Type type) {
+        return this.defense.getOrDefault(type, 0);
     }
 
     public static final class Layer {
@@ -32,25 +32,25 @@ public record ArmorMaterial(
         private final ResourceLocation innerTexture;
         private final ResourceLocation outerTexture;
 
-        public Layer(ResourceLocation p_324274_, String p_324446_, boolean p_324406_) {
-            this.assetName = p_324274_;
-            this.suffix = p_324446_;
-            this.dyeable = p_324406_;
+        public Layer(ResourceLocation assetName, String suffix, boolean dyeable) {
+            this.assetName = assetName;
+            this.suffix = suffix;
+            this.dyeable = dyeable;
             this.innerTexture = this.resolveTexture(true);
             this.outerTexture = this.resolveTexture(false);
         }
 
-        public Layer(ResourceLocation p_323826_) {
-            this(p_323826_, "", false);
+        public Layer(ResourceLocation assetName) {
+            this(assetName, "", false);
         }
 
-        private ResourceLocation resolveTexture(boolean p_324124_) {
+        private ResourceLocation resolveTexture(boolean innerTexture) {
             return this.assetName
-                .withPath(p_324187_ -> "textures/models/armor/" + this.assetName.getPath() + "_layer_" + (p_324124_ ? 2 : 1) + this.suffix + ".png");
+                .withPath(p_324187_ -> "textures/models/armor/" + this.assetName.getPath() + "_layer_" + (innerTexture ? 2 : 1) + this.suffix + ".png");
         }
 
-        public ResourceLocation texture(boolean p_323901_) {
-            return p_323901_ ? this.innerTexture : this.outerTexture;
+        public ResourceLocation texture(boolean innerTexture) {
+            return innerTexture ? this.innerTexture : this.outerTexture;
         }
 
         public boolean dyeable() {

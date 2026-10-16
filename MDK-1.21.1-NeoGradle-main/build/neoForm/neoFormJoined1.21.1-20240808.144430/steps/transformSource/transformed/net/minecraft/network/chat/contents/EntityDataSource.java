@@ -27,9 +27,9 @@ public record EntityDataSource(String selectorPattern, @Nullable EntitySelector 
     }
 
     @Nullable
-    private static EntitySelector compileSelector(String p_237336_) {
+    private static EntitySelector compileSelector(String selectorPattern) {
         try {
-            EntitySelectorParser entityselectorparser = new EntitySelectorParser(new StringReader(p_237336_), true);
+            EntitySelectorParser entityselectorparser = new EntitySelectorParser(new StringReader(selectorPattern), true);
             return entityselectorparser.parse();
         } catch (CommandSyntaxException commandsyntaxexception) {
             return null;
@@ -37,9 +37,9 @@ public record EntityDataSource(String selectorPattern, @Nullable EntitySelector 
     }
 
     @Override
-    public Stream<CompoundTag> getData(CommandSourceStack p_237341_) throws CommandSyntaxException {
+    public Stream<CompoundTag> getData(CommandSourceStack source) throws CommandSyntaxException {
         if (this.compiledSelector != null) {
-            List<? extends Entity> list = this.compiledSelector.findEntities(p_237341_);
+            List<? extends Entity> list = this.compiledSelector.findEntities(source);
             return list.stream().map(NbtPredicate::getEntityTagToCompare);
         } else {
             return Stream.empty();
@@ -57,11 +57,11 @@ public record EntityDataSource(String selectorPattern, @Nullable EntitySelector 
     }
 
     @Override
-    public boolean equals(Object p_237339_) {
-        if (this == p_237339_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            if (p_237339_ instanceof EntityDataSource entitydatasource && this.selectorPattern.equals(entitydatasource.selectorPattern)) {
+            if (other instanceof EntityDataSource entitydatasource && this.selectorPattern.equals(entitydatasource.selectorPattern)) {
                 return true;
             }
 

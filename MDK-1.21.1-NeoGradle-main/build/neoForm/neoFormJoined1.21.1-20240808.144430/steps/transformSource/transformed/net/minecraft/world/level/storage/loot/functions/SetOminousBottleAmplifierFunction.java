@@ -22,9 +22,9 @@ public class SetOminousBottleAmplifierFunction extends LootItemConditionalFuncti
     );
     private final NumberProvider amplifierGenerator;
 
-    private SetOminousBottleAmplifierFunction(List<LootItemCondition> p_338757_, NumberProvider p_338865_) {
-        super(p_338757_);
-        this.amplifierGenerator = p_338865_;
+    private SetOminousBottleAmplifierFunction(List<LootItemCondition> conditions, NumberProvider amplifierGenerator) {
+        super(conditions);
+        this.amplifierGenerator = amplifierGenerator;
     }
 
     @Override
@@ -37,18 +37,21 @@ public class SetOminousBottleAmplifierFunction extends LootItemConditionalFuncti
         return LootItemFunctions.SET_OMINOUS_BOTTLE_AMPLIFIER;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_338554_, LootContext p_338336_) {
-        int i = Mth.clamp(this.amplifierGenerator.getInt(p_338336_), 0, 4);
-        p_338554_.set(DataComponents.OMINOUS_BOTTLE_AMPLIFIER, i);
-        return p_338554_;
+    public ItemStack run(ItemStack stack, LootContext context) {
+        int i = Mth.clamp(this.amplifierGenerator.getInt(context), 0, 4);
+        stack.set(DataComponents.OMINOUS_BOTTLE_AMPLIFIER, i);
+        return stack;
     }
 
     public NumberProvider amplifier() {
         return this.amplifierGenerator;
     }
 
-    public static LootItemConditionalFunction.Builder<?> setAmplifier(NumberProvider p_338338_) {
-        return simpleBuilder(p_338611_ -> new SetOminousBottleAmplifierFunction(p_338611_, p_338338_));
+    public static LootItemConditionalFunction.Builder<?> setAmplifier(NumberProvider amplifier) {
+        return simpleBuilder(p_338611_ -> new SetOminousBottleAmplifierFunction(p_338611_, amplifier));
     }
 }

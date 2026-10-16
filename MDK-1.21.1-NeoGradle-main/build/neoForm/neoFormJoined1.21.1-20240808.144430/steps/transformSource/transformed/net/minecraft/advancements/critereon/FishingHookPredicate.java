@@ -18,8 +18,8 @@ public record FishingHookPredicate(Optional<Boolean> inOpenWater) implements Ent
                 .apply(p_337364_, FishingHookPredicate::new)
     );
 
-    public static FishingHookPredicate inOpenWater(boolean p_39767_) {
-        return new FishingHookPredicate(Optional.of(p_39767_));
+    public static FishingHookPredicate inOpenWater(boolean inOpenWater) {
+        return new FishingHookPredicate(Optional.of(inOpenWater));
     }
 
     @Override
@@ -28,11 +28,11 @@ public record FishingHookPredicate(Optional<Boolean> inOpenWater) implements Ent
     }
 
     @Override
-    public boolean matches(Entity p_219716_, ServerLevel p_219717_, @Nullable Vec3 p_219718_) {
+    public boolean matches(Entity entity, ServerLevel level, @Nullable Vec3 position) {
         if (this.inOpenWater.isEmpty()) {
             return true;
         } else {
-            return p_219716_ instanceof FishingHook fishinghook ? this.inOpenWater.get() == fishinghook.isOpenWaterFishing() : false;
+            return entity instanceof FishingHook fishinghook ? this.inOpenWater.get() == fishinghook.isOpenWaterFishing() : false;
         }
     }
 }

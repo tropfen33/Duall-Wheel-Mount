@@ -29,48 +29,48 @@ public class TrimMaterials {
     public static final ResourceKey<TrimMaterial> LAPIS = registryKey("lapis");
     public static final ResourceKey<TrimMaterial> AMETHYST = registryKey("amethyst");
 
-    public static void bootstrap(BootstrapContext<TrimMaterial> p_321806_) {
-        register(p_321806_, QUARTZ, Items.QUARTZ, Style.EMPTY.withColor(14931140), 0.1F);
-        register(p_321806_, IRON, Items.IRON_INGOT, Style.EMPTY.withColor(15527148), 0.2F, Map.of(ArmorMaterials.IRON, "iron_darker"));
-        register(p_321806_, NETHERITE, Items.NETHERITE_INGOT, Style.EMPTY.withColor(6445145), 0.3F, Map.of(ArmorMaterials.NETHERITE, "netherite_darker"));
-        register(p_321806_, REDSTONE, Items.REDSTONE, Style.EMPTY.withColor(9901575), 0.4F);
-        register(p_321806_, COPPER, Items.COPPER_INGOT, Style.EMPTY.withColor(11823181), 0.5F);
-        register(p_321806_, GOLD, Items.GOLD_INGOT, Style.EMPTY.withColor(14594349), 0.6F, Map.of(ArmorMaterials.GOLD, "gold_darker"));
-        register(p_321806_, EMERALD, Items.EMERALD, Style.EMPTY.withColor(1155126), 0.7F);
-        register(p_321806_, DIAMOND, Items.DIAMOND, Style.EMPTY.withColor(7269586), 0.8F, Map.of(ArmorMaterials.DIAMOND, "diamond_darker"));
-        register(p_321806_, LAPIS, Items.LAPIS_LAZULI, Style.EMPTY.withColor(4288151), 0.9F);
-        register(p_321806_, AMETHYST, Items.AMETHYST_SHARD, Style.EMPTY.withColor(10116294), 1.0F);
+    public static void bootstrap(BootstrapContext<TrimMaterial> context) {
+        register(context, QUARTZ, Items.QUARTZ, Style.EMPTY.withColor(14931140), 0.1F);
+        register(context, IRON, Items.IRON_INGOT, Style.EMPTY.withColor(15527148), 0.2F, Map.of(ArmorMaterials.IRON, "iron_darker"));
+        register(context, NETHERITE, Items.NETHERITE_INGOT, Style.EMPTY.withColor(6445145), 0.3F, Map.of(ArmorMaterials.NETHERITE, "netherite_darker"));
+        register(context, REDSTONE, Items.REDSTONE, Style.EMPTY.withColor(9901575), 0.4F);
+        register(context, COPPER, Items.COPPER_INGOT, Style.EMPTY.withColor(11823181), 0.5F);
+        register(context, GOLD, Items.GOLD_INGOT, Style.EMPTY.withColor(14594349), 0.6F, Map.of(ArmorMaterials.GOLD, "gold_darker"));
+        register(context, EMERALD, Items.EMERALD, Style.EMPTY.withColor(1155126), 0.7F);
+        register(context, DIAMOND, Items.DIAMOND, Style.EMPTY.withColor(7269586), 0.8F, Map.of(ArmorMaterials.DIAMOND, "diamond_darker"));
+        register(context, LAPIS, Items.LAPIS_LAZULI, Style.EMPTY.withColor(4288151), 0.9F);
+        register(context, AMETHYST, Items.AMETHYST_SHARD, Style.EMPTY.withColor(10116294), 1.0F);
     }
 
-    public static Optional<Holder.Reference<TrimMaterial>> getFromIngredient(HolderLookup.Provider p_335701_, ItemStack p_267327_) {
-        return p_335701_.lookupOrThrow(Registries.TRIM_MATERIAL).listElements().filter(p_266876_ -> p_267327_.is(p_266876_.value().ingredient())).findFirst();
+    public static Optional<Holder.Reference<TrimMaterial>> getFromIngredient(HolderLookup.Provider regustries, ItemStack ingredient) {
+        return regustries.lookupOrThrow(Registries.TRIM_MATERIAL).listElements().filter(p_266876_ -> ingredient.is(p_266876_.value().ingredient())).findFirst();
     }
 
     private static void register(
-        BootstrapContext<TrimMaterial> p_321637_, ResourceKey<TrimMaterial> p_268293_, Item p_268156_, Style p_268174_, float p_268274_
+        BootstrapContext<TrimMaterial> context, ResourceKey<TrimMaterial> materialKey, Item ingredient, Style style, float itemModelIndex
     ) {
-        register(p_321637_, p_268293_, p_268156_, p_268174_, p_268274_, Map.of());
+        register(context, materialKey, ingredient, style, itemModelIndex, Map.of());
     }
 
     private static void register(
-        BootstrapContext<TrimMaterial> p_321693_,
-        ResourceKey<TrimMaterial> p_268139_,
-        Item p_268311_,
-        Style p_268232_,
-        float p_268197_,
-        Map<Holder<ArmorMaterial>, String> p_268352_
+        BootstrapContext<TrimMaterial> context,
+        ResourceKey<TrimMaterial> materialKey,
+        Item ingredient,
+        Style style,
+        float itemModelIndex,
+        Map<Holder<ArmorMaterial>, String> overrideArmorMaterials
     ) {
         TrimMaterial trimmaterial = TrimMaterial.create(
-            p_268139_.location().getPath(),
-            p_268311_,
-            p_268197_,
-            Component.translatable(Util.makeDescriptionId("trim_material", p_268139_.location())).withStyle(p_268232_),
-            p_268352_
+            materialKey.location().getPath(),
+            ingredient,
+            itemModelIndex,
+            Component.translatable(Util.makeDescriptionId("trim_material", materialKey.location())).withStyle(style),
+            overrideArmorMaterials
         );
-        p_321693_.register(p_268139_, trimmaterial);
+        context.register(materialKey, trimmaterial);
     }
 
-    private static ResourceKey<TrimMaterial> registryKey(String p_266965_) {
-        return ResourceKey.create(Registries.TRIM_MATERIAL, ResourceLocation.withDefaultNamespace(p_266965_));
+    private static ResourceKey<TrimMaterial> registryKey(String key) {
+        return ResourceKey.create(Registries.TRIM_MATERIAL, ResourceLocation.withDefaultNamespace(key));
     }
 }

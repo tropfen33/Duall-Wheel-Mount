@@ -26,7 +26,7 @@ public record DebugStickState(Map<Holder<Block>, Property<?>> properties) {
         )
         .xmap(DebugStickState::new, DebugStickState::properties);
 
-    public DebugStickState withProperty(Holder<Block> p_331264_, Property<?> p_330373_) {
-        return new DebugStickState(Util.copyAndPut(this.properties, p_331264_, p_330373_));
+    public DebugStickState withProperty(Holder<Block> block, Property<?> property) {
+        return new DebugStickState(Util.copyAndPut(this.properties, block, property));
     }
 }

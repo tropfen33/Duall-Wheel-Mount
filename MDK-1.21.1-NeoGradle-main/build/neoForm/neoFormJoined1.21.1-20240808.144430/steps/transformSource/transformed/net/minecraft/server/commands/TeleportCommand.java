@@ -37,8 +37,8 @@ public class TeleportCommand {
         Component.translatable("commands.teleport.invalidPosition")
     );
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_139009_) {
-        LiteralCommandNode<CommandSourceStack> literalcommandnode = p_139009_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        LiteralCommandNode<CommandSourceStack> literalcommandnode = dispatcher.register(
             Commands.literal("teleport")
                 .requires(p_139039_ -> p_139039_.hasPermission(2))
                 .then(
@@ -154,88 +154,88 @@ public class TeleportCommand {
                         )
                 )
         );
-        p_139009_.register(Commands.literal("tp").requires(p_139013_ -> p_139013_.hasPermission(2)).redirect(literalcommandnode));
+        dispatcher.register(Commands.literal("tp").requires(p_139013_ -> p_139013_.hasPermission(2)).redirect(literalcommandnode));
     }
 
-    private static int teleportToEntity(CommandSourceStack p_139033_, Collection<? extends Entity> p_139034_, Entity p_139035_) throws CommandSyntaxException {
-        for (Entity entity : p_139034_) {
+    private static int teleportToEntity(CommandSourceStack source, Collection<? extends Entity> targets, Entity destination) throws CommandSyntaxException {
+        for (Entity entity : targets) {
             performTeleport(
-                p_139033_,
+                source,
                 entity,
-                (ServerLevel)p_139035_.level(),
-                p_139035_.getX(),
-                p_139035_.getY(),
-                p_139035_.getZ(),
+                (ServerLevel)destination.level(),
+                destination.getX(),
+                destination.getY(),
+                destination.getZ(),
                 EnumSet.noneOf(RelativeMovement.class),
-                p_139035_.getYRot(),
-                p_139035_.getXRot(),
+                destination.getYRot(),
+                destination.getXRot(),
                 null
             );
         }
 
-        if (p_139034_.size() == 1) {
-            p_139033_.sendSuccess(
+        if (targets.size() == 1) {
+            source.sendSuccess(
                 () -> Component.translatable(
-                        "commands.teleport.success.entity.single", p_139034_.iterator().next().getDisplayName(), p_139035_.getDisplayName()
+                        "commands.teleport.success.entity.single", targets.iterator().next().getDisplayName(), destination.getDisplayName()
                     ),
                 true
             );
         } else {
-            p_139033_.sendSuccess(() -> Component.translatable("commands.teleport.success.entity.multiple", p_139034_.size(), p_139035_.getDisplayName()), true);
+            source.sendSuccess(() -> Component.translatable("commands.teleport.success.entity.multiple", targets.size(), destination.getDisplayName()), true);
         }
 
-        return p_139034_.size();
+        return targets.size();
     }
 
     private static int teleportToPos(
-        CommandSourceStack p_139026_,
-        Collection<? extends Entity> p_139027_,
-        ServerLevel p_139028_,
-        Coordinates p_139029_,
-        @Nullable Coordinates p_139030_,
-        @Nullable TeleportCommand.LookAt p_139031_
+        CommandSourceStack source,
+        Collection<? extends Entity> targets,
+        ServerLevel level,
+        Coordinates position,
+        @Nullable Coordinates rotation,
+        @Nullable TeleportCommand.LookAt facing
     ) throws CommandSyntaxException {
-        Vec3 vec3 = p_139029_.getPosition(p_139026_);
-        Vec2 vec2 = p_139030_ == null ? null : p_139030_.getRotation(p_139026_);
+        Vec3 vec3 = position.getPosition(source);
+        Vec2 vec2 = rotation == null ? null : rotation.getRotation(source);
         Set<RelativeMovement> set = EnumSet.noneOf(RelativeMovement.class);
-        if (p_139029_.isXRelative()) {
+        if (position.isXRelative()) {
             set.add(RelativeMovement.X);
         }
 
-        if (p_139029_.isYRelative()) {
+        if (position.isYRelative()) {
             set.add(RelativeMovement.Y);
         }
 
-        if (p_139029_.isZRelative()) {
+        if (position.isZRelative()) {
             set.add(RelativeMovement.Z);
         }
 
-        if (p_139030_ == null) {
+        if (rotation == null) {
             set.add(RelativeMovement.X_ROT);
             set.add(RelativeMovement.Y_ROT);
         } else {
-            if (p_139030_.isXRelative()) {
+            if (rotation.isXRelative()) {
                 set.add(RelativeMovement.X_ROT);
             }
 
-            if (p_139030_.isYRelative()) {
+            if (rotation.isYRelative()) {
                 set.add(RelativeMovement.Y_ROT);
             }
         }
 
-        for (Entity entity : p_139027_) {
-            if (p_139030_ == null) {
-                performTeleport(p_139026_, entity, p_139028_, vec3.x, vec3.y, vec3.z, set, entity.getYRot(), entity.getXRot(), p_139031_);
+        for (Entity entity : targets) {
+            if (rotation == null) {
+                performTeleport(source, entity, level, vec3.x, vec3.y, vec3.z, set, entity.getYRot(), entity.getXRot(), facing);
             } else {
-                performTeleport(p_139026_, entity, p_139028_, vec3.x, vec3.y, vec3.z, set, vec2.y, vec2.x, p_139031_);
+                performTeleport(source, entity, level, vec3.x, vec3.y, vec3.z, set, vec2.y, vec2.x, facing);
             }
         }
 
-        if (p_139027_.size() == 1) {
-            p_139026_.sendSuccess(
+        if (targets.size() == 1) {
+            source.sendSuccess(
                 () -> Component.translatable(
                         "commands.teleport.success.location.single",
-                        p_139027_.iterator().next().getDisplayName(),
+                        targets.iterator().next().getDisplayName(),
                         formatDouble(vec3.x),
                         formatDouble(vec3.y),
                         formatDouble(vec3.z)
@@ -243,58 +243,58 @@ public class TeleportCommand {
                 true
             );
         } else {
-            p_139026_.sendSuccess(
+            source.sendSuccess(
                 () -> Component.translatable(
-                        "commands.teleport.success.location.multiple", p_139027_.size(), formatDouble(vec3.x), formatDouble(vec3.y), formatDouble(vec3.z)
+                        "commands.teleport.success.location.multiple", targets.size(), formatDouble(vec3.x), formatDouble(vec3.y), formatDouble(vec3.z)
                     ),
                 true
             );
         }
 
-        return p_139027_.size();
+        return targets.size();
     }
 
-    private static String formatDouble(double p_142776_) {
-        return String.format(Locale.ROOT, "%f", p_142776_);
+    private static String formatDouble(double value) {
+        return String.format(Locale.ROOT, "%f", value);
     }
 
     private static void performTeleport(
-        CommandSourceStack p_139015_,
-        Entity p_139016_,
-        ServerLevel p_139017_,
-        double p_139018_,
-        double p_139019_,
-        double p_139020_,
-        Set<RelativeMovement> p_139021_,
-        float p_139022_,
-        float p_139023_,
-        @Nullable TeleportCommand.LookAt p_139024_
+        CommandSourceStack source,
+        Entity entity,
+        ServerLevel level,
+        double x,
+        double y,
+        double z,
+        Set<RelativeMovement> relativeList,
+        float yaw,
+        float pitch,
+        @Nullable TeleportCommand.LookAt facing
     ) throws CommandSyntaxException {
-        net.neoforged.neoforge.event.entity.EntityTeleportEvent.TeleportCommand event = net.neoforged.neoforge.event.EventHooks.onEntityTeleportCommand(p_139016_, p_139018_, p_139019_, p_139020_);
+        net.neoforged.neoforge.event.entity.EntityTeleportEvent.TeleportCommand event = net.neoforged.neoforge.event.EventHooks.onEntityTeleportCommand(entity, x, y, z);
         if (event.isCanceled()) {
              return;
         }
-        p_139018_ = event.getTargetX();
-        p_139019_ = event.getTargetY();
-        p_139020_ = event.getTargetZ();
+        x = event.getTargetX();
+        y = event.getTargetY();
+        z = event.getTargetZ();
 
-        BlockPos blockpos = BlockPos.containing(p_139018_, p_139019_, p_139020_);
+        BlockPos blockpos = BlockPos.containing(x, y, z);
         if (!Level.isInSpawnableBounds(blockpos)) {
             throw INVALID_POSITION.create();
         } else {
-            float f = Mth.wrapDegrees(p_139022_);
-            float f1 = Mth.wrapDegrees(p_139023_);
-            if (p_139016_.teleportTo(p_139017_, p_139018_, p_139019_, p_139020_, p_139021_, f, f1)) {
-                if (p_139024_ != null) {
-                    p_139024_.perform(p_139015_, p_139016_);
+            float f = Mth.wrapDegrees(yaw);
+            float f1 = Mth.wrapDegrees(pitch);
+            if (entity.teleportTo(level, x, y, z, relativeList, f, f1)) {
+                if (facing != null) {
+                    facing.perform(source, entity);
                 }
 
-                if (!(p_139016_ instanceof LivingEntity livingentity) || !livingentity.isFallFlying()) {
-                    p_139016_.setDeltaMovement(p_139016_.getDeltaMovement().multiply(1.0, 0.0, 1.0));
-                    p_139016_.setOnGround(true);
+                if (!(entity instanceof LivingEntity livingentity) || !livingentity.isFallFlying()) {
+                    entity.setDeltaMovement(entity.getDeltaMovement().multiply(1.0, 0.0, 1.0));
+                    entity.setOnGround(true);
                 }
 
-                if (p_139016_ instanceof PathfinderMob pathfindermob) {
+                if (entity instanceof PathfinderMob pathfindermob) {
                     pathfindermob.getNavigation().stop();
                 }
             }
@@ -303,7 +303,7 @@ public class TeleportCommand {
 
     @FunctionalInterface
     interface LookAt {
-        void perform(CommandSourceStack p_139061_, Entity p_139062_);
+        void perform(CommandSourceStack source, Entity entity);
     }
 
     static record LookAtEntity(Entity entity, EntityAnchorArgument.Anchor anchor) implements TeleportCommand.LookAt {

@@ -32,8 +32,8 @@ public class BeetrootBlock extends CropBlock {
         return CODEC;
     }
 
-    public BeetrootBlock(BlockBehaviour.Properties p_49661_) {
-        super(p_49661_);
+    public BeetrootBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
@@ -51,25 +51,28 @@ public class BeetrootBlock extends CropBlock {
         return Items.BEETROOT_SEEDS;
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_220778_, ServerLevel p_220779_, BlockPos p_220780_, RandomSource p_220781_) {
-        if (p_220781_.nextInt(3) != 0) {
-            super.randomTick(p_220778_, p_220779_, p_220780_, p_220781_);
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (random.nextInt(3) != 0) {
+            super.randomTick(state, level, pos, random);
         }
     }
 
     @Override
-    protected int getBonemealAgeIncrease(Level p_49663_) {
-        return super.getBonemealAgeIncrease(p_49663_) / 3;
+    protected int getBonemealAgeIncrease(Level level) {
+        return super.getBonemealAgeIncrease(level) / 3;
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_49665_) {
-        p_49665_.add(AGE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AGE);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_49672_, BlockGetter p_49673_, BlockPos p_49674_, CollisionContext p_49675_) {
-        return SHAPE_BY_AGE[this.getAge(p_49672_)];
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SHAPE_BY_AGE[this.getAge(state)];
     }
 }

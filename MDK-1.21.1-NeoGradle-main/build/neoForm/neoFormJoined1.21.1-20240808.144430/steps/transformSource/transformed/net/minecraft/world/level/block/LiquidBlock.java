@@ -63,115 +63,126 @@ public class LiquidBlock extends Block implements BucketPickup {
         return CODEC;
     }
 
-    public LiquidBlock(FlowingFluid p_54694_, BlockBehaviour.Properties p_54695_) {
-        super(p_54695_);
-        this.fluid = p_54694_;
+    public LiquidBlock(FlowingFluid fluid, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.fluid = fluid;
         this.stateCache = Lists.newArrayList();
-        this.stateCache.add(p_54694_.getSource(false));
+        this.stateCache.add(fluid.getSource(false));
 
         for (int i = 1; i < 8; i++) {
-            this.stateCache.add(p_54694_.getFlowing(8 - i, false));
+            this.stateCache.add(fluid.getFlowing(8 - i, false));
         }
 
-        this.stateCache.add(p_54694_.getFlowing(8, true));
+        this.stateCache.add(fluid.getFlowing(8, true));
         this.registerDefaultState(this.stateDefinition.any().setValue(LEVEL, Integer.valueOf(0)));
     }
 
     @Override
-    protected VoxelShape getCollisionShape(BlockState p_54760_, BlockGetter p_54761_, BlockPos p_54762_, CollisionContext p_54763_) {
-        return p_54763_.isAbove(STABLE_SHAPE, p_54762_, true)
-                && p_54760_.getValue(LEVEL) == 0
-                && p_54763_.canStandOnFluid(p_54761_.getFluidState(p_54762_.above()), p_54760_.getFluidState())
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return context.isAbove(STABLE_SHAPE, pos, true)
+                && state.getValue(LEVEL) == 0
+                && context.canStandOnFluid(level.getFluidState(pos.above()), state.getFluidState())
             ? STABLE_SHAPE
             : Shapes.empty();
     }
 
     @Override
-    protected boolean isRandomlyTicking(BlockState p_54732_) {
-        return p_54732_.getFluidState().isRandomlyTicking();
+    protected boolean isRandomlyTicking(BlockState state) {
+        return state.getFluidState().isRandomlyTicking();
+    }
+
+    /**
+     * Performs a random tick on a block.
+     */
+    @Override
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        state.getFluidState().randomTick(level, pos, random);
     }
 
     @Override
-    protected void randomTick(BlockState p_221410_, ServerLevel p_221411_, BlockPos p_221412_, RandomSource p_221413_) {
-        p_221410_.getFluidState().randomTick(p_221411_, p_221412_, p_221413_);
-    }
-
-    @Override
-    protected boolean propagatesSkylightDown(BlockState p_54745_, BlockGetter p_54746_, BlockPos p_54747_) {
+    protected boolean propagatesSkylightDown(BlockState state, BlockGetter reader, BlockPos pos) {
         return false;
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_54704_, PathComputationType p_54707_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return !this.fluid.is(FluidTags.LAVA);
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_54765_) {
-        int i = p_54765_.getValue(LEVEL);
+    protected FluidState getFluidState(BlockState state) {
+        int i = state.getValue(LEVEL);
         return this.stateCache.get(Math.min(i, 8));
     }
 
     @Override
-    protected boolean skipRendering(BlockState p_54716_, BlockState p_54717_, Direction p_54718_) {
-        return p_54717_.getFluidState().getType().isSame(this.fluid);
+    protected boolean skipRendering(BlockState state, BlockState adjacentBlockState, Direction side) {
+        return adjacentBlockState.getFluidState().getType().isSame(this.fluid);
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_54738_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.INVISIBLE;
     }
 
     @Override
-    protected List<ItemStack> getDrops(BlockState p_54720_, LootParams.Builder p_287727_) {
+    protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
         return Collections.emptyList();
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_54749_, BlockGetter p_54750_, BlockPos p_54751_, CollisionContext p_54752_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return Shapes.empty();
     }
 
     @Override
-    protected void onPlace(BlockState p_54754_, Level p_54755_, BlockPos p_54756_, BlockState p_54757_, boolean p_54758_) {
-        if (!net.neoforged.neoforge.fluids.FluidInteractionRegistry.canInteract(p_54755_, p_54756_)) {
-            p_54755_.scheduleTick(p_54756_, p_54754_.getFluidState().getType(), this.fluid.getTickDelay(p_54755_));
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!net.neoforged.neoforge.fluids.FluidInteractionRegistry.canInteract(level, pos)) {
+            level.scheduleTick(pos, state.getFluidState().getType(), this.fluid.getTickDelay(level));
         }
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_54723_, Direction p_54724_, BlockState p_54725_, LevelAccessor p_54726_, BlockPos p_54727_, BlockPos p_54728_) {
-        if (p_54723_.getFluidState().isSource() || p_54725_.getFluidState().isSource()) {
-            p_54726_.scheduleTick(p_54727_, p_54723_.getFluidState().getType(), this.fluid.getTickDelay(p_54726_));
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (state.getFluidState().isSource() || facingState.getFluidState().isSource()) {
+            level.scheduleTick(currentPos, state.getFluidState().getType(), this.fluid.getTickDelay(level));
         }
 
-        return super.updateShape(p_54723_, p_54724_, p_54725_, p_54726_, p_54727_, p_54728_);
+        return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected void neighborChanged(BlockState p_54709_, Level p_54710_, BlockPos p_54711_, Block p_54712_, BlockPos p_54713_, boolean p_54714_) {
-        if (!net.neoforged.neoforge.fluids.FluidInteractionRegistry.canInteract(p_54710_, p_54711_)) {
-            p_54710_.scheduleTick(p_54711_, p_54709_.getFluidState().getType(), this.fluid.getTickDelay(p_54710_));
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!net.neoforged.neoforge.fluids.FluidInteractionRegistry.canInteract(level, pos)) {
+            level.scheduleTick(pos, state.getFluidState().getType(), this.fluid.getTickDelay(level));
         }
     }
 
     @Deprecated // FORGE: Use FluidInteractionRegistry#canInteract instead
-    private boolean shouldSpreadLiquid(Level p_54697_, BlockPos p_54698_, BlockState p_54699_) {
+    private boolean shouldSpreadLiquid(Level level, BlockPos pos, BlockState state) {
         if (this.fluid.is(FluidTags.LAVA)) {
-            boolean flag = p_54697_.getBlockState(p_54698_.below()).is(Blocks.SOUL_SOIL);
+            boolean flag = level.getBlockState(pos.below()).is(Blocks.SOUL_SOIL);
 
             for (Direction direction : POSSIBLE_FLOW_DIRECTIONS) {
-                BlockPos blockpos = p_54698_.relative(direction.getOpposite());
-                if (p_54697_.getFluidState(blockpos).is(FluidTags.WATER)) {
-                    Block block = p_54697_.getFluidState(p_54698_).isSource() ? Blocks.OBSIDIAN : Blocks.COBBLESTONE;
-                    p_54697_.setBlockAndUpdate(p_54698_, block.defaultBlockState());
-                    this.fizz(p_54697_, p_54698_);
+                BlockPos blockpos = pos.relative(direction.getOpposite());
+                if (level.getFluidState(blockpos).is(FluidTags.WATER)) {
+                    Block block = level.getFluidState(pos).isSource() ? Blocks.OBSIDIAN : Blocks.COBBLESTONE;
+                    level.setBlockAndUpdate(pos, block.defaultBlockState());
+                    this.fizz(level, pos);
                     return false;
                 }
 
-                if (flag && p_54697_.getBlockState(blockpos).is(Blocks.BLUE_ICE)) {
-                    p_54697_.setBlockAndUpdate(p_54698_, Blocks.BASALT.defaultBlockState());
-                    this.fizz(p_54697_, p_54698_);
+                if (flag && level.getBlockState(blockpos).is(Blocks.BLUE_ICE)) {
+                    level.setBlockAndUpdate(pos, Blocks.BASALT.defaultBlockState());
+                    this.fizz(level, pos);
                     return false;
                 }
             }
@@ -180,19 +191,19 @@ public class LiquidBlock extends Block implements BucketPickup {
         return true;
     }
 
-    private void fizz(LevelAccessor p_54701_, BlockPos p_54702_) {
-        p_54701_.levelEvent(1501, p_54702_, 0);
+    private void fizz(LevelAccessor level, BlockPos pos) {
+        level.levelEvent(1501, pos, 0);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_54730_) {
-        p_54730_.add(LEVEL);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(LEVEL);
     }
 
     @Override
-    public ItemStack pickupBlock(@Nullable Player p_295410_, LevelAccessor p_153772_, BlockPos p_153773_, BlockState p_153774_) {
-        if (p_153774_.getValue(LEVEL) == 0) {
-            p_153772_.setBlock(p_153773_, Blocks.AIR.defaultBlockState(), 11);
+    public ItemStack pickupBlock(@Nullable Player player, LevelAccessor level, BlockPos pos, BlockState state) {
+        if (state.getValue(LEVEL) == 0) {
+            level.setBlock(pos, Blocks.AIR.defaultBlockState(), 11);
             return new ItemStack(this.fluid.getBucket());
         } else {
             return ItemStack.EMPTY;

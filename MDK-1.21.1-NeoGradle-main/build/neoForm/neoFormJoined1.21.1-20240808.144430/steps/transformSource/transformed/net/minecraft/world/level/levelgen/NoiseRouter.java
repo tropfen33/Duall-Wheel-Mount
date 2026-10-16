@@ -43,27 +43,27 @@ public record NoiseRouter(
                 .apply(p_224411_, NoiseRouter::new)
     );
 
-    private static RecordCodecBuilder<NoiseRouter, DensityFunction> field(String p_224415_, Function<NoiseRouter, DensityFunction> p_224416_) {
-        return DensityFunction.HOLDER_HELPER_CODEC.fieldOf(p_224415_).forGetter(p_224416_);
+    private static RecordCodecBuilder<NoiseRouter, DensityFunction> field(String name, Function<NoiseRouter, DensityFunction> getter) {
+        return DensityFunction.HOLDER_HELPER_CODEC.fieldOf(name).forGetter(getter);
     }
 
-    public NoiseRouter mapAll(DensityFunction.Visitor p_224413_) {
+    public NoiseRouter mapAll(DensityFunction.Visitor visitor) {
         return new NoiseRouter(
-            this.barrierNoise.mapAll(p_224413_),
-            this.fluidLevelFloodednessNoise.mapAll(p_224413_),
-            this.fluidLevelSpreadNoise.mapAll(p_224413_),
-            this.lavaNoise.mapAll(p_224413_),
-            this.temperature.mapAll(p_224413_),
-            this.vegetation.mapAll(p_224413_),
-            this.continents.mapAll(p_224413_),
-            this.erosion.mapAll(p_224413_),
-            this.depth.mapAll(p_224413_),
-            this.ridges.mapAll(p_224413_),
-            this.initialDensityWithoutJaggedness.mapAll(p_224413_),
-            this.finalDensity.mapAll(p_224413_),
-            this.veinToggle.mapAll(p_224413_),
-            this.veinRidged.mapAll(p_224413_),
-            this.veinGap.mapAll(p_224413_)
+            this.barrierNoise.mapAll(visitor),
+            this.fluidLevelFloodednessNoise.mapAll(visitor),
+            this.fluidLevelSpreadNoise.mapAll(visitor),
+            this.lavaNoise.mapAll(visitor),
+            this.temperature.mapAll(visitor),
+            this.vegetation.mapAll(visitor),
+            this.continents.mapAll(visitor),
+            this.erosion.mapAll(visitor),
+            this.depth.mapAll(visitor),
+            this.ridges.mapAll(visitor),
+            this.initialDensityWithoutJaggedness.mapAll(visitor),
+            this.finalDensity.mapAll(visitor),
+            this.veinToggle.mapAll(visitor),
+            this.veinRidged.mapAll(visitor),
+            this.veinGap.mapAll(visitor)
         );
     }
 }

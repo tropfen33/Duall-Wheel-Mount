@@ -20,12 +20,12 @@ public class ShapelessRecipe implements CraftingRecipe {
     final NonNullList<Ingredient> ingredients;
     private final boolean isSimple;
 
-    public ShapelessRecipe(String p_249640_, CraftingBookCategory p_249390_, ItemStack p_252071_, NonNullList<Ingredient> p_250689_) {
-        this.group = p_249640_;
-        this.category = p_249390_;
-        this.result = p_252071_;
-        this.ingredients = p_250689_;
-        this.isSimple = p_250689_.stream().allMatch(Ingredient::isSimple);
+    public ShapelessRecipe(String group, CraftingBookCategory category, ItemStack result, NonNullList<Ingredient> ingredients) {
+        this.group = group;
+        this.category = category;
+        this.result = result;
+        this.ingredients = ingredients;
+        this.isSimple = ingredients.stream().allMatch(Ingredient::isSimple);
     }
 
     @Override
@@ -44,7 +44,7 @@ public class ShapelessRecipe implements CraftingRecipe {
     }
 
     @Override
-    public ItemStack getResultItem(HolderLookup.Provider p_335606_) {
+    public ItemStack getResultItem(HolderLookup.Provider registries) {
         return this.result;
     }
 
@@ -53,29 +53,32 @@ public class ShapelessRecipe implements CraftingRecipe {
         return this.ingredients;
     }
 
-    public boolean matches(CraftingInput p_346123_, Level p_44263_) {
-        if (p_346123_.ingredientCount() != this.ingredients.size()) {
+    public boolean matches(CraftingInput input, Level level) {
+        if (input.ingredientCount() != this.ingredients.size()) {
             return false;
         } else if (!isSimple) {
-            var nonEmptyItems = new java.util.ArrayList<ItemStack>(p_346123_.ingredientCount());
-            for (var item : p_346123_.items())
+            var nonEmptyItems = new java.util.ArrayList<ItemStack>(input.ingredientCount());
+            for (var item : input.items())
                 if (!item.isEmpty())
                     nonEmptyItems.add(item);
             return net.neoforged.neoforge.common.util.RecipeMatcher.findMatches(nonEmptyItems, this.ingredients) != null;
         } else {
-            return p_346123_.size() == 1 && this.ingredients.size() == 1
-                ? this.ingredients.getFirst().test(p_346123_.getItem(0))
-                : p_346123_.stackedContents().canCraft(this, null);
+            return input.size() == 1 && this.ingredients.size() == 1
+                ? this.ingredients.getFirst().test(input.getItem(0))
+                : input.stackedContents().canCraft(this, null);
         }
     }
 
-    public ItemStack assemble(CraftingInput p_345555_, HolderLookup.Provider p_335725_) {
+    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
         return this.result.copy();
     }
 
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
     @Override
-    public boolean canCraftInDimensions(int p_44252_, int p_44253_) {
-        return p_44252_ * p_44253_ >= this.ingredients.size();
+    public boolean canCraftInDimensions(int width, int height) {
+        return width * height >= this.ingredients.size();
     }
 
     public static class Serializer implements RecipeSerializer<ShapelessRecipe> {
@@ -118,26 +121,26 @@ public class ShapelessRecipe implements CraftingRecipe {
             return STREAM_CODEC;
         }
 
-        private static ShapelessRecipe fromNetwork(RegistryFriendlyByteBuf p_319905_) {
-            String s = p_319905_.readUtf();
-            CraftingBookCategory craftingbookcategory = p_319905_.readEnum(CraftingBookCategory.class);
-            int i = p_319905_.readVarInt();
+        private static ShapelessRecipe fromNetwork(RegistryFriendlyByteBuf buffer) {
+            String s = buffer.readUtf();
+            CraftingBookCategory craftingbookcategory = buffer.readEnum(CraftingBookCategory.class);
+            int i = buffer.readVarInt();
             NonNullList<Ingredient> nonnulllist = NonNullList.withSize(i, Ingredient.EMPTY);
-            nonnulllist.replaceAll(p_319735_ -> Ingredient.CONTENTS_STREAM_CODEC.decode(p_319905_));
-            ItemStack itemstack = ItemStack.STREAM_CODEC.decode(p_319905_);
+            nonnulllist.replaceAll(p_319735_ -> Ingredient.CONTENTS_STREAM_CODEC.decode(buffer));
+            ItemStack itemstack = ItemStack.STREAM_CODEC.decode(buffer);
             return new ShapelessRecipe(s, craftingbookcategory, itemstack, nonnulllist);
         }
 
-        private static void toNetwork(RegistryFriendlyByteBuf p_320371_, ShapelessRecipe p_320323_) {
-            p_320371_.writeUtf(p_320323_.group);
-            p_320371_.writeEnum(p_320323_.category);
-            p_320371_.writeVarInt(p_320323_.ingredients.size());
+        private static void toNetwork(RegistryFriendlyByteBuf buffer, ShapelessRecipe recipe) {
+            buffer.writeUtf(recipe.group);
+            buffer.writeEnum(recipe.category);
+            buffer.writeVarInt(recipe.ingredients.size());
 
-            for (Ingredient ingredient : p_320323_.ingredients) {
-                Ingredient.CONTENTS_STREAM_CODEC.encode(p_320371_, ingredient);
+            for (Ingredient ingredient : recipe.ingredients) {
+                Ingredient.CONTENTS_STREAM_CODEC.encode(buffer, ingredient);
             }
 
-            ItemStack.STREAM_CODEC.encode(p_320371_, p_320323_.result);
+            ItemStack.STREAM_CODEC.encode(buffer, recipe.result);
         }
     }
 }

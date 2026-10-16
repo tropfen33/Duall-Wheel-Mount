@@ -11,30 +11,30 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class ChatOptionsScreen extends OptionsSubScreen {
     private static final Component TITLE = Component.translatable("options.chat.title");
 
-    private static OptionInstance<?>[] options(Options p_345277_) {
+    private static OptionInstance<?>[] options(Options options) {
         return new OptionInstance[]{
-            p_345277_.chatVisibility(),
-            p_345277_.chatColors(),
-            p_345277_.chatLinks(),
-            p_345277_.chatLinksPrompt(),
-            p_345277_.chatOpacity(),
-            p_345277_.textBackgroundOpacity(),
-            p_345277_.chatScale(),
-            p_345277_.chatLineSpacing(),
-            p_345277_.chatDelay(),
-            p_345277_.chatWidth(),
-            p_345277_.chatHeightFocused(),
-            p_345277_.chatHeightUnfocused(),
-            p_345277_.narrator(),
-            p_345277_.autoSuggestions(),
-            p_345277_.hideMatchedNames(),
-            p_345277_.reducedDebugInfo(),
-            p_345277_.onlyShowSecureChat()
+            options.chatVisibility(),
+            options.chatColors(),
+            options.chatLinks(),
+            options.chatLinksPrompt(),
+            options.chatOpacity(),
+            options.textBackgroundOpacity(),
+            options.chatScale(),
+            options.chatLineSpacing(),
+            options.chatDelay(),
+            options.chatWidth(),
+            options.chatHeightFocused(),
+            options.chatHeightUnfocused(),
+            options.narrator(),
+            options.autoSuggestions(),
+            options.hideMatchedNames(),
+            options.reducedDebugInfo(),
+            options.onlyShowSecureChat()
         };
     }
 
-    public ChatOptionsScreen(Screen p_345947_, Options p_345195_) {
-        super(p_345947_, p_345195_, TITLE);
+    public ChatOptionsScreen(Screen lastScreen, Options options) {
+        super(lastScreen, options, TITLE);
     }
 
     @Override

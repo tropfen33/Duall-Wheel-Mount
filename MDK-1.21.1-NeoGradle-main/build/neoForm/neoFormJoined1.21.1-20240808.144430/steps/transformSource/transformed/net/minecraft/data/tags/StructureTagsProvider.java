@@ -9,17 +9,22 @@ import net.minecraft.world.level.levelgen.structure.BuiltinStructures;
 import net.minecraft.world.level.levelgen.structure.Structure;
 
 public class StructureTagsProvider extends TagsProvider<Structure> {
-    /** @deprecated Forge: Use the {@linkplain #StructureTagsProvider(PackOutput, CompletableFuture, String, net.neoforged.neoforge.common.data.ExistingFileHelper) mod id variant} */
+    /**
+ * @deprecated Forge: Use the {@linkplain #StructureTagsProvider(PackOutput,
+ *             CompletableFuture, String,
+ *             net.neoforged.neoforge.common.data.ExistingFileHelper) mod id
+ *             variant}
+ */
     @Deprecated
-    public StructureTagsProvider(PackOutput p_256522_, CompletableFuture<HolderLookup.Provider> p_256661_) {
-        super(p_256522_, Registries.STRUCTURE, p_256661_);
+    public StructureTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider) {
+        super(output, Registries.STRUCTURE, provider);
     }
-    public StructureTagsProvider(PackOutput p_256522_, CompletableFuture<HolderLookup.Provider> p_256661_, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
-        super(p_256522_, Registries.STRUCTURE, p_256661_, modId, existingFileHelper);
+    public StructureTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
+        super(output, Registries.STRUCTURE, provider, modId, existingFileHelper);
     }
 
     @Override
-    protected void addTags(HolderLookup.Provider p_256087_) {
+    protected void addTags(HolderLookup.Provider provider) {
         this.tag(StructureTags.VILLAGE)
             .add(BuiltinStructures.VILLAGE_PLAINS)
             .add(BuiltinStructures.VILLAGE_DESERT)

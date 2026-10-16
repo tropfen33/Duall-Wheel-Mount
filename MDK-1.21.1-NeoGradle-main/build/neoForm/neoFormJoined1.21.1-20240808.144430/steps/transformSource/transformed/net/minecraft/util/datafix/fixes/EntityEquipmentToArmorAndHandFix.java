@@ -18,8 +18,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public class EntityEquipmentToArmorAndHandFix extends DataFix {
-    public EntityEquipmentToArmorAndHandFix(Schema p_15417_, boolean p_15418_) {
-        super(p_15417_, p_15418_);
+    public EntityEquipmentToArmorAndHandFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -27,16 +27,16 @@ public class EntityEquipmentToArmorAndHandFix extends DataFix {
         return this.cap(this.getInputSchema().getTypeRaw(References.ITEM_STACK));
     }
 
-    private <IS> TypeRewriteRule cap(Type<IS> p_15427_) {
-        Type<Pair<Either<List<IS>, Unit>, Dynamic<?>>> type = DSL.and(DSL.optional(DSL.field("Equipment", DSL.list(p_15427_))), DSL.remainderType());
+    private <IS> TypeRewriteRule cap(Type<IS> itemStackType) {
+        Type<Pair<Either<List<IS>, Unit>, Dynamic<?>>> type = DSL.and(DSL.optional(DSL.field("Equipment", DSL.list(itemStackType))), DSL.remainderType());
         Type<Pair<Either<List<IS>, Unit>, Pair<Either<List<IS>, Unit>, Pair<Either<IS, Unit>, Dynamic<?>>>>> type1 = DSL.and(
-            DSL.optional(DSL.field("ArmorItems", DSL.list(p_15427_))),
-            DSL.optional(DSL.field("HandItems", DSL.list(p_15427_))),
-            DSL.optional(DSL.field("body_armor_item", p_15427_)),
+            DSL.optional(DSL.field("ArmorItems", DSL.list(itemStackType))),
+            DSL.optional(DSL.field("HandItems", DSL.list(itemStackType))),
+            DSL.optional(DSL.field("body_armor_item", itemStackType)),
             DSL.remainderType()
         );
         OpticFinder<Pair<Either<List<IS>, Unit>, Dynamic<?>>> opticfinder = DSL.typeFinder(type);
-        OpticFinder<List<IS>> opticfinder1 = DSL.fieldFinder("Equipment", DSL.list(p_15427_));
+        OpticFinder<List<IS>> opticfinder1 = DSL.fieldFinder("Equipment", DSL.list(itemStackType));
         return this.fixTypeEverywhereTyped(
             "EntityEquipmentToArmorAndHandFix",
             this.getInputSchema().getType(References.ENTITY),
@@ -49,7 +49,7 @@ public class EntityEquipmentToArmorAndHandFix extends DataFix {
                 Optional<List<IS>> optional = p_326763_.getOptional(opticfinder1);
                 if (optional.isPresent()) {
                     List<IS> list = optional.get();
-                    IS is = p_15427_.read(dynamic.emptyMap())
+                    IS is = itemStackType.read(dynamic.emptyMap())
                         .result()
                         .orElseThrow(() -> new IllegalStateException("Could not parse newly created empty itemstack."))
                         .getFirst();

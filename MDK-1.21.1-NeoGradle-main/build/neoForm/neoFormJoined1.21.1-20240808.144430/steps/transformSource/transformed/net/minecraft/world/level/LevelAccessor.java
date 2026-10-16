@@ -37,35 +37,35 @@ public interface LevelAccessor extends CommonLevelAccessor, LevelTimeAccess {
 
     LevelTickAccess<Block> getBlockTicks();
 
-    private <T> ScheduledTick<T> createTick(BlockPos p_186483_, T p_186484_, int p_186485_, TickPriority p_186486_) {
-        return new ScheduledTick<>(p_186484_, p_186483_, this.getLevelData().getGameTime() + (long)p_186485_, p_186486_, this.nextSubTickCount());
+    private <T> ScheduledTick<T> createTick(BlockPos pos, T type, int delay, TickPriority priority) {
+        return new ScheduledTick<>(type, pos, this.getLevelData().getGameTime() + (long)delay, priority, this.nextSubTickCount());
     }
 
-    private <T> ScheduledTick<T> createTick(BlockPos p_186479_, T p_186480_, int p_186481_) {
-        return new ScheduledTick<>(p_186480_, p_186479_, this.getLevelData().getGameTime() + (long)p_186481_, this.nextSubTickCount());
+    private <T> ScheduledTick<T> createTick(BlockPos pos, T type, int delay) {
+        return new ScheduledTick<>(type, pos, this.getLevelData().getGameTime() + (long)delay, this.nextSubTickCount());
     }
 
-    default void scheduleTick(BlockPos p_186465_, Block p_186466_, int p_186467_, TickPriority p_186468_) {
-        this.getBlockTicks().schedule(this.createTick(p_186465_, p_186466_, p_186467_, p_186468_));
+    default void scheduleTick(BlockPos pos, Block block, int delay, TickPriority priority) {
+        this.getBlockTicks().schedule(this.createTick(pos, block, delay, priority));
     }
 
-    default void scheduleTick(BlockPos p_186461_, Block p_186462_, int p_186463_) {
-        this.getBlockTicks().schedule(this.createTick(p_186461_, p_186462_, p_186463_));
+    default void scheduleTick(BlockPos pos, Block block, int delay) {
+        this.getBlockTicks().schedule(this.createTick(pos, block, delay));
     }
 
     LevelTickAccess<Fluid> getFluidTicks();
 
-    default void scheduleTick(BlockPos p_186474_, Fluid p_186475_, int p_186476_, TickPriority p_186477_) {
-        this.getFluidTicks().schedule(this.createTick(p_186474_, p_186475_, p_186476_, p_186477_));
+    default void scheduleTick(BlockPos pos, Fluid fluid, int delay, TickPriority priority) {
+        this.getFluidTicks().schedule(this.createTick(pos, fluid, delay, priority));
     }
 
-    default void scheduleTick(BlockPos p_186470_, Fluid p_186471_, int p_186472_) {
-        this.getFluidTicks().schedule(this.createTick(p_186470_, p_186471_, p_186472_));
+    default void scheduleTick(BlockPos pos, Fluid fluid, int delay) {
+        this.getFluidTicks().schedule(this.createTick(pos, fluid, delay));
     }
 
     LevelData getLevelData();
 
-    DifficultyInstance getCurrentDifficultyAt(BlockPos p_46800_);
+    DifficultyInstance getCurrentDifficultyAt(BlockPos pos);
 
     @Nullable
     MinecraftServer getServer();
@@ -77,48 +77,56 @@ public interface LevelAccessor extends CommonLevelAccessor, LevelTimeAccess {
     ChunkSource getChunkSource();
 
     @Override
-    default boolean hasChunk(int p_46794_, int p_46795_) {
-        return this.getChunkSource().hasChunk(p_46794_, p_46795_);
+    default boolean hasChunk(int chunkX, int chunkZ) {
+        return this.getChunkSource().hasChunk(chunkX, chunkZ);
     }
 
     RandomSource getRandom();
 
-    default void blockUpdated(BlockPos p_46781_, Block p_46782_) {
+    default void blockUpdated(BlockPos pos, Block block) {
     }
 
-    default void neighborShapeChanged(Direction p_220411_, BlockState p_220412_, BlockPos p_220413_, BlockPos p_220414_, int p_220415_, int p_220416_) {
-        NeighborUpdater.executeShapeUpdate(this, p_220411_, p_220412_, p_220413_, p_220414_, p_220415_, p_220416_ - 1);
+    /**
+     * @param queried   The block state of the current block
+     * @param pos       The position of the neighbor block
+     * @param offsetPos The position of the current block
+     */
+    default void neighborShapeChanged(Direction direction, BlockState queried, BlockPos pos, BlockPos offsetPos, int flags, int recursionLevel) {
+        NeighborUpdater.executeShapeUpdate(this, direction, queried, pos, offsetPos, flags, recursionLevel - 1);
     }
 
-    default void playSound(@Nullable Player p_251195_, BlockPos p_250192_, SoundEvent p_249887_, SoundSource p_250593_) {
-        this.playSound(p_251195_, p_250192_, p_249887_, p_250593_, 1.0F, 1.0F);
+    default void playSound(@Nullable Player player, BlockPos pos, SoundEvent sound, SoundSource source) {
+        this.playSound(player, pos, sound, source, 1.0F, 1.0F);
     }
 
-    void playSound(@Nullable Player p_46775_, BlockPos p_46776_, SoundEvent p_46777_, SoundSource p_46778_, float p_46779_, float p_46780_);
+    /**
+     * Plays a sound. On the server, the sound is broadcast to all nearby <em>except</em> the given player. On the client, the sound only plays if the given player is the client player. Thus, this method is intended to be called from code running on both sides. The client plays it locally and the server plays it for everyone else.
+     */
+    void playSound(@Nullable Player player, BlockPos pos, SoundEvent sound, SoundSource source, float volume, float pitch);
 
-    void addParticle(ParticleOptions p_46783_, double p_46784_, double p_46785_, double p_46786_, double p_46787_, double p_46788_, double p_46789_);
+    void addParticle(ParticleOptions particleData, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed);
 
-    void levelEvent(@Nullable Player p_46771_, int p_46772_, BlockPos p_46773_, int p_46774_);
+    void levelEvent(@Nullable Player player, int type, BlockPos pos, int data);
 
-    default void levelEvent(int p_46797_, BlockPos p_46798_, int p_46799_) {
-        this.levelEvent(null, p_46797_, p_46798_, p_46799_);
+    default void levelEvent(int type, BlockPos pos, int data) {
+        this.levelEvent(null, type, pos, data);
     }
 
-    void gameEvent(Holder<GameEvent> p_316267_, Vec3 p_220405_, GameEvent.Context p_220406_);
+    void gameEvent(Holder<GameEvent> gameEvent, Vec3 pos, GameEvent.Context context);
 
-    default void gameEvent(@Nullable Entity p_151549_, Holder<GameEvent> p_316314_, Vec3 p_316613_) {
-        this.gameEvent(p_316314_, p_316613_, new GameEvent.Context(p_151549_, null));
+    default void gameEvent(@Nullable Entity entity, Holder<GameEvent> gameEvent, Vec3 pos) {
+        this.gameEvent(gameEvent, pos, new GameEvent.Context(entity, null));
     }
 
-    default void gameEvent(@Nullable Entity p_316772_, Holder<GameEvent> p_316248_, BlockPos p_316282_) {
-        this.gameEvent(p_316248_, p_316282_, new GameEvent.Context(p_316772_, null));
+    default void gameEvent(@Nullable Entity entity, Holder<GameEvent> gameEvent, BlockPos pos) {
+        this.gameEvent(gameEvent, pos, new GameEvent.Context(entity, null));
     }
 
-    default void gameEvent(Holder<GameEvent> p_316320_, BlockPos p_220409_, GameEvent.Context p_220410_) {
-        this.gameEvent(p_316320_, Vec3.atCenterOf(p_220409_), p_220410_);
+    default void gameEvent(Holder<GameEvent> gameEvent, BlockPos pos, GameEvent.Context context) {
+        this.gameEvent(gameEvent, Vec3.atCenterOf(pos), context);
     }
 
-    default void gameEvent(ResourceKey<GameEvent> p_316780_, BlockPos p_316509_, GameEvent.Context p_316524_) {
-        this.gameEvent(this.registryAccess().registryOrThrow(Registries.GAME_EVENT).getHolderOrThrow(p_316780_), p_316509_, p_316524_);
+    default void gameEvent(ResourceKey<GameEvent> gameEvent, BlockPos pos, GameEvent.Context context) {
+        this.gameEvent(this.registryAccess().registryOrThrow(Registries.GAME_EVENT).getHolderOrThrow(gameEvent), pos, context);
     }
 }

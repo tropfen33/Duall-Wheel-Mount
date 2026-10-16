@@ -17,28 +17,28 @@ import net.minecraft.world.level.block.Blocks;
 class WeavingMobEffect extends MobEffect {
     private final ToIntFunction<RandomSource> maxCobwebs;
 
-    protected WeavingMobEffect(MobEffectCategory p_338733_, int p_338278_, ToIntFunction<RandomSource> p_338263_) {
-        super(p_338733_, p_338278_, ParticleTypes.ITEM_COBWEB);
-        this.maxCobwebs = p_338263_;
+    protected WeavingMobEffect(MobEffectCategory category, int color, ToIntFunction<RandomSource> maxCobwebs) {
+        super(category, color, ParticleTypes.ITEM_COBWEB);
+        this.maxCobwebs = maxCobwebs;
     }
 
     @Override
-    public void onMobRemoved(LivingEntity p_338209_, int p_338446_, Entity.RemovalReason p_338624_) {
-        if (p_338624_ == Entity.RemovalReason.KILLED
-            && (p_338209_ instanceof Player || p_338209_.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING))) {
-            this.spawnCobwebsRandomlyAround(p_338209_.level(), p_338209_.getRandom(), p_338209_.getOnPos());
+    public void onMobRemoved(LivingEntity livingEntity, int amplifier, Entity.RemovalReason reason) {
+        if (reason == Entity.RemovalReason.KILLED
+            && (livingEntity instanceof Player || livingEntity.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING))) {
+            this.spawnCobwebsRandomlyAround(livingEntity.level(), livingEntity.getRandom(), livingEntity.getOnPos());
         }
     }
 
-    private void spawnCobwebsRandomlyAround(Level p_338396_, RandomSource p_338709_, BlockPos p_338472_) {
+    private void spawnCobwebsRandomlyAround(Level level, RandomSource random, BlockPos pos) {
         Set<BlockPos> set = Sets.newHashSet();
-        int i = this.maxCobwebs.applyAsInt(p_338709_);
+        int i = this.maxCobwebs.applyAsInt(random);
 
-        for (BlockPos blockpos : BlockPos.randomInCube(p_338709_, 15, p_338472_, 1)) {
+        for (BlockPos blockpos : BlockPos.randomInCube(random, 15, pos, 1)) {
             BlockPos blockpos1 = blockpos.below();
             if (!set.contains(blockpos)
-                && p_338396_.getBlockState(blockpos).canBeReplaced()
-                && p_338396_.getBlockState(blockpos1).isFaceSturdy(p_338396_, blockpos1, Direction.UP)) {
+                && level.getBlockState(blockpos).canBeReplaced()
+                && level.getBlockState(blockpos1).isFaceSturdy(level, blockpos1, Direction.UP)) {
                 set.add(blockpos.immutable());
                 if (set.size() >= i) {
                     break;
@@ -47,8 +47,8 @@ class WeavingMobEffect extends MobEffect {
         }
 
         for (BlockPos blockpos2 : set) {
-            p_338396_.setBlock(blockpos2, Blocks.COBWEB.defaultBlockState(), 3);
-            p_338396_.levelEvent(3018, blockpos2, 0);
+            level.setBlock(blockpos2, Blocks.COBWEB.defaultBlockState(), 3);
+            level.levelEvent(3018, blockpos2, 0);
         }
     }
 }

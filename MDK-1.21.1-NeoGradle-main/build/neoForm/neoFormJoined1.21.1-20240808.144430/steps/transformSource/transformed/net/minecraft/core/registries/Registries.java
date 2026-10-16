@@ -236,23 +236,23 @@ public class Registries {
     public static final ResourceKey<Registry<Advancement>> ADVANCEMENT = createRegistryKey("advancement");
     public static final ResourceKey<Registry<Recipe<?>>> RECIPE = createRegistryKey("recipe");
 
-    public static ResourceKey<Level> levelStemToLevel(ResourceKey<LevelStem> p_259475_) {
-        return ResourceKey.create(DIMENSION, p_259475_.location());
+    public static ResourceKey<Level> levelStemToLevel(ResourceKey<LevelStem> levelStem) {
+        return ResourceKey.create(DIMENSION, levelStem.location());
     }
 
-    public static ResourceKey<LevelStem> levelToLevelStem(ResourceKey<Level> p_260225_) {
-        return ResourceKey.create(LEVEL_STEM, p_260225_.location());
+    public static ResourceKey<LevelStem> levelToLevelStem(ResourceKey<Level> level) {
+        return ResourceKey.create(LEVEL_STEM, level.location());
     }
 
-    private static <T> ResourceKey<Registry<T>> createRegistryKey(String p_259572_) {
-        return ResourceKey.createRegistryKey(ResourceLocation.withDefaultNamespace(p_259572_));
+    private static <T> ResourceKey<Registry<T>> createRegistryKey(String name) {
+        return ResourceKey.createRegistryKey(ResourceLocation.withDefaultNamespace(name));
     }
 
-    public static String elementsDirPath(ResourceKey<? extends Registry<?>> p_350960_) {
-        return net.neoforged.neoforge.common.CommonHooks.prefixNamespace(p_350960_.location());
+    public static String elementsDirPath(ResourceKey<? extends Registry<?>> registryKey) {
+        return net.neoforged.neoforge.common.CommonHooks.prefixNamespace(registryKey.location());
     }
 
-    public static String tagsDirPath(ResourceKey<? extends Registry<?>> p_350980_) {
-        return "tags/" + net.neoforged.neoforge.common.CommonHooks.prefixNamespace(p_350980_.location());
+    public static String tagsDirPath(ResourceKey<? extends Registry<?>> registryKey) {
+        return "tags/" + net.neoforged.neoforge.common.CommonHooks.prefixNamespace(registryKey.location());
     }
 }

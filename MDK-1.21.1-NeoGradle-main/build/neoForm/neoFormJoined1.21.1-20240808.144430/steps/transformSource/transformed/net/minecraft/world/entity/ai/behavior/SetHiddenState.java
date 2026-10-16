@@ -11,8 +11,8 @@ import org.apache.commons.lang3.mutable.MutableInt;
 public class SetHiddenState {
     private static final int HIDE_TIMEOUT = 300;
 
-    public static BehaviorControl<LivingEntity> create(int p_259244_, int p_260263_) {
-        int i = p_259244_ * 20;
+    public static BehaviorControl<LivingEntity> create(int stayHiddenSeconds, int closeEnoughdist) {
+        int i = stayHiddenSeconds * 20;
         MutableInt mutableint = new MutableInt(0);
         return BehaviorBuilder.create(
             p_259055_ -> p_259055_.group(p_259055_.present(MemoryModuleType.HIDING_PLACE), p_259055_.present(MemoryModuleType.HEARD_BELL_TIME))
@@ -21,7 +21,7 @@ public class SetHiddenState {
                             boolean flag = j + 300L <= p_340745_;
                             if (mutableint.getValue() <= i && !flag) {
                                 BlockPos blockpos = p_259055_.get(p_260296_).pos();
-                                if (blockpos.closerThan(p_340744_.blockPosition(), (double)p_260263_)) {
+                                if (blockpos.closerThan(p_340744_.blockPosition(), (double)closeEnoughdist)) {
                                     mutableint.increment();
                                 }
 

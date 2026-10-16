@@ -27,23 +27,23 @@ public abstract class AbstractChestedHorse extends AbstractHorse {
     private static final EntityDataAccessor<Boolean> DATA_ID_CHEST = SynchedEntityData.defineId(AbstractChestedHorse.class, EntityDataSerializers.BOOLEAN);
     private final EntityDimensions babyDimensions;
 
-    protected AbstractChestedHorse(EntityType<? extends AbstractChestedHorse> p_30485_, Level p_30486_) {
-        super(p_30485_, p_30486_);
+    protected AbstractChestedHorse(EntityType<? extends AbstractChestedHorse> entityType, Level level) {
+        super(entityType, level);
         this.canGallop = false;
-        this.babyDimensions = p_30485_.getDimensions()
-            .withAttachments(EntityAttachments.builder().attach(EntityAttachment.PASSENGER, 0.0F, p_30485_.getHeight() - 0.15625F, 0.0F))
+        this.babyDimensions = entityType.getDimensions()
+            .withAttachments(EntityAttachments.builder().attach(EntityAttachment.PASSENGER, 0.0F, entityType.getHeight() - 0.15625F, 0.0F))
             .scale(0.5F);
     }
 
     @Override
-    protected void randomizeAttributes(RandomSource p_218803_) {
-        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double)generateMaxHealth(p_218803_::nextInt));
+    protected void randomizeAttributes(RandomSource random) {
+        this.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double)generateMaxHealth(random::nextInt));
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326402_) {
-        super.defineSynchedData(p_326402_);
-        p_326402_.define(DATA_ID_CHEST, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_ID_CHEST, false);
     }
 
     public static AttributeSupplier.Builder createBaseChestedHorseAttributes() {
@@ -54,13 +54,13 @@ public abstract class AbstractChestedHorse extends AbstractHorse {
         return this.entityData.get(DATA_ID_CHEST);
     }
 
-    public void setChest(boolean p_30505_) {
-        this.entityData.set(DATA_ID_CHEST, p_30505_);
+    public void setChest(boolean chested) {
+        this.entityData.set(DATA_ID_CHEST, chested);
     }
 
     @Override
-    public EntityDimensions getDefaultDimensions(Pose p_316142_) {
-        return this.isBaby() ? this.babyDimensions : super.getDefaultDimensions(p_316142_);
+    public EntityDimensions getDefaultDimensions(Pose pose) {
+        return this.isBaby() ? this.babyDimensions : super.getDefaultDimensions(pose);
     }
 
     @Override
@@ -76,9 +76,9 @@ public abstract class AbstractChestedHorse extends AbstractHorse {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_30496_) {
-        super.addAdditionalSaveData(p_30496_);
-        p_30496_.putBoolean("ChestedHorse", this.hasChest());
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putBoolean("ChestedHorse", this.hasChest());
         if (this.hasChest()) {
             ListTag listtag = new ListTag();
 
@@ -91,17 +91,20 @@ public abstract class AbstractChestedHorse extends AbstractHorse {
                 }
             }
 
-            p_30496_.put("Items", listtag);
+            compound.put("Items", listtag);
         }
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_30488_) {
-        super.readAdditionalSaveData(p_30488_);
-        this.setChest(p_30488_.getBoolean("ChestedHorse"));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.setChest(compound.getBoolean("ChestedHorse"));
         this.createInventory();
         if (this.hasChest()) {
-            ListTag listtag = p_30488_.getList("Items", 10);
+            ListTag listtag = compound.getList("Items", 10);
 
             for (int i = 0; i < listtag.size(); i++) {
                 CompoundTag compoundtag = listtag.getCompound(i);
@@ -116,8 +119,8 @@ public abstract class AbstractChestedHorse extends AbstractHorse {
     }
 
     @Override
-    public SlotAccess getSlot(int p_149479_) {
-        return p_149479_ == 499 ? new SlotAccess() {
+    public SlotAccess getSlot(int slot) {
+        return slot == 499 ? new SlotAccess() {
             @Override
             public ItemStack get() {
                 return AbstractChestedHorse.this.hasChest() ? new ItemStack(Items.CHEST) : ItemStack.EMPTY;
@@ -143,17 +146,17 @@ public abstract class AbstractChestedHorse extends AbstractHorse {
                     return false;
                 }
             }
-        } : super.getSlot(p_149479_);
+        } : super.getSlot(slot);
     }
 
     @Override
-    public InteractionResult mobInteract(Player p_30493_, InteractionHand p_30494_) {
-        boolean flag = !this.isBaby() && this.isTamed() && p_30493_.isSecondaryUseActive();
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        boolean flag = !this.isBaby() && this.isTamed() && player.isSecondaryUseActive();
         if (!this.isVehicle() && !flag) {
-            ItemStack itemstack = p_30493_.getItemInHand(p_30494_);
+            ItemStack itemstack = player.getItemInHand(hand);
             if (!itemstack.isEmpty()) {
                 if (this.isFood(itemstack)) {
-                    return this.fedFood(p_30493_, itemstack);
+                    return this.fedFood(player, itemstack);
                 }
 
                 if (!this.isTamed()) {
@@ -162,21 +165,21 @@ public abstract class AbstractChestedHorse extends AbstractHorse {
                 }
 
                 if (!this.hasChest() && itemstack.is(Items.CHEST)) {
-                    this.equipChest(p_30493_, itemstack);
+                    this.equipChest(player, itemstack);
                     return InteractionResult.sidedSuccess(this.level().isClientSide);
                 }
             }
 
-            return super.mobInteract(p_30493_, p_30494_);
+            return super.mobInteract(player, hand);
         } else {
-            return super.mobInteract(p_30493_, p_30494_);
+            return super.mobInteract(player, hand);
         }
     }
 
-    private void equipChest(Player p_250937_, ItemStack p_251558_) {
+    private void equipChest(Player player, ItemStack chestStack) {
         this.setChest(true);
         this.playChestEquipsSound();
-        p_251558_.consume(1, p_250937_);
+        chestStack.consume(1, player);
         this.createInventory();
     }
 

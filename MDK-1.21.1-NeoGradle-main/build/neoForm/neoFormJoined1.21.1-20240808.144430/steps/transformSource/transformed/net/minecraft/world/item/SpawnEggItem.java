@@ -42,32 +42,39 @@ public class SpawnEggItem extends Item {
     private final int highlightColor;
     private final EntityType<?> defaultType;
 
-    /** @deprecated Forge: Use {@link net.neoforged.neoforge.common.DeferredSpawnEggItem} instead for suppliers */
+    /**
+ * @deprecated Forge: Use {@link
+ *             net.neoforged.neoforge.common.DeferredSpawnEggItem} instead for
+ *             suppliers
+ */
     @Deprecated
-    public SpawnEggItem(EntityType<? extends Mob> p_43207_, int p_43208_, int p_43209_, Item.Properties p_43210_) {
-        super(p_43210_);
-        this.defaultType = p_43207_;
-        this.backgroundColor = p_43208_;
-        this.highlightColor = p_43209_;
-        if (p_43207_ != null)
-        BY_ID.put(p_43207_, this);
+    public SpawnEggItem(EntityType<? extends Mob> defaultType, int backgroundColor, int highlightColor, Item.Properties properties) {
+        super(properties);
+        this.defaultType = defaultType;
+        this.backgroundColor = backgroundColor;
+        this.highlightColor = highlightColor;
+        if (defaultType != null)
+        BY_ID.put(defaultType, this);
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_43223_) {
-        Level level = p_43223_.getLevel();
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
         if (!(level instanceof ServerLevel)) {
             return InteractionResult.SUCCESS;
         } else {
-            ItemStack itemstack = p_43223_.getItemInHand();
-            BlockPos blockpos = p_43223_.getClickedPos();
-            Direction direction = p_43223_.getClickedFace();
+            ItemStack itemstack = context.getItemInHand();
+            BlockPos blockpos = context.getClickedPos();
+            Direction direction = context.getClickedFace();
             BlockState blockstate = level.getBlockState(blockpos);
             if (level.getBlockEntity(blockpos) instanceof Spawner spawner) {
                 EntityType<?> entitytype1 = this.getType(itemstack);
                 spawner.setEntityId(entitytype1, level.getRandom());
                 level.sendBlockUpdated(blockpos, blockstate, blockstate, 3);
-                level.gameEvent(p_43223_.getPlayer(), GameEvent.BLOCK_CHANGE, blockpos);
+                level.gameEvent(context.getPlayer(), GameEvent.BLOCK_CHANGE, blockpos);
                 itemstack.shrink(1);
                 return InteractionResult.CONSUME;
             } else {
@@ -82,7 +89,7 @@ public class SpawnEggItem extends Item {
                 if (entitytype.spawn(
                         (ServerLevel)level,
                         itemstack,
-                        p_43223_.getPlayer(),
+                        context.getPlayer(),
                         blockpos1,
                         MobSpawnType.SPAWN_EGG,
                         true,
@@ -90,7 +97,7 @@ public class SpawnEggItem extends Item {
                     )
                     != null) {
                     itemstack.shrink(1);
-                    level.gameEvent(p_43223_.getPlayer(), GameEvent.ENTITY_PLACE, blockpos);
+                    level.gameEvent(context.getPlayer(), GameEvent.ENTITY_PLACE, blockpos);
                 }
 
                 return InteractionResult.CONSUME;
@@ -98,27 +105,30 @@ public class SpawnEggItem extends Item {
         }
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_43225_, Player p_43226_, InteractionHand p_43227_) {
-        ItemStack itemstack = p_43226_.getItemInHand(p_43227_);
-        BlockHitResult blockhitresult = getPlayerPOVHitResult(p_43225_, p_43226_, ClipContext.Fluid.SOURCE_ONLY);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
+        BlockHitResult blockhitresult = getPlayerPOVHitResult(level, player, ClipContext.Fluid.SOURCE_ONLY);
         if (blockhitresult.getType() != HitResult.Type.BLOCK) {
             return InteractionResultHolder.pass(itemstack);
-        } else if (!(p_43225_ instanceof ServerLevel)) {
+        } else if (!(level instanceof ServerLevel)) {
             return InteractionResultHolder.success(itemstack);
         } else {
             BlockPos blockpos = blockhitresult.getBlockPos();
-            if (!(p_43225_.getBlockState(blockpos).getBlock() instanceof LiquidBlock)) {
+            if (!(level.getBlockState(blockpos).getBlock() instanceof LiquidBlock)) {
                 return InteractionResultHolder.pass(itemstack);
-            } else if (p_43225_.mayInteract(p_43226_, blockpos) && p_43226_.mayUseItemAt(blockpos, blockhitresult.getDirection(), itemstack)) {
+            } else if (level.mayInteract(player, blockpos) && player.mayUseItemAt(blockpos, blockhitresult.getDirection(), itemstack)) {
                 EntityType<?> entitytype = this.getType(itemstack);
-                Entity entity = entitytype.spawn((ServerLevel)p_43225_, itemstack, p_43226_, blockpos, MobSpawnType.SPAWN_EGG, false, false);
+                Entity entity = entitytype.spawn((ServerLevel)level, itemstack, player, blockpos, MobSpawnType.SPAWN_EGG, false, false);
                 if (entity == null) {
                     return InteractionResultHolder.pass(itemstack);
                 } else {
-                    itemstack.consume(1, p_43226_);
-                    p_43226_.awardStat(Stats.ITEM_USED.get(this));
-                    p_43225_.gameEvent(p_43226_, GameEvent.ENTITY_PLACE, entity.position());
+                    itemstack.consume(1, player);
+                    player.awardStat(Stats.ITEM_USED.get(this));
+                    level.gameEvent(player, GameEvent.ENTITY_PLACE, entity.position());
                     return InteractionResultHolder.consume(itemstack);
                 }
             } else {
@@ -127,27 +137,27 @@ public class SpawnEggItem extends Item {
         }
     }
 
-    public boolean spawnsEntity(ItemStack p_330965_, EntityType<?> p_43232_) {
-        return Objects.equals(this.getType(p_330965_), p_43232_);
+    public boolean spawnsEntity(ItemStack stack, EntityType<?> entityType) {
+        return Objects.equals(this.getType(stack), entityType);
     }
 
-    public int getColor(int p_43212_) {
-        return p_43212_ == 0 ? this.backgroundColor : this.highlightColor;
+    public int getColor(int tintIndex) {
+        return tintIndex == 0 ? this.backgroundColor : this.highlightColor;
     }
 
     @Nullable
-    public static SpawnEggItem byId(@Nullable EntityType<?> p_43214_) {
-        var ret = net.neoforged.neoforge.common.DeferredSpawnEggItem.deferredOnlyById(p_43214_);
+    public static SpawnEggItem byId(@Nullable EntityType<?> type) {
+        var ret = net.neoforged.neoforge.common.DeferredSpawnEggItem.deferredOnlyById(type);
         if (ret != null) return ret;
-        return BY_ID.get(p_43214_);
+        return BY_ID.get(type);
     }
 
     public static Iterable<SpawnEggItem> eggs() {
         return Iterables.unmodifiableIterable(BY_ID.values());
     }
 
-    public EntityType<?> getType(ItemStack p_330335_) {
-        CustomData customdata = p_330335_.getOrDefault(DataComponents.ENTITY_DATA, CustomData.EMPTY);
+    public EntityType<?> getType(ItemStack stack) {
+        CustomData customdata = stack.getOrDefault(DataComponents.ENTITY_DATA, CustomData.EMPTY);
         return !customdata.isEmpty() ? customdata.read(ENTITY_TYPE_FIELD_CODEC).result().orElse(getDefaultType()) : getDefaultType();
     }
 
@@ -157,16 +167,16 @@ public class SpawnEggItem extends Item {
     }
 
     public Optional<Mob> spawnOffspringFromSpawnEgg(
-        Player p_43216_, Mob p_43217_, EntityType<? extends Mob> p_43218_, ServerLevel p_43219_, Vec3 p_43220_, ItemStack p_43221_
+        Player player, Mob p_mob, EntityType<? extends Mob> entityType, ServerLevel serverLevel, Vec3 pos, ItemStack stack
     ) {
-        if (!this.spawnsEntity(p_43221_, p_43218_)) {
+        if (!this.spawnsEntity(stack, entityType)) {
             return Optional.empty();
         } else {
             Mob mob;
-            if (p_43217_ instanceof AgeableMob) {
-                mob = ((AgeableMob)p_43217_).getBreedOffspring(p_43219_, (AgeableMob)p_43217_);
+            if (p_mob instanceof AgeableMob) {
+                mob = ((AgeableMob)p_mob).getBreedOffspring(serverLevel, (AgeableMob)p_mob);
             } else {
-                mob = p_43218_.create(p_43219_);
+                mob = entityType.create(serverLevel);
             }
 
             if (mob == null) {
@@ -176,10 +186,10 @@ public class SpawnEggItem extends Item {
                 if (!mob.isBaby()) {
                     return Optional.empty();
                 } else {
-                    mob.moveTo(p_43220_.x(), p_43220_.y(), p_43220_.z(), 0.0F, 0.0F);
-                    p_43219_.addFreshEntityWithPassengers(mob);
-                    mob.setCustomName(p_43221_.get(DataComponents.CUSTOM_NAME));
-                    p_43221_.consume(1, p_43216_);
+                    mob.moveTo(pos.x(), pos.y(), pos.z(), 0.0F, 0.0F);
+                    serverLevel.addFreshEntityWithPassengers(mob);
+                    mob.setCustomName(stack.get(DataComponents.CUSTOM_NAME));
+                    stack.consume(1, player);
                     return Optional.of(mob);
                 }
             }

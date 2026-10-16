@@ -22,49 +22,49 @@ public class CelebrateVillagersSurvivedRaid extends Behavior<Villager> {
     @Nullable
     private Raid currentRaid;
 
-    public CelebrateVillagersSurvivedRaid(int p_22684_, int p_22685_) {
-        super(ImmutableMap.of(), p_22684_, p_22685_);
+    public CelebrateVillagersSurvivedRaid(int minDuration, int maxDuration) {
+        super(ImmutableMap.of(), minDuration, maxDuration);
     }
 
-    protected boolean checkExtraStartConditions(ServerLevel p_22690_, Villager p_22691_) {
-        BlockPos blockpos = p_22691_.blockPosition();
-        this.currentRaid = p_22690_.getRaidAt(blockpos);
-        return this.currentRaid != null && this.currentRaid.isVictory() && MoveToSkySeeingSpot.hasNoBlocksAbove(p_22690_, p_22691_, blockpos);
+    protected boolean checkExtraStartConditions(ServerLevel level, Villager owner) {
+        BlockPos blockpos = owner.blockPosition();
+        this.currentRaid = level.getRaidAt(blockpos);
+        return this.currentRaid != null && this.currentRaid.isVictory() && MoveToSkySeeingSpot.hasNoBlocksAbove(level, owner, blockpos);
     }
 
-    protected boolean canStillUse(ServerLevel p_22693_, Villager p_22694_, long p_22695_) {
+    protected boolean canStillUse(ServerLevel level, Villager entity, long gameTime) {
         return this.currentRaid != null && !this.currentRaid.isStopped();
     }
 
-    protected void stop(ServerLevel p_22704_, Villager p_22705_, long p_22706_) {
+    protected void stop(ServerLevel level, Villager entity, long gameTime) {
         this.currentRaid = null;
-        p_22705_.getBrain().updateActivityFromSchedule(p_22704_.getDayTime(), p_22704_.getGameTime());
+        entity.getBrain().updateActivityFromSchedule(level.getDayTime(), level.getGameTime());
     }
 
-    protected void tick(ServerLevel p_22712_, Villager p_22713_, long p_22714_) {
-        RandomSource randomsource = p_22713_.getRandom();
+    protected void tick(ServerLevel level, Villager owner, long gameTime) {
+        RandomSource randomsource = owner.getRandom();
         if (randomsource.nextInt(100) == 0) {
-            p_22713_.playCelebrateSound();
+            owner.playCelebrateSound();
         }
 
-        if (randomsource.nextInt(200) == 0 && MoveToSkySeeingSpot.hasNoBlocksAbove(p_22712_, p_22713_, p_22713_.blockPosition())) {
+        if (randomsource.nextInt(200) == 0 && MoveToSkySeeingSpot.hasNoBlocksAbove(level, owner, owner.blockPosition())) {
             DyeColor dyecolor = Util.getRandom(DyeColor.values(), randomsource);
             int i = randomsource.nextInt(3);
             ItemStack itemstack = this.getFirework(dyecolor, i);
             FireworkRocketEntity fireworkrocketentity = new FireworkRocketEntity(
-                p_22713_.level(), p_22713_, p_22713_.getX(), p_22713_.getEyeY(), p_22713_.getZ(), itemstack
+                owner.level(), owner, owner.getX(), owner.getEyeY(), owner.getZ(), itemstack
             );
-            p_22713_.level().addFreshEntity(fireworkrocketentity);
+            owner.level().addFreshEntity(fireworkrocketentity);
         }
     }
 
-    private ItemStack getFirework(DyeColor p_22697_, int p_22698_) {
+    private ItemStack getFirework(DyeColor color, int flightTime) {
         ItemStack itemstack = new ItemStack(Items.FIREWORK_ROCKET);
         itemstack.set(
             DataComponents.FIREWORKS,
             new Fireworks(
-                (byte)p_22698_,
-                List.of(new FireworkExplosion(FireworkExplosion.Shape.BURST, IntList.of(p_22697_.getFireworkColor()), IntList.of(), false, false))
+                (byte)flightTime,
+                List.of(new FireworkExplosion(FireworkExplosion.Shape.BURST, IntList.of(color.getFireworkColor()), IntList.of(), false, false))
             )
         );
         return itemstack;

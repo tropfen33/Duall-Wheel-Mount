@@ -14,19 +14,26 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.configurations.SculkPatchConfiguration;
 
 public class SculkPatchFeature extends Feature<SculkPatchConfiguration> {
-    public SculkPatchFeature(Codec<SculkPatchConfiguration> p_225237_) {
-        super(p_225237_);
+    public SculkPatchFeature(Codec<SculkPatchConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<SculkPatchConfiguration> p_225242_) {
-        WorldGenLevel worldgenlevel = p_225242_.level();
-        BlockPos blockpos = p_225242_.origin();
+    public boolean place(FeaturePlaceContext<SculkPatchConfiguration> context) {
+        WorldGenLevel worldgenlevel = context.level();
+        BlockPos blockpos = context.origin();
         if (!this.canSpreadFrom(worldgenlevel, blockpos)) {
             return false;
         } else {
-            SculkPatchConfiguration sculkpatchconfiguration = p_225242_.config();
-            RandomSource randomsource = p_225242_.random();
+            SculkPatchConfiguration sculkpatchconfiguration = context.config();
+            RandomSource randomsource = context.random();
             SculkSpreader sculkspreader = SculkSpreader.createWorldGenSpreader();
             int i = sculkpatchconfiguration.spreadRounds() + sculkpatchconfiguration.growthRounds();
 
@@ -66,16 +73,16 @@ public class SculkPatchFeature extends Feature<SculkPatchConfiguration> {
         }
     }
 
-    private boolean canSpreadFrom(LevelAccessor p_225239_, BlockPos p_225240_) {
-        BlockState blockstate = p_225239_.getBlockState(p_225240_);
+    private boolean canSpreadFrom(LevelAccessor level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
         if (blockstate.getBlock() instanceof SculkBehaviour) {
             return true;
         } else {
             return !blockstate.isAir() && (!blockstate.is(Blocks.WATER) || !blockstate.getFluidState().isSource())
                 ? false
                 : Direction.stream()
-                    .map(p_225240_::relative)
-                    .anyMatch(p_225245_ -> p_225239_.getBlockState(p_225245_).isCollisionShapeFullBlock(p_225239_, p_225245_));
+                    .map(pos::relative)
+                    .anyMatch(p_225245_ -> level.getBlockState(p_225245_).isCollisionShapeFullBlock(level, p_225245_));
         }
     }
 }

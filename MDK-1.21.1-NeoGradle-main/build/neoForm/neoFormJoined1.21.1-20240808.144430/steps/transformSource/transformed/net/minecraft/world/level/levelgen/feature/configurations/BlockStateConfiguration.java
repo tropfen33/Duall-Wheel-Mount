@@ -10,7 +10,7 @@ public class BlockStateConfiguration implements FeatureConfiguration {
         .codec();
     public final BlockState state;
 
-    public BlockStateConfiguration(BlockState p_67550_) {
-        this.state = p_67550_;
+    public BlockStateConfiguration(BlockState state) {
+        this.state = state;
     }
 }

@@ -23,21 +23,21 @@ public class AnimationMetadataSection {
     private final int defaultFrameTime;
     private final boolean interpolatedFrames;
 
-    public AnimationMetadataSection(List<AnimationFrame> p_119020_, int p_119021_, int p_119022_, int p_119023_, boolean p_119024_) {
-        this.frames = p_119020_;
-        this.frameWidth = p_119021_;
-        this.frameHeight = p_119022_;
-        this.defaultFrameTime = p_119023_;
-        this.interpolatedFrames = p_119024_;
+    public AnimationMetadataSection(List<AnimationFrame> frames, int frameWidth, int frameHeight, int defaultFrameTime, boolean interpolatedFrames) {
+        this.frames = frames;
+        this.frameWidth = frameWidth;
+        this.frameHeight = frameHeight;
+        this.defaultFrameTime = defaultFrameTime;
+        this.interpolatedFrames = interpolatedFrames;
     }
 
-    public FrameSize calculateFrameSize(int p_249859_, int p_250148_) {
+    public FrameSize calculateFrameSize(int width, int height) {
         if (this.frameWidth != -1) {
-            return this.frameHeight != -1 ? new FrameSize(this.frameWidth, this.frameHeight) : new FrameSize(this.frameWidth, p_250148_);
+            return this.frameHeight != -1 ? new FrameSize(this.frameWidth, this.frameHeight) : new FrameSize(this.frameWidth, height);
         } else if (this.frameHeight != -1) {
-            return new FrameSize(p_249859_, this.frameHeight);
+            return new FrameSize(width, this.frameHeight);
         } else {
-            int i = Math.min(p_249859_, p_250148_);
+            int i = Math.min(width, height);
             return new FrameSize(i, i);
         }
     }
@@ -50,15 +50,15 @@ public class AnimationMetadataSection {
         return this.interpolatedFrames;
     }
 
-    public void forEachFrame(AnimationMetadataSection.FrameOutput p_174862_) {
+    public void forEachFrame(AnimationMetadataSection.FrameOutput output) {
         for (AnimationFrame animationframe : this.frames) {
-            p_174862_.accept(animationframe.getIndex(), animationframe.getTime(this.defaultFrameTime));
+            output.accept(animationframe.getIndex(), animationframe.getTime(this.defaultFrameTime));
         }
     }
 
     @FunctionalInterface
     @OnlyIn(Dist.CLIENT)
     public interface FrameOutput {
-        void accept(int p_174864_, int p_174865_);
+        void accept(int index, int time);
     }
 }

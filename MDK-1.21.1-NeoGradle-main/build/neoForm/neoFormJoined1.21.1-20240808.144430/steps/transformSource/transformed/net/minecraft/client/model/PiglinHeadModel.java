@@ -14,8 +14,8 @@ public class PiglinHeadModel extends SkullModelBase {
     private final ModelPart leftEar;
     private final ModelPart rightEar;
 
-    public PiglinHeadModel(ModelPart p_261926_) {
-        this.head = p_261926_.getChild("head");
+    public PiglinHeadModel(ModelPart root) {
+        this.head = root.getChild("head");
         this.leftEar = this.head.getChild("left_ear");
         this.rightEar = this.head.getChild("right_ear");
     }
@@ -27,16 +27,16 @@ public class PiglinHeadModel extends SkullModelBase {
     }
 
     @Override
-    public void setupAnim(float p_261561_, float p_261750_, float p_261549_) {
-        this.head.yRot = p_261750_ * (float) (Math.PI / 180.0);
-        this.head.xRot = p_261549_ * (float) (Math.PI / 180.0);
+    public void setupAnim(float mouthAnimation, float yRot, float xRot) {
+        this.head.yRot = yRot * (float) (Math.PI / 180.0);
+        this.head.xRot = xRot * (float) (Math.PI / 180.0);
         float f = 1.2F;
-        this.leftEar.zRot = (float)(-(Math.cos((double)(p_261561_ * (float) Math.PI * 0.2F * 1.2F)) + 2.5)) * 0.2F;
-        this.rightEar.zRot = (float)(Math.cos((double)(p_261561_ * (float) Math.PI * 0.2F)) + 2.5) * 0.2F;
+        this.leftEar.zRot = (float)(-(Math.cos((double)(mouthAnimation * (float) Math.PI * 0.2F * 1.2F)) + 2.5)) * 0.2F;
+        this.rightEar.zRot = (float)(Math.cos((double)(mouthAnimation * (float) Math.PI * 0.2F)) + 2.5) * 0.2F;
     }
 
     @Override
-    public void renderToBuffer(PoseStack p_261809_, VertexConsumer p_261744_, int p_261711_, int p_262032_, int p_350881_) {
-        this.head.render(p_261809_, p_261744_, p_261711_, p_262032_, p_350881_);
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
+        this.head.render(poseStack, buffer, packedLight, packedOverlay, color);
     }
 }

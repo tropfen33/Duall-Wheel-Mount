@@ -9,6 +9,12 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketType;
 import net.minecraft.world.level.block.Block;
 
+/**
+ * Triggers a block event on the client.
+ *
+ * @see Block#triggerEvent
+ * @see Level#blockEvent
+ */
 public class ClientboundBlockEventPacket implements Packet<ClientGamePacketListener> {
     public static final StreamCodec<RegistryFriendlyByteBuf, ClientboundBlockEventPacket> STREAM_CODEC = Packet.codec(
         ClientboundBlockEventPacket::write, ClientboundBlockEventPacket::new
@@ -18,25 +24,31 @@ public class ClientboundBlockEventPacket implements Packet<ClientGamePacketListe
     private final int b1;
     private final Block block;
 
-    public ClientboundBlockEventPacket(BlockPos p_131715_, Block p_131716_, int p_131717_, int p_131718_) {
-        this.pos = p_131715_;
-        this.block = p_131716_;
-        this.b0 = p_131717_;
-        this.b1 = p_131718_;
+    /**
+     * @param b0 first parameter of the block event. The meaning of this value depends
+     *           on the block.
+     * @param b1 second parameter of the block event. The meaning of this value
+     *           depends on the block.
+     */
+    public ClientboundBlockEventPacket(BlockPos pos, Block block, int b0, int b1) {
+        this.pos = pos;
+        this.block = block;
+        this.b0 = b0;
+        this.b1 = b1;
     }
 
-    private ClientboundBlockEventPacket(RegistryFriendlyByteBuf p_320705_) {
-        this.pos = p_320705_.readBlockPos();
-        this.b0 = p_320705_.readUnsignedByte();
-        this.b1 = p_320705_.readUnsignedByte();
-        this.block = ByteBufCodecs.registry(Registries.BLOCK).decode(p_320705_);
+    private ClientboundBlockEventPacket(RegistryFriendlyByteBuf buffer) {
+        this.pos = buffer.readBlockPos();
+        this.b0 = buffer.readUnsignedByte();
+        this.b1 = buffer.readUnsignedByte();
+        this.block = ByteBufCodecs.registry(Registries.BLOCK).decode(buffer);
     }
 
-    private void write(RegistryFriendlyByteBuf p_320189_) {
-        p_320189_.writeBlockPos(this.pos);
-        p_320189_.writeByte(this.b0);
-        p_320189_.writeByte(this.b1);
-        ByteBufCodecs.registry(Registries.BLOCK).encode(p_320189_, this.block);
+    private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeBlockPos(this.pos);
+        buffer.writeByte(this.b0);
+        buffer.writeByte(this.b1);
+        ByteBufCodecs.registry(Registries.BLOCK).encode(buffer, this.block);
     }
 
     @Override
@@ -44,8 +56,11 @@ public class ClientboundBlockEventPacket implements Packet<ClientGamePacketListe
         return GamePacketTypes.CLIENTBOUND_BLOCK_EVENT;
     }
 
-    public void handle(ClientGamePacketListener p_131724_) {
-        p_131724_.handleBlockEvent(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleBlockEvent(this);
     }
 
     public BlockPos getPos() {

@@ -33,9 +33,9 @@ public class FeaturePoolElement extends StructurePoolElement {
     private final Holder<PlacedFeature> feature;
     private final CompoundTag defaultJigsawNBT;
 
-    protected FeaturePoolElement(Holder<PlacedFeature> p_210209_, StructureTemplatePool.Projection p_210210_) {
-        super(p_210210_);
-        this.feature = p_210209_;
+    protected FeaturePoolElement(Holder<PlacedFeature> feature, StructureTemplatePool.Projection projection) {
+        super(projection);
+        this.feature = feature;
         this.defaultJigsawNBT = this.fillDefaultJigsawNBT();
     }
 
@@ -50,18 +50,18 @@ public class FeaturePoolElement extends StructurePoolElement {
     }
 
     @Override
-    public Vec3i getSize(StructureTemplateManager p_227192_, Rotation p_227193_) {
+    public Vec3i getSize(StructureTemplateManager structureTemplateManager, Rotation rotation) {
         return Vec3i.ZERO;
     }
 
     @Override
     public List<StructureTemplate.StructureBlockInfo> getShuffledJigsawBlocks(
-        StructureTemplateManager p_227199_, BlockPos p_227200_, Rotation p_227201_, RandomSource p_227202_
+        StructureTemplateManager structureTemplateManager, BlockPos pos, Rotation rotation, RandomSource random
     ) {
         List<StructureTemplate.StructureBlockInfo> list = Lists.newArrayList();
         list.add(
             new StructureTemplate.StructureBlockInfo(
-                p_227200_,
+                pos,
                 Blocks.JIGSAW.defaultBlockState().setValue(JigsawBlock.ORIENTATION, FrontAndTop.fromFrontAndTop(Direction.DOWN, Direction.SOUTH)),
                 this.defaultJigsawNBT
             )
@@ -70,33 +70,33 @@ public class FeaturePoolElement extends StructurePoolElement {
     }
 
     @Override
-    public BoundingBox getBoundingBox(StructureTemplateManager p_227195_, BlockPos p_227196_, Rotation p_227197_) {
-        Vec3i vec3i = this.getSize(p_227195_, p_227197_);
+    public BoundingBox getBoundingBox(StructureTemplateManager structureTemplateManager, BlockPos pos, Rotation rotation) {
+        Vec3i vec3i = this.getSize(structureTemplateManager, rotation);
         return new BoundingBox(
-            p_227196_.getX(),
-            p_227196_.getY(),
-            p_227196_.getZ(),
-            p_227196_.getX() + vec3i.getX(),
-            p_227196_.getY() + vec3i.getY(),
-            p_227196_.getZ() + vec3i.getZ()
+            pos.getX(),
+            pos.getY(),
+            pos.getZ(),
+            pos.getX() + vec3i.getX(),
+            pos.getY() + vec3i.getY(),
+            pos.getZ() + vec3i.getZ()
         );
     }
 
     @Override
     public boolean place(
-        StructureTemplateManager p_227181_,
-        WorldGenLevel p_227182_,
-        StructureManager p_227183_,
-        ChunkGenerator p_227184_,
-        BlockPos p_227185_,
-        BlockPos p_227186_,
-        Rotation p_227187_,
-        BoundingBox p_227188_,
-        RandomSource p_227189_,
-        LiquidSettings p_352143_,
-        boolean p_227190_
+        StructureTemplateManager structureTemplateManager,
+        WorldGenLevel level,
+        StructureManager structureManager,
+        ChunkGenerator generator,
+        BlockPos offset,
+        BlockPos pos,
+        Rotation rotation,
+        BoundingBox box,
+        RandomSource random,
+        LiquidSettings liquidSettings,
+        boolean keepJigsaws
     ) {
-        return this.feature.value().place(p_227182_, p_227184_, p_227189_, p_227185_);
+        return this.feature.value().place(level, generator, random, offset);
     }
 
     @Override

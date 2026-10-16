@@ -37,17 +37,17 @@ public class EntityDataAccessor implements DataAccessor {
         };
     private final Entity entity;
 
-    public EntityDataAccessor(Entity p_139510_) {
-        this.entity = p_139510_;
+    public EntityDataAccessor(Entity entity) {
+        this.entity = entity;
     }
 
     @Override
-    public void setData(CompoundTag p_139519_) throws CommandSyntaxException {
+    public void setData(CompoundTag other) throws CommandSyntaxException {
         if (this.entity instanceof Player) {
             throw ERROR_NO_PLAYERS.create();
         } else {
             UUID uuid = this.entity.getUUID();
-            this.entity.load(p_139519_);
+            this.entity.load(other);
             this.entity.setUUID(uuid);
         }
     }
@@ -62,15 +62,21 @@ public class EntityDataAccessor implements DataAccessor {
         return Component.translatable("commands.data.entity.modified", this.entity.getDisplayName());
     }
 
+    /**
+     * Gets the message used as a result of querying the given NBT (both for /data get and /data get path)
+     */
     @Override
-    public Component getPrintSuccess(Tag p_139521_) {
-        return Component.translatable("commands.data.entity.query", this.entity.getDisplayName(), NbtUtils.toPrettyComponent(p_139521_));
+    public Component getPrintSuccess(Tag nbt) {
+        return Component.translatable("commands.data.entity.query", this.entity.getDisplayName(), NbtUtils.toPrettyComponent(nbt));
     }
 
+    /**
+     * Gets the message used as a result of querying the given path with a scale.
+     */
     @Override
-    public Component getPrintSuccess(NbtPathArgument.NbtPath p_139513_, double p_139514_, int p_139515_) {
+    public Component getPrintSuccess(NbtPathArgument.NbtPath path, double scale, int value) {
         return Component.translatable(
-            "commands.data.entity.get", p_139513_.asString(), this.entity.getDisplayName(), String.format(Locale.ROOT, "%.2f", p_139514_), p_139515_
+            "commands.data.entity.get", path.asString(), this.entity.getDisplayName(), String.format(Locale.ROOT, "%.2f", scale), value
         );
     }
 }

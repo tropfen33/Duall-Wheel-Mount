@@ -21,26 +21,29 @@ public class CatRenderer extends MobRenderer<Cat, CatModel<Cat>> {
         this.addLayer(new CatCollarLayer(this, p_173943_.getModelSet()));
     }
 
-    public ResourceLocation getTextureLocation(Cat p_113950_) {
-        return p_113950_.getTextureId();
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Cat entity) {
+        return entity.getTextureId();
     }
 
-    protected void scale(Cat p_113952_, PoseStack p_113953_, float p_113954_) {
-        super.scale(p_113952_, p_113953_, p_113954_);
-        p_113953_.scale(0.8F, 0.8F, 0.8F);
+    protected void scale(Cat livingEntity, PoseStack poseStack, float partialTickTime) {
+        super.scale(livingEntity, poseStack, partialTickTime);
+        poseStack.scale(0.8F, 0.8F, 0.8F);
     }
 
-    protected void setupRotations(Cat p_113956_, PoseStack p_113957_, float p_113958_, float p_113959_, float p_113960_, float p_320072_) {
-        super.setupRotations(p_113956_, p_113957_, p_113958_, p_113959_, p_113960_, p_320072_);
-        float f = p_113956_.getLieDownAmount(p_113960_);
+    protected void setupRotations(Cat entity, PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale) {
+        super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
+        float f = entity.getLieDownAmount(partialTick);
         if (f > 0.0F) {
-            p_113957_.translate(0.4F * f, 0.15F * f, 0.1F * f);
-            p_113957_.mulPose(Axis.ZP.rotationDegrees(Mth.rotLerp(f, 0.0F, 90.0F)));
-            BlockPos blockpos = p_113956_.blockPosition();
+            poseStack.translate(0.4F * f, 0.15F * f, 0.1F * f);
+            poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.rotLerp(f, 0.0F, 90.0F)));
+            BlockPos blockpos = entity.blockPosition();
 
-            for (Player player : p_113956_.level().getEntitiesOfClass(Player.class, new AABB(blockpos).inflate(2.0, 2.0, 2.0))) {
+            for (Player player : entity.level().getEntitiesOfClass(Player.class, new AABB(blockpos).inflate(2.0, 2.0, 2.0))) {
                 if (player.isSleeping()) {
-                    p_113957_.translate(0.15F * f, 0.0F, 0.0F);
+                    poseStack.translate(0.15F * f, 0.0F, 0.0F);
                     break;
                 }
             }

@@ -9,6 +9,12 @@ import net.minecraft.resources.RegistryFileCodec;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.LootContextUser;
 
+/**
+ * A condition based on {@link LootContext}.
+ *
+ * @see {@link LootItemConditions}
+ * @see {@link PredicateManager}
+ */
 public interface LootItemCondition extends LootContextUser, Predicate<LootContext> {
     Codec<LootItemCondition> TYPED_CODEC = BuiltInRegistries.LOOT_CONDITION_TYPE
         .byNameCodec()
@@ -26,12 +32,12 @@ public interface LootItemCondition extends LootContextUser, Predicate<LootContex
             return InvertedLootItemCondition.invert(this);
         }
 
-        default AnyOfCondition.Builder or(LootItemCondition.Builder p_286316_) {
-            return AnyOfCondition.anyOf(this, p_286316_);
+        default AnyOfCondition.Builder or(LootItemCondition.Builder condition) {
+            return AnyOfCondition.anyOf(this, condition);
         }
 
-        default AllOfCondition.Builder and(LootItemCondition.Builder p_286363_) {
-            return AllOfCondition.allOf(this, p_286363_);
+        default AllOfCondition.Builder and(LootItemCondition.Builder condition) {
+            return AllOfCondition.allOf(this, condition);
         }
     }
 }

@@ -8,17 +8,17 @@ import java.util.stream.Stream;
 public class PoiTypeRemoveFix extends AbstractPoiSectionFix {
     private final Predicate<String> typesToKeep;
 
-    public PoiTypeRemoveFix(Schema p_216701_, String p_216702_, Predicate<String> p_216703_) {
-        super(p_216701_, p_216702_);
-        this.typesToKeep = p_216703_.negate();
+    public PoiTypeRemoveFix(Schema outputSchema, String name, Predicate<String> typesToRemove) {
+        super(outputSchema, name);
+        this.typesToKeep = typesToRemove.negate();
     }
 
     @Override
-    protected <T> Stream<Dynamic<T>> processRecords(Stream<Dynamic<T>> p_216707_) {
-        return p_216707_.filter(this::shouldKeepRecord);
+    protected <T> Stream<Dynamic<T>> processRecords(Stream<Dynamic<T>> records) {
+        return records.filter(this::shouldKeepRecord);
     }
 
-    private <T> boolean shouldKeepRecord(Dynamic<T> p_216705_) {
-        return p_216705_.get("type").asString().result().filter(this.typesToKeep).isPresent();
+    private <T> boolean shouldKeepRecord(Dynamic<T> record) {
+        return record.get("type").asString().result().filter(this.typesToKeep).isPresent();
     }
 }

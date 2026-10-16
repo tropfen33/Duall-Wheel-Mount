@@ -19,9 +19,9 @@ public class NumberFormatTypes {
         .dispatch(NumberFormat::type, NumberFormatType::streamCodec);
     public static final StreamCodec<RegistryFriendlyByteBuf, Optional<NumberFormat>> OPTIONAL_STREAM_CODEC = STREAM_CODEC.apply(ByteBufCodecs::optional);
 
-    public static NumberFormatType<?> bootstrap(Registry<NumberFormatType<?>> p_313781_) {
-        Registry.register(p_313781_, "blank", BlankFormat.TYPE);
-        Registry.register(p_313781_, "styled", StyledFormat.TYPE);
-        return Registry.register(p_313781_, "fixed", FixedFormat.TYPE);
+    public static NumberFormatType<?> bootstrap(Registry<NumberFormatType<?>> regsitry) {
+        Registry.register(regsitry, "blank", BlankFormat.TYPE);
+        Registry.register(regsitry, "styled", StyledFormat.TYPE);
+        return Registry.register(regsitry, "fixed", FixedFormat.TYPE);
     }
 }

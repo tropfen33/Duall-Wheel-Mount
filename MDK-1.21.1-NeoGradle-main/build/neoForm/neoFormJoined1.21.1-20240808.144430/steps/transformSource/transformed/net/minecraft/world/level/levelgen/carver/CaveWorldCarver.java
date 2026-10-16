@@ -13,59 +13,71 @@ import net.minecraft.world.level.chunk.CarvingMask;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.Aquifer;
 
+/**
+ * A carver which creates Minecraft's most common cave types.
+ */
 public class CaveWorldCarver extends WorldCarver<CaveCarverConfiguration> {
-    public CaveWorldCarver(Codec<CaveCarverConfiguration> p_159194_) {
-        super(p_159194_);
+    public CaveWorldCarver(Codec<CaveCarverConfiguration> codec) {
+        super(codec);
     }
 
-    public boolean isStartChunk(CaveCarverConfiguration p_224894_, RandomSource p_224895_) {
-        return p_224895_.nextFloat() <= p_224894_.probability;
+    public boolean isStartChunk(CaveCarverConfiguration config, RandomSource random) {
+        return random.nextFloat() <= config.probability;
     }
 
+    /**
+     * Carves the given chunk with caves that originate from the given {@code chunkPos}.
+     * This method is invoked 289 times in order to generate each chunk (once for every position in an 8 chunk radius, or 17x17 chunk area, centered around the target chunk).
+     *
+     * @see net.minecraft.world.level.chunk.ChunkGenerator#applyCarvers
+     *
+     * @param chunk    The chunk to be carved
+     * @param chunkPos The chunk position this carver is being called from
+     */
     public boolean carve(
-        CarvingContext p_224885_,
-        CaveCarverConfiguration p_224886_,
-        ChunkAccess p_224887_,
-        Function<BlockPos, Holder<Biome>> p_224888_,
-        RandomSource p_224889_,
-        Aquifer p_224890_,
-        ChunkPos p_224891_,
-        CarvingMask p_224892_
+        CarvingContext context,
+        CaveCarverConfiguration config,
+        ChunkAccess chunk,
+        Function<BlockPos, Holder<Biome>> biomeAccessor,
+        RandomSource random,
+        Aquifer aquifer,
+        ChunkPos chunkPos,
+        CarvingMask carvingMask
     ) {
         int i = SectionPos.sectionToBlockCoord(this.getRange() * 2 - 1);
-        int j = p_224889_.nextInt(p_224889_.nextInt(p_224889_.nextInt(this.getCaveBound()) + 1) + 1);
+        int j = random.nextInt(random.nextInt(random.nextInt(this.getCaveBound()) + 1) + 1);
 
         for (int k = 0; k < j; k++) {
-            double d0 = (double)p_224891_.getBlockX(p_224889_.nextInt(16));
-            double d1 = (double)p_224886_.y.sample(p_224889_, p_224885_);
-            double d2 = (double)p_224891_.getBlockZ(p_224889_.nextInt(16));
-            double d3 = (double)p_224886_.horizontalRadiusMultiplier.sample(p_224889_);
-            double d4 = (double)p_224886_.verticalRadiusMultiplier.sample(p_224889_);
-            double d5 = (double)p_224886_.floorLevel.sample(p_224889_);
+            double d0 = (double)chunkPos.getBlockX(random.nextInt(16));
+            double d1 = (double)config.y.sample(random, context);
+            double d2 = (double)chunkPos.getBlockZ(random.nextInt(16));
+            double d3 = (double)config.horizontalRadiusMultiplier.sample(random);
+            double d4 = (double)config.verticalRadiusMultiplier.sample(random);
+            double d5 = (double)config.floorLevel.sample(random);
             WorldCarver.CarveSkipChecker worldcarver$carveskipchecker = (p_159202_, p_159203_, p_159204_, p_159205_, p_159206_) -> shouldSkip(
                     p_159203_, p_159204_, p_159205_, d5
                 );
             int l = 1;
-            if (p_224889_.nextInt(4) == 0) {
-                double d6 = (double)p_224886_.yScale.sample(p_224889_);
-                float f1 = 1.0F + p_224889_.nextFloat() * 6.0F;
-                this.createRoom(p_224885_, p_224886_, p_224887_, p_224888_, p_224890_, d0, d1, d2, f1, d6, p_224892_, worldcarver$carveskipchecker);
-                l += p_224889_.nextInt(4);
+            if (random.nextInt(4) == 0) {
+                double d6 = (double)config.yScale.sample(random);
+                float f1 = 1.0F + random.nextFloat() * 6.0F;
+                this.createRoom(context, config, chunk, biomeAccessor, aquifer, d0, d1, d2, f1, d6, carvingMask, worldcarver$carveskipchecker);
+                l += random.nextInt(4);
             }
 
             for (int k1 = 0; k1 < l; k1++) {
-                float f = p_224889_.nextFloat() * (float) (Math.PI * 2);
-                float f3 = (p_224889_.nextFloat() - 0.5F) / 4.0F;
-                float f2 = this.getThickness(p_224889_);
-                int i1 = i - p_224889_.nextInt(i / 4);
+                float f = random.nextFloat() * (float) (Math.PI * 2);
+                float f3 = (random.nextFloat() - 0.5F) / 4.0F;
+                float f2 = this.getThickness(random);
+                int i1 = i - random.nextInt(i / 4);
                 int j1 = 0;
                 this.createTunnel(
-                    p_224885_,
-                    p_224886_,
-                    p_224887_,
-                    p_224888_,
-                    p_224889_.nextLong(),
-                    p_224890_,
+                    context,
+                    config,
+                    chunk,
+                    biomeAccessor,
+                    random.nextLong(),
+                    aquifer,
                     d0,
                     d1,
                     d2,
@@ -77,7 +89,7 @@ public class CaveWorldCarver extends WorldCarver<CaveCarverConfiguration> {
                     0,
                     i1,
                     this.getYScale(),
-                    p_224892_,
+                    carvingMask,
                     worldcarver$carveskipchecker
                 );
             }
@@ -90,10 +102,10 @@ public class CaveWorldCarver extends WorldCarver<CaveCarverConfiguration> {
         return 15;
     }
 
-    protected float getThickness(RandomSource p_224871_) {
-        float f = p_224871_.nextFloat() * 2.0F + p_224871_.nextFloat();
-        if (p_224871_.nextInt(10) == 0) {
-            f *= p_224871_.nextFloat() * p_224871_.nextFloat() * 3.0F + 1.0F;
+    protected float getThickness(RandomSource random) {
+        float f = random.nextFloat() * 2.0F + random.nextFloat();
+        if (random.nextInt(10) == 0) {
+            f *= random.nextFloat() * random.nextFloat() * 3.0F + 1.0F;
         }
 
         return f;
@@ -104,135 +116,135 @@ public class CaveWorldCarver extends WorldCarver<CaveCarverConfiguration> {
     }
 
     protected void createRoom(
-        CarvingContext p_190691_,
-        CaveCarverConfiguration p_190692_,
-        ChunkAccess p_190693_,
-        Function<BlockPos, Holder<Biome>> p_190694_,
-        Aquifer p_190695_,
-        double p_190696_,
-        double p_190697_,
-        double p_190698_,
-        float p_190699_,
-        double p_190700_,
-        CarvingMask p_190701_,
-        WorldCarver.CarveSkipChecker p_190702_
+        CarvingContext context,
+        CaveCarverConfiguration config,
+        ChunkAccess chunk,
+        Function<BlockPos, Holder<Biome>> biomeAccessor,
+        Aquifer aquifer,
+        double x,
+        double y,
+        double z,
+        float radius,
+        double horizontalVerticalRatio,
+        CarvingMask carvingMask,
+        WorldCarver.CarveSkipChecker skipChecker
     ) {
-        double d0 = 1.5 + (double)(Mth.sin((float) (Math.PI / 2)) * p_190699_);
-        double d1 = d0 * p_190700_;
-        this.carveEllipsoid(p_190691_, p_190692_, p_190693_, p_190694_, p_190695_, p_190696_ + 1.0, p_190697_, p_190698_, d0, d1, p_190701_, p_190702_);
+        double d0 = 1.5 + (double)(Mth.sin((float) (Math.PI / 2)) * radius);
+        double d1 = d0 * horizontalVerticalRatio;
+        this.carveEllipsoid(context, config, chunk, biomeAccessor, aquifer, x + 1.0, y, z, d0, d1, carvingMask, skipChecker);
     }
 
     protected void createTunnel(
-        CarvingContext p_190671_,
-        CaveCarverConfiguration p_190672_,
-        ChunkAccess p_190673_,
-        Function<BlockPos, Holder<Biome>> p_190674_,
-        long p_190675_,
-        Aquifer p_190676_,
-        double p_190677_,
-        double p_190678_,
-        double p_190679_,
-        double p_190680_,
-        double p_190681_,
-        float p_190682_,
-        float p_190683_,
-        float p_190684_,
-        int p_190685_,
-        int p_190686_,
-        double p_190687_,
-        CarvingMask p_190688_,
-        WorldCarver.CarveSkipChecker p_190689_
+        CarvingContext context,
+        CaveCarverConfiguration config,
+        ChunkAccess chunk,
+        Function<BlockPos, Holder<Biome>> biomeAccessor,
+        long seed,
+        Aquifer aquifer,
+        double x,
+        double y,
+        double z,
+        double horizontalRadiusMultiplier,
+        double verticalRadiusMultiplier,
+        float thickness,
+        float yaw,
+        float pitch,
+        int branchIndex,
+        int branchCount,
+        double horizontalVerticalRatio,
+        CarvingMask carvingMask,
+        WorldCarver.CarveSkipChecker skipChecker
     ) {
-        RandomSource randomsource = RandomSource.create(p_190675_);
-        int i = randomsource.nextInt(p_190686_ / 2) + p_190686_ / 4;
+        RandomSource randomsource = RandomSource.create(seed);
+        int i = randomsource.nextInt(branchCount / 2) + branchCount / 4;
         boolean flag = randomsource.nextInt(6) == 0;
         float f = 0.0F;
         float f1 = 0.0F;
 
-        for (int j = p_190685_; j < p_190686_; j++) {
-            double d0 = 1.5 + (double)(Mth.sin((float) Math.PI * (float)j / (float)p_190686_) * p_190682_);
-            double d1 = d0 * p_190687_;
-            float f2 = Mth.cos(p_190684_);
-            p_190677_ += (double)(Mth.cos(p_190683_) * f2);
-            p_190678_ += (double)Mth.sin(p_190684_);
-            p_190679_ += (double)(Mth.sin(p_190683_) * f2);
-            p_190684_ *= flag ? 0.92F : 0.7F;
-            p_190684_ += f1 * 0.1F;
-            p_190683_ += f * 0.1F;
+        for (int j = branchIndex; j < branchCount; j++) {
+            double d0 = 1.5 + (double)(Mth.sin((float) Math.PI * (float)j / (float)branchCount) * thickness);
+            double d1 = d0 * horizontalVerticalRatio;
+            float f2 = Mth.cos(pitch);
+            x += (double)(Mth.cos(yaw) * f2);
+            y += (double)Mth.sin(pitch);
+            z += (double)(Mth.sin(yaw) * f2);
+            pitch *= flag ? 0.92F : 0.7F;
+            pitch += f1 * 0.1F;
+            yaw += f * 0.1F;
             f1 *= 0.9F;
             f *= 0.75F;
             f1 += (randomsource.nextFloat() - randomsource.nextFloat()) * randomsource.nextFloat() * 2.0F;
             f += (randomsource.nextFloat() - randomsource.nextFloat()) * randomsource.nextFloat() * 4.0F;
-            if (j == i && p_190682_ > 1.0F) {
+            if (j == i && thickness > 1.0F) {
                 this.createTunnel(
-                    p_190671_,
-                    p_190672_,
-                    p_190673_,
-                    p_190674_,
+                    context,
+                    config,
+                    chunk,
+                    biomeAccessor,
                     randomsource.nextLong(),
-                    p_190676_,
-                    p_190677_,
-                    p_190678_,
-                    p_190679_,
-                    p_190680_,
-                    p_190681_,
+                    aquifer,
+                    x,
+                    y,
+                    z,
+                    horizontalRadiusMultiplier,
+                    verticalRadiusMultiplier,
                     randomsource.nextFloat() * 0.5F + 0.5F,
-                    p_190683_ - (float) (Math.PI / 2),
-                    p_190684_ / 3.0F,
+                    yaw - (float) (Math.PI / 2),
+                    pitch / 3.0F,
                     j,
-                    p_190686_,
+                    branchCount,
                     1.0,
-                    p_190688_,
-                    p_190689_
+                    carvingMask,
+                    skipChecker
                 );
                 this.createTunnel(
-                    p_190671_,
-                    p_190672_,
-                    p_190673_,
-                    p_190674_,
+                    context,
+                    config,
+                    chunk,
+                    biomeAccessor,
                     randomsource.nextLong(),
-                    p_190676_,
-                    p_190677_,
-                    p_190678_,
-                    p_190679_,
-                    p_190680_,
-                    p_190681_,
+                    aquifer,
+                    x,
+                    y,
+                    z,
+                    horizontalRadiusMultiplier,
+                    verticalRadiusMultiplier,
                     randomsource.nextFloat() * 0.5F + 0.5F,
-                    p_190683_ + (float) (Math.PI / 2),
-                    p_190684_ / 3.0F,
+                    yaw + (float) (Math.PI / 2),
+                    pitch / 3.0F,
                     j,
-                    p_190686_,
+                    branchCount,
                     1.0,
-                    p_190688_,
-                    p_190689_
+                    carvingMask,
+                    skipChecker
                 );
                 return;
             }
 
             if (randomsource.nextInt(4) != 0) {
-                if (!canReach(p_190673_.getPos(), p_190677_, p_190679_, j, p_190686_, p_190682_)) {
+                if (!canReach(chunk.getPos(), x, z, j, branchCount, thickness)) {
                     return;
                 }
 
                 this.carveEllipsoid(
-                    p_190671_,
-                    p_190672_,
-                    p_190673_,
-                    p_190674_,
-                    p_190676_,
-                    p_190677_,
-                    p_190678_,
-                    p_190679_,
-                    d0 * p_190680_,
-                    d1 * p_190681_,
-                    p_190688_,
-                    p_190689_
+                    context,
+                    config,
+                    chunk,
+                    biomeAccessor,
+                    aquifer,
+                    x,
+                    y,
+                    z,
+                    d0 * horizontalRadiusMultiplier,
+                    d1 * verticalRadiusMultiplier,
+                    carvingMask,
+                    skipChecker
                 );
             }
         }
     }
 
-    private static boolean shouldSkip(double p_159196_, double p_159197_, double p_159198_, double p_159199_) {
-        return p_159197_ <= p_159199_ ? true : p_159196_ * p_159196_ + p_159197_ * p_159197_ + p_159198_ * p_159198_ >= 1.0;
+    private static boolean shouldSkip(double relative, double relativeY, double relativeZ, double minrelativeY) {
+        return relativeY <= minrelativeY ? true : relative * relative + relativeY * relativeY + relativeZ * relativeZ >= 1.0;
     }
 }

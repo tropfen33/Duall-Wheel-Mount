@@ -15,8 +15,8 @@ public record ServerboundClientInformationPacket(ClientInformation information) 
         this(new ClientInformation(p_302025_));
     }
 
-    private void write(FriendlyByteBuf p_301974_) {
-        this.information.write(p_301974_);
+    private void write(FriendlyByteBuf buffer) {
+        this.information.write(buffer);
     }
 
     @Override
@@ -24,7 +24,10 @@ public record ServerboundClientInformationPacket(ClientInformation information) 
         return CommonPacketTypes.SERVERBOUND_CLIENT_INFORMATION;
     }
 
-    public void handle(ServerCommonPacketListener p_302031_) {
-        p_302031_.handleClientInformation(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ServerCommonPacketListener handler) {
+        handler.handleClientInformation(this);
     }
 }

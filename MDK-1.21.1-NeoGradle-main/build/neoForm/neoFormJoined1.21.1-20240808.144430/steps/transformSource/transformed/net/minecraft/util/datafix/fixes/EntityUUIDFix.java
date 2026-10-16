@@ -21,8 +21,8 @@ public class EntityUUIDFix extends AbstractUUIDFix {
     private static final Set<String> LIVING_ENTITIES = Sets.newHashSet();
     private static final Set<String> PROJECTILES = Sets.newHashSet();
 
-    public EntityUUIDFix(Schema p_15723_) {
-        super(p_15723_, References.ENTITY);
+    public EntityUUIDFix(Schema outputSchema) {
+        super(outputSchema, References.ENTITY);
     }
 
     @Override
@@ -66,8 +66,8 @@ public class EntityUUIDFix extends AbstractUUIDFix {
         });
     }
 
-    private static Dynamic<?> updatePiglin(Dynamic<?> p_15740_) {
-        return p_15740_.update(
+    private static Dynamic<?> updatePiglin(Dynamic<?> piglinTag) {
+        return piglinTag.update(
             "Brain",
             p_15781_ -> p_15781_.update(
                     "memories",
@@ -79,60 +79,60 @@ public class EntityUUIDFix extends AbstractUUIDFix {
         );
     }
 
-    private static Dynamic<?> updateEvokerFangs(Dynamic<?> p_15745_) {
-        return replaceUUIDLeastMost(p_15745_, "OwnerUUID", "Owner").orElse(p_15745_);
+    private static Dynamic<?> updateEvokerFangs(Dynamic<?> evokerFangsTag) {
+        return replaceUUIDLeastMost(evokerFangsTag, "OwnerUUID", "Owner").orElse(evokerFangsTag);
     }
 
-    private static Dynamic<?> updateZombieVillager(Dynamic<?> p_15750_) {
-        return replaceUUIDLeastMost(p_15750_, "ConversionPlayer", "ConversionPlayer").orElse(p_15750_);
+    private static Dynamic<?> updateZombieVillager(Dynamic<?> zombieVillagerTag) {
+        return replaceUUIDLeastMost(zombieVillagerTag, "ConversionPlayer", "ConversionPlayer").orElse(zombieVillagerTag);
     }
 
-    private static Dynamic<?> updateAreaEffectCloud(Dynamic<?> p_15752_) {
-        return replaceUUIDLeastMost(p_15752_, "OwnerUUID", "Owner").orElse(p_15752_);
+    private static Dynamic<?> updateAreaEffectCloud(Dynamic<?> areaEffectCloudTag) {
+        return replaceUUIDLeastMost(areaEffectCloudTag, "OwnerUUID", "Owner").orElse(areaEffectCloudTag);
     }
 
-    private static Dynamic<?> updateShulkerBullet(Dynamic<?> p_15754_) {
-        p_15754_ = replaceUUIDMLTag(p_15754_, "Owner", "Owner").orElse(p_15754_);
-        return replaceUUIDMLTag(p_15754_, "Target", "Target").orElse(p_15754_);
+    private static Dynamic<?> updateShulkerBullet(Dynamic<?> shulkerBulletTag) {
+        shulkerBulletTag = replaceUUIDMLTag(shulkerBulletTag, "Owner", "Owner").orElse(shulkerBulletTag);
+        return replaceUUIDMLTag(shulkerBulletTag, "Target", "Target").orElse(shulkerBulletTag);
     }
 
-    private static Dynamic<?> updateItem(Dynamic<?> p_15756_) {
-        p_15756_ = replaceUUIDMLTag(p_15756_, "Owner", "Owner").orElse(p_15756_);
-        return replaceUUIDMLTag(p_15756_, "Thrower", "Thrower").orElse(p_15756_);
+    private static Dynamic<?> updateItem(Dynamic<?> itemTag) {
+        itemTag = replaceUUIDMLTag(itemTag, "Owner", "Owner").orElse(itemTag);
+        return replaceUUIDMLTag(itemTag, "Thrower", "Thrower").orElse(itemTag);
     }
 
-    private static Dynamic<?> updateFox(Dynamic<?> p_15758_) {
-        Optional<Dynamic<?>> optional = p_15758_.get("TrustedUUIDs")
+    private static Dynamic<?> updateFox(Dynamic<?> foxTag) {
+        Optional<Dynamic<?>> optional = foxTag.get("TrustedUUIDs")
             .result()
-            .map(p_15748_ -> p_15758_.createList(p_15748_.asStream().map(p_145341_ -> createUUIDFromML((Dynamic<?>)p_145341_).orElseGet(() -> {
+            .map(p_15748_ -> foxTag.createList(p_15748_.asStream().map(p_145341_ -> createUUIDFromML((Dynamic<?>)p_145341_).orElseGet(() -> {
                         LOGGER.warn("Trusted contained invalid data.");
                         return p_145341_;
                     }))));
-        return DataFixUtils.orElse(optional.map(p_15743_ -> p_15758_.remove("TrustedUUIDs").set("Trusted", (Dynamic<?>)p_15743_)), p_15758_);
+        return DataFixUtils.orElse(optional.map(p_15743_ -> foxTag.remove("TrustedUUIDs").set("Trusted", (Dynamic<?>)p_15743_)), foxTag);
     }
 
-    private static Dynamic<?> updateHurtBy(Dynamic<?> p_15760_) {
-        return replaceUUIDString(p_15760_, "HurtBy", "HurtBy").orElse(p_15760_);
+    private static Dynamic<?> updateHurtBy(Dynamic<?> tag) {
+        return replaceUUIDString(tag, "HurtBy", "HurtBy").orElse(tag);
     }
 
-    private static Dynamic<?> updateAnimalOwner(Dynamic<?> p_15762_) {
-        Dynamic<?> dynamic = updateAnimal(p_15762_);
+    private static Dynamic<?> updateAnimalOwner(Dynamic<?> ownerTag) {
+        Dynamic<?> dynamic = updateAnimal(ownerTag);
         return replaceUUIDString(dynamic, "OwnerUUID", "Owner").orElse(dynamic);
     }
 
-    private static Dynamic<?> updateAnimal(Dynamic<?> p_15764_) {
-        Dynamic<?> dynamic = updateMob(p_15764_);
+    private static Dynamic<?> updateAnimal(Dynamic<?> animalTag) {
+        Dynamic<?> dynamic = updateMob(animalTag);
         return replaceUUIDLeastMost(dynamic, "LoveCause", "LoveCause").orElse(dynamic);
     }
 
-    private static Dynamic<?> updateMob(Dynamic<?> p_15767_) {
-        return updateLivingEntity(p_15767_).update("Leash", p_15775_ -> replaceUUIDLeastMost(p_15775_, "UUID", "UUID").orElse(p_15775_));
+    private static Dynamic<?> updateMob(Dynamic<?> mobTag) {
+        return updateLivingEntity(mobTag).update("Leash", p_15775_ -> replaceUUIDLeastMost(p_15775_, "UUID", "UUID").orElse(p_15775_));
     }
 
-    public static Dynamic<?> updateLivingEntity(Dynamic<?> p_15730_) {
-        return p_15730_.update(
+    public static Dynamic<?> updateLivingEntity(Dynamic<?> livingEntityTag) {
+        return livingEntityTag.update(
             "Attributes",
-            p_15733_ -> p_15730_.createList(
+            p_15733_ -> livingEntityTag.createList(
                     p_15733_.asStream()
                         .map(
                             p_145337_ -> p_145337_.update(
@@ -147,14 +147,14 @@ public class EntityUUIDFix extends AbstractUUIDFix {
         );
     }
 
-    private static Dynamic<?> updateProjectile(Dynamic<?> p_15769_) {
+    private static Dynamic<?> updateProjectile(Dynamic<?> projectileTag) {
         return DataFixUtils.orElse(
-            p_15769_.get("OwnerUUID").result().map(p_15728_ -> p_15769_.remove("OwnerUUID").set("Owner", (Dynamic<?>)p_15728_)), p_15769_
+            projectileTag.get("OwnerUUID").result().map(p_15728_ -> projectileTag.remove("OwnerUUID").set("Owner", (Dynamic<?>)p_15728_)), projectileTag
         );
     }
 
-    public static Dynamic<?> updateEntityUUID(Dynamic<?> p_15735_) {
-        return replaceUUIDLeastMost(p_15735_, "UUID", "UUID").orElse(p_15735_);
+    public static Dynamic<?> updateEntityUUID(Dynamic<?> entityTag) {
+        return replaceUUIDLeastMost(entityTag, "UUID", "UUID").orElse(entityTag);
     }
 
     static {

@@ -33,21 +33,21 @@ public class GameEventListenerRenderer implements DebugRenderer.SimpleDebugRende
     private final List<GameEventListenerRenderer.TrackedGameEvent> trackedGameEvents = Lists.newArrayList();
     private final List<GameEventListenerRenderer.TrackedListener> trackedListeners = Lists.newArrayList();
 
-    public GameEventListenerRenderer(Minecraft p_173822_) {
-        this.minecraft = p_173822_;
+    public GameEventListenerRenderer(Minecraft minecraft) {
+        this.minecraft = minecraft;
     }
 
     @Override
-    public void render(PoseStack p_173846_, MultiBufferSource p_173847_, double p_173848_, double p_173849_, double p_173850_) {
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, double camX, double camY, double camZ) {
         Level level = this.minecraft.level;
         if (level == null) {
             this.trackedGameEvents.clear();
             this.trackedListeners.clear();
         } else {
-            Vec3 vec3 = new Vec3(p_173848_, 0.0, p_173850_);
+            Vec3 vec3 = new Vec3(camX, 0.0, camZ);
             this.trackedGameEvents.removeIf(GameEventListenerRenderer.TrackedGameEvent::isExpired);
             this.trackedListeners.removeIf(p_234512_ -> p_234512_.isExpired(level, vec3));
-            VertexConsumer vertexconsumer = p_173847_.getBuffer(RenderType.lines());
+            VertexConsumer vertexconsumer = bufferSource.getBuffer(RenderType.lines());
 
             for (GameEventListenerRenderer.TrackedListener gameeventlistenerrenderer$trackedlistener : this.trackedListeners) {
                 gameeventlistenerrenderer$trackedlistener.getPosition(level)
@@ -60,12 +60,12 @@ public class GameEventListenerRenderer implements DebugRenderer.SimpleDebugRende
                             double d11 = p_269731_.y() + (double)gameeventlistenerrenderer$trackedlistener.getListenerRadius();
                             double d12 = p_269731_.z() + (double)gameeventlistenerrenderer$trackedlistener.getListenerRadius();
                             LevelRenderer.renderVoxelShape(
-                                p_173846_,
+                                poseStack,
                                 vertexconsumer,
                                 Shapes.create(new AABB(d7, d8, d9, d10, d11, d12)),
-                                -p_173848_,
-                                -p_173849_,
-                                -p_173850_,
+                                -camX,
+                                -camY,
+                                -camZ,
                                 1.0F,
                                 1.0F,
                                 0.0F,
@@ -76,20 +76,20 @@ public class GameEventListenerRenderer implements DebugRenderer.SimpleDebugRende
                     );
             }
 
-            VertexConsumer vertexconsumer1 = p_173847_.getBuffer(RenderType.debugFilledBox());
+            VertexConsumer vertexconsumer1 = bufferSource.getBuffer(RenderType.debugFilledBox());
 
             for (GameEventListenerRenderer.TrackedListener gameeventlistenerrenderer$trackedlistener1 : this.trackedListeners) {
                 gameeventlistenerrenderer$trackedlistener1.getPosition(level)
                     .ifPresent(
                         p_269724_ -> LevelRenderer.addChainedFilledBoxVertices(
-                                p_173846_,
+                                poseStack,
                                 vertexconsumer1,
-                                p_269724_.x() - 0.25 - p_173848_,
-                                p_269724_.y() - p_173849_,
-                                p_269724_.z() - 0.25 - p_173850_,
-                                p_269724_.x() + 0.25 - p_173848_,
-                                p_269724_.y() - p_173849_ + 1.0,
-                                p_269724_.z() + 0.25 - p_173850_,
+                                p_269724_.x() - 0.25 - camX,
+                                p_269724_.y() - camY,
+                                p_269724_.z() - 0.25 - camZ,
+                                p_269724_.x() + 0.25 - camX,
+                                p_269724_.y() - camY + 1.0,
+                                p_269724_.z() + 0.25 - camZ,
                                 1.0F,
                                 1.0F,
                                 0.0F,
@@ -103,11 +103,11 @@ public class GameEventListenerRenderer implements DebugRenderer.SimpleDebugRende
                     .ifPresent(
                         p_274713_ -> {
                             DebugRenderer.renderFloatingText(
-                                p_173846_, p_173847_, "Listener Origin", p_274713_.x(), p_274713_.y() + 1.8F, p_274713_.z(), -1, 0.025F
+                                poseStack, bufferSource, "Listener Origin", p_274713_.x(), p_274713_.y() + 1.8F, p_274713_.z(), -1, 0.025F
                             );
                             DebugRenderer.renderFloatingText(
-                                p_173846_,
-                                p_173847_,
+                                poseStack,
+                                bufferSource,
                                 BlockPos.containing(p_274713_).toString(),
                                 p_274713_.x(),
                                 p_274713_.y() + 1.5,
@@ -128,10 +128,10 @@ public class GameEventListenerRenderer implements DebugRenderer.SimpleDebugRende
                 double d4 = vec31.x + 0.2F;
                 double d5 = vec31.y + 0.2F + 0.5;
                 double d6 = vec31.z + 0.2F;
-                renderFilledBox(p_173846_, p_173847_, new AABB(d1, d2, d3, d4, d5, d6), 1.0F, 1.0F, 1.0F, 0.2F);
+                renderFilledBox(poseStack, bufferSource, new AABB(d1, d2, d3, d4, d5, d6), 1.0F, 1.0F, 1.0F, 0.2F);
                 DebugRenderer.renderFloatingText(
-                    p_173846_,
-                    p_173847_,
+                    poseStack,
+                    bufferSource,
                     gameeventlistenerrenderer$trackedgameevent.gameEvent.location().toString(),
                     vec31.x,
                     vec31.y + 0.85F,
@@ -144,21 +144,21 @@ public class GameEventListenerRenderer implements DebugRenderer.SimpleDebugRende
     }
 
     private static void renderFilledBox(
-        PoseStack p_270351_, MultiBufferSource p_270763_, AABB p_270205_, float p_270707_, float p_270538_, float p_270314_, float p_270966_
+        PoseStack poseStack, MultiBufferSource buffer, AABB boundingBox, float red, float green, float blue, float alpha
     ) {
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
         if (camera.isInitialized()) {
             Vec3 vec3 = camera.getPosition().reverse();
-            DebugRenderer.renderFilledBox(p_270351_, p_270763_, p_270205_.move(vec3), p_270707_, p_270538_, p_270314_, p_270966_);
+            DebugRenderer.renderFilledBox(poseStack, buffer, boundingBox.move(vec3), red, green, blue, alpha);
         }
     }
 
-    public void trackGameEvent(ResourceKey<GameEvent> p_294637_, Vec3 p_234515_) {
-        this.trackedGameEvents.add(new GameEventListenerRenderer.TrackedGameEvent(Util.getMillis(), p_294637_, p_234515_));
+    public void trackGameEvent(ResourceKey<GameEvent> gameEvent, Vec3 position) {
+        this.trackedGameEvents.add(new GameEventListenerRenderer.TrackedGameEvent(Util.getMillis(), gameEvent, position));
     }
 
-    public void trackListener(PositionSource p_173831_, int p_173832_) {
-        this.trackedListeners.add(new GameEventListenerRenderer.TrackedListener(p_173831_, p_173832_));
+    public void trackListener(PositionSource listenerSource, int listenerRange) {
+        this.trackedListeners.add(new GameEventListenerRenderer.TrackedListener(listenerSource, listenerRange));
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -173,17 +173,17 @@ public class GameEventListenerRenderer implements DebugRenderer.SimpleDebugRende
         public final PositionSource listenerSource;
         public final int listenerRange;
 
-        public TrackedListener(PositionSource p_173872_, int p_173873_) {
-            this.listenerSource = p_173872_;
-            this.listenerRange = p_173873_;
+        public TrackedListener(PositionSource listenerSource, int listenerRange) {
+            this.listenerSource = listenerSource;
+            this.listenerRange = listenerRange;
         }
 
-        public boolean isExpired(Level p_234543_, Vec3 p_234544_) {
-            return this.listenerSource.getPosition(p_234543_).filter(p_234547_ -> p_234547_.distanceToSqr(p_234544_) <= 1024.0).isPresent();
+        public boolean isExpired(Level level, Vec3 pos) {
+            return this.listenerSource.getPosition(level).filter(p_234547_ -> p_234547_.distanceToSqr(pos) <= 1024.0).isPresent();
         }
 
-        public Optional<Vec3> getPosition(Level p_173876_) {
-            return this.listenerSource.getPosition(p_173876_);
+        public Optional<Vec3> getPosition(Level level) {
+            return this.listenerSource.getPosition(level);
         }
 
         @Override
@@ -197,7 +197,7 @@ public class GameEventListenerRenderer implements DebugRenderer.SimpleDebugRende
         }
 
         @Override
-        public boolean handleGameEvent(ServerLevel p_234540_, Holder<GameEvent> p_316503_, GameEvent.Context p_250285_, Vec3 p_250758_) {
+        public boolean handleGameEvent(ServerLevel level, Holder<GameEvent> gameEvent, GameEvent.Context context, Vec3 pos) {
             return false;
         }
     }

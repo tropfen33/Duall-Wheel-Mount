@@ -13,15 +13,15 @@ public record FieldTree(int depth, Map<String, TagType<?>> selectedFields, Map<S
         return new FieldTree(1);
     }
 
-    public void addEntry(FieldSelector p_202539_) {
-        if (this.depth <= p_202539_.path().size()) {
-            this.fieldsToRecurse.computeIfAbsent(p_202539_.path().get(this.depth - 1), p_202534_ -> new FieldTree(this.depth + 1)).addEntry(p_202539_);
+    public void addEntry(FieldSelector selector) {
+        if (this.depth <= selector.path().size()) {
+            this.fieldsToRecurse.computeIfAbsent(selector.path().get(this.depth - 1), p_202534_ -> new FieldTree(this.depth + 1)).addEntry(selector);
         } else {
-            this.selectedFields.put(p_202539_.name(), p_202539_.type());
+            this.selectedFields.put(selector.name(), selector.type());
         }
     }
 
-    public boolean isSelected(TagType<?> p_202536_, String p_202537_) {
-        return p_202536_.equals(this.selectedFields().get(p_202537_));
+    public boolean isSelected(TagType<?> type, String name) {
+        return type.equals(this.selectedFields().get(name));
     }
 }

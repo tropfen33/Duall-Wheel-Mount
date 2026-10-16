@@ -11,11 +11,11 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class EntityBoundSoundInstance extends AbstractTickableSoundInstance {
     private final Entity entity;
 
-    public EntityBoundSoundInstance(SoundEvent p_235080_, SoundSource p_235081_, float p_235082_, float p_235083_, Entity p_235084_, long p_235085_) {
-        super(p_235080_, p_235081_, RandomSource.create(p_235085_));
-        this.volume = p_235082_;
-        this.pitch = p_235083_;
-        this.entity = p_235084_;
+    public EntityBoundSoundInstance(SoundEvent soundEvent, SoundSource source, float volume, float pitch, Entity entity, long seed) {
+        super(soundEvent, source, RandomSource.create(seed));
+        this.volume = volume;
+        this.pitch = pitch;
+        this.entity = entity;
         this.x = (double)((float)this.entity.getX());
         this.y = (double)((float)this.entity.getY());
         this.z = (double)((float)this.entity.getZ());

@@ -12,22 +12,25 @@ public class I18n {
     private I18n() {
     }
 
-    static void setLanguage(Language p_118942_) {
-        language = p_118942_;
-        net.neoforged.fml.i18n.I18nManager.injectTranslations(p_118942_.getLanguageData());
+    static void setLanguage(Language p_language) {
+        language = p_language;
+        net.neoforged.fml.i18n.I18nManager.injectTranslations(p_language.getLanguageData());
     }
 
-    public static String get(String p_118939_, Object... p_118940_) {
-        String s = language.getOrDefault(p_118939_);
+    /**
+     * Translates the given string and then formats it. Equivalent to {@code String.format(translate(key), parameters)}.
+     */
+    public static String get(String translateKey, Object... parameters) {
+        String s = language.getOrDefault(translateKey);
 
         try {
-            return String.format(s, p_118940_);
+            return String.format(s, parameters);
         } catch (IllegalFormatException illegalformatexception) {
             return "Format error: " + s;
         }
     }
 
-    public static boolean exists(String p_118937_) {
-        return language.has(p_118937_);
+    public static boolean exists(String key) {
+        return language.has(key);
     }
 }

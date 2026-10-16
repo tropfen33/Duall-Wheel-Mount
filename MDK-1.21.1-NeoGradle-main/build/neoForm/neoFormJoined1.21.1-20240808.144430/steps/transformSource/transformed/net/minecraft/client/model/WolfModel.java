@@ -18,6 +18,9 @@ public class WolfModel<T extends Wolf> extends ColorableAgeableListModel<T> {
     private static final String UPPER_BODY = "upper_body";
     private static final String REAL_TAIL = "real_tail";
     private final ModelPart head;
+    /**
+     * Added as a result/workaround for the loss of renderWithRotation
+     */
     private final ModelPart realHead;
     private final ModelPart body;
     private final ModelPart rightHindLeg;
@@ -25,24 +28,27 @@ public class WolfModel<T extends Wolf> extends ColorableAgeableListModel<T> {
     private final ModelPart rightFrontLeg;
     private final ModelPart leftFrontLeg;
     private final ModelPart tail;
+    /**
+     * Added as a result/workaround for the loss of renderWithRotation
+     */
     private final ModelPart realTail;
     private final ModelPart upperBody;
     private static final int LEG_SIZE = 8;
 
-    public WolfModel(ModelPart p_171087_) {
-        this.head = p_171087_.getChild("head");
+    public WolfModel(ModelPart root) {
+        this.head = root.getChild("head");
         this.realHead = this.head.getChild("real_head");
-        this.body = p_171087_.getChild("body");
-        this.upperBody = p_171087_.getChild("upper_body");
-        this.rightHindLeg = p_171087_.getChild("right_hind_leg");
-        this.leftHindLeg = p_171087_.getChild("left_hind_leg");
-        this.rightFrontLeg = p_171087_.getChild("right_front_leg");
-        this.leftFrontLeg = p_171087_.getChild("left_front_leg");
-        this.tail = p_171087_.getChild("tail");
+        this.body = root.getChild("body");
+        this.upperBody = root.getChild("upper_body");
+        this.rightHindLeg = root.getChild("right_hind_leg");
+        this.leftHindLeg = root.getChild("left_hind_leg");
+        this.rightFrontLeg = root.getChild("right_front_leg");
+        this.leftFrontLeg = root.getChild("left_front_leg");
+        this.tail = root.getChild("tail");
         this.realTail = this.tail.getChild("real_tail");
     }
 
-    public static MeshDefinition createMeshDefinition(CubeDeformation p_316269_) {
+    public static MeshDefinition createMeshDefinition(CubeDeformation cubeDeformation) {
         MeshDefinition meshdefinition = new MeshDefinition();
         PartDefinition partdefinition = meshdefinition.getRoot();
         float f = 13.5F;
@@ -51,26 +57,26 @@ public class WolfModel<T extends Wolf> extends ColorableAgeableListModel<T> {
             "real_head",
             CubeListBuilder.create()
                 .texOffs(0, 0)
-                .addBox(-2.0F, -3.0F, -2.0F, 6.0F, 6.0F, 4.0F, p_316269_)
+                .addBox(-2.0F, -3.0F, -2.0F, 6.0F, 6.0F, 4.0F, cubeDeformation)
                 .texOffs(16, 14)
-                .addBox(-2.0F, -5.0F, 0.0F, 2.0F, 2.0F, 1.0F, p_316269_)
+                .addBox(-2.0F, -5.0F, 0.0F, 2.0F, 2.0F, 1.0F, cubeDeformation)
                 .texOffs(16, 14)
-                .addBox(2.0F, -5.0F, 0.0F, 2.0F, 2.0F, 1.0F, p_316269_)
+                .addBox(2.0F, -5.0F, 0.0F, 2.0F, 2.0F, 1.0F, cubeDeformation)
                 .texOffs(0, 10)
-                .addBox(-0.5F, -0.001F, -5.0F, 3.0F, 3.0F, 4.0F, p_316269_),
+                .addBox(-0.5F, -0.001F, -5.0F, 3.0F, 3.0F, 4.0F, cubeDeformation),
             PartPose.ZERO
         );
         partdefinition.addOrReplaceChild(
             "body",
-            CubeListBuilder.create().texOffs(18, 14).addBox(-3.0F, -2.0F, -3.0F, 6.0F, 9.0F, 6.0F, p_316269_),
+            CubeListBuilder.create().texOffs(18, 14).addBox(-3.0F, -2.0F, -3.0F, 6.0F, 9.0F, 6.0F, cubeDeformation),
             PartPose.offsetAndRotation(0.0F, 14.0F, 2.0F, (float) (Math.PI / 2), 0.0F, 0.0F)
         );
         partdefinition.addOrReplaceChild(
             "upper_body",
-            CubeListBuilder.create().texOffs(21, 0).addBox(-3.0F, -3.0F, -3.0F, 8.0F, 6.0F, 7.0F, p_316269_),
+            CubeListBuilder.create().texOffs(21, 0).addBox(-3.0F, -3.0F, -3.0F, 8.0F, 6.0F, 7.0F, cubeDeformation),
             PartPose.offsetAndRotation(-1.0F, 14.0F, -3.0F, (float) (Math.PI / 2), 0.0F, 0.0F)
         );
-        CubeListBuilder cubelistbuilder = CubeListBuilder.create().texOffs(0, 18).addBox(0.0F, 0.0F, -1.0F, 2.0F, 8.0F, 2.0F, p_316269_);
+        CubeListBuilder cubelistbuilder = CubeListBuilder.create().texOffs(0, 18).addBox(0.0F, 0.0F, -1.0F, 2.0F, 8.0F, 2.0F, cubeDeformation);
         partdefinition.addOrReplaceChild("right_hind_leg", cubelistbuilder, PartPose.offset(-2.5F, 16.0F, 7.0F));
         partdefinition.addOrReplaceChild("left_hind_leg", cubelistbuilder, PartPose.offset(0.5F, 16.0F, 7.0F));
         partdefinition.addOrReplaceChild("right_front_leg", cubelistbuilder, PartPose.offset(-2.5F, 16.0F, -4.0F));
@@ -79,7 +85,7 @@ public class WolfModel<T extends Wolf> extends ColorableAgeableListModel<T> {
             "tail", CubeListBuilder.create(), PartPose.offsetAndRotation(-1.0F, 12.0F, 8.0F, (float) (Math.PI / 5), 0.0F, 0.0F)
         );
         partdefinition2.addOrReplaceChild(
-            "real_tail", CubeListBuilder.create().texOffs(9, 18).addBox(0.0F, 0.0F, -1.0F, 2.0F, 8.0F, 2.0F, p_316269_), PartPose.ZERO
+            "real_tail", CubeListBuilder.create().texOffs(9, 18).addBox(0.0F, 0.0F, -1.0F, 2.0F, 8.0F, 2.0F, cubeDeformation), PartPose.ZERO
         );
         return meshdefinition;
     }
@@ -94,14 +100,14 @@ public class WolfModel<T extends Wolf> extends ColorableAgeableListModel<T> {
         return ImmutableList.of(this.body, this.rightHindLeg, this.leftHindLeg, this.rightFrontLeg, this.leftFrontLeg, this.tail, this.upperBody);
     }
 
-    public void prepareMobModel(T p_104132_, float p_104133_, float p_104134_, float p_104135_) {
-        if (p_104132_.isAngry()) {
+    public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float partialTick) {
+        if (entity.isAngry()) {
             this.tail.yRot = 0.0F;
         } else {
-            this.tail.yRot = Mth.cos(p_104133_ * 0.6662F) * 1.4F * p_104134_;
+            this.tail.yRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
         }
 
-        if (p_104132_.isInSittingPose()) {
+        if (entity.isInSittingPose()) {
             this.upperBody.setPos(-1.0F, 16.0F, -3.0F);
             this.upperBody.xRot = (float) (Math.PI * 2.0 / 5.0);
             this.upperBody.yRot = 0.0F;
@@ -126,21 +132,24 @@ public class WolfModel<T extends Wolf> extends ColorableAgeableListModel<T> {
             this.leftHindLeg.setPos(0.5F, 16.0F, 7.0F);
             this.rightFrontLeg.setPos(-2.5F, 16.0F, -4.0F);
             this.leftFrontLeg.setPos(0.5F, 16.0F, -4.0F);
-            this.rightHindLeg.xRot = Mth.cos(p_104133_ * 0.6662F) * 1.4F * p_104134_;
-            this.leftHindLeg.xRot = Mth.cos(p_104133_ * 0.6662F + (float) Math.PI) * 1.4F * p_104134_;
-            this.rightFrontLeg.xRot = Mth.cos(p_104133_ * 0.6662F + (float) Math.PI) * 1.4F * p_104134_;
-            this.leftFrontLeg.xRot = Mth.cos(p_104133_ * 0.6662F) * 1.4F * p_104134_;
+            this.rightHindLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
+            this.leftHindLeg.xRot = Mth.cos(limbSwing * 0.6662F + (float) Math.PI) * 1.4F * limbSwingAmount;
+            this.rightFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F + (float) Math.PI) * 1.4F * limbSwingAmount;
+            this.leftFrontLeg.xRot = Mth.cos(limbSwing * 0.6662F) * 1.4F * limbSwingAmount;
         }
 
-        this.realHead.zRot = p_104132_.getHeadRollAngle(p_104135_) + p_104132_.getBodyRollAngle(p_104135_, 0.0F);
-        this.upperBody.zRot = p_104132_.getBodyRollAngle(p_104135_, -0.08F);
-        this.body.zRot = p_104132_.getBodyRollAngle(p_104135_, -0.16F);
-        this.realTail.zRot = p_104132_.getBodyRollAngle(p_104135_, -0.2F);
+        this.realHead.zRot = entity.getHeadRollAngle(partialTick) + entity.getBodyRollAngle(partialTick, 0.0F);
+        this.upperBody.zRot = entity.getBodyRollAngle(partialTick, -0.08F);
+        this.body.zRot = entity.getBodyRollAngle(partialTick, -0.16F);
+        this.realTail.zRot = entity.getBodyRollAngle(partialTick, -0.2F);
     }
 
-    public void setupAnim(T p_104137_, float p_104138_, float p_104139_, float p_104140_, float p_104141_, float p_104142_) {
-        this.head.xRot = p_104142_ * (float) (Math.PI / 180.0);
-        this.head.yRot = p_104141_ * (float) (Math.PI / 180.0);
-        this.tail.xRot = p_104140_;
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.head.xRot = headPitch * (float) (Math.PI / 180.0);
+        this.head.yRot = netHeadYaw * (float) (Math.PI / 180.0);
+        this.tail.xRot = ageInTicks;
     }
 }

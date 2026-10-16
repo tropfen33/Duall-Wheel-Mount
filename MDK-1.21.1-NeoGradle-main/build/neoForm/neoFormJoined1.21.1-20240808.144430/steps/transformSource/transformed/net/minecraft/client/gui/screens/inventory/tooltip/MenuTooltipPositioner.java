@@ -15,21 +15,21 @@ public class MenuTooltipPositioner implements ClientTooltipPositioner {
     public static final int MAX_DISTANCE_TO_WIDGET = 5;
     private final ScreenRectangle screenRectangle;
 
-    public MenuTooltipPositioner(ScreenRectangle p_305825_) {
-        this.screenRectangle = p_305825_;
+    public MenuTooltipPositioner(ScreenRectangle screenRectangle) {
+        this.screenRectangle = screenRectangle;
     }
 
     @Override
-    public Vector2ic positionTooltip(int p_283490_, int p_282509_, int p_282684_, int p_281703_, int p_281348_, int p_283657_) {
-        Vector2i vector2i = new Vector2i(p_282684_ + 12, p_281703_);
-        if (vector2i.x + p_281348_ > p_283490_ - 5) {
-            vector2i.x = Math.max(p_282684_ - 12 - p_281348_, 9);
+    public Vector2ic positionTooltip(int screenWidth, int screenHeight, int mouseX, int mouseY, int tooltipWidth, int tooltipHeight) {
+        Vector2i vector2i = new Vector2i(mouseX + 12, mouseY);
+        if (vector2i.x + tooltipWidth > screenWidth - 5) {
+            vector2i.x = Math.max(mouseX - 12 - tooltipWidth, 9);
         }
 
         vector2i.y += 3;
-        int i = p_283657_ + 3 + 3;
+        int i = tooltipHeight + 3 + 3;
         int j = this.screenRectangle.bottom() + 3 + getOffset(0, 0, this.screenRectangle.height());
-        int k = p_282509_ - 5;
+        int k = screenHeight - 5;
         if (j + i <= k) {
             vector2i.y = vector2i.y + getOffset(vector2i.y, this.screenRectangle.top(), this.screenRectangle.height());
         } else {
@@ -39,8 +39,8 @@ public class MenuTooltipPositioner implements ClientTooltipPositioner {
         return vector2i;
     }
 
-    private static int getOffset(int p_268188_, int p_268026_, int p_268015_) {
-        int i = Math.min(Math.abs(p_268188_ - p_268026_), p_268015_);
-        return Math.round(Mth.lerp((float)i / (float)p_268015_, (float)(p_268015_ - 3), 5.0F));
+    private static int getOffset(int mouseY, int widgetY, int widgetHeight) {
+        int i = Math.min(Math.abs(mouseY - widgetY), widgetHeight);
+        return Math.round(Mth.lerp((float)i / (float)widgetHeight, (float)(widgetHeight - 3), 5.0F));
     }
 }

@@ -20,11 +20,11 @@ public abstract class GrowingPlantBlock extends Block {
     protected final boolean scheduleFluidTicks;
     protected final VoxelShape shape;
 
-    protected GrowingPlantBlock(BlockBehaviour.Properties p_53863_, Direction p_53864_, VoxelShape p_53865_, boolean p_53866_) {
-        super(p_53863_);
-        this.growthDirection = p_53864_;
-        this.shape = p_53865_;
-        this.scheduleFluidTicks = p_53866_;
+    protected GrowingPlantBlock(BlockBehaviour.Properties properties, Direction growthDirection, VoxelShape shape, boolean scheduleFluidTicks) {
+        super(properties);
+        this.growthDirection = growthDirection;
+        this.shape = shape;
+        this.scheduleFluidTicks = scheduleFluidTicks;
     }
 
     @Override
@@ -32,39 +32,39 @@ public abstract class GrowingPlantBlock extends Block {
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_53868_) {
-        BlockState blockstate = p_53868_.getLevel().getBlockState(p_53868_.getClickedPos().relative(this.growthDirection));
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockState blockstate = context.getLevel().getBlockState(context.getClickedPos().relative(this.growthDirection));
         return !blockstate.is(this.getHeadBlock()) && !blockstate.is(this.getBodyBlock())
-            ? this.getStateForPlacement(p_53868_.getLevel())
+            ? this.getStateForPlacement(context.getLevel())
             : this.getBodyBlock().defaultBlockState();
     }
 
-    public BlockState getStateForPlacement(LevelAccessor p_53869_) {
+    public BlockState getStateForPlacement(LevelAccessor level) {
         return this.defaultBlockState();
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_53876_, LevelReader p_53877_, BlockPos p_53878_) {
-        BlockPos blockpos = p_53878_.relative(this.growthDirection.getOpposite());
-        BlockState blockstate = p_53877_.getBlockState(blockpos);
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        BlockPos blockpos = pos.relative(this.growthDirection.getOpposite());
+        BlockState blockstate = level.getBlockState(blockpos);
         return !this.canAttachTo(blockstate)
             ? false
-            : blockstate.is(this.getHeadBlock()) || blockstate.is(this.getBodyBlock()) || blockstate.isFaceSturdy(p_53877_, blockpos, this.growthDirection);
+            : blockstate.is(this.getHeadBlock()) || blockstate.is(this.getBodyBlock()) || blockstate.isFaceSturdy(level, blockpos, this.growthDirection);
     }
 
     @Override
-    protected void tick(BlockState p_221280_, ServerLevel p_221281_, BlockPos p_221282_, RandomSource p_221283_) {
-        if (!p_221280_.canSurvive(p_221281_, p_221282_)) {
-            p_221281_.destroyBlock(p_221282_, true);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (!state.canSurvive(level, pos)) {
+            level.destroyBlock(pos, true);
         }
     }
 
-    protected boolean canAttachTo(BlockState p_153321_) {
+    protected boolean canAttachTo(BlockState state) {
         return true;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_53880_, BlockGetter p_53881_, BlockPos p_53882_, CollisionContext p_53883_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return this.shape;
     }
 

@@ -27,8 +27,8 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.dimension.DimensionType;
 
 public abstract class Monster extends PathfinderMob implements Enemy {
-    protected Monster(EntityType<? extends Monster> p_33002_, Level p_33003_) {
-        super(p_33002_, p_33003_);
+    protected Monster(EntityType<? extends Monster> entityType, Level level) {
+        super(entityType, level);
         this.xpReward = 5;
     }
 
@@ -67,7 +67,7 @@ public abstract class Monster extends PathfinderMob implements Enemy {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_33034_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.HOSTILE_HURT;
     }
 
@@ -82,37 +82,46 @@ public abstract class Monster extends PathfinderMob implements Enemy {
     }
 
     @Override
-    public float getWalkTargetValue(BlockPos p_33013_, LevelReader p_33014_) {
-        return -p_33014_.getPathfindingCostFromLightLevels(p_33013_);
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
+        return -level.getPathfindingCostFromLightLevels(pos);
     }
 
-    public static boolean isDarkEnoughToSpawn(ServerLevelAccessor p_219010_, BlockPos p_219011_, RandomSource p_219012_) {
-        if (p_219010_.getBrightness(LightLayer.SKY, p_219011_) > p_219012_.nextInt(32)) {
+    /**
+     * Static predicate for determining if the current light level and environmental conditions allow for a monster to spawn.
+     */
+    public static boolean isDarkEnoughToSpawn(ServerLevelAccessor level, BlockPos pos, RandomSource random) {
+        if (level.getBrightness(LightLayer.SKY, pos) > random.nextInt(32)) {
             return false;
         } else {
-            DimensionType dimensiontype = p_219010_.dimensionType();
+            DimensionType dimensiontype = level.dimensionType();
             int i = dimensiontype.monsterSpawnBlockLightLimit();
-            if (i < 15 && p_219010_.getBrightness(LightLayer.BLOCK, p_219011_) > i) {
+            if (i < 15 && level.getBrightness(LightLayer.BLOCK, pos) > i) {
                 return false;
             } else {
-                int j = p_219010_.getLevel().isThundering() ? p_219010_.getMaxLocalRawBrightness(p_219011_, 10) : p_219010_.getMaxLocalRawBrightness(p_219011_);
-                return j <= dimensiontype.monsterSpawnLightTest().sample(p_219012_);
+                int j = level.getLevel().isThundering() ? level.getMaxLocalRawBrightness(pos, 10) : level.getMaxLocalRawBrightness(pos);
+                return j <= dimensiontype.monsterSpawnLightTest().sample(random);
             }
         }
     }
 
+    /**
+     * Static predicate for determining whether a monster can spawn at the provided location, incorporating a check of the current light level at the location.
+     */
     public static boolean checkMonsterSpawnRules(
-        EntityType<? extends Monster> p_219014_, ServerLevelAccessor p_219015_, MobSpawnType p_219016_, BlockPos p_219017_, RandomSource p_219018_
+        EntityType<? extends Monster> type, ServerLevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return p_219015_.getDifficulty() != Difficulty.PEACEFUL
-            && (MobSpawnType.ignoresLightRequirements(p_219016_) || isDarkEnoughToSpawn(p_219015_, p_219017_, p_219018_))
-            && checkMobSpawnRules(p_219014_, p_219015_, p_219016_, p_219017_, p_219018_);
+        return level.getDifficulty() != Difficulty.PEACEFUL
+            && (MobSpawnType.ignoresLightRequirements(spawnType) || isDarkEnoughToSpawn(level, pos, random))
+            && checkMobSpawnRules(type, level, spawnType, pos, random);
     }
 
+    /**
+     * Static predicate for determining whether a monster can spawn at the provided location.
+     */
     public static boolean checkAnyLightMonsterSpawnRules(
-        EntityType<? extends Monster> p_219020_, LevelAccessor p_219021_, MobSpawnType p_219022_, BlockPos p_219023_, RandomSource p_219024_
+        EntityType<? extends Monster> type, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return p_219021_.getDifficulty() != Difficulty.PEACEFUL && checkMobSpawnRules(p_219020_, p_219021_, p_219022_, p_219023_, p_219024_);
+        return level.getDifficulty() != Difficulty.PEACEFUL && checkMobSpawnRules(type, level, spawnType, pos, random);
     }
 
     public static AttributeSupplier.Builder createMonsterAttributes() {
@@ -129,18 +138,21 @@ public abstract class Monster extends PathfinderMob implements Enemy {
         return true;
     }
 
-    public boolean isPreventingPlayerRest(Player p_33036_) {
+    public boolean isPreventingPlayerRest(Player player) {
         return true;
     }
 
+    /**
+     * Gets an item stack available to this entity to be loaded into the provided weapon, or an empty item stack if no such item stack is available.
+     */
     @Override
-    public ItemStack getProjectile(ItemStack p_33038_) {
-        if (p_33038_.getItem() instanceof ProjectileWeaponItem) {
-            Predicate<ItemStack> predicate = ((ProjectileWeaponItem)p_33038_.getItem()).getSupportedHeldProjectiles(p_33038_);
+    public ItemStack getProjectile(ItemStack shootable) {
+        if (shootable.getItem() instanceof ProjectileWeaponItem) {
+            Predicate<ItemStack> predicate = ((ProjectileWeaponItem)shootable.getItem()).getSupportedHeldProjectiles(shootable);
             ItemStack itemstack = ProjectileWeaponItem.getHeldProjectile(this, predicate);
-            return net.neoforged.neoforge.common.CommonHooks.getProjectile(this, p_33038_, itemstack.isEmpty() ? new ItemStack(Items.ARROW) : itemstack);
+            return net.neoforged.neoforge.common.CommonHooks.getProjectile(this, shootable, itemstack.isEmpty() ? new ItemStack(Items.ARROW) : itemstack);
         } else {
-            return net.neoforged.neoforge.common.CommonHooks.getProjectile(this, p_33038_, ItemStack.EMPTY);
+            return net.neoforged.neoforge.common.CommonHooks.getProjectile(this, shootable, ItemStack.EMPTY);
         }
     }
 }

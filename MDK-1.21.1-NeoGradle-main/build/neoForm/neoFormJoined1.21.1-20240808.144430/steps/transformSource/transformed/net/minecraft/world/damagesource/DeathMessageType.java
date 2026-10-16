@@ -15,26 +15,39 @@ public enum DeathMessageType implements StringRepresentable, net.neoforged.fml.c
     private final net.neoforged.neoforge.common.damagesource.IDeathMessageProvider msgFunction;
 
     @net.neoforged.fml.common.asm.enumextension.ReservedConstructor
-    private DeathMessageType(String p_270201_) {
-        this(p_270201_, net.neoforged.neoforge.common.damagesource.IDeathMessageProvider.DEFAULT);
+    private DeathMessageType(String id) {
+        this(id, net.neoforged.neoforge.common.damagesource.IDeathMessageProvider.DEFAULT);
     }
 
     /**
      * Creates a new DeathMessageType with the specified ID and death message provider. Store the created enum in a static final field.<p>
-     * Use an enumextender.json to link to your {@link net.neoforged.fml.common.asm.enumextension.EnumProxy} in order to create new entries for this enum.<p>
+     * 
+
+     * Use an enumextender.json to link to your
+     * {@link net.neoforged.fml.common.asm.enumextension.EnumProxy}
+     * in order to create new entries for this enum.<p>
+     * 
+
      * Example usage:
+     * 
+
+     *
      * {@snippet :
      * public static final EnumProxy<DeathMessageType> CUSTOM_FUNCTION = new EnumProxy<>(
      *             DeathMessageType.class,
      *             "mymod:custom",
      *             MyDeathMessageTypes.CUSTOM_MESSAGE_PROVIDER::value);
      * }
-     * @param id The {@linkplain StringRepresentable#getSerializedName() serialized name}. Prefix this with your modid and `:`
-     * @param msgFunction The provider to use for determine when to display the message.
-     * @apiNote This method must be called as early as possible, as if {@link #CODEC} is resolved before this is called, it will be unusable.
+     *
+     * @apiNote This method must be called as early as possible, as if {@link #CODEC}
+     *          is resolved before this is called, it will be unusable.
+     * @param p_id        The {@linkplain StringRepresentable#getSerializedName()
+     *                    serialized name}. Prefix this with your modid and `:`
+     * @param msgFunction The provider to use for determine when to display the
+     *                    message.
      */
-    private DeathMessageType(String id, net.neoforged.neoforge.common.damagesource.IDeathMessageProvider msgFunction) {
-        this.id = id;
+    private DeathMessageType(String p_id, net.neoforged.neoforge.common.damagesource.IDeathMessageProvider msgFunction) {
+        this.id = p_id;
         this.msgFunction = msgFunction;
     }
 

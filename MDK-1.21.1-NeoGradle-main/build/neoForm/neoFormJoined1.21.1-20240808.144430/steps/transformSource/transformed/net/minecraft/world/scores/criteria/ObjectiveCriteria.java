@@ -65,47 +65,47 @@ public class ObjectiveCriteria {
     private final boolean readOnly;
     private final ObjectiveCriteria.RenderType renderType;
 
-    private static ObjectiveCriteria registerCustom(String p_166110_, boolean p_166111_, ObjectiveCriteria.RenderType p_166112_) {
-        ObjectiveCriteria objectivecriteria = new ObjectiveCriteria(p_166110_, p_166111_, p_166112_);
-        CUSTOM_CRITERIA.put(p_166110_, objectivecriteria);
+    private static ObjectiveCriteria registerCustom(String name, boolean readOnly, ObjectiveCriteria.RenderType renderType) {
+        ObjectiveCriteria objectivecriteria = new ObjectiveCriteria(name, readOnly, renderType);
+        CUSTOM_CRITERIA.put(name, objectivecriteria);
         return objectivecriteria;
     }
 
-    private static ObjectiveCriteria registerCustom(String p_166114_) {
-        return registerCustom(p_166114_, false, ObjectiveCriteria.RenderType.INTEGER);
+    private static ObjectiveCriteria registerCustom(String name) {
+        return registerCustom(name, false, ObjectiveCriteria.RenderType.INTEGER);
     }
 
-    protected ObjectiveCriteria(String p_83606_) {
-        this(p_83606_, false, ObjectiveCriteria.RenderType.INTEGER);
+    protected ObjectiveCriteria(String name) {
+        this(name, false, ObjectiveCriteria.RenderType.INTEGER);
     }
 
-    protected ObjectiveCriteria(String p_83608_, boolean p_83609_, ObjectiveCriteria.RenderType p_83610_) {
-        this.name = p_83608_;
-        this.readOnly = p_83609_;
-        this.renderType = p_83610_;
-        CRITERIA_CACHE.put(p_83608_, this);
+    protected ObjectiveCriteria(String name, boolean readOnly, ObjectiveCriteria.RenderType renderType) {
+        this.name = name;
+        this.readOnly = readOnly;
+        this.renderType = renderType;
+        CRITERIA_CACHE.put(name, this);
     }
 
     public static Set<String> getCustomCriteriaNames() {
         return ImmutableSet.copyOf(CUSTOM_CRITERIA.keySet());
     }
 
-    public static Optional<ObjectiveCriteria> byName(String p_83615_) {
-        ObjectiveCriteria objectivecriteria = CRITERIA_CACHE.get(p_83615_);
+    public static Optional<ObjectiveCriteria> byName(String name) {
+        ObjectiveCriteria objectivecriteria = CRITERIA_CACHE.get(name);
         if (objectivecriteria != null) {
             return Optional.of(objectivecriteria);
         } else {
-            int i = p_83615_.indexOf(58);
+            int i = name.indexOf(58);
             return i < 0
                 ? Optional.empty()
                 : BuiltInRegistries.STAT_TYPE
-                    .getOptional(ResourceLocation.bySeparator(p_83615_.substring(0, i), '.'))
-                    .flatMap(p_350264_ -> getStat((StatType<?>)p_350264_, ResourceLocation.bySeparator(p_83615_.substring(i + 1), '.')));
+                    .getOptional(ResourceLocation.bySeparator(name.substring(0, i), '.'))
+                    .flatMap(p_350264_ -> getStat((StatType<?>)p_350264_, ResourceLocation.bySeparator(name.substring(i + 1), '.')));
         }
     }
 
-    private static <T> Optional<ObjectiveCriteria> getStat(StatType<T> p_83612_, ResourceLocation p_83613_) {
-        return p_83612_.getRegistry().getOptional(p_83613_).map(p_83612_::get);
+    private static <T> Optional<ObjectiveCriteria> getStat(StatType<T> statType, ResourceLocation resourceLocation) {
+        return statType.getRegistry().getOptional(resourceLocation).map(statType::get);
     }
 
     public String getName() {
@@ -129,8 +129,8 @@ public class ObjectiveCriteria {
             ObjectiveCriteria.RenderType::values
         );
 
-        private RenderType(String p_83632_) {
-            this.id = p_83632_;
+        private RenderType(String id) {
+            this.id = id;
         }
 
         public String getId() {
@@ -142,8 +142,8 @@ public class ObjectiveCriteria {
             return this.id;
         }
 
-        public static ObjectiveCriteria.RenderType byId(String p_83635_) {
-            return CODEC.byName(p_83635_, INTEGER);
+        public static ObjectiveCriteria.RenderType byId(String renderType) {
+            return CODEC.byName(renderType, INTEGER);
         }
     }
 }

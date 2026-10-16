@@ -9,17 +9,17 @@ public class RarityFilter extends PlacementFilter {
     public static final MapCodec<RarityFilter> CODEC = ExtraCodecs.POSITIVE_INT.fieldOf("chance").xmap(RarityFilter::new, p_191907_ -> p_191907_.chance);
     private final int chance;
 
-    private RarityFilter(int p_191899_) {
-        this.chance = p_191899_;
+    private RarityFilter(int chance) {
+        this.chance = chance;
     }
 
-    public static RarityFilter onAverageOnceEvery(int p_191901_) {
-        return new RarityFilter(p_191901_);
+    public static RarityFilter onAverageOnceEvery(int chance) {
+        return new RarityFilter(chance);
     }
 
     @Override
-    protected boolean shouldPlace(PlacementContext p_226397_, RandomSource p_226398_, BlockPos p_226399_) {
-        return p_226398_.nextFloat() < 1.0F / (float)this.chance;
+    protected boolean shouldPlace(PlacementContext context, RandomSource random, BlockPos pos) {
+        return random.nextFloat() < 1.0F / (float)this.chance;
     }
 
     @Override

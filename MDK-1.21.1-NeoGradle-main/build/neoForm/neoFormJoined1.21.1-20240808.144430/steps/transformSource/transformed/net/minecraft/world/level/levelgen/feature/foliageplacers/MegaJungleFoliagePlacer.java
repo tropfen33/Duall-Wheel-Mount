@@ -17,9 +17,9 @@ public class MegaJungleFoliagePlacer extends FoliagePlacer {
     );
     protected final int height;
 
-    public MegaJungleFoliagePlacer(IntProvider p_161454_, IntProvider p_161455_, int p_161456_) {
-        super(p_161454_, p_161455_);
-        this.height = p_161456_;
+    public MegaJungleFoliagePlacer(IntProvider radius, IntProvider offset, int height) {
+        super(radius, offset);
+        this.height = height;
     }
 
     @Override
@@ -29,31 +29,35 @@ public class MegaJungleFoliagePlacer extends FoliagePlacer {
 
     @Override
     protected void createFoliage(
-        LevelSimulatedReader p_225657_,
-        FoliagePlacer.FoliageSetter p_273447_,
-        RandomSource p_225659_,
-        TreeConfiguration p_225660_,
-        int p_225661_,
-        FoliagePlacer.FoliageAttachment p_225662_,
-        int p_225663_,
-        int p_225664_,
-        int p_225665_
+        LevelSimulatedReader level,
+        FoliagePlacer.FoliageSetter blockSetter,
+        RandomSource random,
+        TreeConfiguration config,
+        int maxFreeTreeHeight,
+        FoliagePlacer.FoliageAttachment attachment,
+        int foliageHeight,
+        int foliageRadius,
+        int offset
     ) {
-        int i = p_225662_.doubleTrunk() ? p_225663_ : 1 + p_225659_.nextInt(2);
+        int i = attachment.doubleTrunk() ? foliageHeight : 1 + random.nextInt(2);
 
-        for (int j = p_225665_; j >= p_225665_ - i; j--) {
-            int k = p_225664_ + p_225662_.radiusOffset() + 1 - j;
-            this.placeLeavesRow(p_225657_, p_273447_, p_225659_, p_225660_, p_225662_.pos(), k, j, p_225662_.doubleTrunk());
+        for (int j = offset; j >= offset - i; j--) {
+            int k = foliageRadius + attachment.radiusOffset() + 1 - j;
+            this.placeLeavesRow(level, blockSetter, random, config, attachment.pos(), k, j, attachment.doubleTrunk());
         }
     }
 
     @Override
-    public int foliageHeight(RandomSource p_225653_, int p_225654_, TreeConfiguration p_225655_) {
+    public int foliageHeight(RandomSource random, int height, TreeConfiguration config) {
         return this.height;
     }
 
+    /**
+     * Skips certain positions based on the provided shape, such as rounding corners randomly.
+     * The coordinates are passed in as absolute value, and should be within [0, {@code range}].
+     */
     @Override
-    protected boolean shouldSkipLocation(RandomSource p_225646_, int p_225647_, int p_225648_, int p_225649_, int p_225650_, boolean p_225651_) {
-        return p_225647_ + p_225649_ >= 7 ? true : p_225647_ * p_225647_ + p_225649_ * p_225649_ > p_225650_ * p_225650_;
+    protected boolean shouldSkipLocation(RandomSource random, int localX, int localY, int localZ, int range, boolean large) {
+        return localX + localZ >= 7 ? true : localX * localX + localZ * localZ > range * range;
     }
 }

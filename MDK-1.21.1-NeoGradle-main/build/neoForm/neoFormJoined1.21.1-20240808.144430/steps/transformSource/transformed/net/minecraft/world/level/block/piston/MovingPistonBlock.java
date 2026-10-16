@@ -44,52 +44,55 @@ public class MovingPistonBlock extends BaseEntityBlock {
         return CODEC;
     }
 
-    public MovingPistonBlock(BlockBehaviour.Properties p_60050_) {
-        super(p_60050_);
+    public MovingPistonBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(TYPE, PistonType.DEFAULT));
     }
 
     @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_155879_, BlockState p_155880_) {
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return null;
     }
 
     public static BlockEntity newMovingBlockEntity(
-        BlockPos p_155882_, BlockState p_155883_, BlockState p_155884_, Direction p_155885_, boolean p_155886_, boolean p_155887_
+        BlockPos pos, BlockState blockState, BlockState movedState, Direction direction, boolean extending, boolean isSourcePiston
     ) {
-        return new PistonMovingBlockEntity(p_155882_, p_155883_, p_155884_, p_155885_, p_155886_, p_155887_);
+        return new PistonMovingBlockEntity(pos, blockState, movedState, direction, extending, isSourcePiston);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_155875_, BlockState p_155876_, BlockEntityType<T> p_155877_) {
-        return createTickerHelper(p_155877_, BlockEntityType.PISTON, PistonMovingBlockEntity::tick);
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        return createTickerHelper(blockEntityType, BlockEntityType.PISTON, PistonMovingBlockEntity::tick);
     }
 
     @Override
-    protected void onRemove(BlockState p_60077_, Level p_60078_, BlockPos p_60079_, BlockState p_60080_, boolean p_60081_) {
-        if (!p_60077_.is(p_60080_.getBlock())) {
-            BlockEntity blockentity = p_60078_.getBlockEntity(p_60079_);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock())) {
+            BlockEntity blockentity = level.getBlockEntity(pos);
             if (blockentity instanceof PistonMovingBlockEntity) {
                 ((PistonMovingBlockEntity)blockentity).finalTick();
             }
         }
     }
 
+    /**
+     * Called after this block has been removed by a player.
+     */
     @Override
-    public void destroy(LevelAccessor p_60061_, BlockPos p_60062_, BlockState p_60063_) {
-        BlockPos blockpos = p_60062_.relative(p_60063_.getValue(FACING).getOpposite());
-        BlockState blockstate = p_60061_.getBlockState(blockpos);
+    public void destroy(LevelAccessor level, BlockPos pos, BlockState state) {
+        BlockPos blockpos = pos.relative(state.getValue(FACING).getOpposite());
+        BlockState blockstate = level.getBlockState(blockpos);
         if (blockstate.getBlock() instanceof PistonBaseBlock && blockstate.getValue(PistonBaseBlock.EXTENDED)) {
-            p_60061_.removeBlock(blockpos, false);
+            level.removeBlock(blockpos, false);
         }
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_60070_, Level p_60071_, BlockPos p_60072_, Player p_60073_, BlockHitResult p_60075_) {
-        if (!p_60071_.isClientSide && p_60071_.getBlockEntity(p_60072_) == null) {
-            p_60071_.removeBlock(p_60072_, false);
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (!level.isClientSide && level.getBlockEntity(pos) == null) {
+            level.removeBlock(pos, false);
             return InteractionResult.CONSUME;
         } else {
             return InteractionResult.PASS;
@@ -97,52 +100,58 @@ public class MovingPistonBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected List<ItemStack> getDrops(BlockState p_287650_, LootParams.Builder p_287754_) {
+    protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
         PistonMovingBlockEntity pistonmovingblockentity = this.getBlockEntity(
-            p_287754_.getLevel(), BlockPos.containing(p_287754_.getParameter(LootContextParams.ORIGIN))
+            params.getLevel(), BlockPos.containing(params.getParameter(LootContextParams.ORIGIN))
         );
-        return pistonmovingblockentity == null ? Collections.emptyList() : pistonmovingblockentity.getMovedState().getDrops(p_287754_);
+        return pistonmovingblockentity == null ? Collections.emptyList() : pistonmovingblockentity.getMovedState().getDrops(params);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_60099_, BlockGetter p_60100_, BlockPos p_60101_, CollisionContext p_60102_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return Shapes.empty();
     }
 
     @Override
-    protected VoxelShape getCollisionShape(BlockState p_60104_, BlockGetter p_60105_, BlockPos p_60106_, CollisionContext p_60107_) {
-        PistonMovingBlockEntity pistonmovingblockentity = this.getBlockEntity(p_60105_, p_60106_);
-        return pistonmovingblockentity != null ? pistonmovingblockentity.getCollisionShape(p_60105_, p_60106_) : Shapes.empty();
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        PistonMovingBlockEntity pistonmovingblockentity = this.getBlockEntity(level, pos);
+        return pistonmovingblockentity != null ? pistonmovingblockentity.getCollisionShape(level, pos) : Shapes.empty();
     }
 
     @Nullable
-    private PistonMovingBlockEntity getBlockEntity(BlockGetter p_60054_, BlockPos p_60055_) {
-        BlockEntity blockentity = p_60054_.getBlockEntity(p_60055_);
+    private PistonMovingBlockEntity getBlockEntity(BlockGetter blockReader, BlockPos pos) {
+        BlockEntity blockentity = blockReader.getBlockEntity(pos);
         return blockentity instanceof PistonMovingBlockEntity ? (PistonMovingBlockEntity)blockentity : null;
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader p_304937_, BlockPos p_60058_, BlockState p_60059_) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         return ItemStack.EMPTY;
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_60086_, Rotation p_60087_) {
-        return p_60086_.setValue(FACING, p_60087_.rotate(p_60086_.getValue(FACING)));
+    protected BlockState rotate(BlockState state, Rotation rot) {
+        return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState mirror(BlockState p_60083_, Mirror p_60084_) {
-        return p_60083_.rotate(p_60084_.getRotation(p_60083_.getValue(FACING)));
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, TYPE);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_60097_) {
-        p_60097_.add(FACING, TYPE);
-    }
-
-    @Override
-    protected boolean isPathfindable(BlockState p_60065_, PathComputationType p_60068_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

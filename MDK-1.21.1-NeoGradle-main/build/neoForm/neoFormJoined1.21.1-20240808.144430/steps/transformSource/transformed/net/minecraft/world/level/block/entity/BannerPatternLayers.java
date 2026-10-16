@@ -34,27 +34,27 @@ public record BannerPatternLayers(List<BannerPatternLayers.Layer> layers) {
         private final ImmutableList.Builder<BannerPatternLayers.Layer> layers = ImmutableList.builder();
 
         @Deprecated
-        public BannerPatternLayers.Builder addIfRegistered(HolderGetter<BannerPattern> p_332806_, ResourceKey<BannerPattern> p_332663_, DyeColor p_332781_) {
-            Optional<Holder.Reference<BannerPattern>> optional = p_332806_.get(p_332663_);
+        public BannerPatternLayers.Builder addIfRegistered(HolderGetter<BannerPattern> patterns, ResourceKey<BannerPattern> patternKey, DyeColor color) {
+            Optional<Holder.Reference<BannerPattern>> optional = patterns.get(patternKey);
             if (optional.isEmpty()) {
-                BannerPatternLayers.LOGGER.warn("Unable to find banner pattern with id: '{}'", p_332663_.location());
+                BannerPatternLayers.LOGGER.warn("Unable to find banner pattern with id: '{}'", patternKey.location());
                 return this;
             } else {
-                return this.add(optional.get(), p_332781_);
+                return this.add(optional.get(), color);
             }
         }
 
-        public BannerPatternLayers.Builder add(Holder<BannerPattern> p_330325_, DyeColor p_330891_) {
-            return this.add(new BannerPatternLayers.Layer(p_330325_, p_330891_));
+        public BannerPatternLayers.Builder add(Holder<BannerPattern> pattern, DyeColor color) {
+            return this.add(new BannerPatternLayers.Layer(pattern, color));
         }
 
-        public BannerPatternLayers.Builder add(BannerPatternLayers.Layer p_331518_) {
-            this.layers.add(p_331518_);
+        public BannerPatternLayers.Builder add(BannerPatternLayers.Layer layer) {
+            this.layers.add(layer);
             return this;
         }
 
-        public BannerPatternLayers.Builder addAll(BannerPatternLayers p_330600_) {
-            this.layers.addAll(p_330600_.layers);
+        public BannerPatternLayers.Builder addAll(BannerPatternLayers layers) {
+            this.layers.addAll(layers.layers);
             return this;
         }
 

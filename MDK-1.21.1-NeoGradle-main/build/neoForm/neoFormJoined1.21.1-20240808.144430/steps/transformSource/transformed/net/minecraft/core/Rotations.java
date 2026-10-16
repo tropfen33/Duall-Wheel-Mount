@@ -18,18 +18,27 @@ public class Rotations {
             p_320561_.writeFloat(p_320041_.z);
         }
     };
+    /**
+     * Rotation on the X axis
+     */
     protected final float x;
+    /**
+     * Rotation on the Y axis
+     */
     protected final float y;
+    /**
+     * Rotation on the Z axis
+     */
     protected final float z;
 
-    public Rotations(float p_123150_, float p_123151_, float p_123152_) {
-        this.x = !Float.isInfinite(p_123150_) && !Float.isNaN(p_123150_) ? p_123150_ % 360.0F : 0.0F;
-        this.y = !Float.isInfinite(p_123151_) && !Float.isNaN(p_123151_) ? p_123151_ % 360.0F : 0.0F;
-        this.z = !Float.isInfinite(p_123152_) && !Float.isNaN(p_123152_) ? p_123152_ % 360.0F : 0.0F;
+    public Rotations(float x, float y, float z) {
+        this.x = !Float.isInfinite(x) && !Float.isNaN(x) ? x % 360.0F : 0.0F;
+        this.y = !Float.isInfinite(y) && !Float.isNaN(y) ? y % 360.0F : 0.0F;
+        this.z = !Float.isInfinite(z) && !Float.isNaN(z) ? z % 360.0F : 0.0F;
     }
 
-    public Rotations(ListTag p_123154_) {
-        this(p_123154_.getFloat(0), p_123154_.getFloat(1), p_123154_.getFloat(2));
+    public Rotations(ListTag tag) {
+        this(tag.getFloat(0), tag.getFloat(1), tag.getFloat(2));
     }
 
     public ListTag save() {
@@ -41,8 +50,8 @@ public class Rotations {
     }
 
     @Override
-    public boolean equals(Object p_123160_) {
-        return !(p_123160_ instanceof Rotations rotations) ? false : this.x == rotations.x && this.y == rotations.y && this.z == rotations.z;
+    public boolean equals(Object other) {
+        return !(other instanceof Rotations rotations) ? false : this.x == rotations.x && this.y == rotations.y && this.z == rotations.z;
     }
 
     public float getX() {

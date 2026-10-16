@@ -39,8 +39,8 @@ public class Squid extends WaterAnimal {
     private float ty;
     private float tz;
 
-    public Squid(EntityType<? extends Squid> p_29953_, Level p_29954_) {
-        super(p_29953_, p_29954_);
+    public Squid(EntityType<? extends Squid> entityType, Level level) {
+        super(entityType, level);
         this.random.setSeed((long)this.getId());
         this.tentacleSpeed = 1.0F / (this.random.nextFloat() + 1.0F) * 0.2F;
     }
@@ -61,7 +61,7 @@ public class Squid extends WaterAnimal {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_29980_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.SQUID_HURT;
     }
 
@@ -158,9 +158,12 @@ public class Squid extends WaterAnimal {
         }
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_29963_, float p_29964_) {
-        if (super.hurt(p_29963_, p_29964_) && this.getLastHurtByMob() != null) {
+    public boolean hurt(DamageSource source, float amount) {
+        if (super.hurt(source, amount) && this.getLastHurtByMob() != null) {
             if (!this.level().isClientSide) {
                 this.spawnInk();
             }
@@ -171,8 +174,8 @@ public class Squid extends WaterAnimal {
         }
     }
 
-    private Vec3 rotateVector(Vec3 p_29986_) {
-        Vec3 vec3 = p_29986_.xRot(this.xBodyRotO * (float) (Math.PI / 180.0));
+    private Vec3 rotateVector(Vec3 vector) {
+        Vec3 vec3 = vector.xRot(this.xBodyRotO * (float) (Math.PI / 180.0));
         return vec3.yRot(-this.yBodyRotO * (float) (Math.PI / 180.0));
     }
 
@@ -192,23 +195,26 @@ public class Squid extends WaterAnimal {
     }
 
     @Override
-    public void travel(Vec3 p_29984_) {
+    public void travel(Vec3 travelVector) {
         this.move(MoverType.SELF, this.getDeltaMovement());
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @Override
-    public void handleEntityEvent(byte p_29957_) {
-        if (p_29957_ == 19) {
+    public void handleEntityEvent(byte id) {
+        if (id == 19) {
             this.tentacleMovement = 0.0F;
         } else {
-            super.handleEntityEvent(p_29957_);
+            super.handleEntityEvent(id);
         }
     }
 
-    public void setMovementVector(float p_29959_, float p_29960_, float p_29961_) {
-        this.tx = p_29959_;
-        this.ty = p_29960_;
-        this.tz = p_29961_;
+    public void setMovementVector(float tx, float ty, float tz) {
+        this.tx = tx;
+        this.ty = ty;
+        this.tz = tz;
     }
 
     public boolean hasMovementVector() {
@@ -278,8 +284,8 @@ public class Squid extends WaterAnimal {
     class SquidRandomMovementGoal extends Goal {
         private final Squid squid;
 
-        public SquidRandomMovementGoal(Squid p_30004_) {
-            this.squid = p_30004_;
+        public SquidRandomMovementGoal(Squid squid) {
+            this.squid = squid;
         }
 
         @Override

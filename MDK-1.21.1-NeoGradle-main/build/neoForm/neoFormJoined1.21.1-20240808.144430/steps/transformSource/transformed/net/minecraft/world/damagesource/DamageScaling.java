@@ -15,26 +15,39 @@ public enum DamageScaling implements StringRepresentable, net.neoforged.fml.comm
     private final net.neoforged.neoforge.common.damagesource.IScalingFunction scaling;
 
     @net.neoforged.fml.common.asm.enumextension.ReservedConstructor
-    private DamageScaling(String p_270266_) {
-        this(p_270266_, net.neoforged.neoforge.common.damagesource.IScalingFunction.DEFAULT);
+    private DamageScaling(String id) {
+        this(id, net.neoforged.neoforge.common.damagesource.IScalingFunction.DEFAULT);
     }
 
     /**
      * Creates a new DamageScaling with the specified ID and scaling function. Store the created enum in a static final field.<p>
-     * Use an enumextender.json to link to your {@link net.neoforged.fml.common.asm.enumextension.EnumProxy} in order to create new entries for this enum.<p>
+     * 
+
+     * Use an enumextender.json to link to your
+     * {@link net.neoforged.fml.common.asm.enumextension.EnumProxy}
+     * in order to create new entries for this enum.<p>
+     * 
+
      * Example usage:
+     * 
+
+     *
      * {@snippet :
      * public static final EnumProxy<DamageScaling> CUSTOM_FUNCTION = new EnumProxy<>(
      *             DamageScaling.class,
      *             "mymod:custom",
      *             MyDamageScalings.CUSTOM_MESSAGE_PROVIDER::value);
      * }
-     * @param id The {@linkplain StringRepresentable#getSerializedName() serialized name}. Prefix this with your modid and `:`
-     * @param scaling The scaling function that will be used when a player is hurt by a damage type with this type of scaling.
-     * @apiNote This method must be called as early as possible, as if {@link #CODEC} is resolved before this is called, it will be unusable.
+     *
+     * @apiNote This method must be called as early as possible, as if {@link #CODEC}
+     *          is resolved before this is called, it will be unusable.
+     * @param p_id    The {@linkplain StringRepresentable#getSerializedName()
+     *                serialized name}. Prefix this with your modid and `:`
+     * @param scaling The scaling function that will be used when a player is hurt by
+     *                a damage type with this type of scaling.
      */
-    private DamageScaling(String id, net.neoforged.neoforge.common.damagesource.IScalingFunction scaling) {
-        this.id = id;
+    private DamageScaling(String p_id, net.neoforged.neoforge.common.damagesource.IScalingFunction scaling) {
+        this.id = p_id;
         this.scaling = scaling;
     }
 

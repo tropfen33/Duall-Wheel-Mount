@@ -8,8 +8,8 @@ public class DragonHoverPhase extends AbstractDragonPhaseInstance {
     @Nullable
     private Vec3 targetLocation;
 
-    public DragonHoverPhase(EnderDragon p_31246_) {
-        super(p_31246_);
+    public DragonHoverPhase(EnderDragon dragon) {
+        super(dragon);
     }
 
     @Override

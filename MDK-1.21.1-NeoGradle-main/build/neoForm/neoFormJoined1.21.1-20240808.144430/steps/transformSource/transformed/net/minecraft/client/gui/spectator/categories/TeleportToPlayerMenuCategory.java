@@ -28,8 +28,8 @@ public class TeleportToPlayerMenuCategory implements SpectatorMenuCategory, Spec
         this(Minecraft.getInstance().getConnection().getListedOnlinePlayers());
     }
 
-    public TeleportToPlayerMenuCategory(Collection<PlayerInfo> p_101861_) {
-        this.items = p_101861_.stream()
+    public TeleportToPlayerMenuCategory(Collection<PlayerInfo> players) {
+        this.items = players.stream()
             .filter(p_253336_ -> p_253336_.getGameMode() != GameType.SPECTATOR)
             .sorted(PROFILE_ORDER)
             .map(p_253334_ -> (SpectatorMenuItem)new PlayerMenuItem(p_253334_.getProfile()))
@@ -47,8 +47,8 @@ public class TeleportToPlayerMenuCategory implements SpectatorMenuCategory, Spec
     }
 
     @Override
-    public void selectItem(SpectatorMenu p_101868_) {
-        p_101868_.selectCategory(this);
+    public void selectItem(SpectatorMenu menu) {
+        menu.selectCategory(this);
     }
 
     @Override
@@ -57,8 +57,8 @@ public class TeleportToPlayerMenuCategory implements SpectatorMenuCategory, Spec
     }
 
     @Override
-    public void renderIcon(GuiGraphics p_281992_, float p_281684_, int p_281889_) {
-        p_281992_.blitSprite(TELEPORT_TO_PLAYER_SPRITE, 0, 0, 16, 16);
+    public void renderIcon(GuiGraphics guiGraphics, float shadeColor, int alpha) {
+        guiGraphics.blitSprite(TELEPORT_TO_PLAYER_SPRITE, 0, 0, 16, 16);
     }
 
     @Override

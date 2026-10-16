@@ -29,9 +29,9 @@ public class AllayModel extends HierarchicalModel<Allay> implements ArmedModel {
     private static final float MAX_HAND_HOLDING_ITEM_X_ROT_RAD = -1.134464F;
     private static final float MIN_HAND_HOLDING_ITEM_X_ROT_RAD = (float) (-Math.PI / 3);
 
-    public AllayModel(ModelPart p_233312_) {
+    public AllayModel(ModelPart root) {
         super(RenderType::entityTranslucent);
-        this.root = p_233312_.getChild("root");
+        this.root = root.getChild("root");
         this.head = this.root.getChild("head");
         this.body = this.root.getChild("body");
         this.right_arm = this.body.getChild("right_arm");
@@ -86,28 +86,31 @@ public class AllayModel extends HierarchicalModel<Allay> implements ArmedModel {
         return LayerDefinition.create(meshdefinition, 32, 32);
     }
 
-    public void setupAnim(Allay p_233325_, float p_233326_, float p_233327_, float p_233328_, float p_233329_, float p_233330_) {
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(Allay entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.root().getAllParts().forEach(ModelPart::resetPose);
-        float f = p_233328_ * 20.0F * (float) (Math.PI / 180.0) + p_233326_;
-        float f1 = Mth.cos(f) * (float) Math.PI * 0.15F + p_233327_;
-        float f2 = p_233328_ - (float)p_233325_.tickCount;
-        float f3 = p_233328_ * 9.0F * (float) (Math.PI / 180.0);
-        float f4 = Math.min(p_233327_ / 0.3F, 1.0F);
+        float f = ageInTicks * 20.0F * (float) (Math.PI / 180.0) + limbSwing;
+        float f1 = Mth.cos(f) * (float) Math.PI * 0.15F + limbSwingAmount;
+        float f2 = ageInTicks - (float)entity.tickCount;
+        float f3 = ageInTicks * 9.0F * (float) (Math.PI / 180.0);
+        float f4 = Math.min(limbSwingAmount / 0.3F, 1.0F);
         float f5 = 1.0F - f4;
-        float f6 = p_233325_.getHoldingItemAnimationProgress(f2);
-        if (p_233325_.isDancing()) {
-            float f7 = p_233328_ * 8.0F * (float) (Math.PI / 180.0) + p_233327_;
+        float f6 = entity.getHoldingItemAnimationProgress(f2);
+        if (entity.isDancing()) {
+            float f7 = ageInTicks * 8.0F * (float) (Math.PI / 180.0) + limbSwingAmount;
             float f8 = Mth.cos(f7) * 16.0F * (float) (Math.PI / 180.0);
-            float f9 = p_233325_.getSpinningProgress(f2);
+            float f9 = entity.getSpinningProgress(f2);
             float f10 = Mth.cos(f7) * 14.0F * (float) (Math.PI / 180.0);
             float f11 = Mth.cos(f7) * 30.0F * (float) (Math.PI / 180.0);
-            this.root.yRot = p_233325_.isSpinning() ? (float) (Math.PI * 4) * f9 : this.root.yRot;
+            this.root.yRot = entity.isSpinning() ? (float) (Math.PI * 4) * f9 : this.root.yRot;
             this.root.zRot = f8 * (1.0F - f9);
             this.head.yRot = f11 * (1.0F - f9);
             this.head.zRot = f10 * (1.0F - f9);
         } else {
-            this.head.xRot = p_233330_ * (float) (Math.PI / 180.0);
-            this.head.yRot = p_233329_ * (float) (Math.PI / 180.0);
+            this.head.xRot = headPitch * (float) (Math.PI / 180.0);
+            this.head.yRot = netHeadYaw * (float) (Math.PI / 180.0);
         }
 
         this.right_wing.xRot = 0.43633232F * (1.0F - f4);
@@ -128,14 +131,14 @@ public class AllayModel extends HierarchicalModel<Allay> implements ArmedModel {
     }
 
     @Override
-    public void translateToHand(HumanoidArm p_233322_, PoseStack p_233323_) {
+    public void translateToHand(HumanoidArm side, PoseStack poseStack) {
         float f = 1.0F;
         float f1 = 3.0F;
-        this.root.translateAndRotate(p_233323_);
-        this.body.translateAndRotate(p_233323_);
-        p_233323_.translate(0.0F, 0.0625F, 0.1875F);
-        p_233323_.mulPose(Axis.XP.rotation(this.right_arm.xRot));
-        p_233323_.scale(0.7F, 0.7F, 0.7F);
-        p_233323_.translate(0.0625F, 0.0F, 0.0F);
+        this.root.translateAndRotate(poseStack);
+        this.body.translateAndRotate(poseStack);
+        poseStack.translate(0.0F, 0.0625F, 0.1875F);
+        poseStack.mulPose(Axis.XP.rotation(this.right_arm.xRot));
+        poseStack.scale(0.7F, 0.7F, 0.7F);
+        poseStack.translate(0.0625F, 0.0F, 0.0F);
     }
 }

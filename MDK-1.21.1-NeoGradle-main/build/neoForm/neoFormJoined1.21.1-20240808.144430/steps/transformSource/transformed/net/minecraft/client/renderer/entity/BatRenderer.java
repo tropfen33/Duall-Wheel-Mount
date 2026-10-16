@@ -15,7 +15,10 @@ public class BatRenderer extends MobRenderer<Bat, BatModel> {
         super(p_173929_, new BatModel(p_173929_.bakeLayer(ModelLayers.BAT)), 0.25F);
     }
 
-    public ResourceLocation getTextureLocation(Bat p_113876_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Bat entity) {
         return BAT_LOCATION;
     }
 }

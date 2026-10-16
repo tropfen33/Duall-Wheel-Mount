@@ -77,70 +77,70 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     private static final int MAX_PUBLIC_KEY_LENGTH = 512;
     private static final Gson GSON = new Gson();
 
-    public FriendlyByteBuf(ByteBuf p_130051_) {
-        this.source = p_130051_;
+    public FriendlyByteBuf(ByteBuf source) {
+        this.source = source;
     }
 
     @Deprecated
-    public <T> T readWithCodecTrusted(DynamicOps<Tag> p_295347_, Codec<T> p_296304_) {
-        return this.readWithCodec(p_295347_, p_296304_, NbtAccounter.unlimitedHeap());
+    public <T> T readWithCodecTrusted(DynamicOps<Tag> ops, Codec<T> codec) {
+        return this.readWithCodec(ops, codec, NbtAccounter.unlimitedHeap());
     }
 
     @Deprecated
-    public <T> T readWithCodec(DynamicOps<Tag> p_266903_, Codec<T> p_267107_, NbtAccounter p_295027_) {
-        Tag tag = this.readNbt(p_295027_);
-        return p_267107_.parse(p_266903_, tag).getOrThrow(p_339398_ -> new DecoderException("Failed to decode: " + p_339398_ + " " + tag));
+    public <T> T readWithCodec(DynamicOps<Tag> ops, Codec<T> codec, NbtAccounter nbtAccounter) {
+        Tag tag = this.readNbt(nbtAccounter);
+        return codec.parse(ops, tag).getOrThrow(p_339398_ -> new DecoderException("Failed to decode: " + p_339398_ + " " + tag));
     }
 
     @Deprecated
-    public <T> FriendlyByteBuf writeWithCodec(DynamicOps<Tag> p_266702_, Codec<T> p_267245_, T p_266783_) {
-        Tag tag = p_267245_.encodeStart(p_266702_, p_266783_).getOrThrow(p_339400_ -> new EncoderException("Failed to encode: " + p_339400_ + " " + p_266783_));
+    public <T> FriendlyByteBuf writeWithCodec(DynamicOps<Tag> ops, Codec<T> codec, T value) {
+        Tag tag = codec.encodeStart(ops, value).getOrThrow(p_339400_ -> new EncoderException("Failed to encode: " + p_339400_ + " " + value));
         this.writeNbt(tag);
         return this;
     }
 
-    public <T> T readJsonWithCodec(Codec<T> p_273318_) {
+    public <T> T readJsonWithCodec(Codec<T> codec) {
         JsonElement jsonelement = GsonHelper.fromJson(GSON, this.readUtf(), JsonElement.class);
-        DataResult<T> dataresult = p_273318_.parse(JsonOps.INSTANCE, jsonelement);
+        DataResult<T> dataresult = codec.parse(JsonOps.INSTANCE, jsonelement);
         return dataresult.getOrThrow(p_272382_ -> new DecoderException("Failed to decode json: " + p_272382_));
     }
 
-    public <T> void writeJsonWithCodec(Codec<T> p_273285_, T p_272770_) {
-        DataResult<JsonElement> dataresult = p_273285_.encodeStart(JsonOps.INSTANCE, p_272770_);
-        this.writeUtf(GSON.toJson(dataresult.getOrThrow(p_339402_ -> new EncoderException("Failed to encode: " + p_339402_ + " " + p_272770_))));
+    public <T> void writeJsonWithCodec(Codec<T> codec, T value) {
+        DataResult<JsonElement> dataresult = codec.encodeStart(JsonOps.INSTANCE, value);
+        this.writeUtf(GSON.toJson(dataresult.getOrThrow(p_339402_ -> new EncoderException("Failed to encode: " + p_339402_ + " " + value))));
     }
 
-    public static <T> IntFunction<T> limitValue(IntFunction<T> p_182696_, int p_182697_) {
+    public static <T> IntFunction<T> limitValue(IntFunction<T> function, int limit) {
         return p_182686_ -> {
-            if (p_182686_ > p_182697_) {
-                throw new DecoderException("Value " + p_182686_ + " is larger than limit " + p_182697_);
+            if (p_182686_ > limit) {
+                throw new DecoderException("Value " + p_182686_ + " is larger than limit " + limit);
             } else {
-                return p_182696_.apply(p_182686_);
+                return function.apply(p_182686_);
             }
         };
     }
 
-    public <T, C extends Collection<T>> C readCollection(IntFunction<C> p_236839_, StreamDecoder<? super FriendlyByteBuf, T> p_320606_) {
+    public <T, C extends Collection<T>> C readCollection(IntFunction<C> collectionFactory, StreamDecoder<? super FriendlyByteBuf, T> elementReader) {
         int i = this.readVarInt();
-        C c = (C)p_236839_.apply(Math.min(i, net.minecraft.network.codec.ByteBufCodecs.MAX_INITIAL_COLLECTION_SIZE));
+        C c = (C)collectionFactory.apply(Math.min(i, net.minecraft.network.codec.ByteBufCodecs.MAX_INITIAL_COLLECTION_SIZE));
 
         for (int j = 0; j < i; j++) {
-            c.add(p_320606_.decode(this));
+            c.add(elementReader.decode(this));
         }
 
         return c;
     }
 
-    public <T> void writeCollection(Collection<T> p_236829_, StreamEncoder<? super FriendlyByteBuf, T> p_319902_) {
-        this.writeVarInt(p_236829_.size());
+    public <T> void writeCollection(Collection<T> collection, StreamEncoder<? super FriendlyByteBuf, T> elementWriter) {
+        this.writeVarInt(collection.size());
 
-        for (T t : p_236829_) {
-            p_319902_.encode(this, t);
+        for (T t : collection) {
+            elementWriter.encode(this, t);
         }
     }
 
-    public <T> List<T> readList(StreamDecoder<? super FriendlyByteBuf, T> p_320744_) {
-        return this.readCollection(Lists::newArrayListWithCapacity, p_320744_);
+    public <T> List<T> readList(StreamDecoder<? super FriendlyByteBuf, T> elementReader) {
+        return this.readCollection(Lists::newArrayListWithCapacity, elementReader);
     }
 
     public IntList readIntIdList() {
@@ -154,61 +154,69 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return intlist;
     }
 
-    public void writeIntIdList(IntList p_178346_) {
-        this.writeVarInt(p_178346_.size());
-        p_178346_.forEach(this::writeVarInt);
+    /**
+     * Write an IntList to this buffer. Every element is encoded as a VarInt.
+     *
+     * @see #readIntIdList
+     */
+    public void writeIntIdList(IntList itIdList) {
+        this.writeVarInt(itIdList.size());
+        itIdList.forEach(this::writeVarInt);
     }
 
     public <K, V, M extends Map<K, V>> M readMap(
-        IntFunction<M> p_236842_, StreamDecoder<? super FriendlyByteBuf, K> p_320803_, StreamDecoder<? super FriendlyByteBuf, V> p_320748_
+        IntFunction<M> mapFactory, StreamDecoder<? super FriendlyByteBuf, K> keyReader, StreamDecoder<? super FriendlyByteBuf, V> valueReader
     ) {
         int i = this.readVarInt();
-        M m = (M)p_236842_.apply(Math.min(i, net.minecraft.network.codec.ByteBufCodecs.MAX_INITIAL_COLLECTION_SIZE));
+        M m = (M)mapFactory.apply(Math.min(i, net.minecraft.network.codec.ByteBufCodecs.MAX_INITIAL_COLLECTION_SIZE));
 
         for (int j = 0; j < i; j++) {
-            K k = p_320803_.decode(this);
-            V v = p_320748_.decode(this);
+            K k = keyReader.decode(this);
+            V v = valueReader.decode(this);
             m.put(k, v);
         }
 
         return m;
     }
 
-    public <K, V> Map<K, V> readMap(StreamDecoder<? super FriendlyByteBuf, K> p_319851_, StreamDecoder<? super FriendlyByteBuf, V> p_320732_) {
-        return this.readMap(Maps::newHashMapWithExpectedSize, p_319851_, p_320732_);
+    public <K, V> Map<K, V> readMap(StreamDecoder<? super FriendlyByteBuf, K> keyReader, StreamDecoder<? super FriendlyByteBuf, V> valueReader) {
+        return this.readMap(Maps::newHashMapWithExpectedSize, keyReader, valueReader);
     }
 
-    public <K, V> void writeMap(Map<K, V> p_236832_, StreamEncoder<? super FriendlyByteBuf, K> p_320909_, StreamEncoder<? super FriendlyByteBuf, V> p_320188_) {
-        this.writeVarInt(p_236832_.size());
-        p_236832_.forEach((p_319534_, p_319535_) -> {
-            p_320909_.encode(this, (K)p_319534_);
-            p_320188_.encode(this, (V)p_319535_);
+    public <K, V> void writeMap(Map<K, V> map, StreamEncoder<? super FriendlyByteBuf, K> keyWriter, StreamEncoder<? super FriendlyByteBuf, V> valueWriter) {
+        this.writeVarInt(map.size());
+        map.forEach((p_319534_, p_319535_) -> {
+            keyWriter.encode(this, (K)p_319534_);
+            valueWriter.encode(this, (V)p_319535_);
         });
     }
 
-    public void readWithCount(Consumer<FriendlyByteBuf> p_178365_) {
+    /**
+     * Read a VarInt N from this buffer, then reads N values by calling {@code reader}.
+     */
+    public void readWithCount(Consumer<FriendlyByteBuf> reader) {
         int i = this.readVarInt();
 
         for (int j = 0; j < i; j++) {
-            p_178365_.accept(this);
+            reader.accept(this);
         }
     }
 
-    public <E extends Enum<E>> void writeEnumSet(EnumSet<E> p_250400_, Class<E> p_250673_) {
-        E[] ae = (E[])p_250673_.getEnumConstants();
+    public <E extends Enum<E>> void writeEnumSet(EnumSet<E> enumSet, Class<E> enumClass) {
+        E[] ae = (E[])enumClass.getEnumConstants();
         BitSet bitset = new BitSet(ae.length);
 
         for (int i = 0; i < ae.length; i++) {
-            bitset.set(i, p_250400_.contains(ae[i]));
+            bitset.set(i, enumSet.contains(ae[i]));
         }
 
         this.writeFixedBitSet(bitset, ae.length);
     }
 
-    public <E extends Enum<E>> EnumSet<E> readEnumSet(Class<E> p_251289_) {
-        E[] ae = (E[])p_251289_.getEnumConstants();
+    public <E extends Enum<E>> EnumSet<E> readEnumSet(Class<E> enumClass) {
+        E[] ae = (E[])enumClass.getEnumConstants();
         BitSet bitset = this.readFixedBitSet(ae.length);
-        EnumSet<E> enumset = EnumSet.noneOf(p_251289_);
+        EnumSet<E> enumset = EnumSet.noneOf(enumClass);
 
         for (int i = 0; i < ae.length; i++) {
             if (bitset.get(i)) {
@@ -219,39 +227,39 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return enumset;
     }
 
-    public <T> void writeOptional(Optional<T> p_236836_, StreamEncoder<? super FriendlyByteBuf, T> p_320585_) {
-        if (p_236836_.isPresent()) {
+    public <T> void writeOptional(Optional<T> optional, StreamEncoder<? super FriendlyByteBuf, T> writer) {
+        if (optional.isPresent()) {
             this.writeBoolean(true);
-            p_320585_.encode(this, p_236836_.get());
+            writer.encode(this, optional.get());
         } else {
             this.writeBoolean(false);
         }
     }
 
-    public <T> Optional<T> readOptional(StreamDecoder<? super FriendlyByteBuf, T> p_320700_) {
-        return this.readBoolean() ? Optional.of(p_320700_.decode(this)) : Optional.empty();
+    public <T> Optional<T> readOptional(StreamDecoder<? super FriendlyByteBuf, T> reader) {
+        return this.readBoolean() ? Optional.of(reader.decode(this)) : Optional.empty();
     }
 
     @Nullable
-    public <T> T readNullable(StreamDecoder<? super FriendlyByteBuf, T> p_320095_) {
-        return readNullable(this, p_320095_);
+    public <T> T readNullable(StreamDecoder<? super FriendlyByteBuf, T> reader) {
+        return readNullable(this, reader);
     }
 
     @Nullable
-    public static <T, B extends ByteBuf> T readNullable(B p_324437_, StreamDecoder<? super B, T> p_324453_) {
-        return p_324437_.readBoolean() ? p_324453_.decode(p_324437_) : null;
+    public static <T, B extends ByteBuf> T readNullable(B buffer, StreamDecoder<? super B, T> reader) {
+        return buffer.readBoolean() ? reader.decode(buffer) : null;
     }
 
-    public <T> void writeNullable(@Nullable T p_236822_, StreamEncoder<? super FriendlyByteBuf, T> p_320116_) {
-        writeNullable(this, p_236822_, p_320116_);
+    public <T> void writeNullable(@Nullable T value, StreamEncoder<? super FriendlyByteBuf, T> writer) {
+        writeNullable(this, value, writer);
     }
 
-    public static <T, B extends ByteBuf> void writeNullable(B p_324502_, @Nullable T p_324536_, StreamEncoder<? super B, T> p_324547_) {
-        if (p_324536_ != null) {
-            p_324502_.writeBoolean(true);
-            p_324547_.encode(p_324502_, p_324536_);
+    public static <T, B extends ByteBuf> void writeNullable(B buffer, @Nullable T value, StreamEncoder<? super B, T> writer) {
+        if (value != null) {
+            buffer.writeBoolean(true);
+            writer.encode(buffer, value);
         } else {
-            p_324502_.writeBoolean(false);
+            buffer.writeBoolean(false);
         }
     }
 
@@ -259,39 +267,44 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return readByteArray(this);
     }
 
-    public static byte[] readByteArray(ByteBuf p_324567_) {
-        return readByteArray(p_324567_, p_324567_.readableBytes());
+    public static byte[] readByteArray(ByteBuf buffer) {
+        return readByteArray(buffer, buffer.readableBytes());
     }
 
-    public FriendlyByteBuf writeByteArray(byte[] p_130088_) {
-        writeByteArray(this, p_130088_);
+    public FriendlyByteBuf writeByteArray(byte[] array) {
+        writeByteArray(this, array);
         return this;
     }
 
-    public static void writeByteArray(ByteBuf p_324397_, byte[] p_324485_) {
-        VarInt.write(p_324397_, p_324485_.length);
-        p_324397_.writeBytes(p_324485_);
+    public static void writeByteArray(ByteBuf buffer, byte[] array) {
+        VarInt.write(buffer, array.length);
+        buffer.writeBytes(array);
     }
 
-    public byte[] readByteArray(int p_130102_) {
-        return readByteArray(this, p_130102_);
+    public byte[] readByteArray(int maxLength) {
+        return readByteArray(this, maxLength);
     }
 
-    public static byte[] readByteArray(ByteBuf p_323774_, int p_324044_) {
-        int i = VarInt.read(p_323774_);
-        if (i > p_324044_) {
-            throw new DecoderException("ByteArray with size " + i + " is bigger than allowed " + p_324044_);
+    public static byte[] readByteArray(ByteBuf buffer, int maxSize) {
+        int i = VarInt.read(buffer);
+        if (i > maxSize) {
+            throw new DecoderException("ByteArray with size " + i + " is bigger than allowed " + maxSize);
         } else {
             byte[] abyte = new byte[i];
-            p_323774_.readBytes(abyte);
+            buffer.readBytes(abyte);
             return abyte;
         }
     }
 
-    public FriendlyByteBuf writeVarIntArray(int[] p_130090_) {
-        this.writeVarInt(p_130090_.length);
+    /**
+     * Writes an array of VarInts to the buffer, prefixed by the length of the array (as a VarInt).
+     *
+     * @see #readVarIntArray
+     */
+    public FriendlyByteBuf writeVarIntArray(int[] array) {
+        this.writeVarInt(array.length);
 
-        for (int i : p_130090_) {
+        for (int i : array) {
             this.writeVarInt(i);
         }
 
@@ -302,10 +315,15 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return this.readVarIntArray(this.readableBytes());
     }
 
-    public int[] readVarIntArray(int p_130117_) {
+    /**
+     * Reads an array of VarInts with a maximum length from this buffer.
+     *
+     * @see #writeVarIntArray
+     */
+    public int[] readVarIntArray(int maxLength) {
         int i = this.readVarInt();
-        if (i > p_130117_) {
-            throw new DecoderException("VarIntArray with size " + i + " is bigger than allowed " + p_130117_);
+        if (i > maxLength) {
+            throw new DecoderException("VarIntArray with size " + i + " is bigger than allowed " + maxLength);
         } else {
             int[] aint = new int[i];
 
@@ -317,10 +335,15 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         }
     }
 
-    public FriendlyByteBuf writeLongArray(long[] p_130092_) {
-        this.writeVarInt(p_130092_.length);
+    /**
+     * Writes an array of longs to the buffer, prefixed by the length of the array (as a VarInt).
+     *
+     * @see #readLongArray
+     */
+    public FriendlyByteBuf writeLongArray(long[] array) {
+        this.writeVarInt(array.length);
 
-        for (long i : p_130092_) {
+        for (long i : array) {
             this.writeLong(i);
         }
 
@@ -331,50 +354,68 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return this.readLongArray(null);
     }
 
-    public long[] readLongArray(@Nullable long[] p_130106_) {
-        return this.readLongArray(p_130106_, this.readableBytes() / 8);
+    /**
+     * Reads a length-prefixed array of longs from the buffer.
+     * Will try to use the given long[] if possible. Note that if an array with the correct size is given, maxLength is ignored.
+     */
+    public long[] readLongArray(@Nullable long[] array) {
+        return this.readLongArray(array, this.readableBytes() / 8);
     }
 
-    public long[] readLongArray(@Nullable long[] p_130094_, int p_130095_) {
+    /**
+     * Reads a length-prefixed array of longs with a maximum length from the buffer.
+     * Will try to use the given long[] if possible. Note that if an array with the correct size is given, maxLength is ignored.
+     */
+    public long[] readLongArray(@Nullable long[] array, int maxLength) {
         int i = this.readVarInt();
-        if (p_130094_ == null || p_130094_.length != i) {
-            if (i > p_130095_) {
-                throw new DecoderException("LongArray with size " + i + " is bigger than allowed " + p_130095_);
+        if (array == null || array.length != i) {
+            if (i > maxLength) {
+                throw new DecoderException("LongArray with size " + i + " is bigger than allowed " + maxLength);
             }
 
-            p_130094_ = new long[i];
+            array = new long[i];
         }
 
-        for (int j = 0; j < p_130094_.length; j++) {
-            p_130094_[j] = this.readLong();
+        for (int j = 0; j < array.length; j++) {
+            array[j] = this.readLong();
         }
 
-        return p_130094_;
+        return array;
     }
 
     public BlockPos readBlockPos() {
         return readBlockPos(this);
     }
 
-    public static BlockPos readBlockPos(ByteBuf p_320037_) {
-        return BlockPos.of(p_320037_.readLong());
+    public static BlockPos readBlockPos(ByteBuf buffer) {
+        return BlockPos.of(buffer.readLong());
     }
 
-    public FriendlyByteBuf writeBlockPos(BlockPos p_130065_) {
-        writeBlockPos(this, p_130065_);
+    /**
+     * Writes a BlockPos encoded as a long to the buffer.
+     *
+     * @see #readBlockPos
+     */
+    public FriendlyByteBuf writeBlockPos(BlockPos pos) {
+        writeBlockPos(this, pos);
         return this;
     }
 
-    public static void writeBlockPos(ByteBuf p_320943_, BlockPos p_320546_) {
-        p_320943_.writeLong(p_320546_.asLong());
+    public static void writeBlockPos(ByteBuf buffer, BlockPos pos) {
+        buffer.writeLong(pos.asLong());
     }
 
     public ChunkPos readChunkPos() {
         return new ChunkPos(this.readLong());
     }
 
-    public FriendlyByteBuf writeChunkPos(ChunkPos p_178342_) {
-        this.writeLong(p_178342_.toLong());
+    /**
+     * Writes a ChunkPos encoded as a long to the buffer.
+     *
+     * @see #readChunkPos
+     */
+    public FriendlyByteBuf writeChunkPos(ChunkPos chunkPos) {
+        this.writeLong(chunkPos.toLong());
         return this;
     }
 
@@ -382,8 +423,13 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return SectionPos.of(this.readLong());
     }
 
-    public FriendlyByteBuf writeSectionPos(SectionPos p_178344_) {
-        this.writeLong(p_178344_.asLong());
+    /**
+     * Writes a SectionPos encoded as a long to the buffer.
+     *
+     * @see #readSectionPos
+     */
+    public FriendlyByteBuf writeSectionPos(SectionPos sectionPos) {
+        this.writeLong(sectionPos.asLong());
         return this;
     }
 
@@ -393,73 +439,83 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return GlobalPos.of(resourcekey, blockpos);
     }
 
-    public void writeGlobalPos(GlobalPos p_236815_) {
-        this.writeResourceKey(p_236815_.dimension());
-        this.writeBlockPos(p_236815_.pos());
+    public void writeGlobalPos(GlobalPos pos) {
+        this.writeResourceKey(pos.dimension());
+        this.writeBlockPos(pos.pos());
     }
 
     public Vector3f readVector3f() {
         return readVector3f(this);
     }
 
-    public static Vector3f readVector3f(ByteBuf p_320362_) {
-        return new Vector3f(p_320362_.readFloat(), p_320362_.readFloat(), p_320362_.readFloat());
+    public static Vector3f readVector3f(ByteBuf buffer) {
+        return new Vector3f(buffer.readFloat(), buffer.readFloat(), buffer.readFloat());
     }
 
-    public void writeVector3f(Vector3f p_270985_) {
-        writeVector3f(this, p_270985_);
+    public void writeVector3f(Vector3f vector3f) {
+        writeVector3f(this, vector3f);
     }
 
-    public static void writeVector3f(ByteBuf p_320042_, Vector3f p_320090_) {
-        p_320042_.writeFloat(p_320090_.x());
-        p_320042_.writeFloat(p_320090_.y());
-        p_320042_.writeFloat(p_320090_.z());
+    public static void writeVector3f(ByteBuf buffer, Vector3f vector3f) {
+        buffer.writeFloat(vector3f.x());
+        buffer.writeFloat(vector3f.y());
+        buffer.writeFloat(vector3f.z());
     }
 
     public Quaternionf readQuaternion() {
         return readQuaternion(this);
     }
 
-    public static Quaternionf readQuaternion(ByteBuf p_319961_) {
-        return new Quaternionf(p_319961_.readFloat(), p_319961_.readFloat(), p_319961_.readFloat(), p_319961_.readFloat());
+    public static Quaternionf readQuaternion(ByteBuf buffer) {
+        return new Quaternionf(buffer.readFloat(), buffer.readFloat(), buffer.readFloat(), buffer.readFloat());
     }
 
-    public void writeQuaternion(Quaternionf p_270141_) {
-        writeQuaternion(this, p_270141_);
+    public void writeQuaternion(Quaternionf quaternion) {
+        writeQuaternion(this, quaternion);
     }
 
-    public static void writeQuaternion(ByteBuf p_320668_, Quaternionf p_320341_) {
-        p_320668_.writeFloat(p_320341_.x);
-        p_320668_.writeFloat(p_320341_.y);
-        p_320668_.writeFloat(p_320341_.z);
-        p_320668_.writeFloat(p_320341_.w);
+    public static void writeQuaternion(ByteBuf buffer, Quaternionf quaternion) {
+        buffer.writeFloat(quaternion.x);
+        buffer.writeFloat(quaternion.y);
+        buffer.writeFloat(quaternion.z);
+        buffer.writeFloat(quaternion.w);
     }
 
     public Vec3 readVec3() {
         return new Vec3(this.readDouble(), this.readDouble(), this.readDouble());
     }
 
-    public void writeVec3(Vec3 p_296062_) {
-        this.writeDouble(p_296062_.x());
-        this.writeDouble(p_296062_.y());
-        this.writeDouble(p_296062_.z());
+    public void writeVec3(Vec3 vec3) {
+        this.writeDouble(vec3.x());
+        this.writeDouble(vec3.y());
+        this.writeDouble(vec3.z());
     }
 
-    public <T extends Enum<T>> T readEnum(Class<T> p_130067_) {
-        return p_130067_.getEnumConstants()[this.readVarInt()];
+    /**
+     * Reads an enum of the given type T using the ordinal encoded as a VarInt from the buffer.
+     *
+     * @see #writeEnum
+     */
+    public <T extends Enum<T>> T readEnum(Class<T> enumClass) {
+        return enumClass.getEnumConstants()[this.readVarInt()];
     }
 
-    public FriendlyByteBuf writeEnum(Enum<?> p_130069_) {
-        return this.writeVarInt(p_130069_.ordinal());
+    /**
+     * Writes an enum of the given type T using the ordinal encoded as a VarInt to the buffer.
+     *
+     * @see #readEnum
+     */
+    public FriendlyByteBuf writeEnum(Enum<?> value) {
+        return this.writeVarInt(value.ordinal());
     }
 
-    public <T> T readById(IntFunction<T> p_295187_) {
+    public <T> T readById(IntFunction<T> idLookuo) {
         int i = this.readVarInt();
-        return p_295187_.apply(i);
+        return idLookuo.apply(i);
     }
 
-    public <T> FriendlyByteBuf writeById(ToIntFunction<T> p_295233_, T p_294192_) {
-        int i = p_295233_.applyAsInt(p_294192_);
+    public <T> FriendlyByteBuf writeById(ToIntFunction<T> idGetter, T value) {
+        int i = idGetter.applyAsInt(value);
         return this.writeVarInt(i);
     }
 
@@ -471,46 +527,57 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return VarLong.read(this.source);
     }
 
-    public FriendlyByteBuf writeUUID(UUID p_130078_) {
-        writeUUID(this, p_130078_);
+    /**
+     * Writes a UUID encoded as two longs to this buffer.
+     *
+     * @see #readUUID
+     */
+    public FriendlyByteBuf writeUUID(UUID uuid) {
+        writeUUID(this, uuid);
         return this;
     }
 
-    public static void writeUUID(ByteBuf p_320444_, UUID p_319838_) {
-        p_320444_.writeLong(p_319838_.getMostSignificantBits());
-        p_320444_.writeLong(p_319838_.getLeastSignificantBits());
+    public static void writeUUID(ByteBuf buffer, UUID id) {
+        buffer.writeLong(id.getMostSignificantBits());
+        buffer.writeLong(id.getLeastSignificantBits());
     }
 
     public UUID readUUID() {
         return readUUID(this);
     }
 
-    public static UUID readUUID(ByteBuf p_319877_) {
-        return new UUID(p_319877_.readLong(), p_319877_.readLong());
+    public static UUID readUUID(ByteBuf buffer) {
+        return new UUID(buffer.readLong(), buffer.readLong());
     }
 
-    public FriendlyByteBuf writeVarInt(int p_130131_) {
-        VarInt.write(this.source, p_130131_);
+    /**
+     * Writes a compressed int to the buffer. The smallest number of bytes to fit the passed int will be written. Of each such byte only 7 bits will be used to describe the actual value since its most significant bit dictates whether the next byte is part of that same int. Micro-optimization for int values that are usually small.
+     */
+    public FriendlyByteBuf writeVarInt(int input) {
+        VarInt.write(this.source, input);
         return this;
     }
 
-    public FriendlyByteBuf writeVarLong(long p_130104_) {
-        VarLong.write(this.source, p_130104_);
+    /**
+     * Writes a compressed long to the buffer. The smallest number of bytes to fit the passed long will be written. Of each such byte only 7 bits will be used to describe the actual value since its most significant bit dictates whether the next byte is part of that same long. Micro-optimization for long values that are usually small.
+     */
+    public FriendlyByteBuf writeVarLong(long value) {
+        VarLong.write(this.source, value);
         return this;
     }
 
-    public FriendlyByteBuf writeNbt(@Nullable Tag p_296432_) {
-        writeNbt(this, p_296432_);
+    public FriendlyByteBuf writeNbt(@Nullable Tag tag) {
+        writeNbt(this, tag);
         return this;
     }
 
-    public static void writeNbt(ByteBuf p_320344_, @Nullable Tag p_320692_) {
-        if (p_320692_ == null) {
-            p_320692_ = EndTag.INSTANCE;
+    public static void writeNbt(ByteBuf buffer, @Nullable Tag nbt) {
+        if (nbt == null) {
+            nbt = EndTag.INSTANCE;
         }
 
         try {
-            NbtIo.writeAnyTag(p_320692_, new ByteBufOutputStream(p_320344_));
+            NbtIo.writeAnyTag(nbt, new ByteBufOutputStream(buffer));
         } catch (IOException ioexception) {
             throw new EncoderException(ioexception);
         }
@@ -522,8 +589,8 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     }
 
     @Nullable
-    public static CompoundTag readNbt(ByteBuf p_320394_) {
-        Tag tag = readNbt(p_320394_, NbtAccounter.create(2097152L));
+    public static CompoundTag readNbt(ByteBuf buffer) {
+        Tag tag = readNbt(buffer, NbtAccounter.create(2097152L));
         if (tag != null && !(tag instanceof CompoundTag)) {
             throw new DecoderException("Not a compound tag: " + tag);
         } else {
@@ -532,9 +599,9 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     }
 
     @Nullable
-    public static Tag readNbt(ByteBuf p_320170_, NbtAccounter p_320055_) {
+    public static Tag readNbt(ByteBuf buffer, NbtAccounter nbtAccounter) {
         try {
-            Tag tag = NbtIo.readAnyTag(new ByteBufInputStream(p_320170_), p_320055_);
+            Tag tag = NbtIo.readAnyTag(new ByteBufInputStream(buffer), nbtAccounter);
             return tag.getId() == 0 ? null : tag;
         } catch (IOException ioexception) {
             throw new EncoderException(ioexception);
@@ -542,24 +609,39 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     }
 
     @Nullable
-    public Tag readNbt(NbtAccounter p_130082_) {
-        return readNbt(this, p_130082_);
+    public Tag readNbt(NbtAccounter nbtAccounter) {
+        return readNbt(this, nbtAccounter);
     }
 
     public String readUtf() {
         return this.readUtf(32767);
     }
 
-    public String readUtf(int p_130137_) {
-        return Utf8String.read(this.source, p_130137_);
+    /**
+     * Reads a string with a maximum length from this buffer.
+     *
+     * @see #writeUtf
+     */
+    public String readUtf(int maxLength) {
+        return Utf8String.read(this.source, maxLength);
     }
 
-    public FriendlyByteBuf writeUtf(String p_130071_) {
-        return this.writeUtf(p_130071_, 32767);
+    /**
+     * Writes a String with a maximum length of {@code Short.MAX_VALUE}.
+     *
+     * @see #readUtf
+     */
+    public FriendlyByteBuf writeUtf(String string) {
+        return this.writeUtf(string, 32767);
     }
 
-    public FriendlyByteBuf writeUtf(String p_130073_, int p_130074_) {
-        Utf8String.write(this.source, p_130073_, p_130074_);
+    /**
+     * Writes a String with a maximum length.
+     *
+     * @see #readUtf
+     */
+    public FriendlyByteBuf writeUtf(String string, int maxLength) {
+        Utf8String.write(this.source, string, maxLength);
         return this;
     }
 
@@ -567,18 +649,23 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return ResourceLocation.parse(this.readUtf(32767));
     }
 
-    public FriendlyByteBuf writeResourceLocation(ResourceLocation p_130086_) {
-        this.writeUtf(p_130086_.toString());
+    /**
+     * Write a ResourceLocation using its String representation.
+     *
+     * @see #readResourceLocation
+     */
+    public FriendlyByteBuf writeResourceLocation(ResourceLocation resourceLocation) {
+        this.writeUtf(resourceLocation.toString());
         return this;
     }
 
-    public <T> ResourceKey<T> readResourceKey(ResourceKey<? extends Registry<T>> p_236802_) {
+    public <T> ResourceKey<T> readResourceKey(ResourceKey<? extends Registry<T>> registryKey) {
         ResourceLocation resourcelocation = this.readResourceLocation();
-        return ResourceKey.create(p_236802_, resourcelocation);
+        return ResourceKey.create(registryKey, resourcelocation);
     }
 
-    public void writeResourceKey(ResourceKey<?> p_236859_) {
-        this.writeResourceLocation(p_236859_.location());
+    public void writeResourceKey(ResourceKey<?> resourceKey) {
+        this.writeResourceLocation(resourceKey.location());
     }
 
     public <T> ResourceKey<? extends Registry<T>> readRegistryKey() {
@@ -590,8 +677,13 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return new Date(this.readLong());
     }
 
-    public FriendlyByteBuf writeDate(Date p_130076_) {
-        this.writeLong(p_130076_.getTime());
+    /**
+     * Write a timestamp as milliseconds since the unix epoch.
+     *
+     * @see #readDate
+     */
+    public FriendlyByteBuf writeDate(Date time) {
+        this.writeLong(time.getTime());
         return this;
     }
 
@@ -599,8 +691,8 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return Instant.ofEpochMilli(this.readLong());
     }
 
-    public void writeInstant(Instant p_236827_) {
-        this.writeLong(p_236827_.toEpochMilli());
+    public void writeInstant(Instant instant) {
+        this.writeLong(instant.toEpochMilli());
     }
 
     public PublicKey readPublicKey() {
@@ -611,8 +703,8 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         }
     }
 
-    public FriendlyByteBuf writePublicKey(PublicKey p_236825_) {
-        this.writeByteArray(p_236825_.getEncoded());
+    public FriendlyByteBuf writePublicKey(PublicKey publicKey) {
+        this.writeByteArray(publicKey.getEncoded());
         return this;
     }
 
@@ -631,37 +723,47 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         );
     }
 
-    public void writeBlockHitResult(BlockHitResult p_130063_) {
-        BlockPos blockpos = p_130063_.getBlockPos();
+    /**
+     * Write a BlockHitResult.
+     *
+     * @see #readBlockHitResult
+     */
+    public void writeBlockHitResult(BlockHitResult result) {
+        BlockPos blockpos = result.getBlockPos();
         this.writeBlockPos(blockpos);
-        this.writeEnum(p_130063_.getDirection());
-        Vec3 vec3 = p_130063_.getLocation();
+        this.writeEnum(result.getDirection());
+        Vec3 vec3 = result.getLocation();
         this.writeFloat((float)(vec3.x - (double)blockpos.getX()));
         this.writeFloat((float)(vec3.y - (double)blockpos.getY()));
         this.writeFloat((float)(vec3.z - (double)blockpos.getZ()));
-        this.writeBoolean(p_130063_.isInside());
+        this.writeBoolean(result.isInside());
     }
 
     public BitSet readBitSet() {
         return BitSet.valueOf(this.readLongArray());
     }
 
-    public void writeBitSet(BitSet p_178351_) {
-        this.writeLongArray(p_178351_.toLongArray());
+    /**
+     * Write a BitSet as a long[].
+     *
+     * @see #readBitSet
+     */
+    public void writeBitSet(BitSet bitSet) {
+        this.writeLongArray(bitSet.toLongArray());
     }
 
-    public BitSet readFixedBitSet(int p_249113_) {
-        byte[] abyte = new byte[Mth.positiveCeilDiv(p_249113_, 8)];
+    public BitSet readFixedBitSet(int size) {
+        byte[] abyte = new byte[Mth.positiveCeilDiv(size, 8)];
         this.readBytes(abyte);
         return BitSet.valueOf(abyte);
     }
 
-    public void writeFixedBitSet(BitSet p_248698_, int p_248869_) {
-        if (p_248698_.length() > p_248869_) {
-            throw new EncoderException("BitSet is larger than expected size (" + p_248698_.length() + ">" + p_248869_ + ")");
+    public void writeFixedBitSet(BitSet bitSet, int size) {
+        if (bitSet.length() > size) {
+            throw new EncoderException("BitSet is larger than expected size (" + bitSet.length() + ">" + size + ")");
         } else {
-            byte[] abyte = p_248698_.toByteArray();
-            this.writeBytes(Arrays.copyOf(abyte, Mth.positiveCeilDiv(p_248869_, 8)));
+            byte[] abyte = bitSet.toByteArray();
+            this.writeBytes(Arrays.copyOf(abyte, Mth.positiveCeilDiv(size, 8)));
         }
     }
 
@@ -680,8 +782,8 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return this.source.capacity();
     }
 
-    public FriendlyByteBuf capacity(int p_295325_) {
-        this.source.capacity(p_295325_);
+    public FriendlyByteBuf capacity(int newCapacity) {
+        this.source.capacity(newCapacity);
         return this;
     }
 
@@ -701,8 +803,8 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     }
 
     @Override
-    public ByteBuf order(ByteOrder p_130280_) {
-        return this.source.order(p_130280_);
+    public ByteBuf order(ByteOrder endianness) {
+        return this.source.order(endianness);
     }
 
     @Override
@@ -730,8 +832,8 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return this.source.readerIndex();
     }
 
-    public FriendlyByteBuf readerIndex(int p_295519_) {
-        this.source.readerIndex(p_295519_);
+    public FriendlyByteBuf readerIndex(int readerIndex) {
+        this.source.readerIndex(readerIndex);
         return this;
     }
 
@@ -740,13 +842,13 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return this.source.writerIndex();
     }
 
-    public FriendlyByteBuf writerIndex(int p_294907_) {
-        this.source.writerIndex(p_294907_);
+    public FriendlyByteBuf writerIndex(int writerIndex) {
+        this.source.writerIndex(writerIndex);
         return this;
     }
 
-    public FriendlyByteBuf setIndex(int p_296056_, int p_295480_) {
-        this.source.setIndex(p_296056_, p_295480_);
+    public FriendlyByteBuf setIndex(int readerIndex, int writerIndex) {
+        this.source.setIndex(readerIndex, writerIndex);
         return this;
     }
 
@@ -771,8 +873,8 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     }
 
     @Override
-    public boolean isReadable(int p_130254_) {
-        return this.source.isReadable(p_130254_);
+    public boolean isReadable(int size) {
+        return this.source.isReadable(size);
     }
 
     @Override
@@ -781,8 +883,8 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     }
 
     @Override
-    public boolean isWritable(int p_130257_) {
-        return this.source.isWritable(p_130257_);
+    public boolean isWritable(int size) {
+        return this.source.isWritable(size);
     }
 
     public FriendlyByteBuf clear() {
@@ -820,284 +922,284 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return this;
     }
 
-    public FriendlyByteBuf ensureWritable(int p_294903_) {
-        this.source.ensureWritable(p_294903_);
+    public FriendlyByteBuf ensureWritable(int size) {
+        this.source.ensureWritable(size);
         return this;
     }
 
     @Override
-    public int ensureWritable(int p_130141_, boolean p_130142_) {
-        return this.source.ensureWritable(p_130141_, p_130142_);
+    public int ensureWritable(int size, boolean force) {
+        return this.source.ensureWritable(size, force);
     }
 
     @Override
-    public boolean getBoolean(int p_130159_) {
-        return this.source.getBoolean(p_130159_);
+    public boolean getBoolean(int index) {
+        return this.source.getBoolean(index);
     }
 
     @Override
-    public byte getByte(int p_130161_) {
-        return this.source.getByte(p_130161_);
+    public byte getByte(int index) {
+        return this.source.getByte(index);
     }
 
     @Override
-    public short getUnsignedByte(int p_130225_) {
-        return this.source.getUnsignedByte(p_130225_);
+    public short getUnsignedByte(int index) {
+        return this.source.getUnsignedByte(index);
     }
 
     @Override
-    public short getShort(int p_130221_) {
-        return this.source.getShort(p_130221_);
+    public short getShort(int index) {
+        return this.source.getShort(index);
     }
 
     @Override
-    public short getShortLE(int p_130223_) {
-        return this.source.getShortLE(p_130223_);
+    public short getShortLE(int index) {
+        return this.source.getShortLE(index);
     }
 
     @Override
-    public int getUnsignedShort(int p_130235_) {
-        return this.source.getUnsignedShort(p_130235_);
+    public int getUnsignedShort(int index) {
+        return this.source.getUnsignedShort(index);
     }
 
     @Override
-    public int getUnsignedShortLE(int p_130237_) {
-        return this.source.getUnsignedShortLE(p_130237_);
+    public int getUnsignedShortLE(int index) {
+        return this.source.getUnsignedShortLE(index);
     }
 
     @Override
-    public int getMedium(int p_130217_) {
-        return this.source.getMedium(p_130217_);
+    public int getMedium(int index) {
+        return this.source.getMedium(index);
     }
 
     @Override
-    public int getMediumLE(int p_130219_) {
-        return this.source.getMediumLE(p_130219_);
+    public int getMediumLE(int index) {
+        return this.source.getMediumLE(index);
     }
 
     @Override
-    public int getUnsignedMedium(int p_130231_) {
-        return this.source.getUnsignedMedium(p_130231_);
+    public int getUnsignedMedium(int index) {
+        return this.source.getUnsignedMedium(index);
     }
 
     @Override
-    public int getUnsignedMediumLE(int p_130233_) {
-        return this.source.getUnsignedMediumLE(p_130233_);
+    public int getUnsignedMediumLE(int index) {
+        return this.source.getUnsignedMediumLE(index);
     }
 
     @Override
-    public int getInt(int p_130209_) {
-        return this.source.getInt(p_130209_);
+    public int getInt(int index) {
+        return this.source.getInt(index);
     }
 
     @Override
-    public int getIntLE(int p_130211_) {
-        return this.source.getIntLE(p_130211_);
+    public int getIntLE(int index) {
+        return this.source.getIntLE(index);
     }
 
     @Override
-    public long getUnsignedInt(int p_130227_) {
-        return this.source.getUnsignedInt(p_130227_);
+    public long getUnsignedInt(int index) {
+        return this.source.getUnsignedInt(index);
     }
 
     @Override
-    public long getUnsignedIntLE(int p_130229_) {
-        return this.source.getUnsignedIntLE(p_130229_);
+    public long getUnsignedIntLE(int index) {
+        return this.source.getUnsignedIntLE(index);
     }
 
     @Override
-    public long getLong(int p_130213_) {
-        return this.source.getLong(p_130213_);
+    public long getLong(int index) {
+        return this.source.getLong(index);
     }
 
     @Override
-    public long getLongLE(int p_130215_) {
-        return this.source.getLongLE(p_130215_);
+    public long getLongLE(int index) {
+        return this.source.getLongLE(index);
     }
 
     @Override
-    public char getChar(int p_130199_) {
-        return this.source.getChar(p_130199_);
+    public char getChar(int index) {
+        return this.source.getChar(index);
     }
 
     @Override
-    public float getFloat(int p_130207_) {
-        return this.source.getFloat(p_130207_);
+    public float getFloat(int index) {
+        return this.source.getFloat(index);
     }
 
     @Override
-    public double getDouble(int p_130205_) {
-        return this.source.getDouble(p_130205_);
+    public double getDouble(int index) {
+        return this.source.getDouble(index);
     }
 
-    public FriendlyByteBuf getBytes(int p_296115_, ByteBuf p_295805_) {
-        this.source.getBytes(p_296115_, p_295805_);
+    public FriendlyByteBuf getBytes(int index, ByteBuf destination) {
+        this.source.getBytes(index, destination);
         return this;
     }
 
-    public FriendlyByteBuf getBytes(int p_294876_, ByteBuf p_295864_, int p_294524_) {
-        this.source.getBytes(p_294876_, p_295864_, p_294524_);
+    public FriendlyByteBuf getBytes(int index, ByteBuf destination, int length) {
+        this.source.getBytes(index, destination, length);
         return this;
     }
 
-    public FriendlyByteBuf getBytes(int p_294107_, ByteBuf p_296448_, int p_295017_, int p_294733_) {
-        this.source.getBytes(p_294107_, p_296448_, p_295017_, p_294733_);
+    public FriendlyByteBuf getBytes(int index, ByteBuf destination, int destinationIndex, int length) {
+        this.source.getBytes(index, destination, destinationIndex, length);
         return this;
     }
 
-    public FriendlyByteBuf getBytes(int p_294557_, byte[] p_295660_) {
-        this.source.getBytes(p_294557_, p_295660_);
+    public FriendlyByteBuf getBytes(int index, byte[] destination) {
+        this.source.getBytes(index, destination);
         return this;
     }
 
-    public FriendlyByteBuf getBytes(int p_295128_, byte[] p_296337_, int p_294659_, int p_294779_) {
-        this.source.getBytes(p_295128_, p_296337_, p_294659_, p_294779_);
+    public FriendlyByteBuf getBytes(int index, byte[] destination, int destinationIndex, int length) {
+        this.source.getBytes(index, destination, destinationIndex, length);
         return this;
     }
 
-    public FriendlyByteBuf getBytes(int p_296377_, ByteBuffer p_295139_) {
-        this.source.getBytes(p_296377_, p_295139_);
+    public FriendlyByteBuf getBytes(int index, ByteBuffer destination) {
+        this.source.getBytes(index, destination);
         return this;
     }
 
-    public FriendlyByteBuf getBytes(int p_294277_, OutputStream p_296069_, int p_296395_) throws IOException {
-        this.source.getBytes(p_294277_, p_296069_, p_296395_);
-        return this;
-    }
-
-    @Override
-    public int getBytes(int p_130187_, GatheringByteChannel p_130188_, int p_130189_) throws IOException {
-        return this.source.getBytes(p_130187_, p_130188_, p_130189_);
-    }
-
-    @Override
-    public int getBytes(int p_130182_, FileChannel p_130183_, long p_130184_, int p_130185_) throws IOException {
-        return this.source.getBytes(p_130182_, p_130183_, p_130184_, p_130185_);
-    }
-
-    @Override
-    public CharSequence getCharSequence(int p_130201_, int p_130202_, Charset p_130203_) {
-        return this.source.getCharSequence(p_130201_, p_130202_, p_130203_);
-    }
-
-    public FriendlyByteBuf setBoolean(int p_295254_, boolean p_295072_) {
-        this.source.setBoolean(p_295254_, p_295072_);
-        return this;
-    }
-
-    public FriendlyByteBuf setByte(int p_294776_, int p_295119_) {
-        this.source.setByte(p_294776_, p_295119_);
-        return this;
-    }
-
-    public FriendlyByteBuf setShort(int p_295713_, int p_296093_) {
-        this.source.setShort(p_295713_, p_296093_);
-        return this;
-    }
-
-    public FriendlyByteBuf setShortLE(int p_295748_, int p_294784_) {
-        this.source.setShortLE(p_295748_, p_294784_);
-        return this;
-    }
-
-    public FriendlyByteBuf setMedium(int p_295726_, int p_296052_) {
-        this.source.setMedium(p_295726_, p_296052_);
-        return this;
-    }
-
-    public FriendlyByteBuf setMediumLE(int p_296476_, int p_295239_) {
-        this.source.setMediumLE(p_296476_, p_295239_);
-        return this;
-    }
-
-    public FriendlyByteBuf setInt(int p_295466_, int p_295351_) {
-        this.source.setInt(p_295466_, p_295351_);
-        return this;
-    }
-
-    public FriendlyByteBuf setIntLE(int p_296041_, int p_295343_) {
-        this.source.setIntLE(p_296041_, p_295343_);
-        return this;
-    }
-
-    public FriendlyByteBuf setLong(int p_295413_, long p_294370_) {
-        this.source.setLong(p_295413_, p_294370_);
-        return this;
-    }
-
-    public FriendlyByteBuf setLongLE(int p_294242_, long p_295126_) {
-        this.source.setLongLE(p_294242_, p_295126_);
-        return this;
-    }
-
-    public FriendlyByteBuf setChar(int p_295571_, int p_295295_) {
-        this.source.setChar(p_295571_, p_295295_);
-        return this;
-    }
-
-    public FriendlyByteBuf setFloat(int p_295320_, float p_296028_) {
-        this.source.setFloat(p_295320_, p_296028_);
-        return this;
-    }
-
-    public FriendlyByteBuf setDouble(int p_294330_, double p_295264_) {
-        this.source.setDouble(p_294330_, p_295264_);
-        return this;
-    }
-
-    public FriendlyByteBuf setBytes(int p_294134_, ByteBuf p_294238_) {
-        this.source.setBytes(p_294134_, p_294238_);
-        return this;
-    }
-
-    public FriendlyByteBuf setBytes(int p_295824_, ByteBuf p_294581_, int p_295654_) {
-        this.source.setBytes(p_295824_, p_294581_, p_295654_);
-        return this;
-    }
-
-    public FriendlyByteBuf setBytes(int p_296236_, ByteBuf p_295709_, int p_294354_, int p_295897_) {
-        this.source.setBytes(p_296236_, p_295709_, p_294354_, p_295897_);
-        return this;
-    }
-
-    public FriendlyByteBuf setBytes(int p_295696_, byte[] p_295990_) {
-        this.source.setBytes(p_295696_, p_295990_);
-        return this;
-    }
-
-    public FriendlyByteBuf setBytes(int p_295030_, byte[] p_295276_, int p_295073_, int p_295926_) {
-        this.source.setBytes(p_295030_, p_295276_, p_295073_, p_295926_);
-        return this;
-    }
-
-    public FriendlyByteBuf setBytes(int p_294827_, ByteBuffer p_295408_) {
-        this.source.setBytes(p_294827_, p_295408_);
+    public FriendlyByteBuf getBytes(int index, OutputStream out, int length) throws IOException {
+        this.source.getBytes(index, out, length);
         return this;
     }
 
     @Override
-    public int setBytes(int p_130380_, InputStream p_130381_, int p_130382_) throws IOException {
-        return this.source.setBytes(p_130380_, p_130381_, p_130382_);
+    public int getBytes(int index, GatheringByteChannel out, int length) throws IOException {
+        return this.source.getBytes(index, out, length);
     }
 
     @Override
-    public int setBytes(int p_130392_, ScatteringByteChannel p_130393_, int p_130394_) throws IOException {
-        return this.source.setBytes(p_130392_, p_130393_, p_130394_);
+    public int getBytes(int index, FileChannel out, long position, int length) throws IOException {
+        return this.source.getBytes(index, out, position, length);
     }
 
     @Override
-    public int setBytes(int p_130387_, FileChannel p_130388_, long p_130389_, int p_130390_) throws IOException {
-        return this.source.setBytes(p_130387_, p_130388_, p_130389_, p_130390_);
+    public CharSequence getCharSequence(int index, int length, Charset charset) {
+        return this.source.getCharSequence(index, length, charset);
     }
 
-    public FriendlyByteBuf setZero(int p_295002_, int p_295655_) {
-        this.source.setZero(p_295002_, p_295655_);
+    public FriendlyByteBuf setBoolean(int index, boolean value) {
+        this.source.setBoolean(index, value);
+        return this;
+    }
+
+    public FriendlyByteBuf setByte(int index, int value) {
+        this.source.setByte(index, value);
+        return this;
+    }
+
+    public FriendlyByteBuf setShort(int index, int value) {
+        this.source.setShort(index, value);
+        return this;
+    }
+
+    public FriendlyByteBuf setShortLE(int index, int value) {
+        this.source.setShortLE(index, value);
+        return this;
+    }
+
+    public FriendlyByteBuf setMedium(int index, int value) {
+        this.source.setMedium(index, value);
+        return this;
+    }
+
+    public FriendlyByteBuf setMediumLE(int index, int value) {
+        this.source.setMediumLE(index, value);
+        return this;
+    }
+
+    public FriendlyByteBuf setInt(int index, int value) {
+        this.source.setInt(index, value);
+        return this;
+    }
+
+    public FriendlyByteBuf setIntLE(int index, int value) {
+        this.source.setIntLE(index, value);
+        return this;
+    }
+
+    public FriendlyByteBuf setLong(int index, long value) {
+        this.source.setLong(index, value);
+        return this;
+    }
+
+    public FriendlyByteBuf setLongLE(int index, long value) {
+        this.source.setLongLE(index, value);
+        return this;
+    }
+
+    public FriendlyByteBuf setChar(int index, int value) {
+        this.source.setChar(index, value);
+        return this;
+    }
+
+    public FriendlyByteBuf setFloat(int index, float value) {
+        this.source.setFloat(index, value);
+        return this;
+    }
+
+    public FriendlyByteBuf setDouble(int index, double value) {
+        this.source.setDouble(index, value);
+        return this;
+    }
+
+    public FriendlyByteBuf setBytes(int index, ByteBuf source) {
+        this.source.setBytes(index, source);
+        return this;
+    }
+
+    public FriendlyByteBuf setBytes(int index, ByteBuf source, int length) {
+        this.source.setBytes(index, source, length);
+        return this;
+    }
+
+    public FriendlyByteBuf setBytes(int index, ByteBuf source, int sourceIndex, int length) {
+        this.source.setBytes(index, source, sourceIndex, length);
+        return this;
+    }
+
+    public FriendlyByteBuf setBytes(int index, byte[] source) {
+        this.source.setBytes(index, source);
+        return this;
+    }
+
+    public FriendlyByteBuf setBytes(int index, byte[] source, int sourceIndex, int length) {
+        this.source.setBytes(index, source, sourceIndex, length);
+        return this;
+    }
+
+    public FriendlyByteBuf setBytes(int index, ByteBuffer source) {
+        this.source.setBytes(index, source);
         return this;
     }
 
     @Override
-    public int setCharSequence(int p_130407_, CharSequence p_130408_, Charset p_130409_) {
-        return this.source.setCharSequence(p_130407_, p_130408_, p_130409_);
+    public int setBytes(int index, InputStream in, int length) throws IOException {
+        return this.source.setBytes(index, in, length);
+    }
+
+    @Override
+    public int setBytes(int index, ScatteringByteChannel in, int length) throws IOException {
+        return this.source.setBytes(index, in, length);
+    }
+
+    @Override
+    public int setBytes(int index, FileChannel in, long position, int length) throws IOException {
+        return this.source.setBytes(index, in, position, length);
+    }
+
+    public FriendlyByteBuf setZero(int index, int length) {
+        this.source.setZero(index, length);
+        return this;
+    }
+
+    @Override
+    public int setCharSequence(int index, CharSequence charSequence, Charset charset) {
+        return this.source.setCharSequence(index, charSequence, charset);
     }
 
     @Override
@@ -1201,233 +1303,233 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     }
 
     @Override
-    public ByteBuf readBytes(int p_130287_) {
-        return this.source.readBytes(p_130287_);
+    public ByteBuf readBytes(int length) {
+        return this.source.readBytes(length);
     }
 
     @Override
-    public ByteBuf readSlice(int p_130332_) {
-        return this.source.readSlice(p_130332_);
+    public ByteBuf readSlice(int length) {
+        return this.source.readSlice(length);
     }
 
     @Override
-    public ByteBuf readRetainedSlice(int p_130328_) {
-        return this.source.readRetainedSlice(p_130328_);
+    public ByteBuf readRetainedSlice(int length) {
+        return this.source.readRetainedSlice(length);
     }
 
-    public FriendlyByteBuf readBytes(ByteBuf p_296080_) {
-        this.source.readBytes(p_296080_);
+    public FriendlyByteBuf readBytes(ByteBuf destination) {
+        this.source.readBytes(destination);
         return this;
     }
 
-    public FriendlyByteBuf readBytes(ByteBuf p_296068_, int p_295259_) {
-        this.source.readBytes(p_296068_, p_295259_);
+    public FriendlyByteBuf readBytes(ByteBuf destination, int length) {
+        this.source.readBytes(destination, length);
         return this;
     }
 
-    public FriendlyByteBuf readBytes(ByteBuf p_295701_, int p_294970_, int p_294610_) {
-        this.source.readBytes(p_295701_, p_294970_, p_294610_);
+    public FriendlyByteBuf readBytes(ByteBuf destination, int destinationIndex, int length) {
+        this.source.readBytes(destination, destinationIndex, length);
         return this;
     }
 
-    public FriendlyByteBuf readBytes(byte[] p_295557_) {
-        this.source.readBytes(p_295557_);
+    public FriendlyByteBuf readBytes(byte[] destination) {
+        this.source.readBytes(destination);
         return this;
     }
 
-    public FriendlyByteBuf readBytes(byte[] p_294152_, int p_294331_, int p_295481_) {
-        this.source.readBytes(p_294152_, p_294331_, p_295481_);
+    public FriendlyByteBuf readBytes(byte[] destination, int destinationIndex, int length) {
+        this.source.readBytes(destination, destinationIndex, length);
         return this;
     }
 
-    public FriendlyByteBuf readBytes(ByteBuffer p_294641_) {
-        this.source.readBytes(p_294641_);
+    public FriendlyByteBuf readBytes(ByteBuffer destination) {
+        this.source.readBytes(destination);
         return this;
     }
 
-    public FriendlyByteBuf readBytes(OutputStream p_296425_, int p_295786_) throws IOException {
-        this.source.readBytes(p_296425_, p_295786_);
-        return this;
-    }
-
-    @Override
-    public int readBytes(GatheringByteChannel p_130307_, int p_130308_) throws IOException {
-        return this.source.readBytes(p_130307_, p_130308_);
-    }
-
-    @Override
-    public CharSequence readCharSequence(int p_130317_, Charset p_130318_) {
-        return this.source.readCharSequence(p_130317_, p_130318_);
-    }
-
-    @Override
-    public int readBytes(FileChannel p_130303_, long p_130304_, int p_130305_) throws IOException {
-        return this.source.readBytes(p_130303_, p_130304_, p_130305_);
-    }
-
-    public FriendlyByteBuf skipBytes(int p_296015_) {
-        this.source.skipBytes(p_296015_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeBoolean(boolean p_295682_) {
-        this.source.writeBoolean(p_295682_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeByte(int p_295618_) {
-        this.source.writeByte(p_295618_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeShort(int p_294734_) {
-        this.source.writeShort(p_294734_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeShortLE(int p_295772_) {
-        this.source.writeShortLE(p_295772_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeMedium(int p_296189_) {
-        this.source.writeMedium(p_296189_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeMediumLE(int p_295508_) {
-        this.source.writeMediumLE(p_295508_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeInt(int p_296090_) {
-        this.source.writeInt(p_296090_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeIntLE(int p_294626_) {
-        this.source.writeIntLE(p_294626_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeLong(long p_295423_) {
-        this.source.writeLong(p_295423_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeLongLE(long p_294730_) {
-        this.source.writeLongLE(p_294730_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeChar(int p_295369_) {
-        this.source.writeChar(p_295369_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeFloat(float p_294332_) {
-        this.source.writeFloat(p_294332_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeDouble(double p_295463_) {
-        this.source.writeDouble(p_295463_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeBytes(ByteBuf p_295011_) {
-        this.source.writeBytes(p_295011_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeBytes(ByteBuf p_295384_, int p_295311_) {
-        this.source.writeBytes(p_295384_, p_295311_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeBytes(ByteBuf p_295348_, int p_294807_, int p_294737_) {
-        this.source.writeBytes(p_295348_, p_294807_, p_294737_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeBytes(byte[] p_296194_) {
-        this.source.writeBytes(p_296194_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeBytes(byte[] p_294409_, int p_295416_, int p_294380_) {
-        this.source.writeBytes(p_294409_, p_295416_, p_294380_);
-        return this;
-    }
-
-    public FriendlyByteBuf writeBytes(ByteBuffer p_295937_) {
-        this.source.writeBytes(p_295937_);
+    public FriendlyByteBuf readBytes(OutputStream out, int length) throws IOException {
+        this.source.readBytes(out, length);
         return this;
     }
 
     @Override
-    public int writeBytes(InputStream p_130481_, int p_130482_) throws IOException {
-        return this.source.writeBytes(p_130481_, p_130482_);
+    public int readBytes(GatheringByteChannel out, int length) throws IOException {
+        return this.source.readBytes(out, length);
     }
 
     @Override
-    public int writeBytes(ScatteringByteChannel p_130490_, int p_130491_) throws IOException {
-        return this.source.writeBytes(p_130490_, p_130491_);
+    public CharSequence readCharSequence(int length, Charset charset) {
+        return this.source.readCharSequence(length, charset);
     }
 
     @Override
-    public int writeBytes(FileChannel p_130486_, long p_130487_, int p_130488_) throws IOException {
-        return this.source.writeBytes(p_130486_, p_130487_, p_130488_);
+    public int readBytes(FileChannel out, long position, int length) throws IOException {
+        return this.source.readBytes(out, position, length);
     }
 
-    public FriendlyByteBuf writeZero(int p_295016_) {
-        this.source.writeZero(p_295016_);
+    public FriendlyByteBuf skipBytes(int length) {
+        this.source.skipBytes(length);
+        return this;
+    }
+
+    public FriendlyByteBuf writeBoolean(boolean value) {
+        this.source.writeBoolean(value);
+        return this;
+    }
+
+    public FriendlyByteBuf writeByte(int value) {
+        this.source.writeByte(value);
+        return this;
+    }
+
+    public FriendlyByteBuf writeShort(int value) {
+        this.source.writeShort(value);
+        return this;
+    }
+
+    public FriendlyByteBuf writeShortLE(int value) {
+        this.source.writeShortLE(value);
+        return this;
+    }
+
+    public FriendlyByteBuf writeMedium(int value) {
+        this.source.writeMedium(value);
+        return this;
+    }
+
+    public FriendlyByteBuf writeMediumLE(int value) {
+        this.source.writeMediumLE(value);
+        return this;
+    }
+
+    public FriendlyByteBuf writeInt(int value) {
+        this.source.writeInt(value);
+        return this;
+    }
+
+    public FriendlyByteBuf writeIntLE(int value) {
+        this.source.writeIntLE(value);
+        return this;
+    }
+
+    public FriendlyByteBuf writeLong(long value) {
+        this.source.writeLong(value);
+        return this;
+    }
+
+    public FriendlyByteBuf writeLongLE(long value) {
+        this.source.writeLongLE(value);
+        return this;
+    }
+
+    public FriendlyByteBuf writeChar(int value) {
+        this.source.writeChar(value);
+        return this;
+    }
+
+    public FriendlyByteBuf writeFloat(float value) {
+        this.source.writeFloat(value);
+        return this;
+    }
+
+    public FriendlyByteBuf writeDouble(double value) {
+        this.source.writeDouble(value);
+        return this;
+    }
+
+    public FriendlyByteBuf writeBytes(ByteBuf source) {
+        this.source.writeBytes(source);
+        return this;
+    }
+
+    public FriendlyByteBuf writeBytes(ByteBuf source, int length) {
+        this.source.writeBytes(source, length);
+        return this;
+    }
+
+    public FriendlyByteBuf writeBytes(ByteBuf source, int sourceIndex, int length) {
+        this.source.writeBytes(source, sourceIndex, length);
+        return this;
+    }
+
+    public FriendlyByteBuf writeBytes(byte[] source) {
+        this.source.writeBytes(source);
+        return this;
+    }
+
+    public FriendlyByteBuf writeBytes(byte[] source, int sourceIndex, int length) {
+        this.source.writeBytes(source, sourceIndex, length);
+        return this;
+    }
+
+    public FriendlyByteBuf writeBytes(ByteBuffer source) {
+        this.source.writeBytes(source);
         return this;
     }
 
     @Override
-    public int writeCharSequence(CharSequence p_130501_, Charset p_130502_) {
-        return this.source.writeCharSequence(p_130501_, p_130502_);
+    public int writeBytes(InputStream in, int length) throws IOException {
+        return this.source.writeBytes(in, length);
     }
 
     @Override
-    public int indexOf(int p_130244_, int p_130245_, byte p_130246_) {
-        return this.source.indexOf(p_130244_, p_130245_, p_130246_);
+    public int writeBytes(ScatteringByteChannel in, int length) throws IOException {
+        return this.source.writeBytes(in, length);
     }
 
     @Override
-    public int bytesBefore(byte p_130108_) {
-        return this.source.bytesBefore(p_130108_);
+    public int writeBytes(FileChannel in, long position, int length) throws IOException {
+        return this.source.writeBytes(in, position, length);
+    }
+
+    public FriendlyByteBuf writeZero(int length) {
+        this.source.writeZero(length);
+        return this;
     }
 
     @Override
-    public int bytesBefore(int p_130110_, byte p_130111_) {
-        return this.source.bytesBefore(p_130110_, p_130111_);
+    public int writeCharSequence(CharSequence charSequence, Charset charset) {
+        return this.source.writeCharSequence(charSequence, charset);
     }
 
     @Override
-    public int bytesBefore(int p_130113_, int p_130114_, byte p_130115_) {
-        return this.source.bytesBefore(p_130113_, p_130114_, p_130115_);
+    public int indexOf(int fromIndex, int toIndex, byte value) {
+        return this.source.indexOf(fromIndex, toIndex, value);
     }
 
     @Override
-    public int forEachByte(ByteProcessor p_130150_) {
-        return this.source.forEachByte(p_130150_);
+    public int bytesBefore(byte value) {
+        return this.source.bytesBefore(value);
     }
 
     @Override
-    public int forEachByte(int p_130146_, int p_130147_, ByteProcessor p_130148_) {
-        return this.source.forEachByte(p_130146_, p_130147_, p_130148_);
+    public int bytesBefore(int length, byte value) {
+        return this.source.bytesBefore(length, value);
     }
 
     @Override
-    public int forEachByteDesc(ByteProcessor p_130156_) {
-        return this.source.forEachByteDesc(p_130156_);
+    public int bytesBefore(int index, int length, byte value) {
+        return this.source.bytesBefore(index, length, value);
     }
 
     @Override
-    public int forEachByteDesc(int p_130152_, int p_130153_, ByteProcessor p_130154_) {
-        return this.source.forEachByteDesc(p_130152_, p_130153_, p_130154_);
+    public int forEachByte(ByteProcessor processor) {
+        return this.source.forEachByte(processor);
+    }
+
+    @Override
+    public int forEachByte(int index, int length, ByteProcessor processor) {
+        return this.source.forEachByte(index, length, processor);
+    }
+
+    @Override
+    public int forEachByteDesc(ByteProcessor processor) {
+        return this.source.forEachByteDesc(processor);
+    }
+
+    @Override
+    public int forEachByteDesc(int index, int length, ByteProcessor processor) {
+        return this.source.forEachByteDesc(index, length, processor);
     }
 
     @Override
@@ -1436,8 +1538,8 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     }
 
     @Override
-    public ByteBuf copy(int p_130128_, int p_130129_) {
-        return this.source.copy(p_130128_, p_130129_);
+    public ByteBuf copy(int index, int length) {
+        return this.source.copy(index, length);
     }
 
     @Override
@@ -1451,13 +1553,13 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     }
 
     @Override
-    public ByteBuf slice(int p_130450_, int p_130451_) {
-        return this.source.slice(p_130450_, p_130451_);
+    public ByteBuf slice(int index, int length) {
+        return this.source.slice(index, length);
     }
 
     @Override
-    public ByteBuf retainedSlice(int p_130359_, int p_130360_) {
-        return this.source.retainedSlice(p_130359_, p_130360_);
+    public ByteBuf retainedSlice(int index, int length) {
+        return this.source.retainedSlice(index, length);
     }
 
     @Override
@@ -1481,13 +1583,13 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     }
 
     @Override
-    public ByteBuffer nioBuffer(int p_130270_, int p_130271_) {
-        return this.source.nioBuffer(p_130270_, p_130271_);
+    public ByteBuffer nioBuffer(int index, int length) {
+        return this.source.nioBuffer(index, length);
     }
 
     @Override
-    public ByteBuffer internalNioBuffer(int p_130248_, int p_130249_) {
-        return this.source.internalNioBuffer(p_130248_, p_130249_);
+    public ByteBuffer internalNioBuffer(int index, int length) {
+        return this.source.internalNioBuffer(index, length);
     }
 
     @Override
@@ -1496,8 +1598,8 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     }
 
     @Override
-    public ByteBuffer[] nioBuffers(int p_130275_, int p_130276_) {
-        return this.source.nioBuffers(p_130275_, p_130276_);
+    public ByteBuffer[] nioBuffers(int index, int length) {
+        return this.source.nioBuffers(index, length);
     }
 
     @Override
@@ -1526,13 +1628,13 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     }
 
     @Override
-    public String toString(Charset p_130458_) {
-        return this.source.toString(p_130458_);
+    public String toString(Charset charset) {
+        return this.source.toString(charset);
     }
 
     @Override
-    public String toString(int p_130454_, int p_130455_, Charset p_130456_) {
-        return this.source.toString(p_130454_, p_130455_, p_130456_);
+    public String toString(int index, int length, Charset charset) {
+        return this.source.toString(index, length, charset);
     }
 
     @Override
@@ -1541,13 +1643,13 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     }
 
     @Override
-    public boolean equals(Object p_130144_) {
-        return this.source.equals(p_130144_);
+    public boolean equals(Object other) {
+        return this.source.equals(other);
     }
 
     @Override
-    public int compareTo(ByteBuf p_130123_) {
-        return this.source.compareTo(p_130123_);
+    public int compareTo(ByteBuf other) {
+        return this.source.compareTo(other);
     }
 
     @Override
@@ -1555,8 +1657,8 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return this.source.toString();
     }
 
-    public FriendlyByteBuf retain(int p_294685_) {
-        this.source.retain(p_294685_);
+    public FriendlyByteBuf retain(int increment) {
+        this.source.retain(increment);
         return this;
     }
 
@@ -1570,8 +1672,8 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
         return this;
     }
 
-    public FriendlyByteBuf touch(Object p_296360_) {
-        this.source.touch(p_296360_);
+    public FriendlyByteBuf touch(Object hint) {
+        this.source.touch(hint);
         return this;
     }
 
@@ -1586,8 +1688,8 @@ public class FriendlyByteBuf extends ByteBuf implements net.neoforged.neoforge.c
     }
 
     @Override
-    public boolean release(int p_130347_) {
-        return this.source.release(p_130347_);
+    public boolean release(int decrement) {
+        return this.source.release(decrement);
     }
 
     @org.jetbrains.annotations.ApiStatus.Internal

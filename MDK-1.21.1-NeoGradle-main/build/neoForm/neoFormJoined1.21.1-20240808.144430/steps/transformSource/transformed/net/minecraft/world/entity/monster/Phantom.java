@@ -47,8 +47,8 @@ public class Phantom extends FlyingMob implements Enemy {
     BlockPos anchorPoint = BlockPos.ZERO;
     Phantom.AttackPhase attackPhase = Phantom.AttackPhase.CIRCLE;
 
-    public Phantom(EntityType<? extends Phantom> p_33101_, Level p_33102_) {
-        super(p_33101_, p_33102_);
+    public Phantom(EntityType<? extends Phantom> entityType, Level level) {
+        super(entityType, level);
         this.xpReward = 5;
         this.moveControl = new Phantom.PhantomMoveControl(this);
         this.lookControl = new Phantom.PhantomLookControl(this);
@@ -73,13 +73,13 @@ public class Phantom extends FlyingMob implements Enemy {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326421_) {
-        super.defineSynchedData(p_326421_);
-        p_326421_.define(ID_SIZE, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(ID_SIZE, 0);
     }
 
-    public void setPhantomSize(int p_33109_) {
-        this.entityData.set(ID_SIZE, Mth.clamp(p_33109_, 0, 64));
+    public void setPhantomSize(int phantomSize) {
+        this.entityData.set(ID_SIZE, Mth.clamp(phantomSize, 0, 64));
     }
 
     private void updatePhantomSizeInfo() {
@@ -92,12 +92,12 @@ public class Phantom extends FlyingMob implements Enemy {
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_33134_) {
-        if (ID_SIZE.equals(p_33134_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        if (ID_SIZE.equals(key)) {
             this.updatePhantomSizeInfo();
         }
 
-        super.onSyncedDataUpdated(p_33134_);
+        super.onSyncedDataUpdated(key);
     }
 
     public int getUniqueFlapTickOffset() {
@@ -153,33 +153,39 @@ public class Phantom extends FlyingMob implements Enemy {
     }
 
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_33126_, DifficultyInstance p_33127_, MobSpawnType p_33128_, @Nullable SpawnGroupData p_33129_) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
         this.anchorPoint = this.blockPosition().above(5);
         this.setPhantomSize(0);
-        return super.finalizeSpawn(p_33126_, p_33127_, p_33128_, p_33129_);
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_33132_) {
-        super.readAdditionalSaveData(p_33132_);
-        if (p_33132_.contains("AX")) {
-            this.anchorPoint = new BlockPos(p_33132_.getInt("AX"), p_33132_.getInt("AY"), p_33132_.getInt("AZ"));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.contains("AX")) {
+            this.anchorPoint = new BlockPos(compound.getInt("AX"), compound.getInt("AY"), compound.getInt("AZ"));
         }
 
-        this.setPhantomSize(p_33132_.getInt("Size"));
+        this.setPhantomSize(compound.getInt("Size"));
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_33141_) {
-        super.addAdditionalSaveData(p_33141_);
-        p_33141_.putInt("AX", this.anchorPoint.getX());
-        p_33141_.putInt("AY", this.anchorPoint.getY());
-        p_33141_.putInt("AZ", this.anchorPoint.getZ());
-        p_33141_.putInt("Size", this.getPhantomSize());
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("AX", this.anchorPoint.getX());
+        compound.putInt("AY", this.anchorPoint.getY());
+        compound.putInt("AZ", this.anchorPoint.getZ());
+        compound.putInt("Size", this.getPhantomSize());
     }
 
+    /**
+     * Checks if the entity is in range to render.
+     */
     @Override
-    public boolean shouldRenderAtSqrDistance(double p_33107_) {
+    public boolean shouldRenderAtSqrDistance(double distance) {
         return true;
     }
 
@@ -194,7 +200,7 @@ public class Phantom extends FlyingMob implements Enemy {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_33152_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.PHANTOM_HURT;
     }
 
@@ -209,14 +215,14 @@ public class Phantom extends FlyingMob implements Enemy {
     }
 
     @Override
-    public boolean canAttackType(EntityType<?> p_33111_) {
+    public boolean canAttackType(EntityType<?> type) {
         return true;
     }
 
     @Override
-    public EntityDimensions getDefaultDimensions(Pose p_316501_) {
+    public EntityDimensions getDefaultDimensions(Pose pose) {
         int i = this.getPhantomSize();
-        EntityDimensions entitydimensions = super.getDefaultDimensions(p_316501_);
+        EntityDimensions entitydimensions = super.getDefaultDimensions(pose);
         return entitydimensions.scale(1.0F + 0.15F * (float)i);
     }
 
@@ -307,8 +313,8 @@ public class Phantom extends FlyingMob implements Enemy {
     }
 
     class PhantomBodyRotationControl extends BodyRotationControl {
-        public PhantomBodyRotationControl(Mob p_33216_) {
-            super(p_33216_);
+        public PhantomBodyRotationControl(Mob mob) {
+            super(mob);
         }
 
         @Override
@@ -383,8 +389,8 @@ public class Phantom extends FlyingMob implements Enemy {
     }
 
     class PhantomLookControl extends LookControl {
-        public PhantomLookControl(Mob p_33235_) {
-            super(p_33235_);
+        public PhantomLookControl(Mob mob) {
+            super(mob);
         }
 
         @Override
@@ -395,8 +401,8 @@ public class Phantom extends FlyingMob implements Enemy {
     class PhantomMoveControl extends MoveControl {
         private float speed = 0.1F;
 
-        public PhantomMoveControl(Mob p_33241_) {
-            super(p_33241_);
+        public PhantomMoveControl(Mob mob) {
+            super(mob);
         }
 
         @Override

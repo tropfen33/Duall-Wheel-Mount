@@ -3,6 +3,9 @@ package net.minecraft.world.level.levelgen;
 import com.mojang.serialization.Codec;
 import net.minecraft.util.StringRepresentable;
 
+/**
+ * Represents individual steps that the features and carvers chunk status go through, respectively.
+ */
 public class GenerationStep {
     public static enum Carving implements StringRepresentable {
         AIR("air"),
@@ -11,8 +14,8 @@ public class GenerationStep {
         public static final Codec<GenerationStep.Carving> CODEC = StringRepresentable.fromEnum(GenerationStep.Carving::values);
         private final String name;
 
-        private Carving(String p_64202_) {
-            this.name = p_64202_;
+        private Carving(String name) {
+            this.name = name;
         }
 
         public String getName() {
@@ -41,8 +44,8 @@ public class GenerationStep {
         public static final Codec<GenerationStep.Decoration> CODEC = StringRepresentable.fromEnum(GenerationStep.Decoration::values);
         private final String name;
 
-        private Decoration(String p_224193_) {
-            this.name = p_224193_;
+        private Decoration(String name) {
+            this.name = name;
         }
 
         public String getName() {

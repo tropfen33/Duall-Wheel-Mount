@@ -8,6 +8,11 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.lwjgl.openal.AL10;
 
+/**
+ * The SoundBuffer class represents an audio buffer containing audio data in a particular format.
+ *
+ * The audio data can be used to create an OpenAL buffer, which can be played in a 3D audio environment.
+ */
 @OnlyIn(Dist.CLIENT)
 public class SoundBuffer {
     @Nullable
@@ -16,9 +21,9 @@ public class SoundBuffer {
     private boolean hasAlBuffer;
     private int alBuffer;
 
-    public SoundBuffer(ByteBuffer p_83798_, AudioFormat p_83799_) {
-        this.data = p_83798_;
-        this.format = p_83799_;
+    public SoundBuffer(ByteBuffer data, AudioFormat format) {
+        this.data = data;
+        this.format = format;
     }
 
     OptionalInt getAlBuffer() {

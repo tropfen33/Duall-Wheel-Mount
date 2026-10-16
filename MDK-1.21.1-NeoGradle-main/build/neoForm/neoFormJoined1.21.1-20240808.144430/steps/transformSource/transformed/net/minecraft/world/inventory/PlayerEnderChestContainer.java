@@ -17,31 +17,31 @@ public class PlayerEnderChestContainer extends SimpleContainer {
         super(27);
     }
 
-    public void setActiveChest(EnderChestBlockEntity p_40106_) {
-        this.activeChest = p_40106_;
+    public void setActiveChest(EnderChestBlockEntity enderChestBlockEntity) {
+        this.activeChest = enderChestBlockEntity;
     }
 
-    public boolean isActiveChest(EnderChestBlockEntity p_150634_) {
-        return this.activeChest == p_150634_;
+    public boolean isActiveChest(EnderChestBlockEntity enderChest) {
+        return this.activeChest == enderChest;
     }
 
     @Override
-    public void fromTag(ListTag p_40108_, HolderLookup.Provider p_330977_) {
+    public void fromTag(ListTag tag, HolderLookup.Provider levelRegistry) {
         for (int i = 0; i < this.getContainerSize(); i++) {
             this.setItem(i, ItemStack.EMPTY);
         }
 
-        for (int k = 0; k < p_40108_.size(); k++) {
-            CompoundTag compoundtag = p_40108_.getCompound(k);
+        for (int k = 0; k < tag.size(); k++) {
+            CompoundTag compoundtag = tag.getCompound(k);
             int j = compoundtag.getByte("Slot") & 255;
             if (j >= 0 && j < this.getContainerSize()) {
-                this.setItem(j, ItemStack.parse(p_330977_, compoundtag).orElse(ItemStack.EMPTY));
+                this.setItem(j, ItemStack.parse(levelRegistry, compoundtag).orElse(ItemStack.EMPTY));
             }
         }
     }
 
     @Override
-    public ListTag createTag(HolderLookup.Provider p_330801_) {
+    public ListTag createTag(HolderLookup.Provider levelRegistry) {
         ListTag listtag = new ListTag();
 
         for (int i = 0; i < this.getContainerSize(); i++) {
@@ -49,34 +49,37 @@ public class PlayerEnderChestContainer extends SimpleContainer {
             if (!itemstack.isEmpty()) {
                 CompoundTag compoundtag = new CompoundTag();
                 compoundtag.putByte("Slot", (byte)i);
-                listtag.add(itemstack.save(p_330801_, compoundtag));
+                listtag.add(itemstack.save(levelRegistry, compoundtag));
             }
         }
 
         return listtag;
     }
 
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
     @Override
-    public boolean stillValid(Player p_40104_) {
-        return this.activeChest != null && !this.activeChest.stillValid(p_40104_) ? false : super.stillValid(p_40104_);
+    public boolean stillValid(Player player) {
+        return this.activeChest != null && !this.activeChest.stillValid(player) ? false : super.stillValid(player);
     }
 
     @Override
-    public void startOpen(Player p_40112_) {
+    public void startOpen(Player player) {
         if (this.activeChest != null) {
-            this.activeChest.startOpen(p_40112_);
+            this.activeChest.startOpen(player);
         }
 
-        super.startOpen(p_40112_);
+        super.startOpen(player);
     }
 
     @Override
-    public void stopOpen(Player p_40110_) {
+    public void stopOpen(Player player) {
         if (this.activeChest != null) {
-            this.activeChest.stopOpen(p_40110_);
+            this.activeChest.stopOpen(player);
         }
 
-        super.stopOpen(p_40110_);
+        super.stopOpen(player);
         this.activeChest = null;
     }
 }

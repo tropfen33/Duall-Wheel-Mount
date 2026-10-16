@@ -12,31 +12,31 @@ public class TrialSpawnerDetectionParticle extends TextureSheetParticle {
     private static final int BASE_LIFETIME = 8;
 
     protected TrialSpawnerDetectionParticle(
-        ClientLevel p_312476_,
-        double p_312565_,
-        double p_312753_,
-        double p_311963_,
-        double p_312472_,
-        double p_311956_,
-        double p_312272_,
-        float p_312057_,
-        SpriteSet p_312002_
+        ClientLevel level,
+        double x,
+        double y,
+        double z,
+        double xSpeed,
+        double ySpeed,
+        double zSpeed,
+        float sizeMultiplier,
+        SpriteSet sprites
     ) {
-        super(p_312476_, p_312565_, p_312753_, p_311963_, 0.0, 0.0, 0.0);
-        this.sprites = p_312002_;
+        super(level, x, y, z, 0.0, 0.0, 0.0);
+        this.sprites = sprites;
         this.friction = 0.96F;
         this.gravity = -0.1F;
         this.speedUpWhenYMotionIsBlocked = true;
         this.xd *= 0.0;
         this.yd *= 0.9;
         this.zd *= 0.0;
-        this.xd += p_312472_;
-        this.yd += p_311956_;
-        this.zd += p_312272_;
-        this.quadSize *= 0.75F * p_312057_;
-        this.lifetime = (int)(8.0F / Mth.randomBetween(this.random, 0.5F, 1.0F) * p_312057_);
+        this.xd += xSpeed;
+        this.yd += ySpeed;
+        this.zd += zSpeed;
+        this.quadSize *= 0.75F * sizeMultiplier;
+        this.lifetime = (int)(8.0F / Mth.randomBetween(this.random, 0.5F, 1.0F) * sizeMultiplier);
         this.lifetime = Math.max(this.lifetime, 1);
-        this.setSpriteFromAge(p_312002_);
+        this.setSpriteFromAge(sprites);
         this.hasPhysics = true;
     }
 
@@ -46,7 +46,7 @@ public class TrialSpawnerDetectionParticle extends TextureSheetParticle {
     }
 
     @Override
-    public int getLightColor(float p_312871_) {
+    public int getLightColor(float partialTick) {
         return 240;
     }
 
@@ -62,29 +62,29 @@ public class TrialSpawnerDetectionParticle extends TextureSheetParticle {
     }
 
     @Override
-    public float getQuadSize(float p_312246_) {
-        return this.quadSize * Mth.clamp(((float)this.age + p_312246_) / (float)this.lifetime * 32.0F, 0.0F, 1.0F);
+    public float getQuadSize(float scaleFactor) {
+        return this.quadSize * Mth.clamp(((float)this.age + scaleFactor) / (float)this.lifetime * 32.0F, 0.0F, 1.0F);
     }
 
     @OnlyIn(Dist.CLIENT)
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprites;
 
-        public Provider(SpriteSet p_312414_) {
-            this.sprites = p_312414_;
+        public Provider(SpriteSet sprites) {
+            this.sprites = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_312488_,
-            ClientLevel p_312627_,
-            double p_312195_,
-            double p_312322_,
-            double p_312229_,
-            double p_312548_,
-            double p_312570_,
-            double p_311993_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            return new TrialSpawnerDetectionParticle(p_312627_, p_312195_, p_312322_, p_312229_, p_312548_, p_312570_, p_311993_, 1.5F, this.sprites);
+            return new TrialSpawnerDetectionParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, 1.5F, this.sprites);
         }
     }
 }

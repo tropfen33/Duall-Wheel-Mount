@@ -18,8 +18,8 @@ public class SectionBufferBuilderPack implements AutoCloseable {
         }
     });
 
-    public ByteBufferBuilder buffer(RenderType p_350986_) {
-        return this.buffers.get(p_350986_);
+    public ByteBufferBuilder buffer(RenderType renderType) {
+        return this.buffers.get(renderType);
     }
 
     public void clearAll() {

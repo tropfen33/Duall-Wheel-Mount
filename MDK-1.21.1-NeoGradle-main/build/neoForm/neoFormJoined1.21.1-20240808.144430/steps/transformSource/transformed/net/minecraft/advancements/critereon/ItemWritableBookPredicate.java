@@ -27,16 +27,16 @@ public record ItemWritableBookPredicate(Optional<CollectionPredicate<Filterable<
         return DataComponents.WRITABLE_BOOK_CONTENT;
     }
 
-    public boolean matches(ItemStack p_340860_, WritableBookContent p_341176_) {
-        return !this.pages.isPresent() || this.pages.get().test(p_341176_.pages());
+    public boolean matches(ItemStack stack, WritableBookContent value) {
+        return !this.pages.isPresent() || this.pages.get().test(value.pages());
     }
 
     public static record PagePredicate(String contents) implements Predicate<Filterable<String>> {
         public static final Codec<ItemWritableBookPredicate.PagePredicate> CODEC = Codec.STRING
             .xmap(ItemWritableBookPredicate.PagePredicate::new, ItemWritableBookPredicate.PagePredicate::contents);
 
-        public boolean test(Filterable<String> p_341135_) {
-            return p_341135_.raw().equals(this.contents);
+        public boolean test(Filterable<String> contents) {
+            return contents.raw().equals(this.contents);
         }
     }
 }

@@ -22,14 +22,14 @@ import net.minecraft.network.protocol.status.StatusProtocols;
 public class PacketReport implements DataProvider {
     private final PackOutput output;
 
-    public PacketReport(PackOutput p_352107_) {
-        this.output = p_352107_;
+    public PacketReport(PackOutput output) {
+        this.output = output;
     }
 
     @Override
-    public CompletableFuture<?> run(CachedOutput p_352340_) {
+    public CompletableFuture<?> run(CachedOutput output) {
         Path path = this.output.getOutputFolder(PackOutput.Target.REPORTS).resolve("packets.json");
-        return DataProvider.saveStable(p_352340_, this.serializePackets(), path);
+        return DataProvider.saveStable(output, this.serializePackets(), path);
     }
 
     private JsonElement serializePackets() {

@@ -27,21 +27,21 @@ public final class DataComponentPredicate implements Predicate<DataComponentMap>
     public static final DataComponentPredicate EMPTY = new DataComponentPredicate(List.of());
     private final List<TypedDataComponent<?>> expectedComponents;
 
-    DataComponentPredicate(List<TypedDataComponent<?>> p_330446_) {
-        this.expectedComponents = p_330446_;
+    DataComponentPredicate(List<TypedDataComponent<?>> expectedComponents) {
+        this.expectedComponents = expectedComponents;
     }
 
     public static DataComponentPredicate.Builder builder() {
         return new DataComponentPredicate.Builder();
     }
 
-    public static DataComponentPredicate allOf(DataComponentMap p_331623_) {
-        return new DataComponentPredicate(ImmutableList.copyOf(p_331623_));
+    public static DataComponentPredicate allOf(DataComponentMap expectedComponents) {
+        return new DataComponentPredicate(ImmutableList.copyOf(expectedComponents));
     }
 
     @Override
-    public boolean equals(Object p_330889_) {
-        if (p_330889_ instanceof DataComponentPredicate datacomponentpredicate && this.expectedComponents.equals(datacomponentpredicate.expectedComponents)) {
+    public boolean equals(Object other) {
+        if (other instanceof DataComponentPredicate datacomponentpredicate && this.expectedComponents.equals(datacomponentpredicate.expectedComponents)) {
             return true;
         }
 
@@ -58,9 +58,9 @@ public final class DataComponentPredicate implements Predicate<DataComponentMap>
         return this.expectedComponents.toString();
     }
 
-    public boolean test(DataComponentMap p_331560_) {
+    public boolean test(DataComponentMap components) {
         for (TypedDataComponent<?> typeddatacomponent : this.expectedComponents) {
-            Object object = p_331560_.get(typeddatacomponent.type());
+            Object object = components.get(typeddatacomponent.type());
             if (!Objects.equals(typeddatacomponent.value(), object)) {
                 return false;
             }
@@ -69,8 +69,8 @@ public final class DataComponentPredicate implements Predicate<DataComponentMap>
         return true;
     }
 
-    public boolean test(DataComponentHolder p_331666_) {
-        return this.test(p_331666_.getComponents());
+    public boolean test(DataComponentHolder components) {
+        return this.test(components.getComponents());
     }
 
     public boolean alwaysMatches() {
@@ -93,14 +93,14 @@ public final class DataComponentPredicate implements Predicate<DataComponentMap>
         Builder() {
         }
 
-        public <T> DataComponentPredicate.Builder expect(DataComponentType<? super T> p_331861_, T p_330813_) {
+        public <T> DataComponentPredicate.Builder expect(DataComponentType<? super T> component, T value) {
             for (TypedDataComponent<?> typeddatacomponent : this.expectedComponents) {
-                if (typeddatacomponent.type() == p_331861_) {
-                    throw new IllegalArgumentException("Predicate already has component of type: '" + p_331861_ + "'");
+                if (typeddatacomponent.type() == component) {
+                    throw new IllegalArgumentException("Predicate already has component of type: '" + component + "'");
                 }
             }
 
-            this.expectedComponents.add(new TypedDataComponent<>(p_331861_, p_330813_));
+            this.expectedComponents.add(new TypedDataComponent<>(component, value));
             return this;
         }
 

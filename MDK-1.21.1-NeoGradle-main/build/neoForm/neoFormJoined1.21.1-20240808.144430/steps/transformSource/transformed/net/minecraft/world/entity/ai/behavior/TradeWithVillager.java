@@ -27,52 +27,52 @@ public class TradeWithVillager extends Behavior<Villager> {
         );
     }
 
-    protected boolean checkExtraStartConditions(ServerLevel p_24416_, Villager p_24417_) {
-        return BehaviorUtils.targetIsValid(p_24417_.getBrain(), MemoryModuleType.INTERACTION_TARGET, EntityType.VILLAGER);
+    protected boolean checkExtraStartConditions(ServerLevel level, Villager owner) {
+        return BehaviorUtils.targetIsValid(owner.getBrain(), MemoryModuleType.INTERACTION_TARGET, EntityType.VILLAGER);
     }
 
-    protected boolean canStillUse(ServerLevel p_24419_, Villager p_24420_, long p_24421_) {
-        return this.checkExtraStartConditions(p_24419_, p_24420_);
+    protected boolean canStillUse(ServerLevel level, Villager entity, long gameTime) {
+        return this.checkExtraStartConditions(level, entity);
     }
 
-    protected void start(ServerLevel p_24437_, Villager p_24438_, long p_24439_) {
-        Villager villager = (Villager)p_24438_.getBrain().getMemory(MemoryModuleType.INTERACTION_TARGET).get();
-        BehaviorUtils.lockGazeAndWalkToEachOther(p_24438_, villager, 0.5F, 2);
-        this.trades = figureOutWhatIAmWillingToTrade(p_24438_, villager);
+    protected void start(ServerLevel level, Villager entity, long gameTime) {
+        Villager villager = (Villager)entity.getBrain().getMemory(MemoryModuleType.INTERACTION_TARGET).get();
+        BehaviorUtils.lockGazeAndWalkToEachOther(entity, villager, 0.5F, 2);
+        this.trades = figureOutWhatIAmWillingToTrade(entity, villager);
     }
 
-    protected void tick(ServerLevel p_24445_, Villager p_24446_, long p_24447_) {
-        Villager villager = (Villager)p_24446_.getBrain().getMemory(MemoryModuleType.INTERACTION_TARGET).get();
-        if (!(p_24446_.distanceToSqr(villager) > 5.0)) {
-            BehaviorUtils.lockGazeAndWalkToEachOther(p_24446_, villager, 0.5F, 2);
-            p_24446_.gossip(p_24445_, villager, p_24447_);
-            if (p_24446_.hasExcessFood() && (p_24446_.getVillagerData().getProfession() == VillagerProfession.FARMER || villager.wantsMoreFood())) {
-                throwHalfStack(p_24446_, Villager.FOOD_POINTS.keySet(), villager);
+    protected void tick(ServerLevel level, Villager owner, long gameTime) {
+        Villager villager = (Villager)owner.getBrain().getMemory(MemoryModuleType.INTERACTION_TARGET).get();
+        if (!(owner.distanceToSqr(villager) > 5.0)) {
+            BehaviorUtils.lockGazeAndWalkToEachOther(owner, villager, 0.5F, 2);
+            owner.gossip(level, villager, gameTime);
+            if (owner.hasExcessFood() && (owner.getVillagerData().getProfession() == VillagerProfession.FARMER || villager.wantsMoreFood())) {
+                throwHalfStack(owner, Villager.FOOD_POINTS.keySet(), villager);
             }
 
             if (villager.getVillagerData().getProfession() == VillagerProfession.FARMER
-                && p_24446_.getInventory().countItem(Items.WHEAT) > Items.WHEAT.getDefaultMaxStackSize() / 2) {
-                throwHalfStack(p_24446_, ImmutableSet.of(Items.WHEAT), villager);
+                && owner.getInventory().countItem(Items.WHEAT) > Items.WHEAT.getDefaultMaxStackSize() / 2) {
+                throwHalfStack(owner, ImmutableSet.of(Items.WHEAT), villager);
             }
 
-            if (!this.trades.isEmpty() && p_24446_.getInventory().hasAnyOf(this.trades)) {
-                throwHalfStack(p_24446_, this.trades, villager);
+            if (!this.trades.isEmpty() && owner.getInventory().hasAnyOf(this.trades)) {
+                throwHalfStack(owner, this.trades, villager);
             }
         }
     }
 
-    protected void stop(ServerLevel p_24453_, Villager p_24454_, long p_24455_) {
-        p_24454_.getBrain().eraseMemory(MemoryModuleType.INTERACTION_TARGET);
+    protected void stop(ServerLevel level, Villager entity, long gameTime) {
+        entity.getBrain().eraseMemory(MemoryModuleType.INTERACTION_TARGET);
     }
 
-    private static Set<Item> figureOutWhatIAmWillingToTrade(Villager p_24423_, Villager p_24424_) {
-        ImmutableSet<Item> immutableset = p_24424_.getVillagerData().getProfession().requestedItems();
-        ImmutableSet<Item> immutableset1 = p_24423_.getVillagerData().getProfession().requestedItems();
+    private static Set<Item> figureOutWhatIAmWillingToTrade(Villager villager, Villager other) {
+        ImmutableSet<Item> immutableset = other.getVillagerData().getProfession().requestedItems();
+        ImmutableSet<Item> immutableset1 = villager.getVillagerData().getProfession().requestedItems();
         return immutableset.stream().filter(p_24431_ -> !immutableset1.contains(p_24431_)).collect(Collectors.toSet());
     }
 
-    private static void throwHalfStack(Villager p_24426_, Set<Item> p_24427_, LivingEntity p_24428_) {
-        SimpleContainer simplecontainer = p_24426_.getInventory();
+    private static void throwHalfStack(Villager villager, Set<Item> stack, LivingEntity entity) {
+        SimpleContainer simplecontainer = villager.getInventory();
         ItemStack itemstack = ItemStack.EMPTY;
         int i = 0;
 
@@ -84,7 +84,7 @@ public class TradeWithVillager extends Behavior<Villager> {
                 itemstack1 = simplecontainer.getItem(i);
                 if (!itemstack1.isEmpty()) {
                     item = itemstack1.getItem();
-                    if (p_24427_.contains(item)) {
+                    if (stack.contains(item)) {
                         if (itemstack1.getCount() > itemstack1.getMaxStackSize() / 2) {
                             j = itemstack1.getCount() / 2;
                             break label28;
@@ -107,7 +107,7 @@ public class TradeWithVillager extends Behavior<Villager> {
         }
 
         if (!itemstack.isEmpty()) {
-            BehaviorUtils.throwItem(p_24426_, itemstack, p_24428_.position());
+            BehaviorUtils.throwItem(villager, itemstack, entity.position());
         }
     }
 }

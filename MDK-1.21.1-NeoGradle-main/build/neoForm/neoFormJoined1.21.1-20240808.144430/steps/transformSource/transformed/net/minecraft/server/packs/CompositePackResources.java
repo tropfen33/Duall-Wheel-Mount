@@ -18,25 +18,25 @@ public class CompositePackResources implements PackResources {
     private final PackResources primaryPackResources;
     private final List<PackResources> packResourcesStack;
 
-    public CompositePackResources(PackResources p_296246_, List<PackResources> p_294643_) {
-        this.primaryPackResources = p_296246_;
-        List<PackResources> list = new ArrayList<>(p_294643_.size() + 1);
-        list.addAll(Lists.reverse(p_294643_));
-        list.add(p_296246_);
+    public CompositePackResources(PackResources primaryPackResources, List<PackResources> packResourcesStack) {
+        this.primaryPackResources = primaryPackResources;
+        List<PackResources> list = new ArrayList<>(packResourcesStack.size() + 1);
+        list.addAll(Lists.reverse(packResourcesStack));
+        list.add(primaryPackResources);
         this.packResourcesStack = List.copyOf(list);
     }
 
     @Nullable
     @Override
-    public IoSupplier<InputStream> getRootResource(String... p_295316_) {
-        return this.primaryPackResources.getRootResource(p_295316_);
+    public IoSupplier<InputStream> getRootResource(String... elements) {
+        return this.primaryPackResources.getRootResource(elements);
     }
 
     @Nullable
     @Override
-    public IoSupplier<InputStream> getResource(PackType p_295406_, ResourceLocation p_296382_) {
+    public IoSupplier<InputStream> getResource(PackType packType, ResourceLocation location) {
         for (PackResources packresources : this.packResourcesStack) {
-            IoSupplier<InputStream> iosupplier = packresources.getResource(p_295406_, p_296382_);
+            IoSupplier<InputStream> iosupplier = packresources.getResource(packType, location);
             if (iosupplier != null) {
                 return iosupplier;
             }
@@ -46,22 +46,22 @@ public class CompositePackResources implements PackResources {
     }
 
     @Override
-    public void listResources(PackType p_295490_, String p_296164_, String p_294691_, PackResources.ResourceOutput p_295313_) {
+    public void listResources(PackType packType, String namespace, String path, PackResources.ResourceOutput resourceOutput) {
         Map<ResourceLocation, IoSupplier<InputStream>> map = new HashMap<>();
 
         for (PackResources packresources : this.packResourcesStack) {
-            packresources.listResources(p_295490_, p_296164_, p_294691_, map::putIfAbsent);
+            packresources.listResources(packType, namespace, path, map::putIfAbsent);
         }
 
-        map.forEach(p_295313_);
+        map.forEach(resourceOutput);
     }
 
     @Override
-    public Set<String> getNamespaces(PackType p_294708_) {
+    public Set<String> getNamespaces(PackType type) {
         Set<String> set = new HashSet<>();
 
         for (PackResources packresources : this.packResourcesStack) {
-            set.addAll(packresources.getNamespaces(p_294708_));
+            set.addAll(packresources.getNamespaces(type));
         }
 
         return set;
@@ -69,8 +69,8 @@ public class CompositePackResources implements PackResources {
 
     @Nullable
     @Override
-    public <T> T getMetadataSection(MetadataSectionSerializer<T> p_295061_) throws IOException {
-        return this.primaryPackResources.getMetadataSection(p_295061_);
+    public <T> T getMetadataSection(MetadataSectionSerializer<T> deserializer) throws IOException {
+        return this.primaryPackResources.getMetadataSection(deserializer);
     }
 
     @Override

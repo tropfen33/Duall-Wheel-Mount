@@ -14,9 +14,9 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class FormattedBidiReorder {
-    public static FormattedCharSequence reorder(FormattedText p_118932_, boolean p_118933_) {
-        SubStringSource substringsource = SubStringSource.create(p_118932_, UCharacter::getMirror, FormattedBidiReorder::shape);
-        Bidi bidi = new Bidi(substringsource.getPlainText(), p_118933_ ? 127 : 126);
+    public static FormattedCharSequence reorder(FormattedText text, boolean defaultRightToLeft) {
+        SubStringSource substringsource = SubStringSource.create(text, UCharacter::getMirror, FormattedBidiReorder::shape);
+        Bidi bidi = new Bidi(substringsource.getPlainText(), defaultRightToLeft ? 127 : 126);
         bidi.setReorderingMode(0);
         List<FormattedCharSequence> list = Lists.newArrayList();
         int i = bidi.countRuns();
@@ -29,11 +29,11 @@ public class FormattedBidiReorder {
         return FormattedCharSequence.composite(list);
     }
 
-    private static String shape(String p_118930_) {
+    private static String shape(String text) {
         try {
-            return new ArabicShaping(8).shape(p_118930_);
+            return new ArabicShaping(8).shape(text);
         } catch (Exception exception) {
-            return p_118930_;
+            return text;
         }
     }
 }

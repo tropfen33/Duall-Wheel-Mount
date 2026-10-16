@@ -33,8 +33,8 @@ public class PerfCommand {
         Component.translatable("commands.perf.alreadyRunning")
     );
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_180438_) {
-        p_180438_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("perf")
                 .requires(p_180462_ -> p_180462_.hasPermission(4))
                 .then(Commands.literal("start").executes(p_180455_ -> startProfilingDedicatedServer(p_180455_.getSource())))
@@ -42,21 +42,21 @@ public class PerfCommand {
         );
     }
 
-    private static int startProfilingDedicatedServer(CommandSourceStack p_180442_) throws CommandSyntaxException {
-        MinecraftServer minecraftserver = p_180442_.getServer();
+    private static int startProfilingDedicatedServer(CommandSourceStack source) throws CommandSyntaxException {
+        MinecraftServer minecraftserver = source.getServer();
         if (minecraftserver.isRecordingMetrics()) {
             throw ERROR_ALREADY_RUNNING.create();
         } else {
-            Consumer<ProfileResults> consumer = p_180460_ -> whenStopped(p_180442_, p_180460_);
-            Consumer<Path> consumer1 = p_180453_ -> saveResults(p_180442_, p_180453_, minecraftserver);
+            Consumer<ProfileResults> consumer = p_180460_ -> whenStopped(source, p_180460_);
+            Consumer<Path> consumer1 = p_180453_ -> saveResults(source, p_180453_, minecraftserver);
             minecraftserver.startRecordingMetrics(consumer, consumer1);
-            p_180442_.sendSuccess(() -> Component.translatable("commands.perf.started"), false);
+            source.sendSuccess(() -> Component.translatable("commands.perf.started"), false);
             return 0;
         }
     }
 
-    private static int stopProfilingDedicatedServer(CommandSourceStack p_180457_) throws CommandSyntaxException {
-        MinecraftServer minecraftserver = p_180457_.getServer();
+    private static int stopProfilingDedicatedServer(CommandSourceStack source) throws CommandSyntaxException {
+        MinecraftServer minecraftserver = source.getServer();
         if (!minecraftserver.isRecordingMetrics()) {
             throw ERROR_NOT_RUNNING.create();
         } else {
@@ -65,39 +65,39 @@ public class PerfCommand {
         }
     }
 
-    private static void saveResults(CommandSourceStack p_180447_, Path p_180448_, MinecraftServer p_180449_) {
+    private static void saveResults(CommandSourceStack source, Path path, MinecraftServer server) {
         String s = String.format(
-            Locale.ROOT, "%s-%s-%s", Util.getFilenameFormattedDateTime(), p_180449_.getWorldData().getLevelName(), SharedConstants.getCurrentVersion().getId()
+            Locale.ROOT, "%s-%s-%s", Util.getFilenameFormattedDateTime(), server.getWorldData().getLevelName(), SharedConstants.getCurrentVersion().getId()
         );
 
         String s1;
         try {
             s1 = FileUtil.findAvailableName(MetricsPersister.PROFILING_RESULTS_DIR, s, ".zip");
         } catch (IOException ioexception1) {
-            p_180447_.sendFailure(Component.translatable("commands.perf.reportFailed"));
+            source.sendFailure(Component.translatable("commands.perf.reportFailed"));
             LOGGER.error("Failed to create report name", (Throwable)ioexception1);
             return;
         }
 
         try (FileZipper filezipper = new FileZipper(MetricsPersister.PROFILING_RESULTS_DIR.resolve(s1))) {
-            filezipper.add(Paths.get("system.txt"), p_180449_.fillSystemReport(new SystemReport()).toLineSeparatedString());
-            filezipper.add(p_180448_);
+            filezipper.add(Paths.get("system.txt"), server.fillSystemReport(new SystemReport()).toLineSeparatedString());
+            filezipper.add(path);
         }
 
         try {
-            FileUtils.forceDelete(p_180448_.toFile());
+            FileUtils.forceDelete(path.toFile());
         } catch (IOException ioexception) {
-            LOGGER.warn("Failed to delete temporary profiling file {}", p_180448_, ioexception);
+            LOGGER.warn("Failed to delete temporary profiling file {}", path, ioexception);
         }
 
-        p_180447_.sendSuccess(() -> Component.translatable("commands.perf.reportSaved", s1), false);
+        source.sendSuccess(() -> Component.translatable("commands.perf.reportSaved", s1), false);
     }
 
-    private static void whenStopped(CommandSourceStack p_180444_, ProfileResults p_180445_) {
-        if (p_180445_ != EmptyProfileResults.EMPTY) {
-            int i = p_180445_.getTickDuration();
-            double d0 = (double)p_180445_.getNanoDuration() / (double)TimeUtil.NANOSECONDS_PER_SECOND;
-            p_180444_.sendSuccess(
+    private static void whenStopped(CommandSourceStack source, ProfileResults results) {
+        if (results != EmptyProfileResults.EMPTY) {
+            int i = results.getTickDuration();
+            double d0 = (double)results.getNanoDuration() / (double)TimeUtil.NANOSECONDS_PER_SECOND;
+            source.sendSuccess(
                 () -> Component.translatable(
                         "commands.perf.stopped", String.format(Locale.ROOT, "%.2f", d0), i, String.format(Locale.ROOT, "%.2f", (double)i / d0)
                     ),

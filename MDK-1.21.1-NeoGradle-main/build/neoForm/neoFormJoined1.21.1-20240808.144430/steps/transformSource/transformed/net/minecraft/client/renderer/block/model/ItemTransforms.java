@@ -36,67 +36,67 @@ public class ItemTransforms {
         );
     }
 
-    public ItemTransforms(ItemTransforms p_111807_) {
-        this.thirdPersonLeftHand = p_111807_.thirdPersonLeftHand;
-        this.thirdPersonRightHand = p_111807_.thirdPersonRightHand;
-        this.firstPersonLeftHand = p_111807_.firstPersonLeftHand;
-        this.firstPersonRightHand = p_111807_.firstPersonRightHand;
-        this.head = p_111807_.head;
-        this.gui = p_111807_.gui;
-        this.ground = p_111807_.ground;
-        this.fixed = p_111807_.fixed;
-        this.moddedTransforms = p_111807_.moddedTransforms;
+    public ItemTransforms(ItemTransforms transforms) {
+        this.thirdPersonLeftHand = transforms.thirdPersonLeftHand;
+        this.thirdPersonRightHand = transforms.thirdPersonRightHand;
+        this.firstPersonLeftHand = transforms.firstPersonLeftHand;
+        this.firstPersonRightHand = transforms.firstPersonRightHand;
+        this.head = transforms.head;
+        this.gui = transforms.gui;
+        this.ground = transforms.ground;
+        this.fixed = transforms.fixed;
+        this.moddedTransforms = transforms.moddedTransforms;
     }
 
     @Deprecated
     public ItemTransforms(
-        ItemTransform p_111798_,
-        ItemTransform p_111799_,
-        ItemTransform p_111800_,
-        ItemTransform p_111801_,
-        ItemTransform p_111802_,
-        ItemTransform p_111803_,
-        ItemTransform p_111804_,
-        ItemTransform p_111805_
+        ItemTransform thirdPersonLeftHand,
+        ItemTransform thirdPersonRightHand,
+        ItemTransform firstPersonLeftHand,
+        ItemTransform firstPersonRightHand,
+        ItemTransform head,
+        ItemTransform gui,
+        ItemTransform ground,
+        ItemTransform fixed
     ) {
-        this(p_111798_, p_111799_, p_111800_, p_111801_, p_111802_, p_111803_, p_111804_, p_111805_, com.google.common.collect.ImmutableMap.of());
+        this(thirdPersonLeftHand, thirdPersonRightHand, firstPersonLeftHand, firstPersonRightHand, head, gui, ground, fixed, com.google.common.collect.ImmutableMap.of());
     }
 
     public ItemTransforms(
-        ItemTransform p_111798_,
-        ItemTransform p_111799_,
-        ItemTransform p_111800_,
-        ItemTransform p_111801_,
-        ItemTransform p_111802_,
-        ItemTransform p_111803_,
-        ItemTransform p_111804_,
-        ItemTransform p_111805_,
+        ItemTransform thirdPersonLeftHand,
+        ItemTransform thirdPersonRightHand,
+        ItemTransform firstPersonLeftHand,
+        ItemTransform firstPersonRightHand,
+        ItemTransform head,
+        ItemTransform gui,
+        ItemTransform ground,
+        ItemTransform fixed,
         com.google.common.collect.ImmutableMap<ItemDisplayContext, ItemTransform> moddedTransforms
     ) {
-        this.thirdPersonLeftHand = p_111798_;
-        this.thirdPersonRightHand = p_111799_;
-        this.firstPersonLeftHand = p_111800_;
-        this.firstPersonRightHand = p_111801_;
-        this.head = p_111802_;
-        this.gui = p_111803_;
-        this.ground = p_111804_;
-        this.fixed = p_111805_;
+        this.thirdPersonLeftHand = thirdPersonLeftHand;
+        this.thirdPersonRightHand = thirdPersonRightHand;
+        this.firstPersonLeftHand = firstPersonLeftHand;
+        this.firstPersonRightHand = firstPersonRightHand;
+        this.head = head;
+        this.gui = gui;
+        this.ground = ground;
+        this.fixed = fixed;
         this.moddedTransforms = moddedTransforms;
     }
 
-    public ItemTransform getTransform(ItemDisplayContext p_270619_) {
-        if (p_270619_.isModded()) {
-            ItemTransform moddedTransform = moddedTransforms.get(p_270619_);
+    public ItemTransform getTransform(ItemDisplayContext displayContext) {
+        if (displayContext.isModded()) {
+            ItemTransform moddedTransform = moddedTransforms.get(displayContext);
             if (moddedTransform != null) {
                 return moddedTransform;
             }
-            ItemDisplayContext moddedFallback = p_270619_.fallback();
+            ItemDisplayContext moddedFallback = displayContext.fallback();
             if (moddedFallback == null) {
                 return ItemTransform.NO_TRANSFORM;
             }
-            p_270619_ = moddedFallback;
+            displayContext = moddedFallback;
         }
-        return switch (p_270619_) {
+        return switch (displayContext) {
             case THIRD_PERSON_LEFT_HAND -> this.thirdPersonLeftHand;
             case THIRD_PERSON_RIGHT_HAND -> this.thirdPersonRightHand;
             case FIRST_PERSON_LEFT_HAND -> this.firstPersonLeftHand;
@@ -109,39 +109,39 @@ public class ItemTransforms {
         };
     }
 
-    public boolean hasTransform(ItemDisplayContext p_270365_) {
-        return this.getTransform(p_270365_) != ItemTransform.NO_TRANSFORM;
+    public boolean hasTransform(ItemDisplayContext displayContext) {
+        return this.getTransform(displayContext) != ItemTransform.NO_TRANSFORM;
     }
 
     @OnlyIn(Dist.CLIENT)
     public static class Deserializer implements JsonDeserializer<ItemTransforms> {
-        public ItemTransforms deserialize(JsonElement p_111820_, Type p_111821_, JsonDeserializationContext p_111822_) throws JsonParseException {
-            JsonObject jsonobject = p_111820_.getAsJsonObject();
-            ItemTransform itemtransform = this.getTransform(p_111822_, jsonobject, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND);
-            ItemTransform itemtransform1 = this.getTransform(p_111822_, jsonobject, ItemDisplayContext.THIRD_PERSON_LEFT_HAND);
+        public ItemTransforms deserialize(JsonElement json, Type p_type, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonobject = json.getAsJsonObject();
+            ItemTransform itemtransform = this.getTransform(context, jsonobject, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND);
+            ItemTransform itemtransform1 = this.getTransform(context, jsonobject, ItemDisplayContext.THIRD_PERSON_LEFT_HAND);
             if (itemtransform1 == ItemTransform.NO_TRANSFORM) {
                 itemtransform1 = itemtransform;
             }
 
-            ItemTransform itemtransform2 = this.getTransform(p_111822_, jsonobject, ItemDisplayContext.FIRST_PERSON_RIGHT_HAND);
-            ItemTransform itemtransform3 = this.getTransform(p_111822_, jsonobject, ItemDisplayContext.FIRST_PERSON_LEFT_HAND);
+            ItemTransform itemtransform2 = this.getTransform(context, jsonobject, ItemDisplayContext.FIRST_PERSON_RIGHT_HAND);
+            ItemTransform itemtransform3 = this.getTransform(context, jsonobject, ItemDisplayContext.FIRST_PERSON_LEFT_HAND);
             if (itemtransform3 == ItemTransform.NO_TRANSFORM) {
                 itemtransform3 = itemtransform2;
             }
 
-            ItemTransform itemtransform4 = this.getTransform(p_111822_, jsonobject, ItemDisplayContext.HEAD);
-            ItemTransform itemtransform5 = this.getTransform(p_111822_, jsonobject, ItemDisplayContext.GUI);
-            ItemTransform itemtransform6 = this.getTransform(p_111822_, jsonobject, ItemDisplayContext.GROUND);
-            ItemTransform itemtransform7 = this.getTransform(p_111822_, jsonobject, ItemDisplayContext.FIXED);
+            ItemTransform itemtransform4 = this.getTransform(context, jsonobject, ItemDisplayContext.HEAD);
+            ItemTransform itemtransform5 = this.getTransform(context, jsonobject, ItemDisplayContext.GUI);
+            ItemTransform itemtransform6 = this.getTransform(context, jsonobject, ItemDisplayContext.GROUND);
+            ItemTransform itemtransform7 = this.getTransform(context, jsonobject, ItemDisplayContext.FIXED);
 
             var builder = com.google.common.collect.ImmutableMap.<ItemDisplayContext, ItemTransform>builder();
             for (ItemDisplayContext type : ItemDisplayContext.values()) {
                 if (type.isModded()) {
-                    var transform = this.getTransform(p_111822_, jsonobject, type);
+                    var transform = this.getTransform(context, jsonobject, type);
                     var fallbackType = type;
                     while (transform == ItemTransform.NO_TRANSFORM && fallbackType.fallback() != null) {
                         fallbackType = fallbackType.fallback();
-                        transform = this.getTransform(p_111822_, jsonobject, fallbackType);
+                        transform = this.getTransform(context, jsonobject, fallbackType);
                     }
                     if (transform != ItemTransform.NO_TRANSFORM){
                         builder.put(type, transform);
@@ -152,9 +152,9 @@ public class ItemTransforms {
             return new ItemTransforms(itemtransform1, itemtransform, itemtransform3, itemtransform2, itemtransform4, itemtransform5, itemtransform6, itemtransform7, builder.build());
         }
 
-        private ItemTransform getTransform(JsonDeserializationContext p_270385_, JsonObject p_270436_, ItemDisplayContext p_270100_) {
-            String s = p_270100_.getSerializedName();
-            return p_270436_.has(s) ? p_270385_.deserialize(p_270436_.get(s), ItemTransform.class) : ItemTransform.NO_TRANSFORM;
+        private ItemTransform getTransform(JsonDeserializationContext deserializationContext, JsonObject json, ItemDisplayContext displayContext) {
+            String s = displayContext.getSerializedName();
+            return json.has(s) ? deserializationContext.deserialize(json.get(s), ItemTransform.class) : ItemTransform.NO_TRANSFORM;
         }
     }
 }

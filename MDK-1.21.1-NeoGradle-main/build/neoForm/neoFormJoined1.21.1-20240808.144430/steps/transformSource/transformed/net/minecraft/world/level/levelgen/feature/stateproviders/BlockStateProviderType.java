@@ -18,12 +18,12 @@ public class BlockStateProviderType<P extends BlockStateProvider> {
     );
     private final MapCodec<P> codec;
 
-    private static <P extends BlockStateProvider> BlockStateProviderType<P> register(String p_68763_, MapCodec<P> p_338587_) {
-        return Registry.register(BuiltInRegistries.BLOCKSTATE_PROVIDER_TYPE, p_68763_, new BlockStateProviderType<>(p_338587_));
+    private static <P extends BlockStateProvider> BlockStateProviderType<P> register(String name, MapCodec<P> codec) {
+        return Registry.register(BuiltInRegistries.BLOCKSTATE_PROVIDER_TYPE, name, new BlockStateProviderType<>(codec));
     }
 
-    public BlockStateProviderType(MapCodec<P> p_338337_) {
-        this.codec = p_338337_;
+    public BlockStateProviderType(MapCodec<P> codec) {
+        this.codec = codec;
     }
 
     public MapCodec<P> codec() {

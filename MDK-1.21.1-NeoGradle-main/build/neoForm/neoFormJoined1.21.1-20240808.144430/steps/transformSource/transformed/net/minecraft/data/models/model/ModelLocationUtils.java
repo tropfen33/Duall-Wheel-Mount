@@ -7,31 +7,31 @@ import net.minecraft.world.level.block.Block;
 
 public class ModelLocationUtils {
     @Deprecated
-    public static ResourceLocation decorateBlockModelLocation(String p_125582_) {
-        return ResourceLocation.withDefaultNamespace("block/" + p_125582_);
+    public static ResourceLocation decorateBlockModelLocation(String blockModelLocation) {
+        return ResourceLocation.withDefaultNamespace("block/" + blockModelLocation);
     }
 
-    public static ResourceLocation decorateItemModelLocation(String p_125584_) {
-        return ResourceLocation.withDefaultNamespace("item/" + p_125584_);
+    public static ResourceLocation decorateItemModelLocation(String itemModelLocation) {
+        return ResourceLocation.withDefaultNamespace("item/" + itemModelLocation);
     }
 
-    public static ResourceLocation getModelLocation(Block p_125579_, String p_125580_) {
-        ResourceLocation resourcelocation = BuiltInRegistries.BLOCK.getKey(p_125579_);
-        return resourcelocation.withPath(p_251253_ -> "block/" + p_251253_ + p_125580_);
+    public static ResourceLocation getModelLocation(Block block, String modelLocationSuffix) {
+        ResourceLocation resourcelocation = BuiltInRegistries.BLOCK.getKey(block);
+        return resourcelocation.withPath(p_251253_ -> "block/" + p_251253_ + modelLocationSuffix);
     }
 
-    public static ResourceLocation getModelLocation(Block p_125577_) {
-        ResourceLocation resourcelocation = BuiltInRegistries.BLOCK.getKey(p_125577_);
+    public static ResourceLocation getModelLocation(Block block) {
+        ResourceLocation resourcelocation = BuiltInRegistries.BLOCK.getKey(block);
         return resourcelocation.withPrefix("block/");
     }
 
-    public static ResourceLocation getModelLocation(Item p_125572_) {
-        ResourceLocation resourcelocation = BuiltInRegistries.ITEM.getKey(p_125572_);
+    public static ResourceLocation getModelLocation(Item item) {
+        ResourceLocation resourcelocation = BuiltInRegistries.ITEM.getKey(item);
         return resourcelocation.withPrefix("item/");
     }
 
-    public static ResourceLocation getModelLocation(Item p_125574_, String p_125575_) {
-        ResourceLocation resourcelocation = BuiltInRegistries.ITEM.getKey(p_125574_);
-        return resourcelocation.withPath(p_251542_ -> "item/" + p_251542_ + p_125575_);
+    public static ResourceLocation getModelLocation(Item item, String modelLocationSuffix) {
+        ResourceLocation resourcelocation = BuiltInRegistries.ITEM.getKey(item);
+        return resourcelocation.withPath(p_251542_ -> "item/" + p_251542_ + modelLocationSuffix);
     }
 }

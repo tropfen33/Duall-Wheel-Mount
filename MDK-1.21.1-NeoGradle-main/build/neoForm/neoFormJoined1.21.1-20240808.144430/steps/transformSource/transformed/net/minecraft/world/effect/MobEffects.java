@@ -128,11 +128,11 @@ public class MobEffects {
         "infested", new InfestedMobEffect(MobEffectCategory.HARMFUL, 9214860, 0.1F, p_340705_ -> Mth.randomBetweenInclusive(p_340705_, 1, 2))
     );
 
-    private static Holder<MobEffect> register(String p_19625_, MobEffect p_19626_) {
-        return Registry.registerForHolder(BuiltInRegistries.MOB_EFFECT, ResourceLocation.withDefaultNamespace(p_19625_), p_19626_);
+    private static Holder<MobEffect> register(String name, MobEffect effect) {
+        return Registry.registerForHolder(BuiltInRegistries.MOB_EFFECT, ResourceLocation.withDefaultNamespace(name), effect);
     }
 
-    public static Holder<MobEffect> bootstrap(Registry<MobEffect> p_316893_) {
+    public static Holder<MobEffect> bootstrap(Registry<MobEffect> registry) {
         return MOVEMENT_SPEED;
     }
 }

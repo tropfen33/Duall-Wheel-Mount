@@ -40,47 +40,64 @@ public class TabNavigationBar extends AbstractContainerEventHandler implements R
     private final ImmutableList<Tab> tabs;
     private final ImmutableList<TabButton> tabButtons;
 
-    TabNavigationBar(int p_275379_, TabManager p_275624_, Iterable<Tab> p_275279_) {
-        this.width = p_275379_;
-        this.tabManager = p_275624_;
-        this.tabs = ImmutableList.copyOf(p_275279_);
+    TabNavigationBar(int width, TabManager tabManager, Iterable<Tab> tabs) {
+        this.width = width;
+        this.tabManager = tabManager;
+        this.tabs = ImmutableList.copyOf(tabs);
         this.layout.defaultCellSetting().alignHorizontallyCenter();
         ImmutableList.Builder<TabButton> builder = ImmutableList.builder();
 
-        for (Tab tab : p_275279_) {
-            builder.add(this.layout.addChild(new TabButton(p_275624_, tab, 0, 24)));
+        for (Tab tab : tabs) {
+            builder.add(this.layout.addChild(new TabButton(tabManager, tab, 0, 24)));
         }
 
         this.tabButtons = builder.build();
     }
 
-    public static TabNavigationBar.Builder builder(TabManager p_268126_, int p_268070_) {
-        return new TabNavigationBar.Builder(p_268126_, p_268070_);
+    public static TabNavigationBar.Builder builder(TabManager tabManager, int width) {
+        return new TabNavigationBar.Builder(tabManager, width);
     }
 
-    public void setWidth(int p_268094_) {
-        this.width = p_268094_;
+    public void setWidth(int width) {
+        this.width = width;
     }
 
+    /**
+     * Sets the focus state of the GUI element.
+     *
+     * @param focused {@code true} to apply focus, {@code false} to remove focus
+     */
     @Override
-    public void setFocused(boolean p_275488_) {
-        super.setFocused(p_275488_);
+    public void setFocused(boolean focused) {
+        super.setFocused(focused);
         if (this.getFocused() != null) {
-            this.getFocused().setFocused(p_275488_);
+            this.getFocused().setFocused(focused);
         }
     }
 
+    /**
+     * Sets the focus state of the GUI element.
+     *
+     * @param listener the focused GUI element.
+     */
     @Override
-    public void setFocused(@Nullable GuiEventListener p_275675_) {
-        super.setFocused(p_275675_);
-        if (p_275675_ instanceof TabButton tabbutton) {
+    public void setFocused(@Nullable GuiEventListener listener) {
+        super.setFocused(listener);
+        if (listener instanceof TabButton tabbutton) {
             this.tabManager.setCurrentTab(tabbutton.tab(), true);
         }
     }
 
+    /**
+     * Retrieves the next focus path based on the given focus navigation event.
+     * <p>
+     * @return the next focus path as a ComponentPath, or {@code null} if there is no next focus path.
+     *
+     * @param event the focus navigation event.
+     */
     @Nullable
     @Override
-    public ComponentPath nextFocusPath(FocusNavigationEvent p_275418_) {
+    public ComponentPath nextFocusPath(FocusNavigationEvent event) {
         if (!this.isFocused()) {
             TabButton tabbutton = this.currentTabButton();
             if (tabbutton != null) {
@@ -88,7 +105,7 @@ public class TabNavigationBar extends AbstractContainerEventHandler implements R
             }
         }
 
-        return p_275418_ instanceof FocusNavigationEvent.TabNavigation ? null : super.nextFocusPath(p_275418_);
+        return event instanceof FocusNavigationEvent.TabNavigation ? null : super.nextFocusPath(event);
     }
 
     @Override
@@ -101,41 +118,60 @@ public class TabNavigationBar extends AbstractContainerEventHandler implements R
         return this.tabButtons.stream().map(AbstractWidget::narrationPriority).max(Comparator.naturalOrder()).orElse(NarratableEntry.NarrationPriority.NONE);
     }
 
+    /**
+     * Updates the narration output with the current narration information.
+     *
+     * @param narrationElementOutput the output to update with narration information.
+     */
     @Override
-    public void updateNarration(NarrationElementOutput p_275583_) {
+    public void updateNarration(NarrationElementOutput narrationElementOutput) {
         Optional<TabButton> optional = this.tabButtons
             .stream()
             .filter(AbstractWidget::isHovered)
             .findFirst()
             .or(() -> Optional.ofNullable(this.currentTabButton()));
         optional.ifPresent(p_274663_ -> {
-            this.narrateListElementPosition(p_275583_.nest(), p_274663_);
-            p_274663_.updateNarration(p_275583_);
+            this.narrateListElementPosition(narrationElementOutput.nest(), p_274663_);
+            p_274663_.updateNarration(narrationElementOutput);
         });
         if (this.isFocused()) {
-            p_275583_.add(NarratedElementType.USAGE, USAGE_NARRATION);
+            narrationElementOutput.add(NarratedElementType.USAGE, USAGE_NARRATION);
         }
     }
 
-    protected void narrateListElementPosition(NarrationElementOutput p_275386_, TabButton p_275397_) {
+    /**
+     * Narrates the position of a list element (tab button).
+     *
+     * @param narrationElementOutput the narration output to update.
+     * @param tabButton              the tab button whose position is being narrated.
+     */
+    protected void narrateListElementPosition(NarrationElementOutput narrationElementOutput, TabButton tabButton) {
         if (this.tabs.size() > 1) {
-            int i = this.tabButtons.indexOf(p_275397_);
+            int i = this.tabButtons.indexOf(tabButton);
             if (i != -1) {
-                p_275386_.add(NarratedElementType.POSITION, Component.translatable("narrator.position.tab", i + 1, this.tabs.size()));
+                narrationElementOutput.add(NarratedElementType.POSITION, Component.translatable("narrator.position.tab", i + 1, this.tabs.size()));
             }
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_281720_, int p_282085_, int p_281687_, float p_283048_) {
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         RenderSystem.enableBlend();
-        p_281720_.blit(Screen.HEADER_SEPARATOR, 0, this.layout.getY() + this.layout.getHeight() - 2, 0.0F, 0.0F, this.tabButtons.get(0).getX(), 2, 32, 2);
+        guiGraphics.blit(Screen.HEADER_SEPARATOR, 0, this.layout.getY() + this.layout.getHeight() - 2, 0.0F, 0.0F, this.tabButtons.get(0).getX(), 2, 32, 2);
         int i = this.tabButtons.get(this.tabButtons.size() - 1).getRight();
-        p_281720_.blit(Screen.HEADER_SEPARATOR, i, this.layout.getY() + this.layout.getHeight() - 2, 0.0F, 0.0F, this.width, 2, 32, 2);
+        guiGraphics.blit(Screen.HEADER_SEPARATOR, i, this.layout.getY() + this.layout.getHeight() - 2, 0.0F, 0.0F, this.width, 2, 32, 2);
         RenderSystem.disableBlend();
 
         for (TabButton tabbutton : this.tabButtons) {
-            tabbutton.render(p_281720_, p_282085_, p_281687_, p_283048_);
+            tabbutton.render(guiGraphics, mouseX, mouseY, partialTick);
         }
     }
 
@@ -157,17 +193,30 @@ public class TabNavigationBar extends AbstractContainerEventHandler implements R
         this.layout.setY(0);
     }
 
-    public void selectTab(int p_276107_, boolean p_276125_) {
+    /**
+     * Selects the tab at the specified index.
+     *
+     * @param index          the index of the tab to select.
+     * @param playClickSound whether to play a click sound when selecting the tab.
+     */
+    public void selectTab(int index, boolean playClickSound) {
         if (this.isFocused()) {
-            this.setFocused(this.tabButtons.get(p_276107_));
+            this.setFocused(this.tabButtons.get(index));
         } else {
-            this.tabManager.setCurrentTab(this.tabs.get(p_276107_), p_276125_);
+            this.tabManager.setCurrentTab(this.tabs.get(index), playClickSound);
         }
     }
 
-    public boolean keyPressed(int p_270495_) {
+    /**
+     * Handles key pressed events.
+     * <p>
+     * @return {@code true} if the key press was handled, {@code false} otherwise.
+     *
+     * @param keycode the keycode of the pressed key.
+     */
+    public boolean keyPressed(int keycode) {
         if (Screen.hasControlDown()) {
-            int i = this.getNextTabIndex(p_270495_);
+            int i = this.getNextTabIndex(keycode);
             if (i != -1) {
                 this.selectTab(Mth.clamp(i, 0, this.tabs.size() - 1), true);
                 return true;
@@ -177,11 +226,18 @@ public class TabNavigationBar extends AbstractContainerEventHandler implements R
         return false;
     }
 
-    private int getNextTabIndex(int p_270508_) {
-        if (p_270508_ >= 49 && p_270508_ <= 57) {
-            return p_270508_ - 49;
+    /**
+     * Returns the index of the next tab based on the given key code.
+     * <p>
+     * @return the index of the next tab, or -1 if no valid tab index is found.
+     *
+     * @param keycode the keycode of the pressed key.
+     */
+    private int getNextTabIndex(int keycode) {
+        if (keycode >= 49 && keycode <= 57) {
+            return keycode - 49;
         } else {
-            if (p_270508_ == 258) {
+            if (keycode == 258) {
                 int i = this.currentTabIndex();
                 if (i != -1) {
                     int j = Screen.hasShiftDown() ? i - 1 : i + 1;
@@ -205,19 +261,29 @@ public class TabNavigationBar extends AbstractContainerEventHandler implements R
         return i != -1 ? this.tabButtons.get(i) : null;
     }
 
+    /**
+     * Builder class for creating a TabNavigationBar instance.
+     */
     @OnlyIn(Dist.CLIENT)
     public static class Builder {
         private final int width;
         private final TabManager tabManager;
         private final List<Tab> tabs = new ArrayList<>();
 
-        Builder(TabManager p_268334_, int p_267986_) {
-            this.tabManager = p_268334_;
-            this.width = p_267986_;
+        Builder(TabManager tabManager, int width) {
+            this.tabManager = tabManager;
+            this.width = width;
         }
 
-        public TabNavigationBar.Builder addTabs(Tab... p_268144_) {
-            Collections.addAll(this.tabs, p_268144_);
+        /**
+         * Adds multiple tabs to the TabNavigationBar.
+         * <p>
+         * @return the {@link Builder} instance.
+         *
+         * @param tabs the tabs to add.
+         */
+        public TabNavigationBar.Builder addTabs(Tab... tabs) {
+            Collections.addAll(this.tabs, tabs);
             return this;
         }
 

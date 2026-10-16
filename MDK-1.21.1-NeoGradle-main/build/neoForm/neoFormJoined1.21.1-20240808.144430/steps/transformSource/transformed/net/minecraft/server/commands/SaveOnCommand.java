@@ -11,8 +11,8 @@ import net.minecraft.server.level.ServerLevel;
 public class SaveOnCommand {
     private static final SimpleCommandExceptionType ERROR_ALREADY_ON = new SimpleCommandExceptionType(Component.translatable("commands.save.alreadyOn"));
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_138293_) {
-        p_138293_.register(Commands.literal("save-on").requires(p_138297_ -> p_138297_.hasPermission(4)).executes(p_138295_ -> {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(Commands.literal("save-on").requires(p_138297_ -> p_138297_.hasPermission(4)).executes(p_138295_ -> {
             CommandSourceStack commandsourcestack = p_138295_.getSource();
             boolean flag = false;
 

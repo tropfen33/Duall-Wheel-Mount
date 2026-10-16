@@ -21,16 +21,16 @@ public class WorldLoadEvent {
     @Nullable
     private final String minigameName;
 
-    public WorldLoadEvent(@Nullable String p_286661_) {
-        this.minigameName = p_286661_;
+    public WorldLoadEvent(@Nullable String minigameName) {
+        this.minigameName = minigameName;
     }
 
-    public void addProperties(TelemetryPropertyMap.Builder p_261869_) {
+    public void addProperties(TelemetryPropertyMap.Builder builder) {
         if (this.serverBrand != null) {
-            p_261869_.put(TelemetryProperty.SERVER_MODDED, !this.serverBrand.equals("vanilla"));
+            builder.put(TelemetryProperty.SERVER_MODDED, !this.serverBrand.equals("vanilla"));
         }
 
-        p_261869_.put(TelemetryProperty.SERVER_TYPE, this.getServerType());
+        builder.put(TelemetryProperty.SERVER_TYPE, this.getServerType());
     }
 
     private TelemetryProperty.ServerType getServerType() {
@@ -42,10 +42,10 @@ public class WorldLoadEvent {
         }
     }
 
-    public boolean send(TelemetryEventSender p_263325_) {
+    public boolean send(TelemetryEventSender sender) {
         if (!this.eventSent && this.gameMode != null && this.serverBrand != null) {
             this.eventSent = true;
-            p_263325_.send(TelemetryEventType.WORLD_LOADED, p_286185_ -> {
+            sender.send(TelemetryEventType.WORLD_LOADED, p_286185_ -> {
                 p_286185_.put(TelemetryProperty.GAME_MODE, this.gameMode);
                 if (this.minigameName != null) {
                     p_286185_.put(TelemetryProperty.REALMS_MAP_CONTENT, this.minigameName);
@@ -57,16 +57,16 @@ public class WorldLoadEvent {
         }
     }
 
-    public void setGameMode(GameType p_261852_, boolean p_261831_) {
-        this.gameMode = switch (p_261852_) {
-            case SURVIVAL -> p_261831_ ? TelemetryProperty.GameMode.HARDCORE : TelemetryProperty.GameMode.SURVIVAL;
+    public void setGameMode(GameType gameMode, boolean isHardcore) {
+        this.gameMode = switch (gameMode) {
+            case SURVIVAL -> isHardcore ? TelemetryProperty.GameMode.HARDCORE : TelemetryProperty.GameMode.SURVIVAL;
             case CREATIVE -> TelemetryProperty.GameMode.CREATIVE;
             case ADVENTURE -> TelemetryProperty.GameMode.ADVENTURE;
             case SPECTATOR -> TelemetryProperty.GameMode.SPECTATOR;
         };
     }
 
-    public void setServerBrand(String p_261964_) {
-        this.serverBrand = p_261964_;
+    public void setServerBrand(String serverBrand) {
+        this.serverBrand = serverBrand;
     }
 }

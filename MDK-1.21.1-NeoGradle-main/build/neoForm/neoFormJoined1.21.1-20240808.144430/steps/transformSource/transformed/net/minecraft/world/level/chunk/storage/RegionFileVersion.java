@@ -19,10 +19,19 @@ import net.jpountz.lz4.LZ4BlockOutputStream;
 import net.minecraft.util.FastBufferedInputStream;
 import org.slf4j.Logger;
 
+/**
+ * A decorator for input and output streams used to read and write the chunk data from region files. This exists as there are different ways of compressing the chunk data inside a region file.
+ * @see net.minecraft.world.level.chunk.storage.RegionFileVersion#VERSION_GZIP
+ * @see net.minecraft.world.level.chunk.storage.RegionFileVersion#VERSION_DEFLATE
+ * @see net.minecraft.world.level.chunk.storage.RegionFileVersion#VERSION_NONE
+ */
 public class RegionFileVersion {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static final Int2ObjectMap<RegionFileVersion> VERSIONS = new Int2ObjectOpenHashMap<>();
     private static final Object2ObjectMap<String, RegionFileVersion> VERSIONS_BY_NAME = new Object2ObjectOpenHashMap<>();
+    /**
+     * Used to store the chunk data in gzip format. Unused in practice.
+     */
     public static final RegionFileVersion VERSION_GZIP = register(
         new RegionFileVersion(
             1,
@@ -31,6 +40,9 @@ public class RegionFileVersion {
             p_63769_ -> new BufferedOutputStream(new GZIPOutputStream(p_63769_))
         )
     );
+    /**
+     * Used to store the chunk data in zlib format. This is the default.
+     */
     public static final RegionFileVersion VERSION_DEFLATE = register(
         new RegionFileVersion(
             2,
@@ -39,7 +51,13 @@ public class RegionFileVersion {
             p_196966_ -> new BufferedOutputStream(new DeflaterOutputStream(p_196966_))
         )
     );
+    /**
+     * Used to keep the chunk data uncompressed. Unused in practice.
+     */
     public static final RegionFileVersion VERSION_NONE = register(new RegionFileVersion(3, "none", FastBufferedInputStream::new, BufferedOutputStream::new));
+    /**
+     * Used to store the chunk data in lz4 format. Used when region-file-compression is set to 1z4 in server.properties.
+     */
     public static final RegionFileVersion VERSION_LZ4 = register(
         new RegionFileVersion(
             4,
@@ -62,36 +80,36 @@ public class RegionFileVersion {
     private final RegionFileVersion.StreamWrapper<OutputStream> outputWrapper;
 
     private RegionFileVersion(
-        int p_63752_, @Nullable String p_321638_, RegionFileVersion.StreamWrapper<InputStream> p_63753_, RegionFileVersion.StreamWrapper<OutputStream> p_63754_
+        int id, @Nullable String optionName, RegionFileVersion.StreamWrapper<InputStream> inputWrapper, RegionFileVersion.StreamWrapper<OutputStream> outputWrapper
     ) {
-        this.id = p_63752_;
-        this.optionName = p_321638_;
-        this.inputWrapper = p_63753_;
-        this.outputWrapper = p_63754_;
+        this.id = id;
+        this.optionName = optionName;
+        this.inputWrapper = inputWrapper;
+        this.outputWrapper = outputWrapper;
     }
 
-    private static RegionFileVersion register(RegionFileVersion p_63759_) {
-        VERSIONS.put(p_63759_.id, p_63759_);
-        if (p_63759_.optionName != null) {
-            VERSIONS_BY_NAME.put(p_63759_.optionName, p_63759_);
+    private static RegionFileVersion register(RegionFileVersion fileVersion) {
+        VERSIONS.put(fileVersion.id, fileVersion);
+        if (fileVersion.optionName != null) {
+            VERSIONS_BY_NAME.put(fileVersion.optionName, fileVersion);
         }
 
-        return p_63759_;
+        return fileVersion;
     }
 
     @Nullable
-    public static RegionFileVersion fromId(int p_63757_) {
-        return VERSIONS.get(p_63757_);
+    public static RegionFileVersion fromId(int id) {
+        return VERSIONS.get(id);
     }
 
-    public static void configure(String p_321707_) {
-        RegionFileVersion regionfileversion = VERSIONS_BY_NAME.get(p_321707_);
+    public static void configure(String optionValue) {
+        RegionFileVersion regionfileversion = VERSIONS_BY_NAME.get(optionValue);
         if (regionfileversion != null) {
             selected = regionfileversion;
         } else {
             LOGGER.error(
                 "Invalid `region-file-compression` value `{}` in server.properties. Please use one of: {}",
-                p_321707_,
+                optionValue,
                 String.join(", ", VERSIONS_BY_NAME.keySet())
             );
         }
@@ -101,24 +119,24 @@ public class RegionFileVersion {
         return selected;
     }
 
-    public static boolean isValidVersion(int p_63765_) {
-        return VERSIONS.containsKey(p_63765_);
+    public static boolean isValidVersion(int id) {
+        return VERSIONS.containsKey(id);
     }
 
     public int getId() {
         return this.id;
     }
 
-    public OutputStream wrap(OutputStream p_63763_) throws IOException {
-        return this.outputWrapper.wrap(p_63763_);
+    public OutputStream wrap(OutputStream outputStream) throws IOException {
+        return this.outputWrapper.wrap(outputStream);
     }
 
-    public InputStream wrap(InputStream p_63761_) throws IOException {
-        return this.inputWrapper.wrap(p_63761_);
+    public InputStream wrap(InputStream inputStream) throws IOException {
+        return this.inputWrapper.wrap(inputStream);
     }
 
     @FunctionalInterface
     interface StreamWrapper<O> {
-        O wrap(O p_63771_) throws IOException;
+        O wrap(O stream) throws IOException;
     }
 }

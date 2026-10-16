@@ -62,8 +62,8 @@ public class SculkShriekerBlockEntity extends BlockEntity implements GameEventLi
     private VibrationSystem.Data vibrationData = new VibrationSystem.Data();
     private final VibrationSystem.Listener vibrationListener = new VibrationSystem.Listener(this);
 
-    public SculkShriekerBlockEntity(BlockPos p_222835_, BlockState p_222836_) {
-        super(BlockEntityType.SCULK_SHRIEKER, p_222835_, p_222836_);
+    public SculkShriekerBlockEntity(BlockPos pos, BlockState blockState) {
+        super(BlockEntityType.SCULK_SHRIEKER, pos, blockState);
     }
 
     @Override
@@ -77,52 +77,52 @@ public class SculkShriekerBlockEntity extends BlockEntity implements GameEventLi
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_222868_, HolderLookup.Provider p_324354_) {
-        super.loadAdditional(p_222868_, p_324354_);
-        if (p_222868_.contains("warning_level", 99)) {
-            this.warningLevel = p_222868_.getInt("warning_level");
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.contains("warning_level", 99)) {
+            this.warningLevel = tag.getInt("warning_level");
         }
 
-        RegistryOps<Tag> registryops = p_324354_.createSerializationContext(NbtOps.INSTANCE);
-        if (p_222868_.contains("listener", 10)) {
+        RegistryOps<Tag> registryops = registries.createSerializationContext(NbtOps.INSTANCE);
+        if (tag.contains("listener", 10)) {
             VibrationSystem.Data.CODEC
-                .parse(registryops, p_222868_.getCompound("listener"))
+                .parse(registryops, tag.getCompound("listener"))
                 .resultOrPartial(p_351976_ -> LOGGER.error("Failed to parse vibration listener for Sculk Shrieker: '{}'", p_351976_))
                 .ifPresent(p_281147_ -> this.vibrationData = p_281147_);
         }
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_222878_, HolderLookup.Provider p_324505_) {
-        super.saveAdditional(p_222878_, p_324505_);
-        p_222878_.putInt("warning_level", this.warningLevel);
-        RegistryOps<Tag> registryops = p_324505_.createSerializationContext(NbtOps.INSTANCE);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        tag.putInt("warning_level", this.warningLevel);
+        RegistryOps<Tag> registryops = registries.createSerializationContext(NbtOps.INSTANCE);
         VibrationSystem.Data.CODEC
             .encodeStart(registryops, this.vibrationData)
             .resultOrPartial(p_351975_ -> LOGGER.error("Failed to encode vibration listener for Sculk Shrieker: '{}'", p_351975_))
-            .ifPresent(p_222871_ -> p_222878_.put("listener", p_222871_));
+            .ifPresent(p_222871_ -> tag.put("listener", p_222871_));
     }
 
     @Nullable
-    public static ServerPlayer tryGetPlayer(@Nullable Entity p_222862_) {
-        if (p_222862_ instanceof ServerPlayer) {
-            return (ServerPlayer)p_222862_;
+    public static ServerPlayer tryGetPlayer(@Nullable Entity p_entity) {
+        if (p_entity instanceof ServerPlayer) {
+            return (ServerPlayer)p_entity;
         } else {
-            if (p_222862_ != null) {
-                LivingEntity $$6 = p_222862_.getControllingPassenger();
+            if (p_entity != null) {
+                LivingEntity $$6 = p_entity.getControllingPassenger();
                 if ($$6 instanceof ServerPlayer) {
                     return (ServerPlayer)$$6;
                 }
             }
 
-            if (p_222862_ instanceof Projectile projectile) {
+            if (p_entity instanceof Projectile projectile) {
                 Entity entity = projectile.getOwner();
                 if (entity instanceof ServerPlayer) {
                     return (ServerPlayer)entity;
                 }
             }
 
-            if (p_222862_ instanceof ItemEntity itementity) {
+            if (p_entity instanceof ItemEntity itementity) {
                 Entity entity1 = itementity.getOwner();
                 if (entity1 instanceof ServerPlayer) {
                     return (ServerPlayer)entity1;
@@ -133,64 +133,64 @@ public class SculkShriekerBlockEntity extends BlockEntity implements GameEventLi
         }
     }
 
-    public void tryShriek(ServerLevel p_222842_, @Nullable ServerPlayer p_222843_) {
-        if (p_222843_ != null) {
+    public void tryShriek(ServerLevel level, @Nullable ServerPlayer player) {
+        if (player != null) {
             BlockState blockstate = this.getBlockState();
             if (!blockstate.getValue(SculkShriekerBlock.SHRIEKING)) {
                 this.warningLevel = 0;
-                if (!this.canRespond(p_222842_) || this.tryToWarn(p_222842_, p_222843_)) {
-                    this.shriek(p_222842_, p_222843_);
+                if (!this.canRespond(level) || this.tryToWarn(level, player)) {
+                    this.shriek(level, player);
                 }
             }
         }
     }
 
-    private boolean tryToWarn(ServerLevel p_222875_, ServerPlayer p_222876_) {
-        OptionalInt optionalint = WardenSpawnTracker.tryWarn(p_222875_, this.getBlockPos(), p_222876_);
+    private boolean tryToWarn(ServerLevel level, ServerPlayer player) {
+        OptionalInt optionalint = WardenSpawnTracker.tryWarn(level, this.getBlockPos(), player);
         optionalint.ifPresent(p_222838_ -> this.warningLevel = p_222838_);
         return optionalint.isPresent();
     }
 
-    private void shriek(ServerLevel p_222845_, @Nullable Entity p_222846_) {
+    private void shriek(ServerLevel level, @Nullable Entity sourceEntity) {
         BlockPos blockpos = this.getBlockPos();
         BlockState blockstate = this.getBlockState();
-        p_222845_.setBlock(blockpos, blockstate.setValue(SculkShriekerBlock.SHRIEKING, Boolean.valueOf(true)), 2);
-        p_222845_.scheduleTick(blockpos, blockstate.getBlock(), 90);
-        p_222845_.levelEvent(3007, blockpos, 0);
-        p_222845_.gameEvent(GameEvent.SHRIEK, blockpos, GameEvent.Context.of(p_222846_));
+        level.setBlock(blockpos, blockstate.setValue(SculkShriekerBlock.SHRIEKING, Boolean.valueOf(true)), 2);
+        level.scheduleTick(blockpos, blockstate.getBlock(), 90);
+        level.levelEvent(3007, blockpos, 0);
+        level.gameEvent(GameEvent.SHRIEK, blockpos, GameEvent.Context.of(sourceEntity));
     }
 
-    private boolean canRespond(ServerLevel p_222873_) {
+    private boolean canRespond(ServerLevel level) {
         return this.getBlockState().getValue(SculkShriekerBlock.CAN_SUMMON)
-            && p_222873_.getDifficulty() != Difficulty.PEACEFUL
-            && p_222873_.getGameRules().getBoolean(GameRules.RULE_DO_WARDEN_SPAWNING);
+            && level.getDifficulty() != Difficulty.PEACEFUL
+            && level.getGameRules().getBoolean(GameRules.RULE_DO_WARDEN_SPAWNING);
     }
 
-    public void tryRespond(ServerLevel p_222840_) {
-        if (this.canRespond(p_222840_) && this.warningLevel > 0) {
-            if (!this.trySummonWarden(p_222840_)) {
-                this.playWardenReplySound(p_222840_);
+    public void tryRespond(ServerLevel level) {
+        if (this.canRespond(level) && this.warningLevel > 0) {
+            if (!this.trySummonWarden(level)) {
+                this.playWardenReplySound(level);
             }
 
-            Warden.applyDarknessAround(p_222840_, Vec3.atCenterOf(this.getBlockPos()), null, 40);
+            Warden.applyDarknessAround(level, Vec3.atCenterOf(this.getBlockPos()), null, 40);
         }
     }
 
-    private void playWardenReplySound(Level p_281300_) {
+    private void playWardenReplySound(Level level) {
         SoundEvent soundevent = SOUND_BY_LEVEL.get(this.warningLevel);
         if (soundevent != null) {
             BlockPos blockpos = this.getBlockPos();
-            int i = blockpos.getX() + Mth.randomBetweenInclusive(p_281300_.random, -10, 10);
-            int j = blockpos.getY() + Mth.randomBetweenInclusive(p_281300_.random, -10, 10);
-            int k = blockpos.getZ() + Mth.randomBetweenInclusive(p_281300_.random, -10, 10);
-            p_281300_.playSound(null, (double)i, (double)j, (double)k, soundevent, SoundSource.HOSTILE, 5.0F, 1.0F);
+            int i = blockpos.getX() + Mth.randomBetweenInclusive(level.random, -10, 10);
+            int j = blockpos.getY() + Mth.randomBetweenInclusive(level.random, -10, 10);
+            int k = blockpos.getZ() + Mth.randomBetweenInclusive(level.random, -10, 10);
+            level.playSound(null, (double)i, (double)j, (double)k, soundevent, SoundSource.HOSTILE, 5.0F, 1.0F);
         }
     }
 
-    private boolean trySummonWarden(ServerLevel p_222881_) {
+    private boolean trySummonWarden(ServerLevel level) {
         return this.warningLevel < 4
             ? false
-            : SpawnUtil.trySpawnMob(EntityType.WARDEN, MobSpawnType.TRIGGERED, p_222881_, this.getBlockPos(), 20, 5, 6, SpawnUtil.Strategy.ON_TOP_OF_COLLIDER)
+            : SpawnUtil.trySpawnMob(EntityType.WARDEN, MobSpawnType.TRIGGERED, level, this.getBlockPos(), 20, 5, 6, SpawnUtil.Strategy.ON_TOP_OF_COLLIDER)
                 .isPresent();
     }
 

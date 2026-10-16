@@ -25,16 +25,16 @@ public class SkinReportScreen extends AbstractReportScreen<SkinReport.Builder> {
     private MultiLineEditBox commentBox;
     private Button selectReasonButton;
 
-    private SkinReportScreen(Screen p_299943_, ReportingContext p_299995_, SkinReport.Builder p_299886_) {
-        super(TITLE, p_299943_, p_299995_, p_299886_);
+    private SkinReportScreen(Screen lastScreen, ReportingContext reportingContext, SkinReport.Builder reportBuilder) {
+        super(TITLE, lastScreen, reportingContext, reportBuilder);
     }
 
-    public SkinReportScreen(Screen p_299906_, ReportingContext p_299981_, UUID p_299970_, Supplier<PlayerSkin> p_299980_) {
-        this(p_299906_, p_299981_, new SkinReport.Builder(p_299970_, p_299980_, p_299981_.sender().reportLimits()));
+    public SkinReportScreen(Screen lastScreen, ReportingContext reportingContext, UUID reportId, Supplier<PlayerSkin> skinGetter) {
+        this(lastScreen, reportingContext, new SkinReport.Builder(reportId, skinGetter, reportingContext.sender().reportLimits()));
     }
 
-    public SkinReportScreen(Screen p_299996_, ReportingContext p_299971_, SkinReport p_299899_) {
-        this(p_299996_, p_299971_, new SkinReport.Builder(p_299899_, p_299971_.sender().reportLimits()));
+    public SkinReportScreen(Screen lastScreen, ReportingContext reportingContext, SkinReport report) {
+        this(lastScreen, reportingContext, new SkinReport.Builder(report, reportingContext.sender().reportLimits()));
     }
 
     @Override
@@ -71,8 +71,17 @@ public class SkinReportScreen extends AbstractReportScreen<SkinReport.Builder> {
         super.onReportChanged();
     }
 
+    /**
+     * Called when a mouse button is released within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was released.
+     */
     @Override
-    public boolean mouseReleased(double p_299874_, double p_299850_, int p_299923_) {
-        return super.mouseReleased(p_299874_, p_299850_, p_299923_) ? true : this.commentBox.mouseReleased(p_299874_, p_299850_, p_299923_);
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        return super.mouseReleased(mouseX, mouseY, button) ? true : this.commentBox.mouseReleased(mouseX, mouseY, button);
     }
 }

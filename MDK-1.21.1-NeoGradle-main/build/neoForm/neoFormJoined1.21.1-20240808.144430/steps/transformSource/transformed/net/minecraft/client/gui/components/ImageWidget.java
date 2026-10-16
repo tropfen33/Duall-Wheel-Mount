@@ -13,24 +13,24 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class ImageWidget extends AbstractWidget {
-    ImageWidget(int p_275421_, int p_275294_, int p_275403_, int p_275631_) {
-        super(p_275421_, p_275294_, p_275403_, p_275631_, CommonComponents.EMPTY);
+    ImageWidget(int x, int y, int width, int height) {
+        super(x, y, width, height, CommonComponents.EMPTY);
     }
 
-    public static ImageWidget texture(int p_294719_, int p_294578_, ResourceLocation p_295560_, int p_295321_, int p_296474_) {
-        return new ImageWidget.Texture(0, 0, p_294719_, p_294578_, p_295560_, p_295321_, p_296474_);
+    public static ImageWidget texture(int width, int height, ResourceLocation texture, int textureWidth, int textureHeight) {
+        return new ImageWidget.Texture(0, 0, width, height, texture, textureWidth, textureHeight);
     }
 
-    public static ImageWidget sprite(int p_295244_, int p_296002_, ResourceLocation p_295131_) {
-        return new ImageWidget.Sprite(0, 0, p_295244_, p_296002_, p_295131_);
-    }
-
-    @Override
-    protected void updateWidgetNarration(NarrationElementOutput p_275454_) {
+    public static ImageWidget sprite(int width, int height, ResourceLocation sprite) {
+        return new ImageWidget.Sprite(0, 0, width, height, sprite);
     }
 
     @Override
-    public void playDownSound(SoundManager p_295108_) {
+    protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+    }
+
+    @Override
+    public void playDownSound(SoundManager handler) {
     }
 
     @Override
@@ -38,9 +38,16 @@ public abstract class ImageWidget extends AbstractWidget {
         return false;
     }
 
+    /**
+     * Retrieves the next focus path based on the given focus navigation event.
+     * <p>
+     * @return the next focus path as a ComponentPath, or {@code null} if there is no next focus path.
+     *
+     * @param event the focus navigation event.
+     */
     @Nullable
     @Override
-    public ComponentPath nextFocusPath(FocusNavigationEvent p_296129_) {
+    public ComponentPath nextFocusPath(FocusNavigationEvent event) {
         return null;
     }
 
@@ -48,14 +55,14 @@ public abstract class ImageWidget extends AbstractWidget {
     static class Sprite extends ImageWidget {
         private final ResourceLocation sprite;
 
-        public Sprite(int p_295957_, int p_294219_, int p_296365_, int p_294849_, ResourceLocation p_296297_) {
-            super(p_295957_, p_294219_, p_296365_, p_294849_);
-            this.sprite = p_296297_;
+        public Sprite(int x, int y, int width, int height, ResourceLocation sprite) {
+            super(x, y, width, height);
+            this.sprite = sprite;
         }
 
         @Override
-        public void renderWidget(GuiGraphics p_295869_, int p_295287_, int p_294110_, float p_296031_) {
-            p_295869_.blitSprite(this.sprite, this.getX(), this.getY(), this.getWidth(), this.getHeight());
+        public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+            guiGraphics.blitSprite(this.sprite, this.getX(), this.getY(), this.getWidth(), this.getHeight());
         }
     }
 
@@ -65,16 +72,16 @@ public abstract class ImageWidget extends AbstractWidget {
         private final int textureWidth;
         private final int textureHeight;
 
-        public Texture(int p_294324_, int p_296206_, int p_294604_, int p_294607_, ResourceLocation p_294536_, int p_295196_, int p_294112_) {
-            super(p_294324_, p_296206_, p_294604_, p_294607_);
-            this.texture = p_294536_;
-            this.textureWidth = p_295196_;
-            this.textureHeight = p_294112_;
+        public Texture(int x, int y, int width, int height, ResourceLocation texture, int textureWidth, int textureHeight) {
+            super(x, y, width, height);
+            this.texture = texture;
+            this.textureWidth = textureWidth;
+            this.textureHeight = textureHeight;
         }
 
         @Override
-        protected void renderWidget(GuiGraphics p_294145_, int p_294755_, int p_294985_, float p_294245_) {
-            p_294145_.blit(
+        protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+            guiGraphics.blit(
                 this.texture,
                 this.getX(),
                 this.getY(),

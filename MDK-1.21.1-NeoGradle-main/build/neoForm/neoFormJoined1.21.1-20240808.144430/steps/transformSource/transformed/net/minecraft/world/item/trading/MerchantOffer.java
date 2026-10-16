@@ -28,8 +28,17 @@ public class MerchantOffer {
     public static final StreamCodec<RegistryFriendlyByteBuf, MerchantOffer> STREAM_CODEC = StreamCodec.of(
         MerchantOffer::writeToStream, MerchantOffer::createFromStream
     );
+    /**
+     * The first input for this offer.
+     */
     private final ItemCost baseCostA;
+    /**
+     * The second input for this offer.
+     */
     private final Optional<ItemCost> costB;
+    /**
+     * The output of this offer.
+     */
     private final ItemStack result;
     private int uses;
     private final int maxUses;
@@ -40,59 +49,59 @@ public class MerchantOffer {
     private final int xp;
 
     private MerchantOffer(
-        ItemCost p_330734_,
-        Optional<ItemCost> p_331500_,
-        ItemStack p_45327_,
-        int p_45330_,
-        int p_45331_,
-        boolean p_330754_,
-        int p_332006_,
-        int p_330432_,
-        float p_45332_,
-        int p_330282_
+        ItemCost baseCostA,
+        Optional<ItemCost> costB,
+        ItemStack result,
+        int uses,
+        int maxUses,
+        boolean rewardExp,
+        int specialPriceDiff,
+        int demand,
+        float priceMultiplier,
+        int xp
     ) {
-        this.baseCostA = p_330734_;
-        this.costB = p_331500_;
-        this.result = p_45327_;
-        this.uses = p_45330_;
-        this.maxUses = p_45331_;
-        this.rewardExp = p_330754_;
-        this.specialPriceDiff = p_332006_;
-        this.demand = p_330432_;
-        this.priceMultiplier = p_45332_;
-        this.xp = p_330282_;
+        this.baseCostA = baseCostA;
+        this.costB = costB;
+        this.result = result;
+        this.uses = uses;
+        this.maxUses = maxUses;
+        this.rewardExp = rewardExp;
+        this.specialPriceDiff = specialPriceDiff;
+        this.demand = demand;
+        this.priceMultiplier = priceMultiplier;
+        this.xp = xp;
     }
 
-    public MerchantOffer(ItemCost p_332077_, ItemStack p_320418_, int p_320071_, int p_320069_, float p_320947_) {
-        this(p_332077_, Optional.empty(), p_320418_, p_320071_, p_320069_, p_320947_);
+    public MerchantOffer(ItemCost baseCostA, ItemStack result, int maxUses, int xp, float priceMultiplier) {
+        this(baseCostA, Optional.empty(), result, maxUses, xp, priceMultiplier);
     }
 
-    public MerchantOffer(ItemCost p_331596_, Optional<ItemCost> p_330410_, ItemStack p_45334_, int p_45337_, int p_45338_, float p_45340_) {
-        this(p_331596_, p_330410_, p_45334_, 0, p_45337_, p_45338_, p_45340_);
+    public MerchantOffer(ItemCost baseCostA, Optional<ItemCost> costB, ItemStack result, int maxUses, int xp, float priceMultiplier) {
+        this(baseCostA, costB, result, 0, maxUses, xp, priceMultiplier);
     }
 
-    public MerchantOffer(ItemCost p_331409_, Optional<ItemCost> p_331614_, ItemStack p_45321_, int p_45323_, int p_45324_, int p_330951_, float p_45325_) {
-        this(p_331409_, p_331614_, p_45321_, p_45323_, p_45324_, p_330951_, p_45325_, 0);
+    public MerchantOffer(ItemCost baseCostA, Optional<ItemCost> costB, ItemStack result, int uses, int maxUses, int xp, float priceMultiplier) {
+        this(baseCostA, costB, result, uses, maxUses, xp, priceMultiplier, 0);
     }
 
     public MerchantOffer(
-        ItemCost p_331744_, Optional<ItemCost> p_330460_, ItemStack p_324239_, int p_324562_, int p_324493_, int p_323558_, float p_323528_, int p_324484_
+        ItemCost baseCostA, Optional<ItemCost> costB, ItemStack result, int uses, int maxUses, int xp, float priceMultiplier, int demand
     ) {
-        this(p_331744_, p_330460_, p_324239_, p_324562_, p_324493_, true, 0, p_324484_, p_323528_, p_323558_);
+        this(baseCostA, costB, result, uses, maxUses, true, 0, demand, priceMultiplier, xp);
     }
 
-    private MerchantOffer(MerchantOffer p_302340_) {
+    private MerchantOffer(MerchantOffer other) {
         this(
-            p_302340_.baseCostA,
-            p_302340_.costB,
-            p_302340_.result.copy(),
-            p_302340_.uses,
-            p_302340_.maxUses,
-            p_302340_.rewardExp,
-            p_302340_.specialPriceDiff,
-            p_302340_.demand,
-            p_302340_.priceMultiplier,
-            p_302340_.xp
+            other.baseCostA,
+            other.costB,
+            other.result.copy(),
+            other.uses,
+            other.maxUses,
+            other.rewardExp,
+            other.specialPriceDiff,
+            other.demand,
+            other.priceMultiplier,
+            other.xp
         );
     }
 
@@ -104,10 +113,10 @@ public class MerchantOffer {
         return this.baseCostA.itemStack().copyWithCount(this.getModifiedCostCount(this.baseCostA));
     }
 
-    private int getModifiedCostCount(ItemCost p_330556_) {
-        int i = p_330556_.count();
+    private int getModifiedCostCount(ItemCost itemCost) {
+        int i = itemCost.count();
         int j = Math.max(0, Mth.floor((float)(i * this.demand) * this.priceMultiplier));
-        return Mth.clamp(i + j + this.specialPriceDiff, 1, p_330556_.itemStack().getMaxStackSize());
+        return Mth.clamp(i + j + this.specialPriceDiff, 1, itemCost.itemStack().getMaxStackSize());
     }
 
     public ItemStack getCostB() {
@@ -154,8 +163,8 @@ public class MerchantOffer {
         return this.demand;
     }
 
-    public void addToSpecialPriceDiff(int p_45354_) {
-        this.specialPriceDiff += p_45354_;
+    public void addToSpecialPriceDiff(int add) {
+        this.specialPriceDiff += add;
     }
 
     public void resetSpecialPriceDiff() {
@@ -166,8 +175,8 @@ public class MerchantOffer {
         return this.specialPriceDiff;
     }
 
-    public void setSpecialPriceDiff(int p_45360_) {
-        this.specialPriceDiff = p_45360_;
+    public void setSpecialPriceDiff(int price) {
+        this.specialPriceDiff = price;
     }
 
     public float getPriceMultiplier() {
@@ -194,21 +203,21 @@ public class MerchantOffer {
         return this.rewardExp;
     }
 
-    public boolean satisfiedBy(ItemStack p_45356_, ItemStack p_45357_) {
-        if (!this.baseCostA.test(p_45356_) || p_45356_.getCount() < this.getModifiedCostCount(this.baseCostA)) {
+    public boolean satisfiedBy(ItemStack playerOfferA, ItemStack playerOfferB) {
+        if (!this.baseCostA.test(playerOfferA) || playerOfferA.getCount() < this.getModifiedCostCount(this.baseCostA)) {
             return false;
         } else {
-            return !this.costB.isPresent() ? p_45357_.isEmpty() : this.costB.get().test(p_45357_) && p_45357_.getCount() >= this.costB.get().count();
+            return !this.costB.isPresent() ? playerOfferB.isEmpty() : this.costB.get().test(playerOfferB) && playerOfferB.getCount() >= this.costB.get().count();
         }
     }
 
-    public boolean take(ItemStack p_45362_, ItemStack p_45363_) {
-        if (!this.satisfiedBy(p_45362_, p_45363_)) {
+    public boolean take(ItemStack playerOfferA, ItemStack playerOfferB) {
+        if (!this.satisfiedBy(playerOfferA, playerOfferB)) {
             return false;
         } else {
-            p_45362_.shrink(this.getCostA().getCount());
+            playerOfferA.shrink(this.getCostA().getCount());
             if (!this.getCostB().isEmpty()) {
-                p_45363_.shrink(this.getCostB().getCount());
+                playerOfferB.shrink(this.getCostB().getCount());
             }
 
             return true;
@@ -219,30 +228,30 @@ public class MerchantOffer {
         return new MerchantOffer(this);
     }
 
-    private static void writeToStream(RegistryFriendlyByteBuf p_320530_, MerchantOffer p_320384_) {
-        ItemCost.STREAM_CODEC.encode(p_320530_, p_320384_.getItemCostA());
-        ItemStack.STREAM_CODEC.encode(p_320530_, p_320384_.getResult());
-        ItemCost.OPTIONAL_STREAM_CODEC.encode(p_320530_, p_320384_.getItemCostB());
-        p_320530_.writeBoolean(p_320384_.isOutOfStock());
-        p_320530_.writeInt(p_320384_.getUses());
-        p_320530_.writeInt(p_320384_.getMaxUses());
-        p_320530_.writeInt(p_320384_.getXp());
-        p_320530_.writeInt(p_320384_.getSpecialPriceDiff());
-        p_320530_.writeFloat(p_320384_.getPriceMultiplier());
-        p_320530_.writeInt(p_320384_.getDemand());
+    private static void writeToStream(RegistryFriendlyByteBuf buffer, MerchantOffer offer) {
+        ItemCost.STREAM_CODEC.encode(buffer, offer.getItemCostA());
+        ItemStack.STREAM_CODEC.encode(buffer, offer.getResult());
+        ItemCost.OPTIONAL_STREAM_CODEC.encode(buffer, offer.getItemCostB());
+        buffer.writeBoolean(offer.isOutOfStock());
+        buffer.writeInt(offer.getUses());
+        buffer.writeInt(offer.getMaxUses());
+        buffer.writeInt(offer.getXp());
+        buffer.writeInt(offer.getSpecialPriceDiff());
+        buffer.writeFloat(offer.getPriceMultiplier());
+        buffer.writeInt(offer.getDemand());
     }
 
-    public static MerchantOffer createFromStream(RegistryFriendlyByteBuf p_320207_) {
-        ItemCost itemcost = ItemCost.STREAM_CODEC.decode(p_320207_);
-        ItemStack itemstack = ItemStack.STREAM_CODEC.decode(p_320207_);
-        Optional<ItemCost> optional = ItemCost.OPTIONAL_STREAM_CODEC.decode(p_320207_);
-        boolean flag = p_320207_.readBoolean();
-        int i = p_320207_.readInt();
-        int j = p_320207_.readInt();
-        int k = p_320207_.readInt();
-        int l = p_320207_.readInt();
-        float f = p_320207_.readFloat();
-        int i1 = p_320207_.readInt();
+    public static MerchantOffer createFromStream(RegistryFriendlyByteBuf buffer) {
+        ItemCost itemcost = ItemCost.STREAM_CODEC.decode(buffer);
+        ItemStack itemstack = ItemStack.STREAM_CODEC.decode(buffer);
+        Optional<ItemCost> optional = ItemCost.OPTIONAL_STREAM_CODEC.decode(buffer);
+        boolean flag = buffer.readBoolean();
+        int i = buffer.readInt();
+        int j = buffer.readInt();
+        int k = buffer.readInt();
+        int l = buffer.readInt();
+        float f = buffer.readFloat();
+        int i1 = buffer.readInt();
         MerchantOffer merchantoffer = new MerchantOffer(itemcost, optional, itemstack, i, j, k, f, i1);
         if (flag) {
             merchantoffer.setToOutOfStock();

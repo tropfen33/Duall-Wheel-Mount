@@ -20,9 +20,9 @@ public class SetItemFunction extends LootItemConditionalFunction {
     );
     private final Holder<Item> item;
 
-    public SetItemFunction(List<LootItemCondition> p_340855_, Holder<Item> p_341008_) {
-        super(p_340855_);
-        this.item = p_341008_;
+    public SetItemFunction(List<LootItemCondition> conditions, Holder<Item> item) {
+        super(conditions);
+        this.item = item;
     }
 
     @Override
@@ -30,8 +30,11 @@ public class SetItemFunction extends LootItemConditionalFunction {
         return LootItemFunctions.SET_ITEM;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_340909_, LootContext p_341298_) {
-        return p_340909_.transmuteCopy(this.item.value());
+    public ItemStack run(ItemStack stack, LootContext context) {
+        return stack.transmuteCopy(this.item.value());
     }
 }

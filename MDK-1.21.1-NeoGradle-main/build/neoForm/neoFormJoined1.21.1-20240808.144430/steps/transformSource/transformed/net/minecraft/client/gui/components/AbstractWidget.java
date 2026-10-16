@@ -41,12 +41,12 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, La
     private boolean focused;
     private final WidgetTooltipHolder tooltip = new WidgetTooltipHolder();
 
-    public AbstractWidget(int p_93629_, int p_93630_, int p_93631_, int p_93632_, Component p_93633_) {
-        this.x = p_93629_;
-        this.y = p_93630_;
-        this.width = p_93631_;
-        this.height = p_93632_;
-        this.message = p_93633_;
+    public AbstractWidget(int x, int y, int width, int height, Component message) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.message = message;
     }
 
     @Override
@@ -54,21 +54,29 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, La
         return this.height;
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public final void render(GuiGraphics p_282421_, int p_93658_, int p_93659_, float p_93660_) {
+    public final void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.visible) {
-            this.isHovered = p_282421_.containsPointInScissor(p_93658_, p_93659_)
-                && p_93658_ >= this.getX()
-                && p_93659_ >= this.getY()
-                && p_93658_ < this.getX() + this.width
-                && p_93659_ < this.getY() + this.height;
-            this.renderWidget(p_282421_, p_93658_, p_93659_, p_93660_);
+            this.isHovered = guiGraphics.containsPointInScissor(mouseX, mouseY)
+                && mouseX >= this.getX()
+                && mouseY >= this.getY()
+                && mouseX < this.getX() + this.width
+                && mouseY < this.getY() + this.height;
+            this.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
             this.tooltip.refreshTooltipForNextRenderPass(this.isHovered(), this.isFocused(), this.getRectangle());
         }
     }
 
-    public void setTooltip(@Nullable Tooltip p_259796_) {
-        this.tooltip.set(p_259796_);
+    public void setTooltip(@Nullable Tooltip tooltip) {
+        this.tooltip.set(tooltip);
     }
 
     @Nullable
@@ -76,72 +84,83 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, La
         return this.tooltip.get();
     }
 
-    public void setTooltipDelay(Duration p_319769_) {
-        this.tooltip.setDelay(p_319769_);
+    public void setTooltipDelay(Duration tooltipDelay) {
+        this.tooltip.setDelay(tooltipDelay);
     }
 
     protected MutableComponent createNarrationMessage() {
         return wrapDefaultNarrationMessage(this.getMessage());
     }
 
-    public static MutableComponent wrapDefaultNarrationMessage(Component p_168800_) {
-        return Component.translatable("gui.narrate.button", p_168800_);
+    public static MutableComponent wrapDefaultNarrationMessage(Component message) {
+        return Component.translatable("gui.narrate.button", message);
     }
 
-    protected abstract void renderWidget(GuiGraphics p_282139_, int p_268034_, int p_268009_, float p_268085_);
+    protected abstract void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick);
 
     public static void renderScrollingString(
-        GuiGraphics p_281620_, Font p_282651_, Component p_281467_, int p_283621_, int p_282084_, int p_283398_, int p_281938_, int p_283471_
+        GuiGraphics guiGraphics, Font font, Component text, int minX, int minY, int maxX, int maxY, int color
     ) {
-        renderScrollingString(p_281620_, p_282651_, p_281467_, (p_283621_ + p_283398_) / 2, p_283621_, p_282084_, p_283398_, p_281938_, p_283471_);
+        renderScrollingString(guiGraphics, font, text, (minX + maxX) / 2, minX, minY, maxX, maxY, color);
     }
 
     public static void renderScrollingString(
-        GuiGraphics p_296355_, Font p_295317_, Component p_294875_, int p_294289_, int p_295475_, int p_294243_, int p_296428_, int p_294696_, int p_295687_
+        GuiGraphics guiGraphics, Font font, Component text, int centerX, int minX, int minY, int maxX, int maxY, int color
     ) {
-        int i = p_295317_.width(p_294875_);
-        int j = (p_294243_ + p_294696_ - 9) / 2 + 1;
-        int k = p_296428_ - p_295475_;
+        int i = font.width(text);
+        int j = (minY + maxY - 9) / 2 + 1;
+        int k = maxX - minX;
         if (i > k) {
             int l = i - k;
             double d0 = (double)Util.getMillis() / 1000.0;
             double d1 = Math.max((double)l * 0.5, 3.0);
             double d2 = Math.sin((Math.PI / 2) * Math.cos((Math.PI * 2) * d0 / d1)) / 2.0 + 0.5;
             double d3 = Mth.lerp(d2, 0.0, (double)l);
-            p_296355_.enableScissor(p_295475_, p_294243_, p_296428_, p_294696_);
-            p_296355_.drawString(p_295317_, p_294875_, p_295475_ - (int)d3, j, p_295687_);
-            p_296355_.disableScissor();
+            guiGraphics.enableScissor(minX, minY, maxX, maxY);
+            guiGraphics.drawString(font, text, minX - (int)d3, j, color);
+            guiGraphics.disableScissor();
         } else {
-            int i1 = Mth.clamp(p_294289_, p_295475_ + i / 2, p_296428_ - i / 2);
-            p_296355_.drawCenteredString(p_295317_, p_294875_, i1, j, p_295687_);
+            int i1 = Mth.clamp(centerX, minX + i / 2, maxX - i / 2);
+            guiGraphics.drawCenteredString(font, text, i1, j, color);
         }
     }
 
-    protected void renderScrollingString(GuiGraphics p_281857_, Font p_282790_, int p_282664_, int p_282944_) {
-        int i = this.getX() + p_282664_;
-        int j = this.getX() + this.getWidth() - p_282664_;
-        renderScrollingString(p_281857_, p_282790_, this.getMessage(), i, this.getY(), j, this.getY() + this.getHeight(), p_282944_);
+    protected void renderScrollingString(GuiGraphics guiGraphics, Font font, int width, int color) {
+        int i = this.getX() + width;
+        int j = this.getX() + this.getWidth() - width;
+        renderScrollingString(guiGraphics, font, this.getMessage(), i, this.getY(), j, this.getY() + this.getHeight(), color);
     }
 
-    /** @deprecated Neo: Use {@link #onClick(double, double, int)} instead. */
+    /**
+ * @deprecated Neo: Use {@link #onClick(double, double, int)} instead.
+ */
     @Deprecated
-    public void onClick(double p_93634_, double p_93635_) {
+    public void onClick(double mouseX, double mouseY) {
     }
 
-    public void onRelease(double p_93669_, double p_93670_) {
+    public void onRelease(double mouseX, double mouseY) {
     }
 
-    protected void onDrag(double p_93636_, double p_93637_, double p_93638_, double p_93639_) {
+    protected void onDrag(double mouseX, double mouseY, double dragX, double dragY) {
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    public boolean mouseClicked(double p_93641_, double p_93642_, int p_93643_) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (this.active && this.visible) {
-            if (this.isValidClickButton(p_93643_)) {
-                boolean flag = this.clicked(p_93641_, p_93642_);
+            if (this.isValidClickButton(button)) {
+                boolean flag = this.clicked(mouseX, mouseY);
                 if (flag) {
                     this.playDownSound(Minecraft.getInstance().getSoundManager());
-                    this.onClick(p_93641_, p_93642_, p_93643_);
+                    this.onClick(mouseX, mouseY, button);
                     return true;
                 }
             }
@@ -152,42 +171,69 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, La
         }
     }
 
+    /**
+     * Called when a mouse button is released within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was released.
+     */
     @Override
-    public boolean mouseReleased(double p_93684_, double p_93685_, int p_93686_) {
-        if (this.isValidClickButton(p_93686_)) {
-            this.onRelease(p_93684_, p_93685_);
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (this.isValidClickButton(button)) {
+            this.onRelease(mouseX, mouseY);
             return true;
         } else {
             return false;
         }
     }
 
-    protected boolean isValidClickButton(int p_93652_) {
-        return p_93652_ == 0;
+    protected boolean isValidClickButton(int button) {
+        return button == 0;
     }
 
+    /**
+     * Called when the mouse is dragged within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that is being dragged.
+     * @param dragX  the X distance of the drag.
+     * @param dragY  the Y distance of the drag.
+     */
     @Override
-    public boolean mouseDragged(double p_93645_, double p_93646_, int p_93647_, double p_93648_, double p_93649_) {
-        if (this.isValidClickButton(p_93647_)) {
-            this.onDrag(p_93645_, p_93646_, p_93648_, p_93649_);
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (this.isValidClickButton(button)) {
+            this.onDrag(mouseX, mouseY, dragX, dragY);
             return true;
         } else {
             return false;
         }
     }
 
-    protected boolean clicked(double p_93681_, double p_93682_) {
+    protected boolean clicked(double mouseX, double mouseY) {
         return this.active
             && this.visible
-            && p_93681_ >= (double)this.getX()
-            && p_93682_ >= (double)this.getY()
-            && p_93681_ < (double)(this.getX() + this.getWidth())
-            && p_93682_ < (double)(this.getY() + this.getHeight());
+            && mouseX >= (double)this.getX()
+            && mouseY >= (double)this.getY()
+            && mouseX < (double)(this.getX() + this.getWidth())
+            && mouseY < (double)(this.getY() + this.getHeight());
     }
 
+    /**
+     * Retrieves the next focus path based on the given focus navigation event.
+     * <p>
+     * @return the next focus path as a ComponentPath, or {@code null} if there is no next focus path.
+     *
+     * @param event the focus navigation event.
+     */
     @Nullable
     @Override
-    public ComponentPath nextFocusPath(FocusNavigationEvent p_265640_) {
+    public ComponentPath nextFocusPath(FocusNavigationEvent event) {
         if (!this.active || !this.visible) {
             return null;
         } else {
@@ -195,18 +241,26 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, La
         }
     }
 
+    /**
+     * Checks if the given mouse coordinates are over the GUI element.
+     * <p>
+     * @return {@code true} if the mouse is over the GUI element, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     */
     @Override
-    public boolean isMouseOver(double p_93672_, double p_93673_) {
+    public boolean isMouseOver(double mouseX, double mouseY) {
         return this.active
             && this.visible
-            && p_93672_ >= (double)this.getX()
-            && p_93673_ >= (double)this.getY()
-            && p_93672_ < (double)(this.getX() + this.width)
-            && p_93673_ < (double)(this.getY() + this.height);
+            && mouseX >= (double)this.getX()
+            && mouseY >= (double)this.getY()
+            && mouseX < (double)(this.getX() + this.width)
+            && mouseY < (double)(this.getY() + this.height);
     }
 
-    public void playDownSound(SoundManager p_93665_) {
-        p_93665_.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+    public void playDownSound(SoundManager handler) {
+        handler.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
     }
 
     @Override
@@ -214,20 +268,20 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, La
         return this.width;
     }
 
-    public void setWidth(int p_93675_) {
-        this.width = p_93675_;
+    public void setWidth(int width) {
+        this.width = width;
     }
 
-    public void setHeight(int p_299883_) {
-        this.height = p_299883_;
+    public void setHeight(int height) {
+        this.height = height;
     }
 
-    public void setAlpha(float p_93651_) {
-        this.alpha = p_93651_;
+    public void setAlpha(float alpha) {
+        this.alpha = alpha;
     }
 
-    public void setMessage(Component p_93667_) {
-        this.message = p_93667_;
+    public void setMessage(Component message) {
+        this.message = message;
     }
 
     public Component getMessage() {
@@ -252,9 +306,14 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, La
         return this.visible && this.active;
     }
 
+    /**
+     * Sets the focus state of the GUI element.
+     *
+     * @param focused {@code true} to apply focus, {@code false} to remove focus
+     */
     @Override
-    public void setFocused(boolean p_93693_) {
-        this.focused = p_93693_;
+    public void setFocused(boolean focused) {
+        this.focused = focused;
     }
 
     public static final int UNSET_FG_COLOR = -1;
@@ -279,21 +338,26 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, La
         }
     }
 
+    /**
+     * Updates the narration output with the current narration information.
+     *
+     * @param narrationElementOutput the output to update with narration information.
+     */
     @Override
-    public final void updateNarration(NarrationElementOutput p_259921_) {
-        this.updateWidgetNarration(p_259921_);
-        this.tooltip.updateNarration(p_259921_);
+    public final void updateNarration(NarrationElementOutput narrationElementOutput) {
+        this.updateWidgetNarration(narrationElementOutput);
+        this.tooltip.updateNarration(narrationElementOutput);
     }
 
-    protected abstract void updateWidgetNarration(NarrationElementOutput p_259858_);
+    protected abstract void updateWidgetNarration(NarrationElementOutput narrationElementOutput);
 
-    protected void defaultButtonNarrationText(NarrationElementOutput p_168803_) {
-        p_168803_.add(NarratedElementType.TITLE, this.createNarrationMessage());
+    protected void defaultButtonNarrationText(NarrationElementOutput narrationElementOutput) {
+        narrationElementOutput.add(NarratedElementType.TITLE, this.createNarrationMessage());
         if (this.active) {
             if (this.isFocused()) {
-                p_168803_.add(NarratedElementType.USAGE, Component.translatable("narration.button.usage.focused"));
+                narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.button.usage.focused"));
             } else {
-                p_168803_.add(NarratedElementType.USAGE, Component.translatable("narration.button.usage.hovered"));
+                narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.button.usage.hovered"));
             }
         }
     }
@@ -304,8 +368,8 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, La
     }
 
     @Override
-    public void setX(int p_254495_) {
-        this.x = p_254495_;
+    public void setX(int x) {
+        this.x = x;
     }
 
     @Override
@@ -314,8 +378,8 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, La
     }
 
     @Override
-    public void setY(int p_253718_) {
-        this.y = p_253718_;
+    public void setY(int y) {
+        this.y = y;
     }
 
     public int getRight() {
@@ -327,13 +391,13 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, La
     }
 
     @Override
-    public void visitWidgets(Consumer<AbstractWidget> p_265566_) {
-        p_265566_.accept(this);
+    public void visitWidgets(Consumer<AbstractWidget> consumer) {
+        consumer.accept(this);
     }
 
-    public void setSize(int p_313746_, int p_313734_) {
-        this.width = p_313746_;
-        this.height = p_313734_;
+    public void setSize(int width, int height) {
+        this.width = width;
+        this.height = height;
     }
 
     @Override
@@ -341,9 +405,9 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, La
         return LayoutElement.super.getRectangle();
     }
 
-    public void setRectangle(int p_313710_, int p_313740_, int p_313689_, int p_313709_) {
-        this.setSize(p_313710_, p_313740_);
-        this.setPosition(p_313689_, p_313709_);
+    public void setRectangle(int width, int height, int x, int y) {
+        this.setSize(width, height);
+        this.setPosition(x, y);
     }
 
     @Override
@@ -351,7 +415,7 @@ public abstract class AbstractWidget implements Renderable, GuiEventListener, La
         return this.tabOrderGroup;
     }
 
-    public void setTabOrderGroup(int p_268123_) {
-        this.tabOrderGroup = p_268123_;
+    public void setTabOrderGroup(int tabOrderGroup) {
+        this.tabOrderGroup = tabOrderGroup;
     }
 }

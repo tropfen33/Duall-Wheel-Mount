@@ -56,8 +56,8 @@ public class CrafterBlockEntity extends RandomizableContainerBlockEntity impleme
         }
     };
 
-    public CrafterBlockEntity(BlockPos p_307502_, BlockState p_307485_) {
-        super(BlockEntityType.CRAFTER, p_307502_, p_307485_);
+    public CrafterBlockEntity(BlockPos pos, BlockState state) {
+        super(BlockEntityType.CRAFTER, pos, state);
     }
 
     @Override
@@ -66,41 +66,44 @@ public class CrafterBlockEntity extends RandomizableContainerBlockEntity impleme
     }
 
     @Override
-    protected AbstractContainerMenu createMenu(int p_307441_, Inventory p_307664_) {
-        return new CrafterMenu(p_307441_, p_307664_, this, this.containerData);
+    protected AbstractContainerMenu createMenu(int containerId, Inventory inventory) {
+        return new CrafterMenu(containerId, inventory, this, this.containerData);
     }
 
-    public void setSlotState(int p_307571_, boolean p_307624_) {
-        if (this.slotCanBeDisabled(p_307571_)) {
-            this.containerData.set(p_307571_, p_307624_ ? 0 : 1);
+    public void setSlotState(int slot, boolean state) {
+        if (this.slotCanBeDisabled(slot)) {
+            this.containerData.set(slot, state ? 0 : 1);
             this.setChanged();
         }
     }
 
-    public boolean isSlotDisabled(int p_307461_) {
-        return p_307461_ >= 0 && p_307461_ < 9 ? this.containerData.get(p_307461_) == 1 : false;
+    public boolean isSlotDisabled(int slot) {
+        return slot >= 0 && slot < 9 ? this.containerData.get(slot) == 1 : false;
     }
 
+    /**
+     * Returns {@code true} if automation is allowed to insert the given stack (ignoring stack size) into the given slot. For guis use Slot.isItemValid
+     */
     @Override
-    public boolean canPlaceItem(int p_307543_, ItemStack p_307267_) {
-        if (this.containerData.get(p_307543_) == 1) {
+    public boolean canPlaceItem(int slot, ItemStack stack) {
+        if (this.containerData.get(slot) == 1) {
             return false;
         } else {
-            ItemStack itemstack = this.items.get(p_307543_);
+            ItemStack itemstack = this.items.get(slot);
             int i = itemstack.getCount();
             if (i >= itemstack.getMaxStackSize()) {
                 return false;
             } else {
-                return itemstack.isEmpty() ? true : !this.smallerStackExist(i, itemstack, p_307543_);
+                return itemstack.isEmpty() ? true : !this.smallerStackExist(i, itemstack, slot);
             }
         }
     }
 
-    private boolean smallerStackExist(int p_307396_, ItemStack p_307520_, int p_307348_) {
-        for (int i = p_307348_ + 1; i < 9; i++) {
+    private boolean smallerStackExist(int currentSize, ItemStack stack, int slot) {
+        for (int i = slot + 1; i < 9; i++) {
             if (!this.isSlotDisabled(i)) {
                 ItemStack itemstack = this.getItem(i);
-                if (itemstack.isEmpty() || itemstack.getCount() < p_307396_ && ItemStack.isSameItemSameComponents(itemstack, p_307520_)) {
+                if (itemstack.isEmpty() || itemstack.getCount() < currentSize && ItemStack.isSameItemSameComponents(itemstack, stack)) {
                     return true;
                 }
             }
@@ -110,15 +113,15 @@ public class CrafterBlockEntity extends RandomizableContainerBlockEntity impleme
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_307457_, HolderLookup.Provider p_324538_) {
-        super.loadAdditional(p_307457_, p_324538_);
-        this.craftingTicksRemaining = p_307457_.getInt("crafting_ticks_remaining");
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        this.craftingTicksRemaining = tag.getInt("crafting_ticks_remaining");
         this.items = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
-        if (!this.tryLoadLootTable(p_307457_)) {
-            ContainerHelper.loadAllItems(p_307457_, this.items, p_324538_);
+        if (!this.tryLoadLootTable(tag)) {
+            ContainerHelper.loadAllItems(tag, this.items, registries);
         }
 
-        int[] aint = p_307457_.getIntArray("disabled_slots");
+        int[] aint = tag.getIntArray("disabled_slots");
 
         for (int i = 0; i < 9; i++) {
             this.containerData.set(i, 0);
@@ -130,19 +133,19 @@ public class CrafterBlockEntity extends RandomizableContainerBlockEntity impleme
             }
         }
 
-        this.containerData.set(9, p_307457_.getInt("triggered"));
+        this.containerData.set(9, tag.getInt("triggered"));
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_307531_, HolderLookup.Provider p_324381_) {
-        super.saveAdditional(p_307531_, p_324381_);
-        p_307531_.putInt("crafting_ticks_remaining", this.craftingTicksRemaining);
-        if (!this.trySaveLootTable(p_307531_)) {
-            ContainerHelper.saveAllItems(p_307531_, this.items, p_324381_);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        tag.putInt("crafting_ticks_remaining", this.craftingTicksRemaining);
+        if (!this.trySaveLootTable(tag)) {
+            ContainerHelper.saveAllItems(tag, this.items, registries);
         }
 
-        this.addDisabledSlots(p_307531_);
-        this.addTriggered(p_307531_);
+        this.addDisabledSlots(tag);
+        this.addTriggered(tag);
     }
 
     @Override
@@ -162,22 +165,25 @@ public class CrafterBlockEntity extends RandomizableContainerBlockEntity impleme
     }
 
     @Override
-    public ItemStack getItem(int p_307189_) {
-        return this.items.get(p_307189_);
+    public ItemStack getItem(int index) {
+        return this.items.get(index);
     }
 
     @Override
-    public void setItem(int p_307195_, ItemStack p_307232_) {
-        if (this.isSlotDisabled(p_307195_)) {
-            this.setSlotState(p_307195_, true);
+    public void setItem(int index, ItemStack stack) {
+        if (this.isSlotDisabled(index)) {
+            this.setSlotState(index, true);
         }
 
-        super.setItem(p_307195_, p_307232_);
+        super.setItem(index, stack);
     }
 
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
     @Override
-    public boolean stillValid(Player p_307443_) {
-        return Container.stillValidBlockEntity(this, p_307443_);
+    public boolean stillValid(Player player) {
+        return Container.stillValidBlockEntity(this, player);
     }
 
     @Override
@@ -186,8 +192,8 @@ public class CrafterBlockEntity extends RandomizableContainerBlockEntity impleme
     }
 
     @Override
-    protected void setItems(NonNullList<ItemStack> p_307392_) {
-        this.items = p_307392_;
+    protected void setItems(NonNullList<ItemStack> items) {
+        this.items = items;
     }
 
     @Override
@@ -201,13 +207,13 @@ public class CrafterBlockEntity extends RandomizableContainerBlockEntity impleme
     }
 
     @Override
-    public void fillStackedContents(StackedContents p_307380_) {
+    public void fillStackedContents(StackedContents contents) {
         for (ItemStack itemstack : this.items) {
-            p_307380_.accountSimpleStack(itemstack);
+            contents.accountSimpleStack(itemstack);
         }
     }
 
-    private void addDisabledSlots(CompoundTag p_307523_) {
+    private void addDisabledSlots(CompoundTag tag) {
         IntList intlist = new IntArrayList();
 
         for (int i = 0; i < 9; i++) {
@@ -216,15 +222,15 @@ public class CrafterBlockEntity extends RandomizableContainerBlockEntity impleme
             }
         }
 
-        p_307523_.putIntArray("disabled_slots", intlist);
+        tag.putIntArray("disabled_slots", intlist);
     }
 
-    private void addTriggered(CompoundTag p_307675_) {
-        p_307675_.putInt("triggered", this.containerData.get(9));
+    private void addTriggered(CompoundTag tag) {
+        tag.putInt("triggered", this.containerData.get(9));
     }
 
-    public void setTriggered(boolean p_307366_) {
-        this.containerData.set(9, p_307366_ ? 1 : 0);
+    public void setTriggered(boolean triggered) {
+        this.containerData.set(9, triggered ? 1 : 0);
     }
 
     @VisibleForTesting
@@ -232,18 +238,18 @@ public class CrafterBlockEntity extends RandomizableContainerBlockEntity impleme
         return this.containerData.get(9) == 1;
     }
 
-    public static void serverTick(Level p_307316_, BlockPos p_307463_, BlockState p_307350_, CrafterBlockEntity p_307265_) {
-        int i = p_307265_.craftingTicksRemaining - 1;
+    public static void serverTick(Level level, BlockPos pos, BlockState state, CrafterBlockEntity crafter) {
+        int i = crafter.craftingTicksRemaining - 1;
         if (i >= 0) {
-            p_307265_.craftingTicksRemaining = i;
+            crafter.craftingTicksRemaining = i;
             if (i == 0) {
-                p_307316_.setBlock(p_307463_, p_307350_.setValue(CrafterBlock.CRAFTING, Boolean.valueOf(false)), 3);
+                level.setBlock(pos, state.setValue(CrafterBlock.CRAFTING, Boolean.valueOf(false)), 3);
             }
         }
     }
 
-    public void setCraftingTicksRemaining(int p_307276_) {
-        this.craftingTicksRemaining = p_307276_;
+    public void setCraftingTicksRemaining(int craftingTicksRemaining) {
+        this.craftingTicksRemaining = craftingTicksRemaining;
     }
 
     public int getRedstoneSignal() {
@@ -259,7 +265,7 @@ public class CrafterBlockEntity extends RandomizableContainerBlockEntity impleme
         return i;
     }
 
-    private boolean slotCanBeDisabled(int p_307658_) {
-        return p_307658_ > -1 && p_307658_ < 9 && this.items.get(p_307658_).isEmpty();
+    private boolean slotCanBeDisabled(int slot) {
+        return slot > -1 && slot < 9 && this.items.get(slot).isEmpty();
     }
 }

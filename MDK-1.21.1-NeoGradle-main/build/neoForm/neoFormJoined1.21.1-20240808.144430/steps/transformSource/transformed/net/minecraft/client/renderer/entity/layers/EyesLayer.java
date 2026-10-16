@@ -13,25 +13,25 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class EyesLayer<T extends Entity, M extends EntityModel<T>> extends RenderLayer<T, M> {
-    public EyesLayer(RenderLayerParent<T, M> p_116981_) {
-        super(p_116981_);
+    public EyesLayer(RenderLayerParent<T, M> renderer) {
+        super(renderer);
     }
 
     @Override
     public void render(
-        PoseStack p_116983_,
-        MultiBufferSource p_116984_,
-        int p_116985_,
-        T p_116986_,
-        float p_116987_,
-        float p_116988_,
-        float p_116989_,
-        float p_116990_,
-        float p_116991_,
-        float p_116992_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        T livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTicks,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
-        VertexConsumer vertexconsumer = p_116984_.getBuffer(this.renderType());
-        this.getParentModel().renderToBuffer(p_116983_, vertexconsumer, 15728640, OverlayTexture.NO_OVERLAY);
+        VertexConsumer vertexconsumer = buffer.getBuffer(this.renderType());
+        this.getParentModel().renderToBuffer(poseStack, vertexconsumer, 15728640, OverlayTexture.NO_OVERLAY);
     }
 
     public abstract RenderType renderType();

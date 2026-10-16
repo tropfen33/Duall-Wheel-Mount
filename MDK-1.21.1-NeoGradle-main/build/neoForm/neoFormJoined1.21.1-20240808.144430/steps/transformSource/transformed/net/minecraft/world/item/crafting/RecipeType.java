@@ -13,11 +13,11 @@ public interface RecipeType<T extends Recipe<?>> {
     RecipeType<StonecutterRecipe> STONECUTTING = register("stonecutting");
     RecipeType<SmithingRecipe> SMITHING = register("smithing");
 
-    static <T extends Recipe<?>> RecipeType<T> register(final String p_44120_) {
-        return Registry.register(BuiltInRegistries.RECIPE_TYPE, ResourceLocation.withDefaultNamespace(p_44120_), new RecipeType<T>() {
+    static <T extends Recipe<?>> RecipeType<T> register(final String identifier) {
+        return Registry.register(BuiltInRegistries.RECIPE_TYPE, ResourceLocation.withDefaultNamespace(identifier), new RecipeType<T>() {
             @Override
             public String toString() {
-                return p_44120_;
+                return identifier;
             }
         });
     }

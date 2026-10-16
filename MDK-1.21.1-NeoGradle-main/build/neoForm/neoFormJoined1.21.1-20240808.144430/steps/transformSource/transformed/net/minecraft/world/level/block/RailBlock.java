@@ -26,9 +26,9 @@ public class RailBlock extends BaseRailBlock {
     }
 
     @Override
-    protected void updateState(BlockState p_55397_, Level p_55398_, BlockPos p_55399_, Block p_55400_) {
-        if (p_55400_.defaultBlockState().isSignalSource() && new RailState(p_55398_, p_55399_, p_55397_).countPotentialConnections() == 3) {
-            this.updateDir(p_55398_, p_55399_, p_55397_, false);
+    protected void updateState(BlockState state, Level level, BlockPos pos, Block block) {
+        if (block.defaultBlockState().isSignalSource() && new RailState(level, pos, state).countPotentialConnections() == 3) {
+            this.updateDir(level, pos, state, false);
         }
     }
 
@@ -37,11 +37,14 @@ public class RailBlock extends BaseRailBlock {
         return SHAPE;
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_55405_, Rotation p_55406_) {
-        RailShape railshape = p_55405_.getValue(SHAPE);
+    protected BlockState rotate(BlockState state, Rotation rot) {
+        RailShape railshape = state.getValue(SHAPE);
 
-        return p_55405_.setValue(SHAPE, switch (p_55406_) {
+        return state.setValue(SHAPE, switch (rot) {
             case CLOCKWISE_180 -> {
                 switch (railshape) {
                     case NORTH_SOUTH:
@@ -124,56 +127,59 @@ public class RailBlock extends BaseRailBlock {
         });
     }
 
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState mirror(BlockState p_55402_, Mirror p_55403_) {
-        RailShape railshape = p_55402_.getValue(SHAPE);
-        switch (p_55403_) {
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        RailShape railshape = state.getValue(SHAPE);
+        switch (mirror) {
             case LEFT_RIGHT:
                 switch (railshape) {
                     case ASCENDING_NORTH:
-                        return p_55402_.setValue(SHAPE, RailShape.ASCENDING_SOUTH);
+                        return state.setValue(SHAPE, RailShape.ASCENDING_SOUTH);
                     case ASCENDING_SOUTH:
-                        return p_55402_.setValue(SHAPE, RailShape.ASCENDING_NORTH);
+                        return state.setValue(SHAPE, RailShape.ASCENDING_NORTH);
                     case SOUTH_EAST:
-                        return p_55402_.setValue(SHAPE, RailShape.NORTH_EAST);
+                        return state.setValue(SHAPE, RailShape.NORTH_EAST);
                     case SOUTH_WEST:
-                        return p_55402_.setValue(SHAPE, RailShape.NORTH_WEST);
+                        return state.setValue(SHAPE, RailShape.NORTH_WEST);
                     case NORTH_WEST:
-                        return p_55402_.setValue(SHAPE, RailShape.SOUTH_WEST);
+                        return state.setValue(SHAPE, RailShape.SOUTH_WEST);
                     case NORTH_EAST:
-                        return p_55402_.setValue(SHAPE, RailShape.SOUTH_EAST);
+                        return state.setValue(SHAPE, RailShape.SOUTH_EAST);
                     default:
-                        return super.mirror(p_55402_, p_55403_);
+                        return super.mirror(state, mirror);
                 }
             case FRONT_BACK:
                 switch (railshape) {
                     case ASCENDING_EAST:
-                        return p_55402_.setValue(SHAPE, RailShape.ASCENDING_WEST);
+                        return state.setValue(SHAPE, RailShape.ASCENDING_WEST);
                     case ASCENDING_WEST:
-                        return p_55402_.setValue(SHAPE, RailShape.ASCENDING_EAST);
+                        return state.setValue(SHAPE, RailShape.ASCENDING_EAST);
                     case ASCENDING_NORTH:
                     case ASCENDING_SOUTH:
                     default:
                         break;
                     case SOUTH_EAST:
-                        return p_55402_.setValue(SHAPE, RailShape.SOUTH_WEST);
+                        return state.setValue(SHAPE, RailShape.SOUTH_WEST);
                     case SOUTH_WEST:
-                        return p_55402_.setValue(SHAPE, RailShape.SOUTH_EAST);
+                        return state.setValue(SHAPE, RailShape.SOUTH_EAST);
                     case NORTH_WEST:
-                        return p_55402_.setValue(SHAPE, RailShape.NORTH_EAST);
+                        return state.setValue(SHAPE, RailShape.NORTH_EAST);
                     case NORTH_EAST:
-                        return p_55402_.setValue(SHAPE, RailShape.NORTH_WEST);
+                        return state.setValue(SHAPE, RailShape.NORTH_WEST);
                     case NORTH_SOUTH: //Forge fix: MC-196102
                     case EAST_WEST:
-                        return p_55402_; // TODO 1.20.3 PORTING: reevaluate
+                        return state; // TODO 1.20.3 PORTING: reevaluate
                 }
         }
 
-        return super.mirror(p_55402_, p_55403_);
+        return super.mirror(state, mirror);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_55408_) {
-        p_55408_.add(SHAPE, WATERLOGGED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(SHAPE, WATERLOGGED);
     }
 }

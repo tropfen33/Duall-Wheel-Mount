@@ -12,8 +12,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class LockIconButton extends Button {
     private boolean locked;
 
-    public LockIconButton(int p_94299_, int p_94300_, Button.OnPress p_94301_) {
-        super(p_94299_, p_94300_, 20, 20, Component.translatable("narrator.button.difficulty_lock"), p_94301_, DEFAULT_NARRATION);
+    public LockIconButton(int x, int y, Button.OnPress onPress) {
+        super(x, y, 20, 20, Component.translatable("narrator.button.difficulty_lock"), onPress, DEFAULT_NARRATION);
     }
 
     @Override
@@ -30,12 +30,12 @@ public class LockIconButton extends Button {
         return this.locked;
     }
 
-    public void setLocked(boolean p_94310_) {
-        this.locked = p_94310_;
+    public void setLocked(boolean locked) {
+        this.locked = locked;
     }
 
     @Override
-    public void renderWidget(GuiGraphics p_282701_, int p_282638_, int p_283565_, float p_282549_) {
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         LockIconButton.Icon lockiconbutton$icon;
         if (!this.active) {
             lockiconbutton$icon = this.locked ? LockIconButton.Icon.LOCKED_DISABLED : LockIconButton.Icon.UNLOCKED_DISABLED;
@@ -45,7 +45,7 @@ public class LockIconButton extends Button {
             lockiconbutton$icon = this.locked ? LockIconButton.Icon.LOCKED : LockIconButton.Icon.UNLOCKED;
         }
 
-        p_282701_.blitSprite(lockiconbutton$icon.sprite, this.getX(), this.getY(), this.width, this.height);
+        guiGraphics.blitSprite(lockiconbutton$icon.sprite, this.getX(), this.getY(), this.width, this.height);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -59,8 +59,8 @@ public class LockIconButton extends Button {
 
         final ResourceLocation sprite;
 
-        private Icon(ResourceLocation p_294269_) {
-            this.sprite = p_294269_;
+        private Icon(ResourceLocation sprite) {
+            this.sprite = sprite;
         }
     }
 }

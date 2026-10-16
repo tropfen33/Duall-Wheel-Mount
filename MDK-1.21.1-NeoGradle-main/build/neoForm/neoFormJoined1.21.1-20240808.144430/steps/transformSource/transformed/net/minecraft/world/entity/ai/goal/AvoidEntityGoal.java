@@ -22,38 +22,44 @@ public class AvoidEntityGoal<T extends LivingEntity> extends Goal {
     @Nullable
     protected Path path;
     protected final PathNavigation pathNav;
+    /**
+     * Class of entity this behavior seeks to avoid
+     */
     protected final Class<T> avoidClass;
     protected final Predicate<LivingEntity> avoidPredicate;
     protected final Predicate<LivingEntity> predicateOnAvoidEntity;
     private final TargetingConditions avoidEntityTargeting;
 
-    public AvoidEntityGoal(PathfinderMob p_25027_, Class<T> p_25028_, float p_25029_, double p_25030_, double p_25031_) {
-        this(p_25027_, p_25028_, p_25052_ -> true, p_25029_, p_25030_, p_25031_, EntitySelector.NO_CREATIVE_OR_SPECTATOR::test);
+    public AvoidEntityGoal(PathfinderMob mob, Class<T> entityClassToAvoid, float maxDistance, double walkSpeedModifier, double sprintSpeedModifier) {
+        this(mob, entityClassToAvoid, p_25052_ -> true, maxDistance, walkSpeedModifier, sprintSpeedModifier, EntitySelector.NO_CREATIVE_OR_SPECTATOR::test);
     }
 
+    /**
+     * Goal that helps mobs avoid mobs of a specific class
+     */
     public AvoidEntityGoal(
-        PathfinderMob p_25040_,
-        Class<T> p_25041_,
-        Predicate<LivingEntity> p_25042_,
-        float p_25043_,
-        double p_25044_,
-        double p_25045_,
-        Predicate<LivingEntity> p_25046_
+        PathfinderMob mob,
+        Class<T> entityClassToAvoid,
+        Predicate<LivingEntity> avoidPredicate,
+        float maxDistance,
+        double walkSpeedModifier,
+        double sprintSpeedModifier,
+        Predicate<LivingEntity> predicateOnAvoidEntity
     ) {
-        this.mob = p_25040_;
-        this.avoidClass = p_25041_;
-        this.avoidPredicate = p_25042_;
-        this.maxDist = p_25043_;
-        this.walkSpeedModifier = p_25044_;
-        this.sprintSpeedModifier = p_25045_;
-        this.predicateOnAvoidEntity = p_25046_;
-        this.pathNav = p_25040_.getNavigation();
+        this.mob = mob;
+        this.avoidClass = entityClassToAvoid;
+        this.avoidPredicate = avoidPredicate;
+        this.maxDist = maxDistance;
+        this.walkSpeedModifier = walkSpeedModifier;
+        this.sprintSpeedModifier = sprintSpeedModifier;
+        this.predicateOnAvoidEntity = predicateOnAvoidEntity;
+        this.pathNav = mob.getNavigation();
         this.setFlags(EnumSet.of(Goal.Flag.MOVE));
-        this.avoidEntityTargeting = TargetingConditions.forCombat().range((double)p_25043_).selector(p_25046_.and(p_25042_));
+        this.avoidEntityTargeting = TargetingConditions.forCombat().range((double)maxDistance).selector(predicateOnAvoidEntity.and(avoidPredicate));
     }
 
-    public AvoidEntityGoal(PathfinderMob p_25033_, Class<T> p_25034_, float p_25035_, double p_25036_, double p_25037_, Predicate<LivingEntity> p_25038_) {
-        this(p_25033_, p_25034_, p_25049_ -> true, p_25035_, p_25036_, p_25037_, p_25038_);
+    public AvoidEntityGoal(PathfinderMob mob, Class<T> entityClassToAvoid, float maxDistance, double walkSpeedModifier, double sprintSpeedModifier, Predicate<LivingEntity> predicateOnAvoidEntity) {
+        this(mob, entityClassToAvoid, p_25049_ -> true, maxDistance, walkSpeedModifier, sprintSpeedModifier, predicateOnAvoidEntity);
     }
 
     @Override

@@ -18,25 +18,28 @@ public class SalmonRenderer extends MobRenderer<Salmon, SalmonModel<Salmon>> {
         super(p_174364_, new SalmonModel<>(p_174364_.bakeLayer(ModelLayers.SALMON)), 0.4F);
     }
 
-    public ResourceLocation getTextureLocation(Salmon p_115826_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Salmon entity) {
         return SALMON_LOCATION;
     }
 
-    protected void setupRotations(Salmon p_115828_, PoseStack p_115829_, float p_115830_, float p_115831_, float p_115832_, float p_320820_) {
-        super.setupRotations(p_115828_, p_115829_, p_115830_, p_115831_, p_115832_, p_320820_);
+    protected void setupRotations(Salmon entity, PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale) {
+        super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
         float f = 1.0F;
         float f1 = 1.0F;
-        if (!p_115828_.isInWater()) {
+        if (!entity.isInWater()) {
             f = 1.3F;
             f1 = 1.7F;
         }
 
-        float f2 = f * 4.3F * Mth.sin(f1 * 0.6F * p_115830_);
-        p_115829_.mulPose(Axis.YP.rotationDegrees(f2));
-        p_115829_.translate(0.0F, 0.0F, -0.4F);
-        if (!p_115828_.isInWater()) {
-            p_115829_.translate(0.2F, 0.1F, 0.0F);
-            p_115829_.mulPose(Axis.ZP.rotationDegrees(90.0F));
+        float f2 = f * 4.3F * Mth.sin(f1 * 0.6F * bob);
+        poseStack.mulPose(Axis.YP.rotationDegrees(f2));
+        poseStack.translate(0.0F, 0.0F, -0.4F);
+        if (!entity.isInWater()) {
+            poseStack.translate(0.2F, 0.1F, 0.0F);
+            poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
         }
     }
 }

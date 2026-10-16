@@ -15,8 +15,8 @@ public record ServerboundChatSessionUpdatePacket(RemoteChatSession.Data chatSess
         this(RemoteChatSession.Data.read(p_254010_));
     }
 
-    private void write(FriendlyByteBuf p_253690_) {
-        RemoteChatSession.Data.write(p_253690_, this.chatSession);
+    private void write(FriendlyByteBuf buffer) {
+        RemoteChatSession.Data.write(buffer, this.chatSession);
     }
 
     @Override
@@ -24,7 +24,10 @@ public record ServerboundChatSessionUpdatePacket(RemoteChatSession.Data chatSess
         return GamePacketTypes.SERVERBOUND_CHAT_SESSION_UPDATE;
     }
 
-    public void handle(ServerGamePacketListener p_253620_) {
-        p_253620_.handleChatSessionUpdate(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleChatSessionUpdate(this);
     }
 }

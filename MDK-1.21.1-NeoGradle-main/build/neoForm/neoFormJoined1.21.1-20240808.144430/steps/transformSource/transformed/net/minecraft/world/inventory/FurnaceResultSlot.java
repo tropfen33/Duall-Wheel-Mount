@@ -10,45 +10,59 @@ public class FurnaceResultSlot extends Slot {
     private final Player player;
     private int removeCount;
 
-    public FurnaceResultSlot(Player p_39542_, Container p_39543_, int p_39544_, int p_39545_, int p_39546_) {
-        super(p_39543_, p_39544_, p_39545_, p_39546_);
-        this.player = p_39542_;
+    public FurnaceResultSlot(Player player, Container container, int slot, int xPosition, int yPosition) {
+        super(container, slot, xPosition, yPosition);
+        this.player = player;
     }
 
+    /**
+     * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+     */
     @Override
-    public boolean mayPlace(ItemStack p_39553_) {
+    public boolean mayPlace(ItemStack stack) {
         return false;
     }
 
+    /**
+     * Decrease the size of the stack in slot (first int arg) by the amount of the second int arg. Returns the new stack.
+     */
     @Override
-    public ItemStack remove(int p_39548_) {
+    public ItemStack remove(int amount) {
         if (this.hasItem()) {
-            this.removeCount = this.removeCount + Math.min(p_39548_, this.getItem().getCount());
+            this.removeCount = this.removeCount + Math.min(amount, this.getItem().getCount());
         }
 
-        return super.remove(p_39548_);
+        return super.remove(amount);
     }
 
     @Override
-    public void onTake(Player p_150563_, ItemStack p_150564_) {
-        this.checkTakeAchievements(p_150564_);
-        super.onTake(p_150563_, p_150564_);
+    public void onTake(Player player, ItemStack stack) {
+        this.checkTakeAchievements(stack);
+        super.onTake(player, stack);
     }
 
+    /**
+     * Typically increases an internal count, then calls {@code onCrafting(item)}.
+     *
+     * @param stack the output - ie, iron ingots, and pickaxes, not ore and wood.
+     */
     @Override
-    protected void onQuickCraft(ItemStack p_39555_, int p_39556_) {
-        this.removeCount += p_39556_;
-        this.checkTakeAchievements(p_39555_);
+    protected void onQuickCraft(ItemStack stack, int amount) {
+        this.removeCount += amount;
+        this.checkTakeAchievements(stack);
     }
 
+    /**
+     * @param stack the output - ie, iron ingots, and pickaxes, not ore and wood.
+     */
     @Override
-    protected void checkTakeAchievements(ItemStack p_39558_) {
-        p_39558_.onCraftedBy(this.player.level(), this.player, this.removeCount);
+    protected void checkTakeAchievements(ItemStack stack) {
+        stack.onCraftedBy(this.player.level(), this.player, this.removeCount);
         if (this.player instanceof ServerPlayer serverplayer && this.container instanceof AbstractFurnaceBlockEntity abstractfurnaceblockentity) {
             abstractfurnaceblockentity.awardUsedRecipesAndPopExperience(serverplayer);
         }
 
         this.removeCount = 0;
-        net.neoforged.neoforge.event.EventHooks.firePlayerSmeltedEvent(this.player, p_39558_);
+        net.neoforged.neoforge.event.EventHooks.firePlayerSmeltedEvent(this.player, stack);
     }
 }

@@ -12,8 +12,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 public interface UnbakedModel {
     Collection<ResourceLocation> getDependencies();
 
-    void resolveParents(Function<ResourceLocation, UnbakedModel> p_119538_);
+    void resolveParents(Function<ResourceLocation, UnbakedModel> resolver);
 
     @Nullable
-    BakedModel bake(ModelBaker p_250133_, Function<Material, TextureAtlasSprite> p_119535_, ModelState p_119536_);
+    BakedModel bake(ModelBaker baker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState state);
 }

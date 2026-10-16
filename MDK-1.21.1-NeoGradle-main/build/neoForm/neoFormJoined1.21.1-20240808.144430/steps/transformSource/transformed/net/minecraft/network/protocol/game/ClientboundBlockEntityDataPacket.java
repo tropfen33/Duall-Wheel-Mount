@@ -24,22 +24,25 @@ public class ClientboundBlockEntityDataPacket implements Packet<ClientGamePacket
         ClientboundBlockEntityDataPacket::new
     );
     private final BlockPos pos;
+    /**
+     * Used only for vanilla block entities
+     */
     private final BlockEntityType<?> type;
     private final CompoundTag tag;
 
-    public static ClientboundBlockEntityDataPacket create(BlockEntity p_195643_, BiFunction<BlockEntity, RegistryAccess, CompoundTag> p_324611_) {
-        RegistryAccess registryaccess = p_195643_.getLevel().registryAccess();
-        return new ClientboundBlockEntityDataPacket(p_195643_.getBlockPos(), p_195643_.getType(), p_324611_.apply(p_195643_, registryaccess));
+    public static ClientboundBlockEntityDataPacket create(BlockEntity blockEntity, BiFunction<BlockEntity, RegistryAccess, CompoundTag> dataGetter) {
+        RegistryAccess registryaccess = blockEntity.getLevel().registryAccess();
+        return new ClientboundBlockEntityDataPacket(blockEntity.getBlockPos(), blockEntity.getType(), dataGetter.apply(blockEntity, registryaccess));
     }
 
-    public static ClientboundBlockEntityDataPacket create(BlockEntity p_195641_) {
-        return create(p_195641_, BlockEntity::getUpdateTag);
+    public static ClientboundBlockEntityDataPacket create(BlockEntity blockEntity) {
+        return create(blockEntity, BlockEntity::getUpdateTag);
     }
 
-    private ClientboundBlockEntityDataPacket(BlockPos p_195637_, BlockEntityType<?> p_195638_, CompoundTag p_195639_) {
-        this.pos = p_195637_;
-        this.type = p_195638_;
-        this.tag = p_195639_;
+    private ClientboundBlockEntityDataPacket(BlockPos pos, BlockEntityType<?> type, CompoundTag tag) {
+        this.pos = pos;
+        this.type = type;
+        this.tag = tag;
     }
 
     @Override
@@ -47,8 +50,11 @@ public class ClientboundBlockEntityDataPacket implements Packet<ClientGamePacket
         return GamePacketTypes.CLIENTBOUND_BLOCK_ENTITY_DATA;
     }
 
-    public void handle(ClientGamePacketListener p_131703_) {
-        p_131703_.handleBlockEntityData(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleBlockEntityData(this);
     }
 
     public BlockPos getPos() {

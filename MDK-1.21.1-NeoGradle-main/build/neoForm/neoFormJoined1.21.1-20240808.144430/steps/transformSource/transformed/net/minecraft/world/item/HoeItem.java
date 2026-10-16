@@ -48,24 +48,27 @@ public class HoeItem extends DiggerItem {
         super(p_41336_, BlockTags.MINEABLE_WITH_HOE, p_41339_);
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_41341_) {
-        Level level = p_41341_.getLevel();
-        BlockPos blockpos = p_41341_.getClickedPos();
-        BlockState toolModifiedState = level.getBlockState(blockpos).getToolModifiedState(p_41341_, net.neoforged.neoforge.common.ItemAbilities.HOE_TILL, false);
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
+        BlockState toolModifiedState = level.getBlockState(blockpos).getToolModifiedState(context, net.neoforged.neoforge.common.ItemAbilities.HOE_TILL, false);
         Pair<Predicate<UseOnContext>, Consumer<UseOnContext>> pair = toolModifiedState == null ? null : Pair.of(ctx -> true, changeIntoState(toolModifiedState));
         if (pair == null) {
             return InteractionResult.PASS;
         } else {
             Predicate<UseOnContext> predicate = pair.getFirst();
             Consumer<UseOnContext> consumer = pair.getSecond();
-            if (predicate.test(p_41341_)) {
-                Player player = p_41341_.getPlayer();
+            if (predicate.test(context)) {
+                Player player = context.getPlayer();
                 level.playSound(player, blockpos, SoundEvents.HOE_TILL, SoundSource.BLOCKS, 1.0F, 1.0F);
                 if (!level.isClientSide) {
-                    consumer.accept(p_41341_);
+                    consumer.accept(context);
                     if (player != null) {
-                        p_41341_.getItemInHand().hurtAndBreak(1, player, LivingEntity.getSlotForHand(p_41341_.getHand()));
+                        context.getItemInHand().hurtAndBreak(1, player, LivingEntity.getSlotForHand(context.getHand()));
                     }
                 }
 
@@ -76,23 +79,23 @@ public class HoeItem extends DiggerItem {
         }
     }
 
-    public static Consumer<UseOnContext> changeIntoState(BlockState p_150859_) {
+    public static Consumer<UseOnContext> changeIntoState(BlockState state) {
         return p_316061_ -> {
-            p_316061_.getLevel().setBlock(p_316061_.getClickedPos(), p_150859_, 11);
-            p_316061_.getLevel().gameEvent(GameEvent.BLOCK_CHANGE, p_316061_.getClickedPos(), GameEvent.Context.of(p_316061_.getPlayer(), p_150859_));
+            p_316061_.getLevel().setBlock(p_316061_.getClickedPos(), state, 11);
+            p_316061_.getLevel().gameEvent(GameEvent.BLOCK_CHANGE, p_316061_.getClickedPos(), GameEvent.Context.of(p_316061_.getPlayer(), state));
         };
     }
 
-    public static Consumer<UseOnContext> changeIntoStateAndDropItem(BlockState p_150850_, ItemLike p_150851_) {
+    public static Consumer<UseOnContext> changeIntoStateAndDropItem(BlockState state, ItemLike itemToDrop) {
         return p_316064_ -> {
-            p_316064_.getLevel().setBlock(p_316064_.getClickedPos(), p_150850_, 11);
-            p_316064_.getLevel().gameEvent(GameEvent.BLOCK_CHANGE, p_316064_.getClickedPos(), GameEvent.Context.of(p_316064_.getPlayer(), p_150850_));
-            Block.popResourceFromFace(p_316064_.getLevel(), p_316064_.getClickedPos(), p_316064_.getClickedFace(), new ItemStack(p_150851_));
+            p_316064_.getLevel().setBlock(p_316064_.getClickedPos(), state, 11);
+            p_316064_.getLevel().gameEvent(GameEvent.BLOCK_CHANGE, p_316064_.getClickedPos(), GameEvent.Context.of(p_316064_.getPlayer(), state));
+            Block.popResourceFromFace(p_316064_.getLevel(), p_316064_.getClickedPos(), p_316064_.getClickedFace(), new ItemStack(itemToDrop));
         };
     }
 
-    public static boolean onlyIfAirAbove(UseOnContext p_150857_) {
-        return p_150857_.getClickedFace() != Direction.DOWN && p_150857_.getLevel().getBlockState(p_150857_.getClickedPos().above()).isAir();
+    public static boolean onlyIfAirAbove(UseOnContext context) {
+        return context.getClickedFace() != Direction.DOWN && context.getLevel().getBlockState(context.getClickedPos().above()).isAir();
     }
 
     @Override

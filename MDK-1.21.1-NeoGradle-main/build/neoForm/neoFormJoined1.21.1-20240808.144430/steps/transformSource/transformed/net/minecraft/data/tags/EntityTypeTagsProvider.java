@@ -8,17 +8,22 @@ import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.entity.EntityType;
 
 public class EntityTypeTagsProvider extends IntrinsicHolderTagsProvider<EntityType<?>> {
-    /** @deprecated Forge: Use the {@linkplain #EntityTypeTagsProvider(PackOutput, CompletableFuture, String, net.neoforged.neoforge.common.data.ExistingFileHelper) mod id variant} */
+    /**
+ * @deprecated Forge: Use the {@linkplain #EntityTypeTagsProvider(PackOutput,
+ *             CompletableFuture, String,
+ *             net.neoforged.neoforge.common.data.ExistingFileHelper) mod id
+ *             variant}
+ */
     @Deprecated
-    public EntityTypeTagsProvider(PackOutput p_256095_, CompletableFuture<HolderLookup.Provider> p_256572_) {
-        this(p_256095_, p_256572_, "vanilla", null);
+    public EntityTypeTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider) {
+        this(output, provider, "vanilla", null);
     }
-    public EntityTypeTagsProvider(PackOutput p_256095_, CompletableFuture<HolderLookup.Provider> p_256572_, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
-        super(p_256095_, Registries.ENTITY_TYPE, p_256572_, p_256665_ -> p_256665_.builtInRegistryHolder().key(), modId, existingFileHelper);
+    public EntityTypeTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
+        super(output, Registries.ENTITY_TYPE, provider, p_256665_ -> p_256665_.builtInRegistryHolder().key(), modId, existingFileHelper);
     }
 
     @Override
-    protected void addTags(HolderLookup.Provider p_255894_) {
+    protected void addTags(HolderLookup.Provider provider) {
         this.tag(EntityTypeTags.SKELETONS).add(EntityType.SKELETON, EntityType.STRAY, EntityType.WITHER_SKELETON, EntityType.SKELETON_HORSE, EntityType.BOGGED);
         this.tag(EntityTypeTags.ZOMBIES)
             .add(

@@ -39,46 +39,46 @@ public class NetherFossilPieces {
         ResourceLocation.withDefaultNamespace("nether_fossils/fossil_14")
     };
 
-    public static void addPieces(StructureTemplateManager p_228535_, StructurePieceAccessor p_228536_, RandomSource p_228537_, BlockPos p_228538_) {
-        Rotation rotation = Rotation.getRandom(p_228537_);
-        p_228536_.addPiece(new NetherFossilPieces.NetherFossilPiece(p_228535_, Util.getRandom(FOSSILS, p_228537_), p_228538_, rotation));
+    public static void addPieces(StructureTemplateManager structureManager, StructurePieceAccessor pieces, RandomSource random, BlockPos pos) {
+        Rotation rotation = Rotation.getRandom(random);
+        pieces.addPiece(new NetherFossilPieces.NetherFossilPiece(structureManager, Util.getRandom(FOSSILS, random), pos, rotation));
     }
 
     public static class NetherFossilPiece extends TemplateStructurePiece {
-        public NetherFossilPiece(StructureTemplateManager p_228540_, ResourceLocation p_228541_, BlockPos p_228542_, Rotation p_228543_) {
-            super(StructurePieceType.NETHER_FOSSIL, 0, p_228540_, p_228541_, p_228541_.toString(), makeSettings(p_228543_), p_228542_);
+        public NetherFossilPiece(StructureTemplateManager structureManager, ResourceLocation location, BlockPos pos, Rotation rotation) {
+            super(StructurePieceType.NETHER_FOSSIL, 0, structureManager, location, location.toString(), makeSettings(rotation), pos);
         }
 
-        public NetherFossilPiece(StructureTemplateManager p_228545_, CompoundTag p_228546_) {
-            super(StructurePieceType.NETHER_FOSSIL, p_228546_, p_228545_, p_228568_ -> makeSettings(Rotation.valueOf(p_228546_.getString("Rot"))));
+        public NetherFossilPiece(StructureTemplateManager structureManager, CompoundTag tag) {
+            super(StructurePieceType.NETHER_FOSSIL, tag, structureManager, p_228568_ -> makeSettings(Rotation.valueOf(tag.getString("Rot"))));
         }
 
-        private static StructurePlaceSettings makeSettings(Rotation p_228556_) {
-            return new StructurePlaceSettings().setRotation(p_228556_).setMirror(Mirror.NONE).addProcessor(BlockIgnoreProcessor.STRUCTURE_AND_AIR);
-        }
-
-        @Override
-        protected void addAdditionalSaveData(StructurePieceSerializationContext p_228558_, CompoundTag p_228559_) {
-            super.addAdditionalSaveData(p_228558_, p_228559_);
-            p_228559_.putString("Rot", this.placeSettings.getRotation().name());
+        private static StructurePlaceSettings makeSettings(Rotation rotation) {
+            return new StructurePlaceSettings().setRotation(rotation).setMirror(Mirror.NONE).addProcessor(BlockIgnoreProcessor.STRUCTURE_AND_AIR);
         }
 
         @Override
-        protected void handleDataMarker(String p_228561_, BlockPos p_228562_, ServerLevelAccessor p_228563_, RandomSource p_228564_, BoundingBox p_228565_) {
+        protected void addAdditionalSaveData(StructurePieceSerializationContext context, CompoundTag tag) {
+            super.addAdditionalSaveData(context, tag);
+            tag.putString("Rot", this.placeSettings.getRotation().name());
+        }
+
+        @Override
+        protected void handleDataMarker(String name, BlockPos pos, ServerLevelAccessor level, RandomSource random, BoundingBox box) {
         }
 
         @Override
         public void postProcess(
-            WorldGenLevel p_228548_,
-            StructureManager p_228549_,
-            ChunkGenerator p_228550_,
-            RandomSource p_228551_,
-            BoundingBox p_228552_,
-            ChunkPos p_228553_,
-            BlockPos p_228554_
+            WorldGenLevel level,
+            StructureManager structureManager,
+            ChunkGenerator generator,
+            RandomSource random,
+            BoundingBox box,
+            ChunkPos chunkPos,
+            BlockPos pos
         ) {
-            p_228552_.encapsulate(this.template.getBoundingBox(this.placeSettings, this.templatePosition));
-            super.postProcess(p_228548_, p_228549_, p_228550_, p_228551_, p_228552_, p_228553_, p_228554_);
+            box.encapsulate(this.template.getBoundingBox(this.placeSettings, this.templatePosition));
+            super.postProcess(level, structureManager, generator, random, box, chunkPos, pos);
         }
     }
 }

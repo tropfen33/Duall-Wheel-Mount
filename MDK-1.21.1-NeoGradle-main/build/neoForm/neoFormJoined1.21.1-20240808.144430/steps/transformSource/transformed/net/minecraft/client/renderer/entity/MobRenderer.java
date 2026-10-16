@@ -7,16 +7,16 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class MobRenderer<T extends Mob, M extends EntityModel<T>> extends LivingEntityRenderer<T, M> {
-    public MobRenderer(EntityRendererProvider.Context p_174304_, M p_174305_, float p_174306_) {
-        super(p_174304_, p_174305_, p_174306_);
+    public MobRenderer(EntityRendererProvider.Context context, M model, float shadowRadius) {
+        super(context, model, shadowRadius);
     }
 
-    protected boolean shouldShowName(T p_115506_) {
-        return super.shouldShowName(p_115506_)
-            && (p_115506_.shouldShowName() || p_115506_.hasCustomName() && p_115506_ == this.entityRenderDispatcher.crosshairPickEntity);
+    protected boolean shouldShowName(T entity) {
+        return super.shouldShowName(entity)
+            && (entity.shouldShowName() || entity.hasCustomName() && entity == this.entityRenderDispatcher.crosshairPickEntity);
     }
 
-    protected float getShadowRadius(T p_316170_) {
-        return super.getShadowRadius(p_316170_) * p_316170_.getAgeScale();
+    protected float getShadowRadius(T entity) {
+        return super.getShadowRadius(entity) * entity.getAgeScale();
     }
 }

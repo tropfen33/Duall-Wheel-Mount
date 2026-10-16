@@ -27,44 +27,44 @@ public class ConcretePowderBlock extends FallingBlock {
         return CODEC;
     }
 
-    public ConcretePowderBlock(Block p_52060_, BlockBehaviour.Properties p_52061_) {
-        super(p_52061_);
-        this.concrete = p_52060_;
+    public ConcretePowderBlock(Block concrete, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.concrete = concrete;
     }
 
     @Override
-    public void onLand(Level p_52068_, BlockPos p_52069_, BlockState p_52070_, BlockState p_52071_, FallingBlockEntity p_52072_) {
-        if (shouldSolidify(p_52068_, p_52069_, p_52070_, p_52071_.getFluidState())) { // Forge: Use block of falling entity instead of block at replaced position, and check if shouldSolidify with the FluidState of the replaced block
-            p_52068_.setBlock(p_52069_, this.concrete.defaultBlockState(), 3);
+    public void onLand(Level level, BlockPos pos, BlockState state, BlockState replaceableState, FallingBlockEntity fallingBlock) {
+        if (shouldSolidify(level, pos, state, replaceableState.getFluidState())) { // Forge: Use block of falling entity instead of block at replaced position, and check if shouldSolidify with the FluidState of the replaced block
+            level.setBlock(pos, this.concrete.defaultBlockState(), 3);
         }
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_52063_) {
-        BlockGetter blockgetter = p_52063_.getLevel();
-        BlockPos blockpos = p_52063_.getClickedPos();
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockGetter blockgetter = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
         BlockState blockstate = blockgetter.getBlockState(blockpos);
-        return shouldSolidify(blockgetter, blockpos, blockstate) ? this.concrete.defaultBlockState() : super.getStateForPlacement(p_52063_);
+        return shouldSolidify(blockgetter, blockpos, blockstate) ? this.concrete.defaultBlockState() : super.getStateForPlacement(context);
     }
 
-    private static boolean shouldSolidify(BlockGetter p_52081_, BlockPos p_52082_, BlockState p_52083_, net.minecraft.world.level.material.FluidState fluidState) {
-        return p_52083_.canBeHydrated(p_52081_, p_52082_, fluidState, p_52082_) || touchesLiquid(p_52081_, p_52082_, p_52083_);
+    private static boolean shouldSolidify(BlockGetter level, BlockPos pos, BlockState state, net.minecraft.world.level.material.FluidState fluidState) {
+        return state.canBeHydrated(level, pos, fluidState, pos) || touchesLiquid(level, pos, state);
     }
 
-    private static boolean shouldSolidify(BlockGetter p_52081_, BlockPos p_52082_, BlockState p_52083_) {
-        return shouldSolidify(p_52081_, p_52082_, p_52083_, p_52081_.getFluidState(p_52082_));
+    private static boolean shouldSolidify(BlockGetter level, BlockPos pos, BlockState state) {
+        return shouldSolidify(level, pos, state, level.getFluidState(pos));
     }
 
-    private static boolean touchesLiquid(BlockGetter p_52065_, BlockPos p_52066_, BlockState state) {
+    private static boolean touchesLiquid(BlockGetter level, BlockPos pos, BlockState state) {
         boolean flag = false;
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = p_52066_.mutable();
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = pos.mutable();
 
         for (Direction direction : Direction.values()) {
-            BlockState blockstate = p_52065_.getBlockState(blockpos$mutableblockpos);
-            if (direction != Direction.DOWN || state.canBeHydrated(p_52065_, p_52066_, blockstate.getFluidState(), blockpos$mutableblockpos)) {
-                blockpos$mutableblockpos.setWithOffset(p_52066_, direction);
-                blockstate = p_52065_.getBlockState(blockpos$mutableblockpos);
-                if (state.canBeHydrated(p_52065_, p_52066_, blockstate.getFluidState(), blockpos$mutableblockpos) && !blockstate.isFaceSturdy(p_52065_, p_52066_, direction.getOpposite())) {
+            BlockState blockstate = level.getBlockState(blockpos$mutableblockpos);
+            if (direction != Direction.DOWN || state.canBeHydrated(level, pos, blockstate.getFluidState(), blockpos$mutableblockpos)) {
+                blockpos$mutableblockpos.setWithOffset(pos, direction);
+                blockstate = level.getBlockState(blockpos$mutableblockpos);
+                if (state.canBeHydrated(level, pos, blockstate.getFluidState(), blockpos$mutableblockpos) && !blockstate.isFaceSturdy(level, pos, direction.getOpposite())) {
                     flag = true;
                     break;
                 }
@@ -74,19 +74,19 @@ public class ConcretePowderBlock extends FallingBlock {
         return flag;
     }
 
-    private static boolean canSolidify(BlockState p_52089_) {
-        return p_52089_.getFluidState().is(FluidTags.WATER);
+    private static boolean canSolidify(BlockState state) {
+        return state.getFluidState().is(FluidTags.WATER);
     }
 
     @Override
-    protected BlockState updateShape(BlockState p_52074_, Direction p_52075_, BlockState p_52076_, LevelAccessor p_52077_, BlockPos p_52078_, BlockPos p_52079_) {
-        return touchesLiquid(p_52077_, p_52078_, p_52074_)
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return touchesLiquid(level, currentPos, state)
             ? this.concrete.defaultBlockState()
-            : super.updateShape(p_52074_, p_52075_, p_52076_, p_52077_, p_52078_, p_52079_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    public int getDustColor(BlockState p_52085_, BlockGetter p_52086_, BlockPos p_52087_) {
-        return p_52085_.getMapColor(p_52086_, p_52087_).col;
+    public int getDustColor(BlockState state, BlockGetter reader, BlockPos pos) {
+        return state.getMapColor(reader, pos).col;
     }
 }

@@ -25,32 +25,32 @@ public class RenderChunkRegion implements BlockAndTintGetter {
     private final it.unimi.dsi.fastutil.longs.Long2ObjectFunction<net.neoforged.neoforge.client.model.data.ModelData> modelDataSnapshot;
 
     @Deprecated
-    RenderChunkRegion(Level p_200456_, int p_200457_, int p_200458_, RenderChunk[] p_350680_) {
-        this(p_200456_, p_200457_, p_200458_, p_350680_, net.neoforged.neoforge.client.model.data.ModelDataManager.EMPTY_SNAPSHOT);
+    RenderChunkRegion(Level level, int minChunkX, int minChunkZ, RenderChunk[] chunks) {
+        this(level, minChunkX, minChunkZ, chunks, net.neoforged.neoforge.client.model.data.ModelDataManager.EMPTY_SNAPSHOT);
     }
-    RenderChunkRegion(Level p_200456_, int p_200457_, int p_200458_, RenderChunk[] p_350680_, it.unimi.dsi.fastutil.longs.Long2ObjectFunction<net.neoforged.neoforge.client.model.data.ModelData> modelDataSnapshot) {
-        this.level = p_200456_;
-        this.minChunkX = p_200457_;
-        this.minChunkZ = p_200458_;
-        this.chunks = p_350680_;
+    RenderChunkRegion(Level level, int minChunkX, int minChunkZ, RenderChunk[] chunks, it.unimi.dsi.fastutil.longs.Long2ObjectFunction<net.neoforged.neoforge.client.model.data.ModelData> modelDataSnapshot) {
+        this.level = level;
+        this.minChunkX = minChunkX;
+        this.minChunkZ = minChunkZ;
+        this.chunks = chunks;
         this.modelDataSnapshot = modelDataSnapshot;
     }
 
     @Override
-    public BlockState getBlockState(BlockPos p_112947_) {
-        return this.getChunk(SectionPos.blockToSectionCoord(p_112947_.getX()), SectionPos.blockToSectionCoord(p_112947_.getZ())).getBlockState(p_112947_);
+    public BlockState getBlockState(BlockPos pos) {
+        return this.getChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ())).getBlockState(pos);
     }
 
     @Override
-    public FluidState getFluidState(BlockPos p_112943_) {
-        return this.getChunk(SectionPos.blockToSectionCoord(p_112943_.getX()), SectionPos.blockToSectionCoord(p_112943_.getZ()))
-            .getBlockState(p_112943_)
+    public FluidState getFluidState(BlockPos pos) {
+        return this.getChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()))
+            .getBlockState(pos)
             .getFluidState();
     }
 
     @Override
-    public float getShade(Direction p_112940_, boolean p_112941_) {
-        return this.level.getShade(p_112940_, p_112941_);
+    public float getShade(Direction direction, boolean shade) {
+        return this.level.getShade(direction, shade);
     }
 
     @Override
@@ -60,17 +60,17 @@ public class RenderChunkRegion implements BlockAndTintGetter {
 
     @Nullable
     @Override
-    public BlockEntity getBlockEntity(BlockPos p_112945_) {
-        return this.getChunk(SectionPos.blockToSectionCoord(p_112945_.getX()), SectionPos.blockToSectionCoord(p_112945_.getZ())).getBlockEntity(p_112945_);
+    public BlockEntity getBlockEntity(BlockPos pos) {
+        return this.getChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ())).getBlockEntity(pos);
     }
 
-    private RenderChunk getChunk(int p_350795_, int p_350558_) {
-        return this.chunks[index(this.minChunkX, this.minChunkZ, p_350795_, p_350558_)];
+    private RenderChunk getChunk(int x, int z) {
+        return this.chunks[index(this.minChunkX, this.minChunkZ, x, z)];
     }
 
     @Override
-    public int getBlockTint(BlockPos p_112937_, ColorResolver p_112938_) {
-        return this.level.getBlockTint(p_112937_, p_112938_);
+    public int getBlockTint(BlockPos pos, ColorResolver colorResolver) {
+        return this.level.getBlockTint(pos, colorResolver);
     }
 
     @Override
@@ -98,7 +98,7 @@ public class RenderChunkRegion implements BlockAndTintGetter {
         return this.getChunk(pos.x, pos.z).wrapped.getAuxLightManager(pos);
     }
 
-    public static int index(int p_350911_, int p_350842_, int p_350891_, int p_350833_) {
-        return p_350891_ - p_350911_ + (p_350833_ - p_350842_) * 3;
+    public static int index(int minX, int minZ, int x, int z) {
+        return x - minX + (z - minZ) * 3;
     }
 }

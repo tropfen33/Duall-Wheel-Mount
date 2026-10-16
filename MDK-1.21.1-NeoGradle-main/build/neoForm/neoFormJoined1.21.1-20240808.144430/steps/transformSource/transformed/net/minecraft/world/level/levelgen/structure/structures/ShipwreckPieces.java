@@ -76,77 +76,77 @@ public class ShipwreckPieces {
     );
 
     public static ShipwreckPieces.ShipwreckPiece addRandomPiece(
-        StructureTemplateManager p_341897_, BlockPos p_341911_, Rotation p_341901_, StructurePieceAccessor p_341889_, RandomSource p_341928_, boolean p_341941_
+        StructureTemplateManager structureTemplateManager, BlockPos pos, Rotation rotation, StructurePieceAccessor pieces, RandomSource random, boolean isBeached
     ) {
-        ResourceLocation resourcelocation = Util.getRandom(p_341941_ ? STRUCTURE_LOCATION_BEACHED : STRUCTURE_LOCATION_OCEAN, p_341928_);
+        ResourceLocation resourcelocation = Util.getRandom(isBeached ? STRUCTURE_LOCATION_BEACHED : STRUCTURE_LOCATION_OCEAN, random);
         ShipwreckPieces.ShipwreckPiece shipwreckpieces$shipwreckpiece = new ShipwreckPieces.ShipwreckPiece(
-            p_341897_, resourcelocation, p_341911_, p_341901_, p_341941_
+            structureTemplateManager, resourcelocation, pos, rotation, isBeached
         );
-        p_341889_.addPiece(shipwreckpieces$shipwreckpiece);
+        pieces.addPiece(shipwreckpieces$shipwreckpiece);
         return shipwreckpieces$shipwreckpiece;
     }
 
     public static class ShipwreckPiece extends TemplateStructurePiece {
         private final boolean isBeached;
 
-        public ShipwreckPiece(StructureTemplateManager p_229354_, ResourceLocation p_229355_, BlockPos p_229356_, Rotation p_229357_, boolean p_229358_) {
-            super(StructurePieceType.SHIPWRECK_PIECE, 0, p_229354_, p_229355_, p_229355_.toString(), makeSettings(p_229357_), p_229356_);
-            this.isBeached = p_229358_;
+        public ShipwreckPiece(StructureTemplateManager structureTemplateManager, ResourceLocation location, BlockPos pos, Rotation rotation, boolean isBeached) {
+            super(StructurePieceType.SHIPWRECK_PIECE, 0, structureTemplateManager, location, location.toString(), makeSettings(rotation), pos);
+            this.isBeached = isBeached;
         }
 
-        public ShipwreckPiece(StructureTemplateManager p_229360_, CompoundTag p_229361_) {
-            super(StructurePieceType.SHIPWRECK_PIECE, p_229361_, p_229360_, p_229383_ -> makeSettings(Rotation.valueOf(p_229361_.getString("Rot"))));
-            this.isBeached = p_229361_.getBoolean("isBeached");
+        public ShipwreckPiece(StructureTemplateManager structureTemplateManager, CompoundTag tag) {
+            super(StructurePieceType.SHIPWRECK_PIECE, tag, structureTemplateManager, p_229383_ -> makeSettings(Rotation.valueOf(tag.getString("Rot"))));
+            this.isBeached = tag.getBoolean("isBeached");
         }
 
         @Override
-        protected void addAdditionalSaveData(StructurePieceSerializationContext p_229373_, CompoundTag p_229374_) {
-            super.addAdditionalSaveData(p_229373_, p_229374_);
-            p_229374_.putBoolean("isBeached", this.isBeached);
-            p_229374_.putString("Rot", this.placeSettings.getRotation().name());
+        protected void addAdditionalSaveData(StructurePieceSerializationContext context, CompoundTag tag) {
+            super.addAdditionalSaveData(context, tag);
+            tag.putBoolean("isBeached", this.isBeached);
+            tag.putString("Rot", this.placeSettings.getRotation().name());
         }
 
-        private static StructurePlaceSettings makeSettings(Rotation p_229371_) {
+        private static StructurePlaceSettings makeSettings(Rotation rotation) {
             return new StructurePlaceSettings()
-                .setRotation(p_229371_)
+                .setRotation(rotation)
                 .setMirror(Mirror.NONE)
                 .setRotationPivot(ShipwreckPieces.PIVOT)
                 .addProcessor(BlockIgnoreProcessor.STRUCTURE_AND_AIR);
         }
 
         @Override
-        protected void handleDataMarker(String p_229376_, BlockPos p_229377_, ServerLevelAccessor p_229378_, RandomSource p_229379_, BoundingBox p_229380_) {
-            ResourceKey<LootTable> resourcekey = ShipwreckPieces.MARKERS_TO_LOOT.get(p_229376_);
+        protected void handleDataMarker(String name, BlockPos pos, ServerLevelAccessor level, RandomSource random, BoundingBox box) {
+            ResourceKey<LootTable> resourcekey = ShipwreckPieces.MARKERS_TO_LOOT.get(name);
             if (resourcekey != null) {
-                RandomizableContainer.setBlockEntityLootTable(p_229378_, p_229379_, p_229377_.below(), resourcekey);
+                RandomizableContainer.setBlockEntityLootTable(level, random, pos.below(), resourcekey);
             }
         }
 
         @Override
         public void postProcess(
-            WorldGenLevel p_229363_,
-            StructureManager p_229364_,
-            ChunkGenerator p_229365_,
-            RandomSource p_229366_,
-            BoundingBox p_229367_,
-            ChunkPos p_229368_,
-            BlockPos p_229369_
+            WorldGenLevel level,
+            StructureManager structureManager,
+            ChunkGenerator generator,
+            RandomSource random,
+            BoundingBox box,
+            ChunkPos chunkPos,
+            BlockPos pos
         ) {
             if (this.isTooBigToFitInWorldGenRegion()) {
-                super.postProcess(p_229363_, p_229364_, p_229365_, p_229366_, p_229367_, p_229368_, p_229369_);
+                super.postProcess(level, structureManager, generator, random, box, chunkPos, pos);
             } else {
-                int i = p_229363_.getMaxBuildHeight();
+                int i = level.getMaxBuildHeight();
                 int j = 0;
                 Vec3i vec3i = this.template.getSize();
                 Heightmap.Types heightmap$types = this.isBeached ? Heightmap.Types.WORLD_SURFACE_WG : Heightmap.Types.OCEAN_FLOOR_WG;
                 int k = vec3i.getX() * vec3i.getZ();
                 if (k == 0) {
-                    j = p_229363_.getHeight(heightmap$types, this.templatePosition.getX(), this.templatePosition.getZ());
+                    j = level.getHeight(heightmap$types, this.templatePosition.getX(), this.templatePosition.getZ());
                 } else {
                     BlockPos blockpos = this.templatePosition.offset(vec3i.getX() - 1, 0, vec3i.getZ() - 1);
 
                     for (BlockPos blockpos1 : BlockPos.betweenClosed(this.templatePosition, blockpos)) {
-                        int l = p_229363_.getHeight(heightmap$types, blockpos1.getX(), blockpos1.getZ());
+                        int l = level.getHeight(heightmap$types, blockpos1.getX(), blockpos1.getZ());
                         j += l;
                         i = Math.min(i, l);
                     }
@@ -154,8 +154,8 @@ public class ShipwreckPieces {
                     j /= k;
                 }
 
-                this.adjustPositionHeight(this.isBeached ? this.calculateBeachedPosition(i, p_229366_) : j);
-                super.postProcess(p_229363_, p_229364_, p_229365_, p_229366_, p_229367_, p_229368_, p_229369_);
+                this.adjustPositionHeight(this.isBeached ? this.calculateBeachedPosition(i, random) : j);
+                super.postProcess(level, structureManager, generator, random, box, chunkPos, pos);
             }
         }
 
@@ -164,12 +164,12 @@ public class ShipwreckPieces {
             return vec3i.getX() > 32 || vec3i.getY() > 32;
         }
 
-        public int calculateBeachedPosition(int p_341902_, RandomSource p_341891_) {
-            return p_341902_ - this.template.getSize().getY() / 2 - p_341891_.nextInt(3);
+        public int calculateBeachedPosition(int maxHeight, RandomSource random) {
+            return maxHeight - this.template.getSize().getY() / 2 - random.nextInt(3);
         }
 
-        public void adjustPositionHeight(int p_341929_) {
-            this.templatePosition = new BlockPos(this.templatePosition.getX(), p_341929_, this.templatePosition.getZ());
+        public void adjustPositionHeight(int height) {
+            this.templatePosition = new BlockPos(this.templatePosition.getX(), height, this.templatePosition.getZ());
         }
     }
 }

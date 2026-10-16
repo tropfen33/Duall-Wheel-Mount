@@ -5,13 +5,13 @@ import net.minecraft.world.entity.Entity;
 public class EntityHitResult extends HitResult {
     private final Entity entity;
 
-    public EntityHitResult(Entity p_82439_) {
-        this(p_82439_, p_82439_.position());
+    public EntityHitResult(Entity entity) {
+        this(entity, entity.position());
     }
 
-    public EntityHitResult(Entity p_82441_, Vec3 p_82442_) {
-        super(p_82442_);
-        this.entity = p_82441_;
+    public EntityHitResult(Entity entity, Vec3 location) {
+        super(location);
+        this.entity = entity;
     }
 
     public Entity getEntity() {

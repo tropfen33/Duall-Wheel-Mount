@@ -16,31 +16,31 @@ import net.minecraft.world.level.block.state.BlockState;
 public interface NeighborUpdater {
     Direction[] UPDATE_ORDER = new Direction[]{Direction.WEST, Direction.EAST, Direction.DOWN, Direction.UP, Direction.NORTH, Direction.SOUTH};
 
-    void shapeUpdate(Direction p_230791_, BlockState p_230792_, BlockPos p_230793_, BlockPos p_230794_, int p_230795_, int p_230796_);
+    void shapeUpdate(Direction direction, BlockState state, BlockPos pos, BlockPos neighborPos, int flags, int recursionLevel);
 
-    void neighborChanged(BlockPos p_230785_, Block p_230786_, BlockPos p_230787_);
+    void neighborChanged(BlockPos pos, Block neighborBlock, BlockPos neighborPos);
 
-    void neighborChanged(BlockState p_230780_, BlockPos p_230781_, Block p_230782_, BlockPos p_230783_, boolean p_230784_);
+    void neighborChanged(BlockState state, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston);
 
-    default void updateNeighborsAtExceptFromFacing(BlockPos p_230788_, Block p_230789_, @Nullable Direction p_230790_) {
+    default void updateNeighborsAtExceptFromFacing(BlockPos pos, Block block, @Nullable Direction facing) {
         for (Direction direction : UPDATE_ORDER) {
-            if (direction != p_230790_) {
-                this.neighborChanged(p_230788_.relative(direction), p_230789_, p_230788_);
+            if (direction != facing) {
+                this.neighborChanged(pos.relative(direction), block, pos);
             }
         }
     }
 
     static void executeShapeUpdate(
-        LevelAccessor p_230771_, Direction p_230772_, BlockState p_230773_, BlockPos p_230774_, BlockPos p_230775_, int p_230776_, int p_230777_
+        LevelAccessor level, Direction direction, BlockState state, BlockPos pos, BlockPos neighborPos, int flags, int recursionLevel
     ) {
-        BlockState blockstate = p_230771_.getBlockState(p_230774_);
-        BlockState blockstate1 = blockstate.updateShape(p_230772_, p_230773_, p_230771_, p_230774_, p_230775_);
-        Block.updateOrDestroy(blockstate, blockstate1, p_230771_, p_230774_, p_230776_, p_230777_);
+        BlockState blockstate = level.getBlockState(pos);
+        BlockState blockstate1 = blockstate.updateShape(direction, state, level, pos, neighborPos);
+        Block.updateOrDestroy(blockstate, blockstate1, level, pos, flags, recursionLevel);
     }
 
-    static void executeUpdate(Level p_230764_, BlockState p_230765_, BlockPos p_230766_, Block p_230767_, BlockPos p_230768_, boolean p_230769_) {
+    static void executeUpdate(Level level, BlockState state, BlockPos pos, Block neighborBlock, BlockPos neighborPos, boolean movedByPiston) {
         try {
-            p_230765_.handleNeighborChanged(p_230764_, p_230766_, p_230767_, p_230768_, p_230769_);
+            state.handleNeighborChanged(level, pos, neighborBlock, neighborPos, movedByPiston);
         } catch (Throwable throwable) {
             CrashReport crashreport = CrashReport.forThrowable(throwable, "Exception while updating neighbours");
             CrashReportCategory crashreportcategory = crashreport.addCategory("Block being updated");
@@ -51,16 +51,16 @@ public interface NeighborUpdater {
                         return String.format(
                             Locale.ROOT,
                             "ID #%s (%s // %s)",
-                            BuiltInRegistries.BLOCK.getKey(p_230767_),
-                            p_230767_.getDescriptionId(),
-                            p_230767_.getClass().getCanonicalName()
+                            BuiltInRegistries.BLOCK.getKey(neighborBlock),
+                            neighborBlock.getDescriptionId(),
+                            neighborBlock.getClass().getCanonicalName()
                         );
                     } catch (Throwable throwable1) {
-                        return "ID #" + BuiltInRegistries.BLOCK.getKey(p_230767_);
+                        return "ID #" + BuiltInRegistries.BLOCK.getKey(neighborBlock);
                     }
                 }
             );
-            CrashReportCategory.populateBlockDetails(crashreportcategory, p_230764_, p_230766_, p_230765_);
+            CrashReportCategory.populateBlockDetails(crashreportcategory, level, pos, state);
             throw new ReportedException(crashreport);
         }
     }

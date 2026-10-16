@@ -16,8 +16,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 
 public class SetSpawnCommand {
-    public static void register(CommandDispatcher<CommandSourceStack> p_138644_) {
-        p_138644_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("spawnpoint")
                 .requires(p_138648_ -> p_138648_.hasPermission(2))
                 .executes(
@@ -64,36 +64,36 @@ public class SetSpawnCommand {
         );
     }
 
-    private static int setSpawn(CommandSourceStack p_138650_, Collection<ServerPlayer> p_138651_, BlockPos p_138652_, float p_138653_) {
-        ResourceKey<Level> resourcekey = p_138650_.getLevel().dimension();
+    private static int setSpawn(CommandSourceStack source, Collection<ServerPlayer> targets, BlockPos pos, float angle) {
+        ResourceKey<Level> resourcekey = source.getLevel().dimension();
 
-        for (ServerPlayer serverplayer : p_138651_) {
-            serverplayer.setRespawnPosition(resourcekey, p_138652_, p_138653_, true, false);
+        for (ServerPlayer serverplayer : targets) {
+            serverplayer.setRespawnPosition(resourcekey, pos, angle, true, false);
         }
 
         String s = resourcekey.location().toString();
-        if (p_138651_.size() == 1) {
-            p_138650_.sendSuccess(
+        if (targets.size() == 1) {
+            source.sendSuccess(
                 () -> Component.translatable(
                         "commands.spawnpoint.success.single",
-                        p_138652_.getX(),
-                        p_138652_.getY(),
-                        p_138652_.getZ(),
-                        p_138653_,
-                        p_138650_.getLevel().getDescription(), // Neo: Use dimension translation, if one exists
-                        p_138651_.iterator().next().getDisplayName()
+                        pos.getX(),
+                        pos.getY(),
+                        pos.getZ(),
+                        angle,
+                        source.getLevel().getDescription(), // Neo: Use dimension translation, if one exists
+                        targets.iterator().next().getDisplayName()
                     ),
                 true
             );
         } else {
-            p_138650_.sendSuccess(
+            source.sendSuccess(
                 () -> Component.translatable(
-                        "commands.spawnpoint.success.multiple", p_138652_.getX(), p_138652_.getY(), p_138652_.getZ(), p_138653_, s, p_138651_.size()
+                        "commands.spawnpoint.success.multiple", pos.getX(), pos.getY(), pos.getZ(), angle, s, targets.size()
                     ),
                 true
             );
         }
 
-        return p_138651_.size();
+        return targets.size();
     }
 }

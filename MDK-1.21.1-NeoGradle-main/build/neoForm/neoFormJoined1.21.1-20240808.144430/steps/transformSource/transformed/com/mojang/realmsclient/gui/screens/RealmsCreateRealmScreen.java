@@ -33,16 +33,16 @@ public class RealmsCreateRealmScreen extends RealmsScreen {
     private EditBox descriptionBox;
     private final Runnable createWorldRunnable;
 
-    public RealmsCreateRealmScreen(RealmsMainScreen p_88575_, RealmsServer p_88574_) {
+    public RealmsCreateRealmScreen(RealmsMainScreen lastScreen, RealmsServer realmsServer) {
         super(CREATE_REALM_TEXT);
-        this.lastScreen = p_88575_;
-        this.createWorldRunnable = () -> this.createWorld(p_88574_);
+        this.lastScreen = lastScreen;
+        this.createWorldRunnable = () -> this.createWorld(realmsServer);
     }
 
-    public RealmsCreateRealmScreen(RealmsMainScreen p_306218_, long p_305942_) {
+    public RealmsCreateRealmScreen(RealmsMainScreen lastScreen, long parentId) {
         super(CREATE_REALM_TEXT);
-        this.lastScreen = p_306218_;
-        this.createWorldRunnable = () -> this.createSnapshotWorld(p_305942_);
+        this.lastScreen = lastScreen;
+        this.createWorldRunnable = () -> this.createSnapshotWorld(parentId);
     }
 
     @Override
@@ -75,10 +75,10 @@ public class RealmsCreateRealmScreen extends RealmsScreen {
         this.layout.arrangeElements();
     }
 
-    private void createWorld(RealmsServer p_305781_) {
-        RealmCreationTask realmcreationtask = new RealmCreationTask(p_305781_.id, this.nameBox.getValue(), this.descriptionBox.getValue());
+    private void createWorld(RealmsServer realmsServer) {
+        RealmCreationTask realmcreationtask = new RealmCreationTask(realmsServer.id, this.nameBox.getValue(), this.descriptionBox.getValue());
         RealmsResetWorldScreen realmsresetworldscreen = RealmsResetWorldScreen.forNewRealm(
-            this, p_305781_, realmcreationtask, () -> this.minecraft.execute(() -> {
+            this, realmsServer, realmcreationtask, () -> this.minecraft.execute(() -> {
                     RealmsMainScreen.refreshServerList();
                     this.minecraft.setScreen(this.lastScreen);
                 })
@@ -86,7 +86,7 @@ public class RealmsCreateRealmScreen extends RealmsScreen {
         this.minecraft.setScreen(realmsresetworldscreen);
     }
 
-    private void createSnapshotWorld(long p_305809_) {
+    private void createSnapshotWorld(long parentId) {
         Screen screen = new RealmsResetNormalWorldScreen(
             p_305627_ -> {
                 if (p_305627_ == null) {
@@ -96,7 +96,7 @@ public class RealmsCreateRealmScreen extends RealmsScreen {
                         .setScreen(
                             new RealmsLongRunningMcoTaskScreen(
                                 this,
-                                new CreateSnapshotRealmTask(this.lastScreen, p_305809_, p_305627_, this.nameBox.getValue(), this.descriptionBox.getValue())
+                                new CreateSnapshotRealmTask(this.lastScreen, parentId, p_305627_, this.nameBox.getValue(), this.descriptionBox.getValue())
                             )
                         );
                 }

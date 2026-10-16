@@ -21,8 +21,8 @@ public record ConfiguredFeature<FC extends FeatureConfiguration, F extends Featu
     public static final Codec<Holder<ConfiguredFeature<?, ?>>> CODEC = RegistryFileCodec.create(Registries.CONFIGURED_FEATURE, DIRECT_CODEC);
     public static final Codec<HolderSet<ConfiguredFeature<?, ?>>> LIST_CODEC = RegistryCodecs.homogeneousList(Registries.CONFIGURED_FEATURE, DIRECT_CODEC);
 
-    public boolean place(WorldGenLevel p_224954_, ChunkGenerator p_224955_, RandomSource p_224956_, BlockPos p_224957_) {
-        return this.feature.place(this.config, p_224954_, p_224955_, p_224956_, p_224957_);
+    public boolean place(WorldGenLevel reader, ChunkGenerator chunkGenerator, RandomSource random, BlockPos pos) {
+        return this.feature.place(this.config, reader, chunkGenerator, random, pos);
     }
 
     public Stream<ConfiguredFeature<?, ?>> getFeatures() {

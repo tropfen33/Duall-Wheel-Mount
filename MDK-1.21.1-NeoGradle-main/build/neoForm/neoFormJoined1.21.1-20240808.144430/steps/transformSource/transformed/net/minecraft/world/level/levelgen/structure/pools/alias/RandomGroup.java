@@ -20,8 +20,8 @@ record RandomGroup(SimpleWeightedRandomList<List<PoolAliasBinding>> groups) impl
     );
 
     @Override
-    public void forEachResolved(RandomSource p_307472_, BiConsumer<ResourceKey<StructureTemplatePool>, ResourceKey<StructureTemplatePool>> p_307324_) {
-        this.groups.getRandom(p_307472_).ifPresent(p_338108_ -> p_338108_.data().forEach(p_307493_ -> p_307493_.forEachResolved(p_307472_, p_307324_)));
+    public void forEachResolved(RandomSource random, BiConsumer<ResourceKey<StructureTemplatePool>, ResourceKey<StructureTemplatePool>> stucturePoolKey) {
+        this.groups.getRandom(random).ifPresent(p_338108_ -> p_338108_.data().forEach(p_307493_ -> p_307493_.forEachResolved(random, stucturePoolKey)));
     }
 
     @Override

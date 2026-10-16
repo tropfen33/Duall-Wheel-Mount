@@ -12,8 +12,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class WaterCurrentDownParticle extends TextureSheetParticle {
     private float angle;
 
-    protected WaterCurrentDownParticle(ClientLevel p_108450_, double p_108451_, double p_108452_, double p_108453_) {
-        super(p_108450_, p_108451_, p_108452_, p_108453_);
+    protected WaterCurrentDownParticle(ClientLevel level, double x, double y, double z) {
+        super(level, x, y, z);
         this.lifetime = (int)(Math.random() * 60.0) + 30;
         this.hasPhysics = false;
         this.xd = 0.0;
@@ -55,21 +55,21 @@ public class WaterCurrentDownParticle extends TextureSheetParticle {
     public static class Provider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprite;
 
-        public Provider(SpriteSet p_108464_) {
-            this.sprite = p_108464_;
+        public Provider(SpriteSet sprites) {
+            this.sprite = sprites;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_108475_,
-            ClientLevel p_108476_,
-            double p_108477_,
-            double p_108478_,
-            double p_108479_,
-            double p_108480_,
-            double p_108481_,
-            double p_108482_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            WaterCurrentDownParticle watercurrentdownparticle = new WaterCurrentDownParticle(p_108476_, p_108477_, p_108478_, p_108479_);
+            WaterCurrentDownParticle watercurrentdownparticle = new WaterCurrentDownParticle(level, x, y, z);
             watercurrentdownparticle.pickSprite(this.sprite);
             return watercurrentdownparticle;
         }

@@ -10,15 +10,15 @@ public class ItemCooldowns {
     private final Map<Item, ItemCooldowns.CooldownInstance> cooldowns = Maps.newHashMap();
     private int tickCount;
 
-    public boolean isOnCooldown(Item p_41520_) {
-        return this.getCooldownPercent(p_41520_, 0.0F) > 0.0F;
+    public boolean isOnCooldown(Item item) {
+        return this.getCooldownPercent(item, 0.0F) > 0.0F;
     }
 
-    public float getCooldownPercent(Item p_41522_, float p_41523_) {
-        ItemCooldowns.CooldownInstance itemcooldowns$cooldowninstance = this.cooldowns.get(p_41522_);
+    public float getCooldownPercent(Item item, float partialTicks) {
+        ItemCooldowns.CooldownInstance itemcooldowns$cooldowninstance = this.cooldowns.get(item);
         if (itemcooldowns$cooldowninstance != null) {
             float f = (float)(itemcooldowns$cooldowninstance.endTime - itemcooldowns$cooldowninstance.startTime);
-            float f1 = (float)itemcooldowns$cooldowninstance.endTime - ((float)this.tickCount + p_41523_);
+            float f1 = (float)itemcooldowns$cooldowninstance.endTime - ((float)this.tickCount + partialTicks);
             return Mth.clamp(f1 / f, 0.0F, 1.0F);
         } else {
             return 0.0F;
@@ -40,29 +40,29 @@ public class ItemCooldowns {
         }
     }
 
-    public void addCooldown(Item p_41525_, int p_41526_) {
-        this.cooldowns.put(p_41525_, new ItemCooldowns.CooldownInstance(this.tickCount, this.tickCount + p_41526_));
-        this.onCooldownStarted(p_41525_, p_41526_);
+    public void addCooldown(Item item, int ticks) {
+        this.cooldowns.put(item, new ItemCooldowns.CooldownInstance(this.tickCount, this.tickCount + ticks));
+        this.onCooldownStarted(item, ticks);
     }
 
-    public void removeCooldown(Item p_41528_) {
-        this.cooldowns.remove(p_41528_);
-        this.onCooldownEnded(p_41528_);
+    public void removeCooldown(Item item) {
+        this.cooldowns.remove(item);
+        this.onCooldownEnded(item);
     }
 
-    protected void onCooldownStarted(Item p_41529_, int p_41530_) {
+    protected void onCooldownStarted(Item item, int ticks) {
     }
 
-    protected void onCooldownEnded(Item p_41531_) {
+    protected void onCooldownEnded(Item item) {
     }
 
     static class CooldownInstance {
         final int startTime;
         final int endTime;
 
-        CooldownInstance(int p_186358_, int p_186359_) {
-            this.startTime = p_186358_;
-            this.endTime = p_186359_;
+        CooldownInstance(int startTime, int endTime) {
+            this.startTime = startTime;
+            this.endTime = endTime;
         }
     }
 }

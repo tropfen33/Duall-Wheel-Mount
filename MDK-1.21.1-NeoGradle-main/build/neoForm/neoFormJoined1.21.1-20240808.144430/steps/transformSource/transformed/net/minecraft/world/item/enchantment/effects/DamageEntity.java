@@ -24,9 +24,9 @@ public record DamageEntity(LevelBasedValue minDamage, LevelBasedValue maxDamage,
     );
 
     @Override
-    public void apply(ServerLevel p_345710_, int p_344734_, EnchantedItemInUse p_345002_, Entity p_345450_, Vec3 p_345442_) {
-        float f = Mth.randomBetween(p_345450_.getRandom(), this.minDamage.calculate(p_344734_), this.maxDamage.calculate(p_344734_));
-        p_345450_.hurt(new DamageSource(this.damageType, p_345002_.owner()), f);
+    public void apply(ServerLevel level, int enchantmentLevel, EnchantedItemInUse item, Entity entity, Vec3 origin) {
+        float f = Mth.randomBetween(entity.getRandom(), this.minDamage.calculate(enchantmentLevel), this.maxDamage.calculate(enchantmentLevel));
+        entity.hurt(new DamageSource(this.damageType, item.owner()), f);
     }
 
     @Override

@@ -7,8 +7,8 @@ import net.minecraft.Util;
 public class AnyOfCondition extends CompositeLootItemCondition {
     public static final MapCodec<AnyOfCondition> CODEC = createCodec(AnyOfCondition::new);
 
-    AnyOfCondition(List<LootItemCondition> p_299191_) {
-        super(p_299191_, Util.anyOf(p_299191_));
+    AnyOfCondition(List<LootItemCondition> conditions) {
+        super(conditions, Util.anyOf(conditions));
     }
 
     @Override
@@ -16,8 +16,8 @@ public class AnyOfCondition extends CompositeLootItemCondition {
         return LootItemConditions.ANY_OF;
     }
 
-    public static AnyOfCondition.Builder anyOf(LootItemCondition.Builder... p_286239_) {
-        return new AnyOfCondition.Builder(p_286239_);
+    public static AnyOfCondition.Builder anyOf(LootItemCondition.Builder... conditions) {
+        return new AnyOfCondition.Builder(conditions);
     }
 
     public static class Builder extends CompositeLootItemCondition.Builder {

@@ -16,27 +16,27 @@ public class PoiRecord {
     private int freeTickets;
     private final Runnable setDirty;
 
-    public static Codec<PoiRecord> codec(Runnable p_27243_) {
+    public static Codec<PoiRecord> codec(Runnable executable) {
         return RecordCodecBuilder.create(
             p_258948_ -> p_258948_.group(
                         BlockPos.CODEC.fieldOf("pos").forGetter(p_148673_ -> p_148673_.pos),
                         RegistryFixedCodec.create(Registries.POINT_OF_INTEREST_TYPE).fieldOf("type").forGetter(p_218017_ -> p_218017_.poiType),
                         Codec.INT.fieldOf("free_tickets").orElse(0).forGetter(p_148669_ -> p_148669_.freeTickets),
-                        RecordCodecBuilder.point(p_27243_)
+                        RecordCodecBuilder.point(executable)
                     )
                     .apply(p_258948_, PoiRecord::new)
         );
     }
 
-    private PoiRecord(BlockPos p_218008_, Holder<PoiType> p_218009_, int p_218010_, Runnable p_218011_) {
-        this.pos = p_218008_.immutable();
-        this.poiType = p_218009_;
-        this.freeTickets = p_218010_;
-        this.setDirty = p_218011_;
+    private PoiRecord(BlockPos pos, Holder<PoiType> poiType, int freeTickets, Runnable setDirty) {
+        this.pos = pos.immutable();
+        this.poiType = poiType;
+        this.freeTickets = freeTickets;
+        this.setDirty = setDirty;
     }
 
-    public PoiRecord(BlockPos p_218013_, Holder<PoiType> p_218014_, Runnable p_218015_) {
-        this(p_218013_, p_218014_, p_218014_.value().maxTickets(), p_218015_);
+    public PoiRecord(BlockPos pod, Holder<PoiType> poiType, Runnable setDirty) {
+        this(pod, poiType, poiType.value().maxTickets(), setDirty);
     }
 
     @Deprecated
@@ -82,11 +82,11 @@ public class PoiRecord {
     }
 
     @Override
-    public boolean equals(Object p_27256_) {
-        if (this == p_27256_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return p_27256_ != null && this.getClass() == p_27256_.getClass() ? Objects.equals(this.pos, ((PoiRecord)p_27256_).pos) : false;
+            return other != null && this.getClass() == other.getClass() ? Objects.equals(this.pos, ((PoiRecord)other).pos) : false;
         }
     }
 

@@ -35,17 +35,20 @@ public class TorchBlock extends BaseTorchBlock {
         return CODEC;
     }
 
-    public TorchBlock(SimpleParticleType p_304940_, BlockBehaviour.Properties p_57491_) {
-        super(p_57491_);
-        this.flameParticle = p_304940_;
+    public TorchBlock(SimpleParticleType flameParticle, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.flameParticle = flameParticle;
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_222593_, Level p_222594_, BlockPos p_222595_, RandomSource p_222596_) {
-        double d0 = (double)p_222595_.getX() + 0.5;
-        double d1 = (double)p_222595_.getY() + 0.7;
-        double d2 = (double)p_222595_.getZ() + 0.5;
-        p_222594_.addParticle(ParticleTypes.SMOKE, d0, d1, d2, 0.0, 0.0, 0.0);
-        p_222594_.addParticle(this.flameParticle, d0, d1, d2, 0.0, 0.0, 0.0);
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        double d0 = (double)pos.getX() + 0.5;
+        double d1 = (double)pos.getY() + 0.7;
+        double d2 = (double)pos.getZ() + 0.5;
+        level.addParticle(ParticleTypes.SMOKE, d0, d1, d2, 0.0, 0.0, 0.0);
+        level.addParticle(this.flameParticle, d0, d1, d2, 0.0, 0.0, 0.0);
     }
 }

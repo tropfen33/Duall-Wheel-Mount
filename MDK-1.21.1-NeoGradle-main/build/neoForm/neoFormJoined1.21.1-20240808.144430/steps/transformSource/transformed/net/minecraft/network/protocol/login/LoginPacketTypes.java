@@ -16,11 +16,11 @@ public class LoginPacketTypes {
     public static final PacketType<ServerboundKeyPacket> SERVERBOUND_KEY = createServerbound("key");
     public static final PacketType<ServerboundLoginAcknowledgedPacket> SERVERBOUND_LOGIN_ACKNOWLEDGED = createServerbound("login_acknowledged");
 
-    private static <T extends Packet<ClientLoginPacketListener>> PacketType<T> createClientbound(String p_320367_) {
-        return new PacketType<>(PacketFlow.CLIENTBOUND, ResourceLocation.withDefaultNamespace(p_320367_));
+    private static <T extends Packet<ClientLoginPacketListener>> PacketType<T> createClientbound(String name) {
+        return new PacketType<>(PacketFlow.CLIENTBOUND, ResourceLocation.withDefaultNamespace(name));
     }
 
-    private static <T extends Packet<ServerLoginPacketListener>> PacketType<T> createServerbound(String p_320772_) {
-        return new PacketType<>(PacketFlow.SERVERBOUND, ResourceLocation.withDefaultNamespace(p_320772_));
+    private static <T extends Packet<ServerLoginPacketListener>> PacketType<T> createServerbound(String name) {
+        return new PacketType<>(PacketFlow.SERVERBOUND, ResourceLocation.withDefaultNamespace(name));
     }
 }

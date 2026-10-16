@@ -12,16 +12,16 @@ import org.slf4j.Logger;
 public class ProgramManager {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public static void glUseProgram(int p_85579_) {
+    public static void glUseProgram(int program) {
         RenderSystem.assertOnRenderThread();
-        GlStateManager._glUseProgram(p_85579_);
+        GlStateManager._glUseProgram(program);
     }
 
-    public static void releaseProgram(Shader p_166622_) {
+    public static void releaseProgram(Shader shader) {
         RenderSystem.assertOnRenderThread();
-        p_166622_.getFragmentProgram().close();
-        p_166622_.getVertexProgram().close();
-        GlStateManager.glDeleteProgram(p_166622_.getId());
+        shader.getFragmentProgram().close();
+        shader.getVertexProgram().close();
+        GlStateManager.glDeleteProgram(shader.getId());
     }
 
     public static int createProgram() throws IOException {
@@ -34,18 +34,18 @@ public class ProgramManager {
         }
     }
 
-    public static void linkShader(Shader p_166624_) {
+    public static void linkShader(Shader shader) {
         RenderSystem.assertOnRenderThread();
-        p_166624_.attachToProgram();
-        GlStateManager.glLinkProgram(p_166624_.getId());
-        int i = GlStateManager.glGetProgrami(p_166624_.getId(), 35714);
+        shader.attachToProgram();
+        GlStateManager.glLinkProgram(shader.getId());
+        int i = GlStateManager.glGetProgrami(shader.getId(), 35714);
         if (i == 0) {
             LOGGER.warn(
                 "Error encountered when linking program containing VS {} and FS {}. Log output:",
-                p_166624_.getVertexProgram().getName(),
-                p_166624_.getFragmentProgram().getName()
+                shader.getVertexProgram().getName(),
+                shader.getFragmentProgram().getName()
             );
-            LOGGER.warn(GlStateManager.glGetProgramInfoLog(p_166624_.getId(), 32768));
+            LOGGER.warn(GlStateManager.glGetProgramInfoLog(shader.getId(), 32768));
         }
     }
 }

@@ -31,9 +31,9 @@ public class MultiPartBakedModel implements BakedModel, net.neoforged.neoforge.c
     private final Map<BlockState, BitSet> selectorCache = new Reference2ObjectOpenHashMap<>();
     private final BakedModel defaultModel;
 
-    public MultiPartBakedModel(List<Pair<Predicate<BlockState>, BakedModel>> p_119462_) {
-        this.selectors = p_119462_;
-        BakedModel bakedmodel = p_119462_.iterator().next().getRight();
+    public MultiPartBakedModel(List<Pair<Predicate<BlockState>, BakedModel>> selectors) {
+        this.selectors = selectors;
+        BakedModel bakedmodel = selectors.iterator().next().getRight();
         this.defaultModel = bakedmodel;
         this.hasAmbientOcclusion = bakedmodel.useAmbientOcclusion();
         this.isGui3d = bakedmodel.isGui3d();
@@ -62,19 +62,19 @@ public class MultiPartBakedModel implements BakedModel, net.neoforged.neoforge.c
 
     // FORGE: Implement our overloads (here and below) so child models can have custom logic
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState p_235050_, @Nullable Direction p_235051_, RandomSource p_235052_, net.neoforged.neoforge.client.model.data.ModelData modelData, @org.jetbrains.annotations.Nullable net.minecraft.client.renderer.RenderType renderType) {
-        if (p_235050_ == null) {
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction direction, RandomSource random, net.neoforged.neoforge.client.model.data.ModelData modelData, @org.jetbrains.annotations.Nullable net.minecraft.client.renderer.RenderType renderType) {
+        if (state == null) {
             return Collections.emptyList();
         } else {
-            BitSet bitset = getSelectors(p_235050_);
+            BitSet bitset = getSelectors(state);
             List<List<BakedQuad>> list = Lists.newArrayList();
-            long k = p_235052_.nextLong();
+            long k = random.nextLong();
 
             for (int j = 0; j < bitset.length(); j++) {
                 if (bitset.get(j)) {
                     var model = this.selectors.get(j).getRight();
-                    if (renderType == null || model.getRenderTypes(p_235050_, p_235052_, modelData).contains(renderType)) // FORGE: Only put quad data if the model is using the render type passed
-                    list.add(model.getQuads(p_235050_, p_235051_, RandomSource.create(k), net.neoforged.neoforge.client.model.data.MultipartModelData.resolve(modelData, model), renderType));
+                    if (renderType == null || model.getRenderTypes(state, random, modelData).contains(renderType)) // FORGE: Only put quad data if the model is using the render type passed
+                    list.add(model.getQuads(state, direction, RandomSource.create(k), net.neoforged.neoforge.client.model.data.MultipartModelData.resolve(modelData, model), renderType));
                 }
             }
 
@@ -153,8 +153,8 @@ public class MultiPartBakedModel implements BakedModel, net.neoforged.neoforge.c
     public static class Builder {
         private final List<Pair<Predicate<BlockState>, BakedModel>> selectors = Lists.newArrayList();
 
-        public void add(Predicate<BlockState> p_119478_, BakedModel p_119479_) {
-            this.selectors.add(Pair.of(p_119478_, p_119479_));
+        public void add(Predicate<BlockState> predicate, BakedModel model) {
+            this.selectors.add(Pair.of(predicate, model));
         }
 
         public BakedModel build() {

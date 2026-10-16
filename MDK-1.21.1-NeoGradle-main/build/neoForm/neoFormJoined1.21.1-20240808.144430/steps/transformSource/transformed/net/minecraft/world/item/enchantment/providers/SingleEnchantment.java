@@ -22,9 +22,9 @@ public record SingleEnchantment(Holder<Enchantment> enchantment, IntProvider lev
     );
 
     @Override
-    public void enchant(ItemStack p_346218_, ItemEnchantments.Mutable p_345570_, RandomSource p_345742_, DifficultyInstance p_348562_) {
-        p_345570_.upgrade(
-            this.enchantment, Mth.clamp(this.level.sample(p_345742_), this.enchantment.value().getMinLevel(), this.enchantment.value().getMaxLevel())
+    public void enchant(ItemStack stack, ItemEnchantments.Mutable enchantments, RandomSource random, DifficultyInstance difficulty) {
+        enchantments.upgrade(
+            this.enchantment, Mth.clamp(this.level.sample(random), this.enchantment.value().getMinLevel(), this.enchantment.value().getMaxLevel())
         );
     }
 

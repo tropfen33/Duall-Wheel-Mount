@@ -7,5 +7,5 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface RecipeShownListener {
-    void recipesShown(List<RecipeHolder<?>> p_100518_);
+    void recipesShown(List<RecipeHolder<?>> recipes);
 }

@@ -11,10 +11,10 @@ import java.util.function.Supplier;
 public class Variant implements Supplier<JsonElement> {
     private final Map<VariantProperty<?>, VariantProperty<?>.Value> values = Maps.newLinkedHashMap();
 
-    public <T> Variant with(VariantProperty<T> p_125512_, T p_125513_) {
-        VariantProperty<?>.Value variantproperty = this.values.put(p_125512_, p_125512_.withValue(p_125513_));
+    public <T> Variant with(VariantProperty<T> property, T value) {
+        VariantProperty<?>.Value variantproperty = this.values.put(property, property.withValue(value));
         if (variantproperty != null) {
-            throw new IllegalStateException("Replacing value of " + variantproperty + " with " + p_125513_);
+            throw new IllegalStateException("Replacing value of " + variantproperty + " with " + value);
         } else {
             return this;
         }
@@ -24,10 +24,10 @@ public class Variant implements Supplier<JsonElement> {
         return new Variant();
     }
 
-    public static Variant merge(Variant p_125509_, Variant p_125510_) {
+    public static Variant merge(Variant definition1, Variant definition2) {
         Variant variant = new Variant();
-        variant.values.putAll(p_125509_.values);
-        variant.values.putAll(p_125510_.values);
+        variant.values.putAll(definition1.values);
+        variant.values.putAll(definition2.values);
         return variant;
     }
 
@@ -37,12 +37,12 @@ public class Variant implements Supplier<JsonElement> {
         return jsonobject;
     }
 
-    public static JsonElement convertList(List<Variant> p_125515_) {
-        if (p_125515_.size() == 1) {
-            return p_125515_.get(0).get();
+    public static JsonElement convertList(List<Variant> definitions) {
+        if (definitions.size() == 1) {
+            return definitions.get(0).get();
         } else {
             JsonArray jsonarray = new JsonArray();
-            p_125515_.forEach(p_125504_ -> jsonarray.add(p_125504_.get()));
+            definitions.forEach(p_125504_ -> jsonarray.add(p_125504_.get()));
             return jsonarray;
         }
     }

@@ -34,8 +34,8 @@ public class Silverfish extends Monster {
     @Nullable
     private Silverfish.SilverfishWakeUpFriendsGoal friendsGoal;
 
-    public Silverfish(EntityType<? extends Silverfish> p_33523_, Level p_33524_) {
-        super(p_33523_, p_33524_);
+    public Silverfish(EntityType<? extends Silverfish> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
@@ -65,7 +65,7 @@ public class Silverfish extends Monster {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_33549_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.SILVERFISH_HURT;
     }
 
@@ -75,20 +75,23 @@ public class Silverfish extends Monster {
     }
 
     @Override
-    protected void playStepSound(BlockPos p_33543_, BlockState p_33544_) {
+    protected void playStepSound(BlockPos pos, BlockState block) {
         this.playSound(SoundEvents.SILVERFISH_STEP, 0.15F, 1.0F);
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_33527_, float p_33528_) {
-        if (this.isInvulnerableTo(p_33527_)) {
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isInvulnerableTo(source)) {
             return false;
         } else {
-            if ((p_33527_.getEntity() != null || p_33527_.is(DamageTypeTags.ALWAYS_TRIGGERS_SILVERFISH)) && this.friendsGoal != null) {
+            if ((source.getEntity() != null || source.is(DamageTypeTags.ALWAYS_TRIGGERS_SILVERFISH)) && this.friendsGoal != null) {
                 this.friendsGoal.notifyHurt();
             }
 
-            return super.hurt(p_33527_, p_33528_);
+            return super.hurt(source, amount);
         }
     }
 
@@ -98,23 +101,26 @@ public class Silverfish extends Monster {
         super.tick();
     }
 
+    /**
+     * Set the render yaw offset
+     */
     @Override
-    public void setYBodyRot(float p_33553_) {
-        this.setYRot(p_33553_);
-        super.setYBodyRot(p_33553_);
+    public void setYBodyRot(float offset) {
+        this.setYRot(offset);
+        super.setYBodyRot(offset);
     }
 
     @Override
-    public float getWalkTargetValue(BlockPos p_33530_, LevelReader p_33531_) {
-        return InfestedBlock.isCompatibleHostBlock(p_33531_.getBlockState(p_33530_.below())) ? 10.0F : super.getWalkTargetValue(p_33530_, p_33531_);
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
+        return InfestedBlock.isCompatibleHostBlock(level.getBlockState(pos.below())) ? 10.0F : super.getWalkTargetValue(pos, level);
     }
 
     public static boolean checkSilverfishSpawnRules(
-        EntityType<Silverfish> p_219077_, LevelAccessor p_219078_, MobSpawnType p_219079_, BlockPos p_219080_, RandomSource p_219081_
+        EntityType<Silverfish> silverfish, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        if (checkAnyLightMonsterSpawnRules(p_219077_, p_219078_, p_219079_, p_219080_, p_219081_)) {
-            Player player = p_219078_.getNearestPlayer(
-                (double)p_219080_.getX() + 0.5, (double)p_219080_.getY() + 0.5, (double)p_219080_.getZ() + 0.5, 5.0, true
+        if (checkAnyLightMonsterSpawnRules(silverfish, level, spawnType, pos, random)) {
+            Player player = level.getNearestPlayer(
+                (double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, 5.0, true
             );
             return player == null;
         } else {
@@ -127,8 +133,8 @@ public class Silverfish extends Monster {
         private Direction selectedDirection;
         private boolean doMerge;
 
-        public SilverfishMergeWithStoneGoal(Silverfish p_33558_) {
-            super(p_33558_, 1.0, 10);
+        public SilverfishMergeWithStoneGoal(Silverfish silverfish) {
+            super(silverfish, 1.0, 10);
             this.setFlags(EnumSet.of(Goal.Flag.MOVE));
         }
 
@@ -181,8 +187,8 @@ public class Silverfish extends Monster {
         private final Silverfish silverfish;
         private int lookForFriends;
 
-        public SilverfishWakeUpFriendsGoal(Silverfish p_33565_) {
-            this.silverfish = p_33565_;
+        public SilverfishWakeUpFriendsGoal(Silverfish silverfish) {
+            this.silverfish = silverfish;
         }
 
         public void notifyHurt() {

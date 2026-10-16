@@ -14,8 +14,8 @@ public record PoiRemovedDebugPayload(BlockPos pos) implements CustomPacketPayloa
         this(p_295381_.readBlockPos());
     }
 
-    private void write(FriendlyByteBuf p_295470_) {
-        p_295470_.writeBlockPos(this.pos);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeBlockPos(this.pos);
     }
 
     @Override

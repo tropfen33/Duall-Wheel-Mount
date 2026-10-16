@@ -37,9 +37,9 @@ public record StatePropertiesPredicate(List<StatePropertiesPredicate.PropertyMat
         .apply(ByteBufCodecs.list())
         .map(StatePropertiesPredicate::new, StatePropertiesPredicate::properties);
 
-    public <S extends StateHolder<?, S>> boolean matches(StateDefinition<?, S> p_67670_, S p_67671_) {
+    public <S extends StateHolder<?, S>> boolean matches(StateDefinition<?, S> properties, S targetProperty) {
         for (StatePropertiesPredicate.PropertyMatcher statepropertiespredicate$propertymatcher : this.properties) {
-            if (!statepropertiespredicate$propertymatcher.match(p_67670_, p_67671_)) {
+            if (!statepropertiespredicate$propertymatcher.match(properties, targetProperty)) {
                 return false;
             }
         }
@@ -47,17 +47,17 @@ public record StatePropertiesPredicate(List<StatePropertiesPredicate.PropertyMat
         return true;
     }
 
-    public boolean matches(BlockState p_67668_) {
-        return this.matches(p_67668_.getBlock().getStateDefinition(), p_67668_);
+    public boolean matches(BlockState state) {
+        return this.matches(state.getBlock().getStateDefinition(), state);
     }
 
-    public boolean matches(FluidState p_67685_) {
-        return this.matches(p_67685_.getType().getStateDefinition(), p_67685_);
+    public boolean matches(FluidState state) {
+        return this.matches(state.getType().getStateDefinition(), state);
     }
 
-    public Optional<String> checkState(StateDefinition<?, ?> p_298590_) {
+    public Optional<String> checkState(StateDefinition<?, ?> state) {
         for (StatePropertiesPredicate.PropertyMatcher statepropertiespredicate$propertymatcher : this.properties) {
-            Optional<String> optional = statepropertiespredicate$propertymatcher.checkState(p_298590_);
+            Optional<String> optional = statepropertiespredicate$propertymatcher.checkState(state);
             if (optional.isPresent()) {
                 return optional;
             }
@@ -76,21 +76,21 @@ public record StatePropertiesPredicate(List<StatePropertiesPredicate.PropertyMat
             return new StatePropertiesPredicate.Builder();
         }
 
-        public StatePropertiesPredicate.Builder hasProperty(Property<?> p_67701_, String p_67702_) {
-            this.matchers.add(new StatePropertiesPredicate.PropertyMatcher(p_67701_.getName(), new StatePropertiesPredicate.ExactMatcher(p_67702_)));
+        public StatePropertiesPredicate.Builder hasProperty(Property<?> property, String value) {
+            this.matchers.add(new StatePropertiesPredicate.PropertyMatcher(property.getName(), new StatePropertiesPredicate.ExactMatcher(value)));
             return this;
         }
 
-        public StatePropertiesPredicate.Builder hasProperty(Property<Integer> p_67695_, int p_67696_) {
-            return this.hasProperty(p_67695_, Integer.toString(p_67696_));
+        public StatePropertiesPredicate.Builder hasProperty(Property<Integer> property, int value) {
+            return this.hasProperty(property, Integer.toString(value));
         }
 
-        public StatePropertiesPredicate.Builder hasProperty(Property<Boolean> p_67704_, boolean p_67705_) {
-            return this.hasProperty(p_67704_, Boolean.toString(p_67705_));
+        public StatePropertiesPredicate.Builder hasProperty(Property<Boolean> property, boolean value) {
+            return this.hasProperty(property, Boolean.toString(value));
         }
 
-        public <T extends Comparable<T> & StringRepresentable> StatePropertiesPredicate.Builder hasProperty(Property<T> p_67698_, T p_67699_) {
-            return this.hasProperty(p_67698_, p_67699_.getSerializedName());
+        public <T extends Comparable<T> & StringRepresentable> StatePropertiesPredicate.Builder hasProperty(Property<T> property, T value) {
+            return this.hasProperty(property, value.getSerializedName());
         }
 
         public Optional<StatePropertiesPredicate> build() {
@@ -121,13 +121,13 @@ public record StatePropertiesPredicate(List<StatePropertiesPredicate.PropertyMat
             StatePropertiesPredicate.PropertyMatcher::new
         );
 
-        public <S extends StateHolder<?, S>> boolean match(StateDefinition<?, S> p_67719_, S p_67720_) {
-            Property<?> property = p_67719_.getProperty(this.name);
-            return property != null && this.valueMatcher.match(p_67720_, property);
+        public <S extends StateHolder<?, S>> boolean match(StateDefinition<?, S> properties, S propertyToMatch) {
+            Property<?> property = properties.getProperty(this.name);
+            return property != null && this.valueMatcher.match(propertyToMatch, property);
         }
 
-        public Optional<String> checkState(StateDefinition<?, ?> p_67722_) {
-            Property<?> property = p_67722_.getProperty(this.name);
+        public Optional<String> checkState(StateDefinition<?, ?> state) {
+            Property<?> property = state.getProperty(this.name);
             return property != null ? Optional.empty() : Optional.of(this.name);
         }
     }
@@ -149,17 +149,17 @@ public record StatePropertiesPredicate(List<StatePropertiesPredicate.PropertyMat
         );
 
         @Override
-        public <T extends Comparable<T>> boolean match(StateHolder<?, ?> p_298772_, Property<T> p_298371_) {
-            T t = p_298772_.getValue(p_298371_);
+        public <T extends Comparable<T>> boolean match(StateHolder<?, ?> stateHolder, Property<T> property) {
+            T t = stateHolder.getValue(property);
             if (this.minValue.isPresent()) {
-                Optional<T> optional = p_298371_.getValue(this.minValue.get());
+                Optional<T> optional = property.getValue(this.minValue.get());
                 if (optional.isEmpty() || t.compareTo(optional.get()) < 0) {
                     return false;
                 }
             }
 
             if (this.maxValue.isPresent()) {
-                Optional<T> optional1 = p_298371_.getValue(this.maxValue.get());
+                Optional<T> optional1 = property.getValue(this.maxValue.get());
                 if (optional1.isEmpty() || t.compareTo(optional1.get()) > 0) {
                     return false;
                 }
@@ -195,6 +195,6 @@ public record StatePropertiesPredicate(List<StatePropertiesPredicate.PropertyMat
                 }
             });
 
-        <T extends Comparable<T>> boolean match(StateHolder<?, ?> p_299255_, Property<T> p_298372_);
+        <T extends Comparable<T>> boolean match(StateHolder<?, ?> stateHolder, Property<T> property);
     }
 }

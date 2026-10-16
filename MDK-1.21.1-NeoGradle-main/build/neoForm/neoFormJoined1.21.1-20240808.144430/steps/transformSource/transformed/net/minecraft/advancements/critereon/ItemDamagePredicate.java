@@ -21,11 +21,11 @@ public record ItemDamagePredicate(MinMaxBounds.Ints durability, MinMaxBounds.Int
         return DataComponents.DAMAGE;
     }
 
-    public boolean matches(ItemStack p_334074_, Integer p_333878_) {
-        return !this.durability.matches(p_334074_.getMaxDamage() - p_333878_) ? false : this.damage.matches(p_333878_);
+    public boolean matches(ItemStack stack, Integer value) {
+        return !this.durability.matches(stack.getMaxDamage() - value) ? false : this.damage.matches(value);
     }
 
-    public static ItemDamagePredicate durability(MinMaxBounds.Ints p_334087_) {
-        return new ItemDamagePredicate(p_334087_, MinMaxBounds.Ints.ANY);
+    public static ItemDamagePredicate durability(MinMaxBounds.Ints damage) {
+        return new ItemDamagePredicate(damage, MinMaxBounds.Ints.ANY);
     }
 }

@@ -13,21 +13,21 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class FullTextSearchTree<T> extends IdSearchTree<T> {
     private final SearchTree<T> plainTextSearchTree;
 
-    public FullTextSearchTree(Function<T, Stream<String>> p_235155_, Function<T, Stream<ResourceLocation>> p_235156_, List<T> p_235157_) {
-        super(p_235156_, p_235157_);
-        this.plainTextSearchTree = SearchTree.plainText(p_235157_, p_235155_);
+    public FullTextSearchTree(Function<T, Stream<String>> filter, Function<T, Stream<ResourceLocation>> idGetter, List<T> contents) {
+        super(idGetter, contents);
+        this.plainTextSearchTree = SearchTree.plainText(contents, filter);
     }
 
     @Override
-    protected List<T> searchPlainText(String p_235160_) {
-        return this.plainTextSearchTree.search(p_235160_);
+    protected List<T> searchPlainText(String query) {
+        return this.plainTextSearchTree.search(query);
     }
 
     @Override
-    protected List<T> searchResourceLocation(String p_235162_, String p_235163_) {
-        List<T> list = this.resourceLocationSearchTree.searchNamespace(p_235162_);
-        List<T> list1 = this.resourceLocationSearchTree.searchPath(p_235163_);
-        List<T> list2 = this.plainTextSearchTree.search(p_235163_);
+    protected List<T> searchResourceLocation(String namespace, String path) {
+        List<T> list = this.resourceLocationSearchTree.searchNamespace(namespace);
+        List<T> list1 = this.resourceLocationSearchTree.searchPath(path);
+        List<T> list2 = this.plainTextSearchTree.search(path);
         Iterator<T> iterator = new MergingUniqueIterator<>(list1.iterator(), list2.iterator(), this.additionOrder);
         return ImmutableList.copyOf(new IntersectionIterator<>(list.iterator(), iterator, this.additionOrder));
     }

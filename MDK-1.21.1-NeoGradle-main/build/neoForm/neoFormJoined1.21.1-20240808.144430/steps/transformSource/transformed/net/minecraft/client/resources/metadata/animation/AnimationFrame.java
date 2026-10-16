@@ -9,17 +9,17 @@ public class AnimationFrame {
     private final int index;
     private final int time;
 
-    public AnimationFrame(int p_119004_) {
-        this(p_119004_, -1);
+    public AnimationFrame(int index) {
+        this(index, -1);
     }
 
-    public AnimationFrame(int p_119006_, int p_119007_) {
-        this.index = p_119006_;
-        this.time = p_119007_;
+    public AnimationFrame(int index, int time) {
+        this.index = index;
+        this.time = time;
     }
 
-    public int getTime(int p_174857_) {
-        return this.time == -1 ? p_174857_ : this.time;
+    public int getTime(int defaultValue) {
+        return this.time == -1 ? defaultValue : this.time;
     }
 
     public int getIndex() {

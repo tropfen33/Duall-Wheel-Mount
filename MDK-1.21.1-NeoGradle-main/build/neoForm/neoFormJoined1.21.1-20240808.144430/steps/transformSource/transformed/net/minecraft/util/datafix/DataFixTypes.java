@@ -37,50 +37,50 @@ public enum DataFixTypes {
     public static final Set<TypeReference> TYPES_FOR_LEVEL_LIST;
     private final TypeReference type;
 
-    private DataFixTypes(TypeReference p_14503_) {
-        this.type = p_14503_;
+    private DataFixTypes(TypeReference type) {
+        this.type = type;
     }
 
     static int currentVersion() {
         return SharedConstants.getCurrentVersion().getDataVersion().getVersion();
     }
 
-    public <A> Codec<A> wrapCodec(final Codec<A> p_301309_, final DataFixer p_301075_, final int p_300912_) {
+    public <A> Codec<A> wrapCodec(final Codec<A> codec, final DataFixer dataFixer, final int dataVersion) {
         return new Codec<A>() {
             @Override
-            public <T> DataResult<T> encode(A p_301090_, DynamicOps<T> p_300954_, T p_301331_) {
-                return p_301309_.encode(p_301090_, p_300954_, p_301331_)
+            public <T> DataResult<T> encode(A input, DynamicOps<T> ops, T value) {
+                return codec.encode(input, ops, value)
                     .flatMap(
-                        p_300998_ -> p_300954_.mergeToMap(
-                                (T)p_300998_, p_300954_.createString("DataVersion"), p_300954_.createInt(DataFixTypes.currentVersion())
+                        p_300998_ -> ops.mergeToMap(
+                                (T)p_300998_, ops.createString("DataVersion"), ops.createInt(DataFixTypes.currentVersion())
                             )
                     );
             }
 
             @Override
-            public <T> DataResult<Pair<A, T>> decode(DynamicOps<T> p_300987_, T p_301210_) {
-                int i = p_300987_.get(p_301210_, "DataVersion").flatMap(p_300987_::getNumberValue).map(Number::intValue).result().orElse(p_300912_);
-                Dynamic<T> dynamic = new Dynamic<>(p_300987_, p_300987_.remove(p_301210_, "DataVersion"));
-                Dynamic<T> dynamic1 = DataFixTypes.this.updateToCurrentVersion(p_301075_, dynamic, i);
-                return p_301309_.decode(dynamic1);
+            public <T> DataResult<Pair<A, T>> decode(DynamicOps<T> ops, T value) {
+                int i = ops.get(value, "DataVersion").flatMap(ops::getNumberValue).map(Number::intValue).result().orElse(dataVersion);
+                Dynamic<T> dynamic = new Dynamic<>(ops, ops.remove(value, "DataVersion"));
+                Dynamic<T> dynamic1 = DataFixTypes.this.updateToCurrentVersion(dataFixer, dynamic, i);
+                return codec.decode(dynamic1);
             }
         };
     }
 
-    public <T> Dynamic<T> update(DataFixer p_265388_, Dynamic<T> p_265179_, int p_265372_, int p_265168_) {
-        return p_265388_.update(this.type, p_265179_, p_265372_, p_265168_);
+    public <T> Dynamic<T> update(DataFixer fixer, Dynamic<T> input, int version, int newVersion) {
+        return fixer.update(this.type, input, version, newVersion);
     }
 
-    public <T> Dynamic<T> updateToCurrentVersion(DataFixer p_265085_, Dynamic<T> p_265237_, int p_265099_) {
-        return this.update(p_265085_, p_265237_, p_265099_, currentVersion());
+    public <T> Dynamic<T> updateToCurrentVersion(DataFixer fixer, Dynamic<T> input, int version) {
+        return this.update(fixer, input, version, currentVersion());
     }
 
-    public CompoundTag update(DataFixer p_265128_, CompoundTag p_265422_, int p_265549_, int p_265304_) {
-        return (CompoundTag)this.update(p_265128_, new Dynamic<>(NbtOps.INSTANCE, p_265422_), p_265549_, p_265304_).getValue();
+    public CompoundTag update(DataFixer fixer, CompoundTag tag, int version, int newVersion) {
+        return (CompoundTag)this.update(fixer, new Dynamic<>(NbtOps.INSTANCE, tag), version, newVersion).getValue();
     }
 
-    public CompoundTag updateToCurrentVersion(DataFixer p_265583_, CompoundTag p_265401_, int p_265111_) {
-        return this.update(p_265583_, p_265401_, p_265111_, currentVersion());
+    public CompoundTag updateToCurrentVersion(DataFixer fixer, CompoundTag tag, int version) {
+        return this.update(fixer, tag, version, currentVersion());
     }
 
     static {

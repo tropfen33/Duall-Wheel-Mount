@@ -16,19 +16,19 @@ public class FeaturePlaceContext<FC extends FeatureConfiguration> {
     private final FC config;
 
     public FeaturePlaceContext(
-        Optional<ConfiguredFeature<?, ?>> p_225035_,
-        WorldGenLevel p_225036_,
-        ChunkGenerator p_225037_,
-        RandomSource p_225038_,
-        BlockPos p_225039_,
-        FC p_225040_
+        Optional<ConfiguredFeature<?, ?>> topFeature,
+        WorldGenLevel level,
+        ChunkGenerator chunkGenerator,
+        RandomSource random,
+        BlockPos origin,
+        FC config
     ) {
-        this.topFeature = p_225035_;
-        this.level = p_225036_;
-        this.chunkGenerator = p_225037_;
-        this.random = p_225038_;
-        this.origin = p_225039_;
-        this.config = p_225040_;
+        this.topFeature = topFeature;
+        this.level = level;
+        this.chunkGenerator = chunkGenerator;
+        this.random = random;
+        this.origin = origin;
+        this.config = config;
     }
 
     public Optional<ConfiguredFeature<?, ?>> topFeature() {

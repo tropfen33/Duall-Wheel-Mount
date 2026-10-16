@@ -5,6 +5,9 @@ import javax.annotation.Nullable;
 import net.minecraft.Util;
 import net.minecraft.util.VisibleForDebug;
 
+/**
+ * A representation of a 16x16x16 cube of nibbles (half-bytes).
+ */
 public class DataLayer {
     public static final int LAYER_COUNT = 16;
     public static final int LAYER_SIZE = 128;
@@ -18,67 +21,75 @@ public class DataLayer {
         this(0);
     }
 
-    public DataLayer(int p_62554_) {
-        this.defaultValue = p_62554_;
+    public DataLayer(int size) {
+        this.defaultValue = size;
     }
 
-    public DataLayer(byte[] p_62556_) {
-        this.data = p_62556_;
+    public DataLayer(byte[] data) {
+        this.data = data;
         this.defaultValue = 0;
-        if (p_62556_.length != 2048) {
-            throw (IllegalArgumentException)Util.pauseInIde(new IllegalArgumentException("DataLayer should be 2048 bytes not: " + p_62556_.length));
+        if (data.length != 2048) {
+            throw (IllegalArgumentException)Util.pauseInIde(new IllegalArgumentException("DataLayer should be 2048 bytes not: " + data.length));
         }
     }
 
-    public int get(int p_62561_, int p_62562_, int p_62563_) {
-        return this.get(getIndex(p_62561_, p_62562_, p_62563_));
+    /**
+     * Note all coordinates must be in the range [0, 16), they <strong>are not checked</strong>, and will either silently overrun the array or throw an exception.
+     * @return The value of this data layer at the provided position.
+     */
+    public int get(int x, int y, int z) {
+        return this.get(getIndex(x, y, z));
     }
 
-    public void set(int p_62565_, int p_62566_, int p_62567_, int p_62568_) {
-        this.set(getIndex(p_62565_, p_62566_, p_62567_), p_62568_);
+    /**
+     * Sets the value of this data layer at the provided position.
+     * Note all coordinates must be in the range [0, 16), they <strong>are not checked</strong>, and will either silently overrun the array or throw an exception.
+     */
+    public void set(int x, int y, int z, int value) {
+        this.set(getIndex(x, y, z), value);
     }
 
-    private static int getIndex(int p_62572_, int p_62573_, int p_62574_) {
-        return p_62573_ << 8 | p_62574_ << 4 | p_62572_;
+    private static int getIndex(int x, int y, int z) {
+        return y << 8 | z << 4 | x;
     }
 
-    private int get(int p_62571_) {
+    private int get(int index) {
         if (this.data == null) {
             return this.defaultValue;
         } else {
-            int i = getByteIndex(p_62571_);
-            int j = getNibbleIndex(p_62571_);
+            int i = getByteIndex(index);
+            int j = getNibbleIndex(index);
             return this.data[i] >> 4 * j & 15;
         }
     }
 
-    private void set(int p_62558_, int p_62559_) {
+    private void set(int index, int value) {
         byte[] abyte = this.getData();
-        int i = getByteIndex(p_62558_);
-        int j = getNibbleIndex(p_62558_);
+        int i = getByteIndex(index);
+        int j = getNibbleIndex(index);
         int k = ~(15 << 4 * j);
-        int l = (p_62559_ & 15) << 4 * j;
+        int l = (value & 15) << 4 * j;
         abyte[i] = (byte)(abyte[i] & k | l);
     }
 
-    private static int getNibbleIndex(int p_182482_) {
-        return p_182482_ & 1;
+    private static int getNibbleIndex(int index) {
+        return index & 1;
     }
 
-    private static int getByteIndex(int p_62579_) {
-        return p_62579_ >> 1;
+    private static int getByteIndex(int index) {
+        return index >> 1;
     }
 
-    public void fill(int p_285142_) {
-        this.defaultValue = p_285142_;
+    public void fill(int defaultValue) {
+        this.defaultValue = defaultValue;
         this.data = null;
     }
 
-    private static byte packFilled(int p_282176_) {
-        byte b0 = (byte)p_282176_;
+    private static byte packFilled(int value) {
+        byte b0 = (byte)value;
 
         for (int i = 4; i < 8; i += 4) {
-            b0 = (byte)(b0 | p_282176_ << i);
+            b0 = (byte)(b0 | value << i);
         }
 
         return b0;
@@ -118,7 +129,7 @@ public class DataLayer {
     }
 
     @VisibleForDebug
-    public String layerToString(int p_156342_) {
+    public String layerToString(int unused) {
         StringBuilder stringbuilder = new StringBuilder();
 
         for (int i = 0; i < 256; i++) {
@@ -135,8 +146,8 @@ public class DataLayer {
         return this.data == null;
     }
 
-    public boolean isDefinitelyFilledWith(int p_281763_) {
-        return this.data == null && this.defaultValue == p_281763_;
+    public boolean isDefinitelyFilledWith(int value) {
+        return this.data == null && this.defaultValue == value;
     }
 
     public boolean isEmpty() {

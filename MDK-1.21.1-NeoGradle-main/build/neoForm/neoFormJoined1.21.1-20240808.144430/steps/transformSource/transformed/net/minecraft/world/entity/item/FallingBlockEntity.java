@@ -63,32 +63,32 @@ public class FallingBlockEntity extends Entity {
     public boolean forceTickAfterTeleportToDuplicate;
     protected static final EntityDataAccessor<BlockPos> DATA_START_POS = SynchedEntityData.defineId(FallingBlockEntity.class, EntityDataSerializers.BLOCK_POS);
 
-    public FallingBlockEntity(EntityType<? extends FallingBlockEntity> p_31950_, Level p_31951_) {
-        super(p_31950_, p_31951_);
+    public FallingBlockEntity(EntityType<? extends FallingBlockEntity> entityType, Level level) {
+        super(entityType, level);
     }
 
-    private FallingBlockEntity(Level p_31953_, double p_31954_, double p_31955_, double p_31956_, BlockState p_31957_) {
-        this(EntityType.FALLING_BLOCK, p_31953_);
-        this.blockState = p_31957_;
+    private FallingBlockEntity(Level level, double x, double y, double z, BlockState state) {
+        this(EntityType.FALLING_BLOCK, level);
+        this.blockState = state;
         this.blocksBuilding = true;
-        this.setPos(p_31954_, p_31955_, p_31956_);
+        this.setPos(x, y, z);
         this.setDeltaMovement(Vec3.ZERO);
-        this.xo = p_31954_;
-        this.yo = p_31955_;
-        this.zo = p_31956_;
+        this.xo = x;
+        this.yo = y;
+        this.zo = z;
         this.setStartPos(this.blockPosition());
     }
 
-    public static FallingBlockEntity fall(Level p_201972_, BlockPos p_201973_, BlockState p_201974_) {
+    public static FallingBlockEntity fall(Level level, BlockPos pos, BlockState blockState) {
         FallingBlockEntity fallingblockentity = new FallingBlockEntity(
-            p_201972_,
-            (double)p_201973_.getX() + 0.5,
-            (double)p_201973_.getY(),
-            (double)p_201973_.getZ() + 0.5,
-            p_201974_.hasProperty(BlockStateProperties.WATERLOGGED) ? p_201974_.setValue(BlockStateProperties.WATERLOGGED, Boolean.valueOf(false)) : p_201974_
+            level,
+            (double)pos.getX() + 0.5,
+            (double)pos.getY(),
+            (double)pos.getZ() + 0.5,
+            blockState.hasProperty(BlockStateProperties.WATERLOGGED) ? blockState.setValue(BlockStateProperties.WATERLOGGED, Boolean.valueOf(false)) : blockState
         );
-        p_201972_.setBlock(p_201973_, p_201974_.getFluidState().createLegacyBlock(), 3);
-        p_201972_.addFreshEntity(fallingblockentity);
+        level.setBlock(pos, blockState.getFluidState().createLegacyBlock(), 3);
+        level.addFreshEntity(fallingblockentity);
         return fallingblockentity;
     }
 
@@ -97,8 +97,8 @@ public class FallingBlockEntity extends Entity {
         return false;
     }
 
-    public void setStartPos(BlockPos p_31960_) {
-        this.entityData.set(DATA_START_POS, p_31960_);
+    public void setStartPos(BlockPos startPos) {
+        this.entityData.set(DATA_START_POS, startPos);
     }
 
     public BlockPos getStartPos() {
@@ -111,8 +111,8 @@ public class FallingBlockEntity extends Entity {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326465_) {
-        p_326465_.define(DATA_START_POS, BlockPos.ZERO);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_START_POS, BlockPos.ZERO);
     }
 
     @Override
@@ -231,18 +231,18 @@ public class FallingBlockEntity extends Entity {
         }
     }
 
-    public void callOnBrokenAfterFall(Block p_149651_, BlockPos p_149652_) {
-        if (p_149651_ instanceof Fallable) {
-            ((Fallable)p_149651_).onBrokenAfterFall(this.level(), p_149652_, this);
+    public void callOnBrokenAfterFall(Block block, BlockPos pos) {
+        if (block instanceof Fallable) {
+            ((Fallable)block).onBrokenAfterFall(this.level(), pos, this);
         }
     }
 
     @Override
-    public boolean causeFallDamage(float p_149643_, float p_149644_, DamageSource p_149645_) {
+    public boolean causeFallDamage(float fallDistance, float multiplier, DamageSource source) {
         if (!this.hurtEntities) {
             return false;
         } else {
-            int i = Mth.ceil(p_149643_ - 1.0F);
+            int i = Mth.ceil(fallDistance - 1.0F);
             if (i < 0) {
                 return false;
             } else {
@@ -268,50 +268,53 @@ public class FallingBlockEntity extends Entity {
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_31973_) {
-        p_31973_.put("BlockState", NbtUtils.writeBlockState(this.blockState));
-        p_31973_.putInt("Time", this.time);
-        p_31973_.putBoolean("DropItem", this.dropItem);
-        p_31973_.putBoolean("HurtEntities", this.hurtEntities);
-        p_31973_.putFloat("FallHurtAmount", this.fallDamagePerDistance);
-        p_31973_.putInt("FallHurtMax", this.fallDamageMax);
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        compound.put("BlockState", NbtUtils.writeBlockState(this.blockState));
+        compound.putInt("Time", this.time);
+        compound.putBoolean("DropItem", this.dropItem);
+        compound.putBoolean("HurtEntities", this.hurtEntities);
+        compound.putFloat("FallHurtAmount", this.fallDamagePerDistance);
+        compound.putInt("FallHurtMax", this.fallDamageMax);
         if (this.blockData != null) {
-            p_31973_.put("TileEntityData", this.blockData);
+            compound.put("TileEntityData", this.blockData);
         }
 
-        p_31973_.putBoolean("CancelDrop", this.cancelDrop);
+        compound.putBoolean("CancelDrop", this.cancelDrop);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_31964_) {
-        this.blockState = NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), p_31964_.getCompound("BlockState"));
-        this.time = p_31964_.getInt("Time");
-        if (p_31964_.contains("HurtEntities", 99)) {
-            this.hurtEntities = p_31964_.getBoolean("HurtEntities");
-            this.fallDamagePerDistance = p_31964_.getFloat("FallHurtAmount");
-            this.fallDamageMax = p_31964_.getInt("FallHurtMax");
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        this.blockState = NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), compound.getCompound("BlockState"));
+        this.time = compound.getInt("Time");
+        if (compound.contains("HurtEntities", 99)) {
+            this.hurtEntities = compound.getBoolean("HurtEntities");
+            this.fallDamagePerDistance = compound.getFloat("FallHurtAmount");
+            this.fallDamageMax = compound.getInt("FallHurtMax");
         } else if (this.blockState.is(BlockTags.ANVIL)) {
             this.hurtEntities = true;
         }
 
-        if (p_31964_.contains("DropItem", 99)) {
-            this.dropItem = p_31964_.getBoolean("DropItem");
+        if (compound.contains("DropItem", 99)) {
+            this.dropItem = compound.getBoolean("DropItem");
         }
 
-        if (p_31964_.contains("TileEntityData", 10)) {
-            this.blockData = p_31964_.getCompound("TileEntityData").copy();
+        if (compound.contains("TileEntityData", 10)) {
+            this.blockData = compound.getCompound("TileEntityData").copy();
         }
 
-        this.cancelDrop = p_31964_.getBoolean("CancelDrop");
+        this.cancelDrop = compound.getBoolean("CancelDrop");
         if (this.blockState.isAir()) {
             this.blockState = Blocks.SAND.defaultBlockState();
         }
     }
 
-    public void setHurtsEntities(float p_149657_, int p_149658_) {
+    public void setHurtsEntities(float fallDamagePerDistance, int fallDamageMax) {
         this.hurtEntities = true;
-        this.fallDamagePerDistance = p_149657_;
-        this.fallDamageMax = p_149658_;
+        this.fallDamagePerDistance = fallDamagePerDistance;
+        this.fallDamageMax = fallDamageMax;
     }
 
     public void disableDrop() {
@@ -324,9 +327,9 @@ public class FallingBlockEntity extends Entity {
     }
 
     @Override
-    public void fillCrashReportCategory(CrashReportCategory p_31962_) {
-        super.fillCrashReportCategory(p_31962_);
-        p_31962_.setDetail("Immitating BlockState", this.blockState.toString());
+    public void fillCrashReportCategory(CrashReportCategory category) {
+        super.fillCrashReportCategory(category);
+        category.setDetail("Immitating BlockState", this.blockState.toString());
     }
 
     public BlockState getBlockState() {
@@ -344,29 +347,29 @@ public class FallingBlockEntity extends Entity {
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity p_352287_) {
-        return new ClientboundAddEntityPacket(this, p_352287_, Block.getId(this.getBlockState()));
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
+        return new ClientboundAddEntityPacket(this, entity, Block.getId(this.getBlockState()));
     }
 
     @Override
-    public void recreateFromPacket(ClientboundAddEntityPacket p_149654_) {
-        super.recreateFromPacket(p_149654_);
-        this.blockState = Block.stateById(p_149654_.getData());
+    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        this.blockState = Block.stateById(packet.getData());
         this.blocksBuilding = true;
-        double d0 = p_149654_.getX();
-        double d1 = p_149654_.getY();
-        double d2 = p_149654_.getZ();
+        double d0 = packet.getX();
+        double d1 = packet.getY();
+        double d2 = packet.getZ();
         this.setPos(d0, d1, d2);
         this.setStartPos(this.blockPosition());
     }
 
     @Nullable
     @Override
-    public Entity changeDimension(DimensionTransition p_351015_) {
-        ResourceKey<Level> resourcekey = p_351015_.newLevel().dimension();
+    public Entity changeDimension(DimensionTransition transition) {
+        ResourceKey<Level> resourcekey = transition.newLevel().dimension();
         ResourceKey<Level> resourcekey1 = this.level().dimension();
         boolean flag = (resourcekey1 == Level.END || resourcekey == Level.END) && resourcekey1 != resourcekey;
-        Entity entity = super.changeDimension(p_351015_);
+        Entity entity = super.changeDimension(transition);
         this.forceTickAfterTeleportToDuplicate = entity != null && flag;
         return entity;
     }

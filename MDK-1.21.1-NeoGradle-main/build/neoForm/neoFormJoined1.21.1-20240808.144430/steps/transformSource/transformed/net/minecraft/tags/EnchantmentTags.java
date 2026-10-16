@@ -42,7 +42,7 @@ public interface EnchantmentTags {
     TagKey<Enchantment> TRADES_SWAMP_SPECIAL = create("trades/swamp_special");
     TagKey<Enchantment> TRADES_TAIGA_SPECIAL = create("trades/taiga_special");
 
-    private static TagKey<Enchantment> create(String p_341202_) {
-        return TagKey.create(Registries.ENCHANTMENT, ResourceLocation.withDefaultNamespace(p_341202_));
+    private static TagKey<Enchantment> create(String name) {
+        return TagKey.create(Registries.ENCHANTMENT, ResourceLocation.withDefaultNamespace(name));
     }
 }

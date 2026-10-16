@@ -16,8 +16,8 @@ public class UsedTotemTrigger extends SimpleCriterionTrigger<UsedTotemTrigger.Tr
         return UsedTotemTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_74432_, ItemStack p_74433_) {
-        this.trigger(p_74432_, p_74436_ -> p_74436_.matches(p_74433_));
+    public void trigger(ServerPlayer player, ItemStack item) {
+        this.trigger(player, p_74436_ -> p_74436_.matches(item));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, Optional<ItemPredicate> item) implements SimpleCriterionTrigger.SimpleInstance {
@@ -29,17 +29,17 @@ public class UsedTotemTrigger extends SimpleCriterionTrigger<UsedTotemTrigger.Tr
                     .apply(p_337403_, UsedTotemTrigger.TriggerInstance::new)
         );
 
-        public static Criterion<UsedTotemTrigger.TriggerInstance> usedTotem(ItemPredicate p_163725_) {
-            return CriteriaTriggers.USED_TOTEM.createCriterion(new UsedTotemTrigger.TriggerInstance(Optional.empty(), Optional.of(p_163725_)));
+        public static Criterion<UsedTotemTrigger.TriggerInstance> usedTotem(ItemPredicate item) {
+            return CriteriaTriggers.USED_TOTEM.createCriterion(new UsedTotemTrigger.TriggerInstance(Optional.empty(), Optional.of(item)));
         }
 
-        public static Criterion<UsedTotemTrigger.TriggerInstance> usedTotem(ItemLike p_74453_) {
+        public static Criterion<UsedTotemTrigger.TriggerInstance> usedTotem(ItemLike item) {
             return CriteriaTriggers.USED_TOTEM
-                .createCriterion(new UsedTotemTrigger.TriggerInstance(Optional.empty(), Optional.of(ItemPredicate.Builder.item().of(p_74453_).build())));
+                .createCriterion(new UsedTotemTrigger.TriggerInstance(Optional.empty(), Optional.of(ItemPredicate.Builder.item().of(item).build())));
         }
 
-        public boolean matches(ItemStack p_74451_) {
-            return this.item.isEmpty() || this.item.get().test(p_74451_);
+        public boolean matches(ItemStack item) {
+            return this.item.isEmpty() || this.item.get().test(item);
         }
     }
 }

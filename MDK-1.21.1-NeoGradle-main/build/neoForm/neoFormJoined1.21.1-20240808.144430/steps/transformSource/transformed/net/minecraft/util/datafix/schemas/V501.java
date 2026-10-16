@@ -6,14 +6,14 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class V501 extends Schema {
-    public V501(int p_17974_, Schema p_17975_) {
-        super(p_17974_, p_17975_);
+    public V501(int versionKey, Schema parent) {
+        super(versionKey, parent);
     }
 
     @Override
-    public Map<String, Supplier<TypeTemplate>> registerEntities(Schema p_17983_) {
-        Map<String, Supplier<TypeTemplate>> map = super.registerEntities(p_17983_);
-        p_17983_.register(map, "PolarBear", () -> V100.equipment(p_17983_));
+    public Map<String, Supplier<TypeTemplate>> registerEntities(Schema schema) {
+        Map<String, Supplier<TypeTemplate>> map = super.registerEntities(schema);
+        schema.register(map, "PolarBear", () -> V100.equipment(schema));
         return map;
     }
 }

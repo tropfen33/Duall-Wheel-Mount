@@ -16,9 +16,9 @@ public class DistanceTrigger extends SimpleCriterionTrigger<DistanceTrigger.Trig
         return DistanceTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_186166_, Vec3 p_186167_) {
-        Vec3 vec3 = p_186166_.position();
-        this.trigger(p_186166_, p_284572_ -> p_284572_.matches(p_186166_.serverLevel(), p_186167_, vec3));
+    public void trigger(ServerPlayer player, Vec3 position) {
+        Vec3 vec3 = player.position();
+        this.trigger(player, p_284572_ -> p_284572_.matches(player.serverLevel(), position, vec3));
     }
 
     public static record TriggerInstance(
@@ -34,28 +34,28 @@ public class DistanceTrigger extends SimpleCriterionTrigger<DistanceTrigger.Trig
         );
 
         public static Criterion<DistanceTrigger.TriggerInstance> fallFromHeight(
-            EntityPredicate.Builder p_186198_, DistancePredicate p_186199_, LocationPredicate.Builder p_299057_
+            EntityPredicate.Builder player, DistancePredicate distance, LocationPredicate.Builder startPosition
         ) {
             return CriteriaTriggers.FALL_FROM_HEIGHT
                 .createCriterion(
-                    new DistanceTrigger.TriggerInstance(Optional.of(EntityPredicate.wrap(p_186198_)), Optional.of(p_299057_.build()), Optional.of(p_186199_))
+                    new DistanceTrigger.TriggerInstance(Optional.of(EntityPredicate.wrap(player)), Optional.of(startPosition.build()), Optional.of(distance))
                 );
         }
 
-        public static Criterion<DistanceTrigger.TriggerInstance> rideEntityInLava(EntityPredicate.Builder p_186195_, DistancePredicate p_186196_) {
+        public static Criterion<DistanceTrigger.TriggerInstance> rideEntityInLava(EntityPredicate.Builder player, DistancePredicate distance) {
             return CriteriaTriggers.RIDE_ENTITY_IN_LAVA_TRIGGER
-                .createCriterion(new DistanceTrigger.TriggerInstance(Optional.of(EntityPredicate.wrap(p_186195_)), Optional.empty(), Optional.of(p_186196_)));
+                .createCriterion(new DistanceTrigger.TriggerInstance(Optional.of(EntityPredicate.wrap(player)), Optional.empty(), Optional.of(distance)));
         }
 
-        public static Criterion<DistanceTrigger.TriggerInstance> travelledThroughNether(DistancePredicate p_186193_) {
+        public static Criterion<DistanceTrigger.TriggerInstance> travelledThroughNether(DistancePredicate distance) {
             return CriteriaTriggers.NETHER_TRAVEL
-                .createCriterion(new DistanceTrigger.TriggerInstance(Optional.empty(), Optional.empty(), Optional.of(p_186193_)));
+                .createCriterion(new DistanceTrigger.TriggerInstance(Optional.empty(), Optional.empty(), Optional.of(distance)));
         }
 
-        public boolean matches(ServerLevel p_186189_, Vec3 p_186190_, Vec3 p_186191_) {
-            return this.startPosition.isPresent() && !this.startPosition.get().matches(p_186189_, p_186190_.x, p_186190_.y, p_186190_.z)
+        public boolean matches(ServerLevel level, Vec3 startPosition, Vec3 currentPosition) {
+            return this.startPosition.isPresent() && !this.startPosition.get().matches(level, startPosition.x, startPosition.y, startPosition.z)
                 ? false
-                : !this.distance.isPresent() || this.distance.get().matches(p_186190_.x, p_186190_.y, p_186190_.z, p_186191_.x, p_186191_.y, p_186191_.z);
+                : !this.distance.isPresent() || this.distance.get().matches(startPosition.x, startPosition.y, startPosition.z, currentPosition.x, currentPosition.y, currentPosition.z);
         }
     }
 }

@@ -65,7 +65,7 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 
 public class Main {
     @DontObfuscate
-    public static void main(String[] p_129669_) throws IOException {
+    public static void main(String[] args) throws IOException {
         SharedConstants.tryDetectVersion();
         OptionParser optionparser = new OptionParser();
         OptionSpec<Void> optionspec = optionparser.accepts("help", "Show the help menu").forHelp();
@@ -84,7 +84,7 @@ public class Main {
         OptionSpec<Void> flat = optionparser.accepts("flat", "Do not append modid prefix to output directory when generating for multiple mods");
         OptionSpec<String> assetIndex = optionparser.accepts("assetIndex").withRequiredArg();
         OptionSpec<java.io.File> assetsDir = optionparser.accepts("assetsDir").withRequiredArg().ofType(java.io.File.class);
-        OptionSet optionset = optionparser.parse(p_129669_);
+        OptionSet optionset = optionparser.parse(args);
         if (!optionset.has(optionspec) && optionset.hasOptions() && !(optionset.specs().size() == 1 && optionset.has(gameDir))) {
             Path path = Paths.get(optionspec7.value(optionset));
             boolean flag = optionset.has(optionspec6);
@@ -119,29 +119,29 @@ public class Main {
     }
 
     private static <T extends DataProvider> DataProvider.Factory<T> bindRegistries(
-        BiFunction<PackOutput, CompletableFuture<HolderLookup.Provider>, T> p_256618_, CompletableFuture<HolderLookup.Provider> p_256515_
+        BiFunction<PackOutput, CompletableFuture<HolderLookup.Provider>, T> tagProviderFactory, CompletableFuture<HolderLookup.Provider> lookupProvider
     ) {
-        return p_255476_ -> p_256618_.apply(p_255476_, p_256515_);
+        return p_255476_ -> tagProviderFactory.apply(p_255476_, lookupProvider);
     }
 
     public static DataGenerator createStandardGenerator(
-        Path p_236680_,
-        Collection<Path> p_236681_,
-        boolean p_236682_,
-        boolean p_236683_,
-        boolean p_236684_,
-        boolean p_236685_,
-        boolean p_236686_,
-        WorldVersion p_236687_,
-        boolean p_236688_
+        Path outputFolder,
+        Collection<Path> inputFolders,
+        boolean client,
+        boolean server,
+        boolean dev,
+        boolean reports,
+        boolean validate,
+        WorldVersion version,
+        boolean alwaysGenerate
     ) {
-        DataGenerator datagenerator = new DataGenerator(p_236680_, p_236687_, p_236688_);
-        DataGenerator.PackGenerator datagenerator$packgenerator = datagenerator.getVanillaPack(p_236682_ || p_236683_);
-        datagenerator$packgenerator.addProvider(p_253388_ -> new SnbtToNbt(p_253388_, p_236681_).addFilter(new StructureUpdater()));
+        DataGenerator datagenerator = new DataGenerator(outputFolder, version, alwaysGenerate);
+        DataGenerator.PackGenerator datagenerator$packgenerator = datagenerator.getVanillaPack(client || server);
+        datagenerator$packgenerator.addProvider(p_253388_ -> new SnbtToNbt(p_253388_, inputFolders).addFilter(new StructureUpdater()));
         CompletableFuture<HolderLookup.Provider> completablefuture1 = CompletableFuture.supplyAsync(VanillaRegistries::createLookup, Util.backgroundExecutor());
-        DataGenerator.PackGenerator datagenerator$packgenerator1 = datagenerator.getVanillaPack(p_236682_);
+        DataGenerator.PackGenerator datagenerator$packgenerator1 = datagenerator.getVanillaPack(client);
         datagenerator$packgenerator1.addProvider(ModelProvider::new);
-        DataGenerator.PackGenerator datagenerator$packgenerator2 = datagenerator.getVanillaPack(p_236683_);
+        DataGenerator.PackGenerator datagenerator$packgenerator2 = datagenerator.getVanillaPack(server);
         datagenerator$packgenerator2.addProvider(bindRegistries(RegistriesDatapackGenerator::new, completablefuture1));
         datagenerator$packgenerator2.addProvider(bindRegistries(VanillaAdvancementProvider::create, completablefuture1));
         datagenerator$packgenerator2.addProvider(bindRegistries(VanillaLootTableProvider::create, completablefuture1));
@@ -164,16 +164,16 @@ public class Main {
         datagenerator$packgenerator2.addProvider(bindRegistries(PoiTypeTagsProvider::new, completablefuture1));
         datagenerator$packgenerator2.addProvider(bindRegistries(WorldPresetTagsProvider::new, completablefuture1));
         datagenerator$packgenerator2.addProvider(bindRegistries(VanillaEnchantmentTagsProvider::new, completablefuture1));
-        datagenerator$packgenerator2 = datagenerator.getVanillaPack(p_236684_);
-        datagenerator$packgenerator2.addProvider(p_253386_ -> new NbtToSnbt(p_253386_, p_236681_));
-        datagenerator$packgenerator2 = datagenerator.getVanillaPack(p_236685_);
+        datagenerator$packgenerator2 = datagenerator.getVanillaPack(dev);
+        datagenerator$packgenerator2.addProvider(p_253386_ -> new NbtToSnbt(p_253386_, inputFolders));
+        datagenerator$packgenerator2 = datagenerator.getVanillaPack(reports);
         datagenerator$packgenerator2.addProvider(bindRegistries(BiomeParametersDumpReport::new, completablefuture1));
         datagenerator$packgenerator2.addProvider(bindRegistries(ItemListReport::new, completablefuture1));
         datagenerator$packgenerator2.addProvider(bindRegistries(BlockListReport::new, completablefuture1));
         datagenerator$packgenerator2.addProvider(bindRegistries(CommandsReport::new, completablefuture1));
         datagenerator$packgenerator2.addProvider(RegistryDumpReport::new);
         datagenerator$packgenerator2.addProvider(PacketReport::new);
-        datagenerator$packgenerator2 = datagenerator.getBuiltinDatapack(p_236683_, "bundle");
+        datagenerator$packgenerator2 = datagenerator.getBuiltinDatapack(server, "bundle");
         datagenerator$packgenerator2.addProvider(bindRegistries(BundleRecipeProvider::new, completablefuture1));
         datagenerator$packgenerator2.addProvider(
             p_253392_ -> PackMetadataGenerator.forFeaturePack(
@@ -182,7 +182,7 @@ public class Main {
         );
         CompletableFuture<RegistrySetBuilder.PatchedRegistries> completablefuture2 = TradeRebalanceRegistries.createLookup(completablefuture1);
         CompletableFuture<HolderLookup.Provider> completablefuture = completablefuture2.thenApply(RegistrySetBuilder.PatchedRegistries::patches);
-        DataGenerator.PackGenerator datagenerator$packgenerator3 = datagenerator.getBuiltinDatapack(p_236683_, "trade_rebalance");
+        DataGenerator.PackGenerator datagenerator$packgenerator3 = datagenerator.getBuiltinDatapack(server, "trade_rebalance");
         datagenerator$packgenerator3.addProvider(bindRegistries(RegistriesDatapackGenerator::new, completablefuture));
         datagenerator$packgenerator3.addProvider(
             p_293698_ -> PackMetadataGenerator.forFeaturePack(

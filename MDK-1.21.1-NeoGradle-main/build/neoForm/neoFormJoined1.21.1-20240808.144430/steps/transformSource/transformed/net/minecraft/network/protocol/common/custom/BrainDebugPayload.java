@@ -21,8 +21,8 @@ public record BrainDebugPayload(BrainDebugPayload.BrainDump brainDump) implement
         this(new BrainDebugPayload.BrainDump(p_295683_));
     }
 
-    private void write(FriendlyByteBuf p_294240_) {
-        this.brainDump.write(p_294240_);
+    private void write(FriendlyByteBuf buffer) {
+        this.brainDump.write(buffer);
     }
 
     @Override
@@ -73,33 +73,33 @@ public record BrainDebugPayload(BrainDebugPayload.BrainDump brainDump) implement
             );
         }
 
-        public void write(FriendlyByteBuf p_296077_) {
-            p_296077_.writeUUID(this.uuid);
-            p_296077_.writeInt(this.id);
-            p_296077_.writeUtf(this.name);
-            p_296077_.writeUtf(this.profession);
-            p_296077_.writeInt(this.xp);
-            p_296077_.writeFloat(this.health);
-            p_296077_.writeFloat(this.maxHealth);
-            p_296077_.writeVec3(this.pos);
-            p_296077_.writeUtf(this.inventory);
-            p_296077_.writeNullable(this.path, (p_296121_, p_295181_) -> p_295181_.writeToStream(p_296121_));
-            p_296077_.writeBoolean(this.wantsGolem);
-            p_296077_.writeInt(this.angerLevel);
-            p_296077_.writeCollection(this.activities, FriendlyByteBuf::writeUtf);
-            p_296077_.writeCollection(this.behaviors, FriendlyByteBuf::writeUtf);
-            p_296077_.writeCollection(this.memories, FriendlyByteBuf::writeUtf);
-            p_296077_.writeCollection(this.gossips, FriendlyByteBuf::writeUtf);
-            p_296077_.writeCollection(this.pois, BlockPos.STREAM_CODEC);
-            p_296077_.writeCollection(this.potentialPois, BlockPos.STREAM_CODEC);
+        public void write(FriendlyByteBuf buffer) {
+            buffer.writeUUID(this.uuid);
+            buffer.writeInt(this.id);
+            buffer.writeUtf(this.name);
+            buffer.writeUtf(this.profession);
+            buffer.writeInt(this.xp);
+            buffer.writeFloat(this.health);
+            buffer.writeFloat(this.maxHealth);
+            buffer.writeVec3(this.pos);
+            buffer.writeUtf(this.inventory);
+            buffer.writeNullable(this.path, (p_296121_, p_295181_) -> p_295181_.writeToStream(p_296121_));
+            buffer.writeBoolean(this.wantsGolem);
+            buffer.writeInt(this.angerLevel);
+            buffer.writeCollection(this.activities, FriendlyByteBuf::writeUtf);
+            buffer.writeCollection(this.behaviors, FriendlyByteBuf::writeUtf);
+            buffer.writeCollection(this.memories, FriendlyByteBuf::writeUtf);
+            buffer.writeCollection(this.gossips, FriendlyByteBuf::writeUtf);
+            buffer.writeCollection(this.pois, BlockPos.STREAM_CODEC);
+            buffer.writeCollection(this.potentialPois, BlockPos.STREAM_CODEC);
         }
 
-        public boolean hasPoi(BlockPos p_294781_) {
-            return this.pois.contains(p_294781_);
+        public boolean hasPoi(BlockPos pos) {
+            return this.pois.contains(pos);
         }
 
-        public boolean hasPotentialPoi(BlockPos p_295626_) {
-            return this.potentialPois.contains(p_295626_);
+        public boolean hasPotentialPoi(BlockPos pos) {
+            return this.potentialPois.contains(pos);
         }
     }
 }

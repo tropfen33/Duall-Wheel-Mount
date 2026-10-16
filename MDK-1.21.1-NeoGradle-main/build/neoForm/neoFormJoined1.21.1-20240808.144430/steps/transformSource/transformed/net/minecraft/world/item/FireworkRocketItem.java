@@ -23,20 +23,23 @@ public class FireworkRocketItem extends Item implements ProjectileItem {
     public static final byte[] CRAFTABLE_DURATIONS = new byte[]{1, 2, 3};
     public static final double ROCKET_PLACEMENT_OFFSET = 0.15;
 
-    public FireworkRocketItem(Item.Properties p_41209_) {
-        super(p_41209_);
+    public FireworkRocketItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_41216_) {
-        Level level = p_41216_.getLevel();
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
         if (!level.isClientSide) {
-            ItemStack itemstack = p_41216_.getItemInHand();
-            Vec3 vec3 = p_41216_.getClickLocation();
-            Direction direction = p_41216_.getClickedFace();
+            ItemStack itemstack = context.getItemInHand();
+            Vec3 vec3 = context.getClickLocation();
+            Direction direction = context.getClickedFace();
             FireworkRocketEntity fireworkrocketentity = new FireworkRocketEntity(
                 level,
-                p_41216_.getPlayer(),
+                context.getPlayer(),
                 vec3.x + (double)direction.getStepX() * 0.15,
                 vec3.y + (double)direction.getStepY() * 0.15,
                 vec3.z + (double)direction.getStepZ() * 0.15,
@@ -49,34 +52,37 @@ public class FireworkRocketItem extends Item implements ProjectileItem {
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_41218_, Player p_41219_, InteractionHand p_41220_) {
-        if (p_41219_.isFallFlying()) {
-            ItemStack itemstack = p_41219_.getItemInHand(p_41220_);
-            if (!p_41218_.isClientSide) {
-                FireworkRocketEntity fireworkrocketentity = new FireworkRocketEntity(p_41218_, itemstack, p_41219_);
-                p_41218_.addFreshEntity(fireworkrocketentity);
-                itemstack.consume(1, p_41219_);
-                p_41219_.awardStat(Stats.ITEM_USED.get(this));
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        if (player.isFallFlying()) {
+            ItemStack itemstack = player.getItemInHand(hand);
+            if (!level.isClientSide) {
+                FireworkRocketEntity fireworkrocketentity = new FireworkRocketEntity(level, itemstack, player);
+                level.addFreshEntity(fireworkrocketentity);
+                itemstack.consume(1, player);
+                player.awardStat(Stats.ITEM_USED.get(this));
             }
 
-            return InteractionResultHolder.sidedSuccess(p_41219_.getItemInHand(p_41220_), p_41218_.isClientSide());
+            return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide());
         } else {
-            return InteractionResultHolder.pass(p_41219_.getItemInHand(p_41220_));
+            return InteractionResultHolder.pass(player.getItemInHand(hand));
         }
     }
 
     @Override
-    public void appendHoverText(ItemStack p_41211_, Item.TooltipContext p_339661_, List<Component> p_41213_, TooltipFlag p_41214_) {
-        Fireworks fireworks = p_41211_.get(DataComponents.FIREWORKS);
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        Fireworks fireworks = stack.get(DataComponents.FIREWORKS);
         if (fireworks != null) {
-            fireworks.addToTooltip(p_339661_, p_41213_::add, p_41214_);
+            fireworks.addToTooltip(context, tooltipComponents::add, tooltipFlag);
         }
     }
 
     @Override
-    public Projectile asProjectile(Level p_338390_, Position p_338574_, ItemStack p_338487_, Direction p_338368_) {
-        return new FireworkRocketEntity(p_338390_, p_338487_.copyWithCount(1), p_338574_.x(), p_338574_.y(), p_338574_.z(), true);
+    public Projectile asProjectile(Level level, Position pos, ItemStack stack, Direction direction) {
+        return new FireworkRocketEntity(level, stack.copyWithCount(1), pos.x(), pos.y(), pos.z(), true);
     }
 
     @Override
@@ -89,13 +95,13 @@ public class FireworkRocketItem extends Item implements ProjectileItem {
             .build();
     }
 
-    private static Vec3 getEntityPokingOutOfBlockPos(BlockSource p_338806_, Direction p_338706_) {
-        return p_338806_.center()
+    private static Vec3 getEntityPokingOutOfBlockPos(BlockSource source, Direction direction) {
+        return source.center()
             .add(
-                (double)p_338706_.getStepX() * (0.5000099999997474 - (double)EntityType.FIREWORK_ROCKET.getWidth() / 2.0),
-                (double)p_338706_.getStepY() * (0.5000099999997474 - (double)EntityType.FIREWORK_ROCKET.getHeight() / 2.0)
+                (double)direction.getStepX() * (0.5000099999997474 - (double)EntityType.FIREWORK_ROCKET.getWidth() / 2.0),
+                (double)direction.getStepY() * (0.5000099999997474 - (double)EntityType.FIREWORK_ROCKET.getHeight() / 2.0)
                     - (double)EntityType.FIREWORK_ROCKET.getHeight() / 2.0,
-                (double)p_338706_.getStepZ() * (0.5000099999997474 - (double)EntityType.FIREWORK_ROCKET.getWidth() / 2.0)
+                (double)direction.getStepZ() * (0.5000099999997474 - (double)EntityType.FIREWORK_ROCKET.getWidth() / 2.0)
             );
     }
 }

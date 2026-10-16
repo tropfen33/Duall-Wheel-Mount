@@ -43,9 +43,9 @@ public class AccountProfileKeyPairManager implements ProfileKeyPairManager {
     private CompletableFuture<Optional<ProfileKeyPair>> keyPair = CompletableFuture.completedFuture(Optional.empty());
     private Instant nextProfileKeyRefreshTime = Instant.EPOCH;
 
-    public AccountProfileKeyPairManager(UserApiService p_253640_, UUID p_254415_, Path p_253813_) {
-        this.userApiService = p_253640_;
-        this.profileKeyPairPath = p_253813_.resolve(PROFILE_KEY_PAIR_DIR).resolve(p_254415_ + ".json");
+    public AccountProfileKeyPairManager(UserApiService userApiService, UUID uuid, Path gameDirectory) {
+        this.userApiService = userApiService;
+        this.profileKeyPairPath = gameDirectory.resolve(PROFILE_KEY_PAIR_DIR).resolve(uuid + ".json");
     }
 
     @Override
@@ -62,14 +62,14 @@ public class AccountProfileKeyPairManager implements ProfileKeyPairManager {
             : false;
     }
 
-    private CompletableFuture<Optional<ProfileKeyPair>> readOrFetchProfileKeyPair(Optional<ProfileKeyPair> p_254074_) {
+    private CompletableFuture<Optional<ProfileKeyPair>> readOrFetchProfileKeyPair(Optional<ProfileKeyPair> pair) {
         return CompletableFuture.supplyAsync(() -> {
-            if (p_254074_.isPresent() && !p_254074_.get().dueRefresh()) {
+            if (pair.isPresent() && !pair.get().dueRefresh()) {
                 if (!SharedConstants.IS_RUNNING_IN_IDE) {
                     this.writeProfileKeyPair(null);
                 }
 
-                return p_254074_;
+                return pair;
             } else {
                 try {
                     ProfileKeyPair profilekeypair = this.fetchProfileKeyPair(this.userApiService);
@@ -80,7 +80,7 @@ public class AccountProfileKeyPairManager implements ProfileKeyPairManager {
                     if (net.neoforged.fml.loading.FMLLoader.isProduction() || this.userApiService != UserApiService.OFFLINE)
                     LOGGER.error("Failed to retrieve profile key pair", (Throwable)ioexception);
                     this.writeProfileKeyPair(null);
-                    return p_254074_;
+                    return pair;
                 }
             }
         }, Util.nonCriticalIoPool());
@@ -104,16 +104,16 @@ public class AccountProfileKeyPairManager implements ProfileKeyPairManager {
         }
     }
 
-    private void writeProfileKeyPair(@Nullable ProfileKeyPair p_254227_) {
+    private void writeProfileKeyPair(@Nullable ProfileKeyPair profileKeyPair) {
         try {
             Files.deleteIfExists(this.profileKeyPairPath);
         } catch (IOException ioexception) {
             LOGGER.error("Failed to delete profile key pair file {}", this.profileKeyPairPath, ioexception);
         }
 
-        if (p_254227_ != null) {
+        if (profileKeyPair != null) {
             if (SharedConstants.IS_RUNNING_IN_IDE) {
-                ProfileKeyPair.CODEC.encodeStart(JsonOps.INSTANCE, p_254227_).ifSuccess(p_254406_ -> {
+                ProfileKeyPair.CODEC.encodeStart(JsonOps.INSTANCE, profileKeyPair).ifSuccess(p_254406_ -> {
                     try {
                         Files.createDirectories(this.profileKeyPairPath.getParent());
                         Files.writeString(this.profileKeyPairPath, p_254406_.toString());
@@ -126,8 +126,8 @@ public class AccountProfileKeyPairManager implements ProfileKeyPairManager {
     }
 
     @Nullable
-    private ProfileKeyPair fetchProfileKeyPair(UserApiService p_253844_) throws CryptException, IOException {
-        KeyPairResponse keypairresponse = p_253844_.getKeyPair();
+    private ProfileKeyPair fetchProfileKeyPair(UserApiService userApiService) throws CryptException, IOException {
+        KeyPairResponse keypairresponse = userApiService.getKeyPair();
         if (keypairresponse != null) {
             ProfilePublicKey.Data profilepublickey$data = parsePublicKey(keypairresponse);
             return new ProfileKeyPair(
@@ -140,16 +140,16 @@ public class AccountProfileKeyPairManager implements ProfileKeyPairManager {
         }
     }
 
-    private static ProfilePublicKey.Data parsePublicKey(KeyPairResponse p_253834_) throws CryptException {
-        KeyPair keypair = p_253834_.keyPair();
+    private static ProfilePublicKey.Data parsePublicKey(KeyPairResponse keyPairResponse) throws CryptException {
+        KeyPair keypair = keyPairResponse.keyPair();
         if (keypair != null
             && !Strings.isNullOrEmpty(keypair.publicKey())
-            && p_253834_.publicKeySignature() != null
-            && p_253834_.publicKeySignature().array().length != 0) {
+            && keyPairResponse.publicKeySignature() != null
+            && keyPairResponse.publicKeySignature().array().length != 0) {
             try {
-                Instant instant = Instant.parse(p_253834_.expiresAt());
+                Instant instant = Instant.parse(keyPairResponse.expiresAt());
                 PublicKey publickey = Crypt.stringToRsaPublicKey(keypair.publicKey());
-                ByteBuffer bytebuffer = p_253834_.publicKeySignature();
+                ByteBuffer bytebuffer = keyPairResponse.publicKeySignature();
                 return new ProfilePublicKey.Data(instant, publickey, bytebuffer.array());
             } catch (IllegalArgumentException | DateTimeException datetimeexception) {
                 throw new CryptException(datetimeexception);

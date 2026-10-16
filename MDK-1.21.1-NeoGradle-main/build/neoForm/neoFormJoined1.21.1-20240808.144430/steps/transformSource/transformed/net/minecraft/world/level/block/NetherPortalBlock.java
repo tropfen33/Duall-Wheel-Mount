@@ -51,14 +51,14 @@ public class NetherPortalBlock extends Block implements Portal {
         return CODEC;
     }
 
-    public NetherPortalBlock(BlockBehaviour.Properties p_54909_) {
-        super(p_54909_);
+    public NetherPortalBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(AXIS, Direction.Axis.X));
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_54942_, BlockGetter p_54943_, BlockPos p_54944_, CollisionContext p_54945_) {
-        switch ((Direction.Axis)p_54942_.getValue(AXIS)) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        switch ((Direction.Axis)state.getValue(AXIS)) {
             case Z:
                 return Z_AXIS_AABB;
             case X:
@@ -67,17 +67,20 @@ public class NetherPortalBlock extends Block implements Portal {
         }
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_221799_, ServerLevel p_221800_, BlockPos p_221801_, RandomSource p_221802_) {
-        if (p_221800_.dimensionType().natural()
-            && p_221800_.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)
-            && p_221802_.nextInt(2000) < p_221800_.getDifficulty().getId()) {
-            while (p_221800_.getBlockState(p_221801_).is(this)) {
-                p_221801_ = p_221801_.below();
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (level.dimensionType().natural()
+            && level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING)
+            && random.nextInt(2000) < level.getDifficulty().getId()) {
+            while (level.getBlockState(pos).is(this)) {
+                pos = pos.below();
             }
 
-            if (p_221800_.getBlockState(p_221801_).isValidSpawn(p_221800_, p_221801_, EntityType.ZOMBIFIED_PIGLIN)) {
-                Entity entity = EntityType.ZOMBIFIED_PIGLIN.spawn(p_221800_, p_221801_.above(), MobSpawnType.STRUCTURE);
+            if (level.getBlockState(pos).isValidSpawn(level, pos, EntityType.ZOMBIFIED_PIGLIN)) {
+                Entity entity = EntityType.ZOMBIFIED_PIGLIN.spawn(level, pos.above(), MobSpawnType.STRUCTURE);
                 if (entity != null) {
                     entity.setPortalCooldown();
                 }
@@ -85,29 +88,34 @@ public class NetherPortalBlock extends Block implements Portal {
         }
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_54928_, Direction p_54929_, BlockState p_54930_, LevelAccessor p_54931_, BlockPos p_54932_, BlockPos p_54933_) {
-        Direction.Axis direction$axis = p_54929_.getAxis();
-        Direction.Axis direction$axis1 = p_54928_.getValue(AXIS);
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        Direction.Axis direction$axis = facing.getAxis();
+        Direction.Axis direction$axis1 = state.getValue(AXIS);
         boolean flag = direction$axis1 != direction$axis && direction$axis.isHorizontal();
-        return !flag && !p_54930_.is(this) && !new PortalShape(p_54931_, p_54932_, direction$axis1).isComplete()
+        return !flag && !facingState.is(this) && !new PortalShape(level, currentPos, direction$axis1).isComplete()
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_54928_, p_54929_, p_54930_, p_54931_, p_54932_, p_54933_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected void entityInside(BlockState p_54915_, Level p_54916_, BlockPos p_54917_, Entity p_54918_) {
-        if (p_54918_.canUsePortal(false)) {
-            p_54918_.setAsInsidePortal(this, p_54917_);
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        if (entity.canUsePortal(false)) {
+            entity.setAsInsidePortal(this, pos);
         }
     }
 
     @Override
-    public int getPortalTransitionTime(ServerLevel p_350689_, Entity p_350280_) {
-        return p_350280_ instanceof Player player
+    public int getPortalTransitionTime(ServerLevel level, Entity entity) {
+        return entity instanceof Player player
             ? Math.max(
                 1,
-                p_350689_.getGameRules()
+                level.getGameRules()
                     .getInt(
                         player.getAbilities().invulnerable
                             ? GameRules.RULE_PLAYERS_NETHER_PORTAL_CREATIVE_DELAY
@@ -119,42 +127,42 @@ public class NetherPortalBlock extends Block implements Portal {
 
     @Nullable
     @Override
-    public DimensionTransition getPortalDestination(ServerLevel p_350444_, Entity p_350334_, BlockPos p_350764_) {
-        ResourceKey<Level> resourcekey = p_350444_.dimension() == Level.NETHER ? Level.OVERWORLD : Level.NETHER;
-        ServerLevel serverlevel = p_350444_.getServer().getLevel(resourcekey);
+    public DimensionTransition getPortalDestination(ServerLevel level, Entity entity, BlockPos pos) {
+        ResourceKey<Level> resourcekey = level.dimension() == Level.NETHER ? Level.OVERWORLD : Level.NETHER;
+        ServerLevel serverlevel = level.getServer().getLevel(resourcekey);
         if (serverlevel == null) {
             return null;
         } else {
             boolean flag = serverlevel.dimension() == Level.NETHER;
             WorldBorder worldborder = serverlevel.getWorldBorder();
-            double d0 = DimensionType.getTeleportationScale(p_350444_.dimensionType(), serverlevel.dimensionType());
-            BlockPos blockpos = worldborder.clampToBounds(p_350334_.getX() * d0, p_350334_.getY(), p_350334_.getZ() * d0);
-            return this.getExitPortal(serverlevel, p_350334_, p_350764_, blockpos, flag, worldborder);
+            double d0 = DimensionType.getTeleportationScale(level.dimensionType(), serverlevel.dimensionType());
+            BlockPos blockpos = worldborder.clampToBounds(entity.getX() * d0, entity.getY(), entity.getZ() * d0);
+            return this.getExitPortal(serverlevel, entity, pos, blockpos, flag, worldborder);
         }
     }
 
     @Nullable
     private DimensionTransition getExitPortal(
-        ServerLevel p_350564_, Entity p_350493_, BlockPos p_350379_, BlockPos p_350747_, boolean p_350326_, WorldBorder p_350718_
+        ServerLevel level, Entity entity, BlockPos pos, BlockPos exitPos, boolean isNether, WorldBorder worldBorder
     ) {
-        Optional<BlockPos> optional = p_350564_.getPortalForcer().findClosestPortalPosition(p_350747_, p_350326_, p_350718_);
+        Optional<BlockPos> optional = level.getPortalForcer().findClosestPortalPosition(exitPos, isNether, worldBorder);
         BlockUtil.FoundRectangle blockutil$foundrectangle;
         DimensionTransition.PostDimensionTransition dimensiontransition$postdimensiontransition;
         if (optional.isPresent()) {
             BlockPos blockpos = optional.get();
-            BlockState blockstate = p_350564_.getBlockState(blockpos);
+            BlockState blockstate = level.getBlockState(blockpos);
             blockutil$foundrectangle = BlockUtil.getLargestRectangleAround(
                 blockpos,
                 blockstate.getValue(BlockStateProperties.HORIZONTAL_AXIS),
                 21,
                 Direction.Axis.Y,
                 21,
-                p_351970_ -> p_350564_.getBlockState(p_351970_) == blockstate
+                p_351970_ -> level.getBlockState(p_351970_) == blockstate
             );
             dimensiontransition$postdimensiontransition = DimensionTransition.PLAY_PORTAL_SOUND.then(p_351967_ -> p_351967_.placePortalTicket(blockpos));
         } else {
-            Direction.Axis direction$axis = p_350493_.level().getBlockState(p_350379_).getOptionalValue(AXIS).orElse(Direction.Axis.X);
-            Optional<BlockUtil.FoundRectangle> optional1 = p_350564_.getPortalForcer().createPortal(p_350747_, direction$axis);
+            Direction.Axis direction$axis = entity.level().getBlockState(pos).getOptionalValue(AXIS).orElse(Direction.Axis.X);
+            Optional<BlockUtil.FoundRectangle> optional1 = level.getPortalForcer().createPortal(exitPos, direction$axis);
             if (optional1.isEmpty()) {
                 LOGGER.error("Unable to create a portal, likely target out of worldborder");
                 return null;
@@ -164,57 +172,57 @@ public class NetherPortalBlock extends Block implements Portal {
             dimensiontransition$postdimensiontransition = DimensionTransition.PLAY_PORTAL_SOUND.then(DimensionTransition.PLACE_PORTAL_TICKET);
         }
 
-        return getDimensionTransitionFromExit(p_350493_, p_350379_, blockutil$foundrectangle, p_350564_, dimensiontransition$postdimensiontransition);
+        return getDimensionTransitionFromExit(entity, pos, blockutil$foundrectangle, level, dimensiontransition$postdimensiontransition);
     }
 
     private static DimensionTransition getDimensionTransitionFromExit(
-        Entity p_350906_, BlockPos p_350376_, BlockUtil.FoundRectangle p_350428_, ServerLevel p_350928_, DimensionTransition.PostDimensionTransition p_352093_
+        Entity entity, BlockPos pos, BlockUtil.FoundRectangle rectangle, ServerLevel level, DimensionTransition.PostDimensionTransition postDimensionTransition
     ) {
-        BlockState blockstate = p_350906_.level().getBlockState(p_350376_);
+        BlockState blockstate = entity.level().getBlockState(pos);
         Direction.Axis direction$axis;
         Vec3 vec3;
         if (blockstate.hasProperty(BlockStateProperties.HORIZONTAL_AXIS)) {
             direction$axis = blockstate.getValue(BlockStateProperties.HORIZONTAL_AXIS);
             BlockUtil.FoundRectangle blockutil$foundrectangle = BlockUtil.getLargestRectangleAround(
-                p_350376_, direction$axis, 21, Direction.Axis.Y, 21, p_351016_ -> p_350906_.level().getBlockState(p_351016_) == blockstate
+                pos, direction$axis, 21, Direction.Axis.Y, 21, p_351016_ -> entity.level().getBlockState(p_351016_) == blockstate
             );
-            vec3 = p_350906_.getRelativePortalPosition(direction$axis, blockutil$foundrectangle);
+            vec3 = entity.getRelativePortalPosition(direction$axis, blockutil$foundrectangle);
         } else {
             direction$axis = Direction.Axis.X;
             vec3 = new Vec3(0.5, 0.0, 0.0);
         }
 
         return createDimensionTransition(
-            p_350928_, p_350428_, direction$axis, vec3, p_350906_, p_350906_.getDeltaMovement(), p_350906_.getYRot(), p_350906_.getXRot(), p_352093_
+            level, rectangle, direction$axis, vec3, entity, entity.getDeltaMovement(), entity.getYRot(), entity.getXRot(), postDimensionTransition
         );
     }
 
     private static DimensionTransition createDimensionTransition(
-        ServerLevel p_350955_,
-        BlockUtil.FoundRectangle p_350865_,
-        Direction.Axis p_351013_,
-        Vec3 p_351020_,
-        Entity p_350578_,
-        Vec3 p_350266_,
-        float p_350648_,
-        float p_350338_,
-        DimensionTransition.PostDimensionTransition p_352441_
+        ServerLevel level,
+        BlockUtil.FoundRectangle rectangle,
+        Direction.Axis axis,
+        Vec3 offset,
+        Entity entity,
+        Vec3 speed,
+        float yRot,
+        float xRot,
+        DimensionTransition.PostDimensionTransition postDimensionTransition
     ) {
-        BlockPos blockpos = p_350865_.minCorner;
-        BlockState blockstate = p_350955_.getBlockState(blockpos);
+        BlockPos blockpos = rectangle.minCorner;
+        BlockState blockstate = level.getBlockState(blockpos);
         Direction.Axis direction$axis = blockstate.getOptionalValue(BlockStateProperties.HORIZONTAL_AXIS).orElse(Direction.Axis.X);
-        double d0 = (double)p_350865_.axis1Size;
-        double d1 = (double)p_350865_.axis2Size;
-        EntityDimensions entitydimensions = p_350578_.getDimensions(p_350578_.getPose());
-        int i = p_351013_ == direction$axis ? 0 : 90;
-        Vec3 vec3 = p_351013_ == direction$axis ? p_350266_ : new Vec3(p_350266_.z, p_350266_.y, -p_350266_.x);
-        double d2 = (double)entitydimensions.width() / 2.0 + (d0 - (double)entitydimensions.width()) * p_351020_.x();
-        double d3 = (d1 - (double)entitydimensions.height()) * p_351020_.y();
-        double d4 = 0.5 + p_351020_.z();
+        double d0 = (double)rectangle.axis1Size;
+        double d1 = (double)rectangle.axis2Size;
+        EntityDimensions entitydimensions = entity.getDimensions(entity.getPose());
+        int i = axis == direction$axis ? 0 : 90;
+        Vec3 vec3 = axis == direction$axis ? speed : new Vec3(speed.z, speed.y, -speed.x);
+        double d2 = (double)entitydimensions.width() / 2.0 + (d0 - (double)entitydimensions.width()) * offset.x();
+        double d3 = (d1 - (double)entitydimensions.height()) * offset.y();
+        double d4 = 0.5 + offset.z();
         boolean flag = direction$axis == Direction.Axis.X;
         Vec3 vec31 = new Vec3((double)blockpos.getX() + (flag ? d2 : d4), (double)blockpos.getY() + d3, (double)blockpos.getZ() + (flag ? d4 : d2));
-        Vec3 vec32 = PortalShape.findCollisionFreePosition(vec31, p_350955_, p_350578_, entitydimensions);
-        return new DimensionTransition(p_350955_, vec32, vec3, p_350648_ + (float)i, p_350338_, p_352441_);
+        Vec3 vec32 = PortalShape.findCollisionFreePosition(vec31, level, entity, entitydimensions);
+        return new DimensionTransition(level, vec32, vec3, yRot + (float)i, xRot, postDimensionTransition);
     }
 
     @Override
@@ -222,66 +230,72 @@ public class NetherPortalBlock extends Block implements Portal {
         return Portal.Transition.CONFUSION;
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_221794_, Level p_221795_, BlockPos p_221796_, RandomSource p_221797_) {
-        if (p_221797_.nextInt(100) == 0) {
-            p_221795_.playLocalSound(
-                (double)p_221796_.getX() + 0.5,
-                (double)p_221796_.getY() + 0.5,
-                (double)p_221796_.getZ() + 0.5,
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (random.nextInt(100) == 0) {
+            level.playLocalSound(
+                (double)pos.getX() + 0.5,
+                (double)pos.getY() + 0.5,
+                (double)pos.getZ() + 0.5,
                 SoundEvents.PORTAL_AMBIENT,
                 SoundSource.BLOCKS,
                 0.5F,
-                p_221797_.nextFloat() * 0.4F + 0.8F,
+                random.nextFloat() * 0.4F + 0.8F,
                 false
             );
         }
 
         for (int i = 0; i < 4; i++) {
-            double d0 = (double)p_221796_.getX() + p_221797_.nextDouble();
-            double d1 = (double)p_221796_.getY() + p_221797_.nextDouble();
-            double d2 = (double)p_221796_.getZ() + p_221797_.nextDouble();
-            double d3 = ((double)p_221797_.nextFloat() - 0.5) * 0.5;
-            double d4 = ((double)p_221797_.nextFloat() - 0.5) * 0.5;
-            double d5 = ((double)p_221797_.nextFloat() - 0.5) * 0.5;
-            int j = p_221797_.nextInt(2) * 2 - 1;
-            if (!p_221795_.getBlockState(p_221796_.west()).is(this) && !p_221795_.getBlockState(p_221796_.east()).is(this)) {
-                d0 = (double)p_221796_.getX() + 0.5 + 0.25 * (double)j;
-                d3 = (double)(p_221797_.nextFloat() * 2.0F * (float)j);
+            double d0 = (double)pos.getX() + random.nextDouble();
+            double d1 = (double)pos.getY() + random.nextDouble();
+            double d2 = (double)pos.getZ() + random.nextDouble();
+            double d3 = ((double)random.nextFloat() - 0.5) * 0.5;
+            double d4 = ((double)random.nextFloat() - 0.5) * 0.5;
+            double d5 = ((double)random.nextFloat() - 0.5) * 0.5;
+            int j = random.nextInt(2) * 2 - 1;
+            if (!level.getBlockState(pos.west()).is(this) && !level.getBlockState(pos.east()).is(this)) {
+                d0 = (double)pos.getX() + 0.5 + 0.25 * (double)j;
+                d3 = (double)(random.nextFloat() * 2.0F * (float)j);
             } else {
-                d2 = (double)p_221796_.getZ() + 0.5 + 0.25 * (double)j;
-                d5 = (double)(p_221797_.nextFloat() * 2.0F * (float)j);
+                d2 = (double)pos.getZ() + 0.5 + 0.25 * (double)j;
+                d5 = (double)(random.nextFloat() * 2.0F * (float)j);
             }
 
-            p_221795_.addParticle(ParticleTypes.PORTAL, d0, d1, d2, d3, d4, d5);
+            level.addParticle(ParticleTypes.PORTAL, d0, d1, d2, d3, d4, d5);
         }
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader p_304402_, BlockPos p_54912_, BlockState p_54913_) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         return ItemStack.EMPTY;
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_54925_, Rotation p_54926_) {
-        switch (p_54926_) {
+    protected BlockState rotate(BlockState state, Rotation rot) {
+        switch (rot) {
             case COUNTERCLOCKWISE_90:
             case CLOCKWISE_90:
-                switch ((Direction.Axis)p_54925_.getValue(AXIS)) {
+                switch ((Direction.Axis)state.getValue(AXIS)) {
                     case Z:
-                        return p_54925_.setValue(AXIS, Direction.Axis.X);
+                        return state.setValue(AXIS, Direction.Axis.X);
                     case X:
-                        return p_54925_.setValue(AXIS, Direction.Axis.Z);
+                        return state.setValue(AXIS, Direction.Axis.Z);
                     default:
-                        return p_54925_;
+                        return state;
                 }
             default:
-                return p_54925_;
+                return state;
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_54935_) {
-        p_54935_.add(AXIS);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AXIS);
     }
 }

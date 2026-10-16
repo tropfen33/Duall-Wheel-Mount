@@ -9,8 +9,8 @@ import com.mojang.datafixers.schemas.Schema;
 import com.mojang.serialization.Dynamic;
 
 public class MapIdFix extends DataFix {
-    public MapIdFix(Schema p_16396_, boolean p_16397_) {
-        super(p_16396_, p_16397_);
+    public MapIdFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override

@@ -6,14 +6,17 @@ import net.minecraft.world.item.ItemStack;
 public class CrafterSlot extends Slot {
     private final CrafterMenu menu;
 
-    public CrafterSlot(Container p_307192_, int p_307545_, int p_307618_, int p_307649_, CrafterMenu p_307432_) {
-        super(p_307192_, p_307545_, p_307618_, p_307649_);
-        this.menu = p_307432_;
+    public CrafterSlot(Container container, int slot, int x, int y, CrafterMenu menu) {
+        super(container, slot, x, y);
+        this.menu = menu;
     }
 
+    /**
+     * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+     */
     @Override
-    public boolean mayPlace(ItemStack p_307320_) {
-        return !this.menu.isSlotDisabled(this.index) && super.mayPlace(p_307320_);
+    public boolean mayPlace(ItemStack stack) {
+        return !this.menu.isSlotDisabled(this.index) && super.mayPlace(stack);
     }
 
     @Override

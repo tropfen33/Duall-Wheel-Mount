@@ -13,22 +13,22 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public interface CommonLevelAccessor extends EntityGetter, LevelReader, LevelSimulatedRW {
     @Override
-    default <T extends BlockEntity> Optional<T> getBlockEntity(BlockPos p_151452_, BlockEntityType<T> p_151453_) {
-        return LevelReader.super.getBlockEntity(p_151452_, p_151453_);
+    default <T extends BlockEntity> Optional<T> getBlockEntity(BlockPos pos, BlockEntityType<T> blockEntityType) {
+        return LevelReader.super.getBlockEntity(pos, blockEntityType);
     }
 
     @Override
-    default List<VoxelShape> getEntityCollisions(@Nullable Entity p_186447_, AABB p_186448_) {
-        return EntityGetter.super.getEntityCollisions(p_186447_, p_186448_);
+    default List<VoxelShape> getEntityCollisions(@Nullable Entity entity, AABB collisionBox) {
+        return EntityGetter.super.getEntityCollisions(entity, collisionBox);
     }
 
     @Override
-    default boolean isUnobstructed(@Nullable Entity p_45828_, VoxelShape p_45829_) {
-        return EntityGetter.super.isUnobstructed(p_45828_, p_45829_);
+    default boolean isUnobstructed(@Nullable Entity entity, VoxelShape shape) {
+        return EntityGetter.super.isUnobstructed(entity, shape);
     }
 
     @Override
-    default BlockPos getHeightmapPos(Heightmap.Types p_45831_, BlockPos p_45832_) {
-        return LevelReader.super.getHeightmapPos(p_45831_, p_45832_);
+    default BlockPos getHeightmapPos(Heightmap.Types heightmapType, BlockPos pos) {
+        return LevelReader.super.getHeightmapPos(heightmapType, pos);
     }
 }

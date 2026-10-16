@@ -18,8 +18,8 @@ import java.util.stream.Collectors;
 import net.minecraft.util.datafix.schemas.NamespacedSchema;
 
 public class NewVillageFix extends DataFix {
-    public NewVillageFix(Schema p_16476_, boolean p_16477_) {
-        super(p_16476_, p_16477_);
+    public NewVillageFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -29,13 +29,13 @@ public class NewVillageFix extends DataFix {
         return this.cap(compoundlisttype);
     }
 
-    private <SF> TypeRewriteRule cap(CompoundListType<String, SF> p_16499_) {
+    private <SF> TypeRewriteRule cap(CompoundListType<String, SF> p_type) {
         Type<?> type = this.getInputSchema().getType(References.CHUNK);
         Type<?> type1 = this.getInputSchema().getType(References.STRUCTURE_FEATURE);
         OpticFinder<?> opticfinder = type.findField("Level");
         OpticFinder<?> opticfinder1 = opticfinder.type().findField("Structures");
         OpticFinder<?> opticfinder2 = opticfinder1.type().findField("Starts");
-        OpticFinder<List<Pair<String, SF>>> opticfinder3 = p_16499_.finder();
+        OpticFinder<List<Pair<String, SF>>> opticfinder3 = p_type.finder();
         return TypeRewriteRule.seq(
             this.fixTypeEverywhereTyped(
                 "NewVillageFix",

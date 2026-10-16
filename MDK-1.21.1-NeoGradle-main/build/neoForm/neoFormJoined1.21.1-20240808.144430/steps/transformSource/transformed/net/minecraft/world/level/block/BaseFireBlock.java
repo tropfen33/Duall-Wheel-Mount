@@ -25,168 +25,171 @@ public abstract class BaseFireBlock extends Block {
     protected static final float AABB_OFFSET = 1.0F;
     protected static final VoxelShape DOWN_AABB = Block.box(0.0, 0.0, 0.0, 16.0, 1.0, 16.0);
 
-    public BaseFireBlock(BlockBehaviour.Properties p_49241_, float p_49242_) {
-        super(p_49241_);
-        this.fireDamage = p_49242_;
+    public BaseFireBlock(BlockBehaviour.Properties properties, float fireDamage) {
+        super(properties);
+        this.fireDamage = fireDamage;
     }
 
     @Override
     protected abstract MapCodec<? extends BaseFireBlock> codec();
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_49244_) {
-        return getState(p_49244_.getLevel(), p_49244_.getClickedPos());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return getState(context.getLevel(), context.getClickedPos());
     }
 
-    public static BlockState getState(BlockGetter p_49246_, BlockPos p_49247_) {
-        BlockPos blockpos = p_49247_.below();
-        BlockState blockstate = p_49246_.getBlockState(blockpos);
+    public static BlockState getState(BlockGetter reader, BlockPos pos) {
+        BlockPos blockpos = pos.below();
+        BlockState blockstate = reader.getBlockState(blockpos);
         return SoulFireBlock.canSurviveOnBlock(blockstate)
             ? Blocks.SOUL_FIRE.defaultBlockState()
-            : ((FireBlock)Blocks.FIRE).getStateForPlacement(p_49246_, p_49247_);
+            : ((FireBlock)Blocks.FIRE).getStateForPlacement(reader, pos);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_49274_, BlockGetter p_49275_, BlockPos p_49276_, CollisionContext p_49277_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return DOWN_AABB;
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_220763_, Level p_220764_, BlockPos p_220765_, RandomSource p_220766_) {
-        if (p_220766_.nextInt(24) == 0) {
-            p_220764_.playLocalSound(
-                (double)p_220765_.getX() + 0.5,
-                (double)p_220765_.getY() + 0.5,
-                (double)p_220765_.getZ() + 0.5,
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (random.nextInt(24) == 0) {
+            level.playLocalSound(
+                (double)pos.getX() + 0.5,
+                (double)pos.getY() + 0.5,
+                (double)pos.getZ() + 0.5,
                 SoundEvents.FIRE_AMBIENT,
                 SoundSource.BLOCKS,
-                1.0F + p_220766_.nextFloat(),
-                p_220766_.nextFloat() * 0.7F + 0.3F,
+                1.0F + random.nextFloat(),
+                random.nextFloat() * 0.7F + 0.3F,
                 false
             );
         }
 
-        BlockPos blockpos = p_220765_.below();
-        BlockState blockstate = p_220764_.getBlockState(blockpos);
-        if (!this.canBurn(blockstate) && !blockstate.isFaceSturdy(p_220764_, blockpos, Direction.UP)) {
-            if (this.canBurn(p_220764_.getBlockState(p_220765_.west()))) {
+        BlockPos blockpos = pos.below();
+        BlockState blockstate = level.getBlockState(blockpos);
+        if (!this.canBurn(blockstate) && !blockstate.isFaceSturdy(level, blockpos, Direction.UP)) {
+            if (this.canBurn(level.getBlockState(pos.west()))) {
                 for (int j = 0; j < 2; j++) {
-                    double d3 = (double)p_220765_.getX() + p_220766_.nextDouble() * 0.1F;
-                    double d8 = (double)p_220765_.getY() + p_220766_.nextDouble();
-                    double d13 = (double)p_220765_.getZ() + p_220766_.nextDouble();
-                    p_220764_.addParticle(ParticleTypes.LARGE_SMOKE, d3, d8, d13, 0.0, 0.0, 0.0);
+                    double d3 = (double)pos.getX() + random.nextDouble() * 0.1F;
+                    double d8 = (double)pos.getY() + random.nextDouble();
+                    double d13 = (double)pos.getZ() + random.nextDouble();
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, d3, d8, d13, 0.0, 0.0, 0.0);
                 }
             }
 
-            if (this.canBurn(p_220764_.getBlockState(p_220765_.east()))) {
+            if (this.canBurn(level.getBlockState(pos.east()))) {
                 for (int k = 0; k < 2; k++) {
-                    double d4 = (double)(p_220765_.getX() + 1) - p_220766_.nextDouble() * 0.1F;
-                    double d9 = (double)p_220765_.getY() + p_220766_.nextDouble();
-                    double d14 = (double)p_220765_.getZ() + p_220766_.nextDouble();
-                    p_220764_.addParticle(ParticleTypes.LARGE_SMOKE, d4, d9, d14, 0.0, 0.0, 0.0);
+                    double d4 = (double)(pos.getX() + 1) - random.nextDouble() * 0.1F;
+                    double d9 = (double)pos.getY() + random.nextDouble();
+                    double d14 = (double)pos.getZ() + random.nextDouble();
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, d4, d9, d14, 0.0, 0.0, 0.0);
                 }
             }
 
-            if (this.canBurn(p_220764_.getBlockState(p_220765_.north()))) {
+            if (this.canBurn(level.getBlockState(pos.north()))) {
                 for (int l = 0; l < 2; l++) {
-                    double d5 = (double)p_220765_.getX() + p_220766_.nextDouble();
-                    double d10 = (double)p_220765_.getY() + p_220766_.nextDouble();
-                    double d15 = (double)p_220765_.getZ() + p_220766_.nextDouble() * 0.1F;
-                    p_220764_.addParticle(ParticleTypes.LARGE_SMOKE, d5, d10, d15, 0.0, 0.0, 0.0);
+                    double d5 = (double)pos.getX() + random.nextDouble();
+                    double d10 = (double)pos.getY() + random.nextDouble();
+                    double d15 = (double)pos.getZ() + random.nextDouble() * 0.1F;
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, d5, d10, d15, 0.0, 0.0, 0.0);
                 }
             }
 
-            if (this.canBurn(p_220764_.getBlockState(p_220765_.south()))) {
+            if (this.canBurn(level.getBlockState(pos.south()))) {
                 for (int i1 = 0; i1 < 2; i1++) {
-                    double d6 = (double)p_220765_.getX() + p_220766_.nextDouble();
-                    double d11 = (double)p_220765_.getY() + p_220766_.nextDouble();
-                    double d16 = (double)(p_220765_.getZ() + 1) - p_220766_.nextDouble() * 0.1F;
-                    p_220764_.addParticle(ParticleTypes.LARGE_SMOKE, d6, d11, d16, 0.0, 0.0, 0.0);
+                    double d6 = (double)pos.getX() + random.nextDouble();
+                    double d11 = (double)pos.getY() + random.nextDouble();
+                    double d16 = (double)(pos.getZ() + 1) - random.nextDouble() * 0.1F;
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, d6, d11, d16, 0.0, 0.0, 0.0);
                 }
             }
 
-            if (this.canBurn(p_220764_.getBlockState(p_220765_.above()))) {
+            if (this.canBurn(level.getBlockState(pos.above()))) {
                 for (int j1 = 0; j1 < 2; j1++) {
-                    double d7 = (double)p_220765_.getX() + p_220766_.nextDouble();
-                    double d12 = (double)(p_220765_.getY() + 1) - p_220766_.nextDouble() * 0.1F;
-                    double d17 = (double)p_220765_.getZ() + p_220766_.nextDouble();
-                    p_220764_.addParticle(ParticleTypes.LARGE_SMOKE, d7, d12, d17, 0.0, 0.0, 0.0);
+                    double d7 = (double)pos.getX() + random.nextDouble();
+                    double d12 = (double)(pos.getY() + 1) - random.nextDouble() * 0.1F;
+                    double d17 = (double)pos.getZ() + random.nextDouble();
+                    level.addParticle(ParticleTypes.LARGE_SMOKE, d7, d12, d17, 0.0, 0.0, 0.0);
                 }
             }
         } else {
             for (int i = 0; i < 3; i++) {
-                double d0 = (double)p_220765_.getX() + p_220766_.nextDouble();
-                double d1 = (double)p_220765_.getY() + p_220766_.nextDouble() * 0.5 + 0.5;
-                double d2 = (double)p_220765_.getZ() + p_220766_.nextDouble();
-                p_220764_.addParticle(ParticleTypes.LARGE_SMOKE, d0, d1, d2, 0.0, 0.0, 0.0);
+                double d0 = (double)pos.getX() + random.nextDouble();
+                double d1 = (double)pos.getY() + random.nextDouble() * 0.5 + 0.5;
+                double d2 = (double)pos.getZ() + random.nextDouble();
+                level.addParticle(ParticleTypes.LARGE_SMOKE, d0, d1, d2, 0.0, 0.0, 0.0);
             }
         }
     }
 
-    protected abstract boolean canBurn(BlockState p_49284_);
+    protected abstract boolean canBurn(BlockState state);
 
     @Override
-    protected void entityInside(BlockState p_49260_, Level p_49261_, BlockPos p_49262_, Entity p_49263_) {
-        if (!p_49263_.fireImmune()) {
-            p_49263_.setRemainingFireTicks(p_49263_.getRemainingFireTicks() + 1);
-            if (p_49263_.getRemainingFireTicks() == 0) {
-                p_49263_.igniteForSeconds(8.0F);
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        if (!entity.fireImmune()) {
+            entity.setRemainingFireTicks(entity.getRemainingFireTicks() + 1);
+            if (entity.getRemainingFireTicks() == 0) {
+                entity.igniteForSeconds(8.0F);
             }
         }
 
-        p_49263_.hurt(p_49261_.damageSources().inFire(), this.fireDamage);
-        super.entityInside(p_49260_, p_49261_, p_49262_, p_49263_);
+        entity.hurt(level.damageSources().inFire(), this.fireDamage);
+        super.entityInside(state, level, pos, entity);
     }
 
     @Override
-    protected void onPlace(BlockState p_49279_, Level p_49280_, BlockPos p_49281_, BlockState p_49282_, boolean p_49283_) {
-        if (!p_49282_.is(p_49279_.getBlock())) {
-            if (inPortalDimension(p_49280_)) {
-                Optional<PortalShape> optional = PortalShape.findEmptyPortalShape(p_49280_, p_49281_, Direction.Axis.X);
-                optional = net.neoforged.neoforge.event.EventHooks.onTrySpawnPortal(p_49280_, p_49281_, optional);
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!oldState.is(state.getBlock())) {
+            if (inPortalDimension(level)) {
+                Optional<PortalShape> optional = PortalShape.findEmptyPortalShape(level, pos, Direction.Axis.X);
+                optional = net.neoforged.neoforge.event.EventHooks.onTrySpawnPortal(level, pos, optional);
                 if (optional.isPresent()) {
                     optional.get().createPortalBlocks();
                     return;
                 }
             }
 
-            if (!p_49279_.canSurvive(p_49280_, p_49281_)) {
-                p_49280_.removeBlock(p_49281_, false);
+            if (!state.canSurvive(level, pos)) {
+                level.removeBlock(pos, false);
             }
         }
     }
 
-    private static boolean inPortalDimension(Level p_49249_) {
-        return p_49249_.dimension() == Level.OVERWORLD || p_49249_.dimension() == Level.NETHER;
+    private static boolean inPortalDimension(Level level) {
+        return level.dimension() == Level.OVERWORLD || level.dimension() == Level.NETHER;
     }
 
     @Override
-    protected void spawnDestroyParticles(Level p_152139_, Player p_152140_, BlockPos p_152141_, BlockState p_152142_) {
+    protected void spawnDestroyParticles(Level level, Player player, BlockPos pos, BlockState state) {
     }
 
     @Override
-    public BlockState playerWillDestroy(Level p_49251_, BlockPos p_49252_, BlockState p_49253_, Player p_49254_) {
-        if (!p_49251_.isClientSide()) {
-            p_49251_.levelEvent(null, 1009, p_49252_, 0);
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide()) {
+            level.levelEvent(null, 1009, pos, 0);
         }
 
-        return super.playerWillDestroy(p_49251_, p_49252_, p_49253_, p_49254_);
+        return super.playerWillDestroy(level, pos, state, player);
     }
 
-    public static boolean canBePlacedAt(Level p_49256_, BlockPos p_49257_, Direction p_49258_) {
-        BlockState blockstate = p_49256_.getBlockState(p_49257_);
-        return !blockstate.isAir() ? false : getState(p_49256_, p_49257_).canSurvive(p_49256_, p_49257_) || isPortal(p_49256_, p_49257_, p_49258_);
+    public static boolean canBePlacedAt(Level level, BlockPos pos, Direction direction) {
+        BlockState blockstate = level.getBlockState(pos);
+        return !blockstate.isAir() ? false : getState(level, pos).canSurvive(level, pos) || isPortal(level, pos, direction);
     }
 
-    private static boolean isPortal(Level p_49270_, BlockPos p_49271_, Direction p_49272_) {
-        if (!inPortalDimension(p_49270_)) {
+    private static boolean isPortal(Level level, BlockPos pos, Direction p_direction) {
+        if (!inPortalDimension(level)) {
             return false;
         } else {
-            BlockPos.MutableBlockPos blockpos$mutableblockpos = p_49271_.mutable();
+            BlockPos.MutableBlockPos blockpos$mutableblockpos = pos.mutable();
             boolean flag = false;
 
             for (Direction direction : Direction.values()) {
-                if (p_49270_.getBlockState(blockpos$mutableblockpos.set(p_49271_).move(direction)).isPortalFrame(p_49270_, blockpos$mutableblockpos)) {
+                if (level.getBlockState(blockpos$mutableblockpos.set(pos).move(direction)).isPortalFrame(level, blockpos$mutableblockpos)) {
                     flag = true;
                     break;
                 }
@@ -195,10 +198,10 @@ public abstract class BaseFireBlock extends Block {
             if (!flag) {
                 return false;
             } else {
-                Direction.Axis direction$axis = p_49272_.getAxis().isHorizontal()
-                    ? p_49272_.getCounterClockWise().getAxis()
-                    : Direction.Plane.HORIZONTAL.getRandomAxis(p_49270_.random);
-                return PortalShape.findEmptyPortalShape(p_49270_, p_49271_, direction$axis).isPresent();
+                Direction.Axis direction$axis = p_direction.getAxis().isHorizontal()
+                    ? p_direction.getCounterClockWise().getAxis()
+                    : Direction.Plane.HORIZONTAL.getRandomAxis(level.random);
+                return PortalShape.findEmptyPortalShape(level, pos, direction$axis).isPresent();
             }
         }
     }

@@ -37,9 +37,9 @@ public record Tool(List<Tool.Rule> rules, float defaultMiningSpeed, int damagePe
         Tool::new
     );
 
-    public float getMiningSpeed(BlockState p_336131_) {
+    public float getMiningSpeed(BlockState state) {
         for (Tool.Rule tool$rule : this.rules) {
-            if (tool$rule.speed.isPresent() && p_336131_.is(tool$rule.blocks)) {
+            if (tool$rule.speed.isPresent() && state.is(tool$rule.blocks)) {
                 return tool$rule.speed.get();
             }
         }
@@ -47,9 +47,9 @@ public record Tool(List<Tool.Rule> rules, float defaultMiningSpeed, int damagePe
         return this.defaultMiningSpeed;
     }
 
-    public boolean isCorrectForDrops(BlockState p_336189_) {
+    public boolean isCorrectForDrops(BlockState state) {
         for (Tool.Rule tool$rule : this.rules) {
-            if (tool$rule.correctForDrops.isPresent() && p_336189_.is(tool$rule.blocks)) {
+            if (tool$rule.correctForDrops.isPresent() && state.is(tool$rule.blocks)) {
                 return tool$rule.correctForDrops.get();
             }
         }
@@ -76,32 +76,32 @@ public record Tool(List<Tool.Rule> rules, float defaultMiningSpeed, int damagePe
             Tool.Rule::new
         );
 
-        public static Tool.Rule minesAndDrops(List<Block> p_335413_, float p_335923_) {
-            return forBlocks(p_335413_, Optional.of(p_335923_), Optional.of(true));
+        public static Tool.Rule minesAndDrops(List<Block> blocks, float speed) {
+            return forBlocks(blocks, Optional.of(speed), Optional.of(true));
         }
 
-        public static Tool.Rule minesAndDrops(TagKey<Block> p_335441_, float p_336060_) {
-            return forTag(p_335441_, Optional.of(p_336060_), Optional.of(true));
+        public static Tool.Rule minesAndDrops(TagKey<Block> blocks, float speed) {
+            return forTag(blocks, Optional.of(speed), Optional.of(true));
         }
 
-        public static Tool.Rule deniesDrops(TagKey<Block> p_335654_) {
-            return forTag(p_335654_, Optional.empty(), Optional.of(false));
+        public static Tool.Rule deniesDrops(TagKey<Block> blocks) {
+            return forTag(blocks, Optional.empty(), Optional.of(false));
         }
 
-        public static Tool.Rule overrideSpeed(TagKey<Block> p_335580_, float p_335857_) {
-            return forTag(p_335580_, Optional.of(p_335857_), Optional.empty());
+        public static Tool.Rule overrideSpeed(TagKey<Block> blocks, float speed) {
+            return forTag(blocks, Optional.of(speed), Optional.empty());
         }
 
-        public static Tool.Rule overrideSpeed(List<Block> p_335776_, float p_335593_) {
-            return forBlocks(p_335776_, Optional.of(p_335593_), Optional.empty());
+        public static Tool.Rule overrideSpeed(List<Block> blocks, float speed) {
+            return forBlocks(blocks, Optional.of(speed), Optional.empty());
         }
 
-        private static Tool.Rule forTag(TagKey<Block> p_336036_, Optional<Float> p_335728_, Optional<Boolean> p_335781_) {
-            return new Tool.Rule(BuiltInRegistries.BLOCK.getOrCreateTag(p_336036_), p_335728_, p_335781_);
+        private static Tool.Rule forTag(TagKey<Block> tag, Optional<Float> speed, Optional<Boolean> correctForDrops) {
+            return new Tool.Rule(BuiltInRegistries.BLOCK.getOrCreateTag(tag), speed, correctForDrops);
         }
 
-        private static Tool.Rule forBlocks(List<Block> p_335983_, Optional<Float> p_335694_, Optional<Boolean> p_335468_) {
-            return new Tool.Rule(HolderSet.direct(p_335983_.stream().map(Block::builtInRegistryHolder).collect(Collectors.toList())), p_335694_, p_335468_);
+        private static Tool.Rule forBlocks(List<Block> blocks, Optional<Float> speed, Optional<Boolean> correctForDrops) {
+            return new Tool.Rule(HolderSet.direct(blocks.stream().map(Block::builtInRegistryHolder).collect(Collectors.toList())), speed, correctForDrops);
         }
     }
 }

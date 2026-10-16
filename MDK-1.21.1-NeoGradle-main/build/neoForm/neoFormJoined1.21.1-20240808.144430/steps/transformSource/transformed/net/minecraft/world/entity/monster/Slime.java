@@ -55,8 +55,8 @@ public class Slime extends Mob implements Enemy {
     public float oSquish;
     private boolean wasOnGround;
 
-    public Slime(EntityType<? extends Slime> p_33588_, Level p_33589_) {
-        super(p_33588_, p_33589_);
+    public Slime(EntityType<? extends Slime> entityType, Level level) {
+        super(entityType, level);
         this.fixupDimensions();
         this.moveControl = new Slime.SlimeMoveControl(this);
     }
@@ -78,21 +78,21 @@ public class Slime extends Mob implements Enemy {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326431_) {
-        super.defineSynchedData(p_326431_);
-        p_326431_.define(ID_SIZE, 1);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(ID_SIZE, 1);
     }
 
     @VisibleForTesting
-    public void setSize(int p_33594_, boolean p_33595_) {
-        int i = Mth.clamp(p_33594_, 1, 127);
+    public void setSize(int size, boolean resetHealth) {
+        int i = Mth.clamp(size, 1, 127);
         this.entityData.set(ID_SIZE, i);
         this.reapplyPosition();
         this.refreshDimensions();
         this.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double)(i * i));
         this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue((double)(0.2F + 0.1F * (float)i));
         this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue((double)i);
-        if (p_33595_) {
+        if (resetHealth) {
             this.setHealth(this.getMaxHealth());
         }
 
@@ -104,17 +104,20 @@ public class Slime extends Mob implements Enemy {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_33619_) {
-        super.addAdditionalSaveData(p_33619_);
-        p_33619_.putInt("Size", this.getSize() - 1);
-        p_33619_.putBoolean("wasOnGround", this.wasOnGround);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("Size", this.getSize() - 1);
+        compound.putBoolean("wasOnGround", this.wasOnGround);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_33607_) {
-        this.setSize(p_33607_.getInt("Size") + 1, false);
-        super.readAdditionalSaveData(p_33607_);
-        this.wasOnGround = p_33607_.getBoolean("wasOnGround");
+    public void readAdditionalSaveData(CompoundTag compound) {
+        this.setSize(compound.getInt("Size") + 1, false);
+        super.readAdditionalSaveData(compound);
+        this.wasOnGround = compound.getBoolean("wasOnGround");
     }
 
     public boolean isTiny() {
@@ -177,8 +180,8 @@ public class Slime extends Mob implements Enemy {
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_33609_) {
-        if (ID_SIZE.equals(p_33609_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        if (ID_SIZE.equals(key)) {
             this.refreshDimensions();
             this.setYRot(this.yHeadRot);
             this.yBodyRot = this.yHeadRot;
@@ -187,7 +190,7 @@ public class Slime extends Mob implements Enemy {
             }
         }
 
-        super.onSyncedDataUpdated(p_33609_);
+        super.onSyncedDataUpdated(key);
     }
 
     @Override
@@ -196,7 +199,7 @@ public class Slime extends Mob implements Enemy {
     }
 
     @Override
-    public void remove(Entity.RemovalReason p_149847_) {
+    public void remove(Entity.RemovalReason reason) {
         int i = this.getSize();
         if (!this.level().isClientSide && i > 1 && this.isDeadOrDying()) {
             Component component = this.getCustomName();
@@ -232,39 +235,45 @@ public class Slime extends Mob implements Enemy {
             }
         }
 
-        super.remove(p_149847_);
+        super.remove(reason);
     }
 
+    /**
+     * Applies a velocity to the entities, to push them away from eachother.
+     */
     @Override
-    public void push(Entity p_33636_) {
-        super.push(p_33636_);
-        if (p_33636_ instanceof IronGolem && this.isDealsDamage()) {
-            this.dealDamage((LivingEntity)p_33636_);
+    public void push(Entity entity) {
+        super.push(entity);
+        if (entity instanceof IronGolem && this.isDealsDamage()) {
+            this.dealDamage((LivingEntity)entity);
         }
     }
 
+    /**
+     * Called by a player entity when they collide with an entity
+     */
     @Override
-    public void playerTouch(Player p_33611_) {
+    public void playerTouch(Player entity) {
         if (this.isDealsDamage()) {
-            this.dealDamage(p_33611_);
+            this.dealDamage(entity);
         }
     }
 
-    protected void dealDamage(LivingEntity p_33638_) {
-        if (this.isAlive() && this.isWithinMeleeAttackRange(p_33638_) && this.hasLineOfSight(p_33638_)) {
+    protected void dealDamage(LivingEntity livingEntity) {
+        if (this.isAlive() && this.isWithinMeleeAttackRange(livingEntity) && this.hasLineOfSight(livingEntity)) {
             DamageSource damagesource = this.damageSources().mobAttack(this);
-            if (p_33638_.hurt(damagesource, this.getAttackDamage())) {
+            if (livingEntity.hurt(damagesource, this.getAttackDamage())) {
                 this.playSound(SoundEvents.SLIME_ATTACK, 1.0F, (this.random.nextFloat() - this.random.nextFloat()) * 0.2F + 1.0F);
                 if (this.level() instanceof ServerLevel serverlevel) {
-                    EnchantmentHelper.doPostAttackEffects(serverlevel, p_33638_, damagesource);
+                    EnchantmentHelper.doPostAttackEffects(serverlevel, livingEntity, damagesource);
                 }
             }
         }
     }
 
     @Override
-    protected Vec3 getPassengerAttachmentPoint(Entity p_296103_, EntityDimensions p_295741_, float p_295572_) {
-        return new Vec3(0.0, (double)p_295741_.height() - 0.015625 * (double)this.getSize() * (double)p_295572_, 0.0);
+    protected Vec3 getPassengerAttachmentPoint(Entity entity, EntityDimensions dimensions, float partialTick) {
+        return new Vec3(0.0, (double)dimensions.height() - 0.015625 * (double)this.getSize() * (double)partialTick, 0.0);
     }
 
     protected boolean isDealsDamage() {
@@ -276,7 +285,7 @@ public class Slime extends Mob implements Enemy {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_33631_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return this.isTiny() ? SoundEvents.SLIME_HURT_SMALL : SoundEvents.SLIME_HURT;
     }
 
@@ -290,33 +299,33 @@ public class Slime extends Mob implements Enemy {
     }
 
     public static boolean checkSlimeSpawnRules(
-        EntityType<Slime> p_219113_, LevelAccessor p_219114_, MobSpawnType p_219115_, BlockPos p_219116_, RandomSource p_219117_
+        EntityType<Slime> slime, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        if (MobSpawnType.isSpawner(p_219115_)) {
-            return checkMobSpawnRules(p_219113_, p_219114_, p_219115_, p_219116_, p_219117_);
+        if (MobSpawnType.isSpawner(spawnType)) {
+            return checkMobSpawnRules(slime, level, spawnType, pos, random);
         } else {
-            if (p_219114_.getDifficulty() != Difficulty.PEACEFUL) {
-                if (p_219115_ == MobSpawnType.SPAWNER) {
-                    return checkMobSpawnRules(p_219113_, p_219114_, p_219115_, p_219116_, p_219117_);
+            if (level.getDifficulty() != Difficulty.PEACEFUL) {
+                if (spawnType == MobSpawnType.SPAWNER) {
+                    return checkMobSpawnRules(slime, level, spawnType, pos, random);
                 }
 
-                if (p_219114_.getBiome(p_219116_).is(BiomeTags.ALLOWS_SURFACE_SLIME_SPAWNS)
-                    && p_219116_.getY() > 50
-                    && p_219116_.getY() < 70
-                    && p_219117_.nextFloat() < 0.5F
-                    && p_219117_.nextFloat() < p_219114_.getMoonBrightness()
-                    && p_219114_.getMaxLocalRawBrightness(p_219116_) <= p_219117_.nextInt(8)) {
-                    return checkMobSpawnRules(p_219113_, p_219114_, p_219115_, p_219116_, p_219117_);
+                if (level.getBiome(pos).is(BiomeTags.ALLOWS_SURFACE_SLIME_SPAWNS)
+                    && pos.getY() > 50
+                    && pos.getY() < 70
+                    && random.nextFloat() < 0.5F
+                    && random.nextFloat() < level.getMoonBrightness()
+                    && level.getMaxLocalRawBrightness(pos) <= random.nextInt(8)) {
+                    return checkMobSpawnRules(slime, level, spawnType, pos, random);
                 }
 
-                if (!(p_219114_ instanceof WorldGenLevel)) {
+                if (!(level instanceof WorldGenLevel)) {
                     return false;
                 }
 
-                ChunkPos chunkpos = new ChunkPos(p_219116_);
-                boolean flag = WorldgenRandom.seedSlimeChunk(chunkpos.x, chunkpos.z, ((WorldGenLevel)p_219114_).getSeed(), 987234911L).nextInt(10) == 0;
-                if (p_219117_.nextInt(10) == 0 && flag && p_219116_.getY() < 40) {
-                    return checkMobSpawnRules(p_219113_, p_219114_, p_219115_, p_219116_, p_219117_);
+                ChunkPos chunkpos = new ChunkPos(pos);
+                boolean flag = WorldgenRandom.seedSlimeChunk(chunkpos.x, chunkpos.z, ((WorldGenLevel)level).getSeed(), 987234911L).nextInt(10) == 0;
+                if (random.nextInt(10) == 0 && flag && pos.getY() < 40) {
+                    return checkMobSpawnRules(slime, level, spawnType, pos, random);
                 }
             }
 
@@ -348,16 +357,16 @@ public class Slime extends Mob implements Enemy {
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_33601_, DifficultyInstance p_33602_, MobSpawnType p_33603_, @Nullable SpawnGroupData p_33604_) {
-        RandomSource randomsource = p_33601_.getRandom();
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        RandomSource randomsource = level.getRandom();
         int i = randomsource.nextInt(3);
-        if (i < 2 && randomsource.nextFloat() < 0.5F * p_33602_.getSpecialMultiplier()) {
+        if (i < 2 && randomsource.nextFloat() < 0.5F * difficulty.getSpecialMultiplier()) {
             i++;
         }
 
         int j = 1 << i;
         this.setSize(j, true);
-        return super.finalizeSpawn(p_33601_, p_33602_, p_33603_, p_33604_);
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
     float getSoundPitch() {
@@ -370,8 +379,8 @@ public class Slime extends Mob implements Enemy {
     }
 
     @Override
-    public EntityDimensions getDefaultDimensions(Pose p_316359_) {
-        return super.getDefaultDimensions(p_316359_).scale((float)this.getSize());
+    public EntityDimensions getDefaultDimensions(Pose pose) {
+        return super.getDefaultDimensions(pose).scale((float)this.getSize());
     }
 
     /**
@@ -384,8 +393,8 @@ public class Slime extends Mob implements Enemy {
         private final Slime slime;
         private int growTiredTimer;
 
-        public SlimeAttackGoal(Slime p_33648_) {
-            this.slime = p_33648_;
+        public SlimeAttackGoal(Slime slime) {
+            this.slime = slime;
             this.setFlags(EnumSet.of(Goal.Flag.LOOK));
         }
 
@@ -436,10 +445,10 @@ public class Slime extends Mob implements Enemy {
     static class SlimeFloatGoal extends Goal {
         private final Slime slime;
 
-        public SlimeFloatGoal(Slime p_33655_) {
-            this.slime = p_33655_;
+        public SlimeFloatGoal(Slime slime) {
+            this.slime = slime;
             this.setFlags(EnumSet.of(Goal.Flag.JUMP, Goal.Flag.MOVE));
-            p_33655_.getNavigation().setCanFloat(true);
+            slime.getNavigation().setCanFloat(true);
         }
 
         @Override
@@ -467,8 +476,8 @@ public class Slime extends Mob implements Enemy {
     static class SlimeKeepOnJumpingGoal extends Goal {
         private final Slime slime;
 
-        public SlimeKeepOnJumpingGoal(Slime p_33660_) {
-            this.slime = p_33660_;
+        public SlimeKeepOnJumpingGoal(Slime slime) {
+            this.slime = slime;
             this.setFlags(EnumSet.of(Goal.Flag.JUMP, Goal.Flag.MOVE));
         }
 
@@ -491,19 +500,19 @@ public class Slime extends Mob implements Enemy {
         private final Slime slime;
         private boolean isAggressive;
 
-        public SlimeMoveControl(Slime p_33668_) {
-            super(p_33668_);
-            this.slime = p_33668_;
-            this.yRot = 180.0F * p_33668_.getYRot() / (float) Math.PI;
+        public SlimeMoveControl(Slime slime) {
+            super(slime);
+            this.slime = slime;
+            this.yRot = 180.0F * slime.getYRot() / (float) Math.PI;
         }
 
-        public void setDirection(float p_33673_, boolean p_33674_) {
-            this.yRot = p_33673_;
-            this.isAggressive = p_33674_;
+        public void setDirection(float yRot, boolean aggressive) {
+            this.yRot = yRot;
+            this.isAggressive = aggressive;
         }
 
-        public void setWantedMovement(double p_33671_) {
-            this.speedModifier = p_33671_;
+        public void setWantedMovement(double speed) {
+            this.speedModifier = speed;
             this.operation = MoveControl.Operation.MOVE_TO;
         }
 
@@ -545,8 +554,8 @@ public class Slime extends Mob implements Enemy {
         private float chosenDegrees;
         private int nextRandomizeTime;
 
-        public SlimeRandomDirectionGoal(Slime p_33679_) {
-            this.slime = p_33679_;
+        public SlimeRandomDirectionGoal(Slime slime) {
+            this.slime = slime;
             this.setFlags(EnumSet.of(Goal.Flag.LOOK));
         }
 

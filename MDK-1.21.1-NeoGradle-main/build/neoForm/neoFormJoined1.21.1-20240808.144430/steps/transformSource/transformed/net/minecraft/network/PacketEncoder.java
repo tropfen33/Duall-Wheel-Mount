@@ -9,12 +9,15 @@ import net.minecraft.network.protocol.PacketType;
 import net.minecraft.util.profiling.jfr.JvmProfiler;
 import org.slf4j.Logger;
 
+/**
+ * Main netty packet encoder. Writes the packet ID as a VarInt based on the current {@link ConnectionProtocol} as well as the packet's data.
+ */
 public class PacketEncoder<T extends PacketListener> extends MessageToByteEncoder<Packet<T>> {
     private static final Logger LOGGER = LogUtils.getLogger();
     private final ProtocolInfo<T> protocolInfo;
 
-    public PacketEncoder(ProtocolInfo<T> p_320006_) {
-        this.protocolInfo = p_320006_;
+    public PacketEncoder(ProtocolInfo<T> protocolInfo) {
+        this.protocolInfo = protocolInfo;
     }
 
     protected void encode(ChannelHandlerContext p_130545_, Packet<T> p_130546_, ByteBuf p_130547_) throws Exception {

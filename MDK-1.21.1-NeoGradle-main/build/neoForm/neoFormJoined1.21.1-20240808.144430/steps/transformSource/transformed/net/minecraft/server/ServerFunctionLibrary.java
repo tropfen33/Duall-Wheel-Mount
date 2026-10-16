@@ -46,41 +46,41 @@ public class ServerFunctionLibrary implements PreparableReloadListener {
     private final int functionCompilationLevel;
     private final CommandDispatcher<CommandSourceStack> dispatcher;
 
-    public Optional<CommandFunction<CommandSourceStack>> getFunction(ResourceLocation p_136090_) {
-        return Optional.ofNullable(this.functions.get(p_136090_));
+    public Optional<CommandFunction<CommandSourceStack>> getFunction(ResourceLocation location) {
+        return Optional.ofNullable(this.functions.get(location));
     }
 
     public Map<ResourceLocation, CommandFunction<CommandSourceStack>> getFunctions() {
         return this.functions;
     }
 
-    public Collection<CommandFunction<CommandSourceStack>> getTag(ResourceLocation p_214328_) {
-        return this.tags.getOrDefault(p_214328_, List.of());
+    public Collection<CommandFunction<CommandSourceStack>> getTag(ResourceLocation location) {
+        return this.tags.getOrDefault(location, List.of());
     }
 
     public Iterable<ResourceLocation> getAvailableTags() {
         return this.tags.keySet();
     }
 
-    public ServerFunctionLibrary(int p_136053_, CommandDispatcher<CommandSourceStack> p_136054_) {
-        this.functionCompilationLevel = p_136053_;
-        this.dispatcher = p_136054_;
+    public ServerFunctionLibrary(int functionCompilationLevel, CommandDispatcher<CommandSourceStack> dispatcher) {
+        this.functionCompilationLevel = functionCompilationLevel;
+        this.dispatcher = dispatcher;
     }
 
     @Override
     public CompletableFuture<Void> reload(
-        PreparableReloadListener.PreparationBarrier p_136057_,
-        ResourceManager p_136058_,
-        ProfilerFiller p_136059_,
-        ProfilerFiller p_136060_,
-        Executor p_136061_,
-        Executor p_136062_
+        PreparableReloadListener.PreparationBarrier stage,
+        ResourceManager resourceManager,
+        ProfilerFiller preparationsProfiler,
+        ProfilerFiller reloadProfiler,
+        Executor backgroundExecutor,
+        Executor gameExecutor
     ) {
         CompletableFuture<Map<ResourceLocation, List<TagLoader.EntryWithSource>>> completablefuture = CompletableFuture.supplyAsync(
-            () -> this.tagsLoader.load(p_136058_), p_136061_
+            () -> this.tagsLoader.load(resourceManager), backgroundExecutor
         );
         CompletableFuture<Map<ResourceLocation, CompletableFuture<CommandFunction<CommandSourceStack>>>> completablefuture1 = CompletableFuture.<Map<ResourceLocation, Resource>>supplyAsync(
-                () -> LISTER.listMatchingResources(p_136058_), p_136061_
+                () -> LISTER.listMatchingResources(resourceManager), backgroundExecutor
             )
             .thenCompose(
                 p_248095_ -> {
@@ -95,7 +95,7 @@ public class ServerFunctionLibrary implements PreparableReloadListener {
                         map.put(resourcelocation1, CompletableFuture.supplyAsync(() -> {
                             List<String> list = readLines(entry.getValue());
                             return CommandFunction.fromLines(resourcelocation1, this.dispatcher, commandsourcestack, list);
-                        }, p_136061_));
+                        }, backgroundExecutor));
                     }
 
                     CompletableFuture<?>[] completablefuture2 = map.values().toArray(new CompletableFuture[0]);
@@ -103,7 +103,7 @@ public class ServerFunctionLibrary implements PreparableReloadListener {
                 }
             );
         return completablefuture.thenCombine(completablefuture1, Pair::of)
-            .thenCompose(p_136057_::wait)
+            .thenCompose(stage::wait)
             .thenAcceptAsync(
                 p_179944_ -> {
                     Map<ResourceLocation, CompletableFuture<CommandFunction<CommandSourceStack>>> map = (Map<ResourceLocation, CompletableFuture<CommandFunction<CommandSourceStack>>>)p_179944_.getSecond();
@@ -120,14 +120,14 @@ public class ServerFunctionLibrary implements PreparableReloadListener {
                     this.functions = builder.build();
                     this.tags = this.tagsLoader.build((Map<ResourceLocation, List<TagLoader.EntryWithSource>>)p_179944_.getFirst());
                 },
-                p_136062_
+                gameExecutor
             );
     }
 
-    private static List<String> readLines(Resource p_214317_) {
+    private static List<String> readLines(Resource resource) {
         try {
             List list;
-            try (BufferedReader bufferedreader = p_214317_.openAsReader()) {
+            try (BufferedReader bufferedreader = resource.openAsReader()) {
                 list = bufferedreader.lines().toList();
             }
 

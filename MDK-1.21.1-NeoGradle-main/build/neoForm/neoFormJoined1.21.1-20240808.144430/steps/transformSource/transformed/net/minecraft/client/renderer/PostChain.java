@@ -42,20 +42,20 @@ public class PostChain implements AutoCloseable {
     private float time;
     private float lastStamp;
 
-    public PostChain(TextureManager p_110018_, ResourceProvider p_330592_, RenderTarget p_110020_, ResourceLocation p_110021_) throws IOException, JsonSyntaxException {
-        this.resourceProvider = p_330592_;
-        this.screenTarget = p_110020_;
+    public PostChain(TextureManager textureManager, ResourceProvider resourceProvider, RenderTarget screenTarget, ResourceLocation resourceLocation) throws IOException, JsonSyntaxException {
+        this.resourceProvider = resourceProvider;
+        this.screenTarget = screenTarget;
         this.time = 0.0F;
         this.lastStamp = 0.0F;
-        this.screenWidth = p_110020_.viewWidth;
-        this.screenHeight = p_110020_.viewHeight;
-        this.name = p_110021_.toString();
+        this.screenWidth = screenTarget.viewWidth;
+        this.screenHeight = screenTarget.viewHeight;
+        this.name = resourceLocation.toString();
         this.updateOrthoMatrix();
-        this.load(p_110018_, p_110021_);
+        this.load(textureManager, resourceLocation);
     }
 
-    private void load(TextureManager p_110034_, ResourceLocation p_110035_) throws IOException, JsonSyntaxException {
-        Resource resource = this.resourceProvider.getResourceOrThrow(p_110035_);
+    private void load(TextureManager textureManager, ResourceLocation resourceLocation) throws IOException, JsonSyntaxException {
+        Resource resource = this.resourceProvider.getResourceOrThrow(resourceLocation);
 
         try {
             try (Reader reader = resource.openAsReader()) {
@@ -83,7 +83,7 @@ public class PostChain implements AutoCloseable {
 
                     for (JsonElement jsonelement1 : jsonarray1) {
                         try {
-                            this.parsePassNode(p_110034_, jsonelement1);
+                            this.parsePassNode(textureManager, jsonelement1);
                         } catch (Exception exception) {
                             ChainedJsonException chainedjsonexception2 = ChainedJsonException.forException(exception);
                             chainedjsonexception2.prependJsonKey("passes[" + j + "]");
@@ -96,16 +96,16 @@ public class PostChain implements AutoCloseable {
             }
         } catch (Exception exception2) {
             ChainedJsonException chainedjsonexception = ChainedJsonException.forException(exception2);
-            chainedjsonexception.setFilenameAndFlush(p_110035_.getPath() + " (" + resource.sourcePackId() + ")");
+            chainedjsonexception.setFilenameAndFlush(resourceLocation.getPath() + " (" + resource.sourcePackId() + ")");
             throw chainedjsonexception;
         }
     }
 
-    private void parseTargetNode(JsonElement p_110029_) throws ChainedJsonException {
-        if (GsonHelper.isStringValue(p_110029_)) {
-            this.addTempTarget(p_110029_.getAsString(), this.screenWidth, this.screenHeight);
+    private void parseTargetNode(JsonElement json) throws ChainedJsonException {
+        if (GsonHelper.isStringValue(json)) {
+            this.addTempTarget(json.getAsString(), this.screenWidth, this.screenHeight);
         } else {
-            JsonObject jsonobject = GsonHelper.convertToJsonObject(p_110029_, "target");
+            JsonObject jsonobject = GsonHelper.convertToJsonObject(json, "target");
             String s = GsonHelper.getAsString(jsonobject, "name");
             int i = GsonHelper.getAsInt(jsonobject, "width", this.screenWidth);
             int j = GsonHelper.getAsInt(jsonobject, "height", this.screenHeight);
@@ -117,8 +117,8 @@ public class PostChain implements AutoCloseable {
         }
     }
 
-    private void parsePassNode(TextureManager p_110031_, JsonElement p_110032_) throws IOException {
-        JsonObject jsonobject = GsonHelper.convertToJsonObject(p_110032_, "pass");
+    private void parsePassNode(TextureManager textureManager, JsonElement json) throws IOException {
+        JsonObject jsonobject = GsonHelper.convertToJsonObject(json, "pass");
         String s = GsonHelper.getAsString(jsonobject, "name");
         String s1 = GsonHelper.getAsString(jsonobject, "intarget");
         String s2 = GsonHelper.getAsString(jsonobject, "outtarget");
@@ -162,8 +162,8 @@ public class PostChain implements AutoCloseable {
                                 .getResource(resourcelocation)
                                 .orElseThrow(() -> new ChainedJsonException("Render target or texture '" + s4 + "' does not exist"));
                             RenderSystem.setShaderTexture(0, resourcelocation);
-                            p_110031_.bindForSetup(resourcelocation);
-                            AbstractTexture abstracttexture = p_110031_.getTexture(resourcelocation);
+                            textureManager.bindForSetup(resourcelocation);
+                            AbstractTexture abstracttexture = textureManager.getTexture(resourcelocation);
                             int j = GsonHelper.getAsInt(jsonobject1, "width");
                             int k = GsonHelper.getAsInt(jsonobject1, "height");
                             boolean flag2 = GsonHelper.getAsBoolean(jsonobject1, "bilinear");
@@ -210,8 +210,8 @@ public class PostChain implements AutoCloseable {
         }
     }
 
-    private void parseUniformNode(JsonElement p_110048_) throws ChainedJsonException {
-        JsonObject jsonobject = GsonHelper.convertToJsonObject(p_110048_, "uniform");
+    private void parseUniformNode(JsonElement json) throws ChainedJsonException {
+        JsonObject jsonobject = GsonHelper.convertToJsonObject(json, "uniform");
         String s = GsonHelper.getAsString(jsonobject, "name");
         Uniform uniform = this.passes.get(this.passes.size() - 1).getEffect().getUniform(s);
         if (uniform == null) {
@@ -251,16 +251,16 @@ public class PostChain implements AutoCloseable {
         }
     }
 
-    public RenderTarget getTempTarget(String p_110037_) {
-        return this.customRenderTargets.get(p_110037_);
+    public RenderTarget getTempTarget(String attributeName) {
+        return this.customRenderTargets.get(attributeName);
     }
 
-    public void addTempTarget(String p_110039_, int p_110040_, int p_110041_) {
-        RenderTarget rendertarget = new TextureTarget(p_110040_, p_110041_, true, Minecraft.ON_OSX);
+    public void addTempTarget(String name, int width, int height) {
+        RenderTarget rendertarget = new TextureTarget(width, height, true, Minecraft.ON_OSX);
         rendertarget.setClearColor(0.0F, 0.0F, 0.0F, 0.0F);
         if (screenTarget.isStencilEnabled()) { rendertarget.enableStencil(); }
-        this.customRenderTargets.put(p_110039_, rendertarget);
-        if (p_110040_ == this.screenWidth && p_110041_ == this.screenHeight) {
+        this.customRenderTargets.put(name, rendertarget);
+        if (width == this.screenWidth && height == this.screenHeight) {
             this.fullSizedTargets.add(rendertarget);
         }
     }
@@ -278,8 +278,8 @@ public class PostChain implements AutoCloseable {
         this.passes.clear();
     }
 
-    public PostPass addPass(String p_110043_, RenderTarget p_110044_, RenderTarget p_110045_, boolean p_334079_) throws IOException {
-        PostPass postpass = new PostPass(this.resourceProvider, p_110043_, p_110044_, p_110045_, p_334079_);
+    public PostPass addPass(String name, RenderTarget inTarget, RenderTarget outTarget, boolean useLinearFilter) throws IOException {
+        PostPass postpass = new PostPass(this.resourceProvider, name, inTarget, outTarget, useLinearFilter);
         this.passes.add(this.passes.size(), postpass);
         return postpass;
     }
@@ -288,7 +288,7 @@ public class PostChain implements AutoCloseable {
         this.shaderOrthoMatrix = new Matrix4f().setOrtho(0.0F, (float)this.screenTarget.width, 0.0F, (float)this.screenTarget.height, 0.1F, 1000.0F);
     }
 
-    public void resize(int p_110026_, int p_110027_) {
+    public void resize(int width, int height) {
         this.screenWidth = this.screenTarget.width;
         this.screenHeight = this.screenTarget.height;
         this.updateOrthoMatrix();
@@ -298,20 +298,20 @@ public class PostChain implements AutoCloseable {
         }
 
         for (RenderTarget rendertarget : this.fullSizedTargets) {
-            rendertarget.resize(p_110026_, p_110027_, Minecraft.ON_OSX);
+            rendertarget.resize(width, height, Minecraft.ON_OSX);
         }
     }
 
-    private void setFilterMode(int p_333852_) {
-        this.screenTarget.setFilterMode(p_333852_);
+    private void setFilterMode(int filterMode) {
+        this.screenTarget.setFilterMode(filterMode);
 
         for (RenderTarget rendertarget : this.customRenderTargets.values()) {
-            rendertarget.setFilterMode(p_333852_);
+            rendertarget.setFilterMode(filterMode);
         }
     }
 
-    public void process(float p_110024_) {
-        this.time += p_110024_;
+    public void process(float partialTicks) {
+        this.time += partialTicks;
 
         while (this.time > 20.0F) {
             this.time -= 20.0F;
@@ -332,9 +332,9 @@ public class PostChain implements AutoCloseable {
         this.setFilterMode(9728);
     }
 
-    public void setUniform(String p_332204_, float p_331999_) {
+    public void setUniform(String name, float backgroundBlurriness) {
         for (PostPass postpass : this.passes) {
-            postpass.getEffect().safeGetUniform(p_332204_).set(p_331999_);
+            postpass.getEffect().safeGetUniform(name).set(backgroundBlurriness);
         }
     }
 
@@ -343,11 +343,11 @@ public class PostChain implements AutoCloseable {
     }
 
     @Nullable
-    private RenderTarget getRenderTarget(@Nullable String p_110050_) {
-        if (p_110050_ == null) {
+    private RenderTarget getRenderTarget(@Nullable String target) {
+        if (target == null) {
             return null;
         } else {
-            return p_110050_.equals("minecraft:main") ? this.screenTarget : this.customRenderTargets.get(p_110050_);
+            return target.equals("minecraft:main") ? this.screenTarget : this.customRenderTargets.get(target);
         }
     }
 }

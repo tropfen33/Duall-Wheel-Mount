@@ -15,40 +15,40 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class Deadmau5EarsLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
-    public Deadmau5EarsLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> p_116860_) {
-        super(p_116860_);
+    public Deadmau5EarsLayer(RenderLayerParent<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> renderer) {
+        super(renderer);
     }
 
     public void render(
-        PoseStack p_116873_,
-        MultiBufferSource p_116874_,
-        int p_116875_,
-        AbstractClientPlayer p_116876_,
-        float p_116877_,
-        float p_116878_,
-        float p_116879_,
-        float p_116880_,
-        float p_116881_,
-        float p_116882_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        AbstractClientPlayer livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTicks,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
-        if ("deadmau5".equals(p_116876_.getName().getString()) && !p_116876_.isInvisible()) {
-            VertexConsumer vertexconsumer = p_116874_.getBuffer(RenderType.entitySolid(p_116876_.getSkin().texture()));
-            int i = LivingEntityRenderer.getOverlayCoords(p_116876_, 0.0F);
+        if ("deadmau5".equals(livingEntity.getName().getString()) && !livingEntity.isInvisible()) {
+            VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.entitySolid(livingEntity.getSkin().texture()));
+            int i = LivingEntityRenderer.getOverlayCoords(livingEntity, 0.0F);
 
             for (int j = 0; j < 2; j++) {
-                float f = Mth.lerp(p_116879_, p_116876_.yRotO, p_116876_.getYRot()) - Mth.lerp(p_116879_, p_116876_.yBodyRotO, p_116876_.yBodyRot);
-                float f1 = Mth.lerp(p_116879_, p_116876_.xRotO, p_116876_.getXRot());
-                p_116873_.pushPose();
-                p_116873_.mulPose(Axis.YP.rotationDegrees(f));
-                p_116873_.mulPose(Axis.XP.rotationDegrees(f1));
-                p_116873_.translate(0.375F * (float)(j * 2 - 1), 0.0F, 0.0F);
-                p_116873_.translate(0.0F, -0.375F, 0.0F);
-                p_116873_.mulPose(Axis.XP.rotationDegrees(-f1));
-                p_116873_.mulPose(Axis.YP.rotationDegrees(-f));
+                float f = Mth.lerp(partialTicks, livingEntity.yRotO, livingEntity.getYRot()) - Mth.lerp(partialTicks, livingEntity.yBodyRotO, livingEntity.yBodyRot);
+                float f1 = Mth.lerp(partialTicks, livingEntity.xRotO, livingEntity.getXRot());
+                poseStack.pushPose();
+                poseStack.mulPose(Axis.YP.rotationDegrees(f));
+                poseStack.mulPose(Axis.XP.rotationDegrees(f1));
+                poseStack.translate(0.375F * (float)(j * 2 - 1), 0.0F, 0.0F);
+                poseStack.translate(0.0F, -0.375F, 0.0F);
+                poseStack.mulPose(Axis.XP.rotationDegrees(-f1));
+                poseStack.mulPose(Axis.YP.rotationDegrees(-f));
                 float f2 = 1.3333334F;
-                p_116873_.scale(1.3333334F, 1.3333334F, 1.3333334F);
-                this.getParentModel().renderEars(p_116873_, vertexconsumer, p_116875_, i);
-                p_116873_.popPose();
+                poseStack.scale(1.3333334F, 1.3333334F, 1.3333334F);
+                this.getParentModel().renderEars(poseStack, vertexconsumer, packedLight, i);
+                poseStack.popPose();
             }
         }
     }

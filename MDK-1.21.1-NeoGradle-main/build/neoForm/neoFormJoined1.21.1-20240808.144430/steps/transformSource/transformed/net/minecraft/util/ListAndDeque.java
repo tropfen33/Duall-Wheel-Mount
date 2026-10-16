@@ -16,10 +16,10 @@ public interface ListAndDeque<T> extends Serializable, Cloneable, Deque<T>, List
     T getLast();
 
     @Override
-    void addFirst(T p_339667_);
+    void addFirst(T element);
 
     @Override
-    void addLast(T p_339629_);
+    void addLast(T element);
 
     @Override
     T removeFirst();
@@ -28,8 +28,8 @@ public interface ListAndDeque<T> extends Serializable, Cloneable, Deque<T>, List
     T removeLast();
 
     @Override
-    default boolean offer(T p_339589_) {
-        return this.offerLast(p_339589_);
+    default boolean offer(T element) {
+        return this.offerLast(element);
     }
 
     @Override
@@ -55,8 +55,8 @@ public interface ListAndDeque<T> extends Serializable, Cloneable, Deque<T>, List
     }
 
     @Override
-    default void push(T p_339595_) {
-        this.addFirst(p_339595_);
+    default void push(T element) {
+        this.addFirst(element);
     }
 
     @Override

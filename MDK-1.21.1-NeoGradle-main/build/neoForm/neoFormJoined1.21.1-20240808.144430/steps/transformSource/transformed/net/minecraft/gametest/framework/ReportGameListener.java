@@ -31,114 +31,114 @@ class ReportGameListener implements GameTestListener {
     }
 
     @Override
-    public void testStructureLoaded(GameTestInfo p_177718_) {
-        spawnBeacon(p_177718_, Blocks.LIGHT_GRAY_STAINED_GLASS);
+    public void testStructureLoaded(GameTestInfo testInfo) {
+        spawnBeacon(testInfo, Blocks.LIGHT_GRAY_STAINED_GLASS);
         this.attempts++;
     }
 
-    private void handleRetry(GameTestInfo p_319864_, GameTestRunner p_319782_, boolean p_320742_) {
-        RetryOptions retryoptions = p_319864_.retryOptions();
+    private void handleRetry(GameTestInfo testInfo, GameTestRunner runner, boolean passed) {
+        RetryOptions retryoptions = testInfo.retryOptions();
         String s = String.format("[Run: %4d, Ok: %4d, Fail: %4d", this.attempts, this.successes, this.attempts - this.successes);
         if (!retryoptions.unlimitedTries()) {
             s = s + String.format(", Left: %4d", retryoptions.numberOfTries() - this.attempts);
         }
 
         s = s + "]";
-        String s1 = p_319864_.getTestName() + " " + (p_320742_ ? "passed" : "failed") + "! " + p_319864_.getRunTime() + "ms";
+        String s1 = testInfo.getTestName() + " " + (passed ? "passed" : "failed") + "! " + testInfo.getRunTime() + "ms";
         String s2 = String.format("%-53s%s", s, s1);
-        if (p_320742_) {
-            reportPassed(p_319864_, s2);
+        if (passed) {
+            reportPassed(testInfo, s2);
         } else {
-            say(p_319864_.getLevel(), ChatFormatting.RED, s2);
+            say(testInfo.getLevel(), ChatFormatting.RED, s2);
         }
 
         if (retryoptions.hasTriesLeft(this.attempts, this.successes)) {
-            p_319782_.rerunTest(p_319864_);
+            runner.rerunTest(testInfo);
         }
     }
 
     @Override
-    public void testPassed(GameTestInfo p_177729_, GameTestRunner p_320359_) {
+    public void testPassed(GameTestInfo test, GameTestRunner runner) {
         this.successes++;
-        if (p_177729_.retryOptions().hasRetries()) {
-            this.handleRetry(p_177729_, p_320359_, true);
-        } else if (!p_177729_.isFlaky()) {
-            reportPassed(p_177729_, p_177729_.getTestName() + " passed! (" + p_177729_.getRunTime() + "ms)");
+        if (test.retryOptions().hasRetries()) {
+            this.handleRetry(test, runner, true);
+        } else if (!test.isFlaky()) {
+            reportPassed(test, test.getTestName() + " passed! (" + test.getRunTime() + "ms)");
         } else {
-            if (this.successes >= p_177729_.requiredSuccesses()) {
-                reportPassed(p_177729_, p_177729_ + " passed " + this.successes + " times of " + this.attempts + " attempts.");
+            if (this.successes >= test.requiredSuccesses()) {
+                reportPassed(test, test + " passed " + this.successes + " times of " + this.attempts + " attempts.");
             } else {
                 say(
-                    p_177729_.getLevel(),
+                    test.getLevel(),
                     ChatFormatting.GREEN,
-                    "Flaky test " + p_177729_ + " succeeded, attempt: " + this.attempts + " successes: " + this.successes
+                    "Flaky test " + test + " succeeded, attempt: " + this.attempts + " successes: " + this.successes
                 );
-                p_320359_.rerunTest(p_177729_);
+                runner.rerunTest(test);
             }
         }
     }
 
     @Override
-    public void testFailed(GameTestInfo p_177737_, GameTestRunner p_320181_) {
-        if (!p_177737_.isFlaky()) {
-            reportFailure(p_177737_, p_177737_.getError());
-            if (p_177737_.retryOptions().hasRetries()) {
-                this.handleRetry(p_177737_, p_320181_, false);
+    public void testFailed(GameTestInfo test, GameTestRunner runner) {
+        if (!test.isFlaky()) {
+            reportFailure(test, test.getError());
+            if (test.retryOptions().hasRetries()) {
+                this.handleRetry(test, runner, false);
             }
         } else {
-            TestFunction testfunction = p_177737_.getTestFunction();
-            String s = "Flaky test " + p_177737_ + " failed, attempt: " + this.attempts + "/" + testfunction.maxAttempts();
+            TestFunction testfunction = test.getTestFunction();
+            String s = "Flaky test " + test + " failed, attempt: " + this.attempts + "/" + testfunction.maxAttempts();
             if (testfunction.requiredSuccesses() > 1) {
                 s = s + ", successes: " + this.successes + " (" + testfunction.requiredSuccesses() + " required)";
             }
 
-            say(p_177737_.getLevel(), ChatFormatting.YELLOW, s);
-            if (p_177737_.maxAttempts() - this.attempts + this.successes >= p_177737_.requiredSuccesses()) {
-                p_320181_.rerunTest(p_177737_);
+            say(test.getLevel(), ChatFormatting.YELLOW, s);
+            if (test.maxAttempts() - this.attempts + this.successes >= test.requiredSuccesses()) {
+                runner.rerunTest(test);
             } else {
-                reportFailure(p_177737_, new ExhaustedAttemptsException(this.attempts, this.successes, p_177737_));
+                reportFailure(test, new ExhaustedAttemptsException(this.attempts, this.successes, test));
             }
         }
     }
 
     @Override
-    public void testAddedForRerun(GameTestInfo p_320478_, GameTestInfo p_320907_, GameTestRunner p_320607_) {
-        p_320907_.addListener(this);
+    public void testAddedForRerun(GameTestInfo oldTest, GameTestInfo newTest, GameTestRunner runner) {
+        newTest.addListener(this);
     }
 
-    public static void reportPassed(GameTestInfo p_177723_, String p_177724_) {
-        updateBeaconGlass(p_177723_, Blocks.LIME_STAINED_GLASS);
-        visualizePassedTest(p_177723_, p_177724_);
+    public static void reportPassed(GameTestInfo testInfo, String message) {
+        updateBeaconGlass(testInfo, Blocks.LIME_STAINED_GLASS);
+        visualizePassedTest(testInfo, message);
     }
 
-    private static void visualizePassedTest(GameTestInfo p_177731_, String p_177732_) {
-        say(p_177731_.getLevel(), ChatFormatting.GREEN, p_177732_);
-        GlobalTestReporter.onTestSuccess(p_177731_);
+    private static void visualizePassedTest(GameTestInfo testInfo, String message) {
+        say(testInfo.getLevel(), ChatFormatting.GREEN, message);
+        GlobalTestReporter.onTestSuccess(testInfo);
     }
 
-    protected static void reportFailure(GameTestInfo p_177726_, Throwable p_177727_) {
-        updateBeaconGlass(p_177726_, p_177726_.isRequired() ? Blocks.RED_STAINED_GLASS : Blocks.ORANGE_STAINED_GLASS);
-        spawnLectern(p_177726_, Util.describeError(p_177727_));
-        visualizeFailedTest(p_177726_, p_177727_);
+    protected static void reportFailure(GameTestInfo testInfo, Throwable error) {
+        updateBeaconGlass(testInfo, testInfo.isRequired() ? Blocks.RED_STAINED_GLASS : Blocks.ORANGE_STAINED_GLASS);
+        spawnLectern(testInfo, Util.describeError(error));
+        visualizeFailedTest(testInfo, error);
     }
 
-    protected static void visualizeFailedTest(GameTestInfo p_177734_, Throwable p_177735_) {
-        String s = p_177735_.getMessage() + (p_177735_.getCause() == null ? "" : " cause: " + Util.describeError(p_177735_.getCause()));
-        String s1 = (p_177734_.isRequired() ? "" : "(optional) ") + p_177734_.getTestName() + " failed! " + s;
-        say(p_177734_.getLevel(), p_177734_.isRequired() ? ChatFormatting.RED : ChatFormatting.YELLOW, s1);
-        Throwable throwable = MoreObjects.firstNonNull(ExceptionUtils.getRootCause(p_177735_), p_177735_);
+    protected static void visualizeFailedTest(GameTestInfo testInfo, Throwable error) {
+        String s = error.getMessage() + (error.getCause() == null ? "" : " cause: " + Util.describeError(error.getCause()));
+        String s1 = (testInfo.isRequired() ? "" : "(optional) ") + testInfo.getTestName() + " failed! " + s;
+        say(testInfo.getLevel(), testInfo.isRequired() ? ChatFormatting.RED : ChatFormatting.YELLOW, s1);
+        Throwable throwable = MoreObjects.firstNonNull(ExceptionUtils.getRootCause(error), error);
         if (throwable instanceof GameTestAssertPosException gametestassertposexception) {
-            showRedBox(p_177734_.getLevel(), gametestassertposexception.getAbsolutePos(), gametestassertposexception.getMessageToShowAtBlock());
+            showRedBox(testInfo.getLevel(), gametestassertposexception.getAbsolutePos(), gametestassertposexception.getMessageToShowAtBlock());
         }
 
-        GlobalTestReporter.onTestFailed(p_177734_);
+        GlobalTestReporter.onTestFailed(testInfo);
     }
 
-    protected static void spawnBeacon(GameTestInfo p_177720_, Block p_177721_) {
-        ServerLevel serverlevel = p_177720_.getLevel();
-        BlockPos blockpos = getBeaconPos(p_177720_);
-        serverlevel.setBlockAndUpdate(blockpos, Blocks.BEACON.defaultBlockState().rotate(p_177720_.getRotation()));
-        updateBeaconGlass(p_177720_, p_177721_);
+    protected static void spawnBeacon(GameTestInfo testInfo, Block block) {
+        ServerLevel serverlevel = testInfo.getLevel();
+        BlockPos blockpos = getBeaconPos(testInfo);
+        serverlevel.setBlockAndUpdate(blockpos, Blocks.BEACON.defaultBlockState().rotate(testInfo.getRotation()));
+        updateBeaconGlass(testInfo, block);
 
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
@@ -148,50 +148,50 @@ class ReportGameListener implements GameTestListener {
         }
     }
 
-    private static BlockPos getBeaconPos(GameTestInfo p_352434_) {
-        BlockPos blockpos = p_352434_.getStructureBlockPos();
+    private static BlockPos getBeaconPos(GameTestInfo testInfo) {
+        BlockPos blockpos = testInfo.getStructureBlockPos();
         BlockPos blockpos1 = new BlockPos(-1, -2, -1);
-        return StructureTemplate.transform(blockpos.offset(blockpos1), Mirror.NONE, p_352434_.getRotation(), blockpos);
+        return StructureTemplate.transform(blockpos.offset(blockpos1), Mirror.NONE, testInfo.getRotation(), blockpos);
     }
 
-    private static void updateBeaconGlass(GameTestInfo p_352228_, Block p_352195_) {
-        ServerLevel serverlevel = p_352228_.getLevel();
-        BlockPos blockpos = getBeaconPos(p_352228_);
+    private static void updateBeaconGlass(GameTestInfo testInfo, Block newBlock) {
+        ServerLevel serverlevel = testInfo.getLevel();
+        BlockPos blockpos = getBeaconPos(testInfo);
         if (serverlevel.getBlockState(blockpos).is(Blocks.BEACON)) {
             BlockPos blockpos1 = blockpos.offset(0, 1, 0);
-            serverlevel.setBlockAndUpdate(blockpos1, p_352195_.defaultBlockState());
+            serverlevel.setBlockAndUpdate(blockpos1, newBlock.defaultBlockState());
         }
     }
 
-    private static void spawnLectern(GameTestInfo p_177739_, String p_177740_) {
-        ServerLevel serverlevel = p_177739_.getLevel();
-        BlockPos blockpos = p_177739_.getStructureBlockPos();
+    private static void spawnLectern(GameTestInfo testInfo, String message) {
+        ServerLevel serverlevel = testInfo.getLevel();
+        BlockPos blockpos = testInfo.getStructureBlockPos();
         BlockPos blockpos1 = new BlockPos(-1, 0, -1);
-        BlockPos blockpos2 = StructureTemplate.transform(blockpos.offset(blockpos1), Mirror.NONE, p_177739_.getRotation(), blockpos);
-        serverlevel.setBlockAndUpdate(blockpos2, Blocks.LECTERN.defaultBlockState().rotate(p_177739_.getRotation()));
+        BlockPos blockpos2 = StructureTemplate.transform(blockpos.offset(blockpos1), Mirror.NONE, testInfo.getRotation(), blockpos);
+        serverlevel.setBlockAndUpdate(blockpos2, Blocks.LECTERN.defaultBlockState().rotate(testInfo.getRotation()));
         BlockState blockstate = serverlevel.getBlockState(blockpos2);
-        ItemStack itemstack = createBook(p_177739_.getTestName(), p_177739_.isRequired(), p_177740_);
+        ItemStack itemstack = createBook(testInfo.getTestName(), testInfo.isRequired(), message);
         LecternBlock.tryPlaceBook(null, serverlevel, blockpos2, blockstate, itemstack);
     }
 
-    private static ItemStack createBook(String p_177711_, boolean p_177712_, String p_177713_) {
+    private static ItemStack createBook(String testName, boolean required, String message) {
         StringBuffer stringbuffer = new StringBuffer();
-        Arrays.stream(p_177711_.split("\\.")).forEach(p_177716_ -> stringbuffer.append(p_177716_).append('\n'));
-        if (!p_177712_) {
+        Arrays.stream(testName.split("\\.")).forEach(p_177716_ -> stringbuffer.append(p_177716_).append('\n'));
+        if (!required) {
             stringbuffer.append("(optional)\n");
         }
 
         stringbuffer.append("-------------------\n");
         ItemStack itemstack = new ItemStack(Items.WRITABLE_BOOK);
-        itemstack.set(DataComponents.WRITABLE_BOOK_CONTENT, new WritableBookContent(List.of(Filterable.passThrough(stringbuffer + p_177713_))));
+        itemstack.set(DataComponents.WRITABLE_BOOK_CONTENT, new WritableBookContent(List.of(Filterable.passThrough(stringbuffer + message))));
         return itemstack;
     }
 
-    protected static void say(ServerLevel p_177701_, ChatFormatting p_177702_, String p_177703_) {
-        p_177701_.getPlayers(p_177705_ -> true).forEach(p_177709_ -> p_177709_.sendSystemMessage(Component.literal(p_177703_).withStyle(p_177702_)));
+    protected static void say(ServerLevel serverLevel, ChatFormatting formatting, String message) {
+        serverLevel.getPlayers(p_177705_ -> true).forEach(p_177709_ -> p_177709_.sendSystemMessage(Component.literal(message).withStyle(formatting)));
     }
 
-    private static void showRedBox(ServerLevel p_177697_, BlockPos p_177698_, String p_177699_) {
-        DebugPackets.sendGameTestAddMarker(p_177697_, p_177698_, p_177699_, -2130771968, Integer.MAX_VALUE);
+    private static void showRedBox(ServerLevel serverLevel, BlockPos pos, String displayMessage) {
+        DebugPackets.sendGameTestAddMarker(serverLevel, pos, displayMessage, -2130771968, Integer.MAX_VALUE);
     }
 }

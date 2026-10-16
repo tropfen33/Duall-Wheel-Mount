@@ -10,14 +10,14 @@ import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
 
 public class BastionHoglinStablePools {
-    public static void bootstrap(BootstrapContext<StructureTemplatePool> p_321665_) {
-        HolderGetter<StructureProcessorList> holdergetter = p_321665_.lookup(Registries.PROCESSOR_LIST);
+    public static void bootstrap(BootstrapContext<StructureTemplatePool> context) {
+        HolderGetter<StructureProcessorList> holdergetter = context.lookup(Registries.PROCESSOR_LIST);
         Holder<StructureProcessorList> holder = holdergetter.getOrThrow(ProcessorLists.STABLE_DEGRADATION);
         Holder<StructureProcessorList> holder1 = holdergetter.getOrThrow(ProcessorLists.SIDE_WALL_DEGRADATION);
-        HolderGetter<StructureTemplatePool> holdergetter1 = p_321665_.lookup(Registries.TEMPLATE_POOL);
+        HolderGetter<StructureTemplatePool> holdergetter1 = context.lookup(Registries.TEMPLATE_POOL);
         Holder<StructureTemplatePool> holder2 = holdergetter1.getOrThrow(Pools.EMPTY);
         Pools.register(
-            p_321665_,
+            context,
             "bastion/hoglin_stable/starting_pieces",
             new StructureTemplatePool(
                 holder2,
@@ -32,7 +32,7 @@ public class BastionHoglinStablePools {
             )
         );
         Pools.register(
-            p_321665_,
+            context,
             "bastion/hoglin_stable/mirrored_starting_pieces",
             new StructureTemplatePool(
                 holder2,
@@ -47,7 +47,7 @@ public class BastionHoglinStablePools {
             )
         );
         Pools.register(
-            p_321665_,
+            context,
             "bastion/hoglin_stable/wall_bases",
             new StructureTemplatePool(
                 holder2,
@@ -56,7 +56,7 @@ public class BastionHoglinStablePools {
             )
         );
         Pools.register(
-            p_321665_,
+            context,
             "bastion/hoglin_stable/walls",
             new StructureTemplatePool(
                 holder2,
@@ -68,7 +68,7 @@ public class BastionHoglinStablePools {
             )
         );
         Pools.register(
-            p_321665_,
+            context,
             "bastion/hoglin_stable/stairs",
             new StructureTemplatePool(
                 holder2,
@@ -93,7 +93,7 @@ public class BastionHoglinStablePools {
             )
         );
         Pools.register(
-            p_321665_,
+            context,
             "bastion/hoglin_stable/small_stables/inner",
             new StructureTemplatePool(
                 holder2,
@@ -107,7 +107,7 @@ public class BastionHoglinStablePools {
             )
         );
         Pools.register(
-            p_321665_,
+            context,
             "bastion/hoglin_stable/small_stables/outer",
             new StructureTemplatePool(
                 holder2,
@@ -121,7 +121,7 @@ public class BastionHoglinStablePools {
             )
         );
         Pools.register(
-            p_321665_,
+            context,
             "bastion/hoglin_stable/large_stables/inner",
             new StructureTemplatePool(
                 holder2,
@@ -136,7 +136,7 @@ public class BastionHoglinStablePools {
             )
         );
         Pools.register(
-            p_321665_,
+            context,
             "bastion/hoglin_stable/large_stables/outer",
             new StructureTemplatePool(
                 holder2,
@@ -151,7 +151,7 @@ public class BastionHoglinStablePools {
             )
         );
         Pools.register(
-            p_321665_,
+            context,
             "bastion/hoglin_stable/posts",
             new StructureTemplatePool(
                 holder2,
@@ -163,7 +163,7 @@ public class BastionHoglinStablePools {
             )
         );
         Pools.register(
-            p_321665_,
+            context,
             "bastion/hoglin_stable/ramparts",
             new StructureTemplatePool(
                 holder2,
@@ -176,7 +176,7 @@ public class BastionHoglinStablePools {
             )
         );
         Pools.register(
-            p_321665_,
+            context,
             "bastion/hoglin_stable/rampart_plates",
             new StructureTemplatePool(
                 holder2,
@@ -185,7 +185,7 @@ public class BastionHoglinStablePools {
             )
         );
         Pools.register(
-            p_321665_,
+            context,
             "bastion/hoglin_stable/connectors",
             new StructureTemplatePool(
                 holder2,

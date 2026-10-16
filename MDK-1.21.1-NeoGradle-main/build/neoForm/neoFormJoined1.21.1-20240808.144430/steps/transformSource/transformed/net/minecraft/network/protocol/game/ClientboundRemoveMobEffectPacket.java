@@ -25,12 +25,15 @@ public record ClientboundRemoveMobEffectPacket(int entityId, Holder<MobEffect> e
         return GamePacketTypes.CLIENTBOUND_REMOVE_MOB_EFFECT;
     }
 
-    public void handle(ClientGamePacketListener p_132908_) {
-        p_132908_.handleRemoveMobEffect(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleRemoveMobEffect(this);
     }
 
     @Nullable
-    public Entity getEntity(Level p_132902_) {
-        return p_132902_.getEntity(this.entityId);
+    public Entity getEntity(Level level) {
+        return level.getEntity(this.entityId);
     }
 }

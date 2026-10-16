@@ -99,27 +99,27 @@ public class EndDragonFight {
     @Nullable
     private List<EndCrystal> respawnCrystals;
 
-    public EndDragonFight(ServerLevel p_289759_, long p_289805_, EndDragonFight.Data p_289800_) {
-        this(p_289759_, p_289805_, p_289800_, BlockPos.ZERO);
+    public EndDragonFight(ServerLevel level, long seed, EndDragonFight.Data data) {
+        this(level, seed, data, BlockPos.ZERO);
     }
 
-    public EndDragonFight(ServerLevel p_289771_, long p_289793_, EndDragonFight.Data p_289768_, BlockPos p_289794_) {
-        this.level = p_289771_;
-        this.origin = p_289794_;
+    public EndDragonFight(ServerLevel level, long seed, EndDragonFight.Data data, BlockPos origin) {
+        this.level = level;
+        this.origin = origin;
         this.validPlayer = EntitySelector.ENTITY_STILL_ALIVE
-            .and(EntitySelector.withinDistance((double)p_289794_.getX(), (double)(128 + p_289794_.getY()), (double)p_289794_.getZ(), 192.0));
-        this.needsStateScanning = p_289768_.needsStateScanning;
-        this.dragonUUID = p_289768_.dragonUUID.orElse(null);
-        this.dragonKilled = p_289768_.dragonKilled;
-        this.previouslyKilled = p_289768_.previouslyKilled;
-        if (p_289768_.isRespawning) {
+            .and(EntitySelector.withinDistance((double)origin.getX(), (double)(128 + origin.getY()), (double)origin.getZ(), 192.0));
+        this.needsStateScanning = data.needsStateScanning;
+        this.dragonUUID = data.dragonUUID.orElse(null);
+        this.dragonKilled = data.dragonKilled;
+        this.previouslyKilled = data.previouslyKilled;
+        if (data.isRespawning) {
             this.respawnStage = DragonRespawnAnimation.START;
         }
 
-        this.portalLocation = p_289768_.exitPortalLocation.orElse(null);
-        this.gateways.addAll(p_289768_.gateways.orElseGet(() -> {
+        this.portalLocation = data.exitPortalLocation.orElse(null);
+        this.gateways.addAll(data.gateways.orElseGet(() -> {
             ObjectArrayList<Integer> objectarraylist = new ObjectArrayList<>(ContiguousSet.create(Range.closedOpen(0, 20), DiscreteDomain.integers()));
-            Util.shuffle(objectarraylist, RandomSource.create(p_289793_));
+            Util.shuffle(objectarraylist, RandomSource.create(seed));
             return objectarraylist;
         }));
         this.exitPortalPattern = BlockPatternBuilder.start()
@@ -235,12 +235,12 @@ public class EndDragonFight {
         }
     }
 
-    protected void setRespawnStage(DragonRespawnAnimation p_64088_) {
+    protected void setRespawnStage(DragonRespawnAnimation state) {
         if (this.respawnStage == null) {
             throw new IllegalStateException("Dragon respawn isn't in progress, can't skip ahead in the animation.");
         } else {
             this.respawnTime = 0;
-            if (p_64088_ == DragonRespawnAnimation.END) {
+            if (state == DragonRespawnAnimation.END) {
                 this.respawnStage = null;
                 this.dragonKilled = false;
                 EnderDragon enderdragon = this.createNewDragon();
@@ -250,7 +250,7 @@ public class EndDragonFight {
                     }
                 }
             } else {
-                this.respawnStage = p_64088_;
+                this.respawnStage = state;
             }
         }
     }
@@ -364,8 +364,8 @@ public class EndDragonFight {
         LOGGER.debug("Found {} end crystals still alive", this.crystalsAlive);
     }
 
-    public void setDragonKilled(EnderDragon p_64086_) {
-        if (p_64086_.getUUID().equals(this.dragonUUID)) {
+    public void setDragonKilled(EnderDragon dragon) {
+        if (dragon.getUUID().equals(this.dragonUUID)) {
             this.dragonEvent.setProgress(0.0F);
             this.dragonEvent.setVisible(false);
             this.spawnExitPortal(true);
@@ -398,17 +398,17 @@ public class EndDragonFight {
         }
     }
 
-    private void spawnNewGateway(BlockPos p_64090_) {
-        this.level.levelEvent(3000, p_64090_, 0);
+    private void spawnNewGateway(BlockPos pos) {
+        this.level.levelEvent(3000, pos, 0);
         this.level
             .registryAccess()
             .registry(Registries.CONFIGURED_FEATURE)
             .flatMap(p_258993_ -> p_258993_.getHolder(EndFeatures.END_GATEWAY_DELAYED))
-            .ifPresent(p_256486_ -> p_256486_.value().place(this.level, this.level.getChunkSource().getGenerator(), RandomSource.create(), p_64090_));
+            .ifPresent(p_256486_ -> p_256486_.value().place(this.level, this.level.getChunkSource().getGenerator(), RandomSource.create(), pos));
     }
 
-    private void spawnExitPortal(boolean p_64094_) {
-        EndPodiumFeature endpodiumfeature = new EndPodiumFeature(p_64094_);
+    private void spawnExitPortal(boolean active) {
+        EndPodiumFeature endpodiumfeature = new EndPodiumFeature(active);
         if (this.portalLocation == null) {
             this.portalLocation = this.level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EndPodiumFeature.getLocation(this.origin)).below();
 
@@ -443,12 +443,12 @@ public class EndDragonFight {
         return enderdragon;
     }
 
-    public void updateDragon(EnderDragon p_64097_) {
-        if (p_64097_.getUUID().equals(this.dragonUUID)) {
-            this.dragonEvent.setProgress(p_64097_.getHealth() / p_64097_.getMaxHealth());
+    public void updateDragon(EnderDragon dragon) {
+        if (dragon.getUUID().equals(this.dragonUUID)) {
+            this.dragonEvent.setProgress(dragon.getHealth() / dragon.getMaxHealth());
             this.ticksSinceDragonSeen = 0;
-            if (p_64097_.hasCustomName()) {
-                this.dragonEvent.setName(p_64097_.getDisplayName());
+            if (dragon.hasCustomName()) {
+                this.dragonEvent.setName(dragon.getDisplayName());
             }
         }
     }
@@ -457,8 +457,8 @@ public class EndDragonFight {
         return this.crystalsAlive;
     }
 
-    public void onCrystalDestroyed(EndCrystal p_64083_, DamageSource p_64084_) {
-        if (this.respawnStage != null && this.respawnCrystals.contains(p_64083_)) {
+    public void onCrystalDestroyed(EndCrystal crystal, DamageSource dmgSrc) {
+        if (this.respawnStage != null && this.respawnCrystals.contains(crystal)) {
             LOGGER.debug("Aborting respawn sequence");
             this.respawnStage = null;
             this.respawnTime = 0;
@@ -468,7 +468,7 @@ public class EndDragonFight {
             this.updateCrystalCount();
             Entity entity = this.level.getEntity(this.dragonUUID);
             if (entity instanceof EnderDragon) {
-                ((EnderDragon)entity).onCrystalDestroyed(p_64083_, p_64083_.blockPosition(), p_64084_);
+                ((EnderDragon)entity).onCrystalDestroyed(crystal, crystal.blockPosition(), dmgSrc);
             }
         }
     }
@@ -510,7 +510,7 @@ public class EndDragonFight {
         }
     }
 
-    private void respawnDragon(List<EndCrystal> p_64092_) {
+    private void respawnDragon(List<EndCrystal> crystals) {
         if (this.dragonKilled && this.respawnStage == null) {
             for (BlockPattern.BlockPatternMatch blockpattern$blockpatternmatch = this.findExitPortal();
                 blockpattern$blockpatternmatch != null;
@@ -531,7 +531,7 @@ public class EndDragonFight {
             this.respawnStage = DragonRespawnAnimation.START;
             this.respawnTime = 0;
             this.spawnExitPortal(false);
-            this.respawnCrystals = p_64092_;
+            this.respawnCrystals = crystals;
         }
     }
 

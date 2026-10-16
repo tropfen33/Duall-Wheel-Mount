@@ -54,19 +54,22 @@ public class AxeItem extends DiggerItem {
         super(p_40521_, BlockTags.MINEABLE_WITH_AXE, p_40524_);
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_40529_) {
-        Level level = p_40529_.getLevel();
-        BlockPos blockpos = p_40529_.getClickedPos();
-        Player player = p_40529_.getPlayer();
-        if (playerHasShieldUseIntent(p_40529_)) {
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
+        Player player = context.getPlayer();
+        if (playerHasShieldUseIntent(context)) {
             return InteractionResult.PASS;
         } else {
-            Optional<BlockState> optional = this.evaluateNewBlockState(level, blockpos, player, level.getBlockState(blockpos), p_40529_);
+            Optional<BlockState> optional = this.evaluateNewBlockState(level, blockpos, player, level.getBlockState(blockpos), context);
             if (optional.isEmpty()) {
                 return InteractionResult.PASS;
             } else {
-                ItemStack itemstack = p_40529_.getItemInHand();
+                ItemStack itemstack = context.getItemInHand();
                 if (player instanceof ServerPlayer) {
                     CriteriaTriggers.ITEM_USED_ON_BLOCK.trigger((ServerPlayer)player, blockpos, itemstack);
                 }
@@ -74,7 +77,7 @@ public class AxeItem extends DiggerItem {
                 level.setBlock(blockpos, optional.get(), 11);
                 level.gameEvent(GameEvent.BLOCK_CHANGE, blockpos, GameEvent.Context.of(player, optional.get()));
                 if (player != null) {
-                    itemstack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(p_40529_.getHand()));
+                    itemstack.hurtAndBreak(1, player, LivingEntity.getSlotForHand(context.getHand()));
                 }
 
                 return InteractionResult.sidedSuccess(level.isClientSide);
@@ -82,27 +85,27 @@ public class AxeItem extends DiggerItem {
         }
     }
 
-    private static boolean playerHasShieldUseIntent(UseOnContext p_345141_) {
-        Player player = p_345141_.getPlayer();
-        return p_345141_.getHand().equals(InteractionHand.MAIN_HAND) && player.getOffhandItem().is(Items.SHIELD) && !player.isSecondaryUseActive();
+    private static boolean playerHasShieldUseIntent(UseOnContext context) {
+        Player player = context.getPlayer();
+        return context.getHand().equals(InteractionHand.MAIN_HAND) && player.getOffhandItem().is(Items.SHIELD) && !player.isSecondaryUseActive();
     }
 
-    private Optional<BlockState> evaluateNewBlockState(Level p_308922_, BlockPos p_308899_, @Nullable Player p_309192_, BlockState p_308900_, UseOnContext p_40529_) {
-        Optional<BlockState> optional = Optional.ofNullable(p_308900_.getToolModifiedState(p_40529_, net.neoforged.neoforge.common.ItemAbilities.AXE_STRIP, false));
+    private Optional<BlockState> evaluateNewBlockState(Level level, BlockPos pos, @Nullable Player player, BlockState state, UseOnContext p_40529_) {
+        Optional<BlockState> optional = Optional.ofNullable(state.getToolModifiedState(p_40529_, net.neoforged.neoforge.common.ItemAbilities.AXE_STRIP, false));
         if (optional.isPresent()) {
-            p_308922_.playSound(p_309192_, p_308899_, SoundEvents.AXE_STRIP, SoundSource.BLOCKS, 1.0F, 1.0F);
+            level.playSound(player, pos, SoundEvents.AXE_STRIP, SoundSource.BLOCKS, 1.0F, 1.0F);
             return optional;
         } else {
-            Optional<BlockState> optional1 = Optional.ofNullable(p_308900_.getToolModifiedState(p_40529_, net.neoforged.neoforge.common.ItemAbilities.AXE_SCRAPE, false));
+            Optional<BlockState> optional1 = Optional.ofNullable(state.getToolModifiedState(p_40529_, net.neoforged.neoforge.common.ItemAbilities.AXE_SCRAPE, false));
             if (optional1.isPresent()) {
-                p_308922_.playSound(p_309192_, p_308899_, SoundEvents.AXE_SCRAPE, SoundSource.BLOCKS, 1.0F, 1.0F);
-                p_308922_.levelEvent(p_309192_, 3005, p_308899_, 0);
+                level.playSound(player, pos, SoundEvents.AXE_SCRAPE, SoundSource.BLOCKS, 1.0F, 1.0F);
+                level.levelEvent(player, 3005, pos, 0);
                 return optional1;
             } else {
-                Optional<BlockState> optional2 = Optional.ofNullable(p_308900_.getToolModifiedState(p_40529_, net.neoforged.neoforge.common.ItemAbilities.AXE_WAX_OFF, false));
+                Optional<BlockState> optional2 = Optional.ofNullable(state.getToolModifiedState(p_40529_, net.neoforged.neoforge.common.ItemAbilities.AXE_WAX_OFF, false));
                 if (optional2.isPresent()) {
-                    p_308922_.playSound(p_309192_, p_308899_, SoundEvents.AXE_WAX_OFF, SoundSource.BLOCKS, 1.0F, 1.0F);
-                    p_308922_.levelEvent(p_309192_, 3004, p_308899_, 0);
+                    level.playSound(player, pos, SoundEvents.AXE_WAX_OFF, SoundSource.BLOCKS, 1.0F, 1.0F);
+                    level.levelEvent(player, 3004, pos, 0);
                     return optional2;
                 } else {
                     return Optional.empty();
@@ -119,13 +122,13 @@ public class AxeItem extends DiggerItem {
         return block != null ? block.defaultBlockState().setValue(RotatedPillarBlock.AXIS, originalState.getValue(RotatedPillarBlock.AXIS)) : null;
     }
 
-    private Optional<BlockState> getStripped(BlockState p_150691_) {
-        var strippable = p_150691_.getBlock().builtInRegistryHolder().getData(net.neoforged.neoforge.registries.datamaps.builtin.NeoForgeDataMaps.STRIPPABLES);
+    private Optional<BlockState> getStripped(BlockState unstrippedState) {
+        var strippable = unstrippedState.getBlock().builtInRegistryHolder().getData(net.neoforged.neoforge.registries.datamaps.builtin.NeoForgeDataMaps.STRIPPABLES);
         if (strippable != null) {
-            return Optional.of(strippable.strippedBlock().withPropertiesOf(p_150691_));
+            return Optional.of(strippable.strippedBlock().withPropertiesOf(unstrippedState));
         }
-        return Optional.ofNullable(STRIPPABLES.get(p_150691_.getBlock()))
-            .map(p_150689_ -> p_150689_.defaultBlockState().setValue(RotatedPillarBlock.AXIS, p_150691_.getValue(RotatedPillarBlock.AXIS)));
+        return Optional.ofNullable(STRIPPABLES.get(unstrippedState.getBlock()))
+            .map(p_150689_ -> p_150689_.defaultBlockState().setValue(RotatedPillarBlock.AXIS, unstrippedState.getValue(RotatedPillarBlock.AXIS)));
     }
 
     @Override

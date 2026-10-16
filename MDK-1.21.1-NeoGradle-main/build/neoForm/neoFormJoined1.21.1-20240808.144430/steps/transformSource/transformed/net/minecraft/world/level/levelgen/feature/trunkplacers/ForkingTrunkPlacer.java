@@ -20,8 +20,8 @@ public class ForkingTrunkPlacer extends TrunkPlacer {
         p_70161_ -> trunkPlacerParts(p_70161_).apply(p_70161_, ForkingTrunkPlacer::new)
     );
 
-    public ForkingTrunkPlacer(int p_70148_, int p_70149_, int p_70150_) {
-        super(p_70148_, p_70149_, p_70150_);
+    public ForkingTrunkPlacer(int baseHeight, int heightRandA, int heightRandB) {
+        super(baseHeight, heightRandA, heightRandB);
     }
 
     @Override
@@ -31,32 +31,32 @@ public class ForkingTrunkPlacer extends TrunkPlacer {
 
     @Override
     public List<FoliagePlacer.FoliageAttachment> placeTrunk(
-        LevelSimulatedReader p_226116_,
-        BiConsumer<BlockPos, BlockState> p_226117_,
-        RandomSource p_226118_,
-        int p_226119_,
-        BlockPos p_226120_,
-        TreeConfiguration p_226121_
+        LevelSimulatedReader level,
+        BiConsumer<BlockPos, BlockState> blockSetter,
+        RandomSource random,
+        int freeTreeHeight,
+        BlockPos pos,
+        TreeConfiguration config
     ) {
-        setDirtAt(p_226116_, p_226117_, p_226118_, p_226120_.below(), p_226121_);
+        setDirtAt(level, blockSetter, random, pos.below(), config);
         List<FoliagePlacer.FoliageAttachment> list = Lists.newArrayList();
-        Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(p_226118_);
-        int i = p_226119_ - p_226118_.nextInt(4) - 1;
-        int j = 3 - p_226118_.nextInt(3);
+        Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(random);
+        int i = freeTreeHeight - random.nextInt(4) - 1;
+        int j = 3 - random.nextInt(3);
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
-        int k = p_226120_.getX();
-        int l = p_226120_.getZ();
+        int k = pos.getX();
+        int l = pos.getZ();
         OptionalInt optionalint = OptionalInt.empty();
 
-        for (int i1 = 0; i1 < p_226119_; i1++) {
-            int j1 = p_226120_.getY() + i1;
+        for (int i1 = 0; i1 < freeTreeHeight; i1++) {
+            int j1 = pos.getY() + i1;
             if (i1 >= i && j > 0) {
                 k += direction.getStepX();
                 l += direction.getStepZ();
                 j--;
             }
 
-            if (this.placeLog(p_226116_, p_226117_, p_226118_, blockpos$mutableblockpos.set(k, j1, l), p_226121_)) {
+            if (this.placeLog(level, blockSetter, random, blockpos$mutableblockpos.set(k, j1, l), config)) {
                 optionalint = OptionalInt.of(j1 + 1);
             }
         }
@@ -65,20 +65,20 @@ public class ForkingTrunkPlacer extends TrunkPlacer {
             list.add(new FoliagePlacer.FoliageAttachment(new BlockPos(k, optionalint.getAsInt(), l), 1, false));
         }
 
-        k = p_226120_.getX();
-        l = p_226120_.getZ();
-        Direction direction1 = Direction.Plane.HORIZONTAL.getRandomDirection(p_226118_);
+        k = pos.getX();
+        l = pos.getZ();
+        Direction direction1 = Direction.Plane.HORIZONTAL.getRandomDirection(random);
         if (direction1 != direction) {
-            int j2 = i - p_226118_.nextInt(2) - 1;
-            int k1 = 1 + p_226118_.nextInt(3);
+            int j2 = i - random.nextInt(2) - 1;
+            int k1 = 1 + random.nextInt(3);
             optionalint = OptionalInt.empty();
 
-            for (int l1 = j2; l1 < p_226119_ && k1 > 0; k1--) {
+            for (int l1 = j2; l1 < freeTreeHeight && k1 > 0; k1--) {
                 if (l1 >= 1) {
-                    int i2 = p_226120_.getY() + l1;
+                    int i2 = pos.getY() + l1;
                     k += direction1.getStepX();
                     l += direction1.getStepZ();
-                    if (this.placeLog(p_226116_, p_226117_, p_226118_, blockpos$mutableblockpos.set(k, i2, l), p_226121_)) {
+                    if (this.placeLog(level, blockSetter, random, blockpos$mutableblockpos.set(k, i2, l), config)) {
                         optionalint = OptionalInt.of(i2 + 1);
                     }
                 }

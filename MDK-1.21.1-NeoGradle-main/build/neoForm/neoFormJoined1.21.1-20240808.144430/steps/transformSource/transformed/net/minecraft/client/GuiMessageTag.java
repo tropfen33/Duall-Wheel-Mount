@@ -35,8 +35,8 @@ public record GuiMessageTag(int indicatorColor, @Nullable GuiMessageTag.Icon ico
         return CHAT_NOT_SECURE;
     }
 
-    public static GuiMessageTag chatModified(String p_242878_) {
-        Component component = Component.literal(p_242878_).withStyle(ChatFormatting.GRAY);
+    public static GuiMessageTag chatModified(String originalText) {
+        Component component = Component.literal(originalText).withStyle(ChatFormatting.GRAY);
         Component component1 = Component.empty().append(CHAT_MODIFIED_TEXT).append(CommonComponents.NEW_LINE).append(component);
         return new GuiMessageTag(6316128, GuiMessageTag.Icon.CHAT_MODIFIED, component1, "Modified");
     }
@@ -53,14 +53,14 @@ public record GuiMessageTag(int indicatorColor, @Nullable GuiMessageTag.Icon ico
         public final int width;
         public final int height;
 
-        private Icon(ResourceLocation p_296008_, int p_240599_, int p_240544_) {
-            this.sprite = p_296008_;
-            this.width = p_240599_;
-            this.height = p_240544_;
+        private Icon(ResourceLocation sprite, int width, int height) {
+            this.sprite = sprite;
+            this.width = width;
+            this.height = height;
         }
 
-        public void draw(GuiGraphics p_282284_, int p_282597_, int p_283579_) {
-            p_282284_.blitSprite(this.sprite, p_282597_, p_283579_, this.width, this.height);
+        public void draw(GuiGraphics guiGraphics, int x, int y) {
+            guiGraphics.blitSprite(this.sprite, x, y, this.width, this.height);
         }
     }
 }

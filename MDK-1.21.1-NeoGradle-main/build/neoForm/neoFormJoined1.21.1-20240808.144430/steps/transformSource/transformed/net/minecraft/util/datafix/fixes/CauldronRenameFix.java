@@ -9,19 +9,19 @@ import com.mojang.serialization.Dynamic;
 import java.util.Optional;
 
 public class CauldronRenameFix extends DataFix {
-    public CauldronRenameFix(Schema p_145196_, boolean p_145197_) {
-        super(p_145196_, p_145197_);
+    public CauldronRenameFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
-    private static Dynamic<?> fix(Dynamic<?> p_145201_) {
-        Optional<String> optional = p_145201_.get("Name").asString().result();
+    private static Dynamic<?> fix(Dynamic<?> p_dynamic) {
+        Optional<String> optional = p_dynamic.get("Name").asString().result();
         if (optional.equals(Optional.of("minecraft:cauldron"))) {
-            Dynamic<?> dynamic = p_145201_.get("Properties").orElseEmptyMap();
+            Dynamic<?> dynamic = p_dynamic.get("Properties").orElseEmptyMap();
             return dynamic.get("level").asString("0").equals("0")
-                ? p_145201_.remove("Properties")
-                : p_145201_.set("Name", p_145201_.createString("minecraft:water_cauldron"));
+                ? p_dynamic.remove("Properties")
+                : p_dynamic.set("Name", p_dynamic.createString("minecraft:water_cauldron"));
         } else {
-            return p_145201_;
+            return p_dynamic;
         }
     }
 

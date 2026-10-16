@@ -30,8 +30,8 @@ public class MovementTutorialStepInstance implements TutorialStepInstance {
     private int moveCompleted = -1;
     private int lookCompleted = -1;
 
-    public MovementTutorialStepInstance(Tutorial p_120522_) {
-        this.tutorial = p_120522_;
+    public MovementTutorialStepInstance(Tutorial tutorial) {
+        this.tutorial = tutorial;
     }
 
     @Override
@@ -105,16 +105,19 @@ public class MovementTutorialStepInstance implements TutorialStepInstance {
         }
     }
 
+    /**
+     * Handles the player movement
+     */
     @Override
-    public void onInput(Input p_120528_) {
-        if (p_120528_.up || p_120528_.down || p_120528_.left || p_120528_.right || p_120528_.jumping) {
+    public void onInput(Input input) {
+        if (input.up || input.down || input.left || input.right || input.jumping) {
             this.moved = true;
         }
     }
 
     @Override
-    public void onMouse(double p_120525_, double p_120526_) {
-        if (Math.abs(p_120525_) > 0.01 || Math.abs(p_120526_) > 0.01) {
+    public void onMouse(double velocityX, double velocityY) {
+        if (Math.abs(velocityX) > 0.01 || Math.abs(velocityY) > 0.01) {
             this.turned = true;
         }
     }

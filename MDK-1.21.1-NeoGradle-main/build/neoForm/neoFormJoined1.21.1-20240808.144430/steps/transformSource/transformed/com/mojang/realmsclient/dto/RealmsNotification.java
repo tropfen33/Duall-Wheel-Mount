@@ -38,11 +38,11 @@ public class RealmsNotification {
     final boolean seen;
     final String type;
 
-    RealmsNotification(UUID p_275316_, boolean p_275303_, boolean p_275497_, String p_275401_) {
-        this.uuid = p_275316_;
-        this.dismissable = p_275303_;
-        this.seen = p_275497_;
-        this.type = p_275401_;
+    RealmsNotification(UUID uuid, boolean dismissable, boolean seen, String type) {
+        this.uuid = uuid;
+        this.dismissable = dismissable;
+        this.seen = seen;
+        this.type = type;
     }
 
     public boolean seen() {
@@ -57,11 +57,11 @@ public class RealmsNotification {
         return this.uuid;
     }
 
-    public static List<RealmsNotification> parseList(String p_275464_) {
+    public static List<RealmsNotification> parseList(String json) {
         List<RealmsNotification> list = new ArrayList<>();
 
         try {
-            for (JsonElement jsonelement : JsonParser.parseString(p_275464_).getAsJsonObject().get("notifications").getAsJsonArray()) {
+            for (JsonElement jsonelement : JsonParser.parseString(json).getAsJsonObject().get("notifications").getAsJsonArray()) {
                 list.add(parse(jsonelement.getAsJsonObject()));
             }
         } catch (Exception exception) {
@@ -71,19 +71,19 @@ public class RealmsNotification {
         return list;
     }
 
-    private static RealmsNotification parse(JsonObject p_275549_) {
-        UUID uuid = JsonUtils.getUuidOr("notificationUuid", p_275549_, null);
+    private static RealmsNotification parse(JsonObject json) {
+        UUID uuid = JsonUtils.getUuidOr("notificationUuid", json, null);
         if (uuid == null) {
             throw new IllegalStateException("Missing required property notificationUuid");
         } else {
-            boolean flag = JsonUtils.getBooleanOr("dismissable", p_275549_, true);
-            boolean flag1 = JsonUtils.getBooleanOr("seen", p_275549_, false);
-            String s = JsonUtils.getRequiredString("type", p_275549_);
+            boolean flag = JsonUtils.getBooleanOr("dismissable", json, true);
+            boolean flag1 = JsonUtils.getBooleanOr("seen", json, false);
+            String s = JsonUtils.getRequiredString("type", json);
             RealmsNotification realmsnotification = new RealmsNotification(uuid, flag, flag1, s);
 
             return (RealmsNotification)(switch (s) {
-                case "visitUrl" -> RealmsNotification.VisitUrl.parse(realmsnotification, p_275549_);
-                case "infoPopup" -> RealmsNotification.InfoPopup.parse(realmsnotification, p_275549_);
+                case "visitUrl" -> RealmsNotification.VisitUrl.parse(realmsnotification, json);
+                case "infoPopup" -> RealmsNotification.InfoPopup.parse(realmsnotification, json);
                 default -> realmsnotification;
             });
         }
@@ -102,35 +102,35 @@ public class RealmsNotification {
         private final RealmsNotification.UrlButton urlButton;
 
         private InfoPopup(
-            RealmsNotification p_304992_,
-            RealmsText p_304968_,
-            RealmsText p_304788_,
-            ResourceLocation p_304749_,
-            @Nullable RealmsNotification.UrlButton p_304471_
+            RealmsNotification notification,
+            RealmsText title,
+            RealmsText message,
+            ResourceLocation image,
+            @Nullable RealmsNotification.UrlButton urlButton
         ) {
-            super(p_304992_.uuid, p_304992_.dismissable, p_304992_.seen, p_304992_.type);
-            this.title = p_304968_;
-            this.message = p_304788_;
-            this.image = p_304749_;
-            this.urlButton = p_304471_;
+            super(notification.uuid, notification.dismissable, notification.seen, notification.type);
+            this.title = title;
+            this.message = message;
+            this.image = image;
+            this.urlButton = urlButton;
         }
 
-        public static RealmsNotification.InfoPopup parse(RealmsNotification p_304647_, JsonObject p_304686_) {
-            RealmsText realmstext = JsonUtils.getRequired("title", p_304686_, RealmsText::parse);
-            RealmsText realmstext1 = JsonUtils.getRequired("message", p_304686_, RealmsText::parse);
-            ResourceLocation resourcelocation = ResourceLocation.parse(JsonUtils.getRequiredString("image", p_304686_));
-            RealmsNotification.UrlButton realmsnotification$urlbutton = JsonUtils.getOptional("urlButton", p_304686_, RealmsNotification.UrlButton::parse);
-            return new RealmsNotification.InfoPopup(p_304647_, realmstext, realmstext1, resourcelocation, realmsnotification$urlbutton);
+        public static RealmsNotification.InfoPopup parse(RealmsNotification notification, JsonObject json) {
+            RealmsText realmstext = JsonUtils.getRequired("title", json, RealmsText::parse);
+            RealmsText realmstext1 = JsonUtils.getRequired("message", json, RealmsText::parse);
+            ResourceLocation resourcelocation = ResourceLocation.parse(JsonUtils.getRequiredString("image", json));
+            RealmsNotification.UrlButton realmsnotification$urlbutton = JsonUtils.getOptional("urlButton", json, RealmsNotification.UrlButton::parse);
+            return new RealmsNotification.InfoPopup(notification, realmstext, realmstext1, resourcelocation, realmsnotification$urlbutton);
         }
 
         @Nullable
-        public PopupScreen buildScreen(Screen p_304415_, Consumer<UUID> p_304962_) {
+        public PopupScreen buildScreen(Screen backgroundScreen, Consumer<UUID> uuidOutput) {
             Component component = this.title.createComponent();
             if (component == null) {
                 RealmsNotification.LOGGER.warn("Realms info popup had title with no available translation: {}", this.title);
                 return null;
             } else {
-                PopupScreen.Builder popupscreen$builder = new PopupScreen.Builder(p_304415_, component)
+                PopupScreen.Builder popupscreen$builder = new PopupScreen.Builder(backgroundScreen, component)
                     .setImage(this.image)
                     .setMessage(this.message.createComponent(CommonComponents.EMPTY));
                 if (this.urlButton != null) {
@@ -139,20 +139,20 @@ public class RealmsNotification {
                         minecraft.setScreen(new ConfirmLinkScreen(p_304708_ -> {
                             if (p_304708_) {
                                 Util.getPlatform().openUri(this.urlButton.url);
-                                minecraft.setScreen(p_304415_);
+                                minecraft.setScreen(backgroundScreen);
                             } else {
                                 minecraft.setScreen(p_304766_);
                             }
                         }, this.urlButton.url, true));
-                        p_304962_.accept(this.uuid());
+                        uuidOutput.accept(this.uuid());
                     });
                 }
 
                 popupscreen$builder.addButton(CommonComponents.GUI_OK, p_304476_ -> {
                     p_304476_.onClose();
-                    p_304962_.accept(this.uuid());
+                    uuidOutput.accept(this.uuid());
                 });
-                popupscreen$builder.onClose(() -> p_304962_.accept(this.uuid()));
+                popupscreen$builder.onClose(() -> uuidOutput.accept(this.uuid()));
                 return popupscreen$builder.build();
             }
         }
@@ -163,9 +163,9 @@ public class RealmsNotification {
         private static final String URL = "url";
         private static final String URL_TEXT = "urlText";
 
-        public static RealmsNotification.UrlButton parse(JsonObject p_304518_) {
-            String s = JsonUtils.getRequiredString("url", p_304518_);
-            RealmsText realmstext = JsonUtils.getRequired("urlText", p_304518_, RealmsText::parse);
+        public static RealmsNotification.UrlButton parse(JsonObject json) {
+            String s = JsonUtils.getRequiredString("url", json);
+            RealmsText realmstext = JsonUtils.getRequired("urlText", json, RealmsText::parse);
             return new RealmsNotification.UrlButton(s, realmstext);
         }
     }
@@ -179,27 +179,27 @@ public class RealmsNotification {
         private final RealmsText buttonText;
         private final RealmsText message;
 
-        private VisitUrl(RealmsNotification p_275564_, String p_275312_, RealmsText p_275433_, RealmsText p_275541_) {
-            super(p_275564_.uuid, p_275564_.dismissable, p_275564_.seen, p_275564_.type);
-            this.url = p_275312_;
-            this.buttonText = p_275433_;
-            this.message = p_275541_;
+        private VisitUrl(RealmsNotification notification, String url, RealmsText buttonText, RealmsText message) {
+            super(notification.uuid, notification.dismissable, notification.seen, notification.type);
+            this.url = url;
+            this.buttonText = buttonText;
+            this.message = message;
         }
 
-        public static RealmsNotification.VisitUrl parse(RealmsNotification p_275651_, JsonObject p_275278_) {
-            String s = JsonUtils.getRequiredString("url", p_275278_);
-            RealmsText realmstext = JsonUtils.getRequired("buttonText", p_275278_, RealmsText::parse);
-            RealmsText realmstext1 = JsonUtils.getRequired("message", p_275278_, RealmsText::parse);
-            return new RealmsNotification.VisitUrl(p_275651_, s, realmstext, realmstext1);
+        public static RealmsNotification.VisitUrl parse(RealmsNotification notification, JsonObject json) {
+            String s = JsonUtils.getRequiredString("url", json);
+            RealmsText realmstext = JsonUtils.getRequired("buttonText", json, RealmsText::parse);
+            RealmsText realmstext1 = JsonUtils.getRequired("message", json, RealmsText::parse);
+            return new RealmsNotification.VisitUrl(notification, s, realmstext, realmstext1);
         }
 
         public Component getMessage() {
             return this.message.createComponent(Component.translatable("mco.notification.visitUrl.message.default"));
         }
 
-        public Button buildOpenLinkButton(Screen p_275412_) {
+        public Button buildOpenLinkButton(Screen lastScreen) {
             Component component = this.buttonText.createComponent(RealmsNotification.BUTTON_TEXT_FALLBACK);
-            return Button.builder(component, ConfirmLinkScreen.confirmLink(p_275412_, this.url)).build();
+            return Button.builder(component, ConfirmLinkScreen.confirmLink(lastScreen, this.url)).build();
         }
     }
 }

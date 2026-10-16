@@ -215,9 +215,9 @@ public record BlockSetType(
         );
     }
 
-    public static BlockSetType register(BlockSetType p_273033_) {
-        TYPES.put(p_273033_.name, p_273033_);
-        return p_273033_;
+    public static BlockSetType register(BlockSetType value) {
+        TYPES.put(value.name, value);
+        return value;
     }
 
     public static Stream<BlockSetType> values() {

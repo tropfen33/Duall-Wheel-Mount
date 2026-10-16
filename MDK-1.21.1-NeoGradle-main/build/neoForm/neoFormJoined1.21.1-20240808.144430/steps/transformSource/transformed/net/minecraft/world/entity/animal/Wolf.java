@@ -109,8 +109,8 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
     @Nullable
     private UUID persistentAngerTarget;
 
-    public Wolf(EntityType<? extends Wolf> p_30369_, Level p_30370_) {
-        super(p_30369_, p_30370_);
+    public Wolf(EntityType<? extends Wolf> entityType, Level level) {
+        super(entityType, level);
         this.setTame(false, false);
         this.setPathfindingMalus(PathType.POWDER_SNOW, -1.0F);
         this.setPathfindingMalus(PathType.DANGER_POWDER_SNOW, -1.0F);
@@ -153,8 +153,8 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
         return this.entityData.get(DATA_VARIANT_ID);
     }
 
-    public void setVariant(Holder<WolfVariant> p_332777_) {
-        this.entityData.set(DATA_VARIANT_ID, p_332777_);
+    public void setVariant(Holder<WolfVariant> variant) {
+        this.entityData.set(DATA_VARIANT_ID, variant);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -162,57 +162,60 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326027_) {
-        super.defineSynchedData(p_326027_);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
         RegistryAccess registryaccess = this.registryAccess();
         Registry<WolfVariant> registry = registryaccess.registryOrThrow(Registries.WOLF_VARIANT);
-        p_326027_.define(DATA_VARIANT_ID, registry.getHolder(WolfVariants.DEFAULT).or(registry::getAny).orElseThrow());
-        p_326027_.define(DATA_INTERESTED_ID, false);
-        p_326027_.define(DATA_COLLAR_COLOR, DyeColor.RED.getId());
-        p_326027_.define(DATA_REMAINING_ANGER_TIME, 0);
+        builder.define(DATA_VARIANT_ID, registry.getHolder(WolfVariants.DEFAULT).or(registry::getAny).orElseThrow());
+        builder.define(DATA_INTERESTED_ID, false);
+        builder.define(DATA_COLLAR_COLOR, DyeColor.RED.getId());
+        builder.define(DATA_REMAINING_ANGER_TIME, 0);
     }
 
     @Override
-    protected void playStepSound(BlockPos p_30415_, BlockState p_30416_) {
+    protected void playStepSound(BlockPos pos, BlockState block) {
         this.playSound(SoundEvents.WOLF_STEP, 0.15F, 1.0F);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_30418_) {
-        super.addAdditionalSaveData(p_30418_);
-        p_30418_.putByte("CollarColor", (byte)this.getCollarColor().getId());
-        this.getVariant().unwrapKey().ifPresent(p_344339_ -> p_30418_.putString("variant", p_344339_.location().toString()));
-        this.addPersistentAngerSaveData(p_30418_);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putByte("CollarColor", (byte)this.getCollarColor().getId());
+        this.getVariant().unwrapKey().ifPresent(p_344339_ -> compound.putString("variant", p_344339_.location().toString()));
+        this.addPersistentAngerSaveData(compound);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_30402_) {
-        super.readAdditionalSaveData(p_30402_);
-        Optional.ofNullable(ResourceLocation.tryParse(p_30402_.getString("variant")))
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        Optional.ofNullable(ResourceLocation.tryParse(compound.getString("variant")))
             .map(p_332608_ -> ResourceKey.create(Registries.WOLF_VARIANT, p_332608_))
             .flatMap(p_352803_ -> this.registryAccess().registryOrThrow(Registries.WOLF_VARIANT).getHolder((ResourceKey<WolfVariant>)p_352803_))
             .ifPresent(this::setVariant);
-        if (p_30402_.contains("CollarColor", 99)) {
-            this.setCollarColor(DyeColor.byId(p_30402_.getInt("CollarColor")));
+        if (compound.contains("CollarColor", 99)) {
+            this.setCollarColor(DyeColor.byId(compound.getInt("CollarColor")));
         }
 
-        this.readPersistentAngerSaveData(this.level(), p_30402_);
+        this.readPersistentAngerSaveData(this.level(), compound);
     }
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_332775_, DifficultyInstance p_332793_, MobSpawnType p_332761_, @Nullable SpawnGroupData p_332782_) {
-        Holder<Biome> holder = p_332775_.getBiome(this.blockPosition());
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        Holder<Biome> holder = level.getBiome(this.blockPosition());
         Holder<WolfVariant> holder1;
-        if (p_332782_ instanceof Wolf.WolfPackData wolf$wolfpackdata) {
+        if (spawnGroupData instanceof Wolf.WolfPackData wolf$wolfpackdata) {
             holder1 = wolf$wolfpackdata.type;
         } else {
             holder1 = WolfVariants.getSpawnVariant(this.registryAccess(), holder);
-            p_332782_ = new Wolf.WolfPackData(holder1);
+            spawnGroupData = new Wolf.WolfPackData(holder1);
         }
 
         this.setVariant(holder1);
-        return super.finalizeSpawn(p_332775_, p_332793_, p_332761_, p_332782_);
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
     @Override
@@ -227,8 +230,8 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_30424_) {
-        return this.canArmorAbsorb(p_30424_) ? SoundEvents.WOLF_ARMOR_DAMAGE : SoundEvents.WOLF_HURT;
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return this.canArmorAbsorb(damageSource) ? SoundEvents.WOLF_ARMOR_DAMAGE : SoundEvents.WOLF_HURT;
     }
 
     @Override
@@ -310,25 +313,31 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
         this.shakeAnimO = 0.0F;
     }
 
+    /**
+     * Called when the mob's health reaches 0.
+     */
     @Override
-    public void die(DamageSource p_30384_) {
+    public void die(DamageSource cause) {
         this.isWet = false;
         this.isShaking = false;
         this.shakeAnimO = 0.0F;
         this.shakeAnim = 0.0F;
-        super.die(p_30384_);
+        super.die(cause);
     }
 
     public boolean isWet() {
         return this.isWet;
     }
 
-    public float getWetShade(float p_30447_) {
-        return Math.min(0.75F + Mth.lerp(p_30447_, this.shakeAnimO, this.shakeAnim) / 2.0F * 0.25F, 1.0F);
+    /**
+     * Used when calculating the amount of shading to apply while the wolf is wet.
+     */
+    public float getWetShade(float partialTicks) {
+        return Math.min(0.75F + Mth.lerp(partialTicks, this.shakeAnimO, this.shakeAnim) / 2.0F * 0.25F, 1.0F);
     }
 
-    public float getBodyRollAngle(float p_30433_, float p_30434_) {
-        float f = (Mth.lerp(p_30433_, this.shakeAnimO, this.shakeAnim) + p_30434_) / 1.8F;
+    public float getBodyRollAngle(float partialTicks, float offset) {
+        float f = (Mth.lerp(partialTicks, this.shakeAnimO, this.shakeAnim) + offset) / 1.8F;
         if (f < 0.0F) {
             f = 0.0F;
         } else if (f > 1.0F) {
@@ -338,8 +347,8 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
         return Mth.sin(f * (float) Math.PI) * Mth.sin(f * (float) Math.PI * 11.0F) * 0.15F * (float) Math.PI;
     }
 
-    public float getHeadRollAngle(float p_30449_) {
-        return Mth.lerp(p_30449_, this.interestedAngleO, this.interestedAngle) * 0.15F * (float) Math.PI;
+    public float getHeadRollAngle(float partialTicks) {
+        return Mth.lerp(partialTicks, this.interestedAngleO, this.interestedAngle) * 0.15F * (float) Math.PI;
     }
 
     @Override
@@ -347,33 +356,39 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
         return this.isInSittingPose() ? 20 : super.getMaxHeadXRot();
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_30386_, float p_30387_) {
-        if (this.isInvulnerableTo(p_30386_)) {
+    public boolean hurt(DamageSource source, float amount) {
+        if (this.isInvulnerableTo(source)) {
             return false;
         } else {
             if (!this.level().isClientSide) {
                 this.setOrderedToSit(false);
             }
 
-            return super.hurt(p_30386_, p_30387_);
+            return super.hurt(source, amount);
         }
     }
 
     @Override
-    public boolean canUseSlot(EquipmentSlot p_348657_) {
+    public boolean canUseSlot(EquipmentSlot slot) {
         return true;
     }
 
+    /**
+     * Deals damage to the entity. This will take the armor of the entity into consideration before damaging the health bar.
+     */
     @Override
-    protected void actuallyHurt(DamageSource p_331935_, float p_330695_) {
-        if (!this.canArmorAbsorb(p_331935_)) {
-            super.actuallyHurt(p_331935_, p_330695_);
+    protected void actuallyHurt(DamageSource damageSource, float damageAmount) {
+        if (!this.canArmorAbsorb(damageSource)) {
+            super.actuallyHurt(damageSource, damageAmount);
         } else {
             ItemStack itemstack = this.getBodyArmorItem();
             int i = itemstack.getDamageValue();
             int j = itemstack.getMaxDamage();
-            itemstack.hurtAndBreak(Mth.ceil(p_330695_), this, EquipmentSlot.BODY);
+            itemstack.hurtAndBreak(Mth.ceil(damageAmount), this, EquipmentSlot.BODY);
             if (Crackiness.WOLF_ARMOR.byDamage(i, j) != Crackiness.WOLF_ARMOR.byDamage(this.getBodyArmorItem())) {
                 this.playSound(SoundEvents.WOLF_ARMOR_CRACK);
                 if (this.level() instanceof ServerLevel serverlevel) {
@@ -393,8 +408,8 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
         }
     }
 
-    private boolean canArmorAbsorb(DamageSource p_331524_) {
-        return this.hasArmor() && !p_331524_.is(DamageTypeTags.BYPASSES_WOLF_ARMOR);
+    private boolean canArmorAbsorb(DamageSource damageSource) {
+        return this.hasArmor() && !damageSource.is(DamageTypeTags.BYPASSES_WOLF_ARMOR);
     }
 
     @Override
@@ -408,13 +423,13 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
     }
 
     @Override
-    protected void hurtArmor(DamageSource p_332118_, float p_330593_) {
-        this.doHurtEquipment(p_332118_, p_330593_, new EquipmentSlot[]{EquipmentSlot.BODY});
+    protected void hurtArmor(DamageSource damageSource, float damageAmount) {
+        this.doHurtEquipment(damageSource, damageAmount, new EquipmentSlot[]{EquipmentSlot.BODY});
     }
 
     @Override
-    public InteractionResult mobInteract(Player p_30412_, InteractionHand p_30413_) {
-        ItemStack itemstack = p_30412_.getItemInHand(p_30413_);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
         Item item = itemstack.getItem();
         if (!this.level().isClientSide || this.isBaby() && this.isFood(itemstack)) {
             if (this.isTame()) {
@@ -422,30 +437,30 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
                     FoodProperties foodproperties = itemstack.getFoodProperties(this);
                     float f = foodproperties != null ? (float)foodproperties.nutrition() : 1.0F;
                     this.heal(2.0F * f);
-                    itemstack.consume(1, p_30412_);
+                    itemstack.consume(1, player);
                     this.gameEvent(GameEvent.EAT); // Neo: add EAT game event
                     return InteractionResult.sidedSuccess(this.level().isClientSide());
                 } else {
-                    if (item instanceof DyeItem dyeitem && this.isOwnedBy(p_30412_)) {
+                    if (item instanceof DyeItem dyeitem && this.isOwnedBy(player)) {
                         DyeColor dyecolor = dyeitem.getDyeColor();
                         if (dyecolor != this.getCollarColor()) {
                             this.setCollarColor(dyecolor);
-                            itemstack.consume(1, p_30412_);
+                            itemstack.consume(1, player);
                             return InteractionResult.SUCCESS;
                         }
 
-                        return super.mobInteract(p_30412_, p_30413_);
+                        return super.mobInteract(player, hand);
                     }
 
-                    if (itemstack.is(Items.WOLF_ARMOR) && this.isOwnedBy(p_30412_) && this.getBodyArmorItem().isEmpty() && !this.isBaby()) {
+                    if (itemstack.is(Items.WOLF_ARMOR) && this.isOwnedBy(player) && this.getBodyArmorItem().isEmpty() && !this.isBaby()) {
                         this.setBodyArmorItem(itemstack.copyWithCount(1));
-                        itemstack.consume(1, p_30412_);
+                        itemstack.consume(1, player);
                         return InteractionResult.SUCCESS;
                     } else if (itemstack.canPerformAction(net.neoforged.neoforge.common.ItemAbilities.SHEARS_REMOVE_ARMOR)
-                        && this.isOwnedBy(p_30412_)
+                        && this.isOwnedBy(player)
                         && this.hasArmor()
-                        && (!EnchantmentHelper.has(this.getBodyArmorItem(), EnchantmentEffectComponents.PREVENT_ARMOR_CHANGE) || p_30412_.isCreative())) {
-                        itemstack.hurtAndBreak(1, p_30412_, getSlotForHand(p_30413_));
+                        && (!EnchantmentHelper.has(this.getBodyArmorItem(), EnchantmentEffectComponents.PREVENT_ARMOR_CHANGE) || player.isCreative())) {
+                        itemstack.hurtAndBreak(1, player, getSlotForHand(hand));
                         this.playSound(SoundEvents.ARMOR_UNEQUIP_WOLF);
                         ItemStack itemstack1 = this.getBodyArmorItem();
                         this.setBodyArmorItem(ItemStack.EMPTY);
@@ -454,7 +469,7 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
                     } else if (ArmorMaterials.ARMADILLO.value().repairIngredient().get().test(itemstack)
                         && this.isInSittingPose()
                         && this.hasArmor()
-                        && this.isOwnedBy(p_30412_)
+                        && this.isOwnedBy(player)
                         && this.getBodyArmorItem().isDamaged()) {
                         itemstack.shrink(1);
                         this.playSound(SoundEvents.WOLF_ARMOR_REPAIR);
@@ -463,8 +478,8 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
                         itemstack2.setDamageValue(Math.max(0, itemstack2.getDamageValue() - i));
                         return InteractionResult.SUCCESS;
                     } else {
-                        InteractionResult interactionresult = super.mobInteract(p_30412_, p_30413_);
-                        if (!interactionresult.consumesAction() && this.isOwnedBy(p_30412_)) {
+                        InteractionResult interactionresult = super.mobInteract(player, hand);
+                        if (!interactionresult.consumesAction() && this.isOwnedBy(player)) {
                             this.setOrderedToSit(!this.isOrderedToSit());
                             this.jumping = false;
                             this.navigation.stop();
@@ -476,21 +491,21 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
                     }
                 }
             } else if (itemstack.is(Items.BONE) && !this.isAngry()) {
-                itemstack.consume(1, p_30412_);
-                this.tryToTame(p_30412_);
+                itemstack.consume(1, player);
+                this.tryToTame(player);
                 return InteractionResult.SUCCESS;
             } else {
-                return super.mobInteract(p_30412_, p_30413_);
+                return super.mobInteract(player, hand);
             }
         } else {
-            boolean flag = this.isOwnedBy(p_30412_) || this.isTame() || itemstack.is(Items.BONE) && !this.isTame() && !this.isAngry();
+            boolean flag = this.isOwnedBy(player) || this.isTame() || itemstack.is(Items.BONE) && !this.isTame() && !this.isAngry();
             return flag ? InteractionResult.CONSUME : InteractionResult.PASS;
         }
     }
 
-    private void tryToTame(Player p_333736_) {
-        if (this.random.nextInt(3) == 0  && !net.neoforged.neoforge.event.EventHooks.onAnimalTame(this, p_333736_)) {
-            this.tame(p_333736_);
+    private void tryToTame(Player player) {
+        if (this.random.nextInt(3) == 0  && !net.neoforged.neoforge.event.EventHooks.onAnimalTame(this, player)) {
+            this.tame(player);
             this.navigation.stop();
             this.setTarget(null);
             this.setOrderedToSit(true);
@@ -500,16 +515,19 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
         }
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @Override
-    public void handleEntityEvent(byte p_30379_) {
-        if (p_30379_ == 8) {
+    public void handleEntityEvent(byte id) {
+        if (id == 8) {
             this.isShaking = true;
             this.shakeAnim = 0.0F;
             this.shakeAnimO = 0.0F;
-        } else if (p_30379_ == 56) {
+        } else if (id == 56) {
             this.cancelShake();
         } else {
-            super.handleEntityEvent(p_30379_);
+            super.handleEntityEvent(id);
         }
     }
 
@@ -525,9 +543,12 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
         }
     }
 
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on the animal type)
+     */
     @Override
-    public boolean isFood(ItemStack p_30440_) {
-        return p_30440_.is(ItemTags.WOLF_FOOD);
+    public boolean isFood(ItemStack stack) {
+        return stack.is(ItemTags.WOLF_FOOD);
     }
 
     @Override
@@ -541,8 +562,8 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
     }
 
     @Override
-    public void setRemainingPersistentAngerTime(int p_30404_) {
-        this.entityData.set(DATA_REMAINING_ANGER_TIME, p_30404_);
+    public void setRemainingPersistentAngerTime(int time) {
+        this.entityData.set(DATA_REMAINING_ANGER_TIME, time);
     }
 
     @Override
@@ -557,8 +578,8 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
     }
 
     @Override
-    public void setPersistentAngerTarget(@Nullable UUID p_30400_) {
-        this.persistentAngerTarget = p_30400_;
+    public void setPersistentAngerTarget(@Nullable UUID target) {
+        this.persistentAngerTarget = target;
     }
 
     public DyeColor getCollarColor() {
@@ -569,14 +590,14 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
         return this.getBodyArmorItem().is(Items.WOLF_ARMOR);
     }
 
-    private void setCollarColor(DyeColor p_30398_) {
-        this.entityData.set(DATA_COLLAR_COLOR, p_30398_.getId());
+    private void setCollarColor(DyeColor collarColor) {
+        this.entityData.set(DATA_COLLAR_COLOR, collarColor.getId());
     }
 
     @Nullable
-    public Wolf getBreedOffspring(ServerLevel p_149088_, AgeableMob p_149089_) {
-        Wolf wolf = EntityType.WOLF.create(p_149088_);
-        if (wolf != null && p_149089_ instanceof Wolf wolf1) {
+    public Wolf getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        Wolf wolf = EntityType.WOLF.create(level);
+        if (wolf != null && otherParent instanceof Wolf wolf1) {
             if (this.random.nextBoolean()) {
                 wolf.setVariant(this.getVariant());
             } else {
@@ -597,17 +618,20 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
         return wolf;
     }
 
-    public void setIsInterested(boolean p_30445_) {
-        this.entityData.set(DATA_INTERESTED_ID, p_30445_);
+    public void setIsInterested(boolean isInterested) {
+        this.entityData.set(DATA_INTERESTED_ID, isInterested);
     }
 
+    /**
+     * Returns {@code true} if the mob is currently able to mate with the specified mob.
+     */
     @Override
-    public boolean canMate(Animal p_30392_) {
-        if (p_30392_ == this) {
+    public boolean canMate(Animal otherAnimal) {
+        if (otherAnimal == this) {
             return false;
         } else if (!this.isTame()) {
             return false;
-        } else if (!(p_30392_ instanceof Wolf wolf)) {
+        } else if (!(otherAnimal instanceof Wolf wolf)) {
             return false;
         } else if (!wolf.isTame()) {
             return false;
@@ -621,21 +645,21 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
     }
 
     @Override
-    public boolean wantsToAttack(LivingEntity p_30389_, LivingEntity p_30390_) {
-        if (p_30389_ instanceof Creeper || p_30389_ instanceof Ghast || p_30389_ instanceof ArmorStand) {
+    public boolean wantsToAttack(LivingEntity target, LivingEntity owner) {
+        if (target instanceof Creeper || target instanceof Ghast || target instanceof ArmorStand) {
             return false;
-        } else if (p_30389_ instanceof Wolf wolf) {
-            return !wolf.isTame() || wolf.getOwner() != p_30390_;
+        } else if (target instanceof Wolf wolf) {
+            return !wolf.isTame() || wolf.getOwner() != owner;
         } else {
-            if (p_30389_ instanceof Player player && p_30390_ instanceof Player player1 && !player1.canHarmPlayer(player)) {
+            if (target instanceof Player player && owner instanceof Player player1 && !player1.canHarmPlayer(player)) {
                 return false;
             }
 
-            if (p_30389_ instanceof AbstractHorse abstracthorse && abstracthorse.isTamed()) {
+            if (target instanceof AbstractHorse abstracthorse && abstracthorse.isTamed()) {
                 return false;
             }
 
-            if (p_30389_ instanceof TamableAnimal tamableanimal && tamableanimal.isTame()) {
+            if (target instanceof TamableAnimal tamableanimal && tamableanimal.isTame()) {
                 return false;
             }
 
@@ -654,17 +678,17 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
     }
 
     public static boolean checkWolfSpawnRules(
-        EntityType<Wolf> p_218292_, LevelAccessor p_218293_, MobSpawnType p_218294_, BlockPos p_218295_, RandomSource p_218296_
+        EntityType<Wolf> wolf, LevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return p_218293_.getBlockState(p_218295_.below()).is(BlockTags.WOLVES_SPAWNABLE_ON) && isBrightEnoughToSpawn(p_218293_, p_218295_);
+        return level.getBlockState(pos.below()).is(BlockTags.WOLVES_SPAWNABLE_ON) && isBrightEnoughToSpawn(level, pos);
     }
 
     class WolfAvoidEntityGoal<T extends LivingEntity> extends AvoidEntityGoal<T> {
         private final Wolf wolf;
 
-        public WolfAvoidEntityGoal(Wolf p_30454_, Class<T> p_30455_, float p_30456_, double p_30457_, double p_30458_) {
-            super(p_30454_, p_30455_, p_30456_, p_30457_, p_30458_);
-            this.wolf = p_30454_;
+        public WolfAvoidEntityGoal(Wolf wolf, Class<T> entityClassToAvoid, float maxDist, double walkSpeedModifier, double sprintSpeedModifier) {
+            super(wolf, entityClassToAvoid, maxDist, walkSpeedModifier, sprintSpeedModifier);
+            this.wolf = wolf;
         }
 
         @Override
@@ -672,8 +696,8 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
             return super.canUse() && this.toAvoid instanceof Llama ? !this.wolf.isTame() && this.avoidLlama((Llama)this.toAvoid) : false;
         }
 
-        private boolean avoidLlama(Llama p_30461_) {
-            return p_30461_.getStrength() >= Wolf.this.random.nextInt(5);
+        private boolean avoidLlama(Llama llama) {
+            return llama.getStrength() >= Wolf.this.random.nextInt(5);
         }
 
         @Override
@@ -692,9 +716,9 @@ public class Wolf extends TamableAnimal implements NeutralMob, VariantHolder<Hol
     public static class WolfPackData extends AgeableMob.AgeableMobGroupData {
         public final Holder<WolfVariant> type;
 
-        public WolfPackData(Holder<WolfVariant> p_332792_) {
+        public WolfPackData(Holder<WolfVariant> type) {
             super(false);
-            this.type = p_332792_;
+            this.type = type;
         }
     }
 }

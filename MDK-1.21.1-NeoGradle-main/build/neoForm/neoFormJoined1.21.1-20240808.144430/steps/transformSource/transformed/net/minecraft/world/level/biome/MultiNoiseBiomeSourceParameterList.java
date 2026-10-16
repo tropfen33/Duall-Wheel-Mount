@@ -35,9 +35,9 @@ public class MultiNoiseBiomeSourceParameterList {
     private final MultiNoiseBiomeSourceParameterList.Preset preset;
     private final Climate.ParameterList<Holder<Biome>> parameters;
 
-    public MultiNoiseBiomeSourceParameterList(MultiNoiseBiomeSourceParameterList.Preset p_275275_, HolderGetter<Biome> p_275192_) {
-        this.preset = p_275275_;
-        this.parameters = p_275275_.provider.apply(p_275192_::getOrThrow);
+    public MultiNoiseBiomeSourceParameterList(MultiNoiseBiomeSourceParameterList.Preset preset, HolderGetter<Biome> biomes) {
+        this.preset = preset;
+        this.parameters = preset.provider.apply(biomes::getOrThrow);
     }
 
     public Climate.ParameterList<Holder<Biome>> parameters() {
@@ -91,9 +91,9 @@ public class MultiNoiseBiomeSourceParameterList {
                 p_275325_ -> DataResult.success(p_275325_.id)
             );
 
-        static <T> Climate.ParameterList<T> generateOverworldBiomes(Function<ResourceKey<Biome>, T> p_277826_) {
+        static <T> Climate.ParameterList<T> generateOverworldBiomes(Function<ResourceKey<Biome>, T> valueGetter) {
             Builder<Pair<Climate.ParameterPoint, T>> builder = ImmutableList.builder();
-            new OverworldBiomeBuilder().addBiomes(p_275579_ -> builder.add(p_275579_.mapSecond(p_277826_)));
+            new OverworldBiomeBuilder().addBiomes(p_275579_ -> builder.add(p_275579_.mapSecond(valueGetter)));
             return new Climate.ParameterList<>(builder.build());
         }
 
@@ -103,7 +103,7 @@ public class MultiNoiseBiomeSourceParameterList {
 
         @FunctionalInterface
         interface SourceProvider {
-            <T> Climate.ParameterList<T> apply(Function<ResourceKey<Biome>, T> p_275485_);
+            <T> Climate.ParameterList<T> apply(Function<ResourceKey<Biome>, T> valueGetter);
         }
     }
 }

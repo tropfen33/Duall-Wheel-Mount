@@ -21,19 +21,19 @@ public class NoiseBasedCountPlacement extends RepeatingPlacement {
     private final double noiseFactor;
     private final double noiseOffset;
 
-    private NoiseBasedCountPlacement(int p_191728_, double p_191729_, double p_191730_) {
-        this.noiseToCountRatio = p_191728_;
-        this.noiseFactor = p_191729_;
-        this.noiseOffset = p_191730_;
+    private NoiseBasedCountPlacement(int noiseToCountRatio, double noiseFactor, double noiseOffset) {
+        this.noiseToCountRatio = noiseToCountRatio;
+        this.noiseFactor = noiseFactor;
+        this.noiseOffset = noiseOffset;
     }
 
-    public static NoiseBasedCountPlacement of(int p_191732_, double p_191733_, double p_191734_) {
-        return new NoiseBasedCountPlacement(p_191732_, p_191733_, p_191734_);
+    public static NoiseBasedCountPlacement of(int noiseToCountRatio, double noiseFactor, double noiseOffset) {
+        return new NoiseBasedCountPlacement(noiseToCountRatio, noiseFactor, noiseOffset);
     }
 
     @Override
-    protected int count(RandomSource p_226352_, BlockPos p_226353_) {
-        double d0 = Biome.BIOME_INFO_NOISE.getValue((double)p_226353_.getX() / this.noiseFactor, (double)p_226353_.getZ() / this.noiseFactor, false);
+    protected int count(RandomSource random, BlockPos pos) {
+        double d0 = Biome.BIOME_INFO_NOISE.getValue((double)pos.getX() / this.noiseFactor, (double)pos.getZ() / this.noiseFactor, false);
         return (int)Math.ceil((d0 + this.noiseOffset) * (double)this.noiseToCountRatio);
     }
 

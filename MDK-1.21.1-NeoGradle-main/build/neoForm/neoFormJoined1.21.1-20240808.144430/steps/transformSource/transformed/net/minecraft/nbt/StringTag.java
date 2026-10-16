@@ -8,25 +8,25 @@ import java.util.Objects;
 public class StringTag implements Tag {
     private static final int SELF_SIZE_IN_BYTES = 36;
     public static final TagType<StringTag> TYPE = new TagType.VariableSize<StringTag>() {
-        public StringTag load(DataInput p_129320_, NbtAccounter p_129322_) throws IOException {
-            return StringTag.valueOf(readAccounted(p_129320_, p_129322_));
+        public StringTag load(DataInput input, NbtAccounter accounter) throws IOException {
+            return StringTag.valueOf(readAccounted(input, accounter));
         }
 
         @Override
-        public StreamTagVisitor.ValueResult parse(DataInput p_197570_, StreamTagVisitor p_197571_, NbtAccounter p_302336_) throws IOException {
-            return p_197571_.visit(readAccounted(p_197570_, p_302336_));
+        public StreamTagVisitor.ValueResult parse(DataInput input, StreamTagVisitor visitor, NbtAccounter accounter) throws IOException {
+            return visitor.visit(readAccounted(input, accounter));
         }
 
-        private static String readAccounted(DataInput p_302398_, NbtAccounter p_302365_) throws IOException {
-            p_302365_.accountBytes(36L);
-            String s = p_302398_.readUTF();
-            p_302365_.readUTF(s);
+        private static String readAccounted(DataInput input, NbtAccounter nbtAccounter) throws IOException {
+            nbtAccounter.accountBytes(36L);
+            String s = input.readUTF();
+            nbtAccounter.readUTF(s);
             return s;
         }
 
         @Override
-        public void skip(DataInput p_197568_, NbtAccounter p_302356_) throws IOException {
-            StringTag.skipString(p_197568_);
+        public void skip(DataInput input, NbtAccounter accounter) throws IOException {
+            StringTag.skipString(input);
         }
 
         @Override
@@ -51,22 +51,22 @@ public class StringTag implements Tag {
     private static final char NOT_SET = '\u0000';
     private final String data;
 
-    public static void skipString(DataInput p_197564_) throws IOException {
-        p_197564_.skipBytes(p_197564_.readUnsignedShort());
+    public static void skipString(DataInput input) throws IOException {
+        input.skipBytes(input.readUnsignedShort());
     }
 
-    private StringTag(String p_129293_) {
-        Objects.requireNonNull(p_129293_, "Null string not allowed");
-        this.data = p_129293_;
+    private StringTag(String data) {
+        Objects.requireNonNull(data, "Null string not allowed");
+        this.data = data;
     }
 
-    public static StringTag valueOf(String p_129298_) {
-        return p_129298_.isEmpty() ? EMPTY : new StringTag(p_129298_);
+    public static StringTag valueOf(String data) {
+        return data.isEmpty() ? EMPTY : new StringTag(data);
     }
 
     @Override
-    public void write(DataOutput p_129296_) throws IOException {
-        p_129296_.writeUTF(this.data);
+    public void write(DataOutput output) throws IOException {
+        output.writeUTF(this.data);
     }
 
     @Override
@@ -94,8 +94,8 @@ public class StringTag implements Tag {
     }
 
     @Override
-    public boolean equals(Object p_129308_) {
-        return this == p_129308_ ? true : p_129308_ instanceof StringTag && Objects.equals(this.data, ((StringTag)p_129308_).data);
+    public boolean equals(Object other) {
+        return this == other ? true : other instanceof StringTag && Objects.equals(this.data, ((StringTag)other).data);
     }
 
     @Override
@@ -109,16 +109,16 @@ public class StringTag implements Tag {
     }
 
     @Override
-    public void accept(TagVisitor p_178154_) {
-        p_178154_.visitString(this);
+    public void accept(TagVisitor visitor) {
+        visitor.visitString(this);
     }
 
-    public static String quoteAndEscape(String p_129304_) {
+    public static String quoteAndEscape(String text) {
         StringBuilder stringbuilder = new StringBuilder(" ");
         char c0 = 0;
 
-        for (int i = 0; i < p_129304_.length(); i++) {
-            char c1 = p_129304_.charAt(i);
+        for (int i = 0; i < text.length(); i++) {
+            char c1 = text.charAt(i);
             if (c1 == '\\') {
                 stringbuilder.append('\\');
             } else if (c1 == '"' || c1 == '\'') {
@@ -144,7 +144,7 @@ public class StringTag implements Tag {
     }
 
     @Override
-    public StreamTagVisitor.ValueResult accept(StreamTagVisitor p_197566_) {
-        return p_197566_.visit(this.data);
+    public StreamTagVisitor.ValueResult accept(StreamTagVisitor visitor) {
+        return visitor.visit(this.data);
     }
 }

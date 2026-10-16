@@ -9,25 +9,46 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.scores.Team;
 
 public final class EntitySelector {
+    /**
+     * Selects only entities which are alive
+     */
     public static final Predicate<Entity> ENTITY_STILL_ALIVE = Entity::isAlive;
+    /**
+     * Selects only entities which are LivingEntities and alive
+     */
     public static final Predicate<Entity> LIVING_ENTITY_STILL_ALIVE = p_20442_ -> p_20442_.isAlive() && p_20442_ instanceof LivingEntity;
+    /**
+     * Selects only entities which are neither ridden by anything nor ride on anything
+     */
     public static final Predicate<Entity> ENTITY_NOT_BEING_RIDDEN = p_20440_ -> p_20440_.isAlive() && !p_20440_.isVehicle() && !p_20440_.isPassenger();
+    /**
+     * Selects only entities which are container entities
+     */
     public static final Predicate<Entity> CONTAINER_ENTITY_SELECTOR = p_20438_ -> p_20438_ instanceof Container && p_20438_.isAlive();
+    /**
+     * Selects entities which are neither creative-mode players nor spectator-players
+     */
     public static final Predicate<Entity> NO_CREATIVE_OR_SPECTATOR = p_20436_ -> !(p_20436_ instanceof Player)
             || !p_20436_.isSpectator() && !((Player)p_20436_).isCreative();
+    /**
+     * Selects entities which are either not players or players that are not spectating
+     */
     public static final Predicate<Entity> NO_SPECTATORS = p_20434_ -> !p_20434_.isSpectator();
+    /**
+     * Selects entities which are collidable with and aren't spectators
+     */
     public static final Predicate<Entity> CAN_BE_COLLIDED_WITH = NO_SPECTATORS.and(Entity::canBeCollidedWith);
 
     private EntitySelector() {
     }
 
-    public static Predicate<Entity> withinDistance(double p_20411_, double p_20412_, double p_20413_, double p_20414_) {
-        double d0 = p_20414_ * p_20414_;
-        return p_20420_ -> p_20420_ != null && p_20420_.distanceToSqr(p_20411_, p_20412_, p_20413_) <= d0;
+    public static Predicate<Entity> withinDistance(double x, double y, double z, double range) {
+        double d0 = range * range;
+        return p_20420_ -> p_20420_ != null && p_20420_.distanceToSqr(x, y, z) <= d0;
     }
 
-    public static Predicate<Entity> pushableBy(Entity p_20422_) {
-        Team team = p_20422_.getTeam();
+    public static Predicate<Entity> pushableBy(Entity entity) {
+        Team team = entity.getTeam();
         Team.CollisionRule team$collisionrule = team == null ? Team.CollisionRule.ALWAYS : team.getCollisionRule();
         return (Predicate<Entity>)(team$collisionrule == Team.CollisionRule.NEVER
             ? Predicates.alwaysFalse()
@@ -35,7 +56,7 @@ public final class EntitySelector {
                 p_20430_ -> {
                     if (!p_20430_.isPushable()) {
                         return false;
-                    } else if (!p_20422_.level().isClientSide || p_20430_ instanceof Player && ((Player)p_20430_).isLocalPlayer()) {
+                    } else if (!entity.level().isClientSide || p_20430_ instanceof Player && ((Player)p_20430_).isLocalPlayer()) {
                         Team team1 = p_20430_.getTeam();
                         Team.CollisionRule team$collisionrule1 = team1 == null ? Team.CollisionRule.ALWAYS : team1.getCollisionRule();
                         if (team$collisionrule1 == Team.CollisionRule.NEVER) {
@@ -54,11 +75,11 @@ public final class EntitySelector {
             ));
     }
 
-    public static Predicate<Entity> notRiding(Entity p_20432_) {
+    public static Predicate<Entity> notRiding(Entity entity) {
         return p_20425_ -> {
             while (p_20425_.isPassenger()) {
                 p_20425_ = p_20425_.getVehicle();
-                if (p_20425_ == p_20432_) {
+                if (p_20425_ == entity) {
                     return false;
                 }
             }
@@ -70,15 +91,15 @@ public final class EntitySelector {
     public static class MobCanWearArmorEntitySelector implements Predicate<Entity> {
         private final ItemStack itemStack;
 
-        public MobCanWearArmorEntitySelector(ItemStack p_20445_) {
-            this.itemStack = p_20445_;
+        public MobCanWearArmorEntitySelector(ItemStack stack) {
+            this.itemStack = stack;
         }
 
-        public boolean test(@Nullable Entity p_20447_) {
-            if (!p_20447_.isAlive()) {
+        public boolean test(@Nullable Entity entity) {
+            if (!entity.isAlive()) {
                 return false;
             } else {
-                return !(p_20447_ instanceof LivingEntity livingentity) ? false : livingentity.canTakeItem(this.itemStack);
+                return !(entity instanceof LivingEntity livingentity) ? false : livingentity.canTakeItem(this.itemStack);
             }
         }
     }

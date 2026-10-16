@@ -11,34 +11,34 @@ import net.minecraft.world.level.ItemLike;
 public interface RecipeBuilder {
     ResourceLocation ROOT_RECIPE_ADVANCEMENT = ResourceLocation.withDefaultNamespace("recipes/root");
 
-    RecipeBuilder unlockedBy(String p_176496_, Criterion<?> p_301065_);
+    RecipeBuilder unlockedBy(String name, Criterion<?> criterion);
 
-    RecipeBuilder group(@Nullable String p_176495_);
+    RecipeBuilder group(@Nullable String groupName);
 
     Item getResult();
 
-    void save(RecipeOutput p_301032_, ResourceLocation p_176504_);
+    void save(RecipeOutput recipeOutput, ResourceLocation id);
 
-    default void save(RecipeOutput p_301244_) {
-        this.save(p_301244_, getDefaultRecipeId(this.getResult()));
+    default void save(RecipeOutput recipeOutput) {
+        this.save(recipeOutput, getDefaultRecipeId(this.getResult()));
     }
 
-    default void save(RecipeOutput p_301186_, String p_176502_) {
+    default void save(RecipeOutput recipeOutput, String id) {
         ResourceLocation resourcelocation = getDefaultRecipeId(this.getResult());
-        ResourceLocation resourcelocation1 = ResourceLocation.parse(p_176502_);
+        ResourceLocation resourcelocation1 = ResourceLocation.parse(id);
         if (resourcelocation1.equals(resourcelocation)) {
-            throw new IllegalStateException("Recipe " + p_176502_ + " should remove its 'save' argument as it is equal to default one");
+            throw new IllegalStateException("Recipe " + id + " should remove its 'save' argument as it is equal to default one");
         } else {
-            this.save(p_301186_, resourcelocation1);
+            this.save(recipeOutput, resourcelocation1);
         }
     }
 
-    static ResourceLocation getDefaultRecipeId(ItemLike p_176494_) {
-        return BuiltInRegistries.ITEM.getKey(p_176494_.asItem());
+    static ResourceLocation getDefaultRecipeId(ItemLike itemLike) {
+        return BuiltInRegistries.ITEM.getKey(itemLike.asItem());
     }
 
-    static CraftingBookCategory determineBookCategory(RecipeCategory p_311837_) {
-        return switch (p_311837_) {
+    static CraftingBookCategory determineBookCategory(RecipeCategory category) {
+        return switch (category) {
             case BUILDING_BLOCKS -> CraftingBookCategory.BUILDING;
             case TOOLS, COMBAT -> CraftingBookCategory.EQUIPMENT;
             case REDSTONE -> CraftingBookCategory.REDSTONE;

@@ -15,19 +15,22 @@ public class ClientboundTagQueryPacket implements Packet<ClientGamePacketListene
     @Nullable
     private final CompoundTag tag;
 
-    public ClientboundTagQueryPacket(int p_133497_, @Nullable CompoundTag p_133498_) {
-        this.transactionId = p_133497_;
-        this.tag = p_133498_;
+    public ClientboundTagQueryPacket(int transactionId, @Nullable CompoundTag tag) {
+        this.transactionId = transactionId;
+        this.tag = tag;
     }
 
-    private ClientboundTagQueryPacket(FriendlyByteBuf p_179433_) {
-        this.transactionId = p_179433_.readVarInt();
-        this.tag = p_179433_.readNbt();
+    private ClientboundTagQueryPacket(FriendlyByteBuf buffer) {
+        this.transactionId = buffer.readVarInt();
+        this.tag = buffer.readNbt();
     }
 
-    private void write(FriendlyByteBuf p_133508_) {
-        p_133508_.writeVarInt(this.transactionId);
-        p_133508_.writeNbt(this.tag);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.transactionId);
+        buffer.writeNbt(this.tag);
     }
 
     @Override
@@ -35,8 +38,11 @@ public class ClientboundTagQueryPacket implements Packet<ClientGamePacketListene
         return GamePacketTypes.CLIENTBOUND_TAG_QUERY;
     }
 
-    public void handle(ClientGamePacketListener p_133505_) {
-        p_133505_.handleTagQueryPacket(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleTagQueryPacket(this);
     }
 
     public int getTransactionId() {

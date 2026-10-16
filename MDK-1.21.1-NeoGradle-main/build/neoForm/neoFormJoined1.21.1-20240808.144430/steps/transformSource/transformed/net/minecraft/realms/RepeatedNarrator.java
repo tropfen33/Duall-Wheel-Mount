@@ -13,19 +13,19 @@ public class RepeatedNarrator {
     private final float permitsPerSecond;
     private final AtomicReference<RepeatedNarrator.Params> params = new AtomicReference<>();
 
-    public RepeatedNarrator(Duration p_120788_) {
-        this.permitsPerSecond = 1000.0F / (float)p_120788_.toMillis();
+    public RepeatedNarrator(Duration duration) {
+        this.permitsPerSecond = 1000.0F / (float)duration.toMillis();
     }
 
-    public void narrate(GameNarrator p_240528_, Component p_240604_) {
+    public void narrate(GameNarrator narrator, Component narration) {
         RepeatedNarrator.Params repeatednarrator$params = this.params
             .updateAndGet(
-                p_339420_ -> p_339420_ != null && p_240604_.equals(p_339420_.narration)
+                p_339420_ -> p_339420_ != null && narration.equals(p_339420_.narration)
                         ? p_339420_
-                        : new RepeatedNarrator.Params(p_240604_, RateLimiter.create((double)this.permitsPerSecond))
+                        : new RepeatedNarrator.Params(narration, RateLimiter.create((double)this.permitsPerSecond))
             );
         if (repeatednarrator$params.rateLimiter.tryAcquire(1)) {
-            p_240528_.sayNow(p_240604_);
+            narrator.sayNow(narration);
         }
     }
 
@@ -34,9 +34,9 @@ public class RepeatedNarrator {
         final Component narration;
         final RateLimiter rateLimiter;
 
-        Params(Component p_175082_, RateLimiter p_175083_) {
-            this.narration = p_175082_;
-            this.rateLimiter = p_175083_;
+        Params(Component narration, RateLimiter rateLimiter) {
+            this.narration = narration;
+            this.rateLimiter = rateLimiter;
         }
     }
 }

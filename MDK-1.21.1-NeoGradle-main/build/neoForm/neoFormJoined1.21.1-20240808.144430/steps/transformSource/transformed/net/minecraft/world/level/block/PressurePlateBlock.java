@@ -26,32 +26,41 @@ public class PressurePlateBlock extends BasePressurePlateBlock {
         return CODEC;
     }
 
-    public PressurePlateBlock(BlockSetType p_273284_, BlockBehaviour.Properties p_273571_) {
-        super(p_273571_, p_273284_);
+    public PressurePlateBlock(BlockSetType type, BlockBehaviour.Properties properties) {
+        super(properties, type);
         this.registerDefaultState(this.stateDefinition.any().setValue(POWERED, Boolean.valueOf(false)));
     }
 
+    /**
+     * Returns the signal encoded in the given block state.
+     */
     @Override
-    protected int getSignalForState(BlockState p_55270_) {
-        return p_55270_.getValue(POWERED) ? 15 : 0;
+    protected int getSignalForState(BlockState state) {
+        return state.getValue(POWERED) ? 15 : 0;
     }
 
+    /**
+     * Returns the block state that encodes the given signal.
+     */
     @Override
-    protected BlockState setSignalForState(BlockState p_55259_, int p_55260_) {
-        return p_55259_.setValue(POWERED, Boolean.valueOf(p_55260_ > 0));
+    protected BlockState setSignalForState(BlockState state, int strength) {
+        return state.setValue(POWERED, Boolean.valueOf(strength > 0));
     }
 
+    /**
+     * Calculates what the signal strength of a pressure plate at the given location should be.
+     */
     @Override
-    protected int getSignalStrength(Level p_55264_, BlockPos p_55265_) {
+    protected int getSignalStrength(Level level, BlockPos pos) {
         Class<? extends Entity> oclass = switch (this.type.pressurePlateSensitivity()) {
             case EVERYTHING -> Entity.class;
             case MOBS -> LivingEntity.class;
         };
-        return getEntityCount(p_55264_, TOUCH_AABB.move(p_55265_), oclass) > 0 ? 15 : 0;
+        return getEntityCount(level, TOUCH_AABB.move(pos), oclass) > 0 ? 15 : 0;
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_55262_) {
-        p_55262_.add(POWERED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(POWERED);
     }
 }

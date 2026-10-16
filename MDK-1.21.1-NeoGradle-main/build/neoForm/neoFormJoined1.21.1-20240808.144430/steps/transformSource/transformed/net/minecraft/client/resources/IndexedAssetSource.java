@@ -23,10 +23,10 @@ public class IndexedAssetSource {
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final Splitter PATH_SPLITTER = Splitter.on('/');
 
-    public static Path createIndexFs(Path p_248776_, String p_250235_) {
-        Path path = p_248776_.resolve("objects");
+    public static Path createIndexFs(Path assetDirectory, String assetIndex) {
+        Path path = assetDirectory.resolve("objects");
         LinkFileSystem.Builder linkfilesystem$builder = LinkFileSystem.builder();
-        Path path1 = p_248776_.resolve("indexes/" + p_250235_ + ".json");
+        Path path1 = assetDirectory.resolve("indexes/" + assetIndex + ".json");
 
         try (BufferedReader bufferedreader = Files.newBufferedReader(path1, StandardCharsets.UTF_8)) {
             JsonObject jsonobject = GsonHelper.parse(bufferedreader);
@@ -47,6 +47,6 @@ public class IndexedAssetSource {
             LOGGER.error("Can't open the resource index file: {}", path1);
         }
 
-        return linkfilesystem$builder.build("index-" + p_250235_).getPath("/");
+        return linkfilesystem$builder.build("index-" + assetIndex).getPath("/");
     }
 }

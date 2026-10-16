@@ -20,15 +20,15 @@ public class TwoLayersFeatureSize extends FeatureSize {
     private final int lowerSize;
     private final int upperSize;
 
-    public TwoLayersFeatureSize(int p_68342_, int p_68343_, int p_68344_) {
-        this(p_68342_, p_68343_, p_68344_, OptionalInt.empty());
+    public TwoLayersFeatureSize(int limit, int lowerSize, int upperSize) {
+        this(limit, lowerSize, upperSize, OptionalInt.empty());
     }
 
-    public TwoLayersFeatureSize(int p_68346_, int p_68347_, int p_68348_, OptionalInt p_68349_) {
-        super(p_68349_);
-        this.limit = p_68346_;
-        this.lowerSize = p_68347_;
-        this.upperSize = p_68348_;
+    public TwoLayersFeatureSize(int limit, int lowerSize, int upperSize, OptionalInt minClippedHeight) {
+        super(minClippedHeight);
+        this.limit = limit;
+        this.lowerSize = lowerSize;
+        this.upperSize = upperSize;
     }
 
     @Override
@@ -37,7 +37,7 @@ public class TwoLayersFeatureSize extends FeatureSize {
     }
 
     @Override
-    public int getSizeAtHeight(int p_68351_, int p_68352_) {
-        return p_68352_ < this.limit ? this.lowerSize : this.upperSize;
+    public int getSizeAtHeight(int height, int midpoint) {
+        return midpoint < this.limit ? this.lowerSize : this.upperSize;
     }
 }

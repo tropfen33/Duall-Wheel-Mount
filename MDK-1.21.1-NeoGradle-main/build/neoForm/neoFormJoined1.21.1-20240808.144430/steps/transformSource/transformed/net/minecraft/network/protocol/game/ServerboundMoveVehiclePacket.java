@@ -16,28 +16,31 @@ public class ServerboundMoveVehiclePacket implements Packet<ServerGamePacketList
     private final float yRot;
     private final float xRot;
 
-    public ServerboundMoveVehiclePacket(Entity p_134192_) {
-        this.x = p_134192_.getX();
-        this.y = p_134192_.getY();
-        this.z = p_134192_.getZ();
-        this.yRot = p_134192_.getYRot();
-        this.xRot = p_134192_.getXRot();
+    public ServerboundMoveVehiclePacket(Entity vehicle) {
+        this.x = vehicle.getX();
+        this.y = vehicle.getY();
+        this.z = vehicle.getZ();
+        this.yRot = vehicle.getYRot();
+        this.xRot = vehicle.getXRot();
     }
 
-    private ServerboundMoveVehiclePacket(FriendlyByteBuf p_179700_) {
-        this.x = p_179700_.readDouble();
-        this.y = p_179700_.readDouble();
-        this.z = p_179700_.readDouble();
-        this.yRot = p_179700_.readFloat();
-        this.xRot = p_179700_.readFloat();
+    private ServerboundMoveVehiclePacket(FriendlyByteBuf buffer) {
+        this.x = buffer.readDouble();
+        this.y = buffer.readDouble();
+        this.z = buffer.readDouble();
+        this.yRot = buffer.readFloat();
+        this.xRot = buffer.readFloat();
     }
 
-    private void write(FriendlyByteBuf p_134201_) {
-        p_134201_.writeDouble(this.x);
-        p_134201_.writeDouble(this.y);
-        p_134201_.writeDouble(this.z);
-        p_134201_.writeFloat(this.yRot);
-        p_134201_.writeFloat(this.xRot);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeDouble(this.x);
+        buffer.writeDouble(this.y);
+        buffer.writeDouble(this.z);
+        buffer.writeFloat(this.yRot);
+        buffer.writeFloat(this.xRot);
     }
 
     @Override
@@ -45,8 +48,11 @@ public class ServerboundMoveVehiclePacket implements Packet<ServerGamePacketList
         return GamePacketTypes.SERVERBOUND_MOVE_VEHICLE;
     }
 
-    public void handle(ServerGamePacketListener p_134198_) {
-        p_134198_.handleMoveVehicle(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleMoveVehicle(this);
     }
 
     public double getX() {

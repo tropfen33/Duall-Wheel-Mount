@@ -8,26 +8,26 @@ import net.minecraft.world.level.chunk.DataLayer;
 
 public interface LayerLightEventListener extends LightEventListener {
     @Nullable
-    DataLayer getDataLayerData(SectionPos p_75709_);
+    DataLayer getDataLayerData(SectionPos sectionPos);
 
-    int getLightValue(BlockPos p_75710_);
+    int getLightValue(BlockPos levelPos);
 
     public static enum DummyLightLayerEventListener implements LayerLightEventListener {
         INSTANCE;
 
         @Nullable
         @Override
-        public DataLayer getDataLayerData(SectionPos p_75718_) {
+        public DataLayer getDataLayerData(SectionPos sectionPos) {
             return null;
         }
 
         @Override
-        public int getLightValue(BlockPos p_75723_) {
+        public int getLightValue(BlockPos levelPos) {
             return 0;
         }
 
         @Override
-        public void checkBlock(BlockPos p_164434_) {
+        public void checkBlock(BlockPos pos) {
         }
 
         @Override
@@ -41,15 +41,15 @@ public interface LayerLightEventListener extends LightEventListener {
         }
 
         @Override
-        public void updateSectionStatus(SectionPos p_75720_, boolean p_75721_) {
+        public void updateSectionStatus(SectionPos pos, boolean isEmpty) {
         }
 
         @Override
-        public void setLightEnabled(ChunkPos p_164431_, boolean p_164432_) {
+        public void setLightEnabled(ChunkPos chunkPos, boolean lightEnabled) {
         }
 
         @Override
-        public void propagateLightSources(ChunkPos p_285209_) {
+        public void propagateLightSources(ChunkPos chunkPos) {
         }
     }
 }

@@ -24,46 +24,46 @@ public class CaveCarverConfiguration extends CarverConfiguration {
     final FloatProvider floorLevel;
 
     public CaveCarverConfiguration(
-        float p_224853_,
-        HeightProvider p_224854_,
-        FloatProvider p_224855_,
-        VerticalAnchor p_224856_,
-        CarverDebugSettings p_224857_,
-        HolderSet<Block> p_224858_,
-        FloatProvider p_224859_,
-        FloatProvider p_224860_,
-        FloatProvider p_224861_
+        float probability,
+        HeightProvider y,
+        FloatProvider yScale,
+        VerticalAnchor lavaLevel,
+        CarverDebugSettings debugSettings,
+        HolderSet<Block> replaceable,
+        FloatProvider horizontalRadiusMultiplier,
+        FloatProvider verticalRadiusMultiplier,
+        FloatProvider floorLevel
     ) {
-        super(p_224853_, p_224854_, p_224855_, p_224856_, p_224857_, p_224858_);
-        this.horizontalRadiusMultiplier = p_224859_;
-        this.verticalRadiusMultiplier = p_224860_;
-        this.floorLevel = p_224861_;
+        super(probability, y, yScale, lavaLevel, debugSettings, replaceable);
+        this.horizontalRadiusMultiplier = horizontalRadiusMultiplier;
+        this.verticalRadiusMultiplier = verticalRadiusMultiplier;
+        this.floorLevel = floorLevel;
     }
 
     public CaveCarverConfiguration(
-        float p_224863_,
-        HeightProvider p_224864_,
-        FloatProvider p_224865_,
-        VerticalAnchor p_224866_,
-        HolderSet<Block> p_224867_,
-        FloatProvider p_224868_,
-        FloatProvider p_224869_,
-        FloatProvider p_224870_
+        float probability,
+        HeightProvider y,
+        FloatProvider yScale,
+        VerticalAnchor lavaLevel,
+        HolderSet<Block> replaceable,
+        FloatProvider horizontalRadiusMultiplier,
+        FloatProvider verticalRadiusMultiplier,
+        FloatProvider floorLevel
     ) {
-        this(p_224863_, p_224864_, p_224865_, p_224866_, CarverDebugSettings.DEFAULT, p_224867_, p_224868_, p_224869_, p_224870_);
+        this(probability, y, yScale, lavaLevel, CarverDebugSettings.DEFAULT, replaceable, horizontalRadiusMultiplier, verticalRadiusMultiplier, floorLevel);
     }
 
-    public CaveCarverConfiguration(CarverConfiguration p_159179_, FloatProvider p_159180_, FloatProvider p_159181_, FloatProvider p_159182_) {
+    public CaveCarverConfiguration(CarverConfiguration config, FloatProvider horizontalRadiusMultiplier, FloatProvider verticalRadiusMultiplier, FloatProvider floorLevel) {
         this(
-            p_159179_.probability,
-            p_159179_.y,
-            p_159179_.yScale,
-            p_159179_.lavaLevel,
-            p_159179_.debugSettings,
-            p_159179_.replaceable,
-            p_159180_,
-            p_159181_,
-            p_159182_
+            config.probability,
+            config.y,
+            config.yScale,
+            config.lavaLevel,
+            config.debugSettings,
+            config.replaceable,
+            horizontalRadiusMultiplier,
+            verticalRadiusMultiplier,
+            floorLevel
         );
     }
 }

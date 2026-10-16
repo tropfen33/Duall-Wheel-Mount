@@ -11,8 +11,8 @@ public enum EnchantmentTarget implements StringRepresentable {
     public static final Codec<EnchantmentTarget> CODEC = StringRepresentable.fromEnum(EnchantmentTarget::values);
     private final String id;
 
-    private EnchantmentTarget(String p_345108_) {
-        this.id = p_345108_;
+    private EnchantmentTarget(String id) {
+        this.id = id;
     }
 
     @Override

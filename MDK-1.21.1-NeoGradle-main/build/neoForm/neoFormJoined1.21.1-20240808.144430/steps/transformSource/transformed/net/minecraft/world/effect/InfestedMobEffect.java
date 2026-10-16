@@ -17,33 +17,33 @@ class InfestedMobEffect extends MobEffect {
     private final float chanceToSpawn;
     private final ToIntFunction<RandomSource> spawnedCount;
 
-    protected InfestedMobEffect(MobEffectCategory p_338776_, int p_338484_, float p_338378_, ToIntFunction<RandomSource> p_338750_) {
-        super(p_338776_, p_338484_, ParticleTypes.INFESTED);
-        this.chanceToSpawn = p_338378_;
-        this.spawnedCount = p_338750_;
+    protected InfestedMobEffect(MobEffectCategory category, int color, float chanceToSpawn, ToIntFunction<RandomSource> spawnedCount) {
+        super(category, color, ParticleTypes.INFESTED);
+        this.chanceToSpawn = chanceToSpawn;
+        this.spawnedCount = spawnedCount;
     }
 
     @Override
-    public void onMobHurt(LivingEntity p_338481_, int p_338438_, DamageSource p_338894_, float p_338367_) {
-        if (p_338481_.getRandom().nextFloat() <= this.chanceToSpawn) {
-            int i = this.spawnedCount.applyAsInt(p_338481_.getRandom());
+    public void onMobHurt(LivingEntity livingEntity, int amplifier, DamageSource damageSource, float amount) {
+        if (livingEntity.getRandom().nextFloat() <= this.chanceToSpawn) {
+            int i = this.spawnedCount.applyAsInt(livingEntity.getRandom());
 
             for (int j = 0; j < i; j++) {
-                this.spawnSilverfish(p_338481_.level(), p_338481_, p_338481_.getX(), p_338481_.getY() + (double)p_338481_.getBbHeight() / 2.0, p_338481_.getZ());
+                this.spawnSilverfish(livingEntity.level(), livingEntity, livingEntity.getX(), livingEntity.getY() + (double)livingEntity.getBbHeight() / 2.0, livingEntity.getZ());
             }
         }
     }
 
-    private void spawnSilverfish(Level p_338804_, LivingEntity p_341023_, double p_338557_, double p_338848_, double p_338562_) {
-        Silverfish silverfish = EntityType.SILVERFISH.create(p_338804_);
+    private void spawnSilverfish(Level level, LivingEntity entity, double x, double y, double z) {
+        Silverfish silverfish = EntityType.SILVERFISH.create(level);
         if (silverfish != null) {
-            RandomSource randomsource = p_341023_.getRandom();
+            RandomSource randomsource = entity.getRandom();
             float f = (float) (Math.PI / 2);
             float f1 = Mth.randomBetween(randomsource, (float) (-Math.PI / 2), (float) (Math.PI / 2));
-            Vector3f vector3f = p_341023_.getLookAngle().toVector3f().mul(0.3F).mul(1.0F, 1.5F, 1.0F).rotateY(f1);
-            silverfish.moveTo(p_338557_, p_338848_, p_338562_, p_338804_.getRandom().nextFloat() * 360.0F, 0.0F);
+            Vector3f vector3f = entity.getLookAngle().toVector3f().mul(0.3F).mul(1.0F, 1.5F, 1.0F).rotateY(f1);
+            silverfish.moveTo(x, y, z, level.getRandom().nextFloat() * 360.0F, 0.0F);
             silverfish.setDeltaMovement(new Vec3(vector3f));
-            p_338804_.addFreshEntity(silverfish);
+            level.addFreshEntity(silverfish);
             silverfish.playSound(SoundEvents.SILVERFISH_HURT);
         }
     }

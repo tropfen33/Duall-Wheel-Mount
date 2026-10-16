@@ -12,15 +12,15 @@ public record EntityTypePredicate(HolderSet<EntityType<?>> types) {
     public static final Codec<EntityTypePredicate> CODEC = RegistryCodecs.homogeneousList(Registries.ENTITY_TYPE)
         .xmap(EntityTypePredicate::new, EntityTypePredicate::types);
 
-    public static EntityTypePredicate of(EntityType<?> p_37648_) {
-        return new EntityTypePredicate(HolderSet.direct(p_37648_.builtInRegistryHolder()));
+    public static EntityTypePredicate of(EntityType<?> type) {
+        return new EntityTypePredicate(HolderSet.direct(type.builtInRegistryHolder()));
     }
 
-    public static EntityTypePredicate of(TagKey<EntityType<?>> p_204082_) {
-        return new EntityTypePredicate(BuiltInRegistries.ENTITY_TYPE.getOrCreateTag(p_204082_));
+    public static EntityTypePredicate of(TagKey<EntityType<?>> tag) {
+        return new EntityTypePredicate(BuiltInRegistries.ENTITY_TYPE.getOrCreateTag(tag));
     }
 
-    public boolean matches(EntityType<?> p_37642_) {
-        return p_37642_.is(this.types);
+    public boolean matches(EntityType<?> type) {
+        return type.is(this.types);
     }
 }

@@ -30,33 +30,33 @@ public final class StructureStart {
     @Nullable
     private volatile BoundingBox cachedBoundingBox;
 
-    public StructureStart(Structure p_226846_, ChunkPos p_226847_, int p_226848_, PiecesContainer p_226849_) {
-        this.structure = p_226846_;
-        this.chunkPos = p_226847_;
-        this.references = p_226848_;
-        this.pieceContainer = p_226849_;
+    public StructureStart(Structure structure, ChunkPos chunkPos, int references, PiecesContainer pieceContainer) {
+        this.structure = structure;
+        this.chunkPos = chunkPos;
+        this.references = references;
+        this.pieceContainer = pieceContainer;
     }
 
     @Nullable
-    public static StructureStart loadStaticStart(StructurePieceSerializationContext p_226858_, CompoundTag p_226859_, long p_226860_) {
-        String s = p_226859_.getString("id");
+    public static StructureStart loadStaticStart(StructurePieceSerializationContext context, CompoundTag tag, long seed) {
+        String s = tag.getString("id");
         if ("INVALID".equals(s)) {
             return INVALID_START;
         } else {
-            Registry<Structure> registry = p_226858_.registryAccess().registryOrThrow(Registries.STRUCTURE);
+            Registry<Structure> registry = context.registryAccess().registryOrThrow(Registries.STRUCTURE);
             Structure structure = registry.get(ResourceLocation.parse(s));
             if (structure == null) {
                 LOGGER.error("Unknown stucture id: {}", s);
                 return null;
             } else {
-                ChunkPos chunkpos = new ChunkPos(p_226859_.getInt("ChunkX"), p_226859_.getInt("ChunkZ"));
-                int i = p_226859_.getInt("references");
-                ListTag listtag = p_226859_.getList("Children", 10);
+                ChunkPos chunkpos = new ChunkPos(tag.getInt("ChunkX"), tag.getInt("ChunkZ"));
+                int i = tag.getInt("references");
+                ListTag listtag = tag.getList("Children", 10);
 
                 try {
-                    PiecesContainer piecescontainer = PiecesContainer.load(listtag, p_226858_);
+                    PiecesContainer piecescontainer = PiecesContainer.load(listtag, context);
                     if (structure instanceof OceanMonumentStructure) {
-                        piecescontainer = OceanMonumentStructure.regeneratePiecesAfterLoad(chunkpos, p_226860_, piecescontainer);
+                        piecescontainer = OceanMonumentStructure.regeneratePiecesAfterLoad(chunkpos, seed, piecescontainer);
                     }
 
                     return new StructureStart(structure, chunkpos, i, piecescontainer);
@@ -79,7 +79,7 @@ public final class StructureStart {
     }
 
     public void placeInChunk(
-        WorldGenLevel p_226851_, StructureManager p_226852_, ChunkGenerator p_226853_, RandomSource p_226854_, BoundingBox p_226855_, ChunkPos p_226856_
+        WorldGenLevel level, StructureManager structureManager, ChunkGenerator generator, RandomSource random, BoundingBox box, ChunkPos chunkPos
     ) {
         List<StructurePiece> list = this.pieceContainer.pieces();
         if (!list.isEmpty()) {
@@ -88,26 +88,26 @@ public final class StructureStart {
             BlockPos blockpos1 = new BlockPos(blockpos.getX(), boundingbox.minY(), blockpos.getZ());
 
             for (StructurePiece structurepiece : list) {
-                if (structurepiece.getBoundingBox().intersects(p_226855_)) {
-                    structurepiece.postProcess(p_226851_, p_226852_, p_226853_, p_226854_, p_226855_, p_226856_, blockpos1);
+                if (structurepiece.getBoundingBox().intersects(box)) {
+                    structurepiece.postProcess(level, structureManager, generator, random, box, chunkPos, blockpos1);
                 }
             }
 
-            this.structure.afterPlace(p_226851_, p_226852_, p_226853_, p_226854_, p_226855_, p_226856_, this.pieceContainer);
+            this.structure.afterPlace(level, structureManager, generator, random, box, chunkPos, this.pieceContainer);
         }
     }
 
-    public CompoundTag createTag(StructurePieceSerializationContext p_192661_, ChunkPos p_192662_) {
+    public CompoundTag createTag(StructurePieceSerializationContext context, ChunkPos chunkPos) {
         CompoundTag compoundtag = new CompoundTag();
         if (this.isValid()) {
-            if (p_192661_.registryAccess().registryOrThrow(Registries.STRUCTURE).getKey(this.getStructure()) == null) { // FORGE: This is just a more friendly error instead of the 'Null String' below
+            if (context.registryAccess().registryOrThrow(Registries.STRUCTURE).getKey(this.getStructure()) == null) { // FORGE: This is just a more friendly error instead of the 'Null String' below
                 throw new RuntimeException("StructureStart \"" + this.getClass().getName() + "\": \"" + this.getStructure() + "\" unregistered, serializing impossible.");
             }
-            compoundtag.putString("id", p_192661_.registryAccess().registryOrThrow(Registries.STRUCTURE).getKey(this.structure).toString());
-            compoundtag.putInt("ChunkX", p_192662_.x);
-            compoundtag.putInt("ChunkZ", p_192662_.z);
+            compoundtag.putString("id", context.registryAccess().registryOrThrow(Registries.STRUCTURE).getKey(this.structure).toString());
+            compoundtag.putInt("ChunkX", chunkPos.x);
+            compoundtag.putInt("ChunkZ", chunkPos.z);
             compoundtag.putInt("references", this.references);
-            compoundtag.put("Children", this.pieceContainer.save(p_192661_));
+            compoundtag.put("Children", this.pieceContainer.save(context));
             return compoundtag;
         } else {
             compoundtag.putString("id", "INVALID");

@@ -7,16 +7,16 @@ class GameTestEvent {
     public final Long expectedDelay;
     public final Runnable assertion;
 
-    private GameTestEvent(@Nullable Long p_177092_, Runnable p_177093_) {
-        this.expectedDelay = p_177092_;
-        this.assertion = p_177093_;
+    private GameTestEvent(@Nullable Long expectedDelay, Runnable assertion) {
+        this.expectedDelay = expectedDelay;
+        this.assertion = assertion;
     }
 
-    static GameTestEvent create(Runnable p_177098_) {
-        return new GameTestEvent(null, p_177098_);
+    static GameTestEvent create(Runnable assertion) {
+        return new GameTestEvent(null, assertion);
     }
 
-    static GameTestEvent create(long p_177095_, Runnable p_177096_) {
-        return new GameTestEvent(p_177095_, p_177096_);
+    static GameTestEvent create(long expectedDelay, Runnable assertion) {
+        return new GameTestEvent(expectedDelay, assertion);
     }
 }

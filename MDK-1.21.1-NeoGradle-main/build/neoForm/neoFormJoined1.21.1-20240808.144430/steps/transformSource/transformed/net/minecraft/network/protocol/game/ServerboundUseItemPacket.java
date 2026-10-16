@@ -15,25 +15,28 @@ public class ServerboundUseItemPacket implements Packet<ServerGamePacketListener
     private final float yRot;
     private final float xRot;
 
-    public ServerboundUseItemPacket(InteractionHand p_238011_, int p_238012_, float p_348579_, float p_348520_) {
-        this.hand = p_238011_;
-        this.sequence = p_238012_;
-        this.yRot = p_348579_;
-        this.xRot = p_348520_;
+    public ServerboundUseItemPacket(InteractionHand hand, int sequence, float yRot, float xRot) {
+        this.hand = hand;
+        this.sequence = sequence;
+        this.yRot = yRot;
+        this.xRot = xRot;
     }
 
-    private ServerboundUseItemPacket(FriendlyByteBuf p_179798_) {
-        this.hand = p_179798_.readEnum(InteractionHand.class);
-        this.sequence = p_179798_.readVarInt();
-        this.yRot = p_179798_.readFloat();
-        this.xRot = p_179798_.readFloat();
+    private ServerboundUseItemPacket(FriendlyByteBuf buffer) {
+        this.hand = buffer.readEnum(InteractionHand.class);
+        this.sequence = buffer.readVarInt();
+        this.yRot = buffer.readFloat();
+        this.xRot = buffer.readFloat();
     }
 
-    private void write(FriendlyByteBuf p_134719_) {
-        p_134719_.writeEnum(this.hand);
-        p_134719_.writeVarInt(this.sequence);
-        p_134719_.writeFloat(this.yRot);
-        p_134719_.writeFloat(this.xRot);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeEnum(this.hand);
+        buffer.writeVarInt(this.sequence);
+        buffer.writeFloat(this.yRot);
+        buffer.writeFloat(this.xRot);
     }
 
     @Override
@@ -41,8 +44,11 @@ public class ServerboundUseItemPacket implements Packet<ServerGamePacketListener
         return GamePacketTypes.SERVERBOUND_USE_ITEM;
     }
 
-    public void handle(ServerGamePacketListener p_134716_) {
-        p_134716_.handleUseItem(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleUseItem(this);
     }
 
     public InteractionHand getHand() {

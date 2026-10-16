@@ -44,19 +44,19 @@ public class FireworkStarRecipe extends CustomRecipe {
     });
     private static final Ingredient GUNPOWDER_INGREDIENT = Ingredient.of(Items.GUNPOWDER);
 
-    public FireworkStarRecipe(CraftingBookCategory p_251577_) {
-        super(p_251577_);
+    public FireworkStarRecipe(CraftingBookCategory category) {
+        super(category);
     }
 
-    public boolean matches(CraftingInput p_344993_, Level p_43896_) {
+    public boolean matches(CraftingInput input, Level level) {
         boolean flag = false;
         boolean flag1 = false;
         boolean flag2 = false;
         boolean flag3 = false;
         boolean flag4 = false;
 
-        for (int i = 0; i < p_344993_.size(); i++) {
-            ItemStack itemstack = p_344993_.getItem(i);
+        for (int i = 0; i < input.size(); i++) {
+            ItemStack itemstack = input.getItem(i);
             if (!itemstack.isEmpty()) {
                 if (SHAPE_INGREDIENT.test(itemstack)) {
                     if (flag2) {
@@ -95,14 +95,14 @@ public class FireworkStarRecipe extends CustomRecipe {
         return flag && flag1;
     }
 
-    public ItemStack assemble(CraftingInput p_346206_, HolderLookup.Provider p_335498_) {
+    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
         FireworkExplosion.Shape fireworkexplosion$shape = FireworkExplosion.Shape.SMALL_BALL;
         boolean flag = false;
         boolean flag1 = false;
         IntList intlist = new IntArrayList();
 
-        for (int i = 0; i < p_346206_.size(); i++) {
-            ItemStack itemstack = p_346206_.getItem(i);
+        for (int i = 0; i < input.size(); i++) {
+            ItemStack itemstack = input.getItem(i);
             if (!itemstack.isEmpty()) {
                 if (SHAPE_INGREDIENT.test(itemstack)) {
                     fireworkexplosion$shape = SHAPE_BY_ITEM.get(itemstack.getItem());
@@ -121,13 +121,16 @@ public class FireworkStarRecipe extends CustomRecipe {
         return itemstack1;
     }
 
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
     @Override
-    public boolean canCraftInDimensions(int p_43885_, int p_43886_) {
-        return p_43885_ * p_43886_ >= 2;
+    public boolean canCraftInDimensions(int width, int height) {
+        return width * height >= 2;
     }
 
     @Override
-    public ItemStack getResultItem(HolderLookup.Provider p_335423_) {
+    public ItemStack getResultItem(HolderLookup.Provider registries) {
         return new ItemStack(Items.FIREWORK_STAR);
     }
 

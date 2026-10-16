@@ -70,8 +70,8 @@ public class Block extends BlockBehaviour implements ItemLike, net.neoforged.neo
         .maximumSize(512L)
         .weakKeys()
         .build(new CacheLoader<VoxelShape, Boolean>() {
-            public Boolean load(VoxelShape p_49972_) {
-                return !Shapes.joinIsNotEmpty(Shapes.block(), p_49972_, BooleanOp.NOT_SAME);
+            public Boolean load(VoxelShape shape) {
+                return !Shapes.joinIsNotEmpty(Shapes.block(), shape, BooleanOp.NOT_SAME);
             }
         });
     public static final int UPDATE_NEIGHBORS = 1;
@@ -100,7 +100,7 @@ public class Block extends BlockBehaviour implements ItemLike, net.neoforged.neo
                 2048, 0.25F
             ) {
                 @Override
-                protected void rehash(int p_49979_) {
+                protected void rehash(int newN) {
                 }
             };
             object2bytelinkedopenhashmap.defaultReturnValue((byte)127);
@@ -113,75 +113,81 @@ public class Block extends BlockBehaviour implements ItemLike, net.neoforged.neo
         return CODEC;
     }
 
-    public static int getId(@Nullable BlockState p_49957_) {
-        if (p_49957_ == null) {
+    public static int getId(@Nullable BlockState state) {
+        if (state == null) {
             return 0;
         } else {
-            int i = BLOCK_STATE_REGISTRY.getId(p_49957_);
+            int i = BLOCK_STATE_REGISTRY.getId(state);
             return i == -1 ? 0 : i;
         }
     }
 
-    public static BlockState stateById(int p_49804_) {
-        BlockState blockstate = BLOCK_STATE_REGISTRY.byId(p_49804_);
+    public static BlockState stateById(int id) {
+        BlockState blockstate = BLOCK_STATE_REGISTRY.byId(id);
         return blockstate == null ? Blocks.AIR.defaultBlockState() : blockstate;
     }
 
-    public static Block byItem(@Nullable Item p_49815_) {
-        return p_49815_ instanceof BlockItem ? ((BlockItem)p_49815_).getBlock() : Blocks.AIR;
+    public static Block byItem(@Nullable Item item) {
+        return item instanceof BlockItem ? ((BlockItem)item).getBlock() : Blocks.AIR;
     }
 
-    public static BlockState pushEntitiesUp(BlockState p_49898_, BlockState p_49899_, LevelAccessor p_238252_, BlockPos p_49901_) {
+    public static BlockState pushEntitiesUp(BlockState oldState, BlockState newState, LevelAccessor level, BlockPos pos) {
         VoxelShape voxelshape = Shapes.joinUnoptimized(
-                p_49898_.getCollisionShape(p_238252_, p_49901_), p_49899_.getCollisionShape(p_238252_, p_49901_), BooleanOp.ONLY_SECOND
+                oldState.getCollisionShape(level, pos), newState.getCollisionShape(level, pos), BooleanOp.ONLY_SECOND
             )
-            .move((double)p_49901_.getX(), (double)p_49901_.getY(), (double)p_49901_.getZ());
+            .move((double)pos.getX(), (double)pos.getY(), (double)pos.getZ());
         if (voxelshape.isEmpty()) {
-            return p_49899_;
+            return newState;
         } else {
-            for (Entity entity : p_238252_.getEntities(null, voxelshape.bounds())) {
+            for (Entity entity : level.getEntities(null, voxelshape.bounds())) {
                 double d0 = Shapes.collide(Direction.Axis.Y, entity.getBoundingBox().move(0.0, 1.0, 0.0), List.of(voxelshape), -1.0);
                 entity.teleportRelative(0.0, 1.0 + d0, 0.0);
             }
 
-            return p_49899_;
+            return newState;
         }
     }
 
-    public static VoxelShape box(double p_49797_, double p_49798_, double p_49799_, double p_49800_, double p_49801_, double p_49802_) {
-        return Shapes.box(p_49797_ / 16.0, p_49798_ / 16.0, p_49799_ / 16.0, p_49800_ / 16.0, p_49801_ / 16.0, p_49802_ / 16.0);
+    public static VoxelShape box(double x1, double y1, double z1, double x2, double y2, double z2) {
+        return Shapes.box(x1 / 16.0, y1 / 16.0, z1 / 16.0, x2 / 16.0, y2 / 16.0, z2 / 16.0);
     }
 
-    public static BlockState updateFromNeighbourShapes(BlockState p_49932_, LevelAccessor p_49933_, BlockPos p_49934_) {
-        BlockState blockstate = p_49932_;
+    /**
+     * With the provided block state, performs neighbor checks for all neighboring blocks to get an "adjusted" blockstate for placement in the world, if the current state is not valid.
+     */
+    public static BlockState updateFromNeighbourShapes(BlockState currentState, LevelAccessor level, BlockPos pos) {
+        BlockState blockstate = currentState;
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
 
         for (Direction direction : UPDATE_SHAPE_ORDER) {
-            blockpos$mutableblockpos.setWithOffset(p_49934_, direction);
-            blockstate = blockstate.updateShape(direction, p_49933_.getBlockState(blockpos$mutableblockpos), p_49933_, p_49934_, blockpos$mutableblockpos);
+            blockpos$mutableblockpos.setWithOffset(pos, direction);
+            blockstate = blockstate.updateShape(direction, level.getBlockState(blockpos$mutableblockpos), level, pos, blockpos$mutableblockpos);
         }
 
         return blockstate;
     }
 
-    public static void updateOrDestroy(BlockState p_49903_, BlockState p_49904_, LevelAccessor p_49905_, BlockPos p_49906_, int p_49907_) {
-        updateOrDestroy(p_49903_, p_49904_, p_49905_, p_49906_, p_49907_, 512);
+    /**
+     * Replaces oldState with newState, possibly playing effects and creating drops. Flags are as in {@link net.minecraft.world.level.Level#setBlock(net.minecraft.core.BlockPos, net.minecraft.world.level.block.state.BlockState, int)}.
+     */
+    public static void updateOrDestroy(BlockState oldState, BlockState newState, LevelAccessor level, BlockPos pos, int flags) {
+        updateOrDestroy(oldState, newState, level, pos, flags, 512);
     }
 
-    public static void updateOrDestroy(BlockState p_49909_, BlockState p_49910_, LevelAccessor p_49911_, BlockPos p_49912_, int p_49913_, int p_49914_) {
-        if (p_49910_ != p_49909_) {
-            if (p_49910_.isAir()) {
-                if (!p_49911_.isClientSide()) {
-                    p_49911_.destroyBlock(p_49912_, (p_49913_ & 32) == 0, null, p_49914_);
+    public static void updateOrDestroy(BlockState oldState, BlockState newState, LevelAccessor level, BlockPos pos, int flags, int recursionLeft) {
+        if (newState != oldState) {
+            if (newState.isAir()) {
+                if (!level.isClientSide()) {
+                    level.destroyBlock(pos, (flags & 32) == 0, null, recursionLeft);
                 }
             } else {
-                p_49911_.setBlock(p_49912_, p_49910_, p_49913_ & -33, p_49914_);
+                level.setBlock(pos, newState, flags & -33, recursionLeft);
             }
         }
     }
 
-    public Block(BlockBehaviour.Properties p_49795_) {
-        super(p_49795_);
+    public Block(BlockBehaviour.Properties properties) {
+        super(properties);
         StateDefinition.Builder<Block, BlockState> builder = new StateDefinition.Builder<>(this);
         this.createBlockStateDefinition(builder);
         this.stateDefinition = builder.create(Block::defaultBlockState, BlockState::new);
@@ -194,34 +200,34 @@ public class Block extends BlockBehaviour implements ItemLike, net.neoforged.neo
         }
     }
 
-    public static boolean isExceptionForConnection(BlockState p_152464_) {
-        return p_152464_.getBlock() instanceof LeavesBlock
-            || p_152464_.is(Blocks.BARRIER)
-            || p_152464_.is(Blocks.CARVED_PUMPKIN)
-            || p_152464_.is(Blocks.JACK_O_LANTERN)
-            || p_152464_.is(Blocks.MELON)
-            || p_152464_.is(Blocks.PUMPKIN)
-            || p_152464_.is(BlockTags.SHULKER_BOXES);
+    public static boolean isExceptionForConnection(BlockState state) {
+        return state.getBlock() instanceof LeavesBlock
+            || state.is(Blocks.BARRIER)
+            || state.is(Blocks.CARVED_PUMPKIN)
+            || state.is(Blocks.JACK_O_LANTERN)
+            || state.is(Blocks.MELON)
+            || state.is(Blocks.PUMPKIN)
+            || state.is(BlockTags.SHULKER_BOXES);
     }
 
-    public static boolean shouldRenderFace(BlockState p_152445_, BlockGetter p_152446_, BlockPos p_152447_, Direction p_152448_, BlockPos p_152449_) {
-        BlockState blockstate = p_152446_.getBlockState(p_152449_);
-        if (p_152445_.skipRendering(blockstate, p_152448_)) {
+    public static boolean shouldRenderFace(BlockState state, BlockGetter level, BlockPos offset, Direction face, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
+        if (state.skipRendering(blockstate, face)) {
             return false;
-        } else if (blockstate.hidesNeighborFace(p_152446_, p_152449_, p_152445_, p_152448_.getOpposite()) && p_152445_.supportsExternalFaceHiding()) {
+        } else if (blockstate.hidesNeighborFace(level, pos, state, face.getOpposite()) && state.supportsExternalFaceHiding()) {
             return false;
         } else if (blockstate.canOcclude()) {
-            Block.BlockStatePairKey block$blockstatepairkey = new Block.BlockStatePairKey(p_152445_, blockstate, p_152448_);
+            Block.BlockStatePairKey block$blockstatepairkey = new Block.BlockStatePairKey(state, blockstate, face);
             Object2ByteLinkedOpenHashMap<Block.BlockStatePairKey> object2bytelinkedopenhashmap = OCCLUSION_CACHE.get();
             byte b0 = object2bytelinkedopenhashmap.getAndMoveToFirst(block$blockstatepairkey);
             if (b0 != 127) {
                 return b0 != 0;
             } else {
-                VoxelShape voxelshape = p_152445_.getFaceOcclusionShape(p_152446_, p_152447_, p_152448_);
+                VoxelShape voxelshape = state.getFaceOcclusionShape(level, offset, face);
                 if (voxelshape.isEmpty()) {
                     return true;
                 } else {
-                    VoxelShape voxelshape1 = blockstate.getFaceOcclusionShape(p_152446_, p_152449_, p_152448_.getOpposite());
+                    VoxelShape voxelshape1 = blockstate.getFaceOcclusionShape(level, pos, face.getOpposite());
                     boolean flag = Shapes.joinIsNotEmpty(voxelshape, voxelshape1, BooleanOp.ONLY_FIRST);
                     if (object2bytelinkedopenhashmap.size() == 2048) {
                         object2bytelinkedopenhashmap.removeLastByte();
@@ -236,120 +242,141 @@ public class Block extends BlockBehaviour implements ItemLike, net.neoforged.neo
         }
     }
 
-    public static boolean canSupportRigidBlock(BlockGetter p_49937_, BlockPos p_49938_) {
-        return p_49937_.getBlockState(p_49938_).isFaceSturdy(p_49937_, p_49938_, Direction.UP, SupportType.RIGID);
+    /**
+     * @return whether the given position has a rigid top face
+     */
+    public static boolean canSupportRigidBlock(BlockGetter level, BlockPos pos) {
+        return level.getBlockState(pos).isFaceSturdy(level, pos, Direction.UP, SupportType.RIGID);
     }
 
-    public static boolean canSupportCenter(LevelReader p_49864_, BlockPos p_49865_, Direction p_49866_) {
-        BlockState blockstate = p_49864_.getBlockState(p_49865_);
-        return p_49866_ == Direction.DOWN && blockstate.is(BlockTags.UNSTABLE_BOTTOM_CENTER)
+    /**
+     * @return whether the given position has a solid center in the given direction
+     */
+    public static boolean canSupportCenter(LevelReader level, BlockPos pos, Direction direction) {
+        BlockState blockstate = level.getBlockState(pos);
+        return direction == Direction.DOWN && blockstate.is(BlockTags.UNSTABLE_BOTTOM_CENTER)
             ? false
-            : blockstate.isFaceSturdy(p_49864_, p_49865_, p_49866_, SupportType.CENTER);
+            : blockstate.isFaceSturdy(level, pos, direction, SupportType.CENTER);
     }
 
-    public static boolean isFaceFull(VoxelShape p_49919_, Direction p_49920_) {
-        VoxelShape voxelshape = p_49919_.getFaceShape(p_49920_);
+    public static boolean isFaceFull(VoxelShape shape, Direction face) {
+        VoxelShape voxelshape = shape.getFaceShape(face);
         return isShapeFullBlock(voxelshape);
     }
 
-    public static boolean isShapeFullBlock(VoxelShape p_49917_) {
-        return SHAPE_FULL_BLOCK_CACHE.getUnchecked(p_49917_);
+    /**
+     * @return whether the provided {@link net.minecraft.world.phys.shapes.VoxelShape} is a full block (1x1x1)
+     */
+    public static boolean isShapeFullBlock(VoxelShape shape) {
+        return SHAPE_FULL_BLOCK_CACHE.getUnchecked(shape);
     }
 
-    public void animateTick(BlockState p_220827_, Level p_220828_, BlockPos p_220829_, RandomSource p_220830_) {
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
     }
 
-    public void destroy(LevelAccessor p_49860_, BlockPos p_49861_, BlockState p_49862_) {
+    /**
+     * Called after this block has been removed by a player.
+     */
+    public void destroy(LevelAccessor level, BlockPos pos, BlockState state) {
     }
 
-    public static List<ItemStack> getDrops(BlockState p_49870_, ServerLevel p_49871_, BlockPos p_49872_, @Nullable BlockEntity p_49873_) {
-        LootParams.Builder lootparams$builder = new LootParams.Builder(p_49871_)
-            .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(p_49872_))
+    public static List<ItemStack> getDrops(BlockState state, ServerLevel level, BlockPos pos, @Nullable BlockEntity blockEntity) {
+        LootParams.Builder lootparams$builder = new LootParams.Builder(level)
+            .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
             .withParameter(LootContextParams.TOOL, ItemStack.EMPTY)
-            .withOptionalParameter(LootContextParams.BLOCK_ENTITY, p_49873_);
-        return p_49870_.getDrops(lootparams$builder);
+            .withOptionalParameter(LootContextParams.BLOCK_ENTITY, blockEntity);
+        return state.getDrops(lootparams$builder);
     }
 
     public static List<ItemStack> getDrops(
-        BlockState p_49875_, ServerLevel p_49876_, BlockPos p_49877_, @Nullable BlockEntity p_49878_, @Nullable Entity p_49879_, ItemStack p_49880_
+        BlockState state, ServerLevel level, BlockPos pos, @Nullable BlockEntity blockEntity, @Nullable Entity entity, ItemStack tool
     ) {
-        LootParams.Builder lootparams$builder = new LootParams.Builder(p_49876_)
-            .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(p_49877_))
-            .withParameter(LootContextParams.TOOL, p_49880_)
-            .withOptionalParameter(LootContextParams.THIS_ENTITY, p_49879_)
-            .withOptionalParameter(LootContextParams.BLOCK_ENTITY, p_49878_);
-        return p_49875_.getDrops(lootparams$builder);
+        LootParams.Builder lootparams$builder = new LootParams.Builder(level)
+            .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
+            .withParameter(LootContextParams.TOOL, tool)
+            .withOptionalParameter(LootContextParams.THIS_ENTITY, entity)
+            .withOptionalParameter(LootContextParams.BLOCK_ENTITY, blockEntity);
+        return state.getDrops(lootparams$builder);
     }
 
-    public static void dropResources(BlockState p_49951_, Level p_49952_, BlockPos p_49953_) {
-        if (p_49952_ instanceof ServerLevel) {
+    public static void dropResources(BlockState state, Level level, BlockPos pos) {
+        if (level instanceof ServerLevel) {
             beginCapturingDrops();
-            getDrops(p_49951_, (ServerLevel)p_49952_, p_49953_, null).forEach(p_152406_ -> popResource(p_49952_, p_49953_, p_152406_));
+            getDrops(state, (ServerLevel)level, pos, null).forEach(p_152406_ -> popResource(level, pos, p_152406_));
             List<ItemEntity> captured = stopCapturingDrops();
-            net.neoforged.neoforge.common.CommonHooks.handleBlockDrops((ServerLevel) p_49952_, p_49953_, p_49951_, null, captured, null, ItemStack.EMPTY);
+            net.neoforged.neoforge.common.CommonHooks.handleBlockDrops((ServerLevel) level, pos, state, null, captured, null, ItemStack.EMPTY);
         }
     }
 
-    public static void dropResources(BlockState p_49893_, LevelAccessor p_49894_, BlockPos p_49895_, @Nullable BlockEntity p_49896_) {
-        if (p_49894_ instanceof ServerLevel) {
+    public static void dropResources(BlockState state, LevelAccessor level, BlockPos pos, @Nullable BlockEntity blockEntity) {
+        if (level instanceof ServerLevel) {
             beginCapturingDrops();
-            getDrops(p_49893_, (ServerLevel)p_49894_, p_49895_, p_49896_).forEach(p_49859_ -> popResource((ServerLevel)p_49894_, p_49895_, p_49859_));
+            getDrops(state, (ServerLevel)level, pos, blockEntity).forEach(p_49859_ -> popResource((ServerLevel)level, pos, p_49859_));
             List<ItemEntity> captured = stopCapturingDrops();
-            net.neoforged.neoforge.common.CommonHooks.handleBlockDrops((ServerLevel) p_49894_, p_49895_, p_49893_, p_49896_, captured, null, ItemStack.EMPTY);
+            net.neoforged.neoforge.common.CommonHooks.handleBlockDrops((ServerLevel) level, pos, state, blockEntity, captured, null, ItemStack.EMPTY);
         }
     }
 
     public static void dropResources(
-            BlockState p_49882_, Level p_49883_, BlockPos p_49884_, @Nullable BlockEntity p_49885_, @Nullable Entity p_49886_, ItemStack p_49887_
+            BlockState state, Level level, BlockPos pos, @Nullable BlockEntity blockEntity, @Nullable Entity entity, ItemStack tool
     ) {
-        if (p_49883_ instanceof ServerLevel) {
+        if (level instanceof ServerLevel) {
             beginCapturingDrops();
-            getDrops(p_49882_, (ServerLevel)p_49883_, p_49884_, p_49885_, p_49886_, p_49887_).forEach(p_49944_ -> popResource(p_49883_, p_49884_, p_49944_));
+            getDrops(state, (ServerLevel)level, pos, blockEntity, entity, tool).forEach(p_49944_ -> popResource(level, pos, p_49944_));
             List<ItemEntity> captured = stopCapturingDrops();
-            net.neoforged.neoforge.common.CommonHooks.handleBlockDrops((ServerLevel) p_49883_, p_49884_, p_49882_, p_49885_, captured, p_49886_, p_49887_);
+            net.neoforged.neoforge.common.CommonHooks.handleBlockDrops((ServerLevel) level, pos, state, blockEntity, captured, entity, tool);
         }
     }
 
-    public static void popResource(Level p_49841_, BlockPos p_49842_, ItemStack p_49843_) {
+    /**
+     * Spawns the given stack into the Level at the given position, respecting the doTileDrops gamerule
+     */
+    public static void popResource(Level level, BlockPos pos, ItemStack stack) {
         double d0 = (double)EntityType.ITEM.getHeight() / 2.0;
-        double d1 = (double)p_49842_.getX() + 0.5 + Mth.nextDouble(p_49841_.random, -0.25, 0.25);
-        double d2 = (double)p_49842_.getY() + 0.5 + Mth.nextDouble(p_49841_.random, -0.25, 0.25) - d0;
-        double d3 = (double)p_49842_.getZ() + 0.5 + Mth.nextDouble(p_49841_.random, -0.25, 0.25);
-        popResource(p_49841_, () -> new ItemEntity(p_49841_, d1, d2, d3, p_49843_), p_49843_);
+        double d1 = (double)pos.getX() + 0.5 + Mth.nextDouble(level.random, -0.25, 0.25);
+        double d2 = (double)pos.getY() + 0.5 + Mth.nextDouble(level.random, -0.25, 0.25) - d0;
+        double d3 = (double)pos.getZ() + 0.5 + Mth.nextDouble(level.random, -0.25, 0.25);
+        popResource(level, () -> new ItemEntity(level, d1, d2, d3, stack), stack);
     }
 
-    public static void popResourceFromFace(Level p_152436_, BlockPos p_152437_, Direction p_152438_, ItemStack p_152439_) {
-        int i = p_152438_.getStepX();
-        int j = p_152438_.getStepY();
-        int k = p_152438_.getStepZ();
+    public static void popResourceFromFace(Level level, BlockPos pos, Direction direction, ItemStack stack) {
+        int i = direction.getStepX();
+        int j = direction.getStepY();
+        int k = direction.getStepZ();
         double d0 = (double)EntityType.ITEM.getWidth() / 2.0;
         double d1 = (double)EntityType.ITEM.getHeight() / 2.0;
-        double d2 = (double)p_152437_.getX() + 0.5 + (i == 0 ? Mth.nextDouble(p_152436_.random, -0.25, 0.25) : (double)i * (0.5 + d0));
-        double d3 = (double)p_152437_.getY() + 0.5 + (j == 0 ? Mth.nextDouble(p_152436_.random, -0.25, 0.25) : (double)j * (0.5 + d1)) - d1;
-        double d4 = (double)p_152437_.getZ() + 0.5 + (k == 0 ? Mth.nextDouble(p_152436_.random, -0.25, 0.25) : (double)k * (0.5 + d0));
-        double d5 = i == 0 ? Mth.nextDouble(p_152436_.random, -0.1, 0.1) : (double)i * 0.1;
-        double d6 = j == 0 ? Mth.nextDouble(p_152436_.random, 0.0, 0.1) : (double)j * 0.1 + 0.1;
-        double d7 = k == 0 ? Mth.nextDouble(p_152436_.random, -0.1, 0.1) : (double)k * 0.1;
-        popResource(p_152436_, () -> new ItemEntity(p_152436_, d2, d3, d4, p_152439_, d5, d6, d7), p_152439_);
+        double d2 = (double)pos.getX() + 0.5 + (i == 0 ? Mth.nextDouble(level.random, -0.25, 0.25) : (double)i * (0.5 + d0));
+        double d3 = (double)pos.getY() + 0.5 + (j == 0 ? Mth.nextDouble(level.random, -0.25, 0.25) : (double)j * (0.5 + d1)) - d1;
+        double d4 = (double)pos.getZ() + 0.5 + (k == 0 ? Mth.nextDouble(level.random, -0.25, 0.25) : (double)k * (0.5 + d0));
+        double d5 = i == 0 ? Mth.nextDouble(level.random, -0.1, 0.1) : (double)i * 0.1;
+        double d6 = j == 0 ? Mth.nextDouble(level.random, 0.0, 0.1) : (double)j * 0.1 + 0.1;
+        double d7 = k == 0 ? Mth.nextDouble(level.random, -0.1, 0.1) : (double)k * 0.1;
+        popResource(level, () -> new ItemEntity(level, d2, d3, d4, stack, d5, d6, d7), stack);
     }
 
-    private static void popResource(Level p_152441_, Supplier<ItemEntity> p_152442_, ItemStack p_152443_) {
-        if (!p_152441_.isClientSide && !p_152443_.isEmpty() && p_152441_.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS) && !p_152441_.restoringBlockSnapshots) {
-            ItemEntity itementity = p_152442_.get();
+    private static void popResource(Level level, Supplier<ItemEntity> itemEntitySupplier, ItemStack stack) {
+        if (!level.isClientSide && !stack.isEmpty() && level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS) && !level.restoringBlockSnapshots) {
+            ItemEntity itementity = itemEntitySupplier.get();
             itementity.setDefaultPickUpDelay();
             // Neo: Add drops to the captured list if capturing is enabled.
             if (capturedDrops != null) {
                 capturedDrops.add(itementity);
             }
             else {
-                p_152441_.addFreshEntity(itementity);
+                level.addFreshEntity(itementity);
             }
         }
     }
 
-    public void popExperience(ServerLevel p_49806_, BlockPos p_49807_, int p_49808_) {
-        if (p_49806_.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS) && !p_49806_.restoringBlockSnapshots) {
-            ExperienceOrb.award(p_49806_, Vec3.atCenterOf(p_49807_), p_49808_);
+    /**
+     * Spawns the given amount of experience into the Level as experience orb entities.
+     */
+    public void popExperience(ServerLevel level, BlockPos pos, int amount) {
+        if (level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS) && !level.restoringBlockSnapshots) {
+            ExperienceOrb.award(level, Vec3.atCenterOf(pos), amount);
         }
     }
 
@@ -358,28 +385,37 @@ public class Block extends BlockBehaviour implements ItemLike, net.neoforged.neo
         return this.explosionResistance;
     }
 
-    public void wasExploded(Level p_49844_, BlockPos p_49845_, Explosion p_49846_) {
+    /**
+     * Called when this Block is destroyed by an Explosion
+     */
+    public void wasExploded(Level level, BlockPos pos, Explosion explosion) {
     }
 
-    public void stepOn(Level p_152431_, BlockPos p_152432_, BlockState p_152433_, Entity p_152434_) {
+    public void stepOn(Level level, BlockPos pos, BlockState state, Entity entity) {
     }
 
     @Nullable
-    public BlockState getStateForPlacement(BlockPlaceContext p_49820_) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         return this.defaultBlockState();
     }
 
-    public void playerDestroy(Level p_49827_, Player p_49828_, BlockPos p_49829_, BlockState p_49830_, @Nullable BlockEntity p_49831_, ItemStack p_49832_) {
-        p_49828_.awardStat(Stats.BLOCK_MINED.get(this));
-        p_49828_.causeFoodExhaustion(0.005F);
-        dropResources(p_49830_, p_49827_, p_49829_, p_49831_, p_49828_, p_49832_);
+    /**
+     * Called after a player has successfully harvested this block. This method will only be called if the player has used the correct tool and drops should be spawned.
+     */
+    public void playerDestroy(Level level, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack tool) {
+        player.awardStat(Stats.BLOCK_MINED.get(this));
+        player.causeFoodExhaustion(0.005F);
+        dropResources(state, level, pos, blockEntity, player, tool);
     }
 
-    public void setPlacedBy(Level p_49847_, BlockPos p_49848_, BlockState p_49849_, @Nullable LivingEntity p_49850_, ItemStack p_49851_) {
+    /**
+     * Called by BlockItem after this block has been placed.
+     */
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
     }
 
-    public boolean isPossibleToRespawnInThis(BlockState p_279289_) {
-        return !p_279289_.isSolid() && !p_279289_.liquid();
+    public boolean isPossibleToRespawnInThis(BlockState state) {
+        return !state.isSolid() && !state.liquid();
     }
 
     public MutableComponent getName() {
@@ -394,17 +430,21 @@ public class Block extends BlockBehaviour implements ItemLike, net.neoforged.neo
         return this.descriptionId;
     }
 
-    public void fallOn(Level p_152426_, BlockState p_152427_, BlockPos p_152428_, Entity p_152429_, float p_152430_) {
-        p_152429_.causeFallDamage(p_152430_, 1.0F, p_152429_.damageSources().fall());
+    public void fallOn(Level level, BlockState state, BlockPos pos, Entity entity, float fallDistance) {
+        entity.causeFallDamage(fallDistance, 1.0F, entity.damageSources().fall());
     }
 
-    public void updateEntityAfterFallOn(BlockGetter p_49821_, Entity p_49822_) {
-        p_49822_.setDeltaMovement(p_49822_.getDeltaMovement().multiply(1.0, 0.0, 1.0));
-        p_49822_.setDeltaMovement(p_49822_.getDeltaMovement().multiply(1.0D, 0.0D, 1.0D));
+    /**
+     * Called when an Entity lands on this Block.
+     * This method is responsible for doing any modification on the motion of the entity that should result from the landing.
+     */
+    public void updateEntityAfterFallOn(BlockGetter level, Entity entity) {
+        entity.setDeltaMovement(entity.getDeltaMovement().multiply(1.0, 0.0, 1.0));
+        entity.setDeltaMovement(entity.getDeltaMovement().multiply(1.0D, 0.0D, 1.0D));
     }
 
     @Deprecated //Forge: Use more sensitive version
-    public ItemStack getCloneItemStack(LevelReader p_304395_, BlockPos p_49824_, BlockState p_49825_) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         return new ItemStack(this);
     }
 
@@ -420,57 +460,60 @@ public class Block extends BlockBehaviour implements ItemLike, net.neoforged.neo
         return this.jumpFactor;
     }
 
-    protected void spawnDestroyParticles(Level p_152422_, Player p_152423_, BlockPos p_152424_, BlockState p_152425_) {
-        p_152422_.levelEvent(p_152423_, 2001, p_152424_, getId(p_152425_));
+    protected void spawnDestroyParticles(Level level, Player player, BlockPos pos, BlockState state) {
+        level.levelEvent(player, 2001, pos, getId(state));
     }
 
-    public BlockState playerWillDestroy(Level p_49852_, BlockPos p_49853_, BlockState p_49854_, Player p_49855_) {
-        this.spawnDestroyParticles(p_49852_, p_49855_, p_49853_, p_49854_);
-        if (p_49854_.is(BlockTags.GUARDED_BY_PIGLINS)) {
-            PiglinAi.angerNearbyPiglins(p_49855_, false);
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        this.spawnDestroyParticles(level, player, pos, state);
+        if (state.is(BlockTags.GUARDED_BY_PIGLINS)) {
+            PiglinAi.angerNearbyPiglins(player, false);
         }
 
-        p_49852_.gameEvent(GameEvent.BLOCK_DESTROY, p_49853_, GameEvent.Context.of(p_49855_, p_49854_));
-        return p_49854_;
+        level.gameEvent(GameEvent.BLOCK_DESTROY, pos, GameEvent.Context.of(player, state));
+        return state;
     }
 
-    public void handlePrecipitation(BlockState p_152450_, Level p_152451_, BlockPos p_152452_, Biome.Precipitation p_152453_) {
+    public void handlePrecipitation(BlockState state, Level level, BlockPos pos, Biome.Precipitation precipitation) {
     }
 
+    /**
+     * @return whether this block should drop its drops when destroyed by the given explosion
+     */
     @Deprecated //Forge: Use more sensitive version
-    public boolean dropFromExplosion(Explosion p_49826_) {
+    public boolean dropFromExplosion(Explosion explosion) {
         return true;
     }
 
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_49915_) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
     }
 
     public StateDefinition<Block, BlockState> getStateDefinition() {
         return this.stateDefinition;
     }
 
-    protected final void registerDefaultState(BlockState p_49960_) {
-        this.defaultBlockState = p_49960_;
+    protected final void registerDefaultState(BlockState state) {
+        this.defaultBlockState = state;
     }
 
     public final BlockState defaultBlockState() {
         return this.defaultBlockState;
     }
 
-    public final BlockState withPropertiesOf(BlockState p_152466_) {
+    public final BlockState withPropertiesOf(BlockState state) {
         BlockState blockstate = this.defaultBlockState();
 
-        for (Property<?> property : p_152466_.getBlock().getStateDefinition().getProperties()) {
+        for (Property<?> property : state.getBlock().getStateDefinition().getProperties()) {
             if (blockstate.hasProperty(property)) {
-                blockstate = copyProperty(p_152466_, blockstate, property);
+                blockstate = copyProperty(state, blockstate, property);
             }
         }
 
         return blockstate;
     }
 
-    private static <T extends Comparable<T>> BlockState copyProperty(BlockState p_152455_, BlockState p_152456_, Property<T> p_152457_) {
-        return p_152456_.setValue(p_152457_, p_152455_.getValue(p_152457_));
+    private static <T extends Comparable<T>> BlockState copyProperty(BlockState sourceState, BlockState targetState, Property<T> property) {
+        return targetState.setValue(property, sourceState.getValue(property));
     }
 
     @Override
@@ -491,7 +534,7 @@ public class Block extends BlockBehaviour implements ItemLike, net.neoforged.neo
         return "Block{" + BuiltInRegistries.BLOCK.wrapAsHolder(this).getRegisteredName() + "}";
     }
 
-    public void appendHoverText(ItemStack p_49816_, Item.TooltipContext p_339606_, List<Component> p_49818_, TooltipFlag p_49819_) {
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
     }
 
     @Override
@@ -499,8 +542,8 @@ public class Block extends BlockBehaviour implements ItemLike, net.neoforged.neo
         return this;
     }
 
-    protected ImmutableMap<BlockState, VoxelShape> getShapeForEachState(Function<BlockState, VoxelShape> p_152459_) {
-        return this.stateDefinition.getPossibleStates().stream().collect(ImmutableMap.toImmutableMap(Function.identity(), p_152459_));
+    protected ImmutableMap<BlockState, VoxelShape> getShapeForEachState(Function<BlockState, VoxelShape> shapeGetter) {
+        return this.stateDefinition.getPossibleStates().stream().collect(ImmutableMap.toImmutableMap(Function.identity(), shapeGetter));
     }
 
     /**
@@ -545,10 +588,10 @@ public class Block extends BlockBehaviour implements ItemLike, net.neoforged.neo
         return this.builtInRegistryHolder;
     }
 
-    protected void tryDropExperience(ServerLevel p_220823_, BlockPos p_220824_, ItemStack p_220825_, IntProvider p_220826_) {
-        int i = EnchantmentHelper.processBlockExperience(p_220823_, p_220825_, p_220826_.sample(p_220823_.getRandom()));
+    protected void tryDropExperience(ServerLevel level, BlockPos pos, ItemStack heldItem, IntProvider amount) {
+        int i = EnchantmentHelper.processBlockExperience(level, heldItem, amount.sample(level.getRandom()));
         if (i > 0) {
-            this.popExperience(p_220823_, p_220824_, i);
+            this.popExperience(level, pos, i);
         }
     }
 
@@ -557,18 +600,18 @@ public class Block extends BlockBehaviour implements ItemLike, net.neoforged.neo
         private final BlockState second;
         private final Direction direction;
 
-        public BlockStatePairKey(BlockState p_49984_, BlockState p_49985_, Direction p_49986_) {
-            this.first = p_49984_;
-            this.second = p_49985_;
-            this.direction = p_49986_;
+        public BlockStatePairKey(BlockState first, BlockState second, Direction direction) {
+            this.first = first;
+            this.second = second;
+            this.direction = direction;
         }
 
         @Override
-        public boolean equals(Object p_49988_) {
-            if (this == p_49988_) {
+        public boolean equals(Object other) {
+            if (this == other) {
                 return true;
             } else {
-                return !(p_49988_ instanceof Block.BlockStatePairKey block$blockstatepairkey)
+                return !(other instanceof Block.BlockStatePairKey block$blockstatepairkey)
                     ? false
                     : this.first == block$blockstatepairkey.first
                         && this.second == block$blockstatepairkey.second

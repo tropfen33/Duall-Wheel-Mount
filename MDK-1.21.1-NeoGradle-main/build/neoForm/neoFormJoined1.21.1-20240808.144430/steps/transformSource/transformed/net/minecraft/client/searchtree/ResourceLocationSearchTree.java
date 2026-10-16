@@ -24,15 +24,15 @@ public interface ResourceLocationSearchTree<T> {
         };
     }
 
-    static <T> ResourceLocationSearchTree<T> create(List<T> p_235213_, Function<T, Stream<ResourceLocation>> p_235214_) {
-        if (p_235213_.isEmpty()) {
+    static <T> ResourceLocationSearchTree<T> create(List<T> contents, Function<T, Stream<ResourceLocation>> idGetter) {
+        if (contents.isEmpty()) {
             return empty();
         } else {
             final SuffixArray<T> suffixarray = new SuffixArray<>();
             final SuffixArray<T> suffixarray1 = new SuffixArray<>();
 
-            for (T t : p_235213_) {
-                p_235214_.apply(t).forEach(p_235210_ -> {
+            for (T t : contents) {
+                idGetter.apply(t).forEach(p_235210_ -> {
                     suffixarray.add(t, p_235210_.getNamespace().toLowerCase(Locale.ROOT));
                     suffixarray1.add(t, p_235210_.getPath().toLowerCase(Locale.ROOT));
                 });
@@ -54,7 +54,7 @@ public interface ResourceLocationSearchTree<T> {
         }
     }
 
-    List<T> searchNamespace(String p_235211_);
+    List<T> searchNamespace(String query);
 
-    List<T> searchPath(String p_235215_);
+    List<T> searchPath(String query);
 }

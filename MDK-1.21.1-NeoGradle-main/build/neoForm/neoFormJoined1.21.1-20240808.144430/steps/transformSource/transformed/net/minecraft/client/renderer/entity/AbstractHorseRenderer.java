@@ -10,13 +10,13 @@ import net.neoforged.api.distmarker.OnlyIn;
 public abstract class AbstractHorseRenderer<T extends AbstractHorse, M extends HorseModel<T>> extends MobRenderer<T, M> {
     private final float scale;
 
-    public AbstractHorseRenderer(EntityRendererProvider.Context p_173906_, M p_173907_, float p_173908_) {
-        super(p_173906_, p_173907_, 0.75F);
-        this.scale = p_173908_;
+    public AbstractHorseRenderer(EntityRendererProvider.Context context, M model, float scale) {
+        super(context, model, 0.75F);
+        this.scale = scale;
     }
 
-    protected void scale(T p_113754_, PoseStack p_113755_, float p_113756_) {
-        p_113755_.scale(this.scale, this.scale, this.scale);
-        super.scale(p_113754_, p_113755_, p_113756_);
+    protected void scale(T livingEntity, PoseStack poseStack, float partialTickTime) {
+        poseStack.scale(this.scale, this.scale, this.scale);
+        super.scale(livingEntity, poseStack, partialTickTime);
     }
 }

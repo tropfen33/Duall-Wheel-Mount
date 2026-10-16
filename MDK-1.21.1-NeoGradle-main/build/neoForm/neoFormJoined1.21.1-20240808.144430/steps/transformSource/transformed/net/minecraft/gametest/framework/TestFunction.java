@@ -36,8 +36,8 @@ public record TestFunction(
         this(p_177820_, p_177821_, p_177822_, p_177823_, p_177824_, p_177825_, p_177826_, false, 1, 1, false, p_177827_);
     }
 
-    public void run(GameTestHelper p_128077_) {
-        this.function.accept(p_128077_);
+    public void run(GameTestHelper gameTestHelper) {
+        this.function.accept(gameTestHelper);
     }
 
     @Override

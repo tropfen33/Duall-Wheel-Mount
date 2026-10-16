@@ -24,10 +24,10 @@ public class RandomSpreadFoliagePlacer extends FoliagePlacer {
     private final IntProvider foliageHeight;
     private final int leafPlacementAttempts;
 
-    public RandomSpreadFoliagePlacer(IntProvider p_161506_, IntProvider p_161507_, IntProvider p_161508_, int p_161509_) {
-        super(p_161506_, p_161507_);
-        this.foliageHeight = p_161508_;
-        this.leafPlacementAttempts = p_161509_;
+    public RandomSpreadFoliagePlacer(IntProvider radius, IntProvider offset, IntProvider foliageHeight, int leafPlacementAttempts) {
+        super(radius, offset);
+        this.foliageHeight = foliageHeight;
+        this.leafPlacementAttempts = leafPlacementAttempts;
     }
 
     @Override
@@ -37,37 +37,41 @@ public class RandomSpreadFoliagePlacer extends FoliagePlacer {
 
     @Override
     protected void createFoliage(
-        LevelSimulatedReader p_225723_,
-        FoliagePlacer.FoliageSetter p_272842_,
-        RandomSource p_225725_,
-        TreeConfiguration p_225726_,
-        int p_225727_,
-        FoliagePlacer.FoliageAttachment p_225728_,
-        int p_225729_,
-        int p_225730_,
-        int p_225731_
+        LevelSimulatedReader level,
+        FoliagePlacer.FoliageSetter blockSetter,
+        RandomSource random,
+        TreeConfiguration config,
+        int maxFreeTreeHeight,
+        FoliagePlacer.FoliageAttachment attachment,
+        int foliageHeight,
+        int foliageRadius,
+        int offset
     ) {
-        BlockPos blockpos = p_225728_.pos();
+        BlockPos blockpos = attachment.pos();
         BlockPos.MutableBlockPos blockpos$mutableblockpos = blockpos.mutable();
 
         for (int i = 0; i < this.leafPlacementAttempts; i++) {
             blockpos$mutableblockpos.setWithOffset(
                 blockpos,
-                p_225725_.nextInt(p_225730_) - p_225725_.nextInt(p_225730_),
-                p_225725_.nextInt(p_225729_) - p_225725_.nextInt(p_225729_),
-                p_225725_.nextInt(p_225730_) - p_225725_.nextInt(p_225730_)
+                random.nextInt(foliageRadius) - random.nextInt(foliageRadius),
+                random.nextInt(foliageHeight) - random.nextInt(foliageHeight),
+                random.nextInt(foliageRadius) - random.nextInt(foliageRadius)
             );
-            tryPlaceLeaf(p_225723_, p_272842_, p_225725_, p_225726_, blockpos$mutableblockpos);
+            tryPlaceLeaf(level, blockSetter, random, config, blockpos$mutableblockpos);
         }
     }
 
     @Override
-    public int foliageHeight(RandomSource p_225719_, int p_225720_, TreeConfiguration p_225721_) {
-        return this.foliageHeight.sample(p_225719_);
+    public int foliageHeight(RandomSource random, int height, TreeConfiguration config) {
+        return this.foliageHeight.sample(random);
     }
 
+    /**
+     * Skips certain positions based on the provided shape, such as rounding corners randomly.
+     * The coordinates are passed in as absolute value, and should be within [0, {@code range}].
+     */
     @Override
-    protected boolean shouldSkipLocation(RandomSource p_225712_, int p_225713_, int p_225714_, int p_225715_, int p_225716_, boolean p_225717_) {
+    protected boolean shouldSkipLocation(RandomSource random, int localX, int localY, int localZ, int range, boolean large) {
         return false;
     }
 }

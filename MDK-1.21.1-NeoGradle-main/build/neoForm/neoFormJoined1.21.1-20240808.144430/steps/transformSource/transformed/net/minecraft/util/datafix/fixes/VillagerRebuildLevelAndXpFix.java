@@ -16,12 +16,12 @@ public class VillagerRebuildLevelAndXpFix extends DataFix {
     private static final int TRADES_PER_LEVEL = 2;
     private static final int[] LEVEL_XP_THRESHOLDS = new int[]{0, 10, 50, 100, 150};
 
-    public static int getMinXpPerLevel(int p_17080_) {
-        return LEVEL_XP_THRESHOLDS[Mth.clamp(p_17080_ - 1, 0, LEVEL_XP_THRESHOLDS.length - 1)];
+    public static int getMinXpPerLevel(int level) {
+        return LEVEL_XP_THRESHOLDS[Mth.clamp(level - 1, 0, LEVEL_XP_THRESHOLDS.length - 1)];
     }
 
-    public VillagerRebuildLevelAndXpFix(Schema p_17077_, boolean p_17078_) {
-        super(p_17077_, p_17078_);
+    public VillagerRebuildLevelAndXpFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -65,14 +65,14 @@ public class VillagerRebuildLevelAndXpFix extends DataFix {
         );
     }
 
-    private static Typed<?> addLevel(Typed<?> p_17100_, int p_17101_) {
-        return p_17100_.update(
-            DSL.remainderFinder(), p_17104_ -> p_17104_.update("VillagerData", p_145775_ -> p_145775_.set("level", p_145775_.createInt(p_17101_)))
+    private static Typed<?> addLevel(Typed<?> typed, int level) {
+        return typed.update(
+            DSL.remainderFinder(), p_17104_ -> p_17104_.update("VillagerData", p_145775_ -> p_145775_.set("level", p_145775_.createInt(level)))
         );
     }
 
-    private static Typed<?> addXpFromLevel(Typed<?> p_17109_, int p_17110_) {
-        int i = getMinXpPerLevel(p_17110_);
-        return p_17109_.update(DSL.remainderFinder(), p_17083_ -> p_17083_.set("Xp", p_17083_.createInt(i)));
+    private static Typed<?> addXpFromLevel(Typed<?> typed, int xp) {
+        int i = getMinXpPerLevel(xp);
+        return typed.update(DSL.remainderFinder(), p_17083_ -> p_17083_.set("Xp", p_17083_.createInt(i)));
     }
 }

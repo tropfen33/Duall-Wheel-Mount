@@ -19,17 +19,17 @@ public class RootsBlock extends BushBlock {
         return CODEC;
     }
 
-    public RootsBlock(BlockBehaviour.Properties p_55912_) {
-        super(p_55912_);
+    public RootsBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_55915_, BlockGetter p_55916_, BlockPos p_55917_, CollisionContext p_55918_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
-    protected boolean mayPlaceOn(BlockState p_55920_, BlockGetter p_55921_, BlockPos p_55922_) {
-        return p_55920_.is(BlockTags.NYLIUM) || p_55920_.is(Blocks.SOUL_SOIL) || super.mayPlaceOn(p_55920_, p_55921_, p_55922_);
+    protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.is(BlockTags.NYLIUM) || state.is(Blocks.SOUL_SOIL) || super.mayPlaceOn(state, level, pos);
     }
 }

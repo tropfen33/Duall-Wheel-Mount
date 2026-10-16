@@ -20,11 +20,11 @@ public class AnimalMakeLove extends Behavior<Animal> {
     private static final int DEFAULT_CLOSE_ENOUGH_DISTANCE = 2;
     private long spawnChildAtTime;
 
-    public AnimalMakeLove(EntityType<? extends Animal> p_320473_) {
-        this(p_320473_, 1.0F, 2);
+    public AnimalMakeLove(EntityType<? extends Animal> partnerType) {
+        this(partnerType, 1.0F, 2);
     }
 
-    public AnimalMakeLove(EntityType<? extends Animal> p_22391_, float p_22392_, int p_320576_) {
+    public AnimalMakeLove(EntityType<? extends Animal> partnerType, float speedModifier, int closeEnoughDistance) {
         super(
             ImmutableMap.of(
                 MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES,
@@ -40,69 +40,69 @@ public class AnimalMakeLove extends Behavior<Animal> {
             ),
             110
         );
-        this.partnerType = p_22391_;
-        this.speedModifier = p_22392_;
-        this.closeEnoughDistance = p_320576_;
+        this.partnerType = partnerType;
+        this.speedModifier = speedModifier;
+        this.closeEnoughDistance = closeEnoughDistance;
     }
 
-    protected boolean checkExtraStartConditions(ServerLevel p_22401_, Animal p_22402_) {
-        return p_22402_.isInLove() && this.findValidBreedPartner(p_22402_).isPresent();
+    protected boolean checkExtraStartConditions(ServerLevel level, Animal owner) {
+        return owner.isInLove() && this.findValidBreedPartner(owner).isPresent();
     }
 
-    protected void start(ServerLevel p_22404_, Animal p_22405_, long p_22406_) {
-        Animal animal = this.findValidBreedPartner(p_22405_).get();
-        p_22405_.getBrain().setMemory(MemoryModuleType.BREED_TARGET, animal);
-        animal.getBrain().setMemory(MemoryModuleType.BREED_TARGET, p_22405_);
-        BehaviorUtils.lockGazeAndWalkToEachOther(p_22405_, animal, this.speedModifier, this.closeEnoughDistance);
-        int i = 60 + p_22405_.getRandom().nextInt(50);
-        this.spawnChildAtTime = p_22406_ + (long)i;
+    protected void start(ServerLevel level, Animal entity, long gameTime) {
+        Animal animal = this.findValidBreedPartner(entity).get();
+        entity.getBrain().setMemory(MemoryModuleType.BREED_TARGET, animal);
+        animal.getBrain().setMemory(MemoryModuleType.BREED_TARGET, entity);
+        BehaviorUtils.lockGazeAndWalkToEachOther(entity, animal, this.speedModifier, this.closeEnoughDistance);
+        int i = 60 + entity.getRandom().nextInt(50);
+        this.spawnChildAtTime = gameTime + (long)i;
     }
 
-    protected boolean canStillUse(ServerLevel p_22416_, Animal p_22417_, long p_22418_) {
-        if (!this.hasBreedTargetOfRightType(p_22417_)) {
+    protected boolean canStillUse(ServerLevel level, Animal entity, long gameTime) {
+        if (!this.hasBreedTargetOfRightType(entity)) {
             return false;
         } else {
-            Animal animal = this.getBreedTarget(p_22417_);
+            Animal animal = this.getBreedTarget(entity);
             return animal.isAlive()
-                && p_22417_.canMate(animal)
-                && BehaviorUtils.entityIsVisible(p_22417_.getBrain(), animal)
-                && p_22418_ <= this.spawnChildAtTime
-                && !p_22417_.isPanicking()
+                && entity.canMate(animal)
+                && BehaviorUtils.entityIsVisible(entity.getBrain(), animal)
+                && gameTime <= this.spawnChildAtTime
+                && !entity.isPanicking()
                 && !animal.isPanicking();
         }
     }
 
-    protected void tick(ServerLevel p_22428_, Animal p_22429_, long p_22430_) {
-        Animal animal = this.getBreedTarget(p_22429_);
-        BehaviorUtils.lockGazeAndWalkToEachOther(p_22429_, animal, this.speedModifier, this.closeEnoughDistance);
-        if (p_22429_.closerThan(animal, 3.0)) {
-            if (p_22430_ >= this.spawnChildAtTime) {
-                p_22429_.spawnChildFromBreeding(p_22428_, animal);
-                p_22429_.getBrain().eraseMemory(MemoryModuleType.BREED_TARGET);
+    protected void tick(ServerLevel level, Animal owner, long gameTime) {
+        Animal animal = this.getBreedTarget(owner);
+        BehaviorUtils.lockGazeAndWalkToEachOther(owner, animal, this.speedModifier, this.closeEnoughDistance);
+        if (owner.closerThan(animal, 3.0)) {
+            if (gameTime >= this.spawnChildAtTime) {
+                owner.spawnChildFromBreeding(level, animal);
+                owner.getBrain().eraseMemory(MemoryModuleType.BREED_TARGET);
                 animal.getBrain().eraseMemory(MemoryModuleType.BREED_TARGET);
             }
         }
     }
 
-    protected void stop(ServerLevel p_22438_, Animal p_22439_, long p_22440_) {
-        p_22439_.getBrain().eraseMemory(MemoryModuleType.BREED_TARGET);
-        p_22439_.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
-        p_22439_.getBrain().eraseMemory(MemoryModuleType.LOOK_TARGET);
+    protected void stop(ServerLevel level, Animal entity, long gameTime) {
+        entity.getBrain().eraseMemory(MemoryModuleType.BREED_TARGET);
+        entity.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
+        entity.getBrain().eraseMemory(MemoryModuleType.LOOK_TARGET);
         this.spawnChildAtTime = 0L;
     }
 
-    private Animal getBreedTarget(Animal p_22410_) {
-        return (Animal)p_22410_.getBrain().getMemory(MemoryModuleType.BREED_TARGET).get();
+    private Animal getBreedTarget(Animal animal) {
+        return (Animal)animal.getBrain().getMemory(MemoryModuleType.BREED_TARGET).get();
     }
 
-    private boolean hasBreedTargetOfRightType(Animal p_22422_) {
-        Brain<?> brain = p_22422_.getBrain();
+    private boolean hasBreedTargetOfRightType(Animal animal) {
+        Brain<?> brain = animal.getBrain();
         return brain.hasMemoryValue(MemoryModuleType.BREED_TARGET) && brain.getMemory(MemoryModuleType.BREED_TARGET).get().getType() == this.partnerType;
     }
 
-    private Optional<? extends Animal> findValidBreedPartner(Animal p_22432_) {
-        return p_22432_.getBrain().getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES).get().findClosest(p_352711_ -> {
-            if (p_352711_.getType() == this.partnerType && p_352711_ instanceof Animal animal && p_22432_.canMate(animal) && !animal.isPanicking()) {
+    private Optional<? extends Animal> findValidBreedPartner(Animal p_animal) {
+        return p_animal.getBrain().getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES).get().findClosest(p_352711_ -> {
+            if (p_352711_.getType() == this.partnerType && p_352711_ instanceof Animal animal && p_animal.canMate(animal) && !animal.isPanicking()) {
                 return true;
             }
 

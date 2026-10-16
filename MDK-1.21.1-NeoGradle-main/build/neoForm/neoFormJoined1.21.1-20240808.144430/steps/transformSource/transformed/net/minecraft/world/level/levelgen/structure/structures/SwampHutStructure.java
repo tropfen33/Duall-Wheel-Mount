@@ -10,17 +10,17 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilde
 public class SwampHutStructure extends Structure {
     public static final MapCodec<SwampHutStructure> CODEC = simpleCodec(SwampHutStructure::new);
 
-    public SwampHutStructure(Structure.StructureSettings p_229974_) {
-        super(p_229974_);
+    public SwampHutStructure(Structure.StructureSettings settings) {
+        super(settings);
     }
 
     @Override
-    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext p_229976_) {
-        return onTopOfChunkCenter(p_229976_, Heightmap.Types.WORLD_SURFACE_WG, p_229979_ -> generatePieces(p_229979_, p_229976_));
+    public Optional<Structure.GenerationStub> findGenerationPoint(Structure.GenerationContext context) {
+        return onTopOfChunkCenter(context, Heightmap.Types.WORLD_SURFACE_WG, p_229979_ -> generatePieces(p_229979_, context));
     }
 
-    private static void generatePieces(StructurePiecesBuilder p_229981_, Structure.GenerationContext p_229982_) {
-        p_229981_.addPiece(new SwampHutPiece(p_229982_.random(), p_229982_.chunkPos().getMinBlockX(), p_229982_.chunkPos().getMinBlockZ()));
+    private static void generatePieces(StructurePiecesBuilder builder, Structure.GenerationContext context) {
+        builder.addPiece(new SwampHutPiece(context.random(), context.chunkPos().getMinBlockX(), context.chunkPos().getMinBlockZ()));
     }
 
     @Override

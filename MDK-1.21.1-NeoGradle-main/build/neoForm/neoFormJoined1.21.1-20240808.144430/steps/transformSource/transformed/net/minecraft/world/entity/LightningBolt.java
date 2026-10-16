@@ -40,16 +40,16 @@ public class LightningBolt extends Entity {
     private int blocksSetOnFire;
     private float damage = 5.0F;
 
-    public LightningBolt(EntityType<? extends LightningBolt> p_20865_, Level p_20866_) {
-        super(p_20865_, p_20866_);
+    public LightningBolt(EntityType<? extends LightningBolt> entityType, Level level) {
+        super(entityType, level);
         this.noCulling = true;
         this.life = 2;
         this.seed = this.random.nextLong();
         this.flashes = this.random.nextInt(3) + 1;
     }
 
-    public void setVisualOnly(boolean p_20875_) {
-        this.visualOnly = p_20875_;
+    public void setVisualOnly(boolean visualOnly) {
+        this.visualOnly = visualOnly;
     }
 
     @Override
@@ -62,8 +62,8 @@ public class LightningBolt extends Entity {
         return this.cause;
     }
 
-    public void setCause(@Nullable ServerPlayer p_20880_) {
-        this.cause = p_20880_;
+    public void setCause(@Nullable ServerPlayer cause) {
+        this.cause = cause;
     }
 
     private void powerLightningRod() {
@@ -178,7 +178,7 @@ public class LightningBolt extends Entity {
         return BlockPos.containing(vec3.x, vec3.y - 1.0E-6, vec3.z);
     }
 
-    private void spawnFire(int p_20871_) {
+    private void spawnFire(int extraIgnitions) {
         if (!this.visualOnly && !this.level().isClientSide && this.level().getGameRules().getBoolean(GameRules.RULE_DOFIRETICK)) {
             BlockPos blockpos = this.blockPosition();
             BlockState blockstate = BaseFireBlock.getState(this.level(), blockpos);
@@ -187,7 +187,7 @@ public class LightningBolt extends Entity {
                 this.blocksSetOnFire++;
             }
 
-            for (int i = 0; i < p_20871_; i++) {
+            for (int i = 0; i < extraIgnitions; i++) {
                 BlockPos blockpos1 = blockpos.offset(this.random.nextInt(3) - 1, this.random.nextInt(3) - 1, this.random.nextInt(3) - 1);
                 blockstate = BaseFireBlock.getState(this.level(), blockpos1);
                 if (this.level().getBlockState(blockpos1).isAir() && blockstate.canSurvive(this.level(), blockpos1)) {
@@ -198,50 +198,50 @@ public class LightningBolt extends Entity {
         }
     }
 
-    private static void clearCopperOnLightningStrike(Level p_147151_, BlockPos p_147152_) {
-        BlockState blockstate = p_147151_.getBlockState(p_147152_);
+    private static void clearCopperOnLightningStrike(Level level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
         BlockPos blockpos;
         BlockState blockstate1;
         // Neo: support custom LightningRodBlocks
         if (blockstate.getBlock() instanceof LightningRodBlock) {
-            blockpos = p_147152_.relative(blockstate.getValue(LightningRodBlock.FACING).getOpposite());
-            blockstate1 = p_147151_.getBlockState(blockpos);
+            blockpos = pos.relative(blockstate.getValue(LightningRodBlock.FACING).getOpposite());
+            blockstate1 = level.getBlockState(blockpos);
         } else {
-            blockpos = p_147152_;
+            blockpos = pos;
             blockstate1 = blockstate;
         }
 
         if (blockstate1.getBlock() instanceof WeatheringCopper) {
-            p_147151_.setBlockAndUpdate(blockpos, WeatheringCopper.getFirst(p_147151_.getBlockState(blockpos)));
-            BlockPos.MutableBlockPos blockpos$mutableblockpos = p_147152_.mutable();
-            int i = p_147151_.random.nextInt(3) + 3;
+            level.setBlockAndUpdate(blockpos, WeatheringCopper.getFirst(level.getBlockState(blockpos)));
+            BlockPos.MutableBlockPos blockpos$mutableblockpos = pos.mutable();
+            int i = level.random.nextInt(3) + 3;
 
             for (int j = 0; j < i; j++) {
-                int k = p_147151_.random.nextInt(8) + 1;
-                randomWalkCleaningCopper(p_147151_, blockpos, blockpos$mutableblockpos, k);
+                int k = level.random.nextInt(8) + 1;
+                randomWalkCleaningCopper(level, blockpos, blockpos$mutableblockpos, k);
             }
         }
     }
 
-    private static void randomWalkCleaningCopper(Level p_147146_, BlockPos p_147147_, BlockPos.MutableBlockPos p_147148_, int p_147149_) {
-        p_147148_.set(p_147147_);
+    private static void randomWalkCleaningCopper(Level level, BlockPos pos, BlockPos.MutableBlockPos mutable, int steps) {
+        mutable.set(pos);
 
-        for (int i = 0; i < p_147149_; i++) {
-            Optional<BlockPos> optional = randomStepCleaningCopper(p_147146_, p_147148_);
+        for (int i = 0; i < steps; i++) {
+            Optional<BlockPos> optional = randomStepCleaningCopper(level, mutable);
             if (optional.isEmpty()) {
                 break;
             }
 
-            p_147148_.set(optional.get());
+            mutable.set(optional.get());
         }
     }
 
-    private static Optional<BlockPos> randomStepCleaningCopper(Level p_147154_, BlockPos p_147155_) {
-        for (BlockPos blockpos : BlockPos.randomInCube(p_147154_.random, 10, p_147155_, 1)) {
-            BlockState blockstate = p_147154_.getBlockState(blockpos);
+    private static Optional<BlockPos> randomStepCleaningCopper(Level level, BlockPos pos) {
+        for (BlockPos blockpos : BlockPos.randomInCube(level.random, 10, pos, 1)) {
+            BlockState blockstate = level.getBlockState(blockpos);
             if (blockstate.getBlock() instanceof WeatheringCopper) {
-                WeatheringCopper.getPrevious(blockstate).ifPresent(p_147144_ -> p_147154_.setBlockAndUpdate(blockpos, p_147144_));
-                p_147154_.levelEvent(3002, blockpos, -1);
+                WeatheringCopper.getPrevious(blockstate).ifPresent(p_147144_ -> level.setBlockAndUpdate(blockpos, p_147144_));
+                level.levelEvent(3002, blockpos, -1);
                 return Optional.of(blockpos);
             }
         }
@@ -249,22 +249,28 @@ public class LightningBolt extends Entity {
         return Optional.empty();
     }
 
+    /**
+     * Checks if the entity is in range to render.
+     */
     @Override
-    public boolean shouldRenderAtSqrDistance(double p_20869_) {
+    public boolean shouldRenderAtSqrDistance(double distance) {
         double d0 = 64.0 * getViewScale();
-        return p_20869_ < d0 * d0;
+        return distance < d0 * d0;
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_325966_) {
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+    }
+
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    @Override
+    protected void readAdditionalSaveData(CompoundTag compound) {
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_20873_) {
-    }
-
-    @Override
-    protected void addAdditionalSaveData(CompoundTag p_20877_) {
+    protected void addAdditionalSaveData(CompoundTag compound) {
     }
 
     public int getBlocksSetOnFire() {

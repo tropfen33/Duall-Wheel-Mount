@@ -11,8 +11,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 
 public class KillCommand {
-    public static void register(CommandDispatcher<CommandSourceStack> p_137808_) {
-        p_137808_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("kill")
                 .requires(p_137812_ -> p_137812_.hasPermission(2))
                 .executes(p_137817_ -> kill(p_137817_.getSource(), ImmutableList.of(p_137817_.getSource().getEntityOrException())))
@@ -23,17 +23,17 @@ public class KillCommand {
         );
     }
 
-    private static int kill(CommandSourceStack p_137814_, Collection<? extends Entity> p_137815_) {
-        for (Entity entity : p_137815_) {
+    private static int kill(CommandSourceStack source, Collection<? extends Entity> targets) {
+        for (Entity entity : targets) {
             entity.kill();
         }
 
-        if (p_137815_.size() == 1) {
-            p_137814_.sendSuccess(() -> Component.translatable("commands.kill.success.single", p_137815_.iterator().next().getDisplayName()), true);
+        if (targets.size() == 1) {
+            source.sendSuccess(() -> Component.translatable("commands.kill.success.single", targets.iterator().next().getDisplayName()), true);
         } else {
-            p_137814_.sendSuccess(() -> Component.translatable("commands.kill.success.multiple", p_137815_.size()), true);
+            source.sendSuccess(() -> Component.translatable("commands.kill.success.multiple", targets.size()), true);
         }
 
-        return p_137815_.size();
+        return targets.size();
     }
 }

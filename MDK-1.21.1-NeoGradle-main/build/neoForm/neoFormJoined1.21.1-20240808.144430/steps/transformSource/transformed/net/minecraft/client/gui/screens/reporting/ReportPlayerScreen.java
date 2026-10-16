@@ -30,11 +30,11 @@ public class ReportPlayerScreen extends Screen {
     private final PlayerEntry player;
     private final LinearLayout layout = LinearLayout.vertical().spacing(6);
 
-    public ReportPlayerScreen(Screen p_299954_, ReportingContext p_299878_, PlayerEntry p_299949_) {
+    public ReportPlayerScreen(Screen lastScreen, ReportingContext context, PlayerEntry player) {
         super(TITLE);
-        this.lastScreen = p_299954_;
-        this.context = p_299878_;
-        this.player = p_299949_;
+        this.lastScreen = lastScreen;
+        this.context = context;
+        this.player = player;
     }
 
     @Override

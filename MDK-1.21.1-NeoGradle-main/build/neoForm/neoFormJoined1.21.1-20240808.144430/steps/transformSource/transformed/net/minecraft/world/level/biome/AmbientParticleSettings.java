@@ -18,16 +18,16 @@ public class AmbientParticleSettings {
     private final ParticleOptions options;
     private final float probability;
 
-    public AmbientParticleSettings(ParticleOptions p_47417_, float p_47418_) {
-        this.options = p_47417_;
-        this.probability = p_47418_;
+    public AmbientParticleSettings(ParticleOptions options, float probability) {
+        this.options = options;
+        this.probability = probability;
     }
 
     public ParticleOptions getOptions() {
         return this.options;
     }
 
-    public boolean canSpawn(RandomSource p_220528_) {
-        return p_220528_.nextFloat() <= this.probability;
+    public boolean canSpawn(RandomSource random) {
+        return random.nextFloat() <= this.probability;
     }
 }

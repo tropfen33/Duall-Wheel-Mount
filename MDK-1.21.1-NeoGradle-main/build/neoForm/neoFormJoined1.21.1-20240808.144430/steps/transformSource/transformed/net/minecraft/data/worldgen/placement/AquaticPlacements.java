@@ -38,12 +38,12 @@ public class AquaticPlacements {
     public static final ResourceKey<PlacedFeature> KELP_WARM = PlacementUtils.createKey("kelp_warm");
     public static final ResourceKey<PlacedFeature> WARM_OCEAN_VEGETATION = PlacementUtils.createKey("warm_ocean_vegetation");
 
-    private static List<PlacementModifier> seagrassPlacement(int p_195234_) {
-        return List.of(InSquarePlacement.spread(), PlacementUtils.HEIGHTMAP_TOP_SOLID, CountPlacement.of(p_195234_), BiomeFilter.biome());
+    private static List<PlacementModifier> seagrassPlacement(int count) {
+        return List.of(InSquarePlacement.spread(), PlacementUtils.HEIGHTMAP_TOP_SOLID, CountPlacement.of(count), BiomeFilter.biome());
     }
 
-    public static void bootstrap(BootstrapContext<PlacedFeature> p_321710_) {
-        HolderGetter<ConfiguredFeature<?, ?>> holdergetter = p_321710_.lookup(Registries.CONFIGURED_FEATURE);
+    public static void bootstrap(BootstrapContext<PlacedFeature> context) {
+        HolderGetter<ConfiguredFeature<?, ?>> holdergetter = context.lookup(Registries.CONFIGURED_FEATURE);
         Holder.Reference<ConfiguredFeature<?, ?>> reference = holdergetter.getOrThrow(AquaticFeatures.SEAGRASS_SHORT);
         Holder.Reference<ConfiguredFeature<?, ?>> reference1 = holdergetter.getOrThrow(AquaticFeatures.SEAGRASS_SLIGHTLY_LESS_SHORT);
         Holder.Reference<ConfiguredFeature<?, ?>> reference2 = holdergetter.getOrThrow(AquaticFeatures.SEAGRASS_MID);
@@ -52,16 +52,16 @@ public class AquaticPlacements {
         Holder.Reference<ConfiguredFeature<?, ?>> reference5 = holdergetter.getOrThrow(AquaticFeatures.SEA_PICKLE);
         Holder.Reference<ConfiguredFeature<?, ?>> reference6 = holdergetter.getOrThrow(AquaticFeatures.KELP);
         Holder.Reference<ConfiguredFeature<?, ?>> reference7 = holdergetter.getOrThrow(AquaticFeatures.WARM_OCEAN_VEGETATION);
-        PlacementUtils.register(p_321710_, SEAGRASS_WARM, reference, seagrassPlacement(80));
-        PlacementUtils.register(p_321710_, SEAGRASS_NORMAL, reference, seagrassPlacement(48));
-        PlacementUtils.register(p_321710_, SEAGRASS_COLD, reference, seagrassPlacement(32));
-        PlacementUtils.register(p_321710_, SEAGRASS_RIVER, reference1, seagrassPlacement(48));
-        PlacementUtils.register(p_321710_, SEAGRASS_SWAMP, reference2, seagrassPlacement(64));
-        PlacementUtils.register(p_321710_, SEAGRASS_DEEP_WARM, reference3, seagrassPlacement(80));
-        PlacementUtils.register(p_321710_, SEAGRASS_DEEP, reference3, seagrassPlacement(48));
-        PlacementUtils.register(p_321710_, SEAGRASS_DEEP_COLD, reference3, seagrassPlacement(40));
+        PlacementUtils.register(context, SEAGRASS_WARM, reference, seagrassPlacement(80));
+        PlacementUtils.register(context, SEAGRASS_NORMAL, reference, seagrassPlacement(48));
+        PlacementUtils.register(context, SEAGRASS_COLD, reference, seagrassPlacement(32));
+        PlacementUtils.register(context, SEAGRASS_RIVER, reference1, seagrassPlacement(48));
+        PlacementUtils.register(context, SEAGRASS_SWAMP, reference2, seagrassPlacement(64));
+        PlacementUtils.register(context, SEAGRASS_DEEP_WARM, reference3, seagrassPlacement(80));
+        PlacementUtils.register(context, SEAGRASS_DEEP, reference3, seagrassPlacement(48));
+        PlacementUtils.register(context, SEAGRASS_DEEP_COLD, reference3, seagrassPlacement(40));
         PlacementUtils.register(
-            p_321710_,
+            context,
             SEAGRASS_SIMPLE,
             reference4,
             CarvingMaskPlacement.forStep(GenerationStep.Carving.LIQUID),
@@ -76,7 +76,7 @@ public class AquaticPlacements {
             BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321710_,
+            context,
             SEA_PICKLE,
             reference5,
             RarityFilter.onAverageOnceEvery(16),
@@ -85,7 +85,7 @@ public class AquaticPlacements {
             BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321710_,
+            context,
             KELP_COLD,
             reference6,
             NoiseBasedCountPlacement.of(120, 80.0, 0.0),
@@ -94,7 +94,7 @@ public class AquaticPlacements {
             BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321710_,
+            context,
             KELP_WARM,
             reference6,
             NoiseBasedCountPlacement.of(80, 80.0, 0.0),
@@ -103,7 +103,7 @@ public class AquaticPlacements {
             BiomeFilter.biome()
         );
         PlacementUtils.register(
-            p_321710_,
+            context,
             WARM_OCEAN_VEGETATION,
             reference7,
             NoiseBasedCountPlacement.of(20, 400.0, 0.0),

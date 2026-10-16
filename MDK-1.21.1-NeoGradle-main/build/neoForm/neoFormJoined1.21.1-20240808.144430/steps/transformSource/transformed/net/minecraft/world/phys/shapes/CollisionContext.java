@@ -10,15 +10,15 @@ public interface CollisionContext {
         return EntityCollisionContext.EMPTY;
     }
 
-    static CollisionContext of(Entity p_82751_) {
-        return new EntityCollisionContext(p_82751_);
+    static CollisionContext of(Entity entity) {
+        return new EntityCollisionContext(entity);
     }
 
     boolean isDescending();
 
-    boolean isAbove(VoxelShape p_82755_, BlockPos p_82756_, boolean p_82757_);
+    boolean isAbove(VoxelShape shape, BlockPos pos, boolean canAscend);
 
-    boolean isHoldingItem(Item p_82752_);
+    boolean isHoldingItem(Item item);
 
-    boolean canStandOnFluid(FluidState p_205110_, FluidState p_205111_);
+    boolean canStandOnFluid(FluidState fluid1, FluidState fluid2);
 }

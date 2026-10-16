@@ -24,22 +24,22 @@ public abstract class GlslPreprocessor {
     );
     private static final Pattern REGEX_ENDS_WITH_WHITESPACE = Pattern.compile("(?:^|\\v)(?:\\s|/\\*(?:[^*]|\\*+[^*/])*\\*+/|(//[^\\v]*))*\\z");
 
-    public List<String> process(String p_166462_) {
+    public List<String> process(String shaderData) {
         GlslPreprocessor.Context glslpreprocessor$context = new GlslPreprocessor.Context();
-        List<String> list = this.processImports(p_166462_, glslpreprocessor$context, "");
+        List<String> list = this.processImports(shaderData, glslpreprocessor$context, "");
         list.set(0, this.setVersion(list.get(0), glslpreprocessor$context.glslVersion));
         return list;
     }
 
-    private List<String> processImports(String p_166470_, GlslPreprocessor.Context p_166471_, String p_166472_) {
-        int i = p_166471_.sourceId;
+    private List<String> processImports(String shaderData, GlslPreprocessor.Context context, String includeDirectory) {
+        int i = context.sourceId;
         int j = 0;
         String s = "";
         List<String> list = Lists.newArrayList();
-        Matcher matcher = REGEX_MOJ_IMPORT.matcher(p_166470_);
+        Matcher matcher = REGEX_MOJ_IMPORT.matcher(shaderData);
 
         while (matcher.find()) {
-            if (!isDirectiveDisabled(p_166470_, matcher, j)) {
+            if (!isDirectiveDisabled(shaderData, matcher, j)) {
                 String s1 = matcher.group(2);
                 boolean flag = s1 != null;
                 if (!flag) {
@@ -47,18 +47,18 @@ public abstract class GlslPreprocessor {
                 }
 
                 if (s1 != null) {
-                    String s2 = p_166470_.substring(j, matcher.start(1));
-                    String s3 = p_166472_ + s1;
+                    String s2 = shaderData.substring(j, matcher.start(1));
+                    String s3 = includeDirectory + s1;
                     String s4 = this.applyImport(flag, s3);
                     if (!Strings.isNullOrEmpty(s4)) {
                         if (!StringUtil.endsWithNewLine(s4)) {
                             s4 = s4 + System.lineSeparator();
                         }
 
-                        p_166471_.sourceId++;
-                        int k = p_166471_.sourceId;
-                        List<String> list1 = this.processImports(s4, p_166471_, flag ? FileUtil.getFullResourcePath(s3) : "");
-                        list1.set(0, String.format(Locale.ROOT, "#line %d %d\n%s", 0, k, this.processVersions(list1.get(0), p_166471_)));
+                        context.sourceId++;
+                        int k = context.sourceId;
+                        List<String> list1 = this.processImports(s4, context, flag ? FileUtil.getFullResourcePath(s3) : "");
+                        list1.set(0, String.format(Locale.ROOT, "#line %d %d\n%s", 0, k, this.processVersions(list1.get(0), context)));
                         if (!StringUtil.isBlank(s2)) {
                             list.add(s2);
                         }
@@ -69,14 +69,14 @@ public abstract class GlslPreprocessor {
                         list.add(s + s2 + s6);
                     }
 
-                    int l = StringUtil.lineCount(p_166470_.substring(0, matcher.end(1)));
+                    int l = StringUtil.lineCount(shaderData.substring(0, matcher.end(1)));
                     s = String.format(Locale.ROOT, "#line %d %d", l, i);
                     j = matcher.end(1);
                 }
             }
         }
 
-        String s5 = p_166470_.substring(j);
+        String s5 = shaderData.substring(j);
         if (!StringUtil.isBlank(s5)) {
             list.add(s + s5);
         }
@@ -84,48 +84,48 @@ public abstract class GlslPreprocessor {
         return list;
     }
 
-    private String processVersions(String p_166467_, GlslPreprocessor.Context p_166468_) {
-        Matcher matcher = REGEX_VERSION.matcher(p_166467_);
-        if (matcher.find() && isDirectiveEnabled(p_166467_, matcher)) {
-            p_166468_.glslVersion = Math.max(p_166468_.glslVersion, Integer.parseInt(matcher.group(2)));
-            return p_166467_.substring(0, matcher.start(1))
+    private String processVersions(String versionData, GlslPreprocessor.Context context) {
+        Matcher matcher = REGEX_VERSION.matcher(versionData);
+        if (matcher.find() && isDirectiveEnabled(versionData, matcher)) {
+            context.glslVersion = Math.max(context.glslVersion, Integer.parseInt(matcher.group(2)));
+            return versionData.substring(0, matcher.start(1))
                 + "/*"
-                + p_166467_.substring(matcher.start(1), matcher.end(1))
+                + versionData.substring(matcher.start(1), matcher.end(1))
                 + "*/"
-                + p_166467_.substring(matcher.end(1));
+                + versionData.substring(matcher.end(1));
         } else {
-            return p_166467_;
+            return versionData;
         }
     }
 
-    private String setVersion(String p_166464_, int p_166465_) {
-        Matcher matcher = REGEX_VERSION.matcher(p_166464_);
-        return matcher.find() && isDirectiveEnabled(p_166464_, matcher)
-            ? p_166464_.substring(0, matcher.start(2)) + Math.max(p_166465_, Integer.parseInt(matcher.group(2))) + p_166464_.substring(matcher.end(2))
-            : p_166464_;
+    private String setVersion(String versionData, int glslVersion) {
+        Matcher matcher = REGEX_VERSION.matcher(versionData);
+        return matcher.find() && isDirectiveEnabled(versionData, matcher)
+            ? versionData.substring(0, matcher.start(2)) + Math.max(glslVersion, Integer.parseInt(matcher.group(2))) + versionData.substring(matcher.end(2))
+            : versionData;
     }
 
-    private static boolean isDirectiveEnabled(String p_166474_, Matcher p_166475_) {
-        return !isDirectiveDisabled(p_166474_, p_166475_, 0);
+    private static boolean isDirectiveEnabled(String shaderData, Matcher matcher) {
+        return !isDirectiveDisabled(shaderData, matcher, 0);
     }
 
-    private static boolean isDirectiveDisabled(String p_166477_, Matcher p_166478_, int p_166479_) {
-        int i = p_166478_.start() - p_166479_;
+    private static boolean isDirectiveDisabled(String shaderData, Matcher p_matcher, int offset) {
+        int i = p_matcher.start() - offset;
         if (i == 0) {
             return false;
         } else {
-            Matcher matcher = REGEX_ENDS_WITH_WHITESPACE.matcher(p_166477_.substring(p_166479_, p_166478_.start()));
+            Matcher matcher = REGEX_ENDS_WITH_WHITESPACE.matcher(shaderData.substring(offset, p_matcher.start()));
             if (!matcher.find()) {
                 return true;
             } else {
                 int j = matcher.end(1);
-                return j == p_166478_.start();
+                return j == p_matcher.start();
             }
         }
     }
 
     @Nullable
-    public abstract String applyImport(boolean p_166480_, String p_166481_);
+    public abstract String applyImport(boolean useFullPath, String directory);
 
     @OnlyIn(Dist.CLIENT)
     static final class Context {

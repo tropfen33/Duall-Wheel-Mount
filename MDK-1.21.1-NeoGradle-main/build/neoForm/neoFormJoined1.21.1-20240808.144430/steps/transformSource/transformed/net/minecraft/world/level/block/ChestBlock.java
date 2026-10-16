@@ -118,15 +118,15 @@ public class ChestBlock extends AbstractChestBlock<ChestBlockEntity> implements 
         return CODEC;
     }
 
-    public ChestBlock(BlockBehaviour.Properties p_51490_, Supplier<BlockEntityType<? extends ChestBlockEntity>> p_51491_) {
-        super(p_51490_, p_51491_);
+    public ChestBlock(BlockBehaviour.Properties properties, Supplier<BlockEntityType<? extends ChestBlockEntity>> blockEntityType) {
+        super(properties, blockEntityType);
         this.registerDefaultState(
             this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(TYPE, ChestType.SINGLE).setValue(WATERLOGGED, Boolean.valueOf(false))
         );
     }
 
-    public static DoubleBlockCombiner.BlockType getBlockType(BlockState p_51583_) {
-        ChestType chesttype = p_51583_.getValue(TYPE);
+    public static DoubleBlockCombiner.BlockType getBlockType(BlockState state) {
+        ChestType chesttype = state.getValue(TYPE);
         if (chesttype == ChestType.SINGLE) {
             return DoubleBlockCombiner.BlockType.SINGLE;
         } else {
@@ -134,38 +134,47 @@ public class ChestBlock extends AbstractChestBlock<ChestBlockEntity> implements 
         }
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     * @deprecated call via {@link IBlockState#getRenderType()} whenever possible. Implementing/overriding is fine.
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_51567_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
+    /**
+     * Update the provided state given the provided neighbor facing and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific face passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_51555_, Direction p_51556_, BlockState p_51557_, LevelAccessor p_51558_, BlockPos p_51559_, BlockPos p_51560_) {
-        if (p_51555_.getValue(WATERLOGGED)) {
-            p_51558_.scheduleTick(p_51559_, Fluids.WATER, Fluids.WATER.getTickDelay(p_51558_));
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        if (p_51557_.is(this) && p_51556_.getAxis().isHorizontal()) {
-            ChestType chesttype = p_51557_.getValue(TYPE);
-            if (p_51555_.getValue(TYPE) == ChestType.SINGLE
+        if (facingState.is(this) && facing.getAxis().isHorizontal()) {
+            ChestType chesttype = facingState.getValue(TYPE);
+            if (state.getValue(TYPE) == ChestType.SINGLE
                 && chesttype != ChestType.SINGLE
-                && p_51555_.getValue(FACING) == p_51557_.getValue(FACING)
-                && getConnectedDirection(p_51557_) == p_51556_.getOpposite()) {
-                return p_51555_.setValue(TYPE, chesttype.getOpposite());
+                && state.getValue(FACING) == facingState.getValue(FACING)
+                && getConnectedDirection(facingState) == facing.getOpposite()) {
+                return state.setValue(TYPE, chesttype.getOpposite());
             }
-        } else if (getConnectedDirection(p_51555_) == p_51556_) {
-            return p_51555_.setValue(TYPE, ChestType.SINGLE);
+        } else if (getConnectedDirection(state) == facing) {
+            return state.setValue(TYPE, ChestType.SINGLE);
         }
 
-        return super.updateShape(p_51555_, p_51556_, p_51557_, p_51558_, p_51559_, p_51560_);
+        return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_51569_, BlockGetter p_51570_, BlockPos p_51571_, CollisionContext p_51572_) {
-        if (p_51569_.getValue(TYPE) == ChestType.SINGLE) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        if (state.getValue(TYPE) == ChestType.SINGLE) {
             return AABB;
         } else {
-            switch (getConnectedDirection(p_51569_)) {
+            switch (getConnectedDirection(state)) {
                 case NORTH:
                 default:
                     return NORTH_AABB;
@@ -179,20 +188,23 @@ public class ChestBlock extends AbstractChestBlock<ChestBlockEntity> implements 
         }
     }
 
-    public static Direction getConnectedDirection(BlockState p_51585_) {
-        Direction direction = p_51585_.getValue(FACING);
-        return p_51585_.getValue(TYPE) == ChestType.LEFT ? direction.getClockWise() : direction.getCounterClockWise();
+    /**
+     * @return the Direction pointing from the given state to its attached double chest
+     */
+    public static Direction getConnectedDirection(BlockState state) {
+        Direction direction = state.getValue(FACING);
+        return state.getValue(TYPE) == ChestType.LEFT ? direction.getClockWise() : direction.getCounterClockWise();
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_51493_) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         ChestType chesttype = ChestType.SINGLE;
-        Direction direction = p_51493_.getHorizontalDirection().getOpposite();
-        FluidState fluidstate = p_51493_.getLevel().getFluidState(p_51493_.getClickedPos());
-        boolean flag = p_51493_.isSecondaryUseActive();
-        Direction direction1 = p_51493_.getClickedFace();
+        Direction direction = context.getHorizontalDirection().getOpposite();
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
+        boolean flag = context.isSecondaryUseActive();
+        Direction direction1 = context.getClickedFace();
         if (direction1.getAxis().isHorizontal() && flag) {
-            Direction direction2 = this.candidatePartnerFacing(p_51493_, direction1.getOpposite());
+            Direction direction2 = this.candidatePartnerFacing(context, direction1.getOpposite());
             if (direction2 != null && direction2.getAxis() != direction1.getAxis()) {
                 direction = direction2;
                 chesttype = direction2.getCounterClockWise() == direction1.getOpposite() ? ChestType.RIGHT : ChestType.LEFT;
@@ -200,9 +212,9 @@ public class ChestBlock extends AbstractChestBlock<ChestBlockEntity> implements 
         }
 
         if (chesttype == ChestType.SINGLE && !flag) {
-            if (direction == this.candidatePartnerFacing(p_51493_, direction.getClockWise())) {
+            if (direction == this.candidatePartnerFacing(context, direction.getClockWise())) {
                 chesttype = ChestType.LEFT;
-            } else if (direction == this.candidatePartnerFacing(p_51493_, direction.getCounterClockWise())) {
+            } else if (direction == this.candidatePartnerFacing(context, direction.getCounterClockWise())) {
                 chesttype = ChestType.RIGHT;
             }
         }
@@ -214,32 +226,32 @@ public class ChestBlock extends AbstractChestBlock<ChestBlockEntity> implements 
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_51581_) {
-        return p_51581_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_51581_);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
     @Nullable
-    private Direction candidatePartnerFacing(BlockPlaceContext p_51495_, Direction p_51496_) {
-        BlockState blockstate = p_51495_.getLevel().getBlockState(p_51495_.getClickedPos().relative(p_51496_));
+    private Direction candidatePartnerFacing(BlockPlaceContext context, Direction direction) {
+        BlockState blockstate = context.getLevel().getBlockState(context.getClickedPos().relative(direction));
         return blockstate.is(this) && blockstate.getValue(TYPE) == ChestType.SINGLE ? blockstate.getValue(FACING) : null;
     }
 
     @Override
-    protected void onRemove(BlockState p_51538_, Level p_51539_, BlockPos p_51540_, BlockState p_51541_, boolean p_51542_) {
-        Containers.dropContentsOnDestroy(p_51538_, p_51541_, p_51539_, p_51540_);
-        super.onRemove(p_51538_, p_51539_, p_51540_, p_51541_, p_51542_);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        Containers.dropContentsOnDestroy(state, newState, level, pos);
+        super.onRemove(state, level, pos, newState, isMoving);
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_51531_, Level p_51532_, BlockPos p_51533_, Player p_51534_, BlockHitResult p_51536_) {
-        if (p_51532_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
-            MenuProvider menuprovider = this.getMenuProvider(p_51531_, p_51532_, p_51533_);
+            MenuProvider menuprovider = this.getMenuProvider(state, level, pos);
             if (menuprovider != null) {
-                p_51534_.openMenu(menuprovider);
-                p_51534_.awardStat(this.getOpenChestStat());
-                PiglinAi.angerNearbyPiglins(p_51534_, true);
+                player.openMenu(menuprovider);
+                player.awardStat(this.getOpenChestStat());
+                PiglinAi.angerNearbyPiglins(player, true);
             }
 
             return InteractionResult.CONSUME;
@@ -255,33 +267,33 @@ public class ChestBlock extends AbstractChestBlock<ChestBlockEntity> implements 
     }
 
     @Nullable
-    public static Container getContainer(ChestBlock p_51512_, BlockState p_51513_, Level p_51514_, BlockPos p_51515_, boolean p_51516_) {
-        return p_51512_.combine(p_51513_, p_51514_, p_51515_, p_51516_).apply(CHEST_COMBINER).orElse(null);
+    public static Container getContainer(ChestBlock chest, BlockState state, Level level, BlockPos pos, boolean override) {
+        return chest.combine(state, level, pos, override).apply(CHEST_COMBINER).orElse(null);
     }
 
     @Override
     public DoubleBlockCombiner.NeighborCombineResult<? extends ChestBlockEntity> combine(
-        BlockState p_51544_, Level p_51545_, BlockPos p_51546_, boolean p_51547_
+        BlockState state, Level level, BlockPos pos, boolean override
     ) {
         BiPredicate<LevelAccessor, BlockPos> bipredicate;
-        if (p_51547_) {
+        if (override) {
             bipredicate = (p_51578_, p_51579_) -> false;
         } else {
             bipredicate = ChestBlock::isChestBlockedAt;
         }
 
         return DoubleBlockCombiner.combineWithNeigbour(
-            this.blockEntityType.get(), ChestBlock::getBlockType, ChestBlock::getConnectedDirection, FACING, p_51544_, p_51545_, p_51546_, bipredicate
+            this.blockEntityType.get(), ChestBlock::getBlockType, ChestBlock::getConnectedDirection, FACING, state, level, pos, bipredicate
         );
     }
 
     @Nullable
     @Override
-    protected MenuProvider getMenuProvider(BlockState p_51574_, Level p_51575_, BlockPos p_51576_) {
-        return this.combine(p_51574_, p_51575_, p_51576_, false).apply(MENU_PROVIDER_COMBINER).orElse(null);
+    protected MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
+        return this.combine(state, level, pos, false).apply(MENU_PROVIDER_COMBINER).orElse(null);
     }
 
-    public static DoubleBlockCombiner.Combiner<ChestBlockEntity, Float2FloatFunction> opennessCombiner(final LidBlockEntity p_51518_) {
+    public static DoubleBlockCombiner.Combiner<ChestBlockEntity, Float2FloatFunction> opennessCombiner(final LidBlockEntity lid) {
         return new DoubleBlockCombiner.Combiner<ChestBlockEntity, Float2FloatFunction>() {
             public Float2FloatFunction acceptDouble(ChestBlockEntity p_51633_, ChestBlockEntity p_51634_) {
                 return p_51638_ -> Math.max(p_51633_.getOpenNess(p_51638_), p_51634_.getOpenNess(p_51638_));
@@ -292,41 +304,41 @@ public class ChestBlock extends AbstractChestBlock<ChestBlockEntity> implements 
             }
 
             public Float2FloatFunction acceptNone() {
-                return p_51518_::getOpenNess;
+                return lid::getOpenNess;
             }
         };
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_153064_, BlockState p_153065_) {
-        return new ChestBlockEntity(p_153064_, p_153065_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new ChestBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_153055_, BlockState p_153056_, BlockEntityType<T> p_153057_) {
-        return p_153055_.isClientSide ? createTickerHelper(p_153057_, this.blockEntityType(), ChestBlockEntity::lidAnimateTick) : null;
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        return level.isClientSide ? createTickerHelper(blockEntityType, this.blockEntityType(), ChestBlockEntity::lidAnimateTick) : null;
     }
 
-    public static boolean isChestBlockedAt(LevelAccessor p_51509_, BlockPos p_51510_) {
-        return isBlockedChestByBlock(p_51509_, p_51510_) || isCatSittingOnChest(p_51509_, p_51510_);
+    public static boolean isChestBlockedAt(LevelAccessor level, BlockPos pos) {
+        return isBlockedChestByBlock(level, pos) || isCatSittingOnChest(level, pos);
     }
 
-    private static boolean isBlockedChestByBlock(BlockGetter p_51500_, BlockPos p_51501_) {
-        BlockPos blockpos = p_51501_.above();
-        return p_51500_.getBlockState(blockpos).isRedstoneConductor(p_51500_, blockpos);
+    private static boolean isBlockedChestByBlock(BlockGetter level, BlockPos pos) {
+        BlockPos blockpos = pos.above();
+        return level.getBlockState(blockpos).isRedstoneConductor(level, blockpos);
     }
 
-    private static boolean isCatSittingOnChest(LevelAccessor p_51564_, BlockPos p_51565_) {
-        List<Cat> list = p_51564_.getEntitiesOfClass(
+    private static boolean isCatSittingOnChest(LevelAccessor level, BlockPos pos) {
+        List<Cat> list = level.getEntitiesOfClass(
             Cat.class,
             new AABB(
-                (double)p_51565_.getX(),
-                (double)(p_51565_.getY() + 1),
-                (double)p_51565_.getZ(),
-                (double)(p_51565_.getX() + 1),
-                (double)(p_51565_.getY() + 2),
-                (double)(p_51565_.getZ() + 1)
+                (double)pos.getX(),
+                (double)(pos.getY() + 1),
+                (double)pos.getZ(),
+                (double)(pos.getX() + 1),
+                (double)(pos.getY() + 2),
+                (double)(pos.getZ() + 1)
             )
         );
         if (!list.isEmpty()) {
@@ -341,39 +353,49 @@ public class ChestBlock extends AbstractChestBlock<ChestBlockEntity> implements 
     }
 
     @Override
-    protected boolean hasAnalogOutputSignal(BlockState p_51520_) {
+    protected boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 
+    /**
+     * Returns the analog signal this block emits. This is the signal a comparator can read from it.
+     *
+     */
     @Override
-    protected int getAnalogOutputSignal(BlockState p_51527_, Level p_51528_, BlockPos p_51529_) {
-        return AbstractContainerMenu.getRedstoneSignalFromContainer(getContainer(this, p_51527_, p_51528_, p_51529_, false));
+    protected int getAnalogOutputSignal(BlockState blockState, Level level, BlockPos pos) {
+        return AbstractContainerMenu.getRedstoneSignalFromContainer(getContainer(this, blockState, level, pos, false));
+    }
+
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        BlockState rotated = state.rotate(mirror.getRotation(state.getValue(FACING)));
+        return mirror == Mirror.NONE ? rotated : rotated.setValue(TYPE, rotated.getValue(TYPE).getOpposite());  // Forge: Fixed MC-134110 Structure mirroring breaking apart double chests
     }
 
     @Override
-    protected BlockState rotate(BlockState p_51552_, Rotation p_51553_) {
-        return p_51552_.setValue(FACING, p_51553_.rotate(p_51552_.getValue(FACING)));
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, TYPE, WATERLOGGED);
     }
 
     @Override
-    protected BlockState mirror(BlockState p_51549_, Mirror p_51550_) {
-        BlockState rotated = p_51549_.rotate(p_51550_.getRotation(p_51549_.getValue(FACING)));
-        return p_51550_ == Mirror.NONE ? rotated : rotated.setValue(TYPE, rotated.getValue(TYPE).getOpposite());  // Forge: Fixed MC-134110 Structure mirroring breaking apart double chests
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_51562_) {
-        p_51562_.add(FACING, TYPE, WATERLOGGED);
-    }
-
-    @Override
-    protected boolean isPathfindable(BlockState p_51522_, PathComputationType p_51525_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
     @Override
-    protected void tick(BlockState p_220958_, ServerLevel p_220959_, BlockPos p_220960_, RandomSource p_220961_) {
-        BlockEntity blockentity = p_220959_.getBlockEntity(p_220960_);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        BlockEntity blockentity = level.getBlockEntity(pos);
         if (blockentity instanceof ChestBlockEntity) {
             ((ChestBlockEntity)blockentity).recheckOpen();
         }

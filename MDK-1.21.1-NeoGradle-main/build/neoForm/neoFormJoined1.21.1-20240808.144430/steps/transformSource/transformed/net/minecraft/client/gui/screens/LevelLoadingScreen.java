@@ -36,9 +36,9 @@ public class LevelLoadingScreen extends Screen {
         p_280803_.put(ChunkStatus.FULL, 16777215);
     });
 
-    public LevelLoadingScreen(StoringChunkProgressListener p_96143_) {
+    public LevelLoadingScreen(StoringChunkProgressListener progressListener) {
         super(GameNarrator.NO_TITLE);
-        this.progressListener = p_96143_;
+        this.progressListener = progressListener;
     }
 
     @Override
@@ -58,11 +58,11 @@ public class LevelLoadingScreen extends Screen {
     }
 
     @Override
-    protected void updateNarratedWidget(NarrationElementOutput p_169312_) {
+    protected void updateNarratedWidget(NarrationElementOutput narrationElementOutput) {
         if (this.done) {
-            p_169312_.add(NarratedElementType.TITLE, Component.translatable("narrator.loading.done"));
+            narrationElementOutput.add(NarratedElementType.TITLE, Component.translatable("narrator.loading.done"));
         } else {
-            p_169312_.add(NarratedElementType.TITLE, this.getFormattedProgress());
+            narrationElementOutput.add(NarratedElementType.TITLE, this.getFormattedProgress());
         }
     }
 
@@ -70,9 +70,17 @@ public class LevelLoadingScreen extends Screen {
         return Component.translatable("loading.progress", Mth.clamp(this.progressListener.getProgress(), 0, 100));
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283534_, int p_96146_, int p_96147_, float p_96148_) {
-        super.render(p_283534_, p_96146_, p_96147_, p_96148_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         long i = Util.getMillis();
         if (i - this.lastNarration > 2000L) {
             this.lastNarration = i;
@@ -81,35 +89,35 @@ public class LevelLoadingScreen extends Screen {
 
         int j = this.width / 2;
         int k = this.height / 2;
-        renderChunks(p_283534_, this.progressListener, j, k, 2, 0);
+        renderChunks(guiGraphics, this.progressListener, j, k, 2, 0);
         int l = this.progressListener.getDiameter() + 9 + 2;
-        p_283534_.drawCenteredString(this.font, this.getFormattedProgress(), j, k - l, 16777215);
+        guiGraphics.drawCenteredString(this.font, this.getFormattedProgress(), j, k - l, 16777215);
     }
 
-    public static void renderChunks(GuiGraphics p_283467_, StoringChunkProgressListener p_96151_, int p_96152_, int p_96153_, int p_96154_, int p_96155_) {
+    public static void renderChunks(GuiGraphics guiGraphics, StoringChunkProgressListener progressListener, int x, int y, int p_96154_, int p_96155_) {
         int i = p_96154_ + p_96155_;
-        int j = p_96151_.getFullDiameter();
+        int j = progressListener.getFullDiameter();
         int k = j * i - p_96155_;
-        int l = p_96151_.getDiameter();
+        int l = progressListener.getDiameter();
         int i1 = l * i - p_96155_;
-        int j1 = p_96152_ - i1 / 2;
-        int k1 = p_96153_ - i1 / 2;
+        int j1 = x - i1 / 2;
+        int k1 = y - i1 / 2;
         int l1 = k / 2 + 1;
         int i2 = -16772609;
-        p_283467_.drawManaged(() -> {
+        guiGraphics.drawManaged(() -> {
             if (p_96155_ != 0) {
-                p_283467_.fill(p_96152_ - l1, p_96153_ - l1, p_96152_ - l1 + 1, p_96153_ + l1, -16772609);
-                p_283467_.fill(p_96152_ + l1 - 1, p_96153_ - l1, p_96152_ + l1, p_96153_ + l1, -16772609);
-                p_283467_.fill(p_96152_ - l1, p_96153_ - l1, p_96152_ + l1, p_96153_ - l1 + 1, -16772609);
-                p_283467_.fill(p_96152_ - l1, p_96153_ + l1 - 1, p_96152_ + l1, p_96153_ + l1, -16772609);
+                guiGraphics.fill(x - l1, y - l1, x - l1 + 1, y + l1, -16772609);
+                guiGraphics.fill(x + l1 - 1, y - l1, x + l1, y + l1, -16772609);
+                guiGraphics.fill(x - l1, y - l1, x + l1, y - l1 + 1, -16772609);
+                guiGraphics.fill(x - l1, y + l1 - 1, x + l1, y + l1, -16772609);
             }
 
             for (int j2 = 0; j2 < l; j2++) {
                 for (int k2 = 0; k2 < l; k2++) {
-                    ChunkStatus chunkstatus = p_96151_.getStatus(j2, k2);
+                    ChunkStatus chunkstatus = progressListener.getStatus(j2, k2);
                     int l2 = j1 + j2 * i;
                     int i3 = k1 + k2 * i;
-                    p_283467_.fill(l2, i3, l2 + p_96154_, i3 + p_96154_, COLORS.getInt(chunkstatus) | 0xFF000000);
+                    guiGraphics.fill(l2, i3, l2 + p_96154_, i3 + p_96154_, COLORS.getInt(chunkstatus) | 0xFF000000);
                 }
             }
         });

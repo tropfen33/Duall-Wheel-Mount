@@ -19,68 +19,73 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public abstract class GrowingPlantBodyBlock extends GrowingPlantBlock implements BonemealableBlock {
-    protected GrowingPlantBodyBlock(BlockBehaviour.Properties p_53886_, Direction p_53887_, VoxelShape p_53888_, boolean p_53889_) {
-        super(p_53886_, p_53887_, p_53888_, p_53889_);
+    protected GrowingPlantBodyBlock(BlockBehaviour.Properties properties, Direction growthDirection, VoxelShape shape, boolean scheduleFluidTicks) {
+        super(properties, growthDirection, shape, scheduleFluidTicks);
     }
 
     @Override
     protected abstract MapCodec<? extends GrowingPlantBodyBlock> codec();
 
-    protected BlockState updateHeadAfterConvertedFromBody(BlockState p_153326_, BlockState p_153327_) {
-        return p_153327_;
+    protected BlockState updateHeadAfterConvertedFromBody(BlockState head, BlockState body) {
+        return body;
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_53913_, Direction p_53914_, BlockState p_53915_, LevelAccessor p_53916_, BlockPos p_53917_, BlockPos p_53918_) {
-        if (p_53914_ == this.growthDirection.getOpposite() && !p_53913_.canSurvive(p_53916_, p_53917_)) {
-            p_53916_.scheduleTick(p_53917_, this, 1);
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (facing == this.growthDirection.getOpposite() && !state.canSurvive(level, currentPos)) {
+            level.scheduleTick(currentPos, this, 1);
         }
 
         GrowingPlantHeadBlock growingplantheadblock = this.getHeadBlock();
-        if (p_53914_ == this.growthDirection && !p_53915_.is(this) && !p_53915_.is(growingplantheadblock)) {
-            return this.updateHeadAfterConvertedFromBody(p_53913_, growingplantheadblock.getStateForPlacement(p_53916_));
+        if (facing == this.growthDirection && !facingState.is(this) && !facingState.is(growingplantheadblock)) {
+            return this.updateHeadAfterConvertedFromBody(state, growingplantheadblock.getStateForPlacement(level));
         } else {
             if (this.scheduleFluidTicks) {
-                p_53916_.scheduleTick(p_53917_, Fluids.WATER, Fluids.WATER.getTickDelay(p_53916_));
+                level.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
             }
 
-            return super.updateShape(p_53913_, p_53914_, p_53915_, p_53916_, p_53917_, p_53918_);
+            return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
         }
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader p_304650_, BlockPos p_53897_, BlockState p_53898_) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         return new ItemStack(this.getHeadBlock());
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader p_256221_, BlockPos p_255647_, BlockState p_256117_) {
-        Optional<BlockPos> optional = this.getHeadPos(p_256221_, p_255647_, p_256117_.getBlock());
-        return optional.isPresent() && this.getHeadBlock().canGrowInto(p_256221_.getBlockState(optional.get().relative(this.growthDirection)));
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+        Optional<BlockPos> optional = this.getHeadPos(level, pos, state.getBlock());
+        return optional.isPresent() && this.getHeadBlock().canGrowInto(level.getBlockState(optional.get().relative(this.growthDirection)));
     }
 
     @Override
-    public boolean isBonemealSuccess(Level p_221290_, RandomSource p_221291_, BlockPos p_221292_, BlockState p_221293_) {
+    public boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel p_221285_, RandomSource p_221286_, BlockPos p_221287_, BlockState p_221288_) {
-        Optional<BlockPos> optional = this.getHeadPos(p_221285_, p_221287_, p_221288_.getBlock());
+    public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
+        Optional<BlockPos> optional = this.getHeadPos(level, pos, state.getBlock());
         if (optional.isPresent()) {
-            BlockState blockstate = p_221285_.getBlockState(optional.get());
-            ((GrowingPlantHeadBlock)blockstate.getBlock()).performBonemeal(p_221285_, p_221286_, optional.get(), blockstate);
+            BlockState blockstate = level.getBlockState(optional.get());
+            ((GrowingPlantHeadBlock)blockstate.getBlock()).performBonemeal(level, random, optional.get(), blockstate);
         }
     }
 
-    private Optional<BlockPos> getHeadPos(BlockGetter p_153323_, BlockPos p_153324_, Block p_153325_) {
-        return BlockUtil.getTopConnectedBlock(p_153323_, p_153324_, p_153325_, this.growthDirection, this.getHeadBlock());
+    private Optional<BlockPos> getHeadPos(BlockGetter level, BlockPos pos, Block block) {
+        return BlockUtil.getTopConnectedBlock(level, pos, block, this.growthDirection, this.getHeadBlock());
     }
 
     @Override
-    protected boolean canBeReplaced(BlockState p_53910_, BlockPlaceContext p_53911_) {
-        boolean flag = super.canBeReplaced(p_53910_, p_53911_);
-        return flag && p_53911_.getItemInHand().is(this.getHeadBlock().asItem()) ? false : flag;
+    protected boolean canBeReplaced(BlockState state, BlockPlaceContext useContext) {
+        boolean flag = super.canBeReplaced(state, useContext);
+        return flag && useContext.getItemInHand().is(this.getHeadBlock().asItem()) ? false : flag;
     }
 
     @Override

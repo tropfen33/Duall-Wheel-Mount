@@ -18,39 +18,42 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class DrownedModel<T extends Zombie> extends ZombieModel<T> {
-    public DrownedModel(ModelPart p_170534_) {
-        super(p_170534_);
+    public DrownedModel(ModelPart root) {
+        super(root);
     }
 
-    public static LayerDefinition createBodyLayer(CubeDeformation p_170536_) {
-        MeshDefinition meshdefinition = HumanoidModel.createMesh(p_170536_, 0.0F);
+    public static LayerDefinition createBodyLayer(CubeDeformation cubeDeformation) {
+        MeshDefinition meshdefinition = HumanoidModel.createMesh(cubeDeformation, 0.0F);
         PartDefinition partdefinition = meshdefinition.getRoot();
         partdefinition.addOrReplaceChild(
-            "left_arm", CubeListBuilder.create().texOffs(32, 48).addBox(-1.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F, p_170536_), PartPose.offset(5.0F, 2.0F, 0.0F)
+            "left_arm", CubeListBuilder.create().texOffs(32, 48).addBox(-1.0F, -2.0F, -2.0F, 4.0F, 12.0F, 4.0F, cubeDeformation), PartPose.offset(5.0F, 2.0F, 0.0F)
         );
         partdefinition.addOrReplaceChild(
-            "left_leg", CubeListBuilder.create().texOffs(16, 48).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 12.0F, 4.0F, p_170536_), PartPose.offset(1.9F, 12.0F, 0.0F)
+            "left_leg", CubeListBuilder.create().texOffs(16, 48).addBox(-2.0F, 0.0F, -2.0F, 4.0F, 12.0F, 4.0F, cubeDeformation), PartPose.offset(1.9F, 12.0F, 0.0F)
         );
         return LayerDefinition.create(meshdefinition, 64, 64);
     }
 
-    public void prepareMobModel(T p_102521_, float p_102522_, float p_102523_, float p_102524_) {
+    public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float partialTick) {
         this.rightArmPose = HumanoidModel.ArmPose.EMPTY;
         this.leftArmPose = HumanoidModel.ArmPose.EMPTY;
-        ItemStack itemstack = p_102521_.getItemInHand(InteractionHand.MAIN_HAND);
-        if (itemstack.is(Items.TRIDENT) && p_102521_.isAggressive()) {
-            if (p_102521_.getMainArm() == HumanoidArm.RIGHT) {
+        ItemStack itemstack = entity.getItemInHand(InteractionHand.MAIN_HAND);
+        if (itemstack.is(Items.TRIDENT) && entity.isAggressive()) {
+            if (entity.getMainArm() == HumanoidArm.RIGHT) {
                 this.rightArmPose = HumanoidModel.ArmPose.THROW_SPEAR;
             } else {
                 this.leftArmPose = HumanoidModel.ArmPose.THROW_SPEAR;
             }
         }
 
-        super.prepareMobModel(p_102521_, p_102522_, p_102523_, p_102524_);
+        super.prepareMobModel(entity, limbSwing, limbSwingAmount, partialTick);
     }
 
-    public void setupAnim(T p_102526_, float p_102527_, float p_102528_, float p_102529_, float p_102530_, float p_102531_) {
-        super.setupAnim(p_102526_, p_102527_, p_102528_, p_102529_, p_102530_, p_102531_);
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
         if (this.leftArmPose == HumanoidModel.ArmPose.THROW_SPEAR) {
             this.leftArm.xRot = this.leftArm.xRot * 0.5F - (float) Math.PI;
             this.leftArm.yRot = 0.0F;
@@ -63,13 +66,13 @@ public class DrownedModel<T extends Zombie> extends ZombieModel<T> {
 
         if (this.swimAmount > 0.0F) {
             this.rightArm.xRot = this.rotlerpRad(this.swimAmount, this.rightArm.xRot, (float) (-Math.PI * 4.0 / 5.0))
-                + this.swimAmount * 0.35F * Mth.sin(0.1F * p_102529_);
+                + this.swimAmount * 0.35F * Mth.sin(0.1F * ageInTicks);
             this.leftArm.xRot = this.rotlerpRad(this.swimAmount, this.leftArm.xRot, (float) (-Math.PI * 4.0 / 5.0))
-                - this.swimAmount * 0.35F * Mth.sin(0.1F * p_102529_);
+                - this.swimAmount * 0.35F * Mth.sin(0.1F * ageInTicks);
             this.rightArm.zRot = this.rotlerpRad(this.swimAmount, this.rightArm.zRot, -0.15F);
             this.leftArm.zRot = this.rotlerpRad(this.swimAmount, this.leftArm.zRot, 0.15F);
-            this.leftLeg.xRot = this.leftLeg.xRot - this.swimAmount * 0.55F * Mth.sin(0.1F * p_102529_);
-            this.rightLeg.xRot = this.rightLeg.xRot + this.swimAmount * 0.55F * Mth.sin(0.1F * p_102529_);
+            this.leftLeg.xRot = this.leftLeg.xRot - this.swimAmount * 0.55F * Mth.sin(0.1F * ageInTicks);
+            this.rightLeg.xRot = this.rightLeg.xRot + this.swimAmount * 0.55F * Mth.sin(0.1F * ageInTicks);
             this.head.xRot = 0.0F;
         }
     }

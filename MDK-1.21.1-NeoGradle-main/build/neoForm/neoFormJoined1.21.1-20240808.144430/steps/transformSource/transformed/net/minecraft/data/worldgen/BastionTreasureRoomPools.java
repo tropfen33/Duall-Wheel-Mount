@@ -10,17 +10,17 @@ import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
 
 public class BastionTreasureRoomPools {
-    public static void bootstrap(BootstrapContext<StructureTemplatePool> p_321741_) {
-        HolderGetter<StructureProcessorList> holdergetter = p_321741_.lookup(Registries.PROCESSOR_LIST);
+    public static void bootstrap(BootstrapContext<StructureTemplatePool> context) {
+        HolderGetter<StructureProcessorList> holdergetter = context.lookup(Registries.PROCESSOR_LIST);
         Holder<StructureProcessorList> holder = holdergetter.getOrThrow(ProcessorLists.TREASURE_ROOMS);
         Holder<StructureProcessorList> holder1 = holdergetter.getOrThrow(ProcessorLists.HIGH_WALL);
         Holder<StructureProcessorList> holder2 = holdergetter.getOrThrow(ProcessorLists.BOTTOM_RAMPART);
         Holder<StructureProcessorList> holder3 = holdergetter.getOrThrow(ProcessorLists.HIGH_RAMPART);
         Holder<StructureProcessorList> holder4 = holdergetter.getOrThrow(ProcessorLists.ROOF);
-        HolderGetter<StructureTemplatePool> holdergetter1 = p_321741_.lookup(Registries.TEMPLATE_POOL);
+        HolderGetter<StructureTemplatePool> holdergetter1 = context.lookup(Registries.TEMPLATE_POOL);
         Holder<StructureTemplatePool> holder5 = holdergetter1.getOrThrow(Pools.EMPTY);
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/bases",
             new StructureTemplatePool(
                 holder5,
@@ -29,7 +29,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/stairs",
             new StructureTemplatePool(
                 holder5,
@@ -38,7 +38,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/bases/centers",
             new StructureTemplatePool(
                 holder5,
@@ -52,7 +52,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/brains",
             new StructureTemplatePool(
                 holder5,
@@ -61,7 +61,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/walls",
             new StructureTemplatePool(
                 holder5,
@@ -73,7 +73,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/walls/outer",
             new StructureTemplatePool(
                 holder5,
@@ -89,7 +89,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/walls/bottom",
             new StructureTemplatePool(
                 holder5,
@@ -103,7 +103,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/walls/mid",
             new StructureTemplatePool(
                 holder5,
@@ -116,7 +116,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/walls/top",
             new StructureTemplatePool(
                 holder5,
@@ -129,7 +129,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/connectors",
             new StructureTemplatePool(
                 holder5,
@@ -142,7 +142,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/entrances",
             new StructureTemplatePool(
                 holder5,
@@ -151,7 +151,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/ramparts",
             new StructureTemplatePool(
                 holder5,
@@ -167,7 +167,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/corners/bottom",
             new StructureTemplatePool(
                 holder5,
@@ -179,7 +179,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/corners/edges",
             new StructureTemplatePool(
                 holder5,
@@ -192,7 +192,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/corners/middle",
             new StructureTemplatePool(
                 holder5,
@@ -204,7 +204,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/corners/top",
             new StructureTemplatePool(
                 holder5,
@@ -216,7 +216,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/extensions/large_pool",
             new StructureTemplatePool(
                 holder5,
@@ -235,7 +235,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/extensions/small_pool",
             new StructureTemplatePool(
                 holder5,
@@ -252,7 +252,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/extensions/houses",
             new StructureTemplatePool(
                 holder5,
@@ -264,7 +264,7 @@ public class BastionTreasureRoomPools {
             )
         );
         Pools.register(
-            p_321741_,
+            context,
             "bastion/treasure/roofs",
             new StructureTemplatePool(
                 holder5,

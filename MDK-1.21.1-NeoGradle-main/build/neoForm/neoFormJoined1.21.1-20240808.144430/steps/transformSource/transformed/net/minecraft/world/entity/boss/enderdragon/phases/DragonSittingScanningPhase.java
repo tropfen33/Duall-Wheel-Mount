@@ -15,9 +15,9 @@ public class DragonSittingScanningPhase extends AbstractDragonSittingPhase {
     private final TargetingConditions scanTargeting;
     private int scanningTime;
 
-    public DragonSittingScanningPhase(EnderDragon p_31342_) {
-        super(p_31342_);
-        this.scanTargeting = TargetingConditions.forCombat().range(20.0).selector(p_352809_ -> Math.abs(p_352809_.getY() - p_31342_.getY()) <= 10.0);
+    public DragonSittingScanningPhase(EnderDragon dragon) {
+        super(dragon);
+        this.scanTargeting = TargetingConditions.forCombat().range(20.0).selector(p_352809_ -> Math.abs(p_352809_.getY() - dragon.getY()) <= 10.0);
     }
 
     @Override

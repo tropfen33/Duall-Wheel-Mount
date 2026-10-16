@@ -14,15 +14,15 @@ public class CommonLayouts {
     private CommonLayouts() {
     }
 
-    public static Layout labeledElement(Font p_300005_, LayoutElement p_299827_, Component p_299870_) {
-        return labeledElement(p_300005_, p_299827_, p_299870_, p_300036_ -> {
+    public static Layout labeledElement(Font font, LayoutElement element, Component label) {
+        return labeledElement(font, element, label, p_300036_ -> {
         });
     }
 
-    public static Layout labeledElement(Font p_300013_, LayoutElement p_299865_, Component p_300008_, Consumer<LayoutSettings> p_299888_) {
+    public static Layout labeledElement(Font font, LayoutElement element, Component label, Consumer<LayoutSettings> layoutSettings) {
         LinearLayout linearlayout = LinearLayout.vertical().spacing(4);
-        linearlayout.addChild(new StringWidget(p_300008_, p_300013_));
-        linearlayout.addChild(p_299865_, p_299888_);
+        linearlayout.addChild(new StringWidget(label, font));
+        linearlayout.addChild(element, layoutSettings);
         return linearlayout;
     }
 }

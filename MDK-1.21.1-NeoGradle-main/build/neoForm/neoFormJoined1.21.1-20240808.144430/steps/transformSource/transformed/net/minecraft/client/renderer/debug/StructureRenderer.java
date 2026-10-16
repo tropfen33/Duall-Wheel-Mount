@@ -26,28 +26,28 @@ public class StructureRenderer implements DebugRenderer.SimpleDebugRenderer {
     private final Map<ResourceKey<Level>, Map<String, StructuresDebugPayload.PieceInfo>> postPieces = Maps.newIdentityHashMap();
     private static final int MAX_RENDER_DIST = 500;
 
-    public StructureRenderer(Minecraft p_113680_) {
-        this.minecraft = p_113680_;
+    public StructureRenderer(Minecraft minecraft) {
+        this.minecraft = minecraft;
     }
 
     @Override
-    public void render(PoseStack p_113688_, MultiBufferSource p_113689_, double p_113690_, double p_113691_, double p_113692_) {
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, double camX, double camY, double camZ) {
         Camera camera = this.minecraft.gameRenderer.getMainCamera();
         ResourceKey<Level> resourcekey = this.minecraft.level.dimension();
         BlockPos blockpos = BlockPos.containing(camera.getPosition().x, 0.0, camera.getPosition().z);
-        VertexConsumer vertexconsumer = p_113689_.getBuffer(RenderType.lines());
+        VertexConsumer vertexconsumer = bufferSource.getBuffer(RenderType.lines());
         if (this.postMainBoxes.containsKey(resourcekey)) {
             for (BoundingBox boundingbox : this.postMainBoxes.get(resourcekey).values()) {
                 if (blockpos.closerThan(boundingbox.getCenter(), 500.0)) {
                     LevelRenderer.renderLineBox(
-                        p_113688_,
+                        poseStack,
                         vertexconsumer,
-                        (double)boundingbox.minX() - p_113690_,
-                        (double)boundingbox.minY() - p_113691_,
-                        (double)boundingbox.minZ() - p_113692_,
-                        (double)(boundingbox.maxX() + 1) - p_113690_,
-                        (double)(boundingbox.maxY() + 1) - p_113691_,
-                        (double)(boundingbox.maxZ() + 1) - p_113692_,
+                        (double)boundingbox.minX() - camX,
+                        (double)boundingbox.minY() - camY,
+                        (double)boundingbox.minZ() - camZ,
+                        (double)(boundingbox.maxX() + 1) - camX,
+                        (double)(boundingbox.maxY() + 1) - camY,
+                        (double)(boundingbox.maxZ() + 1) - camZ,
                         1.0F,
                         1.0F,
                         1.0F,
@@ -67,14 +67,14 @@ public class StructureRenderer implements DebugRenderer.SimpleDebugRenderer {
                 if (blockpos.closerThan(boundingbox1.getCenter(), 500.0)) {
                     if (structuresdebugpayload$pieceinfo.isStart()) {
                         LevelRenderer.renderLineBox(
-                            p_113688_,
+                            poseStack,
                             vertexconsumer,
-                            (double)boundingbox1.minX() - p_113690_,
-                            (double)boundingbox1.minY() - p_113691_,
-                            (double)boundingbox1.minZ() - p_113692_,
-                            (double)(boundingbox1.maxX() + 1) - p_113690_,
-                            (double)(boundingbox1.maxY() + 1) - p_113691_,
-                            (double)(boundingbox1.maxZ() + 1) - p_113692_,
+                            (double)boundingbox1.minX() - camX,
+                            (double)boundingbox1.minY() - camY,
+                            (double)boundingbox1.minZ() - camZ,
+                            (double)(boundingbox1.maxX() + 1) - camX,
+                            (double)(boundingbox1.maxY() + 1) - camY,
+                            (double)(boundingbox1.maxZ() + 1) - camZ,
                             0.0F,
                             1.0F,
                             0.0F,
@@ -85,14 +85,14 @@ public class StructureRenderer implements DebugRenderer.SimpleDebugRenderer {
                         );
                     } else {
                         LevelRenderer.renderLineBox(
-                            p_113688_,
+                            poseStack,
                             vertexconsumer,
-                            (double)boundingbox1.minX() - p_113690_,
-                            (double)boundingbox1.minY() - p_113691_,
-                            (double)boundingbox1.minZ() - p_113692_,
-                            (double)(boundingbox1.maxX() + 1) - p_113690_,
-                            (double)(boundingbox1.maxY() + 1) - p_113691_,
-                            (double)(boundingbox1.maxZ() + 1) - p_113692_,
+                            (double)boundingbox1.minX() - camX,
+                            (double)boundingbox1.minY() - camY,
+                            (double)boundingbox1.minZ() - camZ,
+                            (double)(boundingbox1.maxX() + 1) - camX,
+                            (double)(boundingbox1.maxY() + 1) - camY,
+                            (double)(boundingbox1.maxZ() + 1) - camZ,
                             0.0F,
                             0.0F,
                             1.0F,
@@ -107,11 +107,11 @@ public class StructureRenderer implements DebugRenderer.SimpleDebugRenderer {
         }
     }
 
-    public void addBoundingBox(BoundingBox p_113683_, List<StructuresDebugPayload.PieceInfo> p_113684_, ResourceKey<Level> p_295656_) {
-        this.postMainBoxes.computeIfAbsent(p_295656_, p_294379_ -> new HashMap<>()).put(p_113683_.toString(), p_113683_);
-        Map<String, StructuresDebugPayload.PieceInfo> map = this.postPieces.computeIfAbsent(p_295656_, p_294187_ -> new HashMap<>());
+    public void addBoundingBox(BoundingBox boundingBox, List<StructuresDebugPayload.PieceInfo> pieces, ResourceKey<Level> dimension) {
+        this.postMainBoxes.computeIfAbsent(dimension, p_294379_ -> new HashMap<>()).put(boundingBox.toString(), boundingBox);
+        Map<String, StructuresDebugPayload.PieceInfo> map = this.postPieces.computeIfAbsent(dimension, p_294187_ -> new HashMap<>());
 
-        for (StructuresDebugPayload.PieceInfo structuresdebugpayload$pieceinfo : p_113684_) {
+        for (StructuresDebugPayload.PieceInfo structuresdebugpayload$pieceinfo : pieces) {
             map.put(structuresdebugpayload$pieceinfo.boundingBox().toString(), structuresdebugpayload$pieceinfo);
         }
     }

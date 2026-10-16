@@ -16,8 +16,8 @@ import net.minecraft.world.level.GameType;
 public class GameModeCommand {
     public static final int PERMISSION_LEVEL = 2;
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_137730_) {
-        p_137730_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("gamemode")
                 .requires(p_137736_ -> p_137736_.hasPermission(2))
                 .then(
@@ -41,25 +41,25 @@ public class GameModeCommand {
         );
     }
 
-    private static void logGamemodeChange(CommandSourceStack p_137738_, ServerPlayer p_137739_, GameType p_137740_) {
-        Component component = Component.translatable("gameMode." + p_137740_.getName());
-        if (p_137738_.getEntity() == p_137739_) {
-            p_137738_.sendSuccess(() -> Component.translatable("commands.gamemode.success.self", component), true);
+    private static void logGamemodeChange(CommandSourceStack source, ServerPlayer player, GameType gameType) {
+        Component component = Component.translatable("gameMode." + gameType.getName());
+        if (source.getEntity() == player) {
+            source.sendSuccess(() -> Component.translatable("commands.gamemode.success.self", component), true);
         } else {
-            if (p_137738_.getLevel().getGameRules().getBoolean(GameRules.RULE_SENDCOMMANDFEEDBACK)) {
-                p_137739_.sendSystemMessage(Component.translatable("gameMode.changed", component));
+            if (source.getLevel().getGameRules().getBoolean(GameRules.RULE_SENDCOMMANDFEEDBACK)) {
+                player.sendSystemMessage(Component.translatable("gameMode.changed", component));
             }
 
-            p_137738_.sendSuccess(() -> Component.translatable("commands.gamemode.success.other", p_137739_.getDisplayName(), component), true);
+            source.sendSuccess(() -> Component.translatable("commands.gamemode.success.other", player.getDisplayName(), component), true);
         }
     }
 
-    private static int setMode(CommandContext<CommandSourceStack> p_137732_, Collection<ServerPlayer> p_137733_, GameType p_137734_) {
+    private static int setMode(CommandContext<CommandSourceStack> source, Collection<ServerPlayer> players, GameType gameType) {
         int i = 0;
 
-        for (ServerPlayer serverplayer : p_137733_) {
-            if (serverplayer.setGameMode(p_137734_)) {
-                logGamemodeChange(p_137732_.getSource(), serverplayer, p_137734_);
+        for (ServerPlayer serverplayer : players) {
+            if (serverplayer.setGameMode(gameType)) {
+                logGamemodeChange(source.getSource(), serverplayer, gameType);
                 i++;
             }
         }

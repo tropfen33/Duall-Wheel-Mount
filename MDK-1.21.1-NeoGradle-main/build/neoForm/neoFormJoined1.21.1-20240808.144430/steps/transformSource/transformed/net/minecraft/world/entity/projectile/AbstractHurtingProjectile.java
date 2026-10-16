@@ -23,45 +23,48 @@ public abstract class AbstractHurtingProjectile extends Projectile {
     public static final double DEFLECTION_SCALE = 0.5;
     public double accelerationPower = 0.1;
 
-    protected AbstractHurtingProjectile(EntityType<? extends AbstractHurtingProjectile> p_36833_, Level p_36834_) {
-        super(p_36833_, p_36834_);
+    protected AbstractHurtingProjectile(EntityType<? extends AbstractHurtingProjectile> entityType, Level level) {
+        super(entityType, level);
     }
 
     protected AbstractHurtingProjectile(
-        EntityType<? extends AbstractHurtingProjectile> p_312669_, double p_312561_, double p_312829_, double p_312607_, Level p_312011_
+        EntityType<? extends AbstractHurtingProjectile> entityType, double x, double y, double z, Level level
     ) {
-        this(p_312669_, p_312011_);
-        this.setPos(p_312561_, p_312829_, p_312607_);
+        this(entityType, level);
+        this.setPos(x, y, z);
     }
 
     public AbstractHurtingProjectile(
-        EntityType<? extends AbstractHurtingProjectile> p_36826_, double p_36828_, double p_36829_, double p_36830_, Vec3 p_347477_, Level p_36831_
+        EntityType<? extends AbstractHurtingProjectile> entityType, double x, double y, double z, Vec3 movement, Level level
     ) {
-        this(p_36826_, p_36831_);
-        this.moveTo(p_36828_, p_36829_, p_36830_, this.getYRot(), this.getXRot());
+        this(entityType, level);
+        this.moveTo(x, y, z, this.getYRot(), this.getXRot());
         this.reapplyPosition();
-        this.assignDirectionalMovement(p_347477_, this.accelerationPower);
+        this.assignDirectionalMovement(movement, this.accelerationPower);
     }
 
-    public AbstractHurtingProjectile(EntityType<? extends AbstractHurtingProjectile> p_36817_, LivingEntity p_347648_, Vec3 p_347596_, Level p_36824_) {
-        this(p_36817_, p_347648_.getX(), p_347648_.getY(), p_347648_.getZ(), p_347596_, p_36824_);
-        this.setOwner(p_347648_);
-        this.setRot(p_347648_.getYRot(), p_347648_.getXRot());
-    }
-
-    @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326181_) {
+    public AbstractHurtingProjectile(EntityType<? extends AbstractHurtingProjectile> entityType, LivingEntity owner, Vec3 movement, Level level) {
+        this(entityType, owner.getX(), owner.getY(), owner.getZ(), movement, level);
+        this.setOwner(owner);
+        this.setRot(owner.getYRot(), owner.getXRot());
     }
 
     @Override
-    public boolean shouldRenderAtSqrDistance(double p_36837_) {
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+    }
+
+    /**
+     * Checks if the entity is in range to render.
+     */
+    @Override
+    public boolean shouldRenderAtSqrDistance(double distance) {
         double d0 = this.getBoundingBox().getSize() * 4.0;
         if (Double.isNaN(d0)) {
             d0 = 4.0;
         }
 
         d0 *= 64.0;
-        return p_36837_ < d0 * d0;
+        return distance < d0 * d0;
     }
 
     protected ClipContext.Block getClipType() {
@@ -112,14 +115,17 @@ public abstract class AbstractHurtingProjectile extends Projectile {
         }
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_341896_, float p_341906_) {
-        return !this.isInvulnerableTo(p_341896_);
+    public boolean hurt(DamageSource source, float amount) {
+        return !this.isInvulnerableTo(source);
     }
 
     @Override
-    protected boolean canHitEntity(Entity p_36842_) {
-        return super.canHitEntity(p_36842_) && !p_36842_.noPhysics;
+    protected boolean canHitEntity(Entity target) {
+        return super.canHitEntity(target) && !target.noPhysics;
     }
 
     protected boolean shouldBurn() {
@@ -140,16 +146,19 @@ public abstract class AbstractHurtingProjectile extends Projectile {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_36848_) {
-        super.addAdditionalSaveData(p_36848_);
-        p_36848_.putDouble("acceleration_power", this.accelerationPower);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putDouble("acceleration_power", this.accelerationPower);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_36844_) {
-        super.readAdditionalSaveData(p_36844_);
-        if (p_36844_.contains("acceleration_power", 6)) {
-            this.accelerationPower = p_36844_.getDouble("acceleration_power");
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.contains("acceleration_power", 6)) {
+            this.accelerationPower = compound.getDouble("acceleration_power");
         }
     }
 
@@ -159,41 +168,41 @@ public abstract class AbstractHurtingProjectile extends Projectile {
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity p_352396_) {
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity p_entity) {
         Entity entity = this.getOwner();
         int i = entity == null ? 0 : entity.getId();
-        Vec3 vec3 = p_352396_.getPositionBase();
+        Vec3 vec3 = p_entity.getPositionBase();
         return new ClientboundAddEntityPacket(
             this.getId(),
             this.getUUID(),
             vec3.x(),
             vec3.y(),
             vec3.z(),
-            p_352396_.getLastSentXRot(),
-            p_352396_.getLastSentYRot(),
+            p_entity.getLastSentXRot(),
+            p_entity.getLastSentYRot(),
             this.getType(),
             i,
-            p_352396_.getLastSentMovement(),
+            p_entity.getLastSentMovement(),
             0.0
         );
     }
 
     @Override
-    public void recreateFromPacket(ClientboundAddEntityPacket p_150128_) {
-        super.recreateFromPacket(p_150128_);
-        Vec3 vec3 = new Vec3(p_150128_.getXa(), p_150128_.getYa(), p_150128_.getZa());
+    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        Vec3 vec3 = new Vec3(packet.getXa(), packet.getYa(), packet.getZa());
         this.setDeltaMovement(vec3);
     }
 
-    private void assignDirectionalMovement(Vec3 p_347481_, double p_347589_) {
-        this.setDeltaMovement(p_347481_.normalize().scale(p_347589_));
+    private void assignDirectionalMovement(Vec3 movement, double accelerationPower) {
+        this.setDeltaMovement(movement.normalize().scale(accelerationPower));
         this.hasImpulse = true;
     }
 
     @Override
-    protected void onDeflection(@Nullable Entity p_341940_, boolean p_341895_) {
-        super.onDeflection(p_341940_, p_341895_);
-        if (p_341895_) {
+    protected void onDeflection(@Nullable Entity entity, boolean deflectedByPlayer) {
+        super.onDeflection(entity, deflectedByPlayer);
+        if (deflectedByPlayer) {
             this.accelerationPower = 0.1;
         } else {
             this.accelerationPower *= 0.5;

@@ -17,8 +17,8 @@ public class LayerConfiguration implements FeatureConfiguration {
     public final int height;
     public final BlockState state;
 
-    public LayerConfiguration(int p_67772_, BlockState p_67773_) {
-        this.height = p_67772_;
-        this.state = p_67773_;
+    public LayerConfiguration(int height, BlockState state) {
+        this.height = height;
+        this.state = state;
     }
 }

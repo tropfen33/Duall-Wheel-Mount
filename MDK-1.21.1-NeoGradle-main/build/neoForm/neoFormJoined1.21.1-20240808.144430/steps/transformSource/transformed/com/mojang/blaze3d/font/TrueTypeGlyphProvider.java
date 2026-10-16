@@ -30,30 +30,30 @@ public class TrueTypeGlyphProvider implements GlyphProvider {
     final float oversample;
     private final IntSet skip = new IntArraySet();
 
-    public TrueTypeGlyphProvider(ByteBuffer p_83846_, FT_Face p_320481_, float p_83848_, float p_83849_, float p_83850_, float p_83851_, String p_83852_) {
-        this.fontMemory = p_83846_;
-        this.face = p_320481_;
-        this.oversample = p_83849_;
-        p_83852_.codePoints().forEach(this.skip::add);
-        int i = Math.round(p_83848_ * p_83849_);
-        FreeType.FT_Set_Pixel_Sizes(p_320481_, i, i);
-        float f = p_83850_ * p_83849_;
-        float f1 = -p_83851_ * p_83849_;
+    public TrueTypeGlyphProvider(ByteBuffer fontMemory, FT_Face face, float size, float oversample, float shiftX, float shiftY, String skip) {
+        this.fontMemory = fontMemory;
+        this.face = face;
+        this.oversample = oversample;
+        skip.codePoints().forEach(this.skip::add);
+        int i = Math.round(size * oversample);
+        FreeType.FT_Set_Pixel_Sizes(face, i, i);
+        float f = shiftX * oversample;
+        float f1 = -shiftY * oversample;
 
         try (MemoryStack memorystack = MemoryStack.stackPush()) {
             FT_Vector ft_vector = FreeTypeUtil.setVector(FT_Vector.malloc(memorystack), f, f1);
-            FreeType.FT_Set_Transform(p_320481_, null, ft_vector);
+            FreeType.FT_Set_Transform(face, null, ft_vector);
         }
     }
 
     @Nullable
     @Override
-    public GlyphInfo getGlyph(int p_231116_) {
+    public GlyphInfo getGlyph(int character) {
         FT_Face ft_face = this.validateFontOpen();
-        if (this.skip.contains(p_231116_)) {
+        if (this.skip.contains(character)) {
             return null;
         } else {
-            int i = FreeType.FT_Get_Char_Index(ft_face, (long)p_231116_);
+            int i = FreeType.FT_Get_Char_Index(ft_face, (long)character);
             if (i == 0) {
                 return null;
             } else {
@@ -118,13 +118,13 @@ public class TrueTypeGlyphProvider implements GlyphProvider {
         private final float advance;
         final int index;
 
-        Glyph(float p_83886_, float p_83887_, int p_83882_, int p_83883_, float p_320408_, int p_83884_) {
-            this.width = p_83882_;
-            this.height = p_83883_;
-            this.advance = p_320408_ / TrueTypeGlyphProvider.this.oversample;
-            this.bearingX = p_83886_ / TrueTypeGlyphProvider.this.oversample;
-            this.bearingY = p_83887_ / TrueTypeGlyphProvider.this.oversample;
-            this.index = p_83884_;
+        Glyph(float bearingX, float bearingY, int width, int height, float advance, int index) {
+            this.width = width;
+            this.height = height;
+            this.advance = advance / TrueTypeGlyphProvider.this.oversample;
+            this.bearingX = bearingX / TrueTypeGlyphProvider.this.oversample;
+            this.bearingY = bearingY / TrueTypeGlyphProvider.this.oversample;
+            this.index = index;
         }
 
         @Override
@@ -133,8 +133,8 @@ public class TrueTypeGlyphProvider implements GlyphProvider {
         }
 
         @Override
-        public BakedGlyph bake(Function<SheetGlyphInfo, BakedGlyph> p_231120_) {
-            return p_231120_.apply(new SheetGlyphInfo() {
+        public BakedGlyph bake(Function<SheetGlyphInfo, BakedGlyph> glyphProvider) {
+            return glyphProvider.apply(new SheetGlyphInfo() {
                 @Override
                 public int getPixelWidth() {
                     return Glyph.this.width;

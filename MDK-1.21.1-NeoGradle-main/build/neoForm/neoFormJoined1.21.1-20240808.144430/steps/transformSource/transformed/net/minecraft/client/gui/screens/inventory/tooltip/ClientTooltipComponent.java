@@ -12,17 +12,17 @@ import org.joml.Matrix4f;
 
 @OnlyIn(Dist.CLIENT)
 public interface ClientTooltipComponent {
-    static ClientTooltipComponent create(FormattedCharSequence p_169949_) {
-        return new ClientTextTooltip(p_169949_);
+    static ClientTooltipComponent create(FormattedCharSequence text) {
+        return new ClientTextTooltip(text);
     }
 
-    static ClientTooltipComponent create(TooltipComponent p_169951_) {
-        if (p_169951_ instanceof BundleTooltip bundletooltip) {
+    static ClientTooltipComponent create(TooltipComponent visualTooltipComponent) {
+        if (visualTooltipComponent instanceof BundleTooltip bundletooltip) {
             return new ClientBundleTooltip(bundletooltip.contents());
-        } else if (p_169951_ instanceof ClientActivePlayersTooltip.ActivePlayersTooltip clientactiveplayerstooltip$activeplayerstooltip) {
+        } else if (visualTooltipComponent instanceof ClientActivePlayersTooltip.ActivePlayersTooltip clientactiveplayerstooltip$activeplayerstooltip) {
             return new ClientActivePlayersTooltip(clientactiveplayerstooltip$activeplayerstooltip);
         } else {
-            ClientTooltipComponent result = net.neoforged.neoforge.client.gui.ClientTooltipComponentManager.createClientTooltipComponent(p_169951_);
+            ClientTooltipComponent result = net.neoforged.neoforge.client.gui.ClientTooltipComponentManager.createClientTooltipComponent(visualTooltipComponent);
             if (result != null) return result;
             throw new IllegalArgumentException("Unknown TooltipComponent");
         }
@@ -30,11 +30,11 @@ public interface ClientTooltipComponent {
 
     int getHeight();
 
-    int getWidth(Font p_169952_);
+    int getWidth(Font font);
 
-    default void renderText(Font p_169953_, int p_169954_, int p_169955_, Matrix4f p_253692_, MultiBufferSource.BufferSource p_169957_) {
+    default void renderText(Font font, int mouseX, int mouseY, Matrix4f matrix, MultiBufferSource.BufferSource bufferSource) {
     }
 
-    default void renderImage(Font p_194048_, int p_194049_, int p_194050_, GuiGraphics p_283459_) {
+    default void renderImage(Font font, int x, int y, GuiGraphics guiGraphics) {
     }
 }

@@ -31,8 +31,8 @@ public class TriggerCommand {
         Component.translatable("commands.trigger.failed.invalid")
     );
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_139142_) {
-        p_139142_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("trigger")
                 .then(
                     Commands.argument("objective", ObjectiveArgument.objective())
@@ -74,11 +74,11 @@ public class TriggerCommand {
         );
     }
 
-    public static CompletableFuture<Suggestions> suggestObjectives(CommandSourceStack p_139149_, SuggestionsBuilder p_139150_) {
-        ScoreHolder scoreholder = p_139149_.getEntity();
+    public static CompletableFuture<Suggestions> suggestObjectives(CommandSourceStack source, SuggestionsBuilder builder) {
+        ScoreHolder scoreholder = source.getEntity();
         List<String> list = Lists.newArrayList();
         if (scoreholder != null) {
-            Scoreboard scoreboard = p_139149_.getServer().getScoreboard();
+            Scoreboard scoreboard = source.getServer().getScoreboard();
 
             for (Objective objective : scoreboard.getObjectives()) {
                 if (objective.getCriteria() == ObjectiveCriteria.TRIGGER) {
@@ -90,37 +90,37 @@ public class TriggerCommand {
             }
         }
 
-        return SharedSuggestionProvider.suggest(list, p_139150_);
+        return SharedSuggestionProvider.suggest(list, builder);
     }
 
-    private static int addValue(CommandSourceStack p_139155_, ServerPlayer p_313736_, Objective p_313848_, int p_139157_) throws CommandSyntaxException {
-        ScoreAccess scoreaccess = getScore(p_139155_.getServer().getScoreboard(), p_313736_, p_313848_);
-        int i = scoreaccess.add(p_139157_);
-        p_139155_.sendSuccess(() -> Component.translatable("commands.trigger.add.success", p_313848_.getFormattedDisplayName(), p_139157_), true);
+    private static int addValue(CommandSourceStack source, ServerPlayer player, Objective objective, int value) throws CommandSyntaxException {
+        ScoreAccess scoreaccess = getScore(source.getServer().getScoreboard(), player, objective);
+        int i = scoreaccess.add(value);
+        source.sendSuccess(() -> Component.translatable("commands.trigger.add.success", objective.getFormattedDisplayName(), value), true);
         return i;
     }
 
-    private static int setValue(CommandSourceStack p_139161_, ServerPlayer p_313837_, Objective p_313724_, int p_139163_) throws CommandSyntaxException {
-        ScoreAccess scoreaccess = getScore(p_139161_.getServer().getScoreboard(), p_313837_, p_313724_);
-        scoreaccess.set(p_139163_);
-        p_139161_.sendSuccess(() -> Component.translatable("commands.trigger.set.success", p_313724_.getFormattedDisplayName(), p_139163_), true);
-        return p_139163_;
+    private static int setValue(CommandSourceStack source, ServerPlayer player, Objective objective, int value) throws CommandSyntaxException {
+        ScoreAccess scoreaccess = getScore(source.getServer().getScoreboard(), player, objective);
+        scoreaccess.set(value);
+        source.sendSuccess(() -> Component.translatable("commands.trigger.set.success", objective.getFormattedDisplayName(), value), true);
+        return value;
     }
 
-    private static int simpleTrigger(CommandSourceStack p_139152_, ServerPlayer p_313865_, Objective p_313706_) throws CommandSyntaxException {
-        ScoreAccess scoreaccess = getScore(p_139152_.getServer().getScoreboard(), p_313865_, p_313706_);
+    private static int simpleTrigger(CommandSourceStack source, ServerPlayer player, Objective objective) throws CommandSyntaxException {
+        ScoreAccess scoreaccess = getScore(source.getServer().getScoreboard(), player, objective);
         int i = scoreaccess.add(1);
-        p_139152_.sendSuccess(() -> Component.translatable("commands.trigger.simple.success", p_313706_.getFormattedDisplayName()), true);
+        source.sendSuccess(() -> Component.translatable("commands.trigger.simple.success", objective.getFormattedDisplayName()), true);
         return i;
     }
 
-    private static ScoreAccess getScore(Scoreboard p_313748_, ScoreHolder p_313873_, Objective p_139140_) throws CommandSyntaxException {
-        if (p_139140_.getCriteria() != ObjectiveCriteria.TRIGGER) {
+    private static ScoreAccess getScore(Scoreboard scoreboard, ScoreHolder scoreHolder, Objective objective) throws CommandSyntaxException {
+        if (objective.getCriteria() != ObjectiveCriteria.TRIGGER) {
             throw ERROR_INVALID_OBJECTIVE.create();
         } else {
-            ReadOnlyScoreInfo readonlyscoreinfo = p_313748_.getPlayerScoreInfo(p_313873_, p_139140_);
+            ReadOnlyScoreInfo readonlyscoreinfo = scoreboard.getPlayerScoreInfo(scoreHolder, objective);
             if (readonlyscoreinfo != null && !readonlyscoreinfo.isLocked()) {
-                ScoreAccess scoreaccess = p_313748_.getOrCreatePlayerScore(p_313873_, p_139140_);
+                ScoreAccess scoreaccess = scoreboard.getOrCreatePlayerScore(scoreHolder, objective);
                 scoreaccess.lock();
                 return scoreaccess;
             } else {

@@ -11,13 +11,13 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class ResettingGeneratedWorldTask extends ResettingWorldTask {
     private final WorldGenerationInfo generationInfo;
 
-    public ResettingGeneratedWorldTask(WorldGenerationInfo p_167659_, long p_167660_, Component p_167661_, Runnable p_167662_) {
-        super(p_167660_, p_167661_, p_167662_);
-        this.generationInfo = p_167659_;
+    public ResettingGeneratedWorldTask(WorldGenerationInfo generationInfo, long serverId, Component title, Runnable callback) {
+        super(serverId, title, callback);
+        this.generationInfo = generationInfo;
     }
 
     @Override
-    protected void sendResetRequest(RealmsClient p_167664_, long p_167665_) throws RealmsServiceException {
-        p_167664_.resetWorldWithSeed(p_167665_, this.generationInfo);
+    protected void sendResetRequest(RealmsClient client, long serverId) throws RealmsServiceException {
+        client.resetWorldWithSeed(serverId, this.generationInfo);
     }
 }

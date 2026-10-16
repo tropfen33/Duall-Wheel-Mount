@@ -17,21 +17,27 @@ public class FoodData {
         this.saturationLevel = 5.0F;
     }
 
-    private void add(int p_340988_, float p_340961_) {
-        this.foodLevel = Mth.clamp(p_340988_ + this.foodLevel, 0, 20);
-        this.saturationLevel = Mth.clamp(p_340961_ + this.saturationLevel, 0.0F, (float)this.foodLevel);
+    private void add(int foodLevel, float saturationLevel) {
+        this.foodLevel = Mth.clamp(foodLevel + this.foodLevel, 0, 20);
+        this.saturationLevel = Mth.clamp(saturationLevel + this.saturationLevel, 0.0F, (float)this.foodLevel);
     }
 
-    public void eat(int p_38708_, float p_38709_) {
-        this.add(p_38708_, FoodConstants.saturationByModifier(p_38708_, p_38709_));
+    /**
+     * Add food stats.
+     */
+    public void eat(int foodLevelModifier, float saturationLevelModifier) {
+        this.add(foodLevelModifier, FoodConstants.saturationByModifier(foodLevelModifier, saturationLevelModifier));
     }
 
-    public void eat(FoodProperties p_347533_) {
-        this.add(p_347533_.nutrition(), p_347533_.saturation());
+    public void eat(FoodProperties foodProperties) {
+        this.add(foodProperties.nutrition(), foodProperties.saturation());
     }
 
-    public void tick(Player p_38711_) {
-        Difficulty difficulty = p_38711_.level().getDifficulty();
+    /**
+     * Handles the food game logic.
+     */
+    public void tick(Player player) {
+        Difficulty difficulty = player.level().getDifficulty();
         this.lastFoodLevel = this.foodLevel;
         if (this.exhaustionLevel > 4.0F) {
             this.exhaustionLevel -= 4.0F;
@@ -42,27 +48,27 @@ public class FoodData {
             }
         }
 
-        boolean flag = p_38711_.level().getGameRules().getBoolean(GameRules.RULE_NATURAL_REGENERATION);
-        if (flag && this.saturationLevel > 0.0F && p_38711_.isHurt() && this.foodLevel >= 20) {
+        boolean flag = player.level().getGameRules().getBoolean(GameRules.RULE_NATURAL_REGENERATION);
+        if (flag && this.saturationLevel > 0.0F && player.isHurt() && this.foodLevel >= 20) {
             this.tickTimer++;
             if (this.tickTimer >= 10) {
                 float f = Math.min(this.saturationLevel, 6.0F);
-                p_38711_.heal(f / 6.0F);
+                player.heal(f / 6.0F);
                 this.addExhaustion(f);
                 this.tickTimer = 0;
             }
-        } else if (flag && this.foodLevel >= 18 && p_38711_.isHurt()) {
+        } else if (flag && this.foodLevel >= 18 && player.isHurt()) {
             this.tickTimer++;
             if (this.tickTimer >= 80) {
-                p_38711_.heal(1.0F);
+                player.heal(1.0F);
                 this.addExhaustion(6.0F);
                 this.tickTimer = 0;
             }
         } else if (this.foodLevel <= 0) {
             this.tickTimer++;
             if (this.tickTimer >= 80) {
-                if (p_38711_.getHealth() > 10.0F || difficulty == Difficulty.HARD || p_38711_.getHealth() > 1.0F && difficulty == Difficulty.NORMAL) {
-                    p_38711_.hurt(p_38711_.damageSources().starve(), 1.0F);
+                if (player.getHealth() > 10.0F || difficulty == Difficulty.HARD || player.getHealth() > 1.0F && difficulty == Difficulty.NORMAL) {
+                    player.hurt(player.damageSources().starve(), 1.0F);
                 }
 
                 this.tickTimer = 0;
@@ -72,20 +78,26 @@ public class FoodData {
         }
     }
 
-    public void readAdditionalSaveData(CompoundTag p_38716_) {
-        if (p_38716_.contains("foodLevel", 99)) {
-            this.foodLevel = p_38716_.getInt("foodLevel");
-            this.tickTimer = p_38716_.getInt("foodTickTimer");
-            this.saturationLevel = p_38716_.getFloat("foodSaturationLevel");
-            this.exhaustionLevel = p_38716_.getFloat("foodExhaustionLevel");
+    /**
+     * Reads the food data for the player.
+     */
+    public void readAdditionalSaveData(CompoundTag compoundTag) {
+        if (compoundTag.contains("foodLevel", 99)) {
+            this.foodLevel = compoundTag.getInt("foodLevel");
+            this.tickTimer = compoundTag.getInt("foodTickTimer");
+            this.saturationLevel = compoundTag.getFloat("foodSaturationLevel");
+            this.exhaustionLevel = compoundTag.getFloat("foodExhaustionLevel");
         }
     }
 
-    public void addAdditionalSaveData(CompoundTag p_38720_) {
-        p_38720_.putInt("foodLevel", this.foodLevel);
-        p_38720_.putInt("foodTickTimer", this.tickTimer);
-        p_38720_.putFloat("foodSaturationLevel", this.saturationLevel);
-        p_38720_.putFloat("foodExhaustionLevel", this.exhaustionLevel);
+    /**
+     * Writes the food data for the player.
+     */
+    public void addAdditionalSaveData(CompoundTag compoundTag) {
+        compoundTag.putInt("foodLevel", this.foodLevel);
+        compoundTag.putInt("foodTickTimer", this.tickTimer);
+        compoundTag.putFloat("foodSaturationLevel", this.saturationLevel);
+        compoundTag.putFloat("foodExhaustionLevel", this.exhaustionLevel);
     }
 
     public int getFoodLevel() {
@@ -100,8 +112,11 @@ public class FoodData {
         return this.foodLevel < 20;
     }
 
-    public void addExhaustion(float p_38704_) {
-        this.exhaustionLevel = Math.min(this.exhaustionLevel + p_38704_, 40.0F);
+    /**
+     * Adds input to {@code foodExhaustionLevel} to a max of 40.
+     */
+    public void addExhaustion(float exhaustion) {
+        this.exhaustionLevel = Math.min(this.exhaustionLevel + exhaustion, 40.0F);
     }
 
     public float getExhaustionLevel() {
@@ -112,15 +127,15 @@ public class FoodData {
         return this.saturationLevel;
     }
 
-    public void setFoodLevel(int p_38706_) {
-        this.foodLevel = p_38706_;
+    public void setFoodLevel(int foodLevel) {
+        this.foodLevel = foodLevel;
     }
 
-    public void setSaturation(float p_38718_) {
-        this.saturationLevel = p_38718_;
+    public void setSaturation(float saturationLevel) {
+        this.saturationLevel = saturationLevel;
     }
 
-    public void setExhaustion(float p_150379_) {
-        this.exhaustionLevel = p_150379_;
+    public void setExhaustion(float exhaustionLevel) {
+        this.exhaustionLevel = exhaustionLevel;
     }
 }

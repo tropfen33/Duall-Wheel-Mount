@@ -12,49 +12,63 @@ public class MerchantResultSlot extends Slot {
     private int removeCount;
     private final Merchant merchant;
 
-    public MerchantResultSlot(Player p_40083_, Merchant p_40084_, MerchantContainer p_40085_, int p_40086_, int p_40087_, int p_40088_) {
-        super(p_40085_, p_40086_, p_40087_, p_40088_);
-        this.player = p_40083_;
-        this.merchant = p_40084_;
-        this.slots = p_40085_;
+    public MerchantResultSlot(Player player, Merchant merchant, MerchantContainer slots, int slot, int xPosition, int yPosition) {
+        super(slots, slot, xPosition, yPosition);
+        this.player = player;
+        this.merchant = merchant;
+        this.slots = slots;
     }
 
+    /**
+     * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+     */
     @Override
-    public boolean mayPlace(ItemStack p_40095_) {
+    public boolean mayPlace(ItemStack stack) {
         return false;
     }
 
+    /**
+     * Decrease the size of the stack in slot (first int arg) by the amount of the second int arg. Returns the new stack.
+     */
     @Override
-    public ItemStack remove(int p_40090_) {
+    public ItemStack remove(int amount) {
         if (this.hasItem()) {
-            this.removeCount = this.removeCount + Math.min(p_40090_, this.getItem().getCount());
+            this.removeCount = this.removeCount + Math.min(amount, this.getItem().getCount());
         }
 
-        return super.remove(p_40090_);
+        return super.remove(amount);
     }
 
+    /**
+     * Typically increases an internal count, then calls {@code onCrafting(item)}.
+     *
+     * @param stack the output - ie, iron ingots, and pickaxes, not ore and wood.
+     */
     @Override
-    protected void onQuickCraft(ItemStack p_40097_, int p_40098_) {
-        this.removeCount += p_40098_;
-        this.checkTakeAchievements(p_40097_);
+    protected void onQuickCraft(ItemStack stack, int amount) {
+        this.removeCount += amount;
+        this.checkTakeAchievements(stack);
     }
 
+    /**
+     * @param stack the output - ie, iron ingots, and pickaxes, not ore and wood.
+     */
     @Override
-    protected void checkTakeAchievements(ItemStack p_40100_) {
-        p_40100_.onCraftedBy(this.player.level(), this.player, this.removeCount);
+    protected void checkTakeAchievements(ItemStack stack) {
+        stack.onCraftedBy(this.player.level(), this.player, this.removeCount);
         this.removeCount = 0;
     }
 
     @Override
-    public void onTake(Player p_150631_, ItemStack p_150632_) {
-        this.checkTakeAchievements(p_150632_);
+    public void onTake(Player player, ItemStack stack) {
+        this.checkTakeAchievements(stack);
         MerchantOffer merchantoffer = this.slots.getActiveOffer();
         if (merchantoffer != null) {
             ItemStack itemstack = this.slots.getItem(0);
             ItemStack itemstack1 = this.slots.getItem(1);
             if (merchantoffer.take(itemstack, itemstack1) || merchantoffer.take(itemstack1, itemstack)) {
                 this.merchant.notifyTrade(merchantoffer);
-                p_150631_.awardStat(Stats.TRADED_WITH_VILLAGER);
+                player.awardStat(Stats.TRADED_WITH_VILLAGER);
                 this.slots.setItem(0, itemstack);
                 this.slots.setItem(1, itemstack1);
             }

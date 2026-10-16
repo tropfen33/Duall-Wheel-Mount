@@ -27,9 +27,9 @@ public abstract class AbstractSliderButton extends AbstractWidget {
     protected double value;
     private boolean canChangeValue;
 
-    public AbstractSliderButton(int p_93579_, int p_93580_, int p_93581_, int p_93582_, Component p_93583_, double p_93584_) {
-        super(p_93579_, p_93580_, p_93581_, p_93582_, p_93583_);
-        this.value = p_93584_;
+    public AbstractSliderButton(int x, int y, int width, int height, Component message, double value) {
+        super(x, y, width, height, message);
+        this.value = value;
     }
 
     protected ResourceLocation getSprite() {
@@ -46,40 +46,40 @@ public abstract class AbstractSliderButton extends AbstractWidget {
     }
 
     @Override
-    public void updateWidgetNarration(NarrationElementOutput p_168798_) {
-        p_168798_.add(NarratedElementType.TITLE, this.createNarrationMessage());
+    public void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+        narrationElementOutput.add(NarratedElementType.TITLE, this.createNarrationMessage());
         if (this.active) {
             if (this.isFocused()) {
-                p_168798_.add(NarratedElementType.USAGE, Component.translatable("narration.slider.usage.focused"));
+                narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.slider.usage.focused"));
             } else {
-                p_168798_.add(NarratedElementType.USAGE, Component.translatable("narration.slider.usage.hovered"));
+                narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.slider.usage.hovered"));
             }
         }
     }
 
     @Override
-    public void renderWidget(GuiGraphics p_283427_, int p_281447_, int p_282852_, float p_282409_) {
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         Minecraft minecraft = Minecraft.getInstance();
-        p_283427_.setColor(1.0F, 1.0F, 1.0F, this.alpha);
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, this.alpha);
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.enableDepthTest();
-        p_283427_.blitSprite(this.getSprite(), this.getX(), this.getY(), this.getWidth(), this.getHeight());
-        p_283427_.blitSprite(this.getHandleSprite(), this.getX() + (int)(this.value * (double)(this.width - 8)), this.getY(), 8, this.getHeight());
-        p_283427_.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        guiGraphics.blitSprite(this.getSprite(), this.getX(), this.getY(), this.getWidth(), this.getHeight());
+        guiGraphics.blitSprite(this.getHandleSprite(), this.getX() + (int)(this.value * (double)(this.width - 8)), this.getY(), 8, this.getHeight());
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         int i = this.active ? 16777215 : 10526880;
-        this.renderScrollingString(p_283427_, minecraft.font, 2, i | Mth.ceil(this.alpha * 255.0F) << 24);
+        this.renderScrollingString(guiGraphics, minecraft.font, 2, i | Mth.ceil(this.alpha * 255.0F) << 24);
     }
 
     @Override
-    public void onClick(double p_93588_, double p_93589_) {
-        this.setValueFromMouse(p_93588_);
+    public void onClick(double mouseX, double mouseY) {
+        this.setValueFromMouse(mouseX);
     }
 
     @Override
-    public void setFocused(boolean p_265705_) {
-        super.setFocused(p_265705_);
-        if (!p_265705_) {
+    public void setFocused(boolean focused) {
+        super.setFocused(focused);
+        if (!focused) {
             this.canChangeValue = false;
         } else {
             InputType inputtype = Minecraft.getInstance().getLastInputType();
@@ -89,15 +89,24 @@ public abstract class AbstractSliderButton extends AbstractWidget {
         }
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_93596_, int p_93597_, int p_93598_) {
-        if (CommonInputs.selected(p_93596_)) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (CommonInputs.selected(keyCode)) {
             this.canChangeValue = !this.canChangeValue;
             return true;
         } else {
             if (this.canChangeValue) {
-                boolean flag = p_93596_ == 263;
-                if (flag || p_93596_ == 262) {
+                boolean flag = keyCode == 263;
+                if (flag || keyCode == 262) {
                     float f = flag ? -1.0F : 1.0F;
                     this.setValue(this.value + (double)(f / (float)(this.width - 8)));
                     return true;
@@ -108,13 +117,13 @@ public abstract class AbstractSliderButton extends AbstractWidget {
         }
     }
 
-    private void setValueFromMouse(double p_93586_) {
-        this.setValue((p_93586_ - (double)(this.getX() + 4)) / (double)(this.width - 8));
+    private void setValueFromMouse(double mouseX) {
+        this.setValue((mouseX - (double)(this.getX() + 4)) / (double)(this.width - 8));
     }
 
-    private void setValue(double p_93612_) {
+    private void setValue(double value) {
         double d0 = this.value;
-        this.value = Mth.clamp(p_93612_, 0.0, 1.0);
+        this.value = Mth.clamp(value, 0.0, 1.0);
         if (d0 != this.value) {
             this.applyValue();
         }
@@ -123,17 +132,17 @@ public abstract class AbstractSliderButton extends AbstractWidget {
     }
 
     @Override
-    protected void onDrag(double p_93591_, double p_93592_, double p_93593_, double p_93594_) {
-        this.setValueFromMouse(p_93591_);
-        super.onDrag(p_93591_, p_93592_, p_93593_, p_93594_);
+    protected void onDrag(double mouseX, double mouseY, double dragX, double dragY) {
+        this.setValueFromMouse(mouseX);
+        super.onDrag(mouseX, mouseY, dragX, dragY);
     }
 
     @Override
-    public void playDownSound(SoundManager p_93605_) {
+    public void playDownSound(SoundManager handler) {
     }
 
     @Override
-    public void onRelease(double p_93609_, double p_93610_) {
+    public void onRelease(double mouseX, double mouseY) {
         super.playDownSound(Minecraft.getInstance().getSoundManager());
     }
 

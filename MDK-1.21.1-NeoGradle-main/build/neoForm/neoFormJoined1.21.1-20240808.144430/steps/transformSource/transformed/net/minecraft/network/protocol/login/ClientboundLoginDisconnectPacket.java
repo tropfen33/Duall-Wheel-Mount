@@ -13,16 +13,19 @@ public class ClientboundLoginDisconnectPacket implements Packet<ClientLoginPacke
     );
     private final Component reason;
 
-    public ClientboundLoginDisconnectPacket(Component p_134812_) {
-        this.reason = p_134812_;
+    public ClientboundLoginDisconnectPacket(Component reason) {
+        this.reason = reason;
     }
 
-    private ClientboundLoginDisconnectPacket(FriendlyByteBuf p_179820_) {
-        this.reason = Component.Serializer.fromJsonLenient(p_179820_.readUtf(262144), RegistryAccess.EMPTY);
+    private ClientboundLoginDisconnectPacket(FriendlyByteBuf buffer) {
+        this.reason = Component.Serializer.fromJsonLenient(buffer.readUtf(262144), RegistryAccess.EMPTY);
     }
 
-    private void write(FriendlyByteBuf p_134821_) {
-        p_134821_.writeUtf(Component.Serializer.toJson(this.reason, RegistryAccess.EMPTY));
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeUtf(Component.Serializer.toJson(this.reason, RegistryAccess.EMPTY));
     }
 
     @Override
@@ -30,8 +33,11 @@ public class ClientboundLoginDisconnectPacket implements Packet<ClientLoginPacke
         return LoginPacketTypes.CLIENTBOUND_LOGIN_DISCONNECT;
     }
 
-    public void handle(ClientLoginPacketListener p_134818_) {
-        p_134818_.handleDisconnect(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientLoginPacketListener handler) {
+        handler.handleDisconnect(this);
     }
 
     public Component getReason() {

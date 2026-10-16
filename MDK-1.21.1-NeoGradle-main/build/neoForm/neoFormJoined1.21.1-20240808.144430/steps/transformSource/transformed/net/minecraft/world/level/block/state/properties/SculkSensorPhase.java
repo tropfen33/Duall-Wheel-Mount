@@ -9,8 +9,8 @@ public enum SculkSensorPhase implements StringRepresentable {
 
     private final String name;
 
-    private SculkSensorPhase(String p_156050_) {
-        this.name = p_156050_;
+    private SculkSensorPhase(String name) {
+        this.name = name;
     }
 
     @Override

@@ -12,42 +12,56 @@ public class ResultSlot extends Slot {
     private final Player player;
     private int removeCount;
 
-    public ResultSlot(Player p_40166_, CraftingContainer p_40167_, Container p_40168_, int p_40169_, int p_40170_, int p_40171_) {
-        super(p_40168_, p_40169_, p_40170_, p_40171_);
-        this.player = p_40166_;
-        this.craftSlots = p_40167_;
+    public ResultSlot(Player player, CraftingContainer craftSlots, Container container, int slot, int xPosition, int yPosition) {
+        super(container, slot, xPosition, yPosition);
+        this.player = player;
+        this.craftSlots = craftSlots;
     }
 
+    /**
+     * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+     */
     @Override
-    public boolean mayPlace(ItemStack p_40178_) {
+    public boolean mayPlace(ItemStack stack) {
         return false;
     }
 
+    /**
+     * Decrease the size of the stack in slot (first int arg) by the amount of the second int arg. Returns the new stack.
+     */
     @Override
-    public ItemStack remove(int p_40173_) {
+    public ItemStack remove(int amount) {
         if (this.hasItem()) {
-            this.removeCount = this.removeCount + Math.min(p_40173_, this.getItem().getCount());
+            this.removeCount = this.removeCount + Math.min(amount, this.getItem().getCount());
         }
 
-        return super.remove(p_40173_);
+        return super.remove(amount);
+    }
+
+    /**
+     * Typically increases an internal count, then calls {@code onCrafting(item)}.
+     *
+     * @param stack the output - ie, iron ingots, and pickaxes, not ore and wood.
+     */
+    @Override
+    protected void onQuickCraft(ItemStack stack, int amount) {
+        this.removeCount += amount;
+        this.checkTakeAchievements(stack);
     }
 
     @Override
-    protected void onQuickCraft(ItemStack p_40180_, int p_40181_) {
-        this.removeCount += p_40181_;
-        this.checkTakeAchievements(p_40180_);
+    protected void onSwapCraft(int numItemsCrafted) {
+        this.removeCount += numItemsCrafted;
     }
 
+    /**
+     * @param stack the output - ie, iron ingots, and pickaxes, not ore and wood.
+     */
     @Override
-    protected void onSwapCraft(int p_40183_) {
-        this.removeCount += p_40183_;
-    }
-
-    @Override
-    protected void checkTakeAchievements(ItemStack p_40185_) {
+    protected void checkTakeAchievements(ItemStack stack) {
         if (this.removeCount > 0) {
-            p_40185_.onCraftedBy(this.player.level(), this.player, this.removeCount);
-            net.neoforged.neoforge.event.EventHooks.firePlayerCraftingEvent(this.player, p_40185_, this.craftSlots);
+            stack.onCraftedBy(this.player.level(), this.player, this.removeCount);
+            net.neoforged.neoforge.event.EventHooks.firePlayerCraftingEvent(this.player, stack, this.craftSlots);
         }
 
         if (this.container instanceof RecipeCraftingHolder recipecraftingholder) {
@@ -58,14 +72,14 @@ public class ResultSlot extends Slot {
     }
 
     @Override
-    public void onTake(Player p_150638_, ItemStack p_150639_) {
-        this.checkTakeAchievements(p_150639_);
+    public void onTake(Player player, ItemStack stack) {
+        this.checkTakeAchievements(stack);
         CraftingInput.Positioned craftinginput$positioned = this.craftSlots.asPositionedCraftInput();
         CraftingInput craftinginput = craftinginput$positioned.input();
         int i = craftinginput$positioned.left();
         int j = craftinginput$positioned.top();
-        net.neoforged.neoforge.common.CommonHooks.setCraftingPlayer(p_150638_);
-        NonNullList<ItemStack> nonnulllist = p_150638_.level().getRecipeManager().getRemainingItemsFor(RecipeType.CRAFTING, craftinginput, p_150638_.level());
+        net.neoforged.neoforge.common.CommonHooks.setCraftingPlayer(player);
+        NonNullList<ItemStack> nonnulllist = player.level().getRecipeManager().getRemainingItemsFor(RecipeType.CRAFTING, craftinginput, player.level());
         net.neoforged.neoforge.common.CommonHooks.setCraftingPlayer(null);
 
         for (int k = 0; k < craftinginput.height(); k++) {

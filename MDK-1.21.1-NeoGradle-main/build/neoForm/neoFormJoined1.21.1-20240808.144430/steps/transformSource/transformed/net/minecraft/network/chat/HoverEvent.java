@@ -39,12 +39,12 @@ public class HoverEvent {
         .xmap(HoverEvent::new, p_337497_ -> p_337497_.event);
     private final HoverEvent.TypedHoverEvent<?> event;
 
-    public <T> HoverEvent(HoverEvent.Action<T> p_130818_, T p_130819_) {
-        this(new HoverEvent.TypedHoverEvent<>(p_130818_, p_130819_));
+    public <T> HoverEvent(HoverEvent.Action<T> action, T value) {
+        this(new HoverEvent.TypedHoverEvent<>(action, value));
     }
 
-    private HoverEvent(HoverEvent.TypedHoverEvent<?> p_304734_) {
-        this.event = p_304734_;
+    private HoverEvent(HoverEvent.TypedHoverEvent<?> event) {
+        this.event = event;
     }
 
     public HoverEvent.Action<?> getAction() {
@@ -52,16 +52,16 @@ public class HoverEvent {
     }
 
     @Nullable
-    public <T> T getValue(HoverEvent.Action<T> p_130824_) {
-        return this.event.action == p_130824_ ? p_130824_.cast(this.event.value) : null;
+    public <T> T getValue(HoverEvent.Action<T> actionType) {
+        return this.event.action == actionType ? actionType.cast(this.event.value) : null;
     }
 
     @Override
-    public boolean equals(Object p_130828_) {
-        if (this == p_130828_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return p_130828_ != null && this.getClass() == p_130828_.getClass() ? ((HoverEvent)p_130828_).event.equals(this.event) : false;
+            return other != null && this.getClass() == other.getClass() ? ((HoverEvent)other).event.equals(this.event) : false;
         }
     }
 
@@ -94,19 +94,19 @@ public class HoverEvent {
         final MapCodec<HoverEvent.TypedHoverEvent<T>> codec;
         final MapCodec<HoverEvent.TypedHoverEvent<T>> legacyCodec;
 
-        public Action(String p_130842_, boolean p_130843_, Codec<T> p_304723_, final HoverEvent.LegacyConverter<T> p_331991_) {
-            this.name = p_130842_;
-            this.allowFromServer = p_130843_;
-            this.codec = p_304723_.xmap(p_304162_ -> new HoverEvent.TypedHoverEvent<>(this, (T)p_304162_), p_304164_ -> p_304164_.value).fieldOf("contents");
+        public Action(String name, boolean allowFromServer, Codec<T> codec, final HoverEvent.LegacyConverter<T> legacyConverter) {
+            this.name = name;
+            this.allowFromServer = allowFromServer;
+            this.codec = codec.xmap(p_304162_ -> new HoverEvent.TypedHoverEvent<>(this, (T)p_304162_), p_304164_ -> p_304164_.value).fieldOf("contents");
             this.legacyCodec = (new Codec<HoverEvent.TypedHoverEvent<T>>() {
                 @Override
                 public <D> DataResult<Pair<HoverEvent.TypedHoverEvent<T>, D>> decode(DynamicOps<D> p_331755_, D p_331509_) {
                     return ComponentSerialization.CODEC.decode(p_331755_, p_331509_).flatMap(p_337500_ -> {
                         DataResult<T> dataresult;
                         if (p_331755_ instanceof RegistryOps<D> registryops) {
-                            dataresult = p_331991_.parse(p_337500_.getFirst(), registryops);
+                            dataresult = legacyConverter.parse(p_337500_.getFirst(), registryops);
                         } else {
-                            dataresult = p_331991_.parse(p_337500_.getFirst(), null);
+                            dataresult = legacyConverter.parse(p_337500_.getFirst(), null);
                         }
 
                         return dataresult.map(p_331221_ -> Pair.of(new HoverEvent.TypedHoverEvent<>(Action.this, (T)p_331221_), (D)p_337500_.getSecond()));
@@ -128,8 +128,8 @@ public class HoverEvent {
             return this.name;
         }
 
-        T cast(Object p_130865_) {
-            return (T)p_130865_;
+        T cast(Object parameter) {
+            return (T)parameter;
         }
 
         @Override
@@ -137,13 +137,13 @@ public class HoverEvent {
             return "<action " + this.name + ">";
         }
 
-        private static DataResult<HoverEvent.Action<?>> filterForSerialization(@Nullable HoverEvent.Action<?> p_304784_) {
-            if (p_304784_ == null) {
+        private static DataResult<HoverEvent.Action<?>> filterForSerialization(@Nullable HoverEvent.Action<?> action) {
+            if (action == null) {
                 return DataResult.error(() -> "Unknown action");
             } else {
-                return !p_304784_.isAllowedFromServer()
-                    ? DataResult.error(() -> "Action not allowed: " + p_304784_)
-                    : DataResult.success(p_304784_, Lifecycle.stable());
+                return !action.isAllowedFromServer()
+                    ? DataResult.error(() -> "Action not allowed: " + action)
+                    : DataResult.success(action, Lifecycle.stable());
             }
         }
     }
@@ -163,20 +163,20 @@ public class HoverEvent {
         @Nullable
         private List<Component> linesCache;
 
-        public EntityTooltipInfo(EntityType<?> p_130876_, UUID p_130877_, @Nullable Component p_130878_) {
-            this(p_130876_, p_130877_, Optional.ofNullable(p_130878_));
+        public EntityTooltipInfo(EntityType<?> type, UUID id, @Nullable Component name) {
+            this(type, id, Optional.ofNullable(name));
         }
 
-        public EntityTooltipInfo(EntityType<?> p_304581_, UUID p_304712_, Optional<Component> p_304973_) {
-            this.type = p_304581_;
-            this.id = p_304712_;
-            this.name = p_304973_;
+        public EntityTooltipInfo(EntityType<?> type, UUID id, Optional<Component> name) {
+            this.type = type;
+            this.id = id;
+            this.name = name;
         }
 
-        public static DataResult<HoverEvent.EntityTooltipInfo> legacyCreate(Component p_304689_, @Nullable RegistryOps<?> p_330431_) {
+        public static DataResult<HoverEvent.EntityTooltipInfo> legacyCreate(Component name, @Nullable RegistryOps<?> ops) {
             try {
-                CompoundTag compoundtag = TagParser.parseTag(p_304689_.getString());
-                DynamicOps<JsonElement> dynamicops = (DynamicOps<JsonElement>)(p_330431_ != null ? p_330431_.withParent(JsonOps.INSTANCE) : JsonOps.INSTANCE);
+                CompoundTag compoundtag = TagParser.parseTag(name.getString());
+                DynamicOps<JsonElement> dynamicops = (DynamicOps<JsonElement>)(ops != null ? ops.withParent(JsonOps.INSTANCE) : JsonOps.INSTANCE);
                 DataResult<Component> dataresult = ComponentSerialization.CODEC.parse(dynamicops, JsonParser.parseString(compoundtag.getString("name")));
                 EntityType<?> entitytype = BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse(compoundtag.getString("type")));
                 UUID uuid = UUID.fromString(compoundtag.getString("id"));
@@ -198,11 +198,11 @@ public class HoverEvent {
         }
 
         @Override
-        public boolean equals(Object p_130886_) {
-            if (this == p_130886_) {
+        public boolean equals(Object other) {
+            if (this == other) {
                 return true;
-            } else if (p_130886_ != null && this.getClass() == p_130886_.getClass()) {
-                HoverEvent.EntityTooltipInfo hoverevent$entitytooltipinfo = (HoverEvent.EntityTooltipInfo)p_130886_;
+            } else if (other != null && this.getClass() == other.getClass()) {
+                HoverEvent.EntityTooltipInfo hoverevent$entitytooltipinfo = (HoverEvent.EntityTooltipInfo)other;
                 return this.type.equals(hoverevent$entitytooltipinfo.type)
                     && this.id.equals(hoverevent$entitytooltipinfo.id)
                     && this.name.equals(hoverevent$entitytooltipinfo.name);
@@ -231,22 +231,22 @@ public class HoverEvent {
         @Nullable
         private ItemStack itemStack;
 
-        ItemStackInfo(Holder<Item> p_330519_, int p_130894_, DataComponentPatch p_331646_) {
-            this.item = p_330519_;
-            this.count = p_130894_;
-            this.components = p_331646_;
+        ItemStackInfo(Holder<Item> item, int count, DataComponentPatch components) {
+            this.item = item;
+            this.count = count;
+            this.components = components;
         }
 
-        public ItemStackInfo(ItemStack p_130897_) {
-            this(p_130897_.getItemHolder(), p_130897_.getCount(), p_130897_.getComponentsPatch());
+        public ItemStackInfo(ItemStack stack) {
+            this(stack.getItemHolder(), stack.getCount(), stack.getComponentsPatch());
         }
 
         @Override
-        public boolean equals(Object p_130911_) {
-            if (this == p_130911_) {
+        public boolean equals(Object other) {
+            if (this == other) {
                 return true;
-            } else if (p_130911_ != null && this.getClass() == p_130911_.getClass()) {
-                HoverEvent.ItemStackInfo hoverevent$itemstackinfo = (HoverEvent.ItemStackInfo)p_130911_;
+            } else if (other != null && this.getClass() == other.getClass()) {
+                HoverEvent.ItemStackInfo hoverevent$itemstackinfo = (HoverEvent.ItemStackInfo)other;
                 return this.count == hoverevent$itemstackinfo.count
                     && this.item.equals(hoverevent$itemstackinfo.item)
                     && this.components.equals(hoverevent$itemstackinfo.components);
@@ -270,10 +270,10 @@ public class HoverEvent {
             return this.itemStack;
         }
 
-        private static DataResult<HoverEvent.ItemStackInfo> legacyCreate(Component p_304732_, @Nullable RegistryOps<?> p_331763_) {
+        private static DataResult<HoverEvent.ItemStackInfo> legacyCreate(Component name, @Nullable RegistryOps<?> ops) {
             try {
-                CompoundTag compoundtag = TagParser.parseTag(p_304732_.getString());
-                DynamicOps<Tag> dynamicops = (DynamicOps<Tag>)(p_331763_ != null ? p_331763_.withParent(NbtOps.INSTANCE) : NbtOps.INSTANCE);
+                CompoundTag compoundtag = TagParser.parseTag(name.getString());
+                DynamicOps<Tag> dynamicops = (DynamicOps<Tag>)(ops != null ? ops.withParent(NbtOps.INSTANCE) : NbtOps.INSTANCE);
                 return ItemStack.CODEC.parse(dynamicops, compoundtag).map(HoverEvent.ItemStackInfo::new);
             } catch (CommandSyntaxException commandsyntaxexception) {
                 return DataResult.error(() -> "Failed to parse item tag: " + commandsyntaxexception.getMessage());
@@ -282,7 +282,7 @@ public class HoverEvent {
     }
 
     public interface LegacyConverter<T> {
-        DataResult<T> parse(Component p_332047_, @Nullable RegistryOps<?> p_331431_);
+        DataResult<T> parse(Component name, @Nullable RegistryOps<?> ops);
     }
 
     static record TypedHoverEvent<T>(HoverEvent.Action<T> action, T value) {

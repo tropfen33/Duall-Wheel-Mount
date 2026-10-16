@@ -23,24 +23,24 @@ public class NeighborsUpdateRenderer implements DebugRenderer.SimpleDebugRendere
     private final Minecraft minecraft;
     private final Map<Long, Map<BlockPos, Integer>> lastUpdate = Maps.newTreeMap(Ordering.natural().reverse());
 
-    NeighborsUpdateRenderer(Minecraft p_113595_) {
-        this.minecraft = p_113595_;
+    NeighborsUpdateRenderer(Minecraft minecraft) {
+        this.minecraft = minecraft;
     }
 
-    public void addUpdate(long p_113597_, BlockPos p_113598_) {
-        Map<BlockPos, Integer> map = this.lastUpdate.computeIfAbsent(p_113597_, p_113606_ -> Maps.newHashMap());
-        int i = map.getOrDefault(p_113598_, 0);
-        map.put(p_113598_, i + 1);
+    public void addUpdate(long gameTime, BlockPos pos) {
+        Map<BlockPos, Integer> map = this.lastUpdate.computeIfAbsent(gameTime, p_113606_ -> Maps.newHashMap());
+        int i = map.getOrDefault(pos, 0);
+        map.put(pos, i + 1);
     }
 
     @Override
-    public void render(PoseStack p_113600_, MultiBufferSource p_113601_, double p_113602_, double p_113603_, double p_113604_) {
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, double camX, double camY, double camZ) {
         long i = this.minecraft.level.getGameTime();
         int j = 200;
         double d0 = 0.0025;
         Set<BlockPos> set = Sets.newHashSet();
         Map<BlockPos, Integer> map = Maps.newHashMap();
-        VertexConsumer vertexconsumer = p_113601_.getBuffer(RenderType.lines());
+        VertexConsumer vertexconsumer = bufferSource.getBuffer(RenderType.lines());
         Iterator<Entry<Long, Map<BlockPos, Integer>>> iterator = this.lastUpdate.entrySet().iterator();
 
         while (iterator.hasNext()) {
@@ -59,9 +59,9 @@ public class NeighborsUpdateRenderer implements DebugRenderer.SimpleDebugRendere
                             .inflate(0.002)
                             .deflate(0.0025 * (double)k)
                             .move((double)blockpos.getX(), (double)blockpos.getY(), (double)blockpos.getZ())
-                            .move(-p_113602_, -p_113603_, -p_113604_);
+                            .move(-camX, -camY, -camZ);
                         LevelRenderer.renderLineBox(
-                            p_113600_, vertexconsumer, aabb.minX, aabb.minY, aabb.minZ, aabb.maxX, aabb.maxY, aabb.maxZ, 1.0F, 1.0F, 1.0F, 1.0F
+                            poseStack, vertexconsumer, aabb.minX, aabb.minY, aabb.minZ, aabb.maxX, aabb.maxY, aabb.maxZ, 1.0F, 1.0F, 1.0F, 1.0F
                         );
                         map.put(blockpos, integer);
                     }
@@ -72,7 +72,7 @@ public class NeighborsUpdateRenderer implements DebugRenderer.SimpleDebugRendere
         for (Entry<BlockPos, Integer> entry2 : map.entrySet()) {
             BlockPos blockpos1 = entry2.getKey();
             Integer integer1 = entry2.getValue();
-            DebugRenderer.renderFloatingText(p_113600_, p_113601_, String.valueOf(integer1), blockpos1.getX(), blockpos1.getY(), blockpos1.getZ(), -1);
+            DebugRenderer.renderFloatingText(poseStack, bufferSource, String.valueOf(integer1), blockpos1.getX(), blockpos1.getY(), blockpos1.getZ(), -1);
         }
     }
 }

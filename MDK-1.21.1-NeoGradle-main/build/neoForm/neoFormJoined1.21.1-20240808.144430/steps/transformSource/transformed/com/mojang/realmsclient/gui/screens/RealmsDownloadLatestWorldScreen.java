@@ -60,12 +60,12 @@ public class RealmsDownloadLatestWorldScreen extends RealmsScreen {
     private boolean checked;
     private final BooleanConsumer callback;
 
-    public RealmsDownloadLatestWorldScreen(Screen p_88625_, WorldDownload p_88626_, String p_88627_, BooleanConsumer p_88628_) {
+    public RealmsDownloadLatestWorldScreen(Screen lastScreen, WorldDownload worldDownload, String worldName, BooleanConsumer callback) {
         super(GameNarrator.NO_TITLE);
-        this.callback = p_88628_;
-        this.lastScreen = p_88625_;
-        this.worldName = p_88627_;
-        this.worldDownload = p_88626_;
+        this.callback = callback;
+        this.lastScreen = lastScreen;
+        this.worldName = worldName;
+        this.worldDownload = worldDownload;
         this.downloadStatus = new RealmsDownloadLatestWorldScreen.DownloadStatus();
         this.downloadTitle = Component.translatable("mco.download.title");
         this.narrationRateLimiter = RateLimiter.create(0.1F);
@@ -94,9 +94,9 @@ public class RealmsDownloadLatestWorldScreen extends RealmsScreen {
         }
     }
 
-    private long getContentLength(String p_88647_) {
+    private long getContentLength(String uri) {
         FileDownload filedownload = new FileDownload();
-        return filedownload.contentLength(p_88647_);
+        return filedownload.contentLength(uri);
     }
 
     @Override
@@ -135,45 +135,53 @@ public class RealmsDownloadLatestWorldScreen extends RealmsScreen {
         this.minecraft.setScreen(this.lastScreen);
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282124_, int p_88635_, int p_88636_, float p_88637_) {
-        super.render(p_282124_, p_88635_, p_88636_, p_88637_);
-        p_282124_.drawCenteredString(this.font, this.downloadTitle, this.width / 2, 20, -1);
-        p_282124_.drawCenteredString(this.font, this.status, this.width / 2, 50, -1);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.downloadTitle, this.width / 2, 20, -1);
+        guiGraphics.drawCenteredString(this.font, this.status, this.width / 2, 50, -1);
         if (this.showDots) {
-            this.drawDots(p_282124_);
+            this.drawDots(guiGraphics);
         }
 
         if (this.downloadStatus.bytesWritten != 0L && !this.cancelled) {
-            this.drawProgressBar(p_282124_);
-            this.drawDownloadSpeed(p_282124_);
+            this.drawProgressBar(guiGraphics);
+            this.drawDownloadSpeed(guiGraphics);
         }
 
         if (this.errorMessage != null) {
-            p_282124_.drawCenteredString(this.font, this.errorMessage, this.width / 2, 110, -65536);
+            guiGraphics.drawCenteredString(this.font, this.errorMessage, this.width / 2, 110, -65536);
         }
     }
 
-    private void drawDots(GuiGraphics p_281948_) {
+    private void drawDots(GuiGraphics guiGraphics) {
         int i = this.font.width(this.status);
         if (this.animTick != 0 && this.animTick % 10 == 0) {
             this.dotIndex++;
         }
 
-        p_281948_.drawString(this.font, DOTS[this.dotIndex % DOTS.length], this.width / 2 + i / 2 + 5, 50, -1, false);
+        guiGraphics.drawString(this.font, DOTS[this.dotIndex % DOTS.length], this.width / 2 + i / 2 + 5, 50, -1, false);
     }
 
-    private void drawProgressBar(GuiGraphics p_281556_) {
+    private void drawProgressBar(GuiGraphics guiGraphics) {
         double d0 = Math.min((double)this.downloadStatus.bytesWritten / (double)this.downloadStatus.totalBytes, 1.0);
         this.progress = String.format(Locale.ROOT, "%.1f", d0 * 100.0);
         int i = (this.width - 200) / 2;
         int j = i + (int)Math.round(200.0 * d0);
-        p_281556_.fill(i - 1, 79, j + 1, 96, -1);
-        p_281556_.fill(i, 80, j, 95, -8355712);
-        p_281556_.drawCenteredString(this.font, Component.translatable("mco.download.percent", this.progress), this.width / 2, 84, -1);
+        guiGraphics.fill(i - 1, 79, j + 1, 96, -1);
+        guiGraphics.fill(i, 80, j, 95, -8355712);
+        guiGraphics.drawCenteredString(this.font, Component.translatable("mco.download.percent", this.progress), this.width / 2, 84, -1);
     }
 
-    private void drawDownloadSpeed(GuiGraphics p_282236_) {
+    private void drawDownloadSpeed(GuiGraphics guiGraphics) {
         if (this.animTick % 20 == 0) {
             if (this.previousWrittenBytes != null) {
                 long i = Util.getMillis() - this.previousTimeSnapshot;
@@ -182,21 +190,21 @@ public class RealmsDownloadLatestWorldScreen extends RealmsScreen {
                 }
 
                 this.bytesPersSecond = 1000L * (this.downloadStatus.bytesWritten - this.previousWrittenBytes) / i;
-                this.drawDownloadSpeed0(p_282236_, this.bytesPersSecond);
+                this.drawDownloadSpeed0(guiGraphics, this.bytesPersSecond);
             }
 
             this.previousWrittenBytes = this.downloadStatus.bytesWritten;
             this.previousTimeSnapshot = Util.getMillis();
         } else {
-            this.drawDownloadSpeed0(p_282236_, this.bytesPersSecond);
+            this.drawDownloadSpeed0(guiGraphics, this.bytesPersSecond);
         }
     }
 
-    private void drawDownloadSpeed0(GuiGraphics p_283338_, long p_281931_) {
-        if (p_281931_ > 0L) {
+    private void drawDownloadSpeed0(GuiGraphics guiGraphics, long bytesPerSecond) {
+        if (bytesPerSecond > 0L) {
             int i = this.font.width(this.progress);
-            p_283338_.drawString(
-                this.font, Component.translatable("mco.download.speed", Unit.humanReadable(p_281931_)), this.width / 2 + i / 2 + 15, 84, -1, false
+            guiGraphics.drawString(
+                this.font, Component.translatable("mco.download.speed", Unit.humanReadable(bytesPerSecond)), this.width / 2 + i / 2 + 15, 84, -1, false
             );
         }
     }

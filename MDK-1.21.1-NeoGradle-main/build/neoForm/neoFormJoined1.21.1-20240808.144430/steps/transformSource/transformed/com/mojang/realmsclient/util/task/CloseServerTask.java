@@ -17,9 +17,9 @@ public class CloseServerTask extends LongRunningTask {
     private final RealmsServer serverData;
     private final RealmsConfigureWorldScreen configureScreen;
 
-    public CloseServerTask(RealmsServer p_90302_, RealmsConfigureWorldScreen p_90303_) {
-        this.serverData = p_90302_;
-        this.configureScreen = p_90303_;
+    public CloseServerTask(RealmsServer serverData, RealmsConfigureWorldScreen configureScreen) {
+        this.serverData = serverData;
+        this.configureScreen = configureScreen;
     }
 
     @Override

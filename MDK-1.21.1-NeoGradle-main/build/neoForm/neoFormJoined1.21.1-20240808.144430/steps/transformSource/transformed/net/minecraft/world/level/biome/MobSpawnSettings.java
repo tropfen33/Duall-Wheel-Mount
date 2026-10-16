@@ -55,19 +55,19 @@ public class MobSpawnSettings {
     private final java.util.Set<EntityType<?>> costView;
 
     MobSpawnSettings(
-        float p_196689_,
-        Map<MobCategory, WeightedRandomList<MobSpawnSettings.SpawnerData>> p_196690_,
-        Map<EntityType<?>, MobSpawnSettings.MobSpawnCost> p_196691_
+        float creatureGenerationProbability,
+        Map<MobCategory, WeightedRandomList<MobSpawnSettings.SpawnerData>> spawners,
+        Map<EntityType<?>, MobSpawnSettings.MobSpawnCost> mobSpawnCosts
     ) {
-        this.creatureGenerationProbability = p_196689_;
-        this.spawners = ImmutableMap.copyOf(p_196690_);
-        this.mobSpawnCosts = ImmutableMap.copyOf(p_196691_);
+        this.creatureGenerationProbability = creatureGenerationProbability;
+        this.spawners = ImmutableMap.copyOf(spawners);
+        this.mobSpawnCosts = ImmutableMap.copyOf(mobSpawnCosts);
         this.typesView = java.util.Collections.unmodifiableSet(this.spawners.keySet());
         this.costView = java.util.Collections.unmodifiableSet(this.mobSpawnCosts.keySet());
     }
 
-    public WeightedRandomList<MobSpawnSettings.SpawnerData> getMobs(MobCategory p_151799_) {
-        return this.spawners.getOrDefault(p_151799_, EMPTY_MOB_LIST);
+    public WeightedRandomList<MobSpawnSettings.SpawnerData> getMobs(MobCategory category) {
+        return this.spawners.getOrDefault(category, EMPTY_MOB_LIST);
     }
 
     public java.util.Set<MobCategory> getSpawnerTypes() {
@@ -75,8 +75,8 @@ public class MobSpawnSettings {
     }
 
     @Nullable
-    public MobSpawnSettings.MobSpawnCost getMobSpawnCost(EntityType<?> p_48346_) {
-        return this.mobSpawnCosts.get(p_48346_);
+    public MobSpawnSettings.MobSpawnCost getMobSpawnCost(EntityType<?> entityType) {
+        return this.mobSpawnCosts.get(entityType);
     }
 
     public java.util.Set<EntityType<?>> getEntityTypes() {
@@ -93,18 +93,18 @@ public class MobSpawnSettings {
         protected final Map<EntityType<?>, MobSpawnSettings.MobSpawnCost> mobSpawnCosts = Maps.newLinkedHashMap();
         protected float creatureGenerationProbability = 0.1F;
 
-        public MobSpawnSettings.Builder addSpawn(MobCategory p_48377_, MobSpawnSettings.SpawnerData p_48378_) {
-            this.spawners.get(p_48377_).add(p_48378_);
+        public MobSpawnSettings.Builder addSpawn(MobCategory classification, MobSpawnSettings.SpawnerData spawner) {
+            this.spawners.get(classification).add(spawner);
             return this;
         }
 
-        public MobSpawnSettings.Builder addMobCharge(EntityType<?> p_48371_, double p_48372_, double p_48373_) {
-            this.mobSpawnCosts.put(p_48371_, new MobSpawnSettings.MobSpawnCost(p_48373_, p_48372_));
+        public MobSpawnSettings.Builder addMobCharge(EntityType<?> entityType, double charge, double energyBudget) {
+            this.mobSpawnCosts.put(entityType, new MobSpawnSettings.MobSpawnCost(energyBudget, charge));
             return this;
         }
 
-        public MobSpawnSettings.Builder creatureGenerationProbability(float p_48369_) {
-            this.creatureGenerationProbability = p_48369_;
+        public MobSpawnSettings.Builder creatureGenerationProbability(float probability) {
+            this.creatureGenerationProbability = probability;
             return this;
         }
 
@@ -120,6 +120,10 @@ public class MobSpawnSettings {
         }
     }
 
+    /**
+     * @param energyBudget Determines the total amount of entities that can spawn in a location based on their current cost (e.g. a cost of 0.1 and a max total of 1 means at most ten entities can spawn in the given location).
+     * @param charge Determines the cost per entity towards the maximum spawn cap.
+     */
     public static record MobSpawnCost(double energyBudget, double charge) {
         public static final Codec<MobSpawnSettings.MobSpawnCost> CODEC = RecordCodecBuilder.create(
             p_48399_ -> p_48399_.group(
@@ -149,15 +153,15 @@ public class MobSpawnSettings {
         public final int minCount;
         public final int maxCount;
 
-        public SpawnerData(EntityType<?> p_48409_, int p_48410_, int p_48411_, int p_48412_) {
-            this(p_48409_, Weight.of(p_48410_), p_48411_, p_48412_);
+        public SpawnerData(EntityType<?> type, int weight, int minCount, int maxCount) {
+            this(type, Weight.of(weight), minCount, maxCount);
         }
 
-        public SpawnerData(EntityType<?> p_151815_, Weight p_151816_, int p_151817_, int p_151818_) {
-            super(p_151816_);
-            this.type = p_151815_.getCategory() == MobCategory.MISC ? EntityType.PIG : p_151815_;
-            this.minCount = p_151817_;
-            this.maxCount = p_151818_;
+        public SpawnerData(EntityType<?> type, Weight weight, int minCount, int maxCount) {
+            super(weight);
+            this.type = type.getCategory() == MobCategory.MISC ? EntityType.PIG : type;
+            this.minCount = minCount;
+            this.maxCount = maxCount;
         }
 
         @Override

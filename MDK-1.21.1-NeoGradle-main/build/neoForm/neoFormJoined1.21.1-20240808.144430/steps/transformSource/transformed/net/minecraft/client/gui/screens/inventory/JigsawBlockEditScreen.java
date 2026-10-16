@@ -45,9 +45,9 @@ public class JigsawBlockEditScreen extends Screen {
     private Button generateButton;
     private JigsawBlockEntity.JointType joint;
 
-    public JigsawBlockEditScreen(JigsawBlockEntity p_98949_) {
+    public JigsawBlockEditScreen(JigsawBlockEntity jigsawEntity) {
         super(GameNarrator.NO_TITLE);
-        this.jigsawEntity = p_98949_;
+        this.jigsawEntity = jigsawEntity;
     }
 
     private void onDone() {
@@ -76,9 +76,9 @@ public class JigsawBlockEditScreen extends Screen {
             );
     }
 
-    private int parseAsInt(String p_309106_) {
+    private int parseAsInt(String string) {
         try {
-            return Integer.parseInt(p_309106_);
+            return Integer.parseInt(string);
         } catch (NumberFormatException numberformatexception) {
             return 0;
         }
@@ -178,12 +178,12 @@ public class JigsawBlockEditScreen extends Screen {
     }
 
     @Override
-    public void renderBackground(GuiGraphics p_334016_, int p_333942_, int p_334006_, float p_333770_) {
-        this.renderTransparentBackground(p_334016_);
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.renderTransparentBackground(guiGraphics);
     }
 
-    public static boolean isValidResourceLocation(String p_352366_) {
-        return ResourceLocation.tryParse(p_352366_) != null;
+    public static boolean isValidResourceLocation(String location) {
+        return ResourceLocation.tryParse(location) != null;
     }
 
     private void updateValidity() {
@@ -195,7 +195,7 @@ public class JigsawBlockEditScreen extends Screen {
     }
 
     @Override
-    public void resize(Minecraft p_98960_, int p_98961_, int p_98962_) {
+    public void resize(Minecraft minecraft, int width, int height) {
         String s = this.nameEdit.getValue();
         String s1 = this.targetEdit.getValue();
         String s2 = this.poolEdit.getValue();
@@ -204,7 +204,7 @@ public class JigsawBlockEditScreen extends Screen {
         String s5 = this.placementPriorityEdit.getValue();
         int i = this.levels;
         JigsawBlockEntity.JointType jigsawblockentity$jointtype = this.joint;
-        this.init(p_98960_, p_98961_, p_98962_);
+        this.init(minecraft, width, height);
         this.nameEdit.setValue(s);
         this.targetEdit.setValue(s1);
         this.poolEdit.setValue(s2);
@@ -216,11 +216,20 @@ public class JigsawBlockEditScreen extends Screen {
         this.placementPriorityEdit.setValue(s5);
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_98951_, int p_98952_, int p_98953_) {
-        if (super.keyPressed(p_98951_, p_98952_, p_98953_)) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (super.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
-        } else if (!this.doneButton.active || p_98951_ != 257 && p_98951_ != 335) {
+        } else if (!this.doneButton.active || keyCode != 257 && keyCode != 335) {
             return false;
         } else {
             this.onDone();
@@ -228,23 +237,31 @@ public class JigsawBlockEditScreen extends Screen {
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282514_, int p_98956_, int p_98957_, float p_98958_) {
-        super.render(p_282514_, p_98956_, p_98957_, p_98958_);
-        p_282514_.drawString(this.font, POOL_LABEL, this.width / 2 - 153, 10, 10526880);
-        this.poolEdit.render(p_282514_, p_98956_, p_98957_, p_98958_);
-        p_282514_.drawString(this.font, NAME_LABEL, this.width / 2 - 153, 45, 10526880);
-        this.nameEdit.render(p_282514_, p_98956_, p_98957_, p_98958_);
-        p_282514_.drawString(this.font, TARGET_LABEL, this.width / 2 - 153, 80, 10526880);
-        this.targetEdit.render(p_282514_, p_98956_, p_98957_, p_98958_);
-        p_282514_.drawString(this.font, FINAL_STATE_LABEL, this.width / 2 - 153, 115, 10526880);
-        this.finalStateEdit.render(p_282514_, p_98956_, p_98957_, p_98958_);
-        p_282514_.drawString(this.font, SELECTION_PRIORITY_LABEL, this.width / 2 - 153, 150, 10526880);
-        this.placementPriorityEdit.render(p_282514_, p_98956_, p_98957_, p_98958_);
-        p_282514_.drawString(this.font, PLACEMENT_PRIORITY_LABEL, this.width / 2 - 50, 150, 10526880);
-        this.selectionPriorityEdit.render(p_282514_, p_98956_, p_98957_, p_98958_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawString(this.font, POOL_LABEL, this.width / 2 - 153, 10, 10526880);
+        this.poolEdit.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawString(this.font, NAME_LABEL, this.width / 2 - 153, 45, 10526880);
+        this.nameEdit.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawString(this.font, TARGET_LABEL, this.width / 2 - 153, 80, 10526880);
+        this.targetEdit.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawString(this.font, FINAL_STATE_LABEL, this.width / 2 - 153, 115, 10526880);
+        this.finalStateEdit.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawString(this.font, SELECTION_PRIORITY_LABEL, this.width / 2 - 153, 150, 10526880);
+        this.placementPriorityEdit.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawString(this.font, PLACEMENT_PRIORITY_LABEL, this.width / 2 - 50, 150, 10526880);
+        this.selectionPriorityEdit.render(guiGraphics, mouseX, mouseY, partialTick);
         if (JigsawBlock.getFrontFacing(this.jigsawEntity.getBlockState()).getAxis().isVertical()) {
-            p_282514_.drawString(this.font, JOINT_LABEL, this.width / 2 + 53, 150, 10526880);
+            guiGraphics.drawString(this.font, JOINT_LABEL, this.width / 2 + 53, 150, 10526880);
         }
     }
 }

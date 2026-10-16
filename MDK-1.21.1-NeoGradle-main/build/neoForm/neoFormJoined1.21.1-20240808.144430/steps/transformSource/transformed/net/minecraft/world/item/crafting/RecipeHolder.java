@@ -10,11 +10,11 @@ public record RecipeHolder<T extends Recipe<?>>(ResourceLocation id, T value) {
     );
 
     @Override
-    public boolean equals(Object p_301091_) {
-        if (this == p_301091_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            if (p_301091_ instanceof RecipeHolder<?> recipeholder && this.id.equals(recipeholder.id)) {
+            if (other instanceof RecipeHolder<?> recipeholder && this.id.equals(recipeholder.id)) {
                 return true;
             }
 

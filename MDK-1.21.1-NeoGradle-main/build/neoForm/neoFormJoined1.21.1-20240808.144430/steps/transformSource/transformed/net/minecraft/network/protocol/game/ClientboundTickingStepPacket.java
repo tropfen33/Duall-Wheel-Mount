@@ -15,12 +15,12 @@ public record ClientboundTickingStepPacket(int tickSteps) implements Packet<Clie
         this(p_309129_.readVarInt());
     }
 
-    public static ClientboundTickingStepPacket from(TickRateManager p_308913_) {
-        return new ClientboundTickingStepPacket(p_308913_.frozenTicksToRun());
+    public static ClientboundTickingStepPacket from(TickRateManager tickRateManager) {
+        return new ClientboundTickingStepPacket(tickRateManager.frozenTicksToRun());
     }
 
-    private void write(FriendlyByteBuf p_309179_) {
-        p_309179_.writeVarInt(this.tickSteps);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.tickSteps);
     }
 
     @Override
@@ -28,7 +28,10 @@ public record ClientboundTickingStepPacket(int tickSteps) implements Packet<Clie
         return GamePacketTypes.CLIENTBOUND_TICKING_STEP;
     }
 
-    public void handle(ClientGamePacketListener p_309086_) {
-        p_309086_.handleTickingStep(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleTickingStep(this);
     }
 }

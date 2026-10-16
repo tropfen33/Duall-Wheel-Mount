@@ -29,79 +29,82 @@ public class EndGatewayBlock extends BaseEntityBlock implements Portal {
         return CODEC;
     }
 
-    public EndGatewayBlock(BlockBehaviour.Properties p_52999_) {
-        super(p_52999_);
+    public EndGatewayBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_153193_, BlockState p_153194_) {
-        return new TheEndGatewayBlockEntity(p_153193_, p_153194_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new TheEndGatewayBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_153189_, BlockState p_153190_, BlockEntityType<T> p_153191_) {
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
         return createTickerHelper(
-            p_153191_, BlockEntityType.END_GATEWAY, p_153189_.isClientSide ? TheEndGatewayBlockEntity::beamAnimationTick : TheEndGatewayBlockEntity::portalTick
+            blockEntityType, BlockEntityType.END_GATEWAY, level.isClientSide ? TheEndGatewayBlockEntity::beamAnimationTick : TheEndGatewayBlockEntity::portalTick
         );
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_221097_, Level p_221098_, BlockPos p_221099_, RandomSource p_221100_) {
-        BlockEntity blockentity = p_221098_.getBlockEntity(p_221099_);
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        BlockEntity blockentity = level.getBlockEntity(pos);
         if (blockentity instanceof TheEndGatewayBlockEntity) {
             int i = ((TheEndGatewayBlockEntity)blockentity).getParticleAmount();
 
             for (int j = 0; j < i; j++) {
-                double d0 = (double)p_221099_.getX() + p_221100_.nextDouble();
-                double d1 = (double)p_221099_.getY() + p_221100_.nextDouble();
-                double d2 = (double)p_221099_.getZ() + p_221100_.nextDouble();
-                double d3 = (p_221100_.nextDouble() - 0.5) * 0.5;
-                double d4 = (p_221100_.nextDouble() - 0.5) * 0.5;
-                double d5 = (p_221100_.nextDouble() - 0.5) * 0.5;
-                int k = p_221100_.nextInt(2) * 2 - 1;
-                if (p_221100_.nextBoolean()) {
-                    d2 = (double)p_221099_.getZ() + 0.5 + 0.25 * (double)k;
-                    d5 = (double)(p_221100_.nextFloat() * 2.0F * (float)k);
+                double d0 = (double)pos.getX() + random.nextDouble();
+                double d1 = (double)pos.getY() + random.nextDouble();
+                double d2 = (double)pos.getZ() + random.nextDouble();
+                double d3 = (random.nextDouble() - 0.5) * 0.5;
+                double d4 = (random.nextDouble() - 0.5) * 0.5;
+                double d5 = (random.nextDouble() - 0.5) * 0.5;
+                int k = random.nextInt(2) * 2 - 1;
+                if (random.nextBoolean()) {
+                    d2 = (double)pos.getZ() + 0.5 + 0.25 * (double)k;
+                    d5 = (double)(random.nextFloat() * 2.0F * (float)k);
                 } else {
-                    d0 = (double)p_221099_.getX() + 0.5 + 0.25 * (double)k;
-                    d3 = (double)(p_221100_.nextFloat() * 2.0F * (float)k);
+                    d0 = (double)pos.getX() + 0.5 + 0.25 * (double)k;
+                    d3 = (double)(random.nextFloat() * 2.0F * (float)k);
                 }
 
-                p_221098_.addParticle(ParticleTypes.PORTAL, d0, d1, d2, d3, d4, d5);
+                level.addParticle(ParticleTypes.PORTAL, d0, d1, d2, d3, d4, d5);
             }
         }
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader p_304768_, BlockPos p_53004_, BlockState p_53005_) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         return ItemStack.EMPTY;
     }
 
     @Override
-    protected boolean canBeReplaced(BlockState p_53012_, Fluid p_53013_) {
+    protected boolean canBeReplaced(BlockState state, Fluid fluid) {
         return false;
     }
 
     @Override
-    protected void entityInside(BlockState p_350647_, Level p_350785_, BlockPos p_350610_, Entity p_350849_) {
-        if (p_350849_.canUsePortal(false)
-            && !p_350785_.isClientSide
-            && p_350785_.getBlockEntity(p_350610_) instanceof TheEndGatewayBlockEntity theendgatewayblockentity
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        if (entity.canUsePortal(false)
+            && !level.isClientSide
+            && level.getBlockEntity(pos) instanceof TheEndGatewayBlockEntity theendgatewayblockentity
             && !theendgatewayblockentity.isCoolingDown()) {
-            p_350849_.setAsInsidePortal(this, p_350610_);
-            TheEndGatewayBlockEntity.triggerCooldown(p_350785_, p_350610_, p_350647_, theendgatewayblockentity);
+            entity.setAsInsidePortal(this, pos);
+            TheEndGatewayBlockEntity.triggerCooldown(level, pos, state, theendgatewayblockentity);
         }
     }
 
     @Nullable
     @Override
-    public DimensionTransition getPortalDestination(ServerLevel p_350958_, Entity p_350650_, BlockPos p_350525_) {
-        if (p_350958_.getBlockEntity(p_350525_) instanceof TheEndGatewayBlockEntity theendgatewayblockentity) {
-            Vec3 vec3 = theendgatewayblockentity.getPortalPosition(p_350958_, p_350525_);
+    public DimensionTransition getPortalDestination(ServerLevel level, Entity entity, BlockPos pos) {
+        if (level.getBlockEntity(pos) instanceof TheEndGatewayBlockEntity theendgatewayblockentity) {
+            Vec3 vec3 = theendgatewayblockentity.getPortalPosition(level, pos);
             return vec3 != null
                 ? new DimensionTransition(
-                    p_350958_, vec3, calculateExitMovement(p_350650_), p_350650_.getYRot(), p_350650_.getXRot(), DimensionTransition.PLACE_PORTAL_TICKET
+                    level, vec3, calculateExitMovement(entity), entity.getYRot(), entity.getXRot(), DimensionTransition.PLACE_PORTAL_TICKET
                 )
                 : null;
         } else {
@@ -109,7 +112,7 @@ public class EndGatewayBlock extends BaseEntityBlock implements Portal {
         }
     }
 
-    private static Vec3 calculateExitMovement(Entity p_352063_) {
-        return p_352063_ instanceof ThrownEnderpearl ? new Vec3(0.0, -1.0, 0.0) : p_352063_.getDeltaMovement();
+    private static Vec3 calculateExitMovement(Entity entity) {
+        return entity instanceof ThrownEnderpearl ? new Vec3(0.0, -1.0, 0.0) : entity.getDeltaMovement();
     }
 }

@@ -23,11 +23,11 @@ import org.slf4j.Logger;
 public interface SpriteResourceLoader {
     Logger LOGGER = LogUtils.getLogger();
 
-    static SpriteResourceLoader create(Collection<MetadataSectionSerializer<?>> p_296204_) {
+    static SpriteResourceLoader create(Collection<MetadataSectionSerializer<?>> sectionSerializers) {
         return (p_293680_, p_293681_, constructor) -> {
             ResourceMetadata resourcemetadata;
             try {
-                resourcemetadata = p_293681_.metadata().copySections(p_296204_);
+                resourcemetadata = p_293681_.metadata().copySections(sectionSerializers);
             } catch (Exception exception) {
                 LOGGER.error("Unable to parse metadata from {}", p_293680_, exception);
                 return null;
@@ -62,10 +62,10 @@ public interface SpriteResourceLoader {
     }
 
     @Nullable
-    default SpriteContents loadSprite(ResourceLocation p_295581_, Resource p_294329_) {
-        return loadSprite(p_295581_, p_294329_, SpriteContents::new);
+    default SpriteContents loadSprite(ResourceLocation location, Resource resource) {
+        return loadSprite(location, resource, SpriteContents::new);
     }
 
     @Nullable
-    SpriteContents loadSprite(ResourceLocation id, Resource resource, net.neoforged.neoforge.client.textures.SpriteContentsConstructor constructor);
+    SpriteContents loadSprite(ResourceLocation location, Resource resource, net.neoforged.neoforge.client.textures.SpriteContentsConstructor constructor);
 }

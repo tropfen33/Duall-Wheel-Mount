@@ -93,25 +93,25 @@ public abstract class ClientCommonPacketListenerImpl implements ClientCommonPack
      */
     protected net.neoforged.neoforge.network.connection.ConnectionType connectionType = net.neoforged.neoforge.network.connection.ConnectionType.OTHER;
 
-    protected ClientCommonPacketListenerImpl(Minecraft p_295454_, Connection p_294773_, CommonListenerCookie p_294647_) {
-        this.minecraft = p_295454_;
-        this.connection = p_294773_;
-        this.serverData = p_294647_.serverData();
-        this.serverBrand = p_294647_.serverBrand();
-        this.telemetryManager = p_294647_.telemetryManager();
-        this.postDisconnectScreen = p_294647_.postDisconnectScreen();
-        this.serverCookies = p_294647_.serverCookies();
-        this.strictErrorHandling = p_294647_.strictErrorHandling();
-        this.customReportDetails = p_294647_.customReportDetails();
-        this.serverLinks = p_294647_.serverLinks();
+    protected ClientCommonPacketListenerImpl(Minecraft minecraft, Connection connection, CommonListenerCookie commonListenerCookie) {
+        this.minecraft = minecraft;
+        this.connection = connection;
+        this.serverData = commonListenerCookie.serverData();
+        this.serverBrand = commonListenerCookie.serverBrand();
+        this.telemetryManager = commonListenerCookie.telemetryManager();
+        this.postDisconnectScreen = commonListenerCookie.postDisconnectScreen();
+        this.serverCookies = commonListenerCookie.serverCookies();
+        this.strictErrorHandling = commonListenerCookie.strictErrorHandling();
+        this.customReportDetails = commonListenerCookie.customReportDetails();
+        this.serverLinks = commonListenerCookie.serverLinks();
         // Neo: Set the connection type based on the cookie from the previous phase.
-        this.connectionType = p_294647_.connectionType();
+        this.connectionType = commonListenerCookie.connectionType();
     }
 
     @Override
-    public void onPacketError(Packet p_341624_, Exception p_341639_) {
-        LOGGER.error("Failed to handle packet {}", p_341624_, p_341639_);
-        Optional<Path> optional = this.storeDisconnectionReport(p_341624_, p_341639_);
+    public void onPacketError(Packet packet, Exception exception) {
+        LOGGER.error("Failed to handle packet {}", packet, exception);
+        Optional<Path> optional = this.storeDisconnectionReport(packet, exception);
         Optional<URI> optional1 = this.serverLinks.findKnownType(ServerLinks.KnownLinkType.BUG_REPORT).map(ServerLinks.Entry::link);
         if (this.strictErrorHandling) {
             this.connection.disconnect(new DisconnectionDetails(Component.translatable("disconnect.packetError"), optional, optional1));
@@ -119,15 +119,15 @@ public abstract class ClientCommonPacketListenerImpl implements ClientCommonPack
     }
 
     @Override
-    public DisconnectionDetails createDisconnectionInfo(Component p_350683_, Throwable p_350813_) {
-        Optional<Path> optional = this.storeDisconnectionReport(null, p_350813_);
+    public DisconnectionDetails createDisconnectionInfo(Component reason, Throwable error) {
+        Optional<Path> optional = this.storeDisconnectionReport(null, error);
         Optional<URI> optional1 = this.serverLinks.findKnownType(ServerLinks.KnownLinkType.BUG_REPORT).map(ServerLinks.Entry::link);
-        return new DisconnectionDetails(p_350683_, optional, optional1);
+        return new DisconnectionDetails(reason, optional, optional1);
     }
 
-    private Optional<Path> storeDisconnectionReport(@Nullable Packet p_350430_, Throwable p_350533_) {
-        CrashReport crashreport = CrashReport.forThrowable(p_350533_, "Packet handling error");
-        PacketUtils.fillCrashReport(crashreport, this, p_350430_);
+    private Optional<Path> storeDisconnectionReport(@Nullable Packet packet, Throwable error) {
+        CrashReport crashreport = CrashReport.forThrowable(error, "Packet handling error");
+        PacketUtils.fillCrashReport(crashreport, this, packet);
         Path path = this.minecraft.gameDirectory.toPath().resolve("debug");
         Path path1 = path.resolve("disconnect-" + Util.getFilenameFormattedDateTime() + "-client.txt");
         Optional<ServerLinks.Entry> optional = this.serverLinks.findKnownType(ServerLinks.KnownLinkType.BUG_REPORT);
@@ -136,55 +136,55 @@ public abstract class ClientCommonPacketListenerImpl implements ClientCommonPack
     }
 
     @Override
-    public boolean shouldHandleMessage(Packet<?> p_341905_) {
-        return ClientCommonPacketListener.super.shouldHandleMessage(p_341905_)
+    public boolean shouldHandleMessage(Packet<?> packet) {
+        return ClientCommonPacketListener.super.shouldHandleMessage(packet)
             ? true
-            : this.isTransferring && (p_341905_ instanceof ClientboundStoreCookiePacket || p_341905_ instanceof ClientboundTransferPacket);
+            : this.isTransferring && (packet instanceof ClientboundStoreCookiePacket || packet instanceof ClientboundTransferPacket);
     }
 
     @Override
-    public void handleKeepAlive(ClientboundKeepAlivePacket p_295361_) {
-        this.sendWhen(new ServerboundKeepAlivePacket(p_295361_.getId()), () -> !RenderSystem.isFrozenAtPollEvents(), Duration.ofMinutes(1L));
+    public void handleKeepAlive(ClientboundKeepAlivePacket packet) {
+        this.sendWhen(new ServerboundKeepAlivePacket(packet.getId()), () -> !RenderSystem.isFrozenAtPollEvents(), Duration.ofMinutes(1L));
     }
 
     @Override
-    public void handlePing(ClientboundPingPacket p_295594_) {
-        PacketUtils.ensureRunningOnSameThread(p_295594_, this, this.minecraft);
-        this.send(new ServerboundPongPacket(p_295594_.getId()));
+    public void handlePing(ClientboundPingPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.send(new ServerboundPongPacket(packet.getId()));
     }
 
     @Override
-    public void handleCustomPayload(ClientboundCustomPayloadPacket p_295727_) {
+    public void handleCustomPayload(ClientboundCustomPayloadPacket packet) {
         // Neo: Unconditionally handle register/unregister payloads.
-        if (p_295727_.payload() instanceof net.neoforged.neoforge.network.payload.MinecraftRegisterPayload minecraftRegisterPayload) {
+        if (packet.payload() instanceof net.neoforged.neoforge.network.payload.MinecraftRegisterPayload minecraftRegisterPayload) {
             net.neoforged.neoforge.network.registration.NetworkRegistry.onMinecraftRegister(this.getConnection(), minecraftRegisterPayload.newChannels());
             return;
         }
 
-        if (p_295727_.payload() instanceof net.neoforged.neoforge.network.payload.MinecraftUnregisterPayload minecraftUnregisterPayload) {
+        if (packet.payload() instanceof net.neoforged.neoforge.network.payload.MinecraftUnregisterPayload minecraftUnregisterPayload) {
             net.neoforged.neoforge.network.registration.NetworkRegistry.onMinecraftUnregister(this.getConnection(), minecraftUnregisterPayload.forgottenChannels());
             return;
         }
 
-        if (p_295727_.payload() instanceof net.neoforged.neoforge.network.payload.CommonVersionPayload commonVersionPayload) {
+        if (packet.payload() instanceof net.neoforged.neoforge.network.payload.CommonVersionPayload commonVersionPayload) {
             net.neoforged.neoforge.network.registration.NetworkRegistry.checkCommonVersion(this, commonVersionPayload);
             return;
         }
 
-        if (p_295727_.payload() instanceof net.neoforged.neoforge.network.payload.CommonRegisterPayload commonRegisterPayload) {
+        if (packet.payload() instanceof net.neoforged.neoforge.network.payload.CommonRegisterPayload commonRegisterPayload) {
             net.neoforged.neoforge.network.registration.NetworkRegistry.onCommonRegister(this, commonRegisterPayload);
             return;
         }
 
         // Neo: Handle modded payloads. Vanilla payloads do not get sent to the modded handling pass. Additional payloads cannot be registered in the minecraft domain.
-        if (net.neoforged.neoforge.network.registration.NetworkRegistry.isModdedPayload(p_295727_.payload())) {
-            net.neoforged.neoforge.network.registration.NetworkRegistry.handleModdedPayload(this, p_295727_);
+        if (net.neoforged.neoforge.network.registration.NetworkRegistry.isModdedPayload(packet.payload())) {
+            net.neoforged.neoforge.network.registration.NetworkRegistry.handleModdedPayload(this, packet);
             return;
         }
 
-        CustomPacketPayload custompacketpayload = p_295727_.payload();
+        CustomPacketPayload custompacketpayload = packet.payload();
         if (!(custompacketpayload instanceof DiscardedPayload)) {
-            PacketUtils.ensureRunningOnSameThread(p_295727_, this, this.minecraft);
+            PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
             if (custompacketpayload instanceof BrandPayload brandpayload) {
                 this.serverBrand = brandpayload.brand();
                 this.telemetryManager.onServerBrandReceived(brandpayload.brand());
@@ -194,18 +194,18 @@ public abstract class ClientCommonPacketListenerImpl implements ClientCommonPack
         }
     }
 
-    protected abstract void handleCustomPayload(CustomPacketPayload p_295776_);
+    protected abstract void handleCustomPayload(CustomPacketPayload payload);
 
     @Override
-    public void handleResourcePackPush(ClientboundResourcePackPushPacket p_314606_) {
-        PacketUtils.ensureRunningOnSameThread(p_314606_, this, this.minecraft);
-        UUID uuid = p_314606_.id();
-        URL url = parseResourcePackUrl(p_314606_.url());
+    public void handleResourcePackPush(ClientboundResourcePackPushPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        UUID uuid = packet.id();
+        URL url = parseResourcePackUrl(packet.url());
         if (url == null) {
             this.connection.send(new ServerboundResourcePackPacket(uuid, ServerboundResourcePackPacket.Action.INVALID_URL));
         } else {
-            String s = p_314606_.hash();
-            boolean flag = p_314606_.required();
+            String s = packet.hash();
+            boolean flag = packet.required();
             ServerData.ServerPackStatus serverdata$serverpackstatus = this.serverData != null
                 ? this.serverData.getResourcePackStatus()
                 : ServerData.ServerPackStatus.PROMPT;
@@ -213,26 +213,26 @@ public abstract class ClientCommonPacketListenerImpl implements ClientCommonPack
                 && (!flag || serverdata$serverpackstatus != ServerData.ServerPackStatus.DISABLED)) {
                 this.minecraft.getDownloadedPackSource().pushPack(uuid, url, s);
             } else {
-                this.minecraft.setScreen(this.addOrUpdatePackPrompt(uuid, url, s, flag, p_314606_.prompt().orElse(null)));
+                this.minecraft.setScreen(this.addOrUpdatePackPrompt(uuid, url, s, flag, packet.prompt().orElse(null)));
             }
         }
     }
 
     @Override
-    public void handleResourcePackPop(ClientboundResourcePackPopPacket p_314537_) {
-        PacketUtils.ensureRunningOnSameThread(p_314537_, this, this.minecraft);
-        p_314537_.id()
+    public void handleResourcePackPop(ClientboundResourcePackPopPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        packet.id()
             .ifPresentOrElse(p_314401_ -> this.minecraft.getDownloadedPackSource().popPack(p_314401_), () -> this.minecraft.getDownloadedPackSource().popAll());
     }
 
-    static Component preparePackPrompt(Component p_296200_, @Nullable Component p_295584_) {
-        return (Component)(p_295584_ == null ? p_296200_ : Component.translatable("multiplayer.texturePrompt.serverPrompt", p_296200_, p_295584_));
+    static Component preparePackPrompt(Component line1, @Nullable Component line2) {
+        return (Component)(line2 == null ? line1 : Component.translatable("multiplayer.texturePrompt.serverPrompt", line1, line2));
     }
 
     @Nullable
-    private static URL parseResourcePackUrl(String p_295495_) {
+    private static URL parseResourcePackUrl(String p_url) {
         try {
-            URL url = new URL(p_295495_);
+            URL url = new URL(p_url);
             String s = url.getProtocol();
             return !"http".equals(s) && !"https".equals(s) ? null : url;
         } catch (MalformedURLException malformedurlexception) {
@@ -241,27 +241,27 @@ public abstract class ClientCommonPacketListenerImpl implements ClientCommonPack
     }
 
     @Override
-    public void handleRequestCookie(ClientboundCookieRequestPacket p_320212_) {
-        PacketUtils.ensureRunningOnSameThread(p_320212_, this, this.minecraft);
-        this.connection.send(new ServerboundCookieResponsePacket(p_320212_.key(), this.serverCookies.get(p_320212_.key())));
+    public void handleRequestCookie(ClientboundCookieRequestPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.connection.send(new ServerboundCookieResponsePacket(packet.key(), this.serverCookies.get(packet.key())));
     }
 
     @Override
-    public void handleStoreCookie(ClientboundStoreCookiePacket p_320008_) {
-        PacketUtils.ensureRunningOnSameThread(p_320008_, this, this.minecraft);
-        this.serverCookies.put(p_320008_.key(), p_320008_.payload());
+    public void handleStoreCookie(ClientboundStoreCookiePacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.serverCookies.put(packet.key(), packet.payload());
     }
 
     @Override
-    public void handleCustomReportDetails(ClientboundCustomReportDetailsPacket p_350638_) {
-        PacketUtils.ensureRunningOnSameThread(p_350638_, this, this.minecraft);
-        this.customReportDetails = p_350638_.details();
+    public void handleCustomReportDetails(ClientboundCustomReportDetailsPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        this.customReportDetails = packet.details();
     }
 
     @Override
-    public void handleServerLinks(ClientboundServerLinksPacket p_350990_) {
-        PacketUtils.ensureRunningOnSameThread(p_350990_, this, this.minecraft);
-        List<ServerLinks.UntrustedEntry> list = p_350990_.links();
+    public void handleServerLinks(ClientboundServerLinksPacket packet) {
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
+        List<ServerLinks.UntrustedEntry> list = packet.links();
         Builder<ServerLinks.Entry> builder = ImmutableList.builderWithExpectedSize(list.size());
 
         for (ServerLinks.UntrustedEntry serverlinks$untrustedentry : list) {
@@ -277,16 +277,16 @@ public abstract class ClientCommonPacketListenerImpl implements ClientCommonPack
     }
 
     @Override
-    public void handleTransfer(ClientboundTransferPacket p_320739_) {
+    public void handleTransfer(ClientboundTransferPacket packet) {
         this.isTransferring = true;
-        PacketUtils.ensureRunningOnSameThread(p_320739_, this, this.minecraft);
+        PacketUtils.ensureRunningOnSameThread(packet, this, this.minecraft);
         if (this.serverData == null) {
             throw new IllegalStateException("Cannot transfer to server from singleplayer");
         } else {
             this.connection.disconnect(Component.translatable("disconnect.transfer"));
             this.connection.setReadOnly();
             this.connection.handleDisconnection();
-            ServerAddress serveraddress = new ServerAddress(p_320739_.host(), p_320739_.port());
+            ServerAddress serveraddress = new ServerAddress(packet.host(), packet.port());
             ConnectScreen.startConnecting(
                 Objects.requireNonNullElseGet(this.postDisconnectScreen, TitleScreen::new),
                 this.minecraft,
@@ -299,8 +299,8 @@ public abstract class ClientCommonPacketListenerImpl implements ClientCommonPack
     }
 
     @Override
-    public void handleDisconnect(ClientboundDisconnectPacket p_296159_) {
-        this.connection.disconnect(p_296159_.reason());
+    public void handleDisconnect(ClientboundDisconnectPacket packet) {
+        this.connection.disconnect(packet.reason());
     }
 
     protected void sendDeferredPackets() {
@@ -317,34 +317,34 @@ public abstract class ClientCommonPacketListenerImpl implements ClientCommonPack
         }
     }
 
-    public void send(Packet<?> p_295097_) {
+    public void send(Packet<?> packet) {
         // Neo: Validate modded payloads before sending.
-        net.neoforged.neoforge.network.registration.NetworkRegistry.checkPacket(p_295097_, this);
-        this.connection.send(p_295097_);
+        net.neoforged.neoforge.network.registration.NetworkRegistry.checkPacket(packet, this);
+        this.connection.send(packet);
     }
 
     @Override
-    public void onDisconnect(DisconnectionDetails p_350760_) {
+    public void onDisconnect(DisconnectionDetails details) {
         this.telemetryManager.onDisconnect();
-        this.minecraft.disconnect(this.createDisconnectScreen(p_350760_), this.isTransferring);
-        LOGGER.warn("Client disconnected with reason: {}", p_350760_.reason().getString());
+        this.minecraft.disconnect(this.createDisconnectScreen(details), this.isTransferring);
+        LOGGER.warn("Client disconnected with reason: {}", details.reason().getString());
     }
 
     @Override
-    public void fillListenerSpecificCrashDetails(CrashReport p_350364_, CrashReportCategory p_315011_) {
-        p_315011_.setDetail("Server type", () -> this.serverData != null ? this.serverData.type().toString() : "<none>");
-        p_315011_.setDetail("Server brand", () -> this.serverBrand);
+    public void fillListenerSpecificCrashDetails(CrashReport crashReport, CrashReportCategory category) {
+        category.setDetail("Server type", () -> this.serverData != null ? this.serverData.type().toString() : "<none>");
+        category.setDetail("Server brand", () -> this.serverBrand);
         if (!this.customReportDetails.isEmpty()) {
-            CrashReportCategory crashreportcategory = p_350364_.addCategory("Custom Server Details");
+            CrashReportCategory crashreportcategory = crashReport.addCategory("Custom Server Details");
             this.customReportDetails.forEach(crashreportcategory::setDetail);
         }
     }
 
-    protected Screen createDisconnectScreen(DisconnectionDetails p_350769_) {
+    protected Screen createDisconnectScreen(DisconnectionDetails details) {
         Screen screen = Objects.requireNonNullElseGet(this.postDisconnectScreen, () -> new JoinMultiplayerScreen(new TitleScreen()));
         return (Screen)(this.serverData != null && this.serverData.isRealm()
-            ? new DisconnectedRealmsScreen(screen, GENERIC_DISCONNECT_MESSAGE, p_350769_.reason())
-            : new DisconnectedScreen(screen, GENERIC_DISCONNECT_MESSAGE, p_350769_));
+            ? new DisconnectedRealmsScreen(screen, GENERIC_DISCONNECT_MESSAGE, details.reason())
+            : new DisconnectedScreen(screen, GENERIC_DISCONNECT_MESSAGE, details));
     }
 
     @Nullable
@@ -352,24 +352,24 @@ public abstract class ClientCommonPacketListenerImpl implements ClientCommonPack
         return this.serverBrand;
     }
 
-    private void sendWhen(Packet<? extends ServerboundPacketListener> p_296259_, BooleanSupplier p_296086_, Duration p_294812_) {
-        if (p_296086_.getAsBoolean()) {
-            this.send(p_296259_);
+    private void sendWhen(Packet<? extends ServerboundPacketListener> packet, BooleanSupplier sendCondition, Duration expirationTime) {
+        if (sendCondition.getAsBoolean()) {
+            this.send(packet);
         } else {
-            this.deferredPackets.add(new ClientCommonPacketListenerImpl.DeferredPacket(p_296259_, p_296086_, Util.getMillis() + p_294812_.toMillis()));
+            this.deferredPackets.add(new ClientCommonPacketListenerImpl.DeferredPacket(packet, sendCondition, Util.getMillis() + expirationTime.toMillis()));
         }
     }
 
-    private Screen addOrUpdatePackPrompt(UUID p_314948_, URL p_315012_, String p_314981_, boolean p_315013_, @Nullable Component p_314960_) {
+    private Screen addOrUpdatePackPrompt(UUID id, URL url, String hash, boolean required, @Nullable Component prompt) {
         Screen screen = this.minecraft.screen;
         return screen instanceof ClientCommonPacketListenerImpl.PackConfirmScreen clientcommonpacketlistenerimpl$packconfirmscreen
-            ? clientcommonpacketlistenerimpl$packconfirmscreen.update(this.minecraft, p_314948_, p_315012_, p_314981_, p_315013_, p_314960_)
+            ? clientcommonpacketlistenerimpl$packconfirmscreen.update(this.minecraft, id, url, hash, required, prompt)
             : new ClientCommonPacketListenerImpl.PackConfirmScreen(
                 this.minecraft,
                 screen,
-                List.of(new ClientCommonPacketListenerImpl.PackConfirmScreen.PendingRequest(p_314948_, p_315012_, p_314981_)),
-                p_315013_,
-                p_314960_
+                List.of(new ClientCommonPacketListenerImpl.PackConfirmScreen.PendingRequest(id, url, hash)),
+                required,
+                prompt
             );
     }
 
@@ -384,16 +384,16 @@ public abstract class ClientCommonPacketListenerImpl implements ClientCommonPack
         private final Screen parentScreen;
 
         PackConfirmScreen(
-            Minecraft p_314973_,
-            @Nullable Screen p_315016_,
-            List<ClientCommonPacketListenerImpl.PackConfirmScreen.PendingRequest> p_314994_,
-            boolean p_314923_,
-            @Nullable Component p_314940_
+            Minecraft minecraft,
+            @Nullable Screen parentScreen,
+            List<ClientCommonPacketListenerImpl.PackConfirmScreen.PendingRequest> requests,
+            boolean required,
+            @Nullable Component prompt
         ) {
             super(
                 p_315005_ -> {
-                    p_314973_.setScreen(p_315016_);
-                    DownloadedPackSource downloadedpacksource = p_314973_.getDownloadedPackSource();
+                    minecraft.setScreen(parentScreen);
+                    DownloadedPackSource downloadedpacksource = minecraft.getDownloadedPackSource();
                     if (p_315005_) {
                         if (ClientCommonPacketListenerImpl.this.serverData != null) {
                             ClientCommonPacketListenerImpl.this.serverData.setResourcePackStatus(ServerData.ServerPackStatus.ENABLED);
@@ -402,14 +402,14 @@ public abstract class ClientCommonPacketListenerImpl implements ClientCommonPack
                         downloadedpacksource.allowServerPacks();
                     } else {
                         downloadedpacksource.rejectServerPacks();
-                        if (p_314923_) {
+                        if (required) {
                             ClientCommonPacketListenerImpl.this.connection.disconnect(Component.translatable("multiplayer.requiredTexturePrompt.disconnect"));
                         } else if (ClientCommonPacketListenerImpl.this.serverData != null) {
                             ClientCommonPacketListenerImpl.this.serverData.setResourcePackStatus(ServerData.ServerPackStatus.DISABLED);
                         }
                     }
 
-                    for (ClientCommonPacketListenerImpl.PackConfirmScreen.PendingRequest clientcommonpacketlistenerimpl$packconfirmscreen$pendingrequest : p_314994_) {
+                    for (ClientCommonPacketListenerImpl.PackConfirmScreen.PendingRequest clientcommonpacketlistenerimpl$packconfirmscreen$pendingrequest : requests) {
                         downloadedpacksource.pushPack(
                             clientcommonpacketlistenerimpl$packconfirmscreen$pendingrequest.id,
                             clientcommonpacketlistenerimpl$packconfirmscreen$pendingrequest.url,
@@ -421,30 +421,30 @@ public abstract class ClientCommonPacketListenerImpl implements ClientCommonPack
                         ServerList.saveSingleServer(ClientCommonPacketListenerImpl.this.serverData);
                     }
                 },
-                p_314923_ ? Component.translatable("multiplayer.requiredTexturePrompt.line1") : Component.translatable("multiplayer.texturePrompt.line1"),
+                required ? Component.translatable("multiplayer.requiredTexturePrompt.line1") : Component.translatable("multiplayer.texturePrompt.line1"),
                 ClientCommonPacketListenerImpl.preparePackPrompt(
-                    p_314923_
+                    required
                         ? Component.translatable("multiplayer.requiredTexturePrompt.line2").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD)
                         : Component.translatable("multiplayer.texturePrompt.line2"),
-                    p_314940_
+                    prompt
                 ),
-                p_314923_ ? CommonComponents.GUI_PROCEED : CommonComponents.GUI_YES,
-                p_314923_ ? CommonComponents.GUI_DISCONNECT : CommonComponents.GUI_NO
+                required ? CommonComponents.GUI_PROCEED : CommonComponents.GUI_YES,
+                required ? CommonComponents.GUI_DISCONNECT : CommonComponents.GUI_NO
             );
-            this.requests = p_314994_;
-            this.parentScreen = p_315016_;
+            this.requests = requests;
+            this.parentScreen = parentScreen;
         }
 
         public ClientCommonPacketListenerImpl.PackConfirmScreen update(
-            Minecraft p_314946_, UUID p_314980_, URL p_314930_, String p_315003_, boolean p_314916_, @Nullable Component p_314991_
+            Minecraft minecraft, UUID id, URL url, String hash, boolean required, @Nullable Component prompt
         ) {
             List<ClientCommonPacketListenerImpl.PackConfirmScreen.PendingRequest> list = ImmutableList.<ClientCommonPacketListenerImpl.PackConfirmScreen.PendingRequest>builderWithExpectedSize(
                     this.requests.size() + 1
                 )
                 .addAll(this.requests)
-                .add(new ClientCommonPacketListenerImpl.PackConfirmScreen.PendingRequest(p_314980_, p_314930_, p_315003_))
+                .add(new ClientCommonPacketListenerImpl.PackConfirmScreen.PendingRequest(id, url, hash))
                 .build();
-            return ClientCommonPacketListenerImpl.this.new PackConfirmScreen(p_314946_, this.parentScreen, list, p_314916_, p_314991_);
+            return ClientCommonPacketListenerImpl.this.new PackConfirmScreen(minecraft, this.parentScreen, list, required, prompt);
         }
 
         @OnlyIn(Dist.CLIENT)

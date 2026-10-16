@@ -21,8 +21,11 @@ public class WitherWallSkullBlock extends WallSkullBlock {
         super(SkullBlock.Types.WITHER_SKELETON, p_58276_);
     }
 
+    /**
+     * Called by ItemBlocks after a block is set in the world, to allow post-place logic
+     */
     @Override
-    public void setPlacedBy(Level p_58278_, BlockPos p_58279_, BlockState p_58280_, @Nullable LivingEntity p_58281_, ItemStack p_58282_) {
-        WitherSkullBlock.checkSpawn(p_58278_, p_58279_);
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        WitherSkullBlock.checkSpawn(level, pos);
     }
 }

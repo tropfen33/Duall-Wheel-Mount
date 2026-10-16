@@ -15,8 +15,8 @@ public abstract class ScalableParticleOptionsBase implements ParticleOptions {
         );
     private final float scale;
 
-    public ScalableParticleOptionsBase(float p_341658_) {
-        this.scale = Mth.clamp(p_341658_, 0.01F, 4.0F);
+    public ScalableParticleOptionsBase(float scale) {
+        this.scale = Mth.clamp(scale, 0.01F, 4.0F);
     }
 
     public float getScale() {

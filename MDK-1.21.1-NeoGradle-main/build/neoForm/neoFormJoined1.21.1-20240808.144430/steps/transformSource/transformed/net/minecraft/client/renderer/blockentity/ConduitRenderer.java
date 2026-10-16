@@ -41,12 +41,12 @@ public class ConduitRenderer implements BlockEntityRenderer<ConduitBlockEntity> 
     private final ModelPart cage;
     private final BlockEntityRenderDispatcher renderer;
 
-    public ConduitRenderer(BlockEntityRendererProvider.Context p_173613_) {
-        this.renderer = p_173613_.getBlockEntityRenderDispatcher();
-        this.eye = p_173613_.bakeLayer(ModelLayers.CONDUIT_EYE);
-        this.wind = p_173613_.bakeLayer(ModelLayers.CONDUIT_WIND);
-        this.shell = p_173613_.bakeLayer(ModelLayers.CONDUIT_SHELL);
-        this.cage = p_173613_.bakeLayer(ModelLayers.CONDUIT_CAGE);
+    public ConduitRenderer(BlockEntityRendererProvider.Context context) {
+        this.renderer = context.getBlockEntityRenderDispatcher();
+        this.eye = context.bakeLayer(ModelLayers.CONDUIT_EYE);
+        this.wind = context.bakeLayer(ModelLayers.CONDUIT_WIND);
+        this.shell = context.bakeLayer(ModelLayers.CONDUIT_SHELL);
+        this.cage = context.bakeLayer(ModelLayers.CONDUIT_CAGE);
     }
 
     public static LayerDefinition createEyeLayer() {
@@ -79,60 +79,60 @@ public class ConduitRenderer implements BlockEntityRenderer<ConduitBlockEntity> 
         return LayerDefinition.create(meshdefinition, 32, 16);
     }
 
-    public void render(ConduitBlockEntity p_112399_, float p_112400_, PoseStack p_112401_, MultiBufferSource p_112402_, int p_112403_, int p_112404_) {
-        float f = (float)p_112399_.tickCount + p_112400_;
-        if (!p_112399_.isActive()) {
-            float f5 = p_112399_.getActiveRotation(0.0F);
-            VertexConsumer vertexconsumer1 = SHELL_TEXTURE.buffer(p_112402_, RenderType::entitySolid);
-            p_112401_.pushPose();
-            p_112401_.translate(0.5F, 0.5F, 0.5F);
-            p_112401_.mulPose(new Quaternionf().rotationY(f5 * (float) (Math.PI / 180.0)));
-            this.shell.render(p_112401_, vertexconsumer1, p_112403_, p_112404_);
-            p_112401_.popPose();
+    public void render(ConduitBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        float f = (float)blockEntity.tickCount + partialTick;
+        if (!blockEntity.isActive()) {
+            float f5 = blockEntity.getActiveRotation(0.0F);
+            VertexConsumer vertexconsumer1 = SHELL_TEXTURE.buffer(bufferSource, RenderType::entitySolid);
+            poseStack.pushPose();
+            poseStack.translate(0.5F, 0.5F, 0.5F);
+            poseStack.mulPose(new Quaternionf().rotationY(f5 * (float) (Math.PI / 180.0)));
+            this.shell.render(poseStack, vertexconsumer1, packedLight, packedOverlay);
+            poseStack.popPose();
         } else {
-            float f1 = p_112399_.getActiveRotation(p_112400_) * (180.0F / (float)Math.PI);
+            float f1 = blockEntity.getActiveRotation(partialTick) * (180.0F / (float)Math.PI);
             float f2 = Mth.sin(f * 0.1F) / 2.0F + 0.5F;
             f2 = f2 * f2 + f2;
-            p_112401_.pushPose();
-            p_112401_.translate(0.5F, 0.3F + f2 * 0.2F, 0.5F);
+            poseStack.pushPose();
+            poseStack.translate(0.5F, 0.3F + f2 * 0.2F, 0.5F);
             Vector3f vector3f = new Vector3f(0.5F, 1.0F, 0.5F).normalize();
-            p_112401_.mulPose(new Quaternionf().rotationAxis(f1 * (float) (Math.PI / 180.0), vector3f));
-            this.cage.render(p_112401_, ACTIVE_SHELL_TEXTURE.buffer(p_112402_, RenderType::entityCutoutNoCull), p_112403_, p_112404_);
-            p_112401_.popPose();
-            int i = p_112399_.tickCount / 66 % 3;
-            p_112401_.pushPose();
-            p_112401_.translate(0.5F, 0.5F, 0.5F);
+            poseStack.mulPose(new Quaternionf().rotationAxis(f1 * (float) (Math.PI / 180.0), vector3f));
+            this.cage.render(poseStack, ACTIVE_SHELL_TEXTURE.buffer(bufferSource, RenderType::entityCutoutNoCull), packedLight, packedOverlay);
+            poseStack.popPose();
+            int i = blockEntity.tickCount / 66 % 3;
+            poseStack.pushPose();
+            poseStack.translate(0.5F, 0.5F, 0.5F);
             if (i == 1) {
-                p_112401_.mulPose(new Quaternionf().rotationX((float) (Math.PI / 2)));
+                poseStack.mulPose(new Quaternionf().rotationX((float) (Math.PI / 2)));
             } else if (i == 2) {
-                p_112401_.mulPose(new Quaternionf().rotationZ((float) (Math.PI / 2)));
+                poseStack.mulPose(new Quaternionf().rotationZ((float) (Math.PI / 2)));
             }
 
-            VertexConsumer vertexconsumer = (i == 1 ? VERTICAL_WIND_TEXTURE : WIND_TEXTURE).buffer(p_112402_, RenderType::entityCutoutNoCull);
-            this.wind.render(p_112401_, vertexconsumer, p_112403_, p_112404_);
-            p_112401_.popPose();
-            p_112401_.pushPose();
-            p_112401_.translate(0.5F, 0.5F, 0.5F);
-            p_112401_.scale(0.875F, 0.875F, 0.875F);
-            p_112401_.mulPose(new Quaternionf().rotationXYZ((float) Math.PI, 0.0F, (float) Math.PI));
-            this.wind.render(p_112401_, vertexconsumer, p_112403_, p_112404_);
-            p_112401_.popPose();
+            VertexConsumer vertexconsumer = (i == 1 ? VERTICAL_WIND_TEXTURE : WIND_TEXTURE).buffer(bufferSource, RenderType::entityCutoutNoCull);
+            this.wind.render(poseStack, vertexconsumer, packedLight, packedOverlay);
+            poseStack.popPose();
+            poseStack.pushPose();
+            poseStack.translate(0.5F, 0.5F, 0.5F);
+            poseStack.scale(0.875F, 0.875F, 0.875F);
+            poseStack.mulPose(new Quaternionf().rotationXYZ((float) Math.PI, 0.0F, (float) Math.PI));
+            this.wind.render(poseStack, vertexconsumer, packedLight, packedOverlay);
+            poseStack.popPose();
             Camera camera = this.renderer.camera;
-            p_112401_.pushPose();
-            p_112401_.translate(0.5F, 0.3F + f2 * 0.2F, 0.5F);
-            p_112401_.scale(0.5F, 0.5F, 0.5F);
+            poseStack.pushPose();
+            poseStack.translate(0.5F, 0.3F + f2 * 0.2F, 0.5F);
+            poseStack.scale(0.5F, 0.5F, 0.5F);
             float f3 = -camera.getYRot();
-            p_112401_.mulPose(new Quaternionf().rotationYXZ(f3 * (float) (Math.PI / 180.0), camera.getXRot() * (float) (Math.PI / 180.0), (float) Math.PI));
+            poseStack.mulPose(new Quaternionf().rotationYXZ(f3 * (float) (Math.PI / 180.0), camera.getXRot() * (float) (Math.PI / 180.0), (float) Math.PI));
             float f4 = 1.3333334F;
-            p_112401_.scale(1.3333334F, 1.3333334F, 1.3333334F);
+            poseStack.scale(1.3333334F, 1.3333334F, 1.3333334F);
             this.eye
                 .render(
-                    p_112401_,
-                    (p_112399_.isHunting() ? OPEN_EYE_TEXTURE : CLOSED_EYE_TEXTURE).buffer(p_112402_, RenderType::entityCutoutNoCull),
-                    p_112403_,
-                    p_112404_
+                    poseStack,
+                    (blockEntity.isHunting() ? OPEN_EYE_TEXTURE : CLOSED_EYE_TEXTURE).buffer(bufferSource, RenderType::entityCutoutNoCull),
+                    packedLight,
+                    packedOverlay
                 );
-            p_112401_.popPose();
+            poseStack.popPose();
         }
     }
 

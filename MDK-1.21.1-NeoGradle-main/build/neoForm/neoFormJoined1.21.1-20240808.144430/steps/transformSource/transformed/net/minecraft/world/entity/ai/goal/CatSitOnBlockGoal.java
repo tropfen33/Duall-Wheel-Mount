@@ -15,9 +15,9 @@ import net.minecraft.world.level.block.state.properties.BedPart;
 public class CatSitOnBlockGoal extends MoveToBlockGoal {
     private final Cat cat;
 
-    public CatSitOnBlockGoal(Cat p_25149_, double p_25150_) {
-        super(p_25149_, p_25150_, 8);
-        this.cat = p_25149_;
+    public CatSitOnBlockGoal(Cat cat, double speedModifier) {
+        super(cat, speedModifier, 8);
+        this.cat = cat;
     }
 
     @Override
@@ -43,14 +43,17 @@ public class CatSitOnBlockGoal extends MoveToBlockGoal {
         this.cat.setInSittingPose(this.isReachedTarget());
     }
 
+    /**
+     * Return {@code true} to set given position as destination
+     */
     @Override
-    protected boolean isValidTarget(LevelReader p_25153_, BlockPos p_25154_) {
-        if (!p_25153_.isEmptyBlock(p_25154_.above())) {
+    protected boolean isValidTarget(LevelReader level, BlockPos pos) {
+        if (!level.isEmptyBlock(pos.above())) {
             return false;
         } else {
-            BlockState blockstate = p_25153_.getBlockState(p_25154_);
+            BlockState blockstate = level.getBlockState(pos);
             if (blockstate.is(Blocks.CHEST)) {
-                return ChestBlockEntity.getOpenCount(p_25153_, p_25154_) < 1;
+                return ChestBlockEntity.getOpenCount(level, pos) < 1;
             } else {
                 return blockstate.is(Blocks.FURNACE) && blockstate.getValue(FurnaceBlock.LIT)
                     ? true

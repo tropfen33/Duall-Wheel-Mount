@@ -57,13 +57,13 @@ public class LoomMenu extends AbstractContainerMenu {
         }
     };
 
-    public LoomMenu(int p_39856_, Inventory p_39857_) {
-        this(p_39856_, p_39857_, ContainerLevelAccess.NULL);
+    public LoomMenu(int containerId, Inventory playerInventory) {
+        this(containerId, playerInventory, ContainerLevelAccess.NULL);
     }
 
-    public LoomMenu(int p_39859_, Inventory p_39860_, final ContainerLevelAccess p_39861_) {
-        super(MenuType.LOOM, p_39859_);
-        this.access = p_39861_;
+    public LoomMenu(int containerId, Inventory playerInventory, final ContainerLevelAccess access) {
+        super(MenuType.LOOM, containerId);
+        this.access = access;
         this.bannerSlot = this.addSlot(new Slot(this.inputContainer, 0, 13, 26) {
             @Override
             public boolean mayPlace(ItemStack p_39918_) {
@@ -83,76 +83,88 @@ public class LoomMenu extends AbstractContainerMenu {
             }
         });
         this.resultSlot = this.addSlot(new Slot(this.outputContainer, 0, 143, 57) {
+            /**
+             * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+             */
             @Override
-            public boolean mayPlace(ItemStack p_39950_) {
+            public boolean mayPlace(ItemStack stack) {
                 return false;
             }
 
             @Override
-            public void onTake(Player p_150617_, ItemStack p_150618_) {
+            public void onTake(Player player, ItemStack stack) {
                 LoomMenu.this.bannerSlot.remove(1);
                 LoomMenu.this.dyeSlot.remove(1);
                 if (!LoomMenu.this.bannerSlot.hasItem() || !LoomMenu.this.dyeSlot.hasItem()) {
                     LoomMenu.this.selectedBannerPatternIndex.set(-1);
                 }
 
-                p_39861_.execute((p_39952_, p_39953_) -> {
+                access.execute((p_39952_, p_39953_) -> {
                     long l = p_39952_.getGameTime();
                     if (LoomMenu.this.lastSoundTime != l) {
                         p_39952_.playSound(null, p_39953_, SoundEvents.UI_LOOM_TAKE_RESULT, SoundSource.BLOCKS, 1.0F, 1.0F);
                         LoomMenu.this.lastSoundTime = l;
                     }
                 });
-                super.onTake(p_150617_, p_150618_);
+                super.onTake(player, stack);
             }
         });
 
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 9; j++) {
-                this.addSlot(new Slot(p_39860_, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
+                this.addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 84 + i * 18));
             }
         }
 
         for (int k = 0; k < 9; k++) {
-            this.addSlot(new Slot(p_39860_, k, 8 + k * 18, 142));
+            this.addSlot(new Slot(playerInventory, k, 8 + k * 18, 142));
         }
 
         this.addDataSlot(this.selectedBannerPatternIndex);
-        this.patternGetter = p_39860_.player.registryAccess().lookupOrThrow(Registries.BANNER_PATTERN);
+        this.patternGetter = playerInventory.player.registryAccess().lookupOrThrow(Registries.BANNER_PATTERN);
     }
 
+    /**
+     * Determines whether supplied player can use this container
+     */
     @Override
-    public boolean stillValid(Player p_39865_) {
-        return stillValid(this.access, p_39865_, Blocks.LOOM);
+    public boolean stillValid(Player player) {
+        return stillValid(this.access, player, Blocks.LOOM);
     }
 
+    /**
+     * Handles the given Button-click on the server, currently only used by enchanting. Name is for legacy.
+     */
     @Override
-    public boolean clickMenuButton(Player p_39867_, int p_39868_) {
-        if (p_39868_ >= 0 && p_39868_ < this.selectablePatterns.size()) {
-            this.selectedBannerPatternIndex.set(p_39868_);
-            this.setupResultSlot(this.selectablePatterns.get(p_39868_));
+    public boolean clickMenuButton(Player player, int id) {
+        if (id >= 0 && id < this.selectablePatterns.size()) {
+            this.selectedBannerPatternIndex.set(id);
+            this.setupResultSlot(this.selectablePatterns.get(id));
             return true;
         } else {
             return false;
         }
     }
 
-    private List<Holder<BannerPattern>> getSelectablePatterns(ItemStack p_219994_) {
-        if (p_219994_.isEmpty()) {
+    private List<Holder<BannerPattern>> getSelectablePatterns(ItemStack stack) {
+        if (stack.isEmpty()) {
             return this.patternGetter.get(BannerPatternTags.NO_ITEM_REQUIRED).map(ImmutableList::copyOf).orElse(ImmutableList.of());
         } else {
-            return (List<Holder<BannerPattern>>)(p_219994_.getItem() instanceof BannerPatternItem bannerpatternitem
+            return (List<Holder<BannerPattern>>)(stack.getItem() instanceof BannerPatternItem bannerpatternitem
                 ? this.patternGetter.get(bannerpatternitem.getBannerPattern()).map(ImmutableList::copyOf).orElse(ImmutableList.of())
                 : List.of());
         }
     }
 
-    private boolean isValidPatternIndex(int p_242850_) {
-        return p_242850_ >= 0 && p_242850_ < this.selectablePatterns.size();
+    private boolean isValidPatternIndex(int index) {
+        return index >= 0 && index < this.selectablePatterns.size();
     }
 
+    /**
+     * Callback for when the crafting matrix is changed.
+     */
     @Override
-    public void slotsChanged(Container p_39863_) {
+    public void slotsChanged(Container inventory) {
         ItemStack itemstack = this.bannerSlot.getItem();
         ItemStack itemstack1 = this.dyeSlot.getItem();
         ItemStack itemstack2 = this.patternSlot.getItem();
@@ -209,24 +221,27 @@ public class LoomMenu extends AbstractContainerMenu {
         return this.selectedBannerPatternIndex.get();
     }
 
-    public void registerUpdateListener(Runnable p_39879_) {
-        this.slotUpdateListener = p_39879_;
+    public void registerUpdateListener(Runnable listener) {
+        this.slotUpdateListener = listener;
     }
 
+    /**
+     * Handle when the stack in slot {@code index} is shift-clicked. Normally this moves the stack between the player inventory and the other inventory(s).
+     */
     @Override
-    public ItemStack quickMoveStack(Player p_39883_, int p_39884_) {
+    public ItemStack quickMoveStack(Player player, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(p_39884_);
+        Slot slot = this.slots.get(index);
         if (slot != null && slot.hasItem()) {
             ItemStack itemstack1 = slot.getItem();
             itemstack = itemstack1.copy();
-            if (p_39884_ == this.resultSlot.index) {
+            if (index == this.resultSlot.index) {
                 if (!this.moveItemStackTo(itemstack1, 4, 40, true)) {
                     return ItemStack.EMPTY;
                 }
 
                 slot.onQuickCraft(itemstack1, itemstack);
-            } else if (p_39884_ != this.dyeSlot.index && p_39884_ != this.bannerSlot.index && p_39884_ != this.patternSlot.index) {
+            } else if (index != this.dyeSlot.index && index != this.bannerSlot.index && index != this.patternSlot.index) {
                 if (itemstack1.getItem() instanceof BannerItem) {
                     if (!this.moveItemStackTo(itemstack1, this.bannerSlot.index, this.bannerSlot.index + 1, false)) {
                         return ItemStack.EMPTY;
@@ -239,11 +254,11 @@ public class LoomMenu extends AbstractContainerMenu {
                     if (!this.moveItemStackTo(itemstack1, this.patternSlot.index, this.patternSlot.index + 1, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (p_39884_ >= 4 && p_39884_ < 31) {
+                } else if (index >= 4 && index < 31) {
                     if (!this.moveItemStackTo(itemstack1, 31, 40, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else if (p_39884_ >= 31 && p_39884_ < 40 && !this.moveItemStackTo(itemstack1, 4, 31, false)) {
+                } else if (index >= 31 && index < 40 && !this.moveItemStackTo(itemstack1, 4, 31, false)) {
                     return ItemStack.EMPTY;
                 }
             } else if (!this.moveItemStackTo(itemstack1, 4, 40, false)) {
@@ -260,19 +275,25 @@ public class LoomMenu extends AbstractContainerMenu {
                 return ItemStack.EMPTY;
             }
 
-            slot.onTake(p_39883_, itemstack1);
+            slot.onTake(player, itemstack1);
         }
 
         return itemstack;
     }
 
+    /**
+     * Called when the container is closed.
+     */
     @Override
-    public void removed(Player p_39881_) {
-        super.removed(p_39881_);
-        this.access.execute((p_39871_, p_39872_) -> this.clearContainer(p_39881_, this.inputContainer));
+    public void removed(Player player) {
+        super.removed(player);
+        this.access.execute((p_39871_, p_39872_) -> this.clearContainer(player, this.inputContainer));
     }
 
-    private void setupResultSlot(Holder<BannerPattern> p_219992_) {
+    /**
+     * Creates an output banner ItemStack based on the patterns, dyes, etc. in the loom.
+     */
+    private void setupResultSlot(Holder<BannerPattern> pattern) {
         ItemStack itemstack = this.bannerSlot.getItem();
         ItemStack itemstack1 = this.dyeSlot.getItem();
         ItemStack itemstack2 = ItemStack.EMPTY;
@@ -282,7 +303,7 @@ public class LoomMenu extends AbstractContainerMenu {
             itemstack2.update(
                 DataComponents.BANNER_PATTERNS,
                 BannerPatternLayers.EMPTY,
-                p_330070_ -> new BannerPatternLayers.Builder().addAll(p_330070_).add(p_219992_, dyecolor).build()
+                p_330070_ -> new BannerPatternLayers.Builder().addAll(p_330070_).add(pattern, dyecolor).build()
             );
         }
 

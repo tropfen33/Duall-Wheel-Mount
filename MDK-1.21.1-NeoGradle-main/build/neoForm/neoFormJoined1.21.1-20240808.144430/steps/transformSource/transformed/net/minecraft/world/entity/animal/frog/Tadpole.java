@@ -60,15 +60,15 @@ public class Tadpole extends AbstractFish {
         MemoryModuleType.IS_PANICKING
     );
 
-    public Tadpole(EntityType<? extends AbstractFish> p_218686_, Level p_218687_) {
-        super(p_218686_, p_218687_);
+    public Tadpole(EntityType<? extends AbstractFish> entityType, Level level) {
+        super(entityType, level);
         this.moveControl = new SmoothSwimmingMoveControl(this, 85, 10, 0.02F, 0.1F, true);
         this.lookControl = new SmoothSwimmingLookControl(this, 10);
     }
 
     @Override
-    protected PathNavigation createNavigation(Level p_218694_) {
-        return new WaterBoundPathNavigation(this, p_218694_);
+    protected PathNavigation createNavigation(Level level) {
+        return new WaterBoundPathNavigation(this, level);
     }
 
     @Override
@@ -77,8 +77,8 @@ public class Tadpole extends AbstractFish {
     }
 
     @Override
-    protected Brain<?> makeBrain(Dynamic<?> p_218696_) {
-        return TadpoleAi.makeBrain(this.brainProvider().makeBrain(p_218696_));
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return TadpoleAi.makeBrain(this.brainProvider().makeBrain(dynamic));
     }
 
     @Override
@@ -115,15 +115,18 @@ public class Tadpole extends AbstractFish {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_218709_) {
-        super.addAdditionalSaveData(p_218709_);
-        p_218709_.putInt("Age", this.age);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("Age", this.age);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_218698_) {
-        super.readAdditionalSaveData(p_218698_);
-        this.setAge(p_218698_.getInt("Age"));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.setAge(compound.getInt("Age"));
     }
 
     @Nullable
@@ -134,7 +137,7 @@ public class Tadpole extends AbstractFish {
 
     @Nullable
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_218713_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.TADPOLE_HURT;
     }
 
@@ -145,13 +148,13 @@ public class Tadpole extends AbstractFish {
     }
 
     @Override
-    public InteractionResult mobInteract(Player p_218703_, InteractionHand p_218704_) {
-        ItemStack itemstack = p_218703_.getItemInHand(p_218704_);
+    public InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
         if (this.isFood(itemstack)) {
-            this.feed(p_218703_, itemstack);
+            this.feed(player, itemstack);
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         } else {
-            return Bucketable.bucketMobPickup(p_218703_, p_218704_, this).orElse(super.mobInteract(p_218703_, p_218704_));
+            return Bucketable.bucketMobPickup(player, hand, this).orElse(super.mobInteract(player, hand));
         }
     }
 
@@ -167,20 +170,20 @@ public class Tadpole extends AbstractFish {
     }
 
     @Override
-    public void setFromBucket(boolean p_218732_) {
+    public void setFromBucket(boolean fromBucket) {
     }
 
     @Override
-    public void saveToBucketTag(ItemStack p_218725_) {
-        Bucketable.saveDefaultDataToBucketTag(this, p_218725_);
-        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, p_218725_, p_331788_ -> p_331788_.putInt("Age", this.getAge()));
+    public void saveToBucketTag(ItemStack stack) {
+        Bucketable.saveDefaultDataToBucketTag(this, stack);
+        CustomData.update(DataComponents.BUCKET_ENTITY_DATA, stack, p_331788_ -> p_331788_.putInt("Age", this.getAge()));
     }
 
     @Override
-    public void loadFromBucketTag(CompoundTag p_218715_) {
-        Bucketable.loadDefaultDataFromBucketTag(this, p_218715_);
-        if (p_218715_.contains("Age")) {
-            this.setAge(p_218715_.getInt("Age"));
+    public void loadFromBucketTag(CompoundTag tag) {
+        Bucketable.loadDefaultDataFromBucketTag(this, tag);
+        if (tag.contains("Age")) {
+            this.setAge(tag.getInt("Age"));
         }
     }
 
@@ -194,30 +197,30 @@ public class Tadpole extends AbstractFish {
         return SoundEvents.BUCKET_FILL_TADPOLE;
     }
 
-    private boolean isFood(ItemStack p_218727_) {
-        return p_218727_.is(ItemTags.FROG_FOOD);
+    private boolean isFood(ItemStack stack) {
+        return stack.is(ItemTags.FROG_FOOD);
     }
 
-    private void feed(Player p_218691_, ItemStack p_218692_) {
-        this.usePlayerItem(p_218691_, p_218692_);
+    private void feed(Player player, ItemStack stack) {
+        this.usePlayerItem(player, stack);
         this.ageUp(AgeableMob.getSpeedUpSecondsWhenFeeding(this.getTicksLeftUntilAdult()));
         this.level().addParticle(ParticleTypes.HAPPY_VILLAGER, this.getRandomX(1.0), this.getRandomY() + 0.5, this.getRandomZ(1.0), 0.0, 0.0, 0.0);
     }
 
-    private void usePlayerItem(Player p_218706_, ItemStack p_218707_) {
-        p_218707_.consume(1, p_218706_);
+    private void usePlayerItem(Player player, ItemStack stack) {
+        stack.consume(1, player);
     }
 
     private int getAge() {
         return this.age;
     }
 
-    private void ageUp(int p_218701_) {
-        this.setAge(this.age + p_218701_ * 20);
+    private void ageUp(int offset) {
+        this.setAge(this.age + offset * 20);
     }
 
-    private void setAge(int p_218711_) {
-        this.age = p_218711_;
+    private void setAge(int age) {
+        this.age = age;
         if (this.age >= ticksToBeFrog) {
             this.ageUp();
         }

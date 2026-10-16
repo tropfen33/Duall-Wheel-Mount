@@ -74,39 +74,39 @@ public final class TreeGrower {
     private final Optional<ResourceKey<ConfiguredFeature<?, ?>>> secondaryFlowers;
 
     public TreeGrower(
-        String p_304408_,
-        Optional<ResourceKey<ConfiguredFeature<?, ?>>> p_304634_,
-        Optional<ResourceKey<ConfiguredFeature<?, ?>>> p_304477_,
-        Optional<ResourceKey<ConfiguredFeature<?, ?>>> p_304753_
+        String name,
+        Optional<ResourceKey<ConfiguredFeature<?, ?>>> megaTree,
+        Optional<ResourceKey<ConfiguredFeature<?, ?>>> tree,
+        Optional<ResourceKey<ConfiguredFeature<?, ?>>> flowers
     ) {
-        this(p_304408_, 0.0F, p_304634_, Optional.empty(), p_304477_, Optional.empty(), p_304753_, Optional.empty());
+        this(name, 0.0F, megaTree, Optional.empty(), tree, Optional.empty(), flowers, Optional.empty());
     }
 
     public TreeGrower(
-        String p_304522_,
-        float p_304600_,
-        Optional<ResourceKey<ConfiguredFeature<?, ?>>> p_304738_,
-        Optional<ResourceKey<ConfiguredFeature<?, ?>>> p_304561_,
-        Optional<ResourceKey<ConfiguredFeature<?, ?>>> p_304433_,
-        Optional<ResourceKey<ConfiguredFeature<?, ?>>> p_304821_,
-        Optional<ResourceKey<ConfiguredFeature<?, ?>>> p_304558_,
-        Optional<ResourceKey<ConfiguredFeature<?, ?>>> p_304488_
+        String name,
+        float secondaryChance,
+        Optional<ResourceKey<ConfiguredFeature<?, ?>>> megaTree,
+        Optional<ResourceKey<ConfiguredFeature<?, ?>>> secondaryMegaTree,
+        Optional<ResourceKey<ConfiguredFeature<?, ?>>> tree,
+        Optional<ResourceKey<ConfiguredFeature<?, ?>>> secondaryTree,
+        Optional<ResourceKey<ConfiguredFeature<?, ?>>> flowers,
+        Optional<ResourceKey<ConfiguredFeature<?, ?>>> secondaryFlowers
     ) {
-        this.name = p_304522_;
-        this.secondaryChance = p_304600_;
-        this.megaTree = p_304738_;
-        this.secondaryMegaTree = p_304561_;
-        this.tree = p_304433_;
-        this.secondaryTree = p_304821_;
-        this.flowers = p_304558_;
-        this.secondaryFlowers = p_304488_;
-        GROWERS.put(p_304522_, this);
+        this.name = name;
+        this.secondaryChance = secondaryChance;
+        this.megaTree = megaTree;
+        this.secondaryMegaTree = secondaryMegaTree;
+        this.tree = tree;
+        this.secondaryTree = secondaryTree;
+        this.flowers = flowers;
+        this.secondaryFlowers = secondaryFlowers;
+        GROWERS.put(name, this);
     }
 
     @Nullable
-    private ResourceKey<ConfiguredFeature<?, ?>> getConfiguredFeature(RandomSource p_304525_, boolean p_304410_) {
-        if (p_304525_.nextFloat() < this.secondaryChance) {
-            if (p_304410_ && this.secondaryFlowers.isPresent()) {
+    private ResourceKey<ConfiguredFeature<?, ?>> getConfiguredFeature(RandomSource random, boolean flowers) {
+        if (random.nextFloat() < this.secondaryChance) {
+            if (flowers && this.secondaryFlowers.isPresent()) {
                 return this.secondaryFlowers.get();
             }
 
@@ -115,42 +115,42 @@ public final class TreeGrower {
             }
         }
 
-        return p_304410_ && this.flowers.isPresent() ? this.flowers.get() : this.tree.orElse(null);
+        return flowers && this.flowers.isPresent() ? this.flowers.get() : this.tree.orElse(null);
     }
 
     @Nullable
-    private ResourceKey<ConfiguredFeature<?, ?>> getConfiguredMegaFeature(RandomSource p_304575_) {
-        return this.secondaryMegaTree.isPresent() && p_304575_.nextFloat() < this.secondaryChance ? this.secondaryMegaTree.get() : this.megaTree.orElse(null);
+    private ResourceKey<ConfiguredFeature<?, ?>> getConfiguredMegaFeature(RandomSource random) {
+        return this.secondaryMegaTree.isPresent() && random.nextFloat() < this.secondaryChance ? this.secondaryMegaTree.get() : this.megaTree.orElse(null);
     }
 
-    public boolean growTree(ServerLevel p_304396_, ChunkGenerator p_304672_, BlockPos p_304643_, BlockState p_304439_, RandomSource p_304893_) {
-        ResourceKey<ConfiguredFeature<?, ?>> resourcekey = this.getConfiguredMegaFeature(p_304893_);
+    public boolean growTree(ServerLevel level, ChunkGenerator chunkGenerator, BlockPos pos, BlockState state, RandomSource random) {
+        ResourceKey<ConfiguredFeature<?, ?>> resourcekey = this.getConfiguredMegaFeature(random);
         if (resourcekey != null) {
-            Holder<ConfiguredFeature<?, ?>> holder = p_304396_.registryAccess()
+            Holder<ConfiguredFeature<?, ?>> holder = level.registryAccess()
                 .registryOrThrow(Registries.CONFIGURED_FEATURE)
                 .getHolder(resourcekey)
                 .orElse(null);
-            var event = net.neoforged.neoforge.event.EventHooks.fireBlockGrowFeature(p_304396_, p_304893_, p_304643_, holder);
+            var event = net.neoforged.neoforge.event.EventHooks.fireBlockGrowFeature(level, random, pos, holder);
             holder = event.getFeature();
             if (event.isCanceled()) return false;
             if (holder != null) {
                 for (int i = 0; i >= -1; i--) {
                     for (int j = 0; j >= -1; j--) {
-                        if (isTwoByTwoSapling(p_304439_, p_304396_, p_304643_, i, j)) {
+                        if (isTwoByTwoSapling(state, level, pos, i, j)) {
                             ConfiguredFeature<?, ?> configuredfeature = holder.value();
                             BlockState blockstate = Blocks.AIR.defaultBlockState();
-                            p_304396_.setBlock(p_304643_.offset(i, 0, j), blockstate, 4);
-                            p_304396_.setBlock(p_304643_.offset(i + 1, 0, j), blockstate, 4);
-                            p_304396_.setBlock(p_304643_.offset(i, 0, j + 1), blockstate, 4);
-                            p_304396_.setBlock(p_304643_.offset(i + 1, 0, j + 1), blockstate, 4);
-                            if (configuredfeature.place(p_304396_, p_304672_, p_304893_, p_304643_.offset(i, 0, j))) {
+                            level.setBlock(pos.offset(i, 0, j), blockstate, 4);
+                            level.setBlock(pos.offset(i + 1, 0, j), blockstate, 4);
+                            level.setBlock(pos.offset(i, 0, j + 1), blockstate, 4);
+                            level.setBlock(pos.offset(i + 1, 0, j + 1), blockstate, 4);
+                            if (configuredfeature.place(level, chunkGenerator, random, pos.offset(i, 0, j))) {
                                 return true;
                             }
 
-                            p_304396_.setBlock(p_304643_.offset(i, 0, j), p_304439_, 4);
-                            p_304396_.setBlock(p_304643_.offset(i + 1, 0, j), p_304439_, 4);
-                            p_304396_.setBlock(p_304643_.offset(i, 0, j + 1), p_304439_, 4);
-                            p_304396_.setBlock(p_304643_.offset(i + 1, 0, j + 1), p_304439_, 4);
+                            level.setBlock(pos.offset(i, 0, j), state, 4);
+                            level.setBlock(pos.offset(i + 1, 0, j), state, 4);
+                            level.setBlock(pos.offset(i, 0, j + 1), state, 4);
+                            level.setBlock(pos.offset(i + 1, 0, j + 1), state, 4);
                             return false;
                         }
                     }
@@ -158,48 +158,48 @@ public final class TreeGrower {
             }
         }
 
-        ResourceKey<ConfiguredFeature<?, ?>> resourcekey1 = this.getConfiguredFeature(p_304893_, this.hasFlowers(p_304396_, p_304643_));
+        ResourceKey<ConfiguredFeature<?, ?>> resourcekey1 = this.getConfiguredFeature(random, this.hasFlowers(level, pos));
         if (resourcekey1 == null) {
             return false;
         } else {
-            Holder<ConfiguredFeature<?, ?>> holder1 = p_304396_.registryAccess()
+            Holder<ConfiguredFeature<?, ?>> holder1 = level.registryAccess()
                 .registryOrThrow(Registries.CONFIGURED_FEATURE)
                 .getHolder(resourcekey1)
                 .orElse(null);
-            var event = net.neoforged.neoforge.event.EventHooks.fireBlockGrowFeature(p_304396_, p_304893_, p_304643_, holder1);
+            var event = net.neoforged.neoforge.event.EventHooks.fireBlockGrowFeature(level, random, pos, holder1);
             holder1 = event.getFeature();
             if (event.isCanceled()) return false;
             if (holder1 == null) {
                 return false;
             } else {
                 ConfiguredFeature<?, ?> configuredfeature1 = holder1.value();
-                BlockState blockstate1 = p_304396_.getFluidState(p_304643_).createLegacyBlock();
-                p_304396_.setBlock(p_304643_, blockstate1, 4);
-                if (configuredfeature1.place(p_304396_, p_304672_, p_304893_, p_304643_)) {
-                    if (p_304396_.getBlockState(p_304643_) == blockstate1) {
-                        p_304396_.sendBlockUpdated(p_304643_, p_304439_, blockstate1, 2);
+                BlockState blockstate1 = level.getFluidState(pos).createLegacyBlock();
+                level.setBlock(pos, blockstate1, 4);
+                if (configuredfeature1.place(level, chunkGenerator, random, pos)) {
+                    if (level.getBlockState(pos) == blockstate1) {
+                        level.sendBlockUpdated(pos, state, blockstate1, 2);
                     }
 
                     return true;
                 } else {
-                    p_304396_.setBlock(p_304643_, p_304439_, 4);
+                    level.setBlock(pos, state, 4);
                     return false;
                 }
             }
         }
     }
 
-    private static boolean isTwoByTwoSapling(BlockState p_304497_, BlockGetter p_304772_, BlockPos p_304920_, int p_304941_, int p_304932_) {
-        Block block = p_304497_.getBlock();
-        return p_304772_.getBlockState(p_304920_.offset(p_304941_, 0, p_304932_)).is(block)
-            && p_304772_.getBlockState(p_304920_.offset(p_304941_ + 1, 0, p_304932_)).is(block)
-            && p_304772_.getBlockState(p_304920_.offset(p_304941_, 0, p_304932_ + 1)).is(block)
-            && p_304772_.getBlockState(p_304920_.offset(p_304941_ + 1, 0, p_304932_ + 1)).is(block);
+    private static boolean isTwoByTwoSapling(BlockState state, BlockGetter level, BlockPos pos, int xOffset, int yOffset) {
+        Block block = state.getBlock();
+        return level.getBlockState(pos.offset(xOffset, 0, yOffset)).is(block)
+            && level.getBlockState(pos.offset(xOffset + 1, 0, yOffset)).is(block)
+            && level.getBlockState(pos.offset(xOffset, 0, yOffset + 1)).is(block)
+            && level.getBlockState(pos.offset(xOffset + 1, 0, yOffset + 1)).is(block);
     }
 
-    private boolean hasFlowers(LevelAccessor p_304555_, BlockPos p_304465_) {
-        for (BlockPos blockpos : BlockPos.MutableBlockPos.betweenClosed(p_304465_.below().north(2).west(2), p_304465_.above().south(2).east(2))) {
-            if (p_304555_.getBlockState(blockpos).is(BlockTags.FLOWERS)) {
+    private boolean hasFlowers(LevelAccessor level, BlockPos pos) {
+        for (BlockPos blockpos : BlockPos.MutableBlockPos.betweenClosed(pos.below().north(2).west(2), pos.above().south(2).east(2))) {
+            if (level.getBlockState(blockpos).is(BlockTags.FLOWERS)) {
                 return true;
             }
         }

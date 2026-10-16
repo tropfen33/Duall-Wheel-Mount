@@ -18,24 +18,27 @@ public class EnderDragonPart extends net.neoforged.neoforge.entity.PartEntity<En
     public final String name;
     private final EntityDimensions size;
 
-    public EnderDragonPart(EnderDragon p_31014_, String p_31015_, float p_31016_, float p_31017_) {
-        super(p_31014_);
-        this.size = EntityDimensions.scalable(p_31016_, p_31017_);
+    public EnderDragonPart(EnderDragon parentMob, String name, float width, float height) {
+        super(parentMob);
+        this.size = EntityDimensions.scalable(width, height);
         this.refreshDimensions();
-        this.parentMob = p_31014_;
-        this.name = p_31015_;
+        this.parentMob = parentMob;
+        this.name = name;
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_325943_) {
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+    }
+
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    @Override
+    protected void readAdditionalSaveData(CompoundTag compound) {
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_31025_) {
-    }
-
-    @Override
-    protected void addAdditionalSaveData(CompoundTag p_31028_) {
+    protected void addAdditionalSaveData(CompoundTag compound) {
     }
 
     @Override
@@ -49,23 +52,29 @@ public class EnderDragonPart extends net.neoforged.neoforge.entity.PartEntity<En
         return this.parentMob.getPickResult();
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_31020_, float p_31021_) {
-        return this.isInvulnerableTo(p_31020_) ? false : this.parentMob.hurt(this, p_31020_, p_31021_);
+    public boolean hurt(DamageSource source, float amount) {
+        return this.isInvulnerableTo(source) ? false : this.parentMob.hurt(this, source, amount);
+    }
+
+    /**
+     * Returns {@code true} if Entity argument is equal to this Entity
+     */
+    @Override
+    public boolean is(Entity entity) {
+        return this == entity || this.parentMob == entity;
     }
 
     @Override
-    public boolean is(Entity p_31031_) {
-        return this == p_31031_ || this.parentMob == p_31031_;
-    }
-
-    @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity p_352320_) {
+    public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public EntityDimensions getDimensions(Pose p_31023_) {
+    public EntityDimensions getDimensions(Pose pose) {
         return this.size;
     }
 

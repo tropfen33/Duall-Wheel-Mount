@@ -10,8 +10,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 
 public class Mule extends AbstractChestedHorse {
-    public Mule(EntityType<? extends Mule> p_30878_, Level p_30879_) {
-        super(p_30878_, p_30879_);
+    public Mule(EntityType<? extends Mule> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
@@ -36,7 +36,7 @@ public class Mule extends AbstractChestedHorse {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_30886_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.MULE_HURT;
     }
 
@@ -52,7 +52,7 @@ public class Mule extends AbstractChestedHorse {
 
     @Nullable
     @Override
-    public AgeableMob getBreedOffspring(ServerLevel p_149549_, AgeableMob p_149550_) {
-        return EntityType.MULE.create(p_149549_);
+    public AgeableMob getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        return EntityType.MULE.create(level);
     }
 }

@@ -38,9 +38,9 @@ public record Fireworks(int flightDuration, List<FireworkExplosion> explosions) 
     }
 
     @Override
-    public void addToTooltip(Item.TooltipContext p_341156_, Consumer<Component> p_331099_, TooltipFlag p_330997_) {
+    public void addToTooltip(Item.TooltipContext context, Consumer<Component> tooltipAdder, TooltipFlag tooltipFlag) {
         if (this.flightDuration > 0) {
-            p_331099_.accept(
+            tooltipAdder.accept(
                 Component.translatable("item.minecraft.firework_rocket.flight")
                     .append(CommonComponents.SPACE)
                     .append(String.valueOf(this.flightDuration))
@@ -49,8 +49,8 @@ public record Fireworks(int flightDuration, List<FireworkExplosion> explosions) 
         }
 
         for (FireworkExplosion fireworkexplosion : this.explosions) {
-            fireworkexplosion.addShapeNameTooltip(p_331099_);
-            fireworkexplosion.addAdditionalTooltip(p_331413_ -> p_331099_.accept(Component.literal("  ").append(p_331413_)));
+            fireworkexplosion.addShapeNameTooltip(tooltipAdder);
+            fireworkexplosion.addAdditionalTooltip(p_331413_ -> tooltipAdder.accept(Component.literal("  ").append(p_331413_)));
         }
     }
 }

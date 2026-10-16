@@ -7,8 +7,8 @@ import com.mojang.datafixers.Typed;
 import com.mojang.datafixers.schemas.Schema;
 
 public class BlockStateStructureTemplateFix extends DataFix {
-    public BlockStateStructureTemplateFix(Schema p_15001_, boolean p_15002_) {
-        super(p_15001_, p_15002_);
+    public BlockStateStructureTemplateFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override

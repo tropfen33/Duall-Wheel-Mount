@@ -20,30 +20,30 @@ public class WorkAtComposter extends WorkAtPoi {
     private static final List<Item> COMPOSTABLE_ITEMS = ImmutableList.of(Items.WHEAT_SEEDS, Items.BEETROOT_SEEDS);
 
     @Override
-    protected void useWorkstation(ServerLevel p_24790_, Villager p_24791_) {
-        Optional<GlobalPos> optional = p_24791_.getBrain().getMemory(MemoryModuleType.JOB_SITE);
+    protected void useWorkstation(ServerLevel level, Villager villager) {
+        Optional<GlobalPos> optional = villager.getBrain().getMemory(MemoryModuleType.JOB_SITE);
         if (!optional.isEmpty()) {
             GlobalPos globalpos = optional.get();
-            BlockState blockstate = p_24790_.getBlockState(globalpos.pos());
+            BlockState blockstate = level.getBlockState(globalpos.pos());
             if (blockstate.is(Blocks.COMPOSTER)) {
-                this.makeBread(p_24791_);
-                this.compostItems(p_24790_, p_24791_, globalpos, blockstate);
+                this.makeBread(villager);
+                this.compostItems(level, villager, globalpos, blockstate);
             }
         }
     }
 
-    private void compostItems(ServerLevel p_24793_, Villager p_24794_, GlobalPos p_24795_, BlockState p_24796_) {
-        BlockPos blockpos = p_24795_.pos();
-        if (p_24796_.getValue(ComposterBlock.LEVEL) == 8) {
-            p_24796_ = ComposterBlock.extractProduce(p_24794_, p_24796_, p_24793_, blockpos);
+    private void compostItems(ServerLevel level, Villager villager, GlobalPos global, BlockState state) {
+        BlockPos blockpos = global.pos();
+        if (state.getValue(ComposterBlock.LEVEL) == 8) {
+            state = ComposterBlock.extractProduce(villager, state, level, blockpos);
         }
 
         int i = 20;
         int j = 10;
         it.unimi.dsi.fastutil.objects.Reference2IntMap<Item> amounts = new it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap<>(COMPOSTABLE_ITEMS.size() * 2); // Neo: let's assume that there's roughly twice more villager compostables than in vanilla
-        SimpleContainer simplecontainer = p_24794_.getInventory();
+        SimpleContainer simplecontainer = villager.getInventory();
         int k = simplecontainer.getContainerSize();
-        BlockState blockstate = p_24796_;
+        BlockState blockstate = state;
 
         for (int l = k - 1; l >= 0 && i > 0; l--) {
             ItemStack itemstack = simplecontainer.getItem(l);
@@ -57,9 +57,9 @@ public class WorkAtComposter extends WorkAtPoi {
                     i -= l1;
 
                     for (int i2 = 0; i2 < l1; i2++) {
-                        blockstate = ComposterBlock.insertItem(p_24794_, blockstate, p_24793_, itemstack, blockpos);
+                        blockstate = ComposterBlock.insertItem(villager, blockstate, level, itemstack, blockpos);
                         if (blockstate.getValue(ComposterBlock.LEVEL) == 7) {
-                            this.spawnComposterFillEffects(p_24793_, p_24796_, blockpos, blockstate);
+                            this.spawnComposterFillEffects(level, state, blockpos, blockstate);
                             return;
                         }
                     }
@@ -67,15 +67,15 @@ public class WorkAtComposter extends WorkAtPoi {
             }
         }
 
-        this.spawnComposterFillEffects(p_24793_, p_24796_, blockpos, blockstate);
+        this.spawnComposterFillEffects(level, state, blockpos, blockstate);
     }
 
-    private void spawnComposterFillEffects(ServerLevel p_24798_, BlockState p_24799_, BlockPos p_24800_, BlockState p_24801_) {
-        p_24798_.levelEvent(1500, p_24800_, p_24801_ != p_24799_ ? 1 : 0);
+    private void spawnComposterFillEffects(ServerLevel level, BlockState preState, BlockPos pos, BlockState postState) {
+        level.levelEvent(1500, pos, postState != preState ? 1 : 0);
     }
 
-    private void makeBread(Villager p_24803_) {
-        SimpleContainer simplecontainer = p_24803_.getInventory();
+    private void makeBread(Villager villager) {
+        SimpleContainer simplecontainer = villager.getInventory();
         if (simplecontainer.countItem(Items.BREAD) <= 36) {
             int i = simplecontainer.countItem(Items.WHEAT);
             int j = 3;
@@ -86,7 +86,7 @@ public class WorkAtComposter extends WorkAtPoi {
                 simplecontainer.removeItemType(Items.WHEAT, i1);
                 ItemStack itemstack = simplecontainer.addItem(new ItemStack(Items.BREAD, l));
                 if (!itemstack.isEmpty()) {
-                    p_24803_.spawnAtLocation(itemstack, 0.5F);
+                    villager.spawnAtLocation(itemstack, 0.5F);
                 }
             }
         }

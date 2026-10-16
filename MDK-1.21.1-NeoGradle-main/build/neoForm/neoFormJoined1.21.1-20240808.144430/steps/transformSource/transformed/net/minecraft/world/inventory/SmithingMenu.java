@@ -30,13 +30,13 @@ public class SmithingMenu extends ItemCombinerMenu {
     private RecipeHolder<SmithingRecipe> selectedRecipe;
     private final List<RecipeHolder<SmithingRecipe>> recipes;
 
-    public SmithingMenu(int p_40245_, Inventory p_40246_) {
-        this(p_40245_, p_40246_, ContainerLevelAccess.NULL);
+    public SmithingMenu(int containerId, Inventory playerInventory) {
+        this(containerId, playerInventory, ContainerLevelAccess.NULL);
     }
 
-    public SmithingMenu(int p_40248_, Inventory p_40249_, ContainerLevelAccess p_40250_) {
-        super(MenuType.SMITHING, p_40248_, p_40249_, p_40250_);
-        this.level = p_40249_.player.level();
+    public SmithingMenu(int containerId, Inventory playerInventory, ContainerLevelAccess access) {
+        super(MenuType.SMITHING, containerId, playerInventory, access);
+        this.level = playerInventory.player.level();
         this.recipes = this.level.getRecipeManager().getAllRecipesFor(RecipeType.SMITHING);
     }
 
@@ -51,19 +51,19 @@ public class SmithingMenu extends ItemCombinerMenu {
     }
 
     @Override
-    protected boolean isValidBlock(BlockState p_40266_) {
-        return p_40266_.is(Blocks.SMITHING_TABLE);
+    protected boolean isValidBlock(BlockState state) {
+        return state.is(Blocks.SMITHING_TABLE);
     }
 
     @Override
-    protected boolean mayPickup(Player p_40268_, boolean p_40269_) {
+    protected boolean mayPickup(Player player, boolean hasStack) {
         return this.selectedRecipe != null && this.selectedRecipe.value().matches(this.createRecipeInput(), this.level);
     }
 
     @Override
-    protected void onTake(Player p_150663_, ItemStack p_150664_) {
-        p_150664_.onCraftedBy(p_150663_.level(), p_150663_, p_150664_.getCount());
-        this.resultSlots.awardUsedRecipes(p_150663_, this.getRelevantItems());
+    protected void onTake(Player player, ItemStack stack) {
+        stack.onCraftedBy(player.level(), player, stack.getCount());
+        this.resultSlots.awardUsedRecipes(player, this.getRelevantItems());
         this.shrinkStackInSlot(0);
         this.shrinkStackInSlot(1);
         this.shrinkStackInSlot(2);
@@ -78,11 +78,11 @@ public class SmithingMenu extends ItemCombinerMenu {
         return new SmithingRecipeInput(this.inputSlots.getItem(0), this.inputSlots.getItem(1), this.inputSlots.getItem(2));
     }
 
-    private void shrinkStackInSlot(int p_40271_) {
-        ItemStack itemstack = this.inputSlots.getItem(p_40271_);
+    private void shrinkStackInSlot(int index) {
+        ItemStack itemstack = this.inputSlots.getItem(index);
         if (!itemstack.isEmpty()) {
             itemstack.shrink(1);
-            this.inputSlots.setItem(p_40271_, itemstack);
+            this.inputSlots.setItem(index, itemstack);
         }
     }
 
@@ -104,34 +104,37 @@ public class SmithingMenu extends ItemCombinerMenu {
     }
 
     @Override
-    public int getSlotToQuickMoveTo(ItemStack p_266739_) {
-        return this.findSlotToQuickMoveTo(p_266739_).orElse(0);
+    public int getSlotToQuickMoveTo(ItemStack stack) {
+        return this.findSlotToQuickMoveTo(stack).orElse(0);
     }
 
-    private static OptionalInt findSlotMatchingIngredient(SmithingRecipe p_266790_, ItemStack p_266818_) {
-        if (p_266790_.isTemplateIngredient(p_266818_)) {
+    private static OptionalInt findSlotMatchingIngredient(SmithingRecipe recipe, ItemStack stack) {
+        if (recipe.isTemplateIngredient(stack)) {
             return OptionalInt.of(0);
-        } else if (p_266790_.isBaseIngredient(p_266818_)) {
+        } else if (recipe.isBaseIngredient(stack)) {
             return OptionalInt.of(1);
         } else {
-            return p_266790_.isAdditionIngredient(p_266818_) ? OptionalInt.of(2) : OptionalInt.empty();
+            return recipe.isAdditionIngredient(stack) ? OptionalInt.of(2) : OptionalInt.empty();
         }
     }
 
+    /**
+     * Called to determine if the current slot is valid for the stack merging (double-click) code. The stack passed in is null for the initial slot that was double-clicked.
+     */
     @Override
-    public boolean canTakeItemForPickAll(ItemStack p_40257_, Slot p_40258_) {
-        return p_40258_.container != this.resultSlots && super.canTakeItemForPickAll(p_40257_, p_40258_);
+    public boolean canTakeItemForPickAll(ItemStack stack, Slot slot) {
+        return slot.container != this.resultSlots && super.canTakeItemForPickAll(stack, slot);
     }
 
     @Override
-    public boolean canMoveIntoInputSlots(ItemStack p_266846_) {
-        return this.findSlotToQuickMoveTo(p_266846_).isPresent();
+    public boolean canMoveIntoInputSlots(ItemStack stack) {
+        return this.findSlotToQuickMoveTo(stack).isPresent();
     }
 
-    private OptionalInt findSlotToQuickMoveTo(ItemStack p_295440_) {
+    private OptionalInt findSlotToQuickMoveTo(ItemStack stack) {
         return this.recipes
             .stream()
-            .flatMapToInt(p_300800_ -> findSlotMatchingIngredient(p_300800_.value(), p_295440_).stream())
+            .flatMapToInt(p_300800_ -> findSlotMatchingIngredient(p_300800_.value(), stack).stream())
             .filter(p_294045_ -> !this.getSlot(p_294045_).hasItem())
             .findFirst();
     }

@@ -20,22 +20,25 @@ public class WitherBossRenderer extends MobRenderer<WitherBoss, WitherBossModel<
         this.addLayer(new WitherArmorLayer(this, p_174445_.getModelSet()));
     }
 
-    protected int getBlockLightLevel(WitherBoss p_116443_, BlockPos p_116444_) {
+    protected int getBlockLightLevel(WitherBoss entity, BlockPos pos) {
         return 15;
     }
 
-    public ResourceLocation getTextureLocation(WitherBoss p_116437_) {
-        int i = p_116437_.getInvulnerableTicks();
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(WitherBoss entity) {
+        int i = entity.getInvulnerableTicks();
         return i > 0 && (i > 80 || i / 5 % 2 != 1) ? WITHER_INVULNERABLE_LOCATION : WITHER_LOCATION;
     }
 
-    protected void scale(WitherBoss p_116439_, PoseStack p_116440_, float p_116441_) {
+    protected void scale(WitherBoss livingEntity, PoseStack poseStack, float partialTickTime) {
         float f = 2.0F;
-        int i = p_116439_.getInvulnerableTicks();
+        int i = livingEntity.getInvulnerableTicks();
         if (i > 0) {
-            f -= ((float)i - p_116441_) / 220.0F * 0.5F;
+            f -= ((float)i - partialTickTime) / 220.0F * 0.5F;
         }
 
-        p_116440_.scale(f, f, f);
+        poseStack.scale(f, f, f);
     }
 }

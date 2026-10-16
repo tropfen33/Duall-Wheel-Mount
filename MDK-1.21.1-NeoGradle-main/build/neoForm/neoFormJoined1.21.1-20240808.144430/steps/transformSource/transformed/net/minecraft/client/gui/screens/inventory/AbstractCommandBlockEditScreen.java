@@ -92,15 +92,15 @@ public abstract class AbstractCommandBlockEditScreen extends Screen {
     }
 
     @Override
-    public void resize(Minecraft p_97677_, int p_97678_, int p_97679_) {
+    public void resize(Minecraft minecraft, int width, int height) {
         String s = this.commandEdit.getValue();
-        this.init(p_97677_, p_97678_, p_97679_);
+        this.init(minecraft, width, height);
         this.commandEdit.setValue(s);
         this.commandSuggestions.updateCommandInfo();
     }
 
-    protected void updatePreviousOutput(boolean p_169599_) {
-        this.previousEdit.setValue(p_169599_ ? this.getCommandBlock().getLastOutput().getString() : "-");
+    protected void updatePreviousOutput(boolean trackOutput) {
+        this.previousEdit.setValue(trackOutput ? this.getCommandBlock().getLastOutput().getString() : "-");
     }
 
     protected void onDone() {
@@ -113,19 +113,28 @@ public abstract class AbstractCommandBlockEditScreen extends Screen {
         this.minecraft.setScreen(null);
     }
 
-    protected abstract void populateAndSendPacket(BaseCommandBlock p_97670_);
+    protected abstract void populateAndSendPacket(BaseCommandBlock commandBlock);
 
-    private void onEdited(String p_97689_) {
+    private void onEdited(String command) {
         this.commandSuggestions.updateCommandInfo();
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_97667_, int p_97668_, int p_97669_) {
-        if (this.commandSuggestions.keyPressed(p_97667_, p_97668_, p_97669_)) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (this.commandSuggestions.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
-        } else if (super.keyPressed(p_97667_, p_97668_, p_97669_)) {
+        } else if (super.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
-        } else if (p_97667_ != 257 && p_97667_ != 335) {
+        } else if (keyCode != 257 && keyCode != 335) {
             return false;
         } else {
             this.onDone();
@@ -134,33 +143,50 @@ public abstract class AbstractCommandBlockEditScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double p_97659_, double p_97660_, double p_97661_, double p_294594_) {
-        return this.commandSuggestions.mouseScrolled(p_294594_) ? true : super.mouseScrolled(p_97659_, p_97660_, p_97661_, p_294594_);
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        return this.commandSuggestions.mouseScrolled(scrollY) ? true : super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
+    /**
+     * Called when a mouse button is clicked within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was clicked.
+     */
     @Override
-    public boolean mouseClicked(double p_97663_, double p_97664_, int p_97665_) {
-        return this.commandSuggestions.mouseClicked(p_97663_, p_97664_, p_97665_) ? true : super.mouseClicked(p_97663_, p_97664_, p_97665_);
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        return this.commandSuggestions.mouseClicked(mouseX, mouseY, button) ? true : super.mouseClicked(mouseX, mouseY, button);
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_283074_, int p_97673_, int p_97674_, float p_97675_) {
-        super.render(p_283074_, p_97673_, p_97674_, p_97675_);
-        p_283074_.drawCenteredString(this.font, SET_COMMAND_LABEL, this.width / 2, 20, 16777215);
-        p_283074_.drawString(this.font, COMMAND_LABEL, this.width / 2 - 150 + 1, 40, 10526880);
-        this.commandEdit.render(p_283074_, p_97673_, p_97674_, p_97675_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, SET_COMMAND_LABEL, this.width / 2, 20, 16777215);
+        guiGraphics.drawString(this.font, COMMAND_LABEL, this.width / 2 - 150 + 1, 40, 10526880);
+        this.commandEdit.render(guiGraphics, mouseX, mouseY, partialTick);
         int i = 75;
         if (!this.previousEdit.getValue().isEmpty()) {
             i += 5 * 9 + 1 + this.getPreviousY() - 135;
-            p_283074_.drawString(this.font, PREVIOUS_OUTPUT_LABEL, this.width / 2 - 150 + 1, i + 4, 10526880);
-            this.previousEdit.render(p_283074_, p_97673_, p_97674_, p_97675_);
+            guiGraphics.drawString(this.font, PREVIOUS_OUTPUT_LABEL, this.width / 2 - 150 + 1, i + 4, 10526880);
+            this.previousEdit.render(guiGraphics, mouseX, mouseY, partialTick);
         }
 
-        this.commandSuggestions.render(p_283074_, p_97673_, p_97674_);
+        this.commandSuggestions.render(guiGraphics, mouseX, mouseY);
     }
 
     @Override
-    public void renderBackground(GuiGraphics p_333760_, int p_333752_, int p_333931_, float p_333774_) {
-        this.renderTransparentBackground(p_333760_);
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.renderTransparentBackground(guiGraphics);
     }
 }

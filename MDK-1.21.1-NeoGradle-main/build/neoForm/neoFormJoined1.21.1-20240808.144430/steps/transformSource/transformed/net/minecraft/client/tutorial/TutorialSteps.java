@@ -16,22 +16,22 @@ public enum TutorialSteps {
     private final String name;
     private final Function<Tutorial, ? extends TutorialStepInstance> constructor;
 
-    private <T extends TutorialStepInstance> TutorialSteps(String p_120637_, Function<Tutorial, T> p_120638_) {
-        this.name = p_120637_;
-        this.constructor = p_120638_;
+    private <T extends TutorialStepInstance> TutorialSteps(String name, Function<Tutorial, T> constructor) {
+        this.name = name;
+        this.constructor = constructor;
     }
 
-    public TutorialStepInstance create(Tutorial p_120641_) {
-        return this.constructor.apply(p_120641_);
+    public TutorialStepInstance create(Tutorial tutorial) {
+        return this.constructor.apply(tutorial);
     }
 
     public String getName() {
         return this.name;
     }
 
-    public static TutorialSteps getByName(String p_120643_) {
+    public static TutorialSteps getByName(String name) {
         for (TutorialSteps tutorialsteps : values()) {
-            if (tutorialsteps.name.equals(p_120643_)) {
+            if (tutorialsteps.name.equals(name)) {
                 return tutorialsteps;
             }
         }

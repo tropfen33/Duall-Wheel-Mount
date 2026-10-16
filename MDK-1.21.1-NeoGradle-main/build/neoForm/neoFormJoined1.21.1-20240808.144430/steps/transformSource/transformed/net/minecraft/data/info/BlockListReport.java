@@ -24,13 +24,13 @@ public class BlockListReport implements DataProvider {
     private final PackOutput output;
     private final CompletableFuture<HolderLookup.Provider> registries;
 
-    public BlockListReport(PackOutput p_251533_, CompletableFuture<HolderLookup.Provider> p_330926_) {
-        this.output = p_251533_;
-        this.registries = p_330926_;
+    public BlockListReport(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
+        this.output = output;
+        this.registries = registries;
     }
 
     @Override
-    public CompletableFuture<?> run(CachedOutput p_236197_) {
+    public CompletableFuture<?> run(CachedOutput output) {
         Path path = this.output.getOutputFolder(PackOutput.Target.REPORTS).resolve("blocks.json");
         return this.registries
             .thenCompose(
@@ -93,7 +93,7 @@ public class BlockListReport implements DataProvider {
                                 jsonobject.add(s, jsonobject1);
                             }
                         );
-                    return DataProvider.saveStable(p_236197_, jsonobject, path);
+                    return DataProvider.saveStable(output, jsonobject, path);
                 }
             );
     }

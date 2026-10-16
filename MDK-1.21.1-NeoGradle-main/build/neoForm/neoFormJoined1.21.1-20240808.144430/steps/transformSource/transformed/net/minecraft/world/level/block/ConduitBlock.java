@@ -35,60 +35,68 @@ public class ConduitBlock extends BaseEntityBlock implements SimpleWaterloggedBl
         return CODEC;
     }
 
-    public ConduitBlock(BlockBehaviour.Properties p_52094_) {
-        super(p_52094_);
+    public ConduitBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(WATERLOGGED, Boolean.valueOf(true)));
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_52118_) {
-        p_52118_.add(WATERLOGGED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(WATERLOGGED);
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_153098_, BlockState p_153099_) {
-        return new ConduitBlockEntity(p_153098_, p_153099_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new ConduitBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_153094_, BlockState p_153095_, BlockEntityType<T> p_153096_) {
-        return createTickerHelper(p_153096_, BlockEntityType.CONDUIT, p_153094_.isClientSide ? ConduitBlockEntity::clientTick : ConduitBlockEntity::serverTick);
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        return createTickerHelper(blockEntityType, BlockEntityType.CONDUIT, level.isClientSide ? ConduitBlockEntity::clientTick : ConduitBlockEntity::serverTick);
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_52120_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.ENTITYBLOCK_ANIMATED;
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_52127_) {
-        return p_52127_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_52127_);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_52111_, Direction p_52112_, BlockState p_52113_, LevelAccessor p_52114_, BlockPos p_52115_, BlockPos p_52116_) {
-        if (p_52111_.getValue(WATERLOGGED)) {
-            p_52114_.scheduleTick(p_52115_, Fluids.WATER, Fluids.WATER.getTickDelay(p_52114_));
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        return super.updateShape(p_52111_, p_52112_, p_52113_, p_52114_, p_52115_, p_52116_);
+        return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_52122_, BlockGetter p_52123_, BlockPos p_52124_, CollisionContext p_52125_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_52096_) {
-        FluidState fluidstate = p_52096_.getLevel().getFluidState(p_52096_.getClickedPos());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
         return this.defaultBlockState().setValue(WATERLOGGED, Boolean.valueOf(fluidstate.is(FluidTags.WATER) && fluidstate.getAmount() == 8));
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_52106_, PathComputationType p_52109_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

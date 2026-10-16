@@ -49,8 +49,8 @@ public class TripWireBlock extends Block {
         return CODEC;
     }
 
-    public TripWireBlock(Block p_304873_, BlockBehaviour.Properties p_57604_) {
-        super(p_57604_);
+    public TripWireBlock(Block hook, BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(
             this.stateDefinition
                 .any()
@@ -62,18 +62,18 @@ public class TripWireBlock extends Block {
                 .setValue(SOUTH, Boolean.valueOf(false))
                 .setValue(WEST, Boolean.valueOf(false))
         );
-        this.hook = p_304873_;
+        this.hook = hook;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_57654_, BlockGetter p_57655_, BlockPos p_57656_, CollisionContext p_57657_) {
-        return p_57654_.getValue(ATTACHED) ? AABB : NOT_ATTACHED_AABB;
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return state.getValue(ATTACHED) ? AABB : NOT_ATTACHED_AABB;
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_57606_) {
-        BlockGetter blockgetter = p_57606_.getLevel();
-        BlockPos blockpos = p_57606_.getClickedPos();
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockGetter blockgetter = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
         return this.defaultBlockState()
             .setValue(NORTH, Boolean.valueOf(this.shouldConnectTo(blockgetter.getBlockState(blockpos.north()), Direction.NORTH)))
             .setValue(EAST, Boolean.valueOf(this.shouldConnectTo(blockgetter.getBlockState(blockpos.east()), Direction.EAST)))
@@ -81,45 +81,50 @@ public class TripWireBlock extends Block {
             .setValue(WEST, Boolean.valueOf(this.shouldConnectTo(blockgetter.getBlockState(blockpos.west()), Direction.WEST)));
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_57645_, Direction p_57646_, BlockState p_57647_, LevelAccessor p_57648_, BlockPos p_57649_, BlockPos p_57650_) {
-        return p_57646_.getAxis().isHorizontal()
-            ? p_57645_.setValue(PROPERTY_BY_DIRECTION.get(p_57646_), Boolean.valueOf(this.shouldConnectTo(p_57647_, p_57646_)))
-            : super.updateShape(p_57645_, p_57646_, p_57647_, p_57648_, p_57649_, p_57650_);
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return facing.getAxis().isHorizontal()
+            ? state.setValue(PROPERTY_BY_DIRECTION.get(facing), Boolean.valueOf(this.shouldConnectTo(facingState, facing)))
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected void onPlace(BlockState p_57659_, Level p_57660_, BlockPos p_57661_, BlockState p_57662_, boolean p_57663_) {
-        if (!p_57662_.is(p_57659_.getBlock())) {
-            this.updateSource(p_57660_, p_57661_, p_57659_);
+    protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        if (!oldState.is(state.getBlock())) {
+            this.updateSource(level, pos, state);
         }
     }
 
     @Override
-    protected void onRemove(BlockState p_57630_, Level p_57631_, BlockPos p_57632_, BlockState p_57633_, boolean p_57634_) {
-        if (!p_57634_ && !p_57630_.is(p_57633_.getBlock())) {
-            this.updateSource(p_57631_, p_57632_, p_57630_.setValue(POWERED, Boolean.valueOf(true)));
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!isMoving && !state.is(newState.getBlock())) {
+            this.updateSource(level, pos, state.setValue(POWERED, Boolean.valueOf(true)));
         }
     }
 
     @Override
-    public BlockState playerWillDestroy(Level p_57615_, BlockPos p_57616_, BlockState p_57617_, Player p_57618_) {
-        if (!p_57615_.isClientSide && !p_57618_.getMainHandItem().isEmpty() && p_57618_.getMainHandItem().canPerformAction(net.neoforged.neoforge.common.ItemAbilities.SHEARS_DISARM)) {
-            p_57615_.setBlock(p_57616_, p_57617_.setValue(DISARMED, Boolean.valueOf(true)), 4);
-            p_57615_.gameEvent(p_57618_, GameEvent.SHEAR, p_57616_);
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide && !player.getMainHandItem().isEmpty() && player.getMainHandItem().canPerformAction(net.neoforged.neoforge.common.ItemAbilities.SHEARS_DISARM)) {
+            level.setBlock(pos, state.setValue(DISARMED, Boolean.valueOf(true)), 4);
+            level.gameEvent(player, GameEvent.SHEAR, pos);
         }
 
-        return super.playerWillDestroy(p_57615_, p_57616_, p_57617_, p_57618_);
+        return super.playerWillDestroy(level, pos, state, player);
     }
 
-    private void updateSource(Level p_57611_, BlockPos p_57612_, BlockState p_57613_) {
+    private void updateSource(Level level, BlockPos pos, BlockState state) {
         for (Direction direction : new Direction[]{Direction.SOUTH, Direction.WEST}) {
             for (int i = 1; i < 42; i++) {
-                BlockPos blockpos = p_57612_.relative(direction, i);
-                BlockState blockstate = p_57611_.getBlockState(blockpos);
+                BlockPos blockpos = pos.relative(direction, i);
+                BlockState blockstate = level.getBlockState(blockpos);
                 if (blockstate.is(this.hook)) {
                     if (blockstate.getValue(TripWireHookBlock.FACING) == direction.getOpposite()) {
-                        TripWireHookBlock.calculateState(p_57611_, blockpos, blockstate, false, true, i, p_57613_);
+                        TripWireHookBlock.calculateState(level, blockpos, blockstate, false, true, i, state);
                     }
                     break;
                 }
@@ -132,26 +137,26 @@ public class TripWireBlock extends Block {
     }
 
     @Override
-    protected void entityInside(BlockState p_57625_, Level p_57626_, BlockPos p_57627_, Entity p_57628_) {
-        if (!p_57626_.isClientSide) {
-            if (!p_57625_.getValue(POWERED)) {
-                this.checkPressed(p_57626_, p_57627_);
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        if (!level.isClientSide) {
+            if (!state.getValue(POWERED)) {
+                this.checkPressed(level, pos);
             }
         }
     }
 
     @Override
-    protected void tick(BlockState p_222598_, ServerLevel p_222599_, BlockPos p_222600_, RandomSource p_222601_) {
-        if (p_222599_.getBlockState(p_222600_).getValue(POWERED)) {
-            this.checkPressed(p_222599_, p_222600_);
+    protected void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (level.getBlockState(pos).getValue(POWERED)) {
+            this.checkPressed(level, pos);
         }
     }
 
-    private void checkPressed(Level p_57608_, BlockPos p_57609_) {
-        BlockState blockstate = p_57608_.getBlockState(p_57609_);
+    private void checkPressed(Level level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
         boolean flag = blockstate.getValue(POWERED);
         boolean flag1 = false;
-        List<? extends Entity> list = p_57608_.getEntities(null, blockstate.getShape(p_57608_, p_57609_).bounds().move(p_57609_));
+        List<? extends Entity> list = level.getEntities(null, blockstate.getShape(level, pos).bounds().move(pos));
         if (!list.isEmpty()) {
             for (Entity entity : list) {
                 if (!entity.isIgnoringBlockTriggers()) {
@@ -163,56 +168,62 @@ public class TripWireBlock extends Block {
 
         if (flag1 != flag) {
             blockstate = blockstate.setValue(POWERED, Boolean.valueOf(flag1));
-            p_57608_.setBlock(p_57609_, blockstate, 3);
-            this.updateSource(p_57608_, p_57609_, blockstate);
+            level.setBlock(pos, blockstate, 3);
+            this.updateSource(level, pos, blockstate);
         }
 
         if (flag1) {
-            p_57608_.scheduleTick(new BlockPos(p_57609_), this, 10);
+            level.scheduleTick(new BlockPos(pos), this, 10);
         }
     }
 
-    public boolean shouldConnectTo(BlockState p_57642_, Direction p_57643_) {
-        return p_57642_.is(this.hook) ? p_57642_.getValue(TripWireHookBlock.FACING) == p_57643_.getOpposite() : p_57642_.is(this);
+    public boolean shouldConnectTo(BlockState state, Direction direction) {
+        return state.is(this.hook) ? state.getValue(TripWireHookBlock.FACING) == direction.getOpposite() : state.is(this);
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_57639_, Rotation p_57640_) {
-        switch (p_57640_) {
+    protected BlockState rotate(BlockState state, Rotation rot) {
+        switch (rot) {
             case CLOCKWISE_180:
-                return p_57639_.setValue(NORTH, p_57639_.getValue(SOUTH))
-                    .setValue(EAST, p_57639_.getValue(WEST))
-                    .setValue(SOUTH, p_57639_.getValue(NORTH))
-                    .setValue(WEST, p_57639_.getValue(EAST));
+                return state.setValue(NORTH, state.getValue(SOUTH))
+                    .setValue(EAST, state.getValue(WEST))
+                    .setValue(SOUTH, state.getValue(NORTH))
+                    .setValue(WEST, state.getValue(EAST));
             case COUNTERCLOCKWISE_90:
-                return p_57639_.setValue(NORTH, p_57639_.getValue(EAST))
-                    .setValue(EAST, p_57639_.getValue(SOUTH))
-                    .setValue(SOUTH, p_57639_.getValue(WEST))
-                    .setValue(WEST, p_57639_.getValue(NORTH));
+                return state.setValue(NORTH, state.getValue(EAST))
+                    .setValue(EAST, state.getValue(SOUTH))
+                    .setValue(SOUTH, state.getValue(WEST))
+                    .setValue(WEST, state.getValue(NORTH));
             case CLOCKWISE_90:
-                return p_57639_.setValue(NORTH, p_57639_.getValue(WEST))
-                    .setValue(EAST, p_57639_.getValue(NORTH))
-                    .setValue(SOUTH, p_57639_.getValue(EAST))
-                    .setValue(WEST, p_57639_.getValue(SOUTH));
+                return state.setValue(NORTH, state.getValue(WEST))
+                    .setValue(EAST, state.getValue(NORTH))
+                    .setValue(SOUTH, state.getValue(EAST))
+                    .setValue(WEST, state.getValue(SOUTH));
             default:
-                return p_57639_;
+                return state;
         }
     }
 
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState mirror(BlockState p_57636_, Mirror p_57637_) {
-        switch (p_57637_) {
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        switch (mirror) {
             case LEFT_RIGHT:
-                return p_57636_.setValue(NORTH, p_57636_.getValue(SOUTH)).setValue(SOUTH, p_57636_.getValue(NORTH));
+                return state.setValue(NORTH, state.getValue(SOUTH)).setValue(SOUTH, state.getValue(NORTH));
             case FRONT_BACK:
-                return p_57636_.setValue(EAST, p_57636_.getValue(WEST)).setValue(WEST, p_57636_.getValue(EAST));
+                return state.setValue(EAST, state.getValue(WEST)).setValue(WEST, state.getValue(EAST));
             default:
-                return super.mirror(p_57636_, p_57637_);
+                return super.mirror(state, mirror);
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_57652_) {
-        p_57652_.add(POWERED, ATTACHED, DISARMED, NORTH, EAST, WEST, SOUTH);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(POWERED, ATTACHED, DISARMED, NORTH, EAST, WEST, SOUTH);
     }
 }

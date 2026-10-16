@@ -18,16 +18,16 @@ public class NameReportScreen extends AbstractReportScreen<NameReport.Builder> {
     private static final Component TITLE = Component.translatable("gui.abuseReport.name.title");
     private MultiLineEditBox commentBox;
 
-    private NameReportScreen(Screen p_299832_, ReportingContext p_300026_, NameReport.Builder p_299866_) {
-        super(TITLE, p_299832_, p_300026_, p_299866_);
+    private NameReportScreen(Screen lastScreen, ReportingContext reportingContext, NameReport.Builder reportBuilder) {
+        super(TITLE, lastScreen, reportingContext, reportBuilder);
     }
 
-    public NameReportScreen(Screen p_299947_, ReportingContext p_299966_, UUID p_299912_, String p_299935_) {
-        this(p_299947_, p_299966_, new NameReport.Builder(p_299912_, p_299935_, p_299966_.sender().reportLimits()));
+    public NameReportScreen(Screen lastScreen, ReportingContext reportingContext, UUID reportedProfileId, String reportedName) {
+        this(lastScreen, reportingContext, new NameReport.Builder(reportedProfileId, reportedName, reportingContext.sender().reportLimits()));
     }
 
-    public NameReportScreen(Screen p_299861_, ReportingContext p_300015_, NameReport p_299994_) {
-        this(p_299861_, p_300015_, new NameReport.Builder(p_299994_, p_300015_.sender().reportLimits()));
+    public NameReportScreen(Screen lastScreen, ReportingContext reportingContext, NameReport report) {
+        this(lastScreen, reportingContext, new NameReport.Builder(report, reportingContext.sender().reportLimits()));
     }
 
     @Override
@@ -45,8 +45,17 @@ public class NameReportScreen extends AbstractReportScreen<NameReport.Builder> {
         this.layout.addChild(CommonLayouts.labeledElement(this.font, this.commentBox, MORE_COMMENTS_LABEL, p_299902_ -> p_299902_.paddingBottom(12)));
     }
 
+    /**
+     * Called when a mouse button is released within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     * @param button the button that was released.
+     */
     @Override
-    public boolean mouseReleased(double p_299979_, double p_299840_, int p_299849_) {
-        return super.mouseReleased(p_299979_, p_299840_, p_299849_) ? true : this.commentBox.mouseReleased(p_299979_, p_299840_, p_299849_);
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        return super.mouseReleased(mouseX, mouseY, button) ? true : this.commentBox.mouseReleased(mouseX, mouseY, button);
     }
 }

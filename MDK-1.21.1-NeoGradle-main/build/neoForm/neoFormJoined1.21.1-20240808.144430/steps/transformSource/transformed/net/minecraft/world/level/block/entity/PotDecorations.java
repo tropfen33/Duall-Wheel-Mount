@@ -33,21 +33,21 @@ public record PotDecorations(Optional<Item> back, Optional<Item> left, Optional<
         this(List.of(p_331754_, p_331488_, p_331845_, p_330988_));
     }
 
-    private static Optional<Item> getItem(List<Item> p_332036_, int p_331756_) {
-        if (p_331756_ >= p_332036_.size()) {
+    private static Optional<Item> getItem(List<Item> decorations, int index) {
+        if (index >= decorations.size()) {
             return Optional.empty();
         } else {
-            Item item = p_332036_.get(p_331756_);
+            Item item = decorations.get(index);
             return item == Items.BRICK ? Optional.empty() : Optional.of(item);
         }
     }
 
-    public CompoundTag save(CompoundTag p_331751_) {
+    public CompoundTag save(CompoundTag tag) {
         if (this.equals(EMPTY)) {
-            return p_331751_;
+            return tag;
         } else {
-            p_331751_.put("sherds", CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow());
-            return p_331751_;
+            tag.put("sherds", CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow());
+            return tag;
         }
     }
 
@@ -55,7 +55,7 @@ public record PotDecorations(Optional<Item> back, Optional<Item> left, Optional<
         return Stream.of(this.back, this.left, this.right, this.front).map(p_331733_ -> p_331733_.orElse(Items.BRICK)).toList();
     }
 
-    public static PotDecorations load(@Nullable CompoundTag p_331530_) {
-        return p_331530_ != null && p_331530_.contains("sherds") ? CODEC.parse(NbtOps.INSTANCE, p_331530_.get("sherds")).result().orElse(EMPTY) : EMPTY;
+    public static PotDecorations load(@Nullable CompoundTag tag) {
+        return tag != null && tag.contains("sherds") ? CODEC.parse(NbtOps.INSTANCE, tag.get("sherds")).result().orElse(EMPTY) : EMPTY;
     }
 }

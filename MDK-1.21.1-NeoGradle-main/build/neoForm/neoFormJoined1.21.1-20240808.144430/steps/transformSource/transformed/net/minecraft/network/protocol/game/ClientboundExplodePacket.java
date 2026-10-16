@@ -35,70 +35,70 @@ public class ClientboundExplodePacket implements Packet<ClientGamePacketListener
     private final Holder<SoundEvent> explosionSound;
 
     public ClientboundExplodePacket(
-        double p_132115_,
-        double p_132116_,
-        double p_132117_,
-        float p_132118_,
-        List<BlockPos> p_132119_,
-        @Nullable Vec3 p_132120_,
-        Explosion.BlockInteraction p_312296_,
-        ParticleOptions p_312499_,
-        ParticleOptions p_312203_,
-        Holder<SoundEvent> p_320679_
+        double x,
+        double y,
+        double z,
+        float power,
+        List<BlockPos> toBlow,
+        @Nullable Vec3 knockback,
+        Explosion.BlockInteraction blockInteraction,
+        ParticleOptions smallExplosionParticles,
+        ParticleOptions largeExplosionParticles,
+        Holder<SoundEvent> explosionSound
     ) {
-        this.x = p_132115_;
-        this.y = p_132116_;
-        this.z = p_132117_;
-        this.power = p_132118_;
-        this.toBlow = Lists.newArrayList(p_132119_);
-        this.explosionSound = p_320679_;
-        if (p_132120_ != null) {
-            this.knockbackX = (float)p_132120_.x;
-            this.knockbackY = (float)p_132120_.y;
-            this.knockbackZ = (float)p_132120_.z;
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.power = power;
+        this.toBlow = Lists.newArrayList(toBlow);
+        this.explosionSound = explosionSound;
+        if (knockback != null) {
+            this.knockbackX = (float)knockback.x;
+            this.knockbackY = (float)knockback.y;
+            this.knockbackZ = (float)knockback.z;
         } else {
             this.knockbackX = 0.0F;
             this.knockbackY = 0.0F;
             this.knockbackZ = 0.0F;
         }
 
-        this.blockInteraction = p_312296_;
-        this.smallExplosionParticles = p_312499_;
-        this.largeExplosionParticles = p_312203_;
+        this.blockInteraction = blockInteraction;
+        this.smallExplosionParticles = smallExplosionParticles;
+        this.largeExplosionParticles = largeExplosionParticles;
     }
 
-    private ClientboundExplodePacket(RegistryFriendlyByteBuf p_320217_) {
-        this.x = p_320217_.readDouble();
-        this.y = p_320217_.readDouble();
-        this.z = p_320217_.readDouble();
-        this.power = p_320217_.readFloat();
+    private ClientboundExplodePacket(RegistryFriendlyByteBuf buffer) {
+        this.x = buffer.readDouble();
+        this.y = buffer.readDouble();
+        this.z = buffer.readDouble();
+        this.power = buffer.readFloat();
         int i = Mth.floor(this.x);
         int j = Mth.floor(this.y);
         int k = Mth.floor(this.z);
-        this.toBlow = p_320217_.readList(p_178850_ -> {
+        this.toBlow = buffer.readList(p_178850_ -> {
             int l = p_178850_.readByte() + i;
             int i1 = p_178850_.readByte() + j;
             int j1 = p_178850_.readByte() + k;
             return new BlockPos(l, i1, j1);
         });
-        this.knockbackX = p_320217_.readFloat();
-        this.knockbackY = p_320217_.readFloat();
-        this.knockbackZ = p_320217_.readFloat();
-        this.blockInteraction = p_320217_.readEnum(Explosion.BlockInteraction.class);
-        this.smallExplosionParticles = ParticleTypes.STREAM_CODEC.decode(p_320217_);
-        this.largeExplosionParticles = ParticleTypes.STREAM_CODEC.decode(p_320217_);
-        this.explosionSound = SoundEvent.STREAM_CODEC.decode(p_320217_);
+        this.knockbackX = buffer.readFloat();
+        this.knockbackY = buffer.readFloat();
+        this.knockbackZ = buffer.readFloat();
+        this.blockInteraction = buffer.readEnum(Explosion.BlockInteraction.class);
+        this.smallExplosionParticles = ParticleTypes.STREAM_CODEC.decode(buffer);
+        this.largeExplosionParticles = ParticleTypes.STREAM_CODEC.decode(buffer);
+        this.explosionSound = SoundEvent.STREAM_CODEC.decode(buffer);
     }
 
-    private void write(RegistryFriendlyByteBuf p_319914_) {
-        p_319914_.writeDouble(this.x);
-        p_319914_.writeDouble(this.y);
-        p_319914_.writeDouble(this.z);
-        p_319914_.writeFloat(this.power);
+    private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeDouble(this.x);
+        buffer.writeDouble(this.y);
+        buffer.writeDouble(this.z);
+        buffer.writeFloat(this.power);
         int i = Mth.floor(this.x);
         int j = Mth.floor(this.y);
         int k = Mth.floor(this.z);
-        p_319914_.writeCollection(this.toBlow, (p_293728_, p_293729_) -> {
+        buffer.writeCollection(this.toBlow, (p_293728_, p_293729_) -> {
             int l = p_293729_.getX() - i;
             int i1 = p_293729_.getY() - j;
             int j1 = p_293729_.getZ() - k;
@@ -106,13 +106,13 @@ public class ClientboundExplodePacket implements Packet<ClientGamePacketListener
             p_293728_.writeByte(i1);
             p_293728_.writeByte(j1);
         });
-        p_319914_.writeFloat(this.knockbackX);
-        p_319914_.writeFloat(this.knockbackY);
-        p_319914_.writeFloat(this.knockbackZ);
-        p_319914_.writeEnum(this.blockInteraction);
-        ParticleTypes.STREAM_CODEC.encode(p_319914_, this.smallExplosionParticles);
-        ParticleTypes.STREAM_CODEC.encode(p_319914_, this.largeExplosionParticles);
-        SoundEvent.STREAM_CODEC.encode(p_319914_, this.explosionSound);
+        buffer.writeFloat(this.knockbackX);
+        buffer.writeFloat(this.knockbackY);
+        buffer.writeFloat(this.knockbackZ);
+        buffer.writeEnum(this.blockInteraction);
+        ParticleTypes.STREAM_CODEC.encode(buffer, this.smallExplosionParticles);
+        ParticleTypes.STREAM_CODEC.encode(buffer, this.largeExplosionParticles);
+        SoundEvent.STREAM_CODEC.encode(buffer, this.explosionSound);
     }
 
     @Override
@@ -120,8 +120,11 @@ public class ClientboundExplodePacket implements Packet<ClientGamePacketListener
         return GamePacketTypes.CLIENTBOUND_EXPLODE;
     }
 
-    public void handle(ClientGamePacketListener p_132126_) {
-        p_132126_.handleExplosion(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleExplosion(this);
     }
 
     public float getKnockbackX() {

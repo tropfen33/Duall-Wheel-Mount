@@ -23,8 +23,8 @@ public class PublishCommand {
         p_304281_ -> Component.translatableEscape("commands.publish.alreadyPublished", p_304281_)
     );
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_138185_) {
-        p_138185_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("publish")
                 .requires(p_138189_ -> p_138189_.hasPermission(4))
                 .executes(p_258235_ -> publish(p_258235_.getSource(), HttpUtil.getAvailablePort(), false, null))
@@ -59,19 +59,19 @@ public class PublishCommand {
         );
     }
 
-    private static int publish(CommandSourceStack p_260117_, int p_259411_, boolean p_260137_, @Nullable GameType p_259145_) throws CommandSyntaxException {
-        if (p_260117_.getServer().isPublished()) {
-            throw ERROR_ALREADY_PUBLISHED.create(p_260117_.getServer().getPort());
-        } else if (!p_260117_.getServer().publishServer(p_259145_, p_260137_, p_259411_)) {
+    private static int publish(CommandSourceStack source, int port, boolean cheats, @Nullable GameType gameMode) throws CommandSyntaxException {
+        if (source.getServer().isPublished()) {
+            throw ERROR_ALREADY_PUBLISHED.create(source.getServer().getPort());
+        } else if (!source.getServer().publishServer(gameMode, cheats, port)) {
             throw ERROR_FAILED.create();
         } else {
-            p_260117_.sendSuccess(() -> getSuccessMessage(p_259411_), true);
-            return p_259411_;
+            source.sendSuccess(() -> getSuccessMessage(port), true);
+            return port;
         }
     }
 
-    public static MutableComponent getSuccessMessage(int p_259532_) {
-        Component component = ComponentUtils.copyOnClickText(String.valueOf(p_259532_));
+    public static MutableComponent getSuccessMessage(int port) {
+        Component component = ComponentUtils.copyOnClickText(String.valueOf(port));
         return Component.translatable("commands.publish.started", component);
     }
 }

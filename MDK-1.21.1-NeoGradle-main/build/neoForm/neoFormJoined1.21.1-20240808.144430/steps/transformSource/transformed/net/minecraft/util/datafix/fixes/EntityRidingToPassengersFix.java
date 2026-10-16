@@ -18,8 +18,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class EntityRidingToPassengersFix extends DataFix {
-    public EntityRidingToPassengersFix(Schema p_15638_, boolean p_15639_) {
-        super(p_15638_, p_15639_);
+    public EntityRidingToPassengersFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -33,16 +33,16 @@ public class EntityRidingToPassengersFix extends DataFix {
     }
 
     private <OldEntityTree, NewEntityTree, Entity> TypeRewriteRule cap(
-        Schema p_15642_, Schema p_15643_, Type<OldEntityTree> p_15644_, Type<NewEntityTree> p_15645_, Type<Entity> p_15646_
+        Schema inputSchema, Schema outputSchema, Type<OldEntityTree> oldEntityTreeType, Type<NewEntityTree> newEntityTreeType, Type<Entity> entityType
     ) {
         Type<Pair<String, Pair<Either<OldEntityTree, Unit>, Entity>>> type = DSL.named(
-            References.ENTITY_TREE.typeName(), DSL.and(DSL.optional(DSL.field("Riding", p_15644_)), p_15646_)
+            References.ENTITY_TREE.typeName(), DSL.and(DSL.optional(DSL.field("Riding", oldEntityTreeType)), entityType)
         );
         Type<Pair<String, Pair<Either<List<NewEntityTree>, Unit>, Entity>>> type1 = DSL.named(
-            References.ENTITY_TREE.typeName(), DSL.and(DSL.optional(DSL.field("Passengers", DSL.list(p_15645_))), p_15646_)
+            References.ENTITY_TREE.typeName(), DSL.and(DSL.optional(DSL.field("Passengers", DSL.list(newEntityTreeType))), entityType)
         );
-        Type<?> type2 = p_15642_.getType(References.ENTITY_TREE);
-        Type<?> type3 = p_15643_.getType(References.ENTITY_TREE);
+        Type<?> type2 = inputSchema.getType(References.ENTITY_TREE);
+        Type<?> type3 = outputSchema.getType(References.ENTITY_TREE);
         if (!Objects.equals(type2, type)) {
             throw new IllegalStateException("Old entity type is not what was expected.");
         } else if (!type3.equals(type1, true, true)) {
@@ -50,9 +50,9 @@ public class EntityRidingToPassengersFix extends DataFix {
         } else {
             OpticFinder<Pair<String, Pair<Either<OldEntityTree, Unit>, Entity>>> opticfinder = DSL.typeFinder(type);
             OpticFinder<Pair<String, Pair<Either<List<NewEntityTree>, Unit>, Entity>>> opticfinder1 = DSL.typeFinder(type1);
-            OpticFinder<NewEntityTree> opticfinder2 = DSL.typeFinder(p_15645_);
-            Type<?> type4 = p_15642_.getType(References.PLAYER);
-            Type<?> type5 = p_15643_.getType(References.PLAYER);
+            OpticFinder<NewEntityTree> opticfinder2 = DSL.typeFinder(newEntityTreeType);
+            Type<?> type4 = inputSchema.getType(References.PLAYER);
+            Type<?> type5 = outputSchema.getType(References.PLAYER);
             return TypeRewriteRule.seq(
                 this.fixTypeEverywhere(
                     "EntityRidingToPassengerFix",
@@ -66,7 +66,7 @@ public class EntityRidingToPassengersFix extends DataFix {
                                 Either<List<NewEntityTree>, Unit> either = DataFixUtils.orElse(
                                     optional.map(
                                         p_145326_ -> {
-                                            Typed<NewEntityTree> typed = p_15645_.pointTyped(p_15653_)
+                                            Typed<NewEntityTree> typed = newEntityTreeType.pointTyped(p_15653_)
                                                 .orElseThrow(() -> new IllegalStateException("Could not create new entity tree"));
                                             NewEntityTree newentitytree = typed.set(
                                                     opticfinder1, (Pair<String, Pair<Either<List<NewEntityTree>, Unit>, Entity>>)p_145326_
@@ -84,7 +84,7 @@ public class EntityRidingToPassengersFix extends DataFix {
                                     return optional.orElseThrow(() -> new IllegalStateException("Should always have an entity tree here"));
                                 }
 
-                                pair = new Typed<>(p_15644_, p_15653_, optional1.get())
+                                pair = new Typed<>(oldEntityTreeType, p_15653_, optional1.get())
                                     .getOptional(opticfinder)
                                     .orElseThrow(() -> new IllegalStateException("Should always have an entity here"));
                             }

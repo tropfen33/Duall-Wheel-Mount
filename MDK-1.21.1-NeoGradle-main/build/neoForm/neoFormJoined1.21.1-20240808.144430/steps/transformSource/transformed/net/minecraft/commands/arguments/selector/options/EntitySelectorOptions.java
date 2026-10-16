@@ -79,8 +79,8 @@ public class EntitySelectorOptions {
         p_304137_ -> Component.translatableEscape("argument.entity.options.type.invalid", p_304137_)
     );
 
-    public static void register(String p_121454_, EntitySelectorOptions.Modifier p_121455_, Predicate<EntitySelectorParser> p_121456_, Component p_121457_) {
-        OPTIONS.put(p_121454_, new EntitySelectorOptions.Option(p_121455_, p_121456_, p_121457_));
+    public static void register(String id, EntitySelectorOptions.Modifier handler, Predicate<EntitySelectorParser> predicate, Component tooltip) {
+        OPTIONS.put(id, new EntitySelectorOptions.Option(handler, predicate, tooltip));
     }
 
     public static void bootStrap() {
@@ -516,32 +516,32 @@ public class EntitySelectorOptions {
         }
     }
 
-    public static EntitySelectorOptions.Modifier get(EntitySelectorParser p_121448_, String p_121449_, int p_121450_) throws CommandSyntaxException {
-        EntitySelectorOptions.Option entityselectoroptions$option = OPTIONS.get(p_121449_);
+    public static EntitySelectorOptions.Modifier get(EntitySelectorParser parser, String id, int cursor) throws CommandSyntaxException {
+        EntitySelectorOptions.Option entityselectoroptions$option = OPTIONS.get(id);
         if (entityselectoroptions$option != null) {
-            if (entityselectoroptions$option.canUse.test(p_121448_)) {
+            if (entityselectoroptions$option.canUse.test(parser)) {
                 return entityselectoroptions$option.modifier;
             } else {
-                throw ERROR_INAPPLICABLE_OPTION.createWithContext(p_121448_.getReader(), p_121449_);
+                throw ERROR_INAPPLICABLE_OPTION.createWithContext(parser.getReader(), id);
             }
         } else {
-            p_121448_.getReader().setCursor(p_121450_);
-            throw ERROR_UNKNOWN_OPTION.createWithContext(p_121448_.getReader(), p_121449_);
+            parser.getReader().setCursor(cursor);
+            throw ERROR_UNKNOWN_OPTION.createWithContext(parser.getReader(), id);
         }
     }
 
-    public static void suggestNames(EntitySelectorParser p_121441_, SuggestionsBuilder p_121442_) {
-        String s = p_121442_.getRemaining().toLowerCase(Locale.ROOT);
+    public static void suggestNames(EntitySelectorParser parser, SuggestionsBuilder builder) {
+        String s = builder.getRemaining().toLowerCase(Locale.ROOT);
 
         for (Entry<String, EntitySelectorOptions.Option> entry : OPTIONS.entrySet()) {
-            if (entry.getValue().canUse.test(p_121441_) && entry.getKey().toLowerCase(Locale.ROOT).startsWith(s)) {
-                p_121442_.suggest(entry.getKey() + "=", entry.getValue().description);
+            if (entry.getValue().canUse.test(parser) && entry.getKey().toLowerCase(Locale.ROOT).startsWith(s)) {
+                builder.suggest(entry.getKey() + "=", entry.getValue().description);
             }
         }
     }
 
     public interface Modifier {
-        void handle(EntitySelectorParser p_121564_) throws CommandSyntaxException;
+        void handle(EntitySelectorParser parser) throws CommandSyntaxException;
     }
 
     static record Option(EntitySelectorOptions.Modifier modifier, Predicate<EntitySelectorParser> canUse, Component description) {

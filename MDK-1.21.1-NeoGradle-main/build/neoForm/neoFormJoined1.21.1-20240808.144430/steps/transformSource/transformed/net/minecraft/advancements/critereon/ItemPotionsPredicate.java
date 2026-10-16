@@ -21,12 +21,12 @@ public record ItemPotionsPredicate(HolderSet<Potion> potions) implements SingleC
         return DataComponents.POTION_CONTENTS;
     }
 
-    public boolean matches(ItemStack p_333755_, PotionContents p_333955_) {
-        Optional<Holder<Potion>> optional = p_333955_.potion();
+    public boolean matches(ItemStack stack, PotionContents value) {
+        Optional<Holder<Potion>> optional = value.potion();
         return !optional.isEmpty() && this.potions.contains(optional.get());
     }
 
-    public static ItemSubPredicate potions(HolderSet<Potion> p_334085_) {
-        return new ItemPotionsPredicate(p_334085_);
+    public static ItemSubPredicate potions(HolderSet<Potion> potions) {
+        return new ItemPotionsPredicate(potions);
     }
 }

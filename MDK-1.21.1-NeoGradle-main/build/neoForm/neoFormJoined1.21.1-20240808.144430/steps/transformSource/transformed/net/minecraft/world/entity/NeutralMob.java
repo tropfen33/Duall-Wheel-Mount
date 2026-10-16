@@ -15,31 +15,31 @@ public interface NeutralMob {
 
     int getRemainingPersistentAngerTime();
 
-    void setRemainingPersistentAngerTime(int p_21673_);
+    void setRemainingPersistentAngerTime(int remainingPersistentAngerTime);
 
     @Nullable
     UUID getPersistentAngerTarget();
 
-    void setPersistentAngerTarget(@Nullable UUID p_21672_);
+    void setPersistentAngerTarget(@Nullable UUID persistentAngerTarget);
 
     void startPersistentAngerTimer();
 
-    default void addPersistentAngerSaveData(CompoundTag p_21679_) {
-        p_21679_.putInt("AngerTime", this.getRemainingPersistentAngerTime());
+    default void addPersistentAngerSaveData(CompoundTag nbt) {
+        nbt.putInt("AngerTime", this.getRemainingPersistentAngerTime());
         if (this.getPersistentAngerTarget() != null) {
-            p_21679_.putUUID("AngryAt", this.getPersistentAngerTarget());
+            nbt.putUUID("AngryAt", this.getPersistentAngerTarget());
         }
     }
 
-    default void readPersistentAngerSaveData(Level p_147286_, CompoundTag p_147287_) {
-        this.setRemainingPersistentAngerTime(p_147287_.getInt("AngerTime"));
-        if (p_147286_ instanceof ServerLevel) {
-            if (!p_147287_.hasUUID("AngryAt")) {
+    default void readPersistentAngerSaveData(Level level, CompoundTag tag) {
+        this.setRemainingPersistentAngerTime(tag.getInt("AngerTime"));
+        if (level instanceof ServerLevel) {
+            if (!tag.hasUUID("AngryAt")) {
                 this.setPersistentAngerTarget(null);
             } else {
-                UUID uuid = p_147287_.getUUID("AngryAt");
+                UUID uuid = tag.getUUID("AngryAt");
                 this.setPersistentAngerTarget(uuid);
-                Entity entity = ((ServerLevel)p_147286_).getEntity(uuid);
+                Entity entity = ((ServerLevel)level).getEntity(uuid);
                 if (entity != null) {
                     if (entity instanceof Mob mob) {
                         this.setTarget(mob);
@@ -55,10 +55,10 @@ public interface NeutralMob {
         }
     }
 
-    default void updatePersistentAnger(ServerLevel p_21667_, boolean p_21668_) {
+    default void updatePersistentAnger(ServerLevel serverLevel, boolean updateAnger) {
         LivingEntity livingentity = this.getTarget();
         UUID uuid = this.getPersistentAngerTarget();
-        if ((livingentity == null || livingentity.isDeadOrDying()) && uuid != null && p_21667_.getEntity(uuid) instanceof Mob) {
+        if ((livingentity == null || livingentity.isDeadOrDying()) && uuid != null && serverLevel.getEntity(uuid) instanceof Mob) {
             this.stopBeingAngry();
         } else {
             if (livingentity != null && !Objects.equals(uuid, livingentity.getUUID())) {
@@ -66,7 +66,7 @@ public interface NeutralMob {
                 this.startPersistentAngerTimer();
             }
 
-            if (this.getRemainingPersistentAngerTime() > 0 && (livingentity == null || livingentity.getType() != EntityType.PLAYER || !p_21668_)) {
+            if (this.getRemainingPersistentAngerTime() > 0 && (livingentity == null || livingentity.getType() != EntityType.PLAYER || !updateAnger)) {
                 this.setRemainingPersistentAngerTime(this.getRemainingPersistentAngerTime() - 1);
                 if (this.getRemainingPersistentAngerTime() == 0) {
                     this.stopBeingAngry();
@@ -75,27 +75,27 @@ public interface NeutralMob {
         }
     }
 
-    default boolean isAngryAt(LivingEntity p_21675_) {
-        if (!this.canAttack(p_21675_)) {
+    default boolean isAngryAt(LivingEntity target) {
+        if (!this.canAttack(target)) {
             return false;
         } else {
-            return p_21675_.getType() == EntityType.PLAYER && this.isAngryAtAllPlayers(p_21675_.level())
+            return target.getType() == EntityType.PLAYER && this.isAngryAtAllPlayers(target.level())
                 ? true
-                : p_21675_.getUUID().equals(this.getPersistentAngerTarget());
+                : target.getUUID().equals(this.getPersistentAngerTarget());
         }
     }
 
-    default boolean isAngryAtAllPlayers(Level p_21671_) {
-        return p_21671_.getGameRules().getBoolean(GameRules.RULE_UNIVERSAL_ANGER) && this.isAngry() && this.getPersistentAngerTarget() == null;
+    default boolean isAngryAtAllPlayers(Level level) {
+        return level.getGameRules().getBoolean(GameRules.RULE_UNIVERSAL_ANGER) && this.isAngry() && this.getPersistentAngerTarget() == null;
     }
 
     default boolean isAngry() {
         return this.getRemainingPersistentAngerTime() > 0;
     }
 
-    default void playerDied(Player p_21677_) {
-        if (p_21677_.level().getGameRules().getBoolean(GameRules.RULE_FORGIVE_DEAD_PLAYERS)) {
-            if (p_21677_.getUUID().equals(this.getPersistentAngerTarget())) {
+    default void playerDied(Player player) {
+        if (player.level().getGameRules().getBoolean(GameRules.RULE_FORGIVE_DEAD_PLAYERS)) {
+            if (player.getUUID().equals(this.getPersistentAngerTarget())) {
                 this.stopBeingAngry();
             }
         }
@@ -116,13 +116,19 @@ public interface NeutralMob {
     @Nullable
     LivingEntity getLastHurtByMob();
 
-    void setLastHurtByMob(@Nullable LivingEntity p_21669_);
+    /**
+     * Hint to AI tasks that we were attacked by the passed EntityLivingBase and should retaliate. Is not guaranteed to change our actual active target (for example if we are currently busy attacking someone else)
+     */
+    void setLastHurtByMob(@Nullable LivingEntity livingEntity);
 
-    void setLastHurtByPlayer(@Nullable Player p_21680_);
+    void setLastHurtByPlayer(@Nullable Player player);
 
-    void setTarget(@Nullable LivingEntity p_21681_);
+    /**
+     * Sets the active target the Task system uses for tracking
+     */
+    void setTarget(@Nullable LivingEntity livingEntity);
 
-    boolean canAttack(LivingEntity p_181126_);
+    boolean canAttack(LivingEntity entity);
 
     @Nullable
     LivingEntity getTarget();

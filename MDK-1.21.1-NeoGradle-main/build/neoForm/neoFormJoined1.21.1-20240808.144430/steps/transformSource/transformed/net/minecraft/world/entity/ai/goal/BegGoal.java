@@ -19,11 +19,11 @@ public class BegGoal extends Goal {
     private int lookTime;
     private final TargetingConditions begTargeting;
 
-    public BegGoal(Wolf p_25063_, float p_25064_) {
-        this.wolf = p_25063_;
-        this.level = p_25063_.level();
-        this.lookDistance = p_25064_;
-        this.begTargeting = TargetingConditions.forNonCombat().range((double)p_25064_);
+    public BegGoal(Wolf wolf, float lookDistance) {
+        this.wolf = wolf;
+        this.level = wolf.level();
+        this.lookDistance = lookDistance;
+        this.begTargeting = TargetingConditions.forNonCombat().range((double)lookDistance);
         this.setFlags(EnumSet.of(Goal.Flag.LOOK));
     }
 
@@ -62,9 +62,12 @@ public class BegGoal extends Goal {
         this.lookTime--;
     }
 
-    private boolean playerHoldingInteresting(Player p_25067_) {
+    /**
+     * Gets if the Player has the Bone in the hand.
+     */
+    private boolean playerHoldingInteresting(Player player) {
         for (InteractionHand interactionhand : InteractionHand.values()) {
-            ItemStack itemstack = p_25067_.getItemInHand(interactionhand);
+            ItemStack itemstack = player.getItemInHand(interactionhand);
             if (itemstack.is(Items.BONE) || this.wolf.isFood(itemstack)) {
                 return true;
             }

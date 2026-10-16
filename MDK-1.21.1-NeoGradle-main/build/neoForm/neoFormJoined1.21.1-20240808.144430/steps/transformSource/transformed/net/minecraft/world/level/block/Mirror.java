@@ -16,37 +16,46 @@ public enum Mirror implements StringRepresentable {
     private final Component symbol;
     private final OctahedralGroup rotation;
 
-    private Mirror(String p_221529_, OctahedralGroup p_221530_) {
-        this.id = p_221529_;
-        this.symbol = Component.translatable("mirror." + p_221529_);
-        this.rotation = p_221530_;
+    private Mirror(String id, OctahedralGroup rotation) {
+        this.id = id;
+        this.symbol = Component.translatable("mirror." + id);
+        this.rotation = rotation;
     }
 
-    public int mirror(int p_54844_, int p_54845_) {
-        int i = p_54845_ / 2;
-        int j = p_54844_ > i ? p_54844_ - p_54845_ : p_54844_;
+    /**
+     * Mirrors the given rotation like specified by this mirror. Rotations start at 0 and go up to rotationCount-1. 0 is front, rotationCount/2 is back.
+     */
+    public int mirror(int rotation, int rotationCount) {
+        int i = rotationCount / 2;
+        int j = rotation > i ? rotation - rotationCount : rotation;
         switch (this) {
             case LEFT_RIGHT:
-                return (i - j + p_54845_) % p_54845_;
+                return (i - j + rotationCount) % rotationCount;
             case FRONT_BACK:
-                return (p_54845_ - j) % p_54845_;
+                return (rotationCount - j) % rotationCount;
             default:
-                return p_54844_;
+                return rotation;
         }
     }
 
-    public Rotation getRotation(Direction p_54847_) {
-        Direction.Axis direction$axis = p_54847_.getAxis();
+    /**
+     * Determines the rotation that is equivalent to this mirror if the rotating object faces in the given direction
+     */
+    public Rotation getRotation(Direction facing) {
+        Direction.Axis direction$axis = facing.getAxis();
         return (this != LEFT_RIGHT || direction$axis != Direction.Axis.Z) && (this != FRONT_BACK || direction$axis != Direction.Axis.X)
             ? Rotation.NONE
             : Rotation.CLOCKWISE_180;
     }
 
-    public Direction mirror(Direction p_54849_) {
-        if (this == FRONT_BACK && p_54849_.getAxis() == Direction.Axis.X) {
-            return p_54849_.getOpposite();
+    /**
+     * Mirror the given facing according to this mirror
+     */
+    public Direction mirror(Direction facing) {
+        if (this == FRONT_BACK && facing.getAxis() == Direction.Axis.X) {
+            return facing.getOpposite();
         } else {
-            return this == LEFT_RIGHT && p_54849_.getAxis() == Direction.Axis.Z ? p_54849_.getOpposite() : p_54849_;
+            return this == LEFT_RIGHT && facing.getAxis() == Direction.Axis.Z ? facing.getOpposite() : facing;
         }
     }
 

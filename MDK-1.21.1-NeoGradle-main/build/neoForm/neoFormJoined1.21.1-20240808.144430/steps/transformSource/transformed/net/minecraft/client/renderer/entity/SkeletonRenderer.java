@@ -17,24 +17,27 @@ public class SkeletonRenderer<T extends AbstractSkeleton> extends HumanoidMobRen
         this(p_174380_, ModelLayers.SKELETON, ModelLayers.SKELETON_INNER_ARMOR, ModelLayers.SKELETON_OUTER_ARMOR);
     }
 
-    public SkeletonRenderer(EntityRendererProvider.Context p_174382_, ModelLayerLocation p_174383_, ModelLayerLocation p_174384_, ModelLayerLocation p_174385_) {
-        this(p_174382_, p_174384_, p_174385_, new SkeletonModel<>(p_174382_.bakeLayer(p_174383_)));
+    public SkeletonRenderer(EntityRendererProvider.Context context, ModelLayerLocation skeletonLayer, ModelLayerLocation innerModelLayer, ModelLayerLocation outerModelLayer) {
+        this(context, innerModelLayer, outerModelLayer, new SkeletonModel<>(context.bakeLayer(skeletonLayer)));
     }
 
-    public SkeletonRenderer(EntityRendererProvider.Context p_331294_, ModelLayerLocation p_330964_, ModelLayerLocation p_331594_, SkeletonModel<T> p_331796_) {
-        super(p_331294_, p_331796_, 0.5F);
+    public SkeletonRenderer(EntityRendererProvider.Context context, ModelLayerLocation skeletonLayer, ModelLayerLocation innerModelLayer, SkeletonModel<T> model) {
+        super(context, model, 0.5F);
         this.addLayer(
             new HumanoidArmorLayer<>(
-                this, new SkeletonModel(p_331294_.bakeLayer(p_330964_)), new SkeletonModel(p_331294_.bakeLayer(p_331594_)), p_331294_.getModelManager()
+                this, new SkeletonModel(context.bakeLayer(skeletonLayer)), new SkeletonModel(context.bakeLayer(innerModelLayer)), context.getModelManager()
             )
         );
     }
 
-    public ResourceLocation getTextureLocation(T p_115941_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(T entity) {
         return SKELETON_LOCATION;
     }
 
-    protected boolean isShaking(T p_174389_) {
-        return p_174389_.isShaking();
+    protected boolean isShaking(T entity) {
+        return entity.isShaking();
     }
 }

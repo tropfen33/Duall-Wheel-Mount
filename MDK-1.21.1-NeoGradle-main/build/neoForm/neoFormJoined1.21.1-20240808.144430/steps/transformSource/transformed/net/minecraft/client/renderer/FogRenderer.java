@@ -41,12 +41,12 @@ public class FogRenderer {
     private static int previousBiomeFog = -1;
     private static long biomeChangedTime = -1L;
 
-    public static void setupColor(Camera p_109019_, float p_109020_, ClientLevel p_109021_, int p_109022_, float p_109023_) {
-        FogType fogtype = p_109019_.getFluidInCamera();
-        Entity entity = p_109019_.getEntity();
+    public static void setupColor(Camera activeRenderInfo, float partialTicks, ClientLevel level, int renderDistanceChunks, float bossColorModifier) {
+        FogType fogtype = activeRenderInfo.getFluidInCamera();
+        Entity entity = activeRenderInfo.getEntity();
         if (fogtype == FogType.WATER) {
             long i = Util.getMillis();
-            int j = p_109021_.getBiome(BlockPos.containing(p_109019_.getPosition())).value().getWaterFogColor();
+            int j = level.getBiome(BlockPos.containing(activeRenderInfo.getPosition())).value().getWaterFogColor();
             if (biomeChangedTime < 0L) {
                 targetBiomeFog = j;
                 previousBiomeFog = j;
@@ -83,18 +83,18 @@ public class FogRenderer {
             biomeChangedTime = -1L;
             RenderSystem.clearColor(fogRed, fogGreen, fogBlue, 0.0F);
         } else {
-            float f4 = 0.25F + 0.75F * (float)p_109022_ / 32.0F;
+            float f4 = 0.25F + 0.75F * (float)renderDistanceChunks / 32.0F;
             f4 = 1.0F - (float)Math.pow((double)f4, 0.25);
-            Vec3 vec3 = p_109021_.getSkyColor(p_109019_.getPosition(), p_109020_);
+            Vec3 vec3 = level.getSkyColor(activeRenderInfo.getPosition(), partialTicks);
             float f6 = (float)vec3.x;
             float f8 = (float)vec3.y;
             float f10 = (float)vec3.z;
-            float f11 = Mth.clamp(Mth.cos(p_109021_.getTimeOfDay(p_109020_) * (float) (Math.PI * 2)) * 2.0F + 0.5F, 0.0F, 1.0F);
-            BiomeManager biomemanager = p_109021_.getBiomeManager();
-            Vec3 vec31 = p_109019_.getPosition().subtract(2.0, 2.0, 2.0).scale(0.25);
+            float f11 = Mth.clamp(Mth.cos(level.getTimeOfDay(partialTicks) * (float) (Math.PI * 2)) * 2.0F + 0.5F, 0.0F, 1.0F);
+            BiomeManager biomemanager = level.getBiomeManager();
+            Vec3 vec31 = activeRenderInfo.getPosition().subtract(2.0, 2.0, 2.0).scale(0.25);
             Vec3 vec32 = CubicSampler.gaussianSampleVec3(
                 vec31,
-                (p_109033_, p_109034_, p_109035_) -> p_109021_.effects()
+                (p_109033_, p_109034_, p_109035_) -> level.effects()
                         .getBrightnessDependentFogColor(
                             Vec3.fromRGB24(biomemanager.getNoiseBiomeAtQuart(p_109033_, p_109034_, p_109035_).value().getFogColor()), f11
                         )
@@ -102,16 +102,16 @@ public class FogRenderer {
             fogRed = (float)vec32.x();
             fogGreen = (float)vec32.y();
             fogBlue = (float)vec32.z();
-            if (p_109022_ >= 4) {
-                float f12 = Mth.sin(p_109021_.getSunAngle(p_109020_)) > 0.0F ? -1.0F : 1.0F;
+            if (renderDistanceChunks >= 4) {
+                float f12 = Mth.sin(level.getSunAngle(partialTicks)) > 0.0F ? -1.0F : 1.0F;
                 Vector3f vector3f = new Vector3f(f12, 0.0F, 0.0F);
-                float f16 = p_109019_.getLookVector().dot(vector3f);
+                float f16 = activeRenderInfo.getLookVector().dot(vector3f);
                 if (f16 < 0.0F) {
                     f16 = 0.0F;
                 }
 
                 if (f16 > 0.0F) {
-                    float[] afloat = p_109021_.effects().getSunriseColor(p_109021_.getTimeOfDay(p_109020_), p_109020_);
+                    float[] afloat = level.effects().getSunriseColor(level.getTimeOfDay(partialTicks), partialTicks);
                     if (afloat != null) {
                         f16 *= afloat[3];
                         fogRed = fogRed * (1.0F - f16) + afloat[0] * f16;
@@ -124,7 +124,7 @@ public class FogRenderer {
             fogRed = fogRed + (f6 - fogRed) * f4;
             fogGreen = fogGreen + (f8 - fogGreen) * f4;
             fogBlue = fogBlue + (f10 - fogBlue) * f4;
-            float f13 = p_109021_.getRainLevel(p_109020_);
+            float f13 = level.getRainLevel(partialTicks);
             if (f13 > 0.0F) {
                 float f14 = 1.0F - f13 * 0.5F;
                 float f17 = 1.0F - f13 * 0.4F;
@@ -133,7 +133,7 @@ public class FogRenderer {
                 fogBlue *= f17;
             }
 
-            float f15 = p_109021_.getThunderLevel(p_109020_);
+            float f15 = level.getThunderLevel(partialTicks);
             if (f15 > 0.0F) {
                 float f18 = 1.0F - f15 * 0.5F;
                 fogRed *= f18;
@@ -144,12 +144,12 @@ public class FogRenderer {
             biomeChangedTime = -1L;
         }
 
-        float f5 = ((float)p_109019_.getPosition().y - (float)p_109021_.getMinBuildHeight()) * p_109021_.getLevelData().getClearColorScale();
-        FogRenderer.MobEffectFogFunction fogrenderer$mobeffectfogfunction = getPriorityFogFunction(entity, p_109020_);
+        float f5 = ((float)activeRenderInfo.getPosition().y - (float)level.getMinBuildHeight()) * level.getLevelData().getClearColorScale();
+        FogRenderer.MobEffectFogFunction fogrenderer$mobeffectfogfunction = getPriorityFogFunction(entity, partialTicks);
         if (fogrenderer$mobeffectfogfunction != null) {
             LivingEntity livingentity = (LivingEntity)entity;
             f5 = fogrenderer$mobeffectfogfunction.getModifiedVoidDarkness(
-                livingentity, livingentity.getEffect(fogrenderer$mobeffectfogfunction.getMobEffect()), f5, p_109020_
+                livingentity, livingentity.getEffect(fogrenderer$mobeffectfogfunction.getMobEffect()), f5, partialTicks
             );
         }
 
@@ -164,10 +164,10 @@ public class FogRenderer {
             fogBlue *= f5;
         }
 
-        if (p_109023_ > 0.0F) {
-            fogRed = fogRed * (1.0F - p_109023_) + fogRed * 0.7F * p_109023_;
-            fogGreen = fogGreen * (1.0F - p_109023_) + fogGreen * 0.6F * p_109023_;
-            fogBlue = fogBlue * (1.0F - p_109023_) + fogBlue * 0.6F * p_109023_;
+        if (bossColorModifier > 0.0F) {
+            fogRed = fogRed * (1.0F - bossColorModifier) + fogRed * 0.7F * bossColorModifier;
+            fogGreen = fogGreen * (1.0F - bossColorModifier) + fogGreen * 0.6F * bossColorModifier;
+            fogBlue = fogBlue * (1.0F - bossColorModifier) + fogBlue * 0.6F * bossColorModifier;
         }
 
         float f7;
@@ -182,7 +182,7 @@ public class FogRenderer {
                 if (entity instanceof LivingEntity livingentity1
                     && livingentity1.hasEffect(MobEffects.NIGHT_VISION)
                     && !livingentity1.hasEffect(MobEffects.DARKNESS)) {
-                    f7 = GameRenderer.getNightVisionScale(livingentity1, p_109020_);
+                    f7 = GameRenderer.getNightVisionScale(livingentity1, partialTicks);
                     break label86;
                 }
 
@@ -197,7 +197,7 @@ public class FogRenderer {
             fogBlue = fogBlue * (1.0F - f7) + fogBlue * f9 * f7;
         }
 
-        Vector3f fogColor = net.neoforged.neoforge.client.ClientHooks.getFogColor(p_109019_, p_109020_, p_109021_, p_109022_, p_109023_, fogRed, fogGreen, fogBlue);
+        Vector3f fogColor = net.neoforged.neoforge.client.ClientHooks.getFogColor(activeRenderInfo, partialTicks, level, renderDistanceChunks, bossColorModifier, fogRed, fogGreen, fogBlue);
 
         fogRed = fogColor.x();
         fogGreen = fogColor.y();
@@ -211,21 +211,21 @@ public class FogRenderer {
     }
 
     @Nullable
-    private static FogRenderer.MobEffectFogFunction getPriorityFogFunction(Entity p_234166_, float p_234167_) {
-        return p_234166_ instanceof LivingEntity livingentity
-            ? MOB_EFFECT_FOG.stream().filter(p_234171_ -> p_234171_.isEnabled(livingentity, p_234167_)).findFirst().orElse(null)
+    private static FogRenderer.MobEffectFogFunction getPriorityFogFunction(Entity entity, float partialTick) {
+        return entity instanceof LivingEntity livingentity
+            ? MOB_EFFECT_FOG.stream().filter(p_234171_ -> p_234171_.isEnabled(livingentity, partialTick)).findFirst().orElse(null)
             : null;
     }
 
-    public static void setupFog(Camera p_234173_, FogRenderer.FogMode p_234174_, float p_234175_, boolean p_234176_, float p_234177_) {
-        FogType fogtype = p_234173_.getFluidInCamera();
-        Entity entity = p_234173_.getEntity();
-        FogRenderer.FogData fogrenderer$fogdata = new FogRenderer.FogData(p_234174_);
-        FogRenderer.MobEffectFogFunction fogrenderer$mobeffectfogfunction = getPriorityFogFunction(entity, p_234177_);
+    public static void setupFog(Camera camera, FogRenderer.FogMode fogMode, float farPlaneDistance, boolean shouldCreateFog, float partialTick) {
+        FogType fogtype = camera.getFluidInCamera();
+        Entity entity = camera.getEntity();
+        FogRenderer.FogData fogrenderer$fogdata = new FogRenderer.FogData(fogMode);
+        FogRenderer.MobEffectFogFunction fogrenderer$mobeffectfogfunction = getPriorityFogFunction(entity, partialTick);
         if (fogtype == FogType.LAVA) {
             if (entity.isSpectator()) {
                 fogrenderer$fogdata.start = -8.0F;
-                fogrenderer$fogdata.end = p_234175_ * 0.5F;
+                fogrenderer$fogdata.end = farPlaneDistance * 0.5F;
             } else if (entity instanceof LivingEntity && ((LivingEntity)entity).hasEffect(MobEffects.FIRE_RESISTANCE)) {
                 fogrenderer$fogdata.start = 0.0F;
                 fogrenderer$fogdata.end = 5.0F;
@@ -236,7 +236,7 @@ public class FogRenderer {
         } else if (fogtype == FogType.POWDER_SNOW) {
             if (entity.isSpectator()) {
                 fogrenderer$fogdata.start = -8.0F;
-                fogrenderer$fogdata.end = p_234175_ * 0.5F;
+                fogrenderer$fogdata.end = farPlaneDistance * 0.5F;
             } else {
                 fogrenderer$fogdata.start = 0.0F;
                 fogrenderer$fogdata.end = 2.0F;
@@ -245,7 +245,7 @@ public class FogRenderer {
             LivingEntity livingentity = (LivingEntity)entity;
             MobEffectInstance mobeffectinstance = livingentity.getEffect(fogrenderer$mobeffectfogfunction.getMobEffect());
             if (mobeffectinstance != null) {
-                fogrenderer$mobeffectfogfunction.setupFog(fogrenderer$fogdata, livingentity, mobeffectinstance, p_234175_, p_234177_);
+                fogrenderer$mobeffectfogfunction.setupFog(fogrenderer$fogdata, livingentity, mobeffectinstance, farPlaneDistance, partialTick);
             }
         } else if (fogtype == FogType.WATER) {
             fogrenderer$fogdata.start = -8.0F;
@@ -258,28 +258,28 @@ public class FogRenderer {
                 }
             }
 
-            if (fogrenderer$fogdata.end > p_234175_) {
-                fogrenderer$fogdata.end = p_234175_;
+            if (fogrenderer$fogdata.end > farPlaneDistance) {
+                fogrenderer$fogdata.end = farPlaneDistance;
                 fogrenderer$fogdata.shape = FogShape.CYLINDER;
             }
-        } else if (p_234176_) {
-            fogrenderer$fogdata.start = p_234175_ * 0.05F;
-            fogrenderer$fogdata.end = Math.min(p_234175_, 192.0F) * 0.5F;
-        } else if (p_234174_ == FogRenderer.FogMode.FOG_SKY) {
+        } else if (shouldCreateFog) {
+            fogrenderer$fogdata.start = farPlaneDistance * 0.05F;
+            fogrenderer$fogdata.end = Math.min(farPlaneDistance, 192.0F) * 0.5F;
+        } else if (fogMode == FogRenderer.FogMode.FOG_SKY) {
             fogrenderer$fogdata.start = 0.0F;
-            fogrenderer$fogdata.end = p_234175_;
+            fogrenderer$fogdata.end = farPlaneDistance;
             fogrenderer$fogdata.shape = FogShape.CYLINDER;
         } else {
-            float f = Mth.clamp(p_234175_ / 10.0F, 4.0F, 64.0F);
-            fogrenderer$fogdata.start = p_234175_ - f;
-            fogrenderer$fogdata.end = p_234175_;
+            float f = Mth.clamp(farPlaneDistance / 10.0F, 4.0F, 64.0F);
+            fogrenderer$fogdata.start = farPlaneDistance - f;
+            fogrenderer$fogdata.end = farPlaneDistance;
             fogrenderer$fogdata.shape = FogShape.CYLINDER;
         }
 
         RenderSystem.setShaderFogStart(fogrenderer$fogdata.start);
         RenderSystem.setShaderFogEnd(fogrenderer$fogdata.end);
         RenderSystem.setShaderFogShape(fogrenderer$fogdata.shape);
-        net.neoforged.neoforge.client.ClientHooks.onFogRender(p_234174_, fogtype, p_234173_, p_234177_, p_234175_, fogrenderer$fogdata.start, fogrenderer$fogdata.end, fogrenderer$fogdata.shape);
+        net.neoforged.neoforge.client.ClientHooks.onFogRender(fogMode, fogtype, camera, partialTick, farPlaneDistance, fogrenderer$fogdata.start, fogrenderer$fogdata.end, fogrenderer$fogdata.shape);
     }
 
     public static void levelFogColor() {
@@ -333,8 +333,8 @@ public class FogRenderer {
         public float end;
         public FogShape shape = FogShape.SPHERE;
 
-        public FogData(FogRenderer.FogMode p_234204_) {
-            this.mode = p_234204_;
+        public FogData(FogRenderer.FogMode mode) {
+            this.mode = mode;
         }
     }
 
@@ -348,14 +348,14 @@ public class FogRenderer {
     interface MobEffectFogFunction {
         Holder<MobEffect> getMobEffect();
 
-        void setupFog(FogRenderer.FogData p_234212_, LivingEntity p_234213_, MobEffectInstance p_234214_, float p_234215_, float p_234216_);
+        void setupFog(FogRenderer.FogData fogData, LivingEntity entity, MobEffectInstance effectInstance, float farPlaneDistance, float p_234216_);
 
-        default boolean isEnabled(LivingEntity p_234206_, float p_234207_) {
-            return p_234206_.hasEffect(this.getMobEffect());
+        default boolean isEnabled(LivingEntity entity, float p_234207_) {
+            return entity.hasEffect(this.getMobEffect());
         }
 
-        default float getModifiedVoidDarkness(LivingEntity p_234208_, MobEffectInstance p_234209_, float p_234210_, float p_234211_) {
-            MobEffectInstance mobeffectinstance = p_234208_.getEffect(this.getMobEffect());
+        default float getModifiedVoidDarkness(LivingEntity entity, MobEffectInstance effectInstance, float p_234210_, float partialTick) {
+            MobEffectInstance mobeffectinstance = entity.getEffect(this.getMobEffect());
             if (mobeffectinstance != null) {
                 if (mobeffectinstance.endsWithin(19)) {
                     p_234210_ = 1.0F - (float)mobeffectinstance.getDuration() / 20.0F;

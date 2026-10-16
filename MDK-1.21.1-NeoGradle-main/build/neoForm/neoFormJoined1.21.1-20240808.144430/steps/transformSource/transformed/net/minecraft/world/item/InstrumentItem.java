@@ -26,42 +26,45 @@ import net.minecraft.world.level.gameevent.GameEvent;
 public class InstrumentItem extends Item {
     private final TagKey<Instrument> instruments;
 
-    public InstrumentItem(Item.Properties p_220099_, TagKey<Instrument> p_220100_) {
-        super(p_220099_);
-        this.instruments = p_220100_;
+    public InstrumentItem(Item.Properties properties, TagKey<Instrument> instruments) {
+        super(properties);
+        this.instruments = instruments;
     }
 
     @Override
-    public void appendHoverText(ItemStack p_220115_, Item.TooltipContext p_339630_, List<Component> p_220117_, TooltipFlag p_220118_) {
-        super.appendHoverText(p_220115_, p_339630_, p_220117_, p_220118_);
-        Optional<ResourceKey<Instrument>> optional = this.getInstrument(p_220115_).flatMap(Holder::unwrapKey);
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        Optional<ResourceKey<Instrument>> optional = this.getInstrument(stack).flatMap(Holder::unwrapKey);
         if (optional.isPresent()) {
             MutableComponent mutablecomponent = Component.translatable(Util.makeDescriptionId("instrument", optional.get().location()));
-            p_220117_.add(mutablecomponent.withStyle(ChatFormatting.GRAY));
+            tooltipComponents.add(mutablecomponent.withStyle(ChatFormatting.GRAY));
         }
     }
 
-    public static ItemStack create(Item p_220108_, Holder<Instrument> p_220109_) {
-        ItemStack itemstack = new ItemStack(p_220108_);
-        itemstack.set(DataComponents.INSTRUMENT, p_220109_);
+    public static ItemStack create(Item item, Holder<Instrument> instrument) {
+        ItemStack itemstack = new ItemStack(item);
+        itemstack.set(DataComponents.INSTRUMENT, instrument);
         return itemstack;
     }
 
-    public static void setRandom(ItemStack p_220111_, TagKey<Instrument> p_220112_, RandomSource p_220113_) {
-        Optional<Holder<Instrument>> optional = BuiltInRegistries.INSTRUMENT.getRandomElementOf(p_220112_, p_220113_);
-        optional.ifPresent(p_330088_ -> p_220111_.set(DataComponents.INSTRUMENT, (Holder<Instrument>)p_330088_));
+    public static void setRandom(ItemStack stack, TagKey<Instrument> instrumentTag, RandomSource random) {
+        Optional<Holder<Instrument>> optional = BuiltInRegistries.INSTRUMENT.getRandomElementOf(instrumentTag, random);
+        optional.ifPresent(p_330088_ -> stack.set(DataComponents.INSTRUMENT, (Holder<Instrument>)p_330088_));
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link net.minecraft.world.item.Item#useOn(net.minecraft.world.item.context.UseOnContext)}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_220123_, Player p_220124_, InteractionHand p_220125_) {
-        ItemStack itemstack = p_220124_.getItemInHand(p_220125_);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
+        ItemStack itemstack = player.getItemInHand(usedHand);
         Optional<? extends Holder<Instrument>> optional = this.getInstrument(itemstack);
         if (optional.isPresent()) {
             Instrument instrument = optional.get().value();
-            p_220124_.startUsingItem(p_220125_);
-            play(p_220123_, p_220124_, instrument);
-            p_220124_.getCooldowns().addCooldown(this, instrument.useDuration());
-            p_220124_.awardStat(Stats.ITEM_USED.get(this));
+            player.startUsingItem(usedHand);
+            play(level, player, instrument);
+            player.getCooldowns().addCooldown(this, instrument.useDuration());
+            player.awardStat(Stats.ITEM_USED.get(this));
             return InteractionResultHolder.consume(itemstack);
         } else {
             return InteractionResultHolder.fail(itemstack);
@@ -69,13 +72,13 @@ public class InstrumentItem extends Item {
     }
 
     @Override
-    public int getUseDuration(ItemStack p_220131_, LivingEntity p_345916_) {
-        Optional<Holder<Instrument>> optional = this.getInstrument(p_220131_);
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
+        Optional<Holder<Instrument>> optional = this.getInstrument(stack);
         return optional.<Integer>map(p_248418_ -> p_248418_.value().useDuration()).orElse(0);
     }
 
-    private Optional<Holder<Instrument>> getInstrument(ItemStack p_220135_) {
-        Holder<Instrument> holder = p_220135_.get(DataComponents.INSTRUMENT);
+    private Optional<Holder<Instrument>> getInstrument(ItemStack stack) {
+        Holder<Instrument> holder = stack.get(DataComponents.INSTRUMENT);
         if (holder != null) {
             return Optional.of(holder);
         } else {
@@ -84,15 +87,18 @@ public class InstrumentItem extends Item {
         }
     }
 
+    /**
+     * Returns the action that specifies what animation to play when the item is being used.
+     */
     @Override
-    public UseAnim getUseAnimation(ItemStack p_220133_) {
+    public UseAnim getUseAnimation(ItemStack stack) {
         return UseAnim.TOOT_HORN;
     }
 
-    private static void play(Level p_220127_, Player p_220128_, Instrument p_220129_) {
-        SoundEvent soundevent = p_220129_.soundEvent().value();
-        float f = p_220129_.range() / 16.0F;
-        p_220127_.playSound(p_220128_, p_220128_, soundevent, SoundSource.RECORDS, f, 1.0F);
-        p_220127_.gameEvent(GameEvent.INSTRUMENT_PLAY, p_220128_.position(), GameEvent.Context.of(p_220128_));
+    private static void play(Level level, Player player, Instrument instrument) {
+        SoundEvent soundevent = instrument.soundEvent().value();
+        float f = instrument.range() / 16.0F;
+        level.playSound(player, player, soundevent, SoundSource.RECORDS, f, 1.0F);
+        level.gameEvent(GameEvent.INSTRUMENT_PLAY, player.position(), GameEvent.Context.of(player));
     }
 }

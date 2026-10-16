@@ -40,15 +40,15 @@ public class ReloadableServerResources {
     private final ServerAdvancementManager advancements;
     private final ServerFunctionLibrary functionLibrary;
 
-    private ReloadableServerResources(RegistryAccess.Frozen p_206857_, FeatureFlagSet p_250695_, Commands.CommandSelection p_206858_, int p_206859_) {
-        this.fullRegistryHolder = new ReloadableServerRegistries.Holder(p_206857_);
-        this.registryLookup = new ReloadableServerResources.ConfigurableRegistryLookup(p_206857_);
+    private ReloadableServerResources(RegistryAccess.Frozen registryAccess, FeatureFlagSet enabledFeatures, Commands.CommandSelection commandSelection, int functionCompilationLevel) {
+        this.fullRegistryHolder = new ReloadableServerRegistries.Holder(registryAccess);
+        this.registryLookup = new ReloadableServerResources.ConfigurableRegistryLookup(registryAccess);
         this.registryLookup.missingTagAccessPolicy(ReloadableServerResources.MissingTagAccessPolicy.CREATE_NEW);
         this.recipes = new RecipeManager(this.registryLookup);
-        this.tagManager = new TagManager(p_206857_);
-        this.commands = new Commands(p_206858_, CommandBuildContext.simple(this.registryLookup, p_250695_));
+        this.tagManager = new TagManager(registryAccess);
+        this.commands = new Commands(commandSelection, CommandBuildContext.simple(this.registryLookup, enabledFeatures));
         this.advancements = new ServerAdvancementManager(this.registryLookup);
-        this.functionLibrary = new ServerFunctionLibrary(p_206859_, this.commands.getDispatcher());
+        this.functionLibrary = new ServerFunctionLibrary(functionCompilationLevel, this.commands.getDispatcher());
         // Neo: Create context object
         this.context = new net.neoforged.neoforge.common.conditions.ConditionContext(this.tagManager);
     }
@@ -96,19 +96,19 @@ public class ReloadableServerResources {
     }
 
     public static CompletableFuture<ReloadableServerResources> loadResources(
-        ResourceManager p_248588_,
-        LayeredRegistryAccess<RegistryLayer> p_335667_,
-        FeatureFlagSet p_250212_,
-        Commands.CommandSelection p_249301_,
-        int p_251126_,
-        Executor p_249136_,
-        Executor p_249601_
+        ResourceManager resourceManager,
+        LayeredRegistryAccess<RegistryLayer> registries,
+        FeatureFlagSet enabledFeatures,
+        Commands.CommandSelection commandSelection,
+        int functionCompilationLevel,
+        Executor backgroundExecutor,
+        Executor gameExecutor
     ) {
-        return ReloadableServerRegistries.reload(p_335667_, p_248588_, p_249136_)
+        return ReloadableServerRegistries.reload(registries, resourceManager, backgroundExecutor)
             .thenCompose(
                 p_335211_ -> {
                     ReloadableServerResources reloadableserverresources = new ReloadableServerResources(
-                        p_335211_.compositeAccess(), p_250212_, p_249301_, p_251126_
+                        p_335211_.compositeAccess(), enabledFeatures, commandSelection, functionCompilationLevel
                     );
                     List<PreparableReloadListener> listeners = new java.util.ArrayList<>(reloadableserverresources.listeners());
                     listeners.addAll(net.neoforged.neoforge.event.EventHooks.onResourceReload(reloadableserverresources, p_335211_.compositeAccess()));
@@ -116,7 +116,7 @@ public class ReloadableServerResources {
                         if (rl instanceof net.neoforged.neoforge.resource.ContextAwareReloadListener srl) srl.injectContext(reloadableserverresources.context, reloadableserverresources.registryLookup);
                     });
                     return SimpleReloadInstance.create(
-                            p_248588_, listeners, p_249136_, p_249601_, DATA_RELOAD_INITIAL_TASK, LOGGER.isDebugEnabled()
+                            resourceManager, listeners, backgroundExecutor, gameExecutor, DATA_RELOAD_INITIAL_TASK, LOGGER.isDebugEnabled()
                         )
                         .done()
                         .whenComplete(
@@ -143,25 +143,25 @@ public class ReloadableServerResources {
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.TagsUpdatedEvent(this.fullRegistryHolder.get(), false, false));
     }
 
-    private static <T> void updateRegistryTags(RegistryAccess p_206871_, TagManager.LoadResult<T> p_206872_) {
-        ResourceKey<? extends Registry<T>> resourcekey = p_206872_.key();
-        Map<TagKey<T>, List<Holder<T>>> map = p_206872_.tags()
+    private static <T> void updateRegistryTags(RegistryAccess registryAccess, TagManager.LoadResult<T> loadResult) {
+        ResourceKey<? extends Registry<T>> resourcekey = loadResult.key();
+        Map<TagKey<T>, List<Holder<T>>> map = loadResult.tags()
             .entrySet()
             .stream()
             .collect(Collectors.toUnmodifiableMap(p_214303_ -> TagKey.create(resourcekey, p_214303_.getKey()), p_214312_ -> List.copyOf(p_214312_.getValue())));
-        p_206871_.registryOrThrow(resourcekey).bindTags(map);
+        registryAccess.registryOrThrow(resourcekey).bindTags(map);
     }
 
     static class ConfigurableRegistryLookup implements HolderLookup.Provider {
         private final RegistryAccess registryAccess;
         ReloadableServerResources.MissingTagAccessPolicy missingTagAccessPolicy = ReloadableServerResources.MissingTagAccessPolicy.FAIL;
 
-        ConfigurableRegistryLookup(RegistryAccess p_324146_) {
-            this.registryAccess = p_324146_;
+        ConfigurableRegistryLookup(RegistryAccess registryAccess) {
+            this.registryAccess = registryAccess;
         }
 
-        public void missingTagAccessPolicy(ReloadableServerResources.MissingTagAccessPolicy p_324138_) {
-            this.missingTagAccessPolicy = p_324138_;
+        public void missingTagAccessPolicy(ReloadableServerResources.MissingTagAccessPolicy missingTagAccessPolicy) {
+            this.missingTagAccessPolicy = missingTagAccessPolicy;
         }
 
         @Override
@@ -170,19 +170,19 @@ public class ReloadableServerResources {
         }
 
         @Override
-        public <T> Optional<HolderLookup.RegistryLookup<T>> lookup(ResourceKey<? extends Registry<? extends T>> p_323818_) {
-            return this.registryAccess.registry(p_323818_).map(p_324050_ -> this.createDispatchedLookup(p_324050_.asLookup(), p_324050_.asTagAddingLookup()));
+        public <T> Optional<HolderLookup.RegistryLookup<T>> lookup(ResourceKey<? extends Registry<? extends T>> registryKey) {
+            return this.registryAccess.registry(registryKey).map(p_324050_ -> this.createDispatchedLookup(p_324050_.asLookup(), p_324050_.asTagAddingLookup()));
         }
 
         private <T> HolderLookup.RegistryLookup<T> createDispatchedLookup(
-            final HolderLookup.RegistryLookup<T> p_324196_, final HolderLookup.RegistryLookup<T> p_323710_
+            final HolderLookup.RegistryLookup<T> lookup, final HolderLookup.RegistryLookup<T> tagAddingLookup
         ) {
             return new HolderLookup.RegistryLookup.Delegate<T>() {
                 @Override
                 public HolderLookup.RegistryLookup<T> parent() {
                     return switch (ConfigurableRegistryLookup.this.missingTagAccessPolicy) {
-                        case CREATE_NEW -> p_323710_;
-                        case FAIL -> p_324196_;
+                        case CREATE_NEW -> tagAddingLookup;
+                        case FAIL -> lookup;
                     };
                 }
             };

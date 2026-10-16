@@ -19,9 +19,9 @@ public class ChanneledLightningTrigger extends SimpleCriterionTrigger<ChanneledL
         return ChanneledLightningTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_21722_, Collection<? extends Entity> p_21723_) {
-        List<LootContext> list = p_21723_.stream().map(p_21720_ -> EntityPredicate.createContext(p_21722_, p_21720_)).collect(Collectors.toList());
-        this.trigger(p_21722_, p_21730_ -> p_21730_.matches(list));
+    public void trigger(ServerPlayer player, Collection<? extends Entity> entityTriggered) {
+        List<LootContext> list = entityTriggered.stream().map(p_21720_ -> EntityPredicate.createContext(player, p_21720_)).collect(Collectors.toList());
+        this.trigger(player, p_21730_ -> p_21730_.matches(list));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, List<ContextAwarePredicate> victims)
@@ -37,16 +37,16 @@ public class ChanneledLightningTrigger extends SimpleCriterionTrigger<ChanneledL
                     .apply(p_337346_, ChanneledLightningTrigger.TriggerInstance::new)
         );
 
-        public static Criterion<ChanneledLightningTrigger.TriggerInstance> channeledLightning(EntityPredicate.Builder... p_298972_) {
+        public static Criterion<ChanneledLightningTrigger.TriggerInstance> channeledLightning(EntityPredicate.Builder... victims) {
             return CriteriaTriggers.CHANNELED_LIGHTNING
-                .createCriterion(new ChanneledLightningTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(p_298972_)));
+                .createCriterion(new ChanneledLightningTrigger.TriggerInstance(Optional.empty(), EntityPredicate.wrap(victims)));
         }
 
-        public boolean matches(Collection<? extends LootContext> p_21745_) {
+        public boolean matches(Collection<? extends LootContext> victims) {
             for (ContextAwarePredicate contextawarepredicate : this.victims) {
                 boolean flag = false;
 
-                for (LootContext lootcontext : p_21745_) {
+                for (LootContext lootcontext : victims) {
                     if (contextawarepredicate.matches(lootcontext)) {
                         flag = true;
                         break;
@@ -62,9 +62,9 @@ public class ChanneledLightningTrigger extends SimpleCriterionTrigger<ChanneledL
         }
 
         @Override
-        public void validate(CriterionValidator p_312314_) {
-            SimpleCriterionTrigger.SimpleInstance.super.validate(p_312314_);
-            p_312314_.validateEntities(this.victims, ".victims");
+        public void validate(CriterionValidator validator) {
+            SimpleCriterionTrigger.SimpleInstance.super.validate(validator);
+            validator.validateEntities(this.victims, ".victims");
         }
     }
 }

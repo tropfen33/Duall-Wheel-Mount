@@ -10,7 +10,7 @@ public class BlockPileConfiguration implements FeatureConfiguration {
         .codec();
     public final BlockStateProvider stateProvider;
 
-    public BlockPileConfiguration(BlockStateProvider p_67543_) {
-        this.stateProvider = p_67543_;
+    public BlockPileConfiguration(BlockStateProvider stateProvider) {
+        this.stateProvider = stateProvider;
     }
 }

@@ -15,13 +15,13 @@ public record SlimePredicate(MinMaxBounds.Ints size) implements EntitySubPredica
                 .apply(p_337395_, SlimePredicate::new)
     );
 
-    public static SlimePredicate sized(MinMaxBounds.Ints p_223427_) {
-        return new SlimePredicate(p_223427_);
+    public static SlimePredicate sized(MinMaxBounds.Ints size) {
+        return new SlimePredicate(size);
     }
 
     @Override
-    public boolean matches(Entity p_223423_, ServerLevel p_223424_, @Nullable Vec3 p_223425_) {
-        return p_223423_ instanceof Slime slime ? this.size.matches(slime.getSize()) : false;
+    public boolean matches(Entity entity, ServerLevel level, @Nullable Vec3 position) {
+        return entity instanceof Slime slime ? this.size.matches(slime.getSize()) : false;
     }
 
     @Override

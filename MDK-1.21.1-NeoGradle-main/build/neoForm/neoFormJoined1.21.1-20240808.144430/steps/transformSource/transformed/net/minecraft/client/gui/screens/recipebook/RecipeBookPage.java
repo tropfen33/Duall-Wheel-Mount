@@ -49,29 +49,29 @@ public class RecipeBookPage {
         }
     }
 
-    public void init(Minecraft p_100429_, int p_100430_, int p_100431_) {
-        this.minecraft = p_100429_;
-        this.recipeBook = p_100429_.player.getRecipeBook();
+    public void init(Minecraft minecraft, int x, int y) {
+        this.minecraft = minecraft;
+        this.recipeBook = minecraft.player.getRecipeBook();
 
         for (int i = 0; i < this.buttons.size(); i++) {
-            this.buttons.get(i).setPosition(p_100430_ + 11 + 25 * (i % 5), p_100431_ + 31 + 25 * (i / 5));
+            this.buttons.get(i).setPosition(x + 11 + 25 * (i % 5), y + 31 + 25 * (i / 5));
         }
 
-        this.forwardButton = new StateSwitchingButton(p_100430_ + 93, p_100431_ + 137, 12, 17, false);
+        this.forwardButton = new StateSwitchingButton(x + 93, y + 137, 12, 17, false);
         this.forwardButton.initTextureValues(PAGE_FORWARD_SPRITES);
-        this.backButton = new StateSwitchingButton(p_100430_ + 38, p_100431_ + 137, 12, 17, true);
+        this.backButton = new StateSwitchingButton(x + 38, y + 137, 12, 17, true);
         this.backButton.initTextureValues(PAGE_BACKWARD_SPRITES);
     }
 
-    public void addListener(RecipeBookComponent p_100433_) {
-        this.showListeners.remove(p_100433_);
-        this.showListeners.add(p_100433_);
+    public void addListener(RecipeBookComponent listener) {
+        this.showListeners.remove(listener);
+        this.showListeners.add(listener);
     }
 
-    public void updateCollections(List<RecipeCollection> p_100437_, boolean p_100438_) {
-        this.recipeCollections = p_100437_;
-        this.totalPages = (int)Math.ceil((double)p_100437_.size() / 20.0);
-        if (this.totalPages <= this.currentPage || p_100438_) {
+    public void updateCollections(List<RecipeCollection> recipeCollections, boolean resetPageNumber) {
+        this.recipeCollections = recipeCollections;
+        this.totalPages = (int)Math.ceil((double)recipeCollections.size() / 20.0);
+        if (this.totalPages <= this.currentPage || resetPageNumber) {
             this.currentPage = 0;
         }
 
@@ -100,30 +100,30 @@ public class RecipeBookPage {
         this.backButton.visible = this.totalPages > 1 && this.currentPage > 0;
     }
 
-    public void render(GuiGraphics p_281416_, int p_281888_, int p_281904_, int p_282278_, int p_282424_, float p_281712_) {
+    public void render(GuiGraphics guiGraphics, int x, int y, int mouseX, int mouseY, float partialTick) {
         if (this.totalPages > 1) {
             Component component = Component.translatable("gui.recipebook.page", this.currentPage + 1, this.totalPages);
             int i = this.minecraft.font.width(component);
-            p_281416_.drawString(this.minecraft.font, component, p_281888_ - i / 2 + 73, p_281904_ + 141, -1, false);
+            guiGraphics.drawString(this.minecraft.font, component, x - i / 2 + 73, y + 141, -1, false);
         }
 
         this.hoveredButton = null;
 
         for (RecipeButton recipebutton : this.buttons) {
-            recipebutton.render(p_281416_, p_282278_, p_282424_, p_281712_);
+            recipebutton.render(guiGraphics, mouseX, mouseY, partialTick);
             if (recipebutton.visible && recipebutton.isHoveredOrFocused()) {
                 this.hoveredButton = recipebutton;
             }
         }
 
-        this.backButton.render(p_281416_, p_282278_, p_282424_, p_281712_);
-        this.forwardButton.render(p_281416_, p_282278_, p_282424_, p_281712_);
-        this.overlay.render(p_281416_, p_282278_, p_282424_, p_281712_);
+        this.backButton.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.forwardButton.render(guiGraphics, mouseX, mouseY, partialTick);
+        this.overlay.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
-    public void renderTooltip(GuiGraphics p_283690_, int p_282626_, int p_282490_) {
+    public void renderTooltip(GuiGraphics guiGraphics, int x, int y) {
         if (this.minecraft.screen != null && this.hoveredButton != null && !this.overlay.isVisible()) {
-            p_283690_.renderComponentTooltip(this.minecraft.font, this.hoveredButton.getTooltipText(), p_282626_, p_282490_);
+            guiGraphics.renderComponentTooltip(this.minecraft.font, this.hoveredButton.getTooltipText(), x, y);
         }
     }
 
@@ -141,11 +141,11 @@ public class RecipeBookPage {
         this.overlay.setVisible(false);
     }
 
-    public boolean mouseClicked(double p_100410_, double p_100411_, int p_100412_, int p_100413_, int p_100414_, int p_100415_, int p_100416_) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button, int p_100413_, int p_100414_, int p_100415_, int p_100416_) {
         this.lastClickedRecipe = null;
         this.lastClickedRecipeCollection = null;
         if (this.overlay.isVisible()) {
-            if (this.overlay.mouseClicked(p_100410_, p_100411_, p_100412_)) {
+            if (this.overlay.mouseClicked(mouseX, mouseY, button)) {
                 this.lastClickedRecipe = this.overlay.getLastRecipeClicked();
                 this.lastClickedRecipeCollection = this.overlay.getRecipeCollection();
             } else {
@@ -153,21 +153,21 @@ public class RecipeBookPage {
             }
 
             return true;
-        } else if (this.forwardButton.mouseClicked(p_100410_, p_100411_, p_100412_)) {
+        } else if (this.forwardButton.mouseClicked(mouseX, mouseY, button)) {
             this.currentPage++;
             this.updateButtonsForPage();
             return true;
-        } else if (this.backButton.mouseClicked(p_100410_, p_100411_, p_100412_)) {
+        } else if (this.backButton.mouseClicked(mouseX, mouseY, button)) {
             this.currentPage--;
             this.updateButtonsForPage();
             return true;
         } else {
             for (RecipeButton recipebutton : this.buttons) {
-                if (recipebutton.mouseClicked(p_100410_, p_100411_, p_100412_)) {
-                    if (p_100412_ == 0) {
+                if (recipebutton.mouseClicked(mouseX, mouseY, button)) {
+                    if (button == 0) {
                         this.lastClickedRecipe = recipebutton.getRecipe();
                         this.lastClickedRecipeCollection = recipebutton.getCollection();
-                    } else if (p_100412_ == 1 && !this.overlay.isVisible() && !recipebutton.isOnlyOption()) {
+                    } else if (button == 1 && !this.overlay.isVisible() && !recipebutton.isOnlyOption()) {
                         this.overlay
                             .init(
                                 this.minecraft,
@@ -188,9 +188,9 @@ public class RecipeBookPage {
         }
     }
 
-    public void recipesShown(List<RecipeHolder<?>> p_100435_) {
+    public void recipesShown(List<RecipeHolder<?>> recipes) {
         for (RecipeShownListener recipeshownlistener : this.showListeners) {
-            recipeshownlistener.recipesShown(p_100435_);
+            recipeshownlistener.recipesShown(recipes);
         }
     }
 
@@ -202,9 +202,9 @@ public class RecipeBookPage {
         return this.recipeBook;
     }
 
-    protected void listButtons(Consumer<AbstractWidget> p_170054_) {
-        p_170054_.accept(this.forwardButton);
-        p_170054_.accept(this.backButton);
-        this.buttons.forEach(p_170054_);
+    protected void listButtons(Consumer<AbstractWidget> consumer) {
+        consumer.accept(this.forwardButton);
+        consumer.accept(this.backButton);
+        this.buttons.forEach(consumer);
     }
 }

@@ -12,16 +12,19 @@ public class ClientboundOpenBookPacket implements Packet<ClientGamePacketListene
     );
     private final InteractionHand hand;
 
-    public ClientboundOpenBookPacket(InteractionHand p_132601_) {
-        this.hand = p_132601_;
+    public ClientboundOpenBookPacket(InteractionHand hand) {
+        this.hand = hand;
     }
 
-    private ClientboundOpenBookPacket(FriendlyByteBuf p_179009_) {
-        this.hand = p_179009_.readEnum(InteractionHand.class);
+    private ClientboundOpenBookPacket(FriendlyByteBuf buffer) {
+        this.hand = buffer.readEnum(InteractionHand.class);
     }
 
-    private void write(FriendlyByteBuf p_132610_) {
-        p_132610_.writeEnum(this.hand);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeEnum(this.hand);
     }
 
     @Override
@@ -29,8 +32,11 @@ public class ClientboundOpenBookPacket implements Packet<ClientGamePacketListene
         return GamePacketTypes.CLIENTBOUND_OPEN_BOOK;
     }
 
-    public void handle(ClientGamePacketListener p_132607_) {
-        p_132607_.handleOpenBook(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleOpenBook(this);
     }
 
     public InteractionHand getHand() {

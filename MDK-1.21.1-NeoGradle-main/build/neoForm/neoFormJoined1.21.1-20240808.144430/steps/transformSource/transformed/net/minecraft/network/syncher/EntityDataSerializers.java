@@ -36,6 +36,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
+/**
+ * Registry for {@link EntityDataSerializer}.
+ */
 public class EntityDataSerializers {
     private static final CrudeIncrementalIntIdentityHashBiMap<EntityDataSerializer<?>> SERIALIZERS = CrudeIncrementalIntIdentityHashBiMap.create(16);
     public static final EntityDataSerializer<Byte> BYTE = EntityDataSerializer.forValueType(ByteBufCodecs.BYTE);
@@ -127,26 +130,28 @@ public class EntityDataSerializers {
     private static final org.slf4j.Logger LOGGER = com.mojang.logging.LogUtils.getLogger();
     private static final StackWalker STACK_WALKER = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
     /**
-     * @deprecated NeoForge: Use {@link net.neoforged.neoforge.registries.NeoForgeRegistries#ENTITY_DATA_SERIALIZERS} instead
+     * @deprecated NeoForge: Use {@link
+     *             net.neoforged.neoforge.registries.NeoForgeRegistries#
+     *             ENTITY_DATA_SERIALIZERS} instead
      */
     @Deprecated
-    public static void registerSerializer(EntityDataSerializer<?> p_135051_) {
+    public static void registerSerializer(EntityDataSerializer<?> serializer) {
         if (!STACK_WALKER.getCallerClass().equals(EntityDataSerializers.class)) {
             LOGGER.error("Modded EntityDataSerializers must be registered to NeoForgeRegistries.ENTITY_DATA_SERIALIZERS instead to prevent ID mismatches between client and server!");
             throw new UnsupportedOperationException("Modded EntityDataSerializers must be registered to NeoForgeRegistries.ENTITY_DATA_SERIALIZERS instead to prevent ID mismatches between client and server!");
         }
 
-        if (SERIALIZERS.add(p_135051_) >= net.neoforged.neoforge.common.CommonHooks.VANILLA_SERIALIZER_LIMIT)
+        if (SERIALIZERS.add(serializer) >= net.neoforged.neoforge.common.CommonHooks.VANILLA_SERIALIZER_LIMIT)
             throw new RuntimeException("Vanilla EntityDataSerializer ID limit exceeded");
     }
 
     @Nullable
-    public static EntityDataSerializer<?> getSerializer(int p_135049_) {
-        return net.neoforged.neoforge.common.CommonHooks.getSerializer(p_135049_, SERIALIZERS);
+    public static EntityDataSerializer<?> getSerializer(int id) {
+        return net.neoforged.neoforge.common.CommonHooks.getSerializer(id, SERIALIZERS);
     }
 
-    public static int getSerializedId(EntityDataSerializer<?> p_135053_) {
-        return net.neoforged.neoforge.common.CommonHooks.getSerializerId(p_135053_, SERIALIZERS);
+    public static int getSerializedId(EntityDataSerializer<?> serializer) {
+        return net.neoforged.neoforge.common.CommonHooks.getSerializerId(serializer, SERIALIZERS);
     }
 
     private EntityDataSerializers() {

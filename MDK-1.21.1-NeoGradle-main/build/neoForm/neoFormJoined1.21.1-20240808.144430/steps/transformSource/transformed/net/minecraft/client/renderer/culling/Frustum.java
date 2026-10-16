@@ -17,27 +17,27 @@ public class Frustum {
     private double camY;
     private double camZ;
 
-    public Frustum(Matrix4f p_254207_, Matrix4f p_254535_) {
-        this.calculateFrustum(p_254207_, p_254535_);
+    public Frustum(Matrix4f frustum, Matrix4f projection) {
+        this.calculateFrustum(frustum, projection);
     }
 
-    public Frustum(Frustum p_194440_) {
-        this.intersection.set(p_194440_.matrix);
-        this.matrix.set(p_194440_.matrix);
-        this.camX = p_194440_.camX;
-        this.camY = p_194440_.camY;
-        this.camZ = p_194440_.camZ;
-        this.viewVector = p_194440_.viewVector;
+    public Frustum(Frustum other) {
+        this.intersection.set(other.matrix);
+        this.matrix.set(other.matrix);
+        this.camX = other.camX;
+        this.camY = other.camY;
+        this.camZ = other.camZ;
+        this.viewVector = other.viewVector;
     }
 
-    public Frustum offsetToFullyIncludeCameraCube(int p_194442_) {
-        double d0 = Math.floor(this.camX / (double)p_194442_) * (double)p_194442_;
-        double d1 = Math.floor(this.camY / (double)p_194442_) * (double)p_194442_;
-        double d2 = Math.floor(this.camZ / (double)p_194442_) * (double)p_194442_;
-        double d3 = Math.ceil(this.camX / (double)p_194442_) * (double)p_194442_;
-        double d4 = Math.ceil(this.camY / (double)p_194442_) * (double)p_194442_;
+    public Frustum offsetToFullyIncludeCameraCube(int offset) {
+        double d0 = Math.floor(this.camX / (double)offset) * (double)offset;
+        double d1 = Math.floor(this.camY / (double)offset) * (double)offset;
+        double d2 = Math.floor(this.camZ / (double)offset) * (double)offset;
+        double d3 = Math.ceil(this.camX / (double)offset) * (double)offset;
+        double d4 = Math.ceil(this.camY / (double)offset) * (double)offset;
 
-        for (double d5 = Math.ceil(this.camZ / (double)p_194442_) * (double)p_194442_;
+        for (double d5 = Math.ceil(this.camZ / (double)offset) * (double)offset;
             this.intersection
                     .intersectAab(
                         (float)(d0 - this.camX),
@@ -57,31 +57,31 @@ public class Frustum {
         return this;
     }
 
-    public void prepare(double p_113003_, double p_113004_, double p_113005_) {
-        this.camX = p_113003_;
-        this.camY = p_113004_;
-        this.camZ = p_113005_;
+    public void prepare(double camX, double camY, double camZ) {
+        this.camX = camX;
+        this.camY = camY;
+        this.camZ = camZ;
     }
 
-    private void calculateFrustum(Matrix4f p_253909_, Matrix4f p_254521_) {
-        p_254521_.mul(p_253909_, this.matrix);
+    private void calculateFrustum(Matrix4f frustum, Matrix4f projection) {
+        projection.mul(frustum, this.matrix);
         this.intersection.set(this.matrix);
         this.viewVector = this.matrix.transformTranspose(new Vector4f(0.0F, 0.0F, 1.0F, 0.0F));
     }
 
-    public boolean isVisible(AABB p_113030_) {
+    public boolean isVisible(AABB aabb) {
         // FORGE: exit early for infinite bounds, these would otherwise fail in the intersection test at certain camera angles (GH-9321)
-        if (p_113030_.isInfinite()) return true;
-        return this.cubeInFrustum(p_113030_.minX, p_113030_.minY, p_113030_.minZ, p_113030_.maxX, p_113030_.maxY, p_113030_.maxZ);
+        if (aabb.isInfinite()) return true;
+        return this.cubeInFrustum(aabb.minX, aabb.minY, aabb.minZ, aabb.maxX, aabb.maxY, aabb.maxZ);
     }
 
-    private boolean cubeInFrustum(double p_113007_, double p_113008_, double p_113009_, double p_113010_, double p_113011_, double p_113012_) {
-        float f = (float)(p_113007_ - this.camX);
-        float f1 = (float)(p_113008_ - this.camY);
-        float f2 = (float)(p_113009_ - this.camZ);
-        float f3 = (float)(p_113010_ - this.camX);
-        float f4 = (float)(p_113011_ - this.camY);
-        float f5 = (float)(p_113012_ - this.camZ);
+    private boolean cubeInFrustum(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        float f = (float)(minX - this.camX);
+        float f1 = (float)(minY - this.camY);
+        float f2 = (float)(minZ - this.camZ);
+        float f3 = (float)(maxX - this.camX);
+        float f4 = (float)(maxY - this.camY);
+        float f5 = (float)(maxZ - this.camZ);
         return this.intersection.testAab(f, f1, f2, f3, f4, f5);
     }
 }

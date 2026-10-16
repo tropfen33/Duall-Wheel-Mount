@@ -14,8 +14,8 @@ public class LegacyRandomSource implements BitRandomSource {
     private final AtomicLong seed = new AtomicLong();
     private final MarsagliaPolarGaussian gaussianSource = new MarsagliaPolarGaussian(this);
 
-    public LegacyRandomSource(long p_188578_) {
-        this.setSeed(p_188578_);
+    public LegacyRandomSource(long seed) {
+        this.setSeed(seed);
     }
 
     @Override
@@ -29,8 +29,8 @@ public class LegacyRandomSource implements BitRandomSource {
     }
 
     @Override
-    public void setSeed(long p_188585_) {
-        if (!this.seed.compareAndSet(this.seed.get(), (p_188585_ ^ 25214903917L) & 281474976710655L)) {
+    public void setSeed(long seed) {
+        if (!this.seed.compareAndSet(this.seed.get(), (seed ^ 25214903917L) & 281474976710655L)) {
             throw ThreadingDetector.makeThreadingException("LegacyRandomSource", null);
         } else {
             this.gaussianSource.reset();
@@ -38,13 +38,13 @@ public class LegacyRandomSource implements BitRandomSource {
     }
 
     @Override
-    public int next(int p_188581_) {
+    public int next(int size) {
         long i = this.seed.get();
         long j = i * 25214903917L + 11L & 281474976710655L;
         if (!this.seed.compareAndSet(i, j)) {
             throw ThreadingDetector.makeThreadingException("LegacyRandomSource", null);
         } else {
-            return (int)(j >> 48 - p_188581_);
+            return (int)(j >> 48 - size);
         }
     }
 
@@ -56,32 +56,32 @@ public class LegacyRandomSource implements BitRandomSource {
     public static class LegacyPositionalRandomFactory implements PositionalRandomFactory {
         private final long seed;
 
-        public LegacyPositionalRandomFactory(long p_188588_) {
-            this.seed = p_188588_;
+        public LegacyPositionalRandomFactory(long seed) {
+            this.seed = seed;
         }
 
         @Override
-        public RandomSource at(int p_224198_, int p_224199_, int p_224200_) {
-            long i = Mth.getSeed(p_224198_, p_224199_, p_224200_);
+        public RandomSource at(int x, int y, int z) {
+            long i = Mth.getSeed(x, y, z);
             long j = i ^ this.seed;
             return new LegacyRandomSource(j);
         }
 
         @Override
-        public RandomSource fromHashOf(String p_224202_) {
-            int i = p_224202_.hashCode();
+        public RandomSource fromHashOf(String name) {
+            int i = name.hashCode();
             return new LegacyRandomSource((long)i ^ this.seed);
         }
 
         @Override
-        public RandomSource fromSeed(long p_348617_) {
-            return new LegacyRandomSource(p_348617_);
+        public RandomSource fromSeed(long seed) {
+            return new LegacyRandomSource(seed);
         }
 
         @VisibleForTesting
         @Override
-        public void parityConfigString(StringBuilder p_188596_) {
-            p_188596_.append("LegacyPositionalRandomFactory{").append(this.seed).append("}");
+        public void parityConfigString(StringBuilder builder) {
+            builder.append("LegacyPositionalRandomFactory{").append(this.seed).append("}");
         }
     }
 }

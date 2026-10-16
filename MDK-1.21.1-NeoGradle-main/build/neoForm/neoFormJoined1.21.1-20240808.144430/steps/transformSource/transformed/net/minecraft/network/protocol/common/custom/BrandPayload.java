@@ -11,8 +11,8 @@ public record BrandPayload(String brand) implements CustomPacketPayload {
         this(p_296001_.readUtf());
     }
 
-    private void write(FriendlyByteBuf p_294892_) {
-        p_294892_.writeUtf(this.brand);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeUtf(this.brand);
     }
 
     @Override

@@ -34,8 +34,8 @@ public class MaceItem extends Item {
     public static final float SMASH_ATTACK_KNOCKBACK_RADIUS = 3.5F;
     private static final float SMASH_ATTACK_KNOCKBACK_POWER = 0.7F;
 
-    public MaceItem(Item.Properties p_333796_) {
-        super(p_333796_);
+    public MaceItem(Item.Properties properties) {
+        super(properties);
     }
 
     public static ItemAttributeModifiers createAttributes() {
@@ -54,8 +54,8 @@ public class MaceItem extends Item {
     }
 
     @Override
-    public boolean canAttackBlock(BlockState p_333875_, Level p_333847_, BlockPos p_334073_, Player p_334042_) {
-        return !p_334042_.isCreative();
+    public boolean canAttackBlock(BlockState state, Level level, BlockPos pos, Player player) {
+        return !player.isCreative();
     }
 
     @Override
@@ -63,10 +63,13 @@ public class MaceItem extends Item {
         return 15;
     }
 
+    /**
+     * Current implementations of this method in child classes do not use the entry argument beside ev. They just raise the damage on the stack.
+     */
     @Override
-    public boolean hurtEnemy(ItemStack p_334046_, LivingEntity p_333712_, LivingEntity p_333812_) {
-        if (p_333812_ instanceof ServerPlayer serverplayer && canSmashAttack(serverplayer)) {
-            ServerLevel serverlevel = (ServerLevel)p_333812_.level();
+    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        if (attacker instanceof ServerPlayer serverplayer && canSmashAttack(serverplayer)) {
+            ServerLevel serverlevel = (ServerLevel)attacker.level();
             if (serverplayer.isIgnoringFallDamageFromCurrentImpulse() && serverplayer.currentImpulseImpactPos != null) {
                 if (serverplayer.currentImpulseImpactPos.y > serverplayer.position().y) {
                     serverplayer.currentImpulseImpactPos = serverplayer.position();
@@ -78,7 +81,7 @@ public class MaceItem extends Item {
             serverplayer.setIgnoreFallDamageFromCurrentImpulse(true);
             serverplayer.setDeltaMovement(serverplayer.getDeltaMovement().with(Direction.Axis.Y, 0.01F));
             serverplayer.connection.send(new ClientboundSetEntityMotionPacket(serverplayer));
-            if (p_333712_.onGround()) {
+            if (target.onGround()) {
                 serverplayer.setSpawnExtraParticlesOnFall(true);
                 SoundEvent soundevent = serverplayer.fallDistance > 5.0F ? SoundEvents.MACE_SMASH_GROUND_HEAVY : SoundEvents.MACE_SMASH_GROUND;
                 serverlevel.playSound(
@@ -90,28 +93,31 @@ public class MaceItem extends Item {
                 );
             }
 
-            knockback(serverlevel, serverplayer, p_333712_);
+            knockback(serverlevel, serverplayer, target);
         }
 
         return true;
     }
 
     @Override
-    public void postHurtEnemy(ItemStack p_345716_, LivingEntity p_345817_, LivingEntity p_346003_) {
-        p_345716_.hurtAndBreak(1, p_346003_, EquipmentSlot.MAINHAND);
-        if (canSmashAttack(p_346003_)) {
-            p_346003_.resetFallDistance();
+    public void postHurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        stack.hurtAndBreak(1, attacker, EquipmentSlot.MAINHAND);
+        if (canSmashAttack(attacker)) {
+            attacker.resetFallDistance();
         }
     }
 
+    /**
+     * Return whether this item is repairable in an anvil.
+     */
     @Override
-    public boolean isValidRepairItem(ItemStack p_334031_, ItemStack p_334058_) {
-        return p_334058_.is(Items.BREEZE_ROD);
+    public boolean isValidRepairItem(ItemStack stack, ItemStack repairCandidate) {
+        return repairCandidate.is(Items.BREEZE_ROD);
     }
 
     @Override
-    public float getAttackDamageBonus(Entity p_344900_, float p_335575_, DamageSource p_344972_) {
-        if (p_344972_.getDirectEntity() instanceof LivingEntity livingentity) {
+    public float getAttackDamageBonus(Entity target, float damage, DamageSource damageSource) {
+        if (damageSource.getDirectEntity() instanceof LivingEntity livingentity) {
             if (!canSmashAttack(livingentity)) {
                 return 0.0F;
             } else {
@@ -128,7 +134,7 @@ public class MaceItem extends Item {
                 }
 
                 return livingentity.level() instanceof ServerLevel serverlevel
-                    ? f2 + EnchantmentHelper.modifyFallBasedDamage(serverlevel, livingentity.getWeaponItem(), p_344900_, p_344972_, 0.0F) * f1
+                    ? f2 + EnchantmentHelper.modifyFallBasedDamage(serverlevel, livingentity.getWeaponItem(), target, damageSource, 0.0F) * f1
                     : f2;
             }
         } else {
@@ -136,12 +142,12 @@ public class MaceItem extends Item {
         }
     }
 
-    private static void knockback(Level p_335716_, Player p_335955_, Entity p_335810_) {
-        p_335716_.levelEvent(2013, p_335810_.getOnPos(), 750);
-        p_335716_.getEntitiesOfClass(LivingEntity.class, p_335810_.getBoundingBox().inflate(3.5), knockbackPredicate(p_335955_, p_335810_))
+    private static void knockback(Level level, Player player, Entity entity) {
+        level.levelEvent(2013, entity.getOnPos(), 750);
+        level.getEntitiesOfClass(LivingEntity.class, entity.getBoundingBox().inflate(3.5), knockbackPredicate(player, entity))
             .forEach(p_347296_ -> {
-                Vec3 vec3 = p_347296_.position().subtract(p_335810_.position());
-                double d0 = getKnockbackPower(p_335955_, p_347296_, vec3);
+                Vec3 vec3 = p_347296_.position().subtract(entity.position());
+                double d0 = getKnockbackPower(player, p_347296_, vec3);
                 Vec3 vec31 = vec3.normalize().scale(d0);
                 if (d0 > 0.0) {
                     p_347296_.push(vec31.x, 0.7F, vec31.z);
@@ -152,7 +158,7 @@ public class MaceItem extends Item {
             });
     }
 
-    private static Predicate<LivingEntity> knockbackPredicate(Player p_338613_, Entity p_338698_) {
+    private static Predicate<LivingEntity> knockbackPredicate(Player player, Entity entity) {
         return p_344407_ -> {
             boolean flag;
             boolean flag1;
@@ -160,9 +166,9 @@ public class MaceItem extends Item {
             boolean flag6;
             label62: {
                 flag = !p_344407_.isSpectator();
-                flag1 = p_344407_ != p_338613_ && p_344407_ != p_338698_;
-                flag2 = !p_338613_.isAlliedTo(p_344407_);
-                if (p_344407_ instanceof TamableAnimal tamableanimal && tamableanimal.isTame() && p_338613_.getUUID().equals(tamableanimal.getOwnerUUID())) {
+                flag1 = p_344407_ != player && p_344407_ != entity;
+                flag2 = !player.isAlliedTo(p_344407_);
+                if (p_344407_ instanceof TamableAnimal tamableanimal && tamableanimal.isTame() && player.getUUID().equals(tamableanimal.getOwnerUUID())) {
                     flag6 = true;
                     break label62;
                 }
@@ -182,19 +188,19 @@ public class MaceItem extends Item {
             }
 
             boolean flag4 = flag6;
-            boolean flag5 = p_338698_.distanceToSqr(p_344407_) <= Math.pow(3.5, 2.0);
+            boolean flag5 = entity.distanceToSqr(p_344407_) <= Math.pow(3.5, 2.0);
             return flag && flag1 && flag2 && flag3 && flag4 && flag5;
         };
     }
 
-    private static double getKnockbackPower(Player p_338265_, LivingEntity p_338630_, Vec3 p_338866_) {
-        return (3.5 - p_338866_.length())
+    private static double getKnockbackPower(Player player, LivingEntity entity, Vec3 entityPos) {
+        return (3.5 - entityPos.length())
             * 0.7F
-            * (double)(p_338265_.fallDistance > 5.0F ? 2 : 1)
-            * (1.0 - p_338630_.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE));
+            * (double)(player.fallDistance > 5.0F ? 2 : 1)
+            * (1.0 - entity.getAttributeValue(Attributes.KNOCKBACK_RESISTANCE));
     }
 
-    public static boolean canSmashAttack(LivingEntity p_344836_) {
-        return p_344836_.fallDistance > 1.5F && !p_344836_.isFallFlying();
+    public static boolean canSmashAttack(LivingEntity entity) {
+        return entity.fallDistance > 1.5F && !entity.isFallFlying();
     }
 }

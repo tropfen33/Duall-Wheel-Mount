@@ -10,7 +10,7 @@ public interface ItemSubPredicate {
         BuiltInRegistries.ITEM_SUB_PREDICATE_TYPE.byNameCodec(), ItemSubPredicate.Type::codec
     );
 
-    boolean matches(ItemStack p_333984_);
+    boolean matches(ItemStack stack);
 
     public static record Type<T extends ItemSubPredicate>(Codec<T> codec) {
     }

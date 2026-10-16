@@ -29,8 +29,8 @@ public class RepeaterBlock extends DiodeBlock {
         return CODEC;
     }
 
-    public RepeaterBlock(BlockBehaviour.Properties p_55801_) {
-        super(p_55801_);
+    public RepeaterBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(
             this.stateDefinition
                 .any()
@@ -42,40 +42,48 @@ public class RepeaterBlock extends DiodeBlock {
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_55809_, Level p_55810_, BlockPos p_55811_, Player p_55812_, BlockHitResult p_55814_) {
-        if (!p_55812_.getAbilities().mayBuild) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (!player.getAbilities().mayBuild) {
             return InteractionResult.PASS;
         } else {
-            p_55810_.setBlock(p_55811_, p_55809_.cycle(DELAY), 3);
-            return InteractionResult.sidedSuccess(p_55810_.isClientSide);
+            level.setBlock(pos, state.cycle(DELAY), 3);
+            return InteractionResult.sidedSuccess(level.isClientSide);
         }
     }
 
     @Override
-    protected int getDelay(BlockState p_55830_) {
-        return p_55830_.getValue(DELAY) * 2;
+    protected int getDelay(BlockState state) {
+        return state.getValue(DELAY) * 2;
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_55803_) {
-        BlockState blockstate = super.getStateForPlacement(p_55803_);
-        return blockstate.setValue(LOCKED, Boolean.valueOf(this.isLocked(p_55803_.getLevel(), p_55803_.getClickedPos(), blockstate)));
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        BlockState blockstate = super.getStateForPlacement(context);
+        return blockstate.setValue(LOCKED, Boolean.valueOf(this.isLocked(context.getLevel(), context.getClickedPos(), blockstate)));
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_55821_, Direction p_55822_, BlockState p_55823_, LevelAccessor p_55824_, BlockPos p_55825_, BlockPos p_55826_) {
-        if (p_55822_ == Direction.DOWN && !this.canSurviveOn(p_55824_, p_55826_, p_55823_)) {
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (facing == Direction.DOWN && !this.canSurviveOn(level, facingPos, facingState)) {
             return Blocks.AIR.defaultBlockState();
         } else {
-            return !p_55824_.isClientSide() && p_55822_.getAxis() != p_55821_.getValue(FACING).getAxis()
-                ? p_55821_.setValue(LOCKED, Boolean.valueOf(this.isLocked(p_55824_, p_55825_, p_55821_)))
-                : super.updateShape(p_55821_, p_55822_, p_55823_, p_55824_, p_55825_, p_55826_);
+            return !level.isClientSide() && facing.getAxis() != state.getValue(FACING).getAxis()
+                ? state.setValue(LOCKED, Boolean.valueOf(this.isLocked(level, currentPos, state)))
+                : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
         }
     }
 
+    /**
+     * Check if neighboring blocks are locking this diode.
+     */
     @Override
-    public boolean isLocked(LevelReader p_55805_, BlockPos p_55806_, BlockState p_55807_) {
-        return this.getAlternateSignal(p_55805_, p_55806_, p_55807_) > 0;
+    public boolean isLocked(LevelReader level, BlockPos pos, BlockState state) {
+        return this.getAlternateSignal(level, pos, state) > 0;
     }
 
     @Override
@@ -83,27 +91,30 @@ public class RepeaterBlock extends DiodeBlock {
         return true;
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_221964_, Level p_221965_, BlockPos p_221966_, RandomSource p_221967_) {
-        if (p_221964_.getValue(POWERED)) {
-            Direction direction = p_221964_.getValue(FACING);
-            double d0 = (double)p_221966_.getX() + 0.5 + (p_221967_.nextDouble() - 0.5) * 0.2;
-            double d1 = (double)p_221966_.getY() + 0.4 + (p_221967_.nextDouble() - 0.5) * 0.2;
-            double d2 = (double)p_221966_.getZ() + 0.5 + (p_221967_.nextDouble() - 0.5) * 0.2;
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (state.getValue(POWERED)) {
+            Direction direction = state.getValue(FACING);
+            double d0 = (double)pos.getX() + 0.5 + (random.nextDouble() - 0.5) * 0.2;
+            double d1 = (double)pos.getY() + 0.4 + (random.nextDouble() - 0.5) * 0.2;
+            double d2 = (double)pos.getZ() + 0.5 + (random.nextDouble() - 0.5) * 0.2;
             float f = -5.0F;
-            if (p_221967_.nextBoolean()) {
-                f = (float)(p_221964_.getValue(DELAY) * 2 - 1);
+            if (random.nextBoolean()) {
+                f = (float)(state.getValue(DELAY) * 2 - 1);
             }
 
             f /= 16.0F;
             double d3 = (double)(f * (float)direction.getStepX());
             double d4 = (double)(f * (float)direction.getStepZ());
-            p_221965_.addParticle(DustParticleOptions.REDSTONE, d0 + d3, d1, d2 + d4, 0.0, 0.0, 0.0);
+            level.addParticle(DustParticleOptions.REDSTONE, d0 + d3, d1, d2 + d4, 0.0, 0.0, 0.0);
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_55828_) {
-        p_55828_.add(FACING, DELAY, LOCKED, POWERED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, DELAY, LOCKED, POWERED);
     }
 }

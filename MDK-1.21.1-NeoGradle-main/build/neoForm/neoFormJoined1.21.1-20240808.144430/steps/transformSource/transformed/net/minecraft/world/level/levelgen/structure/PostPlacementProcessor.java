@@ -13,12 +13,12 @@ public interface PostPlacementProcessor {
     };
 
     void afterPlace(
-        WorldGenLevel p_226526_,
-        StructureManager p_226527_,
-        ChunkGenerator p_226528_,
-        RandomSource p_226529_,
-        BoundingBox p_226530_,
-        ChunkPos p_226531_,
-        PiecesContainer p_226532_
+        WorldGenLevel level,
+        StructureManager structureManager,
+        ChunkGenerator generator,
+        RandomSource random,
+        BoundingBox box,
+        ChunkPos chunkPos,
+        PiecesContainer pieces
     );
 }

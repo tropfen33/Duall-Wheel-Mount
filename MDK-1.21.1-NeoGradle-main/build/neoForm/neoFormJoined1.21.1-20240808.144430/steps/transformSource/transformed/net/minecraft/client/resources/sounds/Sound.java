@@ -23,23 +23,23 @@ public class Sound implements Weighted<Sound> {
     private final int attenuationDistance;
 
     public Sound(
-        ResourceLocation p_350972_,
-        SampledFloat p_235135_,
-        SampledFloat p_235136_,
-        int p_235137_,
-        Sound.Type p_235138_,
-        boolean p_235139_,
-        boolean p_235140_,
-        int p_235141_
+        ResourceLocation location,
+        SampledFloat volume,
+        SampledFloat pitch,
+        int weight,
+        Sound.Type type,
+        boolean stream,
+        boolean preload,
+        int attenuationDistance
     ) {
-        this.location = p_350972_;
-        this.volume = p_235135_;
-        this.pitch = p_235136_;
-        this.weight = p_235137_;
-        this.type = p_235138_;
-        this.stream = p_235139_;
-        this.preload = p_235140_;
-        this.attenuationDistance = p_235141_;
+        this.location = location;
+        this.volume = volume;
+        this.pitch = pitch;
+        this.weight = weight;
+        this.type = type;
+        this.stream = stream;
+        this.preload = preload;
+        this.attenuationDistance = attenuationDistance;
     }
 
     public ResourceLocation getLocation() {
@@ -63,14 +63,28 @@ public class Sound implements Weighted<Sound> {
         return this.weight;
     }
 
-    public Sound getSound(RandomSource p_235143_) {
+    /**
+     * Retrieves the sound associated with the element.
+     * The sound is obtained using the provided random source.
+     * <p>
+     * @return The sound associated with the element
+     *
+     * @param randomSource the random source used for sound selection
+     */
+    public Sound getSound(RandomSource randomSource) {
         return this;
     }
 
+    /**
+     * Preloads the sound if required by the sound engine.
+     * This method is called to preload the sound associated with the element into the sound engine, ensuring it is ready for playback.
+     *
+     * @param engine the sound engine used for sound preloading
+     */
     @Override
-    public void preloadIfRequired(SoundEngine p_119789_) {
+    public void preloadIfRequired(SoundEngine engine) {
         if (this.preload) {
-            p_119789_.requestPreload(this);
+            engine.requestPreload(this);
         }
     }
 
@@ -102,14 +116,14 @@ public class Sound implements Weighted<Sound> {
 
         private final String name;
 
-        private Type(String p_119809_) {
-            this.name = p_119809_;
+        private Type(String name) {
+            this.name = name;
         }
 
         @Nullable
-        public static Sound.Type getByName(String p_119811_) {
+        public static Sound.Type getByName(String name) {
             for (Sound.Type sound$type : values()) {
-                if (sound$type.name.equals(p_119811_)) {
+                if (sound$type.name.equals(name)) {
                     return sound$type;
                 }
             }

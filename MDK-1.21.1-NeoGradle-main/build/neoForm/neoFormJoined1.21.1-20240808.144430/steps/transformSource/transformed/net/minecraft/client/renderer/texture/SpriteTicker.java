@@ -5,7 +5,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface SpriteTicker extends AutoCloseable {
-    void tickAndUpload(int p_248847_, int p_250486_);
+    void tickAndUpload(int x, int y);
 
     @Override
     void close();

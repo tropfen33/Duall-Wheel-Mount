@@ -28,10 +28,10 @@ public class FunctionArgument implements ArgumentType<FunctionArgument.Result> {
         return new FunctionArgument();
     }
 
-    public FunctionArgument.Result parse(StringReader p_120909_) throws CommandSyntaxException {
-        if (p_120909_.canRead() && p_120909_.peek() == '#') {
-            p_120909_.skip();
-            final ResourceLocation resourcelocation1 = ResourceLocation.read(p_120909_);
+    public FunctionArgument.Result parse(StringReader reader) throws CommandSyntaxException {
+        if (reader.canRead() && reader.peek() == '#') {
+            reader.skip();
+            final ResourceLocation resourcelocation1 = ResourceLocation.read(reader);
             return new FunctionArgument.Result() {
                 @Override
                 public Collection<CommandFunction<CommandSourceStack>> create(CommandContext<CommandSourceStack> p_120943_) throws CommandSyntaxException {
@@ -51,7 +51,7 @@ public class FunctionArgument implements ArgumentType<FunctionArgument.Result> {
                 }
             };
         } else {
-            final ResourceLocation resourcelocation = ResourceLocation.read(p_120909_);
+            final ResourceLocation resourcelocation = ResourceLocation.read(reader);
             return new FunctionArgument.Result() {
                 @Override
                 public Collection<CommandFunction<CommandSourceStack>> create(CommandContext<CommandSourceStack> p_120952_) throws CommandSyntaxException {
@@ -73,33 +73,33 @@ public class FunctionArgument implements ArgumentType<FunctionArgument.Result> {
         }
     }
 
-    static CommandFunction<CommandSourceStack> getFunction(CommandContext<CommandSourceStack> p_120929_, ResourceLocation p_120930_) throws CommandSyntaxException {
-        return p_120929_.getSource().getServer().getFunctions().get(p_120930_).orElseThrow(() -> ERROR_UNKNOWN_FUNCTION.create(p_120930_.toString()));
+    static CommandFunction<CommandSourceStack> getFunction(CommandContext<CommandSourceStack> context, ResourceLocation id) throws CommandSyntaxException {
+        return context.getSource().getServer().getFunctions().get(id).orElseThrow(() -> ERROR_UNKNOWN_FUNCTION.create(id.toString()));
     }
 
-    static Collection<CommandFunction<CommandSourceStack>> getFunctionTag(CommandContext<CommandSourceStack> p_235274_, ResourceLocation p_235275_) throws CommandSyntaxException {
-        Collection<CommandFunction<CommandSourceStack>> collection = p_235274_.getSource().getServer().getFunctions().getTag(p_235275_);
+    static Collection<CommandFunction<CommandSourceStack>> getFunctionTag(CommandContext<CommandSourceStack> context, ResourceLocation id) throws CommandSyntaxException {
+        Collection<CommandFunction<CommandSourceStack>> collection = context.getSource().getServer().getFunctions().getTag(id);
         if (collection == null) {
-            throw ERROR_UNKNOWN_TAG.create(p_235275_.toString());
+            throw ERROR_UNKNOWN_TAG.create(id.toString());
         } else {
             return collection;
         }
     }
 
-    public static Collection<CommandFunction<CommandSourceStack>> getFunctions(CommandContext<CommandSourceStack> p_120911_, String p_120912_) throws CommandSyntaxException {
-        return p_120911_.getArgument(p_120912_, FunctionArgument.Result.class).create(p_120911_);
+    public static Collection<CommandFunction<CommandSourceStack>> getFunctions(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
+        return context.getArgument(name, FunctionArgument.Result.class).create(context);
     }
 
     public static Pair<ResourceLocation, Either<CommandFunction<CommandSourceStack>, Collection<CommandFunction<CommandSourceStack>>>> getFunctionOrTag(
-        CommandContext<CommandSourceStack> p_120921_, String p_120922_
+        CommandContext<CommandSourceStack> context, String name
     ) throws CommandSyntaxException {
-        return p_120921_.getArgument(p_120922_, FunctionArgument.Result.class).unwrap(p_120921_);
+        return context.getArgument(name, FunctionArgument.Result.class).unwrap(context);
     }
 
     public static Pair<ResourceLocation, Collection<CommandFunction<CommandSourceStack>>> getFunctionCollection(
-        CommandContext<CommandSourceStack> p_314719_, String p_314716_
+        CommandContext<CommandSourceStack> context, String name
     ) throws CommandSyntaxException {
-        return p_314719_.getArgument(p_314716_, FunctionArgument.Result.class).unwrapToCollection(p_314719_);
+        return context.getArgument(name, FunctionArgument.Result.class).unwrapToCollection(context);
     }
 
     @Override
@@ -108,12 +108,12 @@ public class FunctionArgument implements ArgumentType<FunctionArgument.Result> {
     }
 
     public interface Result {
-        Collection<CommandFunction<CommandSourceStack>> create(CommandContext<CommandSourceStack> p_120955_) throws CommandSyntaxException;
+        Collection<CommandFunction<CommandSourceStack>> create(CommandContext<CommandSourceStack> context) throws CommandSyntaxException;
 
         Pair<ResourceLocation, Either<CommandFunction<CommandSourceStack>, Collection<CommandFunction<CommandSourceStack>>>> unwrap(
-            CommandContext<CommandSourceStack> p_120956_
+            CommandContext<CommandSourceStack> context
         ) throws CommandSyntaxException;
 
-        Pair<ResourceLocation, Collection<CommandFunction<CommandSourceStack>>> unwrapToCollection(CommandContext<CommandSourceStack> p_314714_) throws CommandSyntaxException;
+        Pair<ResourceLocation, Collection<CommandFunction<CommandSourceStack>>> unwrapToCollection(CommandContext<CommandSourceStack> context) throws CommandSyntaxException;
     }
 }

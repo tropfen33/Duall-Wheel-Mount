@@ -19,8 +19,8 @@ import net.minecraft.world.level.block.Blocks;
 public class GlowSquid extends Squid {
     private static final EntityDataAccessor<Integer> DATA_DARK_TICKS_REMAINING = SynchedEntityData.defineId(GlowSquid.class, EntityDataSerializers.INT);
 
-    public GlowSquid(EntityType<? extends GlowSquid> p_147111_, Level p_147112_) {
-        super(p_147111_, p_147112_);
+    public GlowSquid(EntityType<? extends GlowSquid> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
@@ -29,9 +29,9 @@ public class GlowSquid extends Squid {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326482_) {
-        super.defineSynchedData(p_326482_);
-        p_326482_.define(DATA_DARK_TICKS_REMAINING, 0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_DARK_TICKS_REMAINING, 0);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class GlowSquid extends Squid {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_147124_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.GLOW_SQUID_HURT;
     }
 
@@ -55,15 +55,18 @@ public class GlowSquid extends Squid {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_147122_) {
-        super.addAdditionalSaveData(p_147122_);
-        p_147122_.putInt("DarkTicksRemaining", this.getDarkTicksRemaining());
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("DarkTicksRemaining", this.getDarkTicksRemaining());
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_147117_) {
-        super.readAdditionalSaveData(p_147117_);
-        this.setDarkTicks(p_147117_.getInt("DarkTicksRemaining"));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.setDarkTicks(compound.getInt("DarkTicksRemaining"));
     }
 
     @Override
@@ -77,9 +80,12 @@ public class GlowSquid extends Squid {
         this.level().addParticle(ParticleTypes.GLOW, this.getRandomX(0.6), this.getRandomY(), this.getRandomZ(0.6), 0.0, 0.0, 0.0);
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_147114_, float p_147115_) {
-        boolean flag = super.hurt(p_147114_, p_147115_);
+    public boolean hurt(DamageSource source, float amount) {
+        boolean flag = super.hurt(source, amount);
         if (flag) {
             this.setDarkTicks(100);
         }
@@ -87,8 +93,8 @@ public class GlowSquid extends Squid {
         return flag;
     }
 
-    private void setDarkTicks(int p_147120_) {
-        this.entityData.set(DATA_DARK_TICKS_REMAINING, p_147120_);
+    private void setDarkTicks(int darkTicks) {
+        this.entityData.set(DATA_DARK_TICKS_REMAINING, darkTicks);
     }
 
     public int getDarkTicksRemaining() {
@@ -96,10 +102,10 @@ public class GlowSquid extends Squid {
     }
 
     public static boolean checkGlowSquidSpawnRules(
-        EntityType<? extends LivingEntity> p_217018_, ServerLevelAccessor p_217019_, MobSpawnType p_217020_, BlockPos p_217021_, RandomSource p_217022_
+        EntityType<? extends LivingEntity> glowSquid, ServerLevelAccessor level, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        return p_217021_.getY() <= p_217019_.getSeaLevel() - 33
-            && p_217019_.getRawBrightness(p_217021_, 0) == 0
-            && p_217019_.getBlockState(p_217021_).is(Blocks.WATER);
+        return pos.getY() <= level.getSeaLevel() - 33
+            && level.getRawBrightness(pos, 0) == 0
+            && level.getBlockState(pos).is(Blocks.WATER);
     }
 }

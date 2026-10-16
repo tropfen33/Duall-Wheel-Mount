@@ -22,23 +22,23 @@ public class CarvingContext extends WorldGenerationContext {
     private final SurfaceRules.RuleSource surfaceRule;
 
     public CarvingContext(
-        NoiseBasedChunkGenerator p_224845_,
-        RegistryAccess p_224846_,
-        LevelHeightAccessor p_224847_,
-        NoiseChunk p_224848_,
-        RandomState p_224849_,
-        SurfaceRules.RuleSource p_224850_
+        NoiseBasedChunkGenerator generator,
+        RegistryAccess registryAccess,
+        LevelHeightAccessor level,
+        NoiseChunk noiseChunk,
+        RandomState randomState,
+        SurfaceRules.RuleSource surfaceRule
     ) {
-        super(p_224845_, p_224847_);
-        this.registryAccess = p_224846_;
-        this.noiseChunk = p_224848_;
-        this.randomState = p_224849_;
-        this.surfaceRule = p_224850_;
+        super(generator, level);
+        this.registryAccess = registryAccess;
+        this.noiseChunk = noiseChunk;
+        this.randomState = randomState;
+        this.surfaceRule = surfaceRule;
     }
 
     @Deprecated
-    public Optional<BlockState> topMaterial(Function<BlockPos, Holder<Biome>> p_190647_, ChunkAccess p_190648_, BlockPos p_190649_, boolean p_190650_) {
-        return this.randomState.surfaceSystem().topMaterial(this.surfaceRule, this, p_190647_, p_190648_, this.noiseChunk, p_190649_, p_190650_);
+    public Optional<BlockState> topMaterial(Function<BlockPos, Holder<Biome>> biomeMapper, ChunkAccess access, BlockPos pos, boolean hasFluid) {
+        return this.randomState.surfaceSystem().topMaterial(this.surfaceRule, this, biomeMapper, access, this.noiseChunk, pos, hasFluid);
     }
 
     @Deprecated

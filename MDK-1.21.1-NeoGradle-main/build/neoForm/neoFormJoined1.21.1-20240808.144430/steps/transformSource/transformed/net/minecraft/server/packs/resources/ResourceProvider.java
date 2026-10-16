@@ -12,21 +12,21 @@ import net.minecraft.resources.ResourceLocation;
 public interface ResourceProvider {
     ResourceProvider EMPTY = p_325641_ -> Optional.empty();
 
-    Optional<Resource> getResource(ResourceLocation p_215592_);
+    Optional<Resource> getResource(ResourceLocation location);
 
-    default Resource getResourceOrThrow(ResourceLocation p_215594_) throws FileNotFoundException {
-        return this.getResource(p_215594_).orElseThrow(() -> new FileNotFoundException(p_215594_.toString()));
+    default Resource getResourceOrThrow(ResourceLocation location) throws FileNotFoundException {
+        return this.getResource(location).orElseThrow(() -> new FileNotFoundException(location.toString()));
     }
 
-    default InputStream open(ResourceLocation p_215596_) throws IOException {
-        return this.getResourceOrThrow(p_215596_).open();
+    default InputStream open(ResourceLocation location) throws IOException {
+        return this.getResourceOrThrow(location).open();
     }
 
-    default BufferedReader openAsReader(ResourceLocation p_215598_) throws IOException {
-        return this.getResourceOrThrow(p_215598_).openAsReader();
+    default BufferedReader openAsReader(ResourceLocation location) throws IOException {
+        return this.getResourceOrThrow(location).openAsReader();
     }
 
-    static ResourceProvider fromMap(Map<ResourceLocation, Resource> p_251819_) {
-        return p_248274_ -> Optional.ofNullable(p_251819_.get(p_248274_));
+    static ResourceProvider fromMap(Map<ResourceLocation, Resource> resources) {
+        return p_248274_ -> Optional.ofNullable(resources.get(p_248274_));
     }
 }

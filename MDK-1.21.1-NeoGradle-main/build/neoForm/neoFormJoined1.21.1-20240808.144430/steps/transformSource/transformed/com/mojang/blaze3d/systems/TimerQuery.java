@@ -45,8 +45,8 @@ public class TimerQuery {
         private final int queryName;
         private long result;
 
-        FrameProfile(int p_231148_) {
-            this.queryName = p_231148_;
+        FrameProfile(int queryName) {
+            this.queryName = queryName;
         }
 
         public void cancel() {

@@ -63,7 +63,7 @@ public class FunctionCommand {
         }
     };
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_137715_) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         LiteralArgumentBuilder<CommandSourceStack> literalargumentbuilder = Commands.literal("with");
 
         for (DataCommands.DataProvider datacommands$dataprovider : DataCommands.SOURCE_PROVIDERS) {
@@ -80,7 +80,7 @@ public class FunctionCommand {
                 })));
         }
 
-        p_137715_.register(
+        dispatcher.register(
             Commands.literal("function")
                 .requires(p_137722_ -> p_137722_.hasPermission(2))
                 .then(
@@ -100,8 +100,8 @@ public class FunctionCommand {
         );
     }
 
-    static CompoundTag getArgumentTag(NbtPathArgument.NbtPath p_295114_, DataAccessor p_296132_) throws CommandSyntaxException {
-        Tag tag = DataCommands.getSingleTag(p_295114_, p_296132_);
+    static CompoundTag getArgumentTag(NbtPathArgument.NbtPath nbtPath, DataAccessor dataAccessor) throws CommandSyntaxException {
+        Tag tag = DataCommands.getSingleTag(nbtPath, dataAccessor);
         if (tag instanceof CompoundTag) {
             return (CompoundTag)tag;
         } else {
@@ -109,96 +109,96 @@ public class FunctionCommand {
         }
     }
 
-    public static CommandSourceStack modifySenderForExecution(CommandSourceStack p_305783_) {
-        return p_305783_.withSuppressedOutput().withMaximumPermission(2);
+    public static CommandSourceStack modifySenderForExecution(CommandSourceStack source) {
+        return source.withSuppressedOutput().withMaximumPermission(2);
     }
 
     public static <T extends ExecutionCommandSource<T>> void queueFunctions(
-        Collection<CommandFunction<T>> p_305938_,
-        @Nullable CompoundTag p_306214_,
-        T p_306048_,
-        T p_305876_,
-        ExecutionControl<T> p_305902_,
-        FunctionCommand.Callbacks<T> p_306230_,
-        ChainModifiers p_309589_
+        Collection<CommandFunction<T>> functions,
+        @Nullable CompoundTag arguments,
+        T originalSource,
+        T source,
+        ExecutionControl<T> executionControl,
+        FunctionCommand.Callbacks<T> callbacks,
+        ChainModifiers chainModifiers
     ) throws CommandSyntaxException {
-        if (p_309589_.isReturn()) {
-            queueFunctionsAsReturn(p_305938_, p_306214_, p_306048_, p_305876_, p_305902_, p_306230_);
+        if (chainModifiers.isReturn()) {
+            queueFunctionsAsReturn(functions, arguments, originalSource, source, executionControl, callbacks);
         } else {
-            queueFunctionsNoReturn(p_305938_, p_306214_, p_306048_, p_305876_, p_305902_, p_306230_);
+            queueFunctionsNoReturn(functions, arguments, originalSource, source, executionControl, callbacks);
         }
     }
 
     private static <T extends ExecutionCommandSource<T>> void instantiateAndQueueFunctions(
-        @Nullable CompoundTag p_309636_,
-        ExecutionControl<T> p_309536_,
-        CommandDispatcher<T> p_309639_,
-        T p_309605_,
-        CommandFunction<T> p_309610_,
-        ResourceLocation p_309719_,
-        CommandResultCallback p_309544_,
-        boolean p_309542_
+        @Nullable CompoundTag arguments,
+        ExecutionControl<T> executionControl,
+        CommandDispatcher<T> dispatcher,
+        T source,
+        CommandFunction<T> function,
+        ResourceLocation functionId,
+        CommandResultCallback resultCallback,
+        boolean returnParentFrame
     ) throws CommandSyntaxException {
         try {
-            InstantiatedFunction<T> instantiatedfunction = p_309610_.instantiate(p_309636_, p_309639_);
-            p_309536_.queueNext(new CallFunction<>(instantiatedfunction, p_309544_, p_309542_).bind(p_309605_));
+            InstantiatedFunction<T> instantiatedfunction = function.instantiate(arguments, dispatcher);
+            executionControl.queueNext(new CallFunction<>(instantiatedfunction, resultCallback, returnParentFrame).bind(source));
         } catch (FunctionInstantiationException functioninstantiationexception) {
-            throw ERROR_FUNCTION_INSTANTATION_FAILURE.create(p_309719_, functioninstantiationexception.messageComponent());
+            throw ERROR_FUNCTION_INSTANTATION_FAILURE.create(functionId, functioninstantiationexception.messageComponent());
         }
     }
 
     private static <T extends ExecutionCommandSource<T>> CommandResultCallback decorateOutputIfNeeded(
-        T p_309706_, FunctionCommand.Callbacks<T> p_309672_, ResourceLocation p_309690_, CommandResultCallback p_309608_
+        T source, FunctionCommand.Callbacks<T> callbacks, ResourceLocation function, CommandResultCallback resultCallback
     ) {
-        return p_309706_.isSilent() ? p_309608_ : (p_315913_, p_315914_) -> {
-            p_309672_.signalResult(p_309706_, p_309690_, p_315914_);
-            p_309608_.onResult(p_315913_, p_315914_);
+        return source.isSilent() ? resultCallback : (p_315913_, p_315914_) -> {
+            callbacks.signalResult(source, function, p_315914_);
+            resultCallback.onResult(p_315913_, p_315914_);
         };
     }
 
     private static <T extends ExecutionCommandSource<T>> void queueFunctionsAsReturn(
-        Collection<CommandFunction<T>> p_309534_,
-        @Nullable CompoundTag p_309696_,
-        T p_309655_,
-        T p_309547_,
-        ExecutionControl<T> p_309663_,
-        FunctionCommand.Callbacks<T> p_309585_
+        Collection<CommandFunction<T>> functions,
+        @Nullable CompoundTag arguments,
+        T originalSource,
+        T source,
+        ExecutionControl<T> exectutionControl,
+        FunctionCommand.Callbacks<T> callbacks
     ) throws CommandSyntaxException {
-        CommandDispatcher<T> commanddispatcher = p_309655_.dispatcher();
-        T t = p_309547_.clearCallbacks();
-        CommandResultCallback commandresultcallback = CommandResultCallback.chain(p_309655_.callback(), p_309663_.currentFrame().returnValueConsumer());
+        CommandDispatcher<T> commanddispatcher = originalSource.dispatcher();
+        T t = source.clearCallbacks();
+        CommandResultCallback commandresultcallback = CommandResultCallback.chain(originalSource.callback(), exectutionControl.currentFrame().returnValueConsumer());
 
-        for (CommandFunction<T> commandfunction : p_309534_) {
+        for (CommandFunction<T> commandfunction : functions) {
             ResourceLocation resourcelocation = commandfunction.id();
-            CommandResultCallback commandresultcallback1 = decorateOutputIfNeeded(p_309655_, p_309585_, resourcelocation, commandresultcallback);
-            instantiateAndQueueFunctions(p_309696_, p_309663_, commanddispatcher, t, commandfunction, resourcelocation, commandresultcallback1, true);
+            CommandResultCallback commandresultcallback1 = decorateOutputIfNeeded(originalSource, callbacks, resourcelocation, commandresultcallback);
+            instantiateAndQueueFunctions(arguments, exectutionControl, commanddispatcher, t, commandfunction, resourcelocation, commandresultcallback1, true);
         }
 
-        p_309663_.queueNext(FallthroughTask.instance());
+        exectutionControl.queueNext(FallthroughTask.instance());
     }
 
     private static <T extends ExecutionCommandSource<T>> void queueFunctionsNoReturn(
-        Collection<CommandFunction<T>> p_309573_,
-        @Nullable CompoundTag p_309637_,
-        T p_309693_,
-        T p_309593_,
-        ExecutionControl<T> p_309574_,
-        FunctionCommand.Callbacks<T> p_309570_
+        Collection<CommandFunction<T>> functions,
+        @Nullable CompoundTag arguments,
+        T originalSource,
+        T source,
+        ExecutionControl<T> executionControl,
+        FunctionCommand.Callbacks<T> callbacks
     ) throws CommandSyntaxException {
-        CommandDispatcher<T> commanddispatcher = p_309693_.dispatcher();
-        T t = p_309593_.clearCallbacks();
-        CommandResultCallback commandresultcallback = p_309693_.callback();
-        if (!p_309573_.isEmpty()) {
-            if (p_309573_.size() == 1) {
-                CommandFunction<T> commandfunction = p_309573_.iterator().next();
+        CommandDispatcher<T> commanddispatcher = originalSource.dispatcher();
+        T t = source.clearCallbacks();
+        CommandResultCallback commandresultcallback = originalSource.callback();
+        if (!functions.isEmpty()) {
+            if (functions.size() == 1) {
+                CommandFunction<T> commandfunction = functions.iterator().next();
                 ResourceLocation resourcelocation = commandfunction.id();
-                CommandResultCallback commandresultcallback1 = decorateOutputIfNeeded(p_309693_, p_309570_, resourcelocation, commandresultcallback);
-                instantiateAndQueueFunctions(p_309637_, p_309574_, commanddispatcher, t, commandfunction, resourcelocation, commandresultcallback1, false);
+                CommandResultCallback commandresultcallback1 = decorateOutputIfNeeded(originalSource, callbacks, resourcelocation, commandresultcallback);
+                instantiateAndQueueFunctions(arguments, executionControl, commanddispatcher, t, commandfunction, resourcelocation, commandresultcallback1, false);
             } else if (commandresultcallback == CommandResultCallback.EMPTY) {
-                for (CommandFunction<T> commandfunction1 : p_309573_) {
+                for (CommandFunction<T> commandfunction1 : functions) {
                     ResourceLocation resourcelocation2 = commandfunction1.id();
-                    CommandResultCallback commandresultcallback2 = decorateOutputIfNeeded(p_309693_, p_309570_, resourcelocation2, commandresultcallback);
-                    instantiateAndQueueFunctions(p_309637_, p_309574_, commanddispatcher, t, commandfunction1, resourcelocation2, commandresultcallback2, false);
+                    CommandResultCallback commandresultcallback2 = decorateOutputIfNeeded(originalSource, callbacks, resourcelocation2, commandresultcallback);
+                    instantiateAndQueueFunctions(arguments, executionControl, commanddispatcher, t, commandfunction1, resourcelocation2, commandresultcallback2, false);
                 }
             } else {
                 class Accumulator {
@@ -214,13 +214,13 @@ public class FunctionCommand {
                 Accumulator functioncommand$1accumulator = new Accumulator();
                 CommandResultCallback commandresultcallback4 = (p_309467_, p_309468_) -> functioncommand$1accumulator.add(p_309468_);
 
-                for (CommandFunction<T> commandfunction2 : p_309573_) {
+                for (CommandFunction<T> commandfunction2 : functions) {
                     ResourceLocation resourcelocation1 = commandfunction2.id();
-                    CommandResultCallback commandresultcallback3 = decorateOutputIfNeeded(p_309693_, p_309570_, resourcelocation1, commandresultcallback4);
-                    instantiateAndQueueFunctions(p_309637_, p_309574_, commanddispatcher, t, commandfunction2, resourcelocation1, commandresultcallback3, false);
+                    CommandResultCallback commandresultcallback3 = decorateOutputIfNeeded(originalSource, callbacks, resourcelocation1, commandresultcallback4);
+                    instantiateAndQueueFunctions(arguments, executionControl, commanddispatcher, t, commandfunction2, resourcelocation1, commandresultcallback3, false);
                 }
 
-                p_309574_.queueNext((p_309471_, p_309472_) -> {
+                executionControl.queueNext((p_309471_, p_309472_) -> {
                     if (functioncommand$1accumulator.anyResult) {
                         commandresultcallback.onSuccess(functioncommand$1accumulator.sum);
                     }
@@ -230,32 +230,32 @@ public class FunctionCommand {
     }
 
     public interface Callbacks<T> {
-        void signalResult(T p_306084_, ResourceLocation p_306003_, int p_305926_);
+        void signalResult(T source, ResourceLocation function, int commands);
     }
 
     abstract static class FunctionCustomExecutor
         extends CustomCommandExecutor.WithErrorHandling<CommandSourceStack>
         implements CustomCommandExecutor.CommandAdapter<CommandSourceStack> {
         @Nullable
-        protected abstract CompoundTag arguments(CommandContext<CommandSourceStack> p_306010_) throws CommandSyntaxException;
+        protected abstract CompoundTag arguments(CommandContext<CommandSourceStack> context) throws CommandSyntaxException;
 
         public void runGuarded(
-            CommandSourceStack p_305800_, ContextChain<CommandSourceStack> p_305848_, ChainModifiers p_309662_, ExecutionControl<CommandSourceStack> p_306013_
+            CommandSourceStack source, ContextChain<CommandSourceStack> contextChain, ChainModifiers chainModifiers, ExecutionControl<CommandSourceStack> executionControl
         ) throws CommandSyntaxException {
-            CommandContext<CommandSourceStack> commandcontext = p_305848_.getTopContext().copyFor(p_305800_);
+            CommandContext<CommandSourceStack> commandcontext = contextChain.getTopContext().copyFor(source);
             Pair<ResourceLocation, Collection<CommandFunction<CommandSourceStack>>> pair = FunctionArgument.getFunctionCollection(commandcontext, "name");
             Collection<CommandFunction<CommandSourceStack>> collection = pair.getSecond();
             if (collection.isEmpty()) {
                 throw FunctionCommand.ERROR_NO_FUNCTIONS.create(Component.translationArg(pair.getFirst()));
             } else {
                 CompoundTag compoundtag = this.arguments(commandcontext);
-                CommandSourceStack commandsourcestack = FunctionCommand.modifySenderForExecution(p_305800_);
+                CommandSourceStack commandsourcestack = FunctionCommand.modifySenderForExecution(source);
                 if (collection.size() == 1) {
-                    p_305800_.sendSuccess(
+                    source.sendSuccess(
                         () -> Component.translatable("commands.function.scheduled.single", Component.translationArg(collection.iterator().next().id())), true
                     );
                 } else {
-                    p_305800_.sendSuccess(
+                    source.sendSuccess(
                         () -> Component.translatable(
                                 "commands.function.scheduled.multiple",
                                 ComponentUtils.formatList(collection.stream().map(CommandFunction::id).toList(), Component::translationArg)
@@ -265,7 +265,7 @@ public class FunctionCommand {
                 }
 
                 FunctionCommand.queueFunctions(
-                    collection, compoundtag, p_305800_, commandsourcestack, p_306013_, FunctionCommand.FULL_CONTEXT_CALLBACKS, p_309662_
+                    collection, compoundtag, source, commandsourcestack, executionControl, FunctionCommand.FULL_CONTEXT_CALLBACKS, chainModifiers
                 );
             }
         }

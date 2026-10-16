@@ -29,8 +29,8 @@ public class Endermite extends Monster {
     private static final int MAX_LIFE = 2400;
     private int life;
 
-    public Endermite(EntityType<? extends Endermite> p_32591_, Level p_32592_) {
-        super(p_32591_, p_32592_);
+    public Endermite(EntityType<? extends Endermite> entityType, Level level) {
+        super(entityType, level);
         this.xpReward = 3;
     }
 
@@ -61,7 +61,7 @@ public class Endermite extends Monster {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_32615_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.ENDERMITE_HURT;
     }
 
@@ -71,20 +71,23 @@ public class Endermite extends Monster {
     }
 
     @Override
-    protected void playStepSound(BlockPos p_32607_, BlockState p_32608_) {
+    protected void playStepSound(BlockPos pos, BlockState block) {
         this.playSound(SoundEvents.ENDERMITE_STEP, 0.15F, 1.0F);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_32595_) {
-        super.readAdditionalSaveData(p_32595_);
-        this.life = p_32595_.getInt("Lifetime");
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.life = compound.getInt("Lifetime");
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_32610_) {
-        super.addAdditionalSaveData(p_32610_);
-        p_32610_.putInt("Lifetime", this.life);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("Lifetime", this.life);
     }
 
     @Override
@@ -93,10 +96,13 @@ public class Endermite extends Monster {
         super.tick();
     }
 
+    /**
+     * Set the body Y rotation of the entity.
+     */
     @Override
-    public void setYBodyRot(float p_32621_) {
-        this.setYRot(p_32621_);
-        super.setYBodyRot(p_32621_);
+    public void setYBodyRot(float offset) {
+        this.setYRot(offset);
+        super.setYBodyRot(offset);
     }
 
     @Override
@@ -127,11 +133,11 @@ public class Endermite extends Monster {
     }
 
     public static boolean checkEndermiteSpawnRules(
-        EntityType<Endermite> p_218969_, LevelAccessor p_218970_, MobSpawnType p_218971_, BlockPos p_218972_, RandomSource p_218973_
+        EntityType<Endermite> endermite, LevelAccessor serverLevel, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        if (checkAnyLightMonsterSpawnRules(p_218969_, p_218970_, p_218971_, p_218972_, p_218973_)) {
-            Player player = p_218970_.getNearestPlayer(
-                (double)p_218972_.getX() + 0.5, (double)p_218972_.getY() + 0.5, (double)p_218972_.getZ() + 0.5, 5.0, true
+        if (checkAnyLightMonsterSpawnRules(endermite, serverLevel, spawnType, pos, random)) {
+            Player player = serverLevel.getNearestPlayer(
+                (double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, 5.0, true
             );
             return player == null;
         } else {

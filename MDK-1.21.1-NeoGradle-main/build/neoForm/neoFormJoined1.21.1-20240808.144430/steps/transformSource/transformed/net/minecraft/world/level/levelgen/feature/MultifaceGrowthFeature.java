@@ -11,16 +11,23 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.configurations.MultifaceGrowthConfiguration;
 
 public class MultifaceGrowthFeature extends Feature<MultifaceGrowthConfiguration> {
-    public MultifaceGrowthFeature(Codec<MultifaceGrowthConfiguration> p_225156_) {
-        super(p_225156_);
+    public MultifaceGrowthFeature(Codec<MultifaceGrowthConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<MultifaceGrowthConfiguration> p_225165_) {
-        WorldGenLevel worldgenlevel = p_225165_.level();
-        BlockPos blockpos = p_225165_.origin();
-        RandomSource randomsource = p_225165_.random();
-        MultifaceGrowthConfiguration multifacegrowthconfiguration = p_225165_.config();
+    public boolean place(FeaturePlaceContext<MultifaceGrowthConfiguration> context) {
+        WorldGenLevel worldgenlevel = context.level();
+        BlockPos blockpos = context.origin();
+        RandomSource randomsource = context.random();
+        MultifaceGrowthConfiguration multifacegrowthconfiguration = context.config();
         if (!isAirOrWater(worldgenlevel.getBlockState(blockpos))) {
             return false;
         } else {
@@ -53,27 +60,27 @@ public class MultifaceGrowthFeature extends Feature<MultifaceGrowthConfiguration
     }
 
     public static boolean placeGrowthIfPossible(
-        WorldGenLevel p_225158_,
-        BlockPos p_225159_,
-        BlockState p_225160_,
-        MultifaceGrowthConfiguration p_225161_,
-        RandomSource p_225162_,
-        List<Direction> p_225163_
+        WorldGenLevel level,
+        BlockPos pos,
+        BlockState state,
+        MultifaceGrowthConfiguration config,
+        RandomSource random,
+        List<Direction> directions
     ) {
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = p_225159_.mutable();
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = pos.mutable();
 
-        for (Direction direction : p_225163_) {
-            BlockState blockstate = p_225158_.getBlockState(blockpos$mutableblockpos.setWithOffset(p_225159_, direction));
-            if (blockstate.is(p_225161_.canBePlacedOn)) {
-                BlockState blockstate1 = p_225161_.placeBlock.getStateForPlacement(p_225160_, p_225158_, p_225159_, direction);
+        for (Direction direction : directions) {
+            BlockState blockstate = level.getBlockState(blockpos$mutableblockpos.setWithOffset(pos, direction));
+            if (blockstate.is(config.canBePlacedOn)) {
+                BlockState blockstate1 = config.placeBlock.getStateForPlacement(state, level, pos, direction);
                 if (blockstate1 == null) {
                     return false;
                 }
 
-                p_225158_.setBlock(p_225159_, blockstate1, 3);
-                p_225158_.getChunk(p_225159_).markPosForPostprocessing(p_225159_);
-                if (p_225162_.nextFloat() < p_225161_.chanceOfSpreading) {
-                    p_225161_.placeBlock.getSpreader().spreadFromFaceTowardRandomDirection(blockstate1, p_225158_, p_225159_, direction, p_225162_, true);
+                level.setBlock(pos, blockstate1, 3);
+                level.getChunk(pos).markPosForPostprocessing(pos);
+                if (random.nextFloat() < config.chanceOfSpreading) {
+                    config.placeBlock.getSpreader().spreadFromFaceTowardRandomDirection(blockstate1, level, pos, direction, random, true);
                 }
 
                 return true;
@@ -83,7 +90,7 @@ public class MultifaceGrowthFeature extends Feature<MultifaceGrowthConfiguration
         return false;
     }
 
-    private static boolean isAirOrWater(BlockState p_225167_) {
-        return p_225167_.isAir() || p_225167_.is(Blocks.WATER);
+    private static boolean isAirOrWater(BlockState state) {
+        return state.isAir() || state.is(Blocks.WATER);
     }
 }

@@ -20,8 +20,8 @@ public class V1451_6 extends NamespacedSchema {
     public static final String SPECIAL_OBJECTIVE_MARKER = "_special";
     protected static final HookFunction UNPACK_OBJECTIVE_ID = new HookFunction() {
         @Override
-        public <T> T apply(DynamicOps<T> p_181096_, T p_181097_) {
-            Dynamic<T> dynamic = new Dynamic<>(p_181096_, p_181097_);
+        public <T> T apply(DynamicOps<T> ops, T value) {
+            Dynamic<T> dynamic = new Dynamic<>(ops, value);
             return DataFixUtils.orElse(
                     dynamic.get("CriteriaName")
                         .asString()
@@ -60,8 +60,8 @@ public class V1451_6 extends NamespacedSchema {
     };
     protected static final HookFunction REPACK_OBJECTIVE_ID = new HookFunction() {
         @Override
-        public <T> T apply(DynamicOps<T> p_181105_, T p_181106_) {
-            Dynamic<T> dynamic = new Dynamic<>(p_181105_, p_181106_);
+        public <T> T apply(DynamicOps<T> ops, T value) {
+            Dynamic<T> dynamic = new Dynamic<>(ops, value);
             Optional<Dynamic<T>> optional = dynamic.get("CriteriaType")
                 .get()
                 .result()
@@ -84,44 +84,44 @@ public class V1451_6 extends NamespacedSchema {
         }
     };
 
-    public V1451_6(int p_17532_, Schema p_17533_) {
-        super(p_17532_, p_17533_);
+    public V1451_6(int versionKey, Schema parent) {
+        super(versionKey, parent);
     }
 
     @Override
-    public void registerTypes(Schema p_17540_, Map<String, Supplier<TypeTemplate>> p_17541_, Map<String, Supplier<TypeTemplate>> p_17542_) {
-        super.registerTypes(p_17540_, p_17541_, p_17542_);
-        Supplier<TypeTemplate> supplier = () -> DSL.compoundList(References.ITEM_NAME.in(p_17540_), DSL.constType(DSL.intType()));
-        p_17540_.registerType(
+    public void registerTypes(Schema schema, Map<String, Supplier<TypeTemplate>> entityTypes, Map<String, Supplier<TypeTemplate>> blockEntityTypes) {
+        super.registerTypes(schema, entityTypes, blockEntityTypes);
+        Supplier<TypeTemplate> supplier = () -> DSL.compoundList(References.ITEM_NAME.in(schema), DSL.constType(DSL.intType()));
+        schema.registerType(
             false,
             References.STATS,
             () -> DSL.optionalFields(
                     "stats",
                     DSL.optionalFields(
-                        Pair.of("minecraft:mined", DSL.compoundList(References.BLOCK_NAME.in(p_17540_), DSL.constType(DSL.intType()))),
+                        Pair.of("minecraft:mined", DSL.compoundList(References.BLOCK_NAME.in(schema), DSL.constType(DSL.intType()))),
                         Pair.of("minecraft:crafted", supplier.get()),
                         Pair.of("minecraft:used", supplier.get()),
                         Pair.of("minecraft:broken", supplier.get()),
                         Pair.of("minecraft:picked_up", supplier.get()),
                         Pair.of("minecraft:dropped", supplier.get()),
-                        Pair.of("minecraft:killed", DSL.compoundList(References.ENTITY_NAME.in(p_17540_), DSL.constType(DSL.intType()))),
-                        Pair.of("minecraft:killed_by", DSL.compoundList(References.ENTITY_NAME.in(p_17540_), DSL.constType(DSL.intType()))),
+                        Pair.of("minecraft:killed", DSL.compoundList(References.ENTITY_NAME.in(schema), DSL.constType(DSL.intType()))),
+                        Pair.of("minecraft:killed_by", DSL.compoundList(References.ENTITY_NAME.in(schema), DSL.constType(DSL.intType()))),
                         Pair.of("minecraft:custom", DSL.compoundList(DSL.constType(namespacedString()), DSL.constType(DSL.intType())))
                     )
                 )
         );
-        Map<String, Supplier<TypeTemplate>> map = createCriterionTypes(p_17540_);
-        p_17540_.registerType(
+        Map<String, Supplier<TypeTemplate>> map = createCriterionTypes(schema);
+        schema.registerType(
             false,
             References.OBJECTIVE,
             () -> DSL.hook(DSL.optionalFields("CriteriaType", DSL.taggedChoiceLazy("type", DSL.string(), map)), UNPACK_OBJECTIVE_ID, REPACK_OBJECTIVE_ID)
         );
     }
 
-    protected static Map<String, Supplier<TypeTemplate>> createCriterionTypes(Schema p_181078_) {
-        Supplier<TypeTemplate> supplier = () -> DSL.optionalFields("id", References.ITEM_NAME.in(p_181078_));
-        Supplier<TypeTemplate> supplier1 = () -> DSL.optionalFields("id", References.BLOCK_NAME.in(p_181078_));
-        Supplier<TypeTemplate> supplier2 = () -> DSL.optionalFields("id", References.ENTITY_NAME.in(p_181078_));
+    protected static Map<String, Supplier<TypeTemplate>> createCriterionTypes(Schema schema) {
+        Supplier<TypeTemplate> supplier = () -> DSL.optionalFields("id", References.ITEM_NAME.in(schema));
+        Supplier<TypeTemplate> supplier1 = () -> DSL.optionalFields("id", References.BLOCK_NAME.in(schema));
+        Supplier<TypeTemplate> supplier2 = () -> DSL.optionalFields("id", References.ENTITY_NAME.in(schema));
         Map<String, Supplier<TypeTemplate>> map = Maps.newHashMap();
         map.put("minecraft:mined", supplier1);
         map.put("minecraft:crafted", supplier);
@@ -136,8 +136,8 @@ public class V1451_6 extends NamespacedSchema {
         return map;
     }
 
-    public static String packNamespacedWithDot(String p_294923_) {
-        ResourceLocation resourcelocation = ResourceLocation.tryParse(p_294923_);
-        return resourcelocation != null ? resourcelocation.getNamespace() + "." + resourcelocation.getPath() : p_294923_;
+    public static String packNamespacedWithDot(String namespace) {
+        ResourceLocation resourcelocation = ResourceLocation.tryParse(namespace);
+        return resourcelocation != null ? resourcelocation.getNamespace() + "." + resourcelocation.getPath() : namespace;
     }
 }

@@ -16,9 +16,9 @@ public class ClipboardManager {
     public static final int FORMAT_UNAVAILABLE = 65545;
     private final ByteBuffer clipboardScratchBuffer = BufferUtils.createByteBuffer(8192);
 
-    public String getClipboard(long p_83996_, GLFWErrorCallbackI p_83997_) {
-        GLFWErrorCallback glfwerrorcallback = GLFW.glfwSetErrorCallback(p_83997_);
-        String s = GLFW.glfwGetClipboardString(p_83996_);
+    public String getClipboard(long window, GLFWErrorCallbackI errorCallback) {
+        GLFWErrorCallback glfwerrorcallback = GLFW.glfwSetErrorCallback(errorCallback);
+        String s = GLFW.glfwGetClipboardString(window);
         s = s != null ? StringDecomposer.filterBrokenSurrogates(s) : "";
         GLFWErrorCallback glfwerrorcallback1 = GLFW.glfwSetErrorCallback(glfwerrorcallback);
         if (glfwerrorcallback1 != null) {
@@ -28,24 +28,24 @@ public class ClipboardManager {
         return s;
     }
 
-    private static void pushClipboard(long p_83992_, ByteBuffer p_83993_, byte[] p_83994_) {
-        p_83993_.clear();
-        p_83993_.put(p_83994_);
-        p_83993_.put((byte)0);
-        p_83993_.flip();
-        GLFW.glfwSetClipboardString(p_83992_, p_83993_);
+    private static void pushClipboard(long window, ByteBuffer buffer, byte[] clipboardContent) {
+        buffer.clear();
+        buffer.put(clipboardContent);
+        buffer.put((byte)0);
+        buffer.flip();
+        GLFW.glfwSetClipboardString(window, buffer);
     }
 
-    public void setClipboard(long p_83989_, String p_83990_) {
-        byte[] abyte = p_83990_.getBytes(Charsets.UTF_8);
+    public void setClipboard(long window, String clipboardContent) {
+        byte[] abyte = clipboardContent.getBytes(Charsets.UTF_8);
         int i = abyte.length + 1;
         if (i < this.clipboardScratchBuffer.capacity()) {
-            pushClipboard(p_83989_, this.clipboardScratchBuffer, abyte);
+            pushClipboard(window, this.clipboardScratchBuffer, abyte);
         } else {
             ByteBuffer bytebuffer = MemoryUtil.memAlloc(i);
 
             try {
-                pushClipboard(p_83989_, bytebuffer, abyte);
+                pushClipboard(window, bytebuffer, abyte);
             } finally {
                 MemoryUtil.memFree(bytebuffer);
             }

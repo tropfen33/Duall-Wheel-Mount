@@ -17,10 +17,10 @@ public class ConnectTask extends LongRunningTask {
     private final RealmsServer server;
     private final RealmsServerAddress address;
 
-    public ConnectTask(Screen p_90309_, RealmsServer p_90310_, RealmsServerAddress p_90311_) {
-        this.server = p_90310_;
-        this.address = p_90311_;
-        this.realmsConnect = new RealmsConnect(p_90309_);
+    public ConnectTask(Screen onlineScreen, RealmsServer server, RealmsServerAddress address) {
+        this.server = server;
+        this.address = address;
+        this.realmsConnect = new RealmsConnect(onlineScreen);
     }
 
     @Override

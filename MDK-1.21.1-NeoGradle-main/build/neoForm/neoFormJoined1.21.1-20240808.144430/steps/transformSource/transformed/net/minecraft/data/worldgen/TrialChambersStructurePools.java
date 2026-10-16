@@ -62,18 +62,18 @@ public class TrialChambersStructurePools {
         )
         .build();
 
-    public static String spawner(String p_312677_) {
-        return "trial_chambers/spawner/" + p_312677_;
+    public static String spawner(String name) {
+        return "trial_chambers/spawner/" + name;
     }
 
-    public static void bootstrap(BootstrapContext<StructureTemplatePool> p_321754_) {
-        HolderGetter<StructureTemplatePool> holdergetter = p_321754_.lookup(Registries.TEMPLATE_POOL);
+    public static void bootstrap(BootstrapContext<StructureTemplatePool> context) {
+        HolderGetter<StructureTemplatePool> holdergetter = context.lookup(Registries.TEMPLATE_POOL);
         Holder<StructureTemplatePool> holder = holdergetter.getOrThrow(Pools.EMPTY);
         Holder<StructureTemplatePool> holder1 = holdergetter.getOrThrow(HALLWAY_FALLBACK);
         Holder<StructureTemplatePool> holder2 = holdergetter.getOrThrow(CHAMBER_CAP_FALLBACK);
-        HolderGetter<StructureProcessorList> holdergetter1 = p_321754_.lookup(Registries.PROCESSOR_LIST);
+        HolderGetter<StructureProcessorList> holdergetter1 = context.lookup(Registries.PROCESSOR_LIST);
         Holder<StructureProcessorList> holder3 = holdergetter1.getOrThrow(ProcessorLists.TRIAL_CHAMBERS_COPPER_BULB_DEGRADATION);
-        p_321754_.register(
+        context.register(
             START,
             new StructureTemplatePool(
                 holder,
@@ -85,7 +85,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/chamber/entrance_cap",
             new StructureTemplatePool(
                 holder2,
@@ -94,7 +94,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/chambers/end",
             new StructureTemplatePool(
                 holder1,
@@ -108,7 +108,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/corridor",
             new StructureTemplatePool(
                 holder,
@@ -127,7 +127,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/chamber/addon",
             new StructureTemplatePool(
                 holder,
@@ -147,7 +147,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/chamber/assembly",
             new StructureTemplatePool(
                 holder,
@@ -178,7 +178,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/chamber/eruption",
             new StructureTemplatePool(
                 holder,
@@ -198,7 +198,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/chamber/slanted",
             new StructureTemplatePool(
                 holder,
@@ -223,7 +223,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/chamber/pedestal",
             new StructureTemplatePool(
                 holder,
@@ -247,7 +247,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/corridor/slices",
             new StructureTemplatePool(
                 holder,
@@ -264,7 +264,7 @@ public class TrialChambersStructurePools {
                 StructureTemplatePool.Projection.RIGID
             )
         );
-        p_321754_.register(
+        context.register(
             HALLWAY_FALLBACK,
             new StructureTemplatePool(
                 holder,
@@ -278,7 +278,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/hallway",
             new StructureTemplatePool(
                 holder1,
@@ -312,7 +312,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/corridors/addon/lower",
             new StructureTemplatePool(
                 holder,
@@ -328,7 +328,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/corridors/addon/middle",
             new StructureTemplatePool(
                 holder,
@@ -341,7 +341,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/corridors/addon/middle_upper",
             new StructureTemplatePool(
                 holder,
@@ -357,7 +357,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/atrium",
             new StructureTemplatePool(
                 holder,
@@ -374,7 +374,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/decor",
             new StructureTemplatePool(
                 holder,
@@ -396,7 +396,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/entrance",
             new StructureTemplatePool(
                 holder,
@@ -409,7 +409,7 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/decor/chamber",
             new StructureTemplatePool(
                 holder,
@@ -418,49 +418,49 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/reward/all",
             new StructureTemplatePool(
                 holder, List.of(Pair.of(StructurePoolElement.single("trial_chambers/reward/vault"), 1)), StructureTemplatePool.Projection.RIGID
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/reward/ominous_vault",
             new StructureTemplatePool(
                 holder, List.of(Pair.of(StructurePoolElement.single("trial_chambers/reward/ominous_vault"), 1)), StructureTemplatePool.Projection.RIGID
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/reward/contents/default",
             new StructureTemplatePool(
                 holder, List.of(Pair.of(StructurePoolElement.single("trial_chambers/reward/vault"), 1)), StructureTemplatePool.Projection.RIGID
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/chests/supply",
             new StructureTemplatePool(
                 holder, List.of(Pair.of(StructurePoolElement.single("trial_chambers/chests/connectors/supply"), 1)), StructureTemplatePool.Projection.RIGID
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/chests/contents/supply",
             new StructureTemplatePool(
                 holder, List.of(Pair.of(StructurePoolElement.single("trial_chambers/chests/supply"), 1)), StructureTemplatePool.Projection.RIGID
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/spawner/ranged",
             new StructureTemplatePool(
                 holder, List.of(Pair.of(StructurePoolElement.single("trial_chambers/spawner/connectors/ranged"), 1)), StructureTemplatePool.Projection.RIGID
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/spawner/slow_ranged",
             new StructureTemplatePool(
                 holder,
@@ -469,14 +469,14 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/spawner/melee",
             new StructureTemplatePool(
                 holder, List.of(Pair.of(StructurePoolElement.single("trial_chambers/spawner/connectors/melee"), 1)), StructureTemplatePool.Projection.RIGID
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/spawner/small_melee",
             new StructureTemplatePool(
                 holder,
@@ -485,14 +485,14 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/spawner/breeze",
             new StructureTemplatePool(
                 holder, List.of(Pair.of(StructurePoolElement.single("trial_chambers/spawner/connectors/breeze"), 1)), StructureTemplatePool.Projection.RIGID
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/spawner/all",
             new StructureTemplatePool(
                 holder,
@@ -505,14 +505,14 @@ public class TrialChambersStructurePools {
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/spawner/contents/breeze",
             new StructureTemplatePool(
                 holder, List.of(Pair.of(StructurePoolElement.single("trial_chambers/spawner/breeze/breeze"), 1)), StructureTemplatePool.Projection.RIGID
             )
         );
         Pools.register(
-            p_321754_,
+            context,
             "trial_chambers/dispensers/chamber",
             new StructureTemplatePool(
                 holder,
@@ -525,6 +525,6 @@ public class TrialChambersStructurePools {
                 StructureTemplatePool.Projection.RIGID
             )
         );
-        PoolAliasBindings.registerTargetsAsPools(p_321754_, holder, ALIAS_BINDINGS);
+        PoolAliasBindings.registerTargetsAsPools(context, holder, ALIAS_BINDINGS);
     }
 }

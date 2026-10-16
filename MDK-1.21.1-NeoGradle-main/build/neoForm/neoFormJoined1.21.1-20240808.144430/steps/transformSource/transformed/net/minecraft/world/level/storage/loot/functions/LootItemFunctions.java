@@ -13,6 +13,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
 
+/**
+ * Registry for {@link LootItemFunction}
+ */
 public class LootItemFunctions {
     public static final BiFunction<ItemStack, LootContext, ItemStack> IDENTITY = (p_80760_, p_80761_) -> p_80760_;
     public static final Codec<LootItemFunction> TYPED_CODEC = BuiltInRegistries.LOOT_FUNCTION_TYPE
@@ -73,12 +76,12 @@ public class LootItemFunctions {
         "set_custom_model_data", SetCustomModelDataFunction.CODEC
     );
 
-    private static <T extends LootItemFunction> LootItemFunctionType<T> register(String p_80763_, MapCodec<T> p_338516_) {
-        return Registry.register(BuiltInRegistries.LOOT_FUNCTION_TYPE, ResourceLocation.withDefaultNamespace(p_80763_), new LootItemFunctionType<>(p_338516_));
+    private static <T extends LootItemFunction> LootItemFunctionType<T> register(String name, MapCodec<T> codec) {
+        return Registry.register(BuiltInRegistries.LOOT_FUNCTION_TYPE, ResourceLocation.withDefaultNamespace(name), new LootItemFunctionType<>(codec));
     }
 
-    public static BiFunction<ItemStack, LootContext, ItemStack> compose(List<? extends BiFunction<ItemStack, LootContext, ItemStack>> p_298851_) {
-        List<BiFunction<ItemStack, LootContext, ItemStack>> list = List.copyOf(p_298851_);
+    public static BiFunction<ItemStack, LootContext, ItemStack> compose(List<? extends BiFunction<ItemStack, LootContext, ItemStack>> functions) {
+        List<BiFunction<ItemStack, LootContext, ItemStack>> list = List.copyOf(functions);
 
         return switch (list.size()) {
             case 0 -> IDENTITY;

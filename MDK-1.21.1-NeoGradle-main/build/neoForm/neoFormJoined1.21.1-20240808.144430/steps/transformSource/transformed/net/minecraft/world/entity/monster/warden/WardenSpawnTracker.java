@@ -36,10 +36,10 @@ public class WardenSpawnTracker {
     private int warningLevel;
     private int cooldownTicks;
 
-    public WardenSpawnTracker(int p_219568_, int p_219569_, int p_219570_) {
-        this.ticksSinceLastWarning = p_219568_;
-        this.warningLevel = p_219569_;
-        this.cooldownTicks = p_219570_;
+    public WardenSpawnTracker(int ticksSinceLastWarning, int warningLevel, int cooldownTicks) {
+        this.ticksSinceLastWarning = ticksSinceLastWarning;
+        this.warningLevel = warningLevel;
+        this.cooldownTicks = cooldownTicks;
     }
 
     public void tick() {
@@ -61,13 +61,13 @@ public class WardenSpawnTracker {
         this.cooldownTicks = 0;
     }
 
-    public static OptionalInt tryWarn(ServerLevel p_219578_, BlockPos p_219579_, ServerPlayer p_219580_) {
-        if (hasNearbyWarden(p_219578_, p_219579_)) {
+    public static OptionalInt tryWarn(ServerLevel level, BlockPos pos, ServerPlayer player) {
+        if (hasNearbyWarden(level, pos)) {
             return OptionalInt.empty();
         } else {
-            List<ServerPlayer> list = getNearbyPlayers(p_219578_, p_219579_);
-            if (!list.contains(p_219580_)) {
-                list.add(p_219580_);
+            List<ServerPlayer> list = getNearbyPlayers(level, pos);
+            if (!list.contains(player)) {
+                list.add(player);
             }
 
             if (list.stream().anyMatch(p_248397_ -> p_248397_.getWardenSpawnTracker().map(WardenSpawnTracker::onCooldown).orElse(false))) {
@@ -92,15 +92,15 @@ public class WardenSpawnTracker {
         return this.cooldownTicks > 0;
     }
 
-    private static boolean hasNearbyWarden(ServerLevel p_219575_, BlockPos p_219576_) {
-        AABB aabb = AABB.ofSize(Vec3.atCenterOf(p_219576_), 48.0, 48.0, 48.0);
-        return !p_219575_.getEntitiesOfClass(Warden.class, aabb).isEmpty();
+    private static boolean hasNearbyWarden(ServerLevel level, BlockPos pos) {
+        AABB aabb = AABB.ofSize(Vec3.atCenterOf(pos), 48.0, 48.0, 48.0);
+        return !level.getEntitiesOfClass(Warden.class, aabb).isEmpty();
     }
 
-    private static List<ServerPlayer> getNearbyPlayers(ServerLevel p_219595_, BlockPos p_219596_) {
-        Vec3 vec3 = Vec3.atCenterOf(p_219596_);
+    private static List<ServerPlayer> getNearbyPlayers(ServerLevel level, BlockPos pos) {
+        Vec3 vec3 = Vec3.atCenterOf(pos);
         Predicate<ServerPlayer> predicate = p_352830_ -> p_352830_.position().closerThan(vec3, 16.0);
-        return p_219595_.getPlayers(predicate.and(LivingEntity::isAlive).and(EntitySelector.NO_SPECTATORS));
+        return level.getPlayers(predicate.and(LivingEntity::isAlive).and(EntitySelector.NO_SPECTATORS));
     }
 
     private void increaseWarningLevel() {
@@ -115,17 +115,17 @@ public class WardenSpawnTracker {
         this.setWarningLevel(this.getWarningLevel() - 1);
     }
 
-    public void setWarningLevel(int p_219573_) {
-        this.warningLevel = Mth.clamp(p_219573_, 0, 4);
+    public void setWarningLevel(int warningLevel) {
+        this.warningLevel = Mth.clamp(warningLevel, 0, 4);
     }
 
     public int getWarningLevel() {
         return this.warningLevel;
     }
 
-    private void copyData(WardenSpawnTracker p_219584_) {
-        this.warningLevel = p_219584_.warningLevel;
-        this.cooldownTicks = p_219584_.cooldownTicks;
-        this.ticksSinceLastWarning = p_219584_.ticksSinceLastWarning;
+    private void copyData(WardenSpawnTracker other) {
+        this.warningLevel = other.warningLevel;
+        this.cooldownTicks = other.cooldownTicks;
+        this.ticksSinceLastWarning = other.ticksSinceLastWarning;
     }
 }

@@ -9,12 +9,12 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class FontOptionsScreen extends OptionsSubScreen {
-    private static OptionInstance<?>[] options(Options p_346352_) {
-        return new OptionInstance[]{p_346352_.forceUnicodeFont(), p_346352_.japaneseGlyphVariants()};
+    private static OptionInstance<?>[] options(Options options) {
+        return new OptionInstance[]{options.forceUnicodeFont(), options.japaneseGlyphVariants()};
     }
 
-    public FontOptionsScreen(Screen p_345371_, Options p_345464_) {
-        super(p_345371_, p_345464_, Component.translatable("options.font.title"));
+    public FontOptionsScreen(Screen lastScreen, Options options) {
+        super(lastScreen, options, Component.translatable("options.font.title"));
     }
 
     @Override

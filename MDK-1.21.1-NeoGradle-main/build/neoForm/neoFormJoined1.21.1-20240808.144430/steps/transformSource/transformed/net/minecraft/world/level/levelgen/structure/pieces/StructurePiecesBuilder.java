@@ -12,30 +12,30 @@ public class StructurePiecesBuilder implements StructurePieceAccessor {
     private final List<StructurePiece> pieces = Lists.newArrayList();
 
     @Override
-    public void addPiece(StructurePiece p_192791_) {
-        this.pieces.add(p_192791_);
+    public void addPiece(StructurePiece piece) {
+        this.pieces.add(piece);
     }
 
     @Nullable
     @Override
-    public StructurePiece findCollisionPiece(BoundingBox p_192789_) {
-        return StructurePiece.findCollisionPiece(this.pieces, p_192789_);
+    public StructurePiece findCollisionPiece(BoundingBox box) {
+        return StructurePiece.findCollisionPiece(this.pieces, box);
     }
 
     @Deprecated
-    public void offsetPiecesVertically(int p_192782_) {
+    public void offsetPiecesVertically(int offset) {
         for (StructurePiece structurepiece : this.pieces) {
-            structurepiece.move(0, p_192782_, 0);
+            structurepiece.move(0, offset, 0);
         }
     }
 
     @Deprecated
-    public int moveBelowSeaLevel(int p_226966_, int p_226967_, RandomSource p_226968_, int p_226969_) {
-        int i = p_226966_ - p_226969_;
+    public int moveBelowSeaLevel(int seaLevel, int minY, RandomSource random, int amount) {
+        int i = seaLevel - amount;
         BoundingBox boundingbox = this.getBoundingBox();
-        int j = boundingbox.getYSpan() + p_226967_ + 1;
+        int j = boundingbox.getYSpan() + minY + 1;
         if (j < i) {
-            j += p_226968_.nextInt(i - j);
+            j += random.nextInt(i - j);
         }
 
         int k = j - boundingbox.maxY();
@@ -43,15 +43,17 @@ public class StructurePiecesBuilder implements StructurePieceAccessor {
         return k;
     }
 
-    /** @deprecated */
-    public void moveInsideHeights(RandomSource p_226971_, int p_226972_, int p_226973_) {
+    /**
+ * @deprecated
+ */
+    public void moveInsideHeights(RandomSource random, int minY, int maxY) {
         BoundingBox boundingbox = this.getBoundingBox();
-        int i = p_226973_ - p_226972_ + 1 - boundingbox.getYSpan();
+        int i = maxY - minY + 1 - boundingbox.getYSpan();
         int j;
         if (i > 1) {
-            j = p_226972_ + p_226971_.nextInt(i);
+            j = minY + random.nextInt(i);
         } else {
-            j = p_226972_;
+            j = minY;
         }
 
         int k = j - boundingbox.minY();

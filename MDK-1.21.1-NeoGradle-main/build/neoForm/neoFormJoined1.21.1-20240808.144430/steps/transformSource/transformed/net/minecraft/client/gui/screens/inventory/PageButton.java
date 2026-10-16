@@ -19,14 +19,14 @@ public class PageButton extends Button {
     private final boolean isForward;
     private final boolean playTurnSound;
 
-    public PageButton(int p_99225_, int p_99226_, boolean p_99227_, Button.OnPress p_99228_, boolean p_99229_) {
-        super(p_99225_, p_99226_, 23, 13, CommonComponents.EMPTY, p_99228_, DEFAULT_NARRATION);
-        this.isForward = p_99227_;
-        this.playTurnSound = p_99229_;
+    public PageButton(int x, int y, boolean isForward, Button.OnPress onPress, boolean playTurnSound) {
+        super(x, y, 23, 13, CommonComponents.EMPTY, onPress, DEFAULT_NARRATION);
+        this.isForward = isForward;
+        this.playTurnSound = playTurnSound;
     }
 
     @Override
-    public void renderWidget(GuiGraphics p_283468_, int p_282922_, int p_283637_, float p_282459_) {
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         ResourceLocation resourcelocation;
         if (this.isForward) {
             resourcelocation = this.isHoveredOrFocused() ? PAGE_FORWARD_HIGHLIGHTED_SPRITE : PAGE_FORWARD_SPRITE;
@@ -34,13 +34,13 @@ public class PageButton extends Button {
             resourcelocation = this.isHoveredOrFocused() ? PAGE_BACKWARD_HIGHLIGHTED_SPRITE : PAGE_BACKWARD_SPRITE;
         }
 
-        p_283468_.blitSprite(resourcelocation, this.getX(), this.getY(), 23, 13);
+        guiGraphics.blitSprite(resourcelocation, this.getX(), this.getY(), 23, 13);
     }
 
     @Override
-    public void playDownSound(SoundManager p_99231_) {
+    public void playDownSound(SoundManager handler) {
         if (this.playTurnSound) {
-            p_99231_.play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0F));
+            handler.play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, 1.0F));
         }
     }
 }

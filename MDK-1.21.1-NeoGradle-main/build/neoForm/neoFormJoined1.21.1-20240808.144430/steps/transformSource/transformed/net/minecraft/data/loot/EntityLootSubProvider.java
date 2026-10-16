@@ -78,19 +78,19 @@ public abstract class EntityLootSubProvider implements LootTableSubProvider {
         );
     }
 
-    protected EntityLootSubProvider(FeatureFlagSet p_266989_, HolderLookup.Provider p_345284_) {
-        this(p_266989_, p_266989_, p_345284_);
+    protected EntityLootSubProvider(FeatureFlagSet required, HolderLookup.Provider registries) {
+        this(required, required, registries);
     }
 
-    protected EntityLootSubProvider(FeatureFlagSet p_251971_, FeatureFlagSet p_345117_, HolderLookup.Provider p_344819_) {
-        this.allowed = p_251971_;
-        this.required = p_345117_;
-        this.registries = p_344819_;
+    protected EntityLootSubProvider(FeatureFlagSet allowed, FeatureFlagSet required, HolderLookup.Provider registries) {
+        this.allowed = allowed;
+        this.required = required;
+        this.registries = registries;
     }
 
-    protected static LootTable.Builder createSheepTable(ItemLike p_249422_) {
+    protected static LootTable.Builder createSheepTable(ItemLike woolItem) {
         return LootTable.lootTable()
-            .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1.0F)).add(LootItem.lootTableItem(p_249422_)))
+            .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1.0F)).add(LootItem.lootTableItem(woolItem)))
             .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1.0F)).add(NestedLootTable.lootTableReference(EntityType.SHEEP.getDefaultLootTable())));
     }
 
@@ -101,7 +101,7 @@ public abstract class EntityLootSubProvider implements LootTableSubProvider {
     }
 
     @Override
-    public void generate(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> p_251751_) {
+    public void generate(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> output) {
         this.generate();
         Set<ResourceKey<LootTable>> set = new HashSet<>();
         this.getKnownEntityTypes()
@@ -129,7 +129,7 @@ public abstract class EntityLootSubProvider implements LootTableSubProvider {
                                                 String.format(Locale.ROOT, "Duplicate loottable '%s' for '%s'", p_335546_, p_266624_.key().location())
                                             );
                                         } else {
-                                            p_251751_.accept((ResourceKey<LootTable>)p_335546_, p_250972_);
+                                            output.accept((ResourceKey<LootTable>)p_335546_, p_250972_);
                                         }
                                     }
                                 );
@@ -163,22 +163,22 @@ public abstract class EntityLootSubProvider implements LootTableSubProvider {
         return DamageSourceCondition.hasDamageSource(DamageSourcePredicate.Builder.damageType().source(EntityPredicate.Builder.entity().of(EntityType.FROG)));
     }
 
-    protected LootItemCondition.Builder killedByFrogVariant(ResourceKey<FrogVariant> p_335676_) {
+    protected LootItemCondition.Builder killedByFrogVariant(ResourceKey<FrogVariant> frogVariant) {
         return DamageSourceCondition.hasDamageSource(
             DamageSourcePredicate.Builder.damageType()
                 .source(
                     EntityPredicate.Builder.entity()
                         .of(EntityType.FROG)
-                        .subPredicate(EntitySubPredicates.frogVariant(BuiltInRegistries.FROG_VARIANT.getHolderOrThrow(p_335676_)))
+                        .subPredicate(EntitySubPredicates.frogVariant(BuiltInRegistries.FROG_VARIANT.getHolderOrThrow(frogVariant)))
                 )
         );
     }
 
-    protected void add(EntityType<?> p_248740_, LootTable.Builder p_249440_) {
-        this.add(p_248740_, p_248740_.getDefaultLootTable(), p_249440_);
+    protected void add(EntityType<?> entityType, LootTable.Builder builder) {
+        this.add(entityType, entityType.getDefaultLootTable(), builder);
     }
 
-    protected void add(EntityType<?> p_252130_, ResourceKey<LootTable> p_335943_, LootTable.Builder p_249357_) {
-        this.map.computeIfAbsent(p_252130_, p_251466_ -> new HashMap<>()).put(p_335943_, p_249357_);
+    protected void add(EntityType<?> entityType, ResourceKey<LootTable> defaultLootTable, LootTable.Builder builder) {
+        this.map.computeIfAbsent(entityType, p_251466_ -> new HashMap<>()).put(defaultLootTable, builder);
     }
 }

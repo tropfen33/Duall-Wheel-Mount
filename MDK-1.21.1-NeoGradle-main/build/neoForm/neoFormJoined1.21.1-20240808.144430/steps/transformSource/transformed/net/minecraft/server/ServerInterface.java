@@ -17,5 +17,8 @@ public interface ServerInterface extends ServerInfo {
 
     String getPluginNames();
 
-    String runCommand(String p_136143_);
+    /**
+     * Handle a command received by an RCon instance
+     */
+    String runCommand(String command);
 }

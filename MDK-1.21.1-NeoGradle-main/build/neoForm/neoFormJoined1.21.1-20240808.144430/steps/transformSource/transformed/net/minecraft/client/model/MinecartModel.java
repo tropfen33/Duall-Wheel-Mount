@@ -14,8 +14,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class MinecartModel<T extends Entity> extends HierarchicalModel<T> {
     private final ModelPart root;
 
-    public MinecartModel(ModelPart p_170737_) {
-        this.root = p_170737_;
+    public MinecartModel(ModelPart root) {
+        this.root = root;
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -51,8 +51,11 @@ public class MinecartModel<T extends Entity> extends HierarchicalModel<T> {
         return LayerDefinition.create(meshdefinition, 64, 32);
     }
 
+    /**
+     * Sets this entity's model rotation angles
+     */
     @Override
-    public void setupAnim(T p_103100_, float p_103101_, float p_103102_, float p_103103_, float p_103104_, float p_103105_) {
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
     }
 
     @Override

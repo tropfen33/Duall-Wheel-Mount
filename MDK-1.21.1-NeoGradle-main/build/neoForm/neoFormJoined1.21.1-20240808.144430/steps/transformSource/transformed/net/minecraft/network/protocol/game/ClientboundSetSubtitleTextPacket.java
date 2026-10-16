@@ -17,7 +17,10 @@ public record ClientboundSetSubtitleTextPacket(Component text) implements Packet
         return GamePacketTypes.CLIENTBOUND_SET_SUBTITLE_TEXT;
     }
 
-    public void handle(ClientGamePacketListener p_179384_) {
-        p_179384_.setSubtitleText(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.setSubtitleText(this);
     }
 }

@@ -22,19 +22,22 @@ public class BlockPatternBuilder {
         this.lookup.put(' ', p_187549_ -> true);
     }
 
-    public BlockPatternBuilder aisle(String... p_61248_) {
-        if (!ArrayUtils.isEmpty((Object[])p_61248_) && !StringUtils.isEmpty(p_61248_[0])) {
+    /**
+     * Adds a single aisle to this pattern, going in the z axis. (so multiple calls to this will increase the z-size by 1)
+     */
+    public BlockPatternBuilder aisle(String... aisle) {
+        if (!ArrayUtils.isEmpty((Object[])aisle) && !StringUtils.isEmpty(aisle[0])) {
             if (this.pattern.isEmpty()) {
-                this.height = p_61248_.length;
-                this.width = p_61248_[0].length();
+                this.height = aisle.length;
+                this.width = aisle[0].length();
             }
 
-            if (p_61248_.length != this.height) {
+            if (aisle.length != this.height) {
                 throw new IllegalArgumentException(
-                    "Expected aisle with height of " + this.height + ", but was given one with a height of " + p_61248_.length + ")"
+                    "Expected aisle with height of " + this.height + ", but was given one with a height of " + aisle.length + ")"
                 );
             } else {
-                for (String s : p_61248_) {
+                for (String s : aisle) {
                     if (s.length() != this.width) {
                         throw new IllegalArgumentException(
                             "Not all rows in the given aisle are the correct width (expected " + this.width + ", found one with " + s.length() + ")"
@@ -48,7 +51,7 @@ public class BlockPatternBuilder {
                     }
                 }
 
-                this.pattern.add(p_61248_);
+                this.pattern.add(aisle);
                 return this;
             }
         } else {
@@ -60,8 +63,8 @@ public class BlockPatternBuilder {
         return new BlockPatternBuilder();
     }
 
-    public BlockPatternBuilder where(char p_61245_, Predicate<BlockInWorld> p_61246_) {
-        this.lookup.put(p_61245_, p_61246_);
+    public BlockPatternBuilder where(char symbol, Predicate<BlockInWorld> blockMatcher) {
+        this.lookup.put(symbol, blockMatcher);
         return this;
     }
 

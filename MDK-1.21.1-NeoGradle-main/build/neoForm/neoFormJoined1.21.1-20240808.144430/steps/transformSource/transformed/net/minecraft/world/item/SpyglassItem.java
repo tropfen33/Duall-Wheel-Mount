@@ -12,40 +12,52 @@ public class SpyglassItem extends Item {
     public static final int USE_DURATION = 1200;
     public static final float ZOOM_FOV_MODIFIER = 0.1F;
 
-    public SpyglassItem(Item.Properties p_151205_) {
-        super(p_151205_);
+    public SpyglassItem(Item.Properties properties) {
+        super(properties);
     }
 
     @Override
-    public int getUseDuration(ItemStack p_151222_, LivingEntity p_345399_) {
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
         return 1200;
     }
 
+    /**
+     * Returns the action that specifies what animation to play when the item is being used.
+     */
     @Override
-    public UseAnim getUseAnimation(ItemStack p_151224_) {
+    public UseAnim getUseAnimation(ItemStack stack) {
         return UseAnim.SPYGLASS;
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link net.minecraft.world.item.Item#useOn(net.minecraft.world.item.context.UseOnContext)}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_151218_, Player p_151219_, InteractionHand p_151220_) {
-        p_151219_.playSound(SoundEvents.SPYGLASS_USE, 1.0F, 1.0F);
-        p_151219_.awardStat(Stats.ITEM_USED.get(this));
-        return ItemUtils.startUsingInstantly(p_151218_, p_151219_, p_151220_);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand usedHand) {
+        player.playSound(SoundEvents.SPYGLASS_USE, 1.0F, 1.0F);
+        player.awardStat(Stats.ITEM_USED.get(this));
+        return ItemUtils.startUsingInstantly(level, player, usedHand);
     }
 
+    /**
+     * Called when the player finishes using this Item (E.g. finishes eating.). Not called when the player stops using the Item before the action is complete.
+     */
     @Override
-    public ItemStack finishUsingItem(ItemStack p_151209_, Level p_151210_, LivingEntity p_151211_) {
-        this.stopUsing(p_151211_);
-        return p_151209_;
+    public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity livingEntity) {
+        this.stopUsing(livingEntity);
+        return stack;
     }
 
+    /**
+     * Called when the player stops using an Item (stops holding the right mouse button).
+     */
     @Override
-    public void releaseUsing(ItemStack p_151213_, Level p_151214_, LivingEntity p_151215_, int p_151216_) {
-        this.stopUsing(p_151215_);
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity livingEntity, int timeCharged) {
+        this.stopUsing(livingEntity);
     }
 
-    private void stopUsing(LivingEntity p_151207_) {
-        p_151207_.playSound(SoundEvents.SPYGLASS_STOP_USING, 1.0F, 1.0F);
+    private void stopUsing(LivingEntity user) {
+        user.playSound(SoundEvents.SPYGLASS_STOP_USING, 1.0F, 1.0F);
     }
 
     @Override

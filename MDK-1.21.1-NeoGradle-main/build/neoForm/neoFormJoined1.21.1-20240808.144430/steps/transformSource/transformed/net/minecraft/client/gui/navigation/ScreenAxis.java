@@ -29,7 +29,7 @@ public enum ScreenAxis {
         };
     }
 
-    public ScreenDirection getDirection(boolean p_265698_) {
-        return p_265698_ ? this.getPositive() : this.getNegative();
+    public ScreenDirection getDirection(boolean isPositive) {
+        return isPositive ? this.getPositive() : this.getNegative();
     }
 }

@@ -69,25 +69,25 @@ public class SectionRenderDispatcher {
     final SectionCompiler sectionCompiler;
 
     public SectionRenderDispatcher(
-        ClientLevel p_295274_,
-        LevelRenderer p_295323_,
-        Executor p_295234_,
-        RenderBuffers p_307511_,
-        BlockRenderDispatcher p_350514_,
-        BlockEntityRenderDispatcher p_350550_
+        ClientLevel level,
+        LevelRenderer renderer,
+        Executor executor,
+        RenderBuffers buffers,
+        BlockRenderDispatcher blockRenderer,
+        BlockEntityRenderDispatcher blockEntityRenderer
     ) {
-        this.level = p_295274_;
-        this.renderer = p_295323_;
-        this.fixedBuffers = p_307511_.fixedBufferPack();
-        this.bufferPool = p_307511_.sectionBufferPool();
-        this.executor = p_295234_;
-        this.mailbox = ProcessorMailbox.create(p_295234_, "Section Renderer");
+        this.level = level;
+        this.renderer = renderer;
+        this.fixedBuffers = buffers.fixedBufferPack();
+        this.bufferPool = buffers.sectionBufferPool();
+        this.executor = executor;
+        this.mailbox = ProcessorMailbox.create(executor, "Section Renderer");
         this.mailbox.tell(this::runTask);
-        this.sectionCompiler = new SectionCompiler(p_350514_, p_350550_);
+        this.sectionCompiler = new SectionCompiler(blockRenderer, blockEntityRenderer);
     }
 
-    public void setLevel(ClientLevel p_295112_) {
-        this.level = p_295112_;
+    public void setLevel(ClientLevel level) {
+        this.level = level;
     }
 
     private void runTask() {
@@ -160,8 +160,8 @@ public class SectionRenderDispatcher {
         return this.bufferPool.getFreeBufferCount();
     }
 
-    public void setCamera(Vec3 p_296331_) {
-        this.camera = p_296331_;
+    public void setCamera(Vec3 camera) {
+        this.camera = camera;
     }
 
     public Vec3 getCameraPosition() {
@@ -175,22 +175,22 @@ public class SectionRenderDispatcher {
         }
     }
 
-    public void rebuildSectionSync(SectionRenderDispatcher.RenderSection p_296309_, RenderRegionCache p_294139_) {
-        p_296309_.compileSync(p_294139_);
+    public void rebuildSectionSync(SectionRenderDispatcher.RenderSection section, RenderRegionCache regionCache) {
+        section.compileSync(regionCache);
     }
 
     public void blockUntilClear() {
         this.clearBatchQueue();
     }
 
-    public void schedule(SectionRenderDispatcher.RenderSection.CompileTask p_295825_) {
+    public void schedule(SectionRenderDispatcher.RenderSection.CompileTask task) {
         if (!this.closed) {
             this.mailbox.tell(() -> {
                 if (!this.closed) {
-                    if (p_295825_.isHighPriority) {
-                        this.toBatchHighPriority.offer(p_295825_);
+                    if (task.isHighPriority) {
+                        this.toBatchHighPriority.offer(task);
                     } else {
-                        this.toBatchLowPriority.offer(p_295825_);
+                        this.toBatchLowPriority.offer(task);
                     }
 
                     this.toBatchCount = this.toBatchHighPriority.size() + this.toBatchLowPriority.size();
@@ -200,25 +200,25 @@ public class SectionRenderDispatcher {
         }
     }
 
-    public CompletableFuture<Void> uploadSectionLayer(MeshData p_350732_, VertexBuffer p_294163_) {
+    public CompletableFuture<Void> uploadSectionLayer(MeshData meshData, VertexBuffer vertexBuffer) {
         return this.closed ? CompletableFuture.completedFuture(null) : CompletableFuture.runAsync(() -> {
-            if (p_294163_.isInvalid()) {
-                p_350732_.close();
+            if (vertexBuffer.isInvalid()) {
+                meshData.close();
             } else {
-                p_294163_.bind();
-                p_294163_.upload(p_350732_);
+                vertexBuffer.bind();
+                vertexBuffer.upload(meshData);
                 VertexBuffer.unbind();
             }
         }, this.toUpload::add);
     }
 
-    public CompletableFuture<Void> uploadSectionIndexBuffer(ByteBufferBuilder.Result p_350933_, VertexBuffer p_350643_) {
+    public CompletableFuture<Void> uploadSectionIndexBuffer(ByteBufferBuilder.Result result, VertexBuffer vertexBuffer) {
         return this.closed ? CompletableFuture.completedFuture(null) : CompletableFuture.runAsync(() -> {
-            if (p_350643_.isInvalid()) {
-                p_350933_.close();
+            if (vertexBuffer.isInvalid()) {
+                result.close();
             } else {
-                p_350643_.bind();
-                p_350643_.uploadIndexBuffer(p_350933_);
+                vertexBuffer.bind();
+                vertexBuffer.uploadIndexBuffer(result);
                 VertexBuffer.unbind();
             }
         }, this.toUpload::add);
@@ -276,16 +276,16 @@ public class SectionRenderDispatcher {
             return this.hasBlocks.isEmpty();
         }
 
-        public boolean isEmpty(RenderType p_296192_) {
-            return !this.hasBlocks.contains(p_296192_);
+        public boolean isEmpty(RenderType renderType) {
+            return !this.hasBlocks.contains(renderType);
         }
 
         public List<BlockEntity> getRenderableBlockEntities() {
             return this.renderableBlockEntities;
         }
 
-        public boolean facesCanSeeEachother(Direction p_295753_, Direction p_294424_) {
-            return this.visibilitySet.visibilityBetween(p_295753_, p_294424_);
+        public boolean facesCanSeeEachother(Direction face1, Direction face2) {
+            return this.visibilitySet.visibilityBetween(face1, face2);
         }
     }
 
@@ -315,14 +315,14 @@ public class SectionRenderDispatcher {
         });
         private boolean playerChanged;
 
-        public RenderSection(int p_295197_, int p_295159_, int p_294506_, int p_294392_) {
-            this.index = p_295197_;
-            this.setOrigin(p_295159_, p_294506_, p_294392_);
+        public RenderSection(int index, int originX, int originY, int originZ) {
+            this.index = index;
+            this.setOrigin(originX, originY, originZ);
         }
 
-        private boolean doesChunkExistAt(BlockPos p_295253_) {
+        private boolean doesChunkExistAt(BlockPos pos) {
             return SectionRenderDispatcher.this.level
-                    .getChunk(SectionPos.blockToSectionCoord(p_295253_.getX()), SectionPos.blockToSectionCoord(p_295253_.getZ()), ChunkStatus.FULL, false)
+                    .getChunk(SectionPos.blockToSectionCoord(pos.getX()), SectionPos.blockToSectionCoord(pos.getZ()), ChunkStatus.FULL, false)
                 != null;
         }
 
@@ -340,15 +340,15 @@ public class SectionRenderDispatcher {
             return this.bb;
         }
 
-        public VertexBuffer getBuffer(RenderType p_294497_) {
-            return this.buffers.get(p_294497_);
+        public VertexBuffer getBuffer(RenderType renderType) {
+            return this.buffers.get(renderType);
         }
 
-        public void setOrigin(int p_294148_, int p_295137_, int p_295706_) {
+        public void setOrigin(int x, int y, int z) {
             this.reset();
-            this.origin.set(p_294148_, p_295137_, p_295706_);
+            this.origin.set(x, y, z);
             this.bb = new AABB(
-                (double)p_294148_, (double)p_295137_, (double)p_295706_, (double)(p_294148_ + 16), (double)(p_295137_ + 16), (double)(p_295706_ + 16)
+                (double)x, (double)y, (double)z, (double)(x + 16), (double)(y + 16), (double)(z + 16)
             );
 
             for (Direction direction : Direction.values()) {
@@ -383,10 +383,10 @@ public class SectionRenderDispatcher {
             return this.origin;
         }
 
-        public void setDirty(boolean p_295417_) {
+        public void setDirty(boolean playerChanged) {
             boolean flag = this.dirty;
             this.dirty = true;
-            this.playerChanged = p_295417_ | (flag && this.playerChanged);
+            this.playerChanged = playerChanged | (flag && this.playerChanged);
         }
 
         public void setNotDirty() {
@@ -402,23 +402,23 @@ public class SectionRenderDispatcher {
             return this.dirty && this.playerChanged;
         }
 
-        public BlockPos getRelativeOrigin(Direction p_296100_) {
-            return this.relativeOrigins[p_296100_.ordinal()];
+        public BlockPos getRelativeOrigin(Direction direction) {
+            return this.relativeOrigins[direction.ordinal()];
         }
 
-        public boolean resortTransparency(RenderType p_295679_, SectionRenderDispatcher p_294363_) {
+        public boolean resortTransparency(RenderType renderType, SectionRenderDispatcher sectionRenderDispatcher) {
             SectionRenderDispatcher.CompiledSection sectionrenderdispatcher$compiledsection = this.getCompiled();
             if (this.lastResortTransparencyTask != null) {
                 this.lastResortTransparencyTask.cancel();
             }
 
-            if (!sectionrenderdispatcher$compiledsection.hasBlocks.contains(p_295679_)) {
+            if (!sectionrenderdispatcher$compiledsection.hasBlocks.contains(renderType)) {
                 return false;
             } else {
                 this.lastResortTransparencyTask = new SectionRenderDispatcher.RenderSection.ResortTransparencyTask(
                     this.getDistToPlayerSqr(), sectionrenderdispatcher$compiledsection
                 );
-                p_294363_.schedule(this.lastResortTransparencyTask);
+                sectionRenderDispatcher.schedule(this.lastResortTransparencyTask);
                 return true;
             }
         }
@@ -439,10 +439,10 @@ public class SectionRenderDispatcher {
             return flag;
         }
 
-        public SectionRenderDispatcher.RenderSection.CompileTask createCompileTask(RenderRegionCache p_295324_) {
+        public SectionRenderDispatcher.RenderSection.CompileTask createCompileTask(RenderRegionCache regionCache) {
             boolean flag = this.cancelTasks();
             var additionalRenderers = net.neoforged.neoforge.client.ClientHooks.gatherAdditionalRenderers(this.origin, SectionRenderDispatcher.this.level);
-            RenderChunkRegion renderchunkregion = p_295324_.createRegion(SectionRenderDispatcher.this.level, SectionPos.of(this.origin), additionalRenderers.isEmpty());
+            RenderChunkRegion renderchunkregion = regionCache.createRegion(SectionRenderDispatcher.this.level, SectionPos.of(this.origin), additionalRenderers.isEmpty());
             boolean flag1 = this.compiled.get() == SectionRenderDispatcher.CompiledSection.UNCOMPILED;
             if (flag1 && flag) {
                 this.initialCompilationCancelCount.incrementAndGet();
@@ -454,39 +454,39 @@ public class SectionRenderDispatcher {
             return this.lastRebuildTask;
         }
 
-        public void rebuildSectionAsync(SectionRenderDispatcher p_295901_, RenderRegionCache p_294660_) {
-            SectionRenderDispatcher.RenderSection.CompileTask sectionrenderdispatcher$rendersection$compiletask = this.createCompileTask(p_294660_);
-            p_295901_.schedule(sectionrenderdispatcher$rendersection$compiletask);
+        public void rebuildSectionAsync(SectionRenderDispatcher sectionRenderDispatcher, RenderRegionCache regionCache) {
+            SectionRenderDispatcher.RenderSection.CompileTask sectionrenderdispatcher$rendersection$compiletask = this.createCompileTask(regionCache);
+            sectionRenderDispatcher.schedule(sectionrenderdispatcher$rendersection$compiletask);
         }
 
-        void updateGlobalBlockEntities(Collection<BlockEntity> p_296155_) {
-            Set<BlockEntity> set = Sets.newHashSet(p_296155_);
+        void updateGlobalBlockEntities(Collection<BlockEntity> blockEntities) {
+            Set<BlockEntity> set = Sets.newHashSet(blockEntities);
             Set<BlockEntity> set1;
             synchronized (this.globalBlockEntities) {
                 set1 = Sets.newHashSet(this.globalBlockEntities);
                 set.removeAll(this.globalBlockEntities);
-                set1.removeAll(p_296155_);
+                set1.removeAll(blockEntities);
                 this.globalBlockEntities.clear();
-                this.globalBlockEntities.addAll(p_296155_);
+                this.globalBlockEntities.addAll(blockEntities);
             }
 
             SectionRenderDispatcher.this.renderer.updateGlobalBlockEntities(set1, set);
         }
 
-        public void compileSync(RenderRegionCache p_296018_) {
-            SectionRenderDispatcher.RenderSection.CompileTask sectionrenderdispatcher$rendersection$compiletask = this.createCompileTask(p_296018_);
+        public void compileSync(RenderRegionCache regionCache) {
+            SectionRenderDispatcher.RenderSection.CompileTask sectionrenderdispatcher$rendersection$compiletask = this.createCompileTask(regionCache);
             sectionrenderdispatcher$rendersection$compiletask.doTask(SectionRenderDispatcher.this.fixedBuffers);
         }
 
-        public boolean isAxisAlignedWith(int p_295743_, int p_295344_, int p_295518_) {
+        public boolean isAxisAlignedWith(int x, int y, int z) {
             BlockPos blockpos = this.getOrigin();
-            return p_295743_ == SectionPos.blockToSectionCoord(blockpos.getX())
-                || p_295518_ == SectionPos.blockToSectionCoord(blockpos.getZ())
-                || p_295344_ == SectionPos.blockToSectionCoord(blockpos.getY());
+            return x == SectionPos.blockToSectionCoord(blockpos.getX())
+                || z == SectionPos.blockToSectionCoord(blockpos.getZ())
+                || y == SectionPos.blockToSectionCoord(blockpos.getY());
         }
 
-        void setCompiled(SectionRenderDispatcher.CompiledSection p_350692_) {
-            this.compiled.set(p_350692_);
+        void setCompiled(SectionRenderDispatcher.CompiledSection compiled) {
+            this.compiled.set(compiled);
             this.initialCompilationCancelCount.set(0);
             SectionRenderDispatcher.this.renderer.addRecentlyCompiledSection(this);
         }
@@ -504,19 +504,19 @@ public class SectionRenderDispatcher {
             protected final AtomicBoolean isCancelled = new AtomicBoolean(false);
             protected final boolean isHighPriority;
 
-            public CompileTask(double p_294428_, boolean p_295051_) {
-                this.distAtCreation = p_294428_;
-                this.isHighPriority = p_295051_;
+            public CompileTask(double distAtCreation, boolean isHighPriority) {
+                this.distAtCreation = distAtCreation;
+                this.isHighPriority = isHighPriority;
             }
 
-            public abstract CompletableFuture<SectionRenderDispatcher.SectionTaskResult> doTask(SectionBufferBuilderPack p_294622_);
+            public abstract CompletableFuture<SectionRenderDispatcher.SectionTaskResult> doTask(SectionBufferBuilderPack sectionBufferBuilderPack);
 
             public abstract void cancel();
 
             protected abstract String name();
 
-            public int compareTo(SectionRenderDispatcher.RenderSection.CompileTask p_296186_) {
-                return Doubles.compare(this.distAtCreation, p_296186_.distAtCreation);
+            public int compareTo(SectionRenderDispatcher.RenderSection.CompileTask other) {
+                return Doubles.compare(this.distAtCreation, other.distAtCreation);
             }
         }
 
@@ -527,13 +527,13 @@ public class SectionRenderDispatcher {
             private final List<net.neoforged.neoforge.client.event.AddSectionGeometryEvent.AdditionalSectionRenderer> additionalRenderers;
 
             @Deprecated
-            public RebuildTask(double p_294400_, @Nullable RenderChunkRegion p_294382_, boolean p_295207_) {
-                this(p_294400_, p_294382_, p_295207_, List.of());
+            public RebuildTask(double distAtCreation, @Nullable RenderChunkRegion region, boolean isHighPriority) {
+                this(distAtCreation, region, isHighPriority, List.of());
             }
 
-            public RebuildTask(double p_294400_, @Nullable RenderChunkRegion p_294382_, boolean p_295207_, List<net.neoforged.neoforge.client.event.AddSectionGeometryEvent.AdditionalSectionRenderer> additionalRenderers) {
-                super(p_294400_, p_295207_);
-                this.region = p_294382_;
+            public RebuildTask(double distAtCreation, @Nullable RenderChunkRegion region, boolean isHighPriority, List<net.neoforged.neoforge.client.event.AddSectionGeometryEvent.AdditionalSectionRenderer> additionalRenderers) {
+                super(distAtCreation, isHighPriority);
+                this.region = region;
                 this.additionalRenderers = additionalRenderers;
             }
 
@@ -543,7 +543,7 @@ public class SectionRenderDispatcher {
             }
 
             @Override
-            public CompletableFuture<SectionRenderDispatcher.SectionTaskResult> doTask(SectionBufferBuilderPack p_296138_) {
+            public CompletableFuture<SectionRenderDispatcher.SectionTaskResult> doTask(SectionBufferBuilderPack sectionBufferBuilderPack) {
                 if (this.isCancelled.get()) {
                     return CompletableFuture.completedFuture(SectionRenderDispatcher.SectionTaskResult.CANCELLED);
                 } else if (!RenderSection.this.hasAllNeighbors()) {
@@ -562,7 +562,7 @@ public class SectionRenderDispatcher {
                     } else {
                         SectionPos sectionpos = SectionPos.of(RenderSection.this.origin);
                         SectionCompiler.Results sectioncompiler$results = SectionRenderDispatcher.this.sectionCompiler
-                            .compile(sectionpos, renderchunkregion, RenderSection.this.createVertexSorting(), p_296138_, this.additionalRenderers);
+                            .compile(sectionpos, renderchunkregion, RenderSection.this.createVertexSorting(), sectionBufferBuilderPack, this.additionalRenderers);
                         RenderSection.this.updateGlobalBlockEntities(sectioncompiler$results.globalBlockEntities);
                         if (this.isCancelled.get()) {
                             sectioncompiler$results.release();
@@ -607,9 +607,9 @@ public class SectionRenderDispatcher {
         class ResortTransparencyTask extends SectionRenderDispatcher.RenderSection.CompileTask {
             private final SectionRenderDispatcher.CompiledSection compiledSection;
 
-            public ResortTransparencyTask(double p_294102_, SectionRenderDispatcher.CompiledSection p_294601_) {
-                super(p_294102_, true);
-                this.compiledSection = p_294601_;
+            public ResortTransparencyTask(double distAtCreation, SectionRenderDispatcher.CompiledSection compiledSection) {
+                super(distAtCreation, true);
+                this.compiledSection = compiledSection;
             }
 
             @Override
@@ -618,7 +618,7 @@ public class SectionRenderDispatcher {
             }
 
             @Override
-            public CompletableFuture<SectionRenderDispatcher.SectionTaskResult> doTask(SectionBufferBuilderPack p_295160_) {
+            public CompletableFuture<SectionRenderDispatcher.SectionTaskResult> doTask(SectionBufferBuilderPack sectionBufferBuilderPack) {
                 if (this.isCancelled.get()) {
                     return CompletableFuture.completedFuture(SectionRenderDispatcher.SectionTaskResult.CANCELLED);
                 } else if (!RenderSection.this.hasAllNeighbors()) {
@@ -631,7 +631,7 @@ public class SectionRenderDispatcher {
                     if (meshdata$sortstate != null && !this.compiledSection.isEmpty(RenderType.translucent())) {
                         VertexSorting vertexsorting = RenderSection.this.createVertexSorting();
                         ByteBufferBuilder.Result bytebufferbuilder$result = meshdata$sortstate.buildSortedIndexBuffer(
-                            p_295160_.buffer(RenderType.translucent()), vertexsorting
+                            sectionBufferBuilderPack.buffer(RenderType.translucent()), vertexsorting
                         );
                         if (bytebufferbuilder$result == null) {
                             return CompletableFuture.completedFuture(SectionRenderDispatcher.SectionTaskResult.CANCELLED);

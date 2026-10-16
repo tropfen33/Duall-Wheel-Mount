@@ -28,19 +28,19 @@ public class BreezeModel<T extends Breeze> extends HierarchicalModel<T> {
     private final ModelPart windBottom;
     private final ModelPart rods;
 
-    public BreezeModel(ModelPart p_312152_) {
+    public BreezeModel(ModelPart root) {
         super(RenderType::entityTranslucent);
-        this.root = p_312152_;
-        this.wind = p_312152_.getChild("wind_body");
+        this.root = root;
+        this.wind = root.getChild("wind_body");
         this.windBottom = this.wind.getChild("wind_bottom");
         this.windMid = this.windBottom.getChild("wind_mid");
         this.windTop = this.windMid.getChild("wind_top");
-        this.head = p_312152_.getChild("body").getChild("head");
+        this.head = root.getChild("body").getChild("head");
         this.eyes = this.head.getChild("eyes");
-        this.rods = p_312152_.getChild("body").getChild("rods");
+        this.rods = root.getChild("body").getChild("rods");
     }
 
-    public static LayerDefinition createBodyLayer(int p_316814_, int p_316468_) {
+    public static LayerDefinition createBodyLayer(int width, int height) {
         MeshDefinition meshdefinition = new MeshDefinition();
         PartDefinition partdefinition = meshdefinition.getRoot();
         PartDefinition partdefinition1 = partdefinition.addOrReplaceChild("body", CubeListBuilder.create(), PartPose.offset(0.0F, 0.0F, 0.0F));
@@ -106,12 +106,15 @@ public class BreezeModel<T extends Breeze> extends HierarchicalModel<T> {
                 .addBox(-2.5F, -8.0F, -2.5F, 5.0F, 8.0F, 5.0F, new CubeDeformation(0.0F)),
             PartPose.offset(0.0F, -6.0F, 0.0F)
         );
-        return LayerDefinition.create(meshdefinition, p_316814_, p_316468_);
+        return LayerDefinition.create(meshdefinition, width, height);
     }
 
-    public void setupAnim(T p_312040_, float p_311926_, float p_312463_, float p_311788_, float p_311860_, float p_312017_) {
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.root().getAllParts().forEach(ModelPart::resetPose);
-        float f = p_311788_ * (float) Math.PI * -0.1F;
+        float f = ageInTicks * (float) Math.PI * -0.1F;
         this.windTop.x = Mth.cos(f) * 1.0F * 0.6F;
         this.windTop.z = Mth.sin(f) * 1.0F * 0.6F;
         this.windMid.x = Mth.sin(f) * 0.5F * 0.8F;
@@ -119,11 +122,11 @@ public class BreezeModel<T extends Breeze> extends HierarchicalModel<T> {
         this.windBottom.x = Mth.cos(f) * -0.25F * 1.0F;
         this.windBottom.z = Mth.sin(f) * -0.25F * 1.0F;
         this.head.y = 4.0F + Mth.cos(f) / 4.0F;
-        this.rods.yRot = p_311788_ * (float) Math.PI * 0.1F;
-        this.animate(p_312040_.shoot, BreezeAnimation.SHOOT, p_311788_);
-        this.animate(p_312040_.slide, BreezeAnimation.SLIDE, p_311788_);
-        this.animate(p_312040_.slideBack, BreezeAnimation.SLIDE_BACK, p_311788_);
-        this.animate(p_312040_.longJump, BreezeAnimation.JUMP, p_311788_);
+        this.rods.yRot = ageInTicks * (float) Math.PI * 0.1F;
+        this.animate(entity.shoot, BreezeAnimation.SHOOT, ageInTicks);
+        this.animate(entity.slide, BreezeAnimation.SLIDE, ageInTicks);
+        this.animate(entity.slideBack, BreezeAnimation.SLIDE_BACK, ageInTicks);
+        this.animate(entity.longJump, BreezeAnimation.JUMP, ageInTicks);
     }
 
     @Override

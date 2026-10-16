@@ -47,10 +47,10 @@ public class RealmsBrokenWorldScreen extends RealmsScreen {
     private final List<Integer> slotsThatHasBeenDownloaded = Lists.newArrayList();
     private int animTick;
 
-    public RealmsBrokenWorldScreen(Screen p_88296_, long p_88298_, boolean p_88299_) {
-        super(p_88299_ ? Component.translatable("mco.brokenworld.minigame.title") : Component.translatable("mco.brokenworld.title"));
-        this.lastScreen = p_88296_;
-        this.serverId = p_88298_;
+    public RealmsBrokenWorldScreen(Screen lastScreen, long serverId, boolean isMinigame) {
+        super(isMinigame ? Component.translatable("mco.brokenworld.minigame.title") : Component.translatable("mco.brokenworld.title"));
+        this.lastScreen = lastScreen;
+        this.serverId = serverId;
     }
 
     @Override
@@ -115,24 +115,32 @@ public class RealmsBrokenWorldScreen extends RealmsScreen {
         this.animTick++;
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282934_, int p_88317_, int p_88318_, float p_88319_) {
-        super.render(p_282934_, p_88317_, p_88318_, p_88319_);
-        p_282934_.drawCenteredString(this.font, this.title, this.width / 2, 17, -1);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 17, -1);
 
         for (int i = 0; i < this.message.length; i++) {
-            p_282934_.drawCenteredString(this.font, this.message[i], this.width / 2, row(-1) + 3 + i * 12, -6250336);
+            guiGraphics.drawCenteredString(this.font, this.message[i], this.width / 2, row(-1) + 3 + i * 12, -6250336);
         }
 
         if (this.serverData != null) {
             for (Entry<Integer, RealmsWorldOptions> entry : this.serverData.slots.entrySet()) {
                 if (entry.getValue().templateImage != null && entry.getValue().templateId != -1L) {
                     this.drawSlotFrame(
-                        p_282934_,
+                        guiGraphics,
                         this.getFramePositionX(entry.getKey()),
                         row(1) + 5,
-                        p_88317_,
-                        p_88318_,
+                        mouseX,
+                        mouseY,
                         this.serverData.activeSlot == entry.getKey() && !this.isMinigame(),
                         entry.getValue().getSlotName(entry.getKey()),
                         entry.getKey(),
@@ -142,11 +150,11 @@ public class RealmsBrokenWorldScreen extends RealmsScreen {
                     );
                 } else {
                     this.drawSlotFrame(
-                        p_282934_,
+                        guiGraphics,
                         this.getFramePositionX(entry.getKey()),
                         row(1) + 5,
-                        p_88317_,
-                        p_88318_,
+                        mouseX,
+                        mouseY,
                         this.serverData.activeSlot == entry.getKey() && !this.isMinigame(),
                         entry.getValue().getSlotName(entry.getKey()),
                         entry.getKey(),
@@ -159,16 +167,16 @@ public class RealmsBrokenWorldScreen extends RealmsScreen {
         }
     }
 
-    private int getFramePositionX(int p_88302_) {
-        return this.leftX + (p_88302_ - 1) * 110;
+    private int getFramePositionX(int index) {
+        return this.leftX + (index - 1) * 110;
     }
 
-    private void fetchServerData(long p_88314_) {
+    private void fetchServerData(long serverId) {
         new Thread(() -> {
             RealmsClient realmsclient = RealmsClient.create();
 
             try {
-                this.serverData = realmsclient.getOwnRealm(p_88314_);
+                this.serverData = realmsclient.getOwnRealm(serverId);
                 this.addButtons();
             } catch (RealmsServiceException realmsserviceexception) {
                 LOGGER.error("Couldn't get own world", (Throwable)realmsserviceexception);
@@ -201,15 +209,15 @@ public class RealmsBrokenWorldScreen extends RealmsScreen {
             .start();
     }
 
-    private void downloadWorld(int p_88336_) {
+    private void downloadWorld(int slotIndex) {
         RealmsClient realmsclient = RealmsClient.create();
 
         try {
-            WorldDownload worlddownload = realmsclient.requestDownloadInfo(this.serverData.id, p_88336_);
+            WorldDownload worlddownload = realmsclient.requestDownloadInfo(this.serverData.id, slotIndex);
             RealmsDownloadLatestWorldScreen realmsdownloadlatestworldscreen = new RealmsDownloadLatestWorldScreen(
-                this, worlddownload, this.serverData.getWorldName(p_88336_), p_329645_ -> {
+                this, worlddownload, this.serverData.getWorldName(slotIndex), p_329645_ -> {
                     if (p_329645_) {
-                        this.slotsThatHasBeenDownloaded.add(p_88336_);
+                        this.slotsThatHasBeenDownloaded.add(slotIndex);
                         this.clearWidgets();
                         this.addButtons();
                     } else {
@@ -234,49 +242,49 @@ public class RealmsBrokenWorldScreen extends RealmsScreen {
     }
 
     private void drawSlotFrame(
-        GuiGraphics p_281929_,
-        int p_283393_,
-        int p_281553_,
-        int p_283523_,
-        int p_282823_,
-        boolean p_283032_,
-        String p_283498_,
-        int p_283330_,
-        long p_283588_,
-        @Nullable String p_282484_,
-        boolean p_282283_
+        GuiGraphics guiGraphics,
+        int x,
+        int y,
+        int mouseX,
+        int mouseY,
+        boolean isActiveNonMinigame,
+        String text,
+        int slotIndex,
+        long templateId,
+        @Nullable String templateImage,
+        boolean hasTemplateImage
     ) {
         ResourceLocation resourcelocation;
-        if (p_282283_) {
+        if (hasTemplateImage) {
             resourcelocation = RealmsWorldSlotButton.EMPTY_SLOT_LOCATION;
-        } else if (p_282484_ != null && p_283588_ != -1L) {
-            resourcelocation = RealmsTextureManager.worldTemplate(String.valueOf(p_283588_), p_282484_);
-        } else if (p_283330_ == 1) {
+        } else if (templateImage != null && templateId != -1L) {
+            resourcelocation = RealmsTextureManager.worldTemplate(String.valueOf(templateId), templateImage);
+        } else if (slotIndex == 1) {
             resourcelocation = RealmsWorldSlotButton.DEFAULT_WORLD_SLOT_1;
-        } else if (p_283330_ == 2) {
+        } else if (slotIndex == 2) {
             resourcelocation = RealmsWorldSlotButton.DEFAULT_WORLD_SLOT_2;
-        } else if (p_283330_ == 3) {
+        } else if (slotIndex == 3) {
             resourcelocation = RealmsWorldSlotButton.DEFAULT_WORLD_SLOT_3;
         } else {
             resourcelocation = RealmsTextureManager.worldTemplate(String.valueOf(this.serverData.minigameId), this.serverData.minigameImage);
         }
 
-        if (!p_283032_) {
-            p_281929_.setColor(0.56F, 0.56F, 0.56F, 1.0F);
-        } else if (p_283032_) {
+        if (!isActiveNonMinigame) {
+            guiGraphics.setColor(0.56F, 0.56F, 0.56F, 1.0F);
+        } else if (isActiveNonMinigame) {
             float f = 0.9F + 0.1F * Mth.cos((float)this.animTick * 0.2F);
-            p_281929_.setColor(f, f, f, 1.0F);
+            guiGraphics.setColor(f, f, f, 1.0F);
         }
 
-        p_281929_.blit(resourcelocation, p_283393_ + 3, p_281553_ + 3, 0.0F, 0.0F, 74, 74, 74, 74);
-        if (p_283032_) {
-            p_281929_.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        guiGraphics.blit(resourcelocation, x + 3, y + 3, 0.0F, 0.0F, 74, 74, 74, 74);
+        if (isActiveNonMinigame) {
+            guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         } else {
-            p_281929_.setColor(0.56F, 0.56F, 0.56F, 1.0F);
+            guiGraphics.setColor(0.56F, 0.56F, 0.56F, 1.0F);
         }
 
-        p_281929_.blitSprite(SLOT_FRAME_SPRITE, p_283393_, p_281553_, 80, 80);
-        p_281929_.drawCenteredString(this.font, p_283498_, p_283393_ + 40, p_281553_ + 66, -1);
-        p_281929_.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        guiGraphics.blitSprite(SLOT_FRAME_SPRITE, x, y, 80, 80);
+        guiGraphics.drawCenteredString(this.font, text, x + 40, y + 66, -1);
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 }

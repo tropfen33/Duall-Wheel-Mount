@@ -9,17 +9,22 @@ import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 
 public class PoiTypeTagsProvider extends TagsProvider<PoiType> {
-    /** @deprecated Forge: Use the {@linkplain #PoiTypeTagsProvider(PackOutput, CompletableFuture, String, net.neoforged.neoforge.common.data.ExistingFileHelper) mod id variant} */
+    /**
+ * @deprecated Forge: Use the {@linkplain #PoiTypeTagsProvider(PackOutput,
+ *             CompletableFuture, String,
+ *             net.neoforged.neoforge.common.data.ExistingFileHelper) mod id
+ *             variant}
+ */
     @Deprecated
-    public PoiTypeTagsProvider(PackOutput p_256012_, CompletableFuture<HolderLookup.Provider> p_256617_) {
-        super(p_256012_, Registries.POINT_OF_INTEREST_TYPE, p_256617_);
+    public PoiTypeTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider) {
+        super(output, Registries.POINT_OF_INTEREST_TYPE, provider);
     }
-    public PoiTypeTagsProvider(PackOutput p_256012_, CompletableFuture<HolderLookup.Provider> p_256617_, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
-        super(p_256012_, Registries.POINT_OF_INTEREST_TYPE, p_256617_, modId, existingFileHelper);
+    public PoiTypeTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
+        super(output, Registries.POINT_OF_INTEREST_TYPE, provider, modId, existingFileHelper);
     }
 
     @Override
-    protected void addTags(HolderLookup.Provider p_256206_) {
+    protected void addTags(HolderLookup.Provider provider) {
         this.tag(PoiTypeTags.ACQUIRABLE_JOB_SITE)
             .add(
                 PoiTypes.ARMORER,

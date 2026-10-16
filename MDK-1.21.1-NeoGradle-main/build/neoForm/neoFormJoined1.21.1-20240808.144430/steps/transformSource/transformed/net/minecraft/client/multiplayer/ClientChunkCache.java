@@ -35,13 +35,13 @@ public class ClientChunkCache extends ChunkSource {
     volatile ClientChunkCache.Storage storage;
     final ClientLevel level;
 
-    public ClientChunkCache(ClientLevel p_104414_, int p_104415_) {
-        this.level = p_104414_;
+    public ClientChunkCache(ClientLevel level, int viewDistance) {
+        this.level = level;
         this.emptyChunk = new EmptyLevelChunk(
-            p_104414_, new ChunkPos(0, 0), p_104414_.registryAccess().registryOrThrow(Registries.BIOME).getHolderOrThrow(Biomes.PLAINS)
+            level, new ChunkPos(0, 0), level.registryAccess().registryOrThrow(Registries.BIOME).getHolderOrThrow(Biomes.PLAINS)
         );
-        this.lightEngine = new LevelLightEngine(this, true, p_104414_.dimensionType().hasSkyLight());
-        this.storage = new ClientChunkCache.Storage(calculateStorageRange(p_104415_));
+        this.lightEngine = new LevelLightEngine(this, true, level.dimensionType().hasSkyLight());
+        this.storage = new ClientChunkCache.Storage(calculateStorageRange(viewDistance));
     }
 
     @Override
@@ -49,20 +49,20 @@ public class ClientChunkCache extends ChunkSource {
         return this.lightEngine;
     }
 
-    private static boolean isValidChunk(@Nullable LevelChunk p_104439_, int p_104440_, int p_104441_) {
-        if (p_104439_ == null) {
+    private static boolean isValidChunk(@Nullable LevelChunk chunk, int x, int z) {
+        if (chunk == null) {
             return false;
         } else {
-            ChunkPos chunkpos = p_104439_.getPos();
-            return chunkpos.x == p_104440_ && chunkpos.z == p_104441_;
+            ChunkPos chunkpos = chunk.getPos();
+            return chunkpos.x == x && chunkpos.z == z;
         }
     }
 
-    public void drop(ChunkPos p_295783_) {
-        if (this.storage.inRange(p_295783_.x, p_295783_.z)) {
-            int i = this.storage.getIndex(p_295783_.x, p_295783_.z);
+    public void drop(ChunkPos chunkPos) {
+        if (this.storage.inRange(chunkPos.x, chunkPos.z)) {
+            int i = this.storage.getIndex(chunkPos.x, chunkPos.z);
             LevelChunk levelchunk = this.storage.getChunk(i);
-            if (isValidChunk(levelchunk, p_295783_.x, p_295783_.z)) {
+            if (isValidChunk(levelchunk, chunkPos.x, chunkPos.z)) {
                 net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.event.level.ChunkEvent.Unload(levelchunk));
                 this.storage.replace(i, levelchunk, null);
             }
@@ -70,15 +70,15 @@ public class ClientChunkCache extends ChunkSource {
     }
 
     @Nullable
-    public LevelChunk getChunk(int p_104451_, int p_104452_, ChunkStatus p_330230_, boolean p_104454_) {
-        if (this.storage.inRange(p_104451_, p_104452_)) {
-            LevelChunk levelchunk = this.storage.getChunk(this.storage.getIndex(p_104451_, p_104452_));
-            if (isValidChunk(levelchunk, p_104451_, p_104452_)) {
+    public LevelChunk getChunk(int x, int z, ChunkStatus chunkStatus, boolean requireChunk) {
+        if (this.storage.inRange(x, z)) {
+            LevelChunk levelchunk = this.storage.getChunk(this.storage.getIndex(x, z));
+            if (isValidChunk(levelchunk, x, z)) {
                 return levelchunk;
             }
         }
 
-        return p_104454_ ? this.emptyChunk : null;
+        return requireChunk ? this.emptyChunk : null;
     }
 
     @Override
@@ -86,41 +86,41 @@ public class ClientChunkCache extends ChunkSource {
         return this.level;
     }
 
-    public void replaceBiomes(int p_275374_, int p_275226_, FriendlyByteBuf p_275745_) {
-        if (!this.storage.inRange(p_275374_, p_275226_)) {
-            LOGGER.warn("Ignoring chunk since it's not in the view range: {}, {}", p_275374_, p_275226_);
+    public void replaceBiomes(int x, int z, FriendlyByteBuf buffer) {
+        if (!this.storage.inRange(x, z)) {
+            LOGGER.warn("Ignoring chunk since it's not in the view range: {}, {}", x, z);
         } else {
-            int i = this.storage.getIndex(p_275374_, p_275226_);
+            int i = this.storage.getIndex(x, z);
             LevelChunk levelchunk = this.storage.chunks.get(i);
-            if (!isValidChunk(levelchunk, p_275374_, p_275226_)) {
-                LOGGER.warn("Ignoring chunk since it's not present: {}, {}", p_275374_, p_275226_);
+            if (!isValidChunk(levelchunk, x, z)) {
+                LOGGER.warn("Ignoring chunk since it's not present: {}, {}", x, z);
             } else {
-                levelchunk.replaceBiomes(p_275745_);
+                levelchunk.replaceBiomes(buffer);
             }
         }
     }
 
     @Nullable
     public LevelChunk replaceWithPacketData(
-        int p_194117_,
-        int p_194118_,
-        FriendlyByteBuf p_194119_,
-        CompoundTag p_194120_,
-        Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> p_194121_
+        int x,
+        int z,
+        FriendlyByteBuf buffer,
+        CompoundTag tag,
+        Consumer<ClientboundLevelChunkPacketData.BlockEntityTagOutput> consumer
     ) {
-        if (!this.storage.inRange(p_194117_, p_194118_)) {
-            LOGGER.warn("Ignoring chunk since it's not in the view range: {}, {}", p_194117_, p_194118_);
+        if (!this.storage.inRange(x, z)) {
+            LOGGER.warn("Ignoring chunk since it's not in the view range: {}, {}", x, z);
             return null;
         } else {
-            int i = this.storage.getIndex(p_194117_, p_194118_);
+            int i = this.storage.getIndex(x, z);
             LevelChunk levelchunk = this.storage.chunks.get(i);
-            ChunkPos chunkpos = new ChunkPos(p_194117_, p_194118_);
-            if (!isValidChunk(levelchunk, p_194117_, p_194118_)) {
+            ChunkPos chunkpos = new ChunkPos(x, z);
+            if (!isValidChunk(levelchunk, x, z)) {
                 levelchunk = new LevelChunk(this.level, chunkpos);
-                levelchunk.replaceWithPacketData(p_194119_, p_194120_, p_194121_);
+                levelchunk.replaceWithPacketData(buffer, tag, consumer);
                 this.storage.replace(i, levelchunk);
             } else {
-                levelchunk.replaceWithPacketData(p_194119_, p_194120_, p_194121_);
+                levelchunk.replaceWithPacketData(buffer, tag, consumer);
             }
 
             this.level.onChunkLoaded(chunkpos);
@@ -130,17 +130,17 @@ public class ClientChunkCache extends ChunkSource {
     }
 
     @Override
-    public void tick(BooleanSupplier p_202421_, boolean p_202422_) {
+    public void tick(BooleanSupplier hasTimeLeft, boolean tickChunks) {
     }
 
-    public void updateViewCenter(int p_104460_, int p_104461_) {
-        this.storage.viewCenterX = p_104460_;
-        this.storage.viewCenterZ = p_104461_;
+    public void updateViewCenter(int x, int z) {
+        this.storage.viewCenterX = x;
+        this.storage.viewCenterZ = z;
     }
 
-    public void updateViewRadius(int p_104417_) {
+    public void updateViewRadius(int viewDistance) {
         int i = this.storage.chunkRadius;
-        int j = calculateStorageRange(p_104417_);
+        int j = calculateStorageRange(viewDistance);
         if (i != j) {
             ClientChunkCache.Storage clientchunkcache$storage = new ClientChunkCache.Storage(j);
             clientchunkcache$storage.viewCenterX = this.storage.viewCenterX;
@@ -160,8 +160,8 @@ public class ClientChunkCache extends ChunkSource {
         }
     }
 
-    private static int calculateStorageRange(int p_104449_) {
-        return Math.max(2, p_104449_) + 3;
+    private static int calculateStorageRange(int viewDistance) {
+        return Math.max(2, viewDistance) + 3;
     }
 
     @Override
@@ -175,8 +175,8 @@ public class ClientChunkCache extends ChunkSource {
     }
 
     @Override
-    public void onLightUpdate(LightLayer p_104436_, SectionPos p_104437_) {
-        Minecraft.getInstance().levelRenderer.setSectionDirty(p_104437_.x(), p_104437_.y(), p_104437_.z());
+    public void onLightUpdate(LightLayer type, SectionPos pos) {
+        Minecraft.getInstance().levelRenderer.setSectionDirty(pos.x(), pos.y(), pos.z());
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -188,48 +188,48 @@ public class ClientChunkCache extends ChunkSource {
         volatile int viewCenterZ;
         int chunkCount;
 
-        Storage(int p_104474_) {
-            this.chunkRadius = p_104474_;
-            this.viewRange = p_104474_ * 2 + 1;
+        Storage(int chunkRadius) {
+            this.chunkRadius = chunkRadius;
+            this.viewRange = chunkRadius * 2 + 1;
             this.chunks = new AtomicReferenceArray<>(this.viewRange * this.viewRange);
         }
 
-        int getIndex(int p_104482_, int p_104483_) {
-            return Math.floorMod(p_104483_, this.viewRange) * this.viewRange + Math.floorMod(p_104482_, this.viewRange);
+        int getIndex(int x, int z) {
+            return Math.floorMod(z, this.viewRange) * this.viewRange + Math.floorMod(x, this.viewRange);
         }
 
-        protected void replace(int p_104485_, @Nullable LevelChunk p_104486_) {
-            LevelChunk levelchunk = this.chunks.getAndSet(p_104485_, p_104486_);
+        protected void replace(int chunkIndex, @Nullable LevelChunk chunk) {
+            LevelChunk levelchunk = this.chunks.getAndSet(chunkIndex, chunk);
             if (levelchunk != null) {
                 this.chunkCount--;
                 ClientChunkCache.this.level.unload(levelchunk);
             }
 
-            if (p_104486_ != null) {
+            if (chunk != null) {
                 this.chunkCount++;
             }
         }
 
-        protected LevelChunk replace(int p_104488_, LevelChunk p_104489_, @Nullable LevelChunk p_104490_) {
-            if (this.chunks.compareAndSet(p_104488_, p_104489_, p_104490_) && p_104490_ == null) {
+        protected LevelChunk replace(int chunkIndex, LevelChunk chunk, @Nullable LevelChunk replaceWith) {
+            if (this.chunks.compareAndSet(chunkIndex, chunk, replaceWith) && replaceWith == null) {
                 this.chunkCount--;
             }
 
-            ClientChunkCache.this.level.unload(p_104489_);
-            return p_104489_;
+            ClientChunkCache.this.level.unload(chunk);
+            return chunk;
         }
 
-        boolean inRange(int p_104501_, int p_104502_) {
-            return Math.abs(p_104501_ - this.viewCenterX) <= this.chunkRadius && Math.abs(p_104502_ - this.viewCenterZ) <= this.chunkRadius;
+        boolean inRange(int x, int z) {
+            return Math.abs(x - this.viewCenterX) <= this.chunkRadius && Math.abs(z - this.viewCenterZ) <= this.chunkRadius;
         }
 
         @Nullable
-        protected LevelChunk getChunk(int p_104480_) {
-            return this.chunks.get(p_104480_);
+        protected LevelChunk getChunk(int chunkIndex) {
+            return this.chunks.get(chunkIndex);
         }
 
-        private void dumpChunks(String p_171623_) {
-            try (FileOutputStream fileoutputstream = new FileOutputStream(p_171623_)) {
+        private void dumpChunks(String filePath) {
+            try (FileOutputStream fileoutputstream = new FileOutputStream(filePath)) {
                 int i = ClientChunkCache.this.storage.chunkRadius;
 
                 for (int j = this.viewCenterZ - i; j <= this.viewCenterZ + i; j++) {
@@ -242,7 +242,7 @@ public class ClientChunkCache extends ChunkSource {
                     }
                 }
             } catch (IOException ioexception) {
-                ClientChunkCache.LOGGER.error("Failed to dump chunks to file {}", p_171623_, ioexception);
+                ClientChunkCache.LOGGER.error("Failed to dump chunks to file {}", filePath, ioexception);
             }
         }
     }

@@ -19,33 +19,42 @@ public class SimpleContainer implements Container, StackedContentsCompatible {
     @Nullable
     private List<ContainerListener> listeners;
 
-    public SimpleContainer(int p_19150_) {
-        this.size = p_19150_;
-        this.items = NonNullList.withSize(p_19150_, ItemStack.EMPTY);
+    public SimpleContainer(int size) {
+        this.size = size;
+        this.items = NonNullList.withSize(size, ItemStack.EMPTY);
     }
 
-    public SimpleContainer(ItemStack... p_19152_) {
-        this.size = p_19152_.length;
-        this.items = NonNullList.of(ItemStack.EMPTY, p_19152_);
+    public SimpleContainer(ItemStack... items) {
+        this.size = items.length;
+        this.items = NonNullList.of(ItemStack.EMPTY, items);
     }
 
-    public void addListener(ContainerListener p_19165_) {
+    /**
+     * Add a listener that will be notified when any item in this inventory is modified.
+     */
+    public void addListener(ContainerListener listener) {
         if (this.listeners == null) {
             this.listeners = Lists.newArrayList();
         }
 
-        this.listeners.add(p_19165_);
+        this.listeners.add(listener);
     }
 
-    public void removeListener(ContainerListener p_19182_) {
+    /**
+     * Removes the specified {@link net.minecraft.world.ContainerListener} from receiving further change notices.
+     */
+    public void removeListener(ContainerListener listener) {
         if (this.listeners != null) {
-            this.listeners.remove(p_19182_);
+            this.listeners.remove(listener);
         }
     }
 
+    /**
+     * Returns the stack in the given slot.
+     */
     @Override
-    public ItemStack getItem(int p_19157_) {
-        return p_19157_ >= 0 && p_19157_ < this.items.size() ? this.items.get(p_19157_) : ItemStack.EMPTY;
+    public ItemStack getItem(int index) {
+        return index >= 0 && index < this.items.size() ? this.items.get(index) : ItemStack.EMPTY;
     }
 
     public List<ItemStack> removeAllItems() {
@@ -54,9 +63,12 @@ public class SimpleContainer implements Container, StackedContentsCompatible {
         return list;
     }
 
+    /**
+     * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
+     */
     @Override
-    public ItemStack removeItem(int p_19159_, int p_19160_) {
-        ItemStack itemstack = ContainerHelper.removeItem(this.items, p_19159_, p_19160_);
+    public ItemStack removeItem(int index, int count) {
+        ItemStack itemstack = ContainerHelper.removeItem(this.items, index, count);
         if (!itemstack.isEmpty()) {
             this.setChanged();
         }
@@ -64,16 +76,16 @@ public class SimpleContainer implements Container, StackedContentsCompatible {
         return itemstack;
     }
 
-    public ItemStack removeItemType(Item p_19171_, int p_19172_) {
-        ItemStack itemstack = new ItemStack(p_19171_, 0);
+    public ItemStack removeItemType(Item item, int amount) {
+        ItemStack itemstack = new ItemStack(item, 0);
 
         for (int i = this.size - 1; i >= 0; i--) {
             ItemStack itemstack1 = this.getItem(i);
-            if (itemstack1.getItem().equals(p_19171_)) {
-                int j = p_19172_ - itemstack.getCount();
+            if (itemstack1.getItem().equals(item)) {
+                int j = amount - itemstack.getCount();
                 ItemStack itemstack2 = itemstack1.split(j);
                 itemstack.grow(itemstack2.getCount());
-                if (itemstack.getCount() == p_19172_) {
+                if (itemstack.getCount() == amount) {
                     break;
                 }
             }
@@ -86,11 +98,11 @@ public class SimpleContainer implements Container, StackedContentsCompatible {
         return itemstack;
     }
 
-    public ItemStack addItem(ItemStack p_19174_) {
-        if (p_19174_.isEmpty()) {
+    public ItemStack addItem(ItemStack stack) {
+        if (stack.isEmpty()) {
             return ItemStack.EMPTY;
         } else {
-            ItemStack itemstack = p_19174_.copy();
+            ItemStack itemstack = stack.copy();
             this.moveItemToOccupiedSlotsWithSameType(itemstack);
             if (itemstack.isEmpty()) {
                 return ItemStack.EMPTY;
@@ -101,11 +113,11 @@ public class SimpleContainer implements Container, StackedContentsCompatible {
         }
     }
 
-    public boolean canAddItem(ItemStack p_19184_) {
+    public boolean canAddItem(ItemStack stack) {
         boolean flag = false;
 
         for (ItemStack itemstack : this.items) {
-            if (itemstack.isEmpty() || ItemStack.isSameItemSameComponents(itemstack, p_19184_) && itemstack.getCount() < itemstack.getMaxStackSize()) {
+            if (itemstack.isEmpty() || ItemStack.isSameItemSameComponents(itemstack, stack) && itemstack.getCount() < itemstack.getMaxStackSize()) {
                 flag = true;
                 break;
             }
@@ -114,21 +126,27 @@ public class SimpleContainer implements Container, StackedContentsCompatible {
         return flag;
     }
 
+    /**
+     * Removes a stack from the given slot and returns it.
+     */
     @Override
-    public ItemStack removeItemNoUpdate(int p_19180_) {
-        ItemStack itemstack = this.items.get(p_19180_);
+    public ItemStack removeItemNoUpdate(int index) {
+        ItemStack itemstack = this.items.get(index);
         if (itemstack.isEmpty()) {
             return ItemStack.EMPTY;
         } else {
-            this.items.set(p_19180_, ItemStack.EMPTY);
+            this.items.set(index, ItemStack.EMPTY);
             return itemstack;
         }
     }
 
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
     @Override
-    public void setItem(int p_19162_, ItemStack p_19163_) {
-        this.items.set(p_19162_, p_19163_);
-        p_19163_.limitSize(this.getMaxStackSize(p_19163_));
+    public void setItem(int index, ItemStack stack) {
+        this.items.set(index, stack);
+        stack.limitSize(this.getMaxStackSize(stack));
         this.setChanged();
     }
 
@@ -157,8 +175,11 @@ public class SimpleContainer implements Container, StackedContentsCompatible {
         }
     }
 
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
     @Override
-    public boolean stillValid(Player p_19167_) {
+    public boolean stillValid(Player player) {
         return true;
     }
 
@@ -169,9 +190,9 @@ public class SimpleContainer implements Container, StackedContentsCompatible {
     }
 
     @Override
-    public void fillStackedContents(StackedContents p_19169_) {
+    public void fillStackedContents(StackedContents helper) {
         for (ItemStack itemstack : this.items) {
-            p_19169_.accountStack(itemstack);
+            helper.accountStack(itemstack);
         }
     }
 
@@ -180,53 +201,53 @@ public class SimpleContainer implements Container, StackedContentsCompatible {
         return this.items.stream().filter(p_19194_ -> !p_19194_.isEmpty()).collect(Collectors.toList()).toString();
     }
 
-    private void moveItemToEmptySlots(ItemStack p_19190_) {
+    private void moveItemToEmptySlots(ItemStack stack) {
         for (int i = 0; i < this.size; i++) {
             ItemStack itemstack = this.getItem(i);
             if (itemstack.isEmpty()) {
-                this.setItem(i, p_19190_.copyAndClear());
+                this.setItem(i, stack.copyAndClear());
                 return;
             }
         }
     }
 
-    private void moveItemToOccupiedSlotsWithSameType(ItemStack p_19192_) {
+    private void moveItemToOccupiedSlotsWithSameType(ItemStack stack) {
         for (int i = 0; i < this.size; i++) {
             ItemStack itemstack = this.getItem(i);
-            if (ItemStack.isSameItemSameComponents(itemstack, p_19192_)) {
-                this.moveItemsBetweenStacks(p_19192_, itemstack);
-                if (p_19192_.isEmpty()) {
+            if (ItemStack.isSameItemSameComponents(itemstack, stack)) {
+                this.moveItemsBetweenStacks(stack, itemstack);
+                if (stack.isEmpty()) {
                     return;
                 }
             }
         }
     }
 
-    private void moveItemsBetweenStacks(ItemStack p_19186_, ItemStack p_19187_) {
-        int i = this.getMaxStackSize(p_19187_);
-        int j = Math.min(p_19186_.getCount(), i - p_19187_.getCount());
+    private void moveItemsBetweenStacks(ItemStack stack, ItemStack other) {
+        int i = this.getMaxStackSize(other);
+        int j = Math.min(stack.getCount(), i - other.getCount());
         if (j > 0) {
-            p_19187_.grow(j);
-            p_19186_.shrink(j);
+            other.grow(j);
+            stack.shrink(j);
             this.setChanged();
         }
     }
 
-    public void fromTag(ListTag p_19178_, HolderLookup.Provider p_331527_) {
+    public void fromTag(ListTag tag, HolderLookup.Provider levelRegistry) {
         this.clearContent();
 
-        for (int i = 0; i < p_19178_.size(); i++) {
-            ItemStack.parse(p_331527_, p_19178_.getCompound(i)).ifPresent(this::addItem);
+        for (int i = 0; i < tag.size(); i++) {
+            ItemStack.parse(levelRegistry, tag.getCompound(i)).ifPresent(this::addItem);
         }
     }
 
-    public ListTag createTag(HolderLookup.Provider p_330840_) {
+    public ListTag createTag(HolderLookup.Provider levelRegistry) {
         ListTag listtag = new ListTag();
 
         for (int i = 0; i < this.getContainerSize(); i++) {
             ItemStack itemstack = this.getItem(i);
             if (!itemstack.isEmpty()) {
-                listtag.add(itemstack.save(p_330840_));
+                listtag.add(itemstack.save(levelRegistry));
             }
         }
 

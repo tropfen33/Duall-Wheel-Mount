@@ -8,50 +8,50 @@ import java.util.function.Supplier;
 import net.minecraft.util.datafix.fixes.References;
 
 public class V1451_3 extends NamespacedSchema {
-    public V1451_3(int p_17444_, Schema p_17445_) {
-        super(p_17444_, p_17445_);
+    public V1451_3(int versionKey, Schema parent) {
+        super(versionKey, parent);
     }
 
     @Override
-    public Map<String, Supplier<TypeTemplate>> registerEntities(Schema p_17472_) {
-        Map<String, Supplier<TypeTemplate>> map = super.registerEntities(p_17472_);
-        p_17472_.registerSimple(map, "minecraft:egg");
-        p_17472_.registerSimple(map, "minecraft:ender_pearl");
-        p_17472_.registerSimple(map, "minecraft:fireball");
-        p_17472_.register(map, "minecraft:potion", p_17450_ -> DSL.optionalFields("Potion", References.ITEM_STACK.in(p_17472_)));
-        p_17472_.registerSimple(map, "minecraft:small_fireball");
-        p_17472_.registerSimple(map, "minecraft:snowball");
-        p_17472_.registerSimple(map, "minecraft:wither_skull");
-        p_17472_.registerSimple(map, "minecraft:xp_bottle");
-        p_17472_.register(map, "minecraft:arrow", () -> DSL.optionalFields("inBlockState", References.BLOCK_STATE.in(p_17472_)));
-        p_17472_.register(
-            map, "minecraft:enderman", () -> DSL.optionalFields("carriedBlockState", References.BLOCK_STATE.in(p_17472_), V100.equipment(p_17472_))
+    public Map<String, Supplier<TypeTemplate>> registerEntities(Schema schema) {
+        Map<String, Supplier<TypeTemplate>> map = super.registerEntities(schema);
+        schema.registerSimple(map, "minecraft:egg");
+        schema.registerSimple(map, "minecraft:ender_pearl");
+        schema.registerSimple(map, "minecraft:fireball");
+        schema.register(map, "minecraft:potion", p_17450_ -> DSL.optionalFields("Potion", References.ITEM_STACK.in(schema)));
+        schema.registerSimple(map, "minecraft:small_fireball");
+        schema.registerSimple(map, "minecraft:snowball");
+        schema.registerSimple(map, "minecraft:wither_skull");
+        schema.registerSimple(map, "minecraft:xp_bottle");
+        schema.register(map, "minecraft:arrow", () -> DSL.optionalFields("inBlockState", References.BLOCK_STATE.in(schema)));
+        schema.register(
+            map, "minecraft:enderman", () -> DSL.optionalFields("carriedBlockState", References.BLOCK_STATE.in(schema), V100.equipment(schema))
         );
-        p_17472_.register(
+        schema.register(
             map,
             "minecraft:falling_block",
-            () -> DSL.optionalFields("BlockState", References.BLOCK_STATE.in(p_17472_), "TileEntityData", References.BLOCK_ENTITY.in(p_17472_))
+            () -> DSL.optionalFields("BlockState", References.BLOCK_STATE.in(schema), "TileEntityData", References.BLOCK_ENTITY.in(schema))
         );
-        p_17472_.register(map, "minecraft:spectral_arrow", () -> DSL.optionalFields("inBlockState", References.BLOCK_STATE.in(p_17472_)));
-        p_17472_.register(
+        schema.register(map, "minecraft:spectral_arrow", () -> DSL.optionalFields("inBlockState", References.BLOCK_STATE.in(schema)));
+        schema.register(
             map,
             "minecraft:chest_minecart",
-            () -> DSL.optionalFields("DisplayState", References.BLOCK_STATE.in(p_17472_), "Items", DSL.list(References.ITEM_STACK.in(p_17472_)))
+            () -> DSL.optionalFields("DisplayState", References.BLOCK_STATE.in(schema), "Items", DSL.list(References.ITEM_STACK.in(schema)))
         );
-        p_17472_.register(map, "minecraft:commandblock_minecart", () -> DSL.optionalFields("DisplayState", References.BLOCK_STATE.in(p_17472_)));
-        p_17472_.register(map, "minecraft:furnace_minecart", () -> DSL.optionalFields("DisplayState", References.BLOCK_STATE.in(p_17472_)));
-        p_17472_.register(
+        schema.register(map, "minecraft:commandblock_minecart", () -> DSL.optionalFields("DisplayState", References.BLOCK_STATE.in(schema)));
+        schema.register(map, "minecraft:furnace_minecart", () -> DSL.optionalFields("DisplayState", References.BLOCK_STATE.in(schema)));
+        schema.register(
             map,
             "minecraft:hopper_minecart",
-            () -> DSL.optionalFields("DisplayState", References.BLOCK_STATE.in(p_17472_), "Items", DSL.list(References.ITEM_STACK.in(p_17472_)))
+            () -> DSL.optionalFields("DisplayState", References.BLOCK_STATE.in(schema), "Items", DSL.list(References.ITEM_STACK.in(schema)))
         );
-        p_17472_.register(map, "minecraft:minecart", () -> DSL.optionalFields("DisplayState", References.BLOCK_STATE.in(p_17472_)));
-        p_17472_.register(
+        schema.register(map, "minecraft:minecart", () -> DSL.optionalFields("DisplayState", References.BLOCK_STATE.in(schema)));
+        schema.register(
             map,
             "minecraft:spawner_minecart",
-            () -> DSL.optionalFields("DisplayState", References.BLOCK_STATE.in(p_17472_), References.UNTAGGED_SPAWNER.in(p_17472_))
+            () -> DSL.optionalFields("DisplayState", References.BLOCK_STATE.in(schema), References.UNTAGGED_SPAWNER.in(schema))
         );
-        p_17472_.register(map, "minecraft:tnt_minecart", () -> DSL.optionalFields("DisplayState", References.BLOCK_STATE.in(p_17472_)));
+        schema.register(map, "minecraft:tnt_minecart", () -> DSL.optionalFields("DisplayState", References.BLOCK_STATE.in(schema)));
         return map;
     }
 }

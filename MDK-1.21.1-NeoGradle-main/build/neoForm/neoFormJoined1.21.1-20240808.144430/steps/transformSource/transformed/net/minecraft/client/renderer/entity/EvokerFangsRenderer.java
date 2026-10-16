@@ -17,34 +17,37 @@ public class EvokerFangsRenderer extends EntityRenderer<EvokerFangs> {
     private static final ResourceLocation TEXTURE_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/illager/evoker_fangs.png");
     private final EvokerFangsModel<EvokerFangs> model;
 
-    public EvokerFangsRenderer(EntityRendererProvider.Context p_174100_) {
-        super(p_174100_);
-        this.model = new EvokerFangsModel<>(p_174100_.bakeLayer(ModelLayers.EVOKER_FANGS));
+    public EvokerFangsRenderer(EntityRendererProvider.Context context) {
+        super(context);
+        this.model = new EvokerFangsModel<>(context.bakeLayer(ModelLayers.EVOKER_FANGS));
     }
 
-    public void render(EvokerFangs p_114528_, float p_114529_, float p_114530_, PoseStack p_114531_, MultiBufferSource p_114532_, int p_114533_) {
-        float f = p_114528_.getAnimationProgress(p_114530_);
+    public void render(EvokerFangs entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        float f = entity.getAnimationProgress(partialTicks);
         if (f != 0.0F) {
             float f1 = 2.0F;
             if (f > 0.9F) {
                 f1 *= (1.0F - f) / 0.1F;
             }
 
-            p_114531_.pushPose();
-            p_114531_.mulPose(Axis.YP.rotationDegrees(90.0F - p_114528_.getYRot()));
-            p_114531_.scale(-f1, -f1, f1);
+            poseStack.pushPose();
+            poseStack.mulPose(Axis.YP.rotationDegrees(90.0F - entity.getYRot()));
+            poseStack.scale(-f1, -f1, f1);
             float f2 = 0.03125F;
-            p_114531_.translate(0.0, -0.626, 0.0);
-            p_114531_.scale(0.5F, 0.5F, 0.5F);
-            this.model.setupAnim(p_114528_, f, 0.0F, 0.0F, p_114528_.getYRot(), p_114528_.getXRot());
-            VertexConsumer vertexconsumer = p_114532_.getBuffer(this.model.renderType(TEXTURE_LOCATION));
-            this.model.renderToBuffer(p_114531_, vertexconsumer, p_114533_, OverlayTexture.NO_OVERLAY);
-            p_114531_.popPose();
-            super.render(p_114528_, p_114529_, p_114530_, p_114531_, p_114532_, p_114533_);
+            poseStack.translate(0.0, -0.626, 0.0);
+            poseStack.scale(0.5F, 0.5F, 0.5F);
+            this.model.setupAnim(entity, f, 0.0F, 0.0F, entity.getYRot(), entity.getXRot());
+            VertexConsumer vertexconsumer = buffer.getBuffer(this.model.renderType(TEXTURE_LOCATION));
+            this.model.renderToBuffer(poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY);
+            poseStack.popPose();
+            super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
         }
     }
 
-    public ResourceLocation getTextureLocation(EvokerFangs p_114526_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(EvokerFangs entity) {
         return TEXTURE_LOCATION;
     }
 }

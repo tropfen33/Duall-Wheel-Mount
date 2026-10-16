@@ -39,17 +39,17 @@ public record ReplaceDisk(
     );
 
     @Override
-    public void apply(ServerLevel p_353045_, int p_353076_, EnchantedItemInUse p_353050_, Entity p_353038_, Vec3 p_353044_) {
-        BlockPos blockpos = BlockPos.containing(p_353044_).offset(this.offset);
-        RandomSource randomsource = p_353038_.getRandom();
-        int i = (int)this.radius.calculate(p_353076_);
-        int j = (int)this.height.calculate(p_353076_);
+    public void apply(ServerLevel level, int enchantmentLevel, EnchantedItemInUse item, Entity entity, Vec3 origin) {
+        BlockPos blockpos = BlockPos.containing(origin).offset(this.offset);
+        RandomSource randomsource = entity.getRandom();
+        int i = (int)this.radius.calculate(enchantmentLevel);
+        int j = (int)this.height.calculate(enchantmentLevel);
 
         for (BlockPos blockpos1 : BlockPos.betweenClosed(blockpos.offset(-i, 0, -i), blockpos.offset(i, Math.min(j - 1, 0), i))) {
-            if (blockpos1.distToCenterSqr(p_353044_.x(), (double)blockpos1.getY() + 0.5, p_353044_.z()) < (double)Mth.square(i)
-                && this.predicate.map(p_353051_ -> p_353051_.test(p_353045_, blockpos1)).orElse(true)
-                && p_353045_.setBlockAndUpdate(blockpos1, this.blockState.getState(randomsource, blockpos1))) {
-                this.triggerGameEvent.ifPresent(p_353037_ -> p_353045_.gameEvent(p_353038_, (Holder<GameEvent>)p_353037_, blockpos1));
+            if (blockpos1.distToCenterSqr(origin.x(), (double)blockpos1.getY() + 0.5, origin.z()) < (double)Mth.square(i)
+                && this.predicate.map(p_353051_ -> p_353051_.test(level, blockpos1)).orElse(true)
+                && level.setBlockAndUpdate(blockpos1, this.blockState.getState(randomsource, blockpos1))) {
+                this.triggerGameEvent.ifPresent(p_353037_ -> level.gameEvent(entity, (Holder<GameEvent>)p_353037_, blockpos1));
             }
         }
     }

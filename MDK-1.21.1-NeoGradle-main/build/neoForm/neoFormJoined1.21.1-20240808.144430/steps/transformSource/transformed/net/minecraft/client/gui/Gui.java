@@ -144,20 +144,47 @@ public class Gui {
     private ItemStack lastToolHighlight = ItemStack.EMPTY;
     private final DebugScreenOverlay debugOverlay;
     private final SubtitleOverlay subtitleOverlay;
+    /**
+     * The spectator GUI for this in-game GUI instance
+     */
     private final SpectatorGui spectatorGui;
     private final PlayerTabOverlay tabList;
     private final BossHealthOverlay bossOverlay;
+    /**
+     * A timer for the current title and subtitle displayed
+     */
     private int titleTime;
+    /**
+     * The current title displayed
+     */
     @Nullable
     private Component title;
+    /**
+     * The current sub-title displayed
+     */
     @Nullable
     private Component subtitle;
+    /**
+     * The time that the title take to fade in
+     */
     private int titleFadeInTime;
+    /**
+     * The time that the title is display
+     */
     private int titleStayTime;
+    /**
+     * The time that the title take to fade out
+     */
     private int titleFadeOutTime;
     private int lastHealth;
     private int displayHealth;
+    /**
+     * The last recorded system time
+     */
     private long lastHealthTime;
+    /**
+     * Used with updateCounter to make the heart bar flash
+     */
     private long healthBlinkTime;
     private float autosaveIndicatorValue;
     private float lastAutosaveIndicatorValue;
@@ -176,14 +203,14 @@ public class Gui {
      */
     public int rightHeight;
 
-    public Gui(Minecraft p_232355_) {
-        this.minecraft = p_232355_;
-        this.debugOverlay = new DebugScreenOverlay(p_232355_);
-        this.spectatorGui = new SpectatorGui(p_232355_);
-        this.chat = new ChatComponent(p_232355_);
-        this.tabList = new PlayerTabOverlay(p_232355_, this);
-        this.bossOverlay = new BossHealthOverlay(p_232355_);
-        this.subtitleOverlay = new SubtitleOverlay(p_232355_);
+    public Gui(Minecraft minecraft) {
+        this.minecraft = minecraft;
+        this.debugOverlay = new DebugScreenOverlay(minecraft);
+        this.spectatorGui = new SpectatorGui(minecraft);
+        this.chat = new ChatComponent(minecraft);
+        this.tabList = new PlayerTabOverlay(minecraft, this);
+        this.bossOverlay = new BossHealthOverlay(minecraft);
+        this.subtitleOverlay = new SubtitleOverlay(minecraft);
         this.resetTitleTimes();
         var playerHealthComponents = new net.neoforged.neoforge.client.gui.GuiLayerManager()
                 .add(PLAYER_HEALTH, (guiGraphics, partialTick) -> renderHealthLevel(guiGraphics))
@@ -218,7 +245,7 @@ public class Gui {
             .add(TAB_LIST, this::renderTabList)
             .add(SUBTITLE_OVERLAY, (p_315816_, p_315817_) -> this.subtitleOverlay.render(p_315816_))
             .add(SAVING_INDICATOR, this::renderSavingIndicator);
-        this.layerManager.add(layereddraw, () -> !p_232355_.options.hideGui).add(SLEEP_OVERLAY, this::renderSleepOverlay).add(layereddraw1, () -> !p_232355_.options.hideGui);
+        this.layerManager.add(layereddraw, () -> !minecraft.options.hideGui).add(SLEEP_OVERLAY, this::renderSleepOverlay).add(layereddraw1, () -> !minecraft.options.hideGui);
     }
 
     public void resetTitleTimes() {
@@ -227,48 +254,48 @@ public class Gui {
         this.titleFadeOutTime = 20;
     }
 
-    public void render(GuiGraphics p_282884_, DeltaTracker p_348630_) {
+    public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         RenderSystem.enableDepthTest();
         leftHeight = 39;
         rightHeight = 39;
-        this.layerManager.render(p_282884_, p_348630_);
+        this.layerManager.render(guiGraphics, deltaTracker);
         RenderSystem.disableDepthTest();
     }
 
-    private void renderCameraOverlays(GuiGraphics p_316735_, DeltaTracker p_348538_) {
+    private void renderCameraOverlays(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         if (Minecraft.useFancyGraphics()) {
-            this.renderVignette(p_316735_, this.minecraft.getCameraEntity());
+            this.renderVignette(guiGraphics, this.minecraft.getCameraEntity());
         }
 
-        float f = p_348538_.getGameTimeDeltaTicks();
+        float f = deltaTracker.getGameTimeDeltaTicks();
         this.scopeScale = Mth.lerp(0.5F * f, this.scopeScale, 1.125F);
         if (this.minecraft.options.getCameraType().isFirstPerson()) {
             if (this.minecraft.player.isScoping()) {
-                this.renderSpyglassOverlay(p_316735_, this.scopeScale);
+                this.renderSpyglassOverlay(guiGraphics, this.scopeScale);
             } else {
                 this.scopeScale = 0.5F;
                 ItemStack itemstack = this.minecraft.player.getInventory().getArmor(3);
                 if (itemstack.is(Blocks.CARVED_PUMPKIN.asItem())) {
-                    this.renderTextureOverlay(p_316735_, PUMPKIN_BLUR_LOCATION, 1.0F);
+                    this.renderTextureOverlay(guiGraphics, PUMPKIN_BLUR_LOCATION, 1.0F);
                 } else {
-                    net.neoforged.neoforge.client.extensions.common.IClientItemExtensions.of(itemstack).renderHelmetOverlay(itemstack, this.minecraft.player, p_316735_, p_348538_);
+                    net.neoforged.neoforge.client.extensions.common.IClientItemExtensions.of(itemstack).renderHelmetOverlay(itemstack, this.minecraft.player, guiGraphics, deltaTracker);
                 }
             }
         }
 
         if (this.minecraft.player.getTicksFrozen() > 0) {
-            this.renderTextureOverlay(p_316735_, POWDER_SNOW_OUTLINE_LOCATION, this.minecraft.player.getPercentFrozen());
+            this.renderTextureOverlay(guiGraphics, POWDER_SNOW_OUTLINE_LOCATION, this.minecraft.player.getPercentFrozen());
         }
 
         float f1 = Mth.lerp(
-            p_348538_.getGameTimeDeltaPartialTick(false), this.minecraft.player.oSpinningEffectIntensity, this.minecraft.player.spinningEffectIntensity
+            deltaTracker.getGameTimeDeltaPartialTick(false), this.minecraft.player.oSpinningEffectIntensity, this.minecraft.player.spinningEffectIntensity
         );
         if (f1 > 0.0F && !this.minecraft.player.hasEffect(MobEffects.CONFUSION)) {
-            this.renderPortalOverlay(p_316735_, f1);
+            this.renderPortalOverlay(guiGraphics, f1);
         }
     }
 
-    private void renderSleepOverlay(GuiGraphics p_316466_, DeltaTracker p_348533_) {
+    private void renderSleepOverlay(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         if (this.minecraft.player.getSleepTimer() > 0) {
             this.minecraft.getProfiler().push("sleep");
             float f = (float)this.minecraft.player.getSleepTimer();
@@ -278,16 +305,16 @@ public class Gui {
             }
 
             int i = (int)(220.0F * f1) << 24 | 1052704;
-            p_316466_.fill(RenderType.guiOverlay(), 0, 0, p_316466_.guiWidth(), p_316466_.guiHeight(), i);
+            guiGraphics.fill(RenderType.guiOverlay(), 0, 0, guiGraphics.guiWidth(), guiGraphics.guiHeight(), i);
             this.minecraft.getProfiler().pop();
         }
     }
 
-    private void renderOverlayMessage(GuiGraphics p_316291_, DeltaTracker p_348653_) {
+    private void renderOverlayMessage(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         Font font = this.getFont();
         if (this.overlayMessageString != null && this.overlayMessageTime > 0) {
             this.minecraft.getProfiler().push("overlayMessage");
-            float f = (float)this.overlayMessageTime - p_348653_.getGameTimeDeltaPartialTick(false);
+            float f = (float)this.overlayMessageTime - deltaTracker.getGameTimeDeltaPartialTick(false);
             int i = (int)(f * 255.0F / 20.0F);
             if (i > 255) {
                 i = 255;
@@ -297,9 +324,9 @@ public class Gui {
                 //Include a shift based on the bar height plus the difference between the height that renderSelectedItemName
                 // renders at (59) and the height that the overlay/status bar renders at (68) by default
                 int yShift = Math.max(leftHeight, rightHeight) + (68 - 59);
-                p_316291_.pose().pushPose();
+                guiGraphics.pose().pushPose();
                 //If y shift is smaller less than the default y level, just render it at the base y level
-                p_316291_.pose().translate((float)(p_316291_.guiWidth() / 2), (float)(p_316291_.guiHeight() - Math.max(yShift, 68)), 0.0F);
+                guiGraphics.pose().translate((float)(guiGraphics.guiWidth() / 2), (float)(guiGraphics.guiHeight() - Math.max(yShift, 68)), 0.0F);
                 int j;
                 if (this.animateOverlayMessageColor) {
                     j = Mth.hsvToArgb(f / 50.0F, 0.7F, 0.6F, i);
@@ -308,19 +335,19 @@ public class Gui {
                 }
 
                 int k = font.width(this.overlayMessageString);
-                p_316291_.drawStringWithBackdrop(font, this.overlayMessageString, -k / 2, -4, k, j);
-                p_316291_.pose().popPose();
+                guiGraphics.drawStringWithBackdrop(font, this.overlayMessageString, -k / 2, -4, k, j);
+                guiGraphics.pose().popPose();
             }
 
             this.minecraft.getProfiler().pop();
         }
     }
 
-    private void renderTitle(GuiGraphics p_316629_, DeltaTracker p_348613_) {
+    private void renderTitle(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         if (this.title != null && this.titleTime > 0) {
             Font font = this.getFont();
             this.minecraft.getProfiler().push("titleAndSubtitle");
-            float f = (float)this.titleTime - p_348613_.getGameTimeDeltaPartialTick(false);
+            float f = (float)this.titleTime - deltaTracker.getGameTimeDeltaPartialTick(false);
             int i = 255;
             if (this.titleTime > this.titleFadeOutTime + this.titleStayTime) {
                 float f1 = (float)(this.titleFadeInTime + this.titleStayTime + this.titleFadeOutTime) - f;
@@ -333,49 +360,49 @@ public class Gui {
 
             i = Mth.clamp(i, 0, 255);
             if (i > 8) {
-                p_316629_.pose().pushPose();
-                p_316629_.pose().translate((float)(p_316629_.guiWidth() / 2), (float)(p_316629_.guiHeight() / 2), 0.0F);
-                p_316629_.pose().pushPose();
-                p_316629_.pose().scale(4.0F, 4.0F, 4.0F);
+                guiGraphics.pose().pushPose();
+                guiGraphics.pose().translate((float)(guiGraphics.guiWidth() / 2), (float)(guiGraphics.guiHeight() / 2), 0.0F);
+                guiGraphics.pose().pushPose();
+                guiGraphics.pose().scale(4.0F, 4.0F, 4.0F);
                 int l = font.width(this.title);
                 int j = FastColor.ARGB32.color(i, -1);
-                p_316629_.drawStringWithBackdrop(font, this.title, -l / 2, -10, l, j);
-                p_316629_.pose().popPose();
+                guiGraphics.drawStringWithBackdrop(font, this.title, -l / 2, -10, l, j);
+                guiGraphics.pose().popPose();
                 if (this.subtitle != null) {
-                    p_316629_.pose().pushPose();
-                    p_316629_.pose().scale(2.0F, 2.0F, 2.0F);
+                    guiGraphics.pose().pushPose();
+                    guiGraphics.pose().scale(2.0F, 2.0F, 2.0F);
                     int k = font.width(this.subtitle);
-                    p_316629_.drawStringWithBackdrop(font, this.subtitle, -k / 2, 5, k, j);
-                    p_316629_.pose().popPose();
+                    guiGraphics.drawStringWithBackdrop(font, this.subtitle, -k / 2, 5, k, j);
+                    guiGraphics.pose().popPose();
                 }
 
-                p_316629_.pose().popPose();
+                guiGraphics.pose().popPose();
             }
 
             this.minecraft.getProfiler().pop();
         }
     }
 
-    private void renderChat(GuiGraphics p_316307_, DeltaTracker p_348631_) {
+    private void renderChat(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         if (!this.chat.isChatFocused()) {
             Window window = this.minecraft.getWindow();
             // Neo: Allow customizing position of chat component
             var chatBottomMargin = 40; // See ChatComponent#BOTTOM_MARGIN (used in translate calls in ChatComponent#render)
             var event = net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(
-                    new net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent.Chat(window, p_316307_, p_348631_, 0, p_316307_.guiHeight() - chatBottomMargin)
+                    new net.neoforged.neoforge.client.event.CustomizeGuiOverlayEvent.Chat(window, guiGraphics, deltaTracker, 0, guiGraphics.guiHeight() - chatBottomMargin)
             );
 
             // The event is given the absolute Y position; account for chat component's own offsetting here
-            p_316307_.pose().pushPose();
-            p_316307_.pose().translate(event.getPosX(), (event.getPosY() - p_316307_.guiHeight() + chatBottomMargin) / this.chat.getScale(), 0.0F);
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(event.getPosX(), (event.getPosY() - guiGraphics.guiHeight() + chatBottomMargin) / this.chat.getScale(), 0.0F);
             int i = Mth.floor(this.minecraft.mouseHandler.xpos() * (double)window.getGuiScaledWidth() / (double)window.getScreenWidth());
             int j = Mth.floor(this.minecraft.mouseHandler.ypos() * (double)window.getGuiScaledHeight() / (double)window.getScreenHeight());
-            this.chat.render(p_316307_, this.tickCount, i, j, false);
-            p_316307_.pose().popPose();
+            this.chat.render(guiGraphics, this.tickCount, i, j, false);
+            guiGraphics.pose().popPose();
         }
     }
 
-    private void renderScoreboardSidebar(GuiGraphics p_316834_, DeltaTracker p_348514_) {
+    private void renderScoreboardSidebar(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         Scoreboard scoreboard = this.minecraft.level.getScoreboard();
         Objective objective = null;
         PlayerTeam playerteam = scoreboard.getPlayersTeam(this.minecraft.player.getScoreboardName());
@@ -388,11 +415,11 @@ public class Gui {
 
         Objective objective1 = objective != null ? objective : scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
         if (objective1 != null) {
-            this.displayScoreboardSidebar(p_316834_, objective1);
+            this.displayScoreboardSidebar(guiGraphics, objective1);
         }
     }
 
-    private void renderTabList(GuiGraphics p_316182_, DeltaTracker p_348611_) {
+    private void renderTabList(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         Scoreboard scoreboard = this.minecraft.level.getScoreboard();
         Objective objective = scoreboard.getDisplayObjective(DisplaySlot.LIST);
         if (!this.minecraft.options.keyPlayerList.isDown()
@@ -400,11 +427,11 @@ public class Gui {
             this.tabList.setVisible(false);
         } else {
             this.tabList.setVisible(true);
-            this.tabList.render(p_316182_, p_316182_.guiWidth(), scoreboard, objective);
+            this.tabList.render(guiGraphics, guiGraphics.guiWidth(), scoreboard, objective);
         }
     }
 
-    private void renderCrosshair(GuiGraphics p_282828_, DeltaTracker p_348625_) {
+    private void renderCrosshair(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         Options options = this.minecraft.options;
         if (options.getCameraType().isFirstPerson()) {
             if (this.minecraft.gameMode.getPlayerMode() != GameType.SPECTATOR || this.canRenderCrosshairForSpectator(this.minecraft.hitResult)) {
@@ -413,8 +440,8 @@ public class Gui {
                     Camera camera = this.minecraft.gameRenderer.getMainCamera();
                     Matrix4fStack matrix4fstack = RenderSystem.getModelViewStack();
                     matrix4fstack.pushMatrix();
-                    matrix4fstack.mul(p_282828_.pose().last().pose());
-                    matrix4fstack.translate((float)(p_282828_.guiWidth() / 2), (float)(p_282828_.guiHeight() / 2), 0.0F);
+                    matrix4fstack.mul(guiGraphics.pose().last().pose());
+                    matrix4fstack.translate((float)(guiGraphics.guiWidth() / 2), (float)(guiGraphics.guiHeight() / 2), 0.0F);
                     matrix4fstack.rotateX(-camera.getXRot() * (float) (Math.PI / 180.0));
                     matrix4fstack.rotateY(camera.getYRot() * (float) (Math.PI / 180.0));
                     matrix4fstack.scale(-1.0F, -1.0F, -1.0F);
@@ -430,7 +457,7 @@ public class Gui {
                         GlStateManager.DestFactor.ZERO
                     );
                     int i = 15;
-                    p_282828_.blitSprite(CROSSHAIR_SPRITE, (p_282828_.guiWidth() - 15) / 2, (p_282828_.guiHeight() - 15) / 2, 15, 15);
+                    guiGraphics.blitSprite(CROSSHAIR_SPRITE, (guiGraphics.guiWidth() - 15) / 2, (guiGraphics.guiHeight() - 15) / 2, 15, 15);
                     if (this.minecraft.options.attackIndicator().get() == AttackIndicatorStatus.CROSSHAIR) {
                         float f = this.minecraft.player.getAttackStrengthScale(0.0F);
                         boolean flag = false;
@@ -439,14 +466,14 @@ public class Gui {
                             flag &= this.minecraft.crosshairPickEntity.isAlive();
                         }
 
-                        int j = p_282828_.guiHeight() / 2 - 7 + 16;
-                        int k = p_282828_.guiWidth() / 2 - 8;
+                        int j = guiGraphics.guiHeight() / 2 - 7 + 16;
+                        int k = guiGraphics.guiWidth() / 2 - 8;
                         if (flag) {
-                            p_282828_.blitSprite(CROSSHAIR_ATTACK_INDICATOR_FULL_SPRITE, k, j, 16, 16);
+                            guiGraphics.blitSprite(CROSSHAIR_ATTACK_INDICATOR_FULL_SPRITE, k, j, 16, 16);
                         } else if (f < 1.0F) {
                             int l = (int)(f * 17.0F);
-                            p_282828_.blitSprite(CROSSHAIR_ATTACK_INDICATOR_BACKGROUND_SPRITE, k, j, 16, 4);
-                            p_282828_.blitSprite(CROSSHAIR_ATTACK_INDICATOR_PROGRESS_SPRITE, 16, 4, 0, 0, k, j, l, 4);
+                            guiGraphics.blitSprite(CROSSHAIR_ATTACK_INDICATOR_BACKGROUND_SPRITE, k, j, 16, 4);
+                            guiGraphics.blitSprite(CROSSHAIR_ATTACK_INDICATOR_PROGRESS_SPRITE, 16, 4, 0, 0, k, j, l, 4);
                         }
                     }
 
@@ -458,13 +485,20 @@ public class Gui {
         }
     }
 
-    private boolean canRenderCrosshairForSpectator(@Nullable HitResult p_93025_) {
-        if (p_93025_ == null) {
+    /**
+     * Checks if the crosshair can be rendered for a spectator based on the provided {@link HitResult}.
+     * <p>
+     * @return {@code true} if the crosshair can be rendered for a spectator, {@code false} otherwise.
+     *
+     * @param rayTrace the result of a ray trace operation.
+     */
+    private boolean canRenderCrosshairForSpectator(@Nullable HitResult rayTrace) {
+        if (rayTrace == null) {
             return false;
-        } else if (p_93025_.getType() == HitResult.Type.ENTITY) {
-            return ((EntityHitResult)p_93025_).getEntity() instanceof MenuProvider;
-        } else if (p_93025_.getType() == HitResult.Type.BLOCK) {
-            BlockPos blockpos = ((BlockHitResult)p_93025_).getBlockPos();
+        } else if (rayTrace.getType() == HitResult.Type.ENTITY) {
+            return ((EntityHitResult)rayTrace).getEntity() instanceof MenuProvider;
+        } else if (rayTrace.getType() == HitResult.Type.BLOCK) {
+            BlockPos blockpos = ((BlockHitResult)rayTrace).getBlockPos();
             Level level = this.minecraft.level;
             return level.getBlockState(blockpos).getMenuProvider(level, blockpos) != null;
         } else {
@@ -472,7 +506,7 @@ public class Gui {
         }
     }
 
-    private void renderEffects(GuiGraphics p_282812_, DeltaTracker p_348654_) {
+    private void renderEffects(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         Collection<MobEffectInstance> collection = this.minecraft.player.getActiveEffects();
         if (!collection.isEmpty()) {
             if (this.minecraft.screen instanceof EffectRenderingInventoryScreen effectrenderinginventoryscreen
@@ -491,7 +525,7 @@ public class Gui {
                 if (!renderer.isVisibleInGui(mobeffectinstance)) continue;
                 Holder<MobEffect> holder = mobeffectinstance.getEffect();
                 if (mobeffectinstance.showIcon()) {
-                    int i = p_282812_.guiWidth();
+                    int i = guiGraphics.guiWidth();
                     int j = 1;
                     if (this.minecraft.isDemo()) {
                         j += 15;
@@ -508,9 +542,9 @@ public class Gui {
 
                     float f = 1.0F;
                     if (mobeffectinstance.isAmbient()) {
-                        p_282812_.blitSprite(EFFECT_BACKGROUND_AMBIENT_SPRITE, i, j, 24, 24);
+                        guiGraphics.blitSprite(EFFECT_BACKGROUND_AMBIENT_SPRITE, i, j, 24, 24);
                     } else {
-                        p_282812_.blitSprite(EFFECT_BACKGROUND_SPRITE, i, j, 24, 24);
+                        guiGraphics.blitSprite(EFFECT_BACKGROUND_SPRITE, i, j, 24, 24);
                         if (mobeffectinstance.endsWithin(200)) {
                             int k = mobeffectinstance.getDuration();
                             int l = 10 - k / 20;
@@ -519,15 +553,15 @@ public class Gui {
                         }
                     }
 
-                    if (renderer.renderGuiIcon(mobeffectinstance, this, p_282812_, i, j, 0, f)) continue;
+                    if (renderer.renderGuiIcon(mobeffectinstance, this, guiGraphics, i, j, 0, f)) continue;
                     TextureAtlasSprite textureatlassprite = mobeffecttexturemanager.get(holder);
                     int l1 = i;
                     int i1 = j;
                     float f1 = f;
                     list.add(() -> {
-                        p_282812_.setColor(1.0F, 1.0F, 1.0F, f1);
-                        p_282812_.blit(l1 + 3, i1 + 3, 0, 18, 18, textureatlassprite);
-                        p_282812_.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+                        guiGraphics.setColor(1.0F, 1.0F, 1.0F, f1);
+                        guiGraphics.blit(l1 + 3, i1 + 3, 0, 18, 18, textureatlassprite);
+                        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
                     });
                 }
             }
@@ -538,14 +572,14 @@ public class Gui {
     }
 
     @Deprecated // Neo: Split up into different layers
-    private void renderHotbarAndDecorations(GuiGraphics p_316628_, DeltaTracker p_348543_) {
-        renderHotbar(p_316628_, p_348543_);
-        maybeRenderJumpMeter(p_316628_, p_348543_);
-        maybeRenderExperienceBar(p_316628_, p_348543_);
-        maybeRenderPlayerHealth(p_316628_, p_348543_);
-        maybeRenderVehicleHealth(p_316628_, p_348543_);
-        maybeRenderSelectedItemName(p_316628_, p_348543_);
-        maybeRenderSpectatorTooltip(p_316628_, p_348543_);
+    private void renderHotbarAndDecorations(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
+        renderHotbar(guiGraphics, deltaTracker);
+        maybeRenderJumpMeter(guiGraphics, deltaTracker);
+        maybeRenderExperienceBar(guiGraphics, deltaTracker);
+        maybeRenderPlayerHealth(guiGraphics, deltaTracker);
+        maybeRenderVehicleHealth(guiGraphics, deltaTracker);
+        maybeRenderSelectedItemName(guiGraphics, deltaTracker);
+        maybeRenderSpectatorTooltip(guiGraphics, deltaTracker);
     }
 
     private void renderHotbar(GuiGraphics p_316628_, DeltaTracker p_348543_) {
@@ -594,43 +628,43 @@ public class Gui {
         }
     }
 
-    private void renderItemHotbar(GuiGraphics p_316896_, DeltaTracker p_348464_) {
+    private void renderItemHotbar(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         Player player = this.getCameraPlayer();
         if (player != null) {
             ItemStack itemstack = player.getOffhandItem();
             HumanoidArm humanoidarm = player.getMainArm().getOpposite();
-            int i = p_316896_.guiWidth() / 2;
+            int i = guiGraphics.guiWidth() / 2;
             int j = 182;
             int k = 91;
             RenderSystem.enableBlend();
-            p_316896_.pose().pushPose();
-            p_316896_.pose().translate(0.0F, 0.0F, -90.0F);
-            p_316896_.blitSprite(HOTBAR_SPRITE, i - 91, p_316896_.guiHeight() - 22, 182, 22);
-            p_316896_.blitSprite(HOTBAR_SELECTION_SPRITE, i - 91 - 1 + player.getInventory().selected * 20, p_316896_.guiHeight() - 22 - 1, 24, 23);
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(0.0F, 0.0F, -90.0F);
+            guiGraphics.blitSprite(HOTBAR_SPRITE, i - 91, guiGraphics.guiHeight() - 22, 182, 22);
+            guiGraphics.blitSprite(HOTBAR_SELECTION_SPRITE, i - 91 - 1 + player.getInventory().selected * 20, guiGraphics.guiHeight() - 22 - 1, 24, 23);
             if (!itemstack.isEmpty()) {
                 if (humanoidarm == HumanoidArm.LEFT) {
-                    p_316896_.blitSprite(HOTBAR_OFFHAND_LEFT_SPRITE, i - 91 - 29, p_316896_.guiHeight() - 23, 29, 24);
+                    guiGraphics.blitSprite(HOTBAR_OFFHAND_LEFT_SPRITE, i - 91 - 29, guiGraphics.guiHeight() - 23, 29, 24);
                 } else {
-                    p_316896_.blitSprite(HOTBAR_OFFHAND_RIGHT_SPRITE, i + 91, p_316896_.guiHeight() - 23, 29, 24);
+                    guiGraphics.blitSprite(HOTBAR_OFFHAND_RIGHT_SPRITE, i + 91, guiGraphics.guiHeight() - 23, 29, 24);
                 }
             }
 
-            p_316896_.pose().popPose();
+            guiGraphics.pose().popPose();
             RenderSystem.disableBlend();
             int l = 1;
 
             for (int i1 = 0; i1 < 9; i1++) {
                 int j1 = i - 90 + i1 * 20 + 2;
-                int k1 = p_316896_.guiHeight() - 16 - 3;
-                this.renderSlot(p_316896_, j1, k1, p_348464_, player, player.getInventory().items.get(i1), l++);
+                int k1 = guiGraphics.guiHeight() - 16 - 3;
+                this.renderSlot(guiGraphics, j1, k1, deltaTracker, player, player.getInventory().items.get(i1), l++);
             }
 
             if (!itemstack.isEmpty()) {
-                int i2 = p_316896_.guiHeight() - 16 - 3;
+                int i2 = guiGraphics.guiHeight() - 16 - 3;
                 if (humanoidarm == HumanoidArm.LEFT) {
-                    this.renderSlot(p_316896_, i - 91 - 26, i2, p_348464_, player, itemstack, l++);
+                    this.renderSlot(guiGraphics, i - 91 - 26, i2, deltaTracker, player, itemstack, l++);
                 } else {
-                    this.renderSlot(p_316896_, i + 91 + 10, i2, p_348464_, player, itemstack, l++);
+                    this.renderSlot(guiGraphics, i + 91 + 10, i2, deltaTracker, player, itemstack, l++);
                 }
             }
 
@@ -638,15 +672,15 @@ public class Gui {
                 RenderSystem.enableBlend();
                 float f = this.minecraft.player.getAttackStrengthScale(0.0F);
                 if (f < 1.0F) {
-                    int j2 = p_316896_.guiHeight() - 20;
+                    int j2 = guiGraphics.guiHeight() - 20;
                     int k2 = i + 91 + 6;
                     if (humanoidarm == HumanoidArm.RIGHT) {
                         k2 = i - 91 - 22;
                     }
 
                     int l1 = (int)(f * 19.0F);
-                    p_316896_.blitSprite(HOTBAR_ATTACK_INDICATOR_BACKGROUND_SPRITE, k2, j2, 18, 18);
-                    p_316896_.blitSprite(HOTBAR_ATTACK_INDICATOR_PROGRESS_SPRITE, 18, 18, 0, 18 - l1, k2, j2 + 18 - l1, 18, l1);
+                    guiGraphics.blitSprite(HOTBAR_ATTACK_INDICATOR_BACKGROUND_SPRITE, k2, j2, 18, 18);
+                    guiGraphics.blitSprite(HOTBAR_ATTACK_INDICATOR_PROGRESS_SPRITE, 18, 18, 0, 18 - l1, k2, j2 + 18 - l1, 18, l1);
                 }
 
                 RenderSystem.disableBlend();
@@ -654,35 +688,49 @@ public class Gui {
         }
     }
 
-    private void renderJumpMeter(PlayerRideableJumping p_282774_, GuiGraphics p_282939_, int p_283351_) {
+    /**
+     * Renders the jump meter for a rideable entity on the screen using the provided rideable object, GuiGraphics object, and x-coordinate.
+     *
+     * @param rideable    the PlayerRideableJumping object representing the rideable
+     *                    entity.
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param x           the x-coordinate for rendering the jump meter.
+     */
+    private void renderJumpMeter(PlayerRideableJumping rideable, GuiGraphics guiGraphics, int x) {
         this.minecraft.getProfiler().push("jumpBar");
         float f = this.minecraft.player.getJumpRidingScale();
         int i = 182;
         int j = (int)(f * 183.0F);
-        int k = p_282939_.guiHeight() - 32 + 3;
+        int k = guiGraphics.guiHeight() - 32 + 3;
         RenderSystem.enableBlend();
-        p_282939_.blitSprite(JUMP_BAR_BACKGROUND_SPRITE, p_283351_, k, 182, 5);
-        if (p_282774_.getJumpCooldown() > 0) {
-            p_282939_.blitSprite(JUMP_BAR_COOLDOWN_SPRITE, p_283351_, k, 182, 5);
+        guiGraphics.blitSprite(JUMP_BAR_BACKGROUND_SPRITE, x, k, 182, 5);
+        if (rideable.getJumpCooldown() > 0) {
+            guiGraphics.blitSprite(JUMP_BAR_COOLDOWN_SPRITE, x, k, 182, 5);
         } else if (j > 0) {
-            p_282939_.blitSprite(JUMP_BAR_PROGRESS_SPRITE, 182, 5, 0, 0, p_283351_, k, j, 5);
+            guiGraphics.blitSprite(JUMP_BAR_PROGRESS_SPRITE, 182, 5, 0, 0, x, k, j, 5);
         }
 
         RenderSystem.disableBlend();
         this.minecraft.getProfiler().pop();
     }
 
-    private void renderExperienceBar(GuiGraphics p_281906_, int p_282731_) {
+    /**
+     * Renders the experience bar on the screen using the provided GuiGraphics object and x-coordinate.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param x           the x-coordinate for rendering the experience bar.
+     */
+    private void renderExperienceBar(GuiGraphics guiGraphics, int x) {
         this.minecraft.getProfiler().push("expBar");
         int i = this.minecraft.player.getXpNeededForNextLevel();
         if (i > 0) {
             int j = 182;
             int k = (int)(this.minecraft.player.experienceProgress * 183.0F);
-            int l = p_281906_.guiHeight() - 32 + 3;
+            int l = guiGraphics.guiHeight() - 32 + 3;
             RenderSystem.enableBlend();
-            p_281906_.blitSprite(EXPERIENCE_BAR_BACKGROUND_SPRITE, p_282731_, l, 182, 5);
+            guiGraphics.blitSprite(EXPERIENCE_BAR_BACKGROUND_SPRITE, x, l, 182, 5);
             if (k > 0) {
-                p_281906_.blitSprite(EXPERIENCE_BAR_PROGRESS_SPRITE, 182, 5, 0, 0, p_282731_, l, k, 5);
+                guiGraphics.blitSprite(EXPERIENCE_BAR_PROGRESS_SPRITE, 182, 5, 0, 0, x, l, k, 5);
             }
 
             RenderSystem.disableBlend();
@@ -691,18 +739,18 @@ public class Gui {
         this.minecraft.getProfiler().pop();
     }
 
-    private void renderExperienceLevel(GuiGraphics p_320582_, DeltaTracker p_348622_) {
+    private void renderExperienceLevel(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         int i = this.minecraft.player.experienceLevel;
         if (this.isExperienceBarVisible() && i > 0) {
             this.minecraft.getProfiler().push("expLevel");
             String s = i + "";
-            int j = (p_320582_.guiWidth() - this.getFont().width(s)) / 2;
-            int k = p_320582_.guiHeight() - 31 - 4;
-            p_320582_.drawString(this.getFont(), s, j + 1, k, 0, false);
-            p_320582_.drawString(this.getFont(), s, j - 1, k, 0, false);
-            p_320582_.drawString(this.getFont(), s, j, k + 1, 0, false);
-            p_320582_.drawString(this.getFont(), s, j, k - 1, 0, false);
-            p_320582_.drawString(this.getFont(), s, j, k, 8453920, false);
+            int j = (guiGraphics.guiWidth() - this.getFont().width(s)) / 2;
+            int k = guiGraphics.guiHeight() - 31 - 4;
+            guiGraphics.drawString(this.getFont(), s, j + 1, k, 0, false);
+            guiGraphics.drawString(this.getFont(), s, j - 1, k, 0, false);
+            guiGraphics.drawString(this.getFont(), s, j, k + 1, 0, false);
+            guiGraphics.drawString(this.getFont(), s, j, k - 1, 0, false);
+            guiGraphics.drawString(this.getFont(), s, j, k, 8453920, false);
             this.minecraft.getProfiler().pop();
         }
     }
@@ -711,11 +759,21 @@ public class Gui {
         return this.minecraft.player.jumpableVehicle() == null && this.minecraft.gameMode.hasExperience();
     }
 
-    private void renderSelectedItemName(GuiGraphics p_283501_) {
-        renderSelectedItemName(p_283501_, 0);
+    /**
+     * Renders the name of the selected item on the screen using the provided GuiGraphics object.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     */
+    private void renderSelectedItemName(GuiGraphics guiGraphics) {
+        renderSelectedItemName(guiGraphics, 0);
     }
 
-    public void renderSelectedItemName(GuiGraphics p_283501_, int yShift) {
+    /**
+     * Renders the name of the selected item on the screen using the provided GuiGraphics object.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     */
+    public void renderSelectedItemName(GuiGraphics guiGraphics, int yShift) {
         this.minecraft.getProfiler().push("selectedItemName");
         if (this.toolHighlightTimer > 0 && !this.lastToolHighlight.isEmpty()) {
             MutableComponent mutablecomponent = Component.empty()
@@ -727,8 +785,8 @@ public class Gui {
 
             Component highlightTip = this.lastToolHighlight.getHighlightTip(mutablecomponent);
             int i = this.getFont().width(highlightTip);
-            int j = (p_283501_.guiWidth() - i) / 2;
-            int k = p_283501_.guiHeight() - Math.max(yShift, 59);
+            int j = (guiGraphics.guiWidth() - i) / 2;
+            int k = guiGraphics.guiHeight() - Math.max(yShift, 59);
             if (!this.minecraft.gameMode.canHurtPlayer()) {
                 k += 14;
             }
@@ -741,10 +799,10 @@ public class Gui {
             if (l > 0) {
                 Font font = net.neoforged.neoforge.client.extensions.common.IClientItemExtensions.of(lastToolHighlight).getFont(lastToolHighlight, net.neoforged.neoforge.client.extensions.common.IClientItemExtensions.FontContext.SELECTED_ITEM_NAME);
                 if (font == null) {
-                    p_283501_.drawStringWithBackdrop(this.getFont(), highlightTip, j, k, i, FastColor.ARGB32.color(l, -1));
+                    guiGraphics.drawStringWithBackdrop(this.getFont(), highlightTip, j, k, i, FastColor.ARGB32.color(l, -1));
                 } else {
-                    j = (p_283501_.guiWidth() - font.width(highlightTip)) / 2;
-                    p_283501_.drawStringWithBackdrop(font, highlightTip, j, k, i, FastColor.ARGB32.color(l, -1));
+                    j = (guiGraphics.guiWidth() - font.width(highlightTip)) / 2;
+                    guiGraphics.drawStringWithBackdrop(font, highlightTip, j, k, i, FastColor.ARGB32.color(l, -1));
                 }
             }
         }
@@ -752,7 +810,7 @@ public class Gui {
         this.minecraft.getProfiler().pop();
     }
 
-    private void renderDemoOverlay(GuiGraphics p_281825_, DeltaTracker p_348679_) {
+    private void renderDemoOverlay(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         if (this.minecraft.isDemo() && !this.getDebugOverlay().showDebugScreen()) { // Neo: Hide demo timer when F3 debug overlay is open; fixes MC-271166
             this.minecraft.getProfiler().push("demo");
             Component component;
@@ -766,22 +824,28 @@ public class Gui {
             }
 
             int i = this.getFont().width(component);
-            int j = p_281825_.guiWidth() - i - 10;
+            int j = guiGraphics.guiWidth() - i - 10;
             int k = 5;
-            p_281825_.drawStringWithBackdrop(this.getFont(), component, j, 5, i, -1);
+            guiGraphics.drawStringWithBackdrop(this.getFont(), component, j, 5, i, -1);
             this.minecraft.getProfiler().pop();
         }
     }
 
-    private void displayScoreboardSidebar(GuiGraphics p_282008_, Objective p_283455_) {
-        Scoreboard scoreboard = p_283455_.getScoreboard();
-        NumberFormat numberformat = p_283455_.numberFormatOrDefault(StyledFormat.SIDEBAR_DEFAULT);
+    /**
+     * Displays the scoreboard sidebar on the screen using the provided GuiGraphics object and objective.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param objective   the objective representing the scoreboard sidebar.
+     */
+    private void displayScoreboardSidebar(GuiGraphics guiGraphics, Objective objective) {
+        Scoreboard scoreboard = objective.getScoreboard();
+        NumberFormat numberformat = objective.numberFormatOrDefault(StyledFormat.SIDEBAR_DEFAULT);
 
         @OnlyIn(Dist.CLIENT)
         record DisplayEntry(Component name, Component score, int scoreWidth) {
         }
 
-        DisplayEntry[] agui$1displayentry = scoreboard.listPlayerScores(p_283455_)
+        DisplayEntry[] agui$1displayentry = scoreboard.listPlayerScores(objective)
             .stream()
             .filter(p_313419_ -> !p_313419_.isHidden())
             .sorted(SCORE_DISPLAY_ORDER)
@@ -795,7 +859,7 @@ public class Gui {
                 return new DisplayEntry(component2, component3, i1);
             })
             .toArray(DisplayEntry[]::new);
-        Component component = p_283455_.getDisplayName();
+        Component component = objective.getDisplayName();
         int i = this.getFont().width(component);
         int j = i;
         int k = this.getFont().width(": ");
@@ -805,25 +869,25 @@ public class Gui {
         }
 
         int l = j;
-        p_282008_.drawManaged(() -> {
+        guiGraphics.drawManaged(() -> {
             int i1 = agui$1displayentry.length;
             int j1 = i1 * 9;
-            int k1 = p_282008_.guiHeight() / 2 + j1 / 3;
+            int k1 = guiGraphics.guiHeight() / 2 + j1 / 3;
             int l1 = 3;
-            int i2 = p_282008_.guiWidth() - l - 3;
-            int j2 = p_282008_.guiWidth() - 3 + 2;
+            int i2 = guiGraphics.guiWidth() - l - 3;
+            int j2 = guiGraphics.guiWidth() - 3 + 2;
             int k2 = this.minecraft.options.getBackgroundColor(0.3F);
             int l2 = this.minecraft.options.getBackgroundColor(0.4F);
             int i3 = k1 - i1 * 9;
-            p_282008_.fill(i2 - 2, i3 - 9 - 1, j2, i3 - 1, l2);
-            p_282008_.fill(i2 - 2, i3 - 1, j2, k1, k2);
-            p_282008_.drawString(this.getFont(), component, i2 + l / 2 - i / 2, i3 - 9, -1, false);
+            guiGraphics.fill(i2 - 2, i3 - 9 - 1, j2, i3 - 1, l2);
+            guiGraphics.fill(i2 - 2, i3 - 1, j2, k1, k2);
+            guiGraphics.drawString(this.getFont(), component, i2 + l / 2 - i / 2, i3 - 9, -1, false);
 
             for (int j3 = 0; j3 < i1; j3++) {
                 DisplayEntry gui$1displayentry1 = agui$1displayentry[j3];
                 int k3 = k1 - (i1 - j3) * 9;
-                p_282008_.drawString(this.getFont(), gui$1displayentry1.name, i2, k3, -1, false);
-                p_282008_.drawString(this.getFont(), gui$1displayentry1.score, j2 - gui$1displayentry1.scoreWidth, k3, -1, false);
+                guiGraphics.drawString(this.getFont(), gui$1displayentry1.name, i2, k3, -1, false);
+                guiGraphics.drawString(this.getFont(), gui$1displayentry1.score, j2 - gui$1displayentry1.scoreWidth, k3, -1, false);
             }
         });
     }
@@ -850,9 +914,16 @@ public class Gui {
         return null;
     }
 
-    private int getVehicleMaxHearts(@Nullable LivingEntity p_93023_) {
-        if (p_93023_ != null && p_93023_.showVehicleHealth()) {
-            float f = p_93023_.getMaxHealth();
+    /**
+     * Retrieves the maximum number of hearts representing the vehicle's health for the given mount entity.
+     * <p>
+     * @return the maximum number of hearts representing the vehicle's health, or 0 if the mount entity is null or does not show vehicle health.
+     *
+     * @param vehicle the living entity representing the vehicle.
+     */
+    private int getVehicleMaxHearts(@Nullable LivingEntity vehicle) {
+        if (vehicle != null && vehicle.showVehicleHealth()) {
+            float f = vehicle.getMaxHealth();
             int i = (int)(f + 0.5F) / 2;
             if (i > 30) {
                 i = 30;
@@ -864,16 +935,28 @@ public class Gui {
         }
     }
 
-    private int getVisibleVehicleHeartRows(int p_93013_) {
-        return (int)Math.ceil((double)p_93013_ / 10.0);
+    /**
+     * Retrieves the number of rows of visible hearts needed to represent the given mount health.
+     * <p>
+     * @return the number of rows of visible hearts needed to represent the mount health.
+     *
+     * @param vehicleHealth the health of the mount entity.
+     */
+    private int getVisibleVehicleHeartRows(int vehicleHealth) {
+        return (int)Math.ceil((double)vehicleHealth / 10.0);
     }
 
+    /**
+     * Renders the player's health, armor, food, and air bars on the screen.
+     *
+     * @param guiGraphics the graphics object used for rendering.
+     */
     @Deprecated // Neo: Split up into different layers
-    private void renderPlayerHealth(GuiGraphics p_283143_) {
-        renderHealthLevel(p_283143_);
-        renderArmorLevel(p_283143_);
-        renderFoodLevel(p_283143_);
-        renderAirLevel(p_283143_);
+    private void renderPlayerHealth(GuiGraphics guiGraphics) {
+        renderHealthLevel(guiGraphics);
+        renderArmorLevel(guiGraphics);
+        renderFoodLevel(guiGraphics);
+        renderAirLevel(guiGraphics);
     }
 
     private void renderHealthLevel(GuiGraphics p_283143_) {
@@ -977,24 +1060,24 @@ public class Gui {
         }
     }
 
-    private static void renderArmor(GuiGraphics p_335393_, Player p_335672_, int p_335452_, int p_335846_, int p_335778_, int p_335859_) {
-        int i = p_335672_.getArmorValue();
+    private static void renderArmor(GuiGraphics guiGraphics, Player player, int y, int heartRows, int height, int x) {
+        int i = player.getArmorValue();
         if (i > 0) {
             RenderSystem.enableBlend();
-            int j = p_335452_ - (p_335846_ - 1) * p_335778_ - 10;
+            int j = y - (heartRows - 1) * height - 10;
 
             for (int k = 0; k < 10; k++) {
-                int l = p_335859_ + k * 8;
+                int l = x + k * 8;
                 if (k * 2 + 1 < i) {
-                    p_335393_.blitSprite(ARMOR_FULL_SPRITE, l, j, 9, 9);
+                    guiGraphics.blitSprite(ARMOR_FULL_SPRITE, l, j, 9, 9);
                 }
 
                 if (k * 2 + 1 == i) {
-                    p_335393_.blitSprite(ARMOR_HALF_SPRITE, l, j, 9, 9);
+                    guiGraphics.blitSprite(ARMOR_HALF_SPRITE, l, j, 9, 9);
                 }
 
                 if (k * 2 + 1 > i) {
-                    p_335393_.blitSprite(ARMOR_EMPTY_SPRITE, l, j, 9, 9);
+                    guiGraphics.blitSprite(ARMOR_EMPTY_SPRITE, l, j, 9, 9);
                 }
             }
 
@@ -1002,80 +1085,95 @@ public class Gui {
         }
     }
 
+    /**
+     * Renders the player's hearts, including health, absorption, and highlight hearts, on the screen.
+     *
+     * @param guiGraphics      the graphics object used for rendering.
+     * @param player           the player entity.
+     * @param x                the x-coordinate of the hearts' position.
+     * @param y                the y-coordinate of the hearts' position.
+     * @param height           the height of each heart.
+     * @param offsetHeartIndex the index of the offset heart.
+     * @param maxHealth        the maximum health of the player.
+     * @param currentHealth    the current health of the player.
+     * @param displayHealth    the displayed health of the player.
+     * @param absorptionAmount the absorption amount of the player.
+     * @param renderHighlight  determines whether to render the highlight hearts.
+     */
     private void renderHearts(
-        GuiGraphics p_282497_,
-        Player p_168690_,
-        int p_168691_,
-        int p_168692_,
-        int p_168693_,
-        int p_168694_,
-        float p_168695_,
-        int p_168696_,
-        int p_168697_,
-        int p_168698_,
-        boolean p_168699_
+        GuiGraphics guiGraphics,
+        Player player,
+        int x,
+        int y,
+        int height,
+        int offsetHeartIndex,
+        float maxHealth,
+        int currentHealth,
+        int displayHealth,
+        int absorptionAmount,
+        boolean renderHighlight
     ) {
-        Gui.HeartType gui$hearttype = Gui.HeartType.forPlayer(p_168690_);
-        boolean flag = p_168690_.level().getLevelData().isHardcore();
-        int i = Mth.ceil((double)p_168695_ / 2.0);
-        int j = Mth.ceil((double)p_168698_ / 2.0);
+        Gui.HeartType gui$hearttype = Gui.HeartType.forPlayer(player);
+        boolean flag = player.level().getLevelData().isHardcore();
+        int i = Mth.ceil((double)maxHealth / 2.0);
+        int j = Mth.ceil((double)absorptionAmount / 2.0);
         int k = i * 2;
 
         for (int l = i + j - 1; l >= 0; l--) {
             int i1 = l / 10;
             int j1 = l % 10;
-            int k1 = p_168691_ + j1 * 8;
-            int l1 = p_168692_ - i1 * p_168693_;
-            if (p_168696_ + p_168698_ <= 4) {
+            int k1 = x + j1 * 8;
+            int l1 = y - i1 * height;
+            if (currentHealth + absorptionAmount <= 4) {
                 l1 += this.random.nextInt(2);
             }
 
-            if (l < i && l == p_168694_) {
+            if (l < i && l == offsetHeartIndex) {
                 l1 -= 2;
             }
 
-            this.renderHeart(p_282497_, Gui.HeartType.CONTAINER, k1, l1, flag, p_168699_, false);
+            this.renderHeart(guiGraphics, Gui.HeartType.CONTAINER, k1, l1, flag, renderHighlight, false);
             int i2 = l * 2;
             boolean flag1 = l >= i;
             if (flag1) {
                 int j2 = i2 - k;
-                if (j2 < p_168698_) {
-                    boolean flag2 = j2 + 1 == p_168698_;
-                    this.renderHeart(p_282497_, gui$hearttype == Gui.HeartType.WITHERED ? gui$hearttype : Gui.HeartType.ABSORBING, k1, l1, flag, false, flag2);
+                if (j2 < absorptionAmount) {
+                    boolean flag2 = j2 + 1 == absorptionAmount;
+                    this.renderHeart(guiGraphics, gui$hearttype == Gui.HeartType.WITHERED ? gui$hearttype : Gui.HeartType.ABSORBING, k1, l1, flag, false, flag2);
                 }
             }
 
-            if (p_168699_ && i2 < p_168697_) {
-                boolean flag3 = i2 + 1 == p_168697_;
-                this.renderHeart(p_282497_, gui$hearttype, k1, l1, flag, true, flag3);
+            if (renderHighlight && i2 < displayHealth) {
+                boolean flag3 = i2 + 1 == displayHealth;
+                this.renderHeart(guiGraphics, gui$hearttype, k1, l1, flag, true, flag3);
             }
 
-            if (i2 < p_168696_) {
-                boolean flag4 = i2 + 1 == p_168696_;
-                this.renderHeart(p_282497_, gui$hearttype, k1, l1, flag, false, flag4);
+            if (i2 < currentHealth) {
+                boolean flag4 = i2 + 1 == currentHealth;
+                this.renderHeart(guiGraphics, gui$hearttype, k1, l1, flag, false, flag4);
             }
         }
     }
 
     private void renderHeart(
-        GuiGraphics p_283024_, Gui.HeartType p_281393_, int p_283636_, int p_283279_, boolean p_283440_, boolean p_282496_, boolean p_294129_
+        GuiGraphics guiGraphics, Gui.HeartType heartType, int x, int y, boolean hardcore, boolean halfHeart, boolean blinking
     ) {
         RenderSystem.enableBlend();
-        p_283024_.blitSprite(p_281393_.getSprite(p_283440_, p_294129_, p_282496_), p_283636_, p_283279_, 9, 9);
+        guiGraphics.blitSprite(heartType.getSprite(hardcore, blinking, halfHeart), x, y, 9, 9);
         RenderSystem.disableBlend();
     }
 
-    private void renderFood(GuiGraphics p_335615_, Player p_336082_, int p_335399_, int p_335589_) {
-        FoodData fooddata = p_336082_.getFoodData();
+    private void renderFood(GuiGraphics guiGraphics, Player player, int y, int x) {
+        FoodData fooddata = player.getFoodData();
         int i = fooddata.getFoodLevel();
         RenderSystem.enableBlend();
 
         for (int j = 0; j < 10; j++) {
-            int k = p_335399_;
+            int k = y;
             ResourceLocation resourcelocation;
             ResourceLocation resourcelocation1;
             ResourceLocation resourcelocation2;
-            if (p_336082_.hasEffect(MobEffects.HUNGER)) {
+            if (player.hasEffect(MobEffects.HUNGER)) {
                 resourcelocation = FOOD_EMPTY_HUNGER_SPRITE;
                 resourcelocation1 = FOOD_HALF_HUNGER_SPRITE;
                 resourcelocation2 = FOOD_FULL_HUNGER_SPRITE;
@@ -1085,33 +1183,38 @@ public class Gui {
                 resourcelocation2 = FOOD_FULL_SPRITE;
             }
 
-            if (p_336082_.getFoodData().getSaturationLevel() <= 0.0F && this.tickCount % (i * 3 + 1) == 0) {
-                k = p_335399_ + (this.random.nextInt(3) - 1);
+            if (player.getFoodData().getSaturationLevel() <= 0.0F && this.tickCount % (i * 3 + 1) == 0) {
+                k = y + (this.random.nextInt(3) - 1);
             }
 
-            int l = p_335589_ - j * 8 - 9;
-            p_335615_.blitSprite(resourcelocation, l, k, 9, 9);
+            int l = x - j * 8 - 9;
+            guiGraphics.blitSprite(resourcelocation, l, k, 9, 9);
             if (j * 2 + 1 < i) {
-                p_335615_.blitSprite(resourcelocation2, l, k, 9, 9);
+                guiGraphics.blitSprite(resourcelocation2, l, k, 9, 9);
             }
 
             if (j * 2 + 1 == i) {
-                p_335615_.blitSprite(resourcelocation1, l, k, 9, 9);
+                guiGraphics.blitSprite(resourcelocation1, l, k, 9, 9);
             }
         }
 
         RenderSystem.disableBlend();
     }
 
-    private void renderVehicleHealth(GuiGraphics p_283368_) {
+    /**
+     * Renders the health of the player's vehicle on the screen.
+     *
+     * @param guiGraphics the graphics object used for rendering.
+     */
+    private void renderVehicleHealth(GuiGraphics guiGraphics) {
         LivingEntity livingentity = this.getPlayerVehicleWithHealth();
         if (livingentity != null) {
             int i = this.getVehicleMaxHearts(livingentity);
             if (i != 0) {
                 int j = (int)Math.ceil((double)livingentity.getHealth());
                 this.minecraft.getProfiler().popPush("mountHealth");
-                int k = p_283368_.guiHeight() - rightHeight;
-                int l = p_283368_.guiWidth() / 2 + 91;
+                int k = guiGraphics.guiHeight() - rightHeight;
+                int l = guiGraphics.guiWidth() / 2 + 91;
                 int i1 = k;
                 int j1 = 0;
                 RenderSystem.enableBlend();
@@ -1122,13 +1225,13 @@ public class Gui {
 
                     for (int l1 = 0; l1 < k1; l1++) {
                         int i2 = l - l1 * 8 - 9;
-                        p_283368_.blitSprite(HEART_VEHICLE_CONTAINER_SPRITE, i2, i1, 9, 9);
+                        guiGraphics.blitSprite(HEART_VEHICLE_CONTAINER_SPRITE, i2, i1, 9, 9);
                         if (l1 * 2 + 1 + j1 < j) {
-                            p_283368_.blitSprite(HEART_VEHICLE_FULL_SPRITE, i2, i1, 9, 9);
+                            guiGraphics.blitSprite(HEART_VEHICLE_FULL_SPRITE, i2, i1, 9, 9);
                         }
 
                         if (l1 * 2 + 1 + j1 == j) {
-                            p_283368_.blitSprite(HEART_VEHICLE_HALF_SPRITE, i2, i1, 9, 9);
+                            guiGraphics.blitSprite(HEART_VEHICLE_HALF_SPRITE, i2, i1, 9, 9);
                         }
                     }
 
@@ -1142,50 +1245,75 @@ public class Gui {
         }
     }
 
-    private void renderTextureOverlay(GuiGraphics p_282304_, ResourceLocation p_281622_, float p_281504_) {
+    /**
+     * Renders a texture overlay on the screen with the specified shader location and alpha value.
+     *
+     * @param guiGraphics    the graphics object used for rendering.
+     * @param shaderLocation the location of the shader texture.
+     * @param alpha          the alpha value to apply to the overlay.
+     */
+    private void renderTextureOverlay(GuiGraphics guiGraphics, ResourceLocation shaderLocation, float alpha) {
         RenderSystem.disableDepthTest();
         RenderSystem.depthMask(false);
         RenderSystem.enableBlend();
-        p_282304_.setColor(1.0F, 1.0F, 1.0F, p_281504_);
-        p_282304_.blit(p_281622_, 0, 0, -90, 0.0F, 0.0F, p_282304_.guiWidth(), p_282304_.guiHeight(), p_282304_.guiWidth(), p_282304_.guiHeight());
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, alpha);
+        guiGraphics.blit(shaderLocation, 0, 0, -90, 0.0F, 0.0F, guiGraphics.guiWidth(), guiGraphics.guiHeight(), guiGraphics.guiWidth(), guiGraphics.guiHeight());
         RenderSystem.disableBlend();
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
-        p_282304_.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    private void renderSpyglassOverlay(GuiGraphics p_282069_, float p_283442_) {
-        float f = (float)Math.min(p_282069_.guiWidth(), p_282069_.guiHeight());
-        float f1 = Math.min((float)p_282069_.guiWidth() / f, (float)p_282069_.guiHeight() / f) * p_283442_;
+    /**
+     * Renders the overlay for the spyglass effect.
+     *
+     * @param guiGraphics the graphics object used for rendering.
+     * @param scopeScale  the scale factor for the spyglass scope.
+     */
+    private void renderSpyglassOverlay(GuiGraphics guiGraphics, float scopeScale) {
+        float f = (float)Math.min(guiGraphics.guiWidth(), guiGraphics.guiHeight());
+        float f1 = Math.min((float)guiGraphics.guiWidth() / f, (float)guiGraphics.guiHeight() / f) * scopeScale;
         int i = Mth.floor(f * f1);
         int j = Mth.floor(f * f1);
-        int k = (p_282069_.guiWidth() - i) / 2;
-        int l = (p_282069_.guiHeight() - j) / 2;
+        int k = (guiGraphics.guiWidth() - i) / 2;
+        int l = (guiGraphics.guiHeight() - j) / 2;
         int i1 = k + i;
         int j1 = l + j;
         ItemStack useItem = this.minecraft.player.getUseItem();
         var clientItemExtensions = net.neoforged.neoforge.client.extensions.common.IClientItemExtensions.of(useItem);
         RenderSystem.enableBlend();
-        p_282069_.blit(clientItemExtensions.getScopeOverlayTexture(useItem), k, l, -90, 0.0F, 0.0F, i, j, i, j);
+        guiGraphics.blit(clientItemExtensions.getScopeOverlayTexture(useItem), k, l, -90, 0.0F, 0.0F, i, j, i, j);
         RenderSystem.disableBlend();
-        p_282069_.fill(RenderType.guiOverlay(), 0, j1, p_282069_.guiWidth(), p_282069_.guiHeight(), -90, -16777216);
-        p_282069_.fill(RenderType.guiOverlay(), 0, 0, p_282069_.guiWidth(), l, -90, -16777216);
-        p_282069_.fill(RenderType.guiOverlay(), 0, l, k, j1, -90, -16777216);
-        p_282069_.fill(RenderType.guiOverlay(), i1, l, p_282069_.guiWidth(), j1, -90, -16777216);
+        guiGraphics.fill(RenderType.guiOverlay(), 0, j1, guiGraphics.guiWidth(), guiGraphics.guiHeight(), -90, -16777216);
+        guiGraphics.fill(RenderType.guiOverlay(), 0, 0, guiGraphics.guiWidth(), l, -90, -16777216);
+        guiGraphics.fill(RenderType.guiOverlay(), 0, l, k, j1, -90, -16777216);
+        guiGraphics.fill(RenderType.guiOverlay(), i1, l, guiGraphics.guiWidth(), j1, -90, -16777216);
     }
 
-    private void updateVignetteBrightness(Entity p_93021_) {
-        BlockPos blockpos = BlockPos.containing(p_93021_.getX(), p_93021_.getEyeY(), p_93021_.getZ());
-        float f = LightTexture.getBrightness(p_93021_.level().dimensionType(), p_93021_.level().getMaxLocalRawBrightness(blockpos));
+    /**
+     * Updates the brightness of the vignette effect based on the brightness of the given entity's position.
+     *
+     * @param entity the entity used to determine the brightness.
+     */
+    private void updateVignetteBrightness(Entity entity) {
+        BlockPos blockpos = BlockPos.containing(entity.getX(), entity.getEyeY(), entity.getZ());
+        float f = LightTexture.getBrightness(entity.level().dimensionType(), entity.level().getMaxLocalRawBrightness(blockpos));
         float f1 = Mth.clamp(1.0F - f, 0.0F, 1.0F);
         this.vignetteBrightness = this.vignetteBrightness + (f1 - this.vignetteBrightness) * 0.01F;
     }
 
-    private void renderVignette(GuiGraphics p_283063_, @Nullable Entity p_283439_) {
+    /**
+     * Renders the vignette effect on the screen based on the distance to the world border and the entity's position.
+     *
+     * @param guiGraphics the graphics object used for rendering.
+     * @param entity      the entity used to determine the distance to the world
+     *                    border.
+     */
+    private void renderVignette(GuiGraphics guiGraphics, @Nullable Entity entity) {
         WorldBorder worldborder = this.minecraft.level.getWorldBorder();
         float f = 0.0F;
-        if (p_283439_ != null) {
-            float f1 = (float)worldborder.getDistanceToBorder(p_283439_);
+        if (entity != null) {
+            float f1 = (float)worldborder.getDistanceToBorder(entity);
             double d0 = Math.min(
                 worldborder.getLerpSpeed() * (double)worldborder.getWarningTime() * 1000.0, Math.abs(worldborder.getLerpTarget() - worldborder.getSize())
             );
@@ -1203,66 +1331,75 @@ public class Gui {
         );
         if (f > 0.0F) {
             f = Mth.clamp(f, 0.0F, 1.0F);
-            p_283063_.setColor(0.0F, f, f, 1.0F);
+            guiGraphics.setColor(0.0F, f, f, 1.0F);
         } else {
             float f2 = this.vignetteBrightness;
             f2 = Mth.clamp(f2, 0.0F, 1.0F);
-            p_283063_.setColor(f2, f2, f2, 1.0F);
+            guiGraphics.setColor(f2, f2, f2, 1.0F);
         }
 
-        p_283063_.blit(VIGNETTE_LOCATION, 0, 0, -90, 0.0F, 0.0F, p_283063_.guiWidth(), p_283063_.guiHeight(), p_283063_.guiWidth(), p_283063_.guiHeight());
+        guiGraphics.blit(VIGNETTE_LOCATION, 0, 0, -90, 0.0F, 0.0F, guiGraphics.guiWidth(), guiGraphics.guiHeight(), guiGraphics.guiWidth(), guiGraphics.guiHeight());
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
-        p_283063_.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
     }
 
-    private void renderPortalOverlay(GuiGraphics p_283375_, float p_283296_) {
-        if (p_283296_ < 1.0F) {
-            p_283296_ *= p_283296_;
-            p_283296_ *= p_283296_;
-            p_283296_ = p_283296_ * 0.8F + 0.2F;
+    /**
+     * Renders the portal overlay effect on the screen with the specified alpha value.
+     *
+     * @param guiGraphics the graphics object used for rendering.
+     * @param alpha       the alpha value of the overlay.
+     */
+    private void renderPortalOverlay(GuiGraphics guiGraphics, float alpha) {
+        if (alpha < 1.0F) {
+            alpha *= alpha;
+            alpha *= alpha;
+            alpha = alpha * 0.8F + 0.2F;
         }
 
         RenderSystem.disableDepthTest();
         RenderSystem.depthMask(false);
         RenderSystem.enableBlend();
-        p_283375_.setColor(1.0F, 1.0F, 1.0F, p_283296_);
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, alpha);
         TextureAtlasSprite textureatlassprite = this.minecraft
             .getBlockRenderer()
             .getBlockModelShaper()
             .getParticleIcon(Blocks.NETHER_PORTAL.defaultBlockState());
-        p_283375_.blit(0, 0, -90, p_283375_.guiWidth(), p_283375_.guiHeight(), textureatlassprite);
+        guiGraphics.blit(0, 0, -90, guiGraphics.guiWidth(), guiGraphics.guiHeight(), textureatlassprite);
         RenderSystem.disableBlend();
         RenderSystem.depthMask(true);
         RenderSystem.enableDepthTest();
-        p_283375_.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+        guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
     }
 
-    private void renderSlot(GuiGraphics p_283283_, int p_283213_, int p_281301_, DeltaTracker p_348541_, Player p_283644_, ItemStack p_283317_, int p_283261_) {
-        if (!p_283317_.isEmpty()) {
-            float f = (float)p_283317_.getPopTime() - p_348541_.getGameTimeDeltaPartialTick(false);
+    private void renderSlot(GuiGraphics guiGraphics, int x, int y, DeltaTracker deltaTracker, Player player, ItemStack stack, int seed) {
+        if (!stack.isEmpty()) {
+            float f = (float)stack.getPopTime() - deltaTracker.getGameTimeDeltaPartialTick(false);
             if (f > 0.0F) {
                 float f1 = 1.0F + f / 5.0F;
-                p_283283_.pose().pushPose();
-                p_283283_.pose().translate((float)(p_283213_ + 8), (float)(p_281301_ + 12), 0.0F);
-                p_283283_.pose().scale(1.0F / f1, (f1 + 1.0F) / 2.0F, 1.0F);
-                p_283283_.pose().translate((float)(-(p_283213_ + 8)), (float)(-(p_281301_ + 12)), 0.0F);
+                guiGraphics.pose().pushPose();
+                guiGraphics.pose().translate((float)(x + 8), (float)(y + 12), 0.0F);
+                guiGraphics.pose().scale(1.0F / f1, (f1 + 1.0F) / 2.0F, 1.0F);
+                guiGraphics.pose().translate((float)(-(x + 8)), (float)(-(y + 12)), 0.0F);
             }
 
-            p_283283_.renderItem(p_283644_, p_283317_, p_283213_, p_281301_, p_283261_);
+            guiGraphics.renderItem(player, stack, x, y, seed);
             if (f > 0.0F) {
-                p_283283_.pose().popPose();
+                guiGraphics.pose().popPose();
             }
 
-            p_283283_.renderItemDecorations(this.minecraft.font, p_283317_, p_283213_, p_281301_);
+            guiGraphics.renderItemDecorations(this.minecraft.font, stack, x, y);
         }
     }
 
-    public void tick(boolean p_193833_) {
+    /**
+     * Advances the tick for the autosave indicator and optionally ticks the object if not paused.
+     */
+    public void tick(boolean pause) {
         this.tickAutosaveIndicator();
-        if (!p_193833_) {
+        if (!pause) {
             this.tick();
         }
     }
@@ -1311,38 +1448,60 @@ public class Gui {
         this.autosaveIndicatorValue = Mth.lerp(0.2F, this.autosaveIndicatorValue, flag ? 1.0F : 0.0F);
     }
 
-    public void setNowPlaying(Component p_93056_) {
-        Component component = Component.translatable("record.nowPlaying", p_93056_);
+    /**
+     * Sets the currently playing record display name and updates the overlay message.
+     *
+     * @param displayName the display name of the currently playing record.
+     */
+    public void setNowPlaying(Component displayName) {
+        Component component = Component.translatable("record.nowPlaying", displayName);
         this.setOverlayMessage(component, true);
         this.minecraft.getNarrator().sayNow(component);
     }
 
-    public void setOverlayMessage(Component p_93064_, boolean p_93065_) {
+    /**
+     * Sets the overlay message to be displayed on the screen.
+     *
+     * @param component    the {@link Component} representing the overlay message.
+     * @param animateColor a boolean indicating whether to animate the color of the
+     *                     overlay message.
+     */
+    public void setOverlayMessage(Component component, boolean animateColor) {
         this.setChatDisabledByPlayerShown(false);
-        this.overlayMessageString = p_93064_;
+        this.overlayMessageString = component;
         this.overlayMessageTime = 60;
-        this.animateOverlayMessageColor = p_93065_;
+        this.animateOverlayMessageColor = animateColor;
     }
 
-    public void setChatDisabledByPlayerShown(boolean p_238398_) {
-        this.chatDisabledByPlayerShown = p_238398_;
+    /**
+     * {@return {@code true} if the chat is disabled, {@code false} if chat is enabled}
+     */
+    public void setChatDisabledByPlayerShown(boolean chatDisabledByPlayerShown) {
+        this.chatDisabledByPlayerShown = chatDisabledByPlayerShown;
     }
 
     public boolean isShowingChatDisabledByPlayer() {
         return this.chatDisabledByPlayerShown && this.overlayMessageTime > 0;
     }
 
-    public void setTimes(int p_168685_, int p_168686_, int p_168687_) {
-        if (p_168685_ >= 0) {
-            this.titleFadeInTime = p_168685_;
+    /**
+     * Sets the fade-in, stay, and fade-out times for the title display.
+     *
+     * @param titleFadeInTime  the fade-in time for the title message in ticks.
+     * @param titleStayTime    the stay time for the title message in ticks.
+     * @param titleFadeOutTime the fade-out time for the title message in ticks.
+     */
+    public void setTimes(int titleFadeInTime, int titleStayTime, int titleFadeOutTime) {
+        if (titleFadeInTime >= 0) {
+            this.titleFadeInTime = titleFadeInTime;
         }
 
-        if (p_168686_ >= 0) {
-            this.titleStayTime = p_168686_;
+        if (titleStayTime >= 0) {
+            this.titleStayTime = titleStayTime;
         }
 
-        if (p_168687_ >= 0) {
-            this.titleFadeOutTime = p_168687_;
+        if (titleFadeOutTime >= 0) {
+            this.titleFadeOutTime = titleFadeOutTime;
         }
 
         if (this.titleTime > 0) {
@@ -1350,12 +1509,22 @@ public class Gui {
         }
     }
 
-    public void setSubtitle(Component p_168712_) {
-        this.subtitle = p_168712_;
+    /**
+     * Sets the subtitle to be displayed in the title screen.
+     *
+     * @param subtitle the subtitle {@link Component} to be displayed.
+     */
+    public void setSubtitle(Component subtitle) {
+        this.subtitle = subtitle;
     }
 
-    public void setTitle(Component p_168715_) {
-        this.title = p_168715_;
+    /**
+     * Sets the title to be displayed in the title screen.
+     *
+     * @param title the title {@link Component} to be displayed.
+     */
+    public void setTitle(Component title) {
+        this.title = title;
         this.titleTime = this.titleFadeInTime + this.titleStayTime + this.titleFadeOutTime;
     }
 
@@ -1405,18 +1574,18 @@ public class Gui {
         this.debugOverlay.clearChunkCache();
     }
 
-    public void renderSavingIndicator(GuiGraphics p_282761_, DeltaTracker p_348592_) {
+    public void renderSavingIndicator(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
         if (this.minecraft.options.showAutosaveIndicator().get() && (this.autosaveIndicatorValue > 0.0F || this.lastAutosaveIndicatorValue > 0.0F)) {
             int i = Mth.floor(
-                255.0F * Mth.clamp(Mth.lerp(p_348592_.getRealtimeDeltaTicks(), this.lastAutosaveIndicatorValue, this.autosaveIndicatorValue), 0.0F, 1.0F)
+                255.0F * Mth.clamp(Mth.lerp(deltaTracker.getRealtimeDeltaTicks(), this.lastAutosaveIndicatorValue, this.autosaveIndicatorValue), 0.0F, 1.0F)
             );
             if (i > 8) {
                 Font font = this.getFont();
                 int j = font.width(SAVING_TEXT);
                 int k = FastColor.ARGB32.color(i, -1);
-                int l = p_282761_.guiWidth() - j - 2;
-                int i1 = p_282761_.guiHeight() - 35;
-                p_282761_.drawStringWithBackdrop(font, SAVING_TEXT, l, i1, j, k);
+                int l = guiGraphics.guiWidth() - j - 2;
+                int i1 = guiGraphics.guiHeight() - 35;
+                guiGraphics.drawStringWithBackdrop(font, SAVING_TEXT, l, i1, j, k);
             }
         }
     }
@@ -1503,51 +1672,58 @@ public class Gui {
         private final ResourceLocation hardcoreHalfBlinking;
 
         private HeartType(
-            ResourceLocation p_294435_,
-            ResourceLocation p_294438_,
-            ResourceLocation p_295036_,
-            ResourceLocation p_295439_,
-            ResourceLocation p_296249_,
-            ResourceLocation p_295479_,
-            ResourceLocation p_296219_,
-            ResourceLocation p_296437_
+            ResourceLocation full,
+            ResourceLocation fullBlinking,
+            ResourceLocation half,
+            ResourceLocation halfBlinking,
+            ResourceLocation hardcoreFull,
+            ResourceLocation hardcoreBlinking,
+            ResourceLocation hardcoreHalf,
+            ResourceLocation hardcoreHalfBlinking
         ) {
-            this.full = p_294435_;
-            this.fullBlinking = p_294438_;
-            this.half = p_295036_;
-            this.halfBlinking = p_295439_;
-            this.hardcoreFull = p_296249_;
-            this.hardcoreFullBlinking = p_295479_;
-            this.hardcoreHalf = p_296219_;
-            this.hardcoreHalfBlinking = p_296437_;
+            this.full = full;
+            this.fullBlinking = fullBlinking;
+            this.half = half;
+            this.halfBlinking = halfBlinking;
+            this.hardcoreFull = hardcoreFull;
+            this.hardcoreFullBlinking = hardcoreBlinking;
+            this.hardcoreHalf = hardcoreHalf;
+            this.hardcoreHalfBlinking = hardcoreHalfBlinking;
         }
 
-        public ResourceLocation getSprite(boolean p_295909_, boolean p_295387_, boolean p_294486_) {
-            if (!p_295909_) {
-                if (p_295387_) {
-                    return p_294486_ ? this.halfBlinking : this.half;
+        public ResourceLocation getSprite(boolean hardcore, boolean halfHeart, boolean blinking) {
+            if (!hardcore) {
+                if (halfHeart) {
+                    return blinking ? this.halfBlinking : this.half;
                 } else {
-                    return p_294486_ ? this.fullBlinking : this.full;
+                    return blinking ? this.fullBlinking : this.full;
                 }
-            } else if (p_295387_) {
-                return p_294486_ ? this.hardcoreHalfBlinking : this.hardcoreHalf;
+            } else if (halfHeart) {
+                return blinking ? this.hardcoreHalfBlinking : this.hardcoreHalf;
             } else {
-                return p_294486_ ? this.hardcoreFullBlinking : this.hardcoreFull;
+                return blinking ? this.hardcoreFullBlinking : this.hardcoreFull;
             }
         }
 
-        static Gui.HeartType forPlayer(Player p_168733_) {
+        /**
+         * Returns the {@link HeartType} based on the player's status effects.
+         * <p>
+         * @return the {@link HeartType} based on the player's status effects.
+         *
+         * @param player the player for which to determine the HeartType.
+         */
+        static Gui.HeartType forPlayer(Player player) {
             Gui.HeartType gui$hearttype;
-            if (p_168733_.hasEffect(MobEffects.POISON)) {
+            if (player.hasEffect(MobEffects.POISON)) {
                 gui$hearttype = POISIONED;
-            } else if (p_168733_.hasEffect(MobEffects.WITHER)) {
+            } else if (player.hasEffect(MobEffects.WITHER)) {
                 gui$hearttype = WITHERED;
-            } else if (p_168733_.isFullyFrozen()) {
+            } else if (player.isFullyFrozen()) {
                 gui$hearttype = FROZEN;
             } else {
                 gui$hearttype = NORMAL;
             }
-            gui$hearttype = net.neoforged.neoforge.event.EventHooks.firePlayerHeartTypeEvent(p_168733_, gui$hearttype);
+            gui$hearttype = net.neoforged.neoforge.event.EventHooks.firePlayerHeartTypeEvent(player, gui$hearttype);
 
             return gui$hearttype;
         }

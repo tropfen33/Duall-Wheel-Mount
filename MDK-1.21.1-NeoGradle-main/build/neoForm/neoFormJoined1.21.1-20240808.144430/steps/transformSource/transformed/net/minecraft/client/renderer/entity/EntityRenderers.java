@@ -26,15 +26,15 @@ public class EntityRenderers {
         PlayerSkin.Model.WIDE, p_174098_ -> new PlayerRenderer(p_174098_, false), PlayerSkin.Model.SLIM, p_174096_ -> new PlayerRenderer(p_174096_, true)
     );
 
-    public static <T extends Entity> void register(EntityType<? extends T> p_174037_, EntityRendererProvider<T> p_174038_) {
-        PROVIDERS.put(p_174037_, p_174038_);
+    public static <T extends Entity> void register(EntityType<? extends T> entityType, EntityRendererProvider<T> provider) {
+        PROVIDERS.put(entityType, provider);
     }
 
-    public static Map<EntityType<?>, EntityRenderer<?>> createEntityRenderers(EntityRendererProvider.Context p_174050_) {
+    public static Map<EntityType<?>, EntityRenderer<?>> createEntityRenderers(EntityRendererProvider.Context context) {
         Builder<EntityType<?>, EntityRenderer<?>> builder = ImmutableMap.builder();
         PROVIDERS.forEach((p_339310_, p_339311_) -> {
             try {
-                builder.put((EntityType<?>)p_339310_, p_339311_.create(p_174050_));
+                builder.put((EntityType<?>)p_339310_, p_339311_.create(context));
             } catch (Exception exception) {
                 throw new IllegalArgumentException("Failed to create model for " + BuiltInRegistries.ENTITY_TYPE.getKey((EntityType<?>)p_339310_), exception);
             }
@@ -42,11 +42,11 @@ public class EntityRenderers {
         return builder.build();
     }
 
-    public static Map<PlayerSkin.Model, EntityRenderer<? extends Player>> createPlayerRenderers(EntityRendererProvider.Context p_174052_) {
+    public static Map<PlayerSkin.Model, EntityRenderer<? extends Player>> createPlayerRenderers(EntityRendererProvider.Context context) {
         Builder<PlayerSkin.Model, EntityRenderer<? extends Player>> builder = ImmutableMap.builder();
         PLAYER_PROVIDERS.forEach((p_339306_, p_339307_) -> {
             try {
-                builder.put(p_339306_, p_339307_.create(p_174052_));
+                builder.put(p_339306_, p_339307_.create(context));
             } catch (Exception exception) {
                 throw new IllegalArgumentException("Failed to create player model for " + p_339306_, exception);
             }

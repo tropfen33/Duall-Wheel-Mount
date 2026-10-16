@@ -12,22 +12,31 @@ public class WalkTarget {
     private final float speedModifier;
     private final int closeEnoughDist;
 
-    public WalkTarget(BlockPos p_26417_, float p_26418_, int p_26419_) {
-        this(new BlockPosTracker(p_26417_), p_26418_, p_26419_);
+    /**
+     * Constructs a walk target that tracks a position
+     */
+    public WalkTarget(BlockPos pos, float speedModifier, int closeEnoughDist) {
+        this(new BlockPosTracker(pos), speedModifier, closeEnoughDist);
     }
 
-    public WalkTarget(Vec3 p_26413_, float p_26414_, int p_26415_) {
-        this(new BlockPosTracker(BlockPos.containing(p_26413_)), p_26414_, p_26415_);
+    /**
+     * Constructs a walk target using a vector that's directly converted to a BlockPos.
+     */
+    public WalkTarget(Vec3 vectorPos, float speedModifier, int closeEnoughDist) {
+        this(new BlockPosTracker(BlockPos.containing(vectorPos)), speedModifier, closeEnoughDist);
     }
 
-    public WalkTarget(Entity p_148209_, float p_148210_, int p_148211_) {
-        this(new EntityTracker(p_148209_, false), p_148210_, p_148211_);
+    /**
+     * Constructs a walk target that tracks an entity's position
+     */
+    public WalkTarget(Entity targetEntity, float speedModifier, int closeEnoughDist) {
+        this(new EntityTracker(targetEntity, false), speedModifier, closeEnoughDist);
     }
 
-    public WalkTarget(PositionTracker p_26409_, float p_26410_, int p_26411_) {
-        this.target = p_26409_;
-        this.speedModifier = p_26410_;
-        this.closeEnoughDist = p_26411_;
+    public WalkTarget(PositionTracker target, float speedModifier, int closeEnoughDist) {
+        this.target = target;
+        this.speedModifier = speedModifier;
+        this.closeEnoughDist = closeEnoughDist;
     }
 
     public PositionTracker getTarget() {

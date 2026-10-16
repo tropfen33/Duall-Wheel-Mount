@@ -10,8 +10,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 
 public class TimeCommand {
-    public static void register(CommandDispatcher<CommandSourceStack> p_139072_) {
-        p_139072_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("time")
                 .requires(p_139076_ -> p_139076_.hasPermission(2))
                 .then(
@@ -49,31 +49,34 @@ public class TimeCommand {
         );
     }
 
-    private static int getDayTime(ServerLevel p_139070_) {
-        return (int)(p_139070_.getDayTime() % 24000L);
+    /**
+     * Returns the day time (time wrapped within a day)
+     */
+    private static int getDayTime(ServerLevel level) {
+        return (int)(level.getDayTime() % 24000L);
     }
 
-    private static int queryTime(CommandSourceStack p_139088_, int p_139089_) {
-        p_139088_.sendSuccess(() -> Component.translatable("commands.time.query", p_139089_), false);
-        return p_139089_;
+    private static int queryTime(CommandSourceStack source, int time) {
+        source.sendSuccess(() -> Component.translatable("commands.time.query", time), false);
+        return time;
     }
 
-    public static int setTime(CommandSourceStack p_139078_, int p_139079_) {
-        for (ServerLevel serverlevel : p_139078_.getServer().getAllLevels()) {
-            serverlevel.setDayTime((long)p_139079_);
+    public static int setTime(CommandSourceStack source, int time) {
+        for (ServerLevel serverlevel : source.getServer().getAllLevels()) {
+            serverlevel.setDayTime((long)time);
         }
 
-        p_139078_.sendSuccess(() -> Component.translatable("commands.time.set", p_139079_), true);
-        return getDayTime(p_139078_.getLevel());
+        source.sendSuccess(() -> Component.translatable("commands.time.set", time), true);
+        return getDayTime(source.getLevel());
     }
 
-    public static int addTime(CommandSourceStack p_139083_, int p_139084_) {
-        for (ServerLevel serverlevel : p_139083_.getServer().getAllLevels()) {
-            serverlevel.setDayTime(serverlevel.getDayTime() + (long)p_139084_);
+    public static int addTime(CommandSourceStack source, int amount) {
+        for (ServerLevel serverlevel : source.getServer().getAllLevels()) {
+            serverlevel.setDayTime(serverlevel.getDayTime() + (long)amount);
         }
 
-        int i = getDayTime(p_139083_.getLevel());
-        p_139083_.sendSuccess(() -> Component.translatable("commands.time.set", i), true);
+        int i = getDayTime(source.getLevel());
+        source.sendSuccess(() -> Component.translatable("commands.time.set", i), true);
         return i;
     }
 }

@@ -21,26 +21,26 @@ public class CrafterMenu extends AbstractContainerMenu implements ContainerListe
     private final Player player;
     private final CraftingContainer container;
 
-    public CrafterMenu(int p_307357_, Inventory p_307257_) {
-        super(MenuType.CRAFTER_3x3, p_307357_);
-        this.player = p_307257_.player;
+    public CrafterMenu(int containerId, Inventory playerInventory) {
+        super(MenuType.CRAFTER_3x3, containerId);
+        this.player = playerInventory.player;
         this.containerData = new SimpleContainerData(10);
         this.container = new TransientCraftingContainer(this, 3, 3);
-        this.addSlots(p_307257_);
+        this.addSlots(playerInventory);
     }
 
-    public CrafterMenu(int p_307363_, Inventory p_307517_, CraftingContainer p_307449_, ContainerData p_307285_) {
-        super(MenuType.CRAFTER_3x3, p_307363_);
-        this.player = p_307517_.player;
-        this.containerData = p_307285_;
-        this.container = p_307449_;
-        checkContainerSize(p_307449_, 9);
-        p_307449_.startOpen(p_307517_.player);
-        this.addSlots(p_307517_);
+    public CrafterMenu(int containerId, Inventory playerInventory, CraftingContainer container, ContainerData containerData) {
+        super(MenuType.CRAFTER_3x3, containerId);
+        this.player = playerInventory.player;
+        this.containerData = containerData;
+        this.container = container;
+        checkContainerSize(container, 9);
+        container.startOpen(playerInventory.player);
+        this.addSlots(playerInventory);
         this.addSlotListener(this);
     }
 
-    private void addSlots(Inventory p_307214_) {
+    private void addSlots(Inventory playerInventory) {
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 int k = j + i * 3;
@@ -50,12 +50,12 @@ public class CrafterMenu extends AbstractContainerMenu implements ContainerListe
 
         for (int l = 0; l < 3; l++) {
             for (int j1 = 0; j1 < 9; j1++) {
-                this.addSlot(new Slot(p_307214_, j1 + l * 9 + 9, 8 + j1 * 18, 84 + l * 18));
+                this.addSlot(new Slot(playerInventory, j1 + l * 9 + 9, 8 + j1 * 18, 84 + l * 18));
             }
         }
 
         for (int i1 = 0; i1 < 9; i1++) {
-            this.addSlot(new Slot(p_307214_, i1, 8 + i1 * 18, 142));
+            this.addSlot(new Slot(playerInventory, i1, 8 + i1 * 18, 142));
         }
 
         this.addSlot(new NonInteractiveResultSlot(this.resultContainer, 0, 134, 35));
@@ -63,28 +63,31 @@ public class CrafterMenu extends AbstractContainerMenu implements ContainerListe
         this.refreshRecipeResult();
     }
 
-    public void setSlotState(int p_307384_, boolean p_307499_) {
-        CrafterSlot crafterslot = (CrafterSlot)this.getSlot(p_307384_);
-        this.containerData.set(crafterslot.index, p_307499_ ? 0 : 1);
+    public void setSlotState(int slot, boolean enabled) {
+        CrafterSlot crafterslot = (CrafterSlot)this.getSlot(slot);
+        this.containerData.set(crafterslot.index, enabled ? 0 : 1);
         this.broadcastChanges();
     }
 
-    public boolean isSlotDisabled(int p_307609_) {
-        return p_307609_ > -1 && p_307609_ < 9 ? this.containerData.get(p_307609_) == 1 : false;
+    public boolean isSlotDisabled(int slot) {
+        return slot > -1 && slot < 9 ? this.containerData.get(slot) == 1 : false;
     }
 
     public boolean isPowered() {
         return this.containerData.get(9) == 1;
     }
 
+    /**
+     * Handle when the stack in slot {@code index} is shift-clicked. Normally this moves the stack between the player inventory and the other inventory(s).
+     */
     @Override
-    public ItemStack quickMoveStack(Player p_307459_, int p_307204_) {
+    public ItemStack quickMoveStack(Player player, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(p_307204_);
+        Slot slot = this.slots.get(index);
         if (slot != null && slot.hasItem()) {
             ItemStack itemstack1 = slot.getItem();
             itemstack = itemstack1.copy();
-            if (p_307204_ < 9) {
+            if (index < 9) {
                 if (!this.moveItemStackTo(itemstack1, 9, 45, true)) {
                     return ItemStack.EMPTY;
                 }
@@ -102,15 +105,18 @@ public class CrafterMenu extends AbstractContainerMenu implements ContainerListe
                 return ItemStack.EMPTY;
             }
 
-            slot.onTake(p_307459_, itemstack1);
+            slot.onTake(player, itemstack1);
         }
 
         return itemstack;
     }
 
+    /**
+     * Determines whether supplied player can use this container
+     */
     @Override
-    public boolean stillValid(Player p_307229_) {
-        return this.container.stillValid(p_307229_);
+    public boolean stillValid(Player player) {
+        return this.container.stillValid(player);
     }
 
     private void refreshRecipeResult() {
@@ -128,12 +134,15 @@ public class CrafterMenu extends AbstractContainerMenu implements ContainerListe
         return this.container;
     }
 
+    /**
+     * Sends the contents of an inventory slot to the client-side Container. This doesn't have to match the actual contents of that slot.
+     */
     @Override
-    public void slotChanged(AbstractContainerMenu p_307332_, int p_307437_, ItemStack p_307233_) {
+    public void slotChanged(AbstractContainerMenu containerToSend, int dataSlotIndex, ItemStack stack) {
         this.refreshRecipeResult();
     }
 
     @Override
-    public void dataChanged(AbstractContainerMenu p_307424_, int p_307646_, int p_307221_) {
+    public void dataChanged(AbstractContainerMenu containerMenu, int dataSlotIndex, int value) {
     }
 }

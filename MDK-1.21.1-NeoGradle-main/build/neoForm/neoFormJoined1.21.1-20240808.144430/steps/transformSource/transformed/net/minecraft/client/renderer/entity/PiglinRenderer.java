@@ -27,38 +27,41 @@ public class PiglinRenderer extends HumanoidMobRenderer<Mob, PiglinModel<Mob>> {
     private static final float PIGLIN_CUSTOM_HEAD_SCALE = 1.0019531F;
 
     public PiglinRenderer(
-        EntityRendererProvider.Context p_174344_, ModelLayerLocation p_174345_, ModelLayerLocation p_174346_, ModelLayerLocation p_174347_, boolean p_174348_
+        EntityRendererProvider.Context context, ModelLayerLocation layer, ModelLayerLocation p_174346_, ModelLayerLocation p_174347_, boolean noRightEar
     ) {
-        super(p_174344_, createModel(p_174344_.getModelSet(), p_174345_, p_174348_), 0.5F, 1.0019531F, 1.0F, 1.0019531F);
+        super(context, createModel(context.getModelSet(), layer, noRightEar), 0.5F, 1.0019531F, 1.0F, 1.0019531F);
         this.addLayer(
             new HumanoidArmorLayer<>(
                 this,
-                new HumanoidArmorModel(p_174344_.bakeLayer(p_174346_)),
-                new HumanoidArmorModel(p_174344_.bakeLayer(p_174347_)),
-                p_174344_.getModelManager()
+                new HumanoidArmorModel(context.bakeLayer(p_174346_)),
+                new HumanoidArmorModel(context.bakeLayer(p_174347_)),
+                context.getModelManager()
             )
         );
     }
 
-    private static PiglinModel<Mob> createModel(EntityModelSet p_174350_, ModelLayerLocation p_174351_, boolean p_174352_) {
-        PiglinModel<Mob> piglinmodel = new PiglinModel<>(p_174350_.bakeLayer(p_174351_));
-        if (p_174352_) {
+    private static PiglinModel<Mob> createModel(EntityModelSet modelSet, ModelLayerLocation layer, boolean noRightEar) {
+        PiglinModel<Mob> piglinmodel = new PiglinModel<>(modelSet.bakeLayer(layer));
+        if (noRightEar) {
             piglinmodel.rightEar.visible = false;
         }
 
         return piglinmodel;
     }
 
-    public ResourceLocation getTextureLocation(Mob p_115708_) {
-        ResourceLocation resourcelocation = TEXTURES.get(p_115708_.getType());
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Mob entity) {
+        ResourceLocation resourcelocation = TEXTURES.get(entity.getType());
         if (resourcelocation == null) {
-            throw new IllegalArgumentException("I don't know what texture to use for " + p_115708_.getType());
+            throw new IllegalArgumentException("I don't know what texture to use for " + entity.getType());
         } else {
             return resourcelocation;
         }
     }
 
-    protected boolean isShaking(Mob p_115712_) {
-        return super.isShaking(p_115712_) || p_115712_ instanceof AbstractPiglin && ((AbstractPiglin)p_115712_).isConverting();
+    protected boolean isShaking(Mob entity) {
+        return super.isShaking(entity) || entity instanceof AbstractPiglin && ((AbstractPiglin)entity).isConverting();
     }
 }

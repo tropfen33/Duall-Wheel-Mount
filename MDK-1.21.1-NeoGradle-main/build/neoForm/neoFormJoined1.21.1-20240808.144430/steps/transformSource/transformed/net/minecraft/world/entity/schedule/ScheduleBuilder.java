@@ -8,12 +8,12 @@ public class ScheduleBuilder {
     private final Schedule schedule;
     private final List<ScheduleBuilder.ActivityTransition> transitions = Lists.newArrayList();
 
-    public ScheduleBuilder(Schedule p_38038_) {
-        this.schedule = p_38038_;
+    public ScheduleBuilder(Schedule schedule) {
+        this.schedule = schedule;
     }
 
-    public ScheduleBuilder changeActivityAt(int p_38041_, Activity p_38042_) {
-        this.transitions.add(new ScheduleBuilder.ActivityTransition(p_38041_, p_38042_));
+    public ScheduleBuilder changeActivityAt(int duration, Activity activity) {
+        this.transitions.add(new ScheduleBuilder.ActivityTransition(duration, activity));
         return this;
     }
 
@@ -35,9 +35,9 @@ public class ScheduleBuilder {
         private final int time;
         private final Activity activity;
 
-        public ActivityTransition(int p_38051_, Activity p_38052_) {
-            this.time = p_38051_;
-            this.activity = p_38052_;
+        public ActivityTransition(int time, Activity activity) {
+            this.time = time;
+            this.activity = activity;
         }
 
         public int getTime() {

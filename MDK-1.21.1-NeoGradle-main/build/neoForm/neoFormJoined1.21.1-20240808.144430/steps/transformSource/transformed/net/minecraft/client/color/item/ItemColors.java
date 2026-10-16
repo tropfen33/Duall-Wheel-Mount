@@ -29,7 +29,7 @@ public class ItemColors {
     // Neo: Use the item instance directly as non-Vanilla item ids are not constant
     private final java.util.Map<Item, ItemColor> itemColors = new java.util.IdentityHashMap<>();
 
-    public static ItemColors createDefault(BlockColors p_92684_) {
+    public static ItemColors createDefault(BlockColors colors) {
         ItemColors itemcolors = new ItemColors();
         itemcolors.register(
             (p_329705_, p_329706_) -> p_329706_ > 0 ? -1 : DyedItemColor.getOrDefault(p_329705_, -6265536),
@@ -85,7 +85,7 @@ public class ItemColors {
         itemcolors.register(
             (p_92687_, p_92688_) -> {
                 BlockState blockstate = ((BlockItem)p_92687_.getItem()).getBlock().defaultBlockState();
-                return p_92684_.getColor(blockstate, null, null, p_92688_);
+                return colors.getColor(blockstate, null, null, p_92688_);
             },
             Blocks.GRASS_BLOCK,
             Blocks.SHORT_GRASS,
@@ -106,20 +106,24 @@ public class ItemColors {
                     : FastColor.ARGB32.opaque(p_329710_.getOrDefault(DataComponents.MAP_COLOR, MapItemColor.DEFAULT).rgb()),
             Items.FILLED_MAP
         );
-        net.neoforged.neoforge.client.ClientHooks.onItemColorsInit(itemcolors, p_92684_);
+        net.neoforged.neoforge.client.ClientHooks.onItemColorsInit(itemcolors, colors);
         return itemcolors;
     }
 
-    public int getColor(ItemStack p_92677_, int p_92678_) {
-        ItemColor itemcolor = this.itemColors.get(p_92677_.getItem());
-        return itemcolor == null ? -1 : itemcolor.getColor(p_92677_, p_92678_);
+    public int getColor(ItemStack stack, int tintIndex) {
+        ItemColor itemcolor = this.itemColors.get(stack.getItem());
+        return itemcolor == null ? -1 : itemcolor.getColor(stack, tintIndex);
     }
 
-    /** @deprecated Register via {@link net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.Item} */
+    /**
+ * @deprecated Register via {@link
+ *             net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.Item
+ *             }
+ */
     @Deprecated
-    public void register(ItemColor p_92690_, ItemLike... p_92691_) {
-        for (ItemLike itemlike : p_92691_) {
-            this.itemColors.put(itemlike.asItem(), p_92690_);
+    public void register(ItemColor itemColor, ItemLike... items) {
+        for (ItemLike itemlike : items) {
+            this.itemColors.put(itemlike.asItem(), itemColor);
         }
     }
 }

@@ -25,18 +25,18 @@ public class FilterMask {
     private final BitSet mask;
     private final FilterMask.Type type;
 
-    private FilterMask(BitSet p_243243_, FilterMask.Type p_243249_) {
-        this.mask = p_243243_;
-        this.type = p_243249_;
+    private FilterMask(BitSet mask, FilterMask.Type type) {
+        this.mask = mask;
+        this.type = type;
     }
 
-    private FilterMask(BitSet p_253780_) {
-        this.mask = p_253780_;
+    private FilterMask(BitSet mask) {
+        this.mask = mask;
         this.type = FilterMask.Type.PARTIALLY_FILTERED;
     }
 
-    public FilterMask(int p_243210_) {
-        this(new BitSet(p_243210_), FilterMask.Type.PARTIALLY_FILTERED);
+    public FilterMask(int size) {
+        this(new BitSet(size), FilterMask.Type.PARTIALLY_FILTERED);
     }
 
     private FilterMask.Type type() {
@@ -47,34 +47,34 @@ public class FilterMask {
         return this.mask;
     }
 
-    public static FilterMask read(FriendlyByteBuf p_243205_) {
-        FilterMask.Type filtermask$type = p_243205_.readEnum(FilterMask.Type.class);
+    public static FilterMask read(FriendlyByteBuf buffer) {
+        FilterMask.Type filtermask$type = buffer.readEnum(FilterMask.Type.class);
 
         return switch (filtermask$type) {
             case PASS_THROUGH -> PASS_THROUGH;
             case FULLY_FILTERED -> FULLY_FILTERED;
-            case PARTIALLY_FILTERED -> new FilterMask(p_243205_.readBitSet(), FilterMask.Type.PARTIALLY_FILTERED);
+            case PARTIALLY_FILTERED -> new FilterMask(buffer.readBitSet(), FilterMask.Type.PARTIALLY_FILTERED);
         };
     }
 
-    public static void write(FriendlyByteBuf p_243308_, FilterMask p_243231_) {
-        p_243308_.writeEnum(p_243231_.type);
-        if (p_243231_.type == FilterMask.Type.PARTIALLY_FILTERED) {
-            p_243308_.writeBitSet(p_243231_.mask);
+    public static void write(FriendlyByteBuf buffer, FilterMask mask) {
+        buffer.writeEnum(mask.type);
+        if (mask.type == FilterMask.Type.PARTIALLY_FILTERED) {
+            buffer.writeBitSet(mask.mask);
         }
     }
 
-    public void setFiltered(int p_243202_) {
-        this.mask.set(p_243202_);
+    public void setFiltered(int bitIndex) {
+        this.mask.set(bitIndex);
     }
 
     @Nullable
-    public String apply(String p_243317_) {
+    public String apply(String text) {
         return switch (this.type) {
-            case PASS_THROUGH -> p_243317_;
+            case PASS_THROUGH -> text;
             case FULLY_FILTERED -> null;
             case PARTIALLY_FILTERED -> {
-                char[] achar = p_243317_.toCharArray();
+                char[] achar = text.toCharArray();
 
                 for (int i = 0; i < achar.length && i < this.mask.length(); i++) {
                     if (this.mask.get(i)) {
@@ -88,9 +88,9 @@ public class FilterMask {
     }
 
     @Nullable
-    public Component applyWithFormatting(String p_251709_) {
+    public Component applyWithFormatting(String text) {
         return switch (this.type) {
-            case PASS_THROUGH -> Component.literal(p_251709_);
+            case PASS_THROUGH -> Component.literal(text);
             case FULLY_FILTERED -> null;
             case PARTIALLY_FILTERED -> {
                 MutableComponent mutablecomponent = Component.empty();
@@ -99,7 +99,7 @@ public class FilterMask {
 
                 while (true) {
                     int j = flag ? this.mask.nextClearBit(i) : this.mask.nextSetBit(i);
-                    j = j < 0 ? p_251709_.length() : j;
+                    j = j < 0 ? text.length() : j;
                     if (j == i) {
                         yield mutablecomponent;
                     }
@@ -107,7 +107,7 @@ public class FilterMask {
                     if (flag) {
                         mutablecomponent.append(Component.literal(StringUtils.repeat('#', j - i)).withStyle(FILTERED_STYLE));
                     } else {
-                        mutablecomponent.append(p_251709_.substring(i, j));
+                        mutablecomponent.append(text.substring(i, j));
                     }
 
                     flag = !flag;
@@ -126,11 +126,11 @@ public class FilterMask {
     }
 
     @Override
-    public boolean equals(Object p_254275_) {
-        if (this == p_254275_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        } else if (p_254275_ != null && this.getClass() == p_254275_.getClass()) {
-            FilterMask filtermask = (FilterMask)p_254275_;
+        } else if (other != null && this.getClass() == other.getClass()) {
+            FilterMask filtermask = (FilterMask)other;
             return this.mask.equals(filtermask.mask) && this.type == filtermask.type;
         } else {
             return false;
@@ -151,9 +151,9 @@ public class FilterMask {
         private final String serializedName;
         private final Supplier<MapCodec<FilterMask>> codec;
 
-        private Type(String p_253679_, Supplier<MapCodec<FilterMask>> p_253988_) {
-            this.serializedName = p_253679_;
-            this.codec = p_253988_;
+        private Type(String serializedName, Supplier<MapCodec<FilterMask>> codec) {
+            this.serializedName = serializedName;
+            this.codec = codec;
         }
 
         @Override

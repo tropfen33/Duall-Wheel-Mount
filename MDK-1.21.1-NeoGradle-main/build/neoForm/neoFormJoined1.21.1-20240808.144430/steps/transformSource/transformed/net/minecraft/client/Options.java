@@ -794,12 +794,12 @@ public class Options {
         return this.prioritizeChunkUpdates;
     }
 
-    public void updateResourcePacks(PackRepository p_275268_) {
+    public void updateResourcePacks(PackRepository packRepository) {
         List<String> list = ImmutableList.copyOf(this.resourcePacks);
         this.resourcePacks.clear();
         this.incompatibleResourcePacks.clear();
 
-        for (Pack pack : p_275268_.getSelectedPacks()) {
+        for (Pack pack : packRepository.getSelectedPacks()) {
             if (!pack.isFixedPosition() && !pack.isHidden()) {
                 this.resourcePacks.add(pack.getId());
                 if (!pack.getCompatibility().isCompatible()) {
@@ -891,12 +891,12 @@ public class Options {
         return this.biomeBlendRadius;
     }
 
-    private static double logMouse(int p_231966_) {
-        return Math.pow(10.0, (double)p_231966_ / 100.0);
+    private static double logMouse(int input) {
+        return Math.pow(10.0, (double)input / 100.0);
     }
 
-    private static int unlogMouse(double p_231840_) {
-        return Mth.floor(Math.log10(p_231840_) * 100.0);
+    private static int unlogMouse(double input) {
+        return Mth.floor(Math.log10(input) * 100.0);
     }
 
     public OptionInstance<Double> mouseWheelSensitivity() {
@@ -979,22 +979,22 @@ public class Options {
         return this.reducedDebugInfo;
     }
 
-    public final float getSoundSourceVolume(SoundSource p_92148_) {
-        return this.getSoundSourceOptionInstance(p_92148_).get().floatValue();
+    public final float getSoundSourceVolume(SoundSource category) {
+        return this.getSoundSourceOptionInstance(category).get().floatValue();
     }
 
-    public final OptionInstance<Double> getSoundSourceOptionInstance(SoundSource p_251574_) {
-        return Objects.requireNonNull(this.soundSourceVolumes.get(p_251574_));
+    public final OptionInstance<Double> getSoundSourceOptionInstance(SoundSource soundSource) {
+        return Objects.requireNonNull(this.soundSourceVolumes.get(soundSource));
     }
 
-    private OptionInstance<Double> createSoundSliderOptionInstance(String p_250353_, SoundSource p_249262_) {
+    private OptionInstance<Double> createSoundSliderOptionInstance(String text, SoundSource soundSource) {
         return new OptionInstance<>(
-            p_250353_,
+            text,
             OptionInstance.noTooltip(),
             Options::percentValueOrOffLabel,
             OptionInstance.UnitDouble.INSTANCE,
             1.0,
-            p_247768_ -> Minecraft.getInstance().getSoundManager().updateSourceVolume(p_249262_, p_247768_.floatValue())
+            p_247768_ -> Minecraft.getInstance().getSoundManager().updateSourceVolume(soundSource, p_247768_.floatValue())
         );
     }
 
@@ -1099,10 +1099,10 @@ public class Options {
         this.save();
     }
 
-    public Options(Minecraft p_92138_, File p_92139_) {
+    public Options(Minecraft minecraft, File gameDirectory) {
         setForgeKeybindProperties();
-        this.minecraft = p_92138_;
-        this.optionsFile = new File(p_92139_, "options.txt");
+        this.minecraft = minecraft;
+        this.optionsFile = new File(gameDirectory, "options.txt");
         boolean flag = Runtime.getRuntime().maxMemory() >= 1000000000L;
         this.renderDistance = new OptionInstance<>(
             "options.renderDistance",
@@ -1125,121 +1125,121 @@ public class Options {
         this.load();
     }
 
-    public float getBackgroundOpacity(float p_92142_) {
-        return this.backgroundForChatOnly.get() ? p_92142_ : this.textBackgroundOpacity().get().floatValue();
+    public float getBackgroundOpacity(float opacity) {
+        return this.backgroundForChatOnly.get() ? opacity : this.textBackgroundOpacity().get().floatValue();
     }
 
-    public int getBackgroundColor(float p_92171_) {
-        return (int)(this.getBackgroundOpacity(p_92171_) * 255.0F) << 24 & 0xFF000000;
+    public int getBackgroundColor(float opacity) {
+        return (int)(this.getBackgroundOpacity(opacity) * 255.0F) << 24 & 0xFF000000;
     }
 
-    public int getBackgroundColor(int p_92144_) {
-        return this.backgroundForChatOnly.get() ? p_92144_ : (int)(this.textBackgroundOpacity.get() * 255.0) << 24 & 0xFF000000;
+    public int getBackgroundColor(int chatColor) {
+        return this.backgroundForChatOnly.get() ? chatColor : (int)(this.textBackgroundOpacity.get() * 255.0) << 24 & 0xFF000000;
     }
 
-    public void setKey(KeyMapping p_92160_, InputConstants.Key p_92161_) {
-        p_92160_.setKey(p_92161_);
+    public void setKey(KeyMapping keyBinding, InputConstants.Key input) {
+        keyBinding.setKey(input);
         this.save();
     }
 
-    private void processDumpedOptions(Options.OptionAccess p_326142_) {
-        p_326142_.process("ao", this.ambientOcclusion);
-        p_326142_.process("biomeBlendRadius", this.biomeBlendRadius);
-        p_326142_.process("enableVsync", this.enableVsync);
-        p_326142_.process("entityDistanceScaling", this.entityDistanceScaling);
-        p_326142_.process("entityShadows", this.entityShadows);
-        p_326142_.process("forceUnicodeFont", this.forceUnicodeFont);
-        p_326142_.process("japaneseGlyphVariants", this.japaneseGlyphVariants);
-        p_326142_.process("fov", this.fov);
-        p_326142_.process("fovEffectScale", this.fovEffectScale);
-        p_326142_.process("darknessEffectScale", this.darknessEffectScale);
-        p_326142_.process("glintSpeed", this.glintSpeed);
-        p_326142_.process("glintStrength", this.glintStrength);
-        p_326142_.process("prioritizeChunkUpdates", this.prioritizeChunkUpdates);
-        p_326142_.process("fullscreen", this.fullscreen);
-        p_326142_.process("gamma", this.gamma);
-        p_326142_.process("graphicsMode", this.graphicsMode);
-        p_326142_.process("guiScale", this.guiScale);
-        p_326142_.process("maxFps", this.framerateLimit);
-        p_326142_.process("mipmapLevels", this.mipmapLevels);
-        p_326142_.process("narrator", this.narrator);
-        p_326142_.process("particles", this.particles);
-        p_326142_.process("reducedDebugInfo", this.reducedDebugInfo);
-        p_326142_.process("renderClouds", this.cloudStatus);
-        p_326142_.process("renderDistance", this.renderDistance);
-        p_326142_.process("simulationDistance", this.simulationDistance);
-        p_326142_.process("screenEffectScale", this.screenEffectScale);
-        p_326142_.process("soundDevice", this.soundDevice);
+    private void processDumpedOptions(Options.OptionAccess optionAccess) {
+        optionAccess.process("ao", this.ambientOcclusion);
+        optionAccess.process("biomeBlendRadius", this.biomeBlendRadius);
+        optionAccess.process("enableVsync", this.enableVsync);
+        optionAccess.process("entityDistanceScaling", this.entityDistanceScaling);
+        optionAccess.process("entityShadows", this.entityShadows);
+        optionAccess.process("forceUnicodeFont", this.forceUnicodeFont);
+        optionAccess.process("japaneseGlyphVariants", this.japaneseGlyphVariants);
+        optionAccess.process("fov", this.fov);
+        optionAccess.process("fovEffectScale", this.fovEffectScale);
+        optionAccess.process("darknessEffectScale", this.darknessEffectScale);
+        optionAccess.process("glintSpeed", this.glintSpeed);
+        optionAccess.process("glintStrength", this.glintStrength);
+        optionAccess.process("prioritizeChunkUpdates", this.prioritizeChunkUpdates);
+        optionAccess.process("fullscreen", this.fullscreen);
+        optionAccess.process("gamma", this.gamma);
+        optionAccess.process("graphicsMode", this.graphicsMode);
+        optionAccess.process("guiScale", this.guiScale);
+        optionAccess.process("maxFps", this.framerateLimit);
+        optionAccess.process("mipmapLevels", this.mipmapLevels);
+        optionAccess.process("narrator", this.narrator);
+        optionAccess.process("particles", this.particles);
+        optionAccess.process("reducedDebugInfo", this.reducedDebugInfo);
+        optionAccess.process("renderClouds", this.cloudStatus);
+        optionAccess.process("renderDistance", this.renderDistance);
+        optionAccess.process("simulationDistance", this.simulationDistance);
+        optionAccess.process("screenEffectScale", this.screenEffectScale);
+        optionAccess.process("soundDevice", this.soundDevice);
     }
 
-    private void processOptions(Options.FieldAccess p_168428_) {
-        this.processDumpedOptions(p_168428_);
-        p_168428_.process("autoJump", this.autoJump);
-        p_168428_.process("operatorItemsTab", this.operatorItemsTab);
-        p_168428_.process("autoSuggestions", this.autoSuggestions);
-        p_168428_.process("chatColors", this.chatColors);
-        p_168428_.process("chatLinks", this.chatLinks);
-        p_168428_.process("chatLinksPrompt", this.chatLinksPrompt);
-        p_168428_.process("discrete_mouse_scroll", this.discreteMouseScroll);
-        p_168428_.process("invertYMouse", this.invertYMouse);
-        p_168428_.process("realmsNotifications", this.realmsNotifications);
-        p_168428_.process("showSubtitles", this.showSubtitles);
-        p_168428_.process("directionalAudio", this.directionalAudio);
-        p_168428_.process("touchscreen", this.touchscreen);
-        p_168428_.process("bobView", this.bobView);
-        p_168428_.process("toggleCrouch", this.toggleCrouch);
-        p_168428_.process("toggleSprint", this.toggleSprint);
-        p_168428_.process("darkMojangStudiosBackground", this.darkMojangStudiosBackground);
-        p_168428_.process("hideLightningFlashes", this.hideLightningFlash);
-        p_168428_.process("hideSplashTexts", this.hideSplashTexts);
-        p_168428_.process("mouseSensitivity", this.sensitivity);
-        p_168428_.process("damageTiltStrength", this.damageTiltStrength);
-        p_168428_.process("highContrast", this.highContrast);
-        p_168428_.process("narratorHotkey", this.narratorHotkey);
-        this.resourcePacks = p_168428_.process("resourcePacks", this.resourcePacks, Options::readListOfStrings, GSON::toJson);
-        this.incompatibleResourcePacks = p_168428_.process(
+    private void processOptions(Options.FieldAccess accessor) {
+        this.processDumpedOptions(accessor);
+        accessor.process("autoJump", this.autoJump);
+        accessor.process("operatorItemsTab", this.operatorItemsTab);
+        accessor.process("autoSuggestions", this.autoSuggestions);
+        accessor.process("chatColors", this.chatColors);
+        accessor.process("chatLinks", this.chatLinks);
+        accessor.process("chatLinksPrompt", this.chatLinksPrompt);
+        accessor.process("discrete_mouse_scroll", this.discreteMouseScroll);
+        accessor.process("invertYMouse", this.invertYMouse);
+        accessor.process("realmsNotifications", this.realmsNotifications);
+        accessor.process("showSubtitles", this.showSubtitles);
+        accessor.process("directionalAudio", this.directionalAudio);
+        accessor.process("touchscreen", this.touchscreen);
+        accessor.process("bobView", this.bobView);
+        accessor.process("toggleCrouch", this.toggleCrouch);
+        accessor.process("toggleSprint", this.toggleSprint);
+        accessor.process("darkMojangStudiosBackground", this.darkMojangStudiosBackground);
+        accessor.process("hideLightningFlashes", this.hideLightningFlash);
+        accessor.process("hideSplashTexts", this.hideSplashTexts);
+        accessor.process("mouseSensitivity", this.sensitivity);
+        accessor.process("damageTiltStrength", this.damageTiltStrength);
+        accessor.process("highContrast", this.highContrast);
+        accessor.process("narratorHotkey", this.narratorHotkey);
+        this.resourcePacks = accessor.process("resourcePacks", this.resourcePacks, Options::readListOfStrings, GSON::toJson);
+        this.incompatibleResourcePacks = accessor.process(
             "incompatibleResourcePacks", this.incompatibleResourcePacks, Options::readListOfStrings, GSON::toJson
         );
-        this.lastMpIp = p_168428_.process("lastServer", this.lastMpIp);
-        this.languageCode = p_168428_.process("lang", this.languageCode);
-        p_168428_.process("chatVisibility", this.chatVisibility);
-        p_168428_.process("chatOpacity", this.chatOpacity);
-        p_168428_.process("chatLineSpacing", this.chatLineSpacing);
-        p_168428_.process("textBackgroundOpacity", this.textBackgroundOpacity);
-        p_168428_.process("backgroundForChatOnly", this.backgroundForChatOnly);
-        this.hideServerAddress = p_168428_.process("hideServerAddress", this.hideServerAddress);
-        this.advancedItemTooltips = p_168428_.process("advancedItemTooltips", this.advancedItemTooltips);
-        this.pauseOnLostFocus = p_168428_.process("pauseOnLostFocus", this.pauseOnLostFocus);
-        this.overrideWidth = p_168428_.process("overrideWidth", this.overrideWidth);
-        this.overrideHeight = p_168428_.process("overrideHeight", this.overrideHeight);
-        p_168428_.process("chatHeightFocused", this.chatHeightFocused);
-        p_168428_.process("chatDelay", this.chatDelay);
-        p_168428_.process("chatHeightUnfocused", this.chatHeightUnfocused);
-        p_168428_.process("chatScale", this.chatScale);
-        p_168428_.process("chatWidth", this.chatWidth);
-        p_168428_.process("notificationDisplayTime", this.notificationDisplayTime);
-        this.useNativeTransport = p_168428_.process("useNativeTransport", this.useNativeTransport);
-        p_168428_.process("mainHand", this.mainHand);
-        p_168428_.process("attackIndicator", this.attackIndicator);
-        this.tutorialStep = p_168428_.process("tutorialStep", this.tutorialStep, TutorialSteps::getByName, TutorialSteps::getName);
-        p_168428_.process("mouseWheelSensitivity", this.mouseWheelSensitivity);
-        p_168428_.process("rawMouseInput", this.rawMouseInput);
-        this.glDebugVerbosity = p_168428_.process("glDebugVerbosity", this.glDebugVerbosity);
-        this.skipMultiplayerWarning = p_168428_.process("skipMultiplayerWarning", this.skipMultiplayerWarning);
-        p_168428_.process("hideMatchedNames", this.hideMatchedNames);
-        this.joinedFirstServer = p_168428_.process("joinedFirstServer", this.joinedFirstServer);
-        this.hideBundleTutorial = p_168428_.process("hideBundleTutorial", this.hideBundleTutorial);
-        this.syncWrites = p_168428_.process("syncChunkWrites", this.syncWrites);
-        p_168428_.process("showAutosaveIndicator", this.showAutosaveIndicator);
-        p_168428_.process("allowServerListing", this.allowServerListing);
-        p_168428_.process("onlyShowSecureChat", this.onlyShowSecureChat);
-        p_168428_.process("panoramaScrollSpeed", this.panoramaSpeed);
-        p_168428_.process("telemetryOptInExtra", this.telemetryOptInExtra);
-        this.onboardAccessibility = p_168428_.process("onboardAccessibility", this.onboardAccessibility);
-        p_168428_.process("menuBackgroundBlurriness", this.menuBackgroundBlurriness);
+        this.lastMpIp = accessor.process("lastServer", this.lastMpIp);
+        this.languageCode = accessor.process("lang", this.languageCode);
+        accessor.process("chatVisibility", this.chatVisibility);
+        accessor.process("chatOpacity", this.chatOpacity);
+        accessor.process("chatLineSpacing", this.chatLineSpacing);
+        accessor.process("textBackgroundOpacity", this.textBackgroundOpacity);
+        accessor.process("backgroundForChatOnly", this.backgroundForChatOnly);
+        this.hideServerAddress = accessor.process("hideServerAddress", this.hideServerAddress);
+        this.advancedItemTooltips = accessor.process("advancedItemTooltips", this.advancedItemTooltips);
+        this.pauseOnLostFocus = accessor.process("pauseOnLostFocus", this.pauseOnLostFocus);
+        this.overrideWidth = accessor.process("overrideWidth", this.overrideWidth);
+        this.overrideHeight = accessor.process("overrideHeight", this.overrideHeight);
+        accessor.process("chatHeightFocused", this.chatHeightFocused);
+        accessor.process("chatDelay", this.chatDelay);
+        accessor.process("chatHeightUnfocused", this.chatHeightUnfocused);
+        accessor.process("chatScale", this.chatScale);
+        accessor.process("chatWidth", this.chatWidth);
+        accessor.process("notificationDisplayTime", this.notificationDisplayTime);
+        this.useNativeTransport = accessor.process("useNativeTransport", this.useNativeTransport);
+        accessor.process("mainHand", this.mainHand);
+        accessor.process("attackIndicator", this.attackIndicator);
+        this.tutorialStep = accessor.process("tutorialStep", this.tutorialStep, TutorialSteps::getByName, TutorialSteps::getName);
+        accessor.process("mouseWheelSensitivity", this.mouseWheelSensitivity);
+        accessor.process("rawMouseInput", this.rawMouseInput);
+        this.glDebugVerbosity = accessor.process("glDebugVerbosity", this.glDebugVerbosity);
+        this.skipMultiplayerWarning = accessor.process("skipMultiplayerWarning", this.skipMultiplayerWarning);
+        accessor.process("hideMatchedNames", this.hideMatchedNames);
+        this.joinedFirstServer = accessor.process("joinedFirstServer", this.joinedFirstServer);
+        this.hideBundleTutorial = accessor.process("hideBundleTutorial", this.hideBundleTutorial);
+        this.syncWrites = accessor.process("syncChunkWrites", this.syncWrites);
+        accessor.process("showAutosaveIndicator", this.showAutosaveIndicator);
+        accessor.process("allowServerListing", this.allowServerListing);
+        accessor.process("onlyShowSecureChat", this.onlyShowSecureChat);
+        accessor.process("panoramaScrollSpeed", this.panoramaSpeed);
+        accessor.process("telemetryOptInExtra", this.telemetryOptInExtra);
+        this.onboardAccessibility = accessor.process("onboardAccessibility", this.onboardAccessibility);
+        accessor.process("menuBackgroundBlurriness", this.menuBackgroundBlurriness);
 
-        net.neoforged.neoforge.forge.snapshots.ForgeSnapshotsMod.processOptions(p_168428_);
-        processOptionsForge(p_168428_);
+        net.neoforged.neoforge.forge.snapshots.ForgeSnapshotsMod.processOptions(accessor);
+        processOptionsForge(accessor);
     }
     // FORGE: split off to allow reloading options after mod loading is done
     private void processOptionsForge(Options.FieldAccess p_168428_)
@@ -1304,56 +1304,56 @@ public class Options {
             processor.accept(
                 new Options.FieldAccess() {
                     @Nullable
-                    private String getValueOrNull(String p_168459_) {
-                        return compoundtag1.contains(p_168459_) ? compoundtag1.get(p_168459_).getAsString() : null;
+                    private String getValueOrNull(String name) {
+                        return compoundtag1.contains(name) ? compoundtag1.get(name).getAsString() : null;
                     }
 
                     @Override
-                    public <T> void process(String p_232125_, OptionInstance<T> p_232126_) {
-                        String s = this.getValueOrNull(p_232125_);
+                    public <T> void process(String name, OptionInstance<T> value) {
+                        String s = this.getValueOrNull(name);
                         if (s != null) {
                             JsonReader jsonreader = new JsonReader(new StringReader(s.isEmpty() ? "\"\"" : s));
                             JsonElement jsonelement = JsonParser.parseReader(jsonreader);
-                            DataResult<T> dataresult = p_232126_.codec().parse(JsonOps.INSTANCE, jsonelement);
+                            DataResult<T> dataresult = value.codec().parse(JsonOps.INSTANCE, jsonelement);
                             dataresult.error()
                                 .ifPresent(
                                     p_339273_ -> Options.LOGGER
-                                            .error("Error parsing option value " + s + " for option " + p_232126_ + ": " + p_339273_.message())
+                                            .error("Error parsing option value " + s + " for option " + value + ": " + p_339273_.message())
                                 );
-                            dataresult.ifSuccess(p_232126_::set);
+                            dataresult.ifSuccess(value::set);
                         }
                     }
 
                     @Override
-                    public int process(String p_168467_, int p_168468_) {
-                        String s = this.getValueOrNull(p_168467_);
+                    public int process(String name, int value) {
+                        String s = this.getValueOrNull(name);
                         if (s != null) {
                             try {
                                 return Integer.parseInt(s);
                             } catch (NumberFormatException numberformatexception) {
-                                Options.LOGGER.warn("Invalid integer value for option {} = {}", p_168467_, s, numberformatexception);
+                                Options.LOGGER.warn("Invalid integer value for option {} = {}", name, s, numberformatexception);
                             }
                         }
 
-                        return p_168468_;
+                        return value;
                     }
 
                     @Override
-                    public boolean process(String p_168483_, boolean p_168484_) {
-                        String s = this.getValueOrNull(p_168483_);
-                        return s != null ? Options.isTrue(s) : p_168484_;
+                    public boolean process(String name, boolean value) {
+                        String s = this.getValueOrNull(name);
+                        return s != null ? Options.isTrue(s) : value;
                     }
 
                     @Override
-                    public String process(String p_168480_, String p_168481_) {
-                        return MoreObjects.firstNonNull(this.getValueOrNull(p_168480_), p_168481_);
+                    public String process(String name, String value) {
+                        return MoreObjects.firstNonNull(this.getValueOrNull(name), value);
                     }
 
                     @Override
-                    public float process(String p_168464_, float p_168465_) {
-                        String s = this.getValueOrNull(p_168464_);
+                    public float process(String name, float value) {
+                        String s = this.getValueOrNull(name);
                         if (s == null) {
-                            return p_168465_;
+                            return value;
                         } else if (Options.isTrue(s)) {
                             return 1.0F;
                         } else if (Options.isFalse(s)) {
@@ -1362,16 +1362,16 @@ public class Options {
                             try {
                                 return Float.parseFloat(s);
                             } catch (NumberFormatException numberformatexception) {
-                                Options.LOGGER.warn("Invalid floating point value for option {} = {}", p_168464_, s, numberformatexception);
-                                return p_168465_;
+                                Options.LOGGER.warn("Invalid floating point value for option {} = {}", name, s, numberformatexception);
+                                return value;
                             }
                         }
                     }
 
                     @Override
-                    public <T> T process(String p_168470_, T p_168471_, Function<String, T> p_168472_, Function<T, String> p_168473_) {
-                        String s = this.getValueOrNull(p_168470_);
-                        return s == null ? p_168471_ : p_168472_.apply(s);
+                    public <T> T process(String name, T value, Function<String, T> stringValuefier, Function<T, String> valueStringifier) {
+                        String s = this.getValueOrNull(name);
+                        return s == null ? value : stringValuefier.apply(s);
                     }
                 }
             );
@@ -1389,23 +1389,23 @@ public class Options {
         }
     }
 
-    static boolean isTrue(String p_168436_) {
-        return "true".equals(p_168436_);
+    static boolean isTrue(String value) {
+        return "true".equals(value);
     }
 
-    static boolean isFalse(String p_168441_) {
-        return "false".equals(p_168441_);
+    static boolean isFalse(String value) {
+        return "false".equals(value);
     }
 
-    private CompoundTag dataFix(CompoundTag p_92165_) {
+    private CompoundTag dataFix(CompoundTag nbt) {
         int i = 0;
 
         try {
-            i = Integer.parseInt(p_92165_.getString("version"));
+            i = Integer.parseInt(nbt.getString("version"));
         } catch (RuntimeException runtimeexception) {
         }
 
-        return DataFixTypes.OPTIONS.updateToCurrentVersion(this.minecraft.getFixerUpper(), p_92165_, i);
+        return DataFixTypes.OPTIONS.updateToCurrentVersion(this.minecraft.getFixerUpper(), nbt, i);
     }
 
     public void save() {
@@ -1413,55 +1413,55 @@ public class Options {
             printwriter.println("version:" + SharedConstants.getCurrentVersion().getDataVersion().getVersion());
             this.processOptions(
                 new Options.FieldAccess() {
-                    public void writePrefix(String p_168491_) {
-                        printwriter.print(p_168491_);
+                    public void writePrefix(String prefix) {
+                        printwriter.print(prefix);
                         printwriter.print(':');
                     }
 
                     @Override
-                    public <T> void process(String p_232135_, OptionInstance<T> p_232136_) {
-                        p_232136_.codec()
-                            .encodeStart(JsonOps.INSTANCE, p_232136_.get())
-                            .ifError(p_339275_ -> Options.LOGGER.error("Error saving option " + p_232136_ + ": " + p_339275_))
+                    public <T> void process(String name, OptionInstance<T> value) {
+                        value.codec()
+                            .encodeStart(JsonOps.INSTANCE, value.get())
+                            .ifError(p_339275_ -> Options.LOGGER.error("Error saving option " + value + ": " + p_339275_))
                             .ifSuccess(p_232140_ -> {
-                                this.writePrefix(p_232135_);
+                                this.writePrefix(name);
                                 printwriter.println(Options.GSON.toJson(p_232140_));
                             });
                     }
 
                     @Override
-                    public int process(String p_168499_, int p_168500_) {
-                        this.writePrefix(p_168499_);
-                        printwriter.println(p_168500_);
-                        return p_168500_;
+                    public int process(String name, int value) {
+                        this.writePrefix(name);
+                        printwriter.println(value);
+                        return value;
                     }
 
                     @Override
-                    public boolean process(String p_168515_, boolean p_168516_) {
-                        this.writePrefix(p_168515_);
-                        printwriter.println(p_168516_);
-                        return p_168516_;
+                    public boolean process(String name, boolean value) {
+                        this.writePrefix(name);
+                        printwriter.println(value);
+                        return value;
                     }
 
                     @Override
-                    public String process(String p_168512_, String p_168513_) {
-                        this.writePrefix(p_168512_);
-                        printwriter.println(p_168513_);
-                        return p_168513_;
+                    public String process(String name, String value) {
+                        this.writePrefix(name);
+                        printwriter.println(value);
+                        return value;
                     }
 
                     @Override
-                    public float process(String p_168496_, float p_168497_) {
-                        this.writePrefix(p_168496_);
-                        printwriter.println(p_168497_);
-                        return p_168497_;
+                    public float process(String name, float value) {
+                        this.writePrefix(name);
+                        printwriter.println(value);
+                        return value;
                     }
 
                     @Override
-                    public <T> T process(String p_168502_, T p_168503_, Function<String, T> p_168504_, Function<T, String> p_168505_) {
-                        this.writePrefix(p_168502_);
-                        printwriter.println(p_168505_.apply(p_168503_));
-                        return p_168503_;
+                    public <T> T process(String name, T value, Function<String, T> stringValuefier, Function<T, String> valueStringifier) {
+                        this.writePrefix(name);
+                        printwriter.println(valueStringifier.apply(value));
+                        return value;
                     }
                 }
             );
@@ -1501,20 +1501,20 @@ public class Options {
         }
     }
 
-    private void setModelPart(PlayerModelPart p_92155_, boolean p_92156_) {
-        if (p_92156_) {
-            this.modelParts.add(p_92155_);
+    private void setModelPart(PlayerModelPart modelPart, boolean enable) {
+        if (enable) {
+            this.modelParts.add(modelPart);
         } else {
-            this.modelParts.remove(p_92155_);
+            this.modelParts.remove(modelPart);
         }
     }
 
-    public boolean isModelPartEnabled(PlayerModelPart p_168417_) {
-        return this.modelParts.contains(p_168417_);
+    public boolean isModelPartEnabled(PlayerModelPart playerModelPart) {
+        return this.modelParts.contains(playerModelPart);
     }
 
-    public void toggleModelPart(PlayerModelPart p_168419_, boolean p_168420_) {
-        this.setModelPart(p_168419_, p_168420_);
+    public void toggleModelPart(PlayerModelPart playerModelPart, boolean enable) {
+        this.setModelPart(playerModelPart, enable);
         this.broadcastOptions();
     }
 
@@ -1526,15 +1526,15 @@ public class Options {
         return this.useNativeTransport;
     }
 
-    public void loadSelectedResourcePacks(PackRepository p_92146_) {
+    public void loadSelectedResourcePacks(PackRepository resourcePackList) {
         Set<String> set = Sets.newLinkedHashSet();
         Iterator<String> iterator = this.resourcePacks.iterator();
 
         while (iterator.hasNext()) {
             String s = iterator.next();
-            Pack pack = p_92146_.getPack(s);
+            Pack pack = resourcePackList.getPack(s);
             if (pack == null && !s.startsWith("file/")) {
-                pack = p_92146_.getPack("file/" + s);
+                pack = resourcePackList.getPack("file/" + s);
             }
 
             if (pack == null) {
@@ -1551,7 +1551,7 @@ public class Options {
             }
         }
 
-        p_92146_.setSelected(set);
+        resourcePackList.setSelected(set);
     }
 
     private void setForgeKeybindProperties() {
@@ -1575,12 +1575,12 @@ public class Options {
         return this.cameraType;
     }
 
-    public void setCameraType(CameraType p_92158_) {
-        this.cameraType = p_92158_;
+    public void setCameraType(CameraType pointOfView) {
+        this.cameraType = pointOfView;
     }
 
-    private static List<String> readListOfStrings(String p_295764_) {
-        List<String> list = GsonHelper.fromNullableJson(GSON, p_295764_, LIST_OF_STRINGS_TYPE);
+    private static List<String> readListOfStrings(String json) {
+        List<String> list = GsonHelper.fromNullableJson(GSON, json, LIST_OF_STRINGS_TYPE);
         return (List<String>)(list != null ? list : Lists.newArrayList());
     }
 
@@ -1609,53 +1609,53 @@ public class Options {
             .collect(Collectors.joining(System.lineSeparator()));
     }
 
-    public void setServerRenderDistance(int p_193771_) {
-        this.serverRenderDistance = p_193771_;
+    public void setServerRenderDistance(int serverRenderDistance) {
+        this.serverRenderDistance = serverRenderDistance;
     }
 
     public int getEffectiveRenderDistance() {
         return this.serverRenderDistance > 0 ? Math.min(this.renderDistance.get(), this.serverRenderDistance) : this.renderDistance.get();
     }
 
-    private static Component pixelValueLabel(Component p_231953_, int p_231954_) {
-        return Component.translatable("options.pixel_value", p_231953_, p_231954_);
+    private static Component pixelValueLabel(Component text, int value) {
+        return Component.translatable("options.pixel_value", text, value);
     }
 
-    private static Component percentValueLabel(Component p_231898_, double p_231899_) {
-        return Component.translatable("options.percent_value", p_231898_, (int)(p_231899_ * 100.0));
+    private static Component percentValueLabel(Component text, double value) {
+        return Component.translatable("options.percent_value", text, (int)(value * 100.0));
     }
 
-    public static Component genericValueLabel(Component p_231922_, Component p_231923_) {
-        return Component.translatable("options.generic_value", p_231922_, p_231923_);
+    public static Component genericValueLabel(Component text, Component value) {
+        return Component.translatable("options.generic_value", text, value);
     }
 
-    public static Component genericValueLabel(Component p_231901_, int p_231902_) {
-        return genericValueLabel(p_231901_, Component.literal(Integer.toString(p_231902_)));
+    public static Component genericValueLabel(Component text, int value) {
+        return genericValueLabel(text, Component.literal(Integer.toString(value)));
     }
 
-    public static Component genericValueOrOffLabel(Component p_348615_, int p_348682_) {
-        return p_348682_ == 0 ? genericValueLabel(p_348615_, CommonComponents.OPTION_OFF) : genericValueLabel(p_348615_, p_348682_);
+    public static Component genericValueOrOffLabel(Component text, int value) {
+        return value == 0 ? genericValueLabel(text, CommonComponents.OPTION_OFF) : genericValueLabel(text, value);
     }
 
-    private static Component percentValueOrOffLabel(Component p_341700_, double p_341691_) {
-        return p_341691_ == 0.0 ? genericValueLabel(p_341700_, CommonComponents.OPTION_OFF) : percentValueLabel(p_341700_, p_341691_);
+    private static Component percentValueOrOffLabel(Component text, double value) {
+        return value == 0.0 ? genericValueLabel(text, CommonComponents.OPTION_OFF) : percentValueLabel(text, value);
     }
 
     @OnlyIn(Dist.CLIENT)
     public interface FieldAccess extends Options.OptionAccess {
-        int process(String p_168523_, int p_168524_);
+        int process(String name, int value);
 
-        boolean process(String p_168535_, boolean p_168536_);
+        boolean process(String name, boolean value);
 
-        String process(String p_168533_, String p_168534_);
+        String process(String name, String value);
 
-        float process(String p_168521_, float p_168522_);
+        float process(String name, float value);
 
-        <T> T process(String p_168525_, T p_168526_, Function<String, T> p_168527_, Function<T, String> p_168528_);
+        <T> T process(String name, T value, Function<String, T> stringValuefier, Function<T, String> valueStringifier);
     }
 
     @OnlyIn(Dist.CLIENT)
     interface OptionAccess {
-        <T> void process(String p_326392_, OptionInstance<T> p_326326_);
+        <T> void process(String name, OptionInstance<T> value);
     }
 }

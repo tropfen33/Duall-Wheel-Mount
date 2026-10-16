@@ -15,16 +15,16 @@ public class FireworkRocketRecipe extends CustomRecipe {
     private static final Ingredient GUNPOWDER_INGREDIENT = Ingredient.of(Items.GUNPOWDER);
     private static final Ingredient STAR_INGREDIENT = Ingredient.of(Items.FIREWORK_STAR);
 
-    public FireworkRocketRecipe(CraftingBookCategory p_250134_) {
-        super(p_250134_);
+    public FireworkRocketRecipe(CraftingBookCategory category) {
+        super(category);
     }
 
-    public boolean matches(CraftingInput p_345559_, Level p_43855_) {
+    public boolean matches(CraftingInput input, Level level) {
         boolean flag = false;
         int i = 0;
 
-        for (int j = 0; j < p_345559_.size(); j++) {
-            ItemStack itemstack = p_345559_.getItem(j);
+        for (int j = 0; j < input.size(); j++) {
+            ItemStack itemstack = input.getItem(j);
             if (!itemstack.isEmpty()) {
                 if (PAPER_INGREDIENT.test(itemstack)) {
                     if (flag) {
@@ -45,12 +45,12 @@ public class FireworkRocketRecipe extends CustomRecipe {
         return flag && i >= 1;
     }
 
-    public ItemStack assemble(CraftingInput p_345921_, HolderLookup.Provider p_335560_) {
+    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
         List<FireworkExplosion> list = new ArrayList<>();
         int i = 0;
 
-        for (int j = 0; j < p_345921_.size(); j++) {
-            ItemStack itemstack = p_345921_.getItem(j);
+        for (int j = 0; j < input.size(); j++) {
+            ItemStack itemstack = input.getItem(j);
             if (!itemstack.isEmpty()) {
                 if (GUNPOWDER_INGREDIENT.test(itemstack)) {
                     i++;
@@ -68,13 +68,16 @@ public class FireworkRocketRecipe extends CustomRecipe {
         return itemstack1;
     }
 
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
     @Override
-    public boolean canCraftInDimensions(int p_43844_, int p_43845_) {
-        return p_43844_ * p_43845_ >= 2;
+    public boolean canCraftInDimensions(int width, int height) {
+        return width * height >= 2;
     }
 
     @Override
-    public ItemStack getResultItem(HolderLookup.Provider p_335481_) {
+    public ItemStack getResultItem(HolderLookup.Provider registries) {
         return new ItemStack(Items.FIREWORK_ROCKET);
     }
 

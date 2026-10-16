@@ -9,12 +9,12 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
 public class VanillaBlockTagsProvider extends IntrinsicHolderTagsProvider<Block> {
-    public VanillaBlockTagsProvider(PackOutput p_256406_, CompletableFuture<HolderLookup.Provider> p_256525_) {
-        super(p_256406_, Registries.BLOCK, p_256525_, p_255627_ -> p_255627_.builtInRegistryHolder().key());
+    public VanillaBlockTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
+        super(output, Registries.BLOCK, lookupProvider, p_255627_ -> p_255627_.builtInRegistryHolder().key());
     }
 
     @Override
-    protected void addTags(HolderLookup.Provider p_255662_) {
+    protected void addTags(HolderLookup.Provider provider) {
         this.tag(BlockTags.WOOL)
             .add(
                 Blocks.WHITE_WOOL,
@@ -1764,7 +1764,7 @@ public class VanillaBlockTagsProvider extends IntrinsicHolderTagsProvider<Block>
             );
         this.tag(BlockTags.SNIFFER_EGG_HATCH_BOOST).add(Blocks.MOSS_BLOCK);
         IntrinsicHolderTagsProvider.IntrinsicTagAppender<Block> intrinsictagappender = this.tag(BlockTags.REPLACEABLE);
-        p_255662_.lookupOrThrow(Registries.BLOCK)
+        provider.lookupOrThrow(Registries.BLOCK)
             .filterElements(p_284651_ -> p_284651_.defaultBlockState().canBeReplaced())
             .listElementIds()
             .forEach(intrinsictagappender::add);

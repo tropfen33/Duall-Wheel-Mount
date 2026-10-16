@@ -21,20 +21,20 @@ public class AngleArgument implements ArgumentType<AngleArgument.SingleAngle> {
         return new AngleArgument();
     }
 
-    public static float getAngle(CommandContext<CommandSourceStack> p_83811_, String p_83812_) {
-        return p_83811_.getArgument(p_83812_, AngleArgument.SingleAngle.class).getAngle(p_83811_.getSource());
+    public static float getAngle(CommandContext<CommandSourceStack> context, String name) {
+        return context.getArgument(name, AngleArgument.SingleAngle.class).getAngle(context.getSource());
     }
 
-    public AngleArgument.SingleAngle parse(StringReader p_83809_) throws CommandSyntaxException {
-        if (!p_83809_.canRead()) {
-            throw ERROR_NOT_COMPLETE.createWithContext(p_83809_);
+    public AngleArgument.SingleAngle parse(StringReader reader) throws CommandSyntaxException {
+        if (!reader.canRead()) {
+            throw ERROR_NOT_COMPLETE.createWithContext(reader);
         } else {
-            boolean flag = WorldCoordinate.isRelative(p_83809_);
-            float f = p_83809_.canRead() && p_83809_.peek() != ' ' ? p_83809_.readFloat() : 0.0F;
+            boolean flag = WorldCoordinate.isRelative(reader);
+            float f = reader.canRead() && reader.peek() != ' ' ? reader.readFloat() : 0.0F;
             if (!Float.isNaN(f) && !Float.isInfinite(f)) {
                 return new AngleArgument.SingleAngle(f, flag);
             } else {
-                throw ERROR_INVALID_ANGLE.createWithContext(p_83809_);
+                throw ERROR_INVALID_ANGLE.createWithContext(reader);
             }
         }
     }
@@ -48,13 +48,13 @@ public class AngleArgument implements ArgumentType<AngleArgument.SingleAngle> {
         private final float angle;
         private final boolean isRelative;
 
-        SingleAngle(float p_83819_, boolean p_83820_) {
-            this.angle = p_83819_;
-            this.isRelative = p_83820_;
+        SingleAngle(float angle, boolean isRelative) {
+            this.angle = angle;
+            this.isRelative = isRelative;
         }
 
-        public float getAngle(CommandSourceStack p_83826_) {
-            return Mth.wrapDegrees(this.isRelative ? this.angle + p_83826_.getRotation().y : this.angle);
+        public float getAngle(CommandSourceStack source) {
+            return Mth.wrapDegrees(this.isRelative ? this.angle + source.getRotation().y : this.angle);
         }
     }
 }

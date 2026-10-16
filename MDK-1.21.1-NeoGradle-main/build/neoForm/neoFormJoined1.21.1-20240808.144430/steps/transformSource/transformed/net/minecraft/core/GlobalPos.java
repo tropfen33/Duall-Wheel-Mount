@@ -22,8 +22,8 @@ public record GlobalPos(ResourceKey<Level> dimension, BlockPos pos) {
         ResourceKey.streamCodec(Registries.DIMENSION), GlobalPos::dimension, BlockPos.STREAM_CODEC, GlobalPos::pos, GlobalPos::of
     );
 
-    public static GlobalPos of(ResourceKey<Level> p_122644_, BlockPos p_122645_) {
-        return new GlobalPos(p_122644_, p_122645_);
+    public static GlobalPos of(ResourceKey<Level> dimension, BlockPos pos) {
+        return new GlobalPos(dimension, pos);
     }
 
     @Override

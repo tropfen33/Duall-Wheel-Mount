@@ -19,8 +19,8 @@ import net.minecraft.world.item.enchantment.providers.VanillaEnchantmentProvider
 public class SkeletonTrapGoal extends Goal {
     private final SkeletonHorse horse;
 
-    public SkeletonTrapGoal(SkeletonHorse p_30927_) {
-        this.horse = p_30927_;
+    public SkeletonTrapGoal(SkeletonHorse horse) {
+        this.horse = horse;
     }
 
     @Override
@@ -66,10 +66,10 @@ public class SkeletonTrapGoal extends Goal {
     }
 
     @Nullable
-    private AbstractHorse createHorse(DifficultyInstance p_30930_) {
+    private AbstractHorse createHorse(DifficultyInstance difficulty) {
         SkeletonHorse skeletonhorse = EntityType.SKELETON_HORSE.create(this.horse.level());
         if (skeletonhorse != null) {
-            skeletonhorse.finalizeSpawn((ServerLevel)this.horse.level(), p_30930_, MobSpawnType.TRIGGERED, null);
+            skeletonhorse.finalizeSpawn((ServerLevel)this.horse.level(), difficulty, MobSpawnType.TRIGGERED, null);
             skeletonhorse.setPos(this.horse.getX(), this.horse.getY(), this.horse.getZ());
             skeletonhorse.invulnerableTime = 60;
             skeletonhorse.setPersistenceRequired();
@@ -81,30 +81,30 @@ public class SkeletonTrapGoal extends Goal {
     }
 
     @Nullable
-    private Skeleton createSkeleton(DifficultyInstance p_30932_, AbstractHorse p_30933_) {
-        Skeleton skeleton = EntityType.SKELETON.create(p_30933_.level());
+    private Skeleton createSkeleton(DifficultyInstance difficulty, AbstractHorse horse) {
+        Skeleton skeleton = EntityType.SKELETON.create(horse.level());
         if (skeleton != null) {
-            skeleton.finalizeSpawn((ServerLevel)p_30933_.level(), p_30932_, MobSpawnType.TRIGGERED, null);
-            skeleton.setPos(p_30933_.getX(), p_30933_.getY(), p_30933_.getZ());
+            skeleton.finalizeSpawn((ServerLevel)horse.level(), difficulty, MobSpawnType.TRIGGERED, null);
+            skeleton.setPos(horse.getX(), horse.getY(), horse.getZ());
             skeleton.invulnerableTime = 60;
             skeleton.setPersistenceRequired();
             if (skeleton.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) {
                 skeleton.setItemSlot(EquipmentSlot.HEAD, new ItemStack(Items.IRON_HELMET));
             }
 
-            this.enchant(skeleton, EquipmentSlot.MAINHAND, p_30932_);
-            this.enchant(skeleton, EquipmentSlot.HEAD, p_30932_);
+            this.enchant(skeleton, EquipmentSlot.MAINHAND, difficulty);
+            this.enchant(skeleton, EquipmentSlot.HEAD, difficulty);
         }
 
         return skeleton;
     }
 
-    private void enchant(Skeleton p_345688_, EquipmentSlot p_346060_, DifficultyInstance p_348658_) {
-        ItemStack itemstack = p_345688_.getItemBySlot(p_346060_);
+    private void enchant(Skeleton skeleton, EquipmentSlot slot, DifficultyInstance difficulty) {
+        ItemStack itemstack = skeleton.getItemBySlot(slot);
         itemstack.set(DataComponents.ENCHANTMENTS, ItemEnchantments.EMPTY);
         EnchantmentHelper.enchantItemFromProvider(
-            itemstack, p_345688_.level().registryAccess(), VanillaEnchantmentProviders.MOB_SPAWN_EQUIPMENT, p_348658_, p_345688_.getRandom()
+            itemstack, skeleton.level().registryAccess(), VanillaEnchantmentProviders.MOB_SPAWN_EQUIPMENT, difficulty, skeleton.getRandom()
         );
-        p_345688_.setItemSlot(p_346060_, itemstack);
+        skeleton.setItemSlot(slot, itemstack);
     }
 }

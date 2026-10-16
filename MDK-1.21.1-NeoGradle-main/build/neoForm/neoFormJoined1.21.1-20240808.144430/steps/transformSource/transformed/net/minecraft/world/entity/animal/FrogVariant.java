@@ -15,17 +15,17 @@ public record FrogVariant(ResourceLocation texture) {
     public static final ResourceKey<FrogVariant> WARM = createKey("warm");
     public static final ResourceKey<FrogVariant> COLD = createKey("cold");
 
-    private static ResourceKey<FrogVariant> createKey(String p_335735_) {
-        return ResourceKey.create(Registries.FROG_VARIANT, ResourceLocation.withDefaultNamespace(p_335735_));
+    private static ResourceKey<FrogVariant> createKey(String name) {
+        return ResourceKey.create(Registries.FROG_VARIANT, ResourceLocation.withDefaultNamespace(name));
     }
 
-    public static FrogVariant bootstrap(Registry<FrogVariant> p_336150_) {
-        register(p_336150_, TEMPERATE, "textures/entity/frog/temperate_frog.png");
-        register(p_336150_, WARM, "textures/entity/frog/warm_frog.png");
-        return register(p_336150_, COLD, "textures/entity/frog/cold_frog.png");
+    public static FrogVariant bootstrap(Registry<FrogVariant> registry) {
+        register(registry, TEMPERATE, "textures/entity/frog/temperate_frog.png");
+        register(registry, WARM, "textures/entity/frog/warm_frog.png");
+        return register(registry, COLD, "textures/entity/frog/cold_frog.png");
     }
 
-    private static FrogVariant register(Registry<FrogVariant> p_336004_, ResourceKey<FrogVariant> p_335508_, String p_218194_) {
-        return Registry.register(p_336004_, p_335508_, new FrogVariant(ResourceLocation.withDefaultNamespace(p_218194_)));
+    private static FrogVariant register(Registry<FrogVariant> registry, ResourceKey<FrogVariant> key, String texture) {
+        return Registry.register(registry, key, new FrogVariant(ResourceLocation.withDefaultNamespace(texture)));
     }
 }

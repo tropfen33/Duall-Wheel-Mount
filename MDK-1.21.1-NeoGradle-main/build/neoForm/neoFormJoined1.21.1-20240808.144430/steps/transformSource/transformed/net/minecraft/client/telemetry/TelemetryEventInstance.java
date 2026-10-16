@@ -20,7 +20,7 @@ public record TelemetryEventInstance(TelemetryEventType type, TelemetryPropertyM
         this.properties = properties;
     }
 
-    public TelemetryEvent export(TelemetrySession p_261645_) {
-        return this.type.export(p_261645_, this.properties);
+    public TelemetryEvent export(TelemetrySession session) {
+        return this.type.export(session, this.properties);
     }
 }

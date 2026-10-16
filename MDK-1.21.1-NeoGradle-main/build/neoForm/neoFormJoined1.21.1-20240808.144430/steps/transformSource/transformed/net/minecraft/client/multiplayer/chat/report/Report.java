@@ -22,28 +22,28 @@ public abstract class Report {
     protected ReportReason reason;
     protected boolean attested;
 
-    public Report(UUID p_299940_, Instant p_300011_, UUID p_299976_) {
-        this.reportId = p_299940_;
-        this.createdAt = p_300011_;
-        this.reportedProfileId = p_299976_;
+    public Report(UUID reportId, Instant createdAt, UUID reportedProfileId) {
+        this.reportId = reportId;
+        this.createdAt = createdAt;
+        this.reportedProfileId = reportedProfileId;
     }
 
-    public boolean isReportedPlayer(UUID p_300032_) {
-        return p_300032_.equals(this.reportedProfileId);
+    public boolean isReportedPlayer(UUID playerId) {
+        return playerId.equals(this.reportedProfileId);
     }
 
     public abstract Report copy();
 
-    public abstract Screen createScreen(Screen p_299960_, ReportingContext p_299959_);
+    public abstract Screen createScreen(Screen lastScreen, ReportingContext reportingContext);
 
     @OnlyIn(Dist.CLIENT)
     public abstract static class Builder<R extends Report> {
         protected final R report;
         protected final AbuseReportLimits limits;
 
-        protected Builder(R p_299998_, AbuseReportLimits p_299869_) {
-            this.report = p_299998_;
-            this.limits = p_299869_;
+        protected Builder(R report, AbuseReportLimits limits) {
+            this.report = report;
+            this.limits = limits;
         }
 
         public R report() {
@@ -62,8 +62,8 @@ public abstract class Report {
             return this.report().attested;
         }
 
-        public void setComments(String p_299837_) {
-            this.report.comments = p_299837_;
+        public void setComments(String comments) {
+            this.report.comments = comments;
         }
 
         @Nullable
@@ -71,12 +71,12 @@ public abstract class Report {
             return this.report.reason;
         }
 
-        public void setReason(ReportReason p_299937_) {
-            this.report.reason = p_299937_;
+        public void setReason(ReportReason reason) {
+            this.report.reason = reason;
         }
 
-        public void setAttested(boolean p_352965_) {
-            this.report.attested = p_352965_;
+        public void setAttested(boolean attested) {
+            this.report.attested = attested;
         }
 
         public abstract boolean hasContent();
@@ -86,7 +86,7 @@ public abstract class Report {
             return !this.report().attested ? Report.CannotBuildReason.NOT_ATTESTED : null;
         }
 
-        public abstract Either<Report.Result, Report.CannotBuildReason> build(ReportingContext p_299877_);
+        public abstract Either<Report.Result, Report.CannotBuildReason> build(ReportingContext reportingContext);
     }
 
     @OnlyIn(Dist.CLIENT)

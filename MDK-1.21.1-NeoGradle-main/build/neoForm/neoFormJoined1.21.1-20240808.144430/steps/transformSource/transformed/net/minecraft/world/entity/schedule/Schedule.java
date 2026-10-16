@@ -30,30 +30,30 @@ public class Schedule {
         .build();
     private final Map<Activity, Timeline> timelines = Maps.newHashMap();
 
-    protected static ScheduleBuilder register(String p_38030_) {
-        Schedule schedule = Registry.register(BuiltInRegistries.SCHEDULE, p_38030_, new Schedule());
+    protected static ScheduleBuilder register(String key) {
+        Schedule schedule = Registry.register(BuiltInRegistries.SCHEDULE, key, new Schedule());
         return new ScheduleBuilder(schedule);
     }
 
-    protected void ensureTimelineExistsFor(Activity p_38025_) {
-        if (!this.timelines.containsKey(p_38025_)) {
-            this.timelines.put(p_38025_, new Timeline());
+    protected void ensureTimelineExistsFor(Activity activity) {
+        if (!this.timelines.containsKey(activity)) {
+            this.timelines.put(activity, new Timeline());
         }
     }
 
-    protected Timeline getTimelineFor(Activity p_38032_) {
-        return this.timelines.get(p_38032_);
+    protected Timeline getTimelineFor(Activity activity) {
+        return this.timelines.get(activity);
     }
 
-    protected List<Timeline> getAllTimelinesExceptFor(Activity p_38034_) {
-        return this.timelines.entrySet().stream().filter(p_38028_ -> p_38028_.getKey() != p_38034_).map(Entry::getValue).collect(Collectors.toList());
+    protected List<Timeline> getAllTimelinesExceptFor(Activity activity) {
+        return this.timelines.entrySet().stream().filter(p_38028_ -> p_38028_.getKey() != activity).map(Entry::getValue).collect(Collectors.toList());
     }
 
-    public Activity getActivityAt(int p_38020_) {
+    public Activity getActivityAt(int dayTime) {
         return this.timelines
             .entrySet()
             .stream()
-            .max(Comparator.comparingDouble(p_38023_ -> (double)p_38023_.getValue().getValueAt(p_38020_)))
+            .max(Comparator.comparingDouble(p_38023_ -> (double)p_38023_.getValue().getValueAt(dayTime)))
             .map(Entry::getKey)
             .orElse(Activity.IDLE);
     }

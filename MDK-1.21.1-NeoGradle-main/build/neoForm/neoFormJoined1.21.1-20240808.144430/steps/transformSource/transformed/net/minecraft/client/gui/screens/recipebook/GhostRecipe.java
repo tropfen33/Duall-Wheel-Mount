@@ -27,12 +27,12 @@ public class GhostRecipe {
         this.time = 0.0F;
     }
 
-    public void addIngredient(Ingredient p_100144_, int p_100145_, int p_100146_) {
-        this.ingredients.add(new GhostRecipe.GhostIngredient(p_100144_, p_100145_, p_100146_));
+    public void addIngredient(Ingredient ingredient, int x, int y) {
+        this.ingredients.add(new GhostRecipe.GhostIngredient(ingredient, x, y));
     }
 
-    public GhostRecipe.GhostIngredient get(int p_100142_) {
-        return this.ingredients.get(p_100142_);
+    public GhostRecipe.GhostIngredient get(int index) {
+        return this.ingredients.get(index);
     }
 
     public int size() {
@@ -44,30 +44,30 @@ public class GhostRecipe {
         return this.recipe;
     }
 
-    public void setRecipe(RecipeHolder<?> p_300899_) {
-        this.recipe = p_300899_;
+    public void setRecipe(RecipeHolder<?> recipe) {
+        this.recipe = recipe;
     }
 
-    public void render(GuiGraphics p_282081_, Minecraft p_281341_, int p_283169_, int p_282326_, boolean p_282174_, float p_282256_) {
+    public void render(GuiGraphics guiGraphics, Minecraft minecraft, int leftPos, int topPos, boolean offset, float partialTick) {
         if (!Screen.hasControlDown()) {
-            this.time += p_282256_;
+            this.time += partialTick;
         }
 
         for (int i = 0; i < this.ingredients.size(); i++) {
             GhostRecipe.GhostIngredient ghostrecipe$ghostingredient = this.ingredients.get(i);
-            int j = ghostrecipe$ghostingredient.getX() + p_283169_;
-            int k = ghostrecipe$ghostingredient.getY() + p_282326_;
-            if (i == 0 && p_282174_) {
-                p_282081_.fill(j - 4, k - 4, j + 20, k + 20, 822018048);
+            int j = ghostrecipe$ghostingredient.getX() + leftPos;
+            int k = ghostrecipe$ghostingredient.getY() + topPos;
+            if (i == 0 && offset) {
+                guiGraphics.fill(j - 4, k - 4, j + 20, k + 20, 822018048);
             } else {
-                p_282081_.fill(j, k, j + 16, k + 16, 822018048);
+                guiGraphics.fill(j, k, j + 16, k + 16, 822018048);
             }
 
             ItemStack itemstack = ghostrecipe$ghostingredient.getItem();
-            p_282081_.renderFakeItem(itemstack, j, k);
-            p_282081_.fill(RenderType.guiGhostRecipeOverlay(), j, k, j + 16, k + 16, 822083583);
+            guiGraphics.renderFakeItem(itemstack, j, k);
+            guiGraphics.fill(RenderType.guiGhostRecipeOverlay(), j, k, j + 16, k + 16, 822083583);
             if (i == 0) {
-                p_282081_.renderItemDecorations(p_281341_.font, itemstack, j, k);
+                guiGraphics.renderItemDecorations(minecraft.font, itemstack, j, k);
             }
         }
     }
@@ -78,10 +78,10 @@ public class GhostRecipe {
         private final int x;
         private final int y;
 
-        public GhostIngredient(Ingredient p_100166_, int p_100167_, int p_100168_) {
-            this.ingredient = p_100166_;
-            this.x = p_100167_;
-            this.y = p_100168_;
+        public GhostIngredient(Ingredient ingredient, int x, int y) {
+            this.ingredient = ingredient;
+            this.x = x;
+            this.y = y;
         }
 
         public int getX() {

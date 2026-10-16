@@ -10,16 +10,16 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class GuardedSerializer {
     private final Gson gson = new Gson();
 
-    public String toJson(ReflectionBasedSerialization p_87414_) {
-        return this.gson.toJson(p_87414_);
+    public String toJson(ReflectionBasedSerialization reflectionBasedSerialization) {
+        return this.gson.toJson(reflectionBasedSerialization);
     }
 
-    public String toJson(JsonElement p_275638_) {
-        return this.gson.toJson(p_275638_);
+    public String toJson(JsonElement json) {
+        return this.gson.toJson(json);
     }
 
     @Nullable
-    public <T extends ReflectionBasedSerialization> T fromJson(String p_87416_, Class<T> p_87417_) {
-        return this.gson.fromJson(p_87416_, p_87417_);
+    public <T extends ReflectionBasedSerialization> T fromJson(String json, Class<T> classOfT) {
+        return this.gson.fromJson(json, classOfT);
     }
 }

@@ -46,14 +46,14 @@ public class UnihexProvider implements GlyphProvider {
     private static final int DIGITS_FOR_WIDTH_32 = 128;
     private final CodepointMap<UnihexProvider.Glyph> glyphs;
 
-    UnihexProvider(CodepointMap<UnihexProvider.Glyph> p_285457_) {
-        this.glyphs = p_285457_;
+    UnihexProvider(CodepointMap<UnihexProvider.Glyph> glyph) {
+        this.glyphs = glyph;
     }
 
     @Nullable
     @Override
-    public GlyphInfo getGlyph(int p_285239_) {
-        return this.glyphs.get(p_285239_);
+    public GlyphInfo getGlyph(int character) {
+        return this.glyphs.get(character);
     }
 
     @Override
@@ -62,34 +62,34 @@ public class UnihexProvider implements GlyphProvider {
     }
 
     @VisibleForTesting
-    static void unpackBitsToBytes(IntBuffer p_285211_, int p_285508_, int p_285312_, int p_285412_) {
-        int i = 32 - p_285312_ - 1;
-        int j = 32 - p_285412_ - 1;
+    static void unpackBitsToBytes(IntBuffer buffer, int lineData, int left, int right) {
+        int i = 32 - left - 1;
+        int j = 32 - right - 1;
 
         for (int k = i; k >= j; k--) {
             if (k < 32 && k >= 0) {
-                boolean flag = (p_285508_ >> k & 1) != 0;
-                p_285211_.put(flag ? -1 : 0);
+                boolean flag = (lineData >> k & 1) != 0;
+                buffer.put(flag ? -1 : 0);
             } else {
-                p_285211_.put(0);
+                buffer.put(0);
             }
         }
     }
 
-    static void unpackBitsToBytes(IntBuffer p_285283_, UnihexProvider.LineData p_285485_, int p_284940_, int p_284950_) {
+    static void unpackBitsToBytes(IntBuffer buffer, UnihexProvider.LineData lineData, int left, int right) {
         for (int i = 0; i < 16; i++) {
-            int j = p_285485_.line(i);
-            unpackBitsToBytes(p_285283_, j, p_284940_, p_284950_);
+            int j = lineData.line(i);
+            unpackBitsToBytes(buffer, j, left, right);
         }
     }
 
     @VisibleForTesting
-    static void readFromStream(InputStream p_285315_, UnihexProvider.ReaderOutput p_285353_) throws IOException {
+    static void readFromStream(InputStream stream, UnihexProvider.ReaderOutput output) throws IOException {
         int i = 0;
         ByteList bytelist = new ByteArrayList(128);
 
         while (true) {
-            boolean flag = copyUntil(p_285315_, bytelist, 58);
+            boolean flag = copyUntil(stream, bytelist, 58);
             int j = bytelist.size();
             if (j == 0 && !flag) {
                 return;
@@ -106,7 +106,7 @@ public class UnihexProvider implements GlyphProvider {
             }
 
             bytelist.clear();
-            copyUntil(p_285315_, bytelist, 10);
+            copyUntil(stream, bytelist, 10);
             int i1 = bytelist.size();
 
             UnihexProvider.LineData unihexprovider$linedata = switch (i1) {
@@ -118,18 +118,18 @@ public class UnihexProvider implements GlyphProvider {
                 "Invalid entry at line " + i + ": expected hex number describing (8,16,24,32) x 16 bitmap, followed by a new line"
             );
             };
-            p_285353_.accept(k, unihexprovider$linedata);
+            output.accept(k, unihexprovider$linedata);
             i++;
             bytelist.clear();
         }
     }
 
-    static int decodeHex(int p_285205_, ByteList p_285268_, int p_285345_) {
-        return decodeHex(p_285205_, p_285268_.getByte(p_285345_));
+    static int decodeHex(int lineNumber, ByteList byteList, int index) {
+        return decodeHex(lineNumber, byteList.getByte(index));
     }
 
-    private static int decodeHex(int p_284952_, byte p_285036_) {
-        return switch (p_285036_) {
+    private static int decodeHex(int lineNumber, byte data) {
+        return switch (data) {
             case 48 -> 0;
             case 49 -> 1;
             case 50 -> 2;
@@ -140,7 +140,7 @@ public class UnihexProvider implements GlyphProvider {
             case 55 -> 7;
             case 56 -> 8;
             case 57 -> 9;
-            default -> throw new IllegalArgumentException("Invalid entry at line " + p_284952_ + ": expected hex digit, got " + (char)p_285036_);
+            default -> throw new IllegalArgumentException("Invalid entry at line " + lineNumber + ": expected hex digit, got " + (char)data);
             case 65 -> 10;
             case 66 -> 11;
             case 67 -> 12;
@@ -150,35 +150,35 @@ public class UnihexProvider implements GlyphProvider {
         };
     }
 
-    private static boolean copyUntil(InputStream p_284994_, ByteList p_285351_, int p_285177_) throws IOException {
+    private static boolean copyUntil(InputStream stream, ByteList byteList, int value) throws IOException {
         while (true) {
-            int i = p_284994_.read();
+            int i = stream.read();
             if (i == -1) {
                 return false;
             }
 
-            if (i == p_285177_) {
+            if (i == value) {
                 return true;
             }
 
-            p_285351_.add((byte)i);
+            byteList.add((byte)i);
         }
     }
 
     @OnlyIn(Dist.CLIENT)
     static record ByteContents(byte[] contents) implements UnihexProvider.LineData {
         @Override
-        public int line(int p_285203_) {
-            return this.contents[p_285203_] << 24;
+        public int line(int index) {
+            return this.contents[index] << 24;
         }
 
-        static UnihexProvider.LineData read(int p_285080_, ByteList p_285481_) {
+        static UnihexProvider.LineData read(int index, ByteList byteList) {
             byte[] abyte = new byte[16];
             int i = 0;
 
             for (int j = 0; j < 16; j++) {
-                int k = UnihexProvider.decodeHex(p_285080_, p_285481_, i++);
-                int l = UnihexProvider.decodeHex(p_285080_, p_285481_, i++);
+                int k = UnihexProvider.decodeHex(index, byteList, i++);
+                int l = UnihexProvider.decodeHex(index, byteList, i++);
                 byte b0 = (byte)(k << 4 | l);
                 abyte[j] = b0;
             }
@@ -204,9 +204,9 @@ public class UnihexProvider implements GlyphProvider {
         private final ResourceLocation hexFile;
         private final List<UnihexProvider.OverrideRange> sizeOverrides;
 
-        private Definition(ResourceLocation p_286378_, List<UnihexProvider.OverrideRange> p_286770_) {
-            this.hexFile = p_286378_;
-            this.sizeOverrides = p_286770_;
+        private Definition(ResourceLocation hexFile, List<UnihexProvider.OverrideRange> sizeOverrides) {
+            this.hexFile = hexFile;
+            this.sizeOverrides = sizeOverrides;
         }
 
         @Override
@@ -219,21 +219,21 @@ public class UnihexProvider implements GlyphProvider {
             return Either.left(this::load);
         }
 
-        private GlyphProvider load(ResourceManager p_286472_) throws IOException {
+        private GlyphProvider load(ResourceManager resourceManager) throws IOException {
             UnihexProvider unihexprovider;
-            try (InputStream inputstream = p_286472_.open(this.hexFile)) {
+            try (InputStream inputstream = resourceManager.open(this.hexFile)) {
                 unihexprovider = this.loadData(inputstream);
             }
 
             return unihexprovider;
         }
 
-        private UnihexProvider loadData(InputStream p_286795_) throws IOException {
+        private UnihexProvider loadData(InputStream inputStream) throws IOException {
             CodepointMap<UnihexProvider.LineData> codepointmap = new CodepointMap<>(UnihexProvider.LineData[]::new, UnihexProvider.LineData[][]::new);
             UnihexProvider.ReaderOutput unihexprovider$readeroutput = codepointmap::put;
 
             UnihexProvider unihexprovider;
-            try (ZipInputStream zipinputstream = new ZipInputStream(p_286795_)) {
+            try (ZipInputStream zipinputstream = new ZipInputStream(inputStream)) {
                 ZipEntry zipentry;
                 while ((zipentry = zipinputstream.getNextEntry()) != null) {
                     String s = zipentry.getName();
@@ -288,16 +288,16 @@ public class UnihexProvider implements GlyphProvider {
             return pack(this.left, this.right);
         }
 
-        public static int pack(int p_285339_, int p_285120_) {
-            return (p_285339_ & 0xFF) << 8 | p_285120_ & 0xFF;
+        public static int pack(int left, int right) {
+            return (left & 0xFF) << 8 | right & 0xFF;
         }
 
-        public static int left(int p_285195_) {
-            return (byte)(p_285195_ >> 8);
+        public static int left(int packedDimensions) {
+            return (byte)(packedDimensions >> 8);
         }
 
-        public static int right(int p_285419_) {
-            return (byte)p_285419_;
+        public static int right(int packedDimensions) {
+            return (byte)packedDimensions;
         }
     }
 
@@ -361,22 +361,22 @@ public class UnihexProvider implements GlyphProvider {
         private static final int SIZE_24 = 24;
 
         @Override
-        public int line(int p_285172_) {
-            return this.contents[p_285172_];
+        public int line(int index) {
+            return this.contents[index];
         }
 
-        static UnihexProvider.LineData read24(int p_285362_, ByteList p_285123_) {
+        static UnihexProvider.LineData read24(int index, ByteList byteList) {
             int[] aint = new int[16];
             int i = 0;
             int j = 0;
 
             for (int k = 0; k < 16; k++) {
-                int l = UnihexProvider.decodeHex(p_285362_, p_285123_, j++);
-                int i1 = UnihexProvider.decodeHex(p_285362_, p_285123_, j++);
-                int j1 = UnihexProvider.decodeHex(p_285362_, p_285123_, j++);
-                int k1 = UnihexProvider.decodeHex(p_285362_, p_285123_, j++);
-                int l1 = UnihexProvider.decodeHex(p_285362_, p_285123_, j++);
-                int i2 = UnihexProvider.decodeHex(p_285362_, p_285123_, j++);
+                int l = UnihexProvider.decodeHex(index, byteList, j++);
+                int i1 = UnihexProvider.decodeHex(index, byteList, j++);
+                int j1 = UnihexProvider.decodeHex(index, byteList, j++);
+                int k1 = UnihexProvider.decodeHex(index, byteList, j++);
+                int l1 = UnihexProvider.decodeHex(index, byteList, j++);
+                int i2 = UnihexProvider.decodeHex(index, byteList, j++);
                 int j2 = l << 20 | i1 << 16 | j1 << 12 | k1 << 8 | l1 << 4 | i2;
                 aint[k] = j2 << 8;
                 i |= j2;
@@ -385,20 +385,20 @@ public class UnihexProvider implements GlyphProvider {
             return new UnihexProvider.IntContents(aint, 24);
         }
 
-        public static UnihexProvider.LineData read32(int p_285222_, ByteList p_285346_) {
+        public static UnihexProvider.LineData read32(int index, ByteList byteList) {
             int[] aint = new int[16];
             int i = 0;
             int j = 0;
 
             for (int k = 0; k < 16; k++) {
-                int l = UnihexProvider.decodeHex(p_285222_, p_285346_, j++);
-                int i1 = UnihexProvider.decodeHex(p_285222_, p_285346_, j++);
-                int j1 = UnihexProvider.decodeHex(p_285222_, p_285346_, j++);
-                int k1 = UnihexProvider.decodeHex(p_285222_, p_285346_, j++);
-                int l1 = UnihexProvider.decodeHex(p_285222_, p_285346_, j++);
-                int i2 = UnihexProvider.decodeHex(p_285222_, p_285346_, j++);
-                int j2 = UnihexProvider.decodeHex(p_285222_, p_285346_, j++);
-                int k2 = UnihexProvider.decodeHex(p_285222_, p_285346_, j++);
+                int l = UnihexProvider.decodeHex(index, byteList, j++);
+                int i1 = UnihexProvider.decodeHex(index, byteList, j++);
+                int j1 = UnihexProvider.decodeHex(index, byteList, j++);
+                int k1 = UnihexProvider.decodeHex(index, byteList, j++);
+                int l1 = UnihexProvider.decodeHex(index, byteList, j++);
+                int i2 = UnihexProvider.decodeHex(index, byteList, j++);
+                int j2 = UnihexProvider.decodeHex(index, byteList, j++);
+                int k2 = UnihexProvider.decodeHex(index, byteList, j++);
                 int l2 = l << 28 | i1 << 24 | j1 << 20 | k1 << 16 | l1 << 12 | i2 << 8 | j2 << 4 | k2;
                 aint[k] = l2;
                 i |= l2;
@@ -410,7 +410,7 @@ public class UnihexProvider implements GlyphProvider {
 
     @OnlyIn(Dist.CLIENT)
     public interface LineData {
-        int line(int p_285166_);
+        int line(int index);
 
         int bitWidth();
 
@@ -467,19 +467,19 @@ public class UnihexProvider implements GlyphProvider {
     @OnlyIn(Dist.CLIENT)
     static record ShortContents(short[] contents) implements UnihexProvider.LineData {
         @Override
-        public int line(int p_285158_) {
-            return this.contents[p_285158_] << 16;
+        public int line(int index) {
+            return this.contents[index] << 16;
         }
 
-        static UnihexProvider.LineData read(int p_285528_, ByteList p_284958_) {
+        static UnihexProvider.LineData read(int index, ByteList byteList) {
             short[] ashort = new short[16];
             int i = 0;
 
             for (int j = 0; j < 16; j++) {
-                int k = UnihexProvider.decodeHex(p_285528_, p_284958_, i++);
-                int l = UnihexProvider.decodeHex(p_285528_, p_284958_, i++);
-                int i1 = UnihexProvider.decodeHex(p_285528_, p_284958_, i++);
-                int j1 = UnihexProvider.decodeHex(p_285528_, p_284958_, i++);
+                int k = UnihexProvider.decodeHex(index, byteList, i++);
+                int l = UnihexProvider.decodeHex(index, byteList, i++);
+                int i1 = UnihexProvider.decodeHex(index, byteList, i++);
+                int j1 = UnihexProvider.decodeHex(index, byteList, i++);
                 short short1 = (short)(k << 12 | l << 8 | i1 << 4 | j1);
                 ashort[j] = short1;
             }

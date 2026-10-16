@@ -26,9 +26,9 @@ public class AnvilScreen extends ItemCombinerScreen<AnvilMenu> {
     private EditBox name;
     private final Player player;
 
-    public AnvilScreen(AnvilMenu p_97874_, Inventory p_97875_, Component p_97876_) {
-        super(p_97874_, p_97875_, p_97876_, ANVIL_LOCATION);
-        this.player = p_97875_.player;
+    public AnvilScreen(AnvilMenu menu, Inventory playerInventory, Component title) {
+        super(menu, playerInventory, title, ANVIL_LOCATION);
+        this.player = playerInventory.player;
         this.titleLabelX = 60;
     }
 
@@ -54,26 +54,35 @@ public class AnvilScreen extends ItemCombinerScreen<AnvilMenu> {
     }
 
     @Override
-    public void resize(Minecraft p_97886_, int p_97887_, int p_97888_) {
+    public void resize(Minecraft minecraft, int width, int height) {
         String s = this.name.getValue();
-        this.init(p_97886_, p_97887_, p_97888_);
+        this.init(minecraft, width, height);
         this.name.setValue(s);
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_97878_, int p_97879_, int p_97880_) {
-        if (p_97878_ == 256) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 256) {
             this.minecraft.player.closeContainer();
         }
 
-        return !this.name.keyPressed(p_97878_, p_97879_, p_97880_) && !this.name.canConsumeInput() ? super.keyPressed(p_97878_, p_97879_, p_97880_) : true;
+        return !this.name.keyPressed(keyCode, scanCode, modifiers) && !this.name.canConsumeInput() ? super.keyPressed(keyCode, scanCode, modifiers) : true;
     }
 
-    private void onNameChanged(String p_97899_) {
+    private void onNameChanged(String name) {
         Slot slot = this.menu.getSlot(0);
         if (slot.hasItem()) {
-            String s = p_97899_;
-            if (!slot.getItem().has(DataComponents.CUSTOM_NAME) && p_97899_.equals(slot.getItem().getHoverName().getString())) {
+            String s = name;
+            if (!slot.getItem().has(DataComponents.CUSTOM_NAME) && name.equals(slot.getItem().getHoverName().getString())) {
                 s = "";
             }
 
@@ -84,8 +93,8 @@ public class AnvilScreen extends ItemCombinerScreen<AnvilMenu> {
     }
 
     @Override
-    protected void renderLabels(GuiGraphics p_281442_, int p_282417_, int p_283022_) {
-        super.renderLabels(p_281442_, p_282417_, p_283022_);
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        super.renderLabels(guiGraphics, mouseX, mouseY);
         int i = this.menu.getCost();
         if (i > 0) {
             int j = 8453920;
@@ -105,35 +114,38 @@ public class AnvilScreen extends ItemCombinerScreen<AnvilMenu> {
             if (component != null) {
                 int k = this.imageWidth - 8 - this.font.width(component) - 2;
                 int l = 69;
-                p_281442_.fill(k - 2, 67, this.imageWidth - 8, 79, 1325400064);
-                p_281442_.drawString(this.font, component, k, 69, j);
+                guiGraphics.fill(k - 2, 67, this.imageWidth - 8, 79, 1325400064);
+                guiGraphics.drawString(this.font, component, k, 69, j);
             }
         }
     }
 
     @Override
-    protected void renderBg(GuiGraphics p_283345_, float p_283412_, int p_282871_, int p_281306_) {
-        super.renderBg(p_283345_, p_283412_, p_282871_, p_281306_);
-        p_283345_.blitSprite(this.menu.getSlot(0).hasItem() ? TEXT_FIELD_SPRITE : TEXT_FIELD_DISABLED_SPRITE, this.leftPos + 59, this.topPos + 20, 110, 16);
+    protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
+        super.renderBg(guiGraphics, partialTick, mouseX, mouseY);
+        guiGraphics.blitSprite(this.menu.getSlot(0).hasItem() ? TEXT_FIELD_SPRITE : TEXT_FIELD_DISABLED_SPRITE, this.leftPos + 59, this.topPos + 20, 110, 16);
     }
 
     @Override
-    public void renderFg(GuiGraphics p_283449_, int p_283263_, int p_281526_, float p_282957_) {
-        this.name.render(p_283449_, p_283263_, p_281526_, p_282957_);
+    public void renderFg(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.name.render(guiGraphics, mouseX, mouseY, partialTick);
     }
 
     @Override
-    protected void renderErrorIcon(GuiGraphics p_282905_, int p_283237_, int p_282237_) {
+    protected void renderErrorIcon(GuiGraphics guiGraphics, int x, int y) {
         if ((this.menu.getSlot(0).hasItem() || this.menu.getSlot(1).hasItem()) && !this.menu.getSlot(this.menu.getResultSlot()).hasItem()) {
-            p_282905_.blitSprite(ERROR_SPRITE, p_283237_ + 99, p_282237_ + 45, 28, 21);
+            guiGraphics.blitSprite(ERROR_SPRITE, x + 99, y + 45, 28, 21);
         }
     }
 
+    /**
+     * Sends the contents of an inventory slot to the client-side Container. This doesn't have to match the actual contents of that slot.
+     */
     @Override
-    public void slotChanged(AbstractContainerMenu p_97882_, int p_97883_, ItemStack p_97884_) {
-        if (p_97883_ == 0) {
-            this.name.setValue(p_97884_.isEmpty() ? "" : p_97884_.getHoverName().getString());
-            this.name.setEditable(!p_97884_.isEmpty());
+    public void slotChanged(AbstractContainerMenu containerToSend, int slotInd, ItemStack stack) {
+        if (slotInd == 0) {
+            this.name.setValue(stack.isEmpty() ? "" : stack.getHoverName().getString());
+            this.name.setEditable(!stack.isEmpty());
             this.setFocused(this.name);
         }
     }

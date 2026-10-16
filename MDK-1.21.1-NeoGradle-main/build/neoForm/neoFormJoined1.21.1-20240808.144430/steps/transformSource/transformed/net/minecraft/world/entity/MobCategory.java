@@ -22,12 +22,12 @@ public enum MobCategory implements StringRepresentable, net.neoforged.fml.common
     private final int noDespawnDistance = 32;
     private final int despawnDistance;
 
-    private MobCategory(String p_21597_, int p_21598_, boolean p_21599_, boolean p_21600_, int p_21601_) {
-        this.name = p_21597_;
-        this.max = p_21598_;
-        this.isFriendly = p_21599_;
-        this.isPersistent = p_21600_;
-        this.despawnDistance = p_21601_;
+    private MobCategory(String name, int max, boolean isFriendly, boolean isPersistent, int despawnDistance) {
+        this.name = name;
+        this.max = max;
+        this.isFriendly = isFriendly;
+        this.isPersistent = isPersistent;
+        this.despawnDistance = despawnDistance;
     }
 
     public String getName() {

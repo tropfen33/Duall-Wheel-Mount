@@ -36,12 +36,12 @@ public class ServerPacksSource extends BuiltInPackSource {
     private static final PackSelectionConfig FEATURE_SELECTION_CONFIG = new PackSelectionConfig(false, Pack.Position.TOP, false);
     private static final ResourceLocation PACKS_DIR = ResourceLocation.withDefaultNamespace("datapacks");
 
-    public ServerPacksSource(DirectoryValidator p_294494_) {
-        super(PackType.SERVER_DATA, createVanillaPackSource(), PACKS_DIR, p_294494_);
+    public ServerPacksSource(DirectoryValidator validator) {
+        super(PackType.SERVER_DATA, createVanillaPackSource(), PACKS_DIR, validator);
     }
 
-    private static PackLocationInfo createBuiltInPackLocation(String p_326487_, Component p_326454_) {
-        return new PackLocationInfo(p_326487_, p_326454_, PackSource.FEATURE, Optional.of(KnownPack.vanilla(p_326487_)));
+    private static PackLocationInfo createBuiltInPackLocation(String id, Component title) {
+        return new PackLocationInfo(id, title, PackSource.FEATURE, Optional.of(KnownPack.vanilla(id)));
     }
 
     @VisibleForTesting
@@ -55,24 +55,24 @@ public class ServerPacksSource extends BuiltInPackSource {
     }
 
     @Override
-    protected Component getPackTitle(String p_249692_) {
-        return Component.literal(p_249692_);
+    protected Component getPackTitle(String id) {
+        return Component.literal(id);
     }
 
     @Nullable
     @Override
-    protected Pack createVanillaPack(PackResources p_250283_) {
-        return Pack.readMetaAndCreate(VANILLA_PACK_INFO, fixedResources(p_250283_), PackType.SERVER_DATA, VANILLA_SELECTION_CONFIG);
+    protected Pack createVanillaPack(PackResources resources) {
+        return Pack.readMetaAndCreate(VANILLA_PACK_INFO, fixedResources(resources), PackType.SERVER_DATA, VANILLA_SELECTION_CONFIG);
     }
 
     @Nullable
     @Override
-    protected Pack createBuiltinPack(String p_250596_, Pack.ResourcesSupplier p_249625_, Component p_249043_) {
-        return Pack.readMetaAndCreate(createBuiltInPackLocation(p_250596_, p_249043_), p_249625_, PackType.SERVER_DATA, FEATURE_SELECTION_CONFIG);
+    protected Pack createBuiltinPack(String id, Pack.ResourcesSupplier resources, Component title) {
+        return Pack.readMetaAndCreate(createBuiltInPackLocation(id, title), resources, PackType.SERVER_DATA, FEATURE_SELECTION_CONFIG);
     }
 
-    public static PackRepository createPackRepository(Path p_251569_, DirectoryValidator p_295336_) {
-        final PackRepository packRepository = new PackRepository(new ServerPacksSource(p_295336_), new FolderRepositorySource(p_251569_, PackType.SERVER_DATA, PackSource.WORLD, p_295336_));
+    public static PackRepository createPackRepository(Path folder, DirectoryValidator validator) {
+        final PackRepository packRepository = new PackRepository(new ServerPacksSource(validator), new FolderRepositorySource(folder, PackType.SERVER_DATA, PackSource.WORLD, validator));
         net.neoforged.neoforge.resource.ResourcePackLoader.populatePackRepository(packRepository, PackType.SERVER_DATA, false);
         return packRepository;
     }
@@ -83,7 +83,7 @@ public class ServerPacksSource extends BuiltInPackSource {
         return packRepository;
     }
 
-    public static PackRepository createPackRepository(LevelStorageSource.LevelStorageAccess p_250213_) {
-        return createPackRepository(p_250213_.getLevelPath(LevelResource.DATAPACK_DIR), p_250213_.parent().getWorldDirValidator());
+    public static PackRepository createPackRepository(LevelStorageSource.LevelStorageAccess level) {
+        return createPackRepository(level.getLevelPath(LevelResource.DATAPACK_DIR), level.parent().getWorldDirValidator());
     }
 }

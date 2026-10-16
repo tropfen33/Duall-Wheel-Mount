@@ -14,6 +14,9 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
+/**
+ * A loot pool entry that always generates a given item.
+ */
 public class LootItem extends LootPoolSingletonContainer {
     public static final MapCodec<LootItem> CODEC = RecordCodecBuilder.mapCodec(
         p_344670_ -> p_344670_.group(BuiltInRegistries.ITEM.holderByNameCodec().fieldOf("name").forGetter(p_298016_ -> p_298016_.item))
@@ -22,9 +25,9 @@ public class LootItem extends LootPoolSingletonContainer {
     );
     private final Holder<Item> item;
 
-    private LootItem(Holder<Item> p_298423_, int p_79567_, int p_79568_, List<LootItemCondition> p_299249_, List<LootItemFunction> p_299128_) {
-        super(p_79567_, p_79568_, p_299249_, p_299128_);
-        this.item = p_298423_;
+    private LootItem(Holder<Item> item, int weight, int quality, List<LootItemCondition> conditions, List<LootItemFunction> functions) {
+        super(weight, quality, conditions, functions);
+        this.item = item;
     }
 
     @Override
@@ -32,14 +35,18 @@ public class LootItem extends LootPoolSingletonContainer {
         return LootPoolEntries.ITEM;
     }
 
+    /**
+     * Generate the loot stacks of this entry.
+     * Contrary to the method name this method does not always generate one stack, it can also generate zero or multiple stacks.
+     */
     @Override
-    public void createItemStack(Consumer<ItemStack> p_79590_, LootContext p_79591_) {
-        p_79590_.accept(new ItemStack(this.item));
+    public void createItemStack(Consumer<ItemStack> stackConsumer, LootContext lootContext) {
+        stackConsumer.accept(new ItemStack(this.item));
     }
 
-    public static LootPoolSingletonContainer.Builder<?> lootTableItem(ItemLike p_79580_) {
+    public static LootPoolSingletonContainer.Builder<?> lootTableItem(ItemLike item) {
         return simpleBuilder(
-            (p_298018_, p_298019_, p_298020_, p_298021_) -> new LootItem(p_79580_.asItem().builtInRegistryHolder(), p_298018_, p_298019_, p_298020_, p_298021_)
+            (p_298018_, p_298019_, p_298020_, p_298021_) -> new LootItem(item.asItem().builtInRegistryHolder(), p_298018_, p_298019_, p_298020_, p_298021_)
         );
     }
 }

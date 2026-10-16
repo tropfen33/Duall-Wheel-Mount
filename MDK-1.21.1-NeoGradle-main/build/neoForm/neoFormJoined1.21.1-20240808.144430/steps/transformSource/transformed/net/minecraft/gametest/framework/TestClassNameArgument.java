@@ -18,8 +18,8 @@ import net.minecraft.network.chat.Component;
 public class TestClassNameArgument implements ArgumentType<String> {
     private static final Collection<String> EXAMPLES = Arrays.asList("techtests", "mobtests");
 
-    public String parse(StringReader p_127919_) throws CommandSyntaxException {
-        String s = p_127919_.readUnquotedString();
+    public String parse(StringReader reader) throws CommandSyntaxException {
+        String s = reader.readUnquotedString();
         if (GameTestRegistry.isTestClass(s)) {
             return s;
         } else {
@@ -32,13 +32,13 @@ public class TestClassNameArgument implements ArgumentType<String> {
         return new TestClassNameArgument();
     }
 
-    public static String getTestClassName(CommandContext<CommandSourceStack> p_127921_, String p_127922_) {
-        return p_127921_.getArgument(p_127922_, String.class);
+    public static String getTestClassName(CommandContext<CommandSourceStack> context, String argument) {
+        return context.getArgument(argument, String.class);
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> p_127925_, SuggestionsBuilder p_127926_) {
-        return SharedSuggestionProvider.suggest(GameTestRegistry.getAllTestClassNames().stream(), p_127926_);
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
+        return SharedSuggestionProvider.suggest(GameTestRegistry.getAllTestClassNames().stream(), builder);
     }
 
     @Override

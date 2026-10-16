@@ -7,24 +7,27 @@ import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 public class AxolotlAttackablesSensor extends NearestVisibleLivingEntitySensor {
     public static final float TARGET_DETECTION_DISTANCE = 8.0F;
 
+    /**
+     * @return if the second entity is hostile to the axolotl or is huntable by it
+     */
     @Override
-    protected boolean isMatchingEntity(LivingEntity p_148266_, LivingEntity p_148267_) {
-        return this.isClose(p_148266_, p_148267_)
-            && p_148267_.isInWaterOrBubble()
-            && (this.isHostileTarget(p_148267_) || this.isHuntTarget(p_148266_, p_148267_))
-            && Sensor.isEntityAttackable(p_148266_, p_148267_);
+    protected boolean isMatchingEntity(LivingEntity attacker, LivingEntity target) {
+        return this.isClose(attacker, target)
+            && target.isInWaterOrBubble()
+            && (this.isHostileTarget(target) || this.isHuntTarget(attacker, target))
+            && Sensor.isEntityAttackable(attacker, target);
     }
 
-    private boolean isHuntTarget(LivingEntity p_148272_, LivingEntity p_148273_) {
-        return !p_148272_.getBrain().hasMemoryValue(MemoryModuleType.HAS_HUNTING_COOLDOWN) && p_148273_.getType().is(EntityTypeTags.AXOLOTL_HUNT_TARGETS);
+    private boolean isHuntTarget(LivingEntity attacker, LivingEntity target) {
+        return !attacker.getBrain().hasMemoryValue(MemoryModuleType.HAS_HUNTING_COOLDOWN) && target.getType().is(EntityTypeTags.AXOLOTL_HUNT_TARGETS);
     }
 
-    private boolean isHostileTarget(LivingEntity p_148270_) {
-        return p_148270_.getType().is(EntityTypeTags.AXOLOTL_ALWAYS_HOSTILES);
+    private boolean isHostileTarget(LivingEntity target) {
+        return target.getType().is(EntityTypeTags.AXOLOTL_ALWAYS_HOSTILES);
     }
 
-    private boolean isClose(LivingEntity p_148275_, LivingEntity p_148276_) {
-        return p_148276_.distanceToSqr(p_148275_) <= 64.0;
+    private boolean isClose(LivingEntity attacker, LivingEntity target) {
+        return target.distanceToSqr(attacker) <= 64.0;
     }
 
     @Override

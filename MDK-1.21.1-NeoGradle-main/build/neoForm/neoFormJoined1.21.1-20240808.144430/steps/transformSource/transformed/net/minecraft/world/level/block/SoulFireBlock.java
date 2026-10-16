@@ -21,22 +21,27 @@ public class SoulFireBlock extends BaseFireBlock {
         super(p_56653_, 2.0F);
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_56659_, Direction p_56660_, BlockState p_56661_, LevelAccessor p_56662_, BlockPos p_56663_, BlockPos p_56664_) {
-        return this.canSurvive(p_56659_, p_56662_, p_56663_) ? this.defaultBlockState() : Blocks.AIR.defaultBlockState();
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return this.canSurvive(state, level, currentPos) ? this.defaultBlockState() : Blocks.AIR.defaultBlockState();
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_56655_, LevelReader p_56656_, BlockPos p_56657_) {
-        return canSurviveOnBlock(p_56656_.getBlockState(p_56657_.below()));
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        return canSurviveOnBlock(level.getBlockState(pos.below()));
     }
 
-    public static boolean canSurviveOnBlock(BlockState p_154651_) {
-        return p_154651_.is(BlockTags.SOUL_FIRE_BASE_BLOCKS);
+    public static boolean canSurviveOnBlock(BlockState state) {
+        return state.is(BlockTags.SOUL_FIRE_BASE_BLOCKS);
     }
 
     @Override
-    protected boolean canBurn(BlockState p_56668_) {
+    protected boolean canBurn(BlockState state) {
         return true;
     }
 }

@@ -14,23 +14,23 @@ public class RealmsPopups {
     private static final Component INFO = Component.translatable("mco.info").withColor(8226750);
     private static final Component WARNING = Component.translatable("mco.warning").withColor(-65536);
 
-    public static PopupScreen infoPopupScreen(Screen p_345107_, Component p_344859_, Consumer<PopupScreen> p_345991_) {
-        return new PopupScreen.Builder(p_345107_, INFO)
-            .setMessage(p_344859_)
-            .addButton(CommonComponents.GUI_CONTINUE, p_345991_)
+    public static PopupScreen infoPopupScreen(Screen backgroundScreen, Component message, Consumer<PopupScreen> onContinue) {
+        return new PopupScreen.Builder(backgroundScreen, INFO)
+            .setMessage(message)
+            .addButton(CommonComponents.GUI_CONTINUE, onContinue)
             .addButton(CommonComponents.GUI_CANCEL, PopupScreen::onClose)
             .build();
     }
 
-    public static PopupScreen warningPopupScreen(Screen p_345623_, Component p_346338_, Consumer<PopupScreen> p_345246_) {
-        return new PopupScreen.Builder(p_345623_, WARNING)
-            .setMessage(p_346338_)
-            .addButton(CommonComponents.GUI_CONTINUE, p_345246_)
+    public static PopupScreen warningPopupScreen(Screen backgroundScreen, Component message, Consumer<PopupScreen> onContinue) {
+        return new PopupScreen.Builder(backgroundScreen, WARNING)
+            .setMessage(message)
+            .addButton(CommonComponents.GUI_CONTINUE, onContinue)
             .addButton(CommonComponents.GUI_CANCEL, PopupScreen::onClose)
             .build();
     }
 
-    public static PopupScreen warningAcknowledgePopupScreen(Screen p_345088_, Component p_344868_, Consumer<PopupScreen> p_344792_) {
-        return new PopupScreen.Builder(p_345088_, WARNING).setMessage(p_344868_).addButton(CommonComponents.GUI_OK, p_344792_).build();
+    public static PopupScreen warningAcknowledgePopupScreen(Screen backgroundScreen, Component message, Consumer<PopupScreen> onContinue) {
+        return new PopupScreen.Builder(backgroundScreen, WARNING).setMessage(message).addButton(CommonComponents.GUI_OK, onContinue).build();
     }
 }

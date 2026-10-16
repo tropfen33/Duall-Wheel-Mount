@@ -10,12 +10,12 @@ import com.mojang.serialization.Dynamic;
 import java.util.Optional;
 
 public class ObjectiveRenderTypeFix extends DataFix {
-    public ObjectiveRenderTypeFix(Schema p_16536_, boolean p_16537_) {
-        super(p_16536_, p_16537_);
+    public ObjectiveRenderTypeFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
-    private static String getRenderType(String p_262957_) {
-        return p_262957_.equals("health") ? "hearts" : "integer";
+    private static String getRenderType(String oldRenderType) {
+        return oldRenderType.equals("health") ? "hearts" : "integer";
     }
 
     @Override

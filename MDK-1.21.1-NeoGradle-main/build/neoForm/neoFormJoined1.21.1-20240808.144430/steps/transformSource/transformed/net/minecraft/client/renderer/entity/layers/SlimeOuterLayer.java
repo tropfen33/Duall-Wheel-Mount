@@ -19,37 +19,37 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class SlimeOuterLayer<T extends LivingEntity> extends RenderLayer<T, SlimeModel<T>> {
     private final EntityModel<T> model;
 
-    public SlimeOuterLayer(RenderLayerParent<T, SlimeModel<T>> p_174536_, EntityModelSet p_174537_) {
-        super(p_174536_);
-        this.model = new SlimeModel<>(p_174537_.bakeLayer(ModelLayers.SLIME_OUTER));
+    public SlimeOuterLayer(RenderLayerParent<T, SlimeModel<T>> renderer, EntityModelSet modelSet) {
+        super(renderer);
+        this.model = new SlimeModel<>(modelSet.bakeLayer(ModelLayers.SLIME_OUTER));
     }
 
     public void render(
-        PoseStack p_117470_,
-        MultiBufferSource p_117471_,
-        int p_117472_,
-        T p_117473_,
-        float p_117474_,
-        float p_117475_,
-        float p_117476_,
-        float p_117477_,
-        float p_117478_,
-        float p_117479_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        T livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTicks,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
         Minecraft minecraft = Minecraft.getInstance();
-        boolean flag = minecraft.shouldEntityAppearGlowing(p_117473_) && p_117473_.isInvisible();
-        if (!p_117473_.isInvisible() || flag) {
+        boolean flag = minecraft.shouldEntityAppearGlowing(livingEntity) && livingEntity.isInvisible();
+        if (!livingEntity.isInvisible() || flag) {
             VertexConsumer vertexconsumer;
             if (flag) {
-                vertexconsumer = p_117471_.getBuffer(RenderType.outline(this.getTextureLocation(p_117473_)));
+                vertexconsumer = buffer.getBuffer(RenderType.outline(this.getTextureLocation(livingEntity)));
             } else {
-                vertexconsumer = p_117471_.getBuffer(RenderType.entityTranslucent(this.getTextureLocation(p_117473_)));
+                vertexconsumer = buffer.getBuffer(RenderType.entityTranslucent(this.getTextureLocation(livingEntity)));
             }
 
             this.getParentModel().copyPropertiesTo(this.model);
-            this.model.prepareMobModel(p_117473_, p_117474_, p_117475_, p_117476_);
-            this.model.setupAnim(p_117473_, p_117474_, p_117475_, p_117477_, p_117478_, p_117479_);
-            this.model.renderToBuffer(p_117470_, vertexconsumer, p_117472_, LivingEntityRenderer.getOverlayCoords(p_117473_, 0.0F));
+            this.model.prepareMobModel(livingEntity, limbSwing, limbSwingAmount, partialTicks);
+            this.model.setupAnim(livingEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);
+            this.model.renderToBuffer(poseStack, vertexconsumer, packedLight, LivingEntityRenderer.getOverlayCoords(livingEntity, 0.0F));
         }
     }
 }

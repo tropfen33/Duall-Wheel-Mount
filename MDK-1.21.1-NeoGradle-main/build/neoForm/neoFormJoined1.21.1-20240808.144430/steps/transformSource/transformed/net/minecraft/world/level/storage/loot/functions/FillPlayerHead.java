@@ -15,6 +15,10 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
+/**
+ * LootItemFunction that applies the {@code "SkullOwner"} NBT tag to any player heads based on the given {@link LootContext.EntityTarget}.
+ * If the given target does not resolve to a player, nothing happens.
+ */
 public class FillPlayerHead extends LootItemConditionalFunction {
     public static final MapCodec<FillPlayerHead> CODEC = RecordCodecBuilder.mapCodec(
         p_298087_ -> commonFields(p_298087_)
@@ -23,9 +27,9 @@ public class FillPlayerHead extends LootItemConditionalFunction {
     );
     private final LootContext.EntityTarget entityTarget;
 
-    public FillPlayerHead(List<LootItemCondition> p_298265_, LootContext.EntityTarget p_80605_) {
-        super(p_298265_);
-        this.entityTarget = p_80605_;
+    public FillPlayerHead(List<LootItemCondition> conditions, LootContext.EntityTarget entityTarget) {
+        super(conditions);
+        this.entityTarget = entityTarget;
     }
 
     @Override
@@ -38,16 +42,19 @@ public class FillPlayerHead extends LootItemConditionalFunction {
         return ImmutableSet.of(this.entityTarget.getParam());
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_80608_, LootContext p_80609_) {
-        if (p_80608_.is(Items.PLAYER_HEAD) && p_80609_.getParamOrNull(this.entityTarget.getParam()) instanceof Player player) {
-            p_80608_.set(DataComponents.PROFILE, new ResolvableProfile(player.getGameProfile()));
+    public ItemStack run(ItemStack stack, LootContext context) {
+        if (stack.is(Items.PLAYER_HEAD) && context.getParamOrNull(this.entityTarget.getParam()) instanceof Player player) {
+            stack.set(DataComponents.PROFILE, new ResolvableProfile(player.getGameProfile()));
         }
 
-        return p_80608_;
+        return stack;
     }
 
-    public static LootItemConditionalFunction.Builder<?> fillPlayerHead(LootContext.EntityTarget p_165208_) {
-        return simpleBuilder(p_298085_ -> new FillPlayerHead(p_298085_, p_165208_));
+    public static LootItemConditionalFunction.Builder<?> fillPlayerHead(LootContext.EntityTarget entityTarget) {
+        return simpleBuilder(p_298085_ -> new FillPlayerHead(p_298085_, entityTarget));
     }
 }

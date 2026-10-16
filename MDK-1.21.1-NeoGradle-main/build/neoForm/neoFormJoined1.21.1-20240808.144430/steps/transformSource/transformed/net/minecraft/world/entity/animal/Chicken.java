@@ -46,8 +46,8 @@ public class Chicken extends Animal {
     public int eggTime = this.random.nextInt(6000) + 6000;
     public boolean isChickenJockey;
 
-    public Chicken(EntityType<? extends Chicken> p_28236_, Level p_28237_) {
-        super(p_28236_, p_28237_);
+    public Chicken(EntityType<? extends Chicken> entityType, Level level) {
+        super(entityType, level);
         this.setPathfindingMalus(PathType.WATER, 0.0F);
     }
 
@@ -64,8 +64,8 @@ public class Chicken extends Animal {
     }
 
     @Override
-    public EntityDimensions getDefaultDimensions(Pose p_316516_) {
-        return this.isBaby() ? BABY_DIMENSIONS : super.getDefaultDimensions(p_316516_);
+    public EntityDimensions getDefaultDimensions(Pose pose) {
+        return this.isBaby() ? BABY_DIMENSIONS : super.getDefaultDimensions(pose);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -114,7 +114,7 @@ public class Chicken extends Animal {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_28262_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.CHICKEN_HURT;
     }
 
@@ -124,18 +124,21 @@ public class Chicken extends Animal {
     }
 
     @Override
-    protected void playStepSound(BlockPos p_28254_, BlockState p_28255_) {
+    protected void playStepSound(BlockPos pos, BlockState block) {
         this.playSound(SoundEvents.CHICKEN_STEP, 0.15F, 1.0F);
     }
 
     @Nullable
-    public Chicken getBreedOffspring(ServerLevel p_148884_, AgeableMob p_148885_) {
-        return EntityType.CHICKEN.create(p_148884_);
+    public Chicken getBreedOffspring(ServerLevel level, AgeableMob otherParent) {
+        return EntityType.CHICKEN.create(level);
     }
 
+    /**
+     * Checks if the parameter is an item which this animal can be fed to breed it (wheat, carrots or seeds depending on the animal type)
+     */
     @Override
-    public boolean isFood(ItemStack p_28271_) {
-        return p_28271_.is(ItemTags.CHICKEN_FOOD);
+    public boolean isFood(ItemStack stack) {
+        return stack.is(ItemTags.CHICKEN_FOOD);
     }
 
     @Override
@@ -143,32 +146,35 @@ public class Chicken extends Animal {
         return this.isChickenJockey() ? 10 : super.getBaseExperienceReward();
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_28243_) {
-        super.readAdditionalSaveData(p_28243_);
-        this.isChickenJockey = p_28243_.getBoolean("IsChickenJockey");
-        if (p_28243_.contains("EggLayTime")) {
-            this.eggTime = p_28243_.getInt("EggLayTime");
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.isChickenJockey = compound.getBoolean("IsChickenJockey");
+        if (compound.contains("EggLayTime")) {
+            this.eggTime = compound.getInt("EggLayTime");
         }
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_28257_) {
-        super.addAdditionalSaveData(p_28257_);
-        p_28257_.putBoolean("IsChickenJockey", this.isChickenJockey);
-        p_28257_.putInt("EggLayTime", this.eggTime);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putBoolean("IsChickenJockey", this.isChickenJockey);
+        compound.putInt("EggLayTime", this.eggTime);
     }
 
     @Override
-    public boolean removeWhenFarAway(double p_28266_) {
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return this.isChickenJockey();
     }
 
     @Override
-    protected void positionRider(Entity p_289537_, Entity.MoveFunction p_289541_) {
-        super.positionRider(p_289537_, p_289541_);
-        if (p_289537_ instanceof LivingEntity) {
-            ((LivingEntity)p_289537_).yBodyRot = this.yBodyRot;
+    protected void positionRider(Entity passenger, Entity.MoveFunction callback) {
+        super.positionRider(passenger, callback);
+        if (passenger instanceof LivingEntity) {
+            ((LivingEntity)passenger).yBodyRot = this.yBodyRot;
         }
     }
 
@@ -176,7 +182,10 @@ public class Chicken extends Animal {
         return this.isChickenJockey;
     }
 
-    public void setChickenJockey(boolean p_28274_) {
-        this.isChickenJockey = p_28274_;
+    /**
+     * Sets whether this chicken is a jockey or not.
+     */
+    public void setChickenJockey(boolean isChickenJockey) {
+        this.isChickenJockey = isChickenJockey;
     }
 }

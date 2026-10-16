@@ -12,15 +12,15 @@ public class RegistryFriendlyByteBuf extends FriendlyByteBuf {
      * @deprecated Neo: use overload with ConnectionType context
      */
     @Deprecated
-    public RegistryFriendlyByteBuf(ByteBuf p_320951_, RegistryAccess p_319803_) {
-        super(p_320951_);
-        this.registryAccess = p_319803_;
+    public RegistryFriendlyByteBuf(ByteBuf source, RegistryAccess registryAccess) {
+        super(source);
+        this.registryAccess = registryAccess;
         this.connectionType = net.neoforged.neoforge.network.connection.ConnectionType.OTHER;
     }
 
-    public RegistryFriendlyByteBuf(ByteBuf p_320951_, RegistryAccess p_319803_, net.neoforged.neoforge.network.connection.ConnectionType connectionType) {
-        super(p_320951_);
-        this.registryAccess = p_319803_;
+    public RegistryFriendlyByteBuf(ByteBuf source, RegistryAccess registryAccess, net.neoforged.neoforge.network.connection.ConnectionType connectionType) {
+        super(source);
+        this.registryAccess = registryAccess;
         this.connectionType = connectionType;
     }
 
@@ -32,15 +32,15 @@ public class RegistryFriendlyByteBuf extends FriendlyByteBuf {
         return this.registryAccess;
     }
 
-    public static Function<ByteBuf, RegistryFriendlyByteBuf> decorator(RegistryAccess p_320166_, net.neoforged.neoforge.network.connection.ConnectionType connectionType) {
-        return p_320793_ -> new RegistryFriendlyByteBuf(p_320793_, p_320166_, connectionType);
+    public static Function<ByteBuf, RegistryFriendlyByteBuf> decorator(RegistryAccess registry, net.neoforged.neoforge.network.connection.ConnectionType connectionType) {
+        return p_320793_ -> new RegistryFriendlyByteBuf(p_320793_, registry, connectionType);
     }
 
     /**
      * @deprecated Neo: use overload with ConnectionType context
      */
     @Deprecated
-    public static Function<ByteBuf, RegistryFriendlyByteBuf> decorator(RegistryAccess p_320166_) {
-        return p_320793_ -> new RegistryFriendlyByteBuf(p_320793_, p_320166_);
+    public static Function<ByteBuf, RegistryFriendlyByteBuf> decorator(RegistryAccess registry) {
+        return p_320793_ -> new RegistryFriendlyByteBuf(p_320793_, registry);
     }
 }

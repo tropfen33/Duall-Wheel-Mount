@@ -20,10 +20,10 @@ public class RestoreTask extends LongRunningTask {
     private final long realmId;
     private final RealmsConfigureWorldScreen lastScreen;
 
-    public RestoreTask(Backup p_90443_, long p_90444_, RealmsConfigureWorldScreen p_90445_) {
-        this.backup = p_90443_;
-        this.realmId = p_90444_;
-        this.lastScreen = p_90445_;
+    public RestoreTask(Backup backup, long worldId, RealmsConfigureWorldScreen lastScreen) {
+        this.backup = backup;
+        this.realmId = worldId;
+        this.lastScreen = lastScreen;
     }
 
     @Override

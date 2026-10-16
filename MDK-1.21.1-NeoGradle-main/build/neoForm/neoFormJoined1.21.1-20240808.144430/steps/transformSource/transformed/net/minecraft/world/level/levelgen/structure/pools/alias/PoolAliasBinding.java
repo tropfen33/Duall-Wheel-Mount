@@ -17,30 +17,30 @@ import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 public interface PoolAliasBinding {
     Codec<PoolAliasBinding> CODEC = BuiltInRegistries.POOL_ALIAS_BINDING_TYPE.byNameCodec().dispatch(PoolAliasBinding::codec, Function.identity());
 
-    void forEachResolved(RandomSource p_307322_, BiConsumer<ResourceKey<StructureTemplatePool>, ResourceKey<StructureTemplatePool>> p_307269_);
+    void forEachResolved(RandomSource random, BiConsumer<ResourceKey<StructureTemplatePool>, ResourceKey<StructureTemplatePool>> stucturePoolKey);
 
     Stream<ResourceKey<StructureTemplatePool>> allTargets();
 
-    static Direct direct(String p_307227_, String p_307334_) {
-        return direct(Pools.createKey(p_307227_), Pools.createKey(p_307334_));
+    static Direct direct(String alias, String target) {
+        return direct(Pools.createKey(alias), Pools.createKey(target));
     }
 
-    static Direct direct(ResourceKey<StructureTemplatePool> p_307379_, ResourceKey<StructureTemplatePool> p_307242_) {
-        return new Direct(p_307379_, p_307242_);
+    static Direct direct(ResourceKey<StructureTemplatePool> alias, ResourceKey<StructureTemplatePool> target) {
+        return new Direct(alias, target);
     }
 
-    static Random random(String p_307435_, SimpleWeightedRandomList<String> p_307653_) {
+    static Random random(String alias, SimpleWeightedRandomList<String> targets) {
         SimpleWeightedRandomList.Builder<ResourceKey<StructureTemplatePool>> builder = SimpleWeightedRandomList.builder();
-        p_307653_.unwrap().forEach(p_338103_ -> builder.add(Pools.createKey(p_338103_.data()), p_338103_.getWeight().asInt()));
-        return random(Pools.createKey(p_307435_), builder.build());
+        targets.unwrap().forEach(p_338103_ -> builder.add(Pools.createKey(p_338103_.data()), p_338103_.getWeight().asInt()));
+        return random(Pools.createKey(alias), builder.build());
     }
 
-    static Random random(ResourceKey<StructureTemplatePool> p_307260_, SimpleWeightedRandomList<ResourceKey<StructureTemplatePool>> p_307665_) {
-        return new Random(p_307260_, p_307665_);
+    static Random random(ResourceKey<StructureTemplatePool> alias, SimpleWeightedRandomList<ResourceKey<StructureTemplatePool>> targets) {
+        return new Random(alias, targets);
     }
 
-    static RandomGroup randomGroup(SimpleWeightedRandomList<List<PoolAliasBinding>> p_307498_) {
-        return new RandomGroup(p_307498_);
+    static RandomGroup randomGroup(SimpleWeightedRandomList<List<PoolAliasBinding>> groups) {
+        return new RandomGroup(groups);
     }
 
     MapCodec<? extends PoolAliasBinding> codec();

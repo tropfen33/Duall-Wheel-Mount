@@ -26,11 +26,11 @@ public record MapBanner(BlockPos pos, DyeColor color, Optional<Component> name) 
     public static final Codec<List<MapBanner>> LIST_CODEC = CODEC.listOf();
 
     @Nullable
-    public static MapBanner fromWorld(BlockGetter p_77775_, BlockPos p_77776_) {
-        if (p_77775_.getBlockEntity(p_77776_) instanceof BannerBlockEntity bannerblockentity) {
+    public static MapBanner fromWorld(BlockGetter level, BlockPos pos) {
+        if (level.getBlockEntity(pos) instanceof BannerBlockEntity bannerblockentity) {
             DyeColor dyecolor = bannerblockentity.getBaseColor();
             Optional<Component> optional = Optional.ofNullable(bannerblockentity.getCustomName());
-            return new MapBanner(p_77776_, dyecolor, optional);
+            return new MapBanner(pos, dyecolor, optional);
         } else {
             return null;
         }

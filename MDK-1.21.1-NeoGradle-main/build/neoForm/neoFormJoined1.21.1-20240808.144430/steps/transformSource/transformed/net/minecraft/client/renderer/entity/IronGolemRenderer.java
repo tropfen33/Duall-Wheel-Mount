@@ -21,17 +21,20 @@ public class IronGolemRenderer extends MobRenderer<IronGolem, IronGolemModel<Iro
         this.addLayer(new IronGolemFlowerLayer(this, p_174188_.getBlockRenderDispatcher()));
     }
 
-    public ResourceLocation getTextureLocation(IronGolem p_115012_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(IronGolem entity) {
         return GOLEM_LOCATION;
     }
 
-    protected void setupRotations(IronGolem p_115014_, PoseStack p_115015_, float p_115016_, float p_115017_, float p_115018_, float p_320099_) {
-        super.setupRotations(p_115014_, p_115015_, p_115016_, p_115017_, p_115018_, p_320099_);
-        if (!((double)p_115014_.walkAnimation.speed() < 0.01)) {
+    protected void setupRotations(IronGolem entity, PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale) {
+        super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
+        if (!((double)entity.walkAnimation.speed() < 0.01)) {
             float f = 13.0F;
-            float f1 = p_115014_.walkAnimation.position(p_115018_) + 6.0F;
+            float f1 = entity.walkAnimation.position(partialTick) + 6.0F;
             float f2 = (Math.abs(f1 % 13.0F - 6.5F) - 3.25F) / 3.25F;
-            p_115015_.mulPose(Axis.ZP.rotationDegrees(6.5F * f2));
+            poseStack.mulPose(Axis.ZP.rotationDegrees(6.5F * f2));
         }
     }
 }

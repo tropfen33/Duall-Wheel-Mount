@@ -50,8 +50,8 @@ public class WallSignBlock extends SignBlock {
         return CODEC;
     }
 
-    public WallSignBlock(WoodType p_58069_, BlockBehaviour.Properties p_58068_) {
-        super(p_58069_, p_58068_.sound(p_58069_.soundType()));
+    public WallSignBlock(WoodType type, BlockBehaviour.Properties properties) {
+        super(type, properties.sound(type.soundType()));
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(WATERLOGGED, Boolean.valueOf(false)));
     }
 
@@ -61,23 +61,23 @@ public class WallSignBlock extends SignBlock {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_58092_, BlockGetter p_58093_, BlockPos p_58094_, CollisionContext p_58095_) {
-        return AABBS.get(p_58092_.getValue(FACING));
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return AABBS.get(state.getValue(FACING));
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_58073_, LevelReader p_58074_, BlockPos p_58075_) {
-        return p_58074_.getBlockState(p_58075_.relative(p_58073_.getValue(FACING).getOpposite())).isSolid();
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        return level.getBlockState(pos.relative(state.getValue(FACING).getOpposite())).isSolid();
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_58071_) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState blockstate = this.defaultBlockState();
-        FluidState fluidstate = p_58071_.getLevel().getFluidState(p_58071_.getClickedPos());
-        LevelReader levelreader = p_58071_.getLevel();
-        BlockPos blockpos = p_58071_.getClickedPos();
-        Direction[] adirection = p_58071_.getNearestLookingDirections();
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
+        LevelReader levelreader = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
+        Direction[] adirection = context.getNearestLookingDirections();
 
         for (Direction direction : adirection) {
             if (direction.getAxis().isHorizontal()) {
@@ -92,36 +92,47 @@ public class WallSignBlock extends SignBlock {
         return null;
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_58083_, Direction p_58084_, BlockState p_58085_, LevelAccessor p_58086_, BlockPos p_58087_, BlockPos p_58088_) {
-        return p_58084_.getOpposite() == p_58083_.getValue(FACING) && !p_58083_.canSurvive(p_58086_, p_58087_)
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return facing.getOpposite() == state.getValue(FACING) && !state.canSurvive(level, currentPos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_58083_, p_58084_, p_58085_, p_58086_, p_58087_, p_58088_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    public float getYRotationDegrees(BlockState p_278024_) {
-        return p_278024_.getValue(FACING).toYRot();
+    public float getYRotationDegrees(BlockState state) {
+        return state.getValue(FACING).toYRot();
     }
 
     @Override
-    public Vec3 getSignHitboxCenterPosition(BlockState p_278316_) {
-        VoxelShape voxelshape = AABBS.get(p_278316_.getValue(FACING));
+    public Vec3 getSignHitboxCenterPosition(BlockState state) {
+        VoxelShape voxelshape = AABBS.get(state.getValue(FACING));
         return voxelshape.bounds().getCenter();
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_58080_, Rotation p_58081_) {
-        return p_58080_.setValue(FACING, p_58081_.rotate(p_58080_.getValue(FACING)));
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState mirror(BlockState p_58077_, Mirror p_58078_) {
-        return p_58077_.rotate(p_58078_.getRotation(p_58077_.getValue(FACING)));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_58090_) {
-        p_58090_.add(FACING, WATERLOGGED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, WATERLOGGED);
     }
 }

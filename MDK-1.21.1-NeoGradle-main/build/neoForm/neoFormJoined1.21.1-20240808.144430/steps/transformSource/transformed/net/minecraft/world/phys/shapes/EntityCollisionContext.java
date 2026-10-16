@@ -24,33 +24,33 @@ public class EntityCollisionContext implements CollisionContext {
     @Nullable
     private final Entity entity;
 
-    protected EntityCollisionContext(boolean p_198916_, double p_198917_, ItemStack p_198918_, Predicate<FluidState> p_198919_, @Nullable Entity p_198920_) {
-        this.descending = p_198916_;
-        this.entityBottom = p_198917_;
-        this.heldItem = p_198918_;
-        this.canStandOnFluid = p_198919_;
-        this.entity = p_198920_;
+    protected EntityCollisionContext(boolean descending, double entityBottom, ItemStack heldItem, Predicate<FluidState> canStandOnFluid, @Nullable Entity entity) {
+        this.descending = descending;
+        this.entityBottom = entityBottom;
+        this.heldItem = heldItem;
+        this.canStandOnFluid = canStandOnFluid;
+        this.entity = entity;
     }
 
     @Deprecated
-    protected EntityCollisionContext(Entity p_82872_) {
+    protected EntityCollisionContext(Entity entity) {
         this(
-            p_82872_.isDescending(),
-            p_82872_.getY(),
-            p_82872_ instanceof LivingEntity ? ((LivingEntity)p_82872_).getMainHandItem() : ItemStack.EMPTY,
-            p_82872_ instanceof LivingEntity ? ((LivingEntity)p_82872_)::canStandOnFluid : p_205113_ -> false,
-            p_82872_
+            entity.isDescending(),
+            entity.getY(),
+            entity instanceof LivingEntity ? ((LivingEntity)entity).getMainHandItem() : ItemStack.EMPTY,
+            entity instanceof LivingEntity ? ((LivingEntity)entity)::canStandOnFluid : p_205113_ -> false,
+            entity
         );
     }
 
     @Override
-    public boolean isHoldingItem(Item p_82879_) {
-        return this.heldItem.is(p_82879_);
+    public boolean isHoldingItem(Item item) {
+        return this.heldItem.is(item);
     }
 
     @Override
-    public boolean canStandOnFluid(FluidState p_205115_, FluidState p_205116_) {
-        return this.canStandOnFluid.test(p_205116_) && !p_205115_.getType().isSame(p_205116_.getType());
+    public boolean canStandOnFluid(FluidState fluid1, FluidState fluid2) {
+        return this.canStandOnFluid.test(fluid2) && !fluid1.getType().isSame(fluid2.getType());
     }
 
     @Override
@@ -59,8 +59,8 @@ public class EntityCollisionContext implements CollisionContext {
     }
 
     @Override
-    public boolean isAbove(VoxelShape p_82886_, BlockPos p_82887_, boolean p_82888_) {
-        return this.entityBottom > (double)p_82887_.getY() + p_82886_.max(Direction.Axis.Y) - 1.0E-5F;
+    public boolean isAbove(VoxelShape shape, BlockPos pos, boolean canAscend) {
+        return this.entityBottom > (double)pos.getY() + shape.max(Direction.Axis.Y) - 1.0E-5F;
     }
 
     @Nullable

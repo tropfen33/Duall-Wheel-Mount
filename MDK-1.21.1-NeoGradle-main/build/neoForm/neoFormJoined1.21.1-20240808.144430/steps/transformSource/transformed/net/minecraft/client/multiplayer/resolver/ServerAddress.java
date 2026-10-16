@@ -13,12 +13,12 @@ public final class ServerAddress {
     private final HostAndPort hostAndPort;
     private static final ServerAddress INVALID = new ServerAddress(HostAndPort.fromParts("server.invalid", 25565));
 
-    public ServerAddress(String p_171861_, int p_171862_) {
-        this(HostAndPort.fromParts(p_171861_, p_171862_));
+    public ServerAddress(String host, int port) {
+        this(HostAndPort.fromParts(host, port));
     }
 
-    private ServerAddress(HostAndPort p_171859_) {
-        this.hostAndPort = p_171859_;
+    private ServerAddress(HostAndPort hostAndPort) {
+        this.hostAndPort = hostAndPort;
     }
 
     public String getHost() {
@@ -33,23 +33,23 @@ public final class ServerAddress {
         return this.hostAndPort.getPort();
     }
 
-    public static ServerAddress parseString(String p_171865_) {
-        if (p_171865_ == null) {
+    public static ServerAddress parseString(String ip) {
+        if (ip == null) {
             return INVALID;
         } else {
             try {
-                HostAndPort hostandport = HostAndPort.fromString(p_171865_).withDefaultPort(25565);
+                HostAndPort hostandport = HostAndPort.fromString(ip).withDefaultPort(25565);
                 return hostandport.getHost().isEmpty() ? INVALID : new ServerAddress(hostandport);
             } catch (IllegalArgumentException illegalargumentexception) {
-                LOGGER.info("Failed to parse URL {}", p_171865_, illegalargumentexception);
+                LOGGER.info("Failed to parse URL {}", ip, illegalargumentexception);
                 return INVALID;
             }
         }
     }
 
-    public static boolean isValidAddress(String p_171868_) {
+    public static boolean isValidAddress(String hostAndPort) {
         try {
-            HostAndPort hostandport = HostAndPort.fromString(p_171868_);
+            HostAndPort hostandport = HostAndPort.fromString(hostAndPort);
             String s = hostandport.getHost();
             if (!s.isEmpty()) {
                 IDN.toASCII(s);
@@ -61,9 +61,9 @@ public final class ServerAddress {
         return false;
     }
 
-    static int parsePort(String p_171870_) {
+    static int parsePort(String port) {
         try {
-            return Integer.parseInt(p_171870_.trim());
+            return Integer.parseInt(port.trim());
         } catch (Exception exception) {
             return 25565;
         }
@@ -75,11 +75,11 @@ public final class ServerAddress {
     }
 
     @Override
-    public boolean equals(Object p_171872_) {
-        if (this == p_171872_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return p_171872_ instanceof ServerAddress ? this.hostAndPort.equals(((ServerAddress)p_171872_).hostAndPort) : false;
+            return other instanceof ServerAddress ? this.hostAndPort.equals(((ServerAddress)other).hostAndPort) : false;
         }
     }
 

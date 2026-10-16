@@ -27,21 +27,24 @@ public class WeatheringCopperDoorBlock extends DoorBlock implements WeatheringCo
         return CODEC;
     }
 
-    public WeatheringCopperDoorBlock(BlockSetType p_309051_, WeatheringCopper.WeatherState p_308937_, BlockBehaviour.Properties p_309122_) {
-        super(p_309051_, p_309122_);
-        this.weatherState = p_308937_;
+    public WeatheringCopperDoorBlock(BlockSetType type, WeatheringCopper.WeatherState weatherState, BlockBehaviour.Properties properties) {
+        super(type, properties);
+        this.weatherState = weatherState;
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_308942_, ServerLevel p_309109_, BlockPos p_309034_, RandomSource p_309156_) {
-        if (p_308942_.getValue(DoorBlock.HALF) == DoubleBlockHalf.LOWER) {
-            this.changeOverTime(p_308942_, p_309109_, p_309034_, p_309156_);
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        if (state.getValue(DoorBlock.HALF) == DoubleBlockHalf.LOWER) {
+            this.changeOverTime(state, level, pos, random);
         }
     }
 
     @Override
-    protected boolean isRandomlyTicking(BlockState p_308997_) {
-        return WeatheringCopper.getNext(p_308997_.getBlock()).isPresent();
+    protected boolean isRandomlyTicking(BlockState state) {
+        return WeatheringCopper.getNext(state.getBlock()).isPresent();
     }
 
     public WeatheringCopper.WeatherState getAge() {

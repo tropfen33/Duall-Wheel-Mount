@@ -31,14 +31,14 @@ public class CherryFoliagePlacer extends FoliagePlacer {
     private final float hangingLeavesExtensionChance;
 
     public CherryFoliagePlacer(
-        IntProvider p_272646_, IntProvider p_272802_, IntProvider p_273604_, float p_272737_, float p_273720_, float p_273152_, float p_273529_
+        IntProvider radius, IntProvider offset, IntProvider height, float wideBottomLayerHoleChance, float cornerHoleChance, float hangingLeavesChance, float hangingLeavesExtensionChance
     ) {
-        super(p_272646_, p_272802_);
-        this.height = p_273604_;
-        this.wideBottomLayerHoleChance = p_272737_;
-        this.cornerHoleChance = p_273720_;
-        this.hangingLeavesChance = p_273152_;
-        this.hangingLeavesExtensionChance = p_273529_;
+        super(radius, offset);
+        this.height = height;
+        this.wideBottomLayerHoleChance = wideBottomLayerHoleChance;
+        this.cornerHoleChance = cornerHoleChance;
+        this.hangingLeavesChance = hangingLeavesChance;
+        this.hangingLeavesExtensionChance = hangingLeavesExtensionChance;
     }
 
     @Override
@@ -48,49 +48,53 @@ public class CherryFoliagePlacer extends FoliagePlacer {
 
     @Override
     protected void createFoliage(
-        LevelSimulatedReader p_272723_,
-        FoliagePlacer.FoliageSetter p_273410_,
-        RandomSource p_273057_,
-        TreeConfiguration p_273220_,
-        int p_272975_,
-        FoliagePlacer.FoliageAttachment p_273037_,
-        int p_273647_,
-        int p_273700_,
-        int p_273188_
+        LevelSimulatedReader level,
+        FoliagePlacer.FoliageSetter blockSetter,
+        RandomSource random,
+        TreeConfiguration config,
+        int maxFreeTreeHeight,
+        FoliagePlacer.FoliageAttachment attachment,
+        int foliageHeight,
+        int foliageRadius,
+        int offset
     ) {
-        boolean flag = p_273037_.doubleTrunk();
-        BlockPos blockpos = p_273037_.pos().above(p_273188_);
-        int i = p_273700_ + p_273037_.radiusOffset() - 1;
-        this.placeLeavesRow(p_272723_, p_273410_, p_273057_, p_273220_, blockpos, i - 2, p_273647_ - 3, flag);
-        this.placeLeavesRow(p_272723_, p_273410_, p_273057_, p_273220_, blockpos, i - 1, p_273647_ - 4, flag);
+        boolean flag = attachment.doubleTrunk();
+        BlockPos blockpos = attachment.pos().above(offset);
+        int i = foliageRadius + attachment.radiusOffset() - 1;
+        this.placeLeavesRow(level, blockSetter, random, config, blockpos, i - 2, foliageHeight - 3, flag);
+        this.placeLeavesRow(level, blockSetter, random, config, blockpos, i - 1, foliageHeight - 4, flag);
 
-        for (int j = p_273647_ - 5; j >= 0; j--) {
-            this.placeLeavesRow(p_272723_, p_273410_, p_273057_, p_273220_, blockpos, i, j, flag);
+        for (int j = foliageHeight - 5; j >= 0; j--) {
+            this.placeLeavesRow(level, blockSetter, random, config, blockpos, i, j, flag);
         }
 
         this.placeLeavesRowWithHangingLeavesBelow(
-            p_272723_, p_273410_, p_273057_, p_273220_, blockpos, i, -1, flag, this.hangingLeavesChance, this.hangingLeavesExtensionChance
+            level, blockSetter, random, config, blockpos, i, -1, flag, this.hangingLeavesChance, this.hangingLeavesExtensionChance
         );
         this.placeLeavesRowWithHangingLeavesBelow(
-            p_272723_, p_273410_, p_273057_, p_273220_, blockpos, i - 1, -2, flag, this.hangingLeavesChance, this.hangingLeavesExtensionChance
+            level, blockSetter, random, config, blockpos, i - 1, -2, flag, this.hangingLeavesChance, this.hangingLeavesExtensionChance
         );
     }
 
     @Override
-    public int foliageHeight(RandomSource p_273679_, int p_273336_, TreeConfiguration p_273643_) {
-        return this.height.sample(p_273679_);
+    public int foliageHeight(RandomSource random, int height, TreeConfiguration config) {
+        return this.height.sample(random);
     }
 
+    /**
+     * Skips certain positions based on the provided shape, such as rounding corners randomly.
+     * The coordinates are passed in as absolute value, and should be within [0, {@code range}].
+     */
     @Override
-    protected boolean shouldSkipLocation(RandomSource p_273294_, int p_273380_, int p_272865_, int p_272853_, int p_272631_, boolean p_273432_) {
-        if (p_272865_ == -1 && (p_273380_ == p_272631_ || p_272853_ == p_272631_) && p_273294_.nextFloat() < this.wideBottomLayerHoleChance) {
+    protected boolean shouldSkipLocation(RandomSource random, int localX, int localY, int localZ, int range, boolean large) {
+        if (localY == -1 && (localX == range || localZ == range) && random.nextFloat() < this.wideBottomLayerHoleChance) {
             return true;
         } else {
-            boolean flag = p_273380_ == p_272631_ && p_272853_ == p_272631_;
-            boolean flag1 = p_272631_ > 2;
+            boolean flag = localX == range && localZ == range;
+            boolean flag1 = range > 2;
             return flag1
-                ? flag || p_273380_ + p_272853_ > p_272631_ * 2 - 2 && p_273294_.nextFloat() < this.cornerHoleChance
-                : flag && p_273294_.nextFloat() < this.cornerHoleChance;
+                ? flag || localX + localZ > range * 2 - 2 && random.nextFloat() < this.cornerHoleChance
+                : flag && random.nextFloat() < this.cornerHoleChance;
         }
     }
 }

@@ -25,12 +25,12 @@ public class HeightmapTypeArgument extends StringRepresentableArgument<Heightmap
         return new HeightmapTypeArgument();
     }
 
-    public static Heightmap.Types getHeightmap(CommandContext<CommandSourceStack> p_275445_, String p_275449_) {
-        return p_275445_.getArgument(p_275449_, Heightmap.Types.class);
+    public static Heightmap.Types getHeightmap(CommandContext<CommandSourceStack> context, String argument) {
+        return context.getArgument(argument, Heightmap.Types.class);
     }
 
     @Override
-    protected String convertId(String p_275666_) {
-        return p_275666_.toLowerCase(Locale.ROOT);
+    protected String convertId(String id) {
+        return id.toLowerCase(Locale.ROOT);
     }
 }

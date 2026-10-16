@@ -30,48 +30,53 @@ public class SimpleBakedModel implements BakedModel {
     protected final List<net.minecraft.client.renderer.RenderType> itemRenderTypes;
     protected final List<net.minecraft.client.renderer.RenderType> fabulousItemRenderTypes;
 
-    /** @deprecated Forge: Use {@linkplain #SimpleBakedModel(List, Map, boolean, boolean, boolean, TextureAtlasSprite, ItemTransforms, ItemOverrides, net.neoforged.neoforge.client.RenderTypeGroup) variant with RenderTypeGroup} **/
+    /**
+ * @deprecated Forge: Use {@linkplain #SimpleBakedModel(List, Map, boolean,
+ *             boolean, boolean, TextureAtlasSprite, ItemTransforms, ItemOverrides
+ *             , net.neoforged.neoforge.client.RenderTypeGroup) variant with
+ *             RenderTypeGroup}
+ */
     @Deprecated
     public SimpleBakedModel(
-        List<BakedQuad> p_119489_,
-        Map<Direction, List<BakedQuad>> p_119490_,
-        boolean p_119491_,
-        boolean p_119492_,
-        boolean p_119493_,
-        TextureAtlasSprite p_119494_,
-        ItemTransforms p_119495_,
-        ItemOverrides p_119496_
+        List<BakedQuad> unculledFaces,
+        Map<Direction, List<BakedQuad>> culledFaces,
+        boolean hasAmbientOcclusion,
+        boolean usesBlockLight,
+        boolean isGui3d,
+        TextureAtlasSprite particleIcon,
+        ItemTransforms transforms,
+        ItemOverrides overrides
     ) {
-        this(p_119489_, p_119490_, p_119491_, p_119492_, p_119493_, p_119494_, p_119495_, p_119496_, net.neoforged.neoforge.client.RenderTypeGroup.EMPTY);
+        this(unculledFaces, culledFaces, hasAmbientOcclusion, usesBlockLight, isGui3d, particleIcon, transforms, overrides, net.neoforged.neoforge.client.RenderTypeGroup.EMPTY);
     }
 
     public SimpleBakedModel(
-              List<BakedQuad> p_119489_,
-              Map<Direction, List<BakedQuad>> p_119490_,
-              boolean p_119491_,
-              boolean p_119492_,
-              boolean p_119493_,
-              TextureAtlasSprite p_119494_,
-              ItemTransforms p_119495_,
-              ItemOverrides p_119496_,
+              List<BakedQuad> unculledFaces,
+              Map<Direction, List<BakedQuad>> culledFaces,
+              boolean hasAmbientOcclusion,
+              boolean usesBlockLight,
+              boolean isGui3d,
+              TextureAtlasSprite particleIcon,
+              ItemTransforms transforms,
+              ItemOverrides overrides,
               net.neoforged.neoforge.client.RenderTypeGroup renderTypes
     ) {
-        this.unculledFaces = p_119489_;
-        this.culledFaces = p_119490_;
-        this.hasAmbientOcclusion = p_119491_;
-        this.isGui3d = p_119493_;
-        this.usesBlockLight = p_119492_;
-        this.particleIcon = p_119494_;
-        this.transforms = p_119495_;
-        this.overrides = p_119496_;
+        this.unculledFaces = unculledFaces;
+        this.culledFaces = culledFaces;
+        this.hasAmbientOcclusion = hasAmbientOcclusion;
+        this.isGui3d = isGui3d;
+        this.usesBlockLight = usesBlockLight;
+        this.particleIcon = particleIcon;
+        this.transforms = transforms;
+        this.overrides = overrides;
         this.blockRenderTypes = !renderTypes.isEmpty() ? net.neoforged.neoforge.client.ChunkRenderTypeSet.of(renderTypes.block()) : null;
         this.itemRenderTypes = !renderTypes.isEmpty() ? List.of(renderTypes.entity()) : null;
         this.fabulousItemRenderTypes = !renderTypes.isEmpty() ? List.of(renderTypes.entityFabulous()) : null;
     }
 
     @Override
-    public List<BakedQuad> getQuads(@Nullable BlockState p_235054_, @Nullable Direction p_235055_, RandomSource p_235056_) {
-        return p_235055_ == null ? this.unculledFaces : this.culledFaces.get(p_235055_);
+    public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction direction, RandomSource random) {
+        return direction == null ? this.unculledFaces : this.culledFaces.get(direction);
     }
 
     @Override
@@ -139,34 +144,34 @@ public class SimpleBakedModel implements BakedModel {
         private final boolean isGui3d;
         private final ItemTransforms transforms;
 
-        public Builder(BlockModel p_119517_, ItemOverrides p_119518_, boolean p_119519_) {
-            this(p_119517_.hasAmbientOcclusion(), p_119517_.getGuiLight().lightLikeBlock(), p_119519_, p_119517_.getTransforms(), p_119518_);
+        public Builder(BlockModel blockModel, ItemOverrides overrides, boolean isGui3d) {
+            this(blockModel.hasAmbientOcclusion(), blockModel.getGuiLight().lightLikeBlock(), isGui3d, blockModel.getTransforms(), overrides);
         }
 
-        public Builder(boolean p_119521_, boolean p_119522_, boolean p_119523_, ItemTransforms p_119524_, ItemOverrides p_119525_) {
+        public Builder(boolean hasAmbientOcclusion, boolean usesBlockLight, boolean isGui3d, ItemTransforms transforms, ItemOverrides overrides) {
             for (Direction direction : Direction.values()) {
                 this.culledFaces.put(direction, Lists.newArrayList());
             }
 
-            this.overrides = p_119525_;
-            this.hasAmbientOcclusion = p_119521_;
-            this.usesBlockLight = p_119522_;
-            this.isGui3d = p_119523_;
-            this.transforms = p_119524_;
+            this.overrides = overrides;
+            this.hasAmbientOcclusion = hasAmbientOcclusion;
+            this.usesBlockLight = usesBlockLight;
+            this.isGui3d = isGui3d;
+            this.transforms = transforms;
         }
 
-        public SimpleBakedModel.Builder addCulledFace(Direction p_119531_, BakedQuad p_119532_) {
-            this.culledFaces.get(p_119531_).add(p_119532_);
+        public SimpleBakedModel.Builder addCulledFace(Direction facing, BakedQuad quad) {
+            this.culledFaces.get(facing).add(quad);
             return this;
         }
 
-        public SimpleBakedModel.Builder addUnculledFace(BakedQuad p_119527_) {
-            this.unculledFaces.add(p_119527_);
+        public SimpleBakedModel.Builder addUnculledFace(BakedQuad quad) {
+            this.unculledFaces.add(quad);
             return this;
         }
 
-        public SimpleBakedModel.Builder particle(TextureAtlasSprite p_119529_) {
-            this.particleIcon = p_119529_;
+        public SimpleBakedModel.Builder particle(TextureAtlasSprite particleIcon) {
+            this.particleIcon = particleIcon;
             return this;
         }
 

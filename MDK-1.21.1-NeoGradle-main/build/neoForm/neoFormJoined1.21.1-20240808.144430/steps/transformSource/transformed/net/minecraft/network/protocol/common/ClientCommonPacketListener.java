@@ -4,25 +4,25 @@ import net.minecraft.network.ClientboundPacketListener;
 import net.minecraft.network.protocol.cookie.ClientCookiePacketListener;
 
 public interface ClientCommonPacketListener extends ClientCookiePacketListener, ClientboundPacketListener, net.neoforged.neoforge.common.extensions.IClientCommonPacketListenerExtension {
-    void handleKeepAlive(ClientboundKeepAlivePacket p_295236_);
+    void handleKeepAlive(ClientboundKeepAlivePacket packet);
 
-    void handlePing(ClientboundPingPacket p_296451_);
+    void handlePing(ClientboundPingPacket packet);
 
-    void handleCustomPayload(ClientboundCustomPayloadPacket p_294344_);
+    void handleCustomPayload(ClientboundCustomPayloadPacket packet);
 
-    void handleDisconnect(ClientboundDisconnectPacket p_294847_);
+    void handleDisconnect(ClientboundDisconnectPacket packet);
 
-    void handleResourcePackPush(ClientboundResourcePackPushPacket p_314475_);
+    void handleResourcePackPush(ClientboundResourcePackPushPacket packet);
 
-    void handleResourcePackPop(ClientboundResourcePackPopPacket p_314490_);
+    void handleResourcePackPop(ClientboundResourcePackPopPacket packet);
 
-    void handleUpdateTags(ClientboundUpdateTagsPacket p_294883_);
+    void handleUpdateTags(ClientboundUpdateTagsPacket packet);
 
-    void handleStoreCookie(ClientboundStoreCookiePacket p_320452_);
+    void handleStoreCookie(ClientboundStoreCookiePacket packet);
 
-    void handleTransfer(ClientboundTransferPacket p_320836_);
+    void handleTransfer(ClientboundTransferPacket packet);
 
-    void handleCustomReportDetails(ClientboundCustomReportDetailsPacket p_350481_);
+    void handleCustomReportDetails(ClientboundCustomReportDetailsPacket packet);
 
-    void handleServerLinks(ClientboundServerLinksPacket p_350776_);
+    void handleServerLinks(ClientboundServerLinksPacket packet);
 }

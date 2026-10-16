@@ -14,10 +14,10 @@ public class MergingUniqueIterator<T> extends AbstractIterator<T> {
     private final PeekingIterator<T> secondIterator;
     private final Comparator<T> comparator;
 
-    public MergingUniqueIterator(Iterator<T> p_235186_, Iterator<T> p_235187_, Comparator<T> p_235188_) {
-        this.firstIterator = Iterators.peekingIterator(p_235186_);
-        this.secondIterator = Iterators.peekingIterator(p_235187_);
-        this.comparator = p_235188_;
+    public MergingUniqueIterator(Iterator<T> firstIterator, Iterator<T> secondIterator, Comparator<T> comparator) {
+        this.firstIterator = Iterators.peekingIterator(firstIterator);
+        this.secondIterator = Iterators.peekingIterator(secondIterator);
+        this.comparator = comparator;
     }
 
     @Override

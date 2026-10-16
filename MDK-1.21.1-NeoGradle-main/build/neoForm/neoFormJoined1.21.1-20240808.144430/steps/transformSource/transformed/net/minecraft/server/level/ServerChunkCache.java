@@ -66,43 +66,43 @@ public class ServerChunkCache extends ChunkSource implements net.neoforged.neofo
     private NaturalSpawner.SpawnState lastSpawnState;
 
     public ServerChunkCache(
-        ServerLevel p_214982_,
-        LevelStorageSource.LevelStorageAccess p_214983_,
-        DataFixer p_214984_,
-        StructureTemplateManager p_214985_,
-        Executor p_214986_,
-        ChunkGenerator p_214987_,
-        int p_214988_,
-        int p_214989_,
-        boolean p_214990_,
-        ChunkProgressListener p_214991_,
-        ChunkStatusUpdateListener p_214992_,
-        Supplier<DimensionDataStorage> p_214993_
+        ServerLevel level,
+        LevelStorageSource.LevelStorageAccess levelStorageAccess,
+        DataFixer fixerUpper,
+        StructureTemplateManager structureManager,
+        Executor dispatcher,
+        ChunkGenerator generator,
+        int viewDistance,
+        int simulationDistance,
+        boolean sync,
+        ChunkProgressListener progressListener,
+        ChunkStatusUpdateListener chunkStatusListener,
+        Supplier<DimensionDataStorage> overworldDataStorage
     ) {
-        this.level = p_214982_;
-        this.mainThreadProcessor = new ServerChunkCache.MainThreadExecutor(p_214982_);
+        this.level = level;
+        this.mainThreadProcessor = new ServerChunkCache.MainThreadExecutor(level);
         this.mainThread = Thread.currentThread();
-        File file1 = p_214983_.getDimensionPath(p_214982_.dimension()).resolve("data").toFile();
+        File file1 = levelStorageAccess.getDimensionPath(level.dimension()).resolve("data").toFile();
         file1.mkdirs();
-        this.dataStorage = new DimensionDataStorage(file1, p_214984_, p_214982_.registryAccess());
+        this.dataStorage = new DimensionDataStorage(file1, fixerUpper, level.registryAccess());
         this.chunkMap = new ChunkMap(
-            p_214982_,
-            p_214983_,
-            p_214984_,
-            p_214985_,
-            p_214986_,
+            level,
+            levelStorageAccess,
+            fixerUpper,
+            structureManager,
+            dispatcher,
             this.mainThreadProcessor,
             this,
-            p_214987_,
-            p_214991_,
-            p_214992_,
-            p_214993_,
-            p_214988_,
-            p_214990_
+            generator,
+            progressListener,
+            chunkStatusListener,
+            overworldDataStorage,
+            viewDistance,
+            sync
         );
         this.lightEngine = this.chunkMap.getLightEngine();
         this.distanceManager = this.chunkMap.getDistanceManager();
-        this.distanceManager.updateSimulationDistance(p_214989_);
+        this.distanceManager.updateSimulationDistance(simulationDistance);
         this.clearCache();
     }
 
@@ -111,40 +111,40 @@ public class ServerChunkCache extends ChunkSource implements net.neoforged.neofo
     }
 
     @Nullable
-    private ChunkHolder getVisibleChunkIfPresent(long p_8365_) {
-        return this.chunkMap.getVisibleChunkIfPresent(p_8365_);
+    private ChunkHolder getVisibleChunkIfPresent(long chunkPos) {
+        return this.chunkMap.getVisibleChunkIfPresent(chunkPos);
     }
 
     public int getTickingGenerated() {
         return this.chunkMap.getTickingGenerated();
     }
 
-    private void storeInCache(long p_8367_, @Nullable ChunkAccess p_8368_, ChunkStatus p_331839_) {
+    private void storeInCache(long chunkPos, @Nullable ChunkAccess chunk, ChunkStatus chunkStatus) {
         for (int i = 3; i > 0; i--) {
             this.lastChunkPos[i] = this.lastChunkPos[i - 1];
             this.lastChunkStatus[i] = this.lastChunkStatus[i - 1];
             this.lastChunk[i] = this.lastChunk[i - 1];
         }
 
-        this.lastChunkPos[0] = p_8367_;
-        this.lastChunkStatus[0] = p_331839_;
-        this.lastChunk[0] = p_8368_;
+        this.lastChunkPos[0] = chunkPos;
+        this.lastChunkStatus[0] = chunkStatus;
+        this.lastChunk[0] = chunk;
     }
 
     @Nullable
     @Override
-    public ChunkAccess getChunk(int p_8360_, int p_8361_, ChunkStatus p_330876_, boolean p_8363_) {
+    public ChunkAccess getChunk(int x, int z, ChunkStatus chunkStatus, boolean requireChunk) {
         if (Thread.currentThread() != this.mainThread) {
-            return CompletableFuture.<ChunkAccess>supplyAsync(() -> this.getChunk(p_8360_, p_8361_, p_330876_, p_8363_), this.mainThreadProcessor).join();
+            return CompletableFuture.<ChunkAccess>supplyAsync(() -> this.getChunk(x, z, chunkStatus, requireChunk), this.mainThreadProcessor).join();
         } else {
             ProfilerFiller profilerfiller = this.level.getProfiler();
             profilerfiller.incrementCounter("getChunk");
-            long i = ChunkPos.asLong(p_8360_, p_8361_);
+            long i = ChunkPos.asLong(x, z);
 
             for (int j = 0; j < 4; j++) {
-                if (i == this.lastChunkPos[j] && p_330876_ == this.lastChunkStatus[j]) {
+                if (i == this.lastChunkPos[j] && chunkStatus == this.lastChunkStatus[j]) {
                     ChunkAccess chunkaccess = this.lastChunk[j];
-                    if (chunkaccess != null || !p_8363_) {
+                    if (chunkaccess != null || !requireChunk) {
                         return chunkaccess;
                     }
                 }
@@ -155,14 +155,14 @@ public class ServerChunkCache extends ChunkSource implements net.neoforged.neofo
                 return chunkholder.currentlyLoading; // Neo: If the requested chunk is loading, bypass the future chain to prevent a deadlock.
 
             profilerfiller.incrementCounter("getChunkCacheMiss");
-            CompletableFuture<ChunkResult<ChunkAccess>> completablefuture = this.getChunkFutureMainThread(p_8360_, p_8361_, p_330876_, p_8363_);
+            CompletableFuture<ChunkResult<ChunkAccess>> completablefuture = this.getChunkFutureMainThread(x, z, chunkStatus, requireChunk);
             this.mainThreadProcessor.managedBlock(completablefuture::isDone);
             ChunkResult<ChunkAccess> chunkresult = completablefuture.join();
             ChunkAccess chunkaccess1 = chunkresult.orElse(null);
-            if (chunkaccess1 == null && p_8363_) {
+            if (chunkaccess1 == null && requireChunk) {
                 throw (IllegalStateException)Util.pauseInIde(new IllegalStateException("Chunk not there when requested: " + chunkresult.getError()));
             } else {
-                this.storeInCache(i, chunkaccess1, p_330876_);
+                this.storeInCache(i, chunkaccess1, chunkStatus);
                 return chunkaccess1;
             }
         }
@@ -170,12 +170,12 @@ public class ServerChunkCache extends ChunkSource implements net.neoforged.neofo
 
     @Nullable
     @Override
-    public LevelChunk getChunkNow(int p_8357_, int p_8358_) {
+    public LevelChunk getChunkNow(int chunkX, int chunkZ) {
         if (Thread.currentThread() != this.mainThread) {
             return null;
         } else {
             this.level.getProfiler().incrementCounter("getChunkNow");
-            long i = ChunkPos.asLong(p_8357_, p_8358_);
+            long i = ChunkPos.asLong(chunkX, chunkZ);
 
             for (int j = 0; j < 4; j++) {
                 if (i == this.lastChunkPos[j] && this.lastChunkStatus[j] == ChunkStatus.FULL) {
@@ -208,15 +208,15 @@ public class ServerChunkCache extends ChunkSource implements net.neoforged.neofo
         Arrays.fill(this.lastChunk, null);
     }
 
-    public CompletableFuture<ChunkResult<ChunkAccess>> getChunkFuture(int p_8432_, int p_8433_, ChunkStatus p_330326_, boolean p_8435_) {
+    public CompletableFuture<ChunkResult<ChunkAccess>> getChunkFuture(int x, int z, ChunkStatus chunkStatus, boolean requireChunk) {
         boolean flag = Thread.currentThread() == this.mainThread;
         CompletableFuture<ChunkResult<ChunkAccess>> completablefuture;
         if (flag) {
-            completablefuture = this.getChunkFutureMainThread(p_8432_, p_8433_, p_330326_, p_8435_);
+            completablefuture = this.getChunkFutureMainThread(x, z, chunkStatus, requireChunk);
             this.mainThreadProcessor.managedBlock(completablefuture::isDone);
         } else {
             completablefuture = CompletableFuture.<CompletableFuture<ChunkResult<ChunkAccess>>>supplyAsync(
-                    () -> this.getChunkFutureMainThread(p_8432_, p_8433_, p_330326_, p_8435_), this.mainThreadProcessor
+                    () -> this.getChunkFutureMainThread(x, z, chunkStatus, requireChunk), this.mainThreadProcessor
                 )
                 .thenCompose(p_331360_ -> (CompletionStage<ChunkResult<ChunkAccess>>)p_331360_);
         }
@@ -224,12 +224,12 @@ public class ServerChunkCache extends ChunkSource implements net.neoforged.neofo
         return completablefuture;
     }
 
-    private CompletableFuture<ChunkResult<ChunkAccess>> getChunkFutureMainThread(int p_8457_, int p_8458_, ChunkStatus p_331599_, boolean p_8460_) {
-        ChunkPos chunkpos = new ChunkPos(p_8457_, p_8458_);
+    private CompletableFuture<ChunkResult<ChunkAccess>> getChunkFutureMainThread(int x, int z, ChunkStatus chunkStatus, boolean requireChunk) {
+        ChunkPos chunkpos = new ChunkPos(x, z);
         long i = chunkpos.toLong();
-        int j = ChunkLevel.byStatus(p_331599_);
+        int j = ChunkLevel.byStatus(chunkStatus);
         ChunkHolder chunkholder = this.getVisibleChunkIfPresent(i);
-        if (p_8460_) {
+        if (requireChunk) {
             this.distanceManager.addTicket(TicketType.UNKNOWN, chunkpos, j, chunkpos);
             if (this.chunkAbsent(chunkholder, j)) {
                 ProfilerFiller profilerfiller = this.level.getProfiler();
@@ -245,24 +245,27 @@ public class ServerChunkCache extends ChunkSource implements net.neoforged.neofo
 
         return this.chunkAbsent(chunkholder, j)
             ? GenerationChunkHolder.UNLOADED_CHUNK_FUTURE
-            : chunkholder.scheduleChunkGenerationTask(p_331599_, this.chunkMap);
+            : chunkholder.scheduleChunkGenerationTask(chunkStatus, this.chunkMap);
     }
 
-    private boolean chunkAbsent(@Nullable ChunkHolder p_8417_, int p_8418_) {
-        return p_8417_ == null || p_8417_.getTicketLevel() > p_8418_;
+    private boolean chunkAbsent(@Nullable ChunkHolder chunkHolder, int status) {
+        return chunkHolder == null || chunkHolder.getTicketLevel() > status;
     }
 
+    /**
+     * Checks to see if a chunk exists at x, z
+     */
     @Override
-    public boolean hasChunk(int p_8429_, int p_8430_) {
-        ChunkHolder chunkholder = this.getVisibleChunkIfPresent(new ChunkPos(p_8429_, p_8430_).toLong());
+    public boolean hasChunk(int x, int z) {
+        ChunkHolder chunkholder = this.getVisibleChunkIfPresent(new ChunkPos(x, z).toLong());
         int i = ChunkLevel.byStatus(ChunkStatus.FULL);
         return !this.chunkAbsent(chunkholder, i);
     }
 
     @Nullable
     @Override
-    public LightChunk getChunkForLighting(int p_8454_, int p_8455_) {
-        long i = ChunkPos.asLong(p_8454_, p_8455_);
+    public LightChunk getChunkForLighting(int chunkX, int chunkZ) {
+        long i = ChunkPos.asLong(chunkX, chunkZ);
         ChunkHolder chunkholder = this.getVisibleChunkIfPresent(i);
         return chunkholder == null ? null : chunkholder.getChunkIfPresentUnchecked(ChunkStatus.INITIALIZE_LIGHT.getParent());
     }
@@ -287,18 +290,18 @@ public class ServerChunkCache extends ChunkSource implements net.neoforged.neofo
         }
     }
 
-    public boolean isPositionTicking(long p_143240_) {
-        ChunkHolder chunkholder = this.getVisibleChunkIfPresent(p_143240_);
+    public boolean isPositionTicking(long chunkPos) {
+        ChunkHolder chunkholder = this.getVisibleChunkIfPresent(chunkPos);
         if (chunkholder == null) {
             return false;
         } else {
-            return !this.level.shouldTickBlocksAt(p_143240_) ? false : chunkholder.getTickingChunkFuture().getNow(ChunkHolder.UNLOADED_LEVEL_CHUNK).isSuccess();
+            return !this.level.shouldTickBlocksAt(chunkPos) ? false : chunkholder.getTickingChunkFuture().getNow(ChunkHolder.UNLOADED_LEVEL_CHUNK).isSuccess();
         }
     }
 
-    public void save(boolean p_8420_) {
+    public void save(boolean flush) {
         this.runDistanceManagerUpdates();
-        this.chunkMap.saveAllChunks(p_8420_);
+        this.chunkMap.saveAllChunks(flush);
     }
 
     @Override
@@ -309,21 +312,21 @@ public class ServerChunkCache extends ChunkSource implements net.neoforged.neofo
     }
 
     @Override
-    public void tick(BooleanSupplier p_201913_, boolean p_201914_) {
+    public void tick(BooleanSupplier hasTimeLeft, boolean tickChunks) {
         this.level.getProfiler().push("purge");
-        if (this.level.tickRateManager().runsNormally() || !p_201914_) {
+        if (this.level.tickRateManager().runsNormally() || !tickChunks) {
             this.distanceManager.purgeStaleTickets();
         }
 
         this.runDistanceManagerUpdates();
         this.level.getProfiler().popPush("chunks");
-        if (p_201914_) {
+        if (tickChunks) {
             this.tickChunks();
             this.chunkMap.tick();
         }
 
         this.level.getProfiler().popPush("unload");
-        this.chunkMap.tick(p_201913_);
+        this.chunkMap.tick(hasTimeLeft);
         this.level.getProfiler().pop();
         this.clearCache();
     }
@@ -386,10 +389,10 @@ public class ServerChunkCache extends ChunkSource implements net.neoforged.neofo
         }
     }
 
-    private void getFullChunk(long p_8371_, Consumer<LevelChunk> p_8372_) {
-        ChunkHolder chunkholder = this.getVisibleChunkIfPresent(p_8371_);
+    private void getFullChunk(long chunkPos, Consumer<LevelChunk> fullChunkGetter) {
+        ChunkHolder chunkholder = this.getVisibleChunkIfPresent(chunkPos);
         if (chunkholder != null) {
-            chunkholder.getFullChunkFuture().getNow(ChunkHolder.UNLOADED_LEVEL_CHUNK).ifSuccess(p_8372_);
+            chunkholder.getFullChunkFuture().getNow(ChunkHolder.UNLOADED_LEVEL_CHUNK).ifSuccess(fullChunkGetter);
         }
     }
 
@@ -420,82 +423,82 @@ public class ServerChunkCache extends ChunkSource implements net.neoforged.neofo
         return this.chunkMap.size();
     }
 
-    public void blockChanged(BlockPos p_8451_) {
-        int i = SectionPos.blockToSectionCoord(p_8451_.getX());
-        int j = SectionPos.blockToSectionCoord(p_8451_.getZ());
+    public void blockChanged(BlockPos pos) {
+        int i = SectionPos.blockToSectionCoord(pos.getX());
+        int j = SectionPos.blockToSectionCoord(pos.getZ());
         ChunkHolder chunkholder = this.getVisibleChunkIfPresent(ChunkPos.asLong(i, j));
         if (chunkholder != null) {
-            chunkholder.blockChanged(p_8451_);
+            chunkholder.blockChanged(pos);
         }
     }
 
     @Override
-    public void onLightUpdate(LightLayer p_8403_, SectionPos p_8404_) {
+    public void onLightUpdate(LightLayer type, SectionPos pos) {
         this.mainThreadProcessor.execute(() -> {
-            ChunkHolder chunkholder = this.getVisibleChunkIfPresent(p_8404_.chunk().toLong());
+            ChunkHolder chunkholder = this.getVisibleChunkIfPresent(pos.chunk().toLong());
             if (chunkholder != null) {
-                chunkholder.sectionLightChanged(p_8403_, p_8404_.y());
+                chunkholder.sectionLightChanged(type, pos.y());
             }
         });
     }
 
-    public <T> void addRegionTicket(TicketType<T> p_8388_, ChunkPos p_8389_, int p_8390_, T p_8391_) {
-        addRegionTicket(p_8388_, p_8389_, p_8390_, p_8391_, false);
+    public <T> void addRegionTicket(TicketType<T> type, ChunkPos pos, int distance, T value) {
+        addRegionTicket(type, pos, distance, value, false);
     }
-    public <T> void addRegionTicket(TicketType<T> p_8388_, ChunkPos p_8389_, int p_8390_, T p_8391_, boolean forceTicks) {
-        this.distanceManager.addRegionTicket(p_8388_, p_8389_, p_8390_, p_8391_, forceTicks);
+    public <T> void addRegionTicket(TicketType<T> type, ChunkPos pos, int distance, T value, boolean forceTicks) {
+        this.distanceManager.addRegionTicket(type, pos, distance, value, forceTicks);
     }
 
-    public <T> void removeRegionTicket(TicketType<T> p_8439_, ChunkPos p_8440_, int p_8441_, T p_8442_) {
-        removeRegionTicket(p_8439_, p_8440_, p_8441_, p_8442_, false);
+    public <T> void removeRegionTicket(TicketType<T> type, ChunkPos pos, int distance, T value) {
+        removeRegionTicket(type, pos, distance, value, false);
     }
-    public <T> void removeRegionTicket(TicketType<T> p_8439_, ChunkPos p_8440_, int p_8441_, T p_8442_, boolean forceTicks) {
-        this.distanceManager.removeRegionTicket(p_8439_, p_8440_, p_8441_, p_8442_, forceTicks);
+    public <T> void removeRegionTicket(TicketType<T> type, ChunkPos pos, int distance, T value, boolean forceTicks) {
+        this.distanceManager.removeRegionTicket(type, pos, distance, value, forceTicks);
     }
 
     @Override
-    public void updateChunkForced(ChunkPos p_8400_, boolean p_8401_) {
-        this.distanceManager.updateChunkForced(p_8400_, p_8401_);
+    public void updateChunkForced(ChunkPos pos, boolean add) {
+        this.distanceManager.updateChunkForced(pos, add);
     }
 
-    public void move(ServerPlayer p_8386_) {
-        if (!p_8386_.isRemoved()) {
-            this.chunkMap.move(p_8386_);
+    public void move(ServerPlayer player) {
+        if (!player.isRemoved()) {
+            this.chunkMap.move(player);
         }
     }
 
-    public void removeEntity(Entity p_8444_) {
-        this.chunkMap.removeEntity(p_8444_);
+    public void removeEntity(Entity entity) {
+        this.chunkMap.removeEntity(entity);
     }
 
-    public void addEntity(Entity p_8464_) {
-        this.chunkMap.addEntity(p_8464_);
+    public void addEntity(Entity entity) {
+        this.chunkMap.addEntity(entity);
     }
 
-    public void broadcastAndSend(Entity p_8395_, Packet<?> p_8396_) {
-        this.chunkMap.broadcastAndSend(p_8395_, p_8396_);
+    public void broadcastAndSend(Entity entity, Packet<?> packet) {
+        this.chunkMap.broadcastAndSend(entity, packet);
     }
 
-    public void broadcast(Entity p_8446_, Packet<?> p_8447_) {
-        this.chunkMap.broadcast(p_8446_, p_8447_);
+    public void broadcast(Entity entity, Packet<?> packet) {
+        this.chunkMap.broadcast(entity, packet);
     }
 
-    public void setViewDistance(int p_8355_) {
-        this.chunkMap.setServerViewDistance(p_8355_);
+    public void setViewDistance(int viewDistance) {
+        this.chunkMap.setServerViewDistance(viewDistance);
     }
 
-    public void setSimulationDistance(int p_184027_) {
-        this.distanceManager.updateSimulationDistance(p_184027_);
+    public void setSimulationDistance(int simulationDistance) {
+        this.distanceManager.updateSimulationDistance(simulationDistance);
     }
 
     @Override
-    public void setSpawnSettings(boolean p_8425_, boolean p_8426_) {
-        this.spawnEnemies = p_8425_;
-        this.spawnFriendlies = p_8426_;
+    public void setSpawnSettings(boolean hostile, boolean peaceful) {
+        this.spawnEnemies = hostile;
+        this.spawnFriendlies = peaceful;
     }
 
-    public String getChunkDebugData(ChunkPos p_8449_) {
-        return this.chunkMap.getChunkDebugData(p_8449_);
+    public String getChunkDebugData(ChunkPos chunkPos) {
+        return this.chunkMap.getChunkDebugData(chunkPos);
     }
 
     public DimensionDataStorage getDataStorage() {
@@ -524,22 +527,25 @@ public class ServerChunkCache extends ChunkSource implements net.neoforged.neofo
     }
 
     final class MainThreadExecutor extends BlockableEventLoop<Runnable> {
-        MainThreadExecutor(Level p_8494_) {
-            super("Chunk source main thread executor for " + p_8494_.dimension().location());
+        MainThreadExecutor(Level level) {
+            super("Chunk source main thread executor for " + level.dimension().location());
+        }
+
+        /**
+         * Drive the executor until the given BooleanSupplier returns true
+         */
+        @Override
+        public void managedBlock(BooleanSupplier isDone) {
+            super.managedBlock(() -> MinecraftServer.throwIfFatalException() && isDone.getAsBoolean());
         }
 
         @Override
-        public void managedBlock(BooleanSupplier p_347606_) {
-            super.managedBlock(() -> MinecraftServer.throwIfFatalException() && p_347606_.getAsBoolean());
+        protected Runnable wrapRunnable(Runnable runnable) {
+            return runnable;
         }
 
         @Override
-        protected Runnable wrapRunnable(Runnable p_8506_) {
-            return p_8506_;
-        }
-
-        @Override
-        protected boolean shouldRun(Runnable p_8504_) {
+        protected boolean shouldRun(Runnable runnable) {
             return true;
         }
 
@@ -554,9 +560,9 @@ public class ServerChunkCache extends ChunkSource implements net.neoforged.neofo
         }
 
         @Override
-        protected void doRunTask(Runnable p_8502_) {
+        protected void doRunTask(Runnable task) {
             ServerChunkCache.this.level.getProfiler().incrementCounter("runTask");
-            super.doRunTask(p_8502_);
+            super.doRunTask(task);
         }
 
         @Override

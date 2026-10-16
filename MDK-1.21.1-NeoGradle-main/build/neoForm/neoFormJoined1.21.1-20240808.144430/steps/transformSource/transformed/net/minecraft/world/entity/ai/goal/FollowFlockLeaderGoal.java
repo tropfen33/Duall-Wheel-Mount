@@ -11,13 +11,13 @@ public class FollowFlockLeaderGoal extends Goal {
     private int timeToRecalcPath;
     private int nextStartTick;
 
-    public FollowFlockLeaderGoal(AbstractSchoolingFish p_25249_) {
-        this.mob = p_25249_;
-        this.nextStartTick = this.nextStartTick(p_25249_);
+    public FollowFlockLeaderGoal(AbstractSchoolingFish fish) {
+        this.mob = fish;
+        this.nextStartTick = this.nextStartTick(fish);
     }
 
-    protected int nextStartTick(AbstractSchoolingFish p_25252_) {
-        return reducedTickDelay(200 + p_25252_.getRandom().nextInt(200) % 20);
+    protected int nextStartTick(AbstractSchoolingFish taskOwner) {
+        return reducedTickDelay(200 + taskOwner.getRandom().nextInt(200) % 20);
     }
 
     @Override

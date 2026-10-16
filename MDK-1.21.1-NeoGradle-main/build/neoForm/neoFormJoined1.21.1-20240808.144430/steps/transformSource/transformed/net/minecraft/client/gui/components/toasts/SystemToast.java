@@ -28,31 +28,31 @@ public class SystemToast implements Toast {
     private final int width;
     private boolean forceHide;
 
-    public SystemToast(SystemToast.SystemToastId p_314596_, Component p_94833_, @Nullable Component p_94834_) {
+    public SystemToast(SystemToast.SystemToastId id, Component title, @Nullable Component message) {
         this(
-            p_314596_,
-            p_94833_,
-            nullToEmpty(p_94834_),
-            Math.max(160, 30 + Math.max(Minecraft.getInstance().font.width(p_94833_), p_94834_ == null ? 0 : Minecraft.getInstance().font.width(p_94834_)))
+            id,
+            title,
+            nullToEmpty(message),
+            Math.max(160, 30 + Math.max(Minecraft.getInstance().font.width(title), message == null ? 0 : Minecraft.getInstance().font.width(message)))
         );
     }
 
-    public static SystemToast multiline(Minecraft p_94848_, SystemToast.SystemToastId p_314435_, Component p_94850_, Component p_94851_) {
-        Font font = p_94848_.font;
-        List<FormattedCharSequence> list = font.split(p_94851_, 200);
+    public static SystemToast multiline(Minecraft minecraft, SystemToast.SystemToastId id, Component title, Component message) {
+        Font font = minecraft.font;
+        List<FormattedCharSequence> list = font.split(message, 200);
         int i = Math.max(200, list.stream().mapToInt(font::width).max().orElse(200));
-        return new SystemToast(p_314435_, p_94850_, list, i + 30);
+        return new SystemToast(id, title, list, i + 30);
     }
 
-    private SystemToast(SystemToast.SystemToastId p_314467_, Component p_94828_, List<FormattedCharSequence> p_94829_, int p_94830_) {
-        this.id = p_314467_;
-        this.title = p_94828_;
-        this.messageLines = p_94829_;
-        this.width = p_94830_;
+    private SystemToast(SystemToast.SystemToastId id, Component title, List<FormattedCharSequence> messageLines, int width) {
+        this.id = id;
+        this.title = title;
+        this.messageLines = messageLines;
+        this.width = width;
     }
 
-    private static ImmutableList<FormattedCharSequence> nullToEmpty(@Nullable Component p_94861_) {
-        return p_94861_ == null ? ImmutableList.of() : ImmutableList.of(p_94861_.getVisualOrderText());
+    private static ImmutableList<FormattedCharSequence> nullToEmpty(@Nullable Component message) {
+        return message == null ? ImmutableList.of() : ImmutableList.of(message.getVisualOrderText());
     }
 
     @Override
@@ -70,59 +70,59 @@ public class SystemToast implements Toast {
     }
 
     @Override
-    public Toast.Visibility render(GuiGraphics p_281624_, ToastComponent p_282333_, long p_282762_) {
+    public Toast.Visibility render(GuiGraphics guiGraphics, ToastComponent toastComponent, long timeSinceLastVisible) {
         if (this.changed) {
-            this.lastChanged = p_282762_;
+            this.lastChanged = timeSinceLastVisible;
             this.changed = false;
         }
 
         int i = this.width();
         if (i == 160 && this.messageLines.size() <= 1) {
-            p_281624_.blitSprite(BACKGROUND_SPRITE, 0, 0, i, this.height());
+            guiGraphics.blitSprite(BACKGROUND_SPRITE, 0, 0, i, this.height());
         } else {
             int j = this.height();
             int k = 28;
             int l = Math.min(4, j - 28);
-            this.renderBackgroundRow(p_281624_, i, 0, 0, 28);
+            this.renderBackgroundRow(guiGraphics, i, 0, 0, 28);
 
             for (int i1 = 28; i1 < j - l; i1 += 10) {
-                this.renderBackgroundRow(p_281624_, i, 16, i1, Math.min(16, j - i1 - l));
+                this.renderBackgroundRow(guiGraphics, i, 16, i1, Math.min(16, j - i1 - l));
             }
 
-            this.renderBackgroundRow(p_281624_, i, 32 - l, j - l, l);
+            this.renderBackgroundRow(guiGraphics, i, 32 - l, j - l, l);
         }
 
         if (this.messageLines.isEmpty()) {
-            p_281624_.drawString(p_282333_.getMinecraft().font, this.title, 18, 12, -256, false);
+            guiGraphics.drawString(toastComponent.getMinecraft().font, this.title, 18, 12, -256, false);
         } else {
-            p_281624_.drawString(p_282333_.getMinecraft().font, this.title, 18, 7, -256, false);
+            guiGraphics.drawString(toastComponent.getMinecraft().font, this.title, 18, 7, -256, false);
 
             for (int j1 = 0; j1 < this.messageLines.size(); j1++) {
-                p_281624_.drawString(p_282333_.getMinecraft().font, this.messageLines.get(j1), 18, 18 + j1 * 12, -1, false);
+                guiGraphics.drawString(toastComponent.getMinecraft().font, this.messageLines.get(j1), 18, 18 + j1 * 12, -1, false);
             }
         }
 
-        double d0 = (double)this.id.displayTime * p_282333_.getNotificationDisplayTimeMultiplier();
-        long k1 = p_282762_ - this.lastChanged;
+        double d0 = (double)this.id.displayTime * toastComponent.getNotificationDisplayTimeMultiplier();
+        long k1 = timeSinceLastVisible - this.lastChanged;
         return !this.forceHide && (double)k1 < d0 ? Toast.Visibility.SHOW : Toast.Visibility.HIDE;
     }
 
-    private void renderBackgroundRow(GuiGraphics p_281840_, int p_281750_, int p_282371_, int p_283613_, int p_282880_) {
-        int i = p_282371_ == 0 ? 20 : 5;
-        int j = Math.min(60, p_281750_ - i);
+    private void renderBackgroundRow(GuiGraphics guiGraphics, int width, int vOffset, int y, int height) {
+        int i = vOffset == 0 ? 20 : 5;
+        int j = Math.min(60, width - i);
         ResourceLocation resourcelocation = BACKGROUND_SPRITE;
-        p_281840_.blitSprite(resourcelocation, 160, 32, 0, p_282371_, 0, p_283613_, i, p_282880_);
+        guiGraphics.blitSprite(resourcelocation, 160, 32, 0, vOffset, 0, y, i, height);
 
-        for (int k = i; k < p_281750_ - j; k += 64) {
-            p_281840_.blitSprite(resourcelocation, 160, 32, 32, p_282371_, k, p_283613_, Math.min(64, p_281750_ - k - j), p_282880_);
+        for (int k = i; k < width - j; k += 64) {
+            guiGraphics.blitSprite(resourcelocation, 160, 32, 32, vOffset, k, y, Math.min(64, width - k - j), height);
         }
 
-        p_281840_.blitSprite(resourcelocation, 160, 32, 160 - j, p_282371_, p_281750_ - j, p_283613_, j, p_282880_);
+        guiGraphics.blitSprite(resourcelocation, 160, 32, 160 - j, vOffset, width - j, y, j, height);
     }
 
-    public void reset(Component p_94863_, @Nullable Component p_94864_) {
-        this.title = p_94863_;
-        this.messageLines = nullToEmpty(p_94864_);
+    public void reset(Component title, @Nullable Component message) {
+        this.title = title;
+        this.messageLines = nullToEmpty(message);
         this.changed = true;
     }
 
@@ -130,80 +130,80 @@ public class SystemToast implements Toast {
         return this.id;
     }
 
-    public static void add(ToastComponent p_94856_, SystemToast.SystemToastId p_314591_, Component p_94858_, @Nullable Component p_94859_) {
-        p_94856_.addToast(new SystemToast(p_314591_, p_94858_, p_94859_));
+    public static void add(ToastComponent toastComponent, SystemToast.SystemToastId id, Component title, @Nullable Component message) {
+        toastComponent.addToast(new SystemToast(id, title, message));
     }
 
-    public static void addOrUpdate(ToastComponent p_94870_, SystemToast.SystemToastId p_314579_, Component p_94872_, @Nullable Component p_94873_) {
-        SystemToast systemtoast = p_94870_.getToast(SystemToast.class, p_314579_);
+    public static void addOrUpdate(ToastComponent toastComponent, SystemToast.SystemToastId id, Component title, @Nullable Component message) {
+        SystemToast systemtoast = toastComponent.getToast(SystemToast.class, id);
         if (systemtoast == null) {
-            add(p_94870_, p_314579_, p_94872_, p_94873_);
+            add(toastComponent, id, title, message);
         } else {
-            systemtoast.reset(p_94872_, p_94873_);
+            systemtoast.reset(title, message);
         }
     }
 
-    public static void forceHide(ToastComponent p_314559_, SystemToast.SystemToastId p_314474_) {
-        SystemToast systemtoast = p_314559_.getToast(SystemToast.class, p_314474_);
+    public static void forceHide(ToastComponent toastComponent, SystemToast.SystemToastId id) {
+        SystemToast systemtoast = toastComponent.getToast(SystemToast.class, id);
         if (systemtoast != null) {
             systemtoast.forceHide();
         }
     }
 
-    public static void onWorldAccessFailure(Minecraft p_94853_, String p_94854_) {
+    public static void onWorldAccessFailure(Minecraft minecraft, String message) {
         add(
-            p_94853_.getToasts(),
+            minecraft.getToasts(),
             SystemToast.SystemToastId.WORLD_ACCESS_FAILURE,
             Component.translatable("selectWorld.access_failure"),
-            Component.literal(p_94854_)
+            Component.literal(message)
         );
     }
 
-    public static void onWorldDeleteFailure(Minecraft p_94867_, String p_94868_) {
+    public static void onWorldDeleteFailure(Minecraft minecraft, String message) {
         add(
-            p_94867_.getToasts(),
+            minecraft.getToasts(),
             SystemToast.SystemToastId.WORLD_ACCESS_FAILURE,
             Component.translatable("selectWorld.delete_failure"),
-            Component.literal(p_94868_)
+            Component.literal(message)
         );
     }
 
-    public static void onPackCopyFailure(Minecraft p_94876_, String p_94877_) {
-        add(p_94876_.getToasts(), SystemToast.SystemToastId.PACK_COPY_FAILURE, Component.translatable("pack.copyFailure"), Component.literal(p_94877_));
+    public static void onPackCopyFailure(Minecraft minecraft, String message) {
+        add(minecraft.getToasts(), SystemToast.SystemToastId.PACK_COPY_FAILURE, Component.translatable("pack.copyFailure"), Component.literal(message));
     }
 
-    public static void onFileDropFailure(Minecraft p_350375_, int p_350447_) {
+    public static void onFileDropFailure(Minecraft minecraft, int failedFileCount) {
         add(
-            p_350375_.getToasts(),
+            minecraft.getToasts(),
             SystemToast.SystemToastId.FILE_DROP_FAILURE,
             Component.translatable("gui.fileDropFailure.title"),
-            Component.translatable("gui.fileDropFailure.detail", p_350447_)
+            Component.translatable("gui.fileDropFailure.detail", failedFileCount)
         );
     }
 
-    public static void onLowDiskSpace(Minecraft p_331174_) {
+    public static void onLowDiskSpace(Minecraft minecraft) {
         addOrUpdate(
-            p_331174_.getToasts(),
+            minecraft.getToasts(),
             SystemToast.SystemToastId.LOW_DISK_SPACE,
             Component.translatable("chunk.toast.lowDiskSpace"),
             Component.translatable("chunk.toast.lowDiskSpace.description")
         );
     }
 
-    public static void onChunkLoadFailure(Minecraft p_330933_, ChunkPos p_331933_) {
+    public static void onChunkLoadFailure(Minecraft minecraft, ChunkPos chunkPos) {
         addOrUpdate(
-            p_330933_.getToasts(),
+            minecraft.getToasts(),
             SystemToast.SystemToastId.CHUNK_LOAD_FAILURE,
-            Component.translatable("chunk.toast.loadFailure", Component.translationArg(p_331933_)).withStyle(ChatFormatting.RED),
+            Component.translatable("chunk.toast.loadFailure", Component.translationArg(chunkPos)).withStyle(ChatFormatting.RED),
             Component.translatable("chunk.toast.checkLog")
         );
     }
 
-    public static void onChunkSaveFailure(Minecraft p_331849_, ChunkPos p_330399_) {
+    public static void onChunkSaveFailure(Minecraft minecraft, ChunkPos chunkPos) {
         addOrUpdate(
-            p_331849_.getToasts(),
+            minecraft.getToasts(),
             SystemToast.SystemToastId.CHUNK_SAVE_FAILURE,
-            Component.translatable("chunk.toast.saveFailure", Component.translationArg(p_330399_)).withStyle(ChatFormatting.RED),
+            Component.translatable("chunk.toast.saveFailure", Component.translationArg(chunkPos)).withStyle(ChatFormatting.RED),
             Component.translatable("chunk.toast.checkLog")
         );
     }
@@ -223,8 +223,8 @@ public class SystemToast implements Toast {
         public static final SystemToast.SystemToastId UNSECURE_SERVER_WARNING = new SystemToast.SystemToastId(10000L);
         final long displayTime;
 
-        public SystemToastId(long p_314425_) {
-            this.displayTime = p_314425_;
+        public SystemToastId(long displayTime) {
+            this.displayTime = displayTime;
         }
 
         public SystemToastId() {

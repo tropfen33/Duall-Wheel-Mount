@@ -10,11 +10,14 @@ public class TippableArrowRenderer extends ArrowRenderer<Arrow> {
     public static final ResourceLocation NORMAL_ARROW_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/projectiles/arrow.png");
     public static final ResourceLocation TIPPED_ARROW_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/projectiles/tipped_arrow.png");
 
-    public TippableArrowRenderer(EntityRendererProvider.Context p_174422_) {
-        super(p_174422_);
+    public TippableArrowRenderer(EntityRendererProvider.Context context) {
+        super(context);
     }
 
-    public ResourceLocation getTextureLocation(Arrow p_116140_) {
-        return p_116140_.getColor() > 0 ? TIPPED_ARROW_LOCATION : NORMAL_ARROW_LOCATION;
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Arrow entity) {
+        return entity.getColor() > 0 ? TIPPED_ARROW_LOCATION : NORMAL_ARROW_LOCATION;
     }
 }

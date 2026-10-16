@@ -1,31 +1,54 @@
-modLoader="javafml"
-loaderVersion="[4,)"
-license="All Rights Reserved"
+modLoader = "javafml"
+loaderVersion = "[1,)"
+license = "All Rights Reserved"
+issueTrackerURL = "https://example.invalid/change-me"
 
 [[mods]]
-modId="aero_dualmounts"
-version="1.0.0"
-displayName="Aeronautics: Dual Mounts"
-authors="Lukas Winkler"
-description='''Adds dual mounting functionality to Aeronautics.'''
+modId = "duall_wheel_mount"
+version = "1.0.0"
+displayName = "Duall Wheel Mount"
+authors = "Tropfen_33"
+description = '''Adds a dual-wheel version of Offroad's Wheel Mount block, carrying two wheels side by side on one shared, steerable, brakeable axle.'''
+# logoFile = "duall_wheel_mount.png" # add a real logo PNG here and uncomment if you want one
 
-[[dependencies.aero_dualmounts]]
-modId="neoforge"
-type="required"
-versionRange="[21.1,)"
-ordering="NONE"
-side="BOTH"
+[[dependencies.'duall_wheel_mount']]
+    modId = "neoforge"
+    type = "required"
+    versionRange = "[21.1.235,)"
+    ordering = "NONE"
+    side = "BOTH"
 
-[[dependencies.aero_dualmounts]]
-modId="minecraft"
-type="required"
-versionRange="[1.21.1,1.22)"
-ordering="NONE"
-side="BOTH"
+[[dependencies.'duall_wheel_mount']]
+    modId = "minecraft"
+    type = "required"
+    versionRange = "[1.21.1]"
+    ordering = "NONE"
+    side = "BOTH"
 
-[[dependencies.aero_dualmounts]]
-modId="create"
-type="required"
-versionRange="[6.0.10,)"
-ordering="AFTER"
-side="BOTH"
+[[dependencies.'duall_wheel_mount']]
+    modId = "create"
+    type = "required"
+    versionRange = "[6.0.10,)"
+    ordering = "AFTER"
+    side = "BOTH"
+
+[[dependencies.'duall_wheel_mount']]
+    modId = "sable"
+    type = "required"
+    versionRange = "[2.0.0,3.0.0)"
+    ordering = "AFTER"
+    side = "BOTH"
+
+[[dependencies.'duall_wheel_mount']]
+    modId = "simulated"
+    type = "required"
+    versionRange = "[1.3.1,)"
+    ordering = "AFTER"
+    side = "BOTH"
+
+[[dependencies.'duall_wheel_mount']]
+    modId = "offroad"
+    type = "required"
+    versionRange = "[1.3.1,)"
+    ordering = "AFTER"
+    side = "BOTH"

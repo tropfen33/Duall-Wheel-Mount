@@ -15,8 +15,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class SkinCustomizationScreen extends OptionsSubScreen {
     private static final Component TITLE = Component.translatable("options.skinCustomisation.title");
 
-    public SkinCustomizationScreen(Screen p_346103_, Options p_345751_) {
-        super(p_346103_, p_345751_, TITLE);
+    public SkinCustomizationScreen(Screen lastScreen, Options options) {
+        super(lastScreen, options, TITLE);
     }
 
     @Override

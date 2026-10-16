@@ -12,6 +12,9 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 
+/**
+ * A LootItemCondition that checks the {@linkplain LootContextParams#TOOL tool} against an {@link ItemPredicate}.
+ */
 public record MatchTool(Optional<ItemPredicate> predicate) implements LootItemCondition {
     public static final MapCodec<MatchTool> CODEC = RecordCodecBuilder.mapCodec(
         p_338172_ -> p_338172_.group(ItemPredicate.CODEC.optionalFieldOf("predicate").forGetter(MatchTool::predicate)).apply(p_338172_, MatchTool::new)
@@ -27,12 +30,12 @@ public record MatchTool(Optional<ItemPredicate> predicate) implements LootItemCo
         return ImmutableSet.of(LootContextParams.TOOL);
     }
 
-    public boolean test(LootContext p_82000_) {
-        ItemStack itemstack = p_82000_.getParamOrNull(LootContextParams.TOOL);
+    public boolean test(LootContext context) {
+        ItemStack itemstack = context.getParamOrNull(LootContextParams.TOOL);
         return itemstack != null && (this.predicate.isEmpty() || this.predicate.get().test(itemstack));
     }
 
-    public static LootItemCondition.Builder toolMatches(ItemPredicate.Builder p_81998_) {
-        return () -> new MatchTool(Optional.of(p_81998_.build()));
+    public static LootItemCondition.Builder toolMatches(ItemPredicate.Builder toolPredicateBuilder) {
+        return () -> new MatchTool(Optional.of(toolPredicateBuilder.build()));
     }
 }

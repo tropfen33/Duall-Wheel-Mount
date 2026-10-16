@@ -14,50 +14,60 @@ import org.slf4j.Logger;
 public class PacketUtils {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public static <T extends PacketListener> void ensureRunningOnSameThread(Packet<T> p_131360_, T p_131361_, ServerLevel p_131362_) throws RunningOnDifferentThreadException {
-        ensureRunningOnSameThread(p_131360_, p_131361_, p_131362_.getServer());
+    /**
+     * Ensures that the given packet is handled on the main thread. If the current thread is not the main thread, this method
+     * throws {@link net.minecraft.server.RunningOnDifferentThreadException}, which is caught and ignored in the outer call ({@link net.minecraft.network.Connection#channelRead0(io.netty.channel.ChannelHandlerContext, net.minecraft.network.protocol.Packet)}). Additionally, it then re-schedules the packet to be handled on the main thread,
+     * which will then end up back here, but this time on the main thread.
+     */
+    public static <T extends PacketListener> void ensureRunningOnSameThread(Packet<T> packet, T processor, ServerLevel level) throws RunningOnDifferentThreadException {
+        ensureRunningOnSameThread(packet, processor, level.getServer());
     }
 
-    public static <T extends PacketListener> void ensureRunningOnSameThread(Packet<T> p_131364_, T p_131365_, BlockableEventLoop<?> p_131366_) throws RunningOnDifferentThreadException {
-        if (!p_131366_.isSameThread()) {
-            p_131366_.executeIfPossible(() -> {
-                if (p_131365_.shouldHandleMessage(p_131364_)) {
+    /**
+     * Ensures that the given packet is handled on the main thread. If the current thread is not the main thread, this method
+     * throws {@link net.minecraft.server.RunningOnDifferentThreadException}, which is caught and ignored in the outer call ({@link net.minecraft.network.Connection#channelRead0(io.netty.channel.ChannelHandlerContext, net.minecraft.network.protocol.Packet)}). Additionally, it then re-schedules the packet to be handled on the main thread,
+     * which will then end up back here, but this time on the main thread.
+     */
+    public static <T extends PacketListener> void ensureRunningOnSameThread(Packet<T> packet, T processor, BlockableEventLoop<?> executor) throws RunningOnDifferentThreadException {
+        if (!executor.isSameThread()) {
+            executor.executeIfPossible(() -> {
+                if (processor.shouldHandleMessage(packet)) {
                     try {
-                        p_131364_.handle(p_131365_);
+                        packet.handle(processor);
                     } catch (Exception exception) {
                         if (exception instanceof ReportedException reportedexception && reportedexception.getCause() instanceof OutOfMemoryError) {
-                            throw makeReportedException(exception, p_131364_, p_131365_);
+                            throw makeReportedException(exception, packet, processor);
                         }
 
-                        p_131365_.onPacketError(p_131364_, exception);
+                        processor.onPacketError(packet, exception);
                     }
                 } else {
-                    LOGGER.debug("Ignoring packet due to disconnection: {}", p_131364_);
+                    LOGGER.debug("Ignoring packet due to disconnection: {}", packet);
                 }
             });
             throw RunningOnDifferentThreadException.RUNNING_ON_DIFFERENT_THREAD;
         }
     }
 
-    public static <T extends PacketListener> ReportedException makeReportedException(Exception p_341646_, Packet<T> p_341629_, T p_341619_) {
-        if (p_341646_ instanceof ReportedException reportedexception) {
-            fillCrashReport(reportedexception.getReport(), p_341619_, p_341629_);
+    public static <T extends PacketListener> ReportedException makeReportedException(Exception exception, Packet<T> packet, T packetListener) {
+        if (exception instanceof ReportedException reportedexception) {
+            fillCrashReport(reportedexception.getReport(), packetListener, packet);
             return reportedexception;
         } else {
-            CrashReport crashreport = CrashReport.forThrowable(p_341646_, "Main thread packet handler");
-            fillCrashReport(crashreport, p_341619_, p_341629_);
+            CrashReport crashreport = CrashReport.forThrowable(exception, "Main thread packet handler");
+            fillCrashReport(crashreport, packetListener, packet);
             return new ReportedException(crashreport);
         }
     }
 
-    public static <T extends PacketListener> void fillCrashReport(CrashReport p_340891_, T p_340866_, @Nullable Packet<T> p_340900_) {
-        if (p_340900_ != null) {
-            CrashReportCategory crashreportcategory = p_340891_.addCategory("Incoming Packet");
-            crashreportcategory.setDetail("Type", () -> p_340900_.type().toString());
-            crashreportcategory.setDetail("Is Terminal", () -> Boolean.toString(p_340900_.isTerminal()));
-            crashreportcategory.setDetail("Is Skippable", () -> Boolean.toString(p_340900_.isSkippable()));
+    public static <T extends PacketListener> void fillCrashReport(CrashReport crashReport, T packetListener, @Nullable Packet<T> packet) {
+        if (packet != null) {
+            CrashReportCategory crashreportcategory = crashReport.addCategory("Incoming Packet");
+            crashreportcategory.setDetail("Type", () -> packet.type().toString());
+            crashreportcategory.setDetail("Is Terminal", () -> Boolean.toString(packet.isTerminal()));
+            crashreportcategory.setDetail("Is Skippable", () -> Boolean.toString(packet.isSkippable()));
         }
 
-        p_340866_.fillCrashReport(p_340891_);
+        packetListener.fillCrashReport(crashReport);
     }
 }

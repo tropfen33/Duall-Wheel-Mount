@@ -25,35 +25,35 @@ public record BlockItemStateProperties(Map<String, String> properties) {
         BlockItemStateProperties::new, BlockItemStateProperties::properties
     );
 
-    public <T extends Comparable<T>> BlockItemStateProperties with(Property<T> p_331215_, T p_331193_) {
-        return new BlockItemStateProperties(Util.copyAndPut(this.properties, p_331215_.getName(), p_331215_.getName(p_331193_)));
+    public <T extends Comparable<T>> BlockItemStateProperties with(Property<T> property, T value) {
+        return new BlockItemStateProperties(Util.copyAndPut(this.properties, property.getName(), property.getName(value)));
     }
 
-    public <T extends Comparable<T>> BlockItemStateProperties with(Property<T> p_330873_, BlockState p_330751_) {
-        return this.with(p_330873_, p_330751_.getValue(p_330873_));
+    public <T extends Comparable<T>> BlockItemStateProperties with(Property<T> property, BlockState state) {
+        return this.with(property, state.getValue(property));
     }
 
     @Nullable
-    public <T extends Comparable<T>> T get(Property<T> p_332023_) {
-        String s = this.properties.get(p_332023_.getName());
-        return s == null ? null : p_332023_.getValue(s).orElse(null);
+    public <T extends Comparable<T>> T get(Property<T> property) {
+        String s = this.properties.get(property.getName());
+        return s == null ? null : property.getValue(s).orElse(null);
     }
 
-    public BlockState apply(BlockState p_330225_) {
-        StateDefinition<Block, BlockState> statedefinition = p_330225_.getBlock().getStateDefinition();
+    public BlockState apply(BlockState state) {
+        StateDefinition<Block, BlockState> statedefinition = state.getBlock().getStateDefinition();
 
         for (Entry<String, String> entry : this.properties.entrySet()) {
             Property<?> property = statedefinition.getProperty(entry.getKey());
             if (property != null) {
-                p_330225_ = updateState(p_330225_, property, entry.getValue());
+                state = updateState(state, property, entry.getValue());
             }
         }
 
-        return p_330225_;
+        return state;
     }
 
-    private static <T extends Comparable<T>> BlockState updateState(BlockState p_331833_, Property<T> p_331585_, String p_331923_) {
-        return p_331585_.getValue(p_331923_).map(p_330629_ -> p_331833_.setValue(p_331585_, p_330629_)).orElse(p_331833_);
+    private static <T extends Comparable<T>> BlockState updateState(BlockState state, Property<T> property, String propertyName) {
+        return property.getValue(propertyName).map(p_330629_ -> state.setValue(property, p_330629_)).orElse(state);
     }
 
     public boolean isEmpty() {

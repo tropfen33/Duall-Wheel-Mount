@@ -7,22 +7,25 @@ import net.minecraft.world.item.Items;
 public class FurnaceFuelSlot extends Slot {
     private final AbstractFurnaceMenu menu;
 
-    public FurnaceFuelSlot(AbstractFurnaceMenu p_39520_, Container p_39521_, int p_39522_, int p_39523_, int p_39524_) {
-        super(p_39521_, p_39522_, p_39523_, p_39524_);
-        this.menu = p_39520_;
+    public FurnaceFuelSlot(AbstractFurnaceMenu furnaceMenu, Container furnaceContainer, int slot, int xPosition, int yPosition) {
+        super(furnaceContainer, slot, xPosition, yPosition);
+        this.menu = furnaceMenu;
+    }
+
+    /**
+     * Check if the stack is allowed to be placed in this slot, used for armor slots as well as furnace fuel.
+     */
+    @Override
+    public boolean mayPlace(ItemStack stack) {
+        return this.menu.isFuel(stack) || isBucket(stack);
     }
 
     @Override
-    public boolean mayPlace(ItemStack p_39526_) {
-        return this.menu.isFuel(p_39526_) || isBucket(p_39526_);
+    public int getMaxStackSize(ItemStack stack) {
+        return isBucket(stack) ? 1 : super.getMaxStackSize(stack);
     }
 
-    @Override
-    public int getMaxStackSize(ItemStack p_39528_) {
-        return isBucket(p_39528_) ? 1 : super.getMaxStackSize(p_39528_);
-    }
-
-    public static boolean isBucket(ItemStack p_39530_) {
-        return p_39530_.is(Items.BUCKET);
+    public static boolean isBucket(ItemStack stack) {
+        return stack.is(Items.BUCKET);
     }
 }

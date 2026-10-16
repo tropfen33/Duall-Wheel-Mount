@@ -40,7 +40,7 @@ public interface EntityTypeTags {
     TagKey<EntityType<?>> IMMUNE_TO_INFESTED = create("immune_to_infested");
     TagKey<EntityType<?>> REDIRECTABLE_PROJECTILE = create("redirectable_projectile");
 
-    private static TagKey<EntityType<?>> create(String p_203849_) {
-        return TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.withDefaultNamespace(p_203849_));
+    private static TagKey<EntityType<?>> create(String name) {
+        return TagKey.create(Registries.ENTITY_TYPE, ResourceLocation.withDefaultNamespace(name));
     }
 }

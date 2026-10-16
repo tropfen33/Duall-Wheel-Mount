@@ -22,14 +22,21 @@ public class DesertWellFeature extends Feature<NoneFeatureConfiguration> {
     private final BlockState sandstone = Blocks.SANDSTONE.defaultBlockState();
     private final BlockState water = Blocks.WATER.defaultBlockState();
 
-    public DesertWellFeature(Codec<NoneFeatureConfiguration> p_65599_) {
-        super(p_65599_);
+    public DesertWellFeature(Codec<NoneFeatureConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> p_159571_) {
-        WorldGenLevel worldgenlevel = p_159571_.level();
-        BlockPos blockpos = p_159571_.origin();
+    public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
+        WorldGenLevel worldgenlevel = context.level();
+        BlockPos blockpos = context.origin();
         blockpos = blockpos.above();
 
         while (worldgenlevel.isEmptyBlock(blockpos) && blockpos.getY() > worldgenlevel.getMinBuildHeight() + 2) {
@@ -99,16 +106,16 @@ public class DesertWellFeature extends Feature<NoneFeatureConfiguration> {
             }
 
             List<BlockPos> list = List.of(blockpos, blockpos.east(), blockpos.south(), blockpos.west(), blockpos.north());
-            RandomSource randomsource = p_159571_.random();
+            RandomSource randomsource = context.random();
             placeSusSand(worldgenlevel, Util.getRandom(list, randomsource).below(1));
             placeSusSand(worldgenlevel, Util.getRandom(list, randomsource).below(2));
             return true;
         }
     }
 
-    private static void placeSusSand(WorldGenLevel p_278029_, BlockPos p_278082_) {
-        p_278029_.setBlock(p_278082_, Blocks.SUSPICIOUS_SAND.defaultBlockState(), 3);
-        p_278029_.getBlockEntity(p_278082_, BlockEntityType.BRUSHABLE_BLOCK)
-            .ifPresent(p_335307_ -> p_335307_.setLootTable(BuiltInLootTables.DESERT_WELL_ARCHAEOLOGY, p_278082_.asLong()));
+    private static void placeSusSand(WorldGenLevel level, BlockPos pos) {
+        level.setBlock(pos, Blocks.SUSPICIOUS_SAND.defaultBlockState(), 3);
+        level.getBlockEntity(pos, BlockEntityType.BRUSHABLE_BLOCK)
+            .ifPresent(p_335307_ -> p_335307_.setLootTable(BuiltInLootTables.DESERT_WELL_ARCHAEOLOGY, pos.asLong()));
     }
 }

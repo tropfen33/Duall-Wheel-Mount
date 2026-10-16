@@ -18,14 +18,14 @@ import net.minecraft.world.level.block.state.BlockState;
 public class ValidateNearbyPoi {
     private static final int MAX_DISTANCE = 16;
 
-    public static BehaviorControl<LivingEntity> create(Predicate<Holder<PoiType>> p_259460_, MemoryModuleType<GlobalPos> p_259635_) {
+    public static BehaviorControl<LivingEntity> create(Predicate<Holder<PoiType>> poiValidator, MemoryModuleType<GlobalPos> poiPosMemory) {
         return BehaviorBuilder.create(
-            p_259215_ -> p_259215_.group(p_259215_.present(p_259635_)).apply(p_259215_, p_259498_ -> (p_259843_, p_259259_, p_260036_) -> {
+            p_259215_ -> p_259215_.group(p_259215_.present(poiPosMemory)).apply(p_259215_, p_259498_ -> (p_259843_, p_259259_, p_260036_) -> {
                         GlobalPos globalpos = p_259215_.get(p_259498_);
                         BlockPos blockpos = globalpos.pos();
                         if (p_259843_.dimension() == globalpos.dimension() && blockpos.closerToCenterThan(p_259259_.position(), 16.0)) {
                             ServerLevel serverlevel = p_259843_.getServer().getLevel(globalpos.dimension());
-                            if (serverlevel == null || !serverlevel.getPoiManager().exists(blockpos, p_259460_)) {
+                            if (serverlevel == null || !serverlevel.getPoiManager().exists(blockpos, poiValidator)) {
                                 p_259498_.erase();
                             } else if (bedIsOccupied(serverlevel, blockpos, p_259259_)) {
                                 p_259498_.erase();
@@ -41,8 +41,8 @@ public class ValidateNearbyPoi {
         );
     }
 
-    private static boolean bedIsOccupied(ServerLevel p_24531_, BlockPos p_24532_, LivingEntity p_24533_) {
-        BlockState blockstate = p_24531_.getBlockState(p_24532_);
-        return blockstate.is(BlockTags.BEDS) && blockstate.getValue(BedBlock.OCCUPIED) && !p_24533_.isSleeping();
+    private static boolean bedIsOccupied(ServerLevel level, BlockPos pos, LivingEntity entity) {
+        BlockState blockstate = level.getBlockState(pos);
+        return blockstate.is(BlockTags.BEDS) && blockstate.getValue(BedBlock.OCCUPIED) && !entity.isSleeping();
     }
 }

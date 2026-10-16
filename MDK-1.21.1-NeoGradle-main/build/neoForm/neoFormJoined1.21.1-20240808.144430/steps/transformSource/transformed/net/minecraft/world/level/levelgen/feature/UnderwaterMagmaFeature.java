@@ -17,16 +17,23 @@ import net.minecraft.world.level.levelgen.feature.configurations.UnderwaterMagma
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 public class UnderwaterMagmaFeature extends Feature<UnderwaterMagmaConfiguration> {
-    public UnderwaterMagmaFeature(Codec<UnderwaterMagmaConfiguration> p_160560_) {
-        super(p_160560_);
+    public UnderwaterMagmaFeature(Codec<UnderwaterMagmaConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<UnderwaterMagmaConfiguration> p_160569_) {
-        WorldGenLevel worldgenlevel = p_160569_.level();
-        BlockPos blockpos = p_160569_.origin();
-        UnderwaterMagmaConfiguration underwatermagmaconfiguration = p_160569_.config();
-        RandomSource randomsource = p_160569_.random();
+    public boolean place(FeaturePlaceContext<UnderwaterMagmaConfiguration> context) {
+        WorldGenLevel worldgenlevel = context.level();
+        BlockPos blockpos = context.origin();
+        UnderwaterMagmaConfiguration underwatermagmaconfiguration = context.config();
+        RandomSource randomsource = context.random();
         OptionalInt optionalint = getFloorY(worldgenlevel, blockpos, underwatermagmaconfiguration);
         if (optionalint.isEmpty()) {
             return false;
@@ -50,17 +57,17 @@ public class UnderwaterMagmaFeature extends Feature<UnderwaterMagmaConfiguration
         }
     }
 
-    private static OptionalInt getFloorY(WorldGenLevel p_160565_, BlockPos p_160566_, UnderwaterMagmaConfiguration p_160567_) {
+    private static OptionalInt getFloorY(WorldGenLevel level, BlockPos pos, UnderwaterMagmaConfiguration config) {
         Predicate<BlockState> predicate = p_160586_ -> p_160586_.is(Blocks.WATER);
         Predicate<BlockState> predicate1 = p_160581_ -> !p_160581_.is(Blocks.WATER);
-        Optional<Column> optional = Column.scan(p_160565_, p_160566_, p_160567_.floorSearchRange, predicate, predicate1);
+        Optional<Column> optional = Column.scan(level, pos, config.floorSearchRange, predicate, predicate1);
         return optional.map(Column::getFloor).orElseGet(OptionalInt::empty);
     }
 
-    private boolean isValidPlacement(WorldGenLevel p_160575_, BlockPos p_160576_) {
-        if (!this.isWaterOrAir(p_160575_, p_160576_) && !this.isWaterOrAir(p_160575_, p_160576_.below())) {
+    private boolean isValidPlacement(WorldGenLevel level, BlockPos pos) {
+        if (!this.isWaterOrAir(level, pos) && !this.isWaterOrAir(level, pos.below())) {
             for (Direction direction : Direction.Plane.HORIZONTAL) {
-                if (this.isWaterOrAir(p_160575_, p_160576_.relative(direction))) {
+                if (this.isWaterOrAir(level, pos.relative(direction))) {
                     return false;
                 }
             }
@@ -71,8 +78,8 @@ public class UnderwaterMagmaFeature extends Feature<UnderwaterMagmaConfiguration
         }
     }
 
-    private boolean isWaterOrAir(LevelAccessor p_160562_, BlockPos p_160563_) {
-        BlockState blockstate = p_160562_.getBlockState(p_160563_);
+    private boolean isWaterOrAir(LevelAccessor level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
         return blockstate.is(Blocks.WATER) || blockstate.isAir();
     }
 }

@@ -21,13 +21,13 @@ public class SimpleTexture extends AbstractTexture {
     static final Logger LOGGER = LogUtils.getLogger();
     protected final ResourceLocation location;
 
-    public SimpleTexture(ResourceLocation p_118133_) {
-        this.location = p_118133_;
+    public SimpleTexture(ResourceLocation location) {
+        this.location = location;
     }
 
     @Override
-    public void load(ResourceManager p_118135_) throws IOException {
-        SimpleTexture.TextureImage simpletexture$textureimage = this.getTextureImage(p_118135_);
+    public void load(ResourceManager resourceManager) throws IOException {
+        SimpleTexture.TextureImage simpletexture$textureimage = this.getTextureImage(resourceManager);
         simpletexture$textureimage.throwIfError();
         TextureMetadataSection texturemetadatasection = simpletexture$textureimage.getTextureMetadata();
         boolean flag;
@@ -48,13 +48,13 @@ public class SimpleTexture extends AbstractTexture {
         }
     }
 
-    private void doLoad(NativeImage p_118137_, boolean p_118138_, boolean p_118139_) {
-        TextureUtil.prepareImage(this.getId(), 0, p_118137_.getWidth(), p_118137_.getHeight());
-        p_118137_.upload(0, 0, 0, 0, 0, p_118137_.getWidth(), p_118137_.getHeight(), p_118138_, p_118139_, false, true);
+    private void doLoad(NativeImage image, boolean blur, boolean clamp) {
+        TextureUtil.prepareImage(this.getId(), 0, image.getWidth(), image.getHeight());
+        image.upload(0, 0, 0, 0, 0, image.getWidth(), image.getHeight(), blur, clamp, false, true);
     }
 
-    protected SimpleTexture.TextureImage getTextureImage(ResourceManager p_118140_) {
-        return SimpleTexture.TextureImage.load(p_118140_, this.location);
+    protected SimpleTexture.TextureImage getTextureImage(ResourceManager resourceManager) {
+        return SimpleTexture.TextureImage.load(resourceManager, this.location);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -66,21 +66,21 @@ public class SimpleTexture extends AbstractTexture {
         @Nullable
         private final IOException exception;
 
-        public TextureImage(IOException p_118153_) {
-            this.exception = p_118153_;
+        public TextureImage(IOException exception) {
+            this.exception = exception;
             this.metadata = null;
             this.image = null;
         }
 
-        public TextureImage(@Nullable TextureMetadataSection p_118150_, NativeImage p_118151_) {
+        public TextureImage(@Nullable TextureMetadataSection metadata, NativeImage image) {
             this.exception = null;
-            this.metadata = p_118150_;
-            this.image = p_118151_;
+            this.metadata = metadata;
+            this.image = image;
         }
 
-        public static SimpleTexture.TextureImage load(ResourceManager p_118156_, ResourceLocation p_118157_) {
+        public static SimpleTexture.TextureImage load(ResourceManager resourceManager, ResourceLocation location) {
             try {
-                Resource resource = p_118156_.getResourceOrThrow(p_118157_);
+                Resource resource = resourceManager.getResourceOrThrow(location);
 
                 NativeImage nativeimage;
                 try (InputStream inputstream = resource.open()) {
@@ -92,7 +92,7 @@ public class SimpleTexture extends AbstractTexture {
                 try {
                     texturemetadatasection = resource.metadata().getSection(TextureMetadataSection.SERIALIZER).orElse(null);
                 } catch (RuntimeException runtimeexception) {
-                    SimpleTexture.LOGGER.warn("Failed reading metadata of: {}", p_118157_, runtimeexception);
+                    SimpleTexture.LOGGER.warn("Failed reading metadata of: {}", location, runtimeexception);
                 }
 
                 return new SimpleTexture.TextureImage(texturemetadatasection, nativeimage);

@@ -21,17 +21,17 @@ public class GameConfig {
     public final GameConfig.QuickPlayData quickPlay;
 
     public GameConfig(
-        GameConfig.UserData p_279448_,
-        DisplayData p_279368_,
-        GameConfig.FolderData p_279174_,
-        GameConfig.GameData p_279138_,
-        GameConfig.QuickPlayData p_279425_
+        GameConfig.UserData user,
+        DisplayData display,
+        GameConfig.FolderData location,
+        GameConfig.GameData game,
+        GameConfig.QuickPlayData quickPlay
     ) {
-        this.user = p_279448_;
-        this.display = p_279368_;
-        this.location = p_279174_;
-        this.game = p_279138_;
-        this.quickPlay = p_279425_;
+        this.user = user;
+        this.display = display;
+        this.location = location;
+        this.game = game;
+        this.quickPlay = quickPlay;
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -42,11 +42,11 @@ public class GameConfig {
         @Nullable
         public final String assetIndex;
 
-        public FolderData(File p_101921_, File p_101922_, File p_101923_, @Nullable String p_101924_) {
-            this.gameDirectory = p_101921_;
-            this.resourcePackDirectory = p_101922_;
-            this.assetDirectory = p_101923_;
-            this.assetIndex = p_101924_;
+        public FolderData(File gameDirectory, File resourcePackDirectory, File assetDirectory, @Nullable String assetIndex) {
+            this.gameDirectory = gameDirectory;
+            this.resourcePackDirectory = resourcePackDirectory;
+            this.assetDirectory = assetDirectory;
+            this.assetIndex = assetIndex;
         }
 
         public Path getExternalAssetSource() {
@@ -62,12 +62,12 @@ public class GameConfig {
         public final boolean disableMultiplayer;
         public final boolean disableChat;
 
-        public GameData(boolean p_101932_, String p_101933_, String p_101934_, boolean p_101935_, boolean p_101936_) {
-            this.demo = p_101932_;
-            this.launchVersion = p_101933_;
-            this.versionType = p_101934_;
-            this.disableMultiplayer = p_101935_;
-            this.disableChat = p_101936_;
+        public GameData(boolean demo, String launchVersion, String versionType, boolean disableMultiplayer, boolean disableChat) {
+            this.demo = demo;
+            this.launchVersion = launchVersion;
+            this.versionType = versionType;
+            this.disableMultiplayer = disableMultiplayer;
+            this.disableChat = disableChat;
         }
     }
 
@@ -85,11 +85,11 @@ public class GameConfig {
         public final PropertyMap profileProperties;
         public final Proxy proxy;
 
-        public UserData(User p_101947_, PropertyMap p_101948_, PropertyMap p_101949_, Proxy p_101950_) {
-            this.user = p_101947_;
-            this.userProperties = p_101948_;
-            this.profileProperties = p_101949_;
-            this.proxy = p_101950_;
+        public UserData(User user, PropertyMap userProperties, PropertyMap profileProperties, Proxy proxy) {
+            this.user = user;
+            this.userProperties = userProperties;
+            this.profileProperties = profileProperties;
+            this.proxy = proxy;
         }
     }
 }

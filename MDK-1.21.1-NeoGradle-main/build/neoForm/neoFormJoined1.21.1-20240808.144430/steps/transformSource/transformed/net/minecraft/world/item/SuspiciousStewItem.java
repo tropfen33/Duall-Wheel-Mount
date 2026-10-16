@@ -13,33 +13,36 @@ import net.minecraft.world.level.Level;
 public class SuspiciousStewItem extends Item {
     public static final int DEFAULT_DURATION = 160;
 
-    public SuspiciousStewItem(Item.Properties p_43257_) {
-        super(p_43257_);
+    public SuspiciousStewItem(Item.Properties properties) {
+        super(properties);
     }
 
     @Override
-    public void appendHoverText(ItemStack p_260314_, Item.TooltipContext p_339691_, List<Component> p_259700_, TooltipFlag p_260021_) {
-        super.appendHoverText(p_260314_, p_339691_, p_259700_, p_260021_);
-        if (p_260021_.isCreative()) {
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        if (tooltipFlag.isCreative()) {
             List<MobEffectInstance> list = new ArrayList<>();
-            SuspiciousStewEffects suspicioussteweffects = p_260314_.getOrDefault(DataComponents.SUSPICIOUS_STEW_EFFECTS, SuspiciousStewEffects.EMPTY);
+            SuspiciousStewEffects suspicioussteweffects = stack.getOrDefault(DataComponents.SUSPICIOUS_STEW_EFFECTS, SuspiciousStewEffects.EMPTY);
 
             for (SuspiciousStewEffects.Entry suspicioussteweffects$entry : suspicioussteweffects.effects()) {
                 list.add(suspicioussteweffects$entry.createEffectInstance());
             }
 
-            PotionContents.addPotionTooltip(list, p_259700_::add, 1.0F, p_339691_.tickRate());
+            PotionContents.addPotionTooltip(list, tooltipComponents::add, 1.0F, context.tickRate());
         }
     }
 
+    /**
+     * Called when the player finishes using this Item (E.g. finishes eating.). Not called when the player stops using the Item before the action is complete.
+     */
     @Override
-    public ItemStack finishUsingItem(ItemStack p_43263_, Level p_43264_, LivingEntity p_43265_) {
-        SuspiciousStewEffects suspicioussteweffects = p_43263_.getOrDefault(DataComponents.SUSPICIOUS_STEW_EFFECTS, SuspiciousStewEffects.EMPTY);
+    public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entityLiving) {
+        SuspiciousStewEffects suspicioussteweffects = stack.getOrDefault(DataComponents.SUSPICIOUS_STEW_EFFECTS, SuspiciousStewEffects.EMPTY);
 
         for (SuspiciousStewEffects.Entry suspicioussteweffects$entry : suspicioussteweffects.effects()) {
-            p_43265_.addEffect(suspicioussteweffects$entry.createEffectInstance());
+            entityLiving.addEffect(suspicioussteweffects$entry.createEffectInstance());
         }
 
-        return super.finishUsingItem(p_43263_, p_43264_, p_43265_);
+        return super.finishUsingItem(stack, level, entityLiving);
     }
 }

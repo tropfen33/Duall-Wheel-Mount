@@ -21,20 +21,20 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class ShulkerBoxRenderer implements BlockEntityRenderer<ShulkerBoxBlockEntity> {
     private final ShulkerModel<?> model;
 
-    public ShulkerBoxRenderer(BlockEntityRendererProvider.Context p_173626_) {
-        this.model = new ShulkerModel(p_173626_.bakeLayer(ModelLayers.SHULKER));
+    public ShulkerBoxRenderer(BlockEntityRendererProvider.Context context) {
+        this.model = new ShulkerModel(context.bakeLayer(ModelLayers.SHULKER));
     }
 
-    public void render(ShulkerBoxBlockEntity p_112478_, float p_112479_, PoseStack p_112480_, MultiBufferSource p_112481_, int p_112482_, int p_112483_) {
+    public void render(ShulkerBoxBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
         Direction direction = Direction.UP;
-        if (p_112478_.hasLevel()) {
-            BlockState blockstate = p_112478_.getLevel().getBlockState(p_112478_.getBlockPos());
+        if (blockEntity.hasLevel()) {
+            BlockState blockstate = blockEntity.getLevel().getBlockState(blockEntity.getBlockPos());
             if (blockstate.getBlock() instanceof ShulkerBoxBlock) {
                 direction = blockstate.getValue(ShulkerBoxBlock.FACING);
             }
         }
 
-        DyeColor dyecolor = p_112478_.getColor();
+        DyeColor dyecolor = blockEntity.getColor();
         Material material;
         if (dyecolor == null) {
             material = Sheets.DEFAULT_SHULKER_TEXTURE_LOCATION;
@@ -42,19 +42,19 @@ public class ShulkerBoxRenderer implements BlockEntityRenderer<ShulkerBoxBlockEn
             material = Sheets.SHULKER_TEXTURE_LOCATION.get(dyecolor.getId());
         }
 
-        p_112480_.pushPose();
-        p_112480_.translate(0.5F, 0.5F, 0.5F);
+        poseStack.pushPose();
+        poseStack.translate(0.5F, 0.5F, 0.5F);
         float f = 0.9995F;
-        p_112480_.scale(0.9995F, 0.9995F, 0.9995F);
-        p_112480_.mulPose(direction.getRotation());
-        p_112480_.scale(1.0F, -1.0F, -1.0F);
-        p_112480_.translate(0.0F, -1.0F, 0.0F);
+        poseStack.scale(0.9995F, 0.9995F, 0.9995F);
+        poseStack.mulPose(direction.getRotation());
+        poseStack.scale(1.0F, -1.0F, -1.0F);
+        poseStack.translate(0.0F, -1.0F, 0.0F);
         ModelPart modelpart = this.model.getLid();
-        modelpart.setPos(0.0F, 24.0F - p_112478_.getProgress(p_112479_) * 0.5F * 16.0F, 0.0F);
-        modelpart.yRot = 270.0F * p_112478_.getProgress(p_112479_) * (float) (Math.PI / 180.0);
-        VertexConsumer vertexconsumer = material.buffer(p_112481_, RenderType::entityCutoutNoCull);
-        this.model.renderToBuffer(p_112480_, vertexconsumer, p_112482_, p_112483_);
-        p_112480_.popPose();
+        modelpart.setPos(0.0F, 24.0F - blockEntity.getProgress(partialTick) * 0.5F * 16.0F, 0.0F);
+        modelpart.yRot = 270.0F * blockEntity.getProgress(partialTick) * (float) (Math.PI / 180.0);
+        VertexConsumer vertexconsumer = material.buffer(bufferSource, RenderType::entityCutoutNoCull);
+        this.model.renderToBuffer(poseStack, vertexconsumer, packedLight, packedOverlay);
+        poseStack.popPose();
     }
 
     @Override

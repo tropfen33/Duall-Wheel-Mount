@@ -18,10 +18,10 @@ import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadType;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
 
 public interface StructureSets {
-    static void bootstrap(BootstrapContext<StructureSet> p_321852_) {
-        HolderGetter<Structure> holdergetter = p_321852_.lookup(Registries.STRUCTURE);
-        HolderGetter<Biome> holdergetter1 = p_321852_.lookup(Registries.BIOME);
-        Holder.Reference<StructureSet> reference = p_321852_.register(
+    static void bootstrap(BootstrapContext<StructureSet> context) {
+        HolderGetter<Structure> holdergetter = context.lookup(Registries.STRUCTURE);
+        HolderGetter<Biome> holdergetter1 = context.lookup(Registries.BIOME);
+        Holder.Reference<StructureSet> reference = context.register(
             BuiltinStructureSets.VILLAGES,
             new StructureSet(
                 List.of(
@@ -34,27 +34,27 @@ public interface StructureSets {
                 new RandomSpreadStructurePlacement(34, 8, RandomSpreadType.LINEAR, 10387312)
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.DESERT_PYRAMIDS,
             new StructureSet(
                 holdergetter.getOrThrow(BuiltinStructures.DESERT_PYRAMID), new RandomSpreadStructurePlacement(32, 8, RandomSpreadType.LINEAR, 14357617)
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.IGLOOS,
             new StructureSet(holdergetter.getOrThrow(BuiltinStructures.IGLOO), new RandomSpreadStructurePlacement(32, 8, RandomSpreadType.LINEAR, 14357618))
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.JUNGLE_TEMPLES,
             new StructureSet(
                 holdergetter.getOrThrow(BuiltinStructures.JUNGLE_TEMPLE), new RandomSpreadStructurePlacement(32, 8, RandomSpreadType.LINEAR, 14357619)
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.SWAMP_HUTS,
             new StructureSet(holdergetter.getOrThrow(BuiltinStructures.SWAMP_HUT), new RandomSpreadStructurePlacement(32, 8, RandomSpreadType.LINEAR, 14357620))
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.PILLAGER_OUTPOSTS,
             new StructureSet(
                 holdergetter.getOrThrow(BuiltinStructures.PILLAGER_OUTPOST),
@@ -70,25 +70,25 @@ public interface StructureSets {
                 )
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.ANCIENT_CITIES,
             new StructureSet(
                 holdergetter.getOrThrow(BuiltinStructures.ANCIENT_CITY), new RandomSpreadStructurePlacement(24, 8, RandomSpreadType.LINEAR, 20083232)
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.OCEAN_MONUMENTS,
             new StructureSet(
                 holdergetter.getOrThrow(BuiltinStructures.OCEAN_MONUMENT), new RandomSpreadStructurePlacement(32, 5, RandomSpreadType.TRIANGULAR, 10387313)
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.WOODLAND_MANSIONS,
             new StructureSet(
                 holdergetter.getOrThrow(BuiltinStructures.WOODLAND_MANSION), new RandomSpreadStructurePlacement(80, 20, RandomSpreadType.TRIANGULAR, 10387319)
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.BURIED_TREASURES,
             new StructureSet(
                 holdergetter.getOrThrow(BuiltinStructures.BURIED_TREASURE),
@@ -97,7 +97,7 @@ public interface StructureSets {
                 )
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.MINESHAFTS,
             new StructureSet(
                 List.of(
@@ -109,7 +109,7 @@ public interface StructureSets {
                 )
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.RUINED_PORTALS,
             new StructureSet(
                 List.of(
@@ -124,7 +124,7 @@ public interface StructureSets {
                 new RandomSpreadStructurePlacement(40, 15, RandomSpreadType.LINEAR, 34222645)
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.SHIPWRECKS,
             new StructureSet(
                 List.of(
@@ -134,7 +134,7 @@ public interface StructureSets {
                 new RandomSpreadStructurePlacement(24, 4, RandomSpreadType.LINEAR, 165745295)
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.OCEAN_RUINS,
             new StructureSet(
                 List.of(
@@ -144,7 +144,7 @@ public interface StructureSets {
                 new RandomSpreadStructurePlacement(20, 8, RandomSpreadType.LINEAR, 14357621)
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.NETHER_COMPLEXES,
             new StructureSet(
                 List.of(
@@ -154,32 +154,32 @@ public interface StructureSets {
                 new RandomSpreadStructurePlacement(27, 4, RandomSpreadType.LINEAR, 30084232)
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.NETHER_FOSSILS,
             new StructureSet(
                 holdergetter.getOrThrow(BuiltinStructures.NETHER_FOSSIL), new RandomSpreadStructurePlacement(2, 1, RandomSpreadType.LINEAR, 14357921)
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.END_CITIES,
             new StructureSet(
                 holdergetter.getOrThrow(BuiltinStructures.END_CITY), new RandomSpreadStructurePlacement(20, 11, RandomSpreadType.TRIANGULAR, 10387313)
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.STRONGHOLDS,
             new StructureSet(
                 holdergetter.getOrThrow(BuiltinStructures.STRONGHOLD),
                 new ConcentricRingsStructurePlacement(32, 3, 128, holdergetter1.getOrThrow(BiomeTags.STRONGHOLD_BIASED_TO))
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.TRAIL_RUINS,
             new StructureSet(
                 holdergetter.getOrThrow(BuiltinStructures.TRAIL_RUINS), new RandomSpreadStructurePlacement(34, 8, RandomSpreadType.LINEAR, 83469867)
             )
         );
-        p_321852_.register(
+        context.register(
             BuiltinStructureSets.TRIAL_CHAMBERS,
             new StructureSet(
                 holdergetter.getOrThrow(BuiltinStructures.TRIAL_CHAMBERS), new RandomSpreadStructurePlacement(34, 12, RandomSpreadType.LINEAR, 94251327)

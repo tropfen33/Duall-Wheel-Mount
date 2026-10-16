@@ -18,24 +18,27 @@ public record ClientboundCustomQueryPacket(int transactionId, CustomQueryPayload
         this(p_179810_.readVarInt(), readPayload(p_179810_.readResourceLocation(), p_179810_));
     }
 
-    private static CustomQueryPayload readPayload(ResourceLocation p_295267_, FriendlyByteBuf p_295117_) {
-        return readUnknownPayload(p_295267_, p_295117_);
+    private static CustomQueryPayload readPayload(ResourceLocation id, FriendlyByteBuf buffer) {
+        return readUnknownPayload(id, buffer);
     }
 
-    private static DiscardedQueryPayload readUnknownPayload(ResourceLocation p_294837_, FriendlyByteBuf p_296380_) {
-        int i = p_296380_.readableBytes();
+    private static DiscardedQueryPayload readUnknownPayload(ResourceLocation id, FriendlyByteBuf buffer) {
+        int i = buffer.readableBytes();
         if (i >= 0 && i <= 1048576) {
-            p_296380_.skipBytes(i);
-            return new DiscardedQueryPayload(p_294837_);
+            buffer.skipBytes(i);
+            return new DiscardedQueryPayload(id);
         } else {
             throw new IllegalArgumentException("Payload may not be larger than 1048576 bytes");
         }
     }
 
-    private void write(FriendlyByteBuf p_134757_) {
-        p_134757_.writeVarInt(this.transactionId);
-        p_134757_.writeResourceLocation(this.payload.id());
-        this.payload.write(p_134757_);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.transactionId);
+        buffer.writeResourceLocation(this.payload.id());
+        this.payload.write(buffer);
     }
 
     @Override
@@ -43,7 +46,10 @@ public record ClientboundCustomQueryPacket(int transactionId, CustomQueryPayload
         return LoginPacketTypes.CLIENTBOUND_CUSTOM_QUERY;
     }
 
-    public void handle(ClientLoginPacketListener p_134754_) {
-        p_134754_.handleCustomQuery(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientLoginPacketListener handler) {
+        handler.handleCustomQuery(this);
     }
 }

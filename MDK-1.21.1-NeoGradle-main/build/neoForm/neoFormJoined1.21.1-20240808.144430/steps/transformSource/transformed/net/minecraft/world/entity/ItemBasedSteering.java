@@ -15,10 +15,10 @@ public class ItemBasedSteering {
     private boolean boosting;
     private int boostTime;
 
-    public ItemBasedSteering(SynchedEntityData p_20841_, EntityDataAccessor<Integer> p_20842_, EntityDataAccessor<Boolean> p_20843_) {
-        this.entityData = p_20841_;
-        this.boostTimeAccessor = p_20842_;
-        this.hasSaddleAccessor = p_20843_;
+    public ItemBasedSteering(SynchedEntityData entityData, EntityDataAccessor<Integer> boostTimeAccessor, EntityDataAccessor<Boolean> hasSaddleAccessor) {
+        this.entityData = entityData;
+        this.boostTimeAccessor = boostTimeAccessor;
+        this.hasSaddleAccessor = hasSaddleAccessor;
     }
 
     public void onSynced() {
@@ -26,13 +26,13 @@ public class ItemBasedSteering {
         this.boostTime = 0;
     }
 
-    public boolean boost(RandomSource p_217033_) {
+    public boolean boost(RandomSource random) {
         if (this.boosting) {
             return false;
         } else {
             this.boosting = true;
             this.boostTime = 0;
-            this.entityData.set(this.boostTimeAccessor, p_217033_.nextInt(841) + 140);
+            this.entityData.set(this.boostTimeAccessor, random.nextInt(841) + 140);
             return true;
         }
     }
@@ -51,16 +51,16 @@ public class ItemBasedSteering {
         return this.entityData.get(this.boostTimeAccessor);
     }
 
-    public void addAdditionalSaveData(CompoundTag p_20848_) {
-        p_20848_.putBoolean("Saddle", this.hasSaddle());
+    public void addAdditionalSaveData(CompoundTag nbt) {
+        nbt.putBoolean("Saddle", this.hasSaddle());
     }
 
-    public void readAdditionalSaveData(CompoundTag p_20853_) {
-        this.setSaddle(p_20853_.getBoolean("Saddle"));
+    public void readAdditionalSaveData(CompoundTag nbt) {
+        this.setSaddle(nbt.getBoolean("Saddle"));
     }
 
-    public void setSaddle(boolean p_20850_) {
-        this.entityData.set(this.hasSaddleAccessor, p_20850_);
+    public void setSaddle(boolean saddled) {
+        this.entityData.set(this.hasSaddleAccessor, saddled);
     }
 
     public boolean hasSaddle() {

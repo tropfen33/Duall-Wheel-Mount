@@ -24,30 +24,42 @@ public class RabbitModel<T extends Rabbit> extends EntityModel<T> {
     private final ModelPart rightRearFoot;
     private final ModelPart leftHaunch;
     private final ModelPart rightHaunch;
+    /**
+     * The Rabbit's Body
+     */
     private final ModelPart body;
     private final ModelPart leftFrontLeg;
     private final ModelPart rightFrontLeg;
+    /**
+     * The Rabbit's Head
+     */
     private final ModelPart head;
     private final ModelPart rightEar;
     private final ModelPart leftEar;
+    /**
+     * The Rabbit's Tail
+     */
     private final ModelPart tail;
+    /**
+     * The Rabbit's Nose
+     */
     private final ModelPart nose;
     private float jumpRotation;
     private static final float NEW_SCALE = 0.6F;
 
-    public RabbitModel(ModelPart p_170881_) {
-        this.leftRearFoot = p_170881_.getChild("left_hind_foot");
-        this.rightRearFoot = p_170881_.getChild("right_hind_foot");
-        this.leftHaunch = p_170881_.getChild("left_haunch");
-        this.rightHaunch = p_170881_.getChild("right_haunch");
-        this.body = p_170881_.getChild("body");
-        this.leftFrontLeg = p_170881_.getChild("left_front_leg");
-        this.rightFrontLeg = p_170881_.getChild("right_front_leg");
-        this.head = p_170881_.getChild("head");
-        this.rightEar = p_170881_.getChild("right_ear");
-        this.leftEar = p_170881_.getChild("left_ear");
-        this.tail = p_170881_.getChild("tail");
-        this.nose = p_170881_.getChild("nose");
+    public RabbitModel(ModelPart root) {
+        this.leftRearFoot = root.getChild("left_hind_foot");
+        this.rightRearFoot = root.getChild("right_hind_foot");
+        this.leftHaunch = root.getChild("left_haunch");
+        this.rightHaunch = root.getChild("right_haunch");
+        this.body = root.getChild("body");
+        this.leftFrontLeg = root.getChild("left_front_leg");
+        this.rightFrontLeg = root.getChild("right_front_leg");
+        this.head = root.getChild("head");
+        this.rightEar = root.getChild("right_ear");
+        this.leftEar = root.getChild("left_ear");
+        this.tail = root.getChild("tail");
+        this.nose = root.getChild("nose");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -109,27 +121,27 @@ public class RabbitModel<T extends Rabbit> extends EntityModel<T> {
     }
 
     @Override
-    public void renderToBuffer(PoseStack p_103555_, VertexConsumer p_103556_, int p_103557_, int p_103558_, int p_351021_) {
+    public void renderToBuffer(PoseStack poseStack, VertexConsumer buffer, int packedLight, int packedOverlay, int color) {
         if (this.young) {
             float f = 1.5F;
-            p_103555_.pushPose();
-            p_103555_.scale(0.56666666F, 0.56666666F, 0.56666666F);
-            p_103555_.translate(0.0F, 1.375F, 0.125F);
+            poseStack.pushPose();
+            poseStack.scale(0.56666666F, 0.56666666F, 0.56666666F);
+            poseStack.translate(0.0F, 1.375F, 0.125F);
             ImmutableList.of(this.head, this.leftEar, this.rightEar, this.nose)
-                .forEach(p_349855_ -> p_349855_.render(p_103555_, p_103556_, p_103557_, p_103558_, p_351021_));
-            p_103555_.popPose();
-            p_103555_.pushPose();
-            p_103555_.scale(0.4F, 0.4F, 0.4F);
-            p_103555_.translate(0.0F, 2.25F, 0.0F);
+                .forEach(p_349855_ -> p_349855_.render(poseStack, buffer, packedLight, packedOverlay, color));
+            poseStack.popPose();
+            poseStack.pushPose();
+            poseStack.scale(0.4F, 0.4F, 0.4F);
+            poseStack.translate(0.0F, 2.25F, 0.0F);
             ImmutableList.of(
                     this.leftRearFoot, this.rightRearFoot, this.leftHaunch, this.rightHaunch, this.body, this.leftFrontLeg, this.rightFrontLeg, this.tail
                 )
-                .forEach(p_349849_ -> p_349849_.render(p_103555_, p_103556_, p_103557_, p_103558_, p_351021_));
-            p_103555_.popPose();
+                .forEach(p_349849_ -> p_349849_.render(poseStack, buffer, packedLight, packedOverlay, color));
+            poseStack.popPose();
         } else {
-            p_103555_.pushPose();
-            p_103555_.scale(0.6F, 0.6F, 0.6F);
-            p_103555_.translate(0.0F, 1.0F, 0.0F);
+            poseStack.pushPose();
+            poseStack.scale(0.6F, 0.6F, 0.6F);
+            poseStack.translate(0.0F, 1.0F, 0.0F);
             ImmutableList.of(
                     this.leftRearFoot,
                     this.rightRearFoot,
@@ -144,22 +156,25 @@ public class RabbitModel<T extends Rabbit> extends EntityModel<T> {
                     this.tail,
                     this.nose
                 )
-                .forEach(p_349861_ -> p_349861_.render(p_103555_, p_103556_, p_103557_, p_103558_, p_351021_));
-            p_103555_.popPose();
+                .forEach(p_349861_ -> p_349861_.render(poseStack, buffer, packedLight, packedOverlay, color));
+            poseStack.popPose();
         }
     }
 
-    public void setupAnim(T p_103548_, float p_103549_, float p_103550_, float p_103551_, float p_103552_, float p_103553_) {
-        float f = p_103551_ - (float)p_103548_.tickCount;
-        this.nose.xRot = p_103553_ * (float) (Math.PI / 180.0);
-        this.head.xRot = p_103553_ * (float) (Math.PI / 180.0);
-        this.rightEar.xRot = p_103553_ * (float) (Math.PI / 180.0);
-        this.leftEar.xRot = p_103553_ * (float) (Math.PI / 180.0);
-        this.nose.yRot = p_103552_ * (float) (Math.PI / 180.0);
-        this.head.yRot = p_103552_ * (float) (Math.PI / 180.0);
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        float f = ageInTicks - (float)entity.tickCount;
+        this.nose.xRot = headPitch * (float) (Math.PI / 180.0);
+        this.head.xRot = headPitch * (float) (Math.PI / 180.0);
+        this.rightEar.xRot = headPitch * (float) (Math.PI / 180.0);
+        this.leftEar.xRot = headPitch * (float) (Math.PI / 180.0);
+        this.nose.yRot = netHeadYaw * (float) (Math.PI / 180.0);
+        this.head.yRot = netHeadYaw * (float) (Math.PI / 180.0);
         this.rightEar.yRot = this.nose.yRot - (float) (Math.PI / 12);
         this.leftEar.yRot = this.nose.yRot + (float) (Math.PI / 12);
-        this.jumpRotation = Mth.sin(p_103548_.getJumpCompletion(f) * (float) Math.PI);
+        this.jumpRotation = Mth.sin(entity.getJumpCompletion(f) * (float) Math.PI);
         this.leftHaunch.xRot = (this.jumpRotation * 50.0F - 21.0F) * (float) (Math.PI / 180.0);
         this.rightHaunch.xRot = (this.jumpRotation * 50.0F - 21.0F) * (float) (Math.PI / 180.0);
         this.leftRearFoot.xRot = this.jumpRotation * 50.0F * (float) (Math.PI / 180.0);
@@ -168,8 +183,8 @@ public class RabbitModel<T extends Rabbit> extends EntityModel<T> {
         this.rightFrontLeg.xRot = (this.jumpRotation * -40.0F - 11.0F) * (float) (Math.PI / 180.0);
     }
 
-    public void prepareMobModel(T p_103543_, float p_103544_, float p_103545_, float p_103546_) {
-        super.prepareMobModel(p_103543_, p_103544_, p_103545_, p_103546_);
-        this.jumpRotation = Mth.sin(p_103543_.getJumpCompletion(p_103546_) * (float) Math.PI);
+    public void prepareMobModel(T entity, float limbSwing, float limbSwingAmount, float partialTick) {
+        super.prepareMobModel(entity, limbSwing, limbSwingAmount, partialTick);
+        this.jumpRotation = Mth.sin(entity.getJumpCompletion(partialTick) * (float) Math.PI);
     }
 }

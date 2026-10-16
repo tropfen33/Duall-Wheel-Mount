@@ -34,8 +34,8 @@ public class AdvancementCommands {
         return SharedSuggestionProvider.suggestResource(collection.stream().map(AdvancementHolder::id), p_136345_);
     };
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_136311_) {
-        p_136311_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("advancement")
                 .requires(p_136318_ -> p_136318_.hasPermission(2))
                 .then(
@@ -269,63 +269,68 @@ public class AdvancementCommands {
         );
     }
 
+    /**
+     * Performs the given action on each advancement in the list, for each player.
+     *
+     * @return The number of affected advancements across all players.
+     */
     private static int perform(
-        CommandSourceStack p_136320_, Collection<ServerPlayer> p_136321_, AdvancementCommands.Action p_136322_, Collection<AdvancementHolder> p_136323_
+        CommandSourceStack source, Collection<ServerPlayer> targets, AdvancementCommands.Action action, Collection<AdvancementHolder> advancements
     ) throws CommandSyntaxException {
         int i = 0;
 
-        for (ServerPlayer serverplayer : p_136321_) {
-            i += p_136322_.perform(serverplayer, p_136323_);
+        for (ServerPlayer serverplayer : targets) {
+            i += action.perform(serverplayer, advancements);
         }
 
         if (i == 0) {
-            if (p_136323_.size() == 1) {
-                if (p_136321_.size() == 1) {
+            if (advancements.size() == 1) {
+                if (targets.size() == 1) {
                     throw ERROR_NO_ACTION_PERFORMED.create(
                         Component.translatable(
-                            p_136322_.getKey() + ".one.to.one.failure",
-                            Advancement.name(p_136323_.iterator().next()),
-                            p_136321_.iterator().next().getDisplayName()
+                            action.getKey() + ".one.to.one.failure",
+                            Advancement.name(advancements.iterator().next()),
+                            targets.iterator().next().getDisplayName()
                         )
                     );
                 } else {
                     throw ERROR_NO_ACTION_PERFORMED.create(
-                        Component.translatable(p_136322_.getKey() + ".one.to.many.failure", Advancement.name(p_136323_.iterator().next()), p_136321_.size())
+                        Component.translatable(action.getKey() + ".one.to.many.failure", Advancement.name(advancements.iterator().next()), targets.size())
                     );
                 }
-            } else if (p_136321_.size() == 1) {
+            } else if (targets.size() == 1) {
                 throw ERROR_NO_ACTION_PERFORMED.create(
-                    Component.translatable(p_136322_.getKey() + ".many.to.one.failure", p_136323_.size(), p_136321_.iterator().next().getDisplayName())
+                    Component.translatable(action.getKey() + ".many.to.one.failure", advancements.size(), targets.iterator().next().getDisplayName())
                 );
             } else {
-                throw ERROR_NO_ACTION_PERFORMED.create(Component.translatable(p_136322_.getKey() + ".many.to.many.failure", p_136323_.size(), p_136321_.size()));
+                throw ERROR_NO_ACTION_PERFORMED.create(Component.translatable(action.getKey() + ".many.to.many.failure", advancements.size(), targets.size()));
             }
         } else {
-            if (p_136323_.size() == 1) {
-                if (p_136321_.size() == 1) {
-                    p_136320_.sendSuccess(
+            if (advancements.size() == 1) {
+                if (targets.size() == 1) {
+                    source.sendSuccess(
                         () -> Component.translatable(
-                                p_136322_.getKey() + ".one.to.one.success",
-                                Advancement.name(p_136323_.iterator().next()),
-                                p_136321_.iterator().next().getDisplayName()
+                                action.getKey() + ".one.to.one.success",
+                                Advancement.name(advancements.iterator().next()),
+                                targets.iterator().next().getDisplayName()
                             ),
                         true
                     );
                 } else {
-                    p_136320_.sendSuccess(
+                    source.sendSuccess(
                         () -> Component.translatable(
-                                p_136322_.getKey() + ".one.to.many.success", Advancement.name(p_136323_.iterator().next()), p_136321_.size()
+                                action.getKey() + ".one.to.many.success", Advancement.name(advancements.iterator().next()), targets.size()
                             ),
                         true
                     );
                 }
-            } else if (p_136321_.size() == 1) {
-                p_136320_.sendSuccess(
-                    () -> Component.translatable(p_136322_.getKey() + ".many.to.one.success", p_136323_.size(), p_136321_.iterator().next().getDisplayName()),
+            } else if (targets.size() == 1) {
+                source.sendSuccess(
+                    () -> Component.translatable(action.getKey() + ".many.to.one.success", advancements.size(), targets.iterator().next().getDisplayName()),
                     true
                 );
             } else {
-                p_136320_.sendSuccess(() -> Component.translatable(p_136322_.getKey() + ".many.to.many.success", p_136323_.size(), p_136321_.size()), true);
+                source.sendSuccess(() -> Component.translatable(action.getKey() + ".many.to.many.success", advancements.size(), targets.size()), true);
             }
 
             return i;
@@ -333,49 +338,49 @@ public class AdvancementCommands {
     }
 
     private static int performCriterion(
-        CommandSourceStack p_136325_, Collection<ServerPlayer> p_136326_, AdvancementCommands.Action p_136327_, AdvancementHolder p_301324_, String p_136329_
+        CommandSourceStack source, Collection<ServerPlayer> targets, AdvancementCommands.Action action, AdvancementHolder p_advancement, String criterionName
     ) throws CommandSyntaxException {
         int i = 0;
-        Advancement advancement = p_301324_.value();
-        if (!advancement.criteria().containsKey(p_136329_)) {
-            throw ERROR_CRITERION_NOT_FOUND.create(Advancement.name(p_301324_), p_136329_);
+        Advancement advancement = p_advancement.value();
+        if (!advancement.criteria().containsKey(criterionName)) {
+            throw ERROR_CRITERION_NOT_FOUND.create(Advancement.name(p_advancement), criterionName);
         } else {
-            for (ServerPlayer serverplayer : p_136326_) {
-                if (p_136327_.performCriterion(serverplayer, p_301324_, p_136329_)) {
+            for (ServerPlayer serverplayer : targets) {
+                if (action.performCriterion(serverplayer, p_advancement, criterionName)) {
                     i++;
                 }
             }
 
             if (i == 0) {
-                if (p_136326_.size() == 1) {
+                if (targets.size() == 1) {
                     throw ERROR_NO_ACTION_PERFORMED.create(
                         Component.translatable(
-                            p_136327_.getKey() + ".criterion.to.one.failure",
-                            p_136329_,
-                            Advancement.name(p_301324_),
-                            p_136326_.iterator().next().getDisplayName()
+                            action.getKey() + ".criterion.to.one.failure",
+                            criterionName,
+                            Advancement.name(p_advancement),
+                            targets.iterator().next().getDisplayName()
                         )
                     );
                 } else {
                     throw ERROR_NO_ACTION_PERFORMED.create(
-                        Component.translatable(p_136327_.getKey() + ".criterion.to.many.failure", p_136329_, Advancement.name(p_301324_), p_136326_.size())
+                        Component.translatable(action.getKey() + ".criterion.to.many.failure", criterionName, Advancement.name(p_advancement), targets.size())
                     );
                 }
             } else {
-                if (p_136326_.size() == 1) {
-                    p_136325_.sendSuccess(
+                if (targets.size() == 1) {
+                    source.sendSuccess(
                         () -> Component.translatable(
-                                p_136327_.getKey() + ".criterion.to.one.success",
-                                p_136329_,
-                                Advancement.name(p_301324_),
-                                p_136326_.iterator().next().getDisplayName()
+                                action.getKey() + ".criterion.to.one.success",
+                                criterionName,
+                                Advancement.name(p_advancement),
+                                targets.iterator().next().getDisplayName()
                             ),
                         true
                     );
                 } else {
-                    p_136325_.sendSuccess(
+                    source.sendSuccess(
                         () -> Component.translatable(
-                                p_136327_.getKey() + ".criterion.to.many.success", p_136329_, Advancement.name(p_301324_), p_136326_.size()
+                                action.getKey() + ".criterion.to.many.success", criterionName, Advancement.name(p_advancement), targets.size()
                             ),
                         true
                     );
@@ -387,22 +392,22 @@ public class AdvancementCommands {
     }
 
     private static List<AdvancementHolder> getAdvancements(
-        CommandContext<CommandSourceStack> p_300960_, AdvancementHolder p_301220_, AdvancementCommands.Mode p_136335_
+        CommandContext<CommandSourceStack> context, AdvancementHolder advancement, AdvancementCommands.Mode mode
     ) {
-        AdvancementTree advancementtree = p_300960_.getSource().getServer().getAdvancements().tree();
-        AdvancementNode advancementnode = advancementtree.get(p_301220_);
+        AdvancementTree advancementtree = context.getSource().getServer().getAdvancements().tree();
+        AdvancementNode advancementnode = advancementtree.get(advancement);
         if (advancementnode == null) {
-            return List.of(p_301220_);
+            return List.of(advancement);
         } else {
             List<AdvancementHolder> list = new ArrayList<>();
-            if (p_136335_.parents) {
+            if (mode.parents) {
                 for (AdvancementNode advancementnode1 = advancementnode.parent(); advancementnode1 != null; advancementnode1 = advancementnode1.parent()) {
                     list.add(advancementnode1.holder());
                 }
             }
 
-            list.add(p_301220_);
-            if (p_136335_.children) {
+            list.add(advancement);
+            if (mode.children) {
                 addChildren(advancementnode, list);
             }
 
@@ -410,10 +415,10 @@ public class AdvancementCommands {
         }
     }
 
-    private static void addChildren(AdvancementNode p_300871_, List<AdvancementHolder> p_136332_) {
-        for (AdvancementNode advancementnode : p_300871_.children()) {
-            p_136332_.add(advancementnode.holder());
-            addChildren(advancementnode, p_136332_);
+    private static void addChildren(AdvancementNode node, List<AdvancementHolder> output) {
+        for (AdvancementNode advancementnode : node.children()) {
+            output.add(advancementnode.holder());
+            addChildren(advancementnode, output);
         }
     }
 
@@ -461,15 +466,20 @@ public class AdvancementCommands {
 
         private final String key;
 
-        Action(String p_136372_) {
-            this.key = "commands.advancement." + p_136372_;
+        Action(String key) {
+            this.key = "commands.advancement." + key;
         }
 
-        public int perform(ServerPlayer p_136380_, Iterable<AdvancementHolder> p_136381_) {
+        /**
+         * Applies this action to all the given advancements.
+         *
+         * @return The number of players affected.
+         */
+        public int perform(ServerPlayer player, Iterable<AdvancementHolder> advancements) {
             int i = 0;
 
-            for (AdvancementHolder advancementholder : p_136381_) {
-                if (this.perform(p_136380_, advancementholder)) {
+            for (AdvancementHolder advancementholder : advancements) {
+                if (this.perform(player, advancementholder)) {
                     i++;
                 }
             }
@@ -477,9 +487,9 @@ public class AdvancementCommands {
             return i;
         }
 
-        protected abstract boolean perform(ServerPlayer p_136384_, AdvancementHolder p_301251_);
+        protected abstract boolean perform(ServerPlayer player, AdvancementHolder advancement);
 
-        protected abstract boolean performCriterion(ServerPlayer p_136382_, AdvancementHolder p_301120_, String p_301262_);
+        protected abstract boolean performCriterion(ServerPlayer player, AdvancementHolder advancement, String criterionName);
 
         protected String getKey() {
             return this.key;
@@ -496,9 +506,9 @@ public class AdvancementCommands {
         final boolean parents;
         final boolean children;
 
-        private Mode(boolean p_136424_, boolean p_136425_) {
-            this.parents = p_136424_;
-            this.children = p_136425_;
+        private Mode(boolean parents, boolean children) {
+            this.parents = parents;
+            this.children = children;
         }
     }
 }

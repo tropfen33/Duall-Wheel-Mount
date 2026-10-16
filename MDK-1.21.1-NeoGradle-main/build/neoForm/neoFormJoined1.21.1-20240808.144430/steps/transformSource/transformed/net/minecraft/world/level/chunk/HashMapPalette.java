@@ -14,33 +14,33 @@ public class HashMapPalette<T> implements Palette<T> {
     private final PaletteResize<T> resizeHandler;
     private final int bits;
 
-    public HashMapPalette(IdMap<T> p_187908_, int p_187909_, PaletteResize<T> p_187910_, List<T> p_187911_) {
-        this(p_187908_, p_187909_, p_187910_);
-        p_187911_.forEach(this.values::add);
+    public HashMapPalette(IdMap<T> registry, int bits, PaletteResize<T> resizeHandler, List<T> values) {
+        this(registry, bits, resizeHandler);
+        values.forEach(this.values::add);
     }
 
-    public HashMapPalette(IdMap<T> p_187904_, int p_187905_, PaletteResize<T> p_187906_) {
-        this(p_187904_, p_187905_, p_187906_, CrudeIncrementalIntIdentityHashBiMap.create(1 << p_187905_));
+    public HashMapPalette(IdMap<T> registry, int bits, PaletteResize<T> resizeHandler) {
+        this(registry, bits, resizeHandler, CrudeIncrementalIntIdentityHashBiMap.create(1 << bits));
     }
 
-    private HashMapPalette(IdMap<T> p_199915_, int p_199916_, PaletteResize<T> p_199917_, CrudeIncrementalIntIdentityHashBiMap<T> p_199918_) {
-        this.registry = p_199915_;
-        this.bits = p_199916_;
-        this.resizeHandler = p_199917_;
-        this.values = p_199918_;
+    private HashMapPalette(IdMap<T> registry, int bits, PaletteResize<T> resizeHandler, CrudeIncrementalIntIdentityHashBiMap<T> values) {
+        this.registry = registry;
+        this.bits = bits;
+        this.resizeHandler = resizeHandler;
+        this.values = values;
     }
 
-    public static <A> Palette<A> create(int p_187913_, IdMap<A> p_187914_, PaletteResize<A> p_187915_, List<A> p_187916_) {
-        return new HashMapPalette<>(p_187914_, p_187913_, p_187915_, p_187916_);
+    public static <A> Palette<A> create(int bits, IdMap<A> registry, PaletteResize<A> resizeHandler, List<A> values) {
+        return new HashMapPalette<>(registry, bits, resizeHandler, values);
     }
 
     @Override
-    public int idFor(T p_62673_) {
-        int i = this.values.getId(p_62673_);
+    public int idFor(T state) {
+        int i = this.values.getId(state);
         if (i == -1) {
-            i = this.values.add(p_62673_);
+            i = this.values.add(state);
             if (i >= 1 << this.bits) {
-                i = this.resizeHandler.onResize(this.bits + 1, p_62673_);
+                i = this.resizeHandler.onResize(this.bits + 1, state);
             }
         }
 
@@ -48,9 +48,9 @@ public class HashMapPalette<T> implements Palette<T> {
     }
 
     @Override
-    public boolean maybeHas(Predicate<T> p_62675_) {
+    public boolean maybeHas(Predicate<T> filter) {
         for (int i = 0; i < this.getSize(); i++) {
-            if (p_62675_.test(this.values.byId(i))) {
+            if (filter.test(this.values.byId(i))) {
                 return true;
             }
         }
@@ -59,32 +59,32 @@ public class HashMapPalette<T> implements Palette<T> {
     }
 
     @Override
-    public T valueFor(int p_62671_) {
-        T t = this.values.byId(p_62671_);
+    public T valueFor(int id) {
+        T t = this.values.byId(id);
         if (t == null) {
-            throw new MissingPaletteEntryException(p_62671_);
+            throw new MissingPaletteEntryException(id);
         } else {
             return t;
         }
     }
 
     @Override
-    public void read(FriendlyByteBuf p_62679_) {
+    public void read(FriendlyByteBuf buffer) {
         this.values.clear();
-        int i = p_62679_.readVarInt();
+        int i = buffer.readVarInt();
 
         for (int j = 0; j < i; j++) {
-            this.values.add(this.registry.byIdOrThrow(p_62679_.readVarInt()));
+            this.values.add(this.registry.byIdOrThrow(buffer.readVarInt()));
         }
     }
 
     @Override
-    public void write(FriendlyByteBuf p_62684_) {
+    public void write(FriendlyByteBuf buffer) {
         int i = this.getSize();
-        p_62684_.writeVarInt(i);
+        buffer.writeVarInt(i);
 
         for (int j = 0; j < i; j++) {
-            p_62684_.writeVarInt(this.registry.getId(this.values.byId(j)));
+            buffer.writeVarInt(this.registry.getId(this.values.byId(j)));
         }
     }
 

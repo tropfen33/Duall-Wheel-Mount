@@ -40,11 +40,11 @@ public abstract class BlockEntity extends net.neoforged.neoforge.attachment.Atta
     @Nullable
     private CompoundTag customPersistentData;
 
-    public BlockEntity(BlockEntityType<?> p_155228_, BlockPos p_155229_, BlockState p_155230_) {
-        this.type = p_155228_;
-        this.worldPosition = p_155229_.immutable();
-        this.validateBlockState(p_155230_);
-        this.blockState = p_155230_;
+    public BlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState blockState) {
+        this.type = type;
+        this.worldPosition = pos.immutable();
+        this.validateBlockState(blockState);
+        this.blockState = blockState;
     }
 
     private void validateBlockState(BlockState p_353132_) {
@@ -57,8 +57,8 @@ public abstract class BlockEntity extends net.neoforged.neoforge.attachment.Atta
         return this.getType().isValid(p_353131_); // Neo: use getter so correct type is checked for modded subclasses
     }
 
-    public static BlockPos getPosFromTag(CompoundTag p_187473_) {
-        return new BlockPos(p_187473_.getInt("x"), p_187473_.getInt("y"), p_187473_.getInt("z"));
+    public static BlockPos getPosFromTag(CompoundTag tag) {
+        return new BlockPos(tag.getInt("x"), tag.getInt("y"), tag.getInt("z"));
     }
 
     @Nullable
@@ -66,101 +66,101 @@ public abstract class BlockEntity extends net.neoforged.neoforge.attachment.Atta
         return this.level;
     }
 
-    public void setLevel(Level p_155231_) {
-        this.level = p_155231_;
+    public void setLevel(Level level) {
+        this.level = level;
     }
 
     public boolean hasLevel() {
         return this.level != null;
     }
 
-    protected void loadAdditional(CompoundTag p_338466_, HolderLookup.Provider p_338445_) {
-        if (p_338466_.contains("NeoForgeData", net.minecraft.nbt.Tag.TAG_COMPOUND)) this.customPersistentData = p_338466_.getCompound("NeoForgeData");
-        if (p_338466_.contains(ATTACHMENTS_NBT_KEY, net.minecraft.nbt.Tag.TAG_COMPOUND)) deserializeAttachments(p_338445_, p_338466_.getCompound(ATTACHMENTS_NBT_KEY));
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        if (tag.contains("NeoForgeData", net.minecraft.nbt.Tag.TAG_COMPOUND)) this.customPersistentData = tag.getCompound("NeoForgeData");
+        if (tag.contains(ATTACHMENTS_NBT_KEY, net.minecraft.nbt.Tag.TAG_COMPOUND)) deserializeAttachments(registries, tag.getCompound(ATTACHMENTS_NBT_KEY));
     }
 
-    public final void loadWithComponents(CompoundTag p_338356_, HolderLookup.Provider p_338558_) {
-        this.loadAdditional(p_338356_, p_338558_);
+    public final void loadWithComponents(CompoundTag tag, HolderLookup.Provider registries) {
+        this.loadAdditional(tag, registries);
         BlockEntity.ComponentHelper.COMPONENTS_CODEC
-            .parse(p_338558_.createSerializationContext(NbtOps.INSTANCE), p_338356_)
+            .parse(registries.createSerializationContext(NbtOps.INSTANCE), tag)
             .resultOrPartial(p_337987_ -> LOGGER.warn("Failed to load components: {}", p_337987_))
             .ifPresent(p_337995_ -> this.components = p_337995_);
     }
 
-    public final void loadCustomOnly(CompoundTag p_338387_, HolderLookup.Provider p_338713_) {
-        this.loadAdditional(p_338387_, p_338713_);
+    public final void loadCustomOnly(CompoundTag tag, HolderLookup.Provider registries) {
+        this.loadAdditional(tag, registries);
     }
 
-    protected void saveAdditional(CompoundTag p_187471_, HolderLookup.Provider p_323635_) {
-        if (this.customPersistentData != null) p_187471_.put("NeoForgeData", this.customPersistentData.copy());
-        var attachmentsTag = serializeAttachments(p_323635_);
-        if (attachmentsTag != null) p_187471_.put(ATTACHMENTS_NBT_KEY, attachmentsTag);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        if (this.customPersistentData != null) tag.put("NeoForgeData", this.customPersistentData.copy());
+        var attachmentsTag = serializeAttachments(registries);
+        if (attachmentsTag != null) tag.put(ATTACHMENTS_NBT_KEY, attachmentsTag);
     }
 
-    public final CompoundTag saveWithFullMetadata(HolderLookup.Provider p_323767_) {
-        CompoundTag compoundtag = this.saveWithoutMetadata(p_323767_);
+    public final CompoundTag saveWithFullMetadata(HolderLookup.Provider registries) {
+        CompoundTag compoundtag = this.saveWithoutMetadata(registries);
         this.saveMetadata(compoundtag);
         return compoundtag;
     }
 
-    public final CompoundTag saveWithId(HolderLookup.Provider p_324357_) {
-        CompoundTag compoundtag = this.saveWithoutMetadata(p_324357_);
+    public final CompoundTag saveWithId(HolderLookup.Provider registries) {
+        CompoundTag compoundtag = this.saveWithoutMetadata(registries);
         this.saveId(compoundtag);
         return compoundtag;
     }
 
-    public final CompoundTag saveWithoutMetadata(HolderLookup.Provider p_324030_) {
+    public final CompoundTag saveWithoutMetadata(HolderLookup.Provider registries) {
         CompoundTag compoundtag = new CompoundTag();
-        this.saveAdditional(compoundtag, p_324030_);
+        this.saveAdditional(compoundtag, registries);
         BlockEntity.ComponentHelper.COMPONENTS_CODEC
-            .encodeStart(p_324030_.createSerializationContext(NbtOps.INSTANCE), this.components)
+            .encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), this.components)
             .resultOrPartial(p_337988_ -> LOGGER.warn("Failed to save components: {}", p_337988_))
             .ifPresent(p_337994_ -> compoundtag.merge((CompoundTag)p_337994_));
         return compoundtag;
     }
 
-    public final CompoundTag saveCustomOnly(HolderLookup.Provider p_338656_) {
+    public final CompoundTag saveCustomOnly(HolderLookup.Provider registries) {
         CompoundTag compoundtag = new CompoundTag();
-        this.saveAdditional(compoundtag, p_338656_);
+        this.saveAdditional(compoundtag, registries);
         return compoundtag;
     }
 
-    public final CompoundTag saveCustomAndMetadata(HolderLookup.Provider p_339688_) {
-        CompoundTag compoundtag = this.saveCustomOnly(p_339688_);
+    public final CompoundTag saveCustomAndMetadata(HolderLookup.Provider registries) {
+        CompoundTag compoundtag = this.saveCustomOnly(registries);
         this.saveMetadata(compoundtag);
         return compoundtag;
     }
 
-    private void saveId(CompoundTag p_187475_) {
+    private void saveId(CompoundTag tag) {
         ResourceLocation resourcelocation = BlockEntityType.getKey(this.getType());
         if (resourcelocation == null) {
             throw new RuntimeException(this.getClass() + " is missing a mapping! This is a bug!");
         } else {
-            p_187475_.putString("id", resourcelocation.toString());
+            tag.putString("id", resourcelocation.toString());
         }
     }
 
-    public static void addEntityType(CompoundTag p_187469_, BlockEntityType<?> p_187470_) {
-        p_187469_.putString("id", BlockEntityType.getKey(p_187470_).toString());
+    public static void addEntityType(CompoundTag tag, BlockEntityType<?> entityType) {
+        tag.putString("id", BlockEntityType.getKey(entityType).toString());
     }
 
-    public void saveToItem(ItemStack p_187477_, HolderLookup.Provider p_323484_) {
-        CompoundTag compoundtag = this.saveCustomOnly(p_323484_);
+    public void saveToItem(ItemStack stack, HolderLookup.Provider registries) {
+        CompoundTag compoundtag = this.saveCustomOnly(registries);
         this.removeComponentsFromTag(compoundtag);
-        BlockItem.setBlockEntityData(p_187477_, this.getType(), compoundtag);
-        p_187477_.applyComponents(this.collectComponents());
+        BlockItem.setBlockEntityData(stack, this.getType(), compoundtag);
+        stack.applyComponents(this.collectComponents());
     }
 
-    private void saveMetadata(CompoundTag p_187479_) {
-        this.saveId(p_187479_);
-        p_187479_.putInt("x", this.worldPosition.getX());
-        p_187479_.putInt("y", this.worldPosition.getY());
-        p_187479_.putInt("z", this.worldPosition.getZ());
+    private void saveMetadata(CompoundTag tag) {
+        this.saveId(tag);
+        tag.putInt("x", this.worldPosition.getX());
+        tag.putInt("y", this.worldPosition.getY());
+        tag.putInt("z", this.worldPosition.getZ());
     }
 
     @Nullable
-    public static BlockEntity loadStatic(BlockPos p_155242_, BlockState p_155243_, CompoundTag p_155244_, HolderLookup.Provider p_323542_) {
-        String s = p_155244_.getString("id");
+    public static BlockEntity loadStatic(BlockPos pos, BlockState state, CompoundTag tag, HolderLookup.Provider registries) {
+        String s = tag.getString("id");
         ResourceLocation resourcelocation = ResourceLocation.tryParse(s);
         if (resourcelocation == null) {
             LOGGER.error("Block entity has invalid type: {}", s);
@@ -168,14 +168,14 @@ public abstract class BlockEntity extends net.neoforged.neoforge.attachment.Atta
         } else {
             return BuiltInRegistries.BLOCK_ENTITY_TYPE.getOptional(resourcelocation).map(p_155240_ -> {
                 try {
-                    return p_155240_.create(p_155242_, p_155243_);
+                    return p_155240_.create(pos, state);
                 } catch (Throwable throwable) {
                     LOGGER.error("Failed to create block entity {}", s, throwable);
                     return null;
                 }
             }).map(p_337992_ -> {
                 try {
-                    p_337992_.loadWithComponents(p_155244_, p_323542_);
+                    p_337992_.loadWithComponents(tag, registries);
                     return (BlockEntity)p_337992_;
                 } catch (Throwable throwable) {
                     LOGGER.error("Failed to load data for block entity {}", s, throwable);
@@ -194,10 +194,10 @@ public abstract class BlockEntity extends net.neoforged.neoforge.attachment.Atta
         }
     }
 
-    protected static void setChanged(Level p_155233_, BlockPos p_155234_, BlockState p_155235_) {
-        p_155233_.blockEntityChanged(p_155234_);
-        if (!p_155235_.isAir()) {
-            p_155233_.updateNeighbourForOutputSignal(p_155234_, p_155235_.getBlock());
+    protected static void setChanged(Level level, BlockPos pos, BlockState state) {
+        level.blockEntityChanged(pos);
+        if (!state.isAir()) {
+            level.updateNeighbourForOutputSignal(pos, state.getBlock());
         }
     }
 
@@ -214,7 +214,7 @@ public abstract class BlockEntity extends net.neoforged.neoforge.attachment.Atta
         return null;
     }
 
-    public CompoundTag getUpdateTag(HolderLookup.Provider p_323910_) {
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         return new CompoundTag();
     }
 
@@ -234,15 +234,15 @@ public abstract class BlockEntity extends net.neoforged.neoforge.attachment.Atta
         invalidateCapabilities();
     }
 
-    public boolean triggerEvent(int p_58889_, int p_58890_) {
+    public boolean triggerEvent(int id, int type) {
         return false;
     }
 
-    public void fillCrashReportCategory(CrashReportCategory p_58887_) {
-        p_58887_.setDetail("Name", this::getNameForReporting);
+    public void fillCrashReportCategory(CrashReportCategory reportCategory) {
+        reportCategory.setDetail("Name", this::getNameForReporting);
         if (this.level != null) {
-            CrashReportCategory.populateBlockDetails(p_58887_, this.level, this.worldPosition, this.getBlockState());
-            CrashReportCategory.populateBlockDetails(p_58887_, this.level, this.worldPosition, this.level.getBlockState(this.worldPosition));
+            CrashReportCategory.populateBlockDetails(reportCategory, this.level, this.worldPosition, this.getBlockState());
+            CrashReportCategory.populateBlockDetails(reportCategory, this.level, this.worldPosition, this.level.getBlockState(this.worldPosition));
         }
     }
 
@@ -285,22 +285,22 @@ public abstract class BlockEntity extends net.neoforged.neoforge.attachment.Atta
     }
 
     @Deprecated
-    public void setBlockState(BlockState p_155251_) {
-        this.validateBlockState(p_155251_);
-        this.blockState = p_155251_;
+    public void setBlockState(BlockState blockState) {
+        this.validateBlockState(blockState);
+        this.blockState = blockState;
     }
 
-    protected void applyImplicitComponents(BlockEntity.DataComponentInput p_338718_) {
+    protected void applyImplicitComponents(BlockEntity.DataComponentInput componentInput) {
     }
 
-    public final void applyComponentsFromItemStack(ItemStack p_338428_) {
-        this.applyComponents(p_338428_.getPrototype(), p_338428_.getComponentsPatch());
+    public final void applyComponentsFromItemStack(ItemStack stack) {
+        this.applyComponents(stack.getPrototype(), stack.getComponentsPatch());
     }
 
-    public final void applyComponents(DataComponentMap p_330364_, DataComponentPatch p_338381_) {
+    public final void applyComponents(DataComponentMap components, DataComponentPatch patch) {
         final Set<DataComponentType<?>> set = new HashSet<>();
         set.add(DataComponents.BLOCK_ENTITY_DATA);
-        final DataComponentMap datacomponentmap = PatchedDataComponentMap.fromPatch(p_330364_, p_338381_);
+        final DataComponentMap datacomponentmap = PatchedDataComponentMap.fromPatch(components, patch);
         this.applyImplicitComponents(new BlockEntity.DataComponentInput() {
             @Nullable
             @Override
@@ -315,15 +315,15 @@ public abstract class BlockEntity extends net.neoforged.neoforge.attachment.Atta
                 return datacomponentmap.getOrDefault(p_338358_, p_338352_);
             }
         });
-        DataComponentPatch datacomponentpatch = p_338381_.forget(set::contains);
+        DataComponentPatch datacomponentpatch = patch.forget(set::contains);
         this.components = datacomponentpatch.split().added();
     }
 
-    protected void collectImplicitComponents(DataComponentMap.Builder p_338210_) {
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
     }
 
     @Deprecated
-    public void removeComponentsFromTag(CompoundTag p_332032_) {
+    public void removeComponentsFromTag(CompoundTag tag) {
     }
 
     public final DataComponentMap collectComponents() {
@@ -337,16 +337,16 @@ public abstract class BlockEntity extends net.neoforged.neoforge.attachment.Atta
         return this.components;
     }
 
-    public void setComponents(DataComponentMap p_338529_) {
-        this.components = p_338529_;
+    public void setComponents(DataComponentMap components) {
+        this.components = components;
     }
 
     @Nullable
-    public static Component parseCustomNameSafe(String p_342033_, HolderLookup.Provider p_342030_) {
+    public static Component parseCustomNameSafe(String customName, HolderLookup.Provider registries) {
         try {
-            return Component.Serializer.fromJson(p_342033_, p_342030_);
+            return Component.Serializer.fromJson(customName, registries);
         } catch (Exception exception) {
-            LOGGER.warn("Failed to parse custom name from string '{}', discarding", p_342033_, exception);
+            LOGGER.warn("Failed to parse custom name from string '{}', discarding", customName, exception);
             return null;
         }
     }
@@ -360,9 +360,9 @@ public abstract class BlockEntity extends net.neoforged.neoforge.attachment.Atta
 
     protected interface DataComponentInput {
         @Nullable
-        <T> T get(DataComponentType<T> p_338658_);
+        <T> T get(DataComponentType<T> component);
 
-        <T> T getOrDefault(DataComponentType<? extends T> p_338573_, T p_338734_);
+        <T> T getOrDefault(DataComponentType<? extends T> component, T defaultValue);
 
         // Neo: Utility for modded component types, to remove the need to invoke '.value()'
         @Nullable

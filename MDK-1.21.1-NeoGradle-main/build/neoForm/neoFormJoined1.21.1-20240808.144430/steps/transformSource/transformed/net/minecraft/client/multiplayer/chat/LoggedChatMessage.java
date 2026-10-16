@@ -20,12 +20,12 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface LoggedChatMessage extends LoggedChatEvent {
-    static LoggedChatMessage.Player player(GameProfile p_261832_, PlayerChatMessage p_261491_, ChatTrustLevel p_262141_) {
-        return new LoggedChatMessage.Player(p_261832_, p_261491_, p_262141_);
+    static LoggedChatMessage.Player player(GameProfile profile, PlayerChatMessage message, ChatTrustLevel trustLevel) {
+        return new LoggedChatMessage.Player(profile, message, trustLevel);
     }
 
-    static LoggedChatMessage.System system(Component p_242325_, Instant p_242334_) {
-        return new LoggedChatMessage.System(p_242325_, p_242334_);
+    static LoggedChatMessage.System system(Component message, Instant timestamp) {
+        return new LoggedChatMessage.System(message, timestamp);
     }
 
     Component toContentComponent();
@@ -34,7 +34,7 @@ public interface LoggedChatMessage extends LoggedChatEvent {
         return this.toContentComponent();
     }
 
-    boolean canReport(UUID p_242315_);
+    boolean canReport(UUID uuid);
 
     @OnlyIn(Dist.CLIENT)
     public static record Player(GameProfile profile, PlayerChatMessage message, ChatTrustLevel trustLevel) implements LoggedChatMessage {
@@ -76,8 +76,8 @@ public interface LoggedChatMessage extends LoggedChatEvent {
         }
 
         @Override
-        public boolean canReport(UUID p_242210_) {
-            return this.message.hasSignatureFrom(p_242210_);
+        public boolean canReport(UUID uuid) {
+            return this.message.hasSignatureFrom(uuid);
         }
 
         public UUID profileId() {
@@ -106,7 +106,7 @@ public interface LoggedChatMessage extends LoggedChatEvent {
         }
 
         @Override
-        public boolean canReport(UUID p_242173_) {
+        public boolean canReport(UUID uuid) {
             return false;
         }
 

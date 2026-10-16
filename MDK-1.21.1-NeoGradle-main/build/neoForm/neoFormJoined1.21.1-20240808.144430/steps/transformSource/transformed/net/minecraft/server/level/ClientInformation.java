@@ -30,15 +30,15 @@ public record ClientInformation(
         );
     }
 
-    public void write(FriendlyByteBuf p_302000_) {
-        p_302000_.writeUtf(this.language);
-        p_302000_.writeByte(this.viewDistance);
-        p_302000_.writeEnum(this.chatVisibility);
-        p_302000_.writeBoolean(this.chatColors);
-        p_302000_.writeByte(this.modelCustomisation);
-        p_302000_.writeEnum(this.mainHand);
-        p_302000_.writeBoolean(this.textFilteringEnabled);
-        p_302000_.writeBoolean(this.allowsListing);
+    public void write(FriendlyByteBuf buffer) {
+        buffer.writeUtf(this.language);
+        buffer.writeByte(this.viewDistance);
+        buffer.writeEnum(this.chatVisibility);
+        buffer.writeBoolean(this.chatColors);
+        buffer.writeByte(this.modelCustomisation);
+        buffer.writeEnum(this.mainHand);
+        buffer.writeBoolean(this.textFilteringEnabled);
+        buffer.writeBoolean(this.allowsListing);
     }
 
     public static ClientInformation createDefault() {

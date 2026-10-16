@@ -14,9 +14,9 @@ public record NeighborUpdatesDebugPayload(long time, BlockPos pos) implements Cu
         this(p_295153_.readVarLong(), p_295153_.readBlockPos());
     }
 
-    private void write(FriendlyByteBuf p_296340_) {
-        p_296340_.writeVarLong(this.time);
-        p_296340_.writeBlockPos(this.pos);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarLong(this.time);
+        buffer.writeBlockPos(this.pos);
     }
 
     @Override

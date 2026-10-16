@@ -8,14 +8,14 @@ import net.minecraft.tags.EnchantmentTags;
 import net.minecraft.world.item.enchantment.Enchantments;
 
 public class VanillaEnchantmentTagsProvider extends EnchantmentTagsProvider {
-    public VanillaEnchantmentTagsProvider(PackOutput p_341093_, CompletableFuture<HolderLookup.Provider> p_341136_) {
-        super(p_341093_, p_341136_);
+    public VanillaEnchantmentTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
+        super(output, lookupProvider);
     }
 
     @Override
-    protected void addTags(HolderLookup.Provider p_341310_) {
+    protected void addTags(HolderLookup.Provider provider) {
         this.tooltipOrder(
-            p_341310_,
+            provider,
             new ResourceKey[]{
                 Enchantments.BINDING_CURSE,
                 Enchantments.VANISHING_CURSE,

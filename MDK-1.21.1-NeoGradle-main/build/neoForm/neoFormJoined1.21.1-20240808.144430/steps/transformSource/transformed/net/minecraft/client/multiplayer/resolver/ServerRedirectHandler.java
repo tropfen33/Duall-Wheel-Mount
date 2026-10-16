@@ -17,7 +17,7 @@ public interface ServerRedirectHandler {
     Logger LOGGER = LogUtils.getLogger();
     ServerRedirectHandler EMPTY = p_171897_ -> Optional.empty();
 
-    Optional<ServerAddress> lookupRedirect(ServerAddress p_171902_);
+    Optional<ServerAddress> lookupRedirect(ServerAddress serverAddress);
 
     static ServerRedirectHandler createDnsSrvRedirectHandler() {
         DirContext dircontext;

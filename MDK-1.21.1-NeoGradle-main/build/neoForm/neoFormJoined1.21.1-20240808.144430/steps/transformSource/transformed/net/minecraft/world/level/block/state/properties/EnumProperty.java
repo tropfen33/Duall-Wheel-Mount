@@ -13,13 +13,16 @@ import net.minecraft.util.StringRepresentable;
 
 public class EnumProperty<T extends Enum<T> & StringRepresentable> extends Property<T> {
     private final ImmutableSet<T> values;
+    /**
+     * Map of names to Enum values
+     */
     private final Map<String, T> names = Maps.newHashMap();
 
-    protected EnumProperty(String p_61579_, Class<T> p_61580_, Collection<T> p_61581_) {
-        super(p_61579_, p_61580_);
-        this.values = ImmutableSet.copyOf(p_61581_);
+    protected EnumProperty(String name, Class<T> clazz, Collection<T> values) {
+        super(name, clazz);
+        this.values = ImmutableSet.copyOf(values);
 
-        for (T t : p_61581_) {
+        for (T t : values) {
             String s = t.getSerializedName();
             if (this.names.containsKey(s)) {
                 throw new IllegalArgumentException("Multiple values have the same name '" + s + "'");
@@ -35,20 +38,23 @@ public class EnumProperty<T extends Enum<T> & StringRepresentable> extends Prope
     }
 
     @Override
-    public Optional<T> getValue(String p_61604_) {
-        return Optional.ofNullable(this.names.get(p_61604_));
+    public Optional<T> getValue(String value) {
+        return Optional.ofNullable(this.names.get(value));
     }
 
-    public String getName(T p_61586_) {
-        return p_61586_.getSerializedName();
+    /**
+     * @return the name for the given value.
+     */
+    public String getName(T value) {
+        return value.getSerializedName();
     }
 
     @Override
-    public boolean equals(Object p_61606_) {
-        if (this == p_61606_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            if (p_61606_ instanceof EnumProperty<?> enumproperty && super.equals(p_61606_)) {
+            if (other instanceof EnumProperty<?> enumproperty && super.equals(other)) {
                 return this.values.equals(enumproperty.values) && this.names.equals(enumproperty.names);
             }
 
@@ -63,19 +69,31 @@ public class EnumProperty<T extends Enum<T> & StringRepresentable> extends Prope
         return 31 * i + this.names.hashCode();
     }
 
-    public static <T extends Enum<T> & StringRepresentable> EnumProperty<T> create(String p_61588_, Class<T> p_61589_) {
-        return create(p_61588_, p_61589_, p_187560_ -> true);
+    /**
+     * Create a new EnumProperty with all Enum constants of the given class.
+     */
+    public static <T extends Enum<T> & StringRepresentable> EnumProperty<T> create(String name, Class<T> clazz) {
+        return create(name, clazz, p_187560_ -> true);
     }
 
-    public static <T extends Enum<T> & StringRepresentable> EnumProperty<T> create(String p_61595_, Class<T> p_61596_, Predicate<T> p_61597_) {
-        return create(p_61595_, p_61596_, Arrays.<T>stream(p_61596_.getEnumConstants()).filter(p_61597_).collect(Collectors.toList()));
+    /**
+     * Create a new EnumProperty with all Enum constants of the given class that match the given Predicate.
+     */
+    public static <T extends Enum<T> & StringRepresentable> EnumProperty<T> create(String name, Class<T> clazz, Predicate<T> filter) {
+        return create(name, clazz, Arrays.<T>stream(clazz.getEnumConstants()).filter(filter).collect(Collectors.toList()));
     }
 
-    public static <T extends Enum<T> & StringRepresentable> EnumProperty<T> create(String p_61599_, Class<T> p_61600_, T... p_61601_) {
-        return create(p_61599_, p_61600_, Lists.newArrayList(p_61601_));
+    /**
+     * Create a new EnumProperty with the specified values
+     */
+    public static <T extends Enum<T> & StringRepresentable> EnumProperty<T> create(String name, Class<T> clazz, T... values) {
+        return create(name, clazz, Lists.newArrayList(values));
     }
 
-    public static <T extends Enum<T> & StringRepresentable> EnumProperty<T> create(String p_61591_, Class<T> p_61592_, Collection<T> p_61593_) {
-        return new EnumProperty<>(p_61591_, p_61592_, p_61593_);
+    /**
+     * Create a new EnumProperty with the specified values
+     */
+    public static <T extends Enum<T> & StringRepresentable> EnumProperty<T> create(String name, Class<T> clazz, Collection<T> values) {
+        return new EnumProperty<>(name, clazz, values);
     }
 }

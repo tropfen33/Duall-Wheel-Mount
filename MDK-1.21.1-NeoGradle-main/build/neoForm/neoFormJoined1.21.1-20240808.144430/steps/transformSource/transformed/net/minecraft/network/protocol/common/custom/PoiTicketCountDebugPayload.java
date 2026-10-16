@@ -14,9 +14,9 @@ public record PoiTicketCountDebugPayload(BlockPos pos, int freeTicketCount) impl
         this(p_295976_.readBlockPos(), p_295976_.readInt());
     }
 
-    private void write(FriendlyByteBuf p_295476_) {
-        p_295476_.writeBlockPos(this.pos);
-        p_295476_.writeInt(this.freeTicketCount);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeBlockPos(this.pos);
+        buffer.writeInt(this.freeTicketCount);
     }
 
     @Override

@@ -32,20 +32,20 @@ public abstract class AbstractFurnaceRecipeBookComponent extends RecipeBookCompo
     }
 
     @Override
-    public void slotClicked(@Nullable Slot p_100120_) {
-        super.slotClicked(p_100120_);
-        if (p_100120_ != null && p_100120_.index < this.menu.getSize()) {
+    public void slotClicked(@Nullable Slot slot) {
+        super.slotClicked(slot);
+        if (slot != null && slot.index < this.menu.getSize()) {
             this.ghostRecipe.clear();
         }
     }
 
     @Override
-    public void setupGhostRecipe(RecipeHolder<?> p_301099_, List<Slot> p_100123_) {
-        ItemStack itemstack = p_301099_.value().getResultItem(this.minecraft.level.registryAccess());
-        this.ghostRecipe.setRecipe(p_301099_);
-        this.ghostRecipe.addIngredient(Ingredient.of(itemstack), p_100123_.get(2).x, p_100123_.get(2).y);
-        NonNullList<Ingredient> nonnulllist = p_301099_.value().getIngredients();
-        Slot slot = p_100123_.get(1);
+    public void setupGhostRecipe(RecipeHolder<?> recipe, List<Slot> slots) {
+        ItemStack itemstack = recipe.value().getResultItem(this.minecraft.level.registryAccess());
+        this.ghostRecipe.setRecipe(recipe);
+        this.ghostRecipe.addIngredient(Ingredient.of(itemstack), slots.get(2).x, slots.get(2).y);
+        NonNullList<Ingredient> nonnulllist = recipe.value().getIngredients();
+        Slot slot = slots.get(1);
         if (slot.getItem().isEmpty()) {
             if (this.fuels == null) {
                 this.fuels = Ingredient.of(
@@ -65,7 +65,7 @@ public abstract class AbstractFurnaceRecipeBookComponent extends RecipeBookCompo
 
             Ingredient ingredient = iterator.next();
             if (!ingredient.isEmpty()) {
-                Slot slot1 = p_100123_.get(i);
+                Slot slot1 = slots.get(i);
                 this.ghostRecipe.addIngredient(ingredient, slot1.x, slot1.y);
             }
         }

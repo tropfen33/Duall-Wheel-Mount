@@ -22,21 +22,21 @@ public class BlockIgnoreProcessor extends StructureProcessor {
     public static final BlockIgnoreProcessor STRUCTURE_AND_AIR = new BlockIgnoreProcessor(ImmutableList.of(Blocks.AIR, Blocks.STRUCTURE_BLOCK));
     private final ImmutableList<Block> toIgnore;
 
-    public BlockIgnoreProcessor(List<Block> p_74052_) {
-        this.toIgnore = ImmutableList.copyOf(p_74052_);
+    public BlockIgnoreProcessor(List<Block> ignoredBlocks) {
+        this.toIgnore = ImmutableList.copyOf(ignoredBlocks);
     }
 
     @Nullable
     @Override
     public StructureTemplate.StructureBlockInfo processBlock(
-        LevelReader p_74055_,
-        BlockPos p_74056_,
-        BlockPos p_74057_,
-        StructureTemplate.StructureBlockInfo p_74058_,
-        StructureTemplate.StructureBlockInfo p_74059_,
-        StructurePlaceSettings p_74060_
+        LevelReader level,
+        BlockPos offset,
+        BlockPos pos,
+        StructureTemplate.StructureBlockInfo blockInfo,
+        StructureTemplate.StructureBlockInfo relativeBlockInfo,
+        StructurePlaceSettings settings
     ) {
-        return this.toIgnore.contains(p_74059_.state().getBlock()) ? null : p_74059_;
+        return this.toIgnore.contains(relativeBlockInfo.state().getBlock()) ? null : relativeBlockInfo;
     }
 
     @Override

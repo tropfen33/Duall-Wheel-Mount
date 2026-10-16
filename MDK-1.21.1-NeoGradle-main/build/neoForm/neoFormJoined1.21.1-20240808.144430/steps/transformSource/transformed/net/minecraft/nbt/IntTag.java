@@ -7,18 +7,18 @@ import java.io.IOException;
 public class IntTag extends NumericTag {
     private static final int SELF_SIZE_IN_BYTES = 12;
     public static final TagType<IntTag> TYPE = new TagType.StaticSize<IntTag>() {
-        public IntTag load(DataInput p_128708_, NbtAccounter p_128710_) throws IOException {
-            return IntTag.valueOf(readAccounted(p_128708_, p_128710_));
+        public IntTag load(DataInput input, NbtAccounter accounter) throws IOException {
+            return IntTag.valueOf(readAccounted(input, accounter));
         }
 
         @Override
-        public StreamTagVisitor.ValueResult parse(DataInput p_197483_, StreamTagVisitor p_197484_, NbtAccounter p_302339_) throws IOException {
-            return p_197484_.visit(readAccounted(p_197483_, p_302339_));
+        public StreamTagVisitor.ValueResult parse(DataInput input, StreamTagVisitor visitor, NbtAccounter accounter) throws IOException {
+            return visitor.visit(readAccounted(input, accounter));
         }
 
-        private static int readAccounted(DataInput p_302357_, NbtAccounter p_302392_) throws IOException {
-            p_302392_.accountBytes(12L);
-            return p_302357_.readInt();
+        private static int readAccounted(DataInput input, NbtAccounter accounter) throws IOException {
+            accounter.accountBytes(12L);
+            return input.readInt();
         }
 
         @Override
@@ -43,17 +43,17 @@ public class IntTag extends NumericTag {
     };
     private final int data;
 
-    IntTag(int p_128674_) {
-        this.data = p_128674_;
+    IntTag(int data) {
+        this.data = data;
     }
 
-    public static IntTag valueOf(int p_128680_) {
-        return p_128680_ >= -128 && p_128680_ <= 1024 ? IntTag.Cache.cache[p_128680_ - -128] : new IntTag(p_128680_);
+    public static IntTag valueOf(int data) {
+        return data >= -128 && data <= 1024 ? IntTag.Cache.cache[data - -128] : new IntTag(data);
     }
 
     @Override
-    public void write(DataOutput p_128682_) throws IOException {
-        p_128682_.writeInt(this.data);
+    public void write(DataOutput output) throws IOException {
+        output.writeInt(this.data);
     }
 
     @Override
@@ -76,8 +76,8 @@ public class IntTag extends NumericTag {
     }
 
     @Override
-    public boolean equals(Object p_128691_) {
-        return this == p_128691_ ? true : p_128691_ instanceof IntTag && this.data == ((IntTag)p_128691_).data;
+    public boolean equals(Object other) {
+        return this == other ? true : other instanceof IntTag && this.data == ((IntTag)other).data;
     }
 
     @Override
@@ -86,8 +86,8 @@ public class IntTag extends NumericTag {
     }
 
     @Override
-    public void accept(TagVisitor p_177984_) {
-        p_177984_.visitInt(this);
+    public void accept(TagVisitor visitor) {
+        visitor.visitInt(this);
     }
 
     @Override
@@ -126,8 +126,8 @@ public class IntTag extends NumericTag {
     }
 
     @Override
-    public StreamTagVisitor.ValueResult accept(StreamTagVisitor p_197481_) {
-        return p_197481_.visit(this.data);
+    public StreamTagVisitor.ValueResult accept(StreamTagVisitor visitor) {
+        return visitor.visit(this.data);
     }
 
     static class Cache {

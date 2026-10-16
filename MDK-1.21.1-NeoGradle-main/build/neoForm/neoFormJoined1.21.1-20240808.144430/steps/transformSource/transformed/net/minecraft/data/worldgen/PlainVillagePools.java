@@ -16,22 +16,22 @@ public class PlainVillagePools {
     public static final ResourceKey<StructureTemplatePool> START = Pools.createKey("village/plains/town_centers");
     private static final ResourceKey<StructureTemplatePool> TERMINATORS_KEY = Pools.createKey("village/plains/terminators");
 
-    public static void bootstrap(BootstrapContext<StructureTemplatePool> p_321538_) {
-        HolderGetter<PlacedFeature> holdergetter = p_321538_.lookup(Registries.PLACED_FEATURE);
+    public static void bootstrap(BootstrapContext<StructureTemplatePool> context) {
+        HolderGetter<PlacedFeature> holdergetter = context.lookup(Registries.PLACED_FEATURE);
         Holder<PlacedFeature> holder = holdergetter.getOrThrow(VillagePlacements.OAK_VILLAGE);
         Holder<PlacedFeature> holder1 = holdergetter.getOrThrow(VillagePlacements.FLOWER_PLAIN_VILLAGE);
         Holder<PlacedFeature> holder2 = holdergetter.getOrThrow(VillagePlacements.PILE_HAY_VILLAGE);
-        HolderGetter<StructureProcessorList> holdergetter1 = p_321538_.lookup(Registries.PROCESSOR_LIST);
+        HolderGetter<StructureProcessorList> holdergetter1 = context.lookup(Registries.PROCESSOR_LIST);
         Holder<StructureProcessorList> holder3 = holdergetter1.getOrThrow(ProcessorLists.MOSSIFY_10_PERCENT);
         Holder<StructureProcessorList> holder4 = holdergetter1.getOrThrow(ProcessorLists.MOSSIFY_20_PERCENT);
         Holder<StructureProcessorList> holder5 = holdergetter1.getOrThrow(ProcessorLists.MOSSIFY_70_PERCENT);
         Holder<StructureProcessorList> holder6 = holdergetter1.getOrThrow(ProcessorLists.ZOMBIE_PLAINS);
         Holder<StructureProcessorList> holder7 = holdergetter1.getOrThrow(ProcessorLists.STREET_PLAINS);
         Holder<StructureProcessorList> holder8 = holdergetter1.getOrThrow(ProcessorLists.FARM_PLAINS);
-        HolderGetter<StructureTemplatePool> holdergetter2 = p_321538_.lookup(Registries.TEMPLATE_POOL);
+        HolderGetter<StructureTemplatePool> holdergetter2 = context.lookup(Registries.TEMPLATE_POOL);
         Holder<StructureTemplatePool> holder9 = holdergetter2.getOrThrow(Pools.EMPTY);
         Holder<StructureTemplatePool> holder10 = holdergetter2.getOrThrow(TERMINATORS_KEY);
-        p_321538_.register(
+        context.register(
             START,
             new StructureTemplatePool(
                 holder9,
@@ -49,7 +49,7 @@ public class PlainVillagePools {
             )
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/plains/streets",
             new StructureTemplatePool(
                 holder10,
@@ -75,7 +75,7 @@ public class PlainVillagePools {
             )
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/plains/zombie/streets",
             new StructureTemplatePool(
                 holder10,
@@ -101,7 +101,7 @@ public class PlainVillagePools {
             )
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/plains/houses",
             new StructureTemplatePool(
                 holder10,
@@ -148,7 +148,7 @@ public class PlainVillagePools {
             )
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/plains/zombie/houses",
             new StructureTemplatePool(
                 holder10,
@@ -193,7 +193,7 @@ public class PlainVillagePools {
                 StructureTemplatePool.Projection.RIGID
             )
         );
-        p_321538_.register(
+        context.register(
             TERMINATORS_KEY,
             new StructureTemplatePool(
                 holder9,
@@ -207,12 +207,12 @@ public class PlainVillagePools {
             )
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/plains/trees",
             new StructureTemplatePool(holder9, ImmutableList.of(Pair.of(StructurePoolElement.feature(holder), 1)), StructureTemplatePool.Projection.RIGID)
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/plains/decor",
             new StructureTemplatePool(
                 holder9,
@@ -227,7 +227,7 @@ public class PlainVillagePools {
             )
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/plains/zombie/decor",
             new StructureTemplatePool(
                 holder9,
@@ -242,7 +242,7 @@ public class PlainVillagePools {
             )
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/plains/villagers",
             new StructureTemplatePool(
                 holder9,
@@ -255,7 +255,7 @@ public class PlainVillagePools {
             )
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/plains/zombie/villagers",
             new StructureTemplatePool(
                 holder9,
@@ -267,7 +267,7 @@ public class PlainVillagePools {
             )
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/common/animals",
             new StructureTemplatePool(
                 holder9,
@@ -287,7 +287,7 @@ public class PlainVillagePools {
             )
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/common/sheep",
             new StructureTemplatePool(
                 holder9,
@@ -299,7 +299,7 @@ public class PlainVillagePools {
             )
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/common/cats",
             new StructureTemplatePool(
                 holder9,
@@ -320,7 +320,7 @@ public class PlainVillagePools {
             )
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/common/butcher_animals",
             new StructureTemplatePool(
                 holder9,
@@ -334,14 +334,14 @@ public class PlainVillagePools {
             )
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/common/iron_golem",
             new StructureTemplatePool(
                 holder9, ImmutableList.of(Pair.of(StructurePoolElement.legacy("village/common/iron_golem"), 1)), StructureTemplatePool.Projection.RIGID
             )
         );
         Pools.register(
-            p_321538_,
+            context,
             "village/common/well_bottoms",
             new StructureTemplatePool(
                 holder9, ImmutableList.of(Pair.of(StructurePoolElement.legacy("village/common/well_bottom"), 1)), StructureTemplatePool.Projection.RIGID

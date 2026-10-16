@@ -8,8 +8,8 @@ import com.mojang.datafixers.schemas.Schema;
 import com.mojang.serialization.Dynamic;
 
 public class OptionsAccessibilityOnboardFix extends DataFix {
-    public OptionsAccessibilityOnboardFix(Schema p_265364_) {
-        super(p_265364_, false);
+    public OptionsAccessibilityOnboardFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
     @Override

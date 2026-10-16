@@ -6,7 +6,7 @@ public record Atom<T>(String name) {
         return "<" + this.name + ">";
     }
 
-    public static <T> Atom<T> of(String p_335549_) {
-        return new Atom<>(p_335549_);
+    public static <T> Atom<T> of(String name) {
+        return new Atom<>(name);
     }
 }

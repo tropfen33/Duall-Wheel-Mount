@@ -10,8 +10,8 @@ import com.mojang.serialization.Dynamic;
 import java.util.function.Function;
 
 public class AbstractArrowPickupFix extends DataFix {
-    public AbstractArrowPickupFix(Schema p_145046_) {
-        super(p_145046_, false);
+    public AbstractArrowPickupFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
     @Override
@@ -20,24 +20,24 @@ public class AbstractArrowPickupFix extends DataFix {
         return this.fixTypeEverywhereTyped("AbstractArrowPickupFix", schema.getType(References.ENTITY), this::updateProjectiles);
     }
 
-    private Typed<?> updateProjectiles(Typed<?> p_145048_) {
-        p_145048_ = this.updateEntity(p_145048_, "minecraft:arrow", AbstractArrowPickupFix::updatePickup);
-        p_145048_ = this.updateEntity(p_145048_, "minecraft:spectral_arrow", AbstractArrowPickupFix::updatePickup);
-        return this.updateEntity(p_145048_, "minecraft:trident", AbstractArrowPickupFix::updatePickup);
+    private Typed<?> updateProjectiles(Typed<?> typed) {
+        typed = this.updateEntity(typed, "minecraft:arrow", AbstractArrowPickupFix::updatePickup);
+        typed = this.updateEntity(typed, "minecraft:spectral_arrow", AbstractArrowPickupFix::updatePickup);
+        return this.updateEntity(typed, "minecraft:trident", AbstractArrowPickupFix::updatePickup);
     }
 
-    private static Dynamic<?> updatePickup(Dynamic<?> p_145054_) {
-        if (p_145054_.get("pickup").result().isPresent()) {
-            return p_145054_;
+    private static Dynamic<?> updatePickup(Dynamic<?> dynamic) {
+        if (dynamic.get("pickup").result().isPresent()) {
+            return dynamic;
         } else {
-            boolean flag = p_145054_.get("player").asBoolean(true);
-            return p_145054_.set("pickup", p_145054_.createByte((byte)(flag ? 1 : 0))).remove("player");
+            boolean flag = dynamic.get("player").asBoolean(true);
+            return dynamic.set("pickup", dynamic.createByte((byte)(flag ? 1 : 0))).remove("player");
         }
     }
 
-    private Typed<?> updateEntity(Typed<?> p_145050_, String p_145051_, Function<Dynamic<?>, Dynamic<?>> p_145052_) {
-        Type<?> type = this.getInputSchema().getChoiceType(References.ENTITY, p_145051_);
-        Type<?> type1 = this.getOutputSchema().getChoiceType(References.ENTITY, p_145051_);
-        return p_145050_.updateTyped(DSL.namedChoice(p_145051_, type), type1, p_145057_ -> p_145057_.update(DSL.remainderFinder(), p_145052_));
+    private Typed<?> updateEntity(Typed<?> typed, String choiceName, Function<Dynamic<?>, Dynamic<?>> updater) {
+        Type<?> type = this.getInputSchema().getChoiceType(References.ENTITY, choiceName);
+        Type<?> type1 = this.getOutputSchema().getChoiceType(References.ENTITY, choiceName);
+        return typed.updateTyped(DSL.namedChoice(choiceName, type), type1, p_145057_ -> p_145057_.update(DSL.remainderFinder(), updater));
     }
 }

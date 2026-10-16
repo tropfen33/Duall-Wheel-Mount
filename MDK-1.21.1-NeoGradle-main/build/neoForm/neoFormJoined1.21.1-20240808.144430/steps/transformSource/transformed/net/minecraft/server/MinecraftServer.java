@@ -262,7 +262,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     private volatile boolean isSaving;
     private static final AtomicReference<RuntimeException> fatalException = new AtomicReference<>();
 
-    public static <S extends MinecraftServer> S spin(Function<Thread, S> p_129873_) {
+    public static <S extends MinecraftServer> S spin(Function<Thread, S> threadFunction) {
         AtomicReference<S> atomicreference = new AtomicReference<>();
         Thread thread = new Thread(net.neoforged.fml.util.thread.SidedThreadGroups.SERVER, () -> atomicreference.get().runServer(), "Server thread");
         thread.setUncaughtExceptionHandler((p_177909_, p_177910_) -> LOGGER.error("Uncaught exception in server thread", p_177910_));
@@ -270,57 +270,57 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
             thread.setPriority(8);
         }
 
-        S s = (S)p_129873_.apply(thread);
+        S s = (S)threadFunction.apply(thread);
         atomicreference.set(s);
         thread.start();
         return s;
     }
 
     public MinecraftServer(
-        Thread p_236723_,
-        LevelStorageSource.LevelStorageAccess p_236724_,
-        PackRepository p_236725_,
-        WorldStem p_236726_,
-        Proxy p_236727_,
-        DataFixer p_236728_,
-        Services p_236729_,
-        ChunkProgressListenerFactory p_236730_
+        Thread serverThread,
+        LevelStorageSource.LevelStorageAccess storageSource,
+        PackRepository packRepository,
+        WorldStem worldStem,
+        Proxy proxy,
+        DataFixer fixerUpper,
+        Services services,
+        ChunkProgressListenerFactory progressListenerFactory
     ) {
         super("Server");
-        this.registries = p_236726_.registries();
-        this.worldData = p_236726_.worldData();
+        this.registries = worldStem.registries();
+        this.worldData = worldStem.worldData();
         if (!this.registries.compositeAccess().registryOrThrow(Registries.LEVEL_STEM).containsKey(LevelStem.OVERWORLD)) {
             throw new IllegalStateException("Missing Overworld dimension data");
         } else {
-            this.proxy = p_236727_;
-            this.packRepository = p_236725_;
-            this.resources = new MinecraftServer.ReloadableResources(p_236726_.resourceManager(), p_236726_.dataPackResources());
-            this.services = p_236729_;
-            if (p_236729_.profileCache() != null) {
-                p_236729_.profileCache().setExecutor(this);
+            this.proxy = proxy;
+            this.packRepository = packRepository;
+            this.resources = new MinecraftServer.ReloadableResources(worldStem.resourceManager(), worldStem.dataPackResources());
+            this.services = services;
+            if (services.profileCache() != null) {
+                services.profileCache().setExecutor(this);
             }
 
             this.connection = new ServerConnectionListener(this);
             this.tickRateManager = new ServerTickRateManager(this);
-            this.progressListenerFactory = p_236730_;
-            this.storageSource = p_236724_;
-            this.playerDataStorage = p_236724_.createPlayerStorage();
-            this.fixerUpper = p_236728_;
+            this.progressListenerFactory = progressListenerFactory;
+            this.storageSource = storageSource;
+            this.playerDataStorage = storageSource.createPlayerStorage();
+            this.fixerUpper = fixerUpper;
             this.functionManager = new ServerFunctionManager(this, this.resources.managers.getFunctionLibrary());
             HolderGetter<Block> holdergetter = this.registries
                 .compositeAccess()
                 .registryOrThrow(Registries.BLOCK)
                 .asLookup()
                 .filterFeatures(this.worldData.enabledFeatures());
-            this.structureTemplateManager = new StructureTemplateManager(p_236726_.resourceManager(), p_236724_, p_236728_, holdergetter);
-            this.serverThread = p_236723_;
+            this.structureTemplateManager = new StructureTemplateManager(worldStem.resourceManager(), storageSource, fixerUpper, holdergetter);
+            this.serverThread = serverThread;
             this.executor = Util.backgroundExecutor();
             this.potionBrewing = PotionBrewing.bootstrap(this.worldData.enabledFeatures(), this.registryAccess());
         }
     }
 
-    private void readScoreboard(DimensionDataStorage p_129842_) {
-        p_129842_.computeIfAbsent(this.getScoreboard().dataFactory(), "scoreboard");
+    private void readScoreboard(DimensionDataStorage dataStorage) {
+        dataStorage.computeIfAbsent(this.getScoreboard().dataFactory(), "scoreboard");
     }
 
     protected abstract boolean initServer() throws IOException;
@@ -353,7 +353,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     protected void forceDifficulty() {
     }
 
-    protected void createLevels(ChunkProgressListener p_129816_) {
+    protected void createLevels(ChunkProgressListener listener) {
         ServerLevelData serverleveldata = this.worldData.overworldData();
         boolean flag = this.worldData.isDebugWorld();
         Registry<LevelStem> registry = this.registries.compositeAccess().registryOrThrow(Registries.LEVEL_STEM);
@@ -365,7 +365,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         );
         LevelStem levelstem = registry.get(LevelStem.OVERWORLD);
         ServerLevel serverlevel = new ServerLevel(
-            this, this.executor, this.storageSource, serverleveldata, Level.OVERWORLD, levelstem, p_129816_, flag, j, list, true, null
+            this, this.executor, this.storageSource, serverleveldata, Level.OVERWORLD, levelstem, listener, flag, j, list, true, null
         );
         this.levels.put(Level.OVERWORLD, serverlevel);
         DimensionDataStorage dimensiondatastorage = serverlevel.getDataStorage();
@@ -413,7 +413,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                     derivedleveldata,
                     resourcekey1,
                     entry.getValue(),
-                    p_129816_,
+                    listener,
                     flag,
                     j,
                     ImmutableList.of(),
@@ -429,20 +429,20 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         worldborder.applySettings(serverleveldata.getWorldBorder());
     }
 
-    private static void setInitialSpawn(ServerLevel p_177897_, ServerLevelData p_177898_, boolean p_177899_, boolean p_177900_) {
-        if (p_177900_) {
-            p_177898_.setSpawn(BlockPos.ZERO.above(80), 0.0F);
+    private static void setInitialSpawn(ServerLevel level, ServerLevelData levelData, boolean generateBonusChest, boolean debug) {
+        if (debug) {
+            levelData.setSpawn(BlockPos.ZERO.above(80), 0.0F);
         } else {
-            ServerChunkCache serverchunkcache = p_177897_.getChunkSource();
-            if (net.neoforged.neoforge.event.EventHooks.onCreateWorldSpawn(p_177897_, p_177898_)) return;
+            ServerChunkCache serverchunkcache = level.getChunkSource();
+            if (net.neoforged.neoforge.event.EventHooks.onCreateWorldSpawn(level, levelData)) return;
             ChunkPos chunkpos = new ChunkPos(serverchunkcache.randomState().sampler().findSpawnPosition());
-            int i = serverchunkcache.getGenerator().getSpawnHeight(p_177897_);
-            if (i < p_177897_.getMinBuildHeight()) {
+            int i = serverchunkcache.getGenerator().getSpawnHeight(level);
+            if (i < level.getMinBuildHeight()) {
                 BlockPos blockpos = chunkpos.getWorldPosition();
-                i = p_177897_.getHeight(Heightmap.Types.WORLD_SURFACE, blockpos.getX() + 8, blockpos.getZ() + 8);
+                i = level.getHeight(Heightmap.Types.WORLD_SURFACE, blockpos.getX() + 8, blockpos.getZ() + 8);
             }
 
-            p_177898_.setSpawn(chunkpos.getWorldPosition().offset(8, i, 8), 0.0F);
+            levelData.setSpawn(chunkpos.getWorldPosition().offset(8, i, 8), 0.0F);
             int j1 = 0;
             int j = 0;
             int k = 0;
@@ -450,9 +450,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
 
             for (int i1 = 0; i1 < Mth.square(11); i1++) {
                 if (j1 >= -5 && j1 <= 5 && j >= -5 && j <= 5) {
-                    BlockPos blockpos1 = PlayerRespawnLogic.getSpawnPosInChunk(p_177897_, new ChunkPos(chunkpos.x + j1, chunkpos.z + j));
+                    BlockPos blockpos1 = PlayerRespawnLogic.getSpawnPosInChunk(level, new ChunkPos(chunkpos.x + j1, chunkpos.z + j));
                     if (blockpos1 != null) {
-                        p_177898_.setSpawn(blockpos1, 0.0F);
+                        levelData.setSpawn(blockpos1, 0.0F);
                         break;
                     }
                 }
@@ -467,19 +467,19 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                 j += l;
             }
 
-            if (p_177899_) {
-                p_177897_.registryAccess()
+            if (generateBonusChest) {
+                level.registryAccess()
                     .registry(Registries.CONFIGURED_FEATURE)
                     .flatMap(p_258226_ -> p_258226_.getHolder(MiscOverworldFeatures.BONUS_CHEST))
-                    .ifPresent(p_319563_ -> p_319563_.value().place(p_177897_, serverchunkcache.getGenerator(), p_177897_.random, p_177898_.getSpawnPos()));
+                    .ifPresent(p_319563_ -> p_319563_.value().place(level, serverchunkcache.getGenerator(), level.random, levelData.getSpawnPos()));
             }
         }
     }
 
-    private void setupDebugLevel(WorldData p_129848_) {
-        p_129848_.setDifficulty(Difficulty.PEACEFUL);
-        p_129848_.setDifficultyLocked(true);
-        ServerLevelData serverleveldata = p_129848_.overworldData();
+    private void setupDebugLevel(WorldData worldData) {
+        worldData.setDifficulty(Difficulty.PEACEFUL);
+        worldData.setDifficultyLocked(true);
+        ServerLevelData serverleveldata = worldData.overworldData();
         serverleveldata.setRaining(false);
         serverleveldata.setThundering(false);
         serverleveldata.setClearWeatherTime(1000000000);
@@ -487,11 +487,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         serverleveldata.setGameType(GameType.SPECTATOR);
     }
 
-    private void prepareLevels(ChunkProgressListener p_129941_) {
+    /**
+     * Loads the spawn chunks and any forced chunks
+     */
+    private void prepareLevels(ChunkProgressListener listener) {
         ServerLevel serverlevel = this.overworld();
         LOGGER.info("Preparing start region for dimension {}", serverlevel.dimension().location());
         BlockPos blockpos = serverlevel.getSharedSpawnPos();
-        p_129941_.updateSpawnPos(new ChunkPos(blockpos));
+        listener.updateSpawnPos(new ChunkPos(blockpos));
         ServerChunkCache serverchunkcache = serverlevel.getChunkSource();
         this.nextTickTimeNanos = Util.getNanos();
         serverlevel.setDefaultSpawnPos(blockpos, serverlevel.getSharedSpawnAngle());
@@ -522,7 +525,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
 
         this.nextTickTimeNanos = Util.getNanos() + PREPARE_LEVELS_DEFAULT_DELAY_NANOS;
         this.waitUntilNextTick();
-        p_129941_.stop();
+        listener.stop();
         this.updateMobSpawningFlags();
     }
 
@@ -540,15 +543,15 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
 
     public abstract boolean shouldRconBroadcast();
 
-    public boolean saveAllChunks(boolean p_129886_, boolean p_129887_, boolean p_129888_) {
+    public boolean saveAllChunks(boolean suppressLog, boolean flush, boolean forced) {
         boolean flag = false;
 
         for (ServerLevel serverlevel : this.getAllLevels()) {
-            if (!p_129886_) {
+            if (!suppressLog) {
                 LOGGER.info("Saving chunks for level '{}'/{}", serverlevel, serverlevel.dimension().location());
             }
 
-            serverlevel.save(null, p_129887_, serverlevel.noSave && !p_129888_);
+            serverlevel.save(null, flush, serverlevel.noSave && !forced);
             flag = true;
         }
 
@@ -557,7 +560,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         serverleveldata.setWorldBorder(serverlevel2.getWorldBorder().createSettings());
         this.worldData.setCustomBossEvents(this.getCustomBossEvents().save(this.registryAccess()));
         this.storageSource.saveDataTag(this.registryAccess(), this.worldData, this.getPlayerList().getSingleplayerData());
-        if (p_129887_) {
+        if (flush) {
             for (ServerLevel serverlevel1 : this.getAllLevels()) {
                 LOGGER.info("ThreadedAnvilChunkStorage ({}): All chunks are saved", serverlevel1.getChunkSource().chunkMap.getStorageName());
             }
@@ -568,12 +571,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return flag;
     }
 
-    public boolean saveEverything(boolean p_195515_, boolean p_195516_, boolean p_195517_) {
+    public boolean saveEverything(boolean suppressLog, boolean flush, boolean forced) {
         boolean flag;
         try {
             this.isSaving = true;
             this.getPlayerList().saveAll();
-            flag = this.saveAllChunks(p_195515_, p_195516_, p_195517_);
+            flag = this.saveAllChunks(suppressLog, flush, forced);
         } finally {
             this.isSaving = false;
         }
@@ -646,17 +649,20 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.localIp;
     }
 
-    public void setLocalIp(String p_129914_) {
-        this.localIp = p_129914_;
+    public void setLocalIp(String localIp) {
+        this.localIp = localIp;
     }
 
     public boolean isRunning() {
         return this.running;
     }
 
-    public void halt(boolean p_129884_) {
+    /**
+     * Sets the serverRunning variable to false, in order to get the server to shut down.
+     */
+    public void halt(boolean waitForServer) {
         this.running = false;
-        if (p_129884_) {
+        if (waitForServer) {
             try {
                 this.serverThread.join();
             } catch (InterruptedException interruptedexception) {
@@ -777,10 +783,10 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         }
     }
 
-    private static CrashReport constructOrExtractCrashReport(Throwable p_206569_) {
+    private static CrashReport constructOrExtractCrashReport(Throwable cause) {
         ReportedException reportedexception = null;
 
-        for (Throwable throwable = p_206569_; throwable != null; throwable = throwable.getCause()) {
+        for (Throwable throwable = cause; throwable != null; throwable = throwable.getCause()) {
             if (throwable instanceof ReportedException reportedexception1) {
                 reportedexception = reportedexception1;
             }
@@ -789,11 +795,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         CrashReport crashreport;
         if (reportedexception != null) {
             crashreport = reportedexception.getReport();
-            if (reportedexception != p_206569_) {
-                crashreport.addCategory("Wrapped in").setDetailError("Wrapping exception", p_206569_);
+            if (reportedexception != cause) {
+                crashreport.addCategory("Wrapped in").setDetailError("Wrapping exception", cause);
             }
         } else {
-            crashreport = new CrashReport("Exception in server tick loop", p_206569_);
+            crashreport = new CrashReport("Exception in server tick loop", cause);
         }
 
         return crashreport;
@@ -812,13 +818,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         }
     }
 
-    public static void setFatalException(RuntimeException p_347584_) {
-        fatalException.compareAndSet(null, p_347584_);
+    public static void setFatalException(RuntimeException p_fatalException) {
+        fatalException.compareAndSet(null, p_fatalException);
     }
 
+    /**
+     * Drive the executor until the given BooleanSupplier returns true
+     */
     @Override
-    public void managedBlock(BooleanSupplier p_347462_) {
-        super.managedBlock(() -> throwIfFatalException() && p_347462_.getAsBoolean());
+    public void managedBlock(BooleanSupplier isDone) {
+        super.managedBlock(() -> throwIfFatalException() && isDone.getAsBoolean());
     }
 
     protected void waitUntilNextTick() {
@@ -836,12 +845,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         }
     }
 
-    protected TickTask wrapRunnable(Runnable p_129852_) {
-        return new TickTask(this.tickCount, p_129852_);
+    protected TickTask wrapRunnable(Runnable runnable) {
+        return new TickTask(this.tickCount, runnable);
     }
 
-    protected boolean shouldRun(TickTask p_129883_) {
-        return p_129883_.getTick() + 3 < this.tickCount || this.haveTime();
+    protected boolean shouldRun(TickTask runnable) {
+        return runnable.getTick() + 3 < this.tickCount || this.haveTime();
     }
 
     @Override
@@ -867,9 +876,9 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         }
     }
 
-    public void doRunTask(TickTask p_129957_) {
+    public void doRunTask(TickTask task) {
         this.getProfiler().incrementCounter("runTask");
-        super.doRunTask(p_129957_);
+        super.doRunTask(task);
     }
 
     private Optional<ServerStatus.Favicon> loadStatusIcon() {
@@ -899,7 +908,10 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return Path.of("");
     }
 
-    public void onServerCrash(CrashReport p_129874_) {
+    /**
+     * Called on exit from the main run() loop.
+     */
+    public void onServerCrash(CrashReport report) {
     }
 
     public void onServerExit() {
@@ -909,12 +921,15 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return false;
     }
 
-    public void tickServer(BooleanSupplier p_129871_) {
+    /**
+     * Main function called by run() every loop.
+     */
+    public void tickServer(BooleanSupplier hasTimeLeft) {
         long i = Util.getNanos();
         this.tickCount++;
-        net.neoforged.neoforge.event.EventHooks.fireServerTickPre(p_129871_, this);
+        net.neoforged.neoforge.event.EventHooks.fireServerTickPre(hasTimeLeft, this);
         this.tickRateManager.tick();
-        this.tickChildren(p_129871_);
+        this.tickChildren(hasTimeLeft);
         if (i - this.lastServerStatus >= STATUS_EXPIRE_TIME_NANOS) {
             this.lastServerStatus = i;
             this.status = this.buildServerStatus();
@@ -940,12 +955,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         this.smoothedTickTimeMillis = this.smoothedTickTimeMillis * 0.8F + (float)j / (float)TimeUtil.NANOSECONDS_PER_MILLISECOND * 0.19999999F;
         this.logTickMethodTime(i);
         this.profiler.pop();
-        net.neoforged.neoforge.event.EventHooks.fireServerTickPost(p_129871_, this);
+        net.neoforged.neoforge.event.EventHooks.fireServerTickPost(hasTimeLeft, this);
     }
 
-    private void logTickMethodTime(long p_321837_) {
+    private void logTickMethodTime(long startTime) {
         if (this.isTickTimeLoggingEnabled()) {
-            this.getTickTimeLogger().logPartialSample(Util.getNanos() - p_321837_, TpsDebugDimensions.TICK_SERVER_METHOD.ordinal());
+            this.getTickTimeLogger().logPartialSample(Util.getNanos() - startTime, TpsDebugDimensions.TICK_SERVER_METHOD.ordinal());
         }
     }
 
@@ -1015,7 +1030,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         }
     }
 
-    public void tickChildren(BooleanSupplier p_129954_) {
+    public void tickChildren(BooleanSupplier hasTimeLeft) {
         this.getPlayerList().getPlayers().forEach(p_341570_ -> p_341570_.connection.suspendFlushing());
         this.profiler.push("commandFunctions");
         this.getFunctions().tick();
@@ -1031,16 +1046,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
             }
 
             this.profiler.push("tick");
-            net.neoforged.neoforge.event.EventHooks.fireLevelTickPre(serverlevel, p_129954_);
+            net.neoforged.neoforge.event.EventHooks.fireLevelTickPre(serverlevel, hasTimeLeft);
 
             try {
-                serverlevel.tick(p_129954_);
+                serverlevel.tick(hasTimeLeft);
             } catch (Throwable throwable) {
                 CrashReport crashreport = CrashReport.forThrowable(throwable, "Exception ticking world");
                 serverlevel.fillReportDetails(crashreport);
                 throw new ReportedException(crashreport);
             }
-            net.neoforged.neoforge.event.EventHooks.fireLevelTickPost(serverlevel, p_129954_);
+            net.neoforged.neoforge.event.EventHooks.fireLevelTickPost(serverlevel, hasTimeLeft);
 
             this.profiler.pop();
             this.profiler.pop();
@@ -1071,11 +1086,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         this.profiler.pop();
     }
 
-    private void synchronizeTime(ServerLevel p_276371_) {
-        ClientboundSetTimePacket vanillaPacket = new ClientboundSetTimePacket(p_276371_.getGameTime(), p_276371_.getDayTime(), p_276371_.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT));
-        net.neoforged.neoforge.network.payload.ClientboundCustomSetTimePayload neoPacket = new net.neoforged.neoforge.network.payload.ClientboundCustomSetTimePayload(p_276371_.getGameTime(), p_276371_.getDayTime(), p_276371_.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT), p_276371_.getDayTimeFraction(), p_276371_.getDayTimePerTick());
+    private void synchronizeTime(ServerLevel level) {
+        ClientboundSetTimePacket vanillaPacket = new ClientboundSetTimePacket(level.getGameTime(), level.getDayTime(), level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT));
+        net.neoforged.neoforge.network.payload.ClientboundCustomSetTimePayload neoPacket = new net.neoforged.neoforge.network.payload.ClientboundCustomSetTimePayload(level.getGameTime(), level.getDayTime(), level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT), level.getDayTimeFraction(), level.getDayTimePerTick());
         for (ServerPlayer serverplayer : playerList.getPlayers()) {
-            if (serverplayer.level().dimension() == p_276371_.dimension()) {
+            if (serverplayer.level().dimension() == level.dimension()) {
                 if (serverplayer.connection.hasChannel(net.neoforged.neoforge.network.payload.ClientboundCustomSetTimePayload.TYPE)) {
                     serverplayer.connection.send(neoPacket);
                 } else {
@@ -1095,33 +1110,36 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         this.profiler.pop();
     }
 
-    public boolean isLevelEnabled(Level p_350377_) {
+    public boolean isLevelEnabled(Level level) {
         return true;
     }
 
-    public void addTickable(Runnable p_129947_) {
-        this.tickables.add(p_129947_);
+    public void addTickable(Runnable tickable) {
+        this.tickables.add(tickable);
     }
 
-    protected void setId(String p_129949_) {
-        this.serverId = p_129949_;
+    protected void setId(String serverId) {
+        this.serverId = serverId;
     }
 
     public boolean isShutdown() {
         return !this.serverThread.isAlive();
     }
 
-    public Path getFile(String p_129972_) {
-        return this.getServerDirectory().resolve(p_129972_);
+    public Path getFile(String path) {
+        return this.getServerDirectory().resolve(path);
     }
 
     public final ServerLevel overworld() {
         return this.levels.get(Level.OVERWORLD);
     }
 
+    /**
+     * Gets the worldServer by the given dimension.
+     */
     @Nullable
-    public ServerLevel getLevel(ResourceKey<Level> p_129881_) {
-        return this.levels.get(p_129881_);
+    public ServerLevel getLevel(ResourceKey<Level> dimension) {
+        return this.levels.get(dimension);
     }
 
     public Set<ResourceKey<Level>> levelKeys() {
@@ -1156,38 +1174,38 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return net.neoforged.neoforge.internal.BrandingControl.getServerBranding();
     }
 
-    public SystemReport fillSystemReport(SystemReport p_177936_) {
-        p_177936_.setDetail("Server Running", () -> Boolean.toString(this.running));
+    public SystemReport fillSystemReport(SystemReport systemReport) {
+        systemReport.setDetail("Server Running", () -> Boolean.toString(this.running));
         if (this.playerList != null) {
-            p_177936_.setDetail(
+            systemReport.setDetail(
                 "Player Count", () -> this.playerList.getPlayerCount() + " / " + this.playerList.getMaxPlayers() + "; " + this.playerList.getPlayers()
             );
         }
 
-        p_177936_.setDetail("Active Data Packs", () -> PackRepository.displayPackList(this.packRepository.getSelectedPacks()));
-        p_177936_.setDetail("Available Data Packs", () -> PackRepository.displayPackList(this.packRepository.getAvailablePacks()));
-        p_177936_.setDetail(
+        systemReport.setDetail("Active Data Packs", () -> PackRepository.displayPackList(this.packRepository.getSelectedPacks()));
+        systemReport.setDetail("Available Data Packs", () -> PackRepository.displayPackList(this.packRepository.getAvailablePacks()));
+        systemReport.setDetail(
             "Enabled Feature Flags",
             () -> FeatureFlags.REGISTRY.toNames(this.worldData.enabledFeatures()).stream().map(ResourceLocation::toString).collect(Collectors.joining(", "))
         );
-        p_177936_.setDetail("World Generation", () -> this.worldData.worldGenSettingsLifecycle().toString());
-        p_177936_.setDetail("World Seed", () -> String.valueOf(this.worldData.worldGenOptions().seed()));
+        systemReport.setDetail("World Generation", () -> this.worldData.worldGenSettingsLifecycle().toString());
+        systemReport.setDetail("World Seed", () -> String.valueOf(this.worldData.worldGenOptions().seed()));
         if (this.serverId != null) {
-            p_177936_.setDetail("Server Id", () -> this.serverId);
+            systemReport.setDetail("Server Id", () -> this.serverId);
         }
 
-        return this.fillServerSystemReport(p_177936_);
+        return this.fillServerSystemReport(systemReport);
     }
 
-    public abstract SystemReport fillServerSystemReport(SystemReport p_177901_);
+    public abstract SystemReport fillServerSystemReport(SystemReport report);
 
     public ModCheck getModdedStatus() {
         return ModCheck.identify("vanilla", this::getServerModName, "Server", MinecraftServer.class);
     }
 
     @Override
-    public void sendSystemMessage(Component p_236736_) {
-        LOGGER.info(p_236736_.getString());
+    public void sendSystemMessage(Component component) {
+        LOGGER.info(component.getString());
     }
 
     public KeyPair getKeyPair() {
@@ -1198,8 +1216,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.port;
     }
 
-    public void setPort(int p_129802_) {
-        this.port = p_129802_;
+    public void setPort(int port) {
+        this.port = port;
     }
 
     @Nullable
@@ -1207,8 +1225,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.singleplayerProfile;
     }
 
-    public void setSingleplayerProfile(@Nullable GameProfile p_236741_) {
-        this.singleplayerProfile = p_236741_;
+    public void setSingleplayerProfile(@Nullable GameProfile singleplayerProfile) {
+        this.singleplayerProfile = singleplayerProfile;
     }
 
     public boolean isSingleplayer() {
@@ -1225,16 +1243,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         }
     }
 
-    public void setDifficulty(Difficulty p_129828_, boolean p_129829_) {
-        if (p_129829_ || !this.worldData.isDifficultyLocked()) {
-            this.worldData.setDifficulty(this.worldData.isHardcore() ? Difficulty.HARD : p_129828_);
+    public void setDifficulty(Difficulty difficulty, boolean forced) {
+        if (forced || !this.worldData.isDifficultyLocked()) {
+            this.worldData.setDifficulty(this.worldData.isHardcore() ? Difficulty.HARD : difficulty);
             this.updateMobSpawningFlags();
             this.getPlayerList().getPlayers().forEach(this::sendDifficultyUpdate);
         }
     }
 
-    public int getScaledTrackingDistance(int p_129935_) {
-        return p_129935_;
+    public int getScaledTrackingDistance(int trackingDistance) {
+        return trackingDistance;
     }
 
     private void updateMobSpawningFlags() {
@@ -1243,14 +1261,14 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         }
     }
 
-    public void setDifficultyLocked(boolean p_129959_) {
-        this.worldData.setDifficultyLocked(p_129959_);
+    public void setDifficultyLocked(boolean locked) {
+        this.worldData.setDifficultyLocked(locked);
         this.getPlayerList().getPlayers().forEach(this::sendDifficultyUpdate);
     }
 
-    private void sendDifficultyUpdate(ServerPlayer p_129939_) {
-        LevelData leveldata = p_129939_.level().getLevelData();
-        p_129939_.connection.send(new ClientboundChangeDifficultyPacket(leveldata.getDifficulty(), leveldata.isDifficultyLocked()));
+    private void sendDifficultyUpdate(ServerPlayer player) {
+        LevelData leveldata = player.level().getLevelData();
+        player.connection.send(new ClientboundChangeDifficultyPacket(leveldata.getDifficulty(), leveldata.isDifficultyLocked()));
     }
 
     public boolean isSpawningMonsters() {
@@ -1261,8 +1279,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.isDemo;
     }
 
-    public void setDemo(boolean p_129976_) {
-        this.isDemo = p_129976_;
+    /**
+     * Sets whether this is a demo or not.
+     */
+    public void setDemo(boolean demo) {
+        this.isDemo = demo;
     }
 
     public Optional<MinecraftServer.ServerResourcePackInfo> getServerResourcePack() {
@@ -1281,16 +1302,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.onlineMode;
     }
 
-    public void setUsesAuthentication(boolean p_129986_) {
-        this.onlineMode = p_129986_;
+    public void setUsesAuthentication(boolean online) {
+        this.onlineMode = online;
     }
 
     public boolean getPreventProxyConnections() {
         return this.preventProxyConnections;
     }
 
-    public void setPreventProxyConnections(boolean p_129994_) {
-        this.preventProxyConnections = p_129994_;
+    public void setPreventProxyConnections(boolean preventProxyConnections) {
+        this.preventProxyConnections = preventProxyConnections;
     }
 
     public boolean isSpawningAnimals() {
@@ -1307,16 +1328,16 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.pvp;
     }
 
-    public void setPvpAllowed(boolean p_129998_) {
-        this.pvp = p_129998_;
+    public void setPvpAllowed(boolean allowPvp) {
+        this.pvp = allowPvp;
     }
 
     public boolean isFlightAllowed() {
         return this.allowFlight;
     }
 
-    public void setFlightAllowed(boolean p_130000_) {
-        this.allowFlight = p_130000_;
+    public void setFlightAllowed(boolean allow) {
+        this.allowFlight = allow;
     }
 
     public abstract boolean isCommandBlockEnabled();
@@ -1326,8 +1347,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.motd;
     }
 
-    public void setMotd(String p_129990_) {
-        this.motd = p_129990_;
+    public void setMotd(String motd) {
+        this.motd = motd;
     }
 
     public boolean isStopped() {
@@ -1338,14 +1359,17 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.playerList;
     }
 
-    public void setPlayerList(PlayerList p_129824_) {
-        this.playerList = p_129824_;
+    public void setPlayerList(PlayerList list) {
+        this.playerList = list;
     }
 
     public abstract boolean isPublished();
 
-    public void setDefaultGameType(GameType p_129832_) {
-        this.worldData.setGameType(p_129832_);
+    /**
+     * Sets the game type for all worlds.
+     */
+    public void setDefaultGameType(GameType gameMode) {
+        this.worldData.setGameType(gameMode);
     }
 
     public ServerConnectionListener getConnection() {
@@ -1360,7 +1384,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return false;
     }
 
-    public boolean publishServer(@Nullable GameType p_129833_, boolean p_129834_, int p_129835_) {
+    public boolean publishServer(@Nullable GameType gameMode, boolean commands, int port) {
         return false;
     }
 
@@ -1372,7 +1396,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return 16;
     }
 
-    public boolean isUnderSpawnProtection(ServerLevel p_129811_, BlockPos p_129812_, Player p_129813_) {
+    public boolean isUnderSpawnProtection(ServerLevel level, BlockPos pos, Player player) {
         return false;
     }
 
@@ -1392,8 +1416,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.playerIdleTimeout;
     }
 
-    public void setPlayerIdleTimeout(int p_129978_) {
-        this.playerIdleTimeout = p_129978_;
+    public void setPlayerIdleTimeout(int idleTimeout) {
+        this.playerIdleTimeout = idleTimeout;
     }
 
     public MinecraftSessionService getSessionService() {
@@ -1433,11 +1457,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     }
 
     @Override
-    public void executeIfPossible(Runnable p_202482_) {
+    public void executeIfPossible(Runnable task) {
         if (this.isStopped()) {
             throw new RejectedExecutionException("Server already shutting down");
         } else {
-            super.executeIfPossible(p_202482_);
+            super.executeIfPossible(task);
         }
     }
 
@@ -1462,8 +1486,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.fixerUpper;
     }
 
-    public int getSpawnRadius(@Nullable ServerLevel p_129804_) {
-        return p_129804_ != null ? p_129804_.getGameRules().getInt(GameRules.RULE_SPAWN_RADIUS) : 10;
+    public int getSpawnRadius(@Nullable ServerLevel level) {
+        return level != null ? level.getGameRules().getInt(GameRules.RULE_SPAWN_RADIUS) : 10;
     }
 
     public ServerAdvancementManager getAdvancements() {
@@ -1474,9 +1498,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.functionManager;
     }
 
-    public CompletableFuture<Void> reloadResources(Collection<String> p_129862_) {
+    /**
+     * Replaces currently selected list of datapacks, reloads them, and sends new data to players.
+     */
+    public CompletableFuture<Void> reloadResources(Collection<String> selectedIds) {
         CompletableFuture<Void> completablefuture = CompletableFuture.<ImmutableList>supplyAsync(
-                () -> this.packRepository.rebuildSelected(p_129862_).stream().map(Pack::open).collect(ImmutableList.toImmutableList()),
+                () -> this.packRepository.rebuildSelected(selectedIds).stream().map(Pack::open).collect(ImmutableList.toImmutableList()),
                 this
             )
             .thenCompose(
@@ -1503,7 +1530,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                 p_335203_ -> {
                     this.resources.close();
                     this.resources = p_335203_;
-                    this.packRepository.setSelected(p_129862_);
+                    this.packRepository.setSelected(selectedIds);
                     WorldDataConfiguration worlddataconfiguration = new WorldDataConfiguration(
                         getSelectedPacks(this.packRepository, true), this.worldData.enabledFeatures()
                     );
@@ -1525,28 +1552,28 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     }
 
     public static WorldDataConfiguration configurePackRepository(
-        PackRepository p_248681_, WorldDataConfiguration p_341632_, boolean p_249869_, boolean p_341620_
+        PackRepository packRepository, WorldDataConfiguration initialDataConfig, boolean initMode, boolean safeMode
     ) {
-        DataPackConfig datapackconfig = p_341632_.dataPacks();
-        FeatureFlagSet featureflagset = p_249869_ ? FeatureFlagSet.of() : p_341632_.enabledFeatures();
-        FeatureFlagSet featureflagset1 = p_249869_ ? FeatureFlags.REGISTRY.allFlags() : p_341632_.enabledFeatures();
-        p_248681_.reload();
+        DataPackConfig datapackconfig = initialDataConfig.dataPacks();
+        FeatureFlagSet featureflagset = initMode ? FeatureFlagSet.of() : initialDataConfig.enabledFeatures();
+        FeatureFlagSet featureflagset1 = initMode ? FeatureFlags.REGISTRY.allFlags() : initialDataConfig.enabledFeatures();
+        packRepository.reload();
         DataPackConfig.DEFAULT.addModPacks(net.neoforged.neoforge.common.CommonHooks.getModDataPacks());
         datapackconfig.addModPacks(net.neoforged.neoforge.common.CommonHooks.getModDataPacks());
-        if (p_341620_) {
-            return configureRepositoryWithSelection(p_248681_, net.neoforged.neoforge.common.CommonHooks.getModDataPacksWithVanilla(), featureflagset, false);
+        if (safeMode) {
+            return configureRepositoryWithSelection(packRepository, net.neoforged.neoforge.common.CommonHooks.getModDataPacksWithVanilla(), featureflagset, false);
         } else {
             Set<String> set = Sets.newLinkedHashSet();
 
             for (String s : datapackconfig.getEnabled()) {
-                if (p_248681_.isAvailable(s)) {
+                if (packRepository.isAvailable(s)) {
                     set.add(s);
                 } else {
                     LOGGER.warn("Missing data pack {}", s);
                 }
             }
 
-            for (Pack pack : p_248681_.getAvailablePacks()) {
+            for (Pack pack : packRepository.getAvailablePacks()) {
                 String s1 = pack.getId();
                 if (!datapackconfig.getDisabled().contains(s1)) {
                     FeatureFlagSet featureflagset2 = pack.getRequestedFeatures();
@@ -1580,29 +1607,29 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                 set.add("vanilla");
             }
 
-            net.neoforged.neoforge.resource.ResourcePackLoader.reorderNewlyDiscoveredPacks(set, datapackconfig.getEnabled(), p_248681_);
+            net.neoforged.neoforge.resource.ResourcePackLoader.reorderNewlyDiscoveredPacks(set, datapackconfig.getEnabled(), packRepository);
 
-            return configureRepositoryWithSelection(p_248681_, set, featureflagset, true);
+            return configureRepositoryWithSelection(packRepository, set, featureflagset, true);
         }
     }
 
     private static WorldDataConfiguration configureRepositoryWithSelection(
-        PackRepository p_341680_, Collection<String> p_341677_, FeatureFlagSet p_341602_, boolean p_341662_
+        PackRepository packRepository, Collection<String> selectedPacks, FeatureFlagSet enabledFeatures, boolean safeMode
     ) {
-        p_341680_.setSelected(p_341677_);
-        enableForcedFeaturePacks(p_341680_, p_341602_);
-        DataPackConfig datapackconfig = getSelectedPacks(p_341680_, p_341662_);
-        FeatureFlagSet featureflagset = p_341680_.getRequestedFeatureFlags().join(p_341602_);
+        packRepository.setSelected(selectedPacks);
+        enableForcedFeaturePacks(packRepository, enabledFeatures);
+        DataPackConfig datapackconfig = getSelectedPacks(packRepository, safeMode);
+        FeatureFlagSet featureflagset = packRepository.getRequestedFeatureFlags().join(enabledFeatures);
         return new WorldDataConfiguration(datapackconfig, featureflagset);
     }
 
-    private static void enableForcedFeaturePacks(PackRepository p_341674_, FeatureFlagSet p_341598_) {
-        FeatureFlagSet featureflagset = p_341674_.getRequestedFeatureFlags();
-        FeatureFlagSet featureflagset1 = p_341598_.subtract(featureflagset);
+    private static void enableForcedFeaturePacks(PackRepository packRepository, FeatureFlagSet enabledFeatures) {
+        FeatureFlagSet featureflagset = packRepository.getRequestedFeatureFlags();
+        FeatureFlagSet featureflagset1 = enabledFeatures.subtract(featureflagset);
         if (!featureflagset1.isEmpty()) {
-            Set<String> set = new ObjectArraySet<>(p_341674_.getSelectedIds());
+            Set<String> set = new ObjectArraySet<>(packRepository.getSelectedIds());
 
-            for (Pack pack : p_341674_.getAvailablePacks()) {
+            for (Pack pack : packRepository.getAvailablePacks()) {
                 if (featureflagset1.isEmpty()) {
                     break;
                 }
@@ -1610,7 +1637,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                 if (pack.getPackSource() == PackSource.FEATURE) {
                     String s = pack.getId();
                     FeatureFlagSet featureflagset2 = pack.getRequestedFeatures();
-                    if (!featureflagset2.isEmpty() && featureflagset2.intersects(featureflagset1) && featureflagset2.isSubsetOf(p_341598_)) {
+                    if (!featureflagset2.isEmpty() && featureflagset2.intersects(featureflagset1) && featureflagset2.isSubsetOf(enabledFeatures)) {
                         if (!set.add(s)) {
                             throw new IllegalStateException("Tried to force '" + s + "', but it was already enabled");
                         }
@@ -1621,20 +1648,20 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                 }
             }
 
-            p_341674_.setSelected(set);
+            packRepository.setSelected(set);
         }
     }
 
-    private static DataPackConfig getSelectedPacks(PackRepository p_129818_, boolean p_341596_) {
-        Collection<String> collection = p_129818_.getSelectedIds();
+    private static DataPackConfig getSelectedPacks(PackRepository packRepository, boolean safeMode) {
+        Collection<String> collection = packRepository.getSelectedIds();
         List<String> list = ImmutableList.copyOf(collection);
-        List<String> list1 = p_341596_ ? p_129818_.getAvailableIds().stream().filter(p_212916_ -> !collection.contains(p_212916_)).toList() : List.of();
+        List<String> list1 = safeMode ? packRepository.getAvailableIds().stream().filter(p_212916_ -> !collection.contains(p_212916_)).toList() : List.of();
         return new DataPackConfig(list, list1);
     }
 
-    public void kickUnlistedPlayers(CommandSourceStack p_129850_) {
+    public void kickUnlistedPlayers(CommandSourceStack commandSource) {
         if (this.isEnforceWhitelist()) {
-            PlayerList playerlist = p_129850_.getServer().getPlayerList();
+            PlayerList playerlist = commandSource.getServer().getPlayerList();
             UserWhiteList userwhitelist = playerlist.getWhiteList();
 
             for (ServerPlayer serverplayer : Lists.newArrayList(playerlist.getPlayers())) {
@@ -1709,8 +1736,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.enforceWhitelist;
     }
 
-    public void setEnforceWhitelist(boolean p_130005_) {
-        this.enforceWhitelist = p_130005_;
+    public void setEnforceWhitelist(boolean whitelistEnabled) {
+        this.enforceWhitelist = whitelistEnabled;
     }
 
     public float getCurrentSmoothedTickTime() {
@@ -1729,12 +1756,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.tickTimesNanos;
     }
 
-    public int getProfilePermissions(GameProfile p_129945_) {
-        if (this.getPlayerList().isOp(p_129945_)) {
-            ServerOpListEntry serveroplistentry = this.getPlayerList().getOps().get(p_129945_);
+    public int getProfilePermissions(GameProfile profile) {
+        if (this.getPlayerList().isOp(profile)) {
+            ServerOpListEntry serveroplistentry = this.getPlayerList().getOps().get(profile);
             if (serveroplistentry != null) {
                 return serveroplistentry.getLevel();
-            } else if (this.isSingleplayerOwner(p_129945_)) {
+            } else if (this.isSingleplayerOwner(profile)) {
                 return 4;
             } else if (this.isSingleplayer()) {
                 return this.getPlayerList().isAllowCommandsForAllPlayers() ? 4 : 0;
@@ -1750,7 +1777,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.profiler;
     }
 
-    public abstract boolean isSingleplayerOwner(GameProfile p_129840_);
+    public abstract boolean isSingleplayerOwner(GameProfile profile);
 
     private Map<ResourceKey<Level>, long[]> perWorldTickTimes = Maps.newIdentityHashMap();
     @Nullable
@@ -1777,11 +1804,11 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return worldArray;
     }
 
-    public void dumpServerProperties(Path p_177911_) throws IOException {
+    public void dumpServerProperties(Path path) throws IOException {
     }
 
-    private void saveDebugReport(Path p_129860_) {
-        Path path = p_129860_.resolve("levels");
+    private void saveDebugReport(Path p_path) {
+        Path path = p_path.resolve("levels");
 
         try {
             for (Entry<ResourceKey<Level>, ServerLevel> entry : this.levels.entrySet()) {
@@ -1791,19 +1818,19 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                 entry.getValue().saveDebugReport(path1);
             }
 
-            this.dumpGameRules(p_129860_.resolve("gamerules.txt"));
-            this.dumpClasspath(p_129860_.resolve("classpath.txt"));
-            this.dumpMiscStats(p_129860_.resolve("stats.txt"));
-            this.dumpThreads(p_129860_.resolve("threads.txt"));
-            this.dumpServerProperties(p_129860_.resolve("server.properties.txt"));
-            this.dumpNativeModules(p_129860_.resolve("modules.txt"));
+            this.dumpGameRules(p_path.resolve("gamerules.txt"));
+            this.dumpClasspath(p_path.resolve("classpath.txt"));
+            this.dumpMiscStats(p_path.resolve("stats.txt"));
+            this.dumpThreads(p_path.resolve("threads.txt"));
+            this.dumpServerProperties(p_path.resolve("server.properties.txt"));
+            this.dumpNativeModules(p_path.resolve("modules.txt"));
         } catch (IOException ioexception) {
             LOGGER.warn("Failed to save debug report", (Throwable)ioexception);
         }
     }
 
-    private void dumpMiscStats(Path p_129951_) throws IOException {
-        try (Writer writer = Files.newBufferedWriter(p_129951_)) {
+    private void dumpMiscStats(Path path) throws IOException {
+        try (Writer writer = Files.newBufferedWriter(path)) {
             writer.write(String.format(Locale.ROOT, "pending_tasks: %d\n", this.getPendingTasksCount()));
             writer.write(String.format(Locale.ROOT, "average_tick_time: %f\n", this.getCurrentSmoothedTickTime()));
             writer.write(String.format(Locale.ROOT, "tick_times: %s\n", Arrays.toString(this.tickTimesNanos)));
@@ -1811,8 +1838,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         }
     }
 
-    private void dumpGameRules(Path p_129984_) throws IOException {
-        try (Writer writer = Files.newBufferedWriter(p_129984_)) {
+    private void dumpGameRules(Path path) throws IOException {
+        try (Writer writer = Files.newBufferedWriter(path)) {
             final List<String> list = Lists.newArrayList();
             final GameRules gamerules = this.getGameRules();
             GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
@@ -1828,8 +1855,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         }
     }
 
-    private void dumpClasspath(Path p_129992_) throws IOException {
-        try (Writer writer = Files.newBufferedWriter(p_129992_)) {
+    private void dumpClasspath(Path path) throws IOException {
+        try (Writer writer = Files.newBufferedWriter(path)) {
             String s = System.getProperty("java.class.path");
             String s1 = System.getProperty("path.separator");
 
@@ -1840,12 +1867,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         }
     }
 
-    private void dumpThreads(Path p_129996_) throws IOException {
+    private void dumpThreads(Path path) throws IOException {
         ThreadMXBean threadmxbean = ManagementFactory.getThreadMXBean();
         ThreadInfo[] athreadinfo = threadmxbean.dumpAllThreads(true, true);
         Arrays.sort(athreadinfo, Comparator.comparing(ThreadInfo::getThreadName));
 
-        try (Writer writer = Files.newBufferedWriter(p_129996_)) {
+        try (Writer writer = Files.newBufferedWriter(path)) {
             for (ThreadInfo threadinfo : athreadinfo) {
                 writer.write(threadinfo.toString());
                 writer.write(10);
@@ -1853,8 +1880,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         }
     }
 
-    private void dumpNativeModules(Path p_195522_) throws IOException {
-        try (Writer writer = Files.newBufferedWriter(p_195522_)) {
+    private void dumpNativeModules(Path path) throws IOException {
+        try (Writer writer = Files.newBufferedWriter(path)) {
             List<NativeModuleLister.NativeModuleInfo> list;
             try {
                 list = Lists.newArrayList(NativeModuleLister.listModules());
@@ -1902,12 +1929,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.metricsRecorder.isRecording();
     }
 
-    public void startRecordingMetrics(Consumer<ProfileResults> p_177924_, Consumer<Path> p_177925_) {
+    public void startRecordingMetrics(Consumer<ProfileResults> output, Consumer<Path> onMetricsRecordingFinished) {
         this.onMetricsRecordingStopped = p_212922_ -> {
             this.stopRecordingMetrics();
-            p_177924_.accept(p_212922_);
+            output.accept(p_212922_);
         };
-        this.onMetricsRecordingFinished = p_177925_;
+        this.onMetricsRecordingFinished = onMetricsRecordingFinished;
         this.willStartRecordingMetrics = true;
     }
 
@@ -1924,8 +1951,8 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         this.profiler = this.metricsRecorder.getProfiler();
     }
 
-    public Path getWorldPath(LevelResource p_129844_) {
-        return this.storageSource.getLevelPath(p_129844_);
+    public Path getWorldPath(LevelResource levelResource) {
+        return this.storageSource.getLevelPath(levelResource);
     }
 
     public boolean forceSynchronousWrites() {
@@ -1956,12 +1983,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return this.resources.managers.fullRegistries();
     }
 
-    public TextFilter createTextFilterForPlayer(ServerPlayer p_129814_) {
+    public TextFilter createTextFilterForPlayer(ServerPlayer player) {
         return TextFilter.DUMMY;
     }
 
-    public ServerPlayerGameMode createGameModeForPlayer(ServerPlayer p_177934_) {
-        return (ServerPlayerGameMode)(this.isDemo() ? new DemoMode(p_177934_) : new ServerPlayerGameMode(p_177934_));
+    public ServerPlayerGameMode createGameModeForPlayer(ServerPlayer player) {
+        return (ServerPlayerGameMode)(this.isDemo() ? new DemoMode(player) : new ServerPlayerGameMode(player));
     }
 
     @Nullable
@@ -1999,10 +2026,10 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return 1000000;
     }
 
-    public void logChatMessage(Component p_241503_, ChatType.Bound p_241402_, @Nullable String p_241481_) {
-        String s = p_241402_.decorate(p_241503_).getString();
-        if (p_241481_ != null) {
-            LOGGER.info("[{}] {}", p_241481_, s);
+    public void logChatMessage(Component content, ChatType.Bound boundChatType, @Nullable String header) {
+        String s = boundChatType.decorate(content).getString();
+        if (header != null) {
+            LOGGER.info("[{}] {}", header, s);
         } else {
             LOGGER.info("{}", s);
         }
@@ -2016,19 +2043,19 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         return true;
     }
 
-    public void subscribeToDebugSample(ServerPlayer p_324078_, RemoteDebugSampleType p_323992_) {
+    public void subscribeToDebugSample(ServerPlayer player, RemoteDebugSampleType sampleType) {
     }
 
     public boolean acceptsTransfers() {
         return false;
     }
 
-    private void storeChunkIoError(CrashReport p_352397_, ChunkPos p_352348_, RegionStorageInfo p_352231_) {
+    private void storeChunkIoError(CrashReport crashReport, ChunkPos chunkPos, RegionStorageInfo regionStorageInfo) {
         Util.ioPool().execute(() -> {
             try {
                 Path path = this.getFile("debug");
                 FileUtil.createDirectoriesSafe(path);
-                String s = FileUtil.sanitizeName(p_352231_.level());
+                String s = FileUtil.sanitizeName(regionStorageInfo.level());
                 Path path1 = path.resolve("chunk-" + s + "-" + Util.getFilenameFormattedDateTime() + "-server.txt");
                 FileStore filestore = Files.getFileStore(path);
                 long i = filestore.getUsableSpace();
@@ -2037,13 +2064,13 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
                     return;
                 }
 
-                CrashReportCategory crashreportcategory = p_352397_.addCategory("Chunk Info");
-                crashreportcategory.setDetail("Level", p_352231_::level);
-                crashreportcategory.setDetail("Dimension", () -> p_352231_.dimension().location().toString());
-                crashreportcategory.setDetail("Storage", p_352231_::type);
-                crashreportcategory.setDetail("Position", p_352348_::toString);
-                p_352397_.saveToFile(path1, ReportType.CHUNK_IO_ERROR);
-                LOGGER.info("Saved details to {}", p_352397_.getSaveFile());
+                CrashReportCategory crashreportcategory = crashReport.addCategory("Chunk Info");
+                crashreportcategory.setDetail("Level", regionStorageInfo::level);
+                crashreportcategory.setDetail("Dimension", () -> regionStorageInfo.dimension().location().toString());
+                crashreportcategory.setDetail("Storage", regionStorageInfo::type);
+                crashreportcategory.setDetail("Position", chunkPos::toString);
+                crashReport.saveToFile(path1, ReportType.CHUNK_IO_ERROR);
+                LOGGER.info("Saved details to {}", crashReport.getSaveFile());
             } catch (Exception exception) {
                 LOGGER.warn("Failed to store chunk IO exception", (Throwable)exception);
             }
@@ -2051,15 +2078,15 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
     }
 
     @Override
-    public void reportChunkLoadFailure(Throwable p_352289_, RegionStorageInfo p_352335_, ChunkPos p_330507_) {
-        LOGGER.error("Failed to load chunk {},{}", p_330507_.x, p_330507_.z, p_352289_);
-        this.storeChunkIoError(CrashReport.forThrowable(p_352289_, "Chunk load failure"), p_330507_, p_352335_);
+    public void reportChunkLoadFailure(Throwable throwable, RegionStorageInfo regionStorageInfo, ChunkPos chunkPos) {
+        LOGGER.error("Failed to load chunk {},{}", chunkPos.x, chunkPos.z, throwable);
+        this.storeChunkIoError(CrashReport.forThrowable(throwable, "Chunk load failure"), chunkPos, regionStorageInfo);
     }
 
     @Override
-    public void reportChunkSaveFailure(Throwable p_352232_, RegionStorageInfo p_352253_, ChunkPos p_331741_) {
-        LOGGER.error("Failed to save chunk {},{}", p_331741_.x, p_331741_.z, p_352232_);
-        this.storeChunkIoError(CrashReport.forThrowable(p_352232_, "Chunk save failure"), p_331741_, p_352253_);
+    public void reportChunkSaveFailure(Throwable throwable, RegionStorageInfo regionStorageInfo, ChunkPos chunkPos) {
+        LOGGER.error("Failed to save chunk {},{}", chunkPos.x, chunkPos.z, throwable);
+        this.storeChunkIoError(CrashReport.forThrowable(throwable, "Chunk save failure"), chunkPos, regionStorageInfo);
     }
 
     public PotionBrewing potionBrewing() {
@@ -2084,12 +2111,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
         final long startNanos;
         final int startTick;
 
-        TimeProfiler(long p_177958_, int p_177959_) {
-            this.startNanos = p_177958_;
-            this.startTick = p_177959_;
+        TimeProfiler(long startNanos, int startTick) {
+            this.startNanos = startNanos;
+            this.startTick = startTick;
         }
 
-        ProfileResults stop(final long p_177961_, final int p_177962_) {
+        ProfileResults stop(final long endTimeNano, final int endTimeTicks) {
             return new ProfileResults() {
                 @Override
                 public List<ResultField> getTimes(String p_177972_) {
@@ -2113,12 +2140,12 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
 
                 @Override
                 public long getEndTimeNano() {
-                    return p_177961_;
+                    return endTimeNano;
                 }
 
                 @Override
                 public int getEndTimeTicks() {
-                    return p_177962_;
+                    return endTimeTicks;
                 }
 
                 @Override

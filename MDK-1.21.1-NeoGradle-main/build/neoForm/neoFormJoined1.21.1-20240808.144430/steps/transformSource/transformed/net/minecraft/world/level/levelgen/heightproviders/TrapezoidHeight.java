@@ -25,35 +25,35 @@ public class TrapezoidHeight extends HeightProvider {
     private final VerticalAnchor maxInclusive;
     private final int plateau;
 
-    private TrapezoidHeight(VerticalAnchor p_162000_, VerticalAnchor p_162001_, int p_162002_) {
-        this.minInclusive = p_162000_;
-        this.maxInclusive = p_162001_;
-        this.plateau = p_162002_;
+    private TrapezoidHeight(VerticalAnchor minInclusive, VerticalAnchor maxInclusive, int plateau) {
+        this.minInclusive = minInclusive;
+        this.maxInclusive = maxInclusive;
+        this.plateau = plateau;
     }
 
-    public static TrapezoidHeight of(VerticalAnchor p_162010_, VerticalAnchor p_162011_, int p_162012_) {
-        return new TrapezoidHeight(p_162010_, p_162011_, p_162012_);
+    public static TrapezoidHeight of(VerticalAnchor minInclusive, VerticalAnchor maxInclusive, int plateau) {
+        return new TrapezoidHeight(minInclusive, maxInclusive, plateau);
     }
 
-    public static TrapezoidHeight of(VerticalAnchor p_162007_, VerticalAnchor p_162008_) {
-        return of(p_162007_, p_162008_, 0);
+    public static TrapezoidHeight of(VerticalAnchor minInclusive, VerticalAnchor maxInclusive) {
+        return of(minInclusive, maxInclusive, 0);
     }
 
     @Override
-    public int sample(RandomSource p_226305_, WorldGenerationContext p_226306_) {
-        int i = this.minInclusive.resolveY(p_226306_);
-        int j = this.maxInclusive.resolveY(p_226306_);
+    public int sample(RandomSource random, WorldGenerationContext context) {
+        int i = this.minInclusive.resolveY(context);
+        int j = this.maxInclusive.resolveY(context);
         if (i > j) {
             LOGGER.warn("Empty height range: {}", this);
             return i;
         } else {
             int k = j - i;
             if (this.plateau >= k) {
-                return Mth.randomBetweenInclusive(p_226305_, i, j);
+                return Mth.randomBetweenInclusive(random, i, j);
             } else {
                 int l = (k - this.plateau) / 2;
                 int i1 = k - l;
-                return i + Mth.randomBetweenInclusive(p_226305_, 0, i1) + Mth.randomBetweenInclusive(p_226305_, 0, l);
+                return i + Mth.randomBetweenInclusive(random, 0, i1) + Mth.randomBetweenInclusive(random, 0, l);
             }
         }
     }

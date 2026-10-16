@@ -18,14 +18,14 @@ class MatchingBlocksPredicate extends StateTestingPredicate {
                 .apply(p_259004_, MatchingBlocksPredicate::new)
     );
 
-    public MatchingBlocksPredicate(Vec3i p_204690_, HolderSet<Block> p_204691_) {
-        super(p_204690_);
-        this.blocks = p_204691_;
+    public MatchingBlocksPredicate(Vec3i offset, HolderSet<Block> blocks) {
+        super(offset);
+        this.blocks = blocks;
     }
 
     @Override
-    protected boolean test(BlockState p_190487_) {
-        return p_190487_.is(this.blocks);
+    protected boolean test(BlockState state) {
+        return state.is(this.blocks);
     }
 
     @Override

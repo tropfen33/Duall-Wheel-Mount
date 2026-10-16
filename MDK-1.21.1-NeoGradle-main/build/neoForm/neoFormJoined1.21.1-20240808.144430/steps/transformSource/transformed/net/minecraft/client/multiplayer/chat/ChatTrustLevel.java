@@ -21,33 +21,33 @@ public enum ChatTrustLevel implements StringRepresentable {
     public static final Codec<ChatTrustLevel> CODEC = StringRepresentable.fromEnum(ChatTrustLevel::values);
     private final String serializedName;
 
-    private ChatTrustLevel(String p_254190_) {
-        this.serializedName = p_254190_;
+    private ChatTrustLevel(String serializedName) {
+        this.serializedName = serializedName;
     }
 
-    public static ChatTrustLevel evaluate(PlayerChatMessage p_248663_, Component p_248544_, Instant p_252024_) {
-        if (!p_248663_.hasSignature() || p_248663_.hasExpiredClient(p_252024_)) {
+    public static ChatTrustLevel evaluate(PlayerChatMessage chatMessage, Component decoratedServerContent, Instant timestamp) {
+        if (!chatMessage.hasSignature() || chatMessage.hasExpiredClient(timestamp)) {
             return NOT_SECURE;
         } else {
-            return isModified(p_248663_, p_248544_) ? MODIFIED : SECURE;
+            return isModified(chatMessage, decoratedServerContent) ? MODIFIED : SECURE;
         }
     }
 
-    private static boolean isModified(PlayerChatMessage p_252093_, Component p_250811_) {
-        if (!p_250811_.getString().contains(p_252093_.signedContent())) {
+    private static boolean isModified(PlayerChatMessage chatMessage, Component decoratedServerContent) {
+        if (!decoratedServerContent.getString().contains(chatMessage.signedContent())) {
             return true;
         } else {
-            Component component = p_252093_.unsignedContent();
+            Component component = chatMessage.unsignedContent();
             return component == null ? false : containsModifiedStyle(component);
         }
     }
 
-    private static boolean containsModifiedStyle(Component p_251011_) {
-        return p_251011_.<Boolean>visit((p_251711_, p_250844_) -> isModifiedStyle(p_251711_) ? Optional.of(true) : Optional.empty(), Style.EMPTY).orElse(false);
+    private static boolean containsModifiedStyle(Component chatMessage) {
+        return chatMessage.<Boolean>visit((p_251711_, p_250844_) -> isModifiedStyle(p_251711_) ? Optional.of(true) : Optional.empty(), Style.EMPTY).orElse(false);
     }
 
-    private static boolean isModifiedStyle(Style p_251347_) {
-        return !p_251347_.getFont().equals(Style.DEFAULT_FONT);
+    private static boolean isModifiedStyle(Style style) {
+        return !style.getFont().equals(Style.DEFAULT_FONT);
     }
 
     public boolean isNotSecure() {
@@ -55,9 +55,9 @@ public enum ChatTrustLevel implements StringRepresentable {
     }
 
     @Nullable
-    public GuiMessageTag createTag(PlayerChatMessage p_240632_) {
+    public GuiMessageTag createTag(PlayerChatMessage chatMessage) {
         return switch (this) {
-            case MODIFIED -> GuiMessageTag.chatModified(p_240632_.signedContent());
+            case MODIFIED -> GuiMessageTag.chatModified(chatMessage.signedContent());
             case NOT_SECURE -> GuiMessageTag.chatNotSecure();
             default -> null;
         };

@@ -31,32 +31,32 @@ public record DimensionTransition(
         this(p_348609_, findAdjustedSharedSpawnPos(p_348609_, p_352432_), Vec3.ZERO, 0.0F, 0.0F, false, p_352373_);
     }
 
-    private static void playPortalSound(Entity p_352075_) {
-        if (p_352075_ instanceof ServerPlayer serverplayer) {
+    private static void playPortalSound(Entity entity) {
+        if (entity instanceof ServerPlayer serverplayer) {
             serverplayer.connection.send(new ClientboundLevelEventPacket(1032, BlockPos.ZERO, 0, false));
         }
     }
 
-    private static void placePortalTicket(Entity p_352447_) {
-        p_352447_.placePortalTicket(BlockPos.containing(p_352447_.position()));
+    private static void placePortalTicket(Entity entity) {
+        entity.placePortalTicket(BlockPos.containing(entity.position()));
     }
 
-    public static DimensionTransition missingRespawnBlock(ServerLevel p_348517_, Entity p_352420_, DimensionTransition.PostDimensionTransition p_352305_) {
-        return new DimensionTransition(p_348517_, findAdjustedSharedSpawnPos(p_348517_, p_352420_), Vec3.ZERO, 0.0F, 0.0F, true, p_352305_);
+    public static DimensionTransition missingRespawnBlock(ServerLevel level, Entity entity, DimensionTransition.PostDimensionTransition postDimensionTransition) {
+        return new DimensionTransition(level, findAdjustedSharedSpawnPos(level, entity), Vec3.ZERO, 0.0F, 0.0F, true, postDimensionTransition);
     }
 
-    private static Vec3 findAdjustedSharedSpawnPos(ServerLevel p_352080_, Entity p_352400_) {
-        return p_352400_.adjustSpawnLocation(p_352080_, p_352080_.getSharedSpawnPos()).getBottomCenter();
+    private static Vec3 findAdjustedSharedSpawnPos(ServerLevel newLevel, Entity entity) {
+        return entity.adjustSpawnLocation(newLevel, newLevel.getSharedSpawnPos()).getBottomCenter();
     }
 
     @FunctionalInterface
     public interface PostDimensionTransition {
-        void onTransition(Entity p_352279_);
+        void onTransition(Entity entity);
 
-        default DimensionTransition.PostDimensionTransition then(DimensionTransition.PostDimensionTransition p_352277_) {
+        default DimensionTransition.PostDimensionTransition then(DimensionTransition.PostDimensionTransition transition) {
             return p_352242_ -> {
                 this.onTransition(p_352242_);
-                p_352277_.onTransition(p_352242_);
+                transition.onTransition(p_352242_);
             };
         }
     }

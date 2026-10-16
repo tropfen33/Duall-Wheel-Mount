@@ -28,138 +28,138 @@ public class BehaviorUtils {
     private BehaviorUtils() {
     }
 
-    public static void lockGazeAndWalkToEachOther(LivingEntity p_22603_, LivingEntity p_22604_, float p_22605_, int p_320174_) {
-        lookAtEachOther(p_22603_, p_22604_);
-        setWalkAndLookTargetMemoriesToEachOther(p_22603_, p_22604_, p_22605_, p_320174_);
+    public static void lockGazeAndWalkToEachOther(LivingEntity firstEntity, LivingEntity secondEntity, float speed, int distance) {
+        lookAtEachOther(firstEntity, secondEntity);
+        setWalkAndLookTargetMemoriesToEachOther(firstEntity, secondEntity, speed, distance);
     }
 
-    public static boolean entityIsVisible(Brain<?> p_22637_, LivingEntity p_22638_) {
-        Optional<NearestVisibleLivingEntities> optional = p_22637_.getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES);
-        return optional.isPresent() && optional.get().contains(p_22638_);
+    public static boolean entityIsVisible(Brain<?> brain, LivingEntity target) {
+        Optional<NearestVisibleLivingEntities> optional = brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES);
+        return optional.isPresent() && optional.get().contains(target);
     }
 
-    public static boolean targetIsValid(Brain<?> p_22640_, MemoryModuleType<? extends LivingEntity> p_22641_, EntityType<?> p_22642_) {
-        return targetIsValid(p_22640_, p_22641_, p_348170_ -> p_348170_.getType() == p_22642_);
+    public static boolean targetIsValid(Brain<?> brains, MemoryModuleType<? extends LivingEntity> memorymodule, EntityType<?> entityType) {
+        return targetIsValid(brains, memorymodule, p_348170_ -> p_348170_.getType() == entityType);
     }
 
-    private static boolean targetIsValid(Brain<?> p_22644_, MemoryModuleType<? extends LivingEntity> p_22645_, Predicate<LivingEntity> p_22646_) {
-        return p_22644_.getMemory(p_22645_)
-            .filter(p_22646_)
+    private static boolean targetIsValid(Brain<?> brain, MemoryModuleType<? extends LivingEntity> memoryType, Predicate<LivingEntity> livingPredicate) {
+        return brain.getMemory(memoryType)
+            .filter(livingPredicate)
             .filter(LivingEntity::isAlive)
-            .filter(p_186037_ -> entityIsVisible(p_22644_, p_186037_))
+            .filter(p_186037_ -> entityIsVisible(brain, p_186037_))
             .isPresent();
     }
 
-    private static void lookAtEachOther(LivingEntity p_22671_, LivingEntity p_22672_) {
-        lookAtEntity(p_22671_, p_22672_);
-        lookAtEntity(p_22672_, p_22671_);
+    private static void lookAtEachOther(LivingEntity firstEntity, LivingEntity secondEntity) {
+        lookAtEntity(firstEntity, secondEntity);
+        lookAtEntity(secondEntity, firstEntity);
     }
 
-    public static void lookAtEntity(LivingEntity p_22596_, LivingEntity p_22597_) {
-        p_22596_.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new EntityTracker(p_22597_, true));
+    public static void lookAtEntity(LivingEntity entity, LivingEntity target) {
+        entity.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new EntityTracker(target, true));
     }
 
-    private static void setWalkAndLookTargetMemoriesToEachOther(LivingEntity p_22661_, LivingEntity p_22662_, float p_22663_, int p_319876_) {
-        setWalkAndLookTargetMemories(p_22661_, p_22662_, p_22663_, p_319876_);
-        setWalkAndLookTargetMemories(p_22662_, p_22661_, p_22663_, p_319876_);
+    private static void setWalkAndLookTargetMemoriesToEachOther(LivingEntity firstEntity, LivingEntity secondEntity, float speed, int distance) {
+        setWalkAndLookTargetMemories(firstEntity, secondEntity, speed, distance);
+        setWalkAndLookTargetMemories(secondEntity, firstEntity, speed, distance);
     }
 
-    public static void setWalkAndLookTargetMemories(LivingEntity p_22591_, Entity p_22592_, float p_22593_, int p_22594_) {
-        setWalkAndLookTargetMemories(p_22591_, new EntityTracker(p_22592_, true), p_22593_, p_22594_);
+    public static void setWalkAndLookTargetMemories(LivingEntity livingEntity, Entity target, float speed, int distance) {
+        setWalkAndLookTargetMemories(livingEntity, new EntityTracker(target, true), speed, distance);
     }
 
-    public static void setWalkAndLookTargetMemories(LivingEntity p_22618_, BlockPos p_22619_, float p_22620_, int p_22621_) {
-        setWalkAndLookTargetMemories(p_22618_, new BlockPosTracker(p_22619_), p_22620_, p_22621_);
+    public static void setWalkAndLookTargetMemories(LivingEntity livingEntity, BlockPos pos, float speed, int distance) {
+        setWalkAndLookTargetMemories(livingEntity, new BlockPosTracker(pos), speed, distance);
     }
 
-    public static void setWalkAndLookTargetMemories(LivingEntity p_217129_, PositionTracker p_217130_, float p_217131_, int p_217132_) {
-        WalkTarget walktarget = new WalkTarget(p_217130_, p_217131_, p_217132_);
-        p_217129_.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, p_217130_);
-        p_217129_.getBrain().setMemory(MemoryModuleType.WALK_TARGET, walktarget);
+    public static void setWalkAndLookTargetMemories(LivingEntity entity, PositionTracker positionTracker, float speedModifier, int closeEnoughDist) {
+        WalkTarget walktarget = new WalkTarget(positionTracker, speedModifier, closeEnoughDist);
+        entity.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, positionTracker);
+        entity.getBrain().setMemory(MemoryModuleType.WALK_TARGET, walktarget);
     }
 
-    public static void throwItem(LivingEntity p_22614_, ItemStack p_22615_, Vec3 p_22616_) {
+    public static void throwItem(LivingEntity livingEntity, ItemStack stack, Vec3 offset) {
         Vec3 vec3 = new Vec3(0.3F, 0.3F, 0.3F);
-        throwItem(p_22614_, p_22615_, p_22616_, vec3, 0.3F);
+        throwItem(livingEntity, stack, offset, vec3, 0.3F);
     }
 
-    public static void throwItem(LivingEntity p_217134_, ItemStack p_217135_, Vec3 p_217136_, Vec3 p_217137_, float p_217138_) {
-        double d0 = p_217134_.getEyeY() - (double)p_217138_;
-        ItemEntity itementity = new ItemEntity(p_217134_.level(), p_217134_.getX(), d0, p_217134_.getZ(), p_217135_);
-        itementity.setThrower(p_217134_);
-        Vec3 vec3 = p_217136_.subtract(p_217134_.position());
-        vec3 = vec3.normalize().multiply(p_217137_.x, p_217137_.y, p_217137_.z);
+    public static void throwItem(LivingEntity entity, ItemStack stack, Vec3 offset, Vec3 speedMultiplier, float yOffset) {
+        double d0 = entity.getEyeY() - (double)yOffset;
+        ItemEntity itementity = new ItemEntity(entity.level(), entity.getX(), d0, entity.getZ(), stack);
+        itementity.setThrower(entity);
+        Vec3 vec3 = offset.subtract(entity.position());
+        vec3 = vec3.normalize().multiply(speedMultiplier.x, speedMultiplier.y, speedMultiplier.z);
         itementity.setDeltaMovement(vec3);
         itementity.setDefaultPickUpDelay();
-        p_217134_.level().addFreshEntity(itementity);
+        entity.level().addFreshEntity(itementity);
     }
 
-    public static SectionPos findSectionClosestToVillage(ServerLevel p_22582_, SectionPos p_22583_, int p_22584_) {
-        int i = p_22582_.sectionsToVillage(p_22583_);
-        return SectionPos.cube(p_22583_, p_22584_)
-            .filter(p_186017_ -> p_22582_.sectionsToVillage(p_186017_) < i)
-            .min(Comparator.comparingInt(p_22582_::sectionsToVillage))
-            .orElse(p_22583_);
+    public static SectionPos findSectionClosestToVillage(ServerLevel serverLevel, SectionPos sectionPos, int radius) {
+        int i = serverLevel.sectionsToVillage(sectionPos);
+        return SectionPos.cube(sectionPos, radius)
+            .filter(p_186017_ -> serverLevel.sectionsToVillage(p_186017_) < i)
+            .min(Comparator.comparingInt(serverLevel::sectionsToVillage))
+            .orElse(sectionPos);
     }
 
-    public static boolean isWithinAttackRange(Mob p_22633_, LivingEntity p_22634_, int p_22635_) {
-        if (p_22633_.getMainHandItem().getItem() instanceof ProjectileWeaponItem projectileweaponitem && p_22633_.canFireProjectileWeapon(projectileweaponitem)
+    public static boolean isWithinAttackRange(Mob mob, LivingEntity target, int cooldown) {
+        if (mob.getMainHandItem().getItem() instanceof ProjectileWeaponItem projectileweaponitem && mob.canFireProjectileWeapon(projectileweaponitem)
             )
          {
-            int i = projectileweaponitem.getDefaultProjectileRange() - p_22635_;
-            return p_22633_.closerThan(p_22634_, (double)i);
+            int i = projectileweaponitem.getDefaultProjectileRange() - cooldown;
+            return mob.closerThan(target, (double)i);
         }
 
-        return p_22633_.isWithinMeleeAttackRange(p_22634_);
+        return mob.isWithinMeleeAttackRange(target);
     }
 
-    public static boolean isOtherTargetMuchFurtherAwayThanCurrentAttackTarget(LivingEntity p_22599_, LivingEntity p_22600_, double p_22601_) {
-        Optional<LivingEntity> optional = p_22599_.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET);
+    public static boolean isOtherTargetMuchFurtherAwayThanCurrentAttackTarget(LivingEntity livingEntity, LivingEntity target, double distance) {
+        Optional<LivingEntity> optional = livingEntity.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET);
         if (optional.isEmpty()) {
             return false;
         } else {
-            double d0 = p_22599_.distanceToSqr(optional.get().position());
-            double d1 = p_22599_.distanceToSqr(p_22600_.position());
-            return d1 > d0 + p_22601_ * p_22601_;
+            double d0 = livingEntity.distanceToSqr(optional.get().position());
+            double d1 = livingEntity.distanceToSqr(target.position());
+            return d1 > d0 + distance * distance;
         }
     }
 
-    public static boolean canSee(LivingEntity p_22668_, LivingEntity p_22669_) {
-        Brain<?> brain = p_22668_.getBrain();
+    public static boolean canSee(LivingEntity livingEntity, LivingEntity target) {
+        Brain<?> brain = livingEntity.getBrain();
         return !brain.hasMemoryValue(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES)
             ? false
-            : brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES).get().contains(p_22669_);
+            : brain.getMemory(MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES).get().contains(target);
     }
 
-    public static LivingEntity getNearestTarget(LivingEntity p_22626_, Optional<LivingEntity> p_22627_, LivingEntity p_22628_) {
-        return p_22627_.isEmpty() ? p_22628_ : getTargetNearestMe(p_22626_, p_22627_.get(), p_22628_);
+    public static LivingEntity getNearestTarget(LivingEntity centerEntity, Optional<LivingEntity> optionalEntity, LivingEntity livingEntity) {
+        return optionalEntity.isEmpty() ? livingEntity : getTargetNearestMe(centerEntity, optionalEntity.get(), livingEntity);
     }
 
-    public static LivingEntity getTargetNearestMe(LivingEntity p_22607_, LivingEntity p_22608_, LivingEntity p_22609_) {
-        Vec3 vec3 = p_22608_.position();
-        Vec3 vec31 = p_22609_.position();
-        return p_22607_.distanceToSqr(vec3) < p_22607_.distanceToSqr(vec31) ? p_22608_ : p_22609_;
+    public static LivingEntity getTargetNearestMe(LivingEntity centerEntity, LivingEntity livingEntity1, LivingEntity livingEntity2) {
+        Vec3 vec3 = livingEntity1.position();
+        Vec3 vec31 = livingEntity2.position();
+        return centerEntity.distanceToSqr(vec3) < centerEntity.distanceToSqr(vec31) ? livingEntity1 : livingEntity2;
     }
 
-    public static Optional<LivingEntity> getLivingEntityFromUUIDMemory(LivingEntity p_22611_, MemoryModuleType<UUID> p_22612_) {
-        Optional<UUID> optional = p_22611_.getBrain().getMemory(p_22612_);
-        return optional.<Entity>map(p_352713_ -> ((ServerLevel)p_22611_.level()).getEntity(p_352713_))
+    public static Optional<LivingEntity> getLivingEntityFromUUIDMemory(LivingEntity livingEntity, MemoryModuleType<UUID> targetMemory) {
+        Optional<UUID> optional = livingEntity.getBrain().getMemory(targetMemory);
+        return optional.<Entity>map(p_352713_ -> ((ServerLevel)livingEntity.level()).getEntity(p_352713_))
             .map(p_186019_ -> p_186019_ instanceof LivingEntity livingentity ? livingentity : null);
     }
 
     @Nullable
-    public static Vec3 getRandomSwimmablePos(PathfinderMob p_147445_, int p_147446_, int p_147447_) {
-        Vec3 vec3 = DefaultRandomPos.getPos(p_147445_, p_147446_, p_147447_);
+    public static Vec3 getRandomSwimmablePos(PathfinderMob pathfinder, int radius, int verticalDistance) {
+        Vec3 vec3 = DefaultRandomPos.getPos(pathfinder, radius, verticalDistance);
         int i = 0;
 
-        while (vec3 != null && !p_147445_.level().getBlockState(BlockPos.containing(vec3)).isPathfindable(PathComputationType.WATER) && i++ < 10) {
-            vec3 = DefaultRandomPos.getPos(p_147445_, p_147446_, p_147447_);
+        while (vec3 != null && !pathfinder.level().getBlockState(BlockPos.containing(vec3)).isPathfindable(PathComputationType.WATER) && i++ < 10) {
+            vec3 = DefaultRandomPos.getPos(pathfinder, radius, verticalDistance);
         }
 
         return vec3;
     }
 
-    public static boolean isBreeding(LivingEntity p_217127_) {
-        return p_217127_.getBrain().hasMemoryValue(MemoryModuleType.BREED_TARGET);
+    public static boolean isBreeding(LivingEntity entity) {
+        return entity.getBrain().hasMemoryValue(MemoryModuleType.BREED_TARGET);
     }
 }

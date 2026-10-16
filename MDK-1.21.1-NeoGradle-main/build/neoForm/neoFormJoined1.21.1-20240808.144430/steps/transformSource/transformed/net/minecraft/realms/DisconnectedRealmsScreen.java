@@ -17,10 +17,10 @@ public class DisconnectedRealmsScreen extends RealmsScreen {
     private final Screen parent;
     private int textHeight;
 
-    public DisconnectedRealmsScreen(Screen p_120653_, Component p_120654_, Component p_120655_) {
-        super(p_120654_);
-        this.parent = p_120653_;
-        this.reason = p_120655_;
+    public DisconnectedRealmsScreen(Screen parent, Component title, Component reason) {
+        super(title);
+        this.parent = parent;
+        this.reason = reason;
     }
 
     @Override
@@ -45,10 +45,18 @@ public class DisconnectedRealmsScreen extends RealmsScreen {
         Minecraft.getInstance().setScreen(this.parent);
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282959_, int p_120658_, int p_120659_, float p_120660_) {
-        super.render(p_282959_, p_120658_, p_120659_, p_120660_);
-        p_282959_.drawCenteredString(this.font, this.title, this.width / 2, this.height / 2 - this.textHeight / 2 - 9 * 2, 11184810);
-        this.message.renderCentered(p_282959_, this.width / 2, this.height / 2 - this.textHeight / 2);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, this.height / 2 - this.textHeight / 2 - 9 * 2, 11184810);
+        this.message.renderCentered(guiGraphics, this.width / 2, this.height / 2 - this.textHeight / 2);
     }
 }

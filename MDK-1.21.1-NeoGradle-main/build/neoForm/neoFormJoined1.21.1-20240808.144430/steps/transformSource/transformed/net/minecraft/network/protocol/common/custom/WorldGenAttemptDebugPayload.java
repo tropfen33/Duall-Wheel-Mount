@@ -14,13 +14,13 @@ public record WorldGenAttemptDebugPayload(BlockPos pos, float scale, float red, 
         this(p_295574_.readBlockPos(), p_295574_.readFloat(), p_295574_.readFloat(), p_295574_.readFloat(), p_295574_.readFloat(), p_295574_.readFloat());
     }
 
-    private void write(FriendlyByteBuf p_295822_) {
-        p_295822_.writeBlockPos(this.pos);
-        p_295822_.writeFloat(this.scale);
-        p_295822_.writeFloat(this.red);
-        p_295822_.writeFloat(this.green);
-        p_295822_.writeFloat(this.blue);
-        p_295822_.writeFloat(this.alpha);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeBlockPos(this.pos);
+        buffer.writeFloat(this.scale);
+        buffer.writeFloat(this.red);
+        buffer.writeFloat(this.green);
+        buffer.writeFloat(this.blue);
+        buffer.writeFloat(this.alpha);
     }
 
     @Override

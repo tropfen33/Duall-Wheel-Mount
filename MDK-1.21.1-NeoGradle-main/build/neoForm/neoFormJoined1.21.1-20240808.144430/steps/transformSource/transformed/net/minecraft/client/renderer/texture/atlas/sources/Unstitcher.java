@@ -42,22 +42,22 @@ public class Unstitcher implements SpriteSource {
     private final double xDivisor;
     private final double yDivisor;
 
-    public Unstitcher(ResourceLocation p_261679_, List<Unstitcher.Region> p_261974_, double p_262181_, double p_261631_) {
-        this.resource = p_261679_;
-        this.regions = p_261974_;
-        this.xDivisor = p_262181_;
-        this.yDivisor = p_261631_;
+    public Unstitcher(ResourceLocation resource, List<Unstitcher.Region> regions, double xDivisor, double yDivisor) {
+        this.resource = resource;
+        this.regions = regions;
+        this.xDivisor = xDivisor;
+        this.yDivisor = yDivisor;
     }
 
     @Override
-    public void run(ResourceManager p_261498_, SpriteSource.Output p_261828_) {
+    public void run(ResourceManager resourceManager, SpriteSource.Output output) {
         ResourceLocation resourcelocation = TEXTURE_ID_CONVERTER.idToFile(this.resource);
-        Optional<Resource> optional = p_261498_.getResource(resourcelocation);
+        Optional<Resource> optional = resourceManager.getResource(resourcelocation);
         if (optional.isPresent()) {
             LazyLoadedImage lazyloadedimage = new LazyLoadedImage(resourcelocation, optional.get(), this.regions.size());
 
             for (Unstitcher.Region unstitcher$region : this.regions) {
-                p_261828_.add(unstitcher$region.sprite, new Unstitcher.RegionInstance(lazyloadedimage, unstitcher$region, this.xDivisor, this.yDivisor));
+                output.add(unstitcher$region.sprite, new Unstitcher.RegionInstance(lazyloadedimage, unstitcher$region, this.xDivisor, this.yDivisor));
             }
         } else {
             LOGGER.warn("Missing sprite: {}", resourcelocation);
@@ -90,11 +90,11 @@ public class Unstitcher implements SpriteSource {
         private final double xDivisor;
         private final double yDivisor;
 
-        public RegionInstance(LazyLoadedImage p_266678_, Unstitcher.Region p_267197_, double p_266911_, double p_266789_) {
-            this.image = p_266678_;
-            this.region = p_267197_;
-            this.xDivisor = p_266911_;
-            this.yDivisor = p_266789_;
+        public RegionInstance(LazyLoadedImage image, Unstitcher.Region region, double xDivisor, double yDivisor) {
+            this.image = image;
+            this.region = region;
+            this.xDivisor = xDivisor;
+            this.yDivisor = yDivisor;
         }
 
         public SpriteContents apply(SpriteResourceLoader p_296272_) {

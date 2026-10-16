@@ -29,8 +29,8 @@ public class LecternScreen extends BookViewScreen implements MenuAccess<LecternM
         }
     };
 
-    public LecternScreen(LecternMenu p_99020_, Inventory p_99021_, Component p_99022_) {
-        this.menu = p_99020_;
+    public LecternScreen(LecternMenu menu, Inventory playerInventory, Component title) {
+        this.menu = menu;
     }
 
     public LecternMenu getMenu() {
@@ -79,18 +79,21 @@ public class LecternScreen extends BookViewScreen implements MenuAccess<LecternM
         this.sendButtonClick(2);
     }
 
+    /**
+     * I'm not sure why this exists. The function it calls is public and does all the work.
+     */
     @Override
-    protected boolean forcePage(int p_99031_) {
-        if (p_99031_ != this.menu.getPage()) {
-            this.sendButtonClick(100 + p_99031_);
+    protected boolean forcePage(int pageNum) {
+        if (pageNum != this.menu.getPage()) {
+            this.sendButtonClick(100 + pageNum);
             return true;
         } else {
             return false;
         }
     }
 
-    private void sendButtonClick(int p_99037_) {
-        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, p_99037_);
+    private void sendButtonClick(int pageData) {
+        this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, pageData);
     }
 
     @Override

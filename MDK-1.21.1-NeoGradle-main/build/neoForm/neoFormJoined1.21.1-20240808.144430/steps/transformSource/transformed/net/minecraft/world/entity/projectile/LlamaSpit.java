@@ -19,17 +19,17 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class LlamaSpit extends Projectile {
-    public LlamaSpit(EntityType<? extends LlamaSpit> p_37224_, Level p_37225_) {
-        super(p_37224_, p_37225_);
+    public LlamaSpit(EntityType<? extends LlamaSpit> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public LlamaSpit(Level p_37235_, Llama p_37236_) {
-        this(EntityType.LLAMA_SPIT, p_37235_);
-        this.setOwner(p_37236_);
+    public LlamaSpit(Level level, Llama spitter) {
+        this(EntityType.LLAMA_SPIT, level);
+        this.setOwner(spitter);
         this.setPos(
-            p_37236_.getX() - (double)(p_37236_.getBbWidth() + 1.0F) * 0.5 * (double)Mth.sin(p_37236_.yBodyRot * (float) (Math.PI / 180.0)),
-            p_37236_.getEyeY() - 0.1F,
-            p_37236_.getZ() + (double)(p_37236_.getBbWidth() + 1.0F) * 0.5 * (double)Mth.cos(p_37236_.yBodyRot * (float) (Math.PI / 180.0))
+            spitter.getX() - (double)(spitter.getBbWidth() + 1.0F) * 0.5 * (double)Mth.sin(spitter.yBodyRot * (float) (Math.PI / 180.0)),
+            spitter.getEyeY() - 0.1F,
+            spitter.getZ() + (double)(spitter.getBbWidth() + 1.0F) * 0.5 * (double)Mth.cos(spitter.yBodyRot * (float) (Math.PI / 180.0))
         );
     }
 
@@ -61,11 +61,14 @@ public class LlamaSpit extends Projectile {
         }
     }
 
+    /**
+     * Called when the arrow hits an entity
+     */
     @Override
-    protected void onHitEntity(EntityHitResult p_37241_) {
-        super.onHitEntity(p_37241_);
+    protected void onHitEntity(EntityHitResult result) {
+        super.onHitEntity(result);
         if (this.getOwner() instanceof LivingEntity livingentity) {
-            Entity entity = p_37241_.getEntity();
+            Entity entity = result.getEntity();
             DamageSource damagesource = this.damageSources().spit(this, livingentity);
             if (entity.hurt(damagesource, 1.0F) && this.level() instanceof ServerLevel serverlevel) {
                 EnchantmentHelper.doPostAttackEffects(serverlevel, entity, damagesource);
@@ -74,23 +77,23 @@ public class LlamaSpit extends Projectile {
     }
 
     @Override
-    protected void onHitBlock(BlockHitResult p_37239_) {
-        super.onHitBlock(p_37239_);
+    protected void onHitBlock(BlockHitResult result) {
+        super.onHitBlock(result);
         if (!this.level().isClientSide) {
             this.discard();
         }
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326005_) {
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
     }
 
     @Override
-    public void recreateFromPacket(ClientboundAddEntityPacket p_150162_) {
-        super.recreateFromPacket(p_150162_);
-        double d0 = p_150162_.getXa();
-        double d1 = p_150162_.getYa();
-        double d2 = p_150162_.getZa();
+    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+        super.recreateFromPacket(packet);
+        double d0 = packet.getXa();
+        double d1 = packet.getYa();
+        double d2 = packet.getZa();
 
         for (int i = 0; i < 7; i++) {
             double d3 = 0.4 + 0.1 * (double)i;

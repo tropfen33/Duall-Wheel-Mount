@@ -14,7 +14,7 @@ public class SmokerScreen extends AbstractFurnaceScreen<SmokerMenu> {
     private static final ResourceLocation BURN_PROGRESS_SPRITE = ResourceLocation.withDefaultNamespace("container/smoker/burn_progress");
     private static final ResourceLocation TEXTURE = ResourceLocation.withDefaultNamespace("textures/gui/container/smoker.png");
 
-    public SmokerScreen(SmokerMenu p_99300_, Inventory p_99301_, Component p_99302_) {
-        super(p_99300_, new SmokingRecipeBookComponent(), p_99301_, p_99302_, TEXTURE, LIT_PROGRESS_SPRITE, BURN_PROGRESS_SPRITE);
+    public SmokerScreen(SmokerMenu menu, Inventory playerInventory, Component title) {
+        super(menu, new SmokingRecipeBookComponent(), playerInventory, title, TEXTURE, LIT_PROGRESS_SPRITE, BURN_PROGRESS_SPRITE);
     }
 }

@@ -21,8 +21,8 @@ public record BeeDebugPayload(BeeDebugPayload.BeeInfo beeInfo) implements Custom
         this(new BeeDebugPayload.BeeInfo(p_295882_));
     }
 
-    private void write(FriendlyByteBuf p_295949_) {
-        this.beeInfo.write(p_295949_);
+    private void write(FriendlyByteBuf buffer) {
+        this.beeInfo.write(buffer);
     }
 
     @Override
@@ -55,20 +55,20 @@ public record BeeDebugPayload(BeeDebugPayload.BeeInfo beeInfo) implements Custom
             );
         }
 
-        public void write(FriendlyByteBuf p_294673_) {
-            p_294673_.writeUUID(this.uuid);
-            p_294673_.writeInt(this.id);
-            p_294673_.writeVec3(this.pos);
-            p_294673_.writeNullable(this.path, (p_294507_, p_294902_) -> p_294902_.writeToStream(p_294507_));
-            p_294673_.writeNullable(this.hivePos, BlockPos.STREAM_CODEC);
-            p_294673_.writeNullable(this.flowerPos, BlockPos.STREAM_CODEC);
-            p_294673_.writeInt(this.travelTicks);
-            p_294673_.writeCollection(this.goals, FriendlyByteBuf::writeUtf);
-            p_294673_.writeCollection(this.blacklistedHives, BlockPos.STREAM_CODEC);
+        public void write(FriendlyByteBuf buffer) {
+            buffer.writeUUID(this.uuid);
+            buffer.writeInt(this.id);
+            buffer.writeVec3(this.pos);
+            buffer.writeNullable(this.path, (p_294507_, p_294902_) -> p_294902_.writeToStream(p_294507_));
+            buffer.writeNullable(this.hivePos, BlockPos.STREAM_CODEC);
+            buffer.writeNullable(this.flowerPos, BlockPos.STREAM_CODEC);
+            buffer.writeInt(this.travelTicks);
+            buffer.writeCollection(this.goals, FriendlyByteBuf::writeUtf);
+            buffer.writeCollection(this.blacklistedHives, BlockPos.STREAM_CODEC);
         }
 
-        public boolean hasHive(BlockPos p_296043_) {
-            return Objects.equals(p_296043_, this.hivePos);
+        public boolean hasHive(BlockPos pos) {
+            return Objects.equals(pos, this.hivePos);
         }
 
         public String generateName() {

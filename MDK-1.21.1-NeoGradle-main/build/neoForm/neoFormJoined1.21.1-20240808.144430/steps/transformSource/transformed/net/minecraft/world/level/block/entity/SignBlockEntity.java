@@ -42,23 +42,23 @@ public class SignBlockEntity extends BlockEntity {
     private SignText backText = this.createDefaultSignText();
     private boolean isWaxed;
 
-    public SignBlockEntity(BlockPos p_155700_, BlockState p_155701_) {
-        this(BlockEntityType.SIGN, p_155700_, p_155701_);
+    public SignBlockEntity(BlockPos pos, BlockState blockState) {
+        this(BlockEntityType.SIGN, pos, blockState);
     }
 
-    public SignBlockEntity(BlockEntityType p_249609_, BlockPos p_248914_, BlockState p_249550_) {
-        super(p_249609_, p_248914_, p_249550_);
+    public SignBlockEntity(BlockEntityType type, BlockPos pos, BlockState blockState) {
+        super(type, pos, blockState);
     }
 
     protected SignText createDefaultSignText() {
         return new SignText();
     }
 
-    public boolean isFacingFrontText(Player p_277382_) {
+    public boolean isFacingFrontText(Player player) {
         if (this.getBlockState().getBlock() instanceof SignBlock signblock) {
             Vec3 vec3 = signblock.getSignHitboxCenterPosition(this.getBlockState());
-            double d0 = p_277382_.getX() - ((double)this.getBlockPos().getX() + vec3.x);
-            double d1 = p_277382_.getZ() - ((double)this.getBlockPos().getZ() + vec3.z);
+            double d0 = player.getX() - ((double)this.getBlockPos().getX() + vec3.x);
+            double d1 = player.getZ() - ((double)this.getBlockPos().getZ() + vec3.z);
             float f = signblock.getYRotationDegrees(this.getBlockState());
             float f1 = (float)(Mth.atan2(d1, d0) * 180.0F / (float)Math.PI) - 90.0F;
             return Mth.degreesDifferenceAbs(f, f1) <= 90.0F;
@@ -67,8 +67,8 @@ public class SignBlockEntity extends BlockEntity {
         }
     }
 
-    public SignText getText(boolean p_277918_) {
-        return p_277918_ ? this.frontText : this.backText;
+    public SignText getText(boolean isFrontText) {
+        return isFrontText ? this.frontText : this.backText;
     }
 
     public SignText getFrontText() {
@@ -88,100 +88,100 @@ public class SignBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_187515_, HolderLookup.Provider p_324471_) {
-        super.saveAdditional(p_187515_, p_324471_);
-        DynamicOps<Tag> dynamicops = p_324471_.createSerializationContext(NbtOps.INSTANCE);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        DynamicOps<Tag> dynamicops = registries.createSerializationContext(NbtOps.INSTANCE);
         SignText.DIRECT_CODEC
             .encodeStart(dynamicops, this.frontText)
             .resultOrPartial(LOGGER::error)
-            .ifPresent(p_277417_ -> p_187515_.put("front_text", p_277417_));
+            .ifPresent(p_277417_ -> tag.put("front_text", p_277417_));
         SignText.DIRECT_CODEC
             .encodeStart(dynamicops, this.backText)
             .resultOrPartial(LOGGER::error)
-            .ifPresent(p_277389_ -> p_187515_.put("back_text", p_277389_));
-        p_187515_.putBoolean("is_waxed", this.isWaxed);
+            .ifPresent(p_277389_ -> tag.put("back_text", p_277389_));
+        tag.putBoolean("is_waxed", this.isWaxed);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_155716_, HolderLookup.Provider p_324351_) {
-        super.loadAdditional(p_155716_, p_324351_);
-        DynamicOps<Tag> dynamicops = p_324351_.createSerializationContext(NbtOps.INSTANCE);
-        if (p_155716_.contains("front_text")) {
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        DynamicOps<Tag> dynamicops = registries.createSerializationContext(NbtOps.INSTANCE);
+        if (tag.contains("front_text")) {
             SignText.DIRECT_CODEC
-                .parse(dynamicops, p_155716_.getCompound("front_text"))
+                .parse(dynamicops, tag.getCompound("front_text"))
                 .resultOrPartial(LOGGER::error)
                 .ifPresent(p_278212_ -> this.frontText = this.loadLines(p_278212_));
         }
 
-        if (p_155716_.contains("back_text")) {
+        if (tag.contains("back_text")) {
             SignText.DIRECT_CODEC
-                .parse(dynamicops, p_155716_.getCompound("back_text"))
+                .parse(dynamicops, tag.getCompound("back_text"))
                 .resultOrPartial(LOGGER::error)
                 .ifPresent(p_278213_ -> this.backText = this.loadLines(p_278213_));
         }
 
-        this.isWaxed = p_155716_.getBoolean("is_waxed");
+        this.isWaxed = tag.getBoolean("is_waxed");
     }
 
-    private SignText loadLines(SignText p_278305_) {
+    private SignText loadLines(SignText text) {
         for (int i = 0; i < 4; i++) {
-            Component component = this.loadLine(p_278305_.getMessage(i, false));
-            Component component1 = this.loadLine(p_278305_.getMessage(i, true));
-            p_278305_ = p_278305_.setMessage(i, component, component1);
+            Component component = this.loadLine(text.getMessage(i, false));
+            Component component1 = this.loadLine(text.getMessage(i, true));
+            text = text.setMessage(i, component, component1);
         }
 
-        return p_278305_;
+        return text;
     }
 
-    private Component loadLine(Component p_278307_) {
+    private Component loadLine(Component lineText) {
         if (this.level instanceof ServerLevel serverlevel) {
             try {
-                return ComponentUtils.updateForEntity(createCommandSourceStack(null, serverlevel, this.worldPosition), p_278307_, null, 0);
+                return ComponentUtils.updateForEntity(createCommandSourceStack(null, serverlevel, this.worldPosition), lineText, null, 0);
             } catch (CommandSyntaxException commandsyntaxexception) {
             }
         }
 
-        return p_278307_;
+        return lineText;
     }
 
-    public void updateSignText(Player p_278048_, boolean p_278103_, List<FilteredText> p_277990_) {
-        if (!this.isWaxed() && p_278048_.getUUID().equals(this.getPlayerWhoMayEdit()) && this.level != null) {
-            this.updateText(p_277776_ -> this.setMessages(p_278048_, p_277990_, p_277776_), p_278103_);
+    public void updateSignText(Player player, boolean isFrontText, List<FilteredText> filteredText) {
+        if (!this.isWaxed() && player.getUUID().equals(this.getPlayerWhoMayEdit()) && this.level != null) {
+            this.updateText(p_277776_ -> this.setMessages(player, filteredText, p_277776_), isFrontText);
             this.setAllowedPlayerEditor(null);
             this.level.sendBlockUpdated(this.getBlockPos(), this.getBlockState(), this.getBlockState(), 3);
         } else {
-            LOGGER.warn("Player {} just tried to change non-editable sign", p_278048_.getName().getString());
+            LOGGER.warn("Player {} just tried to change non-editable sign", player.getName().getString());
         }
     }
 
-    public boolean updateText(UnaryOperator<SignText> p_277877_, boolean p_277426_) {
-        SignText signtext = this.getText(p_277426_);
-        return this.setText(p_277877_.apply(signtext), p_277426_);
+    public boolean updateText(UnaryOperator<SignText> updater, boolean isFrontText) {
+        SignText signtext = this.getText(isFrontText);
+        return this.setText(updater.apply(signtext), isFrontText);
     }
 
-    private SignText setMessages(Player p_277396_, List<FilteredText> p_277744_, SignText p_277359_) {
-        for (int i = 0; i < p_277744_.size(); i++) {
-            FilteredText filteredtext = p_277744_.get(i);
-            Style style = p_277359_.getMessage(i, p_277396_.isTextFilteringEnabled()).getStyle();
-            if (p_277396_.isTextFilteringEnabled()) {
-                p_277359_ = p_277359_.setMessage(i, Component.literal(filteredtext.filteredOrEmpty()).setStyle(style));
+    private SignText setMessages(Player player, List<FilteredText> filteredText, SignText text) {
+        for (int i = 0; i < filteredText.size(); i++) {
+            FilteredText filteredtext = filteredText.get(i);
+            Style style = text.getMessage(i, player.isTextFilteringEnabled()).getStyle();
+            if (player.isTextFilteringEnabled()) {
+                text = text.setMessage(i, Component.literal(filteredtext.filteredOrEmpty()).setStyle(style));
             } else {
-                p_277359_ = p_277359_.setMessage(
+                text = text.setMessage(
                     i, Component.literal(filteredtext.raw()).setStyle(style), Component.literal(filteredtext.filteredOrEmpty()).setStyle(style)
                 );
             }
         }
 
-        return p_277359_;
+        return text;
     }
 
-    public boolean setText(SignText p_277733_, boolean p_277720_) {
-        return p_277720_ ? this.setFrontText(p_277733_) : this.setBackText(p_277733_);
+    public boolean setText(SignText text, boolean isFrontText) {
+        return isFrontText ? this.setFrontText(text) : this.setBackText(text);
     }
 
-    private boolean setBackText(SignText p_277777_) {
-        if (p_277777_ != this.backText) {
-            this.backText = p_277777_;
+    private boolean setBackText(SignText text) {
+        if (text != this.backText) {
+            this.backText = text;
             this.markUpdated();
             return true;
         } else {
@@ -189,9 +189,9 @@ public class SignBlockEntity extends BlockEntity {
         }
     }
 
-    private boolean setFrontText(SignText p_278038_) {
-        if (p_278038_ != this.frontText) {
-            this.frontText = p_278038_;
+    private boolean setFrontText(SignText text) {
+        if (text != this.frontText) {
+            this.frontText = text;
             this.markUpdated();
             return true;
         } else {
@@ -199,18 +199,18 @@ public class SignBlockEntity extends BlockEntity {
         }
     }
 
-    public boolean canExecuteClickCommands(boolean p_278276_, Player p_278240_) {
-        return this.isWaxed() && this.getText(p_278276_).hasAnyClickCommands(p_278240_);
+    public boolean canExecuteClickCommands(boolean isFrontText, Player player) {
+        return this.isWaxed() && this.getText(isFrontText).hasAnyClickCommands(player);
     }
 
-    public boolean executeClickCommandsIfPresent(Player p_279304_, Level p_279201_, BlockPos p_278282_, boolean p_278254_) {
+    public boolean executeClickCommandsIfPresent(Player player, Level level, BlockPos pos, boolean frontText) {
         boolean flag = false;
 
-        for (Component component : this.getText(p_278254_).getMessages(p_279304_.isTextFilteringEnabled())) {
+        for (Component component : this.getText(frontText).getMessages(player.isTextFilteringEnabled())) {
             Style style = component.getStyle();
             ClickEvent clickevent = style.getClickEvent();
             if (clickevent != null && clickevent.getAction() == ClickEvent.Action.RUN_COMMAND) {
-                p_279304_.getServer().getCommands().performPrefixedCommand(createCommandSourceStack(p_279304_, p_279201_, p_278282_), clickevent.getValue());
+                player.getServer().getCommands().performPrefixedCommand(createCommandSourceStack(player, level, pos), clickevent.getValue());
                 flag = true;
             }
         }
@@ -218,11 +218,11 @@ public class SignBlockEntity extends BlockEntity {
         return flag;
     }
 
-    private static CommandSourceStack createCommandSourceStack(@Nullable Player p_279428_, Level p_279359_, BlockPos p_279430_) {
-        String s = p_279428_ == null ? "Sign" : p_279428_.getName().getString();
-        Component component = (Component)(p_279428_ == null ? Component.literal("Sign") : p_279428_.getDisplayName());
+    private static CommandSourceStack createCommandSourceStack(@Nullable Player player, Level level, BlockPos pos) {
+        String s = player == null ? "Sign" : player.getName().getString();
+        Component component = (Component)(player == null ? Component.literal("Sign") : player.getDisplayName());
         return new CommandSourceStack(
-            CommandSource.NULL, Vec3.atCenterOf(p_279430_), Vec2.ZERO, (ServerLevel)p_279359_, 2, s, component, p_279359_.getServer(), p_279428_
+            CommandSource.NULL, Vec3.atCenterOf(pos), Vec2.ZERO, (ServerLevel)level, 2, s, component, level.getServer(), player
         );
     }
 
@@ -231,8 +231,8 @@ public class SignBlockEntity extends BlockEntity {
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider p_324439_) {
-        return this.saveCustomOnly(p_324439_);
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        return this.saveCustomOnly(registries);
     }
 
     @Override
@@ -240,8 +240,8 @@ public class SignBlockEntity extends BlockEntity {
         return true;
     }
 
-    public void setAllowedPlayerEditor(@Nullable UUID p_155714_) {
-        this.playerWhoMayEdit = p_155714_;
+    public void setAllowedPlayerEditor(@Nullable UUID playWhoMayEdit) {
+        this.playerWhoMayEdit = playWhoMayEdit;
     }
 
     @Nullable
@@ -258,9 +258,9 @@ public class SignBlockEntity extends BlockEntity {
         return this.isWaxed;
     }
 
-    public boolean setWaxed(boolean p_277344_) {
-        if (this.isWaxed != p_277344_) {
-            this.isWaxed = p_277344_;
+    public boolean setWaxed(boolean isWaxed) {
+        if (this.isWaxed != isWaxed) {
+            this.isWaxed = isWaxed;
             this.markUpdated();
             return true;
         } else {
@@ -268,21 +268,21 @@ public class SignBlockEntity extends BlockEntity {
         }
     }
 
-    public boolean playerIsTooFarAwayToEdit(UUID p_277978_) {
-        Player player = this.level.getPlayerByUUID(p_277978_);
+    public boolean playerIsTooFarAwayToEdit(UUID uuid) {
+        Player player = this.level.getPlayerByUUID(uuid);
         return player == null || !player.canInteractWithBlock(this.getBlockPos(), 4.0);
     }
 
-    public static void tick(Level p_277662_, BlockPos p_278050_, BlockState p_277927_, SignBlockEntity p_277928_) {
-        UUID uuid = p_277928_.getPlayerWhoMayEdit();
+    public static void tick(Level level, BlockPos pos, BlockState state, SignBlockEntity sign) {
+        UUID uuid = sign.getPlayerWhoMayEdit();
         if (uuid != null) {
-            p_277928_.clearInvalidPlayerWhoMayEdit(p_277928_, p_277662_, uuid);
+            sign.clearInvalidPlayerWhoMayEdit(sign, level, uuid);
         }
     }
 
-    private void clearInvalidPlayerWhoMayEdit(SignBlockEntity p_277656_, Level p_277853_, UUID p_277849_) {
-        if (p_277656_.playerIsTooFarAwayToEdit(p_277849_)) {
-            p_277656_.setAllowedPlayerEditor(null);
+    private void clearInvalidPlayerWhoMayEdit(SignBlockEntity sign, Level level, UUID uuid) {
+        if (sign.playerIsTooFarAwayToEdit(uuid)) {
+            sign.setAllowedPlayerEditor(null);
         }
     }
 

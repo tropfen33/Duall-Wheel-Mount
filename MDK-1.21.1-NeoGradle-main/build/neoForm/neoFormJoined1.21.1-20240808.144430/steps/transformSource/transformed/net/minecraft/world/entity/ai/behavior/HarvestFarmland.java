@@ -46,89 +46,89 @@ public class HarvestFarmland extends Behavior<Villager> {
         );
     }
 
-    protected boolean checkExtraStartConditions(ServerLevel p_23174_, Villager p_23175_) {
-        if (!net.neoforged.neoforge.event.EventHooks.canEntityGrief(p_23174_, p_23175_)) {
+    protected boolean checkExtraStartConditions(ServerLevel level, Villager owner) {
+        if (!net.neoforged.neoforge.event.EventHooks.canEntityGrief(level, owner)) {
             return false;
-        } else if (p_23175_.getVillagerData().getProfession() != VillagerProfession.FARMER) {
+        } else if (owner.getVillagerData().getProfession() != VillagerProfession.FARMER) {
             return false;
         } else {
-            BlockPos.MutableBlockPos blockpos$mutableblockpos = p_23175_.blockPosition().mutable();
+            BlockPos.MutableBlockPos blockpos$mutableblockpos = owner.blockPosition().mutable();
             this.validFarmlandAroundVillager.clear();
 
             for (int i = -1; i <= 1; i++) {
                 for (int j = -1; j <= 1; j++) {
                     for (int k = -1; k <= 1; k++) {
-                        blockpos$mutableblockpos.set(p_23175_.getX() + (double)i, p_23175_.getY() + (double)j, p_23175_.getZ() + (double)k);
-                        if (this.validPos(blockpos$mutableblockpos, p_23174_)) {
+                        blockpos$mutableblockpos.set(owner.getX() + (double)i, owner.getY() + (double)j, owner.getZ() + (double)k);
+                        if (this.validPos(blockpos$mutableblockpos, level)) {
                             this.validFarmlandAroundVillager.add(new BlockPos(blockpos$mutableblockpos));
                         }
                     }
                 }
             }
 
-            this.aboveFarmlandPos = this.getValidFarmland(p_23174_);
+            this.aboveFarmlandPos = this.getValidFarmland(level);
             return this.aboveFarmlandPos != null;
         }
     }
 
     @Nullable
-    private BlockPos getValidFarmland(ServerLevel p_23165_) {
+    private BlockPos getValidFarmland(ServerLevel serverLevel) {
         return this.validFarmlandAroundVillager.isEmpty()
             ? null
-            : this.validFarmlandAroundVillager.get(p_23165_.getRandom().nextInt(this.validFarmlandAroundVillager.size()));
+            : this.validFarmlandAroundVillager.get(serverLevel.getRandom().nextInt(this.validFarmlandAroundVillager.size()));
     }
 
-    private boolean validPos(BlockPos p_23181_, ServerLevel p_23182_) {
-        BlockState blockstate = p_23182_.getBlockState(p_23181_);
+    private boolean validPos(BlockPos pos, ServerLevel serverLevel) {
+        BlockState blockstate = serverLevel.getBlockState(pos);
         Block block = blockstate.getBlock();
-        Block block1 = p_23182_.getBlockState(p_23181_.below()).getBlock();
+        Block block1 = serverLevel.getBlockState(pos.below()).getBlock();
         return block instanceof CropBlock && ((CropBlock)block).isMaxAge(blockstate) || blockstate.isAir() && (block1 instanceof FarmBlock || block1.builtInRegistryHolder().is(net.neoforged.neoforge.common.Tags.Blocks.VILLAGER_FARMLANDS));
     }
 
-    protected void start(ServerLevel p_23177_, Villager p_23178_, long p_23179_) {
-        if (p_23179_ > this.nextOkStartTime && this.aboveFarmlandPos != null) {
-            p_23178_.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosTracker(this.aboveFarmlandPos));
-            p_23178_.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(new BlockPosTracker(this.aboveFarmlandPos), 0.5F, 1));
+    protected void start(ServerLevel level, Villager entity, long gameTime) {
+        if (gameTime > this.nextOkStartTime && this.aboveFarmlandPos != null) {
+            entity.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosTracker(this.aboveFarmlandPos));
+            entity.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(new BlockPosTracker(this.aboveFarmlandPos), 0.5F, 1));
         }
     }
 
-    protected void stop(ServerLevel p_23188_, Villager p_23189_, long p_23190_) {
-        p_23189_.getBrain().eraseMemory(MemoryModuleType.LOOK_TARGET);
-        p_23189_.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
+    protected void stop(ServerLevel level, Villager entity, long gameTime) {
+        entity.getBrain().eraseMemory(MemoryModuleType.LOOK_TARGET);
+        entity.getBrain().eraseMemory(MemoryModuleType.WALK_TARGET);
         this.timeWorkedSoFar = 0;
-        this.nextOkStartTime = p_23190_ + 40L;
+        this.nextOkStartTime = gameTime + 40L;
     }
 
-    protected void tick(ServerLevel p_23196_, Villager p_23197_, long p_23198_) {
-        if (this.aboveFarmlandPos == null || this.aboveFarmlandPos.closerToCenterThan(p_23197_.position(), 1.0)) {
-            if (this.aboveFarmlandPos != null && p_23198_ > this.nextOkStartTime) {
-                BlockState blockstate = p_23196_.getBlockState(this.aboveFarmlandPos);
+    protected void tick(ServerLevel level, Villager owner, long gameTime) {
+        if (this.aboveFarmlandPos == null || this.aboveFarmlandPos.closerToCenterThan(owner.position(), 1.0)) {
+            if (this.aboveFarmlandPos != null && gameTime > this.nextOkStartTime) {
+                BlockState blockstate = level.getBlockState(this.aboveFarmlandPos);
                 Block block = blockstate.getBlock();
-                Block block1 = p_23196_.getBlockState(this.aboveFarmlandPos.below()).getBlock();
+                Block block1 = level.getBlockState(this.aboveFarmlandPos.below()).getBlock();
                 if (block instanceof CropBlock && ((CropBlock)block).isMaxAge(blockstate)) {
-                    p_23196_.destroyBlock(this.aboveFarmlandPos, true, p_23197_);
+                    level.destroyBlock(this.aboveFarmlandPos, true, owner);
                 }
 
-                if (blockstate.isAir() && (block1 instanceof FarmBlock || block1.builtInRegistryHolder().is(net.neoforged.neoforge.common.Tags.Blocks.VILLAGER_FARMLANDS)) && p_23197_.hasFarmSeeds()) {
-                    SimpleContainer simplecontainer = p_23197_.getInventory();
+                if (blockstate.isAir() && (block1 instanceof FarmBlock || block1.builtInRegistryHolder().is(net.neoforged.neoforge.common.Tags.Blocks.VILLAGER_FARMLANDS)) && owner.hasFarmSeeds()) {
+                    SimpleContainer simplecontainer = owner.getInventory();
 
                     for (int i = 0; i < simplecontainer.getContainerSize(); i++) {
                         ItemStack itemstack = simplecontainer.getItem(i);
                         boolean flag = false;
                         if (!itemstack.isEmpty() && itemstack.is(ItemTags.VILLAGER_PLANTABLE_SEEDS) && itemstack.getItem() instanceof BlockItem blockitem) {
                             BlockState blockstate1 = blockitem.getBlock().defaultBlockState();
-                            p_23196_.setBlockAndUpdate(this.aboveFarmlandPos, blockstate1);
-                            p_23196_.gameEvent(GameEvent.BLOCK_PLACE, this.aboveFarmlandPos, GameEvent.Context.of(p_23197_, blockstate1));
+                            level.setBlockAndUpdate(this.aboveFarmlandPos, blockstate1);
+                            level.gameEvent(GameEvent.BLOCK_PLACE, this.aboveFarmlandPos, GameEvent.Context.of(owner, blockstate1));
                             flag = true;
-                        } else if (itemstack.getItem() instanceof net.neoforged.neoforge.common.SpecialPlantable specialPlantable && specialPlantable.villagerCanPlantItem(p_23197_)) {
-                            if (specialPlantable.canPlacePlantAtPosition(itemstack, p_23196_, aboveFarmlandPos, net.minecraft.core.Direction.DOWN)) {
-                                specialPlantable.spawnPlantAtPosition(itemstack, p_23196_, aboveFarmlandPos, net.minecraft.core.Direction.DOWN);
+                        } else if (itemstack.getItem() instanceof net.neoforged.neoforge.common.SpecialPlantable specialPlantable && specialPlantable.villagerCanPlantItem(owner)) {
+                            if (specialPlantable.canPlacePlantAtPosition(itemstack, level, aboveFarmlandPos, net.minecraft.core.Direction.DOWN)) {
+                                specialPlantable.spawnPlantAtPosition(itemstack, level, aboveFarmlandPos, net.minecraft.core.Direction.DOWN);
                                 flag = true;
                             }
                         }
 
                         if (flag) {
-                            p_23196_.playSound(
+                            level.playSound(
                                 null,
                                 (double)this.aboveFarmlandPos.getX(),
                                 (double)this.aboveFarmlandPos.getY(),
@@ -149,11 +149,11 @@ public class HarvestFarmland extends Behavior<Villager> {
 
                 if (block instanceof CropBlock && !((CropBlock)block).isMaxAge(blockstate)) {
                     this.validFarmlandAroundVillager.remove(this.aboveFarmlandPos);
-                    this.aboveFarmlandPos = this.getValidFarmland(p_23196_);
+                    this.aboveFarmlandPos = this.getValidFarmland(level);
                     if (this.aboveFarmlandPos != null) {
-                        this.nextOkStartTime = p_23198_ + 20L;
-                        p_23197_.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(new BlockPosTracker(this.aboveFarmlandPos), 0.5F, 1));
-                        p_23197_.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosTracker(this.aboveFarmlandPos));
+                        this.nextOkStartTime = gameTime + 20L;
+                        owner.getBrain().setMemory(MemoryModuleType.WALK_TARGET, new WalkTarget(new BlockPosTracker(this.aboveFarmlandPos), 0.5F, 1));
+                        owner.getBrain().setMemory(MemoryModuleType.LOOK_TARGET, new BlockPosTracker(this.aboveFarmlandPos));
                     }
                 }
             }
@@ -162,7 +162,7 @@ public class HarvestFarmland extends Behavior<Villager> {
         }
     }
 
-    protected boolean canStillUse(ServerLevel p_23204_, Villager p_23205_, long p_23206_) {
+    protected boolean canStillUse(ServerLevel level, Villager entity, long gameTime) {
         return this.timeWorkedSoFar < 200;
     }
 }

@@ -14,17 +14,17 @@ import net.minecraft.nbt.NbtUtils;
 import net.minecraft.server.Bootstrap;
 
 public class SnbtDatafixer {
-    public static void main(String[] p_301983_) throws IOException {
+    public static void main(String[] args) throws IOException {
         SharedConstants.setVersion(DetectedVersion.BUILT_IN);
         Bootstrap.bootStrap();
 
-        for (String s : p_301983_) {
+        for (String s : args) {
             updateInDirectory(s);
         }
     }
 
-    private static void updateInDirectory(String p_302034_) throws IOException {
-        try (Stream<Path> stream = Files.walk(Paths.get(p_302034_))) {
+    private static void updateInDirectory(String path) throws IOException {
+        try (Stream<Path> stream = Files.walk(Paths.get(path))) {
             stream.filter(p_301991_ -> p_301991_.toString().endsWith(".snbt")).forEach(p_301994_ -> {
                 try {
                     String s = Files.readString(p_301994_);

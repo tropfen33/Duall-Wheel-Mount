@@ -9,11 +9,11 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class MapDecorationTextureManager extends TextureAtlasHolder {
-    public MapDecorationTextureManager(TextureManager p_335745_) {
-        super(p_335745_, ResourceLocation.withDefaultNamespace("textures/atlas/map_decorations.png"), ResourceLocation.withDefaultNamespace("map_decorations"));
+    public MapDecorationTextureManager(TextureManager textureManager) {
+        super(textureManager, ResourceLocation.withDefaultNamespace("textures/atlas/map_decorations.png"), ResourceLocation.withDefaultNamespace("map_decorations"));
     }
 
-    public TextureAtlasSprite get(MapDecoration p_335945_) {
-        return this.getSprite(p_335945_.getSpriteLocation());
+    public TextureAtlasSprite get(MapDecoration mapDecoration) {
+        return this.getSprite(mapDecoration.getSpriteLocation());
     }
 }

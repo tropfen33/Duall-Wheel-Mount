@@ -15,33 +15,33 @@ public class NarrationThunk<T> {
     public static final NarrationThunk<?> EMPTY = new NarrationThunk<>(Unit.INSTANCE, (p_169171_, p_169172_) -> {
     });
 
-    private NarrationThunk(T p_169158_, BiConsumer<Consumer<String>, T> p_169159_) {
-        this.contents = p_169158_;
-        this.converter = p_169159_;
+    private NarrationThunk(T contents, BiConsumer<Consumer<String>, T> converter) {
+        this.contents = contents;
+        this.converter = converter;
     }
 
-    public static NarrationThunk<?> from(String p_169161_) {
-        return new NarrationThunk<>(p_169161_, Consumer::accept);
+    public static NarrationThunk<?> from(String text) {
+        return new NarrationThunk<>(text, Consumer::accept);
     }
 
-    public static NarrationThunk<?> from(Component p_169177_) {
-        return new NarrationThunk<>(p_169177_, (p_169174_, p_169175_) -> p_169174_.accept(p_169175_.getString()));
+    public static NarrationThunk<?> from(Component component) {
+        return new NarrationThunk<>(component, (p_169174_, p_169175_) -> p_169174_.accept(p_169175_.getString()));
     }
 
-    public static NarrationThunk<?> from(List<Component> p_169163_) {
-        return new NarrationThunk<>(p_169163_, (p_169166_, p_169167_) -> p_169163_.stream().map(Component::getString).forEach(p_169166_));
+    public static NarrationThunk<?> from(List<Component> components) {
+        return new NarrationThunk<>(components, (p_169166_, p_169167_) -> components.stream().map(Component::getString).forEach(p_169166_));
     }
 
-    public void getText(Consumer<String> p_169169_) {
-        this.converter.accept(p_169169_, this.contents);
+    public void getText(Consumer<String> consumer) {
+        this.converter.accept(consumer, this.contents);
     }
 
     @Override
-    public boolean equals(Object p_169179_) {
-        if (this == p_169179_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
         } else {
-            return !(p_169179_ instanceof NarrationThunk<?> narrationthunk)
+            return !(other instanceof NarrationThunk<?> narrationthunk)
                 ? false
                 : narrationthunk.converter == this.converter && narrationthunk.contents.equals(this.contents);
         }

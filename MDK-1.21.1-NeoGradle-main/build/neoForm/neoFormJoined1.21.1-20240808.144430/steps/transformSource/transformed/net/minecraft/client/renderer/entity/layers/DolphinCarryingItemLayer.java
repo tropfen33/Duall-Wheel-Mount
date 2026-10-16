@@ -17,36 +17,36 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class DolphinCarryingItemLayer extends RenderLayer<Dolphin, DolphinModel<Dolphin>> {
     private final ItemInHandRenderer itemInHandRenderer;
 
-    public DolphinCarryingItemLayer(RenderLayerParent<Dolphin, DolphinModel<Dolphin>> p_234834_, ItemInHandRenderer p_234835_) {
-        super(p_234834_);
-        this.itemInHandRenderer = p_234835_;
+    public DolphinCarryingItemLayer(RenderLayerParent<Dolphin, DolphinModel<Dolphin>> renderer, ItemInHandRenderer itemInHandRenderer) {
+        super(renderer);
+        this.itemInHandRenderer = itemInHandRenderer;
     }
 
     public void render(
-        PoseStack p_116897_,
-        MultiBufferSource p_116898_,
-        int p_116899_,
-        Dolphin p_116900_,
-        float p_116901_,
-        float p_116902_,
-        float p_116903_,
-        float p_116904_,
-        float p_116905_,
-        float p_116906_
+        PoseStack poseStack,
+        MultiBufferSource buffer,
+        int packedLight,
+        Dolphin livingEntity,
+        float limbSwing,
+        float limbSwingAmount,
+        float partialTicks,
+        float ageInTicks,
+        float netHeadYaw,
+        float headPitch
     ) {
-        boolean flag = p_116900_.getMainArm() == HumanoidArm.RIGHT;
-        p_116897_.pushPose();
+        boolean flag = livingEntity.getMainArm() == HumanoidArm.RIGHT;
+        poseStack.pushPose();
         float f = 1.0F;
         float f1 = -1.0F;
-        float f2 = Mth.abs(p_116900_.getXRot()) / 60.0F;
-        if (p_116900_.getXRot() < 0.0F) {
-            p_116897_.translate(0.0F, 1.0F - f2 * 0.5F, -1.0F + f2 * 0.5F);
+        float f2 = Mth.abs(livingEntity.getXRot()) / 60.0F;
+        if (livingEntity.getXRot() < 0.0F) {
+            poseStack.translate(0.0F, 1.0F - f2 * 0.5F, -1.0F + f2 * 0.5F);
         } else {
-            p_116897_.translate(0.0F, 1.0F + f2 * 0.8F, -1.0F + f2 * 0.2F);
+            poseStack.translate(0.0F, 1.0F + f2 * 0.8F, -1.0F + f2 * 0.2F);
         }
 
-        ItemStack itemstack = flag ? p_116900_.getMainHandItem() : p_116900_.getOffhandItem();
-        this.itemInHandRenderer.renderItem(p_116900_, itemstack, ItemDisplayContext.GROUND, false, p_116897_, p_116898_, p_116899_);
-        p_116897_.popPose();
+        ItemStack itemstack = flag ? livingEntity.getMainHandItem() : livingEntity.getOffhandItem();
+        this.itemInHandRenderer.renderItem(livingEntity, itemstack, ItemDisplayContext.GROUND, false, poseStack, buffer, packedLight);
+        poseStack.popPose();
     }
 }

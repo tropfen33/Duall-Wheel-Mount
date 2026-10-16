@@ -57,34 +57,34 @@ public class SkullBlockEntity extends BlockEntity {
     @Nullable
     private Component customName;
 
-    public SkullBlockEntity(BlockPos p_155731_, BlockState p_155732_) {
-        super(BlockEntityType.SKULL, p_155731_, p_155732_);
+    public SkullBlockEntity(BlockPos pos, BlockState blockState) {
+        super(BlockEntityType.SKULL, pos, blockState);
     }
 
-    public static void setup(final Services p_222886_, Executor p_222887_) {
-        mainThreadExecutor = p_222887_;
+    public static void setup(final Services services, Executor p_mainThreadExecutor) {
+        mainThreadExecutor = p_mainThreadExecutor;
         final BooleanSupplier booleansupplier = () -> profileCacheById == null;
         profileCacheByName = CacheBuilder.newBuilder()
             .expireAfterAccess(Duration.ofMinutes(10L))
             .maximumSize(256L)
             .build(new CacheLoader<String, CompletableFuture<Optional<GameProfile>>>() {
-                public CompletableFuture<Optional<GameProfile>> load(String p_304652_) {
-                    return SkullBlockEntity.fetchProfileByName(p_304652_, p_222886_);
+                public CompletableFuture<Optional<GameProfile>> load(String username) {
+                    return SkullBlockEntity.fetchProfileByName(username, services);
                 }
             });
         profileCacheById = CacheBuilder.newBuilder()
             .expireAfterAccess(Duration.ofMinutes(10L))
             .maximumSize(256L)
             .build(new CacheLoader<UUID, CompletableFuture<Optional<GameProfile>>>() {
-                public CompletableFuture<Optional<GameProfile>> load(UUID p_339657_) {
-                    return SkullBlockEntity.fetchProfileById(p_339657_, p_222886_, booleansupplier);
+                public CompletableFuture<Optional<GameProfile>> load(UUID id) {
+                    return SkullBlockEntity.fetchProfileById(id, services, booleansupplier);
                 }
             });
     }
 
-    static CompletableFuture<Optional<GameProfile>> fetchProfileByName(String p_339683_, Services p_339592_) {
-        return p_339592_.profileCache()
-            .getAsync(p_339683_)
+    static CompletableFuture<Optional<GameProfile>> fetchProfileByName(String name, Services services) {
+        return services.profileCache()
+            .getAsync(name)
             .thenCompose(
                 p_339545_ -> {
                     LoadingCache<UUID, CompletableFuture<Optional<GameProfile>>> loadingcache = profileCacheById;
@@ -95,12 +95,12 @@ public class SkullBlockEntity extends BlockEntity {
             );
     }
 
-    static CompletableFuture<Optional<GameProfile>> fetchProfileById(UUID p_339663_, Services p_339676_, BooleanSupplier p_339631_) {
+    static CompletableFuture<Optional<GameProfile>> fetchProfileById(UUID id, Services services, BooleanSupplier cacheUninitialized) {
         return CompletableFuture.supplyAsync(() -> {
-            if (p_339631_.getAsBoolean()) {
+            if (cacheUninitialized.getAsBoolean()) {
                 return Optional.empty();
             } else {
-                ProfileResult profileresult = p_339676_.sessionService().fetchProfile(p_339663_, true);
+                ProfileResult profileresult = services.sessionService().fetchProfile(id, true);
                 return Optional.ofNullable(profileresult).map(ProfileResult::profile);
             }
         }, Util.backgroundExecutor());
@@ -113,53 +113,53 @@ public class SkullBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_187518_, HolderLookup.Provider p_324418_) {
-        super.saveAdditional(p_187518_, p_324418_);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
         if (this.owner != null) {
-            p_187518_.put("profile", ResolvableProfile.CODEC.encodeStart(NbtOps.INSTANCE, this.owner).getOrThrow());
+            tag.put("profile", ResolvableProfile.CODEC.encodeStart(NbtOps.INSTANCE, this.owner).getOrThrow());
         }
 
         if (this.noteBlockSound != null) {
-            p_187518_.putString("note_block_sound", this.noteBlockSound.toString());
+            tag.putString("note_block_sound", this.noteBlockSound.toString());
         }
 
         if (this.customName != null) {
-            p_187518_.putString("custom_name", Component.Serializer.toJson(this.customName, p_324418_));
+            tag.putString("custom_name", Component.Serializer.toJson(this.customName, registries));
         }
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_155745_, HolderLookup.Provider p_323876_) {
-        super.loadAdditional(p_155745_, p_323876_);
-        if (p_155745_.contains("profile")) {
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        if (tag.contains("profile")) {
             ResolvableProfile.CODEC
-                .parse(NbtOps.INSTANCE, p_155745_.get("profile"))
+                .parse(NbtOps.INSTANCE, tag.get("profile"))
                 .resultOrPartial(p_332637_ -> LOGGER.error("Failed to load profile from player head: {}", p_332637_))
                 .ifPresent(this::setOwner);
         }
 
-        if (p_155745_.contains("note_block_sound", 8)) {
-            this.noteBlockSound = ResourceLocation.tryParse(p_155745_.getString("note_block_sound"));
+        if (tag.contains("note_block_sound", 8)) {
+            this.noteBlockSound = ResourceLocation.tryParse(tag.getString("note_block_sound"));
         }
 
-        if (p_155745_.contains("custom_name", 8)) {
-            this.customName = parseCustomNameSafe(p_155745_.getString("custom_name"), p_323876_);
+        if (tag.contains("custom_name", 8)) {
+            this.customName = parseCustomNameSafe(tag.getString("custom_name"), registries);
         } else {
             this.customName = null;
         }
     }
 
-    public static void animation(Level p_261710_, BlockPos p_262153_, BlockState p_262021_, SkullBlockEntity p_261594_) {
-        if (p_262021_.hasProperty(SkullBlock.POWERED) && p_262021_.getValue(SkullBlock.POWERED)) {
-            p_261594_.isAnimating = true;
-            p_261594_.animationTickCount++;
+    public static void animation(Level level, BlockPos pos, BlockState state, SkullBlockEntity blockEntity) {
+        if (state.hasProperty(SkullBlock.POWERED) && state.getValue(SkullBlock.POWERED)) {
+            blockEntity.isAnimating = true;
+            blockEntity.animationTickCount++;
         } else {
-            p_261594_.isAnimating = false;
+            blockEntity.isAnimating = false;
         }
     }
 
-    public float getAnimation(float p_262053_) {
-        return this.isAnimating ? (float)this.animationTickCount + p_262053_ : (float)this.animationTickCount;
+    public float getAnimation(float partialTick) {
+        return this.isAnimating ? (float)this.animationTickCount + partialTick : (float)this.animationTickCount;
     }
 
     @Nullable
@@ -177,13 +177,13 @@ public class SkullBlockEntity extends BlockEntity {
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider p_323711_) {
-        return this.saveCustomOnly(p_323711_);
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        return this.saveCustomOnly(registries);
     }
 
-    public void setOwner(@Nullable ResolvableProfile p_332738_) {
+    public void setOwner(@Nullable ResolvableProfile owner) {
         synchronized (this) {
-            this.owner = p_332738_;
+            this.owner = owner;
         }
 
         this.updateOwnerProfile();
@@ -200,39 +200,39 @@ public class SkullBlockEntity extends BlockEntity {
         }
     }
 
-    public static CompletableFuture<Optional<GameProfile>> fetchGameProfile(String p_295932_) {
+    public static CompletableFuture<Optional<GameProfile>> fetchGameProfile(String profileName) {
         LoadingCache<String, CompletableFuture<Optional<GameProfile>>> loadingcache = profileCacheByName;
-        return loadingcache != null && StringUtil.isValidPlayerName(p_295932_)
-            ? loadingcache.getUnchecked(p_295932_)
+        return loadingcache != null && StringUtil.isValidPlayerName(profileName)
+            ? loadingcache.getUnchecked(profileName)
             : CompletableFuture.completedFuture(Optional.empty());
     }
 
-    public static CompletableFuture<Optional<GameProfile>> fetchGameProfile(UUID p_339604_) {
+    public static CompletableFuture<Optional<GameProfile>> fetchGameProfile(UUID profileUuid) {
         LoadingCache<UUID, CompletableFuture<Optional<GameProfile>>> loadingcache = profileCacheById;
-        return loadingcache != null ? loadingcache.getUnchecked(p_339604_) : CompletableFuture.completedFuture(Optional.empty());
+        return loadingcache != null ? loadingcache.getUnchecked(profileUuid) : CompletableFuture.completedFuture(Optional.empty());
     }
 
     @Override
-    protected void applyImplicitComponents(BlockEntity.DataComponentInput p_338654_) {
-        super.applyImplicitComponents(p_338654_);
-        this.setOwner(p_338654_.get(DataComponents.PROFILE));
-        this.noteBlockSound = p_338654_.get(DataComponents.NOTE_BLOCK_SOUND);
-        this.customName = p_338654_.get(DataComponents.CUSTOM_NAME);
+    protected void applyImplicitComponents(BlockEntity.DataComponentInput componentInput) {
+        super.applyImplicitComponents(componentInput);
+        this.setOwner(componentInput.get(DataComponents.PROFILE));
+        this.noteBlockSound = componentInput.get(DataComponents.NOTE_BLOCK_SOUND);
+        this.customName = componentInput.get(DataComponents.CUSTOM_NAME);
     }
 
     @Override
-    protected void collectImplicitComponents(DataComponentMap.Builder p_338880_) {
-        super.collectImplicitComponents(p_338880_);
-        p_338880_.set(DataComponents.PROFILE, this.owner);
-        p_338880_.set(DataComponents.NOTE_BLOCK_SOUND, this.noteBlockSound);
-        p_338880_.set(DataComponents.CUSTOM_NAME, this.customName);
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        components.set(DataComponents.PROFILE, this.owner);
+        components.set(DataComponents.NOTE_BLOCK_SOUND, this.noteBlockSound);
+        components.set(DataComponents.CUSTOM_NAME, this.customName);
     }
 
     @Override
-    public void removeComponentsFromTag(CompoundTag p_331773_) {
-        super.removeComponentsFromTag(p_331773_);
-        p_331773_.remove("profile");
-        p_331773_.remove("note_block_sound");
-        p_331773_.remove("custom_name");
+    public void removeComponentsFromTag(CompoundTag tag) {
+        super.removeComponentsFromTag(tag);
+        tag.remove("profile");
+        tag.remove("note_block_sound");
+        tag.remove("custom_name");
     }
 }

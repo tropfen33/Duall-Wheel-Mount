@@ -38,15 +38,15 @@ public class SimpleCookingRecipeBuilder implements RecipeBuilder {
     private final AbstractCookingRecipe.Factory<?> factory;
 
     private SimpleCookingRecipeBuilder(
-        RecipeCategory p_251345_,
-        CookingBookCategory p_251607_,
-        ItemLike p_252112_,
-        Ingredient p_250362_,
-        float p_251204_,
-        int p_250189_,
-        AbstractCookingRecipe.Factory<?> p_311960_
+        RecipeCategory category,
+        CookingBookCategory bookCategory,
+        ItemLike result,
+        Ingredient ingredient,
+        float experience,
+        int cookingTime,
+        AbstractCookingRecipe.Factory<?> factory
     ) {
-        this(p_251345_, p_251607_, new ItemStack(p_252112_), p_250362_, p_251204_, p_250189_, p_311960_);
+        this(category, bookCategory, new ItemStack(result), ingredient, experience, cookingTime, factory);
     }
 
     private SimpleCookingRecipeBuilder(
@@ -69,35 +69,35 @@ public class SimpleCookingRecipeBuilder implements RecipeBuilder {
     }
 
     public static <T extends AbstractCookingRecipe> SimpleCookingRecipeBuilder generic(
-        Ingredient p_250999_,
-        RecipeCategory p_248815_,
-        ItemLike p_249766_,
-        float p_251320_,
-        int p_248693_,
-        RecipeSerializer<T> p_250921_,
-        AbstractCookingRecipe.Factory<T> p_312657_
+        Ingredient ingredient,
+        RecipeCategory category,
+        ItemLike result,
+        float experience,
+        int cookingTime,
+        RecipeSerializer<T> cookingSerializer,
+        AbstractCookingRecipe.Factory<T> factory
     ) {
-        return new SimpleCookingRecipeBuilder(p_248815_, determineRecipeCategory(p_250921_, p_249766_), p_249766_, p_250999_, p_251320_, p_248693_, p_312657_);
+        return new SimpleCookingRecipeBuilder(category, determineRecipeCategory(cookingSerializer, result), result, ingredient, experience, cookingTime, factory);
     }
 
-    public static SimpleCookingRecipeBuilder campfireCooking(Ingredient p_249393_, RecipeCategory p_249372_, ItemLike p_251516_, float p_252321_, int p_251916_) {
-        return new SimpleCookingRecipeBuilder(p_249372_, CookingBookCategory.FOOD, p_251516_, p_249393_, p_252321_, p_251916_, CampfireCookingRecipe::new);
+    public static SimpleCookingRecipeBuilder campfireCooking(Ingredient ingredient, RecipeCategory category, ItemLike result, float experience, int cookingTime) {
+        return new SimpleCookingRecipeBuilder(category, CookingBookCategory.FOOD, result, ingredient, experience, cookingTime, CampfireCookingRecipe::new);
     }
 
-    public static SimpleCookingRecipeBuilder blasting(Ingredient p_252115_, RecipeCategory p_249421_, ItemLike p_251247_, float p_250383_, int p_250476_) {
+    public static SimpleCookingRecipeBuilder blasting(Ingredient ingredient, RecipeCategory category, ItemLike result, float experience, int cookingTime) {
         return new SimpleCookingRecipeBuilder(
-            p_249421_, determineBlastingRecipeCategory(p_251247_), p_251247_, p_252115_, p_250383_, p_250476_, BlastingRecipe::new
+            category, determineBlastingRecipeCategory(result), result, ingredient, experience, cookingTime, BlastingRecipe::new
         );
     }
 
-    public static SimpleCookingRecipeBuilder smelting(Ingredient p_249223_, RecipeCategory p_251240_, ItemLike p_249551_, float p_249452_, int p_250496_) {
+    public static SimpleCookingRecipeBuilder smelting(Ingredient ingredient, RecipeCategory category, ItemLike result, float experience, int cookingTime) {
         return new SimpleCookingRecipeBuilder(
-            p_251240_, determineSmeltingRecipeCategory(p_249551_), p_249551_, p_249223_, p_249452_, p_250496_, SmeltingRecipe::new
+            category, determineSmeltingRecipeCategory(result), result, ingredient, experience, cookingTime, SmeltingRecipe::new
         );
     }
 
-    public static SimpleCookingRecipeBuilder smoking(Ingredient p_248930_, RecipeCategory p_250319_, ItemLike p_250377_, float p_252329_, int p_250482_) {
-        return new SimpleCookingRecipeBuilder(p_250319_, CookingBookCategory.FOOD, p_250377_, p_248930_, p_252329_, p_250482_, SmokingRecipe::new);
+    public static SimpleCookingRecipeBuilder smoking(Ingredient ingredient, RecipeCategory category, ItemLike result, float experience, int cookingTime) {
+        return new SimpleCookingRecipeBuilder(category, CookingBookCategory.FOOD, result, ingredient, experience, cookingTime, SmokingRecipe::new);
     }
 
     public static <T extends AbstractCookingRecipe> SimpleCookingRecipeBuilder generic(
@@ -132,13 +132,13 @@ public class SimpleCookingRecipeBuilder implements RecipeBuilder {
         return new SimpleCookingRecipeBuilder(p_250319_, CookingBookCategory.FOOD, result, p_248930_, p_252329_, p_250482_, SmokingRecipe::new);
     }
 
-    public SimpleCookingRecipeBuilder unlockedBy(String p_176792_, Criterion<?> p_300970_) {
-        this.criteria.put(p_176792_, p_300970_);
+    public SimpleCookingRecipeBuilder unlockedBy(String name, Criterion<?> criterion) {
+        this.criteria.put(name, criterion);
         return this;
     }
 
-    public SimpleCookingRecipeBuilder group(@Nullable String p_176795_) {
-        this.group = p_176795_;
+    public SimpleCookingRecipeBuilder group(@Nullable String groupName) {
+        this.group = groupName;
         return this;
     }
 
@@ -148,47 +148,50 @@ public class SimpleCookingRecipeBuilder implements RecipeBuilder {
     }
 
     @Override
-    public void save(RecipeOutput p_301266_, ResourceLocation p_126264_) {
-        this.ensureValid(p_126264_);
-        Advancement.Builder advancement$builder = p_301266_.advancement()
-            .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(p_126264_))
-            .rewards(AdvancementRewards.Builder.recipe(p_126264_))
+    public void save(RecipeOutput recipeOutput, ResourceLocation id) {
+        this.ensureValid(id);
+        Advancement.Builder advancement$builder = recipeOutput.advancement()
+            .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(id))
+            .rewards(AdvancementRewards.Builder.recipe(id))
             .requirements(AdvancementRequirements.Strategy.OR);
         this.criteria.forEach(advancement$builder::addCriterion);
         AbstractCookingRecipe abstractcookingrecipe = this.factory
             .create(
                 Objects.requireNonNullElse(this.group, ""), this.bookCategory, this.ingredient, this.stackResult, this.experience, this.cookingTime
             );
-        p_301266_.accept(p_126264_, abstractcookingrecipe, advancement$builder.build(p_126264_.withPrefix("recipes/" + this.category.getFolderName() + "/")));
+        recipeOutput.accept(id, abstractcookingrecipe, advancement$builder.build(id.withPrefix("recipes/" + this.category.getFolderName() + "/")));
     }
 
-    private static CookingBookCategory determineSmeltingRecipeCategory(ItemLike p_251938_) {
-        if (p_251938_.asItem().components().has(DataComponents.FOOD)) {
+    private static CookingBookCategory determineSmeltingRecipeCategory(ItemLike result) {
+        if (result.asItem().components().has(DataComponents.FOOD)) {
             return CookingBookCategory.FOOD;
         } else {
-            return p_251938_.asItem() instanceof BlockItem ? CookingBookCategory.BLOCKS : CookingBookCategory.MISC;
+            return result.asItem() instanceof BlockItem ? CookingBookCategory.BLOCKS : CookingBookCategory.MISC;
         }
     }
 
-    private static CookingBookCategory determineBlastingRecipeCategory(ItemLike p_249047_) {
-        return p_249047_.asItem() instanceof BlockItem ? CookingBookCategory.BLOCKS : CookingBookCategory.MISC;
+    private static CookingBookCategory determineBlastingRecipeCategory(ItemLike result) {
+        return result.asItem() instanceof BlockItem ? CookingBookCategory.BLOCKS : CookingBookCategory.MISC;
     }
 
-    private static CookingBookCategory determineRecipeCategory(RecipeSerializer<? extends AbstractCookingRecipe> p_251261_, ItemLike p_249582_) {
-        if (p_251261_ == RecipeSerializer.SMELTING_RECIPE) {
-            return determineSmeltingRecipeCategory(p_249582_);
-        } else if (p_251261_ == RecipeSerializer.BLASTING_RECIPE) {
-            return determineBlastingRecipeCategory(p_249582_);
-        } else if (p_251261_ != RecipeSerializer.SMOKING_RECIPE && p_251261_ != RecipeSerializer.CAMPFIRE_COOKING_RECIPE) {
+    private static CookingBookCategory determineRecipeCategory(RecipeSerializer<? extends AbstractCookingRecipe> serializer, ItemLike result) {
+        if (serializer == RecipeSerializer.SMELTING_RECIPE) {
+            return determineSmeltingRecipeCategory(result);
+        } else if (serializer == RecipeSerializer.BLASTING_RECIPE) {
+            return determineBlastingRecipeCategory(result);
+        } else if (serializer != RecipeSerializer.SMOKING_RECIPE && serializer != RecipeSerializer.CAMPFIRE_COOKING_RECIPE) {
             throw new IllegalStateException("Unknown cooking recipe type");
         } else {
             return CookingBookCategory.FOOD;
         }
     }
 
-    private void ensureValid(ResourceLocation p_126266_) {
+    /**
+     * Makes sure that this obtainable.
+     */
+    private void ensureValid(ResourceLocation id) {
         if (this.criteria.isEmpty()) {
-            throw new IllegalStateException("No way of obtaining recipe " + p_126266_);
+            throw new IllegalStateException("No way of obtaining recipe " + id);
         }
     }
 }

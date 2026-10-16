@@ -7,12 +7,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.portal.DimensionTransition;
 
 public interface Portal {
-    default int getPortalTransitionTime(ServerLevel p_350613_, Entity p_350544_) {
+    default int getPortalTransitionTime(ServerLevel level, Entity entity) {
         return 0;
     }
 
     @Nullable
-    DimensionTransition getPortalDestination(ServerLevel p_350469_, Entity p_350401_, BlockPos p_350443_);
+    DimensionTransition getPortalDestination(ServerLevel level, Entity entity, BlockPos pos);
 
     default Portal.Transition getLocalTransition() {
         return Portal.Transition.NONE;

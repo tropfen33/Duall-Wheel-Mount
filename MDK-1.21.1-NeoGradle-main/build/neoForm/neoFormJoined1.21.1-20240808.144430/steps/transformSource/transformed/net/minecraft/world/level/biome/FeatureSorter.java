@@ -26,7 +26,7 @@ import org.apache.commons.lang3.mutable.MutableInt;
 
 public class FeatureSorter {
     public static <T> List<FeatureSorter.StepFeatureData> buildFeaturesPerStep(
-        List<T> p_220604_, Function<T, List<HolderSet<PlacedFeature>>> p_220605_, boolean p_220606_
+        List<T> featureSetSources, Function<T, List<HolderSet<PlacedFeature>>> toFeatueSetFunction, boolean notRecursiveFlag
     ) {
         Object2IntMap<PlacedFeature> object2intmap = new Object2IntOpenHashMap<>();
         MutableInt mutableint = new MutableInt(0);
@@ -38,9 +38,9 @@ public class FeatureSorter {
         Map<FeatureData, Set<FeatureData>> map = new TreeMap<>(comparator);
         int i = 0;
 
-        for (T t : p_220604_) {
+        for (T t : featureSetSources) {
             List<FeatureData> list = Lists.newArrayList();
-            List<HolderSet<PlacedFeature>> list1 = p_220605_.apply(t);
+            List<HolderSet<PlacedFeature>> list1 = toFeatueSetFunction.apply(t);
             i = Math.max(i, list1.size());
 
             for (int j = 0; j < list1.size(); j++) {
@@ -68,11 +68,11 @@ public class FeatureSorter {
             }
 
             if (!set.contains(featuresorter$1featuredata) && Graph.depthFirstSearch(map, set, set1, list2::add, featuresorter$1featuredata)) {
-                if (!p_220606_) {
+                if (!notRecursiveFlag) {
                     throw new IllegalStateException("Feature order cycle found");
                 }
 
-                List<T> list3 = new ArrayList<>(p_220604_);
+                List<T> list3 = new ArrayList<>(featureSetSources);
 
                 int j1;
                 do {
@@ -84,7 +84,7 @@ public class FeatureSorter {
                         listiterator.remove();
 
                         try {
-                            buildFeaturesPerStep(list3, p_220605_, false);
+                            buildFeaturesPerStep(list3, toFeatueSetFunction, false);
                         } catch (IllegalStateException illegalstateexception) {
                             continue;
                         }

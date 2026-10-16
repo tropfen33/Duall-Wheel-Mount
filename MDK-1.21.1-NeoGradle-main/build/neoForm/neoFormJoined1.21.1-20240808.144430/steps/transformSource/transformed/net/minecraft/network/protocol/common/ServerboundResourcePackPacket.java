@@ -15,9 +15,9 @@ public record ServerboundResourcePackPacket(UUID id, ServerboundResourcePackPack
         this(p_295986_.readUUID(), p_295986_.readEnum(ServerboundResourcePackPacket.Action.class));
     }
 
-    private void write(FriendlyByteBuf p_295360_) {
-        p_295360_.writeUUID(this.id);
-        p_295360_.writeEnum(this.action);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeUUID(this.id);
+        buffer.writeEnum(this.action);
     }
 
     @Override
@@ -25,8 +25,11 @@ public record ServerboundResourcePackPacket(UUID id, ServerboundResourcePackPack
         return CommonPacketTypes.SERVERBOUND_RESOURCE_PACK;
     }
 
-    public void handle(ServerCommonPacketListener p_296386_) {
-        p_296386_.handleResourcePackResponse(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ServerCommonPacketListener handler) {
+        handler.handleResourcePackResponse(this);
     }
 
     public static enum Action {

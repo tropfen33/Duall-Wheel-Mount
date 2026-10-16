@@ -52,78 +52,78 @@ public class StructureBlockEntity extends BlockEntity {
     private float integrity = 1.0F;
     private long seed;
 
-    public StructureBlockEntity(BlockPos p_155779_, BlockState p_155780_) {
-        super(BlockEntityType.STRUCTURE_BLOCK, p_155779_, p_155780_);
-        this.mode = p_155780_.getValue(StructureBlock.MODE);
+    public StructureBlockEntity(BlockPos pos, BlockState blockState) {
+        super(BlockEntityType.STRUCTURE_BLOCK, pos, blockState);
+        this.mode = blockState.getValue(StructureBlock.MODE);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_187524_, HolderLookup.Provider p_323617_) {
-        super.saveAdditional(p_187524_, p_323617_);
-        p_187524_.putString("name", this.getStructureName());
-        p_187524_.putString("author", this.author);
-        p_187524_.putString("metadata", this.metaData);
-        p_187524_.putInt("posX", this.structurePos.getX());
-        p_187524_.putInt("posY", this.structurePos.getY());
-        p_187524_.putInt("posZ", this.structurePos.getZ());
-        p_187524_.putInt("sizeX", this.structureSize.getX());
-        p_187524_.putInt("sizeY", this.structureSize.getY());
-        p_187524_.putInt("sizeZ", this.structureSize.getZ());
-        p_187524_.putString("rotation", this.rotation.toString());
-        p_187524_.putString("mirror", this.mirror.toString());
-        p_187524_.putString("mode", this.mode.toString());
-        p_187524_.putBoolean("ignoreEntities", this.ignoreEntities);
-        p_187524_.putBoolean("powered", this.powered);
-        p_187524_.putBoolean("showair", this.showAir);
-        p_187524_.putBoolean("showboundingbox", this.showBoundingBox);
-        p_187524_.putFloat("integrity", this.integrity);
-        p_187524_.putLong("seed", this.seed);
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        tag.putString("name", this.getStructureName());
+        tag.putString("author", this.author);
+        tag.putString("metadata", this.metaData);
+        tag.putInt("posX", this.structurePos.getX());
+        tag.putInt("posY", this.structurePos.getY());
+        tag.putInt("posZ", this.structurePos.getZ());
+        tag.putInt("sizeX", this.structureSize.getX());
+        tag.putInt("sizeY", this.structureSize.getY());
+        tag.putInt("sizeZ", this.structureSize.getZ());
+        tag.putString("rotation", this.rotation.toString());
+        tag.putString("mirror", this.mirror.toString());
+        tag.putString("mode", this.mode.toString());
+        tag.putBoolean("ignoreEntities", this.ignoreEntities);
+        tag.putBoolean("powered", this.powered);
+        tag.putBoolean("showair", this.showAir);
+        tag.putBoolean("showboundingbox", this.showBoundingBox);
+        tag.putFloat("integrity", this.integrity);
+        tag.putLong("seed", this.seed);
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_155800_, HolderLookup.Provider p_324076_) {
-        super.loadAdditional(p_155800_, p_324076_);
-        this.setStructureName(p_155800_.getString("name"));
-        this.author = p_155800_.getString("author");
-        this.metaData = p_155800_.getString("metadata");
-        int i = Mth.clamp(p_155800_.getInt("posX"), -48, 48);
-        int j = Mth.clamp(p_155800_.getInt("posY"), -48, 48);
-        int k = Mth.clamp(p_155800_.getInt("posZ"), -48, 48);
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        this.setStructureName(tag.getString("name"));
+        this.author = tag.getString("author");
+        this.metaData = tag.getString("metadata");
+        int i = Mth.clamp(tag.getInt("posX"), -48, 48);
+        int j = Mth.clamp(tag.getInt("posY"), -48, 48);
+        int k = Mth.clamp(tag.getInt("posZ"), -48, 48);
         this.structurePos = new BlockPos(i, j, k);
-        int l = Mth.clamp(p_155800_.getInt("sizeX"), 0, 48);
-        int i1 = Mth.clamp(p_155800_.getInt("sizeY"), 0, 48);
-        int j1 = Mth.clamp(p_155800_.getInt("sizeZ"), 0, 48);
+        int l = Mth.clamp(tag.getInt("sizeX"), 0, 48);
+        int i1 = Mth.clamp(tag.getInt("sizeY"), 0, 48);
+        int j1 = Mth.clamp(tag.getInt("sizeZ"), 0, 48);
         this.structureSize = new Vec3i(l, i1, j1);
 
         try {
-            this.rotation = Rotation.valueOf(p_155800_.getString("rotation"));
+            this.rotation = Rotation.valueOf(tag.getString("rotation"));
         } catch (IllegalArgumentException illegalargumentexception2) {
             this.rotation = Rotation.NONE;
         }
 
         try {
-            this.mirror = Mirror.valueOf(p_155800_.getString("mirror"));
+            this.mirror = Mirror.valueOf(tag.getString("mirror"));
         } catch (IllegalArgumentException illegalargumentexception1) {
             this.mirror = Mirror.NONE;
         }
 
         try {
-            this.mode = StructureMode.valueOf(p_155800_.getString("mode"));
+            this.mode = StructureMode.valueOf(tag.getString("mode"));
         } catch (IllegalArgumentException illegalargumentexception) {
             this.mode = StructureMode.DATA;
         }
 
-        this.ignoreEntities = p_155800_.getBoolean("ignoreEntities");
-        this.powered = p_155800_.getBoolean("powered");
-        this.showAir = p_155800_.getBoolean("showair");
-        this.showBoundingBox = p_155800_.getBoolean("showboundingbox");
-        if (p_155800_.contains("integrity")) {
-            this.integrity = p_155800_.getFloat("integrity");
+        this.ignoreEntities = tag.getBoolean("ignoreEntities");
+        this.powered = tag.getBoolean("powered");
+        this.showAir = tag.getBoolean("showair");
+        this.showBoundingBox = tag.getBoolean("showboundingbox");
+        if (tag.contains("integrity")) {
+            this.integrity = tag.getFloat("integrity");
         } else {
             this.integrity = 1.0F;
         }
 
-        this.seed = p_155800_.getLong("seed");
+        this.seed = tag.getLong("seed");
         this.updateBlockState();
     }
 
@@ -142,16 +142,16 @@ public class StructureBlockEntity extends BlockEntity {
     }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider p_324257_) {
-        return this.saveCustomOnly(p_324257_);
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        return this.saveCustomOnly(registries);
     }
 
-    public boolean usedBy(Player p_59854_) {
-        if (!p_59854_.canUseGameMasterBlocks()) {
+    public boolean usedBy(Player player) {
+        if (!player.canUseGameMasterBlocks()) {
             return false;
         } else {
-            if (p_59854_.getCommandSenderWorld().isClientSide) {
-                p_59854_.openStructureBlock(this);
+            if (player.getCommandSenderWorld().isClientSide) {
+                player.openStructureBlock(this);
             }
 
             return true;
@@ -166,67 +166,67 @@ public class StructureBlockEntity extends BlockEntity {
         return this.structureName != null;
     }
 
-    public void setStructureName(@Nullable String p_59869_) {
-        this.setStructureName(StringUtil.isNullOrEmpty(p_59869_) ? null : ResourceLocation.tryParse(p_59869_));
+    public void setStructureName(@Nullable String structureName) {
+        this.setStructureName(StringUtil.isNullOrEmpty(structureName) ? null : ResourceLocation.tryParse(structureName));
     }
 
-    public void setStructureName(@Nullable ResourceLocation p_59875_) {
-        this.structureName = p_59875_;
+    public void setStructureName(@Nullable ResourceLocation structureName) {
+        this.structureName = structureName;
     }
 
-    public void createdBy(LivingEntity p_59852_) {
-        this.author = p_59852_.getName().getString();
+    public void createdBy(LivingEntity author) {
+        this.author = author.getName().getString();
     }
 
     public BlockPos getStructurePos() {
         return this.structurePos;
     }
 
-    public void setStructurePos(BlockPos p_59886_) {
-        this.structurePos = p_59886_;
+    public void setStructurePos(BlockPos structurePos) {
+        this.structurePos = structurePos;
     }
 
     public Vec3i getStructureSize() {
         return this.structureSize;
     }
 
-    public void setStructureSize(Vec3i p_155798_) {
-        this.structureSize = p_155798_;
+    public void setStructureSize(Vec3i structureSize) {
+        this.structureSize = structureSize;
     }
 
     public Mirror getMirror() {
         return this.mirror;
     }
 
-    public void setMirror(Mirror p_59882_) {
-        this.mirror = p_59882_;
+    public void setMirror(Mirror mirror) {
+        this.mirror = mirror;
     }
 
     public Rotation getRotation() {
         return this.rotation;
     }
 
-    public void setRotation(Rotation p_59884_) {
-        this.rotation = p_59884_;
+    public void setRotation(Rotation rotation) {
+        this.rotation = rotation;
     }
 
     public String getMetaData() {
         return this.metaData;
     }
 
-    public void setMetaData(String p_59888_) {
-        this.metaData = p_59888_;
+    public void setMetaData(String metaData) {
+        this.metaData = metaData;
     }
 
     public StructureMode getMode() {
         return this.mode;
     }
 
-    public void setMode(StructureMode p_59861_) {
-        this.mode = p_59861_;
+    public void setMode(StructureMode mode) {
+        this.mode = mode;
         BlockState blockstate = this.level.getBlockState(this.getBlockPos());
         if (blockstate.is(Blocks.STRUCTURE_BLOCK)) {
-            this.level.setBlock(this.getBlockPos(), blockstate.setValue(StructureBlock.MODE, p_59861_), 2);
+            this.level.setBlock(this.getBlockPos(), blockstate.setValue(StructureBlock.MODE, mode), 2);
         }
     }
 
@@ -234,24 +234,24 @@ public class StructureBlockEntity extends BlockEntity {
         return this.ignoreEntities;
     }
 
-    public void setIgnoreEntities(boolean p_59877_) {
-        this.ignoreEntities = p_59877_;
+    public void setIgnoreEntities(boolean ignoreEntities) {
+        this.ignoreEntities = ignoreEntities;
     }
 
     public float getIntegrity() {
         return this.integrity;
     }
 
-    public void setIntegrity(float p_59839_) {
-        this.integrity = p_59839_;
+    public void setIntegrity(float integrity) {
+        this.integrity = integrity;
     }
 
     public long getSeed() {
         return this.seed;
     }
 
-    public void setSeed(long p_59841_) {
-        this.seed = p_59841_;
+    public void setSeed(long seed) {
+        this.seed = seed;
     }
 
     public boolean detectSize() {
@@ -287,8 +287,8 @@ public class StructureBlockEntity extends BlockEntity {
         }
     }
 
-    private Stream<BlockPos> getRelatedCorners(BlockPos p_155792_, BlockPos p_155793_) {
-        return BlockPos.betweenClosedStream(p_155792_, p_155793_)
+    private Stream<BlockPos> getRelatedCorners(BlockPos minPos, BlockPos maxPos) {
+        return BlockPos.betweenClosedStream(minPos, maxPos)
             .filter(p_272561_ -> this.level.getBlockState(p_272561_).is(Blocks.STRUCTURE_BLOCK))
             .map(this.level::getBlockEntity)
             .filter(p_155802_ -> p_155802_ instanceof StructureBlockEntity)
@@ -297,8 +297,8 @@ public class StructureBlockEntity extends BlockEntity {
             .map(BlockEntity::getBlockPos);
     }
 
-    private static Optional<BoundingBox> calculateEnclosingBoundingBox(BlockPos p_155795_, Stream<BlockPos> p_155796_) {
-        Iterator<BlockPos> iterator = p_155796_.iterator();
+    private static Optional<BoundingBox> calculateEnclosingBoundingBox(BlockPos pos, Stream<BlockPos> relatedCorners) {
+        Iterator<BlockPos> iterator = relatedCorners.iterator();
         if (!iterator.hasNext()) {
             return Optional.empty();
         } else {
@@ -307,7 +307,7 @@ public class StructureBlockEntity extends BlockEntity {
             if (iterator.hasNext()) {
                 iterator.forEachRemaining(boundingbox::encapsulate);
             } else {
-                boundingbox.encapsulate(p_155795_);
+                boundingbox.encapsulate(pos);
             }
 
             return Optional.of(boundingbox);
@@ -318,7 +318,12 @@ public class StructureBlockEntity extends BlockEntity {
         return this.mode != StructureMode.SAVE ? false : this.saveStructure(true);
     }
 
-    public boolean saveStructure(boolean p_59890_) {
+    /**
+     * Saves the template, either updating the local version or writing it to disk.
+     *
+     * @return true if the template was successfully saved.
+     */
+    public boolean saveStructure(boolean writeToDisk) {
         if (this.structureName == null) {
             return false;
         } else {
@@ -335,7 +340,7 @@ public class StructureBlockEntity extends BlockEntity {
 
             structuretemplate.fillFromWorld(this.level, blockpos, this.structureSize, !this.ignoreEntities, Blocks.STRUCTURE_VOID);
             structuretemplate.setAuthor(this.author);
-            if (p_59890_) {
+            if (writeToDisk) {
                 try {
                     return structuretemplatemanager.save(this.structureName);
                 } catch (ResourceLocationException resourcelocationexception) {
@@ -347,17 +352,17 @@ public class StructureBlockEntity extends BlockEntity {
         }
     }
 
-    public static RandomSource createRandom(long p_222889_) {
-        return p_222889_ == 0L ? RandomSource.create(Util.getMillis()) : RandomSource.create(p_222889_);
+    public static RandomSource createRandom(long seed) {
+        return seed == 0L ? RandomSource.create(Util.getMillis()) : RandomSource.create(seed);
     }
 
-    public boolean placeStructureIfSameSize(ServerLevel p_309647_) {
+    public boolean placeStructureIfSameSize(ServerLevel level) {
         if (this.mode == StructureMode.LOAD && this.structureName != null) {
-            StructureTemplate structuretemplate = p_309647_.getStructureManager().get(this.structureName).orElse(null);
+            StructureTemplate structuretemplate = level.getStructureManager().get(this.structureName).orElse(null);
             if (structuretemplate == null) {
                 return false;
             } else if (structuretemplate.getSize().equals(this.structureSize)) {
-                this.placeStructure(p_309647_, structuretemplate);
+                this.placeStructure(level, structuretemplate);
                 return true;
             } else {
                 this.loadStructureInfo(structuretemplate);
@@ -368,8 +373,8 @@ public class StructureBlockEntity extends BlockEntity {
         }
     }
 
-    public boolean loadStructureInfo(ServerLevel p_309683_) {
-        StructureTemplate structuretemplate = this.getStructureTemplate(p_309683_);
+    public boolean loadStructureInfo(ServerLevel level) {
+        StructureTemplate structuretemplate = this.getStructureTemplate(level);
         if (structuretemplate == null) {
             return false;
         } else {
@@ -378,26 +383,26 @@ public class StructureBlockEntity extends BlockEntity {
         }
     }
 
-    private void loadStructureInfo(StructureTemplate p_309715_) {
-        this.author = !StringUtil.isNullOrEmpty(p_309715_.getAuthor()) ? p_309715_.getAuthor() : "";
-        this.structureSize = p_309715_.getSize();
+    private void loadStructureInfo(StructureTemplate structureTemplate) {
+        this.author = !StringUtil.isNullOrEmpty(structureTemplate.getAuthor()) ? structureTemplate.getAuthor() : "";
+        this.structureSize = structureTemplate.getSize();
         this.setChanged();
     }
 
-    public void placeStructure(ServerLevel p_309543_) {
-        StructureTemplate structuretemplate = this.getStructureTemplate(p_309543_);
+    public void placeStructure(ServerLevel level) {
+        StructureTemplate structuretemplate = this.getStructureTemplate(level);
         if (structuretemplate != null) {
-            this.placeStructure(p_309543_, structuretemplate);
+            this.placeStructure(level, structuretemplate);
         }
     }
 
     @Nullable
-    private StructureTemplate getStructureTemplate(ServerLevel p_309601_) {
-        return this.structureName == null ? null : p_309601_.getStructureManager().get(this.structureName).orElse(null);
+    private StructureTemplate getStructureTemplate(ServerLevel level) {
+        return this.structureName == null ? null : level.getStructureManager().get(this.structureName).orElse(null);
     }
 
-    private void placeStructure(ServerLevel p_309691_, StructureTemplate p_309550_) {
-        this.loadStructureInfo(p_309550_);
+    private void placeStructure(ServerLevel level, StructureTemplate structureTemplate) {
+        this.loadStructureInfo(structureTemplate);
         StructurePlaceSettings structureplacesettings = new StructurePlaceSettings()
             .setMirror(this.mirror)
             .setRotation(this.rotation)
@@ -409,7 +414,7 @@ public class StructureBlockEntity extends BlockEntity {
         }
 
         BlockPos blockpos = this.getBlockPos().offset(this.structurePos);
-        p_309550_.placeInWorld(p_309691_, blockpos, blockpos, structureplacesettings, createRandom(this.seed), 2);
+        structureTemplate.placeInWorld(level, blockpos, blockpos, structureplacesettings, createRandom(this.seed), 2);
     }
 
     public void unloadStructure() {
@@ -439,24 +444,24 @@ public class StructureBlockEntity extends BlockEntity {
         return this.powered;
     }
 
-    public void setPowered(boolean p_59894_) {
-        this.powered = p_59894_;
+    public void setPowered(boolean powered) {
+        this.powered = powered;
     }
 
     public boolean getShowAir() {
         return this.showAir;
     }
 
-    public void setShowAir(boolean p_59897_) {
-        this.showAir = p_59897_;
+    public void setShowAir(boolean showAir) {
+        this.showAir = showAir;
     }
 
     public boolean getShowBoundingBox() {
         return this.showBoundingBox;
     }
 
-    public void setShowBoundingBox(boolean p_59899_) {
-        this.showBoundingBox = p_59899_;
+    public void setShowBoundingBox(boolean showBoundingBox) {
+        this.showBoundingBox = showBoundingBox;
     }
 
     public static enum UpdateType {

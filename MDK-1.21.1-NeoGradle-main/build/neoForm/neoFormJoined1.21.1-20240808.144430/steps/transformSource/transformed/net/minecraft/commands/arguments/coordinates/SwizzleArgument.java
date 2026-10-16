@@ -20,24 +20,24 @@ public class SwizzleArgument implements ArgumentType<EnumSet<Direction.Axis>> {
         return new SwizzleArgument();
     }
 
-    public static EnumSet<Direction.Axis> getSwizzle(CommandContext<CommandSourceStack> p_120811_, String p_120812_) {
-        return p_120811_.getArgument(p_120812_, EnumSet.class);
+    public static EnumSet<Direction.Axis> getSwizzle(CommandContext<CommandSourceStack> context, String name) {
+        return context.getArgument(name, EnumSet.class);
     }
 
-    public EnumSet<Direction.Axis> parse(StringReader p_120809_) throws CommandSyntaxException {
+    public EnumSet<Direction.Axis> parse(StringReader reader) throws CommandSyntaxException {
         EnumSet<Direction.Axis> enumset = EnumSet.noneOf(Direction.Axis.class);
 
-        while (p_120809_.canRead() && p_120809_.peek() != ' ') {
-            char c0 = p_120809_.read();
+        while (reader.canRead() && reader.peek() != ' ') {
+            char c0 = reader.read();
 
             Direction.Axis $$6 = switch (c0) {
                 case 'x' -> Direction.Axis.X;
                 case 'y' -> Direction.Axis.Y;
                 case 'z' -> Direction.Axis.Z;
-                default -> throw ERROR_INVALID.createWithContext(p_120809_);
+                default -> throw ERROR_INVALID.createWithContext(reader);
             };
             if (enumset.contains($$6)) {
-                throw ERROR_INVALID.createWithContext(p_120809_);
+                throw ERROR_INVALID.createWithContext(reader);
             }
 
             enumset.add($$6);

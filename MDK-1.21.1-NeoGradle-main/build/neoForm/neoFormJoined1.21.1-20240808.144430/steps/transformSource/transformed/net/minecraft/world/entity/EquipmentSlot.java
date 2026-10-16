@@ -20,16 +20,16 @@ public enum EquipmentSlot implements StringRepresentable {
     private final int filterFlag;
     private final String name;
 
-    private EquipmentSlot(EquipmentSlot.Type p_348560_, int p_348539_, int p_348468_, int p_348612_, String p_348519_) {
-        this.type = p_348560_;
-        this.index = p_348539_;
-        this.countLimit = p_348468_;
-        this.filterFlag = p_348612_;
-        this.name = p_348519_;
+    private EquipmentSlot(EquipmentSlot.Type type, int index, int countLimit, int filterFlag, String name) {
+        this.type = type;
+        this.index = index;
+        this.countLimit = countLimit;
+        this.filterFlag = filterFlag;
+        this.name = name;
     }
 
-    private EquipmentSlot(EquipmentSlot.Type p_20739_, int p_20740_, int p_20741_, String p_20742_) {
-        this(p_20739_, p_20740_, 0, p_20741_, p_20742_);
+    private EquipmentSlot(EquipmentSlot.Type type, int index, int filterFlag, String name) {
+        this(type, index, 0, filterFlag, name);
     }
 
     public EquipmentSlot.Type getType() {
@@ -40,12 +40,12 @@ public enum EquipmentSlot implements StringRepresentable {
         return this.index;
     }
 
-    public int getIndex(int p_147069_) {
-        return p_147069_ + this.index;
+    public int getIndex(int baseIndex) {
+        return baseIndex + this.index;
     }
 
-    public ItemStack limit(ItemStack p_348466_) {
-        return this.countLimit > 0 ? p_348466_.split(this.countLimit) : p_348466_;
+    public ItemStack limit(ItemStack stack) {
+        return this.countLimit > 0 ? stack.split(this.countLimit) : stack;
     }
 
     public int getFilterFlag() {
@@ -65,12 +65,12 @@ public enum EquipmentSlot implements StringRepresentable {
         return this.name;
     }
 
-    public static EquipmentSlot byName(String p_20748_) {
-        EquipmentSlot equipmentslot = CODEC.byName(p_20748_);
+    public static EquipmentSlot byName(String targetName) {
+        EquipmentSlot equipmentslot = CODEC.byName(targetName);
         if (equipmentslot != null) {
             return equipmentslot;
         } else {
-            throw new IllegalArgumentException("Invalid slot '" + p_20748_ + "'");
+            throw new IllegalArgumentException("Invalid slot '" + targetName + "'");
         }
     }
 

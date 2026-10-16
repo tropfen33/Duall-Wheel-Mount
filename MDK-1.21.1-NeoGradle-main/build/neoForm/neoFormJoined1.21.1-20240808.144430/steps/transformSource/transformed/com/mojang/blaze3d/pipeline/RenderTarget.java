@@ -31,29 +31,29 @@ public abstract class RenderTarget {
     private final float[] clearChannels = Util.make(() -> new float[]{1.0F, 1.0F, 1.0F, 0.0F});
     public int filterMode;
 
-    public RenderTarget(boolean p_166199_) {
-        this.useDepth = p_166199_;
+    public RenderTarget(boolean useDepth) {
+        this.useDepth = useDepth;
         this.frameBufferId = -1;
         this.colorTextureId = -1;
         this.depthBufferId = -1;
     }
 
-    public void resize(int p_83942_, int p_83943_, boolean p_83944_) {
+    public void resize(int width, int height, boolean clearError) {
         if (!RenderSystem.isOnRenderThread()) {
-            RenderSystem.recordRenderCall(() -> this._resize(p_83942_, p_83943_, p_83944_));
+            RenderSystem.recordRenderCall(() -> this._resize(width, height, clearError));
         } else {
-            this._resize(p_83942_, p_83943_, p_83944_);
+            this._resize(width, height, clearError);
         }
     }
 
-    private void _resize(int p_83965_, int p_83966_, boolean p_83967_) {
+    private void _resize(int width, int height, boolean clearError) {
         RenderSystem.assertOnRenderThreadOrInit();
         GlStateManager._enableDepthTest();
         if (this.frameBufferId >= 0) {
             this.destroyBuffers();
         }
 
-        this.createBuffers(p_83965_, p_83966_, p_83967_);
+        this.createBuffers(width, height, clearError);
         GlStateManager._glBindFramebuffer(36160, 0);
     }
 
@@ -78,22 +78,22 @@ public abstract class RenderTarget {
         }
     }
 
-    public void copyDepthFrom(RenderTarget p_83946_) {
+    public void copyDepthFrom(RenderTarget otherTarget) {
         RenderSystem.assertOnRenderThreadOrInit();
-        GlStateManager._glBindFramebuffer(36008, p_83946_.frameBufferId);
+        GlStateManager._glBindFramebuffer(36008, otherTarget.frameBufferId);
         GlStateManager._glBindFramebuffer(36009, this.frameBufferId);
-        GlStateManager._glBlitFrameBuffer(0, 0, p_83946_.width, p_83946_.height, 0, 0, this.width, this.height, 256, 9728);
+        GlStateManager._glBlitFrameBuffer(0, 0, otherTarget.width, otherTarget.height, 0, 0, this.width, this.height, 256, 9728);
         GlStateManager._glBindFramebuffer(36160, 0);
     }
 
-    public void createBuffers(int p_83951_, int p_83952_, boolean p_83953_) {
+    public void createBuffers(int width, int height, boolean clearError) {
         RenderSystem.assertOnRenderThreadOrInit();
         int i = RenderSystem.maxSupportedTextureSize();
-        if (p_83951_ > 0 && p_83951_ <= i && p_83952_ > 0 && p_83952_ <= i) {
-            this.viewWidth = p_83951_;
-            this.viewHeight = p_83952_;
-            this.width = p_83951_;
-            this.height = p_83952_;
+        if (width > 0 && width <= i && height > 0 && height <= i) {
+            this.viewWidth = width;
+            this.viewHeight = height;
+            this.width = width;
+            this.height = height;
             this.frameBufferId = GlStateManager.glGenFramebuffers();
             this.colorTextureId = TextureUtil.generateTextureId();
             if (this.useDepth) {
@@ -129,24 +129,24 @@ public abstract class RenderTarget {
             }
 
             this.checkStatus();
-            this.clear(p_83953_);
+            this.clear(clearError);
             this.unbindRead();
         } else {
-            throw new IllegalArgumentException("Window " + p_83951_ + "x" + p_83952_ + " size out of bounds (max. size: " + i + ")");
+            throw new IllegalArgumentException("Window " + width + "x" + height + " size out of bounds (max. size: " + i + ")");
         }
     }
 
-    public void setFilterMode(int p_83937_) {
-        this.setFilterMode(p_83937_, false);
+    public void setFilterMode(int filterMode) {
+        this.setFilterMode(filterMode, false);
     }
 
-    private void setFilterMode(int p_333818_, boolean p_333775_) {
+    private void setFilterMode(int filterMode, boolean force) {
         RenderSystem.assertOnRenderThreadOrInit();
-        if (p_333775_ || p_333818_ != this.filterMode) {
-            this.filterMode = p_333818_;
+        if (force || filterMode != this.filterMode) {
+            this.filterMode = filterMode;
             GlStateManager._bindTexture(this.colorTextureId);
-            GlStateManager._texParameter(3553, 10241, p_333818_);
-            GlStateManager._texParameter(3553, 10240, p_333818_);
+            GlStateManager._texParameter(3553, 10241, filterMode);
+            GlStateManager._texParameter(3553, 10240, filterMode);
             GlStateManager._bindTexture(0);
         }
     }
@@ -183,18 +183,18 @@ public abstract class RenderTarget {
         GlStateManager._bindTexture(0);
     }
 
-    public void bindWrite(boolean p_83948_) {
+    public void bindWrite(boolean setViewport) {
         if (!RenderSystem.isOnRenderThread()) {
-            RenderSystem.recordRenderCall(() -> this._bindWrite(p_83948_));
+            RenderSystem.recordRenderCall(() -> this._bindWrite(setViewport));
         } else {
-            this._bindWrite(p_83948_);
+            this._bindWrite(setViewport);
         }
     }
 
-    private void _bindWrite(boolean p_83962_) {
+    private void _bindWrite(boolean setViewport) {
         RenderSystem.assertOnRenderThreadOrInit();
         GlStateManager._glBindFramebuffer(36160, this.frameBufferId);
-        if (p_83962_) {
+        if (setViewport) {
             GlStateManager._viewport(0, 0, this.viewWidth, this.viewHeight);
         }
     }
@@ -207,28 +207,28 @@ public abstract class RenderTarget {
         }
     }
 
-    public void setClearColor(float p_83932_, float p_83933_, float p_83934_, float p_83935_) {
-        this.clearChannels[0] = p_83932_;
-        this.clearChannels[1] = p_83933_;
-        this.clearChannels[2] = p_83934_;
-        this.clearChannels[3] = p_83935_;
+    public void setClearColor(float red, float green, float blue, float alpha) {
+        this.clearChannels[0] = red;
+        this.clearChannels[1] = green;
+        this.clearChannels[2] = blue;
+        this.clearChannels[3] = alpha;
     }
 
-    public void blitToScreen(int p_83939_, int p_83940_) {
-        this.blitToScreen(p_83939_, p_83940_, true);
+    public void blitToScreen(int width, int height) {
+        this.blitToScreen(width, height, true);
     }
 
-    public void blitToScreen(int p_83958_, int p_83959_, boolean p_83960_) {
-        this._blitToScreen(p_83958_, p_83959_, p_83960_);
+    public void blitToScreen(int width, int height, boolean disableBlend) {
+        this._blitToScreen(width, height, disableBlend);
     }
 
-    private void _blitToScreen(int p_83972_, int p_83973_, boolean p_83974_) {
+    private void _blitToScreen(int width, int height, boolean disableBlend) {
         RenderSystem.assertOnRenderThread();
         GlStateManager._colorMask(true, true, true, false);
         GlStateManager._disableDepthTest();
         GlStateManager._depthMask(false);
-        GlStateManager._viewport(0, 0, p_83972_, p_83973_);
-        if (p_83974_) {
+        GlStateManager._viewport(0, 0, width, height);
+        if (disableBlend) {
             GlStateManager._disableBlend();
         }
 
@@ -247,7 +247,7 @@ public abstract class RenderTarget {
         GlStateManager._colorMask(true, true, true, true);
     }
 
-    public void clear(boolean p_83955_) {
+    public void clear(boolean clearError) {
         RenderSystem.assertOnRenderThreadOrInit();
         this.bindWrite(true);
         GlStateManager._clearColor(this.clearChannels[0], this.clearChannels[1], this.clearChannels[2], this.clearChannels[3]);
@@ -257,7 +257,7 @@ public abstract class RenderTarget {
             i |= 256;
         }
 
-        GlStateManager._clear(i, p_83955_);
+        GlStateManager._clear(i, clearError);
         this.unbindWrite();
     }
 

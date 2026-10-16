@@ -47,15 +47,15 @@ public enum DyeColor implements StringRepresentable {
     private final net.minecraft.tags.TagKey<Item> dyedTag;
     private final int textColor;
 
-    private DyeColor(int p_41046_, String p_41047_, int p_41048_, MapColor p_285297_, int p_41050_, int p_41051_) {
-        this.id = p_41046_;
-        this.name = p_41047_;
-        this.mapColor = p_285297_;
-        this.textColor = p_41051_;
-        this.dyesTag = net.minecraft.tags.ItemTags.create(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", "dyes/" + p_41047_));
-        this.dyedTag = net.minecraft.tags.ItemTags.create(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", "dyed/" + p_41047_));
-        this.textureDiffuseColor = FastColor.ARGB32.opaque(p_41048_);
-        this.fireworkColor = p_41050_;
+    private DyeColor(int id, String name, int textureDefuseColor, MapColor mapColor, int fireworkColor, int textColor) {
+        this.id = id;
+        this.name = name;
+        this.mapColor = mapColor;
+        this.textColor = textColor;
+        this.dyesTag = net.minecraft.tags.ItemTags.create(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", "dyes/" + name));
+        this.dyedTag = net.minecraft.tags.ItemTags.create(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("c", "dyed/" + name));
+        this.textureDiffuseColor = FastColor.ARGB32.opaque(textureDefuseColor);
+        this.fireworkColor = fireworkColor;
     }
 
     public int getId() {
@@ -82,20 +82,20 @@ public enum DyeColor implements StringRepresentable {
         return this.textColor;
     }
 
-    public static DyeColor byId(int p_41054_) {
-        return BY_ID.apply(p_41054_);
+    public static DyeColor byId(int colorId) {
+        return BY_ID.apply(colorId);
     }
 
     @Nullable
     @Contract("_,!null->!null;_,null->_")
-    public static DyeColor byName(String p_41058_, @Nullable DyeColor p_41059_) {
-        DyeColor dyecolor = CODEC.byName(p_41058_);
-        return dyecolor != null ? dyecolor : p_41059_;
+    public static DyeColor byName(String translationKey, @Nullable DyeColor fallback) {
+        DyeColor dyecolor = CODEC.byName(translationKey);
+        return dyecolor != null ? dyecolor : fallback;
     }
 
     @Nullable
-    public static DyeColor byFireworkColor(int p_41062_) {
-        return BY_FIREWORK_COLOR.get(p_41062_);
+    public static DyeColor byFireworkColor(int fireworkColor) {
+        return BY_FIREWORK_COLOR.get(fireworkColor);
     }
 
     @Override

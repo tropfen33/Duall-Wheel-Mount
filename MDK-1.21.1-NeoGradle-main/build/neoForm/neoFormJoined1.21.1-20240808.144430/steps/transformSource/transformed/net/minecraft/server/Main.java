@@ -64,7 +64,7 @@ public class Main {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     @DontObfuscate
-    public static void main(String[] p_129699_) throws Exception {
+    public static void main(String[] args) throws Exception {
         SharedConstants.tryDetectVersion();
         OptionParser optionparser = new OptionParser();
         OptionSpec<Void> optionspec = optionparser.accepts("nogui");
@@ -94,7 +94,7 @@ public class Main {
         }
 
         try {
-            OptionSet optionset = optionparser.parse(p_129699_);
+            OptionSet optionset = optionparser.parse(args);
             if (optionset.has(optionspec8)) {
                 optionparser.printHelpOn(System.err);
                 return;
@@ -311,43 +311,43 @@ public class Main {
         }
     }
 
-    private static void writePidFile(Path p_270192_) {
+    private static void writePidFile(Path path) {
         try {
             long i = ProcessHandle.current().pid();
-            Files.writeString(p_270192_, Long.toString(i));
+            Files.writeString(path, Long.toString(i));
         } catch (IOException ioexception) {
             throw new UncheckedIOException(ioexception);
         }
     }
 
     private static WorldLoader.InitConfig loadOrCreateConfig(
-        DedicatedServerProperties p_248563_, @Nullable Dynamic<?> p_307444_, boolean p_249093_, PackRepository p_251069_
+        DedicatedServerProperties dedicatedServerProperties, @Nullable Dynamic<?> dynamic, boolean safeMode, PackRepository packRepository
     ) {
         boolean flag;
         WorldDataConfiguration worlddataconfiguration;
-        if (p_307444_ != null) {
-            WorldDataConfiguration worlddataconfiguration1 = LevelStorageSource.readDataConfig(p_307444_);
+        if (dynamic != null) {
+            WorldDataConfiguration worlddataconfiguration1 = LevelStorageSource.readDataConfig(dynamic);
             flag = false;
             worlddataconfiguration = worlddataconfiguration1;
         } else {
             flag = true;
-            worlddataconfiguration = new WorldDataConfiguration(p_248563_.initialDataPackConfiguration, FeatureFlags.DEFAULT_FLAGS);
+            worlddataconfiguration = new WorldDataConfiguration(dedicatedServerProperties.initialDataPackConfiguration, FeatureFlags.DEFAULT_FLAGS);
         }
 
-        WorldLoader.PackConfig worldloader$packconfig = new WorldLoader.PackConfig(p_251069_, worlddataconfiguration, p_249093_, flag);
-        return new WorldLoader.InitConfig(worldloader$packconfig, Commands.CommandSelection.DEDICATED, p_248563_.functionPermissionLevel);
+        WorldLoader.PackConfig worldloader$packconfig = new WorldLoader.PackConfig(packRepository, worlddataconfiguration, safeMode, flag);
+        return new WorldLoader.InitConfig(worldloader$packconfig, Commands.CommandSelection.DEDICATED, dedicatedServerProperties.functionPermissionLevel);
     }
 
     private static void forceUpgrade(
-        LevelStorageSource.LevelStorageAccess p_195489_,
-        DataFixer p_195490_,
-        boolean p_195491_,
-        BooleanSupplier p_195492_,
-        RegistryAccess p_323503_,
-        boolean p_321704_
+        LevelStorageSource.LevelStorageAccess levelStorage,
+        DataFixer dataFixer,
+        boolean eraseCache,
+        BooleanSupplier shouldContinue,
+        RegistryAccess registryAccess,
+        boolean recreateRegionFiles
     ) {
         LOGGER.info("Forcing world upgrade!");
-        WorldUpgrader worldupgrader = new WorldUpgrader(p_195489_, p_195490_, p_323503_, p_195491_, p_321704_);
+        WorldUpgrader worldupgrader = new WorldUpgrader(levelStorage, dataFixer, registryAccess, eraseCache, recreateRegionFiles);
         Component component = null;
 
         while (!worldupgrader.isFinished()) {
@@ -363,7 +363,7 @@ public class Main {
                 LOGGER.info("{}% completed ({} / {} chunks)...", Mth.floor((float)j / (float)i * 100.0F), j, i);
             }
 
-            if (!p_195492_.getAsBoolean()) {
+            if (!shouldContinue.getAsBoolean()) {
                 worldupgrader.cancel();
             } else {
                 try {

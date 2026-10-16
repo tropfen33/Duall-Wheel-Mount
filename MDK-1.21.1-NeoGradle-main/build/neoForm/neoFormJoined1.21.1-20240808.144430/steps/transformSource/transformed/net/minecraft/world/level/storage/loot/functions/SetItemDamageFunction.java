@@ -16,6 +16,9 @@ import net.minecraft.world.level.storage.loot.providers.number.NumberProvider;
 import net.minecraft.world.level.storage.loot.providers.number.NumberProviders;
 import org.slf4j.Logger;
 
+/**
+ * LootItemFunction that sets the stack's damage based on a {@link NumberProvider}, optionally adding to any existing damage.
+ */
 public class SetItemDamageFunction extends LootItemConditionalFunction {
     private static final Logger LOGGER = LogUtils.getLogger();
     public static final MapCodec<SetItemDamageFunction> CODEC = RecordCodecBuilder.mapCodec(
@@ -31,10 +34,10 @@ public class SetItemDamageFunction extends LootItemConditionalFunction {
     private final NumberProvider damage;
     private final boolean add;
 
-    private SetItemDamageFunction(List<LootItemCondition> p_298394_, NumberProvider p_165428_, boolean p_165429_) {
-        super(p_298394_);
-        this.damage = p_165428_;
-        this.add = p_165429_;
+    private SetItemDamageFunction(List<LootItemCondition> conditions, NumberProvider damage, boolean add) {
+        super(conditions);
+        this.damage = damage;
+        this.add = add;
     }
 
     @Override
@@ -47,25 +50,28 @@ public class SetItemDamageFunction extends LootItemConditionalFunction {
         return this.damage.getReferencedContextParams();
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_81048_, LootContext p_81049_) {
-        if (p_81048_.isDamageableItem()) {
-            int i = p_81048_.getMaxDamage();
-            float f = this.add ? 1.0F - (float)p_81048_.getDamageValue() / (float)i : 0.0F;
-            float f1 = 1.0F - Mth.clamp(this.damage.getFloat(p_81049_) + f, 0.0F, 1.0F);
-            p_81048_.setDamageValue(Mth.floor(f1 * (float)i));
+    public ItemStack run(ItemStack stack, LootContext context) {
+        if (stack.isDamageableItem()) {
+            int i = stack.getMaxDamage();
+            float f = this.add ? 1.0F - (float)stack.getDamageValue() / (float)i : 0.0F;
+            float f1 = 1.0F - Mth.clamp(this.damage.getFloat(context) + f, 0.0F, 1.0F);
+            stack.setDamageValue(Mth.floor(f1 * (float)i));
         } else {
-            LOGGER.warn("Couldn't set damage of loot item {}", p_81048_);
+            LOGGER.warn("Couldn't set damage of loot item {}", stack);
         }
 
-        return p_81048_;
+        return stack;
     }
 
-    public static LootItemConditionalFunction.Builder<?> setDamage(NumberProvider p_165431_) {
-        return simpleBuilder(p_298140_ -> new SetItemDamageFunction(p_298140_, p_165431_, false));
+    public static LootItemConditionalFunction.Builder<?> setDamage(NumberProvider damageValue) {
+        return simpleBuilder(p_298140_ -> new SetItemDamageFunction(p_298140_, damageValue, false));
     }
 
-    public static LootItemConditionalFunction.Builder<?> setDamage(NumberProvider p_165433_, boolean p_165434_) {
-        return simpleBuilder(p_298137_ -> new SetItemDamageFunction(p_298137_, p_165433_, p_165434_));
+    public static LootItemConditionalFunction.Builder<?> setDamage(NumberProvider damageValue, boolean add) {
+        return simpleBuilder(p_298137_ -> new SetItemDamageFunction(p_298137_, damageValue, add));
     }
 }

@@ -60,8 +60,8 @@ public class FenceGateBlock extends HorizontalDirectionalBlock {
         return CODEC;
     }
 
-    public FenceGateBlock(WoodType p_273340_, BlockBehaviour.Properties p_273352_) {
-        this(java.util.Optional.of(p_273340_), p_273352_.sound(p_273340_.soundType()), java.util.Optional.of(p_273340_.fenceGateOpen()), java.util.Optional.of(p_273340_.fenceGateClose()));
+    public FenceGateBlock(WoodType type, BlockBehaviour.Properties properties) {
+        this(java.util.Optional.of(type), properties.sound(type.soundType()), java.util.Optional.of(type.fenceGateOpen()), java.util.Optional.of(type.fenceGateClose()));
     }
     public FenceGateBlock(BlockBehaviour.Properties p_273352_, net.minecraft.sounds.SoundEvent openSound, net.minecraft.sounds.SoundEvent closeSound) {
         this(java.util.Optional.empty(), p_273352_, java.util.Optional.of(openSound), java.util.Optional.of(closeSound));
@@ -82,72 +82,77 @@ public class FenceGateBlock extends HorizontalDirectionalBlock {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_53391_, BlockGetter p_53392_, BlockPos p_53393_, CollisionContext p_53394_) {
-        if (p_53391_.getValue(IN_WALL)) {
-            return p_53391_.getValue(FACING).getAxis() == Direction.Axis.X ? X_SHAPE_LOW : Z_SHAPE_LOW;
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        if (state.getValue(IN_WALL)) {
+            return state.getValue(FACING).getAxis() == Direction.Axis.X ? X_SHAPE_LOW : Z_SHAPE_LOW;
         } else {
-            return p_53391_.getValue(FACING).getAxis() == Direction.Axis.X ? X_SHAPE : Z_SHAPE;
+            return state.getValue(FACING).getAxis() == Direction.Axis.X ? X_SHAPE : Z_SHAPE;
+        }
+    }
+
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
+    @Override
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        Direction.Axis direction$axis = facing.getAxis();
+        if (state.getValue(FACING).getClockWise().getAxis() != direction$axis) {
+            return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
+        } else {
+            boolean flag = this.isWall(facingState) || this.isWall(level.getBlockState(currentPos.relative(facing.getOpposite())));
+            return state.setValue(IN_WALL, Boolean.valueOf(flag));
         }
     }
 
     @Override
-    protected BlockState updateShape(BlockState p_53382_, Direction p_53383_, BlockState p_53384_, LevelAccessor p_53385_, BlockPos p_53386_, BlockPos p_53387_) {
-        Direction.Axis direction$axis = p_53383_.getAxis();
-        if (p_53382_.getValue(FACING).getClockWise().getAxis() != direction$axis) {
-            return super.updateShape(p_53382_, p_53383_, p_53384_, p_53385_, p_53386_, p_53387_);
-        } else {
-            boolean flag = this.isWall(p_53384_) || this.isWall(p_53385_.getBlockState(p_53386_.relative(p_53383_.getOpposite())));
-            return p_53382_.setValue(IN_WALL, Boolean.valueOf(flag));
-        }
-    }
-
-    @Override
-    protected VoxelShape getBlockSupportShape(BlockState p_253862_, BlockGetter p_254569_, BlockPos p_254197_) {
-        if (p_253862_.getValue(OPEN)) {
+    protected VoxelShape getBlockSupportShape(BlockState state, BlockGetter level, BlockPos pos) {
+        if (state.getValue(OPEN)) {
             return Shapes.empty();
         } else {
-            return p_253862_.getValue(FACING).getAxis() == Direction.Axis.Z ? Z_SUPPORT_SHAPE : X_SUPPORT_SHAPE;
+            return state.getValue(FACING).getAxis() == Direction.Axis.Z ? Z_SUPPORT_SHAPE : X_SUPPORT_SHAPE;
         }
     }
 
     @Override
-    protected VoxelShape getCollisionShape(BlockState p_53396_, BlockGetter p_53397_, BlockPos p_53398_, CollisionContext p_53399_) {
-        if (p_53396_.getValue(OPEN)) {
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        if (state.getValue(OPEN)) {
             return Shapes.empty();
         } else {
-            return p_53396_.getValue(FACING).getAxis() == Direction.Axis.Z ? Z_COLLISION_SHAPE : X_COLLISION_SHAPE;
+            return state.getValue(FACING).getAxis() == Direction.Axis.Z ? Z_COLLISION_SHAPE : X_COLLISION_SHAPE;
         }
     }
 
     @Override
-    protected VoxelShape getOcclusionShape(BlockState p_53401_, BlockGetter p_53402_, BlockPos p_53403_) {
-        if (p_53401_.getValue(IN_WALL)) {
-            return p_53401_.getValue(FACING).getAxis() == Direction.Axis.X ? X_OCCLUSION_SHAPE_LOW : Z_OCCLUSION_SHAPE_LOW;
+    protected VoxelShape getOcclusionShape(BlockState state, BlockGetter level, BlockPos pos) {
+        if (state.getValue(IN_WALL)) {
+            return state.getValue(FACING).getAxis() == Direction.Axis.X ? X_OCCLUSION_SHAPE_LOW : Z_OCCLUSION_SHAPE_LOW;
         } else {
-            return p_53401_.getValue(FACING).getAxis() == Direction.Axis.X ? X_OCCLUSION_SHAPE : Z_OCCLUSION_SHAPE;
+            return state.getValue(FACING).getAxis() == Direction.Axis.X ? X_OCCLUSION_SHAPE : Z_OCCLUSION_SHAPE;
         }
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_53360_, PathComputationType p_53363_) {
-        switch (p_53363_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
+        switch (pathComputationType) {
             case LAND:
-                return p_53360_.getValue(OPEN);
+                return state.getValue(OPEN);
             case WATER:
                 return false;
             case AIR:
-                return p_53360_.getValue(OPEN);
+                return state.getValue(OPEN);
             default:
                 return false;
         }
     }
 
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_53358_) {
-        Level level = p_53358_.getLevel();
-        BlockPos blockpos = p_53358_.getClickedPos();
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Level level = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
         boolean flag = level.hasNeighborSignal(blockpos);
-        Direction direction = p_53358_.getHorizontalDirection();
+        Direction direction = context.getHorizontalDirection();
         Direction.Axis direction$axis = direction.getAxis();
         boolean flag1 = direction$axis == Direction.Axis.Z
                 && (this.isWall(level.getBlockState(blockpos.west())) || this.isWall(level.getBlockState(blockpos.east())))
@@ -159,84 +164,84 @@ public class FenceGateBlock extends HorizontalDirectionalBlock {
             .setValue(IN_WALL, Boolean.valueOf(flag1));
     }
 
-    private boolean isWall(BlockState p_53405_) {
-        return p_53405_.is(BlockTags.WALLS);
+    private boolean isWall(BlockState state) {
+        return state.is(BlockTags.WALLS);
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_53365_, Level p_53366_, BlockPos p_53367_, Player p_53368_, BlockHitResult p_53370_) {
-        if (p_53365_.getValue(OPEN)) {
-            p_53365_ = p_53365_.setValue(OPEN, Boolean.valueOf(false));
-            p_53366_.setBlock(p_53367_, p_53365_, 10);
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (state.getValue(OPEN)) {
+            state = state.setValue(OPEN, Boolean.valueOf(false));
+            level.setBlock(pos, state, 10);
         } else {
-            Direction direction = p_53368_.getDirection();
-            if (p_53365_.getValue(FACING) == direction.getOpposite()) {
-                p_53365_ = p_53365_.setValue(FACING, direction);
+            Direction direction = player.getDirection();
+            if (state.getValue(FACING) == direction.getOpposite()) {
+                state = state.setValue(FACING, direction);
             }
 
-            p_53365_ = p_53365_.setValue(OPEN, Boolean.valueOf(true));
-            p_53366_.setBlock(p_53367_, p_53365_, 10);
+            state = state.setValue(OPEN, Boolean.valueOf(true));
+            level.setBlock(pos, state, 10);
         }
 
-        boolean flag = p_53365_.getValue(OPEN);
-        p_53366_.playSound(
-            p_53368_,
-            p_53367_,
+        boolean flag = state.getValue(OPEN);
+        level.playSound(
+            player,
+            pos,
             flag ? openSound : closeSound,
             SoundSource.BLOCKS,
             1.0F,
-            p_53366_.getRandom().nextFloat() * 0.1F + 0.9F
+            level.getRandom().nextFloat() * 0.1F + 0.9F
         );
-        p_53366_.gameEvent(p_53368_, flag ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, p_53367_);
-        return InteractionResult.sidedSuccess(p_53366_.isClientSide);
+        level.gameEvent(player, flag ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, pos);
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Override
-    protected void onExplosionHit(BlockState p_312699_, Level p_311813_, BlockPos p_312680_, Explosion p_312186_, BiConsumer<ItemStack, BlockPos> p_312187_) {
-        if (p_312186_.canTriggerBlocks() && !p_312699_.getValue(POWERED)) {
-            boolean flag = p_312699_.getValue(OPEN);
-            p_311813_.setBlockAndUpdate(p_312680_, p_312699_.setValue(OPEN, Boolean.valueOf(!flag)));
-            p_311813_.playSound(
+    protected void onExplosionHit(BlockState state, Level level, BlockPos pos, Explosion explosion, BiConsumer<ItemStack, BlockPos> dropConsumer) {
+        if (explosion.canTriggerBlocks() && !state.getValue(POWERED)) {
+            boolean flag = state.getValue(OPEN);
+            level.setBlockAndUpdate(pos, state.setValue(OPEN, Boolean.valueOf(!flag)));
+            level.playSound(
                 null,
-                p_312680_,
+                pos,
                 flag ? closeSound : openSound,
                 SoundSource.BLOCKS,
                 1.0F,
-                p_311813_.getRandom().nextFloat() * 0.1F + 0.9F
+                level.getRandom().nextFloat() * 0.1F + 0.9F
             );
-            p_311813_.gameEvent(flag ? GameEvent.BLOCK_CLOSE : GameEvent.BLOCK_OPEN, p_312680_, GameEvent.Context.of(p_312699_));
+            level.gameEvent(flag ? GameEvent.BLOCK_CLOSE : GameEvent.BLOCK_OPEN, pos, GameEvent.Context.of(state));
         }
 
-        super.onExplosionHit(p_312699_, p_311813_, p_312680_, p_312186_, p_312187_);
+        super.onExplosionHit(state, level, pos, explosion, dropConsumer);
     }
 
     @Override
-    protected void neighborChanged(BlockState p_53372_, Level p_53373_, BlockPos p_53374_, Block p_53375_, BlockPos p_53376_, boolean p_53377_) {
-        if (!p_53373_.isClientSide) {
-            boolean flag = p_53373_.hasNeighborSignal(p_53374_);
-            if (p_53372_.getValue(POWERED) != flag) {
-                p_53373_.setBlock(p_53374_, p_53372_.setValue(POWERED, Boolean.valueOf(flag)).setValue(OPEN, Boolean.valueOf(flag)), 2);
-                if (p_53372_.getValue(OPEN) != flag) {
-                    p_53373_.playSound(
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (!level.isClientSide) {
+            boolean flag = level.hasNeighborSignal(pos);
+            if (state.getValue(POWERED) != flag) {
+                level.setBlock(pos, state.setValue(POWERED, Boolean.valueOf(flag)).setValue(OPEN, Boolean.valueOf(flag)), 2);
+                if (state.getValue(OPEN) != flag) {
+                    level.playSound(
                         null,
-                        p_53374_,
+                        pos,
                         flag ? openSound : closeSound,
                         SoundSource.BLOCKS,
                         1.0F,
-                        p_53373_.getRandom().nextFloat() * 0.1F + 0.9F
+                        level.getRandom().nextFloat() * 0.1F + 0.9F
                     );
-                    p_53373_.gameEvent(null, flag ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, p_53374_);
+                    level.gameEvent(null, flag ? GameEvent.BLOCK_OPEN : GameEvent.BLOCK_CLOSE, pos);
                 }
             }
         }
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_53389_) {
-        p_53389_.add(FACING, OPEN, POWERED, IN_WALL);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, OPEN, POWERED, IN_WALL);
     }
 
-    public static boolean connectsToDirection(BlockState p_53379_, Direction p_53380_) {
-        return p_53379_.getValue(FACING).getAxis() == p_53380_.getClockWise().getAxis();
+    public static boolean connectsToDirection(BlockState state, Direction direction) {
+        return state.getValue(FACING).getAxis() == direction.getClockWise().getAxis();
     }
 }

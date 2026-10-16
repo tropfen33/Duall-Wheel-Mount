@@ -13,8 +13,8 @@ public record MapDecorations(Map<String, MapDecorations.Entry> decorations) {
     public static final Codec<MapDecorations> CODEC = Codec.unboundedMap(Codec.STRING, MapDecorations.Entry.CODEC)
         .xmap(MapDecorations::new, MapDecorations::decorations);
 
-    public MapDecorations withDecoration(String p_331258_, MapDecorations.Entry p_330416_) {
-        return new MapDecorations(Util.copyAndPut(this.decorations, p_331258_, p_330416_));
+    public MapDecorations withDecoration(String type, MapDecorations.Entry entry) {
+        return new MapDecorations(Util.copyAndPut(this.decorations, type, entry));
     }
 
     public static record Entry(Holder<MapDecorationType> type, double x, double z, float rotation) {

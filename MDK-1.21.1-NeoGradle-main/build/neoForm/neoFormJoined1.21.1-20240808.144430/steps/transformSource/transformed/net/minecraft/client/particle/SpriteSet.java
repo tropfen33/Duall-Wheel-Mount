@@ -7,7 +7,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface SpriteSet {
-    TextureAtlasSprite get(int p_107966_, int p_107967_);
+    TextureAtlasSprite get(int age, int lifetime);
 
-    TextureAtlasSprite get(RandomSource p_234102_);
+    TextureAtlasSprite get(RandomSource random);
 }

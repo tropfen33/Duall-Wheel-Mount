@@ -26,24 +26,24 @@ public class MultiLineEditBox extends AbstractScrollWidget {
     private final MultilineTextField textField;
     private long focusedTime = Util.getMillis();
 
-    public MultiLineEditBox(Font p_239008_, int p_239009_, int p_239010_, int p_239011_, int p_239012_, Component p_239013_, Component p_239014_) {
-        super(p_239009_, p_239010_, p_239011_, p_239012_, p_239014_);
-        this.font = p_239008_;
-        this.placeholder = p_239013_;
-        this.textField = new MultilineTextField(p_239008_, p_239011_ - this.totalInnerPadding());
+    public MultiLineEditBox(Font font, int x, int y, int width, int height, Component placeholder, Component message) {
+        super(x, y, width, height, message);
+        this.font = font;
+        this.placeholder = placeholder;
+        this.textField = new MultilineTextField(font, width - this.totalInnerPadding());
         this.textField.setCursorListener(this::scrollToCursor);
     }
 
-    public void setCharacterLimit(int p_239314_) {
-        this.textField.setCharacterLimit(p_239314_);
+    public void setCharacterLimit(int characterLimit) {
+        this.textField.setCharacterLimit(characterLimit);
     }
 
-    public void setValueListener(Consumer<String> p_239274_) {
-        this.textField.setValueListener(p_239274_);
+    public void setValueListener(Consumer<String> valueListener) {
+        this.textField.setValueListener(valueListener);
     }
 
-    public void setValue(String p_240160_) {
-        this.textField.setValue(p_240160_);
+    public void setValue(String fullText) {
+        this.textField.setValue(fullText);
     }
 
     public String getValue() {
@@ -51,28 +51,28 @@ public class MultiLineEditBox extends AbstractScrollWidget {
     }
 
     @Override
-    public void updateWidgetNarration(NarrationElementOutput p_259393_) {
-        p_259393_.add(NarratedElementType.TITLE, Component.translatable("gui.narrate.editBox", this.getMessage(), this.getValue()));
+    public void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+        narrationElementOutput.add(NarratedElementType.TITLE, Component.translatable("gui.narrate.editBox", this.getMessage(), this.getValue()));
     }
 
     @Override
-    public boolean mouseClicked(double p_239101_, double p_239102_, int p_239103_) {
-        if (this.withinContentAreaPoint(p_239101_, p_239102_) && p_239103_ == 0) {
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (this.withinContentAreaPoint(mouseX, mouseY) && button == 0) {
             this.textField.setSelecting(Screen.hasShiftDown());
-            this.seekCursorScreen(p_239101_, p_239102_);
+            this.seekCursorScreen(mouseX, mouseY);
             return true;
         } else {
-            return super.mouseClicked(p_239101_, p_239102_, p_239103_);
+            return super.mouseClicked(mouseX, mouseY, button);
         }
     }
 
     @Override
-    public boolean mouseDragged(double p_238978_, double p_238979_, int p_238980_, double p_238981_, double p_238982_) {
-        if (super.mouseDragged(p_238978_, p_238979_, p_238980_, p_238981_, p_238982_)) {
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (super.mouseDragged(mouseX, mouseY, button, dragX, dragY)) {
             return true;
-        } else if (this.withinContentAreaPoint(p_238978_, p_238979_) && p_238980_ == 0) {
+        } else if (this.withinContentAreaPoint(mouseX, mouseY) && button == 0) {
             this.textField.setSelecting(true);
-            this.seekCursorScreen(p_238978_, p_238979_);
+            this.seekCursorScreen(mouseX, mouseY);
             this.textField.setSelecting(Screen.hasShiftDown());
             return true;
         } else {
@@ -80,15 +80,32 @@ public class MultiLineEditBox extends AbstractScrollWidget {
         }
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_239433_, int p_239434_, int p_239435_) {
-        return this.textField.keyPressed(p_239433_);
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        return this.textField.keyPressed(keyCode);
     }
 
+    /**
+     * Called when a character is typed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param codePoint the code point of the typed character.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean charTyped(char p_239387_, int p_239388_) {
-        if (this.visible && this.isFocused() && StringUtil.isAllowedChatCharacter(p_239387_)) {
-            this.textField.insertText(Character.toString(p_239387_));
+    public boolean charTyped(char codePoint, int modifiers) {
+        if (this.visible && this.isFocused() && StringUtil.isAllowedChatCharacter(codePoint)) {
+            this.textField.insertText(Character.toString(codePoint));
             return true;
         } else {
             return false;
@@ -96,10 +113,10 @@ public class MultiLineEditBox extends AbstractScrollWidget {
     }
 
     @Override
-    protected void renderContents(GuiGraphics p_283676_, int p_281538_, int p_283033_, float p_281767_) {
+    protected void renderContents(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         String s = this.textField.value();
         if (s.isEmpty() && !this.isFocused()) {
-            p_283676_.drawWordWrap(
+            guiGraphics.drawWordWrap(
                 this.font,
                 this.placeholder,
                 this.getX() + this.innerPadding(),
@@ -119,16 +136,16 @@ public class MultiLineEditBox extends AbstractScrollWidget {
                 boolean flag2 = this.withinContentAreaTopBottom(l, l + 9);
                 if (flag && flag1 && i >= multilinetextfield$stringview.beginIndex() && i <= multilinetextfield$stringview.endIndex()) {
                     if (flag2) {
-                        j = p_283676_.drawString(
+                        j = guiGraphics.drawString(
                                 this.font, s.substring(multilinetextfield$stringview.beginIndex(), i), this.getX() + this.innerPadding(), l, -2039584
                             )
                             - 1;
-                        p_283676_.fill(j, l - 1, j + 1, l + 1 + 9, -3092272);
-                        p_283676_.drawString(this.font, s.substring(i, multilinetextfield$stringview.endIndex()), j, l, -2039584);
+                        guiGraphics.fill(j, l - 1, j + 1, l + 1 + 9, -3092272);
+                        guiGraphics.drawString(this.font, s.substring(i, multilinetextfield$stringview.endIndex()), j, l, -2039584);
                     }
                 } else {
                     if (flag2) {
-                        j = p_283676_.drawString(
+                        j = guiGraphics.drawString(
                                 this.font,
                                 s.substring(multilinetextfield$stringview.beginIndex(), multilinetextfield$stringview.endIndex()),
                                 this.getX() + this.innerPadding(),
@@ -145,7 +162,7 @@ public class MultiLineEditBox extends AbstractScrollWidget {
             }
 
             if (flag && !flag1 && this.withinContentAreaTopBottom(k, k + 9)) {
-                p_283676_.drawString(this.font, "_", j, k, -3092272);
+                guiGraphics.drawString(this.font, "_", j, k, -3092272);
             }
 
             if (this.textField.hasSelection()) {
@@ -176,7 +193,7 @@ public class MultiLineEditBox extends AbstractScrollWidget {
                                 j1 = this.font.width(s.substring(multilinetextfield$stringview1.beginIndex(), multilinetextfield$stringview2.endIndex()));
                             }
 
-                            this.renderHighlight(p_283676_, k1 + i1, l, k1 + j1, l + 9);
+                            this.renderHighlight(guiGraphics, k1 + i1, l, k1 + j1, l + 9);
                         }
 
                         l += 9;
@@ -187,12 +204,12 @@ public class MultiLineEditBox extends AbstractScrollWidget {
     }
 
     @Override
-    protected void renderDecorations(GuiGraphics p_282551_) {
-        super.renderDecorations(p_282551_);
+    protected void renderDecorations(GuiGraphics guiGraphics) {
+        super.renderDecorations(guiGraphics);
         if (this.textField.hasCharacterLimit()) {
             int i = this.textField.characterLimit();
             Component component = Component.translatable("gui.multiLineEditBox.character_limit", this.textField.value().length(), i);
-            p_282551_.drawString(this.font, component, this.getX() + this.width - this.font.width(component), this.getY() + this.height + 4, 10526880);
+            guiGraphics.drawString(this.font, component, this.getX() + this.width - this.font.width(component), this.getY() + this.height + 4, 10526880);
         }
     }
 
@@ -211,8 +228,8 @@ public class MultiLineEditBox extends AbstractScrollWidget {
         return 9.0 / 2.0;
     }
 
-    private void renderHighlight(GuiGraphics p_282092_, int p_282814_, int p_282908_, int p_281451_, int p_281765_) {
-        p_282092_.fill(RenderType.guiTextHighlight(), p_282814_, p_282908_, p_281451_, p_281765_, -16776961);
+    private void renderHighlight(GuiGraphics guiGraphics, int minX, int minY, int maxX, int maxY) {
+        guiGraphics.fill(RenderType.guiTextHighlight(), minX, minY, maxX, maxY, -16776961);
     }
 
     private void scrollToCursor() {
@@ -234,16 +251,21 @@ public class MultiLineEditBox extends AbstractScrollWidget {
         return (double)(this.height - this.totalInnerPadding()) / 9.0;
     }
 
-    private void seekCursorScreen(double p_239276_, double p_239277_) {
-        double d0 = p_239276_ - (double)this.getX() - (double)this.innerPadding();
-        double d1 = p_239277_ - (double)this.getY() - (double)this.innerPadding() + this.scrollAmount();
+    private void seekCursorScreen(double mouseX, double mouseY) {
+        double d0 = mouseX - (double)this.getX() - (double)this.innerPadding();
+        double d1 = mouseY - (double)this.getY() - (double)this.innerPadding() + this.scrollAmount();
         this.textField.seekCursorToPoint(d0, d1);
     }
 
+    /**
+     * Sets the focus state of the GUI element.
+     *
+     * @param focused {@code true} to apply focus, {@code false} to remove focus
+     */
     @Override
-    public void setFocused(boolean p_295271_) {
-        super.setFocused(p_295271_);
-        if (p_295271_) {
+    public void setFocused(boolean focused) {
+        super.setFocused(focused);
+        if (focused) {
             this.focusedTime = Util.getMillis();
         }
     }

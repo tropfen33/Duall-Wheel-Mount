@@ -144,25 +144,25 @@ public class ParticleTypes {
     public static final StreamCodec<RegistryFriendlyByteBuf, ParticleOptions> STREAM_CODEC = ByteBufCodecs.registry(Registries.PARTICLE_TYPE)
         .dispatch(ParticleOptions::getType, ParticleType::streamCodec);
 
-    private static SimpleParticleType register(String p_123825_, boolean p_123826_) {
-        return Registry.register(BuiltInRegistries.PARTICLE_TYPE, p_123825_, new SimpleParticleType(p_123826_));
+    private static SimpleParticleType register(String key, boolean overrideLimiter) {
+        return Registry.register(BuiltInRegistries.PARTICLE_TYPE, key, new SimpleParticleType(overrideLimiter));
     }
 
     private static <T extends ParticleOptions> ParticleType<T> register(
-        String p_235906_,
-        boolean p_235907_,
-        final Function<ParticleType<T>, MapCodec<T>> p_235909_,
-        final Function<ParticleType<T>, StreamCodec<? super RegistryFriendlyByteBuf, T>> p_320791_
+        String name,
+        boolean overrideLimitter,
+        final Function<ParticleType<T>, MapCodec<T>> codecGetter,
+        final Function<ParticleType<T>, StreamCodec<? super RegistryFriendlyByteBuf, T>> streamCodecGetter
     ) {
-        return Registry.register(BuiltInRegistries.PARTICLE_TYPE, p_235906_, new ParticleType<T>(p_235907_) {
+        return Registry.register(BuiltInRegistries.PARTICLE_TYPE, name, new ParticleType<T>(overrideLimitter) {
             @Override
             public MapCodec<T> codec() {
-                return p_235909_.apply(this);
+                return codecGetter.apply(this);
             }
 
             @Override
             public StreamCodec<? super RegistryFriendlyByteBuf, T> streamCodec() {
-                return p_320791_.apply(this);
+                return streamCodecGetter.apply(this);
             }
         });
     }

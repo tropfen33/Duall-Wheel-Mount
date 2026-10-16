@@ -18,24 +18,27 @@ public class ThrownTridentRenderer extends EntityRenderer<ThrownTrident> {
     public static final ResourceLocation TRIDENT_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/trident.png");
     private final TridentModel model;
 
-    public ThrownTridentRenderer(EntityRendererProvider.Context p_174420_) {
-        super(p_174420_);
-        this.model = new TridentModel(p_174420_.bakeLayer(ModelLayers.TRIDENT));
+    public ThrownTridentRenderer(EntityRendererProvider.Context context) {
+        super(context);
+        this.model = new TridentModel(context.bakeLayer(ModelLayers.TRIDENT));
     }
 
-    public void render(ThrownTrident p_116111_, float p_116112_, float p_116113_, PoseStack p_116114_, MultiBufferSource p_116115_, int p_116116_) {
-        p_116114_.pushPose();
-        p_116114_.mulPose(Axis.YP.rotationDegrees(Mth.lerp(p_116113_, p_116111_.yRotO, p_116111_.getYRot()) - 90.0F));
-        p_116114_.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(p_116113_, p_116111_.xRotO, p_116111_.getXRot()) + 90.0F));
+    public void render(ThrownTrident entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        poseStack.pushPose();
+        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, entity.yRotO, entity.getYRot()) - 90.0F));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(partialTicks, entity.xRotO, entity.getXRot()) + 90.0F));
         VertexConsumer vertexconsumer = ItemRenderer.getFoilBufferDirect(
-            p_116115_, this.model.renderType(this.getTextureLocation(p_116111_)), false, p_116111_.isFoil()
+            buffer, this.model.renderType(this.getTextureLocation(entity)), false, entity.isFoil()
         );
-        this.model.renderToBuffer(p_116114_, vertexconsumer, p_116116_, OverlayTexture.NO_OVERLAY);
-        p_116114_.popPose();
-        super.render(p_116111_, p_116112_, p_116113_, p_116114_, p_116115_, p_116116_);
+        this.model.renderToBuffer(poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY);
+        poseStack.popPose();
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 
-    public ResourceLocation getTextureLocation(ThrownTrident p_116109_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(ThrownTrident entity) {
         return TRIDENT_LOCATION;
     }
 }

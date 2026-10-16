@@ -20,8 +20,8 @@ public class DarkOakTrunkPlacer extends TrunkPlacer {
         p_70090_ -> trunkPlacerParts(p_70090_).apply(p_70090_, DarkOakTrunkPlacer::new)
     );
 
-    public DarkOakTrunkPlacer(int p_70077_, int p_70078_, int p_70079_) {
-        super(p_70077_, p_70078_, p_70079_);
+    public DarkOakTrunkPlacer(int baseHeight, int heightRandA, int heightRandB) {
+        super(baseHeight, heightRandA, heightRandB);
     }
 
     @Override
@@ -31,30 +31,30 @@ public class DarkOakTrunkPlacer extends TrunkPlacer {
 
     @Override
     public List<FoliagePlacer.FoliageAttachment> placeTrunk(
-        LevelSimulatedReader p_226086_,
-        BiConsumer<BlockPos, BlockState> p_226087_,
-        RandomSource p_226088_,
-        int p_226089_,
-        BlockPos p_226090_,
-        TreeConfiguration p_226091_
+        LevelSimulatedReader level,
+        BiConsumer<BlockPos, BlockState> blockSetter,
+        RandomSource random,
+        int freeTreeHeight,
+        BlockPos pos,
+        TreeConfiguration config
     ) {
         List<FoliagePlacer.FoliageAttachment> list = Lists.newArrayList();
-        BlockPos blockpos = p_226090_.below();
-        setDirtAt(p_226086_, p_226087_, p_226088_, blockpos, p_226091_);
-        setDirtAt(p_226086_, p_226087_, p_226088_, blockpos.east(), p_226091_);
-        setDirtAt(p_226086_, p_226087_, p_226088_, blockpos.south(), p_226091_);
-        setDirtAt(p_226086_, p_226087_, p_226088_, blockpos.south().east(), p_226091_);
-        Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(p_226088_);
-        int i = p_226089_ - p_226088_.nextInt(4);
-        int j = 2 - p_226088_.nextInt(3);
-        int k = p_226090_.getX();
-        int l = p_226090_.getY();
-        int i1 = p_226090_.getZ();
+        BlockPos blockpos = pos.below();
+        setDirtAt(level, blockSetter, random, blockpos, config);
+        setDirtAt(level, blockSetter, random, blockpos.east(), config);
+        setDirtAt(level, blockSetter, random, blockpos.south(), config);
+        setDirtAt(level, blockSetter, random, blockpos.south().east(), config);
+        Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(random);
+        int i = freeTreeHeight - random.nextInt(4);
+        int j = 2 - random.nextInt(3);
+        int k = pos.getX();
+        int l = pos.getY();
+        int i1 = pos.getZ();
         int j1 = k;
         int k1 = i1;
-        int l1 = l + p_226089_ - 1;
+        int l1 = l + freeTreeHeight - 1;
 
-        for (int i2 = 0; i2 < p_226089_; i2++) {
+        for (int i2 = 0; i2 < freeTreeHeight; i2++) {
             if (i2 >= i && j > 0) {
                 j1 += direction.getStepX();
                 k1 += direction.getStepZ();
@@ -63,11 +63,11 @@ public class DarkOakTrunkPlacer extends TrunkPlacer {
 
             int j2 = l + i2;
             BlockPos blockpos1 = new BlockPos(j1, j2, k1);
-            if (TreeFeature.isAirOrLeaves(p_226086_, blockpos1)) {
-                this.placeLog(p_226086_, p_226087_, p_226088_, blockpos1, p_226091_);
-                this.placeLog(p_226086_, p_226087_, p_226088_, blockpos1.east(), p_226091_);
-                this.placeLog(p_226086_, p_226087_, p_226088_, blockpos1.south(), p_226091_);
-                this.placeLog(p_226086_, p_226087_, p_226088_, blockpos1.east().south(), p_226091_);
+            if (TreeFeature.isAirOrLeaves(level, blockpos1)) {
+                this.placeLog(level, blockSetter, random, blockpos1, config);
+                this.placeLog(level, blockSetter, random, blockpos1.east(), config);
+                this.placeLog(level, blockSetter, random, blockpos1.south(), config);
+                this.placeLog(level, blockSetter, random, blockpos1.east().south(), config);
             }
         }
 
@@ -75,11 +75,11 @@ public class DarkOakTrunkPlacer extends TrunkPlacer {
 
         for (int l2 = -1; l2 <= 2; l2++) {
             for (int i3 = -1; i3 <= 2; i3++) {
-                if ((l2 < 0 || l2 > 1 || i3 < 0 || i3 > 1) && p_226088_.nextInt(3) <= 0) {
-                    int j3 = p_226088_.nextInt(3) + 2;
+                if ((l2 < 0 || l2 > 1 || i3 < 0 || i3 > 1) && random.nextInt(3) <= 0) {
+                    int j3 = random.nextInt(3) + 2;
 
                     for (int k2 = 0; k2 < j3; k2++) {
-                        this.placeLog(p_226086_, p_226087_, p_226088_, new BlockPos(k + l2, l1 - k2 - 1, i1 + i3), p_226091_);
+                        this.placeLog(level, blockSetter, random, new BlockPos(k + l2, l1 - k2 - 1, i1 + i3), config);
                     }
 
                     list.add(new FoliagePlacer.FoliageAttachment(new BlockPos(j1 + l2, l1, k1 + i3), 0, false));

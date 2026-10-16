@@ -23,19 +23,22 @@ public class FoxRenderer extends MobRenderer<Fox, FoxModel<Fox>> {
         this.addLayer(new FoxHeldItemLayer(this, p_174127_.getItemInHandRenderer()));
     }
 
-    protected void setupRotations(Fox p_320936_, PoseStack p_114731_, float p_114732_, float p_114733_, float p_114734_, float p_320025_) {
-        super.setupRotations(p_320936_, p_114731_, p_114732_, p_114733_, p_114734_, p_320025_);
-        if (p_320936_.isPouncing() || p_320936_.isFaceplanted()) {
-            float f = -Mth.lerp(p_114734_, p_320936_.xRotO, p_320936_.getXRot());
-            p_114731_.mulPose(Axis.XP.rotationDegrees(f));
+    protected void setupRotations(Fox entity, PoseStack poseStack, float bob, float yBodyRot, float partialTick, float scale) {
+        super.setupRotations(entity, poseStack, bob, yBodyRot, partialTick, scale);
+        if (entity.isPouncing() || entity.isFaceplanted()) {
+            float f = -Mth.lerp(partialTick, entity.xRotO, entity.getXRot());
+            poseStack.mulPose(Axis.XP.rotationDegrees(f));
         }
     }
 
-    public ResourceLocation getTextureLocation(Fox p_114736_) {
-        if (p_114736_.getVariant() == Fox.Type.RED) {
-            return p_114736_.isSleeping() ? RED_FOX_SLEEP_TEXTURE : RED_FOX_TEXTURE;
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Fox entity) {
+        if (entity.getVariant() == Fox.Type.RED) {
+            return entity.isSleeping() ? RED_FOX_SLEEP_TEXTURE : RED_FOX_TEXTURE;
         } else {
-            return p_114736_.isSleeping() ? SNOW_FOX_SLEEP_TEXTURE : SNOW_FOX_TEXTURE;
+            return entity.isSleeping() ? SNOW_FOX_SLEEP_TEXTURE : SNOW_FOX_TEXTURE;
         }
     }
 }

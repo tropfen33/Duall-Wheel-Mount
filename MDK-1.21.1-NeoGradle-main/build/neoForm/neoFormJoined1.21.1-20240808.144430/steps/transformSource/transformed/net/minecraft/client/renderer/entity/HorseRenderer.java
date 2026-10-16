@@ -32,7 +32,10 @@ public final class HorseRenderer extends AbstractHorseRenderer<Horse, HorseModel
         this.addLayer(new HorseArmorLayer(this, p_174167_.getModelSet()));
     }
 
-    public ResourceLocation getTextureLocation(Horse p_114872_) {
-        return LOCATION_BY_VARIANT.get(p_114872_.getVariant());
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Horse entity) {
+        return LOCATION_BY_VARIANT.get(entity.getVariant());
     }
 }

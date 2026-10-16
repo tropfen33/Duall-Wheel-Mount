@@ -9,10 +9,10 @@ import net.minecraft.nbt.TagType;
 public class SkipFields extends CollectToTag {
     private final Deque<FieldTree> stack = new ArrayDeque<>();
 
-    public SkipFields(FieldSelector... p_202549_) {
+    public SkipFields(FieldSelector... selectors) {
         FieldTree fieldtree = FieldTree.createRoot();
 
-        for (FieldSelector fieldselector : p_202549_) {
+        for (FieldSelector fieldselector : selectors) {
             fieldtree.addEntry(fieldselector);
         }
 
@@ -20,19 +20,19 @@ public class SkipFields extends CollectToTag {
     }
 
     @Override
-    public StreamTagVisitor.EntryResult visitEntry(TagType<?> p_202551_, String p_202552_) {
+    public StreamTagVisitor.EntryResult visitEntry(TagType<?> type, String id) {
         FieldTree fieldtree = this.stack.element();
-        if (fieldtree.isSelected(p_202551_, p_202552_)) {
+        if (fieldtree.isSelected(type, id)) {
             return StreamTagVisitor.EntryResult.SKIP;
         } else {
-            if (p_202551_ == CompoundTag.TYPE) {
-                FieldTree fieldtree1 = fieldtree.fieldsToRecurse().get(p_202552_);
+            if (type == CompoundTag.TYPE) {
+                FieldTree fieldtree1 = fieldtree.fieldsToRecurse().get(id);
                 if (fieldtree1 != null) {
                     this.stack.push(fieldtree1);
                 }
             }
 
-            return super.visitEntry(p_202551_, p_202552_);
+            return super.visitEntry(type, id);
         }
     }
 

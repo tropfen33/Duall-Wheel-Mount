@@ -16,8 +16,8 @@ public record BreezeDebugPayload(BreezeDebugPayload.BreezeInfo breezeInfo) imple
         this(new BreezeDebugPayload.BreezeInfo(p_312069_));
     }
 
-    private void write(FriendlyByteBuf p_312126_) {
-        this.breezeInfo.write(p_312126_);
+    private void write(FriendlyByteBuf buffer) {
+        this.breezeInfo.write(buffer);
     }
 
     @Override
@@ -30,11 +30,11 @@ public record BreezeDebugPayload(BreezeDebugPayload.BreezeInfo breezeInfo) imple
             this(p_311866_.readUUID(), p_311866_.readInt(), p_311866_.readNullable(FriendlyByteBuf::readInt), p_311866_.readNullable(BlockPos.STREAM_CODEC));
         }
 
-        public void write(FriendlyByteBuf p_311804_) {
-            p_311804_.writeUUID(this.uuid);
-            p_311804_.writeInt(this.id);
-            p_311804_.writeNullable(this.attackTarget, FriendlyByteBuf::writeInt);
-            p_311804_.writeNullable(this.jumpTarget, BlockPos.STREAM_CODEC);
+        public void write(FriendlyByteBuf buffer) {
+            buffer.writeUUID(this.uuid);
+            buffer.writeInt(this.id);
+            buffer.writeNullable(this.attackTarget, FriendlyByteBuf::writeInt);
+            buffer.writeNullable(this.jumpTarget, BlockPos.STREAM_CODEC);
         }
 
         public String generateName() {

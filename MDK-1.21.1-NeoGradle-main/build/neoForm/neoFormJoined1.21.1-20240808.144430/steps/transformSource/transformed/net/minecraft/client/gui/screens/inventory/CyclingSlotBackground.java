@@ -21,13 +21,13 @@ public class CyclingSlotBackground {
     private int tick;
     private int iconIndex;
 
-    public CyclingSlotBackground(int p_267314_) {
-        this.slotIndex = p_267314_;
+    public CyclingSlotBackground(int slotIndex) {
+        this.slotIndex = slotIndex;
     }
 
-    public void tick(List<ResourceLocation> p_267074_) {
-        if (!this.icons.equals(p_267074_)) {
-            this.icons = p_267074_;
+    public void tick(List<ResourceLocation> icons) {
+        if (!this.icons.equals(icons)) {
+            this.icons = icons;
             this.iconIndex = 0;
         }
 
@@ -36,27 +36,27 @@ public class CyclingSlotBackground {
         }
     }
 
-    public void render(AbstractContainerMenu p_267293_, GuiGraphics p_282894_, float p_266785_, int p_266711_, int p_266841_) {
-        Slot slot = p_267293_.getSlot(this.slotIndex);
+    public void render(AbstractContainerMenu containerMenu, GuiGraphics guiGraphics, float partialTick, int x, int y) {
+        Slot slot = containerMenu.getSlot(this.slotIndex);
         if (!this.icons.isEmpty() && !slot.hasItem()) {
             boolean flag = this.icons.size() > 1 && this.tick >= 30;
-            float f = flag ? this.getIconTransitionTransparency(p_266785_) : 1.0F;
+            float f = flag ? this.getIconTransitionTransparency(partialTick) : 1.0F;
             if (f < 1.0F) {
                 int i = Math.floorMod(this.iconIndex - 1, this.icons.size());
-                this.renderIcon(slot, this.icons.get(i), 1.0F - f, p_282894_, p_266711_, p_266841_);
+                this.renderIcon(slot, this.icons.get(i), 1.0F - f, guiGraphics, x, y);
             }
 
-            this.renderIcon(slot, this.icons.get(this.iconIndex), f, p_282894_, p_266711_, p_266841_);
+            this.renderIcon(slot, this.icons.get(this.iconIndex), f, guiGraphics, x, y);
         }
     }
 
-    private void renderIcon(Slot p_283532_, ResourceLocation p_283004_, float p_282627_, GuiGraphics p_282825_, int p_281375_, int p_283041_) {
-        TextureAtlasSprite textureatlassprite = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(p_283004_);
-        p_282825_.blit(p_281375_ + p_283532_.x, p_283041_ + p_283532_.y, 0, 16, 16, textureatlassprite, 1.0F, 1.0F, 1.0F, p_282627_);
+    private void renderIcon(Slot slot, ResourceLocation icon, float alpha, GuiGraphics guiGraphics, int x, int y) {
+        TextureAtlasSprite textureatlassprite = Minecraft.getInstance().getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(icon);
+        guiGraphics.blit(x + slot.x, y + slot.y, 0, 16, 16, textureatlassprite, 1.0F, 1.0F, 1.0F, alpha);
     }
 
-    private float getIconTransitionTransparency(float p_266904_) {
-        float f = (float)(this.tick % 30) + p_266904_;
+    private float getIconTransitionTransparency(float partialTick) {
+        float f = (float)(this.tick % 30) + partialTick;
         return Math.min(f, 4.0F) / 4.0F;
     }
 }

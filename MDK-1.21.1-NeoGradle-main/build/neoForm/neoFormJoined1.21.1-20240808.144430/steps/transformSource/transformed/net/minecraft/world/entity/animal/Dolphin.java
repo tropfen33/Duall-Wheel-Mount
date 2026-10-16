@@ -68,8 +68,8 @@ public class Dolphin extends WaterAnimal {
     private static final int TOTAL_MOISTNESS_LEVEL = 2400;
     public static final Predicate<ItemEntity> ALLOWED_ITEMS = p_350083_ -> !p_350083_.hasPickUpDelay() && p_350083_.isAlive() && p_350083_.isInWater();
 
-    public Dolphin(EntityType<? extends Dolphin> p_28316_, Level p_28317_) {
-        super(p_28316_, p_28317_);
+    public Dolphin(EntityType<? extends Dolphin> entityType, Level level) {
+        super(entityType, level);
         this.moveControl = new SmoothSwimmingMoveControl(this, 85, 10, 0.02F, 0.1F, true);
         this.lookControl = new SmoothSwimmingLookControl(this, 10);
         this.setCanPickUpLoot(true);
@@ -77,18 +77,18 @@ public class Dolphin extends WaterAnimal {
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_28332_, DifficultyInstance p_28333_, MobSpawnType p_28334_, @Nullable SpawnGroupData p_28335_) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
         this.setAirSupply(this.getMaxAirSupply());
         this.setXRot(0.0F);
-        return super.finalizeSpawn(p_28332_, p_28333_, p_28334_, p_28335_);
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
     @Override
-    protected void handleAirSupply(int p_28326_) {
+    protected void handleAirSupply(int airSupply) {
     }
 
-    public void setTreasurePos(BlockPos p_28385_) {
-        this.entityData.set(TREASURE_POS, p_28385_);
+    public void setTreasurePos(BlockPos pos) {
+        this.entityData.set(TREASURE_POS, pos);
     }
 
     public BlockPos getTreasurePos() {
@@ -99,45 +99,48 @@ public class Dolphin extends WaterAnimal {
         return this.entityData.get(GOT_FISH);
     }
 
-    public void setGotFish(boolean p_28394_) {
-        this.entityData.set(GOT_FISH, p_28394_);
+    public void setGotFish(boolean gotFish) {
+        this.entityData.set(GOT_FISH, gotFish);
     }
 
     public int getMoistnessLevel() {
         return this.entityData.get(MOISTNESS_LEVEL);
     }
 
-    public void setMoisntessLevel(int p_28344_) {
-        this.entityData.set(MOISTNESS_LEVEL, p_28344_);
+    public void setMoisntessLevel(int moistnessLevel) {
+        this.entityData.set(MOISTNESS_LEVEL, moistnessLevel);
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326152_) {
-        super.defineSynchedData(p_326152_);
-        p_326152_.define(TREASURE_POS, BlockPos.ZERO);
-        p_326152_.define(GOT_FISH, false);
-        p_326152_.define(MOISTNESS_LEVEL, 2400);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(TREASURE_POS, BlockPos.ZERO);
+        builder.define(GOT_FISH, false);
+        builder.define(MOISTNESS_LEVEL, 2400);
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_28364_) {
-        super.addAdditionalSaveData(p_28364_);
-        p_28364_.putInt("TreasurePosX", this.getTreasurePos().getX());
-        p_28364_.putInt("TreasurePosY", this.getTreasurePos().getY());
-        p_28364_.putInt("TreasurePosZ", this.getTreasurePos().getZ());
-        p_28364_.putBoolean("GotFish", this.gotFish());
-        p_28364_.putInt("Moistness", this.getMoistnessLevel());
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("TreasurePosX", this.getTreasurePos().getX());
+        compound.putInt("TreasurePosY", this.getTreasurePos().getY());
+        compound.putInt("TreasurePosZ", this.getTreasurePos().getZ());
+        compound.putBoolean("GotFish", this.gotFish());
+        compound.putInt("Moistness", this.getMoistnessLevel());
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_28340_) {
-        int i = p_28340_.getInt("TreasurePosX");
-        int j = p_28340_.getInt("TreasurePosY");
-        int k = p_28340_.getInt("TreasurePosZ");
+    public void readAdditionalSaveData(CompoundTag compound) {
+        int i = compound.getInt("TreasurePosX");
+        int j = compound.getInt("TreasurePosY");
+        int k = compound.getInt("TreasurePosZ");
         this.setTreasurePos(new BlockPos(i, j, k));
-        super.readAdditionalSaveData(p_28340_);
-        this.setGotFish(p_28340_.getBoolean("GotFish"));
-        this.setMoisntessLevel(p_28340_.getInt("Moistness"));
+        super.readAdditionalSaveData(compound);
+        this.setGotFish(compound.getBoolean("GotFish"));
+        this.setMoisntessLevel(compound.getInt("Moistness"));
     }
 
     @Override
@@ -162,8 +165,8 @@ public class Dolphin extends WaterAnimal {
     }
 
     @Override
-    protected PathNavigation createNavigation(Level p_28362_) {
-        return new WaterBoundPathNavigation(this, p_28362_);
+    protected PathNavigation createNavigation(Level level) {
+        return new WaterBoundPathNavigation(this, level);
     }
 
     @Override
@@ -177,7 +180,7 @@ public class Dolphin extends WaterAnimal {
     }
 
     @Override
-    protected int increaseAirSupply(int p_28389_) {
+    protected int increaseAirSupply(int currentAir) {
         return this.getMaxAirSupply();
     }
 
@@ -192,26 +195,29 @@ public class Dolphin extends WaterAnimal {
     }
 
     @Override
-    protected boolean canRide(Entity p_28391_) {
+    protected boolean canRide(Entity entity) {
         return true;
     }
 
     @Override
-    public boolean canTakeItem(ItemStack p_28376_) {
-        EquipmentSlot equipmentslot = this.getEquipmentSlotForItem(p_28376_);
-        return !this.getItemBySlot(equipmentslot).isEmpty() ? false : equipmentslot == EquipmentSlot.MAINHAND && super.canTakeItem(p_28376_);
+    public boolean canTakeItem(ItemStack itemstack) {
+        EquipmentSlot equipmentslot = this.getEquipmentSlotForItem(itemstack);
+        return !this.getItemBySlot(equipmentslot).isEmpty() ? false : equipmentslot == EquipmentSlot.MAINHAND && super.canTakeItem(itemstack);
     }
 
+    /**
+     * Tests if this entity should pick up a weapon or an armor piece. Entity drops current weapon or armor if the new one is better.
+     */
     @Override
-    protected void pickUpItem(ItemEntity p_28357_) {
+    protected void pickUpItem(ItemEntity itemEntity) {
         if (this.getItemBySlot(EquipmentSlot.MAINHAND).isEmpty()) {
-            ItemStack itemstack = p_28357_.getItem();
+            ItemStack itemstack = itemEntity.getItem();
             if (this.canHoldItem(itemstack)) {
-                this.onItemPickup(p_28357_);
+                this.onItemPickup(itemEntity);
                 this.setItemSlot(EquipmentSlot.MAINHAND, itemstack);
                 this.setGuaranteedDrop(EquipmentSlot.MAINHAND);
-                this.take(p_28357_, itemstack.getCount());
-                p_28357_.discard();
+                this.take(itemEntity, itemstack.getCount());
+                itemEntity.discard();
             }
         }
     }
@@ -273,42 +279,45 @@ public class Dolphin extends WaterAnimal {
         }
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @Override
-    public void handleEntityEvent(byte p_28324_) {
-        if (p_28324_ == 38) {
+    public void handleEntityEvent(byte id) {
+        if (id == 38) {
             this.addParticlesAroundSelf(ParticleTypes.HAPPY_VILLAGER);
         } else {
-            super.handleEntityEvent(p_28324_);
+            super.handleEntityEvent(id);
         }
     }
 
-    private void addParticlesAroundSelf(ParticleOptions p_28338_) {
+    private void addParticlesAroundSelf(ParticleOptions particleOption) {
         for (int i = 0; i < 7; i++) {
             double d0 = this.random.nextGaussian() * 0.01;
             double d1 = this.random.nextGaussian() * 0.01;
             double d2 = this.random.nextGaussian() * 0.01;
-            this.level().addParticle(p_28338_, this.getRandomX(1.0), this.getRandomY() + 0.2, this.getRandomZ(1.0), d0, d1, d2);
+            this.level().addParticle(particleOption, this.getRandomX(1.0), this.getRandomY() + 0.2, this.getRandomZ(1.0), d0, d1, d2);
         }
     }
 
     @Override
-    protected InteractionResult mobInteract(Player p_28359_, InteractionHand p_28360_) {
-        ItemStack itemstack = p_28359_.getItemInHand(p_28360_);
+    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
         if (!itemstack.isEmpty() && itemstack.is(ItemTags.FISHES)) {
             if (!this.level().isClientSide) {
                 this.playSound(SoundEvents.DOLPHIN_EAT, 1.0F, 1.0F);
             }
 
             this.setGotFish(true);
-            itemstack.consume(1, p_28359_);
+            itemstack.consume(1, player);
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         } else {
-            return super.mobInteract(p_28359_, p_28360_);
+            return super.mobInteract(player, hand);
         }
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_28374_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.DOLPHIN_HURT;
     }
 
@@ -340,16 +349,16 @@ public class Dolphin extends WaterAnimal {
     }
 
     @Override
-    public void travel(Vec3 p_28383_) {
+    public void travel(Vec3 travelVector) {
         if (this.isEffectiveAi() && this.isInWater()) {
-            this.moveRelative(this.getSpeed(), p_28383_);
+            this.moveRelative(this.getSpeed(), travelVector);
             this.move(MoverType.SELF, this.getDeltaMovement());
             this.setDeltaMovement(this.getDeltaMovement().scale(0.9));
             if (this.getTarget() == null) {
                 this.setDeltaMovement(this.getDeltaMovement().add(0.0, -0.005, 0.0));
             }
         } else {
-            super.travel(p_28383_);
+            super.travel(travelVector);
         }
     }
 
@@ -362,8 +371,8 @@ public class Dolphin extends WaterAnimal {
         private final Dolphin dolphin;
         private boolean stuck;
 
-        DolphinSwimToTreasureGoal(Dolphin p_28402_) {
-            this.dolphin = p_28402_;
+        DolphinSwimToTreasureGoal(Dolphin dolphin) {
+            this.dolphin = dolphin;
             this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
         }
 
@@ -450,9 +459,9 @@ public class Dolphin extends WaterAnimal {
         @Nullable
         private Player player;
 
-        DolphinSwimWithPlayerGoal(Dolphin p_28413_, double p_28414_) {
-            this.dolphin = p_28413_;
-            this.speedModifier = p_28414_;
+        DolphinSwimWithPlayerGoal(Dolphin dolphin, double speedModifier) {
+            this.dolphin = dolphin;
+            this.speedModifier = speedModifier;
             this.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
         }
 
@@ -542,10 +551,10 @@ public class Dolphin extends WaterAnimal {
             }
         }
 
-        private void drop(ItemStack p_28429_) {
-            if (!p_28429_.isEmpty()) {
+        private void drop(ItemStack stack) {
+            if (!stack.isEmpty()) {
                 double d0 = Dolphin.this.getEyeY() - 0.3F;
-                ItemEntity itementity = new ItemEntity(Dolphin.this.level(), Dolphin.this.getX(), d0, Dolphin.this.getZ(), p_28429_);
+                ItemEntity itementity = new ItemEntity(Dolphin.this.level(), Dolphin.this.getX(), d0, Dolphin.this.getZ(), stack);
                 itementity.setPickUpDelay(40);
                 itementity.setThrower(Dolphin.this);
                 float f = 0.3F;

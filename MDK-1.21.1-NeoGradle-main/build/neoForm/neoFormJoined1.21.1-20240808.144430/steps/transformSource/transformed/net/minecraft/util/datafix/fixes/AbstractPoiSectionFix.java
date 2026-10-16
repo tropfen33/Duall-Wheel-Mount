@@ -15,9 +15,9 @@ import java.util.stream.Stream;
 public abstract class AbstractPoiSectionFix extends DataFix {
     private final String name;
 
-    public AbstractPoiSectionFix(Schema p_216536_, String p_216537_) {
-        super(p_216536_, false);
-        this.name = p_216537_;
+    public AbstractPoiSectionFix(Schema outputSchema, String name) {
+        super(outputSchema, false);
+        this.name = name;
     }
 
     @Override
@@ -30,19 +30,19 @@ public abstract class AbstractPoiSectionFix extends DataFix {
         }
     }
 
-    private <T> Dynamic<T> cap(Dynamic<T> p_216541_) {
-        return p_216541_.update("Sections", p_216555_ -> p_216555_.updateMapValues(p_216539_ -> p_216539_.mapSecond(this::processSection)));
+    private <T> Dynamic<T> cap(Dynamic<T> dynamic) {
+        return dynamic.update("Sections", p_216555_ -> p_216555_.updateMapValues(p_216539_ -> p_216539_.mapSecond(this::processSection)));
     }
 
-    private Dynamic<?> processSection(Dynamic<?> p_216551_) {
-        return p_216551_.update("Records", this::processSectionRecords);
+    private Dynamic<?> processSection(Dynamic<?> dynamic) {
+        return dynamic.update("Records", this::processSectionRecords);
     }
 
-    private <T> Dynamic<T> processSectionRecords(Dynamic<T> p_216553_) {
+    private <T> Dynamic<T> processSectionRecords(Dynamic<T> dynamic) {
         return DataFixUtils.orElse(
-            p_216553_.asStreamOpt().result().map(p_216544_ -> p_216553_.createList(this.processRecords((Stream<Dynamic<T>>)p_216544_))), p_216553_
+            dynamic.asStreamOpt().result().map(p_216544_ -> dynamic.createList(this.processRecords((Stream<Dynamic<T>>)p_216544_))), dynamic
         );
     }
 
-    protected abstract <T> Stream<Dynamic<T>> processRecords(Stream<Dynamic<T>> p_216547_);
+    protected abstract <T> Stream<Dynamic<T>> processRecords(Stream<Dynamic<T>> records);
 }

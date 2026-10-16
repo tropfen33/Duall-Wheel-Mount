@@ -6,9 +6,9 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface PackLoadFeedback {
-    void reportUpdate(UUID p_315007_, PackLoadFeedback.Update p_314979_);
+    void reportUpdate(UUID id, PackLoadFeedback.Update update);
 
-    void reportFinalResult(UUID p_314623_, PackLoadFeedback.FinalResult p_314920_);
+    void reportFinalResult(UUID id, PackLoadFeedback.FinalResult result);
 
     @OnlyIn(Dist.CLIENT)
     public static enum FinalResult {

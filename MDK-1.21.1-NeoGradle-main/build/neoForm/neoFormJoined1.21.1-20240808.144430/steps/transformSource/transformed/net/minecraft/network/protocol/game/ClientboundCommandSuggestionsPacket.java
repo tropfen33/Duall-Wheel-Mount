@@ -49,8 +49,11 @@ public record ClientboundCommandSuggestionsPacket(int id, int start, int length,
         return GamePacketTypes.CLIENTBOUND_COMMAND_SUGGESTIONS;
     }
 
-    public void handle(ClientGamePacketListener p_131853_) {
-        p_131853_.handleCommandSuggestions(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleCommandSuggestions(this);
     }
 
     public Suggestions toSuggestions() {

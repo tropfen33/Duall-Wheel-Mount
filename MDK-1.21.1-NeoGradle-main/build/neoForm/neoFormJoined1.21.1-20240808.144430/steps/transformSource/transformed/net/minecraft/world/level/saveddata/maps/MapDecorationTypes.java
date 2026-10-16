@@ -52,20 +52,20 @@ public class MapDecorationTypes {
     public static final Holder<MapDecorationType> SWAMP_HUT = register("swamp_hut", "swamp_hut", true, MapColor.COLOR_LIGHT_GRAY.col, false, true);
     public static final Holder<MapDecorationType> TRIAL_CHAMBERS = register("trial_chambers", "trial_chambers", true, 12741452, false, true);
 
-    public static Holder<MapDecorationType> bootstrap(Registry<MapDecorationType> p_336048_) {
+    public static Holder<MapDecorationType> bootstrap(Registry<MapDecorationType> registry) {
         return PLAYER;
     }
 
-    private static Holder<MapDecorationType> register(String p_335808_, String p_336081_, boolean p_335910_, boolean p_335576_) {
-        return register(p_335808_, p_336081_, p_335910_, -1, p_335576_, false);
+    private static Holder<MapDecorationType> register(String name, String assetId, boolean showOnItemFrame, boolean trackCount) {
+        return register(name, assetId, showOnItemFrame, -1, trackCount, false);
     }
 
     private static Holder<MapDecorationType> register(
-        String p_335821_, String p_335761_, boolean p_336130_, int p_336016_, boolean p_335829_, boolean p_335765_
+        String name, String assetId, boolean showOnItemFrame, int mapColor, boolean explorationMapElement, boolean trackCount
     ) {
-        ResourceKey<MapDecorationType> resourcekey = ResourceKey.create(Registries.MAP_DECORATION_TYPE, ResourceLocation.withDefaultNamespace(p_335821_));
+        ResourceKey<MapDecorationType> resourcekey = ResourceKey.create(Registries.MAP_DECORATION_TYPE, ResourceLocation.withDefaultNamespace(name));
         MapDecorationType mapdecorationtype = new MapDecorationType(
-            ResourceLocation.withDefaultNamespace(p_335761_), p_336130_, p_336016_, p_335765_, p_335829_
+            ResourceLocation.withDefaultNamespace(assetId), showOnItemFrame, mapColor, trackCount, explorationMapElement
         );
         return Registry.registerForHolder(BuiltInRegistries.MAP_DECORATION_TYPE, resourcekey, mapdecorationtype);
     }

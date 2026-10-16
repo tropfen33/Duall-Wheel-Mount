@@ -29,8 +29,8 @@ public class WorldPreset {
     public static final Codec<Holder<WorldPreset>> CODEC = RegistryFileCodec.create(Registries.WORLD_PRESET, DIRECT_CODEC);
     private final Map<ResourceKey<LevelStem>, LevelStem> dimensions;
 
-    public WorldPreset(Map<ResourceKey<LevelStem>, LevelStem> p_226419_) {
-        this.dimensions = p_226419_;
+    public WorldPreset(Map<ResourceKey<LevelStem>, LevelStem> dimensions) {
+        this.dimensions = dimensions;
     }
 
     private ImmutableMap<ResourceKey<LevelStem>, LevelStem> dimensionsInOrder() {
@@ -52,7 +52,7 @@ public class WorldPreset {
         return Optional.ofNullable(this.dimensions.get(LevelStem.OVERWORLD));
     }
 
-    private static DataResult<WorldPreset> requireOverworld(WorldPreset p_238379_) {
-        return p_238379_.overworld().isEmpty() ? DataResult.error(() -> "Missing overworld dimension") : DataResult.success(p_238379_, Lifecycle.stable());
+    private static DataResult<WorldPreset> requireOverworld(WorldPreset preset) {
+        return preset.overworld().isEmpty() ? DataResult.error(() -> "Missing overworld dimension") : DataResult.success(preset, Lifecycle.stable());
     }
 }

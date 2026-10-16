@@ -35,18 +35,18 @@ public class SectionCompiler {
     private final BlockRenderDispatcher blockRenderer;
     private final BlockEntityRenderDispatcher blockEntityRenderer;
 
-    public SectionCompiler(BlockRenderDispatcher p_350768_, BlockEntityRenderDispatcher p_350715_) {
-        this.blockRenderer = p_350768_;
-        this.blockEntityRenderer = p_350715_;
+    public SectionCompiler(BlockRenderDispatcher blockRenderer, BlockEntityRenderDispatcher blockEntityRenderer) {
+        this.blockRenderer = blockRenderer;
+        this.blockEntityRenderer = blockEntityRenderer;
     }
 
-    public SectionCompiler.Results compile(SectionPos p_350790_, RenderChunkRegion p_350782_, VertexSorting p_350635_, SectionBufferBuilderPack p_350612_) {
-        return compile(p_350790_, p_350782_, p_350635_, p_350612_, List.of());
+    public SectionCompiler.Results compile(SectionPos sectionPos, RenderChunkRegion region, VertexSorting vertexSorting, SectionBufferBuilderPack sectionBufferBuilderPack) {
+        return compile(sectionPos, region, vertexSorting, sectionBufferBuilderPack, List.of());
     }
 
-    public SectionCompiler.Results compile(SectionPos p_350790_, RenderChunkRegion p_350782_, VertexSorting p_350635_, SectionBufferBuilderPack p_350612_, List<net.neoforged.neoforge.client.event.AddSectionGeometryEvent.AdditionalSectionRenderer> additionalRenderers) {
+    public SectionCompiler.Results compile(SectionPos sectionPos, RenderChunkRegion region, VertexSorting vertexSorting, SectionBufferBuilderPack sectionBufferBuilderPack, List<net.neoforged.neoforge.client.event.AddSectionGeometryEvent.AdditionalSectionRenderer> additionalRenderers) {
         SectionCompiler.Results sectioncompiler$results = new SectionCompiler.Results();
-        BlockPos blockpos = p_350790_.origin();
+        BlockPos blockpos = sectionPos.origin();
         BlockPos blockpos1 = blockpos.offset(15, 15, 15);
         VisGraph visgraph = new VisGraph();
         PoseStack posestack = new PoseStack();
@@ -55,13 +55,13 @@ public class SectionCompiler {
         RandomSource randomsource = RandomSource.create();
 
         for (BlockPos blockpos2 : BlockPos.betweenClosed(blockpos, blockpos1)) {
-            BlockState blockstate = p_350782_.getBlockState(blockpos2);
-            if (blockstate.isSolidRender(p_350782_, blockpos2)) {
+            BlockState blockstate = region.getBlockState(blockpos2);
+            if (blockstate.isSolidRender(region, blockpos2)) {
                 visgraph.setOpaque(blockpos2);
             }
 
             if (blockstate.hasBlockEntity()) {
-                BlockEntity blockentity = p_350782_.getBlockEntity(blockpos2);
+                BlockEntity blockentity = region.getBlockEntity(blockpos2);
                 if (blockentity != null) {
                     this.handleBlockEntity(sectioncompiler$results, blockentity);
                 }
@@ -70,32 +70,32 @@ public class SectionCompiler {
             FluidState fluidstate = blockstate.getFluidState();
             if (!fluidstate.isEmpty()) {
                 RenderType rendertype = ItemBlockRenderTypes.getRenderLayer(fluidstate);
-                BufferBuilder bufferbuilder = this.getOrBeginLayer(map, p_350612_, rendertype);
-                this.blockRenderer.renderLiquid(blockpos2, p_350782_, bufferbuilder, blockstate, fluidstate);
+                BufferBuilder bufferbuilder = this.getOrBeginLayer(map, sectionBufferBuilderPack, rendertype);
+                this.blockRenderer.renderLiquid(blockpos2, region, bufferbuilder, blockstate, fluidstate);
             }
 
             if (blockstate.getRenderShape() == RenderShape.MODEL) {
                 var model = this.blockRenderer.getBlockModel(blockstate);
-                var modelData = p_350782_.getModelData(blockpos2);
-                modelData = model.getModelData(p_350782_, blockpos2, blockstate, modelData);
+                var modelData = region.getModelData(blockpos2);
+                modelData = model.getModelData(region, blockpos2, blockstate, modelData);
                 randomsource.setSeed(blockstate.getSeed(blockpos2));
                 for (RenderType rendertype2 : model.getRenderTypes(blockstate, randomsource, modelData)) {
-                BufferBuilder bufferbuilder1 = this.getOrBeginLayer(map, p_350612_, rendertype2);
+                BufferBuilder bufferbuilder1 = this.getOrBeginLayer(map, sectionBufferBuilderPack, rendertype2);
                 posestack.pushPose();
                 posestack.translate(
                     (float)SectionPos.sectionRelative(blockpos2.getX()),
                     (float)SectionPos.sectionRelative(blockpos2.getY()),
                     (float)SectionPos.sectionRelative(blockpos2.getZ())
                 );
-                this.blockRenderer.renderBatched(blockstate, blockpos2, p_350782_, posestack, bufferbuilder1, true, randomsource, modelData, rendertype2);
+                this.blockRenderer.renderBatched(blockstate, blockpos2, region, posestack, bufferbuilder1, true, randomsource, modelData, rendertype2);
                 posestack.popPose();
                 }
             }
         }
         net.neoforged.neoforge.client.ClientHooks.addAdditionalGeometry(
                 additionalRenderers,
-                type -> this.getOrBeginLayer(map, p_350612_, type),
-                p_350782_,
+                type -> this.getOrBeginLayer(map, sectionBufferBuilderPack, type),
+                region,
                 posestack
         );
         for (Entry<RenderType, BufferBuilder> entry : map.entrySet()) {
@@ -103,7 +103,7 @@ public class SectionCompiler {
             MeshData meshdata = entry.getValue().build();
             if (meshdata != null) {
                 if (rendertype1 == RenderType.translucent()) {
-                    sectioncompiler$results.transparencyState = meshdata.sortQuads(p_350612_.buffer(RenderType.translucent()), p_350635_);
+                    sectioncompiler$results.transparencyState = meshdata.sortQuads(sectionBufferBuilderPack.buffer(RenderType.translucent()), vertexSorting);
                 }
 
                 sectioncompiler$results.renderedLayers.put(rendertype1, meshdata);
@@ -115,24 +115,24 @@ public class SectionCompiler {
         return sectioncompiler$results;
     }
 
-    private BufferBuilder getOrBeginLayer(Map<RenderType, BufferBuilder> p_350651_, SectionBufferBuilderPack p_350965_, RenderType p_350494_) {
-        BufferBuilder bufferbuilder = p_350651_.get(p_350494_);
+    private BufferBuilder getOrBeginLayer(Map<RenderType, BufferBuilder> bufferLayers, SectionBufferBuilderPack sectionBufferBuilderPack, RenderType renderType) {
+        BufferBuilder bufferbuilder = bufferLayers.get(renderType);
         if (bufferbuilder == null) {
-            ByteBufferBuilder bytebufferbuilder = p_350965_.buffer(p_350494_);
+            ByteBufferBuilder bytebufferbuilder = sectionBufferBuilderPack.buffer(renderType);
             bufferbuilder = new BufferBuilder(bytebufferbuilder, VertexFormat.Mode.QUADS, DefaultVertexFormat.BLOCK);
-            p_350651_.put(p_350494_, bufferbuilder);
+            bufferLayers.put(renderType, bufferbuilder);
         }
 
         return bufferbuilder;
     }
 
-    private <E extends BlockEntity> void handleBlockEntity(SectionCompiler.Results p_350754_, E p_350386_) {
-        BlockEntityRenderer<E> blockentityrenderer = this.blockEntityRenderer.getRenderer(p_350386_);
+    private <E extends BlockEntity> void handleBlockEntity(SectionCompiler.Results results, E blockEntity) {
+        BlockEntityRenderer<E> blockentityrenderer = this.blockEntityRenderer.getRenderer(blockEntity);
         if (blockentityrenderer != null) {
-            if (blockentityrenderer.shouldRenderOffScreen(p_350386_)) {
-                p_350754_.globalBlockEntities.add(p_350386_);
+            if (blockentityrenderer.shouldRenderOffScreen(blockEntity)) {
+                results.globalBlockEntities.add(blockEntity);
             } else {
-                p_350754_.blockEntities.add(p_350386_); // Neo: Fix MC-112730
+                results.blockEntities.add(blockEntity); // Neo: Fix MC-112730
             }
         }
     }

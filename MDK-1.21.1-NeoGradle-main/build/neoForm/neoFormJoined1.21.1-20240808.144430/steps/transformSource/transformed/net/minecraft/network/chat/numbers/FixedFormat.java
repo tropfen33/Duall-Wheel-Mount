@@ -26,12 +26,12 @@ public class FixedFormat implements NumberFormat {
     };
     final Component value;
 
-    public FixedFormat(Component p_313808_) {
-        this.value = p_313808_;
+    public FixedFormat(Component value) {
+        this.value = value;
     }
 
     @Override
-    public MutableComponent format(int p_313721_) {
+    public MutableComponent format(int number) {
         return this.value.copy();
     }
 

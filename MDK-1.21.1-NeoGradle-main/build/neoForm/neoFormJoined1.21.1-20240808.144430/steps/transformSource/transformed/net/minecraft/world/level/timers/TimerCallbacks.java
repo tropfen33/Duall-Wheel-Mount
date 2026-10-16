@@ -18,36 +18,36 @@ public class TimerCallbacks<C> {
     private final Map<ResourceLocation, TimerCallback.Serializer<C, ?>> idToSerializer = Maps.newHashMap();
     private final Map<Class<?>, TimerCallback.Serializer<C, ?>> classToSerializer = Maps.newHashMap();
 
-    public TimerCallbacks<C> register(TimerCallback.Serializer<C, ?> p_82233_) {
-        this.idToSerializer.put(p_82233_.getId(), p_82233_);
-        this.classToSerializer.put(p_82233_.getCls(), p_82233_);
+    public TimerCallbacks<C> register(TimerCallback.Serializer<C, ?> serializer) {
+        this.idToSerializer.put(serializer.getId(), serializer);
+        this.classToSerializer.put(serializer.getCls(), serializer);
         return this;
     }
 
-    private <T extends TimerCallback<C>> TimerCallback.Serializer<C, T> getSerializer(Class<?> p_82237_) {
-        return (TimerCallback.Serializer<C, T>)this.classToSerializer.get(p_82237_);
+    private <T extends TimerCallback<C>> TimerCallback.Serializer<C, T> getSerializer(Class<?> clazz) {
+        return (TimerCallback.Serializer<C, T>)this.classToSerializer.get(clazz);
     }
 
-    public <T extends TimerCallback<C>> CompoundTag serialize(T p_82235_) {
-        TimerCallback.Serializer<C, T> serializer = this.getSerializer(p_82235_.getClass());
+    public <T extends TimerCallback<C>> CompoundTag serialize(T callback) {
+        TimerCallback.Serializer<C, T> serializer = this.getSerializer(callback.getClass());
         CompoundTag compoundtag = new CompoundTag();
-        serializer.serialize(compoundtag, p_82235_);
+        serializer.serialize(compoundtag, callback);
         compoundtag.putString("Type", serializer.getId().toString());
         return compoundtag;
     }
 
     @Nullable
-    public TimerCallback<C> deserialize(CompoundTag p_82239_) {
-        ResourceLocation resourcelocation = ResourceLocation.tryParse(p_82239_.getString("Type"));
+    public TimerCallback<C> deserialize(CompoundTag tag) {
+        ResourceLocation resourcelocation = ResourceLocation.tryParse(tag.getString("Type"));
         TimerCallback.Serializer<C, ?> serializer = this.idToSerializer.get(resourcelocation);
         if (serializer == null) {
-            LOGGER.error("Failed to deserialize timer callback: {}", p_82239_);
+            LOGGER.error("Failed to deserialize timer callback: {}", tag);
             return null;
         } else {
             try {
-                return serializer.deserialize(p_82239_);
+                return serializer.deserialize(tag);
             } catch (Exception exception) {
-                LOGGER.error("Failed to deserialize timer callback: {}", p_82239_, exception);
+                LOGGER.error("Failed to deserialize timer callback: {}", tag, exception);
                 return null;
             }
         }

@@ -28,12 +28,12 @@ public class CreateSnapshotRealmTask extends LongRunningTask {
     @Nullable
     private ResettingGeneratedWorldTask generateWorldTask;
 
-    public CreateSnapshotRealmTask(RealmsMainScreen p_305775_, long p_306103_, WorldGenerationInfo p_305955_, String p_306018_, String p_306116_) {
-        this.parentId = p_306103_;
-        this.generationInfo = p_305955_;
-        this.name = p_306018_;
-        this.description = p_306116_;
-        this.realmsMainScreen = p_305775_;
+    public CreateSnapshotRealmTask(RealmsMainScreen realmsMainScreen, long parentId, WorldGenerationInfo generationInfo, String name, String description) {
+        this.parentId = parentId;
+        this.generationInfo = generationInfo;
+        this.name = name;
+        this.description = description;
+        this.realmsMainScreen = realmsMainScreen;
     }
 
     @Override

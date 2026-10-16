@@ -18,10 +18,10 @@ public abstract class ItemStackTagFix extends DataFix {
     private final String name;
     private final Predicate<String> idFilter;
 
-    public ItemStackTagFix(Schema p_216682_, String p_216683_, Predicate<String> p_216684_) {
-        super(p_216682_, false);
-        this.name = p_216683_;
-        this.idFilter = p_216684_;
+    public ItemStackTagFix(Schema outputSchema, String name, Predicate<String> idFilter) {
+        super(outputSchema, false);
+        this.name = name;
+        this.idFilter = idFilter;
     }
 
     @Override
@@ -30,16 +30,16 @@ public abstract class ItemStackTagFix extends DataFix {
         return this.fixTypeEverywhereTyped(this.name, type, createFixer(type, this.idFilter, this::fixItemStackTag));
     }
 
-    public static UnaryOperator<Typed<?>> createFixer(Type<?> p_326099_, Predicate<String> p_326164_, UnaryOperator<Dynamic<?>> p_326258_) {
+    public static UnaryOperator<Typed<?>> createFixer(Type<?> type, Predicate<String> filter, UnaryOperator<Dynamic<?>> fixer) {
         OpticFinder<Pair<String, String>> opticfinder = DSL.fieldFinder("id", DSL.named(References.ITEM_NAME.typeName(), NamespacedSchema.namespacedString()));
-        OpticFinder<?> opticfinder1 = p_326099_.findField("tag");
+        OpticFinder<?> opticfinder1 = type.findField("tag");
         return p_325658_ -> {
             Optional<Pair<String, String>> optional = p_325658_.getOptional(opticfinder);
-            return optional.isPresent() && p_326164_.test(optional.get().getSecond())
-                ? p_325658_.updateTyped(opticfinder1, p_325653_ -> p_325653_.update(DSL.remainderFinder(), p_326258_))
+            return optional.isPresent() && filter.test(optional.get().getSecond())
+                ? p_325658_.updateTyped(opticfinder1, p_325653_ -> p_325653_.update(DSL.remainderFinder(), fixer))
                 : p_325658_;
         };
     }
 
-    protected abstract <T> Dynamic<T> fixItemStackTag(Dynamic<T> p_216691_);
+    protected abstract <T> Dynamic<T> fixItemStackTag(Dynamic<T> itemStackTag);
 }

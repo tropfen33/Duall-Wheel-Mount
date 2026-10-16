@@ -31,8 +31,8 @@ import net.minecraft.world.level.gameevent.GameEvent;
 public class PotionItem extends Item {
     private static final int DRINK_DURATION = 32;
 
-    public PotionItem(Item.Properties p_42979_) {
-        super(p_42979_);
+    public PotionItem(Item.Properties properties) {
+        super(properties);
     }
 
     @Override
@@ -42,31 +42,34 @@ public class PotionItem extends Item {
         return itemstack;
     }
 
+    /**
+     * Called when the player finishes using this Item (E.g. finishes eating.). Not called when the player stops using the Item before the action is complete.
+     */
     @Override
-    public ItemStack finishUsingItem(ItemStack p_42984_, Level p_42985_, LivingEntity p_42986_) {
-        Player player = p_42986_ instanceof Player ? (Player)p_42986_ : null;
+    public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entityLiving) {
+        Player player = entityLiving instanceof Player ? (Player)entityLiving : null;
         if (player instanceof ServerPlayer) {
-            CriteriaTriggers.CONSUME_ITEM.trigger((ServerPlayer)player, p_42984_);
+            CriteriaTriggers.CONSUME_ITEM.trigger((ServerPlayer)player, stack);
         }
 
-        if (!p_42985_.isClientSide) {
-            PotionContents potioncontents = p_42984_.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY);
+        if (!level.isClientSide) {
+            PotionContents potioncontents = stack.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY);
             potioncontents.forEachEffect(p_330883_ -> {
                 if (p_330883_.getEffect().value().isInstantenous()) {
-                    p_330883_.getEffect().value().applyInstantenousEffect(player, player, p_42986_, p_330883_.getAmplifier(), 1.0);
+                    p_330883_.getEffect().value().applyInstantenousEffect(player, player, entityLiving, p_330883_.getAmplifier(), 1.0);
                 } else {
-                    p_42986_.addEffect(p_330883_);
+                    entityLiving.addEffect(p_330883_);
                 }
             });
         }
 
         if (player != null) {
             player.awardStat(Stats.ITEM_USED.get(this));
-            p_42984_.consume(1, player);
+            stack.consume(1, player);
         }
 
         if (player == null || !player.hasInfiniteMaterials()) {
-            if (p_42984_.isEmpty()) {
+            if (stack.isEmpty()) {
                 return new ItemStack(Items.GLASS_BOTTLE);
             }
 
@@ -75,21 +78,24 @@ public class PotionItem extends Item {
             }
         }
 
-        p_42986_.gameEvent(GameEvent.DRINK);
-        return p_42984_;
+        entityLiving.gameEvent(GameEvent.DRINK);
+        return stack;
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_220235_) {
-        Level level = p_220235_.getLevel();
-        BlockPos blockpos = p_220235_.getClickedPos();
-        Player player = p_220235_.getPlayer();
-        ItemStack itemstack = p_220235_.getItemInHand();
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
+        Player player = context.getPlayer();
+        ItemStack itemstack = context.getItemInHand();
         PotionContents potioncontents = itemstack.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY);
         BlockState blockstate = level.getBlockState(blockpos);
-        if (p_220235_.getClickedFace() != Direction.DOWN && blockstate.is(BlockTags.CONVERTABLE_TO_MUD) && potioncontents.is(Potions.WATER)) {
+        if (context.getClickedFace() != Direction.DOWN && blockstate.is(BlockTags.CONVERTABLE_TO_MUD) && potioncontents.is(Potions.WATER)) {
             level.playSound(null, blockpos, SoundEvents.GENERIC_SPLASH, SoundSource.BLOCKS, 1.0F, 1.0F);
-            player.setItemInHand(p_220235_.getHand(), ItemUtils.createFilledResult(itemstack, player, new ItemStack(Items.GLASS_BOTTLE)));
+            player.setItemInHand(context.getHand(), ItemUtils.createFilledResult(itemstack, player, new ItemStack(Items.GLASS_BOTTLE)));
             player.awardStat(Stats.ITEM_USED.get(itemstack.getItem()));
             if (!level.isClientSide) {
                 ServerLevel serverlevel = (ServerLevel)level;
@@ -119,30 +125,39 @@ public class PotionItem extends Item {
     }
 
     @Override
-    public int getUseDuration(ItemStack p_43001_, LivingEntity p_346041_) {
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
         return 32;
     }
 
+    /**
+     * Returns the action that specifies what animation to play when the item is being used.
+     */
     @Override
-    public UseAnim getUseAnimation(ItemStack p_42997_) {
+    public UseAnim getUseAnimation(ItemStack stack) {
         return UseAnim.DRINK;
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_42993_, Player p_42994_, InteractionHand p_42995_) {
-        return ItemUtils.startUsingInstantly(p_42993_, p_42994_, p_42995_);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        return ItemUtils.startUsingInstantly(level, player, hand);
+    }
+
+    /**
+     * Returns the unlocalized name of this item. This version accepts an ItemStack so different stacks can have different names based on their damage or NBT.
+     */
+    @Override
+    public String getDescriptionId(ItemStack stack) {
+        return Potion.getName(stack.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY).potion(), this.getDescriptionId() + ".effect.");
     }
 
     @Override
-    public String getDescriptionId(ItemStack p_43003_) {
-        return Potion.getName(p_43003_.getOrDefault(DataComponents.POTION_CONTENTS, PotionContents.EMPTY).potion(), this.getDescriptionId() + ".effect.");
-    }
-
-    @Override
-    public void appendHoverText(ItemStack p_42988_, Item.TooltipContext p_339608_, List<Component> p_42990_, TooltipFlag p_42991_) {
-        PotionContents potioncontents = p_42988_.get(DataComponents.POTION_CONTENTS);
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        PotionContents potioncontents = stack.get(DataComponents.POTION_CONTENTS);
         if (potioncontents != null) {
-            potioncontents.addPotionTooltip(p_42990_::add, 1.0F, p_339608_.tickRate());
+            potioncontents.addPotionTooltip(tooltipComponents::add, 1.0F, context.tickRate());
         }
     }
 }

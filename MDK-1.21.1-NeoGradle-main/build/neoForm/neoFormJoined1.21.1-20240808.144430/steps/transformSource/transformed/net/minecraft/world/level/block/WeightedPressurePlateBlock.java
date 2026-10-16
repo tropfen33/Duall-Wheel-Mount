@@ -32,15 +32,18 @@ public class WeightedPressurePlateBlock extends BasePressurePlateBlock {
         return CODEC;
     }
 
-    public WeightedPressurePlateBlock(int p_273669_, BlockSetType p_272868_, BlockBehaviour.Properties p_273512_) {
-        super(p_273512_, p_272868_);
+    public WeightedPressurePlateBlock(int maxWeight, BlockSetType type, BlockBehaviour.Properties properties) {
+        super(properties, type);
         this.registerDefaultState(this.stateDefinition.any().setValue(POWER, Integer.valueOf(0)));
-        this.maxWeight = p_273669_;
+        this.maxWeight = maxWeight;
     }
 
+    /**
+     * Calculates what the signal strength of a pressure plate at the given location should be.
+     */
     @Override
-    protected int getSignalStrength(Level p_58213_, BlockPos p_58214_) {
-        int i = Math.min(getEntityCount(p_58213_, TOUCH_AABB.move(p_58214_), Entity.class), this.maxWeight);
+    protected int getSignalStrength(Level level, BlockPos pos) {
+        int i = Math.min(getEntityCount(level, TOUCH_AABB.move(pos), Entity.class), this.maxWeight);
         if (i > 0) {
             float f = (float)Math.min(this.maxWeight, i) / (float)this.maxWeight;
             return Mth.ceil(f * 15.0F);
@@ -49,14 +52,20 @@ public class WeightedPressurePlateBlock extends BasePressurePlateBlock {
         }
     }
 
+    /**
+     * Returns the signal encoded in the given block state.
+     */
     @Override
-    protected int getSignalForState(BlockState p_58220_) {
-        return p_58220_.getValue(POWER);
+    protected int getSignalForState(BlockState state) {
+        return state.getValue(POWER);
     }
 
+    /**
+     * Returns the block state that encodes the given signal.
+     */
     @Override
-    protected BlockState setSignalForState(BlockState p_58208_, int p_58209_) {
-        return p_58208_.setValue(POWER, Integer.valueOf(p_58209_));
+    protected BlockState setSignalForState(BlockState state, int strength) {
+        return state.setValue(POWER, Integer.valueOf(strength));
     }
 
     @Override
@@ -65,7 +74,7 @@ public class WeightedPressurePlateBlock extends BasePressurePlateBlock {
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_58211_) {
-        p_58211_.add(POWER);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(POWER);
     }
 }

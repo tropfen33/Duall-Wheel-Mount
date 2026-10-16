@@ -15,39 +15,39 @@ public class SimpleExplosionDamageCalculator extends ExplosionDamageCalculator {
     private final Optional<Float> knockbackMultiplier;
     private final Optional<HolderSet<Block>> immuneBlocks;
 
-    public SimpleExplosionDamageCalculator(boolean p_345621_, boolean p_345535_, Optional<Float> p_344810_, Optional<HolderSet<Block>> p_346110_) {
-        this.explodesBlocks = p_345621_;
-        this.damagesEntities = p_345535_;
-        this.knockbackMultiplier = p_344810_;
-        this.immuneBlocks = p_346110_;
+    public SimpleExplosionDamageCalculator(boolean explodesBlocks, boolean damagesEntities, Optional<Float> knockbackMultiplier, Optional<HolderSet<Block>> immuneBlocks) {
+        this.explodesBlocks = explodesBlocks;
+        this.damagesEntities = damagesEntities;
+        this.knockbackMultiplier = knockbackMultiplier;
+        this.immuneBlocks = immuneBlocks;
     }
 
     @Override
     public Optional<Float> getBlockExplosionResistance(
-        Explosion p_346109_, BlockGetter p_345381_, BlockPos p_344921_, BlockState p_346239_, FluidState p_345105_
+        Explosion explosion, BlockGetter reader, BlockPos pos, BlockState state, FluidState fluid
     ) {
         if (this.immuneBlocks.isPresent()) {
-            return p_346239_.is(this.immuneBlocks.get()) ? Optional.of(3600000.0F) : Optional.empty();
+            return state.is(this.immuneBlocks.get()) ? Optional.of(3600000.0F) : Optional.empty();
         } else {
-            return super.getBlockExplosionResistance(p_346109_, p_345381_, p_344921_, p_346239_, p_345105_);
+            return super.getBlockExplosionResistance(explosion, reader, pos, state, fluid);
         }
     }
 
     @Override
-    public boolean shouldBlockExplode(Explosion p_345994_, BlockGetter p_345042_, BlockPos p_345057_, BlockState p_345932_, float p_345776_) {
+    public boolean shouldBlockExplode(Explosion explosion, BlockGetter reader, BlockPos pos, BlockState state, float power) {
         return this.explodesBlocks;
     }
 
     @Override
-    public boolean shouldDamageEntity(Explosion p_346248_, Entity p_344983_) {
+    public boolean shouldDamageEntity(Explosion explosion, Entity entity) {
         return this.damagesEntities;
     }
 
     @Override
-    public float getKnockbackMultiplier(Entity p_345651_) {
+    public float getKnockbackMultiplier(Entity entity) {
         boolean flag1;
         label17: {
-            if (p_345651_ instanceof Player player && player.getAbilities().flying) {
+            if (entity instanceof Player player && player.getAbilities().flying) {
                 flag1 = true;
                 break label17;
             }
@@ -56,6 +56,6 @@ public class SimpleExplosionDamageCalculator extends ExplosionDamageCalculator {
         }
 
         boolean flag = flag1;
-        return flag ? 0.0F : this.knockbackMultiplier.orElseGet(() -> super.getKnockbackMultiplier(p_345651_));
+        return flag ? 0.0F : this.knockbackMultiplier.orElseGet(() -> super.getKnockbackMultiplier(entity));
     }
 }

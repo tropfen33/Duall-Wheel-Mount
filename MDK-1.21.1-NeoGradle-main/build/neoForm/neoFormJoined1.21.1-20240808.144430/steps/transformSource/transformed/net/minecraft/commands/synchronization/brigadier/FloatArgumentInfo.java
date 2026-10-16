@@ -8,50 +8,50 @@ import net.minecraft.commands.synchronization.ArgumentUtils;
 import net.minecraft.network.FriendlyByteBuf;
 
 public class FloatArgumentInfo implements ArgumentTypeInfo<FloatArgumentType, FloatArgumentInfo.Template> {
-    public void serializeToNetwork(FloatArgumentInfo.Template p_235518_, FriendlyByteBuf p_235519_) {
-        boolean flag = p_235518_.min != -Float.MAX_VALUE;
-        boolean flag1 = p_235518_.max != Float.MAX_VALUE;
-        p_235519_.writeByte(ArgumentUtils.createNumberFlags(flag, flag1));
+    public void serializeToNetwork(FloatArgumentInfo.Template template, FriendlyByteBuf buffer) {
+        boolean flag = template.min != -Float.MAX_VALUE;
+        boolean flag1 = template.max != Float.MAX_VALUE;
+        buffer.writeByte(ArgumentUtils.createNumberFlags(flag, flag1));
         if (flag) {
-            p_235519_.writeFloat(p_235518_.min);
+            buffer.writeFloat(template.min);
         }
 
         if (flag1) {
-            p_235519_.writeFloat(p_235518_.max);
+            buffer.writeFloat(template.max);
         }
     }
 
-    public FloatArgumentInfo.Template deserializeFromNetwork(FriendlyByteBuf p_235521_) {
-        byte b0 = p_235521_.readByte();
-        float f = ArgumentUtils.numberHasMin(b0) ? p_235521_.readFloat() : -Float.MAX_VALUE;
-        float f1 = ArgumentUtils.numberHasMax(b0) ? p_235521_.readFloat() : Float.MAX_VALUE;
+    public FloatArgumentInfo.Template deserializeFromNetwork(FriendlyByteBuf buffer) {
+        byte b0 = buffer.readByte();
+        float f = ArgumentUtils.numberHasMin(b0) ? buffer.readFloat() : -Float.MAX_VALUE;
+        float f1 = ArgumentUtils.numberHasMax(b0) ? buffer.readFloat() : Float.MAX_VALUE;
         return new FloatArgumentInfo.Template(f, f1);
     }
 
-    public void serializeToJson(FloatArgumentInfo.Template p_235515_, JsonObject p_235516_) {
-        if (p_235515_.min != -Float.MAX_VALUE) {
-            p_235516_.addProperty("min", p_235515_.min);
+    public void serializeToJson(FloatArgumentInfo.Template template, JsonObject json) {
+        if (template.min != -Float.MAX_VALUE) {
+            json.addProperty("min", template.min);
         }
 
-        if (p_235515_.max != Float.MAX_VALUE) {
-            p_235516_.addProperty("max", p_235515_.max);
+        if (template.max != Float.MAX_VALUE) {
+            json.addProperty("max", template.max);
         }
     }
 
-    public FloatArgumentInfo.Template unpack(FloatArgumentType p_235507_) {
-        return new FloatArgumentInfo.Template(p_235507_.getMinimum(), p_235507_.getMaximum());
+    public FloatArgumentInfo.Template unpack(FloatArgumentType argument) {
+        return new FloatArgumentInfo.Template(argument.getMinimum(), argument.getMaximum());
     }
 
     public final class Template implements ArgumentTypeInfo.Template<FloatArgumentType> {
         final float min;
         final float max;
 
-        Template(float p_235529_, float p_235530_) {
-            this.min = p_235529_;
-            this.max = p_235530_;
+        Template(float min, float max) {
+            this.min = min;
+            this.max = max;
         }
 
-        public FloatArgumentType instantiate(CommandBuildContext p_235533_) {
+        public FloatArgumentType instantiate(CommandBuildContext context) {
             return FloatArgumentType.floatArg(this.min, this.max);
         }
 

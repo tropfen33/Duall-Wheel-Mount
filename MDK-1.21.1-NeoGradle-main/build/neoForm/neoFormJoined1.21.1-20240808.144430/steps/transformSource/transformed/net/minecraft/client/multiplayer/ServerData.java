@@ -36,10 +36,10 @@ public class ServerData {
     private ServerData.State state = ServerData.State.INITIAL;
     public net.neoforged.neoforge.client.ExtendedServerListData neoForgeData = null;
 
-    public ServerData(String p_105375_, String p_105376_, ServerData.Type p_295587_) {
-        this.name = p_105375_;
-        this.ip = p_105376_;
-        this.type = p_295587_;
+    public ServerData(String name, String ip, ServerData.Type type) {
+        this.name = name;
+        this.ip = ip;
+        this.type = type;
     }
 
     public CompoundTag write() {
@@ -63,23 +63,26 @@ public class ServerData {
         return this.packStatus;
     }
 
-    public void setResourcePackStatus(ServerData.ServerPackStatus p_105380_) {
-        this.packStatus = p_105380_;
+    public void setResourcePackStatus(ServerData.ServerPackStatus packStatus) {
+        this.packStatus = packStatus;
     }
 
-    public static ServerData read(CompoundTag p_105386_) {
-        ServerData serverdata = new ServerData(p_105386_.getString("name"), p_105386_.getString("ip"), ServerData.Type.OTHER);
-        if (p_105386_.contains("icon", 8)) {
+    /**
+     * Takes an NBTTagCompound with 'name' and 'ip' keys, returns a ServerData instance.
+     */
+    public static ServerData read(CompoundTag nbtCompound) {
+        ServerData serverdata = new ServerData(nbtCompound.getString("name"), nbtCompound.getString("ip"), ServerData.Type.OTHER);
+        if (nbtCompound.contains("icon", 8)) {
             try {
-                byte[] abyte = Base64.getDecoder().decode(p_105386_.getString("icon"));
+                byte[] abyte = Base64.getDecoder().decode(nbtCompound.getString("icon"));
                 serverdata.setIconBytes(validateIcon(abyte));
             } catch (IllegalArgumentException illegalargumentexception) {
                 LOGGER.warn("Malformed base64 server icon", (Throwable)illegalargumentexception);
             }
         }
 
-        if (p_105386_.contains("acceptTextures", 1)) {
-            if (p_105386_.getBoolean("acceptTextures")) {
+        if (nbtCompound.contains("acceptTextures", 1)) {
+            if (nbtCompound.getBoolean("acceptTextures")) {
                 serverdata.setResourcePackStatus(ServerData.ServerPackStatus.ENABLED);
             } else {
                 serverdata.setResourcePackStatus(ServerData.ServerPackStatus.DISABLED);
@@ -96,8 +99,8 @@ public class ServerData {
         return this.iconBytes;
     }
 
-    public void setIconBytes(@Nullable byte[] p_272760_) {
-        this.iconBytes = p_272760_;
+    public void setIconBytes(@Nullable byte[] iconBytes) {
+        this.iconBytes = iconBytes;
     }
 
     public boolean isLan() {
@@ -112,33 +115,33 @@ public class ServerData {
         return this.type;
     }
 
-    public void copyNameIconFrom(ServerData p_233804_) {
-        this.ip = p_233804_.ip;
-        this.name = p_233804_.name;
-        this.iconBytes = p_233804_.iconBytes;
+    public void copyNameIconFrom(ServerData other) {
+        this.ip = other.ip;
+        this.name = other.name;
+        this.iconBytes = other.iconBytes;
     }
 
-    public void copyFrom(ServerData p_105382_) {
-        this.copyNameIconFrom(p_105382_);
-        this.setResourcePackStatus(p_105382_.getResourcePackStatus());
-        this.type = p_105382_.type;
+    public void copyFrom(ServerData serverData) {
+        this.copyNameIconFrom(serverData);
+        this.setResourcePackStatus(serverData.getResourcePackStatus());
+        this.type = serverData.type;
     }
 
     public ServerData.State state() {
         return this.state;
     }
 
-    public void setState(ServerData.State p_316214_) {
-        this.state = p_316214_;
+    public void setState(ServerData.State state) {
+        this.state = state;
     }
 
     @Nullable
-    public static byte[] validateIcon(@Nullable byte[] p_302394_) {
-        if (p_302394_ != null) {
+    public static byte[] validateIcon(@Nullable byte[] icon) {
+        if (icon != null) {
             try {
-                PngInfo pnginfo = PngInfo.fromBytes(p_302394_);
+                PngInfo pnginfo = PngInfo.fromBytes(icon);
                 if (pnginfo.width() <= 1024 && pnginfo.height() <= 1024) {
-                    return p_302394_;
+                    return icon;
                 }
             } catch (IOException ioexception) {
                 LOGGER.warn("Failed to decode server icon", (Throwable)ioexception);
@@ -156,8 +159,8 @@ public class ServerData {
 
         private final Component name;
 
-        private ServerPackStatus(String p_105399_) {
-            this.name = Component.translatable("addServer.resourcePack." + p_105399_);
+        private ServerPackStatus(String name) {
+            this.name = Component.translatable("addServer.resourcePack." + name);
         }
 
         public Component getName() {

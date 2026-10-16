@@ -8,33 +8,36 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public abstract class ThrowableProjectile extends Projectile {
-    protected ThrowableProjectile(EntityType<? extends ThrowableProjectile> p_37466_, Level p_37467_) {
-        super(p_37466_, p_37467_);
+    protected ThrowableProjectile(EntityType<? extends ThrowableProjectile> entityType, Level level) {
+        super(entityType, level);
     }
 
-    protected ThrowableProjectile(EntityType<? extends ThrowableProjectile> p_37456_, double p_37457_, double p_37458_, double p_37459_, Level p_37460_) {
-        this(p_37456_, p_37460_);
-        this.setPos(p_37457_, p_37458_, p_37459_);
+    protected ThrowableProjectile(EntityType<? extends ThrowableProjectile> entityType, double x, double y, double z, Level level) {
+        this(entityType, level);
+        this.setPos(x, y, z);
     }
 
-    protected ThrowableProjectile(EntityType<? extends ThrowableProjectile> p_37462_, LivingEntity p_37463_, Level p_37464_) {
-        this(p_37462_, p_37463_.getX(), p_37463_.getEyeY() - 0.1F, p_37463_.getZ(), p_37464_);
-        this.setOwner(p_37463_);
+    protected ThrowableProjectile(EntityType<? extends ThrowableProjectile> entityType, LivingEntity shooter, Level level) {
+        this(entityType, shooter.getX(), shooter.getEyeY() - 0.1F, shooter.getZ(), level);
+        this.setOwner(shooter);
     }
 
+    /**
+     * Checks if the entity is in range to render.
+     */
     @Override
-    public boolean shouldRenderAtSqrDistance(double p_37470_) {
+    public boolean shouldRenderAtSqrDistance(double distance) {
         double d0 = this.getBoundingBox().getSize() * 4.0;
         if (Double.isNaN(d0)) {
             d0 = 4.0;
         }
 
         d0 *= 64.0;
-        return p_37470_ < d0 * d0;
+        return distance < d0 * d0;
     }
 
     @Override
-    public boolean canUsePortal(boolean p_352918_) {
+    public boolean canUsePortal(boolean allowPassengers) {
         return true;
     }
 

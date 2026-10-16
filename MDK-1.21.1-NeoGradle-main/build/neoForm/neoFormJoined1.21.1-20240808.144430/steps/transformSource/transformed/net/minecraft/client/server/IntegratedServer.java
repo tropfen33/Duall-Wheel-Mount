@@ -51,19 +51,19 @@ public class IntegratedServer extends MinecraftServer {
     private int previousSimulationDistance = 0;
 
     public IntegratedServer(
-        Thread p_235248_,
-        Minecraft p_235249_,
-        LevelStorageSource.LevelStorageAccess p_235250_,
-        PackRepository p_235251_,
-        WorldStem p_235252_,
-        Services p_235253_,
-        ChunkProgressListenerFactory p_235254_
+        Thread serverThread,
+        Minecraft minecraft,
+        LevelStorageSource.LevelStorageAccess storageSource,
+        PackRepository packRepository,
+        WorldStem worldStem,
+        Services services,
+        ChunkProgressListenerFactory progressListenerFactory
     ) {
-        super(p_235248_, p_235250_, p_235251_, p_235252_, p_235249_.getProxy(), p_235249_.getFixerUpper(), p_235253_, p_235254_);
-        this.setSingleplayerProfile(p_235249_.getGameProfile());
-        this.setDemo(p_235249_.isDemo());
+        super(serverThread, storageSource, packRepository, worldStem, minecraft.getProxy(), minecraft.getFixerUpper(), services, progressListenerFactory);
+        this.setSingleplayerProfile(minecraft.getGameProfile());
+        this.setDemo(minecraft.isDemo());
         this.setPlayerList(new IntegratedPlayerList(this, this.registries(), this.playerDataStorage));
-        this.minecraft = p_235249_;
+        this.minecraft = minecraft;
     }
 
     @Override
@@ -87,8 +87,11 @@ public class IntegratedServer extends MinecraftServer {
         return this.paused;
     }
 
+    /**
+     * Main function called by run() every loop.
+     */
     @Override
-    public void tickServer(BooleanSupplier p_120049_) {
+    public void tickServer(BooleanSupplier hasTimeLeft) {
         boolean flag = this.paused;
         this.paused = Minecraft.getInstance().isPaused();
         ProfilerFiller profilerfiller = this.getProfiler();
@@ -107,7 +110,7 @@ public class IntegratedServer extends MinecraftServer {
                 this.forceTimeSynchronization();
             }
 
-            super.tickServer(p_120049_);
+            super.tickServer(hasTimeLeft);
             int i = Math.max(2, this.minecraft.options.renderDistance().get());
             if (i != this.getPlayerList().getViewDistance()) {
                 LOGGER.info("Changing view distance to {}, from {}", i, this.getPlayerList().getViewDistance());
@@ -168,17 +171,20 @@ public class IntegratedServer extends MinecraftServer {
         return false;
     }
 
+    /**
+     * Called on exit from the main run() loop.
+     */
     @Override
-    public void onServerCrash(CrashReport p_120051_) {
-        this.minecraft.delayCrashRaw(p_120051_);
+    public void onServerCrash(CrashReport report) {
+        this.minecraft.delayCrashRaw(report);
     }
 
     @Override
-    public SystemReport fillServerSystemReport(SystemReport p_174970_) {
-        p_174970_.setDetail("Type", "Integrated Server (map_client.txt)");
-        p_174970_.setDetail("Is Modded", () -> this.getModdedStatus().fullDescription());
-        p_174970_.setDetail("Launched Version", this.minecraft::getLaunchedVersion);
-        return p_174970_;
+    public SystemReport fillServerSystemReport(SystemReport report) {
+        report.setDetail("Type", "Integrated Server (map_client.txt)");
+        report.setDetail("Is Modded", () -> this.getModdedStatus().fullDescription());
+        report.setDetail("Launched Version", this.minecraft::getLaunchedVersion);
+        return report;
     }
 
     @Override
@@ -187,7 +193,7 @@ public class IntegratedServer extends MinecraftServer {
     }
 
     @Override
-    public boolean publishServer(@Nullable GameType p_120041_, boolean p_120042_, int p_120043_) {
+    public boolean publishServer(@Nullable GameType gameMode, boolean cheats, int port) {
         try {
             this.minecraft.prepareForMultiplayer();
             this.minecraft.getProfileKeyPairManager().prepareKeyPair().thenAcceptAsync(p_263550_ -> p_263550_.ifPresent(p_263549_ -> {
@@ -196,13 +202,13 @@ public class IntegratedServer extends MinecraftServer {
                         clientpacketlistener.setKeyPair(p_263549_);
                     }
                 }), this.minecraft);
-            this.getConnection().startTcpServerListener(null, p_120043_);
-            LOGGER.info("Started serving on {}", p_120043_);
-            this.publishedPort = p_120043_;
-            this.lanPinger = new LanServerPinger(this.getMotd(), p_120043_ + "");
+            this.getConnection().startTcpServerListener(null, port);
+            LOGGER.info("Started serving on {}", port);
+            this.publishedPort = port;
+            this.lanPinger = new LanServerPinger(this.getMotd(), port + "");
             this.lanPinger.start();
-            this.publishedGameType = p_120041_;
-            this.getPlayerList().setAllowCommandsForAllPlayers(p_120042_);
+            this.publishedGameType = gameMode;
+            this.getPlayerList().setAllowCommandsForAllPlayers(cheats);
             int i = this.getProfilePermissions(this.minecraft.player.getGameProfile());
             this.minecraft.player.setPermissionLevel(i);
 
@@ -225,8 +231,11 @@ public class IntegratedServer extends MinecraftServer {
         }
     }
 
+    /**
+     * Sets the serverRunning variable to false, in order to get the server to shut down.
+     */
     @Override
-    public void halt(boolean p_120053_) {
+    public void halt(boolean waitForServer) {
         if (isRunning())
         this.executeBlocking(() -> {
             for (ServerPlayer serverplayer : Lists.newArrayList(this.getPlayerList().getPlayers())) {
@@ -235,7 +244,7 @@ public class IntegratedServer extends MinecraftServer {
                 }
             }
         });
-        super.halt(p_120053_);
+        super.halt(waitForServer);
         if (this.lanPinger != null) {
             this.lanPinger.interrupt();
             this.lanPinger = null;
@@ -252,9 +261,12 @@ public class IntegratedServer extends MinecraftServer {
         return this.publishedPort;
     }
 
+    /**
+     * Sets the game type for all worlds.
+     */
     @Override
-    public void setDefaultGameType(GameType p_120039_) {
-        super.setDefaultGameType(p_120039_);
+    public void setDefaultGameType(GameType gameMode) {
+        super.setDefaultGameType(gameMode);
         this.publishedGameType = null;
     }
 
@@ -273,18 +285,18 @@ public class IntegratedServer extends MinecraftServer {
         return 2;
     }
 
-    public void setUUID(UUID p_120047_) {
-        this.uuid = p_120047_;
+    public void setUUID(UUID uuid) {
+        this.uuid = uuid;
     }
 
     @Override
-    public boolean isSingleplayerOwner(GameProfile p_120045_) {
-        return this.getSingleplayerProfile() != null && p_120045_.getName().equalsIgnoreCase(this.getSingleplayerProfile().getName());
+    public boolean isSingleplayerOwner(GameProfile profile) {
+        return this.getSingleplayerProfile() != null && profile.getName().equalsIgnoreCase(this.getSingleplayerProfile().getName());
     }
 
     @Override
-    public int getScaledTrackingDistance(int p_120056_) {
-        return (int)(this.minecraft.options.entityDistanceScaling().get() * (double)p_120056_);
+    public int getScaledTrackingDistance(int trackingDistance) {
+        return (int)(this.minecraft.options.entityDistanceScaling().get() * (double)trackingDistance);
     }
 
     @Override
@@ -299,8 +311,8 @@ public class IntegratedServer extends MinecraftServer {
     }
 
     @Override
-    public boolean saveEverything(boolean p_332035_, boolean p_331844_, boolean p_330847_) {
-        boolean flag = super.saveEverything(p_332035_, p_331844_, p_330847_);
+    public boolean saveEverything(boolean suppressLog, boolean flush, boolean forced) {
+        boolean flag = super.saveEverything(suppressLog, flush, forced);
         this.warnOnLowDiskSpace();
         return flag;
     }
@@ -312,16 +324,16 @@ public class IntegratedServer extends MinecraftServer {
     }
 
     @Override
-    public void reportChunkLoadFailure(Throwable p_352390_, RegionStorageInfo p_352401_, ChunkPos p_330829_) {
-        super.reportChunkLoadFailure(p_352390_, p_352401_, p_330829_);
+    public void reportChunkLoadFailure(Throwable throwable, RegionStorageInfo regionStorageInfo, ChunkPos chunkPos) {
+        super.reportChunkLoadFailure(throwable, regionStorageInfo, chunkPos);
         this.warnOnLowDiskSpace();
-        this.minecraft.execute(() -> SystemToast.onChunkLoadFailure(this.minecraft, p_330829_));
+        this.minecraft.execute(() -> SystemToast.onChunkLoadFailure(this.minecraft, chunkPos));
     }
 
     @Override
-    public void reportChunkSaveFailure(Throwable p_352264_, RegionStorageInfo p_352355_, ChunkPos p_331440_) {
-        super.reportChunkSaveFailure(p_352264_, p_352355_, p_331440_);
+    public void reportChunkSaveFailure(Throwable throwable, RegionStorageInfo regionStorageInfo, ChunkPos chunkPos) {
+        super.reportChunkSaveFailure(throwable, regionStorageInfo, chunkPos);
         this.warnOnLowDiskSpace();
-        this.minecraft.execute(() -> SystemToast.onChunkSaveFailure(this.minecraft, p_331440_));
+        this.minecraft.execute(() -> SystemToast.onChunkSaveFailure(this.minecraft, chunkPos));
     }
 }

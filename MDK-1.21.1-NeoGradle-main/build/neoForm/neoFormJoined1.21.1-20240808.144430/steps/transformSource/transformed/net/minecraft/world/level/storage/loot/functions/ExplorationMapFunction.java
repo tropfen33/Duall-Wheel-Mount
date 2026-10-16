@@ -26,6 +26,9 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.phys.Vec3;
 
+/**
+ * Convert any empty maps into explorer maps that lead to a structure that is nearest to the current {@linkplain LootContextParams.ORIGIN}, if present.
+ */
 public class ExplorationMapFunction extends LootItemConditionalFunction {
     public static final TagKey<Structure> DEFAULT_DESTINATION = StructureTags.ON_TREASURE_MAPS;
     public static final Holder<MapDecorationType> DEFAULT_DECORATION = MapDecorationTypes.WOODLAND_MANSION;
@@ -52,14 +55,14 @@ public class ExplorationMapFunction extends LootItemConditionalFunction {
     private final boolean skipKnownStructures;
 
     ExplorationMapFunction(
-        List<LootItemCondition> p_298451_, TagKey<Structure> p_210653_, Holder<MapDecorationType> p_336106_, byte p_210655_, int p_210656_, boolean p_210657_
+        List<LootItemCondition> conditons, TagKey<Structure> destination, Holder<MapDecorationType> mapDecoration, byte zoom, int searchRadius, boolean skipKnownStructures
     ) {
-        super(p_298451_);
-        this.destination = p_210653_;
-        this.mapDecoration = p_336106_;
-        this.zoom = p_210655_;
-        this.searchRadius = p_210656_;
-        this.skipKnownStructures = p_210657_;
+        super(conditons);
+        this.destination = destination;
+        this.mapDecoration = mapDecoration;
+        this.zoom = zoom;
+        this.searchRadius = searchRadius;
+        this.skipKnownStructures = skipKnownStructures;
     }
 
     @Override
@@ -72,14 +75,17 @@ public class ExplorationMapFunction extends LootItemConditionalFunction {
         return ImmutableSet.of(LootContextParams.ORIGIN);
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_80547_, LootContext p_80548_) {
-        if (!p_80547_.is(Items.MAP)) {
-            return p_80547_;
+    public ItemStack run(ItemStack stack, LootContext context) {
+        if (!stack.is(Items.MAP)) {
+            return stack;
         } else {
-            Vec3 vec3 = p_80548_.getParamOrNull(LootContextParams.ORIGIN);
+            Vec3 vec3 = context.getParamOrNull(LootContextParams.ORIGIN);
             if (vec3 != null) {
-                ServerLevel serverlevel = p_80548_.getLevel();
+                ServerLevel serverlevel = context.getLevel();
                 BlockPos blockpos = serverlevel.findNearestMapStructure(
                     this.destination, BlockPos.containing(vec3), this.searchRadius, this.skipKnownStructures
                 );
@@ -91,7 +97,7 @@ public class ExplorationMapFunction extends LootItemConditionalFunction {
                 }
             }
 
-            return p_80547_;
+            return stack;
         }
     }
 
@@ -110,28 +116,28 @@ public class ExplorationMapFunction extends LootItemConditionalFunction {
             return this;
         }
 
-        public ExplorationMapFunction.Builder setDestination(TagKey<Structure> p_210659_) {
-            this.destination = p_210659_;
+        public ExplorationMapFunction.Builder setDestination(TagKey<Structure> destination) {
+            this.destination = destination;
             return this;
         }
 
-        public ExplorationMapFunction.Builder setMapDecoration(Holder<MapDecorationType> p_335871_) {
-            this.mapDecoration = p_335871_;
+        public ExplorationMapFunction.Builder setMapDecoration(Holder<MapDecorationType> mapDecoration) {
+            this.mapDecoration = mapDecoration;
             return this;
         }
 
-        public ExplorationMapFunction.Builder setZoom(byte p_80570_) {
-            this.zoom = p_80570_;
+        public ExplorationMapFunction.Builder setZoom(byte zoom) {
+            this.zoom = zoom;
             return this;
         }
 
-        public ExplorationMapFunction.Builder setSearchRadius(int p_165206_) {
-            this.searchRadius = p_165206_;
+        public ExplorationMapFunction.Builder setSearchRadius(int searchRadius) {
+            this.searchRadius = searchRadius;
             return this;
         }
 
-        public ExplorationMapFunction.Builder setSkipKnownStructures(boolean p_80576_) {
-            this.skipKnownStructures = p_80576_;
+        public ExplorationMapFunction.Builder setSkipKnownStructures(boolean skipKnownStructures) {
+            this.skipKnownStructures = skipKnownStructures;
             return this;
         }
 

@@ -208,95 +208,101 @@ public class SimpleBitStorage implements BitStorage {
     private final int divideAdd;
     private final int divideShift;
 
-    public SimpleBitStorage(int p_198164_, int p_198165_, int[] p_198166_) {
-        this(p_198164_, p_198165_);
+    public SimpleBitStorage(int bits, int size, int[] data) {
+        this(bits, size);
         int j = 0;
 
         int i;
-        for (i = 0; i <= p_198165_ - this.valuesPerLong; i += this.valuesPerLong) {
+        for (i = 0; i <= size - this.valuesPerLong; i += this.valuesPerLong) {
             long k = 0L;
 
             for (int i1 = this.valuesPerLong - 1; i1 >= 0; i1--) {
-                k <<= p_198164_;
-                k |= (long)p_198166_[i + i1] & this.mask;
+                k <<= bits;
+                k |= (long)data[i + i1] & this.mask;
             }
 
             this.data[j++] = k;
         }
 
-        int k1 = p_198165_ - i;
+        int k1 = size - i;
         if (k1 > 0) {
             long l = 0L;
 
             for (int j1 = k1 - 1; j1 >= 0; j1--) {
-                l <<= p_198164_;
-                l |= (long)p_198166_[i + j1] & this.mask;
+                l <<= bits;
+                l |= (long)data[i + j1] & this.mask;
             }
 
             this.data[j] = l;
         }
     }
 
-    public SimpleBitStorage(int p_184717_, int p_184718_) {
-        this(p_184717_, p_184718_, (long[])null);
+    public SimpleBitStorage(int bits, int size) {
+        this(bits, size, (long[])null);
     }
 
-    public SimpleBitStorage(int p_184724_, int p_184725_, @Nullable long[] p_184726_) {
-        Validate.inclusiveBetween(1L, 32L, (long)p_184724_);
-        this.size = p_184725_;
-        this.bits = p_184724_;
-        this.mask = (1L << p_184724_) - 1L;
-        this.valuesPerLong = (char)(64 / p_184724_);
+    public SimpleBitStorage(int bits, int size, @Nullable long[] data) {
+        Validate.inclusiveBetween(1L, 32L, (long)bits);
+        this.size = size;
+        this.bits = bits;
+        this.mask = (1L << bits) - 1L;
+        this.valuesPerLong = (char)(64 / bits);
         int i = 3 * (this.valuesPerLong - 1);
         this.divideMul = MAGIC[i + 0];
         this.divideAdd = MAGIC[i + 1];
         this.divideShift = MAGIC[i + 2];
-        int j = (p_184725_ + this.valuesPerLong - 1) / this.valuesPerLong;
-        if (p_184726_ != null) {
-            if (p_184726_.length != j) {
-                throw new SimpleBitStorage.InitializationException("Invalid length given for storage, got: " + p_184726_.length + " but expected: " + j);
+        int j = (size + this.valuesPerLong - 1) / this.valuesPerLong;
+        if (data != null) {
+            if (data.length != j) {
+                throw new SimpleBitStorage.InitializationException("Invalid length given for storage, got: " + data.length + " but expected: " + j);
             }
 
-            this.data = p_184726_;
+            this.data = data;
         } else {
             this.data = new long[j];
         }
     }
 
-    private int cellIndex(int p_184740_) {
+    private int cellIndex(int index) {
         long i = Integer.toUnsignedLong(this.divideMul);
         long j = Integer.toUnsignedLong(this.divideAdd);
-        return (int)((long)p_184740_ * i + j >> 32 >> this.divideShift);
+        return (int)((long)index * i + j >> 32 >> this.divideShift);
     }
 
     @Override
-    public int getAndSet(int p_184731_, int p_184732_) {
-        Validate.inclusiveBetween(0L, (long)(this.size - 1), (long)p_184731_);
-        Validate.inclusiveBetween(0L, this.mask, (long)p_184732_);
-        int i = this.cellIndex(p_184731_);
+    public int getAndSet(int index, int value) {
+        Validate.inclusiveBetween(0L, (long)(this.size - 1), (long)index);
+        Validate.inclusiveBetween(0L, this.mask, (long)value);
+        int i = this.cellIndex(index);
         long j = this.data[i];
-        int k = (p_184731_ - i * this.valuesPerLong) * this.bits;
+        int k = (index - i * this.valuesPerLong) * this.bits;
         int l = (int)(j >> k & this.mask);
-        this.data[i] = j & ~(this.mask << k) | ((long)p_184732_ & this.mask) << k;
+        this.data[i] = j & ~(this.mask << k) | ((long)value & this.mask) << k;
         return l;
     }
 
+    /**
+     * Sets the entry at the given location to the given value
+     */
     @Override
-    public void set(int p_184742_, int p_184743_) {
-        Validate.inclusiveBetween(0L, (long)(this.size - 1), (long)p_184742_);
-        Validate.inclusiveBetween(0L, this.mask, (long)p_184743_);
-        int i = this.cellIndex(p_184742_);
+    public void set(int index, int value) {
+        Validate.inclusiveBetween(0L, (long)(this.size - 1), (long)index);
+        Validate.inclusiveBetween(0L, this.mask, (long)value);
+        int i = this.cellIndex(index);
         long j = this.data[i];
-        int k = (p_184742_ - i * this.valuesPerLong) * this.bits;
-        this.data[i] = j & ~(this.mask << k) | ((long)p_184743_ & this.mask) << k;
+        int k = (index - i * this.valuesPerLong) * this.bits;
+        this.data[i] = j & ~(this.mask << k) | ((long)value & this.mask) << k;
     }
 
+    /**
+     * Gets the entry at the given index
+     */
     @Override
-    public int get(int p_184729_) {
-        Validate.inclusiveBetween(0L, (long)(this.size - 1), (long)p_184729_);
-        int i = this.cellIndex(p_184729_);
+    public int get(int index) {
+        Validate.inclusiveBetween(0L, (long)(this.size - 1), (long)index);
+        int i = this.cellIndex(index);
         long j = this.data[i];
-        int k = (p_184729_ - i * this.valuesPerLong) * this.bits;
+        int k = (index - i * this.valuesPerLong) * this.bits;
         return (int)(j >> k & this.mask);
     }
 
@@ -316,12 +322,12 @@ public class SimpleBitStorage implements BitStorage {
     }
 
     @Override
-    public void getAll(IntConsumer p_184734_) {
+    public void getAll(IntConsumer consumer) {
         int i = 0;
 
         for (long j : this.data) {
             for (int k = 0; k < this.valuesPerLong; k++) {
-                p_184734_.accept((int)(j & this.mask));
+                consumer.accept((int)(j & this.mask));
                 j >>= this.bits;
                 if (++i >= this.size) {
                     return;
@@ -331,7 +337,7 @@ public class SimpleBitStorage implements BitStorage {
     }
 
     @Override
-    public void unpack(int[] p_198168_) {
+    public void unpack(int[] array) {
         int i = this.data.length;
         int j = 0;
 
@@ -339,7 +345,7 @@ public class SimpleBitStorage implements BitStorage {
             long l = this.data[k];
 
             for (int i1 = 0; i1 < this.valuesPerLong; i1++) {
-                p_198168_[j + i1] = (int)(l & this.mask);
+                array[j + i1] = (int)(l & this.mask);
                 l >>= this.bits;
             }
 
@@ -351,7 +357,7 @@ public class SimpleBitStorage implements BitStorage {
             long k1 = this.data[i - 1];
 
             for (int l1 = 0; l1 < j1; l1++) {
-                p_198168_[j + l1] = (int)(k1 & this.mask);
+                array[j + l1] = (int)(k1 & this.mask);
                 k1 >>= this.bits;
             }
         }
@@ -363,8 +369,8 @@ public class SimpleBitStorage implements BitStorage {
     }
 
     public static class InitializationException extends RuntimeException {
-        InitializationException(String p_184746_) {
-            super(p_184746_);
+        InitializationException(String message) {
+            super(message);
         }
     }
 }

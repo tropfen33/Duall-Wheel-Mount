@@ -24,9 +24,9 @@ public class CappedProcessor extends StructureProcessor {
     private final StructureProcessor delegate;
     private final IntProvider limit;
 
-    public CappedProcessor(StructureProcessor p_277972_, IntProvider p_277402_) {
-        this.delegate = p_277972_;
-        this.limit = p_277402_;
+    public CappedProcessor(StructureProcessor delegate, IntProvider limit) {
+        this.delegate = delegate;
+        this.limit = limit;
     }
 
     @Override
@@ -36,52 +36,52 @@ public class CappedProcessor extends StructureProcessor {
 
     @Override
     public final List<StructureTemplate.StructureBlockInfo> finalizeProcessing(
-        ServerLevelAccessor p_278291_,
-        BlockPos p_278055_,
-        BlockPos p_277825_,
-        List<StructureTemplate.StructureBlockInfo> p_277746_,
-        List<StructureTemplate.StructureBlockInfo> p_277676_,
-        StructurePlaceSettings p_277728_
+        ServerLevelAccessor serverLevel,
+        BlockPos offset,
+        BlockPos pos,
+        List<StructureTemplate.StructureBlockInfo> originalBlockInfos,
+        List<StructureTemplate.StructureBlockInfo> processedBlockInfos,
+        StructurePlaceSettings settings
     ) {
-        if (this.limit.getMaxValue() != 0 && !p_277676_.isEmpty()) {
-            if (p_277746_.size() != p_277676_.size()) {
+        if (this.limit.getMaxValue() != 0 && !processedBlockInfos.isEmpty()) {
+            if (originalBlockInfos.size() != processedBlockInfos.size()) {
                 Util.logAndPauseIfInIde(
                     "Original block info list not in sync with processed list, skipping processing. Original size: "
-                        + p_277746_.size()
+                        + originalBlockInfos.size()
                         + ", Processed size: "
-                        + p_277676_.size()
+                        + processedBlockInfos.size()
                 );
-                return p_277676_;
+                return processedBlockInfos;
             } else {
-                RandomSource randomsource = RandomSource.create(p_278291_.getLevel().getSeed()).forkPositional().at(p_278055_);
-                int i = Math.min(this.limit.sample(randomsource), p_277676_.size());
+                RandomSource randomsource = RandomSource.create(serverLevel.getLevel().getSeed()).forkPositional().at(offset);
+                int i = Math.min(this.limit.sample(randomsource), processedBlockInfos.size());
                 if (i < 1) {
-                    return p_277676_;
+                    return processedBlockInfos;
                 } else {
-                    IntArrayList intarraylist = Util.toShuffledList(IntStream.range(0, p_277676_.size()), randomsource);
+                    IntArrayList intarraylist = Util.toShuffledList(IntStream.range(0, processedBlockInfos.size()), randomsource);
                     IntIterator intiterator = intarraylist.intIterator();
                     int j = 0;
 
                     while (intiterator.hasNext() && j < i) {
                         int k = intiterator.nextInt();
-                        StructureTemplate.StructureBlockInfo structuretemplate$structureblockinfo = p_277746_.get(k);
-                        StructureTemplate.StructureBlockInfo structuretemplate$structureblockinfo1 = p_277676_.get(k);
+                        StructureTemplate.StructureBlockInfo structuretemplate$structureblockinfo = originalBlockInfos.get(k);
+                        StructureTemplate.StructureBlockInfo structuretemplate$structureblockinfo1 = processedBlockInfos.get(k);
                         StructureTemplate.StructureBlockInfo structuretemplate$structureblockinfo2 = this.delegate
                             .processBlock(
-                                p_278291_, p_278055_, p_277825_, structuretemplate$structureblockinfo, structuretemplate$structureblockinfo1, p_277728_
+                                serverLevel, offset, pos, structuretemplate$structureblockinfo, structuretemplate$structureblockinfo1, settings
                             );
                         if (structuretemplate$structureblockinfo2 != null
                             && !structuretemplate$structureblockinfo1.equals(structuretemplate$structureblockinfo2)) {
                             j++;
-                            p_277676_.set(k, structuretemplate$structureblockinfo2);
+                            processedBlockInfos.set(k, structuretemplate$structureblockinfo2);
                         }
                     }
 
-                    return p_277676_;
+                    return processedBlockInfos;
                 }
             }
         } else {
-            return p_277676_;
+            return processedBlockInfos;
         }
     }
 }

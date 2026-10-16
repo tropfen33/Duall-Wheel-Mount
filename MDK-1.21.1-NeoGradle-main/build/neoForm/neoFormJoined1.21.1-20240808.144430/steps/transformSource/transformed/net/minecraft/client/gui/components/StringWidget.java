@@ -14,26 +14,26 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class StringWidget extends AbstractStringWidget {
     private float alignX = 0.5F;
 
-    public StringWidget(Component p_268211_, Font p_267963_) {
-        this(0, 0, p_267963_.width(p_268211_.getVisualOrderText()), 9, p_268211_, p_267963_);
+    public StringWidget(Component message, Font font) {
+        this(0, 0, font.width(message.getVisualOrderText()), 9, message, font);
     }
 
-    public StringWidget(int p_268183_, int p_268082_, Component p_268069_, Font p_268121_) {
-        this(0, 0, p_268183_, p_268082_, p_268069_, p_268121_);
+    public StringWidget(int width, int height, Component message, Font font) {
+        this(0, 0, width, height, message, font);
     }
 
-    public StringWidget(int p_268199_, int p_268137_, int p_268178_, int p_268169_, Component p_268285_, Font p_268047_) {
-        super(p_268199_, p_268137_, p_268178_, p_268169_, p_268285_, p_268047_);
+    public StringWidget(int x, int y, int width, int height, Component message, Font font) {
+        super(x, y, width, height, message, font);
         this.active = false;
     }
 
-    public StringWidget setColor(int p_270680_) {
-        super.setColor(p_270680_);
+    public StringWidget setColor(int color) {
+        super.setColor(color);
         return this;
     }
 
-    private StringWidget horizontalAlignment(float p_267947_) {
-        this.alignX = p_267947_;
+    private StringWidget horizontalAlignment(float horizontalAlignment) {
+        this.alignX = horizontalAlignment;
         return this;
     }
 
@@ -50,7 +50,7 @@ public class StringWidget extends AbstractStringWidget {
     }
 
     @Override
-    public void renderWidget(GuiGraphics p_281367_, int p_268221_, int p_268001_, float p_268214_) {
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         Component component = this.getMessage();
         Font font = this.getFont();
         int i = this.getWidth();
@@ -58,12 +58,12 @@ public class StringWidget extends AbstractStringWidget {
         int k = this.getX() + Math.round(this.alignX * (float)(i - j));
         int l = this.getY() + (this.getHeight() - 9) / 2;
         FormattedCharSequence formattedcharsequence = j > i ? this.clipText(component, i) : component.getVisualOrderText();
-        p_281367_.drawString(font, formattedcharsequence, k, l, this.getColor());
+        guiGraphics.drawString(font, formattedcharsequence, k, l, this.getColor());
     }
 
-    private FormattedCharSequence clipText(Component p_296006_, int p_295055_) {
+    private FormattedCharSequence clipText(Component message, int width) {
         Font font = this.getFont();
-        FormattedText formattedtext = font.substrByWidth(p_296006_, p_295055_ - font.width(CommonComponents.ELLIPSIS));
+        FormattedText formattedtext = font.substrByWidth(message, width - font.width(CommonComponents.ELLIPSIS));
         return Language.getInstance().getVisualOrder(FormattedText.composite(formattedtext, CommonComponents.ELLIPSIS));
     }
 }

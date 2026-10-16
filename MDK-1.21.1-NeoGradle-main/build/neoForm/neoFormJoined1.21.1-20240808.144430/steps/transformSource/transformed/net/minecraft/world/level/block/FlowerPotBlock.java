@@ -44,10 +44,10 @@ public class FlowerPotBlock extends Block {
     }
 
     @Deprecated // Mods should use the constructor below
-    public FlowerPotBlock(Block p_53528_, BlockBehaviour.Properties p_53529_) {
-        this(Blocks.FLOWER_POT == null ? null : () -> (FlowerPotBlock) Blocks.FLOWER_POT, () -> p_53528_, p_53529_);
+    public FlowerPotBlock(Block potted, BlockBehaviour.Properties properties) {
+        this(Blocks.FLOWER_POT == null ? null : () -> (FlowerPotBlock) Blocks.FLOWER_POT, () -> potted, properties);
         if (Blocks.FLOWER_POT != null) {
-            ((FlowerPotBlock)Blocks.FLOWER_POT).addPlant(net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(p_53528_), () -> this);
+            ((FlowerPotBlock)Blocks.FLOWER_POT).addPlant(net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(potted), () -> this);
         }
     }
 
@@ -71,15 +71,15 @@ public class FlowerPotBlock extends Block {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_53556_, BlockGetter p_53557_, BlockPos p_53558_, CollisionContext p_53559_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
     @Override
     protected ItemInteractionResult useItemOn(
-        ItemStack p_316610_, BlockState p_316240_, Level p_316456_, BlockPos p_316502_, Player p_316491_, InteractionHand p_316444_, BlockHitResult p_316826_
+        ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult
     ) {
-        BlockState blockstate = (p_316610_.getItem() instanceof BlockItem blockitem
+        BlockState blockstate = (stack.getItem() instanceof BlockItem blockitem
                 ? getEmptyPot().fullPots.getOrDefault(net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(blockitem.getBlock()), () -> Blocks.AIR).get()
                 : Blocks.AIR)
             .defaultBlockState();
@@ -88,44 +88,49 @@ public class FlowerPotBlock extends Block {
         } else if (!this.isEmpty()) {
             return ItemInteractionResult.CONSUME;
         } else {
-            p_316456_.setBlock(p_316502_, blockstate, 3);
-            p_316456_.gameEvent(p_316491_, GameEvent.BLOCK_CHANGE, p_316502_);
-            p_316491_.awardStat(Stats.POT_FLOWER);
-            p_316610_.consume(1, p_316491_);
-            return ItemInteractionResult.sidedSuccess(p_316456_.isClientSide);
+            level.setBlock(pos, blockstate, 3);
+            level.gameEvent(player, GameEvent.BLOCK_CHANGE, pos);
+            player.awardStat(Stats.POT_FLOWER);
+            stack.consume(1, player);
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_316363_, Level p_316655_, BlockPos p_316654_, Player p_316338_, BlockHitResult p_316518_) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
         if (this.isEmpty()) {
             return InteractionResult.CONSUME;
         } else {
             ItemStack itemstack = new ItemStack(this.potted);
-            if (!p_316338_.addItem(itemstack)) {
-                p_316338_.drop(itemstack, false);
+            if (!player.addItem(itemstack)) {
+                player.drop(itemstack, false);
             }
 
-            p_316655_.setBlock(p_316654_, getEmptyPot().defaultBlockState(), 3);
-            p_316655_.gameEvent(p_316338_, GameEvent.BLOCK_CHANGE, p_316654_);
-            return InteractionResult.sidedSuccess(p_316655_.isClientSide);
+            level.setBlock(pos, getEmptyPot().defaultBlockState(), 3);
+            level.gameEvent(player, GameEvent.BLOCK_CHANGE, pos);
+            return InteractionResult.sidedSuccess(level.isClientSide);
         }
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader p_304505_, BlockPos p_53532_, BlockState p_53533_) {
-        return this.isEmpty() ? super.getCloneItemStack(p_304505_, p_53532_, p_53533_) : new ItemStack(this.potted);
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
+        return this.isEmpty() ? super.getCloneItemStack(level, pos, state) : new ItemStack(this.potted);
     }
 
     private boolean isEmpty() {
         return this.potted == Blocks.AIR;
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_53547_, Direction p_53548_, BlockState p_53549_, LevelAccessor p_53550_, BlockPos p_53551_, BlockPos p_53552_) {
-        return p_53548_ == Direction.DOWN && !p_53547_.canSurvive(p_53550_, p_53551_)
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return facing == Direction.DOWN && !state.canSurvive(level, currentPos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_53547_, p_53548_, p_53549_, p_53550_, p_53551_, p_53552_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     public Block getPotted() {
@@ -133,7 +138,7 @@ public class FlowerPotBlock extends Block {
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_53535_, PathComputationType p_53538_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 

@@ -7,12 +7,12 @@ public abstract class OptionalDispenseItemBehavior extends DefaultDispenseItemBe
         return this.success;
     }
 
-    public void setSuccess(boolean p_123574_) {
-        this.success = p_123574_;
+    public void setSuccess(boolean success) {
+        this.success = success;
     }
 
     @Override
-    protected void playSound(BlockSource p_302438_) {
-        p_302438_.level().levelEvent(this.isSuccess() ? 1000 : 1001, p_302438_.pos(), 0);
+    protected void playSound(BlockSource blockSource) {
+        blockSource.level().levelEvent(this.isSuccess() ? 1000 : 1001, blockSource.pos(), 0);
     }
 }

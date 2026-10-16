@@ -105,8 +105,8 @@ public class LevelDataGeneratorOptionsFix extends DataFix {
     });
     public static final String GENERATOR_OPTIONS = "generatorOptions";
 
-    public LevelDataGeneratorOptionsFix(Schema p_16309_, boolean p_16310_) {
-        super(p_16309_, p_16310_);
+    public LevelDataGeneratorOptionsFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -131,12 +131,12 @@ public class LevelDataGeneratorOptionsFix extends DataFix {
         );
     }
 
-    private static <T> Dynamic<T> convert(String p_16327_, DynamicOps<T> p_16328_) {
-        Iterator<String> iterator = Splitter.on(';').split(p_16327_).iterator();
+    private static <T> Dynamic<T> convert(String generatorOptions, DynamicOps<T> ops) {
+        Iterator<String> iterator = Splitter.on(';').split(generatorOptions).iterator();
         String s = "minecraft:plains";
         Map<String, Map<String, String>> map = Maps.newHashMap();
         List<Pair<Integer, String>> list;
-        if (!p_16327_.isEmpty() && iterator.hasNext()) {
+        if (!generatorOptions.isEmpty() && iterator.hasNext()) {
             list = getLayersInfoFromString(iterator.next());
             if (!list.isEmpty()) {
                 if (iterator.hasNext()) {
@@ -174,30 +174,30 @@ public class LevelDataGeneratorOptionsFix extends DataFix {
             map.put("village", Maps.newHashMap());
         }
 
-        T t = p_16328_.createList(
+        T t = ops.createList(
             list.stream()
                 .map(
-                    p_16320_ -> p_16328_.createMap(
+                    p_16320_ -> ops.createMap(
                             ImmutableMap.of(
-                                p_16328_.createString("height"),
-                                p_16328_.createInt(p_16320_.getFirst()),
-                                p_16328_.createString("block"),
-                                p_16328_.createString(p_16320_.getSecond())
+                                ops.createString("height"),
+                                ops.createInt(p_16320_.getFirst()),
+                                ops.createString("block"),
+                                ops.createString(p_16320_.getSecond())
                             )
                         )
                 )
         );
-        T t1 = p_16328_.createMap(
+        T t1 = ops.createMap(
             map.entrySet()
                 .stream()
                 .map(
                     p_16323_ -> Pair.of(
-                            p_16328_.createString(p_16323_.getKey().toLowerCase(Locale.ROOT)),
-                            p_16328_.createMap(
+                            ops.createString(p_16323_.getKey().toLowerCase(Locale.ROOT)),
+                            ops.createMap(
                                 p_16323_.getValue()
                                     .entrySet()
                                     .stream()
-                                    .map(p_145487_ -> Pair.of(p_16328_.createString(p_145487_.getKey()), p_16328_.createString(p_145487_.getValue())))
+                                    .map(p_145487_ -> Pair.of(ops.createString(p_145487_.getKey()), ops.createString(p_145487_.getValue())))
                                     .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond))
                             )
                         )
@@ -205,18 +205,18 @@ public class LevelDataGeneratorOptionsFix extends DataFix {
                 .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond))
         );
         return new Dynamic<>(
-            p_16328_,
-            p_16328_.createMap(
+            ops,
+            ops.createMap(
                 ImmutableMap.of(
-                    p_16328_.createString("layers"), t, p_16328_.createString("biome"), p_16328_.createString(s), p_16328_.createString("structures"), t1
+                    ops.createString("layers"), t, ops.createString("biome"), ops.createString(s), ops.createString("structures"), t1
                 )
             )
         );
     }
 
     @Nullable
-    private static Pair<Integer, String> getLayerInfoFromString(String p_16325_) {
-        String[] astring = p_16325_.split("\\*", 2);
+    private static Pair<Integer, String> getLayerInfoFromString(String layer) {
+        String[] astring = layer.split("\\*", 2);
         int i;
         if (astring.length == 2) {
             try {
@@ -232,9 +232,9 @@ public class LevelDataGeneratorOptionsFix extends DataFix {
         return Pair.of(i, s);
     }
 
-    private static List<Pair<Integer, String>> getLayersInfoFromString(String p_16335_) {
+    private static List<Pair<Integer, String>> getLayersInfoFromString(String layers) {
         List<Pair<Integer, String>> list = Lists.newArrayList();
-        String[] astring = p_16335_.split(",");
+        String[] astring = layers.split(",");
 
         for (String s : astring) {
             Pair<Integer, String> pair = getLayerInfoFromString(s);

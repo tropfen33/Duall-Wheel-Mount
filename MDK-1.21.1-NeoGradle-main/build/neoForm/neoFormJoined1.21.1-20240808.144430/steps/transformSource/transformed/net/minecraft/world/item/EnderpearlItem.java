@@ -10,33 +10,36 @@ import net.minecraft.world.entity.projectile.ThrownEnderpearl;
 import net.minecraft.world.level.Level;
 
 public class EnderpearlItem extends Item {
-    public EnderpearlItem(Item.Properties p_41188_) {
-        super(p_41188_);
+    public EnderpearlItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_41190_, Player p_41191_, InteractionHand p_41192_) {
-        ItemStack itemstack = p_41191_.getItemInHand(p_41192_);
-        p_41190_.playSound(
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack itemstack = player.getItemInHand(hand);
+        level.playSound(
             null,
-            p_41191_.getX(),
-            p_41191_.getY(),
-            p_41191_.getZ(),
+            player.getX(),
+            player.getY(),
+            player.getZ(),
             SoundEvents.ENDER_PEARL_THROW,
             SoundSource.NEUTRAL,
             0.5F,
-            0.4F / (p_41190_.getRandom().nextFloat() * 0.4F + 0.8F)
+            0.4F / (level.getRandom().nextFloat() * 0.4F + 0.8F)
         );
-        p_41191_.getCooldowns().addCooldown(this, 20);
-        if (!p_41190_.isClientSide) {
-            ThrownEnderpearl thrownenderpearl = new ThrownEnderpearl(p_41190_, p_41191_);
+        player.getCooldowns().addCooldown(this, 20);
+        if (!level.isClientSide) {
+            ThrownEnderpearl thrownenderpearl = new ThrownEnderpearl(level, player);
             thrownenderpearl.setItem(itemstack);
-            thrownenderpearl.shootFromRotation(p_41191_, p_41191_.getXRot(), p_41191_.getYRot(), 0.0F, 1.5F, 1.0F);
-            p_41190_.addFreshEntity(thrownenderpearl);
+            thrownenderpearl.shootFromRotation(player, player.getXRot(), player.getYRot(), 0.0F, 1.5F, 1.0F);
+            level.addFreshEntity(thrownenderpearl);
         }
 
-        p_41191_.awardStat(Stats.ITEM_USED.get(this));
-        itemstack.consume(1, p_41191_);
-        return InteractionResultHolder.sidedSuccess(itemstack, p_41190_.isClientSide());
+        player.awardStat(Stats.ITEM_USED.get(this));
+        itemstack.consume(1, player);
+        return InteractionResultHolder.sidedSuccess(itemstack, level.isClientSide());
     }
 }

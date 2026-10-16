@@ -19,53 +19,53 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class BeeStingerLayer<T extends LivingEntity, M extends PlayerModel<T>> extends StuckInBodyLayer<T, M> {
     private static final ResourceLocation BEE_STINGER_LOCATION = ResourceLocation.withDefaultNamespace("textures/entity/bee/bee_stinger.png");
 
-    public BeeStingerLayer(LivingEntityRenderer<T, M> p_116580_) {
-        super(p_116580_);
+    public BeeStingerLayer(LivingEntityRenderer<T, M> renderer) {
+        super(renderer);
     }
 
     @Override
-    protected int numStuck(T p_116582_) {
-        return p_116582_.getStingerCount();
+    protected int numStuck(T entity) {
+        return entity.getStingerCount();
     }
 
     @Override
     protected void renderStuckItem(
-        PoseStack p_116584_, MultiBufferSource p_116585_, int p_116586_, Entity p_116587_, float p_116588_, float p_116589_, float p_116590_, float p_116591_
+        PoseStack poseStack, MultiBufferSource buffer, int packedLight, Entity entity, float x, float y, float z, float partialTick
     ) {
-        float f = Mth.sqrt(p_116588_ * p_116588_ + p_116590_ * p_116590_);
-        float f1 = (float)(Math.atan2((double)p_116588_, (double)p_116590_) * 180.0F / (float)Math.PI);
-        float f2 = (float)(Math.atan2((double)p_116589_, (double)f) * 180.0F / (float)Math.PI);
-        p_116584_.translate(0.0F, 0.0F, 0.0F);
-        p_116584_.mulPose(Axis.YP.rotationDegrees(f1 - 90.0F));
-        p_116584_.mulPose(Axis.ZP.rotationDegrees(f2));
+        float f = Mth.sqrt(x * x + z * z);
+        float f1 = (float)(Math.atan2((double)x, (double)z) * 180.0F / (float)Math.PI);
+        float f2 = (float)(Math.atan2((double)y, (double)f) * 180.0F / (float)Math.PI);
+        poseStack.translate(0.0F, 0.0F, 0.0F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(f1 - 90.0F));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(f2));
         float f3 = 0.0F;
         float f4 = 0.125F;
         float f5 = 0.0F;
         float f6 = 0.0625F;
         float f7 = 0.03125F;
-        p_116584_.mulPose(Axis.XP.rotationDegrees(45.0F));
-        p_116584_.scale(0.03125F, 0.03125F, 0.03125F);
-        p_116584_.translate(2.5F, 0.0F, 0.0F);
-        VertexConsumer vertexconsumer = p_116585_.getBuffer(RenderType.entityCutoutNoCull(BEE_STINGER_LOCATION));
+        poseStack.mulPose(Axis.XP.rotationDegrees(45.0F));
+        poseStack.scale(0.03125F, 0.03125F, 0.03125F);
+        poseStack.translate(2.5F, 0.0F, 0.0F);
+        VertexConsumer vertexconsumer = buffer.getBuffer(RenderType.entityCutoutNoCull(BEE_STINGER_LOCATION));
 
         for (int i = 0; i < 4; i++) {
-            p_116584_.mulPose(Axis.XP.rotationDegrees(90.0F));
-            PoseStack.Pose posestack$pose = p_116584_.last();
-            vertex(vertexconsumer, posestack$pose, -4.5F, -1, 0.0F, 0.0F, p_116586_);
-            vertex(vertexconsumer, posestack$pose, 4.5F, -1, 0.125F, 0.0F, p_116586_);
-            vertex(vertexconsumer, posestack$pose, 4.5F, 1, 0.125F, 0.0625F, p_116586_);
-            vertex(vertexconsumer, posestack$pose, -4.5F, 1, 0.0F, 0.0625F, p_116586_);
+            poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+            PoseStack.Pose posestack$pose = poseStack.last();
+            vertex(vertexconsumer, posestack$pose, -4.5F, -1, 0.0F, 0.0F, packedLight);
+            vertex(vertexconsumer, posestack$pose, 4.5F, -1, 0.125F, 0.0F, packedLight);
+            vertex(vertexconsumer, posestack$pose, 4.5F, 1, 0.125F, 0.0625F, packedLight);
+            vertex(vertexconsumer, posestack$pose, -4.5F, 1, 0.0F, 0.0625F, packedLight);
         }
     }
 
     private static void vertex(
-        VertexConsumer p_254470_, PoseStack.Pose p_324141_, float p_253749_, int p_254520_, float p_254099_, float p_253914_, int p_254168_
+        VertexConsumer consumer, PoseStack.Pose pose, float x, int y, float u, float v, int packedLight
     ) {
-        p_254470_.addVertex(p_324141_, p_253749_, (float)p_254520_, 0.0F)
+        consumer.addVertex(pose, x, (float)y, 0.0F)
             .setColor(-1)
-            .setUv(p_254099_, p_253914_)
+            .setUv(u, v)
             .setOverlay(OverlayTexture.NO_OVERLAY)
-            .setLight(p_254168_)
-            .setNormal(p_324141_, 0.0F, 1.0F, 0.0F);
+            .setLight(packedLight)
+            .setNormal(pose, 0.0F, 1.0F, 0.0F);
     }
 }

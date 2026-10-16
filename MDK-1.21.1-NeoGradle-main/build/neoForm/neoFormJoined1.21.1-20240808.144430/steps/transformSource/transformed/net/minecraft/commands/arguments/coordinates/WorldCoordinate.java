@@ -12,29 +12,29 @@ public class WorldCoordinate {
     private final boolean relative;
     private final double value;
 
-    public WorldCoordinate(boolean p_120864_, double p_120865_) {
-        this.relative = p_120864_;
-        this.value = p_120865_;
+    public WorldCoordinate(boolean relative, double value) {
+        this.relative = relative;
+        this.value = value;
     }
 
-    public double get(double p_120868_) {
-        return this.relative ? this.value + p_120868_ : this.value;
+    public double get(double coord) {
+        return this.relative ? this.value + coord : this.value;
     }
 
-    public static WorldCoordinate parseDouble(StringReader p_120872_, boolean p_120873_) throws CommandSyntaxException {
-        if (p_120872_.canRead() && p_120872_.peek() == '^') {
-            throw Vec3Argument.ERROR_MIXED_TYPE.createWithContext(p_120872_);
-        } else if (!p_120872_.canRead()) {
-            throw ERROR_EXPECTED_DOUBLE.createWithContext(p_120872_);
+    public static WorldCoordinate parseDouble(StringReader reader, boolean centerCorrect) throws CommandSyntaxException {
+        if (reader.canRead() && reader.peek() == '^') {
+            throw Vec3Argument.ERROR_MIXED_TYPE.createWithContext(reader);
+        } else if (!reader.canRead()) {
+            throw ERROR_EXPECTED_DOUBLE.createWithContext(reader);
         } else {
-            boolean flag = isRelative(p_120872_);
-            int i = p_120872_.getCursor();
-            double d0 = p_120872_.canRead() && p_120872_.peek() != ' ' ? p_120872_.readDouble() : 0.0;
-            String s = p_120872_.getString().substring(i, p_120872_.getCursor());
+            boolean flag = isRelative(reader);
+            int i = reader.getCursor();
+            double d0 = reader.canRead() && reader.peek() != ' ' ? reader.readDouble() : 0.0;
+            String s = reader.getString().substring(i, reader.getCursor());
             if (flag && s.isEmpty()) {
                 return new WorldCoordinate(true, 0.0);
             } else {
-                if (!s.contains(".") && !flag && p_120873_) {
+                if (!s.contains(".") && !flag && centerCorrect) {
                     d0 += 0.5;
                 }
 
@@ -43,16 +43,16 @@ public class WorldCoordinate {
         }
     }
 
-    public static WorldCoordinate parseInt(StringReader p_120870_) throws CommandSyntaxException {
-        if (p_120870_.canRead() && p_120870_.peek() == '^') {
-            throw Vec3Argument.ERROR_MIXED_TYPE.createWithContext(p_120870_);
-        } else if (!p_120870_.canRead()) {
-            throw ERROR_EXPECTED_INT.createWithContext(p_120870_);
+    public static WorldCoordinate parseInt(StringReader reader) throws CommandSyntaxException {
+        if (reader.canRead() && reader.peek() == '^') {
+            throw Vec3Argument.ERROR_MIXED_TYPE.createWithContext(reader);
+        } else if (!reader.canRead()) {
+            throw ERROR_EXPECTED_INT.createWithContext(reader);
         } else {
-            boolean flag = isRelative(p_120870_);
+            boolean flag = isRelative(reader);
             double d0;
-            if (p_120870_.canRead() && p_120870_.peek() != ' ') {
-                d0 = flag ? p_120870_.readDouble() : (double)p_120870_.readInt();
+            if (reader.canRead() && reader.peek() != ' ') {
+                d0 = flag ? reader.readDouble() : (double)reader.readInt();
             } else {
                 d0 = 0.0;
             }
@@ -61,11 +61,11 @@ public class WorldCoordinate {
         }
     }
 
-    public static boolean isRelative(StringReader p_120875_) {
+    public static boolean isRelative(StringReader reader) {
         boolean flag;
-        if (p_120875_.peek() == '~') {
+        if (reader.peek() == '~') {
             flag = true;
-            p_120875_.skip();
+            reader.skip();
         } else {
             flag = false;
         }
@@ -74,10 +74,10 @@ public class WorldCoordinate {
     }
 
     @Override
-    public boolean equals(Object p_120877_) {
-        if (this == p_120877_) {
+    public boolean equals(Object other) {
+        if (this == other) {
             return true;
-        } else if (!(p_120877_ instanceof WorldCoordinate worldcoordinate)) {
+        } else if (!(other instanceof WorldCoordinate worldcoordinate)) {
             return false;
         } else {
             return this.relative != worldcoordinate.relative ? false : Double.compare(worldcoordinate.value, this.value) == 0;

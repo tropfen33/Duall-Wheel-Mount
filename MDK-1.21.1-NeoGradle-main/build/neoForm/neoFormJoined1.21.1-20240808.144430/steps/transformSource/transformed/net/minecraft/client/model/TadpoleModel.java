@@ -17,10 +17,10 @@ public class TadpoleModel<T extends Tadpole> extends AgeableListModel<T> {
     private final ModelPart root;
     private final ModelPart tail;
 
-    public TadpoleModel(ModelPart p_233443_) {
+    public TadpoleModel(ModelPart root) {
         super(true, 8.0F, 3.35F);
-        this.root = p_233443_;
-        this.tail = p_233443_.getChild("tail");
+        this.root = root;
+        this.tail = root.getChild("tail");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -48,8 +48,11 @@ public class TadpoleModel<T extends Tadpole> extends AgeableListModel<T> {
         return ImmutableList.of(this.tail);
     }
 
-    public void setupAnim(T p_233453_, float p_233454_, float p_233455_, float p_233456_, float p_233457_, float p_233458_) {
-        float f = p_233453_.isInWater() ? 1.0F : 1.5F;
-        this.tail.yRot = -f * 0.25F * Mth.sin(0.3F * p_233456_);
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        float f = entity.isInWater() ? 1.0F : 1.5F;
+        this.tail.yRot = -f * 0.25F * Mth.sin(0.3F * ageInTicks);
     }
 }

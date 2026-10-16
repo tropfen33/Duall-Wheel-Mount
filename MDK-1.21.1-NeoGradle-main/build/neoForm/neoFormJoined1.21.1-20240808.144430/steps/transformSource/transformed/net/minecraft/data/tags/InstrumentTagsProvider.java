@@ -9,17 +9,22 @@ import net.minecraft.world.item.Instrument;
 import net.minecraft.world.item.Instruments;
 
 public class InstrumentTagsProvider extends TagsProvider<Instrument> {
-    /** @deprecated Forge: Use the {@linkplain #InstrumentTagsProvider(PackOutput, CompletableFuture, String, net.neoforged.neoforge.common.data.ExistingFileHelper) mod id variant} */
+    /**
+ * @deprecated Forge: Use the {@linkplain #InstrumentTagsProvider(PackOutput,
+ *             CompletableFuture, String,
+ *             net.neoforged.neoforge.common.data.ExistingFileHelper) mod id
+ *             variant}
+ */
     @Deprecated
-    public InstrumentTagsProvider(PackOutput p_256418_, CompletableFuture<HolderLookup.Provider> p_256038_) {
-        super(p_256418_, Registries.INSTRUMENT, p_256038_);
+    public InstrumentTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider) {
+        super(output, Registries.INSTRUMENT, provider);
     }
-    public InstrumentTagsProvider(PackOutput p_256418_, CompletableFuture<HolderLookup.Provider> p_256038_, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
-        super(p_256418_, Registries.INSTRUMENT, p_256038_, modId, existingFileHelper);
+    public InstrumentTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> provider, String modId, @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper) {
+        super(output, Registries.INSTRUMENT, provider, modId, existingFileHelper);
     }
 
     @Override
-    protected void addTags(HolderLookup.Provider p_256291_) {
+    protected void addTags(HolderLookup.Provider provider) {
         this.tag(InstrumentTags.REGULAR_GOAT_HORNS)
             .add(Instruments.PONDER_GOAT_HORN)
             .add(Instruments.SING_GOAT_HORN)

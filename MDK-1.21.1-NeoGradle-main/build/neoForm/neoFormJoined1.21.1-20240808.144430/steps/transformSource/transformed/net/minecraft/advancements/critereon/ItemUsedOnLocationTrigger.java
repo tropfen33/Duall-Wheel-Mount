@@ -28,17 +28,17 @@ public class ItemUsedOnLocationTrigger extends SimpleCriterionTrigger<ItemUsedOn
         return ItemUsedOnLocationTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_286813_, BlockPos p_286625_, ItemStack p_286620_) {
-        ServerLevel serverlevel = p_286813_.serverLevel();
-        BlockState blockstate = serverlevel.getBlockState(p_286625_);
+    public void trigger(ServerPlayer player, BlockPos pos, ItemStack stack) {
+        ServerLevel serverlevel = player.serverLevel();
+        BlockState blockstate = serverlevel.getBlockState(pos);
         LootParams lootparams = new LootParams.Builder(serverlevel)
-            .withParameter(LootContextParams.ORIGIN, p_286625_.getCenter())
-            .withParameter(LootContextParams.THIS_ENTITY, p_286813_)
+            .withParameter(LootContextParams.ORIGIN, pos.getCenter())
+            .withParameter(LootContextParams.THIS_ENTITY, player)
             .withParameter(LootContextParams.BLOCK_STATE, blockstate)
-            .withParameter(LootContextParams.TOOL, p_286620_)
+            .withParameter(LootContextParams.TOOL, stack)
             .create(LootContextParamSets.ADVANCEMENT_LOCATION);
         LootContext lootcontext = new LootContext.Builder(lootparams).create(Optional.empty());
-        this.trigger(p_286813_, p_286596_ -> p_286596_.matches(lootcontext));
+        this.trigger(player, p_286596_ -> p_286596_.matches(lootcontext));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, Optional<ContextAwarePredicate> location)
@@ -51,47 +51,47 @@ public class ItemUsedOnLocationTrigger extends SimpleCriterionTrigger<ItemUsedOn
                     .apply(p_337372_, ItemUsedOnLocationTrigger.TriggerInstance::new)
         );
 
-        public static Criterion<ItemUsedOnLocationTrigger.TriggerInstance> placedBlock(Block p_301158_) {
+        public static Criterion<ItemUsedOnLocationTrigger.TriggerInstance> placedBlock(Block block) {
             ContextAwarePredicate contextawarepredicate = ContextAwarePredicate.create(
-                LootItemBlockStatePropertyCondition.hasBlockStateProperties(p_301158_).build()
+                LootItemBlockStatePropertyCondition.hasBlockStateProperties(block).build()
             );
             return CriteriaTriggers.PLACED_BLOCK
                 .createCriterion(new ItemUsedOnLocationTrigger.TriggerInstance(Optional.empty(), Optional.of(contextawarepredicate)));
         }
 
-        public static Criterion<ItemUsedOnLocationTrigger.TriggerInstance> placedBlock(LootItemCondition.Builder... p_301013_) {
+        public static Criterion<ItemUsedOnLocationTrigger.TriggerInstance> placedBlock(LootItemCondition.Builder... conditions) {
             ContextAwarePredicate contextawarepredicate = ContextAwarePredicate.create(
-                Arrays.stream(p_301013_).map(LootItemCondition.Builder::build).toArray(LootItemCondition[]::new)
+                Arrays.stream(conditions).map(LootItemCondition.Builder::build).toArray(LootItemCondition[]::new)
             );
             return CriteriaTriggers.PLACED_BLOCK
                 .createCriterion(new ItemUsedOnLocationTrigger.TriggerInstance(Optional.empty(), Optional.of(contextawarepredicate)));
         }
 
-        private static ItemUsedOnLocationTrigger.TriggerInstance itemUsedOnLocation(LocationPredicate.Builder p_286740_, ItemPredicate.Builder p_286777_) {
+        private static ItemUsedOnLocationTrigger.TriggerInstance itemUsedOnLocation(LocationPredicate.Builder location, ItemPredicate.Builder tool) {
             ContextAwarePredicate contextawarepredicate = ContextAwarePredicate.create(
-                LocationCheck.checkLocation(p_286740_).build(), MatchTool.toolMatches(p_286777_).build()
+                LocationCheck.checkLocation(location).build(), MatchTool.toolMatches(tool).build()
             );
             return new ItemUsedOnLocationTrigger.TriggerInstance(Optional.empty(), Optional.of(contextawarepredicate));
         }
 
-        public static Criterion<ItemUsedOnLocationTrigger.TriggerInstance> itemUsedOnBlock(LocationPredicate.Builder p_286808_, ItemPredicate.Builder p_286486_) {
-            return CriteriaTriggers.ITEM_USED_ON_BLOCK.createCriterion(itemUsedOnLocation(p_286808_, p_286486_));
+        public static Criterion<ItemUsedOnLocationTrigger.TriggerInstance> itemUsedOnBlock(LocationPredicate.Builder location, ItemPredicate.Builder tool) {
+            return CriteriaTriggers.ITEM_USED_ON_BLOCK.createCriterion(itemUsedOnLocation(location, tool));
         }
 
         public static Criterion<ItemUsedOnLocationTrigger.TriggerInstance> allayDropItemOnBlock(
-            LocationPredicate.Builder p_286325_, ItemPredicate.Builder p_286531_
+            LocationPredicate.Builder location, ItemPredicate.Builder tool
         ) {
-            return CriteriaTriggers.ALLAY_DROP_ITEM_ON_BLOCK.createCriterion(itemUsedOnLocation(p_286325_, p_286531_));
+            return CriteriaTriggers.ALLAY_DROP_ITEM_ON_BLOCK.createCriterion(itemUsedOnLocation(location, tool));
         }
 
-        public boolean matches(LootContext p_286800_) {
-            return this.location.isEmpty() || this.location.get().matches(p_286800_);
+        public boolean matches(LootContext context) {
+            return this.location.isEmpty() || this.location.get().matches(context);
         }
 
         @Override
-        public void validate(CriterionValidator p_312228_) {
-            SimpleCriterionTrigger.SimpleInstance.super.validate(p_312228_);
-            this.location.ifPresent(p_311427_ -> p_312228_.validate(p_311427_, LootContextParamSets.ADVANCEMENT_LOCATION, ".location"));
+        public void validate(CriterionValidator validator) {
+            SimpleCriterionTrigger.SimpleInstance.super.validate(validator);
+            this.location.ifPresent(p_311427_ -> validator.validate(p_311427_, LootContextParamSets.ADVANCEMENT_LOCATION, ".location"));
         }
     }
 }

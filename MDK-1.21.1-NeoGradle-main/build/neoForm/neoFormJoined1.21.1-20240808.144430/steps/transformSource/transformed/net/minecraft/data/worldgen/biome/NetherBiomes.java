@@ -25,7 +25,7 @@ import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 public class NetherBiomes {
-    public static Biome netherWastes(HolderGetter<PlacedFeature> p_255840_, HolderGetter<ConfiguredWorldCarver<?>> p_255956_) {
+    public static Biome netherWastes(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> worldCarvers) {
         MobSpawnSettings mobspawnsettings = new MobSpawnSettings.Builder()
             .addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(EntityType.GHAST, 50, 4, 4))
             .addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(EntityType.ZOMBIFIED_PIGLIN, 100, 4, 4))
@@ -34,7 +34,7 @@ public class NetherBiomes {
             .addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(EntityType.PIGLIN, 15, 4, 4))
             .addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(EntityType.STRIDER, 60, 1, 2))
             .build();
-        BiomeGenerationSettings.Builder biomegenerationsettings$builder = new BiomeGenerationSettings.Builder(p_255840_, p_255956_)
+        BiomeGenerationSettings.Builder biomegenerationsettings$builder = new BiomeGenerationSettings.Builder(placedFeatures, worldCarvers)
             .addCarver(GenerationStep.Carving.AIR, Carvers.NETHER_CAVE)
             .addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, MiscOverworldPlacements.SPRING_LAVA);
         BiomeDefaultFeatures.addDefaultMushrooms(biomegenerationsettings$builder);
@@ -69,7 +69,7 @@ public class NetherBiomes {
             .build();
     }
 
-    public static Biome soulSandValley(HolderGetter<PlacedFeature> p_256586_, HolderGetter<ConfiguredWorldCarver<?>> p_256434_) {
+    public static Biome soulSandValley(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> worldCarvers) {
         double d0 = 0.7;
         double d1 = 0.15;
         MobSpawnSettings mobspawnsettings = new MobSpawnSettings.Builder()
@@ -82,7 +82,7 @@ public class NetherBiomes {
             .addMobCharge(EntityType.ENDERMAN, 0.7, 0.15)
             .addMobCharge(EntityType.STRIDER, 0.7, 0.15)
             .build();
-        BiomeGenerationSettings.Builder biomegenerationsettings$builder = new BiomeGenerationSettings.Builder(p_256586_, p_256434_)
+        BiomeGenerationSettings.Builder biomegenerationsettings$builder = new BiomeGenerationSettings.Builder(placedFeatures, worldCarvers)
             .addCarver(GenerationStep.Carving.AIR, Carvers.NETHER_CAVE)
             .addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, MiscOverworldPlacements.SPRING_LAVA)
             .addFeature(GenerationStep.Decoration.LOCAL_MODIFICATIONS, NetherPlacements.BASALT_PILLAR)
@@ -118,13 +118,13 @@ public class NetherBiomes {
             .build();
     }
 
-    public static Biome basaltDeltas(HolderGetter<PlacedFeature> p_255798_, HolderGetter<ConfiguredWorldCarver<?>> p_256227_) {
+    public static Biome basaltDeltas(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> worldCarvers) {
         MobSpawnSettings mobspawnsettings = new MobSpawnSettings.Builder()
             .addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(EntityType.GHAST, 40, 1, 1))
             .addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(EntityType.MAGMA_CUBE, 100, 2, 5))
             .addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(EntityType.STRIDER, 60, 1, 2))
             .build();
-        BiomeGenerationSettings.Builder biomegenerationsettings$builder = new BiomeGenerationSettings.Builder(p_255798_, p_256227_)
+        BiomeGenerationSettings.Builder biomegenerationsettings$builder = new BiomeGenerationSettings.Builder(placedFeatures, worldCarvers)
             .addCarver(GenerationStep.Carving.AIR, Carvers.NETHER_CAVE)
             .addFeature(GenerationStep.Decoration.SURFACE_STRUCTURES, NetherPlacements.DELTA)
             .addFeature(GenerationStep.Decoration.SURFACE_STRUCTURES, NetherPlacements.SMALL_BASALT_COLUMNS)
@@ -165,14 +165,14 @@ public class NetherBiomes {
             .build();
     }
 
-    public static Biome crimsonForest(HolderGetter<PlacedFeature> p_256350_, HolderGetter<ConfiguredWorldCarver<?>> p_256386_) {
+    public static Biome crimsonForest(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> worldCarvers) {
         MobSpawnSettings mobspawnsettings = new MobSpawnSettings.Builder()
             .addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(EntityType.ZOMBIFIED_PIGLIN, 1, 2, 4))
             .addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(EntityType.HOGLIN, 9, 3, 4))
             .addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(EntityType.PIGLIN, 5, 3, 4))
             .addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(EntityType.STRIDER, 60, 1, 2))
             .build();
-        BiomeGenerationSettings.Builder biomegenerationsettings$builder = new BiomeGenerationSettings.Builder(p_256350_, p_256386_)
+        BiomeGenerationSettings.Builder biomegenerationsettings$builder = new BiomeGenerationSettings.Builder(placedFeatures, worldCarvers)
             .addCarver(GenerationStep.Carving.AIR, Carvers.NETHER_CAVE)
             .addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, MiscOverworldPlacements.SPRING_LAVA);
         BiomeDefaultFeatures.addDefaultMushrooms(biomegenerationsettings$builder);
@@ -208,13 +208,13 @@ public class NetherBiomes {
             .build();
     }
 
-    public static Biome warpedForest(HolderGetter<PlacedFeature> p_256156_, HolderGetter<ConfiguredWorldCarver<?>> p_256284_) {
+    public static Biome warpedForest(HolderGetter<PlacedFeature> placedFeatures, HolderGetter<ConfiguredWorldCarver<?>> worldCarvers) {
         MobSpawnSettings mobspawnsettings = new MobSpawnSettings.Builder()
             .addSpawn(MobCategory.MONSTER, new MobSpawnSettings.SpawnerData(EntityType.ENDERMAN, 1, 4, 4))
             .addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(EntityType.STRIDER, 60, 1, 2))
             .addMobCharge(EntityType.ENDERMAN, 1.0, 0.12)
             .build();
-        BiomeGenerationSettings.Builder biomegenerationsettings$builder = new BiomeGenerationSettings.Builder(p_256156_, p_256284_)
+        BiomeGenerationSettings.Builder biomegenerationsettings$builder = new BiomeGenerationSettings.Builder(placedFeatures, worldCarvers)
             .addCarver(GenerationStep.Carving.AIR, Carvers.NETHER_CAVE)
             .addFeature(GenerationStep.Decoration.VEGETAL_DECORATION, MiscOverworldPlacements.SPRING_LAVA);
         BiomeDefaultFeatures.addDefaultMushrooms(biomegenerationsettings$builder);

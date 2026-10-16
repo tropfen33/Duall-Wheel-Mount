@@ -13,87 +13,87 @@ public class RecipeBook {
     protected final Set<ResourceLocation> highlight = Sets.newHashSet();
     private final RecipeBookSettings bookSettings = new RecipeBookSettings();
 
-    public void copyOverData(RecipeBook p_12686_) {
+    public void copyOverData(RecipeBook other) {
         this.known.clear();
         this.highlight.clear();
-        this.bookSettings.replaceFrom(p_12686_.bookSettings);
-        this.known.addAll(p_12686_.known);
-        this.highlight.addAll(p_12686_.highlight);
+        this.bookSettings.replaceFrom(other.bookSettings);
+        this.known.addAll(other.known);
+        this.highlight.addAll(other.highlight);
     }
 
-    public void add(RecipeHolder<?> p_300937_) {
-        if (!p_300937_.value().isSpecial()) {
-            this.add(p_300937_.id());
+    public void add(RecipeHolder<?> recipe) {
+        if (!recipe.value().isSpecial()) {
+            this.add(recipe.id());
         }
     }
 
-    protected void add(ResourceLocation p_12703_) {
-        this.known.add(p_12703_);
+    protected void add(ResourceLocation recipeId) {
+        this.known.add(recipeId);
     }
 
-    public boolean contains(@Nullable RecipeHolder<?> p_300981_) {
-        return p_300981_ == null ? false : this.known.contains(p_300981_.id());
+    public boolean contains(@Nullable RecipeHolder<?> recipe) {
+        return recipe == null ? false : this.known.contains(recipe.id());
     }
 
-    public boolean contains(ResourceLocation p_12712_) {
-        return this.known.contains(p_12712_);
+    public boolean contains(ResourceLocation recipeId) {
+        return this.known.contains(recipeId);
     }
 
-    public void remove(RecipeHolder<?> p_301170_) {
-        this.remove(p_301170_.id());
+    public void remove(RecipeHolder<?> recipe) {
+        this.remove(recipe.id());
     }
 
-    protected void remove(ResourceLocation p_12716_) {
-        this.known.remove(p_12716_);
-        this.highlight.remove(p_12716_);
+    protected void remove(ResourceLocation recipeId) {
+        this.known.remove(recipeId);
+        this.highlight.remove(recipeId);
     }
 
-    public boolean willHighlight(RecipeHolder<?> p_300856_) {
-        return this.highlight.contains(p_300856_.id());
+    public boolean willHighlight(RecipeHolder<?> recipe) {
+        return this.highlight.contains(recipe.id());
     }
 
-    public void removeHighlight(RecipeHolder<?> p_300963_) {
-        this.highlight.remove(p_300963_.id());
+    public void removeHighlight(RecipeHolder<?> recipe) {
+        this.highlight.remove(recipe.id());
     }
 
-    public void addHighlight(RecipeHolder<?> p_300907_) {
-        this.addHighlight(p_300907_.id());
+    public void addHighlight(RecipeHolder<?> recipe) {
+        this.addHighlight(recipe.id());
     }
 
-    protected void addHighlight(ResourceLocation p_12720_) {
-        this.highlight.add(p_12720_);
+    protected void addHighlight(ResourceLocation recipeId) {
+        this.highlight.add(recipeId);
     }
 
-    public boolean isOpen(RecipeBookType p_12692_) {
-        return this.bookSettings.isOpen(p_12692_);
+    public boolean isOpen(RecipeBookType bookType) {
+        return this.bookSettings.isOpen(bookType);
     }
 
-    public void setOpen(RecipeBookType p_12694_, boolean p_12695_) {
-        this.bookSettings.setOpen(p_12694_, p_12695_);
+    public void setOpen(RecipeBookType bookType, boolean open) {
+        this.bookSettings.setOpen(bookType, open);
     }
 
-    public boolean isFiltering(RecipeBookMenu<?, ?> p_12690_) {
-        return this.isFiltering(p_12690_.getRecipeBookType());
+    public boolean isFiltering(RecipeBookMenu<?, ?> bookMenu) {
+        return this.isFiltering(bookMenu.getRecipeBookType());
     }
 
-    public boolean isFiltering(RecipeBookType p_12705_) {
-        return this.bookSettings.isFiltering(p_12705_);
+    public boolean isFiltering(RecipeBookType bookType) {
+        return this.bookSettings.isFiltering(bookType);
     }
 
-    public void setFiltering(RecipeBookType p_12707_, boolean p_12708_) {
-        this.bookSettings.setFiltering(p_12707_, p_12708_);
+    public void setFiltering(RecipeBookType bookType, boolean filtering) {
+        this.bookSettings.setFiltering(bookType, filtering);
     }
 
-    public void setBookSettings(RecipeBookSettings p_12688_) {
-        this.bookSettings.replaceFrom(p_12688_);
+    public void setBookSettings(RecipeBookSettings settings) {
+        this.bookSettings.replaceFrom(settings);
     }
 
     public RecipeBookSettings getBookSettings() {
         return this.bookSettings.copy();
     }
 
-    public void setBookSetting(RecipeBookType p_12697_, boolean p_12698_, boolean p_12699_) {
-        this.bookSettings.setOpen(p_12697_, p_12698_);
-        this.bookSettings.setFiltering(p_12697_, p_12699_);
+    public void setBookSetting(RecipeBookType bookType, boolean open, boolean filtering) {
+        this.bookSettings.setOpen(bookType, open);
+        this.bookSettings.setFiltering(bookType, filtering);
     }
 }

@@ -13,6 +13,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 
 public abstract class ItemTagsProvider extends IntrinsicHolderTagsProvider<Item> {
+    /**
+     * A function that resolves block tag builders.
+     */
     private final CompletableFuture<TagsProvider.TagLookup<Block>> blockTags;
     private final Map<TagKey<Block>, TagKey<Item>> tagsToCopy = new HashMap<>();
 
@@ -21,49 +24,55 @@ public abstract class ItemTagsProvider extends IntrinsicHolderTagsProvider<Item>
      * @deprecated Forge: Use the {@linkplain #ItemTagsProvider(PackOutput, CompletableFuture, CompletableFuture, String, net.neoforged.neoforge.common.data.ExistingFileHelper) mod id variant}
      */
     @Deprecated
-        PackOutput p_275343_, CompletableFuture<HolderLookup.Provider> p_275729_, CompletableFuture<TagsProvider.TagLookup<Block>> p_275322_
+        PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, CompletableFuture<TagsProvider.TagLookup<Block>> blockTags
     ) {
-        this(p_275343_, p_275729_, p_275322_, "vanilla", null);
+        this(output, lookupProvider, blockTags, "vanilla", null);
     }
 
     /**
-     * @deprecated Forge: Use the {@linkplain #ItemTagsProvider(PackOutput, CompletableFuture, CompletableFuture, CompletableFuture, String, net.neoforged.neoforge.common.data.ExistingFileHelper) mod id variant}
+     * @deprecated Forge: Use the {@linkplain #ItemTagsProvider(PackOutput,
+     *             CompletableFuture, CompletableFuture, CompletableFuture, String,
+     *             net.neoforged.neoforge.common.data.ExistingFileHelper) mod id
+     *             variant}
      */
     @Deprecated
     public ItemTagsProvider(
-        PackOutput p_275204_,
-        CompletableFuture<HolderLookup.Provider> p_275194_,
-        CompletableFuture<TagsProvider.TagLookup<Item>> p_275207_,
-        CompletableFuture<TagsProvider.TagLookup<Block>> p_275634_
+        PackOutput output,
+        CompletableFuture<HolderLookup.Provider> lookupProvider,
+        CompletableFuture<TagsProvider.TagLookup<Item>> parentProvider,
+        CompletableFuture<TagsProvider.TagLookup<Block>> blockTags
     ) {
-        this(p_275204_, p_275194_, p_275207_, p_275634_, "vanilla", null);
+        this(output, lookupProvider, parentProvider, blockTags, "vanilla", null);
     }
 
     public ItemTagsProvider(
-        PackOutput p_275343_,
-        CompletableFuture<HolderLookup.Provider> p_275729_,
-        CompletableFuture<TagsProvider.TagLookup<Block>> p_275322_,
+        PackOutput output,
+        CompletableFuture<HolderLookup.Provider> lookupProvider,
+        CompletableFuture<TagsProvider.TagLookup<Block>> blockTags,
         String modId,
         @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper
     ) {
-        super(p_275343_, Registries.ITEM, p_275729_, p_255790_ -> p_255790_.builtInRegistryHolder().key(), modId, existingFileHelper);
-        this.blockTags = p_275322_;
+        super(output, Registries.ITEM, lookupProvider, p_255790_ -> p_255790_.builtInRegistryHolder().key(), modId, existingFileHelper);
+        this.blockTags = blockTags;
     }
 
     public ItemTagsProvider(
-        PackOutput p_275204_,
-        CompletableFuture<HolderLookup.Provider> p_275194_,
-        CompletableFuture<TagsProvider.TagLookup<Item>> p_275207_,
-        CompletableFuture<TagsProvider.TagLookup<Block>> p_275634_,
+        PackOutput output,
+        CompletableFuture<HolderLookup.Provider> lookupProvider,
+        CompletableFuture<TagsProvider.TagLookup<Item>> parentProvider,
+        CompletableFuture<TagsProvider.TagLookup<Block>> blockTags,
         String modId,
         @org.jetbrains.annotations.Nullable net.neoforged.neoforge.common.data.ExistingFileHelper existingFileHelper
     ) {
-        super(p_275204_, Registries.ITEM, p_275194_, p_275207_, p_274765_ -> p_274765_.builtInRegistryHolder().key(), modId, existingFileHelper);
-        this.blockTags = p_275634_;
+        super(output, Registries.ITEM, lookupProvider, parentProvider, p_274765_ -> p_274765_.builtInRegistryHolder().key(), modId, existingFileHelper);
+        this.blockTags = blockTags;
     }
 
-    protected void copy(TagKey<Block> p_206422_, TagKey<Item> p_206423_) {
-        this.tagsToCopy.put(p_206422_, p_206423_);
+    /**
+     * Copies the entries from a block tag into an item tag.
+     */
+    protected void copy(TagKey<Block> blockTag, TagKey<Item> itemTag) {
+        this.tagsToCopy.put(blockTag, itemTag);
     }
 
     @Override

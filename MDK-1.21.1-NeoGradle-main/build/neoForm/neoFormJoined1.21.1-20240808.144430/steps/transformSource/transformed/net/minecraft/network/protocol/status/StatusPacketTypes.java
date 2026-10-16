@@ -9,11 +9,11 @@ public class StatusPacketTypes {
     public static final PacketType<ClientboundStatusResponsePacket> CLIENTBOUND_STATUS_RESPONSE = createClientbound("status_response");
     public static final PacketType<ServerboundStatusRequestPacket> SERVERBOUND_STATUS_REQUEST = createServerbound("status_request");
 
-    private static <T extends Packet<ClientStatusPacketListener>> PacketType<T> createClientbound(String p_320562_) {
-        return new PacketType<>(PacketFlow.CLIENTBOUND, ResourceLocation.withDefaultNamespace(p_320562_));
+    private static <T extends Packet<ClientStatusPacketListener>> PacketType<T> createClientbound(String name) {
+        return new PacketType<>(PacketFlow.CLIENTBOUND, ResourceLocation.withDefaultNamespace(name));
     }
 
-    private static <T extends Packet<ServerStatusPacketListener>> PacketType<T> createServerbound(String p_319783_) {
-        return new PacketType<>(PacketFlow.SERVERBOUND, ResourceLocation.withDefaultNamespace(p_319783_));
+    private static <T extends Packet<ServerStatusPacketListener>> PacketType<T> createServerbound(String name) {
+        return new PacketType<>(PacketFlow.SERVERBOUND, ResourceLocation.withDefaultNamespace(name));
     }
 }

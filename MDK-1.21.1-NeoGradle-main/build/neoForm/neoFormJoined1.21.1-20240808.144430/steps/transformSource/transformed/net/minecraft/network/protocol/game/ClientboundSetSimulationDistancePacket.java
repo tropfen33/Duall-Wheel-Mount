@@ -14,8 +14,8 @@ public record ClientboundSetSimulationDistancePacket(int simulationDistance) imp
         this(p_195800_.readVarInt());
     }
 
-    private void write(FriendlyByteBuf p_195802_) {
-        p_195802_.writeVarInt(this.simulationDistance);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.simulationDistance);
     }
 
     @Override
@@ -23,7 +23,10 @@ public record ClientboundSetSimulationDistancePacket(int simulationDistance) imp
         return GamePacketTypes.CLIENTBOUND_SET_SIMULATION_DISTANCE;
     }
 
-    public void handle(ClientGamePacketListener p_195806_) {
-        p_195806_.handleSetSimulationDistance(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleSetSimulationDistance(this);
     }
 }

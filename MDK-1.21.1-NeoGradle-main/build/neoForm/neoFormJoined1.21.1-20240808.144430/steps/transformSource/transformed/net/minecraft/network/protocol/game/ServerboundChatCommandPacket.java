@@ -14,8 +14,8 @@ public record ServerboundChatCommandPacket(String command) implements Packet<Ser
         this(p_237932_.readUtf());
     }
 
-    private void write(FriendlyByteBuf p_237936_) {
-        p_237936_.writeUtf(this.command);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeUtf(this.command);
     }
 
     @Override
@@ -23,7 +23,10 @@ public record ServerboundChatCommandPacket(String command) implements Packet<Ser
         return GamePacketTypes.SERVERBOUND_CHAT_COMMAND;
     }
 
-    public void handle(ServerGamePacketListener p_237940_) {
-        p_237940_.handleChatCommand(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleChatCommand(this);
     }
 }

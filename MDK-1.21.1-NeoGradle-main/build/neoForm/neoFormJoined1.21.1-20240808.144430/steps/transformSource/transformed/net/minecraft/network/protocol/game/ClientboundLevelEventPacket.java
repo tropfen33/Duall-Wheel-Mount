@@ -12,28 +12,37 @@ public class ClientboundLevelEventPacket implements Packet<ClientGamePacketListe
     );
     private final int type;
     private final BlockPos pos;
+    /**
+     * can be a block/item id or other depending on the soundtype
+     */
     private final int data;
+    /**
+     * If true the sound is played across the server
+     */
     private final boolean globalEvent;
 
-    public ClientboundLevelEventPacket(int p_132264_, BlockPos p_132265_, int p_132266_, boolean p_132267_) {
-        this.type = p_132264_;
-        this.pos = p_132265_.immutable();
-        this.data = p_132266_;
-        this.globalEvent = p_132267_;
+    public ClientboundLevelEventPacket(int type, BlockPos pos, int data, boolean globalEvent) {
+        this.type = type;
+        this.pos = pos.immutable();
+        this.data = data;
+        this.globalEvent = globalEvent;
     }
 
-    private ClientboundLevelEventPacket(FriendlyByteBuf p_178908_) {
-        this.type = p_178908_.readInt();
-        this.pos = p_178908_.readBlockPos();
-        this.data = p_178908_.readInt();
-        this.globalEvent = p_178908_.readBoolean();
+    private ClientboundLevelEventPacket(FriendlyByteBuf buffer) {
+        this.type = buffer.readInt();
+        this.pos = buffer.readBlockPos();
+        this.data = buffer.readInt();
+        this.globalEvent = buffer.readBoolean();
     }
 
-    private void write(FriendlyByteBuf p_132276_) {
-        p_132276_.writeInt(this.type);
-        p_132276_.writeBlockPos(this.pos);
-        p_132276_.writeInt(this.data);
-        p_132276_.writeBoolean(this.globalEvent);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeInt(this.type);
+        buffer.writeBlockPos(this.pos);
+        buffer.writeInt(this.data);
+        buffer.writeBoolean(this.globalEvent);
     }
 
     @Override
@@ -41,8 +50,11 @@ public class ClientboundLevelEventPacket implements Packet<ClientGamePacketListe
         return GamePacketTypes.CLIENTBOUND_LEVEL_EVENT;
     }
 
-    public void handle(ClientGamePacketListener p_132273_) {
-        p_132273_.handleLevelEvent(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleLevelEvent(this);
     }
 
     public boolean isGlobalEvent() {

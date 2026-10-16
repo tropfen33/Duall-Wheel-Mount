@@ -11,23 +11,23 @@ import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class SignItem extends StandingAndWallBlockItem {
-    public SignItem(Item.Properties p_43126_, Block p_43127_, Block p_43128_) {
-        super(p_43127_, p_43128_, p_43126_, Direction.DOWN);
+    public SignItem(Item.Properties properties, Block standingBlock, Block wallBlock) {
+        super(standingBlock, wallBlock, properties, Direction.DOWN);
     }
 
-    public SignItem(Item.Properties p_278081_, Block p_277743_, Block p_277375_, Direction p_278052_) {
-        super(p_277743_, p_277375_, p_278081_, p_278052_);
+    public SignItem(Item.Properties properties, Block standingBlock, Block wallBlock, Direction attachmentDirection) {
+        super(standingBlock, wallBlock, properties, attachmentDirection);
     }
 
     @Override
-    protected boolean updateCustomBlockEntityTag(BlockPos p_43130_, Level p_43131_, @Nullable Player p_43132_, ItemStack p_43133_, BlockState p_43134_) {
-        boolean flag = super.updateCustomBlockEntityTag(p_43130_, p_43131_, p_43132_, p_43133_, p_43134_);
-        if (!p_43131_.isClientSide
+    protected boolean updateCustomBlockEntityTag(BlockPos pos, Level level, @Nullable Player player, ItemStack stack, BlockState state) {
+        boolean flag = super.updateCustomBlockEntityTag(pos, level, player, stack, state);
+        if (!level.isClientSide
             && !flag
-            && p_43132_ != null
-            && p_43131_.getBlockEntity(p_43130_) instanceof SignBlockEntity signblockentity
-            && p_43131_.getBlockState(p_43130_).getBlock() instanceof SignBlock signblock) {
-            signblock.openTextEdit(p_43132_, signblockentity, true);
+            && player != null
+            && level.getBlockEntity(pos) instanceof SignBlockEntity signblockentity
+            && level.getBlockState(pos).getBlock() instanceof SignBlock signblock) {
+            signblock.openTextEdit(player, signblockentity, true);
         }
 
         return flag;

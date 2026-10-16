@@ -10,8 +10,8 @@ import javax.annotation.Nullable;
 class LinkFSFileStore extends FileStore {
     private final String name;
 
-    public LinkFSFileStore(String p_249242_) {
-        this.name = p_249242_;
+    public LinkFSFileStore(String name) {
+        this.name = name;
     }
 
     @Override
@@ -45,23 +45,23 @@ class LinkFSFileStore extends FileStore {
     }
 
     @Override
-    public boolean supportsFileAttributeView(Class<? extends FileAttributeView> p_251407_) {
-        return p_251407_ == BasicFileAttributeView.class;
+    public boolean supportsFileAttributeView(Class<? extends FileAttributeView> type) {
+        return type == BasicFileAttributeView.class;
     }
 
     @Override
-    public boolean supportsFileAttributeView(String p_250666_) {
-        return "basic".equals(p_250666_);
+    public boolean supportsFileAttributeView(String name) {
+        return "basic".equals(name);
     }
 
     @Nullable
     @Override
-    public <V extends FileStoreAttributeView> V getFileStoreAttributeView(Class<V> p_251981_) {
+    public <V extends FileStoreAttributeView> V getFileStoreAttributeView(Class<V> type) {
         return null;
     }
 
     @Override
-    public Object getAttribute(String p_249050_) throws IOException {
+    public Object getAttribute(String attribute) throws IOException {
         throw new UnsupportedOperationException();
     }
 }

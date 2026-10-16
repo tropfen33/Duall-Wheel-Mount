@@ -12,16 +12,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.HitResult;
 
 public class ThrownExperienceBottle extends ThrowableItemProjectile {
-    public ThrownExperienceBottle(EntityType<? extends ThrownExperienceBottle> p_37510_, Level p_37511_) {
-        super(p_37510_, p_37511_);
+    public ThrownExperienceBottle(EntityType<? extends ThrownExperienceBottle> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public ThrownExperienceBottle(Level p_37518_, LivingEntity p_37519_) {
-        super(EntityType.EXPERIENCE_BOTTLE, p_37519_, p_37518_);
+    public ThrownExperienceBottle(Level level, LivingEntity shooter) {
+        super(EntityType.EXPERIENCE_BOTTLE, shooter, level);
     }
 
-    public ThrownExperienceBottle(Level p_37513_, double p_37514_, double p_37515_, double p_37516_) {
-        super(EntityType.EXPERIENCE_BOTTLE, p_37514_, p_37515_, p_37516_, p_37513_);
+    public ThrownExperienceBottle(Level level, double x, double y, double z) {
+        super(EntityType.EXPERIENCE_BOTTLE, x, y, z, level);
     }
 
     @Override
@@ -34,9 +34,12 @@ public class ThrownExperienceBottle extends ThrowableItemProjectile {
         return 0.07;
     }
 
+    /**
+     * Called when this EntityFireball hits a block or entity.
+     */
     @Override
-    protected void onHit(HitResult p_37521_) {
-        super.onHit(p_37521_);
+    protected void onHit(HitResult result) {
+        super.onHit(result);
         if (this.level() instanceof ServerLevel) {
             this.level().levelEvent(2002, this.blockPosition(), PotionContents.getColor(Potions.WATER));
             int i = 3 + this.level().random.nextInt(5) + this.level().random.nextInt(5);

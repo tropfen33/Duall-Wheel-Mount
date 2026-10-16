@@ -26,15 +26,15 @@ public class OminousItemSpawner extends Entity {
     public static final int TICKS_BEFORE_ABOUT_TO_SPAWN_SOUND = 36;
     private long spawnItemAfterTicks;
 
-    public OminousItemSpawner(EntityType<? extends OminousItemSpawner> p_338198_, Level p_338269_) {
-        super(p_338198_, p_338269_);
+    public OminousItemSpawner(EntityType<? extends OminousItemSpawner> entityType, Level level) {
+        super(entityType, level);
         this.noPhysics = true;
     }
 
-    public static OminousItemSpawner create(Level p_338234_, ItemStack p_338571_) {
-        OminousItemSpawner ominousitemspawner = new OminousItemSpawner(EntityType.OMINOUS_ITEM_SPAWNER, p_338234_);
-        ominousitemspawner.spawnItemAfterTicks = (long)p_338234_.random.nextIntBetweenInclusive(60, 120);
-        ominousitemspawner.setItem(p_338571_);
+    public static OminousItemSpawner create(Level level, ItemStack item) {
+        OminousItemSpawner ominousitemspawner = new OminousItemSpawner(EntityType.OMINOUS_ITEM_SPAWNER, level);
+        ominousitemspawner.spawnItemAfterTicks = (long)level.random.nextIntBetweenInclusive(60, 120);
+        ominousitemspawner.setItem(item);
         return ominousitemspawner;
     }
 
@@ -97,30 +97,33 @@ public class OminousItemSpawner extends Entity {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_338496_) {
-        p_338496_.define(DATA_ITEM, ItemStack.EMPTY);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_ITEM, ItemStack.EMPTY);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_338507_) {
-        ItemStack itemstack = p_338507_.contains("item", 10)
-            ? ItemStack.parse(this.registryAccess(), p_338507_.getCompound("item")).orElse(ItemStack.EMPTY)
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        ItemStack itemstack = compound.contains("item", 10)
+            ? ItemStack.parse(this.registryAccess(), compound.getCompound("item")).orElse(ItemStack.EMPTY)
             : ItemStack.EMPTY;
         this.setItem(itemstack);
-        this.spawnItemAfterTicks = p_338507_.getLong("spawn_item_after_ticks");
+        this.spawnItemAfterTicks = compound.getLong("spawn_item_after_ticks");
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_338411_) {
+    protected void addAdditionalSaveData(CompoundTag compound) {
         if (!this.getItem().isEmpty()) {
-            p_338411_.put("item", this.getItem().save(this.registryAccess()).copy());
+            compound.put("item", this.getItem().save(this.registryAccess()).copy());
         }
 
-        p_338411_.putLong("spawn_item_after_ticks", this.spawnItemAfterTicks);
+        compound.putLong("spawn_item_after_ticks", this.spawnItemAfterTicks);
     }
 
     @Override
-    protected boolean canAddPassenger(Entity p_338282_) {
+    protected boolean canAddPassenger(Entity passenger) {
         return false;
     }
 
@@ -130,7 +133,7 @@ public class OminousItemSpawner extends Entity {
     }
 
     @Override
-    protected void addPassenger(Entity p_338681_) {
+    protected void addPassenger(Entity passenger) {
         throw new IllegalStateException("Should never addPassenger without checking couldAcceptPassenger()");
     }
 
@@ -164,7 +167,7 @@ public class OminousItemSpawner extends Entity {
         return this.getEntityData().get(DATA_ITEM);
     }
 
-    private void setItem(ItemStack p_338789_) {
-        this.getEntityData().set(DATA_ITEM, p_338789_);
+    private void setItem(ItemStack item) {
+        this.getEntityData().set(DATA_ITEM, item);
     }
 }

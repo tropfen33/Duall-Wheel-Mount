@@ -10,12 +10,12 @@ import com.mojang.serialization.OptionalDynamic;
 import net.minecraft.util.datafix.ExtraDataFixUtils;
 
 public class LegacyDragonFightFix extends DataFix {
-    public LegacyDragonFightFix(Schema p_289761_) {
-        super(p_289761_, false);
+    public LegacyDragonFightFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
-    private static <T> Dynamic<T> fixDragonFight(Dynamic<T> p_325915_) {
-        return p_325915_.update("ExitPortalLocation", ExtraDataFixUtils::fixBlockPos);
+    private static <T> Dynamic<T> fixDragonFight(Dynamic<T> data) {
+        return data.update("ExitPortalLocation", ExtraDataFixUtils::fixBlockPos);
     }
 
     @Override

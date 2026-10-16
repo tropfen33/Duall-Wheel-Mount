@@ -17,23 +17,26 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public class SmallFireball extends Fireball {
-    public SmallFireball(EntityType<? extends SmallFireball> p_37364_, Level p_37365_) {
-        super(p_37364_, p_37365_);
+    public SmallFireball(EntityType<? extends SmallFireball> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public SmallFireball(Level p_37375_, LivingEntity p_37376_, Vec3 p_347501_) {
-        super(EntityType.SMALL_FIREBALL, p_37376_, p_347501_, p_37375_);
+    public SmallFireball(Level level, LivingEntity owner, Vec3 movement) {
+        super(EntityType.SMALL_FIREBALL, owner, movement, level);
     }
 
-    public SmallFireball(Level p_37367_, double p_37368_, double p_37369_, double p_37370_, Vec3 p_347543_) {
-        super(EntityType.SMALL_FIREBALL, p_37368_, p_37369_, p_37370_, p_347543_, p_37367_);
+    public SmallFireball(Level level, double x, double y, double z, Vec3 movement) {
+        super(EntityType.SMALL_FIREBALL, x, y, z, movement, level);
     }
 
+    /**
+     * Called when the arrow hits an entity
+     */
     @Override
-    protected void onHitEntity(EntityHitResult p_37386_) {
-        super.onHitEntity(p_37386_);
+    protected void onHitEntity(EntityHitResult result) {
+        super.onHitEntity(result);
         if (this.level() instanceof ServerLevel serverlevel) {
-            Entity entity1 = p_37386_.getEntity();
+            Entity entity1 = result.getEntity();
             Entity $$4 = this.getOwner();
             int $$5 = entity1.getRemainingFireTicks();
             entity1.igniteForSeconds(5.0F);
@@ -47,12 +50,12 @@ public class SmallFireball extends Fireball {
     }
 
     @Override
-    protected void onHitBlock(BlockHitResult p_37384_) {
-        super.onHitBlock(p_37384_);
+    protected void onHitBlock(BlockHitResult result) {
+        super.onHitBlock(result);
         if (!this.level().isClientSide) {
             Entity entity = this.getOwner();
             if (!(entity instanceof Mob) || net.neoforged.neoforge.event.EventHooks.canEntityGrief(this.level(), entity)) {
-                BlockPos blockpos = p_37384_.getBlockPos().relative(p_37384_.getDirection());
+                BlockPos blockpos = result.getBlockPos().relative(result.getDirection());
                 if (this.level().isEmptyBlock(blockpos)) {
                     this.level().setBlockAndUpdate(blockpos, BaseFireBlock.getState(this.level(), blockpos));
                 }
@@ -60,16 +63,22 @@ public class SmallFireball extends Fireball {
         }
     }
 
+    /**
+     * Called when this EntityFireball hits a block or entity.
+     */
     @Override
-    protected void onHit(HitResult p_37388_) {
-        super.onHit(p_37388_);
+    protected void onHit(HitResult result) {
+        super.onHit(result);
         if (!this.level().isClientSide) {
             this.discard();
         }
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_37381_, float p_37382_) {
+    public boolean hurt(DamageSource source, float amount) {
         return false;
     }
 }

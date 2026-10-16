@@ -14,8 +14,8 @@ public record ClientboundBlockChangedAckPacket(int sequence) implements Packet<C
         this(p_237582_.readVarInt());
     }
 
-    private void write(FriendlyByteBuf p_237584_) {
-        p_237584_.writeVarInt(this.sequence);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.sequence);
     }
 
     @Override
@@ -23,7 +23,10 @@ public record ClientboundBlockChangedAckPacket(int sequence) implements Packet<C
         return GamePacketTypes.CLIENTBOUND_BLOCK_CHANGED_ACK;
     }
 
-    public void handle(ClientGamePacketListener p_237588_) {
-        p_237588_.handleBlockChangedAck(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleBlockChangedAck(this);
     }
 }

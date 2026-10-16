@@ -19,47 +19,47 @@ public interface FormattedText {
         }
     };
 
-    <T> Optional<T> visit(FormattedText.ContentConsumer<T> p_130770_);
+    <T> Optional<T> visit(FormattedText.ContentConsumer<T> acceptor);
 
-    <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> p_130771_, Style p_130772_);
+    <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> acceptor, Style style);
 
-    static FormattedText of(final String p_130776_) {
+    static FormattedText of(final String text) {
         return new FormattedText() {
             @Override
             public <T> Optional<T> visit(FormattedText.ContentConsumer<T> p_130787_) {
-                return p_130787_.accept(p_130776_);
+                return p_130787_.accept(text);
             }
 
             @Override
             public <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> p_130789_, Style p_130790_) {
-                return p_130789_.accept(p_130790_, p_130776_);
+                return p_130789_.accept(p_130790_, text);
             }
         };
     }
 
-    static FormattedText of(final String p_130763_, final Style p_130764_) {
+    static FormattedText of(final String text, final Style style) {
         return new FormattedText() {
             @Override
             public <T> Optional<T> visit(FormattedText.ContentConsumer<T> p_130797_) {
-                return p_130797_.accept(p_130763_);
+                return p_130797_.accept(text);
             }
 
             @Override
             public <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> p_130799_, Style p_130800_) {
-                return p_130799_.accept(p_130764_.applyTo(p_130800_), p_130763_);
+                return p_130799_.accept(style.applyTo(p_130800_), text);
             }
         };
     }
 
-    static FormattedText composite(FormattedText... p_130774_) {
-        return composite(ImmutableList.copyOf(p_130774_));
+    static FormattedText composite(FormattedText... elements) {
+        return composite(ImmutableList.copyOf(elements));
     }
 
-    static FormattedText composite(final List<? extends FormattedText> p_130769_) {
+    static FormattedText composite(final List<? extends FormattedText> elements) {
         return new FormattedText() {
             @Override
             public <T> Optional<T> visit(FormattedText.ContentConsumer<T> p_130805_) {
-                for (FormattedText formattedtext : p_130769_) {
+                for (FormattedText formattedtext : elements) {
                     Optional<T> optional = formattedtext.visit(p_130805_);
                     if (optional.isPresent()) {
                         return optional;
@@ -71,7 +71,7 @@ public interface FormattedText {
 
             @Override
             public <T> Optional<T> visit(FormattedText.StyledContentConsumer<T> p_130807_, Style p_130808_) {
-                for (FormattedText formattedtext : p_130769_) {
+                for (FormattedText formattedtext : elements) {
                     Optional<T> optional = formattedtext.visit(p_130807_, p_130808_);
                     if (optional.isPresent()) {
                         return optional;
@@ -93,10 +93,10 @@ public interface FormattedText {
     }
 
     public interface ContentConsumer<T> {
-        Optional<T> accept(String p_130810_);
+        Optional<T> accept(String content);
     }
 
     public interface StyledContentConsumer<T> {
-        Optional<T> accept(Style p_130811_, String p_130812_);
+        Optional<T> accept(Style style, String content);
     }
 }

@@ -51,29 +51,29 @@ public class BossHealthOverlay {
     private final Minecraft minecraft;
     final Map<UUID, LerpingBossEvent> events = Maps.newLinkedHashMap();
 
-    public BossHealthOverlay(Minecraft p_93702_) {
-        this.minecraft = p_93702_;
+    public BossHealthOverlay(Minecraft minecraft) {
+        this.minecraft = minecraft;
     }
 
-    public void render(GuiGraphics p_283175_) {
+    public void render(GuiGraphics guiGraphics) {
         if (!this.events.isEmpty()) {
             this.minecraft.getProfiler().push("bossHealth");
-            int i = p_283175_.guiWidth();
+            int i = guiGraphics.guiWidth();
             int j = 12;
 
             for (LerpingBossEvent lerpingbossevent : this.events.values()) {
                 int k = i / 2 - 91;
-                var event = net.neoforged.neoforge.client.ClientHooks.onCustomizeBossEventProgress(p_283175_, this.minecraft.getWindow(), lerpingbossevent, k, j, 10 + this.minecraft.font.lineHeight);
+                var event = net.neoforged.neoforge.client.ClientHooks.onCustomizeBossEventProgress(guiGraphics, this.minecraft.getWindow(), lerpingbossevent, k, j, 10 + this.minecraft.font.lineHeight);
                 if (!event.isCanceled()) {
-                this.drawBar(p_283175_, k, j, lerpingbossevent);
+                this.drawBar(guiGraphics, k, j, lerpingbossevent);
                 Component component = lerpingbossevent.getName();
                 int l = this.minecraft.font.width(component);
                 int i1 = i / 2 - l / 2;
                 int j1 = j - 9;
-                p_283175_.drawString(this.minecraft.font, component, i1, j1, 16777215);
+                guiGraphics.drawString(this.minecraft.font, component, i1, j1, 16777215);
                 }
                 j += event.getIncrement();
-                if (j >= p_283175_.guiHeight() / 3) {
+                if (j >= guiGraphics.guiHeight() / 3) {
                     break;
                 }
             }
@@ -82,28 +82,28 @@ public class BossHealthOverlay {
         }
     }
 
-    private void drawBar(GuiGraphics p_283672_, int p_283570_, int p_283306_, BossEvent p_283156_) {
-        this.drawBar(p_283672_, p_283570_, p_283306_, p_283156_, 182, BAR_BACKGROUND_SPRITES, OVERLAY_BACKGROUND_SPRITES);
-        int i = Mth.lerpDiscrete(p_283156_.getProgress(), 0, 182);
+    private void drawBar(GuiGraphics guiGraphics, int x, int y, BossEvent bossEvent) {
+        this.drawBar(guiGraphics, x, y, bossEvent, 182, BAR_BACKGROUND_SPRITES, OVERLAY_BACKGROUND_SPRITES);
+        int i = Mth.lerpDiscrete(bossEvent.getProgress(), 0, 182);
         if (i > 0) {
-            this.drawBar(p_283672_, p_283570_, p_283306_, p_283156_, i, BAR_PROGRESS_SPRITES, OVERLAY_PROGRESS_SPRITES);
+            this.drawBar(guiGraphics, x, y, bossEvent, i, BAR_PROGRESS_SPRITES, OVERLAY_PROGRESS_SPRITES);
         }
     }
 
     private void drawBar(
-        GuiGraphics p_281657_, int p_283675_, int p_282498_, BossEvent p_281288_, int p_283619_, ResourceLocation[] p_296156_, ResourceLocation[] p_296292_
+        GuiGraphics guiGraphics, int x, int y, BossEvent bossEvent, int progress, ResourceLocation[] barProgressSprites, ResourceLocation[] overlayProgressSprites
     ) {
         RenderSystem.enableBlend();
-        p_281657_.blitSprite(p_296156_[p_281288_.getColor().ordinal()], 182, 5, 0, 0, p_283675_, p_282498_, p_283619_, 5);
-        if (p_281288_.getOverlay() != BossEvent.BossBarOverlay.PROGRESS) {
-            p_281657_.blitSprite(p_296292_[p_281288_.getOverlay().ordinal() - 1], 182, 5, 0, 0, p_283675_, p_282498_, p_283619_, 5);
+        guiGraphics.blitSprite(barProgressSprites[bossEvent.getColor().ordinal()], 182, 5, 0, 0, x, y, progress, 5);
+        if (bossEvent.getOverlay() != BossEvent.BossBarOverlay.PROGRESS) {
+            guiGraphics.blitSprite(overlayProgressSprites[bossEvent.getOverlay().ordinal() - 1], 182, 5, 0, 0, x, y, progress, 5);
         }
 
         RenderSystem.disableBlend();
     }
 
-    public void update(ClientboundBossEventPacket p_93712_) {
-        p_93712_.dispatch(
+    public void update(ClientboundBossEventPacket packet) {
+        packet.dispatch(
             new ClientboundBossEventPacket.Handler() {
                 @Override
                 public void add(

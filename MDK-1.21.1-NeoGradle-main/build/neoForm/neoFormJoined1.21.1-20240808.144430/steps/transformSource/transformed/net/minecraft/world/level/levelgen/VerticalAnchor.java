@@ -5,22 +5,31 @@ import com.mojang.serialization.Codec;
 import java.util.function.Function;
 import net.minecraft.world.level.dimension.DimensionType;
 
+/**
+ * Represents a resolvable height value, or y coordinate, based on the world minimum and maximum height.
+ * Can take one of the following three forms:
+ * <ul>
+ * <li>An absolute y value ({@link Absolute}).</li>
+ * <li>A height above the lowest valid y value in the level ({@link AboveBottom}).</li>
+ * <li>A height below the highest valid y value in the level ({@link BelowTop}).</li>
+ * </ul>
+ */
 public interface VerticalAnchor {
     Codec<VerticalAnchor> CODEC = Codec.xor(VerticalAnchor.Absolute.CODEC, Codec.xor(VerticalAnchor.AboveBottom.CODEC, VerticalAnchor.BelowTop.CODEC))
         .xmap(VerticalAnchor::merge, VerticalAnchor::split);
     VerticalAnchor BOTTOM = aboveBottom(0);
     VerticalAnchor TOP = belowTop(0);
 
-    static VerticalAnchor absolute(int p_158923_) {
-        return new VerticalAnchor.Absolute(p_158923_);
+    static VerticalAnchor absolute(int value) {
+        return new VerticalAnchor.Absolute(value);
     }
 
-    static VerticalAnchor aboveBottom(int p_158931_) {
-        return new VerticalAnchor.AboveBottom(p_158931_);
+    static VerticalAnchor aboveBottom(int value) {
+        return new VerticalAnchor.AboveBottom(value);
     }
 
-    static VerticalAnchor belowTop(int p_158936_) {
-        return new VerticalAnchor.BelowTop(p_158936_);
+    static VerticalAnchor belowTop(int value) {
+        return new VerticalAnchor.BelowTop(value);
     }
 
     static VerticalAnchor bottom() {
@@ -31,21 +40,21 @@ public interface VerticalAnchor {
         return TOP;
     }
 
-    private static VerticalAnchor merge(Either<VerticalAnchor.Absolute, Either<VerticalAnchor.AboveBottom, VerticalAnchor.BelowTop>> p_158925_) {
-        return p_158925_.map(Function.identity(), Either::unwrap);
+    private static VerticalAnchor merge(Either<VerticalAnchor.Absolute, Either<VerticalAnchor.AboveBottom, VerticalAnchor.BelowTop>> anchor) {
+        return anchor.map(Function.identity(), Either::unwrap);
     }
 
-    private static Either<VerticalAnchor.Absolute, Either<VerticalAnchor.AboveBottom, VerticalAnchor.BelowTop>> split(VerticalAnchor p_158927_) {
-        return p_158927_ instanceof VerticalAnchor.Absolute
-            ? Either.left((VerticalAnchor.Absolute)p_158927_)
+    private static Either<VerticalAnchor.Absolute, Either<VerticalAnchor.AboveBottom, VerticalAnchor.BelowTop>> split(VerticalAnchor anchor) {
+        return anchor instanceof VerticalAnchor.Absolute
+            ? Either.left((VerticalAnchor.Absolute)anchor)
             : Either.right(
-                p_158927_ instanceof VerticalAnchor.AboveBottom
-                    ? Either.left((VerticalAnchor.AboveBottom)p_158927_)
-                    : Either.right((VerticalAnchor.BelowTop)p_158927_)
+                anchor instanceof VerticalAnchor.AboveBottom
+                    ? Either.left((VerticalAnchor.AboveBottom)anchor)
+                    : Either.right((VerticalAnchor.BelowTop)anchor)
             );
     }
 
-    int resolveY(WorldGenerationContext p_158928_);
+    int resolveY(WorldGenerationContext context);
 
     public static record AboveBottom(int offset) implements VerticalAnchor {
         public static final Codec<VerticalAnchor.AboveBottom> CODEC = Codec.intRange(DimensionType.MIN_Y, DimensionType.MAX_Y)

@@ -8,29 +8,32 @@ import io.netty.handler.codec.CorruptedFrameException;
 import java.util.List;
 import javax.annotation.Nullable;
 
+/**
+ * Counterpart to {@link Varint21LengthFieldPrepender}. Decodes each frame ("packet") by first reading its length and then its data.
+ */
 public class Varint21FrameDecoder extends ByteToMessageDecoder {
     private static final int MAX_VARINT21_BYTES = 3;
     private final ByteBuf helperBuf = Unpooled.directBuffer(3);
     @Nullable
     private final BandwidthDebugMonitor monitor;
 
-    public Varint21FrameDecoder(@Nullable BandwidthDebugMonitor p_298640_) {
-        this.monitor = p_298640_;
+    public Varint21FrameDecoder(@Nullable BandwidthDebugMonitor monitor) {
+        this.monitor = monitor;
     }
 
     @Override
-    protected void handlerRemoved0(ChannelHandlerContext p_294580_) {
+    protected void handlerRemoved0(ChannelHandlerContext context) {
         this.helperBuf.release();
     }
 
-    private static boolean copyVarint(ByteBuf p_294780_, ByteBuf p_294299_) {
+    private static boolean copyVarint(ByteBuf in, ByteBuf out) {
         for (int i = 0; i < 3; i++) {
-            if (!p_294780_.isReadable()) {
+            if (!in.isReadable()) {
                 return false;
             }
 
-            byte b0 = p_294780_.readByte();
-            p_294299_.writeByte(b0);
+            byte b0 = in.readByte();
+            out.writeByte(b0);
             if (!VarInt.hasContinuationBit(b0)) {
                 return true;
             }
@@ -40,21 +43,21 @@ public class Varint21FrameDecoder extends ByteToMessageDecoder {
     }
 
     @Override
-    protected void decode(ChannelHandlerContext p_130566_, ByteBuf p_130567_, List<Object> p_130568_) {
-        p_130567_.markReaderIndex();
+    protected void decode(ChannelHandlerContext context, ByteBuf in, List<Object> out) {
+        in.markReaderIndex();
         this.helperBuf.clear();
-        if (!copyVarint(p_130567_, this.helperBuf)) {
-            p_130567_.resetReaderIndex();
+        if (!copyVarint(in, this.helperBuf)) {
+            in.resetReaderIndex();
         } else {
             int i = VarInt.read(this.helperBuf);
-            if (p_130567_.readableBytes() < i) {
-                p_130567_.resetReaderIndex();
+            if (in.readableBytes() < i) {
+                in.resetReaderIndex();
             } else {
                 if (this.monitor != null) {
                     this.monitor.onReceive(i + VarInt.getByteSize(i));
                 }
 
-                p_130568_.add(p_130567_.readBytes(i));
+                out.add(in.readBytes(i));
             }
         }
     }

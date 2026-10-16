@@ -12,20 +12,23 @@ import net.minecraft.world.level.pathfinder.PathFinder;
 import net.minecraft.world.phys.Vec3;
 
 public class FlyingPathNavigation extends PathNavigation {
-    public FlyingPathNavigation(Mob p_26424_, Level p_26425_) {
-        super(p_26424_, p_26425_);
+    public FlyingPathNavigation(Mob mob, Level level) {
+        super(mob, level);
     }
 
     @Override
-    protected PathFinder createPathFinder(int p_26428_) {
+    protected PathFinder createPathFinder(int maxVisitedNodes) {
         this.nodeEvaluator = new FlyNodeEvaluator();
         this.nodeEvaluator.setCanPassDoors(true);
-        return new PathFinder(this.nodeEvaluator, p_26428_);
+        return new PathFinder(this.nodeEvaluator, maxVisitedNodes);
     }
 
+    /**
+     * Checks if the specified entity can safely walk to the specified location.
+     */
     @Override
-    protected boolean canMoveDirectly(Vec3 p_262585_, Vec3 p_262682_) {
-        return isClearForMovementBetween(this.mob, p_262585_, p_262682_, true);
+    protected boolean canMoveDirectly(Vec3 posVec31, Vec3 posVec32) {
+        return isClearForMovementBetween(this.mob, posVec31, posVec32, true);
     }
 
     @Override
@@ -38,9 +41,12 @@ public class FlyingPathNavigation extends PathNavigation {
         return this.mob.position();
     }
 
+    /**
+     * Returns a path to the given entity or null
+     */
     @Override
-    public Path createPath(Entity p_26430_, int p_26431_) {
-        return this.createPath(p_26430_.blockPosition(), p_26431_);
+    public Path createPath(Entity entity, int accuracy) {
+        return this.createPath(entity.blockPosition(), accuracy);
     }
 
     @Override
@@ -68,16 +74,16 @@ public class FlyingPathNavigation extends PathNavigation {
         }
     }
 
-    public void setCanOpenDoors(boolean p_26441_) {
-        this.nodeEvaluator.setCanOpenDoors(p_26441_);
+    public void setCanOpenDoors(boolean canOpenDoors) {
+        this.nodeEvaluator.setCanOpenDoors(canOpenDoors);
     }
 
     public boolean canPassDoors() {
         return this.nodeEvaluator.canPassDoors();
     }
 
-    public void setCanPassDoors(boolean p_26444_) {
-        this.nodeEvaluator.setCanPassDoors(p_26444_);
+    public void setCanPassDoors(boolean canEnterDoors) {
+        this.nodeEvaluator.setCanPassDoors(canEnterDoors);
     }
 
     public boolean canOpenDoors() {
@@ -85,7 +91,7 @@ public class FlyingPathNavigation extends PathNavigation {
     }
 
     @Override
-    public boolean isStableDestination(BlockPos p_26439_) {
-        return this.level.getBlockState(p_26439_).entityCanStandOn(this.level, p_26439_, this.mob);
+    public boolean isStableDestination(BlockPos pos) {
+        return this.level.getBlockState(pos).entityCanStandOn(this.level, pos, this.mob);
     }
 }

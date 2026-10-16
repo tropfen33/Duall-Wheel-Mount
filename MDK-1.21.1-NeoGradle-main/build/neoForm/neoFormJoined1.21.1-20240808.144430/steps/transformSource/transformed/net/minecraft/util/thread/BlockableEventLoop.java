@@ -23,14 +23,14 @@ public abstract class BlockableEventLoop<R extends Runnable> implements Profiler
     private final Queue<R> pendingRunnables = Queues.newConcurrentLinkedQueue();
     private int blockingCount;
 
-    protected BlockableEventLoop(String p_18686_) {
-        this.name = p_18686_;
+    protected BlockableEventLoop(String name) {
+        this.name = name;
         MetricsRegistry.INSTANCE.add(this);
     }
 
-    protected abstract R wrapRunnable(Runnable p_18704_);
+    protected abstract R wrapRunnable(Runnable runnable);
 
-    protected abstract boolean shouldRun(R p_18703_);
+    protected abstract boolean shouldRun(R runnable);
 
     public boolean isSameThread() {
         return Thread.currentThread() == this.getRunningThread();
@@ -51,13 +51,13 @@ public abstract class BlockableEventLoop<R extends Runnable> implements Profiler
         return this.name;
     }
 
-    public <V> CompletableFuture<V> submit(Supplier<V> p_18692_) {
-        return this.scheduleExecutables() ? CompletableFuture.supplyAsync(p_18692_, this) : CompletableFuture.completedFuture(p_18692_.get());
+    public <V> CompletableFuture<V> submit(Supplier<V> supplier) {
+        return this.scheduleExecutables() ? CompletableFuture.supplyAsync(supplier, this) : CompletableFuture.completedFuture(supplier.get());
     }
 
-    public CompletableFuture<Void> submitAsync(Runnable p_18690_) {
+    public CompletableFuture<Void> submitAsync(Runnable task) {
         return CompletableFuture.<Void>supplyAsync(() -> {
-            p_18690_.run();
+            task.run();
             return null;
         }, this)
         .exceptionallyCompose(ex -> {
@@ -68,39 +68,39 @@ public abstract class BlockableEventLoop<R extends Runnable> implements Profiler
     }
 
     @CheckReturnValue
-    public CompletableFuture<Void> submit(Runnable p_18708_) {
+    public CompletableFuture<Void> submit(Runnable task) {
         if (this.scheduleExecutables()) {
-            return this.submitAsync(p_18708_);
+            return this.submitAsync(task);
         } else {
-            p_18708_.run();
+            task.run();
             return CompletableFuture.completedFuture(null);
         }
     }
 
-    public void executeBlocking(Runnable p_18710_) {
+    public void executeBlocking(Runnable task) {
         if (!this.isSameThread()) {
-            this.submitAsync(p_18710_).join();
+            this.submitAsync(task).join();
         } else {
-            p_18710_.run();
+            task.run();
         }
     }
 
-    public void tell(R p_18712_) {
-        this.pendingRunnables.add(p_18712_);
+    public void tell(R task) {
+        this.pendingRunnables.add(task);
         LockSupport.unpark(this.getRunningThread());
     }
 
     @Override
-    public void execute(Runnable p_18706_) {
+    public void execute(Runnable task) {
         if (this.scheduleExecutables()) {
-            this.tell(this.wrapRunnable(p_18706_));
+            this.tell(this.wrapRunnable(task));
         } else {
-            p_18706_.run();
+            task.run();
         }
     }
 
-    public void executeIfPossible(Runnable p_201937_) {
-        this.execute(p_201937_);
+    public void executeIfPossible(Runnable task) {
+        this.execute(task);
     }
 
     protected void dropAllTasks() {
@@ -124,11 +124,14 @@ public abstract class BlockableEventLoop<R extends Runnable> implements Profiler
         }
     }
 
-    public void managedBlock(BooleanSupplier p_18702_) {
+    /**
+     * Drive the executor until the given BooleanSupplier returns true
+     */
+    public void managedBlock(BooleanSupplier isDone) {
         this.blockingCount++;
 
         try {
-            while (!p_18702_.getAsBoolean()) {
+            while (!isDone.getAsBoolean()) {
                 if (!this.pollTask()) {
                     this.waitForTasks();
                 }
@@ -143,9 +146,9 @@ public abstract class BlockableEventLoop<R extends Runnable> implements Profiler
         LockSupport.parkNanos("waiting for tasks", 100000L);
     }
 
-    protected void doRunTask(R p_18700_) {
+    protected void doRunTask(R task) {
         try {
-            p_18700_.run();
+            task.run();
         } catch (Exception exception) {
             LOGGER.error(LogUtils.FATAL_MARKER, "Error executing task on {}", this.name(), exception);
         }

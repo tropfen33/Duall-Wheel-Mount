@@ -11,16 +11,19 @@ import net.neoforged.api.distmarker.OnlyIn;
 public class CreativeInventoryListener implements ContainerListener {
     private final Minecraft minecraft;
 
-    public CreativeInventoryListener(Minecraft p_98492_) {
-        this.minecraft = p_98492_;
+    public CreativeInventoryListener(Minecraft minecraft) {
+        this.minecraft = minecraft;
+    }
+
+    /**
+     * Sends the contents of an inventory slot to the client-side Container. This doesn't have to match the actual contents of that slot.
+     */
+    @Override
+    public void slotChanged(AbstractContainerMenu containerToSend, int slotInd, ItemStack stack) {
+        this.minecraft.gameMode.handleCreativeModeItemAdd(stack, slotInd);
     }
 
     @Override
-    public void slotChanged(AbstractContainerMenu p_98498_, int p_98499_, ItemStack p_98500_) {
-        this.minecraft.gameMode.handleCreativeModeItemAdd(p_98500_, p_98499_);
-    }
-
-    @Override
-    public void dataChanged(AbstractContainerMenu p_169732_, int p_169733_, int p_169734_) {
+    public void dataChanged(AbstractContainerMenu containerMenu, int dataSlotIndex, int value) {
     }
 }

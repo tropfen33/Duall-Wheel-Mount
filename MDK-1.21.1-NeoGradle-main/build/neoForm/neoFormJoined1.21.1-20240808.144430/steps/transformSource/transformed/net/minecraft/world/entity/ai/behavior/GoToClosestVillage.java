@@ -13,7 +13,7 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.phys.Vec3;
 
 public class GoToClosestVillage {
-    public static BehaviorControl<Villager> create(float p_260342_, int p_259691_) {
+    public static BehaviorControl<Villager> create(float speedModifier, int closeEnoughDist) {
         return BehaviorBuilder.create(
             p_258357_ -> p_258357_.group(p_258357_.absent(MemoryModuleType.WALK_TARGET))
                     .apply(
@@ -44,7 +44,7 @@ public class GoToClosestVillage {
                                     }
 
                                     if (vec3 != null) {
-                                        p_258366_.set(new WalkTarget(vec3, p_260342_, p_259691_));
+                                        p_258366_.set(new WalkTarget(vec3, speedModifier, closeEnoughDist));
                                     }
 
                                     return true;

@@ -39,34 +39,37 @@ public abstract class BaseSpawner implements net.neoforged.neoforge.common.exten
     private int minSpawnDelay = 200;
     private int maxSpawnDelay = 800;
     private int spawnCount = 4;
+    /**
+     * Cached instance of the entity to render inside the spawner.
+     */
     @Nullable
     private Entity displayEntity;
     private int maxNearbyEntities = 6;
     private int requiredPlayerRange = 16;
     private int spawnRange = 4;
 
-    public void setEntityId(EntityType<?> p_253682_, @Nullable Level p_254041_, RandomSource p_254221_, BlockPos p_254050_) {
-        this.getOrCreateNextSpawnData(p_254041_, p_254221_, p_254050_)
+    public void setEntityId(EntityType<?> type, @Nullable Level level, RandomSource random, BlockPos pos) {
+        this.getOrCreateNextSpawnData(level, random, pos)
             .getEntityToSpawn()
-            .putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(p_253682_).toString());
+            .putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(type).toString());
     }
 
-    private boolean isNearPlayer(Level p_151344_, BlockPos p_151345_) {
-        return p_151344_.hasNearbyAlivePlayer(
-            (double)p_151345_.getX() + 0.5, (double)p_151345_.getY() + 0.5, (double)p_151345_.getZ() + 0.5, (double)this.requiredPlayerRange
+    private boolean isNearPlayer(Level level, BlockPos pos) {
+        return level.hasNearbyAlivePlayer(
+            (double)pos.getX() + 0.5, (double)pos.getY() + 0.5, (double)pos.getZ() + 0.5, (double)this.requiredPlayerRange
         );
     }
 
-    public void clientTick(Level p_151320_, BlockPos p_151321_) {
-        if (!this.isNearPlayer(p_151320_, p_151321_)) {
+    public void clientTick(Level level, BlockPos pos) {
+        if (!this.isNearPlayer(level, pos)) {
             this.oSpin = this.spin;
         } else if (this.displayEntity != null) {
-            RandomSource randomsource = p_151320_.getRandom();
-            double d0 = (double)p_151321_.getX() + randomsource.nextDouble();
-            double d1 = (double)p_151321_.getY() + randomsource.nextDouble();
-            double d2 = (double)p_151321_.getZ() + randomsource.nextDouble();
-            p_151320_.addParticle(ParticleTypes.SMOKE, d0, d1, d2, 0.0, 0.0, 0.0);
-            p_151320_.addParticle(ParticleTypes.FLAME, d0, d1, d2, 0.0, 0.0, 0.0);
+            RandomSource randomsource = level.getRandom();
+            double d0 = (double)pos.getX() + randomsource.nextDouble();
+            double d1 = (double)pos.getY() + randomsource.nextDouble();
+            double d2 = (double)pos.getZ() + randomsource.nextDouble();
+            level.addParticle(ParticleTypes.SMOKE, d0, d1, d2, 0.0, 0.0, 0.0);
+            level.addParticle(ParticleTypes.FLAME, d0, d1, d2, 0.0, 0.0, 0.0);
             if (this.spawnDelay > 0) {
                 this.spawnDelay--;
             }
@@ -76,24 +79,24 @@ public abstract class BaseSpawner implements net.neoforged.neoforge.common.exten
         }
     }
 
-    public void serverTick(ServerLevel p_151312_, BlockPos p_151313_) {
-        if (this.isNearPlayer(p_151312_, p_151313_)) {
+    public void serverTick(ServerLevel serverLevel, BlockPos pos) {
+        if (this.isNearPlayer(serverLevel, pos)) {
             if (this.spawnDelay == -1) {
-                this.delay(p_151312_, p_151313_);
+                this.delay(serverLevel, pos);
             }
 
             if (this.spawnDelay > 0) {
                 this.spawnDelay--;
             } else {
                 boolean flag = false;
-                RandomSource randomsource = p_151312_.getRandom();
-                SpawnData spawndata = this.getOrCreateNextSpawnData(p_151312_, randomsource, p_151313_);
+                RandomSource randomsource = serverLevel.getRandom();
+                SpawnData spawndata = this.getOrCreateNextSpawnData(serverLevel, randomsource, pos);
 
                 for (int i = 0; i < this.spawnCount; i++) {
                     CompoundTag compoundtag = spawndata.getEntityToSpawn();
                     Optional<EntityType<?>> optional = EntityType.by(compoundtag);
                     if (optional.isEmpty()) {
-                        this.delay(p_151312_, p_151313_);
+                        this.delay(serverLevel, pos);
                         return;
                     }
 
@@ -101,75 +104,75 @@ public abstract class BaseSpawner implements net.neoforged.neoforge.common.exten
                     int j = listtag.size();
                     double d0 = j >= 1
                         ? listtag.getDouble(0)
-                        : (double)p_151313_.getX() + (randomsource.nextDouble() - randomsource.nextDouble()) * (double)this.spawnRange + 0.5;
-                    double d1 = j >= 2 ? listtag.getDouble(1) : (double)(p_151313_.getY() + randomsource.nextInt(3) - 1);
+                        : (double)pos.getX() + (randomsource.nextDouble() - randomsource.nextDouble()) * (double)this.spawnRange + 0.5;
+                    double d1 = j >= 2 ? listtag.getDouble(1) : (double)(pos.getY() + randomsource.nextInt(3) - 1);
                     double d2 = j >= 3
                         ? listtag.getDouble(2)
-                        : (double)p_151313_.getZ() + (randomsource.nextDouble() - randomsource.nextDouble()) * (double)this.spawnRange + 0.5;
-                    if (p_151312_.noCollision(optional.get().getSpawnAABB(d0, d1, d2))) {
+                        : (double)pos.getZ() + (randomsource.nextDouble() - randomsource.nextDouble()) * (double)this.spawnRange + 0.5;
+                    if (serverLevel.noCollision(optional.get().getSpawnAABB(d0, d1, d2))) {
                         BlockPos blockpos = BlockPos.containing(d0, d1, d2);
                         if (spawndata.getCustomSpawnRules().isPresent()) {
-                            if (!optional.get().getCategory().isFriendly() && p_151312_.getDifficulty() == Difficulty.PEACEFUL) {
+                            if (!optional.get().getCategory().isFriendly() && serverLevel.getDifficulty() == Difficulty.PEACEFUL) {
                                 continue;
                             }
 
                             SpawnData.CustomSpawnRules spawndata$customspawnrules = spawndata.getCustomSpawnRules().get();
-                            if (!spawndata$customspawnrules.isValidPosition(blockpos, p_151312_)) {
+                            if (!spawndata$customspawnrules.isValidPosition(blockpos, serverLevel)) {
                                 continue;
                             }
-                        } else if (!SpawnPlacements.checkSpawnRules(optional.get(), p_151312_, MobSpawnType.SPAWNER, blockpos, p_151312_.getRandom())) {
+                        } else if (!SpawnPlacements.checkSpawnRules(optional.get(), serverLevel, MobSpawnType.SPAWNER, blockpos, serverLevel.getRandom())) {
                             continue;
                         }
 
-                        Entity entity = EntityType.loadEntityRecursive(compoundtag, p_151312_, p_151310_ -> {
+                        Entity entity = EntityType.loadEntityRecursive(compoundtag, serverLevel, p_151310_ -> {
                             p_151310_.moveTo(d0, d1, d2, p_151310_.getYRot(), p_151310_.getXRot());
                             return p_151310_;
                         });
                         if (entity == null) {
-                            this.delay(p_151312_, p_151313_);
+                            this.delay(serverLevel, pos);
                             return;
                         }
 
-                        int k = p_151312_.getEntities(
+                        int k = serverLevel.getEntities(
                                 EntityTypeTest.forExactClass(entity.getClass()),
                                 new AABB(
-                                        (double)p_151313_.getX(),
-                                        (double)p_151313_.getY(),
-                                        (double)p_151313_.getZ(),
-                                        (double)(p_151313_.getX() + 1),
-                                        (double)(p_151313_.getY() + 1),
-                                        (double)(p_151313_.getZ() + 1)
+                                        (double)pos.getX(),
+                                        (double)pos.getY(),
+                                        (double)pos.getZ(),
+                                        (double)(pos.getX() + 1),
+                                        (double)(pos.getY() + 1),
+                                        (double)(pos.getZ() + 1)
                                     )
                                     .inflate((double)this.spawnRange),
                                 EntitySelector.NO_SPECTATORS
                             )
                             .size();
                         if (k >= this.maxNearbyEntities) {
-                            this.delay(p_151312_, p_151313_);
+                            this.delay(serverLevel, pos);
                             return;
                         }
 
                         entity.moveTo(entity.getX(), entity.getY(), entity.getZ(), randomsource.nextFloat() * 360.0F, 0.0F);
                         if (entity instanceof Mob mob) {
-                            if (!net.neoforged.neoforge.event.EventHooks.checkSpawnPositionSpawner(mob, p_151312_, MobSpawnType.SPAWNER, spawndata, this)) {
+                            if (!net.neoforged.neoforge.event.EventHooks.checkSpawnPositionSpawner(mob, serverLevel, MobSpawnType.SPAWNER, spawndata, this)) {
                                 continue;
                             }
 
                             boolean flag1 = spawndata.getEntityToSpawn().size() == 1 && spawndata.getEntityToSpawn().contains("id", 8);
                             // Neo: Patch in FinalizeSpawn for spawners so it may be fired unconditionally, instead of only when vanilla would normally call it.
                             // The local flag1 is the conditions under which the spawner will normally call Mob#finalizeSpawn.
-                            net.neoforged.neoforge.event.EventHooks.finalizeMobSpawnSpawner(mob, p_151312_, p_151312_.getCurrentDifficultyAt(entity.blockPosition()), MobSpawnType.SPAWNER, null, this, flag1);
+                            net.neoforged.neoforge.event.EventHooks.finalizeMobSpawnSpawner(mob, serverLevel, serverLevel.getCurrentDifficultyAt(entity.blockPosition()), MobSpawnType.SPAWNER, null, this, flag1);
 
                             spawndata.getEquipment().ifPresent(mob::equip);
                         }
 
-                        if (!p_151312_.tryAddFreshEntityWithPassengers(entity)) {
-                            this.delay(p_151312_, p_151313_);
+                        if (!serverLevel.tryAddFreshEntityWithPassengers(entity)) {
+                            this.delay(serverLevel, pos);
                             return;
                         }
 
-                        p_151312_.levelEvent(2004, p_151313_, 0);
-                        p_151312_.gameEvent(entity, GameEvent.ENTITY_PLACE, blockpos);
+                        serverLevel.levelEvent(2004, pos, 0);
+                        serverLevel.gameEvent(entity, GameEvent.ENTITY_PLACE, blockpos);
                         if (entity instanceof Mob) {
                             ((Mob)entity).spawnAnim();
                         }
@@ -179,38 +182,38 @@ public abstract class BaseSpawner implements net.neoforged.neoforge.common.exten
                 }
 
                 if (flag) {
-                    this.delay(p_151312_, p_151313_);
+                    this.delay(serverLevel, pos);
                 }
             }
         }
     }
 
-    private void delay(Level p_151351_, BlockPos p_151352_) {
-        RandomSource randomsource = p_151351_.random;
+    private void delay(Level level, BlockPos pos) {
+        RandomSource randomsource = level.random;
         if (this.maxSpawnDelay <= this.minSpawnDelay) {
             this.spawnDelay = this.minSpawnDelay;
         } else {
             this.spawnDelay = this.minSpawnDelay + randomsource.nextInt(this.maxSpawnDelay - this.minSpawnDelay);
         }
 
-        this.spawnPotentials.getRandom(randomsource).ifPresent(p_337965_ -> this.setNextSpawnData(p_151351_, p_151352_, p_337965_.data()));
-        this.broadcastEvent(p_151351_, p_151352_, 1);
+        this.spawnPotentials.getRandom(randomsource).ifPresent(p_337965_ -> this.setNextSpawnData(level, pos, p_337965_.data()));
+        this.broadcastEvent(level, pos, 1);
     }
 
-    public void load(@Nullable Level p_151329_, BlockPos p_151330_, CompoundTag p_151331_) {
-        this.spawnDelay = p_151331_.getShort("Delay");
-        boolean flag = p_151331_.contains("SpawnData", 10);
+    public void load(@Nullable Level level, BlockPos pos, CompoundTag tag) {
+        this.spawnDelay = tag.getShort("Delay");
+        boolean flag = tag.contains("SpawnData", 10);
         if (flag) {
             SpawnData spawndata = SpawnData.CODEC
-                .parse(NbtOps.INSTANCE, p_151331_.getCompound("SpawnData"))
+                .parse(NbtOps.INSTANCE, tag.getCompound("SpawnData"))
                 .resultOrPartial(p_186391_ -> LOGGER.warn("Invalid SpawnData: {}", p_186391_))
                 .orElseGet(SpawnData::new);
-            this.setNextSpawnData(p_151329_, p_151330_, spawndata);
+            this.setNextSpawnData(level, pos, spawndata);
         }
 
-        boolean flag1 = p_151331_.contains("SpawnPotentials", 9);
+        boolean flag1 = tag.contains("SpawnPotentials", 9);
         if (flag1) {
-            ListTag listtag = p_151331_.getList("SpawnPotentials", 10);
+            ListTag listtag = tag.getList("SpawnPotentials", 10);
             this.spawnPotentials = SpawnData.LIST_CODEC
                 .parse(NbtOps.INSTANCE, listtag)
                 .resultOrPartial(p_186388_ -> LOGGER.warn("Invalid SpawnPotentials list: {}", p_186388_))
@@ -219,34 +222,34 @@ public abstract class BaseSpawner implements net.neoforged.neoforge.common.exten
             this.spawnPotentials = SimpleWeightedRandomList.single(this.nextSpawnData != null ? this.nextSpawnData : new SpawnData());
         }
 
-        if (p_151331_.contains("MinSpawnDelay", 99)) {
-            this.minSpawnDelay = p_151331_.getShort("MinSpawnDelay");
-            this.maxSpawnDelay = p_151331_.getShort("MaxSpawnDelay");
-            this.spawnCount = p_151331_.getShort("SpawnCount");
+        if (tag.contains("MinSpawnDelay", 99)) {
+            this.minSpawnDelay = tag.getShort("MinSpawnDelay");
+            this.maxSpawnDelay = tag.getShort("MaxSpawnDelay");
+            this.spawnCount = tag.getShort("SpawnCount");
         }
 
-        if (p_151331_.contains("MaxNearbyEntities", 99)) {
-            this.maxNearbyEntities = p_151331_.getShort("MaxNearbyEntities");
-            this.requiredPlayerRange = p_151331_.getShort("RequiredPlayerRange");
+        if (tag.contains("MaxNearbyEntities", 99)) {
+            this.maxNearbyEntities = tag.getShort("MaxNearbyEntities");
+            this.requiredPlayerRange = tag.getShort("RequiredPlayerRange");
         }
 
-        if (p_151331_.contains("SpawnRange", 99)) {
-            this.spawnRange = p_151331_.getShort("SpawnRange");
+        if (tag.contains("SpawnRange", 99)) {
+            this.spawnRange = tag.getShort("SpawnRange");
         }
 
         this.displayEntity = null;
     }
 
-    public CompoundTag save(CompoundTag p_186382_) {
-        p_186382_.putShort("Delay", (short)this.spawnDelay);
-        p_186382_.putShort("MinSpawnDelay", (short)this.minSpawnDelay);
-        p_186382_.putShort("MaxSpawnDelay", (short)this.maxSpawnDelay);
-        p_186382_.putShort("SpawnCount", (short)this.spawnCount);
-        p_186382_.putShort("MaxNearbyEntities", (short)this.maxNearbyEntities);
-        p_186382_.putShort("RequiredPlayerRange", (short)this.requiredPlayerRange);
-        p_186382_.putShort("SpawnRange", (short)this.spawnRange);
+    public CompoundTag save(CompoundTag tag) {
+        tag.putShort("Delay", (short)this.spawnDelay);
+        tag.putShort("MinSpawnDelay", (short)this.minSpawnDelay);
+        tag.putShort("MaxSpawnDelay", (short)this.maxSpawnDelay);
+        tag.putShort("SpawnCount", (short)this.spawnCount);
+        tag.putShort("MaxNearbyEntities", (short)this.maxNearbyEntities);
+        tag.putShort("RequiredPlayerRange", (short)this.requiredPlayerRange);
+        tag.putShort("SpawnRange", (short)this.spawnRange);
         if (this.nextSpawnData != null) {
-            p_186382_.put(
+            tag.put(
                 "SpawnData",
                 SpawnData.CODEC
                     .encodeStart(NbtOps.INSTANCE, this.nextSpawnData)
@@ -254,19 +257,19 @@ public abstract class BaseSpawner implements net.neoforged.neoforge.common.exten
             );
         }
 
-        p_186382_.put("SpawnPotentials", SpawnData.LIST_CODEC.encodeStart(NbtOps.INSTANCE, this.spawnPotentials).getOrThrow());
-        return p_186382_;
+        tag.put("SpawnPotentials", SpawnData.LIST_CODEC.encodeStart(NbtOps.INSTANCE, this.spawnPotentials).getOrThrow());
+        return tag;
     }
 
     @Nullable
-    public Entity getOrCreateDisplayEntity(Level p_254323_, BlockPos p_254313_) {
+    public Entity getOrCreateDisplayEntity(Level level, BlockPos pos) {
         if (this.displayEntity == null) {
-            CompoundTag compoundtag = this.getOrCreateNextSpawnData(p_254323_, p_254323_.getRandom(), p_254313_).getEntityToSpawn();
+            CompoundTag compoundtag = this.getOrCreateNextSpawnData(level, level.getRandom(), pos).getEntityToSpawn();
             if (!compoundtag.contains("id", 8)) {
                 return null;
             }
 
-            this.displayEntity = EntityType.loadEntityRecursive(compoundtag, p_254323_, Function.identity());
+            this.displayEntity = EntityType.loadEntityRecursive(compoundtag, level, Function.identity());
             if (compoundtag.size() == 1 && this.displayEntity instanceof Mob) {
             }
         }
@@ -274,9 +277,9 @@ public abstract class BaseSpawner implements net.neoforged.neoforge.common.exten
         return this.displayEntity;
     }
 
-    public boolean onEventTriggered(Level p_151317_, int p_151318_) {
-        if (p_151318_ == 1) {
-            if (p_151317_.isClientSide) {
+    public boolean onEventTriggered(Level level, int id) {
+        if (id == 1) {
+            if (level.isClientSide) {
                 this.spawnDelay = this.minSpawnDelay;
             }
 
@@ -286,20 +289,20 @@ public abstract class BaseSpawner implements net.neoforged.neoforge.common.exten
         }
     }
 
-    protected void setNextSpawnData(@Nullable Level p_151325_, BlockPos p_151326_, SpawnData p_151327_) {
-        this.nextSpawnData = p_151327_;
+    protected void setNextSpawnData(@Nullable Level level, BlockPos pos, SpawnData nextSpawnData) {
+        this.nextSpawnData = nextSpawnData;
     }
 
-    private SpawnData getOrCreateNextSpawnData(@Nullable Level p_254503_, RandomSource p_253892_, BlockPos p_254487_) {
+    private SpawnData getOrCreateNextSpawnData(@Nullable Level level, RandomSource random, BlockPos pos) {
         if (this.nextSpawnData != null) {
             return this.nextSpawnData;
         } else {
-            this.setNextSpawnData(p_254503_, p_254487_, this.spawnPotentials.getRandom(p_253892_).map(WeightedEntry.Wrapper::data).orElseGet(SpawnData::new));
+            this.setNextSpawnData(level, pos, this.spawnPotentials.getRandom(random).map(WeightedEntry.Wrapper::data).orElseGet(SpawnData::new));
             return this.nextSpawnData;
         }
     }
 
-    public abstract void broadcastEvent(Level p_151322_, BlockPos p_151323_, int p_151324_);
+    public abstract void broadcastEvent(Level level, BlockPos pos, int eventId);
 
     public double getSpin() {
         return this.spin;

@@ -18,7 +18,7 @@ import net.minecraft.world.entity.npc.VillagerProfession;
 import net.minecraft.world.level.pathfinder.Path;
 
 public class YieldJobSite {
-    public static BehaviorControl<Villager> create(float p_259768_) {
+    public static BehaviorControl<Villager> create(float speedModifier) {
         return BehaviorBuilder.create(
             p_258916_ -> p_258916_.group(
                         p_258916_.present(MemoryModuleType.POTENTIAL_JOB_SITE),
@@ -52,7 +52,7 @@ public class YieldJobSite {
                                                 p_258905_.erase();
                                                 p_258901_.erase();
                                                 if (p_340764_.getBrain().getMemory(MemoryModuleType.JOB_SITE).isEmpty()) {
-                                                    BehaviorUtils.setWalkAndLookTargetMemories(p_340764_, blockpos, p_259768_, 1);
+                                                    BehaviorUtils.setWalkAndLookTargetMemories(p_340764_, blockpos, speedModifier, 1);
                                                     p_340764_.getBrain()
                                                         .setMemory(MemoryModuleType.POTENTIAL_JOB_SITE, GlobalPos.of(p_258912_.dimension(), blockpos));
                                                     DebugPackets.sendPoiTicketCountPacket(p_258912_, blockpos);
@@ -66,23 +66,23 @@ public class YieldJobSite {
         );
     }
 
-    private static boolean nearbyWantsJobsite(Holder<PoiType> p_217511_, Villager p_217512_, BlockPos p_217513_) {
-        boolean flag = p_217512_.getBrain().getMemory(MemoryModuleType.POTENTIAL_JOB_SITE).isPresent();
+    private static boolean nearbyWantsJobsite(Holder<PoiType> poi, Villager villager, BlockPos pos) {
+        boolean flag = villager.getBrain().getMemory(MemoryModuleType.POTENTIAL_JOB_SITE).isPresent();
         if (flag) {
             return false;
         } else {
-            Optional<GlobalPos> optional = p_217512_.getBrain().getMemory(MemoryModuleType.JOB_SITE);
-            VillagerProfession villagerprofession = p_217512_.getVillagerData().getProfession();
-            if (villagerprofession.heldJobSite().test(p_217511_)) {
-                return optional.isEmpty() ? canReachPos(p_217512_, p_217513_, p_217511_.value()) : optional.get().pos().equals(p_217513_);
+            Optional<GlobalPos> optional = villager.getBrain().getMemory(MemoryModuleType.JOB_SITE);
+            VillagerProfession villagerprofession = villager.getVillagerData().getProfession();
+            if (villagerprofession.heldJobSite().test(poi)) {
+                return optional.isEmpty() ? canReachPos(villager, pos, poi.value()) : optional.get().pos().equals(pos);
             } else {
                 return false;
             }
         }
     }
 
-    private static boolean canReachPos(PathfinderMob p_260080_, BlockPos p_259875_, PoiType p_259606_) {
-        Path path = p_260080_.getNavigation().createPath(p_259875_, p_259606_.validRange());
+    private static boolean canReachPos(PathfinderMob mob, BlockPos pos, PoiType poi) {
+        Path path = mob.getNavigation().createPath(pos, poi.validRange());
         return path != null && path.canReach();
     }
 }

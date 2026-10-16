@@ -7,16 +7,16 @@ import javax.annotation.Nullable;
 
 public class ItemStackLinkedSet {
     public static final Strategy<? super ItemStack> TYPE_AND_TAG = new Strategy<ItemStack>() {
-        public int hashCode(@Nullable ItemStack p_251266_) {
-            return ItemStack.hashItemAndComponents(p_251266_);
+        public int hashCode(@Nullable ItemStack stack) {
+            return ItemStack.hashItemAndComponents(stack);
         }
 
-        public boolean equals(@Nullable ItemStack p_250623_, @Nullable ItemStack p_251135_) {
-            return p_250623_ == p_251135_
-                || p_250623_ != null
-                    && p_251135_ != null
-                    && p_250623_.isEmpty() == p_251135_.isEmpty()
-                    && ItemStack.isSameItemSameComponents(p_250623_, p_251135_);
+        public boolean equals(@Nullable ItemStack first, @Nullable ItemStack second) {
+            return first == second
+                || first != null
+                    && second != null
+                    && first.isEmpty() == second.isEmpty()
+                    && ItemStack.isSameItemSameComponents(first, second);
         }
     };
 

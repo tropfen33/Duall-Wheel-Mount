@@ -20,95 +20,98 @@ public class ComponentUtils {
     public static final Component DEFAULT_SEPARATOR = Component.literal(", ").withStyle(ChatFormatting.GRAY);
     public static final Component DEFAULT_NO_STYLE_SEPARATOR = Component.literal(", ");
 
-    public static MutableComponent mergeStyles(MutableComponent p_130751_, Style p_130752_) {
-        if (p_130752_.isEmpty()) {
-            return p_130751_;
+    /**
+     * Merge the component's styles with the given Style.
+     */
+    public static MutableComponent mergeStyles(MutableComponent component, Style p_style) {
+        if (p_style.isEmpty()) {
+            return component;
         } else {
-            Style style = p_130751_.getStyle();
+            Style style = component.getStyle();
             if (style.isEmpty()) {
-                return p_130751_.setStyle(p_130752_);
+                return component.setStyle(p_style);
             } else {
-                return style.equals(p_130752_) ? p_130751_ : p_130751_.setStyle(style.applyTo(p_130752_));
+                return style.equals(p_style) ? component : component.setStyle(style.applyTo(p_style));
             }
         }
     }
 
     public static Optional<MutableComponent> updateForEntity(
-        @Nullable CommandSourceStack p_178425_, Optional<Component> p_178426_, @Nullable Entity p_178427_, int p_178428_
+        @Nullable CommandSourceStack commandSourceStack, Optional<Component> optionalComponent, @Nullable Entity entity, int recursionDepth
     ) throws CommandSyntaxException {
-        return p_178426_.isPresent() ? Optional.of(updateForEntity(p_178425_, p_178426_.get(), p_178427_, p_178428_)) : Optional.empty();
+        return optionalComponent.isPresent() ? Optional.of(updateForEntity(commandSourceStack, optionalComponent.get(), entity, recursionDepth)) : Optional.empty();
     }
 
-    public static MutableComponent updateForEntity(@Nullable CommandSourceStack p_130732_, Component p_130733_, @Nullable Entity p_130734_, int p_130735_) throws CommandSyntaxException {
-        if (p_130735_ > 100) {
-            return p_130733_.copy();
+    public static MutableComponent updateForEntity(@Nullable CommandSourceStack commandSourceStack, Component p_component, @Nullable Entity entity, int recursionDepth) throws CommandSyntaxException {
+        if (recursionDepth > 100) {
+            return p_component.copy();
         } else {
-            MutableComponent mutablecomponent = p_130733_.getContents().resolve(p_130732_, p_130734_, p_130735_ + 1);
+            MutableComponent mutablecomponent = p_component.getContents().resolve(commandSourceStack, entity, recursionDepth + 1);
 
-            for (Component component : p_130733_.getSiblings()) {
-                mutablecomponent.append(updateForEntity(p_130732_, component, p_130734_, p_130735_ + 1));
+            for (Component component : p_component.getSiblings()) {
+                mutablecomponent.append(updateForEntity(commandSourceStack, component, entity, recursionDepth + 1));
             }
 
-            return mutablecomponent.withStyle(resolveStyle(p_130732_, p_130733_.getStyle(), p_130734_, p_130735_));
+            return mutablecomponent.withStyle(resolveStyle(commandSourceStack, p_component.getStyle(), entity, recursionDepth));
         }
     }
 
-    private static Style resolveStyle(@Nullable CommandSourceStack p_130737_, Style p_130738_, @Nullable Entity p_130739_, int p_130740_) throws CommandSyntaxException {
-        HoverEvent hoverevent = p_130738_.getHoverEvent();
+    private static Style resolveStyle(@Nullable CommandSourceStack commandSourceStack, Style style, @Nullable Entity entity, int recursionDepth) throws CommandSyntaxException {
+        HoverEvent hoverevent = style.getHoverEvent();
         if (hoverevent != null) {
             Component component = hoverevent.getValue(HoverEvent.Action.SHOW_TEXT);
             if (component != null) {
-                HoverEvent hoverevent1 = new HoverEvent(HoverEvent.Action.SHOW_TEXT, updateForEntity(p_130737_, component, p_130739_, p_130740_ + 1));
-                return p_130738_.withHoverEvent(hoverevent1);
+                HoverEvent hoverevent1 = new HoverEvent(HoverEvent.Action.SHOW_TEXT, updateForEntity(commandSourceStack, component, entity, recursionDepth + 1));
+                return style.withHoverEvent(hoverevent1);
             }
         }
 
-        return p_130738_;
+        return style;
     }
 
-    public static Component formatList(Collection<String> p_130744_) {
-        return formatAndSortList(p_130744_, p_130742_ -> Component.literal(p_130742_).withStyle(ChatFormatting.GREEN));
+    public static Component formatList(Collection<String> elements) {
+        return formatAndSortList(elements, p_130742_ -> Component.literal(p_130742_).withStyle(ChatFormatting.GREEN));
     }
 
-    public static <T extends Comparable<T>> Component formatAndSortList(Collection<T> p_130746_, Function<T, Component> p_130747_) {
-        if (p_130746_.isEmpty()) {
+    public static <T extends Comparable<T>> Component formatAndSortList(Collection<T> elements, Function<T, Component> componentExtractor) {
+        if (elements.isEmpty()) {
             return CommonComponents.EMPTY;
-        } else if (p_130746_.size() == 1) {
-            return p_130747_.apply(p_130746_.iterator().next());
+        } else if (elements.size() == 1) {
+            return componentExtractor.apply(elements.iterator().next());
         } else {
-            List<T> list = Lists.newArrayList(p_130746_);
+            List<T> list = Lists.newArrayList(elements);
             list.sort(Comparable::compareTo);
-            return formatList(list, p_130747_);
+            return formatList(list, componentExtractor);
         }
     }
 
-    public static <T> Component formatList(Collection<? extends T> p_178441_, Function<T, Component> p_178442_) {
-        return formatList(p_178441_, DEFAULT_SEPARATOR, p_178442_);
+    public static <T> Component formatList(Collection<? extends T> elements, Function<T, Component> componentExtractor) {
+        return formatList(elements, DEFAULT_SEPARATOR, componentExtractor);
     }
 
-    public static <T> MutableComponent formatList(Collection<? extends T> p_178430_, Optional<? extends Component> p_178431_, Function<T, Component> p_178432_) {
-        return formatList(p_178430_, DataFixUtils.orElse(p_178431_, DEFAULT_SEPARATOR), p_178432_);
+    public static <T> MutableComponent formatList(Collection<? extends T> elements, Optional<? extends Component> optionalSeparator, Function<T, Component> componentExtractor) {
+        return formatList(elements, DataFixUtils.orElse(optionalSeparator, DEFAULT_SEPARATOR), componentExtractor);
     }
 
-    public static Component formatList(Collection<? extends Component> p_178434_, Component p_178435_) {
-        return formatList(p_178434_, p_178435_, Function.identity());
+    public static Component formatList(Collection<? extends Component> elements, Component separator) {
+        return formatList(elements, separator, Function.identity());
     }
 
-    public static <T> MutableComponent formatList(Collection<? extends T> p_178437_, Component p_178438_, Function<T, Component> p_178439_) {
-        if (p_178437_.isEmpty()) {
+    public static <T> MutableComponent formatList(Collection<? extends T> elements, Component separator, Function<T, Component> componentExtractor) {
+        if (elements.isEmpty()) {
             return Component.empty();
-        } else if (p_178437_.size() == 1) {
-            return p_178439_.apply((T)p_178437_.iterator().next()).copy();
+        } else if (elements.size() == 1) {
+            return componentExtractor.apply((T)elements.iterator().next()).copy();
         } else {
             MutableComponent mutablecomponent = Component.empty();
             boolean flag = true;
 
-            for (T t : p_178437_) {
+            for (T t : elements) {
                 if (!flag) {
-                    mutablecomponent.append(p_178438_);
+                    mutablecomponent.append(separator);
                 }
 
-                mutablecomponent.append(p_178439_.apply(t));
+                mutablecomponent.append(componentExtractor.apply(t));
                 flag = false;
             }
 
@@ -116,16 +119,19 @@ public class ComponentUtils {
         }
     }
 
-    public static MutableComponent wrapInSquareBrackets(Component p_130749_) {
-        return Component.translatable("chat.square_brackets", p_130749_);
+    /**
+     * Wraps the text with square brackets.
+     */
+    public static MutableComponent wrapInSquareBrackets(Component toWrap) {
+        return Component.translatable("chat.square_brackets", toWrap);
     }
 
-    public static Component fromMessage(Message p_130730_) {
-        return (Component)(p_130730_ instanceof Component ? (Component)p_130730_ : Component.literal(p_130730_.getString()));
+    public static Component fromMessage(Message message) {
+        return (Component)(message instanceof Component ? (Component)message : Component.literal(message.getString()));
     }
 
-    public static boolean isTranslationResolvable(@Nullable Component p_237135_) {
-        if (p_237135_ != null && p_237135_.getContents() instanceof TranslatableContents translatablecontents) {
+    public static boolean isTranslationResolvable(@Nullable Component component) {
+        if (component != null && component.getContents() instanceof TranslatableContents translatablecontents) {
             String s1 = translatablecontents.getKey();
             String s = translatablecontents.getFallback();
             return s != null || Language.getInstance().has(s1);
@@ -134,14 +140,14 @@ public class ComponentUtils {
         }
     }
 
-    public static MutableComponent copyOnClickText(String p_260039_) {
+    public static MutableComponent copyOnClickText(String text) {
         return wrapInSquareBrackets(
-            Component.literal(p_260039_)
+            Component.literal(text)
                 .withStyle(
                     p_258207_ -> p_258207_.withColor(ChatFormatting.GREEN)
-                            .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, p_260039_))
+                            .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, text))
                             .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("chat.copy.click")))
-                            .withInsertion(p_260039_)
+                            .withInsertion(text)
                 )
         );
     }

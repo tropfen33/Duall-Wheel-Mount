@@ -30,60 +30,65 @@ public class GlowLichenBlock extends MultifaceBlock implements BonemealableBlock
         return CODEC;
     }
 
-    public GlowLichenBlock(BlockBehaviour.Properties p_153282_) {
-        super(p_153282_);
+    public GlowLichenBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.defaultBlockState().setValue(WATERLOGGED, Boolean.valueOf(false)));
     }
 
-    public static ToIntFunction<BlockState> emission(int p_181223_) {
-        return p_181221_ -> MultifaceBlock.hasAnyFace(p_181221_) ? p_181223_ : 0;
+    public static ToIntFunction<BlockState> emission(int light) {
+        return p_181221_ -> MultifaceBlock.hasAnyFace(p_181221_) ? light : 0;
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_153309_) {
-        super.createBlockStateDefinition(p_153309_);
-        p_153309_.add(WATERLOGGED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(WATERLOGGED);
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
     protected BlockState updateShape(
-        BlockState p_153302_, Direction p_153303_, BlockState p_153304_, LevelAccessor p_153305_, BlockPos p_153306_, BlockPos p_153307_
+        BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos
     ) {
-        if (p_153302_.getValue(WATERLOGGED)) {
-            p_153305_.scheduleTick(p_153306_, Fluids.WATER, Fluids.WATER.getTickDelay(p_153305_));
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        return super.updateShape(p_153302_, p_153303_, p_153304_, p_153305_, p_153306_, p_153307_);
+        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
 
     @Override
-    protected boolean canBeReplaced(BlockState p_153299_, BlockPlaceContext p_153300_) {
-        return !p_153300_.getItemInHand().is(Items.GLOW_LICHEN) || super.canBeReplaced(p_153299_, p_153300_);
+    protected boolean canBeReplaced(BlockState state, BlockPlaceContext useContext) {
+        return !useContext.getItemInHand().is(Items.GLOW_LICHEN) || super.canBeReplaced(state, useContext);
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader p_256569_, BlockPos p_153290_, BlockState p_153291_) {
-        return Direction.stream().anyMatch(p_153316_ -> this.spreader.canSpreadInAnyDirection(p_153291_, p_256569_, p_153290_, p_153316_.getOpposite()));
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+        return Direction.stream().anyMatch(p_153316_ -> this.spreader.canSpreadInAnyDirection(state, level, pos, p_153316_.getOpposite()));
     }
 
     @Override
-    public boolean isBonemealSuccess(Level p_221264_, RandomSource p_221265_, BlockPos p_221266_, BlockState p_221267_) {
+    public boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel p_221259_, RandomSource p_221260_, BlockPos p_221261_, BlockState p_221262_) {
-        this.spreader.spreadFromRandomFaceTowardRandomDirection(p_221262_, p_221259_, p_221261_, p_221260_);
+    public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
+        this.spreader.spreadFromRandomFaceTowardRandomDirection(state, level, pos, random);
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_153311_) {
-        return p_153311_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_153311_);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
     @Override
-    protected boolean propagatesSkylightDown(BlockState p_181225_, BlockGetter p_181226_, BlockPos p_181227_) {
-        return p_181225_.getFluidState().isEmpty();
+    protected boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.getFluidState().isEmpty();
     }
 
     @Override

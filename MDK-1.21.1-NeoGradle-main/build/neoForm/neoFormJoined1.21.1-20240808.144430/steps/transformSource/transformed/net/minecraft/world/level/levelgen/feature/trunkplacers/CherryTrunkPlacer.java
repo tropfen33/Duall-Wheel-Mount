@@ -49,14 +49,14 @@ public class CherryTrunkPlacer extends TrunkPlacer {
     private final IntProvider branchEndOffsetFromTop;
 
     public CherryTrunkPlacer(
-        int p_273281_, int p_273327_, int p_272619_, IntProvider p_272873_, IntProvider p_272789_, UniformInt p_272917_, IntProvider p_272948_
+        int baseHeight, int heightRandA, int heightRandB, IntProvider branchCount, IntProvider branchHorizontalLength, UniformInt branchStartOffsetFromTop, IntProvider branchEndOffsetFromTop
     ) {
-        super(p_273281_, p_273327_, p_272619_);
-        this.branchCount = p_272873_;
-        this.branchHorizontalLength = p_272789_;
-        this.branchStartOffsetFromTop = p_272917_;
-        this.secondBranchStartOffsetFromTop = UniformInt.of(p_272917_.getMinValue(), p_272917_.getMaxValue() - 1);
-        this.branchEndOffsetFromTop = p_272948_;
+        super(baseHeight, heightRandA, heightRandB);
+        this.branchCount = branchCount;
+        this.branchHorizontalLength = branchHorizontalLength;
+        this.branchStartOffsetFromTop = branchStartOffsetFromTop;
+        this.secondBranchStartOffsetFromTop = UniformInt.of(branchStartOffsetFromTop.getMinValue(), branchStartOffsetFromTop.getMaxValue() - 1);
+        this.branchEndOffsetFromTop = branchEndOffsetFromTop;
     }
 
     @Override
@@ -66,26 +66,26 @@ public class CherryTrunkPlacer extends TrunkPlacer {
 
     @Override
     public List<FoliagePlacer.FoliageAttachment> placeTrunk(
-        LevelSimulatedReader p_272827_,
-        BiConsumer<BlockPos, BlockState> p_272650_,
-        RandomSource p_272993_,
-        int p_272990_,
-        BlockPos p_273471_,
-        TreeConfiguration p_273355_
+        LevelSimulatedReader level,
+        BiConsumer<BlockPos, BlockState> blockSetter,
+        RandomSource random,
+        int freeTreeHeight,
+        BlockPos pos,
+        TreeConfiguration config
     ) {
-        setDirtAt(p_272827_, p_272650_, p_272993_, p_273471_.below(), p_273355_);
-        int i = Math.max(0, p_272990_ - 1 + this.branchStartOffsetFromTop.sample(p_272993_));
-        int j = Math.max(0, p_272990_ - 1 + this.secondBranchStartOffsetFromTop.sample(p_272993_));
+        setDirtAt(level, blockSetter, random, pos.below(), config);
+        int i = Math.max(0, freeTreeHeight - 1 + this.branchStartOffsetFromTop.sample(random));
+        int j = Math.max(0, freeTreeHeight - 1 + this.secondBranchStartOffsetFromTop.sample(random));
         if (j >= i) {
             j++;
         }
 
-        int k = this.branchCount.sample(p_272993_);
+        int k = this.branchCount.sample(random);
         boolean flag = k == 3;
         boolean flag1 = k >= 2;
         int l;
         if (flag) {
-            l = p_272990_;
+            l = freeTreeHeight;
         } else if (flag1) {
             l = Math.max(i, j) + 1;
         } else {
@@ -93,24 +93,24 @@ public class CherryTrunkPlacer extends TrunkPlacer {
         }
 
         for (int i1 = 0; i1 < l; i1++) {
-            this.placeLog(p_272827_, p_272650_, p_272993_, p_273471_.above(i1), p_273355_);
+            this.placeLog(level, blockSetter, random, pos.above(i1), config);
         }
 
         List<FoliagePlacer.FoliageAttachment> list = new ArrayList<>();
         if (flag) {
-            list.add(new FoliagePlacer.FoliageAttachment(p_273471_.above(l), 0, false));
+            list.add(new FoliagePlacer.FoliageAttachment(pos.above(l), 0, false));
         }
 
         BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos();
-        Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(p_272993_);
+        Direction direction = Direction.Plane.HORIZONTAL.getRandomDirection(random);
         Function<BlockState, BlockState> function = p_273382_ -> p_273382_.trySetValue(RotatedPillarBlock.AXIS, direction.getAxis());
         list.add(
-            this.generateBranch(p_272827_, p_272650_, p_272993_, p_272990_, p_273471_, p_273355_, function, direction, i, i < l - 1, blockpos$mutableblockpos)
+            this.generateBranch(level, blockSetter, random, freeTreeHeight, pos, config, function, direction, i, i < l - 1, blockpos$mutableblockpos)
         );
         if (flag1) {
             list.add(
                 this.generateBranch(
-                    p_272827_, p_272650_, p_272993_, p_272990_, p_273471_, p_273355_, function, direction.getOpposite(), j, j < l - 1, blockpos$mutableblockpos
+                    level, blockSetter, random, freeTreeHeight, pos, config, function, direction.getOpposite(), j, j < l - 1, blockpos$mutableblockpos
                 )
             );
         }
@@ -119,41 +119,41 @@ public class CherryTrunkPlacer extends TrunkPlacer {
     }
 
     private FoliagePlacer.FoliageAttachment generateBranch(
-        LevelSimulatedReader p_272736_,
-        BiConsumer<BlockPos, BlockState> p_273092_,
-        RandomSource p_273449_,
-        int p_272659_,
-        BlockPos p_273743_,
-        TreeConfiguration p_273027_,
-        Function<BlockState, BlockState> p_273558_,
-        Direction p_273712_,
-        int p_272980_,
-        boolean p_272719_,
-        BlockPos.MutableBlockPos p_273496_
+        LevelSimulatedReader level,
+        BiConsumer<BlockPos, BlockState> blockSetter,
+        RandomSource random,
+        int freeTreeHeight,
+        BlockPos pos,
+        TreeConfiguration config,
+        Function<BlockState, BlockState> propertySetter,
+        Direction p_direction,
+        int secondBranchStartOffsetFromTop,
+        boolean doubleBranch,
+        BlockPos.MutableBlockPos currentPos
     ) {
-        p_273496_.set(p_273743_).move(Direction.UP, p_272980_);
-        int i = p_272659_ - 1 + this.branchEndOffsetFromTop.sample(p_273449_);
-        boolean flag = p_272719_ || i < p_272980_;
-        int j = this.branchHorizontalLength.sample(p_273449_) + (flag ? 1 : 0);
-        BlockPos blockpos = p_273743_.relative(p_273712_, j).above(i);
+        currentPos.set(pos).move(Direction.UP, secondBranchStartOffsetFromTop);
+        int i = freeTreeHeight - 1 + this.branchEndOffsetFromTop.sample(random);
+        boolean flag = doubleBranch || i < secondBranchStartOffsetFromTop;
+        int j = this.branchHorizontalLength.sample(random) + (flag ? 1 : 0);
+        BlockPos blockpos = pos.relative(p_direction, j).above(i);
         int k = flag ? 2 : 1;
 
         for (int l = 0; l < k; l++) {
-            this.placeLog(p_272736_, p_273092_, p_273449_, p_273496_.move(p_273712_), p_273027_, p_273558_);
+            this.placeLog(level, blockSetter, random, currentPos.move(p_direction), config, propertySetter);
         }
 
-        Direction direction = blockpos.getY() > p_273496_.getY() ? Direction.UP : Direction.DOWN;
+        Direction direction = blockpos.getY() > currentPos.getY() ? Direction.UP : Direction.DOWN;
 
         while (true) {
-            int i1 = p_273496_.distManhattan(blockpos);
+            int i1 = currentPos.distManhattan(blockpos);
             if (i1 == 0) {
                 return new FoliagePlacer.FoliageAttachment(blockpos.above(), 0, false);
             }
 
-            float f = (float)Math.abs(blockpos.getY() - p_273496_.getY()) / (float)i1;
-            boolean flag1 = p_273449_.nextFloat() < f;
-            p_273496_.move(flag1 ? direction : p_273712_);
-            this.placeLog(p_272736_, p_273092_, p_273449_, p_273496_, p_273027_, flag1 ? Function.identity() : p_273558_);
+            float f = (float)Math.abs(blockpos.getY() - currentPos.getY()) / (float)i1;
+            boolean flag1 = random.nextFloat() < f;
+            currentPos.move(flag1 ? direction : p_direction);
+            this.placeLog(level, blockSetter, random, currentPos, config, flag1 ? Function.identity() : propertySetter);
         }
     }
 }

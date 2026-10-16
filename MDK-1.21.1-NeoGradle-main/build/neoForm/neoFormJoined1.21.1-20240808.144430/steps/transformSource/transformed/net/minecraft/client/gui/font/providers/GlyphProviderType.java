@@ -20,9 +20,9 @@ public enum GlyphProviderType implements StringRepresentable, net.neoforged.fml.
     private final String name;
     private final MapCodec<? extends GlyphProviderDefinition> codec;
 
-    private GlyphProviderType(String p_286573_, MapCodec<? extends GlyphProviderDefinition> p_286248_) {
-        this.name = p_286573_;
-        this.codec = p_286248_;
+    private GlyphProviderType(String name, MapCodec<? extends GlyphProviderDefinition> codec) {
+        this.name = name;
+        this.codec = codec;
     }
 
     @Override

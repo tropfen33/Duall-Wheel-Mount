@@ -6,15 +6,15 @@ public interface DataComponentHolder extends net.neoforged.neoforge.common.exten
     DataComponentMap getComponents();
 
     @Nullable
-    default <T> T get(DataComponentType<? extends T> p_331625_) {
-        return this.getComponents().get(p_331625_);
+    default <T> T get(DataComponentType<? extends T> component) {
+        return this.getComponents().get(component);
     }
 
-    default <T> T getOrDefault(DataComponentType<? extends T> p_331643_, T p_330718_) {
-        return this.getComponents().getOrDefault(p_331643_, p_330718_);
+    default <T> T getOrDefault(DataComponentType<? extends T> component, T defaultValue) {
+        return this.getComponents().getOrDefault(component, defaultValue);
     }
 
-    default boolean has(DataComponentType<?> p_330779_) {
-        return this.getComponents().has(p_330779_);
+    default boolean has(DataComponentType<?> component) {
+        return this.getComponents().has(component);
     }
 }

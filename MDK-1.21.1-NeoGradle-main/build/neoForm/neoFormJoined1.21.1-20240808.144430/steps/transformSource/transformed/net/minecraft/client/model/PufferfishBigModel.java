@@ -17,10 +17,10 @@ public class PufferfishBigModel<T extends Entity> extends HierarchicalModel<T> {
     private final ModelPart leftBlueFin;
     private final ModelPart rightBlueFin;
 
-    public PufferfishBigModel(ModelPart p_170835_) {
-        this.root = p_170835_;
-        this.leftBlueFin = p_170835_.getChild("left_blue_fin");
-        this.rightBlueFin = p_170835_.getChild("right_blue_fin");
+    public PufferfishBigModel(ModelPart root) {
+        this.root = root;
+        this.leftBlueFin = root.getChild("left_blue_fin");
+        this.rightBlueFin = root.getChild("right_blue_fin");
     }
 
     public static LayerDefinition createBodyLayer() {
@@ -90,9 +90,12 @@ public class PufferfishBigModel<T extends Entity> extends HierarchicalModel<T> {
         return this.root;
     }
 
+    /**
+     * Sets this entity's model rotation angles
+     */
     @Override
-    public void setupAnim(T p_103451_, float p_103452_, float p_103453_, float p_103454_, float p_103455_, float p_103456_) {
-        this.rightBlueFin.zRot = -0.2F + 0.4F * Mth.sin(p_103454_ * 0.2F);
-        this.leftBlueFin.zRot = 0.2F - 0.4F * Mth.sin(p_103454_ * 0.2F);
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        this.rightBlueFin.zRot = -0.2F + 0.4F * Mth.sin(ageInTicks * 0.2F);
+        this.leftBlueFin.zRot = 0.2F - 0.4F * Mth.sin(ageInTicks * 0.2F);
     }
 }

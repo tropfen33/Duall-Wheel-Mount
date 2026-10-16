@@ -14,18 +14,18 @@ public class CustomBossEvents {
     private final Map<ResourceLocation, CustomBossEvent> events = Maps.newHashMap();
 
     @Nullable
-    public CustomBossEvent get(ResourceLocation p_136298_) {
-        return this.events.get(p_136298_);
+    public CustomBossEvent get(ResourceLocation id) {
+        return this.events.get(id);
     }
 
-    public CustomBossEvent create(ResourceLocation p_136300_, Component p_136301_) {
-        CustomBossEvent custombossevent = new CustomBossEvent(p_136300_, p_136301_);
-        this.events.put(p_136300_, custombossevent);
+    public CustomBossEvent create(ResourceLocation id, Component name) {
+        CustomBossEvent custombossevent = new CustomBossEvent(id, name);
+        this.events.put(id, custombossevent);
         return custombossevent;
     }
 
-    public void remove(CustomBossEvent p_136303_) {
-        this.events.remove(p_136303_.getTextId());
+    public void remove(CustomBossEvent bossbar) {
+        this.events.remove(bossbar.getTextId());
     }
 
     public Collection<ResourceLocation> getIds() {
@@ -36,32 +36,32 @@ public class CustomBossEvents {
         return this.events.values();
     }
 
-    public CompoundTag save(HolderLookup.Provider p_330783_) {
+    public CompoundTag save(HolderLookup.Provider levelRegistry) {
         CompoundTag compoundtag = new CompoundTag();
 
         for (CustomBossEvent custombossevent : this.events.values()) {
-            compoundtag.put(custombossevent.getTextId().toString(), custombossevent.save(p_330783_));
+            compoundtag.put(custombossevent.getTextId().toString(), custombossevent.save(levelRegistry));
         }
 
         return compoundtag;
     }
 
-    public void load(CompoundTag p_136296_, HolderLookup.Provider p_331580_) {
-        for (String s : p_136296_.getAllKeys()) {
+    public void load(CompoundTag tag, HolderLookup.Provider levelRegistry) {
+        for (String s : tag.getAllKeys()) {
             ResourceLocation resourcelocation = ResourceLocation.parse(s);
-            this.events.put(resourcelocation, CustomBossEvent.load(p_136296_.getCompound(s), resourcelocation, p_331580_));
+            this.events.put(resourcelocation, CustomBossEvent.load(tag.getCompound(s), resourcelocation, levelRegistry));
         }
     }
 
-    public void onPlayerConnect(ServerPlayer p_136294_) {
+    public void onPlayerConnect(ServerPlayer player) {
         for (CustomBossEvent custombossevent : this.events.values()) {
-            custombossevent.onPlayerConnect(p_136294_);
+            custombossevent.onPlayerConnect(player);
         }
     }
 
-    public void onPlayerDisconnect(ServerPlayer p_136306_) {
+    public void onPlayerDisconnect(ServerPlayer player) {
         for (CustomBossEvent custombossevent : this.events.values()) {
-            custombossevent.onPlayerDisconnect(p_136306_);
+            custombossevent.onPlayerDisconnect(player);
         }
     }
 }

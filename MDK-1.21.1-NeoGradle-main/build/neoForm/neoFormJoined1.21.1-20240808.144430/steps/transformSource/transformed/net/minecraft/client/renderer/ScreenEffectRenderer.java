@@ -27,33 +27,33 @@ import org.joml.Matrix4f;
 public class ScreenEffectRenderer {
     private static final ResourceLocation UNDERWATER_LOCATION = ResourceLocation.withDefaultNamespace("textures/misc/underwater.png");
 
-    public static void renderScreenEffect(Minecraft p_110719_, PoseStack p_110720_) {
-        Player player = p_110719_.player;
+    public static void renderScreenEffect(Minecraft minecraft, PoseStack poseStack) {
+        Player player = minecraft.player;
         if (!player.noPhysics) {
             org.apache.commons.lang3.tuple.Pair<BlockState, BlockPos> overlay = getOverlayBlock(player);
             if (overlay != null) {
-                if (!net.neoforged.neoforge.client.ClientHooks.renderBlockOverlay(player, p_110720_, net.neoforged.neoforge.client.event.RenderBlockScreenEffectEvent.OverlayType.BLOCK, overlay.getLeft(), overlay.getRight()))
-                    renderTex(p_110719_.getBlockRenderer().getBlockModelShaper().getTexture(overlay.getLeft(), p_110719_.level, overlay.getRight()), p_110720_);
+                if (!net.neoforged.neoforge.client.ClientHooks.renderBlockOverlay(player, poseStack, net.neoforged.neoforge.client.event.RenderBlockScreenEffectEvent.OverlayType.BLOCK, overlay.getLeft(), overlay.getRight()))
+                    renderTex(minecraft.getBlockRenderer().getBlockModelShaper().getTexture(overlay.getLeft(), minecraft.level, overlay.getRight()), poseStack);
             }
         }
 
-        if (!p_110719_.player.isSpectator()) {
-            if (p_110719_.player.isEyeInFluid(FluidTags.WATER)) {
-                if (!net.neoforged.neoforge.client.ClientHooks.renderWaterOverlay(player, p_110720_))
-                renderWater(p_110719_, p_110720_);
+        if (!minecraft.player.isSpectator()) {
+            if (minecraft.player.isEyeInFluid(FluidTags.WATER)) {
+                if (!net.neoforged.neoforge.client.ClientHooks.renderWaterOverlay(player, poseStack))
+                renderWater(minecraft, poseStack);
             }
-            else if (!player.getEyeInFluidType().isAir()) net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(player.getEyeInFluidType()).renderOverlay(p_110719_, p_110720_);
+            else if (!player.getEyeInFluidType().isAir()) net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions.of(player.getEyeInFluidType()).renderOverlay(minecraft, poseStack);
 
-            if (p_110719_.player.isOnFire()) {
-                if (!net.neoforged.neoforge.client.ClientHooks.renderFireOverlay(player, p_110720_))
-                renderFire(p_110719_, p_110720_);
+            if (minecraft.player.isOnFire()) {
+                if (!net.neoforged.neoforge.client.ClientHooks.renderFireOverlay(player, poseStack))
+                renderFire(minecraft, poseStack);
             }
         }
     }
 
     @Nullable
-    private static BlockState getViewBlockingState(Player p_110717_) {
-        return getOverlayBlock(p_110717_).getLeft();
+    private static BlockState getViewBlockingState(Player player) {
+        return getOverlayBlock(player).getLeft();
     }
 
     @Nullable
@@ -74,8 +74,8 @@ public class ScreenEffectRenderer {
         return null;
     }
 
-    private static void renderTex(TextureAtlasSprite p_173297_, PoseStack p_173298_) {
-        RenderSystem.setShaderTexture(0, p_173297_.atlasLocation());
+    private static void renderTex(TextureAtlasSprite texture, PoseStack poseStack) {
+        RenderSystem.setShaderTexture(0, texture.atlasLocation());
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         float f = 0.1F;
         float f1 = -1.0F;
@@ -83,11 +83,11 @@ public class ScreenEffectRenderer {
         float f3 = -1.0F;
         float f4 = 1.0F;
         float f5 = -0.5F;
-        float f6 = p_173297_.getU0();
-        float f7 = p_173297_.getU1();
-        float f8 = p_173297_.getV0();
-        float f9 = p_173297_.getV1();
-        Matrix4f matrix4f = p_173298_.last().pose();
+        float f6 = texture.getU0();
+        float f7 = texture.getU1();
+        float f8 = texture.getV0();
+        float f9 = texture.getV1();
+        Matrix4f matrix4f = poseStack.last().pose();
         BufferBuilder bufferbuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
         bufferbuilder.addVertex(matrix4f, -1.0F, -1.0F, -0.5F).setUv(f7, f9).setColor(0.1F, 0.1F, 0.1F, 1.0F);
         bufferbuilder.addVertex(matrix4f, 1.0F, -1.0F, -0.5F).setUv(f6, f9).setColor(0.1F, 0.1F, 0.1F, 1.0F);
@@ -96,8 +96,8 @@ public class ScreenEffectRenderer {
         BufferUploader.drawWithShader(bufferbuilder.buildOrThrow());
     }
 
-    private static void renderWater(Minecraft p_110726_, PoseStack p_110727_) {
-        renderFluid(p_110726_, p_110727_, UNDERWATER_LOCATION);
+    private static void renderWater(Minecraft minecraft, PoseStack poseStack) {
+        renderFluid(minecraft, poseStack, UNDERWATER_LOCATION);
     }
 
     public static void renderFluid(Minecraft p_110726_, PoseStack p_110727_, ResourceLocation texture) {
@@ -126,7 +126,7 @@ public class ScreenEffectRenderer {
         RenderSystem.disableBlend();
     }
 
-    private static void renderFire(Minecraft p_110729_, PoseStack p_110730_) {
+    private static void renderFire(Minecraft minecraft, PoseStack poseStack) {
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         RenderSystem.depthFunc(519);
         RenderSystem.depthMask(false);
@@ -147,22 +147,22 @@ public class ScreenEffectRenderer {
         float f11 = 1.0F;
 
         for (int i = 0; i < 2; i++) {
-            p_110730_.pushPose();
+            poseStack.pushPose();
             float f12 = -0.5F;
             float f13 = 0.5F;
             float f14 = -0.5F;
             float f15 = 0.5F;
             float f16 = -0.5F;
-            p_110730_.translate((float)(-(i * 2 - 1)) * 0.24F, -0.3F, 0.0F);
-            p_110730_.mulPose(Axis.YP.rotationDegrees((float)(i * 2 - 1) * 10.0F));
-            Matrix4f matrix4f = p_110730_.last().pose();
+            poseStack.translate((float)(-(i * 2 - 1)) * 0.24F, -0.3F, 0.0F);
+            poseStack.mulPose(Axis.YP.rotationDegrees((float)(i * 2 - 1) * 10.0F));
+            Matrix4f matrix4f = poseStack.last().pose();
             BufferBuilder bufferbuilder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
             bufferbuilder.addVertex(matrix4f, -0.5F, -0.5F, -0.5F).setUv(f8, f10).setColor(1.0F, 1.0F, 1.0F, 0.9F);
             bufferbuilder.addVertex(matrix4f, 0.5F, -0.5F, -0.5F).setUv(f7, f10).setColor(1.0F, 1.0F, 1.0F, 0.9F);
             bufferbuilder.addVertex(matrix4f, 0.5F, 0.5F, -0.5F).setUv(f7, f9).setColor(1.0F, 1.0F, 1.0F, 0.9F);
             bufferbuilder.addVertex(matrix4f, -0.5F, 0.5F, -0.5F).setUv(f8, f9).setColor(1.0F, 1.0F, 1.0F, 0.9F);
             BufferUploader.drawWithShader(bufferbuilder.buildOrThrow());
-            p_110730_.popPose();
+            poseStack.popPose();
         }
 
         RenderSystem.disableBlend();

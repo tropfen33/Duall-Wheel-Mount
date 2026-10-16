@@ -15,40 +15,40 @@ public class ChunkLevel {
     public static final int MAX_LEVEL = 33 + RADIUS_AROUND_FULL_CHUNK;
 
     @Nullable
-    public static ChunkStatus generationStatus(int p_287738_) {
-        return getStatusAroundFullChunk(p_287738_ - 33, null);
+    public static ChunkStatus generationStatus(int level) {
+        return getStatusAroundFullChunk(level - 33, null);
     }
 
     @Nullable
     @Contract("_,!null->!null;_,_->_")
-    public static ChunkStatus getStatusAroundFullChunk(int p_347593_, @Nullable ChunkStatus p_347451_) {
-        if (p_347593_ > RADIUS_AROUND_FULL_CHUNK) {
-            return p_347451_;
+    public static ChunkStatus getStatusAroundFullChunk(int distance, @Nullable ChunkStatus chunkStatus) {
+        if (distance > RADIUS_AROUND_FULL_CHUNK) {
+            return chunkStatus;
         } else {
-            return p_347593_ <= 0 ? ChunkStatus.FULL : FULL_CHUNK_STEP.accumulatedDependencies().get(p_347593_);
+            return distance <= 0 ? ChunkStatus.FULL : FULL_CHUNK_STEP.accumulatedDependencies().get(distance);
         }
     }
 
-    public static ChunkStatus getStatusAroundFullChunk(int p_347662_) {
-        return getStatusAroundFullChunk(p_347662_, ChunkStatus.EMPTY);
+    public static ChunkStatus getStatusAroundFullChunk(int distance) {
+        return getStatusAroundFullChunk(distance, ChunkStatus.EMPTY);
     }
 
-    public static int byStatus(ChunkStatus p_331231_) {
-        return 33 + FULL_CHUNK_STEP.getAccumulatedRadiusOf(p_331231_);
+    public static int byStatus(ChunkStatus status) {
+        return 33 + FULL_CHUNK_STEP.getAccumulatedRadiusOf(status);
     }
 
-    public static FullChunkStatus fullStatus(int p_287750_) {
-        if (p_287750_ <= 31) {
+    public static FullChunkStatus fullStatus(int level) {
+        if (level <= 31) {
             return FullChunkStatus.ENTITY_TICKING;
-        } else if (p_287750_ <= 32) {
+        } else if (level <= 32) {
             return FullChunkStatus.BLOCK_TICKING;
         } else {
-            return p_287750_ <= 33 ? FullChunkStatus.FULL : FullChunkStatus.INACCESSIBLE;
+            return level <= 33 ? FullChunkStatus.FULL : FullChunkStatus.INACCESSIBLE;
         }
     }
 
-    public static int byStatus(FullChunkStatus p_287601_) {
-        return switch (p_287601_) {
+    public static int byStatus(FullChunkStatus status) {
+        return switch (status) {
             case INACCESSIBLE -> MAX_LEVEL;
             case FULL -> 33;
             case BLOCK_TICKING -> 32;
@@ -56,15 +56,15 @@ public class ChunkLevel {
         };
     }
 
-    public static boolean isEntityTicking(int p_287767_) {
-        return p_287767_ <= 31;
+    public static boolean isEntityTicking(int level) {
+        return level <= 31;
     }
 
-    public static boolean isBlockTicking(int p_287696_) {
-        return p_287696_ <= 32;
+    public static boolean isBlockTicking(int level) {
+        return level <= 32;
     }
 
-    public static boolean isLoaded(int p_287635_) {
-        return p_287635_ <= MAX_LEVEL;
+    public static boolean isLoaded(int level) {
+        return level <= MAX_LEVEL;
     }
 }

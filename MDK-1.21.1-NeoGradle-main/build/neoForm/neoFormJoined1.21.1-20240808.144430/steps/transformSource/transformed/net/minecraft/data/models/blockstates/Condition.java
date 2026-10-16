@@ -14,32 +14,32 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.Property;
 
 public interface Condition extends Supplier<JsonElement> {
-    void validate(StateDefinition<?, ?> p_125136_);
+    void validate(StateDefinition<?, ?> stateDefinition);
 
     static Condition.TerminalCondition condition() {
         return new Condition.TerminalCondition();
     }
 
-    static Condition and(Condition... p_176294_) {
-        return new Condition.CompositeCondition(Condition.Operation.AND, Arrays.asList(p_176294_));
+    static Condition and(Condition... conditions) {
+        return new Condition.CompositeCondition(Condition.Operation.AND, Arrays.asList(conditions));
     }
 
-    static Condition or(Condition... p_125138_) {
-        return new Condition.CompositeCondition(Condition.Operation.OR, Arrays.asList(p_125138_));
+    static Condition or(Condition... conditions) {
+        return new Condition.CompositeCondition(Condition.Operation.OR, Arrays.asList(conditions));
     }
 
     public static class CompositeCondition implements Condition {
         private final Condition.Operation operation;
         private final List<Condition> subconditions;
 
-        CompositeCondition(Condition.Operation p_125142_, List<Condition> p_125143_) {
-            this.operation = p_125142_;
-            this.subconditions = p_125143_;
+        CompositeCondition(Condition.Operation operation, List<Condition> subconditions) {
+            this.operation = operation;
+            this.subconditions = subconditions;
         }
 
         @Override
-        public void validate(StateDefinition<?, ?> p_125149_) {
-            this.subconditions.forEach(p_125152_ -> p_125152_.validate(p_125149_));
+        public void validate(StateDefinition<?, ?> stateDefinition) {
+            this.subconditions.forEach(p_125152_ -> p_125152_.validate(stateDefinition));
         }
 
         public JsonElement get() {
@@ -57,48 +57,48 @@ public interface Condition extends Supplier<JsonElement> {
 
         final String id;
 
-        private Operation(String p_125163_) {
-            this.id = p_125163_;
+        private Operation(String id) {
+            this.id = id;
         }
     }
 
     public static class TerminalCondition implements Condition {
         private final Map<Property<?>, String> terms = Maps.newHashMap();
 
-        private static <T extends Comparable<T>> String joinValues(Property<T> p_125187_, Stream<T> p_125188_) {
-            return p_125188_.<CharSequence>map(p_125187_::getName).collect(Collectors.joining("|"));
+        private static <T extends Comparable<T>> String joinValues(Property<T> property, Stream<T> valueStream) {
+            return valueStream.<CharSequence>map(property::getName).collect(Collectors.joining("|"));
         }
 
-        private static <T extends Comparable<T>> String getTerm(Property<T> p_125195_, T p_125196_, T[] p_125197_) {
-            return joinValues(p_125195_, Stream.concat(Stream.of(p_125196_), Stream.of(p_125197_)));
+        private static <T extends Comparable<T>> String getTerm(Property<T> property, T firstValue, T[] additionalValues) {
+            return joinValues(property, Stream.concat(Stream.of(firstValue), Stream.of(additionalValues)));
         }
 
-        private <T extends Comparable<T>> void putValue(Property<T> p_125184_, String p_125185_) {
-            String s = this.terms.put(p_125184_, p_125185_);
+        private <T extends Comparable<T>> void putValue(Property<T> property, String value) {
+            String s = this.terms.put(property, value);
             if (s != null) {
-                throw new IllegalStateException("Tried to replace " + p_125184_ + " value from " + s + " to " + p_125185_);
+                throw new IllegalStateException("Tried to replace " + property + " value from " + s + " to " + value);
             }
         }
 
-        public final <T extends Comparable<T>> Condition.TerminalCondition term(Property<T> p_125177_, T p_125178_) {
-            this.putValue(p_125177_, p_125177_.getName(p_125178_));
+        public final <T extends Comparable<T>> Condition.TerminalCondition term(Property<T> property, T value) {
+            this.putValue(property, property.getName(value));
             return this;
         }
 
         @SafeVarargs
-        public final <T extends Comparable<T>> Condition.TerminalCondition term(Property<T> p_125180_, T p_125181_, T... p_125182_) {
-            this.putValue(p_125180_, getTerm(p_125180_, p_125181_, p_125182_));
+        public final <T extends Comparable<T>> Condition.TerminalCondition term(Property<T> property, T firstValue, T... additionalValues) {
+            this.putValue(property, getTerm(property, firstValue, additionalValues));
             return this;
         }
 
-        public final <T extends Comparable<T>> Condition.TerminalCondition negatedTerm(Property<T> p_176297_, T p_176298_) {
-            this.putValue(p_176297_, "!" + p_176297_.getName(p_176298_));
+        public final <T extends Comparable<T>> Condition.TerminalCondition negatedTerm(Property<T> property, T value) {
+            this.putValue(property, "!" + property.getName(value));
             return this;
         }
 
         @SafeVarargs
-        public final <T extends Comparable<T>> Condition.TerminalCondition negatedTerm(Property<T> p_176300_, T p_176301_, T... p_176302_) {
-            this.putValue(p_176300_, "!" + getTerm(p_176300_, p_176301_, p_176302_));
+        public final <T extends Comparable<T>> Condition.TerminalCondition negatedTerm(Property<T> property, T firstValue, T... additionalValues) {
+            this.putValue(property, "!" + getTerm(property, firstValue, additionalValues));
             return this;
         }
 
@@ -109,14 +109,14 @@ public interface Condition extends Supplier<JsonElement> {
         }
 
         @Override
-        public void validate(StateDefinition<?, ?> p_125172_) {
+        public void validate(StateDefinition<?, ?> stateDefinition) {
             List<Property<?>> list = this.terms
                 .keySet()
                 .stream()
-                .filter(p_125175_ -> p_125172_.getProperty(p_125175_.getName()) != p_125175_)
+                .filter(p_125175_ -> stateDefinition.getProperty(p_125175_.getName()) != p_125175_)
                 .collect(Collectors.toList());
             if (!list.isEmpty()) {
-                throw new IllegalStateException("Properties " + list + " are missing from " + p_125172_);
+                throw new IllegalStateException("Properties " + list + " are missing from " + stateDefinition);
             }
         }
     }

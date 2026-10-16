@@ -14,27 +14,27 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public class MobSpawnerEntityIdentifiersFix extends DataFix {
-    public MobSpawnerEntityIdentifiersFix(Schema p_16451_, boolean p_16452_) {
-        super(p_16451_, p_16452_);
+    public MobSpawnerEntityIdentifiersFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
-    private Dynamic<?> fix(Dynamic<?> p_16457_) {
-        if (!"MobSpawner".equals(p_16457_.get("id").asString(""))) {
-            return p_16457_;
+    private Dynamic<?> fix(Dynamic<?> p_dynamic) {
+        if (!"MobSpawner".equals(p_dynamic.get("id").asString(""))) {
+            return p_dynamic;
         } else {
-            Optional<String> optional = p_16457_.get("EntityId").asString().result();
+            Optional<String> optional = p_dynamic.get("EntityId").asString().result();
             if (optional.isPresent()) {
-                Dynamic<?> dynamic = DataFixUtils.orElse(p_16457_.get("SpawnData").result(), p_16457_.emptyMap());
+                Dynamic<?> dynamic = DataFixUtils.orElse(p_dynamic.get("SpawnData").result(), p_dynamic.emptyMap());
                 dynamic = dynamic.set("id", dynamic.createString(optional.get().isEmpty() ? "Pig" : optional.get()));
-                p_16457_ = p_16457_.set("SpawnData", dynamic);
-                p_16457_ = p_16457_.remove("EntityId");
+                p_dynamic = p_dynamic.set("SpawnData", dynamic);
+                p_dynamic = p_dynamic.remove("EntityId");
             }
 
-            Optional<? extends Stream<? extends Dynamic<?>>> optional1 = p_16457_.get("SpawnPotentials").asStreamOpt().result();
+            Optional<? extends Stream<? extends Dynamic<?>>> optional1 = p_dynamic.get("SpawnPotentials").asStreamOpt().result();
             if (optional1.isPresent()) {
-                p_16457_ = p_16457_.set(
+                p_dynamic = p_dynamic.set(
                     "SpawnPotentials",
-                    p_16457_.createList(
+                    p_dynamic.createList(
                         optional1.get()
                             .map(
                                 p_337650_ -> {
@@ -52,7 +52,7 @@ public class MobSpawnerEntityIdentifiersFix extends DataFix {
                 );
             }
 
-            return p_16457_;
+            return p_dynamic;
         }
     }
 

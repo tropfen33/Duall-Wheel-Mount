@@ -11,16 +11,16 @@ public interface BundlerInfo {
     int BUNDLE_SIZE_LIMIT = 4096;
 
     static <T extends PacketListener, P extends BundlePacket<? super T>> BundlerInfo createForPacket(
-        final PacketType<P> p_320816_, final Function<Iterable<Packet<? super T>>, P> p_265627_, final BundleDelimiterPacket<? super T> p_265373_
+        final PacketType<P> type, final Function<Iterable<Packet<? super T>>, P> bundler, final BundleDelimiterPacket<? super T> packet
     ) {
         return new BundlerInfo() {
             @Override
             public void unbundlePacket(Packet<?> p_265538_, Consumer<Packet<?>> p_265064_) {
-                if (p_265538_.type() == p_320816_) {
+                if (p_265538_.type() == type) {
                     P p = (P)p_265538_;
-                    p_265064_.accept(p_265373_);
+                    p_265064_.accept(packet);
                     p.subPackets().forEach(p_265064_);
-                    p_265064_.accept(p_265373_);
+                    p_265064_.accept(packet);
                 } else {
                     p_265064_.accept(p_265538_);
                 }
@@ -28,7 +28,7 @@ public interface BundlerInfo {
 
             @Override
             public void unbundlePacket(Packet<?> bundlePacket, Consumer<Packet<?>> packetSender, io.netty.channel.ChannelHandlerContext context) {
-                if (bundlePacket.type() == p_320816_) {
+                if (bundlePacket.type() == type) {
                     P p = (P)bundlePacket;
                     java.util.List<Packet<?>> packets = net.neoforged.neoforge.network.registration.NetworkRegistry.filterGameBundlePackets(context, p.subPackets());
                     if (packets.isEmpty()) {
@@ -38,9 +38,9 @@ public interface BundlerInfo {
                         packetSender.accept(packets.get(0));
                         return;
                     }
-                    packetSender.accept(p_265373_);
+                    packetSender.accept(packet);
                     packets.forEach(packetSender);
-                    packetSender.accept(p_265373_);
+                    packetSender.accept(packet);
                 } else {
                     packetSender.accept(bundlePacket);
                 }
@@ -49,14 +49,14 @@ public interface BundlerInfo {
             @Nullable
             @Override
             public BundlerInfo.Bundler startPacketBundling(Packet<?> p_265749_) {
-                return p_265749_ == p_265373_ ? new BundlerInfo.Bundler() {
+                return p_265749_ == packet ? new BundlerInfo.Bundler() {
                     private final List<Packet<? super T>> bundlePackets = new ArrayList<>();
 
                     @Nullable
                     @Override
                     public Packet<?> addPacket(Packet<?> p_320276_) {
-                        if (p_320276_ == p_265373_) {
-                            return p_265627_.apply(this.bundlePackets);
+                        if (p_320276_ == packet) {
+                            return bundler.apply(this.bundlePackets);
                         } else if (this.bundlePackets.size() >= 4096) {
                             throw new IllegalStateException("Too many packets in a bundle");
                         } else {
@@ -70,29 +70,35 @@ public interface BundlerInfo {
     }
 
     /**
-     * @deprecated Use {@link #unbundlePacket(Packet, Consumer, io.netty.channel.ChannelHandlerContext)} instead, as it supports packet filtering and is more efficient.
+     * @deprecated Use {@link #unbundlePacket(Packet, Consumer,
+     *             io.netty.channel.ChannelHandlerContext)} instead, as it supports
+     *             packet filtering and is more efficient.
      */
     @Deprecated
-    void unbundlePacket(Packet<?> p_265095_, Consumer<Packet<?>> p_265715_);
+    void unbundlePacket(Packet<?> packet, Consumer<Packet<?>> consumer);
 
     /**
      * Unwrap and flattens a bundle packet.
+     * 
+
      * Then sends the packets contained in the bundle, bracketing them in delimiter packets if need be.
      *
-     * @param bundlePacket The bundle packet to write.
-     * @param packetSender The packet sender.
-     * @param context The network context.
-     * @implNote This implementation should filter out packets which are not sendable on the current context, however to preserve compatibility the default implementation does not do this.
+     * @param packet   The bundle packet to write.
+     * @param consumer The packet sender.
+     * @param context  The network context.
+     * @implNote This implementation should filter out packets which are not sendable
+     *           on the current context, however to preserve compatibility the default
+     *           implementation does not do this.
      */
-    default void unbundlePacket(Packet<?> bundlePacket, Consumer<Packet<?>> packetSender, io.netty.channel.ChannelHandlerContext context) {
-        unbundlePacket(bundlePacket, packetSender);
+    default void unbundlePacket(Packet<?> packet, Consumer<Packet<?>> consumer, io.netty.channel.ChannelHandlerContext context) {
+        unbundlePacket(packet, consumer);
     }
 
     @Nullable
-    BundlerInfo.Bundler startPacketBundling(Packet<?> p_265162_);
+    BundlerInfo.Bundler startPacketBundling(Packet<?> packet);
 
     public interface Bundler {
         @Nullable
-        Packet<?> addPacket(Packet<?> p_265601_);
+        Packet<?> addPacket(Packet<?> packet);
     }
 }

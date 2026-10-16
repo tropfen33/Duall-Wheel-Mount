@@ -42,28 +42,28 @@ public record BlockPredicate(Optional<HolderSet<Block>> blocks, Optional<StatePr
         BlockPredicate::new
     );
 
-    public boolean matches(ServerLevel p_17915_, BlockPos p_17916_) {
-        if (!p_17915_.isLoaded(p_17916_)) {
+    public boolean matches(ServerLevel level, BlockPos pos) {
+        if (!level.isLoaded(pos)) {
             return false;
         } else {
-            return !this.matchesState(p_17915_.getBlockState(p_17916_))
+            return !this.matchesState(level.getBlockState(pos))
                 ? false
-                : !this.nbt.isPresent() || matchesBlockEntity(p_17915_, p_17915_.getBlockEntity(p_17916_), this.nbt.get());
+                : !this.nbt.isPresent() || matchesBlockEntity(level, level.getBlockEntity(pos), this.nbt.get());
         }
     }
 
-    public boolean matches(BlockInWorld p_330448_) {
-        return !this.matchesState(p_330448_.getState())
+    public boolean matches(BlockInWorld block) {
+        return !this.matchesState(block.getState())
             ? false
-            : !this.nbt.isPresent() || matchesBlockEntity(p_330448_.getLevel(), p_330448_.getEntity(), this.nbt.get());
+            : !this.nbt.isPresent() || matchesBlockEntity(block.getLevel(), block.getEntity(), this.nbt.get());
     }
 
-    private boolean matchesState(BlockState p_330349_) {
-        return this.blocks.isPresent() && !p_330349_.is(this.blocks.get()) ? false : !this.properties.isPresent() || this.properties.get().matches(p_330349_);
+    private boolean matchesState(BlockState state) {
+        return this.blocks.isPresent() && !state.is(this.blocks.get()) ? false : !this.properties.isPresent() || this.properties.get().matches(state);
     }
 
-    private static boolean matchesBlockEntity(LevelReader p_330457_, @Nullable BlockEntity p_332206_, NbtPredicate p_330422_) {
-        return p_332206_ != null && p_330422_.matches(p_332206_.saveWithFullMetadata(p_330457_.registryAccess()));
+    private static boolean matchesBlockEntity(LevelReader level, @Nullable BlockEntity blockEntity, NbtPredicate nbtPredicate) {
+        return blockEntity != null && nbtPredicate.matches(blockEntity.saveWithFullMetadata(level.registryAccess()));
     }
 
     public boolean requiresNbt() {
@@ -82,28 +82,28 @@ public record BlockPredicate(Optional<HolderSet<Block>> blocks, Optional<StatePr
             return new BlockPredicate.Builder();
         }
 
-        public BlockPredicate.Builder of(Block... p_146727_) {
-            this.blocks = Optional.of(HolderSet.direct(Block::builtInRegistryHolder, p_146727_));
+        public BlockPredicate.Builder of(Block... blocks) {
+            this.blocks = Optional.of(HolderSet.direct(Block::builtInRegistryHolder, blocks));
             return this;
         }
 
-        public BlockPredicate.Builder of(Collection<Block> p_298407_) {
-            this.blocks = Optional.of(HolderSet.direct(Block::builtInRegistryHolder, p_298407_));
+        public BlockPredicate.Builder of(Collection<Block> blocks) {
+            this.blocks = Optional.of(HolderSet.direct(Block::builtInRegistryHolder, blocks));
             return this;
         }
 
-        public BlockPredicate.Builder of(TagKey<Block> p_204028_) {
-            this.blocks = Optional.of(BuiltInRegistries.BLOCK.getOrCreateTag(p_204028_));
+        public BlockPredicate.Builder of(TagKey<Block> tag) {
+            this.blocks = Optional.of(BuiltInRegistries.BLOCK.getOrCreateTag(tag));
             return this;
         }
 
-        public BlockPredicate.Builder hasNbt(CompoundTag p_146725_) {
-            this.nbt = Optional.of(new NbtPredicate(p_146725_));
+        public BlockPredicate.Builder hasNbt(CompoundTag nbt) {
+            this.nbt = Optional.of(new NbtPredicate(nbt));
             return this;
         }
 
-        public BlockPredicate.Builder setProperties(StatePropertiesPredicate.Builder p_298989_) {
-            this.properties = p_298989_.build();
+        public BlockPredicate.Builder setProperties(StatePropertiesPredicate.Builder properties) {
+            this.properties = properties.build();
             return this;
         }
 

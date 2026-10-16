@@ -18,26 +18,26 @@ public class ItemModelShaper {
     private final Int2ObjectMap<BakedModel> shapesCache = new Int2ObjectOpenHashMap<>(256);
     private final ModelManager modelManager;
 
-    public ItemModelShaper(ModelManager p_109392_) {
-        this.modelManager = p_109392_;
+    public ItemModelShaper(ModelManager modelManager) {
+        this.modelManager = modelManager;
     }
 
-    public BakedModel getItemModel(ItemStack p_109407_) {
-        BakedModel bakedmodel = this.getItemModel(p_109407_.getItem());
+    public BakedModel getItemModel(ItemStack stack) {
+        BakedModel bakedmodel = this.getItemModel(stack.getItem());
         return bakedmodel == null ? this.modelManager.getMissingModel() : bakedmodel;
     }
 
     @Nullable
-    public BakedModel getItemModel(Item p_109395_) {
-        return this.shapesCache.get(getIndex(p_109395_));
+    public BakedModel getItemModel(Item item) {
+        return this.shapesCache.get(getIndex(item));
     }
 
-    private static int getIndex(Item p_109405_) {
-        return Item.getId(p_109405_);
+    private static int getIndex(Item item) {
+        return Item.getId(item);
     }
 
-    public void register(Item p_109397_, ModelResourceLocation p_109398_) {
-        this.shapes.put(getIndex(p_109397_), p_109398_);
+    public void register(Item item, ModelResourceLocation modelLocation) {
+        this.shapes.put(getIndex(item), modelLocation);
     }
 
     public ModelManager getModelManager() {

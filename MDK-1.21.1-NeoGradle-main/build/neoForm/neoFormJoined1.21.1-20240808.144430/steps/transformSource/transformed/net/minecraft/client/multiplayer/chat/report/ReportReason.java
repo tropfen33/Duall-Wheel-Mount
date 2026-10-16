@@ -22,9 +22,9 @@ public enum ReportReason {
     private final Component title;
     private final Component description;
 
-    private ReportReason(String p_273339_) {
-        this.backendName = p_273339_.toUpperCase(Locale.ROOT);
-        String s = "gui.abuseReport.reason." + p_273339_;
+    private ReportReason(String name) {
+        this.backendName = name.toUpperCase(Locale.ROOT);
+        String s = "gui.abuseReport.reason." + name;
         this.title = Component.translatable(s);
         this.description = Component.translatable(s + ".description");
     }

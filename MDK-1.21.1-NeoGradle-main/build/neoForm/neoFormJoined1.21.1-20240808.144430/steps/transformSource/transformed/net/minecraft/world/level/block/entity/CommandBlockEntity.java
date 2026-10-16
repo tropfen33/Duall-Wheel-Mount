@@ -65,26 +65,26 @@ public class CommandBlockEntity extends BlockEntity {
         }
     };
 
-    public CommandBlockEntity(BlockPos p_155380_, BlockState p_155381_) {
-        super(BlockEntityType.COMMAND_BLOCK, p_155380_, p_155381_);
+    public CommandBlockEntity(BlockPos pos, BlockState blockState) {
+        super(BlockEntityType.COMMAND_BLOCK, pos, blockState);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag p_187491_, HolderLookup.Provider p_324575_) {
-        super.saveAdditional(p_187491_, p_324575_);
-        this.commandBlock.save(p_187491_, p_324575_);
-        p_187491_.putBoolean("powered", this.isPowered());
-        p_187491_.putBoolean("conditionMet", this.wasConditionMet());
-        p_187491_.putBoolean("auto", this.isAutomatic());
+    protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.saveAdditional(tag, registries);
+        this.commandBlock.save(tag, registries);
+        tag.putBoolean("powered", this.isPowered());
+        tag.putBoolean("conditionMet", this.wasConditionMet());
+        tag.putBoolean("auto", this.isAutomatic());
     }
 
     @Override
-    protected void loadAdditional(CompoundTag p_338502_, HolderLookup.Provider p_338638_) {
-        super.loadAdditional(p_338502_, p_338638_);
-        this.commandBlock.load(p_338502_, p_338638_);
-        this.powered = p_338502_.getBoolean("powered");
-        this.conditionMet = p_338502_.getBoolean("conditionMet");
-        this.setAutomatic(p_338502_.getBoolean("auto"));
+    protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
+        super.loadAdditional(tag, registries);
+        this.commandBlock.load(tag, registries);
+        this.powered = tag.getBoolean("powered");
+        this.conditionMet = tag.getBoolean("conditionMet");
+        this.setAutomatic(tag.getBoolean("auto"));
     }
 
     @Override
@@ -96,8 +96,8 @@ public class CommandBlockEntity extends BlockEntity {
         return this.commandBlock;
     }
 
-    public void setPowered(boolean p_59136_) {
-        this.powered = p_59136_;
+    public void setPowered(boolean powered) {
+        this.powered = powered;
     }
 
     public boolean isPowered() {
@@ -108,10 +108,10 @@ public class CommandBlockEntity extends BlockEntity {
         return this.auto;
     }
 
-    public void setAutomatic(boolean p_59138_) {
+    public void setAutomatic(boolean auto) {
         boolean flag = this.auto;
-        this.auto = p_59138_;
-        if (!flag && p_59138_ && !this.powered && this.level != null && this.getMode() != CommandBlockEntity.Mode.SEQUENCE) {
+        this.auto = auto;
+        if (!flag && auto && !this.powered && this.level != null && this.getMode() != CommandBlockEntity.Mode.SEQUENCE) {
             this.scheduleTick();
         }
     }
@@ -167,21 +167,21 @@ public class CommandBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void applyImplicitComponents(BlockEntity.DataComponentInput p_338181_) {
-        super.applyImplicitComponents(p_338181_);
-        this.commandBlock.setCustomName(p_338181_.get(DataComponents.CUSTOM_NAME));
+    protected void applyImplicitComponents(BlockEntity.DataComponentInput componentInput) {
+        super.applyImplicitComponents(componentInput);
+        this.commandBlock.setCustomName(componentInput.get(DataComponents.CUSTOM_NAME));
     }
 
     @Override
-    protected void collectImplicitComponents(DataComponentMap.Builder p_338580_) {
-        super.collectImplicitComponents(p_338580_);
-        p_338580_.set(DataComponents.CUSTOM_NAME, this.commandBlock.getCustomName());
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        components.set(DataComponents.CUSTOM_NAME, this.commandBlock.getCustomName());
     }
 
     @Override
-    public void removeComponentsFromTag(CompoundTag p_331967_) {
-        super.removeComponentsFromTag(p_331967_);
-        p_331967_.remove("CustomName");
+    public void removeComponentsFromTag(CompoundTag tag) {
+        super.removeComponentsFromTag(tag);
+        tag.remove("CustomName");
     }
 
     public static enum Mode {

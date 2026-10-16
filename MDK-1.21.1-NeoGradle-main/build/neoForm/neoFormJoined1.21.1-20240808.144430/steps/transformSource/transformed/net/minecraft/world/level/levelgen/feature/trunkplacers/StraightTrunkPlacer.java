@@ -18,8 +18,8 @@ public class StraightTrunkPlacer extends TrunkPlacer {
         p_70261_ -> trunkPlacerParts(p_70261_).apply(p_70261_, StraightTrunkPlacer::new)
     );
 
-    public StraightTrunkPlacer(int p_70248_, int p_70249_, int p_70250_) {
-        super(p_70248_, p_70249_, p_70250_);
+    public StraightTrunkPlacer(int baseHeight, int heightRandA, int heightRandB) {
+        super(baseHeight, heightRandA, heightRandB);
     }
 
     @Override
@@ -29,19 +29,19 @@ public class StraightTrunkPlacer extends TrunkPlacer {
 
     @Override
     public List<FoliagePlacer.FoliageAttachment> placeTrunk(
-        LevelSimulatedReader p_226147_,
-        BiConsumer<BlockPos, BlockState> p_226148_,
-        RandomSource p_226149_,
-        int p_226150_,
-        BlockPos p_226151_,
-        TreeConfiguration p_226152_
+        LevelSimulatedReader level,
+        BiConsumer<BlockPos, BlockState> blockSetter,
+        RandomSource random,
+        int freeTreeHeight,
+        BlockPos pos,
+        TreeConfiguration config
     ) {
-        setDirtAt(p_226147_, p_226148_, p_226149_, p_226151_.below(), p_226152_);
+        setDirtAt(level, blockSetter, random, pos.below(), config);
 
-        for (int i = 0; i < p_226150_; i++) {
-            this.placeLog(p_226147_, p_226148_, p_226149_, p_226151_.above(i), p_226152_);
+        for (int i = 0; i < freeTreeHeight; i++) {
+            this.placeLog(level, blockSetter, random, pos.above(i), config);
         }
 
-        return ImmutableList.of(new FoliagePlacer.FoliageAttachment(p_226151_.above(p_226150_), 0, false));
+        return ImmutableList.of(new FoliagePlacer.FoliageAttachment(pos.above(freeTreeHeight), 0, false));
     }
 }

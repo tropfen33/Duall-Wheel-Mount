@@ -13,10 +13,10 @@ public class LevelLoadStatusManager {
     private final LevelRenderer levelRenderer;
     private LevelLoadStatusManager.Status status = LevelLoadStatusManager.Status.WAITING_FOR_SERVER;
 
-    public LevelLoadStatusManager(LocalPlayer p_304970_, ClientLevel p_304700_, LevelRenderer p_304864_) {
-        this.player = p_304970_;
-        this.level = p_304700_;
-        this.levelRenderer = p_304864_;
+    public LevelLoadStatusManager(LocalPlayer player, ClientLevel level, LevelRenderer levelRenderer) {
+        this.player = player;
+        this.level = level;
+        this.levelRenderer = levelRenderer;
     }
 
     public void tick() {

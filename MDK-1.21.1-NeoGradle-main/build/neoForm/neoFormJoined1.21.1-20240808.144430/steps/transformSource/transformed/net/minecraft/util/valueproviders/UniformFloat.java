@@ -26,22 +26,22 @@ public class UniformFloat extends FloatProvider {
     private final float minInclusive;
     private final float maxExclusive;
 
-    private UniformFloat(float p_146595_, float p_146596_) {
-        this.minInclusive = p_146595_;
-        this.maxExclusive = p_146596_;
+    private UniformFloat(float minInclusive, float maxExclusive) {
+        this.minInclusive = minInclusive;
+        this.maxExclusive = maxExclusive;
     }
 
-    public static UniformFloat of(float p_146606_, float p_146607_) {
-        if (p_146607_ <= p_146606_) {
+    public static UniformFloat of(float minInclusive, float maxExclusive) {
+        if (maxExclusive <= minInclusive) {
             throw new IllegalArgumentException("Max must exceed min");
         } else {
-            return new UniformFloat(p_146606_, p_146607_);
+            return new UniformFloat(minInclusive, maxExclusive);
         }
     }
 
     @Override
-    public float sample(RandomSource p_216866_) {
-        return Mth.randomBetween(p_216866_, this.minInclusive, this.maxExclusive);
+    public float sample(RandomSource random) {
+        return Mth.randomBetween(random, this.minInclusive, this.maxExclusive);
     }
 
     @Override

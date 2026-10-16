@@ -7,9 +7,9 @@ public class WorldgenRandom extends LegacyRandomSource {
     private final RandomSource randomSource;
     private int count;
 
-    public WorldgenRandom(RandomSource p_224680_) {
+    public WorldgenRandom(RandomSource randomSource) {
         super(0L);
-        this.randomSource = p_224680_;
+        this.randomSource = randomSource;
     }
 
     public int getCount() {
@@ -27,55 +27,90 @@ public class WorldgenRandom extends LegacyRandomSource {
     }
 
     @Override
-    public int next(int p_64708_) {
+    public int next(int bits) {
         this.count++;
         return this.randomSource instanceof LegacyRandomSource legacyrandomsource
-            ? legacyrandomsource.next(p_64708_)
-            : (int)(this.randomSource.nextLong() >>> 64 - p_64708_);
+            ? legacyrandomsource.next(bits)
+            : (int)(this.randomSource.nextLong() >>> 64 - bits);
     }
 
     @Override
-    public synchronized void setSeed(long p_190073_) {
+    public synchronized void setSeed(long seed) {
         if (this.randomSource != null) {
-            this.randomSource.setSeed(p_190073_);
+            this.randomSource.setSeed(seed);
         }
     }
 
-    public long setDecorationSeed(long p_64691_, int p_64692_, int p_64693_) {
-        this.setSeed(p_64691_);
+    /**
+     * Seeds the current random for chunk decoration, including spawning mobs and for use in feature placement.
+     * The coordinates correspond to the minimum block position within a given chunk.
+     */
+    public long setDecorationSeed(long levelSeed, int minChunkBlockX, int minChunkBlockZ) {
+        this.setSeed(levelSeed);
         long i = this.nextLong() | 1L;
         long j = this.nextLong() | 1L;
-        long k = (long)p_64692_ * i + (long)p_64693_ * j ^ p_64691_;
+        long k = (long)minChunkBlockX * i + (long)minChunkBlockZ * j ^ levelSeed;
         this.setSeed(k);
         return k;
     }
 
-    public void setFeatureSeed(long p_190065_, int p_190066_, int p_190067_) {
-        long i = p_190065_ + (long)p_190066_ + (long)(10000 * p_190067_);
+    /**
+     * Seeds the current random for placing features.
+     * Each feature is seeded differently in order to seem more random. However, it does not do a good job of this, and issues can arise from the salt being small with features that have the same decoration step and are close together in the feature lists.
+     *
+     * @param decorationSeed The seed computed by {@link #setDecorationSeed(long, int,
+     *                       int)}
+     * @param index          The cumulative index of the generating feature within the
+     *                       biome's list of features.
+     * @param decorationStep The ordinal of the {@link
+     *                       net.minecraft.world.level.levelgen.GenerationStep.Decoration
+     *                       } of the generating feature.
+     */
+    public void setFeatureSeed(long decorationSeed, int index, int decorationStep) {
+        long i = decorationSeed + (long)index + (long)(10000 * decorationStep);
         this.setSeed(i);
     }
 
-    public void setLargeFeatureSeed(long p_190069_, int p_190070_, int p_190071_) {
-        this.setSeed(p_190069_);
+    /**
+     * Seeds the current random for placing large features such as caves, strongholds, and mineshafts.
+     *
+     * @param baseSeed This is passed in as the level seed, or in some cases such as
+     *                 carvers, as an offset from the level seed unique to each carver
+     *                 .
+     */
+    public void setLargeFeatureSeed(long baseSeed, int chunkX, int chunkZ) {
+        this.setSeed(baseSeed);
         long i = this.nextLong();
         long j = this.nextLong();
-        long k = (long)p_190070_ * i ^ (long)p_190071_ * j ^ p_190069_;
+        long k = (long)chunkX * i ^ (long)chunkZ * j ^ baseSeed;
         this.setSeed(k);
     }
 
-    public void setLargeFeatureWithSalt(long p_190059_, int p_190060_, int p_190061_, int p_190062_) {
-        long i = (long)p_190060_ * 341873128712L + (long)p_190061_ * 132897987541L + p_190059_ + (long)p_190062_;
+    /**
+     * Seeds the current random for placing the starts of structure features.
+     * The region coordinates are the region which the target chunk lies in. For example, witch hut regions are 32x32 chunks, so all chunks within that region would be seeded identically.
+     * The size of the regions themselves are determined by the {@code spacing} of the structure settings.
+     *
+     * @param salt A salt unique to each structure.
+     */
+    public void setLargeFeatureWithSalt(long levelSeed, int regionX, int regionZ, int salt) {
+        long i = (long)regionX * 341873128712L + (long)regionZ * 132897987541L + levelSeed + (long)salt;
         this.setSeed(i);
     }
 
-    public static RandomSource seedSlimeChunk(int p_224682_, int p_224683_, long p_224684_, long p_224685_) {
+    /**
+     * Creates a new {@code RandomSource}, seeded for determining whether a chunk is a slime chunk or not.
+     *
+     * @param salt For vanilla slimes, this is always {@code 987234911L}
+     */
+    public static RandomSource seedSlimeChunk(int chunkX, int chunkZ, long levelSeed, long salt) {
         return RandomSource.create(
-            p_224684_
-                    + (long)(p_224682_ * p_224682_ * 4987142)
-                    + (long)(p_224682_ * 5947611)
-                    + (long)(p_224683_ * p_224683_) * 4392871L
-                    + (long)(p_224683_ * 389711)
-                ^ p_224685_
+            levelSeed
+                    + (long)(chunkX * chunkX * 4987142)
+                    + (long)(chunkX * 5947611)
+                    + (long)(chunkZ * chunkZ) * 4392871L
+                    + (long)(chunkZ * 389711)
+                ^ salt
         );
     }
 
@@ -85,12 +120,12 @@ public class WorldgenRandom extends LegacyRandomSource {
 
         private final LongFunction<RandomSource> constructor;
 
-        private Algorithm(LongFunction<RandomSource> p_190082_) {
-            this.constructor = p_190082_;
+        private Algorithm(LongFunction<RandomSource> constructor) {
+            this.constructor = constructor;
         }
 
-        public RandomSource newInstance(long p_224688_) {
-            return this.constructor.apply(p_224688_);
+        public RandomSource newInstance(long seed) {
+            return this.constructor.apply(seed);
         }
     }
 }

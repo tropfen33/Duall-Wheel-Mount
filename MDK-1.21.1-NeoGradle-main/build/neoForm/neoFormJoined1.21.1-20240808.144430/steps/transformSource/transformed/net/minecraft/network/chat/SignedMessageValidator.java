@@ -16,7 +16,7 @@ public interface SignedMessageValidator {
     };
 
     @Nullable
-    PlayerChatMessage updateAndValidate(PlayerChatMessage p_251036_);
+    PlayerChatMessage updateAndValidate(PlayerChatMessage message);
 
     public static class KeyBased implements SignedMessageValidator {
         private final SignatureValidator validator;
@@ -25,22 +25,22 @@ public interface SignedMessageValidator {
         private PlayerChatMessage lastMessage;
         private boolean isChainValid = true;
 
-        public KeyBased(SignatureValidator p_241517_, BooleanSupplier p_298457_) {
-            this.validator = p_241517_;
-            this.expired = p_298457_;
+        public KeyBased(SignatureValidator validator, BooleanSupplier expired) {
+            this.validator = validator;
+            this.expired = expired;
         }
 
-        private boolean validateChain(PlayerChatMessage p_250412_) {
-            if (p_250412_.equals(this.lastMessage)) {
+        private boolean validateChain(PlayerChatMessage message) {
+            if (message.equals(this.lastMessage)) {
                 return true;
-            } else if (this.lastMessage != null && !p_250412_.link().isDescendantOf(this.lastMessage.link())) {
+            } else if (this.lastMessage != null && !message.link().isDescendantOf(this.lastMessage.link())) {
                 LOGGER.error(
                     "Received out-of-order chat message from {}: expected index > {} for session {}, but was {} for session {}",
-                    p_250412_.sender(),
+                    message.sender(),
                     this.lastMessage.link().index(),
                     this.lastMessage.link().sessionId(),
-                    p_250412_.link().index(),
-                    p_250412_.link().sessionId()
+                    message.link().index(),
+                    message.link().sessionId()
                 );
                 return false;
             } else {
@@ -48,27 +48,27 @@ public interface SignedMessageValidator {
             }
         }
 
-        private boolean validate(PlayerChatMessage p_298939_) {
+        private boolean validate(PlayerChatMessage message) {
             if (this.expired.getAsBoolean()) {
-                LOGGER.error("Received message from player with expired profile public key: {}", p_298939_);
+                LOGGER.error("Received message from player with expired profile public key: {}", message);
                 return false;
-            } else if (!p_298939_.verify(this.validator)) {
-                LOGGER.error("Received message with invalid signature from {}", p_298939_.sender());
+            } else if (!message.verify(this.validator)) {
+                LOGGER.error("Received message with invalid signature from {}", message.sender());
                 return false;
             } else {
-                return this.validateChain(p_298939_);
+                return this.validateChain(message);
             }
         }
 
         @Nullable
         @Override
-        public PlayerChatMessage updateAndValidate(PlayerChatMessage p_251182_) {
-            this.isChainValid = this.isChainValid && this.validate(p_251182_);
+        public PlayerChatMessage updateAndValidate(PlayerChatMessage message) {
+            this.isChainValid = this.isChainValid && this.validate(message);
             if (!this.isChainValid) {
                 return null;
             } else {
-                this.lastMessage = p_251182_;
-                return p_251182_;
+                this.lastMessage = message;
+                return message;
             }
         }
     }

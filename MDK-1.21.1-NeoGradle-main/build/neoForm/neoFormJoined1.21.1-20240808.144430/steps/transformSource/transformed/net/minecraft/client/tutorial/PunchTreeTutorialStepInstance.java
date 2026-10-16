@@ -22,8 +22,8 @@ public class PunchTreeTutorialStepInstance implements TutorialStepInstance {
     private int timeWaiting;
     private int resetCount;
 
-    public PunchTreeTutorialStepInstance(Tutorial p_120549_) {
-        this.tutorial = p_120549_;
+    public PunchTreeTutorialStepInstance(Tutorial tutorial) {
+        this.tutorial = tutorial;
     }
 
     @Override
@@ -62,15 +62,18 @@ public class PunchTreeTutorialStepInstance implements TutorialStepInstance {
         }
     }
 
+    /**
+     * Called when a player hits block to destroy it.
+     */
     @Override
-    public void onDestroyBlock(ClientLevel p_120554_, BlockPos p_120555_, BlockState p_120556_, float p_120557_) {
-        boolean flag = p_120556_.is(BlockTags.LOGS);
-        if (flag && p_120557_ > 0.0F) {
+    public void onDestroyBlock(ClientLevel level, BlockPos pos, BlockState state, float diggingStage) {
+        boolean flag = state.is(BlockTags.LOGS);
+        if (flag && diggingStage > 0.0F) {
             if (this.toast != null) {
-                this.toast.updateProgress(p_120557_);
+                this.toast.updateProgress(diggingStage);
             }
 
-            if (p_120557_ >= 1.0F) {
+            if (diggingStage >= 1.0F) {
                 this.tutorial.setStep(TutorialSteps.OPEN_INVENTORY);
             }
         } else if (this.toast != null) {
@@ -80,9 +83,12 @@ public class PunchTreeTutorialStepInstance implements TutorialStepInstance {
         }
     }
 
+    /**
+     * Called when the player pick up an ItemStack
+     */
     @Override
-    public void onGetItem(ItemStack p_120552_) {
-        if (p_120552_.is(ItemTags.LOGS)) {
+    public void onGetItem(ItemStack stack) {
+        if (stack.is(ItemTags.LOGS)) {
             this.tutorial.setStep(TutorialSteps.CRAFT_PLANKS);
         }
     }

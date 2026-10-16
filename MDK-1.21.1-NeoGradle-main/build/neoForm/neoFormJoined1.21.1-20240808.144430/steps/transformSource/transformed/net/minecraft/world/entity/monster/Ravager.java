@@ -55,8 +55,8 @@ public class Ravager extends Raider {
     private int stunnedTick;
     private int roarTick;
 
-    public Ravager(EntityType<? extends Ravager> p_33325_, Level p_33326_) {
-        super(p_33325_, p_33326_);
+    public Ravager(EntityType<? extends Ravager> entityType, Level level) {
+        super(entityType, level);
         this.xpReward = 20;
         this.setPathfindingMalus(PathType.LEAVES, 0.0F);
     }
@@ -97,19 +97,22 @@ public class Ravager extends Raider {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_33353_) {
-        super.addAdditionalSaveData(p_33353_);
-        p_33353_.putInt("AttackTick", this.attackTick);
-        p_33353_.putInt("StunTick", this.stunnedTick);
-        p_33353_.putInt("RoarTick", this.roarTick);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putInt("AttackTick", this.attackTick);
+        compound.putInt("StunTick", this.stunnedTick);
+        compound.putInt("RoarTick", this.roarTick);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_33344_) {
-        super.readAdditionalSaveData(p_33344_);
-        this.attackTick = p_33344_.getInt("AttackTick");
-        this.stunnedTick = p_33344_.getInt("StunTick");
-        this.roarTick = p_33344_.getInt("RoarTick");
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.attackTick = compound.getInt("AttackTick");
+        this.stunnedTick = compound.getInt("StunTick");
+        this.roarTick = compound.getInt("RoarTick");
     }
 
     @Override
@@ -194,23 +197,23 @@ public class Ravager extends Raider {
     }
 
     @Override
-    public boolean hasLineOfSight(Entity p_149755_) {
-        return this.stunnedTick <= 0 && this.roarTick <= 0 ? super.hasLineOfSight(p_149755_) : false;
+    public boolean hasLineOfSight(Entity entity) {
+        return this.stunnedTick <= 0 && this.roarTick <= 0 ? super.hasLineOfSight(entity) : false;
     }
 
     @Override
-    protected void blockedByShield(LivingEntity p_33361_) {
+    protected void blockedByShield(LivingEntity entity) {
         if (this.roarTick == 0) {
             if (this.random.nextDouble() < 0.5) {
                 this.stunnedTick = 40;
                 this.playSound(SoundEvents.RAVAGER_STUNNED, 1.0F, 1.0F);
                 this.level().broadcastEntityEvent(this, (byte)39);
-                p_33361_.push(this);
+                entity.push(this);
             } else {
-                this.strongKnockback(p_33361_);
+                this.strongKnockback(entity);
             }
 
-            p_33361_.hurtMarked = true;
+            entity.hurtMarked = true;
         }
     }
 
@@ -237,23 +240,26 @@ public class Ravager extends Raider {
         }
     }
 
-    private void strongKnockback(Entity p_33340_) {
-        double d0 = p_33340_.getX() - this.getX();
-        double d1 = p_33340_.getZ() - this.getZ();
+    private void strongKnockback(Entity entity) {
+        double d0 = entity.getX() - this.getX();
+        double d1 = entity.getZ() - this.getZ();
         double d2 = Math.max(d0 * d0 + d1 * d1, 0.001);
-        p_33340_.push(d0 / d2 * 4.0, 0.2, d1 / d2 * 4.0);
+        entity.push(d0 / d2 * 4.0, 0.2, d1 / d2 * 4.0);
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @Override
-    public void handleEntityEvent(byte p_33335_) {
-        if (p_33335_ == 4) {
+    public void handleEntityEvent(byte id) {
+        if (id == 4) {
             this.attackTick = 10;
             this.playSound(SoundEvents.RAVAGER_ATTACK, 1.0F, 1.0F);
-        } else if (p_33335_ == 39) {
+        } else if (id == 39) {
             this.stunnedTick = 40;
         }
 
-        super.handleEntityEvent(p_33335_);
+        super.handleEntityEvent(id);
     }
 
     public int getAttackTick() {
@@ -269,11 +275,11 @@ public class Ravager extends Raider {
     }
 
     @Override
-    public boolean doHurtTarget(Entity p_33328_) {
+    public boolean doHurtTarget(Entity entity) {
         this.attackTick = 10;
         this.level().broadcastEntityEvent(this, (byte)4);
         this.playSound(SoundEvents.RAVAGER_ATTACK, 1.0F, 1.0F);
-        return super.doHurtTarget(p_33328_);
+        return super.doHurtTarget(entity);
     }
 
     @Nullable
@@ -283,7 +289,7 @@ public class Ravager extends Raider {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_33359_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.RAVAGER_HURT;
     }
 
@@ -293,17 +299,17 @@ public class Ravager extends Raider {
     }
 
     @Override
-    protected void playStepSound(BlockPos p_33350_, BlockState p_33351_) {
+    protected void playStepSound(BlockPos pos, BlockState block) {
         this.playSound(SoundEvents.RAVAGER_STEP, 0.15F, 1.0F);
     }
 
     @Override
-    public boolean checkSpawnObstruction(LevelReader p_33342_) {
-        return !p_33342_.containsAnyLiquid(this.getBoundingBox());
+    public boolean checkSpawnObstruction(LevelReader level) {
+        return !level.containsAnyLiquid(this.getBoundingBox());
     }
 
     @Override
-    public void applyRaidBuffs(ServerLevel p_348582_, int p_33337_, boolean p_33338_) {
+    public void applyRaidBuffs(ServerLevel level, int wave, boolean unused) {
     }
 
     @Override

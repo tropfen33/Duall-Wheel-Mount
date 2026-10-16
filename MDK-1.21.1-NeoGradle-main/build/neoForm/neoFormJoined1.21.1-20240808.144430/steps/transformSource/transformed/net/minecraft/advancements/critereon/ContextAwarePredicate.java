@@ -15,17 +15,17 @@ public class ContextAwarePredicate {
     private final List<LootItemCondition> conditions;
     private final Predicate<LootContext> compositePredicates;
 
-    ContextAwarePredicate(List<LootItemCondition> p_298428_) {
-        this.conditions = p_298428_;
-        this.compositePredicates = Util.allOf(p_298428_);
+    ContextAwarePredicate(List<LootItemCondition> conditions) {
+        this.conditions = conditions;
+        this.compositePredicates = Util.allOf(conditions);
     }
 
-    public static ContextAwarePredicate create(LootItemCondition... p_286844_) {
-        return new ContextAwarePredicate(List.of(p_286844_));
+    public static ContextAwarePredicate create(LootItemCondition... conditions) {
+        return new ContextAwarePredicate(List.of(conditions));
     }
 
-    public boolean matches(LootContext p_286260_) {
-        return this.compositePredicates.test(p_286260_);
+    public boolean matches(LootContext context) {
+        return this.compositePredicates.test(context);
     }
 
     public void validate(ValidationContext p_312768_) {

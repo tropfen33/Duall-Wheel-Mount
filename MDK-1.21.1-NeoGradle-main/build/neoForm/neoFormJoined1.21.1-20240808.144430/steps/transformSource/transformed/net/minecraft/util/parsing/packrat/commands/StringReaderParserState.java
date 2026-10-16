@@ -8,9 +8,9 @@ import net.minecraft.util.parsing.packrat.ParseState;
 public class StringReaderParserState extends ParseState<StringReader> {
     private final StringReader input;
 
-    public StringReaderParserState(Dictionary<StringReader> p_336091_, ErrorCollector<StringReader> p_335915_, StringReader p_335601_) {
-        super(p_336091_, p_335915_);
-        this.input = p_335601_;
+    public StringReaderParserState(Dictionary<StringReader> dictionary, ErrorCollector<StringReader> errorCollector, StringReader input) {
+        super(dictionary, errorCollector);
+        this.input = input;
     }
 
     public StringReader input() {
@@ -23,7 +23,7 @@ public class StringReaderParserState extends ParseState<StringReader> {
     }
 
     @Override
-    public void restore(int p_335710_) {
-        this.input.setCursor(p_335710_);
+    public void restore(int cursor) {
+        this.input.setCursor(cursor);
     }
 }

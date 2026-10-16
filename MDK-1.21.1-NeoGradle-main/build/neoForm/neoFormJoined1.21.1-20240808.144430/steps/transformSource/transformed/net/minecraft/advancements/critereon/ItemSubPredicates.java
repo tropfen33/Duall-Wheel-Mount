@@ -28,11 +28,11 @@ public class ItemSubPredicates {
     public static final ItemSubPredicate.Type<ItemTrimPredicate> ARMOR_TRIM = register("trim", ItemTrimPredicate.CODEC);
     public static final ItemSubPredicate.Type<ItemJukeboxPlayablePredicate> JUKEBOX_PLAYABLE = register("jukebox_playable", ItemJukeboxPlayablePredicate.CODEC);
 
-    private static <T extends ItemSubPredicate> ItemSubPredicate.Type<T> register(String p_333883_, Codec<T> p_333785_) {
-        return Registry.register(BuiltInRegistries.ITEM_SUB_PREDICATE_TYPE, p_333883_, new ItemSubPredicate.Type<>(p_333785_));
+    private static <T extends ItemSubPredicate> ItemSubPredicate.Type<T> register(String name, Codec<T> codec) {
+        return Registry.register(BuiltInRegistries.ITEM_SUB_PREDICATE_TYPE, name, new ItemSubPredicate.Type<>(codec));
     }
 
-    public static ItemSubPredicate.Type<?> bootstrap(Registry<ItemSubPredicate.Type<?>> p_333896_) {
+    public static ItemSubPredicate.Type<?> bootstrap(Registry<ItemSubPredicate.Type<?>> registry) {
         return DAMAGE;
     }
 }

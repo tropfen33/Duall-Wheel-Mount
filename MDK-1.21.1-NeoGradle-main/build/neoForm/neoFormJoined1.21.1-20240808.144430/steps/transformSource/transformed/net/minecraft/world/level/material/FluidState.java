@@ -26,8 +26,8 @@ public final class FluidState extends StateHolder<Fluid, FluidState> implements 
     public static final int AMOUNT_MAX = 9;
     public static final int AMOUNT_FULL = 8;
 
-    public FluidState(Fluid p_76149_, Reference2ObjectArrayMap<Property<?>, Comparable<?>> p_325993_, MapCodec<FluidState> p_76151_) {
-        super(p_76149_, p_325993_, p_76151_);
+    public FluidState(Fluid owner, Reference2ObjectArrayMap<Property<?>, Comparable<?>> values, MapCodec<FluidState> propertiesCodec) {
+        super(owner, values, propertiesCodec);
     }
 
     public Fluid getType() {
@@ -38,16 +38,16 @@ public final class FluidState extends StateHolder<Fluid, FluidState> implements 
         return this.getType().isSource(this);
     }
 
-    public boolean isSourceOfType(Fluid p_164513_) {
-        return this.owner == p_164513_ && this.owner.isSource(this);
+    public boolean isSourceOfType(Fluid fluid) {
+        return this.owner == fluid && this.owner.isSource(this);
     }
 
     public boolean isEmpty() {
         return this.getType().isEmpty();
     }
 
-    public float getHeight(BlockGetter p_76156_, BlockPos p_76157_) {
-        return this.getType().getHeight(this, p_76156_, p_76157_);
+    public float getHeight(BlockGetter level, BlockPos pos) {
+        return this.getType().getHeight(this, level, pos);
     }
 
     public float getOwnHeight() {
@@ -58,12 +58,12 @@ public final class FluidState extends StateHolder<Fluid, FluidState> implements 
         return this.getType().getAmount(this);
     }
 
-    public boolean shouldRenderBackwardUpFace(BlockGetter p_76172_, BlockPos p_76173_) {
+    public boolean shouldRenderBackwardUpFace(BlockGetter level, BlockPos pos) {
         for (int i = -1; i <= 1; i++) {
             for (int j = -1; j <= 1; j++) {
-                BlockPos blockpos = p_76173_.offset(i, 0, j);
-                FluidState fluidstate = p_76172_.getFluidState(blockpos);
-                if (!fluidstate.getType().isSame(this.getType()) && !p_76172_.getBlockState(blockpos).isSolidRender(p_76172_, blockpos)) {
+                BlockPos blockpos = pos.offset(i, 0, j);
+                FluidState fluidstate = level.getFluidState(blockpos);
+                if (!fluidstate.getType().isSame(this.getType()) && !level.getBlockState(blockpos).isSolidRender(level, blockpos)) {
                     return true;
                 }
             }
@@ -72,24 +72,24 @@ public final class FluidState extends StateHolder<Fluid, FluidState> implements 
         return false;
     }
 
-    public void tick(Level p_76164_, BlockPos p_76165_) {
-        this.getType().tick(p_76164_, p_76165_, this);
+    public void tick(Level level, BlockPos pos) {
+        this.getType().tick(level, pos, this);
     }
 
-    public void animateTick(Level p_230559_, BlockPos p_230560_, RandomSource p_230561_) {
-        this.getType().animateTick(p_230559_, p_230560_, this, p_230561_);
+    public void animateTick(Level level, BlockPos pos, RandomSource random) {
+        this.getType().animateTick(level, pos, this, random);
     }
 
     public boolean isRandomlyTicking() {
         return this.getType().isRandomlyTicking();
     }
 
-    public void randomTick(Level p_230563_, BlockPos p_230564_, RandomSource p_230565_) {
-        this.getType().randomTick(p_230563_, p_230564_, this, p_230565_);
+    public void randomTick(Level level, BlockPos pos, RandomSource random) {
+        this.getType().randomTick(level, pos, this, random);
     }
 
-    public Vec3 getFlow(BlockGetter p_76180_, BlockPos p_76181_) {
-        return this.getType().getFlow(p_76180_, p_76181_, this);
+    public Vec3 getFlow(BlockGetter level, BlockPos pos) {
+        return this.getType().getFlow(level, pos, this);
     }
 
     public BlockState createLegacyBlock() {
@@ -101,16 +101,16 @@ public final class FluidState extends StateHolder<Fluid, FluidState> implements 
         return this.getType().getDripParticle();
     }
 
-    public boolean is(TagKey<Fluid> p_205071_) {
-        return this.getType().builtInRegistryHolder().is(p_205071_);
+    public boolean is(TagKey<Fluid> tag) {
+        return this.getType().builtInRegistryHolder().is(tag);
     }
 
-    public boolean is(HolderSet<Fluid> p_205073_) {
-        return p_205073_.contains(this.getType().builtInRegistryHolder());
+    public boolean is(HolderSet<Fluid> fluids) {
+        return fluids.contains(this.getType().builtInRegistryHolder());
     }
 
-    public boolean is(Fluid p_192918_) {
-        return this.getType() == p_192918_;
+    public boolean is(Fluid fluid) {
+        return this.getType() == fluid;
     }
 
     @Deprecated //Forge: Use more sensitive version
@@ -118,12 +118,12 @@ public final class FluidState extends StateHolder<Fluid, FluidState> implements 
         return this.getType().getExplosionResistance();
     }
 
-    public boolean canBeReplacedWith(BlockGetter p_76159_, BlockPos p_76160_, Fluid p_76161_, Direction p_76162_) {
-        return this.getType().canBeReplacedWith(this, p_76159_, p_76160_, p_76161_, p_76162_);
+    public boolean canBeReplacedWith(BlockGetter level, BlockPos pos, Fluid fluid, Direction direction) {
+        return this.getType().canBeReplacedWith(this, level, pos, fluid, direction);
     }
 
-    public VoxelShape getShape(BlockGetter p_76184_, BlockPos p_76185_) {
-        return this.getType().getShape(this, p_76184_, p_76185_);
+    public VoxelShape getShape(BlockGetter level, BlockPos pos) {
+        return this.getType().getShape(this, level, pos);
     }
 
     public Holder<Fluid> holder() {

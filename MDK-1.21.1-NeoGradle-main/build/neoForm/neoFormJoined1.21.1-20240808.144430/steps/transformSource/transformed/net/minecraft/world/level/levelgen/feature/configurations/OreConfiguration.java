@@ -21,26 +21,26 @@ public class OreConfiguration implements FeatureConfiguration {
     public final int size;
     public final float discardChanceOnAirExposure;
 
-    public OreConfiguration(List<OreConfiguration.TargetBlockState> p_161016_, int p_161017_, float p_161018_) {
-        this.size = p_161017_;
-        this.targetStates = p_161016_;
-        this.discardChanceOnAirExposure = p_161018_;
+    public OreConfiguration(List<OreConfiguration.TargetBlockState> targetStates, int size, float discardChanceOnAirExposure) {
+        this.size = size;
+        this.targetStates = targetStates;
+        this.discardChanceOnAirExposure = discardChanceOnAirExposure;
     }
 
-    public OreConfiguration(List<OreConfiguration.TargetBlockState> p_161013_, int p_161014_) {
-        this(p_161013_, p_161014_, 0.0F);
+    public OreConfiguration(List<OreConfiguration.TargetBlockState> targetStates, int size) {
+        this(targetStates, size, 0.0F);
     }
 
-    public OreConfiguration(RuleTest p_161008_, BlockState p_161009_, int p_161010_, float p_161011_) {
-        this(ImmutableList.of(new OreConfiguration.TargetBlockState(p_161008_, p_161009_)), p_161010_, p_161011_);
+    public OreConfiguration(RuleTest target, BlockState state, int size, float discardChanceOnAirExposure) {
+        this(ImmutableList.of(new OreConfiguration.TargetBlockState(target, state)), size, discardChanceOnAirExposure);
     }
 
-    public OreConfiguration(RuleTest p_67843_, BlockState p_67844_, int p_67845_) {
-        this(ImmutableList.of(new OreConfiguration.TargetBlockState(p_67843_, p_67844_)), p_67845_, 0.0F);
+    public OreConfiguration(RuleTest target, BlockState state, int size) {
+        this(ImmutableList.of(new OreConfiguration.TargetBlockState(target, state)), size, 0.0F);
     }
 
-    public static OreConfiguration.TargetBlockState target(RuleTest p_161022_, BlockState p_161023_) {
-        return new OreConfiguration.TargetBlockState(p_161022_, p_161023_);
+    public static OreConfiguration.TargetBlockState target(RuleTest target, BlockState state) {
+        return new OreConfiguration.TargetBlockState(target, state);
     }
 
     public static class TargetBlockState {
@@ -54,9 +54,9 @@ public class OreConfiguration implements FeatureConfiguration {
         public final RuleTest target;
         public final BlockState state;
 
-        TargetBlockState(RuleTest p_161036_, BlockState p_161037_) {
-            this.target = p_161036_;
-            this.state = p_161037_;
+        TargetBlockState(RuleTest target, BlockState state) {
+            this.target = target;
+            this.state = state;
         }
     }
 }

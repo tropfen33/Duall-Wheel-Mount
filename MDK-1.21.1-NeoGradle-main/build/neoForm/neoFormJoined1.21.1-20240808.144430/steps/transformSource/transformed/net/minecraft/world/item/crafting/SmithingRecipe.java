@@ -9,9 +9,12 @@ public interface SmithingRecipe extends Recipe<SmithingRecipeInput> {
         return RecipeType.SMITHING;
     }
 
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
     @Override
-    default boolean canCraftInDimensions(int p_266835_, int p_266829_) {
-        return p_266835_ >= 3 && p_266829_ >= 1;
+    default boolean canCraftInDimensions(int width, int height) {
+        return width >= 3 && height >= 1;
     }
 
     @Override
@@ -19,9 +22,9 @@ public interface SmithingRecipe extends Recipe<SmithingRecipeInput> {
         return new ItemStack(Blocks.SMITHING_TABLE);
     }
 
-    boolean isTemplateIngredient(ItemStack p_266982_);
+    boolean isTemplateIngredient(ItemStack stack);
 
-    boolean isBaseIngredient(ItemStack p_266962_);
+    boolean isBaseIngredient(ItemStack stack);
 
-    boolean isAdditionIngredient(ItemStack p_267132_);
+    boolean isAdditionIngredient(ItemStack stack);
 }

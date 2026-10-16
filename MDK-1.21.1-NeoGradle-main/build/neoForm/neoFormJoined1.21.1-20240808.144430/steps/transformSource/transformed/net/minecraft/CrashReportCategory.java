@@ -14,30 +14,30 @@ public class CrashReportCategory {
     private final List<CrashReportCategory.Entry> entries = Lists.newArrayList();
     private StackTraceElement[] stackTrace = new StackTraceElement[0];
 
-    public CrashReportCategory(String p_178936_) {
-        this.title = p_178936_;
+    public CrashReportCategory(String title) {
+        this.title = title;
     }
 
-    public static String formatLocation(LevelHeightAccessor p_178938_, double p_178939_, double p_178940_, double p_178941_) {
+    public static String formatLocation(LevelHeightAccessor levelHeightAccess, double x, double y, double z) {
         return String.format(
             Locale.ROOT,
             "%.2f,%.2f,%.2f - %s",
-            p_178939_,
-            p_178940_,
-            p_178941_,
-            formatLocation(p_178938_, BlockPos.containing(p_178939_, p_178940_, p_178941_))
+            x,
+            y,
+            z,
+            formatLocation(levelHeightAccess, BlockPos.containing(x, y, z))
         );
     }
 
-    public static String formatLocation(LevelHeightAccessor p_178948_, BlockPos p_178949_) {
-        return formatLocation(p_178948_, p_178949_.getX(), p_178949_.getY(), p_178949_.getZ());
+    public static String formatLocation(LevelHeightAccessor levelHeightAccess, BlockPos pos) {
+        return formatLocation(levelHeightAccess, pos.getX(), pos.getY(), pos.getZ());
     }
 
-    public static String formatLocation(LevelHeightAccessor p_178943_, int p_178944_, int p_178945_, int p_178946_) {
+    public static String formatLocation(LevelHeightAccessor levelHeightAccess, int x, int y, int z) {
         StringBuilder stringbuilder = new StringBuilder();
 
         try {
-            stringbuilder.append(String.format(Locale.ROOT, "World: (%d,%d,%d)", p_178944_, p_178945_, p_178946_));
+            stringbuilder.append(String.format(Locale.ROOT, "World: (%d,%d,%d)", x, y, z));
         } catch (Throwable throwable2) {
             stringbuilder.append("(Error finding world loc)");
         }
@@ -45,17 +45,17 @@ public class CrashReportCategory {
         stringbuilder.append(", ");
 
         try {
-            int i = SectionPos.blockToSectionCoord(p_178944_);
-            int j = SectionPos.blockToSectionCoord(p_178945_);
-            int k = SectionPos.blockToSectionCoord(p_178946_);
-            int l = p_178944_ & 15;
-            int i1 = p_178945_ & 15;
-            int j1 = p_178946_ & 15;
+            int i = SectionPos.blockToSectionCoord(x);
+            int j = SectionPos.blockToSectionCoord(y);
+            int k = SectionPos.blockToSectionCoord(z);
+            int l = x & 15;
+            int i1 = y & 15;
+            int j1 = z & 15;
             int k1 = SectionPos.sectionToBlockCoord(i);
-            int l1 = p_178943_.getMinBuildHeight();
+            int l1 = levelHeightAccess.getMinBuildHeight();
             int i2 = SectionPos.sectionToBlockCoord(k);
             int j2 = SectionPos.sectionToBlockCoord(i + 1) - 1;
-            int k2 = p_178943_.getMaxBuildHeight() - 1;
+            int k2 = levelHeightAccess.getMaxBuildHeight() - 1;
             int l2 = SectionPos.sectionToBlockCoord(k + 1) - 1;
             stringbuilder.append(
                 String.format(
@@ -69,17 +69,17 @@ public class CrashReportCategory {
         stringbuilder.append(", ");
 
         try {
-            int i3 = p_178944_ >> 9;
-            int j3 = p_178946_ >> 9;
+            int i3 = x >> 9;
+            int j3 = z >> 9;
             int k3 = i3 << 5;
             int l3 = j3 << 5;
             int i4 = (i3 + 1 << 5) - 1;
             int j4 = (j3 + 1 << 5) - 1;
             int k4 = i3 << 9;
-            int l4 = p_178943_.getMinBuildHeight();
+            int l4 = levelHeightAccess.getMinBuildHeight();
             int i5 = j3 << 9;
             int j5 = (i3 + 1 << 9) - 1;
-            int k5 = p_178943_.getMaxBuildHeight() - 1;
+            int k5 = levelHeightAccess.getMaxBuildHeight() - 1;
             int l5 = (j3 + 1 << 9) - 1;
             stringbuilder.append(
                 String.format(
@@ -93,31 +93,45 @@ public class CrashReportCategory {
         return stringbuilder.toString();
     }
 
-    public CrashReportCategory setDetail(String p_128166_, CrashReportDetail<String> p_128167_) {
+    /**
+     * Adds a section to this crash report category, resolved by calling the given callable.
+     *
+     * If the given callable throws an exception, a detail containing that exception will be created instead.
+     */
+    public CrashReportCategory setDetail(String name, CrashReportDetail<String> detail) {
         try {
-            this.setDetail(p_128166_, p_128167_.call());
+            this.setDetail(name, detail.call());
         } catch (Throwable throwable) {
-            this.setDetailError(p_128166_, throwable);
+            this.setDetailError(name, throwable);
         }
 
         return this;
     }
 
-    public CrashReportCategory setDetail(String p_128160_, Object p_128161_) {
-        this.entries.add(new CrashReportCategory.Entry(p_128160_, p_128161_));
+    /**
+     * Adds a Crashreport section with the given name with the given value (converted {@code .toString()})
+     */
+    public CrashReportCategory setDetail(String sectionName, Object value) {
+        this.entries.add(new CrashReportCategory.Entry(sectionName, value));
         return this;
     }
 
-    public void setDetailError(String p_128163_, Throwable p_128164_) {
-        this.setDetail(p_128163_, p_128164_);
+    /**
+     * Adds a Crashreport section with the given name with the given Throwable
+     */
+    public void setDetailError(String sectionName, Throwable throwable) {
+        this.setDetail(sectionName, throwable);
     }
 
-    public int fillInStackTrace(int p_128149_) {
+    /**
+     * Resets our stack trace according to the current trace, pruning the deepest 3 entries.  The parameter indicates how many additional deepest entries to prune.  Returns the number of entries in the resulting pruned stack trace.
+     */
+    public int fillInStackTrace(int size) {
         StackTraceElement[] astacktraceelement = Thread.currentThread().getStackTrace();
         if (astacktraceelement.length <= 0) {
             return 0;
         } else {
-            int len = astacktraceelement.length - 3 - p_128149_;
+            int len = astacktraceelement.length - 3 - size;
             if (len <= 0) len = astacktraceelement.length;
             this.stackTrace = new StackTraceElement[len];
             System.arraycopy(astacktraceelement, astacktraceelement.length - len, this.stackTrace, 0, this.stackTrace.length);
@@ -125,19 +139,22 @@ public class CrashReportCategory {
         }
     }
 
-    public boolean validateStackTrace(StackTraceElement p_128157_, StackTraceElement p_128158_) {
-        if (this.stackTrace.length != 0 && p_128157_ != null) {
+    /**
+     * Do the deepest two elements of our saved stack trace match the given elements, in order from the deepest?
+     */
+    public boolean validateStackTrace(StackTraceElement s1, StackTraceElement s2) {
+        if (this.stackTrace.length != 0 && s1 != null) {
             StackTraceElement stacktraceelement = this.stackTrace[0];
-            if (stacktraceelement.isNativeMethod() == p_128157_.isNativeMethod()
-                && stacktraceelement.getClassName().equals(p_128157_.getClassName())
-                && stacktraceelement.getFileName().equals(p_128157_.getFileName())
-                && stacktraceelement.getMethodName().equals(p_128157_.getMethodName())) {
-                if (p_128158_ != null != this.stackTrace.length > 1) {
+            if (stacktraceelement.isNativeMethod() == s1.isNativeMethod()
+                && stacktraceelement.getClassName().equals(s1.getClassName())
+                && stacktraceelement.getFileName().equals(s1.getFileName())
+                && stacktraceelement.getMethodName().equals(s1.getMethodName())) {
+                if (s2 != null != this.stackTrace.length > 1) {
                     return false;
-                } else if (p_128158_ != null && !this.stackTrace[1].equals(p_128158_)) {
+                } else if (s2 != null && !this.stackTrace[1].equals(s2)) {
                     return false;
                 } else {
-                    this.stackTrace[0] = p_128157_;
+                    this.stackTrace[0] = s1;
                     return true;
                 }
             } else {
@@ -148,26 +165,29 @@ public class CrashReportCategory {
         }
     }
 
-    public void trimStacktrace(int p_128175_) {
-        StackTraceElement[] astacktraceelement = new StackTraceElement[this.stackTrace.length - p_128175_];
+    /**
+     * Removes the given number entries from the bottom of the stack trace.
+     */
+    public void trimStacktrace(int amount) {
+        StackTraceElement[] astacktraceelement = new StackTraceElement[this.stackTrace.length - amount];
         System.arraycopy(this.stackTrace, 0, astacktraceelement, 0, astacktraceelement.length);
         this.stackTrace = astacktraceelement;
     }
 
-    public void getDetails(StringBuilder p_128169_) {
-        p_128169_.append("-- ").append(this.title).append(" --\n");
-        p_128169_.append("Details:");
+    public void getDetails(StringBuilder builder) {
+        builder.append("-- ").append(this.title).append(" --\n");
+        builder.append("Details:");
 
         for (CrashReportCategory.Entry crashreportcategory$entry : this.entries) {
-            p_128169_.append("\n\t");
-            p_128169_.append(crashreportcategory$entry.getKey());
-            p_128169_.append(": ");
-            p_128169_.append(crashreportcategory$entry.getValue());
+            builder.append("\n\t");
+            builder.append(crashreportcategory$entry.getKey());
+            builder.append(": ");
+            builder.append(crashreportcategory$entry.getValue());
         }
 
         if (this.stackTrace != null && this.stackTrace.length > 0) {
-            p_128169_.append("\nStacktrace:");
-            p_128169_.append(net.neoforged.neoforge.logging.CrashReportExtender.generateEnhancedStackTrace(this.stackTrace));
+            builder.append("\nStacktrace:");
+            builder.append(net.neoforged.neoforge.logging.CrashReportExtender.generateEnhancedStackTrace(this.stackTrace));
         }
     }
 
@@ -185,26 +205,26 @@ public class CrashReportCategory {
         this.stackTrace = stackTrace;
     }
 
-    public static void populateBlockDetails(CrashReportCategory p_178951_, LevelHeightAccessor p_178952_, BlockPos p_178953_, @Nullable BlockState p_178954_) {
-        if (p_178954_ != null) {
-            p_178951_.setDetail("Block", p_178954_::toString);
+    public static void populateBlockDetails(CrashReportCategory category, LevelHeightAccessor levelHeightAccessor, BlockPos pos, @Nullable BlockState state) {
+        if (state != null) {
+            category.setDetail("Block", state::toString);
         }
 
-        p_178951_.setDetail("Block location", () -> formatLocation(p_178952_, p_178953_));
+        category.setDetail("Block location", () -> formatLocation(levelHeightAccessor, pos));
     }
 
     static class Entry {
         private final String key;
         private final String value;
 
-        public Entry(String p_128181_, @Nullable Object p_128182_) {
-            this.key = p_128181_;
-            if (p_128182_ == null) {
+        public Entry(String key, @Nullable Object value) {
+            this.key = key;
+            if (value == null) {
                 this.value = "~~NULL~~";
-            } else if (p_128182_ instanceof Throwable throwable) {
+            } else if (value instanceof Throwable throwable) {
                 this.value = "~~ERROR~~ " + throwable.getClass().getSimpleName() + ": " + throwable.getMessage();
             } else {
-                this.value = p_128182_.toString();
+                this.value = value.toString();
             }
         }
 

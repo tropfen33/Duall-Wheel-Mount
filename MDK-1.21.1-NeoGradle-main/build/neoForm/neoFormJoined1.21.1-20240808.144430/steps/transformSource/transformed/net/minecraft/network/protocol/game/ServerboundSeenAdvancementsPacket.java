@@ -16,32 +16,35 @@ public class ServerboundSeenAdvancementsPacket implements Packet<ServerGamePacke
     @Nullable
     private final ResourceLocation tab;
 
-    public ServerboundSeenAdvancementsPacket(ServerboundSeenAdvancementsPacket.Action p_134434_, @Nullable ResourceLocation p_134435_) {
-        this.action = p_134434_;
-        this.tab = p_134435_;
+    public ServerboundSeenAdvancementsPacket(ServerboundSeenAdvancementsPacket.Action action, @Nullable ResourceLocation tab) {
+        this.action = action;
+        this.tab = tab;
     }
 
-    public static ServerboundSeenAdvancementsPacket openedTab(AdvancementHolder p_301294_) {
-        return new ServerboundSeenAdvancementsPacket(ServerboundSeenAdvancementsPacket.Action.OPENED_TAB, p_301294_.id());
+    public static ServerboundSeenAdvancementsPacket openedTab(AdvancementHolder advancement) {
+        return new ServerboundSeenAdvancementsPacket(ServerboundSeenAdvancementsPacket.Action.OPENED_TAB, advancement.id());
     }
 
     public static ServerboundSeenAdvancementsPacket closedScreen() {
         return new ServerboundSeenAdvancementsPacket(ServerboundSeenAdvancementsPacket.Action.CLOSED_SCREEN, null);
     }
 
-    private ServerboundSeenAdvancementsPacket(FriendlyByteBuf p_179744_) {
-        this.action = p_179744_.readEnum(ServerboundSeenAdvancementsPacket.Action.class);
+    private ServerboundSeenAdvancementsPacket(FriendlyByteBuf buffer) {
+        this.action = buffer.readEnum(ServerboundSeenAdvancementsPacket.Action.class);
         if (this.action == ServerboundSeenAdvancementsPacket.Action.OPENED_TAB) {
-            this.tab = p_179744_.readResourceLocation();
+            this.tab = buffer.readResourceLocation();
         } else {
             this.tab = null;
         }
     }
 
-    private void write(FriendlyByteBuf p_134446_) {
-        p_134446_.writeEnum(this.action);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeEnum(this.action);
         if (this.action == ServerboundSeenAdvancementsPacket.Action.OPENED_TAB) {
-            p_134446_.writeResourceLocation(this.tab);
+            buffer.writeResourceLocation(this.tab);
         }
     }
 
@@ -50,8 +53,11 @@ public class ServerboundSeenAdvancementsPacket implements Packet<ServerGamePacke
         return GamePacketTypes.SERVERBOUND_SEEN_ADVANCEMENTS;
     }
 
-    public void handle(ServerGamePacketListener p_134441_) {
-        p_134441_.handleSeenAdvancements(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleSeenAdvancements(this);
     }
 
     public ServerboundSeenAdvancementsPacket.Action getAction() {

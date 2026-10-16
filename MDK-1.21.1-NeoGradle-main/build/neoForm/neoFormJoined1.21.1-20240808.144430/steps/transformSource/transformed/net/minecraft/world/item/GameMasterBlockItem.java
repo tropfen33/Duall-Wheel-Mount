@@ -7,14 +7,14 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class GameMasterBlockItem extends BlockItem {
-    public GameMasterBlockItem(Block p_41318_, Item.Properties p_41319_) {
-        super(p_41318_, p_41319_);
+    public GameMasterBlockItem(Block block, Item.Properties properties) {
+        super(block, properties);
     }
 
     @Nullable
     @Override
-    protected BlockState getPlacementState(BlockPlaceContext p_41321_) {
-        Player player = p_41321_.getPlayer();
-        return player != null && !player.canUseGameMasterBlocks() ? null : super.getPlacementState(p_41321_);
+    protected BlockState getPlacementState(BlockPlaceContext context) {
+        Player player = context.getPlayer();
+        return player != null && !player.canUseGameMasterBlocks() ? null : super.getPlacementState(context);
     }
 }

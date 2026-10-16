@@ -11,31 +11,31 @@ public class DustParticleBase<T extends ScalableParticleOptionsBase> extends Tex
     private final SpriteSet sprites;
 
     protected DustParticleBase(
-        ClientLevel p_172094_,
-        double p_172095_,
-        double p_172096_,
-        double p_172097_,
-        double p_172098_,
-        double p_172099_,
-        double p_172100_,
-        T p_341669_,
-        SpriteSet p_172102_
+        ClientLevel level,
+        double x,
+        double y,
+        double z,
+        double xSpeed,
+        double ySpeed,
+        double zSpeed,
+        T options,
+        SpriteSet sprites
     ) {
-        super(p_172094_, p_172095_, p_172096_, p_172097_, p_172098_, p_172099_, p_172100_);
+        super(level, x, y, z, xSpeed, ySpeed, zSpeed);
         this.friction = 0.96F;
         this.speedUpWhenYMotionIsBlocked = true;
-        this.sprites = p_172102_;
+        this.sprites = sprites;
         this.xd *= 0.1F;
         this.yd *= 0.1F;
         this.zd *= 0.1F;
-        this.quadSize = this.quadSize * 0.75F * p_341669_.getScale();
+        this.quadSize = this.quadSize * 0.75F * options.getScale();
         int i = (int)(8.0 / (this.random.nextDouble() * 0.8 + 0.2));
-        this.lifetime = (int)Math.max((float)i * p_341669_.getScale(), 1.0F);
-        this.setSpriteFromAge(p_172102_);
+        this.lifetime = (int)Math.max((float)i * options.getScale(), 1.0F);
+        this.setSpriteFromAge(sprites);
     }
 
-    protected float randomizeColor(float p_172105_, float p_172106_) {
-        return (this.random.nextFloat() * 0.2F + 0.8F) * p_172105_ * p_172106_;
+    protected float randomizeColor(float coordMultiplier, float multiplier) {
+        return (this.random.nextFloat() * 0.2F + 0.8F) * coordMultiplier * multiplier;
     }
 
     @Override
@@ -44,8 +44,8 @@ public class DustParticleBase<T extends ScalableParticleOptionsBase> extends Tex
     }
 
     @Override
-    public float getQuadSize(float p_172109_) {
-        return this.quadSize * Mth.clamp(((float)this.age + p_172109_) / (float)this.lifetime * 32.0F, 0.0F, 1.0F);
+    public float getQuadSize(float scaleFactor) {
+        return this.quadSize * Mth.clamp(((float)this.age + scaleFactor) / (float)this.lifetime * 32.0F, 0.0F, 1.0F);
     }
 
     @Override

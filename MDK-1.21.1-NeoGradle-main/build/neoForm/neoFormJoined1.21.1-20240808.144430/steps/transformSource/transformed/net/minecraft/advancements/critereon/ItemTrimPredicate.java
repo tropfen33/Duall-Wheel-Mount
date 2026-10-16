@@ -29,9 +29,9 @@ public record ItemTrimPredicate(Optional<HolderSet<TrimMaterial>> material, Opti
         return DataComponents.TRIM;
     }
 
-    public boolean matches(ItemStack p_341406_, ArmorTrim p_340888_) {
-        return this.material.isPresent() && !this.material.get().contains(p_340888_.material())
+    public boolean matches(ItemStack stack, ArmorTrim value) {
+        return this.material.isPresent() && !this.material.get().contains(value.material())
             ? false
-            : !this.pattern.isPresent() || this.pattern.get().contains(p_340888_.pattern());
+            : !this.pattern.isPresent() || this.pattern.get().contains(value.pattern());
     }
 }

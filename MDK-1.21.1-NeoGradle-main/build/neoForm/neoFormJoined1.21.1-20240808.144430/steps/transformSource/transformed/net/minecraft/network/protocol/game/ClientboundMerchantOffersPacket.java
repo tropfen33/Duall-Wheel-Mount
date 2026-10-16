@@ -17,31 +17,31 @@ public class ClientboundMerchantOffersPacket implements Packet<ClientGamePacketL
     private final boolean showProgress;
     private final boolean canRestock;
 
-    public ClientboundMerchantOffersPacket(int p_132456_, MerchantOffers p_132457_, int p_132458_, int p_132459_, boolean p_132460_, boolean p_132461_) {
-        this.containerId = p_132456_;
-        this.offers = p_132457_.copy();
-        this.villagerLevel = p_132458_;
-        this.villagerXp = p_132459_;
-        this.showProgress = p_132460_;
-        this.canRestock = p_132461_;
+    public ClientboundMerchantOffersPacket(int containerId, MerchantOffers offers, int villagerLevel, int villagerXp, boolean showProgress, boolean canRestock) {
+        this.containerId = containerId;
+        this.offers = offers.copy();
+        this.villagerLevel = villagerLevel;
+        this.villagerXp = villagerXp;
+        this.showProgress = showProgress;
+        this.canRestock = canRestock;
     }
 
-    private ClientboundMerchantOffersPacket(RegistryFriendlyByteBuf p_320716_) {
-        this.containerId = p_320716_.readVarInt();
-        this.offers = MerchantOffers.STREAM_CODEC.decode(p_320716_);
-        this.villagerLevel = p_320716_.readVarInt();
-        this.villagerXp = p_320716_.readVarInt();
-        this.showProgress = p_320716_.readBoolean();
-        this.canRestock = p_320716_.readBoolean();
+    private ClientboundMerchantOffersPacket(RegistryFriendlyByteBuf buffer) {
+        this.containerId = buffer.readVarInt();
+        this.offers = MerchantOffers.STREAM_CODEC.decode(buffer);
+        this.villagerLevel = buffer.readVarInt();
+        this.villagerXp = buffer.readVarInt();
+        this.showProgress = buffer.readBoolean();
+        this.canRestock = buffer.readBoolean();
     }
 
-    private void write(RegistryFriendlyByteBuf p_320747_) {
-        p_320747_.writeVarInt(this.containerId);
-        MerchantOffers.STREAM_CODEC.encode(p_320747_, this.offers);
-        p_320747_.writeVarInt(this.villagerLevel);
-        p_320747_.writeVarInt(this.villagerXp);
-        p_320747_.writeBoolean(this.showProgress);
-        p_320747_.writeBoolean(this.canRestock);
+    private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.containerId);
+        MerchantOffers.STREAM_CODEC.encode(buffer, this.offers);
+        buffer.writeVarInt(this.villagerLevel);
+        buffer.writeVarInt(this.villagerXp);
+        buffer.writeBoolean(this.showProgress);
+        buffer.writeBoolean(this.canRestock);
     }
 
     @Override
@@ -49,8 +49,11 @@ public class ClientboundMerchantOffersPacket implements Packet<ClientGamePacketL
         return GamePacketTypes.CLIENTBOUND_MERCHANT_OFFERS;
     }
 
-    public void handle(ClientGamePacketListener p_132467_) {
-        p_132467_.handleMerchantOffers(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleMerchantOffers(this);
     }
 
     public int getContainerId() {

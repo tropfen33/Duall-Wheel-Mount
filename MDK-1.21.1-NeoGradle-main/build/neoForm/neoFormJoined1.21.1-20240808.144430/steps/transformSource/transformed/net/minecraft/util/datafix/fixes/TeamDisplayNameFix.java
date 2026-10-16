@@ -12,8 +12,8 @@ import java.util.Objects;
 import net.minecraft.util.datafix.ComponentDataFixUtils;
 
 public class TeamDisplayNameFix extends DataFix {
-    public TeamDisplayNameFix(Schema p_17001_, boolean p_17002_) {
-        super(p_17001_, p_17002_);
+    public TeamDisplayNameFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override

@@ -16,8 +16,8 @@ public abstract class AbstractSchoolingFish extends AbstractFish {
     private AbstractSchoolingFish leader;
     private int schoolSize = 1;
 
-    public AbstractSchoolingFish(EntityType<? extends AbstractSchoolingFish> p_27523_, Level p_27524_) {
-        super(p_27523_, p_27524_);
+    public AbstractSchoolingFish(EntityType<? extends AbstractSchoolingFish> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
@@ -44,10 +44,10 @@ public abstract class AbstractSchoolingFish extends AbstractFish {
         return this.leader != null && this.leader.isAlive();
     }
 
-    public AbstractSchoolingFish startFollowing(AbstractSchoolingFish p_27526_) {
-        this.leader = p_27526_;
-        p_27526_.addFollower();
-        return p_27526_;
+    public AbstractSchoolingFish startFollowing(AbstractSchoolingFish leader) {
+        this.leader = leader;
+        leader.addFollower();
+        return leader;
     }
 
     public void stopFollowing() {
@@ -93,30 +93,30 @@ public abstract class AbstractSchoolingFish extends AbstractFish {
         }
     }
 
-    public void addFollowers(Stream<? extends AbstractSchoolingFish> p_27534_) {
-        p_27534_.limit((long)(this.getMaxSchoolSize() - this.schoolSize))
+    public void addFollowers(Stream<? extends AbstractSchoolingFish> followers) {
+        followers.limit((long)(this.getMaxSchoolSize() - this.schoolSize))
             .filter(p_27538_ -> p_27538_ != this)
             .forEach(p_27536_ -> p_27536_.startFollowing(this));
     }
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_27528_, DifficultyInstance p_27529_, MobSpawnType p_27530_, @Nullable SpawnGroupData p_27531_) {
-        super.finalizeSpawn(p_27528_, p_27529_, p_27530_, p_27531_);
-        if (p_27531_ == null) {
-            p_27531_ = new AbstractSchoolingFish.SchoolSpawnGroupData(this);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
+        if (spawnGroupData == null) {
+            spawnGroupData = new AbstractSchoolingFish.SchoolSpawnGroupData(this);
         } else {
-            this.startFollowing(((AbstractSchoolingFish.SchoolSpawnGroupData)p_27531_).leader);
+            this.startFollowing(((AbstractSchoolingFish.SchoolSpawnGroupData)spawnGroupData).leader);
         }
 
-        return p_27531_;
+        return spawnGroupData;
     }
 
     public static class SchoolSpawnGroupData implements SpawnGroupData {
         public final AbstractSchoolingFish leader;
 
-        public SchoolSpawnGroupData(AbstractSchoolingFish p_27553_) {
-            this.leader = p_27553_;
+        public SchoolSpawnGroupData(AbstractSchoolingFish leader) {
+            this.leader = leader;
         }
     }
 }

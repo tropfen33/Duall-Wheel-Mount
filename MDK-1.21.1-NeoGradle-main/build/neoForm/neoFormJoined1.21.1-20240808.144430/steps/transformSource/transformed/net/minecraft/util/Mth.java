@@ -35,6 +35,9 @@ public class Mth {
         }
     });
     private static final RandomSource RANDOM = RandomSource.createThreadSafe();
+    /**
+     * Though it looks like an array, this is really more like a mapping. Key (index of this array) is the upper 5 bits of the result of multiplying a 32-bit unsigned integer by the B(2, 5) De Bruijn sequence 0x077CB531. Value (value stored in the array) is the unique index (from the right) of the leftmo
+     */
     private static final int[] MULTIPLY_DE_BRUIJN_BIT_POSITION = new int[]{
         0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
     };
@@ -45,137 +48,200 @@ public class Mth {
     private static final double[] ASIN_TAB = new double[257];
     private static final double[] COS_TAB = new double[257];
 
-    public static float sin(float p_14032_) {
-        return SIN[(int)(p_14032_ * 10430.378F) & 65535];
+    /**
+     * sin looked up in a table
+     */
+    public static float sin(float value) {
+        return SIN[(int)(value * 10430.378F) & 65535];
     }
 
-    public static float cos(float p_14090_) {
-        return SIN[(int)(p_14090_ * 10430.378F + 16384.0F) & 65535];
+    /**
+     * cos looked up in the sin table with the appropriate offset
+     */
+    public static float cos(float value) {
+        return SIN[(int)(value * 10430.378F + 16384.0F) & 65535];
     }
 
-    public static float sqrt(float p_14117_) {
-        return (float)Math.sqrt((double)p_14117_);
+    public static float sqrt(float value) {
+        return (float)Math.sqrt((double)value);
     }
 
-    public static int floor(float p_14144_) {
-        int i = (int)p_14144_;
-        return p_14144_ < (float)i ? i - 1 : i;
+    /**
+     * {@return the greatest integer less than or equal to the float argument}
+     */
+    public static int floor(float value) {
+        int i = (int)value;
+        return value < (float)i ? i - 1 : i;
     }
 
-    public static int floor(double p_14108_) {
-        int i = (int)p_14108_;
-        return p_14108_ < (double)i ? i - 1 : i;
+    /**
+     * {@return the greatest integer less than or equal to the double argument}
+     */
+    public static int floor(double value) {
+        int i = (int)value;
+        return value < (double)i ? i - 1 : i;
     }
 
-    public static long lfloor(double p_14135_) {
-        long i = (long)p_14135_;
-        return p_14135_ < (double)i ? i - 1L : i;
+    /**
+     * Long version of floor()
+     */
+    public static long lfloor(double value) {
+        long i = (long)value;
+        return value < (double)i ? i - 1L : i;
     }
 
-    public static float abs(float p_14155_) {
-        return Math.abs(p_14155_);
+    public static float abs(float value) {
+        return Math.abs(value);
     }
 
-    public static int abs(int p_14041_) {
-        return Math.abs(p_14041_);
+    /**
+     * {@return the unsigned value of an int}
+     */
+    public static int abs(int value) {
+        return Math.abs(value);
     }
 
-    public static int ceil(float p_14168_) {
-        int i = (int)p_14168_;
-        return p_14168_ > (float)i ? i + 1 : i;
+    public static int ceil(float value) {
+        int i = (int)value;
+        return value > (float)i ? i + 1 : i;
     }
 
-    public static int ceil(double p_14166_) {
-        int i = (int)p_14166_;
-        return p_14166_ > (double)i ? i + 1 : i;
+    public static int ceil(double value) {
+        int i = (int)value;
+        return value > (double)i ? i + 1 : i;
     }
 
-    public static int clamp(int p_14046_, int p_14047_, int p_14048_) {
-        return Math.min(Math.max(p_14046_, p_14047_), p_14048_);
+    /**
+     * {@return the given value if between the lower and the upper bound. If the value is less than the lower bound, returns the lower bound} If the value is greater than the upper bound, returns the upper bound.
+     *
+     * @param value The value that is clamped.
+     * @param min   The lower bound for the clamp.
+     * @param max   The upper bound for the clamp.
+     */
+    public static int clamp(int value, int min, int max) {
+        return Math.min(Math.max(value, min), max);
     }
 
-    public static long clamp(long p_298408_, long p_298924_, long p_298326_) {
-        return Math.min(Math.max(p_298408_, p_298924_), p_298326_);
+    public static long clamp(long value, long min, long max) {
+        return Math.min(Math.max(value, min), max);
     }
 
-    public static float clamp(float p_14037_, float p_14038_, float p_14039_) {
-        return p_14037_ < p_14038_ ? p_14038_ : Math.min(p_14037_, p_14039_);
+    /**
+     * {@return the given value if between the lower and the upper bound. If the value is less than the lower bound, returns the lower bound} If the value is greater than the upper bound, returns the upper bound.
+     *
+     * @param value The value that is clamped.
+     * @param min   The lower bound for the clamp.
+     * @param max   The upper bound for the clamp.
+     */
+    public static float clamp(float value, float min, float max) {
+        return value < min ? min : Math.min(value, max);
     }
 
-    public static double clamp(double p_14009_, double p_14010_, double p_14011_) {
-        return p_14009_ < p_14010_ ? p_14010_ : Math.min(p_14009_, p_14011_);
+    /**
+     * {@return the given value if between the lower and the upper bound. If the value is less than the lower bound, returns the lower bound} If the value is greater than the upper bound, returns the upper bound.
+     *
+     * @param value The value that is clamped.
+     * @param min   The lower bound for the clamp.
+     * @param max   The upper bound for the clamp.
+     */
+    public static double clamp(double value, double min, double max) {
+        return value < min ? min : Math.min(value, max);
     }
 
-    public static double clampedLerp(double p_14086_, double p_14087_, double p_14088_) {
-        if (p_14088_ < 0.0) {
-            return p_14086_;
+    /**
+     * Method for linear interpolation of doubles.
+     *
+     * @param start Start value for the lerp.
+     * @param end   End value for the lerp.
+     * @param delta A value between 0 and 1 that indicates the percentage of the lerp.
+     *              (0 will give the start value and 1 will give the end value) If
+     *              the value is not between 0 and 1, it is clamped.
+     */
+    public static double clampedLerp(double start, double end, double delta) {
+        if (delta < 0.0) {
+            return start;
         } else {
-            return p_14088_ > 1.0 ? p_14087_ : lerp(p_14088_, p_14086_, p_14087_);
+            return delta > 1.0 ? end : lerp(delta, start, end);
         }
     }
 
-    public static float clampedLerp(float p_144921_, float p_144922_, float p_144923_) {
-        if (p_144923_ < 0.0F) {
-            return p_144921_;
+    /**
+     * Method for linear interpolation of floats.
+     *
+     * @param start Start value for the lerp.
+     * @param end   End value for the lerp.
+     * @param delta A value between 0 and 1 that indicates the percentage of the lerp.
+     *              (0 will give the start value and 1 will give the end value) If
+     *              the value is not between 0 and 1, it is clamped.
+     */
+    public static float clampedLerp(float start, float end, float delta) {
+        if (delta < 0.0F) {
+            return start;
         } else {
-            return p_144923_ > 1.0F ? p_144922_ : lerp(p_144923_, p_144921_, p_144922_);
+            return delta > 1.0F ? end : lerp(delta, start, end);
         }
     }
 
-    public static double absMax(double p_14006_, double p_14007_) {
-        if (p_14006_ < 0.0) {
-            p_14006_ = -p_14006_;
+    /**
+     * {@return the maximum of the absolute value of two numbers}
+     */
+    public static double absMax(double x, double y) {
+        if (x < 0.0) {
+            x = -x;
         }
 
-        if (p_14007_ < 0.0) {
-            p_14007_ = -p_14007_;
+        if (y < 0.0) {
+            y = -y;
         }
 
-        return Math.max(p_14006_, p_14007_);
+        return Math.max(x, y);
     }
 
-    public static int floorDiv(int p_14043_, int p_14044_) {
-        return Math.floorDiv(p_14043_, p_14044_);
+    public static int floorDiv(int dividend, int divisor) {
+        return Math.floorDiv(dividend, divisor);
     }
 
-    public static int nextInt(RandomSource p_216272_, int p_216273_, int p_216274_) {
-        return p_216273_ >= p_216274_ ? p_216273_ : p_216272_.nextInt(p_216274_ - p_216273_ + 1) + p_216273_;
+    public static int nextInt(RandomSource random, int minimum, int maximum) {
+        return minimum >= maximum ? minimum : random.nextInt(maximum - minimum + 1) + minimum;
     }
 
-    public static float nextFloat(RandomSource p_216268_, float p_216269_, float p_216270_) {
-        return p_216269_ >= p_216270_ ? p_216269_ : p_216268_.nextFloat() * (p_216270_ - p_216269_) + p_216269_;
+    public static float nextFloat(RandomSource random, float minimum, float maximum) {
+        return minimum >= maximum ? minimum : random.nextFloat() * (maximum - minimum) + minimum;
     }
 
-    public static double nextDouble(RandomSource p_216264_, double p_216265_, double p_216266_) {
-        return p_216265_ >= p_216266_ ? p_216265_ : p_216264_.nextDouble() * (p_216266_ - p_216265_) + p_216265_;
+    public static double nextDouble(RandomSource random, double minimum, double maximum) {
+        return minimum >= maximum ? minimum : random.nextDouble() * (maximum - minimum) + minimum;
     }
 
-    public static boolean equal(float p_14034_, float p_14035_) {
-        return Math.abs(p_14035_ - p_14034_) < 1.0E-5F;
+    public static boolean equal(float x, float y) {
+        return Math.abs(y - x) < 1.0E-5F;
     }
 
-    public static boolean equal(double p_14083_, double p_14084_) {
-        return Math.abs(p_14084_ - p_14083_) < 1.0E-5F;
+    public static boolean equal(double x, double y) {
+        return Math.abs(y - x) < 1.0E-5F;
     }
 
-    public static int positiveModulo(int p_14101_, int p_14102_) {
-        return Math.floorMod(p_14101_, p_14102_);
+    public static int positiveModulo(int x, int y) {
+        return Math.floorMod(x, y);
     }
 
-    public static float positiveModulo(float p_14092_, float p_14093_) {
-        return (p_14092_ % p_14093_ + p_14093_) % p_14093_;
+    public static float positiveModulo(float numerator, float denominator) {
+        return (numerator % denominator + denominator) % denominator;
     }
 
-    public static double positiveModulo(double p_14110_, double p_14111_) {
-        return (p_14110_ % p_14111_ + p_14111_) % p_14111_;
+    public static double positiveModulo(double numerator, double denominator) {
+        return (numerator % denominator + denominator) % denominator;
     }
 
-    public static boolean isMultipleOf(int p_265754_, int p_265543_) {
-        return p_265754_ % p_265543_ == 0;
+    public static boolean isMultipleOf(int number, int multiple) {
+        return number % multiple == 0;
     }
 
-    public static int wrapDegrees(int p_14099_) {
-        int i = p_14099_ % 360;
+    /**
+     * Adjust the angle so that its value is in the range [-180;180)
+     */
+    public static int wrapDegrees(int angle) {
+        int i = angle % 360;
         if (i >= 180) {
             i -= 360;
         }
@@ -187,8 +253,11 @@ public class Mth {
         return i;
     }
 
-    public static float wrapDegrees(float p_14178_) {
-        float f = p_14178_ % 360.0F;
+    /**
+     * The angle is reduced to an angle between -180 and +180 by mod, and a 360 check.
+     */
+    public static float wrapDegrees(float value) {
+        float f = value % 360.0F;
         if (f >= 180.0F) {
             f -= 360.0F;
         }
@@ -200,8 +269,11 @@ public class Mth {
         return f;
     }
 
-    public static double wrapDegrees(double p_14176_) {
-        double d0 = p_14176_ % 360.0;
+    /**
+     * The angle is reduced to an angle between -180 and +180 by mod, and a 360 check.
+     */
+    public static double wrapDegrees(double value) {
+        double d0 = value % 360.0;
         if (d0 >= 180.0) {
             d0 -= 360.0;
         }
@@ -213,36 +285,63 @@ public class Mth {
         return d0;
     }
 
-    public static float degreesDifference(float p_14119_, float p_14120_) {
-        return wrapDegrees(p_14120_ - p_14119_);
+    /**
+     * {@return the difference between two angles in degrees}
+     */
+    public static float degreesDifference(float start, float end) {
+        return wrapDegrees(end - start);
     }
 
-    public static float degreesDifferenceAbs(float p_14146_, float p_14147_) {
-        return abs(degreesDifference(p_14146_, p_14147_));
+    /**
+     * {@return the absolute of the difference between two angles in degrees}
+     */
+    public static float degreesDifferenceAbs(float start, float end) {
+        return abs(degreesDifference(start, end));
     }
 
-    public static float rotateIfNecessary(float p_14095_, float p_14096_, float p_14097_) {
-        float f = degreesDifference(p_14095_, p_14096_);
-        float f1 = clamp(f, -p_14097_, p_14097_);
-        return p_14096_ - f1;
+    /**
+     * Takes a rotation and compares it to another rotation.
+     * If the difference is greater than a given maximum, clamps the original rotation between to have at most the given difference to the actual rotation.
+     * This is used to match the body rotation of entities to their head rotation.
+     * @return The new value for the rotation that was adjusted
+     */
+    public static float rotateIfNecessary(float rotationToAdjust, float actualRotation, float maxDifference) {
+        float f = degreesDifference(rotationToAdjust, actualRotation);
+        float f1 = clamp(f, -maxDifference, maxDifference);
+        return actualRotation - f1;
     }
 
-    public static float approach(float p_14122_, float p_14123_, float p_14124_) {
-        p_14124_ = abs(p_14124_);
-        return p_14122_ < p_14123_ ? clamp(p_14122_ + p_14124_, p_14122_, p_14123_) : clamp(p_14122_ - p_14124_, p_14123_, p_14122_);
+    /**
+     * Changes value by stepSize towards the limit and returns the result.
+     * If value is smaller than limit, the result will never be bigger than limit.
+     * If value is bigger than limit, the result will never be smaller than limit.
+     */
+    public static float approach(float value, float limit, float stepSize) {
+        stepSize = abs(stepSize);
+        return value < limit ? clamp(value + stepSize, value, limit) : clamp(value - stepSize, limit, value);
     }
 
-    public static float approachDegrees(float p_14149_, float p_14150_, float p_14151_) {
-        float f = degreesDifference(p_14149_, p_14150_);
-        return approach(p_14149_, p_14149_ + f, p_14151_);
+    /**
+     * Changes the angle by stepSize towards the limit in the direction where the distance is smaller.
+     * {@see #approach(float, float, float)}
+     */
+    public static float approachDegrees(float angle, float limit, float stepSize) {
+        float f = degreesDifference(angle, limit);
+        return approach(angle, angle + f, stepSize);
     }
 
-    public static int getInt(String p_14060_, int p_14061_) {
-        return NumberUtils.toInt(p_14060_, p_14061_);
+    /**
+     * Parses the string as an integer or returns the second parameter if it fails.
+     */
+    public static int getInt(String value, int defaultValue) {
+        return NumberUtils.toInt(value, defaultValue);
     }
 
-    public static int smallestEncompassingPowerOfTwo(int p_14126_) {
-        int i = p_14126_ - 1;
+    /**
+     * {@return the input value rounded up to the next highest power of two}
+     */
+    public static int smallestEncompassingPowerOfTwo(int value) {
+        int i = value - 1;
         i |= i >> 1;
         i |= i >> 2;
         i |= i >> 4;
@@ -251,46 +350,61 @@ public class Mth {
         return i + 1;
     }
 
-    public static boolean isPowerOfTwo(int p_14153_) {
-        return p_14153_ != 0 && (p_14153_ & p_14153_ - 1) == 0;
+    /**
+     * Is the given value a power of two?  (1, 2, 4, 8, 16, ...)
+     */
+    public static boolean isPowerOfTwo(int value) {
+        return value != 0 && (value & value - 1) == 0;
     }
 
-    public static int ceillog2(int p_14164_) {
-        p_14164_ = isPowerOfTwo(p_14164_) ? p_14164_ : smallestEncompassingPowerOfTwo(p_14164_);
-        return MULTIPLY_DE_BRUIJN_BIT_POSITION[(int)((long)p_14164_ * 125613361L >> 27) & 31];
+    /**
+     * Uses a B(2, 5) De Bruijn sequence and a lookup table to efficiently calculate the log-base-two of the given value. Optimized for cases where the input value is a power-of-two. If the input value is not a power-of-two, then subtract 1 from the return value.
+     */
+    public static int ceillog2(int value) {
+        value = isPowerOfTwo(value) ? value : smallestEncompassingPowerOfTwo(value);
+        return MULTIPLY_DE_BRUIJN_BIT_POSITION[(int)((long)value * 125613361L >> 27) & 31];
     }
 
-    public static int log2(int p_14174_) {
-        return ceillog2(p_14174_) - (isPowerOfTwo(p_14174_) ? 0 : 1);
+    /**
+     * Efficiently calculates the floor of the base-2 log of an integer value.  This is effectively the index of the highest bit that is set.  For example, if the number in binary is 0...100101, this will return 5.
+     */
+    public static int log2(int value) {
+        return ceillog2(value) - (isPowerOfTwo(value) ? 0 : 1);
     }
 
-    public static int color(float p_14160_, float p_14161_, float p_14162_) {
-        return FastColor.ARGB32.color(0, floor(p_14160_ * 255.0F), floor(p_14161_ * 255.0F), floor(p_14162_ * 255.0F));
+    /**
+     * Makes an integer color from the given red, green, and blue float values
+     */
+    public static int color(float r, float g, float b) {
+        return FastColor.ARGB32.color(0, floor(r * 255.0F), floor(g * 255.0F), floor(b * 255.0F));
     }
 
-    public static float frac(float p_14188_) {
-        return p_14188_ - (float)floor(p_14188_);
+    public static float frac(float number) {
+        return number - (float)floor(number);
     }
 
-    public static double frac(double p_14186_) {
-        return p_14186_ - (double)lfloor(p_14186_);
+    /**
+     * Gets the decimal portion of the given double. For instance, {@code frac(5.5)} returns {@code .5}.
+     */
+    public static double frac(double number) {
+        return number - (double)lfloor(number);
     }
 
     @Deprecated
-    public static long getSeed(Vec3i p_14058_) {
-        return getSeed(p_14058_.getX(), p_14058_.getY(), p_14058_.getZ());
+    public static long getSeed(Vec3i pos) {
+        return getSeed(pos.getX(), pos.getY(), pos.getZ());
     }
 
     @Deprecated
-    public static long getSeed(int p_14131_, int p_14132_, int p_14133_) {
-        long i = (long)(p_14131_ * 3129871) ^ (long)p_14133_ * 116129781L ^ (long)p_14132_;
+    public static long getSeed(int x, int y, int z) {
+        long i = (long)(x * 3129871) ^ (long)z * 116129781L ^ (long)y;
         i = i * i * 42317861L + i * 11L;
         return i >> 16;
     }
 
-    public static UUID createInsecureUUID(RandomSource p_216262_) {
-        long i = p_216262_.nextLong() & -61441L | 16384L;
-        long j = p_216262_.nextLong() & 4611686018427387903L | Long.MIN_VALUE;
+    public static UUID createInsecureUUID(RandomSource random) {
+        long i = random.nextLong() & -61441L | 16384L;
+        long j = random.nextLong() & 4611686018427387903L | Long.MIN_VALUE;
         return new UUID(i, j);
     }
 
@@ -298,45 +412,45 @@ public class Mth {
         return createInsecureUUID(RANDOM);
     }
 
-    public static double inverseLerp(double p_14113_, double p_14114_, double p_14115_) {
-        return (p_14113_ - p_14114_) / (p_14115_ - p_14114_);
+    public static double inverseLerp(double delta, double start, double end) {
+        return (delta - start) / (end - start);
     }
 
-    public static float inverseLerp(float p_184656_, float p_184657_, float p_184658_) {
-        return (p_184656_ - p_184657_) / (p_184658_ - p_184657_);
+    public static float inverseLerp(float delta, float start, float end) {
+        return (delta - start) / (end - start);
     }
 
-    public static boolean rayIntersectsAABB(Vec3 p_144889_, Vec3 p_144890_, AABB p_144891_) {
-        double d0 = (p_144891_.minX + p_144891_.maxX) * 0.5;
-        double d1 = (p_144891_.maxX - p_144891_.minX) * 0.5;
-        double d2 = p_144889_.x - d0;
-        if (Math.abs(d2) > d1 && d2 * p_144890_.x >= 0.0) {
+    public static boolean rayIntersectsAABB(Vec3 start, Vec3 end, AABB boundingBox) {
+        double d0 = (boundingBox.minX + boundingBox.maxX) * 0.5;
+        double d1 = (boundingBox.maxX - boundingBox.minX) * 0.5;
+        double d2 = start.x - d0;
+        if (Math.abs(d2) > d1 && d2 * end.x >= 0.0) {
             return false;
         } else {
-            double d3 = (p_144891_.minY + p_144891_.maxY) * 0.5;
-            double d4 = (p_144891_.maxY - p_144891_.minY) * 0.5;
-            double d5 = p_144889_.y - d3;
-            if (Math.abs(d5) > d4 && d5 * p_144890_.y >= 0.0) {
+            double d3 = (boundingBox.minY + boundingBox.maxY) * 0.5;
+            double d4 = (boundingBox.maxY - boundingBox.minY) * 0.5;
+            double d5 = start.y - d3;
+            if (Math.abs(d5) > d4 && d5 * end.y >= 0.0) {
                 return false;
             } else {
-                double d6 = (p_144891_.minZ + p_144891_.maxZ) * 0.5;
-                double d7 = (p_144891_.maxZ - p_144891_.minZ) * 0.5;
-                double d8 = p_144889_.z - d6;
-                if (Math.abs(d8) > d7 && d8 * p_144890_.z >= 0.0) {
+                double d6 = (boundingBox.minZ + boundingBox.maxZ) * 0.5;
+                double d7 = (boundingBox.maxZ - boundingBox.minZ) * 0.5;
+                double d8 = start.z - d6;
+                if (Math.abs(d8) > d7 && d8 * end.z >= 0.0) {
                     return false;
                 } else {
-                    double d9 = Math.abs(p_144890_.x);
-                    double d10 = Math.abs(p_144890_.y);
-                    double d11 = Math.abs(p_144890_.z);
-                    double d12 = p_144890_.y * d8 - p_144890_.z * d5;
+                    double d9 = Math.abs(end.x);
+                    double d10 = Math.abs(end.y);
+                    double d11 = Math.abs(end.z);
+                    double d12 = end.y * d8 - end.z * d5;
                     if (Math.abs(d12) > d4 * d11 + d7 * d10) {
                         return false;
                     } else {
-                        d12 = p_144890_.z * d2 - p_144890_.x * d8;
+                        d12 = end.z * d2 - end.x * d8;
                         if (Math.abs(d12) > d1 * d11 + d7 * d9) {
                             return false;
                         } else {
-                            d12 = p_144890_.x * d5 - p_144890_.y * d2;
+                            d12 = end.x * d5 - end.y * d2;
                             return Math.abs(d12) < d1 * d10 + d4 * d9;
                         }
                     }
@@ -345,37 +459,37 @@ public class Mth {
         }
     }
 
-    public static double atan2(double p_14137_, double p_14138_) {
-        double d0 = p_14138_ * p_14138_ + p_14137_ * p_14137_;
+    public static double atan2(double y, double x) {
+        double d0 = x * x + y * y;
         if (Double.isNaN(d0)) {
             return Double.NaN;
         } else {
-            boolean flag = p_14137_ < 0.0;
+            boolean flag = y < 0.0;
             if (flag) {
-                p_14137_ = -p_14137_;
+                y = -y;
             }
 
-            boolean flag1 = p_14138_ < 0.0;
+            boolean flag1 = x < 0.0;
             if (flag1) {
-                p_14138_ = -p_14138_;
+                x = -x;
             }
 
-            boolean flag2 = p_14137_ > p_14138_;
+            boolean flag2 = y > x;
             if (flag2) {
-                double d1 = p_14138_;
-                p_14138_ = p_14137_;
-                p_14137_ = d1;
+                double d1 = x;
+                x = y;
+                y = d1;
             }
 
             double d9 = fastInvSqrt(d0);
-            p_14138_ *= d9;
-            p_14137_ *= d9;
-            double d2 = FRAC_BIAS + p_14137_;
+            x *= d9;
+            y *= d9;
+            double d2 = FRAC_BIAS + y;
             int i = (int)Double.doubleToRawLongBits(d2);
             double d3 = ASIN_TAB[i];
             double d4 = COS_TAB[i];
             double d5 = d2 - FRAC_BIAS;
-            double d6 = p_14137_ * d4 - p_14138_ * d5;
+            double d6 = y * d4 - x * d5;
             double d7 = (6.0 + d6 * d6) * d6 * 0.16666666666666666;
             double d8 = d3 + d7;
             if (flag2) {
@@ -394,300 +508,341 @@ public class Mth {
         }
     }
 
-    public static float invSqrt(float p_265060_) {
-        return org.joml.Math.invsqrt(p_265060_);
+    public static float invSqrt(float number) {
+        return org.joml.Math.invsqrt(number);
     }
 
-    public static double invSqrt(double p_265088_) {
-        return org.joml.Math.invsqrt(p_265088_);
+    public static double invSqrt(double number) {
+        return org.joml.Math.invsqrt(number);
     }
 
+    /**
+     * Computes 1/sqrt(n) using <a href="https://en.wikipedia.org/wiki/Fast_inverse_square_root">the fast inverse square root</a> with a constant of 0x5FE6EB50C7B537AA.
+     */
     @Deprecated
-    public static double fastInvSqrt(double p_14194_) {
-        double d0 = 0.5 * p_14194_;
-        long i = Double.doubleToRawLongBits(p_14194_);
+    public static double fastInvSqrt(double number) {
+        double d0 = 0.5 * number;
+        long i = Double.doubleToRawLongBits(number);
         i = 6910469410427058090L - (i >> 1);
-        p_14194_ = Double.longBitsToDouble(i);
-        return p_14194_ * (1.5 - d0 * p_14194_ * p_14194_);
+        number = Double.longBitsToDouble(i);
+        return number * (1.5 - d0 * number * number);
     }
 
-    public static float fastInvCubeRoot(float p_14200_) {
-        int i = Float.floatToIntBits(p_14200_);
+    public static float fastInvCubeRoot(float number) {
+        int i = Float.floatToIntBits(number);
         i = 1419967116 - i / 3;
         float f = Float.intBitsToFloat(i);
-        f = 0.6666667F * f + 1.0F / (3.0F * f * f * p_14200_);
-        return 0.6666667F * f + 1.0F / (3.0F * f * f * p_14200_);
+        f = 0.6666667F * f + 1.0F / (3.0F * f * f * number);
+        return 0.6666667F * f + 1.0F / (3.0F * f * f * number);
     }
 
-    public static int hsvToRgb(float p_14170_, float p_14171_, float p_14172_) {
-        return hsvToArgb(p_14170_, p_14171_, p_14172_, 0);
+    public static int hsvToRgb(float hue, float saturation, float value) {
+        return hsvToArgb(hue, saturation, value, 0);
     }
 
-    public static int hsvToArgb(float p_348601_, float p_348572_, float p_348491_, int p_348531_) {
-        int i = (int)(p_348601_ * 6.0F) % 6;
-        float f = p_348601_ * 6.0F - (float)i;
-        float f1 = p_348491_ * (1.0F - p_348572_);
-        float f2 = p_348491_ * (1.0F - f * p_348572_);
-        float f3 = p_348491_ * (1.0F - (1.0F - f) * p_348572_);
+    public static int hsvToArgb(float hue, float saturation, float value, int alpha) {
+        int i = (int)(hue * 6.0F) % 6;
+        float f = hue * 6.0F - (float)i;
+        float f1 = value * (1.0F - saturation);
+        float f2 = value * (1.0F - f * saturation);
+        float f3 = value * (1.0F - (1.0F - f) * saturation);
         float f4;
         float f5;
         float f6;
         switch (i) {
             case 0:
-                f4 = p_348491_;
+                f4 = value;
                 f5 = f3;
                 f6 = f1;
                 break;
             case 1:
                 f4 = f2;
-                f5 = p_348491_;
+                f5 = value;
                 f6 = f1;
                 break;
             case 2:
                 f4 = f1;
-                f5 = p_348491_;
+                f5 = value;
                 f6 = f3;
                 break;
             case 3:
                 f4 = f1;
                 f5 = f2;
-                f6 = p_348491_;
+                f6 = value;
                 break;
             case 4:
                 f4 = f3;
                 f5 = f1;
-                f6 = p_348491_;
+                f6 = value;
                 break;
             case 5:
-                f4 = p_348491_;
+                f4 = value;
                 f5 = f1;
                 f6 = f2;
                 break;
             default:
-                throw new RuntimeException("Something went wrong when converting from HSV to RGB. Input was " + p_348601_ + ", " + p_348572_ + ", " + p_348491_);
+                throw new RuntimeException("Something went wrong when converting from HSV to RGB. Input was " + hue + ", " + saturation + ", " + value);
         }
 
-        return FastColor.ARGB32.color(p_348531_, clamp((int)(f4 * 255.0F), 0, 255), clamp((int)(f5 * 255.0F), 0, 255), clamp((int)(f6 * 255.0F), 0, 255));
+        return FastColor.ARGB32.color(alpha, clamp((int)(f4 * 255.0F), 0, 255), clamp((int)(f5 * 255.0F), 0, 255), clamp((int)(f6 * 255.0F), 0, 255));
     }
 
-    public static int murmurHash3Mixer(int p_14184_) {
-        p_14184_ ^= p_14184_ >>> 16;
-        p_14184_ *= -2048144789;
-        p_14184_ ^= p_14184_ >>> 13;
-        p_14184_ *= -1028477387;
-        return p_14184_ ^ p_14184_ >>> 16;
+    public static int murmurHash3Mixer(int input) {
+        input ^= input >>> 16;
+        input *= -2048144789;
+        input ^= input >>> 13;
+        input *= -1028477387;
+        return input ^ input >>> 16;
     }
 
-    public static int binarySearch(int p_14050_, int p_14051_, IntPredicate p_14052_) {
-        int i = p_14051_ - p_14050_;
+    public static int binarySearch(int min, int max, IntPredicate isTargetBeforeOrAt) {
+        int i = max - min;
 
         while (i > 0) {
             int j = i / 2;
-            int k = p_14050_ + j;
-            if (p_14052_.test(k)) {
+            int k = min + j;
+            if (isTargetBeforeOrAt.test(k)) {
                 i = j;
             } else {
-                p_14050_ = k + 1;
+                min = k + 1;
                 i -= j + 1;
             }
         }
 
-        return p_14050_;
+        return min;
     }
 
-    public static int lerpInt(float p_270245_, int p_270597_, int p_270301_) {
-        return p_270597_ + floor(p_270245_ * (float)(p_270301_ - p_270597_));
+    public static int lerpInt(float delta, int start, int end) {
+        return start + floor(delta * (float)(end - start));
     }
 
-    public static int lerpDiscrete(float p_299072_, int p_298417_, int p_299185_) {
-        int i = p_299185_ - p_298417_;
-        return p_298417_ + floor(p_299072_ * (float)(i - 1)) + (p_299072_ > 0.0F ? 1 : 0);
+    public static int lerpDiscrete(float delta, int start, int end) {
+        int i = end - start;
+        return start + floor(delta * (float)(i - 1)) + (delta > 0.0F ? 1 : 0);
     }
 
-    public static float lerp(float p_14180_, float p_14181_, float p_14182_) {
-        return p_14181_ + p_14180_ * (p_14182_ - p_14181_);
+    /**
+     * Method for linear interpolation of floats
+     *
+     * @param delta A value usually between 0 and 1 that indicates the percentage of
+     *              the lerp. (0 will give the start value and 1 will give the end
+     *              value)
+     * @param start Start value for the lerp
+     * @param end   End value for the lerp
+     */
+    public static float lerp(float delta, float start, float end) {
+        return start + delta * (end - start);
     }
 
-    public static double lerp(double p_14140_, double p_14141_, double p_14142_) {
-        return p_14141_ + p_14140_ * (p_14142_ - p_14141_);
+    /**
+     * Method for linear interpolation of doubles
+     *
+     * @param delta A value usually between 0 and 1 that indicates the percentage of
+     *              the lerp. (0 will give the start value and 1 will give the end
+     *              value)
+     * @param start Start value for the lerp
+     * @param end   End value for the lerp
+     */
+    public static double lerp(double delta, double start, double end) {
+        return start + delta * (end - start);
     }
 
-    public static double lerp2(double p_14013_, double p_14014_, double p_14015_, double p_14016_, double p_14017_, double p_14018_) {
-        return lerp(p_14014_, lerp(p_14013_, p_14015_, p_14016_), lerp(p_14013_, p_14017_, p_14018_));
+    public static double lerp2(double delta1, double delta2, double start1, double end1, double start2, double end2) {
+        return lerp(delta2, lerp(delta1, start1, end1), lerp(delta1, start2, end2));
     }
 
     public static double lerp3(
-        double p_14020_,
-        double p_14021_,
-        double p_14022_,
-        double p_14023_,
-        double p_14024_,
-        double p_14025_,
-        double p_14026_,
-        double p_14027_,
-        double p_14028_,
-        double p_14029_,
-        double p_14030_
+        double delta1,
+        double delta2,
+        double delta3,
+        double start1,
+        double end1,
+        double start2,
+        double end2,
+        double start3,
+        double end3,
+        double start4,
+        double end4
     ) {
         return lerp(
-            p_14022_, lerp2(p_14020_, p_14021_, p_14023_, p_14024_, p_14025_, p_14026_), lerp2(p_14020_, p_14021_, p_14027_, p_14028_, p_14029_, p_14030_)
+            delta3, lerp2(delta1, delta2, start1, end1, start2, end2), lerp2(delta1, delta2, start3, end3, start4, end4)
         );
     }
 
-    public static float catmullrom(float p_216245_, float p_216246_, float p_216247_, float p_216248_, float p_216249_) {
+    public static float catmullrom(float delta, float controlPoint1, float controlPoint2, float controlPoint3, float controlPoint4) {
         return 0.5F
             * (
-                2.0F * p_216247_
-                    + (p_216248_ - p_216246_) * p_216245_
-                    + (2.0F * p_216246_ - 5.0F * p_216247_ + 4.0F * p_216248_ - p_216249_) * p_216245_ * p_216245_
-                    + (3.0F * p_216247_ - p_216246_ - 3.0F * p_216248_ + p_216249_) * p_216245_ * p_216245_ * p_216245_
+                2.0F * controlPoint2
+                    + (controlPoint3 - controlPoint1) * delta
+                    + (2.0F * controlPoint1 - 5.0F * controlPoint2 + 4.0F * controlPoint3 - controlPoint4) * delta * delta
+                    + (3.0F * controlPoint2 - controlPoint1 - 3.0F * controlPoint3 + controlPoint4) * delta * delta * delta
             );
     }
 
-    public static double smoothstep(double p_14198_) {
-        return p_14198_ * p_14198_ * p_14198_ * (p_14198_ * (p_14198_ * 6.0 - 15.0) + 10.0);
+    public static double smoothstep(double input) {
+        return input * input * input * (input * (input * 6.0 - 15.0) + 10.0);
     }
 
-    public static double smoothstepDerivative(double p_144947_) {
-        return 30.0 * p_144947_ * p_144947_ * (p_144947_ - 1.0) * (p_144947_ - 1.0);
+    public static double smoothstepDerivative(double input) {
+        return 30.0 * input * input * (input - 1.0) * (input - 1.0);
     }
 
-    public static int sign(double p_14206_) {
-        if (p_14206_ == 0.0) {
+    public static int sign(double x) {
+        if (x == 0.0) {
             return 0;
         } else {
-            return p_14206_ > 0.0 ? 1 : -1;
+            return x > 0.0 ? 1 : -1;
         }
     }
 
-    public static float rotLerp(float p_14190_, float p_14191_, float p_14192_) {
-        return p_14191_ + p_14190_ * wrapDegrees(p_14192_ - p_14191_);
+    /**
+     * Linearly interpolates an angle between the start between the start and end values given as degrees.
+     *
+     * @param delta A value between 0 and 1 that indicates the percentage of the lerp.
+     *              (0 will give the start value and 1 will give the end value)
+     */
+    public static float rotLerp(float delta, float start, float end) {
+        return start + delta * wrapDegrees(end - start);
     }
 
-    public static double rotLerp(double p_296301_, double p_294715_, double p_295496_) {
-        return p_294715_ + p_296301_ * wrapDegrees(p_295496_ - p_294715_);
+    public static double rotLerp(double delta, double start, double end) {
+        return start + delta * wrapDegrees(end - start);
     }
 
-    public static float triangleWave(float p_14157_, float p_14158_) {
-        return (Math.abs(p_14157_ % p_14158_ - p_14158_ * 0.5F) - p_14158_ * 0.25F) / (p_14158_ * 0.25F);
+    public static float triangleWave(float input, float period) {
+        return (Math.abs(input % period - period * 0.5F) - period * 0.25F) / (period * 0.25F);
     }
 
-    public static float square(float p_14208_) {
-        return p_14208_ * p_14208_;
+    public static float square(float value) {
+        return value * value;
     }
 
-    public static double square(double p_144953_) {
-        return p_144953_ * p_144953_;
+    public static double square(double value) {
+        return value * value;
     }
 
-    public static int square(int p_144945_) {
-        return p_144945_ * p_144945_;
+    public static int square(int value) {
+        return value * value;
     }
 
-    public static long square(long p_184644_) {
-        return p_184644_ * p_184644_;
+    public static long square(long value) {
+        return value * value;
     }
 
-    public static double clampedMap(double p_144852_, double p_144853_, double p_144854_, double p_144855_, double p_144856_) {
-        return clampedLerp(p_144855_, p_144856_, inverseLerp(p_144852_, p_144853_, p_144854_));
+    public static double clampedMap(double input, double inputMin, double inputMax, double ouputMin, double outputMax) {
+        return clampedLerp(ouputMin, outputMax, inverseLerp(input, inputMin, inputMax));
     }
 
-    public static float clampedMap(float p_184632_, float p_184633_, float p_184634_, float p_184635_, float p_184636_) {
-        return clampedLerp(p_184635_, p_184636_, inverseLerp(p_184632_, p_184633_, p_184634_));
+    public static float clampedMap(float input, float inputMin, float inputMax, float outputMin, float outputMax) {
+        return clampedLerp(outputMin, outputMax, inverseLerp(input, inputMin, inputMax));
     }
 
-    public static double map(double p_144915_, double p_144916_, double p_144917_, double p_144918_, double p_144919_) {
-        return lerp(inverseLerp(p_144915_, p_144916_, p_144917_), p_144918_, p_144919_);
+    public static double map(double input, double inputMin, double inputMax, double outputMin, double outputMax) {
+        return lerp(inverseLerp(input, inputMin, inputMax), outputMin, outputMax);
     }
 
-    public static float map(float p_184638_, float p_184639_, float p_184640_, float p_184641_, float p_184642_) {
-        return lerp(inverseLerp(p_184638_, p_184639_, p_184640_), p_184641_, p_184642_);
+    public static float map(float input, float inputMin, float inputMax, float outputMin, float outputMax) {
+        return lerp(inverseLerp(input, inputMin, inputMax), outputMin, outputMax);
     }
 
-    public static double wobble(double p_144955_) {
-        return p_144955_ + (2.0 * RandomSource.create((long)floor(p_144955_ * 3000.0)).nextDouble() - 1.0) * 1.0E-7 / 2.0;
+    public static double wobble(double input) {
+        return input + (2.0 * RandomSource.create((long)floor(input * 3000.0)).nextDouble() - 1.0) * 1.0E-7 / 2.0;
     }
 
-    public static int roundToward(int p_144942_, int p_144943_) {
-        return positiveCeilDiv(p_144942_, p_144943_) * p_144943_;
+    /**
+     * Rounds the given value up to a multiple of factor.
+     * @return The smallest integer multiple of factor that is greater than or equal to the value
+     */
+    public static int roundToward(int value, int factor) {
+        return positiveCeilDiv(value, factor) * factor;
     }
 
-    public static int positiveCeilDiv(int p_184653_, int p_184654_) {
-        return -Math.floorDiv(-p_184653_, p_184654_);
+    /**
+     * Returns the smallest (closest to negative infinity) int value that is greater than or equal to the algebraic quotient.
+     * @see java.lang.Math#floorDiv(int, int)
+     */
+    public static int positiveCeilDiv(int x, int y) {
+        return -Math.floorDiv(-x, y);
     }
 
-    public static int randomBetweenInclusive(RandomSource p_216288_, int p_216289_, int p_216290_) {
-        return p_216288_.nextInt(p_216290_ - p_216289_ + 1) + p_216289_;
+    public static int randomBetweenInclusive(RandomSource random, int minInclusive, int maxInclusive) {
+        return random.nextInt(maxInclusive - minInclusive + 1) + minInclusive;
     }
 
-    public static float randomBetween(RandomSource p_216284_, float p_216285_, float p_216286_) {
-        return p_216284_.nextFloat() * (p_216286_ - p_216285_) + p_216285_;
+    public static float randomBetween(RandomSource random, float minInclusive, float maxExclusive) {
+        return random.nextFloat() * (maxExclusive - minInclusive) + minInclusive;
     }
 
-    public static float normal(RandomSource p_216292_, float p_216293_, float p_216294_) {
-        return p_216293_ + (float)p_216292_.nextGaussian() * p_216294_;
+    /**
+     * Generates a value from a normal distribution with the given mean and deviation.
+     */
+    public static float normal(RandomSource random, float mean, float deviation) {
+        return mean + (float)random.nextGaussian() * deviation;
     }
 
-    public static double lengthSquared(double p_211590_, double p_211591_) {
-        return p_211590_ * p_211590_ + p_211591_ * p_211591_;
+    public static double lengthSquared(double xDistance, double yDistance) {
+        return xDistance * xDistance + yDistance * yDistance;
     }
 
-    public static double length(double p_184646_, double p_184647_) {
-        return Math.sqrt(lengthSquared(p_184646_, p_184647_));
+    public static double length(double xDistance, double yDistance) {
+        return Math.sqrt(lengthSquared(xDistance, yDistance));
     }
 
-    public static double lengthSquared(double p_211593_, double p_211594_, double p_211595_) {
-        return p_211593_ * p_211593_ + p_211594_ * p_211594_ + p_211595_ * p_211595_;
+    public static double lengthSquared(double xDistance, double yDistance, double zDistance) {
+        return xDistance * xDistance + yDistance * yDistance + zDistance * zDistance;
     }
 
-    public static double length(double p_184649_, double p_184650_, double p_184651_) {
-        return Math.sqrt(lengthSquared(p_184649_, p_184650_, p_184651_));
+    public static double length(double xDistance, double yDistance, double zDistance) {
+        return Math.sqrt(lengthSquared(xDistance, yDistance, zDistance));
     }
 
-    public static float lengthSquared(float p_350890_, float p_350831_, float p_350696_) {
-        return p_350890_ * p_350890_ + p_350831_ * p_350831_ + p_350696_ * p_350696_;
+    public static float lengthSquared(float xDistance, float yDistance, float zDistance) {
+        return xDistance * xDistance + yDistance * yDistance + zDistance * zDistance;
     }
 
-    public static int quantize(double p_184629_, int p_184630_) {
-        return floor(p_184629_ / (double)p_184630_) * p_184630_;
+    /**
+     * Gets the value closest to zero that is not closer to zero than the given value and is a multiple of the factor.
+     */
+    public static int quantize(double value, int factor) {
+        return floor(value / (double)factor) * factor;
     }
 
-    public static IntStream outFromOrigin(int p_216296_, int p_216297_, int p_216298_) {
-        return outFromOrigin(p_216296_, p_216297_, p_216298_, 1);
+    public static IntStream outFromOrigin(int input, int lowerBound, int upperBound) {
+        return outFromOrigin(input, lowerBound, upperBound, 1);
     }
 
-    public static IntStream outFromOrigin(int p_216251_, int p_216252_, int p_216253_, int p_216254_) {
-        if (p_216252_ > p_216253_) {
-            throw new IllegalArgumentException(String.format(Locale.ROOT, "upperbound %d expected to be > lowerBound %d", p_216253_, p_216252_));
-        } else if (p_216254_ < 1) {
-            throw new IllegalArgumentException(String.format(Locale.ROOT, "steps expected to be >= 1, was %d", p_216254_));
+    public static IntStream outFromOrigin(int input, int lowerBound, int upperBound, int steps) {
+        if (lowerBound > upperBound) {
+            throw new IllegalArgumentException(String.format(Locale.ROOT, "upperbound %d expected to be > lowerBound %d", upperBound, lowerBound));
+        } else if (steps < 1) {
+            throw new IllegalArgumentException(String.format(Locale.ROOT, "steps expected to be >= 1, was %d", steps));
         } else {
-            return p_216251_ >= p_216252_ && p_216251_ <= p_216253_ ? IntStream.iterate(p_216251_, p_216282_ -> {
-                int i = Math.abs(p_216251_ - p_216282_);
-                return p_216251_ - i >= p_216252_ || p_216251_ + i <= p_216253_;
+            return input >= lowerBound && input <= upperBound ? IntStream.iterate(input, p_216282_ -> {
+                int i = Math.abs(input - p_216282_);
+                return input - i >= lowerBound || input + i <= upperBound;
             }, p_216260_ -> {
-                boolean flag = p_216260_ <= p_216251_;
-                int i = Math.abs(p_216251_ - p_216260_);
-                boolean flag1 = p_216251_ + i + p_216254_ <= p_216253_;
+                boolean flag = p_216260_ <= input;
+                int i = Math.abs(input - p_216260_);
+                boolean flag1 = input + i + steps <= upperBound;
                 if (!flag || !flag1) {
-                    int j = p_216251_ - i - (flag ? p_216254_ : 0);
-                    if (j >= p_216252_) {
+                    int j = input - i - (flag ? steps : 0);
+                    if (j >= lowerBound) {
                         return j;
                     }
                 }
 
-                return p_216251_ + i + p_216254_;
+                return input + i + steps;
             }) : IntStream.empty();
         }
     }
 
-    public static Quaternionf rotationAroundAxis(Vector3f p_304469_, Quaternionf p_304737_, Quaternionf p_304773_) {
-        float f = p_304469_.dot(p_304737_.x, p_304737_.y, p_304737_.z);
-        return p_304773_.set(p_304469_.x * f, p_304469_.y * f, p_304469_.z * f, p_304737_.w).normalize();
+    public static Quaternionf rotationAroundAxis(Vector3f axis, Quaternionf cameraOrentation, Quaternionf output) {
+        float f = axis.dot(cameraOrentation.x, cameraOrentation.y, cameraOrentation.z);
+        return output.set(axis.x * f, axis.y * f, axis.z * f, cameraOrentation.w).normalize();
     }
 
-    public static int mulAndTruncate(Fraction p_339645_, int p_339636_) {
-        return p_339645_.getNumerator() * p_339636_ / p_339645_.getDenominator();
+    public static int mulAndTruncate(Fraction fraction, int factor) {
+        return fraction.getNumerator() * factor / fraction.getDenominator();
     }
 
     static {

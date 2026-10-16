@@ -39,6 +39,9 @@ public class MobEffect implements FeatureElement, net.neoforged.neoforge.common.
     public static final Codec<Holder<MobEffect>> CODEC = BuiltInRegistries.MOB_EFFECT.holderByNameCodec();
     public static final StreamCodec<RegistryFriendlyByteBuf, Holder<MobEffect>> STREAM_CODEC = ByteBufCodecs.holderRegistry(Registries.MOB_EFFECT);
     private static final int AMBIENT_ALPHA = Mth.floor(38.25F);
+    /**
+     * Contains a Map of the AttributeModifiers registered by potions
+     */
     private final Map<Holder<Attribute>, MobEffect.AttributeTemplate> attributeModifiers = new Object2ObjectOpenHashMap<>();
     private final MobEffectCategory category;
     private final int color;
@@ -49,52 +52,52 @@ public class MobEffect implements FeatureElement, net.neoforged.neoforge.common.
     private Optional<SoundEvent> soundOnAdded = Optional.empty();
     private FeatureFlagSet requiredFeatures = FeatureFlags.VANILLA_SET;
 
-    protected MobEffect(MobEffectCategory p_19451_, int p_19452_) {
-        this.category = p_19451_;
-        this.color = p_19452_;
+    protected MobEffect(MobEffectCategory category, int color) {
+        this.category = category;
+        this.color = color;
         this.particleFactory = p_333517_ -> {
             int i = p_333517_.isAmbient() ? AMBIENT_ALPHA : 255;
-            return ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, FastColor.ARGB32.color(i, p_19452_));
+            return ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, FastColor.ARGB32.color(i, color));
         };
     }
 
-    protected MobEffect(MobEffectCategory p_333963_, int p_333864_, ParticleOptions p_333716_) {
-        this.category = p_333963_;
-        this.color = p_333864_;
-        this.particleFactory = p_333515_ -> p_333716_;
+    protected MobEffect(MobEffectCategory category, int color, ParticleOptions particle) {
+        this.category = category;
+        this.color = color;
+        this.particleFactory = p_333515_ -> particle;
     }
 
     public int getBlendDurationTicks() {
         return this.blendDurationTicks;
     }
 
-    public boolean applyEffectTick(LivingEntity p_19467_, int p_19468_) {
+    public boolean applyEffectTick(LivingEntity livingEntity, int amplifier) {
         return true;
     }
 
-    public void applyInstantenousEffect(@Nullable Entity p_19462_, @Nullable Entity p_19463_, LivingEntity p_19464_, int p_19465_, double p_19466_) {
-        this.applyEffectTick(p_19464_, p_19465_);
+    public void applyInstantenousEffect(@Nullable Entity source, @Nullable Entity indirectSource, LivingEntity livingEntity, int amplifier, double health) {
+        this.applyEffectTick(livingEntity, amplifier);
     }
 
-    public boolean shouldApplyEffectTickThisTick(int p_295329_, int p_295167_) {
+    public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
         return false;
     }
 
-    public void onEffectStarted(LivingEntity p_296490_, int p_296147_) {
+    public void onEffectStarted(LivingEntity livingEntity, int amplifier) {
     }
 
-    public void onEffectAdded(LivingEntity p_338333_, int p_338715_) {
+    public void onEffectAdded(LivingEntity livingEntity, int amplifier) {
         this.soundOnAdded
             .ifPresent(
-                p_352700_ -> p_338333_.level()
-                        .playSound(null, p_338333_.getX(), p_338333_.getY(), p_338333_.getZ(), p_352700_, p_338333_.getSoundSource(), 1.0F, 1.0F)
+                p_352700_ -> livingEntity.level()
+                        .playSound(null, livingEntity.getX(), livingEntity.getY(), livingEntity.getZ(), p_352700_, livingEntity.getSoundSource(), 1.0F, 1.0F)
             );
     }
 
-    public void onMobRemoved(LivingEntity p_338500_, int p_338476_, Entity.RemovalReason p_338373_) {
+    public void onMobRemoved(LivingEntity livingEntity, int amplifier, Entity.RemovalReason reason) {
     }
 
-    public void onMobHurt(LivingEntity p_338186_, int p_338204_, DamageSource p_338393_, float p_338618_) {
+    public void onMobHurt(LivingEntity livingEntity, int amplifier, DamageSource damageSource, float amount) {
     }
 
     public boolean isInstantenous() {
@@ -125,8 +128,8 @@ public class MobEffect implements FeatureElement, net.neoforged.neoforge.common.
         return this.color;
     }
 
-    public MobEffect addAttributeModifier(Holder<Attribute> p_316656_, ResourceLocation p_350368_, double p_19475_, AttributeModifier.Operation p_19476_) {
-        this.attributeModifiers.put(p_316656_, new MobEffect.AttributeTemplate(p_350368_, p_19475_, p_19476_));
+    public MobEffect addAttributeModifier(Holder<Attribute> attribute, ResourceLocation id, double amount, AttributeModifier.Operation operation) {
+        this.attributeModifiers.put(attribute, new MobEffect.AttributeTemplate(id, amount, operation));
         return this;
     }
 
@@ -142,30 +145,30 @@ public class MobEffect implements FeatureElement, net.neoforged.neoforge.common.
         return this;
     }
 
-    public MobEffect setBlendDuration(int p_316265_) {
-        this.blendDurationTicks = p_316265_;
+    public MobEffect setBlendDuration(int blendDuration) {
+        this.blendDurationTicks = blendDuration;
         return this;
     }
 
-    public void createModifiers(int p_316803_, BiConsumer<Holder<Attribute>, AttributeModifier> p_316902_) {
-        this.attributeModifiers.forEach((p_349971_, p_349972_) -> p_316902_.accept((Holder<Attribute>)p_349971_, p_349972_.create(p_316803_)));
+    public void createModifiers(int amplifier, BiConsumer<Holder<Attribute>, AttributeModifier> output) {
+        this.attributeModifiers.forEach((p_349971_, p_349972_) -> output.accept((Holder<Attribute>)p_349971_, p_349972_.create(amplifier)));
     }
 
-    public void removeAttributeModifiers(AttributeMap p_19470_) {
+    public void removeAttributeModifiers(AttributeMap attributeMap) {
         for (Entry<Holder<Attribute>, MobEffect.AttributeTemplate> entry : this.attributeModifiers.entrySet()) {
-            AttributeInstance attributeinstance = p_19470_.getInstance(entry.getKey());
+            AttributeInstance attributeinstance = attributeMap.getInstance(entry.getKey());
             if (attributeinstance != null) {
                 attributeinstance.removeModifier(entry.getValue().id());
             }
         }
     }
 
-    public void addAttributeModifiers(AttributeMap p_19479_, int p_19480_) {
+    public void addAttributeModifiers(AttributeMap attributeMap, int amplifier) {
         for (Entry<Holder<Attribute>, MobEffect.AttributeTemplate> entry : this.attributeModifiers.entrySet()) {
-            AttributeInstance attributeinstance = p_19479_.getInstance(entry.getKey());
+            AttributeInstance attributeinstance = attributeMap.getInstance(entry.getKey());
             if (attributeinstance != null) {
                 attributeinstance.removeModifier(entry.getValue().id());
-                attributeinstance.addPermanentModifier(entry.getValue().create(p_19480_));
+                attributeinstance.addPermanentModifier(entry.getValue().create(amplifier));
             }
         }
     }
@@ -174,17 +177,17 @@ public class MobEffect implements FeatureElement, net.neoforged.neoforge.common.
         return this.category == MobEffectCategory.BENEFICIAL;
     }
 
-    public ParticleOptions createParticleOptions(MobEffectInstance p_333815_) {
-        return this.particleFactory.apply(p_333815_);
+    public ParticleOptions createParticleOptions(MobEffectInstance effect) {
+        return this.particleFactory.apply(effect);
     }
 
-    public MobEffect withSoundOnAdded(SoundEvent p_338383_) {
-        this.soundOnAdded = Optional.of(p_338383_);
+    public MobEffect withSoundOnAdded(SoundEvent sound) {
+        this.soundOnAdded = Optional.of(sound);
         return this;
     }
 
-    public MobEffect requiredFeatures(FeatureFlag... p_338702_) {
-        this.requiredFeatures = FeatureFlags.REGISTRY.subset(p_338702_);
+    public MobEffect requiredFeatures(FeatureFlag... requiredFeatures) {
+        this.requiredFeatures = FeatureFlags.REGISTRY.subset(requiredFeatures);
         return this;
     }
 
@@ -207,11 +210,11 @@ public class MobEffect implements FeatureElement, net.neoforged.neoforge.common.
             this(id, amount, operation, null);
         }
 
-        public AttributeModifier create(int p_316614_) {
+        public AttributeModifier create(int level) {
             if (curve != null) { // Neo: Use the custom attribute value curve if one is present
-                return new AttributeModifier(this.id, this.curve.apply(p_316614_), this.operation);
+                return new AttributeModifier(this.id, this.curve.apply(level), this.operation);
             }
-            return new AttributeModifier(this.id, this.amount * (double)(p_316614_ + 1), this.operation);
+            return new AttributeModifier(this.id, this.amount * (double)(level + 1), this.operation);
         }
     }
 }

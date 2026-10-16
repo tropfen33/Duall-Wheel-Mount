@@ -18,6 +18,10 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
+/**
+ * @param requestedItems Defines items villagers of this profession can pick up and use.
+ * @param secondaryPoi World blocks this profession interacts with.
+ */
 public record VillagerProfession(
     String name,
     Predicate<Holder<PoiType>> heldJobSite,
@@ -54,34 +58,34 @@ public record VillagerProfession(
         return this.name;
     }
 
-    private static VillagerProfession register(String p_219644_, ResourceKey<PoiType> p_219645_, @Nullable SoundEvent p_219646_) {
-        return register(p_219644_, p_219668_ -> p_219668_.is(p_219645_), p_219640_ -> p_219640_.is(p_219645_), p_219646_);
+    private static VillagerProfession register(String name, ResourceKey<PoiType> jobSite, @Nullable SoundEvent workSound) {
+        return register(name, p_219668_ -> p_219668_.is(jobSite), p_219640_ -> p_219640_.is(jobSite), workSound);
     }
 
     private static VillagerProfession register(
-        String p_219654_, Predicate<Holder<PoiType>> p_219655_, Predicate<Holder<PoiType>> p_219656_, @Nullable SoundEvent p_219657_
+        String name, Predicate<Holder<PoiType>> heldJobSite, Predicate<Holder<PoiType>> acquirableJobSites, @Nullable SoundEvent workSound
     ) {
-        return register(p_219654_, p_219655_, p_219656_, ImmutableSet.of(), ImmutableSet.of(), p_219657_);
+        return register(name, heldJobSite, acquirableJobSites, ImmutableSet.of(), ImmutableSet.of(), workSound);
     }
 
     private static VillagerProfession register(
-        String p_219648_, ResourceKey<PoiType> p_219649_, ImmutableSet<Item> p_219650_, ImmutableSet<Block> p_219651_, @Nullable SoundEvent p_219652_
+        String name, ResourceKey<PoiType> jobSite, ImmutableSet<Item> requestedItems, ImmutableSet<Block> secondaryPoi, @Nullable SoundEvent workSound
     ) {
-        return register(p_219648_, p_238234_ -> p_238234_.is(p_219649_), p_238237_ -> p_238237_.is(p_219649_), p_219650_, p_219651_, p_219652_);
+        return register(name, p_238234_ -> p_238234_.is(jobSite), p_238237_ -> p_238237_.is(jobSite), requestedItems, secondaryPoi, workSound);
     }
 
     private static VillagerProfession register(
-        String p_219659_,
-        Predicate<Holder<PoiType>> p_219660_,
-        Predicate<Holder<PoiType>> p_219661_,
-        ImmutableSet<Item> p_219662_,
-        ImmutableSet<Block> p_219663_,
-        @Nullable SoundEvent p_219664_
+        String name,
+        Predicate<Holder<PoiType>> heldJobSite,
+        Predicate<Holder<PoiType>> acquirableJobSites,
+        ImmutableSet<Item> requestedItems,
+        ImmutableSet<Block> secondaryPoi,
+        @Nullable SoundEvent workSound
     ) {
         return Registry.register(
             BuiltInRegistries.VILLAGER_PROFESSION,
-            ResourceLocation.withDefaultNamespace(p_219659_),
-            new VillagerProfession(p_219659_, p_219660_, p_219661_, p_219662_, p_219663_, p_219664_)
+            ResourceLocation.withDefaultNamespace(name),
+            new VillagerProfession(name, heldJobSite, acquirableJobSites, requestedItems, secondaryPoi, workSound)
         );
     }
 }

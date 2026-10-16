@@ -38,11 +38,11 @@ public class ReportReasonSelectionScreen extends Screen {
     private final Consumer<ReportReason> onSelectedReason;
     final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
 
-    public ReportReasonSelectionScreen(@Nullable Screen p_239438_, @Nullable ReportReason p_239439_, Consumer<ReportReason> p_239440_) {
+    public ReportReasonSelectionScreen(@Nullable Screen lastScreen, @Nullable ReportReason currentlySelectedReason, Consumer<ReportReason> onSelectedReason) {
         super(REASON_TITLE);
-        this.lastScreen = p_239438_;
-        this.currentlySelectedReason = p_239439_;
-        this.onSelectedReason = p_239440_;
+        this.lastScreen = lastScreen;
+        this.currentlySelectedReason = currentlySelectedReason;
+        this.onSelectedReason = onSelectedReason;
     }
 
     @Override
@@ -86,12 +86,20 @@ public class ReportReasonSelectionScreen extends Screen {
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282815_, int p_283039_, int p_283620_, float p_281336_) {
-        super.render(p_282815_, p_283039_, p_283620_, p_281336_);
-        p_282815_.fill(this.descriptionLeft(), this.descriptionTop(), this.descriptionRight(), this.descriptionBottom(), -16777216);
-        p_282815_.renderOutline(this.descriptionLeft(), this.descriptionTop(), this.descriptionWidth(), this.descriptionHeight(), -1);
-        p_282815_.drawString(this.font, REASON_DESCRIPTION, this.descriptionLeft() + 4, this.descriptionTop() + 4, -1);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.fill(this.descriptionLeft(), this.descriptionTop(), this.descriptionRight(), this.descriptionBottom(), -16777216);
+        guiGraphics.renderOutline(this.descriptionLeft(), this.descriptionTop(), this.descriptionWidth(), this.descriptionHeight(), -1);
+        guiGraphics.drawString(this.font, REASON_DESCRIPTION, this.descriptionLeft() + 4, this.descriptionTop() + 4, -1);
         ReportReasonSelectionScreen.ReasonSelectionList.Entry reportreasonselectionscreen$reasonselectionlist$entry = this.reasonSelectionList.getSelected();
         if (reportreasonselectionscreen$reasonselectionlist$entry != null) {
             int i = this.descriptionLeft() + 4 + 16;
@@ -101,7 +109,7 @@ public class ReportReasonSelectionScreen extends Screen {
             int i1 = j - i;
             int j1 = l - k;
             int k1 = this.font.wordWrapHeight(reportreasonselectionscreen$reasonselectionlist$entry.reason.description(), i1);
-            p_282815_.drawWordWrap(this.font, reportreasonselectionscreen$reasonselectionlist$entry.reason.description(), i, k + (j1 - k1) / 2, i1, -1);
+            guiGraphics.drawWordWrap(this.font, reportreasonselectionscreen$reasonselectionlist$entry.reason.description(), i, k + (j1 - k1) / 2, i1, -1);
         }
     }
 
@@ -140,9 +148,9 @@ public class ReportReasonSelectionScreen extends Screen {
 
     @OnlyIn(Dist.CLIENT)
     public class ReasonSelectionList extends ObjectSelectionList<ReportReasonSelectionScreen.ReasonSelectionList.Entry> {
-        public ReasonSelectionList(Minecraft p_239715_) {
+        public ReasonSelectionList(Minecraft minecraft) {
             super(
-                p_239715_,
+                minecraft,
                 ReportReasonSelectionScreen.this.width,
                 ReportReasonSelectionScreen.this.listHeight(),
                 ReportReasonSelectionScreen.this.layout.getHeaderHeight(),
@@ -155,8 +163,8 @@ public class ReportReasonSelectionScreen extends Screen {
         }
 
         @Nullable
-        public ReportReasonSelectionScreen.ReasonSelectionList.Entry findEntry(ReportReason p_239168_) {
-            return this.children().stream().filter(p_239293_ -> p_239293_.reason == p_239168_).findFirst().orElse(null);
+        public ReportReasonSelectionScreen.ReasonSelectionList.Entry findEntry(ReportReason reason) {
+            return this.children().stream().filter(p_239293_ -> p_239293_.reason == reason).findFirst().orElse(null);
         }
 
         @Override
@@ -164,35 +172,35 @@ public class ReportReasonSelectionScreen extends Screen {
             return 320;
         }
 
-        public void setSelected(@Nullable ReportReasonSelectionScreen.ReasonSelectionList.Entry p_240601_) {
-            super.setSelected(p_240601_);
-            ReportReasonSelectionScreen.this.currentlySelectedReason = p_240601_ != null ? p_240601_.getReason() : null;
+        public void setSelected(@Nullable ReportReasonSelectionScreen.ReasonSelectionList.Entry selected) {
+            super.setSelected(selected);
+            ReportReasonSelectionScreen.this.currentlySelectedReason = selected != null ? selected.getReason() : null;
         }
 
         @OnlyIn(Dist.CLIENT)
         public class Entry extends ObjectSelectionList.Entry<ReportReasonSelectionScreen.ReasonSelectionList.Entry> {
             final ReportReason reason;
 
-            public Entry(ReportReason p_239267_) {
-                this.reason = p_239267_;
+            public Entry(ReportReason reason) {
+                this.reason = reason;
             }
 
             @Override
             public void render(
-                GuiGraphics p_281941_,
-                int p_281450_,
-                int p_281781_,
-                int p_283334_,
-                int p_283073_,
-                int p_282523_,
-                int p_282667_,
-                int p_281567_,
-                boolean p_282095_,
-                float p_283305_
+                GuiGraphics guiGraphics,
+                int index,
+                int top,
+                int left,
+                int width,
+                int height,
+                int mouseX,
+                int mouseY,
+                boolean hovering,
+                float partialTick
             ) {
-                int i = p_283334_ + 1;
-                int j = p_281781_ + (p_282523_ - 9) / 2 + 1;
-                p_281941_.drawString(ReportReasonSelectionScreen.this.font, this.reason.title(), i, j, -1);
+                int i = left + 1;
+                int j = top + (height - 9) / 2 + 1;
+                guiGraphics.drawString(ReportReasonSelectionScreen.this.font, this.reason.title(), i, j, -1);
             }
 
             @Override
@@ -200,10 +208,19 @@ public class ReportReasonSelectionScreen extends Screen {
                 return Component.translatable("gui.abuseReport.reason.narration", this.reason.title(), this.reason.description());
             }
 
+            /**
+             * Called when a mouse button is clicked within the GUI element.
+             * <p>
+             * @return {@code true} if the event is consumed, {@code false} otherwise.
+             *
+             * @param mouseX the X coordinate of the mouse.
+             * @param mouseY the Y coordinate of the mouse.
+             * @param button the button that was clicked.
+             */
             @Override
-            public boolean mouseClicked(double p_240021_, double p_240022_, int p_240023_) {
+            public boolean mouseClicked(double mouseX, double mouseY, int button) {
                 ReasonSelectionList.this.setSelected(this);
-                return super.mouseClicked(p_240021_, p_240022_, p_240023_);
+                return super.mouseClicked(mouseX, mouseY, button);
             }
 
             public ReportReason getReason() {

@@ -61,115 +61,126 @@ public class PistonHeadBlock extends DirectionalBlock {
         return CODEC;
     }
 
-    private static VoxelShape[] makeShapes(boolean p_60313_) {
-        return Arrays.stream(Direction.values()).map(p_60316_ -> calculateShape(p_60316_, p_60313_)).toArray(VoxelShape[]::new);
+    private static VoxelShape[] makeShapes(boolean extended) {
+        return Arrays.stream(Direction.values()).map(p_60316_ -> calculateShape(p_60316_, extended)).toArray(VoxelShape[]::new);
     }
 
-    private static VoxelShape calculateShape(Direction p_60310_, boolean p_60311_) {
-        switch (p_60310_) {
+    private static VoxelShape calculateShape(Direction direction, boolean shortArm) {
+        switch (direction) {
             case DOWN:
             default:
-                return Shapes.or(DOWN_AABB, p_60311_ ? SHORT_DOWN_ARM_AABB : DOWN_ARM_AABB);
+                return Shapes.or(DOWN_AABB, shortArm ? SHORT_DOWN_ARM_AABB : DOWN_ARM_AABB);
             case UP:
-                return Shapes.or(UP_AABB, p_60311_ ? SHORT_UP_ARM_AABB : UP_ARM_AABB);
+                return Shapes.or(UP_AABB, shortArm ? SHORT_UP_ARM_AABB : UP_ARM_AABB);
             case NORTH:
-                return Shapes.or(NORTH_AABB, p_60311_ ? SHORT_NORTH_ARM_AABB : NORTH_ARM_AABB);
+                return Shapes.or(NORTH_AABB, shortArm ? SHORT_NORTH_ARM_AABB : NORTH_ARM_AABB);
             case SOUTH:
-                return Shapes.or(SOUTH_AABB, p_60311_ ? SHORT_SOUTH_ARM_AABB : SOUTH_ARM_AABB);
+                return Shapes.or(SOUTH_AABB, shortArm ? SHORT_SOUTH_ARM_AABB : SOUTH_ARM_AABB);
             case WEST:
-                return Shapes.or(WEST_AABB, p_60311_ ? SHORT_WEST_ARM_AABB : WEST_ARM_AABB);
+                return Shapes.or(WEST_AABB, shortArm ? SHORT_WEST_ARM_AABB : WEST_ARM_AABB);
             case EAST:
-                return Shapes.or(EAST_AABB, p_60311_ ? SHORT_EAST_ARM_AABB : EAST_ARM_AABB);
+                return Shapes.or(EAST_AABB, shortArm ? SHORT_EAST_ARM_AABB : EAST_ARM_AABB);
         }
     }
 
-    public PistonHeadBlock(BlockBehaviour.Properties p_60259_) {
-        super(p_60259_);
+    public PistonHeadBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(
             this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(TYPE, PistonType.DEFAULT).setValue(SHORT, Boolean.valueOf(false))
         );
     }
 
     @Override
-    protected boolean useShapeForLightOcclusion(BlockState p_60325_) {
+    protected boolean useShapeForLightOcclusion(BlockState state) {
         return true;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_60320_, BlockGetter p_60321_, BlockPos p_60322_, CollisionContext p_60323_) {
-        return (p_60320_.getValue(SHORT) ? SHAPES_SHORT : SHAPES_LONG)[p_60320_.getValue(FACING).ordinal()];
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return (state.getValue(SHORT) ? SHAPES_SHORT : SHAPES_LONG)[state.getValue(FACING).ordinal()];
     }
 
-    private boolean isFittingBase(BlockState p_60298_, BlockState p_60299_) {
-        Block block = p_60298_.getValue(TYPE) == PistonType.DEFAULT ? Blocks.PISTON : Blocks.STICKY_PISTON;
-        return p_60299_.is(block) && p_60299_.getValue(PistonBaseBlock.EXTENDED) && p_60299_.getValue(FACING) == p_60298_.getValue(FACING);
+    private boolean isFittingBase(BlockState baseState, BlockState extendedState) {
+        Block block = baseState.getValue(TYPE) == PistonType.DEFAULT ? Blocks.PISTON : Blocks.STICKY_PISTON;
+        return extendedState.is(block) && extendedState.getValue(PistonBaseBlock.EXTENDED) && extendedState.getValue(FACING) == baseState.getValue(FACING);
     }
 
     @Override
-    public BlockState playerWillDestroy(Level p_60265_, BlockPos p_60266_, BlockState p_60267_, Player p_60268_) {
-        if (!p_60265_.isClientSide && p_60268_.getAbilities().instabuild) {
-            BlockPos blockpos = p_60266_.relative(p_60267_.getValue(FACING).getOpposite());
-            if (this.isFittingBase(p_60267_, p_60265_.getBlockState(blockpos))) {
-                p_60265_.destroyBlock(blockpos, false);
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide && player.getAbilities().instabuild) {
+            BlockPos blockpos = pos.relative(state.getValue(FACING).getOpposite());
+            if (this.isFittingBase(state, level.getBlockState(blockpos))) {
+                level.destroyBlock(blockpos, false);
             }
         }
 
-        return super.playerWillDestroy(p_60265_, p_60266_, p_60267_, p_60268_);
+        return super.playerWillDestroy(level, pos, state, player);
     }
 
     @Override
-    protected void onRemove(BlockState p_60282_, Level p_60283_, BlockPos p_60284_, BlockState p_60285_, boolean p_60286_) {
-        if (!p_60282_.is(p_60285_.getBlock())) {
-            super.onRemove(p_60282_, p_60283_, p_60284_, p_60285_, p_60286_);
-            BlockPos blockpos = p_60284_.relative(p_60282_.getValue(FACING).getOpposite());
-            if (this.isFittingBase(p_60282_, p_60283_.getBlockState(blockpos))) {
-                p_60283_.destroyBlock(blockpos, true);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock())) {
+            super.onRemove(state, level, pos, newState, isMoving);
+            BlockPos blockpos = pos.relative(state.getValue(FACING).getOpposite());
+            if (this.isFittingBase(state, level.getBlockState(blockpos))) {
+                level.destroyBlock(blockpos, true);
             }
         }
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_60301_, Direction p_60302_, BlockState p_60303_, LevelAccessor p_60304_, BlockPos p_60305_, BlockPos p_60306_) {
-        return p_60302_.getOpposite() == p_60301_.getValue(FACING) && !p_60301_.canSurvive(p_60304_, p_60305_)
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        return facing.getOpposite() == state.getValue(FACING) && !state.canSurvive(level, currentPos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_60301_, p_60302_, p_60303_, p_60304_, p_60305_, p_60306_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected boolean canSurvive(BlockState p_60288_, LevelReader p_60289_, BlockPos p_60290_) {
-        BlockState blockstate = p_60289_.getBlockState(p_60290_.relative(p_60288_.getValue(FACING).getOpposite()));
-        return this.isFittingBase(p_60288_, blockstate) || blockstate.is(Blocks.MOVING_PISTON) && blockstate.getValue(FACING) == p_60288_.getValue(FACING);
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos.relative(state.getValue(FACING).getOpposite()));
+        return this.isFittingBase(state, blockstate) || blockstate.is(Blocks.MOVING_PISTON) && blockstate.getValue(FACING) == state.getValue(FACING);
     }
 
     @Override
-    protected void neighborChanged(BlockState p_60275_, Level p_60276_, BlockPos p_60277_, Block p_60278_, BlockPos p_60279_, boolean p_60280_) {
-        if (p_60275_.canSurvive(p_60276_, p_60277_)) {
-            p_60276_.neighborChanged(p_60277_.relative(p_60275_.getValue(FACING).getOpposite()), p_60278_, p_60279_);
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        if (state.canSurvive(level, pos)) {
+            level.neighborChanged(pos.relative(state.getValue(FACING).getOpposite()), block, fromPos);
         }
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader p_304638_, BlockPos p_60262_, BlockState p_60263_) {
-        return new ItemStack(p_60263_.getValue(TYPE) == PistonType.STICKY ? Blocks.STICKY_PISTON : Blocks.PISTON);
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
+        return new ItemStack(state.getValue(TYPE) == PistonType.STICKY ? Blocks.STICKY_PISTON : Blocks.PISTON);
+    }
+
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rot) {
+        return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState rotate(BlockState p_60295_, Rotation p_60296_) {
-        return p_60295_.setValue(FACING, p_60296_.rotate(p_60295_.getValue(FACING)));
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, TYPE, SHORT);
     }
 
     @Override
-    protected BlockState mirror(BlockState p_60292_, Mirror p_60293_) {
-        return p_60292_.rotate(p_60293_.getRotation(p_60292_.getValue(FACING)));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_60308_) {
-        p_60308_.add(FACING, TYPE, SHORT);
-    }
-
-    @Override
-    protected boolean isPathfindable(BlockState p_60270_, PathComputationType p_60273_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

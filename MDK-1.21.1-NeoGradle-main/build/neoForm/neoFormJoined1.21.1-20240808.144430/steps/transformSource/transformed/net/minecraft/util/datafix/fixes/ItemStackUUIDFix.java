@@ -10,8 +10,8 @@ import com.mojang.serialization.Dynamic;
 import net.minecraft.util.datafix.schemas.NamespacedSchema;
 
 public class ItemStackUUIDFix extends AbstractUUIDFix {
-    public ItemStackUUIDFix(Schema p_16129_) {
-        super(p_16129_, References.ITEM_STACK);
+    public ItemStackUUIDFix(Schema outputSchema) {
+        super(outputSchema, References.ITEM_STACK);
     }
 
     @Override
@@ -30,16 +30,16 @@ public class ItemStackUUIDFix extends AbstractUUIDFix {
         });
     }
 
-    private Dynamic<?> updateAttributeModifiers(Dynamic<?> p_16147_) {
-        return p_16147_.update(
+    private Dynamic<?> updateAttributeModifiers(Dynamic<?> dynamic) {
+        return dynamic.update(
             "AttributeModifiers",
-            p_16145_ -> p_16147_.createList(
+            p_16145_ -> dynamic.createList(
                     p_16145_.asStream().map(p_145437_ -> replaceUUIDLeastMost((Dynamic<?>)p_145437_, "UUID", "UUID").orElse((Dynamic<?>)p_145437_))
                 )
         );
     }
 
-    private Dynamic<?> updateSkullOwner(Dynamic<?> p_16149_) {
-        return p_16149_.update("SkullOwner", p_16151_ -> replaceUUIDString(p_16151_, "Id", "Id").orElse(p_16151_));
+    private Dynamic<?> updateSkullOwner(Dynamic<?> dynamic) {
+        return dynamic.update("SkullOwner", p_16151_ -> replaceUUIDString(p_16151_, "Id", "Id").orElse(p_16151_));
     }
 }

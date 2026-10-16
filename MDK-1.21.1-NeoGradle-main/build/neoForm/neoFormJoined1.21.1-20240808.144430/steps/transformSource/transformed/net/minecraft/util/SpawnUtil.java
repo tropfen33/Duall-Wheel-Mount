@@ -16,27 +16,27 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class SpawnUtil {
     public static <T extends Mob> Optional<T> trySpawnMob(
-        EntityType<T> p_216404_,
-        MobSpawnType p_216405_,
-        ServerLevel p_216406_,
-        BlockPos p_216407_,
-        int p_216408_,
-        int p_216409_,
-        int p_216410_,
-        SpawnUtil.Strategy p_216411_
+        EntityType<T> entityType,
+        MobSpawnType spawnType,
+        ServerLevel level,
+        BlockPos pos,
+        int attempts,
+        int spread,
+        int yOffset,
+        SpawnUtil.Strategy strategy
     ) {
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = p_216407_.mutable();
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = pos.mutable();
 
-        for (int i = 0; i < p_216408_; i++) {
-            int j = Mth.randomBetweenInclusive(p_216406_.random, -p_216409_, p_216409_);
-            int k = Mth.randomBetweenInclusive(p_216406_.random, -p_216409_, p_216409_);
-            blockpos$mutableblockpos.setWithOffset(p_216407_, j, p_216410_, k);
-            if (p_216406_.getWorldBorder().isWithinBounds(blockpos$mutableblockpos)
-                && moveToPossibleSpawnPosition(p_216406_, p_216410_, blockpos$mutableblockpos, p_216411_)) {
-                T t = (T)p_216404_.create(p_216406_, null, blockpos$mutableblockpos, p_216405_, false, false);
+        for (int i = 0; i < attempts; i++) {
+            int j = Mth.randomBetweenInclusive(level.random, -spread, spread);
+            int k = Mth.randomBetweenInclusive(level.random, -spread, spread);
+            blockpos$mutableblockpos.setWithOffset(pos, j, yOffset, k);
+            if (level.getWorldBorder().isWithinBounds(blockpos$mutableblockpos)
+                && moveToPossibleSpawnPosition(level, yOffset, blockpos$mutableblockpos, strategy)) {
+                T t = (T)entityType.create(level, null, blockpos$mutableblockpos, spawnType, false, false);
                 if (t != null) {
-                    if (net.neoforged.neoforge.event.EventHooks.checkSpawnPosition(t, p_216406_, p_216405_)) {
-                        p_216406_.addFreshEntityWithPassengers(t);
+                    if (net.neoforged.neoforge.event.EventHooks.checkSpawnPosition(t, level, spawnType)) {
+                        level.addFreshEntityWithPassengers(t);
                         return Optional.of(t);
                     }
 
@@ -48,16 +48,16 @@ public class SpawnUtil {
         return Optional.empty();
     }
 
-    private static boolean moveToPossibleSpawnPosition(ServerLevel p_216399_, int p_216400_, BlockPos.MutableBlockPos p_216401_, SpawnUtil.Strategy p_216402_) {
-        BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos().set(p_216401_);
-        BlockState blockstate = p_216399_.getBlockState(blockpos$mutableblockpos);
+    private static boolean moveToPossibleSpawnPosition(ServerLevel level, int yOffset, BlockPos.MutableBlockPos pos, SpawnUtil.Strategy strategy) {
+        BlockPos.MutableBlockPos blockpos$mutableblockpos = new BlockPos.MutableBlockPos().set(pos);
+        BlockState blockstate = level.getBlockState(blockpos$mutableblockpos);
 
-        for (int i = p_216400_; i >= -p_216400_; i--) {
-            p_216401_.move(Direction.DOWN);
-            blockpos$mutableblockpos.setWithOffset(p_216401_, Direction.UP);
-            BlockState blockstate1 = p_216399_.getBlockState(p_216401_);
-            if (p_216402_.canSpawnOn(p_216399_, p_216401_, blockstate1, blockpos$mutableblockpos, blockstate)) {
-                p_216401_.move(Direction.UP);
+        for (int i = yOffset; i >= -yOffset; i--) {
+            pos.move(Direction.DOWN);
+            blockpos$mutableblockpos.setWithOffset(pos, Direction.UP);
+            BlockState blockstate1 = level.getBlockState(pos);
+            if (strategy.canSpawnOn(level, pos, blockstate1, blockpos$mutableblockpos, blockstate)) {
+                pos.move(Direction.UP);
                 return true;
             }
 
@@ -90,6 +90,6 @@ public class SpawnUtil {
                     .isEmpty()
                 && Block.isFaceFull(p_216418_.getCollisionShape(p_216416_, p_216417_), Direction.UP);
 
-        boolean canSpawnOn(ServerLevel p_216428_, BlockPos p_216429_, BlockState p_216430_, BlockPos p_216431_, BlockState p_216432_);
+        boolean canSpawnOn(ServerLevel level, BlockPos targetPos, BlockState targetState, BlockPos attemptedPos, BlockState attemptedState);
     }
 }

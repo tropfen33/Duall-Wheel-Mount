@@ -5,6 +5,11 @@ import net.minecraft.util.thread.BlockableEventLoop;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
+/**
+ * The SoundEngineExecutor class is responsible for executing sound-related tasks in a separate thread.
+ * <p>
+ * It extends the BlockableEventLoop class, providing an event loop for managing and executing tasks.
+ */
 @OnlyIn(Dist.CLIENT)
 public class SoundEngineExecutor extends BlockableEventLoop<Runnable> {
     private Thread thread = this.createThread();
@@ -22,13 +27,28 @@ public class SoundEngineExecutor extends BlockableEventLoop<Runnable> {
         return thread;
     }
 
+    /**
+     * Wraps the given runnable task. In this case, the original runnable is returned as-is.
+     * <p>
+     * @return The wrapped runnable task
+     *
+     * @param runnable The original runnable task
+     */
     @Override
-    protected Runnable wrapRunnable(Runnable p_120341_) {
-        return p_120341_;
+    protected Runnable wrapRunnable(Runnable runnable) {
+        return runnable;
     }
 
+    /**
+     * Determines whether the given runnable task should be run or not.
+     * It depends on the shutdown state of the SoundEngineExecutor.
+     * <p>
+     * @return true if the task should run, false otherwise
+     *
+     * @param runnable The runnable task
+     */
     @Override
-    protected boolean shouldRun(Runnable p_120339_) {
+    protected boolean shouldRun(Runnable runnable) {
         return !this.shutdown;
     }
 

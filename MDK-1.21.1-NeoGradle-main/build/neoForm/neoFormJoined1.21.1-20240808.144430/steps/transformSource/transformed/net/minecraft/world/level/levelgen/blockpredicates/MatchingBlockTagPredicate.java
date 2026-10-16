@@ -17,14 +17,14 @@ public class MatchingBlockTagPredicate extends StateTestingPredicate {
                 .apply(p_259003_, MatchingBlockTagPredicate::new)
     );
 
-    protected MatchingBlockTagPredicate(Vec3i p_204683_, TagKey<Block> p_204684_) {
-        super(p_204683_);
-        this.tag = p_204684_;
+    protected MatchingBlockTagPredicate(Vec3i offset, TagKey<Block> tag) {
+        super(offset);
+        this.tag = tag;
     }
 
     @Override
-    protected boolean test(BlockState p_198343_) {
-        return p_198343_.is(this.tag);
+    protected boolean test(BlockState state) {
+        return state.is(this.tag);
     }
 
     @Override

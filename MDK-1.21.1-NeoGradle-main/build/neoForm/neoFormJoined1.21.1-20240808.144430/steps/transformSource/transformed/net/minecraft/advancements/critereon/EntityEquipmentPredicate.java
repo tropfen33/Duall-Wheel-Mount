@@ -36,18 +36,18 @@ public record EntityEquipmentPredicate(
                 .apply(p_340605_, EntityEquipmentPredicate::new)
     );
 
-    public static EntityEquipmentPredicate captainPredicate(HolderGetter<BannerPattern> p_332749_) {
+    public static EntityEquipmentPredicate captainPredicate(HolderGetter<BannerPattern> patternRegistry) {
         return EntityEquipmentPredicate.Builder.equipment()
             .head(
                 ItemPredicate.Builder.item()
                     .of(Items.WHITE_BANNER)
-                    .hasComponents(DataComponentPredicate.allOf(Raid.getLeaderBannerInstance(p_332749_).getComponents()))
+                    .hasComponents(DataComponentPredicate.allOf(Raid.getLeaderBannerInstance(patternRegistry).getComponents()))
             )
             .build();
     }
 
-    public boolean matches(@Nullable Entity p_32194_) {
-        if (p_32194_ instanceof LivingEntity livingentity) {
+    public boolean matches(@Nullable Entity entity) {
+        if (entity instanceof LivingEntity livingentity) {
             if (this.head.isPresent() && !this.head.get().test(livingentity.getItemBySlot(EquipmentSlot.HEAD))) {
                 return false;
             } else if (this.chest.isPresent() && !this.chest.get().test(livingentity.getItemBySlot(EquipmentSlot.CHEST))) {
@@ -81,38 +81,38 @@ public record EntityEquipmentPredicate(
             return new EntityEquipmentPredicate.Builder();
         }
 
-        public EntityEquipmentPredicate.Builder head(ItemPredicate.Builder p_298927_) {
-            this.head = Optional.of(p_298927_.build());
+        public EntityEquipmentPredicate.Builder head(ItemPredicate.Builder head) {
+            this.head = Optional.of(head.build());
             return this;
         }
 
-        public EntityEquipmentPredicate.Builder chest(ItemPredicate.Builder p_298201_) {
-            this.chest = Optional.of(p_298201_.build());
+        public EntityEquipmentPredicate.Builder chest(ItemPredicate.Builder chest) {
+            this.chest = Optional.of(chest.build());
             return this;
         }
 
-        public EntityEquipmentPredicate.Builder legs(ItemPredicate.Builder p_299199_) {
-            this.legs = Optional.of(p_299199_.build());
+        public EntityEquipmentPredicate.Builder legs(ItemPredicate.Builder legs) {
+            this.legs = Optional.of(legs.build());
             return this;
         }
 
-        public EntityEquipmentPredicate.Builder feet(ItemPredicate.Builder p_299012_) {
-            this.feet = Optional.of(p_299012_.build());
+        public EntityEquipmentPredicate.Builder feet(ItemPredicate.Builder feet) {
+            this.feet = Optional.of(feet.build());
             return this;
         }
 
-        public EntityEquipmentPredicate.Builder body(ItemPredicate.Builder p_341015_) {
-            this.body = Optional.of(p_341015_.build());
+        public EntityEquipmentPredicate.Builder body(ItemPredicate.Builder body) {
+            this.body = Optional.of(body.build());
             return this;
         }
 
-        public EntityEquipmentPredicate.Builder mainhand(ItemPredicate.Builder p_298502_) {
-            this.mainhand = Optional.of(p_298502_.build());
+        public EntityEquipmentPredicate.Builder mainhand(ItemPredicate.Builder mainhand) {
+            this.mainhand = Optional.of(mainhand.build());
             return this;
         }
 
-        public EntityEquipmentPredicate.Builder offhand(ItemPredicate.Builder p_299073_) {
-            this.offhand = Optional.of(p_299073_.build());
+        public EntityEquipmentPredicate.Builder offhand(ItemPredicate.Builder offhand) {
+            this.offhand = Optional.of(offhand.build());
             return this;
         }
 

@@ -15,7 +15,10 @@ public class RavagerRenderer extends MobRenderer<Ravager, RavagerModel> {
         super(p_174362_, new RavagerModel(p_174362_.bakeLayer(ModelLayers.RAVAGER)), 1.1F);
     }
 
-    public ResourceLocation getTextureLocation(Ravager p_115811_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Ravager entity) {
         return TEXTURE_LOCATION;
     }
 }

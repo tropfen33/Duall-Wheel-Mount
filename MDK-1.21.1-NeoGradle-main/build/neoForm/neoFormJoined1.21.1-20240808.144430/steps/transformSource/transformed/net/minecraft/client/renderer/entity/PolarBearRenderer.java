@@ -16,12 +16,15 @@ public class PolarBearRenderer extends MobRenderer<PolarBear, PolarBearModel<Pol
         super(p_174356_, new PolarBearModel<>(p_174356_.bakeLayer(ModelLayers.POLAR_BEAR)), 0.9F);
     }
 
-    public ResourceLocation getTextureLocation(PolarBear p_115732_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(PolarBear entity) {
         return BEAR_LOCATION;
     }
 
-    protected void scale(PolarBear p_115734_, PoseStack p_115735_, float p_115736_) {
-        p_115735_.scale(1.2F, 1.2F, 1.2F);
-        super.scale(p_115734_, p_115735_, p_115736_);
+    protected void scale(PolarBear livingEntity, PoseStack poseStack, float partialTickTime) {
+        poseStack.scale(1.2F, 1.2F, 1.2F);
+        super.scale(livingEntity, poseStack, partialTickTime);
     }
 }

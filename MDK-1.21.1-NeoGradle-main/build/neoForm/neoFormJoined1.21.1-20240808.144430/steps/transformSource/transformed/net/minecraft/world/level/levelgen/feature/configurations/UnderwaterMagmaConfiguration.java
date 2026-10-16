@@ -19,9 +19,9 @@ public class UnderwaterMagmaConfiguration implements FeatureConfiguration {
     public final int placementRadiusAroundFloor;
     public final float placementProbabilityPerValidPosition;
 
-    public UnderwaterMagmaConfiguration(int p_161269_, int p_161270_, float p_161271_) {
-        this.floorSearchRange = p_161269_;
-        this.placementRadiusAroundFloor = p_161270_;
-        this.placementProbabilityPerValidPosition = p_161271_;
+    public UnderwaterMagmaConfiguration(int floorSearchRange, int placementRadiusAroundFloor, float placementProbabilityPerValidPosition) {
+        this.floorSearchRange = floorSearchRange;
+        this.placementRadiusAroundFloor = placementRadiusAroundFloor;
+        this.placementProbabilityPerValidPosition = placementProbabilityPerValidPosition;
     }
 }

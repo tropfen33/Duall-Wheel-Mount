@@ -40,15 +40,15 @@ public class RecipeButton extends AbstractWidget {
         super(0, 0, 25, 25, CommonComponents.EMPTY);
     }
 
-    public void init(RecipeCollection p_100480_, RecipeBookPage p_100481_) {
-        this.collection = p_100480_;
-        this.menu = (RecipeBookMenu<?, ?>)p_100481_.getMinecraft().player.containerMenu;
-        this.book = p_100481_.getRecipeBook();
-        List<RecipeHolder<?>> list = p_100480_.getRecipes(this.book.isFiltering(this.menu));
+    public void init(RecipeCollection collection, RecipeBookPage recipeBookPage) {
+        this.collection = collection;
+        this.menu = (RecipeBookMenu<?, ?>)recipeBookPage.getMinecraft().player.containerMenu;
+        this.book = recipeBookPage.getRecipeBook();
+        List<RecipeHolder<?>> list = collection.getRecipes(this.book.isFiltering(this.menu));
 
         for (RecipeHolder<?> recipeholder : list) {
             if (this.book.willHighlight(recipeholder)) {
-                p_100481_.recipesShown(list);
+                recipeBookPage.recipesShown(list);
                 this.animationTime = 15.0F;
                 break;
             }
@@ -60,9 +60,9 @@ public class RecipeButton extends AbstractWidget {
     }
 
     @Override
-    public void renderWidget(GuiGraphics p_281385_, int p_282779_, int p_282744_, float p_282439_) {
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (!Screen.hasControlDown()) {
-            this.time += p_282439_;
+            this.time += partialTick;
         }
 
         ResourceLocation resourcelocation;
@@ -81,26 +81,26 @@ public class RecipeButton extends AbstractWidget {
         boolean flag = this.animationTime > 0.0F;
         if (flag) {
             float f = 1.0F + 0.1F * (float)Math.sin((double)(this.animationTime / 15.0F * (float) Math.PI));
-            p_281385_.pose().pushPose();
-            p_281385_.pose().translate((float)(this.getX() + 8), (float)(this.getY() + 12), 0.0F);
-            p_281385_.pose().scale(f, f, 1.0F);
-            p_281385_.pose().translate((float)(-(this.getX() + 8)), (float)(-(this.getY() + 12)), 0.0F);
-            this.animationTime -= p_282439_;
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate((float)(this.getX() + 8), (float)(this.getY() + 12), 0.0F);
+            guiGraphics.pose().scale(f, f, 1.0F);
+            guiGraphics.pose().translate((float)(-(this.getX() + 8)), (float)(-(this.getY() + 12)), 0.0F);
+            this.animationTime -= partialTick;
         }
 
-        p_281385_.blitSprite(resourcelocation, this.getX(), this.getY(), this.width, this.height);
+        guiGraphics.blitSprite(resourcelocation, this.getX(), this.getY(), this.width, this.height);
         List<RecipeHolder<?>> list = this.getOrderedRecipes();
         this.currentIndex = Mth.floor(this.time / 30.0F) % list.size();
         ItemStack itemstack = list.get(this.currentIndex).value().getResultItem(this.collection.registryAccess());
         int i = 4;
         if (this.collection.hasSingleResultItem() && this.getOrderedRecipes().size() > 1) {
-            p_281385_.renderItem(itemstack, this.getX() + i + 1, this.getY() + i + 1, 0, 10);
+            guiGraphics.renderItem(itemstack, this.getX() + i + 1, this.getY() + i + 1, 0, 10);
             i--;
         }
 
-        p_281385_.renderFakeItem(itemstack, this.getX() + i, this.getY() + i);
+        guiGraphics.renderFakeItem(itemstack, this.getX() + i, this.getY() + i);
         if (flag) {
-            p_281385_.pose().popPose();
+            guiGraphics.pose().popPose();
         }
     }
 
@@ -133,15 +133,15 @@ public class RecipeButton extends AbstractWidget {
     }
 
     @Override
-    public void updateWidgetNarration(NarrationElementOutput p_170060_) {
+    public void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
         ItemStack itemstack = this.getOrderedRecipes().get(this.currentIndex).value().getResultItem(this.collection.registryAccess());
-        p_170060_.add(NarratedElementType.TITLE, Component.translatable("narration.recipe", itemstack.getHoverName()));
+        narrationElementOutput.add(NarratedElementType.TITLE, Component.translatable("narration.recipe", itemstack.getHoverName()));
         if (this.collection.getRecipes(this.book.isFiltering(this.menu)).size() > 1) {
-            p_170060_.add(
+            narrationElementOutput.add(
                 NarratedElementType.USAGE, Component.translatable("narration.button.usage.hovered"), Component.translatable("narration.recipe.usage.more")
             );
         } else {
-            p_170060_.add(NarratedElementType.USAGE, Component.translatable("narration.button.usage.hovered"));
+            narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.button.usage.hovered"));
         }
     }
 
@@ -151,7 +151,7 @@ public class RecipeButton extends AbstractWidget {
     }
 
     @Override
-    protected boolean isValidClickButton(int p_100473_) {
-        return p_100473_ == 0 || p_100473_ == 1;
+    protected boolean isValidClickButton(int button) {
+        return button == 0 || button == 1;
     }
 }

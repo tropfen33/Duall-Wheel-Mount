@@ -20,32 +20,32 @@ public class WorldGenAttemptRenderer implements DebugRenderer.SimpleDebugRendere
     private final List<Float> greens = Lists.newArrayList();
     private final List<Float> blues = Lists.newArrayList();
 
-    public void addPos(BlockPos p_113738_, float p_113739_, float p_113740_, float p_113741_, float p_113742_, float p_113743_) {
-        this.toRender.add(p_113738_);
-        this.scales.add(p_113739_);
-        this.alphas.add(p_113743_);
-        this.reds.add(p_113740_);
-        this.greens.add(p_113741_);
-        this.blues.add(p_113742_);
+    public void addPos(BlockPos pos, float scale, float red, float green, float blue, float alpha) {
+        this.toRender.add(pos);
+        this.scales.add(scale);
+        this.alphas.add(alpha);
+        this.reds.add(red);
+        this.greens.add(green);
+        this.blues.add(blue);
     }
 
     @Override
-    public void render(PoseStack p_113732_, MultiBufferSource p_113733_, double p_113734_, double p_113735_, double p_113736_) {
-        VertexConsumer vertexconsumer = p_113733_.getBuffer(RenderType.debugFilledBox());
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, double camX, double camY, double camZ) {
+        VertexConsumer vertexconsumer = bufferSource.getBuffer(RenderType.debugFilledBox());
 
         for (int i = 0; i < this.toRender.size(); i++) {
             BlockPos blockpos = this.toRender.get(i);
             Float f = this.scales.get(i);
             float f1 = f / 2.0F;
             LevelRenderer.addChainedFilledBoxVertices(
-                p_113732_,
+                poseStack,
                 vertexconsumer,
-                (double)((float)blockpos.getX() + 0.5F - f1) - p_113734_,
-                (double)((float)blockpos.getY() + 0.5F - f1) - p_113735_,
-                (double)((float)blockpos.getZ() + 0.5F - f1) - p_113736_,
-                (double)((float)blockpos.getX() + 0.5F + f1) - p_113734_,
-                (double)((float)blockpos.getY() + 0.5F + f1) - p_113735_,
-                (double)((float)blockpos.getZ() + 0.5F + f1) - p_113736_,
+                (double)((float)blockpos.getX() + 0.5F - f1) - camX,
+                (double)((float)blockpos.getY() + 0.5F - f1) - camY,
+                (double)((float)blockpos.getZ() + 0.5F - f1) - camZ,
+                (double)((float)blockpos.getX() + 0.5F + f1) - camX,
+                (double)((float)blockpos.getY() + 0.5F + f1) - camY,
+                (double)((float)blockpos.getZ() + 0.5F + f1) - camZ,
                 this.reds.get(i),
                 this.greens.get(i),
                 this.blues.get(i),

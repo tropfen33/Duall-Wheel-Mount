@@ -33,9 +33,9 @@ public class BedRenderer implements BlockEntityRenderer<BedBlockEntity> {
     private final ModelPart headRoot;
     private final ModelPart footRoot;
 
-    public BedRenderer(BlockEntityRendererProvider.Context p_173540_) {
-        this.headRoot = p_173540_.bakeLayer(ModelLayers.BED_HEAD);
-        this.footRoot = p_173540_.bakeLayer(ModelLayers.BED_FOOT);
+    public BedRenderer(BlockEntityRendererProvider.Context context) {
+        this.headRoot = context.bakeLayer(ModelLayers.BED_HEAD);
+        this.footRoot = context.bakeLayer(ModelLayers.BED_FOOT);
     }
 
     public static LayerDefinition createHeadLayer() {
@@ -72,11 +72,11 @@ public class BedRenderer implements BlockEntityRenderer<BedBlockEntity> {
         return LayerDefinition.create(meshdefinition, 64, 64);
     }
 
-    public void render(BedBlockEntity p_112205_, float p_112206_, PoseStack p_112207_, MultiBufferSource p_112208_, int p_112209_, int p_112210_) {
-        Material material = Sheets.BED_TEXTURES[p_112205_.getColor().getId()];
-        Level level = p_112205_.getLevel();
+    public void render(BedBlockEntity blockEntity, float partialTick, PoseStack poseStack, MultiBufferSource bufferSource, int packedLight, int packedOverlay) {
+        Material material = Sheets.BED_TEXTURES[blockEntity.getColor().getId()];
+        Level level = blockEntity.getLevel();
         if (level != null) {
-            BlockState blockstate = p_112205_.getBlockState();
+            BlockState blockstate = blockEntity.getBlockState();
             DoubleBlockCombiner.NeighborCombineResult<? extends BedBlockEntity> neighborcombineresult = DoubleBlockCombiner.combineWithNeigbour(
                 BlockEntityType.BED,
                 BedBlock::getBlockType,
@@ -84,44 +84,49 @@ public class BedRenderer implements BlockEntityRenderer<BedBlockEntity> {
                 ChestBlock.FACING,
                 blockstate,
                 level,
-                p_112205_.getBlockPos(),
+                blockEntity.getBlockPos(),
                 (p_112202_, p_112203_) -> false
             );
-            int i = neighborcombineresult.apply(new BrightnessCombiner<>()).get(p_112209_);
+            int i = neighborcombineresult.apply(new BrightnessCombiner<>()).get(packedLight);
             this.renderPiece(
-                p_112207_,
-                p_112208_,
+                poseStack,
+                bufferSource,
                 blockstate.getValue(BedBlock.PART) == BedPart.HEAD ? this.headRoot : this.footRoot,
                 blockstate.getValue(BedBlock.FACING),
                 material,
                 i,
-                p_112210_,
+                packedOverlay,
                 false
             );
         } else {
-            this.renderPiece(p_112207_, p_112208_, this.headRoot, Direction.SOUTH, material, p_112209_, p_112210_, false);
-            this.renderPiece(p_112207_, p_112208_, this.footRoot, Direction.SOUTH, material, p_112209_, p_112210_, true);
+            this.renderPiece(poseStack, bufferSource, this.headRoot, Direction.SOUTH, material, packedLight, packedOverlay, false);
+            this.renderPiece(poseStack, bufferSource, this.footRoot, Direction.SOUTH, material, packedLight, packedOverlay, true);
         }
     }
 
+    /**
+     * @param foot {@code true} if piece to render is the foot of the bed, {@code
+     *             false} otherwise or if being rendered by a {@link
+     *             net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer}
+     */
     private void renderPiece(
-        PoseStack p_173542_,
-        MultiBufferSource p_173543_,
-        ModelPart p_173544_,
-        Direction p_173545_,
-        Material p_173546_,
-        int p_173547_,
-        int p_173548_,
-        boolean p_173549_
+        PoseStack poseStack,
+        MultiBufferSource bufferSource,
+        ModelPart modelPart,
+        Direction direction,
+        Material material,
+        int packedLight,
+        int packedOverlay,
+        boolean foot
     ) {
-        p_173542_.pushPose();
-        p_173542_.translate(0.0F, 0.5625F, p_173549_ ? -1.0F : 0.0F);
-        p_173542_.mulPose(Axis.XP.rotationDegrees(90.0F));
-        p_173542_.translate(0.5F, 0.5F, 0.5F);
-        p_173542_.mulPose(Axis.ZP.rotationDegrees(180.0F + p_173545_.toYRot()));
-        p_173542_.translate(-0.5F, -0.5F, -0.5F);
-        VertexConsumer vertexconsumer = p_173546_.buffer(p_173543_, RenderType::entitySolid);
-        p_173544_.render(p_173542_, vertexconsumer, p_173547_, p_173548_);
-        p_173542_.popPose();
+        poseStack.pushPose();
+        poseStack.translate(0.0F, 0.5625F, foot ? -1.0F : 0.0F);
+        poseStack.mulPose(Axis.XP.rotationDegrees(90.0F));
+        poseStack.translate(0.5F, 0.5F, 0.5F);
+        poseStack.mulPose(Axis.ZP.rotationDegrees(180.0F + direction.toYRot()));
+        poseStack.translate(-0.5F, -0.5F, -0.5F);
+        VertexConsumer vertexconsumer = material.buffer(bufferSource, RenderType::entitySolid);
+        modelPart.render(poseStack, vertexconsumer, packedLight, packedOverlay);
+        poseStack.popPose();
     }
 }

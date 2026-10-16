@@ -5,6 +5,6 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class CompletedTutorialStepInstance implements TutorialStepInstance {
-    public CompletedTutorialStepInstance(Tutorial p_120459_) {
+    public CompletedTutorialStepInstance(Tutorial tutorial) {
     }
 }

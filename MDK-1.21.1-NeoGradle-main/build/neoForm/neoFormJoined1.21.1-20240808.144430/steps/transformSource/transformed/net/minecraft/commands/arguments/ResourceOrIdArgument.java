@@ -40,71 +40,71 @@ public class ResourceOrIdArgument<T> implements ArgumentType<Holder<T>> {
     private final boolean hasRegistry;
     private final Codec<Holder<T>> codec;
 
-    protected ResourceOrIdArgument(CommandBuildContext p_335864_, ResourceKey<Registry<T>> p_335475_, Codec<Holder<T>> p_335632_) {
-        this.registryLookup = p_335864_;
-        this.hasRegistry = p_335864_.lookup(p_335475_).isPresent();
-        this.codec = p_335632_;
+    protected ResourceOrIdArgument(CommandBuildContext registryLookup, ResourceKey<Registry<T>> registryKey, Codec<Holder<T>> codec) {
+        this.registryLookup = registryLookup;
+        this.hasRegistry = registryLookup.lookup(registryKey).isPresent();
+        this.codec = codec;
     }
 
-    public static ResourceOrIdArgument.LootTableArgument lootTable(CommandBuildContext p_335938_) {
-        return new ResourceOrIdArgument.LootTableArgument(p_335938_);
+    public static ResourceOrIdArgument.LootTableArgument lootTable(CommandBuildContext context) {
+        return new ResourceOrIdArgument.LootTableArgument(context);
     }
 
-    public static Holder<LootTable> getLootTable(CommandContext<CommandSourceStack> p_335373_, String p_336017_) throws CommandSyntaxException {
-        return getResource(p_335373_, p_336017_);
+    public static Holder<LootTable> getLootTable(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
+        return getResource(context, name);
     }
 
-    public static ResourceOrIdArgument.LootModifierArgument lootModifier(CommandBuildContext p_335731_) {
-        return new ResourceOrIdArgument.LootModifierArgument(p_335731_);
+    public static ResourceOrIdArgument.LootModifierArgument lootModifier(CommandBuildContext context) {
+        return new ResourceOrIdArgument.LootModifierArgument(context);
     }
 
-    public static Holder<LootItemFunction> getLootModifier(CommandContext<CommandSourceStack> p_335678_, String p_336178_) {
-        return getResource(p_335678_, p_336178_);
+    public static Holder<LootItemFunction> getLootModifier(CommandContext<CommandSourceStack> context, String name) {
+        return getResource(context, name);
     }
 
-    public static ResourceOrIdArgument.LootPredicateArgument lootPredicate(CommandBuildContext p_335891_) {
-        return new ResourceOrIdArgument.LootPredicateArgument(p_335891_);
+    public static ResourceOrIdArgument.LootPredicateArgument lootPredicate(CommandBuildContext context) {
+        return new ResourceOrIdArgument.LootPredicateArgument(context);
     }
 
-    public static Holder<LootItemCondition> getLootPredicate(CommandContext<CommandSourceStack> p_336183_, String p_336098_) {
-        return getResource(p_336183_, p_336098_);
+    public static Holder<LootItemCondition> getLootPredicate(CommandContext<CommandSourceStack> context, String name) {
+        return getResource(context, name);
     }
 
-    private static <T> Holder<T> getResource(CommandContext<CommandSourceStack> p_336122_, String p_335417_) {
-        return p_336122_.getArgument(p_335417_, Holder.class);
+    private static <T> Holder<T> getResource(CommandContext<CommandSourceStack> context, String name) {
+        return context.getArgument(name, Holder.class);
     }
 
     @Nullable
-    public Holder<T> parse(StringReader p_335906_) throws CommandSyntaxException {
-        Tag tag = parseInlineOrId(p_335906_);
+    public Holder<T> parse(StringReader reader) throws CommandSyntaxException {
+        Tag tag = parseInlineOrId(reader);
         if (!this.hasRegistry) {
             return null;
         } else {
             RegistryOps<Tag> registryops = this.registryLookup.createSerializationContext(NbtOps.INSTANCE);
-            return this.codec.parse(registryops, tag).getOrThrow(p_335883_ -> ERROR_FAILED_TO_PARSE.createWithContext(p_335906_, p_335883_));
+            return this.codec.parse(registryops, tag).getOrThrow(p_335883_ -> ERROR_FAILED_TO_PARSE.createWithContext(reader, p_335883_));
         }
     }
 
     @VisibleForTesting
-    static Tag parseInlineOrId(StringReader p_335947_) throws CommandSyntaxException {
-        int i = p_335947_.getCursor();
-        Tag tag = new TagParser(p_335947_).readValue();
-        if (hasConsumedWholeArg(p_335947_)) {
+    static Tag parseInlineOrId(StringReader reader) throws CommandSyntaxException {
+        int i = reader.getCursor();
+        Tag tag = new TagParser(reader).readValue();
+        if (hasConsumedWholeArg(reader)) {
             return tag;
         } else {
-            p_335947_.setCursor(i);
-            ResourceLocation resourcelocation = ResourceLocation.read(p_335947_);
-            if (hasConsumedWholeArg(p_335947_)) {
+            reader.setCursor(i);
+            ResourceLocation resourcelocation = ResourceLocation.read(reader);
+            if (hasConsumedWholeArg(reader)) {
                 return StringTag.valueOf(resourcelocation.toString());
             } else {
-                p_335947_.setCursor(i);
-                throw ERROR_INVALID.createWithContext(p_335947_);
+                reader.setCursor(i);
+                throw ERROR_INVALID.createWithContext(reader);
             }
         }
     }
 
-    private static boolean hasConsumedWholeArg(StringReader p_335624_) {
-        return !p_335624_.canRead() || p_335624_.peek() == ' ';
+    private static boolean hasConsumedWholeArg(StringReader reader) {
+        return !reader.canRead() || reader.peek() == ' ';
     }
 
     @Override
@@ -113,20 +113,20 @@ public class ResourceOrIdArgument<T> implements ArgumentType<Holder<T>> {
     }
 
     public static class LootModifierArgument extends ResourceOrIdArgument<LootItemFunction> {
-        protected LootModifierArgument(CommandBuildContext p_335547_) {
-            super(p_335547_, Registries.ITEM_MODIFIER, LootItemFunctions.CODEC);
+        protected LootModifierArgument(CommandBuildContext context) {
+            super(context, Registries.ITEM_MODIFIER, LootItemFunctions.CODEC);
         }
     }
 
     public static class LootPredicateArgument extends ResourceOrIdArgument<LootItemCondition> {
-        protected LootPredicateArgument(CommandBuildContext p_336020_) {
-            super(p_336020_, Registries.PREDICATE, LootItemCondition.CODEC);
+        protected LootPredicateArgument(CommandBuildContext context) {
+            super(context, Registries.PREDICATE, LootItemCondition.CODEC);
         }
     }
 
     public static class LootTableArgument extends ResourceOrIdArgument<LootTable> {
-        protected LootTableArgument(CommandBuildContext p_335769_) {
-            super(p_335769_, Registries.LOOT_TABLE, LootTable.CODEC);
+        protected LootTableArgument(CommandBuildContext context) {
+            super(context, Registries.LOOT_TABLE, LootTable.CODEC);
         }
     }
 }

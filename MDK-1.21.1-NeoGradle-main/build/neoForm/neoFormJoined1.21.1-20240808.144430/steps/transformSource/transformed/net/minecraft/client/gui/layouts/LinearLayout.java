@@ -11,17 +11,17 @@ public class LinearLayout implements Layout {
     private final LinearLayout.Orientation orientation;
     private int nextChildIndex = 0;
 
-    private LinearLayout(LinearLayout.Orientation p_265341_) {
-        this(0, 0, p_265341_);
+    private LinearLayout(LinearLayout.Orientation orientation) {
+        this(0, 0, orientation);
     }
 
-    public LinearLayout(int p_265093_, int p_265502_, LinearLayout.Orientation p_265112_) {
-        this.wrapped = new GridLayout(p_265093_, p_265502_);
-        this.orientation = p_265112_;
+    public LinearLayout(int width, int height, LinearLayout.Orientation orientation) {
+        this.wrapped = new GridLayout(width, height);
+        this.orientation = orientation;
     }
 
-    public LinearLayout spacing(int p_294650_) {
-        this.orientation.setSpacing(this.wrapped, p_294650_);
+    public LinearLayout spacing(int spacing) {
+        this.orientation.setSpacing(this.wrapped, spacing);
         return this;
     }
 
@@ -33,21 +33,21 @@ public class LinearLayout implements Layout {
         return this.wrapped.defaultCellSetting();
     }
 
-    public <T extends LayoutElement> T addChild(T p_265475_, LayoutSettings p_265684_) {
-        return this.orientation.addChild(this.wrapped, p_265475_, this.nextChildIndex++, p_265684_);
+    public <T extends LayoutElement> T addChild(T child, LayoutSettings layoutSettings) {
+        return this.orientation.addChild(this.wrapped, child, this.nextChildIndex++, layoutSettings);
     }
 
-    public <T extends LayoutElement> T addChild(T p_265140_) {
-        return this.addChild(p_265140_, this.newCellSettings());
+    public <T extends LayoutElement> T addChild(T child) {
+        return this.addChild(child, this.newCellSettings());
     }
 
-    public <T extends LayoutElement> T addChild(T p_294205_, Consumer<LayoutSettings> p_295486_) {
-        return this.orientation.addChild(this.wrapped, p_294205_, this.nextChildIndex++, Util.make(this.newCellSettings(), p_295486_));
+    public <T extends LayoutElement> T addChild(T child, Consumer<LayoutSettings> layoutSettingsFactory) {
+        return this.orientation.addChild(this.wrapped, child, this.nextChildIndex++, Util.make(this.newCellSettings(), layoutSettingsFactory));
     }
 
     @Override
-    public void visitChildren(Consumer<LayoutElement> p_265508_) {
-        this.wrapped.visitChildren(p_265508_);
+    public void visitChildren(Consumer<LayoutElement> visitor) {
+        this.wrapped.visitChildren(visitor);
     }
 
     @Override
@@ -66,13 +66,13 @@ public class LinearLayout implements Layout {
     }
 
     @Override
-    public void setX(int p_295684_) {
-        this.wrapped.setX(p_295684_);
+    public void setX(int x) {
+        this.wrapped.setX(x);
     }
 
     @Override
-    public void setY(int p_295771_) {
-        this.wrapped.setY(p_295771_);
+    public void setY(int y) {
+        this.wrapped.setY(y);
     }
 
     @Override
@@ -98,20 +98,20 @@ public class LinearLayout implements Layout {
         HORIZONTAL,
         VERTICAL;
 
-        void setSpacing(GridLayout p_295925_, int p_295045_) {
+        void setSpacing(GridLayout layout, int spacing) {
             switch (this) {
                 case HORIZONTAL:
-                    p_295925_.columnSpacing(p_295045_);
+                    layout.columnSpacing(spacing);
                     break;
                 case VERTICAL:
-                    p_295925_.rowSpacing(p_295045_);
+                    layout.rowSpacing(spacing);
             }
         }
 
-        public <T extends LayoutElement> T addChild(GridLayout p_296325_, T p_294747_, int p_296492_, LayoutSettings p_295163_) {
+        public <T extends LayoutElement> T addChild(GridLayout layout, T element, int index, LayoutSettings layoutSettings) {
             return (T)(switch (this) {
-                case HORIZONTAL -> (LayoutElement)p_296325_.addChild(p_294747_, 0, p_296492_, p_295163_);
-                case VERTICAL -> (LayoutElement)p_296325_.addChild(p_294747_, p_296492_, 0, p_295163_);
+                case HORIZONTAL -> (LayoutElement)layout.addChild(element, 0, index, layoutSettings);
+                case VERTICAL -> (LayoutElement)layout.addChild(element, index, 0, layoutSettings);
             });
         }
     }

@@ -21,19 +21,19 @@ public class NoiseThresholdCountPlacement extends RepeatingPlacement {
     private final int belowNoise;
     private final int aboveNoise;
 
-    private NoiseThresholdCountPlacement(double p_191753_, int p_191754_, int p_191755_) {
-        this.noiseLevel = p_191753_;
-        this.belowNoise = p_191754_;
-        this.aboveNoise = p_191755_;
+    private NoiseThresholdCountPlacement(double noiseLevel, int belowNoise, int aboveNoise) {
+        this.noiseLevel = noiseLevel;
+        this.belowNoise = belowNoise;
+        this.aboveNoise = aboveNoise;
     }
 
-    public static NoiseThresholdCountPlacement of(double p_191757_, int p_191758_, int p_191759_) {
-        return new NoiseThresholdCountPlacement(p_191757_, p_191758_, p_191759_);
+    public static NoiseThresholdCountPlacement of(double noiseLevel, int belowNoise, int aboveNoise) {
+        return new NoiseThresholdCountPlacement(noiseLevel, belowNoise, aboveNoise);
     }
 
     @Override
-    protected int count(RandomSource p_226355_, BlockPos p_226356_) {
-        double d0 = Biome.BIOME_INFO_NOISE.getValue((double)p_226356_.getX() / 200.0, (double)p_226356_.getZ() / 200.0, false);
+    protected int count(RandomSource random, BlockPos pos) {
+        double d0 = Biome.BIOME_INFO_NOISE.getValue((double)pos.getX() / 200.0, (double)pos.getZ() / 200.0, false);
         return d0 < this.noiseLevel ? this.belowNoise : this.aboveNoise;
     }
 

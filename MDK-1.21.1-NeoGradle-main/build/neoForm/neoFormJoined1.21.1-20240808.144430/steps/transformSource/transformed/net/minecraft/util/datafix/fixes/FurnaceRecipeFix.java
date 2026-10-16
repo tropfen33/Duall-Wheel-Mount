@@ -16,8 +16,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class FurnaceRecipeFix extends DataFix {
-    public FurnaceRecipeFix(Schema p_15837_, boolean p_15838_) {
-        super(p_15837_, p_15838_);
+    public FurnaceRecipeFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -25,9 +25,9 @@ public class FurnaceRecipeFix extends DataFix {
         return this.cap(this.getOutputSchema().getTypeRaw(References.RECIPE));
     }
 
-    private <R> TypeRewriteRule cap(Type<R> p_15850_) {
+    private <R> TypeRewriteRule cap(Type<R> p_type) {
         Type<Pair<Either<Pair<List<Pair<R, Integer>>, Dynamic<?>>, Unit>, Dynamic<?>>> type = DSL.and(
-            DSL.optional(DSL.field("RecipesUsed", DSL.and(DSL.compoundList(p_15850_, DSL.intType()), DSL.remainderType()))), DSL.remainderType()
+            DSL.optional(DSL.field("RecipesUsed", DSL.and(DSL.compoundList(p_type, DSL.intType()), DSL.remainderType()))), DSL.remainderType()
         );
         OpticFinder<?> opticfinder = DSL.namedChoice("minecraft:furnace", this.getInputSchema().getChoiceType(References.BLOCK_ENTITY, "minecraft:furnace"));
         OpticFinder<?> opticfinder1 = DSL.namedChoice(
@@ -43,16 +43,16 @@ public class FurnaceRecipeFix extends DataFix {
             "FurnaceRecipesFix",
             type4,
             type5,
-            p_15848_ -> p_15848_.updateTyped(opticfinder, type1, p_145372_ -> this.updateFurnaceContents(p_15850_, type, p_145372_))
-                    .updateTyped(opticfinder1, type2, p_145368_ -> this.updateFurnaceContents(p_15850_, type, p_145368_))
-                    .updateTyped(opticfinder2, type3, p_145364_ -> this.updateFurnaceContents(p_15850_, type, p_145364_))
+            p_15848_ -> p_15848_.updateTyped(opticfinder, type1, p_145372_ -> this.updateFurnaceContents(p_type, type, p_145372_))
+                    .updateTyped(opticfinder1, type2, p_145368_ -> this.updateFurnaceContents(p_type, type, p_145368_))
+                    .updateTyped(opticfinder2, type3, p_145364_ -> this.updateFurnaceContents(p_type, type, p_145364_))
         );
     }
 
     private <R> Typed<?> updateFurnaceContents(
-        Type<R> p_15852_, Type<Pair<Either<Pair<List<Pair<R, Integer>>, Dynamic<?>>, Unit>, Dynamic<?>>> p_15853_, Typed<?> p_15854_
+        Type<R> type, Type<Pair<Either<Pair<List<Pair<R, Integer>>, Dynamic<?>>, Unit>, Dynamic<?>>> recipesUsed, Typed<?> data
     ) {
-        Dynamic<?> dynamic = p_15854_.getOrCreate(DSL.remainderFinder());
+        Dynamic<?> dynamic = data.getOrCreate(DSL.remainderFinder());
         int i = dynamic.get("RecipesUsedSize").asInt(0);
         dynamic = dynamic.remove("RecipesUsedSize");
         List<Pair<R, Integer>> list = Lists.newArrayList();
@@ -64,7 +64,7 @@ public class FurnaceRecipeFix extends DataFix {
             int k = dynamic.get(s1).asInt(0);
             if (k > 0) {
                 optional.ifPresent(p_337634_ -> {
-                    Optional<? extends Pair<R, ? extends Dynamic<?>>> optional1 = p_15852_.read((Dynamic<?>)p_337634_).result();
+                    Optional<? extends Pair<R, ? extends Dynamic<?>>> optional1 = type.read((Dynamic<?>)p_337634_).result();
                     optional1.ifPresent(p_145360_ -> list.add(Pair.of(p_145360_.getFirst(), k)));
                 });
             }
@@ -72,6 +72,6 @@ public class FurnaceRecipeFix extends DataFix {
             dynamic = dynamic.remove(s).remove(s1);
         }
 
-        return p_15854_.set(DSL.remainderFinder(), p_15853_, Pair.of(Either.left(Pair.of(list, dynamic.emptyMap())), dynamic));
+        return data.set(DSL.remainderFinder(), recipesUsed, Pair.of(Either.left(Pair.of(list, dynamic.emptyMap())), dynamic));
     }
 }

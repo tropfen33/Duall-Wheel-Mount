@@ -18,25 +18,25 @@ public class HeightRangePlacement extends PlacementModifier {
     );
     private final HeightProvider height;
 
-    private HeightRangePlacement(HeightProvider p_191677_) {
-        this.height = p_191677_;
+    private HeightRangePlacement(HeightProvider height) {
+        this.height = height;
     }
 
-    public static HeightRangePlacement of(HeightProvider p_191684_) {
-        return new HeightRangePlacement(p_191684_);
+    public static HeightRangePlacement of(HeightProvider height) {
+        return new HeightRangePlacement(height);
     }
 
-    public static HeightRangePlacement uniform(VerticalAnchor p_191681_, VerticalAnchor p_191682_) {
-        return of(UniformHeight.of(p_191681_, p_191682_));
+    public static HeightRangePlacement uniform(VerticalAnchor minInclusive, VerticalAnchor maxInclusive) {
+        return of(UniformHeight.of(minInclusive, maxInclusive));
     }
 
-    public static HeightRangePlacement triangle(VerticalAnchor p_191693_, VerticalAnchor p_191694_) {
-        return of(TrapezoidHeight.of(p_191693_, p_191694_));
+    public static HeightRangePlacement triangle(VerticalAnchor minInclusive, VerticalAnchor maxInclusive) {
+        return of(TrapezoidHeight.of(minInclusive, maxInclusive));
     }
 
     @Override
-    public Stream<BlockPos> getPositions(PlacementContext p_226340_, RandomSource p_226341_, BlockPos p_226342_) {
-        return Stream.of(p_226342_.atY(this.height.sample(p_226341_, p_226340_)));
+    public Stream<BlockPos> getPositions(PlacementContext context, RandomSource random, BlockPos pos) {
+        return Stream.of(pos.atY(this.height.sample(random, context)));
     }
 
     @Override

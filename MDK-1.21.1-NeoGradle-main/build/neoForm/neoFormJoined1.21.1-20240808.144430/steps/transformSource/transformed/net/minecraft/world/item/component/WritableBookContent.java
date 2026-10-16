@@ -32,11 +32,11 @@ public record WritableBookContent(List<Filterable<String>> pages) implements Boo
         }
     }
 
-    public Stream<String> getPages(boolean p_330613_) {
-        return this.pages.stream().map(p_330772_ -> p_330772_.get(p_330613_));
+    public Stream<String> getPages(boolean filtered) {
+        return this.pages.stream().map(p_330772_ -> p_330772_.get(filtered));
     }
 
-    public WritableBookContent withReplacedPages(List<Filterable<String>> p_333808_) {
-        return new WritableBookContent(p_333808_);
+    public WritableBookContent withReplacedPages(List<Filterable<String>> newPages) {
+        return new WritableBookContent(newPages);
     }
 }

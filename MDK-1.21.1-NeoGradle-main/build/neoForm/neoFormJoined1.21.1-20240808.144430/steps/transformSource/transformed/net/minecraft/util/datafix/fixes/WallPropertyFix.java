@@ -28,8 +28,8 @@ public class WallPropertyFix extends DataFix {
         "minecraft:stone_brick_wall"
     );
 
-    public WallPropertyFix(Schema p_17154_, boolean p_17155_) {
-        super(p_17154_, p_17155_);
+    public WallPropertyFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
     @Override
@@ -41,19 +41,19 @@ public class WallPropertyFix extends DataFix {
         );
     }
 
-    private static String mapProperty(String p_17164_) {
-        return "true".equals(p_17164_) ? "low" : "none";
+    private static String mapProperty(String property) {
+        return "true".equals(property) ? "low" : "none";
     }
 
-    private static <T> Dynamic<T> fixWallProperty(Dynamic<T> p_17161_, String p_17162_) {
-        return p_17161_.update(
-            p_17162_, p_337669_ -> DataFixUtils.orElse(p_337669_.asString().result().map(WallPropertyFix::mapProperty).map(p_337669_::createString), p_337669_)
+    private static <T> Dynamic<T> fixWallProperty(Dynamic<T> dynamic, String key) {
+        return dynamic.update(
+            key, p_337669_ -> DataFixUtils.orElse(p_337669_.asString().result().map(WallPropertyFix::mapProperty).map(p_337669_::createString), p_337669_)
         );
     }
 
-    private static <T> Dynamic<T> upgradeBlockStateTag(Dynamic<T> p_17159_) {
-        boolean flag = p_17159_.get("Name").asString().result().filter(WALL_BLOCKS::contains).isPresent();
-        return !flag ? p_17159_ : p_17159_.update("Properties", p_17166_ -> {
+    private static <T> Dynamic<T> upgradeBlockStateTag(Dynamic<T> p_dynamic) {
+        boolean flag = p_dynamic.get("Name").asString().result().filter(WALL_BLOCKS::contains).isPresent();
+        return !flag ? p_dynamic : p_dynamic.update("Properties", p_17166_ -> {
             Dynamic<?> dynamic = fixWallProperty(p_17166_, "east");
             dynamic = fixWallProperty(dynamic, "west");
             dynamic = fixWallProperty(dynamic, "north");

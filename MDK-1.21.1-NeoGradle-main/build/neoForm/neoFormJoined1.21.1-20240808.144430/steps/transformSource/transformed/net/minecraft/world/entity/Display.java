@@ -99,38 +99,38 @@ public abstract class Display extends Entity {
     @Nullable
     private Display.PosRotInterpolationTarget posRotInterpolationTarget;
 
-    public Display(EntityType<?> p_270360_, Level p_270280_) {
-        super(p_270360_, p_270280_);
+    public Display(EntityType<?> entityType, Level level) {
+        super(entityType, level);
         this.noPhysics = true;
         this.noCulling = true;
         this.cullingBoundingBox = this.getBoundingBox();
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_270275_) {
-        super.onSyncedDataUpdated(p_270275_);
-        if (DATA_HEIGHT_ID.equals(p_270275_) || DATA_WIDTH_ID.equals(p_270275_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (DATA_HEIGHT_ID.equals(key) || DATA_WIDTH_ID.equals(key)) {
             this.updateCulling();
         }
 
-        if (DATA_TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS_ID.equals(p_270275_)) {
+        if (DATA_TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS_ID.equals(key)) {
             this.updateStartTick = true;
         }
 
-        if (DATA_TRANSFORMATION_INTERPOLATION_DURATION_ID.equals(p_270275_)) {
+        if (DATA_TRANSFORMATION_INTERPOLATION_DURATION_ID.equals(key)) {
             this.updateInterpolationDuration = true;
         }
 
-        if (RENDER_STATE_IDS.contains(p_270275_.id())) {
+        if (RENDER_STATE_IDS.contains(key.id())) {
             this.updateRenderState = true;
         }
     }
 
-    private static Transformation createTransformation(SynchedEntityData p_270278_) {
-        Vector3f vector3f = p_270278_.get(DATA_TRANSLATION_ID);
-        Quaternionf quaternionf = p_270278_.get(DATA_LEFT_ROTATION_ID);
-        Vector3f vector3f1 = p_270278_.get(DATA_SCALE_ID);
-        Quaternionf quaternionf1 = p_270278_.get(DATA_RIGHT_ROTATION_ID);
+    private static Transformation createTransformation(SynchedEntityData synchedEntityData) {
+        Vector3f vector3f = synchedEntityData.get(DATA_TRANSLATION_ID);
+        Quaternionf quaternionf = synchedEntityData.get(DATA_LEFT_ROTATION_ID);
+        Vector3f vector3f1 = synchedEntityData.get(DATA_SCALE_ID);
+        Quaternionf quaternionf1 = synchedEntityData.get(DATA_RIGHT_ROTATION_ID);
         return new Transformation(vector3f, quaternionf, vector3f1, quaternionf1);
     }
 
@@ -181,85 +181,88 @@ public abstract class Display extends Entity {
         }
     }
 
-    protected abstract void updateRenderSubState(boolean p_277603_, float p_277810_);
+    protected abstract void updateRenderSubState(boolean interpolate, float partialTick);
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_325924_) {
-        p_325924_.define(DATA_POS_ROT_INTERPOLATION_DURATION_ID, 0);
-        p_325924_.define(DATA_TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS_ID, 0);
-        p_325924_.define(DATA_TRANSFORMATION_INTERPOLATION_DURATION_ID, 0);
-        p_325924_.define(DATA_TRANSLATION_ID, new Vector3f());
-        p_325924_.define(DATA_SCALE_ID, new Vector3f(1.0F, 1.0F, 1.0F));
-        p_325924_.define(DATA_RIGHT_ROTATION_ID, new Quaternionf());
-        p_325924_.define(DATA_LEFT_ROTATION_ID, new Quaternionf());
-        p_325924_.define(DATA_BILLBOARD_RENDER_CONSTRAINTS_ID, Display.BillboardConstraints.FIXED.getId());
-        p_325924_.define(DATA_BRIGHTNESS_OVERRIDE_ID, -1);
-        p_325924_.define(DATA_VIEW_RANGE_ID, 1.0F);
-        p_325924_.define(DATA_SHADOW_RADIUS_ID, 0.0F);
-        p_325924_.define(DATA_SHADOW_STRENGTH_ID, 1.0F);
-        p_325924_.define(DATA_WIDTH_ID, 0.0F);
-        p_325924_.define(DATA_HEIGHT_ID, 0.0F);
-        p_325924_.define(DATA_GLOW_COLOR_OVERRIDE_ID, -1);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_POS_ROT_INTERPOLATION_DURATION_ID, 0);
+        builder.define(DATA_TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS_ID, 0);
+        builder.define(DATA_TRANSFORMATION_INTERPOLATION_DURATION_ID, 0);
+        builder.define(DATA_TRANSLATION_ID, new Vector3f());
+        builder.define(DATA_SCALE_ID, new Vector3f(1.0F, 1.0F, 1.0F));
+        builder.define(DATA_RIGHT_ROTATION_ID, new Quaternionf());
+        builder.define(DATA_LEFT_ROTATION_ID, new Quaternionf());
+        builder.define(DATA_BILLBOARD_RENDER_CONSTRAINTS_ID, Display.BillboardConstraints.FIXED.getId());
+        builder.define(DATA_BRIGHTNESS_OVERRIDE_ID, -1);
+        builder.define(DATA_VIEW_RANGE_ID, 1.0F);
+        builder.define(DATA_SHADOW_RADIUS_ID, 0.0F);
+        builder.define(DATA_SHADOW_STRENGTH_ID, 1.0F);
+        builder.define(DATA_WIDTH_ID, 0.0F);
+        builder.define(DATA_HEIGHT_ID, 0.0F);
+        builder.define(DATA_GLOW_COLOR_OVERRIDE_ID, -1);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_270854_) {
-        if (p_270854_.contains("transformation")) {
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        if (compound.contains("transformation")) {
             Transformation.EXTENDED_CODEC
-                .decode(NbtOps.INSTANCE, p_270854_.get("transformation"))
+                .decode(NbtOps.INSTANCE, compound.get("transformation"))
                 .resultOrPartial(Util.prefix("Display entity", LOGGER::error))
                 .ifPresent(p_270952_ -> this.setTransformation(p_270952_.getFirst()));
         }
 
-        if (p_270854_.contains("interpolation_duration", 99)) {
-            int i = p_270854_.getInt("interpolation_duration");
+        if (compound.contains("interpolation_duration", 99)) {
+            int i = compound.getInt("interpolation_duration");
             this.setTransformationInterpolationDuration(i);
         }
 
-        if (p_270854_.contains("start_interpolation", 99)) {
-            int j = p_270854_.getInt("start_interpolation");
+        if (compound.contains("start_interpolation", 99)) {
+            int j = compound.getInt("start_interpolation");
             this.setTransformationInterpolationDelay(j);
         }
 
-        if (p_270854_.contains("teleport_duration", 99)) {
-            int k = p_270854_.getInt("teleport_duration");
+        if (compound.contains("teleport_duration", 99)) {
+            int k = compound.getInt("teleport_duration");
             this.setPosRotInterpolationDuration(Mth.clamp(k, 0, 59));
         }
 
-        if (p_270854_.contains("billboard", 8)) {
+        if (compound.contains("billboard", 8)) {
             Display.BillboardConstraints.CODEC
-                .decode(NbtOps.INSTANCE, p_270854_.get("billboard"))
+                .decode(NbtOps.INSTANCE, compound.get("billboard"))
                 .resultOrPartial(Util.prefix("Display entity", LOGGER::error))
                 .ifPresent(p_270691_ -> this.setBillboardConstraints(p_270691_.getFirst()));
         }
 
-        if (p_270854_.contains("view_range", 99)) {
-            this.setViewRange(p_270854_.getFloat("view_range"));
+        if (compound.contains("view_range", 99)) {
+            this.setViewRange(compound.getFloat("view_range"));
         }
 
-        if (p_270854_.contains("shadow_radius", 99)) {
-            this.setShadowRadius(p_270854_.getFloat("shadow_radius"));
+        if (compound.contains("shadow_radius", 99)) {
+            this.setShadowRadius(compound.getFloat("shadow_radius"));
         }
 
-        if (p_270854_.contains("shadow_strength", 99)) {
-            this.setShadowStrength(p_270854_.getFloat("shadow_strength"));
+        if (compound.contains("shadow_strength", 99)) {
+            this.setShadowStrength(compound.getFloat("shadow_strength"));
         }
 
-        if (p_270854_.contains("width", 99)) {
-            this.setWidth(p_270854_.getFloat("width"));
+        if (compound.contains("width", 99)) {
+            this.setWidth(compound.getFloat("width"));
         }
 
-        if (p_270854_.contains("height", 99)) {
-            this.setHeight(p_270854_.getFloat("height"));
+        if (compound.contains("height", 99)) {
+            this.setHeight(compound.getFloat("height"));
         }
 
-        if (p_270854_.contains("glow_color_override", 99)) {
-            this.setGlowColorOverride(p_270854_.getInt("glow_color_override"));
+        if (compound.contains("glow_color_override", 99)) {
+            this.setGlowColorOverride(compound.getInt("glow_color_override"));
         }
 
-        if (p_270854_.contains("brightness", 10)) {
+        if (compound.contains("brightness", 10)) {
             Brightness.CODEC
-                .decode(NbtOps.INSTANCE, p_270854_.get("brightness"))
+                .decode(NbtOps.INSTANCE, compound.get("brightness"))
                 .resultOrPartial(Util.prefix("Display entity", LOGGER::error))
                 .ifPresent(p_270247_ -> this.setBrightnessOverride(p_270247_.getFirst()));
         } else {
@@ -267,39 +270,39 @@ public abstract class Display extends Entity {
         }
     }
 
-    private void setTransformation(Transformation p_270186_) {
-        this.entityData.set(DATA_TRANSLATION_ID, p_270186_.getTranslation());
-        this.entityData.set(DATA_LEFT_ROTATION_ID, p_270186_.getLeftRotation());
-        this.entityData.set(DATA_SCALE_ID, p_270186_.getScale());
-        this.entityData.set(DATA_RIGHT_ROTATION_ID, p_270186_.getRightRotation());
+    private void setTransformation(Transformation transformation) {
+        this.entityData.set(DATA_TRANSLATION_ID, transformation.getTranslation());
+        this.entityData.set(DATA_LEFT_ROTATION_ID, transformation.getLeftRotation());
+        this.entityData.set(DATA_SCALE_ID, transformation.getScale());
+        this.entityData.set(DATA_RIGHT_ROTATION_ID, transformation.getRightRotation());
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_270779_) {
+    protected void addAdditionalSaveData(CompoundTag compound) {
         Transformation.EXTENDED_CODEC
             .encodeStart(NbtOps.INSTANCE, createTransformation(this.entityData))
-            .ifSuccess(p_270528_ -> p_270779_.put("transformation", p_270528_));
+            .ifSuccess(p_270528_ -> compound.put("transformation", p_270528_));
         Display.BillboardConstraints.CODEC
             .encodeStart(NbtOps.INSTANCE, this.getBillboardConstraints())
-            .ifSuccess(p_270227_ -> p_270779_.put("billboard", p_270227_));
-        p_270779_.putInt("interpolation_duration", this.getTransformationInterpolationDuration());
-        p_270779_.putInt("teleport_duration", this.getPosRotInterpolationDuration());
-        p_270779_.putFloat("view_range", this.getViewRange());
-        p_270779_.putFloat("shadow_radius", this.getShadowRadius());
-        p_270779_.putFloat("shadow_strength", this.getShadowStrength());
-        p_270779_.putFloat("width", this.getWidth());
-        p_270779_.putFloat("height", this.getHeight());
-        p_270779_.putInt("glow_color_override", this.getGlowColorOverride());
+            .ifSuccess(p_270227_ -> compound.put("billboard", p_270227_));
+        compound.putInt("interpolation_duration", this.getTransformationInterpolationDuration());
+        compound.putInt("teleport_duration", this.getPosRotInterpolationDuration());
+        compound.putFloat("view_range", this.getViewRange());
+        compound.putFloat("shadow_radius", this.getShadowRadius());
+        compound.putFloat("shadow_strength", this.getShadowStrength());
+        compound.putFloat("width", this.getWidth());
+        compound.putFloat("height", this.getHeight());
+        compound.putInt("glow_color_override", this.getGlowColorOverride());
         Brightness brightness = this.getBrightnessOverride();
         if (brightness != null) {
-            Brightness.CODEC.encodeStart(NbtOps.INSTANCE, brightness).ifSuccess(p_270121_ -> p_270779_.put("brightness", p_270121_));
+            Brightness.CODEC.encodeStart(NbtOps.INSTANCE, brightness).ifSuccess(p_270121_ -> compound.put("brightness", p_270121_));
         }
     }
 
     @Override
-    public void lerpTo(double p_296267_, double p_295427_, double p_295172_, float p_294570_, float p_295085_, int p_295553_) {
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
         int i = this.getPosRotInterpolationDuration();
-        this.posRotInterpolationTarget = new Display.PosRotInterpolationTarget(i, p_296267_, p_295427_, p_295172_, (double)p_294570_, (double)p_295085_);
+        this.posRotInterpolationTarget = new Display.PosRotInterpolationTarget(i, x, y, z, (double)yRot, (double)xRot);
     }
 
     @Override
@@ -347,40 +350,40 @@ public abstract class Display extends Entity {
         return this.renderState;
     }
 
-    private void setTransformationInterpolationDuration(int p_295945_) {
-        this.entityData.set(DATA_TRANSFORMATION_INTERPOLATION_DURATION_ID, p_295945_);
+    private void setTransformationInterpolationDuration(int transformationInterpolationDuration) {
+        this.entityData.set(DATA_TRANSFORMATION_INTERPOLATION_DURATION_ID, transformationInterpolationDuration);
     }
 
     private int getTransformationInterpolationDuration() {
         return this.entityData.get(DATA_TRANSFORMATION_INTERPOLATION_DURATION_ID);
     }
 
-    private void setTransformationInterpolationDelay(int p_296116_) {
-        this.entityData.set(DATA_TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS_ID, p_296116_, true);
+    private void setTransformationInterpolationDelay(int transformationInterpolationDelay) {
+        this.entityData.set(DATA_TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS_ID, transformationInterpolationDelay, true);
     }
 
     private int getTransformationInterpolationDelay() {
         return this.entityData.get(DATA_TRANSFORMATION_INTERPOLATION_START_DELTA_TICKS_ID);
     }
 
-    private void setPosRotInterpolationDuration(int p_295015_) {
-        this.entityData.set(DATA_POS_ROT_INTERPOLATION_DURATION_ID, p_295015_);
+    private void setPosRotInterpolationDuration(int posRotInterpolationDuration) {
+        this.entityData.set(DATA_POS_ROT_INTERPOLATION_DURATION_ID, posRotInterpolationDuration);
     }
 
     private int getPosRotInterpolationDuration() {
         return this.entityData.get(DATA_POS_ROT_INTERPOLATION_DURATION_ID);
     }
 
-    private void setBillboardConstraints(Display.BillboardConstraints p_270345_) {
-        this.entityData.set(DATA_BILLBOARD_RENDER_CONSTRAINTS_ID, p_270345_.getId());
+    private void setBillboardConstraints(Display.BillboardConstraints billboardConstraints) {
+        this.entityData.set(DATA_BILLBOARD_RENDER_CONSTRAINTS_ID, billboardConstraints.getId());
     }
 
     private Display.BillboardConstraints getBillboardConstraints() {
         return Display.BillboardConstraints.BY_ID.apply(this.entityData.get(DATA_BILLBOARD_RENDER_CONSTRAINTS_ID));
     }
 
-    private void setBrightnessOverride(@Nullable Brightness p_270461_) {
-        this.entityData.set(DATA_BRIGHTNESS_OVERRIDE_ID, p_270461_ != null ? p_270461_.pack() : -1);
+    private void setBrightnessOverride(@Nullable Brightness brightnessOverride) {
+        this.entityData.set(DATA_BRIGHTNESS_OVERRIDE_ID, brightnessOverride != null ? brightnessOverride.pack() : -1);
     }
 
     @Nullable
@@ -393,57 +396,57 @@ public abstract class Display extends Entity {
         return this.entityData.get(DATA_BRIGHTNESS_OVERRIDE_ID);
     }
 
-    private void setViewRange(float p_270907_) {
-        this.entityData.set(DATA_VIEW_RANGE_ID, p_270907_);
+    private void setViewRange(float viewRange) {
+        this.entityData.set(DATA_VIEW_RANGE_ID, viewRange);
     }
 
     private float getViewRange() {
         return this.entityData.get(DATA_VIEW_RANGE_ID);
     }
 
-    private void setShadowRadius(float p_270122_) {
-        this.entityData.set(DATA_SHADOW_RADIUS_ID, p_270122_);
+    private void setShadowRadius(float shadowRadius) {
+        this.entityData.set(DATA_SHADOW_RADIUS_ID, shadowRadius);
     }
 
     private float getShadowRadius() {
         return this.entityData.get(DATA_SHADOW_RADIUS_ID);
     }
 
-    private void setShadowStrength(float p_270866_) {
-        this.entityData.set(DATA_SHADOW_STRENGTH_ID, p_270866_);
+    private void setShadowStrength(float shadowStrength) {
+        this.entityData.set(DATA_SHADOW_STRENGTH_ID, shadowStrength);
     }
 
     private float getShadowStrength() {
         return this.entityData.get(DATA_SHADOW_STRENGTH_ID);
     }
 
-    private void setWidth(float p_270741_) {
-        this.entityData.set(DATA_WIDTH_ID, p_270741_);
+    private void setWidth(float width) {
+        this.entityData.set(DATA_WIDTH_ID, width);
     }
 
     private float getWidth() {
         return this.entityData.get(DATA_WIDTH_ID);
     }
 
-    private void setHeight(float p_270716_) {
-        this.entityData.set(DATA_HEIGHT_ID, p_270716_);
+    private void setHeight(float height) {
+        this.entityData.set(DATA_HEIGHT_ID, height);
     }
 
     private int getGlowColorOverride() {
         return this.entityData.get(DATA_GLOW_COLOR_OVERRIDE_ID);
     }
 
-    private void setGlowColorOverride(int p_270784_) {
-        this.entityData.set(DATA_GLOW_COLOR_OVERRIDE_ID, p_270784_);
+    private void setGlowColorOverride(int glowColorOverride) {
+        this.entityData.set(DATA_GLOW_COLOR_OVERRIDE_ID, glowColorOverride);
     }
 
-    public float calculateInterpolationProgress(float p_272675_) {
+    public float calculateInterpolationProgress(float partialTick) {
         int i = this.interpolationDuration;
         if (i <= 0) {
             return 1.0F;
         } else {
             float f = (float)((long)this.tickCount - this.interpolationStartClientTick);
-            float f1 = f + p_272675_;
+            float f1 = f + partialTick;
             float f2 = Mth.clamp(Mth.inverseLerp(f1, 0.0F, (float)i), 0.0F, 1.0F);
             this.lastProgress = f2;
             return f2;
@@ -454,9 +457,12 @@ public abstract class Display extends Entity {
         return this.entityData.get(DATA_HEIGHT_ID);
     }
 
+    /**
+     * Sets the x,y,z of the entity from the given parameters. Also seems to set up a bounding box.
+     */
     @Override
-    public void setPos(double p_270091_, double p_270983_, double p_270419_) {
-        super.setPos(p_270091_, p_270983_, p_270419_);
+    public void setPos(double x, double y, double z) {
+        super.setPos(x, y, z);
         this.updateCulling();
     }
 
@@ -475,9 +481,12 @@ public abstract class Display extends Entity {
         }
     }
 
+    /**
+     * Checks if the entity is in range to render.
+     */
     @Override
-    public boolean shouldRenderAtSqrDistance(double p_270991_) {
-        return p_270991_ < Mth.square((double)this.getViewRange() * 64.0 * getViewScale());
+    public boolean shouldRenderAtSqrDistance(double distance) {
+        return distance < Mth.square((double)this.getViewRange() * 64.0 * getViewScale());
     }
 
     @Override
@@ -497,10 +506,10 @@ public abstract class Display extends Entity {
         );
     }
 
-    private Display.RenderState createInterpolatedRenderState(Display.RenderState p_277365_, float p_277948_) {
-        Transformation transformation = p_277365_.transformation.get(p_277948_);
-        float f = p_277365_.shadowRadius.get(p_277948_);
-        float f1 = p_277365_.shadowStrength.get(p_277948_);
+    private Display.RenderState createInterpolatedRenderState(Display.RenderState renderState, float partialTick) {
+        Transformation transformation = renderState.transformation.get(partialTick);
+        float f = renderState.shadowRadius.get(partialTick);
+        float f1 = renderState.shadowStrength.get(partialTick);
         return new Display.RenderState(
             new Display.TransformationInterpolator(transformation, createTransformation(this.entityData)),
             this.getBillboardConstraints(),
@@ -524,9 +533,9 @@ public abstract class Display extends Entity {
         private final byte id;
         private final String name;
 
-        private BillboardConstraints(byte p_270785_, String p_270544_) {
-            this.name = p_270544_;
-            this.id = p_270785_;
+        private BillboardConstraints(byte id, String name) {
+            this.name = name;
+            this.id = id;
         }
 
         @Override
@@ -547,20 +556,20 @@ public abstract class Display extends Entity {
         @Nullable
         private Display.BlockDisplay.BlockRenderState blockRenderState;
 
-        public BlockDisplay(EntityType<?> p_271022_, Level p_270442_) {
-            super(p_271022_, p_270442_);
+        public BlockDisplay(EntityType<?> entityType, Level level) {
+            super(entityType, level);
         }
 
         @Override
-        protected void defineSynchedData(SynchedEntityData.Builder p_326452_) {
-            super.defineSynchedData(p_326452_);
-            p_326452_.define(DATA_BLOCK_STATE_ID, Blocks.AIR.defaultBlockState());
+        protected void defineSynchedData(SynchedEntityData.Builder builder) {
+            super.defineSynchedData(builder);
+            builder.define(DATA_BLOCK_STATE_ID, Blocks.AIR.defaultBlockState());
         }
 
         @Override
-        public void onSyncedDataUpdated(EntityDataAccessor<?> p_277476_) {
-            super.onSyncedDataUpdated(p_277476_);
-            if (p_277476_.equals(DATA_BLOCK_STATE_ID)) {
+        public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+            super.onSyncedDataUpdated(key);
+            if (key.equals(DATA_BLOCK_STATE_ID)) {
                 this.updateRenderState = true;
             }
         }
@@ -569,20 +578,23 @@ public abstract class Display extends Entity {
             return this.entityData.get(DATA_BLOCK_STATE_ID);
         }
 
-        private void setBlockState(BlockState p_270267_) {
-            this.entityData.set(DATA_BLOCK_STATE_ID, p_270267_);
+        private void setBlockState(BlockState blockState) {
+            this.entityData.set(DATA_BLOCK_STATE_ID, blockState);
+        }
+
+        /**
+         * (abstract) Protected helper method to read subclass entity data from NBT.
+         */
+        @Override
+        protected void readAdditionalSaveData(CompoundTag compound) {
+            super.readAdditionalSaveData(compound);
+            this.setBlockState(NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), compound.getCompound("block_state")));
         }
 
         @Override
-        protected void readAdditionalSaveData(CompoundTag p_270139_) {
-            super.readAdditionalSaveData(p_270139_);
-            this.setBlockState(NbtUtils.readBlockState(this.level().holderLookup(Registries.BLOCK), p_270139_.getCompound("block_state")));
-        }
-
-        @Override
-        protected void addAdditionalSaveData(CompoundTag p_270469_) {
-            super.addAdditionalSaveData(p_270469_);
-            p_270469_.put("block_state", NbtUtils.writeBlockState(this.getBlockState()));
+        protected void addAdditionalSaveData(CompoundTag compound) {
+            super.addAdditionalSaveData(compound);
+            compound.put("block_state", NbtUtils.writeBlockState(this.getBlockState()));
         }
 
         @Nullable
@@ -591,7 +603,7 @@ public abstract class Display extends Entity {
         }
 
         @Override
-        protected void updateRenderSubState(boolean p_277802_, float p_277688_) {
+        protected void updateRenderSubState(boolean interpolate, float partialTick) {
             this.blockRenderState = new Display.BlockDisplay.BlockRenderState(this.getBlockState());
         }
 
@@ -608,29 +620,29 @@ public abstract class Display extends Entity {
 
     @FunctionalInterface
     public interface FloatInterpolator {
-        static Display.FloatInterpolator constant(float p_277894_) {
-            return p_278040_ -> p_277894_;
+        static Display.FloatInterpolator constant(float value) {
+            return p_278040_ -> value;
         }
 
-        float get(float p_270330_);
+        float get(float partialTick);
     }
 
     @FunctionalInterface
     public interface GenericInterpolator<T> {
-        static <T> Display.GenericInterpolator<T> constant(T p_277718_) {
-            return p_277907_ -> p_277718_;
+        static <T> Display.GenericInterpolator<T> constant(T value) {
+            return p_277907_ -> value;
         }
 
-        T get(float p_270270_);
+        T get(float partialTick);
     }
 
     @FunctionalInterface
     public interface IntInterpolator {
-        static Display.IntInterpolator constant(int p_277348_) {
-            return p_277356_ -> p_277348_;
+        static Display.IntInterpolator constant(int value) {
+            return p_277356_ -> value;
         }
 
-        int get(float p_270183_);
+        int get(float partialTick);
     }
 
     public static class ItemDisplay extends Display {
@@ -644,21 +656,21 @@ public abstract class Display extends Entity {
         @Nullable
         private Display.ItemDisplay.ItemRenderState itemRenderState;
 
-        public ItemDisplay(EntityType<?> p_270104_, Level p_270735_) {
-            super(p_270104_, p_270735_);
+        public ItemDisplay(EntityType<?> entityType, Level level) {
+            super(entityType, level);
         }
 
         @Override
-        protected void defineSynchedData(SynchedEntityData.Builder p_325946_) {
-            super.defineSynchedData(p_325946_);
-            p_325946_.define(DATA_ITEM_STACK_ID, ItemStack.EMPTY);
-            p_325946_.define(DATA_ITEM_DISPLAY_ID, ItemDisplayContext.NONE.getId());
+        protected void defineSynchedData(SynchedEntityData.Builder builder) {
+            super.defineSynchedData(builder);
+            builder.define(DATA_ITEM_STACK_ID, ItemStack.EMPTY);
+            builder.define(DATA_ITEM_DISPLAY_ID, ItemDisplayContext.NONE.getId());
         }
 
         @Override
-        public void onSyncedDataUpdated(EntityDataAccessor<?> p_277793_) {
-            super.onSyncedDataUpdated(p_277793_);
-            if (DATA_ITEM_STACK_ID.equals(p_277793_) || DATA_ITEM_DISPLAY_ID.equals(p_277793_)) {
+        public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+            super.onSyncedDataUpdated(key);
+            if (DATA_ITEM_STACK_ID.equals(key) || DATA_ITEM_DISPLAY_ID.equals(key)) {
                 this.updateRenderState = true;
             }
         }
@@ -667,48 +679,51 @@ public abstract class Display extends Entity {
             return this.entityData.get(DATA_ITEM_STACK_ID);
         }
 
-        private void setItemStack(ItemStack p_270310_) {
-            this.entityData.set(DATA_ITEM_STACK_ID, p_270310_);
+        private void setItemStack(ItemStack itemStack) {
+            this.entityData.set(DATA_ITEM_STACK_ID, itemStack);
         }
 
-        private void setItemTransform(ItemDisplayContext p_270370_) {
-            this.entityData.set(DATA_ITEM_DISPLAY_ID, p_270370_.getId());
+        private void setItemTransform(ItemDisplayContext itemTransform) {
+            this.entityData.set(DATA_ITEM_DISPLAY_ID, itemTransform.getId());
         }
 
         private ItemDisplayContext getItemTransform() {
             return ItemDisplayContext.BY_ID.apply(this.entityData.get(DATA_ITEM_DISPLAY_ID));
         }
 
+        /**
+         * (abstract) Protected helper method to read subclass entity data from NBT.
+         */
         @Override
-        protected void readAdditionalSaveData(CompoundTag p_270713_) {
-            super.readAdditionalSaveData(p_270713_);
-            if (p_270713_.contains("item")) {
-                this.setItemStack(ItemStack.parse(this.registryAccess(), p_270713_.getCompound("item")).orElse(ItemStack.EMPTY));
+        protected void readAdditionalSaveData(CompoundTag compound) {
+            super.readAdditionalSaveData(compound);
+            if (compound.contains("item")) {
+                this.setItemStack(ItemStack.parse(this.registryAccess(), compound.getCompound("item")).orElse(ItemStack.EMPTY));
             } else {
                 this.setItemStack(ItemStack.EMPTY);
             }
 
-            if (p_270713_.contains("item_display", 8)) {
+            if (compound.contains("item_display", 8)) {
                 ItemDisplayContext.CODEC
-                    .decode(NbtOps.INSTANCE, p_270713_.get("item_display"))
+                    .decode(NbtOps.INSTANCE, compound.get("item_display"))
                     .resultOrPartial(Util.prefix("Display entity", Display.LOGGER::error))
                     .ifPresent(p_270456_ -> this.setItemTransform(p_270456_.getFirst()));
             }
         }
 
         @Override
-        protected void addAdditionalSaveData(CompoundTag p_270669_) {
-            super.addAdditionalSaveData(p_270669_);
+        protected void addAdditionalSaveData(CompoundTag compound) {
+            super.addAdditionalSaveData(compound);
             if (!this.getItemStack().isEmpty()) {
-                p_270669_.put("item", this.getItemStack().save(this.registryAccess()));
+                compound.put("item", this.getItemStack().save(this.registryAccess()));
             }
 
-            ItemDisplayContext.CODEC.encodeStart(NbtOps.INSTANCE, this.getItemTransform()).ifSuccess(p_270615_ -> p_270669_.put("item_display", p_270615_));
+            ItemDisplayContext.CODEC.encodeStart(NbtOps.INSTANCE, this.getItemTransform()).ifSuccess(p_270615_ -> compound.put("item_display", p_270615_));
         }
 
         @Override
-        public SlotAccess getSlot(int p_270599_) {
-            return p_270599_ == 0 ? this.slot : SlotAccess.NULL;
+        public SlotAccess getSlot(int slot) {
+            return slot == 0 ? this.slot : SlotAccess.NULL;
         }
 
         @Nullable
@@ -717,7 +732,7 @@ public abstract class Display extends Entity {
         }
 
         @Override
-        protected void updateRenderSubState(boolean p_277976_, float p_277708_) {
+        protected void updateRenderSubState(boolean interpolate, float partialTick) {
             ItemStack itemstack = this.getItemStack();
             itemstack.setEntityRepresentation(this);
             this.itemRenderState = new Display.ItemDisplay.ItemRenderState(itemstack, this.getItemTransform());
@@ -749,22 +764,22 @@ public abstract class Display extends Entity {
         final double targetYRot;
         final double targetXRot;
 
-        PosRotInterpolationTarget(int p_294253_, double p_294234_, double p_295719_, double p_294808_, double p_295750_, double p_295305_) {
-            this.steps = p_294253_;
-            this.targetX = p_294234_;
-            this.targetY = p_295719_;
-            this.targetZ = p_294808_;
-            this.targetYRot = p_295750_;
-            this.targetXRot = p_295305_;
+        PosRotInterpolationTarget(int steps, double targetX, double targetY, double targetZ, double targetYRot, double targetXRot) {
+            this.steps = steps;
+            this.targetX = targetX;
+            this.targetY = targetY;
+            this.targetZ = targetZ;
+            this.targetYRot = targetYRot;
+            this.targetXRot = targetXRot;
         }
 
-        void applyTargetPosAndRot(Entity p_294993_) {
-            p_294993_.setPos(this.targetX, this.targetY, this.targetZ);
-            p_294993_.setRot((float)this.targetYRot, (float)this.targetXRot);
+        void applyTargetPosAndRot(Entity entity) {
+            entity.setPos(this.targetX, this.targetY, this.targetZ);
+            entity.setRot((float)this.targetYRot, (float)this.targetXRot);
         }
 
-        void applyLerpStep(Entity p_294423_) {
-            p_294423_.lerpPositionAndRotationStep(this.steps, this.targetX, this.targetY, this.targetZ, this.targetYRot, this.targetXRot);
+        void applyLerpStep(Entity entity) {
+            entity.lerpPositionAndRotationStep(this.steps, this.targetX, this.targetY, this.targetZ, this.targetYRot, this.targetXRot);
         }
     }
 
@@ -809,24 +824,24 @@ public abstract class Display extends Entity {
         @Nullable
         private Display.TextDisplay.TextRenderState textRenderState;
 
-        public TextDisplay(EntityType<?> p_270708_, Level p_270736_) {
-            super(p_270708_, p_270736_);
+        public TextDisplay(EntityType<?> entityType, Level level) {
+            super(entityType, level);
         }
 
         @Override
-        protected void defineSynchedData(SynchedEntityData.Builder p_326450_) {
-            super.defineSynchedData(p_326450_);
-            p_326450_.define(DATA_TEXT_ID, Component.empty());
-            p_326450_.define(DATA_LINE_WIDTH_ID, 200);
-            p_326450_.define(DATA_BACKGROUND_COLOR_ID, 1073741824);
-            p_326450_.define(DATA_TEXT_OPACITY_ID, (byte)-1);
-            p_326450_.define(DATA_STYLE_FLAGS_ID, (byte)0);
+        protected void defineSynchedData(SynchedEntityData.Builder builder) {
+            super.defineSynchedData(builder);
+            builder.define(DATA_TEXT_ID, Component.empty());
+            builder.define(DATA_LINE_WIDTH_ID, 200);
+            builder.define(DATA_BACKGROUND_COLOR_ID, 1073741824);
+            builder.define(DATA_TEXT_OPACITY_ID, (byte)-1);
+            builder.define(DATA_STYLE_FLAGS_ID, (byte)0);
         }
 
         @Override
-        public void onSyncedDataUpdated(EntityDataAccessor<?> p_270797_) {
-            super.onSyncedDataUpdated(p_270797_);
-            if (TEXT_RENDER_STATE_IDS.contains(p_270797_.id())) {
+        public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+            super.onSyncedDataUpdated(key);
+            if (TEXT_RENDER_STATE_IDS.contains(key.id())) {
                 this.updateRenderState = true;
             }
         }
@@ -835,66 +850,69 @@ public abstract class Display extends Entity {
             return this.entityData.get(DATA_TEXT_ID);
         }
 
-        private void setText(Component p_270902_) {
-            this.entityData.set(DATA_TEXT_ID, p_270902_);
+        private void setText(Component text) {
+            this.entityData.set(DATA_TEXT_ID, text);
         }
 
         private int getLineWidth() {
             return this.entityData.get(DATA_LINE_WIDTH_ID);
         }
 
-        private void setLineWidth(int p_270545_) {
-            this.entityData.set(DATA_LINE_WIDTH_ID, p_270545_);
+        private void setLineWidth(int lineWidth) {
+            this.entityData.set(DATA_LINE_WIDTH_ID, lineWidth);
         }
 
         private byte getTextOpacity() {
             return this.entityData.get(DATA_TEXT_OPACITY_ID);
         }
 
-        private void setTextOpacity(byte p_270583_) {
-            this.entityData.set(DATA_TEXT_OPACITY_ID, p_270583_);
+        private void setTextOpacity(byte textOpacity) {
+            this.entityData.set(DATA_TEXT_OPACITY_ID, textOpacity);
         }
 
         private int getBackgroundColor() {
             return this.entityData.get(DATA_BACKGROUND_COLOR_ID);
         }
 
-        private void setBackgroundColor(int p_270241_) {
-            this.entityData.set(DATA_BACKGROUND_COLOR_ID, p_270241_);
+        private void setBackgroundColor(int backgroundColor) {
+            this.entityData.set(DATA_BACKGROUND_COLOR_ID, backgroundColor);
         }
 
         private byte getFlags() {
             return this.entityData.get(DATA_STYLE_FLAGS_ID);
         }
 
-        private void setFlags(byte p_270855_) {
-            this.entityData.set(DATA_STYLE_FLAGS_ID, p_270855_);
+        private void setFlags(byte flags) {
+            this.entityData.set(DATA_STYLE_FLAGS_ID, flags);
         }
 
-        private static byte loadFlag(byte p_270219_, CompoundTag p_270994_, String p_270958_, byte p_270701_) {
-            return p_270994_.getBoolean(p_270958_) ? (byte)(p_270219_ | p_270701_) : p_270219_;
+        private static byte loadFlag(byte currentValue, CompoundTag tag, String flag, byte mask) {
+            return tag.getBoolean(flag) ? (byte)(currentValue | mask) : currentValue;
         }
 
+        /**
+         * (abstract) Protected helper method to read subclass entity data from NBT.
+         */
         @Override
-        protected void readAdditionalSaveData(CompoundTag p_270714_) {
-            super.readAdditionalSaveData(p_270714_);
-            if (p_270714_.contains("line_width", 99)) {
-                this.setLineWidth(p_270714_.getInt("line_width"));
+        protected void readAdditionalSaveData(CompoundTag compound) {
+            super.readAdditionalSaveData(compound);
+            if (compound.contains("line_width", 99)) {
+                this.setLineWidth(compound.getInt("line_width"));
             }
 
-            if (p_270714_.contains("text_opacity", 99)) {
-                this.setTextOpacity(p_270714_.getByte("text_opacity"));
+            if (compound.contains("text_opacity", 99)) {
+                this.setTextOpacity(compound.getByte("text_opacity"));
             }
 
-            if (p_270714_.contains("background", 99)) {
-                this.setBackgroundColor(p_270714_.getInt("background"));
+            if (compound.contains("background", 99)) {
+                this.setBackgroundColor(compound.getInt("background"));
             }
 
-            byte b0 = loadFlag((byte)0, p_270714_, "shadow", (byte)1);
-            b0 = loadFlag(b0, p_270714_, "see_through", (byte)2);
-            b0 = loadFlag(b0, p_270714_, "default_background", (byte)4);
+            byte b0 = loadFlag((byte)0, compound, "shadow", (byte)1);
+            b0 = loadFlag(b0, compound, "see_through", (byte)2);
+            b0 = loadFlag(b0, compound, "default_background", (byte)4);
             Optional<Display.TextDisplay.Align> optional = Display.TextDisplay.Align.CODEC
-                .decode(NbtOps.INSTANCE, p_270714_.get("alignment"))
+                .decode(NbtOps.INSTANCE, compound.get("alignment"))
                 .resultOrPartial(Util.prefix("Display entity", Display.LOGGER::error))
                 .map(Pair::getFirst);
             if (optional.isPresent()) {
@@ -906,8 +924,8 @@ public abstract class Display extends Entity {
             }
 
             this.setFlags(b0);
-            if (p_270714_.contains("text", 8)) {
-                String s = p_270714_.getString("text");
+            if (compound.contains("text", 8)) {
+                String s = compound.getString("text");
 
                 try {
                     Component component = Component.Serializer.fromJson(s, this.registryAccess());
@@ -924,28 +942,28 @@ public abstract class Display extends Entity {
             }
         }
 
-        private static void storeFlag(byte p_270879_, CompoundTag p_270177_, String p_270294_, byte p_270853_) {
-            p_270177_.putBoolean(p_270294_, (p_270879_ & p_270853_) != 0);
+        private static void storeFlag(byte currentValue, CompoundTag tag, String flag, byte mask) {
+            tag.putBoolean(flag, (currentValue & mask) != 0);
         }
 
         @Override
-        protected void addAdditionalSaveData(CompoundTag p_270268_) {
-            super.addAdditionalSaveData(p_270268_);
-            p_270268_.putString("text", Component.Serializer.toJson(this.getText(), this.registryAccess()));
-            p_270268_.putInt("line_width", this.getLineWidth());
-            p_270268_.putInt("background", this.getBackgroundColor());
-            p_270268_.putByte("text_opacity", this.getTextOpacity());
+        protected void addAdditionalSaveData(CompoundTag compound) {
+            super.addAdditionalSaveData(compound);
+            compound.putString("text", Component.Serializer.toJson(this.getText(), this.registryAccess()));
+            compound.putInt("line_width", this.getLineWidth());
+            compound.putInt("background", this.getBackgroundColor());
+            compound.putByte("text_opacity", this.getTextOpacity());
             byte b0 = this.getFlags();
-            storeFlag(b0, p_270268_, "shadow", (byte)1);
-            storeFlag(b0, p_270268_, "see_through", (byte)2);
-            storeFlag(b0, p_270268_, "default_background", (byte)4);
-            Display.TextDisplay.Align.CODEC.encodeStart(NbtOps.INSTANCE, getAlign(b0)).ifSuccess(p_271001_ -> p_270268_.put("alignment", p_271001_));
+            storeFlag(b0, compound, "shadow", (byte)1);
+            storeFlag(b0, compound, "see_through", (byte)2);
+            storeFlag(b0, compound, "default_background", (byte)4);
+            Display.TextDisplay.Align.CODEC.encodeStart(NbtOps.INSTANCE, getAlign(b0)).ifSuccess(p_271001_ -> compound.put("alignment", p_271001_));
         }
 
         @Override
-        protected void updateRenderSubState(boolean p_277565_, float p_277967_) {
-            if (p_277565_ && this.textRenderState != null) {
-                this.textRenderState = this.createInterpolatedTextRenderState(this.textRenderState, p_277967_);
+        protected void updateRenderSubState(boolean interpolate, float partialTick) {
+            if (interpolate && this.textRenderState != null) {
+                this.textRenderState = this.createInterpolatedTextRenderState(this.textRenderState, partialTick);
             } else {
                 this.textRenderState = this.createFreshTextRenderState();
             }
@@ -968,9 +986,9 @@ public abstract class Display extends Entity {
             );
         }
 
-        private Display.TextDisplay.TextRenderState createInterpolatedTextRenderState(Display.TextDisplay.TextRenderState p_278000_, float p_277646_) {
-            int i = p_278000_.backgroundColor.get(p_277646_);
-            int j = p_278000_.textOpacity.get(p_277646_);
+        private Display.TextDisplay.TextRenderState createInterpolatedTextRenderState(Display.TextDisplay.TextRenderState renderState, float partialTick) {
+            int i = renderState.backgroundColor.get(partialTick);
+            int j = renderState.textOpacity.get(partialTick);
             return new Display.TextDisplay.TextRenderState(
                 this.getText(),
                 this.getLineWidth(),
@@ -980,10 +998,10 @@ public abstract class Display extends Entity {
             );
         }
 
-        public Display.TextDisplay.CachedInfo cacheDisplay(Display.TextDisplay.LineSplitter p_270682_) {
+        public Display.TextDisplay.CachedInfo cacheDisplay(Display.TextDisplay.LineSplitter splitter) {
             if (this.clientDisplayCache == null) {
                 if (this.textRenderState != null) {
-                    this.clientDisplayCache = p_270682_.split(this.textRenderState.text(), this.textRenderState.lineWidth());
+                    this.clientDisplayCache = splitter.split(this.textRenderState.text(), this.textRenderState.lineWidth());
                 } else {
                     this.clientDisplayCache = new Display.TextDisplay.CachedInfo(List.of(), 0);
                 }
@@ -992,11 +1010,11 @@ public abstract class Display extends Entity {
             return this.clientDisplayCache;
         }
 
-        public static Display.TextDisplay.Align getAlign(byte p_270911_) {
-            if ((p_270911_ & 8) != 0) {
+        public static Display.TextDisplay.Align getAlign(byte flags) {
+            if ((flags & 8) != 0) {
                 return Display.TextDisplay.Align.LEFT;
             } else {
-                return (p_270911_ & 16) != 0 ? Display.TextDisplay.Align.RIGHT : Display.TextDisplay.Align.CENTER;
+                return (flags & 16) != 0 ? Display.TextDisplay.Align.RIGHT : Display.TextDisplay.Align.CENTER;
             }
         }
 
@@ -1008,8 +1026,8 @@ public abstract class Display extends Entity {
             public static final Codec<Display.TextDisplay.Align> CODEC = StringRepresentable.fromEnum(Display.TextDisplay.Align::values);
             private final String name;
 
-            private Align(String p_270554_) {
-                this.name = p_270554_;
+            private Align(String name) {
+                this.name = name;
             }
 
             @Override
@@ -1026,7 +1044,7 @@ public abstract class Display extends Entity {
 
         @FunctionalInterface
         public interface LineSplitter {
-            Display.TextDisplay.CachedInfo split(Component p_270086_, int p_270526_);
+            Display.TextDisplay.CachedInfo split(Component text, int maxWidth);
         }
 
         public static record TextRenderState(

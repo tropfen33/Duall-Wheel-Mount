@@ -16,17 +16,20 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.AABB;
 
 public class LeadItem extends Item {
-    public LeadItem(Item.Properties p_42828_) {
-        super(p_42828_);
+    public LeadItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Called when this item is used when targeting a Block
+     */
     @Override
-    public InteractionResult useOn(UseOnContext p_42834_) {
-        Level level = p_42834_.getLevel();
-        BlockPos blockpos = p_42834_.getClickedPos();
+    public InteractionResult useOn(UseOnContext context) {
+        Level level = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
         BlockState blockstate = level.getBlockState(blockpos);
         if (blockstate.is(BlockTags.FENCES)) {
-            Player player = p_42834_.getPlayer();
+            Player player = context.getPlayer();
             if (!level.isClientSide && player != null) {
                 bindPlayerMobs(player, level, blockpos);
             }
@@ -37,13 +40,13 @@ public class LeadItem extends Item {
         }
     }
 
-    public static InteractionResult bindPlayerMobs(Player p_42830_, Level p_42831_, BlockPos p_42832_) {
+    public static InteractionResult bindPlayerMobs(Player player, Level level, BlockPos pos) {
         LeashFenceKnotEntity leashfenceknotentity = null;
-        List<Leashable> list = leashableInArea(p_42831_, p_42832_, p_353025_ -> p_353025_.getLeashHolder() == p_42830_);
+        List<Leashable> list = leashableInArea(level, pos, p_353025_ -> p_353025_.getLeashHolder() == player);
 
         for (Leashable leashable : list) {
             if (leashfenceknotentity == null) {
-                leashfenceknotentity = LeashFenceKnotEntity.getOrCreateKnot(p_42831_, p_42832_);
+                leashfenceknotentity = LeashFenceKnotEntity.getOrCreateKnot(level, pos);
                 leashfenceknotentity.playPlacementSound();
             }
 
@@ -51,21 +54,21 @@ public class LeadItem extends Item {
         }
 
         if (!list.isEmpty()) {
-            p_42831_.gameEvent(GameEvent.BLOCK_ATTACH, p_42832_, GameEvent.Context.of(p_42830_));
+            level.gameEvent(GameEvent.BLOCK_ATTACH, pos, GameEvent.Context.of(player));
             return InteractionResult.SUCCESS;
         } else {
             return InteractionResult.PASS;
         }
     }
 
-    public static List<Leashable> leashableInArea(Level p_353033_, BlockPos p_353031_, Predicate<Leashable> p_353062_) {
+    public static List<Leashable> leashableInArea(Level level, BlockPos pos, Predicate<Leashable> predicate) {
         double d0 = 7.0;
-        int i = p_353031_.getX();
-        int j = p_353031_.getY();
-        int k = p_353031_.getZ();
+        int i = pos.getX();
+        int j = pos.getY();
+        int k = pos.getZ();
         AABB aabb = new AABB((double)i - 7.0, (double)j - 7.0, (double)k - 7.0, (double)i + 7.0, (double)j + 7.0, (double)k + 7.0);
-        return p_353033_.getEntitiesOfClass(Entity.class, aabb, p_353023_ -> {
-            if (p_353023_ instanceof Leashable leashable && p_353062_.test(leashable)) {
+        return level.getEntitiesOfClass(Entity.class, aabb, p_353023_ -> {
+            if (p_353023_ instanceof Leashable leashable && predicate.test(leashable)) {
                 return true;
             }
 

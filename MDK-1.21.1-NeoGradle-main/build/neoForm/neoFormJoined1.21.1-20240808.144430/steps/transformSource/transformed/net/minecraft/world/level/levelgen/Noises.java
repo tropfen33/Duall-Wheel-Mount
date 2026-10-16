@@ -69,14 +69,14 @@ public class Noises {
     public static final ResourceKey<NormalNoise.NoiseParameters> NETHER_WART = createKey("nether_wart");
     public static final ResourceKey<NormalNoise.NoiseParameters> NETHER_STATE_SELECTOR = createKey("nether_state_selector");
 
-    private static ResourceKey<NormalNoise.NoiseParameters> createKey(String p_189310_) {
-        return ResourceKey.create(Registries.NOISE, ResourceLocation.withDefaultNamespace(p_189310_));
+    private static ResourceKey<NormalNoise.NoiseParameters> createKey(String key) {
+        return ResourceKey.create(Registries.NOISE, ResourceLocation.withDefaultNamespace(key));
     }
 
     public static NormalNoise instantiate(
-        HolderGetter<NormalNoise.NoiseParameters> p_256362_, PositionalRandomFactory p_256306_, ResourceKey<NormalNoise.NoiseParameters> p_256639_
+        HolderGetter<NormalNoise.NoiseParameters> noises, PositionalRandomFactory random, ResourceKey<NormalNoise.NoiseParameters> resourceKey
     ) {
-        Holder<NormalNoise.NoiseParameters> holder = p_256362_.getOrThrow(p_256639_);
-        return NormalNoise.create(p_256306_.fromHashOf(holder.unwrapKey().orElseThrow().location()), holder.value());
+        Holder<NormalNoise.NoiseParameters> holder = noises.getOrThrow(resourceKey);
+        return NormalNoise.create(random.fromHashOf(holder.unwrapKey().orElseThrow().location()), holder.value());
     }
 }

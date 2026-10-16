@@ -15,8 +15,8 @@ public record ClientboundDeleteChatPacket(MessageSignature.Packed messageSignatu
         this(MessageSignature.Packed.read(p_241415_));
     }
 
-    private void write(FriendlyByteBuf p_241358_) {
-        MessageSignature.Packed.write(p_241358_, this.messageSignature);
+    private void write(FriendlyByteBuf buffer) {
+        MessageSignature.Packed.write(buffer, this.messageSignature);
     }
 
     @Override
@@ -24,7 +24,10 @@ public record ClientboundDeleteChatPacket(MessageSignature.Packed messageSignatu
         return GamePacketTypes.CLIENTBOUND_DELETE_CHAT;
     }
 
-    public void handle(ClientGamePacketListener p_241426_) {
-        p_241426_.handleDeleteChat(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleDeleteChat(this);
     }
 }

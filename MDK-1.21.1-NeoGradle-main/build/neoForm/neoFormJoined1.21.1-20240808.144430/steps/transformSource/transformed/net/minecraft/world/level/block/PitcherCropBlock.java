@@ -45,161 +45,172 @@ public class PitcherCropBlock extends DoublePlantBlock implements BonemealableBl
         return CODEC;
     }
 
-    public PitcherCropBlock(BlockBehaviour.Properties p_277780_) {
-        super(p_277780_);
+    public PitcherCropBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_277448_) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         return this.defaultBlockState();
     }
 
     @Override
-    public VoxelShape getShape(BlockState p_277602_, BlockGetter p_277617_, BlockPos p_278005_, CollisionContext p_277514_) {
-        return p_277602_.getValue(HALF) == DoubleBlockHalf.UPPER
-            ? UPPER_SHAPE_BY_AGE[Math.min(Math.abs(4 - (p_277602_.getValue(AGE) + 1)), UPPER_SHAPE_BY_AGE.length - 1)]
-            : LOWER_SHAPE_BY_AGE[p_277602_.getValue(AGE)];
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return state.getValue(HALF) == DoubleBlockHalf.UPPER
+            ? UPPER_SHAPE_BY_AGE[Math.min(Math.abs(4 - (state.getValue(AGE) + 1)), UPPER_SHAPE_BY_AGE.length - 1)]
+            : LOWER_SHAPE_BY_AGE[state.getValue(AGE)];
     }
 
     @Override
-    public VoxelShape getCollisionShape(BlockState p_277609_, BlockGetter p_277398_, BlockPos p_278042_, CollisionContext p_277995_) {
-        if (p_277609_.getValue(AGE) == 0) {
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        if (state.getValue(AGE) == 0) {
             return COLLISION_SHAPE_BULB;
         } else {
-            return p_277609_.getValue(HALF) == DoubleBlockHalf.LOWER
+            return state.getValue(HALF) == DoubleBlockHalf.LOWER
                 ? COLLISION_SHAPE_CROP
-                : super.getCollisionShape(p_277609_, p_277398_, p_278042_, p_277995_);
+                : super.getCollisionShape(state, level, pos, context);
         }
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
     public BlockState updateShape(
-        BlockState p_277518_, Direction p_277700_, BlockState p_277660_, LevelAccessor p_277653_, BlockPos p_277982_, BlockPos p_278106_
+        BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos
     ) {
-        if (isDouble(p_277518_.getValue(AGE))) {
-            return super.updateShape(p_277518_, p_277700_, p_277660_, p_277653_, p_277982_, p_278106_);
+        if (isDouble(state.getValue(AGE))) {
+            return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
         } else {
-            return p_277518_.canSurvive(p_277653_, p_277982_) ? p_277518_ : Blocks.AIR.defaultBlockState();
+            return state.canSurvive(level, currentPos) ? state : Blocks.AIR.defaultBlockState();
         }
     }
 
     @Override
-    public boolean canSurvive(BlockState p_277671_, LevelReader p_277477_, BlockPos p_278085_) {
-        net.neoforged.neoforge.common.util.TriState soilDecision = p_277477_.getBlockState(p_278085_.below()).canSustainPlant(p_277477_, p_278085_.below(), Direction.UP, p_277671_);
-        return isLower(p_277671_) && !sufficientLight(p_277477_, p_278085_) ? soilDecision.isTrue() : super.canSurvive(p_277671_, p_277477_, p_278085_);
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        net.neoforged.neoforge.common.util.TriState soilDecision = level.getBlockState(pos.below()).canSustainPlant(level, pos.below(), Direction.UP, state);
+        return isLower(state) && !sufficientLight(level, pos) ? soilDecision.isTrue() : super.canSurvive(state, level, pos);
     }
 
     @Override
-    protected boolean mayPlaceOn(BlockState p_277418_, BlockGetter p_277461_, BlockPos p_277608_) {
-        return p_277418_.getBlock() instanceof net.minecraft.world.level.block.FarmBlock;
+    protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.getBlock() instanceof net.minecraft.world.level.block.FarmBlock;
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_277573_) {
-        p_277573_.add(AGE);
-        super.createBlockStateDefinition(p_277573_);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AGE);
+        super.createBlockStateDefinition(builder);
     }
 
     @Override
-    public void entityInside(BlockState p_279266_, Level p_279469_, BlockPos p_279119_, Entity p_279372_) {
-        if (p_279372_ instanceof Ravager && p_279469_.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
-            p_279469_.destroyBlock(p_279119_, true, p_279372_);
+    public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        if (entity instanceof Ravager && level.getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
+            level.destroyBlock(pos, true, entity);
         }
 
-        super.entityInside(p_279266_, p_279469_, p_279119_, p_279372_);
+        super.entityInside(state, level, pos, entity);
     }
 
     @Override
-    public boolean canBeReplaced(BlockState p_277627_, BlockPlaceContext p_277759_) {
+    public boolean canBeReplaced(BlockState state, BlockPlaceContext useContext) {
         return false;
     }
 
+    /**
+     * Called by BlockItem after this block has been placed.
+     */
     @Override
-    public void setPlacedBy(Level p_277432_, BlockPos p_277632_, BlockState p_277479_, LivingEntity p_277805_, ItemStack p_277663_) {
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
     }
 
     @Override
-    public boolean isRandomlyTicking(BlockState p_277483_) {
-        return p_277483_.getValue(HALF) == DoubleBlockHalf.LOWER && !this.isMaxAge(p_277483_);
+    public boolean isRandomlyTicking(BlockState state) {
+        return state.getValue(HALF) == DoubleBlockHalf.LOWER && !this.isMaxAge(state);
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    public void randomTick(BlockState p_277950_, ServerLevel p_277589_, BlockPos p_277937_, RandomSource p_277887_) {
-        float f = CropBlock.getGrowthSpeed(p_277950_, p_277589_, p_277937_);
-        boolean flag = p_277887_.nextInt((int)(25.0F / f) + 1) == 0;
+    public void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        float f = CropBlock.getGrowthSpeed(state, level, pos);
+        boolean flag = random.nextInt((int)(25.0F / f) + 1) == 0;
         if (flag) {
-            this.grow(p_277589_, p_277950_, p_277937_, 1);
+            this.grow(level, state, pos, 1);
         }
     }
 
-    private void grow(ServerLevel p_277975_, BlockState p_277349_, BlockPos p_277585_, int p_277498_) {
-        int i = Math.min(p_277349_.getValue(AGE) + p_277498_, 4);
-        if (this.canGrow(p_277975_, p_277585_, p_277349_, i)) {
-            BlockState blockstate = p_277349_.setValue(AGE, Integer.valueOf(i));
-            p_277975_.setBlock(p_277585_, blockstate, 2);
+    private void grow(ServerLevel level, BlockState state, BlockPos pos, int ageIncrement) {
+        int i = Math.min(state.getValue(AGE) + ageIncrement, 4);
+        if (this.canGrow(level, pos, state, i)) {
+            BlockState blockstate = state.setValue(AGE, Integer.valueOf(i));
+            level.setBlock(pos, blockstate, 2);
             if (isDouble(i)) {
-                p_277975_.setBlock(p_277585_.above(), blockstate.setValue(HALF, DoubleBlockHalf.UPPER), 3);
+                level.setBlock(pos.above(), blockstate.setValue(HALF, DoubleBlockHalf.UPPER), 3);
             }
         }
     }
 
-    private static boolean canGrowInto(LevelReader p_290010_, BlockPos p_277823_) {
-        BlockState blockstate = p_290010_.getBlockState(p_277823_);
+    private static boolean canGrowInto(LevelReader level, BlockPos pos) {
+        BlockState blockstate = level.getBlockState(pos);
         return blockstate.isAir() || blockstate.is(Blocks.PITCHER_CROP);
     }
 
-    private static boolean sufficientLight(LevelReader p_290018_, BlockPos p_290011_) {
-        return CropBlock.hasSufficientLight(p_290018_, p_290011_);
+    private static boolean sufficientLight(LevelReader level, BlockPos pos) {
+        return CropBlock.hasSufficientLight(level, pos);
     }
 
-    private static boolean isLower(BlockState p_279488_) {
-        return p_279488_.is(Blocks.PITCHER_CROP) && p_279488_.getValue(HALF) == DoubleBlockHalf.LOWER;
+    private static boolean isLower(BlockState state) {
+        return state.is(Blocks.PITCHER_CROP) && state.getValue(HALF) == DoubleBlockHalf.LOWER;
     }
 
-    private static boolean isDouble(int p_295217_) {
-        return p_295217_ >= 3;
+    private static boolean isDouble(int age) {
+        return age >= 3;
     }
 
-    private boolean canGrow(LevelReader p_290007_, BlockPos p_290014_, BlockState p_290017_, int p_290008_) {
-        return !this.isMaxAge(p_290017_) && sufficientLight(p_290007_, p_290014_) && (!isDouble(p_290008_) || canGrowInto(p_290007_, p_290014_.above()));
+    private boolean canGrow(LevelReader reader, BlockPos pos, BlockState state, int age) {
+        return !this.isMaxAge(state) && sufficientLight(reader, pos) && (!isDouble(age) || canGrowInto(reader, pos.above()));
     }
 
-    private boolean isMaxAge(BlockState p_277387_) {
-        return p_277387_.getValue(AGE) >= 4;
+    private boolean isMaxAge(BlockState state) {
+        return state.getValue(AGE) >= 4;
     }
 
     @Nullable
-    private PitcherCropBlock.PosAndState getLowerHalf(LevelReader p_290009_, BlockPos p_290016_, BlockState p_290015_) {
-        if (isLower(p_290015_)) {
-            return new PitcherCropBlock.PosAndState(p_290016_, p_290015_);
+    private PitcherCropBlock.PosAndState getLowerHalf(LevelReader level, BlockPos pos, BlockState state) {
+        if (isLower(state)) {
+            return new PitcherCropBlock.PosAndState(pos, state);
         } else {
-            BlockPos blockpos = p_290016_.below();
-            BlockState blockstate = p_290009_.getBlockState(blockpos);
+            BlockPos blockpos = pos.below();
+            BlockState blockstate = level.getBlockState(blockpos);
             return isLower(blockstate) ? new PitcherCropBlock.PosAndState(blockpos, blockstate) : null;
         }
     }
 
     @Override
-    public boolean isValidBonemealTarget(LevelReader p_277380_, BlockPos p_277500_, BlockState p_277715_) {
-        PitcherCropBlock.PosAndState pitchercropblock$posandstate = this.getLowerHalf(p_277380_, p_277500_, p_277715_);
+    public boolean isValidBonemealTarget(LevelReader level, BlockPos pos, BlockState state) {
+        PitcherCropBlock.PosAndState pitchercropblock$posandstate = this.getLowerHalf(level, pos, state);
         return pitchercropblock$posandstate == null
             ? false
             : this.canGrow(
-                p_277380_, pitchercropblock$posandstate.pos, pitchercropblock$posandstate.state, pitchercropblock$posandstate.state.getValue(AGE) + 1
+                level, pitchercropblock$posandstate.pos, pitchercropblock$posandstate.state, pitchercropblock$posandstate.state.getValue(AGE) + 1
             );
     }
 
     @Override
-    public boolean isBonemealSuccess(Level p_277920_, RandomSource p_277594_, BlockPos p_277401_, BlockState p_277434_) {
+    public boolean isBonemealSuccess(Level level, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public void performBonemeal(ServerLevel p_277717_, RandomSource p_277870_, BlockPos p_277836_, BlockState p_278034_) {
-        PitcherCropBlock.PosAndState pitchercropblock$posandstate = this.getLowerHalf(p_277717_, p_277836_, p_278034_);
+    public void performBonemeal(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) {
+        PitcherCropBlock.PosAndState pitchercropblock$posandstate = this.getLowerHalf(level, pos, state);
         if (pitchercropblock$posandstate != null) {
-            this.grow(p_277717_, pitchercropblock$posandstate.state, pitchercropblock$posandstate.pos, 1);
+            this.grow(level, pitchercropblock$posandstate.state, pitchercropblock$posandstate.pos, 1);
         }
     }
 

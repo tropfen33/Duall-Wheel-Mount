@@ -7,12 +7,12 @@ public class BandwidthDebugMonitor {
     private final AtomicInteger bytesReceived = new AtomicInteger();
     private final LocalSampleLogger bandwidthLogger;
 
-    public BandwidthDebugMonitor(LocalSampleLogger p_323860_) {
-        this.bandwidthLogger = p_323860_;
+    public BandwidthDebugMonitor(LocalSampleLogger bandwithLogger) {
+        this.bandwidthLogger = bandwithLogger;
     }
 
-    public void onReceive(int p_298836_) {
-        this.bytesReceived.getAndAdd(p_298836_);
+    public void onReceive(int amount) {
+        this.bytesReceived.getAndAdd(amount);
     }
 
     public void tick() {

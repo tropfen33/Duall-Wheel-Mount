@@ -9,12 +9,12 @@ import net.minecraft.world.level.levelgen.structure.BuiltinStructures;
 import net.minecraft.world.level.levelgen.structure.Structure;
 
 public class TradeRebalanceStructureTagsProvider extends TagsProvider<Structure> {
-    public TradeRebalanceStructureTagsProvider(PackOutput p_302237_, CompletableFuture<HolderLookup.Provider> p_302233_) {
-        super(p_302237_, Registries.STRUCTURE, p_302233_);
+    public TradeRebalanceStructureTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
+        super(output, Registries.STRUCTURE, lookupProvider);
     }
 
     @Override
-    protected void addTags(HolderLookup.Provider p_302229_) {
+    protected void addTags(HolderLookup.Provider provider) {
         this.tag(StructureTags.ON_SAVANNA_VILLAGE_MAPS).add(BuiltinStructures.VILLAGE_SAVANNA);
         this.tag(StructureTags.ON_DESERT_VILLAGE_MAPS).add(BuiltinStructures.VILLAGE_DESERT);
         this.tag(StructureTags.ON_PLAINS_VILLAGE_MAPS).add(BuiltinStructures.VILLAGE_PLAINS);

@@ -99,40 +99,44 @@ public class BlockColors {
         return blockcolors;
     }
 
-    public int getColor(BlockState p_92583_, Level p_92584_, BlockPos p_92585_) {
-        BlockColor blockcolor = this.blockColors.get(p_92583_.getBlock());
+    public int getColor(BlockState state, Level level, BlockPos pos) {
+        BlockColor blockcolor = this.blockColors.get(state.getBlock());
         if (blockcolor != null) {
-            return blockcolor.getColor(p_92583_, null, null, 0);
+            return blockcolor.getColor(state, null, null, 0);
         } else {
-            MapColor mapcolor = p_92583_.getMapColor(p_92584_, p_92585_);
+            MapColor mapcolor = state.getMapColor(level, pos);
             return mapcolor != null ? mapcolor.col : -1;
         }
     }
 
-    public int getColor(BlockState p_92578_, @Nullable BlockAndTintGetter p_92579_, @Nullable BlockPos p_92580_, int p_92581_) {
-        BlockColor blockcolor = this.blockColors.get(p_92578_.getBlock());
-        return blockcolor == null ? -1 : blockcolor.getColor(p_92578_, p_92579_, p_92580_, p_92581_);
+    public int getColor(BlockState state, @Nullable BlockAndTintGetter level, @Nullable BlockPos pos, int tintIndex) {
+        BlockColor blockcolor = this.blockColors.get(state.getBlock());
+        return blockcolor == null ? -1 : blockcolor.getColor(state, level, pos, tintIndex);
     }
 
-    /** @deprecated Register via {@link net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.Block} */
+    /**
+ * @deprecated Register via {@link
+ *             net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.Block
+ *             }
+ */
     @Deprecated
-    public void register(BlockColor p_92590_, Block... p_92591_) {
-        for (Block block : p_92591_) {
-            this.blockColors.put(block, p_92590_);
+    public void register(BlockColor blockColor, Block... blocks) {
+        for (Block block : blocks) {
+            this.blockColors.put(block, blockColor);
         }
     }
 
-    private void addColoringStates(Set<Property<?>> p_92593_, Block... p_92594_) {
-        for (Block block : p_92594_) {
-            this.coloringStates.put(block, p_92593_);
+    private void addColoringStates(Set<Property<?>> properties, Block... blocks) {
+        for (Block block : blocks) {
+            this.coloringStates.put(block, properties);
         }
     }
 
-    private void addColoringState(Property<?> p_92587_, Block... p_92588_) {
-        this.addColoringStates(ImmutableSet.of(p_92587_), p_92588_);
+    private void addColoringState(Property<?> property, Block... blocks) {
+        this.addColoringStates(ImmutableSet.of(property), blocks);
     }
 
-    public Set<Property<?>> getColoringProperties(Block p_92576_) {
-        return this.coloringStates.getOrDefault(p_92576_, ImmutableSet.of());
+    public Set<Property<?>> getColoringProperties(Block block) {
+        return this.coloringStates.getOrDefault(block, ImmutableSet.of());
     }
 }

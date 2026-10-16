@@ -12,17 +12,17 @@ public class MessageSignatureCache {
     private static final int DEFAULT_CAPACITY = 128;
     private final MessageSignature[] entries;
 
-    public MessageSignatureCache(int p_250894_) {
-        this.entries = new MessageSignature[p_250894_];
+    public MessageSignatureCache(int size) {
+        this.entries = new MessageSignature[size];
     }
 
     public static MessageSignatureCache createDefault() {
         return new MessageSignatureCache(128);
     }
 
-    public int pack(MessageSignature p_254157_) {
+    public int pack(MessageSignature signature) {
         for (int i = 0; i < this.entries.length; i++) {
-            if (p_254157_.equals(this.entries[i])) {
+            if (signature.equals(this.entries[i])) {
                 return i;
             }
         }
@@ -31,34 +31,34 @@ public class MessageSignatureCache {
     }
 
     @Nullable
-    public MessageSignature unpack(int p_253967_) {
-        return this.entries[p_253967_];
+    public MessageSignature unpack(int index) {
+        return this.entries[index];
     }
 
-    public void push(SignedMessageBody p_314937_, @Nullable MessageSignature p_314936_) {
-        List<MessageSignature> list = p_314937_.lastSeen().entries();
+    public void push(SignedMessageBody signedMessageBody, @Nullable MessageSignature signature) {
+        List<MessageSignature> list = signedMessageBody.lastSeen().entries();
         ArrayDeque<MessageSignature> arraydeque = new ArrayDeque<>(list.size() + 1);
         arraydeque.addAll(list);
-        if (p_314936_ != null) {
-            arraydeque.add(p_314936_);
+        if (signature != null) {
+            arraydeque.add(signature);
         }
 
         this.push(arraydeque);
     }
 
     @VisibleForTesting
-    void push(List<MessageSignature> p_248560_) {
-        this.push(new ArrayDeque<>(p_248560_));
+    void push(List<MessageSignature> chatMessages) {
+        this.push(new ArrayDeque<>(chatMessages));
     }
 
-    private void push(ArrayDeque<MessageSignature> p_251419_) {
-        Set<MessageSignature> set = new ObjectOpenHashSet<>(p_251419_);
+    private void push(ArrayDeque<MessageSignature> deque) {
+        Set<MessageSignature> set = new ObjectOpenHashSet<>(deque);
 
-        for (int i = 0; !p_251419_.isEmpty() && i < this.entries.length; i++) {
+        for (int i = 0; !deque.isEmpty() && i < this.entries.length; i++) {
             MessageSignature messagesignature = this.entries[i];
-            this.entries[i] = p_251419_.removeLast();
+            this.entries[i] = deque.removeLast();
             if (messagesignature != null && !set.contains(messagesignature)) {
-                p_251419_.addFirst(messagesignature);
+                deque.addFirst(messagesignature);
             }
         }
     }

@@ -25,18 +25,18 @@ public class BiasedToBottomInt extends IntProvider {
     private final int minInclusive;
     private final int maxInclusive;
 
-    private BiasedToBottomInt(int p_146364_, int p_146365_) {
-        this.minInclusive = p_146364_;
-        this.maxInclusive = p_146365_;
+    private BiasedToBottomInt(int minInclusive, int maxInclusive) {
+        this.minInclusive = minInclusive;
+        this.maxInclusive = maxInclusive;
     }
 
-    public static BiasedToBottomInt of(int p_146368_, int p_146369_) {
-        return new BiasedToBottomInt(p_146368_, p_146369_);
+    public static BiasedToBottomInt of(int minInclusive, int maxInclusive) {
+        return new BiasedToBottomInt(minInclusive, maxInclusive);
     }
 
     @Override
-    public int sample(RandomSource p_216832_) {
-        return this.minInclusive + p_216832_.nextInt(p_216832_.nextInt(this.maxInclusive - this.minInclusive + 1) + 1);
+    public int sample(RandomSource random) {
+        return this.minInclusive + random.nextInt(random.nextInt(this.maxInclusive - this.minInclusive + 1) + 1);
     }
 
     @Override

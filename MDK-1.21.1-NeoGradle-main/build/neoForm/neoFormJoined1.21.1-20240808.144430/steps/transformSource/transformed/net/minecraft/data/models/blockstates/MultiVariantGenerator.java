@@ -23,20 +23,20 @@ public class MultiVariantGenerator implements BlockStateGenerator {
     private final Set<Property<?>> seenProperties = Sets.newHashSet();
     private final List<PropertyDispatch> declaredPropertySets = Lists.newArrayList();
 
-    private MultiVariantGenerator(Block p_125251_, List<Variant> p_125252_) {
-        this.block = p_125251_;
-        this.baseVariants = p_125252_;
+    private MultiVariantGenerator(Block block, List<Variant> baseVariants) {
+        this.block = block;
+        this.baseVariants = baseVariants;
     }
 
-    public MultiVariantGenerator with(PropertyDispatch p_125272_) {
-        p_125272_.getDefinedProperties().forEach(p_339378_ -> {
+    public MultiVariantGenerator with(PropertyDispatch propertyDispatch) {
+        propertyDispatch.getDefinedProperties().forEach(p_339378_ -> {
             if (this.block.getStateDefinition().getProperty(p_339378_.getName()) != p_339378_) {
                 throw new IllegalStateException("Property " + p_339378_ + " is not defined for block " + this.block);
             } else if (!this.seenProperties.add((Property<?>)p_339378_)) {
                 throw new IllegalStateException("Values of property " + p_339378_ + " already defined for block " + this.block);
             }
         });
-        this.declaredPropertySets.add(p_125272_);
+        this.declaredPropertySets.add(propertyDispatch);
         return this;
     }
 
@@ -59,9 +59,9 @@ public class MultiVariantGenerator implements BlockStateGenerator {
         return jsonobject;
     }
 
-    private static List<Variant> mergeVariants(List<Variant> p_125278_, List<Variant> p_125279_) {
+    private static List<Variant> mergeVariants(List<Variant> variants1, List<Variant> variants2) {
         Builder<Variant> builder = ImmutableList.builder();
-        p_125278_.forEach(p_125276_ -> p_125279_.forEach(p_176306_ -> builder.add(Variant.merge(p_125276_, p_176306_))));
+        variants1.forEach(p_125276_ -> variants2.forEach(p_176306_ -> builder.add(Variant.merge(p_125276_, p_176306_))));
         return builder.build();
     }
 
@@ -70,15 +70,15 @@ public class MultiVariantGenerator implements BlockStateGenerator {
         return this.block;
     }
 
-    public static MultiVariantGenerator multiVariant(Block p_125255_) {
-        return new MultiVariantGenerator(p_125255_, ImmutableList.of(Variant.variant()));
+    public static MultiVariantGenerator multiVariant(Block block) {
+        return new MultiVariantGenerator(block, ImmutableList.of(Variant.variant()));
     }
 
-    public static MultiVariantGenerator multiVariant(Block p_125257_, Variant p_125258_) {
-        return new MultiVariantGenerator(p_125257_, ImmutableList.of(p_125258_));
+    public static MultiVariantGenerator multiVariant(Block block, Variant variant) {
+        return new MultiVariantGenerator(block, ImmutableList.of(variant));
     }
 
-    public static MultiVariantGenerator multiVariant(Block p_125260_, Variant... p_125261_) {
-        return new MultiVariantGenerator(p_125260_, ImmutableList.copyOf(p_125261_));
+    public static MultiVariantGenerator multiVariant(Block block, Variant... variants) {
+        return new MultiVariantGenerator(block, ImmutableList.copyOf(variants));
     }
 }

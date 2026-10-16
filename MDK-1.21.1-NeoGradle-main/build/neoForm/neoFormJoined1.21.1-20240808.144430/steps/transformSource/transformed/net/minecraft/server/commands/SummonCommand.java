@@ -29,12 +29,12 @@ public class SummonCommand {
     private static final SimpleCommandExceptionType ERROR_DUPLICATE_UUID = new SimpleCommandExceptionType(Component.translatable("commands.summon.failed.uuid"));
     private static final SimpleCommandExceptionType INVALID_POSITION = new SimpleCommandExceptionType(Component.translatable("commands.summon.invalidPosition"));
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_250343_, CommandBuildContext p_250122_) {
-        p_250343_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
+        dispatcher.register(
             Commands.literal("summon")
                 .requires(p_138819_ -> p_138819_.hasPermission(2))
                 .then(
-                    Commands.argument("entity", ResourceArgument.resource(p_250122_, Registries.ENTITY_TYPE))
+                    Commands.argument("entity", ResourceArgument.resource(context, Registries.ENTITY_TYPE))
                         .suggests(SuggestionProviders.SUMMONABLE_ENTITIES)
                         .executes(
                             p_248175_ -> spawnEntity(
@@ -74,25 +74,25 @@ public class SummonCommand {
     }
 
     public static Entity createEntity(
-        CommandSourceStack p_270582_, Holder.Reference<EntityType<?>> p_270277_, Vec3 p_270366_, CompoundTag p_270197_, boolean p_270947_
+        CommandSourceStack source, Holder.Reference<EntityType<?>> type, Vec3 pos, CompoundTag tag, boolean randomizeProperties
     ) throws CommandSyntaxException {
-        BlockPos blockpos = BlockPos.containing(p_270366_);
+        BlockPos blockpos = BlockPos.containing(pos);
         if (!Level.isInSpawnableBounds(blockpos)) {
             throw INVALID_POSITION.create();
         } else {
-            CompoundTag compoundtag = p_270197_.copy();
-            compoundtag.putString("id", p_270277_.key().location().toString());
-            ServerLevel serverlevel = p_270582_.getLevel();
+            CompoundTag compoundtag = tag.copy();
+            compoundtag.putString("id", type.key().location().toString());
+            ServerLevel serverlevel = source.getLevel();
             Entity entity = EntityType.loadEntityRecursive(compoundtag, serverlevel, p_138828_ -> {
-                p_138828_.moveTo(p_270366_.x, p_270366_.y, p_270366_.z, p_138828_.getYRot(), p_138828_.getXRot());
+                p_138828_.moveTo(pos.x, pos.y, pos.z, p_138828_.getYRot(), p_138828_.getXRot());
                 return p_138828_;
             });
             if (entity == null) {
                 throw ERROR_FAILED.create();
             } else {
-                if (p_270947_ && entity instanceof Mob) {
+                if (randomizeProperties && entity instanceof Mob) {
                     ((Mob)entity)
-                        .finalizeSpawn(p_270582_.getLevel(), p_270582_.getLevel().getCurrentDifficultyAt(entity.blockPosition()), MobSpawnType.COMMAND, null);
+                        .finalizeSpawn(source.getLevel(), source.getLevel().getCurrentDifficultyAt(entity.blockPosition()), MobSpawnType.COMMAND, null);
                 }
 
                 if (!serverlevel.tryAddFreshEntityWithPassengers(entity)) {
@@ -105,10 +105,10 @@ public class SummonCommand {
     }
 
     private static int spawnEntity(
-        CommandSourceStack p_249752_, Holder.Reference<EntityType<?>> p_251948_, Vec3 p_251429_, CompoundTag p_250568_, boolean p_250229_
+        CommandSourceStack source, Holder.Reference<EntityType<?>> type, Vec3 pos, CompoundTag tag, boolean randomizeProperties
     ) throws CommandSyntaxException {
-        Entity entity = createEntity(p_249752_, p_251948_, p_251429_, p_250568_, p_250229_);
-        p_249752_.sendSuccess(() -> Component.translatable("commands.summon.success", entity.getDisplayName()), true);
+        Entity entity = createEntity(source, type, pos, tag, randomizeProperties);
+        source.sendSuccess(() -> Component.translatable("commands.summon.success", entity.getDisplayName()), true);
         return 1;
     }
 }

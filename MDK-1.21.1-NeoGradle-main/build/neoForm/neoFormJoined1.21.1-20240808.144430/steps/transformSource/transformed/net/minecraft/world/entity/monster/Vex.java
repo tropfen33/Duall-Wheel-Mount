@@ -53,8 +53,8 @@ public class Vex extends Monster implements TraceableEntity {
     private boolean hasLimitedLife;
     private int limitedLifeTicks;
 
-    public Vex(EntityType<? extends Vex> p_33984_, Level p_33985_) {
-        super(p_33984_, p_33985_);
+    public Vex(EntityType<? extends Vex> entityType, Level level) {
+        super(entityType, level);
         this.moveControl = new Vex.VexMoveControl(this);
         this.xpReward = 3;
     }
@@ -65,8 +65,8 @@ public class Vex extends Monster implements TraceableEntity {
     }
 
     @Override
-    public void move(MoverType p_33997_, Vec3 p_33998_) {
-        super.move(p_33997_, p_33998_);
+    public void move(MoverType type, Vec3 pos) {
+        super.move(type, pos);
         this.checkInsideBlocks();
     }
 
@@ -100,42 +100,48 @@ public class Vex extends Monster implements TraceableEntity {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326059_) {
-        super.defineSynchedData(p_326059_);
-        p_326059_.define(DATA_FLAGS_ID, (byte)0);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_FLAGS_ID, (byte)0);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_34008_) {
-        super.readAdditionalSaveData(p_34008_);
-        if (p_34008_.contains("BoundX")) {
-            this.boundOrigin = new BlockPos(p_34008_.getInt("BoundX"), p_34008_.getInt("BoundY"), p_34008_.getInt("BoundZ"));
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.contains("BoundX")) {
+            this.boundOrigin = new BlockPos(compound.getInt("BoundX"), compound.getInt("BoundY"), compound.getInt("BoundZ"));
         }
 
-        if (p_34008_.contains("LifeTicks")) {
-            this.setLimitedLife(p_34008_.getInt("LifeTicks"));
+        if (compound.contains("LifeTicks")) {
+            this.setLimitedLife(compound.getInt("LifeTicks"));
         }
     }
 
+    /**
+     * Prepares this entity in new dimension by copying NBT data from entity in old dimension
+     */
     @Override
-    public void restoreFrom(Entity p_306094_) {
-        super.restoreFrom(p_306094_);
-        if (p_306094_ instanceof Vex vex) {
+    public void restoreFrom(Entity entity) {
+        super.restoreFrom(entity);
+        if (entity instanceof Vex vex) {
             this.owner = vex.getOwner();
         }
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_34015_) {
-        super.addAdditionalSaveData(p_34015_);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
         if (this.boundOrigin != null) {
-            p_34015_.putInt("BoundX", this.boundOrigin.getX());
-            p_34015_.putInt("BoundY", this.boundOrigin.getY());
-            p_34015_.putInt("BoundZ", this.boundOrigin.getZ());
+            compound.putInt("BoundX", this.boundOrigin.getX());
+            compound.putInt("BoundY", this.boundOrigin.getY());
+            compound.putInt("BoundZ", this.boundOrigin.getZ());
         }
 
         if (this.hasLimitedLife) {
-            p_34015_.putInt("LifeTicks", this.limitedLifeTicks);
+            compound.putInt("LifeTicks", this.limitedLifeTicks);
         }
     }
 
@@ -149,21 +155,21 @@ public class Vex extends Monster implements TraceableEntity {
         return this.boundOrigin;
     }
 
-    public void setBoundOrigin(@Nullable BlockPos p_34034_) {
-        this.boundOrigin = p_34034_;
+    public void setBoundOrigin(@Nullable BlockPos boundOrigin) {
+        this.boundOrigin = boundOrigin;
     }
 
-    private boolean getVexFlag(int p_34011_) {
+    private boolean getVexFlag(int mask) {
         int i = this.entityData.get(DATA_FLAGS_ID);
-        return (i & p_34011_) != 0;
+        return (i & mask) != 0;
     }
 
-    private void setVexFlag(int p_33990_, boolean p_33991_) {
+    private void setVexFlag(int mask, boolean value) {
         int i = this.entityData.get(DATA_FLAGS_ID);
-        if (p_33991_) {
-            i |= p_33990_;
+        if (value) {
+            i |= mask;
         } else {
-            i &= ~p_33990_;
+            i &= ~mask;
         }
 
         this.entityData.set(DATA_FLAGS_ID, (byte)(i & 0xFF));
@@ -173,17 +179,17 @@ public class Vex extends Monster implements TraceableEntity {
         return this.getVexFlag(1);
     }
 
-    public void setIsCharging(boolean p_34043_) {
-        this.setVexFlag(1, p_34043_);
+    public void setIsCharging(boolean charging) {
+        this.setVexFlag(1, charging);
     }
 
-    public void setOwner(Mob p_33995_) {
-        this.owner = p_33995_;
+    public void setOwner(Mob owner) {
+        this.owner = owner;
     }
 
-    public void setLimitedLife(int p_33988_) {
+    public void setLimitedLife(int limitedLifeTicks) {
         this.hasLimitedLife = true;
-        this.limitedLifeTicks = p_33988_;
+        this.limitedLifeTicks = limitedLifeTicks;
     }
 
     @Override
@@ -197,7 +203,7 @@ public class Vex extends Monster implements TraceableEntity {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_34023_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.VEX_HURT;
     }
 
@@ -208,15 +214,15 @@ public class Vex extends Monster implements TraceableEntity {
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_34002_, DifficultyInstance p_34003_, MobSpawnType p_34004_, @Nullable SpawnGroupData p_34005_) {
-        RandomSource randomsource = p_34002_.getRandom();
-        this.populateDefaultEquipmentSlots(randomsource, p_34003_);
-        this.populateDefaultEquipmentEnchantments(p_34002_, randomsource, p_34003_);
-        return super.finalizeSpawn(p_34002_, p_34003_, p_34004_, p_34005_);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        RandomSource randomsource = level.getRandom();
+        this.populateDefaultEquipmentSlots(randomsource, difficulty);
+        this.populateDefaultEquipmentEnchantments(level, randomsource, difficulty);
+        return super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData);
     }
 
     @Override
-    protected void populateDefaultEquipmentSlots(RandomSource p_219135_, DifficultyInstance p_219136_) {
+    protected void populateDefaultEquipmentSlots(RandomSource random, DifficultyInstance difficulty) {
         this.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.IRON_SWORD));
         this.setDropChance(EquipmentSlot.MAINHAND, 0.0F);
     }
@@ -285,8 +291,8 @@ public class Vex extends Monster implements TraceableEntity {
     class VexCopyOwnerTargetGoal extends TargetGoal {
         private final TargetingConditions copyOwnerTargeting = TargetingConditions.forNonCombat().ignoreLineOfSight().ignoreInvisibilityTesting();
 
-        public VexCopyOwnerTargetGoal(PathfinderMob p_34056_) {
-            super(p_34056_, false);
+        public VexCopyOwnerTargetGoal(PathfinderMob mob) {
+            super(mob, false);
         }
 
         @Override
@@ -302,8 +308,8 @@ public class Vex extends Monster implements TraceableEntity {
     }
 
     class VexMoveControl extends MoveControl {
-        public VexMoveControl(Vex p_34062_) {
-            super(p_34062_);
+        public VexMoveControl(Vex vex) {
+            super(vex);
         }
 
         @Override

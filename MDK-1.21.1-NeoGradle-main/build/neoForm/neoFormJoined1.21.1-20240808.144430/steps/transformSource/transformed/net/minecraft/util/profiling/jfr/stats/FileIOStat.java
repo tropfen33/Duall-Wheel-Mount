@@ -8,15 +8,15 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 public record FileIOStat(Duration duration, @Nullable String path, long bytes) {
-    public static FileIOStat.Summary summary(Duration p_185641_, List<FileIOStat> p_185642_) {
-        long i = p_185642_.stream().mapToLong(p_185652_ -> p_185652_.bytes).sum();
+    public static FileIOStat.Summary summary(Duration duration, List<FileIOStat> stats) {
+        long i = stats.stream().mapToLong(p_185652_ -> p_185652_.bytes).sum();
         return new FileIOStat.Summary(
             i,
-            (double)i / (double)p_185641_.getSeconds(),
-            (long)p_185642_.size(),
-            (double)p_185642_.size() / (double)p_185641_.getSeconds(),
-            p_185642_.stream().map(FileIOStat::duration).reduce(Duration.ZERO, Duration::plus),
-            p_185642_.stream()
+            (double)i / (double)duration.getSeconds(),
+            (long)stats.size(),
+            (double)stats.size() / (double)duration.getSeconds(),
+            stats.stream().map(FileIOStat::duration).reduce(Duration.ZERO, Duration::plus),
+            stats.stream()
                 .filter(p_185650_ -> p_185650_.path != null)
                 .collect(Collectors.groupingBy(p_185647_ -> p_185647_.path, Collectors.summingLong(p_185639_ -> p_185639_.bytes)))
                 .entrySet()

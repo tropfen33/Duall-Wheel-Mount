@@ -8,42 +8,42 @@ import net.neoforged.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public class DustParticle extends DustParticleBase<DustParticleOptions> {
     protected DustParticle(
-        ClientLevel p_106415_,
-        double p_106416_,
-        double p_106417_,
-        double p_106418_,
-        double p_106419_,
-        double p_106420_,
-        double p_106421_,
-        DustParticleOptions p_106422_,
-        SpriteSet p_106423_
+        ClientLevel level,
+        double x,
+        double y,
+        double z,
+        double xSpeed,
+        double ySpeed,
+        double zSpeed,
+        DustParticleOptions options,
+        SpriteSet sprites
     ) {
-        super(p_106415_, p_106416_, p_106417_, p_106418_, p_106419_, p_106420_, p_106421_, p_106422_, p_106423_);
+        super(level, x, y, z, xSpeed, ySpeed, zSpeed, options, sprites);
         float f = this.random.nextFloat() * 0.4F + 0.6F;
-        this.rCol = this.randomizeColor(p_106422_.getColor().x(), f);
-        this.gCol = this.randomizeColor(p_106422_.getColor().y(), f);
-        this.bCol = this.randomizeColor(p_106422_.getColor().z(), f);
+        this.rCol = this.randomizeColor(options.getColor().x(), f);
+        this.gCol = this.randomizeColor(options.getColor().y(), f);
+        this.bCol = this.randomizeColor(options.getColor().z(), f);
     }
 
     @OnlyIn(Dist.CLIENT)
     public static class Provider implements ParticleProvider<DustParticleOptions> {
         private final SpriteSet sprites;
 
-        public Provider(SpriteSet p_106441_) {
-            this.sprites = p_106441_;
+        public Provider(SpriteSet sprites) {
+            this.sprites = sprites;
         }
 
         public Particle createParticle(
-            DustParticleOptions p_106443_,
-            ClientLevel p_106444_,
-            double p_106445_,
-            double p_106446_,
-            double p_106447_,
-            double p_106448_,
-            double p_106449_,
-            double p_106450_
+            DustParticleOptions type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            return new DustParticle(p_106444_, p_106445_, p_106446_, p_106447_, p_106448_, p_106449_, p_106450_, p_106443_, this.sprites);
+            return new DustParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, type, this.sprites);
         }
     }
 }

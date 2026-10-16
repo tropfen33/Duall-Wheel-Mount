@@ -8,16 +8,23 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.configurations.DiskConfiguration;
 
 public class DiskFeature extends Feature<DiskConfiguration> {
-    public DiskFeature(Codec<DiskConfiguration> p_224992_) {
-        super(p_224992_);
+    public DiskFeature(Codec<DiskConfiguration> codec) {
+        super(codec);
     }
 
+    /**
+     * Places the given feature at the given location.
+     * During world generation, features are provided with a 3x3 region of chunks, centered on the chunk being generated, that they can safely generate into.
+     *
+     * @param context A context object with a reference to the level and the position
+     *                the feature is being placed at
+     */
     @Override
-    public boolean place(FeaturePlaceContext<DiskConfiguration> p_224994_) {
-        DiskConfiguration diskconfiguration = p_224994_.config();
-        BlockPos blockpos = p_224994_.origin();
-        WorldGenLevel worldgenlevel = p_224994_.level();
-        RandomSource randomsource = p_224994_.random();
+    public boolean place(FeaturePlaceContext<DiskConfiguration> context) {
+        DiskConfiguration diskconfiguration = context.config();
+        BlockPos blockpos = context.origin();
+        WorldGenLevel worldgenlevel = context.level();
+        RandomSource randomsource = context.random();
         boolean flag = false;
         int i = blockpos.getY();
         int j = i + diskconfiguration.halfHeight();
@@ -37,16 +44,16 @@ public class DiskFeature extends Feature<DiskConfiguration> {
     }
 
     protected boolean placeColumn(
-        DiskConfiguration p_224996_, WorldGenLevel p_224997_, RandomSource p_224998_, int p_224999_, int p_225000_, BlockPos.MutableBlockPos p_225001_
+        DiskConfiguration config, WorldGenLevel level, RandomSource random, int maxY, int minY, BlockPos.MutableBlockPos pos
     ) {
         boolean flag = false;
 
-        for (int i = p_224999_; i > p_225000_; i--) {
-            p_225001_.setY(i);
-            if (p_224996_.target().test(p_224997_, p_225001_)) {
-                BlockState blockstate = p_224996_.stateProvider().getState(p_224997_, p_224998_, p_225001_);
-                p_224997_.setBlock(p_225001_, blockstate, 2);
-                this.markAboveForPostProcessing(p_224997_, p_225001_);
+        for (int i = maxY; i > minY; i--) {
+            pos.setY(i);
+            if (config.target().test(level, pos)) {
+                BlockState blockstate = config.stateProvider().getState(level, random, pos);
+                level.setBlock(pos, blockstate, 2);
+                this.markAboveForPostProcessing(level, pos);
                 flag = true;
             }
         }

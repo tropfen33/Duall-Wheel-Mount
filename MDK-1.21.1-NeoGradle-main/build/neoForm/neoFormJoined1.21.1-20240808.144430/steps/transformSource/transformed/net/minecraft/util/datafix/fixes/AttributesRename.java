@@ -16,10 +16,10 @@ public class AttributesRename extends DataFix {
     private final String name;
     private final UnaryOperator<String> renames;
 
-    public AttributesRename(Schema p_14671_, String p_326430_, UnaryOperator<String> p_326062_) {
-        super(p_14671_, false);
-        this.name = p_326430_;
-        this.renames = p_326062_;
+    public AttributesRename(Schema outputSchema, String name, UnaryOperator<String> renames) {
+        super(outputSchema, false);
+        this.name = name;
+        this.renames = renames;
     }
 
     @Override
@@ -33,12 +33,12 @@ public class AttributesRename extends DataFix {
         );
     }
 
-    private Dynamic<?> fixName(Dynamic<?> p_14678_) {
-        return DataFixUtils.orElse(p_14678_.asString().result().map(this.renames).map(p_14678_::createString), p_14678_);
+    private Dynamic<?> fixName(Dynamic<?> data) {
+        return DataFixUtils.orElse(data.asString().result().map(this.renames).map(data::createString), data);
     }
 
-    private Typed<?> fixItemStackTag(Typed<?> p_14676_) {
-        return p_14676_.update(
+    private Typed<?> fixItemStackTag(Typed<?> data) {
+        return data.update(
             DSL.remainderFinder(),
             p_325650_ -> p_325650_.update(
                     "AttributeModifiers",
@@ -53,8 +53,8 @@ public class AttributesRename extends DataFix {
         );
     }
 
-    private Typed<?> fixEntity(Typed<?> p_14684_) {
-        return p_14684_.update(
+    private Typed<?> fixEntity(Typed<?> data) {
+        return data.update(
             DSL.remainderFinder(),
             p_325651_ -> p_325651_.update(
                     "Attributes",

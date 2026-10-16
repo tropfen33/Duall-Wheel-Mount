@@ -15,43 +15,49 @@ import net.minecraft.world.level.Level;
 public class HoneyBottleItem extends Item {
     private static final int DRINK_DURATION = 40;
 
-    public HoneyBottleItem(Item.Properties p_41346_) {
-        super(p_41346_);
+    public HoneyBottleItem(Item.Properties properties) {
+        super(properties);
     }
 
+    /**
+     * Called when the player finishes using this Item (E.g. finishes eating.). Not called when the player stops using the Item before the action is complete.
+     */
     @Override
-    public ItemStack finishUsingItem(ItemStack p_41348_, Level p_41349_, LivingEntity p_41350_) {
-        super.finishUsingItem(p_41348_, p_41349_, p_41350_);
-        if (p_41350_ instanceof ServerPlayer serverplayer) {
-            CriteriaTriggers.CONSUME_ITEM.trigger(serverplayer, p_41348_);
+    public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entityLiving) {
+        super.finishUsingItem(stack, level, entityLiving);
+        if (entityLiving instanceof ServerPlayer serverplayer) {
+            CriteriaTriggers.CONSUME_ITEM.trigger(serverplayer, stack);
             serverplayer.awardStat(Stats.ITEM_USED.get(this));
         }
 
-        if (!p_41349_.isClientSide) {
-            p_41350_.removeEffectsCuredBy(net.neoforged.neoforge.common.EffectCures.HONEY);
+        if (!level.isClientSide) {
+            entityLiving.removeEffectsCuredBy(net.neoforged.neoforge.common.EffectCures.HONEY);
         }
 
-        if (p_41348_.isEmpty()) {
+        if (stack.isEmpty()) {
             return new ItemStack(Items.GLASS_BOTTLE);
         } else {
-            if (p_41350_ instanceof Player player && !player.hasInfiniteMaterials()) {
+            if (entityLiving instanceof Player player && !player.hasInfiniteMaterials()) {
                 ItemStack itemstack = new ItemStack(Items.GLASS_BOTTLE);
                 if (!player.getInventory().add(itemstack)) {
                     player.drop(itemstack, false);
                 }
             }
 
-            return p_41348_;
+            return stack;
         }
     }
 
     @Override
-    public int getUseDuration(ItemStack p_41360_, LivingEntity p_345163_) {
+    public int getUseDuration(ItemStack stack, LivingEntity entity) {
         return 40;
     }
 
+    /**
+     * Returns the action that specifies what animation to play when the item is being used.
+     */
     @Override
-    public UseAnim getUseAnimation(ItemStack p_41358_) {
+    public UseAnim getUseAnimation(ItemStack stack) {
         return UseAnim.DRINK;
     }
 
@@ -65,8 +71,11 @@ public class HoneyBottleItem extends Item {
         return SoundEvents.HONEY_DRINK;
     }
 
+    /**
+     * Called to trigger the item's "innate" right click behavior. To handle when this item is used on a Block, see {@link #onItemUse}.
+     */
     @Override
-    public InteractionResultHolder<ItemStack> use(Level p_41352_, Player p_41353_, InteractionHand p_41354_) {
-        return ItemUtils.startUsingInstantly(p_41352_, p_41353_, p_41354_);
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        return ItemUtils.startUsingInstantly(level, player, hand);
     }
 }

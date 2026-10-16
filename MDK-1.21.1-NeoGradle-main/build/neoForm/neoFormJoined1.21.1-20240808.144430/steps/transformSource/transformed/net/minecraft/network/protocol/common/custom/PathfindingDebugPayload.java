@@ -14,10 +14,10 @@ public record PathfindingDebugPayload(int entityId, Path path, float maxNodeDist
         this(p_296445_.readInt(), Path.createFromStream(p_296445_), p_296445_.readFloat());
     }
 
-    private void write(FriendlyByteBuf p_295342_) {
-        p_295342_.writeInt(this.entityId);
-        this.path.writeToStream(p_295342_);
-        p_295342_.writeFloat(this.maxNodeDistance);
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeInt(this.entityId);
+        this.path.writeToStream(buffer);
+        buffer.writeFloat(this.maxNodeDistance);
     }
 
     @Override

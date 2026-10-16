@@ -32,14 +32,14 @@ public class ChainBlock extends RotatedPillarBlock implements SimpleWaterloggedB
         return CODEC;
     }
 
-    public ChainBlock(BlockBehaviour.Properties p_51452_) {
-        super(p_51452_);
+    public ChainBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(WATERLOGGED, Boolean.valueOf(false)).setValue(AXIS, Direction.Axis.Y));
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_51470_, BlockGetter p_51471_, BlockPos p_51472_, CollisionContext p_51473_) {
-        switch ((Direction.Axis)p_51470_.getValue(AXIS)) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        switch ((Direction.Axis)state.getValue(AXIS)) {
             case X:
             default:
                 return X_AXIS_AABB;
@@ -52,33 +52,38 @@ public class ChainBlock extends RotatedPillarBlock implements SimpleWaterloggedB
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_51454_) {
-        FluidState fluidstate = p_51454_.getLevel().getFluidState(p_51454_.getClickedPos());
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
         boolean flag = fluidstate.getType() == Fluids.WATER;
-        return super.getStateForPlacement(p_51454_).setValue(WATERLOGGED, Boolean.valueOf(flag));
+        return super.getStateForPlacement(context).setValue(WATERLOGGED, Boolean.valueOf(flag));
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_51461_, Direction p_51462_, BlockState p_51463_, LevelAccessor p_51464_, BlockPos p_51465_, BlockPos p_51466_) {
-        if (p_51461_.getValue(WATERLOGGED)) {
-            p_51464_.scheduleTick(p_51465_, Fluids.WATER, Fluids.WATER.getTickDelay(p_51464_));
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        return super.updateShape(p_51461_, p_51462_, p_51463_, p_51464_, p_51465_, p_51466_);
+        return super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_51468_) {
-        p_51468_.add(WATERLOGGED).add(AXIS);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(WATERLOGGED).add(AXIS);
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_51475_) {
-        return p_51475_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_51475_);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_51456_, PathComputationType p_51459_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

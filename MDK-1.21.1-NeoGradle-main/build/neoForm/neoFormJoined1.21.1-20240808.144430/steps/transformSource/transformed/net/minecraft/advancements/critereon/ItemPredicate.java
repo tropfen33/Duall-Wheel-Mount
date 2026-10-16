@@ -62,18 +62,18 @@ public record ItemPredicate(
             return new ItemPredicate.Builder();
         }
 
-        public ItemPredicate.Builder of(ItemLike... p_151446_) {
-            this.items = Optional.of(HolderSet.direct(p_298756_ -> p_298756_.asItem().builtInRegistryHolder(), p_151446_));
+        public ItemPredicate.Builder of(ItemLike... items) {
+            this.items = Optional.of(HolderSet.direct(p_298756_ -> p_298756_.asItem().builtInRegistryHolder(), items));
             return this;
         }
 
-        public ItemPredicate.Builder of(TagKey<Item> p_204146_) {
-            this.items = Optional.of(BuiltInRegistries.ITEM.getOrCreateTag(p_204146_));
+        public ItemPredicate.Builder of(TagKey<Item> tag) {
+            this.items = Optional.of(BuiltInRegistries.ITEM.getOrCreateTag(tag));
             return this;
         }
 
-        public ItemPredicate.Builder withCount(MinMaxBounds.Ints p_151444_) {
-            this.count = p_151444_;
+        public ItemPredicate.Builder withCount(MinMaxBounds.Ints count) {
+            this.count = count;
             return this;
         }
 
@@ -82,8 +82,8 @@ public record ItemPredicate(
             return this;
         }
 
-        public ItemPredicate.Builder hasComponents(DataComponentPredicate p_331791_) {
-            this.components = p_331791_;
+        public ItemPredicate.Builder hasComponents(DataComponentPredicate components) {
+            this.components = components;
             return this;
         }
 

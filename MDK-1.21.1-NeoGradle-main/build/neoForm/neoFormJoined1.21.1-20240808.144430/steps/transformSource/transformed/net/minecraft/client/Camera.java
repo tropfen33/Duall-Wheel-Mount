@@ -44,30 +44,30 @@ public class Camera {
     public static final float FOG_DISTANCE_SCALE = 0.083333336F;
     private float roll;
 
-    public void setup(BlockGetter p_90576_, Entity p_90577_, boolean p_90578_, boolean p_90579_, float p_90580_) {
+    public void setup(BlockGetter level, Entity entity, boolean detached, boolean thirdPersonReverse, float partialTick) {
         this.initialized = true;
-        this.level = p_90576_;
-        this.entity = p_90577_;
-        this.detached = p_90578_;
-        this.partialTickTime = p_90580_;
+        this.level = level;
+        this.entity = entity;
+        this.detached = detached;
+        this.partialTickTime = partialTick;
         var cameraSetup = net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.client.event.ViewportEvent.ComputeCameraAngles(
-                this, p_90580_, p_90577_.getViewYRot(p_90580_), p_90577_.getViewXRot(p_90580_), 0)
+                this, partialTick, entity.getViewYRot(partialTick), entity.getViewXRot(partialTick), 0)
         );
         this.setRotation(cameraSetup.getYaw(), cameraSetup.getPitch(), cameraSetup.getRoll());
         this.setPosition(
-            Mth.lerp((double)p_90580_, p_90577_.xo, p_90577_.getX()),
-            Mth.lerp((double)p_90580_, p_90577_.yo, p_90577_.getY()) + (double)Mth.lerp(p_90580_, this.eyeHeightOld, this.eyeHeight),
-            Mth.lerp((double)p_90580_, p_90577_.zo, p_90577_.getZ())
+            Mth.lerp((double)partialTick, entity.xo, entity.getX()),
+            Mth.lerp((double)partialTick, entity.yo, entity.getY()) + (double)Mth.lerp(partialTick, this.eyeHeightOld, this.eyeHeight),
+            Mth.lerp((double)partialTick, entity.zo, entity.getZ())
         );
-        if (p_90578_) {
-            if (p_90579_) {
+        if (detached) {
+            if (thirdPersonReverse) {
                 this.setRotation(this.yRot + 180.0F, -this.xRot, -this.roll);
             }
 
-            float f = p_90577_ instanceof LivingEntity livingentity ? livingentity.getScale() : 1.0F;
-            this.move(-this.getMaxZoom(net.neoforged.neoforge.client.ClientHooks.getDetachedCameraDistance(this, p_90579_, f, 4.0F) * f), 0.0F, 0.0F);
-        } else if (p_90577_ instanceof LivingEntity && ((LivingEntity)p_90577_).isSleeping()) {
-            Direction direction = ((LivingEntity)p_90577_).getBedOrientation();
+            float f = entity instanceof LivingEntity livingentity ? livingentity.getScale() : 1.0F;
+            this.move(-this.getMaxZoom(net.neoforged.neoforge.client.ClientHooks.getDetachedCameraDistance(this, thirdPersonReverse, f, 4.0F) * f), 0.0F, 0.0F);
+        } else if (entity instanceof LivingEntity && ((LivingEntity)entity).isSleeping()) {
+            Direction direction = ((LivingEntity)entity).getBedOrientation();
             this.setRotation(direction != null ? direction.toYRot() - 180.0F : 0.0F, 0.0F);
             this.move(0.0F, 0.3F, 0.0F);
         }
@@ -80,7 +80,7 @@ public class Camera {
         }
     }
 
-    private float getMaxZoom(float p_350335_) {
+    private float getMaxZoom(float maxZoom) {
         float f = 0.1F;
 
         for (int i = 0; i < 8; i++) {
@@ -88,47 +88,52 @@ public class Camera {
             float f2 = (float)((i >> 1 & 1) * 2 - 1);
             float f3 = (float)((i >> 2 & 1) * 2 - 1);
             Vec3 vec3 = this.position.add((double)(f1 * 0.1F), (double)(f2 * 0.1F), (double)(f3 * 0.1F));
-            Vec3 vec31 = vec3.add(new Vec3(this.forwards).scale((double)(-p_350335_)));
+            Vec3 vec31 = vec3.add(new Vec3(this.forwards).scale((double)(-maxZoom)));
             HitResult hitresult = this.level.clip(new ClipContext(vec3, vec31, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, this.entity));
             if (hitresult.getType() != HitResult.Type.MISS) {
                 float f4 = (float)hitresult.getLocation().distanceToSqr(this.position);
-                if (f4 < Mth.square(p_350335_)) {
-                    p_350335_ = Mth.sqrt(f4);
+                if (f4 < Mth.square(maxZoom)) {
+                    maxZoom = Mth.sqrt(f4);
                 }
             }
         }
 
-        return p_350335_;
+        return maxZoom;
     }
 
-    protected void move(float p_351037_, float p_351008_, float p_350869_) {
-        Vector3f vector3f = new Vector3f(p_350869_, p_351008_, -p_351037_).rotate(this.rotation);
+    protected void move(float zoom, float dy, float dx) {
+        Vector3f vector3f = new Vector3f(dx, dy, -zoom).rotate(this.rotation);
         this.setPosition(new Vec3(this.position.x + (double)vector3f.x, this.position.y + (double)vector3f.y, this.position.z + (double)vector3f.z));
     }
 
-    /** @deprecated Neo: call {@link #setRotation(float, float, float)} instead */
+    /**
+ * @deprecated Neo: call {@link #setRotation(float, float, float)} instead
+ */
     @Deprecated
-    protected void setRotation(float p_90573_, float p_90574_) {
-        setRotation(p_90573_, p_90574_, 0F);
+    protected void setRotation(float yRot, float xRot) {
+        setRotation(yRot, xRot, 0F);
     }
 
-    protected void setRotation(float p_90573_, float p_90574_, float roll) {
-        this.xRot = p_90574_;
-        this.yRot = p_90573_;
+    protected void setRotation(float yRot, float xRot, float roll) {
+        this.xRot = xRot;
+        this.yRot = yRot;
         this.roll = roll;
-        this.rotation.rotationYXZ((float) Math.PI - p_90573_ * (float) (Math.PI / 180.0), -p_90574_ * (float) (Math.PI / 180.0), -roll * (float) (Math.PI / 180.0));
+        this.rotation.rotationYXZ((float) Math.PI - yRot * (float) (Math.PI / 180.0), -xRot * (float) (Math.PI / 180.0), -roll * (float) (Math.PI / 180.0));
         FORWARDS.rotate(this.rotation, this.forwards);
         UP.rotate(this.rotation, this.up);
         LEFT.rotate(this.rotation, this.left);
     }
 
-    protected void setPosition(double p_90585_, double p_90586_, double p_90587_) {
-        this.setPosition(new Vec3(p_90585_, p_90586_, p_90587_));
+    /**
+     * Sets the position and blockpos of the active render
+     */
+    protected void setPosition(double x, double y, double z) {
+        this.setPosition(new Vec3(x, y, z));
     }
 
-    protected void setPosition(Vec3 p_90582_) {
-        this.position = p_90582_;
-        this.blockPosition.set(p_90582_.x, p_90582_.y, p_90582_.z);
+    protected void setPosition(Vec3 pos) {
+        this.position = pos;
+        this.blockPosition.set(pos.x, pos.y, pos.z);
     }
 
     public Vec3 getPosition() {
@@ -251,10 +256,10 @@ public class Camera {
         private final Vec3 left;
         private final Vec3 up;
 
-        NearPlane(Vec3 p_167691_, Vec3 p_167692_, Vec3 p_167693_) {
-            this.forward = p_167691_;
-            this.left = p_167692_;
-            this.up = p_167693_;
+        NearPlane(Vec3 forward, Vec3 left, Vec3 up) {
+            this.forward = forward;
+            this.left = left;
+            this.up = up;
         }
 
         public Vec3 getTopLeft() {
@@ -273,8 +278,8 @@ public class Camera {
             return this.forward.subtract(this.up).subtract(this.left);
         }
 
-        public Vec3 getPointOnPlane(float p_167696_, float p_167697_) {
-            return this.forward.add(this.up.scale((double)p_167697_)).subtract(this.left.scale((double)p_167696_));
+        public Vec3 getPointOnPlane(float leftScale, float upScale) {
+            return this.forward.add(this.up.scale((double)upScale)).subtract(this.left.scale((double)leftScale));
         }
     }
 }

@@ -30,22 +30,22 @@ public record EntityFlagsPredicate(
                 .apply(p_344147_, EntityFlagsPredicate::new)
     );
 
-    public boolean matches(Entity p_33697_) {
-        if (this.isOnGround.isPresent() && p_33697_.onGround() != this.isOnGround.get()) {
+    public boolean matches(Entity entity) {
+        if (this.isOnGround.isPresent() && entity.onGround() != this.isOnGround.get()) {
             return false;
-        } else if (this.isOnFire.isPresent() && p_33697_.isOnFire() != this.isOnFire.get()) {
+        } else if (this.isOnFire.isPresent() && entity.isOnFire() != this.isOnFire.get()) {
             return false;
-        } else if (this.isCrouching.isPresent() && p_33697_.isCrouching() != this.isCrouching.get()) {
+        } else if (this.isCrouching.isPresent() && entity.isCrouching() != this.isCrouching.get()) {
             return false;
-        } else if (this.isSprinting.isPresent() && p_33697_.isSprinting() != this.isSprinting.get()) {
+        } else if (this.isSprinting.isPresent() && entity.isSprinting() != this.isSprinting.get()) {
             return false;
-        } else if (this.isSwimming.isPresent() && p_33697_.isSwimming() != this.isSwimming.get()) {
+        } else if (this.isSwimming.isPresent() && entity.isSwimming() != this.isSwimming.get()) {
             return false;
         } else {
             if (this.isFlying.isPresent()) {
                 boolean flag1;
                 label53: {
-                    if (p_33697_ instanceof LivingEntity livingentity
+                    if (entity instanceof LivingEntity livingentity
                         && (livingentity.isFallFlying() || livingentity instanceof Player player && player.getAbilities().flying)) {
                         flag1 = true;
                         break label53;
@@ -60,7 +60,7 @@ public record EntityFlagsPredicate(
                 }
             }
 
-            if (this.isBaby.isPresent() && p_33697_ instanceof LivingEntity livingentity1 && livingentity1.isBaby() != this.isBaby.get()) {
+            if (this.isBaby.isPresent() && entity instanceof LivingEntity livingentity1 && livingentity1.isBaby() != this.isBaby.get()) {
                 return false;
             }
 
@@ -81,38 +81,38 @@ public record EntityFlagsPredicate(
             return new EntityFlagsPredicate.Builder();
         }
 
-        public EntityFlagsPredicate.Builder setOnGround(Boolean p_344950_) {
-            this.isOnGround = Optional.of(p_344950_);
+        public EntityFlagsPredicate.Builder setOnGround(Boolean onGround) {
+            this.isOnGround = Optional.of(onGround);
             return this;
         }
 
-        public EntityFlagsPredicate.Builder setOnFire(Boolean p_33715_) {
-            this.isOnFire = Optional.of(p_33715_);
+        public EntityFlagsPredicate.Builder setOnFire(Boolean onFire) {
+            this.isOnFire = Optional.of(onFire);
             return this;
         }
 
-        public EntityFlagsPredicate.Builder setCrouching(Boolean p_150058_) {
-            this.isCrouching = Optional.of(p_150058_);
+        public EntityFlagsPredicate.Builder setCrouching(Boolean isCrouching) {
+            this.isCrouching = Optional.of(isCrouching);
             return this;
         }
 
-        public EntityFlagsPredicate.Builder setSprinting(Boolean p_150060_) {
-            this.isSprinting = Optional.of(p_150060_);
+        public EntityFlagsPredicate.Builder setSprinting(Boolean isSprinting) {
+            this.isSprinting = Optional.of(isSprinting);
             return this;
         }
 
-        public EntityFlagsPredicate.Builder setSwimming(Boolean p_150062_) {
-            this.isSwimming = Optional.of(p_150062_);
+        public EntityFlagsPredicate.Builder setSwimming(Boolean isSwimming) {
+            this.isSwimming = Optional.of(isSwimming);
             return this;
         }
 
-        public EntityFlagsPredicate.Builder setIsFlying(Boolean p_346066_) {
-            this.isFlying = Optional.of(p_346066_);
+        public EntityFlagsPredicate.Builder setIsFlying(Boolean isFlying) {
+            this.isFlying = Optional.of(isFlying);
             return this;
         }
 
-        public EntityFlagsPredicate.Builder setIsBaby(Boolean p_33718_) {
-            this.isBaby = Optional.of(p_33718_);
+        public EntityFlagsPredicate.Builder setIsBaby(Boolean isBaby) {
+            this.isBaby = Optional.of(isBaby);
             return this;
         }
 

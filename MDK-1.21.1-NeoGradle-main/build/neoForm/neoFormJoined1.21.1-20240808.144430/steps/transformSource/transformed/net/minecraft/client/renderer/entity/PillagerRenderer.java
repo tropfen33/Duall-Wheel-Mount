@@ -17,7 +17,10 @@ public class PillagerRenderer extends IllagerRenderer<Pillager> {
         this.addLayer(new ItemInHandLayer<>(this, p_174354_.getItemInHandRenderer()));
     }
 
-    public ResourceLocation getTextureLocation(Pillager p_115720_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Pillager entity) {
         return PILLAGER;
     }
 }

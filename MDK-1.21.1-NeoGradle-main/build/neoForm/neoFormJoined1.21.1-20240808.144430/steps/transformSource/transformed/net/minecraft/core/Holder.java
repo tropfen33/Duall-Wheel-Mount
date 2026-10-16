@@ -16,16 +16,16 @@ public interface Holder<T> extends net.neoforged.neoforge.common.extensions.IHol
 
     boolean isBound();
 
-    boolean is(ResourceLocation p_205713_);
+    boolean is(ResourceLocation location);
 
-    boolean is(ResourceKey<T> p_205712_);
+    boolean is(ResourceKey<T> resourceKey);
 
-    boolean is(Predicate<ResourceKey<T>> p_205711_);
+    boolean is(Predicate<ResourceKey<T>> predicate);
 
-    boolean is(TagKey<T> p_205705_);
+    boolean is(TagKey<T> tagKey);
 
     @Deprecated
-    boolean is(Holder<T> p_316447_);
+    boolean is(Holder<T> holder);
 
     Stream<TagKey<T>> tags();
 
@@ -35,14 +35,14 @@ public interface Holder<T> extends net.neoforged.neoforge.common.extensions.IHol
 
     Holder.Kind kind();
 
-    boolean canSerializeIn(HolderOwner<T> p_255833_);
+    boolean canSerializeIn(HolderOwner<T> owner);
 
     default String getRegisteredName() {
         return this.unwrapKey().map(p_316542_ -> p_316542_.location().toString()).orElse("[unregistered]");
     }
 
-    static <T> Holder<T> direct(T p_205710_) {
-        return new Holder.Direct<>(p_205710_);
+    static <T> Holder<T> direct(T value) {
+        return new Holder.Direct<>(value);
     }
 
     public static record Direct<T>(T value) implements Holder<T> {
@@ -121,20 +121,20 @@ public interface Holder<T> extends net.neoforged.neoforge.common.extensions.IHol
         @Nullable
         private T value;
 
-        protected Reference(Holder.Reference.Type p_256425_, HolderOwner<T> p_256562_, @Nullable ResourceKey<T> p_256636_, @Nullable T p_255889_) {
-            this.owner = p_256562_;
-            this.type = p_256425_;
-            this.key = p_256636_;
-            this.value = p_255889_;
+        protected Reference(Holder.Reference.Type type, HolderOwner<T> owner, @Nullable ResourceKey<T> key, @Nullable T value) {
+            this.owner = owner;
+            this.type = type;
+            this.key = key;
+            this.value = value;
         }
 
-        public static <T> Holder.Reference<T> createStandAlone(HolderOwner<T> p_255955_, ResourceKey<T> p_255958_) {
-            return new Holder.Reference<>(Holder.Reference.Type.STAND_ALONE, p_255955_, p_255958_, null);
+        public static <T> Holder.Reference<T> createStandAlone(HolderOwner<T> owner, ResourceKey<T> key) {
+            return new Holder.Reference<>(Holder.Reference.Type.STAND_ALONE, owner, key, null);
         }
 
         @Deprecated
-        public static <T> Holder.Reference<T> createIntrusive(HolderOwner<T> p_256106_, @Nullable T p_255948_) {
-            return new Holder.Reference<>(Holder.Reference.Type.INTRUSIVE, p_256106_, null, p_255948_);
+        public static <T> Holder.Reference<T> createIntrusive(HolderOwner<T> owner, @Nullable T value) {
+            return new Holder.Reference<>(Holder.Reference.Type.INTRUSIVE, owner, null, value);
         }
 
         public ResourceKey<T> key() {
@@ -155,33 +155,33 @@ public interface Holder<T> extends net.neoforged.neoforge.common.extensions.IHol
         }
 
         @Override
-        public boolean is(ResourceLocation p_205779_) {
-            return this.key().location().equals(p_205779_);
+        public boolean is(ResourceLocation location) {
+            return this.key().location().equals(location);
         }
 
         @Override
-        public boolean is(ResourceKey<T> p_205774_) {
-            return this.key() == p_205774_;
+        public boolean is(ResourceKey<T> resourceKey) {
+            return this.key() == resourceKey;
         }
 
         @Override
-        public boolean is(TagKey<T> p_205760_) {
-            return this.tags.contains(p_205760_);
+        public boolean is(TagKey<T> tagKey) {
+            return this.tags.contains(tagKey);
         }
 
         @Override
-        public boolean is(Holder<T> p_316168_) {
-            return p_316168_.is(this.key());
+        public boolean is(Holder<T> holder) {
+            return holder.is(this.key());
         }
 
         @Override
-        public boolean is(Predicate<ResourceKey<T>> p_205772_) {
-            return p_205772_.test(this.key());
+        public boolean is(Predicate<ResourceKey<T>> predicate) {
+            return predicate.test(this.key());
         }
 
         @Override
-        public boolean canSerializeIn(HolderOwner<T> p_256521_) {
-            return this.owner.canSerializeIn(p_256521_);
+        public boolean canSerializeIn(HolderOwner<T> owner) {
+            return this.owner.canSerializeIn(owner);
         }
 
         @Override
@@ -204,19 +204,19 @@ public interface Holder<T> extends net.neoforged.neoforge.common.extensions.IHol
             return this.key != null && this.value != null;
         }
 
-        void bindKey(ResourceKey<T> p_251943_) {
-            if (this.key != null && p_251943_ != this.key) {
-                throw new IllegalStateException("Can't change holder key: existing=" + this.key + ", new=" + p_251943_);
+        void bindKey(ResourceKey<T> key) {
+            if (this.key != null && key != this.key) {
+                throw new IllegalStateException("Can't change holder key: existing=" + this.key + ", new=" + key);
             } else {
-                this.key = p_251943_;
+                this.key = key;
             }
         }
 
-        protected void bindValue(T p_249418_) {
-            if (this.type == Holder.Reference.Type.INTRUSIVE && this.value != p_249418_) {
-                throw new IllegalStateException("Can't change holder " + this.key + " value: existing=" + this.value + ", new=" + p_249418_);
+        protected void bindValue(T value) {
+            if (this.type == Holder.Reference.Type.INTRUSIVE && this.value != value) {
+                throw new IllegalStateException("Can't change holder " + this.key + " value: existing=" + this.value + ", new=" + value);
             } else {
-                this.value = p_249418_;
+                this.value = value;
             }
         }
 
@@ -228,8 +228,8 @@ public interface Holder<T> extends net.neoforged.neoforge.common.extensions.IHol
             return null;
         }
 
-        void bindTags(Collection<TagKey<T>> p_205770_) {
-            this.tags = Set.copyOf(p_205770_);
+        void bindTags(Collection<TagKey<T>> tags) {
+            this.tags = Set.copyOf(tags);
         }
 
         @Override

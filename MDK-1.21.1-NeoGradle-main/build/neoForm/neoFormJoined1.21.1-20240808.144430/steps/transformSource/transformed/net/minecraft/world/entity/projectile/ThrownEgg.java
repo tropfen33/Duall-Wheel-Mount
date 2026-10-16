@@ -15,21 +15,24 @@ import net.minecraft.world.phys.HitResult;
 public class ThrownEgg extends ThrowableItemProjectile {
     private static final EntityDimensions ZERO_SIZED_DIMENSIONS = EntityDimensions.fixed(0.0F, 0.0F);
 
-    public ThrownEgg(EntityType<? extends ThrownEgg> p_37473_, Level p_37474_) {
-        super(p_37473_, p_37474_);
+    public ThrownEgg(EntityType<? extends ThrownEgg> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public ThrownEgg(Level p_37481_, LivingEntity p_37482_) {
-        super(EntityType.EGG, p_37482_, p_37481_);
+    public ThrownEgg(Level level, LivingEntity shooter) {
+        super(EntityType.EGG, shooter, level);
     }
 
-    public ThrownEgg(Level p_37476_, double p_37477_, double p_37478_, double p_37479_) {
-        super(EntityType.EGG, p_37477_, p_37478_, p_37479_, p_37476_);
+    public ThrownEgg(Level level, double x, double y, double z) {
+        super(EntityType.EGG, x, y, z, level);
     }
 
+    /**
+     * Handles an entity event received from a {@link net.minecraft.network.protocol.game.ClientboundEntityEventPacket}.
+     */
     @Override
-    public void handleEntityEvent(byte p_37484_) {
-        if (p_37484_ == 3) {
+    public void handleEntityEvent(byte id) {
+        if (id == 3) {
             double d0 = 0.08;
 
             for (int i = 0; i < 8; i++) {
@@ -47,15 +50,21 @@ public class ThrownEgg extends ThrowableItemProjectile {
         }
     }
 
+    /**
+     * Called when the arrow hits an entity
+     */
     @Override
-    protected void onHitEntity(EntityHitResult p_37486_) {
-        super.onHitEntity(p_37486_);
-        p_37486_.getEntity().hurt(this.damageSources().thrown(this, this.getOwner()), 0.0F);
+    protected void onHitEntity(EntityHitResult result) {
+        super.onHitEntity(result);
+        result.getEntity().hurt(this.damageSources().thrown(this, this.getOwner()), 0.0F);
     }
 
+    /**
+     * Called when this EntityFireball hits a block or entity.
+     */
     @Override
-    protected void onHit(HitResult p_37488_) {
-        super.onHit(p_37488_);
+    protected void onHit(HitResult result) {
+        super.onHit(result);
         if (!this.level().isClientSide) {
             if (this.random.nextInt(8) == 0) {
                 int i = 1;

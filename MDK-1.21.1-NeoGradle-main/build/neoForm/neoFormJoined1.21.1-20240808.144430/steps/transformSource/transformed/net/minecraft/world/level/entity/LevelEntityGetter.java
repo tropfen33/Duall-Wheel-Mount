@@ -8,16 +8,16 @@ import net.minecraft.world.phys.AABB;
 
 public interface LevelEntityGetter<T extends EntityAccess> {
     @Nullable
-    T get(int p_156931_);
+    T get(int id);
 
     @Nullable
-    T get(UUID p_156939_);
+    T get(UUID uuid);
 
     Iterable<T> getAll();
 
-    <U extends T> void get(EntityTypeTest<T, U> p_156935_, AbortableIterationConsumer<U> p_261602_);
+    <U extends T> void get(EntityTypeTest<T, U> test, AbortableIterationConsumer<U> consumer);
 
-    void get(AABB p_156937_, Consumer<T> p_156938_);
+    void get(AABB boundingBox, Consumer<T> consumer);
 
-    <U extends T> void get(EntityTypeTest<T, U> p_156932_, AABB p_156933_, AbortableIterationConsumer<U> p_261542_);
+    <U extends T> void get(EntityTypeTest<T, U> test, AABB bounds, AbortableIterationConsumer<U> consumer);
 }

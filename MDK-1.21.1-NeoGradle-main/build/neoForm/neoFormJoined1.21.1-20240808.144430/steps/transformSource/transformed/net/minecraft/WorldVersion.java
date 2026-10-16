@@ -13,7 +13,7 @@ public interface WorldVersion {
 
     int getProtocolVersion();
 
-    int getPackVersion(PackType p_265245_);
+    int getPackVersion(PackType packType);
 
     Date getBuildTime();
 

@@ -29,10 +29,10 @@ public class ServerLinksScreen extends Screen {
     final HeaderAndFooterLayout layout = new HeaderAndFooterLayout(this);
     final ServerLinks links;
 
-    public ServerLinksScreen(Screen p_350433_, ServerLinks p_350491_) {
+    public ServerLinksScreen(Screen lastScreen, ServerLinks links) {
         super(TITLE);
-        this.lastScreen = p_350433_;
-        this.links = p_350491_;
+        this.lastScreen = lastScreen;
+        this.links = links;
     }
 
     @Override
@@ -61,9 +61,9 @@ public class ServerLinksScreen extends Screen {
 
     @OnlyIn(Dist.CLIENT)
     static class LinkList extends ContainerObjectSelectionList<ServerLinksScreen.LinkListEntry> {
-        public LinkList(Minecraft p_350783_, int p_350730_, ServerLinksScreen p_350695_) {
-            super(p_350783_, p_350730_, p_350695_.layout.getContentHeight(), p_350695_.layout.getHeaderHeight(), 25);
-            p_350695_.links.entries().forEach(p_350872_ -> this.addEntry(new ServerLinksScreen.LinkListEntry(p_350695_, p_350872_)));
+        public LinkList(Minecraft minecraft, int width, ServerLinksScreen parent) {
+            super(minecraft, width, parent.layout.getContentHeight(), parent.layout.getHeaderHeight(), 25);
+            parent.links.entries().forEach(p_350872_ -> this.addEntry(new ServerLinksScreen.LinkListEntry(parent, p_350872_)));
         }
 
         @Override
@@ -72,9 +72,9 @@ public class ServerLinksScreen extends Screen {
         }
 
         @Override
-        public void updateSize(int p_350967_, HeaderAndFooterLayout p_350748_) {
-            super.updateSize(p_350967_, p_350748_);
-            int i = p_350967_ / 2 - 155;
+        public void updateSize(int width, HeaderAndFooterLayout layout) {
+            super.updateSize(width, layout);
+            int i = width / 2 - 155;
             this.children().forEach(p_350545_ -> p_350545_.button.setX(i));
         }
     }
@@ -83,25 +83,25 @@ public class ServerLinksScreen extends Screen {
     static class LinkListEntry extends ContainerObjectSelectionList.Entry<ServerLinksScreen.LinkListEntry> {
         final AbstractWidget button;
 
-        LinkListEntry(Screen p_350500_, ServerLinks.Entry p_350677_) {
-            this.button = Button.builder(p_350677_.displayName(), ConfirmLinkScreen.confirmLink(p_350500_, p_350677_.link(), false)).width(310).build();
+        LinkListEntry(Screen screen, ServerLinks.Entry entry) {
+            this.button = Button.builder(entry.displayName(), ConfirmLinkScreen.confirmLink(screen, entry.link(), false)).width(310).build();
         }
 
         @Override
         public void render(
-            GuiGraphics p_350577_,
-            int p_350511_,
-            int p_350936_,
-            int p_350596_,
-            int p_350517_,
-            int p_351059_,
-            int p_350806_,
-            int p_351038_,
-            boolean p_350365_,
-            float p_350788_
+            GuiGraphics guiGraphics,
+            int index,
+            int top,
+            int left,
+            int width,
+            int height,
+            int mouseX,
+            int mouseY,
+            boolean hovering,
+            float partialTick
         ) {
-            this.button.setY(p_350936_);
-            this.button.render(p_350577_, p_350806_, p_351038_, p_350788_);
+            this.button.setY(top);
+            this.button.render(guiGraphics, mouseX, mouseY, partialTick);
         }
 
         @Override

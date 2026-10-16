@@ -20,16 +20,16 @@ public class ClipContext {
     private final ClipContext.Fluid fluid;
     private final CollisionContext collisionContext;
 
-    public ClipContext(Vec3 p_45688_, Vec3 p_45689_, ClipContext.Block p_45690_, ClipContext.Fluid p_45691_, Entity p_45692_) {
-        this(p_45688_, p_45689_, p_45690_, p_45691_, CollisionContext.of(p_45692_));
+    public ClipContext(Vec3 from, Vec3 to, ClipContext.Block block, ClipContext.Fluid fluid, Entity entity) {
+        this(from, to, block, fluid, CollisionContext.of(entity));
     }
 
-    public ClipContext(Vec3 p_311916_, Vec3 p_312802_, ClipContext.Block p_312540_, ClipContext.Fluid p_312487_, CollisionContext p_311823_) {
-        this.from = p_311916_;
-        this.to = p_312802_;
-        this.block = p_312540_;
-        this.fluid = p_312487_;
-        this.collisionContext = p_311823_;
+    public ClipContext(Vec3 from, Vec3 to, ClipContext.Block block, ClipContext.Fluid fluid, CollisionContext collisionContext) {
+        this.from = from;
+        this.to = to;
+        this.block = block;
+        this.fluid = fluid;
+        this.collisionContext = collisionContext;
     }
 
     public Vec3 getTo() {
@@ -40,12 +40,12 @@ public class ClipContext {
         return this.from;
     }
 
-    public VoxelShape getBlockShape(BlockState p_45695_, BlockGetter p_45696_, BlockPos p_45697_) {
-        return this.block.get(p_45695_, p_45696_, p_45697_, this.collisionContext);
+    public VoxelShape getBlockShape(BlockState blockState, BlockGetter level, BlockPos pos) {
+        return this.block.get(blockState, level, pos, this.collisionContext);
     }
 
-    public VoxelShape getFluidShape(FluidState p_45699_, BlockGetter p_45700_, BlockPos p_45701_) {
-        return this.fluid.canPick(p_45699_) ? p_45699_.getShape(p_45700_, p_45701_) : Shapes.empty();
+    public VoxelShape getFluidShape(FluidState state, BlockGetter level, BlockPos pos) {
+        return this.fluid.canPick(state) ? state.getShape(level, pos) : Shapes.empty();
     }
 
     public static enum Block implements ClipContext.ShapeGetter {
@@ -56,13 +56,13 @@ public class ClipContext {
 
         private final ClipContext.ShapeGetter shapeGetter;
 
-        private Block(ClipContext.ShapeGetter p_45712_) {
-            this.shapeGetter = p_45712_;
+        private Block(ClipContext.ShapeGetter shapeGetter) {
+            this.shapeGetter = shapeGetter;
         }
 
         @Override
-        public VoxelShape get(BlockState p_45714_, BlockGetter p_45715_, BlockPos p_45716_, CollisionContext p_45717_) {
-            return this.shapeGetter.get(p_45714_, p_45715_, p_45716_, p_45717_);
+        public VoxelShape get(BlockState state, BlockGetter block, BlockPos pos, CollisionContext collisionContext) {
+            return this.shapeGetter.get(state, block, pos, collisionContext);
         }
     }
 
@@ -74,16 +74,16 @@ public class ClipContext {
 
         private final Predicate<FluidState> canPick;
 
-        private Fluid(Predicate<FluidState> p_45730_) {
-            this.canPick = p_45730_;
+        private Fluid(Predicate<FluidState> canPick) {
+            this.canPick = canPick;
         }
 
-        public boolean canPick(FluidState p_45732_) {
-            return this.canPick.test(p_45732_);
+        public boolean canPick(FluidState state) {
+            return this.canPick.test(state);
         }
     }
 
     public interface ShapeGetter {
-        VoxelShape get(BlockState p_45740_, BlockGetter p_45741_, BlockPos p_45742_, CollisionContext p_45743_);
+        VoxelShape get(BlockState state, BlockGetter block, BlockPos pos, CollisionContext collisionContext);
     }
 }

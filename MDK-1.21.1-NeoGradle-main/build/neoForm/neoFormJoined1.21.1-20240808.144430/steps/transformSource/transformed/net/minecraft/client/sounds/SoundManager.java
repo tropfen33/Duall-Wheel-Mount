@@ -41,6 +41,10 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.slf4j.Logger;
 
+/**
+ * The SoundManager class is responsible for managing sound events and playing sounds.
+ * It handles sound event registrations, caching of sound resources, and sound playback.
+ */
 @OnlyIn(Dist.CLIENT)
 public class SoundManager extends SimplePreparableReloadListener<SoundManager.Preparations> {
     public static final ResourceLocation EMPTY_SOUND_LOCATION = ResourceLocation.withDefaultNamespace("empty");
@@ -64,52 +68,65 @@ public class SoundManager extends SimplePreparableReloadListener<SoundManager.Pr
     private final SoundEngine soundEngine;
     private final Map<ResourceLocation, Resource> soundCache = new HashMap<>();
 
-    public SoundManager(Options p_250027_) {
-        this.soundEngine = new SoundEngine(this, p_250027_, ResourceProvider.fromMap(this.soundCache));
+    public SoundManager(Options options) {
+        this.soundEngine = new SoundEngine(this, options, ResourceProvider.fromMap(this.soundCache));
     }
 
-    protected SoundManager.Preparations prepare(ResourceManager p_120356_, ProfilerFiller p_120357_) {
+    /**
+     * Performs any reloading that can be done off-thread, such as file IO
+     *
+     * @param resourceManager The resource manager in-charge of loading sound files
+     * @param profiler        The sound profiler
+     */
+    protected SoundManager.Preparations prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
         SoundManager.Preparations soundmanager$preparations = new SoundManager.Preparations();
-        p_120357_.startTick();
-        p_120357_.push("list");
-        soundmanager$preparations.listResources(p_120356_);
-        p_120357_.pop();
+        profiler.startTick();
+        profiler.push("list");
+        soundmanager$preparations.listResources(resourceManager);
+        profiler.pop();
 
-        for (String s : p_120356_.getNamespaces()) {
-            p_120357_.push(s);
+        for (String s : resourceManager.getNamespaces()) {
+            profiler.push(s);
 
             try {
-                for (Resource resource : p_120356_.getResourceStack(ResourceLocation.fromNamespaceAndPath(s, "sounds.json"))) {
-                    p_120357_.push(resource.sourcePackId());
+                for (Resource resource : resourceManager.getResourceStack(ResourceLocation.fromNamespaceAndPath(s, "sounds.json"))) {
+                    profiler.push(resource.sourcePackId());
 
                     try (Reader reader = resource.openAsReader()) {
-                        p_120357_.push("parse");
+                        profiler.push("parse");
                         Map<String, SoundEventRegistration> map = GsonHelper.fromJson(GSON, reader, SOUND_EVENT_REGISTRATION_TYPE);
-                        p_120357_.popPush("register");
+                        profiler.popPush("register");
 
                         for (Entry<String, SoundEventRegistration> entry : map.entrySet()) {
                             soundmanager$preparations.handleRegistration(ResourceLocation.fromNamespaceAndPath(s, entry.getKey()), entry.getValue());
                         }
 
-                        p_120357_.pop();
+                        profiler.pop();
                     } catch (RuntimeException runtimeexception) {
                         LOGGER.warn("Invalid {} in resourcepack: '{}'", "sounds.json", resource.sourcePackId(), runtimeexception);
                     }
 
-                    p_120357_.pop();
+                    profiler.pop();
                 }
             } catch (IOException ioexception) {
             }
 
-            p_120357_.pop();
+            profiler.pop();
         }
 
-        p_120357_.endTick();
+        profiler.endTick();
         return soundmanager$preparations;
     }
 
-    protected void apply(SoundManager.Preparations p_120377_, ResourceManager p_120378_, ProfilerFiller p_120379_) {
-        p_120377_.apply(this.registry, this.soundCache, this.soundEngine);
+    /**
+     * Applies the prepared sound event registrations and caches to the sound manager.
+     *
+     * @param object          The prepared sound event registrations and caches
+     * @param resourceManager The resource manager
+     * @param profiler        The profiler
+     */
+    protected void apply(SoundManager.Preparations object, ResourceManager resourceManager, ProfilerFiller profiler) {
+        object.apply(this.registry, this.soundCache, this.soundEngine);
         if (SharedConstants.IS_RUNNING_IN_IDE) {
             for (ResourceLocation resourcelocation : this.registry.keySet()) {
                 WeighedSoundEvents weighedsoundevents = this.registry.get(resourcelocation);
@@ -138,39 +155,72 @@ public class SoundManager extends SimplePreparableReloadListener<SoundManager.Pr
         return this.soundEngine.getListenerTransform();
     }
 
-    static boolean validateSoundResource(Sound p_250396_, ResourceLocation p_250879_, ResourceProvider p_248737_) {
-        ResourceLocation resourcelocation = p_250396_.getPath();
-        if (p_248737_.getResource(resourcelocation).isEmpty()) {
-            LOGGER.warn("File {} does not exist, cannot add it to event {}", resourcelocation, p_250879_);
+    /**
+     * Validates a sound resource
+     * <p>
+     * @return {@code true} if the sound resource is valid, {@code false} otherwise
+     *
+     * @param sound            The sound to validate
+     * @param location         The location of the sound event
+     * @param resourceProvider The resource provider
+     */
+    static boolean validateSoundResource(Sound sound, ResourceLocation location, ResourceProvider resourceProvider) {
+        ResourceLocation resourcelocation = sound.getPath();
+        if (resourceProvider.getResource(resourcelocation).isEmpty()) {
+            LOGGER.warn("File {} does not exist, cannot add it to event {}", resourcelocation, location);
             return false;
         } else {
             return true;
         }
     }
 
+    /**
+     * {@return The sound event associated with the specific {@linkplain ResourceLocation}, or {@code null} if not found}
+     *
+     * @param location The location of the sound event
+     */
     @Nullable
-    public WeighedSoundEvents getSoundEvent(ResourceLocation p_120385_) {
-        return this.registry.get(p_120385_);
+    public WeighedSoundEvents getSoundEvent(ResourceLocation location) {
+        return this.registry.get(location);
     }
 
     public Collection<ResourceLocation> getAvailableSounds() {
         return this.registry.keySet();
     }
 
-    public void queueTickingSound(TickableSoundInstance p_120373_) {
-        this.soundEngine.queueTickingSound(p_120373_);
+    /**
+     * Queues a ticking sound to be played.
+     *
+     * @param tickableSound The ticking sound instance
+     */
+    public void queueTickingSound(TickableSoundInstance tickableSound) {
+        this.soundEngine.queueTickingSound(tickableSound);
     }
 
-    public void play(SoundInstance p_120368_) {
-        this.soundEngine.play(p_120368_);
+    /**
+     * Play a sound
+     */
+    public void play(SoundInstance sound) {
+        this.soundEngine.play(sound);
     }
 
-    public void playDelayed(SoundInstance p_120370_, int p_120371_) {
-        this.soundEngine.playDelayed(p_120370_, p_120371_);
+    /**
+     * Plays a sound with a delay in ticks.
+     *
+     * @param sound The sound instance to play
+     * @param delay The delay in ticks before playing the sound
+     */
+    public void playDelayed(SoundInstance sound, int delay) {
+        this.soundEngine.playDelayed(sound, delay);
     }
 
-    public void updateSource(Camera p_120362_) {
-        this.soundEngine.updateSource(p_120362_);
+    /**
+     * Updates the sound source position based on the active render info.
+     *
+     * @param activeRenderInfo The active render info
+     */
+    public void updateSource(Camera activeRenderInfo) {
+        this.soundEngine.updateSource(activeRenderInfo);
     }
 
     public void pause() {
@@ -189,40 +239,64 @@ public class SoundManager extends SimplePreparableReloadListener<SoundManager.Pr
         this.soundEngine.emergencyShutdown();
     }
 
-    public void tick(boolean p_120390_) {
-        this.soundEngine.tick(p_120390_);
+    /**
+     * Updates the sound manager's tick state.
+     *
+     * @param isGamePaused {@code true} if the game is paused, {@code false} otherwise
+     */
+    public void tick(boolean isGamePaused) {
+        this.soundEngine.tick(isGamePaused);
     }
 
     public void resume() {
         this.soundEngine.resume();
     }
 
-    public void updateSourceVolume(SoundSource p_120359_, float p_120360_) {
-        if (p_120359_ == SoundSource.MASTER && p_120360_ <= 0.0F) {
+    /**
+     * Updates the volume of the specified sound source category.
+     *
+     * @param category The sound source category
+     * @param volume   The new volume
+     */
+    public void updateSourceVolume(SoundSource category, float volume) {
+        if (category == SoundSource.MASTER && volume <= 0.0F) {
             this.stop();
         }
 
-        this.soundEngine.updateCategoryVolume(p_120359_, p_120360_);
+        this.soundEngine.updateCategoryVolume(category, volume);
     }
 
-    public void stop(SoundInstance p_120400_) {
-        this.soundEngine.stop(p_120400_);
+    public void stop(SoundInstance sound) {
+        this.soundEngine.stop(sound);
     }
 
-    public boolean isActive(SoundInstance p_120404_) {
-        return this.soundEngine.isActive(p_120404_);
+    /**
+     * Checks if the specified sound is active (playing or scheduled to be played).
+     * @return {@code true} if the sound is active, {@code false} otherwise
+     *
+     * @param sound The sound instance to check
+     */
+    public boolean isActive(SoundInstance sound) {
+        return this.soundEngine.isActive(sound);
     }
 
-    public void addListener(SoundEventListener p_120375_) {
-        this.soundEngine.addEventListener(p_120375_);
+    public void addListener(SoundEventListener listener) {
+        this.soundEngine.addEventListener(listener);
     }
 
-    public void removeListener(SoundEventListener p_120402_) {
-        this.soundEngine.removeEventListener(p_120402_);
+    public void removeListener(SoundEventListener listener) {
+        this.soundEngine.removeEventListener(listener);
     }
 
-    public void stop(@Nullable ResourceLocation p_120387_, @Nullable SoundSource p_120388_) {
-        this.soundEngine.stop(p_120387_, p_120388_);
+    /**
+     * Stops all sounds associated with the specified ID and category.
+     *
+     * @param id       The ID of the sounds to stop, or null to stop all sounds
+     * @param category The category of the sounds to stop, or null to stop sounds from
+     *                 all categories
+     */
+    public void stop(@Nullable ResourceLocation id, @Nullable SoundSource category) {
+        this.soundEngine.stop(id, category);
     }
 
     public String getDebugString() {
@@ -233,35 +307,38 @@ public class SoundManager extends SimplePreparableReloadListener<SoundManager.Pr
         this.soundEngine.reload();
     }
 
+    /**
+     * The Preparations class represents the prepared sound event registrations and caches for applying to the sound manager.
+     */
     @OnlyIn(Dist.CLIENT)
     protected static class Preparations {
         final Map<ResourceLocation, WeighedSoundEvents> registry = Maps.newHashMap();
         private Map<ResourceLocation, Resource> soundCache = Map.of();
 
-        void listResources(ResourceManager p_249271_) {
-            this.soundCache = Sound.SOUND_LISTER.listMatchingResources(p_249271_);
+        void listResources(ResourceManager resourceManager) {
+            this.soundCache = Sound.SOUND_LISTER.listMatchingResources(resourceManager);
         }
 
-        void handleRegistration(ResourceLocation p_250806_, SoundEventRegistration p_249632_) {
-            WeighedSoundEvents weighedsoundevents = this.registry.get(p_250806_);
+        void handleRegistration(ResourceLocation location, SoundEventRegistration registration) {
+            WeighedSoundEvents weighedsoundevents = this.registry.get(location);
             boolean flag = weighedsoundevents == null;
-            if (flag || p_249632_.isReplace()) {
+            if (flag || registration.isReplace()) {
                 if (!flag) {
-                    SoundManager.LOGGER.debug("Replaced sound event location {}", p_250806_);
+                    SoundManager.LOGGER.debug("Replaced sound event location {}", location);
                 }
 
-                weighedsoundevents = new WeighedSoundEvents(p_250806_, p_249632_.getSubtitle());
-                this.registry.put(p_250806_, weighedsoundevents);
+                weighedsoundevents = new WeighedSoundEvents(location, registration.getSubtitle());
+                this.registry.put(location, weighedsoundevents);
             }
 
             ResourceProvider resourceprovider = ResourceProvider.fromMap(this.soundCache);
 
-            for (final Sound sound : p_249632_.getSounds()) {
+            for (final Sound sound : registration.getSounds()) {
                 final ResourceLocation resourcelocation = sound.getLocation();
                 Weighted<Sound> weighted;
                 switch (sound.getType()) {
                     case FILE:
-                        if (!SoundManager.validateSoundResource(sound, p_250806_, resourceprovider)) {
+                        if (!SoundManager.validateSoundResource(sound, location, resourceprovider)) {
                             continue;
                         }
 
@@ -311,14 +388,21 @@ public class SoundManager extends SimplePreparableReloadListener<SoundManager.Pr
             }
         }
 
-        public void apply(Map<ResourceLocation, WeighedSoundEvents> p_251229_, Map<ResourceLocation, Resource> p_251045_, SoundEngine p_250302_) {
-            p_251229_.clear();
-            p_251045_.clear();
-            p_251045_.putAll(this.soundCache);
+        /**
+         * Applies the prepared sound event registrations and caches to the sound manager.
+         *
+         * @param soundRegistry The sound registry to apply to
+         * @param cache         The sound cache to apply to
+         * @param soundEngine   The sound engine to apply to
+         */
+        public void apply(Map<ResourceLocation, WeighedSoundEvents> soundRegistry, Map<ResourceLocation, Resource> cache, SoundEngine soundEngine) {
+            soundRegistry.clear();
+            cache.clear();
+            cache.putAll(this.soundCache);
 
             for (Entry<ResourceLocation, WeighedSoundEvents> entry : this.registry.entrySet()) {
-                p_251229_.put(entry.getKey(), entry.getValue());
-                entry.getValue().preloadIfRequired(p_250302_);
+                soundRegistry.put(entry.getKey(), entry.getValue());
+                entry.getValue().preloadIfRequired(soundEngine);
             }
         }
     }

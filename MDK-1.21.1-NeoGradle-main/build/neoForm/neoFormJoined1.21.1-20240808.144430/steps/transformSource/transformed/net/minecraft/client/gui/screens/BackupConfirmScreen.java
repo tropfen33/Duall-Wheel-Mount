@@ -19,12 +19,12 @@ public class BackupConfirmScreen extends Screen {
     protected int id;
     private Checkbox eraseCache;
 
-    public BackupConfirmScreen(Runnable p_307341_, BackupConfirmScreen.Listener p_95544_, Component p_95545_, Component p_95546_, boolean p_95547_) {
-        super(p_95545_);
-        this.onCancel = p_307341_;
-        this.onProceed = p_95544_;
-        this.description = p_95546_;
-        this.promptForCacheErase = p_95547_;
+    public BackupConfirmScreen(Runnable onCancel, BackupConfirmScreen.Listener onProceed, Component title, Component description, boolean promptForCacheErase) {
+        super(title);
+        this.onCancel = onCancel;
+        this.onProceed = onProceed;
+        this.description = description;
+        this.promptForCacheErase = promptForCacheErase;
     }
 
     @Override
@@ -51,11 +51,19 @@ public class BackupConfirmScreen extends Screen {
         }
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282759_, int p_282356_, int p_282725_, float p_281518_) {
-        super.render(p_282759_, p_282356_, p_282725_, p_281518_);
-        p_282759_.drawCenteredString(this.font, this.title, this.width / 2, 50, 16777215);
-        this.message.renderCentered(p_282759_, this.width / 2, 70);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
+        guiGraphics.drawCenteredString(this.font, this.title, this.width / 2, 50, 16777215);
+        this.message.renderCentered(guiGraphics, this.width / 2, 70);
     }
 
     @Override
@@ -64,17 +72,17 @@ public class BackupConfirmScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int p_95549_, int p_95550_, int p_95551_) {
-        if (p_95549_ == 256) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 256) {
             this.onCancel.run();
             return true;
         } else {
-            return super.keyPressed(p_95549_, p_95550_, p_95551_);
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
     }
 
     @OnlyIn(Dist.CLIENT)
     public interface Listener {
-        void proceed(boolean p_95566_, boolean p_95567_);
+        void proceed(boolean confirmed, boolean eraseCache);
     }
 }

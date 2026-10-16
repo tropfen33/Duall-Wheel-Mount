@@ -9,8 +9,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
 public class Salmon extends AbstractSchoolingFish {
-    public Salmon(EntityType<? extends Salmon> p_29790_, Level p_29791_) {
-        super(p_29790_, p_29791_);
+    public Salmon(EntityType<? extends Salmon> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
@@ -34,7 +34,7 @@ public class Salmon extends AbstractSchoolingFish {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_29795_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.SALMON_HURT;
     }
 

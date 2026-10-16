@@ -21,36 +21,39 @@ public class ShulkerBulletRenderer extends EntityRenderer<ShulkerBullet> {
     private static final RenderType RENDER_TYPE = RenderType.entityTranslucent(TEXTURE_LOCATION);
     private final ShulkerBulletModel<ShulkerBullet> model;
 
-    public ShulkerBulletRenderer(EntityRendererProvider.Context p_174368_) {
-        super(p_174368_);
-        this.model = new ShulkerBulletModel<>(p_174368_.bakeLayer(ModelLayers.SHULKER_BULLET));
+    public ShulkerBulletRenderer(EntityRendererProvider.Context context) {
+        super(context);
+        this.model = new ShulkerBulletModel<>(context.bakeLayer(ModelLayers.SHULKER_BULLET));
     }
 
-    protected int getBlockLightLevel(ShulkerBullet p_115869_, BlockPos p_115870_) {
+    protected int getBlockLightLevel(ShulkerBullet entity, BlockPos pos) {
         return 15;
     }
 
-    public void render(ShulkerBullet p_115862_, float p_115863_, float p_115864_, PoseStack p_115865_, MultiBufferSource p_115866_, int p_115867_) {
-        p_115865_.pushPose();
-        float f = Mth.rotLerp(p_115864_, p_115862_.yRotO, p_115862_.getYRot());
-        float f1 = Mth.lerp(p_115864_, p_115862_.xRotO, p_115862_.getXRot());
-        float f2 = (float)p_115862_.tickCount + p_115864_;
-        p_115865_.translate(0.0F, 0.15F, 0.0F);
-        p_115865_.mulPose(Axis.YP.rotationDegrees(Mth.sin(f2 * 0.1F) * 180.0F));
-        p_115865_.mulPose(Axis.XP.rotationDegrees(Mth.cos(f2 * 0.1F) * 180.0F));
-        p_115865_.mulPose(Axis.ZP.rotationDegrees(Mth.sin(f2 * 0.15F) * 360.0F));
-        p_115865_.scale(-0.5F, -0.5F, 0.5F);
-        this.model.setupAnim(p_115862_, 0.0F, 0.0F, 0.0F, f, f1);
-        VertexConsumer vertexconsumer = p_115866_.getBuffer(this.model.renderType(TEXTURE_LOCATION));
-        this.model.renderToBuffer(p_115865_, vertexconsumer, p_115867_, OverlayTexture.NO_OVERLAY);
-        p_115865_.scale(1.5F, 1.5F, 1.5F);
-        VertexConsumer vertexconsumer1 = p_115866_.getBuffer(RENDER_TYPE);
-        this.model.renderToBuffer(p_115865_, vertexconsumer1, p_115867_, OverlayTexture.NO_OVERLAY, 654311423);
-        p_115865_.popPose();
-        super.render(p_115862_, p_115863_, p_115864_, p_115865_, p_115866_, p_115867_);
+    public void render(ShulkerBullet entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        poseStack.pushPose();
+        float f = Mth.rotLerp(partialTicks, entity.yRotO, entity.getYRot());
+        float f1 = Mth.lerp(partialTicks, entity.xRotO, entity.getXRot());
+        float f2 = (float)entity.tickCount + partialTicks;
+        poseStack.translate(0.0F, 0.15F, 0.0F);
+        poseStack.mulPose(Axis.YP.rotationDegrees(Mth.sin(f2 * 0.1F) * 180.0F));
+        poseStack.mulPose(Axis.XP.rotationDegrees(Mth.cos(f2 * 0.1F) * 180.0F));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.sin(f2 * 0.15F) * 360.0F));
+        poseStack.scale(-0.5F, -0.5F, 0.5F);
+        this.model.setupAnim(entity, 0.0F, 0.0F, 0.0F, f, f1);
+        VertexConsumer vertexconsumer = buffer.getBuffer(this.model.renderType(TEXTURE_LOCATION));
+        this.model.renderToBuffer(poseStack, vertexconsumer, packedLight, OverlayTexture.NO_OVERLAY);
+        poseStack.scale(1.5F, 1.5F, 1.5F);
+        VertexConsumer vertexconsumer1 = buffer.getBuffer(RENDER_TYPE);
+        this.model.renderToBuffer(poseStack, vertexconsumer1, packedLight, OverlayTexture.NO_OVERLAY, 654311423);
+        poseStack.popPose();
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
     }
 
-    public ResourceLocation getTextureLocation(ShulkerBullet p_115860_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(ShulkerBullet entity) {
         return TEXTURE_LOCATION;
     }
 }

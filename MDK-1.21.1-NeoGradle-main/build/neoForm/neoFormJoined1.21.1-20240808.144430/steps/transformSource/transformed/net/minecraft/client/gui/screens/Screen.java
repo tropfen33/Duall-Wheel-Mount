@@ -96,8 +96,8 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
             }
         });
 
-    protected Screen(Component p_96550_) {
-        this.title = p_96550_;
+    protected Screen(Component title) {
+        this.title = title;
     }
 
     public Component getTitle() {
@@ -108,33 +108,53 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
         return this.getTitle();
     }
 
-    public final void renderWithTooltip(GuiGraphics p_282345_, int p_283456_, int p_283586_, float p_282339_) {
-        this.render(p_282345_, p_283456_, p_283586_, p_282339_);
+    public final void renderWithTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.render(guiGraphics, mouseX, mouseY, partialTick);
         if (this.deferredTooltipRendering != null) {
-            p_282345_.renderTooltip(this.font, this.deferredTooltipRendering.tooltip(), this.deferredTooltipRendering.positioner(), p_283456_, p_283586_);
+            guiGraphics.renderTooltip(this.font, this.deferredTooltipRendering.tooltip(), this.deferredTooltipRendering.positioner(), mouseX, mouseY);
             this.deferredTooltipRendering = null;
         }
     }
 
-    /** Neo: mixins targeting this method won't fire for container screens as {@link net.minecraft.client.gui.screens.inventory.AbstractContainerScreen#render} replicates this method in place of a super call to insert an event */
+    /**
+ * Neo: mixins targeting this method won't fire for container screens as
+ * {@link net.minecraft.client.gui.screens.inventory.AbstractContainerScreen#render}
+ * replicates this method in place of a super call to insert an event
+ * <p>
+ * Renders the graphical user interface (GUI) element.
+ *
+ * @param guiGraphics the GuiGraphics object used for rendering.
+ * @param mouseX      the x-coordinate of the mouse cursor.
+ * @param mouseY      the y-coordinate of the mouse cursor.
+ * @param partialTick the partial tick time.
+ */
     @Override
-    public void render(GuiGraphics p_281549_, int p_281550_, int p_282878_, float p_282465_) {
-        this.renderBackground(p_281549_, p_281550_, p_282878_, p_282465_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTick);
 
         for (Renderable renderable : this.renderables) {
-            renderable.render(p_281549_, p_281550_, p_282878_, p_282465_);
+            renderable.render(guiGraphics, mouseX, mouseY, partialTick);
         }
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_96552_, int p_96553_, int p_96554_) {
-        if (p_96552_ == 256 && this.shouldCloseOnEsc()) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == 256 && this.shouldCloseOnEsc()) {
             this.onClose();
             return true;
-        } else if (super.keyPressed(p_96552_, p_96553_, p_96554_)) {
+        } else if (super.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
         } else {
-            FocusNavigationEvent focusnavigationevent = (FocusNavigationEvent)(switch (p_96552_) {
+            FocusNavigationEvent focusnavigationevent = (FocusNavigationEvent)(switch (keyCode) {
                 case 258 -> this.createTabEvent();
                 default -> null;
                 case 262 -> this.createArrowEvent(ScreenDirection.RIGHT);
@@ -163,8 +183,8 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
         return new FocusNavigationEvent.TabNavigation(flag);
     }
 
-    private FocusNavigationEvent.ArrowNavigation createArrowEvent(ScreenDirection p_265049_) {
-        return new FocusNavigationEvent.ArrowNavigation(p_265049_);
+    private FocusNavigationEvent.ArrowNavigation createArrowEvent(ScreenDirection direction) {
+        return new FocusNavigationEvent.ArrowNavigation(direction);
     }
 
     protected void setInitialFocus() {
@@ -177,8 +197,8 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
         }
     }
 
-    protected void setInitialFocus(GuiEventListener p_265756_) {
-        ComponentPath componentpath = ComponentPath.path(this, p_265756_.nextFocusPath(new FocusNavigationEvent.InitialFocus()));
+    protected void setInitialFocus(GuiEventListener listener) {
+        ComponentPath componentpath = ComponentPath.path(this, listener.nextFocusPath(new FocusNavigationEvent.InitialFocus()));
         if (componentpath != null) {
             this.changeFocus(componentpath);
         }
@@ -192,9 +212,9 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
     }
 
     @VisibleForTesting
-    protected void changeFocus(ComponentPath p_265308_) {
+    protected void changeFocus(ComponentPath path) {
         this.clearFocus();
-        p_265308_.applyFocus(true);
+        path.applyFocus(true);
     }
 
     public boolean shouldCloseOnEsc() {
@@ -205,32 +225,32 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
         this.minecraft.popGuiLayer();
     }
 
-    protected <T extends GuiEventListener & Renderable & NarratableEntry> T addRenderableWidget(T p_169406_) {
-        this.renderables.add(p_169406_);
-        return this.addWidget(p_169406_);
+    protected <T extends GuiEventListener & Renderable & NarratableEntry> T addRenderableWidget(T widget) {
+        this.renderables.add(widget);
+        return this.addWidget(widget);
     }
 
-    protected <T extends Renderable> T addRenderableOnly(T p_254514_) {
-        this.renderables.add(p_254514_);
-        return p_254514_;
+    protected <T extends Renderable> T addRenderableOnly(T renderable) {
+        this.renderables.add(renderable);
+        return renderable;
     }
 
-    protected <T extends GuiEventListener & NarratableEntry> T addWidget(T p_96625_) {
-        this.children.add(p_96625_);
-        this.narratables.add(p_96625_);
-        return p_96625_;
+    protected <T extends GuiEventListener & NarratableEntry> T addWidget(T listener) {
+        this.children.add(listener);
+        this.narratables.add(listener);
+        return listener;
     }
 
-    protected void removeWidget(GuiEventListener p_169412_) {
-        if (p_169412_ instanceof Renderable) {
-            this.renderables.remove((Renderable)p_169412_);
+    protected void removeWidget(GuiEventListener listener) {
+        if (listener instanceof Renderable) {
+            this.renderables.remove((Renderable)listener);
         }
 
-        if (p_169412_ instanceof NarratableEntry) {
-            this.narratables.remove((NarratableEntry)p_169412_);
+        if (listener instanceof NarratableEntry) {
+            this.narratables.remove((NarratableEntry)listener);
         }
 
-        this.children.remove(p_169412_);
+        this.children.remove(listener);
     }
 
     protected void clearWidgets() {
@@ -239,25 +259,25 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
         this.narratables.clear();
     }
 
-    public static List<Component> getTooltipFromItem(Minecraft p_281881_, ItemStack p_282833_) {
-        return p_282833_.getTooltipLines(
-            Item.TooltipContext.of(p_281881_.level),
-            p_281881_.player,
-            net.neoforged.neoforge.client.ClientTooltipFlag.of(p_281881_.options.advancedItemTooltips ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL)
+    public static List<Component> getTooltipFromItem(Minecraft minecraft, ItemStack item) {
+        return item.getTooltipLines(
+            Item.TooltipContext.of(minecraft.level),
+            minecraft.player,
+            net.neoforged.neoforge.client.ClientTooltipFlag.of(minecraft.options.advancedItemTooltips ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL)
         );
     }
 
-    protected void insertText(String p_96587_, boolean p_96588_) {
+    protected void insertText(String text, boolean overwrite) {
     }
 
-    public boolean handleComponentClicked(@Nullable Style p_96592_) {
-        if (p_96592_ == null) {
+    public boolean handleComponentClicked(@Nullable Style style) {
+        if (style == null) {
             return false;
         } else {
-            ClickEvent clickevent = p_96592_.getClickEvent();
+            ClickEvent clickevent = style.getClickEvent();
             if (hasShiftDown()) {
-                if (p_96592_.getInsertion() != null) {
-                    this.insertText(p_96592_.getInsertion(), false);
+                if (style.getInsertion() != null) {
+                    this.insertText(style.getInsertion(), false);
                 }
             } else if (clickevent != null) {
                 if (clickevent.getAction() == ClickEvent.Action.OPEN_URL) {
@@ -307,11 +327,11 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
         }
     }
 
-    public final void init(Minecraft p_96607_, int p_96608_, int p_96609_) {
-        this.minecraft = p_96607_;
-        this.font = p_96607_.font;
-        this.width = p_96608_;
-        this.height = p_96609_;
+    public final void init(Minecraft minecraft, int width, int height) {
+        this.minecraft = minecraft;
+        this.font = minecraft.font;
+        this.width = width;
+        this.height = height;
         if (!this.initialized) {
             if (!net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.client.event.ScreenEvent.Init.Pre(this, this.children, this::addEventWidget, this::removeWidget)).isCanceled()) {
             this.init();
@@ -354,48 +374,48 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
     public void added() {
     }
 
-    public void renderBackground(GuiGraphics p_283688_, int p_296369_, int p_296477_, float p_294317_) {
+    public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         if (this.minecraft.level == null) {
-            this.renderPanorama(p_283688_, p_294317_);
+            this.renderPanorama(guiGraphics, partialTick);
         }
 
-        this.renderBlurredBackground(p_294317_);
-        this.renderMenuBackground(p_283688_);
-        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.client.event.ScreenEvent.BackgroundRendered(this, p_283688_));
+        this.renderBlurredBackground(partialTick);
+        this.renderMenuBackground(guiGraphics);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(new net.neoforged.neoforge.client.event.ScreenEvent.BackgroundRendered(this, guiGraphics));
     }
 
-    protected void renderBlurredBackground(float p_330683_) {
+    protected void renderBlurredBackground(float partialTick) {
         // Neo: fix blur effect rendered at high z with depth test breaking subsequent rendering of screen elements (https://github.com/neoforged/NeoForge/issues/1504)
         RenderSystem.disableDepthTest();
-        this.minecraft.gameRenderer.processBlurEffect(p_330683_);
+        this.minecraft.gameRenderer.processBlurEffect(partialTick);
         this.minecraft.getMainRenderTarget().bindWrite(false);
     }
 
-    protected void renderPanorama(GuiGraphics p_331628_, float p_331316_) {
-        PANORAMA.render(p_331628_, this.width, this.height, 1.0F, p_331316_);
+    protected void renderPanorama(GuiGraphics guiGraphics, float partialTick) {
+        PANORAMA.render(guiGraphics, this.width, this.height, 1.0F, partialTick);
     }
 
-    protected void renderMenuBackground(GuiGraphics p_331074_) {
-        this.renderMenuBackground(p_331074_, 0, 0, this.width, this.height);
+    protected void renderMenuBackground(GuiGraphics partialTick) {
+        this.renderMenuBackground(partialTick, 0, 0, this.width, this.height);
     }
 
-    protected void renderMenuBackground(GuiGraphics p_331077_, int p_331957_, int p_331095_, int p_331894_, int p_332138_) {
+    protected void renderMenuBackground(GuiGraphics guiGraphics, int x, int y, int width, int height) {
         renderMenuBackgroundTexture(
-            p_331077_, this.minecraft.level == null ? MENU_BACKGROUND : INWORLD_MENU_BACKGROUND, p_331957_, p_331095_, 0.0F, 0.0F, p_331894_, p_332138_
+            guiGraphics, this.minecraft.level == null ? MENU_BACKGROUND : INWORLD_MENU_BACKGROUND, x, y, 0.0F, 0.0F, width, height
         );
     }
 
     public static void renderMenuBackgroundTexture(
-        GuiGraphics p_331514_, ResourceLocation p_333918_, int p_330327_, int p_331282_, float p_334038_, float p_334054_, int p_331309_, int p_331449_
+        GuiGraphics guiGraphics, ResourceLocation texture, int x, int y, float uOffset, float vOffset, int width, int height
     ) {
         int i = 32;
         RenderSystem.enableBlend();
-        p_331514_.blit(p_333918_, p_330327_, p_331282_, 0, p_334038_, p_334054_, p_331309_, p_331449_, 32, 32);
+        guiGraphics.blit(texture, x, y, 0, uOffset, vOffset, width, height, 32, 32);
         RenderSystem.disableBlend();
     }
 
-    public void renderTransparentBackground(GuiGraphics p_294586_) {
-        p_294586_.fillGradient(0, 0, this.width, this.height, -1072689136, -804253680);
+    public void renderTransparentBackground(GuiGraphics guiGraphics) {
+        guiGraphics.fillGradient(0, 0, this.width, this.height, -1072689136, -804253680);
     }
 
     public boolean isPauseScreen() {
@@ -420,76 +440,84 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
             || InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), 346);
     }
 
-    public static boolean isCut(int p_96629_) {
-        return p_96629_ == 88 && hasControlDown() && !hasShiftDown() && !hasAltDown();
+    public static boolean isCut(int keyCode) {
+        return keyCode == 88 && hasControlDown() && !hasShiftDown() && !hasAltDown();
     }
 
-    public static boolean isPaste(int p_96631_) {
-        return p_96631_ == 86 && hasControlDown() && !hasShiftDown() && !hasAltDown();
+    public static boolean isPaste(int keyCode) {
+        return keyCode == 86 && hasControlDown() && !hasShiftDown() && !hasAltDown();
     }
 
-    public static boolean isCopy(int p_96633_) {
-        return p_96633_ == 67 && hasControlDown() && !hasShiftDown() && !hasAltDown();
+    public static boolean isCopy(int keyCode) {
+        return keyCode == 67 && hasControlDown() && !hasShiftDown() && !hasAltDown();
     }
 
-    public static boolean isSelectAll(int p_96635_) {
-        return p_96635_ == 65 && hasControlDown() && !hasShiftDown() && !hasAltDown();
+    public static boolean isSelectAll(int keyCode) {
+        return keyCode == 65 && hasControlDown() && !hasShiftDown() && !hasAltDown();
     }
 
     protected void repositionElements() {
         this.rebuildWidgets();
     }
 
-    public void resize(Minecraft p_96575_, int p_96576_, int p_96577_) {
-        this.width = p_96576_;
-        this.height = p_96577_;
+    public void resize(Minecraft minecraft, int width, int height) {
+        this.width = width;
+        this.height = height;
         this.repositionElements();
     }
 
-    public static void wrapScreenError(Runnable p_96580_, String p_96581_, String p_96582_) {
+    public static void wrapScreenError(Runnable action, String errorDesc, String screenName) {
         try {
-            p_96580_.run();
+            action.run();
         } catch (Throwable throwable) {
-            CrashReport crashreport = CrashReport.forThrowable(throwable, p_96581_);
+            CrashReport crashreport = CrashReport.forThrowable(throwable, errorDesc);
             CrashReportCategory crashreportcategory = crashreport.addCategory("Affected screen");
-            crashreportcategory.setDetail("Screen name", () -> p_96582_);
+            crashreportcategory.setDetail("Screen name", () -> screenName);
             throw new ReportedException(crashreport);
         }
     }
 
-    protected boolean isValidCharacterForName(String p_96584_, char p_96585_, int p_96586_) {
-        int i = p_96584_.indexOf(58);
-        int j = p_96584_.indexOf(47);
-        if (p_96585_ == ':') {
-            return (j == -1 || p_96586_ <= j) && i == -1;
+    protected boolean isValidCharacterForName(String text, char charTyped, int cursorPos) {
+        int i = text.indexOf(58);
+        int j = text.indexOf(47);
+        if (charTyped == ':') {
+            return (j == -1 || cursorPos <= j) && i == -1;
         } else {
-            return p_96585_ == '/'
-                ? p_96586_ > i
-                : p_96585_ == '_' || p_96585_ == '-' || p_96585_ >= 'a' && p_96585_ <= 'z' || p_96585_ >= '0' && p_96585_ <= '9' || p_96585_ == '.';
+            return charTyped == '/'
+                ? cursorPos > i
+                : charTyped == '_' || charTyped == '-' || charTyped >= 'a' && charTyped <= 'z' || charTyped >= '0' && charTyped <= '9' || charTyped == '.';
         }
     }
 
+    /**
+     * Checks if the given mouse coordinates are over the GUI element.
+     * <p>
+     * @return {@code true} if the mouse is over the GUI element, {@code false} otherwise.
+     *
+     * @param mouseX the X coordinate of the mouse.
+     * @param mouseY the Y coordinate of the mouse.
+     */
     @Override
-    public boolean isMouseOver(double p_96595_, double p_96596_) {
+    public boolean isMouseOver(double mouseX, double mouseY) {
         return true;
     }
 
-    public void onFilesDrop(List<Path> p_96591_) {
+    public void onFilesDrop(List<Path> packs) {
     }
 
     public Minecraft getMinecraft() {
         return this.minecraft;
     }
 
-    private void scheduleNarration(long p_169381_, boolean p_169382_) {
-        this.nextNarrationTime = Util.getMillis() + p_169381_;
-        if (p_169382_) {
+    private void scheduleNarration(long delay, boolean stopSuppression) {
+        this.nextNarrationTime = Util.getMillis() + delay;
+        if (stopSuppression) {
             this.narrationSuppressTime = Long.MIN_VALUE;
         }
     }
 
-    private void suppressNarration(long p_169379_) {
-        this.narrationSuppressTime = Util.getMillis() + p_169379_;
+    private void suppressNarration(long time) {
+        this.narrationSuppressTime = Util.getMillis() + time;
     }
 
     public void afterMouseMove() {
@@ -518,15 +546,15 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
         }
     }
 
-    public void triggerImmediateNarration(boolean p_169408_) {
+    public void triggerImmediateNarration(boolean onlyNarrateNew) {
         if (this.shouldRunNarration()) {
-            this.runNarration(p_169408_);
+            this.runNarration(onlyNarrateNew);
         }
     }
 
-    private void runNarration(boolean p_169410_) {
+    private void runNarration(boolean onlyNarrateNew) {
         this.narrationState.update(this::updateNarrationState);
-        String s = this.narrationState.collectNarrationText(!p_169410_);
+        String s = this.narrationState.collectNarrationText(!onlyNarrateNew);
         if (!s.isEmpty()) {
             this.minecraft.getNarrator().sayNow(s);
         }
@@ -536,16 +564,16 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
         return true;
     }
 
-    protected void updateNarrationState(NarrationElementOutput p_169396_) {
-        p_169396_.add(NarratedElementType.TITLE, this.getNarrationMessage());
+    protected void updateNarrationState(NarrationElementOutput output) {
+        output.add(NarratedElementType.TITLE, this.getNarrationMessage());
         if (this.shouldNarrateNavigation()) {
-            p_169396_.add(NarratedElementType.USAGE, USAGE_NARRATION);
+            output.add(NarratedElementType.USAGE, USAGE_NARRATION);
         }
 
-        this.updateNarratedWidget(p_169396_);
+        this.updateNarratedWidget(output);
     }
 
-    protected void updateNarratedWidget(NarrationElementOutput p_169403_) {
+    protected void updateNarratedWidget(NarrationElementOutput narrationElementOutput) {
         List<NarratableEntry> list = this.narratables
             .stream()
             .filter(NarratableEntry::isActive)
@@ -558,15 +586,15 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
             }
 
             if (list.size() > 1) {
-                p_169403_.add(
+                narrationElementOutput.add(
                     NarratedElementType.POSITION, Component.translatable("narrator.position.screen", screen$narratablesearchresult.index + 1, list.size())
                 );
                 if (screen$narratablesearchresult.priority == NarratableEntry.NarrationPriority.FOCUSED) {
-                    p_169403_.add(NarratedElementType.USAGE, this.getUsageNarration());
+                    narrationElementOutput.add(NarratedElementType.USAGE, this.getUsageNarration());
                 }
             }
 
-            screen$narratablesearchresult.entry.updateNarration(p_169403_.nest());
+            screen$narratablesearchresult.entry.updateNarration(narrationElementOutput.nest());
         }
     }
 
@@ -575,16 +603,16 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
     }
 
     @Nullable
-    public static Screen.NarratableSearchResult findNarratableWidget(List<? extends NarratableEntry> p_169401_, @Nullable NarratableEntry p_169402_) {
+    public static Screen.NarratableSearchResult findNarratableWidget(List<? extends NarratableEntry> entries, @Nullable NarratableEntry target) {
         Screen.NarratableSearchResult screen$narratablesearchresult = null;
         Screen.NarratableSearchResult screen$narratablesearchresult1 = null;
         int i = 0;
 
-        for (int j = p_169401_.size(); i < j; i++) {
-            NarratableEntry narratableentry = p_169401_.get(i);
+        for (int j = entries.size(); i < j; i++) {
+            NarratableEntry narratableentry = entries.get(i);
             NarratableEntry.NarrationPriority narratableentry$narrationpriority = narratableentry.narrationPriority();
             if (narratableentry$narrationpriority.isTerminal()) {
-                if (narratableentry != p_169402_) {
+                if (narratableentry != target) {
                     return new Screen.NarratableSearchResult(narratableentry, i, narratableentry$narrationpriority);
                 }
 
@@ -600,8 +628,8 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
         return screen$narratablesearchresult != null ? screen$narratablesearchresult : screen$narratablesearchresult1;
     }
 
-    public void updateNarratorStatus(boolean p_352211_) {
-        if (p_352211_) {
+    public void updateNarratorStatus(boolean narratorEnabled) {
+        if (narratorEnabled) {
             this.scheduleNarration(NARRATE_DELAY_NARRATOR_ENABLED, false);
         }
 
@@ -614,22 +642,22 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
         this.deferredTooltipRendering = null;
     }
 
-    public void setTooltipForNextRenderPass(List<FormattedCharSequence> p_259937_) {
-        this.setTooltipForNextRenderPass(p_259937_, DefaultTooltipPositioner.INSTANCE, true);
+    public void setTooltipForNextRenderPass(List<FormattedCharSequence> tooltip) {
+        this.setTooltipForNextRenderPass(tooltip, DefaultTooltipPositioner.INSTANCE, true);
     }
 
-    public void setTooltipForNextRenderPass(List<FormattedCharSequence> p_262939_, ClientTooltipPositioner p_263078_, boolean p_263107_) {
-        if (this.deferredTooltipRendering == null || p_263107_) {
-            this.deferredTooltipRendering = new Screen.DeferredTooltipRendering(p_262939_, p_263078_);
+    public void setTooltipForNextRenderPass(List<FormattedCharSequence> tooltip, ClientTooltipPositioner positioner, boolean override) {
+        if (this.deferredTooltipRendering == null || override) {
+            this.deferredTooltipRendering = new Screen.DeferredTooltipRendering(tooltip, positioner);
         }
     }
 
-    public void setTooltipForNextRenderPass(Component p_259986_) {
-        this.setTooltipForNextRenderPass(Tooltip.splitTooltip(this.minecraft, p_259986_));
+    public void setTooltipForNextRenderPass(Component tooltip) {
+        this.setTooltipForNextRenderPass(Tooltip.splitTooltip(this.minecraft, tooltip));
     }
 
-    public void setTooltipForNextRenderPass(Tooltip p_262992_, ClientTooltipPositioner p_262980_, boolean p_262988_) {
-        this.setTooltipForNextRenderPass(p_262992_.toCharSequence(this.minecraft), p_262980_, p_262988_);
+    public void setTooltipForNextRenderPass(Tooltip tooltip, ClientTooltipPositioner positioner, boolean override) {
+        this.setTooltipForNextRenderPass(tooltip.toCharSequence(this.minecraft), positioner, override);
     }
 
     @Override
@@ -652,10 +680,10 @@ public abstract class Screen extends AbstractContainerEventHandler implements Re
         public final int index;
         public final NarratableEntry.NarrationPriority priority;
 
-        public NarratableSearchResult(NarratableEntry p_169424_, int p_169425_, NarratableEntry.NarrationPriority p_169426_) {
-            this.entry = p_169424_;
-            this.index = p_169425_;
-            this.priority = p_169426_;
+        public NarratableSearchResult(NarratableEntry entry, int index, NarratableEntry.NarrationPriority priority) {
+            this.entry = entry;
+            this.index = index;
+            this.priority = priority;
         }
     }
 

@@ -8,10 +8,10 @@ public class NonOverlappingMerger extends AbstractDoubleList implements IndexMer
     private final DoubleList upper;
     private final boolean swap;
 
-    protected NonOverlappingMerger(DoubleList p_83012_, DoubleList p_83013_, boolean p_83014_) {
-        this.lower = p_83012_;
-        this.upper = p_83013_;
-        this.swap = p_83014_;
+    protected NonOverlappingMerger(DoubleList lower, DoubleList upper, boolean swap) {
+        this.lower = lower;
+        this.upper = upper;
+        this.swap = swap;
     }
 
     @Override
@@ -20,17 +20,17 @@ public class NonOverlappingMerger extends AbstractDoubleList implements IndexMer
     }
 
     @Override
-    public boolean forMergedIndexes(IndexMerger.IndexConsumer p_83017_) {
+    public boolean forMergedIndexes(IndexMerger.IndexConsumer consumer) {
         return this.swap
-            ? this.forNonSwappedIndexes((p_83020_, p_83021_, p_83022_) -> p_83017_.merge(p_83021_, p_83020_, p_83022_))
-            : this.forNonSwappedIndexes(p_83017_);
+            ? this.forNonSwappedIndexes((p_83020_, p_83021_, p_83022_) -> consumer.merge(p_83021_, p_83020_, p_83022_))
+            : this.forNonSwappedIndexes(consumer);
     }
 
-    private boolean forNonSwappedIndexes(IndexMerger.IndexConsumer p_83024_) {
+    private boolean forNonSwappedIndexes(IndexMerger.IndexConsumer consumer) {
         int i = this.lower.size();
 
         for (int j = 0; j < i; j++) {
-            if (!p_83024_.merge(j, -1, j)) {
+            if (!consumer.merge(j, -1, j)) {
                 return false;
             }
         }
@@ -38,7 +38,7 @@ public class NonOverlappingMerger extends AbstractDoubleList implements IndexMer
         int l = this.upper.size() - 1;
 
         for (int k = 0; k < l; k++) {
-            if (!p_83024_.merge(i - 1, k, i + k)) {
+            if (!consumer.merge(i - 1, k, i + k)) {
                 return false;
             }
         }
@@ -47,8 +47,8 @@ public class NonOverlappingMerger extends AbstractDoubleList implements IndexMer
     }
 
     @Override
-    public double getDouble(int p_83026_) {
-        return p_83026_ < this.lower.size() ? this.lower.getDouble(p_83026_) : this.upper.getDouble(p_83026_ - this.lower.size());
+    public double getDouble(int index) {
+        return index < this.lower.size() ? this.lower.getDouble(index) : this.upper.getDouble(index - this.lower.size());
     }
 
     @Override

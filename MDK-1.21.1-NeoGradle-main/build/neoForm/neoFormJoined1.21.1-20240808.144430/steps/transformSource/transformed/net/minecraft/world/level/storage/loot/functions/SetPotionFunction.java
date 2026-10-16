@@ -18,9 +18,9 @@ public class SetPotionFunction extends LootItemConditionalFunction {
     );
     private final Holder<Potion> potion;
 
-    private SetPotionFunction(List<LootItemCondition> p_299010_, Holder<Potion> p_298587_) {
-        super(p_299010_);
-        this.potion = p_298587_;
+    private SetPotionFunction(List<LootItemCondition> conditions, Holder<Potion> potion) {
+        super(conditions);
+        this.potion = potion;
     }
 
     @Override
@@ -28,13 +28,16 @@ public class SetPotionFunction extends LootItemConditionalFunction {
         return LootItemFunctions.SET_POTION;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_193073_, LootContext p_193074_) {
-        p_193073_.update(DataComponents.POTION_CONTENTS, PotionContents.EMPTY, this.potion, PotionContents::withPotion);
-        return p_193073_;
+    public ItemStack run(ItemStack stack, LootContext context) {
+        stack.update(DataComponents.POTION_CONTENTS, PotionContents.EMPTY, this.potion, PotionContents::withPotion);
+        return stack;
     }
 
-    public static LootItemConditionalFunction.Builder<?> setPotion(Holder<Potion> p_316540_) {
-        return simpleBuilder(p_316108_ -> new SetPotionFunction(p_316108_, p_316540_));
+    public static LootItemConditionalFunction.Builder<?> setPotion(Holder<Potion> potion) {
+        return simpleBuilder(p_316108_ -> new SetPotionFunction(p_316108_, potion));
     }
 }

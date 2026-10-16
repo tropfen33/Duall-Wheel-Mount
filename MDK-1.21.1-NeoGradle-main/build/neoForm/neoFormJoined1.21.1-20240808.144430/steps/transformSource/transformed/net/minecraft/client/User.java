@@ -21,11 +21,11 @@ public class User {
     private final Optional<String> clientId;
     private final User.Type type;
 
-    public User(String p_193799_, UUID p_296409_, String p_193800_, Optional<String> p_193802_, Optional<String> p_193803_, User.Type p_193804_) {
-        if (p_193799_ == null || p_193799_.isEmpty()) {
-            p_193799_ = "MissingName";
-            p_296409_ = UUID.fromString("00000000-0000-0000-0000-000000000000");
-            p_193800_ = "NotValid";
+    public User(String name, UUID uuid, String accessToken, Optional<String> xuid, Optional<String> clientId, User.Type type) {
+        if (name == null || name.isEmpty()) {
+            name = "MissingName";
+            uuid = UUID.fromString("00000000-0000-0000-0000-000000000000");
+            accessToken = "NotValid";
             org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(getClass().getName());
             logger.warn("=========================================================");
             logger.warn("WARNING!! the username was not set for this session, typically");
@@ -35,12 +35,12 @@ public class User {
             logger.warn("when asking for help!");
             logger.warn("=========================================================");
         }
-        this.name = p_193799_;
-        this.uuid = p_296409_;
-        this.accessToken = p_193800_;
-        this.xuid = p_193802_;
-        this.clientId = p_193803_;
-        this.type = p_193804_;
+        this.name = name;
+        this.uuid = uuid;
+        this.accessToken = accessToken;
+        this.xuid = xuid;
+        this.clientId = clientId;
+        this.type = type;
     }
 
     public String getSessionId() {
@@ -80,13 +80,13 @@ public class User {
         private static final Map<String, User.Type> BY_NAME = Arrays.stream(values()).collect(Collectors.toMap(p_92560_ -> p_92560_.name, Function.identity()));
         private final String name;
 
-        private Type(String p_92558_) {
-            this.name = p_92558_;
+        private Type(String name) {
+            this.name = name;
         }
 
         @Nullable
-        public static User.Type byName(String p_92562_) {
-            return BY_NAME.get(p_92562_.toLowerCase(Locale.ROOT));
+        public static User.Type byName(String typeName) {
+            return BY_NAME.get(typeName.toLowerCase(Locale.ROOT));
         }
 
         public String getName() {

@@ -26,9 +26,9 @@ public class RealmsParentalConsentScreen extends RealmsScreen {
     @Nullable
     private MultiLineTextWidget textWidget;
 
-    public RealmsParentalConsentScreen(Screen p_88861_) {
+    public RealmsParentalConsentScreen(Screen nextScreen) {
         super(GameNarrator.NO_TITLE);
-        this.lastScreen = p_88861_;
+        this.lastScreen = nextScreen;
     }
 
     @Override

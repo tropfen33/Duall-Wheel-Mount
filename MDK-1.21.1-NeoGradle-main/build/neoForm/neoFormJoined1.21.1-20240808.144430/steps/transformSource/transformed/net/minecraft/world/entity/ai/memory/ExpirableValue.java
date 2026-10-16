@@ -10,9 +10,9 @@ public class ExpirableValue<T> {
     private final T value;
     private long timeToLive;
 
-    public ExpirableValue(T p_26299_, long p_26300_) {
-        this.value = p_26299_;
-        this.timeToLive = p_26300_;
+    public ExpirableValue(T value, long timeToLive) {
+        this.value = value;
+        this.timeToLive = timeToLive;
     }
 
     public void tick() {
@@ -21,12 +21,12 @@ public class ExpirableValue<T> {
         }
     }
 
-    public static <T> ExpirableValue<T> of(T p_26310_) {
-        return new ExpirableValue<>(p_26310_, Long.MAX_VALUE);
+    public static <T> ExpirableValue<T> of(T value) {
+        return new ExpirableValue<>(value, Long.MAX_VALUE);
     }
 
-    public static <T> ExpirableValue<T> of(T p_26312_, long p_26313_) {
-        return new ExpirableValue<>(p_26312_, p_26313_);
+    public static <T> ExpirableValue<T> of(T value, long timeToLive) {
+        return new ExpirableValue<>(value, timeToLive);
     }
 
     public long getTimeToLive() {
@@ -51,10 +51,10 @@ public class ExpirableValue<T> {
         return this.timeToLive != Long.MAX_VALUE;
     }
 
-    public static <T> Codec<ExpirableValue<T>> codec(Codec<T> p_26305_) {
+    public static <T> Codec<ExpirableValue<T>> codec(Codec<T> valueCodec) {
         return RecordCodecBuilder.create(
             p_337791_ -> p_337791_.group(
-                        p_26305_.fieldOf("value").forGetter(p_148193_ -> p_148193_.value),
+                        valueCodec.fieldOf("value").forGetter(p_148193_ -> p_148193_.value),
                         Codec.LONG
                             .lenientOptionalFieldOf("ttl")
                             .forGetter(p_148187_ -> p_148187_.canExpire() ? Optional.of(p_148187_.timeToLive) : Optional.empty())

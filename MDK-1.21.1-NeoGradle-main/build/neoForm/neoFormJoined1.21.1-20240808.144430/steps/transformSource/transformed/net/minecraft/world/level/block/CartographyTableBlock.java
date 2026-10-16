@@ -26,26 +26,26 @@ public class CartographyTableBlock extends Block {
         return CODEC;
     }
 
-    public CartographyTableBlock(BlockBehaviour.Properties p_51349_) {
-        super(p_51349_);
+    public CartographyTableBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_51357_, Level p_51358_, BlockPos p_51359_, Player p_51360_, BlockHitResult p_51362_) {
-        if (p_51358_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
-            p_51360_.openMenu(p_51357_.getMenuProvider(p_51358_, p_51359_));
-            p_51360_.awardStat(Stats.INTERACT_WITH_CARTOGRAPHY_TABLE);
+            player.openMenu(state.getMenuProvider(level, pos));
+            player.awardStat(Stats.INTERACT_WITH_CARTOGRAPHY_TABLE);
             return InteractionResult.CONSUME;
         }
     }
 
     @Nullable
     @Override
-    protected MenuProvider getMenuProvider(BlockState p_51364_, Level p_51365_, BlockPos p_51366_) {
+    protected MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
         return new SimpleMenuProvider(
-            (p_51353_, p_51354_, p_51355_) -> new CartographyTableMenu(p_51353_, p_51354_, ContainerLevelAccess.create(p_51365_, p_51366_)), CONTAINER_TITLE
+            (p_51353_, p_51354_, p_51355_) -> new CartographyTableMenu(p_51353_, p_51354_, ContainerLevelAccess.create(level, pos)), CONTAINER_TITLE
         );
     }
 }

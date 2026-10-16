@@ -28,8 +28,8 @@ public class FrogModel<T extends Frog> extends HierarchicalModel<T> {
     private final ModelPart rightLeg;
     private final ModelPart croakingBody;
 
-    public FrogModel(ModelPart p_233362_) {
-        this.root = p_233362_.getChild("root");
+    public FrogModel(ModelPart root) {
+        this.root = root.getChild("root");
         this.body = this.root.getChild("body");
         this.head = this.body.getChild("head");
         this.eyes = this.head.getChild("eyes");
@@ -97,19 +97,22 @@ public class FrogModel<T extends Frog> extends HierarchicalModel<T> {
         return LayerDefinition.create(meshdefinition, 48, 48);
     }
 
-    public void setupAnim(T p_233372_, float p_233373_, float p_233374_, float p_233375_, float p_233376_, float p_233377_) {
+    /**
+     * Sets this entity's model rotation angles
+     */
+    public void setupAnim(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         this.root().getAllParts().forEach(ModelPart::resetPose);
-        this.animate(p_233372_.jumpAnimationState, FrogAnimation.FROG_JUMP, p_233375_);
-        this.animate(p_233372_.croakAnimationState, FrogAnimation.FROG_CROAK, p_233375_);
-        this.animate(p_233372_.tongueAnimationState, FrogAnimation.FROG_TONGUE, p_233375_);
-        if (p_233372_.isInWaterOrBubble()) {
-            this.animateWalk(FrogAnimation.FROG_SWIM, p_233373_, p_233374_, 1.0F, 2.5F);
+        this.animate(entity.jumpAnimationState, FrogAnimation.FROG_JUMP, ageInTicks);
+        this.animate(entity.croakAnimationState, FrogAnimation.FROG_CROAK, ageInTicks);
+        this.animate(entity.tongueAnimationState, FrogAnimation.FROG_TONGUE, ageInTicks);
+        if (entity.isInWaterOrBubble()) {
+            this.animateWalk(FrogAnimation.FROG_SWIM, limbSwing, limbSwingAmount, 1.0F, 2.5F);
         } else {
-            this.animateWalk(FrogAnimation.FROG_WALK, p_233373_, p_233374_, 1.5F, 2.5F);
+            this.animateWalk(FrogAnimation.FROG_WALK, limbSwing, limbSwingAmount, 1.5F, 2.5F);
         }
 
-        this.animate(p_233372_.swimIdleAnimationState, FrogAnimation.FROG_IDLE_WATER, p_233375_);
-        this.croakingBody.visible = p_233372_.croakAnimationState.isStarted();
+        this.animate(entity.swimIdleAnimationState, FrogAnimation.FROG_IDLE_WATER, ageInTicks);
+        this.croakingBody.visible = entity.croakAnimationState.isStarted();
     }
 
     @Override

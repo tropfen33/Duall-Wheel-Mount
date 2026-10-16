@@ -21,14 +21,26 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 
 public abstract class BaseCommandBlock implements CommandSource {
+    /**
+     * The formatting for the timestamp on commands run.
+     */
     private static final SimpleDateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss");
     private static final Component DEFAULT_NAME = Component.literal("@");
     private long lastExecution = -1L;
     private boolean updateLastExecution = true;
+    /**
+     * The number of successful commands run. (used for redstone output)
+     */
     private int successCount;
     private boolean trackOutput = true;
+    /**
+     * The previously run command.
+     */
     @Nullable
     private Component lastOutput;
+    /**
+     * The command stored in the command block.
+     */
     private String command = "";
     @Nullable
     private Component customName;
@@ -37,50 +49,50 @@ public abstract class BaseCommandBlock implements CommandSource {
         return this.successCount;
     }
 
-    public void setSuccessCount(int p_45411_) {
-        this.successCount = p_45411_;
+    public void setSuccessCount(int successCount) {
+        this.successCount = successCount;
     }
 
     public Component getLastOutput() {
         return this.lastOutput == null ? CommonComponents.EMPTY : this.lastOutput;
     }
 
-    public CompoundTag save(CompoundTag p_45422_, HolderLookup.Provider p_330850_) {
-        p_45422_.putString("Command", this.command);
-        p_45422_.putInt("SuccessCount", this.successCount);
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider levelRegistry) {
+        tag.putString("Command", this.command);
+        tag.putInt("SuccessCount", this.successCount);
         if (this.customName != null) {
-            p_45422_.putString("CustomName", Component.Serializer.toJson(this.customName, p_330850_));
+            tag.putString("CustomName", Component.Serializer.toJson(this.customName, levelRegistry));
         }
 
-        p_45422_.putBoolean("TrackOutput", this.trackOutput);
+        tag.putBoolean("TrackOutput", this.trackOutput);
         if (this.lastOutput != null && this.trackOutput) {
-            p_45422_.putString("LastOutput", Component.Serializer.toJson(this.lastOutput, p_330850_));
+            tag.putString("LastOutput", Component.Serializer.toJson(this.lastOutput, levelRegistry));
         }
 
-        p_45422_.putBoolean("UpdateLastExecution", this.updateLastExecution);
+        tag.putBoolean("UpdateLastExecution", this.updateLastExecution);
         if (this.updateLastExecution && this.lastExecution > 0L) {
-            p_45422_.putLong("LastExecution", this.lastExecution);
+            tag.putLong("LastExecution", this.lastExecution);
         }
 
-        return p_45422_;
+        return tag;
     }
 
-    public void load(CompoundTag p_45432_, HolderLookup.Provider p_331513_) {
-        this.command = p_45432_.getString("Command");
-        this.successCount = p_45432_.getInt("SuccessCount");
-        if (p_45432_.contains("CustomName", 8)) {
-            this.setCustomName(BlockEntity.parseCustomNameSafe(p_45432_.getString("CustomName"), p_331513_));
+    public void load(CompoundTag tag, HolderLookup.Provider levelRegistry) {
+        this.command = tag.getString("Command");
+        this.successCount = tag.getInt("SuccessCount");
+        if (tag.contains("CustomName", 8)) {
+            this.setCustomName(BlockEntity.parseCustomNameSafe(tag.getString("CustomName"), levelRegistry));
         } else {
             this.setCustomName(null);
         }
 
-        if (p_45432_.contains("TrackOutput", 1)) {
-            this.trackOutput = p_45432_.getBoolean("TrackOutput");
+        if (tag.contains("TrackOutput", 1)) {
+            this.trackOutput = tag.getBoolean("TrackOutput");
         }
 
-        if (p_45432_.contains("LastOutput", 8) && this.trackOutput) {
+        if (tag.contains("LastOutput", 8) && this.trackOutput) {
             try {
-                this.lastOutput = Component.Serializer.fromJson(p_45432_.getString("LastOutput"), p_331513_);
+                this.lastOutput = Component.Serializer.fromJson(tag.getString("LastOutput"), levelRegistry);
             } catch (Throwable throwable) {
                 this.lastOutput = Component.literal(throwable.getMessage());
             }
@@ -88,19 +100,22 @@ public abstract class BaseCommandBlock implements CommandSource {
             this.lastOutput = null;
         }
 
-        if (p_45432_.contains("UpdateLastExecution")) {
-            this.updateLastExecution = p_45432_.getBoolean("UpdateLastExecution");
+        if (tag.contains("UpdateLastExecution")) {
+            this.updateLastExecution = tag.getBoolean("UpdateLastExecution");
         }
 
-        if (this.updateLastExecution && p_45432_.contains("LastExecution")) {
-            this.lastExecution = p_45432_.getLong("LastExecution");
+        if (this.updateLastExecution && tag.contains("LastExecution")) {
+            this.lastExecution = tag.getLong("LastExecution");
         } else {
             this.lastExecution = -1L;
         }
     }
 
-    public void setCommand(String p_45420_) {
-        this.command = p_45420_;
+    /**
+     * Sets the command.
+     */
+    public void setCommand(String command) {
+        this.command = command;
         this.successCount = 0;
     }
 
@@ -108,8 +123,8 @@ public abstract class BaseCommandBlock implements CommandSource {
         return this.command;
     }
 
-    public boolean performCommand(Level p_45415_) {
-        if (p_45415_.isClientSide || p_45415_.getGameTime() == this.lastExecution) {
+    public boolean performCommand(Level level) {
+        if (level.isClientSide || level.getGameTime() == this.lastExecution) {
             return false;
         } else if ("Searge".equalsIgnoreCase(this.command)) {
             this.lastOutput = Component.literal("#itzlipofutzli");
@@ -137,7 +152,7 @@ public abstract class BaseCommandBlock implements CommandSource {
             }
 
             if (this.updateLastExecution) {
-                this.lastExecution = p_45415_.getGameTime();
+                this.lastExecution = level.getGameTime();
             } else {
                 this.lastExecution = -1L;
             }
@@ -155,14 +170,14 @@ public abstract class BaseCommandBlock implements CommandSource {
         return this.customName;
     }
 
-    public void setCustomName(@Nullable Component p_331531_) {
-        this.customName = p_331531_;
+    public void setCustomName(@Nullable Component customName) {
+        this.customName = customName;
     }
 
     @Override
-    public void sendSystemMessage(Component p_220330_) {
+    public void sendSystemMessage(Component component) {
         if (this.trackOutput) {
-            this.lastOutput = Component.literal("[" + TIME_FORMAT.format(new Date()) + "] ").append(p_220330_);
+            this.lastOutput = Component.literal("[" + TIME_FORMAT.format(new Date()) + "] ").append(component);
             this.onUpdated();
         }
     }
@@ -171,27 +186,27 @@ public abstract class BaseCommandBlock implements CommandSource {
 
     public abstract void onUpdated();
 
-    public void setLastOutput(@Nullable Component p_45434_) {
-        this.lastOutput = p_45434_;
+    public void setLastOutput(@Nullable Component lastOutputMessage) {
+        this.lastOutput = lastOutputMessage;
     }
 
-    public void setTrackOutput(boolean p_45429_) {
-        this.trackOutput = p_45429_;
+    public void setTrackOutput(boolean shouldTrackOutput) {
+        this.trackOutput = shouldTrackOutput;
     }
 
     public boolean isTrackOutput() {
         return this.trackOutput;
     }
 
-    public InteractionResult usedBy(Player p_45413_) {
-        if (!p_45413_.canUseGameMasterBlocks()) {
+    public InteractionResult usedBy(Player player) {
+        if (!player.canUseGameMasterBlocks()) {
             return InteractionResult.PASS;
         } else {
-            if (p_45413_.getCommandSenderWorld().isClientSide) {
-                p_45413_.openMinecartCommandBlock(this);
+            if (player.getCommandSenderWorld().isClientSide) {
+                player.openMinecartCommandBlock(this);
             }
 
-            return InteractionResult.sidedSuccess(p_45413_.level().isClientSide);
+            return InteractionResult.sidedSuccess(player.level().isClientSide);
         }
     }
 

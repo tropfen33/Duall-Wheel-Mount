@@ -17,16 +17,19 @@ public class ServerHandshakePacketListenerImpl implements ServerHandshakePacketL
     private final MinecraftServer server;
     private final Connection connection;
 
-    public ServerHandshakePacketListenerImpl(MinecraftServer p_9969_, Connection p_9970_) {
-        this.server = p_9969_;
-        this.connection = p_9970_;
+    public ServerHandshakePacketListenerImpl(MinecraftServer server, Connection connection) {
+        this.server = server;
+        this.connection = connection;
     }
 
+    /**
+     * There are two recognized intentions for initiating a handshake: logging in and acquiring server status. The NetworkManager's protocol will be reconfigured according to the specified intention, although a login-intention must pass a versioncheck or receive a disconnect otherwise
+     */
     @Override
-    public void handleIntention(ClientIntentionPacket p_9975_) {
-        switch (p_9975_.intention()) {
+    public void handleIntention(ClientIntentionPacket packet) {
+        switch (packet.intention()) {
             case LOGIN:
-                this.beginLogin(p_9975_, false);
+                this.beginLogin(packet, false);
                 break;
             case STATUS:
                 ServerStatus serverstatus = this.server.getStatus();
@@ -44,19 +47,19 @@ public class ServerHandshakePacketListenerImpl implements ServerHandshakePacketL
                     this.connection.send(new ClientboundLoginDisconnectPacket(component));
                     this.connection.disconnect(component);
                 } else {
-                    this.beginLogin(p_9975_, true);
+                    this.beginLogin(packet, true);
                 }
                 break;
             default:
-                throw new UnsupportedOperationException("Invalid intention " + p_9975_.intention());
+                throw new UnsupportedOperationException("Invalid intention " + packet.intention());
         }
     }
 
-    private void beginLogin(ClientIntentionPacket p_320524_, boolean p_320853_) {
+    private void beginLogin(ClientIntentionPacket packet, boolean transferred) {
         this.connection.setupOutboundProtocol(LoginProtocols.CLIENTBOUND);
-        if (p_320524_.protocolVersion() != SharedConstants.getCurrentVersion().getProtocolVersion()) {
+        if (packet.protocolVersion() != SharedConstants.getCurrentVersion().getProtocolVersion()) {
             Component component;
-            if (p_320524_.protocolVersion() < 754) {
+            if (packet.protocolVersion() < 754) {
                 component = Component.translatable("multiplayer.disconnect.outdated_client", SharedConstants.getCurrentVersion().getName());
             } else {
                 component = Component.translatable("multiplayer.disconnect.incompatible", SharedConstants.getCurrentVersion().getName());
@@ -65,12 +68,12 @@ public class ServerHandshakePacketListenerImpl implements ServerHandshakePacketL
             this.connection.send(new ClientboundLoginDisconnectPacket(component));
             this.connection.disconnect(component);
         } else {
-            this.connection.setupInboundProtocol(LoginProtocols.SERVERBOUND, new ServerLoginPacketListenerImpl(this.server, this.connection, p_320853_));
+            this.connection.setupInboundProtocol(LoginProtocols.SERVERBOUND, new ServerLoginPacketListenerImpl(this.server, this.connection, transferred));
         }
     }
 
     @Override
-    public void onDisconnect(DisconnectionDetails p_350912_) {
+    public void onDisconnect(DisconnectionDetails details) {
     }
 
     @Override

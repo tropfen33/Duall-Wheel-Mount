@@ -28,8 +28,8 @@ public class ShapelessRecipeBuilder implements RecipeBuilder {
     @Nullable
     private String group;
 
-    public ShapelessRecipeBuilder(RecipeCategory p_250837_, ItemLike p_251897_, int p_252227_) {
-        this(p_250837_, new ItemStack(p_251897_, p_252227_));
+    public ShapelessRecipeBuilder(RecipeCategory category, ItemLike result, int count) {
+        this(category, new ItemStack(result, count));
     }
 
     public ShapelessRecipeBuilder(RecipeCategory p_250837_, ItemStack result) {
@@ -39,53 +39,74 @@ public class ShapelessRecipeBuilder implements RecipeBuilder {
         this.resultStack = result;
     }
 
-    public static ShapelessRecipeBuilder shapeless(RecipeCategory p_250714_, ItemLike p_249659_) {
-        return new ShapelessRecipeBuilder(p_250714_, p_249659_, 1);
+    /**
+     * Creates a new builder for a shapeless recipe.
+     */
+    public static ShapelessRecipeBuilder shapeless(RecipeCategory category, ItemLike result) {
+        return new ShapelessRecipeBuilder(category, result, 1);
     }
 
-    public static ShapelessRecipeBuilder shapeless(RecipeCategory p_252339_, ItemLike p_250836_, int p_249928_) {
-        return new ShapelessRecipeBuilder(p_252339_, p_250836_, p_249928_);
+    /**
+     * Creates a new builder for a shapeless recipe.
+     */
+    public static ShapelessRecipeBuilder shapeless(RecipeCategory category, ItemLike result, int count) {
+        return new ShapelessRecipeBuilder(category, result, count);
     }
 
     public static ShapelessRecipeBuilder shapeless(RecipeCategory p_252339_, ItemStack result) {
         return new ShapelessRecipeBuilder(p_252339_, result);
     }
 
-    public ShapelessRecipeBuilder requires(TagKey<Item> p_206420_) {
-        return this.requires(Ingredient.of(p_206420_));
+    /**
+     * Adds an ingredient that can be any item in the given tag.
+     */
+    public ShapelessRecipeBuilder requires(TagKey<Item> tag) {
+        return this.requires(Ingredient.of(tag));
     }
 
-    public ShapelessRecipeBuilder requires(ItemLike p_126210_) {
-        return this.requires(p_126210_, 1);
+    /**
+     * Adds an ingredient of the given item.
+     */
+    public ShapelessRecipeBuilder requires(ItemLike item) {
+        return this.requires(item, 1);
     }
 
-    public ShapelessRecipeBuilder requires(ItemLike p_126212_, int p_126213_) {
-        for (int i = 0; i < p_126213_; i++) {
-            this.requires(Ingredient.of(p_126212_));
+    /**
+     * Adds the given ingredient multiple times.
+     */
+    public ShapelessRecipeBuilder requires(ItemLike item, int quantity) {
+        for (int i = 0; i < quantity; i++) {
+            this.requires(Ingredient.of(item));
         }
 
         return this;
     }
 
-    public ShapelessRecipeBuilder requires(Ingredient p_126185_) {
-        return this.requires(p_126185_, 1);
+    /**
+     * Adds an ingredient.
+     */
+    public ShapelessRecipeBuilder requires(Ingredient ingredient) {
+        return this.requires(ingredient, 1);
     }
 
-    public ShapelessRecipeBuilder requires(Ingredient p_126187_, int p_126188_) {
-        for (int i = 0; i < p_126188_; i++) {
-            this.ingredients.add(p_126187_);
+    /**
+     * Adds an ingredient multiple times.
+     */
+    public ShapelessRecipeBuilder requires(Ingredient ingredient, int quantity) {
+        for (int i = 0; i < quantity; i++) {
+            this.ingredients.add(ingredient);
         }
 
         return this;
     }
 
-    public ShapelessRecipeBuilder unlockedBy(String p_176781_, Criterion<?> p_300897_) {
-        this.criteria.put(p_176781_, p_300897_);
+    public ShapelessRecipeBuilder unlockedBy(String name, Criterion<?> criterion) {
+        this.criteria.put(name, criterion);
         return this;
     }
 
-    public ShapelessRecipeBuilder group(@Nullable String p_126195_) {
-        this.group = p_126195_;
+    public ShapelessRecipeBuilder group(@Nullable String groupName) {
+        this.group = groupName;
         return this;
     }
 
@@ -95,11 +116,11 @@ public class ShapelessRecipeBuilder implements RecipeBuilder {
     }
 
     @Override
-    public void save(RecipeOutput p_301215_, ResourceLocation p_126206_) {
-        this.ensureValid(p_126206_);
-        Advancement.Builder advancement$builder = p_301215_.advancement()
-            .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(p_126206_))
-            .rewards(AdvancementRewards.Builder.recipe(p_126206_))
+    public void save(RecipeOutput recipeOutput, ResourceLocation id) {
+        this.ensureValid(id);
+        Advancement.Builder advancement$builder = recipeOutput.advancement()
+            .addCriterion("has_the_recipe", RecipeUnlockedTrigger.unlocked(id))
+            .rewards(AdvancementRewards.Builder.recipe(id))
             .requirements(AdvancementRequirements.Strategy.OR);
         this.criteria.forEach(advancement$builder::addCriterion);
         ShapelessRecipe shapelessrecipe = new ShapelessRecipe(
@@ -108,12 +129,15 @@ public class ShapelessRecipeBuilder implements RecipeBuilder {
             this.resultStack,
             this.ingredients
         );
-        p_301215_.accept(p_126206_, shapelessrecipe, advancement$builder.build(p_126206_.withPrefix("recipes/" + this.category.getFolderName() + "/")));
+        recipeOutput.accept(id, shapelessrecipe, advancement$builder.build(id.withPrefix("recipes/" + this.category.getFolderName() + "/")));
     }
 
-    private void ensureValid(ResourceLocation p_126208_) {
+    /**
+     * Makes sure that this recipe is valid and obtainable.
+     */
+    private void ensureValid(ResourceLocation id) {
         if (this.criteria.isEmpty()) {
-            throw new IllegalStateException("No way of obtaining recipe " + p_126208_);
+            throw new IllegalStateException("No way of obtaining recipe " + id);
         }
     }
 }

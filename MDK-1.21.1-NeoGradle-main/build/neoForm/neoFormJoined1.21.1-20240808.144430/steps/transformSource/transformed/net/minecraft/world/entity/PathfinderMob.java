@@ -13,21 +13,21 @@ import net.minecraft.world.phys.Vec3;
 public abstract class PathfinderMob extends Mob {
     protected static final float DEFAULT_WALK_TARGET_VALUE = 0.0F;
 
-    protected PathfinderMob(EntityType<? extends PathfinderMob> p_21683_, Level p_21684_) {
-        super(p_21683_, p_21684_);
+    protected PathfinderMob(EntityType<? extends PathfinderMob> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public float getWalkTargetValue(BlockPos p_21693_) {
-        return this.getWalkTargetValue(p_21693_, this.level());
+    public float getWalkTargetValue(BlockPos pos) {
+        return this.getWalkTargetValue(pos, this.level());
     }
 
-    public float getWalkTargetValue(BlockPos p_21688_, LevelReader p_21689_) {
+    public float getWalkTargetValue(BlockPos pos, LevelReader level) {
         return 0.0F;
     }
 
     @Override
-    public boolean checkSpawnRules(LevelAccessor p_21686_, MobSpawnType p_21687_) {
-        return this.getWalkTargetValue(this.blockPosition(), p_21686_) >= 0.0F;
+    public boolean checkSpawnRules(LevelAccessor level, MobSpawnType spawnReason) {
+        return this.getWalkTargetValue(this.blockPosition(), level) >= 0.0F;
     }
 
     public boolean isPathFinding() {
@@ -53,13 +53,13 @@ public abstract class PathfinderMob extends Mob {
     }
 
     @Override
-    public void closeRangeLeashBehaviour(Entity p_352153_) {
-        super.closeRangeLeashBehaviour(p_352153_);
+    public void closeRangeLeashBehaviour(Entity entity) {
+        super.closeRangeLeashBehaviour(entity);
         if (this.shouldStayCloseToLeashHolder() && !this.isPanicking()) {
             this.goalSelector.enableControlFlag(Goal.Flag.MOVE);
             float f = 2.0F;
-            float f1 = this.distanceTo(p_352153_);
-            Vec3 vec3 = new Vec3(p_352153_.getX() - this.getX(), p_352153_.getY() - this.getY(), p_352153_.getZ() - this.getZ())
+            float f1 = this.distanceTo(entity);
+            Vec3 vec3 = new Vec3(entity.getX() - this.getX(), entity.getY() - this.getY(), entity.getZ() - this.getZ())
                 .normalize()
                 .scale((double)Math.max(f1 - 2.0F, 0.0F));
             this.getNavigation().moveTo(this.getX() + vec3.x, this.getY() + vec3.y, this.getZ() + vec3.z, this.followLeashSpeed());
@@ -67,8 +67,8 @@ public abstract class PathfinderMob extends Mob {
     }
 
     @Override
-    public boolean handleLeashAtDistance(Entity p_352071_, float p_352237_) {
-        this.restrictTo(p_352071_.blockPosition(), 5);
+    public boolean handleLeashAtDistance(Entity leashHolder, float distance) {
+        this.restrictTo(leashHolder.blockPosition(), 5);
         return true;
     }
 

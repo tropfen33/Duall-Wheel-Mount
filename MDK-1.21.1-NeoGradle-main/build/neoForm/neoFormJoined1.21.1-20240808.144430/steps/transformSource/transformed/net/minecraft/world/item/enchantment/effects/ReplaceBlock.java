@@ -28,11 +28,11 @@ public record ReplaceBlock(Vec3i offset, Optional<BlockPredicate> predicate, Blo
     );
 
     @Override
-    public void apply(ServerLevel p_345756_, int p_346215_, EnchantedItemInUse p_345202_, Entity p_346293_, Vec3 p_345339_) {
-        BlockPos blockpos = BlockPos.containing(p_345339_).offset(this.offset);
-        if (this.predicate.map(p_345193_ -> p_345193_.test(p_345756_, blockpos)).orElse(true)
-            && p_345756_.setBlockAndUpdate(blockpos, this.blockState.getState(p_346293_.getRandom(), blockpos))) {
-            this.triggerGameEvent.ifPresent(p_347354_ -> p_345756_.gameEvent(p_346293_, (Holder<GameEvent>)p_347354_, blockpos));
+    public void apply(ServerLevel level, int enchantmentLevel, EnchantedItemInUse item, Entity entity, Vec3 origin) {
+        BlockPos blockpos = BlockPos.containing(origin).offset(this.offset);
+        if (this.predicate.map(p_345193_ -> p_345193_.test(level, blockpos)).orElse(true)
+            && level.setBlockAndUpdate(blockpos, this.blockState.getState(entity.getRandom(), blockpos))) {
+            this.triggerGameEvent.ifPresent(p_347354_ -> level.gameEvent(entity, (Holder<GameEvent>)p_347354_, blockpos));
         }
     }
 

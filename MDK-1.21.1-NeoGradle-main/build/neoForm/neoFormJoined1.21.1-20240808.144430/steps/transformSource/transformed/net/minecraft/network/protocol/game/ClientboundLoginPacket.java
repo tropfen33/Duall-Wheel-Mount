@@ -11,6 +11,9 @@ import net.minecraft.network.protocol.PacketType;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 
+/**
+ * @param showDeathScreen Set to false when the doImmediateRespawn gamerule is true
+ */
 public record ClientboundLoginPacket(
     int playerId,
     boolean hardcore,
@@ -44,18 +47,18 @@ public record ClientboundLoginPacket(
         );
     }
 
-    private void write(RegistryFriendlyByteBuf p_321845_) {
-        p_321845_.writeInt(this.playerId);
-        p_321845_.writeBoolean(this.hardcore);
-        p_321845_.writeCollection(this.levels, FriendlyByteBuf::writeResourceKey);
-        p_321845_.writeVarInt(this.maxPlayers);
-        p_321845_.writeVarInt(this.chunkRadius);
-        p_321845_.writeVarInt(this.simulationDistance);
-        p_321845_.writeBoolean(this.reducedDebugInfo);
-        p_321845_.writeBoolean(this.showDeathScreen);
-        p_321845_.writeBoolean(this.doLimitedCrafting);
-        this.commonPlayerSpawnInfo.write(p_321845_);
-        p_321845_.writeBoolean(this.enforcesSecureChat);
+    private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeInt(this.playerId);
+        buffer.writeBoolean(this.hardcore);
+        buffer.writeCollection(this.levels, FriendlyByteBuf::writeResourceKey);
+        buffer.writeVarInt(this.maxPlayers);
+        buffer.writeVarInt(this.chunkRadius);
+        buffer.writeVarInt(this.simulationDistance);
+        buffer.writeBoolean(this.reducedDebugInfo);
+        buffer.writeBoolean(this.showDeathScreen);
+        buffer.writeBoolean(this.doLimitedCrafting);
+        this.commonPlayerSpawnInfo.write(buffer);
+        buffer.writeBoolean(this.enforcesSecureChat);
     }
 
     @Override
@@ -63,7 +66,10 @@ public record ClientboundLoginPacket(
         return GamePacketTypes.CLIENTBOUND_LOGIN;
     }
 
-    public void handle(ClientGamePacketListener p_132397_) {
-        p_132397_.handleLogin(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleLogin(this);
     }
 }

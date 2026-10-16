@@ -22,39 +22,39 @@ public class PlayerInfo extends ValueObject implements ReflectionBasedSerializat
         return this.name;
     }
 
-    public void setName(String p_87449_) {
-        this.name = p_87449_;
+    public void setName(String name) {
+        this.name = name;
     }
 
     public UUID getUuid() {
         return this.uuid;
     }
 
-    public void setUuid(UUID p_295533_) {
-        this.uuid = p_295533_;
+    public void setUuid(UUID uuid) {
+        this.uuid = uuid;
     }
 
     public boolean isOperator() {
         return this.operator;
     }
 
-    public void setOperator(boolean p_87451_) {
-        this.operator = p_87451_;
+    public void setOperator(boolean operator) {
+        this.operator = operator;
     }
 
     public boolean getAccepted() {
         return this.accepted;
     }
 
-    public void setAccepted(boolean p_87456_) {
-        this.accepted = p_87456_;
+    public void setAccepted(boolean accepted) {
+        this.accepted = accepted;
     }
 
     public boolean getOnline() {
         return this.online;
     }
 
-    public void setOnline(boolean p_87459_) {
-        this.online = p_87459_;
+    public void setOnline(boolean online) {
+        this.online = online;
     }
 }

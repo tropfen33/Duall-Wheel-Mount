@@ -21,17 +21,17 @@ import net.minecraft.server.RegistryLayer;
 
 public class TagNetworkSerialization {
     public static Map<ResourceKey<? extends Registry<?>>, TagNetworkSerialization.NetworkPayload> serializeTagsToNetwork(
-        LayeredRegistryAccess<RegistryLayer> p_251774_
+        LayeredRegistryAccess<RegistryLayer> registryAccess
     ) {
-        return RegistrySynchronization.networkSafeRegistries(p_251774_)
+        return RegistrySynchronization.networkSafeRegistries(registryAccess)
             .map(p_203949_ -> Pair.of(p_203949_.key(), serializeToNetwork(p_203949_.value())))
             .filter(p_321439_ -> p_321439_.getSecond().size() > 0)
             .collect(Collectors.toMap(Pair::getFirst, Pair::getSecond));
     }
 
-    private static <T> TagNetworkSerialization.NetworkPayload serializeToNetwork(Registry<T> p_203943_) {
+    private static <T> TagNetworkSerialization.NetworkPayload serializeToNetwork(Registry<T> registry) {
         Map<ResourceLocation, IntList> map = new HashMap<>();
-        p_203943_.getTags().forEach(p_339471_ -> {
+        registry.getTags().forEach(p_339471_ -> {
             HolderSet<T> holderset = p_339471_.getSecond();
             IntList intlist = new IntArrayList(holderset.size());
 
@@ -40,7 +40,7 @@ public class TagNetworkSerialization {
                     throw new IllegalStateException("Can't serialize unregistered value " + holder);
                 }
 
-                intlist.add(p_203943_.getId(holder.value()));
+                intlist.add(registry.getId(holder.value()));
             }
 
             map.put(p_339471_.getFirst().location(), intlist);
@@ -49,48 +49,48 @@ public class TagNetworkSerialization {
     }
 
     static <T> void deserializeTagsFromNetwork(
-        ResourceKey<? extends Registry<T>> p_203953_,
-        Registry<T> p_203954_,
-        TagNetworkSerialization.NetworkPayload p_203955_,
-        TagNetworkSerialization.TagOutput<T> p_203956_
+        ResourceKey<? extends Registry<T>> registryKey,
+        Registry<T> registry,
+        TagNetworkSerialization.NetworkPayload networkPayload,
+        TagNetworkSerialization.TagOutput<T> output
     ) {
-        p_203955_.tags.forEach((p_248278_, p_248279_) -> {
-            TagKey<T> tagkey = TagKey.create(p_203953_, p_248278_);
-            List<Holder<T>> list = p_248279_.intStream().mapToObj(p_203954_::getHolder).flatMap(Optional::stream).collect(Collectors.toUnmodifiableList());
-            p_203956_.accept(tagkey, list);
+        networkPayload.tags.forEach((p_248278_, p_248279_) -> {
+            TagKey<T> tagkey = TagKey.create(registryKey, p_248278_);
+            List<Holder<T>> list = p_248279_.intStream().mapToObj(registry::getHolder).flatMap(Optional::stream).collect(Collectors.toUnmodifiableList());
+            output.accept(tagkey, list);
         });
     }
 
     public static final class NetworkPayload {
         final Map<ResourceLocation, IntList> tags;
 
-        NetworkPayload(Map<ResourceLocation, IntList> p_203965_) {
-            this.tags = p_203965_;
+        NetworkPayload(Map<ResourceLocation, IntList> tags) {
+            this.tags = tags;
         }
 
-        public void write(FriendlyByteBuf p_203968_) {
-            p_203968_.writeMap(this.tags, FriendlyByteBuf::writeResourceLocation, FriendlyByteBuf::writeIntIdList);
+        public void write(FriendlyByteBuf buffer) {
+            buffer.writeMap(this.tags, FriendlyByteBuf::writeResourceLocation, FriendlyByteBuf::writeIntIdList);
         }
 
-        public static TagNetworkSerialization.NetworkPayload read(FriendlyByteBuf p_203970_) {
-            return new TagNetworkSerialization.NetworkPayload(p_203970_.readMap(FriendlyByteBuf::readResourceLocation, FriendlyByteBuf::readIntIdList));
+        public static TagNetworkSerialization.NetworkPayload read(FriendlyByteBuf buffer) {
+            return new TagNetworkSerialization.NetworkPayload(buffer.readMap(FriendlyByteBuf::readResourceLocation, FriendlyByteBuf::readIntIdList));
         }
 
         public int size() {
             return this.tags.size();
         }
 
-        public <T> void applyToRegistry(Registry<T> p_321755_) {
+        public <T> void applyToRegistry(Registry<T> registry) {
             if (this.size() != 0) {
                 Map<TagKey<T>, List<Holder<T>>> map = new HashMap<>(this.size());
-                TagNetworkSerialization.deserializeTagsFromNetwork(p_321755_.key(), p_321755_, this, map::put);
-                p_321755_.bindTags(map);
+                TagNetworkSerialization.deserializeTagsFromNetwork(registry.key(), registry, this, map::put);
+                registry.bindTags(map);
             }
         }
     }
 
     @FunctionalInterface
     public interface TagOutput<T> {
-        void accept(TagKey<T> p_203972_, List<Holder<T>> p_203973_);
+        void accept(TagKey<T> key, List<Holder<T>> values);
     }
 }

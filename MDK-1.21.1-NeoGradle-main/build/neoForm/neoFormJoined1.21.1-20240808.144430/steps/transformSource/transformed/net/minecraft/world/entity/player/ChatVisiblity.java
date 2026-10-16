@@ -13,9 +13,9 @@ public enum ChatVisiblity implements OptionEnum {
     private final int id;
     private final String key;
 
-    private ChatVisiblity(int p_35963_, String p_35964_) {
-        this.id = p_35963_;
-        this.key = p_35964_;
+    private ChatVisiblity(int id, String key) {
+        this.id = id;
+        this.key = key;
     }
 
     @Override
@@ -28,7 +28,7 @@ public enum ChatVisiblity implements OptionEnum {
         return this.key;
     }
 
-    public static ChatVisiblity byId(int p_35967_) {
-        return BY_ID.apply(p_35967_);
+    public static ChatVisiblity byId(int id) {
+        return BY_ID.apply(id);
     }
 }

@@ -35,10 +35,10 @@ public abstract class CrossCollisionBlock extends Block implements SimpleWaterlo
     protected final VoxelShape[] shapeByIndex;
     private final Object2IntMap<BlockState> stateToIndex = new Object2IntOpenHashMap<>();
 
-    protected CrossCollisionBlock(float p_52320_, float p_52321_, float p_52322_, float p_52323_, float p_52324_, BlockBehaviour.Properties p_52325_) {
-        super(p_52325_);
-        this.collisionShapeByIndex = this.makeShapes(p_52320_, p_52321_, p_52324_, 0.0F, p_52324_);
-        this.shapeByIndex = this.makeShapes(p_52320_, p_52321_, p_52322_, 0.0F, p_52323_);
+    protected CrossCollisionBlock(float nodeWidth, float extensionWidth, float nodeHeight, float extensionHeight, float collisionHeight, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.collisionShapeByIndex = this.makeShapes(nodeWidth, extensionWidth, collisionHeight, 0.0F, collisionHeight);
+        this.shapeByIndex = this.makeShapes(nodeWidth, extensionWidth, nodeHeight, 0.0F, extensionHeight);
 
         for (BlockState blockstate : this.stateDefinition.getPossibleStates()) {
             this.getAABBIndex(blockstate);
@@ -48,16 +48,16 @@ public abstract class CrossCollisionBlock extends Block implements SimpleWaterlo
     @Override
     protected abstract MapCodec<? extends CrossCollisionBlock> codec();
 
-    protected VoxelShape[] makeShapes(float p_52327_, float p_52328_, float p_52329_, float p_52330_, float p_52331_) {
-        float f = 8.0F - p_52327_;
-        float f1 = 8.0F + p_52327_;
-        float f2 = 8.0F - p_52328_;
-        float f3 = 8.0F + p_52328_;
-        VoxelShape voxelshape = Block.box((double)f, 0.0, (double)f, (double)f1, (double)p_52329_, (double)f1);
-        VoxelShape voxelshape1 = Block.box((double)f2, (double)p_52330_, 0.0, (double)f3, (double)p_52331_, (double)f3);
-        VoxelShape voxelshape2 = Block.box((double)f2, (double)p_52330_, (double)f2, (double)f3, (double)p_52331_, 16.0);
-        VoxelShape voxelshape3 = Block.box(0.0, (double)p_52330_, (double)f2, (double)f3, (double)p_52331_, (double)f3);
-        VoxelShape voxelshape4 = Block.box((double)f2, (double)p_52330_, (double)f2, 16.0, (double)p_52331_, (double)f3);
+    protected VoxelShape[] makeShapes(float nodeWidth, float extensionWidth, float nodeHeight, float extensionBottom, float extensionHeight) {
+        float f = 8.0F - nodeWidth;
+        float f1 = 8.0F + nodeWidth;
+        float f2 = 8.0F - extensionWidth;
+        float f3 = 8.0F + extensionWidth;
+        VoxelShape voxelshape = Block.box((double)f, 0.0, (double)f, (double)f1, (double)nodeHeight, (double)f1);
+        VoxelShape voxelshape1 = Block.box((double)f2, (double)extensionBottom, 0.0, (double)f3, (double)extensionHeight, (double)f3);
+        VoxelShape voxelshape2 = Block.box((double)f2, (double)extensionBottom, (double)f2, (double)f3, (double)extensionHeight, 16.0);
+        VoxelShape voxelshape3 = Block.box(0.0, (double)extensionBottom, (double)f2, (double)f3, (double)extensionHeight, (double)f3);
+        VoxelShape voxelshape4 = Block.box((double)f2, (double)extensionBottom, (double)f2, 16.0, (double)extensionHeight, (double)f3);
         VoxelShape voxelshape5 = Shapes.or(voxelshape1, voxelshape4);
         VoxelShape voxelshape6 = Shapes.or(voxelshape2, voxelshape3);
         VoxelShape[] avoxelshape = new VoxelShape[]{
@@ -87,26 +87,26 @@ public abstract class CrossCollisionBlock extends Block implements SimpleWaterlo
     }
 
     @Override
-    protected boolean propagatesSkylightDown(BlockState p_52348_, BlockGetter p_52349_, BlockPos p_52350_) {
-        return !p_52348_.getValue(WATERLOGGED);
+    protected boolean propagatesSkylightDown(BlockState state, BlockGetter reader, BlockPos pos) {
+        return !state.getValue(WATERLOGGED);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_52352_, BlockGetter p_52353_, BlockPos p_52354_, CollisionContext p_52355_) {
-        return this.shapeByIndex[this.getAABBIndex(p_52352_)];
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return this.shapeByIndex[this.getAABBIndex(state)];
     }
 
     @Override
-    protected VoxelShape getCollisionShape(BlockState p_52357_, BlockGetter p_52358_, BlockPos p_52359_, CollisionContext p_52360_) {
-        return this.collisionShapeByIndex[this.getAABBIndex(p_52357_)];
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return this.collisionShapeByIndex[this.getAABBIndex(state)];
     }
 
-    private static int indexFor(Direction p_52344_) {
-        return 1 << p_52344_.get2DDataValue();
+    private static int indexFor(Direction facing) {
+        return 1 << facing.get2DDataValue();
     }
 
-    protected int getAABBIndex(BlockState p_52364_) {
-        return this.stateToIndex.computeIntIfAbsent(p_52364_, p_52366_ -> {
+    protected int getAABBIndex(BlockState state) {
+        return this.stateToIndex.computeIntIfAbsent(state, p_52366_ -> {
             int i = 0;
             if (p_52366_.getValue(NORTH)) {
                 i |= indexFor(Direction.NORTH);
@@ -129,47 +129,53 @@ public abstract class CrossCollisionBlock extends Block implements SimpleWaterlo
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_52362_) {
-        return p_52362_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_52362_);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_52333_, PathComputationType p_52336_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState rotate(BlockState p_52341_, Rotation p_52342_) {
-        switch (p_52342_) {
+    protected BlockState rotate(BlockState state, Rotation rot) {
+        switch (rot) {
             case CLOCKWISE_180:
-                return p_52341_.setValue(NORTH, p_52341_.getValue(SOUTH))
-                    .setValue(EAST, p_52341_.getValue(WEST))
-                    .setValue(SOUTH, p_52341_.getValue(NORTH))
-                    .setValue(WEST, p_52341_.getValue(EAST));
+                return state.setValue(NORTH, state.getValue(SOUTH))
+                    .setValue(EAST, state.getValue(WEST))
+                    .setValue(SOUTH, state.getValue(NORTH))
+                    .setValue(WEST, state.getValue(EAST));
             case COUNTERCLOCKWISE_90:
-                return p_52341_.setValue(NORTH, p_52341_.getValue(EAST))
-                    .setValue(EAST, p_52341_.getValue(SOUTH))
-                    .setValue(SOUTH, p_52341_.getValue(WEST))
-                    .setValue(WEST, p_52341_.getValue(NORTH));
+                return state.setValue(NORTH, state.getValue(EAST))
+                    .setValue(EAST, state.getValue(SOUTH))
+                    .setValue(SOUTH, state.getValue(WEST))
+                    .setValue(WEST, state.getValue(NORTH));
             case CLOCKWISE_90:
-                return p_52341_.setValue(NORTH, p_52341_.getValue(WEST))
-                    .setValue(EAST, p_52341_.getValue(NORTH))
-                    .setValue(SOUTH, p_52341_.getValue(EAST))
-                    .setValue(WEST, p_52341_.getValue(SOUTH));
+                return state.setValue(NORTH, state.getValue(WEST))
+                    .setValue(EAST, state.getValue(NORTH))
+                    .setValue(SOUTH, state.getValue(EAST))
+                    .setValue(WEST, state.getValue(SOUTH));
             default:
-                return p_52341_;
+                return state;
         }
     }
 
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
     @Override
-    protected BlockState mirror(BlockState p_52338_, Mirror p_52339_) {
-        switch (p_52339_) {
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        switch (mirror) {
             case LEFT_RIGHT:
-                return p_52338_.setValue(NORTH, p_52338_.getValue(SOUTH)).setValue(SOUTH, p_52338_.getValue(NORTH));
+                return state.setValue(NORTH, state.getValue(SOUTH)).setValue(SOUTH, state.getValue(NORTH));
             case FRONT_BACK:
-                return p_52338_.setValue(EAST, p_52338_.getValue(WEST)).setValue(WEST, p_52338_.getValue(EAST));
+                return state.setValue(EAST, state.getValue(WEST)).setValue(WEST, state.getValue(EAST));
             default:
-                return super.mirror(p_52338_, p_52339_);
+                return super.mirror(state, mirror);
         }
     }
 }

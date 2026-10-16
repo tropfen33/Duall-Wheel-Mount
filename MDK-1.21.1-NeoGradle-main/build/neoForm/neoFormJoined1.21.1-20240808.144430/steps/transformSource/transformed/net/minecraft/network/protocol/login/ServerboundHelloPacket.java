@@ -15,9 +15,12 @@ public record ServerboundHelloPacket(String name, UUID profileId) implements Pac
         this(p_179827_.readUtf(16), p_179827_.readUUID());
     }
 
-    private void write(FriendlyByteBuf p_134851_) {
-        p_134851_.writeUtf(this.name, 16);
-        p_134851_.writeUUID(this.profileId);
+    /**
+     * Writes the raw packet data to the data stream.
+     */
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeUtf(this.name, 16);
+        buffer.writeUUID(this.profileId);
     }
 
     @Override
@@ -25,7 +28,10 @@ public record ServerboundHelloPacket(String name, UUID profileId) implements Pac
         return LoginPacketTypes.SERVERBOUND_HELLO;
     }
 
-    public void handle(ServerLoginPacketListener p_134848_) {
-        p_134848_.handleHello(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerLoginPacketListener handler) {
+        handler.handleHello(this);
     }
 }

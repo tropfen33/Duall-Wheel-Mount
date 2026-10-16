@@ -8,23 +8,29 @@ import java.util.stream.Collectors;
 import net.minecraft.core.Direction;
 
 public class DirectionProperty extends EnumProperty<Direction> {
-    protected DirectionProperty(String p_61541_, Collection<Direction> p_61542_) {
-        super(p_61541_, Direction.class, p_61542_);
+    protected DirectionProperty(String name, Collection<Direction> values) {
+        super(name, Direction.class, values);
     }
 
-    public static DirectionProperty create(String p_156004_) {
-        return create(p_156004_, p_187558_ -> true);
+    public static DirectionProperty create(String name) {
+        return create(name, p_187558_ -> true);
     }
 
-    public static DirectionProperty create(String p_61547_, Predicate<Direction> p_61548_) {
-        return create(p_61547_, Arrays.stream(Direction.values()).filter(p_61548_).collect(Collectors.toList()));
+    /**
+     * Create a new DirectionProperty with all directions that match the given Predicate
+     */
+    public static DirectionProperty create(String name, Predicate<Direction> filter) {
+        return create(name, Arrays.stream(Direction.values()).filter(filter).collect(Collectors.toList()));
     }
 
-    public static DirectionProperty create(String p_61550_, Direction... p_61551_) {
-        return create(p_61550_, Lists.newArrayList(p_61551_));
+    public static DirectionProperty create(String name, Direction... values) {
+        return create(name, Lists.newArrayList(values));
     }
 
-    public static DirectionProperty create(String p_61544_, Collection<Direction> p_61545_) {
-        return new DirectionProperty(p_61544_, p_61545_);
+    /**
+     * Create a new DirectionProperty for the given direction values
+     */
+    public static DirectionProperty create(String name, Collection<Direction> values) {
+        return new DirectionProperty(name, values);
     }
 }

@@ -28,14 +28,14 @@ class RenderChunk {
     private final boolean debug;
     final LevelChunk wrapped;
 
-    RenderChunk(LevelChunk p_200446_) {
-        this.wrapped = p_200446_;
-        this.debug = p_200446_.getLevel().isDebug();
-        this.blockEntities = ImmutableMap.copyOf(p_200446_.getBlockEntities());
-        if (p_200446_ instanceof EmptyLevelChunk) {
+    RenderChunk(LevelChunk wrapped) {
+        this.wrapped = wrapped;
+        this.debug = wrapped.getLevel().isDebug();
+        this.blockEntities = ImmutableMap.copyOf(wrapped.getBlockEntities());
+        if (wrapped instanceof EmptyLevelChunk) {
             this.sections = null;
         } else {
-            LevelChunkSection[] alevelchunksection = p_200446_.getSections();
+            LevelChunkSection[] alevelchunksection = wrapped.getSections();
             this.sections = new ArrayList<>(alevelchunksection.length);
 
             for (LevelChunkSection levelchunksection : alevelchunksection) {
@@ -45,14 +45,14 @@ class RenderChunk {
     }
 
     @Nullable
-    public BlockEntity getBlockEntity(BlockPos p_200452_) {
-        return this.blockEntities.get(p_200452_);
+    public BlockEntity getBlockEntity(BlockPos pos) {
+        return this.blockEntities.get(pos);
     }
 
-    public BlockState getBlockState(BlockPos p_200454_) {
-        int i = p_200454_.getX();
-        int j = p_200454_.getY();
-        int k = p_200454_.getZ();
+    public BlockState getBlockState(BlockPos pos) {
+        int i = pos.getX();
+        int j = pos.getY();
+        int k = pos.getZ();
         if (this.debug) {
             BlockState blockstate = null;
             if (j == 60) {

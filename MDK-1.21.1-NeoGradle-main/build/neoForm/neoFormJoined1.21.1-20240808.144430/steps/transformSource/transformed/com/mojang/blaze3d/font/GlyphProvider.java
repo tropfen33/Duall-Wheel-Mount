@@ -15,7 +15,7 @@ public interface GlyphProvider extends AutoCloseable {
     }
 
     @Nullable
-    default GlyphInfo getGlyph(int p_231091_) {
+    default GlyphInfo getGlyph(int character) {
         return null;
     }
 

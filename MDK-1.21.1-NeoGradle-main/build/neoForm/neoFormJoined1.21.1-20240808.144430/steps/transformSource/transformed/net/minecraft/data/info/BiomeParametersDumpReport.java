@@ -31,13 +31,13 @@ public class BiomeParametersDumpReport implements DataProvider {
     private static final MapCodec<ResourceKey<Biome>> ENTRY_CODEC = ResourceKey.codec(Registries.BIOME).fieldOf("biome");
     private static final Codec<Climate.ParameterList<ResourceKey<Biome>>> CODEC = Climate.ParameterList.codec(ENTRY_CODEC).fieldOf("biomes").codec();
 
-    public BiomeParametersDumpReport(PackOutput p_256322_, CompletableFuture<HolderLookup.Provider> p_256222_) {
-        this.topPath = p_256322_.getOutputFolder(PackOutput.Target.REPORTS).resolve("biome_parameters");
-        this.registries = p_256222_;
+    public BiomeParametersDumpReport(PackOutput output, CompletableFuture<HolderLookup.Provider> registries) {
+        this.topPath = output.getOutputFolder(PackOutput.Target.REPORTS).resolve("biome_parameters");
+        this.registries = registries;
     }
 
     @Override
-    public CompletableFuture<?> run(CachedOutput p_254091_) {
+    public CompletableFuture<?> run(CachedOutput output) {
         return this.registries
             .thenCompose(
                 p_326734_ -> {
@@ -47,7 +47,7 @@ public class BiomeParametersDumpReport implements DataProvider {
                         .forEach(
                             (p_274759_, p_274760_) -> list.add(
                                     dumpValue(
-                                        this.createPath(p_274759_.id()), p_254091_, dynamicops, CODEC, (Climate.ParameterList<ResourceKey<Biome>>)p_274760_
+                                        this.createPath(p_274759_.id()), output, dynamicops, CODEC, (Climate.ParameterList<ResourceKey<Biome>>)p_274760_
                                     )
                                 )
                         );
@@ -57,15 +57,15 @@ public class BiomeParametersDumpReport implements DataProvider {
     }
 
     private static <E> CompletableFuture<?> dumpValue(
-        Path p_254407_, CachedOutput p_254093_, DynamicOps<JsonElement> p_253788_, Encoder<E> p_254276_, E p_254073_
+        Path path, CachedOutput output, DynamicOps<JsonElement> ops, Encoder<E> encoder, E value
     ) {
-        Optional<JsonElement> optional = p_254276_.encodeStart(p_253788_, p_254073_)
-            .resultOrPartial(p_236195_ -> LOGGER.error("Couldn't serialize element {}: {}", p_254407_, p_236195_));
-        return optional.isPresent() ? DataProvider.saveStable(p_254093_, optional.get(), p_254407_) : CompletableFuture.completedFuture(null);
+        Optional<JsonElement> optional = encoder.encodeStart(ops, value)
+            .resultOrPartial(p_236195_ -> LOGGER.error("Couldn't serialize element {}: {}", path, p_236195_));
+        return optional.isPresent() ? DataProvider.saveStable(output, optional.get(), path) : CompletableFuture.completedFuture(null);
     }
 
-    private Path createPath(ResourceLocation p_236179_) {
-        return this.topPath.resolve(p_236179_.getNamespace()).resolve(p_236179_.getPath() + ".json");
+    private Path createPath(ResourceLocation location) {
+        return this.topPath.resolve(location.getNamespace()).resolve(location.getPath() + ".json");
     }
 
     @Override

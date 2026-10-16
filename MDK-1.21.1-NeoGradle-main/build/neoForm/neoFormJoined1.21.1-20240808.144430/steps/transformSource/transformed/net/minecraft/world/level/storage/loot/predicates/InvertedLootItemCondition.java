@@ -8,6 +8,9 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.ValidationContext;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
 
+/**
+ * A LootItemCondition that inverts the output of another one.
+ */
 public record InvertedLootItemCondition(LootItemCondition term) implements LootItemCondition {
     public static final MapCodec<InvertedLootItemCondition> CODEC = RecordCodecBuilder.mapCodec(
         p_344715_ -> p_344715_.group(LootItemCondition.DIRECT_CODEC.fieldOf("term").forGetter(InvertedLootItemCondition::term))
@@ -19,8 +22,8 @@ public record InvertedLootItemCondition(LootItemCondition term) implements LootI
         return LootItemConditions.INVERTED;
     }
 
-    public boolean test(LootContext p_81689_) {
-        return !this.term.test(p_81689_);
+    public boolean test(LootContext context) {
+        return !this.term.test(context);
     }
 
     @Override
@@ -28,14 +31,17 @@ public record InvertedLootItemCondition(LootItemCondition term) implements LootI
         return this.term.getReferencedContextParams();
     }
 
+    /**
+     * Validate that this object is used correctly according to the given ValidationContext.
+     */
     @Override
-    public void validate(ValidationContext p_81691_) {
-        LootItemCondition.super.validate(p_81691_);
-        this.term.validate(p_81691_);
+    public void validate(ValidationContext context) {
+        LootItemCondition.super.validate(context);
+        this.term.validate(context);
     }
 
-    public static LootItemCondition.Builder invert(LootItemCondition.Builder p_81695_) {
-        InvertedLootItemCondition invertedlootitemcondition = new InvertedLootItemCondition(p_81695_.build());
+    public static LootItemCondition.Builder invert(LootItemCondition.Builder toInvert) {
+        InvertedLootItemCondition invertedlootitemcondition = new InvertedLootItemCondition(toInvert.build());
         return () -> invertedlootitemcondition;
     }
 }

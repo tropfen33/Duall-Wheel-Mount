@@ -73,10 +73,10 @@ public class CampfireBlock extends BaseEntityBlock implements SimpleWaterloggedB
         return CODEC;
     }
 
-    public CampfireBlock(boolean p_51236_, int p_51237_, BlockBehaviour.Properties p_51238_) {
-        super(p_51238_);
-        this.spawnParticles = p_51236_;
-        this.fireDamage = p_51237_;
+    public CampfireBlock(boolean spawnParticles, int fireDamage, BlockBehaviour.Properties properties) {
+        super(properties);
+        this.spawnParticles = spawnParticles;
+        this.fireDamage = fireDamage;
         this.registerDefaultState(
             this.stateDefinition
                 .any()
@@ -89,14 +89,14 @@ public class CampfireBlock extends BaseEntityBlock implements SimpleWaterloggedB
 
     @Override
     protected ItemInteractionResult useItemOn(
-        ItemStack p_316347_, BlockState p_51274_, Level p_51275_, BlockPos p_51276_, Player p_51277_, InteractionHand p_51278_, BlockHitResult p_51279_
+        ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult
     ) {
-        if (p_51275_.getBlockEntity(p_51276_) instanceof CampfireBlockEntity campfireblockentity) {
-            ItemStack itemstack = p_51277_.getItemInHand(p_51278_);
+        if (level.getBlockEntity(pos) instanceof CampfireBlockEntity campfireblockentity) {
+            ItemStack itemstack = player.getItemInHand(hand);
             Optional<RecipeHolder<CampfireCookingRecipe>> optional = campfireblockentity.getCookableRecipe(itemstack);
             if (optional.isPresent()) {
-                if (!p_51275_.isClientSide && campfireblockentity.placeFood(p_51277_, itemstack, optional.get().value().getCookingTime())) {
-                    p_51277_.awardStat(Stats.INTERACT_WITH_CAMPFIRE);
+                if (!level.isClientSide && campfireblockentity.placeFood(player, itemstack, optional.get().value().getCookingTime())) {
+                    player.awardStat(Stats.INTERACT_WITH_CAMPFIRE);
                     return ItemInteractionResult.SUCCESS;
                 }
 
@@ -108,125 +108,140 @@ public class CampfireBlock extends BaseEntityBlock implements SimpleWaterloggedB
     }
 
     @Override
-    protected void entityInside(BlockState p_51269_, Level p_51270_, BlockPos p_51271_, Entity p_51272_) {
-        if (p_51269_.getValue(LIT) && p_51272_ instanceof LivingEntity) {
-            p_51272_.hurt(p_51270_.damageSources().campfire(), (float)this.fireDamage);
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        if (state.getValue(LIT) && entity instanceof LivingEntity) {
+            entity.hurt(level.damageSources().campfire(), (float)this.fireDamage);
         }
 
-        super.entityInside(p_51269_, p_51270_, p_51271_, p_51272_);
+        super.entityInside(state, level, pos, entity);
     }
 
     @Override
-    protected void onRemove(BlockState p_51281_, Level p_51282_, BlockPos p_51283_, BlockState p_51284_, boolean p_51285_) {
-        if (!p_51281_.is(p_51284_.getBlock())) {
-            BlockEntity blockentity = p_51282_.getBlockEntity(p_51283_);
+    protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+        if (!state.is(newState.getBlock())) {
+            BlockEntity blockentity = level.getBlockEntity(pos);
             if (blockentity instanceof CampfireBlockEntity) {
-                Containers.dropContents(p_51282_, p_51283_, ((CampfireBlockEntity)blockentity).getItems());
+                Containers.dropContents(level, pos, ((CampfireBlockEntity)blockentity).getItems());
             }
 
-            super.onRemove(p_51281_, p_51282_, p_51283_, p_51284_, p_51285_);
+            super.onRemove(state, level, pos, newState, isMoving);
         }
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_51240_) {
-        LevelAccessor levelaccessor = p_51240_.getLevel();
-        BlockPos blockpos = p_51240_.getClickedPos();
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        LevelAccessor levelaccessor = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
         boolean flag = levelaccessor.getFluidState(blockpos).getType() == Fluids.WATER;
         return this.defaultBlockState()
             .setValue(WATERLOGGED, Boolean.valueOf(flag))
             .setValue(SIGNAL_FIRE, Boolean.valueOf(this.isSmokeSource(levelaccessor.getBlockState(blockpos.below()))))
             .setValue(LIT, Boolean.valueOf(!flag))
-            .setValue(FACING, p_51240_.getHorizontalDirection());
+            .setValue(FACING, context.getHorizontalDirection());
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
-    protected BlockState updateShape(BlockState p_51298_, Direction p_51299_, BlockState p_51300_, LevelAccessor p_51301_, BlockPos p_51302_, BlockPos p_51303_) {
-        if (p_51298_.getValue(WATERLOGGED)) {
-            p_51301_.scheduleTick(p_51302_, Fluids.WATER, Fluids.WATER.getTickDelay(p_51301_));
+    protected BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(currentPos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        return p_51299_ == Direction.DOWN
-            ? p_51298_.setValue(SIGNAL_FIRE, Boolean.valueOf(this.isSmokeSource(p_51300_)))
-            : super.updateShape(p_51298_, p_51299_, p_51300_, p_51301_, p_51302_, p_51303_);
+        return facing == Direction.DOWN
+            ? state.setValue(SIGNAL_FIRE, Boolean.valueOf(this.isSmokeSource(facingState)))
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
-    private boolean isSmokeSource(BlockState p_51324_) {
-        return p_51324_.is(Blocks.HAY_BLOCK);
+    /**
+     * @return whether the given block state produces the thicker signal fire smoke when put below a campfire.
+     */
+    private boolean isSmokeSource(BlockState state) {
+        return state.is(Blocks.HAY_BLOCK);
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_51309_, BlockGetter p_51310_, BlockPos p_51311_, CollisionContext p_51312_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     * @deprecated call via {@link IBlockState#getRenderType()} whenever possible. Implementing/overriding is fine.
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_51307_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_220918_, Level p_220919_, BlockPos p_220920_, RandomSource p_220921_) {
-        if (p_220918_.getValue(LIT)) {
-            if (p_220921_.nextInt(10) == 0) {
-                p_220919_.playLocalSound(
-                    (double)p_220920_.getX() + 0.5,
-                    (double)p_220920_.getY() + 0.5,
-                    (double)p_220920_.getZ() + 0.5,
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        if (state.getValue(LIT)) {
+            if (random.nextInt(10) == 0) {
+                level.playLocalSound(
+                    (double)pos.getX() + 0.5,
+                    (double)pos.getY() + 0.5,
+                    (double)pos.getZ() + 0.5,
                     SoundEvents.CAMPFIRE_CRACKLE,
                     SoundSource.BLOCKS,
-                    0.5F + p_220921_.nextFloat(),
-                    p_220921_.nextFloat() * 0.7F + 0.6F,
+                    0.5F + random.nextFloat(),
+                    random.nextFloat() * 0.7F + 0.6F,
                     false
                 );
             }
 
-            if (this.spawnParticles && p_220921_.nextInt(5) == 0) {
-                for (int i = 0; i < p_220921_.nextInt(1) + 1; i++) {
-                    p_220919_.addParticle(
+            if (this.spawnParticles && random.nextInt(5) == 0) {
+                for (int i = 0; i < random.nextInt(1) + 1; i++) {
+                    level.addParticle(
                         ParticleTypes.LAVA,
-                        (double)p_220920_.getX() + 0.5,
-                        (double)p_220920_.getY() + 0.5,
-                        (double)p_220920_.getZ() + 0.5,
-                        (double)(p_220921_.nextFloat() / 2.0F),
+                        (double)pos.getX() + 0.5,
+                        (double)pos.getY() + 0.5,
+                        (double)pos.getZ() + 0.5,
+                        (double)(random.nextFloat() / 2.0F),
                         5.0E-5,
-                        (double)(p_220921_.nextFloat() / 2.0F)
+                        (double)(random.nextFloat() / 2.0F)
                     );
                 }
             }
         }
     }
 
-    public static void dowse(@Nullable Entity p_152750_, LevelAccessor p_152751_, BlockPos p_152752_, BlockState p_152753_) {
-        if (p_152751_.isClientSide()) {
+    public static void dowse(@Nullable Entity entity, LevelAccessor level, BlockPos pos, BlockState state) {
+        if (level.isClientSide()) {
             for (int i = 0; i < 20; i++) {
-                makeParticles((Level)p_152751_, p_152752_, p_152753_.getValue(SIGNAL_FIRE), true);
+                makeParticles((Level)level, pos, state.getValue(SIGNAL_FIRE), true);
             }
         }
 
-        BlockEntity blockentity = p_152751_.getBlockEntity(p_152752_);
+        BlockEntity blockentity = level.getBlockEntity(pos);
         if (blockentity instanceof CampfireBlockEntity) {
             ((CampfireBlockEntity)blockentity).dowse();
         }
 
-        p_152751_.gameEvent(p_152750_, GameEvent.BLOCK_CHANGE, p_152752_);
+        level.gameEvent(entity, GameEvent.BLOCK_CHANGE, pos);
     }
 
     @Override
-    public boolean placeLiquid(LevelAccessor p_51257_, BlockPos p_51258_, BlockState p_51259_, FluidState p_51260_) {
-        if (!p_51259_.getValue(BlockStateProperties.WATERLOGGED) && p_51260_.getType() == Fluids.WATER) {
-            boolean flag = p_51259_.getValue(LIT);
+    public boolean placeLiquid(LevelAccessor level, BlockPos pos, BlockState state, FluidState fluidState) {
+        if (!state.getValue(BlockStateProperties.WATERLOGGED) && fluidState.getType() == Fluids.WATER) {
+            boolean flag = state.getValue(LIT);
             if (flag) {
-                if (!p_51257_.isClientSide()) {
-                    p_51257_.playSound(null, p_51258_, SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.BLOCKS, 1.0F, 1.0F);
+                if (!level.isClientSide()) {
+                    level.playSound(null, pos, SoundEvents.GENERIC_EXTINGUISH_FIRE, SoundSource.BLOCKS, 1.0F, 1.0F);
                 }
 
-                dowse(null, p_51257_, p_51258_, p_51259_);
+                dowse(null, level, pos, state);
             }
 
-            p_51257_.setBlock(p_51258_, p_51259_.setValue(WATERLOGGED, Boolean.valueOf(true)).setValue(LIT, Boolean.valueOf(false)), 3);
-            p_51257_.scheduleTick(p_51258_, p_51260_.getType(), p_51260_.getType().getTickDelay(p_51257_));
+            level.setBlock(pos, state.setValue(WATERLOGGED, Boolean.valueOf(true)).setValue(LIT, Boolean.valueOf(false)), 3);
+            level.scheduleTick(pos, fluidState.getType(), fluidState.getType().getTickDelay(level));
             return true;
         } else {
             return false;
@@ -234,36 +249,36 @@ public class CampfireBlock extends BaseEntityBlock implements SimpleWaterloggedB
     }
 
     @Override
-    protected void onProjectileHit(Level p_51244_, BlockState p_51245_, BlockHitResult p_51246_, Projectile p_51247_) {
-        BlockPos blockpos = p_51246_.getBlockPos();
-        if (!p_51244_.isClientSide
-            && p_51247_.isOnFire()
-            && p_51247_.mayInteract(p_51244_, blockpos)
-            && !p_51245_.getValue(LIT)
-            && !p_51245_.getValue(WATERLOGGED)) {
-            p_51244_.setBlock(blockpos, p_51245_.setValue(BlockStateProperties.LIT, Boolean.valueOf(true)), 11);
+    protected void onProjectileHit(Level level, BlockState state, BlockHitResult hit, Projectile projectile) {
+        BlockPos blockpos = hit.getBlockPos();
+        if (!level.isClientSide
+            && projectile.isOnFire()
+            && projectile.mayInteract(level, blockpos)
+            && !state.getValue(LIT)
+            && !state.getValue(WATERLOGGED)) {
+            level.setBlock(blockpos, state.setValue(BlockStateProperties.LIT, Boolean.valueOf(true)), 11);
         }
     }
 
-    public static void makeParticles(Level p_51252_, BlockPos p_51253_, boolean p_51254_, boolean p_51255_) {
-        RandomSource randomsource = p_51252_.getRandom();
-        SimpleParticleType simpleparticletype = p_51254_ ? ParticleTypes.CAMPFIRE_SIGNAL_SMOKE : ParticleTypes.CAMPFIRE_COSY_SMOKE;
-        p_51252_.addAlwaysVisibleParticle(
+    public static void makeParticles(Level level, BlockPos pos, boolean isSignalFire, boolean spawnExtraSmoke) {
+        RandomSource randomsource = level.getRandom();
+        SimpleParticleType simpleparticletype = isSignalFire ? ParticleTypes.CAMPFIRE_SIGNAL_SMOKE : ParticleTypes.CAMPFIRE_COSY_SMOKE;
+        level.addAlwaysVisibleParticle(
             simpleparticletype,
             true,
-            (double)p_51253_.getX() + 0.5 + randomsource.nextDouble() / 3.0 * (double)(randomsource.nextBoolean() ? 1 : -1),
-            (double)p_51253_.getY() + randomsource.nextDouble() + randomsource.nextDouble(),
-            (double)p_51253_.getZ() + 0.5 + randomsource.nextDouble() / 3.0 * (double)(randomsource.nextBoolean() ? 1 : -1),
+            (double)pos.getX() + 0.5 + randomsource.nextDouble() / 3.0 * (double)(randomsource.nextBoolean() ? 1 : -1),
+            (double)pos.getY() + randomsource.nextDouble() + randomsource.nextDouble(),
+            (double)pos.getZ() + 0.5 + randomsource.nextDouble() / 3.0 * (double)(randomsource.nextBoolean() ? 1 : -1),
             0.0,
             0.07,
             0.0
         );
-        if (p_51255_) {
-            p_51252_.addParticle(
+        if (spawnExtraSmoke) {
+            level.addParticle(
                 ParticleTypes.SMOKE,
-                (double)p_51253_.getX() + 0.5 + randomsource.nextDouble() / 4.0 * (double)(randomsource.nextBoolean() ? 1 : -1),
-                (double)p_51253_.getY() + 0.4,
-                (double)p_51253_.getZ() + 0.5 + randomsource.nextDouble() / 4.0 * (double)(randomsource.nextBoolean() ? 1 : -1),
+                (double)pos.getX() + 0.5 + randomsource.nextDouble() / 4.0 * (double)(randomsource.nextBoolean() ? 1 : -1),
+                (double)pos.getY() + 0.4,
+                (double)pos.getZ() + 0.5 + randomsource.nextDouble() / 4.0 * (double)(randomsource.nextBoolean() ? 1 : -1),
                 0.0,
                 0.005,
                 0.0
@@ -271,17 +286,17 @@ public class CampfireBlock extends BaseEntityBlock implements SimpleWaterloggedB
         }
     }
 
-    public static boolean isSmokeyPos(Level p_51249_, BlockPos p_51250_) {
+    public static boolean isSmokeyPos(Level level, BlockPos pos) {
         for (int i = 1; i <= 5; i++) {
-            BlockPos blockpos = p_51250_.below(i);
-            BlockState blockstate = p_51249_.getBlockState(blockpos);
+            BlockPos blockpos = pos.below(i);
+            BlockState blockstate = level.getBlockState(blockpos);
             if (isLitCampfire(blockstate)) {
                 return true;
             }
 
-            boolean flag = Shapes.joinIsNotEmpty(VIRTUAL_FENCE_POST, blockstate.getCollisionShape(p_51249_, blockpos, CollisionContext.empty()), BooleanOp.AND); // FORGE: Fix MC-201374
+            boolean flag = Shapes.joinIsNotEmpty(VIRTUAL_FENCE_POST, blockstate.getCollisionShape(level, blockpos, CollisionContext.empty()), BooleanOp.AND); // FORGE: Fix MC-201374
             if (flag) {
-                BlockState blockstate1 = p_51249_.getBlockState(blockpos.below());
+                BlockState blockstate1 = level.getBlockState(blockpos.below());
                 return isLitCampfire(blockstate1);
             }
         }
@@ -289,55 +304,61 @@ public class CampfireBlock extends BaseEntityBlock implements SimpleWaterloggedB
         return false;
     }
 
-    public static boolean isLitCampfire(BlockState p_51320_) {
-        return p_51320_.hasProperty(LIT) && p_51320_.is(BlockTags.CAMPFIRES) && p_51320_.getValue(LIT);
+    public static boolean isLitCampfire(BlockState state) {
+        return state.hasProperty(LIT) && state.is(BlockTags.CAMPFIRES) && state.getValue(LIT);
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_51318_) {
-        return p_51318_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_51318_);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
+    }
+
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rot) {
+        return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState rotate(BlockState p_51295_, Rotation p_51296_) {
-        return p_51295_.setValue(FACING, p_51296_.rotate(p_51295_.getValue(FACING)));
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(LIT, SIGNAL_FIRE, WATERLOGGED, FACING);
     }
 
     @Override
-    protected BlockState mirror(BlockState p_51292_, Mirror p_51293_) {
-        return p_51292_.rotate(p_51293_.getRotation(p_51292_.getValue(FACING)));
-    }
-
-    @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_51305_) {
-        p_51305_.add(LIT, SIGNAL_FIRE, WATERLOGGED, FACING);
-    }
-
-    @Override
-    public BlockEntity newBlockEntity(BlockPos p_152759_, BlockState p_152760_) {
-        return new CampfireBlockEntity(p_152759_, p_152760_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new CampfireBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_152755_, BlockState p_152756_, BlockEntityType<T> p_152757_) {
-        if (p_152755_.isClientSide) {
-            return p_152756_.getValue(LIT) ? createTickerHelper(p_152757_, BlockEntityType.CAMPFIRE, CampfireBlockEntity::particleTick) : null;
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        if (level.isClientSide) {
+            return state.getValue(LIT) ? createTickerHelper(blockEntityType, BlockEntityType.CAMPFIRE, CampfireBlockEntity::particleTick) : null;
         } else {
-            return p_152756_.getValue(LIT)
-                ? createTickerHelper(p_152757_, BlockEntityType.CAMPFIRE, CampfireBlockEntity::cookTick)
-                : createTickerHelper(p_152757_, BlockEntityType.CAMPFIRE, CampfireBlockEntity::cooldownTick);
+            return state.getValue(LIT)
+                ? createTickerHelper(blockEntityType, BlockEntityType.CAMPFIRE, CampfireBlockEntity::cookTick)
+                : createTickerHelper(blockEntityType, BlockEntityType.CAMPFIRE, CampfireBlockEntity::cooldownTick);
         }
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_51264_, PathComputationType p_51267_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
-    public static boolean canLight(BlockState p_51322_) {
-        return p_51322_.is(BlockTags.CAMPFIRES, p_51262_ -> p_51262_.hasProperty(WATERLOGGED) && p_51262_.hasProperty(LIT))
-            && !p_51322_.getValue(WATERLOGGED)
-            && !p_51322_.getValue(LIT);
+    public static boolean canLight(BlockState state) {
+        return state.is(BlockTags.CAMPFIRES, p_51262_ -> p_51262_.hasProperty(WATERLOGGED) && p_51262_.hasProperty(LIT))
+            && !state.getValue(WATERLOGGED)
+            && !state.getValue(LIT);
     }
 }

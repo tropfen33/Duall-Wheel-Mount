@@ -33,13 +33,13 @@ public class LightSectionDebugRenderer implements DebugRenderer.SimpleDebugRende
     @Nullable
     private LightSectionDebugRenderer.SectionData data;
 
-    public LightSectionDebugRenderer(Minecraft p_283340_, LightLayer p_283096_) {
-        this.minecraft = p_283340_;
-        this.lightLayer = p_283096_;
+    public LightSectionDebugRenderer(Minecraft minecraft, LightLayer lightLayer) {
+        this.minecraft = minecraft;
+        this.lightLayer = lightLayer;
     }
 
     @Override
-    public void render(PoseStack p_281418_, MultiBufferSource p_282487_, double p_282164_, double p_282565_, double p_281615_) {
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, double camX, double camY, double camZ) {
         Instant instant = Instant.now();
         if (this.data == null || Duration.between(this.lastUpdateTime, instant).compareTo(REFRESH_INTERVAL) > 0) {
             this.lastUpdateTime = instant;
@@ -48,96 +48,96 @@ public class LightSectionDebugRenderer implements DebugRenderer.SimpleDebugRende
             );
         }
 
-        renderEdges(p_281418_, this.data.lightAndBlocksShape, this.data.minPos, p_282487_, p_282164_, p_282565_, p_281615_, LIGHT_AND_BLOCKS_COLOR);
-        renderEdges(p_281418_, this.data.lightShape, this.data.minPos, p_282487_, p_282164_, p_282565_, p_281615_, LIGHT_ONLY_COLOR);
-        VertexConsumer vertexconsumer = p_282487_.getBuffer(RenderType.debugSectionQuads());
-        renderFaces(p_281418_, this.data.lightAndBlocksShape, this.data.minPos, vertexconsumer, p_282164_, p_282565_, p_281615_, LIGHT_AND_BLOCKS_COLOR);
-        renderFaces(p_281418_, this.data.lightShape, this.data.minPos, vertexconsumer, p_282164_, p_282565_, p_281615_, LIGHT_ONLY_COLOR);
+        renderEdges(poseStack, this.data.lightAndBlocksShape, this.data.minPos, bufferSource, camX, camY, camZ, LIGHT_AND_BLOCKS_COLOR);
+        renderEdges(poseStack, this.data.lightShape, this.data.minPos, bufferSource, camX, camY, camZ, LIGHT_ONLY_COLOR);
+        VertexConsumer vertexconsumer = bufferSource.getBuffer(RenderType.debugSectionQuads());
+        renderFaces(poseStack, this.data.lightAndBlocksShape, this.data.minPos, vertexconsumer, camX, camY, camZ, LIGHT_AND_BLOCKS_COLOR);
+        renderFaces(poseStack, this.data.lightShape, this.data.minPos, vertexconsumer, camX, camY, camZ, LIGHT_ONLY_COLOR);
     }
 
     private static void renderFaces(
-        PoseStack p_283088_,
-        DiscreteVoxelShape p_281747_,
-        SectionPos p_282941_,
-        VertexConsumer p_283103_,
-        double p_281419_,
-        double p_282520_,
-        double p_281976_,
-        Vector4f p_282342_
+        PoseStack poseStack,
+        DiscreteVoxelShape shape,
+        SectionPos pos,
+        VertexConsumer buffer,
+        double camX,
+        double camY,
+        double camZ,
+        Vector4f color
     ) {
-        p_281747_.forAllFaces((p_282087_, p_283360_, p_282854_, p_282233_) -> {
-            int i = p_283360_ + p_282941_.getX();
-            int j = p_282854_ + p_282941_.getY();
-            int k = p_282233_ + p_282941_.getZ();
-            renderFace(p_283088_, p_283103_, p_282087_, p_281419_, p_282520_, p_281976_, i, j, k, p_282342_);
+        shape.forAllFaces((p_282087_, p_283360_, p_282854_, p_282233_) -> {
+            int i = p_283360_ + pos.getX();
+            int j = p_282854_ + pos.getY();
+            int k = p_282233_ + pos.getZ();
+            renderFace(poseStack, buffer, p_282087_, camX, camY, camZ, i, j, k, color);
         });
     }
 
     private static void renderEdges(
-        PoseStack p_282890_,
-        DiscreteVoxelShape p_282950_,
-        SectionPos p_281925_,
-        MultiBufferSource p_281516_,
-        double p_281554_,
-        double p_283233_,
-        double p_281690_,
-        Vector4f p_282916_
+        PoseStack poseStack,
+        DiscreteVoxelShape shape,
+        SectionPos pos,
+        MultiBufferSource bufferSource,
+        double camX,
+        double camY,
+        double camZ,
+        Vector4f color
     ) {
-        p_282950_.forAllEdges((p_283441_, p_283631_, p_282083_, p_281900_, p_281481_, p_283547_) -> {
-            int i = p_283441_ + p_281925_.getX();
-            int j = p_283631_ + p_281925_.getY();
-            int k = p_282083_ + p_281925_.getZ();
-            int l = p_281900_ + p_281925_.getX();
-            int i1 = p_281481_ + p_281925_.getY();
-            int j1 = p_283547_ + p_281925_.getZ();
-            VertexConsumer vertexconsumer = p_281516_.getBuffer(RenderType.debugLineStrip(1.0));
-            renderEdge(p_282890_, vertexconsumer, p_281554_, p_283233_, p_281690_, i, j, k, l, i1, j1, p_282916_);
+        shape.forAllEdges((p_283441_, p_283631_, p_282083_, p_281900_, p_281481_, p_283547_) -> {
+            int i = p_283441_ + pos.getX();
+            int j = p_283631_ + pos.getY();
+            int k = p_282083_ + pos.getZ();
+            int l = p_281900_ + pos.getX();
+            int i1 = p_281481_ + pos.getY();
+            int j1 = p_283547_ + pos.getZ();
+            VertexConsumer vertexconsumer = bufferSource.getBuffer(RenderType.debugLineStrip(1.0));
+            renderEdge(poseStack, vertexconsumer, camX, camY, camZ, i, j, k, l, i1, j1, color);
         }, true);
     }
 
     private static void renderFace(
-        PoseStack p_283612_,
-        VertexConsumer p_281996_,
-        Direction p_282340_,
-        double p_281988_,
-        double p_282440_,
-        double p_282235_,
-        int p_282751_,
-        int p_282270_,
-        int p_282159_,
-        Vector4f p_283316_
+        PoseStack poseStack,
+        VertexConsumer buffer,
+        Direction face,
+        double camX,
+        double camY,
+        double camZ,
+        int blockX,
+        int blockY,
+        int blockZ,
+        Vector4f color
     ) {
-        float f = (float)((double)SectionPos.sectionToBlockCoord(p_282751_) - p_281988_);
-        float f1 = (float)((double)SectionPos.sectionToBlockCoord(p_282270_) - p_282440_);
-        float f2 = (float)((double)SectionPos.sectionToBlockCoord(p_282159_) - p_282235_);
+        float f = (float)((double)SectionPos.sectionToBlockCoord(blockX) - camX);
+        float f1 = (float)((double)SectionPos.sectionToBlockCoord(blockY) - camY);
+        float f2 = (float)((double)SectionPos.sectionToBlockCoord(blockZ) - camZ);
         LevelRenderer.renderFace(
-            p_283612_, p_281996_, p_282340_, f, f1, f2, f + 16.0F, f1 + 16.0F, f2 + 16.0F, p_283316_.x(), p_283316_.y(), p_283316_.z(), p_283316_.w()
+            poseStack, buffer, face, f, f1, f2, f + 16.0F, f1 + 16.0F, f2 + 16.0F, color.x(), color.y(), color.z(), color.w()
         );
     }
 
     private static void renderEdge(
-        PoseStack p_283045_,
-        VertexConsumer p_282888_,
-        double p_283424_,
-        double p_283677_,
-        double p_283390_,
-        int p_281439_,
-        int p_282106_,
-        int p_282462_,
-        int p_282216_,
-        int p_281474_,
-        int p_281542_,
-        Vector4f p_283667_
+        PoseStack poseStack,
+        VertexConsumer buffer,
+        double camX,
+        double camY,
+        double camZ,
+        int x1,
+        int y1,
+        int z1,
+        int x2,
+        int y2,
+        int z2,
+        Vector4f color
     ) {
-        float f = (float)((double)SectionPos.sectionToBlockCoord(p_281439_) - p_283424_);
-        float f1 = (float)((double)SectionPos.sectionToBlockCoord(p_282106_) - p_283677_);
-        float f2 = (float)((double)SectionPos.sectionToBlockCoord(p_282462_) - p_283390_);
-        float f3 = (float)((double)SectionPos.sectionToBlockCoord(p_282216_) - p_283424_);
-        float f4 = (float)((double)SectionPos.sectionToBlockCoord(p_281474_) - p_283677_);
-        float f5 = (float)((double)SectionPos.sectionToBlockCoord(p_281542_) - p_283390_);
-        Matrix4f matrix4f = p_283045_.last().pose();
-        p_282888_.addVertex(matrix4f, f, f1, f2).setColor(p_283667_.x(), p_283667_.y(), p_283667_.z(), 1.0F);
-        p_282888_.addVertex(matrix4f, f3, f4, f5).setColor(p_283667_.x(), p_283667_.y(), p_283667_.z(), 1.0F);
+        float f = (float)((double)SectionPos.sectionToBlockCoord(x1) - camX);
+        float f1 = (float)((double)SectionPos.sectionToBlockCoord(y1) - camY);
+        float f2 = (float)((double)SectionPos.sectionToBlockCoord(z1) - camZ);
+        float f3 = (float)((double)SectionPos.sectionToBlockCoord(x2) - camX);
+        float f4 = (float)((double)SectionPos.sectionToBlockCoord(y2) - camY);
+        float f5 = (float)((double)SectionPos.sectionToBlockCoord(z2) - camZ);
+        Matrix4f matrix4f = poseStack.last().pose();
+        buffer.addVertex(matrix4f, f, f1, f2).setColor(color.x(), color.y(), color.z(), 1.0F);
+        buffer.addVertex(matrix4f, f3, f4, f5).setColor(color.x(), color.y(), color.z(), 1.0F);
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -146,16 +146,16 @@ public class LightSectionDebugRenderer implements DebugRenderer.SimpleDebugRende
         final DiscreteVoxelShape lightShape;
         final SectionPos minPos;
 
-        SectionData(LevelLightEngine p_283220_, SectionPos p_282370_, int p_282804_, LightLayer p_283151_) {
-            int i = p_282804_ * 2 + 1;
+        SectionData(LevelLightEngine levelLightEngine, SectionPos pos, int radius, LightLayer lightLayer) {
+            int i = radius * 2 + 1;
             this.lightAndBlocksShape = new BitSetDiscreteVoxelShape(i, i, i);
             this.lightShape = new BitSetDiscreteVoxelShape(i, i, i);
 
             for (int j = 0; j < i; j++) {
                 for (int k = 0; k < i; k++) {
                     for (int l = 0; l < i; l++) {
-                        SectionPos sectionpos = SectionPos.of(p_282370_.x() + l - p_282804_, p_282370_.y() + k - p_282804_, p_282370_.z() + j - p_282804_);
-                        LayerLightSectionStorage.SectionType layerlightsectionstorage$sectiontype = p_283220_.getDebugSectionType(p_283151_, sectionpos);
+                        SectionPos sectionpos = SectionPos.of(pos.x() + l - radius, pos.y() + k - radius, pos.z() + j - radius);
+                        LayerLightSectionStorage.SectionType layerlightsectionstorage$sectiontype = levelLightEngine.getDebugSectionType(lightLayer, sectionpos);
                         if (layerlightsectionstorage$sectiontype == LayerLightSectionStorage.SectionType.LIGHT_AND_DATA) {
                             this.lightAndBlocksShape.fill(l, k, j);
                             this.lightShape.fill(l, k, j);
@@ -166,7 +166,7 @@ public class LightSectionDebugRenderer implements DebugRenderer.SimpleDebugRende
                 }
             }
 
-            this.minPos = SectionPos.of(p_282370_.x() - p_282804_, p_282370_.y() - p_282804_, p_282370_.z() - p_282804_);
+            this.minPos = SectionPos.of(pos.x() - radius, pos.y() - radius, pos.z() - radius);
         }
     }
 }

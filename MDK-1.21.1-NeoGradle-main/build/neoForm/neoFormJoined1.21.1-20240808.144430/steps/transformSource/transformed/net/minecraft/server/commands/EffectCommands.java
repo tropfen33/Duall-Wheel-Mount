@@ -31,8 +31,8 @@ public class EffectCommands {
         Component.translatable("commands.effect.clear.specific.failed")
     );
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_136954_, CommandBuildContext p_251610_) {
-        p_136954_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
+        dispatcher.register(
             Commands.literal("effect")
                 .requires(p_136958_ -> p_136958_.hasPermission(2))
                 .then(
@@ -42,7 +42,7 @@ public class EffectCommands {
                             Commands.argument("targets", EntityArgument.entities())
                                 .executes(p_136982_ -> clearEffects(p_136982_.getSource(), EntityArgument.getEntities(p_136982_, "targets")))
                                 .then(
-                                    Commands.argument("effect", ResourceArgument.resource(p_251610_, Registries.MOB_EFFECT))
+                                    Commands.argument("effect", ResourceArgument.resource(context, Registries.MOB_EFFECT))
                                         .executes(
                                             p_248126_ -> clearEffect(
                                                     p_248126_.getSource(),
@@ -58,7 +58,7 @@ public class EffectCommands {
                         .then(
                             Commands.argument("targets", EntityArgument.entities())
                                 .then(
-                                    Commands.argument("effect", ResourceArgument.resource(p_251610_, Registries.MOB_EFFECT))
+                                    Commands.argument("effect", ResourceArgument.resource(context, Registries.MOB_EFFECT))
                                         .executes(
                                             p_248127_ -> giveEffect(
                                                     p_248127_.getSource(),
@@ -154,23 +154,23 @@ public class EffectCommands {
     }
 
     private static int giveEffect(
-        CommandSourceStack p_250553_,
-        Collection<? extends Entity> p_250411_,
-        Holder<MobEffect> p_249495_,
-        @Nullable Integer p_249652_,
-        int p_251498_,
-        boolean p_249944_
+        CommandSourceStack source,
+        Collection<? extends Entity> targets,
+        Holder<MobEffect> effect,
+        @Nullable Integer seconds,
+        int amplifier,
+        boolean showParticles
     ) throws CommandSyntaxException {
-        MobEffect mobeffect = p_249495_.value();
+        MobEffect mobeffect = effect.value();
         int i = 0;
         int j;
-        if (p_249652_ != null) {
+        if (seconds != null) {
             if (mobeffect.isInstantenous()) {
-                j = p_249652_;
-            } else if (p_249652_ == -1) {
+                j = seconds;
+            } else if (seconds == -1) {
                 j = -1;
             } else {
-                j = p_249652_ * 20;
+                j = seconds * 20;
             }
         } else if (mobeffect.isInstantenous()) {
             j = 1;
@@ -178,10 +178,10 @@ public class EffectCommands {
             j = 600;
         }
 
-        for (Entity entity : p_250411_) {
+        for (Entity entity : targets) {
             if (entity instanceof LivingEntity) {
-                MobEffectInstance mobeffectinstance = new MobEffectInstance(p_249495_, j, p_251498_, false, p_249944_);
-                if (((LivingEntity)entity).addEffect(mobeffectinstance, p_250553_.getEntity())) {
+                MobEffectInstance mobeffectinstance = new MobEffectInstance(effect, j, amplifier, false, showParticles);
+                if (((LivingEntity)entity).addEffect(mobeffectinstance, source.getEntity())) {
                     i++;
                 }
             }
@@ -190,16 +190,16 @@ public class EffectCommands {
         if (i == 0) {
             throw ERROR_GIVE_FAILED.create();
         } else {
-            if (p_250411_.size() == 1) {
-                p_250553_.sendSuccess(
+            if (targets.size() == 1) {
+                source.sendSuccess(
                     () -> Component.translatable(
-                            "commands.effect.give.success.single", mobeffect.getDisplayName(), p_250411_.iterator().next().getDisplayName(), j / 20
+                            "commands.effect.give.success.single", mobeffect.getDisplayName(), targets.iterator().next().getDisplayName(), j / 20
                         ),
                     true
                 );
             } else {
-                p_250553_.sendSuccess(
-                    () -> Component.translatable("commands.effect.give.success.multiple", mobeffect.getDisplayName(), p_250411_.size(), j / 20), true
+                source.sendSuccess(
+                    () -> Component.translatable("commands.effect.give.success.multiple", mobeffect.getDisplayName(), targets.size(), j / 20), true
                 );
             }
 
@@ -207,10 +207,10 @@ public class EffectCommands {
         }
     }
 
-    private static int clearEffects(CommandSourceStack p_136960_, Collection<? extends Entity> p_136961_) throws CommandSyntaxException {
+    private static int clearEffects(CommandSourceStack source, Collection<? extends Entity> targets) throws CommandSyntaxException {
         int i = 0;
 
-        for (Entity entity : p_136961_) {
+        for (Entity entity : targets) {
             if (entity instanceof LivingEntity && ((LivingEntity)entity).removeAllEffects()) {
                 i++;
             }
@@ -219,24 +219,24 @@ public class EffectCommands {
         if (i == 0) {
             throw ERROR_CLEAR_EVERYTHING_FAILED.create();
         } else {
-            if (p_136961_.size() == 1) {
-                p_136960_.sendSuccess(
-                    () -> Component.translatable("commands.effect.clear.everything.success.single", p_136961_.iterator().next().getDisplayName()), true
+            if (targets.size() == 1) {
+                source.sendSuccess(
+                    () -> Component.translatable("commands.effect.clear.everything.success.single", targets.iterator().next().getDisplayName()), true
                 );
             } else {
-                p_136960_.sendSuccess(() -> Component.translatable("commands.effect.clear.everything.success.multiple", p_136961_.size()), true);
+                source.sendSuccess(() -> Component.translatable("commands.effect.clear.everything.success.multiple", targets.size()), true);
             }
 
             return i;
         }
     }
 
-    private static int clearEffect(CommandSourceStack p_250069_, Collection<? extends Entity> p_248561_, Holder<MobEffect> p_249198_) throws CommandSyntaxException {
-        MobEffect mobeffect = p_249198_.value();
+    private static int clearEffect(CommandSourceStack source, Collection<? extends Entity> targets, Holder<MobEffect> effect) throws CommandSyntaxException {
+        MobEffect mobeffect = effect.value();
         int i = 0;
 
-        for (Entity entity : p_248561_) {
-            if (entity instanceof LivingEntity && ((LivingEntity)entity).removeEffect(p_249198_)) {
+        for (Entity entity : targets) {
+            if (entity instanceof LivingEntity && ((LivingEntity)entity).removeEffect(effect)) {
                 i++;
             }
         }
@@ -244,16 +244,16 @@ public class EffectCommands {
         if (i == 0) {
             throw ERROR_CLEAR_SPECIFIC_FAILED.create();
         } else {
-            if (p_248561_.size() == 1) {
-                p_250069_.sendSuccess(
+            if (targets.size() == 1) {
+                source.sendSuccess(
                     () -> Component.translatable(
-                            "commands.effect.clear.specific.success.single", mobeffect.getDisplayName(), p_248561_.iterator().next().getDisplayName()
+                            "commands.effect.clear.specific.success.single", mobeffect.getDisplayName(), targets.iterator().next().getDisplayName()
                         ),
                     true
                 );
             } else {
-                p_250069_.sendSuccess(
-                    () -> Component.translatable("commands.effect.clear.specific.success.multiple", mobeffect.getDisplayName(), p_248561_.size()), true
+                source.sendSuccess(
+                    () -> Component.translatable("commands.effect.clear.specific.success.multiple", mobeffect.getDisplayName(), targets.size()), true
                 );
             }
 

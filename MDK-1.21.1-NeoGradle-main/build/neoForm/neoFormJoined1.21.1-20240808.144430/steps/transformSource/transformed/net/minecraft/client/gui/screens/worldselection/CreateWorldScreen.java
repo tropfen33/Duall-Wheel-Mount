@@ -115,9 +115,9 @@ public class CreateWorldScreen extends Screen {
     @Nullable
     private TabNavigationBar tabNavigationBar;
 
-    public static void openFresh(Minecraft p_232897_, @Nullable Screen p_232898_) {
-        queueLoadScreen(p_232897_, PREPARING_WORLD_DATA);
-        PackRepository packrepository = new PackRepository(new ServerPacksSource(p_232897_.directoryValidator()));
+    public static void openFresh(Minecraft minecraft, @Nullable Screen lastScreen) {
+        queueLoadScreen(minecraft, PREPARING_WORLD_DATA);
+        PackRepository packrepository = new PackRepository(new ServerPacksSource(minecraft.directoryValidator()));
         net.neoforged.neoforge.resource.ResourcePackLoader.populatePackRepository(packrepository, net.minecraft.server.packs.PackType.SERVER_DATA, false);
         WorldLoader.InitConfig worldloader$initconfig = createDefaultLoadConfig(packrepository, WorldDataConfiguration.DEFAULT);
         CompletableFuture<WorldCreationContext> completablefuture = WorldLoader.load(
@@ -134,42 +134,42 @@ public class CreateWorldScreen extends Screen {
                 return new WorldCreationContext(p_247801_.worldGenSettings(), p_247800_, p_247799_, p_247801_.dataConfiguration());
             },
             Util.backgroundExecutor(),
-            p_232897_
+            minecraft
         );
-        p_232897_.managedBlock(completablefuture::isDone);
-        p_232897_.setScreen(new CreateWorldScreen(p_232897_, p_232898_, completablefuture.join(), Optional.of(WorldPresets.NORMAL), OptionalLong.empty()));
+        minecraft.managedBlock(completablefuture::isDone);
+        minecraft.setScreen(new CreateWorldScreen(minecraft, lastScreen, completablefuture.join(), Optional.of(WorldPresets.NORMAL), OptionalLong.empty()));
     }
 
     public static CreateWorldScreen createFromExisting(
-        Minecraft p_276017_, @Nullable Screen p_276029_, LevelSettings p_276055_, WorldCreationContext p_276028_, @Nullable Path p_276040_
+        Minecraft minecraft, @Nullable Screen lastScreen, LevelSettings levelSettings, WorldCreationContext settings, @Nullable Path tempDataPackDir
     ) {
         CreateWorldScreen createworldscreen = new CreateWorldScreen(
-            p_276017_, p_276029_, p_276028_, WorldPresets.fromSettings(p_276028_.selectedDimensions()), OptionalLong.of(p_276028_.options().seed())
+            minecraft, lastScreen, settings, WorldPresets.fromSettings(settings.selectedDimensions()), OptionalLong.of(settings.options().seed())
         );
         createworldscreen.recreated = true;
-        createworldscreen.uiState.setName(p_276055_.levelName());
-        createworldscreen.uiState.setAllowCommands(p_276055_.allowCommands());
-        createworldscreen.uiState.setDifficulty(p_276055_.difficulty());
-        createworldscreen.uiState.getGameRules().assignFrom(p_276055_.gameRules(), null);
-        if (p_276055_.hardcore()) {
+        createworldscreen.uiState.setName(levelSettings.levelName());
+        createworldscreen.uiState.setAllowCommands(levelSettings.allowCommands());
+        createworldscreen.uiState.setDifficulty(levelSettings.difficulty());
+        createworldscreen.uiState.getGameRules().assignFrom(levelSettings.gameRules(), null);
+        if (levelSettings.hardcore()) {
             createworldscreen.uiState.setGameMode(WorldCreationUiState.SelectedGameMode.HARDCORE);
-        } else if (p_276055_.gameType().isSurvival()) {
+        } else if (levelSettings.gameType().isSurvival()) {
             createworldscreen.uiState.setGameMode(WorldCreationUiState.SelectedGameMode.SURVIVAL);
-        } else if (p_276055_.gameType().isCreative()) {
+        } else if (levelSettings.gameType().isCreative()) {
             createworldscreen.uiState.setGameMode(WorldCreationUiState.SelectedGameMode.CREATIVE);
         }
 
-        createworldscreen.tempDataPackDir = p_276040_;
+        createworldscreen.tempDataPackDir = tempDataPackDir;
         return createworldscreen;
     }
 
     private CreateWorldScreen(
-        Minecraft p_276053_, @Nullable Screen p_276049_, WorldCreationContext p_276047_, Optional<ResourceKey<WorldPreset>> p_276013_, OptionalLong p_276031_
+        Minecraft minecraft, @Nullable Screen lastScreen, WorldCreationContext settings, Optional<ResourceKey<WorldPreset>> preset, OptionalLong seed
     ) {
         super(Component.translatable("selectWorld.create"));
-        this.lastScreen = p_276049_;
-        this.packValidator = p_276053_.directoryValidator();
-        this.uiState = new WorldCreationUiState(p_276053_.getLevelSource().getBaseDir(), p_276047_, p_276013_, p_276031_);
+        this.lastScreen = lastScreen;
+        this.packValidator = minecraft.directoryValidator();
+        this.uiState = new WorldCreationUiState(minecraft.getLevelSource().getBaseDir(), settings, preset, seed);
     }
 
     public WorldCreationUiState getUiState() {
@@ -211,8 +211,8 @@ public class CreateWorldScreen extends Screen {
         }
     }
 
-    private static void queueLoadScreen(Minecraft p_232900_, Component p_232901_) {
-        p_232900_.forceSetScreen(new GenericMessageScreen(p_232901_));
+    private static void queueLoadScreen(Minecraft minecraft, Component title) {
+        minecraft.forceSetScreen(new GenericMessageScreen(title));
     }
 
     private void onCreate() {
@@ -235,15 +235,15 @@ public class CreateWorldScreen extends Screen {
         );
     }
 
-    private void createNewWorld(PrimaryLevelData.SpecialWorldProperty p_250577_, LayeredRegistryAccess<RegistryLayer> p_249152_, Lifecycle p_249994_) {
+    private void createNewWorld(PrimaryLevelData.SpecialWorldProperty specialWorldProperty, LayeredRegistryAccess<RegistryLayer> p_249152_, Lifecycle worldGenSettingsLifecycle) {
         queueLoadScreen(this.minecraft, PREPARING_WORLD_DATA);
         Optional<LevelStorageSource.LevelStorageAccess> optional = this.createNewWorldDirectory();
         if (!optional.isEmpty()) {
             this.removeTempDataPackDir();
-            boolean flag = p_250577_ == PrimaryLevelData.SpecialWorldProperty.DEBUG;
+            boolean flag = specialWorldProperty == PrimaryLevelData.SpecialWorldProperty.DEBUG;
             WorldCreationContext worldcreationcontext = this.uiState.getSettings();
             LevelSettings levelsettings = this.createLevelSettings(flag);
-            WorldData worlddata = new PrimaryLevelData(levelsettings, worldcreationcontext.options(), p_250577_, p_249994_);
+            WorldData worlddata = new PrimaryLevelData(levelsettings, worldcreationcontext.options(), specialWorldProperty, worldGenSettingsLifecycle);
             if(worlddata.worldGenSettingsLifecycle() != Lifecycle.stable()) {
                 // Neo: set experimental settings confirmation flag so user is not shown warning on next open
                 ((PrimaryLevelData)worlddata).withConfirmedWarning(true);
@@ -254,9 +254,9 @@ public class CreateWorldScreen extends Screen {
         }
     }
 
-    private LevelSettings createLevelSettings(boolean p_205448_) {
+    private LevelSettings createLevelSettings(boolean debug) {
         String s = this.uiState.getName().trim();
-        if (p_205448_) {
+        if (debug) {
             GameRules gamerules = new GameRules();
             gamerules.getRule(GameRules.RULE_DAYLIGHT).set(false, null);
             return new LevelSettings(s, GameType.SPECTATOR, false, Difficulty.PEACEFUL, true, gamerules, WorldDataConfiguration.DEFAULT);
@@ -273,13 +273,22 @@ public class CreateWorldScreen extends Screen {
         }
     }
 
+    /**
+     * Called when a keyboard key is pressed within the GUI element.
+     * <p>
+     * @return {@code true} if the event is consumed, {@code false} otherwise.
+     *
+     * @param keyCode   the key code of the pressed key.
+     * @param scanCode  the scan code of the pressed key.
+     * @param modifiers the keyboard modifiers.
+     */
     @Override
-    public boolean keyPressed(int p_100875_, int p_100876_, int p_100877_) {
-        if (this.tabNavigationBar.keyPressed(p_100875_)) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (this.tabNavigationBar.keyPressed(keyCode)) {
             return true;
-        } else if (super.keyPressed(p_100875_, p_100876_, p_100877_)) {
+        } else if (super.keyPressed(keyCode, scanCode, modifiers)) {
             return true;
-        } else if (p_100875_ != 257 && p_100875_ != 335) {
+        } else if (keyCode != 257 && keyCode != 335) {
             return false;
         } else {
             this.onCreate();
@@ -297,28 +306,36 @@ public class CreateWorldScreen extends Screen {
         this.removeTempDataPackDir();
     }
 
+    /**
+     * Renders the graphical user interface (GUI) element.
+     *
+     * @param guiGraphics the GuiGraphics object used for rendering.
+     * @param mouseX      the x-coordinate of the mouse cursor.
+     * @param mouseY      the y-coordinate of the mouse cursor.
+     * @param partialTick the partial tick time.
+     */
     @Override
-    public void render(GuiGraphics p_282137_, int p_283640_, int p_281243_, float p_282743_) {
-        super.render(p_282137_, p_283640_, p_281243_, p_282743_);
+    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         RenderSystem.enableBlend();
-        p_282137_.blit(Screen.FOOTER_SEPARATOR, 0, this.height - this.layout.getFooterHeight() - 2, 0.0F, 0.0F, this.width, 2, 32, 2);
+        guiGraphics.blit(Screen.FOOTER_SEPARATOR, 0, this.height - this.layout.getFooterHeight() - 2, 0.0F, 0.0F, this.width, 2, 32, 2);
         RenderSystem.disableBlend();
     }
 
     @Override
-    protected void renderMenuBackground(GuiGraphics p_331389_) {
-        p_331389_.blit(TAB_HEADER_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, this.layout.getHeaderHeight(), 16, 16);
-        this.renderMenuBackground(p_331389_, 0, this.layout.getHeaderHeight(), this.width, this.height);
+    protected void renderMenuBackground(GuiGraphics partialTick) {
+        partialTick.blit(TAB_HEADER_BACKGROUND, 0, 0, 0.0F, 0.0F, this.width, this.layout.getHeaderHeight(), 16, 16);
+        this.renderMenuBackground(partialTick, 0, this.layout.getHeaderHeight(), this.width, this.height);
     }
 
     @Override
-    protected <T extends GuiEventListener & NarratableEntry> T addWidget(T p_100948_) {
-        return super.addWidget(p_100948_);
+    protected <T extends GuiEventListener & NarratableEntry> T addWidget(T listener) {
+        return super.addWidget(listener);
     }
 
     @Override
-    protected <T extends GuiEventListener & Renderable & NarratableEntry> T addRenderableWidget(T p_170199_) {
-        return super.addRenderableWidget(p_170199_);
+    protected <T extends GuiEventListener & Renderable & NarratableEntry> T addRenderableWidget(T widget) {
+        return super.addRenderableWidget(widget);
     }
 
     @Nullable
@@ -336,16 +353,16 @@ public class CreateWorldScreen extends Screen {
         return this.tempDataPackDir;
     }
 
-    void openExperimentsScreen(WorldDataConfiguration p_270214_) {
-        Pair<Path, PackRepository> pair = this.getDataPackSelectionSettings(p_270214_);
+    void openExperimentsScreen(WorldDataConfiguration worldDataConfiguration) {
+        Pair<Path, PackRepository> pair = this.getDataPackSelectionSettings(worldDataConfiguration);
         if (pair != null) {
             this.minecraft
                 .setScreen(new ExperimentsScreen(this, pair.getSecond(), p_269636_ -> this.tryApplyNewDataPacks(p_269636_, false, this::openExperimentsScreen)));
         }
     }
 
-    void openDataPackSelectionScreen(WorldDataConfiguration p_268186_) {
-        Pair<Path, PackRepository> pair = this.getDataPackSelectionSettings(p_268186_);
+    void openDataPackSelectionScreen(WorldDataConfiguration worldDataConfiguration) {
+        Pair<Path, PackRepository> pair = this.getDataPackSelectionSettings(worldDataConfiguration);
         if (pair != null) {
             this.minecraft
                 .setScreen(
@@ -359,33 +376,33 @@ public class CreateWorldScreen extends Screen {
         }
     }
 
-    private void tryApplyNewDataPacks(PackRepository p_270299_, boolean p_270896_, Consumer<WorldDataConfiguration> p_270760_) {
-        List<String> list = ImmutableList.copyOf(p_270299_.getSelectedIds());
-        List<String> list1 = p_270299_.getAvailableIds().stream().filter(p_232927_ -> !list.contains(p_232927_)).collect(ImmutableList.toImmutableList());
+    private void tryApplyNewDataPacks(PackRepository packRepository, boolean shouldConfirm, Consumer<WorldDataConfiguration> consumer) {
+        List<String> list = ImmutableList.copyOf(packRepository.getSelectedIds());
+        List<String> list1 = packRepository.getAvailableIds().stream().filter(p_232927_ -> !list.contains(p_232927_)).collect(ImmutableList.toImmutableList());
         WorldDataConfiguration worlddataconfiguration = new WorldDataConfiguration(
             new DataPackConfig(list, list1), this.uiState.getSettings().dataConfiguration().enabledFeatures()
         );
         if (this.uiState.tryUpdateDataConfiguration(worlddataconfiguration)) {
             this.minecraft.setScreen(this);
         } else {
-            FeatureFlagSet featureflagset = p_270299_.getRequestedFeatureFlags();
-            if (FeatureFlags.isExperimental(featureflagset) && p_270896_) {
-                this.minecraft.setScreen(new ConfirmExperimentalFeaturesScreen(p_270299_.getSelectedPacks(), p_269635_ -> {
+            FeatureFlagSet featureflagset = packRepository.getRequestedFeatureFlags();
+            if (FeatureFlags.isExperimental(featureflagset) && shouldConfirm) {
+                this.minecraft.setScreen(new ConfirmExperimentalFeaturesScreen(packRepository.getSelectedPacks(), p_269635_ -> {
                     if (p_269635_) {
-                        this.applyNewPackConfig(p_270299_, worlddataconfiguration, p_270760_);
+                        this.applyNewPackConfig(packRepository, worlddataconfiguration, consumer);
                     } else {
-                        p_270760_.accept(this.uiState.getSettings().dataConfiguration());
+                        consumer.accept(this.uiState.getSettings().dataConfiguration());
                     }
                 }));
             } else {
-                this.applyNewPackConfig(p_270299_, worlddataconfiguration, p_270760_);
+                this.applyNewPackConfig(packRepository, worlddataconfiguration, consumer);
             }
         }
     }
 
-    private void applyNewPackConfig(PackRepository p_270272_, WorldDataConfiguration p_270573_, Consumer<WorldDataConfiguration> p_270552_) {
+    private void applyNewPackConfig(PackRepository packRepository, WorldDataConfiguration worldDataConfiguration, Consumer<WorldDataConfiguration> consumer) {
         this.minecraft.forceSetScreen(new GenericMessageScreen(Component.translatable("dataPack.validation.working")));
-        WorldLoader.InitConfig worldloader$initconfig = createDefaultLoadConfig(p_270272_, p_270573_);
+        WorldLoader.InitConfig worldloader$initconfig = createDefaultLoadConfig(packRepository, worldDataConfiguration);
         WorldLoader.<CreateWorldScreen.DataPackReloadCookie, WorldCreationContext>load(
                 worldloader$initconfig,
                 p_326721_ -> {
@@ -431,9 +448,9 @@ public class CreateWorldScreen extends Screen {
                                 new ConfirmScreen(
                                     p_269627_ -> {
                                         if (p_269627_) {
-                                            p_270552_.accept(this.uiState.getSettings().dataConfiguration());
+                                            consumer.accept(this.uiState.getSettings().dataConfiguration());
                                         } else {
-                                            p_270552_.accept(new WorldDataConfiguration(new DataPackConfig(ImmutableList.of("vanilla"), ImmutableList.of()), FeatureFlags.VANILLA_SET)); // FORGE: Revert to *actual* vanilla data
+                                            consumer.accept(new WorldDataConfiguration(new DataPackConfig(ImmutableList.of("vanilla"), ImmutableList.of()), FeatureFlags.VANILLA_SET)); // FORGE: Revert to *actual* vanilla data
                                         }
                                     },
                                     Component.translatable("dataPack.validation.failed"),
@@ -452,8 +469,8 @@ public class CreateWorldScreen extends Screen {
             );
     }
 
-    private static WorldLoader.InitConfig createDefaultLoadConfig(PackRepository p_251829_, WorldDataConfiguration p_251555_) {
-        WorldLoader.PackConfig worldloader$packconfig = new WorldLoader.PackConfig(p_251829_, p_251555_, false, true);
+    private static WorldLoader.InitConfig createDefaultLoadConfig(PackRepository packRepository, WorldDataConfiguration initialDataConfig) {
+        WorldLoader.PackConfig worldloader$packconfig = new WorldLoader.PackConfig(packRepository, initialDataConfig, false, true);
         return new WorldLoader.InitConfig(worldloader$packconfig, Commands.CommandSelection.INTEGRATED, 2);
     }
 
@@ -475,11 +492,11 @@ public class CreateWorldScreen extends Screen {
         }
     }
 
-    private static void copyBetweenDirs(Path p_100913_, Path p_100914_, Path p_100915_) {
+    private static void copyBetweenDirs(Path fromDir, Path toDir, Path filePath) {
         try {
-            Util.copyBetweenDirs(p_100913_, p_100914_, p_100915_);
+            Util.copyBetweenDirs(fromDir, toDir, filePath);
         } catch (IOException ioexception) {
-            LOGGER.warn("Failed to copy datapack file from {} to {}", p_100915_, p_100914_);
+            LOGGER.warn("Failed to copy datapack file from {} to {}", filePath, toDir);
             throw new UncheckedIOException(ioexception);
         }
     }
@@ -518,11 +535,11 @@ public class CreateWorldScreen extends Screen {
     }
 
     @Nullable
-    public static Path createTempDataPackDirFromExistingWorld(Path p_100907_, Minecraft p_100908_) {
+    public static Path createTempDataPackDirFromExistingWorld(Path datapackDir, Minecraft minecraft) {
         MutableObject<Path> mutableobject = new MutableObject<>();
 
-        try (Stream<Path> stream = Files.walk(p_100907_)) {
-            stream.filter(p_232924_ -> !p_232924_.equals(p_100907_)).forEach(p_232933_ -> {
+        try (Stream<Path> stream = Files.walk(datapackDir)) {
+            stream.filter(p_232924_ -> !p_232924_.equals(datapackDir)).forEach(p_232933_ -> {
                 Path path = mutableobject.getValue();
                 if (path == null) {
                     try {
@@ -535,11 +552,11 @@ public class CreateWorldScreen extends Screen {
                     mutableobject.setValue(path);
                 }
 
-                copyBetweenDirs(p_100907_, path, p_232933_);
+                copyBetweenDirs(datapackDir, path, p_232933_);
             });
         } catch (UncheckedIOException | IOException ioexception) {
-            LOGGER.warn("Failed to copy datapacks from world {}", p_100907_, ioexception);
-            SystemToast.onPackCopyFailure(p_100908_, p_100907_.toString());
+            LOGGER.warn("Failed to copy datapacks from world {}", datapackDir, ioexception);
+            SystemToast.onPackCopyFailure(minecraft, datapackDir.toString());
             return null;
         }
 
@@ -547,7 +564,7 @@ public class CreateWorldScreen extends Screen {
     }
 
     @Nullable
-    private Pair<Path, PackRepository> getDataPackSelectionSettings(WorldDataConfiguration p_268328_) {
+    private Pair<Path, PackRepository> getDataPackSelectionSettings(WorldDataConfiguration worldDataConfiguration) {
         Path path = this.getTempDataPackDir();
         if (path != null) {
             if (this.tempDataPackRepository == null) {
@@ -556,7 +573,7 @@ public class CreateWorldScreen extends Screen {
                 this.tempDataPackRepository.reload();
             }
 
-            this.tempDataPackRepository.setSelected(p_268328_.dataPacks().getEnabled());
+            this.tempDataPackRepository.setSelected(worldDataConfiguration.dataPacks().getEnabled());
             return Pair.of(path, this.tempDataPackRepository);
         } else {
             return null;
@@ -778,10 +795,10 @@ public class CreateWorldScreen extends Screen {
             };
         }
 
-        private static MutableComponent createTypeButtonNarration(CycleButton<WorldCreationUiState.WorldTypeEntry> p_268292_) {
-            return p_268292_.getValue().isAmplified()
-                ? CommonComponents.joinForNarration(p_268292_.createDefaultNarrationMessage(), AMPLIFIED_HELP_TEXT)
-                : p_268292_.createDefaultNarrationMessage();
+        private static MutableComponent createTypeButtonNarration(CycleButton<WorldCreationUiState.WorldTypeEntry> button) {
+            return button.getValue().isAmplified()
+                ? CommonComponents.joinForNarration(button.createDefaultNarrationMessage(), AMPLIFIED_HELP_TEXT)
+                : button.createDefaultNarrationMessage();
         }
     }
 }

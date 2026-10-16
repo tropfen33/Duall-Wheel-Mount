@@ -23,6 +23,9 @@ import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.level.storage.loot.providers.number.NumberProvider;
 import net.minecraft.world.level.storage.loot.providers.number.NumberProviders;
 
+/**
+ * LootItemFunction that adds an effect to any suspicious stew items. A random effect is chosen from the given map every time.
+ */
 public class SetStewEffectFunction extends LootItemConditionalFunction {
     private static final Codec<List<SetStewEffectFunction.EffectEntry>> EFFECTS_LIST = SetStewEffectFunction.EffectEntry.CODEC.listOf().validate(p_298165_ -> {
         Set<Holder<MobEffect>> set = new ObjectOpenHashSet<>();
@@ -42,9 +45,9 @@ public class SetStewEffectFunction extends LootItemConditionalFunction {
     );
     private final List<SetStewEffectFunction.EffectEntry> effects;
 
-    SetStewEffectFunction(List<LootItemCondition> p_298938_, List<SetStewEffectFunction.EffectEntry> p_298439_) {
-        super(p_298938_);
-        this.effects = p_298439_;
+    SetStewEffectFunction(List<LootItemCondition> conditions, List<SetStewEffectFunction.EffectEntry> effects) {
+        super(conditions);
+        this.effects = effects;
     }
 
     @Override
@@ -57,23 +60,26 @@ public class SetStewEffectFunction extends LootItemConditionalFunction {
         return this.effects.stream().flatMap(p_298164_ -> p_298164_.duration().getReferencedContextParams().stream()).collect(ImmutableSet.toImmutableSet());
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    public ItemStack run(ItemStack p_81223_, LootContext p_81224_) {
-        if (p_81223_.is(Items.SUSPICIOUS_STEW) && !this.effects.isEmpty()) {
-            SetStewEffectFunction.EffectEntry setsteweffectfunction$effectentry = Util.getRandom(this.effects, p_81224_.getRandom());
+    public ItemStack run(ItemStack stack, LootContext context) {
+        if (stack.is(Items.SUSPICIOUS_STEW) && !this.effects.isEmpty()) {
+            SetStewEffectFunction.EffectEntry setsteweffectfunction$effectentry = Util.getRandom(this.effects, context.getRandom());
             Holder<MobEffect> holder = setsteweffectfunction$effectentry.effect();
-            int i = setsteweffectfunction$effectentry.duration().getInt(p_81224_);
+            int i = setsteweffectfunction$effectentry.duration().getInt(context);
             if (!holder.value().isInstantenous()) {
                 i *= 20;
             }
 
             SuspiciousStewEffects.Entry suspicioussteweffects$entry = new SuspiciousStewEffects.Entry(holder, i);
-            p_81223_.update(
+            stack.update(
                 DataComponents.SUSPICIOUS_STEW_EFFECTS, SuspiciousStewEffects.EMPTY, suspicioussteweffects$entry, SuspiciousStewEffects::withEffectAdded
             );
-            return p_81223_;
+            return stack;
         } else {
-            return p_81223_;
+            return stack;
         }
     }
 
@@ -88,8 +94,8 @@ public class SetStewEffectFunction extends LootItemConditionalFunction {
             return this;
         }
 
-        public SetStewEffectFunction.Builder withEffect(Holder<MobEffect> p_316210_, NumberProvider p_165474_) {
-            this.effects.add(new SetStewEffectFunction.EffectEntry(p_316210_, p_165474_));
+        public SetStewEffectFunction.Builder withEffect(Holder<MobEffect> effect, NumberProvider amplifier) {
+            this.effects.add(new SetStewEffectFunction.EffectEntry(effect, amplifier));
             return this;
         }
 

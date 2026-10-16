@@ -7,6 +7,9 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 
+/**
+ * Stores IDs for built in loot tables, i.e. loot tables which are not based directly on a block or entity ID.
+ */
 public class BuiltInLootTables {
     private static final Set<ResourceKey<LootTable>> LOCATIONS = new HashSet<>();
     private static final Set<ResourceKey<LootTable>> IMMUTABLE_LOCATIONS = Collections.unmodifiableSet(LOCATIONS);
@@ -124,15 +127,15 @@ public class BuiltInLootTables {
     public static final ResourceKey<LootTable> OCEAN_RUIN_WARM_ARCHAEOLOGY = register("archaeology/ocean_ruin_warm");
     public static final ResourceKey<LootTable> OCEAN_RUIN_COLD_ARCHAEOLOGY = register("archaeology/ocean_ruin_cold");
 
-    private static ResourceKey<LootTable> register(String p_78768_) {
-        return register(ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.withDefaultNamespace(p_78768_)));
+    private static ResourceKey<LootTable> register(String name) {
+        return register(ResourceKey.create(Registries.LOOT_TABLE, ResourceLocation.withDefaultNamespace(name)));
     }
 
-    private static ResourceKey<LootTable> register(ResourceKey<LootTable> p_335977_) {
-        if (LOCATIONS.add(p_335977_)) {
-            return p_335977_;
+    private static ResourceKey<LootTable> register(ResourceKey<LootTable> name) {
+        if (LOCATIONS.add(name)) {
+            return name;
         } else {
-            throw new IllegalArgumentException(p_335977_.location() + " is already a registered built-in loot table");
+            throw new IllegalArgumentException(name.location() + " is already a registered built-in loot table");
         }
     }
 

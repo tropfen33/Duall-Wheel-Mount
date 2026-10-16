@@ -27,16 +27,16 @@ public class Tesselator {
         }
     }
 
-    public Tesselator(int p_85912_) {
-        this.buffer = new ByteBufferBuilder(p_85912_);
+    public Tesselator(int capacity) {
+        this.buffer = new ByteBufferBuilder(capacity);
     }
 
     public Tesselator() {
         this(786432);
     }
 
-    public BufferBuilder begin(VertexFormat.Mode p_350571_, VertexFormat p_350837_) {
-        return new BufferBuilder(this.buffer, p_350571_, p_350837_);
+    public BufferBuilder begin(VertexFormat.Mode mode, VertexFormat format) {
+        return new BufferBuilder(this.buffer, mode, format);
     }
 
     public void clear() {

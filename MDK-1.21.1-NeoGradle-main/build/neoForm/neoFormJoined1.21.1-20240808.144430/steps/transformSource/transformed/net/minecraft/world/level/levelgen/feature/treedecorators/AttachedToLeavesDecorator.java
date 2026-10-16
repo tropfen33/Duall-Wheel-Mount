@@ -33,24 +33,24 @@ public class AttachedToLeavesDecorator extends TreeDecorator {
     protected final int requiredEmptyBlocks;
     protected final List<Direction> directions;
 
-    public AttachedToLeavesDecorator(float p_225988_, int p_225989_, int p_225990_, BlockStateProvider p_225991_, int p_225992_, List<Direction> p_225993_) {
-        this.probability = p_225988_;
-        this.exclusionRadiusXZ = p_225989_;
-        this.exclusionRadiusY = p_225990_;
-        this.blockProvider = p_225991_;
-        this.requiredEmptyBlocks = p_225992_;
-        this.directions = p_225993_;
+    public AttachedToLeavesDecorator(float probability, int exclusionRadiusXZ, int exclusionRadiusY, BlockStateProvider blockProvider, int requiredEmptyBlocks, List<Direction> directions) {
+        this.probability = probability;
+        this.exclusionRadiusXZ = exclusionRadiusXZ;
+        this.exclusionRadiusY = exclusionRadiusY;
+        this.blockProvider = blockProvider;
+        this.requiredEmptyBlocks = requiredEmptyBlocks;
+        this.directions = directions;
     }
 
     @Override
-    public void place(TreeDecorator.Context p_226000_) {
+    public void place(TreeDecorator.Context context) {
         Set<BlockPos> set = new HashSet<>();
-        RandomSource randomsource = p_226000_.random();
+        RandomSource randomsource = context.random();
 
-        for (BlockPos blockpos : Util.shuffledCopy(p_226000_.leaves(), randomsource)) {
+        for (BlockPos blockpos : Util.shuffledCopy(context.leaves(), randomsource)) {
             Direction direction = Util.getRandom(this.directions, randomsource);
             BlockPos blockpos1 = blockpos.relative(direction);
-            if (!set.contains(blockpos1) && randomsource.nextFloat() < this.probability && this.hasRequiredEmptyBlocks(p_226000_, blockpos, direction)) {
+            if (!set.contains(blockpos1) && randomsource.nextFloat() < this.probability && this.hasRequiredEmptyBlocks(context, blockpos, direction)) {
                 BlockPos blockpos2 = blockpos1.offset(-this.exclusionRadiusXZ, -this.exclusionRadiusY, -this.exclusionRadiusXZ);
                 BlockPos blockpos3 = blockpos1.offset(this.exclusionRadiusXZ, this.exclusionRadiusY, this.exclusionRadiusXZ);
 
@@ -58,15 +58,15 @@ public class AttachedToLeavesDecorator extends TreeDecorator {
                     set.add(blockpos4.immutable());
                 }
 
-                p_226000_.setBlock(blockpos1, this.blockProvider.getState(randomsource, blockpos1));
+                context.setBlock(blockpos1, this.blockProvider.getState(randomsource, blockpos1));
             }
         }
     }
 
-    private boolean hasRequiredEmptyBlocks(TreeDecorator.Context p_226002_, BlockPos p_226003_, Direction p_226004_) {
+    private boolean hasRequiredEmptyBlocks(TreeDecorator.Context context, BlockPos pos, Direction direction) {
         for (int i = 1; i <= this.requiredEmptyBlocks; i++) {
-            BlockPos blockpos = p_226003_.relative(p_226004_, i);
-            if (!p_226002_.isAir(blockpos)) {
+            BlockPos blockpos = pos.relative(direction, i);
+            if (!context.isAir(blockpos)) {
                 return false;
             }
         }

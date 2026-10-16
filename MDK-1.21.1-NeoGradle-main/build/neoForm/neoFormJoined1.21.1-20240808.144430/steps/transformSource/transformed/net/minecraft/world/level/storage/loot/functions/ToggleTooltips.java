@@ -56,15 +56,18 @@ public class ToggleTooltips extends LootItemConditionalFunction {
     );
     private final Map<ToggleTooltips.ComponentToggle<?>, Boolean> values;
 
-    public ToggleTooltips(List<LootItemCondition> p_335479_, Map<ToggleTooltips.ComponentToggle<?>, Boolean> p_336164_) {
-        super(p_335479_);
-        this.values = p_336164_;
+    public ToggleTooltips(List<LootItemCondition> conditions, Map<ToggleTooltips.ComponentToggle<?>, Boolean> values) {
+        super(conditions);
+        this.values = values;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    protected ItemStack run(ItemStack p_335844_, LootContext p_335764_) {
-        this.values.forEach((p_336152_, p_335653_) -> p_336152_.applyIfPresent(p_335844_, p_335653_));
-        return p_335844_;
+    protected ItemStack run(ItemStack stack, LootContext context) {
+        this.values.forEach((p_336152_, p_335653_) -> p_336152_.applyIfPresent(stack, p_335653_));
+        return stack;
     }
 
     @Override
@@ -73,16 +76,16 @@ public class ToggleTooltips extends LootItemConditionalFunction {
     }
 
     static record ComponentToggle<T>(DataComponentType<T> type, ToggleTooltips.TooltipWither<T> setter) {
-        public void applyIfPresent(ItemStack p_335390_, boolean p_335686_) {
-            T t = p_335390_.get(this.type);
+        public void applyIfPresent(ItemStack stack, boolean showTooltip) {
+            T t = stack.get(this.type);
             if (t != null) {
-                p_335390_.set(this.type, this.setter.withTooltip(t, p_335686_));
+                stack.set(this.type, this.setter.withTooltip(t, showTooltip));
             }
         }
     }
 
     @FunctionalInterface
     interface TooltipWither<T> {
-        T withTooltip(T p_335804_, boolean p_335957_);
+        T withTooltip(T toggle, boolean value);
     }
 }

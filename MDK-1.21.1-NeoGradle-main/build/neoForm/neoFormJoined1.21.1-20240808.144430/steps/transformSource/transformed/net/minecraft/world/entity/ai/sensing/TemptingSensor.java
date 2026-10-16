@@ -21,20 +21,20 @@ public class TemptingSensor extends Sensor<PathfinderMob> {
     private static final TargetingConditions TEMPT_TARGETING = TargetingConditions.forNonCombat().range(10.0).ignoreLineOfSight();
     private final Predicate<ItemStack> temptations;
 
-    public TemptingSensor(Predicate<ItemStack> p_335605_) {
-        this.temptations = p_335605_;
+    public TemptingSensor(Predicate<ItemStack> temptations) {
+        this.temptations = temptations;
     }
 
-    protected void doTick(ServerLevel p_148331_, PathfinderMob p_148332_) {
-        Brain<?> brain = p_148332_.getBrain();
-        List<Player> list = p_148331_.players()
+    protected void doTick(ServerLevel level, PathfinderMob entity) {
+        Brain<?> brain = entity.getBrain();
+        List<Player> list = level.players()
             .stream()
             .filter(EntitySelector.NO_SPECTATORS)
-            .filter(p_148342_ -> TEMPT_TARGETING.test(p_148332_, p_148342_))
-            .filter(p_148335_ -> p_148332_.closerThan(p_148335_, 10.0))
+            .filter(p_148342_ -> TEMPT_TARGETING.test(entity, p_148342_))
+            .filter(p_148335_ -> entity.closerThan(p_148335_, 10.0))
             .filter(this::playerHoldingTemptation)
-            .filter(p_325765_ -> !p_148332_.hasPassenger(p_325765_))
-            .sorted(Comparator.comparingDouble(p_148332_::distanceToSqr))
+            .filter(p_325765_ -> !entity.hasPassenger(p_325765_))
+            .sorted(Comparator.comparingDouble(entity::distanceToSqr))
             .collect(Collectors.toList());
         if (!list.isEmpty()) {
             Player player = list.get(0);
@@ -44,12 +44,12 @@ public class TemptingSensor extends Sensor<PathfinderMob> {
         }
     }
 
-    private boolean playerHoldingTemptation(Player p_148337_) {
-        return this.isTemptation(p_148337_.getMainHandItem()) || this.isTemptation(p_148337_.getOffhandItem());
+    private boolean playerHoldingTemptation(Player player) {
+        return this.isTemptation(player.getMainHandItem()) || this.isTemptation(player.getOffhandItem());
     }
 
-    private boolean isTemptation(ItemStack p_148339_) {
-        return this.temptations.test(p_148339_);
+    private boolean isTemptation(ItemStack stack) {
+        return this.temptations.test(stack);
     }
 
     @Override

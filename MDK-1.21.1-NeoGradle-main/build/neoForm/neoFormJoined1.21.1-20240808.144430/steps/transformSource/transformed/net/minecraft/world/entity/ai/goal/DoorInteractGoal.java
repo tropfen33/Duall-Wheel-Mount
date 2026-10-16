@@ -17,9 +17,9 @@ public abstract class DoorInteractGoal extends Goal {
     private float doorOpenDirX;
     private float doorOpenDirZ;
 
-    public DoorInteractGoal(Mob p_25193_) {
-        this.mob = p_25193_;
-        if (!GoalUtils.hasGroundPathNavigation(p_25193_)) {
+    public DoorInteractGoal(Mob mob) {
+        this.mob = mob;
+        if (!GoalUtils.hasGroundPathNavigation(mob)) {
             throw new IllegalArgumentException("Unsupported mob type for DoorInteractGoal");
         }
     }
@@ -38,11 +38,11 @@ public abstract class DoorInteractGoal extends Goal {
         }
     }
 
-    protected void setOpen(boolean p_25196_) {
+    protected void setOpen(boolean open) {
         if (this.hasDoor) {
             BlockState blockstate = this.mob.level().getBlockState(this.doorPos);
             if (blockstate.getBlock() instanceof DoorBlock) {
-                ((DoorBlock)blockstate.getBlock()).setOpen(this.mob, this.mob.level(), blockstate, this.doorPos, p_25196_);
+                ((DoorBlock)blockstate.getBlock()).setOpen(this.mob, this.mob.level(), blockstate, this.doorPos, open);
             }
         }
     }

@@ -39,20 +39,20 @@ public class LightBlock extends Block implements SimpleWaterloggedBlock {
         return CODEC;
     }
 
-    public LightBlock(BlockBehaviour.Properties p_153662_) {
-        super(p_153662_);
+    public LightBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(LEVEL, Integer.valueOf(15)).setValue(WATERLOGGED, Boolean.valueOf(false)));
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_153687_) {
-        p_153687_.add(LEVEL, WATERLOGGED);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(LEVEL, WATERLOGGED);
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_153673_, Level p_153674_, BlockPos p_153675_, Player p_153676_, BlockHitResult p_153678_) {
-        if (!p_153674_.isClientSide && p_153676_.canUseGameMasterBlocks()) {
-            p_153674_.setBlock(p_153675_, p_153673_.cycle(LEVEL), 2);
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (!level.isClientSide && player.canUseGameMasterBlocks()) {
+            level.setBlock(pos, state.cycle(LEVEL), 2);
             return InteractionResult.SUCCESS;
         } else {
             return InteractionResult.CONSUME;
@@ -60,51 +60,59 @@ public class LightBlock extends Block implements SimpleWaterloggedBlock {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_153668_, BlockGetter p_153669_, BlockPos p_153670_, CollisionContext p_153671_) {
-        return p_153671_.isHoldingItem(Items.LIGHT) ? Shapes.block() : Shapes.empty();
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return context.isHoldingItem(Items.LIGHT) ? Shapes.block() : Shapes.empty();
     }
 
     @Override
-    protected boolean propagatesSkylightDown(BlockState p_153695_, BlockGetter p_153696_, BlockPos p_153697_) {
-        return p_153695_.getFluidState().isEmpty();
+    protected boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.getFluidState().isEmpty();
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_153693_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.INVISIBLE;
     }
 
     @Override
-    protected float getShadeBrightness(BlockState p_153689_, BlockGetter p_153690_, BlockPos p_153691_) {
+    protected float getShadeBrightness(BlockState state, BlockGetter level, BlockPos pos) {
         return 1.0F;
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
     protected BlockState updateShape(
-        BlockState p_153680_, Direction p_153681_, BlockState p_153682_, LevelAccessor p_153683_, BlockPos p_153684_, BlockPos p_153685_
+        BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos
     ) {
-        if (p_153680_.getValue(WATERLOGGED)) {
-            p_153683_.scheduleTick(p_153684_, Fluids.WATER, Fluids.WATER.getTickDelay(p_153683_));
+        if (state.getValue(WATERLOGGED)) {
+            level.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         }
 
-        return super.updateShape(p_153680_, p_153681_, p_153682_, p_153683_, p_153684_, p_153685_);
+        return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
 
     @Override
-    protected FluidState getFluidState(BlockState p_153699_) {
-        return p_153699_.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(p_153699_);
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader p_304798_, BlockPos p_153665_, BlockState p_153666_) {
-        return setLightOnStack(super.getCloneItemStack(p_304798_, p_153665_, p_153666_), p_153666_.getValue(LEVEL));
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
+        return setLightOnStack(super.getCloneItemStack(level, pos, state), state.getValue(LEVEL));
     }
 
-    public static ItemStack setLightOnStack(ItemStack p_259339_, int p_259353_) {
-        if (p_259353_ != 15) {
-            p_259339_.set(DataComponents.BLOCK_STATE, BlockItemStateProperties.EMPTY.with(LEVEL, p_259353_));
+    public static ItemStack setLightOnStack(ItemStack stack, int light) {
+        if (light != 15) {
+            stack.set(DataComponents.BLOCK_STATE, BlockItemStateProperties.EMPTY.with(LEVEL, light));
         }
 
-        return p_259339_;
+        return stack;
     }
 }

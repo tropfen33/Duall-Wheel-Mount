@@ -8,16 +8,16 @@ import net.minecraft.world.level.block.WallHangingSignBlock;
 import net.minecraft.world.level.block.state.BlockState;
 
 public class HangingSignItem extends SignItem {
-    public HangingSignItem(Block p_251582_, Block p_250734_, Item.Properties p_250266_) {
-        super(p_250266_, p_251582_, p_250734_, Direction.UP);
+    public HangingSignItem(Block block, Block wallBlock, Item.Properties properties) {
+        super(properties, block, wallBlock, Direction.UP);
     }
 
     @Override
-    protected boolean canPlace(LevelReader p_252032_, BlockState p_252230_, BlockPos p_252075_) {
-        if (p_252230_.getBlock() instanceof WallHangingSignBlock wallhangingsignblock && !wallhangingsignblock.canPlace(p_252230_, p_252032_, p_252075_)) {
+    protected boolean canPlace(LevelReader level, BlockState state, BlockPos pos) {
+        if (state.getBlock() instanceof WallHangingSignBlock wallhangingsignblock && !wallhangingsignblock.canPlace(state, level, pos)) {
             return false;
         }
 
-        return super.canPlace(p_252032_, p_252230_, p_252075_);
+        return super.canPlace(level, state, pos);
     }
 }

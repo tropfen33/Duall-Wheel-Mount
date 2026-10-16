@@ -22,25 +22,25 @@ public class VillageSectionsDebugRenderer implements DebugRenderer.SimpleDebugRe
         this.villageSections.clear();
     }
 
-    public void setVillageSection(SectionPos p_113710_) {
-        this.villageSections.add(p_113710_);
+    public void setVillageSection(SectionPos pos) {
+        this.villageSections.add(pos);
     }
 
-    public void setNotVillageSection(SectionPos p_113712_) {
-        this.villageSections.remove(p_113712_);
+    public void setNotVillageSection(SectionPos pos) {
+        this.villageSections.remove(pos);
     }
 
     @Override
-    public void render(PoseStack p_113701_, MultiBufferSource p_113702_, double p_113703_, double p_113704_, double p_113705_) {
-        BlockPos blockpos = BlockPos.containing(p_113703_, p_113704_, p_113705_);
+    public void render(PoseStack poseStack, MultiBufferSource bufferSource, double camX, double camY, double camZ) {
+        BlockPos blockpos = BlockPos.containing(camX, camY, camZ);
         this.villageSections.forEach(p_269747_ -> {
             if (blockpos.closerThan(p_269747_.center(), 60.0)) {
-                highlightVillageSection(p_113701_, p_113702_, p_269747_);
+                highlightVillageSection(poseStack, bufferSource, p_269747_);
             }
         });
     }
 
-    private static void highlightVillageSection(PoseStack p_270832_, MultiBufferSource p_270443_, SectionPos p_271021_) {
-        DebugRenderer.renderFilledUnitCube(p_270832_, p_270443_, p_271021_.center(), 0.2F, 1.0F, 0.2F, 0.15F);
+    private static void highlightVillageSection(PoseStack poseStack, MultiBufferSource buffer, SectionPos pos) {
+        DebugRenderer.renderFilledUnitCube(poseStack, buffer, pos.center(), 0.2F, 1.0F, 0.2F, 0.15F);
     }
 }

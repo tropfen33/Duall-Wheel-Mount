@@ -23,12 +23,15 @@ public class RabbitRenderer extends MobRenderer<Rabbit, RabbitModel<Rabbit>> {
         super(p_174360_, new RabbitModel<>(p_174360_.bakeLayer(ModelLayers.RABBIT)), 0.3F);
     }
 
-    public ResourceLocation getTextureLocation(Rabbit p_115803_) {
-        String s = ChatFormatting.stripFormatting(p_115803_.getName().getString());
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Rabbit entity) {
+        String s = ChatFormatting.stripFormatting(entity.getName().getString());
         if ("Toast".equals(s)) {
             return RABBIT_TOAST_LOCATION;
         } else {
-            return switch (p_115803_.getVariant()) {
+            return switch (entity.getVariant()) {
                 case BROWN -> RABBIT_BROWN_LOCATION;
                 case WHITE -> RABBIT_WHITE_LOCATION;
                 case BLACK -> RABBIT_BLACK_LOCATION;

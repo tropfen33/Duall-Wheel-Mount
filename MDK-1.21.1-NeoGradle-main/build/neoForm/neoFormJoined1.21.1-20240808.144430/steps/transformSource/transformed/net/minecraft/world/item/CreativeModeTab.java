@@ -41,12 +41,12 @@ public class CreativeModeTab {
     public final java.util.List<net.minecraft.resources.ResourceLocation> tabsAfter;
 
     CreativeModeTab(
-        CreativeModeTab.Row p_260217_,
-        int p_259557_,
-        CreativeModeTab.Type p_260176_,
-        Component p_260100_,
-        Supplier<ItemStack> p_259543_,
-        CreativeModeTab.DisplayItemsGenerator p_259085_,
+        CreativeModeTab.Row row,
+        int column,
+        CreativeModeTab.Type type,
+        Component displayName,
+        Supplier<ItemStack> iconGenerator,
+        CreativeModeTab.DisplayItemsGenerator displayItemGenerator,
         net.minecraft.resources.ResourceLocation scrollerSpriteLocation,
         boolean hasSearchBar,
         int searchBarWidth,
@@ -56,12 +56,12 @@ public class CreativeModeTab {
         java.util.List<net.minecraft.resources.ResourceLocation> tabsBefore,
         java.util.List<net.minecraft.resources.ResourceLocation> tabsAfter
     ) {
-        this.row = p_260217_;
-        this.column = p_259557_;
-        this.displayName = p_260100_;
-        this.iconGenerator = p_259543_;
-        this.displayItemsGenerator = p_259085_;
-        this.type = p_260176_;
+        this.row = row;
+        this.column = column;
+        this.displayName = displayName;
+        this.iconGenerator = iconGenerator;
+        this.displayItemsGenerator = displayItemGenerator;
+        this.type = type;
         this.scrollerSpriteLocation = scrollerSpriteLocation;
         this.hasSearchBar = hasSearchBar;
         this.searchBarWidth = searchBarWidth;
@@ -80,13 +80,15 @@ public class CreativeModeTab {
         return new CreativeModeTab.Builder(Row.TOP, 0);
     }
 
-    public static ResourceLocation createTextureLocation(String p_350882_) {
-        return ResourceLocation.withDefaultNamespace("textures/gui/container/creative_inventory/tab_" + p_350882_ + ".png");
+    public static ResourceLocation createTextureLocation(String name) {
+        return ResourceLocation.withDefaultNamespace("textures/gui/container/creative_inventory/tab_" + name + ".png");
     }
 
-    /** @deprecated Forge: use {@link #builder()} **/ @Deprecated
-    public static CreativeModeTab.Builder builder(CreativeModeTab.Row p_259342_, int p_260312_) {
-        return new CreativeModeTab.Builder(p_259342_, p_260312_);
+    /**
+ * @deprecated Forge: use {@link #builder()}
+ */ @Deprecated
+    public static CreativeModeTab.Builder builder(CreativeModeTab.Row row, int column) {
+        return new CreativeModeTab.Builder(row, column);
     }
 
     public Component getDisplayName() {
@@ -137,12 +139,12 @@ public class CreativeModeTab {
         return this.type;
     }
 
-    public void buildContents(CreativeModeTab.ItemDisplayParameters p_270156_) {
-        CreativeModeTab.ItemDisplayBuilder creativemodetab$itemdisplaybuilder = new CreativeModeTab.ItemDisplayBuilder(this, p_270156_.enabledFeatures);
+    public void buildContents(CreativeModeTab.ItemDisplayParameters parameters) {
+        CreativeModeTab.ItemDisplayBuilder creativemodetab$itemdisplaybuilder = new CreativeModeTab.ItemDisplayBuilder(this, parameters.enabledFeatures);
         ResourceKey<CreativeModeTab> resourcekey = BuiltInRegistries.CREATIVE_MODE_TAB
             .getResourceKey(this)
             .orElseThrow(() -> new IllegalStateException("Unregistered creative tab: " + this));
-        net.neoforged.neoforge.event.EventHooks.onCreativeModeTabBuildContents(this, resourcekey, this.displayItemsGenerator, p_270156_, creativemodetab$itemdisplaybuilder);
+        net.neoforged.neoforge.event.EventHooks.onCreativeModeTabBuildContents(this, resourcekey, this.displayItemsGenerator, parameters, creativemodetab$itemdisplaybuilder);
         this.displayItems = creativemodetab$itemdisplaybuilder.tabContents;
         this.displayItemsSearchTab = creativemodetab$itemdisplaybuilder.searchTabContents;
     }
@@ -155,8 +157,8 @@ public class CreativeModeTab {
         return this.displayItemsSearchTab;
     }
 
-    public boolean contains(ItemStack p_259317_) {
-        return this.displayItemsSearchTab.contains(p_259317_);
+    public boolean contains(ItemStack stack) {
+        return this.displayItemsSearchTab.contains(stack);
     }
 
     public boolean hasSearchBar() {
@@ -211,23 +213,23 @@ public class CreativeModeTab {
         private final java.util.List<net.minecraft.resources.ResourceLocation> tabsBefore = new java.util.ArrayList<>();
         private final java.util.List<net.minecraft.resources.ResourceLocation> tabsAfter = new java.util.ArrayList<>();
 
-        public Builder(CreativeModeTab.Row p_259171_, int p_259661_) {
-            this.row = p_259171_;
-            this.column = p_259661_;
+        public Builder(CreativeModeTab.Row row, int column) {
+            this.row = row;
+            this.column = column;
         }
 
-        public CreativeModeTab.Builder title(Component p_259616_) {
-            this.displayName = p_259616_;
+        public CreativeModeTab.Builder title(Component title) {
+            this.displayName = title;
             return this;
         }
 
-        public CreativeModeTab.Builder icon(Supplier<ItemStack> p_259333_) {
-            this.iconGenerator = p_259333_;
+        public CreativeModeTab.Builder icon(Supplier<ItemStack> icon) {
+            this.iconGenerator = icon;
             return this;
         }
 
-        public CreativeModeTab.Builder displayItems(CreativeModeTab.DisplayItemsGenerator p_259814_) {
-            this.displayItemsGenerator = p_259814_;
+        public CreativeModeTab.Builder displayItems(CreativeModeTab.DisplayItemsGenerator displayItemsGenerator) {
+            this.displayItemsGenerator = displayItemsGenerator;
             return this;
         }
 
@@ -246,15 +248,15 @@ public class CreativeModeTab {
             return this;
         }
 
-        protected CreativeModeTab.Builder type(CreativeModeTab.Type p_259283_) {
-            this.type = p_259283_;
-            if (p_259283_ == Type.SEARCH)
+        protected CreativeModeTab.Builder type(CreativeModeTab.Type type) {
+            this.type = type;
+            if (type == Type.SEARCH)
                 return this.withSearchBar();
             return this;
         }
 
-        public CreativeModeTab.Builder backgroundTexture(ResourceLocation p_350939_) {
-            this.backgroundTexture = p_350939_;
+        public CreativeModeTab.Builder backgroundTexture(ResourceLocation backgroundTexture) {
+            this.backgroundTexture = backgroundTexture;
             return this;
         }
 
@@ -372,7 +374,7 @@ public class CreativeModeTab {
 
     @FunctionalInterface
     public interface DisplayItemsGenerator {
-        void accept(CreativeModeTab.ItemDisplayParameters p_270258_, CreativeModeTab.Output p_259752_);
+        void accept(CreativeModeTab.ItemDisplayParameters parameters, CreativeModeTab.Output output);
     }
 
     static class ItemDisplayBuilder implements CreativeModeTab.Output {
@@ -381,36 +383,36 @@ public class CreativeModeTab {
         private final CreativeModeTab tab;
         private final FeatureFlagSet featureFlagSet;
 
-        public ItemDisplayBuilder(CreativeModeTab p_251040_, FeatureFlagSet p_249331_) {
-            this.tab = p_251040_;
-            this.featureFlagSet = p_249331_;
+        public ItemDisplayBuilder(CreativeModeTab tab, FeatureFlagSet featureFlagSet) {
+            this.tab = tab;
+            this.featureFlagSet = featureFlagSet;
         }
 
         @Override
-        public void accept(ItemStack p_250391_, CreativeModeTab.TabVisibility p_251472_) {
-            if (p_250391_.getCount() != 1) {
+        public void accept(ItemStack stack, CreativeModeTab.TabVisibility tabVisibility) {
+            if (stack.getCount() != 1) {
                 throw new IllegalArgumentException("Stack size must be exactly 1");
             } else {
-                boolean flag = this.tabContents.contains(p_250391_) && p_251472_ != CreativeModeTab.TabVisibility.SEARCH_TAB_ONLY;
+                boolean flag = this.tabContents.contains(stack) && tabVisibility != CreativeModeTab.TabVisibility.SEARCH_TAB_ONLY;
                 if (flag) {
                     throw new IllegalStateException(
                         "Accidentally adding the same item stack twice "
-                            + p_250391_.getDisplayName().getString()
+                            + stack.getDisplayName().getString()
                             + " to a Creative Mode Tab: "
                             + this.tab.getDisplayName().getString()
                     );
                 } else {
-                    if (p_250391_.getItem().isEnabled(this.featureFlagSet)) {
-                        switch (p_251472_) {
+                    if (stack.getItem().isEnabled(this.featureFlagSet)) {
+                        switch (tabVisibility) {
                             case PARENT_AND_SEARCH_TABS:
-                                this.tabContents.add(p_250391_);
-                                this.searchTabContents.add(p_250391_);
+                                this.tabContents.add(stack);
+                                this.searchTabContents.add(stack);
                                 break;
                             case PARENT_TAB_ONLY:
-                                this.tabContents.add(p_250391_);
+                                this.tabContents.add(stack);
                                 break;
                             case SEARCH_TAB_ONLY:
-                                this.searchTabContents.add(p_250391_);
+                                this.searchTabContents.add(stack);
                         }
                     }
                 }
@@ -419,32 +421,32 @@ public class CreativeModeTab {
     }
 
     public static record ItemDisplayParameters(FeatureFlagSet enabledFeatures, boolean hasPermissions, HolderLookup.Provider holders) {
-        public boolean needsUpdate(FeatureFlagSet p_270338_, boolean p_270835_, HolderLookup.Provider p_270575_) {
-            return !this.enabledFeatures.equals(p_270338_) || this.hasPermissions != p_270835_ || this.holders != p_270575_;
+        public boolean needsUpdate(FeatureFlagSet enabledFeatures, boolean hasPermissions, HolderLookup.Provider holders) {
+            return !this.enabledFeatures.equals(enabledFeatures) || this.hasPermissions != hasPermissions || this.holders != holders;
         }
     }
 
     public interface Output {
-        void accept(ItemStack p_251806_, CreativeModeTab.TabVisibility p_249603_);
+        void accept(ItemStack stack, CreativeModeTab.TabVisibility tabVisibility);
 
-        default void accept(ItemStack p_249977_) {
-            this.accept(p_249977_, CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS);
+        default void accept(ItemStack stack) {
+            this.accept(stack, CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS);
         }
 
-        default void accept(ItemLike p_251528_, CreativeModeTab.TabVisibility p_249821_) {
-            this.accept(new ItemStack(p_251528_), p_249821_);
+        default void accept(ItemLike item, CreativeModeTab.TabVisibility tabVisibility) {
+            this.accept(new ItemStack(item), tabVisibility);
         }
 
-        default void accept(ItemLike p_248610_) {
-            this.accept(new ItemStack(p_248610_), CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS);
+        default void accept(ItemLike item) {
+            this.accept(new ItemStack(item), CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS);
         }
 
-        default void acceptAll(Collection<ItemStack> p_251548_, CreativeModeTab.TabVisibility p_252285_) {
-            p_251548_.forEach(p_252337_ -> this.accept(p_252337_, p_252285_));
+        default void acceptAll(Collection<ItemStack> stacks, CreativeModeTab.TabVisibility tabVisibility) {
+            stacks.forEach(p_252337_ -> this.accept(p_252337_, tabVisibility));
         }
 
-        default void acceptAll(Collection<ItemStack> p_250244_) {
-            this.acceptAll(p_250244_, CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS);
+        default void acceptAll(Collection<ItemStack> stacks) {
+            this.acceptAll(stacks, CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS);
         }
     }
 

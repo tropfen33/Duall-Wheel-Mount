@@ -11,7 +11,7 @@ public class ProbabilityFeatureConfiguration implements FeatureConfiguration {
     );
     public final float probability;
 
-    public ProbabilityFeatureConfiguration(float p_67862_) {
-        this.probability = p_67862_;
+    public ProbabilityFeatureConfiguration(float probability) {
+        this.probability = probability;
     }
 }

@@ -17,7 +17,10 @@ public record ClientboundSetActionBarTextPacket(Component text) implements Packe
         return GamePacketTypes.CLIENTBOUND_SET_ACTION_BAR_TEXT;
     }
 
-    public void handle(ClientGamePacketListener p_179209_) {
-        p_179209_.setActionBarText(this);
+    /**
+     * Passes this Packet on to the PacketListener for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.setActionBarText(this);
     }
 }

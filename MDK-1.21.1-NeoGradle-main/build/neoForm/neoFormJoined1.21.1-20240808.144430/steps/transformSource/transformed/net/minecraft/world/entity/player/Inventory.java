@@ -37,8 +37,8 @@ public class Inventory implements Container, Nameable {
     public final Player player;
     private int timesChanged;
 
-    public Inventory(Player p_35983_) {
-        this.player = p_35983_;
+    public Inventory(Player player) {
+        this.player = player;
     }
 
     public ItemStack getSelected() {
@@ -49,11 +49,11 @@ public class Inventory implements Container, Nameable {
         return 9;
     }
 
-    private boolean hasRemainingSpaceForItem(ItemStack p_36015_, ItemStack p_36016_) {
-        return !p_36015_.isEmpty()
-            && ItemStack.isSameItemSameComponents(p_36015_, p_36016_)
-            && p_36015_.isStackable()
-            && p_36015_.getCount() < this.getMaxStackSize(p_36015_);
+    private boolean hasRemainingSpaceForItem(ItemStack destination, ItemStack origin) {
+        return !destination.isEmpty()
+            && ItemStack.isSameItemSameComponents(destination, origin)
+            && destination.isStackable()
+            && destination.getCount() < this.getMaxStackSize(destination);
     }
 
     public int getFreeSlot() {
@@ -66,8 +66,8 @@ public class Inventory implements Container, Nameable {
         return -1;
     }
 
-    public void setPickedItem(ItemStack p_36013_) {
-        int i = this.findSlotMatchingItem(p_36013_);
+    public void setPickedItem(ItemStack stack) {
+        int i = this.findSlotMatchingItem(stack);
         if (isHotbarSlot(i)) {
             this.selected = i;
         } else {
@@ -80,27 +80,30 @@ public class Inventory implements Container, Nameable {
                     }
                 }
 
-                this.items.set(this.selected, p_36013_);
+                this.items.set(this.selected, stack);
             } else {
                 this.pickSlot(i);
             }
         }
     }
 
-    public void pickSlot(int p_36039_) {
+    public void pickSlot(int index) {
         this.selected = this.getSuitableHotbarSlot();
         ItemStack itemstack = this.items.get(this.selected);
-        this.items.set(this.selected, this.items.get(p_36039_));
-        this.items.set(p_36039_, itemstack);
+        this.items.set(this.selected, this.items.get(index));
+        this.items.set(index, itemstack);
     }
 
-    public static boolean isHotbarSlot(int p_36046_) {
-        return p_36046_ >= 0 && p_36046_ < 9;
+    public static boolean isHotbarSlot(int index) {
+        return index >= 0 && index < 9;
     }
 
-    public int findSlotMatchingItem(ItemStack p_36031_) {
+    /**
+     * Finds the stack or an equivalent one in the main inventory
+     */
+    public int findSlotMatchingItem(ItemStack stack) {
         for (int i = 0; i < this.items.size(); i++) {
-            if (!this.items.get(i).isEmpty() && ItemStack.isSameItemSameComponents(p_36031_, this.items.get(i))) {
+            if (!this.items.get(i).isEmpty() && ItemStack.isSameItemSameComponents(stack, this.items.get(i))) {
                 return i;
             }
         }
@@ -108,11 +111,11 @@ public class Inventory implements Container, Nameable {
         return -1;
     }
 
-    public int findSlotMatchingUnusedItem(ItemStack p_36044_) {
+    public int findSlotMatchingUnusedItem(ItemStack stack) {
         for (int i = 0; i < this.items.size(); i++) {
             ItemStack itemstack = this.items.get(i);
             if (!itemstack.isEmpty()
-                && ItemStack.isSameItemSameComponents(p_36044_, itemstack)
+                && ItemStack.isSameItemSameComponents(stack, itemstack)
                 && !itemstack.isDamaged()
                 && !itemstack.isEnchanted()
                 && !itemstack.has(DataComponents.CUSTOM_NAME)) {
@@ -141,8 +144,11 @@ public class Inventory implements Container, Nameable {
         return this.selected;
     }
 
-    public void swapPaint(double p_35989_) {
-        int i = (int)Math.signum(p_35989_);
+    /**
+     * Change the selected item in the hotbar after a mouse scroll. Select the slot to the left if {@code direction} is positive, or to the right if negative.
+     */
+    public void swapPaint(double direction) {
+        int i = (int)Math.signum(direction);
         this.selected -= i;
 
         while (this.selected < 0) {
@@ -154,13 +160,13 @@ public class Inventory implements Container, Nameable {
         }
     }
 
-    public int clearOrCountMatchingItems(Predicate<ItemStack> p_36023_, int p_36024_, Container p_36025_) {
+    public int clearOrCountMatchingItems(Predicate<ItemStack> stackPredicate, int maxCount, Container inventory) {
         int i = 0;
-        boolean flag = p_36024_ == 0;
-        i += ContainerHelper.clearOrCountMatchingItems(this, p_36023_, p_36024_ - i, flag);
-        i += ContainerHelper.clearOrCountMatchingItems(p_36025_, p_36023_, p_36024_ - i, flag);
+        boolean flag = maxCount == 0;
+        i += ContainerHelper.clearOrCountMatchingItems(this, stackPredicate, maxCount - i, flag);
+        i += ContainerHelper.clearOrCountMatchingItems(inventory, stackPredicate, maxCount - i, flag);
         ItemStack itemstack = this.player.containerMenu.getCarried();
-        i += ContainerHelper.clearOrCountMatchingItems(itemstack, p_36023_, p_36024_ - i, flag);
+        i += ContainerHelper.clearOrCountMatchingItems(itemstack, stackPredicate, maxCount - i, flag);
         if (itemstack.isEmpty()) {
             this.player.containerMenu.setCarried(ItemStack.EMPTY);
         }
@@ -168,21 +174,24 @@ public class Inventory implements Container, Nameable {
         return i;
     }
 
-    private int addResource(ItemStack p_36067_) {
-        int i = this.getSlotWithRemainingSpace(p_36067_);
+    /**
+     * This function stores as many items of an ItemStack as possible in a matching slot and returns the quantity of left over items.
+     */
+    private int addResource(ItemStack stack) {
+        int i = this.getSlotWithRemainingSpace(stack);
         if (i == -1) {
             i = this.getFreeSlot();
         }
 
-        return i == -1 ? p_36067_.getCount() : this.addResource(i, p_36067_);
+        return i == -1 ? stack.getCount() : this.addResource(i, stack);
     }
 
-    private int addResource(int p_36048_, ItemStack p_36049_) {
-        int i = p_36049_.getCount();
-        ItemStack itemstack = this.getItem(p_36048_);
+    private int addResource(int slot, ItemStack stack) {
+        int i = stack.getCount();
+        ItemStack itemstack = this.getItem(slot);
         if (itemstack.isEmpty()) {
-            itemstack = p_36049_.copyWithCount(0);
-            this.setItem(p_36048_, itemstack);
+            itemstack = stack.copyWithCount(0);
+            this.setItem(slot, itemstack);
         }
 
         int j = this.getMaxStackSize(itemstack) - itemstack.getCount();
@@ -197,14 +206,17 @@ public class Inventory implements Container, Nameable {
         }
     }
 
-    public int getSlotWithRemainingSpace(ItemStack p_36051_) {
-        if (this.hasRemainingSpaceForItem(this.getItem(this.selected), p_36051_)) {
+    /**
+     * Stores a stack in the player's inventory. It first tries to place it in the selected slot in the player's hotbar, then the offhand slot, then any available/empty slot in the player's inventory.
+     */
+    public int getSlotWithRemainingSpace(ItemStack stack) {
+        if (this.hasRemainingSpaceForItem(this.getItem(this.selected), stack)) {
             return this.selected;
-        } else if (this.hasRemainingSpaceForItem(this.getItem(40), p_36051_)) {
+        } else if (this.hasRemainingSpaceForItem(this.getItem(40), stack)) {
             return 40;
         } else {
             for (int i = 0; i < this.items.size(); i++) {
-                if (this.hasRemainingSpaceForItem(this.items.get(i), p_36051_)) {
+                if (this.hasRemainingSpaceForItem(this.items.get(i), stack)) {
                     return i;
                 }
             }
@@ -227,26 +239,32 @@ public class Inventory implements Container, Nameable {
         }
     }
 
-    public boolean add(ItemStack p_36055_) {
-        return this.add(-1, p_36055_);
+    /**
+     * Adds the stack to the first empty slot in the player's inventory. Returns {@code false} if it's not possible to place the entire stack in the inventory.
+     */
+    public boolean add(ItemStack stack) {
+        return this.add(-1, stack);
     }
 
-    public boolean add(int p_36041_, ItemStack p_36042_) {
-        if (p_36042_.isEmpty()) {
+    /**
+     * Adds the stack to the specified slot in the player's inventory. Returns {@code false} if it's not possible to place the entire stack in the inventory.
+     */
+    public boolean add(int slot, ItemStack stack) {
+        if (stack.isEmpty()) {
             return false;
         } else {
             try {
-                if (p_36042_.isDamaged()) {
-                    if (p_36041_ == -1) {
-                        p_36041_ = this.getFreeSlot();
+                if (stack.isDamaged()) {
+                    if (slot == -1) {
+                        slot = this.getFreeSlot();
                     }
 
-                    if (p_36041_ >= 0) {
-                        this.items.set(p_36041_, p_36042_.copyAndClear());
-                        this.items.get(p_36041_).setPopTime(5);
+                    if (slot >= 0) {
+                        this.items.set(slot, stack.copyAndClear());
+                        this.items.get(slot).setPopTime(5);
                         return true;
                     } else if (this.player.hasInfiniteMaterials()) {
-                        p_36042_.setCount(0);
+                        stack.setCount(0);
                         return true;
                     } else {
                         return false;
@@ -254,77 +272,80 @@ public class Inventory implements Container, Nameable {
                 } else {
                     int i;
                     do {
-                        i = p_36042_.getCount();
-                        if (p_36041_ == -1) {
-                            p_36042_.setCount(this.addResource(p_36042_));
+                        i = stack.getCount();
+                        if (slot == -1) {
+                            stack.setCount(this.addResource(stack));
                         } else {
-                            p_36042_.setCount(this.addResource(p_36041_, p_36042_));
+                            stack.setCount(this.addResource(slot, stack));
                         }
-                    } while (!p_36042_.isEmpty() && p_36042_.getCount() < i);
+                    } while (!stack.isEmpty() && stack.getCount() < i);
 
-                    if (p_36042_.getCount() == i && this.player.hasInfiniteMaterials()) {
-                        p_36042_.setCount(0);
+                    if (stack.getCount() == i && this.player.hasInfiniteMaterials()) {
+                        stack.setCount(0);
                         return true;
                     } else {
-                        return p_36042_.getCount() < i;
+                        return stack.getCount() < i;
                     }
                 }
             } catch (Throwable throwable) {
                 CrashReport crashreport = CrashReport.forThrowable(throwable, "Adding item to inventory");
                 CrashReportCategory crashreportcategory = crashreport.addCategory("Item being added");
-                crashreportcategory.setDetail("Registry Name", () -> String.valueOf(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(p_36042_.getItem())));
-                crashreportcategory.setDetail("Item Class", () -> p_36042_.getItem().getClass().getName());
-                crashreportcategory.setDetail("Item ID", Item.getId(p_36042_.getItem()));
-                crashreportcategory.setDetail("Item data", p_36042_.getDamageValue());
-                crashreportcategory.setDetail("Item name", () -> p_36042_.getHoverName().getString());
+                crashreportcategory.setDetail("Registry Name", () -> String.valueOf(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem())));
+                crashreportcategory.setDetail("Item Class", () -> stack.getItem().getClass().getName());
+                crashreportcategory.setDetail("Item ID", Item.getId(stack.getItem()));
+                crashreportcategory.setDetail("Item data", stack.getDamageValue());
+                crashreportcategory.setDetail("Item name", () -> stack.getHoverName().getString());
                 throw new ReportedException(crashreport);
             }
         }
     }
 
-    public void placeItemBackInInventory(ItemStack p_150080_) {
-        this.placeItemBackInInventory(p_150080_, true);
+    public void placeItemBackInInventory(ItemStack stack) {
+        this.placeItemBackInInventory(stack, true);
     }
 
-    public void placeItemBackInInventory(ItemStack p_150077_, boolean p_150078_) {
-        while (!p_150077_.isEmpty()) {
-            int i = this.getSlotWithRemainingSpace(p_150077_);
+    public void placeItemBackInInventory(ItemStack stack, boolean sendPacket) {
+        while (!stack.isEmpty()) {
+            int i = this.getSlotWithRemainingSpace(stack);
             if (i == -1) {
                 i = this.getFreeSlot();
             }
 
             if (i == -1) {
-                this.player.drop(p_150077_, false);
+                this.player.drop(stack, false);
                 break;
             }
 
-            int j = p_150077_.getMaxStackSize() - this.getItem(i).getCount();
-            if (this.add(i, p_150077_.split(j)) && p_150078_ && this.player instanceof ServerPlayer) {
+            int j = stack.getMaxStackSize() - this.getItem(i).getCount();
+            if (this.add(i, stack.split(j)) && sendPacket && this.player instanceof ServerPlayer) {
                 ((ServerPlayer)this.player).connection.send(new ClientboundContainerSetSlotPacket(-2, 0, i, this.getItem(i)));
             }
         }
     }
 
+    /**
+     * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
+     */
     @Override
-    public ItemStack removeItem(int p_35993_, int p_35994_) {
+    public ItemStack removeItem(int index, int count) {
         List<ItemStack> list = null;
 
         for (NonNullList<ItemStack> nonnulllist : this.compartments) {
-            if (p_35993_ < nonnulllist.size()) {
+            if (index < nonnulllist.size()) {
                 list = nonnulllist;
                 break;
             }
 
-            p_35993_ -= nonnulllist.size();
+            index -= nonnulllist.size();
         }
 
-        return list != null && !list.get(p_35993_).isEmpty() ? ContainerHelper.removeItem(list, p_35993_, p_35994_) : ItemStack.EMPTY;
+        return list != null && !list.get(index).isEmpty() ? ContainerHelper.removeItem(list, index, count) : ItemStack.EMPTY;
     }
 
-    public void removeItem(ItemStack p_36058_) {
+    public void removeItem(ItemStack stack) {
         for (NonNullList<ItemStack> nonnulllist : this.compartments) {
             for (int i = 0; i < nonnulllist.size(); i++) {
-                if (nonnulllist.get(i) == p_36058_) {
+                if (nonnulllist.get(i) == stack) {
                     nonnulllist.set(i, ItemStack.EMPTY);
                     break;
                 }
@@ -332,56 +353,65 @@ public class Inventory implements Container, Nameable {
         }
     }
 
+    /**
+     * Removes a stack from the given slot and returns it.
+     */
     @Override
-    public ItemStack removeItemNoUpdate(int p_36029_) {
+    public ItemStack removeItemNoUpdate(int index) {
         NonNullList<ItemStack> nonnulllist = null;
 
         for (NonNullList<ItemStack> nonnulllist1 : this.compartments) {
-            if (p_36029_ < nonnulllist1.size()) {
+            if (index < nonnulllist1.size()) {
                 nonnulllist = nonnulllist1;
                 break;
             }
 
-            p_36029_ -= nonnulllist1.size();
+            index -= nonnulllist1.size();
         }
 
-        if (nonnulllist != null && !nonnulllist.get(p_36029_).isEmpty()) {
-            ItemStack itemstack = nonnulllist.get(p_36029_);
-            nonnulllist.set(p_36029_, ItemStack.EMPTY);
+        if (nonnulllist != null && !nonnulllist.get(index).isEmpty()) {
+            ItemStack itemstack = nonnulllist.get(index);
+            nonnulllist.set(index, ItemStack.EMPTY);
             return itemstack;
         } else {
             return ItemStack.EMPTY;
         }
     }
 
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
     @Override
-    public void setItem(int p_35999_, ItemStack p_36000_) {
+    public void setItem(int index, ItemStack stack) {
         NonNullList<ItemStack> nonnulllist = null;
 
         for (NonNullList<ItemStack> nonnulllist1 : this.compartments) {
-            if (p_35999_ < nonnulllist1.size()) {
+            if (index < nonnulllist1.size()) {
                 nonnulllist = nonnulllist1;
                 break;
             }
 
-            p_35999_ -= nonnulllist1.size();
+            index -= nonnulllist1.size();
         }
 
         if (nonnulllist != null) {
-            nonnulllist.set(p_35999_, p_36000_);
+            nonnulllist.set(index, stack);
         }
     }
 
-    public float getDestroySpeed(BlockState p_36021_) {
-        return this.items.get(this.selected).getDestroySpeed(p_36021_);
+    public float getDestroySpeed(BlockState state) {
+        return this.items.get(this.selected).getDestroySpeed(state);
     }
 
-    public ListTag save(ListTag p_36027_) {
+    /**
+     * Writes the inventory out as a list of compound tags. This is where the slot indices are used (+100 for armor, +80 for crafting).
+     */
+    public ListTag save(ListTag listTag) {
         for (int i = 0; i < this.items.size(); i++) {
             if (!this.items.get(i).isEmpty()) {
                 CompoundTag compoundtag = new CompoundTag();
                 compoundtag.putByte("Slot", (byte)i);
-                p_36027_.add(this.items.get(i).save(this.player.registryAccess(), compoundtag));
+                listTag.add(this.items.get(i).save(this.player.registryAccess(), compoundtag));
             }
         }
 
@@ -389,7 +419,7 @@ public class Inventory implements Container, Nameable {
             if (!this.armor.get(j).isEmpty()) {
                 CompoundTag compoundtag1 = new CompoundTag();
                 compoundtag1.putByte("Slot", (byte)(j + 100));
-                p_36027_.add(this.armor.get(j).save(this.player.registryAccess(), compoundtag1));
+                listTag.add(this.armor.get(j).save(this.player.registryAccess(), compoundtag1));
             }
         }
 
@@ -397,20 +427,23 @@ public class Inventory implements Container, Nameable {
             if (!this.offhand.get(k).isEmpty()) {
                 CompoundTag compoundtag2 = new CompoundTag();
                 compoundtag2.putByte("Slot", (byte)(k + 150));
-                p_36027_.add(this.offhand.get(k).save(this.player.registryAccess(), compoundtag2));
+                listTag.add(this.offhand.get(k).save(this.player.registryAccess(), compoundtag2));
             }
         }
 
-        return p_36027_;
+        return listTag;
     }
 
-    public void load(ListTag p_36036_) {
+    /**
+     * Reads from the given tag list and fills the slots in the inventory with the correct items.
+     */
+    public void load(ListTag listTag) {
         this.items.clear();
         this.armor.clear();
         this.offhand.clear();
 
-        for (int i = 0; i < p_36036_.size(); i++) {
-            CompoundTag compoundtag = p_36036_.getCompound(i);
+        for (int i = 0; i < listTag.size(); i++) {
+            CompoundTag compoundtag = listTag.getCompound(i);
             int j = compoundtag.getByte("Slot") & 255;
             ItemStack itemstack = ItemStack.parse(this.player.registryAccess(), compoundtag).orElse(ItemStack.EMPTY);
             if (j >= 0 && j < this.items.size()) {
@@ -451,20 +484,23 @@ public class Inventory implements Container, Nameable {
         return true;
     }
 
+    /**
+     * Returns the stack in the given slot.
+     */
     @Override
-    public ItemStack getItem(int p_35991_) {
+    public ItemStack getItem(int index) {
         List<ItemStack> list = null;
 
         for (NonNullList<ItemStack> nonnulllist : this.compartments) {
-            if (p_35991_ < nonnulllist.size()) {
+            if (index < nonnulllist.size()) {
                 list = nonnulllist;
                 break;
             }
 
-            p_35991_ -= nonnulllist.size();
+            index -= nonnulllist.size();
         }
 
-        return list == null ? ItemStack.EMPTY : list.get(p_35991_);
+        return list == null ? ItemStack.EMPTY : list.get(index);
     }
 
     @Override
@@ -472,8 +508,11 @@ public class Inventory implements Container, Nameable {
         return Component.translatable("container.inventory");
     }
 
-    public ItemStack getArmor(int p_36053_) {
-        return this.armor.get(p_36053_);
+    /**
+     * @return a player armor item (as an {@code ItemStack}) contained in specified armor slot
+     */
+    public ItemStack getArmor(int slot) {
+        return this.armor.get(slot);
     }
 
     public void dropAll() {
@@ -497,15 +536,21 @@ public class Inventory implements Container, Nameable {
         return this.timesChanged;
     }
 
+    /**
+     * Don't rename this method to canInteractWith due to conflicts with Container
+     */
     @Override
-    public boolean stillValid(Player p_36009_) {
-        return p_36009_.canInteractWithEntity(this.player, 4.0);
+    public boolean stillValid(Player player) {
+        return player.canInteractWithEntity(this.player, 4.0);
     }
 
-    public boolean contains(ItemStack p_36064_) {
+    /**
+     * Returns {@code true} if the specified {@link net.minecraft.world.item.ItemStack} exists in the inventory.
+     */
+    public boolean contains(ItemStack stack) {
         for (List<ItemStack> list : this.compartments) {
             for (ItemStack itemstack : list) {
-                if (!itemstack.isEmpty() && ItemStack.isSameItemSameComponents(itemstack, p_36064_)) {
+                if (!itemstack.isEmpty() && ItemStack.isSameItemSameComponents(itemstack, stack)) {
                     return true;
                 }
             }
@@ -514,10 +559,10 @@ public class Inventory implements Container, Nameable {
         return false;
     }
 
-    public boolean contains(TagKey<Item> p_204076_) {
+    public boolean contains(TagKey<Item> tag) {
         for (List<ItemStack> list : this.compartments) {
             for (ItemStack itemstack : list) {
-                if (!itemstack.isEmpty() && itemstack.is(p_204076_)) {
+                if (!itemstack.isEmpty() && itemstack.is(tag)) {
                     return true;
                 }
             }
@@ -526,10 +571,10 @@ public class Inventory implements Container, Nameable {
         return false;
     }
 
-    public boolean contains(Predicate<ItemStack> p_316260_) {
+    public boolean contains(Predicate<ItemStack> predicate) {
         for (List<ItemStack> list : this.compartments) {
             for (ItemStack itemstack : list) {
-                if (p_316260_.test(itemstack)) {
+                if (predicate.test(itemstack)) {
                     return true;
                 }
             }
@@ -538,12 +583,15 @@ public class Inventory implements Container, Nameable {
         return false;
     }
 
-    public void replaceWith(Inventory p_36007_) {
+    /**
+     * Copy the ItemStack contents from another InventoryPlayer instance
+     */
+    public void replaceWith(Inventory playerInventory) {
         for (int i = 0; i < this.getContainerSize(); i++) {
-            this.setItem(i, p_36007_.getItem(i));
+            this.setItem(i, playerInventory.getItem(i));
         }
 
-        this.selected = p_36007_.selected;
+        this.selected = playerInventory.selected;
     }
 
     @Override
@@ -553,14 +601,18 @@ public class Inventory implements Container, Nameable {
         }
     }
 
-    public void fillStackedContents(StackedContents p_36011_) {
+    public void fillStackedContents(StackedContents stackedContent) {
         for (ItemStack itemstack : this.items) {
-            p_36011_.accountSimpleStack(itemstack);
+            stackedContent.accountSimpleStack(itemstack);
         }
     }
 
-    public ItemStack removeFromSelected(boolean p_182404_) {
+    /**
+     * @param removeStack Whether to remove the entire stack of items. If {@code false
+     *                    }, removes a single item.
+     */
+    public ItemStack removeFromSelected(boolean removeStack) {
         ItemStack itemstack = this.getSelected();
-        return itemstack.isEmpty() ? ItemStack.EMPTY : this.removeItem(this.selected, p_182404_ ? itemstack.getCount() : 1);
+        return itemstack.isEmpty() ? ItemStack.EMPTY : this.removeItem(this.selected, removeStack ? itemstack.getCount() : 1);
     }
 }

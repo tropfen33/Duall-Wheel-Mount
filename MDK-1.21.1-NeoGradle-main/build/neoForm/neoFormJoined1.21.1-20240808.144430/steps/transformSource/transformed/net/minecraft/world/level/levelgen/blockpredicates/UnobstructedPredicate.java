@@ -19,7 +19,7 @@ record UnobstructedPredicate(Vec3i offset) implements BlockPredicate {
         return BlockPredicateType.UNOBSTRUCTED;
     }
 
-    public boolean test(WorldGenLevel p_346037_, BlockPos p_345229_) {
-        return p_346037_.isUnobstructed(null, Shapes.block().move((double)p_345229_.getX(), (double)p_345229_.getY(), (double)p_345229_.getZ()));
+    public boolean test(WorldGenLevel level, BlockPos pos) {
+        return level.isUnobstructed(null, Shapes.block().move((double)pos.getX(), (double)pos.getY(), (double)pos.getZ()));
     }
 }

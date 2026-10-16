@@ -17,8 +17,8 @@ public class PardonIpCommand {
     private static final SimpleCommandExceptionType ERROR_INVALID = new SimpleCommandExceptionType(Component.translatable("commands.pardonip.invalid"));
     private static final SimpleCommandExceptionType ERROR_NOT_BANNED = new SimpleCommandExceptionType(Component.translatable("commands.pardonip.failed"));
 
-    public static void register(CommandDispatcher<CommandSourceStack> p_138109_) {
-        p_138109_.register(
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        dispatcher.register(
             Commands.literal("pardon-ip")
                 .requires(p_138116_ -> p_138116_.hasPermission(3))
                 .then(
@@ -33,16 +33,16 @@ public class PardonIpCommand {
         );
     }
 
-    private static int unban(CommandSourceStack p_138118_, String p_138119_) throws CommandSyntaxException {
-        if (!InetAddresses.isInetAddress(p_138119_)) {
+    private static int unban(CommandSourceStack source, String ipAddress) throws CommandSyntaxException {
+        if (!InetAddresses.isInetAddress(ipAddress)) {
             throw ERROR_INVALID.create();
         } else {
-            IpBanList ipbanlist = p_138118_.getServer().getPlayerList().getIpBans();
-            if (!ipbanlist.isBanned(p_138119_)) {
+            IpBanList ipbanlist = source.getServer().getPlayerList().getIpBans();
+            if (!ipbanlist.isBanned(ipAddress)) {
                 throw ERROR_NOT_BANNED.create();
             } else {
-                ipbanlist.remove(p_138119_);
-                p_138118_.sendSuccess(() -> Component.translatable("commands.pardonip.success", p_138119_), true);
+                ipbanlist.remove(ipAddress);
+                source.sendSuccess(() -> Component.translatable("commands.pardonip.success", ipAddress), true);
                 return 1;
             }
         }

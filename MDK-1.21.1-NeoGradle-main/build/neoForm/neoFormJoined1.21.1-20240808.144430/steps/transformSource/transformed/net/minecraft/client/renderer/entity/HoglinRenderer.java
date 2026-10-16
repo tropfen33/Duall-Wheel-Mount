@@ -15,11 +15,14 @@ public class HoglinRenderer extends MobRenderer<Hoglin, HoglinModel<Hoglin>> {
         super(p_174165_, new HoglinModel<>(p_174165_.bakeLayer(ModelLayers.HOGLIN)), 0.7F);
     }
 
-    public ResourceLocation getTextureLocation(Hoglin p_114862_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Hoglin entity) {
         return HOGLIN_LOCATION;
     }
 
-    protected boolean isShaking(Hoglin p_114864_) {
-        return super.isShaking(p_114864_) || p_114864_.isConverting();
+    protected boolean isShaking(Hoglin entity) {
+        return super.isShaking(entity) || entity.isConverting();
     }
 }

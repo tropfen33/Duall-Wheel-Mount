@@ -29,80 +29,80 @@ public abstract class BuiltInPackSource implements RepositorySource {
     private final ResourceLocation packDir;
     private final DirectoryValidator validator;
 
-    public BuiltInPackSource(PackType p_249137_, VanillaPackResources p_250453_, ResourceLocation p_251151_, DirectoryValidator p_294859_) {
-        this.packType = p_249137_;
-        this.vanillaPack = p_250453_;
-        this.packDir = p_251151_;
-        this.validator = p_294859_;
+    public BuiltInPackSource(PackType packType, VanillaPackResources vanillaPack, ResourceLocation packDir, DirectoryValidator validator) {
+        this.packType = packType;
+        this.vanillaPack = vanillaPack;
+        this.packDir = packDir;
+        this.validator = validator;
     }
 
     @Override
-    public void loadPacks(Consumer<Pack> p_250708_) {
+    public void loadPacks(Consumer<Pack> onLoad) {
         Pack pack = this.createVanillaPack(this.vanillaPack);
         if (pack != null) {
-            p_250708_.accept(pack);
+            onLoad.accept(pack);
         }
 
-        this.listBundledPacks(p_250708_);
+        this.listBundledPacks(onLoad);
     }
 
     @Nullable
-    protected abstract Pack createVanillaPack(PackResources p_251690_);
+    protected abstract Pack createVanillaPack(PackResources resources);
 
-    protected abstract Component getPackTitle(String p_251850_);
+    protected abstract Component getPackTitle(String id);
 
     public VanillaPackResources getVanillaPack() {
         return this.vanillaPack;
     }
 
-    private void listBundledPacks(Consumer<Pack> p_249128_) {
+    private void listBundledPacks(Consumer<Pack> packConsumer) {
         Map<String, Function<String, Pack>> map = new HashMap<>();
         this.populatePackList(map::put);
         map.forEach((p_250371_, p_250946_) -> {
             Pack pack = p_250946_.apply(p_250371_);
             if (pack != null) {
-                p_249128_.accept(pack);
+                packConsumer.accept(pack);
             }
         });
     }
 
-    protected void populatePackList(BiConsumer<String, Function<String, Pack>> p_250341_) {
-        this.vanillaPack.listRawPaths(this.packType, this.packDir, p_250248_ -> this.discoverPacksInPath(p_250248_, p_250341_));
+    protected void populatePackList(BiConsumer<String, Function<String, Pack>> populator) {
+        this.vanillaPack.listRawPaths(this.packType, this.packDir, p_250248_ -> this.discoverPacksInPath(p_250248_, populator));
     }
 
-    protected void discoverPacksInPath(@Nullable Path p_250013_, BiConsumer<String, Function<String, Pack>> p_249898_) {
-        if (p_250013_ != null && Files.isDirectory(p_250013_)) {
+    protected void discoverPacksInPath(@Nullable Path directoryPath, BiConsumer<String, Function<String, Pack>> packGetter) {
+        if (directoryPath != null && Files.isDirectory(directoryPath)) {
             try {
                 FolderRepositorySource.discoverPacks(
-                    p_250013_,
+                    directoryPath,
                     this.validator,
-                    (p_252012_, p_249772_) -> p_249898_.accept(
+                    (p_252012_, p_249772_) -> packGetter.accept(
                             pathToId(p_252012_), p_250601_ -> this.createBuiltinPack(p_250601_, p_249772_, this.getPackTitle(p_250601_))
                         )
                 );
             } catch (IOException ioexception) {
-                LOGGER.warn("Failed to discover packs in {}", p_250013_, ioexception);
+                LOGGER.warn("Failed to discover packs in {}", directoryPath, ioexception);
             }
         }
     }
 
-    private static String pathToId(Path p_252048_) {
-        return StringUtils.removeEnd(p_252048_.getFileName().toString(), ".zip");
+    private static String pathToId(Path path) {
+        return StringUtils.removeEnd(path.getFileName().toString(), ".zip");
     }
 
     @Nullable
-    protected abstract Pack createBuiltinPack(String p_249992_, Pack.ResourcesSupplier p_248670_, Component p_252197_);
+    protected abstract Pack createBuiltinPack(String id, Pack.ResourcesSupplier resources, Component title);
 
-    public static Pack.ResourcesSupplier fixedResources(final PackResources p_295971_) {
+    public static Pack.ResourcesSupplier fixedResources(final PackResources resources) {
         return new Pack.ResourcesSupplier() {
             @Override
             public PackResources openPrimary(PackLocationInfo p_326084_) {
-                return p_295971_;
+                return resources;
             }
 
             @Override
             public PackResources openFull(PackLocationInfo p_326285_, Pack.Metadata p_326055_) {
-                return p_295971_;
+                return resources;
             }
         };
     }

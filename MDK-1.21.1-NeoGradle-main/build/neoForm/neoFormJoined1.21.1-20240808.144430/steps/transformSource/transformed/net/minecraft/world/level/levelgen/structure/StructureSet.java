@@ -24,12 +24,12 @@ public record StructureSet(List<StructureSet.StructureSelectionEntry> structures
         this(List.of(new StructureSet.StructureSelectionEntry(p_210007_, 1)), p_210008_);
     }
 
-    public static StructureSet.StructureSelectionEntry entry(Holder<Structure> p_210018_, int p_210019_) {
-        return new StructureSet.StructureSelectionEntry(p_210018_, p_210019_);
+    public static StructureSet.StructureSelectionEntry entry(Holder<Structure> structure, int weight) {
+        return new StructureSet.StructureSelectionEntry(structure, weight);
     }
 
-    public static StructureSet.StructureSelectionEntry entry(Holder<Structure> p_210016_) {
-        return new StructureSet.StructureSelectionEntry(p_210016_, 1);
+    public static StructureSet.StructureSelectionEntry entry(Holder<Structure> structure) {
+        return new StructureSet.StructureSelectionEntry(structure, 1);
     }
 
     public static record StructureSelectionEntry(Holder<Structure> structure, int weight) {

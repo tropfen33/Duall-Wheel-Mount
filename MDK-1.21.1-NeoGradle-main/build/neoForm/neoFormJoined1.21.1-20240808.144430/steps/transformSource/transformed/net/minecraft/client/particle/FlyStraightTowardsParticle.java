@@ -16,34 +16,34 @@ public class FlyStraightTowardsParticle extends TextureSheetParticle {
     private final int endColor;
 
     protected FlyStraightTowardsParticle(
-        ClientLevel p_338359_,
-        double p_338512_,
-        double p_338787_,
-        double p_338665_,
-        double p_338833_,
-        double p_338537_,
-        double p_338840_,
-        int p_338764_,
-        int p_338316_
+        ClientLevel level,
+        double x,
+        double y,
+        double z,
+        double xSpeed,
+        double ySpeed,
+        double zSpeed,
+        int startColor,
+        int endColor
     ) {
-        super(p_338359_, p_338512_, p_338787_, p_338665_);
-        this.xd = p_338833_;
-        this.yd = p_338537_;
-        this.zd = p_338840_;
-        this.xStart = p_338512_;
-        this.yStart = p_338787_;
-        this.zStart = p_338665_;
-        this.xo = p_338512_ + p_338833_;
-        this.yo = p_338787_ + p_338537_;
-        this.zo = p_338665_ + p_338840_;
+        super(level, x, y, z);
+        this.xd = xSpeed;
+        this.yd = ySpeed;
+        this.zd = zSpeed;
+        this.xStart = x;
+        this.yStart = y;
+        this.zStart = z;
+        this.xo = x + xSpeed;
+        this.yo = y + ySpeed;
+        this.zo = z + zSpeed;
         this.x = this.xo;
         this.y = this.yo;
         this.z = this.zo;
         this.quadSize = 0.1F * (this.random.nextFloat() * 0.5F + 0.2F);
         this.hasPhysics = false;
         this.lifetime = (int)(Math.random() * 5.0) + 25;
-        this.startColor = p_338764_;
-        this.endColor = p_338316_;
+        this.startColor = startColor;
+        this.endColor = endColor;
     }
 
     @Override
@@ -52,11 +52,11 @@ public class FlyStraightTowardsParticle extends TextureSheetParticle {
     }
 
     @Override
-    public void move(double p_338805_, double p_338843_, double p_338720_) {
+    public void move(double x, double y, double z) {
     }
 
     @Override
-    public int getLightColor(float p_338732_) {
+    public int getLightColor(float partialTick) {
         return 240;
     }
 
@@ -83,24 +83,24 @@ public class FlyStraightTowardsParticle extends TextureSheetParticle {
     public static class OminousSpawnProvider implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprite;
 
-        public OminousSpawnProvider(SpriteSet p_338292_) {
-            this.sprite = p_338292_;
+        public OminousSpawnProvider(SpriteSet sprite) {
+            this.sprite = sprite;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_338365_,
-            ClientLevel p_338448_,
-            double p_338829_,
-            double p_338561_,
-            double p_338765_,
-            double p_338694_,
-            double p_338802_,
-            double p_338768_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
             FlyStraightTowardsParticle flystraighttowardsparticle = new FlyStraightTowardsParticle(
-                p_338448_, p_338829_, p_338561_, p_338765_, p_338694_, p_338802_, p_338768_, -12210434, -1
+                level, x, y, z, xSpeed, ySpeed, zSpeed, -12210434, -1
             );
-            flystraighttowardsparticle.scale(Mth.randomBetween(p_338448_.getRandom(), 3.0F, 5.0F));
+            flystraighttowardsparticle.scale(Mth.randomBetween(level.getRandom(), 3.0F, 5.0F));
             flystraighttowardsparticle.pickSprite(this.sprite);
             return flystraighttowardsparticle;
         }

@@ -6,23 +6,23 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
 public abstract class FlyingMob extends Mob {
-    protected FlyingMob(EntityType<? extends FlyingMob> p_20806_, Level p_20807_) {
-        super(p_20806_, p_20807_);
+    protected FlyingMob(EntityType<? extends FlyingMob> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Override
-    protected void checkFallDamage(double p_20809_, boolean p_20810_, BlockState p_20811_, BlockPos p_20812_) {
+    protected void checkFallDamage(double y, boolean onGround, BlockState state, BlockPos pos) {
     }
 
     @Override
-    public void travel(Vec3 p_20818_) {
+    public void travel(Vec3 travelVector) {
         if (this.isControlledByLocalInstance()) {
             if (this.isInWater()) {
-                this.moveRelative(0.02F, p_20818_);
+                this.moveRelative(0.02F, travelVector);
                 this.move(MoverType.SELF, this.getDeltaMovement());
                 this.setDeltaMovement(this.getDeltaMovement().scale(0.8F));
             } else if (this.isInLava()) {
-                this.moveRelative(0.02F, p_20818_);
+                this.moveRelative(0.02F, travelVector);
                 this.move(MoverType.SELF, this.getDeltaMovement());
                 this.setDeltaMovement(this.getDeltaMovement().scale(0.5));
             } else {
@@ -38,7 +38,7 @@ public abstract class FlyingMob extends Mob {
                     f = this.level().getBlockState(ground).getFriction(this.level(), ground, this) * 0.91F;
                 }
 
-                this.moveRelative(this.onGround() ? 0.1F * f1 : 0.02F, p_20818_);
+                this.moveRelative(this.onGround() ? 0.1F * f1 : 0.02F, travelVector);
                 this.move(MoverType.SELF, this.getDeltaMovement());
                 this.setDeltaMovement(this.getDeltaMovement().scale((double)f));
             }

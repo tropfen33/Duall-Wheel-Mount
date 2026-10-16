@@ -19,11 +19,11 @@ public class CodepointMap<T> {
     private final T[][] blockMap;
     private final IntFunction<T[]> blockConstructor;
 
-    public CodepointMap(IntFunction<T[]> p_285284_, IntFunction<T[][]> p_285275_) {
-        this.empty = (T[])((Object[])p_285284_.apply(256));
-        this.blockMap = (T[][])((Object[][])p_285275_.apply(4352));
+    public CodepointMap(IntFunction<T[]> blockConstructor, IntFunction<T[][]> blockMapConstructor) {
+        this.empty = (T[])((Object[])blockConstructor.apply(256));
+        this.blockMap = (T[][])((Object[][])blockMapConstructor.apply(4352));
         Arrays.fill(this.blockMap, this.empty);
-        this.blockConstructor = p_285284_;
+        this.blockConstructor = blockConstructor;
     }
 
     public void clear() {
@@ -31,32 +31,32 @@ public class CodepointMap<T> {
     }
 
     @Nullable
-    public T get(int p_285131_) {
-        int i = p_285131_ >> 8;
-        int j = p_285131_ & 0xFF;
+    public T get(int index) {
+        int i = index >> 8;
+        int j = index & 0xFF;
         return this.blockMap[i][j];
     }
 
     @Nullable
-    public T put(int p_285321_, T p_285073_) {
-        int i = p_285321_ >> 8;
-        int j = p_285321_ & 0xFF;
+    public T put(int index, T value) {
+        int i = index >> 8;
+        int j = index & 0xFF;
         T[] at = this.blockMap[i];
         if (at == this.empty) {
             at = (T[])((Object[])this.blockConstructor.apply(256));
             this.blockMap[i] = at;
-            at[j] = p_285073_;
+            at[j] = value;
             return null;
         } else {
             T t = at[j];
-            at[j] = p_285073_;
+            at[j] = value;
             return t;
         }
     }
 
-    public T computeIfAbsent(int p_285365_, IntFunction<T> p_285147_) {
-        int i = p_285365_ >> 8;
-        int j = p_285365_ & 0xFF;
+    public T computeIfAbsent(int index, IntFunction<T> valueIfAbsentGetter) {
+        int i = index >> 8;
+        int j = index & 0xFF;
         T[] at = this.blockMap[i];
         T t = at[j];
         if (t != null) {
@@ -67,7 +67,7 @@ public class CodepointMap<T> {
                 this.blockMap[i] = at;
             }
 
-            T t1 = p_285147_.apply(p_285365_);
+            T t1 = valueIfAbsentGetter.apply(index);
             at[j] = t1;
             return t1;
         }
@@ -87,7 +87,7 @@ public class CodepointMap<T> {
         }
     }
 
-    public void forEach(CodepointMap.Output<T> p_285048_) {
+    public void forEach(CodepointMap.Output<T> output) {
         for (int i = 0; i < this.blockMap.length; i++) {
             T[] at = this.blockMap[i];
             if (at != this.empty) {
@@ -95,7 +95,7 @@ public class CodepointMap<T> {
                     T t = at[j];
                     if (t != null) {
                         int k = i << 8 | j;
-                        p_285048_.accept(k, t);
+                        output.accept(k, t);
                     }
                 }
             }
@@ -111,6 +111,6 @@ public class CodepointMap<T> {
     @FunctionalInterface
     @OnlyIn(Dist.CLIENT)
     public interface Output<T> {
-        void accept(int p_285163_, T p_285313_);
+        void accept(int index, T object);
     }
 }

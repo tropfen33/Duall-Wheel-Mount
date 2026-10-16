@@ -187,12 +187,12 @@ public class ModelLayers {
     public static final ModelLayerLocation ZOMBIFIED_PIGLIN_INNER_ARMOR = registerInnerArmor("zombified_piglin");
     public static final ModelLayerLocation ZOMBIFIED_PIGLIN_OUTER_ARMOR = registerOuterArmor("zombified_piglin");
 
-    private static ModelLayerLocation register(String p_171294_) {
-        return register(p_171294_, "main");
+    private static ModelLayerLocation register(String path) {
+        return register(path, "main");
     }
 
-    private static ModelLayerLocation register(String p_171296_, String p_171297_) {
-        ModelLayerLocation modellayerlocation = createLocation(p_171296_, p_171297_);
+    private static ModelLayerLocation register(String path, String model) {
+        ModelLayerLocation modellayerlocation = createLocation(path, model);
         if (!ALL_MODELS.add(modellayerlocation)) {
             throw new IllegalStateException("Duplicate registration for " + modellayerlocation);
         } else {
@@ -200,45 +200,45 @@ public class ModelLayers {
         }
     }
 
-    private static ModelLayerLocation createLocation(String p_171301_, String p_171302_) {
-        return new ModelLayerLocation(ResourceLocation.withDefaultNamespace(p_171301_), p_171302_);
+    private static ModelLayerLocation createLocation(String path, String model) {
+        return new ModelLayerLocation(ResourceLocation.withDefaultNamespace(path), model);
     }
 
-    private static ModelLayerLocation registerInnerArmor(String p_171299_) {
-        return register(p_171299_, "inner_armor");
+    private static ModelLayerLocation registerInnerArmor(String path) {
+        return register(path, "inner_armor");
     }
 
-    private static ModelLayerLocation registerOuterArmor(String p_171304_) {
-        return register(p_171304_, "outer_armor");
+    private static ModelLayerLocation registerOuterArmor(String path) {
+        return register(path, "outer_armor");
     }
 
-    public static ModelLayerLocation createRaftModelName(Boat.Type p_252002_) {
-        ResourceLocation location = ResourceLocation.parse(p_252002_.getName());
+    public static ModelLayerLocation createRaftModelName(Boat.Type type) {
+        ResourceLocation location = ResourceLocation.parse(type.getName());
         return new ModelLayerLocation(location.withPrefix("raft/"), "main");
     }
 
-    public static ModelLayerLocation createChestRaftModelName(Boat.Type p_248520_) {
-        ResourceLocation location = ResourceLocation.parse(p_248520_.getName());
+    public static ModelLayerLocation createChestRaftModelName(Boat.Type type) {
+        ResourceLocation location = ResourceLocation.parse(type.getName());
         return new ModelLayerLocation(location.withPrefix("chest_raft/"), "main");
     }
 
-    public static ModelLayerLocation createBoatModelName(Boat.Type p_171290_) {
-        ResourceLocation location = ResourceLocation.parse(p_171290_.getName());
+    public static ModelLayerLocation createBoatModelName(Boat.Type type) {
+        ResourceLocation location = ResourceLocation.parse(type.getName());
         return new ModelLayerLocation(location.withPrefix("boat/"), "main");
     }
 
-    public static ModelLayerLocation createChestBoatModelName(Boat.Type p_233551_) {
-        ResourceLocation location = ResourceLocation.parse(p_233551_.getName());
+    public static ModelLayerLocation createChestBoatModelName(Boat.Type type) {
+        ResourceLocation location = ResourceLocation.parse(type.getName());
         return new ModelLayerLocation(location.withPrefix("chest_boat/"), "main");
     }
 
-    public static ModelLayerLocation createSignModelName(WoodType p_171292_) {
-        ResourceLocation location = ResourceLocation.parse(p_171292_.name());
+    public static ModelLayerLocation createSignModelName(WoodType woodType) {
+        ResourceLocation location = ResourceLocation.parse(woodType.name());
         return new ModelLayerLocation(location.withPrefix("sign/"), "main");
     }
 
-    public static ModelLayerLocation createHangingSignModelName(WoodType p_252225_) {
-        ResourceLocation location = ResourceLocation.parse(p_252225_.name());
+    public static ModelLayerLocation createHangingSignModelName(WoodType woodType) {
+        ResourceLocation location = ResourceLocation.parse(woodType.name());
         return new ModelLayerLocation(location.withPrefix("hanging_sign/"), "main");
     }
 

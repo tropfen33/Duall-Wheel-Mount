@@ -239,11 +239,11 @@ public class DataComponents {
         .set(RARITY, Rarity.COMMON)
         .build();
 
-    public static DataComponentType<?> bootstrap(Registry<DataComponentType<?>> p_330821_) {
+    public static DataComponentType<?> bootstrap(Registry<DataComponentType<?>> registry) {
         return CUSTOM_DATA;
     }
 
-    private static <T> DataComponentType<T> register(String p_332092_, UnaryOperator<DataComponentType.Builder<T>> p_331261_) {
-        return Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, p_332092_, p_331261_.apply(DataComponentType.builder()).build());
+    private static <T> DataComponentType<T> register(String name, UnaryOperator<DataComponentType.Builder<T>> builder) {
+        return Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, name, builder.apply(DataComponentType.builder()).build());
     }
 }

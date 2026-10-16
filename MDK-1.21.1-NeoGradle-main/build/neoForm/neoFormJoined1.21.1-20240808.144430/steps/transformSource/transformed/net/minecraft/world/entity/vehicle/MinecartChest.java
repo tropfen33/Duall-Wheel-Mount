@@ -18,12 +18,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
 
 public class MinecartChest extends AbstractMinecartContainer {
-    public MinecartChest(EntityType<? extends MinecartChest> p_38487_, Level p_38488_) {
-        super(p_38487_, p_38488_);
+    public MinecartChest(EntityType<? extends MinecartChest> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public MinecartChest(Level p_38490_, double p_38491_, double p_38492_, double p_38493_) {
-        super(EntityType.CHEST_MINECART, p_38491_, p_38492_, p_38493_, p_38490_);
+    public MinecartChest(Level level, double x, double y, double z) {
+        super(EntityType.CHEST_MINECART, x, y, z, level);
     }
 
     @Override
@@ -52,21 +52,21 @@ public class MinecartChest extends AbstractMinecartContainer {
     }
 
     @Override
-    public AbstractContainerMenu createMenu(int p_38496_, Inventory p_38497_) {
-        return ChestMenu.threeRows(p_38496_, p_38497_, this);
+    public AbstractContainerMenu createMenu(int id, Inventory playerInventory) {
+        return ChestMenu.threeRows(id, playerInventory, this);
     }
 
     @Override
-    public void stopOpen(Player p_270111_) {
-        this.level().gameEvent(GameEvent.CONTAINER_CLOSE, this.position(), GameEvent.Context.of(p_270111_));
+    public void stopOpen(Player player) {
+        this.level().gameEvent(GameEvent.CONTAINER_CLOSE, this.position(), GameEvent.Context.of(player));
     }
 
     @Override
-    public InteractionResult interact(Player p_270398_, InteractionHand p_270576_) {
-        InteractionResult interactionresult = this.interactWithContainerVehicle(p_270398_);
+    public InteractionResult interact(Player player, InteractionHand hand) {
+        InteractionResult interactionresult = this.interactWithContainerVehicle(player);
         if (interactionresult.consumesAction()) {
-            this.gameEvent(GameEvent.CONTAINER_OPEN, p_270398_);
-            PiglinAi.angerNearbyPiglins(p_270398_, true);
+            this.gameEvent(GameEvent.CONTAINER_OPEN, player);
+            PiglinAi.angerNearbyPiglins(player, true);
         }
 
         return interactionresult;

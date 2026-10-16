@@ -26,14 +26,17 @@ public class MinecartFurnace extends AbstractMinecart {
     private int fuel;
     public double xPush;
     public double zPush;
+    /**
+     * The fuel item used to make the minecart move.
+     */
     private static final Ingredient INGREDIENT = Ingredient.of(Items.COAL, Items.CHARCOAL);
 
-    public MinecartFurnace(EntityType<? extends MinecartFurnace> p_38552_, Level p_38553_) {
-        super(p_38552_, p_38553_);
+    public MinecartFurnace(EntityType<? extends MinecartFurnace> entityType, Level level) {
+        super(entityType, level);
     }
 
-    public MinecartFurnace(Level p_38555_, double p_38556_, double p_38557_, double p_38558_) {
-        super(EntityType.FURNACE_MINECART, p_38555_, p_38556_, p_38557_, p_38558_);
+    public MinecartFurnace(Level level, double x, double y, double z) {
+        super(EntityType.FURNACE_MINECART, level, x, y, z);
     }
 
     @Override
@@ -42,9 +45,9 @@ public class MinecartFurnace extends AbstractMinecart {
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326389_) {
-        super.defineSynchedData(p_326389_);
-        p_326389_.define(DATA_ID_FUEL, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_ID_FUEL, false);
     }
 
     @Override
@@ -79,10 +82,10 @@ public class MinecartFurnace extends AbstractMinecart {
     }
 
     @Override
-    protected void moveAlongTrack(BlockPos p_38569_, BlockState p_38570_) {
+    protected void moveAlongTrack(BlockPos pos, BlockState state) {
         double d0 = 1.0E-4;
         double d1 = 0.001;
-        super.moveAlongTrack(p_38569_, p_38570_);
+        super.moveAlongTrack(pos, state);
         Vec3 vec3 = this.getDeltaMovement();
         double d2 = vec3.horizontalDistanceSqr();
         double d3 = this.xPush * this.xPush + this.zPush * this.zPush;
@@ -115,18 +118,18 @@ public class MinecartFurnace extends AbstractMinecart {
     }
 
     @Override
-    public InteractionResult interact(Player p_38562_, InteractionHand p_38563_) {
-        InteractionResult ret = super.interact(p_38562_, p_38563_);
+    public InteractionResult interact(Player player, InteractionHand hand) {
+        InteractionResult ret = super.interact(player, hand);
         if (ret.consumesAction()) return ret;
-        ItemStack itemstack = p_38562_.getItemInHand(p_38563_);
+        ItemStack itemstack = player.getItemInHand(hand);
         if (INGREDIENT.test(itemstack) && this.fuel + 3600 <= 32000) {
-            itemstack.consume(1, p_38562_);
+            itemstack.consume(1, player);
             this.fuel += 3600;
         }
 
         if (this.fuel > 0) {
-            this.xPush = this.getX() - p_38562_.getX();
-            this.zPush = this.getZ() - p_38562_.getZ();
+            this.xPush = this.getX() - player.getX();
+            this.zPush = this.getZ() - player.getZ();
         }
 
         return InteractionResult.sidedSuccess(this.level().isClientSide);
@@ -138,27 +141,30 @@ public class MinecartFurnace extends AbstractMinecart {
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag p_38567_) {
-        super.addAdditionalSaveData(p_38567_);
-        p_38567_.putDouble("PushX", this.xPush);
-        p_38567_.putDouble("PushZ", this.zPush);
-        p_38567_.putShort("Fuel", (short)this.fuel);
+    protected void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putDouble("PushX", this.xPush);
+        compound.putDouble("PushZ", this.zPush);
+        compound.putShort("Fuel", (short)this.fuel);
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    protected void readAdditionalSaveData(CompoundTag p_38565_) {
-        super.readAdditionalSaveData(p_38565_);
-        this.xPush = p_38565_.getDouble("PushX");
-        this.zPush = p_38565_.getDouble("PushZ");
-        this.fuel = p_38565_.getShort("Fuel");
+    protected void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        this.xPush = compound.getDouble("PushX");
+        this.zPush = compound.getDouble("PushZ");
+        this.fuel = compound.getShort("Fuel");
     }
 
     protected boolean hasFuel() {
         return this.entityData.get(DATA_ID_FUEL);
     }
 
-    protected void setHasFuel(boolean p_38577_) {
-        this.entityData.set(DATA_ID_FUEL, p_38577_);
+    protected void setHasFuel(boolean hasFuel) {
+        this.entityData.set(DATA_ID_FUEL, hasFuel);
     }
 
     @Override

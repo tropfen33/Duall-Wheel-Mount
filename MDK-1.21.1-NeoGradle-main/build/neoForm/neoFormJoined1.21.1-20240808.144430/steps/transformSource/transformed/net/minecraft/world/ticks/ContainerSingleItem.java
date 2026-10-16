@@ -8,11 +8,11 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 public interface ContainerSingleItem extends Container {
     ItemStack getTheItem();
 
-    default ItemStack splitTheItem(int p_304641_) {
-        return this.getTheItem().split(p_304641_);
+    default ItemStack splitTheItem(int amount) {
+        return this.getTheItem().split(amount);
     }
 
-    void setTheItem(ItemStack p_304718_);
+    void setTheItem(ItemStack item);
 
     default ItemStack removeTheItem() {
         return this.splitTheItem(this.getMaxStackSize());
@@ -33,25 +33,37 @@ public interface ContainerSingleItem extends Container {
         this.removeTheItem();
     }
 
+    /**
+     * Removes a stack from the given slot and returns it.
+     */
     @Override
-    default ItemStack removeItemNoUpdate(int p_273409_) {
-        return this.removeItem(p_273409_, this.getMaxStackSize());
+    default ItemStack removeItemNoUpdate(int slot) {
+        return this.removeItem(slot, this.getMaxStackSize());
     }
 
+    /**
+     * Returns the stack in the given slot.
+     */
     @Override
-    default ItemStack getItem(int p_304882_) {
-        return p_304882_ == 0 ? this.getTheItem() : ItemStack.EMPTY;
+    default ItemStack getItem(int slot) {
+        return slot == 0 ? this.getTheItem() : ItemStack.EMPTY;
     }
 
+    /**
+     * Removes up to a specified number of items from an inventory slot and returns them in a new stack.
+     */
     @Override
-    default ItemStack removeItem(int p_304944_, int p_304791_) {
-        return p_304944_ != 0 ? ItemStack.EMPTY : this.splitTheItem(p_304791_);
+    default ItemStack removeItem(int slot, int amount) {
+        return slot != 0 ? ItemStack.EMPTY : this.splitTheItem(amount);
     }
 
+    /**
+     * Sets the given item stack to the specified slot in the inventory (can be crafting or armor sections).
+     */
     @Override
-    default void setItem(int p_304434_, ItemStack p_304854_) {
-        if (p_304434_ == 0) {
-            this.setTheItem(p_304854_);
+    default void setItem(int slot, ItemStack stack) {
+        if (slot == 0) {
+            this.setTheItem(stack);
         }
     }
 

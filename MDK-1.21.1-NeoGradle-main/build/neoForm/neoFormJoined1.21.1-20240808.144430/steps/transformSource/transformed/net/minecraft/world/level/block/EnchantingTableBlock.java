@@ -42,79 +42,85 @@ public class EnchantingTableBlock extends BaseEntityBlock {
         return CODEC;
     }
 
-    public EnchantingTableBlock(BlockBehaviour.Properties p_341305_) {
-        super(p_341305_);
+    public EnchantingTableBlock(BlockBehaviour.Properties properties) {
+        super(properties);
     }
 
-    public static boolean isValidBookShelf(Level p_340976_, BlockPos p_340984_, BlockPos p_341294_) {
-        return p_340976_.getBlockState(p_340984_.offset(p_341294_)).getEnchantPowerBonus(p_340976_, p_340984_.offset(p_341294_)) != 0
-            && p_340976_.getBlockState(p_340984_.offset(p_341294_.getX() / 2, p_341294_.getY(), p_341294_.getZ() / 2))
+    public static boolean isValidBookShelf(Level level, BlockPos enchantingTablePos, BlockPos bookshelfPos) {
+        return level.getBlockState(enchantingTablePos.offset(bookshelfPos)).getEnchantPowerBonus(level, enchantingTablePos.offset(bookshelfPos)) != 0
+            && level.getBlockState(enchantingTablePos.offset(bookshelfPos.getX() / 2, bookshelfPos.getY(), bookshelfPos.getZ() / 2))
                 .is(BlockTags.ENCHANTMENT_POWER_TRANSMITTER);
     }
 
     @Override
-    protected boolean useShapeForLightOcclusion(BlockState p_341280_) {
+    protected boolean useShapeForLightOcclusion(BlockState state) {
         return true;
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_340823_, BlockGetter p_340890_, BlockPos p_340839_, CollisionContext p_341114_) {
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
 
+    /**
+     * Called periodically clientside on blocks near the player to show effects (like furnace fire particles).
+     */
     @Override
-    public void animateTick(BlockState p_341263_, Level p_341303_, BlockPos p_340983_, RandomSource p_341147_) {
-        super.animateTick(p_341263_, p_341303_, p_340983_, p_341147_);
+    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
+        super.animateTick(state, level, pos, random);
 
         for (BlockPos blockpos : BOOKSHELF_OFFSETS) {
-            if (p_341147_.nextInt(16) == 0 && isValidBookShelf(p_341303_, p_340983_, blockpos)) {
-                p_341303_.addParticle(
+            if (random.nextInt(16) == 0 && isValidBookShelf(level, pos, blockpos)) {
+                level.addParticle(
                     ParticleTypes.ENCHANT,
-                    (double)p_340983_.getX() + 0.5,
-                    (double)p_340983_.getY() + 2.0,
-                    (double)p_340983_.getZ() + 0.5,
-                    (double)((float)blockpos.getX() + p_341147_.nextFloat()) - 0.5,
-                    (double)((float)blockpos.getY() - p_341147_.nextFloat() - 1.0F),
-                    (double)((float)blockpos.getZ() + p_341147_.nextFloat()) - 0.5
+                    (double)pos.getX() + 0.5,
+                    (double)pos.getY() + 2.0,
+                    (double)pos.getZ() + 0.5,
+                    (double)((float)blockpos.getX() + random.nextFloat()) - 0.5,
+                    (double)((float)blockpos.getY() - random.nextFloat() - 1.0F),
+                    (double)((float)blockpos.getZ() + random.nextFloat()) - 0.5
                 );
             }
         }
     }
 
+    /**
+     * The type of render function called. MODEL for mixed tesr and static model, MODELBLOCK_ANIMATED for TESR-only, LIQUID for vanilla liquids, INVISIBLE to skip all rendering
+     */
     @Override
-    protected RenderShape getRenderShape(BlockState p_340914_) {
+    protected RenderShape getRenderShape(BlockState state) {
         return RenderShape.MODEL;
     }
 
     @Override
-    public BlockEntity newBlockEntity(BlockPos p_341190_, BlockState p_340989_) {
-        return new EnchantingTableBlockEntity(p_341190_, p_340989_);
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new EnchantingTableBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_340880_, BlockState p_341416_, BlockEntityType<T> p_341078_) {
-        return p_340880_.isClientSide ? createTickerHelper(p_341078_, BlockEntityType.ENCHANTING_TABLE, EnchantingTableBlockEntity::bookAnimationTick) : null;
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        return level.isClientSide ? createTickerHelper(blockEntityType, BlockEntityType.ENCHANTING_TABLE, EnchantingTableBlockEntity::bookAnimationTick) : null;
     }
 
     @Override
-    protected InteractionResult useWithoutItem(BlockState p_341077_, Level p_341293_, BlockPos p_341394_, Player p_340990_, BlockHitResult p_341300_) {
-        if (p_341293_.isClientSide) {
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+        if (level.isClientSide) {
             return InteractionResult.SUCCESS;
         } else {
-            p_340990_.openMenu(p_341077_.getMenuProvider(p_341293_, p_341394_));
+            player.openMenu(state.getMenuProvider(level, pos));
             return InteractionResult.CONSUME;
         }
     }
 
     @Nullable
     @Override
-    protected MenuProvider getMenuProvider(BlockState p_341244_, Level p_340950_, BlockPos p_340923_) {
-        BlockEntity blockentity = p_340950_.getBlockEntity(p_340923_);
+    protected MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
+        BlockEntity blockentity = level.getBlockEntity(pos);
         if (blockentity instanceof EnchantingTableBlockEntity) {
             Component component = ((Nameable)blockentity).getDisplayName();
             return new SimpleMenuProvider(
-                (p_341299_, p_341308_, p_341334_) -> new EnchantmentMenu(p_341299_, p_341308_, ContainerLevelAccess.create(p_340950_, p_340923_)), component
+                (p_341299_, p_341308_, p_341334_) -> new EnchantmentMenu(p_341299_, p_341308_, ContainerLevelAccess.create(level, pos)), component
             );
         } else {
             return null;
@@ -122,7 +128,7 @@ public class EnchantingTableBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected boolean isPathfindable(BlockState p_341007_, PathComputationType p_341167_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 }

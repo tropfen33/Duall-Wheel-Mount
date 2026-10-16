@@ -4,35 +4,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 public interface ErrorCollector<S> {
-    void store(int p_335897_, SuggestionSupplier<S> p_336077_, Object p_335991_);
+    void store(int cursor, SuggestionSupplier<S> suggestions, Object reason);
 
-    default void store(int p_335680_, Object p_335827_) {
-        this.store(p_335680_, SuggestionSupplier.empty(), p_335827_);
+    default void store(int cursor, Object reason) {
+        this.store(cursor, SuggestionSupplier.empty(), reason);
     }
 
-    void finish(int p_335723_);
+    void finish(int cursor);
 
     public static class LongestOnly<S> implements ErrorCollector<S> {
         private final List<ErrorEntry<S>> entries = new ArrayList<>();
         private int lastCursor = -1;
 
-        private void discardErrorsFromShorterParse(int p_335634_) {
-            if (p_335634_ > this.lastCursor) {
-                this.lastCursor = p_335634_;
+        private void discardErrorsFromShorterParse(int cursor) {
+            if (cursor > this.lastCursor) {
+                this.lastCursor = cursor;
                 this.entries.clear();
             }
         }
 
         @Override
-        public void finish(int p_335534_) {
-            this.discardErrorsFromShorterParse(p_335534_);
+        public void finish(int cursor) {
+            this.discardErrorsFromShorterParse(cursor);
         }
 
         @Override
-        public void store(int p_335763_, SuggestionSupplier<S> p_336144_, Object p_335736_) {
-            this.discardErrorsFromShorterParse(p_335763_);
-            if (p_335763_ == this.lastCursor) {
-                this.entries.add(new ErrorEntry<>(p_335763_, p_336144_, p_335736_));
+        public void store(int cursor, SuggestionSupplier<S> suggestions, Object reason) {
+            this.discardErrorsFromShorterParse(cursor);
+            if (cursor == this.lastCursor) {
+                this.entries.add(new ErrorEntry<>(cursor, suggestions, reason));
             }
         }
 

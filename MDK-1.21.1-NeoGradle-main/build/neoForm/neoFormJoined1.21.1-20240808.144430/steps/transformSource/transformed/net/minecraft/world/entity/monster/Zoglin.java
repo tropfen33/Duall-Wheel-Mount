@@ -74,8 +74,8 @@ public class Zoglin extends Monster implements Enemy, HoglinBase {
         MemoryModuleType.ATTACK_COOLING_DOWN
     );
 
-    public Zoglin(EntityType<? extends Zoglin> p_34204_, Level p_34205_) {
-        super(p_34204_, p_34205_);
+    public Zoglin(EntityType<? extends Zoglin> entityType, Level level) {
+        super(entityType, level);
         this.xpReward = 5;
     }
 
@@ -85,8 +85,8 @@ public class Zoglin extends Monster implements Enemy, HoglinBase {
     }
 
     @Override
-    protected Brain<?> makeBrain(Dynamic<?> p_34221_) {
-        Brain<Zoglin> brain = this.brainProvider().makeBrain(p_34221_);
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        Brain<Zoglin> brain = this.brainProvider().makeBrain(dynamic);
         initCoreActivity(brain);
         initIdleActivity(brain);
         initFightActivity(brain);
@@ -96,12 +96,12 @@ public class Zoglin extends Monster implements Enemy, HoglinBase {
         return brain;
     }
 
-    private static void initCoreActivity(Brain<Zoglin> p_34217_) {
-        p_34217_.addActivity(Activity.CORE, 0, ImmutableList.of(new LookAtTargetSink(45, 90), new MoveToTargetSink()));
+    private static void initCoreActivity(Brain<Zoglin> brain) {
+        brain.addActivity(Activity.CORE, 0, ImmutableList.of(new LookAtTargetSink(45, 90), new MoveToTargetSink()));
     }
 
-    private static void initIdleActivity(Brain<Zoglin> p_34229_) {
-        p_34229_.addActivity(
+    private static void initIdleActivity(Brain<Zoglin> brain) {
+        brain.addActivity(
             Activity.IDLE,
             10,
             ImmutableList.of(
@@ -116,8 +116,8 @@ public class Zoglin extends Monster implements Enemy, HoglinBase {
         );
     }
 
-    private static void initFightActivity(Brain<Zoglin> p_34237_) {
-        p_34237_.addActivityAndRemoveMemoryWhenStopped(
+    private static void initFightActivity(Brain<Zoglin> brain) {
+        brain.addActivityAndRemoveMemoryWhenStopped(
             Activity.FIGHT,
             10,
             ImmutableList.of(
@@ -137,21 +137,21 @@ public class Zoglin extends Monster implements Enemy, HoglinBase {
             .findClosest(this::isTargetable);
     }
 
-    private boolean isTargetable(LivingEntity p_34253_) {
-        EntityType<?> entitytype = p_34253_.getType();
-        return entitytype != EntityType.ZOGLIN && entitytype != EntityType.CREEPER && Sensor.isEntityAttackable(this, p_34253_);
+    private boolean isTargetable(LivingEntity livingEntity) {
+        EntityType<?> entitytype = livingEntity.getType();
+        return entitytype != EntityType.ZOGLIN && entitytype != EntityType.CREEPER && Sensor.isEntityAttackable(this, livingEntity);
     }
 
     @Override
-    protected void defineSynchedData(SynchedEntityData.Builder p_326281_) {
-        super.defineSynchedData(p_326281_);
-        p_326281_.define(DATA_BABY_ID, false);
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DATA_BABY_ID, false);
     }
 
     @Override
-    public void onSyncedDataUpdated(EntityDataAccessor<?> p_34225_) {
-        super.onSyncedDataUpdated(p_34225_);
-        if (DATA_BABY_ID.equals(p_34225_)) {
+    public void onSyncedDataUpdated(EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (DATA_BABY_ID.equals(key)) {
             this.refreshDimensions();
         }
     }
@@ -170,14 +170,14 @@ public class Zoglin extends Monster implements Enemy, HoglinBase {
     }
 
     @Override
-    public boolean doHurtTarget(Entity p_34207_) {
-        if (!(p_34207_ instanceof LivingEntity)) {
+    public boolean doHurtTarget(Entity entity) {
+        if (!(entity instanceof LivingEntity)) {
             return false;
         } else {
             this.attackAnimationRemainingTicks = 10;
             this.level().broadcastEntityEvent(this, (byte)4);
             this.makeSound(SoundEvents.ZOGLIN_ATTACK);
-            return HoglinBase.hurtAndThrowTarget(this, (LivingEntity)p_34207_);
+            return HoglinBase.hurtAndThrowTarget(this, (LivingEntity)entity);
         }
     }
 
@@ -187,19 +187,22 @@ public class Zoglin extends Monster implements Enemy, HoglinBase {
     }
 
     @Override
-    protected void blockedByShield(LivingEntity p_34246_) {
+    protected void blockedByShield(LivingEntity entity) {
         if (!this.isBaby()) {
-            HoglinBase.throwTarget(this, p_34246_);
+            HoglinBase.throwTarget(this, entity);
         }
     }
 
+    /**
+     * Called when the entity is attacked.
+     */
     @Override
-    public boolean hurt(DamageSource p_34214_, float p_34215_) {
-        boolean flag = super.hurt(p_34214_, p_34215_);
+    public boolean hurt(DamageSource source, float amount) {
+        boolean flag = super.hurt(source, amount);
         if (this.level().isClientSide) {
             return false;
-        } else if (flag && p_34214_.getEntity() instanceof LivingEntity) {
-            LivingEntity livingentity = (LivingEntity)p_34214_.getEntity();
+        } else if (flag && source.getEntity() instanceof LivingEntity) {
+            LivingEntity livingentity = (LivingEntity)source.getEntity();
             if (this.canAttack(livingentity) && !BehaviorUtils.isOtherTargetMuchFurtherAwayThanCurrentAttackTarget(this, livingentity, 4.0)) {
                 this.setAttackTarget(livingentity);
             }
@@ -210,9 +213,9 @@ public class Zoglin extends Monster implements Enemy, HoglinBase {
         }
     }
 
-    private void setAttackTarget(LivingEntity p_34255_) {
+    private void setAttackTarget(LivingEntity target) {
         this.brain.eraseMemory(MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE);
-        this.brain.setMemoryWithExpiry(MemoryModuleType.ATTACK_TARGET, p_34255_, 200L);
+        this.brain.setMemoryWithExpiry(MemoryModuleType.ATTACK_TARGET, target, 200L);
     }
 
     @Override
@@ -239,10 +242,13 @@ public class Zoglin extends Monster implements Enemy, HoglinBase {
         this.updateActivity();
     }
 
+    /**
+     * Set whether this zombie is a child.
+     */
     @Override
-    public void setBaby(boolean p_34227_) {
-        this.getEntityData().set(DATA_BABY_ID, p_34227_);
-        if (!this.level().isClientSide && p_34227_) {
+    public void setBaby(boolean childZombie) {
+        this.getEntityData().set(DATA_BABY_ID, childZombie);
+        if (!this.level().isClientSide && childZombie) {
             this.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(0.5);
         }
     }
@@ -261,13 +267,16 @@ public class Zoglin extends Monster implements Enemy, HoglinBase {
         super.aiStep();
     }
 
+    /**
+     * Handler for {@link World#setEntityState}
+     */
     @Override
-    public void handleEntityEvent(byte p_34212_) {
-        if (p_34212_ == 4) {
+    public void handleEntityEvent(byte id) {
+        if (id == 4) {
             this.attackAnimationRemainingTicks = 10;
             this.makeSound(SoundEvents.ZOGLIN_ATTACK);
         } else {
-            super.handleEntityEvent(p_34212_);
+            super.handleEntityEvent(id);
         }
     }
 
@@ -286,7 +295,7 @@ public class Zoglin extends Monster implements Enemy, HoglinBase {
     }
 
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_34244_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return SoundEvents.ZOGLIN_HURT;
     }
 
@@ -296,7 +305,7 @@ public class Zoglin extends Monster implements Enemy, HoglinBase {
     }
 
     @Override
-    protected void playStepSound(BlockPos p_34231_, BlockState p_34232_) {
+    protected void playStepSound(BlockPos pos, BlockState block) {
         this.playSound(SoundEvents.ZOGLIN_STEP, 0.15F, 1.0F);
     }
 
@@ -317,17 +326,20 @@ public class Zoglin extends Monster implements Enemy, HoglinBase {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag p_34234_) {
-        super.addAdditionalSaveData(p_34234_);
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
         if (this.isBaby()) {
-            p_34234_.putBoolean("IsBaby", true);
+            compound.putBoolean("IsBaby", true);
         }
     }
 
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
     @Override
-    public void readAdditionalSaveData(CompoundTag p_34223_) {
-        super.readAdditionalSaveData(p_34223_);
-        if (p_34223_.getBoolean("IsBaby")) {
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+        if (compound.getBoolean("IsBaby")) {
             this.setBaby(true);
         }
     }

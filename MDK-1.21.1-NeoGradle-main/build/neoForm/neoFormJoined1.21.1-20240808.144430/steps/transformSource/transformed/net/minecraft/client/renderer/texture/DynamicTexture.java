@@ -19,8 +19,8 @@ public class DynamicTexture extends AbstractTexture implements Dumpable {
     @Nullable
     private NativeImage pixels;
 
-    public DynamicTexture(NativeImage p_117984_) {
-        this.pixels = p_117984_;
+    public DynamicTexture(NativeImage pixels) {
+        this.pixels = pixels;
         if (!RenderSystem.isOnRenderThread()) {
             RenderSystem.recordRenderCall(() -> {
                 TextureUtil.prepareImage(this.getId(), this.pixels.getWidth(), this.pixels.getHeight());
@@ -32,13 +32,13 @@ public class DynamicTexture extends AbstractTexture implements Dumpable {
         }
     }
 
-    public DynamicTexture(int p_117980_, int p_117981_, boolean p_117982_) {
-        this.pixels = new NativeImage(p_117980_, p_117981_, p_117982_);
+    public DynamicTexture(int width, int height, boolean useCalloc) {
+        this.pixels = new NativeImage(width, height, useCalloc);
         TextureUtil.prepareImage(this.getId(), this.pixels.getWidth(), this.pixels.getHeight());
     }
 
     @Override
-    public void load(ResourceManager p_117987_) {
+    public void load(ResourceManager manager) {
     }
 
     public void upload() {
@@ -55,12 +55,12 @@ public class DynamicTexture extends AbstractTexture implements Dumpable {
         return this.pixels;
     }
 
-    public void setPixels(NativeImage p_117989_) {
+    public void setPixels(NativeImage pixels) {
         if (this.pixels != null) {
             this.pixels.close();
         }
 
-        this.pixels = p_117989_;
+        this.pixels = pixels;
     }
 
     @Override
@@ -73,10 +73,10 @@ public class DynamicTexture extends AbstractTexture implements Dumpable {
     }
 
     @Override
-    public void dumpContents(ResourceLocation p_276119_, Path p_276105_) throws IOException {
+    public void dumpContents(ResourceLocation resourceLocation, Path p_path) throws IOException {
         if (this.pixels != null) {
-            String s = p_276119_.toDebugFileName() + ".png";
-            Path path = p_276105_.resolve(s);
+            String s = resourceLocation.toDebugFileName() + ".png";
+            Path path = p_path.resolve(s);
             this.pixels.writeToFile(path);
         }
     }

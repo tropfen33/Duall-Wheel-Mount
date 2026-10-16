@@ -17,17 +17,17 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 
 @FunctionalInterface
 public interface PieceGeneratorSupplier<C extends FeatureConfiguration> {
-    Optional<PieceGenerator<C>> createGenerator(PieceGeneratorSupplier.Context<C> p_197348_);
+    Optional<PieceGenerator<C>> createGenerator(PieceGeneratorSupplier.Context<C> context);
 
     static <C extends FeatureConfiguration> PieceGeneratorSupplier<C> simple(
-        Predicate<PieceGeneratorSupplier.Context<C>> p_197350_, PieceGenerator<C> p_197351_
+        Predicate<PieceGeneratorSupplier.Context<C>> predicate, PieceGenerator<C> pieceGenerator
     ) {
-        Optional<PieceGenerator<C>> optional = Optional.of(p_197351_);
-        return p_197344_ -> p_197350_.test(p_197344_) ? optional : Optional.empty();
+        Optional<PieceGenerator<C>> optional = Optional.of(pieceGenerator);
+        return p_197344_ -> predicate.test(p_197344_) ? optional : Optional.empty();
     }
 
-    static <C extends FeatureConfiguration> Predicate<PieceGeneratorSupplier.Context<C>> checkForBiomeOnTop(Heightmap.Types p_197346_) {
-        return p_197340_ -> p_197340_.validBiomeOnTop(p_197346_);
+    static <C extends FeatureConfiguration> Predicate<PieceGeneratorSupplier.Context<C>> checkForBiomeOnTop(Heightmap.Types heightmapType) {
+        return p_197340_ -> p_197340_.validBiomeOnTop(heightmapType);
     }
 
     public static record Context<C extends FeatureConfiguration>(
@@ -42,10 +42,10 @@ public interface PieceGeneratorSupplier<C extends FeatureConfiguration> {
         StructureTemplateManager structureTemplateManager,
         RegistryAccess registryAccess
     ) {
-        public boolean validBiomeOnTop(Heightmap.Types p_197381_) {
+        public boolean validBiomeOnTop(Heightmap.Types heightmapType) {
             int i = this.chunkPos.getMiddleBlockX();
             int j = this.chunkPos.getMiddleBlockZ();
-            int k = this.chunkGenerator.getFirstOccupiedHeight(i, j, p_197381_, this.heightAccessor, this.randomState);
+            int k = this.chunkGenerator.getFirstOccupiedHeight(i, j, heightmapType, this.heightAccessor, this.randomState);
             Holder<Biome> holder = this.chunkGenerator
                 .getBiomeSource()
                 .getNoiseBiome(QuartPos.fromBlock(i), QuartPos.fromBlock(k), QuartPos.fromBlock(j), this.randomState.sampler());

@@ -26,21 +26,24 @@ public class StriderRenderer extends MobRenderer<Strider, StriderModel<Strider>>
         );
     }
 
-    public ResourceLocation getTextureLocation(Strider p_116064_) {
-        return p_116064_.isSuffocating() ? COLD_LOCATION : STRIDER_LOCATION;
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Strider entity) {
+        return entity.isSuffocating() ? COLD_LOCATION : STRIDER_LOCATION;
     }
 
-    protected float getShadowRadius(Strider p_316706_) {
-        float f = super.getShadowRadius(p_316706_);
-        return p_316706_.isBaby() ? f * 0.5F : f;
+    protected float getShadowRadius(Strider entity) {
+        float f = super.getShadowRadius(entity);
+        return entity.isBaby() ? f * 0.5F : f;
     }
 
-    protected void scale(Strider p_320685_, PoseStack p_319790_, float p_319907_) {
-        float f = p_320685_.getAgeScale();
-        p_319790_.scale(f, f, f);
+    protected void scale(Strider livingEntity, PoseStack poseStack, float partialTickTime) {
+        float f = livingEntity.getAgeScale();
+        poseStack.scale(f, f, f);
     }
 
-    protected boolean isShaking(Strider p_116070_) {
-        return super.isShaking(p_116070_) || p_116070_.isSuffocating();
+    protected boolean isShaking(Strider entity) {
+        return super.isShaking(entity) || entity.isSuffocating();
     }
 }

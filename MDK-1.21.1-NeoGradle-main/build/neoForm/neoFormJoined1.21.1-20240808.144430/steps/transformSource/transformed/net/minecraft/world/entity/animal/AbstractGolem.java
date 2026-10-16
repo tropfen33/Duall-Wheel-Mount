@@ -8,8 +8,8 @@ import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.level.Level;
 
 public abstract class AbstractGolem extends PathfinderMob {
-    protected AbstractGolem(EntityType<? extends AbstractGolem> p_27508_, Level p_27509_) {
-        super(p_27508_, p_27509_);
+    protected AbstractGolem(EntityType<? extends AbstractGolem> entityType, Level level) {
+        super(entityType, level);
     }
 
     @Nullable
@@ -20,7 +20,7 @@ public abstract class AbstractGolem extends PathfinderMob {
 
     @Nullable
     @Override
-    protected SoundEvent getHurtSound(DamageSource p_27517_) {
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
         return null;
     }
 
@@ -36,7 +36,7 @@ public abstract class AbstractGolem extends PathfinderMob {
     }
 
     @Override
-    public boolean removeWhenFarAway(double p_27519_) {
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return false;
     }
 }

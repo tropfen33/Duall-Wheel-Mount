@@ -7,15 +7,15 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 
 public class TippedArrowRecipe extends CustomRecipe {
-    public TippedArrowRecipe(CraftingBookCategory p_252163_) {
-        super(p_252163_);
+    public TippedArrowRecipe(CraftingBookCategory category) {
+        super(category);
     }
 
-    public boolean matches(CraftingInput p_345143_, Level p_44516_) {
-        if (p_345143_.width() == 3 && p_345143_.height() == 3) {
-            for (int i = 0; i < p_345143_.height(); i++) {
-                for (int j = 0; j < p_345143_.width(); j++) {
-                    ItemStack itemstack = p_345143_.getItem(j, i);
+    public boolean matches(CraftingInput input, Level level) {
+        if (input.width() == 3 && input.height() == 3) {
+            for (int i = 0; i < input.height(); i++) {
+                for (int j = 0; j < input.width(); j++) {
+                    ItemStack itemstack = input.getItem(j, i);
                     if (itemstack.isEmpty()) {
                         return false;
                     }
@@ -36,8 +36,8 @@ public class TippedArrowRecipe extends CustomRecipe {
         }
     }
 
-    public ItemStack assemble(CraftingInput p_345174_, HolderLookup.Provider p_335792_) {
-        ItemStack itemstack = p_345174_.getItem(1, 1);
+    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
+        ItemStack itemstack = input.getItem(1, 1);
         if (!itemstack.is(Items.LINGERING_POTION)) {
             return ItemStack.EMPTY;
         } else {
@@ -47,9 +47,12 @@ public class TippedArrowRecipe extends CustomRecipe {
         }
     }
 
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
     @Override
-    public boolean canCraftInDimensions(int p_44505_, int p_44506_) {
-        return p_44505_ >= 3 && p_44506_ >= 3;
+    public boolean canCraftInDimensions(int width, int height) {
+        return width >= 3 && height >= 3;
     }
 
     @Override

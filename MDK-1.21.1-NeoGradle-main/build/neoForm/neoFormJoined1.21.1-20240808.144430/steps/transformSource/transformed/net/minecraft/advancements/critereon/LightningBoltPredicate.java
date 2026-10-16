@@ -19,8 +19,8 @@ public record LightningBoltPredicate(MinMaxBounds.Ints blocksSetOnFire, Optional
                 .apply(p_337377_, LightningBoltPredicate::new)
     );
 
-    public static LightningBoltPredicate blockSetOnFire(MinMaxBounds.Ints p_299013_) {
-        return new LightningBoltPredicate(p_299013_, Optional.empty());
+    public static LightningBoltPredicate blockSetOnFire(MinMaxBounds.Ints blocksSetOnFire) {
+        return new LightningBoltPredicate(blocksSetOnFire, Optional.empty());
     }
 
     @Override
@@ -29,13 +29,13 @@ public record LightningBoltPredicate(MinMaxBounds.Ints blocksSetOnFire, Optional
     }
 
     @Override
-    public boolean matches(Entity p_299034_, ServerLevel p_299101_, @Nullable Vec3 p_298929_) {
-        return !(p_299034_ instanceof LightningBolt lightningbolt)
+    public boolean matches(Entity entity, ServerLevel level, @Nullable Vec3 position) {
+        return !(entity instanceof LightningBolt lightningbolt)
             ? false
             : this.blocksSetOnFire.matches(lightningbolt.getBlocksSetOnFire())
                 && (
                     this.entityStruck.isEmpty()
-                        || lightningbolt.getHitEntities().anyMatch(p_298360_ -> this.entityStruck.get().matches(p_299101_, p_298929_, p_298360_))
+                        || lightningbolt.getHitEntities().anyMatch(p_298360_ -> this.entityStruck.get().matches(level, position, p_298360_))
                 );
     }
 }

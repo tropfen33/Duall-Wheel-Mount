@@ -15,27 +15,30 @@ public abstract class AbstractCookingRecipe implements Recipe<SingleRecipeInput>
     protected final int cookingTime;
 
     public AbstractCookingRecipe(
-        RecipeType<?> p_250197_, String p_249518_, CookingBookCategory p_250891_, Ingredient p_251354_, ItemStack p_252185_, float p_252165_, int p_250256_
+        RecipeType<?> type, String group, CookingBookCategory category, Ingredient ingredient, ItemStack result, float experience, int cookingTime
     ) {
-        this.type = p_250197_;
-        this.category = p_250891_;
-        this.group = p_249518_;
-        this.ingredient = p_251354_;
-        this.result = p_252185_;
-        this.experience = p_252165_;
-        this.cookingTime = p_250256_;
+        this.type = type;
+        this.category = category;
+        this.group = group;
+        this.ingredient = ingredient;
+        this.result = result;
+        this.experience = experience;
+        this.cookingTime = cookingTime;
     }
 
-    public boolean matches(SingleRecipeInput p_344849_, Level p_345973_) {
-        return this.ingredient.test(p_344849_.item());
+    public boolean matches(SingleRecipeInput input, Level level) {
+        return this.ingredient.test(input.item());
     }
 
-    public ItemStack assemble(SingleRecipeInput p_344838_, HolderLookup.Provider p_336115_) {
+    public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {
         return this.result.copy();
     }
 
+    /**
+     * Used to determine if this recipe can fit in a grid of the given width/height
+     */
     @Override
-    public boolean canCraftInDimensions(int p_43743_, int p_43744_) {
+    public boolean canCraftInDimensions(int width, int height) {
         return true;
     }
 
@@ -51,7 +54,7 @@ public abstract class AbstractCookingRecipe implements Recipe<SingleRecipeInput>
     }
 
     @Override
-    public ItemStack getResultItem(HolderLookup.Provider p_336110_) {
+    public ItemStack getResultItem(HolderLookup.Provider registries) {
         return this.result;
     }
 
@@ -74,6 +77,6 @@ public abstract class AbstractCookingRecipe implements Recipe<SingleRecipeInput>
     }
 
     public interface Factory<T extends AbstractCookingRecipe> {
-        T create(String p_312581_, CookingBookCategory p_312220_, Ingredient p_312282_, ItemStack p_311868_, float p_312803_, int p_312165_);
+        T create(String group, CookingBookCategory category, Ingredient ingredient, ItemStack result, float experience, int cookingTime);
     }
 }

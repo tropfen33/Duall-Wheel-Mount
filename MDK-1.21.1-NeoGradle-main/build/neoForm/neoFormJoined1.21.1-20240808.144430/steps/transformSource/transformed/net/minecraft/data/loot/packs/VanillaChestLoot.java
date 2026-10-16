@@ -39,9 +39,9 @@ import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
 
 public record VanillaChestLoot(HolderLookup.Provider registries) implements LootTableSubProvider {
     @Override
-    public void generate(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> p_250931_) {
+    public void generate(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> output) {
         HolderLookup.RegistryLookup<Enchantment> registrylookup = this.registries.lookupOrThrow(Registries.ENCHANTMENT);
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.ABANDONED_MINESHAFT,
             LootTable.lootTable()
                 .withPool(
@@ -99,11 +99,11 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Blocks.TORCH).setWeight(15).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 16.0F))))
                 )
         );
-        p_250931_.accept(BuiltInLootTables.BASTION_BRIDGE, this.bastionBridgeLootTable());
-        p_250931_.accept(BuiltInLootTables.BASTION_HOGLIN_STABLE, this.bastionHoglinStableLootTable());
-        p_250931_.accept(BuiltInLootTables.BASTION_OTHER, this.bastionOtherLootTable());
-        p_250931_.accept(BuiltInLootTables.BASTION_TREASURE, this.bastionTreasureLootTable());
-        p_250931_.accept(
+        output.accept(BuiltInLootTables.BASTION_BRIDGE, this.bastionBridgeLootTable());
+        output.accept(BuiltInLootTables.BASTION_HOGLIN_STABLE, this.bastionHoglinStableLootTable());
+        output.accept(BuiltInLootTables.BASTION_OTHER, this.bastionOtherLootTable());
+        output.accept(BuiltInLootTables.BASTION_TREASURE, this.bastionTreasureLootTable());
+        output.accept(
             BuiltInLootTables.BURIED_TREASURE,
             LootTable.lootTable()
                 .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1.0F)).add(LootItem.lootTableItem(Items.HEART_OF_THE_SEA)))
@@ -144,8 +144,8 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .apply(SetPotionFunction.setPotion(Potions.WATER_BREATHING))
                 )
         );
-        p_250931_.accept(BuiltInLootTables.ANCIENT_CITY, this.ancientCityLootTable());
-        p_250931_.accept(
+        output.accept(BuiltInLootTables.ANCIENT_CITY, this.ancientCityLootTable());
+        output.accept(
             BuiltInLootTables.ANCIENT_CITY_ICE_BOX,
             LootTable.lootTable()
                 .withPool(
@@ -173,9 +173,9 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.SNOWBALL).setWeight(4).apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 6.0F))))
                 )
         );
-        p_250931_.accept(BuiltInLootTables.DESERT_PYRAMID, this.desertPyramidLootTable());
-        p_250931_.accept(BuiltInLootTables.END_CITY_TREASURE, this.endCityTreasureLootTable());
-        p_250931_.accept(
+        output.accept(BuiltInLootTables.DESERT_PYRAMID, this.desertPyramidLootTable());
+        output.accept(BuiltInLootTables.END_CITY_TREASURE, this.endCityTreasureLootTable());
+        output.accept(
             BuiltInLootTables.IGLOO_CHEST,
             LootTable.lootTable()
                 .withPool(
@@ -191,8 +191,8 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                 )
                 .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1.0F)).add(LootItem.lootTableItem(Items.GOLDEN_APPLE)))
         );
-        p_250931_.accept(BuiltInLootTables.JUNGLE_TEMPLE, this.jungleTempleLootTable());
-        p_250931_.accept(
+        output.accept(BuiltInLootTables.JUNGLE_TEMPLE, this.jungleTempleLootTable());
+        output.accept(
             BuiltInLootTables.JUNGLE_TEMPLE_DISPENSER,
             LootTable.lootTable()
                 .withPool(
@@ -201,12 +201,12 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.ARROW).setWeight(30).apply(SetItemCountFunction.setCount(UniformGenerator.between(2.0F, 7.0F))))
                 )
         );
-        p_250931_.accept(BuiltInLootTables.NETHER_BRIDGE, this.netherBridgeLootTable());
-        p_250931_.accept(BuiltInLootTables.PILLAGER_OUTPOST, this.pillagerOutpostLootTable());
-        p_250931_.accept(BuiltInLootTables.SHIPWRECK_MAP, this.shipwreckMapLootTable());
-        p_250931_.accept(BuiltInLootTables.SHIPWRECK_SUPPLY, this.shipwreckSupplyLootTable());
-        p_250931_.accept(BuiltInLootTables.SHIPWRECK_TREASURE, this.shipwreckTreasureLootTable());
-        p_250931_.accept(
+        output.accept(BuiltInLootTables.NETHER_BRIDGE, this.netherBridgeLootTable());
+        output.accept(BuiltInLootTables.PILLAGER_OUTPOST, this.pillagerOutpostLootTable());
+        output.accept(BuiltInLootTables.SHIPWRECK_MAP, this.shipwreckMapLootTable());
+        output.accept(BuiltInLootTables.SHIPWRECK_SUPPLY, this.shipwreckSupplyLootTable());
+        output.accept(BuiltInLootTables.SHIPWRECK_TREASURE, this.shipwreckTreasureLootTable());
+        output.accept(
             BuiltInLootTables.SIMPLE_DUNGEON,
             LootTable.lootTable()
                 .withPool(
@@ -257,7 +257,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.STRING).setWeight(10).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 8.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.SPAWN_BONUS_CHEST,
             LootTable.lootTable()
                 .withPool(
@@ -299,8 +299,8 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         )
                 )
         );
-        p_250931_.accept(BuiltInLootTables.STRONGHOLD_CORRIDOR, this.strongholdCorridorLootTable());
-        p_250931_.accept(
+        output.accept(BuiltInLootTables.STRONGHOLD_CORRIDOR, this.strongholdCorridorLootTable());
+        output.accept(
             BuiltInLootTables.STRONGHOLD_CROSSING,
             LootTable.lootTable()
                 .withPool(
@@ -319,8 +319,8 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         )
                 )
         );
-        p_250931_.accept(BuiltInLootTables.STRONGHOLD_LIBRARY, this.strongholdLibraryLootTable());
-        p_250931_.accept(
+        output.accept(BuiltInLootTables.STRONGHOLD_LIBRARY, this.strongholdLibraryLootTable());
+        output.accept(
             BuiltInLootTables.UNDERWATER_RUIN_BIG,
             LootTable.lootTable()
                 .withPool(
@@ -353,7 +353,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         )
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.UNDERWATER_RUIN_SMALL,
             LootTable.lootTable()
                 .withPool(
@@ -385,7 +385,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         )
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_WEAPONSMITH,
             LootTable.lootTable()
                 .withPool(
@@ -410,7 +410,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.DIAMOND_HORSE_ARMOR))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_TOOLSMITH,
             LootTable.lootTable()
                 .withPool(
@@ -426,7 +426,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.IRON_SHOVEL).setWeight(5))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_CARTOGRAPHER,
             LootTable.lootTable()
                 .withPool(
@@ -439,7 +439,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.STICK).setWeight(5).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_MASON,
             LootTable.lootTable()
                 .withPool(
@@ -455,7 +455,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.EMERALD).setWeight(1))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_ARMORER,
             LootTable.lootTable()
                 .withPool(
@@ -467,7 +467,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.EMERALD).setWeight(1))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_SHEPHERD,
             LootTable.lootTable()
                 .withPool(
@@ -487,7 +487,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.WHEAT).setWeight(6).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 6.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_BUTCHER,
             LootTable.lootTable()
                 .withPool(
@@ -501,7 +501,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.COAL).setWeight(3).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_FLETCHER,
             LootTable.lootTable()
                 .withPool(
@@ -515,7 +515,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.STICK).setWeight(6).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_FISHER,
             LootTable.lootTable()
                 .withPool(
@@ -530,7 +530,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.COAL).setWeight(2).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_TANNERY,
             LootTable.lootTable()
                 .withPool(
@@ -546,7 +546,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.EMERALD).setWeight(1).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 4.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_TEMPLE,
             LootTable.lootTable()
                 .withPool(
@@ -560,7 +560,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.EMERALD).setWeight(1).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 4.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_PLAINS_HOUSE,
             LootTable.lootTable()
                 .withPool(
@@ -578,7 +578,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Blocks.OAK_SAPLING).setWeight(5).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_TAIGA_HOUSE,
             LootTable.lootTable()
                 .withPool(
@@ -606,7 +606,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.SPRUCE_LOG).setWeight(10).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 5.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_SAVANNA_HOUSE,
             LootTable.lootTable()
                 .withPool(
@@ -628,7 +628,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.BUCKET).setWeight(1))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_SNOWY_HOUSE,
             LootTable.lootTable()
                 .withPool(
@@ -650,7 +650,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.COAL).setWeight(5).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 4.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.VILLAGE_DESERT_HOUSE,
             LootTable.lootTable()
                 .withPool(
@@ -666,8 +666,8 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.EMERALD).setWeight(1).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 3.0F))))
                 )
         );
-        p_250931_.accept(BuiltInLootTables.WOODLAND_MANSION, this.woodlandMansionLootTable());
-        p_250931_.accept(
+        output.accept(BuiltInLootTables.WOODLAND_MANSION, this.woodlandMansionLootTable());
+        output.accept(
             BuiltInLootTables.RUINED_PORTAL,
             LootTable.lootTable()
                 .withPool(
@@ -740,7 +740,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.GOLD_BLOCK).setWeight(1).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_CORRIDOR_DISPENSER,
             LootTable.lootTable()
                 .withPool(
@@ -749,7 +749,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.ARROW).apply(SetItemCountFunction.setCount(UniformGenerator.between(4.0F, 8.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_WATER_DISPENSER,
             LootTable.lootTable()
                 .withPool(
@@ -758,7 +758,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.WATER_BUCKET).apply(SetItemCountFunction.setCount(ConstantValue.exactly(1.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_CHAMBER_DISPENSER,
             LootTable.lootTable()
                 .withPool(
@@ -813,7 +813,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         )
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_CORRIDOR_POT,
             LootTable.lootTable()
                 .withPool(
@@ -829,7 +829,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.DIAMOND_BLOCK).apply(SetItemCountFunction.setCount(ConstantValue.exactly(1.0F))).setWeight(1))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_SUPPLY,
             LootTable.lootTable()
                 .withPool(
@@ -878,7 +878,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.MILK_BUCKET).apply(SetItemCountFunction.setCount(ConstantValue.exactly(1.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_ENTRANCE,
             LootTable.lootTable()
                 .withPool(
@@ -891,7 +891,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.ARROW).apply(SetItemCountFunction.setCount(UniformGenerator.between(5.0F, 10.0F))).setWeight(10))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_INTERSECTION,
             LootTable.lootTable()
                 .withPool(
@@ -923,7 +923,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.IRON_BLOCK).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F))).setWeight(20))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_INTERSECTION_BARREL,
             LootTable.lootTable()
                 .withPool(
@@ -974,7 +974,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         )
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_CORRIDOR,
             LootTable.lootTable()
                 .withPool(
@@ -1014,7 +1014,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.TUFF).apply(SetItemCountFunction.setCount(UniformGenerator.between(8.0F, 20.0F))).setWeight(3))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_REWARD_RARE,
             LootTable.lootTable()
                 .withPool(
@@ -1090,7 +1090,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         )
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_REWARD_COMMON,
             LootTable.lootTable()
                 .withPool(
@@ -1117,7 +1117,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.DIAMOND).setWeight(1).apply(SetItemCountFunction.setCount(UniformGenerator.between(1.0F, 2.0F))))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_REWARD_UNIQUE,
             LootTable.lootTable()
                 .withPool(
@@ -1130,7 +1130,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.TRIDENT).setWeight(1))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_REWARD,
             LootTable.lootTable()
                 .withPool(
@@ -1151,7 +1151,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(NestedLootTable.lootTableReference(BuiltInLootTables.TRIAL_CHAMBERS_REWARD_UNIQUE))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_REWARD_OMINOUS_RARE,
             LootTable.lootTable()
                 .withPool(
@@ -1212,7 +1212,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.DIAMOND_BLOCK).setWeight(1))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_REWARD_OMINOUS_COMMON,
             LootTable.lootTable()
                 .withPool(
@@ -1235,7 +1235,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         )
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_REWARD_OMINOUS_UNIQUE,
             LootTable.lootTable()
                 .withPool(
@@ -1248,7 +1248,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(LootItem.lootTableItem(Items.HEAVY_CORE).setWeight(1))
                 )
         );
-        p_250931_.accept(
+        output.accept(
             BuiltInLootTables.TRIAL_CHAMBERS_REWARD_OMINOUS,
             LootTable.lootTable()
                 .withPool(
@@ -1269,16 +1269,16 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         .add(NestedLootTable.lootTableReference(BuiltInLootTables.TRIAL_CHAMBERS_REWARD_OMINOUS_UNIQUE))
                 )
         );
-        this.spawnerLootTables(p_250931_);
+        this.spawnerLootTables(output);
     }
 
-    public void spawnerLootTables(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> p_311958_) {
+    public void spawnerLootTables(BiConsumer<ResourceKey<LootTable>, LootTable.Builder> output) {
         HolderLookup.RegistryLookup<Enchantment> registrylookup = this.registries.lookupOrThrow(Registries.ENCHANTMENT);
-        p_311958_.accept(
+        output.accept(
             BuiltInLootTables.SPAWNER_TRIAL_CHAMBER_KEY,
             LootTable.lootTable().withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1.0F)).add(LootItem.lootTableItem(Items.TRIAL_KEY)))
         );
-        p_311958_.accept(
+        output.accept(
             BuiltInLootTables.SPAWNER_TRIAL_CHAMBER_CONSUMABLES,
             LootTable.lootTable()
                 .withPool(
@@ -1299,11 +1299,11 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         )
                 )
         );
-        p_311958_.accept(
+        output.accept(
             BuiltInLootTables.SPAWNER_OMINOUS_TRIAL_CHAMBER_KEY,
             LootTable.lootTable().withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1.0F)).add(LootItem.lootTableItem(Items.OMINOUS_TRIAL_KEY)))
         );
-        p_311958_.accept(
+        output.accept(
             BuiltInLootTables.SPAWNER_OMINOUS_TRIAL_CHAMBER_CONSUMABLES,
             LootTable.lootTable()
                 .withPool(
@@ -1326,7 +1326,7 @@ public record VanillaChestLoot(HolderLookup.Provider registries) implements Loot
                         )
                 )
         );
-        p_311958_.accept(
+        output.accept(
             BuiltInLootTables.SPAWNER_TRIAL_ITEMS_TO_DROP_WHEN_OMINOUS,
             LootTable.lootTable()
                 .withPool(

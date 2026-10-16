@@ -12,25 +12,25 @@ import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 
 public interface EquipmentUser {
-    void setItemSlot(EquipmentSlot p_338576_, ItemStack p_338519_);
+    void setItemSlot(EquipmentSlot slot, ItemStack stack);
 
-    ItemStack getItemBySlot(EquipmentSlot p_338597_);
+    ItemStack getItemBySlot(EquipmentSlot slot);
 
-    void setDropChance(EquipmentSlot p_338643_, float p_338569_);
+    void setDropChance(EquipmentSlot slot, float dropChance);
 
-    default void equip(EquipmentTable p_340994_, LootParams p_338408_) {
-        this.equip(p_340994_.lootTable(), p_338408_, p_340994_.slotDropChances());
+    default void equip(EquipmentTable equipmentTable, LootParams params) {
+        this.equip(equipmentTable.lootTable(), params, equipmentTable.slotDropChances());
     }
 
-    default void equip(ResourceKey<LootTable> p_341330_, LootParams p_340863_, Map<EquipmentSlot, Float> p_341011_) {
-        this.equip(p_341330_, p_340863_, 0L, p_341011_);
+    default void equip(ResourceKey<LootTable> equipmentLootTable, LootParams params, Map<EquipmentSlot, Float> slotDropChances) {
+        this.equip(equipmentLootTable, params, 0L, slotDropChances);
     }
 
-    default void equip(ResourceKey<LootTable> p_340873_, LootParams p_338202_, long p_341024_, Map<EquipmentSlot, Float> p_341367_) {
-        if (!p_340873_.equals(BuiltInLootTables.EMPTY)) {
-            LootTable loottable = p_338202_.getLevel().getServer().reloadableRegistries().getLootTable(p_340873_);
+    default void equip(ResourceKey<LootTable> equipmentLootTable, LootParams params, long seed, Map<EquipmentSlot, Float> slotDropChances) {
+        if (!equipmentLootTable.equals(BuiltInLootTables.EMPTY)) {
+            LootTable loottable = params.getLevel().getServer().reloadableRegistries().getLootTable(equipmentLootTable);
             if (loottable != LootTable.EMPTY) {
-                List<ItemStack> list = loottable.getRandomItems(p_338202_, p_341024_);
+                List<ItemStack> list = loottable.getRandomItems(params, seed);
                 List<EquipmentSlot> list1 = new ArrayList<>();
 
                 for (ItemStack itemstack : list) {
@@ -38,7 +38,7 @@ public interface EquipmentUser {
                     if (equipmentslot != null) {
                         ItemStack itemstack1 = equipmentslot.limit(itemstack);
                         this.setItemSlot(equipmentslot, itemstack1);
-                        Float f = p_341367_.get(equipmentslot);
+                        Float f = slotDropChances.get(equipmentslot);
                         if (f != null) {
                             this.setDropChance(equipmentslot, f);
                         }
@@ -51,17 +51,17 @@ public interface EquipmentUser {
     }
 
     @Nullable
-    default EquipmentSlot resolveSlot(ItemStack p_338225_, List<EquipmentSlot> p_338547_) {
-        if (p_338225_.isEmpty()) {
+    default EquipmentSlot resolveSlot(ItemStack stack, List<EquipmentSlot> excludedSlots) {
+        if (stack.isEmpty()) {
             return null;
         } else {
-            Equipable equipable = Equipable.get(p_338225_);
+            Equipable equipable = Equipable.get(stack);
             if (equipable != null) {
                 EquipmentSlot equipmentslot = equipable.getEquipmentSlot();
-                if (!p_338547_.contains(equipmentslot)) {
+                if (!excludedSlots.contains(equipmentslot)) {
                     return equipmentslot;
                 }
-            } else if (!p_338547_.contains(EquipmentSlot.MAINHAND)) {
+            } else if (!excludedSlots.contains(EquipmentSlot.MAINHAND)) {
                 return EquipmentSlot.MAINHAND;
             }
 

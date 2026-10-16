@@ -7,11 +7,11 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class ZombieModel<T extends Zombie> extends AbstractZombieModel<T> {
-    public ZombieModel(ModelPart p_171090_) {
-        super(p_171090_);
+    public ZombieModel(ModelPart root) {
+        super(root);
     }
 
-    public boolean isAggressive(T p_104155_) {
-        return p_104155_.isAggressive();
+    public boolean isAggressive(T entity) {
+        return entity.isAggressive();
     }
 }

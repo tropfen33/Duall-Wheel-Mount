@@ -135,320 +135,320 @@ public class ChunkPalettedStorageFix extends DataFix {
     static final Dynamic<?> AIR = BlockStateData.getTag(0);
     private static final int SIZE = 4096;
 
-    public ChunkPalettedStorageFix(Schema p_15058_, boolean p_15059_) {
-        super(p_15058_, p_15059_);
+    public ChunkPalettedStorageFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
-    private static void mapSkull(Map<String, Dynamic<?>> p_15078_, int p_15079_, String p_15080_, String p_15081_) {
-        p_15078_.put(p_15079_ + "north", BlockStateData.parse("{Name:'minecraft:" + p_15080_ + "_wall_" + p_15081_ + "',Properties:{facing:'north'}}"));
-        p_15078_.put(p_15079_ + "east", BlockStateData.parse("{Name:'minecraft:" + p_15080_ + "_wall_" + p_15081_ + "',Properties:{facing:'east'}}"));
-        p_15078_.put(p_15079_ + "south", BlockStateData.parse("{Name:'minecraft:" + p_15080_ + "_wall_" + p_15081_ + "',Properties:{facing:'south'}}"));
-        p_15078_.put(p_15079_ + "west", BlockStateData.parse("{Name:'minecraft:" + p_15080_ + "_wall_" + p_15081_ + "',Properties:{facing:'west'}}"));
+    private static void mapSkull(Map<String, Dynamic<?>> map, int id, String skullType, String suffix) {
+        map.put(id + "north", BlockStateData.parse("{Name:'minecraft:" + skullType + "_wall_" + suffix + "',Properties:{facing:'north'}}"));
+        map.put(id + "east", BlockStateData.parse("{Name:'minecraft:" + skullType + "_wall_" + suffix + "',Properties:{facing:'east'}}"));
+        map.put(id + "south", BlockStateData.parse("{Name:'minecraft:" + skullType + "_wall_" + suffix + "',Properties:{facing:'south'}}"));
+        map.put(id + "west", BlockStateData.parse("{Name:'minecraft:" + skullType + "_wall_" + suffix + "',Properties:{facing:'west'}}"));
 
         for (int i = 0; i < 16; i++) {
-            p_15078_.put("" + p_15079_ + i, BlockStateData.parse("{Name:'minecraft:" + p_15080_ + "_" + p_15081_ + "',Properties:{rotation:'" + i + "'}}"));
+            map.put("" + id + i, BlockStateData.parse("{Name:'minecraft:" + skullType + "_" + suffix + "',Properties:{rotation:'" + i + "'}}"));
         }
     }
 
-    private static void mapDoor(Map<String, Dynamic<?>> p_15083_, String p_15084_, int p_15085_) {
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "eastlowerleftfalsefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'east',half:'lower',hinge:'left',open:'false',powered:'false'}}")
+    private static void mapDoor(Map<String, Dynamic<?>> map, String doorId, int id) {
+        map.put(
+            "minecraft:" + doorId + "eastlowerleftfalsefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'east',half:'lower',hinge:'left',open:'false',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "eastlowerleftfalsetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'east',half:'lower',hinge:'left',open:'false',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "eastlowerleftfalsetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'east',half:'lower',hinge:'left',open:'false',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "eastlowerlefttruefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'east',half:'lower',hinge:'left',open:'true',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "eastlowerlefttruefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'east',half:'lower',hinge:'left',open:'true',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "eastlowerlefttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'east',half:'lower',hinge:'left',open:'true',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "eastlowerlefttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'east',half:'lower',hinge:'left',open:'true',powered:'true'}}")
         );
-        p_15083_.put("minecraft:" + p_15084_ + "eastlowerrightfalsefalse", BlockStateData.getTag(p_15085_));
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "eastlowerrightfalsetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'east',half:'lower',hinge:'right',open:'false',powered:'true'}}")
+        map.put("minecraft:" + doorId + "eastlowerrightfalsefalse", BlockStateData.getTag(id));
+        map.put(
+            "minecraft:" + doorId + "eastlowerrightfalsetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'east',half:'lower',hinge:'right',open:'false',powered:'true'}}")
         );
-        p_15083_.put("minecraft:" + p_15084_ + "eastlowerrighttruefalse", BlockStateData.getTag(p_15085_ + 4));
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "eastlowerrighttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'east',half:'lower',hinge:'right',open:'true',powered:'true'}}")
+        map.put("minecraft:" + doorId + "eastlowerrighttruefalse", BlockStateData.getTag(id + 4));
+        map.put(
+            "minecraft:" + doorId + "eastlowerrighttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'east',half:'lower',hinge:'right',open:'true',powered:'true'}}")
         );
-        p_15083_.put("minecraft:" + p_15084_ + "eastupperleftfalsefalse", BlockStateData.getTag(p_15085_ + 8));
-        p_15083_.put("minecraft:" + p_15084_ + "eastupperleftfalsetrue", BlockStateData.getTag(p_15085_ + 10));
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "eastupperlefttruefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'east',half:'upper',hinge:'left',open:'true',powered:'false'}}")
+        map.put("minecraft:" + doorId + "eastupperleftfalsefalse", BlockStateData.getTag(id + 8));
+        map.put("minecraft:" + doorId + "eastupperleftfalsetrue", BlockStateData.getTag(id + 10));
+        map.put(
+            "minecraft:" + doorId + "eastupperlefttruefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'east',half:'upper',hinge:'left',open:'true',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "eastupperlefttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'east',half:'upper',hinge:'left',open:'true',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "eastupperlefttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'east',half:'upper',hinge:'left',open:'true',powered:'true'}}")
         );
-        p_15083_.put("minecraft:" + p_15084_ + "eastupperrightfalsefalse", BlockStateData.getTag(p_15085_ + 9));
-        p_15083_.put("minecraft:" + p_15084_ + "eastupperrightfalsetrue", BlockStateData.getTag(p_15085_ + 11));
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "eastupperrighttruefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'east',half:'upper',hinge:'right',open:'true',powered:'false'}}")
+        map.put("minecraft:" + doorId + "eastupperrightfalsefalse", BlockStateData.getTag(id + 9));
+        map.put("minecraft:" + doorId + "eastupperrightfalsetrue", BlockStateData.getTag(id + 11));
+        map.put(
+            "minecraft:" + doorId + "eastupperrighttruefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'east',half:'upper',hinge:'right',open:'true',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "eastupperrighttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'east',half:'upper',hinge:'right',open:'true',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "eastupperrighttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'east',half:'upper',hinge:'right',open:'true',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "northlowerleftfalsefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'north',half:'lower',hinge:'left',open:'false',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "northlowerleftfalsefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'north',half:'lower',hinge:'left',open:'false',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "northlowerleftfalsetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'north',half:'lower',hinge:'left',open:'false',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "northlowerleftfalsetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'north',half:'lower',hinge:'left',open:'false',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "northlowerlefttruefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'north',half:'lower',hinge:'left',open:'true',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "northlowerlefttruefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'north',half:'lower',hinge:'left',open:'true',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "northlowerlefttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'north',half:'lower',hinge:'left',open:'true',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "northlowerlefttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'north',half:'lower',hinge:'left',open:'true',powered:'true'}}")
         );
-        p_15083_.put("minecraft:" + p_15084_ + "northlowerrightfalsefalse", BlockStateData.getTag(p_15085_ + 3));
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "northlowerrightfalsetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'north',half:'lower',hinge:'right',open:'false',powered:'true'}}")
+        map.put("minecraft:" + doorId + "northlowerrightfalsefalse", BlockStateData.getTag(id + 3));
+        map.put(
+            "minecraft:" + doorId + "northlowerrightfalsetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'north',half:'lower',hinge:'right',open:'false',powered:'true'}}")
         );
-        p_15083_.put("minecraft:" + p_15084_ + "northlowerrighttruefalse", BlockStateData.getTag(p_15085_ + 7));
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "northlowerrighttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'north',half:'lower',hinge:'right',open:'true',powered:'true'}}")
+        map.put("minecraft:" + doorId + "northlowerrighttruefalse", BlockStateData.getTag(id + 7));
+        map.put(
+            "minecraft:" + doorId + "northlowerrighttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'north',half:'lower',hinge:'right',open:'true',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "northupperleftfalsefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'north',half:'upper',hinge:'left',open:'false',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "northupperleftfalsefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'north',half:'upper',hinge:'left',open:'false',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "northupperleftfalsetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'north',half:'upper',hinge:'left',open:'false',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "northupperleftfalsetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'north',half:'upper',hinge:'left',open:'false',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "northupperlefttruefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'north',half:'upper',hinge:'left',open:'true',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "northupperlefttruefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'north',half:'upper',hinge:'left',open:'true',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "northupperlefttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'north',half:'upper',hinge:'left',open:'true',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "northupperlefttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'north',half:'upper',hinge:'left',open:'true',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "northupperrightfalsefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'north',half:'upper',hinge:'right',open:'false',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "northupperrightfalsefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'north',half:'upper',hinge:'right',open:'false',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "northupperrightfalsetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'north',half:'upper',hinge:'right',open:'false',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "northupperrightfalsetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'north',half:'upper',hinge:'right',open:'false',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "northupperrighttruefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'north',half:'upper',hinge:'right',open:'true',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "northupperrighttruefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'north',half:'upper',hinge:'right',open:'true',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "northupperrighttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'north',half:'upper',hinge:'right',open:'true',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "northupperrighttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'north',half:'upper',hinge:'right',open:'true',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "southlowerleftfalsefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'south',half:'lower',hinge:'left',open:'false',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "southlowerleftfalsefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'south',half:'lower',hinge:'left',open:'false',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "southlowerleftfalsetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'south',half:'lower',hinge:'left',open:'false',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "southlowerleftfalsetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'south',half:'lower',hinge:'left',open:'false',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "southlowerlefttruefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'south',half:'lower',hinge:'left',open:'true',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "southlowerlefttruefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'south',half:'lower',hinge:'left',open:'true',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "southlowerlefttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'south',half:'lower',hinge:'left',open:'true',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "southlowerlefttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'south',half:'lower',hinge:'left',open:'true',powered:'true'}}")
         );
-        p_15083_.put("minecraft:" + p_15084_ + "southlowerrightfalsefalse", BlockStateData.getTag(p_15085_ + 1));
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "southlowerrightfalsetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'south',half:'lower',hinge:'right',open:'false',powered:'true'}}")
+        map.put("minecraft:" + doorId + "southlowerrightfalsefalse", BlockStateData.getTag(id + 1));
+        map.put(
+            "minecraft:" + doorId + "southlowerrightfalsetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'south',half:'lower',hinge:'right',open:'false',powered:'true'}}")
         );
-        p_15083_.put("minecraft:" + p_15084_ + "southlowerrighttruefalse", BlockStateData.getTag(p_15085_ + 5));
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "southlowerrighttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'south',half:'lower',hinge:'right',open:'true',powered:'true'}}")
+        map.put("minecraft:" + doorId + "southlowerrighttruefalse", BlockStateData.getTag(id + 5));
+        map.put(
+            "minecraft:" + doorId + "southlowerrighttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'south',half:'lower',hinge:'right',open:'true',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "southupperleftfalsefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'south',half:'upper',hinge:'left',open:'false',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "southupperleftfalsefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'south',half:'upper',hinge:'left',open:'false',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "southupperleftfalsetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'south',half:'upper',hinge:'left',open:'false',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "southupperleftfalsetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'south',half:'upper',hinge:'left',open:'false',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "southupperlefttruefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'south',half:'upper',hinge:'left',open:'true',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "southupperlefttruefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'south',half:'upper',hinge:'left',open:'true',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "southupperlefttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'south',half:'upper',hinge:'left',open:'true',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "southupperlefttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'south',half:'upper',hinge:'left',open:'true',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "southupperrightfalsefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'south',half:'upper',hinge:'right',open:'false',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "southupperrightfalsefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'south',half:'upper',hinge:'right',open:'false',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "southupperrightfalsetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'south',half:'upper',hinge:'right',open:'false',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "southupperrightfalsetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'south',half:'upper',hinge:'right',open:'false',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "southupperrighttruefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'south',half:'upper',hinge:'right',open:'true',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "southupperrighttruefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'south',half:'upper',hinge:'right',open:'true',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "southupperrighttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'south',half:'upper',hinge:'right',open:'true',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "southupperrighttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'south',half:'upper',hinge:'right',open:'true',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "westlowerleftfalsefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'west',half:'lower',hinge:'left',open:'false',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "westlowerleftfalsefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'west',half:'lower',hinge:'left',open:'false',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "westlowerleftfalsetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'west',half:'lower',hinge:'left',open:'false',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "westlowerleftfalsetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'west',half:'lower',hinge:'left',open:'false',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "westlowerlefttruefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'west',half:'lower',hinge:'left',open:'true',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "westlowerlefttruefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'west',half:'lower',hinge:'left',open:'true',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "westlowerlefttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'west',half:'lower',hinge:'left',open:'true',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "westlowerlefttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'west',half:'lower',hinge:'left',open:'true',powered:'true'}}")
         );
-        p_15083_.put("minecraft:" + p_15084_ + "westlowerrightfalsefalse", BlockStateData.getTag(p_15085_ + 2));
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "westlowerrightfalsetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'west',half:'lower',hinge:'right',open:'false',powered:'true'}}")
+        map.put("minecraft:" + doorId + "westlowerrightfalsefalse", BlockStateData.getTag(id + 2));
+        map.put(
+            "minecraft:" + doorId + "westlowerrightfalsetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'west',half:'lower',hinge:'right',open:'false',powered:'true'}}")
         );
-        p_15083_.put("minecraft:" + p_15084_ + "westlowerrighttruefalse", BlockStateData.getTag(p_15085_ + 6));
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "westlowerrighttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'west',half:'lower',hinge:'right',open:'true',powered:'true'}}")
+        map.put("minecraft:" + doorId + "westlowerrighttruefalse", BlockStateData.getTag(id + 6));
+        map.put(
+            "minecraft:" + doorId + "westlowerrighttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'west',half:'lower',hinge:'right',open:'true',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "westupperleftfalsefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'west',half:'upper',hinge:'left',open:'false',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "westupperleftfalsefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'west',half:'upper',hinge:'left',open:'false',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "westupperleftfalsetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'west',half:'upper',hinge:'left',open:'false',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "westupperleftfalsetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'west',half:'upper',hinge:'left',open:'false',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "westupperlefttruefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'west',half:'upper',hinge:'left',open:'true',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "westupperlefttruefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'west',half:'upper',hinge:'left',open:'true',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "westupperlefttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'west',half:'upper',hinge:'left',open:'true',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "westupperlefttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'west',half:'upper',hinge:'left',open:'true',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "westupperrightfalsefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'west',half:'upper',hinge:'right',open:'false',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "westupperrightfalsefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'west',half:'upper',hinge:'right',open:'false',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "westupperrightfalsetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'west',half:'upper',hinge:'right',open:'false',powered:'true'}}")
+        map.put(
+            "minecraft:" + doorId + "westupperrightfalsetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'west',half:'upper',hinge:'right',open:'false',powered:'true'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "westupperrighttruefalse",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'west',half:'upper',hinge:'right',open:'true',powered:'false'}}")
+        map.put(
+            "minecraft:" + doorId + "westupperrighttruefalse",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'west',half:'upper',hinge:'right',open:'true',powered:'false'}}")
         );
-        p_15083_.put(
-            "minecraft:" + p_15084_ + "westupperrighttruetrue",
-            BlockStateData.parse("{Name:'minecraft:" + p_15084_ + "',Properties:{facing:'west',half:'upper',hinge:'right',open:'true',powered:'true'}}")
-        );
-    }
-
-    private static void addBeds(Map<String, Dynamic<?>> p_15074_, int p_15075_, String p_15076_) {
-        p_15074_.put(
-            "southfalsefoot" + p_15075_,
-            BlockStateData.parse("{Name:'minecraft:" + p_15076_ + "_bed',Properties:{facing:'south',occupied:'false',part:'foot'}}")
-        );
-        p_15074_.put(
-            "westfalsefoot" + p_15075_, BlockStateData.parse("{Name:'minecraft:" + p_15076_ + "_bed',Properties:{facing:'west',occupied:'false',part:'foot'}}")
-        );
-        p_15074_.put(
-            "northfalsefoot" + p_15075_,
-            BlockStateData.parse("{Name:'minecraft:" + p_15076_ + "_bed',Properties:{facing:'north',occupied:'false',part:'foot'}}")
-        );
-        p_15074_.put(
-            "eastfalsefoot" + p_15075_, BlockStateData.parse("{Name:'minecraft:" + p_15076_ + "_bed',Properties:{facing:'east',occupied:'false',part:'foot'}}")
-        );
-        p_15074_.put(
-            "southfalsehead" + p_15075_,
-            BlockStateData.parse("{Name:'minecraft:" + p_15076_ + "_bed',Properties:{facing:'south',occupied:'false',part:'head'}}")
-        );
-        p_15074_.put(
-            "westfalsehead" + p_15075_, BlockStateData.parse("{Name:'minecraft:" + p_15076_ + "_bed',Properties:{facing:'west',occupied:'false',part:'head'}}")
-        );
-        p_15074_.put(
-            "northfalsehead" + p_15075_,
-            BlockStateData.parse("{Name:'minecraft:" + p_15076_ + "_bed',Properties:{facing:'north',occupied:'false',part:'head'}}")
-        );
-        p_15074_.put(
-            "eastfalsehead" + p_15075_, BlockStateData.parse("{Name:'minecraft:" + p_15076_ + "_bed',Properties:{facing:'east',occupied:'false',part:'head'}}")
-        );
-        p_15074_.put(
-            "southtruehead" + p_15075_, BlockStateData.parse("{Name:'minecraft:" + p_15076_ + "_bed',Properties:{facing:'south',occupied:'true',part:'head'}}")
-        );
-        p_15074_.put(
-            "westtruehead" + p_15075_, BlockStateData.parse("{Name:'minecraft:" + p_15076_ + "_bed',Properties:{facing:'west',occupied:'true',part:'head'}}")
-        );
-        p_15074_.put(
-            "northtruehead" + p_15075_, BlockStateData.parse("{Name:'minecraft:" + p_15076_ + "_bed',Properties:{facing:'north',occupied:'true',part:'head'}}")
-        );
-        p_15074_.put(
-            "easttruehead" + p_15075_, BlockStateData.parse("{Name:'minecraft:" + p_15076_ + "_bed',Properties:{facing:'east',occupied:'true',part:'head'}}")
+        map.put(
+            "minecraft:" + doorId + "westupperrighttruetrue",
+            BlockStateData.parse("{Name:'minecraft:" + doorId + "',Properties:{facing:'west',half:'upper',hinge:'right',open:'true',powered:'true'}}")
         );
     }
 
-    private static void addBanners(Map<String, Dynamic<?>> p_15097_, int p_15098_, String p_15099_) {
+    private static void addBeds(Map<String, Dynamic<?>> map, int id, String bedColor) {
+        map.put(
+            "southfalsefoot" + id,
+            BlockStateData.parse("{Name:'minecraft:" + bedColor + "_bed',Properties:{facing:'south',occupied:'false',part:'foot'}}")
+        );
+        map.put(
+            "westfalsefoot" + id, BlockStateData.parse("{Name:'minecraft:" + bedColor + "_bed',Properties:{facing:'west',occupied:'false',part:'foot'}}")
+        );
+        map.put(
+            "northfalsefoot" + id,
+            BlockStateData.parse("{Name:'minecraft:" + bedColor + "_bed',Properties:{facing:'north',occupied:'false',part:'foot'}}")
+        );
+        map.put(
+            "eastfalsefoot" + id, BlockStateData.parse("{Name:'minecraft:" + bedColor + "_bed',Properties:{facing:'east',occupied:'false',part:'foot'}}")
+        );
+        map.put(
+            "southfalsehead" + id,
+            BlockStateData.parse("{Name:'minecraft:" + bedColor + "_bed',Properties:{facing:'south',occupied:'false',part:'head'}}")
+        );
+        map.put(
+            "westfalsehead" + id, BlockStateData.parse("{Name:'minecraft:" + bedColor + "_bed',Properties:{facing:'west',occupied:'false',part:'head'}}")
+        );
+        map.put(
+            "northfalsehead" + id,
+            BlockStateData.parse("{Name:'minecraft:" + bedColor + "_bed',Properties:{facing:'north',occupied:'false',part:'head'}}")
+        );
+        map.put(
+            "eastfalsehead" + id, BlockStateData.parse("{Name:'minecraft:" + bedColor + "_bed',Properties:{facing:'east',occupied:'false',part:'head'}}")
+        );
+        map.put(
+            "southtruehead" + id, BlockStateData.parse("{Name:'minecraft:" + bedColor + "_bed',Properties:{facing:'south',occupied:'true',part:'head'}}")
+        );
+        map.put(
+            "westtruehead" + id, BlockStateData.parse("{Name:'minecraft:" + bedColor + "_bed',Properties:{facing:'west',occupied:'true',part:'head'}}")
+        );
+        map.put(
+            "northtruehead" + id, BlockStateData.parse("{Name:'minecraft:" + bedColor + "_bed',Properties:{facing:'north',occupied:'true',part:'head'}}")
+        );
+        map.put(
+            "easttruehead" + id, BlockStateData.parse("{Name:'minecraft:" + bedColor + "_bed',Properties:{facing:'east',occupied:'true',part:'head'}}")
+        );
+    }
+
+    private static void addBanners(Map<String, Dynamic<?>> map, int id, String bannerColor) {
         for (int i = 0; i < 16; i++) {
-            p_15097_.put(i + "_" + p_15098_, BlockStateData.parse("{Name:'minecraft:" + p_15099_ + "_banner',Properties:{rotation:'" + i + "'}}"));
+            map.put(i + "_" + id, BlockStateData.parse("{Name:'minecraft:" + bannerColor + "_banner',Properties:{rotation:'" + i + "'}}"));
         }
 
-        p_15097_.put("north_" + p_15098_, BlockStateData.parse("{Name:'minecraft:" + p_15099_ + "_wall_banner',Properties:{facing:'north'}}"));
-        p_15097_.put("south_" + p_15098_, BlockStateData.parse("{Name:'minecraft:" + p_15099_ + "_wall_banner',Properties:{facing:'south'}}"));
-        p_15097_.put("west_" + p_15098_, BlockStateData.parse("{Name:'minecraft:" + p_15099_ + "_wall_banner',Properties:{facing:'west'}}"));
-        p_15097_.put("east_" + p_15098_, BlockStateData.parse("{Name:'minecraft:" + p_15099_ + "_wall_banner',Properties:{facing:'east'}}"));
+        map.put("north_" + id, BlockStateData.parse("{Name:'minecraft:" + bannerColor + "_wall_banner',Properties:{facing:'north'}}"));
+        map.put("south_" + id, BlockStateData.parse("{Name:'minecraft:" + bannerColor + "_wall_banner',Properties:{facing:'south'}}"));
+        map.put("west_" + id, BlockStateData.parse("{Name:'minecraft:" + bannerColor + "_wall_banner',Properties:{facing:'west'}}"));
+        map.put("east_" + id, BlockStateData.parse("{Name:'minecraft:" + bannerColor + "_wall_banner',Properties:{facing:'east'}}"));
     }
 
-    public static String getName(Dynamic<?> p_15065_) {
-        return p_15065_.get("Name").asString("");
+    public static String getName(Dynamic<?> data) {
+        return data.get("Name").asString("");
     }
 
-    public static String getProperty(Dynamic<?> p_15067_, String p_15068_) {
-        return p_15067_.get("Properties").get(p_15068_).asString("");
+    public static String getProperty(Dynamic<?> data, String key) {
+        return data.get("Properties").get(key).asString("");
     }
 
-    public static int idFor(CrudeIncrementalIntIdentityHashBiMap<Dynamic<?>> p_15062_, Dynamic<?> p_15063_) {
-        int i = p_15062_.getId(p_15063_);
+    public static int idFor(CrudeIncrementalIntIdentityHashBiMap<Dynamic<?>> palette, Dynamic<?> data) {
+        int i = palette.getId(data);
         if (i == -1) {
-            i = p_15062_.add(p_15063_);
+            i = palette.add(data);
         }
 
         return i;
     }
 
-    private Dynamic<?> fix(Dynamic<?> p_15093_) {
-        Optional<? extends Dynamic<?>> optional = p_15093_.get("Level").result();
+    private Dynamic<?> fix(Dynamic<?> dynamic) {
+        Optional<? extends Dynamic<?>> optional = dynamic.get("Level").result();
         return optional.isPresent() && optional.get().get("Sections").asStreamOpt().result().isPresent()
-            ? p_15093_.set("Level", new ChunkPalettedStorageFix.UpgradeChunk((Dynamic<?>)optional.get()).write())
-            : p_15093_;
+            ? dynamic.set("Level", new ChunkPalettedStorageFix.UpgradeChunk((Dynamic<?>)optional.get()).write())
+            : dynamic;
     }
 
     @Override
@@ -458,27 +458,27 @@ public class ChunkPalettedStorageFix extends DataFix {
         return this.writeFixAndRead("ChunkPalettedStorageFix", type, type1, this::fix);
     }
 
-    public static int getSideMask(boolean p_15087_, boolean p_15088_, boolean p_15089_, boolean p_15090_) {
+    public static int getSideMask(boolean west, boolean east, boolean north, boolean south) {
         int i = 0;
-        if (p_15089_) {
-            if (p_15088_) {
+        if (north) {
+            if (east) {
                 i |= 2;
-            } else if (p_15087_) {
+            } else if (west) {
                 i |= 128;
             } else {
                 i |= 1;
             }
-        } else if (p_15090_) {
-            if (p_15087_) {
+        } else if (south) {
+            if (west) {
                 i |= 32;
-            } else if (p_15088_) {
+            } else if (east) {
                 i |= 8;
             } else {
                 i |= 16;
             }
-        } else if (p_15088_) {
+        } else if (east) {
             i |= 4;
-        } else if (p_15087_) {
+        } else if (west) {
             i |= 64;
         }
 
@@ -557,10 +557,10 @@ public class ChunkPalettedStorageFix extends DataFix {
             this.data = new byte[2048];
         }
 
-        public DataLayer(byte[] p_15132_) {
-            this.data = p_15132_;
-            if (p_15132_.length != 2048) {
-                throw new IllegalArgumentException("ChunkNibbleArrays should be 2048 bytes not: " + p_15132_.length);
+        public DataLayer(byte[] data) {
+            this.data = data;
+            if (data.length != 2048) {
+                throw new IllegalArgumentException("ChunkNibbleArrays should be 2048 bytes not: " + data.length);
             }
         }
 
@@ -589,9 +589,9 @@ public class ChunkPalettedStorageFix extends DataFix {
         private final ChunkPalettedStorageFix.Direction.Axis axis;
         private final ChunkPalettedStorageFix.Direction.AxisDirection axisDirection;
 
-        private Direction(ChunkPalettedStorageFix.Direction.AxisDirection p_15154_, ChunkPalettedStorageFix.Direction.Axis p_15155_) {
-            this.axis = p_15155_;
-            this.axisDirection = p_15154_;
+        private Direction(ChunkPalettedStorageFix.Direction.AxisDirection axisDirection, ChunkPalettedStorageFix.Direction.Axis axis) {
+            this.axis = axis;
+            this.axisDirection = axisDirection;
         }
 
         public ChunkPalettedStorageFix.Direction.AxisDirection getAxisDirection() {
@@ -614,8 +614,8 @@ public class ChunkPalettedStorageFix extends DataFix {
 
             private final int step;
 
-            private AxisDirection(int p_15180_) {
-                this.step = p_15180_;
+            private AxisDirection(int step) {
+                this.step = step;
             }
 
             public int getStep() {
@@ -635,28 +635,28 @@ public class ChunkPalettedStorageFix extends DataFix {
         private final Set<Dynamic<?>> seen = Sets.newIdentityHashSet();
         private final int[] buffer = new int[4096];
 
-        public Section(Dynamic<?> p_15195_) {
+        public Section(Dynamic<?> section) {
             this.listTag = Lists.newArrayList();
-            this.section = p_15195_;
-            this.y = p_15195_.get("Y").asInt(0);
-            this.hasData = p_15195_.get("Blocks").result().isPresent();
+            this.section = section;
+            this.y = section.get("Y").asInt(0);
+            this.hasData = section.get("Blocks").result().isPresent();
         }
 
-        public Dynamic<?> getBlock(int p_15198_) {
-            if (p_15198_ >= 0 && p_15198_ <= 4095) {
-                Dynamic<?> dynamic = this.palette.byId(this.buffer[p_15198_]);
+        public Dynamic<?> getBlock(int id) {
+            if (id >= 0 && id <= 4095) {
+                Dynamic<?> dynamic = this.palette.byId(this.buffer[id]);
                 return dynamic == null ? ChunkPalettedStorageFix.AIR : dynamic;
             } else {
                 return ChunkPalettedStorageFix.AIR;
             }
         }
 
-        public void setBlock(int p_15203_, Dynamic<?> p_15204_) {
-            if (this.seen.add(p_15204_)) {
-                this.listTag.add("%%FILTER_ME%%".equals(ChunkPalettedStorageFix.getName(p_15204_)) ? ChunkPalettedStorageFix.AIR : p_15204_);
+        public void setBlock(int index, Dynamic<?> data) {
+            if (this.seen.add(data)) {
+                this.listTag.add("%%FILTER_ME%%".equals(ChunkPalettedStorageFix.getName(data)) ? ChunkPalettedStorageFix.AIR : data);
             }
 
-            this.buffer[p_15203_] = ChunkPalettedStorageFix.idFor(this.palette, p_15204_);
+            this.buffer[index] = ChunkPalettedStorageFix.idFor(this.palette, data);
         }
 
         public int upgrade(int p_15210_) {
@@ -746,11 +746,11 @@ public class ChunkPalettedStorageFix extends DataFix {
         private final int z;
         private final Int2ObjectMap<Dynamic<?>> blockEntities = new Int2ObjectLinkedOpenHashMap<>(16);
 
-        public UpgradeChunk(Dynamic<?> p_15222_) {
-            this.level = p_15222_;
-            this.x = p_15222_.get("xPos").asInt(0) << 4;
-            this.z = p_15222_.get("zPos").asInt(0) << 4;
-            p_15222_.get("TileEntities")
+        public UpgradeChunk(Dynamic<?> level) {
+            this.level = level;
+            this.x = level.get("xPos").asInt(0) << 4;
+            this.z = level.get("zPos").asInt(0) << 4;
+            level.get("TileEntities")
                 .asStreamOpt()
                 .ifSuccess(
                     p_15241_ -> p_15241_.forEach(
@@ -766,8 +766,8 @@ public class ChunkPalettedStorageFix extends DataFix {
                             }
                         )
                 );
-            boolean flag = p_15222_.get("convertedFromAlphaFormat").asBoolean(false);
-            p_15222_.get("Sections").asStreamOpt().ifSuccess(p_15235_ -> p_15235_.forEach(p_145226_ -> {
+            boolean flag = level.get("convertedFromAlphaFormat").asBoolean(false);
+            level.get("Sections").asStreamOpt().ifSuccess(p_15235_ -> p_15235_.forEach(p_145226_ -> {
                     ChunkPalettedStorageFix.Section chunkpalettedstoragefix$section1 = new ChunkPalettedStorageFix.Section((Dynamic<?>)p_145226_);
                     this.sides = chunkpalettedstoragefix$section1.upgrade(this.sides);
                     this.sections[chunkpalettedstoragefix$section1.y] = chunkpalettedstoragefix$section1;
@@ -967,36 +967,36 @@ public class ChunkPalettedStorageFix extends DataFix {
         }
 
         @Nullable
-        private Dynamic<?> getBlockEntity(int p_15237_) {
-            return this.blockEntities.get(p_15237_);
+        private Dynamic<?> getBlockEntity(int index) {
+            return this.blockEntities.get(index);
         }
 
         @Nullable
-        private Dynamic<?> removeBlockEntity(int p_15243_) {
-            return this.blockEntities.remove(p_15243_);
+        private Dynamic<?> removeBlockEntity(int index) {
+            return this.blockEntities.remove(index);
         }
 
-        public static int relative(int p_15227_, ChunkPalettedStorageFix.Direction p_15228_) {
-            switch (p_15228_.getAxis()) {
+        public static int relative(int p_15227_, ChunkPalettedStorageFix.Direction direction) {
+            switch (direction.getAxis()) {
                 case X:
-                    int i = (p_15227_ & 15) + p_15228_.getAxisDirection().getStep();
+                    int i = (p_15227_ & 15) + direction.getAxisDirection().getStep();
                     return i >= 0 && i <= 15 ? p_15227_ & -16 | i : -1;
                 case Y:
-                    int j = (p_15227_ >> 8) + p_15228_.getAxisDirection().getStep();
+                    int j = (p_15227_ >> 8) + direction.getAxisDirection().getStep();
                     return j >= 0 && j <= 255 ? p_15227_ & 0xFF | j << 8 : -1;
                 case Z:
-                    int k = (p_15227_ >> 4 & 15) + p_15228_.getAxisDirection().getStep();
+                    int k = (p_15227_ >> 4 & 15) + direction.getAxisDirection().getStep();
                     return k >= 0 && k <= 15 ? p_15227_ & -241 | k << 4 : -1;
                 default:
                     return -1;
             }
         }
 
-        private void setBlock(int p_15230_, Dynamic<?> p_15231_) {
+        private void setBlock(int p_15230_, Dynamic<?> dynamic) {
             if (p_15230_ >= 0 && p_15230_ <= 65535) {
                 ChunkPalettedStorageFix.Section chunkpalettedstoragefix$section = this.getSection(p_15230_);
                 if (chunkpalettedstoragefix$section != null) {
-                    chunkpalettedstoragefix$section.setBlock(p_15230_ & 4095, p_15231_);
+                    chunkpalettedstoragefix$section.setBlock(p_15230_ & 4095, dynamic);
                 }
             }
         }

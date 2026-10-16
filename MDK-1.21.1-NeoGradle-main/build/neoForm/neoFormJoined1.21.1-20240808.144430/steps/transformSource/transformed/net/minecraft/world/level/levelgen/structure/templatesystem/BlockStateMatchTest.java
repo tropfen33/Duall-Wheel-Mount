@@ -10,13 +10,13 @@ public class BlockStateMatchTest extends RuleTest {
         .xmap(BlockStateMatchTest::new, p_74099_ -> p_74099_.blockState);
     private final BlockState blockState;
 
-    public BlockStateMatchTest(BlockState p_74093_) {
-        this.blockState = p_74093_;
+    public BlockStateMatchTest(BlockState blockState) {
+        this.blockState = blockState;
     }
 
     @Override
-    public boolean test(BlockState p_230293_, RandomSource p_230294_) {
-        return p_230293_ == this.blockState;
+    public boolean test(BlockState state, RandomSource random) {
+        return state == this.blockState;
     }
 
     @Override

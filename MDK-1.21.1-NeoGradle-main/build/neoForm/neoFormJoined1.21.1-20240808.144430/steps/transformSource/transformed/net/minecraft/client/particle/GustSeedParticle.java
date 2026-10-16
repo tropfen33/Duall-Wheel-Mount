@@ -11,11 +11,11 @@ public class GustSeedParticle extends NoRenderParticle {
     private final double scale;
     private final int tickDelayInBetween;
 
-    protected GustSeedParticle(ClientLevel p_311842_, double p_312103_, double p_312358_, double p_312614_, double p_326153_, int p_326148_, int p_326155_) {
-        super(p_311842_, p_312103_, p_312358_, p_312614_, 0.0, 0.0, 0.0);
-        this.scale = p_326153_;
-        this.lifetime = p_326148_;
-        this.tickDelayInBetween = p_326155_;
+    protected GustSeedParticle(ClientLevel level, double x, double y, double z, double scale, int lifetime, int tickDelayInBetween) {
+        super(level, x, y, z, 0.0, 0.0, 0.0);
+        this.scale = scale;
+        this.lifetime = lifetime;
+        this.tickDelayInBetween = tickDelayInBetween;
     }
 
     @Override
@@ -40,23 +40,23 @@ public class GustSeedParticle extends NoRenderParticle {
         private final int lifetime;
         private final int tickDelayInBetween;
 
-        public Provider(double p_326168_, int p_326218_, int p_326276_) {
-            this.scale = p_326168_;
-            this.lifetime = p_326218_;
-            this.tickDelayInBetween = p_326276_;
+        public Provider(double scale, int lifetime, int tickDelayInBetween) {
+            this.scale = scale;
+            this.lifetime = lifetime;
+            this.tickDelayInBetween = tickDelayInBetween;
         }
 
         public Particle createParticle(
-            SimpleParticleType p_312546_,
-            ClientLevel p_311824_,
-            double p_311962_,
-            double p_312036_,
-            double p_312293_,
-            double p_312087_,
-            double p_312437_,
-            double p_312656_
+            SimpleParticleType type,
+            ClientLevel level,
+            double x,
+            double y,
+            double z,
+            double xSpeed,
+            double ySpeed,
+            double zSpeed
         ) {
-            return new GustSeedParticle(p_311824_, p_311962_, p_312036_, p_312293_, this.scale, this.lifetime, this.tickDelayInBetween);
+            return new GustSeedParticle(level, x, y, z, this.scale, this.lifetime, this.tickDelayInBetween);
         }
     }
 }

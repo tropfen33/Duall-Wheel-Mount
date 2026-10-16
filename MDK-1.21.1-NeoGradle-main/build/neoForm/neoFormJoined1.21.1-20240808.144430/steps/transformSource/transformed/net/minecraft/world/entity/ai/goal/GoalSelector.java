@@ -23,37 +23,46 @@ public class GoalSelector {
             return false;
         }
     };
+    /**
+     * Goals currently using a particular flag
+     */
     private final Map<Goal.Flag, WrappedGoal> lockedFlags = new EnumMap<>(Goal.Flag.class);
     private final Set<WrappedGoal> availableGoals = new ObjectLinkedOpenHashSet<>();
     private final Supplier<ProfilerFiller> profiler;
     private final EnumSet<Goal.Flag> disabledFlags = EnumSet.noneOf(Goal.Flag.class);
 
-    public GoalSelector(Supplier<ProfilerFiller> p_25351_) {
-        this.profiler = p_25351_;
+    public GoalSelector(Supplier<ProfilerFiller> profiler) {
+        this.profiler = profiler;
     }
 
-    public void addGoal(int p_25353_, Goal p_25354_) {
-        this.availableGoals.add(new WrappedGoal(p_25353_, p_25354_));
+    /**
+     * Add a goal to the GoalSelector with a certain priority. Lower numbers are higher priority.
+     */
+    public void addGoal(int priority, Goal goal) {
+        this.availableGoals.add(new WrappedGoal(priority, goal));
     }
 
     @VisibleForTesting
-    public void removeAllGoals(Predicate<Goal> p_262575_) {
-        this.availableGoals.removeIf(p_262564_ -> p_262575_.test(p_262564_.getGoal()));
+    public void removeAllGoals(Predicate<Goal> filter) {
+        this.availableGoals.removeIf(p_262564_ -> filter.test(p_262564_.getGoal()));
     }
 
-    public void removeGoal(Goal p_25364_) {
+    /**
+     * Remove the goal from the GoalSelector. This must be the same object as the goal you are trying to remove, which may not always be accessible.
+     */
+    public void removeGoal(Goal goal) {
         for (WrappedGoal wrappedgoal : this.availableGoals) {
-            if (wrappedgoal.getGoal() == p_25364_ && wrappedgoal.isRunning()) {
+            if (wrappedgoal.getGoal() == goal && wrappedgoal.isRunning()) {
                 wrappedgoal.stop();
             }
         }
 
-        this.availableGoals.removeIf(p_25378_ -> p_25378_.getGoal() == p_25364_);
+        this.availableGoals.removeIf(p_25378_ -> p_25378_.getGoal() == goal);
     }
 
-    private static boolean goalContainsAnyFlags(WrappedGoal p_186076_, EnumSet<Goal.Flag> p_186077_) {
-        for (Goal.Flag goal$flag : p_186076_.getFlags()) {
-            if (p_186077_.contains(goal$flag)) {
+    private static boolean goalContainsAnyFlags(WrappedGoal goal, EnumSet<Goal.Flag> flag) {
+        for (Goal.Flag goal$flag : goal.getFlags()) {
+            if (flag.contains(goal$flag)) {
                 return true;
             }
         }
@@ -61,9 +70,9 @@ public class GoalSelector {
         return false;
     }
 
-    private static boolean goalCanBeReplacedForAllFlags(WrappedGoal p_186079_, Map<Goal.Flag, WrappedGoal> p_186080_) {
-        for (Goal.Flag goal$flag : p_186079_.getFlags()) {
-            if (!p_186080_.getOrDefault(goal$flag, NO_GOAL).canBeReplacedBy(p_186079_)) {
+    private static boolean goalCanBeReplacedForAllFlags(WrappedGoal goal, Map<Goal.Flag, WrappedGoal> flag) {
+        for (Goal.Flag goal$flag : goal.getFlags()) {
+            if (!flag.getOrDefault(goal$flag, NO_GOAL).canBeReplacedBy(goal)) {
                 return false;
             }
         }
@@ -104,12 +113,12 @@ public class GoalSelector {
         this.tickRunningGoals(true);
     }
 
-    public void tickRunningGoals(boolean p_186082_) {
+    public void tickRunningGoals(boolean tickAllRunning) {
         ProfilerFiller profilerfiller = this.profiler.get();
         profilerfiller.push("goalTick");
 
         for (WrappedGoal wrappedgoal : this.availableGoals) {
-            if (wrappedgoal.isRunning() && (p_186082_ || wrappedgoal.requiresUpdateEveryTick())) {
+            if (wrappedgoal.isRunning() && (tickAllRunning || wrappedgoal.requiresUpdateEveryTick())) {
                 wrappedgoal.tick();
             }
         }
@@ -121,19 +130,19 @@ public class GoalSelector {
         return this.availableGoals;
     }
 
-    public void disableControlFlag(Goal.Flag p_25356_) {
-        this.disabledFlags.add(p_25356_);
+    public void disableControlFlag(Goal.Flag flag) {
+        this.disabledFlags.add(flag);
     }
 
-    public void enableControlFlag(Goal.Flag p_25375_) {
-        this.disabledFlags.remove(p_25375_);
+    public void enableControlFlag(Goal.Flag flag) {
+        this.disabledFlags.remove(flag);
     }
 
-    public void setControlFlag(Goal.Flag p_25361_, boolean p_25362_) {
-        if (p_25362_) {
-            this.enableControlFlag(p_25361_);
+    public void setControlFlag(Goal.Flag flag, boolean enabled) {
+        if (enabled) {
+            this.enableControlFlag(flag);
         } else {
-            this.disableControlFlag(p_25361_);
+            this.disableControlFlag(flag);
         }
     }
 }

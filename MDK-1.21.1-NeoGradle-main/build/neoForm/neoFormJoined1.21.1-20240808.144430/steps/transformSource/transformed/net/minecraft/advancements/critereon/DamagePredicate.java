@@ -25,15 +25,15 @@ public record DamagePredicate(
                 .apply(p_337350_, DamagePredicate::new)
     );
 
-    public boolean matches(ServerPlayer p_24918_, DamageSource p_24919_, float p_24920_, float p_24921_, boolean p_24922_) {
-        if (!this.dealtDamage.matches((double)p_24920_)) {
+    public boolean matches(ServerPlayer player, DamageSource source, float dealtDamage, float takenDamage, boolean blocked) {
+        if (!this.dealtDamage.matches((double)dealtDamage)) {
             return false;
-        } else if (!this.takenDamage.matches((double)p_24921_)) {
+        } else if (!this.takenDamage.matches((double)takenDamage)) {
             return false;
-        } else if (this.sourceEntity.isPresent() && !this.sourceEntity.get().matches(p_24918_, p_24919_.getEntity())) {
+        } else if (this.sourceEntity.isPresent() && !this.sourceEntity.get().matches(player, source.getEntity())) {
             return false;
         } else {
-            return this.blocked.isPresent() && this.blocked.get() != p_24922_ ? false : !this.type.isPresent() || this.type.get().matches(p_24918_, p_24919_);
+            return this.blocked.isPresent() && this.blocked.get() != blocked ? false : !this.type.isPresent() || this.type.get().matches(player, source);
         }
     }
 
@@ -48,33 +48,33 @@ public record DamagePredicate(
             return new DamagePredicate.Builder();
         }
 
-        public DamagePredicate.Builder dealtDamage(MinMaxBounds.Doubles p_148146_) {
-            this.dealtDamage = p_148146_;
+        public DamagePredicate.Builder dealtDamage(MinMaxBounds.Doubles dealtDamage) {
+            this.dealtDamage = dealtDamage;
             return this;
         }
 
-        public DamagePredicate.Builder takenDamage(MinMaxBounds.Doubles p_148148_) {
-            this.takenDamage = p_148148_;
+        public DamagePredicate.Builder takenDamage(MinMaxBounds.Doubles takenDamage) {
+            this.takenDamage = takenDamage;
             return this;
         }
 
-        public DamagePredicate.Builder sourceEntity(EntityPredicate p_148144_) {
-            this.sourceEntity = Optional.of(p_148144_);
+        public DamagePredicate.Builder sourceEntity(EntityPredicate sourceEntity) {
+            this.sourceEntity = Optional.of(sourceEntity);
             return this;
         }
 
-        public DamagePredicate.Builder blocked(Boolean p_24935_) {
-            this.blocked = Optional.of(p_24935_);
+        public DamagePredicate.Builder blocked(Boolean blocked) {
+            this.blocked = Optional.of(blocked);
             return this;
         }
 
-        public DamagePredicate.Builder type(DamageSourcePredicate p_148142_) {
-            this.type = Optional.of(p_148142_);
+        public DamagePredicate.Builder type(DamageSourcePredicate type) {
+            this.type = Optional.of(type);
             return this;
         }
 
-        public DamagePredicate.Builder type(DamageSourcePredicate.Builder p_24933_) {
-            this.type = Optional.of(p_24933_.build());
+        public DamagePredicate.Builder type(DamageSourcePredicate.Builder typeBuilder) {
+            this.type = Optional.of(typeBuilder.build());
             return this;
         }
 

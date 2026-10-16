@@ -48,26 +48,26 @@ public class EntityHealthFix extends DataFix {
         "Zombie"
     );
 
-    public EntityHealthFix(Schema p_15434_, boolean p_15435_) {
-        super(p_15434_, p_15435_);
+    public EntityHealthFix(Schema outputSchema, boolean changesType) {
+        super(outputSchema, changesType);
     }
 
-    public Dynamic<?> fixTag(Dynamic<?> p_15439_) {
-        Optional<Number> optional = p_15439_.get("HealF").asNumber().result();
-        Optional<Number> optional1 = p_15439_.get("Health").asNumber().result();
+    public Dynamic<?> fixTag(Dynamic<?> tag) {
+        Optional<Number> optional = tag.get("HealF").asNumber().result();
+        Optional<Number> optional1 = tag.get("Health").asNumber().result();
         float f;
         if (optional.isPresent()) {
             f = optional.get().floatValue();
-            p_15439_ = p_15439_.remove("HealF");
+            tag = tag.remove("HealF");
         } else {
             if (!optional1.isPresent()) {
-                return p_15439_;
+                return tag;
             }
 
             f = optional1.get().floatValue();
         }
 
-        return p_15439_.set("Health", p_15439_.createFloat(f));
+        return tag.set("Health", tag.createFloat(f));
     }
 
     @Override

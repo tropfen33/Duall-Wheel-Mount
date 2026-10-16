@@ -73,13 +73,13 @@ public record FoodProperties(
         private Optional<ItemStack> usingConvertsTo = Optional.empty();
         private final ImmutableList.Builder<FoodProperties.PossibleEffect> effects = ImmutableList.builder();
 
-        public FoodProperties.Builder nutrition(int p_38761_) {
-            this.nutrition = p_38761_;
+        public FoodProperties.Builder nutrition(int nutrition) {
+            this.nutrition = nutrition;
             return this;
         }
 
-        public FoodProperties.Builder saturationModifier(float p_38759_) {
-            this.saturationModifier = p_38759_;
+        public FoodProperties.Builder saturationModifier(float saturationModifier) {
+            this.saturationModifier = saturationModifier;
             return this;
         }
 
@@ -95,8 +95,8 @@ public record FoodProperties(
 
         // Neo: Use supplier method instead
         @Deprecated
-        public FoodProperties.Builder effect(MobEffectInstance p_38763_, float p_38764_) {
-            this.effects.add(new FoodProperties.PossibleEffect(p_38763_, p_38764_));
+        public FoodProperties.Builder effect(MobEffectInstance effect, float probability) {
+            this.effects.add(new FoodProperties.PossibleEffect(effect, probability));
             return this;
         }
 
@@ -105,8 +105,8 @@ public record FoodProperties(
             return this;
         }
 
-        public FoodProperties.Builder usingConvertsTo(ItemLike p_347650_) {
-            this.usingConvertsTo = Optional.of(new ItemStack(p_347650_));
+        public FoodProperties.Builder usingConvertsTo(ItemLike item) {
+            this.usingConvertsTo = Optional.of(new ItemStack(item));
             return this;
         }
 

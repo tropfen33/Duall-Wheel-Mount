@@ -6,11 +6,11 @@ import net.minecraft.world.entity.LivingEntity;
 public interface BehaviorControl<E extends LivingEntity> {
     Behavior.Status getStatus();
 
-    boolean tryStart(ServerLevel p_259494_, E p_259608_, long p_260186_);
+    boolean tryStart(ServerLevel level, E entity, long gameTime);
 
-    void tickOrStop(ServerLevel p_259926_, E p_260016_, long p_259089_);
+    void tickOrStop(ServerLevel level, E entity, long gameTime);
 
-    void doStop(ServerLevel p_259056_, E p_259620_, long p_260105_);
+    void doStop(ServerLevel level, E entity, long gameTime);
 
     String debugString();
 }

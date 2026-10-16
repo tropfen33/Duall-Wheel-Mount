@@ -57,33 +57,33 @@ public class WallHangingSignBlock extends SignBlock {
         return CODEC;
     }
 
-    public WallHangingSignBlock(WoodType p_252140_, BlockBehaviour.Properties p_251606_) {
-        super(p_252140_, p_251606_.sound(p_252140_.hangingSignSoundType()));
+    public WallHangingSignBlock(WoodType type, BlockBehaviour.Properties properties) {
+        super(type, properties.sound(type.hangingSignSoundType()));
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(WATERLOGGED, Boolean.valueOf(false)));
     }
 
     @Override
     protected ItemInteractionResult useItemOn(
-        ItemStack p_316420_, BlockState p_316885_, Level p_316114_, BlockPos p_316297_, Player p_316609_, InteractionHand p_316187_, BlockHitResult p_316223_
+        ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult
     ) {
-        if (p_316114_.getBlockEntity(p_316297_) instanceof SignBlockEntity signblockentity
-            && this.shouldTryToChainAnotherHangingSign(p_316885_, p_316609_, p_316223_, signblockentity, p_316420_)) {
+        if (level.getBlockEntity(pos) instanceof SignBlockEntity signblockentity
+            && this.shouldTryToChainAnotherHangingSign(state, player, hitResult, signblockentity, stack)) {
             return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
         }
 
-        return super.useItemOn(p_316420_, p_316885_, p_316114_, p_316297_, p_316609_, p_316187_, p_316223_);
+        return super.useItemOn(stack, state, level, pos, player, hand, hitResult);
     }
 
     private boolean shouldTryToChainAnotherHangingSign(
-        BlockState p_278346_, Player p_278263_, BlockHitResult p_278269_, SignBlockEntity p_278290_, ItemStack p_278238_
+        BlockState state, Player player, BlockHitResult hitResult, SignBlockEntity sign, ItemStack stack
     ) {
-        return !p_278290_.canExecuteClickCommands(p_278290_.isFacingFrontText(p_278263_), p_278263_)
-            && p_278238_.getItem() instanceof HangingSignItem
-            && !this.isHittingEditableSide(p_278269_, p_278346_);
+        return !sign.canExecuteClickCommands(sign.isFacingFrontText(player), player)
+            && stack.getItem() instanceof HangingSignItem
+            && !this.isHittingEditableSide(hitResult, state);
     }
 
-    private boolean isHittingEditableSide(BlockHitResult p_278339_, BlockState p_278302_) {
-        return p_278339_.getDirection().getAxis() == p_278302_.getValue(FACING).getAxis();
+    private boolean isHittingEditableSide(BlockHitResult hitResult, BlockState state) {
+        return hitResult.getDirection().getAxis() == state.getValue(FACING).getAxis();
     }
 
     @Override
@@ -92,18 +92,18 @@ public class WallHangingSignBlock extends SignBlock {
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_250980_, BlockGetter p_251012_, BlockPos p_251391_, CollisionContext p_251875_) {
-        return AABBS.get(p_250980_.getValue(FACING));
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return AABBS.get(state.getValue(FACING));
     }
 
     @Override
-    protected VoxelShape getBlockSupportShape(BlockState p_253927_, BlockGetter p_254149_, BlockPos p_253805_) {
-        return this.getShape(p_253927_, p_254149_, p_253805_, CollisionContext.empty());
+    protected VoxelShape getBlockSupportShape(BlockState state, BlockGetter level, BlockPos pos) {
+        return this.getShape(state, level, pos, CollisionContext.empty());
     }
 
     @Override
-    protected VoxelShape getCollisionShape(BlockState p_249963_, BlockGetter p_248542_, BlockPos p_252224_, CollisionContext p_251891_) {
-        switch ((Direction)p_249963_.getValue(FACING)) {
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        switch ((Direction)state.getValue(FACING)) {
             case EAST:
             case WEST:
                 return PLANK_EASTWEST;
@@ -112,30 +112,30 @@ public class WallHangingSignBlock extends SignBlock {
         }
     }
 
-    public boolean canPlace(BlockState p_249472_, LevelReader p_249453_, BlockPos p_251235_) {
-        Direction direction = p_249472_.getValue(FACING).getClockWise();
-        Direction direction1 = p_249472_.getValue(FACING).getCounterClockWise();
-        return this.canAttachTo(p_249453_, p_249472_, p_251235_.relative(direction), direction1)
-            || this.canAttachTo(p_249453_, p_249472_, p_251235_.relative(direction1), direction);
+    public boolean canPlace(BlockState state, LevelReader level, BlockPos pos) {
+        Direction direction = state.getValue(FACING).getClockWise();
+        Direction direction1 = state.getValue(FACING).getCounterClockWise();
+        return this.canAttachTo(level, state, pos.relative(direction), direction1)
+            || this.canAttachTo(level, state, pos.relative(direction1), direction);
     }
 
-    public boolean canAttachTo(LevelReader p_249746_, BlockState p_251128_, BlockPos p_250583_, Direction p_250567_) {
-        BlockState blockstate = p_249746_.getBlockState(p_250583_);
+    public boolean canAttachTo(LevelReader level, BlockState state, BlockPos pos, Direction direction) {
+        BlockState blockstate = level.getBlockState(pos);
         return blockstate.is(BlockTags.WALL_HANGING_SIGNS)
-            ? blockstate.getValue(FACING).getAxis().test(p_251128_.getValue(FACING))
-            : blockstate.isFaceSturdy(p_249746_, p_250583_, p_250567_, SupportType.FULL);
+            ? blockstate.getValue(FACING).getAxis().test(state.getValue(FACING))
+            : blockstate.isFaceSturdy(level, pos, direction, SupportType.FULL);
     }
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext p_251399_) {
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
         BlockState blockstate = this.defaultBlockState();
-        FluidState fluidstate = p_251399_.getLevel().getFluidState(p_251399_.getClickedPos());
-        LevelReader levelreader = p_251399_.getLevel();
-        BlockPos blockpos = p_251399_.getClickedPos();
+        FluidState fluidstate = context.getLevel().getFluidState(context.getClickedPos());
+        LevelReader levelreader = context.getLevel();
+        BlockPos blockpos = context.getClickedPos();
 
-        for (Direction direction : p_251399_.getNearestLookingDirections()) {
-            if (direction.getAxis().isHorizontal() && !direction.getAxis().test(p_251399_.getClickedFace())) {
+        for (Direction direction : context.getNearestLookingDirections()) {
+            if (direction.getAxis().isHorizontal() && !direction.getAxis().test(context.getClickedFace())) {
                 Direction direction1 = direction.getOpposite();
                 blockstate = blockstate.setValue(FACING, direction1);
                 if (blockstate.canSurvive(levelreader, blockpos) && this.canPlace(blockstate, levelreader, blockpos)) {
@@ -147,48 +147,59 @@ public class WallHangingSignBlock extends SignBlock {
         return null;
     }
 
+    /**
+     * Update the provided state given the provided neighbor direction and neighbor state, returning a new state.
+     * For example, fences make their connections to the passed in state if possible, and wet concrete powder immediately returns its solidified counterpart.
+     * Note that this method should ideally consider only the specific direction passed in.
+     */
     @Override
     protected BlockState updateShape(
-        BlockState p_249879_, Direction p_249939_, BlockState p_250767_, LevelAccessor p_252228_, BlockPos p_252327_, BlockPos p_251853_
+        BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos
     ) {
-        return p_249939_.getAxis() == p_249879_.getValue(FACING).getClockWise().getAxis() && !p_249879_.canSurvive(p_252228_, p_252327_)
+        return facing.getAxis() == state.getValue(FACING).getClockWise().getAxis() && !state.canSurvive(level, currentPos)
             ? Blocks.AIR.defaultBlockState()
-            : super.updateShape(p_249879_, p_249939_, p_250767_, p_252228_, p_252327_, p_251853_);
+            : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 
     @Override
-    public float getYRotationDegrees(BlockState p_278073_) {
-        return p_278073_.getValue(FACING).toYRot();
+    public float getYRotationDegrees(BlockState state) {
+        return state.getValue(FACING).toYRot();
+    }
+
+    /**
+     * Returns the blockstate with the given rotation from the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState rotate(BlockState state, Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    /**
+     * Returns the blockstate with the given mirror of the passed blockstate. If inapplicable, returns the passed blockstate.
+     */
+    @Override
+    protected BlockState mirror(BlockState state, Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    protected BlockState rotate(BlockState p_249292_, Rotation p_249867_) {
-        return p_249292_.setValue(FACING, p_249867_.rotate(p_249292_.getValue(FACING)));
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, WATERLOGGED);
     }
 
     @Override
-    protected BlockState mirror(BlockState p_250446_, Mirror p_249494_) {
-        return p_250446_.rotate(p_249494_.getRotation(p_250446_.getValue(FACING)));
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new HangingSignBlockEntity(pos, state);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_251029_) {
-        p_251029_.add(FACING, WATERLOGGED);
-    }
-
-    @Override
-    public BlockEntity newBlockEntity(BlockPos p_250745_, BlockState p_250905_) {
-        return new HangingSignBlockEntity(p_250745_, p_250905_);
-    }
-
-    @Override
-    protected boolean isPathfindable(BlockState p_253755_, PathComputationType p_253687_) {
+    protected boolean isPathfindable(BlockState state, PathComputationType pathComputationType) {
         return false;
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level p_279316_, BlockState p_279345_, BlockEntityType<T> p_279384_) {
-        return createTickerHelper(p_279384_, BlockEntityType.HANGING_SIGN, SignBlockEntity::tick);
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> blockEntityType) {
+        return createTickerHelper(blockEntityType, BlockEntityType.HANGING_SIGN, SignBlockEntity::tick);
     }
 }

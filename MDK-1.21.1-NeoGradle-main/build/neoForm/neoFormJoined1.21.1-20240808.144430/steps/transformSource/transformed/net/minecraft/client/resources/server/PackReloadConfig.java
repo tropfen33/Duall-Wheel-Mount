@@ -8,13 +8,13 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public interface PackReloadConfig {
-    void scheduleReload(PackReloadConfig.Callbacks p_314413_);
+    void scheduleReload(PackReloadConfig.Callbacks callbacks);
 
     @OnlyIn(Dist.CLIENT)
     public interface Callbacks {
         void onSuccess();
 
-        void onFailure(boolean p_314498_);
+        void onFailure(boolean recoveryFailure);
 
         List<PackReloadConfig.IdAndPath> packsToLoad();
     }

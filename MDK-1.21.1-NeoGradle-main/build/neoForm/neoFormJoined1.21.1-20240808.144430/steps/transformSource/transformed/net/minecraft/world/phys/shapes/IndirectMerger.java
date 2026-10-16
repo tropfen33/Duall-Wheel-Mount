@@ -11,16 +11,16 @@ public class IndirectMerger implements IndexMerger {
     private final int[] secondIndices;
     private final int resultLength;
 
-    public IndirectMerger(DoubleList p_83001_, DoubleList p_83002_, boolean p_83003_, boolean p_83004_) {
+    public IndirectMerger(DoubleList lower, DoubleList upper, boolean excludeUpper, boolean excludeLower) {
         double d0 = Double.NaN;
-        int i = p_83001_.size();
-        int j = p_83002_.size();
+        int i = lower.size();
+        int j = upper.size();
         int k = i + j;
         this.result = new double[k];
         this.firstIndices = new int[k];
         this.secondIndices = new int[k];
-        boolean flag = !p_83003_;
-        boolean flag1 = !p_83004_;
+        boolean flag = !excludeUpper;
+        boolean flag1 = !excludeLower;
         int l = 0;
         int i1 = 0;
         int j1 = 0;
@@ -33,7 +33,7 @@ public class IndirectMerger implements IndexMerger {
                 return;
             }
 
-            boolean flag4 = !flag2 && (flag3 || p_83001_.getDouble(i1) < p_83002_.getDouble(j1) + 1.0E-7);
+            boolean flag4 = !flag2 && (flag3 || lower.getDouble(i1) < upper.getDouble(j1) + 1.0E-7);
             if (flag4) {
                 i1++;
                 if (flag && (j1 == 0 || flag3)) {
@@ -48,7 +48,7 @@ public class IndirectMerger implements IndexMerger {
 
             int k1 = i1 - 1;
             int l1 = j1 - 1;
-            double d1 = flag4 ? p_83001_.getDouble(k1) : p_83002_.getDouble(l1);
+            double d1 = flag4 ? lower.getDouble(k1) : upper.getDouble(l1);
             if (!(d0 >= d1 - 1.0E-7)) {
                 this.firstIndices[l] = k1;
                 this.secondIndices[l] = l1;
@@ -63,11 +63,11 @@ public class IndirectMerger implements IndexMerger {
     }
 
     @Override
-    public boolean forMergedIndexes(IndexMerger.IndexConsumer p_83007_) {
+    public boolean forMergedIndexes(IndexMerger.IndexConsumer consumer) {
         int i = this.resultLength - 1;
 
         for (int j = 0; j < i; j++) {
-            if (!p_83007_.merge(this.firstIndices[j], this.secondIndices[j], j)) {
+            if (!consumer.merge(this.firstIndices[j], this.secondIndices[j], j)) {
                 return false;
             }
         }

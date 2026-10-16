@@ -10,12 +10,12 @@ public class EntityZombifiedPiglinRenameFix extends SimplestEntityRenameFix {
         .put("minecraft:zombie_pigman_spawn_egg", "minecraft:zombified_piglin_spawn_egg")
         .build();
 
-    public EntityZombifiedPiglinRenameFix(Schema p_15817_) {
-        super("EntityZombifiedPiglinRenameFix", p_15817_, true);
+    public EntityZombifiedPiglinRenameFix(Schema outputSchema) {
+        super("EntityZombifiedPiglinRenameFix", outputSchema, true);
     }
 
     @Override
-    protected String rename(String p_15819_) {
-        return Objects.equals("minecraft:zombie_pigman", p_15819_) ? "minecraft:zombified_piglin" : p_15819_;
+    protected String rename(String name) {
+        return Objects.equals("minecraft:zombie_pigman", name) ? "minecraft:zombified_piglin" : name;
     }
 }

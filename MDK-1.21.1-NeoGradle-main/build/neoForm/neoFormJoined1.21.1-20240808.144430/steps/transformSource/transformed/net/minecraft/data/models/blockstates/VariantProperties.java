@@ -18,8 +18,8 @@ public class VariantProperties {
 
         final int value;
 
-        private Rotation(int p_125540_) {
-            this.value = p_125540_;
+        private Rotation(int value) {
+            this.value = value;
         }
     }
 }

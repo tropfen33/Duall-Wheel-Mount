@@ -17,8 +17,8 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.phys.Vec3;
 
 public class CaveSpider extends Spider {
-    public CaveSpider(EntityType<? extends CaveSpider> p_32254_, Level p_32255_) {
-        super(p_32254_, p_32255_);
+    public CaveSpider(EntityType<? extends CaveSpider> entityType, Level level) {
+        super(entityType, level);
     }
 
     public static AttributeSupplier.Builder createCaveSpider() {
@@ -26,9 +26,9 @@ public class CaveSpider extends Spider {
     }
 
     @Override
-    public boolean doHurtTarget(Entity p_32257_) {
-        if (super.doHurtTarget(p_32257_)) {
-            if (p_32257_ instanceof LivingEntity) {
+    public boolean doHurtTarget(Entity entity) {
+        if (super.doHurtTarget(entity)) {
+            if (entity instanceof LivingEntity) {
                 int i = 0;
                 if (this.level().getDifficulty() == Difficulty.NORMAL) {
                     i = 7;
@@ -37,7 +37,7 @@ public class CaveSpider extends Spider {
                 }
 
                 if (i > 0) {
-                    ((LivingEntity)p_32257_).addEffect(new MobEffectInstance(MobEffects.POISON, i * 20, 0), this);
+                    ((LivingEntity)entity).addEffect(new MobEffectInstance(MobEffects.POISON, i * 20, 0), this);
                 }
             }
 
@@ -49,12 +49,12 @@ public class CaveSpider extends Spider {
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor p_32259_, DifficultyInstance p_32260_, MobSpawnType p_32261_, @Nullable SpawnGroupData p_32262_) {
-        return p_32262_;
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor level, DifficultyInstance difficulty, MobSpawnType spawnType, @Nullable SpawnGroupData spawnGroupData) {
+        return spawnGroupData;
     }
 
     @Override
-    public Vec3 getVehicleAttachmentPoint(Entity p_316479_) {
-        return p_316479_.getBbWidth() <= this.getBbWidth() ? new Vec3(0.0, 0.21875 * (double)this.getScale(), 0.0) : super.getVehicleAttachmentPoint(p_316479_);
+    public Vec3 getVehicleAttachmentPoint(Entity entity) {
+        return entity.getBbWidth() <= this.getBbWidth() ? new Vec3(0.0, 0.21875 * (double)this.getScale(), 0.0) : super.getVehicleAttachmentPoint(entity);
     }
 }

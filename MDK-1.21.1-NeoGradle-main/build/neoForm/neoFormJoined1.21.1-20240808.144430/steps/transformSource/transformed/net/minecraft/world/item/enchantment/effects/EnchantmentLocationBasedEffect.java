@@ -15,26 +15,26 @@ public interface EnchantmentLocationBasedEffect {
         .byNameCodec()
         .dispatch(EnchantmentLocationBasedEffect::codec, Function.identity());
 
-    static MapCodec<? extends EnchantmentLocationBasedEffect> bootstrap(Registry<MapCodec<? extends EnchantmentLocationBasedEffect>> p_344955_) {
-        Registry.register(p_344955_, "all_of", AllOf.LocationBasedEffects.CODEC);
-        Registry.register(p_344955_, "apply_mob_effect", ApplyMobEffect.CODEC);
-        Registry.register(p_344955_, "attribute", EnchantmentAttributeEffect.CODEC);
-        Registry.register(p_344955_, "damage_entity", DamageEntity.CODEC);
-        Registry.register(p_344955_, "damage_item", DamageItem.CODEC);
-        Registry.register(p_344955_, "explode", ExplodeEffect.CODEC);
-        Registry.register(p_344955_, "ignite", Ignite.CODEC);
-        Registry.register(p_344955_, "play_sound", PlaySoundEffect.CODEC);
-        Registry.register(p_344955_, "replace_block", ReplaceBlock.CODEC);
-        Registry.register(p_344955_, "replace_disk", ReplaceDisk.CODEC);
-        Registry.register(p_344955_, "run_function", RunFunction.CODEC);
-        Registry.register(p_344955_, "set_block_properties", SetBlockProperties.CODEC);
-        Registry.register(p_344955_, "spawn_particles", SpawnParticlesEffect.CODEC);
-        return Registry.register(p_344955_, "summon_entity", SummonEntityEffect.CODEC);
+    static MapCodec<? extends EnchantmentLocationBasedEffect> bootstrap(Registry<MapCodec<? extends EnchantmentLocationBasedEffect>> registry) {
+        Registry.register(registry, "all_of", AllOf.LocationBasedEffects.CODEC);
+        Registry.register(registry, "apply_mob_effect", ApplyMobEffect.CODEC);
+        Registry.register(registry, "attribute", EnchantmentAttributeEffect.CODEC);
+        Registry.register(registry, "damage_entity", DamageEntity.CODEC);
+        Registry.register(registry, "damage_item", DamageItem.CODEC);
+        Registry.register(registry, "explode", ExplodeEffect.CODEC);
+        Registry.register(registry, "ignite", Ignite.CODEC);
+        Registry.register(registry, "play_sound", PlaySoundEffect.CODEC);
+        Registry.register(registry, "replace_block", ReplaceBlock.CODEC);
+        Registry.register(registry, "replace_disk", ReplaceDisk.CODEC);
+        Registry.register(registry, "run_function", RunFunction.CODEC);
+        Registry.register(registry, "set_block_properties", SetBlockProperties.CODEC);
+        Registry.register(registry, "spawn_particles", SpawnParticlesEffect.CODEC);
+        return Registry.register(registry, "summon_entity", SummonEntityEffect.CODEC);
     }
 
-    void onChangedBlock(ServerLevel p_345577_, int p_345675_, EnchantedItemInUse p_345807_, Entity p_345378_, Vec3 p_344844_, boolean p_345637_);
+    void onChangedBlock(ServerLevel level, int enchantmentLevel, EnchantedItemInUse item, Entity entity, Vec3 pos, boolean applyTransientEffects);
 
-    default void onDeactivated(EnchantedItemInUse p_346131_, Entity p_345920_, Vec3 p_345758_, int p_344750_) {
+    default void onDeactivated(EnchantedItemInUse item, Entity entity, Vec3 pos, int enchantmentLevel) {
     }
 
     MapCodec<? extends EnchantmentLocationBasedEffect> codec();

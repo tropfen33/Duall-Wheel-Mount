@@ -15,8 +15,8 @@ public class UsingItemTrigger extends SimpleCriterionTrigger<UsingItemTrigger.Tr
         return UsingItemTrigger.TriggerInstance.CODEC;
     }
 
-    public void trigger(ServerPlayer p_163866_, ItemStack p_163867_) {
-        this.trigger(p_163866_, p_163870_ -> p_163870_.matches(p_163867_));
+    public void trigger(ServerPlayer player, ItemStack item) {
+        this.trigger(player, p_163870_ -> p_163870_.matches(item));
     }
 
     public static record TriggerInstance(Optional<ContextAwarePredicate> player, Optional<ItemPredicate> item) implements SimpleCriterionTrigger.SimpleInstance {
@@ -28,13 +28,13 @@ public class UsingItemTrigger extends SimpleCriterionTrigger<UsingItemTrigger.Tr
                     .apply(p_337404_, UsingItemTrigger.TriggerInstance::new)
         );
 
-        public static Criterion<UsingItemTrigger.TriggerInstance> lookingAt(EntityPredicate.Builder p_163884_, ItemPredicate.Builder p_163885_) {
+        public static Criterion<UsingItemTrigger.TriggerInstance> lookingAt(EntityPredicate.Builder player, ItemPredicate.Builder item) {
             return CriteriaTriggers.USING_ITEM
-                .createCriterion(new UsingItemTrigger.TriggerInstance(Optional.of(EntityPredicate.wrap(p_163884_)), Optional.of(p_163885_.build())));
+                .createCriterion(new UsingItemTrigger.TriggerInstance(Optional.of(EntityPredicate.wrap(player)), Optional.of(item.build())));
         }
 
-        public boolean matches(ItemStack p_163887_) {
-            return !this.item.isPresent() || this.item.get().test(p_163887_);
+        public boolean matches(ItemStack item) {
+            return !this.item.isPresent() || this.item.get().test(item);
         }
     }
 }

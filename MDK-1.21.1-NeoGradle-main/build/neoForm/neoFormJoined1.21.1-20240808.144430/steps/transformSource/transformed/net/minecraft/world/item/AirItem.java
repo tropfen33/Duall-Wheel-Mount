@@ -7,9 +7,9 @@ import net.minecraft.world.level.block.Block;
 public class AirItem extends Item {
     private final Block block;
 
-    public AirItem(Block p_40368_, Item.Properties p_40369_) {
-        super(p_40369_);
-        this.block = p_40368_;
+    public AirItem(Block block, Item.Properties properties) {
+        super(properties);
+        this.block = block;
     }
 
     @Override
@@ -18,8 +18,8 @@ public class AirItem extends Item {
     }
 
     @Override
-    public void appendHoverText(ItemStack p_40372_, Item.TooltipContext p_339659_, List<Component> p_40374_, TooltipFlag p_40375_) {
-        super.appendHoverText(p_40372_, p_339659_, p_40374_, p_40375_);
-        this.block.appendHoverText(p_40372_, p_339659_, p_40374_, p_40375_);
+    public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltipComponents, TooltipFlag tooltipFlag) {
+        super.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
+        this.block.appendHoverText(stack, context, tooltipComponents, tooltipFlag);
     }
 }

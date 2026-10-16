@@ -14,6 +14,10 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.RegistryFileCodec;
 import net.minecraft.util.RandomSource;
 
+/**
+ * This samples the sum of two individual samplers of perlin noise octaves.
+ * The input coordinates are scaled by {@link #INPUT_FACTOR}, and the result is scaled by {@link #valueFactor}.
+ */
 public class NormalNoise {
     private static final double INPUT_FACTOR = 1.0181268882175227;
     private static final double TARGET_DEVIATION = 0.3333333333333333;
@@ -24,28 +28,28 @@ public class NormalNoise {
     private final NormalNoise.NoiseParameters parameters;
 
     @Deprecated
-    public static NormalNoise createLegacyNetherBiome(RandomSource p_230509_, NormalNoise.NoiseParameters p_230510_) {
-        return new NormalNoise(p_230509_, p_230510_, false);
+    public static NormalNoise createLegacyNetherBiome(RandomSource random, NormalNoise.NoiseParameters parameters) {
+        return new NormalNoise(random, parameters, false);
     }
 
-    public static NormalNoise create(RandomSource p_230505_, int p_230506_, double... p_230507_) {
-        return create(p_230505_, new NormalNoise.NoiseParameters(p_230506_, new DoubleArrayList(p_230507_)));
+    public static NormalNoise create(RandomSource random, int firstOctave, double... amplitudes) {
+        return create(random, new NormalNoise.NoiseParameters(firstOctave, new DoubleArrayList(amplitudes)));
     }
 
-    public static NormalNoise create(RandomSource p_230512_, NormalNoise.NoiseParameters p_230513_) {
-        return new NormalNoise(p_230512_, p_230513_, true);
+    public static NormalNoise create(RandomSource random, NormalNoise.NoiseParameters parameters) {
+        return new NormalNoise(random, parameters, true);
     }
 
-    private NormalNoise(RandomSource p_230501_, NormalNoise.NoiseParameters p_230502_, boolean p_230503_) {
-        int i = p_230502_.firstOctave;
-        DoubleList doublelist = p_230502_.amplitudes;
-        this.parameters = p_230502_;
-        if (p_230503_) {
-            this.first = PerlinNoise.create(p_230501_, i, doublelist);
-            this.second = PerlinNoise.create(p_230501_, i, doublelist);
+    private NormalNoise(RandomSource random, NormalNoise.NoiseParameters parameters, boolean useLegacyNetherBiome) {
+        int i = parameters.firstOctave;
+        DoubleList doublelist = parameters.amplitudes;
+        this.parameters = parameters;
+        if (useLegacyNetherBiome) {
+            this.first = PerlinNoise.create(random, i, doublelist);
+            this.second = PerlinNoise.create(random, i, doublelist);
         } else {
-            this.first = PerlinNoise.createLegacyForLegacyNetherBiome(p_230501_, i, doublelist);
-            this.second = PerlinNoise.createLegacyForLegacyNetherBiome(p_230501_, i, doublelist);
+            this.first = PerlinNoise.createLegacyForLegacyNetherBiome(random, i, doublelist);
+            this.second = PerlinNoise.createLegacyForLegacyNetherBiome(random, i, doublelist);
         }
 
         int j = Integer.MAX_VALUE;
@@ -69,15 +73,15 @@ public class NormalNoise {
         return this.maxValue;
     }
 
-    private static double expectedDeviation(int p_75385_) {
-        return 0.1 * (1.0 + 1.0 / (double)(p_75385_ + 1));
+    private static double expectedDeviation(int octaves) {
+        return 0.1 * (1.0 + 1.0 / (double)(octaves + 1));
     }
 
-    public double getValue(double p_75381_, double p_75382_, double p_75383_) {
-        double d0 = p_75381_ * 1.0181268882175227;
-        double d1 = p_75382_ * 1.0181268882175227;
-        double d2 = p_75383_ * 1.0181268882175227;
-        return (this.first.getValue(p_75381_, p_75382_, p_75383_) + this.second.getValue(d0, d1, d2)) * this.valueFactor;
+    public double getValue(double x, double y, double z) {
+        double d0 = x * 1.0181268882175227;
+        double d1 = y * 1.0181268882175227;
+        double d2 = z * 1.0181268882175227;
+        return (this.first.getValue(x, y, z) + this.second.getValue(d0, d1, d2)) * this.valueFactor;
     }
 
     public NormalNoise.NoiseParameters parameters() {
@@ -85,13 +89,13 @@ public class NormalNoise {
     }
 
     @VisibleForTesting
-    public void parityConfigString(StringBuilder p_192847_) {
-        p_192847_.append("NormalNoise {");
-        p_192847_.append("first: ");
-        this.first.parityConfigString(p_192847_);
-        p_192847_.append(", second: ");
-        this.second.parityConfigString(p_192847_);
-        p_192847_.append("}");
+    public void parityConfigString(StringBuilder builder) {
+        builder.append("NormalNoise {");
+        builder.append("first: ");
+        this.first.parityConfigString(builder);
+        builder.append(", second: ");
+        this.second.parityConfigString(builder);
+        builder.append("}");
     }
 
     public static record NoiseParameters(int firstOctave, DoubleList amplitudes) {

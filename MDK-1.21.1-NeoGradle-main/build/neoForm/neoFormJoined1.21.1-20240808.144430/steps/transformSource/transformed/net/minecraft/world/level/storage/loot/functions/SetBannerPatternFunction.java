@@ -14,6 +14,9 @@ import net.minecraft.world.level.block.entity.BannerPatternLayers;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
+/**
+ * LootItemFunction that sets the banner patterns for a banner item. Optionally appends to any existing patterns.
+ */
 public class SetBannerPatternFunction extends LootItemConditionalFunction {
     public static final MapCodec<SetBannerPatternFunction> CODEC = RecordCodecBuilder.mapCodec(
         p_330181_ -> commonFields(p_330181_)
@@ -28,26 +31,29 @@ public class SetBannerPatternFunction extends LootItemConditionalFunction {
     private final BannerPatternLayers patterns;
     private final boolean append;
 
-    SetBannerPatternFunction(List<LootItemCondition> p_165276_, BannerPatternLayers p_331947_, boolean p_165277_) {
-        super(p_165276_);
-        this.patterns = p_331947_;
-        this.append = p_165277_;
+    SetBannerPatternFunction(List<LootItemCondition> conditions, BannerPatternLayers patterns, boolean append) {
+        super(conditions);
+        this.patterns = patterns;
+        this.append = append;
     }
 
+    /**
+     * Called to perform the actual action of this function, after conditions have been checked.
+     */
     @Override
-    protected ItemStack run(ItemStack p_165280_, LootContext p_165281_) {
+    protected ItemStack run(ItemStack stack, LootContext context) {
         if (this.append) {
-            p_165280_.update(
+            stack.update(
                 DataComponents.BANNER_PATTERNS,
                 BannerPatternLayers.EMPTY,
                 this.patterns,
                 (p_330178_, p_330179_) -> new BannerPatternLayers.Builder().addAll(p_330178_).addAll(p_330179_).build()
             );
         } else {
-            p_165280_.set(DataComponents.BANNER_PATTERNS, this.patterns);
+            stack.set(DataComponents.BANNER_PATTERNS, this.patterns);
         }
 
-        return p_165280_;
+        return stack;
     }
 
     @Override
@@ -55,16 +61,16 @@ public class SetBannerPatternFunction extends LootItemConditionalFunction {
         return LootItemFunctions.SET_BANNER_PATTERN;
     }
 
-    public static SetBannerPatternFunction.Builder setBannerPattern(boolean p_165283_) {
-        return new SetBannerPatternFunction.Builder(p_165283_);
+    public static SetBannerPatternFunction.Builder setBannerPattern(boolean append) {
+        return new SetBannerPatternFunction.Builder(append);
     }
 
     public static class Builder extends LootItemConditionalFunction.Builder<SetBannerPatternFunction.Builder> {
         private final BannerPatternLayers.Builder patterns = new BannerPatternLayers.Builder();
         private final boolean append;
 
-        Builder(boolean p_165287_) {
-            this.append = p_165287_;
+        Builder(boolean append) {
+            this.append = append;
         }
 
         protected SetBannerPatternFunction.Builder getThis() {
@@ -76,8 +82,8 @@ public class SetBannerPatternFunction extends LootItemConditionalFunction {
             return new SetBannerPatternFunction(this.getConditions(), this.patterns.build(), this.append);
         }
 
-        public SetBannerPatternFunction.Builder addPattern(Holder<BannerPattern> p_230999_, DyeColor p_231000_) {
-            this.patterns.add(p_230999_, p_231000_);
+        public SetBannerPatternFunction.Builder addPattern(Holder<BannerPattern> pattern, DyeColor color) {
+            this.patterns.add(pattern, color);
             return this;
         }
     }

@@ -15,7 +15,7 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.material.Fluids;
 
 public class TryLaySpawnOnWaterNearLand {
-    public static BehaviorControl<LivingEntity> create(Block p_259207_) {
+    public static BehaviorControl<LivingEntity> create(Block spawnBlock) {
         return BehaviorBuilder.create(
             p_259781_ -> p_259781_.group(
                         p_259781_.absent(MemoryModuleType.ATTACK_TARGET),
@@ -34,7 +34,7 @@ public class TryLaySpawnOnWaterNearLand {
                                             && p_269881_.getFluidState(blockpos1).is(Fluids.WATER)) {
                                             BlockPos blockpos2 = blockpos1.above();
                                             if (p_269881_.getBlockState(blockpos2).isAir()) {
-                                                BlockState blockstate = p_259207_.defaultBlockState();
+                                                BlockState blockstate = spawnBlock.defaultBlockState();
                                                 p_269881_.setBlock(blockpos2, blockstate, 3);
                                                 p_269881_.gameEvent(GameEvent.BLOCK_PLACE, blockpos2, GameEvent.Context.of(p_269882_, blockstate));
                                                 p_269881_.playSound(null, p_269882_, SoundEvents.FROG_LAY_SPAWN, SoundSource.BLOCKS, 1.0F, 1.0F);

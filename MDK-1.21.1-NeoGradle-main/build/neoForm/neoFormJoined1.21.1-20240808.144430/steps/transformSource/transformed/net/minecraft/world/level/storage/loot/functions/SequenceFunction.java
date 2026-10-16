@@ -21,25 +21,28 @@ public class SequenceFunction implements LootItemFunction {
     private final List<LootItemFunction> functions;
     private final BiFunction<ItemStack, LootContext, ItemStack> compositeFunction;
 
-    private SequenceFunction(List<LootItemFunction> p_299323_) {
-        this.functions = p_299323_;
-        this.compositeFunction = LootItemFunctions.compose(p_299323_);
+    private SequenceFunction(List<LootItemFunction> functions) {
+        this.functions = functions;
+        this.compositeFunction = LootItemFunctions.compose(functions);
     }
 
-    public static SequenceFunction of(List<LootItemFunction> p_298958_) {
-        return new SequenceFunction(List.copyOf(p_298958_));
+    public static SequenceFunction of(List<LootItemFunction> functions) {
+        return new SequenceFunction(List.copyOf(functions));
     }
 
-    public ItemStack apply(ItemStack p_299268_, LootContext p_298221_) {
-        return this.compositeFunction.apply(p_299268_, p_298221_);
+    public ItemStack apply(ItemStack stack, LootContext context) {
+        return this.compositeFunction.apply(stack, context);
     }
 
+    /**
+     * Validate that this object is used correctly according to the given ValidationContext.
+     */
     @Override
-    public void validate(ValidationContext p_298605_) {
-        LootItemFunction.super.validate(p_298605_);
+    public void validate(ValidationContext context) {
+        LootItemFunction.super.validate(context);
 
         for (int i = 0; i < this.functions.size(); i++) {
-            this.functions.get(i).validate(p_298605_.forChild(".function[" + i + "]"));
+            this.functions.get(i).validate(context.forChild(".function[" + i + "]"));
         }
     }
 

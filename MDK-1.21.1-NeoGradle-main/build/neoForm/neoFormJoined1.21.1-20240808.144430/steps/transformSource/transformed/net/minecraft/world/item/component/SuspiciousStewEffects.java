@@ -21,8 +21,8 @@ public record SuspiciousStewEffects(List<SuspiciousStewEffects.Entry> effects) {
         .apply(ByteBufCodecs.list())
         .map(SuspiciousStewEffects::new, SuspiciousStewEffects::effects);
 
-    public SuspiciousStewEffects withEffectAdded(SuspiciousStewEffects.Entry p_330534_) {
-        return new SuspiciousStewEffects(Util.copyAndAdd(this.effects, p_330534_));
+    public SuspiciousStewEffects withEffectAdded(SuspiciousStewEffects.Entry entry) {
+        return new SuspiciousStewEffects(Util.copyAndAdd(this.effects, entry));
     }
 
     public static record Entry(Holder<MobEffect> effect, int duration) {

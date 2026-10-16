@@ -29,20 +29,20 @@ public class GuardianRenderer extends MobRenderer<Guardian, GuardianModel> {
         this(p_174159_, 0.5F, ModelLayers.GUARDIAN);
     }
 
-    protected GuardianRenderer(EntityRendererProvider.Context p_174161_, float p_174162_, ModelLayerLocation p_174163_) {
-        super(p_174161_, new GuardianModel(p_174161_.bakeLayer(p_174163_)), p_174162_);
+    protected GuardianRenderer(EntityRendererProvider.Context context, float shadowRadius, ModelLayerLocation layer) {
+        super(context, new GuardianModel(context.bakeLayer(layer)), shadowRadius);
     }
 
-    public boolean shouldRender(Guardian p_114836_, Frustum p_114837_, double p_114838_, double p_114839_, double p_114840_) {
-        if (super.shouldRender(p_114836_, p_114837_, p_114838_, p_114839_, p_114840_)) {
+    public boolean shouldRender(Guardian livingEntity, Frustum camera, double camX, double camY, double camZ) {
+        if (super.shouldRender(livingEntity, camera, camX, camY, camZ)) {
             return true;
         } else {
-            if (p_114836_.hasActiveAttackTarget()) {
-                LivingEntity livingentity = p_114836_.getActiveAttackTarget();
+            if (livingEntity.hasActiveAttackTarget()) {
+                LivingEntity livingentity = livingEntity.getActiveAttackTarget();
                 if (livingentity != null) {
                     Vec3 vec3 = this.getPosition(livingentity, (double)livingentity.getBbHeight() * 0.5, 1.0F);
-                    Vec3 vec31 = this.getPosition(p_114836_, (double)p_114836_.getEyeHeight(), 1.0F);
-                    return p_114837_.isVisible(new AABB(vec31.x, vec31.y, vec31.z, vec3.x, vec3.y, vec3.z));
+                    Vec3 vec31 = this.getPosition(livingEntity, (double)livingEntity.getEyeHeight(), 1.0F);
+                    return camera.isVisible(new AABB(vec31.x, vec31.y, vec31.z, vec3.x, vec3.y, vec3.z));
                 }
             }
 
@@ -50,32 +50,32 @@ public class GuardianRenderer extends MobRenderer<Guardian, GuardianModel> {
         }
     }
 
-    private Vec3 getPosition(LivingEntity p_114803_, double p_114804_, float p_114805_) {
-        double d0 = Mth.lerp((double)p_114805_, p_114803_.xOld, p_114803_.getX());
-        double d1 = Mth.lerp((double)p_114805_, p_114803_.yOld, p_114803_.getY()) + p_114804_;
-        double d2 = Mth.lerp((double)p_114805_, p_114803_.zOld, p_114803_.getZ());
+    private Vec3 getPosition(LivingEntity livingEntity, double yOffset, float partialTick) {
+        double d0 = Mth.lerp((double)partialTick, livingEntity.xOld, livingEntity.getX());
+        double d1 = Mth.lerp((double)partialTick, livingEntity.yOld, livingEntity.getY()) + yOffset;
+        double d2 = Mth.lerp((double)partialTick, livingEntity.zOld, livingEntity.getZ());
         return new Vec3(d0, d1, d2);
     }
 
-    public void render(Guardian p_114829_, float p_114830_, float p_114831_, PoseStack p_114832_, MultiBufferSource p_114833_, int p_114834_) {
-        super.render(p_114829_, p_114830_, p_114831_, p_114832_, p_114833_, p_114834_);
-        LivingEntity livingentity = p_114829_.getActiveAttackTarget();
+    public void render(Guardian entity, float entityYaw, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
+        super.render(entity, entityYaw, partialTicks, poseStack, buffer, packedLight);
+        LivingEntity livingentity = entity.getActiveAttackTarget();
         if (livingentity != null) {
-            float f = p_114829_.getAttackAnimationScale(p_114831_);
-            float f1 = p_114829_.getClientSideAttackTime() + p_114831_;
+            float f = entity.getAttackAnimationScale(partialTicks);
+            float f1 = entity.getClientSideAttackTime() + partialTicks;
             float f2 = f1 * 0.5F % 1.0F;
-            float f3 = p_114829_.getEyeHeight();
-            p_114832_.pushPose();
-            p_114832_.translate(0.0F, f3, 0.0F);
-            Vec3 vec3 = this.getPosition(livingentity, (double)livingentity.getBbHeight() * 0.5, p_114831_);
-            Vec3 vec31 = this.getPosition(p_114829_, (double)f3, p_114831_);
+            float f3 = entity.getEyeHeight();
+            poseStack.pushPose();
+            poseStack.translate(0.0F, f3, 0.0F);
+            Vec3 vec3 = this.getPosition(livingentity, (double)livingentity.getBbHeight() * 0.5, partialTicks);
+            Vec3 vec31 = this.getPosition(entity, (double)f3, partialTicks);
             Vec3 vec32 = vec3.subtract(vec31);
             float f4 = (float)(vec32.length() + 1.0);
             vec32 = vec32.normalize();
             float f5 = (float)Math.acos(vec32.y);
             float f6 = (float)Math.atan2(vec32.z, vec32.x);
-            p_114832_.mulPose(Axis.YP.rotationDegrees(((float) (Math.PI / 2) - f6) * (180.0F / (float)Math.PI)));
-            p_114832_.mulPose(Axis.XP.rotationDegrees(f5 * (180.0F / (float)Math.PI)));
+            poseStack.mulPose(Axis.YP.rotationDegrees(((float) (Math.PI / 2) - f6) * (180.0F / (float)Math.PI)));
+            poseStack.mulPose(Axis.XP.rotationDegrees(f5 * (180.0F / (float)Math.PI)));
             int i = 1;
             float f7 = f1 * 0.05F * -1.5F;
             float f8 = f * f;
@@ -104,8 +104,8 @@ public class GuardianRenderer extends MobRenderer<Guardian, GuardianModel> {
             float f28 = 0.4999F;
             float f29 = -1.0F + f2;
             float f30 = f4 * 2.5F + f29;
-            VertexConsumer vertexconsumer = p_114833_.getBuffer(BEAM_RENDER_TYPE);
-            PoseStack.Pose posestack$pose = p_114832_.last();
+            VertexConsumer vertexconsumer = buffer.getBuffer(BEAM_RENDER_TYPE);
+            PoseStack.Pose posestack$pose = poseStack.last();
             vertex(vertexconsumer, posestack$pose, f19, f4, f20, j, k, l, 0.4999F, f30);
             vertex(vertexconsumer, posestack$pose, f19, 0.0F, f20, j, k, l, 0.4999F, f29);
             vertex(vertexconsumer, posestack$pose, f21, 0.0F, f22, j, k, l, 0.0F, f29);
@@ -115,7 +115,7 @@ public class GuardianRenderer extends MobRenderer<Guardian, GuardianModel> {
             vertex(vertexconsumer, posestack$pose, f25, 0.0F, f26, j, k, l, 0.0F, f29);
             vertex(vertexconsumer, posestack$pose, f25, f4, f26, j, k, l, 0.0F, f30);
             float f31 = 0.0F;
-            if (p_114829_.tickCount % 2 == 0) {
+            if (entity.tickCount % 2 == 0) {
                 f31 = 0.5F;
             }
 
@@ -123,31 +123,34 @@ public class GuardianRenderer extends MobRenderer<Guardian, GuardianModel> {
             vertex(vertexconsumer, posestack$pose, f13, f4, f14, j, k, l, 1.0F, f31 + 0.5F);
             vertex(vertexconsumer, posestack$pose, f17, f4, f18, j, k, l, 1.0F, f31);
             vertex(vertexconsumer, posestack$pose, f15, f4, f16, j, k, l, 0.5F, f31);
-            p_114832_.popPose();
+            poseStack.popPose();
         }
     }
 
     private static void vertex(
-        VertexConsumer p_253637_,
-        PoseStack.Pose p_323627_,
-        float p_253994_,
-        float p_254492_,
-        float p_254474_,
-        int p_254080_,
-        int p_253655_,
-        int p_254133_,
-        float p_254233_,
-        float p_253939_
+        VertexConsumer consumer,
+        PoseStack.Pose pose,
+        float x,
+        float y,
+        float z,
+        int red,
+        int green,
+        int blue,
+        float u,
+        float v
     ) {
-        p_253637_.addVertex(p_323627_, p_253994_, p_254492_, p_254474_)
-            .setColor(p_254080_, p_253655_, p_254133_, 255)
-            .setUv(p_254233_, p_253939_)
+        consumer.addVertex(pose, x, y, z)
+            .setColor(red, green, blue, 255)
+            .setUv(u, v)
             .setOverlay(OverlayTexture.NO_OVERLAY)
             .setLight(15728880)
-            .setNormal(p_323627_, 0.0F, 1.0F, 0.0F);
+            .setNormal(pose, 0.0F, 1.0F, 0.0F);
     }
 
-    public ResourceLocation getTextureLocation(Guardian p_114827_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Guardian entity) {
         return GUARDIAN_LOCATION;
     }
 }

@@ -9,8 +9,8 @@ import com.mojang.datafixers.schemas.Schema;
 import com.mojang.serialization.Dynamic;
 
 public class OptionsAmbientOcclusionFix extends DataFix {
-    public OptionsAmbientOcclusionFix(Schema p_263497_) {
-        super(p_263497_, false);
+    public OptionsAmbientOcclusionFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
     @Override
@@ -28,11 +28,11 @@ public class OptionsAmbientOcclusionFix extends DataFix {
         );
     }
 
-    private static String updateValue(String p_263541_) {
-        return switch (p_263541_) {
+    private static String updateValue(String oldValue) {
+        return switch (oldValue) {
             case "0" -> "false";
             case "1", "2" -> "true";
-            default -> p_263541_;
+            default -> oldValue;
         };
     }
 }

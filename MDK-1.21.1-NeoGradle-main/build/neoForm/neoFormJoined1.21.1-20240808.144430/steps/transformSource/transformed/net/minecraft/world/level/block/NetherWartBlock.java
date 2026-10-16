@@ -32,43 +32,46 @@ public class NetherWartBlock extends BushBlock {
         return CODEC;
     }
 
-    public NetherWartBlock(BlockBehaviour.Properties p_54971_) {
-        super(p_54971_);
+    public NetherWartBlock(BlockBehaviour.Properties properties) {
+        super(properties);
         this.registerDefaultState(this.stateDefinition.any().setValue(AGE, Integer.valueOf(0)));
     }
 
     @Override
-    protected VoxelShape getShape(BlockState p_54986_, BlockGetter p_54987_, BlockPos p_54988_, CollisionContext p_54989_) {
-        return SHAPE_BY_AGE[p_54986_.getValue(AGE)];
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SHAPE_BY_AGE[state.getValue(AGE)];
     }
 
     @Override
-    protected boolean mayPlaceOn(BlockState p_54991_, BlockGetter p_54992_, BlockPos p_54993_) {
-        return p_54991_.is(Blocks.SOUL_SAND);
+    protected boolean mayPlaceOn(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.is(Blocks.SOUL_SAND);
     }
 
     @Override
-    protected boolean isRandomlyTicking(BlockState p_54979_) {
-        return p_54979_.getValue(AGE) < 3;
+    protected boolean isRandomlyTicking(BlockState state) {
+        return state.getValue(AGE) < 3;
     }
 
+    /**
+     * Performs a random tick on a block.
+     */
     @Override
-    protected void randomTick(BlockState p_221806_, ServerLevel p_221807_, BlockPos p_221808_, RandomSource p_221809_) {
-        int i = p_221806_.getValue(AGE);
-        if (i < 3 && net.neoforged.neoforge.common.CommonHooks.canCropGrow(p_221807_, p_221808_, p_221806_, p_221809_.nextInt(10) == 0)) {
-            p_221806_ = p_221806_.setValue(AGE, Integer.valueOf(i + 1));
-            p_221807_.setBlock(p_221808_, p_221806_, 2);
-            net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(p_221807_, p_221808_, p_221806_);
+    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+        int i = state.getValue(AGE);
+        if (i < 3 && net.neoforged.neoforge.common.CommonHooks.canCropGrow(level, pos, state, random.nextInt(10) == 0)) {
+            state = state.setValue(AGE, Integer.valueOf(i + 1));
+            level.setBlock(pos, state, 2);
+            net.neoforged.neoforge.common.CommonHooks.fireCropGrowPost(level, pos, state);
         }
     }
 
     @Override
-    public ItemStack getCloneItemStack(LevelReader p_304797_, BlockPos p_54974_, BlockState p_54975_) {
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state) {
         return new ItemStack(Items.NETHER_WART);
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> p_54977_) {
-        p_54977_.add(AGE);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(AGE);
     }
 }

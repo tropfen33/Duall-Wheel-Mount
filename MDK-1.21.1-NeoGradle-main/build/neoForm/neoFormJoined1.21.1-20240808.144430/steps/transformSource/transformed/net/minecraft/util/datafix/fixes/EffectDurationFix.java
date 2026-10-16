@@ -16,8 +16,8 @@ import net.minecraft.util.datafix.schemas.NamespacedSchema;
 public class EffectDurationFix extends DataFix {
     private static final Set<String> ITEM_TYPES = Set.of("minecraft:potion", "minecraft:splash_potion", "minecraft:lingering_potion", "minecraft:tipped_arrow");
 
-    public EffectDurationFix(Schema p_267976_) {
-        super(p_267976_, false);
+    public EffectDurationFix(Schema outputSchema) {
+        super(outputSchema, false);
     }
 
     @Override
@@ -49,23 +49,23 @@ public class EffectDurationFix extends DataFix {
         );
     }
 
-    private Dynamic<?> fixEffect(Dynamic<?> p_267989_) {
-        return p_267989_.update("FactorCalculationData", p_268051_ -> {
+    private Dynamic<?> fixEffect(Dynamic<?> dynamic) {
+        return dynamic.update("FactorCalculationData", p_268051_ -> {
             int i = p_268051_.get("effect_changed_timestamp").asInt(-1);
             p_268051_ = p_268051_.remove("effect_changed_timestamp");
-            int j = p_267989_.get("Duration").asInt(-1);
+            int j = dynamic.get("Duration").asInt(-1);
             int k = i - j;
             return p_268051_.set("ticks_active", p_268051_.createInt(k));
         });
     }
 
-    private Dynamic<?> fix(Dynamic<?> p_268201_) {
-        return p_268201_.createList(p_268201_.asStream().map(this::fixEffect));
+    private Dynamic<?> fix(Dynamic<?> dynamic) {
+        return dynamic.createList(dynamic.asStream().map(this::fixEffect));
     }
 
-    private Dynamic<?> updateEntity(Dynamic<?> p_268005_) {
-        p_268005_ = p_268005_.update("Effects", this::fix);
-        p_268005_ = p_268005_.update("ActiveEffects", this::fix);
-        return p_268005_.update("CustomPotionEffects", this::fix);
+    private Dynamic<?> updateEntity(Dynamic<?> entityTag) {
+        entityTag = entityTag.update("Effects", this::fix);
+        entityTag = entityTag.update("ActiveEffects", this::fix);
+        return entityTag.update("CustomPotionEffects", this::fix);
     }
 }

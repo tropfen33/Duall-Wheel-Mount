@@ -17,21 +17,33 @@ public interface TutorialStepInstance {
     default void tick() {
     }
 
-    default void onInput(Input p_120623_) {
+    /**
+     * Handles the player movement
+     */
+    default void onInput(Input input) {
     }
 
-    default void onMouse(double p_120614_, double p_120615_) {
+    default void onMouse(double velocityX, double velocityY) {
     }
 
-    default void onLookAt(ClientLevel p_120617_, HitResult p_120618_) {
+    /**
+     * Handles blocks and entities hovering
+     */
+    default void onLookAt(ClientLevel level, HitResult result) {
     }
 
-    default void onDestroyBlock(ClientLevel p_120619_, BlockPos p_120620_, BlockState p_120621_, float p_120622_) {
+    /**
+     * Called when a player hits block to destroy it.
+     */
+    default void onDestroyBlock(ClientLevel level, BlockPos pos, BlockState state, float diggingStage) {
     }
 
     default void onOpenInventory() {
     }
 
-    default void onGetItem(ItemStack p_120616_) {
+    /**
+     * Called when the player pick up an ItemStack
+     */
+    default void onGetItem(ItemStack stack) {
     }
 }

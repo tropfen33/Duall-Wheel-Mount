@@ -18,27 +18,27 @@ public class ClientboundSetEquipmentPacket implements Packet<ClientGamePacketLis
     private final int entity;
     private final List<Pair<EquipmentSlot, ItemStack>> slots;
 
-    public ClientboundSetEquipmentPacket(int p_133202_, List<Pair<EquipmentSlot, ItemStack>> p_133203_) {
-        this.entity = p_133202_;
-        this.slots = p_133203_;
+    public ClientboundSetEquipmentPacket(int entity, List<Pair<EquipmentSlot, ItemStack>> slots) {
+        this.entity = entity;
+        this.slots = slots;
     }
 
-    private ClientboundSetEquipmentPacket(RegistryFriendlyByteBuf p_320957_) {
-        this.entity = p_320957_.readVarInt();
+    private ClientboundSetEquipmentPacket(RegistryFriendlyByteBuf buffer) {
+        this.entity = buffer.readVarInt();
         EquipmentSlot[] aequipmentslot = EquipmentSlot.values();
         this.slots = Lists.newArrayList();
 
         int i;
         do {
-            i = p_320957_.readByte();
+            i = buffer.readByte();
             EquipmentSlot equipmentslot = aequipmentslot[i & 127];
-            ItemStack itemstack = ItemStack.OPTIONAL_STREAM_CODEC.decode(p_320957_);
+            ItemStack itemstack = ItemStack.OPTIONAL_STREAM_CODEC.decode(buffer);
             this.slots.add(Pair.of(equipmentslot, itemstack));
         } while ((i & -128) != 0);
     }
 
-    private void write(RegistryFriendlyByteBuf p_320609_) {
-        p_320609_.writeVarInt(this.entity);
+    private void write(RegistryFriendlyByteBuf buffer) {
+        buffer.writeVarInt(this.entity);
         int i = this.slots.size();
 
         for (int j = 0; j < i; j++) {
@@ -46,8 +46,8 @@ public class ClientboundSetEquipmentPacket implements Packet<ClientGamePacketLis
             EquipmentSlot equipmentslot = pair.getFirst();
             boolean flag = j != i - 1;
             int k = equipmentslot.ordinal();
-            p_320609_.writeByte(flag ? k | -128 : k);
-            ItemStack.OPTIONAL_STREAM_CODEC.encode(p_320609_, pair.getSecond());
+            buffer.writeByte(flag ? k | -128 : k);
+            ItemStack.OPTIONAL_STREAM_CODEC.encode(buffer, pair.getSecond());
         }
     }
 
@@ -56,8 +56,11 @@ public class ClientboundSetEquipmentPacket implements Packet<ClientGamePacketLis
         return GamePacketTypes.CLIENTBOUND_SET_EQUIPMENT;
     }
 
-    public void handle(ClientGamePacketListener p_133209_) {
-        p_133209_.handleSetEquipment(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ClientGamePacketListener handler) {
+        handler.handleSetEquipment(this);
     }
 
     public int getEntity() {

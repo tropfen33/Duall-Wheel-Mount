@@ -26,11 +26,11 @@ public class CommonLinks {
     public static final URI REALMS_TERMS = URI.create("https://aka.ms/MinecraftRealmsTerms");
     public static final URI REALMS_CONTENT_CREATION = URI.create("https://aka.ms/MinecraftRealmsContentCreator");
 
-    public static String extendRealms(String p_276321_, UUID p_295484_, boolean p_276266_) {
-        return extendRealms(p_276321_, p_295484_) + "&ref=" + (p_276266_ ? "expiredTrial" : "expiredRealm");
+    public static String extendRealms(String subscriptionId, UUID profileId, boolean isTrial) {
+        return extendRealms(subscriptionId, profileId) + "&ref=" + (isTrial ? "expiredTrial" : "expiredRealm");
     }
 
-    public static String extendRealms(String p_276318_, UUID p_296140_) {
-        return "https://aka.ms/ExtendJavaRealms?subscriptionId=" + p_276318_ + "&profileId=" + UndashedUuid.toString(p_296140_);
+    public static String extendRealms(String subscriptionId, UUID profileId) {
+        return "https://aka.ms/ExtendJavaRealms?subscriptionId=" + subscriptionId + "&profileId=" + UndashedUuid.toString(profileId);
     }
 }

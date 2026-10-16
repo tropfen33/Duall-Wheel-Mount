@@ -13,10 +13,10 @@ public record GoalDebugPayload(int entityId, BlockPos pos, List<GoalDebugPayload
         this(p_295257_.readInt(), p_295257_.readBlockPos(), p_295257_.readList(GoalDebugPayload.DebugGoal::new));
     }
 
-    private void write(FriendlyByteBuf p_295543_) {
-        p_295543_.writeInt(this.entityId);
-        p_295543_.writeBlockPos(this.pos);
-        p_295543_.writeCollection(this.goals, (p_294168_, p_295766_) -> p_295766_.write(p_294168_));
+    private void write(FriendlyByteBuf buffer) {
+        buffer.writeInt(this.entityId);
+        buffer.writeBlockPos(this.pos);
+        buffer.writeCollection(this.goals, (p_294168_, p_295766_) -> p_295766_.write(p_294168_));
     }
 
     @Override
@@ -29,10 +29,10 @@ public record GoalDebugPayload(int entityId, BlockPos pos, List<GoalDebugPayload
             this(p_294803_.readInt(), p_294803_.readBoolean(), p_294803_.readUtf(255));
         }
 
-        public void write(FriendlyByteBuf p_294258_) {
-            p_294258_.writeInt(this.priority);
-            p_294258_.writeBoolean(this.isRunning);
-            p_294258_.writeUtf(this.name);
+        public void write(FriendlyByteBuf buffer) {
+            buffer.writeInt(this.priority);
+            buffer.writeBoolean(this.isRunning);
+            buffer.writeUtf(this.name);
         }
     }
 }

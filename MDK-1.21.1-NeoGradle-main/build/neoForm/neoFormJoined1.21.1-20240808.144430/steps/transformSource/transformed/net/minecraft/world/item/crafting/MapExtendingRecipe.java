@@ -11,25 +11,25 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public class MapExtendingRecipe extends ShapedRecipe {
-    public MapExtendingRecipe(CraftingBookCategory p_250154_) {
+    public MapExtendingRecipe(CraftingBookCategory category) {
         super(
             "",
-            p_250154_,
+            category,
             ShapedRecipePattern.of(Map.of('#', Ingredient.of(Items.PAPER), 'x', Ingredient.of(Items.FILLED_MAP)), "###", "#x#", "###"),
             new ItemStack(Items.MAP)
         );
     }
 
     @Override
-    public boolean matches(CraftingInput p_345101_, Level p_43994_) {
-        if (!super.matches(p_345101_, p_43994_)) {
+    public boolean matches(CraftingInput input, Level level) {
+        if (!super.matches(input, level)) {
             return false;
         } else {
-            ItemStack itemstack = findFilledMap(p_345101_);
+            ItemStack itemstack = findFilledMap(input);
             if (itemstack.isEmpty()) {
                 return false;
             } else {
-                MapItemSavedData mapitemsaveddata = MapItem.getSavedData(itemstack, p_43994_);
+                MapItemSavedData mapitemsaveddata = MapItem.getSavedData(itemstack, level);
                 if (mapitemsaveddata == null) {
                     return false;
                 } else {
@@ -40,15 +40,15 @@ public class MapExtendingRecipe extends ShapedRecipe {
     }
 
     @Override
-    public ItemStack assemble(CraftingInput p_345831_, HolderLookup.Provider p_335387_) {
-        ItemStack itemstack = findFilledMap(p_345831_).copyWithCount(1);
+    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
+        ItemStack itemstack = findFilledMap(input).copyWithCount(1);
         itemstack.set(DataComponents.MAP_POST_PROCESSING, MapPostProcessing.SCALE);
         return itemstack;
     }
 
-    private static ItemStack findFilledMap(CraftingInput p_344732_) {
-        for (int i = 0; i < p_344732_.size(); i++) {
-            ItemStack itemstack = p_344732_.getItem(i);
+    private static ItemStack findFilledMap(CraftingInput input) {
+        for (int i = 0; i < input.size(); i++) {
+            ItemStack itemstack = input.getItem(i);
             if (itemstack.is(Items.FILLED_MAP)) {
                 return itemstack;
             }

@@ -20,7 +20,10 @@ public record ServerboundContainerButtonClickPacket(int containerId, int buttonI
         return GamePacketTypes.SERVERBOUND_CONTAINER_BUTTON_CLICK;
     }
 
-    public void handle(ServerGamePacketListener p_133934_) {
-        p_133934_.handleContainerButtonClick(this);
+    /**
+     * Passes this Packet on to the NetHandler for processing.
+     */
+    public void handle(ServerGamePacketListener handler) {
+        handler.handleContainerButtonClick(this);
     }
 }

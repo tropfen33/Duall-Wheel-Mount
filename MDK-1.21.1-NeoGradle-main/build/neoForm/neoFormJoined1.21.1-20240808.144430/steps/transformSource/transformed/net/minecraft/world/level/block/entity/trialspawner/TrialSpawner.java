@@ -83,28 +83,28 @@ public final class TrialSpawner implements net.neoforged.neoforge.common.extensi
         );
     }
 
-    public TrialSpawner(TrialSpawner.StateAccessor p_312676_, PlayerDetector p_312004_, PlayerDetector.EntitySelector p_323917_) {
-        this(TrialSpawnerConfig.DEFAULT, TrialSpawnerConfig.DEFAULT, new TrialSpawnerData(), 36000, 14, p_312676_, p_312004_, p_323917_);
+    public TrialSpawner(TrialSpawner.StateAccessor stateAccessor, PlayerDetector playerDetector, PlayerDetector.EntitySelector entitySelector) {
+        this(TrialSpawnerConfig.DEFAULT, TrialSpawnerConfig.DEFAULT, new TrialSpawnerData(), 36000, 14, stateAccessor, playerDetector, entitySelector);
     }
 
     public TrialSpawner(
-        TrialSpawnerConfig p_323942_,
-        TrialSpawnerConfig p_338891_,
-        TrialSpawnerData p_323470_,
-        int p_338747_,
-        int p_338885_,
-        TrialSpawner.StateAccessor p_312198_,
-        PlayerDetector p_312690_,
-        PlayerDetector.EntitySelector p_323834_
+        TrialSpawnerConfig normalConfig,
+        TrialSpawnerConfig ominousConfig,
+        TrialSpawnerData data,
+        int targetCooldownLength,
+        int requiredPlayerRange,
+        TrialSpawner.StateAccessor stateAccessor,
+        PlayerDetector playerDetector,
+        PlayerDetector.EntitySelector entitySelector
     ) {
-        this.normalConfig = p_323942_;
-        this.ominousConfig = p_338891_;
-        this.data = p_323470_;
-        this.targetCooldownLength = p_338747_;
-        this.requiredPlayerRange = p_338885_;
-        this.stateAccessor = p_312198_;
-        this.playerDetector = p_312690_;
-        this.entitySelector = p_323834_;
+        this.normalConfig = normalConfig;
+        this.ominousConfig = ominousConfig;
+        this.data = data;
+        this.targetCooldownLength = targetCooldownLength;
+        this.requiredPlayerRange = requiredPlayerRange;
+        this.stateAccessor = stateAccessor;
+        this.playerDetector = playerDetector;
+        this.entitySelector = entitySelector;
     }
 
     public TrialSpawnerConfig getConfig() {
@@ -125,15 +125,15 @@ public final class TrialSpawner implements net.neoforged.neoforge.common.extensi
         return !this.ominousConfig.equals(this.normalConfig) ? this.ominousConfig : TrialSpawnerConfig.DEFAULT;
     }
 
-    public void applyOminous(ServerLevel p_338315_, BlockPos p_338416_) {
-        p_338315_.setBlock(p_338416_, p_338315_.getBlockState(p_338416_).setValue(TrialSpawnerBlock.OMINOUS, Boolean.valueOf(true)), 3);
-        p_338315_.levelEvent(3020, p_338416_, 1);
+    public void applyOminous(ServerLevel level, BlockPos pos) {
+        level.setBlock(pos, level.getBlockState(pos).setValue(TrialSpawnerBlock.OMINOUS, Boolean.valueOf(true)), 3);
+        level.levelEvent(3020, pos, 1);
         this.isOminous = true;
-        this.data.resetAfterBecomingOminous(this, p_338315_);
+        this.data.resetAfterBecomingOminous(this, level);
     }
 
-    public void removeOminous(ServerLevel p_338672_, BlockPos p_338318_) {
-        p_338672_.setBlock(p_338318_, p_338672_.getBlockState(p_338318_).setValue(TrialSpawnerBlock.OMINOUS, Boolean.valueOf(false)), 3);
+    public void removeOminous(ServerLevel level, BlockPos pos) {
+        level.setBlock(pos, level.getBlockState(pos).setValue(TrialSpawnerBlock.OMINOUS, Boolean.valueOf(false)), 3);
         this.isOminous = false;
     }
 
@@ -157,8 +157,8 @@ public final class TrialSpawner implements net.neoforged.neoforge.common.extensi
         return this.stateAccessor.getState();
     }
 
-    public void setState(Level p_312688_, TrialSpawnerState p_312718_) {
-        this.stateAccessor.setState(p_312688_, p_312718_);
+    public void setState(Level level, TrialSpawnerState state) {
+        this.stateAccessor.setState(level, state);
     }
 
     public void markUpdated() {
@@ -173,17 +173,17 @@ public final class TrialSpawner implements net.neoforged.neoforge.common.extensi
         return this.entitySelector;
     }
 
-    public boolean canSpawnInLevel(Level p_312615_) {
+    public boolean canSpawnInLevel(Level level) {
         if (this.overridePeacefulAndMobSpawnRule) {
             return true;
         } else {
-            return p_312615_.getDifficulty() == Difficulty.PEACEFUL ? false : p_312615_.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING);
+            return level.getDifficulty() == Difficulty.PEACEFUL ? false : level.getGameRules().getBoolean(GameRules.RULE_DOMOBSPAWNING);
         }
     }
 
-    public Optional<UUID> spawnMob(ServerLevel p_312582_, BlockPos p_312518_) {
-        RandomSource randomsource = p_312582_.getRandom();
-        SpawnData spawndata = this.data.getOrCreateNextSpawnData(this, p_312582_.getRandom());
+    public Optional<UUID> spawnMob(ServerLevel level, BlockPos pos) {
+        RandomSource randomsource = level.getRandom();
+        SpawnData spawndata = this.data.getOrCreateNextSpawnData(this, level.getRandom());
         CompoundTag compoundtag = spawndata.entityToSpawn();
         ListTag listtag = compoundtag.getList("Pos", 6);
         Optional<EntityType<?>> optional = EntityType.by(compoundtag);
@@ -193,30 +193,30 @@ public final class TrialSpawner implements net.neoforged.neoforge.common.extensi
             int i = listtag.size();
             double d0 = i >= 1
                 ? listtag.getDouble(0)
-                : (double)p_312518_.getX() + (randomsource.nextDouble() - randomsource.nextDouble()) * (double)this.getConfig().spawnRange() + 0.5;
-            double d1 = i >= 2 ? listtag.getDouble(1) : (double)(p_312518_.getY() + randomsource.nextInt(3) - 1);
+                : (double)pos.getX() + (randomsource.nextDouble() - randomsource.nextDouble()) * (double)this.getConfig().spawnRange() + 0.5;
+            double d1 = i >= 2 ? listtag.getDouble(1) : (double)(pos.getY() + randomsource.nextInt(3) - 1);
             double d2 = i >= 3
                 ? listtag.getDouble(2)
-                : (double)p_312518_.getZ() + (randomsource.nextDouble() - randomsource.nextDouble()) * (double)this.getConfig().spawnRange() + 0.5;
-            if (!p_312582_.noCollision(optional.get().getSpawnAABB(d0, d1, d2))) {
+                : (double)pos.getZ() + (randomsource.nextDouble() - randomsource.nextDouble()) * (double)this.getConfig().spawnRange() + 0.5;
+            if (!level.noCollision(optional.get().getSpawnAABB(d0, d1, d2))) {
                 return Optional.empty();
             } else {
                 Vec3 vec3 = new Vec3(d0, d1, d2);
-                if (!inLineOfSight(p_312582_, p_312518_.getCenter(), vec3)) {
+                if (!inLineOfSight(level, pos.getCenter(), vec3)) {
                     return Optional.empty();
                 } else {
                     BlockPos blockpos = BlockPos.containing(vec3);
-                    if (!SpawnPlacements.checkSpawnRules(optional.get(), p_312582_, MobSpawnType.TRIAL_SPAWNER, blockpos, p_312582_.getRandom())) {
+                    if (!SpawnPlacements.checkSpawnRules(optional.get(), level, MobSpawnType.TRIAL_SPAWNER, blockpos, level.getRandom())) {
                         return Optional.empty();
                     } else {
                         if (spawndata.getCustomSpawnRules().isPresent()) {
                             SpawnData.CustomSpawnRules spawndata$customspawnrules = spawndata.getCustomSpawnRules().get();
-                            if (!spawndata$customspawnrules.isValidPosition(blockpos, p_312582_)) {
+                            if (!spawndata$customspawnrules.isValidPosition(blockpos, level)) {
                                 return Optional.empty();
                             }
                         }
 
-                        Entity entity = EntityType.loadEntityRecursive(compoundtag, p_312582_, p_312375_ -> {
+                        Entity entity = EntityType.loadEntityRecursive(compoundtag, level, p_312375_ -> {
                             p_312375_.moveTo(d0, d1, d2, randomsource.nextFloat() * 360.0F, 0.0F);
                             return p_312375_;
                         });
@@ -224,28 +224,28 @@ public final class TrialSpawner implements net.neoforged.neoforge.common.extensi
                             return Optional.empty();
                         } else {
                             if (entity instanceof Mob mob) {
-                                if (!mob.checkSpawnObstruction(p_312582_)) {
+                                if (!mob.checkSpawnObstruction(level)) {
                                     return Optional.empty();
                                 }
 
                                 boolean flag = spawndata.getEntityToSpawn().size() == 1 && spawndata.getEntityToSpawn().contains("id", 8);
                                 // Neo: Patch in FinalizeSpawn for spawners so it may be fired unconditionally, instead of only when vanilla would normally call it.
                                 // The local flag is the conditions under which the spawner will normally call Mob#finalizeSpawn.
-                                net.neoforged.neoforge.event.EventHooks.finalizeMobSpawnSpawner(mob, p_312582_, p_312582_.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.TRIAL_SPAWNER, null, this, flag);
+                                net.neoforged.neoforge.event.EventHooks.finalizeMobSpawnSpawner(mob, level, level.getCurrentDifficultyAt(mob.blockPosition()), MobSpawnType.TRIAL_SPAWNER, null, this, flag);
 
                                 mob.setPersistenceRequired();
                                 spawndata.getEquipment().ifPresent(mob::equip);
                             }
 
-                            if (!p_312582_.tryAddFreshEntityWithPassengers(entity)) {
+                            if (!level.tryAddFreshEntityWithPassengers(entity)) {
                                 return Optional.empty();
                             } else {
                                 TrialSpawner.FlameParticle trialspawner$flameparticle = this.isOminous
                                     ? TrialSpawner.FlameParticle.OMINOUS
                                     : TrialSpawner.FlameParticle.NORMAL;
-                                p_312582_.levelEvent(3011, p_312518_, trialspawner$flameparticle.encode());
-                                p_312582_.levelEvent(3012, blockpos, trialspawner$flameparticle.encode());
-                                p_312582_.gameEvent(entity, GameEvent.ENTITY_PLACE, blockpos);
+                                level.levelEvent(3011, pos, trialspawner$flameparticle.encode());
+                                level.levelEvent(3012, blockpos, trialspawner$flameparticle.encode());
+                                level.gameEvent(entity, GameEvent.ENTITY_PLACE, blockpos);
                                 return Optional.of(entity.getUUID());
                             }
                         }
@@ -255,111 +255,111 @@ public final class TrialSpawner implements net.neoforged.neoforge.common.extensi
         }
     }
 
-    public void ejectReward(ServerLevel p_312892_, BlockPos p_312668_, ResourceKey<LootTable> p_335942_) {
-        LootTable loottable = p_312892_.getServer().reloadableRegistries().getLootTable(p_335942_);
-        LootParams lootparams = new LootParams.Builder(p_312892_).create(LootContextParamSets.EMPTY);
+    public void ejectReward(ServerLevel level, BlockPos pos, ResourceKey<LootTable> lootTable) {
+        LootTable loottable = level.getServer().reloadableRegistries().getLootTable(lootTable);
+        LootParams lootparams = new LootParams.Builder(level).create(LootContextParamSets.EMPTY);
         ObjectArrayList<ItemStack> objectarraylist = loottable.getRandomItems(lootparams);
         if (!objectarraylist.isEmpty()) {
             for (ItemStack itemstack : objectarraylist) {
-                DefaultDispenseItemBehavior.spawnItem(p_312892_, itemstack, 2, Direction.UP, Vec3.atBottomCenterOf(p_312668_).relative(Direction.UP, 1.2));
+                DefaultDispenseItemBehavior.spawnItem(level, itemstack, 2, Direction.UP, Vec3.atBottomCenterOf(pos).relative(Direction.UP, 1.2));
             }
 
-            p_312892_.levelEvent(3014, p_312668_, 0);
+            level.levelEvent(3014, pos, 0);
         }
     }
 
-    public void tickClient(Level p_312771_, BlockPos p_312484_, boolean p_338382_) {
+    public void tickClient(Level level, BlockPos pos, boolean isOminous) {
         TrialSpawnerState trialspawnerstate = this.getState();
-        trialspawnerstate.emitParticles(p_312771_, p_312484_, p_338382_);
+        trialspawnerstate.emitParticles(level, pos, isOminous);
         if (trialspawnerstate.hasSpinningMob()) {
-            double d0 = (double)Math.max(0L, this.data.nextMobSpawnsAt - p_312771_.getGameTime());
+            double d0 = (double)Math.max(0L, this.data.nextMobSpawnsAt - level.getGameTime());
             this.data.oSpin = this.data.spin;
             this.data.spin = (this.data.spin + trialspawnerstate.spinningMobSpeed() / (d0 + 200.0)) % 360.0;
         }
 
         if (trialspawnerstate.isCapableOfSpawning()) {
-            RandomSource randomsource = p_312771_.getRandom();
+            RandomSource randomsource = level.getRandom();
             if (randomsource.nextFloat() <= 0.02F) {
-                SoundEvent soundevent = p_338382_ ? SoundEvents.TRIAL_SPAWNER_AMBIENT_OMINOUS : SoundEvents.TRIAL_SPAWNER_AMBIENT;
-                p_312771_.playLocalSound(
-                    p_312484_, soundevent, SoundSource.BLOCKS, randomsource.nextFloat() * 0.25F + 0.75F, randomsource.nextFloat() + 0.5F, false
+                SoundEvent soundevent = isOminous ? SoundEvents.TRIAL_SPAWNER_AMBIENT_OMINOUS : SoundEvents.TRIAL_SPAWNER_AMBIENT;
+                level.playLocalSound(
+                    pos, soundevent, SoundSource.BLOCKS, randomsource.nextFloat() * 0.25F + 0.75F, randomsource.nextFloat() + 0.5F, false
                 );
             }
         }
     }
 
-    public void tickServer(ServerLevel p_312132_, BlockPos p_312062_, boolean p_338207_) {
-        this.isOminous = p_338207_;
+    public void tickServer(ServerLevel level, BlockPos pos, boolean isOminous) {
+        this.isOminous = isOminous;
         TrialSpawnerState trialspawnerstate = this.getState();
-        if (this.data.currentMobs.removeIf(p_312870_ -> shouldMobBeUntracked(p_312132_, p_312062_, p_312870_))) {
-            this.data.nextMobSpawnsAt = p_312132_.getGameTime() + (long)this.getConfig().ticksBetweenSpawn();
+        if (this.data.currentMobs.removeIf(p_312870_ -> shouldMobBeUntracked(level, pos, p_312870_))) {
+            this.data.nextMobSpawnsAt = level.getGameTime() + (long)this.getConfig().ticksBetweenSpawn();
         }
 
-        TrialSpawnerState trialspawnerstate1 = trialspawnerstate.tickAndGetNext(p_312062_, this, p_312132_);
+        TrialSpawnerState trialspawnerstate1 = trialspawnerstate.tickAndGetNext(pos, this, level);
         if (trialspawnerstate1 != trialspawnerstate) {
-            this.setState(p_312132_, trialspawnerstate1);
+            this.setState(level, trialspawnerstate1);
         }
     }
 
-    private static boolean shouldMobBeUntracked(ServerLevel p_312908_, BlockPos p_312807_, UUID p_311952_) {
-        Entity entity = p_312908_.getEntity(p_311952_);
+    private static boolean shouldMobBeUntracked(ServerLevel level, BlockPos pos, UUID uuid) {
+        Entity entity = level.getEntity(uuid);
         return entity == null
             || !entity.isAlive()
-            || !entity.level().dimension().equals(p_312908_.dimension())
-            || entity.blockPosition().distSqr(p_312807_) > (double)MAX_MOB_TRACKING_DISTANCE_SQR;
+            || !entity.level().dimension().equals(level.dimension())
+            || entity.blockPosition().distSqr(pos) > (double)MAX_MOB_TRACKING_DISTANCE_SQR;
     }
 
-    private static boolean inLineOfSight(Level p_312623_, Vec3 p_312390_, Vec3 p_312652_) {
-        BlockHitResult blockhitresult = p_312623_.clip(
-            new ClipContext(p_312652_, p_312390_, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, CollisionContext.empty())
+    private static boolean inLineOfSight(Level level, Vec3 spawnerPos, Vec3 mobPos) {
+        BlockHitResult blockhitresult = level.clip(
+            new ClipContext(mobPos, spawnerPos, ClipContext.Block.VISUAL, ClipContext.Fluid.NONE, CollisionContext.empty())
         );
-        return blockhitresult.getBlockPos().equals(BlockPos.containing(p_312390_)) || blockhitresult.getType() == HitResult.Type.MISS;
+        return blockhitresult.getBlockPos().equals(BlockPos.containing(spawnerPos)) || blockhitresult.getType() == HitResult.Type.MISS;
     }
 
-    public static void addSpawnParticles(Level p_312303_, BlockPos p_312392_, RandomSource p_312825_, SimpleParticleType p_338426_) {
+    public static void addSpawnParticles(Level level, BlockPos pos, RandomSource random, SimpleParticleType particleType) {
         for (int i = 0; i < 20; i++) {
-            double d0 = (double)p_312392_.getX() + 0.5 + (p_312825_.nextDouble() - 0.5) * 2.0;
-            double d1 = (double)p_312392_.getY() + 0.5 + (p_312825_.nextDouble() - 0.5) * 2.0;
-            double d2 = (double)p_312392_.getZ() + 0.5 + (p_312825_.nextDouble() - 0.5) * 2.0;
-            p_312303_.addParticle(ParticleTypes.SMOKE, d0, d1, d2, 0.0, 0.0, 0.0);
-            p_312303_.addParticle(p_338426_, d0, d1, d2, 0.0, 0.0, 0.0);
+            double d0 = (double)pos.getX() + 0.5 + (random.nextDouble() - 0.5) * 2.0;
+            double d1 = (double)pos.getY() + 0.5 + (random.nextDouble() - 0.5) * 2.0;
+            double d2 = (double)pos.getZ() + 0.5 + (random.nextDouble() - 0.5) * 2.0;
+            level.addParticle(ParticleTypes.SMOKE, d0, d1, d2, 0.0, 0.0, 0.0);
+            level.addParticle(particleType, d0, d1, d2, 0.0, 0.0, 0.0);
         }
     }
 
-    public static void addBecomeOminousParticles(Level p_338657_, BlockPos p_338406_, RandomSource p_338527_) {
+    public static void addBecomeOminousParticles(Level level, BlockPos pos, RandomSource random) {
         for (int i = 0; i < 20; i++) {
-            double d0 = (double)p_338406_.getX() + 0.5 + (p_338527_.nextDouble() - 0.5) * 2.0;
-            double d1 = (double)p_338406_.getY() + 0.5 + (p_338527_.nextDouble() - 0.5) * 2.0;
-            double d2 = (double)p_338406_.getZ() + 0.5 + (p_338527_.nextDouble() - 0.5) * 2.0;
-            double d3 = p_338527_.nextGaussian() * 0.02;
-            double d4 = p_338527_.nextGaussian() * 0.02;
-            double d5 = p_338527_.nextGaussian() * 0.02;
-            p_338657_.addParticle(ParticleTypes.TRIAL_OMEN, d0, d1, d2, d3, d4, d5);
-            p_338657_.addParticle(ParticleTypes.SOUL_FIRE_FLAME, d0, d1, d2, d3, d4, d5);
+            double d0 = (double)pos.getX() + 0.5 + (random.nextDouble() - 0.5) * 2.0;
+            double d1 = (double)pos.getY() + 0.5 + (random.nextDouble() - 0.5) * 2.0;
+            double d2 = (double)pos.getZ() + 0.5 + (random.nextDouble() - 0.5) * 2.0;
+            double d3 = random.nextGaussian() * 0.02;
+            double d4 = random.nextGaussian() * 0.02;
+            double d5 = random.nextGaussian() * 0.02;
+            level.addParticle(ParticleTypes.TRIAL_OMEN, d0, d1, d2, d3, d4, d5);
+            level.addParticle(ParticleTypes.SOUL_FIRE_FLAME, d0, d1, d2, d3, d4, d5);
         }
     }
 
-    public static void addDetectPlayerParticles(Level p_312225_, BlockPos p_311759_, RandomSource p_312553_, int p_312188_, ParticleOptions p_338522_) {
-        for (int i = 0; i < 30 + Math.min(p_312188_, 10) * 5; i++) {
-            double d0 = (double)(2.0F * p_312553_.nextFloat() - 1.0F) * 0.65;
-            double d1 = (double)(2.0F * p_312553_.nextFloat() - 1.0F) * 0.65;
-            double d2 = (double)p_311759_.getX() + 0.5 + d0;
-            double d3 = (double)p_311759_.getY() + 0.1 + (double)p_312553_.nextFloat() * 0.8;
-            double d4 = (double)p_311759_.getZ() + 0.5 + d1;
-            p_312225_.addParticle(p_338522_, d2, d3, d4, 0.0, 0.0, 0.0);
+    public static void addDetectPlayerParticles(Level level, BlockPos pos, RandomSource random, int type, ParticleOptions particle) {
+        for (int i = 0; i < 30 + Math.min(type, 10) * 5; i++) {
+            double d0 = (double)(2.0F * random.nextFloat() - 1.0F) * 0.65;
+            double d1 = (double)(2.0F * random.nextFloat() - 1.0F) * 0.65;
+            double d2 = (double)pos.getX() + 0.5 + d0;
+            double d3 = (double)pos.getY() + 0.1 + (double)random.nextFloat() * 0.8;
+            double d4 = (double)pos.getZ() + 0.5 + d1;
+            level.addParticle(particle, d2, d3, d4, 0.0, 0.0, 0.0);
         }
     }
 
-    public static void addEjectItemParticles(Level p_312009_, BlockPos p_312583_, RandomSource p_312715_) {
+    public static void addEjectItemParticles(Level level, BlockPos pos, RandomSource random) {
         for (int i = 0; i < 20; i++) {
-            double d0 = (double)p_312583_.getX() + 0.4 + p_312715_.nextDouble() * 0.2;
-            double d1 = (double)p_312583_.getY() + 0.4 + p_312715_.nextDouble() * 0.2;
-            double d2 = (double)p_312583_.getZ() + 0.4 + p_312715_.nextDouble() * 0.2;
-            double d3 = p_312715_.nextGaussian() * 0.02;
-            double d4 = p_312715_.nextGaussian() * 0.02;
-            double d5 = p_312715_.nextGaussian() * 0.02;
-            p_312009_.addParticle(ParticleTypes.SMALL_FLAME, d0, d1, d2, d3, d4, d5 * 0.25);
-            p_312009_.addParticle(ParticleTypes.SMOKE, d0, d1, d2, d3, d4, d5);
+            double d0 = (double)pos.getX() + 0.4 + random.nextDouble() * 0.2;
+            double d1 = (double)pos.getY() + 0.4 + random.nextDouble() * 0.2;
+            double d2 = (double)pos.getZ() + 0.4 + random.nextDouble() * 0.2;
+            double d3 = random.nextGaussian() * 0.02;
+            double d4 = random.nextGaussian() * 0.02;
+            double d5 = random.nextGaussian() * 0.02;
+            level.addParticle(ParticleTypes.SMALL_FLAME, d0, d1, d2, d3, d4, d5 * 0.25);
+            level.addParticle(ParticleTypes.SMOKE, d0, d1, d2, d3, d4, d5);
         }
     }
 
@@ -367,8 +367,8 @@ public final class TrialSpawner implements net.neoforged.neoforge.common.extensi
         forRemoval = true
     )
     @VisibleForTesting
-    public void setPlayerDetector(PlayerDetector p_312510_) {
-        this.playerDetector = p_312510_;
+    public void setPlayerDetector(PlayerDetector playerDetector) {
+        this.playerDetector = playerDetector;
     }
 
     @Deprecated(
@@ -385,13 +385,13 @@ public final class TrialSpawner implements net.neoforged.neoforge.common.extensi
 
         public final SimpleParticleType particleType;
 
-        private FlameParticle(SimpleParticleType p_338374_) {
-            this.particleType = p_338374_;
+        private FlameParticle(SimpleParticleType particleType) {
+            this.particleType = particleType;
         }
 
-        public static TrialSpawner.FlameParticle decode(int p_338695_) {
+        public static TrialSpawner.FlameParticle decode(int id) {
             TrialSpawner.FlameParticle[] atrialspawner$flameparticle = values();
-            return p_338695_ <= atrialspawner$flameparticle.length && p_338695_ >= 0 ? atrialspawner$flameparticle[p_338695_] : NORMAL;
+            return id <= atrialspawner$flameparticle.length && id >= 0 ? atrialspawner$flameparticle[id] : NORMAL;
         }
 
         public int encode() {
@@ -400,7 +400,7 @@ public final class TrialSpawner implements net.neoforged.neoforge.common.extensi
     }
 
     public interface StateAccessor {
-        void setState(Level p_312617_, TrialSpawnerState p_312288_);
+        void setState(Level level, TrialSpawnerState state);
 
         TrialSpawnerState getState();
 

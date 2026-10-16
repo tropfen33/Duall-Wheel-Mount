@@ -15,7 +15,10 @@ public class OcelotRenderer extends MobRenderer<Ocelot, OcelotModel<Ocelot>> {
         super(p_174330_, new OcelotModel<>(p_174330_.bakeLayer(ModelLayers.OCELOT)), 0.4F);
     }
 
-    public ResourceLocation getTextureLocation(Ocelot p_115524_) {
+    /**
+     * Returns the location of an entity's texture.
+     */
+    public ResourceLocation getTextureLocation(Ocelot entity) {
         return CAT_OCELOT_LOCATION;
     }
 }

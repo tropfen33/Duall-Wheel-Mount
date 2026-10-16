@@ -47,38 +47,40 @@ public class SpawnPlacements {
     private static final Map<EntityType<?>, SpawnPlacements.Data> DATA_BY_TYPE = Maps.newHashMap();
 
     /**
-     * @deprecated Neo: Modders should use {@link net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent} instead.
+     * @deprecated Neo: Modders should use {@link
+     *             net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent}
+     *             instead.
      */
     @Deprecated
     private static <T extends Mob> void register(
-        EntityType<T> p_21755_, SpawnPlacementType p_321847_, Heightmap.Types p_21757_, SpawnPlacements.SpawnPredicate<T> p_21758_
+        EntityType<T> entityType, SpawnPlacementType spawnPlacementType, Heightmap.Types heightmapType, SpawnPlacements.SpawnPredicate<T> predicate
     ) {
-        SpawnPlacements.Data spawnplacements$data = DATA_BY_TYPE.put(p_21755_, new SpawnPlacements.Data(p_21757_, p_321847_, p_21758_));
+        SpawnPlacements.Data spawnplacements$data = DATA_BY_TYPE.put(entityType, new SpawnPlacements.Data(heightmapType, spawnPlacementType, predicate));
         if (spawnplacements$data != null) {
-            throw new IllegalStateException("Duplicate registration for type " + BuiltInRegistries.ENTITY_TYPE.getKey(p_21755_));
+            throw new IllegalStateException("Duplicate registration for type " + BuiltInRegistries.ENTITY_TYPE.getKey(entityType));
         }
     }
 
-    public static SpawnPlacementType getPlacementType(EntityType<?> p_21753_) {
-        SpawnPlacements.Data spawnplacements$data = DATA_BY_TYPE.get(p_21753_);
+    public static SpawnPlacementType getPlacementType(EntityType<?> entityType) {
+        SpawnPlacements.Data spawnplacements$data = DATA_BY_TYPE.get(entityType);
         return spawnplacements$data == null ? SpawnPlacementTypes.NO_RESTRICTIONS : spawnplacements$data.placement;
     }
 
-    public static boolean isSpawnPositionOk(EntityType<?> p_321531_, LevelReader p_321599_, BlockPos p_321663_) {
-        return getPlacementType(p_321531_).isSpawnPositionOk(p_321599_, p_321663_, p_321531_);
+    public static boolean isSpawnPositionOk(EntityType<?> entityType, LevelReader level, BlockPos pos) {
+        return getPlacementType(entityType).isSpawnPositionOk(level, pos, entityType);
     }
 
-    public static Heightmap.Types getHeightmapType(@Nullable EntityType<?> p_21766_) {
-        SpawnPlacements.Data spawnplacements$data = DATA_BY_TYPE.get(p_21766_);
+    public static Heightmap.Types getHeightmapType(@Nullable EntityType<?> entityType) {
+        SpawnPlacements.Data spawnplacements$data = DATA_BY_TYPE.get(entityType);
         return spawnplacements$data == null ? Heightmap.Types.MOTION_BLOCKING_NO_LEAVES : spawnplacements$data.heightMap;
     }
 
     public static <T extends Entity> boolean checkSpawnRules(
-        EntityType<T> p_217075_, ServerLevelAccessor p_217076_, MobSpawnType p_217077_, BlockPos p_217078_, RandomSource p_217079_
+        EntityType<T> entityType, ServerLevelAccessor serverLevel, MobSpawnType spawnType, BlockPos pos, RandomSource random
     ) {
-        SpawnPlacements.Data spawnplacements$data = DATA_BY_TYPE.get(p_217075_);
-        boolean vanillaResult = spawnplacements$data == null || spawnplacements$data.predicate.test((EntityType)p_217075_, p_217076_, p_217077_, p_217078_, p_217079_);
-        return net.neoforged.neoforge.event.EventHooks.checkSpawnPlacements(p_217075_, p_217076_, p_217077_, p_217078_, p_217079_, vanillaResult);
+        SpawnPlacements.Data spawnplacements$data = DATA_BY_TYPE.get(entityType);
+        boolean vanillaResult = spawnplacements$data == null || spawnplacements$data.predicate.test((EntityType)entityType, serverLevel, spawnType, pos, random);
+        return net.neoforged.neoforge.event.EventHooks.checkSpawnPlacements(entityType, serverLevel, spawnType, pos, random, vanillaResult);
     }
 
     // Neo: Added to allow for checking if an entity has a spawn placement
@@ -177,7 +179,7 @@ public class SpawnPlacements {
 
     @FunctionalInterface
     public interface SpawnPredicate<T extends Entity> {
-        boolean test(EntityType<T> p_217081_, ServerLevelAccessor p_217082_, MobSpawnType p_217083_, BlockPos p_217084_, RandomSource p_217085_);
+        boolean test(EntityType<T> entityType, ServerLevelAccessor serverLevel, MobSpawnType spawnType, BlockPos pos, RandomSource random);
     }
 
     /**

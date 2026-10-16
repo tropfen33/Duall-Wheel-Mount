@@ -15,10 +15,10 @@ public class StatsRenameFix extends DataFix {
     private final String name;
     private final Map<String, String> renames;
 
-    public StatsRenameFix(Schema p_145705_, String p_145706_, Map<String, String> p_145707_) {
-        super(p_145705_, false);
-        this.name = p_145706_;
-        this.renames = p_145707_;
+    public StatsRenameFix(Schema outputSchema, String name, Map<String, String> renames) {
+        super(outputSchema, false);
+        this.name = name;
+        this.renames = renames;
     }
 
     @Override

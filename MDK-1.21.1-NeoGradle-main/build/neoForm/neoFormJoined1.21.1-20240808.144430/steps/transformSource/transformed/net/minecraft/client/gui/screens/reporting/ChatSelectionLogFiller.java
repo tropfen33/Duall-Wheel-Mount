@@ -26,17 +26,17 @@ public class ChatSelectionLogFiller {
     @Nullable
     private PlayerChatMessage lastMessage;
 
-    public ChatSelectionLogFiller(ReportingContext p_251076_, Predicate<LoggedChatMessage.Player> p_250367_) {
-        this.log = p_251076_.chatLog();
-        this.contextBuilder = new ChatReportContextBuilder(p_251076_.sender().reportLimits().leadingContextMessageCount());
-        this.canReport = p_250367_;
+    public ChatSelectionLogFiller(ReportingContext reportingContext, Predicate<LoggedChatMessage.Player> canReport) {
+        this.log = reportingContext.chatLog();
+        this.contextBuilder = new ChatReportContextBuilder(reportingContext.sender().reportLimits().leadingContextMessageCount());
+        this.canReport = canReport;
         this.eventId = this.log.end();
     }
 
-    public void fillNextPage(int p_239016_, ChatSelectionLogFiller.Output p_239017_) {
+    public void fillNextPage(int maxVisibleEntries, ChatSelectionLogFiller.Output output) {
         int i = 0;
 
-        while (i < p_239016_) {
+        while (i < maxVisibleEntries) {
             LoggedChatEvent loggedchatevent = this.log.lookup(this.eventId);
             if (loggedchatevent == null) {
                 break;
@@ -44,13 +44,13 @@ public class ChatSelectionLogFiller {
 
             int j = this.eventId--;
             if (loggedchatevent instanceof LoggedChatMessage.Player loggedchatmessage$player && !loggedchatmessage$player.message().equals(this.lastMessage)) {
-                if (this.acceptMessage(p_239017_, loggedchatmessage$player)) {
+                if (this.acceptMessage(output, loggedchatmessage$player)) {
                     if (this.missedCount > 0) {
-                        p_239017_.acceptDivider(Component.translatable("gui.chatSelection.fold", this.missedCount));
+                        output.acceptDivider(Component.translatable("gui.chatSelection.fold", this.missedCount));
                         this.missedCount = 0;
                     }
 
-                    p_239017_.acceptMessage(j, loggedchatmessage$player);
+                    output.acceptMessage(j, loggedchatmessage$player);
                     i++;
                 } else {
                     this.missedCount++;
@@ -61,13 +61,13 @@ public class ChatSelectionLogFiller {
         }
     }
 
-    private boolean acceptMessage(ChatSelectionLogFiller.Output p_254300_, LoggedChatMessage.Player p_253803_) {
-        PlayerChatMessage playerchatmessage = p_253803_.message();
+    private boolean acceptMessage(ChatSelectionLogFiller.Output output, LoggedChatMessage.Player player) {
+        PlayerChatMessage playerchatmessage = player.message();
         boolean flag = this.contextBuilder.acceptContext(playerchatmessage);
-        if (this.canReport.test(p_253803_)) {
+        if (this.canReport.test(player)) {
             this.contextBuilder.trackContext(playerchatmessage);
             if (this.previousLink != null && !this.previousLink.isDescendantOf(playerchatmessage.link())) {
-                p_254300_.acceptDivider(Component.translatable("gui.chatSelection.join", p_253803_.profile().getName()).withStyle(ChatFormatting.YELLOW));
+                output.acceptDivider(Component.translatable("gui.chatSelection.join", player.profile().getName()).withStyle(ChatFormatting.YELLOW));
             }
 
             this.previousLink = playerchatmessage.link();
@@ -79,8 +79,8 @@ public class ChatSelectionLogFiller {
 
     @OnlyIn(Dist.CLIENT)
     public interface Output {
-        void acceptMessage(int p_239762_, LoggedChatMessage.Player p_251438_);
+        void acceptMessage(int chatId, LoggedChatMessage.Player playerMessage);
 
-        void acceptDivider(Component p_239557_);
+        void acceptDivider(Component text);
     }
 }
